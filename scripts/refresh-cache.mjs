@@ -22,6 +22,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { censusQueryName } from "../analyze-run.mjs";
+import { PC_WORLDS, worldTopKillers } from "./honu-live.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -31,6 +32,7 @@ const INDEX_PATH = path.join(DATA_DIR, "index.json");
 const WATCHLIST_PATH = path.join(DATA_DIR, "watchlist.txt");
 const STATE_PATH = path.join(DATA_DIR, "refresh-state.json");
 const STATUS_PATH = path.join(DATA_DIR, "status.json");
+const TOP_KILLERS_PATH = path.join(DATA_DIR, "top-killers.txt");
 
 const HONU = "https://wt.honu.pw/api/character/";
 const CENSUS = "https://census.daybreakgames.com/s:example/get/ps2:v2/";
@@ -233,15 +235,40 @@ async function honuMeta(cid) {
 
 /** Opponents repeat a lot between players on one server: memoize per run. */
 const oppMemo = new Map();
+/** Opponent display names from one batched Census call (saves ~50 Honu calls per player). */
+const nameMemo = new Map();
 function opponentInfo(oid) {
   if (!oppMemo.has(oid)) {
-    const p = Promise.all([honuMeta(oid), honuWeaponPace(oid)]).then(([meta, pace]) => {
+    const known = nameMemo.get(oid);
+    const metaP = known ? Promise.resolve(known) : honuMeta(oid);
+    const p = Promise.all([metaP, honuWeaponPace(oid)]).then(([meta, pace]) => {
       if (!meta || !pace) oppMemo.delete(oid); // don't memoize failures
       return { meta, pace };
     });
     oppMemo.set(oid, p);
   }
   return oppMemo.get(oid);
+}
+
+/** Fill nameMemo for ids via Census (best effort; Honu meta is the fallback). */
+async function censusOpponentNames(ids) {
+  const want = [...new Set(ids)].filter((id) => id && id !== "0" && !nameMemo.has(id) && !oppMemo.has(id));
+  for (let i = 0; i < want.length; i += 50) {
+    const chunk = want.slice(i, i + 50);
+    try {
+      const url =
+        `${CENSUS}character?character_id=${chunk.join(",")}` +
+        `&c:show=character_id,name.first&c:resolve=outfit(alias)&c:limit=${chunk.length}`;
+      const data = await fetchJson(url, { retries: 2 });
+      for (const ch of (data && data.character_list) || []) {
+        if (ch && ch.character_id && ch.name && ch.name.first) {
+          nameMemo.set(String(ch.character_id), { name: ch.name.first, outfitTag: (ch.outfit && ch.outfit.alias) || "" });
+        }
+      }
+    } catch {
+      /* Census flaky: fall back to Honu per-opponent meta */
+    }
+  }
 }
 
 /** Refuse to save a curve if more than this share of opponent KPM lookups failed. */
@@ -294,6 +321,7 @@ async function loadLive(name) {
   const board = await honuKillboard(cid);
   board.sort((a, b) => b.kills + b.deaths - (a.kills + a.deaths));
   const sample = board.slice(0, TOP_N);
+  await censusOpponentNames(sample.map((p) => String(p.otherCharacterID)));
 
   const rows = [];
   let i = 0;
@@ -520,6 +548,122 @@ function collectNames(cliArgs) {
   return { names: out, explicit: false };
 }
 
+/* ---------------- live top killers (data/top-killers.txt) ---------------- */
+
+const TK_KEEP_MS = 7 * 24 * 3600 * 1000;
+const TK_MAX_ROWS = 5000;
+const TK_HEADER =
+  "# Top killers seen live on Honu (120-min window), merged by every background run.\n" +
+  "# Kept 7 days. seen = runs that saw the player; kpm = best kills/min (>=10 min online).\n" +
+  "# name\tworld\tfirstSeen\tlastSeen\tseen\tkills\tdeaths\tminutes\tkpm";
+
+export function parseTopKillers(text) {
+  const map = new Map();
+  for (const line of String(text || "").split(/\r?\n/)) {
+    if (!line || line.startsWith("#")) continue;
+    const [name, world, firstSeen, lastSeen, seen, kills, deaths, minutes, kpm] = line.split("\t");
+    const k = slugKey(name);
+    if (!k) continue;
+    map.set(k, {
+      name, world: world || "", firstSeen: firstSeen || "", lastSeen: lastSeen || "",
+      seen: +seen || 0, kills: +kills || 0, deaths: +deaths || 0, minutes: +minutes || 0, kpm: +kpm || 0,
+    });
+  }
+  return map;
+}
+
+export function formatTopKillers(map) {
+  const rows = [...map.values()].sort((a, b) => b.seen - a.seen || b.kpm - a.kpm || a.name.localeCompare(b.name));
+  return (
+    TK_HEADER + "\n" +
+    rows.map((r) => [r.name, r.world, r.firstSeen, r.lastSeen, r.seen, r.kills, r.deaths, r.minutes, r.kpm.toFixed(2)].join("\t")).join("\n") +
+    (rows.length ? "\n" : "")
+  );
+}
+
+/**
+ * Merge one discovery snapshot. Each player counts once per run (seen += 1).
+ * @param {Map} map  slug -> row (mutated)
+ * @param {{name:string, world:string, kills:number, deaths:number, secondsOnline:number}[]} entries
+ */
+export function mergeTopKillers(map, entries, now = Date.now()) {
+  const iso = new Date(now).toISOString();
+  const seenNow = new Set();
+  for (const e of entries || []) {
+    const k = slugKey(e.name);
+    if (!k || seenNow.has(k)) continue;
+    seenNow.add(k);
+    const minutes = Math.round((+e.secondsOnline || 0) / 60);
+    const kpm = minutes >= 10 ? (+e.kills || 0) / minutes : 0;
+    const prev = map.get(k);
+    map.set(k, {
+      name: String(e.name).replace(/^\[\]\s*/, "").trim(),
+      world: e.world || (prev && prev.world) || "",
+      firstSeen: (prev && prev.firstSeen) || iso,
+      lastSeen: iso,
+      seen: ((prev && prev.seen) || 0) + 1,
+      kills: +e.kills || 0,
+      deaths: +e.deaths || 0,
+      minutes,
+      kpm: Math.max(kpm, (prev && prev.kpm) || 0),
+    });
+  }
+  for (const [k, r] of map) {
+    if (!r.lastSeen || now - Date.parse(r.lastSeen) > TK_KEEP_MS) map.delete(k);
+  }
+  if (map.size > TK_MAX_ROWS) {
+    const keep = [...map.entries()].sort((a, b) => Date.parse(b[1].lastSeen) - Date.parse(a[1].lastSeen)).slice(0, TK_MAX_ROWS);
+    map.clear();
+    for (const [k, r] of keep) map.set(k, r);
+  }
+  return map;
+}
+
+/** Live players not cached yet: most-seen first, then best KPM. Recent failures skipped. */
+export function liveCandidates(map, index, state, now = Date.now()) {
+  const known = new Set(((index && index.players) || []).map((p) => p.slug || slugKey(p.name)));
+  const st = (state && state.players) || {};
+  return [...map.entries()]
+    .filter(([k, r]) => {
+      if (known.has(k) || !isPlausibleName(r.name)) return false;
+      const prev = st[k];
+      return !(prev && prev.lastAttemptAt && now - prev.lastAttemptAt < CRAWL_RETRY_AFTER_MS);
+    })
+    .sort((a, b) => b[1].seen - a[1].seen || b[1].kpm - a[1].kpm || a[1].name.localeCompare(b[1].name))
+    .map(([, r]) => r.name);
+}
+
+/** Pull top killers from every PC world with players online (~5 paced requests per world). */
+async function discoverLive() {
+  const out = { worlds: [], entries: [], errors: [] };
+  let active = PC_WORLDS;
+  try {
+    await honuSlot();
+    const res = await fetch("https://wt.honu.pw/api/world/overview", {
+      headers: { Accept: "application/json", "User-Agent": USER_AGENT },
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    });
+    if (res.ok) {
+      const body = await res.json();
+      const list = Array.isArray(body) ? body : (body && body.data) || [];
+      const online = new Map(list.map((w) => [+w.worldID, +w.playersOnline || 0]));
+      active = PC_WORLDS.filter((w) => (online.get(w.id) || 0) > 0);
+    }
+  } catch {
+    /* overview failed: try every PC world */
+  }
+  for (const w of active) {
+    try {
+      const r = await worldTopKillers(w.id, { userAgent: USER_AGENT, timeoutMs: 40_000, beforeRequest: honuSlot });
+      out.worlds.push({ name: w.name, online: r.onlineCount, killers: r.killers.length });
+      for (const k of r.killers) out.entries.push({ ...k, world: w.name });
+    } catch (e) {
+      out.errors.push(`${w.name}: ${String((e && e.message) || e).slice(0, 80)}`);
+    }
+  }
+  return out;
+}
+
 const CRAWL_RETRY_AFTER_MS = 7 * 24 * 3600 * 1000;
 
 /**
@@ -588,7 +732,7 @@ export function writeStatus(patch) {
 }
 
 function runPlan(argv) {
-  const batchSize = envInt("BATCH_SIZE", 8);
+  const batchSize = envInt("BATCH_SIZE", 40);
   const crawlMax = Number.isFinite(parseInt(process.env.CRAWL_MAX, 10)) ? Math.max(0, parseInt(process.env.CRAWL_MAX, 10)) : 10;
   const { names: all, explicit } = collectNames(argv);
   const index = readIndex();
@@ -612,27 +756,22 @@ async function main() {
     return;
   }
   fs.mkdirSync(PLAYERS_DIR, { recursive: true });
-  const batchSize = envInt("BATCH_SIZE", 8);
-  const crawlMax = Number.isFinite(parseInt(process.env.CRAWL_MAX, 10)) ? Math.max(0, parseInt(process.env.CRAWL_MAX, 10)) : 10;
-  const crawlIndexCap = envInt("CRAWL_INDEX_CAP", 400);
+  const crawlMax = Number.isFinite(parseInt(process.env.CRAWL_MAX, 10)) ? Math.max(0, parseInt(process.env.CRAWL_MAX, 10)) : 50;
+  const crawlIndexCap = envInt("CRAWL_INDEX_CAP", 1500);
   const t0 = Date.now();
 
   const { names: all, explicit } = collectNames(process.argv.slice(2));
   // On-demand runs stay short so they don't hold the concurrency queue.
-  const budgetMs = envInt(explicit ? "ON_DEMAND_BUDGET_MIN" : "TIME_BUDGET_MIN", explicit ? 10 : 13) * 60_000;
+  const budgetMs = envInt(explicit ? "ON_DEMAND_BUDGET_MIN" : "TIME_BUDGET_MIN", explicit ? 10 : 9) * 60_000;
   if (!all.length) {
     console.error("No names to refresh. Add data/watchlist.txt or pass names.");
     process.exit(1);
   }
   const index = readIndex();
   const state = readState();
-  const names = explicit ? all : pickBatch(all, index, state, batchSize);
-
-  console.log(
-    explicit
-      ? `Refreshing ${names.length} explicit name(s): ${names.join(", ")}`
-      : `Rotation: ${names.length} stalest of ${all.length} name(s) (BATCH_SIZE=${batchSize}): ${names.join(", ")}`
-  );
+  const names = explicit ? all : [];
+  if (explicit) console.log(`Refreshing ${names.length} explicit name(s): ${names.join(", ")}`);
+  else console.log(`Background discovery run (cached players are not re-fetched). Index: ${index.players.length}.`);
   const c = { ok: 0, notFound: 0, outage: 0, consecutiveOutage: 0, stoppedEarly: "" };
   const added = []; // explicit names that fetched OK → watchlist
   const discovered = []; // crawl successes → watchlist
@@ -697,46 +836,69 @@ async function main() {
     return display;
   }
 
-  // Phase 1: rotation batch or on-demand names.
-  for (let i = 0; i < names.length; i++) {
-    if (overBudget()) {
-      c.stoppedEarly = `time budget ${Math.round(budgetMs / 60000)} min reached`;
-      break;
+  // On-demand (Worker / manual names): refresh exactly those names.
+  // Background: growth only. Never re-fetch cached players. Discover who is
+  // playing well right now (Honu live top killers), fetch the ones not cached
+  // yet, then fall back to frequent opponents of cached players.
+  const reserveMs = envInt("PLAYER_RESERVE_SEC", explicit ? 0 : 60) * 1000;
+  const deadline = t0 + budgetMs;
+  let ri = 0;
+  if (explicit) {
+    while (ri < names.length && !c.stoppedEarly && Date.now() < deadline) {
+      if (ri > 0) await sleep(BETWEEN_PLAYERS_MS);
+      const d = await refreshOne(names[ri], `[name ${ri + 1}/${names.length}]`);
+      ri++;
+      if (d) added.push(d);
     }
-    const d = await refreshOne(names[i], `[${i + 1}/${names.length}]`);
-    if (d) added.push(d);
-    if (c.stoppedEarly) break;
-    if (i + 1 < names.length) await sleep(BETWEEN_PLAYERS_MS);
+    if (ri < names.length && !c.stoppedEarly) c.stoppedEarly = `time budget ${Math.round(budgetMs / 60000)} min reached`;
   }
 
-  // Phase 2 (rotation runs only): discover new players among cached opponents
-  // while time remains. On-demand (Worker) runs skip this to stay short.
   const crawlFrom = Date.now();
-  if (!explicit && crawlMax > 0 && !c.stoppedEarly) {
-    if (index.players.length >= crawlIndexCap) {
-      console.log(`Crawl: index has ${index.players.length} ≥ CRAWL_INDEX_CAP=${crawlIndexCap}; skipping discovery.`);
-    } else {
-      const cands = crawlCandidates(readAllPayloads(), index, state);
-      const room = Math.min(crawlMax, crawlIndexCap - index.players.length);
-      console.log(`Crawl: ${cands.length} candidate opponent(s) not in index; adding up to ${room}. Top: ${cands.slice(0, 15).join(", ")}`);
-      let tried = 0;
-      for (const name of cands) {
-        if (discovered.length >= room) break;
-        // Keep ~90s in reserve: a new player costs ~50-60s at 2 req/s.
-        if (overBudget(90_000)) {
-          console.log("Crawl: stopping, time budget nearly used.");
-          break;
-        }
-        if (tried) await sleep(BETWEEN_PLAYERS_MS);
-        tried++;
-        const d = await refreshOne(name, `[crawl ${discovered.length + 1}/${room}]`);
-        if (d) discovered.push(d);
-        if (c.stoppedEarly) break;
+  let live = null;
+  let fromLive = 0;
+  if (!explicit) {
+    live = await discoverLive();
+    const tk = parseTopKillers(fs.existsSync(TOP_KILLERS_PATH) ? fs.readFileSync(TOP_KILLERS_PATH, "utf8") : "");
+    mergeTopKillers(tk, live.entries);
+    writeFileAtomic(TOP_KILLERS_PATH, formatTopKillers(tk));
+    console.log(
+      `Live: ${live.worlds.map((w) => `${w.name} ${w.online} online/${w.killers} top`).join(", ") || "no worlds"}` +
+      `${live.errors.length ? `; errors: ${live.errors.join("; ")}` : ""}; list has ${tk.size} names`
+    );
+    const liveNames = liveCandidates(tk, index, state);
+    const room = Math.max(0, Math.min(crawlMax, crawlIndexCap - index.players.length));
+    const seen = new Set();
+    const queue = [];
+    for (const n of liveNames) if (!seen.has(slugKey(n))) { seen.add(slugKey(n)); queue.push({ name: n, src: "live" }); }
+    const liveCount = queue.length;
+    // Fallback only needs a few names; computing it reads every cached file.
+    if (queue.length < room) {
+      for (const n of crawlCandidates(readAllPayloads(), index, state)) {
+        if (queue.length >= room * 2 + 10) break;
+        if (!seen.has(slugKey(n))) { seen.add(slugKey(n)); queue.push({ name: n, src: "crawl" }); }
+      }
+    }
+    console.log(`New-player queue: ${liveCount} live + ${queue.length - liveCount} opponent fallback; room ${room} (cap ${crawlIndexCap}). Next: ${queue.slice(0, 12).map((q) => q.name).join(", ")}`);
+    if (!room) console.log(`Index has ${index.players.length} ≥ CRAWL_INDEX_CAP=${crawlIndexCap}; nothing to add.`);
+    let tried = 0;
+    for (const q of queue) {
+      if (discovered.length >= room || c.stoppedEarly) break;
+      if (Date.now() + reserveMs > deadline) {
+        c.stoppedEarly = `time budget ${Math.round(budgetMs / 60000)} min reached`;
+        break;
+      }
+      if (tried) await sleep(BETWEEN_PLAYERS_MS);
+      tried++;
+      const d = await refreshOne(q.name, `[new ${discovered.length + 1}/${room} ${q.src}]`);
+      if (d) {
+        discovered.push(d);
+        if (q.src === "live") fromLive++;
       }
     }
   }
+  const crawlSecs = Math.round((Date.now() - crawlFrom) / 1000);
 
-  // Successful on-demand + discovered names join the hourly rotation (failures don't).
+  // Successful on-demand + discovered names join the watchlist (failures don't).
   let joined = [];
   const toJoin = [...(explicit ? added : []), ...discovered];
   if (toJoin.length) {
@@ -745,10 +907,9 @@ async function main() {
   }
 
   const secs = Math.round((Date.now() - t0) / 1000);
-  const crawlSecs = Math.round((Date.now() - crawlFrom) / 1000);
   const summary =
     `Done in ${secs}s. ok=${c.ok} notFound=${c.notFound} outage=${c.outage} index=${index.players.length}` +
-    `${discovered.length ? ` discovered=${discovered.length} (crawl ${crawlSecs}s)` : ""}` +
+    `${discovered.length ? ` new=${discovered.length} (live ${fromLive}, opponents ${discovered.length - fromLive}; ${crawlSecs}s)` : ""}` +
     `${joined.length ? ` watchlist+=${joined.length}` : ""}` +
     `${c.stoppedEarly ? ` (stopped early: ${c.stoppedEarly})` : ""}`;
   console.log(summary);
@@ -756,7 +917,7 @@ async function main() {
     lastRun: {
       runId: process.env.GITHUB_RUN_ID || null,
       event: process.env.GITHUB_EVENT_NAME || "local",
-      kind: explicit ? "on-demand" : "rotation",
+      kind: explicit ? "on-demand" : "discovery",
       startedAt,
       endedAt: new Date().toISOString(),
       seconds: secs,
@@ -765,6 +926,9 @@ async function main() {
       failed,
       stoppedEarly: c.stoppedEarly || null,
       indexSize: index.players.length,
+      newFromLive: fromLive,
+      liveWorlds: live ? live.worlds : [],
+      liveErrors: live ? live.errors : [],
     },
   });
   if (process.env.GITHUB_STEP_SUMMARY) {

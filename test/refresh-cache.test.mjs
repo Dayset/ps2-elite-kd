@@ -11,6 +11,10 @@ import {
   newWatchlistNames,
   isPlausibleName,
   crawlCandidates,
+  mergeTopKillers,
+  parseTopKillers,
+  formatTopKillers,
+  liveCandidates,
 } from "../scripts/refresh-cache.mjs";
 
 const index = {
@@ -103,5 +107,50 @@ describe("crawlCandidates (discovery)", () => {
     const payloads = [pl([{ name: "5428011263335537297" }, { name: "0" }, { name: "bad name!" }, { name: "Typo" }, { name: "Old" }])];
     const state = { players: { typo: { lastAttemptAt: now - 1000, fails: 1 }, old: { lastAttemptAt: now - 30 * 864e5, fails: 1 } } };
     assert.deepEqual(crawlCandidates(payloads, idx, state, now), ["Old"]);
+  });
+});
+
+describe("live top killers list", () => {
+  const T0 = Date.parse("2026-10-07T22:00:00Z");
+  it("merges snapshots: seen counts once per run, best KPM kept, 7-day pruning", () => {
+    const m = new Map();
+    mergeTopKillers(m, [
+      { name: "[KlSS] UltramaxVS", world: "Connery", kills: 150, deaths: 36, secondsOnline: 7200 },
+      { name: "[KlSS] UltramaxVS", world: "Connery", kills: 150, deaths: 36, secondsOnline: 7200 },
+      { name: "Shorty", world: "Miller", kills: 9, deaths: 1, secondsOnline: 300 },
+    ], T0);
+    mergeTopKillers(m, [{ name: "[NEW] UltramaxVS", world: "Connery", kills: 60, deaths: 30, secondsOnline: 3600 }], T0 + 600e3);
+    const u = m.get("ultramaxvs");
+    assert.equal(u.seen, 2);
+    assert.equal(u.name, "[NEW] UltramaxVS");
+    assert.equal(u.kpm.toFixed(2), "1.25");
+    assert.equal(m.get("shorty").kpm, 0); // <10 min online: no KPM
+    mergeTopKillers(m, [], T0 + 8 * 864e5);
+    assert.equal(m.size, 0);
+  });
+
+  it("drops Honu's empty outfit tag", () => {
+    const m = mergeTopKillers(new Map(), [{ name: "[] DGOZZOvs4", world: "Connery", kills: 1, deaths: 1, secondsOnline: 60 }], T0);
+    assert.equal(m.get("dgozzovs4").name, "DGOZZOvs4");
+  });
+
+  it("round-trips through the text file", () => {
+    const m = mergeTopKillers(new Map(), [{ name: "A1", world: "Miller", kills: 30, deaths: 3, secondsOnline: 1200 }], T0);
+    const back = parseTopKillers(formatTopKillers(m));
+    assert.deepEqual([...back.values()], [...m.values()].map((r) => ({ ...r, kpm: +r.kpm.toFixed(2) })));
+  });
+
+  it("candidates: not cached, not recently failed, most-seen then best KPM", () => {
+    const m = new Map();
+    mergeTopKillers(m, [
+      { name: "Cached", kills: 99, secondsOnline: 3600 },
+      { name: "Twice", kills: 10, secondsOnline: 3600 },
+      { name: "HighKpm", kills: 120, secondsOnline: 3600 },
+      { name: "Typo", kills: 50, secondsOnline: 3600 },
+    ], T0);
+    mergeTopKillers(m, [{ name: "Twice", kills: 12, secondsOnline: 3700 }], T0 + 1);
+    const idx = { players: [{ name: "Cached", slug: "cached" }] };
+    const state = { players: { typo: { lastAttemptAt: T0, fails: 1 } } };
+    assert.deepEqual(liveCandidates(m, idx, state, T0 + 2), ["Twice", "HighKpm"]);
   });
 });

@@ -61,7 +61,8 @@
     <h1>📦 Shared cache status</h1>
     <div class="st-sub">Updates every 30 s. <span id="stUpdated"></span> · <a href="./">Back to the chart</a></div>
 
-    <section class="st-card" id="cardNow"><h2>Refresh now</h2><div id="now" class="st-dim">Loading…</div><div id="backup" class="st-label"></div></section>
+    <section class="st-card" id="cardNow"><h2>Refresh now</h2><div id="nowRun"></div><div id="now" class="st-dim">Loading…</div><div id="backup" class="st-label"></div></section>
+    <section class="st-card" id="cardLive"><h2>Live top killers (Honu)</h2><div id="live" class="st-dim">Loading…</div></section>
     <section class="st-card" id="cardRuns"><h2>GitHub Actions queue</h2><div id="runs" class="st-dim">Loading…</div></section>
     <section class="st-card" id="cardLast"><h2>Last finished run</h2><div id="last" class="st-dim">Loading…</div></section>
     <section class="st-card" id="cardPending"><h2>Queued from the site (not cached yet)</h2><div id="pending" class="st-dim">Loading…</div></section>
@@ -80,8 +81,6 @@
       var WORKER_URL = "https://ps2-elite-kd-cache.dayset.workers.dev";
       var FLAG_TTL_MS = 20 * 60 * 1000; // same staleness rule as the main page
       var POLL_MS = 30 * 1000;
-      var GH_POLL_MS = 120 * 1000; // unauthenticated GitHub API: 60 req/h per IP
-      var lastGh = 0;
 
       function $(id) { return document.getElementById(id); }
       function esc(s) {
@@ -134,8 +133,7 @@
           html = '<div class="st-big st-dim">Idle (stale flag ignored)</div>' +
             '<div class="st-dim">The flag says “running” but is older than 20 min (' + when(ts) + "), so it’s ignored, like on the main page. " + runLink(flag.runId) + "</div>";
         } else {
-          html = '<div class="st-big st-ok">✓ Idle</div>' +
-            '<div class="st-dim">Last flag change ' + when(ts) + (flag && flag.runId ? " · " + runLink(flag.runId) : "") + ". The schedule runs hourly at :17 UTC.</div>";
+          html = '<div class="st-dim">Main-page “under load” banner: off (background runs don’t raise it). Last flag change ' + when(ts) + (flag && flag.runId ? " · " + runLink(flag.runId) : "") + ".</div>";
         }
         var cur = status && status.running && status.current;
         if (cur) {
@@ -158,7 +156,9 @@
           (r.stoppedEarly ? '<div class="st-dim">Stopped early: ' + esc(r.stoppedEarly) + "</div>" : "") +
           '<div class="st-label">Added (' + (r.added || []).length + "):</div>" + chips(r.added, "add") +
           '<div class="st-label">Updated (' + (r.updated || []).length + "):</div>" + chips(r.updated) +
-          '<div class="st-label">Failed (' + failed.length + "):</div>" + chips(failed, "fail");
+          '<div class="st-label">Failed (' + failed.length + "):</div>" + chips(failed, "fail") +
+          (r.liveWorlds && r.liveWorlds.length ? '<div class="st-label">Live worlds checked: ' + r.liveWorlds.map(function (w) { return esc(w.name) + " (" + esc(w.online) + " online)"; }).join(", ") +
+            " · new from live list: " + esc(r.newFromLive || 0) + "</div>" : "");
       }
 
       function renderRuns(data) {
@@ -195,10 +195,37 @@
         if (!b) { $("backup").textContent = ""; return; }
         var l = b.last;
         var label = { "dispatched": "dispatched a run", "skipped-recent": "skipped (recent run)", "skipped-running": "skipped (run in progress)", "error": "error" };
-        $("backup").innerHTML = "Backup timer (Worker, hourly at :29 UTC): " + (l
+        $("backup").innerHTML = "Worker timer (every 5 min, starts a discovery run when idle): " + (l
           ? "last check " + when(l.at) + ", " + esc(label[l.decision] || l.decision) +
             (l.reason ? " (" + esc(l.reason) + ")" : "") + (l.runId ? " · " + runLink(l.runId) : "")
           : "no check yet.");
+      }
+
+      /** Current run from the Worker's /runs (GitHub run state; no commits needed). */
+      function renderNowRun(data) {
+        var runs = (data && data.workflow_runs) || [];
+        var a = runs.filter(function (r) { return r.status !== "completed"; })[0];
+        $("nowRun").innerHTML = a
+          ? '<div class="st-big st-warn">⏳ ' + (a.status === "in_progress" ? "Discovery run in progress" : "Run " + esc(a.status)) + "</div><div>" + runLink(a.id) +
+            " · started " + when(a.run_started_at || a.created_at) + '. It fetches live top killers that aren’t cached yet, then frequent opponents. Results appear when it commits.</div>'
+          : "";
+      }
+
+      function renderLive(text, index) {
+        var known = {};
+        ((index && index.players) || []).forEach(function (p) { known[p.slug] = 1; });
+        var rows = String(text || "").split(/\r?\n/).filter(function (l) { return l && l.charAt(0) !== "#"; }).map(function (l) {
+          var f = l.split("\t");
+          var slug = String(f[0] || "").toLowerCase().replace(/^\[.*?\]\s*/, "").replace(/[^a-z0-9]+/g, "");
+          return { name: f[0], world: f[1], lastSeen: f[3], seen: +f[4] || 0, kpm: +f[8] || 0, cached: !!known[slug] };
+        });
+        if (!rows.length) { $("live").innerHTML = '<span class="st-dim">No live list yet (written by the first discovery run).</span>'; return; }
+        var cached = rows.filter(function (r) { return r.cached; }).length;
+        $("live").innerHTML = "<div>" + rows.length + " players seen in the last 7 days · " + cached + " cached · " + (rows.length - cached) + " still to fetch</div>" +
+          '<table class="st-table"><tr><th>Player</th><th>World</th><th>Seen</th><th>Best KPM</th><th>Last seen</th></tr>' +
+          rows.slice(0, 25).map(function (r) {
+            return "<tr><td>" + (r.cached ? "✓ " : "") + esc(r.name) + "</td><td>" + esc(r.world) + "</td><td>" + esc(r.seen) + "</td><td>" + esc(r.kpm.toFixed(2)) + "</td><td>" + when(r.lastSeen) + "</td></tr>";
+          }).join("") + "</table>";
       }
 
       function tick() {
@@ -212,12 +239,11 @@
         getJson("data/index.json").then(renderRecent, function (e) { fail("recent", "data/index.json", e); });
         getJson(WORKER_URL + "/pending").then(renderPending, function (e) { fail("pending", "the queue", e); });
         getJson(WORKER_URL + "/health").then(renderBackup, function () { $("backup").textContent = "Backup timer: status unavailable."; });
-        if (Date.now() - lastGh >= GH_POLL_MS) {
-          lastGh = Date.now();
-          fetch("https://api.github.com/repos/" + REPO + "/actions/workflows/refresh-cache.yml/runs?per_page=10", { headers: { Accept: "application/vnd.github+json" } })
-            .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
-            .then(renderRuns, function (e) { fail("runs", "GitHub Actions runs", e); });
-        }
+        getJson(WORKER_URL + "/runs").then(function (d) { renderRuns(d); renderNowRun(d); }, function (e) { fail("runs", "GitHub Actions runs", e); });
+        Promise.all([
+          fetch("data/top-killers.txt?t=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.ok ? r.text() : ""; }).catch(function () { return ""; }),
+          getJson("data/index.json").catch(function () { return null; }),
+        ]).then(function (res) { renderLive(res[0], res[1]); });
         $("stUpdated").textContent = "Last check " + new Date().toLocaleTimeString() + ".";
       }
 

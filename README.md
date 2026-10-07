@@ -53,14 +53,16 @@ Click any column header to sort (names alphabetical; metrics numeric). Default s
 
 ## Shared cache (GitHub Actions)
 
-The static Pages site cannot write `data/`. Shared snapshots are committed automatically by the **Refresh shared cache** Action, with no manual steps:
+The static Pages site cannot write `data/`. Shared snapshots are committed automatically by the **Refresh shared cache** Action, with no manual steps. Goal: grow the cache (1000+ players). Background runs only add **new** players and never re-fetch cached ones.
 
-- **Hourly** at :17 UTC (`17 * * * *`). Each run refreshes the **8 stalest** names from `data/watchlist.txt` + `index.json` (never-fetched first, then oldest `savedAt`), so ~230 names rotate in about 30 hours. Honu requests are paced to 2/s (Honu rate-limits Actions IPs), about 1 min per player. A run stops starting new players after 13 min, so it finishes inside the page's 20-min load-flag window.
-- **Discovery:** with the time left (usually 2–4 players), the run adds new players: opponents that show up most often in cached killboards but aren't in the index yet (max 10 per run, stops at 400 indexed). New names join `watchlist.txt`.
-- Misspelled/unknown names are skipped and their old files are kept (attempts are tracked in `data/refresh-state.json`). A player is also kept as-is if more than 10% of its opponent lookups fail, so rate limits can't save fake 0-KPM curves. A run only fails if nothing refreshed because Census/Honu were down.
-- While it runs, `data/load-flag.json` is `fetching: true`. It's cleared in the same commit as the new data, even if the run fails.
-- Each run also re-enables the workflow, so GitHub's 60-day inactivity rule can't switch the schedule off.
-- **On-demand:** a dispatch with `names` (from the site's Worker when someone analyzes a new name, or **Actions → Run workflow**) refreshes only those names. Names that fetch OK are added to `watchlist.txt`; failures are left out. These runs queue behind a running batch and never cancel it.
+- **Driver:** the Cloudflare Worker (`ps2-elite-kd-cache`) cron checks every 5 min and dispatches a background run when none is queued or running (and the last one finished more than 1 min ago). GitHub's own `17 * * * *` schedule is only a fallback because it hasn't been firing.
+- **Discovery (~9 min per run):** the run reads Honu's live **top killers** on every active PC world (SignalR hub `wt.honu.pw/ws/data`, 120-min window, 8 per faction) and merges them into `data/top-killers.txt` (name, world, first/last seen, times seen, best KPM; kept 7 days). It fetches names that aren't cached yet, most-seen and best-KPM first. When that list runs short, it falls back to frequent opponents from cached killboards. Caps: max 50 new per run, stops at 1500 cached. Honu is paced to 1 req/s with 429 backoff. New names join `watchlist.txt`.
+- **No scheduled refresh of cached players.** A cached player is only re-fetched when someone asks for fresh data (the Worker dispatches it on demand).
+- **On-demand:** a dispatch with `names` (from the Worker, or **Actions → Run workflow**) refreshes only those names at 2 req/s. Names that fetch OK are added to `watchlist.txt`; failures are left out. These runs queue behind a running background run and never cancel it.
+- **One commit per run** (Pages allows ~10 builds/hour). No commit if no player file changed. Background runs don't raise the main page's under-load banner.
+- Unknown names are skipped (attempts tracked in `data/refresh-state.json`, not retried for 7 days). A player is not saved if more than 10% of its opponent lookups fail, so rate limits can't save fake 0-KPM curves.
+- Each run re-enables the workflow, so GitHub's 60-day inactivity rule can't switch it off.
+- Hidden status page: `/status.html` (current run, live top killers, last run, queue).
 
 Browser Analyze still uses a local under-load note across tabs on the same device; the Actions load-flag is what other visitors see during a shared refresh.
 

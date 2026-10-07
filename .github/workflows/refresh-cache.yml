@@ -1,55 +1,53 @@
 name: Refresh shared cache
 
-# Fully automatic: every hour the stalest BATCH_SIZE players (never-fetched
-# first) are re-fetched from Census + Honu and committed to data/. All ~225
-# names rotate through every day. With time left, the run "crawls": it adds up
-# to CRAWL_MAX new players picked from cached players' frequent opponents.
-# No manual steps needed.
+# Grows the shared cache with NEW players; cached players are never re-fetched
+# by background runs (only on demand, e.g. "Fetch fresh" via the Worker).
 #
-# On-demand: a dispatch with inputs.names (e.g. from the site's Cloudflare
-# Worker when someone analyzes a new name) refreshes ONLY those names, adds the
-# ones that fetched OK to data/watchlist.txt, and skips the rotation batch.
+# Driver: the Cloudflare Worker (ps2-elite-kd-cache) cron checks every 5 min
+# and dispatches one background run when no run of this workflow is queued or
+# running. GitHub's own hourly cron below is only a fallback.
+# A background run (~9 min): read Honu's live top killers on every active PC
+# world (data/top-killers.txt), fetch those not cached yet (most-seen, best
+# KPM first), then frequent opponents of cached players as a fallback, up to
+# CRAWL_INDEX_CAP. Honu is paced to 1 req/s (on-demand runs: 2 req/s).
+#
+# Pages: exactly ONE commit per run, none if no player file changed.
 
 on:
   schedule:
-    # Hourly at :17 UTC (off-peak; GitHub often drops/delays :00 crons).
+    # Fallback only (GitHub has not been firing this reliably).
     - cron: "17 * * * *"
   workflow_dispatch:
     inputs:
       names:
-        description: "Names to refresh now (comma/space-separated); successes join the watchlist. Empty = normal rotation batch."
+        description: "Names to refresh now (comma/space-separated); successes join the watchlist. Empty = background discovery run."
         required: false
         default: ""
-      batch_size:
-        description: "Rotation batch size when names is empty"
-        required: false
-        default: "8"
 
 permissions:
   contents: write # commit data/
   actions: write  # keepalive: re-enable this workflow (60-day inactivity rule)
 
-# One run at a time. On-demand dispatches queue behind a running batch
-# (never cancel it), and queue: max keeps every pending dispatch instead of
-# replacing the older pending one.
+# One run at a time. On-demand dispatches queue behind at most one short
+# background run (never cancel it); queue: max keeps every pending dispatch.
 concurrency:
   group: refresh-shared-cache
   cancel-in-progress: false
   queue: max
 
 env:
-  BATCH_SIZE: ${{ github.event.inputs.batch_size || '8' }}
-  TIME_BUDGET_MIN: "13"      # rotation: stop starting new players after this (page ignores flags >20 min old)
-  CRAWL_MAX: "10"            # rotation runs: add up to N new players found among cached opponents
-  CRAWL_INDEX_CAP: "400"     # stop discovering once the shared index is this big
-  ON_DEMAND_BUDGET_MIN: "10" # inputs.names runs stay short
+  TIME_BUDGET_MIN: "9"       # background: stop starting new players after ~9 min
+  ON_DEMAND_BUDGET_MIN: "10" # inputs.names runs
+  CRAWL_MAX: "50"            # background: max new players per run (time budget usually binds first)
+  CRAWL_INDEX_CAP: "1500"    # stop adding at this many cached players
+  HONU_RPS: ${{ github.event.inputs.names != '' && github.event.inputs.names != null && '2' || '1' }}
   ON_DEMAND: ${{ github.event.inputs.names != '' && github.event.inputs.names != null && 'true' || 'false' }}
-  RUN_KIND: ${{ github.event_name == 'schedule' && 'scheduled' || 'manual' }}
+  RUN_KIND: ${{ github.event_name == 'schedule' && 'scheduled' || (github.event.inputs.names != '' && github.event.inputs.names != null) && 'on-demand' || 'discovery' }}
 
 jobs:
   refresh:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -76,49 +74,40 @@ jobs:
           gh api -X PUT "repos/${{ github.repository }}/actions/workflows/refresh-cache.yml/enable"
           echo "Workflow re-enabled (keepalive ok)"
 
-      - name: Raise under-load flag
-        if: env.ON_DEMAND != 'true' # on-demand runs are short; no banner/extra commit
-        continue-on-error: true # a missed banner must not block the refresh
-        env:
-          RUN_ID: ${{ github.run_id }}
-        run: |
-          node -e '
-            const fs = require("fs");
-            fs.writeFileSync("data/load-flag.json", JSON.stringify({
-              fetching: true, ts: Date.now(), source: "actions",
-              runId: process.env.RUN_ID || null,
-              message: "Shared cache refresh in progress",
-            }, null, 2) + "\n");
-          '
-          # data/status.json: rotation batch + crawl candidates (no network), for status.html
-          node scripts/refresh-cache.mjs --plan
-          scripts/ci-commit-push.sh "chore(cache): under-load flag on [bot]"
-
-      - name: Refresh players (rotation batch or on-demand names)
+      - name: Fetch players (new-player discovery, or on-demand names)
         id: refresh
         env:
           NAMES: ${{ github.event.inputs.names || '' }}
         run: node scripts/refresh-cache.mjs
 
-      - name: Commit cache + clear under-load flag
+      - name: Commit (one commit per run, skipped if nothing refreshed)
         if: always()
         env:
           RUN_ID: ${{ github.run_id }}
           OK: ${{ steps.refresh.outputs.ok || '0' }}
           NEW: ${{ steps.refresh.outputs.new || '0' }}
         run: |
-          # Clear the flag only if it is raised (avoids no-op commits on on-demand runs).
+          # Count saved player files from git itself (works even if the step was cut short).
+          changed=$(git status --porcelain -- data/players | wc -l)
+          if [ "$changed" = "0" ]; then
+            # Nothing refreshed (outage / all names bad): don't spend a Pages build.
+            echo "No players refreshed; discarding bookkeeping changes, no commit."
+            git checkout -- data/ && git clean -fdq data/
+            exit 0
+          fi
+          # status.json: mark idle. load-flag.json: background runs no longer raise
+          # the main page's "under load" banner; make sure it's cleared.
           node -e '
             const fs = require("fs");
-            let cur = {};
-            try { cur = JSON.parse(fs.readFileSync("data/load-flag.json", "utf8")); } catch {}
             let st = {};
             try { st = JSON.parse(fs.readFileSync("data/status.json", "utf8")); } catch {}
-            if (st.running !== false) {
+            if (st.running !== false || st.current) {
               st.running = false;
               st.current = null;
               fs.writeFileSync("data/status.json", JSON.stringify(st, null, 2) + "\n");
             }
+            let cur = {};
+            try { cur = JSON.parse(fs.readFileSync("data/load-flag.json", "utf8")); } catch {}
             if (cur.fetching !== false) {
               fs.writeFileSync("data/load-flag.json", JSON.stringify({
                 fetching: false, ts: Date.now(), source: "actions",
@@ -126,9 +115,4 @@ jobs:
               }, null, 2) + "\n");
             }
           '
-          if [ "$ON_DEMAND" = "true" ]; then
-            msg="chore(cache): on-demand refresh, ${OK} player(s) updated [bot]"
-          else
-            msg="chore(cache): ${RUN_KIND} refresh, ${OK} player(s) updated, ${NEW} new [bot]"
-          fi
-          scripts/ci-commit-push.sh "$msg"
+          scripts/ci-commit-push.sh "chore(cache): ${RUN_KIND} refresh, ${changed} player file(s), ${NEW} new [bot]"
