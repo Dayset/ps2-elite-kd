@@ -1094,19 +1094,17 @@
     const hi = Math.max(...finite);
     const ordered = finite.filter((v) => v > 0).sort((a, b) => a - b);
     const mid = ordered.length ? ordered[Math.floor(ordered.length / 2)] : 1;
-    const p90 = ordered.length
-      ? ordered[Math.floor(0.9 * (ordered.length - 1))]
-      : hi;
+    // Extreme farm spikes: log axis keeps the bulk readable while still fitting max.
     const striking = hi >= 15 && hi >= 8 * Math.max(mid, 0.25);
     if (striking) {
       const floor = ordered.length ? Math.max(0.15, ordered[0] * 0.9) : 0.15;
-      return { lo: floor, hi: hi * 1.25, log: true };
+      return { lo: floor, hi: hi * 1.12, log: true };
     }
-    const packHi = hi < 8 ? hi : Math.max(p90, 2);
-    const span = Math.max(packHi - lo, 0.15);
+    // Always extend to true max so no series paints above the plot (e.g. aLandWhaleNC).
+    const span = Math.max(hi - lo, 0.15);
     return {
       lo: Math.max(0, lo - 0.1 * span),
-      hi: packHi + 0.12 * span,
+      hi: hi + 0.12 * span,
       log: false,
     };
   }
@@ -1171,7 +1169,7 @@
     const yvals = [];
     for (const p of list) {
       for (const pt of p.curve || []) {
-        if (pt.kpm <= X_MAX && isFiniteNum(pt.kd) && (pt.deaths > 0 || pt.kills > 0)) {
+        if (pt.kpm <= X_MAX && isFiniteNum(pt.kd) && pt.deaths > 0) {
           yvals.push(pt.kd);
         }
       }
@@ -1226,6 +1224,18 @@
     border.setAttribute("stroke-width", "1");
     svg.appendChild(border);
 
+    const clip = ns("clipPath");
+    clip.setAttribute("id", "plot-clip");
+    const clipRect = ns("rect");
+    clipRect.setAttribute("x", PLOT.x);
+    clipRect.setAttribute("y", PLOT.y);
+    clipRect.setAttribute("width", PLOT.w);
+    clipRect.setAttribute("height", PLOT.h);
+    clip.appendChild(clipRect);
+    const defs = ns("defs");
+    defs.appendChild(clip);
+    svg.appendChild(defs);
+
     const ylab = ns("text");
     ylab.setAttribute("x", PLOT.x + PLOT.w + 44);
     ylab.setAttribute("y", PLOT.y + PLOT.h / 2);
@@ -1233,7 +1243,7 @@
     ylab.setAttribute("font-size", "12");
     ylab.setAttribute("text-anchor", "middle");
     ylab.setAttribute("transform", `rotate(90 ${PLOT.x + PLOT.w + 44} ${PLOT.y + PLOT.h / 2})`);
-    ylab.textContent = "projected K/D";
+    ylab.textContent = "Projected K/D";
     svg.appendChild(ylab);
 
     for (const x of [0, 0.5, 1.0, 1.5, 2.0]) {
@@ -1265,6 +1275,10 @@
     addText(svg, xToPx(EASY_MAX), capY + 14, "0.75", th.muted, 9, "middle");
     addText(svg, xToPx(HARD_MIN), capY + 14, "1.50", th.muted, 9, "middle");
 
+    const seriesG = ns("g");
+    seriesG.setAttribute("clip-path", "url(#plot-clip)");
+    svg.appendChild(seriesG);
+
     const labelAnchors = [];
     list.forEach((p, i) => {
       const col = COLORS[i % COLORS.length];
@@ -1273,7 +1287,7 @@
         .map((pt) => ({
           ...pt,
           rel: reliability(pt),
-          valid: isFiniteNum(pt.kd) && (pt.deaths > 0 || pt.kills > 0),
+          valid: isFiniteNum(pt.kd) && pt.deaths > 0,
         }));
 
       const faint = pts.filter((pt) => pt.valid);
@@ -1289,7 +1303,7 @@
         path.setAttribute("stroke", col);
         path.setAttribute("stroke-width", "0.7");
         path.setAttribute("stroke-opacity", "0.2");
-        svg.appendChild(path);
+        seriesG.appendChild(path);
       }
 
       for (let a = 0; a < pts.length - 1; a++) {
@@ -1305,14 +1319,14 @@
         seg.setAttribute("stroke-width", (0.5 + 1.3 * r).toFixed(2));
         seg.setAttribute("stroke-opacity", (0.3 + 0.7 * r).toFixed(2));
         seg.setAttribute("stroke-linecap", "round");
-        svg.appendChild(seg);
+        seriesG.appendChild(seg);
       }
 
       // Fixed small markers (no √deaths sizing)
       for (const pt of pts) {
         if (!pt.valid) continue;
         if (pt.rel < 0.35) {
-          drawX(svg, xToPx(pt.kpm), yToPx(pt.kd), DOT_R, col);
+          drawX(seriesG, xToPx(pt.kpm), yToPx(pt.kd), DOT_R, col);
         } else {
           const c = ns("circle");
           c.setAttribute("cx", xToPx(pt.kpm));
@@ -1322,7 +1336,7 @@
           c.setAttribute("fill-opacity", "0.92");
           c.setAttribute("stroke", th.markerStroke);
           c.setAttribute("stroke-width", "0.6");
-          svg.appendChild(c);
+          seriesG.appendChild(c);
         }
       }
 
@@ -1523,7 +1537,7 @@
       { id: "mech", label: "⚙️ Mech%", hint: "Projected mechanized / vehicle share implied by Resistance.", fn: (r) => r.mech, digits: 1 },
       { id: "slope", label: "📉 Slope", hint: "K/D drop from easier (25%) to harder (75%) opposition — steeper is worse under pressure.", fn: (r) => r.slope, digits: 2 },
       { id: "pvs", label: "🦁 LionHeart", hint: "Activity × pressure slope — sustained elite volume under hard opposition.", fn: (r) => r.pvs, digits: 2 },
-      { id: "inflation", label: "🎈 Projected K/D", hint: "Global KD ÷ KD at ≥1.5 enemy KPM — how much soft opposition inflates your KD (Projected K/D ratio).", fn: (r) => r.inflation, digits: 2 },
+      { id: "inflation", label: "🎈 Inflation", hint: "Global KD ÷ KD at ≥1.5 enemy KPM — how much soft opposition inflates your KD.", fn: (r) => r.inflation, digits: 2 },
     ];
 
     function sortRows(rows, cols, state) {
