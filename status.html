@@ -43,7 +43,7 @@
     <h1>📦 Shared cache status</h1>
     <div class="st-sub">Updates every 30 s. <span id="stUpdated"></span> · <a href="./">Back to the chart</a></div>
 
-    <section class="st-card" id="cardNow"><h2>Refresh now</h2><div id="now" class="st-dim">Loading…</div></section>
+    <section class="st-card" id="cardNow"><h2>Refresh now</h2><div id="now" class="st-dim">Loading…</div><div id="backup" class="st-label"></div></section>
     <section class="st-card" id="cardRuns"><h2>GitHub Actions queue</h2><div id="runs" class="st-dim">Loading…</div></section>
     <section class="st-card" id="cardLast"><h2>Last finished run</h2><div id="last" class="st-dim">Loading…</div></section>
     <section class="st-card" id="cardPending"><h2>Queued from the site (not cached yet)</h2><div id="pending" class="st-dim">Loading…</div></section>
@@ -167,6 +167,17 @@
           players.slice(0, 30).map(function (p) { return "<tr><td>" + esc(p.name) + "</td><td>" + when(p.savedAt) + "</td></tr>"; }).join("") + "</table>";
       }
 
+      function renderBackup(h) {
+        var b = h && h.backupTimer;
+        if (!b) { $("backup").textContent = ""; return; }
+        var l = b.last;
+        var label = { "dispatched": "dispatched a run", "skipped-recent": "skipped (recent run)", "skipped-running": "skipped (run in progress)", "error": "error" };
+        $("backup").innerHTML = "Backup timer (Worker, hourly at :29 UTC): " + (l
+          ? "last check " + when(l.at) + ", " + esc(label[l.decision] || l.decision) +
+            (l.reason ? " (" + esc(l.reason) + ")" : "") + (l.runId ? " · " + runLink(l.runId) : "")
+          : "no check yet.");
+      }
+
       function tick() {
         Promise.all([
           getJson("data/load-flag.json").catch(function () { return null; }),
@@ -177,6 +188,7 @@
         });
         getJson("data/index.json").then(renderRecent, function (e) { fail("recent", "data/index.json", e); });
         getJson(WORKER_URL + "/pending").then(renderPending, function (e) { fail("pending", "the queue", e); });
+        getJson(WORKER_URL + "/health").then(renderBackup, function () { $("backup").textContent = "Backup timer: status unavailable."; });
         if (Date.now() - lastGh >= GH_POLL_MS) {
           lastGh = Date.now();
           fetch("https://api.github.com/repos/" + REPO + "/actions/workflows/refresh-cache.yml/runs?per_page=10", { headers: { Accept: "application/vnd.github+json" } })
