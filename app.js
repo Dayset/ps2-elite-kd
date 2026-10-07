@@ -106,6 +106,10 @@ import {
 
   let players = [];
   let lastAnalyzedNames = [];
+  /** Preferred open state for shared-cache <details> (collapsed by default). */
+  let sharedCacheWantOpen = false;
+  /** Timer for graph-ready hint auto-dismiss. */
+  let graphReadyHintTimer = 0;
   /** Y-axis zoom factor; 1 = auto-fit current data (default). */
   let yZoom = Y_ZOOM_DEFAULT;
   let fetching = false;
@@ -145,6 +149,46 @@ import {
   function setStatus(html, cls) {
     els.status.innerHTML = html || "";
     els.status.className = cls || "";
+  }
+
+  function collapseSharedCache() {
+    sharedCacheWantOpen = false;
+    const d = els.cacheChips && els.cacheChips.querySelector("details.cache-shared");
+    if (d) d.open = false;
+  }
+
+  function clearGraphReadyHint() {
+    if (graphReadyHintTimer) {
+      clearTimeout(graphReadyHintTimer);
+      graphReadyHintTimer = 0;
+    }
+    if (els.status && els.status.classList.contains("graph-ready")) {
+      setStatus("");
+    }
+  }
+
+  function showGraphReadyHint() {
+    if (!els.status) return;
+    if (graphReadyHintTimer) {
+      clearTimeout(graphReadyHintTimer);
+      graphReadyHintTimer = 0;
+    }
+    setStatus(
+      '<div class="graph-ready-hint">' +
+        "<div>Your Graph is ready.</div>" +
+        "<div>Enter a new name to analyze.</div>" +
+      "</div>",
+      "graph-ready"
+    );
+    // Auto-fade after ~5s
+    graphReadyHintTimer = setTimeout(() => {
+      if (!els.status || !els.status.classList.contains("graph-ready")) return;
+      els.status.classList.add("graph-ready-fade");
+      graphReadyHintTimer = setTimeout(() => {
+        graphReadyHintTimer = 0;
+        if (els.status && els.status.classList.contains("graph-ready")) setStatus("");
+      }, 450);
+    }, 5000);
   }
 
   function formatClock(ms) {
@@ -661,10 +705,10 @@ import {
     return String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
   }
 
-  /** Order-insensitive casefold key for skip-refetch compare. */
+  /** Order-insensitive slug key for same-set / skip-refetch compare. */
   function namesSetKey(names) {
     return names
-      .map((n) => String(n).trim().toLowerCase())
+      .map((n) => slugKey(n))
       .filter(Boolean)
       .sort()
       .join("\0");
@@ -1007,6 +1051,7 @@ import {
   }
 
   function renderNameTokens() {
+    clearGraphReadyHint();
     if (!els.nameTokensEl) return;
     els.nameTokensEl.innerHTML = "";
     nameTokens.forEach((name) => {
@@ -1055,7 +1100,6 @@ import {
     if (!els.cacheChips) return;
     const cached = listCachedNames();
     const inField = currentNamesInField();
-    const wasSharedOpen = !!els.cacheChips.querySelector("details.cache-shared")?.open;
     els.cacheChips.innerHTML = "";
     if (!cached.length) return;
 
@@ -1090,8 +1134,12 @@ import {
     if (shared.length) {
       const details = document.createElement("details");
       details.className = "cache-shared";
-      // Collapsed by default; preserve open state across re-renders (e.g. chip click).
-      if (wasSharedOpen) details.open = true;
+      // Collapsed by default; preserve user open preference across re-renders
+      // (e.g. chip click). Analyze forces closed via sharedCacheWantOpen = false.
+      if (sharedCacheWantOpen) details.open = true;
+      details.addEventListener("toggle", () => {
+        sharedCacheWantOpen = details.open;
+      });
       const summary = document.createElement("summary");
       summary.textContent = `📦 Shared cache (${shared.length})`;
       details.appendChild(summary);
@@ -2044,13 +2092,17 @@ import {
       lastAnalyzedNames.length > 0 &&
       namesSetKey(clean) === namesSetKey(lastAnalyzedNames);
 
-    // Unchanged names + fresh unchecked → re-render only (no refetch)
+    // Same names already graphed + fresh unchecked → hint, no re-run
     if (sameSet && !fresh) {
-      drawChart(players);
-      setStatus("");
+      collapseSharedCache();
+      // Re-render chips so force-collapsed state sticks if a render follows
+      renderCacheChips();
+      showGraphReadyHint();
       return;
     }
 
+    collapseSharedCache();
+    clearGraphReadyHint();
     setFetching(true);
     setProgress(true, {
       title: "Analyzing…",
@@ -2210,6 +2262,7 @@ import {
 
   if (els.analyzeBtn) {
     els.analyzeBtn.addEventListener("click", () => {
+      collapseSharedCache();
       commitFragment({ clearInput: true });
       let names = currentNamesInField();
       if (!names.length) {
@@ -2238,6 +2291,7 @@ import {
     });
 
     els.namesInput.addEventListener("input", () => {
+      clearGraphReadyHint();
       const val = els.namesInput.value;
       // Completed token(s) when text ends with a separator
       if (/[\s,;]$/.test(val)) {

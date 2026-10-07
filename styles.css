@@ -561,6 +561,31 @@ header .sub {
 #status .warn { color: var(--warn); }
 #status .src { color: var(--dim); }
 
+/* Repeat-Analyze hint when the graph is already ready for this name set */
+#status.graph-ready {
+  color: var(--accent);
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.35;
+  padding: 0.45rem 0.7rem;
+  background: var(--chip-active-bg);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  margin-bottom: 0.65rem;
+  transition: opacity 0.45s ease;
+}
+#status.graph-ready.graph-ready-fade {
+  opacity: 0;
+}
+#status.graph-ready .graph-ready-hint {
+  display: block;
+}
+#status.graph-ready .graph-ready-hint > div + div {
+  font-weight: 500;
+  color: var(--muted);
+  margin-top: 0.15rem;
+}
+
 .under-load {
   font-size: 0.78rem;
   color: #ffd166;
