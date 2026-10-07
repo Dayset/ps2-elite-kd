@@ -46,13 +46,13 @@
         <span class="spinner spinner-lg"></span>
       </div>
       <h2 id="progressTitle" class="progress-title">Analyzing…</h2>
-      <p id="progressText" class="progress-text">Fetching…</p>
+      <p id="progressText" class="progress-text"></p>
       <div class="progress-bar-track" aria-hidden="true">
         <div id="progressBar" class="progress-bar-fill" style="width: 0%"></div>
       </div>
       <div class="progress-meta">
         <span id="progressPct">0%</span>
-        <span id="progressEta"></span>
+        <span id="progressTiming" class="progress-timing"></span>
       </div>
       <div id="underLoadInModal" class="under-load under-load-modal" hidden role="status">
         ⏳ The server is under load right now, please be patient.
@@ -63,12 +63,11 @@
   <div id="statsPanel" class="stats-panel" aria-label="Player stats comparison"></div>
 
   <div class="chart-wrap empty">
-    <div id="chartYZoom" class="chart-y-zoom" hidden>
-      <label class="chart-y-zoom-label" for="yZoomSlider" title="Y-axis zoom. Center = auto-fit current data. Slide right to enlarge weak curves; left to fit extreme / high-tier K/D.">
-        <span id="yZoomValue">Y Auto</span>
-      </label>
+    <div id="chartYZoom" class="chart-y-zoom" hidden title="Y-axis zoom. Middle = auto-fit. Up enlarges weak curves; down fits extreme / high-tier K/D.">
       <input id="yZoomSlider" type="range" min="-2" max="2" step="0.05" value="0"
-             aria-label="Y-axis zoom (center = auto fit)" />
+             orient="vertical"
+             aria-label="Y-axis zoom (center = auto fit)"
+             aria-orientation="vertical" />
       <button type="button" id="yZoomReset" class="chart-y-zoom-reset" title="Reset Y zoom to auto-fit">Auto</button>
     </div>
     <div id="chartPlaceholder" class="chart-placeholder" aria-hidden="false">

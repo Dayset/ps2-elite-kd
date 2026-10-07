@@ -89,14 +89,13 @@ import {
     progressText: document.getElementById("progressText"),
     progressBar: document.getElementById("progressBar"),
     progressPct: document.getElementById("progressPct"),
-    progressEta: document.getElementById("progressEta"),
+    progressTiming: document.getElementById("progressTiming"),
     underLoadNote: document.getElementById("underLoadNote"),
     underLoadInModal: document.getElementById("underLoadInModal"),
     chart: document.getElementById("chart"),
     chartPlaceholder: document.getElementById("chartPlaceholder"),
     chartYZoom: document.getElementById("chartYZoom"),
     yZoomSlider: document.getElementById("yZoomSlider"),
-    yZoomValue: document.getElementById("yZoomValue"),
     yZoomReset: document.getElementById("yZoomReset"),
     stats: document.getElementById("statsPanel"),
     legend: document.getElementById("legend"),
@@ -110,6 +109,8 @@ import {
   /** Progress modal timing for ETA (names completed). */
   let progressStartedAt = 0;
   let progressDoneCount = 0;
+  let progressTotalCount = 0;
+  let progressTickTimer = null;
   /** Nested depth of in-flight live Honu/Census loads owned by this tab. */
   let liveFetchDepth = 0;
   let fetchHeartbeatTimer = null;
@@ -137,7 +138,17 @@ import {
     els.status.className = cls || "";
   }
 
-  function formatEta(ms) {
+  function formatClock(ms) {
+    if (!Number.isFinite(ms) || ms < 0) return "0:00";
+    const sec = Math.max(0, Math.floor(ms / 1000));
+    const h = Math.floor(sec / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    const s = sec % 60;
+    if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    return `${m}:${String(s).padStart(2, "0")}`;
+  }
+
+  function formatRemaining(ms) {
     if (!Number.isFinite(ms) || ms < 0) return "";
     const sec = Math.max(0, Math.ceil(ms / 1000));
     if (sec < 60) return `~${sec}s left`;
@@ -149,72 +160,91 @@ import {
     return rm ? `~${h}h ${rm}m left` : `~${h}h left`;
   }
 
+  function stopProgressTick() {
+    if (progressTickTimer) {
+      clearInterval(progressTickTimer);
+      progressTickTimer = null;
+    }
+  }
+
+  function renderProgressTiming() {
+    if (!els.progressTiming || !progressStartedAt) return;
+    const elapsed = Date.now() - progressStartedAt;
+    const elapsedStr = `Elapsed ${formatClock(elapsed)}`;
+    let remainStr = "";
+    if (progressTotalCount > 0 && progressDoneCount > 0 && progressDoneCount < progressTotalCount) {
+      const per = elapsed / progressDoneCount;
+      remainStr = formatRemaining(per * (progressTotalCount - progressDoneCount));
+    } else if (progressTotalCount > 0 && progressDoneCount >= progressTotalCount) {
+      remainStr = "Almost done…";
+    } else if (progressTotalCount > 0) {
+      remainStr = "Estimating…";
+    }
+    els.progressTiming.textContent = remainStr ? `${elapsedStr} · ${remainStr}` : elapsedStr;
+  }
+
+  function startProgressTick() {
+    stopProgressTick();
+    progressTickTimer = setInterval(renderProgressTiming, 250);
+  }
+
   /**
    * Show/hide the analyzing popup.
    * @param {boolean} show
-   * @param {string|object} [info] plain text or { title, text, done, total, name, phase }
+   * @param {string|object} [info] plain text or { title, text, done, total, name }
    */
   function setProgress(show, info) {
     if (!els.progress) return;
     if (!show) {
+      stopProgressTick();
       els.progress.hidden = true;
       els.progress.setAttribute("aria-hidden", "true");
       document.body.classList.remove("progress-open");
       progressStartedAt = 0;
       progressDoneCount = 0;
+      progressTotalCount = 0;
       if (els.progressText) els.progressText.textContent = "";
       if (els.progressTitle) els.progressTitle.textContent = "Analyzing…";
       if (els.progressBar) els.progressBar.style.width = "0%";
       if (els.progressPct) els.progressPct.textContent = "0%";
-      if (els.progressEta) els.progressEta.textContent = "";
+      if (els.progressTiming) els.progressTiming.textContent = "";
       updateUnderLoadNotice();
       return;
     }
 
     const opts =
       typeof info === "string" || info == null
-        ? { text: info || "⏳ Fetching…" }
+        ? { text: info || "Starting…" }
         : info;
 
     const total = Math.max(0, Number(opts.total) || 0);
     const done = Math.max(0, Math.min(total || Infinity, Number(opts.done) || 0));
-    const phase = opts.phase || (done > 0 || total > 0 ? "Fetching" : "Analyzing");
     const name = opts.name ? String(opts.name) : "";
 
     if (!progressStartedAt) progressStartedAt = Date.now();
     progressDoneCount = done;
+    progressTotalCount = total;
 
     let pct = 0;
     if (total > 0) pct = Math.round((done / total) * 100);
     pct = Math.max(0, Math.min(100, pct));
 
+    // Avoid duplicate "Fetching…" in title + body — title stays Analyzing/Finishing.
     let text = opts.text;
     if (!text) {
       if (total > 0) {
         text = name
-          ? `⏳ ${phase} ${done}/${total} — ${name}`
-          : `⏳ ${phase} ${done}/${total}…`;
+          ? `${done}/${total} — ${name}`
+          : `${done}/${total}`;
       } else {
-        text = `⏳ ${phase}…`;
+        text = "Starting…";
       }
     }
 
     let title = opts.title;
     if (!title) {
       if (total > 0 && done >= total) title = "Finishing…";
-      else if (phase.toLowerCase().includes("analy")) title = "Analyzing…";
-      else title = "Fetching…";
-    }
-
-    let etaText = "";
-    if (total > 0 && done > 0 && done < total && progressStartedAt) {
-      const elapsed = Date.now() - progressStartedAt;
-      const per = elapsed / done;
-      etaText = formatEta(per * (total - done));
-    } else if (total > 0 && done >= total) {
-      etaText = "Almost done…";
-    } else if (total > 0 && done === 0) {
-      etaText = "Estimating…";
+      else title = "Analyzing…";
     }
 
     els.progress.hidden = false;
@@ -224,7 +254,8 @@ import {
     if (els.progressText) els.progressText.textContent = text;
     if (els.progressBar) els.progressBar.style.width = `${pct}%`;
     if (els.progressPct) els.progressPct.textContent = `${pct}%`;
-    if (els.progressEta) els.progressEta.textContent = etaText;
+    renderProgressTiming();
+    startProgressTick();
     updateUnderLoadNotice();
   }
 
@@ -1106,12 +1137,6 @@ import {
     return Math.log2(c);
   }
 
-  function formatYZoomLabel(z) {
-    const c = clampYZoom(z);
-    if (Math.abs(c - 1) < 0.03) return "Y Auto";
-    return `Y ×${c.toFixed(2)}`;
-  }
-
   function syncYZoomUi() {
     if (els.yZoomSlider) {
       const sv = sliderFromZoom(yZoom);
@@ -1119,7 +1144,6 @@ import {
         els.yZoomSlider.value = String(sv);
       }
     }
-    if (els.yZoomValue) els.yZoomValue.textContent = formatYZoomLabel(yZoom);
   }
 
   function setYZoom(z, { redraw = true } = {}) {
@@ -1800,7 +1824,6 @@ import {
     progressStartedAt = Date.now();
     setProgress(true, {
       title: "Analyzing…",
-      phase: "Fetching",
       done: 0,
       total: clean.length,
     });
@@ -1815,8 +1838,7 @@ import {
       for (let idx = 0; idx < clean.length; idx++) {
         const name = clean[idx];
         setProgress(true, {
-          title: "Fetching…",
-          phase: "Fetching",
+          title: "Analyzing…",
           done: idx,
           total: clean.length,
           name,
@@ -1829,8 +1851,7 @@ import {
             loaded.push(existing);
             successNames.push(name);
             setProgress(true, {
-              title: "Fetching…",
-              phase: "Fetching",
+              title: "Analyzing…",
               done: idx + 1,
               total: clean.length,
               name,
@@ -1853,8 +1874,7 @@ import {
         }
 
         setProgress(true, {
-          title: idx + 1 >= clean.length ? "Finishing…" : "Fetching…",
-          phase: "Fetching",
+          title: idx + 1 >= clean.length ? "Finishing…" : "Analyzing…",
           done: idx + 1,
           total: clean.length,
           name,

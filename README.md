@@ -36,7 +36,7 @@ Max 10 names. Deep link: `?names=JustV6me,ChrisJTTR`.
 |--------|------|
 | **Public (Census/Honu)** | Collapsed by default — KD, KPM, own KPM, Acc %, HSR %, IvI |
 | **Adjusted (calculated)** | ivi, KD, eKPM, own KPM, Resistance, Activity, COI, Mech%, Slope, LionHeart, Inflation |
-| Chart | Projected K/D vs enemy weapon KPM (bands Easy / Hard at 0.75 / 1.50). **Y zoom** slider (top-right): center = auto-fit; right enlarges weak curves; left fits extreme / high-tier K/D |
+| Chart | Projected K/D vs enemy weapon KPM (bands Easy / Hard at 0.75 / 1.50). Vertical **Y zoom** slider (top-right): middle = auto-fit; up enlarges weak curves; down fits extreme / high-tier K/D |
 | Footer | Repo link + thanks to [HONU](https://wt.honu.pw/) / Varunda |
 
 Click any column header to sort (names alphabetical; metrics numeric). Default sort is **ivi** descending. Hover headers for short hints. Tables sit above the graph.

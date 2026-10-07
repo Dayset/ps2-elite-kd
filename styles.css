@@ -602,10 +602,13 @@ header .sub {
   color: var(--accent);
 }
 
-#progressEta {
+.progress-timing,
+#progressTiming {
   color: var(--muted);
   text-align: right;
   margin-left: auto;
+  font-size: 0.82rem;
+  line-height: 1.35;
 }
 
 .spinner {
@@ -659,61 +662,62 @@ html[data-theme="light"] .progress-modal-backdrop {
   display: none;
 }
 
-/* Y-axis zoom — top-right of graph */
+/* Y-axis zoom — vertical, top-right of graph */
 .chart-y-zoom {
   position: absolute;
   top: 0.45rem;
   right: 0.55rem;
   z-index: 3;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.28rem 0.45rem;
+  gap: 0.35rem;
+  padding: 0.4rem 0.35rem 0.35rem;
   border-radius: 8px;
   background: var(--cta-bg);
   border: 1px solid var(--border);
   box-shadow: 0 4px 14px var(--shadow);
   backdrop-filter: blur(6px);
-  max-width: calc(100% - 1rem);
 }
 .chart-wrap.empty .chart-y-zoom,
 .chart-y-zoom[hidden] {
   display: none !important;
 }
-.chart-y-zoom-label {
-  margin: 0;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: var(--muted);
-  white-space: nowrap;
-  cursor: help;
-  user-select: none;
-}
-.chart-y-zoom-label #yZoomValue {
-  color: var(--text);
-}
 #yZoomSlider {
-  -webkit-appearance: none;
-  appearance: none;
-  width: min(140px, 28vw);
-  height: 4px;
-  border-radius: 999px;
-  background: var(--grid);
+  -webkit-appearance: slider-vertical;
+  appearance: slider-vertical;
+  writing-mode: vertical-lr;
+  direction: rtl;
+  width: 18px;
+  height: min(118px, 28vh);
+  margin: 0;
+  padding: 0;
+  background: transparent;
   outline: none;
   cursor: pointer;
   accent-color: var(--accent);
+}
+#yZoomSlider::-webkit-slider-runnable-track {
+  width: 4px;
+  border-radius: 999px;
+  background: var(--grid);
 }
 #yZoomSlider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
   width: 14px;
   height: 14px;
+  margin-left: -5px;
   border-radius: 50%;
   background: var(--accent);
   border: 2px solid var(--panel);
   box-shadow: 0 1px 4px var(--shadow);
   cursor: pointer;
+}
+#yZoomSlider::-moz-range-track {
+  width: 4px;
+  border-radius: 999px;
+  background: var(--grid);
 }
 #yZoomSlider::-moz-range-thumb {
   width: 14px;
@@ -729,7 +733,7 @@ html[data-theme="light"] .progress-modal-backdrop {
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.03em;
-  padding: 0.18rem 0.45rem;
+  padding: 0.18rem 0.4rem;
   border-radius: 6px;
   border: 1px solid var(--ctrl-btn-border);
   background: var(--ctrl-btn-bg);
@@ -745,13 +749,11 @@ html[data-theme="light"] .progress-modal-backdrop {
     top: 0.3rem;
     right: 0.3rem;
     gap: 0.28rem;
-    padding: 0.22rem 0.35rem;
+    padding: 0.3rem 0.28rem 0.28rem;
   }
   #yZoomSlider {
-    width: min(96px, 26vw);
-  }
-  .chart-y-zoom-label {
-    font-size: 0.65rem;
+    height: min(96px, 24vh);
+    width: 16px;
   }
 }
 
