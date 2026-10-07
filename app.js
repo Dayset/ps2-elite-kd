@@ -110,6 +110,10 @@ import {
   let progressStartedAt = 0;
   let progressDoneCount = 0;
   let progressTotalCount = 0;
+  /** Frozen avg ms/name; updated only when done increases (so remaining can count down). */
+  let progressAvgPerMs = 0;
+  /** Wall time when done last increased (start of current name). */
+  let progressLastDoneAt = 0;
   let progressTickTimer = null;
   /** Nested depth of in-flight live Honu/Census loads owned by this tab. */
   let liveFetchDepth = 0;
@@ -160,6 +164,16 @@ import {
     return rm ? `~${h}h ${rm}m left` : `~${h}h left`;
   }
 
+  /**
+   * Remaining ETA: avgPerName * namesLeft, minus time already spent on the current name.
+   * Counts down between completions; avg is frozen until the next name finishes.
+   */
+  function etaRemainingMs(avgPerMs, namesLeft, spentOnCurrentMs) {
+    if (!(avgPerMs > 0) || !(namesLeft > 0)) return NaN;
+    const spent = Math.max(0, Number(spentOnCurrentMs) || 0);
+    return Math.max(0, avgPerMs * namesLeft - spent);
+  }
+
   function stopProgressTick() {
     if (progressTickTimer) {
       clearInterval(progressTickTimer);
@@ -169,14 +183,16 @@ import {
 
   function renderProgressTiming() {
     if (!els.progressTiming || !progressStartedAt) return;
-    const elapsed = Date.now() - progressStartedAt;
+    const now = Date.now();
+    const elapsed = now - progressStartedAt;
     const elapsedStr = `Elapsed ${formatClock(elapsed)}`;
     let remainStr = "";
-    if (progressTotalCount > 0 && progressDoneCount > 0 && progressDoneCount < progressTotalCount) {
-      const per = elapsed / progressDoneCount;
-      remainStr = formatRemaining(per * (progressTotalCount - progressDoneCount));
-    } else if (progressTotalCount > 0 && progressDoneCount >= progressTotalCount) {
+    const left = progressTotalCount - progressDoneCount;
+    if (progressTotalCount > 0 && progressDoneCount >= progressTotalCount) {
       remainStr = "Almost done…";
+    } else if (progressAvgPerMs > 0 && left > 0) {
+      const spentOnCurrent = Math.max(0, now - (progressLastDoneAt || progressStartedAt));
+      remainStr = formatRemaining(etaRemainingMs(progressAvgPerMs, left, spentOnCurrent));
     } else if (progressTotalCount > 0) {
       remainStr = "Estimating…";
     }
@@ -203,6 +219,8 @@ import {
       progressStartedAt = 0;
       progressDoneCount = 0;
       progressTotalCount = 0;
+      progressAvgPerMs = 0;
+      progressLastDoneAt = 0;
       if (els.progressText) els.progressText.textContent = "";
       if (els.progressTitle) els.progressTitle.textContent = "Analyzing…";
       if (els.progressBar) els.progressBar.style.width = "0%";
@@ -221,9 +239,20 @@ import {
     const done = Math.max(0, Math.min(total || Infinity, Number(opts.done) || 0));
     const name = opts.name ? String(opts.name) : "";
 
-    if (!progressStartedAt) progressStartedAt = Date.now();
+    const prevDone = progressDoneCount;
+    const now = Date.now();
+    if (!progressStartedAt) {
+      progressStartedAt = now;
+      progressLastDoneAt = now;
+      progressAvgPerMs = 0;
+    }
     progressDoneCount = done;
     progressTotalCount = total;
+    // Freeze avg on each completed name so tick-time does not inflate remaining.
+    if (done > prevDone && done > 0) {
+      progressAvgPerMs = (now - progressStartedAt) / done;
+      progressLastDoneAt = now;
+    }
 
     let pct = 0;
     if (total > 0) pct = Math.round((done / total) * 100);
@@ -1821,7 +1850,6 @@ import {
     }
 
     setFetching(true);
-    progressStartedAt = Date.now();
     setProgress(true, {
       title: "Analyzing…",
       done: 0,
