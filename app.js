@@ -74,6 +74,7 @@ import {
 
   const els = {
     themeToggle: document.getElementById("themeToggle"),
+    wipeLocalBtn: document.getElementById("wipeLocalBtn"),
     namesBox: document.getElementById("namesBox"),
     nameTokensEl: document.getElementById("nameTokens"),
     namesInput: document.getElementById("namesInput") || document.getElementById("names"),
@@ -832,6 +833,112 @@ import {
     if (els.namesInput) els.namesInput.value = "";
     renderNameTokens();
     renderCacheChips();
+  }
+
+  const LS_KEY_PREFIX = "ps2-elite-kd";
+
+  /** Remove every localStorage / sessionStorage key for this app. */
+  function wipeAppStorageKeys() {
+    const stores = [];
+    try {
+      stores.push(localStorage);
+    } catch {
+      /* private mode */
+    }
+    try {
+      stores.push(sessionStorage);
+    } catch {
+      /* private mode */
+    }
+    for (const store of stores) {
+      const keys = [];
+      try {
+        for (let i = 0; i < store.length; i++) {
+          const k = store.key(i);
+          if (k && k.startsWith(LS_KEY_PREFIX)) keys.push(k);
+        }
+      } catch {
+        continue;
+      }
+      for (const k of keys) {
+        try {
+          store.removeItem(k);
+        } catch {
+          /* ignore */
+        }
+      }
+    }
+    // Explicit known keys (covers odd separators like ":")
+    for (const k of [
+      LS_CACHE,
+      LS_CACHE_OLD,
+      LS_RECENT,
+      LS_LAST,
+      LS_THEME,
+      LS_FETCHING,
+    ]) {
+      try {
+        localStorage.removeItem(k);
+      } catch {
+        /* ignore */
+      }
+      try {
+        sessionStorage.removeItem(k);
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
+  /** Clear any ps2-elite-kd cookies on this path (usually none). */
+  function wipeAppCookies() {
+    try {
+      const raw = document.cookie || "";
+      if (!raw) return;
+      const parts = raw.split(";");
+      for (const part of parts) {
+        const name = part.split("=")[0].trim();
+        if (!name || !name.startsWith(LS_KEY_PREFIX)) continue;
+        const expire = "Thu, 01 Jan 1970 00:00:00 GMT";
+        document.cookie = `${name}=;expires=${expire};path=/`;
+        document.cookie = `${name}=;expires=${expire};path=/ps2-elite-kd`;
+        document.cookie = `${name}=;expires=${expire};path=/ps2-elite-kd/`;
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  /** Confirm, wipe all local app data, reset chips / results / theme. */
+  function wipeAllLocalAppData() {
+    const ok = window.confirm(
+      "Clear all local data for this app?\n\n" +
+        "This removes browser cache, theme preference, fetch flags, and last comparison on this device. Shared server cache (data/) is not affected."
+    );
+    if (!ok) return;
+
+    try {
+      clearFetchFlagIfOwned();
+    } catch {
+      /* ignore */
+    }
+    wipeAppStorageKeys();
+    wipeAppCookies();
+
+    // In-memory UI reset
+    nameTokens = [];
+    if (els.namesInput) els.namesInput.value = "";
+    if (els.fetchFresh) els.fetchFresh.checked = false;
+    players = [];
+    lastAnalyzedNames = [];
+    showIdleChart("▶️ Press Analyze");
+    renderNameTokens();
+    renderLastLink();
+    renderCacheChips();
+    updateUnderLoadNotice();
+    // Default theme after wipe (persists fresh dark preference)
+    applyTheme("dark", { redraw: false });
+    setStatus('<span class="ok">Local app data cleared.</span>', "ok");
   }
 
   /* ---------- tokenized name input / chips / last link ---------- */
@@ -2176,6 +2283,9 @@ import {
   if (els.themeToggle) {
     els.themeToggle.addEventListener("click", () => toggleTheme());
   }
+  if (els.wipeLocalBtn) {
+    els.wipeLocalBtn.addEventListener("click", () => wipeAllLocalAppData());
+  }
 
   // Expose tiny helpers for sanity checks in console / node --check stays syntax-only
   if (typeof window !== "undefined") {
@@ -2206,6 +2316,7 @@ import {
       LS_CACHE,
       LS_THEME,
       LS_FETCHING,
+      wipeAllLocalAppData,
       getStoredTheme,
       applyTheme,
       SHARED_INDEX_URL,

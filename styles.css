@@ -120,7 +120,41 @@ header.top-bar {
   display: flex;
   justify-content: flex-end;
   align-items: center;
+  gap: 0.4rem;
   margin-top: 0.15rem;
+}
+
+.wipe-local {
+  margin-left: 0;
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0.3rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--ctrl-btn-bg);
+  color: var(--text);
+  cursor: pointer;
+}
+.wipe-local:hover {
+  border-color: #e07070;
+  color: #e07070;
+  background: var(--ctrl-btn-hover);
+}
+.controls button.wipe-local {
+  background: var(--ctrl-btn-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  font-weight: 600;
+  font-size: 1rem;
+  padding: 0.3rem 0.55rem;
+  min-height: auto;
+  box-shadow: none;
+}
+.controls button.wipe-local:hover {
+  background: var(--ctrl-btn-hover);
+  border-color: #e07070;
+  color: #e07070;
 }
 
 .theme-toggle {
