@@ -116,3 +116,10 @@ describe("reviewFlags (combined bin)", () => {
     assert.match(t, /not proof/);
   });
 });
+
+it("aim pattern: slope collapse counts as low LionHeart when Activity is huge", () => {
+  // lololollala-like: Exceptional, Inflation 0.32, slope −116 but LionHeart 5.26 (Activity 470).
+  const m = { adj: 4875, ivi: 1510, pvs: 5.26, slope: -116.4, inflation: 0.32 };
+  assert.equal(redFlag(m).flagged, true);
+  assert.equal(redFlag({ ...m, slope: -1.5 }).flagged, false);
+});

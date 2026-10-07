@@ -22,6 +22,13 @@ export const RED_FLAG_RULE = Object.freeze({
   ALMOST_FRACTION: 0.85,
   /** 🦁 LionHeart at/below this = low band. */
   LIONHEART_LOW_MAX: 2.0,
+  /**
+   * Curve slope at/below this also counts as "low LionHeart". LionHeart bottoms
+   * out at Activity × 0.05^1.5, so a huge-Activity player (e.g. lololollala,
+   * slope −116, LionHeart 5.3) can never reach ≤ 2.0 however steep the collapse.
+   * −2.0 = SLOPE_FLOOR in math.mjs, where LionHeart hits its minimum (2026-10-07).
+   */
+  SLOPE_COLLAPSE_MAX: -2.0,
   /** 🎈 Inflation at/below this = low band. */
   INFLATION_LOW_MAX: 1.5,
 });
@@ -44,13 +51,15 @@ export function skillTier(m, rule = RED_FLAG_RULE) {
 }
 
 /**
- * Apply the rule to one metrics row ({ adj, ivi, pvs, inflation }).
+ * Apply the rule to one metrics row ({ adj, ivi, pvs, slope, inflation }).
  * Missing LionHeart / Inflation never flags (can't judge without them).
  */
 export function redFlag(m, rule = RED_FLAG_RULE) {
   const skill = skillTier(m, rule);
   const highSkill = !!skill.tier;
-  const lowLion = fin(m.pvs) && m.pvs <= rule.LIONHEART_LOW_MAX;
+  const lowLion =
+    (fin(m.pvs) && m.pvs <= rule.LIONHEART_LOW_MAX) ||
+    (fin(m.slope) && m.slope <= rule.SLOPE_COLLAPSE_MAX);
   const lowInfl = fin(m.inflation) && m.inflation <= rule.INFLATION_LOW_MAX;
   return { flagged: highSkill && lowLion && lowInfl, skill, highSkill, lowLion, lowInfl };
 }
@@ -62,7 +71,7 @@ export function redFlagRuleText(rule = RED_FLAG_RULE) {
     `Flagged when ALL hold: skill is Exceptional or within ${pct}% below it ` +
     `(🎯 ivi ≥ ${Math.round(rule.EXCEPTIONAL_ADJ_IVI * rule.ALMOST_FRACTION)} or public IvI ≥ ` +
     `${Math.round(rule.EXCEPTIONAL_IVI * rule.ALMOST_FRACTION)}; Exceptional = ${rule.EXCEPTIONAL_ADJ_IVI} / ` +
-    `${rule.EXCEPTIONAL_IVI}), 🦁 LionHeart ≤ ${rule.LIONHEART_LOW_MAX}, and 🎈 Inflation ≤ ` +
+    `${rule.EXCEPTIONAL_IVI}), 🦁 LionHeart ≤ ${rule.LIONHEART_LOW_MAX} (or curve slope ≤ ${rule.SLOPE_COLLAPSE_MAX}), and 🎈 Inflation ≤ ` +
     `${rule.INFLATION_LOW_MAX}. A lead for manual review, not proof of cheating.`
   );
 }
@@ -133,7 +142,7 @@ export function reviewRuleText() {
     `Flagged when skill is Exceptional or within ${pct}% below it ` +
     `(🎯 ivi ≥ ${Math.round(R.EXCEPTIONAL_ADJ_IVI * R.ALMOST_FRACTION)} or public IvI ≥ ` +
     `${Math.round(R.EXCEPTIONAL_IVI * R.ALMOST_FRACTION)}; Exceptional = ${R.EXCEPTIONAL_ADJ_IVI} / ${R.EXCEPTIONAL_IVI}) AND either ` +
-    `[aim pattern] 🦁 LionHeart ≤ ${R.LIONHEART_LOW_MAX} and 🎈 Inflation ≤ ${R.INFLATION_LOW_MAX}, or ` +
+    `[aim pattern] 🦁 LionHeart ≤ ${R.LIONHEART_LOW_MAX} (or curve slope ≤ ${R.SLOPE_COLLAPSE_MAX}) and 🎈 Inflation ≤ ${R.INFLATION_LOW_MAX}, or ` +
     `[vehicle pattern] KD ≥ ${V.KD_HIGH_MIN}, HSR ≤ ${V.HSR_LOW_MAX}% and accuracy ≤ ${V.ACC_LOW_MAX}% (Inflation ignored). ` +
     `A lead for manual review, not proof of cheating.`
   );
