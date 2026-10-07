@@ -521,12 +521,12 @@ function collectNames(cliArgs) {
 
 async function main() {
   fs.mkdirSync(PLAYERS_DIR, { recursive: true });
-  const batchSize = envInt("BATCH_SIZE", 20);
+  const batchSize = envInt("BATCH_SIZE", 15);
   const t0 = Date.now();
 
   const { names: all, explicit } = collectNames(process.argv.slice(2));
   // On-demand runs stay short so they don't hold the concurrency queue.
-  const budgetMs = envInt(explicit ? "ON_DEMAND_BUDGET_MIN" : "TIME_BUDGET_MIN", explicit ? 10 : 30) * 60_000;
+  const budgetMs = envInt(explicit ? "ON_DEMAND_BUDGET_MIN" : "TIME_BUDGET_MIN", explicit ? 10 : 15) * 60_000;
   const added = [];
   if (!all.length) {
     console.error("No names to refresh. Add data/watchlist.txt or pass names.");

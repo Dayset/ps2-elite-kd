@@ -55,7 +55,7 @@ Click any column header to sort (names alphabetical; metrics numeric). Default s
 
 The static Pages site cannot write `data/`. Shared snapshots are committed automatically by the **Refresh shared cache** Action, with no manual steps:
 
-- **Hourly** at :17 UTC (`17 * * * *`). Each run refreshes the **20 stalest** names from `data/watchlist.txt` + `index.json` (never-fetched first, then oldest `savedAt`), so all ~225 rotate about every 11 hours. Honu requests are paced to 2/s (Honu rate-limits Actions IPs), so a run takes ~15–20 min, with a 30-min internal budget.
+- **Hourly** at :17 UTC (`17 * * * *`). Each run refreshes the **15 stalest** names from `data/watchlist.txt` + `index.json` (never-fetched first, then oldest `savedAt`), so all ~225 rotate about every 15 hours. Honu requests are paced to 2/s (Honu rate-limits Actions IPs). A run takes ~15 min and stops starting new players after 15 min.
 - Misspelled/unknown names are skipped and their old files are kept (attempts are tracked in `data/refresh-state.json`). A player is also kept as-is if more than 10% of its opponent lookups fail, so rate limits can't save fake 0-KPM curves. A run only fails if nothing refreshed because Census/Honu were down.
 - While it runs, `data/load-flag.json` is `fetching: true`. It's cleared in the same commit as the new data, even if the run fails.
 - Each run also re-enables the workflow, so GitHub's 60-day inactivity rule can't switch the schedule off.
