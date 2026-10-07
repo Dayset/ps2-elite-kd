@@ -58,6 +58,7 @@
     progress: document.getElementById("progress"),
     progressText: document.getElementById("progressText"),
     chart: document.getElementById("chart"),
+    chartPlaceholder: document.getElementById("chartPlaceholder"),
     stats: document.getElementById("statsPanel"),
     legend: document.getElementById("legend"),
   };
@@ -802,8 +803,7 @@
   function drawChart(list) {
     const svg = els.chart;
     clearSvg(svg);
-    const wrap = chartWrap();
-    if (wrap) wrap.classList.remove("empty");
+    setPlaceholderVisible(false);
     svg.setAttribute("viewBox", `0 0 ${VB.w} ${VB.h}`);
     svg.setAttribute("role", "img");
     svg.setAttribute("aria-label", "Elite K/D vs enemy weapon KPM");
@@ -1279,23 +1279,35 @@
     return els.chart ? els.chart.closest(".chart-wrap") : null;
   }
 
+  function setPlaceholderVisible(show) {
+    const wrap = chartWrap();
+    if (wrap) wrap.classList.toggle("empty", !!show);
+    if (els.chartPlaceholder) {
+      els.chartPlaceholder.setAttribute("aria-hidden", show ? "false" : "true");
+    }
+    if (els.chart) {
+      if (show) els.chart.setAttribute("hidden", "");
+      else els.chart.removeAttribute("hidden");
+    }
+    const cta = els.chartPlaceholder
+      ? els.chartPlaceholder.querySelector(".chart-placeholder-cta")
+      : null;
+    if (cta && show) {
+      cta.textContent = "Press Analyze";
+    }
+  }
+
   function showIdleChart(message) {
     clearSvg(els.chart);
     if (els.stats) els.stats.innerHTML = "";
     els.legend.innerHTML = "";
     players = [];
     lastAnalyzedNames = [];
-    const wrap = chartWrap();
-    if (wrap) wrap.classList.add("empty");
-    const t = ns("text");
-    t.setAttribute("x", String(VB.w / 2));
-    t.setAttribute("y", String(VB.h / 2));
-    t.setAttribute("fill", "#8a8882");
-    t.setAttribute("font-size", "18");
-    t.setAttribute("text-anchor", "middle");
-    t.setAttribute("dominant-baseline", "middle");
-    t.textContent = message || "Press Analyze";
-    els.chart.appendChild(t);
+    setPlaceholderVisible(true);
+    const cta = els.chartPlaceholder
+      ? els.chartPlaceholder.querySelector(".chart-placeholder-cta")
+      : null;
+    if (cta) cta.textContent = message || "Press Analyze";
   }
 
   function clearChartUi() {
@@ -1546,6 +1558,8 @@
       e.preventDefault();
       e.stopPropagation();
       clearNamesFromInput();
+      clearChartUi();
+      setStatus("Ready — press Analyze");
       if (els.namesInput) els.namesInput.focus();
     });
   }

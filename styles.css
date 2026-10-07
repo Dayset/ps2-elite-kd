@@ -354,6 +354,7 @@ header .sub {
 }
 
 .chart-wrap {
+  position: relative;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -368,11 +369,67 @@ header .sub {
   touch-action: manipulation;
 }
 
-.chart-wrap.empty {
-  min-height: 120px;
+#chart[hidden] {
+  display: none;
+}
+
+.chart-placeholder {
+  display: none;
+  position: relative;
+  width: 100%;
+  margin: 0;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.chart-wrap.empty .chart-placeholder {
+  display: block;
+}
+
+.chart-wrap.empty #chart {
+  display: none;
+}
+
+.chart-placeholder img {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0;
+  border-radius: 6px;
+  pointer-events: none;
+  user-select: none;
+}
+
+.chart-placeholder-overlay {
+  position: absolute;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: linear-gradient(
+    180deg,
+    rgba(11, 12, 14, 0.15) 0%,
+    rgba(11, 12, 14, 0.35) 45%,
+    rgba(11, 12, 14, 0.45) 100%
+  );
+  pointer-events: none;
+}
+
+.chart-placeholder-cta {
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text);
+  padding: 0.55rem 1.15rem;
+  border-radius: 999px;
+  background: rgba(20, 22, 26, 0.72);
+  border: 1px solid rgba(159, 212, 238, 0.35);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(6px);
+}
+
+.chart-wrap:not(.empty) .chart-placeholder {
+  display: none;
 }
 
 .stats-panel {

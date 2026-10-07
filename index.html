@@ -39,8 +39,15 @@
     <span id="progressText"></span>
   </div>
 
-  <div class="chart-wrap">
-    <svg id="chart" viewBox="0 0 1000 580" preserveAspectRatio="xMidYMid meet"></svg>
+  <div class="chart-wrap empty">
+    <div id="chartPlaceholder" class="chart-placeholder" aria-hidden="false">
+      <img src="assets/placeholder-graph.webp" alt="" width="1800" height="1044"
+           onerror="this.onerror=null;this.src='assets/placeholder-graph.png'" />
+      <div class="chart-placeholder-overlay">
+        <span class="chart-placeholder-cta">Press Analyze</span>
+      </div>
+    </div>
+    <svg id="chart" viewBox="0 0 1000 580" preserveAspectRatio="xMidYMid meet" hidden></svg>
   </div>
 
   <div id="statsPanel" class="stats-panel" aria-label="Player stats comparison"></div>
