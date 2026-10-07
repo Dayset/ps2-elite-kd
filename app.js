@@ -405,7 +405,7 @@
     return 600 * (1 + Math.log2(rf / 0.6));
   }
 
-  // Typical worst 25–75 slope ≈ -2; fixed floor so a new name does not rewrite LionHeart.
+  // Typical steep full-curve slope ≈ -2; fixed floor so a new name does not rewrite LionHeart.
   const SLOPE_FLOOR = -2.0;
   const SLOPE_EPS = 0.05;
 
@@ -426,23 +426,45 @@
     return 100.0 * 0.30 * (1.0 + Math.log(1.0 + rf));
   }
 
-  /** How fast projected K/D falls between 25th and 75th opponent-KPM. */
-  function slope2575(p) {
-    const rows = (Array.isArray(p.rows) ? p.rows.slice() : []).filter((r) => (r.kpm || 0) > 0);
-    if (rows.length < 4) return NaN;
-    rows.sort((a, b) => (+a.kpm || 0) - (+b.kpm || 0));
-    const n = rows.length;
-    const i25 = Math.round(0.25 * (n - 1));
-    const i75 = Math.round(0.75 * (n - 1));
-    if (i75 <= i25) return NaN;
-    const k25 = +rows[i25].kpm;
-    const k75 = +rows[i75].kpm;
-    if (Math.abs(k75 - k25) < 1e-6) return NaN;
-    function valAt(cut) {
-      const sl = rows.filter((r) => r.kpm >= cut);
-      return pooled(sl).kd;
+  /**
+   * Full-curve pressure slope: death-weighted linear regression of projected
+   * K/D vs enemy KPM across the plotted curve (deaths > 0, kpm ≤ X_MAX).
+   * Negative ⇒ K/D falls as opposition hardens. Replaces the old 25–75
+   * mid-band slice, which could go spuriously positive when mid-tier farm
+   * deaths dominate while the overall curve still trends down.
+   */
+  function curveSlope(p) {
+    let curve = Array.isArray(p.curve) ? p.curve : [];
+    if (curve.length < 4 && Array.isArray(p.rows) && p.rows.length) {
+      curve = kpmCurve(p.rows);
     }
-    return (valAt(k75) - valAt(k25)) / (k75 - k25);
+    const pts = curve.filter(
+      (pt) =>
+        (pt.deaths || 0) > 0 &&
+        isFiniteNum(pt.kd) &&
+        isFiniteNum(pt.kpm) &&
+        +pt.kpm <= X_MAX + 1e-9
+    );
+    if (pts.length < 4) return NaN;
+    let sw = 0, sx = 0, sy = 0, sxx = 0, sxy = 0;
+    for (const pt of pts) {
+      const w = Math.max(+pt.deaths || 1, 1);
+      const x = +pt.kpm;
+      const y = +pt.kd;
+      sw += w;
+      sx += w * x;
+      sy += w * y;
+      sxx += w * x * x;
+      sxy += w * x * y;
+    }
+    const den = sw * sxx - sx * sx;
+    if (Math.abs(den) < 1e-12) return NaN;
+    return (sw * sxy - sx * sy) / den;
+  }
+
+  /** @deprecated alias — prefer curveSlope */
+  function slope2575(p) {
+    return curveSlope(p);
   }
 
   /** LionHeart = Activity × (shifted slope)^1.5 */
@@ -1490,7 +1512,7 @@
       const rkd = m && isFiniteNum(m.rkd) ? m.rkd : NaN;
       const ekpm = m && isFiniteNum(m.avg_opp) ? m.avg_opp : NaN;
       const own = m && isFiniteNum(m.own) ? m.own : (+p.own_kpm || +p.global_kpm || NaN);
-      const slope = slope2575(p);
+      const slope = curveSlope(p);
       const dm = deathMixLite(p);
       return {
         p,
@@ -1535,7 +1557,7 @@
       { id: "act", label: "🔥 Activity", hint: "How much high-pressure combat you see (Activity / IF).", fn: (r) => r.act, digits: 2 },
       { id: "coi", label: "📊 COI", hint: "Combat Output Index derived from Resistance.", fn: (r) => r.coi, digits: 2 },
       { id: "mech", label: "⚙️ Mech%", hint: "Projected mechanized / vehicle share implied by Resistance.", fn: (r) => r.mech, digits: 1 },
-      { id: "slope", label: "📉 Slope", hint: "K/D drop from easier (25%) to harder (75%) opposition — steeper is worse under pressure.", fn: (r) => r.slope, digits: 2 },
+      { id: "slope", label: "📉 Slope", hint: "Overall graph angle: death-weighted K/D vs enemy KPM across the full curve — negative means K/D falls as opposition hardens.", fn: (r) => r.slope, digits: 2 },
       { id: "pvs", label: "🦁 LionHeart", hint: "Activity × pressure slope — sustained elite volume under hard opposition.", fn: (r) => r.pvs, digits: 2 },
       { id: "inflation", label: "🎈 Inflation", hint: "Global KD ÷ KD at ≥1.5 enemy KPM — how much soft opposition inflates your KD.", fn: (r) => r.inflation, digits: 2 },
     ];
@@ -2027,6 +2049,7 @@
       sliceAt,
       combatOutput,
       projectedMech,
+      curveSlope,
       slope2575,
       pressureVolume,
       resolveIvi,
