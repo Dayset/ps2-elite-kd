@@ -5,12 +5,13 @@ import { RED_FLAG_RULE as R, skillTier, redFlag, redFlagRuleText } from "../red-
 import { normalizePlayer, playerMetrics } from "../player-metrics.mjs";
 
 describe("skillTier", () => {
-  it("Exceptional at the threshold, Almost within 10% below, else none", () => {
+  it("Exceptional at the threshold, Almost within 15% below, else none", () => {
     assert.equal(skillTier({ adj: 2200, ivi: 0 }).tier, "Exceptional");
-    assert.equal(skillTier({ adj: 1980, ivi: 0 }).tier, "Almost exceptional");
-    assert.equal(skillTier({ adj: 1979, ivi: 0 }).tier, "");
+    assert.equal(skillTier({ adj: 1870, ivi: 0 }).tier, "Almost exceptional");
+    assert.equal(skillTier({ adj: 1869, ivi: 0 }).tier, "");
     assert.equal(skillTier({ adj: NaN, ivi: 1700 }).tier, "Exceptional");
-    assert.equal(skillTier({ adj: NaN, ivi: 1530 }).tier, "Almost exceptional");
+    assert.equal(skillTier({ adj: NaN, ivi: 1445 }).tier, "Almost exceptional");
+    assert.equal(skillTier({ adj: NaN, ivi: 1444 }).tier, "");
     assert.equal(skillTier({ adj: NaN, ivi: NaN }).tier, "");
   });
   it("uses the better of 🎯 ivi and public IvI", () => {
@@ -30,6 +31,7 @@ describe("redFlag", () => {
   });
   it("any single condition missing → not flagged", () => {
     assert.equal(redFlag({ ...hit, adj: 1500 }).flagged, false);
+    assert.equal(redFlag({ ...hit, adj: 1869 }).flagged, false);
     assert.equal(redFlag({ ...hit, pvs: 2.01 }).flagged, false);
     assert.equal(redFlag({ ...hit, inflation: 1.51 }).flagged, false);
     assert.equal(redFlag({ ...hit, pvs: NaN }).flagged, false);
@@ -37,8 +39,8 @@ describe("redFlag", () => {
   });
   it("rule text mentions thresholds and 'not proof'", () => {
     const t = redFlagRuleText();
-    assert.match(t, /1980/);
-    assert.match(t, /1530/);
+    assert.match(t, /1870/);
+    assert.match(t, /1445/);
     assert.match(t, /not proof/);
   });
 });
@@ -76,7 +78,7 @@ describe("vehicleFlag", () => {
     assert.equal(vehicleFlag({ ...cold, kd: V.KD_HIGH_MIN, hsr: V.HSR_LOW_MAX, acc: V.ACC_LOW_MAX }).flagged, true);
   });
   it("any condition missing → not flagged", () => {
-    assert.equal(vehicleFlag({ ...cold, adj: 1900 }).flagged, false);
+    assert.equal(vehicleFlag({ ...cold, adj: 1860 }).flagged, false);
     assert.equal(vehicleFlag({ ...cold, kd: 4.79 }).flagged, false);
     assert.equal(vehicleFlag({ ...cold, hsr: 9.1 }).flagged, false);
     assert.equal(vehicleFlag({ ...cold, acc: 16.1 }).flagged, false);
@@ -101,10 +103,11 @@ describe("reviewFlags (combined bin)", () => {
     assert.deepEqual(reviewFlags(both).patterns, ["aim", "vehicle"]);
     assert.equal(reviewFlags({ ...aimOnly, adj: 1500, ivi: 900 }).flagged, false);
   });
-  it("near-miss stays out (no name special-casing)", () => {
-    // [HSR] DizzyKnight cached numbers: 🎯 ivi 1973 < 1980
+  it("85% skill bar: DizzyKnight's numbers land via the aim pattern", () => {
+    // [HSR] DizzyKnight cached numbers: 🎯 ivi 1973 ≈ 0.897 × 2200 (≥ 0.85)
     const dizzy = { adj: 1972.7, ivi: 1043, kd: 5.74, acc: 26.99, hsr: 38.65, pvs: 0.10, inflation: 1.36 };
-    assert.equal(reviewFlags(dizzy).flagged, false);
+    assert.deepEqual(reviewFlags(dizzy).patterns, ["aim"]);
+    assert.equal(reviewFlags(dizzy).skill.tier, "Almost exceptional");
   });
   it("rule text covers both patterns and says not proof", () => {
     const t = reviewRuleText();

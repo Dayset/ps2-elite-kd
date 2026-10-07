@@ -18,8 +18,8 @@ export const RED_FLAG_RULE = Object.freeze({
   EXCEPTIONAL_ADJ_IVI: 2200,
   /** Public IvI at/above this = Exceptional. */
   EXCEPTIONAL_IVI: 1700,
-  /** "Almost exceptional": within 10% below either Exceptional threshold. */
-  ALMOST_FRACTION: 0.9,
+  /** "Almost exceptional": within 15% below either Exceptional threshold (user, 2026-10-07). */
+  ALMOST_FRACTION: 0.85,
   /** 🦁 LionHeart at/below this = low band. */
   LIONHEART_LOW_MAX: 2.0,
   /** 🎈 Inflation at/below this = low band. */
