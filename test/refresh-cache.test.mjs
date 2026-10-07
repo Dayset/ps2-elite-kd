@@ -13,6 +13,8 @@ import {
   crawlCandidates,
   mergeTopKillers,
   opponentRow,
+  honuToCensusShape,
+  isConnectFailure,
   retryable,
   retryCandidates,
   parseTopKillers,
@@ -188,5 +190,26 @@ describe("opponent rows and retry policy", () => {
       threetimes: { lastAttemptAt: T - 9000e3, fails: 3, lastOkAt: null, lastError: "timeout" },
     } };
     assert.deepEqual(retryCandidates({ players: [{ slug: "xrok32" }] }, state, T), ["tolyano", "xrok32"]);
+  });
+});
+
+describe("Census fallback via Honu", () => {
+  it("maps a Honu character + history_stats to the Census shape", () => {
+    const c = honuToCensusShape(
+      { id: "5429162266269045633", name: "RetiredRageteller", outfitTag: "MEME" },
+      [{ type: "kills", allTime: 38716 }, { type: "deaths", allTime: 13857 }, { type: "time", allTime: 954345 }, { type: "battle_rank", allTime: 101 }]
+    );
+    assert.equal(c.character_id, "5429162266269045633");
+    assert.equal(c.name.first, "RetiredRageteller");
+    assert.equal(c.outfit.alias, "MEME");
+    assert.deepEqual(c.stats.stat_history, [
+      { stat_name: "kills", all_time: "38716" }, { stat_name: "deaths", all_time: "13857" }, { stat_name: "time", all_time: "954345" },
+    ]);
+    assert.deepEqual(honuToCensusShape({ id: "1", name: "X", outfitTag: null }, null).outfit, {});
+  });
+  it("classifies connect failures (runner can't reach Census)", () => {
+    assert.equal(isConnectFailure(new Error("fetch failed (UND_ERR_CONNECT_TIMEOUT) for census.daybreakgames.com")), true);
+    assert.equal(isConnectFailure(new Error("503 Service Unavailable for x")), true);
+    assert.equal(isConnectFailure(new Error("Census: no character x")), false);
   });
 });

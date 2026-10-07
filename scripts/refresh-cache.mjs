@@ -193,17 +193,73 @@ function kpmCurve(rows, start = 2.5, end = 0.0, step = 0.05) {
   return pts;
 }
 
+/**
+ * Census is unreachable from some GitHub runner IPs (connect timeouts) and is
+ * flaky in general. After one such failure, skip Census for the rest of the run
+ * and resolve characters through Honu instead (same data, Census-shaped).
+ */
+let censusDown = process.env.CENSUS_DISABLED === "1";
+export function isConnectFailure(e) {
+  const m = String((e && e.message) || e);
+  return /fetch failed|UND_ERR_CONNECT|ECONNREFUSED|ECONNRESET|ENOTFOUND|EAI_AGAIN|ETIMEDOUT|aborted due to timeout|Census unavailable|^5\d\d /.test(m);
+}
+
+/** Build the Census-shaped character object loadLive needs from Honu REST. */
+export function honuToCensusShape(ch, history) {
+  const pick = (t) => {
+    const r = (history || []).find((x) => x && x.type === t);
+    return r ? String(r.allTime || 0) : "0";
+  };
+  return {
+    character_id: String(ch.id),
+    name: { first: ch.name },
+    outfit: ch.outfitTag ? { alias: ch.outfitTag } : {},
+    stats: { stat_history: ["kills", "deaths", "time"].map((t) => ({ stat_name: t, all_time: pick(t) })) },
+  };
+}
+
+async function resolveHonu(raw) {
+  const isId = /^\d{16,}$/.test(raw);
+  let ch;
+  if (isId) {
+    ch = await fetchJson(`${HONU}${raw}`);
+  } else {
+    let list = [];
+    try {
+      list = await fetchJson(`${HONU.replace(/character\/$/, "characters/")}name/${encodeURIComponent(raw)}`);
+    } catch (e) {
+      if (!(e instanceof HttpClientError && e.status === 404)) throw e;
+    }
+    ch = (Array.isArray(list) ? list : []).find((x) => x && String(x.name).toLowerCase() === raw.toLowerCase()) || null;
+  }
+  if (!ch || !ch.id) throw new NotFoundError(`Honu: no character ${raw}`);
+  const history = await fetchJson(`${HONU}${ch.id}/history_stats`);
+  return honuToCensusShape(ch, Array.isArray(history) ? history : []);
+}
+
 async function resolveCensus(name) {
   // Census matches first name only; watchlist/index names may carry "[TAG] ".
   const raw = censusQueryName(name);
   if (!raw) throw new NotFoundError(`Census: empty name ${JSON.stringify(name)}`);
+  if (censusDown) return resolveHonu(raw);
+  try {
+    return await resolveCensusOnly(raw);
+  } catch (e) {
+    if (e instanceof NotFoundError || !isConnectFailure(e)) throw e;
+    censusDown = true;
+    console.warn(`  Census unreachable (${String(e.message).slice(0, 80)}); using Honu for the rest of this run`);
+    return resolveHonu(raw);
+  }
+}
+
+async function resolveCensusOnly(raw) {
   let url;
   if (/^\d{16,}$/.test(raw)) {
     url = `${CENSUS}character?character_id=${encodeURIComponent(raw)}&c:resolve=outfit,stat_history`;
   } else {
     url = `${CENSUS}character?name.first_lower=${encodeURIComponent(raw.toLowerCase())}&c:resolve=outfit,stat_history`;
   }
-  const data = await fetchJson(url);
+  const data = await fetchJson(url, { retries: 2 });
   if (data && !Array.isArray(data.character_list) && (data.error || data.errorCode)) {
     throw new Error(`Census unavailable: ${data.error || data.errorCode}`);
   }
@@ -258,6 +314,7 @@ function opponentInfo(oid) {
 
 /** Fill nameMemo for ids via Census (best effort; Honu meta is the fallback). */
 async function censusOpponentNames(ids) {
+  if (censusDown) return;
   const want = [...new Set(ids)].filter((id) => id && id !== "0" && !nameMemo.has(id) && !oppMemo.has(id));
   for (let i = 0; i < want.length; i += 50) {
     const chunk = want.slice(i, i + 50);
@@ -271,8 +328,9 @@ async function censusOpponentNames(ids) {
           nameMemo.set(String(ch.character_id), { name: ch.name.first, outfitTag: (ch.outfit && ch.outfit.alias) || "" });
         }
       }
-    } catch {
+    } catch (e) {
       /* Census flaky: fall back to Honu per-opponent meta */
+      if (isConnectFailure(e)) censusDown = true;
     }
   }
 }
