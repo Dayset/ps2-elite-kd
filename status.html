@@ -54,6 +54,7 @@
     .st-flags .st-tag { display: inline-block; margin-right: 3px; padding: 0 6px; border-radius: 999px; font-size: 0.74rem; border: 1px solid var(--border); color: var(--muted); }
     .st-flags .st-tag.aim { border-color: #c06060; }
     .st-flags .st-tag.vehicle { border-color: #c08050; }
+    .st-flags .st-tag.rampage { border-color: #d04040; }
   </style>
 </head>
 <body>
@@ -252,22 +253,23 @@
     })();
   </script>
 
-  <!-- Red flags 🚩: one automatic bin = aim pattern OR vehicle pattern (red-flags.mjs), using the
+  <!-- Red flags 🚩: one automatic bin = aim OR vehicle OR rampage pattern (red-flags.mjs), using the
        same metrics as the main tables (player-metrics.mjs). Leads for review, not proof. -->
   <script type="module">
-    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261007-slopecollapse";
-    import { reviewFlags, reviewRuleText } from "./red-flags.mjs?v=20261007-slopecollapse";
+    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261007-rampage";
+    import { reviewFlags, reviewRuleText } from "./red-flags.mjs?v=20261007-rampage";
     import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261007-redflags";
 
     const POLL_MS = 30 * 1000;
     const CONCURRENCY = 6;
-    const SS_KEY = "ps2-elite-kd:redflags:v2"; // { byFile: { file: { savedAt, row } } }
+    const SS_KEY = "ps2-elite-kd:redflags:v3"; // { byFile: { file: { savedAt, row } } }
     const $ = (id) => document.getElementById(id);
     const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
     const fmt = (v, d) => (typeof v === "number" && Number.isFinite(v) ? v.toFixed(d) : "—");
     const TAGS = {
       aim: { label: "aim", tip: "Aim pattern: high skill + low LionHeart + low Inflation", hot: ["pvs", "inflation"] },
       vehicle: { label: "vehicle", tip: "Vehicle pattern: high skill + very high KD + weak infantry aim (HSR / accuracy)", hot: ["kd", "acc", "hsr"] },
+      rampage: { label: "rampage", tip: "Rampage pattern: KD ≥ 15 and KPM ≥ 3 (short absurd kill spree, no skill test)", hot: ["kd"] },
     };
     let busy = false;
 

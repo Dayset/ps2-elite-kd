@@ -123,3 +123,12 @@ it("aim pattern: slope collapse counts as low LionHeart when Activity is huge", 
   assert.equal(redFlag(m).flagged, true);
   assert.equal(redFlag({ ...m, slope: -1.5 }).flagged, false);
 });
+
+it("rampage pattern: absurd KD + KPM flags without a skill test", async () => {
+  const { rampageFlag, reviewFlags } = await import("../red-flags.mjs");
+  assert.equal(rampageFlag({ kd: 98, kpm: 4.7 }).flagged, true);
+  assert.equal(rampageFlag({ kd: 24.7, kpm: 4.41 }).flagged, true);
+  assert.equal(rampageFlag({ kd: 9.7, kpm: 4.5 }).flagged, false);
+  assert.equal(rampageFlag({ kd: 42, kpm: 1.8 }).flagged, false);
+  assert.deepEqual(reviewFlags({ kd: 98, kpm: 4.7, ivi: 228 }).patterns, ["rampage"]);
+});

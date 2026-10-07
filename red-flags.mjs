@@ -117,19 +117,43 @@ export function vehicleRuleText(rule = VEHICLE_RULE, skillRule = RED_FLAG_RULE) 
   );
 }
 
+/* ---------- 🔴 Rampage pattern ---------- */
+
+/**
+ * Short, absurd kill sprees (fresh or long-idle account that just got cheats):
+ * KD and KPM both far beyond anything legit in the cache. From the 228 cached
+ * players (2026-10-07): best legit-looking KD ≈ 9.7, KPM p99 ≈ 3.3; the known
+ * cases sit at KD 24.7–98 with KPM 4.4–4.7 (1stFanOfAhorn — banned, Add1ti0nal).
+ * No skill test: these accounts often have too few rows for a fair one.
+ */
+export const RAMPAGE_RULE = Object.freeze({
+  /** Global KD at/above this = beyond any legit player in the cache. */
+  KD_MIN: 15,
+  /** Global KPM at/above this = top ~1% kill rate. */
+  KPM_MIN: 3.0,
+});
+
+export function rampageFlag(m, rule = RAMPAGE_RULE) {
+  const extremeKd = fin(m.kd) && m.kd >= rule.KD_MIN;
+  const fastKills = fin(m.kpm) && m.kpm >= rule.KPM_MIN;
+  return { flagged: extremeKd && fastKills, extremeKd, fastKills };
+}
+
 /* ---------- combined Red flags 🚩 bin ---------- */
 
 /**
- * One automatic bin, OR of two patterns: "aim" (redFlag: high skill + low
+ * One automatic bin, OR of three patterns (plus "rampage": KD ≥ 15 and KPM ≥ 3): "aim" (redFlag: high skill + low
  * LionHeart + low Inflation) and "vehicle" (vehicleFlag: high skill + very
  * high KD + weak infantry aim). → { flagged, patterns: ["aim"|"vehicle", …], skill }
  */
 export function reviewFlags(m) {
   const aim = redFlag(m);
   const veh = vehicleFlag(m);
+  const ram = rampageFlag(m);
   const patterns = [];
   if (aim.flagged) patterns.push("aim");
   if (veh.flagged) patterns.push("vehicle");
+  if (ram.flagged) patterns.push("rampage");
   return { flagged: patterns.length > 0, patterns, skill: aim.skill };
 }
 
@@ -144,6 +168,7 @@ export function reviewRuleText() {
     `${Math.round(R.EXCEPTIONAL_IVI * R.ALMOST_FRACTION)}; Exceptional = ${R.EXCEPTIONAL_ADJ_IVI} / ${R.EXCEPTIONAL_IVI}) AND either ` +
     `[aim pattern] 🦁 LionHeart ≤ ${R.LIONHEART_LOW_MAX} (or curve slope ≤ ${R.SLOPE_COLLAPSE_MAX}) and 🎈 Inflation ≤ ${R.INFLATION_LOW_MAX}, or ` +
     `[vehicle pattern] KD ≥ ${V.KD_HIGH_MIN}, HSR ≤ ${V.HSR_LOW_MAX}% and accuracy ≤ ${V.ACC_LOW_MAX}% (Inflation ignored). ` +
+    `Also flagged regardless of skill: [rampage pattern] KD ≥ ${RAMPAGE_RULE.KD_MIN} and KPM ≥ ${RAMPAGE_RULE.KPM_MIN}. ` +
     `A lead for manual review, not proof of cheating.`
   );
 }
