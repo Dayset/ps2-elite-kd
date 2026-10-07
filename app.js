@@ -166,7 +166,7 @@
     return 600 * (1 + Math.log2(rf / 0.6));
   }
 
-  // Typical worst 25–75 slope ≈ -2; fixed floor so a new name does not rewrite PVS.
+  // Typical worst 25–75 slope ≈ -2; fixed floor so a new name does not rewrite LionHeart.
   const SLOPE_FLOOR = -2.0;
   const SLOPE_EPS = 0.05;
 
@@ -206,7 +206,7 @@
     return (valAt(k75) - valAt(k25)) / (k75 - k25);
   }
 
-  /** PVS = Activity × (shifted slope)^1.5 */
+  /** LionHeart = Activity × (shifted slope)^1.5 */
   function pressureVolume(activity, slope) {
     if (activity !== activity || slope !== slope) return NaN;
     const shifted = Math.max(slope - SLOPE_FLOOR + SLOPE_EPS, SLOPE_EPS);
@@ -931,9 +931,9 @@
 
     // Short axis labels only (no farm % clutter)
     const capY = PLOT.y + PLOT.h + 40;
-    addText(svg, PLOT.x, capY, "easy", "#8a8882", 10, "start");
+    addText(svg, PLOT.x, capY, "Easy", "#8a8882", 10, "start");
     addText(svg, PLOT.x + PLOT.w / 2, capY, "enemy weapon KPM", "#8a8882", 10, "middle");
-    addText(svg, PLOT.x + PLOT.w, capY, "hard", "#8a8882", 10, "end");
+    addText(svg, PLOT.x + PLOT.w, capY, "Hard", "#8a8882", 10, "end");
     addText(svg, xToPx(EASY_MAX), capY + 14, "0.75", "#8a8882", 9, "middle");
     addText(svg, xToPx(HARD_MIN), capY + 14, "1.50", "#8a8882", 9, "middle");
 
@@ -1199,7 +1199,7 @@
       <tr><td>COI</td>${cells((r) => r.coi, 2)}</tr>
       <tr><td>mech%</td>${cells((r) => r.mech, 1)}</tr>
       <tr><td>slope</td>${cells((r) => r.slope, 2)}</tr>
-      <tr><td>PVS</td>${cells((r) => r.pvs, 2)}</tr>
+      <tr><td>LionHeart</td>${cells((r) => r.pvs, 2)}</tr>
       <tr><td>adjIvI</td>${cells((r) => r.adj, 0)}</tr>
       <tr><td>KD@1.5</td>${cells((r) => r.kd15, 2)}</tr>
       <tr><td>inflation</td>${cells((r) => r.inflation, 2)}</tr>

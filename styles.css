@@ -449,6 +449,8 @@ header .sub {
   border-radius: 6px;
   pointer-events: none;
   user-select: none;
+  opacity: 0.95;
+  filter: brightness(1.18) contrast(1.12) saturate(1.08);
 }
 
 .chart-placeholder-overlay {
@@ -459,9 +461,9 @@ header .sub {
   justify-content: center;
   background: linear-gradient(
     180deg,
-    rgba(11, 12, 14, 0.15) 0%,
-    rgba(11, 12, 14, 0.35) 45%,
-    rgba(11, 12, 14, 0.45) 100%
+    rgba(11, 12, 14, 0.04) 0%,
+    rgba(11, 12, 14, 0.12) 45%,
+    rgba(11, 12, 14, 0.18) 100%
   );
   pointer-events: none;
 }
