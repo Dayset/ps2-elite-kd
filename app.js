@@ -1301,59 +1301,62 @@
       };
     });
 
-    const head = metrics
-      .map((row, i) => {
-        const col = COLORS[i % COLORS.length];
-        return `<th style="color:${col}">${escapeHtml(row.p.display)}</th>`;
-      })
-      .join("");
+    const publicCols = [
+      { label: "KD", fn: (r) => r.kd, digits: 2 },
+      { label: "KPM", fn: (r) => r.kpm, digits: 2 },
+      { label: "own KPM", fn: (r) => r.ownKpm, digits: 2 },
+      { label: "Acc %", fn: (r) => r.acc, digits: 1 },
+      { label: "HSR %", fn: (r) => r.hsr, digits: 1 },
+      { label: "IvI", fn: (r) => r.ivi, digits: 0 },
+    ];
 
-    function cells(fn, digits) {
-      return metrics
-        .map((row) => `<td>${fmtNum(fn(row), digits)}</td>`)
-        .join("");
+    const adjCols = [
+      { label: "rKD", fn: (r) => r.rkd, digits: 3 },
+      { label: "avg opp KPM", fn: (r) => r.ekpm, digits: 2 },
+      { label: "own KPM", fn: (r) => r.own, digits: 2 },
+      { label: "RF", fn: (r) => r.rf, digits: 2 },
+      { label: "Activity", fn: (r) => r.act, digits: 2 },
+      { label: "COI", fn: (r) => r.coi, digits: 2 },
+      { label: "mech%", fn: (r) => r.mech, digits: 1 },
+      { label: "slope", fn: (r) => r.slope, digits: 2 },
+      { label: "LionHeart", fn: (r) => r.pvs, digits: 2 },
+      { label: "adjIvI", fn: (r) => r.adj, digits: 0 },
+      { label: "KD@1.5", fn: (r) => r.kd15, digits: 2 },
+      { label: "inflation", fn: (r) => r.inflation, digits: 2 },
+    ];
+
+    function metricHead(cols) {
+      return cols.map((c) => `<th>${escapeHtml(c.label)}</th>`).join("");
     }
 
-    const publicRows = `
-      <tr><td>KD</td>${cells((r) => r.kd, 2)}</tr>
-      <tr><td>KPM</td>${cells((r) => r.kpm, 2)}</tr>
-      <tr><td>own KPM</td>${cells((r) => r.ownKpm, 2)}</tr>
-      <tr><td>Acc %</td>${cells((r) => r.acc, 1)}</tr>
-      <tr><td>HSR %</td>${cells((r) => r.hsr, 1)}</tr>
-      <tr><td>IvI</td>${cells((r) => r.ivi, 0)}</tr>
-    `;
-
-    const adjRows = `
-      <tr><td>rKD</td>${cells((r) => r.rkd, 3)}</tr>
-      <tr><td>avg opp KPM</td>${cells((r) => r.ekpm, 2)}</tr>
-      <tr><td>own KPM</td>${cells((r) => r.own, 2)}</tr>
-      <tr><td>RF</td>${cells((r) => r.rf, 2)}</tr>
-      <tr><td>Activity</td>${cells((r) => r.act, 2)}</tr>
-      <tr><td>COI</td>${cells((r) => r.coi, 2)}</tr>
-      <tr><td>mech%</td>${cells((r) => r.mech, 1)}</tr>
-      <tr><td>slope</td>${cells((r) => r.slope, 2)}</tr>
-      <tr><td>LionHeart</td>${cells((r) => r.pvs, 2)}</tr>
-      <tr><td>adjIvI</td>${cells((r) => r.adj, 0)}</tr>
-      <tr><td>KD@1.5</td>${cells((r) => r.kd15, 2)}</tr>
-      <tr><td>inflation</td>${cells((r) => r.inflation, 2)}</tr>
-    `;
+    function playerRows(cols) {
+      return metrics
+        .map((row, i) => {
+          const col = COLORS[i % COLORS.length];
+          const vals = cols
+            .map((c) => `<td>${fmtNum(c.fn(row), c.digits)}</td>`)
+            .join("");
+          return `<tr><th scope="row" class="stats-name" style="color:${col}">${escapeHtml(row.p.display)}</th>${vals}</tr>`;
+        })
+        .join("");
+    }
 
     els.stats.innerHTML = `
       <details class="stats-section">
         <summary>Public (Census / Honu)</summary>
         <div class="stats-table-wrap">
-          <table class="stats-table">
-            <thead><tr><th>Metric</th>${head}</tr></thead>
-            <tbody>${publicRows}</tbody>
+          <table class="stats-table stats-table-transposed">
+            <thead><tr><th class="stats-name">Player</th>${metricHead(publicCols)}</tr></thead>
+            <tbody>${playerRows(publicCols)}</tbody>
           </table>
         </div>
       </details>
       <div class="stats-section">
         <div class="section-title">Adjusted (calculated)</div>
         <div class="stats-table-wrap">
-          <table class="stats-table">
-            <thead><tr><th>Metric</th>${head}</tr></thead>
-            <tbody>${adjRows}</tbody>
+          <table class="stats-table stats-table-transposed">
+            <thead><tr><th class="stats-name">Player</th>${metricHead(adjCols)}</tr></thead>
+            <tbody>${playerRows(adjCols)}</tbody>
           </table>
         </div>
       </div>

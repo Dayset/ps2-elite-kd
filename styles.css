@@ -540,7 +540,8 @@ header .sub {
 }
 
 .stats-table {
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
   border-collapse: collapse;
   font-size: 0.8rem;
   font-variant-numeric: tabular-nums;
@@ -554,11 +555,16 @@ header .sub {
   white-space: nowrap;
 }
 
-.stats-table th:first-child,
-.stats-table td:first-child {
+.stats-table .stats-name,
+.stats-table th.stats-name,
+.stats-table td.stats-name {
   text-align: left;
-  color: var(--dim);
-  font-weight: 500;
+  font-weight: 600;
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--panel);
+  box-shadow: 4px 0 8px -4px rgba(0, 0, 0, 0.45);
 }
 
 .stats-table thead th {
@@ -567,7 +573,16 @@ header .sub {
   border-bottom-color: #2a2e36;
 }
 
-.stats-table tbody tr:last-child td { border-bottom: none; }
+.stats-table thead th.stats-name {
+  color: var(--dim);
+  font-weight: 500;
+  z-index: 2;
+}
+
+.stats-table tbody tr:last-child td,
+.stats-table tbody tr:last-child th {
+  border-bottom: none;
+}
 
 .legend {
   display: flex;
