@@ -105,3 +105,18 @@ After enabling Pages, wait a minute for the first deploy, then hard-refresh.
 | Kill-share | easy / mid / hard % of kills by absolute opp KPM |
 
 No RED FLAG badge in this build.
+
+
+## Shared cache (GitHub Actions)
+
+> **Note:** The workflow YAML also lives at `scripts/refresh-cache.workflow.yml` because the automation token lacks GitHub’s `workflow` OAuth scope to push under `.github/workflows/`. To enable Actions once: copy that file to `.github/workflows/refresh-cache.yml` in the GitHub UI (Add file → Create new file), or run `gh auth refresh -s workflow` and push the local `.github/workflows/refresh-cache.yml`.
+
+Shared player JSON lives under `data/` and is committed by the **Refresh shared cache** workflow.
+
+1. Repo → **Actions** → **Refresh shared cache** → **Run workflow**
+2. Optional `names` input (e.g. `JustV6me ChrisJTTR`); empty uses `data/watchlist.txt` + existing index
+3. Workflow raises `data/load-flag.json` (`fetching: true`), fetches Honu/Census, writes `data/players/*.json` + `index.json`, then clears the flag
+
+Weekly schedule: Sunday 12:00 UTC.
+
+Live site: https://dayset.github.io/ps2-elite-kd/
