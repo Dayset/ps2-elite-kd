@@ -222,3 +222,41 @@ export function scaleContains(scale, yvals) {
 
 /** Alias used in UI copy. */
 export const lionHeart = pressureVolume;
+
+
+export const Y_ZOOM_MIN = 0.25;
+export const Y_ZOOM_MAX = 4;
+export const Y_ZOOM_DEFAULT = 1;
+
+/** Clamp Y zoom into [Y_ZOOM_MIN, Y_ZOOM_MAX]; invalid → default 1. */
+export function clampYZoom(z) {
+  const n = +z;
+  if (!Number.isFinite(n)) return Y_ZOOM_DEFAULT;
+  return Math.min(Y_ZOOM_MAX, Math.max(Y_ZOOM_MIN, n));
+}
+
+/**
+ * Apply Y zoom to an auto-fitted scale from yScale().
+ * zoom = 1 → unchanged (auto fit current data)
+ * zoom > 1 → zoom in (shrink Y span from lo; bottom-tier curves expand)
+ * zoom < 1 → zoom out (expand Y span; extremes flatten / fit)
+ * Linear and log both pin lo and scale hi.
+ */
+export function applyYZoom(scale, zoom) {
+  const z = clampYZoom(zoom);
+  const base = scale || { lo: 0, hi: 2, log: false };
+  if (Math.abs(z - 1) < 1e-9) {
+    return { lo: base.lo, hi: base.hi, log: !!base.log, zoom: 1 };
+  }
+  if (base.log) {
+    const lo = Math.max(+base.lo || 1e-6, 1e-6);
+    const hi = Math.max(+base.hi || lo * 1.01, lo * 1.01);
+    const logLo = Math.log10(lo);
+    const logHi = Math.log10(hi);
+    const newHi = Math.pow(10, logLo + (logHi - logLo) / z);
+    return { lo, hi: Math.max(newHi, lo * 1.01), log: true, zoom: z };
+  }
+  const lo = +base.lo || 0;
+  const span = Math.max((+base.hi || 2) - lo, 0.05);
+  return { lo, hi: lo + span / z, log: false, zoom: z };
+}

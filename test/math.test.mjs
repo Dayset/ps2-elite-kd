@@ -21,6 +21,11 @@ import {
   rfIf,
   yScale,
   scaleContains,
+  applyYZoom,
+  clampYZoom,
+  Y_ZOOM_DEFAULT,
+  Y_ZOOM_MIN,
+  Y_ZOOM_MAX,
 } from "../math.mjs";
 
 function approx(a, b, eps = 1e-9) {
@@ -341,5 +346,50 @@ describe("kpmCurve helper", () => {
     assert.ok(hard);
     assert.equal(hard.deaths, 5);
     assert.ok(hard.deaths > 0);
+  });
+});
+
+
+describe("applyYZoom", () => {
+  it("zoom=1 leaves auto scale unchanged", () => {
+    const auto = yScale([0.5, 1, 2, 3]);
+    const z = applyYZoom(auto, 1);
+    assertApprox(z.lo, auto.lo);
+    assertApprox(z.hi, auto.hi);
+    assert.equal(z.log, auto.log);
+    assert.equal(z.zoom, 1);
+  });
+
+  it("zoom>1 shrinks hi (zoom into weak curves)", () => {
+    const auto = { lo: 0, hi: 10, log: false };
+    const z = applyYZoom(auto, 2);
+    assertApprox(z.lo, 0);
+    assertApprox(z.hi, 5);
+    assert.equal(z.zoom, 2);
+  });
+
+  it("zoom<1 expands hi (fit extreme / cheater KD)", () => {
+    const auto = { lo: 0, hi: 10, log: false };
+    const z = applyYZoom(auto, 0.5);
+    assertApprox(z.lo, 0);
+    assertApprox(z.hi, 20);
+    assert.equal(z.zoom, 0.5);
+  });
+
+  it("log scale pins lo and scales hi in log space", () => {
+    const auto = { lo: 0.5, hi: 80, log: true };
+    const zin = applyYZoom(auto, 2);
+    assertApprox(zin.lo, 0.5);
+    assert.ok(zin.hi < 80 && zin.hi > 0.5);
+    assert.equal(zin.log, true);
+    const zout = applyYZoom(auto, 0.5);
+    assert.ok(zout.hi > 80);
+  });
+
+  it("clampYZoom bounds and default", () => {
+    assert.equal(clampYZoom(Y_ZOOM_DEFAULT), 1);
+    assert.equal(clampYZoom(0.01), Y_ZOOM_MIN);
+    assert.equal(clampYZoom(99), Y_ZOOM_MAX);
+    assert.equal(clampYZoom(NaN), Y_ZOOM_DEFAULT);
   });
 });

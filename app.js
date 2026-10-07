@@ -25,6 +25,9 @@ import {
   resolveIvi,
   deathMixLite,
   yScale,
+  applyYZoom,
+  clampYZoom,
+  Y_ZOOM_DEFAULT,
 } from "./math.mjs";
 
   const COLORS = [
@@ -91,12 +94,18 @@ import {
     underLoadInModal: document.getElementById("underLoadInModal"),
     chart: document.getElementById("chart"),
     chartPlaceholder: document.getElementById("chartPlaceholder"),
+    chartYZoom: document.getElementById("chartYZoom"),
+    yZoomSlider: document.getElementById("yZoomSlider"),
+    yZoomValue: document.getElementById("yZoomValue"),
+    yZoomReset: document.getElementById("yZoomReset"),
     stats: document.getElementById("statsPanel"),
     legend: document.getElementById("legend"),
   };
 
   let players = [];
   let lastAnalyzedNames = [];
+  /** Y-axis zoom factor; 1 = auto-fit current data (default). */
+  let yZoom = Y_ZOOM_DEFAULT;
   let fetching = false;
   /** Progress modal timing for ETA (names completed). */
   let progressStartedAt = 0;
@@ -1087,6 +1096,48 @@ import {
     };
   }
 
+
+  function zoomFromSlider(sliderVal) {
+    return clampYZoom(Math.pow(2, +sliderVal || 0));
+  }
+
+  function sliderFromZoom(z) {
+    const c = clampYZoom(z);
+    return Math.log2(c);
+  }
+
+  function formatYZoomLabel(z) {
+    const c = clampYZoom(z);
+    if (Math.abs(c - 1) < 0.03) return "Y Auto";
+    return `Y ×${c.toFixed(2)}`;
+  }
+
+  function syncYZoomUi() {
+    if (els.yZoomSlider) {
+      const sv = sliderFromZoom(yZoom);
+      if (Math.abs(+els.yZoomSlider.value - sv) > 0.001) {
+        els.yZoomSlider.value = String(sv);
+      }
+    }
+    if (els.yZoomValue) els.yZoomValue.textContent = formatYZoomLabel(yZoom);
+  }
+
+  function setYZoom(z, { redraw = true } = {}) {
+    yZoom = clampYZoom(z);
+    syncYZoomUi();
+    if (redraw && players.length) drawChart(players);
+  }
+
+  function resetYZoom({ redraw = true } = {}) {
+    setYZoom(Y_ZOOM_DEFAULT, { redraw });
+  }
+
+  function setYZoomVisible(show) {
+    if (!els.chartYZoom) return;
+    if (show) els.chartYZoom.removeAttribute("hidden");
+    else els.chartYZoom.setAttribute("hidden", "");
+  }
+
   function clearSvg(svg) {
     while (svg.firstChild) svg.removeChild(svg.firstChild);
   }
@@ -1133,7 +1184,8 @@ import {
         }
       }
     }
-    const scale = yScale(yvals);
+    const autoScale = yScale(yvals);
+    const scale = applyYZoom(autoScale, yZoom);
     const yToPx = makeYMapper(scale);
 
     const gGrid = ns("g");
@@ -1690,6 +1742,7 @@ import {
       if (show) els.chart.setAttribute("hidden", "");
       else els.chart.removeAttribute("hidden");
     }
+    setYZoomVisible(!show);
     const cta = els.chartPlaceholder
       ? els.chartPlaceholder.querySelector(".chart-placeholder-cta")
       : null;
@@ -1704,6 +1757,7 @@ import {
     els.legend.innerHTML = "";
     players = [];
     lastAnalyzedNames = [];
+    resetYZoom({ redraw: false });
     setPlaceholderVisible(true);
     const cta = els.chartPlaceholder
       ? els.chartPlaceholder.querySelector(".chart-placeholder-cta")
@@ -1998,6 +2052,19 @@ import {
     });
   }
 
+
+  if (els.yZoomSlider) {
+    const onZoomInput = () => {
+      setYZoom(zoomFromSlider(els.yZoomSlider.value), { redraw: true });
+    };
+    els.yZoomSlider.addEventListener("input", onZoomInput);
+    els.yZoomSlider.addEventListener("change", onZoomInput);
+  }
+  if (els.yZoomReset) {
+    els.yZoomReset.addEventListener("click", () => resetYZoom({ redraw: true }));
+  }
+  syncYZoomUi();
+
   if (els.themeToggle) {
     els.themeToggle.addEventListener("click", () => toggleTheme());
   }
@@ -2019,6 +2086,11 @@ import {
       resolveIvi,
       deathMixLite,
       yScale,
+      applyYZoom,
+      clampYZoom,
+      Y_ZOOM_DEFAULT,
+      getYZoom: () => yZoom,
+      setYZoom,
       INFLATION_KPM,
       RF_SOFT,
       SLOPE_FLOOR,
