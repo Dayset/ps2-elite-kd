@@ -1593,6 +1593,8 @@
   }
 
   // Startup — fill chips only; wait for Analyze (Enter still works)
+  // Never persist / restore "Fetch fresh"; always start clean on load/refresh.
+  if (els.fetchFresh) els.fetchFresh.checked = false;
   const startup = resolveStartupNames();
   setNameTokens(startup.names);
   renderLastLink();
