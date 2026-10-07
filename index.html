@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PS2 Elite K/D — opposition-weighted curve</title>
+  <meta name="description" content="PlanetSide 2 elite K/D vs enemy weapon KPM comparison chart" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>🦁❤ PlanetSide 2 — Elite K/D</h1>
+    <span class="sub">Projected K/D as opponent weapon-KPM rises · absolute bands at 0.75 / 1.50</span>
+  </header>
+
+  <div class="controls">
+    <label for="names">Players</label>
+    <input id="names" type="text" placeholder="JustV6me, ChrisJTTR" autocomplete="off" spellcheck="false" />
+    <button id="loadBtn" type="button">Load</button>
+    <button id="copyLinkBtn" type="button" title="Copy shareable URL with current names">Copy link</button>
+    <button id="clearMemBtn" type="button" class="btn-muted" title="Clear recent names and cached payloads">Clear memory</button>
+    <div id="recentChips" class="recent-chips" aria-label="Recent character names"></div>
+    <div class="hint">
+      Comma-separated names. Load order: bundled <code>./data/</code> → browser cache → Census + Honu (if CORS allows).
+      Share with <code>?names=JustV6me,ChrisJTTR</code>. Bundled demo: JustV6me, ChrisJTTR.
+    </div>
+  </div>
+
+  <div id="status"></div>
+
+  <div class="chart-wrap">
+    <svg id="chart" viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid meet"></svg>
+  </div>
+
+  <div id="sharePanel" class="share-panel" aria-label="Kill share by absolute enemy KPM"></div>
+  <div id="legend" class="legend"></div>
+
+  <footer>
+    <p>
+      X = enemy weapon KPM (easy left → hard right). Y = pooled K/D for all pairs at or above that cutoff
+      (cumulative curve from Honu top-50 killboard). Dot size ∝ √deaths at that cutoff.
+      Kill-share strip uses absolute bands: easy &lt;0.75 · mid 0.75–1.50 · hard &gt;1.50.
+      No RED FLAG badge in this web build.
+    </p>
+    <p>
+      Offline-first: open via a static server or (with relative fetches) GitHub Pages.
+      For <code>file://</code>, some browsers block local JSON — use
+      <code>python3 -m http.server</code> in this folder.
+    </p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
