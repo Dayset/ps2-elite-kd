@@ -1512,29 +1512,27 @@
     });
 
     const publicCols = [
-      { id: "kd", label: "KD", fn: (r) => r.kd, digits: 2 },
-      { id: "kpm", label: "KPM", fn: (r) => r.kpm, digits: 2 },
-      { id: "ownKpm", label: "own KPM", fn: (r) => r.ownKpm, digits: 2 },
-      { id: "acc", label: "Acc %", fn: (r) => r.acc, digits: 1 },
-      { id: "hsr", label: "HSR %", fn: (r) => r.hsr, digits: 1 },
-      { id: "ivi", label: "IvI", fn: (r) => r.ivi, digits: 0 },
+      { id: "kd", label: "KD", hint: "Overall kill/death ratio from Census / Honu.", fn: (r) => r.kd, digits: 2 },
+      { id: "kpm", label: "KPM", hint: "Overall kills per minute.", fn: (r) => r.kpm, digits: 2 },
+      { id: "ownKpm", label: "own KPM", hint: "Your own weapon pace (kills per minute with your weapons).", fn: (r) => r.ownKpm, digits: 2 },
+      { id: "acc", label: "Acc %", hint: "Hit accuracy percentage.", fn: (r) => r.acc, digits: 1 },
+      { id: "hsr", label: "HSR %", hint: "Headshot rate percentage.", fn: (r) => r.hsr, digits: 1 },
+      { id: "ivi", label: "IvI", hint: "Infantry vs Infantry score from Census / Honu.", fn: (r) => r.ivi, digits: 0 },
     ];
 
-    // Column order is fixed (sort only reorders rows). adjIvI is always first metric.
-    // Emoji labels match the original Python share-PNG headers.
+    // Column order is fixed (sort only reorders rows). ivi (adj) is always first metric.
     const adjCols = [
-      { id: "adj", label: "🎯 adjIvI", fn: (r) => r.adj, digits: 0 },
-      { id: "rkd", label: "⚔️ rKD", fn: (r) => r.rkd, digits: 3 },
-      { id: "ekpm", label: "Enemy 💪 KPM", fn: (r) => r.ekpm, digits: 2 },
-      { id: "own", label: "own KPM", fn: (r) => r.own, digits: 2 },
-      { id: "rf", label: "🛡️ Resistance", fn: (r) => r.rf, digits: 2 },
-      { id: "act", label: "🔥 Activity", fn: (r) => r.act, digits: 2 },
-      { id: "coi", label: "📊 COI", fn: (r) => r.coi, digits: 2 },
-      { id: "mech", label: "⚙️ mech%", fn: (r) => r.mech, digits: 1 },
-      { id: "slope", label: "📉 slope", fn: (r) => r.slope, digits: 2 },
-      { id: "pvs", label: "🦁 LionHeart", fn: (r) => r.pvs, digits: 2 },
-      { id: "kd15", label: "KD@1.5", fn: (r) => r.kd15, digits: 2 },
-      { id: "inflation", label: "🎈 inflation", fn: (r) => r.inflation, digits: 2 },
+      { id: "adj", label: "🎯 ivi", hint: "Opposition-weighted IvI: public IvI adjusted by Resistance so soft-farm padding is tempered.", fn: (r) => r.adj, digits: 0 },
+      { id: "rkd", label: "⚔️ KD", hint: "Resistance-weighted K/D against the opposition mix you actually face.", fn: (r) => r.rkd, digits: 3 },
+      { id: "ekpm", label: "eKPM", hint: "Average enemy weapon KPM faced (how hard the opposition shoots).", fn: (r) => r.ekpm, digits: 2 },
+      { id: "own", label: "own KPM", hint: "Your weapon pace used on the elite K/D curve.", fn: (r) => r.own, digits: 2 },
+      { id: "rf", label: "🛡️ Resistance", hint: "How hard the players you die to are (Resistance Factor).", fn: (r) => r.rf, digits: 2 },
+      { id: "act", label: "🔥 Activity", hint: "How much high-pressure combat you see (Activity / IF).", fn: (r) => r.act, digits: 2 },
+      { id: "coi", label: "📊 COI", hint: "Combat Output Index derived from Resistance.", fn: (r) => r.coi, digits: 2 },
+      { id: "mech", label: "⚙️ Mech%", hint: "Projected mechanized / vehicle share implied by Resistance.", fn: (r) => r.mech, digits: 1 },
+      { id: "slope", label: "📉 Slope", hint: "K/D drop from easier (25%) to harder (75%) opposition — steeper is worse under pressure.", fn: (r) => r.slope, digits: 2 },
+      { id: "pvs", label: "🦁 LionHeart", hint: "Activity × pressure slope — sustained elite volume under hard opposition.", fn: (r) => r.pvs, digits: 2 },
+      { id: "inflation", label: "🎈 inflation", hint: "Global KD ÷ KD at ≥1.5 enemy KPM — how much soft opposition inflates your KD.", fn: (r) => r.inflation, digits: 2 },
     ];
 
     function sortRows(rows, cols, state) {
@@ -1575,11 +1573,12 @@
 
     function metricHead(cols, tableId, state) {
       const nameActive = state.key === "name";
+      const nameHint = "Player name — number matches the graph series color. Click to sort A–Z.";
       const nameTh =
         `<th class="stats-name sortable${nameActive ? " sorted" : ""}" ` +
         `data-table="${tableId}" data-sort="name" scope="col" role="columnheader" ` +
         `aria-sort="${nameActive ? (state.dir === "asc" ? "ascending" : "descending") : "none"}" ` +
-        `title="Sort by name">Player${sortIndicator(nameActive, state.dir)}</th>`;
+        `title="${escapeHtml(nameHint)}">Player${sortIndicator(nameActive, state.dir)}</th>`;
       const rest = cols
         .map((c) => {
           const active = state.key === c.id;
@@ -1588,11 +1587,12 @@
               ? "ascending"
               : "descending"
             : "none";
+          const tip = c.hint || c.label;
           return (
             `<th class="sortable${active ? " sorted" : ""}" ` +
             `data-table="${tableId}" data-sort="${escapeHtml(c.id)}" scope="col" ` +
             `role="columnheader" aria-sort="${aria}" ` +
-            `title="Sort by ${escapeHtml(c.label)}">${escapeHtml(c.label)}` +
+            `title="${escapeHtml(tip)}">${escapeHtml(c.label)}` +
             `${sortIndicator(active, state.dir)}</th>`
           );
         })
@@ -1623,11 +1623,8 @@
           const num = i + 1;
           return (
             `<tr><th scope="row" class="stats-name" style="color:${col}">` +
-            `<span class="stats-name-inner">` +
-            `<span class="player-num" style="color:${col};border-color:${col}" ` +
-            `aria-label="Series ${num}">${num}</span>` +
-            `<span class="player-name">${escapeHtml(row.p.display)}</span>` +
-            `</span></th>${vals}</tr>`
+            `<span class="player-num" aria-label="Series ${num}">${num}.</span>` +
+            `${escapeHtml(row.p.display)}</th>${vals}</tr>`
           );
         })
         .join("");
@@ -1637,7 +1634,7 @@
     const adjSorted = sortRows(metrics, adjCols, statsSortState.adjusted);
 
     els.stats.innerHTML = `
-      <details class="stats-section" open>
+      <details class="stats-section">
         <summary>📊 Public (Census / Honu)</summary>
         <div class="stats-table-wrap">
           <table class="stats-table stats-table-transposed" data-stats-table="public">
