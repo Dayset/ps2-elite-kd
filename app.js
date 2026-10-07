@@ -50,7 +50,7 @@
     namesInput: document.getElementById("namesInput") || document.getElementById("names"),
     analyzeBtn: document.getElementById("analyzeBtn") || document.getElementById("loadBtn"),
     copyLinkBtn: document.getElementById("copyLinkBtn"),
-    clearMemBtn: document.getElementById("clearMemBtn"),
+    clearNamesBtn: document.getElementById("clearNamesBtn"),
     fetchFresh: document.getElementById("fetchFresh"),
     cacheChips: document.getElementById("cacheChips") || document.getElementById("recentChips"),
     lastLink: document.getElementById("lastLink"),
@@ -416,16 +416,12 @@
     return list.filter((s) => typeof s === "string" && s.trim());
   }
 
-  function clearMemory() {
-    try {
-      localStorage.removeItem(LS_CACHE);
-      localStorage.removeItem(LS_CACHE_OLD);
-      localStorage.removeItem(LS_RECENT);
-      localStorage.removeItem(LS_LAST);
-    } catch { /* ignore */ }
+  /** Clear name chips + trailing input text only; leave localStorage cache intact. */
+  function clearNamesFromInput() {
+    nameTokens = [];
+    if (els.namesInput) els.namesInput.value = "";
     renderNameTokens();
     renderCacheChips();
-    renderLastLink();
   }
 
   /* ---------- tokenized name input / chips / last link ---------- */
@@ -1275,7 +1271,7 @@
     fetching = on;
     if (els.analyzeBtn) els.analyzeBtn.disabled = on;
     if (els.copyLinkBtn) els.copyLinkBtn.disabled = on;
-    if (els.clearMemBtn) els.clearMemBtn.disabled = on;
+    if (els.clearNamesBtn) els.clearNamesBtn.disabled = on;
     if (els.fetchFresh) els.fetchFresh.disabled = on;
   }
 
@@ -1545,13 +1541,12 @@
     });
   }
 
-  if (els.clearMemBtn) {
-    els.clearMemBtn.addEventListener("click", () => {
-      if (!window.confirm("Clear cached names and player data from this browser?")) {
-        return;
-      }
-      clearMemory();
-      setStatus('<span class="ok">Memory cleared</span> <span class="src">(cache + last comparison)</span>');
+  if (els.clearNamesBtn) {
+    els.clearNamesBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      clearNamesFromInput();
+      if (els.namesInput) els.namesInput.focus();
     });
   }
 

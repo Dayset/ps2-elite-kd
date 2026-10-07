@@ -10,7 +10,6 @@
 <body>
   <header>
     <h1>🦁❤ PlanetSide 2 — Elite K/D</h1>
-    <span class="sub">Projected K/D as opponent weapon-KPM rises · absolute bands at 0.75 / 1.50</span>
   </header>
 
   <div class="controls">
@@ -18,27 +17,20 @@
     <div id="namesBox" class="names-box" role="group" aria-label="Player names">
       <div id="nameTokens" class="name-tokens"></div>
       <input id="namesInput" type="text" placeholder="JustV6me ChrisJTTR" autocomplete="off" spellcheck="false" />
+      <button id="clearNamesBtn" type="button" class="clear-names" title="Clear names from input" aria-label="Clear names from input">×</button>
     </div>
     <button id="analyzeBtn" type="button">Analyze</button>
     <button id="copyLinkBtn" type="button" title="Copy shareable URL with current names">Copy link</button>
-    <button id="clearMemBtn" type="button" class="btn-muted" title="Clear cached names and payloads">Clear memory</button>
 
     <div class="fresh-row">
       <label class="fresh-label" for="fetchFresh">
         <input id="fetchFresh" type="checkbox" />
         Fetch fresh data
       </label>
-      <span class="fresh-hint">Cache avoids hammering Honu/Census and speeds repeat views; entries kept ~1 month.</span>
     </div>
 
     <div id="cacheChips" class="cache-chips" aria-label="Cached character names"></div>
     <div id="lastLink" class="last-link" aria-label="Latest comparison"></div>
-
-    <div class="hint">
-      Type a name, then space or comma to lock it as a chip. Click a chip to remove it.
-      Green = cached or already analyzed; amber = not fetched yet.
-      Share with <code>?names=JustV6me,ChrisJTTR</code>.
-    </div>
   </div>
 
   <div id="status"></div>

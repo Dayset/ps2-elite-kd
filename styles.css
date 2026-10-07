@@ -76,9 +76,39 @@ header .sub {
   background: #0f1114;
   border: 1px solid var(--border);
   border-radius: 6px;
-  padding: 0.28rem 0.45rem;
+  padding: 0.28rem 0.35rem 0.28rem 0.45rem;
   min-height: 2.35rem;
   cursor: text;
+}
+
+.names-box .clear-names {
+  appearance: none;
+  flex: 0 0 auto;
+  margin-left: auto;
+  align-self: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--dim);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.names-box .clear-names:hover {
+  background: #1e2230;
+  color: var(--text);
+}
+
+.names-box .clear-names:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 
 .names-box:focus-within {
