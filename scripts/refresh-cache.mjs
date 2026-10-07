@@ -979,6 +979,7 @@ async function main() {
 
   let live = null;
   let fromLive = 0;
+  let more = false; // worth chaining another background run right away?
   if (!explicit) {
     live = await discoverLive();
     const tk = parseTopKillers(fs.existsSync(TOP_KILLERS_PATH) ? fs.readFileSync(TOP_KILLERS_PATH, "utf8") : "");
@@ -1008,6 +1009,8 @@ async function main() {
     writeStatus({ running: true, current: { kind: "discovery", runId: process.env.GITHUB_RUN_ID || null, startedAt, batch } });
     if (!room) console.log(`Index has ${index.players.length} ≥ CRAWL_INDEX_CAP=${crawlIndexCap}; nothing to add.`);
     let tried = 0;
+    // Chain the next run if there were more names than this run could take.
+    more = room > 0 && queue.length > 0;
     for (const q of queue) {
       if (discovered.length >= room || c.stoppedEarly) break;
       if (Date.now() + reserveMs > deadline) {
@@ -1071,7 +1074,9 @@ async function main() {
   }
   if (process.env.GITHUB_OUTPUT) {
     try {
-      fs.appendFileSync(process.env.GITHUB_OUTPUT, `ok=${c.ok}\nnew=${discovered.length}\n`);
+      // Chain only after real progress (never loop on an outage), while names remain.
+      const chain = more && discovered.length > 0 && index.players.length < crawlIndexCap;
+      fs.appendFileSync(process.env.GITHUB_OUTPUT, `ok=${c.ok}\nnew=${discovered.length}\nmore=${chain}\n`);
     } catch {
       /* ignore */
     }

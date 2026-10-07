@@ -3,9 +3,11 @@ name: Refresh shared cache
 # Grows the shared cache with NEW players; cached players are never re-fetched
 # by background runs (only on demand, e.g. "Fetch fresh" via the Worker).
 #
-# Driver: the Cloudflare Worker (ps2-elite-kd-cache) cron checks every 5 min
-# and dispatches one background run when no run of this workflow is queued or
-# running. GitHub's own hourly cron below is only a fallback.
+# Driver: each background run that added players and still has names left
+# dispatches the next one itself (chain step at the end; GITHUB_TOKEN may
+# trigger workflow_dispatch). Restarts if the chain stops: the Cloudflare
+# Worker (ps2-elite-kd-cache) cron every 5 min and GitHub's hourly cron, both
+# only when no run is queued or running.
 # A background run (~9 min): read Honu's live top killers on every active PC
 # world (data/top-killers.txt), fetch those not cached yet (most-seen, best
 # KPM first), then frequent opponents of cached players as a fallback, up to
@@ -116,3 +118,19 @@ jobs:
             }
           '
           scripts/ci-commit-push.sh "chore(cache): ${RUN_KIND} refresh, ${changed} player file(s), ${NEW} new [bot]"
+
+      - name: Chain next background run (growth)
+        # Only after a background run that added players and left names over.
+        # Outages / empty queues end the chain; the Worker or GitHub cron restarts it.
+        if: success() && env.ON_DEMAND != 'true' && steps.refresh.outputs.more == 'true'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          waiting=$(gh run list --workflow refresh-cache.yml --json status --jq '[.[] | select(.status=="queued" or .status=="waiting" or .status=="pending" or .status=="requested")] | length')
+          if [ "${waiting:-0}" != "0" ]; then
+            echo "A run is already queued ($waiting); not chaining."
+            exit 0
+          fi
+          gh workflow run refresh-cache.yml --ref "${{ github.event.repository.default_branch }}" -f names=
+          echo "Next background run dispatched."
