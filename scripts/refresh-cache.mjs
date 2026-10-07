@@ -889,10 +889,28 @@ async function main() {
   const reserveMs = envInt("PLAYER_RESERVE_SEC", explicit ? 0 : 60) * 1000;
   const deadline = t0 + budgetMs;
   let ri = 0;
+  // Per-name view of this run for status.html: planned batch with its source,
+  // then done / failed / not-found / pending. Committed with the run's data.
+  const SRC_LABEL = { live: "top-killers", crawl: "opponent-crawl", retry: "retry", "on-demand": "on-demand" };
+  const batch = [];
+  const plan = (name, src) => batch.push({ name, src: SRC_LABEL[src] || src, status: "pending" });
+  const settle = (name, display) => {
+    const row = batch.find((b) => b.name === name) || (plan(name, "?"), batch[batch.length - 1]);
+    if (display) {
+      row.status = "done";
+      row.name = display;
+    } else {
+      const f = [...failed].reverse().find((x) => x.name === name);
+      row.status = f && !f.outage ? "not-found" : "failed";
+      if (f) row.reason = f.reason;
+    }
+  };
+  if (explicit) names.forEach((n) => plan(n, "on-demand"));
   if (explicit) {
     while (ri < names.length && !c.stoppedEarly && Date.now() < deadline) {
       if (ri > 0) await sleep(BETWEEN_PLAYERS_MS);
       const d = await refreshOne(names[ri], `[name ${ri + 1}/${names.length}]`);
+      settle(names[ri], d);
       ri++;
       if (d) added.push(d);
     }
@@ -900,6 +918,7 @@ async function main() {
   }
 
   const crawlFrom = Date.now();
+
   let live = null;
   let fromLive = 0;
   if (!explicit) {
@@ -927,6 +946,8 @@ async function main() {
       }
     }
     console.log(`New-player queue: ${liveCount} live + ${retryCount} retry + ${queue.length - liveCount - retryCount} opponent fallback; room ${room} (cap ${crawlIndexCap}). Next: ${queue.slice(0, 12).map((q) => q.name).join(", ")}`);
+    queue.slice(0, Math.min(room, 20)).forEach((q) => plan(q.name, q.src));
+    writeStatus({ running: true, current: { kind: "discovery", runId: process.env.GITHUB_RUN_ID || null, startedAt, batch } });
     if (!room) console.log(`Index has ${index.players.length} ≥ CRAWL_INDEX_CAP=${crawlIndexCap}; nothing to add.`);
     let tried = 0;
     for (const q of queue) {
@@ -938,7 +959,9 @@ async function main() {
       if (tried) await sleep(BETWEEN_PLAYERS_MS);
       tried++;
       const wasCached = index.players.some((p) => (p.slug || slugKey(p.name)) === slugKey(q.name));
+      if (!batch.some((b) => b.name === q.name)) plan(q.name, q.src);
       const d = await refreshOne(q.name, wasCached ? `[repair ${q.src}]` : `[new ${discovered.length + 1}/${room} ${q.src}]`);
+      settle(q.name, d);
       if (d && !wasCached) {
         discovered.push(d);
         if (q.src === "live") fromLive++;
@@ -978,6 +1001,7 @@ async function main() {
       newFromLive: fromLive,
       liveWorlds: live ? live.worlds : [],
       liveErrors: live ? live.errors : [],
+      batch,
     },
   });
   if (process.env.GITHUB_STEP_SUMMARY) {

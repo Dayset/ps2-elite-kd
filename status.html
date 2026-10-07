@@ -146,6 +146,16 @@
         $("now").innerHTML = html;
       }
 
+      var STATUS_TXT = { done: "✓ done", failed: "✗ fetch error", "not-found": "✗ not found", pending: "not reached (time budget)" };
+      function batchTable(batch, live) {
+        return '<table class="st-table"><tr><th>Player</th><th>Source</th><th>Result</th></tr>' + batch.map(function (b) {
+          var cls = b.status === "done" ? "st-ok" : b.status === "pending" ? "st-dim" : "st-err";
+          var txt = live && b.status === "pending" ? "pending" : STATUS_TXT[b.status] || b.status;
+          return "<tr><td>" + esc(b.name) + "</td><td>" + esc(b.src) + '</td><td class="' + cls + '"' + (b.reason ? ' title="' + esc(b.reason) + '"' : "") + ">" + esc(txt) + "</td></tr>";
+        }).join("") + "</table>";
+      }
+      var predicted = []; // uncached live top killers, in the order a discovery run picks them
+
       function renderLast(status) {
         var r = status && status.lastRun;
         if (!r) { $("last").innerHTML = '<span class="st-dim">No finished run recorded yet.</span>'; return; }
@@ -158,6 +168,7 @@
           '<div class="st-label">Added (' + (r.added || []).length + "):</div>" + chips(r.added, "add") +
           '<div class="st-label">Updated (' + (r.updated || []).length + "):</div>" + chips(r.updated) +
           '<div class="st-label">Failed (' + failed.length + "):</div>" + chips(failed, "fail") +
+          (r.batch && r.batch.length ? '<div class="st-label">Batch (planned names by source, and what happened to each):</div>' + batchTable(r.batch) : "") +
           (r.liveWorlds && r.liveWorlds.length ? '<div class="st-label">Live worlds checked: ' + r.liveWorlds.map(function (w) { return esc(w.name) + " (" + esc(w.online) + " online)"; }).join(", ") +
             " · new from live list: " + esc(r.newFromLive || 0) + "</div>" : "");
       }
@@ -208,7 +219,9 @@
         var a = runs.filter(function (r) { return r.status !== "completed"; })[0];
         $("nowRun").innerHTML = a
           ? '<div class="st-big st-warn">⏳ ' + (a.status === "in_progress" ? "Discovery run in progress" : "Run " + esc(a.status)) + "</div><div>" + runLink(a.id) +
-            " · started " + when(a.run_started_at || a.created_at) + '. It fetches live top killers that aren’t cached yet, then frequent opponents. Results appear when it commits.</div>'
+            " · started " + when(a.run_started_at || a.created_at) + '. It fetches live top killers that aren’t cached yet, then frequent opponents. Per-name results appear under “Last finished run” when it commits (one commit per run, so no live per-name progress).</div>' +
+            (predicted.length ? '<div class="st-label">Planned batch (top-killers source, best first; a discovery run takes these first):</div>' +
+              batchTable(predicted.slice(0, 12).map(function (n) { return { name: n, src: "top-killers", status: "pending" }; }), true) : "")
           : "";
       }
 
@@ -222,6 +235,7 @@
         });
         if (!rows.length) { $("live").innerHTML = '<span class="st-dim">No live list yet (written by the first discovery run).</span>'; return; }
         var cached = rows.filter(function (r) { return r.cached; }).length;
+        predicted = rows.filter(function (r) { return !r.cached; }).sort(function (a, b) { return b.seen - a.seen || b.kpm - a.kpm; }).map(function (r) { return r.name; });
         $("live").innerHTML = "<div>" + rows.length + " players seen in the last 7 days · " + cached + " cached · " + (rows.length - cached) + " still to fetch</div>" +
           '<table class="st-table"><tr><th>Player</th><th>World</th><th>Seen</th><th>Best KPM</th><th>Last seen</th></tr>' +
           rows.slice(0, 25).map(function (r) {
