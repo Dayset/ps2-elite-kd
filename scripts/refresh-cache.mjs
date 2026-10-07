@@ -36,7 +36,6 @@ const CENSUS = "https://census.daybreakgames.com/s:example/get/ps2:v2/";
 const TOP_N = 50;
 const OPP_CONCURRENCY = 4;
 const BETWEEN_PLAYERS_MS = 1500;
-const BETWEEN_BATCH_MS = 200;
 const FETCH_TIMEOUT_MS = 20_000;
 const USER_AGENT = "ps2-elite-kd-cache-bot/1.1 (+https://github.com/Dayset/ps2-elite-kd)";
 /** Stop the run early after this many outage-type failures in a row (be polite). */
@@ -95,6 +94,23 @@ function parseNames(text) {
   return tokens;
 }
 
+/**
+ * Honu rate-limits per IP (Actions runners hit 429 + Retry-After: 60 after
+ * ~300 requests in a minute). All Honu calls go through one paced queue:
+ * at most HONU_RPS requests/second, and a 429 pauses every worker.
+ */
+const HONU_RPS = Number(process.env.HONU_RPS) > 0 ? Number(process.env.HONU_RPS) : 2;
+let honuNextSlot = 0;
+async function honuSlot() {
+  const now = Date.now();
+  const at = Math.max(now, honuNextSlot);
+  honuNextSlot = at + Math.ceil(1000 / HONU_RPS);
+  if (at > now) await sleep(at - now);
+}
+function honuPause(ms) {
+  honuNextSlot = Math.max(honuNextSlot, Date.now() + ms);
+}
+
 export function backoffMs(attempt, retryAfterHeader) {
   const ra = Number(retryAfterHeader);
   if (Number.isFinite(ra) && ra > 0) return Math.min(ra * 1000, 60_000);
@@ -104,8 +120,10 @@ export function backoffMs(attempt, retryAfterHeader) {
 
 async function fetchJson(url, { retries = 4 } = {}) {
   let lastErr;
+  const isHonu = url.startsWith(HONU);
   for (let attempt = 0; attempt < retries; attempt++) {
     let wait = backoffMs(attempt);
+    if (isHonu) await honuSlot();
     try {
       const res = await fetch(url, {
         headers: { Accept: "application/json", "User-Agent": USER_AGENT },
@@ -113,6 +131,10 @@ async function fetchJson(url, { retries = 4 } = {}) {
       });
       if (res.status === 429 || res.status >= 500) {
         wait = backoffMs(attempt, res.headers.get("retry-after"));
+        if (isHonu && res.status === 429) {
+          honuPause(wait); // slow everyone down, not just this request
+          wait = 0;
+        }
         lastErr = new Error(`${res.status} ${res.statusText} for ${url}`);
         console.warn(`  retry ${res.status} in ${wait}ms: ${url}`);
       } else if (!res.ok) {
@@ -126,7 +148,7 @@ async function fetchJson(url, { retries = 4 } = {}) {
       if (e instanceof HttpClientError) throw e; // 4xx: retrying won't help
       lastErr = e;
     }
-    if (attempt + 1 < retries) await sleep(wait);
+    if (attempt + 1 < retries && wait > 0) await sleep(wait);
   }
   throw lastErr || new Error(`fetch failed: ${url}`);
 }
@@ -204,10 +226,27 @@ async function honuMeta(cid) {
   try {
     return (await fetchJson(`${HONU}${cid}`)) || {};
   } catch {
-    return {};
+    return null;
   }
 }
 
+/** Opponents repeat a lot between players on one server: memoize per run. */
+const oppMemo = new Map();
+function opponentInfo(oid) {
+  if (!oppMemo.has(oid)) {
+    const p = Promise.all([honuMeta(oid), honuWeaponPace(oid)]).then(([meta, pace]) => {
+      if (!meta || !pace) oppMemo.delete(oid); // don't memoize failures
+      return { meta, pace };
+    });
+    oppMemo.set(oid, p);
+  }
+  return oppMemo.get(oid);
+}
+
+/** Refuse to save a curve if more than this share of opponent KPM lookups failed. */
+export const MAX_OPP_FAIL_RATIO = 0.1;
+
+/** @returns stats, or null if Honu could not be read (not the same as zeros). */
 async function honuWeaponPace(cid) {
   try {
     const stats = await fetchJson(`${HONU}${cid}/stats`);
@@ -234,7 +273,7 @@ async function honuWeaponPace(cid) {
     const ivi = acc * hsr;
     return { wk, wd, kpm, acc, hsr, ivi };
   } catch {
-    return { wk: 0, wd: 0, kpm: 0, acc: 0, hsr: 0, ivi: 0 };
+    return null;
   }
 }
 
@@ -250,31 +289,41 @@ async function loadLive(name) {
   const tag = outfit.alias ? `[${outfit.alias}] ` : "";
   const display = `${tag}${(c.name && c.name.first) || censusQueryName(name)}`;
 
-  const own = await honuWeaponPace(cid);
-  await sleep(BETWEEN_BATCH_MS);
+  const own = (await honuWeaponPace(cid)) || { kpm: 0, acc: 0, hsr: 0, ivi: 0 };
   const board = await honuKillboard(cid);
   board.sort((a, b) => b.kills + b.deaths - (a.kills + a.deaths));
   const sample = board.slice(0, TOP_N);
 
   const rows = [];
   let i = 0;
+  let paceFails = 0;
+  let lookups = 0;
   async function worker() {
     while (i < sample.length) {
       const idx = i++;
       const pair = sample[idx];
       const oid = String(pair.otherCharacterID);
-      const [meta, pace] = await Promise.all([honuMeta(oid), honuWeaponPace(oid)]);
-      const etag = meta.outfitTag ? `[${meta.outfitTag}] ` : "";
+      // "0" = environment / unknown attacker: nothing to look up.
+      const { meta, pace } = oid === "0" ? { meta: {}, pace: { kpm: 0 } } : await opponentInfo(oid);
+      if (oid !== "0") {
+        lookups++;
+        if (!pace) paceFails++;
+      }
+      const m = meta || {};
+      const etag = m.outfitTag ? `[${m.outfitTag}] ` : "";
       rows[idx] = {
-        name: etag + (meta.name || oid),
+        name: etag + (m.name || oid),
         kills: +pair.kills || 0,
         deaths: +pair.deaths || 0,
-        kpm: pace.kpm || 0,
+        kpm: (pace && pace.kpm) || 0,
       };
-      if (idx % OPP_CONCURRENCY === 0) await sleep(BETWEEN_BATCH_MS);
     }
   }
   await Promise.all(Array.from({ length: OPP_CONCURRENCY }, () => worker()));
+  // A curve with many fake 0-KPM opponents is worse than yesterday's data.
+  if (lookups && paceFails / lookups > MAX_OPP_FAIL_RATIO) {
+    throw new Error(`Honu: ${paceFails}/${lookups} opponent stats failed (rate-limited?); keeping old data`);
+  }
 
   const curve = kpmCurve(rows);
   return {
@@ -472,12 +521,12 @@ function collectNames(cliArgs) {
 
 async function main() {
   fs.mkdirSync(PLAYERS_DIR, { recursive: true });
-  const batchSize = envInt("BATCH_SIZE", 30);
+  const batchSize = envInt("BATCH_SIZE", 20);
   const t0 = Date.now();
 
   const { names: all, explicit } = collectNames(process.argv.slice(2));
   // On-demand runs stay short so they don't hold the concurrency queue.
-  const budgetMs = envInt(explicit ? "ON_DEMAND_BUDGET_MIN" : "TIME_BUDGET_MIN", explicit ? 10 : 35) * 60_000;
+  const budgetMs = envInt(explicit ? "ON_DEMAND_BUDGET_MIN" : "TIME_BUDGET_MIN", explicit ? 10 : 30) * 60_000;
   const added = [];
   if (!all.length) {
     console.error("No names to refresh. Add data/watchlist.txt or pass names.");

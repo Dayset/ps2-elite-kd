@@ -55,8 +55,8 @@ Click any column header to sort (names alphabetical; metrics numeric). Default s
 
 The static Pages site cannot write `data/`. Shared snapshots are committed automatically by the **Refresh shared cache** Action, with no manual steps:
 
-- **Hourly** at :17 UTC (`17 * * * *`). Each run refreshes the **30 stalest** names from `data/watchlist.txt` + `index.json` (never-fetched first, then oldest `savedAt`), so all ~225 rotate roughly every 8 hours. A run takes ~6–8 min, with a 35-min internal budget.
-- Misspelled/unknown names are skipped and their old files are kept (attempts are tracked in `data/refresh-state.json`). A run only fails if nothing refreshed because Census/Honu were down.
+- **Hourly** at :17 UTC (`17 * * * *`). Each run refreshes the **20 stalest** names from `data/watchlist.txt` + `index.json` (never-fetched first, then oldest `savedAt`), so all ~225 rotate about every 11 hours. Honu requests are paced to 2/s (Honu rate-limits Actions IPs), so a run takes ~15–20 min, with a 30-min internal budget.
+- Misspelled/unknown names are skipped and their old files are kept (attempts are tracked in `data/refresh-state.json`). A player is also kept as-is if more than 10% of its opponent lookups fail, so rate limits can't save fake 0-KPM curves. A run only fails if nothing refreshed because Census/Honu were down.
 - While it runs, `data/load-flag.json` is `fetching: true`. It's cleared in the same commit as the new data, even if the run fails.
 - Each run also re-enables the workflow, so GitHub's 60-day inactivity rule can't switch the schedule off.
 - **On-demand:** a dispatch with `names` (from the site's Worker when someone analyzes a new name, or **Actions → Run workflow**) refreshes only those names. Names that fetch OK are added to `watchlist.txt`; failures are left out. These runs queue behind a running batch and never cancel it.

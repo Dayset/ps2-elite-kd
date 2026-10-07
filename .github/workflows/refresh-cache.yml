@@ -21,7 +21,7 @@ on:
       batch_size:
         description: "Rotation batch size when names is empty"
         required: false
-        default: "30"
+        default: "20"
 
 permissions:
   contents: write # commit data/
@@ -36,8 +36,8 @@ concurrency:
   queue: max
 
 env:
-  BATCH_SIZE: ${{ github.event.inputs.batch_size || '30' }}
-  TIME_BUDGET_MIN: "35"      # rotation: stop starting new players after this
+  BATCH_SIZE: ${{ github.event.inputs.batch_size || '20' }}
+  TIME_BUDGET_MIN: "30"      # rotation: stop starting new players after this
   ON_DEMAND_BUDGET_MIN: "10" # inputs.names runs stay short
   ON_DEMAND: ${{ github.event.inputs.names != '' && github.event.inputs.names != null && 'true' || 'false' }}
   RUN_KIND: ${{ github.event_name == 'schedule' && 'scheduled' || 'manual' }}
