@@ -1,0 +1,14 @@
+{
+  "name": "ps2-elite-kd",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PlanetSide 2 opposition-weighted elite K/D chart",
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "check": "node --check app.js && node --check math.mjs && node --check scripts/refresh-cache.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,17 +1,36 @@
 /**
  * PlanetSide 2 elite K/D comparison chart (vanilla JS + SVG).
  * Mirrors absolute_target_split / kpm_curve / rf_if / adjusted_ivi from ps2_elite_kd.py
+ * Pure math lives in math.mjs (shared with Node tests).
  */
-(() => {
-  "use strict";
+import {
+  X_MAX,
+  EASY_MAX,
+  HARD_MIN,
+  INFLATION_KPM,
+  RF_SOFT,
+  SLOPE_FLOOR,
+  SLOPE_EPS,
+  isFiniteNum,
+  pooled,
+  kpmCurve,
+  rfIf,
+  adjustedIvi,
+  sliceAt,
+  combatOutput,
+  projectedMech,
+  curveSlope,
+  slope2575,
+  pressureVolume,
+  resolveIvi,
+  deathMixLite,
+  yScale,
+} from "./math.mjs";
 
   const COLORS = [
     "#9fd4ee", "#ff7a7a", "#ffd166", "#8ef0b0", "#e8b0ff",
     "#ffb07a", "#7ef0e6", "#ffa0c8", "#c6f06a", "#8cbcff",
   ];
-  const EASY_MAX = 0.75;
-  const HARD_MIN = 1.50;
-  const X_MAX = 2.0;
   const HONU = "https://wt.honu.pw/api/character/";
   const CENSUS = "https://census.daybreakgames.com/s:example/get/ps2:v2/";
   const DOT_R = 3;
@@ -422,168 +441,12 @@
   }
 
 
-  function isFiniteNum(v) {
-    return typeof v === "number" && Number.isFinite(v);
-  }
-
   function fmtNum(v, digits) {
     if (!isFiniteNum(v)) return "—";
     return Number(v).toFixed(digits);
   }
 
-  /* ---------- math (ported from Python) ---------- */
-
-  function pooled(sl) {
-    let tk = 0, td = 0;
-    for (const r of sl) {
-      tk += r.kills || 0;
-      td += r.deaths || 0;
-    }
-    let kd = NaN;
-    if (td) kd = tk / td;
-    else if (tk) kd = tk;
-    return { kills: tk, deaths: td, kd };
-  }
-
-  function kpmCurve(rows, start = 2.5, end = 0.0, step = 0.05) {
-    const pts = [];
-    for (let t = start; t >= end - 1e-9; t -= step) {
-      const cut = Math.round(t * 100) / 100;
-      const sl = rows.filter((r) => (r.kpm || 0) >= cut);
-      const { kills, deaths, kd } = pooled(sl);
-      pts.push({ kpm: cut, kd, kills, deaths, n: sl.length });
-    }
-    return pts;
-  }
-
-  /**
-   * Resistance Factor (RF) and Activity/IF from high-pressure pair union.
-   * Union of top-n by opp KPM and top-n by deaths against player.
-   * RF = rkd * avg_opp_kpm; IF = rkd * own_kpm.
-   */
-  function rfIf(p, sliceN) {
-    const rows = Array.isArray(p.rows) ? p.rows.slice() : [];
-    if (!rows.length) return null;
-    const n = sliceN == null ? rows.length : Math.max(1, Math.min(sliceN, rows.length));
-    const byKpm = rows.slice().sort((a, b) => (b.kpm || 0) - (a.kpm || 0)).slice(0, n);
-    const byDth = rows.slice().sort((a, b) => (b.deaths || 0) - (a.deaths || 0)).slice(0, n);
-    const seen = new Set();
-    const sl = [];
-    for (const r of byKpm.concat(byDth)) {
-      const key = r.name;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      sl.push(r);
-    }
-    const { kills, deaths, kd: rkd } = pooled(sl);
-    const kpms = sl.map((r) => +r.kpm || 0);
-    const avgOpp = kpms.length ? kpms.reduce((a, b) => a + b, 0) / kpms.length : 0;
-    const own = +(p.own_kpm || p.global_kpm || 0);
-    const rf = rkd * avgOpp;
-    const ifactor = rkd * own;
-    return {
-      n: sl.length,
-      kills,
-      deaths,
-      rkd,
-      avg_opp: avgOpp,
-      own,
-      rf,
-      ifactor,
-    };
-  }
-
-  /** adjIvI = 600 * (1 + log2(RF / 0.6)); soft RF 0.6 ≈ public IvI 600. */
-  function adjustedIvi(ivi, rf) {
-    if (rf == null || !(rf > 0)) return NaN;
-    return 600 * (1 + Math.log2(rf / 0.6));
-  }
-
-  // Typical steep full-curve slope ≈ -2; fixed floor so a new name does not rewrite LionHeart.
-  const SLOPE_FLOOR = -2.0;
-  const SLOPE_EPS = 0.05;
-
-  function sliceAt(rows, cut) {
-    const sl = (rows || []).filter((r) => (r.kpm || 0) >= cut);
-    const { kills, deaths, kd } = pooled(sl);
-    return { kd, kills, deaths, n: sl.length };
-  }
-
-  /** COI = RF / 0.6; soft player ≈ 1. */
-  function combatOutput(rf) {
-    return rf && rf === rf ? rf / 0.6 : NaN;
-  }
-
-  /** Experimental: 0.30 × (1 + ln(1+RF)) as percent. */
-  function projectedMech(rf) {
-    if (rf == null || rf !== rf || rf < 0) return NaN;
-    return 100.0 * 0.30 * (1.0 + Math.log(1.0 + rf));
-  }
-
-  /**
-   * Full-curve pressure slope: death-weighted linear regression of projected
-   * K/D vs enemy KPM across the plotted curve (deaths > 0, kpm ≤ X_MAX).
-   * Negative ⇒ K/D falls as opposition hardens. Replaces the old 25–75
-   * mid-band slice, which could go spuriously positive when mid-tier farm
-   * deaths dominate while the overall curve still trends down.
-   */
-  function curveSlope(p) {
-    let curve = Array.isArray(p.curve) ? p.curve : [];
-    if (curve.length < 4 && Array.isArray(p.rows) && p.rows.length) {
-      curve = kpmCurve(p.rows);
-    }
-    const pts = curve.filter(
-      (pt) =>
-        (pt.deaths || 0) > 0 &&
-        isFiniteNum(pt.kd) &&
-        isFiniteNum(pt.kpm) &&
-        +pt.kpm <= X_MAX + 1e-9
-    );
-    if (pts.length < 4) return NaN;
-    let sw = 0, sx = 0, sy = 0, sxx = 0, sxy = 0;
-    for (const pt of pts) {
-      const w = Math.max(+pt.deaths || 1, 1);
-      const x = +pt.kpm;
-      const y = +pt.kd;
-      sw += w;
-      sx += w * x;
-      sy += w * y;
-      sxx += w * x * x;
-      sxy += w * x * y;
-    }
-    const den = sw * sxx - sx * sx;
-    if (Math.abs(den) < 1e-12) return NaN;
-    return (sw * sxy - sx * sy) / den;
-  }
-
-  /** @deprecated alias — prefer curveSlope */
-  function slope2575(p) {
-    return curveSlope(p);
-  }
-
-  /** LionHeart = Activity × (shifted slope)^1.5 */
-  function pressureVolume(activity, slope) {
-    if (activity !== activity || slope !== slope) return NaN;
-    const shifted = Math.max(slope - SLOPE_FLOOR + SLOPE_EPS, SLOPE_EPS);
-    return activity * Math.pow(shifted, 1.5);
-  }
-
-  /** Prefer player.ivi; fall back to acc × hsr (IvI-style). */
-  function resolveIvi(p) {
-    if (p.ivi != null && isFiniteNum(+p.ivi)) return +p.ivi;
-    const acc = p.acc != null ? +p.acc : NaN;
-    const hsr = p.hsr != null ? +p.hsr : NaN;
-    if (isFiniteNum(acc) && isFiniteNum(hsr)) return acc * hsr;
-    return NaN;
-  }
-
-  /** Lightweight death_mix metrics at inflation cutoff 0.5 (avg planetman ~0.35 KPM). */
-  function deathMixLite(p) {
-    const { kd: kd05, deaths: d05, n: n05 } = sliceAt(p.rows || [], 0.5);
-    const gkd = +p.global_kd || 0;
-    const inflation = isFiniteNum(kd05) && kd05 > 0.05 ? gkd / kd05 : NaN;
-    return { kd05, d05, n05, inflation };
-  }
+  /* math: imported from ./math.mjs */
 
   function normalizePlayer(raw) {
     const p = raw.player || raw;
@@ -1203,27 +1066,7 @@
     return Math.min(1, (n / 8) * 0.5 + (Math.min(d, 80) / 80) * 0.5);
   }
 
-  function yScale(yvals) {
-    const finite = yvals.filter(isFiniteNum);
-    if (!finite.length) return { lo: 0, hi: 2, log: false };
-    const lo = Math.min(...finite);
-    const hi = Math.max(...finite);
-    const ordered = finite.filter((v) => v > 0).sort((a, b) => a - b);
-    const mid = ordered.length ? ordered[Math.floor(ordered.length / 2)] : 1;
-    // Extreme farm spikes: log axis keeps the bulk readable while still fitting max.
-    const striking = hi >= 15 && hi >= 8 * Math.max(mid, 0.25);
-    if (striking) {
-      const floor = ordered.length ? Math.max(0.15, ordered[0] * 0.9) : 0.15;
-      return { lo: floor, hi: hi * 1.12, log: true };
-    }
-    // Always extend to true max so no series paints above the plot (e.g. aLandWhaleNC).
-    const span = Math.max(hi - lo, 0.15);
-    return {
-      lo: Math.max(0, lo - 0.1 * span),
-      hi: hi + 0.12 * span,
-      log: false,
-    };
-  }
+  /* yScale: imported from ./math.mjs */
 
   function xToPx(x) {
     return PLOT.x + (x / X_MAX) * PLOT.w;
@@ -2175,6 +2018,9 @@
       pressureVolume,
       resolveIvi,
       deathMixLite,
+      yScale,
+      INFLATION_KPM,
+      RF_SOFT,
       SLOPE_FLOOR,
       SLOPE_EPS,
       LS_CACHE,
@@ -2235,4 +2081,3 @@
       `Ready — press Analyze <span class="src">${reasonNote}${sharedNote}</span>`
     );
   })();
-})();

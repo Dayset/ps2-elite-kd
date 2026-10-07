@@ -67,7 +67,9 @@ Browser Analyze still uses a local under-load note across tabs on the same devic
 
 ```
 ps2-elite-kd/
-  index.html  styles.css  app.js
+  index.html  styles.css  app.js  math.mjs
+  test/math.test.mjs      # node --test regression suite
+  package.json            # npm test / npm run check
   assets/                 # dark + light placeholder graphs
   data/
     index.json            # shared catalog
@@ -77,6 +79,17 @@ ps2-elite-kd/
   scripts/refresh-cache.mjs
   .github/workflows/refresh-cache.yml
 ```
+
+## Tests
+
+Pure math lives in `math.mjs` (imported by the browser `app.js` module). Run:
+
+```bash
+npm test          # node --test test/*.test.mjs
+npm run check     # syntax-check app.js, math.mjs, refresh script
+```
+
+Coverage includes pooled/sliceAt, Inflation@0.5, curveSlope (deaths>0), LionHeart bounds, adjIvI, and yScale containment for cheater spikes / low players.
 
 ## Credits
 
