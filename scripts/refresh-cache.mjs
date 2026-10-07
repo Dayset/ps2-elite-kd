@@ -41,6 +41,8 @@ const FETCH_TIMEOUT_MS = 20_000;
 const USER_AGENT = "ps2-elite-kd-cache-bot/1.1 (+https://github.com/Dayset/ps2-elite-kd)";
 /** Stop the run early after this many outage-type failures in a row (be polite). */
 const MAX_CONSECUTIVE_OUTAGES = 4;
+/** On-demand runs (inputs.names, e.g. from the site's Worker) refresh at most this many. */
+const MAX_EXPLICIT = 40;
 
 function envInt(name, fallback) {
   const v = parseInt(process.env[name] || "", 10);
@@ -200,7 +202,7 @@ async function honuKillboard(cid) {
 
 async function honuMeta(cid) {
   try {
-    return await fetchJson(`${HONU}${cid}`);
+    return (await fetchJson(`${HONU}${cid}`)) || {};
   } catch {
     return {};
   }
@@ -308,6 +310,36 @@ function readWatchlist() {
   return names;
 }
 
+/**
+ * Names (successfully fetched) not yet in the watchlist, deduped by tag-less
+ * slug against the watchlist and each other.
+ */
+export function newWatchlistNames(existingNames, added) {
+  const seen = new Set(existingNames.map(slugKey).filter(Boolean));
+  const out = [];
+  for (const n of added) {
+    const k = slugKey(n);
+    if (!k || seen.has(k)) continue;
+    seen.add(k);
+    out.push(String(n).trim());
+  }
+  return out;
+}
+
+function appendToWatchlist(names) {
+  const fresh = newWatchlistNames(readWatchlist(), names);
+  if (!fresh.length) return [];
+  let text = fs.existsSync(WATCHLIST_PATH) ? fs.readFileSync(WATCHLIST_PATH, "utf8") : "";
+  if (text && !text.endsWith("\n")) text += "\n";
+  writeFileAtomic(WATCHLIST_PATH, text + fresh.join("\n") + "\n");
+  return fresh;
+}
+
+/** PS2 character names: letters/digits only, up to 32 chars (tag prefix allowed). */
+export function isPlausibleName(name) {
+  return /^[A-Za-z0-9]{1,32}$/.test(censusQueryName(name)) || /^\d{16,}$/.test(censusQueryName(name));
+}
+
 function readIndex() {
   if (!fs.existsSync(INDEX_PATH)) {
     return { updatedAt: null, players: [] };
@@ -408,7 +440,21 @@ function collectNames(cliArgs) {
   const fromEnv = process.env.NAMES || "";
   const fromCli = cliArgs.join(" ");
   const explicit = parseNames(fromCli || fromEnv);
-  if (explicit.length) return { names: explicit, explicit: true };
+  if (explicit.length) {
+    // On-demand (Worker / manual) list: dedupe by slug, cap to keep runs short.
+    const seen = new Set();
+    const out = [];
+    for (const n of explicit) {
+      const k = slugKey(n);
+      if (!k || seen.has(k)) continue;
+      seen.add(k);
+      out.push(n);
+    }
+    if (out.length > MAX_EXPLICIT) {
+      console.warn(`Capping on-demand list at ${MAX_EXPLICIT} (got ${out.length}); dropped: ${out.slice(MAX_EXPLICIT).join(", ")}`);
+    }
+    return { names: out.slice(0, MAX_EXPLICIT), explicit: true };
+  }
 
   const watch = readWatchlist();
   const index = readIndex();
@@ -427,10 +473,12 @@ function collectNames(cliArgs) {
 async function main() {
   fs.mkdirSync(PLAYERS_DIR, { recursive: true });
   const batchSize = envInt("BATCH_SIZE", 30);
-  const budgetMs = envInt("TIME_BUDGET_MIN", 35) * 60_000;
   const t0 = Date.now();
 
   const { names: all, explicit } = collectNames(process.argv.slice(2));
+  // On-demand runs stay short so they don't hold the concurrency queue.
+  const budgetMs = envInt(explicit ? "ON_DEMAND_BUDGET_MIN" : "TIME_BUDGET_MIN", explicit ? 10 : 35) * 60_000;
+  const added = [];
   if (!all.length) {
     console.error("No names to refresh. Add data/watchlist.txt or pass names.");
     process.exit(1);
@@ -466,6 +514,7 @@ async function main() {
     const prev = state.players[slug] || {};
     const now = Date.now();
     try {
+      if (!isPlausibleName(name)) throw new NotFoundError(`not a valid character name ${JSON.stringify(name)}`);
       const payload = await loadLive(name);
       const fileRel = `players/${slug}.json`;
       writeFileAtomic(path.join(DATA_DIR, fileRel), JSON.stringify(payload) + "\n");
@@ -479,6 +528,7 @@ async function main() {
       writeIndex(index);
       state.players[slug] = { lastAttemptAt: now, lastOkAt: payload.savedAt, fails: 0 };
       ok++;
+      added.push(payload.player.display || name);
       consecutiveOutage = 0;
       console.log(`  wrote data/${fileRel} (${payload.player.display})`);
     } catch (e) {
@@ -507,8 +557,15 @@ async function main() {
     if (i + 1 < names.length) await sleep(BETWEEN_PLAYERS_MS);
   }
 
+  // On-demand names that fetched OK join the hourly rotation (failures don't).
+  let joined = [];
+  if (explicit && added.length) {
+    joined = appendToWatchlist(added);
+    if (joined.length) console.log(`Added to watchlist: ${joined.join(", ")}`);
+  }
+
   const secs = Math.round((Date.now() - t0) / 1000);
-  const summary = `Done in ${secs}s. ok=${ok} notFound=${notFound} outage=${outage} index=${index.players.length}${stoppedEarly ? ` (stopped early: ${stoppedEarly})` : ""}`;
+  const summary = `Done in ${secs}s. ok=${ok} notFound=${notFound} outage=${outage} index=${index.players.length}${joined.length ? ` watchlist+=${joined.length}` : ""}${stoppedEarly ? ` (stopped early: ${stoppedEarly})` : ""}`;
   console.log(summary);
   if (process.env.GITHUB_STEP_SUMMARY) {
     try {

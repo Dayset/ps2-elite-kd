@@ -3,7 +3,14 @@
  */
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { pickBatch, isOutageError, NotFoundError, backoffMs } from "../scripts/refresh-cache.mjs";
+import {
+  pickBatch,
+  isOutageError,
+  NotFoundError,
+  backoffMs,
+  newWatchlistNames,
+  isPlausibleName,
+} from "../scripts/refresh-cache.mjs";
 
 const index = {
   players: [
@@ -57,5 +64,23 @@ describe("failure classification", () => {
     assert.equal(backoffMs(0, "3"), 3000);
     assert.ok(backoffMs(10) <= 15_250);
     assert.ok(backoffMs(0) >= 1000);
+  });
+});
+
+describe("on-demand names join the watchlist", () => {
+  it("dedupes by tag-less slug against the watchlist and itself", () => {
+    const existing = ["[RITE] ShloDog", "[12P] BlinderJeck"];
+    assert.deepEqual(
+      newWatchlistNames(existing, ["[XYZ] shlodog", "[NEW] Fresh", "Fresh", "Other"]),
+      ["[NEW] Fresh", "Other"]
+    );
+  });
+
+  it("rejects implausible names before hitting Census", () => {
+    assert.equal(isPlausibleName("[RITE] ShloDog"), true);
+    assert.equal(isPlausibleName("ShloDog"), true);
+    assert.equal(isPlausibleName("bad name!"), false);
+    assert.equal(isPlausibleName("x".repeat(40)), false);
+    assert.equal(isPlausibleName("5428010618015189713"), true);
   });
 });

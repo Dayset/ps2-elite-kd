@@ -3,6 +3,10 @@ name: Refresh shared cache
 # Fully automatic: every hour the stalest BATCH_SIZE players (never-fetched
 # first) are re-fetched from Census + Honu and committed to data/. All ~225
 # names rotate through every few hours. No manual steps needed.
+#
+# On-demand: a dispatch with inputs.names (e.g. from the site's Cloudflare
+# Worker when someone analyzes a new name) refreshes ONLY those names, adds the
+# ones that fetched OK to data/watchlist.txt, and skips the rotation batch.
 
 on:
   schedule:
@@ -11,7 +15,7 @@ on:
   workflow_dispatch:
     inputs:
       names:
-        description: "Optional names to refresh now (comma/space-separated). Empty = normal rotation batch."
+        description: "Names to refresh now (comma/space-separated); successes join the watchlist. Empty = normal rotation batch."
         required: false
         default: ""
       batch_size:
@@ -23,13 +27,19 @@ permissions:
   contents: write # commit data/
   actions: write  # keepalive: re-enable this workflow (60-day inactivity rule)
 
+# One run at a time. On-demand dispatches queue behind a running batch
+# (never cancel it), and queue: max keeps every pending dispatch instead of
+# replacing the older pending one.
 concurrency:
   group: refresh-shared-cache
   cancel-in-progress: false
+  queue: max
 
 env:
   BATCH_SIZE: ${{ github.event.inputs.batch_size || '30' }}
-  TIME_BUDGET_MIN: "35" # script stops starting new players after this
+  TIME_BUDGET_MIN: "35"      # rotation: stop starting new players after this
+  ON_DEMAND_BUDGET_MIN: "10" # inputs.names runs stay short
+  ON_DEMAND: ${{ github.event.inputs.names != '' && github.event.inputs.names != null && 'true' || 'false' }}
   RUN_KIND: ${{ github.event_name == 'schedule' && 'scheduled' || 'manual' }}
 
 jobs:
@@ -39,6 +49,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Latest tip at job start (queued runs see the previous run's data).
+          ref: ${{ github.event.repository.default_branch }}
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -60,6 +73,7 @@ jobs:
           echo "Workflow re-enabled (keepalive ok)"
 
       - name: Raise under-load flag
+        if: env.ON_DEMAND != 'true' # on-demand runs are short; no banner/extra commit
         continue-on-error: true # a missed banner must not block the refresh
         env:
           RUN_ID: ${{ github.run_id }}
@@ -74,7 +88,7 @@ jobs:
           '
           scripts/ci-commit-push.sh "chore(cache): under-load flag on [bot]"
 
-      - name: Refresh stalest players
+      - name: Refresh players (rotation batch or on-demand names)
         id: refresh
         env:
           NAMES: ${{ github.event.inputs.names || '' }}
@@ -86,11 +100,21 @@ jobs:
           RUN_ID: ${{ github.run_id }}
           OK: ${{ steps.refresh.outputs.ok || '0' }}
         run: |
+          # Clear the flag only if it is raised (avoids no-op commits on on-demand runs).
           node -e '
             const fs = require("fs");
-            fs.writeFileSync("data/load-flag.json", JSON.stringify({
-              fetching: false, ts: Date.now(), source: "actions",
-              runId: process.env.RUN_ID || null, message: null,
-            }, null, 2) + "\n");
+            let cur = {};
+            try { cur = JSON.parse(fs.readFileSync("data/load-flag.json", "utf8")); } catch {}
+            if (cur.fetching !== false) {
+              fs.writeFileSync("data/load-flag.json", JSON.stringify({
+                fetching: false, ts: Date.now(), source: "actions",
+                runId: process.env.RUN_ID || null, message: null,
+              }, null, 2) + "\n");
+            }
           '
-          scripts/ci-commit-push.sh "chore(cache): ${RUN_KIND} refresh, ${OK} player(s) updated [bot]"
+          if [ "$ON_DEMAND" = "true" ]; then
+            msg="chore(cache): on-demand refresh, ${OK} player(s) updated [bot]"
+          else
+            msg="chore(cache): ${RUN_KIND} refresh, ${OK} player(s) updated [bot]"
+          fi
+          scripts/ci-commit-push.sh "$msg"

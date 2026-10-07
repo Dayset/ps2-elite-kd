@@ -18,7 +18,7 @@ data/
 
 Automatic. The **Refresh shared cache** Action runs hourly (`17 * * * *` UTC). Each run refreshes the 30 stalest names (never-fetched first, then oldest `savedAt`), so the whole watchlist rotates every few hours. `refresh-state.json` records the last attempt and failures per name, so a misspelled name doesn't block the queue. Failed names keep their old files.
 
-Manual run (optional): repo → **Actions** → **Refresh shared cache** → **Run workflow**. Pass `names` to refresh specific players right away.
+On-demand: a `workflow_dispatch` with `names` (the site's Worker sends these when someone analyzes a new name; you can also use **Actions → Run workflow**) refreshes only those names. Names that fetch OK are appended to `watchlist.txt`, deduped by tag-less slug.
 
 The static site **cannot** push cache updates from the browser. Use **Fetch fresh data** for a personal live pull; shared updates only come from this Action.
 

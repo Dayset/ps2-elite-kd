@@ -59,7 +59,7 @@ The static Pages site cannot write `data/`. Shared snapshots are committed autom
 - Misspelled/unknown names are skipped and their old files are kept (attempts are tracked in `data/refresh-state.json`). A run only fails if nothing refreshed because Census/Honu were down.
 - While it runs, `data/load-flag.json` is `fetching: true`. It's cleared in the same commit as the new data, even if the run fails.
 - Each run also re-enables the workflow, so GitHub's 60-day inactivity rule can't switch the schedule off.
-- Optional manual run: **Actions → Refresh shared cache → Run workflow** (`names` to refresh specific players now, or `batch_size`).
+- **On-demand:** a dispatch with `names` (from the site's Worker when someone analyzes a new name, or **Actions → Run workflow**) refreshes only those names. Names that fetch OK are added to `watchlist.txt`; failures are left out. These runs queue behind a running batch and never cancel it.
 
 Browser Analyze still uses a local under-load note across tabs on the same device; the Actions load-flag is what other visitors see during a shared refresh.
 
