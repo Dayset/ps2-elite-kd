@@ -150,6 +150,12 @@ async function fetchJson(url, { retries = 4 } = {}) {
     } catch (e) {
       if (e instanceof HttpClientError) throw e; // 4xx: retrying won't help
       lastErr = e;
+      // undici's "fetch failed" hides the real reason in e.cause.
+      const cause = e && e.cause && (e.cause.code || e.cause.message);
+      if (cause && e.message === "fetch failed") {
+        lastErr = new Error(`fetch failed (${String(cause).slice(0, 80)}) for ${new URL(url).host}`);
+      }
+      console.warn(`  retry after error (${attempt + 1}/${retries}): ${String(lastErr.message).slice(0, 160)}`);
     }
     if (attempt + 1 < retries && wait > 0) await sleep(wait);
   }
@@ -305,6 +311,24 @@ async function honuWeaponPace(cid) {
   }
 }
 
+/**
+ * One killboard row. Null-safe: Honu answers 204 / null for some characters
+ * (deleted, no outfit, not tracked); that once crashed with
+ * "Cannot read properties of null (reading 'outfitTag')".
+ */
+export function opponentRow(pair, meta, pace) {
+  const p = pair || {};
+  const m = meta || {};
+  const oid = String(p.otherCharacterID == null ? "" : p.otherCharacterID);
+  const tag = m.outfitTag || (m.outfit && m.outfit.alias) || "";
+  return {
+    name: (tag ? `[${tag}] ` : "") + (m.name || oid),
+    kills: +p.kills || 0,
+    deaths: +p.deaths || 0,
+    kpm: (pace && pace.kpm) || 0,
+  };
+}
+
 async function loadLive(name) {
   const c = await resolveCensus(name);
   const cid = c.character_id;
@@ -338,14 +362,7 @@ async function loadLive(name) {
         lookups++;
         if (!pace) paceFails++;
       }
-      const m = meta || {};
-      const etag = m.outfitTag ? `[${m.outfitTag}] ` : "";
-      rows[idx] = {
-        name: etag + (m.name || oid),
-        kills: +pair.kills || 0,
-        deaths: +pair.deaths || 0,
-        kpm: (pace && pace.kpm) || 0,
-      };
+      rows[idx] = opponentRow(pair, meta, pace);
     }
   }
   await Promise.all(Array.from({ length: OPP_CONCURRENCY }, () => worker()));
@@ -627,7 +644,7 @@ export function liveCandidates(map, index, state, now = Date.now()) {
     .filter(([k, r]) => {
       if (known.has(k) || !isPlausibleName(r.name)) return false;
       const prev = st[k];
-      return !(prev && prev.lastAttemptAt && now - prev.lastAttemptAt < CRAWL_RETRY_AFTER_MS);
+      return retryable(prev, now);
     })
     .sort((a, b) => b[1].seen - a[1].seen || b[1].kpm - a[1].kpm || a[1].name.localeCompare(b[1].name))
     .map(([, r]) => r.name);
@@ -664,7 +681,35 @@ async function discoverLive() {
   return out;
 }
 
-const CRAWL_RETRY_AFTER_MS = 7 * 24 * 3600 * 1000;
+const NOT_FOUND_RE = /not found|not a valid|no character|empty killboard|unknown character/i;
+const MAX_TRANSIENT_TRIES = 3;
+const TRANSIENT_RETRY_AFTER_MS = 15 * 60 * 1000;
+
+/**
+ * May discovery try this (uncached) name now? Never after a real not-found
+ * (no character / invalid name / empty killboard); other errors (timeouts,
+ * outages, code bugs) at most MAX_TRANSIENT_TRIES times, 15 min apart.
+ */
+export function retryable(prev, now = Date.now()) {
+  if (!prev || !prev.lastAttemptAt) return true;
+  if (prev.kind === "notfound" || (prev.kind !== "transient" && NOT_FOUND_RE.test(prev.lastError || ""))) return false;
+  if ((prev.fails || 0) >= MAX_TRANSIENT_TRIES) return false;
+  return now - prev.lastAttemptAt >= TRANSIENT_RETRY_AFTER_MS;
+}
+
+/**
+ * Names whose last fetch failed transiently (timeout, outage, code bug) and may
+ * be retried now: new names, and cached players whose own refresh attempt broke
+ * (their old file is kept until a retry succeeds). Not a scheduled re-fetch:
+ * only failed attempts, max 3 tries. The slug works as a Census name.
+ */
+export function retryCandidates(index, state, now = Date.now()) {
+  return Object.entries((state && state.players) || {})
+    .filter(([slug, p]) => p && p.fails > 0 && retryable(p, now) && isPlausibleName(slug) &&
+      !(p.lastOkAt && p.lastOkAt >= p.lastAttemptAt))
+    .sort((a, b) => a[1].lastAttemptAt - b[1].lastAttemptAt)
+    .map(([slug]) => slug);
+}
 
 /**
  * Discovery candidates: opponents that show up in already-cached players'
@@ -686,7 +731,7 @@ export function crawlCandidates(payloads, index, state, now = Date.now()) {
       const k = slugKey(name);
       if (!k || known.has(k)) continue;
       const prev = st[k];
-      if (prev && prev.lastAttemptAt && now - prev.lastAttemptAt < CRAWL_RETRY_AFTER_MS) continue;
+      if (!retryable(prev, now)) continue;
       const a = agg.get(k) || { name, seen: 0, volume: 0 };
       a.volume += (+r.kills || 0) + (+r.deaths || 0);
       if (!seenHere.has(k)) {
@@ -816,6 +861,7 @@ async function main() {
         lastAttemptAt: now,
         lastOkAt: prev.lastOkAt || null,
         fails: (prev.fails || 0) + 1,
+        kind: isOutageError(e) ? "transient" : "notfound",
         lastError: msg.slice(0, 200),
       };
       failed.push({ name, reason: msg.slice(0, 120), outage: isOutageError(e) });
@@ -871,6 +917,8 @@ async function main() {
     const queue = [];
     for (const n of liveNames) if (!seen.has(slugKey(n))) { seen.add(slugKey(n)); queue.push({ name: n, src: "live" }); }
     const liveCount = queue.length;
+    for (const n of retryCandidates(index, state)) if (!seen.has(slugKey(n))) { seen.add(slugKey(n)); queue.push({ name: n, src: "retry" }); }
+    const retryCount = queue.length - liveCount;
     // Fallback only needs a few names; computing it reads every cached file.
     if (queue.length < room) {
       for (const n of crawlCandidates(readAllPayloads(), index, state)) {
@@ -878,7 +926,7 @@ async function main() {
         if (!seen.has(slugKey(n))) { seen.add(slugKey(n)); queue.push({ name: n, src: "crawl" }); }
       }
     }
-    console.log(`New-player queue: ${liveCount} live + ${queue.length - liveCount} opponent fallback; room ${room} (cap ${crawlIndexCap}). Next: ${queue.slice(0, 12).map((q) => q.name).join(", ")}`);
+    console.log(`New-player queue: ${liveCount} live + ${retryCount} retry + ${queue.length - liveCount - retryCount} opponent fallback; room ${room} (cap ${crawlIndexCap}). Next: ${queue.slice(0, 12).map((q) => q.name).join(", ")}`);
     if (!room) console.log(`Index has ${index.players.length} ≥ CRAWL_INDEX_CAP=${crawlIndexCap}; nothing to add.`);
     let tried = 0;
     for (const q of queue) {
@@ -889,8 +937,9 @@ async function main() {
       }
       if (tried) await sleep(BETWEEN_PLAYERS_MS);
       tried++;
-      const d = await refreshOne(q.name, `[new ${discovered.length + 1}/${room} ${q.src}]`);
-      if (d) {
+      const wasCached = index.players.some((p) => (p.slug || slugKey(p.name)) === slugKey(q.name));
+      const d = await refreshOne(q.name, wasCached ? `[repair ${q.src}]` : `[new ${discovered.length + 1}/${room} ${q.src}]`);
+      if (d && !wasCached) {
         discovered.push(d);
         if (q.src === "live") fromLive++;
       }

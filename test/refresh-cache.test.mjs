@@ -12,6 +12,9 @@ import {
   isPlausibleName,
   crawlCandidates,
   mergeTopKillers,
+  opponentRow,
+  retryable,
+  retryCandidates,
   parseTopKillers,
   formatTopKillers,
   liveCandidates,
@@ -152,5 +155,38 @@ describe("live top killers list", () => {
     const idx = { players: [{ name: "Cached", slug: "cached" }] };
     const state = { players: { typo: { lastAttemptAt: T0, fails: 1 } } };
     assert.deepEqual(liveCandidates(m, idx, state, T0 + 2), ["Twice", "HighKpm"]);
+  });
+});
+
+describe("opponent rows and retry policy", () => {
+  it("opponentRow is null-safe (Honu null/204 character, no outfit)", () => {
+    const pair = { otherCharacterID: "5428", kills: 3, deaths: 1 };
+    assert.deepEqual(opponentRow(pair, null, null), { name: "5428", kills: 3, deaths: 1, kpm: 0 });
+    assert.deepEqual(opponentRow(pair, { name: "Bob", outfitTag: null }, { kpm: 1.5 }), { name: "Bob", kills: 3, deaths: 1, kpm: 1.5 });
+    assert.equal(opponentRow(pair, { name: "Bob", outfitTag: "XYZ" }, null).name, "[XYZ] Bob");
+    assert.equal(opponentRow(null, undefined, undefined).kills, 0);
+  });
+
+  const T = Date.parse("2026-10-07T23:00:00Z");
+  it("never retries real not-found, retries other errors at most 3 times, 15 min apart", () => {
+    assert.equal(retryable(undefined, T), true);
+    assert.equal(retryable({ lastAttemptAt: T - 864e5, fails: 1, lastError: "Census: no character xx" }, T), false);
+    assert.equal(retryable({ lastAttemptAt: T - 864e5, fails: 1, lastError: "Honu: empty killboard for 1" }, T), false);
+    assert.equal(retryable({ lastAttemptAt: T - 864e5, fails: 1, kind: "notfound", lastError: "?" }, T), false);
+    const bug = { lastAttemptAt: T - 3600e3, fails: 1, lastError: "Cannot read properties of null (reading 'outfitTag')" };
+    assert.equal(retryable(bug, T), true);
+    assert.equal(retryable({ ...bug, lastAttemptAt: T - 60e3 }, T), false);
+    assert.equal(retryable({ ...bug, fails: 3, lastError: "The operation was aborted due to timeout" }, T), false);
+  });
+
+  it("retryCandidates: transient failures (new or cached), oldest attempt first", () => {
+    const state = { players: {
+      xrok32: { lastAttemptAt: T - 7200e3, fails: 1, lastOkAt: null, lastError: "Cannot read properties of null (reading 'outfitTag')" },
+      shika: { lastAttemptAt: T - 7200e3, fails: 1, lastOkAt: null, lastError: "Honu: empty killboard for 5" },
+      tolyano: { lastAttemptAt: T - 9000e3, fails: 1, lastOkAt: null, lastError: "The operation was aborted due to timeout" },
+      okafter: { lastAttemptAt: T - 9000e3, fails: 0, lastOkAt: T - 9000e3 },
+      threetimes: { lastAttemptAt: T - 9000e3, fails: 3, lastOkAt: null, lastError: "timeout" },
+    } };
+    assert.deepEqual(retryCandidates({ players: [{ slug: "xrok32" }] }, state, T), ["tolyano", "xrok32"]);
   });
 });
