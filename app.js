@@ -20,7 +20,15 @@
   const LS_CACHE_OLD = "ps2-elite-kd-cache-v1";
   const LS_RECENT = "ps2-elite-kd-recent";
   const LS_LAST = "ps2-elite-kd-last";
+  /** Cross-tab live-fetch flag (GitHub Pages has no shared server file). */
+  const LS_FETCHING = "ps2-elite-kd:fetching";
+  const FETCHING_TTL_MS = 3 * 60 * 1000; // 3 min stale expiry
+  const FETCHING_HEARTBEAT_MS = 30 * 1000;
   const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+  const TAB_ID =
+    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : `t-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
   const DEFAULT_NAMES = ["JustV6me", "ChrisJTTR"];
 
   const DEMO_FILES = {
@@ -57,6 +65,7 @@
     status: document.getElementById("status"),
     progress: document.getElementById("progress"),
     progressText: document.getElementById("progressText"),
+    underLoadNote: document.getElementById("underLoadNote"),
     chart: document.getElementById("chart"),
     chartPlaceholder: document.getElementById("chartPlaceholder"),
     stats: document.getElementById("statsPanel"),
@@ -66,6 +75,18 @@
   let players = [];
   let lastAnalyzedNames = [];
   let fetching = false;
+  /** Nested depth of in-flight live Honu/Census loads owned by this tab. */
+  let liveFetchDepth = 0;
+  let fetchHeartbeatTimer = null;
+  let fetchExpireTimer = null;
+  let fetchBroadcast = null;
+  try {
+    if (typeof BroadcastChannel !== "undefined") {
+      fetchBroadcast = new BroadcastChannel("ps2-elite-kd-fetch");
+    }
+  } catch {
+    fetchBroadcast = null;
+  }
   /** Locked name chips in the token input (order preserved). */
   let nameTokens = [];
 
@@ -87,6 +108,109 @@
       els.progress.hidden = true;
       if (els.progressText) els.progressText.textContent = "";
     }
+    updateUnderLoadNotice();
+  }
+
+  function writeFetchFlag() {
+    const payload = JSON.stringify({ owner: TAB_ID, ts: Date.now() });
+    try {
+      localStorage.setItem(LS_FETCHING, payload);
+    } catch {
+      /* private mode / quota */
+    }
+    if (fetchBroadcast) {
+      try {
+        fetchBroadcast.postMessage({ type: "fetching", owner: TAB_ID, ts: Date.now() });
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
+  function clearFetchFlagIfOwned() {
+    try {
+      const raw = localStorage.getItem(LS_FETCHING);
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      if (!data || data.owner !== TAB_ID) return;
+      localStorage.removeItem(LS_FETCHING);
+    } catch {
+      try {
+        localStorage.removeItem(LS_FETCHING);
+      } catch {
+        /* ignore */
+      }
+    }
+    if (fetchBroadcast) {
+      try {
+        fetchBroadcast.postMessage({ type: "idle", owner: TAB_ID });
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
+  function readFetchFlag() {
+    try {
+      const raw = localStorage.getItem(LS_FETCHING);
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      if (!data || !data.owner || typeof data.ts !== "number") return null;
+      if (Date.now() - data.ts > FETCHING_TTL_MS) {
+        try {
+          localStorage.removeItem(LS_FETCHING);
+        } catch {
+          /* ignore */
+        }
+        return null;
+      }
+      return data;
+    } catch {
+      return null;
+    }
+  }
+
+  function otherTabFetching() {
+    const data = readFetchFlag();
+    return !!(data && data.owner !== TAB_ID);
+  }
+
+  function updateUnderLoadNotice() {
+    if (!els.underLoadNote) return;
+    const show = otherTabFetching();
+    els.underLoadNote.hidden = !show;
+    if (fetchExpireTimer) {
+      clearTimeout(fetchExpireTimer);
+      fetchExpireTimer = null;
+    }
+    const data = readFetchFlag();
+    if (data) {
+      const remaining = FETCHING_TTL_MS - (Date.now() - data.ts) + 100;
+      fetchExpireTimer = setTimeout(updateUnderLoadNotice, Math.max(1000, remaining));
+    }
+  }
+
+  function beginLiveFetch() {
+    liveFetchDepth += 1;
+    writeFetchFlag();
+    if (liveFetchDepth === 1 && !fetchHeartbeatTimer) {
+      fetchHeartbeatTimer = setInterval(() => {
+        if (liveFetchDepth > 0) writeFetchFlag();
+      }, FETCHING_HEARTBEAT_MS);
+    }
+    updateUnderLoadNotice();
+  }
+
+  function endLiveFetch() {
+    liveFetchDepth = Math.max(0, liveFetchDepth - 1);
+    if (liveFetchDepth === 0) {
+      if (fetchHeartbeatTimer) {
+        clearInterval(fetchHeartbeatTimer);
+        fetchHeartbeatTimer = null;
+      }
+      clearFetchFlagIfOwned();
+    }
+    updateUnderLoadNotice();
   }
 
   function isFiniteNum(v) {
@@ -660,6 +784,15 @@
   }
 
   async function loadLive(name) {
+    beginLiveFetch();
+    try {
+      return await loadLiveInner(name);
+    } finally {
+      endLiveFetch();
+    }
+  }
+
+  async function loadLiveInner(name) {
     const c = await resolveCensus(name);
     const cid = c.character_id;
     const outfit = c.outfit || {};
@@ -1343,42 +1476,46 @@
 
     setFetching(true);
     setProgress(true, `Fetching 0/${clean.length}…`);
+    updateUnderLoadNotice();
     setStatus(`Analyzing ${clean.length} player${clean.length > 1 ? "s" : ""}…`);
 
     const loaded = [];
     const errors = [];
     const successNames = [];
 
-    for (let idx = 0; idx < clean.length; idx++) {
-      const name = clean[idx];
-      setProgress(true, `Fetching ${idx + 1}/${clean.length} ${name}…`);
+    try {
+      for (let idx = 0; idx < clean.length; idx++) {
+        const name = clean[idx];
+        setProgress(true, `Fetching ${idx + 1}/${clean.length} ${name}…`);
 
-      // Reuse in-memory player when names changed but this one is still present
-      if (!fresh) {
-        const existing = findLoadedPlayer(name);
-        if (existing && lastAnalyzedNames.some((n) => namesEqualIgnoreCase(n, name))) {
-          loaded.push(existing);
+        // Reuse in-memory player when names changed but this one is still present
+        if (!fresh) {
+          const existing = findLoadedPlayer(name);
+          if (existing && lastAnalyzedNames.some((n) => namesEqualIgnoreCase(n, name))) {
+            loaded.push(existing);
+            successNames.push(name);
+            continue;
+          }
+        }
+
+        try {
+          const p = await loadOne(name, { fresh });
+          loaded.push(p);
           successNames.push(name);
-          continue;
+          cachePut(name, p);
+          setStatus(
+            `Loaded <strong>${escapeHtml(p.display)}</strong> ` +
+            `<span class="src">via ${escapeHtml(sourceLabel(p.source))}</span>…`
+          );
+        } catch (e) {
+          errors.push(`${name}: ${e.message}`);
         }
       }
-
-      try {
-        const p = await loadOne(name, { fresh });
-        loaded.push(p);
-        successNames.push(name);
-        cachePut(name, p);
-        setStatus(
-          `Loaded <strong>${escapeHtml(p.display)}</strong> ` +
-          `<span class="src">via ${escapeHtml(sourceLabel(p.source))}</span>…`
-        );
-      } catch (e) {
-        errors.push(`${name}: ${e.message}`);
-      }
+    } finally {
+      setFetching(false);
+      setProgress(false);
+      updateUnderLoadNotice();
     }
-
-    setFetching(false);
-    setProgress(false);
 
     if (!loaded.length) {
       clearChartUi();
@@ -1586,15 +1723,32 @@
       SLOPE_FLOOR,
       SLOPE_EPS,
       LS_CACHE,
+      LS_FETCHING,
       currentNamesInField,
       isNameFetched,
       getNameTokens: () => nameTokens.slice(),
     };
   }
 
+  window.addEventListener("storage", (e) => {
+    if (e.key === LS_FETCHING || e.key === null) updateUnderLoadNotice();
+  });
+  if (fetchBroadcast) {
+    fetchBroadcast.addEventListener("message", () => {
+      updateUnderLoadNotice();
+    });
+  }
+  window.addEventListener("pagehide", () => {
+    if (liveFetchDepth > 0) clearFetchFlagIfOwned();
+  });
+  window.addEventListener("beforeunload", () => {
+    if (liveFetchDepth > 0) clearFetchFlagIfOwned();
+  });
+
   // Startup — fill chips only; wait for Analyze (Enter still works)
   // Never persist / restore "Fetch fresh"; always start clean on load/refresh.
   if (els.fetchFresh) els.fetchFresh.checked = false;
+  updateUnderLoadNotice();
   const startup = resolveStartupNames();
   setNameTokens(startup.names);
   renderLastLink();
