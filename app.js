@@ -110,10 +110,10 @@ import {
   let progressStartedAt = 0;
   let progressDoneCount = 0;
   let progressTotalCount = 0;
-  /** Frozen avg ms/name; updated only when done increases (so remaining can count down). */
+  /** Frozen avg ms/name; updated only when done increases. */
   let progressAvgPerMs = 0;
-  /** Wall time when done last increased (start of current name). */
-  let progressLastDoneAt = 0;
+  /** Absolute ETA deadline (ms epoch). Counts down each tick; never extended mid-run. */
+  let progressEtaDeadline = 0;
   let progressTickTimer = null;
   /** Nested depth of in-flight live Honu/Census loads owned by this tab. */
   let liveFetchDepth = 0;
@@ -154,7 +154,7 @@ import {
 
   function formatRemaining(ms) {
     if (!Number.isFinite(ms) || ms < 0) return "";
-    const sec = Math.max(0, Math.ceil(ms / 1000));
+    const sec = Math.max(0, Math.floor(ms / 1000));
     if (sec < 60) return `~${sec}s left`;
     const m = Math.floor(sec / 60);
     const s = sec % 60;
@@ -165,13 +165,13 @@ import {
   }
 
   /**
-   * Remaining ETA: avgPerName * namesLeft, minus time already spent on the current name.
-   * Counts down between completions; avg is frozen until the next name finishes.
+   * Remaining from a frozen deadline. Always non-increasing between deadline updates.
+   * @param {number} deadlineMs
+   * @param {number} nowMs
    */
-  function etaRemainingMs(avgPerMs, namesLeft, spentOnCurrentMs) {
-    if (!(avgPerMs > 0) || !(namesLeft > 0)) return NaN;
-    const spent = Math.max(0, Number(spentOnCurrentMs) || 0);
-    return Math.max(0, avgPerMs * namesLeft - spent);
+  function etaRemainingMs(deadlineMs, nowMs) {
+    if (!(deadlineMs > 0)) return NaN;
+    return Math.max(0, deadlineMs - nowMs);
   }
 
   function stopProgressTick() {
@@ -190,9 +190,9 @@ import {
     const left = progressTotalCount - progressDoneCount;
     if (progressTotalCount > 0 && progressDoneCount >= progressTotalCount) {
       remainStr = "Almost done…";
-    } else if (progressAvgPerMs > 0 && left > 0) {
-      const spentOnCurrent = Math.max(0, now - (progressLastDoneAt || progressStartedAt));
-      remainStr = formatRemaining(etaRemainingMs(progressAvgPerMs, left, spentOnCurrent));
+    } else if (progressEtaDeadline > 0 && left > 0) {
+      const remain = etaRemainingMs(progressEtaDeadline, now);
+      remainStr = remain > 0 ? formatRemaining(remain) : "~0s left";
     } else if (progressTotalCount > 0) {
       remainStr = "Estimating…";
     }
@@ -220,7 +220,7 @@ import {
       progressDoneCount = 0;
       progressTotalCount = 0;
       progressAvgPerMs = 0;
-      progressLastDoneAt = 0;
+      progressEtaDeadline = 0;
       if (els.progressText) els.progressText.textContent = "";
       if (els.progressTitle) els.progressTitle.textContent = "Analyzing…";
       if (els.progressBar) els.progressBar.style.width = "0%";
@@ -243,15 +243,27 @@ import {
     const now = Date.now();
     if (!progressStartedAt) {
       progressStartedAt = now;
-      progressLastDoneAt = now;
       progressAvgPerMs = 0;
+      progressEtaDeadline = 0;
     }
     progressDoneCount = done;
     progressTotalCount = total;
-    // Freeze avg on each completed name so tick-time does not inflate remaining.
+    // Recalc avg when a name completes. Deadline = now + avg*left, but never extend
+    // an existing deadline so the displayed remaining cannot climb mid-run.
     if (done > prevDone && done > 0) {
       progressAvgPerMs = (now - progressStartedAt) / done;
-      progressLastDoneAt = now;
+      const left = Math.max(0, total - done);
+      if (left > 0 && progressAvgPerMs > 0) {
+        const tentative = now + progressAvgPerMs * left;
+        // Once set, deadline only moves earlier — remaining never climbs mid-run
+        // (including after an overdue/~0s stretch).
+        progressEtaDeadline =
+          progressEtaDeadline > 0
+            ? Math.min(progressEtaDeadline, tentative)
+            : tentative;
+      } else {
+        progressEtaDeadline = now;
+      }
     }
 
     let pct = 0;
