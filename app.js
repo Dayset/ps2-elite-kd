@@ -1036,6 +1036,36 @@ import {
     renderCacheChips();
   }
 
+  /** Case-insensitive or slug-equal (ignores [TAG] / punctuation). */
+  function namesMatch(a, b) {
+    if (namesEqualIgnoreCase(a, b)) return true;
+    const ka = slugKey(a);
+    return !!ka && ka === slugKey(b);
+  }
+
+  /** Cache chip click: add if absent, remove (chip or trailing text) if present. */
+  function toggleNameInField(name) {
+    const clean = String(name).trim();
+    if (!clean) return;
+    const inTokens = nameTokens.some((n) => namesMatch(n, clean));
+    let inFrag = false;
+    if (els.namesInput && String(els.namesInput.value || "").trim()) {
+      const frag = parseNames(els.namesInput.value);
+      const kept = frag.filter((t) => !namesMatch(t, clean));
+      if (kept.length !== frag.length) {
+        inFrag = true;
+        els.namesInput.value = kept.join(" ");
+      }
+    }
+    if (inTokens || inFrag) {
+      nameTokens = nameTokens.filter((n) => !namesMatch(n, clean));
+      renderNameTokens();
+      renderCacheChips();
+      return;
+    }
+    addNameToField(clean);
+  }
+
   function removeNameToken(name) {
     nameTokens = nameTokens.filter((n) => !namesEqualIgnoreCase(n, name));
     renderNameTokens();
@@ -1114,17 +1144,16 @@ import {
       btn.type = "button";
       btn.className = "chip";
       if (item.source === "shared") btn.classList.add("shared");
-      if (inField.some((n) => namesEqualIgnoreCase(n, item.name))) {
-        btn.classList.add("active");
-      }
+      const selected = inField.some((n) => namesMatch(n, item.name));
+      if (selected) btn.classList.add("active", "selected");
+      btn.setAttribute("aria-pressed", selected ? "true" : "false");
       btn.textContent = item.name;
       const when = item.savedAt
         ? new Date(item.savedAt).toLocaleDateString()
         : "";
-      btn.title = item.source === "shared"
-        ? `Shared cache${when ? ` · ${when}` : ""} — add ${item.name}`
-        : `Browser cache${when ? ` · ${when}` : ""} — add ${item.name}`;
-      btn.addEventListener("click", () => addNameToField(item.name));
+      const src = item.source === "shared" ? "Shared cache" : "Browser cache";
+      btn.title = `${src}${when ? ` · ${when}` : ""} — ${selected ? "remove" : "add"} ${item.name}`;
+      btn.addEventListener("click", () => toggleNameInField(item.name));
       return btn;
     }
 
