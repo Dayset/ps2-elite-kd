@@ -1044,38 +1044,62 @@ import {
     if (!els.cacheChips) return;
     const cached = listCachedNames();
     const inField = currentNamesInField();
+    const wasSharedOpen = !!els.cacheChips.querySelector("details.cache-shared")?.open;
     els.cacheChips.innerHTML = "";
     if (!cached.length) return;
 
-    function appendGroup(title, items) {
-      if (!items.length) return;
+    function sortAlpha(items) {
+      return [...items].sort((a, b) =>
+        String(a.name).localeCompare(String(b.name), undefined, { sensitivity: "base" })
+      );
+    }
+
+    function makeChip(item) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "chip";
+      if (item.source === "shared") btn.classList.add("shared");
+      if (inField.some((n) => namesEqualIgnoreCase(n, item.name))) {
+        btn.classList.add("active");
+      }
+      btn.textContent = item.name;
+      const when = item.savedAt
+        ? new Date(item.savedAt).toLocaleDateString()
+        : "";
+      btn.title = item.source === "shared"
+        ? `Shared cache${when ? ` · ${when}` : ""} — add ${item.name}`
+        : `Browser cache${when ? ` · ${when}` : ""} — add ${item.name}`;
+      btn.addEventListener("click", () => addNameToField(item.name));
+      return btn;
+    }
+
+    const shared = sortAlpha(cached.filter((c) => c.source === "shared"));
+    const browser = sortAlpha(cached.filter((c) => c.source !== "shared"));
+
+    if (shared.length) {
+      const details = document.createElement("details");
+      details.className = "cache-shared";
+      // Collapsed by default; preserve open state across re-renders (e.g. chip click).
+      if (wasSharedOpen) details.open = true;
+      const summary = document.createElement("summary");
+      summary.textContent = `📦 Shared cache (${shared.length})`;
+      details.appendChild(summary);
+      const inner = document.createElement("div");
+      inner.className = "cache-shared-chips";
+      inner.setAttribute("aria-label", "Shared cached character names");
+      for (const item of shared) inner.appendChild(makeChip(item));
+      details.appendChild(inner);
+      els.cacheChips.appendChild(details);
+    }
+
+    if (browser.length) {
       const label = document.createElement("span");
       label.className = "fresh-hint";
       label.style.marginRight = "0.35rem";
-      label.textContent = title;
+      label.textContent = "💾 Browser:";
       els.cacheChips.appendChild(label);
-      for (const item of items) {
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "chip";
-        if (item.source === "shared") btn.classList.add("shared");
-        if (inField.some((n) => namesEqualIgnoreCase(n, item.name))) {
-          btn.classList.add("active");
-        }
-        btn.textContent = item.name;
-        const when = item.savedAt
-          ? new Date(item.savedAt).toLocaleDateString()
-          : "";
-        btn.title = item.source === "shared"
-          ? `Shared cache${when ? ` · ${when}` : ""} — add ${item.name}`
-          : `Browser cache${when ? ` · ${when}` : ""} — add ${item.name}`;
-        btn.addEventListener("click", () => addNameToField(item.name));
-        els.cacheChips.appendChild(btn);
-      }
+      for (const item of browser) els.cacheChips.appendChild(makeChip(item));
     }
-
-    appendGroup("📦 Shared:", cached.filter((c) => c.source === "shared"));
-    appendGroup("💾 Browser:", cached.filter((c) => c.source !== "shared"));
   }
 
   function renderLastLink() {

@@ -461,9 +461,45 @@ header .sub {
   flex-wrap: wrap;
   gap: 0.35rem;
   min-height: 0;
+  align-items: center;
 }
 
 .cache-chips:empty { display: none; }
+
+/* Collapsible shared-cache chip list (matches Public Census details style) */
+.cache-shared {
+  flex: 1 1 100%;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.35rem 0.6rem 0.4rem;
+  margin: 0;
+}
+
+.cache-shared > summary {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+}
+
+.cache-shared > summary::-webkit-details-marker { display: none; }
+
+.cache-shared > summary::before {
+  content: "▸ ";
+  color: var(--dim);
+}
+
+.cache-shared[open] > summary::before { content: "▾ "; }
+
+.cache-shared-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.4rem;
+}
 
 .chip {
   appearance: none;
