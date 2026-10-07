@@ -45,7 +45,9 @@
   };
 
   const els = {
-    names: document.getElementById("names"),
+    namesBox: document.getElementById("namesBox"),
+    nameTokensEl: document.getElementById("nameTokens"),
+    namesInput: document.getElementById("namesInput") || document.getElementById("names"),
     analyzeBtn: document.getElementById("analyzeBtn") || document.getElementById("loadBtn"),
     copyLinkBtn: document.getElementById("copyLinkBtn"),
     clearMemBtn: document.getElementById("clearMemBtn"),
@@ -63,6 +65,8 @@
   let players = [];
   let lastAnalyzedNames = [];
   let fetching = false;
+  /** Locked name chips in the token input (order preserved). */
+  let nameTokens = [];
 
   function ns(tag) {
     return document.createElementNS("http://www.w3.org/2000/svg", tag);
@@ -381,6 +385,7 @@
     };
     pruneCache(store);
     writeJsonLS(LS_CACHE, store);
+    renderNameTokens();
     renderCacheChips();
   }
 
@@ -418,31 +423,107 @@
       localStorage.removeItem(LS_RECENT);
       localStorage.removeItem(LS_LAST);
     } catch { /* ignore */ }
+    renderNameTokens();
     renderCacheChips();
     renderLastLink();
   }
 
-  /* ---------- chips / last link ---------- */
+  /* ---------- tokenized name input / chips / last link ---------- */
 
-  function currentNamesInField() {
-    return parseNames(els.names.value);
+  function isNameFetched(name) {
+    if (cacheGet(name)) return true;
+    const slug = slugKey(name);
+    if (players.some((p) => slugKey(p.display) === slug || namesEqualIgnoreCase(p.display, name))) {
+      return true;
+    }
+    if (lastAnalyzedNames.some((n) => namesEqualIgnoreCase(n, name) || slugKey(n) === slug)) {
+      return true;
+    }
+    return false;
+  }
+
+  function setNameTokens(names) {
+    const seen = new Set();
+    nameTokens = [];
+    for (const raw of names || []) {
+      const clean = String(raw).trim();
+      if (!clean) continue;
+      const key = clean.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      nameTokens.push(clean);
+      if (nameTokens.length >= 10) break;
+    }
+    if (els.namesInput) els.namesInput.value = "";
+    renderNameTokens();
+    renderCacheChips();
   }
 
   function addNameToField(name) {
     const clean = String(name).trim();
     if (!clean) return;
-    const existing = currentNamesInField();
-    if (!existing.length) {
-      els.names.value = clean;
+    if (nameTokens.some((n) => namesEqualIgnoreCase(n, clean))) {
+      renderNameTokens();
       renderCacheChips();
       return;
     }
-    if (existing.some((n) => namesEqualIgnoreCase(n, clean))) {
-      renderCacheChips();
+    if (nameTokens.length >= 10) {
+      setStatus('<span class="warn">Max 10 names</span>', "warn");
       return;
     }
-    els.names.value = existing.concat(clean).join(" ");
+    nameTokens.push(clean);
+    renderNameTokens();
     renderCacheChips();
+  }
+
+  function removeNameToken(name) {
+    nameTokens = nameTokens.filter((n) => !namesEqualIgnoreCase(n, name));
+    renderNameTokens();
+    renderCacheChips();
+  }
+
+  function renderNameTokens() {
+    if (!els.nameTokensEl) return;
+    els.nameTokensEl.innerHTML = "";
+    nameTokens.forEach((name) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "name-token " + (isNameFetched(name) ? "fetched" : "unfetched");
+      btn.textContent = name;
+      btn.setAttribute("aria-label", `Remove ${name}`);
+      btn.title = `Remove ${name}`;
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        removeNameToken(name);
+      });
+      els.nameTokensEl.appendChild(btn);
+    });
+  }
+
+  /** Commit trailing raw input into chips (separator flush or Analyze/Enter). */
+  function commitFragment({ clearInput = true } = {}) {
+    if (!els.namesInput) return [];
+    const raw = els.namesInput.value;
+    const tokens = parseNames(raw);
+    for (const t of tokens) addNameToField(t);
+    if (clearInput) els.namesInput.value = "";
+    return tokens;
+  }
+
+  /**
+   * Names for Analyze / share: locked chips + unfinished trailing text
+   * if it parses as a complete name (no trailing separator required).
+   */
+  function currentNamesInField() {
+    const out = nameTokens.slice();
+    const frag = els.namesInput ? String(els.namesInput.value || "").trim() : "";
+    if (frag) {
+      for (const t of parseNames(frag)) {
+        if (!out.some((n) => namesEqualIgnoreCase(n, t))) out.push(t);
+      }
+    }
+    return out.slice(0, 10);
   }
 
   function renderCacheChips() {
@@ -1311,6 +1392,8 @@
     lastAnalyzedNames = successNames.slice();
     drawChart(players);
     saveLastComparison(successNames);
+    renderNameTokens();
+    renderCacheChips();
 
     const srcBits = loaded
       .map((p) => `${escapeHtml(p.display)} ← ${escapeHtml(sourceLabel(p.source))}`)
@@ -1388,7 +1471,8 @@
 
   if (els.analyzeBtn) {
     els.analyzeBtn.addEventListener("click", () => {
-      const names = parseNames(els.names.value);
+      commitFragment({ clearInput: true });
+      const names = currentNamesInField();
       if (!names.length) {
         clearChartUi();
         setStatus('<span class="err">Enter at least one character name (spaces or commas).</span>', "err");
@@ -1398,19 +1482,65 @@
     });
   }
 
-  els.names.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      if (!fetching && els.analyzeBtn) els.analyzeBtn.click();
-    }
-  });
+  if (els.namesInput) {
+    els.namesInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        commitFragment({ clearInput: true });
+        if (!fetching && els.analyzeBtn) els.analyzeBtn.click();
+        return;
+      }
+      if (e.key === "Backspace" && !els.namesInput.value && nameTokens.length) {
+        e.preventDefault();
+        nameTokens.pop();
+        renderNameTokens();
+        renderCacheChips();
+      }
+    });
 
-  els.names.addEventListener("input", () => {
-    renderCacheChips();
-  });
+    els.namesInput.addEventListener("input", () => {
+      const val = els.namesInput.value;
+      // Completed token(s) when text ends with a separator
+      if (/[\s,;]$/.test(val)) {
+        const tokens = parseNames(val);
+        for (const t of tokens) addNameToField(t);
+        els.namesInput.value = "";
+      }
+      renderCacheChips();
+    });
+
+    els.namesInput.addEventListener("blur", () => {
+      // Do not auto-commit on blur — only separator / Analyze / Enter
+      renderCacheChips();
+    });
+
+    els.namesInput.addEventListener("paste", () => {
+      // Bulk paste: lock every complete token parseNames finds (keeps [TAG] Name intact)
+      requestAnimationFrame(() => {
+        const val = els.namesInput.value;
+        if (!/[,;\s]/.test(val)) {
+          renderCacheChips();
+          return;
+        }
+        const tokens = parseNames(val);
+        for (const t of tokens) addNameToField(t);
+        if (tokens.length) els.namesInput.value = "";
+        renderCacheChips();
+      });
+    });
+  }
+
+  if (els.namesBox) {
+    els.namesBox.addEventListener("click", (e) => {
+      if (e.target === els.namesBox || e.target === els.nameTokensEl) {
+        if (els.namesInput) els.namesInput.focus();
+      }
+    });
+  }
 
   if (els.copyLinkBtn) {
     els.copyLinkBtn.addEventListener("click", () => {
+      commitFragment({ clearInput: true });
       copyShareLink();
     });
   }
@@ -1443,13 +1573,15 @@
       SLOPE_FLOOR,
       SLOPE_EPS,
       LS_CACHE,
+      currentNamesInField,
+      isNameFetched,
+      getNameTokens: () => nameTokens.slice(),
     };
   }
 
-  // Startup — fill names / chips only; wait for Analyze (Enter still works)
+  // Startup — fill chips only; wait for Analyze (Enter still works)
   const startup = resolveStartupNames();
-  els.names.value = startup.names.join(" ");
-  renderCacheChips();
+  setNameTokens(startup.names);
   renderLastLink();
   showIdleChart("Press Analyze");
   const reasonNote =

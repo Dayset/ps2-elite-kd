@@ -65,6 +65,86 @@ header .sub {
   color: var(--muted);
 }
 
+/* Tokenized name field — one wide control matching Analyze height */
+.names-box {
+  flex: 1 1 280px;
+  min-width: 180px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  background: #0f1114;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.28rem 0.45rem;
+  min-height: 2.35rem;
+  cursor: text;
+}
+
+.names-box:focus-within {
+  outline: 1px solid var(--accent);
+  border-color: var(--accent);
+}
+
+.name-tokens {
+  display: contents;
+}
+
+.names-box input#namesInput {
+  flex: 1 1 8rem;
+  min-width: 6rem;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  padding: 0.2rem 0.25rem;
+  font-size: 0.95rem;
+  min-height: 1.6rem;
+  outline: none;
+}
+
+.names-box input#namesInput:focus {
+  outline: none;
+  border: none;
+}
+
+/* Name chips inside the input box */
+.name-token {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  cursor: pointer;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.name-token.fetched {
+  background: rgba(142, 240, 176, 0.14);
+  color: #8ef0b0;
+  border: 1px solid rgba(142, 240, 176, 0.55);
+}
+
+.name-token.unfetched {
+  background: rgba(255, 209, 102, 0.1);
+  color: #ffd166;
+  border: 1px solid rgba(255, 209, 102, 0.45);
+}
+
+.name-token:hover {
+  filter: brightness(1.12);
+}
+
+.name-token:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
 .controls input[type="text"] {
   flex: 1 1 280px;
   min-width: 180px;

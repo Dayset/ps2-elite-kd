@@ -29,7 +29,7 @@ Then open http://127.0.0.1:8080/
 
 On open: names are filled from `?names=`, last comparison, or demo defaults (**JustV6me**, **ChrisJTTR**) — chart stays idle until you press **Analyze** (or Enter).
 
-Enter more names (comma-separated) and click **Analyze**, or press **Enter**. The page tries, in order:
+Type a name and press **space** or **comma** to lock it as a chip (click a chip to remove). Green chips are cached/already analyzed; amber means not fetched yet. Click **Analyze** or press **Enter**. The page tries, in order:
 
 1. Bundled `./data/<slug>.json`
 2. Browser **localStorage** payload cache
@@ -41,9 +41,10 @@ Status text reports which source was used per player.
 
 | Feature | Details |
 |---------|---------|
-| Cached names | All names currently in the payload cache shown as chips (`ps2-elite-kd-cache-v2`, ~30-day TTL). Click a chip to add that name. |
+| Name chips | Players field is a token box: space/comma locks a name; click to unlock/remove. Fetched = green, unfetched = amber. |
+| Cached names | All names in the payload cache shown below the field (`ps2-elite-kd-cache-v2`, ~30-day TTL). Click to add. |
 | Payload cache | After a successful load (local or live), trimmed player objects are stored in `ps2-elite-kd-cache-v2` as `{ savedAt, player }`, keyed by normalized name. Expired after 30 days. |
-| Last comparison | Successful name lists saved in `ps2-elite-kd-last` and restored into the input on next open (falls back to JustV6me, ChrisJTTR); Analyze still required. |
+| Last comparison | Successful name lists saved in `ps2-elite-kd-last` and restored as chips on next open (falls back to JustV6me, ChrisJTTR); Analyze still required. |
 | Clear memory | Button clears recent names, payload cache, and last comparison (confirms via `window.confirm`). |
 | Copy link | Builds and copies a shareable URL like `?names=JustV6me,ChrisJTTR`. Query param is honored on load. |
 | Polish | Analyze disabled while fetching with progress text; skip refetch when names unchanged (unless **Fetch fresh data**); Enter submits; Public/Adjusted stats table under the chart. |
