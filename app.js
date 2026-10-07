@@ -227,8 +227,7 @@
     const { kd: kd15, deaths: d15, n: n15 } = sliceAt(p.rows || [], 1.5);
     const gkd = +p.global_kd || 0;
     const inflation = isFiniteNum(kd15) && kd15 > 0.05 ? gkd / kd15 : NaN;
-    const strength = isFiniteNum(kd15) ? kd15 * Math.log10(1.0 + (d15 || 0)) : NaN;
-    return { kd15, d15, n15, inflation, strength };
+    return { kd15, d15, n15, inflation };
   }
 
   function normalizePlayer(raw) {
@@ -1166,7 +1165,6 @@
         adj: adjustedIvi(ivi, rf),
         kd15: dm.kd15,
         inflation: dm.inflation,
-        strength: dm.strength,
       };
     });
 
@@ -1205,7 +1203,6 @@
       <tr><td>adjIvI</td>${cells((r) => r.adj, 0)}</tr>
       <tr><td>KD@1.5</td>${cells((r) => r.kd15, 2)}</tr>
       <tr><td>inflation</td>${cells((r) => r.inflation, 2)}</tr>
-      <tr><td>strength</td>${cells((r) => r.strength, 2)}</tr>
     `;
 
     els.stats.innerHTML = `
