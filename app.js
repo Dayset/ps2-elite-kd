@@ -63,8 +63,13 @@
     lastLink: document.getElementById("lastLink"),
     status: document.getElementById("status"),
     progress: document.getElementById("progress"),
+    progressTitle: document.getElementById("progressTitle"),
     progressText: document.getElementById("progressText"),
+    progressBar: document.getElementById("progressBar"),
+    progressPct: document.getElementById("progressPct"),
+    progressEta: document.getElementById("progressEta"),
     underLoadNote: document.getElementById("underLoadNote"),
+    underLoadInModal: document.getElementById("underLoadInModal"),
     chart: document.getElementById("chart"),
     chartPlaceholder: document.getElementById("chartPlaceholder"),
     stats: document.getElementById("statsPanel"),
@@ -74,6 +79,9 @@
   let players = [];
   let lastAnalyzedNames = [];
   let fetching = false;
+  /** Progress modal timing for ETA (names completed). */
+  let progressStartedAt = 0;
+  let progressDoneCount = 0;
   /** Nested depth of in-flight live Honu/Census loads owned by this tab. */
   let liveFetchDepth = 0;
   let fetchHeartbeatTimer = null;
@@ -101,15 +109,94 @@
     els.status.className = cls || "";
   }
 
-  function setProgress(show, text) {
+  function formatEta(ms) {
+    if (!Number.isFinite(ms) || ms < 0) return "";
+    const sec = Math.max(0, Math.ceil(ms / 1000));
+    if (sec < 60) return `~${sec}s left`;
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    if (m < 60) return s ? `~${m}m ${s}s left` : `~${m}m left`;
+    const h = Math.floor(m / 60);
+    const rm = m % 60;
+    return rm ? `~${h}h ${rm}m left` : `~${h}h left`;
+  }
+
+  /**
+   * Show/hide the analyzing popup.
+   * @param {boolean} show
+   * @param {string|object} [info] plain text or { title, text, done, total, name, phase }
+   */
+  function setProgress(show, info) {
     if (!els.progress) return;
-    if (show) {
-      els.progress.hidden = false;
-      if (els.progressText) els.progressText.textContent = text || "⏳ Fetching…";
-    } else {
+    if (!show) {
       els.progress.hidden = true;
+      els.progress.setAttribute("aria-hidden", "true");
+      document.body.classList.remove("progress-open");
+      progressStartedAt = 0;
+      progressDoneCount = 0;
       if (els.progressText) els.progressText.textContent = "";
+      if (els.progressTitle) els.progressTitle.textContent = "Analyzing…";
+      if (els.progressBar) els.progressBar.style.width = "0%";
+      if (els.progressPct) els.progressPct.textContent = "0%";
+      if (els.progressEta) els.progressEta.textContent = "";
+      updateUnderLoadNotice();
+      return;
     }
+
+    const opts =
+      typeof info === "string" || info == null
+        ? { text: info || "⏳ Fetching…" }
+        : info;
+
+    const total = Math.max(0, Number(opts.total) || 0);
+    const done = Math.max(0, Math.min(total || Infinity, Number(opts.done) || 0));
+    const phase = opts.phase || (done > 0 || total > 0 ? "Fetching" : "Analyzing");
+    const name = opts.name ? String(opts.name) : "";
+
+    if (!progressStartedAt) progressStartedAt = Date.now();
+    progressDoneCount = done;
+
+    let pct = 0;
+    if (total > 0) pct = Math.round((done / total) * 100);
+    pct = Math.max(0, Math.min(100, pct));
+
+    let text = opts.text;
+    if (!text) {
+      if (total > 0) {
+        text = name
+          ? `⏳ ${phase} ${done}/${total} — ${name}`
+          : `⏳ ${phase} ${done}/${total}…`;
+      } else {
+        text = `⏳ ${phase}…`;
+      }
+    }
+
+    let title = opts.title;
+    if (!title) {
+      if (total > 0 && done >= total) title = "Finishing…";
+      else if (phase.toLowerCase().includes("analy")) title = "Analyzing…";
+      else title = "Fetching…";
+    }
+
+    let etaText = "";
+    if (total > 0 && done > 0 && done < total && progressStartedAt) {
+      const elapsed = Date.now() - progressStartedAt;
+      const per = elapsed / done;
+      etaText = formatEta(per * (total - done));
+    } else if (total > 0 && done >= total) {
+      etaText = "Almost done…";
+    } else if (total > 0 && done === 0) {
+      etaText = "Estimating…";
+    }
+
+    els.progress.hidden = false;
+    els.progress.setAttribute("aria-hidden", "false");
+    document.body.classList.add("progress-open");
+    if (els.progressTitle) els.progressTitle.textContent = title;
+    if (els.progressText) els.progressText.textContent = text;
+    if (els.progressBar) els.progressBar.style.width = `${pct}%`;
+    if (els.progressPct) els.progressPct.textContent = `${pct}%`;
+    if (els.progressEta) els.progressEta.textContent = etaText;
     updateUnderLoadNotice();
   }
 
@@ -217,9 +304,16 @@
   }
 
   function updateUnderLoadNotice() {
-    if (!els.underLoadNote) return;
     const show = otherTabFetching() || serverSideFetching();
-    els.underLoadNote.hidden = !show;
+    const modalOpen = !!(els.progress && !els.progress.hidden);
+    if (els.underLoadNote) {
+      // Page banner only when modal is closed (other tab / Actions refresh).
+      els.underLoadNote.hidden = !show || modalOpen;
+    }
+    if (els.underLoadInModal) {
+      // Keep under-load visible inside the analyzing popup when applicable.
+      els.underLoadInModal.hidden = !show || !modalOpen;
+    }
     if (fetchExpireTimer) {
       clearTimeout(fetchExpireTimer);
       fetchExpireTimer = null;
@@ -1806,7 +1900,13 @@
     }
 
     setFetching(true);
-    setProgress(true, `⏳ Fetching 0/${clean.length}…`);
+    progressStartedAt = Date.now();
+    setProgress(true, {
+      title: "Analyzing…",
+      phase: "Fetching",
+      done: 0,
+      total: clean.length,
+    });
     updateUnderLoadNotice();
     setStatus(`Analyzing ${clean.length} player${clean.length > 1 ? "s" : ""}…`);
 
@@ -1817,7 +1917,13 @@
     try {
       for (let idx = 0; idx < clean.length; idx++) {
         const name = clean[idx];
-        setProgress(true, `⏳ Fetching ${idx + 1}/${clean.length} ${name}…`);
+        setProgress(true, {
+          title: "Fetching…",
+          phase: "Fetching",
+          done: idx,
+          total: clean.length,
+          name,
+        });
 
         // Reuse in-memory player when names changed but this one is still present
         if (!fresh) {
@@ -1825,6 +1931,13 @@
           if (existing && lastAnalyzedNames.some((n) => namesEqualIgnoreCase(n, name))) {
             loaded.push(existing);
             successNames.push(name);
+            setProgress(true, {
+              title: "Fetching…",
+              phase: "Fetching",
+              done: idx + 1,
+              total: clean.length,
+              name,
+            });
             continue;
           }
         }
@@ -1841,6 +1954,14 @@
         } catch (e) {
           errors.push(`${name}: ${e.message}`);
         }
+
+        setProgress(true, {
+          title: idx + 1 >= clean.length ? "Finishing…" : "Fetching…",
+          phase: "Fetching",
+          done: idx + 1,
+          total: clean.length,
+          name,
+        });
       }
     } finally {
       setFetching(false);
