@@ -42,7 +42,7 @@
   let sharedIndexLoaded = false;
 
   const VB = { w: 1000, h: 580 };
-  const M = { t: 36, r: 56, b: 72, l: 56 };
+  const M = { t: 20, r: 56, b: 72, l: 56 };
   const PLOT = {
     x: M.l,
     y: M.t,
@@ -1226,15 +1226,6 @@
     border.setAttribute("stroke-width", "1");
     svg.appendChild(border);
 
-    const title = ns("text");
-    title.setAttribute("x", PLOT.x);
-    title.setAttribute("y", 22);
-    title.setAttribute("fill", th.text);
-    title.setAttribute("font-size", "16");
-    title.setAttribute("font-weight", "600");
-    title.textContent = "🦁 Elite K/D vs Enemy 💪 KPM";
-    svg.appendChild(title);
-
     const ylab = ns("text");
     ylab.setAttribute("x", PLOT.x + PLOT.w + 44);
     ylab.setAttribute("y", PLOT.y + PLOT.h / 2);
@@ -1532,7 +1523,7 @@
       { id: "mech", label: "⚙️ Mech%", hint: "Projected mechanized / vehicle share implied by Resistance.", fn: (r) => r.mech, digits: 1 },
       { id: "slope", label: "📉 Slope", hint: "K/D drop from easier (25%) to harder (75%) opposition — steeper is worse under pressure.", fn: (r) => r.slope, digits: 2 },
       { id: "pvs", label: "🦁 LionHeart", hint: "Activity × pressure slope — sustained elite volume under hard opposition.", fn: (r) => r.pvs, digits: 2 },
-      { id: "inflation", label: "🎈 inflation", hint: "Global KD ÷ KD at ≥1.5 enemy KPM — how much soft opposition inflates your KD.", fn: (r) => r.inflation, digits: 2 },
+      { id: "inflation", label: "🎈 Projected K/D", hint: "Global KD ÷ KD at ≥1.5 enemy KPM — how much soft opposition inflates your KD (Projected K/D ratio).", fn: (r) => r.inflation, digits: 2 },
     ];
 
     function sortRows(rows, cols, state) {

@@ -8,8 +8,8 @@ on:
         required: false
         default: ""
   schedule:
-    # Weekly Sunday 12:00 UTC
-    - cron: "0 12 * * 0"
+    # Hourly at minute 0 UTC
+    - cron: "0 * * * *"
 
 permissions:
   contents: write

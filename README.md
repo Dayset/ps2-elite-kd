@@ -117,6 +117,6 @@ Shared player JSON lives under `data/` and is committed by the **Refresh shared 
 2. Optional `names` input (e.g. `JustV6me ChrisJTTR`); empty uses `data/watchlist.txt` + existing index
 3. Workflow raises `data/load-flag.json` (`fetching: true`), fetches Honu/Census, writes `data/players/*.json` + `index.json`, then clears the flag
 
-Weekly schedule: Sunday 12:00 UTC.
+Hourly schedule: every hour at minute 0 UTC (`0 * * * *`).
 
 Live site: https://dayset.github.io/ps2-elite-kd/
