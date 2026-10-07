@@ -5,14 +5,19 @@ Dark-themed SVG chart comparing PlanetSide 2 characters by how their projected K
 ## Files
 
 ```
-ps2-elite-kd-web/
-  index.html      # page shell
-  styles.css      # dark theme (#0b0c0e / #14161a)
-  app.js          # chart + loaders + localStorage QoL
+ps2-elite-kd/
+  index.html
+  styles.css
+  app.js
+  assets/
   data/
-    justv6me.json
-    chrisjttr.json
-    index.json
+    index.json           # shared catalog (name, slug, file, savedAt)
+    watchlist.txt        # names for scheduled Action refreshes
+    load-flag.json       # Actions under-load signal
+    players/<slug>.json  # shared per-player snapshots
+    README.md
+  scripts/refresh-cache.mjs
+  .github/workflows/refresh-cache.yml
   README.md
 ```
 
@@ -31,9 +36,11 @@ On open: names are filled from `?names=`, last comparison, or demo defaults (**J
 
 Type a name and press **space** or **comma** to lock it as a chip (click a chip to remove). Green chips are cached/already analyzed; amber means not fetched yet. Click **Analyze** or press **Enter**. The page tries, in order:
 
-1. Bundled `./data/<slug>.json`
-2. Browser **localStorage** payload cache
+1. Shared `./data/players/<slug>.json` (from `data/index.json`, refreshed by GitHub Actions)
+2. Browser **localStorage** payload cache (personal overlay, ~30-day TTL)
 3. Live Census + Honu (`wt.honu.pw`) when CORS/network allow
+
+**Fetch fresh data** skips caches and hits live only. The static site cannot write the shared `data/` cache or under-load flag — use **Actions → Refresh shared cache**.
 
 Status text reports which source was used per player.
 

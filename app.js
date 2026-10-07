@@ -20,28 +20,25 @@
   const LS_CACHE_OLD = "ps2-elite-kd-cache-v1";
   const LS_RECENT = "ps2-elite-kd-recent";
   const LS_LAST = "ps2-elite-kd-last";
-  /** Cross-tab live-fetch flag (GitHub Pages has no shared server file). */
+  /** Cross-tab live-fetch flag (browser-local). */
   const LS_FETCHING = "ps2-elite-kd:fetching";
   const FETCHING_TTL_MS = 3 * 60 * 1000; // 3 min stale expiry
   const FETCHING_HEARTBEAT_MS = 30 * 1000;
+  /** Shared Actions under-load flag on Pages (data/load-flag.json). */
+  const SERVER_LOAD_FLAG_URL = "data/load-flag.json";
+  const SERVER_LOAD_FLAG_TTL_MS = 20 * 60 * 1000; // 20 min freshness
+  const SERVER_LOAD_FLAG_POLL_MS = 30 * 1000;
   const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
   const TAB_ID =
     typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
       ? crypto.randomUUID()
       : `t-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
   const DEFAULT_NAMES = ["JustV6me", "ChrisJTTR"];
+  const SHARED_INDEX_URL = "data/index.json";
 
-  const DEMO_FILES = {
-    justv6me: "data/justv6me.json",
-    chrisjttr: "data/chrisjttr.json",
-  };
-  const ALIAS_TO_FILE = {
-    justv6me: "justv6me",
-    justv6: "justv6me",
-    chrisjttr: "chrisjttr",
-    chris: "chrisjttr",
-    "[1tc] chrisjttr": "chrisjttr",
-  };
+  /** Catalog from data/index.json (shared Pages cache). */
+  let sharedIndex = { updatedAt: null, players: [] };
+  let sharedIndexLoaded = false;
 
   const VB = { w: 1000, h: 580 };
   const M = { t: 36, r: 56, b: 72, l: 48 };
@@ -79,6 +76,9 @@
   let liveFetchDepth = 0;
   let fetchHeartbeatTimer = null;
   let fetchExpireTimer = null;
+  let serverLoadPollTimer = null;
+  /** Last known Actions load-flag state (null = unknown / idle). */
+  let serverLoadFlag = null;
   let fetchBroadcast = null;
   try {
     if (typeof BroadcastChannel !== "undefined") {
@@ -175,18 +175,64 @@
     return !!(data && data.owner !== TAB_ID);
   }
 
+  function serverSideFetching() {
+    const f = serverLoadFlag;
+    if (!f || !f.fetching) return false;
+    const ts = typeof f.ts === "number" ? f.ts : 0;
+    if (!ts || Date.now() - ts > SERVER_LOAD_FLAG_TTL_MS) return false;
+    return true;
+  }
+
+  async function pollServerLoadFlag() {
+    try {
+      const url = `${SERVER_LOAD_FLAG_URL}?t=${Date.now()}`;
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) {
+        serverLoadFlag = null;
+      } else {
+        const data = await res.json();
+        serverLoadFlag =
+          data && typeof data === "object"
+            ? {
+                fetching: !!data.fetching,
+                ts: typeof data.ts === "number" ? data.ts : 0,
+                source: data.source || "actions",
+                runId: data.runId || null,
+                message: data.message || null,
+              }
+            : null;
+      }
+    } catch {
+      /* offline / blocked — keep last known */
+    }
+    updateUnderLoadNotice();
+  }
+
+  function startServerLoadFlagPolling() {
+    if (serverLoadPollTimer) return;
+    pollServerLoadFlag();
+    serverLoadPollTimer = setInterval(pollServerLoadFlag, SERVER_LOAD_FLAG_POLL_MS);
+  }
+
   function updateUnderLoadNotice() {
     if (!els.underLoadNote) return;
-    const show = otherTabFetching();
+    const show = otherTabFetching() || serverSideFetching();
     els.underLoadNote.hidden = !show;
     if (fetchExpireTimer) {
       clearTimeout(fetchExpireTimer);
       fetchExpireTimer = null;
     }
     const data = readFetchFlag();
+    let nextMs = null;
     if (data) {
-      const remaining = FETCHING_TTL_MS - (Date.now() - data.ts) + 100;
-      fetchExpireTimer = setTimeout(updateUnderLoadNotice, Math.max(1000, remaining));
+      nextMs = FETCHING_TTL_MS - (Date.now() - data.ts) + 100;
+    }
+    if (serverSideFetching() && serverLoadFlag && serverLoadFlag.ts) {
+      const rem = SERVER_LOAD_FLAG_TTL_MS - (Date.now() - serverLoadFlag.ts) + 100;
+      nextMs = nextMs == null ? rem : Math.min(nextMs, rem);
+    }
+    if (nextMs != null) {
+      fetchExpireTimer = setTimeout(updateUnderLoadNotice, Math.max(1000, nextMs));
     }
   }
 
@@ -444,7 +490,66 @@
       .join("\0");
   }
 
+  /* ---------- shared data/ cache (GitHub Pages / Actions) ---------- */
+
+  async function loadSharedIndex() {
+    try {
+      const data = await fetchJson(SHARED_INDEX_URL);
+      let players = [];
+      if (Array.isArray(data.players)) {
+        players = data.players;
+      } else if (Array.isArray(data.demos)) {
+        // legacy index shape
+        players = data.demos.map((d) => ({
+          name: d.name,
+          file: d.file && String(d.file).startsWith("players/")
+            ? d.file
+            : `players/${d.file || ""}`,
+          slug: slugKey(d.name),
+          savedAt: d.savedAt || 0,
+          aliases: d.aliases || [],
+        }));
+      }
+      sharedIndex = {
+        updatedAt: data.updatedAt || null,
+        players: players.filter((p) => p && p.name),
+      };
+    } catch {
+      sharedIndex = { updatedAt: null, players: [] };
+    }
+    sharedIndexLoaded = true;
+    return sharedIndex;
+  }
+
+  function findSharedEntry(name) {
+    const key = slugKey(name);
+    const lower = String(name || "").trim().toLowerCase();
+    for (const p of sharedIndex.players || []) {
+      if (!p) continue;
+      if ((p.slug && p.slug === key) || slugKey(p.name) === key) return p;
+      if (String(p.name || "").trim().toLowerCase() === lower) return p;
+      const aliases = p.aliases || [];
+      for (const a of aliases) {
+        if (String(a).toLowerCase() === lower || slugKey(a) === key) return p;
+      }
+    }
+    return null;
+  }
+
+  function listSharedNames() {
+    return (sharedIndex.players || [])
+      .filter((p) => p && p.name)
+      .map((p) => ({
+        key: p.slug || slugKey(p.name),
+        name: p.name,
+        savedAt: +p.savedAt || 0,
+        source: "shared",
+      }))
+      .sort((a, b) => b.savedAt - a.savedAt);
+  }
+
   /* ---------- localStorage helpers ---------- */
+
 
   function readJsonLS(key, fallback) {
     try {
@@ -514,19 +619,23 @@
   }
 
   function listCachedNames() {
+    const byKey = new Map();
+    for (const item of listSharedNames()) {
+      byKey.set(item.key, item);
+    }
     const store = getCache();
-    const items = [];
     for (const key of Object.keys(store)) {
       const entry = store[key];
       if (!entry || !entry.player) continue;
-      items.push({
+      if (byKey.has(key)) continue; // shared wins for chip identity
+      byKey.set(key, {
         key,
         name: entry.name || entry.player.display || key,
         savedAt: entry.savedAt || 0,
+        source: "browser",
       });
     }
-    items.sort((a, b) => b.savedAt - a.savedAt);
-    return items;
+    return [...byKey.values()].sort((a, b) => b.savedAt - a.savedAt);
   }
 
   function saveLastComparison(names) {
@@ -551,6 +660,7 @@
   /* ---------- tokenized name input / chips / last link ---------- */
 
   function isNameFetched(name) {
+    if (findSharedEntry(name)) return true;
     if (cacheGet(name)) return true;
     const slug = slugKey(name);
     if (players.some((p) => slugKey(p.display) === slug || namesEqualIgnoreCase(p.display, name))) {
@@ -652,23 +762,36 @@
     const inField = currentNamesInField();
     els.cacheChips.innerHTML = "";
     if (!cached.length) return;
-    const label = document.createElement("span");
-    label.className = "fresh-hint";
-    label.style.marginRight = "0.35rem";
-    label.textContent = "Cache:";
-    els.cacheChips.appendChild(label);
-    for (const item of cached) {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "chip";
-      if (inField.some((n) => namesEqualIgnoreCase(n, item.name))) {
-        btn.classList.add("active");
+
+    function appendGroup(title, items) {
+      if (!items.length) return;
+      const label = document.createElement("span");
+      label.className = "fresh-hint";
+      label.style.marginRight = "0.35rem";
+      label.textContent = title;
+      els.cacheChips.appendChild(label);
+      for (const item of items) {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "chip";
+        if (item.source === "shared") btn.classList.add("shared");
+        if (inField.some((n) => namesEqualIgnoreCase(n, item.name))) {
+          btn.classList.add("active");
+        }
+        btn.textContent = item.name;
+        const when = item.savedAt
+          ? new Date(item.savedAt).toLocaleDateString()
+          : "";
+        btn.title = item.source === "shared"
+          ? `Shared cache${when ? ` · ${when}` : ""} — add ${item.name}`
+          : `Browser cache${when ? ` · ${when}` : ""} — add ${item.name}`;
+        btn.addEventListener("click", () => addNameToField(item.name));
+        els.cacheChips.appendChild(btn);
       }
-      btn.textContent = item.name;
-      btn.title = `Add ${item.name} to comparison`;
-      btn.addEventListener("click", () => addNameToField(item.name));
-      els.cacheChips.appendChild(btn);
     }
+
+    appendGroup("Shared:", cached.filter((c) => c.source === "shared"));
+    appendGroup("Browser:", cached.filter((c) => c.source !== "shared"));
   }
 
   function renderLastLink() {
@@ -694,26 +817,36 @@
 
   async function loadLocal(name) {
     const key = slugKey(name);
-    const alias = ALIAS_TO_FILE[name.trim().toLowerCase()] || ALIAS_TO_FILE[key];
-    const fileKey = alias || key;
-    const candidates = [
-      DEMO_FILES[fileKey],
-      `data/${fileKey}.json`,
-      `data/${fileKey}_top50.json`,
+    const shared = findSharedEntry(name);
+    const candidates = [];
+    if (shared && shared.file) {
+      const rel = String(shared.file).replace(/^\.?\/?data\//, "");
+      candidates.push(`data/${rel}`);
+    }
+    candidates.push(
+      `data/players/${key}.json`,
       `data/${key}.json`,
-    ].filter(Boolean);
+      `data/${key}_top50.json`
+    );
+    const seen = new Set();
+    const unique = [];
+    for (const p of candidates) {
+      if (!p || seen.has(p)) continue;
+      seen.add(p);
+      unique.push(p);
+    }
 
     let lastErr;
-    for (const path of candidates) {
+    for (const path of unique) {
       try {
         const data = await fetchJson(path);
-        data._source = `local:${path}`;
+        data._source = `shared:${path}`;
         return normalizePlayer(data);
       } catch (e) {
         lastErr = e;
       }
     }
-    throw lastErr || new Error(`No local data for ${name}`);
+    throw lastErr || new Error(`No shared data for ${name}`);
   }
 
   function loadFromCache(name) {
@@ -846,7 +979,7 @@
   }
 
   /**
-   * Default: bundled → cache → live.
+   * Default: shared data/ → browser localStorage → live.
    * Fresh: live only (error if live fails).
    */
   async function loadOne(name, { fresh = false } = {}) {
@@ -861,7 +994,7 @@
     try {
       return await loadLocal(name);
     } catch (e) {
-      errors.push(`local: ${e.message}`);
+      errors.push(`shared: ${e.message}`);
     }
     try {
       return loadFromCache(name);
@@ -1394,7 +1527,9 @@
 
   function sourceLabel(src) {
     if (!src) return "unknown";
-    if (src.startsWith("local:")) return `bundled (${src.slice(6)})`;
+    if (src.startsWith("shared:") || src.startsWith("local:")) {
+      return `shared cache (${src.split(":").slice(1).join(":")})`;
+    }
     if (src === "cache:localStorage") return "browser cache";
     if (src.startsWith("live:")) return "live Honu/Census";
     return src;
@@ -1527,7 +1662,7 @@
         `<span class="err">${escapeHtml(errors.join(" | "))}</span>` +
         (fresh
           ? ` <span class="src">Fetch fresh was on — live Honu/Census only.</span>`
-          : ` <span class="src">Tried bundled ./data/ → cache → live.</span>`),
+          : ` <span class="src">Tried shared ./data/ → browser cache → live.</span>`),
         "err"
       );
       return;
@@ -1727,6 +1862,11 @@
       SLOPE_EPS,
       LS_CACHE,
       LS_FETCHING,
+      SHARED_INDEX_URL,
+      getSharedIndex: () => sharedIndex,
+      findSharedEntry,
+      SERVER_LOAD_FLAG_URL,
+      getServerLoadFlag: () => serverLoadFlag,
       currentNamesInField,
       isNameFetched,
       getNameTokens: () => nameTokens.slice(),
@@ -1750,17 +1890,28 @@
 
   // Startup — fill chips only; wait for Analyze (Enter still works)
   // Never persist / restore "Fetch fresh"; always start clean on load/refresh.
-  if (els.fetchFresh) els.fetchFresh.checked = false;
-  updateUnderLoadNotice();
-  const startup = resolveStartupNames();
-  setNameTokens(startup.names);
-  renderLastLink();
-  showIdleChart("Press Analyze");
-  const reasonNote =
-    startup.reason === "url"
-      ? "from URL"
-      : startup.reason === "last"
-        ? "restored last comparison"
-        : "demo defaults";
-  setStatus(`Ready — press Analyze <span class="src">${reasonNote}</span>`);
+  (async () => {
+    if (els.fetchFresh) els.fetchFresh.checked = false;
+    startServerLoadFlagPolling();
+    updateUnderLoadNotice();
+    await loadSharedIndex();
+    const startup = resolveStartupNames();
+    setNameTokens(startup.names);
+    renderLastLink();
+    renderCacheChips();
+    showIdleChart("Press Analyze");
+    const reasonNote =
+      startup.reason === "url"
+        ? "from URL"
+        : startup.reason === "last"
+          ? "restored last comparison"
+          : "demo defaults";
+    const sharedN = (sharedIndex.players || []).length;
+    const sharedNote = sharedN
+      ? ` · ${sharedN} shared cache name${sharedN === 1 ? "" : "s"}`
+      : "";
+    setStatus(
+      `Ready — press Analyze <span class="src">${reasonNote}${sharedNote}</span>`
+    );
+  })();
 })();

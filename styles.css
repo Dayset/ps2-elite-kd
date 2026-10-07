@@ -336,6 +336,23 @@ header .sub {
   color: var(--text);
 }
 
+.chip.shared {
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+}
+footer .cache-note {
+  margin-top: 0.55rem;
+  font-size: 0.78rem;
+  opacity: 0.75;
+  max-width: 42rem;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.45;
+}
+footer .cache-note code {
+  font-size: 0.85em;
+}
+
+
 .last-link {
   flex: 1 1 100%;
   font-size: 0.78rem;
