@@ -524,6 +524,30 @@ header .sub {
   margin-top: 0.4rem;
 }
 
+/* Letter separators in the shared-cache chip flow: each group [#] [A] [B] …
+   starts on its own line with a small muted label (not a chip, not clickable). */
+.cache-shared-chips { align-items: center; }
+.chip-break {
+  flex-basis: 100%;
+  height: 0;
+  margin: 0.1rem 0 0;
+  border-top: 1px dashed color-mix(in srgb, var(--border) 70%, transparent);
+}
+.chip-sep {
+  display: inline-block;
+  min-width: 2.1em;
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  letter-spacing: 0.02em;
+  color: var(--dim);
+  line-height: 1.4;
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
 .chip {
   appearance: none;
   background: var(--chip-bg);

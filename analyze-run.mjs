@@ -151,3 +151,46 @@ export function summarizeFailures(failed, okCount) {
   const list = items.map((i) => `${i.name} (${i.reason})`).join(", ");
   return { allFailed, lead, items, tail, text: `${lead} ${list}. ${tail}` };
 }
+
+/* ---------- shared-cache chip ordering ---------- */
+
+const NAME_COLLATE = { sensitivity: "base" };
+
+/**
+ * Compare two display names by character name only (leading "[TAG] " ignored),
+ * case-insensitive / locale-aware; ties broken by the full display string.
+ */
+export function compareByCharName(a, b) {
+  const da = String(a ?? "");
+  const db = String(b ?? "");
+  const byName = censusQueryName(da).localeCompare(censusQueryName(db), undefined, NAME_COLLATE);
+  if (byName) return byName;
+  return da.localeCompare(db, undefined, NAME_COLLATE) || (da < db ? -1 : da > db ? 1 : 0);
+}
+
+/** Group label for a display name: uppercased first letter of the tag-free name, or "#". */
+export function nameGroupLetter(name) {
+  const first = censusQueryName(name).normalize("NFD").charAt(0);
+  return /\p{L}/u.test(first) ? first.toUpperCase() : "#";
+}
+
+/**
+ * Sort items by character name and split into letter groups.
+ * "#" (digits / symbols) comes first, then letters A–Z.
+ * @template T
+ * @param {T[]} items
+ * @param {(item: T) => string} [getName]
+ * @returns {{ letter: string, items: T[] }[]}
+ */
+export function groupByCharName(items, getName = (x) => (x && typeof x === "object" ? x.name : x)) {
+  const sorted = [...(items || [])].sort((a, b) => compareByCharName(getName(a), getName(b)));
+  const groups = new Map();
+  for (const item of sorted) {
+    const letter = nameGroupLetter(getName(item));
+    if (!groups.has(letter)) groups.set(letter, []);
+    groups.get(letter).push(item);
+  }
+  return [...groups.entries()]
+    .sort(([a], [b]) => (a === "#" ? -1 : b === "#" ? 1 : a.localeCompare(b, undefined, NAME_COLLATE)))
+    .map(([letter, list]) => ({ letter, items: list }));
+}

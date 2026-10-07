@@ -36,7 +36,9 @@ import {
   censusQueryName,
   loadEach,
   summarizeFailures,
-} from "./analyze-run.mjs?v=20261007-skipbad";
+  compareByCharName,
+  groupByCharName,
+} from "./analyze-run.mjs?v=20261007-namesort";
 
   const COLORS = [
     "#9fd4ee", "#ff7a7a", "#ffd166", "#8ef0b0", "#e8b0ff",
@@ -1190,9 +1192,8 @@ import {
     if (!cached.length) return;
 
     function sortAlpha(items) {
-      return [...items].sort((a, b) =>
-        String(a.name).localeCompare(String(b.name), undefined, { sensitivity: "base" })
-      );
+      // By character name only — a leading "[TAG] " doesn't affect order.
+      return [...items].sort((a, b) => compareByCharName(a.name, b.name));
     }
 
     function makeChip(item) {
@@ -1213,7 +1214,7 @@ import {
       return btn;
     }
 
-    const shared = sortAlpha(cached.filter((c) => c.source === "shared"));
+    const shared = cached.filter((c) => c.source === "shared");
     const browser = sortAlpha(cached.filter((c) => c.source !== "shared"));
 
     if (shared.length) {
@@ -1231,7 +1232,23 @@ import {
       const inner = document.createElement("div");
       inner.className = "cache-shared-chips";
       inner.setAttribute("aria-label", "Shared cached character names");
-      for (const item of shared) inner.appendChild(makeChip(item));
+      // Letter separators: [#] (digits/symbols) first, then [A], [B], …
+      let firstGroup = true;
+      for (const group of groupByCharName(shared)) {
+        if (!firstGroup) {
+          const br = document.createElement("span");
+          br.className = "chip-break";
+          br.setAttribute("aria-hidden", "true");
+          inner.appendChild(br);
+        }
+        firstGroup = false;
+        const sep = document.createElement("span");
+        sep.className = "chip-sep";
+        sep.setAttribute("aria-hidden", "true");
+        sep.textContent = `[${group.letter}]`;
+        inner.appendChild(sep);
+        for (const item of group.items) inner.appendChild(makeChip(item));
+      }
       details.appendChild(inner);
       els.cacheChips.appendChild(details);
     }
