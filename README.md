@@ -53,13 +53,13 @@ Click any column header to sort (names alphabetical; metrics numeric). Default s
 
 ## Shared cache (GitHub Actions)
 
-The static Pages site cannot write `data/`. Shared snapshots are committed by **Refresh shared cache**:
+The static Pages site cannot write `data/`. Shared snapshots are committed automatically by the **Refresh shared cache** Action, with no manual steps:
 
-1. Repo → **Actions** → **Refresh shared cache** → **Run workflow**
-2. Optional `names` input; empty uses `data/watchlist.txt` + existing index
-3. Job sets `data/load-flag.json` (`fetching: true`), refreshes `data/players/*.json` + `index.json`, then clears the flag
-
-Schedule: **hourly** at minute 0 UTC (`0 * * * *`). Manual runs anytime.
+- **Hourly** at :17 UTC (`17 * * * *`). Each run refreshes the **30 stalest** names from `data/watchlist.txt` + `index.json` (never-fetched first, then oldest `savedAt`), so all ~225 rotate roughly every 8 hours. A run takes ~6–8 min, with a 35-min internal budget.
+- Misspelled/unknown names are skipped and their old files are kept (attempts are tracked in `data/refresh-state.json`). A run only fails if nothing refreshed because Census/Honu were down.
+- While it runs, `data/load-flag.json` is `fetching: true`. It's cleared in the same commit as the new data, even if the run fails.
+- Each run also re-enables the workflow, so GitHub's 60-day inactivity rule can't switch the schedule off.
+- Optional manual run: **Actions → Refresh shared cache → Run workflow** (`names` to refresh specific players now, or `batch_size`).
 
 Browser Analyze still uses a local under-load note across tabs on the same device; the Actions load-flag is what other visitors see during a shared refresh.
 
@@ -73,7 +73,8 @@ ps2-elite-kd/
   assets/                 # dark + light placeholder graphs
   data/
     index.json            # shared catalog
-    watchlist.txt         # scheduled refresh names
+    watchlist.txt         # names in the hourly rotation
+    refresh-state.json    # rotation bookkeeping
     load-flag.json        # Actions under-load signal
     players/<slug>.json
   scripts/refresh-cache.mjs

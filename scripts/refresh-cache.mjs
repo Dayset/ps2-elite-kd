@@ -1,12 +1,22 @@
 #!/usr/bin/env node
 /**
  * Refresh shared player cache under data/players/ and rebuild data/index.json.
- * Used by GitHub Actions (.github/workflows/refresh-cache.yml).
+ * Used by GitHub Actions (.github/workflows/refresh-cache.yml), hourly.
+ *
+ * Rotation: with no explicit names, each run refreshes only the stalest
+ * BATCH_SIZE players (watchlist + index; never-fetched first, then oldest
+ * savedAt / last attempt). Over several runs every name gets refreshed.
+ * A time budget stops starting new players after TIME_BUDGET_MIN minutes.
  *
  * Usage:
- *   node scripts/refresh-cache.mjs              # watchlist (+ existing index)
+ *   node scripts/refresh-cache.mjs              # stalest BATCH_SIZE names
  *   node scripts/refresh-cache.mjs "JustV6me ChrisJTTR"
  *   NAMES="JustV6me" node scripts/refresh-cache.mjs
+ *   BATCH_SIZE=10 TIME_BUDGET_MIN=5 node scripts/refresh-cache.mjs
+ *
+ * Exit code: 0 unless nothing at all refreshed AND at least one failure looked
+ * like an outage (network / 5xx / 429 / Census error). Misspelled or unknown
+ * names are logged and skipped; their existing files are never touched.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -19,6 +29,7 @@ const DATA_DIR = path.join(ROOT, "data");
 const PLAYERS_DIR = path.join(DATA_DIR, "players");
 const INDEX_PATH = path.join(DATA_DIR, "index.json");
 const WATCHLIST_PATH = path.join(DATA_DIR, "watchlist.txt");
+const STATE_PATH = path.join(DATA_DIR, "refresh-state.json");
 
 const HONU = "https://wt.honu.pw/api/character/";
 const CENSUS = "https://census.daybreakgames.com/s:example/get/ps2:v2/";
@@ -26,6 +37,36 @@ const TOP_N = 50;
 const OPP_CONCURRENCY = 4;
 const BETWEEN_PLAYERS_MS = 1500;
 const BETWEEN_BATCH_MS = 200;
+const FETCH_TIMEOUT_MS = 20_000;
+const USER_AGENT = "ps2-elite-kd-cache-bot/1.1 (+https://github.com/Dayset/ps2-elite-kd)";
+/** Stop the run early after this many outage-type failures in a row (be polite). */
+const MAX_CONSECUTIVE_OUTAGES = 4;
+
+function envInt(name, fallback) {
+  const v = parseInt(process.env[name] || "", 10);
+  return Number.isFinite(v) && v > 0 ? v : fallback;
+}
+
+/** Name could not be found (misspelled / deleted / no killboard). Not an outage. */
+export class NotFoundError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "NotFoundError";
+  }
+}
+
+/** Non-retryable HTTP 4xx (other than 429). */
+class HttpClientError extends Error {
+  constructor(message, status) {
+    super(message);
+    this.name = "HttpClientError";
+    this.status = status;
+  }
+}
+
+export function isOutageError(e) {
+  return !(e instanceof NotFoundError);
+}
 
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
@@ -52,25 +93,38 @@ function parseNames(text) {
   return tokens;
 }
 
-async function fetchJson(url, { retries = 3 } = {}) {
+export function backoffMs(attempt, retryAfterHeader) {
+  const ra = Number(retryAfterHeader);
+  if (Number.isFinite(ra) && ra > 0) return Math.min(ra * 1000, 60_000);
+  // 1s, 2s, 4s, 8s … capped, with a little jitter.
+  return Math.min(1000 * 2 ** attempt, 15_000) + Math.floor(Math.random() * 250);
+}
+
+async function fetchJson(url, { retries = 4 } = {}) {
   let lastErr;
   for (let attempt = 0; attempt < retries; attempt++) {
+    let wait = backoffMs(attempt);
     try {
       const res = await fetch(url, {
-        headers: { Accept: "application/json", "User-Agent": "ps2-elite-kd-cache-bot/1.0" },
+        headers: { Accept: "application/json", "User-Agent": USER_AGENT },
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       });
       if (res.status === 429 || res.status >= 500) {
-        const wait = 1000 * (attempt + 1);
+        wait = backoffMs(attempt, res.headers.get("retry-after"));
+        lastErr = new Error(`${res.status} ${res.statusText} for ${url}`);
         console.warn(`  retry ${res.status} in ${wait}ms: ${url}`);
-        await sleep(wait);
-        continue;
+      } else if (!res.ok) {
+        throw new HttpClientError(`${res.status} ${res.statusText} for ${url}`, res.status);
+      } else if (res.status === 204) {
+        return null;
+      } else {
+        return await res.json();
       }
-      if (!res.ok) throw new Error(`${res.status} ${res.statusText} for ${url}`);
-      return await res.json();
     } catch (e) {
+      if (e instanceof HttpClientError) throw e; // 4xx: retrying won't help
       lastErr = e;
-      if (attempt + 1 < retries) await sleep(800 * (attempt + 1));
     }
+    if (attempt + 1 < retries) await sleep(wait);
   }
   throw lastErr || new Error(`fetch failed: ${url}`);
 }
@@ -109,7 +163,7 @@ function kpmCurve(rows, start = 2.5, end = 0.0, step = 0.05) {
 async function resolveCensus(name) {
   // Census matches first name only; watchlist/index names may carry "[TAG] ".
   const raw = censusQueryName(name);
-  if (!raw) throw new Error(`Census: empty name ${JSON.stringify(name)}`);
+  if (!raw) throw new NotFoundError(`Census: empty name ${JSON.stringify(name)}`);
   let url;
   if (/^\d{16,}$/.test(raw)) {
     url = `${CENSUS}character?character_id=${encodeURIComponent(raw)}&c:resolve=outfit,stat_history`;
@@ -122,16 +176,25 @@ async function resolveCensus(name) {
   }
   const chars = (data && data.character_list) || [];
   if (!chars.length || !chars[0] || !chars[0].character_id) {
-    throw new Error(`Census: no character ${raw}`);
+    throw new NotFoundError(`Census: no character ${raw}`);
   }
   return chars[0];
 }
 
 async function honuKillboard(cid) {
-  const board = await fetchJson(`${HONU}${cid}/killboard`);
+  let board;
+  try {
+    board = await fetchJson(`${HONU}${cid}/killboard`);
+  } catch (e) {
+    if (e instanceof HttpClientError && e.status === 404) {
+      throw new NotFoundError(`Honu: no killboard for ${cid}`);
+    }
+    throw e;
+  }
+  if (board == null) board = [];
   if (!Array.isArray(board)) throw new Error(`Honu: unexpected killboard for ${cid}`);
   // Never overwrite existing good data with an empty curve.
-  if (!board.length) throw new Error(`Honu: empty killboard for ${cid}`);
+  if (!board.length) throw new NotFoundError(`Honu: empty killboard for ${cid}`);
   return board;
 }
 
@@ -273,9 +336,53 @@ function readIndex() {
   }
 }
 
+function writeFileAtomic(file, text) {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  const tmp = `${file}.tmp-${process.pid}`;
+  fs.writeFileSync(tmp, text);
+  fs.renameSync(tmp, file);
+}
+
 function writeIndex(index) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-  fs.writeFileSync(INDEX_PATH, JSON.stringify(index, null, 2) + "\n");
+  writeFileAtomic(INDEX_PATH, JSON.stringify(index, null, 2) + "\n");
+}
+
+/** Per-name attempt bookkeeping so failing names don't hog the front of the rotation. */
+function readState() {
+  try {
+    const raw = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    return { updatedAt: raw.updatedAt || null, players: raw.players && typeof raw.players === "object" ? raw.players : {} };
+  } catch {
+    return { updatedAt: null, players: {} };
+  }
+}
+
+function writeState(state) {
+  const players = {};
+  for (const k of Object.keys(state.players).sort()) players[k] = state.players[k];
+  writeFileAtomic(STATE_PATH, JSON.stringify({ updatedAt: state.updatedAt, players }, null, 2) + "\n");
+}
+
+/**
+ * Pick the stalest `size` names. Staleness = max(index savedAt, last attempt).
+ * Never fetched and never attempted (0) come first; ties keep input order.
+ */
+export function pickBatch(names, index, state, size) {
+  const savedBySlug = new Map();
+  for (const p of (index && index.players) || []) {
+    const k = p.slug || slugKey(p.name);
+    if (k) savedBySlug.set(k, Math.max(savedBySlug.get(k) || 0, +p.savedAt || 0));
+  }
+  const st = (state && state.players) || {};
+  return names
+    .map((name, i) => {
+      const k = slugKey(name);
+      const last = Math.max(savedBySlug.get(k) || 0, +(st[k] && st[k].lastAttemptAt) || 0);
+      return { name, i, last };
+    })
+    .sort((a, b) => a.last - b.last || a.i - b.i)
+    .slice(0, Math.max(0, size))
+    .map((x) => x.name);
 }
 
 function upsertIndexEntry(index, { name, display, slug, file, savedAt, aliases }) {
@@ -301,7 +408,7 @@ function collectNames(cliArgs) {
   const fromEnv = process.env.NAMES || "";
   const fromCli = cliArgs.join(" ");
   const explicit = parseNames(fromCli || fromEnv);
-  if (explicit.length) return explicit;
+  if (explicit.length) return { names: explicit, explicit: true };
 
   const watch = readWatchlist();
   const index = readIndex();
@@ -314,36 +421,54 @@ function collectNames(cliArgs) {
     seen.add(k);
     out.push(n);
   }
-  return out;
+  return { names: out, explicit: false };
 }
 
 async function main() {
   fs.mkdirSync(PLAYERS_DIR, { recursive: true });
-  const names = collectNames(process.argv.slice(2));
-  if (!names.length) {
+  const batchSize = envInt("BATCH_SIZE", 30);
+  const budgetMs = envInt("TIME_BUDGET_MIN", 35) * 60_000;
+  const t0 = Date.now();
+
+  const { names: all, explicit } = collectNames(process.argv.slice(2));
+  if (!all.length) {
     console.error("No names to refresh. Add data/watchlist.txt or pass names.");
     process.exit(1);
   }
-
-  console.log(`Refreshing ${names.length} name(s): ${names.join(", ")}`);
   const index = readIndex();
+  const state = readState();
+  const names = explicit ? all : pickBatch(all, index, state, batchSize);
+
+  console.log(
+    explicit
+      ? `Refreshing ${names.length} explicit name(s): ${names.join(", ")}`
+      : `Rotation: ${names.length} stalest of ${all.length} name(s) (BATCH_SIZE=${batchSize}): ${names.join(", ")}`
+  );
   let ok = 0;
-  let fail = 0;
+  let notFound = 0;
+  let outage = 0;
+  let consecutiveOutage = 0;
+  let stoppedEarly = "";
 
   for (let i = 0; i < names.length; i++) {
+    if (Date.now() - t0 > budgetMs) {
+      stoppedEarly = `time budget ${Math.round(budgetMs / 60000)} min reached`;
+      break;
+    }
     const name = names[i];
     const slug = slugKey(name);
     if (!slug) {
       console.warn(`Skip empty slug for ${JSON.stringify(name)}`);
-      fail++;
+      notFound++;
       continue;
     }
     console.log(`[${i + 1}/${names.length}] ${name} (${slug})…`);
+    const prev = state.players[slug] || {};
+    const now = Date.now();
     try {
       const payload = await loadLive(name);
       const fileRel = `players/${slug}.json`;
-      const fileAbs = path.join(DATA_DIR, fileRel);
-      fs.writeFileSync(fileAbs, JSON.stringify(payload) + "\n");
+      writeFileAtomic(path.join(DATA_DIR, fileRel), JSON.stringify(payload) + "\n");
       upsertIndexEntry(index, {
         name,
         display: payload.player.display,
@@ -352,24 +477,63 @@ async function main() {
         savedAt: payload.savedAt,
       });
       writeIndex(index);
+      state.players[slug] = { lastAttemptAt: now, lastOkAt: payload.savedAt, fails: 0 };
       ok++;
+      consecutiveOutage = 0;
       console.log(`  wrote data/${fileRel} (${payload.player.display})`);
     } catch (e) {
-      fail++;
-      console.error(`  FAIL ${name}: ${e.message || e}`);
+      const msg = String((e && e.message) || e);
+      state.players[slug] = {
+        lastAttemptAt: now,
+        lastOkAt: prev.lastOkAt || null,
+        fails: (prev.fails || 0) + 1,
+        lastError: msg.slice(0, 200),
+      };
+      if (isOutageError(e)) {
+        outage++;
+        consecutiveOutage++;
+        console.error(`  FAIL (outage?) ${name}: ${msg}`);
+      } else {
+        notFound++;
+        console.error(`  SKIP (not found) ${name}: ${msg}`);
+      }
+    }
+    state.updatedAt = new Date().toISOString();
+    writeState(state);
+    if (consecutiveOutage >= MAX_CONSECUTIVE_OUTAGES) {
+      stoppedEarly = `${consecutiveOutage} outage-type failures in a row (Census/Honu down?)`;
+      break;
     }
     if (i + 1 < names.length) await sleep(BETWEEN_PLAYERS_MS);
   }
 
-  writeIndex(index);
-  console.log(`Done. ok=${ok} fail=${fail} index=${index.players.length}`);
-  // Bad / misspelled names are logged and skipped; existing data/players files
-  // and index entries for them are left untouched. Only a run where nothing at
-  // all refreshed fails the job.
-  if (ok === 0) process.exit(1);
+  const secs = Math.round((Date.now() - t0) / 1000);
+  const summary = `Done in ${secs}s. ok=${ok} notFound=${notFound} outage=${outage} index=${index.players.length}${stoppedEarly ? ` (stopped early: ${stoppedEarly})` : ""}`;
+  console.log(summary);
+  if (process.env.GITHUB_STEP_SUMMARY) {
+    try {
+      fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `### Shared cache refresh\n\n${summary}\n`);
+    } catch {
+      /* ignore */
+    }
+  }
+  if (process.env.GITHUB_OUTPUT) {
+    try {
+      fs.appendFileSync(process.env.GITHUB_OUTPUT, `ok=${ok}\n`);
+    } catch {
+      /* ignore */
+    }
+  }
+  // Bad / misspelled names are logged and skipped; their existing files and
+  // index entries are left untouched. Only a run where nothing refreshed and
+  // something looked like a real outage fails the job.
+  if (ok === 0 && outage > 0) process.exit(1);
 }
 
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (isMain) {
+  main().catch((e) => {
+    console.error(e);
+    process.exit(1);
+  });
+}
