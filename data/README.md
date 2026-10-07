@@ -11,12 +11,13 @@ data/
   players/<slug>.json    # per-character payload (Honu/Census snapshot)
   load-flag.json         # Actions under-load signal ({ fetching, ts, source })
   refresh-state.json     # rotation bookkeeping (last attempt / failures per slug)
+  status.json            # current batch + last run summary
   README.md              # this file
 ```
 
 ## How it refreshes
 
-Automatic. The **Refresh shared cache** Action runs hourly (`17 * * * *` UTC). Each run refreshes the 15 stalest names (never-fetched first, then oldest `savedAt`), so the whole watchlist rotates every few hours. `refresh-state.json` records the last attempt and failures per name, so a misspelled name doesn't block the queue. Failed names keep their old files.
+Automatic. The **Refresh shared cache** Action runs hourly (`17 * * * *` UTC). Each run refreshes the 8 stalest names (never-fetched first, then oldest `savedAt`), so the whole watchlist rotates in about 30 hours. With the time left it also adds a few new players picked from cached players' most frequent opponents (max 10 per run, up to 400 indexed). `status.json` holds the current batch and the last run's summary. `refresh-state.json` records the last attempt and failures per name, so a misspelled name doesn't block the queue. Failed names keep their old files.
 
 On-demand: a `workflow_dispatch` with `names` (the site's Worker sends these when someone analyzes a new name; you can also use **Actions → Run workflow**) refreshes only those names. Names that fetch OK are appended to `watchlist.txt`, deduped by tag-less slug.
 

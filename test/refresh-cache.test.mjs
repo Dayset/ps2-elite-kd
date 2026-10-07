@@ -10,6 +10,7 @@ import {
   backoffMs,
   newWatchlistNames,
   isPlausibleName,
+  crawlCandidates,
 } from "../scripts/refresh-cache.mjs";
 
 const index = {
@@ -82,5 +83,25 @@ describe("on-demand names join the watchlist", () => {
     assert.equal(isPlausibleName("bad name!"), false);
     assert.equal(isPlausibleName("x".repeat(40)), false);
     assert.equal(isPlausibleName("5428010618015189713"), true);
+  });
+});
+
+describe("crawlCandidates (discovery)", () => {
+  const pl = (rows) => ({ player: { rows } });
+  const idx = { players: [{ name: "[A] Known", slug: "known" }] };
+
+  it("ranks opponents seen by more cached players first, then by volume", () => {
+    const payloads = [
+      pl([{ name: "[X] Alpha", kills: 1, deaths: 1 }, { name: "Beta", kills: 50, deaths: 50 }, { name: "[A] Known", kills: 9, deaths: 9 }]),
+      pl([{ name: "[Y] Alpha", kills: 2, deaths: 0 }, { name: "Gamma", kills: 5, deaths: 5 }]),
+    ];
+    assert.deepEqual(crawlCandidates(payloads, idx, { players: {} }), ["[Y] Alpha", "Beta", "Gamma"]);
+  });
+
+  it("skips unresolved ids, junk, and names that failed recently", () => {
+    const now = 1_000_000_000_000;
+    const payloads = [pl([{ name: "5428011263335537297" }, { name: "0" }, { name: "bad name!" }, { name: "Typo" }, { name: "Old" }])];
+    const state = { players: { typo: { lastAttemptAt: now - 1000, fails: 1 }, old: { lastAttemptAt: now - 30 * 864e5, fails: 1 } } };
+    assert.deepEqual(crawlCandidates(payloads, idx, state, now), ["Old"]);
   });
 });

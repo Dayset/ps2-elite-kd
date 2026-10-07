@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" href="data:," />
+  <title>PS2 Elite K/D: cache status</title>
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="styles.css?v=20261007-status" />
+  <style>
+    body { overflow: auto; }
+    .st-wrap { max-width: 960px; margin: 0 auto; padding: 18px 16px 40px; }
+    .st-wrap h1 { font-size: 1.25rem; margin: 0 0 4px; }
+    .st-sub { color: var(--dim); font-size: 0.85rem; margin-bottom: 16px; }
+    .st-card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
+    .st-card h2 { font-size: 0.95rem; margin: 0 0 8px; color: var(--accent); font-weight: 600; }
+    .st-big { font-size: 1.05rem; font-weight: 600; }
+    .st-ok { color: var(--ok); }
+    .st-warn { color: var(--warn); }
+    .st-dim { color: var(--dim); }
+    .st-err { color: #ff8a8a; }
+    .st-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 2px; padding: 0; list-style: none; }
+    .st-list li { border: 1px solid var(--border); border-radius: 999px; padding: 2px 9px; font-size: 0.85rem; }
+    .st-list li.add { border-color: var(--ok); }
+    .st-list li.fail { border-color: #c06060; text-decoration: line-through; opacity: 0.85; }
+    .st-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    .st-table td, .st-table th { padding: 4px 6px; border-bottom: 1px solid var(--row-border); text-align: left; }
+    .st-table th { color: var(--dim); font-weight: 500; }
+    .st-wrap a { color: var(--accent); }
+    .st-label { color: var(--dim); font-size: 0.82rem; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <main class="st-wrap">
+    <h1>📦 Shared cache status</h1>
+    <div class="st-sub">Updates every 30 s. <span id="stUpdated"></span> · <a href="./">Back to the chart</a></div>
+
+    <section class="st-card" id="cardNow"><h2>Refresh now</h2><div id="now" class="st-dim">Loading…</div></section>
+    <section class="st-card" id="cardRuns"><h2>GitHub Actions queue</h2><div id="runs" class="st-dim">Loading…</div></section>
+    <section class="st-card" id="cardLast"><h2>Last finished run</h2><div id="last" class="st-dim">Loading…</div></section>
+    <section class="st-card" id="cardPending"><h2>Queued from the site (not cached yet)</h2><div id="pending" class="st-dim">Loading…</div></section>
+    <section class="st-card" id="cardRecent"><h2>Recently updated players</h2><div id="recent" class="st-dim">Loading…</div></section>
+  </main>
+
+  <script>
+    (function () {
+      "use strict";
+      var REPO = "Dayset/ps2-elite-kd";
+      var WORKER_URL = "https://ps2-elite-kd-cache.dayset.workers.dev";
+      var FLAG_TTL_MS = 20 * 60 * 1000; // same staleness rule as the main page
+      var POLL_MS = 30 * 1000;
+      var GH_POLL_MS = 120 * 1000; // unauthenticated GitHub API: 60 req/h per IP
+      var lastGh = 0;
+
+      function $(id) { return document.getElementById(id); }
+      function esc(s) {
+        return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+          return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+        });
+      }
+      function runLink(id) {
+        return id ? '<a href="https://github.com/' + REPO + "/actions/runs/" + encodeURIComponent(id) + '" target="_blank" rel="noopener">run #' + esc(id) + "</a>" : "";
+      }
+      function ago(ts) {
+        var t = typeof ts === "number" ? ts : Date.parse(ts);
+        if (!t || isNaN(t)) return "—";
+        var s = Math.round((Date.now() - t) / 1000);
+        var fut = s < 0; s = Math.abs(s);
+        var v = s < 60 ? s + " s" : s < 3600 ? Math.round(s / 60) + " min" : s < 172800 ? Math.round(s / 3600) + " h" : Math.round(s / 86400) + " d";
+        return fut ? "in " + v : v + " ago";
+      }
+      function when(ts) {
+        var t = typeof ts === "number" ? ts : Date.parse(ts);
+        if (!t || isNaN(t)) return "—";
+        var d = new Date(t);
+        return '<span title="' + esc(d.toLocaleString()) + '">' + esc(ago(t)) + "</span>";
+      }
+      function chips(names, cls) {
+        if (!names || !names.length) return '<span class="st-dim">none</span>';
+        return '<ul class="st-list">' + names.map(function (n) {
+          return "<li" + (cls ? ' class="' + cls + '"' : "") + ">" + esc(n) + "</li>";
+        }).join("") + "</ul>";
+      }
+      function getJson(url, opts) {
+        var u = url + (url.indexOf("?") >= 0 ? "&" : "?") + "t=" + Date.now();
+        return fetch(u, Object.assign({ cache: "no-store" }, opts || {})).then(function (r) {
+          if (!r.ok) throw new Error("HTTP " + r.status);
+          return r.json();
+        });
+      }
+      function fail(el, what, e) {
+        $(el).innerHTML = '<span class="st-err">Couldn’t load ' + esc(what) + " (" + esc(e && e.message) + ").</span>";
+      }
+
+      function renderNow(flag, status) {
+        var ts = flag && typeof flag.ts === "number" ? flag.ts : 0;
+        var fresh = flag && flag.fetching && ts && Date.now() - ts <= FLAG_TTL_MS;
+        var html;
+        if (fresh) {
+          html = '<div class="st-big st-warn">⏳ Refresh running</div>' +
+            '<div>Started ' + when(ts) + " · " + runLink(flag.runId) + "</div>";
+        } else if (flag && flag.fetching) {
+          html = '<div class="st-big st-dim">Idle (stale flag ignored)</div>' +
+            '<div class="st-dim">The flag says “running” but is older than 20 min (' + when(ts) + "), so it’s ignored, like on the main page. " + runLink(flag.runId) + "</div>";
+        } else {
+          html = '<div class="st-big st-ok">✓ Idle</div>' +
+            '<div class="st-dim">Last flag change ' + when(ts) + (flag && flag.runId ? " · " + runLink(flag.runId) : "") + ". The schedule runs hourly at :17 UTC.</div>";
+        }
+        var cur = status && status.running && status.current;
+        if (cur) {
+          html += '<div class="st-label">Fetching now (' + esc(cur.kind || "rotation") + "):</div>" + chips(cur.names);
+          if (cur.crawlCandidates && cur.crawlCandidates.length) {
+            html += '<div class="st-label">Discovery candidates if time is left (best first):</div>' + chips(cur.crawlCandidates);
+          }
+        }
+        $("now").innerHTML = html;
+      }
+
+      function renderLast(status) {
+        var r = status && status.lastRun;
+        if (!r) { $("last").innerHTML = '<span class="st-dim">No finished run recorded yet.</span>'; return; }
+        var failed = (r.failed || []).map(function (f) { return f.name + (f.outage ? " (fetch error)" : " (not found)"); });
+        $("last").innerHTML =
+          "<div><strong>" + esc(r.kind) + "</strong> (" + esc(r.event === "schedule" ? "scheduled" : r.event) + ")" + (r.runId ? " · " + runLink(r.runId) : "") +
+          " · started " + when(r.startedAt) + " · took " + esc(Math.round((r.seconds || 0) / 60)) + " min" +
+          " · index " + esc(r.indexSize) + " players</div>" +
+          (r.stoppedEarly ? '<div class="st-dim">Stopped early: ' + esc(r.stoppedEarly) + "</div>" : "") +
+          '<div class="st-label">Added (' + (r.added || []).length + "):</div>" + chips(r.added, "add") +
+          '<div class="st-label">Updated (' + (r.updated || []).length + "):</div>" + chips(r.updated) +
+          '<div class="st-label">Failed (' + failed.length + "):</div>" + chips(failed, "fail");
+      }
+
+      function renderRuns(data) {
+        var runs = (data && data.workflow_runs) || [];
+        var active = runs.filter(function (r) { return r.status !== "completed"; });
+        var done = runs.filter(function (r) { return r.status === "completed"; }).slice(0, 5);
+        var row = function (r) {
+          var ok = r.conclusion === "success" ? "st-ok" : r.conclusion ? "st-err" : "st-warn";
+          return "<tr><td>" + runLink(r.id) + "</td><td>" + esc(r.event === "schedule" ? "scheduled" : r.event === "workflow_dispatch" ? "dispatch" : r.event) +
+            '</td><td class="' + ok + '">' + esc(r.conclusion || r.status) + "</td><td>" + when(r.run_started_at || r.created_at) + "</td></tr>";
+        };
+        $("runs").innerHTML =
+          (active.length ? "<div>" + active.length + " running/queued</div>" : '<div class="st-dim">Nothing running or queued.</div>') +
+          '<table class="st-table"><tr><th>Run</th><th>Trigger</th><th>State</th><th>Started</th></tr>' +
+          active.concat(done).map(row).join("") + "</table>";
+      }
+
+      function renderPending(data) {
+        var p = (data && data.pending) || [];
+        if (!p.length) { $("pending").innerHTML = '<span class="st-dim">Nothing waiting.</span>'; return; }
+        $("pending").innerHTML = '<table class="st-table"><tr><th>Name</th><th>Queued</th></tr>' +
+          p.map(function (x) { return "<tr><td>" + esc(x.name) + "</td><td>" + when(x.queuedAt) + "</td></tr>"; }).join("") + "</table>";
+      }
+
+      function renderRecent(index) {
+        var players = ((index && index.players) || []).slice().sort(function (a, b) { return (b.savedAt || 0) - (a.savedAt || 0); });
+        $("cardRecent").querySelector("h2").textContent = "Recently updated players (" + players.length + " cached)";
+        $("recent").innerHTML = '<table class="st-table"><tr><th>Player</th><th>Updated</th></tr>' +
+          players.slice(0, 30).map(function (p) { return "<tr><td>" + esc(p.name) + "</td><td>" + when(p.savedAt) + "</td></tr>"; }).join("") + "</table>";
+      }
+
+      function tick() {
+        Promise.all([
+          getJson("data/load-flag.json").catch(function () { return null; }),
+          getJson("data/status.json").catch(function () { return null; }),
+        ]).then(function (res) {
+          renderNow(res[0], res[1]);
+          renderLast(res[1]);
+        });
+        getJson("data/index.json").then(renderRecent, function (e) { fail("recent", "data/index.json", e); });
+        getJson(WORKER_URL + "/pending").then(renderPending, function (e) { fail("pending", "the queue", e); });
+        if (Date.now() - lastGh >= GH_POLL_MS) {
+          lastGh = Date.now();
+          fetch("https://api.github.com/repos/" + REPO + "/actions/workflows/refresh-cache.yml/runs?per_page=10", { headers: { Accept: "application/vnd.github+json" } })
+            .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+            .then(renderRuns, function (e) { fail("runs", "GitHub Actions runs", e); });
+        }
+        $("stUpdated").textContent = "Last check " + new Date().toLocaleTimeString() + ".";
+      }
+
+      tick();
+      setInterval(tick, POLL_MS);
+    })();
+  </script>
+</body>
+</html>

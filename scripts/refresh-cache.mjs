@@ -30,6 +30,7 @@ const PLAYERS_DIR = path.join(DATA_DIR, "players");
 const INDEX_PATH = path.join(DATA_DIR, "index.json");
 const WATCHLIST_PATH = path.join(DATA_DIR, "watchlist.txt");
 const STATE_PATH = path.join(DATA_DIR, "refresh-state.json");
+const STATUS_PATH = path.join(DATA_DIR, "status.json");
 
 const HONU = "https://wt.honu.pw/api/character/";
 const CENSUS = "https://census.daybreakgames.com/s:example/get/ps2:v2/";
@@ -519,15 +520,106 @@ function collectNames(cliArgs) {
   return { names: out, explicit: false };
 }
 
+const CRAWL_RETRY_AFTER_MS = 7 * 24 * 3600 * 1000;
+
+/**
+ * Discovery candidates: opponents that show up in already-cached players'
+ * killboards but are not in the index yet. Ranked by how many cached players
+ * met them, then by total kills+deaths. Unresolved ids, implausible names and
+ * names that failed in the last 7 days are skipped.
+ * @param {{player:{rows:{name:string,kills:number,deaths:number}[]}}[]} payloads
+ */
+export function crawlCandidates(payloads, index, state, now = Date.now()) {
+  const known = new Set(((index && index.players) || []).map((p) => p.slug || slugKey(p.name)));
+  const st = (state && state.players) || {};
+  const agg = new Map();
+  for (const pl of payloads || []) {
+    const seenHere = new Set();
+    for (const r of (pl && pl.player && pl.player.rows) || []) {
+      const name = String((r && r.name) || "").trim();
+      if (!name || /^\d+$/.test(censusQueryName(name)) || !isPlausibleName(name)) continue;
+      if (/^RenamedPlayer\d*$/i.test(censusQueryName(name))) continue; // Honu placeholder for renamed chars
+      const k = slugKey(name);
+      if (!k || known.has(k)) continue;
+      const prev = st[k];
+      if (prev && prev.lastAttemptAt && now - prev.lastAttemptAt < CRAWL_RETRY_AFTER_MS) continue;
+      const a = agg.get(k) || { name, seen: 0, volume: 0 };
+      a.volume += (+r.kills || 0) + (+r.deaths || 0);
+      if (!seenHere.has(k)) {
+        seenHere.add(k);
+        a.seen++;
+      }
+      a.name = name; // latest tag wins
+      agg.set(k, a);
+    }
+  }
+  return [...agg.values()]
+    .sort((x, y) => y.seen - x.seen || y.volume - x.volume || x.name.localeCompare(y.name))
+    .map((x) => x.name);
+}
+
+function readAllPayloads() {
+  const out = [];
+  for (const f of fs.existsSync(PLAYERS_DIR) ? fs.readdirSync(PLAYERS_DIR) : []) {
+    if (!f.endsWith(".json")) continue;
+    try {
+      out.push(JSON.parse(fs.readFileSync(path.join(PLAYERS_DIR, f), "utf8")));
+    } catch {
+      /* skip unreadable */
+    }
+  }
+  return out;
+}
+
+/** data/status.json: what the current run plans to fetch + last run summary (read by status.html). */
+export function readStatus() {
+  try {
+    const s = JSON.parse(fs.readFileSync(STATUS_PATH, "utf8"));
+    return s && typeof s === "object" ? s : {};
+  } catch {
+    return {};
+  }
+}
+
+export function writeStatus(patch) {
+  const next = { ...readStatus(), ...patch };
+  writeFileAtomic(STATUS_PATH, JSON.stringify(next, null, 2) + "\n");
+  return next;
+}
+
+function runPlan(argv) {
+  const batchSize = envInt("BATCH_SIZE", 8);
+  const crawlMax = Number.isFinite(parseInt(process.env.CRAWL_MAX, 10)) ? Math.max(0, parseInt(process.env.CRAWL_MAX, 10)) : 10;
+  const { names: all, explicit } = collectNames(argv);
+  const index = readIndex();
+  const state = readState();
+  const names = explicit ? all : pickBatch(all, index, state, batchSize);
+  const crawl = explicit || !crawlMax ? [] : crawlCandidates(readAllPayloads(), index, state).slice(0, crawlMax * 2);
+  return { kind: explicit ? "on-demand" : "rotation", names, crawlCandidates: crawl };
+}
+
 async function main() {
+  if (process.argv.includes("--plan")) {
+    // Used by the workflow at flag-raise time; no network.
+    const plan = runPlan(process.argv.slice(2).filter((a) => a !== "--plan"));
+    writeStatus({
+      running: true,
+      runId: process.env.GITHUB_RUN_ID || null,
+      startedAt: new Date().toISOString(),
+      current: plan,
+    });
+    console.log(JSON.stringify(plan));
+    return;
+  }
   fs.mkdirSync(PLAYERS_DIR, { recursive: true });
-  const batchSize = envInt("BATCH_SIZE", 15);
+  const batchSize = envInt("BATCH_SIZE", 8);
+  const crawlMax = Number.isFinite(parseInt(process.env.CRAWL_MAX, 10)) ? Math.max(0, parseInt(process.env.CRAWL_MAX, 10)) : 10;
+  const crawlIndexCap = envInt("CRAWL_INDEX_CAP", 400);
   const t0 = Date.now();
 
   const { names: all, explicit } = collectNames(process.argv.slice(2));
   // On-demand runs stay short so they don't hold the concurrency queue.
-  const budgetMs = envInt(explicit ? "ON_DEMAND_BUDGET_MIN" : "TIME_BUDGET_MIN", explicit ? 10 : 15) * 60_000;
-  const added = [];
+  const budgetMs = envInt(explicit ? "ON_DEMAND_BUDGET_MIN" : "TIME_BUDGET_MIN", explicit ? 10 : 13) * 60_000;
   if (!all.length) {
     console.error("No names to refresh. Add data/watchlist.txt or pass names.");
     process.exit(1);
@@ -541,45 +633,44 @@ async function main() {
       ? `Refreshing ${names.length} explicit name(s): ${names.join(", ")}`
       : `Rotation: ${names.length} stalest of ${all.length} name(s) (BATCH_SIZE=${batchSize}): ${names.join(", ")}`
   );
-  let ok = 0;
-  let notFound = 0;
-  let outage = 0;
-  let consecutiveOutage = 0;
-  let stoppedEarly = "";
+  const c = { ok: 0, notFound: 0, outage: 0, consecutiveOutage: 0, stoppedEarly: "" };
+  const added = []; // explicit names that fetched OK → watchlist
+  const discovered = []; // crawl successes → watchlist
+  const updated = []; // every name saved this run
+  const failed = []; // { name, reason, outage }
+  const startedAt = new Date(t0).toISOString();
+  if (explicit) {
+    // On-demand runs have no flag-on commit; record the plan for status.html.
+    writeStatus({ current: { kind: "on-demand", names, crawlCandidates: [] } });
+  }
 
-  for (let i = 0; i < names.length; i++) {
-    if (Date.now() - t0 > budgetMs) {
-      stoppedEarly = `time budget ${Math.round(budgetMs / 60000)} min reached`;
-      break;
-    }
-    const name = names[i];
+  const overBudget = (reserveMs = 0) => Date.now() - t0 + reserveMs > budgetMs;
+
+  /** Fetch + save one player. Returns display name on success, else null. */
+  async function refreshOne(name, label) {
     const slug = slugKey(name);
     if (!slug) {
       console.warn(`Skip empty slug for ${JSON.stringify(name)}`);
-      notFound++;
-      continue;
+      c.notFound++;
+      return null;
     }
-    console.log(`[${i + 1}/${names.length}] ${name} (${slug})…`);
+    console.log(`${label} ${name} (${slug})…`);
     const prev = state.players[slug] || {};
     const now = Date.now();
+    let display = null;
     try {
       if (!isPlausibleName(name)) throw new NotFoundError(`not a valid character name ${JSON.stringify(name)}`);
       const payload = await loadLive(name);
       const fileRel = `players/${slug}.json`;
       writeFileAtomic(path.join(DATA_DIR, fileRel), JSON.stringify(payload) + "\n");
-      upsertIndexEntry(index, {
-        name,
-        display: payload.player.display,
-        slug,
-        file: fileRel,
-        savedAt: payload.savedAt,
-      });
+      upsertIndexEntry(index, { name, display: payload.player.display, slug, file: fileRel, savedAt: payload.savedAt });
       writeIndex(index);
       state.players[slug] = { lastAttemptAt: now, lastOkAt: payload.savedAt, fails: 0 };
-      ok++;
-      added.push(payload.player.display || name);
-      consecutiveOutage = 0;
-      console.log(`  wrote data/${fileRel} (${payload.player.display})`);
+      c.ok++;
+      c.consecutiveOutage = 0;
+      display = payload.player.display || name;
+      updated.push(display);
+      console.log(`  wrote data/${fileRel} (${display})`);
     } catch (e) {
       const msg = String((e && e.message) || e);
       state.players[slug] = {
@@ -588,34 +679,94 @@ async function main() {
         fails: (prev.fails || 0) + 1,
         lastError: msg.slice(0, 200),
       };
+      failed.push({ name, reason: msg.slice(0, 120), outage: isOutageError(e) });
       if (isOutageError(e)) {
-        outage++;
-        consecutiveOutage++;
+        c.outage++;
+        c.consecutiveOutage++;
         console.error(`  FAIL (outage?) ${name}: ${msg}`);
       } else {
-        notFound++;
+        c.notFound++;
         console.error(`  SKIP (not found) ${name}: ${msg}`);
       }
     }
     state.updatedAt = new Date().toISOString();
     writeState(state);
-    if (consecutiveOutage >= MAX_CONSECUTIVE_OUTAGES) {
-      stoppedEarly = `${consecutiveOutage} outage-type failures in a row (Census/Honu down?)`;
+    if (c.consecutiveOutage >= MAX_CONSECUTIVE_OUTAGES) {
+      c.stoppedEarly = `${c.consecutiveOutage} outage-type failures in a row (Census/Honu down?)`;
+    }
+    return display;
+  }
+
+  // Phase 1: rotation batch or on-demand names.
+  for (let i = 0; i < names.length; i++) {
+    if (overBudget()) {
+      c.stoppedEarly = `time budget ${Math.round(budgetMs / 60000)} min reached`;
       break;
     }
+    const d = await refreshOne(names[i], `[${i + 1}/${names.length}]`);
+    if (d) added.push(d);
+    if (c.stoppedEarly) break;
     if (i + 1 < names.length) await sleep(BETWEEN_PLAYERS_MS);
   }
 
-  // On-demand names that fetched OK join the hourly rotation (failures don't).
+  // Phase 2 (rotation runs only): discover new players among cached opponents
+  // while time remains. On-demand (Worker) runs skip this to stay short.
+  const crawlFrom = Date.now();
+  if (!explicit && crawlMax > 0 && !c.stoppedEarly) {
+    if (index.players.length >= crawlIndexCap) {
+      console.log(`Crawl: index has ${index.players.length} ≥ CRAWL_INDEX_CAP=${crawlIndexCap}; skipping discovery.`);
+    } else {
+      const cands = crawlCandidates(readAllPayloads(), index, state);
+      const room = Math.min(crawlMax, crawlIndexCap - index.players.length);
+      console.log(`Crawl: ${cands.length} candidate opponent(s) not in index; adding up to ${room}. Top: ${cands.slice(0, 15).join(", ")}`);
+      let tried = 0;
+      for (const name of cands) {
+        if (discovered.length >= room) break;
+        // Keep ~90s in reserve: a new player costs ~50-60s at 2 req/s.
+        if (overBudget(90_000)) {
+          console.log("Crawl: stopping, time budget nearly used.");
+          break;
+        }
+        if (tried) await sleep(BETWEEN_PLAYERS_MS);
+        tried++;
+        const d = await refreshOne(name, `[crawl ${discovered.length + 1}/${room}]`);
+        if (d) discovered.push(d);
+        if (c.stoppedEarly) break;
+      }
+    }
+  }
+
+  // Successful on-demand + discovered names join the hourly rotation (failures don't).
   let joined = [];
-  if (explicit && added.length) {
-    joined = appendToWatchlist(added);
+  const toJoin = [...(explicit ? added : []), ...discovered];
+  if (toJoin.length) {
+    joined = appendToWatchlist(toJoin);
     if (joined.length) console.log(`Added to watchlist: ${joined.join(", ")}`);
   }
 
   const secs = Math.round((Date.now() - t0) / 1000);
-  const summary = `Done in ${secs}s. ok=${ok} notFound=${notFound} outage=${outage} index=${index.players.length}${joined.length ? ` watchlist+=${joined.length}` : ""}${stoppedEarly ? ` (stopped early: ${stoppedEarly})` : ""}`;
+  const crawlSecs = Math.round((Date.now() - crawlFrom) / 1000);
+  const summary =
+    `Done in ${secs}s. ok=${c.ok} notFound=${c.notFound} outage=${c.outage} index=${index.players.length}` +
+    `${discovered.length ? ` discovered=${discovered.length} (crawl ${crawlSecs}s)` : ""}` +
+    `${joined.length ? ` watchlist+=${joined.length}` : ""}` +
+    `${c.stoppedEarly ? ` (stopped early: ${c.stoppedEarly})` : ""}`;
   console.log(summary);
+  writeStatus({
+    lastRun: {
+      runId: process.env.GITHUB_RUN_ID || null,
+      event: process.env.GITHUB_EVENT_NAME || "local",
+      kind: explicit ? "on-demand" : "rotation",
+      startedAt,
+      endedAt: new Date().toISOString(),
+      seconds: secs,
+      updated: updated.filter((n) => !discovered.includes(n) && !(explicit && joined.includes(n))),
+      added: [...discovered, ...(explicit ? joined : [])].filter((n, i, a) => a.indexOf(n) === i),
+      failed,
+      stoppedEarly: c.stoppedEarly || null,
+      indexSize: index.players.length,
+    },
+  });
   if (process.env.GITHUB_STEP_SUMMARY) {
     try {
       fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `### Shared cache refresh\n\n${summary}\n`);
@@ -625,7 +776,7 @@ async function main() {
   }
   if (process.env.GITHUB_OUTPUT) {
     try {
-      fs.appendFileSync(process.env.GITHUB_OUTPUT, `ok=${ok}\n`);
+      fs.appendFileSync(process.env.GITHUB_OUTPUT, `ok=${c.ok}\nnew=${discovered.length}\n`);
     } catch {
       /* ignore */
     }
@@ -633,7 +784,7 @@ async function main() {
   // Bad / misspelled names are logged and skipped; their existing files and
   // index entries are left untouched. Only a run where nothing refreshed and
   // something looked like a real outage fails the job.
-  if (ok === 0 && outage > 0) process.exit(1);
+  if (c.ok === 0 && c.outage > 0) process.exit(1);
 }
 
 const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);

@@ -2,7 +2,9 @@ name: Refresh shared cache
 
 # Fully automatic: every hour the stalest BATCH_SIZE players (never-fetched
 # first) are re-fetched from Census + Honu and committed to data/. All ~225
-# names rotate through every few hours. No manual steps needed.
+# names rotate through every day. With time left, the run "crawls": it adds up
+# to CRAWL_MAX new players picked from cached players' frequent opponents.
+# No manual steps needed.
 #
 # On-demand: a dispatch with inputs.names (e.g. from the site's Cloudflare
 # Worker when someone analyzes a new name) refreshes ONLY those names, adds the
@@ -21,7 +23,7 @@ on:
       batch_size:
         description: "Rotation batch size when names is empty"
         required: false
-        default: "15"
+        default: "8"
 
 permissions:
   contents: write # commit data/
@@ -36,8 +38,10 @@ concurrency:
   queue: max
 
 env:
-  BATCH_SIZE: ${{ github.event.inputs.batch_size || '15' }}
-  TIME_BUDGET_MIN: "15"      # rotation: stop starting new players after this (page ignores flags >20 min old)
+  BATCH_SIZE: ${{ github.event.inputs.batch_size || '8' }}
+  TIME_BUDGET_MIN: "13"      # rotation: stop starting new players after this (page ignores flags >20 min old)
+  CRAWL_MAX: "10"            # rotation runs: add up to N new players found among cached opponents
+  CRAWL_INDEX_CAP: "400"     # stop discovering once the shared index is this big
   ON_DEMAND_BUDGET_MIN: "10" # inputs.names runs stay short
   ON_DEMAND: ${{ github.event.inputs.names != '' && github.event.inputs.names != null && 'true' || 'false' }}
   RUN_KIND: ${{ github.event_name == 'schedule' && 'scheduled' || 'manual' }}
@@ -86,6 +90,8 @@ jobs:
               message: "Shared cache refresh in progress",
             }, null, 2) + "\n");
           '
+          # data/status.json: rotation batch + crawl candidates (no network), for status.html
+          node scripts/refresh-cache.mjs --plan
           scripts/ci-commit-push.sh "chore(cache): under-load flag on [bot]"
 
       - name: Refresh players (rotation batch or on-demand names)
@@ -99,12 +105,20 @@ jobs:
         env:
           RUN_ID: ${{ github.run_id }}
           OK: ${{ steps.refresh.outputs.ok || '0' }}
+          NEW: ${{ steps.refresh.outputs.new || '0' }}
         run: |
           # Clear the flag only if it is raised (avoids no-op commits on on-demand runs).
           node -e '
             const fs = require("fs");
             let cur = {};
             try { cur = JSON.parse(fs.readFileSync("data/load-flag.json", "utf8")); } catch {}
+            let st = {};
+            try { st = JSON.parse(fs.readFileSync("data/status.json", "utf8")); } catch {}
+            if (st.running !== false) {
+              st.running = false;
+              st.current = null;
+              fs.writeFileSync("data/status.json", JSON.stringify(st, null, 2) + "\n");
+            }
             if (cur.fetching !== false) {
               fs.writeFileSync("data/load-flag.json", JSON.stringify({
                 fetching: false, ts: Date.now(), source: "actions",
@@ -115,6 +129,6 @@ jobs:
           if [ "$ON_DEMAND" = "true" ]; then
             msg="chore(cache): on-demand refresh, ${OK} player(s) updated [bot]"
           else
-            msg="chore(cache): ${RUN_KIND} refresh, ${OK} player(s) updated [bot]"
+            msg="chore(cache): ${RUN_KIND} refresh, ${OK} player(s) updated, ${NEW} new [bot]"
           fi
           scripts/ci-commit-push.sh "$msg"
