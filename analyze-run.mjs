@@ -1,0 +1,153 @@
+/**
+ * Per-name isolation for an Analyze run (DOM-free; shared with Node tests and
+ * scripts/refresh-cache.mjs). One bad / misspelled name must never sink the run.
+ */
+
+/** Short, user-facing reason per failure kind. */
+export const FAIL_REASONS = {
+  "not-found": "not found",
+  "no-data": "no killboard data",
+  network: "network error",
+  timeout: "timed out",
+  "bad-response": "bad response",
+  error: "error",
+};
+
+/** Kinds that are probably temporary (worth a retry), not a typo. */
+const TRANSIENT_KINDS = new Set(["network", "timeout", "bad-response"]);
+
+/** Error carrying a failure `kind` (see FAIL_REASONS). */
+export class NameLoadError extends Error {
+  constructor(message, kind = "error", extra = {}) {
+    super(message);
+    this.name = "NameLoadError";
+    this.kind = FAIL_REASONS[kind] ? kind : "error";
+    Object.assign(this, extra);
+  }
+}
+
+/** User cancel (✕ / Esc). Timeouts use name "TimeoutError" so they never match. */
+export function isAbortLike(e) {
+  return !!(e && (e.name === "AbortError" || e.code === 20));
+}
+
+/** Map any loader error to a FAIL_REASONS kind. */
+export function classifyLoadError(e) {
+  if (!e) return "error";
+  if (e.kind && FAIL_REASONS[e.kind]) return e.kind;
+  if (e.name === "TimeoutError") return "timeout";
+  if (e.name === "SyntaxError") return "bad-response";
+  const st = Number(e.status) || 0;
+  if (st === 404) return "not-found";
+  if (st === 429 || st >= 500) return "network";
+  if (st) return "bad-response";
+  const msg = String(e.message || "");
+  if (e.name === "TypeError" && /fetch|network|load failed/i.test(msg)) return "network";
+  if (/no character/i.test(msg)) return "not-found";
+  return "error";
+}
+
+export function failureReason(kind) {
+  return FAIL_REASONS[kind] || FAIL_REASONS.error;
+}
+
+/** Census looks names up by first name only — drop a leading "[TAG] ". */
+export function censusQueryName(name) {
+  return String(name || "")
+    .trim()
+    .replace(/^\[[^\]]*\]\s*/, "")
+    .trim();
+}
+
+/**
+ * Load each name independently. A failure is recorded and the loop moves on;
+ * only an AbortError (user cancel) or isCancelled() stops the whole run.
+ *
+ * @param {string[]} names
+ * @param {(name: string, idx: number) => Promise<any>} loadFn
+ * @param {{
+ *   isCancelled?: () => boolean,
+ *   onStart?: (name: string, idx: number, total: number) => void,
+ *   onDone?: (name: string, idx: number, total: number, outcome: object) => void,
+ * }} [opts]
+ * @returns {Promise<{ loaded: {name: string, idx: number, player: any}[],
+ *   failed: {name: string, idx: number, kind: string, reason: string, message: string}[],
+ *   cancelled: boolean }>}
+ */
+export async function loadEach(names, loadFn, opts = {}) {
+  const { isCancelled = () => false, onStart, onDone } = opts;
+  const list = Array.isArray(names) ? names : [];
+  const total = list.length;
+  const loaded = [];
+  const failed = [];
+  for (let idx = 0; idx < total; idx++) {
+    if (isCancelled()) return { loaded, failed, cancelled: true };
+    const name = list[idx];
+    if (onStart) onStart(name, idx, total);
+    let outcome;
+    try {
+      const player = await loadFn(name, idx);
+      if (isCancelled()) return { loaded, failed, cancelled: true };
+      if (!player) throw new NameLoadError(`No data for ${name}`, "no-data");
+      outcome = { ok: true, name, idx, player };
+      loaded.push({ name, idx, player });
+    } catch (e) {
+      if (isAbortLike(e) || isCancelled()) return { loaded, failed, cancelled: true };
+      const kind = classifyLoadError(e);
+      outcome = {
+        ok: false,
+        name,
+        idx,
+        kind,
+        reason: failureReason(kind),
+        message: String((e && e.message) || e || ""),
+      };
+      failed.push({
+        name,
+        idx,
+        kind,
+        reason: outcome.reason,
+        message: outcome.message,
+      });
+    }
+    // Failed names count as done so progress / ETA keep moving.
+    if (onDone) onDone(name, idx, total, outcome);
+  }
+  return { loaded, failed, cancelled: false };
+}
+
+/**
+ * Plain-text pieces for the amber "skipped names" status line.
+ * @param {{name: string, kind: string, reason?: string}[]} failed
+ * @param {number} okCount names that loaded fine
+ * @returns {null | { allFailed: boolean, lead: string,
+ *   items: {name: string, reason: string}[], tail: string, text: string }}
+ */
+export function summarizeFailures(failed, okCount) {
+  if (!failed || !failed.length) return null;
+  const items = failed.map((f) => ({
+    name: String(f.name),
+    reason: f.reason || failureReason(f.kind),
+  }));
+  const allFailed = !(okCount > 0);
+  const many = items.length > 1;
+  const transient = failed.filter((f) => TRANSIENT_KINDS.has(f.kind)).length;
+  const allTransient = transient === failed.length;
+
+  let lead;
+  if (allFailed) lead = many ? "Couldn't fetch any of these names:" : "Couldn't fetch";
+  else lead = "Couldn't fetch:";
+
+  let why;
+  if (allTransient) {
+    why = "Looks like a network hiccup — try again in a moment.";
+  } else {
+    why = many
+      ? "Probably misspelled or not real characters."
+      : "Probably misspelled or not a real character.";
+    if (transient) why += " Network errors may be temporary — try again.";
+  }
+  const tail = allFailed ? why : `${why} Showing the rest.`;
+  const list = items.map((i) => `${i.name} (${i.reason})`).join(", ");
+  return { allFailed, lead, items, tail, text: `${lead} ${list}. ${tail}` };
+}

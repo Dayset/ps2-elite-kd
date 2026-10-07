@@ -11,6 +11,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { censusQueryName } from "../analyze-run.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -106,7 +107,9 @@ function kpmCurve(rows, start = 2.5, end = 0.0, step = 0.05) {
 }
 
 async function resolveCensus(name) {
-  const raw = String(name).trim();
+  // Census matches first name only; watchlist/index names may carry "[TAG] ".
+  const raw = censusQueryName(name);
+  if (!raw) throw new Error(`Census: empty name ${JSON.stringify(name)}`);
   let url;
   if (/^\d{16,}$/.test(raw)) {
     url = `${CENSUS}character?character_id=${encodeURIComponent(raw)}&c:resolve=outfit,stat_history`;
@@ -114,13 +117,22 @@ async function resolveCensus(name) {
     url = `${CENSUS}character?name.first_lower=${encodeURIComponent(raw.toLowerCase())}&c:resolve=outfit,stat_history`;
   }
   const data = await fetchJson(url);
-  const chars = data.character_list || [];
-  if (!chars.length) throw new Error(`Census: no character ${raw}`);
+  if (data && !Array.isArray(data.character_list) && (data.error || data.errorCode)) {
+    throw new Error(`Census unavailable: ${data.error || data.errorCode}`);
+  }
+  const chars = (data && data.character_list) || [];
+  if (!chars.length || !chars[0] || !chars[0].character_id) {
+    throw new Error(`Census: no character ${raw}`);
+  }
   return chars[0];
 }
 
 async function honuKillboard(cid) {
-  return fetchJson(`${HONU}${cid}/killboard`);
+  const board = await fetchJson(`${HONU}${cid}/killboard`);
+  if (!Array.isArray(board)) throw new Error(`Honu: unexpected killboard for ${cid}`);
+  // Never overwrite existing good data with an empty curve.
+  if (!board.length) throw new Error(`Honu: empty killboard for ${cid}`);
+  return board;
 }
 
 async function honuMeta(cid) {
@@ -134,6 +146,7 @@ async function honuMeta(cid) {
 async function honuWeaponPace(cid) {
   try {
     const stats = await fetchJson(`${HONU}${cid}/stats`);
+    if (!Array.isArray(stats)) throw new Error("stats not a list");
     let wk = 0;
     let wd = 0;
     let wt = 0;
@@ -170,7 +183,7 @@ async function loadLive(name) {
   const gkd = gd ? gk / gd : gk;
   const gkpm = gt ? gk / (gt / 60) : 0;
   const tag = outfit.alias ? `[${outfit.alias}] ` : "";
-  const display = `${tag}${c.name.first}`;
+  const display = `${tag}${(c.name && c.name.first) || censusQueryName(name)}`;
 
   const own = await honuWeaponPace(cid);
   await sleep(BETWEEN_BATCH_MS);
@@ -350,6 +363,9 @@ async function main() {
 
   writeIndex(index);
   console.log(`Done. ok=${ok} fail=${fail} index=${index.players.length}`);
+  // Bad / misspelled names are logged and skipped; existing data/players files
+  // and index entries for them are left untouched. Only a run where nothing at
+  // all refreshed fails the job.
   if (ok === 0) process.exit(1);
 }
 

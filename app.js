@@ -29,6 +29,14 @@ import {
   clampYZoom,
   Y_ZOOM_DEFAULT,
 } from "./math.mjs";
+import {
+  NameLoadError,
+  classifyLoadError,
+  failureReason,
+  censusQueryName,
+  loadEach,
+  summarizeFailures,
+} from "./analyze-run.mjs?v=20261007-skipbad";
 
   const COLORS = [
     "#9fd4ee", "#ff7a7a", "#ffd166", "#8ef0b0", "#e8b0ff",
@@ -147,6 +155,12 @@ import {
   }
   /** Locked name chips in the token input (order preserved). */
   let nameTokens = [];
+  /** slug → { name, kind, reason } for names the last run(s) could not fetch. */
+  const failedNames = new Map();
+  /** Per-request timeouts so one hung Census/Honu call can't stall the run. */
+  const CENSUS_TIMEOUT_MS = 20 * 1000;
+  const HONU_BOARD_TIMEOUT_MS = 45 * 1000;
+  const HONU_SIDE_TIMEOUT_MS = 45 * 1000;
 
   function ns(tag) {
     return document.createElementNS("http://www.w3.org/2000/svg", tag);
@@ -983,6 +997,7 @@ import {
     if (els.fetchFresh) els.fetchFresh.checked = false;
     players = [];
     lastAnalyzedNames = [];
+    failedNames.clear();
     showIdleChart("▶️ Press Analyze");
     renderNameTokens();
     renderLastLink();
@@ -995,7 +1010,13 @@ import {
 
   /* ---------- tokenized name input / chips / last link ---------- */
 
+  function getNameFailure(name) {
+    const key = slugKey(name);
+    return key ? failedNames.get(key) || null : null;
+  }
+
   function isNameFetched(name) {
+    if (getNameFailure(name)) return false;
     if (findSharedEntry(name)) return true;
     if (cacheGet(name)) return true;
     const slug = slugKey(name);
@@ -1093,10 +1114,35 @@ import {
     nameTokens.forEach((name) => {
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.className = "name-token " + (isNameFetched(name) ? "fetched" : "unfetched");
-      btn.textContent = name;
-      btn.setAttribute("aria-label", `Remove ${name}`);
-      btn.title = `Remove ${name}`;
+      const fail = getNameFailure(name);
+      btn.className =
+        "name-token " + (fail ? "failed" : isNameFetched(name) ? "fetched" : "unfetched");
+      if (fail) {
+        const icon = document.createElement("span");
+        icon.className = "name-token-icon";
+        icon.setAttribute("aria-hidden", "true");
+        icon.textContent = "⚠";
+        const label = document.createElement("span");
+        label.className = "name-token-text";
+        label.textContent = name;
+        btn.append(icon, label);
+      } else {
+        btn.textContent = name;
+      }
+      if (fail) {
+        const transient =
+          fail.kind === "network" || fail.kind === "timeout" || fail.kind === "bad-response";
+        const tip =
+          `Couldn't fetch ${name} (${fail.reason}). ` +
+          (transient
+            ? "Probably a network hiccup — Analyze again to retry, or click to remove."
+            : "Probably misspelled or not a real character — click to remove.");
+        btn.setAttribute("aria-label", tip);
+        btn.title = tip;
+      } else {
+        btn.setAttribute("aria-label", `Remove ${name}`);
+        btn.title = `Remove ${name}`;
+      }
       btn.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -1232,13 +1278,55 @@ import {
 
   /* ---------- loaders ---------- */
 
-  async function fetchJson(url, signal) {
+  /**
+   * GET JSON. `timeoutMs` aborts a hung request with a TimeoutError (never an
+   * AbortError, so it counts as a per-name failure, not a user cancel).
+   */
+  async function fetchJson(url, signal, { timeoutMs = 0 } = {}) {
     checkAborted(signal);
-    const res = await fetch(url, signal ? { cache: "no-cache", signal } : { cache: "no-cache" });
-    if (!res.ok) throw new Error(`${res.status} ${res.statusText} for ${url}`);
-    const data = await res.json();
-    checkAborted(signal);
-    return data;
+    let useSignal = signal || null;
+    let timer = 0;
+    let timedOut = false;
+    let onOuterAbort = null;
+    if (timeoutMs > 0 && typeof AbortController !== "undefined") {
+      const ctl = new AbortController();
+      onOuterAbort = () => ctl.abort();
+      if (signal && typeof signal.addEventListener === "function") {
+        signal.addEventListener("abort", onOuterAbort, { once: true });
+      }
+      timer = setTimeout(() => {
+        timedOut = true;
+        ctl.abort();
+      }, timeoutMs);
+      useSignal = ctl.signal;
+    }
+    try {
+      const res = await fetch(
+        url,
+        useSignal ? { cache: "no-cache", signal: useSignal } : { cache: "no-cache" }
+      );
+      if (!res.ok) {
+        const err = new Error(`${res.status} ${res.statusText} for ${url}`);
+        err.status = res.status;
+        throw err;
+      }
+      const data = await res.json();
+      checkAborted(signal);
+      return data;
+    } catch (e) {
+      checkAborted(signal); // user cancel always wins
+      if (timedOut) {
+        const t = new Error(`Timed out after ${Math.round(timeoutMs / 1000)}s: ${url}`);
+        t.name = "TimeoutError";
+        throw t;
+      }
+      throw e;
+    } finally {
+      if (timer) clearTimeout(timer);
+      if (onOuterAbort && signal && typeof signal.removeEventListener === "function") {
+        signal.removeEventListener("abort", onOuterAbort);
+      }
+    }
   }
 
   async function loadLocal(name, signal) {
@@ -1286,26 +1374,44 @@ import {
   }
 
   async function resolveCensus(name, signal) {
-    const raw = name.trim();
+    const raw = censusQueryName(name); // "[TAG] Name" → "Name"
+    if (!raw) throw new NameLoadError(`Census: empty name ${JSON.stringify(name)}`, "not-found");
     let url;
     if (/^\d{16,}$/.test(raw)) {
       url = `${CENSUS}character?character_id=${encodeURIComponent(raw)}&c:resolve=outfit,stat_history`;
     } else {
       url = `${CENSUS}character?name.first_lower=${encodeURIComponent(raw.toLowerCase())}&c:resolve=outfit,stat_history`;
     }
-    const data = await fetchJson(url, signal);
+    const data = await fetchJson(url, signal, { timeoutMs: CENSUS_TIMEOUT_MS });
+    if (!data || typeof data !== "object") {
+      throw new NameLoadError(`Census: bad response for ${raw}`, "bad-response");
+    }
+    if (!Array.isArray(data.character_list) && (data.error || data.errorCode)) {
+      throw new NameLoadError(`Census unavailable: ${data.error || data.errorCode}`, "network");
+    }
     const chars = data.character_list || [];
-    if (!chars.length) throw new Error(`Census: no character ${raw}`);
+    if (!chars.length || !chars[0] || !chars[0].character_id) {
+      throw new NameLoadError(`Census: no character ${raw}`, "not-found");
+    }
     return chars[0];
   }
 
   async function honuKillboard(cid, signal) {
-    return fetchJson(`${HONU}${cid}/killboard`, signal);
+    const board = await fetchJson(`${HONU}${cid}/killboard`, signal, {
+      timeoutMs: HONU_BOARD_TIMEOUT_MS,
+    });
+    if (!Array.isArray(board)) {
+      throw new NameLoadError(`Honu: unexpected killboard for ${cid}`, "bad-response");
+    }
+    if (!board.length) {
+      throw new NameLoadError(`Honu: empty killboard for ${cid}`, "no-data");
+    }
+    return board;
   }
 
   async function honuMeta(cid, signal) {
     try {
-      return await fetchJson(`${HONU}${cid}`, signal);
+      return await fetchJson(`${HONU}${cid}`, signal, { timeoutMs: HONU_SIDE_TIMEOUT_MS });
     } catch (e) {
       if (isAbortError(e)) throw e;
       return {};
@@ -1314,7 +1420,10 @@ import {
 
   async function honuWeaponPace(cid, signal) {
     try {
-      const stats = await fetchJson(`${HONU}${cid}/stats`, signal);
+      const stats = await fetchJson(`${HONU}${cid}/stats`, signal, {
+        timeoutMs: HONU_SIDE_TIMEOUT_MS,
+      });
+      if (!Array.isArray(stats)) throw new Error("Honu: stats not a list");
       let wk = 0, wd = 0, wt = 0;
       let fire = 0, hitc = 0, hs = 0;
       for (const row of stats) {
@@ -1374,7 +1483,7 @@ import {
     const gkd = gd ? gk / gd : gk;
     const gkpm = gt ? gk / (gt / 60) : 0;
     const tag = outfit.alias ? `[${outfit.alias}] ` : "";
-    const display = `${tag}${c.name.first}`;
+    const display = `${tag}${(c.name && c.name.first) || censusQueryName(name)}`;
 
     const own = await honuWeaponPace(cid, signal);
     const board = await honuKillboard(cid, signal);
@@ -1436,7 +1545,10 @@ import {
         return await loadLive(name, run);
       } catch (e) {
         if (isAbortError(e)) throw e;
-        throw new Error(`Live fetch failed for ${JSON.stringify(name)}: ${e.message}`);
+        throw new NameLoadError(
+          `Live fetch failed for ${JSON.stringify(name)}: ${e.message}`,
+          classifyLoadError(e)
+        );
       }
     }
     const errors = [];
@@ -1452,14 +1564,18 @@ import {
     } catch (e) {
       errors.push(`cache: ${e.message}`);
     }
+    let liveErr = null;
     try {
       return await loadLive(name, run);
     } catch (e) {
       if (isAbortError(e)) throw e;
+      liveErr = e;
       errors.push(`live: ${e.message}`);
     }
-    throw new Error(
-      `Could not load ${JSON.stringify(name)}. ${errors.join(" · ")}`
+    // Shared/cache misses are expected; the live error says why the name failed.
+    throw new NameLoadError(
+      `Could not load ${JSON.stringify(name)}. ${errors.join(" · ")}`,
+      classifyLoadError(liveErr)
     );
   }
 
@@ -2241,61 +2357,45 @@ import {
     updateUnderLoadNotice();
     setStatus(`Analyzing ${clean.length} player${clean.length > 1 ? "s" : ""}…`);
 
-    const loaded = [];
-    const errors = [];
-    const successNames = [];
-
+    let result = { loaded: [], failed: [], cancelled: false };
     try {
-      for (let idx = 0; idx < clean.length; idx++) {
-        if (cancelled()) break;
-        const name = clean[idx];
-        setProgress(true, {
-          title: "Analyzing…",
-          done: idx,
-          total: clean.length,
-          name,
-        });
-
-        // Reuse in-memory player when names changed but this one is still present
-        if (!fresh) {
-          const existing = findLoadedPlayer(name);
-          if (existing && lastAnalyzedNames.some((n) => namesEqualIgnoreCase(n, name))) {
-            loaded.push(existing);
-            successNames.push(name);
-            setProgress(true, {
-              title: "Analyzing…",
-              done: idx + 1,
-              total: clean.length,
-              name,
-            });
-            continue;
+      result = await loadEach(
+        clean,
+        async (name) => {
+          // Reuse in-memory player when names changed but this one is still present
+          if (!fresh) {
+            const existing = findLoadedPlayer(name);
+            if (existing && lastAnalyzedNames.some((n) => namesEqualIgnoreCase(n, name))) {
+              return existing;
+            }
           }
-        }
-
-        try {
           const p = await loadOne(name, { fresh, run });
-          if (cancelled()) break;
-          loaded.push(p);
-          successNames.push(name);
-          // Only fully loaded players reach the cache.
+          if (cancelled()) throw makeAbortError();
+          // Only fully loaded players reach the cache (failures never do).
           cachePut(name, p);
           setStatus(
             `Loaded <strong>${escapeHtml(p.display)}</strong> ` +
             `<span class="src">via ${escapeHtml(sourceLabel(p.source))}</span>…`
           );
-        } catch (e) {
-          if (isAbortError(e) || cancelled()) break; // cancel, not an error
-          errors.push(`${name}: ${e.message}`);
+          return p;
+        },
+        {
+          isCancelled: cancelled,
+          onStart: (name, idx, total) => {
+            setProgress(true, { title: "Analyzing…", done: idx, total, name });
+          },
+          // Success or failure, the name counts as done so the bar/ETA advance.
+          onDone: (name, idx, total) => {
+            if (cancelled()) return;
+            setProgress(true, {
+              title: idx + 1 >= total ? "Finishing…" : "Analyzing…",
+              done: idx + 1,
+              total,
+              name,
+            });
+          },
         }
-        if (cancelled()) break;
-
-        setProgress(true, {
-          title: idx + 1 >= clean.length ? "Finishing…" : "Analyzing…",
-          done: idx + 1,
-          total: clean.length,
-          name,
-        });
-      }
+      );
     } finally {
       // A cancelled run already reset the UI in cancelAnalyze(); a newer run may
       // own the modal now, so only the still-active run cleans up here.
@@ -2310,36 +2410,77 @@ import {
     }
 
     // Cancelled: keep previous graph as-is; lastAnalyzedNames unchanged.
-    if (signal.aborted) return;
+    if (result.cancelled || signal.aborted) return;
 
-    if (!loaded.length) {
-      clearChartUi();
+    for (const ok of result.loaded) failedNames.delete(slugKey(ok.name));
+    for (const f of result.failed) {
+      const key = slugKey(f.name);
+      if (key) failedNames.set(key, { name: f.name, kind: f.kind, reason: f.reason });
+    }
+    if (result.failed.length && typeof console !== "undefined") {
+      console.warn(
+        "[ps2-elite-kd] skipped names:",
+        result.failed.map((f) => `${f.name}: ${f.message}`)
+      );
+    }
+
+    const summary = summarizeFailures(result.failed, result.loaded.length);
+
+    if (!result.loaded.length) {
+      // Nothing usable: keep the previous graph if there is one, else idle.
+      const hadGraph = players.length > 0;
+      if (!hadGraph) clearChartUi();
+      renderNameTokens();
+      renderCacheChips();
       setStatus(
-        `<span class="err">Nothing loaded.</span> ` +
-        `<span class="err">${escapeHtml(errors.join(" | "))}</span>` +
-        (fresh
-          ? ` <span class="src">Fetch fresh was on — live Honu/Census only.</span>`
-          : ` <span class="src">Tried shared ./data/ → browser cache → live.</span>`),
-        "err"
+        skippedWarningHtml(summary, {
+          extra: hadGraph ? "Previous graph kept." : "",
+          fresh,
+        }),
+        "warn skipped all-failed"
       );
       return;
     }
 
-    players = loaded;
-    lastAnalyzedNames = successNames.slice();
+    const successNames = result.loaded.map((x) => x.name);
+    players = result.loaded.map((x) => x.player);
+    // Attempted set (incl. skipped names) so a repeat press shows the
+    // "graph is ready" hint instead of refetching the same bad name.
+    lastAnalyzedNames = clean.slice();
     drawChart(players);
+    // Recent / share link only ever carry names that actually loaded.
     saveLastComparison(successNames);
     renderNameTokens();
     renderCacheChips();
 
-    if (errors.length) {
-      setStatus(
-        `<span class="warn">Partial — skipped: ${escapeHtml(errors.join(" | "))}</span>`,
-        "warn"
-      );
+    if (summary) {
+      setStatus(skippedWarningHtml(summary, { fresh }), "warn skipped");
     } else {
       setStatus("");
     }
+  }
+
+  /** Amber status block for names that could not be fetched. */
+  function skippedWarningHtml(summary, { extra = "", fresh = false } = {}) {
+    if (!summary) return "";
+    const items = summary.items
+      .map(
+        (i) =>
+          `<strong class="skipped-name">${escapeHtml(i.name)}</strong>` +
+          ` <span class="skipped-reason">(${escapeHtml(i.reason)})</span>`
+      )
+      .join(", ");
+    const tail = [summary.tail, extra].filter(Boolean).join(" ");
+    const freshNote =
+      fresh && summary.allFailed
+        ? ` <span class="src">Fetch fresh was on — live Honu/Census only.</span>`
+        : "";
+    return (
+      `<div class="skipped-warning" role="status">` +
+      `<span class="warn">⚠️ ${escapeHtml(summary.lead)} ${items}.</span> ` +
+      `<span class="skipped-tail">${escapeHtml(tail)}</span>${freshNote}` +
+      `</div>`
+    );
   }
 
   function buildShareUrl(names) {
@@ -2352,8 +2493,17 @@ import {
   }
 
   async function copyShareLink() {
-    const names = currentNamesInField();
+    // Names that just failed to fetch never go into a share link.
+    const inField = currentNamesInField();
+    const names = inField.filter((n) => !getNameFailure(n));
     if (!names.length) {
+      if (inField.length) {
+        setStatus(
+          '<span class="warn">Nothing to copy — none of these names could be fetched.</span>',
+          "warn"
+        );
+        return;
+      }
       setStatus('<span class="err">Nothing to copy — enter at least one name.</span>', "err");
       return;
     }
@@ -2581,6 +2731,8 @@ import {
       isAnalyzing: () => !!activeRun,
       getLiveFetchDepth: () => liveFetchDepth,
       getLastAnalyzedNames: () => lastAnalyzedNames.slice(),
+      getFailedNames: () => [...failedNames.values()].map((f) => ({ ...f })),
+      getPlayerNames: () => players.map((p) => p.display),
     };
   }
 

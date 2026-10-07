@@ -37,6 +37,11 @@
   --token-warn-bg: rgba(255, 209, 102, 0.1);
   --token-warn-fg: #ffd166;
   --token-warn-bd: rgba(255, 209, 102, 0.45);
+  --token-fail-bg: rgba(255, 122, 122, 0.12);
+  --token-fail-fg: #ff9a9a;
+  --token-fail-bd: rgba(255, 122, 122, 0.6);
+  --skip-bg: rgba(255, 209, 102, 0.08);
+  --skip-bd: rgba(255, 209, 102, 0.45);
 }
 
 /* Creamy haze light theme (~15% warm cream, not pure white) */
@@ -79,6 +84,11 @@ html[data-theme="light"] {
   --token-warn-bg: rgba(154, 106, 0, 0.12);
   --token-warn-fg: #9a6a00;
   --token-warn-bd: rgba(154, 106, 0, 0.4);
+  --token-fail-bg: rgba(176, 48, 48, 0.08);
+  --token-fail-fg: #a03030;
+  --token-fail-bd: rgba(176, 48, 48, 0.5);
+  --skip-bg: rgba(154, 106, 0, 0.08);
+  --skip-bd: rgba(154, 106, 0, 0.4);
 }
 
 * { box-sizing: border-box; }
@@ -334,6 +344,19 @@ header .sub {
   border: 1px solid var(--token-warn-bd);
 }
 
+/* Name the last Analyze couldn't fetch (misspelled / not real / network) */
+.name-token.failed {
+  background: var(--token-fail-bg);
+  color: var(--token-fail-fg);
+  border: 1px dashed var(--token-fail-bd);
+}
+.name-token.failed .name-token-text {
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .name-token:hover {
   filter: brightness(1.12);
 }
@@ -560,6 +583,20 @@ header .sub {
 #status .ok { color: var(--ok); }
 #status .warn { color: var(--warn); }
 #status .src { color: var(--dim); }
+
+/* Amber (not red) note listing names an Analyze run had to skip */
+#status .skipped-warning {
+  padding: 0.4rem 0.65rem;
+  background: var(--skip-bg);
+  border: 1px solid var(--skip-bd);
+  border-left-width: 3px;
+  border-radius: 8px;
+  line-height: 1.4;
+  margin-bottom: 0.15rem;
+}
+#status .skipped-warning .skipped-name { font-weight: 700; }
+#status .skipped-warning .skipped-reason { font-weight: 400; opacity: 0.85; }
+#status .skipped-warning .skipped-tail { color: var(--muted); }
 
 /* Repeat-Analyze hint when the graph is already ready for this name set */
 #status.graph-ready {
