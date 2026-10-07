@@ -38,7 +38,7 @@ import {
   summarizeFailures,
   compareByCharName,
   groupByCharName,
-} from "./analyze-run.mjs?v=20261007-namesort";
+} from "./analyze-run.mjs?v=20261007-letterline";
 
   const COLORS = [
     "#9fd4ee", "#ff7a7a", "#ffd166", "#8ef0b0", "#e8b0ff",
@@ -1233,15 +1233,7 @@ import {
       inner.className = "cache-shared-chips";
       inner.setAttribute("aria-label", "Shared cached character names");
       // Letter separators: [#] (digits/symbols) first, then [A], [B], …
-      let firstGroup = true;
       for (const group of groupByCharName(shared)) {
-        if (!firstGroup) {
-          const br = document.createElement("span");
-          br.className = "chip-break";
-          br.setAttribute("aria-hidden", "true");
-          inner.appendChild(br);
-        }
-        firstGroup = false;
         const sep = document.createElement("span");
         sep.className = "chip-sep";
         sep.setAttribute("aria-hidden", "true");

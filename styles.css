@@ -524,28 +524,28 @@ header .sub {
   margin-top: 0.4rem;
 }
 
-/* Letter separators in the shared-cache chip flow: each group [#] [A] [B] …
-   starts on its own line with a small muted label (not a chip, not clickable). */
+/* Letter separators in the shared-cache chip list: each group [#] [A] [B] …
+   gets its own heading line (dashed divider above, except the first), and the
+   group's chips start on the next line. Not a chip: non-interactive. */
 .cache-shared-chips { align-items: center; }
-.chip-break {
-  flex-basis: 100%;
-  height: 0;
-  margin: 0.1rem 0 0;
-  border-top: 1px dashed color-mix(in srgb, var(--border) 70%, transparent);
-}
 .chip-sep {
-  display: inline-block;
-  min-width: 2.1em;
-  font-size: 0.72rem;
+  flex: 0 0 100%;
+  box-sizing: border-box;
+  font-size: 0.8rem;
   font-weight: 700;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  letter-spacing: 0.02em;
-  color: var(--dim);
-  line-height: 1.4;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  line-height: 1.3;
   user-select: none;
   -webkit-user-select: none;
   pointer-events: none;
   white-space: nowrap;
+}
+.chip-sep:not(:first-child) {
+  margin-top: 0.25rem;
+  padding-top: 0.45rem;
+  border-top: 1px dashed color-mix(in srgb, var(--muted) 35%, transparent);
 }
 
 .chip {
