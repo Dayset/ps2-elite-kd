@@ -20,6 +20,7 @@
   const LS_CACHE_OLD = "ps2-elite-kd-cache-v1";
   const LS_RECENT = "ps2-elite-kd-recent";
   const LS_LAST = "ps2-elite-kd-last";
+  const LS_THEME = "ps2-elite-kd-theme";
   /** Cross-tab live-fetch flag (browser-local). */
   const LS_FETCHING = "ps2-elite-kd:fetching";
   const FETCHING_TTL_MS = 3 * 60 * 1000; // 3 min stale expiry
@@ -50,6 +51,7 @@
   };
 
   const els = {
+    themeToggle: document.getElementById("themeToggle"),
     namesBox: document.getElementById("namesBox"),
     nameTokensEl: document.getElementById("nameTokens"),
     namesInput: document.getElementById("namesInput") || document.getElementById("names"),
@@ -258,6 +260,73 @@
     }
     updateUnderLoadNotice();
   }
+
+
+  /* ---------- theme (dark / creamy light) ---------- */
+
+  function getStoredTheme() {
+    try {
+      const t = localStorage.getItem(LS_THEME);
+      return t === "light" || t === "dark" ? t : "dark";
+    } catch {
+      return "dark";
+    }
+  }
+
+  function applyTheme(theme, { redraw = true } = {}) {
+    const mode = theme === "light" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", mode);
+    try {
+      localStorage.setItem(LS_THEME, mode);
+    } catch {
+      /* private mode */
+    }
+    if (els.themeToggle) {
+      if (mode === "light") {
+        els.themeToggle.textContent = "🌙 Dark";
+        els.themeToggle.title = "Switch to dark theme";
+        els.themeToggle.setAttribute("aria-label", "Switch to dark theme");
+      } else {
+        els.themeToggle.textContent = "☀️ Light";
+        els.themeToggle.title = "Switch to light theme";
+        els.themeToggle.setAttribute("aria-label", "Switch to light theme");
+      }
+    }
+    if (redraw && players.length) drawChart(players);
+  }
+
+  function toggleTheme() {
+    const next = getStoredTheme() === "light" ? "dark" : "light";
+    applyTheme(next);
+  }
+
+  /** Chart chrome colors for current theme (series COLORS stay the same). */
+  function chartTheme() {
+    const light = document.documentElement.getAttribute("data-theme") === "light";
+    if (light) {
+      return {
+        bg: "#e8e1d4",
+        grid: "#d0c8ba",
+        text: "#1c1914",
+        muted: "#6e675c",
+        border: "#c9bfb0",
+        dash: "#6e675c",
+        markerStroke: "#e8e1d4",
+        bandOpacity: 0.12,
+      };
+    }
+    return {
+      bg: "#14161a",
+      grid: "#2a2e36",
+      text: "#f2f0ea",
+      muted: "#8a8882",
+      border: "#2a2e36",
+      dash: "#e0ddd6",
+      markerStroke: "#0b0c0e",
+      bandOpacity: 0.06,
+    };
+  }
+
 
   function isFiniteNum(v) {
     return typeof v === "number" && Number.isFinite(v);
@@ -1073,18 +1142,20 @@
     svg.setAttribute("role", "img");
     svg.setAttribute("aria-label", "Elite K/D vs enemy weapon KPM");
 
+    const th = chartTheme();
+
     const bg = ns("rect");
     bg.setAttribute("x", 0);
     bg.setAttribute("y", 0);
     bg.setAttribute("width", VB.w);
     bg.setAttribute("height", VB.h);
-    bg.setAttribute("fill", "#14161a");
+    bg.setAttribute("fill", th.bg);
     svg.appendChild(bg);
 
     const bands = [
-      { x0: 0, x1: EASY_MAX, fill: "#6a8f6a", opacity: 0.06 },
-      { x0: EASY_MAX, x1: HARD_MIN, fill: "#8a8a6a", opacity: 0.045 },
-      { x0: HARD_MIN, x1: X_MAX, fill: "#8a6a6a", opacity: 0.06 },
+      { x0: 0, x1: EASY_MAX, fill: "#6a8f6a", opacity: th.bandOpacity },
+      { x0: EASY_MAX, x1: HARD_MIN, fill: "#8a8a6a", opacity: th.bandOpacity * 0.75 },
+      { x0: HARD_MIN, x1: X_MAX, fill: "#8a6a6a", opacity: th.bandOpacity },
     ];
     for (const b of bands) {
       const r = ns("rect");
@@ -1109,7 +1180,7 @@
     const yToPx = makeYMapper(scale);
 
     const gGrid = ns("g");
-    gGrid.setAttribute("stroke", "#2a2e36");
+    gGrid.setAttribute("stroke", th.grid);
     gGrid.setAttribute("stroke-width", "0.8");
     for (let x = 0; x <= X_MAX + 1e-9; x += 0.5) {
       const line = ns("line");
@@ -1138,7 +1209,7 @@
       line.setAttribute("x2", xToPx(xv));
       line.setAttribute("y1", PLOT.y);
       line.setAttribute("y2", PLOT.y + PLOT.h);
-      line.setAttribute("stroke", "#e0ddd6");
+      line.setAttribute("stroke", th.dash);
       line.setAttribute("stroke-width", "1");
       line.setAttribute("stroke-dasharray", "5 4");
       line.setAttribute("stroke-opacity", "0.4");
@@ -1151,14 +1222,14 @@
     border.setAttribute("width", PLOT.w);
     border.setAttribute("height", PLOT.h);
     border.setAttribute("fill", "none");
-    border.setAttribute("stroke", "#2a2e36");
+    border.setAttribute("stroke", th.border);
     border.setAttribute("stroke-width", "1");
     svg.appendChild(border);
 
     const title = ns("text");
     title.setAttribute("x", PLOT.x);
     title.setAttribute("y", 22);
-    title.setAttribute("fill", "#f2f0ea");
+    title.setAttribute("fill", th.text);
     title.setAttribute("font-size", "16");
     title.setAttribute("font-weight", "600");
     title.textContent = "🦁❤  Elite K/D vs enemy weapon KPM";
@@ -1167,7 +1238,7 @@
     const ylab = ns("text");
     ylab.setAttribute("x", PLOT.x + PLOT.w + 44);
     ylab.setAttribute("y", PLOT.y + PLOT.h / 2);
-    ylab.setAttribute("fill", "#f2f0ea");
+    ylab.setAttribute("fill", th.text);
     ylab.setAttribute("font-size", "12");
     ylab.setAttribute("text-anchor", "middle");
     ylab.setAttribute("transform", `rotate(90 ${PLOT.x + PLOT.w + 44} ${PLOT.y + PLOT.h / 2})`);
@@ -1178,7 +1249,7 @@
       const t = ns("text");
       t.setAttribute("x", xToPx(x));
       t.setAttribute("y", PLOT.y + PLOT.h + 18);
-      t.setAttribute("fill", "#f2f0ea");
+      t.setAttribute("fill", th.text);
       t.setAttribute("font-size", "11");
       t.setAttribute("text-anchor", "middle");
       t.textContent = x.toFixed(1);
@@ -1188,7 +1259,7 @@
       const t = ns("text");
       t.setAttribute("x", PLOT.x + PLOT.w + 8);
       t.setAttribute("y", yToPx(y) + 4);
-      t.setAttribute("fill", "#f2f0ea");
+      t.setAttribute("fill", th.text);
       t.setAttribute("font-size", "11");
       t.setAttribute("text-anchor", "start");
       t.textContent = formatTick(y, scale.log);
@@ -1197,11 +1268,11 @@
 
     // Short axis labels only (no farm % clutter)
     const capY = PLOT.y + PLOT.h + 40;
-    addText(svg, PLOT.x, capY, "🐣 Easy", "#8a8882", 10, "start");
-    addText(svg, PLOT.x + PLOT.w / 2, capY, "enemy weapon KPM", "#8a8882", 10, "middle");
-    addText(svg, PLOT.x + PLOT.w, capY, "🔥 Hard", "#8a8882", 10, "end");
-    addText(svg, xToPx(EASY_MAX), capY + 14, "0.75", "#8a8882", 9, "middle");
-    addText(svg, xToPx(HARD_MIN), capY + 14, "1.50", "#8a8882", 9, "middle");
+    addText(svg, PLOT.x, capY, "🐣 Easy", th.muted, 10, "start");
+    addText(svg, PLOT.x + PLOT.w / 2, capY, "enemy weapon KPM", th.muted, 10, "middle");
+    addText(svg, PLOT.x + PLOT.w, capY, "🔥 Hard", th.muted, 10, "end");
+    addText(svg, xToPx(EASY_MAX), capY + 14, "0.75", th.muted, 9, "middle");
+    addText(svg, xToPx(HARD_MIN), capY + 14, "1.50", th.muted, 9, "middle");
 
     const labelAnchors = [];
     list.forEach((p, i) => {
@@ -1258,7 +1329,7 @@
           c.setAttribute("r", String(DOT_R));
           c.setAttribute("fill", col);
           c.setAttribute("fill-opacity", "0.92");
-          c.setAttribute("stroke", "#0b0c0e");
+          c.setAttribute("stroke", th.markerStroke);
           c.setAttribute("stroke-width", "0.6");
           svg.appendChild(c);
         }
@@ -1395,7 +1466,7 @@
 
   /* Per-table sort state: key "name" | col index, dir "asc"|"desc" */
   const statsSortState = {
-    public: { key: "adj", dir: "desc" },
+    public: { key: "ivi", dir: "desc" },
     adjusted: { key: "adj", dir: "desc" },
   };
 
@@ -1449,18 +1520,19 @@
       { id: "ivi", label: "IvI", fn: (r) => r.ivi, digits: 0 },
     ];
 
-    // Emoji flair restored from original Python share-PNG headers
+    // Column order is fixed (sort only reorders rows). adjIvI is always first metric.
+    // Emoji labels match the original Python share-PNG headers.
     const adjCols = [
       { id: "adj", label: "🎯 adjIvI", fn: (r) => r.adj, digits: 0 },
-      { id: "rkd", label: "✖️ rKD", fn: (r) => r.rkd, digits: 3 },
-      { id: "ekpm", label: "⚔️ avg opp KPM", fn: (r) => r.ekpm, digits: 2 },
+      { id: "rkd", label: "⚔️ rKD", fn: (r) => r.rkd, digits: 3 },
+      { id: "ekpm", label: "⚡ avg opp KPM", fn: (r) => r.ekpm, digits: 2 },
       { id: "own", label: "own KPM", fn: (r) => r.own, digits: 2 },
-      { id: "rf", label: "🔘 RF", fn: (r) => r.rf, digits: 2 },
-      { id: "act", label: "📅 Activity", fn: (r) => r.act, digits: 2 },
-      { id: "coi", label: "📋 COI", fn: (r) => r.coi, digits: 2 },
+      { id: "rf", label: "🛡️ RF", fn: (r) => r.rf, digits: 2 },
+      { id: "act", label: "🔥 Activity", fn: (r) => r.act, digits: 2 },
+      { id: "coi", label: "📊 COI", fn: (r) => r.coi, digits: 2 },
       { id: "mech", label: "⚙️ mech%", fn: (r) => r.mech, digits: 1 },
-      { id: "slope", label: "📈 slope", fn: (r) => r.slope, digits: 2 },
-      { id: "pvs", label: "💎❤️ LionHeart", fn: (r) => r.pvs, digits: 2 },
+      { id: "slope", label: "📉 slope", fn: (r) => r.slope, digits: 2 },
+      { id: "pvs", label: "🦁❤ LionHeart", fn: (r) => r.pvs, digits: 2 },
       { id: "kd15", label: "KD@1.5", fn: (r) => r.kd15, digits: 2 },
       { id: "inflation", label: "inflation", fn: (r) => r.inflation, digits: 2 },
     ];
@@ -1536,7 +1608,12 @@
           const vals = cols
             .map((c) => `<td>${fmtNum(c.fn(row), c.digits)}</td>`)
             .join("");
-          return `<tr><th scope="row" class="stats-name" style="color:${col}">${escapeHtml(row.p.display)}</th>${vals}</tr>`;
+          // Series index matches graph legend/color order (stable with list, not sort order)
+          const num = i + 1;
+          return (
+            `<tr><th scope="row" class="stats-name" style="color:${col}">` +
+            `<span class="player-num">${num}.</span> ${escapeHtml(row.p.display)}</th>${vals}</tr>`
+          );
         })
         .join("");
     }
@@ -1545,7 +1622,7 @@
     const adjSorted = sortRows(metrics, adjCols, statsSortState.adjusted);
 
     els.stats.innerHTML = `
-      <details class="stats-section">
+      <details class="stats-section" open>
         <summary>📊 Public (Census / Honu)</summary>
         <div class="stats-table-wrap">
           <table class="stats-table stats-table-transposed" data-stats-table="public">
@@ -1595,7 +1672,7 @@
       item.innerHTML = `
         <span class="legend-swatch" style="background:${col}"></span>
         <span style="color:${col}"><strong>${i + 1}.</strong> ${escapeHtml(p.display)}
-          <span style="color:#8a8882;font-size:0.8em">
+          <span class="legend-meta">
             (KD ${p.global_kd.toFixed(2)}, own KPM ${p.own_kpm.toFixed(2)}${iviBit}, ${escapeHtml(p.source)})
           </span>
         </span>
@@ -1930,6 +2007,10 @@
     });
   }
 
+  if (els.themeToggle) {
+    els.themeToggle.addEventListener("click", () => toggleTheme());
+  }
+
   // Expose tiny helpers for sanity checks in console / node --check stays syntax-only
   if (typeof window !== "undefined") {
     window.__ps2EliteKd = {
@@ -1948,7 +2029,10 @@
       SLOPE_FLOOR,
       SLOPE_EPS,
       LS_CACHE,
+      LS_THEME,
       LS_FETCHING,
+      getStoredTheme,
+      applyTheme,
       SHARED_INDEX_URL,
       getSharedIndex: () => sharedIndex,
       findSharedEntry,
@@ -1978,6 +2062,7 @@
   // Startup — fill chips only; wait for Analyze (Enter still works)
   // Never persist / restore "Fetch fresh"; always start clean on load/refresh.
   (async () => {
+    applyTheme(getStoredTheme(), { redraw: false });
     if (els.fetchFresh) els.fetchFresh.checked = false;
     startServerLoadFlagPolling();
     updateUnderLoadNotice();

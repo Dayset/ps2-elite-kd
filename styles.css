@@ -10,6 +10,39 @@
   --mid: #8a8a6a;
   --hard: #8a6a6a;
   --border: #2a2e36;
+  --row-border: #1e222a;
+  --shadow: rgba(0, 0, 0, 0.45);
+  --cta-bg: rgba(20, 22, 26, 0.72);
+  --cta-border: rgba(159, 212, 238, 0.35);
+  --cta-shadow: rgba(0, 0, 0, 0.35);
+  --btn-text: #0b0c0e;
+  --ok: #8ef0b0;
+  --warn: #ffd166;
+  --err: #ff7a7a;
+}
+
+/* Creamy haze light theme (~15% warm cream, not pure white) */
+html[data-theme="light"] {
+  --bg: #f0ebe3;          /* soft cream page */
+  --panel: #e8e1d4;       /* warmer panel haze */
+  --grid: #d0c8ba;
+  --text: #1c1914;
+  --muted: #4a453c;
+  --dim: #6e675c;
+  --accent: #2f6f8f;      /* deeper accent for contrast on cream */
+  --easy: #5a7a5a;
+  --mid: #7a7a55;
+  --hard: #7a5555;
+  --border: #c9bfb0;
+  --row-border: #d8d0c4;
+  --shadow: rgba(60, 45, 20, 0.18);
+  --cta-bg: rgba(240, 235, 227, 0.82);
+  --cta-border: rgba(47, 111, 143, 0.35);
+  --cta-shadow: rgba(60, 45, 20, 0.18);
+  --btn-text: #f0ebe3;
+  --ok: #1a7a45;
+  --warn: #9a6a00;
+  --err: #b03030;
 }
 
 * { box-sizing: border-box; }
@@ -39,9 +72,27 @@ img {
 header {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: center;
+  justify-content: space-between;
   gap: 0.5rem 1rem;
   margin-bottom: 1rem;
+}
+
+.theme-toggle {
+  margin-left: auto;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  cursor: pointer;
+}
+.theme-toggle:hover {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 header h1 {
@@ -258,7 +309,7 @@ header .sub {
 /* Primary action: Analyze pairs with the names input */
 .controls button#analyzeBtn {
   background: #6cb2ff;
-  color: #0b0c0e;
+  color: var(--btn-text);
   border: 1px solid #6cb2ff;
   font-weight: 700;
   font-size: 0.95rem;
@@ -270,7 +321,7 @@ header .sub {
 .controls button#analyzeBtn:hover {
   background: #8cc4ff;
   border-color: #8cc4ff;
-  color: #0b0c0e;
+  color: var(--btn-text);
 }
 .controls button#analyzeBtn:disabled {
   opacity: 0.55;
@@ -383,9 +434,9 @@ footer .cache-note code {
   margin-bottom: 0.5rem;
 }
 
-#status .err { color: #ff7a7a; }
-#status .ok { color: #8ef0b0; }
-#status .warn { color: #ffd166; }
+#status .err { color: var(--err); }
+#status .ok { color: var(--ok); }
+#status .warn { color: var(--warn); }
 #status .src { color: var(--dim); }
 
 .progress {
@@ -507,9 +558,9 @@ footer .cache-note code {
   color: var(--text);
   padding: 0.55rem 1.15rem;
   border-radius: 999px;
-  background: rgba(20, 22, 26, 0.72);
-  border: 1px solid rgba(159, 212, 238, 0.35);
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+  background: var(--cta-bg);
+  border: 1px solid var(--cta-border);
+  box-shadow: 0 8px 28px var(--cta-shadow);
   backdrop-filter: blur(6px);
 }
 
@@ -568,7 +619,7 @@ footer .cache-note code {
 .stats-table th,
 .stats-table td {
   padding: 0.28rem 0.55rem;
-  border-bottom: 1px solid #1e222a;
+  border-bottom: 1px solid var(--row-border);
   text-align: right;
   white-space: nowrap;
 }
@@ -582,13 +633,13 @@ footer .cache-note code {
   left: 0;
   z-index: 1;
   background: var(--panel);
-  box-shadow: 4px 0 8px -4px rgba(0, 0, 0, 0.45);
+  box-shadow: 4px 0 8px -4px var(--shadow);
 }
 
 .stats-table thead th {
   color: var(--text);
   font-weight: 600;
-  border-bottom-color: #2a2e36;
+  border-bottom-color: var(--border);
 }
 
 .stats-table thead th.stats-name {
@@ -658,4 +709,16 @@ footer a { color: var(--accent); }
 }
 .stats-table .sort-ind.active {
   opacity: 1;
+}
+
+
+.stats-table .player-num {
+  font-weight: 700;
+  margin-right: 0.2rem;
+  opacity: 0.95;
+}
+
+.legend-meta {
+  color: var(--dim);
+  font-size: 0.8em;
 }
