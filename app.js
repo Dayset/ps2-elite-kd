@@ -189,26 +189,35 @@ import {
     if (els.progressPct) els.progressPct.textContent = `${Math.round(progressDisplayPct)}%`;
   }
 
-  /** Creep/jitter the bar forward between real updates (OK to hit 100% early). */
+  /** ~30s of random creep to fill the current name's slice (not the whole bar). */
+  const PROGRESS_TICK_MS = 220;
+  const FAKE_SEGMENT_MS = 30000; // one person's segment ≈ 30s of fake fill
+
+  /**
+   * Creep within the current done→done+1 slice over ~FAKE_SEGMENT_MS.
+   * E.g. 2 names: 0–50% ~30s, then 50–100% ~30s. Snap on finish is in setProgress.
+   */
   function creepProgressBar() {
     if (!progressStartedAt || progressDisplayPct >= 100) return;
-    const floor =
-      progressTotalCount > 0
-        ? (progressDoneCount / progressTotalCount) * 100
-        : 0;
-    const nextFloor =
-      progressTotalCount > 0
-        ? ((progressDoneCount + 1) / progressTotalCount) * 100
-        : 100;
-    // Random forward nudge — only forward; may overshoot milestones / hit 100 early.
-    let step = 0.4 + Math.random() * 2.0;
-    if (Math.random() < 0.2) step += 1.5 + Math.random() * 3.5;
-    if (Math.random() < 0.07) step += 4 + Math.random() * 8;
-    let next = Math.min(100, Math.max(progressDisplayPct + step, floor));
-    // Bias a bit harder while still below the next name milestone.
-    if (next < nextFloor - 2 && Math.random() < 0.35) {
-      next = Math.min(100, next + 0.8 + Math.random() * 2.2);
-    }
+    if (progressTotalCount <= 0) return;
+
+    const floor = (progressDoneCount / progressTotalCount) * 100;
+    const ceil = ((progressDoneCount + 1) / progressTotalCount) * 100;
+    const segmentWidth = Math.max(0.0001, ceil - floor);
+
+    // Average step so this slice alone fills in ~30s (not 0→100 in 30s).
+    const ticksPerSegment = FAKE_SEGMENT_MS / PROGRESS_TICK_MS;
+    const avgStep = segmentWidth / ticksPerSegment;
+
+    // Random walk around avg: crawl, burst, near-pause — stay inside this slice.
+    let factor = 0.25 + Math.random() * 1.5; // ~0.25×–1.75×
+    if (Math.random() < 0.18) factor *= 1.6 + Math.random() * 1.4; // burst
+    if (Math.random() < 0.12) factor *= 0.12; // near-pause
+    const step = avgStep * factor;
+
+    // Cap at ceil — next slice belongs to the next name until snap.
+    const base = Math.max(progressDisplayPct, floor);
+    const next = Math.min(ceil, base + step);
     applyProgressBar(Math.max(progressDisplayPct, next));
   }
 
@@ -234,7 +243,7 @@ import {
 
   function startProgressTick() {
     stopProgressTick();
-    progressTickTimer = setInterval(renderProgressTiming, 220);
+    progressTickTimer = setInterval(renderProgressTiming, PROGRESS_TICK_MS);
   }
 
   /**
