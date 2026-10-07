@@ -57,6 +57,8 @@ import {
       ? crypto.randomUUID()
       : `t-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
   const DEFAULT_NAMES = [];
+  /** Empty-field Analyze default + names input placeholder. */
+  const DEFAULT_PLACEHOLDER_NAME = "ShloDog";
   const SHARED_INDEX_URL = "data/index.json";
 
   /** Catalog from data/index.json (shared Pages cache). */
@@ -996,6 +998,14 @@ import {
     renderCacheChips();
   }
 
+  /** Hide ShloDog placeholder whenever chips or typed text occupy the field. */
+  function syncNamesPlaceholder() {
+    if (!els.namesInput) return;
+    const hasChips = nameTokens.length > 0;
+    const hasTyped = String(els.namesInput.value || "").length > 0;
+    els.namesInput.placeholder = hasChips || hasTyped ? "" : DEFAULT_PLACEHOLDER_NAME;
+  }
+
   function renderNameTokens() {
     if (!els.nameTokensEl) return;
     els.nameTokensEl.innerHTML = "";
@@ -1013,6 +1023,7 @@ import {
       });
       els.nameTokensEl.appendChild(btn);
     });
+    syncNamesPlaceholder();
   }
 
   /** Commit trailing raw input into chips (separator flush or Analyze/Enter). */
@@ -2200,11 +2211,11 @@ import {
   if (els.analyzeBtn) {
     els.analyzeBtn.addEventListener("click", () => {
       commitFragment({ clearInput: true });
-      const names = currentNamesInField();
+      let names = currentNamesInField();
       if (!names.length) {
-        clearChartUi();
-        setStatus('<span class="err">Enter at least one character name (spaces or commas).</span>', "err");
-        return;
+        // Empty field → default to ShloDog and show it as a chip
+        setNameTokens([DEFAULT_PLACEHOLDER_NAME]);
+        names = [DEFAULT_PLACEHOLDER_NAME];
       }
       analyzeNames(names);
     });
@@ -2234,6 +2245,7 @@ import {
         for (const t of tokens) addNameToField(t);
         els.namesInput.value = "";
       }
+      syncNamesPlaceholder();
       renderCacheChips();
     });
 
@@ -2247,12 +2259,14 @@ import {
       requestAnimationFrame(() => {
         const val = els.namesInput.value;
         if (!/[,;\s]/.test(val)) {
+          syncNamesPlaceholder();
           renderCacheChips();
           return;
         }
         const tokens = parseNames(val);
         for (const t of tokens) addNameToField(t);
         if (tokens.length) els.namesInput.value = "";
+        syncNamesPlaceholder();
         renderCacheChips();
       });
     });
