@@ -29,7 +29,7 @@ Then open http://127.0.0.1:8080/
 
 Default load: **JustV6me** vs **ChrisJTTR** from `./data/` (or your last comparison / `?names=` query).
 
-Enter more names (comma-separated) and click **Load**, or press **Enter**. The page tries, in order:
+Enter more names (comma-separated) and click **Analyze**, or press **Enter**. The page tries, in order:
 
 1. Bundled `./data/<slug>.json`
 2. Browser **localStorage** payload cache
@@ -41,12 +41,12 @@ Status text reports which source was used per player.
 
 | Feature | Details |
 |---------|---------|
-| Recent names | Up to ~12 unique names in `localStorage` key `ps2-elite-kd-recent`. Clickable chips under the input add a name if missing (empty field → set; already present → keep). |
-| Payload cache | After a successful load (local or live), trimmed player objects are stored in `ps2-elite-kd-cache-v1`, keyed by normalized name. |
+| Cached names | All names currently in the payload cache shown as chips (`ps2-elite-kd-cache-v2`, ~30-day TTL). Click a chip to add that name. |
+| Payload cache | After a successful load (local or live), trimmed player objects are stored in `ps2-elite-kd-cache-v2` as `{ savedAt, player }`, keyed by normalized name. Expired after 30 days. |
 | Last comparison | Successful name lists saved in `ps2-elite-kd-last` and auto-restored on next open (falls back to JustV6me, ChrisJTTR). |
 | Clear memory | Button clears recent names, payload cache, and last comparison (confirms via `window.confirm`). |
 | Copy link | Builds and copies a shareable URL like `?names=JustV6me,ChrisJTTR`. Query param is honored on load. |
-| Polish | Load disabled while fetching; clearer empty/error/partial statuses; Enter submits. |
+| Polish | Analyze disabled while fetching with progress text; skip refetch when names unchanged (unless **Fetch fresh data**); Enter submits; Public/Adjusted stats table under the chart. |
 
 ## Share / deep link
 
@@ -54,7 +54,7 @@ Status text reports which source was used per player.
 https://example.github.io/ps2-elite-kd-web/?names=JustV6me,ChrisJTTR
 ```
 
-Comma-separated (also accepts `;` / newlines in the input field). Max 10 names per comparison.
+Spaces or commas (also `;` / newlines). Outfit tags like `[1TC] Name` stay one token. Max 10 names per comparison.
 
 ## GitHub Pages
 

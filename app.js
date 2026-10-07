@@ -1,6 +1,6 @@
 /**
  * PlanetSide 2 elite K/D comparison chart (vanilla JS + SVG).
- * Mirrors absolute_target_split / kpm_curve / save_share_png from ps2_elite_kd.py
+ * Mirrors absolute_target_split / kpm_curve / rf_if / adjusted_ivi from ps2_elite_kd.py
  */
 (() => {
   "use strict";
@@ -14,14 +14,15 @@
   const X_MAX = 2.0;
   const HONU = "https://wt.honu.pw/api/character/";
   const CENSUS = "https://census.daybreakgames.com/s:example/get/ps2:v2/";
+  const DOT_R = 3;
 
+  const LS_CACHE = "ps2-elite-kd-cache-v2";
+  const LS_CACHE_OLD = "ps2-elite-kd-cache-v1";
   const LS_RECENT = "ps2-elite-kd-recent";
-  const LS_CACHE = "ps2-elite-kd-cache-v1";
   const LS_LAST = "ps2-elite-kd-last";
-  const RECENT_MAX = 12;
+  const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
   const DEFAULT_NAMES = ["JustV6me", "ChrisJTTR"];
 
-  // Bundled demos (file:// + static server)
   const DEMO_FILES = {
     justv6me: "data/justv6me.json",
     chrisjttr: "data/chrisjttr.json",
@@ -34,9 +35,8 @@
     "[1tc] chrisjttr": "chrisjttr",
   };
 
-  // SVG layout (viewBox units)
-  const VB = { w: 1000, h: 620 };
-  const M = { t: 36, r: 56, b: 110, l: 48 };
+  const VB = { w: 1000, h: 580 };
+  const M = { t: 36, r: 56, b: 72, l: 48 };
   const PLOT = {
     x: M.l,
     y: M.t,
@@ -46,17 +46,22 @@
 
   const els = {
     names: document.getElementById("names"),
-    loadBtn: document.getElementById("loadBtn"),
+    analyzeBtn: document.getElementById("analyzeBtn") || document.getElementById("loadBtn"),
     copyLinkBtn: document.getElementById("copyLinkBtn"),
     clearMemBtn: document.getElementById("clearMemBtn"),
-    recentChips: document.getElementById("recentChips"),
+    fetchFresh: document.getElementById("fetchFresh"),
+    cacheChips: document.getElementById("cacheChips") || document.getElementById("recentChips"),
+    lastLink: document.getElementById("lastLink"),
     status: document.getElementById("status"),
+    progress: document.getElementById("progress"),
+    progressText: document.getElementById("progressText"),
     chart: document.getElementById("chart"),
-    share: document.getElementById("sharePanel"),
+    stats: document.getElementById("statsPanel"),
     legend: document.getElementById("legend"),
   };
 
   let players = [];
+  let lastAnalyzedNames = [];
   let fetching = false;
 
   function ns(tag) {
@@ -68,9 +73,27 @@
     els.status.className = cls || "";
   }
 
+  function setProgress(show, text) {
+    if (!els.progress) return;
+    if (show) {
+      els.progress.hidden = false;
+      if (els.progressText) els.progressText.textContent = text || "Fetching…";
+    } else {
+      els.progress.hidden = true;
+      if (els.progressText) els.progressText.textContent = "";
+    }
+  }
+
   function isFiniteNum(v) {
     return typeof v === "number" && Number.isFinite(v);
   }
+
+  function fmtNum(v, digits) {
+    if (!isFiniteNum(v)) return "—";
+    return Number(v).toFixed(digits);
+  }
+
+  /* ---------- math (ported from Python) ---------- */
 
   function pooled(sl) {
     let tk = 0, td = 0;
@@ -95,37 +118,47 @@
     return pts;
   }
 
-  function absoluteTargetSplit(p, easyMax = EASY_MAX, hardMin = HARD_MIN) {
-    const easy = [], mid = [], hard = [];
-    for (const r of p.rows || []) {
-      const ek = r.kpm || 0;
-      if (ek < easyMax) easy.push(r);
-      else if (ek > hardMin) hard.push(r);
-      else mid.push(r);
+  /**
+   * Resistance Factor (RF) and Activity/IF from high-pressure pair union.
+   * Union of top-n by opp KPM and top-n by deaths against player.
+   * RF = rkd * avg_opp_kpm; IF = rkd * own_kpm.
+   */
+  function rfIf(p, sliceN) {
+    const rows = Array.isArray(p.rows) ? p.rows.slice() : [];
+    if (!rows.length) return null;
+    const n = sliceN == null ? rows.length : Math.max(1, Math.min(sliceN, rows.length));
+    const byKpm = rows.slice().sort((a, b) => (b.kpm || 0) - (a.kpm || 0)).slice(0, n);
+    const byDth = rows.slice().sort((a, b) => (b.deaths || 0) - (a.deaths || 0)).slice(0, n);
+    const seen = new Set();
+    const sl = [];
+    for (const r of byKpm.concat(byDth)) {
+      const key = r.name;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      sl.push(r);
     }
-    const totK = (p.rows || []).reduce((s, r) => s + (r.kills || 0), 0);
-    function pack(sl, label) {
-      const { kills, deaths, kd } = pooled(sl);
-      return {
-        label,
-        n: sl.length,
-        kills,
-        deaths,
-        fights: kills + deaths,
-        kd,
-        kill_share: totK ? (100 * kills) / totK : 0,
-      };
-    }
+    const { kills, deaths, kd: rkd } = pooled(sl);
+    const kpms = sl.map((r) => +r.kpm || 0);
+    const avgOpp = kpms.length ? kpms.reduce((a, b) => a + b, 0) / kpms.length : 0;
+    const own = +(p.own_kpm || p.global_kpm || 0);
+    const rf = rkd * avgOpp;
+    const ifactor = rkd * own;
     return {
-      easy_max: easyMax,
-      hard_min: hardMin,
-      tot_k: totK,
-      buckets: {
-        easy: pack(easy, `opp KPM < ${easyMax}`),
-        peer: pack(mid, `${easyMax} <= opp KPM <= ${hardMin}`),
-        hard: pack(hard, `opp KPM > ${hardMin}`),
-      },
+      n: sl.length,
+      kills,
+      deaths,
+      rkd,
+      avg_opp: avgOpp,
+      own,
+      rf,
+      ifactor,
     };
+  }
+
+  /** adjIvI = 600 * (1 + log2(RF / 0.6)); soft RF 0.6 ≈ public IvI 600. */
+  function adjustedIvi(ivi, rf) {
+    if (rf == null || !(rf > 0)) return NaN;
+    return 600 * (1 + Math.log2(rf / 0.6));
   }
 
   function normalizePlayer(raw) {
@@ -151,6 +184,9 @@
       global_kd: +p.global_kd || 0,
       global_kpm: +p.global_kpm || 0,
       own_kpm: +p.own_kpm || +p.global_kpm || 0,
+      acc: p.acc != null ? +p.acc : null,
+      hsr: p.hsr != null ? +p.hsr : null,
+      ivi: p.ivi != null ? +p.ivi : null,
       rows,
       curve,
       honu: p.honu || (p.cid ? `https://wt.honu.pw/c/${p.cid}/killboard` : ""),
@@ -165,6 +201,9 @@
       global_kd: p.global_kd,
       global_kpm: p.global_kpm,
       own_kpm: p.own_kpm,
+      acc: p.acc,
+      hsr: p.hsr,
+      ivi: p.ivi,
       rows: p.rows,
       curve: p.curve.map((pt) => ({
         kpm: pt.kpm,
@@ -185,16 +224,31 @@
       .replace(/[^a-z0-9]+/g, "");
   }
 
+  /** Spaces or commas (also ; / newlines). Preserves optional [TAG] prefix. */
   function parseNames(text) {
-    return String(text || "")
-      .split(/[,;\n]+/)
-      .map((s) => s.trim())
-      .filter(Boolean)
-      .slice(0, 10);
+    const s = String(text || "").trim();
+    if (!s) return [];
+    const tokens = [];
+    const re = /(?:\[[^\]]*\]\s*)?[^\s,;]+/g;
+    let m;
+    while ((m = re.exec(s)) !== null) {
+      const t = m[0].trim();
+      if (t) tokens.push(t);
+    }
+    return tokens.slice(0, 10);
   }
 
   function namesEqualIgnoreCase(a, b) {
     return String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
+  }
+
+  /** Order-insensitive casefold key for skip-refetch compare. */
+  function namesSetKey(names) {
+    return names
+      .map((n) => String(n).trim().toLowerCase())
+      .filter(Boolean)
+      .sort()
+      .join("\0");
   }
 
   /* ---------- localStorage helpers ---------- */
@@ -218,55 +272,72 @@
     }
   }
 
-  function getRecent() {
-    const list = readJsonLS(LS_RECENT, []);
-    return Array.isArray(list) ? list.filter((s) => typeof s === "string" && s.trim()) : [];
+  function getCacheStore() {
+    const obj = readJsonLS(LS_CACHE, {});
+    return obj && typeof obj === "object" && !Array.isArray(obj) ? obj : {};
   }
 
-  function pushRecent(names) {
-    let list = getRecent();
-    // Preserve batch order (first name = most recent); dedupe within batch
-    const batch = [];
-    for (const name of names) {
-      const clean = String(name).trim();
-      if (!clean) continue;
-      if (!batch.some((n) => namesEqualIgnoreCase(n, clean))) batch.push(clean);
+  function pruneCache(store) {
+    const now = Date.now();
+    let changed = false;
+    for (const key of Object.keys(store)) {
+      const entry = store[key];
+      if (!entry || !entry.player || !entry.savedAt || now - entry.savedAt > CACHE_TTL_MS) {
+        delete store[key];
+        changed = true;
+      }
     }
-    for (const clean of batch) {
-      list = list.filter((n) => !namesEqualIgnoreCase(n, clean));
-    }
-    list = batch.concat(list).slice(0, RECENT_MAX);
-    writeJsonLS(LS_RECENT, list);
-    renderRecentChips();
+    return changed;
   }
 
   function getCache() {
-    const obj = readJsonLS(LS_CACHE, {});
-    return obj && typeof obj === "object" && !Array.isArray(obj) ? obj : {};
+    const store = getCacheStore();
+    if (pruneCache(store)) writeJsonLS(LS_CACHE, store);
+    return store;
   }
 
   function cacheGet(name) {
     const key = slugKey(name);
     const store = getCache();
     const entry = store[key];
-    if (!entry || !entry.player) return null;
+    if (!entry || !entry.player || !entry.savedAt) return null;
+    if (Date.now() - entry.savedAt > CACHE_TTL_MS) return null;
     return entry;
   }
 
   function cachePut(name, player) {
     const key = slugKey(name);
     if (!key) return;
-    const store = getCache();
+    const store = getCacheStore();
     store[key] = {
       name: String(name).trim(),
       savedAt: Date.now(),
       player: trimForCache(player),
     };
+    pruneCache(store);
     writeJsonLS(LS_CACHE, store);
+    renderCacheChips();
+  }
+
+  function listCachedNames() {
+    const store = getCache();
+    const items = [];
+    for (const key of Object.keys(store)) {
+      const entry = store[key];
+      if (!entry || !entry.player) continue;
+      items.push({
+        key,
+        name: entry.name || entry.player.display || key,
+        savedAt: entry.savedAt || 0,
+      });
+    }
+    items.sort((a, b) => b.savedAt - a.savedAt);
+    return items;
   }
 
   function saveLastComparison(names) {
     writeJsonLS(LS_LAST, names.map((n) => String(n).trim()).filter(Boolean));
+    renderLastLink();
   }
 
   function getLastComparison() {
@@ -277,14 +348,16 @@
 
   function clearMemory() {
     try {
-      localStorage.removeItem(LS_RECENT);
       localStorage.removeItem(LS_CACHE);
+      localStorage.removeItem(LS_CACHE_OLD);
+      localStorage.removeItem(LS_RECENT);
       localStorage.removeItem(LS_LAST);
     } catch { /* ignore */ }
-    renderRecentChips();
+    renderCacheChips();
+    renderLastLink();
   }
 
-  /* ---------- chips / names field ---------- */
+  /* ---------- chips / last link ---------- */
 
   function currentNamesInField() {
     return parseNames(els.names.value);
@@ -296,35 +369,53 @@
     const existing = currentNamesInField();
     if (!existing.length) {
       els.names.value = clean;
-      renderRecentChips();
+      renderCacheChips();
       return;
     }
     if (existing.some((n) => namesEqualIgnoreCase(n, clean))) {
-      // already present — keep as-is
-      renderRecentChips();
+      renderCacheChips();
       return;
     }
-    els.names.value = existing.concat(clean).join(", ");
-    renderRecentChips();
+    els.names.value = existing.concat(clean).join(" ");
+    renderCacheChips();
   }
 
-  function renderRecentChips() {
-    if (!els.recentChips) return;
-    const recent = getRecent();
+  function renderCacheChips() {
+    if (!els.cacheChips) return;
+    const cached = listCachedNames();
     const inField = currentNamesInField();
-    els.recentChips.innerHTML = "";
-    for (const name of recent) {
+    els.cacheChips.innerHTML = "";
+    if (!cached.length) return;
+    const label = document.createElement("span");
+    label.className = "fresh-hint";
+    label.style.marginRight = "0.35rem";
+    label.textContent = "Cache:";
+    els.cacheChips.appendChild(label);
+    for (const item of cached) {
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "chip";
-      if (inField.some((n) => namesEqualIgnoreCase(n, name))) {
+      if (inField.some((n) => namesEqualIgnoreCase(n, item.name))) {
         btn.classList.add("active");
       }
-      btn.textContent = name;
-      btn.title = `Add ${name} to comparison`;
-      btn.addEventListener("click", () => addNameToField(name));
-      els.recentChips.appendChild(btn);
+      btn.textContent = item.name;
+      btn.title = `Add ${item.name} to comparison`;
+      btn.addEventListener("click", () => addNameToField(item.name));
+      els.cacheChips.appendChild(btn);
     }
+  }
+
+  function renderLastLink() {
+    if (!els.lastLink) return;
+    const last = getLastComparison();
+    if (!last || !last.length) {
+      els.lastLink.innerHTML = "";
+      return;
+    }
+    const namesStr = last.join(",");
+    const url = buildShareUrl(last);
+    els.lastLink.innerHTML =
+      `Latest comparison: <a href="${escapeHtml(url)}">${escapeHtml(namesStr)}</a>`;
   }
 
   /* ---------- loaders ---------- */
@@ -398,17 +489,24 @@
     try {
       const stats = await fetchJson(`${HONU}${cid}/stats`);
       let wk = 0, wd = 0, wt = 0;
+      let fire = 0, hitc = 0, hs = 0;
       for (const row of stats) {
         const n = row.statName;
         const v = +row.valueForever || 0;
         if (n === "weapon_kills") wk = v;
         else if (n === "weapon_deaths") wd = v;
         else if (n === "weapon_play_time") wt = v;
+        else if (n === "weapon_fire_count") fire = v;
+        else if (n === "weapon_hit_count") hitc = v;
+        else if (n === "weapon_headshots") hs = v;
       }
       const kpm = wt ? wk / (wt / 60) : 0;
-      return { wk, wd, kpm };
+      const acc = fire ? (100 * hitc) / fire : 0;
+      const hsr = wk ? (100 * hs) / wk : 0;
+      const ivi = acc * hsr;
+      return { wk, wd, kpm, acc, hsr, ivi };
     } catch {
-      return { wk: 0, wd: 0, kpm: 0 };
+      return { wk: 0, wd: 0, kpm: 0, acc: 0, hsr: 0, ivi: 0 };
     }
   }
 
@@ -434,7 +532,6 @@
     board.sort((a, b) => (b.kills + b.deaths) - (a.kills + a.deaths));
     const sample = board.slice(0, 50);
 
-    // Enrich opponents (limited concurrency)
     const rows = [];
     const concurrency = 4;
     let i = 0;
@@ -463,6 +560,9 @@
         global_kd: gkd,
         global_kpm: gkpm,
         own_kpm: own.kpm || gkpm,
+        acc: own.acc,
+        hsr: own.hsr,
+        ivi: own.ivi,
         rows,
         curve: kpmCurve(rows),
         honu: `https://wt.honu.pw/c/${cid}/killboard`,
@@ -471,9 +571,17 @@
   }
 
   /**
-   * Load order: bundled ./data/ → localStorage cache → live Honu/Census
+   * Default: bundled → cache → live.
+   * Fresh: live only (error if live fails).
    */
-  async function loadOne(name) {
+  async function loadOne(name, { fresh = false } = {}) {
+    if (fresh) {
+      try {
+        return await loadLive(name);
+      } catch (e) {
+        throw new Error(`Live fetch failed for ${JSON.stringify(name)}: ${e.message}`);
+      }
+    }
     const errors = [];
     try {
       return await loadLocal(name);
@@ -552,26 +660,22 @@
   function drawChart(list) {
     const svg = els.chart;
     clearSvg(svg);
-    const extraShare = Math.max(0, (list.length - 2) * 16);
-    const vbH = VB.h + extraShare;
-    svg.setAttribute("viewBox", `0 0 ${VB.w} ${vbH}`);
+    svg.setAttribute("viewBox", `0 0 ${VB.w} ${VB.h}`);
     svg.setAttribute("role", "img");
     svg.setAttribute("aria-label", "Elite K/D vs enemy weapon KPM");
 
-    // Background
     const bg = ns("rect");
     bg.setAttribute("x", 0);
     bg.setAttribute("y", 0);
     bg.setAttribute("width", VB.w);
-    bg.setAttribute("height", vbH);
+    bg.setAttribute("height", VB.h);
     bg.setAttribute("fill", "#14161a");
     svg.appendChild(bg);
 
-    // Band spans
     const bands = [
-      { x0: 0, x1: EASY_MAX, fill: "#6a8f6a", opacity: 0.08 },
-      { x0: EASY_MAX, x1: HARD_MIN, fill: "#8a8a6a", opacity: 0.06 },
-      { x0: HARD_MIN, x1: X_MAX, fill: "#8a6a6a", opacity: 0.08 },
+      { x0: 0, x1: EASY_MAX, fill: "#6a8f6a", opacity: 0.06 },
+      { x0: EASY_MAX, x1: HARD_MIN, fill: "#8a8a6a", opacity: 0.045 },
+      { x0: HARD_MIN, x1: X_MAX, fill: "#8a6a6a", opacity: 0.06 },
     ];
     for (const b of bands) {
       const r = ns("rect");
@@ -584,21 +688,17 @@
       svg.appendChild(r);
     }
 
-    // Collect y values
     const yvals = [];
-    let maxDeaths = 1;
     for (const p of list) {
       for (const pt of p.curve || []) {
         if (pt.kpm <= X_MAX && isFiniteNum(pt.kd) && (pt.deaths > 0 || pt.kills > 0)) {
           yvals.push(pt.kd);
         }
-        maxDeaths = Math.max(maxDeaths, pt.deaths || 0);
       }
     }
     const scale = yScale(yvals);
     const yToPx = makeYMapper(scale);
 
-    // Grid + axes
     const gGrid = ns("g");
     gGrid.setAttribute("stroke", "#2a2e36");
     gGrid.setAttribute("stroke-width", "0.8");
@@ -610,7 +710,6 @@
       line.setAttribute("y2", PLOT.y + PLOT.h);
       gGrid.appendChild(line);
     }
-    // horizontal ticks
     const yTicks = scale.log
       ? niceLogTicks(scale.lo, scale.hi)
       : niceLinTicks(scale.lo, scale.hi, 6);
@@ -624,7 +723,6 @@
     }
     svg.appendChild(gGrid);
 
-    // Band guide lines
     for (const xv of [EASY_MAX, HARD_MIN]) {
       const line = ns("line");
       line.setAttribute("x1", xToPx(xv));
@@ -632,13 +730,12 @@
       line.setAttribute("y1", PLOT.y);
       line.setAttribute("y2", PLOT.y + PLOT.h);
       line.setAttribute("stroke", "#e0ddd6");
-      line.setAttribute("stroke-width", "1.2");
+      line.setAttribute("stroke-width", "1");
       line.setAttribute("stroke-dasharray", "5 4");
-      line.setAttribute("stroke-opacity", "0.55");
+      line.setAttribute("stroke-opacity", "0.4");
       svg.appendChild(line);
     }
 
-    // Plot border
     const border = ns("rect");
     border.setAttribute("x", PLOT.x);
     border.setAttribute("y", PLOT.y);
@@ -649,7 +746,6 @@
     border.setAttribute("stroke-width", "1");
     svg.appendChild(border);
 
-    // Title
     const title = ns("text");
     title.setAttribute("x", PLOT.x);
     title.setAttribute("y", 22);
@@ -659,7 +755,6 @@
     title.textContent = "🦁❤  Elite K/D vs enemy weapon KPM";
     svg.appendChild(title);
 
-    // Y label (right)
     const ylab = ns("text");
     ylab.setAttribute("x", PLOT.x + PLOT.w + 44);
     ylab.setAttribute("y", PLOT.y + PLOT.h / 2);
@@ -670,7 +765,6 @@
     ylab.textContent = "projected K/D";
     svg.appendChild(ylab);
 
-    // X / Y tick labels
     for (const x of [0, 0.5, 1.0, 1.5, 2.0]) {
       const t = ns("text");
       t.setAttribute("x", xToPx(x));
@@ -692,21 +786,14 @@
       svg.appendChild(t);
     }
 
-    // Band captions under axis
-    const capY = PLOT.y + PLOT.h + 38;
-    addText(svg, PLOT.x, capY, "Farming noobs", "#c8c6c0", 11, "start");
-    addText(
-      svg,
-      PLOT.x + PLOT.w / 2,
-      capY,
-      "< Easy targets  —  Enemy KPM  —  Hard targets >",
-      "#c8c6c0",
-      11,
-      "middle"
-    );
-    addText(svg, PLOT.x + PLOT.w, capY, "Shredding", "#c8c6c0", 11, "end");
+    // Short axis labels only (no farm % clutter)
+    const capY = PLOT.y + PLOT.h + 40;
+    addText(svg, PLOT.x, capY, "easy", "#8a8882", 10, "start");
+    addText(svg, PLOT.x + PLOT.w / 2, capY, "enemy weapon KPM", "#8a8882", 10, "middle");
+    addText(svg, PLOT.x + PLOT.w, capY, "hard", "#8a8882", 10, "end");
+    addText(svg, xToPx(EASY_MAX), capY + 14, "0.75", "#8a8882", 9, "middle");
+    addText(svg, xToPx(HARD_MIN), capY + 14, "1.50", "#8a8882", 9, "middle");
 
-    // Curves + dots
     const labelAnchors = [];
     list.forEach((p, i) => {
       const col = COLORS[i % COLORS.length];
@@ -715,12 +802,9 @@
         .map((pt) => ({
           ...pt,
           rel: reliability(pt),
-          valid:
-            isFiniteNum(pt.kd) &&
-            (pt.deaths > 0 || pt.kills > 0),
+          valid: isFiniteNum(pt.kd) && (pt.deaths > 0 || pt.kills > 0),
         }));
 
-      // faint full polyline
       const faint = pts.filter((pt) => pt.valid);
       if (faint.length >= 2) {
         const path = ns("path");
@@ -737,7 +821,6 @@
         svg.appendChild(path);
       }
 
-      // reliability-weighted segments
       for (let a = 0; a < pts.length - 1; a++) {
         const A = pts[a], B = pts[a + 1];
         if (!A.valid || !B.valid) continue;
@@ -754,20 +837,16 @@
         svg.appendChild(seg);
       }
 
-      // dots ∝ sqrt(deaths)
+      // Fixed small markers (no √deaths sizing)
       for (const pt of pts) {
         if (!pt.valid) continue;
-        const vol = Math.sqrt((pt.deaths || 0) / maxDeaths);
-        let r = 2.2 + 10 * vol;
-        if (r > 14) r = 14;
         if (pt.rel < 0.35) {
-          const s = Math.max(2.5, r * 0.7);
-          drawX(svg, xToPx(pt.kpm), yToPx(pt.kd), s, col);
+          drawX(svg, xToPx(pt.kpm), yToPx(pt.kd), DOT_R, col);
         } else {
           const c = ns("circle");
           c.setAttribute("cx", xToPx(pt.kpm));
           c.setAttribute("cy", yToPx(pt.kd));
-          c.setAttribute("r", r.toFixed(2));
+          c.setAttribute("r", String(DOT_R));
           c.setAttribute("fill", col);
           c.setAttribute("fill-opacity", "0.92");
           c.setAttribute("stroke", "#0b0c0e");
@@ -776,14 +855,7 @@
         }
       }
 
-      // left-side label anchor (easy end)
       let anchor = null;
-      for (const pt of pts) {
-        if (pt.valid && pt.kpm <= 0.25) {
-          anchor = pt;
-          break;
-        }
-      }
       const easyPts = pts.filter((pt) => pt.valid && pt.kpm <= 0.25);
       if (easyPts.length) {
         easyPts.sort((a, b) => a.kpm - b.kpm);
@@ -806,7 +878,6 @@
       }
     });
 
-    // Number badges on left, staggered
     labelAnchors.sort((a, b) => yToPx(a.y) - yToPx(b.y));
     const placed = [];
     for (const lab of labelAnchors) {
@@ -836,16 +907,7 @@
       svg.appendChild(link);
     }
 
-    // Kill-share strip text under captions
-    const splits = list.map((p) => absoluteTargetSplit(p));
-    splits.forEach((ts, i) => {
-      const col = COLORS[i % COLORS.length];
-      const b = ts.buckets;
-      const line = `${list[i].display}:  easy ${Math.round(b.easy.kill_share)}%  ·  mid ${Math.round(b.peer.kill_share)}%  ·  hard ${Math.round(b.hard.kill_share)}%`;
-      addText(svg, PLOT.x, PLOT.y + PLOT.h + 58 + i * 16, line, col, 11, "start");
-    });
-
-    renderSharePanel(list, splits);
+    renderStatsTable(list);
     renderLegend(list);
   }
 
@@ -922,24 +984,79 @@
     return y.toFixed(1);
   }
 
-  function renderSharePanel(list, splits) {
-    els.share.innerHTML = "";
-    list.forEach((p, i) => {
-      const b = splits[i].buckets;
-      const col = COLORS[i % COLORS.length];
-      const row = document.createElement("div");
-      row.className = "share-row";
-      row.innerHTML = `
-        <div class="name" style="color:${col}">${escapeHtml(p.display)}</div>
-        <div class="share-bar" title="Kill share by absolute enemy KPM bands">
-          <span class="easy" style="width:${b.easy.kill_share}%"></span>
-          <span class="mid" style="width:${b.peer.kill_share}%"></span>
-          <span class="hard" style="width:${b.hard.kill_share}%"></span>
-        </div>
-        <div class="share-pcts">easy ${Math.round(b.easy.kill_share)}% · mid ${Math.round(b.peer.kill_share)}% · hard ${Math.round(b.hard.kill_share)}%</div>
-      `;
-      els.share.appendChild(row);
+  function renderStatsTable(list) {
+    if (!els.stats) return;
+    if (!list.length) {
+      els.stats.innerHTML = "";
+      return;
+    }
+
+    const metrics = list.map((p) => {
+      const m = rfIf(p);
+      const ivi = p.ivi != null ? +p.ivi : NaN;
+      const rf = m && isFiniteNum(m.rf) ? m.rf : NaN;
+      const act = m && isFiniteNum(m.ifactor) ? m.ifactor : NaN;
+      return {
+        p,
+        m,
+        kd: p.global_kd,
+        kpm: p.own_kpm || p.global_kpm,
+        acc: p.acc,
+        hsr: p.hsr,
+        ivi,
+        rf,
+        act,
+        adj: adjustedIvi(ivi, rf),
+      };
     });
+
+    const head = metrics
+      .map((row, i) => {
+        const col = COLORS[i % COLORS.length];
+        return `<th style="color:${col}">${escapeHtml(row.p.display)}</th>`;
+      })
+      .join("");
+
+    function cells(fn, digits) {
+      return metrics
+        .map((row) => `<td>${fmtNum(fn(row), digits)}</td>`)
+        .join("");
+    }
+
+    const publicRows = `
+      <tr><td>KD</td>${cells((r) => r.kd, 2)}</tr>
+      <tr><td>KPM</td>${cells((r) => r.kpm, 2)}</tr>
+      <tr><td>Acc %</td>${cells((r) => r.acc, 1)}</tr>
+      <tr><td>HSR %</td>${cells((r) => r.hsr, 1)}</tr>
+      <tr><td>IvI</td>${cells((r) => r.ivi, 0)}</tr>
+    `;
+
+    const adjRows = `
+      <tr><td>RF</td>${cells((r) => r.rf, 2)}</tr>
+      <tr><td>Activity / IF</td>${cells((r) => r.act, 2)}</tr>
+      <tr><td>adjIvI</td>${cells((r) => r.adj, 0)}</tr>
+    `;
+
+    els.stats.innerHTML = `
+      <details class="stats-section">
+        <summary>Public (Census / Honu)</summary>
+        <div class="stats-table-wrap">
+          <table class="stats-table">
+            <thead><tr><th>Metric</th>${head}</tr></thead>
+            <tbody>${publicRows}</tbody>
+          </table>
+        </div>
+      </details>
+      <div class="stats-section">
+        <div class="section-title">Adjusted (calculated)</div>
+        <div class="stats-table-wrap">
+          <table class="stats-table">
+            <thead><tr><th>Metric</th>${head}</tr></thead>
+            <tbody>${adjRows}</tbody>
+          </table>
+        </div>
+      </div>
+    `;
   }
 
   function renderLegend(list) {
@@ -948,11 +1065,14 @@
       const col = COLORS[i % COLORS.length];
       const item = document.createElement("div");
       item.className = "legend-item";
+      const iviBit = p.ivi != null && isFiniteNum(+p.ivi)
+        ? `, IvI ${(+p.ivi).toFixed(0)}`
+        : "";
       item.innerHTML = `
         <span class="legend-swatch" style="background:${col}"></span>
         <span style="color:${col}"><strong>${i + 1}.</strong> ${escapeHtml(p.display)}
           <span style="color:#8a8882;font-size:0.8em">
-            (KD ${p.global_kd.toFixed(2)}, own KPM ${p.own_kpm.toFixed(2)}, ${escapeHtml(p.source)})
+            (KD ${p.global_kd.toFixed(2)}, own KPM ${p.own_kpm.toFixed(2)}${iviBit}, ${escapeHtml(p.source)})
           </span>
         </span>
       `;
@@ -978,36 +1098,74 @@
 
   function setFetching(on) {
     fetching = on;
-    els.loadBtn.disabled = on;
+    if (els.analyzeBtn) els.analyzeBtn.disabled = on;
     if (els.copyLinkBtn) els.copyLinkBtn.disabled = on;
     if (els.clearMemBtn) els.clearMemBtn.disabled = on;
+    if (els.fetchFresh) els.fetchFresh.disabled = on;
   }
 
   function clearChartUi() {
     clearSvg(els.chart);
-    els.share.innerHTML = "";
+    if (els.stats) els.stats.innerHTML = "";
     els.legend.innerHTML = "";
     players = [];
+    lastAnalyzedNames = [];
   }
 
-  async function loadNames(names) {
+  function findLoadedPlayer(name) {
+    const slug = slugKey(name);
+    return players.find((p) => slugKey(p.display) === slug || namesEqualIgnoreCase(p.display, name));
+  }
+
+  async function analyzeNames(names, { forceFresh = false } = {}) {
     if (fetching) return;
     const clean = names.map((n) => String(n).trim()).filter(Boolean);
     if (!clean.length) {
       clearChartUi();
-      setStatus('<span class="err">Enter at least one character name (comma-separated).</span>', "err");
+      setStatus('<span class="err">Enter at least one character name (spaces or commas).</span>', "err");
+      return;
+    }
+
+    const fresh = forceFresh || !!(els.fetchFresh && els.fetchFresh.checked);
+    const sameSet =
+      players.length > 0 &&
+      lastAnalyzedNames.length > 0 &&
+      namesSetKey(clean) === namesSetKey(lastAnalyzedNames);
+
+    // Unchanged names + fresh unchecked → re-render only (no refetch)
+    if (sameSet && !fresh) {
+      drawChart(players);
+      setStatus(
+        `<span class="ok">Showing ${players.map((p) => escapeHtml(p.display)).join(" vs ")}</span>` +
+        ` <span class="src">[re-rendered — names unchanged, using current data]</span>`
+      );
       return;
     }
 
     setFetching(true);
-    setStatus(`Loading ${clean.length} player${clean.length > 1 ? "s" : ""}…`);
+    setProgress(true, `Fetching 0/${clean.length}…`);
+    setStatus(`Analyzing ${clean.length} player${clean.length > 1 ? "s" : ""}…`);
+
     const loaded = [];
     const errors = [];
     const successNames = [];
 
-    for (const name of clean) {
+    for (let idx = 0; idx < clean.length; idx++) {
+      const name = clean[idx];
+      setProgress(true, `Fetching ${idx + 1}/${clean.length} ${name}…`);
+
+      // Reuse in-memory player when names changed but this one is still present
+      if (!fresh) {
+        const existing = findLoadedPlayer(name);
+        if (existing && lastAnalyzedNames.some((n) => namesEqualIgnoreCase(n, name))) {
+          loaded.push(existing);
+          successNames.push(name);
+          continue;
+        }
+      }
+
       try {
-        const p = await loadOne(name);
+        const p = await loadOne(name, { fresh });
         loaded.push(p);
         successNames.push(name);
         cachePut(name, p);
@@ -1021,22 +1179,24 @@
     }
 
     setFetching(false);
+    setProgress(false);
 
     if (!loaded.length) {
       clearChartUi();
       setStatus(
         `<span class="err">Nothing loaded.</span> ` +
         `<span class="err">${escapeHtml(errors.join(" | "))}</span>` +
-        ` <span class="src">Tried bundled ./data/ → cache → live.</span>`,
+        (fresh
+          ? ` <span class="src">Fetch fresh was on — live Honu/Census only.</span>`
+          : ` <span class="src">Tried bundled ./data/ → cache → live.</span>`),
         "err"
       );
       return;
     }
 
     players = loaded;
+    lastAnalyzedNames = successNames.slice();
     drawChart(players);
-
-    pushRecent(successNames);
     saveLastComparison(successNames);
 
     const srcBits = loaded
@@ -1113,25 +1273,27 @@
 
   /* ---------- events ---------- */
 
-  els.loadBtn.addEventListener("click", () => {
-    const names = parseNames(els.names.value);
-    if (!names.length) {
-      clearChartUi();
-      setStatus('<span class="err">Enter at least one character name (comma-separated).</span>', "err");
-      return;
-    }
-    loadNames(names);
-  });
+  if (els.analyzeBtn) {
+    els.analyzeBtn.addEventListener("click", () => {
+      const names = parseNames(els.names.value);
+      if (!names.length) {
+        clearChartUi();
+        setStatus('<span class="err">Enter at least one character name (spaces or commas).</span>', "err");
+        return;
+      }
+      analyzeNames(names);
+    });
+  }
 
   els.names.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      if (!fetching) els.loadBtn.click();
+      if (!fetching && els.analyzeBtn) els.analyzeBtn.click();
     }
   });
 
   els.names.addEventListener("input", () => {
-    renderRecentChips();
+    renderCacheChips();
   });
 
   if (els.copyLinkBtn) {
@@ -1142,18 +1304,31 @@
 
   if (els.clearMemBtn) {
     els.clearMemBtn.addEventListener("click", () => {
-      if (!window.confirm("Clear recent names and cached player data from this browser?")) {
+      if (!window.confirm("Clear cached names and player data from this browser?")) {
         return;
       }
       clearMemory();
-      setStatus('<span class="ok">Memory cleared</span> <span class="src">(recent names + payload cache + last comparison)</span>');
+      setStatus('<span class="ok">Memory cleared</span> <span class="src">(cache + last comparison)</span>');
     });
   }
 
-  // Startup: restore from ?names= → last comparison → defaults
+  // Expose tiny helpers for sanity checks in console / node --check stays syntax-only
+  if (typeof window !== "undefined") {
+    window.__ps2EliteKd = {
+      parseNames,
+      namesSetKey,
+      CACHE_TTL_MS,
+      rfIf,
+      adjustedIvi,
+      LS_CACHE,
+    };
+  }
+
+  // Startup
   const startup = resolveStartupNames();
-  els.names.value = startup.names.join(", ");
-  renderRecentChips();
+  els.names.value = startup.names.join(" ");
+  renderCacheChips();
+  renderLastLink();
   const reasonNote =
     startup.reason === "url"
       ? "from URL"
@@ -1161,5 +1336,5 @@
         ? "restored last comparison"
         : "demo defaults";
   setStatus(`Starting… <span class="src">${reasonNote}</span>`);
-  loadNames(startup.names);
+  analyzeNames(startup.names);
 })();

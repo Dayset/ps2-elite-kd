@@ -15,31 +15,47 @@
 
   <div class="controls">
     <label for="names">Players</label>
-    <input id="names" type="text" placeholder="JustV6me, ChrisJTTR" autocomplete="off" spellcheck="false" />
-    <button id="loadBtn" type="button">Load</button>
+    <input id="names" type="text" placeholder="JustV6me ChrisJTTR" autocomplete="off" spellcheck="false" />
+    <button id="analyzeBtn" type="button">Analyze</button>
     <button id="copyLinkBtn" type="button" title="Copy shareable URL with current names">Copy link</button>
-    <button id="clearMemBtn" type="button" class="btn-muted" title="Clear recent names and cached payloads">Clear memory</button>
-    <div id="recentChips" class="recent-chips" aria-label="Recent character names"></div>
+    <button id="clearMemBtn" type="button" class="btn-muted" title="Clear cached names and payloads">Clear memory</button>
+
+    <div class="fresh-row">
+      <label class="fresh-label" for="fetchFresh">
+        <input id="fetchFresh" type="checkbox" />
+        Fetch fresh data
+      </label>
+      <span class="fresh-hint">Cache avoids hammering Honu/Census and speeds repeat views; entries kept ~1 month.</span>
+    </div>
+
+    <div id="cacheChips" class="cache-chips" aria-label="Cached character names"></div>
+    <div id="lastLink" class="last-link" aria-label="Latest comparison"></div>
+
     <div class="hint">
-      Comma-separated names. Load order: bundled <code>./data/</code> → browser cache → Census + Honu (if CORS allows).
+      Names separated by spaces or commas. Load order: bundled <code>./data/</code> → browser cache → Census + Honu (if CORS allows).
       Share with <code>?names=JustV6me,ChrisJTTR</code>. Bundled demo: JustV6me, ChrisJTTR.
+      Check <strong>Fetch fresh data</strong> to skip cache and force live Honu/Census.
     </div>
   </div>
 
   <div id="status"></div>
-
-  <div class="chart-wrap">
-    <svg id="chart" viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid meet"></svg>
+  <div id="progress" class="progress" hidden>
+    <span class="spinner" aria-hidden="true"></span>
+    <span id="progressText"></span>
   </div>
 
-  <div id="sharePanel" class="share-panel" aria-label="Kill share by absolute enemy KPM"></div>
+  <div class="chart-wrap">
+    <svg id="chart" viewBox="0 0 1000 580" preserveAspectRatio="xMidYMid meet"></svg>
+  </div>
+
+  <div id="statsPanel" class="stats-panel" aria-label="Player stats comparison"></div>
   <div id="legend" class="legend"></div>
 
   <footer>
     <p>
       X = enemy weapon KPM (easy left → hard right). Y = pooled K/D for all pairs at or above that cutoff
-      (cumulative curve from Honu top-50 killboard). Dot size ∝ √deaths at that cutoff.
-      Kill-share strip uses absolute bands: easy &lt;0.75 · mid 0.75–1.50 · hard &gt;1.50.
+      (cumulative curve from Honu top-50 killboard). Subtle guides at 0.75 / 1.50.
+      Points use a fixed small marker (× when the sample is thin).
       No RED FLAG badge in this web build.
     </p>
     <p>
