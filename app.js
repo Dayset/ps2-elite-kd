@@ -483,12 +483,12 @@
     return NaN;
   }
 
-  /** Lightweight death_mix metrics at elite cutoff 1.5. */
+  /** Lightweight death_mix metrics at inflation cutoff 0.5 (avg planetman ~0.35 KPM). */
   function deathMixLite(p) {
-    const { kd: kd15, deaths: d15, n: n15 } = sliceAt(p.rows || [], 1.5);
+    const { kd: kd05, deaths: d05, n: n05 } = sliceAt(p.rows || [], 0.5);
     const gkd = +p.global_kd || 0;
-    const inflation = isFiniteNum(kd15) && kd15 > 0.05 ? gkd / kd15 : NaN;
-    return { kd15, d15, n15, inflation };
+    const inflation = isFiniteNum(kd05) && kd05 > 0.05 ? gkd / kd05 : NaN;
+    return { kd05, d05, n05, inflation };
   }
 
   function normalizePlayer(raw) {
@@ -1533,7 +1533,7 @@
         slope,
         pvs: pressureVolume(act, slope),
         adj: adjustedIvi(ivi, rf),
-        kd15: dm.kd15,
+        kd05: dm.kd05,
         inflation: dm.inflation,
       };
     });
@@ -1559,7 +1559,7 @@
       { id: "mech", label: "⚙️ Mech%", hint: "Projected mechanized / vehicle share implied by Resistance.", fn: (r) => r.mech, digits: 1 },
       { id: "slope", label: "📉 Slope", hint: "Overall graph angle: death-weighted K/D vs enemy KPM across the full curve — negative means K/D falls as opposition hardens.", fn: (r) => r.slope, digits: 2 },
       { id: "pvs", label: "🦁 LionHeart", hint: "Activity × pressure slope — sustained elite volume under hard opposition.", fn: (r) => r.pvs, digits: 2 },
-      { id: "inflation", label: "🎈 Inflation", hint: "Global KD ÷ KD at ≥1.5 enemy KPM — how much soft opposition inflates your KD.", fn: (r) => r.inflation, digits: 2 },
+      { id: "inflation", label: "🎈 Inflation", hint: "Global KD ÷ KD at ≥0.5 enemy KPM — how much soft opposition inflates your KD (avg planetman ~0.35).", fn: (r) => r.inflation, digits: 2 },
     ];
 
     function sortRows(rows, cols, state) {

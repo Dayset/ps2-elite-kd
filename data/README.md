@@ -20,7 +20,7 @@ data/
 3. Optional: pass names (e.g. `JustV6me LionHeart`) in the `names` input. Leave empty to refresh `watchlist.txt` plus anyone already in `index.json`.
 4. The workflow fetches Census + Honu, writes `data/players/*.json`, updates `index.json`, and commits.
 
-A weekly schedule also runs (Sunday 12:00 UTC).
+An hourly schedule also runs (minute 0 UTC: `0 * * * *`).
 
 The static site **cannot** push cache updates from the browser. Use **Fetch fresh data** for a personal live pull; shared updates only come from this Action.
 
