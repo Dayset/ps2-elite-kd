@@ -42,7 +42,7 @@
   let sharedIndexLoaded = false;
 
   const VB = { w: 1000, h: 580 };
-  const M = { t: 36, r: 56, b: 72, l: 48 };
+  const M = { t: 36, r: 56, b: 72, l: 56 };
   const PLOT = {
     x: M.l,
     y: M.t,
@@ -1140,7 +1140,7 @@
     setPlaceholderVisible(false);
     svg.setAttribute("viewBox", `0 0 ${VB.w} ${VB.h}`);
     svg.setAttribute("role", "img");
-    svg.setAttribute("aria-label", "Elite K/D vs enemy weapon KPM");
+    svg.setAttribute("aria-label", "Elite K/D vs Enemy KPM");
 
     const th = chartTheme();
 
@@ -1232,7 +1232,7 @@
     title.setAttribute("fill", th.text);
     title.setAttribute("font-size", "16");
     title.setAttribute("font-weight", "600");
-    title.textContent = "🦁❤  Elite K/D vs enemy weapon KPM";
+    title.textContent = "🦁 Elite K/D vs Enemy 💪 KPM";
     svg.appendChild(title);
 
     const ylab = ns("text");
@@ -1269,8 +1269,8 @@
     // Short axis labels only (no farm % clutter)
     const capY = PLOT.y + PLOT.h + 40;
     addText(svg, PLOT.x, capY, "🐣 Easy", th.muted, 10, "start");
-    addText(svg, PLOT.x + PLOT.w / 2, capY, "enemy weapon KPM", th.muted, 10, "middle");
-    addText(svg, PLOT.x + PLOT.w, capY, "🔥 Hard", th.muted, 10, "end");
+    addText(svg, PLOT.x + PLOT.w / 2, capY, "Enemy 💪 KPM", th.muted, 10, "middle");
+    addText(svg, PLOT.x + PLOT.w, capY, "🥵 Hard", th.muted, 10, "end");
     addText(svg, xToPx(EASY_MAX), capY + 14, "0.75", th.muted, 9, "middle");
     addText(svg, xToPx(HARD_MIN), capY + 14, "1.50", th.muted, 9, "middle");
 
@@ -1371,13 +1371,13 @@
       num.setAttribute("x", PLOT.x - 10);
       num.setAttribute("y", fy + 4);
       num.setAttribute("fill", lab.col);
-      num.setAttribute("font-size", "13");
-      num.setAttribute("font-weight", "700");
+      num.setAttribute("font-size", "14");
+      num.setAttribute("font-weight", "800");
       num.setAttribute("text-anchor", "end");
       num.textContent = String(lab.i + 1);
       svg.appendChild(num);
       const link = ns("line");
-      link.setAttribute("x1", PLOT.x - 6);
+      link.setAttribute("x1", PLOT.x - 4);
       link.setAttribute("y1", fy);
       link.setAttribute("x2", xToPx(lab.x));
       link.setAttribute("y2", yToPx(lab.y));
@@ -1525,16 +1525,16 @@
     const adjCols = [
       { id: "adj", label: "🎯 adjIvI", fn: (r) => r.adj, digits: 0 },
       { id: "rkd", label: "⚔️ rKD", fn: (r) => r.rkd, digits: 3 },
-      { id: "ekpm", label: "⚡ avg opp KPM", fn: (r) => r.ekpm, digits: 2 },
+      { id: "ekpm", label: "Enemy 💪 KPM", fn: (r) => r.ekpm, digits: 2 },
       { id: "own", label: "own KPM", fn: (r) => r.own, digits: 2 },
-      { id: "rf", label: "🛡️ RF", fn: (r) => r.rf, digits: 2 },
+      { id: "rf", label: "🛡️ Resistance", fn: (r) => r.rf, digits: 2 },
       { id: "act", label: "🔥 Activity", fn: (r) => r.act, digits: 2 },
       { id: "coi", label: "📊 COI", fn: (r) => r.coi, digits: 2 },
       { id: "mech", label: "⚙️ mech%", fn: (r) => r.mech, digits: 1 },
       { id: "slope", label: "📉 slope", fn: (r) => r.slope, digits: 2 },
-      { id: "pvs", label: "🦁❤ LionHeart", fn: (r) => r.pvs, digits: 2 },
+      { id: "pvs", label: "🦁 LionHeart", fn: (r) => r.pvs, digits: 2 },
       { id: "kd15", label: "KD@1.5", fn: (r) => r.kd15, digits: 2 },
-      { id: "inflation", label: "inflation", fn: (r) => r.inflation, digits: 2 },
+      { id: "inflation", label: "🎈 inflation", fn: (r) => r.inflation, digits: 2 },
     ];
 
     function sortRows(rows, cols, state) {
@@ -1603,16 +1603,31 @@
     function playerRows(cols, ordered) {
       return ordered
         .map((row) => {
-          const i = Math.max(0, list.indexOf(row.p));
+          // Series index matches graph legend/color order (stable with list, not sort order)
+          let i = list.indexOf(row.p);
+          if (i < 0) {
+            i = list.findIndex(
+              (p) =>
+                p === row.p ||
+                (p &&
+                  row.p &&
+                  String(p.display || "").toLowerCase() ===
+                    String(row.p.display || "").toLowerCase())
+            );
+          }
+          if (i < 0) i = 0;
           const col = COLORS[i % COLORS.length];
           const vals = cols
             .map((c) => `<td>${fmtNum(c.fn(row), c.digits)}</td>`)
             .join("");
-          // Series index matches graph legend/color order (stable with list, not sort order)
           const num = i + 1;
           return (
             `<tr><th scope="row" class="stats-name" style="color:${col}">` +
-            `<span class="player-num">${num}.</span> ${escapeHtml(row.p.display)}</th>${vals}</tr>`
+            `<span class="stats-name-inner">` +
+            `<span class="player-num" style="color:${col};border-color:${col}" ` +
+            `aria-label="Series ${num}">${num}</span>` +
+            `<span class="player-name">${escapeHtml(row.p.display)}</span>` +
+            `</span></th>${vals}</tr>`
           );
         })
         .join("");
@@ -1666,16 +1681,9 @@
       const col = COLORS[i % COLORS.length];
       const item = document.createElement("div");
       item.className = "legend-item";
-      const iviBit = p.ivi != null && isFiniteNum(+p.ivi)
-        ? `, IvI ${(+p.ivi).toFixed(0)}`
-        : "";
       item.innerHTML = `
         <span class="legend-swatch" style="background:${col}"></span>
-        <span style="color:${col}"><strong>${i + 1}.</strong> ${escapeHtml(p.display)}
-          <span class="legend-meta">
-            (KD ${p.global_kd.toFixed(2)}, own KPM ${p.own_kpm.toFixed(2)}${iviBit}, ${escapeHtml(p.source)})
-          </span>
-        </span>
+        <span style="color:${col}"><strong>${i + 1}.</strong> ${escapeHtml(p.display)}</span>
       `;
       els.legend.appendChild(item);
     });
@@ -1769,10 +1777,7 @@
     // Unchanged names + fresh unchecked → re-render only (no refetch)
     if (sameSet && !fresh) {
       drawChart(players);
-      setStatus(
-        `<span class="ok">Showing ${players.map((p) => escapeHtml(p.display)).join(" vs ")}</span>` +
-        ` <span class="src">[re-rendered — names unchanged, using current data]</span>`
-      );
+      setStatus("");
       return;
     }
 
@@ -1839,16 +1844,14 @@
     renderNameTokens();
     renderCacheChips();
 
-    const srcBits = loaded
-      .map((p) => `${escapeHtml(p.display)} ← ${escapeHtml(sourceLabel(p.source))}`)
-      .join("; ");
-    const notes = errors.length
-      ? ` <span class="warn">Partial — skipped: ${escapeHtml(errors.join(" | "))}</span>`
-      : "";
-    setStatus(
-      `<span class="ok">Showing ${players.map((p) => escapeHtml(p.display)).join(" vs ")}</span>` +
-      ` <span class="src">[${srcBits}]</span>${notes}`
-    );
+    if (errors.length) {
+      setStatus(
+        `<span class="warn">Partial — skipped: ${escapeHtml(errors.join(" | "))}</span>`,
+        "warn"
+      );
+    } else {
+      setStatus("");
+    }
   }
 
   function buildShareUrl(names) {
