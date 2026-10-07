@@ -15,8 +15,10 @@
   <div class="controls">
     <label for="namesInput">Players</label>
     <div id="namesBox" class="names-box" role="group" aria-label="Player names">
-      <div id="nameTokens" class="name-tokens"></div>
-      <input id="namesInput" type="text" placeholder="JustV6me ChrisJTTR" autocomplete="off" spellcheck="false" />
+      <div class="names-box-main">
+        <div id="nameTokens" class="name-tokens"></div>
+        <input id="namesInput" type="text" placeholder="JustV6me ChrisJTTR" autocomplete="off" spellcheck="false" />
+      </div>
       <button id="clearNamesBtn" type="button" class="clear-names" title="Clear names from input" aria-label="Clear names from input">×</button>
     </div>
     <button id="analyzeBtn" type="button">Analyze</button>
@@ -41,7 +43,7 @@
 
   <div class="chart-wrap empty">
     <div id="chartPlaceholder" class="chart-placeholder" aria-hidden="false">
-      <img src="assets/placeholder-graph.webp" alt="" width="1800" height="1044"
+      <img src="assets/placeholder-graph.webp" alt=""
            onerror="this.onerror=null;this.src='assets/placeholder-graph.png'" />
       <div class="chart-placeholder-overlay">
         <span class="chart-placeholder-cta">Press Analyze</span>

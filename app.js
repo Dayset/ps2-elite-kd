@@ -1271,7 +1271,7 @@
     fetching = on;
     if (els.analyzeBtn) els.analyzeBtn.disabled = on;
     if (els.copyLinkBtn) els.copyLinkBtn.disabled = on;
-    if (els.clearNamesBtn) els.clearNamesBtn.disabled = on;
+    // Keep × always clickable so users can clear mid-fetch
     if (els.fetchFresh) els.fetchFresh.disabled = on;
   }
 
@@ -1540,7 +1540,14 @@
 
   if (els.namesBox) {
     els.namesBox.addEventListener("click", (e) => {
-      if (e.target === els.namesBox || e.target === els.nameTokensEl) {
+      if (e.target.closest && e.target.closest("#clearNamesBtn, .clear-names")) return;
+      const main = els.namesBox.querySelector(".names-box-main");
+      if (
+        e.target === els.namesBox ||
+        e.target === els.nameTokensEl ||
+        e.target === main ||
+        (main && main.contains(e.target) && e.target.tagName !== "BUTTON")
+      ) {
         if (els.namesInput) els.namesInput.focus();
       }
     });
