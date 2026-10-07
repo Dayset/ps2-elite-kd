@@ -27,7 +27,7 @@ python3 -m http.server 8080
 
 Then open http://127.0.0.1:8080/
 
-Default load: **JustV6me** vs **ChrisJTTR** from `./data/` (or your last comparison / `?names=` query).
+On open: names are filled from `?names=`, last comparison, or demo defaults (**JustV6me**, **ChrisJTTR**) — chart stays idle until you press **Analyze** (or Enter).
 
 Enter more names (comma-separated) and click **Analyze**, or press **Enter**. The page tries, in order:
 
@@ -43,7 +43,7 @@ Status text reports which source was used per player.
 |---------|---------|
 | Cached names | All names currently in the payload cache shown as chips (`ps2-elite-kd-cache-v2`, ~30-day TTL). Click a chip to add that name. |
 | Payload cache | After a successful load (local or live), trimmed player objects are stored in `ps2-elite-kd-cache-v2` as `{ savedAt, player }`, keyed by normalized name. Expired after 30 days. |
-| Last comparison | Successful name lists saved in `ps2-elite-kd-last` and auto-restored on next open (falls back to JustV6me, ChrisJTTR). |
+| Last comparison | Successful name lists saved in `ps2-elite-kd-last` and restored into the input on next open (falls back to JustV6me, ChrisJTTR); Analyze still required. |
 | Clear memory | Button clears recent names, payload cache, and last comparison (confirms via `window.confirm`). |
 | Copy link | Builds and copies a shareable URL like `?names=JustV6me,ChrisJTTR`. Query param is honored on load. |
 | Polish | Analyze disabled while fetching with progress text; skip refetch when names unchanged (unless **Fetch fresh data**); Enter submits; Public/Adjusted stats table under the chart. |

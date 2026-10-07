@@ -71,9 +71,10 @@ header .sub {
   background: #0f1114;
   border: 1px solid var(--border);
   color: var(--text);
-  padding: 0.45rem 0.65rem;
+  padding: 0.5rem 0.65rem;
   border-radius: 6px;
   font-size: 0.95rem;
+  min-height: 2.35rem;
 }
 
 .controls input:focus {
@@ -99,6 +100,28 @@ header .sub {
   border-color: var(--border);
 }
 .controls button.btn-muted:hover { background: #1e2230; color: var(--text); }
+
+/* Primary action: Analyze pairs with the names input */
+.controls button#analyzeBtn {
+  background: #6cb2ff;
+  color: #0b0c0e;
+  border: 1px solid #6cb2ff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  padding: 0.5rem 1.2rem;
+  min-height: 2.35rem;
+  letter-spacing: 0.01em;
+  box-shadow: 0 0 0 1px rgba(108, 178, 255, 0.25);
+}
+.controls button#analyzeBtn:hover {
+  background: #8cc4ff;
+  border-color: #8cc4ff;
+  color: #0b0c0e;
+}
+.controls button#analyzeBtn:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
 
 .fresh-row {
   flex: 1 1 100%;

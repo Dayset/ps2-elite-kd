@@ -161,6 +161,71 @@
     return 600 * (1 + Math.log2(rf / 0.6));
   }
 
+  // Typical worst 25–75 slope ≈ -2; fixed floor so a new name does not rewrite PVS.
+  const SLOPE_FLOOR = -2.0;
+  const SLOPE_EPS = 0.05;
+
+  function sliceAt(rows, cut) {
+    const sl = (rows || []).filter((r) => (r.kpm || 0) >= cut);
+    const { kills, deaths, kd } = pooled(sl);
+    return { kd, kills, deaths, n: sl.length };
+  }
+
+  /** COI = RF / 0.6; soft player ≈ 1. */
+  function combatOutput(rf) {
+    return rf && rf === rf ? rf / 0.6 : NaN;
+  }
+
+  /** Experimental: 0.30 × (1 + ln(1+RF)) as percent. */
+  function projectedMech(rf) {
+    if (rf == null || rf !== rf || rf < 0) return NaN;
+    return 100.0 * 0.30 * (1.0 + Math.log(1.0 + rf));
+  }
+
+  /** How fast projected K/D falls between 25th and 75th opponent-KPM. */
+  function slope2575(p) {
+    const rows = (Array.isArray(p.rows) ? p.rows.slice() : []).filter((r) => (r.kpm || 0) > 0);
+    if (rows.length < 4) return NaN;
+    rows.sort((a, b) => (+a.kpm || 0) - (+b.kpm || 0));
+    const n = rows.length;
+    const i25 = Math.round(0.25 * (n - 1));
+    const i75 = Math.round(0.75 * (n - 1));
+    if (i75 <= i25) return NaN;
+    const k25 = +rows[i25].kpm;
+    const k75 = +rows[i75].kpm;
+    if (Math.abs(k75 - k25) < 1e-6) return NaN;
+    function valAt(cut) {
+      const sl = rows.filter((r) => r.kpm >= cut);
+      return pooled(sl).kd;
+    }
+    return (valAt(k75) - valAt(k25)) / (k75 - k25);
+  }
+
+  /** PVS = Activity × (shifted slope)^1.5 */
+  function pressureVolume(activity, slope) {
+    if (activity !== activity || slope !== slope) return NaN;
+    const shifted = Math.max(slope - SLOPE_FLOOR + SLOPE_EPS, SLOPE_EPS);
+    return activity * Math.pow(shifted, 1.5);
+  }
+
+  /** Prefer player.ivi; fall back to acc × hsr (IvI-style). */
+  function resolveIvi(p) {
+    if (p.ivi != null && isFiniteNum(+p.ivi)) return +p.ivi;
+    const acc = p.acc != null ? +p.acc : NaN;
+    const hsr = p.hsr != null ? +p.hsr : NaN;
+    if (isFiniteNum(acc) && isFiniteNum(hsr)) return acc * hsr;
+    return NaN;
+  }
+
+  /** Lightweight death_mix metrics at elite cutoff 1.5. */
+  function deathMixLite(p) {
+    const { kd: kd15, deaths: d15, n: n15 } = sliceAt(p.rows || [], 1.5);
+    const gkd = +p.global_kd || 0;
+    const inflation = isFiniteNum(kd15) && kd15 > 0.05 ? gkd / kd15 : NaN;
+    const strength = isFiniteNum(kd15) ? kd15 * Math.log10(1.0 + (d15 || 0)) : NaN;
+    return { kd15, d15, n15, inflation, strength };
+  }
+
   function normalizePlayer(raw) {
     const p = raw.player || raw;
     const rows = (p.rows || []).map((r) => ({
@@ -660,6 +725,8 @@
   function drawChart(list) {
     const svg = els.chart;
     clearSvg(svg);
+    const wrap = chartWrap();
+    if (wrap) wrap.classList.remove("empty");
     svg.setAttribute("viewBox", `0 0 ${VB.w} ${VB.h}`);
     svg.setAttribute("role", "img");
     svg.setAttribute("aria-label", "Elite K/D vs enemy weapon KPM");
@@ -993,20 +1060,36 @@
 
     const metrics = list.map((p) => {
       const m = rfIf(p);
-      const ivi = p.ivi != null ? +p.ivi : NaN;
+      const ivi = resolveIvi(p);
       const rf = m && isFiniteNum(m.rf) ? m.rf : NaN;
       const act = m && isFiniteNum(m.ifactor) ? m.ifactor : NaN;
+      const rkd = m && isFiniteNum(m.rkd) ? m.rkd : NaN;
+      const ekpm = m && isFiniteNum(m.avg_opp) ? m.avg_opp : NaN;
+      const own = m && isFiniteNum(m.own) ? m.own : (+p.own_kpm || +p.global_kpm || NaN);
+      const slope = slope2575(p);
+      const dm = deathMixLite(p);
       return {
         p,
         m,
         kd: p.global_kd,
-        kpm: p.own_kpm || p.global_kpm,
+        kpm: p.global_kpm,
+        ownKpm: p.own_kpm || p.global_kpm,
         acc: p.acc,
         hsr: p.hsr,
         ivi,
+        rkd,
+        ekpm,
+        own,
         rf,
         act,
+        coi: combatOutput(rf),
+        mech: projectedMech(rf),
+        slope,
+        pvs: pressureVolume(act, slope),
         adj: adjustedIvi(ivi, rf),
+        kd15: dm.kd15,
+        inflation: dm.inflation,
+        strength: dm.strength,
       };
     });
 
@@ -1026,15 +1109,26 @@
     const publicRows = `
       <tr><td>KD</td>${cells((r) => r.kd, 2)}</tr>
       <tr><td>KPM</td>${cells((r) => r.kpm, 2)}</tr>
+      <tr><td>own KPM</td>${cells((r) => r.ownKpm, 2)}</tr>
       <tr><td>Acc %</td>${cells((r) => r.acc, 1)}</tr>
       <tr><td>HSR %</td>${cells((r) => r.hsr, 1)}</tr>
       <tr><td>IvI</td>${cells((r) => r.ivi, 0)}</tr>
     `;
 
     const adjRows = `
+      <tr><td>rKD</td>${cells((r) => r.rkd, 3)}</tr>
+      <tr><td>avg opp KPM</td>${cells((r) => r.ekpm, 2)}</tr>
+      <tr><td>own KPM</td>${cells((r) => r.own, 2)}</tr>
       <tr><td>RF</td>${cells((r) => r.rf, 2)}</tr>
-      <tr><td>Activity / IF</td>${cells((r) => r.act, 2)}</tr>
+      <tr><td>Activity</td>${cells((r) => r.act, 2)}</tr>
+      <tr><td>COI</td>${cells((r) => r.coi, 2)}</tr>
+      <tr><td>mech%</td>${cells((r) => r.mech, 1)}</tr>
+      <tr><td>slope</td>${cells((r) => r.slope, 2)}</tr>
+      <tr><td>PVS</td>${cells((r) => r.pvs, 2)}</tr>
       <tr><td>adjIvI</td>${cells((r) => r.adj, 0)}</tr>
+      <tr><td>KD@1.5</td>${cells((r) => r.kd15, 2)}</tr>
+      <tr><td>inflation</td>${cells((r) => r.inflation, 2)}</tr>
+      <tr><td>strength</td>${cells((r) => r.strength, 2)}</tr>
     `;
 
     els.stats.innerHTML = `
@@ -1104,12 +1198,31 @@
     if (els.fetchFresh) els.fetchFresh.disabled = on;
   }
 
-  function clearChartUi() {
+  function chartWrap() {
+    return els.chart ? els.chart.closest(".chart-wrap") : null;
+  }
+
+  function showIdleChart(message) {
     clearSvg(els.chart);
     if (els.stats) els.stats.innerHTML = "";
     els.legend.innerHTML = "";
     players = [];
     lastAnalyzedNames = [];
+    const wrap = chartWrap();
+    if (wrap) wrap.classList.add("empty");
+    const t = ns("text");
+    t.setAttribute("x", String(VB.w / 2));
+    t.setAttribute("y", String(VB.h / 2));
+    t.setAttribute("fill", "#8a8882");
+    t.setAttribute("font-size", "18");
+    t.setAttribute("text-anchor", "middle");
+    t.setAttribute("dominant-baseline", "middle");
+    t.textContent = message || "Press Analyze";
+    els.chart.appendChild(t);
+  }
+
+  function clearChartUi() {
+    showIdleChart("Press Analyze");
   }
 
   function findLoadedPlayer(name) {
@@ -1320,21 +1433,30 @@
       CACHE_TTL_MS,
       rfIf,
       adjustedIvi,
+      sliceAt,
+      combatOutput,
+      projectedMech,
+      slope2575,
+      pressureVolume,
+      resolveIvi,
+      deathMixLite,
+      SLOPE_FLOOR,
+      SLOPE_EPS,
       LS_CACHE,
     };
   }
 
-  // Startup
+  // Startup — fill names / chips only; wait for Analyze (Enter still works)
   const startup = resolveStartupNames();
   els.names.value = startup.names.join(" ");
   renderCacheChips();
   renderLastLink();
+  showIdleChart("Press Analyze");
   const reasonNote =
     startup.reason === "url"
       ? "from URL"
       : startup.reason === "last"
         ? "restored last comparison"
         : "demo defaults";
-  setStatus(`Starting… <span class="src">${reasonNote}</span>`);
-  analyzeNames(startup.names);
+  setStatus(`Ready — press Analyze <span class="src">${reasonNote}</span>`);
 })();
