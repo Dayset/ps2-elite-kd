@@ -103,7 +103,7 @@
     if (!els.progress) return;
     if (show) {
       els.progress.hidden = false;
-      if (els.progressText) els.progressText.textContent = text || "Fetching…";
+      if (els.progressText) els.progressText.textContent = text || "⏳ Fetching…";
     } else {
       els.progress.hidden = true;
       if (els.progressText) els.progressText.textContent = "";
@@ -790,8 +790,8 @@
       }
     }
 
-    appendGroup("Shared:", cached.filter((c) => c.source === "shared"));
-    appendGroup("Browser:", cached.filter((c) => c.source !== "shared"));
+    appendGroup("📦 Shared:", cached.filter((c) => c.source === "shared"));
+    appendGroup("💾 Browser:", cached.filter((c) => c.source !== "shared"));
   }
 
   function renderLastLink() {
@@ -1197,9 +1197,9 @@
 
     // Short axis labels only (no farm % clutter)
     const capY = PLOT.y + PLOT.h + 40;
-    addText(svg, PLOT.x, capY, "Easy", "#8a8882", 10, "start");
+    addText(svg, PLOT.x, capY, "🐣 Easy", "#8a8882", 10, "start");
     addText(svg, PLOT.x + PLOT.w / 2, capY, "enemy weapon KPM", "#8a8882", 10, "middle");
-    addText(svg, PLOT.x + PLOT.w, capY, "Hard", "#8a8882", 10, "end");
+    addText(svg, PLOT.x + PLOT.w, capY, "🔥 Hard", "#8a8882", 10, "end");
     addText(svg, xToPx(EASY_MAX), capY + 14, "0.75", "#8a8882", 9, "middle");
     addText(svg, xToPx(HARD_MIN), capY + 14, "1.50", "#8a8882", 9, "middle");
 
@@ -1393,6 +1393,12 @@
     return y.toFixed(1);
   }
 
+  /* Per-table sort state: key "name" | col index, dir "asc"|"desc" */
+  const statsSortState = {
+    public: { key: "adj", dir: "desc" },
+    adjusted: { key: "adj", dir: "desc" },
+  };
+
   function renderStatsTable(list) {
     if (!els.stats) return;
     if (!list.length) {
@@ -1435,36 +1441,97 @@
     });
 
     const publicCols = [
-      { label: "KD", fn: (r) => r.kd, digits: 2 },
-      { label: "KPM", fn: (r) => r.kpm, digits: 2 },
-      { label: "own KPM", fn: (r) => r.ownKpm, digits: 2 },
-      { label: "Acc %", fn: (r) => r.acc, digits: 1 },
-      { label: "HSR %", fn: (r) => r.hsr, digits: 1 },
-      { label: "IvI", fn: (r) => r.ivi, digits: 0 },
+      { id: "kd", label: "KD", fn: (r) => r.kd, digits: 2 },
+      { id: "kpm", label: "KPM", fn: (r) => r.kpm, digits: 2 },
+      { id: "ownKpm", label: "own KPM", fn: (r) => r.ownKpm, digits: 2 },
+      { id: "acc", label: "Acc %", fn: (r) => r.acc, digits: 1 },
+      { id: "hsr", label: "HSR %", fn: (r) => r.hsr, digits: 1 },
+      { id: "ivi", label: "IvI", fn: (r) => r.ivi, digits: 0 },
     ];
 
+    // Emoji flair restored from original Python share-PNG headers
     const adjCols = [
-      { label: "rKD", fn: (r) => r.rkd, digits: 3 },
-      { label: "avg opp KPM", fn: (r) => r.ekpm, digits: 2 },
-      { label: "own KPM", fn: (r) => r.own, digits: 2 },
-      { label: "RF", fn: (r) => r.rf, digits: 2 },
-      { label: "Activity", fn: (r) => r.act, digits: 2 },
-      { label: "COI", fn: (r) => r.coi, digits: 2 },
-      { label: "mech%", fn: (r) => r.mech, digits: 1 },
-      { label: "slope", fn: (r) => r.slope, digits: 2 },
-      { label: "LionHeart", fn: (r) => r.pvs, digits: 2 },
-      { label: "adjIvI", fn: (r) => r.adj, digits: 0 },
-      { label: "KD@1.5", fn: (r) => r.kd15, digits: 2 },
-      { label: "inflation", fn: (r) => r.inflation, digits: 2 },
+      { id: "adj", label: "🎯 adjIvI", fn: (r) => r.adj, digits: 0 },
+      { id: "rkd", label: "✖️ rKD", fn: (r) => r.rkd, digits: 3 },
+      { id: "ekpm", label: "⚔️ avg opp KPM", fn: (r) => r.ekpm, digits: 2 },
+      { id: "own", label: "own KPM", fn: (r) => r.own, digits: 2 },
+      { id: "rf", label: "🔘 RF", fn: (r) => r.rf, digits: 2 },
+      { id: "act", label: "📅 Activity", fn: (r) => r.act, digits: 2 },
+      { id: "coi", label: "📋 COI", fn: (r) => r.coi, digits: 2 },
+      { id: "mech", label: "⚙️ mech%", fn: (r) => r.mech, digits: 1 },
+      { id: "slope", label: "📈 slope", fn: (r) => r.slope, digits: 2 },
+      { id: "pvs", label: "💎❤️ LionHeart", fn: (r) => r.pvs, digits: 2 },
+      { id: "kd15", label: "KD@1.5", fn: (r) => r.kd15, digits: 2 },
+      { id: "inflation", label: "inflation", fn: (r) => r.inflation, digits: 2 },
     ];
 
-    function metricHead(cols) {
-      return cols.map((c) => `<th>${escapeHtml(c.label)}</th>`).join("");
+    function sortRows(rows, cols, state) {
+      const key = state.key;
+      const dir = state.dir === "asc" ? 1 : -1;
+      const sorted = rows.slice();
+      sorted.sort((a, b) => {
+        if (key === "name") {
+          const an = String(a.p.display || "").toLowerCase();
+          const bn = String(b.p.display || "").toLowerCase();
+          if (an < bn) return -1 * (state.dir === "asc" ? 1 : -1);
+          if (an > bn) return 1 * (state.dir === "asc" ? 1 : -1);
+          return 0;
+        }
+        // Numeric: default desc means higher first when dir==="desc"
+        const col = cols.find((c) => c.id === key);
+        const getter = col ? col.fn : (r) => r.adj;
+        const av = getter(a);
+        const bv = getter(b);
+        const aOk = isFiniteNum(av);
+        const bOk = isFiniteNum(bv);
+        if (aOk && bOk) {
+          if (av === bv) return 0;
+          return av < bv ? -dir : dir;
+        }
+        if (aOk) return -1;
+        if (bOk) return 1;
+        return 0;
+      });
+      return sorted;
     }
 
-    function playerRows(cols) {
-      return metrics
-        .map((row, i) => {
+    function sortIndicator(active, dir) {
+      if (!active) return `<span class="sort-ind" aria-hidden="true"></span>`;
+      const arrow = dir === "asc" ? "▲" : "▼";
+      return `<span class="sort-ind active" aria-hidden="true">${arrow}</span>`;
+    }
+
+    function metricHead(cols, tableId, state) {
+      const nameActive = state.key === "name";
+      const nameTh =
+        `<th class="stats-name sortable${nameActive ? " sorted" : ""}" ` +
+        `data-table="${tableId}" data-sort="name" scope="col" role="columnheader" ` +
+        `aria-sort="${nameActive ? (state.dir === "asc" ? "ascending" : "descending") : "none"}" ` +
+        `title="Sort by name">Player${sortIndicator(nameActive, state.dir)}</th>`;
+      const rest = cols
+        .map((c) => {
+          const active = state.key === c.id;
+          const aria = active
+            ? state.dir === "asc"
+              ? "ascending"
+              : "descending"
+            : "none";
+          return (
+            `<th class="sortable${active ? " sorted" : ""}" ` +
+            `data-table="${tableId}" data-sort="${escapeHtml(c.id)}" scope="col" ` +
+            `role="columnheader" aria-sort="${aria}" ` +
+            `title="Sort by ${escapeHtml(c.label)}">${escapeHtml(c.label)}` +
+            `${sortIndicator(active, state.dir)}</th>`
+          );
+        })
+        .join("");
+      return nameTh + rest;
+    }
+
+    function playerRows(cols, ordered) {
+      return ordered
+        .map((row) => {
+          const i = Math.max(0, list.indexOf(row.p));
           const col = COLORS[i % COLORS.length];
           const vals = cols
             .map((c) => `<td>${fmtNum(c.fn(row), c.digits)}</td>`)
@@ -1474,26 +1541,46 @@
         .join("");
     }
 
+    const pubSorted = sortRows(metrics, publicCols, statsSortState.public);
+    const adjSorted = sortRows(metrics, adjCols, statsSortState.adjusted);
+
     els.stats.innerHTML = `
       <details class="stats-section">
-        <summary>Public (Census / Honu)</summary>
+        <summary>📊 Public (Census / Honu)</summary>
         <div class="stats-table-wrap">
-          <table class="stats-table stats-table-transposed">
-            <thead><tr><th class="stats-name">Player</th>${metricHead(publicCols)}</tr></thead>
-            <tbody>${playerRows(publicCols)}</tbody>
+          <table class="stats-table stats-table-transposed" data-stats-table="public">
+            <thead><tr>${metricHead(publicCols, "public", statsSortState.public)}</tr></thead>
+            <tbody>${playerRows(publicCols, pubSorted)}</tbody>
           </table>
         </div>
       </details>
       <div class="stats-section">
-        <div class="section-title">Adjusted (calculated)</div>
+        <div class="section-title">✨ Adjusted (calculated)</div>
         <div class="stats-table-wrap">
-          <table class="stats-table stats-table-transposed">
-            <thead><tr><th class="stats-name">Player</th>${metricHead(adjCols)}</tr></thead>
-            <tbody>${playerRows(adjCols)}</tbody>
+          <table class="stats-table stats-table-transposed" data-stats-table="adjusted">
+            <thead><tr>${metricHead(adjCols, "adjusted", statsSortState.adjusted)}</tr></thead>
+            <tbody>${playerRows(adjCols, adjSorted)}</tbody>
           </table>
         </div>
       </div>
     `;
+
+    els.stats.querySelectorAll("th.sortable").forEach((th) => {
+      th.addEventListener("click", () => {
+        const tableId = th.getAttribute("data-table");
+        const key = th.getAttribute("data-sort");
+        if (!tableId || !key || !statsSortState[tableId]) return;
+        const state = statsSortState[tableId];
+        if (state.key === key) {
+          state.dir = state.dir === "asc" ? "desc" : "asc";
+        } else {
+          state.key = key;
+          // Name defaults A→Z; numeric defaults high→low
+          state.dir = key === "name" ? "asc" : "desc";
+        }
+        renderStatsTable(list);
+      });
+    });
   }
 
   function renderLegend(list) {
@@ -1561,7 +1648,7 @@
       ? els.chartPlaceholder.querySelector(".chart-placeholder-cta")
       : null;
     if (cta && show) {
-      cta.textContent = "Press Analyze";
+      cta.textContent = "▶️ Press Analyze";
     }
   }
 
@@ -1575,11 +1662,11 @@
     const cta = els.chartPlaceholder
       ? els.chartPlaceholder.querySelector(".chart-placeholder-cta")
       : null;
-    if (cta) cta.textContent = message || "Press Analyze";
+    if (cta) cta.textContent = message || "▶️ Press Analyze";
   }
 
   function clearChartUi() {
-    showIdleChart("Press Analyze");
+    showIdleChart("▶️ Press Analyze");
   }
 
   function findLoadedPlayer(name) {
@@ -1613,7 +1700,7 @@
     }
 
     setFetching(true);
-    setProgress(true, `Fetching 0/${clean.length}…`);
+    setProgress(true, `⏳ Fetching 0/${clean.length}…`);
     updateUnderLoadNotice();
     setStatus(`Analyzing ${clean.length} player${clean.length > 1 ? "s" : ""}…`);
 
@@ -1624,7 +1711,7 @@
     try {
       for (let idx = 0; idx < clean.length; idx++) {
         const name = clean[idx];
-        setProgress(true, `Fetching ${idx + 1}/${clean.length} ${name}…`);
+        setProgress(true, `⏳ Fetching ${idx + 1}/${clean.length} ${name}…`);
 
         // Reuse in-memory player when names changed but this one is still present
         if (!fresh) {
@@ -1899,7 +1986,7 @@
     setNameTokens(startup.names);
     renderLastLink();
     renderCacheChips();
-    showIdleChart("Press Analyze");
+    showIdleChart("▶️ Press Analyze");
     const reasonNote =
       startup.reason === "url"
         ? "from URL"
