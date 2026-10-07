@@ -95,6 +95,7 @@ import {
     progressTiming: document.getElementById("progressTiming"),
     underLoadNote: document.getElementById("underLoadNote"),
     underLoadInModal: document.getElementById("underLoadInModal"),
+    progressCancel: document.getElementById("progressCancel"),
     chart: document.getElementById("chart"),
     chartPlaceholder: document.getElementById("chartPlaceholder"),
     chartYZoom: document.getElementById("chartYZoom"),
@@ -113,6 +114,11 @@ import {
   /** Y-axis zoom factor; 1 = auto-fit current data (default). */
   let yZoom = Y_ZOOM_DEFAULT;
   let fetching = false;
+  /**
+   * Active analyze run: { controller, signal, live } or null.
+   * `live` = how many beginLiveFetch() holds this run still owns.
+   */
+  let activeRun = null;
   /** Progress modal timing for ETA (names completed). */
   let progressStartedAt = 0;
   let progressDoneCount = 0;
@@ -1203,15 +1209,39 @@ import {
       `Latest comparison: <a href="${escapeHtml(url)}">${escapeHtml(namesStr)}</a>`;
   }
 
-  /* ---------- loaders ---------- */
+  /* ---------- abort helpers ---------- */
 
-  async function fetchJson(url) {
-    const res = await fetch(url, { cache: "no-cache" });
-    if (!res.ok) throw new Error(`${res.status} ${res.statusText} for ${url}`);
-    return res.json();
+  function makeAbortError() {
+    try {
+      return new DOMException("Fetch cancelled", "AbortError");
+    } catch {
+      const e = new Error("Fetch cancelled");
+      e.name = "AbortError";
+      return e;
+    }
   }
 
-  async function loadLocal(name) {
+  function isAbortError(e) {
+    return !!(e && (e.name === "AbortError" || e.code === 20));
+  }
+
+  /** Throw AbortError if this run was cancelled. */
+  function checkAborted(signal) {
+    if (signal && signal.aborted) throw makeAbortError();
+  }
+
+  /* ---------- loaders ---------- */
+
+  async function fetchJson(url, signal) {
+    checkAborted(signal);
+    const res = await fetch(url, signal ? { cache: "no-cache", signal } : { cache: "no-cache" });
+    if (!res.ok) throw new Error(`${res.status} ${res.statusText} for ${url}`);
+    const data = await res.json();
+    checkAborted(signal);
+    return data;
+  }
+
+  async function loadLocal(name, signal) {
     const key = slugKey(name);
     const shared = findSharedEntry(name);
     const candidates = [];
@@ -1235,10 +1265,11 @@ import {
     let lastErr;
     for (const path of unique) {
       try {
-        const data = await fetchJson(path);
+        const data = await fetchJson(path, signal);
         data._source = `shared:${path}`;
         return normalizePlayer(data);
       } catch (e) {
+        if (isAbortError(e)) throw e;
         lastErr = e;
       }
     }
@@ -1254,7 +1285,7 @@ import {
     });
   }
 
-  async function resolveCensus(name) {
+  async function resolveCensus(name, signal) {
     const raw = name.trim();
     let url;
     if (/^\d{16,}$/.test(raw)) {
@@ -1262,27 +1293,28 @@ import {
     } else {
       url = `${CENSUS}character?name.first_lower=${encodeURIComponent(raw.toLowerCase())}&c:resolve=outfit,stat_history`;
     }
-    const data = await fetchJson(url);
+    const data = await fetchJson(url, signal);
     const chars = data.character_list || [];
     if (!chars.length) throw new Error(`Census: no character ${raw}`);
     return chars[0];
   }
 
-  async function honuKillboard(cid) {
-    return fetchJson(`${HONU}${cid}/killboard`);
+  async function honuKillboard(cid, signal) {
+    return fetchJson(`${HONU}${cid}/killboard`, signal);
   }
 
-  async function honuMeta(cid) {
+  async function honuMeta(cid, signal) {
     try {
-      return await fetchJson(`${HONU}${cid}`);
-    } catch {
+      return await fetchJson(`${HONU}${cid}`, signal);
+    } catch (e) {
+      if (isAbortError(e)) throw e;
       return {};
     }
   }
 
-  async function honuWeaponPace(cid) {
+  async function honuWeaponPace(cid, signal) {
     try {
-      const stats = await fetchJson(`${HONU}${cid}/stats`);
+      const stats = await fetchJson(`${HONU}${cid}/stats`, signal);
       let wk = 0, wd = 0, wt = 0;
       let fire = 0, hitc = 0, hs = 0;
       for (const row of stats) {
@@ -1300,7 +1332,8 @@ import {
       const hsr = wk ? (100 * hs) / wk : 0;
       const ivi = acc * hsr;
       return { wk, wd, kpm, acc, hsr, ivi };
-    } catch {
+    } catch (e) {
+      if (isAbortError(e)) throw e;
       return { wk: 0, wd: 0, kpm: 0, acc: 0, hsr: 0, ivi: 0 };
     }
   }
@@ -1312,17 +1345,29 @@ import {
     return 0;
   }
 
-  async function loadLive(name) {
+  /**
+   * Live load. The under-load hold is tracked on `run` so a cancel can release
+   * it immediately (releaseRunLiveHolds) without a late double-decrement here.
+   */
+  async function loadLive(name, run) {
+    const signal = run ? run.signal : undefined;
+    checkAborted(signal);
     beginLiveFetch();
+    if (run) run.live += 1;
     try {
-      return await loadLiveInner(name);
+      return await loadLiveInner(name, signal);
     } finally {
-      endLiveFetch();
+      if (!run) {
+        endLiveFetch();
+      } else if (run.live > 0) {
+        run.live -= 1;
+        endLiveFetch();
+      }
     }
   }
 
-  async function loadLiveInner(name) {
-    const c = await resolveCensus(name);
+  async function loadLiveInner(name, signal) {
+    const c = await resolveCensus(name, signal);
     const cid = c.character_id;
     const outfit = c.outfit || {};
     const gk = hist(c, "kills"), gd = hist(c, "deaths"), gt = hist(c, "time");
@@ -1331,8 +1376,8 @@ import {
     const tag = outfit.alias ? `[${outfit.alias}] ` : "";
     const display = `${tag}${c.name.first}`;
 
-    const own = await honuWeaponPace(cid);
-    const board = await honuKillboard(cid);
+    const own = await honuWeaponPace(cid, signal);
+    const board = await honuKillboard(cid, signal);
     board.sort((a, b) => (b.kills + b.deaths) - (a.kills + a.deaths));
     const sample = board.slice(0, 50);
 
@@ -1341,10 +1386,14 @@ import {
     let i = 0;
     async function worker() {
       while (i < sample.length) {
+        checkAborted(signal); // stop pulling queued opponents after cancel
         const idx = i++;
         const pair = sample[idx];
         const oid = String(pair.otherCharacterID);
-        const [meta, pace] = await Promise.all([honuMeta(oid), honuWeaponPace(oid)]);
+        const [meta, pace] = await Promise.all([
+          honuMeta(oid, signal),
+          honuWeaponPace(oid, signal),
+        ]);
         const etag = meta.outfitTag ? `[${meta.outfitTag}] ` : "";
         rows[idx] = {
           name: etag + (meta.name || oid),
@@ -1355,6 +1404,7 @@ import {
       }
     }
     await Promise.all(Array.from({ length: concurrency }, () => worker()));
+    checkAborted(signal);
 
     return normalizePlayer({
       _source: "live:honu",
@@ -1378,28 +1428,34 @@ import {
    * Default: shared data/ → browser localStorage → live.
    * Fresh: live only (error if live fails).
    */
-  async function loadOne(name, { fresh = false } = {}) {
+  async function loadOne(name, { fresh = false, run = null } = {}) {
+    const signal = run ? run.signal : undefined;
+    checkAborted(signal);
     if (fresh) {
       try {
-        return await loadLive(name);
+        return await loadLive(name, run);
       } catch (e) {
+        if (isAbortError(e)) throw e;
         throw new Error(`Live fetch failed for ${JSON.stringify(name)}: ${e.message}`);
       }
     }
     const errors = [];
     try {
-      return await loadLocal(name);
+      return await loadLocal(name, signal);
     } catch (e) {
+      if (isAbortError(e)) throw e;
       errors.push(`shared: ${e.message}`);
     }
+    checkAborted(signal);
     try {
       return loadFromCache(name);
     } catch (e) {
       errors.push(`cache: ${e.message}`);
     }
     try {
-      return await loadLive(name);
+      return await loadLive(name, run);
     } catch (e) {
+      if (isAbortError(e)) throw e;
       errors.push(`live: ${e.message}`);
     }
     throw new Error(
@@ -2060,6 +2116,39 @@ import {
     if (els.fetchFresh) els.fetchFresh.disabled = on;
   }
 
+  /** Release any under-load holds a (cancelled) run still owns. */
+  function releaseRunLiveHolds(run) {
+    if (!run) return;
+    while (run.live > 0) {
+      run.live -= 1;
+      endLiveFetch();
+    }
+  }
+
+  /**
+   * ✕ / Esc in the progress popup: abort the whole analyze run now.
+   * Previous graph (if any) is left untouched; nothing half-done is rendered.
+   */
+  function cancelAnalyze() {
+    const run = activeRun;
+    if (!run) return;
+    activeRun = null;
+    try {
+      run.controller.abort();
+    } catch {
+      /* ignore */
+    }
+    releaseRunLiveHolds(run);
+    setFetching(false);
+    setProgress(false);
+    if (!players.length) {
+      // No prior graph → back to idle placeholder.
+      showIdleChart("▶️ Press Analyze");
+    }
+    updateUnderLoadNotice();
+    setStatus('<span class="warn">Fetch cancelled.</span>', "warn cancelled");
+  }
+
   function chartWrap() {
     return els.chart ? els.chart.closest(".chart-wrap") : null;
   }
@@ -2132,6 +2221,17 @@ import {
 
     collapseSharedCache();
     clearGraphReadyHint();
+    const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+    const run = {
+      controller: controller || { abort() { this.signal.aborted = true; }, signal: { aborted: false } },
+      signal: null,
+      live: 0,
+    };
+    run.signal = run.controller.signal;
+    activeRun = run;
+    const signal = run.signal;
+    /** True once this run was cancelled (or superseded) — stop touching UI. */
+    const cancelled = () => signal.aborted || activeRun !== run;
     setFetching(true);
     setProgress(true, {
       title: "Analyzing…",
@@ -2147,6 +2247,7 @@ import {
 
     try {
       for (let idx = 0; idx < clean.length; idx++) {
+        if (cancelled()) break;
         const name = clean[idx];
         setProgress(true, {
           title: "Analyzing…",
@@ -2172,17 +2273,21 @@ import {
         }
 
         try {
-          const p = await loadOne(name, { fresh });
+          const p = await loadOne(name, { fresh, run });
+          if (cancelled()) break;
           loaded.push(p);
           successNames.push(name);
+          // Only fully loaded players reach the cache.
           cachePut(name, p);
           setStatus(
             `Loaded <strong>${escapeHtml(p.display)}</strong> ` +
             `<span class="src">via ${escapeHtml(sourceLabel(p.source))}</span>…`
           );
         } catch (e) {
+          if (isAbortError(e) || cancelled()) break; // cancel, not an error
           errors.push(`${name}: ${e.message}`);
         }
+        if (cancelled()) break;
 
         setProgress(true, {
           title: idx + 1 >= clean.length ? "Finishing…" : "Analyzing…",
@@ -2192,10 +2297,20 @@ import {
         });
       }
     } finally {
-      setFetching(false);
-      setProgress(false);
-      updateUnderLoadNotice();
+      // A cancelled run already reset the UI in cancelAnalyze(); a newer run may
+      // own the modal now, so only the still-active run cleans up here.
+      if (activeRun === run) {
+        activeRun = null;
+        setFetching(false);
+        setProgress(false);
+        updateUnderLoadNotice();
+      } else {
+        releaseRunLiveHolds(run);
+      }
     }
+
+    // Cancelled: keep previous graph as-is; lastAnalyzedNames unchanged.
+    if (signal.aborted) return;
 
     if (!loaded.length) {
       clearChartUi();
@@ -2370,6 +2485,20 @@ import {
     });
   }
 
+  if (els.progressCancel) {
+    els.progressCancel.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      cancelAnalyze();
+    });
+  }
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape" && e.key !== "Esc") return;
+    if (!activeRun || !els.progress || els.progress.hidden) return;
+    e.preventDefault();
+    cancelAnalyze();
+  });
+
   if (els.copyLinkBtn) {
     els.copyLinkBtn.addEventListener("click", () => {
       commitFragment({ clearInput: true });
@@ -2448,6 +2577,10 @@ import {
       currentNamesInField,
       isNameFetched,
       getNameTokens: () => nameTokens.slice(),
+      cancelAnalyze,
+      isAnalyzing: () => !!activeRun,
+      getLiveFetchDepth: () => liveFetchDepth,
+      getLastAnalyzedNames: () => lastAnalyzedNames.slice(),
     };
   }
 

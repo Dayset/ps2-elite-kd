@@ -643,6 +643,46 @@ header .sub {
   gap: 0.35rem;
 }
 
+/* ✕ cancel — top-right, ≥44px tap target for mobile */
+.progress-cancel {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1.35rem;
+  line-height: 1;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.progress-cancel:hover,
+.progress-cancel:active {
+  background: var(--ctrl-btn-hover);
+  border-color: var(--ctrl-btn-border);
+  color: var(--text);
+}
+
+.progress-cancel:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  color: var(--text);
+}
+
 .progress-modal-spinner {
   margin-bottom: 0.35rem;
 }

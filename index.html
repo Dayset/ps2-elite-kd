@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>PS2 Elite K/D — opposition-weighted curve</title>
   <meta name="description" content="PlanetSide 2 elite K/D vs enemy weapon KPM comparison chart" />
-  <link rel="stylesheet" href="styles.css?v=20261007-chipsel" />
+  <link rel="stylesheet" href="styles.css?v=20261007-cancelfetch" />
 </head>
 <body>
   <div class="controls">
@@ -43,6 +43,7 @@
   <div id="progress" class="progress-modal" hidden aria-hidden="true">
     <div class="progress-modal-backdrop" aria-hidden="true"></div>
     <div class="progress-modal-card" role="dialog" aria-modal="true" aria-labelledby="progressTitle" aria-describedby="progressText">
+      <button id="progressCancel" type="button" class="progress-cancel" aria-label="Cancel fetch" title="Cancel fetch (Esc)">✕</button>
       <div class="progress-modal-spinner" aria-hidden="true">
         <span class="spinner spinner-lg"></span>
       </div>
@@ -90,6 +91,6 @@
     <p>Thanks to <a href="https://wt.honu.pw/" target="_blank" rel="noopener noreferrer">HONU</a> / Varunda</p>
   </footer>
 
-  <script type="module" src="app.js?v=20261007-chipsel"></script>
+  <script type="module" src="app.js?v=20261007-cancelfetch"></script>
 </body>
 </html>
