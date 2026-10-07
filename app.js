@@ -56,7 +56,7 @@ import {
     typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
       ? crypto.randomUUID()
       : `t-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-  const DEFAULT_NAMES = ["JustV6me", "ChrisJTTR"];
+  const DEFAULT_NAMES = [];
   const SHARED_INDEX_URL = "data/index.json";
 
   /** Catalog from data/index.json (shared Pages cache). */
@@ -2168,7 +2168,7 @@ import {
     if (fromQuery) return { names: fromQuery, reason: "url" };
     const last = getLastComparison();
     if (last && last.length) return { names: last, reason: "last" };
-    return { names: DEFAULT_NAMES.slice(), reason: "default" };
+    return { names: DEFAULT_NAMES.slice(), reason: "empty" };
   }
 
   /* ---------- events ---------- */
@@ -2363,7 +2363,7 @@ import {
         ? "from URL"
         : startup.reason === "last"
           ? "restored last comparison"
-          : "demo defaults";
+          : "empty";
     const sharedN = (sharedIndex.players || []).length;
     const sharedNote = sharedN
       ? ` · ${sharedN} shared cache name${sharedN === 1 ? "" : "s"}`
