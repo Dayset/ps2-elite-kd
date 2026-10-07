@@ -68,6 +68,10 @@ import {
   /** Empty-field Analyze default + names input placeholder. */
   const DEFAULT_PLACEHOLDER_NAME = "ShloDog";
   const SHARED_INDEX_URL = "data/index.json";
+  /** Cloudflare Worker that queues names into the shared data/ cache. "" disables. */
+  const WORKER_URL = "https://ps2-elite-kd-cache.dayset.workers.dev";
+  /** Slugs already sent this page session (avoid re-posting on every Analyze). */
+  const sharedAddSent = new Set();
 
   /** Catalog from data/index.json (shared Pages cache). */
   let sharedIndex = { updatedAt: null, players: [] };
@@ -2452,12 +2456,84 @@ import {
     saveLastComparison(successNames);
     renderNameTokens();
     renderCacheChips();
+    suggestSharedCache(result.loaded); // fire-and-forget, never awaited
 
     if (summary) {
       setStatus(skippedWarningHtml(summary, { fresh }), "warn skipped");
     } else {
       setStatus("");
     }
+  }
+
+  /**
+   * Fire-and-forget: ask the Worker to add names that did NOT come from the
+   * shared data/ cache. Never blocks the UI; failures are console-only.
+   * @param {{name:string, player:object}[]} loaded  result.loaded from loadEach
+   */
+  function suggestSharedCache(loaded) {
+    if (!WORKER_URL || typeof fetch === "undefined") return;
+    const names = [];
+    for (const { name, player } of loaded || []) {
+      const src = String((player && player.source) || "");
+      if (src === "local" || src.startsWith("shared:") || src.startsWith("local:")) continue; // already shared
+      if (findSharedEntry(name)) continue; // e.g. "Fetch fresh" on a shared name
+      const bare = String((player && player.display) || name)
+        .trim()
+        .replace(/^\[[^\]]*\]\s*/, ""); // Worker also strips [TAG]
+      const key = slugKey(bare);
+      if (!key || sharedAddSent.has(key)) continue;
+      sharedAddSent.add(key);
+      names.push(bare);
+    }
+    if (!names.length) return;
+
+    const opts = {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ names: names.slice(0, 10) }),
+    };
+    if (typeof AbortSignal !== "undefined" && AbortSignal.timeout) {
+      opts.signal = AbortSignal.timeout(8000);
+    }
+    fetch(`${WORKER_URL}/add`, opts)
+      .then((res) => res.json().catch(() => null))
+      .then((data) => {
+        if (!data) return;
+        if (Array.isArray(data.queued) && data.queued.length) {
+          showSharedAddNote(data.queued, data.etaMinutes);
+        }
+        // Not queued for a transient reason → allow a retry on a later Analyze.
+        for (const n of [...(data.unverified || []), ...(data.error ? names : [])]) {
+          sharedAddSent.delete(slugKey(n));
+        }
+      })
+      .catch((e) => {
+        for (const n of names) sharedAddSent.delete(slugKey(n));
+        if (typeof console !== "undefined") {
+          console.info("[ps2-elite-kd] shared-cache add skipped:", e && e.message);
+        }
+      });
+  }
+
+  /** Small, self-dismissing note under the status line. */
+  function showSharedAddNote(queued, etaMinutes) {
+    if (!els.status || !els.status.parentNode) return;
+    let note = document.getElementById("shared-add-note");
+    if (!note) {
+      note = document.createElement("div");
+      note.id = "shared-add-note";
+      note.className = "shared-add-note";
+      note.setAttribute("role", "status");
+      els.status.parentNode.insertBefore(note, els.status.nextSibling);
+    }
+    const list = queued.map((n) => `<strong>${escapeHtml(n)}</strong>`).join(", ");
+    const eta = etaMinutes ? ` (~${Math.round(etaMinutes)} min)` : "";
+    note.innerHTML = `📦 Adding ${list} to the shared cache — ready for everyone in a few minutes${eta}.`;
+    note.hidden = false;
+    clearTimeout(showSharedAddNote._t);
+    showSharedAddNote._t = setTimeout(() => {
+      note.hidden = true;
+    }, 12000);
   }
 
   /** Amber status block for names that could not be fetched. */
