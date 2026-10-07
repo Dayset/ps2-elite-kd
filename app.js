@@ -38,7 +38,10 @@ import {
   summarizeFailures,
   compareByCharName,
   groupByCharName,
-} from "./analyze-run.mjs?v=20261007-letterline";
+  shouldShowGraphReady,
+  forgetFailures,
+  honuProfileUrl,
+} from "./analyze-run.mjs?v=20261007-retry";
 
   const COLORS = [
     "#9fd4ee", "#ff7a7a", "#ffd166", "#8ef0b0", "#e8b0ff",
@@ -121,6 +124,8 @@ import {
 
   let players = [];
   let lastAnalyzedNames = [];
+  /** Subset of lastAnalyzedNames that actually loaded (graphed) last run. */
+  let lastLoadedNames = [];
   /** Preferred open state for shared-cache <details> (collapsed by default). */
   let sharedCacheWantOpen = false;
   /** Timer for graph-ready hint auto-dismiss. */
@@ -1003,6 +1008,7 @@ import {
     if (els.fetchFresh) els.fetchFresh.checked = false;
     players = [];
     lastAnalyzedNames = [];
+    lastLoadedNames = [];
     failedNames.clear();
     showIdleChart("▶️ Press Analyze");
     renderNameTokens();
@@ -1029,7 +1035,12 @@ import {
     if (players.some((p) => slugKey(p.display) === slug || namesEqualIgnoreCase(p.display, name))) {
       return true;
     }
-    if (lastAnalyzedNames.some((n) => namesEqualIgnoreCase(n, name) || slugKey(n) === slug)) {
+    // lastAnalyzedNames also holds names that were attempted but skipped, so
+    // only count it when the last run actually graphed one under that name.
+    if (
+      players.length &&
+      lastLoadedNames.some((n) => namesEqualIgnoreCase(n, name) || slugKey(n) === slug)
+    ) {
       return true;
     }
     return false;
@@ -1052,9 +1063,16 @@ import {
     renderCacheChips();
   }
 
+  /** Clear failed state for names so their chips show pending again. */
+  function clearNameFailures(names) {
+    return forgetFailures(failedNames, names, slugKey);
+  }
+
   function addNameToField(name) {
     const clean = String(name).trim();
     if (!clean) return;
+    // Re-adding / re-typing a name always resets its failed state (retryable).
+    clearNameFailures([clean]);
     if (nameTokens.some((n) => namesEqualIgnoreCase(n, clean))) {
       renderNameTokens();
       renderCacheChips();
@@ -1091,6 +1109,7 @@ import {
       }
     }
     if (inTokens || inFrag) {
+      clearNameFailures(nameTokens.filter((n) => namesMatch(n, clean)));
       nameTokens = nameTokens.filter((n) => !namesMatch(n, clean));
       renderNameTokens();
       renderCacheChips();
@@ -1100,6 +1119,7 @@ import {
   }
 
   function removeNameToken(name) {
+    clearNameFailures([name]);
     nameTokens = nameTokens.filter((n) => !namesEqualIgnoreCase(n, name));
     renderNameTokens();
     renderCacheChips();
@@ -1118,37 +1138,17 @@ import {
     if (!els.nameTokensEl) return;
     els.nameTokensEl.innerHTML = "";
     nameTokens.forEach((name) => {
+      const fail = getNameFailure(name);
+      if (fail) {
+        els.nameTokensEl.appendChild(makeFailedToken(name, fail));
+        return;
+      }
       const btn = document.createElement("button");
       btn.type = "button";
-      const fail = getNameFailure(name);
-      btn.className =
-        "name-token " + (fail ? "failed" : isNameFetched(name) ? "fetched" : "unfetched");
-      if (fail) {
-        const icon = document.createElement("span");
-        icon.className = "name-token-icon";
-        icon.setAttribute("aria-hidden", "true");
-        icon.textContent = "⚠";
-        const label = document.createElement("span");
-        label.className = "name-token-text";
-        label.textContent = name;
-        btn.append(icon, label);
-      } else {
-        btn.textContent = name;
-      }
-      if (fail) {
-        const transient =
-          fail.kind === "network" || fail.kind === "timeout" || fail.kind === "bad-response";
-        const tip =
-          `Couldn't fetch ${name} (${fail.reason}). ` +
-          (transient
-            ? "Probably a network hiccup — Analyze again to retry, or click to remove."
-            : "Probably misspelled or not a real character — click to remove.");
-        btn.setAttribute("aria-label", tip);
-        btn.title = tip;
-      } else {
-        btn.setAttribute("aria-label", `Remove ${name}`);
-        btn.title = `Remove ${name}`;
-      }
+      btn.className = "name-token " + (isNameFetched(name) ? "fetched" : "unfetched");
+      btn.textContent = name;
+      btn.setAttribute("aria-label", `Remove ${name}`);
+      btn.title = `Remove ${name}`;
       btn.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -1157,6 +1157,63 @@ import {
       els.nameTokensEl.appendChild(btn);
     });
     syncNamesPlaceholder();
+  }
+
+  /**
+   * Failed chip: struck name is a retry button (clears failed state → pending,
+   * then re-runs Analyze); the small × removes the name.
+   */
+  function makeFailedToken(name, fail) {
+    const wrap = document.createElement("span");
+    wrap.className = "name-token failed";
+    wrap.setAttribute("role", "group");
+    const transient =
+      fail.kind === "network" || fail.kind === "timeout" || fail.kind === "bad-response";
+    const why = transient ? "probably a network hiccup" : "check the spelling";
+    const retryTip = `Couldn't fetch ${name} (${fail.reason}; ${why}) — click to retry`;
+    wrap.title = retryTip;
+
+    const retry = document.createElement("button");
+    retry.type = "button";
+    retry.className = "name-token-retry";
+    retry.title = retryTip;
+    retry.setAttribute("aria-label", `Retry ${name} (couldn't fetch: ${fail.reason})`);
+    const icon = document.createElement("span");
+    icon.className = "name-token-icon";
+    icon.setAttribute("aria-hidden", "true");
+    icon.textContent = "↻";
+    const label = document.createElement("span");
+    label.className = "name-token-text";
+    label.textContent = name;
+    retry.append(icon, label);
+    retry.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      retryFailedName(name);
+    });
+
+    const x = document.createElement("button");
+    x.type = "button";
+    x.className = "name-token-x";
+    x.textContent = "×";
+    x.title = `Remove ${name}`;
+    x.setAttribute("aria-label", `Remove ${name}`);
+    x.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      removeNameToken(name);
+    });
+
+    wrap.append(retry, x);
+    return wrap;
+  }
+
+  /** Click on a failed chip: mark it pending again and re-run Analyze. */
+  function retryFailedName(name) {
+    clearNameFailures([name]);
+    renderNameTokens();
+    renderCacheChips();
+    if (!fetching && els.analyzeBtn) els.analyzeBtn.click();
   }
 
   /** Commit trailing raw input into chips (separator flush or Analyze/Enter). */
@@ -2211,9 +2268,16 @@ import {
       const col = COLORS[i % COLORS.length];
       const item = document.createElement("div");
       item.className = "legend-item";
+      // Name links to the player's Honu profile (plain text if no character id).
+      const url = honuProfileUrl(p.cid);
+      const nameHtml = url
+        ? `<a class="legend-link" href="${escapeHtml(url)}" target="_blank" ` +
+          `rel="noopener noreferrer" title="Open ${escapeHtml(p.display)} on Honu">` +
+          `${escapeHtml(p.display)}</a>`
+        : escapeHtml(p.display);
       item.innerHTML = `
         <span class="legend-swatch" style="background:${col}"></span>
-        <span style="color:${col}"><strong>${i + 1}.</strong> ${escapeHtml(p.display)}</span>
+        <span style="color:${col}"><strong>${i + 1}.</strong> ${nameHtml}</span>
       `;
       els.legend.appendChild(item);
     });
@@ -2258,10 +2322,15 @@ import {
    * ✕ / Esc in the progress popup: abort the whole analyze run now.
    * Previous graph (if any) is left untouched; nothing half-done is rendered.
    */
+  function uncheckFetchFresh() {
+    if (els.fetchFresh) els.fetchFresh.checked = false;
+  }
+
   function cancelAnalyze() {
     const run = activeRun;
     if (!run) return;
     activeRun = null;
+    if (run.fresh) uncheckFetchFresh();
     try {
       run.controller.abort();
     } catch {
@@ -2307,6 +2376,7 @@ import {
     els.legend.innerHTML = "";
     players = [];
     lastAnalyzedNames = [];
+    lastLoadedNames = [];
     resetYZoom({ redraw: false });
     setPlaceholderVisible(true);
     const cta = els.chartPlaceholder
@@ -2339,8 +2409,17 @@ import {
       lastAnalyzedNames.length > 0 &&
       namesSetKey(clean) === namesSetKey(lastAnalyzedNames);
 
-    // Same names already graphed + fresh unchecked → hint, no re-run
-    if (sameSet && !fresh) {
+    // Same names already graphed (all loaded, none failed) + fresh unchecked
+    // → hint, no re-run. Failed / not-yet-loaded chips always run again.
+    if (
+      shouldShowGraphReady({
+        sameSet,
+        fresh,
+        names: clean,
+        isLoaded: (n) => !!findLoadedPlayer(n),
+        isFailed: (n) => !!getNameFailure(n),
+      })
+    ) {
       collapseSharedCache();
       // Re-render chips so force-collapsed state sticks if a render follows
       renderCacheChips();
@@ -2349,12 +2428,18 @@ import {
     }
 
     collapseSharedCache();
+    // Every Analyze retries previously failed names: back to pending.
+    if (clearNameFailures(clean)) {
+      renderNameTokens();
+      renderCacheChips();
+    }
     clearGraphReadyHint();
     const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
     const run = {
       controller: controller || { abort() { this.signal.aborted = true; }, signal: { aborted: false } },
       signal: null,
       live: 0,
+      fresh,
     };
     run.signal = run.controller.signal;
     activeRun = run;
@@ -2410,6 +2495,9 @@ import {
         }
       );
     } finally {
+      // "Fetch fresh" is one-shot: untick after any run that used it
+      // (success, partial, all-failed or cancelled).
+      if (fresh) uncheckFetchFresh();
       // A cancelled run already reset the UI in cancelAnalyze(); a newer run may
       // own the modal now, so only the still-active run cleans up here.
       if (activeRun === run) {
@@ -2460,6 +2548,7 @@ import {
     // Attempted set (incl. skipped names) so a repeat press shows the
     // "graph is ready" hint instead of refetching the same bad name.
     lastAnalyzedNames = clean.slice();
+    lastLoadedNames = successNames.slice();
     drawChart(players);
     // Recent / share link only ever carry names that actually loaded.
     saveLastComparison(successNames);
@@ -2663,7 +2752,8 @@ import {
       }
       if (e.key === "Backspace" && !els.namesInput.value && nameTokens.length) {
         e.preventDefault();
-        nameTokens.pop();
+        const popped = nameTokens.pop();
+        clearNameFailures([popped]);
         renderNameTokens();
         renderCacheChips();
       }

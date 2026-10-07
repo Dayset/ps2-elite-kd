@@ -194,3 +194,41 @@ export function groupByCharName(items, getName = (x) => (x && typeof x === "obje
     .sort(([a], [b]) => (a === "#" ? -1 : b === "#" ? 1 : a.localeCompare(b, undefined, NAME_COLLATE)))
     .map(([letter, list]) => ({ letter, items: list }));
 }
+
+/* ---------- repeat-Analyze / failed-name bookkeeping ---------- */
+
+/**
+ * Should a repeat Analyze press just show "Your Graph is ready" instead of
+ * running? Only when nothing could change: same name set as the last run,
+ * not fetching fresh, every name currently graphed, and none marked failed.
+ * @param {{ sameSet: boolean, fresh: boolean, names: string[],
+ *   isLoaded: (name: string) => boolean, isFailed: (name: string) => boolean }} o
+ */
+export function shouldShowGraphReady({ sameSet, fresh, names, isLoaded, isFailed }) {
+  if (!sameSet || fresh) return false;
+  const list = names || [];
+  if (!list.length) return false;
+  return list.every((n) => isLoaded(n)) && !list.some((n) => isFailed(n));
+}
+
+/**
+ * Drop failed-state entries for `names` (keyed by `keyFn`, e.g. slugKey) so
+ * they show as pending and get fetched again. Returns how many were cleared.
+ * @param {Map<string, any>} failed
+ * @param {string[]} names
+ * @param {(name: string) => string} keyFn
+ */
+export function forgetFailures(failed, names, keyFn) {
+  let n = 0;
+  for (const name of names || []) {
+    const key = keyFn(name);
+    if (key && failed.delete(key)) n += 1;
+  }
+  return n;
+}
+
+/** Honu profile page for a character id, or "" when the id is missing/invalid. */
+export function honuProfileUrl(cid) {
+  const id = String(cid ?? "").trim();
+  return /^\d{5,25}$/.test(id) ? `https://wt.honu.pw/c/${id}` : "";
+}
