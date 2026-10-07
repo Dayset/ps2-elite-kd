@@ -115,6 +115,8 @@ import {
   /** Absolute ETA deadline (ms epoch). Counts down each tick; never extended mid-run. */
   let progressEtaDeadline = 0;
   let progressTickTimer = null;
+  /** Visual bar % (creeps forward for hope; snaps up on real done/total). */
+  let progressDisplayPct = 0;
   /** Nested depth of in-flight live Honu/Census loads owned by this tab. */
   let liveFetchDepth = 0;
   let fetchHeartbeatTimer = null;
@@ -181,8 +183,39 @@ import {
     }
   }
 
+  function applyProgressBar(pct) {
+    progressDisplayPct = Math.max(0, Math.min(100, pct));
+    if (els.progressBar) els.progressBar.style.width = `${progressDisplayPct}%`;
+    if (els.progressPct) els.progressPct.textContent = `${Math.round(progressDisplayPct)}%`;
+  }
+
+  /** Creep/jitter the bar forward between real updates (OK to hit 100% early). */
+  function creepProgressBar() {
+    if (!progressStartedAt || progressDisplayPct >= 100) return;
+    const floor =
+      progressTotalCount > 0
+        ? (progressDoneCount / progressTotalCount) * 100
+        : 0;
+    const nextFloor =
+      progressTotalCount > 0
+        ? ((progressDoneCount + 1) / progressTotalCount) * 100
+        : 100;
+    // Random forward nudge — only forward; may overshoot milestones / hit 100 early.
+    let step = 0.4 + Math.random() * 2.0;
+    if (Math.random() < 0.2) step += 1.5 + Math.random() * 3.5;
+    if (Math.random() < 0.07) step += 4 + Math.random() * 8;
+    let next = Math.min(100, Math.max(progressDisplayPct + step, floor));
+    // Bias a bit harder while still below the next name milestone.
+    if (next < nextFloor - 2 && Math.random() < 0.35) {
+      next = Math.min(100, next + 0.8 + Math.random() * 2.2);
+    }
+    applyProgressBar(Math.max(progressDisplayPct, next));
+  }
+
   function renderProgressTiming() {
-    if (!els.progressTiming || !progressStartedAt) return;
+    if (!progressStartedAt) return;
+    creepProgressBar();
+    if (!els.progressTiming) return;
     const now = Date.now();
     const elapsed = now - progressStartedAt;
     const elapsedStr = `Elapsed ${formatClock(elapsed)}`;
@@ -201,7 +234,7 @@ import {
 
   function startProgressTick() {
     stopProgressTick();
-    progressTickTimer = setInterval(renderProgressTiming, 250);
+    progressTickTimer = setInterval(renderProgressTiming, 220);
   }
 
   /**
@@ -221,10 +254,10 @@ import {
       progressTotalCount = 0;
       progressAvgPerMs = 0;
       progressEtaDeadline = 0;
+      progressDisplayPct = 0;
       if (els.progressText) els.progressText.textContent = "";
       if (els.progressTitle) els.progressTitle.textContent = "Analyzing…";
-      if (els.progressBar) els.progressBar.style.width = "0%";
-      if (els.progressPct) els.progressPct.textContent = "0%";
+      applyProgressBar(0);
       if (els.progressTiming) els.progressTiming.textContent = "";
       updateUnderLoadNotice();
       return;
@@ -241,10 +274,12 @@ import {
 
     const prevDone = progressDoneCount;
     const now = Date.now();
-    if (!progressStartedAt) {
+    const freshRun = !progressStartedAt;
+    if (freshRun) {
       progressStartedAt = now;
       progressAvgPerMs = 0;
       progressEtaDeadline = 0;
+      progressDisplayPct = 0; // always start the bar at zero
     }
     progressDoneCount = done;
     progressTotalCount = total;
@@ -266,9 +301,14 @@ import {
       }
     }
 
-    let pct = 0;
-    if (total > 0) pct = Math.round((done / total) * 100);
-    pct = Math.max(0, Math.min(100, pct));
+    // Real progress floor: 0/2→0%, 1/2→50%, 2/2→100%. Bar never goes backwards.
+    let floorPct = 0;
+    if (total > 0) floorPct = (done / total) * 100;
+    floorPct = Math.max(0, Math.min(100, floorPct));
+    // Snap up to real done/total (e.g. 1 of 2 → 50%); creep may already be ahead.
+    if (floorPct > progressDisplayPct) {
+      progressDisplayPct = floorPct;
+    }
 
     // Avoid duplicate "Fetching…" in title + body — title stays Analyzing/Finishing.
     let text = opts.text;
@@ -293,8 +333,7 @@ import {
     document.body.classList.add("progress-open");
     if (els.progressTitle) els.progressTitle.textContent = title;
     if (els.progressText) els.progressText.textContent = text;
-    if (els.progressBar) els.progressBar.style.width = `${pct}%`;
-    if (els.progressPct) els.progressPct.textContent = `${pct}%`;
+    applyProgressBar(progressDisplayPct);
     renderProgressTiming();
     startProgressTick();
     updateUnderLoadNotice();
