@@ -66,3 +66,75 @@ export function redFlagRuleText(rule = RED_FLAG_RULE) {
     `${rule.INFLATION_LOW_MAX}. A lead for manual review, not proof of cheating.`
   );
 }
+
+/* ---------- 🟠 Vehicle pattern ---------- */
+
+/**
+ * Pattern from a suspected vehicle cheater (FOV/hitbox aim + radar): elite
+ * skill and a very high KD, but infantry aim stats near the bottom of the
+ * cache. Inflation is ignored. Thresholds from the 228 cached players
+ * (2026-10-07): KD p90 ≈ 4.82 (p95 ≈ 6.78); HSR p10 ≈ 9.1%; accuracy p15 ≈ 16.0%.
+ */
+export const VEHICLE_RULE = Object.freeze({
+  /** Global KD at/above this = very high (≈ p90 of the cache). */
+  KD_HIGH_MIN: 4.8,
+  /** HSR % at/below this = weak infantry aim (≈ p10). */
+  HSR_LOW_MAX: 9.0,
+  /** Accuracy % at/below this = weak infantry aim (≈ p15). */
+  ACC_LOW_MAX: 16.0,
+});
+
+/**
+ * Apply the vehicle rule to one metrics row ({ adj, ivi, kd, acc, hsr }).
+ * Uses the same skill test as redFlag. Missing aim stats (null / 0 accuracy)
+ * never flag — no data isn't weak aim.
+ */
+export function vehicleFlag(m, rule = VEHICLE_RULE, skillRule = RED_FLAG_RULE) {
+  const skill = skillTier(m, skillRule);
+  const highSkill = !!skill.tier;
+  const highKd = fin(m.kd) && m.kd >= rule.KD_HIGH_MIN;
+  const hasAim = fin(m.acc) && m.acc > 0 && fin(m.hsr);
+  const weakAim = hasAim && m.hsr <= rule.HSR_LOW_MAX && m.acc <= rule.ACC_LOW_MAX;
+  return { flagged: highSkill && highKd && weakAim, skill, highSkill, highKd, weakAim };
+}
+
+export function vehicleRuleText(rule = VEHICLE_RULE, skillRule = RED_FLAG_RULE) {
+  const pct = Math.round((1 - skillRule.ALMOST_FRACTION) * 100);
+  return (
+    `Flagged when ALL hold: skill is Exceptional or within ${pct}% below it (same test as Red flags), ` +
+    `KD ≥ ${rule.KD_HIGH_MIN}, HSR ≤ ${rule.HSR_LOW_MAX}% and accuracy ≤ ${rule.ACC_LOW_MAX}% ` +
+    `(strong results with weak infantry aim). Inflation is ignored. ` +
+    `A lead for manual review, not proof of cheating.`
+  );
+}
+
+/* ---------- combined Red flags 🚩 bin ---------- */
+
+/**
+ * One automatic bin, OR of two patterns: "aim" (redFlag: high skill + low
+ * LionHeart + low Inflation) and "vehicle" (vehicleFlag: high skill + very
+ * high KD + weak infantry aim). → { flagged, patterns: ["aim"|"vehicle", …], skill }
+ */
+export function reviewFlags(m) {
+  const aim = redFlag(m);
+  const veh = vehicleFlag(m);
+  const patterns = [];
+  if (aim.flagged) patterns.push("aim");
+  if (veh.flagged) patterns.push("vehicle");
+  return { flagged: patterns.length > 0, patterns, skill: aim.skill };
+}
+
+/** Header tooltip / rule line for the combined bin. */
+export function reviewRuleText() {
+  const pct = Math.round((1 - RED_FLAG_RULE.ALMOST_FRACTION) * 100);
+  const R = RED_FLAG_RULE;
+  const V = VEHICLE_RULE;
+  return (
+    `Flagged when skill is Exceptional or within ${pct}% below it ` +
+    `(🎯 ivi ≥ ${Math.round(R.EXCEPTIONAL_ADJ_IVI * R.ALMOST_FRACTION)} or public IvI ≥ ` +
+    `${Math.round(R.EXCEPTIONAL_IVI * R.ALMOST_FRACTION)}; Exceptional = ${R.EXCEPTIONAL_ADJ_IVI} / ${R.EXCEPTIONAL_IVI}) AND either ` +
+    `[aim pattern] 🦁 LionHeart ≤ ${R.LIONHEART_LOW_MAX} and 🎈 Inflation ≤ ${R.INFLATION_LOW_MAX}, or ` +
+    `[vehicle pattern] KD ≥ ${V.KD_HIGH_MIN}, HSR ≤ ${V.HSR_LOW_MAX}% and accuracy ≤ ${V.ACC_LOW_MAX}% (Inflation ignored). ` +
+    `A lead for manual review, not proof of cheating.`
+  );
+}

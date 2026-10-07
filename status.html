@@ -51,6 +51,9 @@
     .st-flags .st-table td, .st-flags .st-table th { white-space: nowrap; }
     .st-flags .st-num { text-align: right; font-variant-numeric: tabular-nums; }
     .st-flags .st-rule { color: var(--dim); font-size: 0.8rem; margin: 8px 0 4px; line-height: 1.4; }
+    .st-flags .st-tag { display: inline-block; margin-right: 3px; padding: 0 6px; border-radius: 999px; font-size: 0.74rem; border: 1px solid var(--border); color: var(--muted); }
+    .st-flags .st-tag.aim { border-color: #c06060; }
+    .st-flags .st-tag.vehicle { border-color: #c08050; }
   </style>
 </head>
 <body>
@@ -223,21 +226,26 @@
     })();
   </script>
 
-  <!-- Red flags 🚩: same metrics as the main tables (player-metrics.mjs), rule in red-flags.mjs. -->
+  <!-- Red flags 🚩: one automatic bin = aim pattern OR vehicle pattern (red-flags.mjs), using the
+       same metrics as the main tables (player-metrics.mjs). Leads for review, not proof. -->
   <script type="module">
-    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261007-redflags";
-    import { redFlag, redFlagRuleText } from "./red-flags.mjs?v=20261007-redflags";
+    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261007-vehicle";
+    import { reviewFlags, reviewRuleText } from "./red-flags.mjs?v=20261007-vehicle";
     import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261007-redflags";
 
     const POLL_MS = 30 * 1000;
     const CONCURRENCY = 6;
-    const SS_KEY = "ps2-elite-kd:redflags:v1"; // { stamp, byFile: { file: { savedAt, row } } }
+    const SS_KEY = "ps2-elite-kd:redflags:v2"; // { byFile: { file: { savedAt, row } } }
     const $ = (id) => document.getElementById(id);
     const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
     const fmt = (v, d) => (typeof v === "number" && Number.isFinite(v) ? v.toFixed(d) : "—");
+    const TAGS = {
+      aim: { label: "aim", tip: "Aim pattern: high skill + low LionHeart + low Inflation", hot: ["pvs", "inflation"] },
+      vehicle: { label: "vehicle", tip: "Vehicle pattern: high skill + very high KD + weak infantry aim (HSR / accuracy)", hot: ["kd", "acc", "hsr"] },
+    };
     let busy = false;
 
-    const ruleText = redFlagRuleText();
+    const ruleText = reviewRuleText();
     $("flagsSummary").title = ruleText;
     $("flagsRule").textContent = "Rule: " + ruleText;
 
@@ -256,12 +264,13 @@
     /** Small, JSON-safe summary of one player (what the table + rule need). */
     function summarize(entry, raw) {
       const m = playerMetrics(normalizePlayer(raw));
-      const f = redFlag(m);
       const num = (v) => (typeof v === "number" && Number.isFinite(v) ? v : null);
+      const f = reviewFlags(m);
       return {
         name: entry.name, cid: String(m.p.cid || ""), savedAt: entry.savedAt || 0,
         adj: num(m.adj), ivi: num(m.ivi), pvs: num(m.pvs), inflation: num(m.inflation),
-        flagged: f.flagged, tier: f.skill.tier, basis: f.skill.basis,
+        kd: num(m.kd), acc: num(m.acc), hsr: num(m.hsr),
+        flagged: f.flagged, patterns: f.patterns, tier: f.skill.tier, basis: f.skill.basis,
       };
     }
 
@@ -269,6 +278,21 @@
       const r = await fetch("data/" + entry.file + "?v=" + (entry.savedAt || 0), { cache: "no-cache" });
       if (!r.ok) throw new Error("HTTP " + r.status);
       return r.json();
+    }
+
+    function rowHtml(r) {
+      const url = honu(r.cid);
+      const nameHtml = url ? '<a href="' + esc(url) + '" target="_blank" rel="noopener noreferrer" title="Open on Honu">' + esc(r.name) + "</a>" : esc(r.name);
+      const chart = '<a href="./?names=' + encodeURIComponent(r.name) + '" title="Open the chart with this name (press Analyze)">chart</a>';
+      const pats = (r.patterns || []).filter((p) => TAGS[p]);
+      const tags = pats.map((p) => '<span class="st-tag ' + p + '" title="' + esc(TAGS[p].tip) + '">' + TAGS[p].label + "</span>").join("");
+      const hot = pats.flatMap((p) => TAGS[p].hot);
+      const skillCell = (r.basis === "ivi" ? "IvI " + fmt(r.ivi, 0) : "🎯 " + fmt(r.adj, 0)) + ' <span class="st-tier">' + esc(r.tier) + "</span>";
+      const cell = (k, v, d) => '<td class="st-num' + (hot.includes(k) ? " st-low" : "") + '">' + fmt(v, d) + "</td>";
+      return "<tr><td>" + nameHtml + "</td><td>" + chart + "</td><td>" + tags + "</td><td>" + skillCell + "</td>" +
+        cell("adj", r.adj, 0) + cell("ivi", r.ivi, 0) + cell("kd", r.kd, 2) + cell("acc", r.acc, 1) + cell("hsr", r.hsr, 1) +
+        cell("pvs", r.pvs, 2) + cell("inflation", r.inflation, 2) +
+        '<td title="' + esc(r.savedAt ? new Date(r.savedAt).toLocaleString() : "") + '">' + esc(ago(r.savedAt)) + "</td></tr>";
     }
 
     function render(rows, total, errors) {
@@ -279,20 +303,10 @@
       const head = '<div class="st-dim">' + flagged.length + " of " + total + " cached players match." +
         (errors ? " " + errors + " player file(s) couldn’t be loaded." : "") + "</div>";
       if (!flagged.length) { $("flags").innerHTML = head; return; }
-      const body = flagged.map((r) => {
-        const url = honu(r.cid);
-        const nameHtml = url ? '<a href="' + esc(url) + '" target="_blank" rel="noopener noreferrer" title="Open on Honu">' + esc(r.name) + "</a>" : esc(r.name);
-        const chart = '<a href="./?names=' + encodeURIComponent(r.name) + '" title="Open the chart with this name (press Analyze)">chart</a>';
-        const skillCell = (r.basis === "ivi" ? "IvI " + fmt(r.ivi, 0) : "🎯 " + fmt(r.adj, 0)) +
-          ' <span class="st-tier">' + esc(r.tier) + "</span>";
-        return "<tr><td>" + nameHtml + "</td><td>" + chart + "</td><td>" + skillCell +
-          '</td><td class="st-num">' + fmt(r.adj, 0) + '</td><td class="st-num">' + fmt(r.ivi, 0) +
-          '</td><td class="st-num st-low">' + fmt(r.pvs, 2) + '</td><td class="st-num st-low">' + fmt(r.inflation, 2) +
-          '</td><td title="' + esc(r.savedAt ? new Date(r.savedAt).toLocaleString() : "") + '">' + esc(ago(r.savedAt)) + "</td></tr>";
-      }).join("");
-      $("flags").innerHTML = head + '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th></th><th>Skill</th>' +
-        '<th class="st-num">🎯 ivi</th><th class="st-num">IvI</th><th class="st-num">🦁 LionHeart</th><th class="st-num">🎈 Inflation</th><th>Updated</th></tr>' +
-        body + "</table></div>";
+      $("flags").innerHTML = head + '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th></th><th>Pattern</th><th>Skill</th>' +
+        '<th class="st-num">🎯 ivi</th><th class="st-num">IvI</th><th class="st-num">KD</th><th class="st-num">Acc %</th><th class="st-num">HSR %</th>' +
+        '<th class="st-num">🦁 LionHeart</th><th class="st-num">🎈 Inflation</th><th>Updated</th></tr>' +
+        flagged.map(rowHtml).join("") + "</table></div>";
     }
 
     async function refreshFlags() {
@@ -303,10 +317,8 @@
         if (!ir.ok) throw new Error("HTTP " + ir.status);
         const index = await ir.json();
         const entries = (index.players || []).filter((e) => e && e.file && e.name);
-        const stamp = String(index.updatedAt || "") + "|" + entries.length;
-        const cache = readCache() || { stamp: "", byFile: {} };
-        const byFile = cache.byFile || {};
-        // Only (re)load players that are new or changed since the cached run.
+        const byFile = (readCache() || {}).byFile || {};
+        // Only (re)load players that are new or changed since the cached pass.
         const todo = entries.filter((e) => !byFile[e.file] || byFile[e.file].savedAt !== (e.savedAt || 0));
         let errors = 0;
         if (todo.length) {
@@ -324,10 +336,9 @@
           };
           await Promise.all(Array.from({ length: Math.min(CONCURRENCY, todo.length) }, worker));
         }
-        // Drop players no longer in the index.
         const live = new Set(entries.map((e) => e.file));
         for (const f of Object.keys(byFile)) if (!live.has(f)) delete byFile[f];
-        writeCache({ stamp, byFile });
+        writeCache({ byFile });
         render(entries.map((e) => byFile[e.file] && byFile[e.file].row), entries.length, errors);
       } catch (e) {
         $("flags").innerHTML = '<span class="st-err">Couldn’t compute red flags (' + esc(e && e.message) + ").</span>";

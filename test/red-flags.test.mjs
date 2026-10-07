@@ -60,3 +60,56 @@ describe("playerMetrics", () => {
     assert.ok(Math.abs(m.inflation - 3 / (14 / 9)) < 1e-9);
   });
 });
+
+import { VEHICLE_RULE as V, vehicleFlag, vehicleRuleText, reviewFlags, reviewRuleText } from "../red-flags.mjs";
+
+describe("vehicleFlag", () => {
+  // coldandhot's cached numbers (2026-10-07)
+  const cold = { adj: 2174.9, ivi: 15.2, kd: 9.41, acc: 8.96, hsr: 1.70, pvs: 0.65, inflation: 3.03 };
+  it("catches the coldandhot pattern (inflation ignored)", () => {
+    const f = vehicleFlag(cold);
+    assert.equal(f.flagged, true);
+    assert.equal(f.skill.tier, "Almost exceptional");
+    assert.equal(redFlag(cold).flagged, false); // high inflation → not a red flag
+  });
+  it("edges are inclusive", () => {
+    assert.equal(vehicleFlag({ ...cold, kd: V.KD_HIGH_MIN, hsr: V.HSR_LOW_MAX, acc: V.ACC_LOW_MAX }).flagged, true);
+  });
+  it("any condition missing → not flagged", () => {
+    assert.equal(vehicleFlag({ ...cold, adj: 1900 }).flagged, false);
+    assert.equal(vehicleFlag({ ...cold, kd: 4.79 }).flagged, false);
+    assert.equal(vehicleFlag({ ...cold, hsr: 9.1 }).flagged, false);
+    assert.equal(vehicleFlag({ ...cold, acc: 16.1 }).flagged, false);
+  });
+  it("missing aim data is not weak aim", () => {
+    assert.equal(vehicleFlag({ ...cold, acc: 0, hsr: 0 }).flagged, false);
+    assert.equal(vehicleFlag({ ...cold, acc: null, hsr: null }).flagged, false);
+  });
+  it("rule text says it's not proof", () => {
+    assert.match(vehicleRuleText(), /KD ≥ 4\.8/);
+    assert.match(vehicleRuleText(), /not proof/);
+  });
+});
+
+describe("reviewFlags (combined bin)", () => {
+  it("tags which pattern matched", () => {
+    const cold = { adj: 2174.9, ivi: 15.2, kd: 9.41, acc: 8.96, hsr: 1.70, pvs: 0.65, inflation: 3.03 };
+    assert.deepEqual(reviewFlags(cold).patterns, ["vehicle"]);
+    const aimOnly = { adj: 2600, ivi: 1100, kd: 7, acc: 30, hsr: 40, pvs: 0.2, inflation: 1.3 };
+    assert.deepEqual(reviewFlags(aimOnly).patterns, ["aim"]);
+    const both = { ...aimOnly, acc: 10, hsr: 5 };
+    assert.deepEqual(reviewFlags(both).patterns, ["aim", "vehicle"]);
+    assert.equal(reviewFlags({ ...aimOnly, adj: 1500, ivi: 900 }).flagged, false);
+  });
+  it("near-miss stays out (no name special-casing)", () => {
+    // [HSR] DizzyKnight cached numbers: 🎯 ivi 1973 < 1980
+    const dizzy = { adj: 1972.7, ivi: 1043, kd: 5.74, acc: 26.99, hsr: 38.65, pvs: 0.10, inflation: 1.36 };
+    assert.equal(reviewFlags(dizzy).flagged, false);
+  });
+  it("rule text covers both patterns and says not proof", () => {
+    const t = reviewRuleText();
+    assert.match(t, /aim pattern/);
+    assert.match(t, /vehicle pattern/);
+    assert.match(t, /not proof/);
+  });
+});
