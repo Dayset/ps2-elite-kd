@@ -271,3 +271,19 @@ describe("progress ETA (regression: stuck at 0s after a fast cached first name)"
     assert.equal(formatEtaLeft(NaN), "");
   });
 });
+
+import { alphabetJumpLetters } from "../analyze-run.mjs";
+import { describe as d2, it as i2 } from "node:test";
+import assert2 from "node:assert/strict";
+d2("alphabetJumpLetters", () => {
+  i2("always lists # and A–Z, enables only present letters, appends extra letters", () => {
+    const out = alphabetJumpLetters(["#", "A", "S", "Ж"]);
+    assert2.equal(out[0].letter, "#");
+    assert2.equal(out[1].letter, "A");
+    assert2.equal(out[26].letter, "Z");
+    assert2.equal(out.length, 28);
+    assert2.equal(out.at(-1).letter, "Ж");
+    assert2.deepEqual(out.filter((x) => x.enabled).map((x) => x.letter), ["#", "A", "S", "Ж"]);
+    assert2.equal(alphabetJumpLetters([]).filter((x) => x.enabled).length, 0);
+  });
+});

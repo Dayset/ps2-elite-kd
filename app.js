@@ -30,7 +30,7 @@ import {
   Y_ZOOM_DEFAULT,
   xMaxForZoom,
   windowYValues,
-} from "./math.mjs?v=20261008-back";
+} from "./math.mjs?v=20261008-back2";
 import {
   NameLoadError,
   classifyLoadError,
@@ -40,6 +40,7 @@ import {
   summarizeFailures,
   compareByCharName,
   groupByCharName,
+  alphabetJumpLetters,
   shouldShowGraphReady,
   forgetFailures,
   honuProfileUrl,
@@ -50,14 +51,14 @@ import {
   estimateRemainingMs,
   nextEtaDeadline,
   formatEtaLeft,
-} from "./analyze-run.mjs?v=20261008-back";
+} from "./analyze-run.mjs?v=20261008-back2";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
-} from "./player-metrics.mjs?v=20261008-back";
+} from "./player-metrics.mjs?v=20261008-back2";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261008-back";
-import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261008-back";
+import "./name-peek.mjs?v=20261008-back2";
+import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261008-back2";
 
   // Player palettes (dark + light theme) live in palette.mjs (shared with ranks.html).
   const COLORS = PALETTE_DARK;
@@ -1375,6 +1376,39 @@ import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette
     return out.slice(0, MAX_NAMES);
   }
 
+  /** Shared-cache "# A B … Z" jump bar; letters without names are disabled. */
+  function makeAlphaBar(present, list) {
+    const nav = document.createElement("nav");
+    nav.className = "alpha-bar";
+    nav.setAttribute("aria-label", "Jump to letter");
+    for (const { letter, enabled } of alphabetJumpLetters(present)) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "alpha-btn";
+      b.textContent = letter;
+      if (!enabled) {
+        b.disabled = true;
+        b.title = `No names under ${letter}`;
+      } else {
+        b.title = `Jump to ${letter === "#" ? "digits / symbols" : letter}`;
+        b.setAttribute("aria-label", b.title);
+        b.addEventListener("click", () => jumpToCacheLetter(letter, list, nav));
+      }
+      nav.appendChild(b);
+    }
+    return nav;
+  }
+
+  function jumpToCacheLetter(letter, list, bar) {
+    const sep = [...list.querySelectorAll(".chip-sep")].find((el) => el.getAttribute("data-letter") === letter);
+    if (!sep) return;
+    // Land the [X] header just below the sticky jump bar.
+    const offset = (bar ? bar.getBoundingClientRect().height : 0) + 8;
+    const top = window.scrollY + sep.getBoundingClientRect().top - offset;
+    const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    window.scrollTo({ top: Math.max(0, top), behavior: reduce ? "auto" : "smooth" });
+  }
+
   function renderCacheChips() {
     if (!els.cacheChips) return;
     const cached = listCachedNames();
@@ -1424,14 +1458,18 @@ import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette
       inner.className = "cache-shared-chips";
       inner.setAttribute("aria-label", "Shared cached character names");
       // Letter separators: [#] (digits/symbols) first, then [A], [B], …
-      for (const group of groupByCharName(shared)) {
+      const groups = groupByCharName(shared);
+      for (const group of groups) {
         const sep = document.createElement("span");
         sep.className = "chip-sep";
         sep.setAttribute("aria-hidden", "true");
+        sep.setAttribute("data-letter", group.letter);
         sep.textContent = `[${group.letter}]`;
         inner.appendChild(sep);
         for (const item of group.items) inner.appendChild(makeChip(item));
       }
+      // Alphabet jump bar (# A … Z): sticky at the top of the open list.
+      details.appendChild(makeAlphaBar(groups.map((g) => g.letter), inner));
       details.appendChild(inner);
       els.cacheChips.appendChild(details);
     }

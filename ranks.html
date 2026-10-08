@@ -13,7 +13,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261008-back" />
+  <link rel="stylesheet" href="styles.css?v=20261008-back2" />
   <style>
     /* Ranks page: one long sortable table of every cached player. */
     body.ranks-page { overflow-x: hidden; }
@@ -45,6 +45,97 @@
     .ranks-toolbar .ranks-compare:disabled { opacity: 0.45; cursor: not-allowed; }
     .ranks-toolbar .ranks-picked { color: var(--dim); font-size: 0.85rem; min-width: 5.5rem; }
     .ranks-toolbar .theme-toggle { margin-left: auto; }
+    /* ‹ 🔍 back to player search: big pill, same height as the search box */
+    .back-btn {
+      position: relative;
+      flex: 0 0 auto;
+      display: inline-flex; align-items: center; justify-content: center; gap: 0.2rem;
+      box-sizing: border-box;
+      height: var(--ctl-h, 2.9rem); min-width: 4.4rem;
+      padding: 0 0.85rem 0 0.6rem;
+      border-radius: 999px;
+      border: 2px solid var(--border);
+      background: var(--ctrl-btn-bg);
+      color: var(--accent);
+      font: inherit; font-size: 1.15rem; line-height: 1;
+      text-decoration: none;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: background-color 0.12s ease, border-color 0.12s ease, transform 0.12s ease;
+    }
+    .back-btn .back-chev { display: block; flex: 0 0 auto; }
+    .back-btn .back-ico { font-size: 1.05rem; }
+    .back-btn:hover,
+    .back-btn:focus-visible {
+      border-color: var(--accent);
+      background: var(--ctrl-btn-hover);
+    }
+    .back-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .back-btn:active { transform: scale(0.96); }
+    /* Hover hint (mouse / keyboard only; touch shows nothing extra) */
+    .back-btn::after {
+      content: attr(data-hint);
+      position: absolute; left: 0; top: calc(100% + 6px); z-index: 20;
+      white-space: nowrap;
+      padding: 0.3rem 0.6rem; border-radius: 6px;
+      font-size: 0.8rem; font-weight: 600; line-height: 1.2;
+      background: var(--bg); color: var(--text);
+      border: 1px solid var(--accent); border-left-width: 3px;
+      box-shadow: 0 6px 18px var(--shadow);
+      opacity: 0; visibility: hidden; transform: translateY(-3px);
+      transition: opacity 0.12s ease, transform 0.12s ease, visibility 0s linear 0.12s;
+      pointer-events: none;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .back-btn:hover::after {
+        opacity: 1; visibility: visible; transform: none;
+        transition: opacity 0.12s ease 0.15s, transform 0.12s ease 0.15s, visibility 0s;
+      }
+    }
+    .back-btn:focus-visible::after { opacity: 1; visibility: visible; transform: none; transition: none; }
+    /* Footer copy: hint opens upwards (nothing below the footer) */
+    .back-btn.back-btn-up::after { top: auto; bottom: calc(100% + 6px); transform: translateY(3px); }
+    footer .footer-row .footer-left { display: inline-flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+    footer .back-btn { font-size: 1.15rem; }
+
+    /* ⬆ / ⬇ quick jumps (fixed bottom-right; shown after ~1 screen of scrolling) */
+    .jump-btns {
+      position: fixed; z-index: 30;
+      right: max(12px, env(safe-area-inset-right));
+      bottom: max(14px, env(safe-area-inset-bottom));
+      display: flex; flex-direction: column; gap: 0.45rem;
+      pointer-events: none;
+    }
+    .jump-btn {
+      position: relative;
+      pointer-events: auto;
+      width: 2.75rem; height: 2.75rem; border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+      border: 2px solid var(--border); background: var(--ctrl-btn-bg); color: var(--accent);
+      box-shadow: 0 4px 14px var(--shadow);
+      cursor: pointer; padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      transition: opacity 0.15s ease, transform 0.15s ease, border-color 0.12s ease, background-color 0.12s ease;
+    }
+    .jump-btn[hidden] { display: none; }
+    .jump-btn svg { display: block; }
+    .jump-btn:hover, .jump-btn:focus-visible { border-color: var(--accent); background: var(--ctrl-btn-hover); }
+    .jump-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .jump-btn:active { transform: scale(0.94); }
+    .jump-btn::after {
+      content: attr(data-hint);
+      position: absolute; right: calc(100% + 8px); top: 50%; transform: translate(3px, -50%);
+      white-space: nowrap; padding: 0.25rem 0.55rem; border-radius: 6px;
+      font-size: 0.78rem; font-weight: 600;
+      background: var(--bg); color: var(--text); border: 1px solid var(--accent);
+      box-shadow: 0 4px 14px var(--shadow);
+      opacity: 0; visibility: hidden; pointer-events: none;
+      transition: opacity 0.12s ease, transform 0.12s ease, visibility 0s linear 0.12s;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .jump-btn:hover::after { opacity: 1; visibility: visible; transform: translate(0, -50%); transition: opacity 0.12s ease 0.15s, transform 0.12s ease 0.15s, visibility 0s; }
+    }
+    .jump-btn:focus-visible::after { opacity: 1; visibility: visible; transform: translate(0, -50%); }
     .ranks-status { min-height: 1.35rem; margin: 0 0 0.5rem; font-size: 0.9rem; }
     .ranks-status:empty { display: none; }
 
@@ -153,7 +244,7 @@
     </div>
 
     <div class="ranks-toolbar">
-      <a id="backLink" href="index.html" class="icon-nav-btn" title="Back to player search" aria-label="Back to player search">🔍</a>
+      <a id="backLink" href="index.html" class="back-btn" aria-label="Back to player search" data-hint="Back to player search"><svg class="back-chev" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M15 4.5 7.5 12 15 19.5" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="back-ico" aria-hidden="true">🔍</span></a>
       <input id="ranksSearch" type="search" placeholder="Filter names…" aria-label="Filter player names" autocomplete="off" spellcheck="false" />
       <button id="ranksCompare" type="button" class="ranks-compare" disabled title="Open the main page with the checked players (up to 10)">Compare</button>
       <span id="ranksPicked" class="ranks-picked" aria-live="polite">0 / 10</span>
@@ -184,7 +275,10 @@
 
   <footer>
     <div class="footer-row">
-      <p><a href="https://github.com/Dayset/ps2-elite-kd">github.com/Dayset/ps2-elite-kd</a></p>
+      <div class="footer-left">
+        <a id="backLinkFooter" href="index.html" class="back-btn back-btn-up" aria-label="Back to player search" data-hint="Back to player search"><svg class="back-chev" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M15 4.5 7.5 12 15 19.5" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="back-ico" aria-hidden="true">🔍</span></a>
+        <p><a href="https://github.com/Dayset/ps2-elite-kd">github.com/Dayset/ps2-elite-kd</a></p>
+      </div>
       <label class="debug-cols-toggle" title="Append the older debug columns (🎯🎈 ivi, eKPM, own KPM, 📊 COI, 📉 Slope) to the rankings table">
         <input type="checkbox" id="debugColsToggle" /> show older debug stats
       </label>
@@ -192,10 +286,15 @@
     <p>Thanks to <a href="https://wt.honu.pw/" target="_blank" rel="noopener noreferrer">HONU</a> / Varunda</p>
   </footer>
 
+  <div class="jump-btns" aria-label="Quick jump">
+    <button type="button" id="jumpTop" class="jump-btn" hidden aria-label="Top" data-hint="Top"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M5 15 12 8l7 7" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <button type="button" id="jumpBottom" class="jump-btn" hidden aria-label="Bottom" data-hint="Bottom"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M5 9l7 7 7-7" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  </div>
+
   <script type="module">
-    import "./name-peek.mjs?v=20261008-back";
-    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits } from "./dist.mjs?v=20261008-back";
-    import { paletteColor } from "./palette.mjs?v=20261008-back";
+    import "./name-peek.mjs?v=20261008-back2";
+    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits } from "./dist.mjs?v=20261008-back2";
+    import { paletteColor } from "./palette.mjs?v=20261008-back2";
 
     const LS_THEME = "ps2-elite-kd-theme";
     const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";
@@ -789,6 +888,53 @@
     document.addEventListener("pointerdown", (e) => {
       if (!e.target.closest || !e.target.closest("#distChart")) hideTip();
     });
+
+    /* ---------- ⬆ / ⬇ quick jumps ----------
+     * The rankings list scrolls inside its own box (sticky header / columns), and
+     * the page scrolls around it. ⬆ = top of both, ⬇ = bottom of both (last
+     * player + footer). Shown after ~1 screen of scrolling; ⬇ hides at the end. */
+    const tableScroll = $("ranksScroll");
+    const reduceMotion = () => window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    function jumpState() {
+      const vh = window.innerHeight || 800;
+      const doc = document.documentElement;
+      const pageY = window.scrollY || doc.scrollTop || 0;
+      const pageMax = Math.max(0, doc.scrollHeight - vh);
+      const t = tableScroll;
+      const tMax = t ? Math.max(0, t.scrollHeight - t.clientHeight) : 0;
+      const tY = t ? t.scrollTop : 0;
+      const scrolled = pageY + tY; // combined distance travelled
+      const nearEnd = pageY >= pageMax - 40 && tY >= tMax - 40;
+      return { show: scrolled > vh * 0.9, nearEnd };
+    }
+    let jumpRaf = 0;
+    function syncJumpBtns() {
+      jumpRaf = 0;
+      const st = jumpState();
+      $("jumpTop").hidden = !st.show;
+      $("jumpBottom").hidden = !st.show || st.nearEnd;
+    }
+    const queueJumpSync = () => { if (!jumpRaf) jumpRaf = requestAnimationFrame(syncJumpBtns); };
+    window.addEventListener("scroll", queueJumpSync, { passive: true });
+    window.addEventListener("resize", queueJumpSync, { passive: true });
+    if (tableScroll) tableScroll.addEventListener("scroll", queueJumpSync, { passive: true });
+    function jumpTo(end) {
+      const behavior = reduceMotion() ? "auto" : "smooth";
+      const doc = document.documentElement;
+      if (tableScroll) {
+        const target = end ? Math.max(0, tableScroll.scrollHeight - tableScroll.clientHeight) : 0;
+        // Long list: hop to ~1 box-height from the target, then glide the rest
+        // (a smooth scroll across ~1300 rows takes seconds).
+        const near = tableScroll.clientHeight;
+        if (behavior === "smooth" && Math.abs(tableScroll.scrollTop - target) > near * 3) {
+          tableScroll.scrollTop = end ? target - near : near;
+        }
+        tableScroll.scrollTo({ top: target, behavior });
+      }
+      window.scrollTo({ top: end ? doc.scrollHeight : 0, behavior });
+    }
+    $("jumpTop").addEventListener("click", () => jumpTo(false));
+    $("jumpBottom").addEventListener("click", () => jumpTo(true));
 
     $("ranksCompare").addEventListener("click", () => {
       if (!picked.size) return;

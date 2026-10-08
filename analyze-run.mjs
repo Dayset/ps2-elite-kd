@@ -195,6 +195,19 @@ export function groupByCharName(items, getName = (x) => (x && typeof x === "obje
     .map(([letter, list]) => ({ letter, items: list }));
 }
 
+/**
+ * Letters for the shared-cache alphabet jump bar: "#", A–Z always (dimmed when
+ * empty), plus any other letter group that exists (e.g. "Ж"), in group order.
+ * @param {string[]} present group letters from groupByCharName
+ * @returns {{ letter: string, enabled: boolean }[]}
+ */
+export function alphabetJumpLetters(present) {
+  const have = new Set(present || []);
+  const base = ["#", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
+  const extra = [...have].filter((l) => !base.includes(l)).sort((a, b) => a.localeCompare(b, undefined, NAME_COLLATE));
+  return [...base, ...extra].map((letter) => ({ letter, enabled: have.has(letter) }));
+}
+
 /* ---------- repeat-Analyze / failed-name bookkeeping ---------- */
 
 /**

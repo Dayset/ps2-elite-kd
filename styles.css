@@ -100,6 +100,9 @@ html, body {
   font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
   min-height: 100%;
   overflow-x: hidden;
+  /* clip (not hidden) so body isn't a scroll container — position: sticky
+     (shared-cache alphabet bar) then sticks to the viewport. */
+  overflow-x: clip;
 }
 
 body {
@@ -675,6 +678,58 @@ header .sub {
   pointer-events: none;
   white-space: nowrap;
 }
+/* Shared-cache alphabet jump bar (# A … Z), sticky at the top while the list scrolls */
+.alpha-bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem;
+  box-sizing: border-box;
+  margin: 0.35rem 0 0;
+  padding: 0.3rem 0;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+.alpha-btn {
+  appearance: none;
+  min-width: 1.7rem;
+  height: 1.7rem;
+  padding: 0 0.2rem;
+  border-radius: 6px;
+  border: 1px solid var(--chip-border);
+  background: var(--chip-bg);
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  line-height: 1;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.alpha-btn:hover:not(:disabled),
+.alpha-btn:focus-visible {
+  border-color: var(--accent);
+  background: var(--chip-hover);
+}
+.alpha-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.alpha-btn:disabled {
+  opacity: 0.32;
+  cursor: default;
+  color: var(--dim);
+}
+@media (max-width: 600px) {
+  /* Phones: two even rows of 14 (# A–M / N–Z), still finger-sized */
+  .alpha-bar {
+    display: grid;
+    grid-template-columns: repeat(14, minmax(0, 1fr));
+    gap: 0.18rem;
+  }
+  .alpha-btn { min-width: 0; height: 1.9rem; padding: 0; font-size: 0.8rem; }
+}
+
 .chip-sep:not(:first-child) {
   margin-top: 0.25rem;
   padding-top: 0.45rem;
