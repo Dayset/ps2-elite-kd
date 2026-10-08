@@ -213,10 +213,12 @@ header .sub {
 }
 
 .controls {
+  /* One height for the names field (single row), 🔍 Analyze and the square 🔗 */
+  --ctl-h: 2.9rem;
   display: flex;
   flex-wrap: wrap;
   gap: 0.6rem;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 1rem;
   padding: 0.75rem 0.9rem;
   background: var(--panel);
@@ -240,8 +242,9 @@ header .sub {
   background: var(--input-bg);
   border: 1px solid var(--border);
   border-radius: 6px;
-  padding: 0.28rem 0.3rem 0.28rem 0.45rem;
-  min-height: 2.35rem;
+  padding: 0.25rem 0.3rem 0.25rem 0.45rem;
+  box-sizing: border-box;
+  min-height: var(--ctl-h);
   cursor: text;
   position: relative;
 }
@@ -299,8 +302,9 @@ header .sub {
 }
 
 .names-box input#namesInput {
-  flex: 1 1 8rem;
-  min-width: 6rem;
+  /* Small basis so the typing spot stays on the chips' line while there is room */
+  flex: 1 1 4rem;
+  min-width: 3rem;
   background: transparent;
   border: none;
   color: var(--text);
@@ -483,6 +487,45 @@ header .sub {
   color: var(--text);
 }
 
+/* 🔗 Copy link: square, same height and corner radius as 🔍 Analyze */
+.controls button#copyLinkBtn {
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  width: var(--ctl-h);
+  height: var(--ctl-h);
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+.controls button#copyLinkBtn.copied {
+  color: var(--ok);
+  border-color: var(--ok);
+  font-weight: 700;
+}
+
+/* Narrow portrait phones: names field full width, one name per line;
+   Analyze stretches so its right edge (with 🔗) lines up with the field. */
+@media (max-width: 600px) and (orientation: portrait) {
+  .names-box { flex: 1 1 100%; }
+  .names-box-main {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: flex-start;
+  }
+  .names-box input#namesInput {
+    flex: 0 0 auto;
+    align-self: stretch;
+    width: 100%;
+    min-width: 0;
+  }
+  .controls button#analyzeBtn { flex: 1 1 auto; }
+  /* × stays at the top-right of the (taller) list instead of floating mid-box */
+  .controls .names-box .clear-names { align-self: flex-start; }
+}
+
 /* Primary action: Analyze pairs with the names input */
 .controls button#analyzeBtn {
   background: #6cb2ff;
@@ -490,8 +533,9 @@ header .sub {
   border: 1px solid #6cb2ff;
   font-weight: 700;
   font-size: 0.95rem;
-  padding: 0.5rem 1.2rem;
-  min-height: 2.35rem;
+  padding: 0 1.2rem;
+  box-sizing: border-box;
+  height: var(--ctl-h);
   letter-spacing: 0.01em;
   box-shadow: 0 0 0 1px rgba(108, 178, 255, 0.25);
 }
@@ -628,22 +672,6 @@ header .sub {
 .chip.shared {
   border-color: color-mix(in srgb, var(--accent) 55%, transparent);
 }
-.last-link {
-  flex: 1 1 100%;
-  font-size: 0.78rem;
-  color: var(--dim);
-  word-break: break-all;
-}
-
-.last-link:empty { display: none; }
-
-.last-link a {
-  color: var(--accent);
-  text-decoration: none;
-}
-
-.last-link a:hover { text-decoration: underline; }
-
 .controls .hint {
   flex: 1 1 100%;
   font-size: 0.75rem;
@@ -656,6 +684,8 @@ header .sub {
   color: var(--muted);
   margin-bottom: 0.5rem;
 }
+/* No idle "Ready" text any more: an empty status line takes no space. */
+#status:empty { min-height: 0; margin-bottom: 0; }
 
 #status .err { color: var(--err); }
 #status .ok { color: var(--ok); }

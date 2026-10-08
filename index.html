@@ -5,20 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>PS2 Elite K/D — opposition-weighted curve</title>
   <meta name="description" content="PlanetSide 2 elite K/D vs enemy weapon KPM comparison chart" />
-  <link rel="stylesheet" href="styles.css?v=20261007-cols" />
+  <link rel="stylesheet" href="styles.css?v=20261007-input" />
 </head>
 <body>
   <div class="controls">
-    <label for="namesInput">Players</label>
     <div id="namesBox" class="names-box" role="group" aria-label="Player names">
       <div class="names-box-main">
         <div id="nameTokens" class="name-tokens"></div>
-        <input id="namesInput" type="text" placeholder="ShloDog" autocomplete="off" spellcheck="false" />
+        <input id="namesInput" type="text" placeholder="ShloDog" aria-label="Player names" autocomplete="off" spellcheck="false" />
       </div>
       <button id="clearNamesBtn" type="button" class="clear-names" title="Clear names from input" aria-label="Clear names from input">×</button>
     </div>
     <button id="analyzeBtn" type="button">🔍 Analyze</button>
-    <button id="copyLinkBtn" type="button" title="Copy shareable URL with current names">Copy link</button>
+    <button id="copyLinkBtn" type="button" title="Copy link" aria-label="Copy link">🔗</button>
 
     <div class="fresh-row">
       <label class="fresh-label" for="fetchFresh">
@@ -28,7 +27,6 @@
     </div>
 
     <div id="cacheChips" class="cache-chips" aria-label="Cached character names"></div>
-    <div id="lastLink" class="last-link" aria-label="Latest comparison"></div>
     <div class="controls-theme-row">
       <button id="wipeLocalBtn" type="button" class="wipe-local" title="Clear all local app data (cache, theme, flags)" aria-label="Clear all local app data">🗑️</button>
       <button id="themeToggle" type="button" class="theme-toggle" title="Toggle light / dark theme" aria-label="Toggle light / dark theme">☀️ Light</button>
@@ -96,6 +94,6 @@
     <p>Thanks to <a href="https://wt.honu.pw/" target="_blank" rel="noopener noreferrer">HONU</a> / Varunda</p>
   </footer>
 
-  <script type="module" src="app.js?v=20261007-cols"></script>
+  <script type="module" src="app.js?v=20261007-input"></script>
 </body>
 </html>

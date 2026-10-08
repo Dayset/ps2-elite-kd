@@ -16,9 +16,9 @@ Prefer a local server (`file://` often blocks `fetch` of JSON).
 
 ## Use
 
-1. Type names; **space** or **comma** locks a chip (click a chip to remove). Green = cached / analyzed; amber = not fetched yet.
+1. Type names; **space** or **comma** locks a chip (click a chip to remove). Green = cached / analyzed; amber = not fetched yet. On narrow portrait phones (≤600px) the chips stack one name per line; wider screens and landscape keep them inline.
 2. Press **Analyze** (or Enter). Clear names with **×**.
-3. **Copy link** builds `?names=…` for sharing.
+3. The square **🔗** button (same height as Analyze) copies a `?names=…` share link; it flashes ✓ when copied.
 4. **☀️ Light / 🌙 Dark** toggles a creamy haze light theme (~15% white).
 5. **Fetch fresh data** skips caches and hits Census + Honu live. Unchecked on every load.
 

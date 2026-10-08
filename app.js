@@ -28,7 +28,7 @@ import {
   applyYZoom,
   clampYZoom,
   Y_ZOOM_DEFAULT,
-} from "./math.mjs?v=20261007-cols";
+} from "./math.mjs?v=20261007-input";
 import {
   NameLoadError,
   classifyLoadError,
@@ -41,11 +41,11 @@ import {
   shouldShowGraphReady,
   forgetFailures,
   honuProfileUrl,
-} from "./analyze-run.mjs?v=20261007-cols";
+} from "./analyze-run.mjs?v=20261007-input";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
-} from "./player-metrics.mjs?v=20261007-cols";
+} from "./player-metrics.mjs?v=20261007-input";
 
   const COLORS = [
     "#9fd4ee", "#ff7a7a", "#ffd166", "#8ef0b0", "#e8b0ff",
@@ -108,7 +108,6 @@ import {
     clearNamesBtn: document.getElementById("clearNamesBtn"),
     fetchFresh: document.getElementById("fetchFresh"),
     cacheChips: document.getElementById("cacheChips") || document.getElementById("recentChips"),
-    lastLink: document.getElementById("lastLink"),
     status: document.getElementById("status"),
     progress: document.getElementById("progress"),
     progressTitle: document.getElementById("progressTitle"),
@@ -874,7 +873,6 @@ import {
 
   function saveLastComparison(names) {
     writeJsonLS(LS_LAST, names.map((n) => String(n).trim()).filter(Boolean));
-    renderLastLink();
   }
 
   function getLastComparison() {
@@ -991,7 +989,6 @@ import {
     failedNames.clear();
     showIdleChart("▶️ Press Analyze");
     renderNameTokens();
-    renderLastLink();
     renderCacheChips();
     updateUnderLoadNotice();
     // Default theme after wipe (persists fresh dark preference)
@@ -1289,19 +1286,6 @@ import {
       els.cacheChips.appendChild(label);
       for (const item of browser) els.cacheChips.appendChild(makeChip(item));
     }
-  }
-
-  function renderLastLink() {
-    if (!els.lastLink) return;
-    const last = getLastComparison();
-    if (!last || !last.length) {
-      els.lastLink.innerHTML = "";
-      return;
-    }
-    const namesStr = last.join(",");
-    const url = buildShareUrl(last);
-    els.lastLink.innerHTML =
-      `Latest comparison: <a href="${escapeHtml(url)}">${escapeHtml(namesStr)}</a>`;
   }
 
   /* ---------- abort helpers ---------- */
@@ -2687,7 +2671,8 @@ import {
         document.execCommand("copy");
         document.body.removeChild(ta);
       }
-      setStatus(`<span class="ok">Copied link</span> <span class="src">${escapeHtml(link)}</span>`);
+      // Quiet success: brief ✓ on the square 🔗 button (same size), no link text in the status line.
+      flashCopied();
     } catch (e) {
       setStatus(
         `<span class="warn">Could not copy automatically.</span> ` +
@@ -2695,6 +2680,24 @@ import {
         "warn"
       );
     }
+  }
+
+  let copiedFlashTimer = 0;
+  function flashCopied() {
+    const btn = els.copyLinkBtn;
+    if (!btn) return;
+    if (copiedFlashTimer) clearTimeout(copiedFlashTimer);
+    btn.textContent = "✓";
+    btn.classList.add("copied");
+    btn.title = "Link copied";
+    btn.setAttribute("aria-label", "Link copied");
+    copiedFlashTimer = setTimeout(() => {
+      copiedFlashTimer = 0;
+      btn.textContent = "🔗";
+      btn.classList.remove("copied");
+      btn.title = "Copy link";
+      btn.setAttribute("aria-label", "Copy link");
+    }, 1200);
   }
 
   function namesFromQuery() {
@@ -2828,7 +2831,7 @@ import {
       e.stopPropagation();
       clearNamesFromInput();
       clearChartUi();
-      setStatus("Ready — press Analyze");
+      setStatus("");
       if (els.namesInput) els.namesInput.focus();
     });
   }
@@ -2927,20 +2930,8 @@ import {
     await loadSharedIndex();
     const startup = resolveStartupNames();
     setNameTokens(startup.names);
-    renderLastLink();
     renderCacheChips();
     showIdleChart("▶️ Press Analyze");
-    const reasonNote =
-      startup.reason === "url"
-        ? "from URL"
-        : startup.reason === "last"
-          ? "restored last comparison"
-          : "empty";
-    const sharedN = (sharedIndex.players || []).length;
-    const sharedNote = sharedN
-      ? ` · ${sharedN} shared cache name${sharedN === 1 ? "" : "s"}`
-      : "";
-    setStatus(
-      `Ready — press Analyze <span class="src">${reasonNote}${sharedNote}</span>`
-    );
+    // No idle "Ready — press Analyze" line; the status area only shows progress / errors.
+    setStatus("");
   })();
