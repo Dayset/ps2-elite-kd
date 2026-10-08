@@ -28,7 +28,7 @@ import {
   applyYZoom,
   clampYZoom,
   Y_ZOOM_DEFAULT,
-} from "./math.mjs?v=20261007-speedmult";
+} from "./math.mjs?v=20261007-cols";
 import {
   NameLoadError,
   classifyLoadError,
@@ -45,7 +45,7 @@ import {
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
-} from "./player-metrics.mjs?v=20261007-speedmult";
+} from "./player-metrics.mjs?v=20261007-cols";
 
   const COLORS = [
     "#9fd4ee", "#ff7a7a", "#ffd166", "#8ef0b0", "#e8b0ff",
@@ -60,6 +60,8 @@ import {
   const LS_RECENT = "ps2-elite-kd-recent";
   const LS_LAST = "ps2-elite-kd-last";
   const LS_THEME = "ps2-elite-kd-theme";
+  /** "1" = show older debug columns in the Adjusted table (footer checkbox). */
+  const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";
   /** Cross-tab live-fetch flag (browser-local). */
   const LS_FETCHING = "ps2-elite-kd:fetching";
   const FETCHING_TTL_MS = 3 * 60 * 1000; // 3 min stale expiry
@@ -124,6 +126,7 @@ import {
     yZoomReset: document.getElementById("yZoomReset"),
     stats: document.getElementById("statsPanel"),
     legend: document.getElementById("legend"),
+    debugColsToggle: document.getElementById("debugColsToggle"),
   };
 
   let players = [];
@@ -2033,11 +2036,37 @@ import {
   /* Per-table sort state: key "name" | col index, dir "asc"|"desc" */
   const statsSortState = {
     public: { key: "ivi", dir: "desc" },
-    adjusted: { key: "adj", dir: "desc" },
+    adjusted: { key: "adjs", dir: "desc" },
   };
+
+  /* Older debug columns in the Adjusted table: hidden unless the footer box is ticked. */
+  function readShowDebugCols() {
+    try {
+      return localStorage.getItem(LS_DEBUG_COLS) === "1";
+    } catch (_) {
+      return false;
+    }
+  }
+  let showDebugCols = readShowDebugCols();
+  /** Last list rendered into the stats tables (re-render when the debug box flips). */
+  let lastStatsList = null;
+  if (els.debugColsToggle) {
+    els.debugColsToggle.checked = showDebugCols;
+    els.debugColsToggle.addEventListener("change", () => {
+      showDebugCols = !!els.debugColsToggle.checked;
+      try {
+        if (showDebugCols) localStorage.setItem(LS_DEBUG_COLS, "1");
+        else localStorage.removeItem(LS_DEBUG_COLS);
+      } catch (_) {
+        /* private mode: keep the in-memory choice */
+      }
+      if (lastStatsList) renderStatsTable(lastStatsList);
+    });
+  }
 
   function renderStatsTable(list) {
     if (!els.stats) return;
+    lastStatsList = list;
     if (!list.length) {
       els.stats.innerHTML = "";
       return;
@@ -2055,21 +2084,30 @@ import {
       { id: "ivi", label: "IvI", hint: "Infantry vs Infantry score from Census / Honu.", fn: (r) => r.ivi, digits: 0 },
     ];
 
-    // Column order is fixed (sort only reorders rows). 🎯🎈 ivi (adj) is always the first metric, ⚡ ivi the last.
-    const adjCols = [
-      { id: "adj", label: "🎯🎈 ivi", hint: "Opposition-weighted IvI: public IvI adjusted by Resistance so soft-farm padding is tempered. The 🎈 is a reminder that this score is still inflated (slow, safe play is not penalised here — see ⚡ ivi).", fn: (r) => r.adj, digits: 0 },
-      { id: "rkd", label: "⚔️ KD", hint: "Resistance-weighted K/D against the opposition mix you actually face.", fn: (r) => r.rkd, digits: 3 },
-      { id: "ekpm", label: "eKPM", hint: "Average enemy weapon KPM faced (how hard the opposition shoots).", fn: (r) => r.ekpm, digits: 2 },
-      { id: "own", label: "own KPM", hint: "Your weapon pace used on the elite K/D curve.", fn: (r) => r.own, digits: 2 },
-      { id: "rf", label: "🛡️ Resistance", hint: "How hard the players you die to are (Resistance Factor).", fn: (r) => r.rf, digits: 2 },
-      { id: "act", label: "🔥 Activity", hint: "How much high-pressure combat you see (Activity / IF).", fn: (r) => r.act, digits: 2 },
-      { id: "coi", label: "📊 COI", hint: "Combat Output Index derived from Resistance.", fn: (r) => r.coi, digits: 2 },
-      { id: "mech", label: "⚙️ Mech%", hint: "Projected mechanized / vehicle share implied by Resistance.", fn: (r) => r.mech, digits: 1 },
-      { id: "slope", label: "📉 Slope", hint: "Overall graph angle: death-weighted K/D vs enemy KPM across the full curve — negative means K/D falls as opposition hardens.", fn: (r) => r.slope, digits: 2 },
-      { id: "pvs", label: "🦁 LionHeart", hint: "Activity × pressure slope — sustained elite volume under hard opposition.", fn: (r) => r.pvs, digits: 2 },
+    // Column order is fixed (sort only reorders rows). Visible by default:
+    const adjVisibleCols = [
+      { id: "adjs", label: "⚔️ iVi", hint: "ivi adjusted for your own kill speed (🎯🎈 ivi in the debug columns is the unadjusted score). Own KPM 0.8–1.4 = unchanged; faster earns a growing bonus; slower scales the score down (at most halved), so a slow, safe KD counts for less but never goes negative. Below zero shows as 0.", fn: (r) => r.adjs, digits: 0, floorZero: true },
+      { id: "rf", label: "🛡️ Resist", hint: "Resistance: how hard the players you die to are (Resistance Factor).", fn: (r) => r.rf, digits: 2 },
+      { id: "act", label: "🔥 Active", hint: "Activity: how much high-pressure combat you see (☠️ K/D × own KPM).", fn: (r) => r.act, digits: 2 },
+      { id: "pvs", label: "🦁 Brave", hint: "Bravery (formerly LionHeart): 🔥 Active × pressure slope — sustained elite volume under hard opposition.", fn: (r) => r.pvs, digits: 2 },
+      { id: "rkd", label: "☠️ K/D", hint: "Resistance-weighted K/D against the opposition mix you actually face.", fn: (r) => r.rkd, digits: 3 },
+      { id: "mech", label: "⚙️ Mech%", hint: "Projected mechanized / vehicle share implied by 🛡️ Resist.", fn: (r) => r.mech, digits: 1 },
       { id: "inflation", label: "🎈 Inflation", hint: "Global KD ÷ KD at ≥0.5 enemy KPM — how much soft opposition inflates your KD (avg planetman ~0.35).", fn: (r) => r.inflation, digits: 2 },
-      { id: "adjs", label: "⚡ ivi", hint: "🎯🎈 ivi adjusted for your own kill speed. Own KPM 0.8–1.4 = unchanged; faster earns a growing bonus; slower scales the score down (at most halved), so a slow, safe KD counts for less but never goes negative.", fn: (r) => r.adjs, digits: 0, floorZero: true },
     ];
+    // Older debug columns: appended only when "show older debug stats" (footer) is ticked.
+    const adjDebugCols = [
+      { id: "adj", label: "🎯🎈 ivi", hint: "Opposition-weighted IvI before the kill-speed adjustment: public IvI adjusted by 🛡️ Resist so soft-farm padding is tempered. The 🎈 is a reminder that this score is still inflated (slow, safe play is not penalised here — see ⚔️ iVi).", fn: (r) => r.adj, digits: 0 },
+      { id: "ekpm", label: "eKPM", hint: "Average enemy weapon KPM faced (how hard the opposition shoots).", fn: (r) => r.ekpm, digits: 2 },
+      { id: "own", label: "own KPM", hint: "Your weapon pace used on the elite K/D curve and for the ⚔️ iVi speed adjustment.", fn: (r) => r.own, digits: 2 },
+      { id: "coi", label: "📊 COI", hint: "Combat Output Index derived from 🛡️ Resist.", fn: (r) => r.coi, digits: 2 },
+      { id: "slope", label: "📉 Slope", hint: "Overall graph angle: death-weighted K/D vs enemy KPM across the full curve — negative means K/D falls as opposition hardens (feeds 🦁 Brave).", fn: (r) => r.slope, digits: 2 },
+    ];
+    const adjCols = showDebugCols ? adjVisibleCols.concat(adjDebugCols) : adjVisibleCols;
+    // Sorting by a hidden debug column falls back to the default (⚔️ iVi high→low).
+    if (statsSortState.adjusted.key !== "name" && !adjCols.some((c) => c.id === statsSortState.adjusted.key)) {
+      statsSortState.adjusted.key = "adjs";
+      statsSortState.adjusted.dir = "desc";
+    }
 
     function sortRows(rows, cols, state) {
       const key = state.key;
@@ -2085,7 +2123,7 @@ import {
         }
         // Numeric: default desc means higher first when dir==="desc"
         const col = cols.find((c) => c.id === key);
-        const getter = col ? col.fn : (r) => r.adj;
+        const getter = col ? col.fn : (r) => r.adjs;
         const av = getter(a);
         const bv = getter(b);
         const aOk = isFiniteNum(av);

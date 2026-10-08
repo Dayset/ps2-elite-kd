@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>PS2 Elite K/D — opposition-weighted curve</title>
   <meta name="description" content="PlanetSide 2 elite K/D vs enemy weapon KPM comparison chart" />
-  <link rel="stylesheet" href="styles.css?v=20261007-speedmult" />
+  <link rel="stylesheet" href="styles.css?v=20261007-cols" />
 </head>
 <body>
   <div class="controls">
@@ -87,10 +87,15 @@
   <div id="legend" class="legend"></div>
 
   <footer>
-    <p><a href="https://github.com/Dayset/ps2-elite-kd">github.com/Dayset/ps2-elite-kd</a></p>
+    <div class="footer-row">
+      <p><a href="https://github.com/Dayset/ps2-elite-kd">github.com/Dayset/ps2-elite-kd</a></p>
+      <label class="debug-cols-toggle" title="Append the older debug columns (🎯🎈 ivi, eKPM, own KPM, 📊 COI, 📉 Slope) to the ✨ Adjusted table">
+        <input type="checkbox" id="debugColsToggle" /> show older debug stats
+      </label>
+    </div>
     <p>Thanks to <a href="https://wt.honu.pw/" target="_blank" rel="noopener noreferrer">HONU</a> / Varunda</p>
   </footer>
 
-  <script type="module" src="app.js?v=20261007-speedmult"></script>
+  <script type="module" src="app.js?v=20261007-cols"></script>
 </body>
 </html>

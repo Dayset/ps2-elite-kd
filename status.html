@@ -292,8 +292,8 @@
   <!-- Red flags 🚩: one automatic bin = aim OR vehicle OR rampage pattern (red-flags.mjs), using the
        same metrics as the main tables (player-metrics.mjs). Leads for review, not proof. -->
   <script type="module">
-    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261007-speedmult";
-    import { reviewFlags, reviewRuleText } from "./red-flags.mjs?v=20261007-speedmult";
+    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261007-cols";
+    import { reviewFlags, reviewRuleText } from "./red-flags.mjs?v=20261007-cols";
     import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261007-redflags";
 
     const POLL_MS = 30 * 1000;
@@ -303,7 +303,7 @@
     const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
     const fmt = (v, d) => (typeof v === "number" && Number.isFinite(v) ? v.toFixed(d) : "—");
     const TAGS = {
-      aim: { label: "aim", tip: "Aim pattern: high skill + low LionHeart + low Inflation", hot: ["pvs", "inflation"] },
+      aim: { label: "aim", tip: "Aim pattern: high skill + low 🦁 Brave + low Inflation", hot: ["pvs", "inflation"] },
       vehicle: { label: "vehicle", tip: "Vehicle pattern: high skill + very high KD + weak infantry aim (HSR / accuracy)", hot: ["kd", "acc", "hsr"] },
       rampage: { label: "rampage", tip: "Rampage pattern: KD ≥ 15 and KPM ≥ 3 (short absurd kill spree, no skill test)", hot: ["kd"] },
     };
@@ -369,7 +369,7 @@
       if (!flagged.length) { $("flags").innerHTML = head; return; }
       $("flags").innerHTML = head + '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th></th><th>Pattern</th><th>Skill</th>' +
         '<th class="st-num">🎯🎈 ivi</th><th class="st-num">IvI</th><th class="st-num">KD</th><th class="st-num">Acc %</th><th class="st-num">HSR %</th>' +
-        '<th class="st-num">🦁 LionHeart</th><th class="st-num">🎈 Inflation</th><th>Updated</th></tr>' +
+        '<th class="st-num">🦁 Brave</th><th class="st-num">🎈 Inflation</th><th>Updated</th></tr>' +
         flagged.map(rowHtml).join("") + "</table></div>";
     }
 

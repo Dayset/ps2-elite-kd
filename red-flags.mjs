@@ -5,7 +5,7 @@
  *
  * Metrics come from player-metrics.mjs (same numbers as the main tables):
  *   adj  = 🎯🎈 ivi (opposition-weighted IvI)   ivi = public IvI
- *   pvs  = 🦁 LionHeart                       inflation = 🎈 Inflation
+ *   pvs  = 🦁 Brave (LionHeart)                      inflation = 🎈 Inflation
  * The app has no skill tiers or low/high bands, so these were set from the
  * distribution of the 228 cached players (2026-10-07):
  *   🎯🎈 ivi  p90 ≈ 1910, p95 ≈ 2270 → Exceptional ≥ 2200 (≈ top 5–6%)
@@ -71,7 +71,7 @@ export function redFlagRuleText(rule = RED_FLAG_RULE) {
     `Flagged when ALL hold: skill is Exceptional or within ${pct}% below it ` +
     `(🎯🎈 ivi ≥ ${Math.round(rule.EXCEPTIONAL_ADJ_IVI * rule.ALMOST_FRACTION)} or public IvI ≥ ` +
     `${Math.round(rule.EXCEPTIONAL_IVI * rule.ALMOST_FRACTION)}; Exceptional = ${rule.EXCEPTIONAL_ADJ_IVI} / ` +
-    `${rule.EXCEPTIONAL_IVI}), 🦁 LionHeart ≤ ${rule.LIONHEART_LOW_MAX} (or curve slope ≤ ${rule.SLOPE_COLLAPSE_MAX}), and 🎈 Inflation ≤ ` +
+    `${rule.EXCEPTIONAL_IVI}), 🦁 Brave ≤ ${rule.LIONHEART_LOW_MAX} (or curve slope ≤ ${rule.SLOPE_COLLAPSE_MAX}), and 🎈 Inflation ≤ ` +
     `${rule.INFLATION_LOW_MAX}. A lead for manual review, not proof of cheating.`
   );
 }
@@ -166,7 +166,7 @@ export function reviewRuleText() {
     `Flagged when skill is Exceptional or within ${pct}% below it ` +
     `(🎯🎈 ivi ≥ ${Math.round(R.EXCEPTIONAL_ADJ_IVI * R.ALMOST_FRACTION)} or public IvI ≥ ` +
     `${Math.round(R.EXCEPTIONAL_IVI * R.ALMOST_FRACTION)}; Exceptional = ${R.EXCEPTIONAL_ADJ_IVI} / ${R.EXCEPTIONAL_IVI}) AND either ` +
-    `[aim pattern] 🦁 LionHeart ≤ ${R.LIONHEART_LOW_MAX} (or curve slope ≤ ${R.SLOPE_COLLAPSE_MAX}) and 🎈 Inflation ≤ ${R.INFLATION_LOW_MAX}, or ` +
+    `[aim pattern] 🦁 Brave ≤ ${R.LIONHEART_LOW_MAX} (or curve slope ≤ ${R.SLOPE_COLLAPSE_MAX}) and 🎈 Inflation ≤ ${R.INFLATION_LOW_MAX}, or ` +
     `[vehicle pattern] KD ≥ ${V.KD_HIGH_MIN}, HSR ≤ ${V.HSR_LOW_MAX}% and accuracy ≤ ${V.ACC_LOW_MAX}% (Inflation ignored). ` +
     `Also flagged regardless of skill: [rampage pattern] KD ≥ ${RAMPAGE_RULE.KD_MIN} and KPM ≥ ${RAMPAGE_RULE.KPM_MIN}. ` +
     `A lead for manual review, not proof of cheating.`

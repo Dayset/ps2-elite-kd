@@ -35,22 +35,30 @@ Max 10 names. Deep link: `?names=JustV6me,ChrisJTTR`.
 | Block | What |
 |--------|------|
 | **Public (Census/Honu)** | Collapsed by default — KD, KPM, own KPM, Acc %, HSR %, IvI |
-| **Adjusted (calculated)** | 🎯🎈 ivi, ⚔️ KD, eKPM, own KPM, Resistance, Activity, COI, Mech%, Slope, LionHeart, Inflation, ⚡ ivi |
+| **Adjusted (calculated)** | Default columns: ⚔️ iVi, 🛡️ Resist, 🔥 Active, 🦁 Brave, ☠️ K/D, ⚙️ Mech%, 🎈 Inflation. Ticking **show older debug stats** (footer, right of the repo link; remembered in localStorage) appends 🎯🎈 ivi, eKPM, own KPM, 📊 COI, 📉 Slope |
 | Chart | Projected K/D vs enemy weapon KPM (bands Easy / Hard at 0.75 / 1.50). Vertical **Y zoom** slider (top-right): middle = auto-fit; up enlarges weak curves; down fits extreme / high-tier K/D |
-| Footer | Repo link + thanks to [HONU](https://wt.honu.pw/) / Varunda |
+| Footer | Repo link (with the **show older debug stats** checkbox on the right) + thanks to [HONU](https://wt.honu.pw/) / Varunda |
 
-Click any column header to sort (names alphabetical; metrics numeric). Default sort is **🎯🎈 ivi** descending. Hover headers for short hints. Tables sit above the graph.
+Click any column header to sort (names alphabetical; metrics numeric). Default sort is **⚔️ iVi** descending (sorting by a debug column falls back to it when the debug columns are hidden). Hover headers for short hints. Tables sit above the graph.
 
 ### Adjusted metrics (short)
 
-- **🎯🎈 ivi** — opposition-weighted IvI (public IvI × Resistance tempering); the 🎈 flags that the score is still inflated
-- **⚡ ivi** (last column) — 🎯🎈 ivi adjusted for own kill speed: own KPM 0.8–1.4 unchanged; above, `+300 × log2(own/1.4)^1.5` points; below, a positive score is multiplied by `max((own/0.8)^0.415, 0.5)` (at most halved, never flipped negative; a score already ≤ 0 gets no extra penalty). Values below zero display as **0** ("Below the rating scale") and sort to the bottom
-- **KD** — resistance-weighted K/D
+Visible by default:
+
+- **⚔️ iVi** — ivi adjusted for own kill speed (`adjs`): own KPM 0.8–1.4 unchanged; above, `+300 × log2(own/1.4)^1.5` points; below, a positive 🎯🎈 ivi is multiplied by `max((own/0.8)^0.415, 0.5)` (at most halved, never flipped negative; a score already ≤ 0 gets no extra penalty). Values below zero display as **0** ("Below the rating scale") and sort to the bottom
+- **🛡️ Resist** — Resistance: hardness of the players you die to (Resistance Factor)
+- **🔥 Active** — Activity: volume of hard fights (☠️ K/D × own KPM)
+- **🦁 Brave** — formerly LionHeart: 🔥 Active × shifted slope pressure under hard opposition
+- **☠️ K/D** — resistance-weighted K/D
+- **⚙️ Mech%** — projected mech share implied by Resist
+- **🎈 Inflation** — global KD ÷ KD among deaths vs opponents ≥ **0.5** weapon KPM (avg planetman ~0.35; soft padding above this)
+
+Older debug stats (hidden unless the footer box is ticked):
+
+- **🎯🎈 ivi** — opposition-weighted IvI before the speed adjustment (public IvI × Resistance tempering); the 🎈 flags that the score is still inflated. The status page red-flag bin uses this value
 - **eKPM / own KPM** — average enemy weapon pace vs your pace (kept separate)
-- **Resistance / Activity / COI / Mech%** — hardness of deaths, volume of hard fights, combat output, projected mech share
-- **Slope** — whole-curve death-weighted angle (K/D vs enemy KPM); negative = K/D falls as opposition hardens
-- **LionHeart** — Activity × shifted slope pressure under hard opposition
-- **Inflation** — global KD ÷ KD among deaths vs opponents ≥ **0.5** weapon KPM (avg planetman ~0.35; soft padding above this)
+- **📊 COI** — combat output index derived from Resist
+- **📉 Slope** — whole-curve death-weighted angle (K/D vs enemy KPM); negative = K/D falls as opposition hardens
 
 ## Shared cache (GitHub Actions)
 
