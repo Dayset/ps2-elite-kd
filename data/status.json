@@ -4,37 +4,42 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "37756530798",
+    "runId": "37757656585",
     "event": "workflow_dispatch",
     "kind": "discovery",
-    "startedAt": "2026-10-08T09:25:34.929Z",
-    "endedAt": "2026-10-08T09:34:56.565Z",
-    "seconds": 562,
+    "startedAt": "2026-10-08T09:35:16.006Z",
+    "endedAt": "2026-10-08T09:43:22.006Z",
+    "seconds": 486,
     "updated": [],
     "added": [
-      "[RWCN] MG008",
-      "[FACS] Atom22031",
-      "BlaireRobot",
-      "[CTIA] rishasha",
-      "[ISV] Blastaa",
-      "[NE0N] Kukukachu",
-      "[KPRP] Teritch",
-      "SSKrogan",
-      "[EMMY] Madia"
+      "LostMyGamingChair",
+      "[CHVN] nowysz",
+      "[KOJx] TheThighGapReturns"
     ],
-    "failed": [],
+    "failed": [
+      {
+        "name": "[1RPC] Nero",
+        "reason": "The operation was aborted due to timeout",
+        "outage": true
+      },
+      {
+        "name": "LANGLANG2",
+        "reason": "Honu: empty killboard for 5429210842275414753",
+        "outage": false
+      }
+    ],
     "stoppedEarly": "time budget 9 min reached",
-    "indexSize": 756,
-    "newFromLive": 8,
+    "indexSize": 759,
+    "newFromLive": 1,
     "liveWorlds": [
       {
         "name": "Connery",
-        "online": 47,
+        "online": 36,
         "killers": 24
       },
       {
         "name": "Miller",
-        "online": 136,
+        "online": 144,
         "killers": 24
       },
       {
@@ -46,49 +51,31 @@
     "liveErrors": [],
     "batch": [
       {
-        "name": "[RWCN] MG008",
+        "name": "LostMyGamingChair",
         "src": "top-killers",
         "status": "done"
       },
       {
-        "name": "[FACS] Atom22031",
-        "src": "top-killers",
-        "status": "done"
-      },
-      {
-        "name": "BlaireRobot",
-        "src": "top-killers",
-        "status": "done"
-      },
-      {
-        "name": "[CTIA] rishasha",
-        "src": "top-killers",
-        "status": "done"
-      },
-      {
-        "name": "[ISV] Blastaa",
-        "src": "top-killers",
-        "status": "done"
-      },
-      {
-        "name": "[NE0N] Kukukachu",
-        "src": "top-killers",
-        "status": "done"
-      },
-      {
-        "name": "[KPRP] Teritch",
-        "src": "top-killers",
-        "status": "done"
-      },
-      {
-        "name": "SSKrogan",
-        "src": "top-killers",
-        "status": "done"
-      },
-      {
-        "name": "[EMMY] Madia",
+        "name": "[CHVN] nowysz",
         "src": "opponent-crawl",
         "status": "done"
+      },
+      {
+        "name": "[1RPC] Nero",
+        "src": "opponent-crawl",
+        "status": "failed",
+        "reason": "The operation was aborted due to timeout"
+      },
+      {
+        "name": "[KOJx] TheThighGapReturns",
+        "src": "opponent-crawl",
+        "status": "done"
+      },
+      {
+        "name": "LANGLANG2",
+        "src": "opponent-crawl",
+        "status": "not-found",
+        "reason": "Honu: empty killboard for 5429210842275414753"
       },
       {
         "name": "[X4] Ymdaren",
@@ -101,22 +88,12 @@
         "status": "pending"
       },
       {
-        "name": "[CHVN] nowysz",
-        "src": "opponent-crawl",
-        "status": "pending"
-      },
-      {
         "name": "[UVFC] Kaamleodagan",
         "src": "opponent-crawl",
         "status": "pending"
       },
       {
         "name": "[DRK1] Garlan4",
-        "src": "opponent-crawl",
-        "status": "pending"
-      },
-      {
-        "name": "[1RPC] Nero",
         "src": "opponent-crawl",
         "status": "pending"
       },
@@ -142,6 +119,36 @@
       },
       {
         "name": "[BUJU] NSGDXoc",
+        "src": "opponent-crawl",
+        "status": "pending"
+      },
+      {
+        "name": "[YWNM] MadBasta",
+        "src": "opponent-crawl",
+        "status": "pending"
+      },
+      {
+        "name": "[NBUS] LounidasMaximillion",
+        "src": "opponent-crawl",
+        "status": "pending"
+      },
+      {
+        "name": "[RAGE] Hydra",
+        "src": "opponent-crawl",
+        "status": "pending"
+      },
+      {
+        "name": "[KBVV] BulkyLightfoots",
+        "src": "opponent-crawl",
+        "status": "pending"
+      },
+      {
+        "name": "[TWC2] DarkEstel",
+        "src": "opponent-crawl",
+        "status": "pending"
+      },
+      {
+        "name": "[H0UR] DOOMSLEYER",
         "src": "opponent-crawl",
         "status": "pending"
       }
