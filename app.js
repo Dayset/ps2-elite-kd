@@ -28,7 +28,7 @@ import {
   applyYZoom,
   clampYZoom,
   Y_ZOOM_DEFAULT,
-} from "./math.mjs?v=20261007-input";
+} from "./math.mjs?v=20261007-limit";
 import {
   NameLoadError,
   classifyLoadError,
@@ -41,11 +41,11 @@ import {
   shouldShowGraphReady,
   forgetFailures,
   honuProfileUrl,
-} from "./analyze-run.mjs?v=20261007-input";
+} from "./analyze-run.mjs?v=20261007-limit";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
-} from "./player-metrics.mjs?v=20261007-input";
+} from "./player-metrics.mjs?v=20261007-limit";
 
   const COLORS = [
     "#9fd4ee", "#ff7a7a", "#ffd166", "#8ef0b0", "#e8b0ff",
@@ -202,6 +202,24 @@ import {
     if (els.status && els.status.classList.contains("graph-ready")) {
       setStatus("");
     }
+  }
+
+  /* ---------- 10-name cap ---------- */
+  const MAX_NAMES = 10;
+  const LIMIT_HINT_HTML = '<span class="warn">10 players limit reached</span>';
+
+  /** Warn (status line) that the field is full; replaces any "graph is ready" hint. */
+  function showLimitHint() {
+    if (graphReadyHintTimer) {
+      clearTimeout(graphReadyHintTimer);
+      graphReadyHintTimer = 0;
+    }
+    setStatus(LIMIT_HINT_HTML, "warn limit-hint");
+  }
+
+  /** Drop the limit warning (only if it is what the status line shows). */
+  function clearLimitHint() {
+    if (els.status && els.status.classList.contains("limit-hint")) setStatus("");
   }
 
   function showGraphReadyHint() {
@@ -707,7 +725,8 @@ import {
       const t = m[0].trim();
       if (t) tokens.push(t);
     }
-    return tokens.slice(0, 10);
+    // No cap here: callers enforce MAX_NAMES so overflow is reported, not dropped.
+    return tokens;
   }
 
   function namesEqualIgnoreCase(a, b) {
@@ -1022,21 +1041,28 @@ import {
     return false;
   }
 
+  /** Replace the chips (URL / last comparison / ShloDog). Keeps the first 10; warns if more. */
   function setNameTokens(names) {
     const seen = new Set();
     nameTokens = [];
+    let overflow = 0;
     for (const raw of names || []) {
       const clean = String(raw).trim();
       if (!clean) continue;
       const key = clean.toLowerCase();
       if (seen.has(key)) continue;
       seen.add(key);
+      if (nameTokens.length >= MAX_NAMES) {
+        overflow++;
+        continue;
+      }
       nameTokens.push(clean);
-      if (nameTokens.length >= 10) break;
     }
     if (els.namesInput) els.namesInput.value = "";
     renderNameTokens();
     renderCacheChips();
+    if (overflow) showLimitHint();
+    return overflow;
   }
 
   /** Clear failed state for names so their chips show pending again. */
@@ -1044,23 +1070,29 @@ import {
     return forgetFailures(failedNames, names, slugKey);
   }
 
+  /**
+   * Add one name as a chip. Returns false (and shows "10 players limit reached")
+   * when the field is already full, so callers can keep the text instead of eating it.
+   */
   function addNameToField(name) {
     const clean = String(name).trim();
-    if (!clean) return;
-    // Re-adding / re-typing a name always resets its failed state (retryable).
-    clearNameFailures([clean]);
+    if (!clean) return true;
     if (nameTokens.some((n) => namesEqualIgnoreCase(n, clean))) {
+      // Re-adding / re-typing a name always resets its failed state (retryable).
+      clearNameFailures([clean]);
       renderNameTokens();
       renderCacheChips();
-      return;
+      return true;
     }
-    if (nameTokens.length >= 10) {
-      setStatus('<span class="warn">Max 10 names</span>', "warn");
-      return;
+    if (nameTokens.length >= MAX_NAMES) {
+      showLimitHint();
+      return false;
     }
+    clearNameFailures([clean]);
     nameTokens.push(clean);
     renderNameTokens();
     renderCacheChips();
+    return true;
   }
 
   /** Case-insensitive or slug-equal (ignores [TAG] / punctuation). */
@@ -1111,6 +1143,7 @@ import {
 
   function renderNameTokens() {
     clearGraphReadyHint();
+    if (nameTokens.length < MAX_NAMES) clearLimitHint();
     if (!els.nameTokensEl) return;
     els.nameTokensEl.innerHTML = "";
     nameTokens.forEach((name) => {
@@ -1193,13 +1226,20 @@ import {
   }
 
   /** Commit trailing raw input into chips (separator flush or Analyze/Enter). */
+  /**
+   * Returns { tokens, rejected }: names that didn't fit (10-name cap) stay in the
+   * text field and the limit hint is shown — nothing is silently dropped.
+   */
   function commitFragment({ clearInput = true } = {}) {
-    if (!els.namesInput) return [];
+    if (!els.namesInput) return { tokens: [], rejected: [] };
     const raw = els.namesInput.value;
     const tokens = parseNames(raw);
-    for (const t of tokens) addNameToField(t);
-    if (clearInput) els.namesInput.value = "";
-    return tokens;
+    const rejected = [];
+    for (const t of tokens) if (!addNameToField(t)) rejected.push(t);
+    if (clearInput) els.namesInput.value = rejected.join(" ");
+    if (rejected.length) showLimitHint();
+    syncNamesPlaceholder();
+    return { tokens, rejected };
   }
 
   /**
@@ -1214,7 +1254,7 @@ import {
         if (!out.some((n) => namesEqualIgnoreCase(n, t))) out.push(t);
       }
     }
-    return out.slice(0, 10);
+    return out.slice(0, MAX_NAMES);
   }
 
   function renderCacheChips() {
@@ -2725,7 +2765,13 @@ import {
   if (els.analyzeBtn) {
     els.analyzeBtn.addEventListener("click", () => {
       collapseSharedCache();
-      commitFragment({ clearInput: true });
+      const { rejected } = commitFragment({ clearInput: true });
+      if (rejected.length) {
+        // Field is full and extra text is waiting: warn instead of eating it or
+        // showing "graph is ready".
+        showLimitHint();
+        return;
+      }
       let names = currentNamesInField();
       if (!names.length) {
         // Empty field → default to ShloDog and show it as a chip
@@ -2740,7 +2786,8 @@ import {
     els.namesInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
-        commitFragment({ clearInput: true });
+        const { rejected } = commitFragment({ clearInput: true });
+        if (rejected.length) return; // limit hint shown, typed text kept
         if (!fetching && els.analyzeBtn) els.analyzeBtn.click();
         return;
       }
@@ -2758,9 +2805,12 @@ import {
       const val = els.namesInput.value;
       // Completed token(s) when text ends with a separator
       if (/[\s,;]$/.test(val)) {
-        const tokens = parseNames(val);
-        for (const t of tokens) addNameToField(t);
-        els.namesInput.value = "";
+        commitFragment({ clearInput: true });
+      } else if (val.trim() && nameTokens.length >= MAX_NAMES) {
+        // Typing an 11th name: say so right away (text is kept).
+        showLimitHint();
+      } else if (!val.trim()) {
+        clearLimitHint();
       }
       syncNamesPlaceholder();
       renderCacheChips();
@@ -2780,9 +2830,7 @@ import {
           renderCacheChips();
           return;
         }
-        const tokens = parseNames(val);
-        for (const t of tokens) addNameToField(t);
-        if (tokens.length) els.namesInput.value = "";
+        commitFragment({ clearInput: true }); // overflow names stay in the field
         syncNamesPlaceholder();
         renderCacheChips();
       });
@@ -2929,9 +2977,9 @@ import {
     updateUnderLoadNotice();
     await loadSharedIndex();
     const startup = resolveStartupNames();
-    setNameTokens(startup.names);
+    setNameTokens(startup.names); // >10 from ?names= → first 10 + limit hint
     renderCacheChips();
     showIdleChart("▶️ Press Analyze");
-    // No idle "Ready — press Analyze" line; the status area only shows progress / errors.
-    setStatus("");
+    // No idle "Ready — press Analyze" line; the status area only shows progress / errors
+    // (and the limit hint if ?names= had more than 10).
   })();

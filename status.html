@@ -14,7 +14,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261007-input" />
+  <link rel="stylesheet" href="styles.css?v=20261007-limit" />
   <style>
     body { overflow: auto; }
     .st-wrap { max-width: 960px; margin: 0 auto; padding: 18px 16px 40px; }
@@ -292,9 +292,9 @@
   <!-- Red flags 🚩: one automatic bin = aim OR vehicle OR rampage pattern (red-flags.mjs), using the
        same metrics as the main tables (player-metrics.mjs). Leads for review, not proof. -->
   <script type="module">
-    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261007-input";
-    import { reviewFlags, reviewRuleText } from "./red-flags.mjs?v=20261007-input";
-    import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261007-input";
+    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261007-limit";
+    import { reviewFlags, reviewRuleText } from "./red-flags.mjs?v=20261007-limit";
+    import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261007-limit";
 
     const POLL_MS = 30 * 1000;
     const CONCURRENCY = 6;
