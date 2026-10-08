@@ -8,13 +8,14 @@ import {
   kpmCurve,
   rfIf,
   adjustedIvi,
+  speedAdjustedIvi,
   combatOutput,
   projectedMech,
   curveSlope,
   pressureVolume,
   resolveIvi,
   deathMixLite,
-} from "./math.mjs";
+} from "./math.mjs?v=20261007-speedivi";
 
 /** Raw cache / live / shared player JSON → the shape the charts & tables use. */
 export function normalizePlayer(raw) {
@@ -61,12 +62,14 @@ export function playerMetrics(p) {
   const own = m && isFiniteNum(m.own) ? m.own : (+p.own_kpm || +p.global_kpm || NaN);
   const slope = curveSlope(p);
   const dm = deathMixLite(p);
+  const adj = adjustedIvi(ivi, rf);
+  const ownKpm = p.own_kpm || p.global_kpm;
   return {
     p,
     m,
     kd: p.global_kd,
     kpm: p.global_kpm,
-    ownKpm: p.own_kpm || p.global_kpm,
+    ownKpm,
     acc: p.acc,
     hsr: p.hsr,
     ivi,
@@ -79,7 +82,9 @@ export function playerMetrics(p) {
     mech: projectedMech(rf),
     slope,
     pvs: pressureVolume(act, slope),
-    adj: adjustedIvi(ivi, rf),
+    adj,
+    // ⚡ ivi: 🎯 ivi adjusted for own kill speed (slow, safe KD counts for less).
+    adjs: speedAdjustedIvi(adj, ownKpm),
     kd05: dm.kd05,
     inflation: dm.inflation,
   };

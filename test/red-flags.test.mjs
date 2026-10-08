@@ -58,6 +58,12 @@ describe("playerMetrics", () => {
     assert.ok(Number.isFinite(m.inflation));
     assert.ok(Number.isFinite(m.pvs));
     assert.ok(Number.isFinite(m.adj));
+    // ⚡ ivi = adj + 300·log2(ownKpm / 0.98); own KPM falls back to global KPM (1)
+    assert.ok(Math.abs(m.adjs - (m.adj + 300 * Math.log2(1 / 0.98))) < 1e-9);
+    const slow = playerMetrics(normalizePlayer({ player: { display: "Y", global_kd: 3, global_kpm: 0.49, own_kpm: 0.49, ivi: 900, rows } }));
+    assert.ok(Math.abs(slow.adjs - (slow.adj - 300)) < 1e-9);
+    const none = playerMetrics(normalizePlayer({ player: { display: "Z", global_kd: 0, global_kpm: 0, rows: [] } }));
+    assert.ok(Number.isNaN(none.adjs));
     // inflation = global KD / KD at ≥0.5 enemy KPM = 3 / (14/9)
     assert.ok(Math.abs(m.inflation - 3 / (14 / 9)) < 1e-9);
   });

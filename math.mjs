@@ -85,6 +85,28 @@ export function adjustedIvi(ivi, rf) {
   return 600 * (1 + Math.log2(rf / RF_SOFT));
 }
 
+/**
+ * Reference own (weapon) KPM for the kill-speed adjustment: the median own KPM
+ * of the ~295 cached players on 2026-10-07 (0.98).
+ */
+export const OWN_KPM_REF = 0.98;
+/** Points per doubling / halving of own KPM relative to OWN_KPM_REF. */
+export const SPEED_IVI_PER_DOUBLING = 300;
+
+/**
+ * ⚡ ivi: 🎯 ivi (adj) adjusted for the player's own kill speed, so a slow,
+ * safe KD counts for less: adj + 300 × log2(ownKpm / OWN_KPM_REF).
+ * Each halving of own KPM below typical costs 300 points; each doubling adds 300.
+ * NaN when an input is missing or ownKpm ≤ 0.
+ */
+export function speedAdjustedIvi(adj, ownKpm) {
+  if (adj == null || ownKpm == null || adj === "" || ownKpm === "") return NaN;
+  const a = +adj;
+  const k = +ownKpm;
+  if (!Number.isFinite(a) || !Number.isFinite(k) || k <= 0) return NaN;
+  return a + SPEED_IVI_PER_DOUBLING * Math.log2(k / OWN_KPM_REF);
+}
+
 export function sliceAt(rows, cut) {
   const sl = (rows || []).filter((r) => (r.kpm || 0) >= cut);
   const { kills, deaths, kd } = pooled(sl);

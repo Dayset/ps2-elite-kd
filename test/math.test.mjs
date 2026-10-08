@@ -393,3 +393,36 @@ describe("applyYZoom", () => {
     assert.equal(clampYZoom(NaN), Y_ZOOM_DEFAULT);
   });
 });
+
+import { OWN_KPM_REF, SPEED_IVI_PER_DOUBLING, speedAdjustedIvi } from "../math.mjs";
+
+describe("speedAdjustedIvi (⚡ ivi)", () => {
+  it("uses the documented constants", () => {
+    assert.equal(OWN_KPM_REF, 0.98);
+    assert.equal(SPEED_IVI_PER_DOUBLING, 300);
+  });
+  it("is unchanged at typical speed, ±300 per doubling / halving", () => {
+    assert.equal(speedAdjustedIvi(1500, 0.98), 1500);
+    assert.ok(Math.abs(speedAdjustedIvi(1500, 1.96) - 1800) < 1e-9);
+    assert.ok(Math.abs(speedAdjustedIvi(1500, 0.49) - 1200) < 1e-9);
+    assert.ok(Math.abs(speedAdjustedIvi(1500, 0.245) - 900) < 1e-9);
+  });
+  it("matches cached players from 2026-10-07 (within rounding of the reference)", () => {
+    // own KPM / adj from the shared cache; expected from the spec (REF ≈ 0.98)
+    const cases = [
+      ["Offtopia", 1789, 0.5675, 1551],
+      ["xCloneKano", 1762, 4.509, 2421],
+      ["Simplenubb", 2109, 3.2836, 2631],
+      ["JustV6me", 1491, 1.0207, 1507],
+    ];
+    for (const [name, adj, own, want] of cases) {
+      const got = speedAdjustedIvi(adj, own);
+      assert.ok(Math.abs(got - want) <= 3, `${name}: ${got.toFixed(1)} vs ${want}`);
+    }
+  });
+  it("returns NaN for missing input or non-positive own KPM", () => {
+    for (const [a, k] of [[NaN, 1], [1500, NaN], [null, 1], [1500, null], [undefined, 1], [1500, undefined], [1500, 0], [1500, -1], [1500, ""]]) {
+      assert.ok(Number.isNaN(speedAdjustedIvi(a, k)), `${a}, ${k}`);
+    }
+  });
+});

@@ -35,7 +35,7 @@ Max 10 names. Deep link: `?names=JustV6me,ChrisJTTR`.
 | Block | What |
 |--------|------|
 | **Public (Census/Honu)** | Collapsed by default — KD, KPM, own KPM, Acc %, HSR %, IvI |
-| **Adjusted (calculated)** | ivi, KD, eKPM, own KPM, Resistance, Activity, COI, Mech%, Slope, LionHeart, Inflation |
+| **Adjusted (calculated)** | ivi, ⚡ ivi, KD, eKPM, own KPM, Resistance, Activity, COI, Mech%, Slope, LionHeart, Inflation |
 | Chart | Projected K/D vs enemy weapon KPM (bands Easy / Hard at 0.75 / 1.50). Vertical **Y zoom** slider (top-right): middle = auto-fit; up enlarges weak curves; down fits extreme / high-tier K/D |
 | Footer | Repo link + thanks to [HONU](https://wt.honu.pw/) / Varunda |
 
@@ -44,6 +44,7 @@ Click any column header to sort (names alphabetical; metrics numeric). Default s
 ### Adjusted metrics (short)
 
 - **ivi** — opposition-weighted IvI (public IvI × Resistance tempering)
+- **⚡ ivi** — 🎯 ivi adjusted for own kill speed: `adj + 300 × log2(ownKpm / 0.98)` (0.98 = median own KPM of the cache on 2026-10-07; ±300 per doubling/halving), so a slow, safe KD counts for less
 - **KD** — resistance-weighted K/D
 - **eKPM / own KPM** — average enemy weapon pace vs your pace (kept separate)
 - **Resistance / Activity / COI / Mech%** — hardness of deaths, volume of hard fights, combat output, projected mech share

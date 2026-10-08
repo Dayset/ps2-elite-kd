@@ -28,7 +28,7 @@ import {
   applyYZoom,
   clampYZoom,
   Y_ZOOM_DEFAULT,
-} from "./math.mjs";
+} from "./math.mjs?v=20261007-speedivi";
 import {
   NameLoadError,
   classifyLoadError,
@@ -45,7 +45,7 @@ import {
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
-} from "./player-metrics.mjs?v=20261007-redflags";
+} from "./player-metrics.mjs?v=20261007-speedivi";
 
   const COLORS = [
     "#9fd4ee", "#ff7a7a", "#ffd166", "#8ef0b0", "#e8b0ff",
@@ -2055,9 +2055,10 @@ import {
       { id: "ivi", label: "IvI", hint: "Infantry vs Infantry score from Census / Honu.", fn: (r) => r.ivi, digits: 0 },
     ];
 
-    // Column order is fixed (sort only reorders rows). ivi (adj) is always first metric.
+    // Column order is fixed (sort only reorders rows). ivi (adj) is always first metric, ⚡ ivi next to it.
     const adjCols = [
       { id: "adj", label: "🎯 ivi", hint: "Opposition-weighted IvI: public IvI adjusted by Resistance so soft-farm padding is tempered.", fn: (r) => r.adj, digits: 0 },
+      { id: "adjs", label: "⚡ ivi", hint: "🎯 ivi adjusted for your own kill speed: +300 per doubling of own KPM above typical (0.98), −300 per halving below, so a slow, safe KD counts for less.", fn: (r) => r.adjs, digits: 0 },
       { id: "rkd", label: "⚔️ KD", hint: "Resistance-weighted K/D against the opposition mix you actually face.", fn: (r) => r.rkd, digits: 3 },
       { id: "ekpm", label: "eKPM", hint: "Average enemy weapon KPM faced (how hard the opposition shoots).", fn: (r) => r.ekpm, digits: 2 },
       { id: "own", label: "own KPM", hint: "Your weapon pace used on the elite K/D curve.", fn: (r) => r.own, digits: 2 },
