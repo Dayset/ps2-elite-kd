@@ -239,6 +239,8 @@ export function honuProfileUrl(cid) {
  *   "high" (default) — reference = highest value; others show −N% below it.
  *   "low"            — reference = lowest value (e.g. 🎈 Inflation: least inflated);
  *                      others show +N% above it.
+ * Optional `pctRefFloor` (with "low"): reference = max(lowest, floor) — 🎈 Inflation
+ * uses 1.0 (below 1.0 = no inflation), so values at/below it show no %.
  * No % when fewer than two values, the reference is ≤ 0, the value is missing,
  * or the value is the reference itself.
  */
@@ -247,11 +249,15 @@ function finiteNums(values) {
   return (values || []).filter((v) => typeof v === "number" && Number.isFinite(v));
 }
 
-/** Reference value for a column: max ("high") or min ("low"); NaN when unusable. */
-export function columnRef(values, dir = "high") {
+/**
+ * Reference value for a column: max ("high") or min ("low"), raised to
+ * `floor` for "low" columns when given; NaN when unusable.
+ */
+export function columnRef(values, dir = "high", { floor = null } = {}) {
   const fin = finiteNums(values);
   if (fin.length < 2) return NaN;
-  const ref = dir === "low" ? Math.min(...fin) : Math.max(...fin);
+  let ref = dir === "low" ? Math.min(...fin) : Math.max(...fin);
+  if (dir === "low" && typeof floor === "number" && Number.isFinite(floor)) ref = Math.max(ref, floor);
   return ref > 0 ? ref : NaN;
 }
 
@@ -273,7 +279,7 @@ export function fmtPctFromRef(p, dir = "high") {
 export function pctTitle(p, refLabel, dir = "high") {
   const n = p === 0 ? "<1" : String(Math.abs(p));
   return dir === "low"
-    ? `${n}% more inflated than the least inflated (${refLabel})`
+    ? `${n}% more inflated than the reference (${refLabel})`
     : `${n}% below the column top (${refLabel})`;
 }
 

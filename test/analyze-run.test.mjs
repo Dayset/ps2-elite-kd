@@ -199,7 +199,7 @@ describe("stats tables: per-column % direction", () => {
     assert.equal(pctFromRef(1.63, ref, "low"), 35);
     assert.equal(fmtPctFromRef(35, "low"), "+35%");
     assert.equal(fmtPctFromRef(0, "low"), "+<1%");
-    assert.equal(pctTitle(35, "1.21", "low"), "35% more inflated than the least inflated (1.21)");
+    assert.equal(pctTitle(35, "1.21", "low"), "35% more inflated than the reference (1.21)");
   });
   it('"low" shows nothing when the lowest value is ≤ 0', () => {
     assert.ok(Number.isNaN(columnRef([0, 1.5, 2], "low")));
@@ -211,5 +211,27 @@ describe("stats tables: per-column % direction", () => {
     assert.equal(pctFromRef(1491, 2075), -28);
     assert.equal(fmtPctFromRef(-28), "−28%");
     assert.equal(pctTitle(-28, "2075"), "28% below the column top (2075)");
+  });
+});
+
+describe("stats tables: pctRefFloor (🎈 Inflation reference = max(lowest, 1.0))", () => {
+  // JustV6me 2.15, ShloDog 1.66, Offtopia 2.94, cheetler 0.03, Zewgie 1.49
+  const vals = [2.15, 1.66, 2.94, 0.03, 1.49];
+  it("raises a low reference to the floor", () => {
+    assert.equal(columnRef(vals, "low", { floor: 1.0 }), 1.0); // lowest 0.03 → floor 1.0
+    assert.equal(columnRef([2.15, 1.66, 1.49], "low", { floor: 1.0 }), 1.49); // lowest above floor
+    assert.equal(columnRef([0.03, 0.8, 2.5], "low", { floor: 1.0 }), 1.0);
+    assert.equal(columnRef([0.03, 1.49], "low"), 0.03); // no floor → plain lowest
+  });
+  it("values at/below the reference show no %; others +N%", () => {
+    const ref = columnRef([0.03, 0.8, 2.5], "low", { floor: 1.0 });
+    assert.equal(pctFromRef(0.03, ref, "low"), null);
+    assert.equal(pctFromRef(1.0, ref, "low"), null);
+    assert.equal(pctFromRef(2.5, ref, "low"), 150);
+    const r2 = columnRef(vals, "low", { floor: 1.0 });
+    assert.deepEqual(vals.map((v) => pctFromRef(v, r2, "low")), [115, 66, 194, null, 49]);
+  });
+  it("floor is ignored for high columns", () => {
+    assert.equal(columnRef([0.5, 0.8], "high", { floor: 1.0 }), 0.8);
   });
 });

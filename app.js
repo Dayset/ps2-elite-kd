@@ -28,7 +28,7 @@ import {
   applyYZoom,
   clampYZoom,
   Y_ZOOM_DEFAULT,
-} from "./math.mjs?v=20261007-infl";
+} from "./math.mjs?v=20261007-infl1";
 import {
   NameLoadError,
   classifyLoadError,
@@ -45,13 +45,13 @@ import {
   pctFromRef,
   fmtPctFromRef,
   pctTitle,
-} from "./analyze-run.mjs?v=20261007-infl";
+} from "./analyze-run.mjs?v=20261007-infl1";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
-} from "./player-metrics.mjs?v=20261007-infl";
+} from "./player-metrics.mjs?v=20261007-infl1";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261007-infl";
+import "./name-peek.mjs?v=20261007-infl1";
 
   const COLORS = [
     "#9fd4ee", "#ff7a7a", "#ffd166", "#8ef0b0", "#e8b0ff",
@@ -2243,7 +2243,7 @@ import "./name-peek.mjs?v=20261007-infl";
       { id: "pvs", label: "🦁 Brave", hint: "Bravery (formerly LionHeart): 🔥 Active × pressure slope — sustained elite volume under hard opposition.", fn: (r) => r.pvs, digits: 2 },
       { id: "rkd", label: "☠️ K/D", hint: "Resistance-weighted K/D against the opposition mix you actually face.", fn: (r) => r.rkd, digits: 3 },
       { id: "mech", label: "⚙️ Mech%", hint: "Projected mechanized / vehicle share implied by 🛡️ Resist.", fn: (r) => r.mech, digits: 1 },
-      { id: "inflation", label: "🎈 Inflation", hint: "Global KD ÷ KD at ≥0.5 enemy KPM — how much soft opposition inflates your KD (avg planetman ~0.35).", fn: (r) => r.inflation, digits: 2, pctDir: "low" },
+      { id: "inflation", label: "🎈 Inflation", hint: "Global KD ÷ KD at ≥0.5 enemy KPM — how much soft opposition inflates your KD (avg planetman ~0.35).", fn: (r) => r.inflation, digits: 2, pctDir: "low", pctRefFloor: 1.0 },
     ];
     // Older debug columns: appended only when "show older debug stats" (footer) is ticked.
     const adjDebugCols = [
@@ -2327,7 +2327,12 @@ import "./name-peek.mjs?v=20261007-infl";
 
     function playerRows(cols, ordered) {
       // Column references over every analysed player (not just the visible order).
-      const colRefs = new Map(cols.map((c) => [c.id, columnRef(metrics.map((r) => c.fn(r)), c.pctDir || "high")]));
+      const colRefs = new Map(
+        cols.map((c) => [
+          c.id,
+          columnRef(metrics.map((r) => c.fn(r)), c.pctDir || "high", { floor: c.pctRefFloor ?? null }),
+        ])
+      );
       return ordered
         .map((row) => {
           // Series index matches graph legend/color order (stable with list, not sort order)
@@ -2361,7 +2366,13 @@ import "./name-peek.mjs?v=20261007-infl";
                   ? ""
                   : `<span class="pct" title="${escapeHtml(pctTitle(p, fmtNum(ref, c.digits), dir))}">` +
                     `${fmtPctFromRef(p, dir)}</span>`;
-              return `<td>${fmtNum(v, c.digits)}${pct}</td>`;
+              // Below the floor (🎈 Inflation < 1.0): no %, just say why on hover.
+              const floor = c.pctRefFloor;
+              const tdTitle =
+                p == null && floor != null && isFiniteNum(v) && v < floor
+                  ? ` title="${escapeHtml(`Below ${fmtNum(floor, c.digits)} = no inflation`)}"`
+                  : "";
+              return `<td${tdTitle}>${fmtNum(v, c.digits)}${pct}</td>`;
             })
             .join("");
           const num = i + 1;
