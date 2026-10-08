@@ -28,7 +28,7 @@ import {
   applyYZoom,
   clampYZoom,
   Y_ZOOM_DEFAULT,
-} from "./math.mjs?v=20261007-scroll";
+} from "./math.mjs?v=20261007-clear";
 import {
   NameLoadError,
   classifyLoadError,
@@ -41,11 +41,11 @@ import {
   shouldShowGraphReady,
   forgetFailures,
   honuProfileUrl,
-} from "./analyze-run.mjs?v=20261007-scroll";
+} from "./analyze-run.mjs?v=20261007-clear";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
-} from "./player-metrics.mjs?v=20261007-scroll";
+} from "./player-metrics.mjs?v=20261007-clear";
 
   const COLORS = [
     "#9fd4ee", "#ff7a7a", "#ffd166", "#8ef0b0", "#e8b0ff",
@@ -951,6 +951,34 @@ import {
     return [...byKey.values()].sort((a, b) => b.savedAt - a.savedAt);
   }
 
+  /**
+   * Keep ?names= in the address bar equal to the current comparison (replaceState,
+   * no reload, other query params kept) so a refresh always shows what's on screen.
+   */
+  function syncUrlNames(names) {
+    try {
+      const url = new URL(window.location.href);
+      const param = (names || []).map((n) => String(n).trim()).filter(Boolean).join(",");
+      if (param) url.searchParams.set("names", param);
+      else url.searchParams.delete("names");
+      const next = url.toString();
+      if (next !== window.location.href && window.history && window.history.replaceState) {
+        window.history.replaceState(window.history.state, "", next);
+      }
+    } catch {
+      /* file:// or locked-down history: nothing to sync */
+    }
+  }
+
+  /** Forget the restorable "last comparison" (used by × clear and 🗑️ wipe). */
+  function forgetLastComparison() {
+    try {
+      localStorage.removeItem(LS_LAST);
+    } catch {
+      /* ignore */
+    }
+  }
+
   function saveLastComparison(names) {
     writeJsonLS(LS_LAST, names.map((n) => String(n).trim()).filter(Boolean));
   }
@@ -1058,6 +1086,16 @@ import {
     }
     wipeAppStorageKeys();
     wipeAppCookies();
+    // Keep the "show older debug stats" choice (not mentioned in the confirm text).
+    if (showDebugCols) {
+      try {
+        localStorage.setItem(LS_DEBUG_COLS, "1");
+      } catch {
+        /* ignore */
+      }
+    }
+    // ?names= in the address bar would bring the names straight back on refresh.
+    syncUrlNames([]);
 
     // In-memory UI reset
     nameTokens = [];
@@ -1067,7 +1105,7 @@ import {
     lastAnalyzedNames = [];
     lastLoadedNames = [];
     failedNames.clear();
-    showIdleChart("▶️ Press Analyze");
+    clearChartUi(); // idle chart + drops the auto-scroll bottom padding
     renderNameTokens();
     renderCacheChips();
     updateUnderLoadNotice();
@@ -2633,6 +2671,7 @@ import {
     drawChart(players);
     // Recent / share link only ever carry names that actually loaded.
     saveLastComparison(successNames);
+    syncUrlNames(successNames); // refresh re-opens exactly this comparison
     renderNameTokens();
     renderCacheChips();
     suggestSharedCache(result.loaded); // fire-and-forget, never awaited
@@ -2988,6 +3027,10 @@ import {
       e.stopPropagation();
       clearNamesFromInput();
       clearChartUi();
+      // Cleared means cleared: a refresh must not restore names from ?names= or
+      // the saved last comparison.
+      syncUrlNames([]);
+      forgetLastComparison();
       setStatus("");
       if (els.namesInput) els.namesInput.focus();
     });
