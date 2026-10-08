@@ -187,3 +187,29 @@ describe("stats tables: % from the column top", () => {
     assert.equal(fmtPctFromTop(null), "");
   });
 });
+
+import { columnRef, pctFromRef, fmtPctFromRef, pctTitle } from "../analyze-run.mjs";
+
+describe("stats tables: per-column % direction", () => {
+  it('"low" (🎈 Inflation): least inflated is the 0% reference, others +N%', () => {
+    const vals = [1.21, 1.66, 2.94, NaN];
+    const ref = columnRef(vals, "low");
+    assert.equal(ref, 1.21);
+    assert.equal(pctFromRef(1.21, ref, "low"), null);
+    assert.equal(pctFromRef(1.63, ref, "low"), 35);
+    assert.equal(fmtPctFromRef(35, "low"), "+35%");
+    assert.equal(fmtPctFromRef(0, "low"), "+<1%");
+    assert.equal(pctTitle(35, "1.21", "low"), "35% more inflated than the least inflated (1.21)");
+  });
+  it('"low" shows nothing when the lowest value is ≤ 0', () => {
+    assert.ok(Number.isNaN(columnRef([0, 1.5, 2], "low")));
+    assert.ok(Number.isNaN(columnRef([-0.2, 1.5], "low")));
+    assert.equal(pctFromRef(1.5, NaN, "low"), null);
+  });
+  it('"high" stays the default (−N% below the top)', () => {
+    assert.equal(columnRef([1491, 2075]), 2075);
+    assert.equal(pctFromRef(1491, 2075), -28);
+    assert.equal(fmtPctFromRef(-28), "−28%");
+    assert.equal(pctTitle(-28, "2075"), "28% below the column top (2075)");
+  });
+});

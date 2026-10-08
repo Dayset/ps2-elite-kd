@@ -233,32 +233,51 @@ export function honuProfileUrl(cid) {
   return /^\d{5,25}$/.test(id) ? `https://wt.honu.pw/c/${id}` : "";
 }
 
-/* ---------- stats tables: % from the column top ---------- */
-
-/**
- * Column top for the "% from top" hint: the highest finite value, or NaN when
- * fewer than two rows have a value (nothing to compare) or the top is ≤ 0
- * (a percentage of a non-positive top is meaningless).
+/* ---------- stats tables: % from the column reference ---------- */
+/*
+ * Per-column direction (`pctDir` on a column definition):
+ *   "high" (default) — reference = highest value; others show −N% below it.
+ *   "low"            — reference = lowest value (e.g. 🎈 Inflation: least inflated);
+ *                      others show +N% above it.
+ * No % when fewer than two values, the reference is ≤ 0, the value is missing,
+ * or the value is the reference itself.
  */
-export function columnTop(values) {
-  const fin = (values || []).filter((v) => typeof v === "number" && Number.isFinite(v));
+
+function finiteNums(values) {
+  return (values || []).filter((v) => typeof v === "number" && Number.isFinite(v));
+}
+
+/** Reference value for a column: max ("high") or min ("low"); NaN when unusable. */
+export function columnRef(values, dir = "high") {
+  const fin = finiteNums(values);
   if (fin.length < 2) return NaN;
-  const top = Math.max(...fin);
-  return top > 0 ? top : NaN;
+  const ref = dir === "low" ? Math.min(...fin) : Math.max(...fin);
+  return ref > 0 ? ref : NaN;
 }
 
-/**
- * Whole-percent difference from the column top (≤ 0), or null when there is
- * nothing sensible to show (no top, missing value, or the value is the top).
- */
-export function pctFromTop(v, top) {
-  if (typeof v !== "number" || !Number.isFinite(v) || !Number.isFinite(top) || top <= 0) return null;
-  if (v >= top) return null;
-  return Math.round(((v - top) / top) * 100) || 0; // no −0
+/** Whole-percent gap to the reference (≤ 0 for "high", ≥ 0 for "low"), or null. */
+export function pctFromRef(v, ref, dir = "high") {
+  if (typeof v !== "number" || !Number.isFinite(v) || !Number.isFinite(ref) || ref <= 0) return null;
+  if (dir === "low" ? v <= ref : v >= ref) return null;
+  return Math.round(((v - ref) / ref) * 100) || 0; // no −0
 }
 
-/** Label for pctFromTop: "−28%"; a gap that rounds to 0 reads "−<1%". */
-export function fmtPctFromTop(p) {
+/** Label: "−28%" / "+35%"; a gap that rounds to 0 reads "−<1%" / "+<1%". */
+export function fmtPctFromRef(p, dir = "high") {
   if (p == null) return "";
-  return p === 0 ? "−<1%" : `−${Math.abs(p)}%`;
+  const sign = dir === "low" ? "+" : "−";
+  return p === 0 ? `${sign}<1%` : `${sign}${Math.abs(p)}%`;
 }
+
+/** Tooltip for a % cell. */
+export function pctTitle(p, refLabel, dir = "high") {
+  const n = p === 0 ? "<1" : String(Math.abs(p));
+  return dir === "low"
+    ? `${n}% more inflated than the least inflated (${refLabel})`
+    : `${n}% below the column top (${refLabel})`;
+}
+
+/* Back-compat names ("high" direction). */
+export const columnTop = (values) => columnRef(values, "high");
+export const pctFromTop = (v, top) => pctFromRef(v, top, "high");
+export const fmtPctFromTop = (p) => fmtPctFromRef(p, "high");

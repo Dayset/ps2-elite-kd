@@ -39,7 +39,7 @@ Max 10 names. Deep link: `?names=JustV6me,ChrisJTTR`.
 | Chart | Projected K/D vs enemy weapon KPM (bands Easy / Hard at 0.75 / 1.50). Vertical **Y zoom** slider (top-right): middle = auto-fit; up enlarges weak curves; down fits extreme / high-tier K/D |
 | Footer | Repo link (with the **show older debug stats** checkbox on the right) + thanks to [HONU](https://wt.honu.pw/) / Varunda |
 
-Click any column header to sort (names alphabetical; metrics numeric). Default sort is **⚔️ iVi** descending (sorting by a debug column falls back to it when the debug columns are hidden). Hover headers for short hints. Each value also shows a small dimmed **−N%** = gap to the highest value in its column (none on the top value, on ⚔️ iVi cells shown as 0, or when the column top is ≤ 0, e.g. 📉 Slope); on phones the % sits under the number. Tables sit above the graph.
+Click any column header to sort (names alphabetical; metrics numeric). Default sort is **⚔️ iVi** descending (sorting by a debug column falls back to it when the debug columns are hidden). Hover headers for short hints. Each value also shows a small dimmed % against its column reference (per-column `pctDir`): by default **−N%** = gap below the highest value; for **🎈 Inflation** the least-inflated (lowest) value is the reference and others show **+N%** above it. No % on the reference value, on ⚔️ iVi cells shown as 0, or when the reference is ≤ 0 (e.g. 📉 Slope); on phones the % sits under the number. Tables sit above the graph.
 
 ### Adjusted metrics (short)
 

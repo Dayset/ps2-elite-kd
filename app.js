@@ -28,7 +28,7 @@ import {
   applyYZoom,
   clampYZoom,
   Y_ZOOM_DEFAULT,
-} from "./math.mjs?v=20261007-pct";
+} from "./math.mjs?v=20261007-infl";
 import {
   NameLoadError,
   classifyLoadError,
@@ -41,16 +41,17 @@ import {
   shouldShowGraphReady,
   forgetFailures,
   honuProfileUrl,
-  columnTop,
-  pctFromTop,
-  fmtPctFromTop,
-} from "./analyze-run.mjs?v=20261007-pct";
+  columnRef,
+  pctFromRef,
+  fmtPctFromRef,
+  pctTitle,
+} from "./analyze-run.mjs?v=20261007-infl";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
-} from "./player-metrics.mjs?v=20261007-pct";
+} from "./player-metrics.mjs?v=20261007-infl";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261007-pct";
+import "./name-peek.mjs?v=20261007-infl";
 
   const COLORS = [
     "#9fd4ee", "#ff7a7a", "#ffd166", "#8ef0b0", "#e8b0ff",
@@ -2242,7 +2243,7 @@ import "./name-peek.mjs?v=20261007-pct";
       { id: "pvs", label: "🦁 Brave", hint: "Bravery (formerly LionHeart): 🔥 Active × pressure slope — sustained elite volume under hard opposition.", fn: (r) => r.pvs, digits: 2 },
       { id: "rkd", label: "☠️ K/D", hint: "Resistance-weighted K/D against the opposition mix you actually face.", fn: (r) => r.rkd, digits: 3 },
       { id: "mech", label: "⚙️ Mech%", hint: "Projected mechanized / vehicle share implied by 🛡️ Resist.", fn: (r) => r.mech, digits: 1 },
-      { id: "inflation", label: "🎈 Inflation", hint: "Global KD ÷ KD at ≥0.5 enemy KPM — how much soft opposition inflates your KD (avg planetman ~0.35).", fn: (r) => r.inflation, digits: 2 },
+      { id: "inflation", label: "🎈 Inflation", hint: "Global KD ÷ KD at ≥0.5 enemy KPM — how much soft opposition inflates your KD (avg planetman ~0.35).", fn: (r) => r.inflation, digits: 2, pctDir: "low" },
     ];
     // Older debug columns: appended only when "show older debug stats" (footer) is ticked.
     const adjDebugCols = [
@@ -2325,8 +2326,8 @@ import "./name-peek.mjs?v=20261007-pct";
     }
 
     function playerRows(cols, ordered) {
-      // Column tops over every analysed player (not just the visible order).
-      const colTops = new Map(cols.map((c) => [c.id, columnTop(metrics.map((r) => c.fn(r)))]));
+      // Column references over every analysed player (not just the visible order).
+      const colRefs = new Map(cols.map((c) => [c.id, columnRef(metrics.map((r) => c.fn(r)), c.pctDir || "high")]));
       return ordered
         .map((row) => {
           // Series index matches graph legend/color order (stable with list, not sort order)
@@ -2350,15 +2351,16 @@ import "./name-peek.mjs?v=20261007-pct";
               if (c.floorZero && isFiniteNum(v) && v < 0) {
                 return `<td class="below-scale" title="Below the rating scale">0</td>`;
               }
-              // Small dimmed "−28%" = gap to the column's highest value (none on the top cell).
-              const top = colTops.get(c.id);
-              const p = pctFromTop(v, top);
+              // Small dimmed % = gap to the column reference (none on the reference cell):
+              // "−28%" below the highest value, or "+35%" above the lowest for pctDir "low".
+              const dir = c.pctDir || "high";
+              const ref = colRefs.get(c.id);
+              const p = pctFromRef(v, ref, dir);
               const pct =
                 p == null
                   ? ""
-                  : `<span class="pct" title="${escapeHtml(
-                      `${p === 0 ? "<1" : Math.abs(p)}% below the column top (${fmtNum(top, c.digits)})`
-                    )}">${fmtPctFromTop(p)}</span>`;
+                  : `<span class="pct" title="${escapeHtml(pctTitle(p, fmtNum(ref, c.digits), dir))}">` +
+                    `${fmtPctFromRef(p, dir)}</span>`;
               return `<td>${fmtNum(v, c.digits)}${pct}</td>`;
             })
             .join("");
