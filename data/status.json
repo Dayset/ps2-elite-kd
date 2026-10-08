@@ -4,80 +4,101 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "37809157156",
-    "event": "schedule",
+    "runId": "37811126156",
+    "event": "workflow_dispatch",
     "kind": "discovery",
-    "startedAt": "2026-10-08T16:35:49.563Z",
-    "endedAt": "2026-10-08T16:44:11.223Z",
-    "seconds": 502,
+    "startedAt": "2026-10-08T16:44:27.737Z",
+    "endedAt": "2026-10-08T16:52:34.003Z",
+    "seconds": 486,
     "updated": [],
     "added": [
-      "[KITV] EsticazNC",
-      "[KARE] MaliciousMoxie",
-      "[2RAF] BloodyRedstone",
-      "[NFFN] ErikaItsumi",
-      "SoloGhosty",
-      "[AGUQ] ncband",
-      "[1KPH] lfYouReadThisYouAreDead",
-      "[RTPS] jzxhone"
+      "[WARP] softcoreTR",
+      "StrixxerNC",
+      "nextdoor3",
+      "[GNHP] Laysrolin",
+      "[0O] sankamanVS",
+      "[VX15] Skylita",
+      "[NCPW] CECILE1"
     ],
-    "failed": [],
+    "failed": [
+      {
+        "name": "oixxxio",
+        "reason": "Honu: 8/50 opponent stats failed (rate-limited?); keeping old data",
+        "outage": true
+      }
+    ],
     "stoppedEarly": "time budget 9 min reached",
-    "indexSize": 1135,
-    "newFromLive": 1,
+    "indexSize": 1142,
+    "newFromLive": 4,
     "liveWorlds": [
       {
         "name": "Connery",
-        "online": 73,
+        "online": 66,
         "killers": 24
       },
       {
         "name": "Miller",
-        "online": 492,
+        "online": 499,
         "killers": 24
       }
     ],
     "liveErrors": [],
     "batch": [
       {
-        "name": "[KITV] EsticazNC",
+        "name": "[WARP] softcoreTR",
         "src": "top-killers",
         "status": "done"
       },
       {
-        "name": "[KARE] MaliciousMoxie",
+        "name": "StrixxerNC",
+        "src": "top-killers",
+        "status": "done"
+      },
+      {
+        "name": "nextdoor3",
+        "src": "top-killers",
+        "status": "done"
+      },
+      {
+        "name": "[GNHP] Laysrolin",
+        "src": "top-killers",
+        "status": "done"
+      },
+      {
+        "name": "oixxxio",
+        "src": "retry",
+        "status": "failed",
+        "reason": "Honu: 8/50 opponent stats failed (rate-limited?); keeping old data"
+      },
+      {
+        "name": "[0O] sankamanVS",
         "src": "opponent-crawl",
         "status": "done"
       },
       {
-        "name": "[2RAF] BloodyRedstone",
+        "name": "[VX15] Skylita",
         "src": "opponent-crawl",
         "status": "done"
       },
       {
-        "name": "[NFFN] ErikaItsumi",
+        "name": "[NCPW] CECILE1",
         "src": "opponent-crawl",
         "status": "done"
       },
       {
-        "name": "SoloGhosty",
+        "name": "[BSWD] MordecaiJones",
         "src": "opponent-crawl",
-        "status": "done"
+        "status": "pending"
       },
       {
-        "name": "[AGUQ] ncband",
+        "name": "[CNRD] SpTGTR",
         "src": "opponent-crawl",
-        "status": "done"
+        "status": "pending"
       },
       {
-        "name": "[1KPH] lfYouReadThisYouAreDead",
+        "name": "[M1XP] SuperAssaultxAki",
         "src": "opponent-crawl",
-        "status": "done"
-      },
-      {
-        "name": "[RTPS] jzxhone",
-        "src": "opponent-crawl",
-        "status": "done"
+        "status": "pending"
       },
       {
         "name": "[LHEU] EU460VS",
@@ -91,11 +112,6 @@
       },
       {
         "name": "[RMBT] EternitHeartTR",
-        "src": "opponent-crawl",
-        "status": "pending"
-      },
-      {
-        "name": "[VX15] Skylita",
         "src": "opponent-crawl",
         "status": "pending"
       },
@@ -126,16 +142,6 @@
       },
       {
         "name": "[CYA6] Ay1",
-        "src": "opponent-crawl",
-        "status": "pending"
-      },
-      {
-        "name": "[DTRI] Hellcat2021",
-        "src": "opponent-crawl",
-        "status": "pending"
-      },
-      {
-        "name": "[DGia] Bwolei",
         "src": "opponent-crawl",
         "status": "pending"
       }
