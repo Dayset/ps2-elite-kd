@@ -167,6 +167,36 @@ header.top-bar {
   color: #e07070;
 }
 
+/* 🏆 Rankings: icon-only link, same pill as 🗑️, pinned to the left end of the row */
+.controls .ranks-link {
+  margin-right: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0.3rem 0.55rem;
+  border-radius: 6px; /* same as the 🗑️ button (.controls button) */
+  border: 1px solid var(--border);
+  background: var(--ctrl-btn-bg);
+  color: var(--text);
+  text-decoration: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.controls .ranks-link:hover,
+.controls .ranks-link:focus-visible {
+  background: var(--ctrl-btn-hover);
+  border-color: var(--accent);
+}
+.controls .ranks-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .theme-toggle {
   margin-left: 0;
   font: inherit;

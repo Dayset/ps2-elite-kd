@@ -19,7 +19,7 @@ Prefer a local server (`file://` often blocks `fetch` of JSON).
 1. Type names; **space** or **comma** locks a chip (click a chip to remove). Green = cached / analyzed; amber = not fetched yet. On narrow portrait phones (≤600px) the chips stack one name per line; wider screens and landscape keep them inline.
 2. Press **Analyze** (or Enter). Clear names with **×**.
 3. The square **🔗** button (same height as Analyze) copies a `?names=…` share link; it flashes ✓ when copied. Opening that link **auto-runs Analyze** once the page is ready — friends land straight on the graph (see *Sharing* below).
-4. **☀️ Light / 🌙 Dark** toggles a creamy haze light theme (~15% white).
+4. **🏆** (left end of the 🗑️ / theme row) opens the [Rankings](ranks.html) page. **☀️ Light / 🌙 Dark** toggles a creamy haze light theme (~15% white).
 5. **Fetch fresh data** skips caches and hits Census + Honu live. Unchecked on every load.
 
 Lookup order per name:
@@ -47,7 +47,7 @@ Max 10 names. Deep link: `?names=JustV6me,ChrisJTTR`.
 | **Public (Census/Honu)** | Collapsed by default — KD, KPM, own KPM, Acc %, HSR %, IvI |
 | **Adjusted (calculated)** | Default columns: ⚔️ iVi, 🛡️ Resist, 🔥 Active, 🦁 Brave, ☠️ K/D, ⚙️ Mech%, 🎈 Inflation. Ticking **show older debug stats** (footer, right of the repo link; remembered in localStorage) appends 🎯🎈 ivi, eKPM, own KPM, 📊 COI, 📉 Slope |
 | Chart | Projected K/D vs enemy weapon KPM (bands Easy / Hard at 0.75 / 1.50). Vertical **zoom** slider (top-right): middle / **Auto** = full graph, auto-fit; **up** zooms hard into the start of the graph — X min stays 0 while X max shrinks fast (≈0.71 at +1, 0.25 at the top) and Y re-fits to the visible left side (lines leaving the right edge are clipped); **down** keeps full X and flattens Y to fit extreme / high-tier K/D |
-| Footer | **🏆 Rankings** link (ranks.html) + repo link (with the **show older debug stats** checkbox on the right) + thanks to [HONU](https://wt.honu.pw/) / Varunda |
+| Footer | Repo link (with the **show older debug stats** checkbox on the right) + thanks to [HONU](https://wt.honu.pw/) / Varunda |
 
 Click any column header to sort (names alphabetical; metrics numeric). Default sort is **⚔️ iVi** descending (sorting by a debug column falls back to it when the debug columns are hidden). Hover headers for short hints. Each value also shows a small dimmed % against its column reference (per-column `pctDir`): by default **−N%** = gap below the highest value; for **🎈 Inflation** (`pctDir: "low"`, `pctRefFloor: 1.0`) the reference is max(lowest value, 1.0) and others show **+N%** above it; values at/below the reference show no % (below 1.0 = no inflation). No % on the reference value, on ⚔️ iVi cells shown as 0, or when the reference is ≤ 0 (e.g. 📉 Slope); on phones the % sits under the number. Tables sit above the graph.
 
