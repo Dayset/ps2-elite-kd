@@ -41,7 +41,7 @@ import {
   shouldShowGraphReady,
   forgetFailures,
   honuProfileUrl,
-} from "./analyze-run.mjs?v=20261007-redflags";
+} from "./analyze-run.mjs?v=20261007-cols";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
