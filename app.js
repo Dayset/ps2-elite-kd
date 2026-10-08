@@ -28,7 +28,7 @@ import {
   applyYZoom,
   clampYZoom,
   Y_ZOOM_DEFAULT,
-} from "./math.mjs?v=20261007-toast";
+} from "./math.mjs?v=20261007-scroll";
 import {
   NameLoadError,
   classifyLoadError,
@@ -41,11 +41,11 @@ import {
   shouldShowGraphReady,
   forgetFailures,
   honuProfileUrl,
-} from "./analyze-run.mjs?v=20261007-toast";
+} from "./analyze-run.mjs?v=20261007-scroll";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
-} from "./player-metrics.mjs?v=20261007-toast";
+} from "./player-metrics.mjs?v=20261007-scroll";
 
   const COLORS = [
     "#9fd4ee", "#ff7a7a", "#ffd166", "#8ef0b0", "#e8b0ff",
@@ -2465,6 +2465,8 @@ import {
 
   function clearChartUi() {
     showIdleChart("▶️ Press Analyze");
+    // Drop any bottom padding scrollToResults() added for short result pages.
+    if (typeof document !== "undefined" && document.body) document.body.style.paddingBottom = "";
   }
 
   function findLoadedPlayer(name) {
@@ -2502,6 +2504,7 @@ import {
       // Re-render chips so force-collapsed state sticks if a render follows
       renderCacheChips();
       showGraphReadyHint();
+      scrollToResults();
       return;
     }
 
@@ -2639,6 +2642,49 @@ import {
     } else {
       setStatus("");
     }
+    // Results are in: glide the input/header up out of view.
+    scrollToResults();
+  }
+
+  /**
+   * After a successful Analyze (or the repeat "graph is ready" path): smoothly
+   * scroll so the start of the results sits ~10px below the top of the viewport.
+   * Target = the status line when it carries a message (skipped-names warning /
+   * "graph is ready"), which sits directly above the stats; otherwise the stats
+   * panel (📊 Public section). Waits two frames so layout has settled; instant
+   * when the user prefers reduced motion.
+   */
+  function scrollToResults() {
+    if (typeof window === "undefined" || !window.scrollTo) return;
+    const raf = window.requestAnimationFrame
+      ? (fn) => window.requestAnimationFrame(fn)
+      : (fn) => setTimeout(fn, 16);
+    raf(() =>
+      raf(() => {
+        const statusMsg = els.status && els.status.textContent.trim();
+        const target = statusMsg ? els.status : els.stats;
+        if (!target || !target.getBoundingClientRect) return;
+        const reduce =
+          !!window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const top = Math.max(
+          0,
+          Math.round(target.getBoundingClientRect().top + (window.scrollY || window.pageYOffset || 0) - 10)
+        );
+        // Short pages (few names on a phone) can't scroll the stats to the top:
+        // pad the bottom just enough so the header can slide fully out of view.
+        const body = document.body;
+        if (body) {
+          body.style.paddingBottom = "";
+          const docH = document.documentElement.scrollHeight;
+          const short = top + window.innerHeight - docH;
+          if (short > 0) {
+            const base = parseFloat(getComputedStyle(body).paddingBottom) || 0;
+            body.style.paddingBottom = Math.ceil(base + short) + "px";
+          }
+        }
+        window.scrollTo({ top, behavior: reduce ? "auto" : "smooth" });
+      })
+    );
   }
 
   /**
