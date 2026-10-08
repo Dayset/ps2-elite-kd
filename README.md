@@ -32,7 +32,7 @@ Max 10 names. Deep link: `?names=JustV6me,ChrisJTTR`.
 
 ## Rankings
 
-[ranks.html](ranks.html) — population ranks across the whole shared cache (one row per player). Same ✨ Adjusted columns as the main page (⚔️ iVi default sort, optional debug columns via the shared "show older debug stats" checkbox), with a **#** rank column and a small **pN** population percentile next to each number (share of cached players below that value). Search filters by name (ignores outfit tags); check up to 10 players and hit **Compare** (or click a name) to open them on the main chart. Numbers come from a precomputed `data/ranks.json` rebuilt by `scripts/build-ranks.mjs` on every cache refresh — the browser never fetches a thousand player files.
+[ranks.html](ranks.html) — population ranks across the whole shared cache (one row per player). Same ✨ Adjusted columns as the main page (⚔️ iVi default sort, optional debug columns via the shared "show older debug stats" checkbox), with a **#** rank column and a small **pN** population percentile next to each number (share of cached players below that value). Search filters by name (ignores outfit tags); check up to 10 players and hit **Compare** (or click a name) to open them on the main chart. A collapsible **📊 Distribution** chart above the table plots any metric (Adjusted, debug or public KD / KPM / Acc / HSR / IvI; sorting by a column switches to it): bars = % of players per value range (~30 nice bins over p1–p99, with `<` / `>` tail bins for outliers; below-scale ⚔️ iVi < 0 sits in the lowest one), a cumulative % line on the right axis, and median / p90 / p99 markers. Hover or tap a bar for "X% of players have … (N players); top Y% from here". Picked players — or a search matching ≤ 5 — appear as coloured markers in the main chart's player palette. Helpers: `dist.mjs` (tested), colours: `palette.mjs` (shared with the main chart). Numbers come from a precomputed `data/ranks.json` rebuilt by `scripts/build-ranks.mjs` on every cache refresh — the browser never fetches a thousand player files.
 
 ### Sharing
 
@@ -90,7 +90,7 @@ Browser Analyze still uses a local under-load note across tabs on the same devic
 
 ```
 ps2-elite-kd/
-  index.html  ranks.html  styles.css  app.js  math.mjs
+  index.html  ranks.html  styles.css  app.js  math.mjs  dist.mjs  palette.mjs
   test/math.test.mjs      # node --test regression suite
   package.json            # npm test / npm run check
   assets/                 # dark + light placeholder graphs

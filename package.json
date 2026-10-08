@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "test": "node --test test/*.test.mjs",
-    "check": "node --check app.js && node --check name-peek.mjs && node --check math.mjs && node --check analyze-run.mjs && node --check player-metrics.mjs && node --check scripts/refresh-cache.mjs && node --check scripts/build-ranks.mjs",
+    "check": "node --check app.js && node --check name-peek.mjs && node --check math.mjs && node --check analyze-run.mjs && node --check player-metrics.mjs && node --check dist.mjs && node --check palette.mjs && node --check scripts/refresh-cache.mjs && node --check scripts/build-ranks.mjs",
     "build:ranks": "node scripts/build-ranks.mjs"
   },
   "engines": {

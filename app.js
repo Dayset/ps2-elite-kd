@@ -30,7 +30,7 @@ import {
   Y_ZOOM_DEFAULT,
   xMaxForZoom,
   windowYValues,
-} from "./math.mjs?v=20261008-ranks";
+} from "./math.mjs?v=20261008-dist";
 import {
   NameLoadError,
   classifyLoadError,
@@ -50,27 +50,18 @@ import {
   estimateRemainingMs,
   nextEtaDeadline,
   formatEtaLeft,
-} from "./analyze-run.mjs?v=20261008-ranks";
+} from "./analyze-run.mjs?v=20261008-dist";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
-} from "./player-metrics.mjs?v=20261008-ranks";
+} from "./player-metrics.mjs?v=20261008-dist";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261008-ranks";
+import "./name-peek.mjs?v=20261008-dist";
+import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261008-dist";
 
-  const COLORS = [
-    "#9fd4ee", "#ff7a7a", "#ffd166", "#8ef0b0", "#e8b0ff",
-    "#ffb07a", "#7ef0e6", "#ffa0c8", "#c6f06a", "#8cbcff",
-  ];
-  /**
-   * Light theme: same hues, darker/more saturated so lines and names reach
-   * ≥4.5:1 contrast on the cream panel (#e8e1d4) and page (#f0ebe3).
-   * Generated from COLORS by HSL lightness reduction (saturation ≥ 0.75).
-   */
-  const LIGHT_COLORS = [
-    "#156b95", "#cc0000", "#855d00", "#0f7332", "#9f00e0",
-    "#ab4500", "#0d7067", "#c70054", "#4e6d0b", "#005cdb",
-  ];
+  // Player palettes (dark + light theme) live in palette.mjs (shared with ranks.html).
+  const COLORS = PALETTE_DARK;
+  const LIGHT_COLORS = PALETTE_LIGHT;
   function isLightTheme() {
     return typeof document !== "undefined" && document.documentElement.getAttribute("data-theme") === "light";
   }

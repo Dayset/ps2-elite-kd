@@ -13,7 +13,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261008-ranks" />
+  <link rel="stylesheet" href="styles.css?v=20261008-dist" />
   <style>
     /* Ranks page: one long sortable table of every cached player. */
     body.ranks-page { overflow-x: hidden; }
@@ -111,6 +111,34 @@
     }
     .ranks-table td.below-scale { opacity: 0.55; cursor: help; }
     .ranks-table input[type="checkbox"] { margin: 0; cursor: pointer; vertical-align: middle; }
+    /* 📊 Distribution (hand-rolled SVG like the main chart) */
+    .dist-section {
+      margin: 0 0 0.85rem; border: 1px solid var(--border); border-radius: 8px;
+      background: var(--panel); padding: 0.45rem 0.75rem 0.6rem;
+    }
+    .dist-section > summary { cursor: pointer; list-style: none; user-select: none; font-weight: 600; font-size: 0.95rem; }
+    .dist-section > summary::-webkit-details-marker { display: none; }
+    .dist-section > summary::before { content: "▸ "; color: var(--dim); }
+    .dist-section[open] > summary::before { content: "▾ "; }
+    .dist-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.9rem; margin: 0.5rem 0 0.35rem; font-size: 0.85rem; }
+    .dist-controls select {
+      font: inherit; font-size: 0.9rem; padding: 0.3rem 0.5rem; border-radius: 6px;
+      border: 1px solid var(--border); background: var(--input-bg); color: var(--text);
+    }
+    .dist-summary { color: var(--dim); }
+    .dist-chart { position: relative; width: 100%; }
+    .dist-chart svg { display: block; width: 100%; height: auto; touch-action: manipulation; }
+    .dist-chart .dist-hit { cursor: pointer; }
+    .dist-tip {
+      position: absolute; z-index: 5; pointer-events: none;
+      max-width: min(20rem, calc(100% - 8px));
+      padding: 0.4rem 0.65rem; border-radius: 8px; font-size: 0.8rem; line-height: 1.35;
+      background: var(--bg); color: var(--text); border: 1px solid var(--accent);
+      border-left-width: 3px; box-shadow: 0 6px 20px var(--shadow);
+    }
+    .dist-tip[hidden] { display: none; }
+    .dist-tip b { color: var(--accent); }
+    .dist-note { color: var(--dim); font-size: 0.75rem; margin-top: 0.25rem; }
     @media (max-width: 600px) {
       .ranks-table td .pct { display: block; margin-left: 0; line-height: 1.1; }
       .ranks-table-wrap { max-height: calc(100vh - 13rem); }
@@ -132,6 +160,19 @@
     </div>
     <div id="ranksStatus" class="ranks-status" role="status"></div>
 
+    <details id="distSection" class="dist-section" open>
+      <summary>📊 Distribution</summary>
+      <div class="dist-controls">
+        <label>Metric <select id="distMetric" aria-label="Distribution metric"></select></label>
+        <span id="distSummary" class="dist-summary"></span>
+      </div>
+      <div class="dist-chart" id="distChart">
+        <svg id="distSvg" role="img" aria-label="Distribution of the selected metric across cached players"></svg>
+        <div id="distTip" class="dist-tip" hidden></div>
+      </div>
+      <div class="dist-note">Bars: % of players per value range (left axis). Line: cumulative % of players below (right axis). Tap / hover a bar for details. Picked players (☐) — or a search with ≤ 5 matches — are marked on the chart.</div>
+    </details>
+
     <div class="ranks-table-wrap" id="ranksScroll">
       <table class="ranks-table" id="ranksTable" aria-label="Population ranks">
         <thead id="ranksHead"></thead>
@@ -151,7 +192,9 @@
   </footer>
 
   <script type="module">
-    import "./name-peek.mjs?v=20261008-ranks";
+    import "./name-peek.mjs?v=20261008-dist";
+    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits } from "./dist.mjs?v=20261008-dist";
+    import { paletteColor } from "./palette.mjs?v=20261008-dist";
 
     const LS_THEME = "ps2-elite-kd-theme";
     const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";
@@ -174,6 +217,18 @@
       { id: "coi", label: "📊 COI", digits: 2, tip: "Combat Output Index" },
       { id: "slope", label: "📉 Slope", digits: 2, tip: "Curve slope (death-weighted)" },
     ];
+
+    // Public stats (in ranks.json; chart only — the table keeps the main page's columns).
+    const PUBLIC = [
+      { id: "kd", label: "KD", digits: 2, tip: "Overall kill/death ratio" },
+      { id: "kpm", label: "KPM", digits: 2, tip: "Overall kills per minute" },
+      { id: "ownKpm", label: "own KPM (public)", digits: 2, tip: "Your own weapon pace (public)" },
+      { id: "acc", label: "Acc %", digits: 1, tip: "Hit accuracy %" },
+      { id: "hsr", label: "HSR %", digits: 1, tip: "Headshot rate %" },
+      { id: "ivi", label: "IvI", digits: 0, tip: "Public Infantry vs Infantry score" },
+    ];
+    const ALL_COLS = [...VISIBLE, ...DEBUG, ...PUBLIC];
+    const colById = (id) => ALL_COLS.find((c) => c.id === id);
 
     const $ = (id) => document.getElementById(id);
     const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -219,20 +274,8 @@
       return String(name || "").replace(/^\s*\[[^\]]*\]\s*/, "").trim().toLowerCase();
     }
 
-    /**
-     * Population percentile of v: share of cached players with a strictly lower
-     * value, floored to an integer (p0 = lowest … p99 = top 1%). Binary search
-     * over the pre-sorted column, so ~1000 rows × 12 columns stays instant.
-     */
-    function pctOf(sorted, v) {
-      if (!fin(v) || !sorted.length) return null;
-      let lo = 0, hi = sorted.length; // first index with sorted[i] >= v
-      while (lo < hi) {
-        const mid = (lo + hi) >> 1;
-        if (sorted[mid] < v) lo = mid + 1; else hi = mid;
-      }
-      return Math.floor((100 * lo) / sorted.length);
-    }
+    /** Population percentile (dist.mjs): share of cached players strictly below, floored (p0…p99). */
+    const pctOf = percentileOf;
 
     let data = null; // { cols, idx, rows:[{name,query,slug,savedAt, metrics…, rank, pcts}] }
     let showDebug = readDebug();
@@ -250,7 +293,7 @@
       const idx = Object.fromEntries(cols.map((c, i) => [c, i]));
       // Population percentiles once, over every finite value of each metric.
       const pools = {};
-      for (const id of [...VISIBLE, ...DEBUG].map((c) => c.id)) {
+      for (const id of ALL_COLS.map((c) => c.id)) {
         const i = idx[id];
         pools[id] = payload.rows.map((r) => r[i]).filter(fin).sort((a, b) => a - b);
       }
@@ -271,6 +314,7 @@
         return o;
       });
       data = { updatedAt: payload.updatedAt, count: payload.count, rows };
+      histCache.clear();
     }
 
     function sortedFiltered() {
@@ -414,8 +458,259 @@
       el._t = setTimeout(() => { el.hidden = true; }, 2500);
     }
 
+    /* ---------- 📊 Distribution chart ---------- */
+
+    const SVGNS = "http://www.w3.org/2000/svg";
+    let distMetric = "adjs";
+    const histCache = new Map();
+
+    function cssVar(name, fallback) {
+      const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+      return v || fallback;
+    }
+    function isLight() {
+      return document.documentElement.getAttribute("data-theme") === "light";
+    }
+    function svgEl(tag, attrs, text) {
+      const el = document.createElementNS(SVGNS, tag);
+      for (const k in attrs) el.setAttribute(k, attrs[k]);
+      if (text != null) el.textContent = text;
+      return el;
+    }
+    function getHist(id) {
+      if (!histCache.has(id)) {
+        const vals = data.rows.map((r) => r[id]);
+        histCache.set(id, histogram(vals, { floor: id === "adjs" ? 0 : null }));
+      }
+      return histCache.get(id);
+    }
+    function fmtEdge(v, h) {
+      return fin(v) ? (+v).toFixed(stepDigits(h.step)) : "—";
+    }
+    function fmtPct(p) {
+      if (!fin(p)) return "—";
+      if (p > 0 && p < 0.1) return "<0.1%";
+      return (p >= 10 ? p.toFixed(0) : p.toFixed(1)) + "%";
+    }
+    function shortName(n, max = 14) {
+      return n.length > max ? n.slice(0, max - 1) + "…" : n;
+    }
+
+    /** Players to mark: picked ones (pick order), else a search with ≤ 5 matches. */
+    function highlightRows() {
+      if (!data) return [];
+      if (picked.size) {
+        const byQ = new Map(data.rows.map((r) => [r.query, r]));
+        return [...picked.keys()].map((q) => byQ.get(q)).filter(Boolean);
+      }
+      const q = bare(filter);
+      if (!q) return [];
+      const hits = data.rows.filter((r) => r._bare.includes(q));
+      return hits.length <= 5 ? hits : [];
+    }
+
+    function fillMetricSelect() {
+      const sel = $("distMetric");
+      const groups = [["✨ Adjusted", VISIBLE], ["Older debug stats", DEBUG], ["📊 Public", PUBLIC]];
+      sel.innerHTML = groups
+        .map(([g, cols]) => `<optgroup label="${esc(g)}">` + cols.map((c) => `<option value="${c.id}">${esc(c.label)}</option>`).join("") + `</optgroup>`)
+        .join("");
+      sel.value = distMetric;
+    }
+
+    function setDistMetric(id) {
+      if (!colById(id)) return;
+      distMetric = id;
+      if ($("distMetric").value !== id) $("distMetric").value = id;
+      drawDist();
+    }
+
+    function hideTip() {
+      $("distTip").hidden = true;
+    }
+
+    function drawDist() {
+      const svg = $("distSvg");
+      if (!data || !svg || !$("distSection").open) return;
+      const col = colById(distMetric);
+      const h = getHist(distMetric);
+      const box = $("distChart");
+      const W = Math.max(320, Math.round(box.clientWidth || 640));
+      const narrow = W < 560;
+      const H = Math.round(Math.min(380, Math.max(250, W * 0.42)));
+      const hl = highlightRows();
+      const M = { l: narrow ? 34 : 44, r: narrow ? 34 : 44, t: 18 + (hl.length ? Math.min(3, hl.length) * 13 : 0) + 14, b: 38 };
+      const PW = W - M.l - M.r;
+      const PH = H - M.t - M.b;
+      svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+      svg.setAttribute("height", String(H));
+      while (svg.firstChild) svg.removeChild(svg.firstChild);
+      hideTip();
+
+      const th = {
+        text: cssVar("--text", "#f2f0ea"),
+        dim: cssVar("--dim", "#8a8882"),
+        grid: cssVar("--grid", "#2a2e36"),
+        accent: cssVar("--accent", "#9fd4ee"),
+        border: cssVar("--border", "#2a2e36"),
+        warn: cssVar("--warn", "#ffd166"),
+      };
+      const fs = narrow ? 10 : 11;
+
+      if (!h.bins.length) {
+        svg.appendChild(svgEl("text", { x: W / 2, y: H / 2, fill: th.dim, "text-anchor": "middle", "font-size": 12 }, "No data"));
+        $("distSummary").textContent = "";
+        return;
+      }
+
+      // Slots: one per bin (≤ / ≥ tail bins get a slot each at the ends).
+      const nb = h.bins.length;
+      const slotW = PW / nb;
+      const slotX = (i) => M.l + i * slotW;
+      const maxPct = Math.max(...h.bins.map((b) => b.pct));
+      const yTop = Math.max(1, Math.ceil((maxPct * 1.12) / (maxPct > 20 ? 5 : maxPct > 6 ? 2 : 1)) * (maxPct > 20 ? 5 : maxPct > 6 ? 2 : 1));
+      const yL = (p) => M.t + PH - (p / yTop) * PH;
+      const yR = (p) => M.t + PH - (p / 100) * PH;
+
+      // value → x (inside its bin; tails at the slot centre)
+      const xOf = (v) => {
+        const i = binIndexOf(h, v);
+        if (i < 0) return null;
+        const b = h.bins[i];
+        if (b.kind !== "core") return slotX(i) + slotW / 2;
+        const f = b.x1 > b.x0 ? (v - b.x0) / (b.x1 - b.x0) : 0.5;
+        return slotX(i) + Math.max(0, Math.min(1, f)) * slotW;
+      };
+
+      // grid + left axis (% of players)
+      const g = svgEl("g", {});
+      const yStep = yTop / 4;
+      for (let k = 0; k <= 4; k++) {
+        const p = k * yStep;
+        const y = yL(p);
+        g.appendChild(svgEl("line", { x1: M.l, x2: M.l + PW, y1: y, y2: y, stroke: th.grid, "stroke-width": 0.8 }));
+        g.appendChild(svgEl("text", { x: M.l - 5, y: y + 3.5, fill: th.dim, "font-size": fs, "text-anchor": "end" }, (p % 1 ? p.toFixed(1) : p.toFixed(0)) + "%"));
+        g.appendChild(svgEl("text", { x: M.l + PW + 5, y: yR(k * 25) + 3.5, fill: th.dim, "font-size": fs, "text-anchor": "start" }, k * 25 + "%"));
+      }
+      svg.appendChild(g);
+
+      // bars
+      const bars = svgEl("g", {});
+      h.bins.forEach((b, i) => {
+        const x = slotX(i) + 1;
+        const w = Math.max(1, slotW - 2);
+        const y = yL(b.pct);
+        const tail = b.kind !== "core";
+        bars.appendChild(svgEl("rect", {
+          x, y, width: w, height: Math.max(0, M.t + PH - y), rx: 1.5,
+          fill: tail ? th.dim : th.accent, "fill-opacity": tail ? 0.45 : (isLight() ? 0.55 : 0.6),
+        }));
+      });
+      svg.appendChild(bars);
+
+      // x labels: tail bins "≤lo" / "≥hi" + every k-th core edge
+      const maxLabels = narrow ? 5 : 9;
+      const coreIdx = h.bins.map((b, i) => (b.kind === "core" ? i : -1)).filter((i) => i >= 0);
+      const every = Math.max(1, Math.ceil((coreIdx.length + 1) / maxLabels));
+      const xl = svgEl("g", { fill: th.dim, "font-size": fs, "text-anchor": "middle" });
+      coreIdx.forEach((i, k) => {
+        if (k % every === 0) xl.appendChild(svgEl("text", { x: slotX(i), y: M.t + PH + 14 }, fmtEdge(h.bins[i].x0, h)));
+      });
+      const lastCore = coreIdx[coreIdx.length - 1];
+      if ((coreIdx.length) % every === 0 || coreIdx.length < 3) {
+        xl.appendChild(svgEl("text", { x: slotX(lastCore) + slotW, y: M.t + PH + 14 }, fmtEdge(h.hi, h)));
+      }
+      if (h.bins[0].kind === "under") xl.appendChild(svgEl("text", { x: slotX(0) + slotW / 2, y: M.t + PH + 26 }, `<${fmtEdge(h.lo, h)}`));
+      if (h.bins[nb - 1].kind === "over") xl.appendChild(svgEl("text", { x: slotX(nb - 1) + slotW / 2, y: M.t + PH + 26 }, `>${fmtEdge(h.hi, h)}`));
+      xl.appendChild(svgEl("text", { x: M.l + PW / 2, y: H - 3, fill: th.text, "font-size": fs + 1 }, col.label));
+      svg.appendChild(xl);
+
+      // cumulative line (right axis)
+      let d = `M${slotX(0).toFixed(1)},${yR(0).toFixed(1)}`;
+      h.bins.forEach((b, i) => { d += ` L${(slotX(i) + slotW).toFixed(1)},${yR(b.cumPct).toFixed(1)}`; });
+      svg.appendChild(svgEl("path", { d, fill: "none", stroke: th.warn, "stroke-width": 2, "stroke-linejoin": "round", opacity: 0.9 }));
+
+      // median / p90 / p99
+      const stats = [["median", h.median], ["p90", h.p90], ["p99", h.p99]];
+      stats.forEach(([lab, v], k) => {
+        const x = xOf(v);
+        if (x == null) return;
+        svg.appendChild(svgEl("line", { x1: x, x2: x, y1: M.t, y2: M.t + PH, stroke: th.text, "stroke-width": 1, "stroke-dasharray": "4 3", opacity: 0.55 }));
+        const right = x > M.l + PW * 0.75; // keep labels inside the plot near the right edge
+        const t = svgEl("text", { x: right ? x - 3 : x + 3, y: M.t + 10 + k * 11, fill: th.text, "font-size": fs - 1, opacity: 0.8, "text-anchor": right ? "end" : "start" }, `${lab} ${(+v).toFixed(col.digits)}`);
+        svg.appendChild(t);
+      });
+
+      // highlighted players: coloured markers with names (staggered rows)
+      const light = isLight();
+      hl.forEach((r, i) => {
+        const v = r[distMetric];
+        const x = xOf(v);
+        if (x == null) return;
+        const color = paletteColor(i, light);
+        const row = i % 3;
+        const ly = 12 + row * 13;
+        const gm = svgEl("g", {});
+        gm.appendChild(svgEl("line", { x1: x, x2: x, y1: ly + 2, y2: M.t + PH, stroke: color, "stroke-width": 2 }));
+        gm.appendChild(svgEl("circle", { cx: x, cy: M.t + PH, r: 3.5, fill: color }));
+        const anchor = x > M.l + PW * 0.8 ? "end" : x < M.l + PW * 0.2 ? "start" : "middle";
+        const t = svgEl("text", { x, y: ly, fill: color, "font-size": fs, "font-weight": 700, "text-anchor": anchor }, shortName(r.name));
+        gm.appendChild(t);
+        const shown = col.floorZero && fin(v) && v < 0 ? "0 (below scale)" : fin(v) ? (+v).toFixed(col.digits) : "—";
+        const p = r.pcts[distMetric];
+        gm.appendChild(svgEl("title", {}, `${r.name}: ${col.label} ${shown}${p != null ? ` · p${p}` : ""} · rank #${r.rank} (current sort)`));
+        svg.appendChild(gm);
+      });
+
+      // hit areas (full-height, per slot) for hover / tap details
+      const hits = svgEl("g", {});
+      h.bins.forEach((b, i) => {
+        const rect = svgEl("rect", { x: slotX(i), y: M.t, width: slotW, height: PH, fill: "transparent", class: "dist-hit" });
+        const show = (ev) => showTip(ev, b, h, col);
+        rect.addEventListener("pointerenter", show);
+        rect.addEventListener("pointermove", show);
+        rect.addEventListener("click", show);
+        rect.addEventListener("pointerleave", (ev) => { if (ev.pointerType === "mouse") hideTip(); });
+        hits.appendChild(rect);
+      });
+      svg.appendChild(hits);
+
+      const below = col.floorZero ? h.sorted.filter((v) => v < 0).length : 0;
+      $("distSummary").textContent =
+        `${h.n.toLocaleString()} players · median ${(+h.median).toFixed(col.digits)} · p90 ${(+h.p90).toFixed(col.digits)} · p99 ${(+h.p99).toFixed(col.digits)}` +
+        (below ? ` · ${below} below scale (shown as 0)` : "");
+    }
+
+    function showTip(ev, b, h, col) {
+      const tip = $("distTip");
+      const name = col.label;
+      let range;
+      if (b.kind === "under") range = col.floorZero ? `below 0 (below scale)` : `below ${fmtEdge(h.lo, h)}`;
+      else if (b.kind === "over") range = `above ${fmtEdge(h.hi, h)}`;
+      else range = `${fmtEdge(b.x0, h)}–${fmtEdge(b.x1, h)}`;
+      const from = b.kind === "under" ? -Infinity : b.x0;
+      const top = b.kind === "under" ? 100 : shareAtOrAbove(h.sorted, from);
+      tip.innerHTML =
+        `<b>${fmtPct(b.pct)}</b> of players have ${esc(name)} ${esc(range)} ` +
+        `(${b.count.toLocaleString()} player${b.count === 1 ? "" : "s"}); ` +
+        `top <b>${fmtPct(top)}</b> from here`;
+      tip.hidden = false;
+      const box = $("distChart").getBoundingClientRect();
+      const tw = tip.offsetWidth;
+      const thh = tip.offsetHeight;
+      let left = ev.clientX - box.left + 12;
+      if (left + tw > box.width - 4) left = Math.max(4, ev.clientX - box.left - tw - 12);
+      let top2 = ev.clientY - box.top - thh - 10;
+      if (top2 < 0) top2 = ev.clientY - box.top + 14;
+      tip.style.left = Math.round(left) + "px";
+      tip.style.top = Math.round(top2) + "px";
+    }
+
     // --- events ---
-    $("themeToggle").addEventListener("click", () => applyTheme(getTheme() === "light" ? "dark" : "light"));
+    $("themeToggle").addEventListener("click", () => {
+      applyTheme(getTheme() === "light" ? "dark" : "light");
+      drawDist();
+    });
     applyTheme(getTheme());
 
     const dbg = $("debugColsToggle");
@@ -432,6 +727,7 @@
       searchTimer = setTimeout(() => {
         filter = e.target.value || "";
         renderBody();
+        drawDist();
       }, 80);
     });
 
@@ -448,6 +744,8 @@
         sortDir = col && col.ascFirst ? "asc" : (key === "name" ? "asc" : "desc");
       }
       render();
+      // Sorting by a metric also shows its distribution.
+      if (key !== "name" && colById(key)) setDistMetric(key);
     });
 
     $("ranksBody").addEventListener("change", (e) => {
@@ -473,6 +771,22 @@
         if (!cb.checked) cb.disabled = full;
       });
       syncPickedUi();
+      drawDist();
+    });
+
+    $("distMetric").addEventListener("change", (e) => setDistMetric(e.target.value));
+    $("distSection").addEventListener("toggle", () => drawDist());
+    let distResizeTimer = 0;
+    let lastDistW = 0;
+    window.addEventListener("resize", () => {
+      clearTimeout(distResizeTimer);
+      distResizeTimer = setTimeout(() => {
+        const w = $("distChart").clientWidth;
+        if (w !== lastDistW) { lastDistW = w; drawDist(); }
+      }, 120);
+    });
+    document.addEventListener("pointerdown", (e) => {
+      if (!e.target.closest || !e.target.closest("#distChart")) hideTip();
     });
 
     $("ranksCompare").addEventListener("click", () => {
@@ -489,7 +803,9 @@
       const payload = await res.json();
       rebuildIndex(payload);
       $("ranksStatus").textContent = "";
+      fillMetricSelect();
       render();
+      drawDist();
     } catch (err) {
       $("ranksStatus").innerHTML = `<span class="err">Could not load ranks.json (${esc(err && err.message)}).</span>`;
       $("ranksMeta").textContent = "—";
