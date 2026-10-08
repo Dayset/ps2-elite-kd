@@ -30,6 +30,10 @@ Lookup order per name:
 
 Max 10 names. Deep link: `?names=JustV6me,ChrisJTTR`.
 
+## Rankings
+
+[ranks.html](ranks.html) — population ranks across the whole shared cache (one row per player). Same ✨ Adjusted columns as the main page (⚔️ iVi default sort, optional debug columns via the shared "show older debug stats" checkbox), with a **#** rank column and a small **pN** population percentile next to each number (share of cached players below that value). Search filters by name (ignores outfit tags); check up to 10 players and hit **Compare** (or click a name) to open them on the main chart. Numbers come from a precomputed `data/ranks.json` rebuilt by `scripts/build-ranks.mjs` on every cache refresh — the browser never fetches a thousand player files.
+
 ### Sharing
 
 - A URL with `?names=…` (what **🔗** copies) **auto-runs Analyze** after the page and shared-cache index load — exactly like pressing 🔍 Analyze: progress popup with countdown and abort ×, skipped-name warning for names that don't exist (the rest are still graphed), then a smooth scroll to the results.
@@ -43,7 +47,7 @@ Max 10 names. Deep link: `?names=JustV6me,ChrisJTTR`.
 | **Public (Census/Honu)** | Collapsed by default — KD, KPM, own KPM, Acc %, HSR %, IvI |
 | **Adjusted (calculated)** | Default columns: ⚔️ iVi, 🛡️ Resist, 🔥 Active, 🦁 Brave, ☠️ K/D, ⚙️ Mech%, 🎈 Inflation. Ticking **show older debug stats** (footer, right of the repo link; remembered in localStorage) appends 🎯🎈 ivi, eKPM, own KPM, 📊 COI, 📉 Slope |
 | Chart | Projected K/D vs enemy weapon KPM (bands Easy / Hard at 0.75 / 1.50). Vertical **zoom** slider (top-right): middle / **Auto** = full graph, auto-fit; **up** zooms hard into the start of the graph — X min stays 0 while X max shrinks fast (≈0.71 at +1, 0.25 at the top) and Y re-fits to the visible left side (lines leaving the right edge are clipped); **down** keeps full X and flattens Y to fit extreme / high-tier K/D |
-| Footer | Repo link (with the **show older debug stats** checkbox on the right) + thanks to [HONU](https://wt.honu.pw/) / Varunda |
+| Footer | **🏆 Rankings** link (ranks.html) + repo link (with the **show older debug stats** checkbox on the right) + thanks to [HONU](https://wt.honu.pw/) / Varunda |
 
 Click any column header to sort (names alphabetical; metrics numeric). Default sort is **⚔️ iVi** descending (sorting by a debug column falls back to it when the debug columns are hidden). Hover headers for short hints. Each value also shows a small dimmed % against its column reference (per-column `pctDir`): by default **−N%** = gap below the highest value; for **🎈 Inflation** (`pctDir: "low"`, `pctRefFloor: 1.0`) the reference is max(lowest value, 1.0) and others show **+N%** above it; values at/below the reference show no % (below 1.0 = no inflation). No % on the reference value, on ⚔️ iVi cells shown as 0, or when the reference is ≤ 0 (e.g. 📉 Slope); on phones the % sits under the number. Tables sit above the graph.
 
@@ -86,17 +90,19 @@ Browser Analyze still uses a local under-load note across tabs on the same devic
 
 ```
 ps2-elite-kd/
-  index.html  styles.css  app.js  math.mjs
+  index.html  ranks.html  styles.css  app.js  math.mjs
   test/math.test.mjs      # node --test regression suite
   package.json            # npm test / npm run check
   assets/                 # dark + light placeholder graphs
   data/
     index.json            # shared catalog
+    ranks.json            # precomputed rankings (scripts/build-ranks.mjs)
     watchlist.txt         # names in the hourly rotation
     refresh-state.json    # rotation bookkeeping
     load-flag.json        # Actions under-load signal
     players/<slug>.json
   scripts/refresh-cache.mjs
+  scripts/build-ranks.mjs   # data/ranks.json from the cache (run by the refresh workflow)
   .github/workflows/refresh-cache.yml
 ```
 
@@ -106,7 +112,8 @@ Pure math lives in `math.mjs` (imported by the browser `app.js` module). Run:
 
 ```bash
 npm test          # node --test test/*.test.mjs
-npm run check     # syntax-check app.js, math.mjs, refresh script
+npm run check     # syntax-check app.js, math.mjs, refresh + ranks scripts
+npm run build:ranks  # rebuild data/ranks.json locally
 ```
 
 Coverage includes pooled/sliceAt, Inflation@0.5, curveSlope (deaths>0), LionHeart bounds, adjIvI, and yScale containment for cheater spikes / low players.

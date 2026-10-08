@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PS2 Elite K/D — Rankings</title>
+  <meta name="description" content="PlanetSide 2 elite K/D population ranks across the shared cache" />
+  <link rel="icon" href="data:," />
+  <script>
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="styles.css?v=20261008-ranks" />
+  <style>
+    /* Ranks page: one long sortable table of every cached player. */
+    body.ranks-page { overflow-x: hidden; }
+    .ranks-wrap { max-width: none; }
+    .ranks-head {
+      display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.35rem 1rem;
+      margin: 0 0 0.75rem;
+    }
+    .ranks-head h1 { font-size: 1.2rem; margin: 0; font-weight: 700; }
+    .ranks-meta { color: var(--dim); font-size: 0.85rem; }
+    .ranks-toolbar {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem;
+      margin: 0 0 0.75rem;
+    }
+    .ranks-toolbar input[type="search"] {
+      flex: 1 1 14rem; min-width: 10rem; max-width: 28rem;
+      font: inherit; font-size: 0.95rem; padding: 0.45rem 0.75rem;
+      border-radius: 8px; border: 1px solid var(--border); background: var(--input-bg);
+      color: var(--text); box-sizing: border-box; height: var(--ctl-h, 2.9rem);
+    }
+    .ranks-toolbar input[type="search"]:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .ranks-toolbar .ranks-compare {
+      font: inherit; font-weight: 700; font-size: 0.95rem; padding: 0 1.1rem;
+      height: var(--ctl-h, 2.9rem); border-radius: 8px; border: 1px solid #6cb2ff;
+      background: #6cb2ff; color: var(--btn-text); cursor: pointer;
+      box-shadow: 0 0 0 1px rgba(108, 178, 255, 0.25);
+    }
+    .ranks-toolbar .ranks-compare:hover { background: #8cc4ff; border-color: #8cc4ff; }
+    .ranks-toolbar .ranks-compare:disabled { opacity: 0.45; cursor: not-allowed; }
+    .ranks-toolbar .ranks-picked { color: var(--dim); font-size: 0.85rem; min-width: 5.5rem; }
+    .ranks-toolbar .theme-toggle { margin-left: auto; }
+    .ranks-status { min-height: 1.35rem; margin: 0 0 0.5rem; font-size: 0.9rem; }
+    .ranks-status:empty { display: none; }
+
+    .ranks-table-wrap {
+      overflow: auto;
+      max-height: calc(100vh - 11rem);
+      -webkit-overflow-scrolling: touch;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+    .ranks-table {
+      width: max-content; min-width: 100%;
+      border-collapse: separate; border-spacing: 0;
+      font-size: 0.8rem; font-variant-numeric: tabular-nums;
+    }
+    .ranks-table th, .ranks-table td {
+      padding: 0.28rem 0.55rem;
+      border-bottom: 1px solid var(--row-border);
+      white-space: nowrap; text-align: right;
+      background: var(--panel);
+    }
+    .ranks-table th.rk-name, .ranks-table td.rk-name,
+    .ranks-table th.rk-pick, .ranks-table td.rk-pick { text-align: left; }
+    .ranks-table thead th {
+      position: sticky; top: 0; z-index: 3;
+      color: var(--text); font-weight: 600;
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 1px 0 var(--border);
+    }
+    .ranks-table thead th.sortable { cursor: pointer; user-select: none; }
+    .ranks-table thead th.sortable:hover,
+    .ranks-table thead th.sortable.sorted { color: var(--accent); }
+    .ranks-table .sort-ind {
+      display: inline-block; min-width: 0.85em; margin-left: 0.15rem;
+      font-size: 0.7em; opacity: 0.35; vertical-align: middle;
+    }
+    .ranks-table .sort-ind.active { opacity: 1; }
+    /* Sticky left: checkbox + # + Player */
+    .ranks-table th.rk-pick, .ranks-table td.rk-pick {
+      position: sticky; left: 0; z-index: 1; width: 1.6rem; padding-right: 0.2rem;
+      box-shadow: none;
+    }
+    .ranks-table th.rk-num, .ranks-table td.rk-num {
+      position: sticky; left: 1.6rem; z-index: 1; width: 2.6rem;
+      text-align: right; color: var(--dim); font-weight: 600;
+      padding-left: 0.2rem; padding-right: 0.4rem;
+    }
+    .ranks-table th.rk-name, .ranks-table td.rk-name {
+      position: sticky; left: 4.2rem; z-index: 1; font-weight: 600;
+      box-shadow: 4px 0 8px -4px var(--shadow);
+    }
+    .ranks-table thead th.rk-pick,
+    .ranks-table thead th.rk-num,
+    .ranks-table thead th.rk-name { z-index: 4; }
+    .ranks-table td.rk-name a {
+      color: inherit; text-decoration: none;
+    }
+    .ranks-table td.rk-name a:hover { color: var(--accent); text-decoration: underline; }
+    .ranks-table tbody tr:hover td { background: var(--input-hover); }
+    .ranks-table td .pct {
+      margin-left: 0.3em; font-size: 0.72em; color: var(--dim);
+      white-space: nowrap; font-variant-numeric: tabular-nums;
+    }
+    .ranks-table td.below-scale { opacity: 0.55; cursor: help; }
+    .ranks-table input[type="checkbox"] { margin: 0; cursor: pointer; vertical-align: middle; }
+    @media (max-width: 600px) {
+      .ranks-table td .pct { display: block; margin-left: 0; line-height: 1.1; }
+      .ranks-table-wrap { max-height: calc(100vh - 13rem); }
+    }
+  </style>
+</head>
+<body class="ranks-page">
+  <div class="ranks-wrap">
+    <div class="ranks-head">
+      <h1>🏆 Rankings</h1>
+      <span id="ranksMeta" class="ranks-meta">Loading…</span>
+    </div>
+
+    <div class="ranks-toolbar">
+      <input id="ranksSearch" type="search" placeholder="Filter names…" aria-label="Filter player names" autocomplete="off" spellcheck="false" />
+      <button id="ranksCompare" type="button" class="ranks-compare" disabled title="Open the main page with the checked players (up to 10)">Compare</button>
+      <span id="ranksPicked" class="ranks-picked" aria-live="polite">0 / 10</span>
+      <button id="themeToggle" type="button" class="theme-toggle" title="Toggle light / dark theme" aria-label="Toggle light / dark theme">☀️ Light</button>
+    </div>
+    <div id="ranksStatus" class="ranks-status" role="status"></div>
+
+    <div class="ranks-table-wrap" id="ranksScroll">
+      <table class="ranks-table" id="ranksTable" aria-label="Population ranks">
+        <thead id="ranksHead"></thead>
+        <tbody id="ranksBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-row">
+      <p><a href="index.html">← Chart</a> · <a href="https://github.com/Dayset/ps2-elite-kd">github.com/Dayset/ps2-elite-kd</a></p>
+      <label class="debug-cols-toggle" title="Append the older debug columns (🎯🎈 ivi, eKPM, own KPM, 📊 COI, 📉 Slope) to the rankings table">
+        <input type="checkbox" id="debugColsToggle" /> show older debug stats
+      </label>
+    </div>
+    <p>Thanks to <a href="https://wt.honu.pw/" target="_blank" rel="noopener noreferrer">HONU</a> / Varunda</p>
+  </footer>
+
+  <script type="module">
+    import "./name-peek.mjs?v=20261008-ranks";
+
+    const LS_THEME = "ps2-elite-kd-theme";
+    const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";
+    const MAX_NAMES = 10;
+
+    // Column definitions: same ids / labels / digits / floorZero as app.js.
+    const VISIBLE = [
+      { id: "adjs", label: "⚔️ iVi", digits: 0, floorZero: true, tip: "ivi adjusted for your own kill speed" },
+      { id: "rf", label: "🛡️ Resist", digits: 2, tip: "Resistance Factor" },
+      { id: "act", label: "🔥 Active", digits: 2, tip: "Activity (K/D × own KPM)" },
+      { id: "pvs", label: "🦁 Brave", digits: 2, tip: "Bravery (Active × slope)" },
+      { id: "rkd", label: "☠️ K/D", digits: 3, tip: "Resistance-weighted K/D" },
+      { id: "mech", label: "⚙️ Mech%", digits: 1, tip: "Projected mechanized share" },
+      { id: "inflation", label: "🎈 Inflation", digits: 2, tip: "Global KD ÷ KD at ≥0.5 enemy KPM — lower is better", ascFirst: true },
+    ];
+    const DEBUG = [
+      { id: "adj", label: "🎯🎈 ivi", digits: 0, tip: "Opposition-weighted IvI (before speed adjustment)" },
+      { id: "ekpm", label: "eKPM", digits: 2, tip: "Average enemy weapon KPM faced" },
+      { id: "own", label: "own KPM", digits: 2, tip: "Your weapon pace" },
+      { id: "coi", label: "📊 COI", digits: 2, tip: "Combat Output Index" },
+      { id: "slope", label: "📉 Slope", digits: 2, tip: "Curve slope (death-weighted)" },
+    ];
+
+    const $ = (id) => document.getElementById(id);
+    const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    const fin = (v) => typeof v === "number" && Number.isFinite(v);
+    const fmt = (v, d) => (fin(v) ? (+v).toFixed(d) : "—");
+
+    function getTheme() {
+      try { return localStorage.getItem(LS_THEME) === "light" ? "light" : "dark"; } catch { return "dark"; }
+    }
+    function applyTheme(mode) {
+      const m = mode === "light" ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", m);
+      try { localStorage.setItem(LS_THEME, m); } catch {}
+      const btn = $("themeToggle");
+      if (btn) {
+        btn.textContent = m === "light" ? "🌙 Dark" : "☀️ Light";
+        btn.title = m === "light" ? "Switch to dark theme" : "Switch to light theme";
+        btn.setAttribute("aria-label", btn.title);
+      }
+    }
+    function readDebug() {
+      try { return localStorage.getItem(LS_DEBUG_COLS) === "1"; } catch { return false; }
+    }
+    function writeDebug(on) {
+      try { if (on) localStorage.setItem(LS_DEBUG_COLS, "1"); else localStorage.removeItem(LS_DEBUG_COLS); } catch {}
+    }
+
+    /** America/Winnipeg label for an ISO / ms timestamp. */
+    function fmtUpdated(iso) {
+      if (!iso) return "—";
+      try {
+        const d = new Date(iso);
+        const s = new Intl.DateTimeFormat("en-CA", {
+          timeZone: "America/Winnipeg", year: "numeric", month: "short", day: "numeric",
+          hour: "numeric", minute: "2-digit", hour12: true,
+        }).format(d);
+        return s + " CT";
+      } catch { return String(iso); }
+    }
+
+    /** Bare name for search / ?names= (strip "[TAG] "). */
+    function bare(name) {
+      return String(name || "").replace(/^\s*\[[^\]]*\]\s*/, "").trim().toLowerCase();
+    }
+
+    /**
+     * Population percentile of v: share of cached players with a strictly lower
+     * value, floored to an integer (p0 = lowest … p99 = top 1%). Binary search
+     * over the pre-sorted column, so ~1000 rows × 12 columns stays instant.
+     */
+    function pctOf(sorted, v) {
+      if (!fin(v) || !sorted.length) return null;
+      let lo = 0, hi = sorted.length; // first index with sorted[i] >= v
+      while (lo < hi) {
+        const mid = (lo + hi) >> 1;
+        if (sorted[mid] < v) lo = mid + 1; else hi = mid;
+      }
+      return Math.floor((100 * lo) / sorted.length);
+    }
+
+    let data = null; // { cols, idx, rows:[{name,query,slug,savedAt, metrics…, rank, pcts}] }
+    let showDebug = readDebug();
+    let sortKey = "adjs";
+    let sortDir = "desc"; // Inflation starts asc on first click
+    let filter = "";
+    const picked = new Map(); // query → display
+
+    function colList() {
+      return showDebug ? VISIBLE.concat(DEBUG) : VISIBLE.slice();
+    }
+
+    function rebuildIndex(payload) {
+      const cols = payload.cols;
+      const idx = Object.fromEntries(cols.map((c, i) => [c, i]));
+      // Population percentiles once, over every finite value of each metric.
+      const pools = {};
+      for (const id of [...VISIBLE, ...DEBUG].map((c) => c.id)) {
+        const i = idx[id];
+        pools[id] = payload.rows.map((r) => r[i]).filter(fin).sort((a, b) => a - b);
+      }
+      const rows = payload.rows.map((r) => {
+        const o = {
+          name: r[idx.name],
+          query: r[idx.query],
+          slug: r[idx.slug],
+          savedAt: r[idx.savedAt],
+          _bare: bare(r[idx.name]),
+          pcts: {},
+        };
+        for (const id of Object.keys(pools)) {
+          const v = r[idx[id]];
+          o[id] = v;
+          o.pcts[id] = pctOf(pools[id], v);
+        }
+        return o;
+      });
+      data = { updatedAt: payload.updatedAt, count: payload.count, rows };
+    }
+
+    function sortedFiltered() {
+      if (!data) return [];
+      const q = bare(filter); // "[RITE] shlo" → "shlo"
+      let list = data.rows;
+      if (q) {
+        // Name only — the outfit tag is ignored ("rite" doesn't list every [RITE] member).
+        list = list.filter((r) => r._bare.includes(q));
+      }
+      // assignRanks() already ordered the whole population for the current
+      // sort; the filtered view keeps that order and the true rank numbers.
+      return list.slice().sort((a, b) => a.rank - b.rank);
+    }
+
+    /** Assign 1-based ranks for the current sort over the whole population. */
+    let rankedFor = "";
+    function assignRanks() {
+      if (!data) return;
+      const sig = sortKey + ":" + sortDir;
+      if (rankedFor === sig) return; // same sort → ranks unchanged (search / picks)
+      rankedFor = sig;
+      const key = sortKey;
+      const dir = sortDir === "asc" ? 1 : -1;
+      const byName = (a, b) => (a._bare < b._bare ? -1 : a._bare > b._bare ? 1 : 0);
+      const all = data.rows.slice().sort((a, b) => {
+        if (key === "name") return byName(a, b) * dir; // Player: A→Z first (tag ignored)
+        const av = a[key], bv = b[key];
+        const aOk = fin(av), bOk = fin(bv);
+        if (!aOk && !bOk) return byName(a, b);
+        if (!aOk) return 1; // missing values always last
+        if (!bOk) return -1;
+        if (av !== bv) return av < bv ? -dir : dir;
+        return byName(a, b);
+      });
+      all.forEach((r, i) => { r.rank = i + 1; });
+    }
+
+    function renderHead() {
+      const cols = colList();
+      const cells = [
+        `<th class="rk-pick" scope="col" title="Pick up to ${MAX_NAMES} to Compare"></th>`,
+        `<th class="rk-num" scope="col" title="Rank under the current sort">#</th>`,
+        `<th class="rk-name sortable${sortKey === "name" ? " sorted" : ""}" data-key="name" scope="col">Player<span class="sort-ind${sortKey === "name" ? " active" : ""}">${sortKey === "name" ? (sortDir === "asc" ? "▲" : "▼") : "▾"}</span></th>`,
+      ];
+      for (const c of cols) {
+        const on = sortKey === c.id;
+        cells.push(
+          `<th class="sortable${on ? " sorted" : ""}" data-key="${c.id}" scope="col" title="${esc(c.tip || c.label)}">${esc(c.label)}<span class="sort-ind${on ? " active" : ""}">${on ? (sortDir === "asc" ? "▲" : "▼") : "▾"}</span></th>`,
+        );
+      }
+      $("ranksHead").innerHTML = `<tr>${cells.join("")}</tr>`;
+    }
+
+    function cellHtml(c, row) {
+      const v = row[c.id];
+      if (c.floorZero && fin(v) && v < 0) {
+        return `<td class="below-scale" title="Below the rating scale">0</td>`;
+      }
+      if (!fin(v)) return `<td>—</td>`;
+      const p = row.pcts[c.id];
+      const pct = p == null ? "" : `<span class="pct" title="Population percentile: higher than ${p}% of cached players">p${p}</span>`;
+      return `<td>${fmt(v, c.digits)}${pct}</td>`;
+    }
+
+    /** Row HTML for one player (plain strings: cheap for ~1000 rows). */
+    function rowHtml(r, cols) {
+      const checked = picked.has(r.query) ? " checked" : "";
+      const disabled = !picked.has(r.query) && picked.size >= MAX_NAMES ? " disabled" : "";
+      const href = `index.html?names=${encodeURIComponent(r.query)}`;
+      return (
+        `<tr data-q="${esc(r.query)}">` +
+        `<td class="rk-pick"><input type="checkbox" aria-label="Pick ${esc(r.name)}"${checked}${disabled} /></td>` +
+        `<td class="rk-num">${r.rank}</td>` +
+        `<td class="rk-name"><a href="${href}" title="Open on the main chart"><span class="nm" data-full="${esc(r.name)}" title="${esc(r.name)}">${esc(r.name)}</span></a></td>` +
+        cols.map((c) => cellHtml(c, r)).join("") +
+        `</tr>`
+      );
+    }
+
+    // Progressive render: the first screenful goes in at once, the rest is
+    // appended in small chunks on later frames so phones stay responsive.
+    const FIRST_CHUNK = 80;
+    const CHUNK = 200;
+    let renderToken = 0;
+
+    function renderBody() {
+      assignRanks();
+      const cols = colList();
+      const list = sortedFiltered();
+      const token = ++renderToken;
+      const body = $("ranksBody");
+      const first = list.slice(0, FIRST_CHUNK).map((r) => rowHtml(r, cols)).join("");
+      body.innerHTML = first;
+      let at = FIRST_CHUNK;
+      const step = () => {
+        if (token !== renderToken || at >= list.length) return;
+        const end = Math.min(list.length, at + CHUNK);
+        let html = "";
+        for (let i = at; i < end; i++) html += rowHtml(list[i], cols);
+        body.insertAdjacentHTML("beforeend", html);
+        at = end;
+        if (at < list.length) requestAnimationFrame(() => setTimeout(step, 0));
+      };
+      if (at < list.length) requestAnimationFrame(() => setTimeout(step, 0));
+      $("ranksMeta").textContent = `${list.length.toLocaleString()} of ${data.count.toLocaleString()} players · updated ${fmtUpdated(data.updatedAt)}`;
+      syncPickedUi();
+    }
+
+    function render() {
+      if (!data) return;
+      if (sortKey !== "name" && !colList().some((c) => c.id === sortKey)) {
+        sortKey = "adjs";
+        sortDir = "desc";
+      }
+      renderHead();
+      renderBody();
+    }
+
+    function syncPickedUi() {
+      $("ranksPicked").textContent = `${picked.size} / ${MAX_NAMES}`;
+      $("ranksCompare").disabled = picked.size === 0;
+    }
+
+    function showLimitToast() {
+      let el = document.getElementById("limitToast");
+      if (!el) {
+        el = document.createElement("div");
+        el.id = "limitToast";
+        el.className = "limit-toast limit-toast-docked";
+        el.setAttribute("role", "alert");
+        el.innerHTML = `<strong>10 players limit reached</strong><span class="limit-toast-sub">Uncheck one to pick another</span>`;
+        el.addEventListener("click", () => { el.hidden = true; });
+        document.body.appendChild(el);
+      }
+      el.hidden = false;
+      el.classList.remove("limit-toast-pop");
+      void el.offsetWidth;
+      el.classList.add("limit-toast-pop");
+      clearTimeout(el._t);
+      el._t = setTimeout(() => { el.hidden = true; }, 2500);
+    }
+
+    // --- events ---
+    $("themeToggle").addEventListener("click", () => applyTheme(getTheme() === "light" ? "dark" : "light"));
+    applyTheme(getTheme());
+
+    const dbg = $("debugColsToggle");
+    dbg.checked = showDebug;
+    dbg.addEventListener("change", () => {
+      showDebug = !!dbg.checked;
+      writeDebug(showDebug);
+      render();
+    });
+
+    let searchTimer = 0;
+    $("ranksSearch").addEventListener("input", (e) => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => {
+        filter = e.target.value || "";
+        renderBody();
+      }, 80);
+    });
+
+    $("ranksHead").addEventListener("click", (e) => {
+      const th = e.target.closest("th.sortable");
+      if (!th) return;
+      const key = th.getAttribute("data-key");
+      if (!key) return;
+      if (sortKey === key) {
+        sortDir = sortDir === "desc" ? "asc" : "desc";
+      } else {
+        sortKey = key;
+        const col = [...VISIBLE, ...DEBUG].find((c) => c.id === key);
+        sortDir = col && col.ascFirst ? "asc" : (key === "name" ? "asc" : "desc");
+      }
+      render();
+    });
+
+    $("ranksBody").addEventListener("change", (e) => {
+      const inp = e.target;
+      if (!(inp instanceof HTMLInputElement) || inp.type !== "checkbox") return;
+      const tr = inp.closest("tr");
+      const q = tr && tr.getAttribute("data-q");
+      if (!q) return;
+      const name = (data.rows.find((r) => r.query === q) || {}).name || q;
+      if (inp.checked) {
+        if (picked.size >= MAX_NAMES) {
+          inp.checked = false;
+          showLimitToast();
+          return;
+        }
+        picked.set(q, name);
+      } else {
+        picked.delete(q);
+      }
+      // Re-enable / disable unchecked boxes without a full re-render.
+      const full = picked.size >= MAX_NAMES;
+      $("ranksBody").querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+        if (!cb.checked) cb.disabled = full;
+      });
+      syncPickedUi();
+    });
+
+    $("ranksCompare").addEventListener("click", () => {
+      if (!picked.size) return;
+      const names = [...picked.keys()].join(",");
+      location.href = `index.html?names=${encodeURIComponent(names).replace(/%2C/g, ",")}`;
+    });
+
+    // --- load ---
+    $("ranksStatus").textContent = "Loading ranks…";
+    try {
+      const res = await fetch("data/ranks.json", { cache: "no-cache" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const payload = await res.json();
+      rebuildIndex(payload);
+      $("ranksStatus").textContent = "";
+      render();
+    } catch (err) {
+      $("ranksStatus").innerHTML = `<span class="err">Could not load ranks.json (${esc(err && err.message)}).</span>`;
+      $("ranksMeta").textContent = "—";
+    }
+  </script>
+</body>
+</html>

@@ -97,6 +97,8 @@ jobs:
             git checkout -- data/ && git clean -fdq data/
             exit 0
           fi
+          # Keep ranks.html in sync with the cache (no network; same player-metrics.mjs).
+          node scripts/build-ranks.mjs || echo "::warning::build-ranks failed; data/ranks.json not updated this run"
           # status.json: mark idle. load-flag.json: background runs no longer raise
           # the main page's "under load" banner; make sure it's cleared.
           node -e '

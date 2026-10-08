@@ -30,7 +30,7 @@ import {
   Y_ZOOM_DEFAULT,
   xMaxForZoom,
   windowYValues,
-} from "./math.mjs?v=20261008-phold";
+} from "./math.mjs?v=20261008-ranks";
 import {
   NameLoadError,
   classifyLoadError,
@@ -50,13 +50,13 @@ import {
   estimateRemainingMs,
   nextEtaDeadline,
   formatEtaLeft,
-} from "./analyze-run.mjs?v=20261008-phold";
+} from "./analyze-run.mjs?v=20261008-ranks";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
-} from "./player-metrics.mjs?v=20261008-phold";
+} from "./player-metrics.mjs?v=20261008-ranks";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261008-phold";
+import "./name-peek.mjs?v=20261008-ranks";
 
   const COLORS = [
     "#9fd4ee", "#ff7a7a", "#ffd166", "#8ef0b0", "#e8b0ff",
