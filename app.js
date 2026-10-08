@@ -28,7 +28,9 @@ import {
   applyYZoom,
   clampYZoom,
   Y_ZOOM_DEFAULT,
-} from "./math.mjs?v=20261007-eta";
+  xMaxForZoom,
+  windowYValues,
+} from "./math.mjs?v=20261008-zoom";
 import {
   NameLoadError,
   classifyLoadError,
@@ -48,13 +50,13 @@ import {
   estimateRemainingMs,
   nextEtaDeadline,
   formatEtaLeft,
-} from "./analyze-run.mjs?v=20261007-eta";
+} from "./analyze-run.mjs?v=20261008-zoom";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
-} from "./player-metrics.mjs?v=20261007-eta";
+} from "./player-metrics.mjs?v=20261008-zoom";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261007-eta";
+import "./name-peek.mjs?v=20261008-zoom";
 
   const COLORS = [
     "#9fd4ee", "#ff7a7a", "#ffd166", "#8ef0b0", "#e8b0ff",
@@ -1785,8 +1787,10 @@ import "./name-peek.mjs?v=20261007-eta";
 
   /* yScale: imported from ./math.mjs */
 
+  /** Right edge of the visible X window (X_MAX unless zoomed into the left). */
+  let viewXMax = X_MAX;
   function xToPx(x) {
-    return PLOT.x + (x / X_MAX) * PLOT.w;
+    return PLOT.x + (x / viewXMax) * PLOT.w;
   }
 
   function makeYMapper(scale) {
@@ -1861,16 +1865,24 @@ import "./name-peek.mjs?v=20261007-eta";
     bg.setAttribute("fill", th.bg);
     svg.appendChild(bg);
 
+    // Zoom slider: above the middle zooms into the LEFT start of the graph
+    // (X shrinks fast from the right, X min stays 0) and Y re-fits to what is
+    // visible; at/below the middle X is full and Y uses the old fit / zoom-out.
+    const zoomedLeft = yZoom > 1 + 1e-9;
+    viewXMax = zoomedLeft ? xMaxForZoom(yZoom) : X_MAX;
+
     const bands = [
       { x0: 0, x1: EASY_MAX, fill: "#6a8f6a", opacity: th.bandOpacity },
       { x0: EASY_MAX, x1: HARD_MIN, fill: "#8a8a6a", opacity: th.bandOpacity * 0.75 },
       { x0: HARD_MIN, x1: X_MAX, fill: "#8a6a6a", opacity: th.bandOpacity },
     ];
     for (const b of bands) {
+      if (b.x0 >= viewXMax) continue;
+      const x1 = Math.min(b.x1, viewXMax);
       const r = ns("rect");
       r.setAttribute("x", xToPx(b.x0));
       r.setAttribute("y", PLOT.y);
-      r.setAttribute("width", xToPx(b.x1) - xToPx(b.x0));
+      r.setAttribute("width", xToPx(x1) - xToPx(b.x0));
       r.setAttribute("height", PLOT.h);
       r.setAttribute("fill", b.fill);
       r.setAttribute("fill-opacity", b.opacity);
@@ -1885,14 +1897,17 @@ import "./name-peek.mjs?v=20261007-eta";
         }
       }
     }
-    const autoScale = yScale(yvals);
-    const scale = applyYZoom(autoScale, yZoom);
+    const scale = zoomedLeft
+      ? yScale(windowYValues(list.map((p) => p.curve || []), viewXMax)) // fit the left window
+      : applyYZoom(yScale(yvals), yZoom);
     const yToPx = makeYMapper(scale);
+    const xTicks = zoomedLeft ? niceLinTicks(0, viewXMax, 5) : [0, 0.5, 1.0, 1.5, 2.0];
+    const xTickDigits = zoomedLeft && xTicks.length > 1 && xTicks[1] - xTicks[0] < 0.1 ? 2 : 1;
 
     const gGrid = ns("g");
     gGrid.setAttribute("stroke", th.grid);
     gGrid.setAttribute("stroke-width", "0.8");
-    for (let x = 0; x <= X_MAX + 1e-9; x += 0.5) {
+    for (const x of xTicks) {
       const line = ns("line");
       line.setAttribute("x1", xToPx(x));
       line.setAttribute("x2", xToPx(x));
@@ -1914,6 +1929,7 @@ import "./name-peek.mjs?v=20261007-eta";
     svg.appendChild(gGrid);
 
     for (const xv of [EASY_MAX, HARD_MIN]) {
+      if (xv >= viewXMax) continue;
       const line = ns("line");
       line.setAttribute("x1", xToPx(xv));
       line.setAttribute("x2", xToPx(xv));
@@ -1958,14 +1974,14 @@ import "./name-peek.mjs?v=20261007-eta";
     ylab.textContent = "Projected K/D";
     svg.appendChild(ylab);
 
-    for (const x of [0, 0.5, 1.0, 1.5, 2.0]) {
+    for (const x of xTicks) {
       const t = ns("text");
       t.setAttribute("x", xToPx(x));
       t.setAttribute("y", PLOT.y + PLOT.h + 18);
       t.setAttribute("fill", th.text);
       t.setAttribute("font-size", "11");
       t.setAttribute("text-anchor", "middle");
-      t.textContent = x.toFixed(1);
+      t.textContent = x.toFixed(xTickDigits);
       svg.appendChild(t);
     }
     for (const y of yTicks) {
@@ -1983,9 +1999,13 @@ import "./name-peek.mjs?v=20261007-eta";
     const capY = PLOT.y + PLOT.h + 40;
     addText(svg, PLOT.x, capY, "🐣 Easy", th.muted, 10, "start");
     addText(svg, PLOT.x + PLOT.w / 2, capY, "Enemy 💪 KPM", th.muted, 10, "middle");
-    addText(svg, PLOT.x + PLOT.w, capY, "🥵 Hard", th.muted, 10, "end");
-    addText(svg, xToPx(EASY_MAX), capY + 14, "0.75", th.muted, 9, "middle");
-    addText(svg, xToPx(HARD_MIN), capY + 14, "1.50", th.muted, 9, "middle");
+    if (zoomedLeft) {
+      addText(svg, PLOT.x + PLOT.w, capY, `🔍 0–${viewXMax.toFixed(2)}`, th.muted, 10, "end");
+    } else {
+      addText(svg, PLOT.x + PLOT.w, capY, "🥵 Hard", th.muted, 10, "end");
+    }
+    if (EASY_MAX < viewXMax) addText(svg, xToPx(EASY_MAX), capY + 14, "0.75", th.muted, 9, "middle");
+    if (HARD_MIN < viewXMax) addText(svg, xToPx(HARD_MIN), capY + 14, "1.50", th.muted, 9, "middle");
 
     const seriesG = ns("g");
     seriesG.setAttribute("clip-path", "url(#plot-clip)");

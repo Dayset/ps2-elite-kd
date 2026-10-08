@@ -324,3 +324,48 @@ export function applyYZoom(scale, zoom) {
   const span = Math.max((+base.hi || 2) - lo, 0.05);
   return { lo, hi: lo + span / z, log: false, zoom: z };
 }
+
+/* ---------- left-anchored zoom (slider above the middle) ---------- */
+
+/** Smallest visible X range when fully zoomed in (enemy KPM 0 → 0.25). */
+export const X_ZOOM_MIN_XMAX = 0.25;
+
+/**
+ * Right edge of the X window for a zoom factor (same factor as the slider's
+ * 2^value). z ≤ 1 → full range (X_MAX). z > 1 zooms into the LEFT start of the
+ * graph, fast: xMax = X_MAX · 2^(−1.5·log2 z) → z=2 (slider +1) ≈ 0.71,
+ * z=4 (top) = 0.25. X min always stays at 0.
+ */
+export function xMaxForZoom(zoom) {
+  const z = clampYZoom(zoom);
+  if (z <= 1) return X_MAX;
+  const s = Math.log2(z);
+  return Math.max(X_ZOOM_MIN_XMAX, Math.min(X_MAX, X_MAX * Math.pow(2, -1.5 * s)));
+}
+
+/**
+ * Projected K/D values visible in the window [0, xMax]: every valid point
+ * (deaths > 0, finite kd) with kpm ≤ xMax, plus the line's value where it
+ * crosses the right edge, so Y can re-fit to just the left side of the graph.
+ * @param {Array<Array<{kpm:number, kd:number, deaths:number}>>} curves
+ */
+export function windowYValues(curves, xMax) {
+  const out = [];
+  for (const curve of curves || []) {
+    const pts = (curve || [])
+      .filter((pt) => pt && isFiniteNum(pt.kd) && pt.deaths > 0 && isFiniteNum(pt.kpm))
+      .sort((a, b) => a.kpm - b.kpm);
+    for (let i = 0; i < pts.length; i++) {
+      const p = pts[i];
+      if (p.kpm <= xMax + 1e-9) {
+        out.push(p.kd);
+        const q = pts[i + 1];
+        if (q && q.kpm > xMax + 1e-9 && q.kpm > p.kpm) {
+          const t = (xMax - p.kpm) / (q.kpm - p.kpm);
+          out.push(p.kd + t * (q.kd - p.kd));
+        }
+      }
+    }
+  }
+  return out;
+}

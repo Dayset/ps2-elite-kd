@@ -463,3 +463,28 @@ describe("speedAdjustedIvi (⚡ ivi, multiplicative slow side)", () => {
     }
   });
 });
+
+import { xMaxForZoom, windowYValues, X_ZOOM_MIN_XMAX } from "../math.mjs";
+
+describe("left-anchored zoom (slider above the middle)", () => {
+  it("full X range at/below the middle, shrinks fast toward 0 above it", () => {
+    assert.equal(xMaxForZoom(1), X_MAX);
+    assert.equal(xMaxForZoom(0.25), X_MAX);
+    assert.ok(Math.abs(xMaxForZoom(2) - X_MAX / Math.pow(2, 1.5)) < 1e-9); // ≈ 0.71
+    assert.equal(xMaxForZoom(4), X_ZOOM_MIN_XMAX);
+    assert.equal(X_ZOOM_MIN_XMAX, 0.25);
+    assert.ok(xMaxForZoom(1.2) < X_MAX && xMaxForZoom(1.2) > xMaxForZoom(2));
+    assert.equal(xMaxForZoom(NaN), X_MAX); // invalid → default zoom 1
+  });
+  it("keeps only the left window's K/D (plus the edge crossing) so Y re-fits", () => {
+    const strong = [{ kpm: 0, kd: 4, deaths: 5 }, { kpm: 0.2, kd: 3, deaths: 5 }, { kpm: 0.4, kd: 2, deaths: 5 }, { kpm: 1.5, kd: 20, deaths: 2 }];
+    const weak = [{ kpm: 0.05, kd: 0.6, deaths: 9 }, { kpm: 0.3, kd: 0.5, deaths: 9 }, { kpm: 0.6, kd: 0.4, deaths: 0 }];
+    const v = windowYValues([strong, weak], 0.3);
+    // strong: 4, 3, edge(0.3)=2.5 ; weak: 0.6, 0.5 (exactly at edge); spike at 1.5 excluded
+    assert.deepEqual(v.map((x) => +x.toFixed(3)), [4, 3, 2.5, 0.6, 0.5]);
+    assert.ok(!v.includes(20));
+    assert.deepEqual(windowYValues([], 0.5), []);
+    const sc = yScale(v);
+    assert.ok(Number.isFinite(sc.lo) && Number.isFinite(sc.hi) && sc.hi > 4 && sc.lo < 0.5);
+  });
+});
