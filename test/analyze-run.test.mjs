@@ -235,3 +235,39 @@ describe("stats tables: pctRefFloor (🎈 Inflation reference = max(lowest, 1.0)
     assert.equal(columnRef([0.5, 0.8], "high", { floor: 1.0 }), 0.8);
   });
 });
+
+import { estimateRemainingMs, nextEtaDeadline, formatEtaLeft, ETA_PRIOR_LIVE_MS, ETA_PRIOR_CACHED_MS } from "../analyze-run.mjs";
+
+describe("progress ETA (regression: stuck at 0s after a fast cached first name)", () => {
+  it("a cached first name does not make the live names look instant", () => {
+    // JustV6me (cached, done in 50 ms), then two live fetches still to go.
+    const est = estimateRemainingMs({ plan: [false, true, true], done: 1, currentElapsedMs: 0, cachedAvgMs: 50 });
+    assert.equal(est.totalMs, 2 * ETA_PRIOR_LIVE_MS);
+    // The old single-average logic gave 50 ms × 2 = 0.1 s → "~0s left" for the whole run.
+  });
+  it("uses measured averages per kind and counts the current name down", () => {
+    const est = estimateRemainingMs({ plan: [true, true, false], done: 1, currentElapsedMs: 4000, liveAvgMs: 10000, cachedAvgMs: 200 });
+    assert.equal(est.currentMs, 6000);
+    assert.equal(est.restMs, 200);
+    assert.equal(est.totalMs, 6200);
+    assert.equal(est.overdue, false);
+    const over = estimateRemainingMs({ plan: [true, true], done: 1, currentElapsedMs: 12000, liveAvgMs: 10000 });
+    assert.equal(over.totalMs, 0);
+    assert.equal(over.overdue, true);
+    assert.equal(estimateRemainingMs({ plan: [false, false], done: 0 }).totalMs, 2 * ETA_PRIOR_CACHED_MS);
+    assert.equal(estimateRemainingMs({ plan: [true], done: 1 }).totalMs, 0);
+  });
+  it("deadline never climbs while running, re-anchors once overdue", () => {
+    assert.equal(nextEtaDeadline(0, 1000, 30000), 31000);
+    assert.equal(nextEtaDeadline(31000, 2000, 40000), 31000); // estimate grew → keep counting down
+    assert.equal(nextEtaDeadline(31000, 2000, 10000), 12000); // faster → move earlier
+    assert.equal(nextEtaDeadline(31000, 32000, 15000), 47000); // ran out with work left → re-estimate
+  });
+  it("formats with seconds rounded up, never '0s'", () => {
+    assert.equal(formatEtaLeft(400), "~1s left");
+    assert.equal(formatEtaLeft(29100), "~30s left");
+    assert.equal(formatEtaLeft(125000), "~2m 5s left");
+    assert.equal(formatEtaLeft(0), "");
+    assert.equal(formatEtaLeft(NaN), "");
+  });
+});

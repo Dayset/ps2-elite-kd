@@ -287,3 +287,60 @@ export function pctTitle(p, refLabel, dir = "high") {
 export const columnTop = (values) => columnRef(values, "high");
 export const pctFromTop = (v, top) => pctFromRef(v, top, "high");
 export const fmtPctFromTop = (p) => fmtPctFromRef(p, "high");
+
+/* ---------- progress popup ETA ---------- */
+/*
+ * Names load one by one; cached names (shared data/, browser cache, already in
+ * memory) take well under a second, live Honu/Census fetches take many seconds.
+ * The ETA therefore sums a per-name expectation by kind instead of one average:
+ * a fast cached first name must not set a ~0 s deadline for slow live names.
+ */
+export const ETA_PRIOR_LIVE_MS = 15000;
+export const ETA_PRIOR_CACHED_MS = 300;
+
+/**
+ * @param {{ plan: boolean[], done: number, currentElapsedMs?: number,
+ *           liveAvgMs?: number, cachedAvgMs?: number }} s
+ *   plan[i] = true when name i is expected to need a live fetch.
+ * @returns {{ totalMs: number, restMs: number, currentMs: number, overdue: boolean }}
+ */
+export function estimateRemainingMs({ plan, done, currentElapsedMs = 0, liveAvgMs = 0, cachedAvgMs = 0 }) {
+  const list = Array.isArray(plan) ? plan : [];
+  const total = list.length;
+  if (done >= total) return { totalMs: 0, restMs: 0, currentMs: 0, overdue: false };
+  const expect = (live) =>
+    live
+      ? liveAvgMs > 0 ? liveAvgMs : ETA_PRIOR_LIVE_MS
+      : cachedAvgMs > 0 ? cachedAvgMs : ETA_PRIOR_CACHED_MS;
+  let restMs = 0;
+  for (let i = done + 1; i < total; i++) restMs += expect(list[i]);
+  const curExp = expect(list[done]);
+  const elapsed = Math.max(0, currentElapsedMs || 0);
+  const currentMs = Math.max(0, curExp - elapsed);
+  return { totalMs: restMs + currentMs, restMs, currentMs, overdue: elapsed > curExp };
+}
+
+/**
+ * Next displayed deadline (ms epoch). The countdown never climbs while it is
+ * still running (deadline only moves earlier); once it has run out with names
+ * still loading, it re-anchors to the fresh estimate instead of sitting at 0 s.
+ */
+export function nextEtaDeadline(prevDeadline, nowMs, estimateMs) {
+  const tentative = nowMs + Math.max(0, estimateMs || 0);
+  if (!(prevDeadline > 0)) return tentative;
+  if (prevDeadline <= nowMs) return tentative; // overdue → re-estimate
+  return Math.min(prevDeadline, tentative);
+}
+
+/** "~12s left" / "~2m 5s left"; seconds round up so a running estimate never reads 0s. */
+export function formatEtaLeft(ms) {
+  if (!Number.isFinite(ms) || ms <= 0) return "";
+  const sec = Math.max(1, Math.ceil(ms / 1000));
+  if (sec < 60) return `~${sec}s left`;
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  if (m < 60) return s ? `~${m}m ${s}s left` : `~${m}m left`;
+  const h = Math.floor(m / 60);
+  const rm = m % 60;
+  return rm ? `~${h}h ${rm}m left` : `~${h}h left`;
+}

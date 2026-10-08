@@ -28,7 +28,7 @@ import {
   applyYZoom,
   clampYZoom,
   Y_ZOOM_DEFAULT,
-} from "./math.mjs?v=20261007-infl1";
+} from "./math.mjs?v=20261007-eta";
 import {
   NameLoadError,
   classifyLoadError,
@@ -45,13 +45,16 @@ import {
   pctFromRef,
   fmtPctFromRef,
   pctTitle,
-} from "./analyze-run.mjs?v=20261007-infl1";
+  estimateRemainingMs,
+  nextEtaDeadline,
+  formatEtaLeft,
+} from "./analyze-run.mjs?v=20261007-eta";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
-} from "./player-metrics.mjs?v=20261007-infl1";
+} from "./player-metrics.mjs?v=20261007-eta";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261007-infl1";
+import "./name-peek.mjs?v=20261007-eta";
 
   const COLORS = [
     "#9fd4ee", "#ff7a7a", "#ffd166", "#8ef0b0", "#e8b0ff",
@@ -171,9 +174,14 @@ import "./name-peek.mjs?v=20261007-infl1";
   let progressStartedAt = 0;
   let progressDoneCount = 0;
   let progressTotalCount = 0;
-  /** Frozen avg ms/name; updated only when done increases. */
-  let progressAvgPerMs = 0;
-  /** Absolute ETA deadline (ms epoch). Counts down each tick; never extended mid-run. */
+  /** plan[i] = name i expected to need a live fetch (vs cached). Set at run start. */
+  let progressPlan = [];
+  /** When the name currently loading started (ms epoch). */
+  let progressCurrentStartedAt = 0;
+  /** Measured per-name durations by kind (ETA uses their averages). */
+  let progressLiveMs = [];
+  let progressCachedMs = [];
+  /** Absolute ETA deadline (ms epoch). Moves earlier while running; re-anchors when overdue. */
   let progressEtaDeadline = 0;
   let progressTickTimer = null;
   /** Visual bar % (creeps forward for hope; snaps up on real done/total). */
@@ -340,26 +348,21 @@ import "./name-peek.mjs?v=20261007-infl1";
     return `${m}:${String(s).padStart(2, "0")}`;
   }
 
-  function formatRemaining(ms) {
-    if (!Number.isFinite(ms) || ms < 0) return "";
-    const sec = Math.max(0, Math.floor(ms / 1000));
-    if (sec < 60) return `~${sec}s left`;
-    const m = Math.floor(sec / 60);
-    const s = sec % 60;
-    if (m < 60) return s ? `~${m}m ${s}s left` : `~${m}m left`;
-    const h = Math.floor(m / 60);
-    const rm = m % 60;
-    return rm ? `~${h}h ${rm}m left` : `~${h}h left`;
-  }
+  const avgMs = (arr) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0);
 
-  /**
-   * Remaining from a frozen deadline. Always non-increasing between deadline updates.
-   * @param {number} deadlineMs
-   * @param {number} nowMs
-   */
-  function etaRemainingMs(deadlineMs, nowMs) {
-    if (!(deadlineMs > 0)) return NaN;
-    return Math.max(0, deadlineMs - nowMs);
+  /** Recompute the ETA deadline from the plan + measured per-kind averages. */
+  function updateEtaDeadline(now) {
+    if (!progressStartedAt || progressTotalCount <= 0) return;
+    const plan =
+      progressPlan.length === progressTotalCount ? progressPlan : new Array(progressTotalCount).fill(true);
+    const est = estimateRemainingMs({
+      plan,
+      done: progressDoneCount,
+      currentElapsedMs: now - (progressCurrentStartedAt || progressStartedAt),
+      liveAvgMs: avgMs(progressLiveMs),
+      cachedAvgMs: avgMs(progressCachedMs),
+    });
+    progressEtaDeadline = nextEtaDeadline(progressEtaDeadline, now, est.totalMs);
   }
 
   function stopProgressTick() {
@@ -416,13 +419,12 @@ import "./name-peek.mjs?v=20261007-infl1";
     const elapsedStr = `Elapsed ${formatClock(elapsed)}`;
     let remainStr = "";
     const left = progressTotalCount - progressDoneCount;
-    if (progressTotalCount > 0 && progressDoneCount >= progressTotalCount) {
+    if (progressTotalCount > 0 && left <= 0) {
       remainStr = "Almost done…";
-    } else if (progressEtaDeadline > 0 && left > 0) {
-      const remain = etaRemainingMs(progressEtaDeadline, now);
-      remainStr = remain > 0 ? formatRemaining(remain) : "~0s left";
     } else if (progressTotalCount > 0) {
-      remainStr = "Estimating…";
+      updateEtaDeadline(now);
+      // Last name running past its estimate → "Almost done…" rather than a stuck "0s".
+      remainStr = formatEtaLeft(progressEtaDeadline - now) || "Almost done…";
     }
     els.progressTiming.textContent = remainStr ? `${elapsedStr} · ${remainStr}` : elapsedStr;
   }
@@ -447,7 +449,10 @@ import "./name-peek.mjs?v=20261007-infl1";
       progressStartedAt = 0;
       progressDoneCount = 0;
       progressTotalCount = 0;
-      progressAvgPerMs = 0;
+      progressPlan = [];
+      progressCurrentStartedAt = 0;
+      progressLiveMs = [];
+      progressCachedMs = [];
       progressEtaDeadline = 0;
       progressDisplayPct = 0;
       if (els.progressText) els.progressText.textContent = "";
@@ -472,28 +477,22 @@ import "./name-peek.mjs?v=20261007-infl1";
     const freshRun = !progressStartedAt;
     if (freshRun) {
       progressStartedAt = now;
-      progressAvgPerMs = 0;
+      progressCurrentStartedAt = now;
+      progressLiveMs = [];
+      progressCachedMs = [];
       progressEtaDeadline = 0;
       progressDisplayPct = 0; // always start the bar at zero
     }
+    if (Array.isArray(opts.plan)) progressPlan = opts.plan.slice();
     progressDoneCount = done;
     progressTotalCount = total;
-    // Recalc avg when a name completes. Deadline = now + avg*left, but never extend
-    // an existing deadline so the displayed remaining cannot climb mid-run.
+    // A name finished: record its duration by kind (cached vs live) for the ETA.
     if (done > prevDone && done > 0) {
-      progressAvgPerMs = (now - progressStartedAt) / done;
-      const left = Math.max(0, total - done);
-      if (left > 0 && progressAvgPerMs > 0) {
-        const tentative = now + progressAvgPerMs * left;
-        // Once set, deadline only moves earlier — remaining never climbs mid-run
-        // (including after an overdue/~0s stretch).
-        progressEtaDeadline =
-          progressEtaDeadline > 0
-            ? Math.min(progressEtaDeadline, tentative)
-            : tentative;
-      } else {
-        progressEtaDeadline = now;
+      for (let i = prevDone; i < done; i++) {
+        const took = (now - (progressCurrentStartedAt || progressStartedAt)) / (done - prevDone);
+        (progressPlan[i] === false ? progressCachedMs : progressLiveMs).push(took);
       }
+      progressCurrentStartedAt = now;
     }
 
     // Real progress floor: 0/2→0%, 1/2→50%, 2/2→100%. Bar never goes backwards.
@@ -2639,6 +2638,8 @@ import "./name-peek.mjs?v=20261007-infl1";
     updateUnderLoadNotice();
     setStatus(`Analyzing ${clean.length} player${clean.length > 1 ? "s" : ""}…`);
 
+    // ETA plan: which names will need a live Honu/Census fetch (vs cached / in memory).
+    const etaPlan = clean.map((n) => fresh || !isNameFetched(n));
     let result = { loaded: [], failed: [], cancelled: false };
     try {
       result = await loadEach(
@@ -2664,7 +2665,7 @@ import "./name-peek.mjs?v=20261007-infl1";
         {
           isCancelled: cancelled,
           onStart: (name, idx, total) => {
-            setProgress(true, { title: "Analyzing…", done: idx, total, name });
+            setProgress(true, { title: "Analyzing…", done: idx, total, name, plan: etaPlan });
           },
           // Success or failure, the name counts as done so the bar/ETA advance.
           onDone: (name, idx, total) => {
