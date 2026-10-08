@@ -18,7 +18,7 @@ Prefer a local server (`file://` often blocks `fetch` of JSON).
 
 1. Type names; **space** or **comma** locks a chip (click a chip to remove). Green = cached / analyzed; amber = not fetched yet. On narrow portrait phones (≤600px) the chips stack one name per line; wider screens and landscape keep them inline.
 2. Press **Analyze** (or Enter). Clear names with **×**.
-3. The square **🔗** button (same height as Analyze) copies a `?names=…` share link; it flashes ✓ when copied.
+3. The square **🔗** button (same height as Analyze) copies a `?names=…` share link; it flashes ✓ when copied. Opening that link **auto-runs Analyze** once the page is ready — friends land straight on the graph (see *Sharing* below).
 4. **☀️ Light / 🌙 Dark** toggles a creamy haze light theme (~15% white).
 5. **Fetch fresh data** skips caches and hits Census + Honu live. Unchecked on every load.
 
@@ -29,6 +29,12 @@ Lookup order per name:
 3. Live Census + Honu when network/CORS allow
 
 Max 10 names. Deep link: `?names=JustV6me,ChrisJTTR`.
+
+### Sharing
+
+- A URL with `?names=…` (what **🔗** copies) **auto-runs Analyze** after the page and shared-cache index load — exactly like pressing 🔍 Analyze: progress popup with countdown and abort ×, skipped-name warning for names that don't exist (the rest are still graphed), then a smooth scroll to the results.
+- More than 10 names in the link → the first 10 become chips and are analysed; the "10 players limit reached" hint stays visible.
+- The auto-run never uses **Fetch fresh data** (forced off), runs once (no repeat if the same set is already graphed or the user already started a run), and does **not** happen on a plain URL — the last comparison restored from localStorage only fills the chips and waits for Analyze.
 
 ## Layout
 

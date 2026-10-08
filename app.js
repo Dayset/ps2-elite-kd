@@ -30,7 +30,7 @@ import {
   Y_ZOOM_DEFAULT,
   xMaxForZoom,
   windowYValues,
-} from "./math.mjs?v=20261008-phbtn";
+} from "./math.mjs?v=20261008-autorun";
 import {
   NameLoadError,
   classifyLoadError,
@@ -50,13 +50,13 @@ import {
   estimateRemainingMs,
   nextEtaDeadline,
   formatEtaLeft,
-} from "./analyze-run.mjs?v=20261008-phbtn";
+} from "./analyze-run.mjs?v=20261008-autorun";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
-} from "./player-metrics.mjs?v=20261008-phbtn";
+} from "./player-metrics.mjs?v=20261008-autorun";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261008-phbtn";
+import "./name-peek.mjs?v=20261008-autorun";
 
   const COLORS = [
     "#9fd4ee", "#ff7a7a", "#ffd166", "#8ef0b0", "#e8b0ff",
@@ -2997,24 +2997,45 @@ import "./name-peek.mjs?v=20261008-phbtn";
 
   /* ---------- events ---------- */
 
+  /** The 🔍 Analyze action (button, placeholder image, shared-link auto-run). */
+  function runAnalyzeFromUi() {
+    collapseSharedCache();
+    const { rejected } = commitFragment({ clearInput: true });
+    if (rejected.length) {
+      // Field is full and extra text is waiting: warn instead of eating it or
+      // showing "graph is ready".
+      showLimitHint();
+      return Promise.resolve();
+    }
+    let names = currentNamesInField();
+    if (!names.length) {
+      // Empty field → default to ShloDog and show it as a chip
+      setNameTokens([DEFAULT_PLACEHOLDER_NAME]);
+      names = [DEFAULT_PLACEHOLDER_NAME];
+    }
+    return analyzeNames(names);
+  }
+
   if (els.analyzeBtn) {
     els.analyzeBtn.addEventListener("click", () => {
-      collapseSharedCache();
-      const { rejected } = commitFragment({ clearInput: true });
-      if (rejected.length) {
-        // Field is full and extra text is waiting: warn instead of eating it or
-        // showing "graph is ready".
-        showLimitHint();
-        return;
-      }
-      let names = currentNamesInField();
-      if (!names.length) {
-        // Empty field → default to ShloDog and show it as a chip
-        setNameTokens([DEFAULT_PLACEHOLDER_NAME]);
-        names = [DEFAULT_PLACEHOLDER_NAME];
-      }
-      analyzeNames(names);
+      runAnalyzeFromUi();
     });
+  }
+
+  /**
+   * Shared link (?names=… in the URL): run Analyze once by itself so a friend
+   * opening the link lands on the graph. Never for a localStorage-only restore,
+   * never with "Fetch fresh", and never on top of a run the user already started
+   * (analyzeNames' "graph is ready" check also stops a repeat of the same set).
+   * More than 10 names → the first 10 run and the limit hint stays visible.
+   */
+  async function autoRunFromLink(startup) {
+    if (!startup || startup.reason !== "url" || !startup.names.length) return;
+    if (fetching || activeRun || players.length) return;
+    if (els.fetchFresh) els.fetchFresh.checked = false;
+    const overLimit = startup.names.length > MAX_NAMES;
+    await runAnalyzeFromUi();
+    if (overLimit && els.status && !String(els.status.textContent || "").trim()) showLimitHint();
   }
 
   // Placeholder image (before any analysis): its centre button — and a click
@@ -3234,4 +3255,6 @@ import "./name-peek.mjs?v=20261008-phbtn";
     showIdleChart("🔍 Analyze");
     // No idle "Ready — press Analyze" line; the status area only shows progress / errors
     // (and the limit hint if ?names= had more than 10).
+    // Opened from a shared 🔗 link → draw the graph without a click.
+    await autoRunFromLink(startup);
   })();
