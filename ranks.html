@@ -13,7 +13,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261008-back2" />
+  <link rel="stylesheet" href="styles.css?v=20261008-jump" />
   <style>
     /* Ranks page: one long sortable table of every cached player. */
     body.ranks-page { overflow-x: hidden; }
@@ -43,7 +43,17 @@
     }
     .ranks-toolbar .ranks-compare:hover { background: #8cc4ff; border-color: #8cc4ff; }
     .ranks-toolbar .ranks-compare:disabled { opacity: 0.45; cursor: not-allowed; }
-    .ranks-toolbar .ranks-picked { color: var(--dim); font-size: 0.85rem; min-width: 5.5rem; }
+    .ranks-toolbar .ranks-picked { color: var(--dim); font-size: 0.85rem; min-width: 3.2rem; }
+    /* ✕ Clear: untick every checked player (picks are remembered across reloads) */
+    .ranks-toolbar .ranks-clear-picks {
+      font: inherit; font-size: 0.85rem; font-weight: 600;
+      height: 2rem; padding: 0 0.7rem; border-radius: 999px;
+      border: 1px solid var(--border); background: var(--ctrl-btn-bg); color: var(--muted);
+      cursor: pointer; -webkit-tap-highlight-color: transparent;
+    }
+    .ranks-toolbar .ranks-clear-picks:hover, .ranks-toolbar .ranks-clear-picks:focus-visible { border-color: var(--accent); color: var(--text); background: var(--ctrl-btn-hover); }
+    .ranks-toolbar .ranks-clear-picks:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .ranks-toolbar .ranks-clear-picks[hidden] { display: none; }
     .ranks-toolbar .theme-toggle { margin-left: auto; }
     /* ‹ 🔍 back to player search: big pill, same height as the search box */
     .back-btn {
@@ -98,44 +108,6 @@
     footer .footer-row .footer-left { display: inline-flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
     footer .back-btn { font-size: 1.15rem; }
 
-    /* ⬆ / ⬇ quick jumps (fixed bottom-right; shown after ~1 screen of scrolling) */
-    .jump-btns {
-      position: fixed; z-index: 30;
-      right: max(12px, env(safe-area-inset-right));
-      bottom: max(14px, env(safe-area-inset-bottom));
-      display: flex; flex-direction: column; gap: 0.45rem;
-      pointer-events: none;
-    }
-    .jump-btn {
-      position: relative;
-      pointer-events: auto;
-      width: 2.75rem; height: 2.75rem; border-radius: 50%;
-      display: inline-flex; align-items: center; justify-content: center;
-      border: 2px solid var(--border); background: var(--ctrl-btn-bg); color: var(--accent);
-      box-shadow: 0 4px 14px var(--shadow);
-      cursor: pointer; padding: 0;
-      -webkit-tap-highlight-color: transparent;
-      transition: opacity 0.15s ease, transform 0.15s ease, border-color 0.12s ease, background-color 0.12s ease;
-    }
-    .jump-btn[hidden] { display: none; }
-    .jump-btn svg { display: block; }
-    .jump-btn:hover, .jump-btn:focus-visible { border-color: var(--accent); background: var(--ctrl-btn-hover); }
-    .jump-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-    .jump-btn:active { transform: scale(0.94); }
-    .jump-btn::after {
-      content: attr(data-hint);
-      position: absolute; right: calc(100% + 8px); top: 50%; transform: translate(3px, -50%);
-      white-space: nowrap; padding: 0.25rem 0.55rem; border-radius: 6px;
-      font-size: 0.78rem; font-weight: 600;
-      background: var(--bg); color: var(--text); border: 1px solid var(--accent);
-      box-shadow: 0 4px 14px var(--shadow);
-      opacity: 0; visibility: hidden; pointer-events: none;
-      transition: opacity 0.12s ease, transform 0.12s ease, visibility 0s linear 0.12s;
-    }
-    @media (hover: hover) and (pointer: fine) {
-      .jump-btn:hover::after { opacity: 1; visibility: visible; transform: translate(0, -50%); transition: opacity 0.12s ease 0.15s, transform 0.12s ease 0.15s, visibility 0s; }
-    }
-    .jump-btn:focus-visible::after { opacity: 1; visibility: visible; transform: translate(0, -50%); }
     .ranks-status { min-height: 1.35rem; margin: 0 0 0.5rem; font-size: 0.9rem; }
     .ranks-status:empty { display: none; }
 
@@ -248,6 +220,7 @@
       <input id="ranksSearch" type="search" placeholder="Filter names…" aria-label="Filter player names" autocomplete="off" spellcheck="false" />
       <button id="ranksCompare" type="button" class="ranks-compare" disabled title="Open the main page with the checked players (up to 10)">Compare</button>
       <span id="ranksPicked" class="ranks-picked" aria-live="polite">0 / 10</span>
+      <button id="ranksClearPicks" type="button" class="ranks-clear-picks" hidden title="Untick all checked players" aria-label="Clear checked players">✕ Clear</button>
       <button id="themeToggle" type="button" class="theme-toggle" title="Toggle light / dark theme" aria-label="Toggle light / dark theme">☀️ Light</button>
     </div>
     <div id="ranksStatus" class="ranks-status" role="status"></div>
@@ -286,15 +259,12 @@
     <p>Thanks to <a href="https://wt.honu.pw/" target="_blank" rel="noopener noreferrer">HONU</a> / Varunda</p>
   </footer>
 
-  <div class="jump-btns" aria-label="Quick jump">
-    <button type="button" id="jumpTop" class="jump-btn" hidden aria-label="Top" data-hint="Top"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M5 15 12 8l7 7" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-    <button type="button" id="jumpBottom" class="jump-btn" hidden aria-label="Bottom" data-hint="Bottom"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M5 9l7 7 7-7" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-  </div>
 
   <script type="module">
-    import "./name-peek.mjs?v=20261008-back2";
-    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits } from "./dist.mjs?v=20261008-back2";
-    import { paletteColor } from "./palette.mjs?v=20261008-back2";
+    import "./name-peek.mjs?v=20261008-jump";
+    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits } from "./dist.mjs?v=20261008-jump";
+    import { paletteColor } from "./palette.mjs?v=20261008-jump";
+    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261008-jump";
 
     const LS_THEME = "ps2-elite-kd-theme";
     const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";
@@ -382,7 +352,27 @@
     let sortKey = "adjs";
     let sortDir = "desc"; // Inflation starts asc on first click
     let filter = "";
-    const picked = new Map(); // query → display
+    const picked = new Map(); // query → display (remembered across reloads)
+    const LS_PICKS = "ps2-elite-kd-ranks-picked";
+    function savePicks() {
+      try {
+        if (picked.size) localStorage.setItem(LS_PICKS, JSON.stringify([...picked.keys()]));
+        else localStorage.removeItem(LS_PICKS);
+      } catch {}
+    }
+    /** Re-tick saved picks that still exist in ranks.json (pick order, max 10). */
+    function restorePicks() {
+      let saved = [];
+      try { saved = JSON.parse(localStorage.getItem(LS_PICKS) || "[]"); } catch {}
+      if (!Array.isArray(saved) || !data) return;
+      const byQ = new Map(data.rows.map((r) => [r.query, r]));
+      for (const q of saved) {
+        if (picked.size >= MAX_NAMES) break;
+        const r = typeof q === "string" && byQ.get(q);
+        if (r) picked.set(q, r.name);
+      }
+      savePicks(); // drop vanished / over-limit entries
+    }
 
     function colList() {
       return showDebug ? VISIBLE.concat(DEBUG) : VISIBLE.slice();
@@ -537,6 +527,7 @@
     function syncPickedUi() {
       $("ranksPicked").textContent = `${picked.size} / ${MAX_NAMES}`;
       $("ranksCompare").disabled = picked.size === 0;
+      $("ranksClearPicks").hidden = picked.size === 0;
     }
 
     function showLimitToast() {
@@ -865,6 +856,7 @@
       } else {
         picked.delete(q);
       }
+      savePicks();
       // Re-enable / disable unchecked boxes without a full re-render.
       const full = picked.size >= MAX_NAMES;
       $("ranksBody").querySelectorAll('input[type="checkbox"]').forEach((cb) => {
@@ -889,12 +881,11 @@
       if (!e.target.closest || !e.target.closest("#distChart")) hideTip();
     });
 
-    /* ---------- ⬆ / ⬇ quick jumps ----------
+    /* ---------- ⬆ / ⬇ quick jumps (shared module jump-btns.mjs) ----------
      * The rankings list scrolls inside its own box (sticky header / columns), and
      * the page scrolls around it. ⬆ = top of both, ⬇ = bottom of both (last
      * player + footer). Shown after ~1 screen of scrolling; ⬇ hides at the end. */
     const tableScroll = $("ranksScroll");
-    const reduceMotion = () => window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     function jumpState() {
       const vh = window.innerHeight || 800;
       const doc = document.documentElement;
@@ -903,38 +894,24 @@
       const t = tableScroll;
       const tMax = t ? Math.max(0, t.scrollHeight - t.clientHeight) : 0;
       const tY = t ? t.scrollTop : 0;
-      const scrolled = pageY + tY; // combined distance travelled
       const nearEnd = pageY >= pageMax - 40 && tY >= tMax - 40;
-      return { show: scrolled > vh * 0.9, nearEnd };
+      return jumpButtonsVisible({ scrolled: pageY + tY, viewport: vh, nearEnd });
     }
-    let jumpRaf = 0;
-    function syncJumpBtns() {
-      jumpRaf = 0;
-      const st = jumpState();
-      $("jumpTop").hidden = !st.show;
-      $("jumpBottom").hidden = !st.show || st.nearEnd;
-    }
-    const queueJumpSync = () => { if (!jumpRaf) jumpRaf = requestAnimationFrame(syncJumpBtns); };
-    window.addEventListener("scroll", queueJumpSync, { passive: true });
-    window.addEventListener("resize", queueJumpSync, { passive: true });
-    if (tableScroll) tableScroll.addEventListener("scroll", queueJumpSync, { passive: true });
     function jumpTo(end) {
-      const behavior = reduceMotion() ? "auto" : "smooth";
-      const doc = document.documentElement;
-      if (tableScroll) {
-        const target = end ? Math.max(0, tableScroll.scrollHeight - tableScroll.clientHeight) : 0;
-        // Long list: hop to ~1 box-height from the target, then glide the rest
-        // (a smooth scroll across ~1300 rows takes seconds).
-        const near = tableScroll.clientHeight;
-        if (behavior === "smooth" && Math.abs(tableScroll.scrollTop - target) > near * 3) {
-          tableScroll.scrollTop = end ? target - near : near;
-        }
-        tableScroll.scrollTo({ top: target, behavior });
-      }
-      window.scrollTo({ top: end ? doc.scrollHeight : 0, behavior });
+      const behavior = scrollBehavior();
+      if (tableScroll) glideTo(tableScroll, end ? Math.max(0, tableScroll.scrollHeight - tableScroll.clientHeight) : 0, behavior);
+      window.scrollTo({ top: end ? document.documentElement.scrollHeight : 0, behavior });
     }
-    $("jumpTop").addEventListener("click", () => jumpTo(false));
-    $("jumpBottom").addEventListener("click", () => jumpTo(true));
+    mountJumpButtons({ state: jumpState, jump: jumpTo, scrollers: [tableScroll], ids: { top: "jumpTop", bottom: "jumpBottom" } });
+
+    $("ranksClearPicks").addEventListener("click", () => {
+      picked.clear();
+      savePicks();
+      $("ranksBody").querySelectorAll('input[type="checkbox"]').forEach((cb) => { cb.checked = false; cb.disabled = false; });
+      syncPickedUi();
+      drawDist();
+      $("ranksSearch").focus({ preventScroll: true });
+    });
 
     $("ranksCompare").addEventListener("click", () => {
       if (!picked.size) return;
@@ -949,6 +926,8 @@
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const payload = await res.json();
       rebuildIndex(payload);
+      restorePicks();
+      syncPickedUi();
       $("ranksStatus").textContent = "";
       fillMetricSelect();
       render();

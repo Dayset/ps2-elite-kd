@@ -30,7 +30,7 @@ import {
   Y_ZOOM_DEFAULT,
   xMaxForZoom,
   windowYValues,
-} from "./math.mjs?v=20261008-back2";
+} from "./math.mjs?v=20261008-jump";
 import {
   NameLoadError,
   classifyLoadError,
@@ -41,6 +41,8 @@ import {
   compareByCharName,
   groupByCharName,
   alphabetJumpLetters,
+  namesListKey,
+  resolveStartupSelection,
   shouldShowGraphReady,
   forgetFailures,
   honuProfileUrl,
@@ -51,14 +53,16 @@ import {
   estimateRemainingMs,
   nextEtaDeadline,
   formatEtaLeft,
-} from "./analyze-run.mjs?v=20261008-back2";
+} from "./analyze-run.mjs?v=20261008-jump";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
-} from "./player-metrics.mjs?v=20261008-back2";
+} from "./player-metrics.mjs?v=20261008-jump";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261008-back2";
-import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261008-back2";
+import "./name-peek.mjs?v=20261008-jump";
+import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261008-jump";
+// ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
+import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261008-jump";
 
   // Player palettes (dark + light theme) live in palette.mjs (shared with ranks.html).
   const COLORS = PALETTE_DARK;
@@ -79,6 +83,8 @@ import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette
   const LS_CACHE_OLD = "ps2-elite-kd-cache-v1";
   const LS_RECENT = "ps2-elite-kd-recent";
   const LS_LAST = "ps2-elite-kd-last";
+  // Current name chips (analyzed or not) so a refresh keeps the selection.
+  const LS_PENDING = "ps2-elite-kd-pending-names";
   const LS_THEME = "ps2-elite-kd-theme";
   /** "1" = show older debug columns in the Adjusted table (footer checkbox). */
   const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";
@@ -1006,6 +1012,23 @@ import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette
     return list.filter((s) => typeof s === "string" && s.trim());
   }
 
+  /*
+   * Keep the field's chips across a refresh: saved on every change (incl. an
+   * empty list after × / 🗑️, so a cleared field stays cleared). `base` = the
+   * ?names= in the address bar at save time, so edits made on top of an
+   * analyzed (URL-synced) comparison come back after its auto-run.
+   * Off until startup has restored the field (no clobbering while loading).
+   */
+  let persistNamesOn = false;
+  function persistPendingNames() {
+    if (!persistNamesOn) return;
+    writeJsonLS(LS_PENDING, { names: nameTokens.slice(0, MAX_NAMES), base: namesListKey(namesFromQuery() || []) });
+  }
+  function getPendingNames() {
+    const v = readJsonLS(LS_PENDING, null);
+    return v && typeof v === "object" && Array.isArray(v.names) ? v : null;
+  }
+
   /** Clear name chips + trailing input text only; leave localStorage cache intact. */
   function clearNamesFromInput() {
     nameTokens = [];
@@ -1053,6 +1076,7 @@ import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette
       LS_CACHE_OLD,
       LS_RECENT,
       LS_LAST,
+      LS_PENDING,
       LS_THEME,
       LS_FETCHING,
     ]) {
@@ -1262,6 +1286,7 @@ import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette
   function renderNameTokens() {
     clearGraphReadyHint();
     if (nameTokens.length < MAX_NAMES) clearLimitHint();
+    persistPendingNames(); // every chip change goes through here
     if (!els.nameTokensEl) return;
     els.nameTokensEl.innerHTML = "";
     nameTokens.forEach((name) => {
@@ -1409,12 +1434,59 @@ import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette
     window.scrollTo({ top: Math.max(0, top), behavior: reduce ? "auto" : "smooth" });
   }
 
+  /* ⬆ / ⬇ quick jumps for the shared-cache A–Z names list: shown while the
+   * open list is on screen and the user has scrolled into it (~1 screen down);
+   * ⬆ = list top (its alphabet bar), ⬇ = end of the list. */
+  let cacheJump = null;
+  function sharedCacheParts() {
+    const d = els.cacheChips && els.cacheChips.querySelector("details.cache-shared");
+    const list = d && d.querySelector(".cache-shared-chips");
+    return d && list ? { details: d, list } : null;
+  }
+  function cacheJumpState() {
+    const p = sharedCacheParts();
+    if (!p || !p.details.open) return { top: false, bottom: false };
+    const r = p.list.getBoundingClientRect();
+    return sectionJumpState({
+      open: true,
+      listTop: r.top,
+      listBottom: r.bottom,
+      viewport: window.innerHeight || 800,
+      pageY: window.scrollY || document.documentElement.scrollTop || 0,
+    });
+  }
+  function cacheJumpTo(end) {
+    const p = sharedCacheParts();
+    if (!p) return;
+    const y = window.scrollY || document.documentElement.scrollTop || 0;
+    const vh = window.innerHeight || 800;
+    const maxY = Math.max(0, document.documentElement.scrollHeight - vh);
+    const target = end
+      ? y + p.list.getBoundingClientRect().bottom - vh + 24 // last names just above the screen bottom
+      : y + p.details.getBoundingClientRect().top - 8; // summary + sticky alphabet bar at the top
+    glideTo(null, Math.round(Math.min(maxY, Math.max(0, target))), scrollBehavior());
+  }
+  function syncCacheJump() {
+    if (typeof document === "undefined" || !els.cacheChips) return;
+    if (!cacheJump) {
+      cacheJump = mountJumpButtons({
+        state: cacheJumpState,
+        jump: cacheJumpTo,
+        ids: { top: "cacheJumpTop", bottom: "cacheJumpBottom" },
+        topLabel: "Top of the shared cache list",
+        bottomLabel: "End of the shared cache list",
+        groupLabel: "Shared cache quick jump",
+      });
+    }
+    cacheJump.sync();
+  }
+
   function renderCacheChips() {
     if (!els.cacheChips) return;
     const cached = listCachedNames();
     const inField = currentNamesInField();
     els.cacheChips.innerHTML = "";
-    if (!cached.length) return;
+    if (!cached.length) { syncCacheJump(); return; }
 
     function sortAlpha(items) {
       // By character name only — a leading "[TAG] " doesn't affect order.
@@ -1450,6 +1522,7 @@ import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette
       if (sharedCacheWantOpen) details.open = true;
       details.addEventListener("toggle", () => {
         sharedCacheWantOpen = details.open;
+        syncCacheJump(); // hide ⬆/⬇ when collapsed
       });
       const summary = document.createElement("summary");
       summary.textContent = `📦 Shared cache (${shared.length})`;
@@ -1473,6 +1546,7 @@ import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette
       details.appendChild(inner);
       els.cacheChips.appendChild(details);
     }
+    syncCacheJump();
 
     if (browser.length) {
       const label = document.createElement("span");
@@ -3017,11 +3091,13 @@ import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette
   }
 
   function resolveStartupNames() {
-    const fromQuery = namesFromQuery();
-    if (fromQuery) return { names: fromQuery, reason: "url" };
-    const last = getLastComparison();
-    if (last && last.length) return { names: last, reason: "last" };
-    return { names: DEFAULT_NAMES.slice(), reason: "empty" };
+    // ?names= (auto-runs) → saved field (no auto-run) → last comparison → empty.
+    return resolveStartupSelection({
+      urlNames: namesFromQuery(),
+      pending: getPendingNames(),
+      last: getLastComparison(),
+      defaults: DEFAULT_NAMES,
+    });
   }
 
   /* ---------- events ---------- */
@@ -3181,6 +3257,7 @@ import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette
       // the saved last comparison.
       syncUrlNames([]);
       forgetLastComparison();
+      persistPendingNames(); // saved field = [] (refresh after clear stays empty)
       setStatus("");
       if (els.namesInput) els.namesInput.focus();
     });
@@ -3285,5 +3362,13 @@ import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette
     // No idle "Ready — press Analyze" line; the status area only shows progress / errors
     // (and the limit hint if ?names= had more than 10).
     // Opened from a shared 🔗 link → draw the graph without a click.
-    await autoRunFromLink(startup);
+    try {
+      await autoRunFromLink(startup);
+    } finally {
+      // Refresh after analyzing + picking more names: the URL re-draws the
+      // analyzed graph, then the field gets the unsaved picks back.
+      if (startup.restoreAfter) setNameTokens(startup.restoreAfter);
+      persistNamesOn = true;
+      persistPendingNames();
+    }
   })();

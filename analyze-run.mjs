@@ -357,3 +357,39 @@ export function formatEtaLeft(ms) {
   const rm = m % 60;
   return rm ? `~${h}h ${rm}m left` : `~${h}h left`;
 }
+
+/** Case / whitespace-insensitive key of a names list (order matters: it is the chart order). */
+export function namesListKey(list) {
+  return (Array.isArray(list) ? list : [])
+    .map((s) => String(s == null ? "" : s).trim().toLowerCase())
+    .filter(Boolean)
+    .join(",");
+}
+
+/**
+ * Which names fill the field on page load (index.html).
+ *   urlNames : ?names= list (shared link or our own synced URL) or null
+ *   pending  : saved field { names: [...], base: "<names key of ?names= when saved>" } or null
+ *   last     : saved last analyzed comparison or null
+ * Precedence: ?names= wins (and auto-runs). If the saved field was edited on
+ * top of this very URL (base matches) and differs from it, those edits come
+ * back after the auto-run (`restoreAfter`). Without ?names=, the saved field
+ * is restored as-is (even empty after a clear) without auto-running; then the
+ * last comparison; then `defaults`.
+ */
+export function resolveStartupSelection({ urlNames = null, pending = null, last = null, defaults = [] } = {}) {
+  const clean = (list) =>
+    Array.isArray(list) ? list.filter((s) => typeof s === "string" && s.trim()).map((s) => s.trim()) : null;
+  const url = clean(urlNames);
+  const saved = pending && typeof pending === "object" ? clean(pending.names) : null;
+  if (url && url.length) {
+    const urlKey = namesListKey(url);
+    const restoreAfter =
+      saved && String(pending.base || "") === urlKey && namesListKey(saved) !== urlKey ? saved : null;
+    return { names: url, reason: "url", restoreAfter };
+  }
+  if (saved) return { names: saved, reason: "saved", restoreAfter: null };
+  const lastList = clean(last);
+  if (lastList && lastList.length) return { names: lastList, reason: "last", restoreAfter: null };
+  return { names: (defaults || []).slice(), reason: "empty", restoreAfter: null };
+}

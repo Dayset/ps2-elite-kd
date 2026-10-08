@@ -287,3 +287,32 @@ d2("alphabetJumpLetters", () => {
     assert2.equal(alphabetJumpLetters([]).filter((x) => x.enabled).length, 0);
   });
 });
+
+import { namesListKey, resolveStartupSelection } from "../analyze-run.mjs";
+
+it("namesListKey: case/space-insensitive, order kept", () => {
+  assert.equal(namesListKey([" ShloDog ", "Abc", ""]), "shlodog,abc");
+  assert.equal(namesListKey(null), "");
+});
+
+it("resolveStartupSelection: ?names= wins; saved field restored without URL", () => {
+  // shared link, nothing saved
+  assert.deepEqual(resolveStartupSelection({ urlNames: ["A", "B"] }), { names: ["A", "B"], reason: "url", restoreAfter: null });
+  // own URL (analyzed A,B) + picked C afterwards → auto-run A,B, then restore A,B,C
+  assert.deepEqual(
+    resolveStartupSelection({ urlNames: ["A", "B"], pending: { names: ["A", "B", "C"], base: "a,b" } }),
+    { names: ["A", "B"], reason: "url", restoreAfter: ["A", "B", "C"] }
+  );
+  // friend's link (different URL than the saved base) → link only
+  assert.equal(resolveStartupSelection({ urlNames: ["X"], pending: { names: ["A"], base: "a,b" } }).restoreAfter, null);
+  // saved equals URL → nothing extra
+  assert.equal(resolveStartupSelection({ urlNames: ["A", "B"], pending: { names: ["a", "b"], base: "a,b" } }).restoreAfter, null);
+  // no URL: saved field (even empty after clear) beats last comparison
+  assert.deepEqual(resolveStartupSelection({ pending: { names: ["C", "D"], base: "" }, last: ["A"] }), { names: ["C", "D"], reason: "saved", restoreAfter: null });
+  assert.deepEqual(resolveStartupSelection({ pending: { names: [], base: "" }, last: ["A"] }), { names: [], reason: "saved", restoreAfter: null });
+  // nothing saved → last → defaults
+  assert.deepEqual(resolveStartupSelection({ last: ["A"] }).names, ["A"]);
+  assert.deepEqual(resolveStartupSelection({ defaults: [] }), { names: [], reason: "empty", restoreAfter: null });
+  // junk in storage is ignored
+  assert.equal(resolveStartupSelection({ pending: { names: "nope" }, last: ["A"] }).reason, "last");
+});
