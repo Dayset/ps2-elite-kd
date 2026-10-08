@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>PS2 Elite K/D — opposition-weighted curve</title>
   <meta name="description" content="PlanetSide 2 elite K/D vs enemy weapon KPM comparison chart" />
-  <link rel="stylesheet" href="styles.css?v=20261008-zoom" />
+  <link rel="stylesheet" href="styles.css?v=20261008-phbtn" />
 </head>
 <body>
   <div class="controls">
@@ -70,13 +70,13 @@
              aria-orientation="vertical" />
       <button type="button" id="yZoomReset" class="chart-y-zoom-reset" title="Reset zoom to auto-fit (full graph)">Auto</button>
     </div>
-    <div id="chartPlaceholder" class="chart-placeholder" aria-hidden="false">
+    <div id="chartPlaceholder" class="chart-placeholder" aria-hidden="false" title="Click to analyze">
       <img class="ph-img ph-dark" src="assets/placeholder-graph.webp" alt=""
            onerror="this.onerror=null;this.src='assets/placeholder-graph.png'" />
       <img class="ph-img ph-light" src="assets/placeholder-graph-light.webp" alt=""
            onerror="this.onerror=null;this.src='assets/placeholder-graph-light.png'" />
       <div class="chart-placeholder-overlay">
-        <span class="chart-placeholder-cta">▶️ Press Analyze</span>
+        <button type="button" id="phAnalyzeBtn" class="chart-placeholder-cta" aria-label="Analyze" title="Analyze (same as the 🔍 Analyze button)">🔍 Analyze</button>
       </div>
     </div>
     <svg id="chart" viewBox="0 0 1000 580" preserveAspectRatio="xMidYMid meet" hidden></svg>
@@ -94,6 +94,6 @@
     <p>Thanks to <a href="https://wt.honu.pw/" target="_blank" rel="noopener noreferrer">HONU</a> / Varunda</p>
   </footer>
 
-  <script type="module" src="app.js?v=20261008-zoom"></script>
+  <script type="module" src="app.js?v=20261008-phbtn"></script>
 </body>
 </html>

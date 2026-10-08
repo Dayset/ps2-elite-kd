@@ -30,7 +30,7 @@ import {
   Y_ZOOM_DEFAULT,
   xMaxForZoom,
   windowYValues,
-} from "./math.mjs?v=20261008-zoom";
+} from "./math.mjs?v=20261008-phbtn";
 import {
   NameLoadError,
   classifyLoadError,
@@ -50,13 +50,13 @@ import {
   estimateRemainingMs,
   nextEtaDeadline,
   formatEtaLeft,
-} from "./analyze-run.mjs?v=20261008-zoom";
+} from "./analyze-run.mjs?v=20261008-phbtn";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
-} from "./player-metrics.mjs?v=20261008-zoom";
+} from "./player-metrics.mjs?v=20261008-phbtn";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261008-zoom";
+import "./name-peek.mjs?v=20261008-phbtn";
 
   const COLORS = [
     "#9fd4ee", "#ff7a7a", "#ffd166", "#8ef0b0", "#e8b0ff",
@@ -148,6 +148,7 @@ import "./name-peek.mjs?v=20261008-zoom";
     progressCancel: document.getElementById("progressCancel"),
     chart: document.getElementById("chart"),
     chartPlaceholder: document.getElementById("chartPlaceholder"),
+    phAnalyzeBtn: document.getElementById("phAnalyzeBtn"),
     chartYZoom: document.getElementById("chartYZoom"),
     yZoomSlider: document.getElementById("yZoomSlider"),
     yZoomReset: document.getElementById("yZoomReset"),
@@ -2541,7 +2542,7 @@ import "./name-peek.mjs?v=20261008-zoom";
     setProgress(false);
     if (!players.length) {
       // No prior graph → back to idle placeholder.
-      showIdleChart("▶️ Press Analyze");
+      showIdleChart("🔍 Analyze");
     }
     updateUnderLoadNotice();
     setStatus('<span class="warn">Fetch cancelled.</span>', "warn cancelled");
@@ -2566,7 +2567,7 @@ import "./name-peek.mjs?v=20261008-zoom";
       ? els.chartPlaceholder.querySelector(".chart-placeholder-cta")
       : null;
     if (cta && show) {
-      cta.textContent = "▶️ Press Analyze";
+      cta.textContent = "🔍 Analyze";
     }
   }
 
@@ -2582,11 +2583,11 @@ import "./name-peek.mjs?v=20261008-zoom";
     const cta = els.chartPlaceholder
       ? els.chartPlaceholder.querySelector(".chart-placeholder-cta")
       : null;
-    if (cta) cta.textContent = message || "▶️ Press Analyze";
+    if (cta) cta.textContent = message || "🔍 Analyze";
   }
 
   function clearChartUi() {
-    showIdleChart("▶️ Press Analyze");
+    showIdleChart("🔍 Analyze");
     // Drop any bottom padding scrollToResults() added for short result pages.
     if (typeof document !== "undefined" && document.body) document.body.style.paddingBottom = "";
   }
@@ -3016,6 +3017,19 @@ import "./name-peek.mjs?v=20261008-zoom";
     });
   }
 
+  // Placeholder image (before any analysis): its centre button — and a click
+  // anywhere on the image — acts as a second 🔍 Analyze (same handler, so the
+  // empty → ShloDog default, limit hint, scroll etc. all apply). People kept
+  // clicking the image expecting it to work.
+  function analyzeFromPlaceholder(e) {
+    if (e) e.preventDefault();
+    if (fetching || !els.analyzeBtn || els.analyzeBtn.disabled) return;
+    els.analyzeBtn.click();
+  }
+  if (els.chartPlaceholder) {
+    els.chartPlaceholder.addEventListener("click", analyzeFromPlaceholder);
+  }
+
   if (els.namesInput) {
     els.namesInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
@@ -3217,7 +3231,7 @@ import "./name-peek.mjs?v=20261008-zoom";
     const startup = resolveStartupNames();
     setNameTokens(startup.names); // >10 from ?names= → first 10 + limit hint
     renderCacheChips();
-    showIdleChart("▶️ Press Analyze");
+    showIdleChart("🔍 Analyze");
     // No idle "Ready — press Analyze" line; the status area only shows progress / errors
     // (and the limit hint if ?names= had more than 10).
   })();
