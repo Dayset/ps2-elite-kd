@@ -44,7 +44,7 @@ Click any column header to sort (names alphabetical; metrics numeric). Default s
 ### Adjusted metrics (short)
 
 - **ivi** — opposition-weighted IvI (public IvI × Resistance tempering)
-- **⚡ ivi** — 🎯 ivi adjusted for own kill speed: `adj + 300 × log2(ownKpm / 0.98)` (0.98 = median own KPM of the cache on 2026-10-07; ±300 per doubling/halving), so a slow, safe KD counts for less
+- **⚡ ivi** — 🎯 ivi adjusted for own kill speed, progressive: own KPM 0.8–1.4 unchanged; below, `−675 × log2(0.8/own)^1.5`; above, `+300 × log2(own/1.4)^1.5` (slow, safe KD counts for less)
 - **KD** — resistance-weighted K/D
 - **eKPM / own KPM** — average enemy weapon pace vs your pace (kept separate)
 - **Resistance / Activity / COI / Mech%** — hardness of deaths, volume of hard fights, combat output, projected mech share

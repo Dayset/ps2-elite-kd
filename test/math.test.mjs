@@ -394,26 +394,26 @@ describe("applyYZoom", () => {
   });
 });
 
-import { OWN_KPM_REF, SPEED_IVI_PER_DOUBLING, speedAdjustedIvi } from "../math.mjs";
+import { SPEED_BAND_LOW, SPEED_BAND_HIGH, speedAdjustment, speedAdjustedIvi } from "../math.mjs";
 
-describe("speedAdjustedIvi (⚡ ivi)", () => {
-  it("uses the documented constants", () => {
-    assert.equal(OWN_KPM_REF, 0.98);
-    assert.equal(SPEED_IVI_PER_DOUBLING, 300);
+describe("speedAdjustedIvi (⚡ ivi, progressive)", () => {
+  it("is neutral inside the 0.8–1.4 own-KPM band", () => {
+    assert.equal(SPEED_BAND_LOW, 0.8);
+    assert.equal(SPEED_BAND_HIGH, 1.4);
+    for (const k of [0.8, 0.98, 1.2, 1.4]) assert.equal(speedAdjustedIvi(1500, k), 1500);
   });
-  it("is unchanged at typical speed, ±300 per doubling / halving", () => {
-    assert.equal(speedAdjustedIvi(1500, 0.98), 1500);
-    assert.ok(Math.abs(speedAdjustedIvi(1500, 1.96) - 1800) < 1e-9);
-    assert.ok(Math.abs(speedAdjustedIvi(1500, 0.49) - 1200) < 1e-9);
-    assert.ok(Math.abs(speedAdjustedIvi(1500, 0.245) - 900) < 1e-9);
+  it("grows progressively outside the band, steeper on the slow side", () => {
+    assert.ok(Math.abs(speedAdjustment(0.4) + 675) < 1e-9); // one doubling below
+    assert.ok(Math.abs(speedAdjustment(2.8) - 300) < 1e-9); // one doubling above
+    assert.ok(speedAdjustment(0.2) < 2 * speedAdjustment(0.4)); // progressive
+    assert.ok(Math.abs(speedAdjustment(0.4)) > Math.abs(speedAdjustment(2.8)));
   });
-  it("matches cached players from 2026-10-07 (within rounding of the reference)", () => {
-    // own KPM / adj from the shared cache; expected from the spec (REF ≈ 0.98)
+  it("matches cached players from 2026-10-07", () => {
     const cases = [
-      ["Offtopia", 1789, 0.5675, 1551],
-      ["xCloneKano", 1762, 4.509, 2421],
-      ["Simplenubb", 2109, 3.2836, 2631],
-      ["JustV6me", 1491, 1.0207, 1507],
+      ["Offtopia", 1789, 0.5675, 1553], // ≈ old ±300 result, as requested
+      ["JustV6me", 1491, 1.0207, 1491], // inside the band
+      ["xCloneKano", 1762, 4.509, 2420],
+      ["Simplenubb", 2109, 3.2836, 2518],
     ];
     for (const [name, adj, own, want] of cases) {
       const got = speedAdjustedIvi(adj, own);

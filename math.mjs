@@ -86,25 +86,39 @@ export function adjustedIvi(ivi, rf) {
 }
 
 /**
- * Reference own (weapon) KPM for the kill-speed adjustment: the median own KPM
- * of the ~295 cached players on 2026-10-07 (0.98).
+ * ⚡ ivi kill-speed adjustment (progressive, user-chosen 2026-10-07).
+ * Own KPM inside [SPEED_BAND_LOW, SPEED_BAND_HIGH] = neutral (⚡ ivi = 🎯 ivi).
+ * Outside the band the adjustment grows progressively with distance in
+ * doublings (d^SPEED_EXP): slow players lose SPEED_SLOW_K × d^1.5, fast players
+ * gain SPEED_FAST_K × d^1.5. Slow side is steeper so slow, safe KD counts for less
+ * (Offtopia, own 0.57 → about −236, same as the old ±300 version).
+ * Examples: own 0.40 → −675, 0.30 → −1136; own 2.8 → +300, 4.5 → +658.
  */
-export const OWN_KPM_REF = 0.98;
-/** Points per doubling / halving of own KPM relative to OWN_KPM_REF. */
-export const SPEED_IVI_PER_DOUBLING = 300;
+export const SPEED_BAND_LOW = 0.8;
+export const SPEED_BAND_HIGH = 1.4;
+export const SPEED_EXP = 1.5;
+export const SPEED_SLOW_K = 675;
+export const SPEED_FAST_K = 300;
+
+/** Points added (+) or removed (−) for own kill speed; 0 inside the neutral band. */
+export function speedAdjustment(ownKpm) {
+  const k = +ownKpm;
+  if (ownKpm == null || ownKpm === "" || !Number.isFinite(k) || k <= 0) return NaN;
+  if (k < SPEED_BAND_LOW) return -SPEED_SLOW_K * Math.pow(Math.log2(SPEED_BAND_LOW / k), SPEED_EXP);
+  if (k > SPEED_BAND_HIGH) return SPEED_FAST_K * Math.pow(Math.log2(k / SPEED_BAND_HIGH), SPEED_EXP);
+  return 0;
+}
 
 /**
- * ⚡ ivi: 🎯 ivi (adj) adjusted for the player's own kill speed, so a slow,
- * safe KD counts for less: adj + 300 × log2(ownKpm / OWN_KPM_REF).
- * Each halving of own KPM below typical costs 300 points; each doubling adds 300.
- * NaN when an input is missing or ownKpm ≤ 0.
+ * ⚡ ivi: 🎯 ivi (adj) + speedAdjustment(ownKpm). NaN when an input is missing
+ * or ownKpm ≤ 0.
  */
 export function speedAdjustedIvi(adj, ownKpm) {
-  if (adj == null || ownKpm == null || adj === "" || ownKpm === "") return NaN;
+  if (adj == null || adj === "") return NaN;
   const a = +adj;
-  const k = +ownKpm;
-  if (!Number.isFinite(a) || !Number.isFinite(k) || k <= 0) return NaN;
-  return a + SPEED_IVI_PER_DOUBLING * Math.log2(k / OWN_KPM_REF);
+  const d = speedAdjustment(ownKpm);
+  if (!Number.isFinite(a) || !Number.isFinite(d)) return NaN;
+  return a + d;
 }
 
 export function sliceAt(rows, cut) {
