@@ -1127,7 +1127,7 @@ html[data-theme="light"] .chart-placeholder-overlay {
 }
 
 /* Whole placeholder image is clickable (= 🔍 Analyze); the centre pill is a
-   real button styled like Analyze. */
+   real button that keeps the original frosted "▶️ Press Analyze" look. */
 .chart-placeholder {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -1135,30 +1135,29 @@ html[data-theme="light"] .chart-placeholder-overlay {
 .chart-placeholder-cta {
   pointer-events: auto;
   cursor: pointer;
-  font: inherit;
+  font-family: inherit;
+  line-height: inherit;
   font-size: 1.05rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  color: var(--btn-text);
-  padding: 0.6rem 1.35rem;
-  min-height: 2.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text);
+  padding: 0.55rem 1.15rem;
   border-radius: 999px;
-  background: #6cb2ff;
-  border: 1px solid #6cb2ff;
-  box-shadow: 0 0 0 1px rgba(108, 178, 255, 0.25), 0 8px 28px var(--cta-shadow);
-  transition: transform 0.12s ease, background-color 0.12s ease, box-shadow 0.12s ease;
+  background: var(--cta-bg);
+  border: 1px solid var(--cta-border);
+  box-shadow: 0 8px 28px var(--cta-shadow);
+  backdrop-filter: blur(6px);
+  transition: transform 0.12s ease, filter 0.12s ease;
   touch-action: manipulation;
 }
 .chart-placeholder:hover .chart-placeholder-cta,
 .chart-placeholder-cta:hover,
 .chart-placeholder-cta:focus-visible {
-  background: #8cc4ff;
-  border-color: #8cc4ff;
-  transform: scale(1.05);
-  box-shadow: 0 0 0 4px rgba(108, 178, 255, 0.3), 0 10px 32px var(--cta-shadow);
+  transform: scale(1.04);
+  filter: brightness(1.12);
 }
 .chart-placeholder-cta:focus-visible {
-  outline: 2px solid var(--text);
+  outline: 2px solid var(--cta-border);
   outline-offset: 3px;
 }
 .chart-placeholder:active .chart-placeholder-cta,

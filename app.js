@@ -30,7 +30,7 @@ import {
   Y_ZOOM_DEFAULT,
   xMaxForZoom,
   windowYValues,
-} from "./math.mjs?v=20261008-autorun";
+} from "./math.mjs?v=20261008-phold";
 import {
   NameLoadError,
   classifyLoadError,
@@ -50,13 +50,13 @@ import {
   estimateRemainingMs,
   nextEtaDeadline,
   formatEtaLeft,
-} from "./analyze-run.mjs?v=20261008-autorun";
+} from "./analyze-run.mjs?v=20261008-phold";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
-} from "./player-metrics.mjs?v=20261008-autorun";
+} from "./player-metrics.mjs?v=20261008-phold";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261008-autorun";
+import "./name-peek.mjs?v=20261008-phold";
 
   const COLORS = [
     "#9fd4ee", "#ff7a7a", "#ffd166", "#8ef0b0", "#e8b0ff",
@@ -2542,7 +2542,7 @@ import "./name-peek.mjs?v=20261008-autorun";
     setProgress(false);
     if (!players.length) {
       // No prior graph → back to idle placeholder.
-      showIdleChart("🔍 Analyze");
+      showIdleChart("▶️ Press Analyze");
     }
     updateUnderLoadNotice();
     setStatus('<span class="warn">Fetch cancelled.</span>', "warn cancelled");
@@ -2567,7 +2567,7 @@ import "./name-peek.mjs?v=20261008-autorun";
       ? els.chartPlaceholder.querySelector(".chart-placeholder-cta")
       : null;
     if (cta && show) {
-      cta.textContent = "🔍 Analyze";
+      cta.textContent = "▶️ Press Analyze";
     }
   }
 
@@ -2583,11 +2583,11 @@ import "./name-peek.mjs?v=20261008-autorun";
     const cta = els.chartPlaceholder
       ? els.chartPlaceholder.querySelector(".chart-placeholder-cta")
       : null;
-    if (cta) cta.textContent = message || "🔍 Analyze";
+    if (cta) cta.textContent = message || "▶️ Press Analyze";
   }
 
   function clearChartUi() {
-    showIdleChart("🔍 Analyze");
+    showIdleChart("▶️ Press Analyze");
     // Drop any bottom padding scrollToResults() added for short result pages.
     if (typeof document !== "undefined" && document.body) document.body.style.paddingBottom = "";
   }
@@ -3252,7 +3252,7 @@ import "./name-peek.mjs?v=20261008-autorun";
     const startup = resolveStartupNames();
     setNameTokens(startup.names); // >10 from ?names= → first 10 + limit hint
     renderCacheChips();
-    showIdleChart("🔍 Analyze");
+    showIdleChart("▶️ Press Analyze");
     // No idle "Ready — press Analyze" line; the status area only shows progress / errors
     // (and the limit hint if ?names= had more than 10).
     // Opened from a shared 🔗 link → draw the graph without a click.
