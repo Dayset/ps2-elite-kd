@@ -28,7 +28,7 @@ import {
   applyYZoom,
   clampYZoom,
   Y_ZOOM_DEFAULT,
-} from "./math.mjs?v=20261007-clear";
+} from "./math.mjs?v=20261007-names";
 import {
   NameLoadError,
   classifyLoadError,
@@ -41,16 +41,35 @@ import {
   shouldShowGraphReady,
   forgetFailures,
   honuProfileUrl,
-} from "./analyze-run.mjs?v=20261007-clear";
+} from "./analyze-run.mjs?v=20261007-names";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
-} from "./player-metrics.mjs?v=20261007-clear";
+} from "./player-metrics.mjs?v=20261007-names";
+// Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
+import "./name-peek.mjs?v=20261007-names";
 
   const COLORS = [
     "#9fd4ee", "#ff7a7a", "#ffd166", "#8ef0b0", "#e8b0ff",
     "#ffb07a", "#7ef0e6", "#ffa0c8", "#c6f06a", "#8cbcff",
   ];
+  /**
+   * Light theme: same hues, darker/more saturated so lines and names reach
+   * ≥4.5:1 contrast on the cream panel (#e8e1d4) and page (#f0ebe3).
+   * Generated from COLORS by HSL lightness reduction (saturation ≥ 0.75).
+   */
+  const LIGHT_COLORS = [
+    "#156b95", "#cc0000", "#855d00", "#0f7332", "#9f00e0",
+    "#ab4500", "#0d7067", "#c70054", "#4e6d0b", "#005cdb",
+  ];
+  function isLightTheme() {
+    return typeof document !== "undefined" && document.documentElement.getAttribute("data-theme") === "light";
+  }
+  /** Series colour for player i in the current theme (graph, legend, table names). */
+  function seriesColor(i) {
+    const pal = isLightTheme() ? LIGHT_COLORS : COLORS;
+    return pal[i % pal.length];
+  }
   const HONU = "https://wt.honu.pw/api/character/";
   const CENSUS = "https://census.daybreakgames.com/s:example/get/ps2:v2/";
   const DOT_R = 3;
@@ -705,7 +724,7 @@ import {
     applyTheme(next);
   }
 
-  /** Chart chrome colors for current theme (series COLORS stay the same). */
+  /** Chart chrome colors for current theme (series colours: seriesColor()). */
   function chartTheme() {
     const light = document.documentElement.getAttribute("data-theme") === "light";
     if (light) {
@@ -1256,7 +1275,7 @@ import {
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "name-token " + (isNameFetched(name) ? "fetched" : "unfetched");
-      btn.textContent = name;
+      btn.appendChild(nameSpan(name, { title: false }));
       btn.setAttribute("aria-label", `Remove ${name}`);
       btn.title = `Remove ${name}`;
       btn.addEventListener("click", (e) => {
@@ -1293,7 +1312,8 @@ import {
     icon.setAttribute("aria-hidden", "true");
     icon.textContent = "↻";
     const label = document.createElement("span");
-    label.className = "name-token-text";
+    label.className = "name-token-text nm";
+    label.setAttribute("data-full", name);
     label.textContent = name;
     retry.append(icon, label);
     retry.addEventListener("click", (e) => {
@@ -1378,7 +1398,7 @@ import {
       const selected = inField.some((n) => namesMatch(n, item.name));
       if (selected) btn.classList.add("active", "selected");
       btn.setAttribute("aria-pressed", selected ? "true" : "false");
-      btn.textContent = item.name;
+      btn.appendChild(nameSpan(item.name, { title: false }));
       const when = item.savedAt
         ? new Date(item.savedAt).toLocaleDateString()
         : "";
@@ -1969,8 +1989,9 @@ import {
     svg.appendChild(seriesG);
 
     const labelAnchors = [];
+    const lightLines = isLightTheme();
     list.forEach((p, i) => {
-      const col = COLORS[i % COLORS.length];
+      const col = seriesColor(i);
       const pts = (p.curve || [])
         .filter((pt) => pt.kpm <= X_MAX + 1e-9)
         .map((pt) => ({
@@ -1990,8 +2011,8 @@ import {
         );
         path.setAttribute("fill", "none");
         path.setAttribute("stroke", col);
-        path.setAttribute("stroke-width", "0.7");
-        path.setAttribute("stroke-opacity", "0.2");
+        path.setAttribute("stroke-width", lightLines ? "0.9" : "0.7");
+        path.setAttribute("stroke-opacity", lightLines ? "0.3" : "0.2");
         seriesG.appendChild(path);
       }
 
@@ -2005,8 +2026,9 @@ import {
         seg.setAttribute("x2", xToPx(B.kpm));
         seg.setAttribute("y2", yToPx(B.kd));
         seg.setAttribute("stroke", col);
-        seg.setAttribute("stroke-width", (0.5 + 1.3 * r).toFixed(2));
-        seg.setAttribute("stroke-opacity", (0.3 + 0.7 * r).toFixed(2));
+        // Light theme: a little thicker and less transparent so lines don't wash out on cream.
+        seg.setAttribute("stroke-width", (lightLines ? 0.7 + 1.5 * r : 0.5 + 1.3 * r).toFixed(2));
+        seg.setAttribute("stroke-opacity", (lightLines ? 0.5 + 0.5 * r : 0.3 + 0.7 * r).toFixed(2));
         seg.setAttribute("stroke-linecap", "round");
         seriesG.appendChild(seg);
       }
@@ -2315,7 +2337,7 @@ import {
             );
           }
           if (i < 0) i = 0;
-          const col = COLORS[i % COLORS.length];
+          const col = seriesColor(i);
           const vals = cols
             .map((c) => {
               const v = c.fn(row);
@@ -2330,7 +2352,7 @@ import {
           return (
             `<tr><th scope="row" class="stats-name" style="color:${col}">` +
             `<span class="player-num" aria-label="Series ${num}">${num}.</span>` +
-            `${escapeHtml(row.p.display)}</th>${vals}</tr>`
+            `${nameSpanHtml(row.p.display)}</th>${vals}</tr>`
           );
         })
         .join("");
@@ -2381,22 +2403,38 @@ import {
   function renderLegend(list) {
     els.legend.innerHTML = "";
     list.forEach((p, i) => {
-      const col = COLORS[i % COLORS.length];
+      const col = seriesColor(i);
       const item = document.createElement("div");
       item.className = "legend-item";
       // Name links to the player's Honu profile (plain text if no character id).
       const url = honuProfileUrl(p.cid);
+      const full = escapeHtml(p.display);
       const nameHtml = url
-        ? `<a class="legend-link" href="${escapeHtml(url)}" target="_blank" ` +
-          `rel="noopener noreferrer" title="Open ${escapeHtml(p.display)} on Honu">` +
-          `${escapeHtml(p.display)}</a>`
-        : escapeHtml(p.display);
+        ? `<a class="legend-link nm" href="${escapeHtml(url)}" target="_blank" ` +
+          `rel="noopener noreferrer" data-full="${full}" title="Open ${full} on Honu">` +
+          `${full}</a>`
+        : `<span class="nm" data-full="${full}" title="${full}">${full}</span>`;
       item.innerHTML = `
         <span class="legend-swatch" style="background:${col}"></span>
-        <span style="color:${col}"><strong>${i + 1}.</strong> ${nameHtml}</span>
+        <span class="legend-label" style="color:${col}"><strong>${i + 1}.</strong>${nameHtml}</span>
       `;
       els.legend.appendChild(item);
     });
+  }
+
+  /** Truncatable player name (.nm, ~18ch cap) with the full name in title / data-full. */
+  function nameSpan(name, { title = true } = {}) {
+    const span = document.createElement("span");
+    span.className = "nm";
+    span.textContent = name;
+    // Chips already carry a title naming the full name ("Remove X" / "… add X").
+    if (title) span.title = name;
+    span.setAttribute("data-full", name);
+    return span;
+  }
+  function nameSpanHtml(name) {
+    const n = escapeHtml(name);
+    return `<span class="nm" data-full="${n}" title="${n}">${n}</span>`;
   }
 
   function escapeHtml(s) {

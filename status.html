@@ -14,7 +14,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261007-clear" />
+  <link rel="stylesheet" href="styles.css?v=20261007-names" />
   <style>
     body { overflow: auto; }
     .st-wrap { max-width: 960px; margin: 0 auto; padding: 18px 16px 40px; }
@@ -89,6 +89,11 @@
           return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
         });
       }
+      /** Player name capped at ~18ch (.nm + ellipsis); full name in title / tap popup (name-peek.mjs). */
+      function nm(n) {
+        var e = esc(n);
+        return '<span class="nm" data-full="' + e + '" title="' + e + '">' + e + "</span>";
+      }
       function runLink(id) {
         return id ? '<a href="https://github.com/' + REPO + "/actions/runs/" + encodeURIComponent(id) + '" target="_blank" rel="noopener">run #' + esc(id) + "</a>" : "";
       }
@@ -109,7 +114,7 @@
       function chips(names, cls) {
         if (!names || !names.length) return '<span class="st-dim">none</span>';
         return '<ul class="st-list">' + names.map(function (n) {
-          return "<li" + (cls ? ' class="' + cls + '"' : "") + ">" + esc(n) + "</li>";
+          return "<li" + (cls ? ' class="' + cls + '"' : "") + ">" + nm(n) + "</li>";
         }).join("") + "</ul>";
       }
       function getJson(url, opts) {
@@ -151,7 +156,7 @@
         return '<table class="st-table"><tr><th>Player</th><th>Source</th><th>Result</th></tr>' + batch.map(function (b) {
           var cls = b.status === "done" ? "st-ok" : b.status === "pending" ? "st-dim" : "st-err";
           var txt = live && b.status === "pending" ? "pending" : STATUS_TXT[b.status] || b.status;
-          return "<tr><td>" + esc(b.name) + "</td><td>" + esc(b.src) + '</td><td class="' + cls + '"' + (b.reason ? ' title="' + esc(b.reason) + '"' : "") + ">" + esc(txt) + "</td></tr>";
+          return "<tr><td>" + nm(b.name) + "</td><td>" + esc(b.src) + '</td><td class="' + cls + '"' + (b.reason ? ' title="' + esc(b.reason) + '"' : "") + ">" + esc(txt) + "</td></tr>";
         }).join("") + "</table>";
       }
       var predicted = []; // uncached live top killers, in the order a discovery run picks them
@@ -201,14 +206,14 @@
         });
         var html = waiting.length
           ? '<table class="st-table"><tr><th>Name</th><th>Queued</th></tr>' +
-            waiting.map(function (x) { return "<tr><td>" + esc(x.name) + "</td><td>" + when(x.queuedAt) + "</td></tr>"; }).join("") + "</table>"
+            waiting.map(function (x) { return "<tr><td>" + nm(x.name) + "</td><td>" + when(x.queuedAt) + "</td></tr>"; }).join("") + "</table>"
           : '<span class="st-dim">Nothing waiting.</span>';
         if (tried.length) {
           html += '<div class="st-dim" style="margin-top:8px">Tried, could not cache (cleared from the queue automatically within 3 h):</div>' +
             '<table class="st-table"><tr><th>Name</th><th>Reason</th><th>Tried</th></tr>' +
             tried.map(function (t) {
               var why = /empty killboard/i.test(t.s.lastError) ? "no kills on Honu" : /no character|not a valid/i.test(t.s.lastError) ? "not found" : "fetch error (will retry)";
-              return '<tr><td class="st-err">' + esc(t.x.name) + "</td><td>" + esc(why) + "</td><td>" + when(new Date(t.s.lastAttemptAt).toISOString()) + "</td></tr>";
+              return '<tr><td class="st-err">' + nm(t.x.name) + "</td><td>" + esc(why) + "</td><td>" + when(new Date(t.s.lastAttemptAt).toISOString()) + "</td></tr>";
             }).join("") + "</table>";
         }
         $("pending").innerHTML = html;
@@ -218,7 +223,7 @@
         var players = ((index && index.players) || []).slice().sort(function (a, b) { return (b.savedAt || 0) - (a.savedAt || 0); });
         $("cardRecent").querySelector("h2").textContent = "Recently updated players (" + players.length + " cached)";
         $("recent").innerHTML = '<table class="st-table"><tr><th>Player</th><th>Updated</th></tr>' +
-          players.slice(0, 30).map(function (p) { return "<tr><td>" + esc(p.name) + "</td><td>" + when(p.savedAt) + "</td></tr>"; }).join("") + "</table>";
+          players.slice(0, 30).map(function (p) { return "<tr><td>" + nm(p.name) + "</td><td>" + when(p.savedAt) + "</td></tr>"; }).join("") + "</table>";
       }
 
       function renderBackup(h) {
@@ -258,7 +263,7 @@
         $("live").innerHTML = "<div>" + rows.length + " players seen in the last 7 days · " + cached + " cached · " + (rows.length - cached) + " still to fetch</div>" +
           '<table class="st-table"><tr><th>Player</th><th>World</th><th>Seen</th><th>Best KPM</th><th>Last seen</th></tr>' +
           rows.slice(0, 25).map(function (r) {
-            return "<tr><td>" + (r.cached ? "✓ " : "") + esc(r.name) + "</td><td>" + esc(r.world) + "</td><td>" + esc(r.seen) + "</td><td>" + esc(r.kpm.toFixed(2)) + "</td><td>" + when(r.lastSeen) + "</td></tr>";
+            return "<tr><td>" + (r.cached ? "✓ " : "") + nm(r.name) + "</td><td>" + esc(r.world) + "</td><td>" + esc(r.seen) + "</td><td>" + esc(r.kpm.toFixed(2)) + "</td><td>" + when(r.lastSeen) + "</td></tr>";
           }).join("") + "</table>";
       }
 
@@ -292,9 +297,10 @@
   <!-- Red flags 🚩: one automatic bin = aim OR vehicle OR rampage pattern (red-flags.mjs), using the
        same metrics as the main tables (player-metrics.mjs). Leads for review, not proof. -->
   <script type="module">
-    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261007-clear";
-    import { reviewFlags, reviewRuleText } from "./red-flags.mjs?v=20261007-clear";
-    import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261007-clear";
+    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261007-names";
+    import { reviewFlags, reviewRuleText } from "./red-flags.mjs?v=20261007-names";
+    import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261007-names";
+    import "./name-peek.mjs?v=20261007-names"; // full-name popup for truncated .nm names
 
     const POLL_MS = 30 * 1000;
     const CONCURRENCY = 6;
@@ -346,7 +352,10 @@
 
     function rowHtml(r) {
       const url = honu(r.cid);
-      const nameHtml = url ? '<a href="' + esc(url) + '" target="_blank" rel="noopener noreferrer" title="Open on Honu">' + esc(r.name) + "</a>" : esc(r.name);
+      const full = esc(r.name);
+      const nameHtml = url
+        ? '<a class="nm" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer" data-full="' + full + '" title="Open ' + full + ' on Honu">' + full + "</a>"
+        : '<span class="nm" data-full="' + full + '" title="' + full + '">' + full + "</span>";
       const chart = '<a href="./?names=' + encodeURIComponent(r.name) + '" title="Open the chart with this name (press Analyze)">chart</a>';
       const pats = (r.patterns || []).filter((p) => TAGS[p]);
       const tags = pats.map((p) => '<span class="st-tag ' + p + '" title="' + esc(TAGS[p].tip) + '">' + TAGS[p].label + "</span>").join("");
