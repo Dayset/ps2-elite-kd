@@ -30,7 +30,7 @@ import {
   Y_ZOOM_DEFAULT,
   xMaxForZoom,
   windowYValues,
-} from "./math.mjs?v=20261008-jump";
+} from "./math.mjs?v=20261008-az";
 import {
   NameLoadError,
   classifyLoadError,
@@ -53,16 +53,16 @@ import {
   estimateRemainingMs,
   nextEtaDeadline,
   formatEtaLeft,
-} from "./analyze-run.mjs?v=20261008-jump";
+} from "./analyze-run.mjs?v=20261008-az";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
-} from "./player-metrics.mjs?v=20261008-jump";
+} from "./player-metrics.mjs?v=20261008-az";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261008-jump";
-import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261008-jump";
+import "./name-peek.mjs?v=20261008-az";
+import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261008-az";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
-import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261008-jump";
+import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261008-az";
 
   // Player palettes (dark + light theme) live in palette.mjs (shared with ranks.html).
   const COLORS = PALETTE_DARK;
