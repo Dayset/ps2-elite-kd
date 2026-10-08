@@ -35,16 +35,16 @@ Max 10 names. Deep link: `?names=JustV6me,ChrisJTTR`.
 | Block | What |
 |--------|------|
 | **Public (Census/Honu)** | Collapsed by default — KD, KPM, own KPM, Acc %, HSR %, IvI |
-| **Adjusted (calculated)** | ivi, ⚡ ivi, KD, eKPM, own KPM, Resistance, Activity, COI, Mech%, Slope, LionHeart, Inflation |
+| **Adjusted (calculated)** | 🎯🎈 ivi, ⚔️ KD, eKPM, own KPM, Resistance, Activity, COI, Mech%, Slope, LionHeart, Inflation, ⚡ ivi |
 | Chart | Projected K/D vs enemy weapon KPM (bands Easy / Hard at 0.75 / 1.50). Vertical **Y zoom** slider (top-right): middle = auto-fit; up enlarges weak curves; down fits extreme / high-tier K/D |
 | Footer | Repo link + thanks to [HONU](https://wt.honu.pw/) / Varunda |
 
-Click any column header to sort (names alphabetical; metrics numeric). Default sort is **ivi** descending. Hover headers for short hints. Tables sit above the graph.
+Click any column header to sort (names alphabetical; metrics numeric). Default sort is **🎯🎈 ivi** descending. Hover headers for short hints. Tables sit above the graph.
 
 ### Adjusted metrics (short)
 
-- **ivi** — opposition-weighted IvI (public IvI × Resistance tempering)
-- **⚡ ivi** — 🎯 ivi adjusted for own kill speed, progressive: own KPM 0.8–1.4 unchanged; below, `−675 × log2(0.8/own)^1.5`; above, `+300 × log2(own/1.4)^1.5` (slow, safe KD counts for less)
+- **🎯🎈 ivi** — opposition-weighted IvI (public IvI × Resistance tempering); the 🎈 flags that the score is still inflated
+- **⚡ ivi** (last column) — 🎯🎈 ivi adjusted for own kill speed: own KPM 0.8–1.4 unchanged; above, `+300 × log2(own/1.4)^1.5` points; below, a positive score is multiplied by `max((own/0.8)^0.415, 0.5)` (at most halved, never flipped negative; a score already ≤ 0 gets no extra penalty). Values below zero display as **0** ("Below the rating scale") and sort to the bottom
 - **KD** — resistance-weighted K/D
 - **eKPM / own KPM** — average enemy weapon pace vs your pace (kept separate)
 - **Resistance / Activity / COI / Mech%** — hardness of deaths, volume of hard fights, combat output, projected mech share

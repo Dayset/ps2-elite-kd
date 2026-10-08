@@ -28,7 +28,7 @@ import {
   applyYZoom,
   clampYZoom,
   Y_ZOOM_DEFAULT,
-} from "./math.mjs?v=20261007-speedprog";
+} from "./math.mjs?v=20261007-speedmult";
 import {
   NameLoadError,
   classifyLoadError,
@@ -45,7 +45,7 @@ import {
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
-} from "./player-metrics.mjs?v=20261007-speedprog";
+} from "./player-metrics.mjs?v=20261007-speedmult";
 
   const COLORS = [
     "#9fd4ee", "#ff7a7a", "#ffd166", "#8ef0b0", "#e8b0ff",
@@ -2055,10 +2055,9 @@ import {
       { id: "ivi", label: "IvI", hint: "Infantry vs Infantry score from Census / Honu.", fn: (r) => r.ivi, digits: 0 },
     ];
 
-    // Column order is fixed (sort only reorders rows). ivi (adj) is always first metric, ⚡ ivi next to it.
+    // Column order is fixed (sort only reorders rows). 🎯🎈 ivi (adj) is always the first metric, ⚡ ivi the last.
     const adjCols = [
-      { id: "adj", label: "🎯 ivi", hint: "Opposition-weighted IvI: public IvI adjusted by Resistance so soft-farm padding is tempered.", fn: (r) => r.adj, digits: 0 },
-      { id: "adjs", label: "⚡ ivi", hint: "🎯 ivi adjusted for your own kill speed. Own KPM 0.8–1.4 = unchanged; faster earns a growing bonus, slower a steeper growing penalty, so a slow, safe KD counts for less.", fn: (r) => r.adjs, digits: 0 },
+      { id: "adj", label: "🎯🎈 ivi", hint: "Opposition-weighted IvI: public IvI adjusted by Resistance so soft-farm padding is tempered. The 🎈 is a reminder that this score is still inflated (slow, safe play is not penalised here — see ⚡ ivi).", fn: (r) => r.adj, digits: 0 },
       { id: "rkd", label: "⚔️ KD", hint: "Resistance-weighted K/D against the opposition mix you actually face.", fn: (r) => r.rkd, digits: 3 },
       { id: "ekpm", label: "eKPM", hint: "Average enemy weapon KPM faced (how hard the opposition shoots).", fn: (r) => r.ekpm, digits: 2 },
       { id: "own", label: "own KPM", hint: "Your weapon pace used on the elite K/D curve.", fn: (r) => r.own, digits: 2 },
@@ -2069,6 +2068,7 @@ import {
       { id: "slope", label: "📉 Slope", hint: "Overall graph angle: death-weighted K/D vs enemy KPM across the full curve — negative means K/D falls as opposition hardens.", fn: (r) => r.slope, digits: 2 },
       { id: "pvs", label: "🦁 LionHeart", hint: "Activity × pressure slope — sustained elite volume under hard opposition.", fn: (r) => r.pvs, digits: 2 },
       { id: "inflation", label: "🎈 Inflation", hint: "Global KD ÷ KD at ≥0.5 enemy KPM — how much soft opposition inflates your KD (avg planetman ~0.35).", fn: (r) => r.inflation, digits: 2 },
+      { id: "adjs", label: "⚡ ivi", hint: "🎯🎈 ivi adjusted for your own kill speed. Own KPM 0.8–1.4 = unchanged; faster earns a growing bonus; slower scales the score down (at most halved), so a slow, safe KD counts for less but never goes negative.", fn: (r) => r.adjs, digits: 0, floorZero: true },
     ];
 
     function sortRows(rows, cols, state) {
@@ -2154,7 +2154,14 @@ import {
           if (i < 0) i = 0;
           const col = COLORS[i % COLORS.length];
           const vals = cols
-            .map((c) => `<td>${fmtNum(c.fn(row), c.digits)}</td>`)
+            .map((c) => {
+              const v = c.fn(row);
+              // ⚡ ivi: below-zero values read as "0" (not rated); sort keeps true value so they stay lowest.
+              if (c.floorZero && isFiniteNum(v) && v < 0) {
+                return `<td class="below-scale" title="Below the rating scale">0</td>`;
+              }
+              return `<td>${fmtNum(v, c.digits)}</td>`;
+            })
             .join("");
           const num = i + 1;
           return (

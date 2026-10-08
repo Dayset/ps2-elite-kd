@@ -86,37 +86,65 @@ export function adjustedIvi(ivi, rf) {
 }
 
 /**
- * ⚡ ivi kill-speed adjustment (progressive, user-chosen 2026-10-07).
- * Own KPM inside [SPEED_BAND_LOW, SPEED_BAND_HIGH] = neutral (⚡ ivi = 🎯 ivi).
- * Outside the band the adjustment grows progressively with distance in
- * doublings (d^SPEED_EXP): slow players lose SPEED_SLOW_K × d^1.5, fast players
- * gain SPEED_FAST_K × d^1.5. Slow side is steeper so slow, safe KD counts for less
- * (Offtopia, own 0.57 → about −236, same as the old ±300 version).
- * Examples: own 0.40 → −675, 0.30 → −1136; own 2.8 → +300, 4.5 → +658.
+ * ⚡ ivi kill-speed adjustment (user-chosen 2026-10-07, multiplicative slow side).
+ * Own KPM inside [SPEED_BAND_LOW, SPEED_BAND_HIGH] = neutral (⚡ ivi = 🎯🎈 ivi).
+ * Faster than the band: + SPEED_FAST_K × log2(own / 1.4)^SPEED_EXP points
+ *   (own 2.8 → +300, 4.5 → +658).
+ * Slower than the band: a positive 🎯🎈 ivi is scaled by
+ *   factor = max((own / 0.8)^SPEED_SLOW_EXP, SPEED_SLOW_FLOOR)
+ *   (own 0.57 → ×0.87, 0.4 → ×0.75, 0.2 → ×0.56, never below ×0.5), so a slow,
+ *   safe KD counts for less but is never flipped negative. A 🎯🎈 ivi ≤ 0 gets
+ *   no extra penalty.
  */
 export const SPEED_BAND_LOW = 0.8;
 export const SPEED_BAND_HIGH = 1.4;
 export const SPEED_EXP = 1.5;
-export const SPEED_SLOW_K = 675;
 export const SPEED_FAST_K = 300;
+export const SPEED_SLOW_EXP = 0.415;
+export const SPEED_SLOW_FLOOR = 0.5;
 
-/** Points added (+) or removed (−) for own kill speed; 0 inside the neutral band. */
-export function speedAdjustment(ownKpm) {
+function ownKpmValue(ownKpm) {
   const k = +ownKpm;
   if (ownKpm == null || ownKpm === "" || !Number.isFinite(k) || k <= 0) return NaN;
-  if (k < SPEED_BAND_LOW) return -SPEED_SLOW_K * Math.pow(Math.log2(SPEED_BAND_LOW / k), SPEED_EXP);
-  if (k > SPEED_BAND_HIGH) return SPEED_FAST_K * Math.pow(Math.log2(k / SPEED_BAND_HIGH), SPEED_EXP);
-  return 0;
+  return k;
 }
 
 /**
- * ⚡ ivi: 🎯 ivi (adj) + speedAdjustment(ownKpm). NaN when an input is missing
- * or ownKpm ≤ 0.
+ * Slow-side multiplier for a positive 🎯🎈 ivi: 1 at/above SPEED_BAND_LOW,
+ * (own/0.8)^0.415 below it, floored at SPEED_SLOW_FLOOR. NaN for bad input.
+ */
+export function speedSlowFactor(ownKpm) {
+  const k = ownKpmValue(ownKpm);
+  if (!Number.isFinite(k)) return NaN;
+  if (k >= SPEED_BAND_LOW) return 1;
+  return Math.max(Math.pow(k / SPEED_BAND_LOW, SPEED_SLOW_EXP), SPEED_SLOW_FLOOR);
+}
+
+/**
+ * Points added (+) or removed (−) for own kill speed given 🎯🎈 ivi (adj):
+ * 0 inside the band, +fast bonus above it, adj × (factor − 1) below it
+ * (0 when adj ≤ 0). NaN when an input is missing or ownKpm ≤ 0.
+ */
+export function speedAdjustment(ownKpm, adj) {
+  const k = ownKpmValue(ownKpm);
+  if (!Number.isFinite(k)) return NaN;
+  if (k > SPEED_BAND_HIGH) return SPEED_FAST_K * Math.pow(Math.log2(k / SPEED_BAND_HIGH), SPEED_EXP);
+  if (k >= SPEED_BAND_LOW) return 0;
+  if (adj == null || adj === "") return NaN;
+  const a = +adj;
+  if (!Number.isFinite(a)) return NaN;
+  if (a <= 0) return 0;
+  return a * (speedSlowFactor(k) - 1);
+}
+
+/**
+ * ⚡ ivi: 🎯🎈 ivi (adj) + speedAdjustment(ownKpm, adj). NaN when an input is
+ * missing or ownKpm ≤ 0.
  */
 export function speedAdjustedIvi(adj, ownKpm) {
   if (adj == null || adj === "") return NaN;
   const a = +adj;
-  const d = speedAdjustment(ownKpm);
+  const d = speedAdjustment(ownKpm, a);
   if (!Number.isFinite(a) || !Number.isFinite(d)) return NaN;
   return a + d;
 }

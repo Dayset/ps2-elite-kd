@@ -394,26 +394,63 @@ describe("applyYZoom", () => {
   });
 });
 
-import { SPEED_BAND_LOW, SPEED_BAND_HIGH, speedAdjustment, speedAdjustedIvi } from "../math.mjs";
+import {
+  SPEED_BAND_LOW,
+  SPEED_BAND_HIGH,
+  SPEED_SLOW_EXP,
+  SPEED_SLOW_FLOOR,
+  speedAdjustment,
+  speedSlowFactor,
+  speedAdjustedIvi,
+} from "../math.mjs";
 
-describe("speedAdjustedIvi (⚡ ivi, progressive)", () => {
+describe("speedAdjustedIvi (⚡ ivi, multiplicative slow side)", () => {
   it("is neutral inside the 0.8–1.4 own-KPM band", () => {
     assert.equal(SPEED_BAND_LOW, 0.8);
     assert.equal(SPEED_BAND_HIGH, 1.4);
-    for (const k of [0.8, 0.98, 1.2, 1.4]) assert.equal(speedAdjustedIvi(1500, k), 1500);
+    for (const k of [0.8, 0.98, 1.2, 1.4]) {
+      assert.equal(speedAdjustedIvi(1500, k), 1500);
+      assert.equal(speedAdjustment(k, 1500), 0);
+    }
   });
-  it("grows progressively outside the band, steeper on the slow side", () => {
-    assert.ok(Math.abs(speedAdjustment(0.4) + 675) < 1e-9); // one doubling below
-    assert.ok(Math.abs(speedAdjustment(2.8) - 300) < 1e-9); // one doubling above
-    assert.ok(speedAdjustment(0.2) < 2 * speedAdjustment(0.4)); // progressive
-    assert.ok(Math.abs(speedAdjustment(0.4)) > Math.abs(speedAdjustment(2.8)));
+  it("adds a progressive bonus above the band (unchanged fast side)", () => {
+    assert.ok(Math.abs(speedAdjustment(2.8, 1500) - 300) < 1e-9); // one doubling above
+    assert.ok(Math.abs(speedAdjustedIvi(1500, 2.8) - 1800) < 1e-9);
+    assert.ok(Math.abs(speedAdjustedIvi(-200, 2.8) - 100) < 1e-9); // bonus is additive
+    assert.ok(speedAdjustment(5.6, 0) > 2 * speedAdjustment(2.8, 0)); // progressive
+  });
+  it("scales a positive score down below the band, at most halved", () => {
+    assert.equal(SPEED_SLOW_EXP, 0.415);
+    assert.equal(SPEED_SLOW_FLOOR, 0.5);
+    assert.equal(speedSlowFactor(1), 1);
+    assert.ok(Math.abs(speedSlowFactor(0.4) - Math.pow(0.5, 0.415)) < 1e-12); // ≈ 0.75
+    assert.ok(Math.abs(speedAdjustedIvi(1000, 0.4) - 1000 * Math.pow(0.5, 0.415)) < 1e-9);
+    assert.ok(Math.abs(speedAdjustment(0.4, 1000) - 1000 * (Math.pow(0.5, 0.415) - 1)) < 1e-9);
+    assert.ok(speedSlowFactor(0.2) < speedSlowFactor(0.4));
+    assert.equal(speedSlowFactor(0.01), 0.5); // floor
+    assert.equal(speedAdjustedIvi(1000, 0.001), 500);
+    for (const k of [0.79, 0.5, 0.3, 0.1, 0.01]) {
+      for (const a of [1, 50, 522, 1789, 4000]) {
+        const got = speedAdjustedIvi(a, k);
+        assert.ok(got > 0 && got <= a, `${a}, ${k}: ${got}`); // never flips negative
+      }
+    }
+  });
+  it("adds no extra penalty when 🎯🎈 ivi is already ≤ 0", () => {
+    assert.equal(speedAdjustedIvi(0, 0.3), 0);
+    assert.equal(speedAdjustedIvi(-250, 0.3), -250);
+    assert.equal(speedAdjustment(0.3, -250), 0);
   });
   it("matches cached players from 2026-10-07", () => {
     const cases = [
-      ["Offtopia", 1789, 0.5675, 1553], // ≈ old ±300 result, as requested
+      ["Shlodog", 522, 0.3991, 391], // average-pace player stays positive
+      ["Offtopia", 1789, 0.5675, 1552], // ≈ old ±300 result, as requested
+      ["loontiq", 1535, 0.6386, 1398],
+      ["hardcoreparkourtrainer", 1072, 0.7198, 1026],
       ["JustV6me", 1491, 1.0207, 1491], // inside the band
       ["xCloneKano", 1762, 4.509, 2420],
       ["Simplenubb", 2109, 3.2836, 2518],
+      ["cheetler", 4149, 0.014, 2075], // floor: halved
     ];
     for (const [name, adj, own, want] of cases) {
       const got = speedAdjustedIvi(adj, own);

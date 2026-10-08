@@ -1170,6 +1170,12 @@ html[data-theme="light"] .chart-placeholder-overlay {
   white-space: nowrap;
 }
 
+/* ⚡ ivi below zero shown as 0 ("Below the rating scale") */
+.stats-table td.below-scale {
+  opacity: 0.55;
+  cursor: help;
+}
+
 .stats-table .stats-name,
 .stats-table th.stats-name,
 .stats-table td.stats-name {

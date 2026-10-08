@@ -15,7 +15,7 @@ import {
   pressureVolume,
   resolveIvi,
   deathMixLite,
-} from "./math.mjs?v=20261007-speedprog";
+} from "./math.mjs?v=20261007-speedmult";
 
 /** Raw cache / live / shared player JSON → the shape the charts & tables use. */
 export function normalizePlayer(raw) {
@@ -83,7 +83,7 @@ export function playerMetrics(p) {
     slope,
     pvs: pressureVolume(act, slope),
     adj,
-    // ⚡ ivi: 🎯 ivi adjusted for own kill speed (slow, safe KD counts for less).
+    // ⚡ ivi: 🎯🎈 ivi adjusted for own kill speed (slow, safe KD counts for less).
     adjs: speedAdjustedIvi(adj, ownKpm),
     kd05: dm.kd05,
     inflation: dm.inflation,

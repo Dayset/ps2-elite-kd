@@ -292,8 +292,8 @@
   <!-- Red flags 🚩: one automatic bin = aim OR vehicle OR rampage pattern (red-flags.mjs), using the
        same metrics as the main tables (player-metrics.mjs). Leads for review, not proof. -->
   <script type="module">
-    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261007-speedprog";
-    import { reviewFlags, reviewRuleText } from "./red-flags.mjs?v=20261007-speedprog";
+    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261007-speedmult";
+    import { reviewFlags, reviewRuleText } from "./red-flags.mjs?v=20261007-speedmult";
     import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261007-redflags";
 
     const POLL_MS = 30 * 1000;
@@ -351,7 +351,7 @@
       const pats = (r.patterns || []).filter((p) => TAGS[p]);
       const tags = pats.map((p) => '<span class="st-tag ' + p + '" title="' + esc(TAGS[p].tip) + '">' + TAGS[p].label + "</span>").join("");
       const hot = pats.flatMap((p) => TAGS[p].hot);
-      const skillCell = (r.basis === "ivi" ? "IvI " + fmt(r.ivi, 0) : "🎯 " + fmt(r.adj, 0)) + ' <span class="st-tier">' + esc(r.tier) + "</span>";
+      const skillCell = (r.basis === "ivi" ? "IvI " + fmt(r.ivi, 0) : "🎯🎈 " + fmt(r.adj, 0)) + ' <span class="st-tier">' + esc(r.tier) + "</span>";
       const cell = (k, v, d) => '<td class="st-num' + (hot.includes(k) ? " st-low" : "") + '">' + fmt(v, d) + "</td>";
       return "<tr><td>" + nameHtml + "</td><td>" + chart + "</td><td>" + tags + "</td><td>" + skillCell + "</td>" +
         cell("adj", r.adj, 0) + cell("ivi", r.ivi, 0) + cell("kd", r.kd, 2) + cell("acc", r.acc, 1) + cell("hsr", r.hsr, 1) +
@@ -368,7 +368,7 @@
         (errors ? " " + errors + " player file(s) couldn’t be loaded." : "") + "</div>";
       if (!flagged.length) { $("flags").innerHTML = head; return; }
       $("flags").innerHTML = head + '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th></th><th>Pattern</th><th>Skill</th>' +
-        '<th class="st-num">🎯 ivi</th><th class="st-num">IvI</th><th class="st-num">KD</th><th class="st-num">Acc %</th><th class="st-num">HSR %</th>' +
+        '<th class="st-num">🎯🎈 ivi</th><th class="st-num">IvI</th><th class="st-num">KD</th><th class="st-num">Acc %</th><th class="st-num">HSR %</th>' +
         '<th class="st-num">🦁 LionHeart</th><th class="st-num">🎈 Inflation</th><th>Updated</th></tr>' +
         flagged.map(rowHtml).join("") + "</table></div>";
     }

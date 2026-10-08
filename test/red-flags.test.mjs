@@ -14,7 +14,7 @@ describe("skillTier", () => {
     assert.equal(skillTier({ adj: NaN, ivi: 1444 }).tier, "");
     assert.equal(skillTier({ adj: NaN, ivi: NaN }).tier, "");
   });
-  it("uses the better of 🎯 ivi and public IvI", () => {
+  it("uses the better of 🎯🎈 ivi and public IvI", () => {
     const s = skillTier({ adj: 1000, ivi: 2000 });
     assert.equal(s.basis, "ivi");
     assert.equal(s.tier, "Exceptional");
@@ -61,8 +61,9 @@ describe("playerMetrics", () => {
     // ⚡ ivi: own KPM falls back to global KPM (1) → inside the 0.8–1.4 neutral band
     assert.ok(Math.abs(m.adjs - m.adj) < 1e-9);
     const slow = playerMetrics(normalizePlayer({ player: { display: "Y", global_kd: 3, global_kpm: 0.4, own_kpm: 0.4, ivi: 900, rows } }));
-    // own 0.4 = one doubling below the band → −675
-    assert.ok(Math.abs(slow.adjs - (slow.adj - 675)) < 1e-9);
+    // own 0.4 = one doubling below the band → positive 🎯🎈 ivi × 0.5^0.415 (≈ ×0.75)
+    assert.ok(slow.adj > 0);
+    assert.ok(Math.abs(slow.adjs - slow.adj * Math.pow(0.5, 0.415)) < 1e-9);
     const none = playerMetrics(normalizePlayer({ player: { display: "Z", global_kd: 0, global_kpm: 0, rows: [] } }));
     assert.ok(Number.isNaN(none.adjs));
     // inflation = global KD / KD at ≥0.5 enemy KPM = 3 / (14/9)
@@ -111,7 +112,7 @@ describe("reviewFlags (combined bin)", () => {
     assert.equal(reviewFlags({ ...aimOnly, adj: 1500, ivi: 900 }).flagged, false);
   });
   it("85% skill bar: DizzyKnight's numbers land via the aim pattern", () => {
-    // [HSR] DizzyKnight cached numbers: 🎯 ivi 1973 ≈ 0.897 × 2200 (≥ 0.85)
+    // [HSR] DizzyKnight cached numbers: 🎯🎈 ivi 1973 ≈ 0.897 × 2200 (≥ 0.85)
     const dizzy = { adj: 1972.7, ivi: 1043, kd: 5.74, acc: 26.99, hsr: 38.65, pvs: 0.10, inflation: 1.36 };
     assert.deepEqual(reviewFlags(dizzy).patterns, ["aim"]);
     assert.equal(reviewFlags(dizzy).skill.tier, "Almost exceptional");

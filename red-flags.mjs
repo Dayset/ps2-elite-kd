@@ -4,17 +4,17 @@
  * LionHeart + low Inflation. A lead for manual review, NOT proof.
  *
  * Metrics come from player-metrics.mjs (same numbers as the main tables):
- *   adj  = 🎯 ivi (opposition-weighted IvI)   ivi = public IvI
+ *   adj  = 🎯🎈 ivi (opposition-weighted IvI)   ivi = public IvI
  *   pvs  = 🦁 LionHeart                       inflation = 🎈 Inflation
  * The app has no skill tiers or low/high bands, so these were set from the
  * distribution of the 228 cached players (2026-10-07):
- *   🎯 ivi  p90 ≈ 1910, p95 ≈ 2270 → Exceptional ≥ 2200 (≈ top 5–6%)
+ *   🎯🎈 ivi  p90 ≈ 1910, p95 ≈ 2270 → Exceptional ≥ 2200 (≈ top 5–6%)
  *   IvI     p90 ≈ 1455, p95 ≈ 1735 → Exceptional ≥ 1700 (≈ top 5–6%)
  *   🦁 LionHeart median ≈ 3.1; elite players usually 4–18 → low ≤ 2.0 (≈ bottom 40%)
  *   🎈 Inflation median ≈ 2.03 → low ≤ 1.5 (≈ bottom 10%)
  */
 export const RED_FLAG_RULE = Object.freeze({
-  /** 🎯 ivi (adjusted) at/above this = Exceptional. */
+  /** 🎯🎈 ivi (adjusted) at/above this = Exceptional. */
   EXCEPTIONAL_ADJ_IVI: 2200,
   /** Public IvI at/above this = Exceptional. */
   EXCEPTIONAL_IVI: 1700,
@@ -36,7 +36,7 @@ export const RED_FLAG_RULE = Object.freeze({
 const fin = (v) => typeof v === "number" && Number.isFinite(v);
 
 /**
- * Skill vs the Exceptional thresholds: best of 🎯 ivi and public IvI, as a
+ * Skill vs the Exceptional thresholds: best of 🎯🎈 ivi and public IvI, as a
  * ratio (1 = exactly Exceptional). Tier: "Exceptional" | "Almost exceptional" | "".
  */
 export function skillTier(m, rule = RED_FLAG_RULE) {
@@ -69,7 +69,7 @@ export function redFlagRuleText(rule = RED_FLAG_RULE) {
   const pct = Math.round((1 - rule.ALMOST_FRACTION) * 100);
   return (
     `Flagged when ALL hold: skill is Exceptional or within ${pct}% below it ` +
-    `(🎯 ivi ≥ ${Math.round(rule.EXCEPTIONAL_ADJ_IVI * rule.ALMOST_FRACTION)} or public IvI ≥ ` +
+    `(🎯🎈 ivi ≥ ${Math.round(rule.EXCEPTIONAL_ADJ_IVI * rule.ALMOST_FRACTION)} or public IvI ≥ ` +
     `${Math.round(rule.EXCEPTIONAL_IVI * rule.ALMOST_FRACTION)}; Exceptional = ${rule.EXCEPTIONAL_ADJ_IVI} / ` +
     `${rule.EXCEPTIONAL_IVI}), 🦁 LionHeart ≤ ${rule.LIONHEART_LOW_MAX} (or curve slope ≤ ${rule.SLOPE_COLLAPSE_MAX}), and 🎈 Inflation ≤ ` +
     `${rule.INFLATION_LOW_MAX}. A lead for manual review, not proof of cheating.`
@@ -164,7 +164,7 @@ export function reviewRuleText() {
   const V = VEHICLE_RULE;
   return (
     `Flagged when skill is Exceptional or within ${pct}% below it ` +
-    `(🎯 ivi ≥ ${Math.round(R.EXCEPTIONAL_ADJ_IVI * R.ALMOST_FRACTION)} or public IvI ≥ ` +
+    `(🎯🎈 ivi ≥ ${Math.round(R.EXCEPTIONAL_ADJ_IVI * R.ALMOST_FRACTION)} or public IvI ≥ ` +
     `${Math.round(R.EXCEPTIONAL_IVI * R.ALMOST_FRACTION)}; Exceptional = ${R.EXCEPTIONAL_ADJ_IVI} / ${R.EXCEPTIONAL_IVI}) AND either ` +
     `[aim pattern] 🦁 LionHeart ≤ ${R.LIONHEART_LOW_MAX} (or curve slope ≤ ${R.SLOPE_COLLAPSE_MAX}) and 🎈 Inflation ≤ ${R.INFLATION_LOW_MAX}, or ` +
     `[vehicle pattern] KD ≥ ${V.KD_HIGH_MIN}, HSR ≤ ${V.HSR_LOW_MAX}% and accuracy ≤ ${V.ACC_LOW_MAX}% (Inflation ignored). ` +
