@@ -1461,3 +1461,20 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
 }
 .name-peek[hidden] { display: none; }
 .name-peek.name-peek-pop { animation: limit-toast-pop 0.18s ease-out; }
+
+/* Stats tables: small dimmed "−28%" gap to the column top beside each value */
+.stats-table td .pct {
+  margin-left: 0.3em;
+  font-size: 0.72em;
+  color: var(--dim);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+/* Phones: stack the % under the number so columns stay narrow */
+@media (max-width: 600px) {
+  .stats-table td .pct {
+    display: block;
+    margin-left: 0;
+    line-height: 1.1;
+  }
+}

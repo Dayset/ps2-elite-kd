@@ -163,3 +163,27 @@ describe("summarizeFailures", () => {
     assert.doesNotMatch(two.text, /Showing the rest/);
   });
 });
+
+import { columnTop, pctFromTop, fmtPctFromTop } from "../analyze-run.mjs";
+
+describe("stats tables: % from the column top", () => {
+  it("top is the highest finite value; needs ≥2 values and a positive top", () => {
+    assert.equal(columnTop([1491, 391, 2075, NaN, null]), 2075);
+    assert.ok(Number.isNaN(columnTop([1491])));
+    assert.ok(Number.isNaN(columnTop([-2, -5])));
+    assert.ok(Number.isNaN(columnTop([0, 0])));
+  });
+  it("percent gap below the top, none for the top / missing values", () => {
+    assert.equal(pctFromTop(1491, 2075), -28);
+    assert.equal(pctFromTop(2075, 2075), null);
+    assert.equal(pctFromTop(NaN, 2075), null);
+    assert.equal(pctFromTop(10, NaN), null);
+    assert.equal(pctFromTop(-1, 2), -150);
+    assert.equal(pctFromTop(2074, 2075), 0);
+  });
+  it("formats as −N% with −<1% for tiny gaps", () => {
+    assert.equal(fmtPctFromTop(-28), "−28%");
+    assert.equal(fmtPctFromTop(0), "−<1%");
+    assert.equal(fmtPctFromTop(null), "");
+  });
+});

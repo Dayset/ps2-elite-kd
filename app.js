@@ -28,7 +28,7 @@ import {
   applyYZoom,
   clampYZoom,
   Y_ZOOM_DEFAULT,
-} from "./math.mjs?v=20261007-names";
+} from "./math.mjs?v=20261007-pct";
 import {
   NameLoadError,
   classifyLoadError,
@@ -41,13 +41,16 @@ import {
   shouldShowGraphReady,
   forgetFailures,
   honuProfileUrl,
-} from "./analyze-run.mjs?v=20261007-names";
+  columnTop,
+  pctFromTop,
+  fmtPctFromTop,
+} from "./analyze-run.mjs?v=20261007-pct";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
-} from "./player-metrics.mjs?v=20261007-names";
+} from "./player-metrics.mjs?v=20261007-pct";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261007-names";
+import "./name-peek.mjs?v=20261007-pct";
 
   const COLORS = [
     "#9fd4ee", "#ff7a7a", "#ffd166", "#8ef0b0", "#e8b0ff",
@@ -2322,6 +2325,8 @@ import "./name-peek.mjs?v=20261007-names";
     }
 
     function playerRows(cols, ordered) {
+      // Column tops over every analysed player (not just the visible order).
+      const colTops = new Map(cols.map((c) => [c.id, columnTop(metrics.map((r) => c.fn(r)))]));
       return ordered
         .map((row) => {
           // Series index matches graph legend/color order (stable with list, not sort order)
@@ -2345,7 +2350,16 @@ import "./name-peek.mjs?v=20261007-names";
               if (c.floorZero && isFiniteNum(v) && v < 0) {
                 return `<td class="below-scale" title="Below the rating scale">0</td>`;
               }
-              return `<td>${fmtNum(v, c.digits)}</td>`;
+              // Small dimmed "−28%" = gap to the column's highest value (none on the top cell).
+              const top = colTops.get(c.id);
+              const p = pctFromTop(v, top);
+              const pct =
+                p == null
+                  ? ""
+                  : `<span class="pct" title="${escapeHtml(
+                      `${p === 0 ? "<1" : Math.abs(p)}% below the column top (${fmtNum(top, c.digits)})`
+                    )}">${fmtPctFromTop(p)}</span>`;
+              return `<td>${fmtNum(v, c.digits)}${pct}</td>`;
             })
             .join("");
           const num = i + 1;
