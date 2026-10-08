@@ -28,7 +28,7 @@ import {
   applyYZoom,
   clampYZoom,
   Y_ZOOM_DEFAULT,
-} from "./math.mjs?v=20261007-limit";
+} from "./math.mjs?v=20261007-toast";
 import {
   NameLoadError,
   classifyLoadError,
@@ -41,11 +41,11 @@ import {
   shouldShowGraphReady,
   forgetFailures,
   honuProfileUrl,
-} from "./analyze-run.mjs?v=20261007-limit";
+} from "./analyze-run.mjs?v=20261007-toast";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
-} from "./player-metrics.mjs?v=20261007-limit";
+} from "./player-metrics.mjs?v=20261007-toast";
 
   const COLORS = [
     "#9fd4ee", "#ff7a7a", "#ffd166", "#8ef0b0", "#e8b0ff",
@@ -217,9 +217,70 @@ import {
     setStatus(LIMIT_HINT_HTML, "warn limit-hint");
   }
 
+  /* Limit toast: one reusable fixed-position popup (no layout shift, no stacking). */
+  let limitToastEl = null;
+  let limitToastTimer = 0;
+  function hideLimitToast() {
+    if (limitToastTimer) {
+      clearTimeout(limitToastTimer);
+      limitToastTimer = 0;
+    }
+    if (limitToastEl) limitToastEl.hidden = true;
+  }
+  /**
+   * Show "10 players limit reached" next to `anchor` (above it, or below when
+   * there's no room), clamped to the viewport; bottom-centre if no anchor.
+   * Auto-hides after 2.5 s, on tap, or on scroll; repeat calls restart it.
+   */
+  function showLimitToast(anchor) {
+    if (typeof document === "undefined") return;
+    if (!limitToastEl) {
+      limitToastEl = document.createElement("div");
+      limitToastEl.id = "limitToast";
+      limitToastEl.className = "limit-toast";
+      limitToastEl.setAttribute("role", "alert");
+      limitToastEl.innerHTML =
+        '<strong>10 players limit reached</strong><span class="limit-toast-sub">remove a name to add another</span>';
+      limitToastEl.addEventListener("click", hideLimitToast);
+      document.body.appendChild(limitToastEl);
+      window.addEventListener("scroll", () => { if (limitToastEl && !limitToastEl.hidden) hideLimitToast(); }, { passive: true });
+      window.addEventListener("resize", () => { if (limitToastEl && !limitToastEl.hidden) hideLimitToast(); });
+    }
+    const el = limitToastEl;
+    if (limitToastTimer) clearTimeout(limitToastTimer);
+    el.hidden = false;
+    el.classList.remove("limit-toast-pop");
+    el.classList.remove("limit-toast-docked");
+    el.style.left = "0px";
+    el.style.top = "0px";
+    const vw = window.innerWidth || document.documentElement.clientWidth;
+    const vh = window.innerHeight || document.documentElement.clientHeight;
+    const r = anchor && anchor.isConnected && anchor.getBoundingClientRect ? anchor.getBoundingClientRect() : null;
+    const tw = el.offsetWidth;
+    const th = el.offsetHeight;
+    const gap = 8;
+    if (r && r.bottom > 0 && r.top < vh) {
+      let left = r.left + r.width / 2 - tw / 2;
+      left = Math.max(gap, Math.min(left, vw - tw - gap));
+      let top = r.top - th - gap;
+      if (top < gap) top = r.bottom + gap;
+      top = Math.max(gap, Math.min(top, vh - th - gap));
+      el.style.left = Math.round(left) + "px";
+      el.style.top = Math.round(top) + "px";
+    } else {
+      el.classList.add("limit-toast-docked"); // bottom-centre via CSS
+      el.style.left = "";
+      el.style.top = "";
+    }
+    void el.offsetWidth; // restart the pop animation
+    el.classList.add("limit-toast-pop");
+    limitToastTimer = setTimeout(hideLimitToast, 2500);
+  }
+
   /** Drop the limit warning (only if it is what the status line shows). */
   function clearLimitHint() {
     if (els.status && els.status.classList.contains("limit-hint")) setStatus("");
+    hideLimitToast();
   }
 
   function showGraphReadyHint() {
@@ -1103,7 +1164,7 @@ import {
   }
 
   /** Cache chip click: add if absent, remove (chip or trailing text) if present. */
-  function toggleNameInField(name) {
+  function toggleNameInField(name, anchor) {
     const clean = String(name).trim();
     if (!clean) return;
     const inTokens = nameTokens.some((n) => namesMatch(n, clean));
@@ -1123,7 +1184,9 @@ import {
       renderCacheChips();
       return;
     }
-    addNameToField(clean);
+    // Field full: the status line may be far off-screen from the cache list,
+    // so also pop a toast right at the clicked chip.
+    if (!addNameToField(clean)) showLimitToast(anchor);
   }
 
   function removeNameToken(name) {
@@ -1283,7 +1346,7 @@ import {
         : "";
       const src = item.source === "shared" ? "Shared cache" : "Browser cache";
       btn.title = `${src}${when ? ` · ${when}` : ""} — ${selected ? "remove" : "add"} ${item.name}`;
-      btn.addEventListener("click", () => toggleNameInField(item.name));
+      btn.addEventListener("click", () => toggleNameInField(item.name, btn));
       return btn;
     }
 
