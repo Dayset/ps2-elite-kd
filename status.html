@@ -188,11 +188,30 @@
           active.concat(done).map(row).join("") + "</table>";
       }
 
-      function renderPending(data) {
+      /** Site queue minus names a run already tried (Worker markers only clear on success, after a 3 h TTL). */
+      function renderPending(data, rstate) {
         var p = (data && data.pending) || [];
-        if (!p.length) { $("pending").innerHTML = '<span class="st-dim">Nothing waiting.</span>'; return; }
-        $("pending").innerHTML = '<table class="st-table"><tr><th>Name</th><th>Queued</th></tr>' +
-          p.map(function (x) { return "<tr><td>" + esc(x.name) + "</td><td>" + when(x.queuedAt) + "</td></tr>"; }).join("") + "</table>";
+        var st = (rstate && rstate.players) || {};
+        var waiting = [], tried = [];
+        p.forEach(function (x) {
+          var s = st[x.slug];
+          var q = Date.parse(x.queuedAt) || 0;
+          if (s && s.lastAttemptAt && s.lastAttemptAt >= q && s.lastError && !(s.lastOkAt && s.lastOkAt >= q)) tried.push({ x: x, s: s });
+          else waiting.push(x);
+        });
+        var html = waiting.length
+          ? '<table class="st-table"><tr><th>Name</th><th>Queued</th></tr>' +
+            waiting.map(function (x) { return "<tr><td>" + esc(x.name) + "</td><td>" + when(x.queuedAt) + "</td></tr>"; }).join("") + "</table>"
+          : '<span class="st-dim">Nothing waiting.</span>';
+        if (tried.length) {
+          html += '<div class="st-dim" style="margin-top:8px">Tried, could not cache (cleared from the queue automatically within 3 h):</div>' +
+            '<table class="st-table"><tr><th>Name</th><th>Reason</th><th>Tried</th></tr>' +
+            tried.map(function (t) {
+              var why = /empty killboard/i.test(t.s.lastError) ? "no kills on Honu" : /no character|not a valid/i.test(t.s.lastError) ? "not found" : "fetch error (will retry)";
+              return '<tr><td class="st-err">' + esc(t.x.name) + "</td><td>" + esc(why) + "</td><td>" + when(new Date(t.s.lastAttemptAt).toISOString()) + "</td></tr>";
+            }).join("") + "</table>";
+        }
+        $("pending").innerHTML = html;
       }
 
       function renderRecent(index) {
@@ -252,7 +271,10 @@
           renderLast(res[1]);
         });
         getJson("data/index.json").then(renderRecent, function (e) { fail("recent", "data/index.json", e); });
-        getJson(WORKER_URL + "/pending").then(renderPending, function (e) { fail("pending", "the queue", e); });
+        Promise.all([
+          getJson(WORKER_URL + "/pending"),
+          getJson("data/refresh-state.json").catch(function () { return null; }),
+        ]).then(function (r) { renderPending(r[0], r[1]); }, function (e) { fail("pending", "the queue", e); });
         getJson(WORKER_URL + "/health").then(renderBackup, function () { $("backup").textContent = "Backup timer: status unavailable."; });
         getJson(WORKER_URL + "/runs").then(function (d) { renderRuns(d); renderNowRun(d); }, function (e) { fail("runs", "GitHub Actions runs", e); });
         Promise.all([
