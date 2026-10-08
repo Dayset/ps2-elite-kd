@@ -13,7 +13,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261008-trophy" />
+  <link rel="stylesheet" href="styles.css?v=20261008-back" />
   <style>
     /* Ranks page: one long sortable table of every cached player. */
     body.ranks-page { overflow-x: hidden; }
@@ -153,6 +153,7 @@
     </div>
 
     <div class="ranks-toolbar">
+      <a id="backLink" href="index.html" class="icon-nav-btn" title="Back to player search" aria-label="Back to player search">🔍</a>
       <input id="ranksSearch" type="search" placeholder="Filter names…" aria-label="Filter player names" autocomplete="off" spellcheck="false" />
       <button id="ranksCompare" type="button" class="ranks-compare" disabled title="Open the main page with the checked players (up to 10)">Compare</button>
       <span id="ranksPicked" class="ranks-picked" aria-live="polite">0 / 10</span>
@@ -183,7 +184,7 @@
 
   <footer>
     <div class="footer-row">
-      <p><a href="index.html">← Chart</a> · <a href="https://github.com/Dayset/ps2-elite-kd">github.com/Dayset/ps2-elite-kd</a></p>
+      <p><a href="https://github.com/Dayset/ps2-elite-kd">github.com/Dayset/ps2-elite-kd</a></p>
       <label class="debug-cols-toggle" title="Append the older debug columns (🎯🎈 ivi, eKPM, own KPM, 📊 COI, 📉 Slope) to the rankings table">
         <input type="checkbox" id="debugColsToggle" /> show older debug stats
       </label>
@@ -192,9 +193,9 @@
   </footer>
 
   <script type="module">
-    import "./name-peek.mjs?v=20261008-trophy";
-    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits } from "./dist.mjs?v=20261008-trophy";
-    import { paletteColor } from "./palette.mjs?v=20261008-trophy";
+    import "./name-peek.mjs?v=20261008-back";
+    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits } from "./dist.mjs?v=20261008-back";
+    import { paletteColor } from "./palette.mjs?v=20261008-back";
 
     const LS_THEME = "ps2-elite-kd-theme";
     const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";

@@ -14,7 +14,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261008-trophy" />
+  <link rel="stylesheet" href="styles.css?v=20261008-back" />
   <style>
     body { overflow: auto; }
     .st-wrap { max-width: 960px; margin: 0 auto; padding: 18px 16px 40px; }
@@ -297,10 +297,10 @@
   <!-- Red flags 🚩: one automatic bin = aim OR vehicle OR rampage pattern (red-flags.mjs), using the
        same metrics as the main tables (player-metrics.mjs). Leads for review, not proof. -->
   <script type="module">
-    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261008-trophy";
-    import { reviewFlags, reviewRuleText } from "./red-flags.mjs?v=20261008-trophy";
-    import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261008-trophy";
-    import "./name-peek.mjs?v=20261008-trophy"; // full-name popup for truncated .nm names
+    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261008-back";
+    import { reviewFlags, reviewRuleText } from "./red-flags.mjs?v=20261008-back";
+    import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261008-back";
+    import "./name-peek.mjs?v=20261008-back"; // full-name popup for truncated .nm names
 
     const POLL_MS = 30 * 1000;
     const CONCURRENCY = 6;
