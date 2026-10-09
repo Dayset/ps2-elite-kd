@@ -7,7 +7,7 @@
 ## Features
 
 - **Comparison chart:** K/D vs enemy KPM per player. **📈 Raw** (cumulative: K/D vs everyone at or above each KPM, the default) or **🎚️ Smooth** (K/D vs enemies around each KPM, faded where there are few fights). Optional **👻 Ghost** lines: a dashed prediction from play style (fitted on the shared cache) that fills sparse ranges, clearly marked as not real fights.
-- **Stats table:** ⚔️ iVi skill rating, 🛡️ Resist, 🔥 Active, 🦁 Brave, ☠️ K/D, ⚙️ Mech%, 🎈 Inflation (details below), with population percentiles.
+- **Stats table:** ⚔️ iVi skill rating, 🛡️ Resist, 🏃 Activity, 🦁 Brave, ☠️ K/D, ⚙️ Mech%, 🎈 Inflation (details below), with population percentiles.
 - **[Rankings](https://dayset.github.io/ps2-elite-kd/ranks.html):** every cached player ranked on the same columns, with search, compare and a distribution chart per metric.
 - **Shared cache:** a GitHub Actions workflow refreshes player snapshots automatically, so most lookups load instantly without hitting the live APIs.
 - **Status page** (unlisted): refresh runs, queue, a 🚩 red-flag review list (leads, never accusations) and a 🌱 "Could use a hand" list of players who might appreciate tips or a squad invite.
@@ -57,7 +57,7 @@ Max 10 names. Deep link: `?names=JustV6me,ChrisJTTR`.
 | Block | What |
 |--------|------|
 | **Public (Census/Honu)** | Collapsed by default — KD, KPM, own KPM, Acc %, HSR %, IvI |
-| **Adjusted (calculated)** | Default columns: ⚔️ iVi, 🛡️ Resist, 🔥 Active, 🦁 Brave, ☠️ K/D, ⚙️ Mech%, 🎈 Inflation. Ticking **show older debug stats** (footer, right of the repo link; remembered in localStorage) appends 🎯🎈 ivi, eKPM, own KPM, 📊 COI, 📉 Slope |
+| **Adjusted (calculated)** | Default columns: ⚔️ iVi, 🛡️ Resist, 🏃 Activity, 🦁 Brave, ☠️ K/D, ⚙️ Mech%, 🎈 Inflation. Ticking **show older debug stats** (footer, right of the repo link; remembered in localStorage) appends 🎯🎈 ivi, eKPM, own KPM, 📊 COI, 📉 Slope |
 | Chart | Projected K/D vs enemy weapon KPM (bands Easy / Hard at 0.75 / 1.50). Vertical **zoom** slider (top-right): middle / **Auto** = full graph, auto-fit; **up** zooms hard into the start of the graph — X min stays 0 while X max shrinks fast (≈0.71 at +1, 0.25 at the top) and Y re-fits to the visible left side (lines leaving the right edge are clipped); **down** keeps full X and flattens Y to fit extreme / high-tier K/D |
 | Footer | Repo link (with the **show older debug stats** checkbox on the right) + thanks to [HONU](https://wt.honu.pw/) / Varunda |
 
@@ -69,8 +69,8 @@ Visible by default:
 
 - **⚔️ iVi** — ivi adjusted for own kill speed (`adjs`): own KPM 0.8–1.4 unchanged; above, `+300 × log2(own/1.4)^1.5` points; below, a positive 🎯🎈 ivi is multiplied by `max((own/0.8)^0.415, 0.5)` (at most halved, never flipped negative; a score already ≤ 0 gets no extra penalty). Values below zero display as **0** ("Below the rating scale") and sort to the bottom
 - **🛡️ Resist** — Resistance: hardness of the players you die to (Resistance Factor)
-- **🔥 Active** — Activity: volume of hard fights (☠️ K/D × own KPM)
-- **🦁 Brave** — formerly LionHeart: 🔥 Active × shifted slope pressure under hard opposition
+- **🏃 Activity** — volume of hard fights (☠️ K/D × own KPM)
+- **🦁 Brave** — formerly LionHeart: 🏃 Activity × shifted slope pressure under hard opposition
 - **☠️ K/D** — resistance-weighted K/D
 - **⚙️ Mech%** — projected mech share implied by Resist
 - **🎈 Inflation** — global KD ÷ KD among deaths vs opponents ≥ **0.5** weapon KPM (avg planetman ~0.35; soft padding above this)
