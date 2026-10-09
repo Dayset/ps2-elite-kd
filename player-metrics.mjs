@@ -15,8 +15,25 @@ import {
   pressureVolume,
   resolveIvi,
   deathMixLite,
-} from "./math.mjs?v=20261009-buildlog";
-import { splitFarm } from "./padding.mjs?v=20261009-buildlog";
+} from "./math.mjs?v=20261009-top200";
+import { splitFarm } from "./padding.mjs?v=20261009-top200";
+import { OPPONENT_TOP_N, LEGACY_TOP_N, sampleTopN } from "./census-fetch.mjs?v=20261009-top200";
+
+/**
+ * Older shared-cache files were scored on the top 50 opponents; new fetches use
+ * OPPONENT_TOP_N (200). Mixed until the weekly refresh reaches everyone, so a
+ * subtle "◦" after the name says so (ranks.html + stats table).
+ */
+export const LEGACY_SAMPLE_MARK = "◦";
+export const LEGACY_SAMPLE_TIP =
+  `Based on the top ${LEGACY_TOP_N} opponents (older sample); upgrading to ${OPPONENT_TOP_N} on its next refresh`;
+
+/** True when a normalized player (or raw file) uses fewer opponents than OPPONENT_TOP_N. */
+export function isLegacySample(p) {
+  if (!p) return false;
+  const t = +p.top;
+  return (Number.isFinite(t) && t > 0 ? t : sampleTopN(p)) < OPPONENT_TOP_N;
+}
 
 /**
  * Minimum fights before the opponent-sample metrics (THIN_METRICS: 🏃 Activity,
@@ -96,6 +113,8 @@ export function normalizePlayer(raw) {
     rawRows: rows,
     rawCurve,
     farm: { victims: farm.victims, kills: farm.kills, deaths: farm.deaths, share: farm.share },
+    // Opponents in the sample (missing in older files → 50).
+    top: sampleTopN(raw),
     honu: p.honu || (p.cid ? `https://wt.honu.pw/c/${p.cid}/killboard` : ""),
     source: raw._source || "local",
   };

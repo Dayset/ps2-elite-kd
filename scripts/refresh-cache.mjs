@@ -30,6 +30,8 @@ import {
   censusRequest,
   defaultCensusRate,
   fetchPlayerCensus,
+  OPPONENT_TOP_N,
+  LEGACY_TOP_N,
   tokenBucket,
 } from "../census-fetch.mjs";
 
@@ -51,7 +53,8 @@ const HONU = "https://wt.honu.pw/api/character/";
 /** Census service ID: env CENSUS_SERVICE_ID (workflow), else the site's registered ID. */
 const CENSUS_SERVICE_ID = (process.env.CENSUS_SERVICE_ID || "").trim() || "daysetps2legends";
 const CENSUS = censusBase(CENSUS_SERVICE_ID);
-const TOP_N = 50;
+/** Opponents per player: the shared census-fetch.mjs value (200; files saved earlier carry top: 50). */
+const TOP_N = OPPONENT_TOP_N;
 const OPP_CONCURRENCY = 4;
 const BETWEEN_PLAYERS_MS = 1500;
 const FETCH_TIMEOUT_MS = 20_000;
@@ -798,7 +801,7 @@ export function pickBatch(names, index, state, size) {
     .map((x) => x.name);
 }
 
-function upsertIndexEntry(index, { name, display, slug, file, savedAt, aliases, fmt }) {
+function upsertIndexEntry(index, { name, display, slug, file, savedAt, aliases, fmt, top }) {
   const players = index.players.slice();
   const i = players.findIndex((p) => p.slug === slug || slugKey(p.name) === slug);
   const entry = {
@@ -807,6 +810,7 @@ function upsertIndexEntry(index, { name, display, slug, file, savedAt, aliases, 
     slug,
     savedAt,
     ...(fmt ? { fmt } : {}),
+    ...(top ? { top } : {}),
     aliases: aliases && aliases.length ? aliases : [slug, String(name).trim().toLowerCase()].filter(
       (v, idx, a) => v && a.indexOf(v) === idx
     ),
@@ -1104,7 +1108,7 @@ async function main() {
       const payload = await loadLive(name, { prevAssists: readPrevAssists(slug) });
       const fileRel = `players/${slug}.json`;
       writeFileAtomic(path.join(DATA_DIR, fileRel), JSON.stringify(payload) + "\n");
-      upsertIndexEntry(index, { name, display: payload.player.display, slug, file: fileRel, savedAt: payload.savedAt, fmt: CACHE_FORMAT });
+      upsertIndexEntry(index, { name, display: payload.player.display, slug, file: fileRel, savedAt: payload.savedAt, fmt: CACHE_FORMAT, top: payload.top });
       writeIndex(index);
       state.players[slug] = { lastAttemptAt: now, lastOkAt: payload.savedAt, fails: 0 };
       c.ok++;
@@ -1348,6 +1352,16 @@ export function needsSync(p) {
   return !(p && +p.fmt >= CACHE_FORMAT);
 }
 
+/**
+ * Saved with fewer opponents than OPPONENT_TOP_N (index `top` missing → 50)?
+ * No forced re-fetch: these just go first among players that are due anyway
+ * (weekly / format sync), so the upgrade costs no extra runs or Census calls.
+ */
+export function needsUpgrade(p) {
+  const t = +(p && p.top);
+  return (Number.isFinite(t) && t > 0 ? t : LEGACY_TOP_N) < OPPONENT_TOP_N;
+}
+
 /** Number of index players still in the one-time format sync backlog. */
 export function syncBacklog(index) {
   return ((index && index.players) || []).filter((p) => p && p.name && isPlausibleName(p.name) && needsSync(p)).length;
@@ -1368,14 +1382,14 @@ export function dueAt(p, state, maxAgeMs = REFRESH_AFTER_MS) {
 }
 
 /**
- * Cached players due now: format-sync backlog first, then weekly-stale; each
- * oldest first. Uses the index name (Census resolves "[TAG] Name" by first name).
+ * Cached players due now: format-sync backlog first, then weekly-stale; within
+ * each, 50-opponent players (needsUpgrade) before 200 ones, then oldest first. Uses the index name (Census resolves "[TAG] Name" by first name).
  */
 export function staleCandidates(index, state, now = Date.now(), maxAgeMs = REFRESH_AFTER_MS) {
   return ((index && index.players) || [])
-    .map((p, i) => ({ p, i, sync: needsSync(p) ? 0 : 1, last: p ? lastTouched(p, state) : 0 }))
+    .map((p, i) => ({ p, i, sync: needsSync(p) ? 0 : 1, up: needsUpgrade(p) ? 0 : 1, last: p ? lastTouched(p, state) : 0 }))
     .filter((x) => x.p && x.p.name && isPlausibleName(x.p.name) && dueAt(x.p, state, maxAgeMs) <= now)
-    .sort((a, b) => a.sync - b.sync || a.last - b.last || a.i - b.i)
+    .sort((a, b) => a.sync - b.sync || a.up - b.up || a.last - b.last || a.i - b.i)
     .map((x) => x.p.name);
 }
 

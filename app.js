@@ -32,9 +32,9 @@ import {
   windowYValues,
   kpmBandCurve,
   bandReliability,
-} from "./math.mjs?v=20261009-buildlog";
-import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261009-buildlog";
-import GHOST_MODEL from "./data/ghost-model.mjs?v=20261009-buildlog";
+} from "./math.mjs?v=20261009-top200";
+import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261009-top200";
+import GHOST_MODEL from "./data/ghost-model.mjs?v=20261009-top200";
 import {
   NameLoadError,
   classifyLoadError,
@@ -60,7 +60,7 @@ import {
   formatEtaLeft,
   etaLearnLiveMs,
   expectedNameMs,
-} from "./analyze-run.mjs?v=20261009-buildlog";
+} from "./analyze-run.mjs?v=20261009-top200";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
@@ -68,15 +68,18 @@ import {
   MIN_FIGHTS_TIP,
   THIN_METRICS,
   shownValue,
-} from "./player-metrics.mjs?v=20261009-buildlog";
-import { farmNote, statMark } from "./padding.mjs?v=20261009-buildlog";
+  isLegacySample,
+  LEGACY_SAMPLE_MARK,
+  LEGACY_SAMPLE_TIP,
+} from "./player-metrics.mjs?v=20261009-top200";
+import { farmNote, statMark } from "./padding.mjs?v=20261009-top200";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261009-buildlog";
-import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261009-buildlog";
+import "./name-peek.mjs?v=20261009-top200";
+import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261009-top200";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
-import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-buildlog";
+import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-top200";
 // Live data: Daybreak Census only (batched, paced); Honu just for a rare history fallback.
-import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261009-buildlog";
+import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261009-top200";
 import {
   censusBase,
   censusRequest,
@@ -84,7 +87,8 @@ import {
   fetchPlayerCensus,
   limitConcurrency,
   tokenBucket,
-} from "./census-fetch.mjs?v=20261009-buildlog";
+  OPPONENT_TOP_N,
+} from "./census-fetch.mjs?v=20261009-top200";
 
   // Player palettes (dark + light theme) live in palette.mjs (shared with ranks.html).
   const COLORS = PALETTE_DARK;
@@ -859,6 +863,7 @@ import {
         deaths: pt.deaths,
         n: pt.n,
       })),
+      top: p.top,
       honu: p.honu,
     };
   }
@@ -1867,7 +1872,7 @@ import {
     try {
       r = await fetchPlayerCensus(cid, {
         base: CENSUS,
-        topN: 50,
+        topN: OPPONENT_TOP_N,
         getJson: (u) => censusJson(u, signal),
       });
     } catch (e) {
@@ -1896,6 +1901,7 @@ import {
         ivi: own.ivi,
         rows,
         curve: kpmCurve(rows),
+        top: OPPONENT_TOP_N,
         honu: `https://wt.honu.pw/c/${cid}/killboard`,
       },
     });
@@ -2819,7 +2825,7 @@ import {
           return (
             `<tr><th scope="row" class="stats-name" style="color:${col}">` +
             `<span class="player-num" aria-label="Series ${num}">${num}.</span>` +
-            `${nameSpanHtml(row.p.display, farmTitle(row.p))}${padMarkHtml(row.p)}</th>${vals}</tr>`
+            `${nameSpanHtml(row.p.display, farmTitle(row.p))}${padMarkHtml(row.p)}${legacySampleHtml(row.p)}</th>${vals}</tr>`
           );
         })
         .join("");
@@ -2940,6 +2946,12 @@ import {
     const mk = playerMark(p);
     if (!mk.mark) return "";
     return `<span class="pad-mark mark-${mk.kind}" title="${escapeHtml(mk.tip)}">${mk.mark}</span>`;
+  }
+
+  /** Subtle "◦" after the name when the sample is the older top-50 one. */
+  function legacySampleHtml(p) {
+    if (!isLegacySample(p)) return "";
+    return `<span class="sample-legacy" title="${escapeHtml(LEGACY_SAMPLE_TIP)}">${LEGACY_SAMPLE_MARK}</span>`;
   }
 
   /** Name cell title: adds the farm note when farm accounts were excluded. */

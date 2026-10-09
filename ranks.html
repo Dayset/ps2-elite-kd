@@ -24,7 +24,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261009-buildlog" />
+  <link rel="stylesheet" href="styles.css?v=20261009-top200" />
   <style>
     /* Ranks page: one long sortable table of every cached player. */
     body.ranks-page { overflow-x: hidden; }
@@ -280,12 +280,12 @@
 
 
   <script type="module">
-    import "./name-peek.mjs?v=20261009-buildlog";
-    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits } from "./dist.mjs?v=20261009-buildlog";
-    import { MIN_FIGHTS, MIN_FIGHTS_TIP, THIN_METRICS } from "./player-metrics.mjs?v=20261009-buildlog";
-    import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261009-buildlog";
-    import { paletteColor } from "./palette.mjs?v=20261009-buildlog";
-    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-buildlog";
+    import "./name-peek.mjs?v=20261009-top200";
+    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits } from "./dist.mjs?v=20261009-top200";
+    import { MIN_FIGHTS, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261009-top200";
+    import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261009-top200";
+    import { paletteColor } from "./palette.mjs?v=20261009-top200";
+    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-top200";
 
     const LS_THEME = "ps2-elite-kd-theme";
     const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";
@@ -426,6 +426,8 @@
           // Altered stats: "padding" → "*", "adjusted" → "†" (padding.mjs statMark).
           markKind: idx.mark != null ? r[idx.mark] || "" : idx.pad != null && r[idx.pad] === 1 ? "padding" : "",
           farm: idx.farm != null ? r[idx.farm] || "" : "",
+          // Older top-50 opponent sample (new fetches use 200): subtle "◦" after the name.
+          legacy: idx.top != null ? (+r[idx.top] || 50) < 200 : false,
           _bare: bare(r[idx.name]),
           pcts: {},
         };
@@ -517,7 +519,8 @@
         `<td class="rk-pick"><input type="checkbox" aria-label="Pick ${esc(r.name)}"${checked}${disabled} /></td>` +
         `<td class="rk-num">${r.rank}</td>` +
         `<td class="rk-name"><a href="${href}" title="Open on the main chart"><span class="nm" data-full="${esc(r.name)}" title="${esc(r.name + (r.farm ? " — " + r.farm : ""))}">${esc(r.name)}</span></a>` +
-        (r.mark ? `<span class="pad-mark mark-${r.markKind}" title="${esc(r.markTip + ". " + r.farm)}">${r.mark}</span>` : "") + `</td>` +
+        (r.mark ? `<span class="pad-mark mark-${r.markKind}" title="${esc(r.markTip + ". " + r.farm)}">${r.mark}</span>` : "") +
+        (r.legacy ? `<span class="sample-legacy" title="${esc(LEGACY_SAMPLE_TIP)}">${LEGACY_SAMPLE_MARK}</span>` : "") + `</td>` +
         cols.map((c) => cellHtml(c, r)).join("") +
         `</tr>`
       );
@@ -976,8 +979,9 @@
       restorePicks();
       syncPickedUi();
       // Legend for the "*" marker, only when someone carries it.
-      $("ranksStatus").innerHTML = [...new Set(data.rows.map((r) => r.markTip).filter(Boolean))]
-        .map((t) => `<span class="legend-note">${esc(t)}</span>`).join("<br />");
+      const notes = [...new Set(data.rows.map((r) => r.markTip).filter(Boolean))];
+      if (data.rows.some((r) => r.legacy)) notes.push(`${LEGACY_SAMPLE_MARK} ${LEGACY_SAMPLE_TIP}`);
+      $("ranksStatus").innerHTML = notes.map((t) => `<span class="legend-note">${esc(t)}</span>`).join("<br />");
       fillMetricSelect();
       render();
       drawDist();

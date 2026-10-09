@@ -322,10 +322,12 @@ export const fmtPctFromTop = (p) => fmtPctFromRef(p, "high");
  * typical, ~5 s for the 2nd+ live name in a run (the 60/min pacing bucket has
  * a burst of 5, i.e. one player), up to ~10 s when Census builds a cold killboard.
  * The old Honu path (~102 calls/player) was budgeted at 15 s.
+ * With 200 opponents per player (2026-10-09: killboard + 2 × stat / by_faction
+ * / names batches, ~8 calls) a live name measured 6–11 s, so the prior is 7 s.
  * Each tab also remembers its own recent live times (etaLearnLiveMs) and uses
  * them as the prior next run, so the first estimate fits that connection.
  */
-export const ETA_PRIOR_LIVE_MS = 4000;
+export const ETA_PRIOR_LIVE_MS = 7000;
 export const ETA_PRIOR_CACHED_MS = 300;
 export const ETA_LEARN_MIN_MS = 500;
 export const ETA_LEARN_MAX_MS = 60000;

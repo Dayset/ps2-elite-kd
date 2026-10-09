@@ -264,7 +264,7 @@ describe("progress ETA (regression: stuck at 0s after a fast cached first name)"
     assert.equal(nextEtaDeadline(31000, 32000, 15000), 47000); // ran out with work left → re-estimate
   });
   it("live prior reflects Census timing (seconds, not the old 15 s Honu budget)", () => {
-    assert.ok(ETA_PRIOR_LIVE_MS >= 2000 && ETA_PRIOR_LIVE_MS <= 6000, `prior ${ETA_PRIOR_LIVE_MS}`);
+    assert.ok(ETA_PRIOR_LIVE_MS >= 2000 && ETA_PRIOR_LIVE_MS <= 9000, `prior ${ETA_PRIOR_LIVE_MS}`);
     // 2 fresh names, nothing measured yet → ~8 s, not 30 s.
     assert.equal(estimateRemainingMs({ plan: [true, true], done: 0 }).totalMs, 2 * ETA_PRIOR_LIVE_MS);
   });

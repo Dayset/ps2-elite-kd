@@ -3,7 +3,8 @@
  *
  * Same numbers Honu used to give us, because Honu itself is a thin wrapper:
  *  - killboard  = Census characters_event_grouped, summed per opponent (KILL /
- *    DEATH), self rows dropped, top 200 by kills+deaths
+ *    DEATH), self rows dropped, top 200 by kills+deaths (the scored sample is the
+ *    first OPPONENT_TOP_N of them)
  *    (honu Services/Census/KillboardCollection.cs). NOTE: no c:limit, exactly
  *    like Honu: Census then returns every row (a capped/sorted query gives a
  *    different top 200).
@@ -14,13 +15,34 @@
  *  - names      = character?character_id=a,b,c&c:resolve=outfit(alias).
  *
  * Opponent stats are batched: one characters_stat + one by_faction call per
- * up to CENSUS_BATCH ids, so a player is ~5 Census calls instead of ~100 Honu
+ * up to CENSUS_BATCH ids, so a player is ~8 Census calls instead of ~100 Honu
  * calls. Runs in the browser (app.js) and Node (scripts/refresh-cache.mjs);
  * the caller supplies getJson(url) (with its own pacing / retries / abort).
  */
 
 export const CENSUS_HOST = "https://census.daybreakgames.com";
-export const CENSUS_BATCH = 60; // ids per batched call (URL stays < ~1.5 KB)
+/**
+ * Ids per batched call. 120 ids → URL ~2.6 KB; tested live 2026-10-09 with all
+ * three calls (stat / by_faction / names + outfit resolve) at 120 and 250 ids:
+ * 200 OK in ~0.3–2 s. The player + OPPONENT_TOP_N opponents = 2 batches.
+ */
+export const CENSUS_BATCH = 120;
+/**
+ * Opponents per player in the scored sample (top by kills + deaths). ONE shared
+ * value for the browser (app.js) and the shared-cache refresh. Player files
+ * saved before 2026-10-09 used LEGACY_TOP_N (50) and are upgraded when the
+ * weekly refresh next re-fetches them. Above 200 the graph lines move ≤ ~5%
+ * (measured on JustV6me / YEEZY / ShloDog) for 3–4× the calls.
+ */
+export const OPPONENT_TOP_N = 200;
+export const LEGACY_TOP_N = 50;
+
+/** Opponent count a saved player was built from (missing → LEGACY_TOP_N). */
+export function sampleTopN(raw) {
+  const v = raw && (raw.top != null ? raw.top : raw.player && raw.player.top);
+  const n = +v;
+  return Number.isFinite(n) && n > 0 ? n : LEGACY_TOP_N;
+}
 const FACTION_STATS = ["weapon_kills", "weapon_headshots"];
 const PLAIN_STATS = ["weapon_deaths", "weapon_play_time", "weapon_fire_count", "weapon_hit_count"];
 
@@ -357,7 +379,7 @@ export async function fetchKillboard(charID, { base, getJson }) {
  * sorted killboard, and the top-N opponent rows ({name, kills, deaths, kpm}).
  * memo (optional Map id -> info) reuses opponent lookups across players.
  */
-export async function fetchPlayerCensus(charID, { base, getJson, topN = 50, memo = null }) {
+export async function fetchPlayerCensus(charID, { base, getJson, topN = OPPONENT_TOP_N, memo = null }) {
   const cid = String(charID);
   const board = await fetchKillboard(cid, { base, getJson });
   board.sort((a, b) => b.kills + b.deaths - (a.kills + a.deaths)); // stable: same as before

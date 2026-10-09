@@ -6,12 +6,12 @@
  * tips or a squad invite; never a ranking to mock anyone with.
  *
  * Rule (automatic): raw ⚔️ iVi (adjs, BEFORE the clamp-to-0 used for display)
- * ≤ 0, and a top-50 sample big enough to mean something (≥ 300 kills+deaths).
+ * ≤ 0, and an opponent sample big enough to mean something (≥ 300 kills+deaths).
  */
 export const SPROUT_RULE = Object.freeze({
   /** Raw ⚔️ iVi (adjs) at/below this. */
   MAX_ADJS: 0,
-  /** Minimum kills + deaths across the top-50 opponents. */
+  /** Minimum kills + deaths across the sampled top opponents (50 in older files, 200 now). */
   MIN_EVENTS: 300,
 });
 
@@ -25,7 +25,7 @@ export function sampleEvents(rows) {
 }
 
 /**
- * Apply the rule. m = playerMetrics row (needs adjs); events = top-50
+ * Apply the rule. m = playerMetrics row (needs adjs); events = sample
  * kills+deaths. Missing iVi never qualifies (can't judge without it).
  */
 export function sprout(m, events, rule = SPROUT_RULE) {
@@ -39,7 +39,7 @@ export function sprout(m, events, rule = SPROUT_RULE) {
 export function sproutRuleText(rule = SPROUT_RULE) {
   return (
     `Listed when ⚔️ iVi (raw, before the main page rounds negatives up to 0) is ≤ ${rule.MAX_ADJS} ` +
-    `and the top-50 sample has at least ${rule.MIN_EVENTS} kills + deaths (so a few bad fights don't count). ` +
+    `and the top-opponent sample has at least ${rule.MIN_EVENTS} kills + deaths (so a few bad fights don't count). ` +
     `Automatic, from the shared cache.`
   );
 }
