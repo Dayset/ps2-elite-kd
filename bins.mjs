@@ -9,7 +9,8 @@
  *      "chart padding should not be in the same bin as red flags"),
  *      "adjusted" (†: farm kills excluded under the padding line) and
  *      "outlier" (🧪 outlier guard: a shown value far outside everyone else).
- *   🚩 Red flags — ANY other pattern (aim, vehicle, rampage, and any future
+ *   🚩 Red flags — ANY other pattern (aim, vehicle, rampage, session (🧪 Honu
+ *      session stats, session-stats.mjs; t294u), and any future
  *      rule by default, so a new pattern can't silently drop out of 🚩).
  *
  * A player with only chart patterns → 📉 only. A player with a red pattern →
@@ -21,7 +22,7 @@
 export const CHART_PATTERNS = Object.freeze(["padding", "adjusted", "outlier"]);
 
 /** Patterns that put a player in 🚩 (documentation / tests; classifyBins treats any non-chart pattern as red). */
-export const RED_PATTERNS = Object.freeze(["aim", "vehicle", "rampage"]);
+export const RED_PATTERNS = Object.freeze(["aim", "vehicle", "rampage", "session"]);
 
 /**
  * { patterns: [...], outlier: bool } → { bin: "red" | "chart" | "", red: [...], chart: [...], both }

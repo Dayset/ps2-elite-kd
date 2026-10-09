@@ -437,14 +437,16 @@ export function dayWindows(startIso, endIso) {
 
 /**
  * Merge newly counted sessions into the stored record and recompute totals.
- * sessions: { [sessionId]: [assists, kills, seconds, startMs] }; oldest pruned
+ * sessions: { [sessionId]: [assists, kills, seconds, startMs, shareSum, shareN, mult, deaths] }; oldest pruned
  * past `maxKept`. Returns null when there is nothing counted at all.
  */
 export function mergeAssists(prev, counted, { maxKept = ASSIST_MAX_SESSIONS_KEPT } = {}) {
   const sessions = { ...((prev && prev.sessions) || {}) };
   for (const c of counted || []) {
     sessions[String(c.id)] = [c.assists, c.kills, c.seconds, c.startMs,
-      Math.round((c.shareSum || 0) * 1000) / 1000, c.shareN || 0, Math.round((c.mult || 1) * 100) / 100];
+      Math.round((c.shareSum || 0) * 1000) / 1000, c.shareN || 0, Math.round((c.mult || 1) * 100) / 100,
+      // [7] session deaths from the same Honu session list (🧪 session K/D; null = unknown).
+      Number.isFinite(c.deaths) ? c.deaths : null];
   }
   let ids = Object.keys(sessions).filter((id) => Array.isArray(sessions[id]) && sessions[id].length >= 4);
   ids.sort((x, y) => sessions[y][3] - sessions[x][3]);
@@ -503,7 +505,7 @@ export async function updateHonuAssists(cid, prev, {
         assists += st.assists; shareSum += st.shareSum; shareN += st.shareN; mult = st.mult;
       }
       const startMs = Date.parse(sess.start);
-      counted.push({ id: sess.id, assists, kills: sess.kills, seconds: Math.round((Date.parse(sess.end) - startMs) / 1000), startMs, shareSum, shareN, mult });
+      counted.push({ id: sess.id, assists, kills: sess.kills, deaths: Number.isFinite(+sess.deaths) ? +sess.deaths : null, seconds: Math.round((Date.parse(sess.end) - startMs) / 1000), startMs, shareSum, shareN, mult });
     }
     return counted.length ? mergeAssists(keep, counted) : keep;
   } catch (e) {

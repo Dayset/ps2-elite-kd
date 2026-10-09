@@ -34,14 +34,14 @@ describe("bin classifier (user rules t280u + t288u: chart-only incl. 🌾 paddin
   it("nothing → no bin; chart patterns are exactly 🌾 padding + † adjusted + 🧪 outlier; 🚩 = aim / vehicle / rampage", () => {
     assert.equal(classifyBins().bin, "");
     assert.deepEqual([...CHART_PATTERNS], ["padding", "adjusted", "outlier"]);
-    assert.deepEqual([...RED_PATTERNS], ["aim", "vehicle", "rampage"]);
+    assert.deepEqual([...RED_PATTERNS], ["aim", "vehicle", "rampage", "session"]);
   });
   it("reviewFlags routes through the classifier", () => {
     assert.equal(reviewFlags({ kd: 98, kpm: 4.7, ivi: 228 }).red, true);
     assert.equal(reviewFlags({ kd: 1, kpm: 1, ivi: 500 }).flagged, false);
   });
   it("real cache: 🌾 / † / outlier-only players are never in 🚩; 🚩 + chart players are cross-referenced", () => {
-    const { guard } = buildRanksWithGuard(dataDir);
+    const { guard, session } = buildRanksWithGuard(dataDir);
     const idx = JSON.parse(fs.readFileSync(path.join(dataDir, "index.json"), "utf8"));
     const red = new Set();
     let pads = 0;
@@ -53,6 +53,8 @@ describe("bin classifier (user rules t280u + t288u: chart-only incl. 🌾 paddin
       if (f.red) assert.ok(f.patterns.some((p) => RED_PATTERNS.includes(p)), e.slug);
       if (f.red) red.add(e.slug);
     }
+    // 🚩 "session" (🧪 session stats, needs data/xp: computed by build-ranks, merged on build-log).
+    for (const f of session.flagged) red.add(f.slug);
     for (const g of guard.players) {
       assert.equal((g.red || []).length > 0, red.has(g.slug), g.slug);
       if (red.has(g.slug)) assert.match(g.reason, /🚩/);

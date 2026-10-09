@@ -14,7 +14,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261009-disco" />
+  <link rel="stylesheet" href="styles.css?v=20261009-sess" />
   <style>
     body { overflow: auto; }
     .st-wrap { max-width: 960px; margin: 0 auto; padding: 18px 16px 40px; }
@@ -68,6 +68,12 @@
     .st-flags .st-tag.rampage { border-color: #d04040; }
     .st-flags .st-tag.padding { border-color: #b070c0; }
     .st-flags .st-tag.adjusted { border-color: #8090a0; }
+    .st-flags .st-tag.session { border-color: #a070d0; }
+    /* 🧪 Session stats (build-log only; assists never public) */
+    .st-sess { border-color: color-mix(in srgb, #a070d0 40%, var(--border)); }
+    .st-sess .st-note { margin: 8px 0 2px; line-height: 1.45; }
+    .st-sess .st-hit { color: #ff8a8a; font-weight: 600; }
+    html[data-theme="light"] .st-sess .st-hit { color: #b03030; }
     /* 📉 Chart anomalies (stat / chart integrity, separate from 🚩; calm blue-grey) */
     .st-anoms { border-color: color-mix(in srgb, #8090a0 45%, var(--border)); }
     .st-anoms .st-note { margin: 8px 0 2px; line-height: 1.45; }
@@ -126,6 +132,28 @@
       <div class="st-rule">Checked on every refresh (scripts/build-ranks.mjs → outlier-guard.mjs) on the numbers as the site shows them, one row per player with every metric that's far out. Unexplained ones may be a formula gap like the old 🦁 Brave 6094; explained ones also have a 🚩 pattern (full row in 🚩), a 🌾 or † entry above, or were reviewed by hand.</div>
       <div id="guardRule" class="st-rule"></div>
       <div id="guard" class="st-dim">Loading…</div>
+      </details>
+    </details>
+    <details class="st-card st-sec st-flags st-sess" id="cardSession">
+      <summary id="sessSummary"><h2>🧪 Session stats <span id="sessCount" class="st-count">…</span></h2></summary>
+      <div class="st-note">Recent Honu sessions we already collect quietly (assists on every refresh; full XP detail for analyzed / requested players), as rates per kill / minute / death. Assists stay off the public pages; this section is the only place they show. Count = 🚩 session-pattern hits. Session-metric outliers also go through the 🧪 outlier guard (📉), and a player with the session pattern is listed in 🚩.</div>
+      <div id="sessRule" class="st-rule"></div>
+      <div id="sessCoverage" class="st-dim">Loading…</div>
+      <details class="st-sub-sec" id="secSessFlags" data-default="open">
+      <summary><h3>🚩 Session pattern <span id="sessFlagCount" class="st-count">…</span></h3></summary>
+      <div id="sessFlags" class="st-dim">Loading…</div>
+      </details>
+      <details class="st-sub-sec" id="secSessRef">
+      <summary><h3>Reference: confirmed cheaters vs top legit</h3></summary>
+      <div id="sessRef" class="st-dim">Loading…</div>
+      </details>
+      <details class="st-sub-sec" id="secSessDist">
+      <summary><h3>Distributions <span id="sessDistCount" class="st-count">…</span></h3></summary>
+      <div id="sessDist" class="st-dim">Loading…</div>
+      </details>
+      <details class="st-sub-sec" id="secSessOut">
+      <summary><h3>Session-metric outliers <span id="sessOutCount" class="st-count">…</span></h3></summary>
+      <div id="sessOut" class="st-dim">Loading…</div>
       </details>
     </details>
     <details class="st-card st-sec" id="cardHidden">
@@ -416,14 +444,14 @@
        🌾 padding + † "adjusted" + the 🧪 outlier guard (grouped by player) go to 📉 Chart anomalies. Uses the
        same metrics as the main tables (player-metrics.mjs). Leads for review, not proof. -->
   <script type="module">
-    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261009-disco";
-    import { reviewFlags, reviewRuleText, anomalyRuleText, paddingRuleText } from "./red-flags.mjs?v=20261009-disco";
-    import { groupOutliers } from "./outlier-guard.mjs?v=20261009-disco";
-    import { classifyBins, CHART_LABELS } from "./bins.mjs?v=20261009-disco";
-    import { sprout, sampleEvents, sproutRuleText } from "./sprouts.mjs?v=20261009-disco";
-    import { reviewDecision } from "./padding.mjs?v=20261009-disco";
-    import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261009-disco";
-    import "./name-peek.mjs?v=20261009-disco"; // full-name popup for truncated .nm names
+    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261009-sess";
+    import { reviewFlags, reviewRuleText, anomalyRuleText, paddingRuleText } from "./red-flags.mjs?v=20261009-sess";
+    import { groupOutliers } from "./outlier-guard.mjs?v=20261009-sess";
+    import { classifyBins, CHART_LABELS } from "./bins.mjs?v=20261009-sess";
+    import { sprout, sampleEvents, sproutRuleText } from "./sprouts.mjs?v=20261009-sess";
+    import { reviewDecision } from "./padding.mjs?v=20261009-sess";
+    import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261009-sess";
+    import "./name-peek.mjs?v=20261009-sess"; // full-name popup for truncated .nm names
 
     const POLL_MS = 30 * 1000;
     const CONCURRENCY = 6;
@@ -437,7 +465,9 @@
       rampage: { label: "rampage", tip: "Rampage pattern: KD ≥ 15 and KPM ≥ 3 (short absurd kill spree, no skill test)", hot: ["kd"] },
       adjusted: { label: "adjusted — needs review", tip: "Stats adjusted: some kills on farm accounts were excluded automatically (under the padding share). A human decides: fluke, bad luck, or padding (record it in data/reviewed.json)", hot: [] },
       padding: { label: "padding", tip: "Stat padding: most kills on a few accounts that never fight back (those kills are excluded from the stats)", hot: [] },
+      session: { label: "session", tip: "Session pattern (🧪 Session stats): very few assists per kill + headshot-heavy kills + a very one-sided session K/D", hot: [] },
     };
+    let sessionSlugs = new Set(); // status.json sessionStats.flagged (needs data/xp, so computed by build-ranks.mjs)
     let busy = false;
     let reviewed = null; // data/reviewed.json
 
@@ -686,6 +716,59 @@
           }).join("") + "</table></div>" : "");
     }
 
+    /* ---------- 🧪 Session stats (status.json sessionStats; never public) ---------- */
+    const SESS_REF_COLS = ["s_apk", "s_hsk", "s_kd", "s_maxKd", "s_kpm", "s_maxKpm", "s_ksk", "s_domk", "s_revDom", "s_savk", "s_spotk", "s_share"];
+    function renderSession(status) {
+      const s = status && status.sessionStats;
+      if (!s) {
+        $("sessCount").textContent = "–";
+        for (const id of ["sessCoverage", "sessFlags", "sessRef", "sessDist", "sessOut"]) $(id).innerHTML = '<span class="st-dim">No check yet (written by the next refresh run).</span>';
+        return;
+      }
+      const label = Object.fromEntries((s.metrics || []).map((m) => [m.id, m]));
+      const th = (id) => '<th class="st-num" title="' + esc((label[id] && label[id].tip) || "") + '">' + esc((label[id] && label[id].label) || id) + "</th>";
+      const c = s.coverage || {};
+      const flagged = s.flagged || [];
+      $("sessCount").textContent = String(flagged.length);
+      $("sessCount").classList.toggle("hot", flagged.length > 0);
+      $("sessFlagCount").textContent = String(flagged.length);
+      $("sessSummary").title = s.ruleText || "";
+      $("sessRule").textContent = "Rule: " + (s.ruleText || "") + " Minimum: " + ((s.min && s.min.MIN_KILLS) || 100) + " kills in counted sessions.";
+      $("sessCoverage").innerHTML = "<div>" + (c.withSessions || 0) + " of " + (c.players || 0) + " cached players have session data (" + (c.sessions || 0) + " sessions, " +
+        (c.kills || 0).toLocaleString() + " kills); " + (c.measured || 0) + " measured (≥ " + ((s.min && s.min.MIN_KILLS) || 100) + " kills). Full XP detail: " +
+        (c.xpPlayers || 0) + " players (" + (c.xpSessions || 0) + " sessions), " + (c.xpMeasured || 0) + " measured; XP-only metrics join the outlier guard at 50 measured players. · checked " +
+        esc(s.checkedAt ? ago(Date.parse(s.checkedAt)) : "—") + "</div>";
+      const ev = (r) => "assists/kill <strong>" + nfmt(r.apk) + "</strong>, headshots " + (r.hs == null ? "—" : "<strong>" + Math.round(r.hs * 100) + "%</strong>") + " (" + esc(r.hsSrc || "—") +
+        "), K/D <strong>" + nfmt(r.kd) + "</strong> (" + esc(r.kdSrc || "—") + ")";
+      $("sessFlags").innerHTML = flagged.length
+        ? '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th class="st-num">Sessions</th><th class="st-num">Kills</th><th>Evidence</th><th>Also</th></tr>' +
+          flagged.map((r) => '<tr><td><a href="#flag-' + esc(r.slug) + '" class="st-jump" title="Row in 🚩 Red flags">' + esc(r.name) + " ↑</a>" + (r.hidden ? ' <span class="st-dim" title="On the 🙈 hide list">🙈</span>' : "") +
+            '</td><td class="st-num">' + r.sessions + '</td><td class="st-num">' + r.kills + "</td><td>" + ev(r) + "</td><td>" + esc((r.otherRed || []).join(", ") || "—") + "</td></tr>").join("") +
+          "</table></div>"
+        : '<div class="st-dim">Nobody matches right now.</div>';
+      const ref = s.reference || [];
+      $("sessRef").innerHTML = ref.length
+        ? '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th>Group</th><th class="st-num">Kills</th>' + SESS_REF_COLS.map(th).join("") + "<th>🚩</th></tr>" +
+          ref.map((r) => "<tr><td>" + esc(r.name) + "</td><td>" + esc(r.group) + '</td><td class="st-num">' + (r.kills || 0) + (r.measured ? "" : ' <span class="st-dim" title="Below the minimum, or no recent sessions">⚠️</span>') + "</td>" +
+            SESS_REF_COLS.map((id) => '<td class="st-num">' + nfmt(r.values && r.values[id]) + "</td>").join("") + "<td>" + (r.flagged ? '<span class="st-hit">session</span>' : "") + "</td></tr>").join("") +
+          "</table></div>"
+        : '<div class="st-dim">No reference players cached.</div>';
+      const dist = s.distributions || {};
+      const ids = (s.metrics || []).map((m) => m.id);
+      $("sessDistCount").textContent = String(ids.length);
+      $("sessDist").innerHTML = '<div class="st-scroll"><table class="st-table"><tr><th>Metric</th><th>Source</th><th class="st-num">n</th><th class="st-num">p01</th><th class="st-num">median</th><th class="st-num">p95</th><th class="st-num">p99</th><th class="st-num">max</th></tr>' +
+        ids.map((id) => { const d = dist[id] || {}; return '<tr><td title="' + esc(label[id].tip) + '">' + esc(label[id].label) + "</td><td>" + (label[id].tier === "x" ? "XP detail" : "assists") + '</td><td class="st-num">' + (d.n || 0) + "</td>" +
+          ["p01", "median", "p95", "p99", "max"].map((k) => '<td class="st-num">' + nfmt(d[k]) + "</td>").join("") + "</tr>"; }).join("") + "</table></div>";
+      const outs = s.outliers || [];
+      $("sessOutCount").textContent = String(outs.length);
+      $("sessOutCount").classList.toggle("hot", (s.outliersUnexplained || 0) > 0);
+      $("sessOut").innerHTML = outs.length
+        ? '<div class="st-dim">Also listed in 📉 Chart anomalies → 🧪 Outlier guard.</div><div class="st-scroll"><table class="st-table"><tr><th>Player</th><th>Metrics far out</th><th>Why</th></tr>' +
+          outs.map((g) => '<tr><td><a href="#chart-out-' + esc(g.slug) + '" class="st-jump">' + esc(g.name) + ' ↑</a></td><td class="st-metrics">' + g.metrics.map((m) => esc(m.label) + " <strong>" + nfmt(m.value) + "</strong>" + (m.side === "low" ? " ↓" : "")).join(", ") +
+            "</td><td>" + (g.explained ? esc(g.reason) : '<span class="st-err">unexplained</span>') + "</td></tr>").join("") + "</table></div>"
+        : '<div class="st-dim">None under the guard rule (robust z beyond ±6 and far past p99).</div>';
+    }
+
     /** 🙈 hide list: data/hidden.json (source of truth) + status.json matches (cid / cached display name). */
     async function renderHidden(status) {
       let list = {};
@@ -716,9 +799,17 @@
       } catch { st = null; }
       renderGuard(st);
       renderHidden(st);
+      renderSession(st);
+    }
+
+    /** Add the 🚩 "session" pattern (from status.json) to a summarized row. */
+    function withSession(r) {
+      if (!r || !sessionSlugs.has(r.slug) || (r.patterns || []).includes("session")) return r;
+      return Object.assign({}, r, { patterns: (r.patterns || []).concat("session"), red: true, flagged: true });
     }
 
     function render(rows, total, errors) {
+      rows = rows.map(withSession);
       sproutRows = rows.filter((r) => r && r.sprout);
       $("sproutsCount").textContent = String(sproutRows.length);
       if (sproutRows.length) renderSprouts();
@@ -752,6 +843,12 @@
           const rr = await fetch("data/reviewed.json?t=" + Date.now(), { cache: "no-store" });
           reviewed = rr.ok ? await rr.json() : null;
         } catch { reviewed = null; }
+        // 🧪 session pattern hits (status.json, written by build-ranks.mjs with the data/xp detail).
+        try {
+          const sr = await fetch("data/status.json?t=" + Date.now(), { cache: "no-store" });
+          const st = sr.ok ? await sr.json() : null;
+          sessionSlugs = new Set(((st && st.sessionStats && st.sessionStats.flagged) || []).map((f) => f.slug));
+        } catch { /* keep the last set */ }
         const entries = (index.players || []).filter((e) => e && e.file && e.name);
         const byFile = (readCache() || {}).byFile || {};
         // Only (re)load players that are new or changed since the cached pass.

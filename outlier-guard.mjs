@@ -17,7 +17,8 @@
  * and test/outlier-guard.test.mjs (fails on unexplained outliers).
  * DOM-free.
  */
-import { classifyBins } from "./bins.mjs?v=20261009-disco";
+import { classifyBins } from "./bins.mjs?v=20261009-sess";
+import { SESSION_LABELS } from "./session-stats.mjs?v=20261009-sess";
 
 export const GUARD_RULE = Object.freeze({ Z: 6, SPAN_K: 3, MIN_N: 50 });
 
@@ -55,6 +56,8 @@ export const METRIC_LABELS = Object.freeze({
   adjs: "⚔️ iVi", rf: "🛡️ Resist", act: "🏃 Activity", pvs: "🦁 Brave", rkd: "☠️ K/D", mech: "⚙️ Mech%",
   inflation: "🎈 Inflation", adj: "🎯🎈 ivi", ekpm: "eKPM", own: "own KPM", coi: "📊 COI", slope: "📉 Slope",
   kd: "KD", kpm: "KPM", ownKpm: "own KPM (public)", acc: "Acc %", hsr: "HSR %", ivi: "IvI",
+  // 🧪 Honu session metrics (session-stats.mjs; build-log only, never public).
+  ...SESSION_LABELS,
 });
 
 /** Why an outlier is already accounted for ("" = unexplained). 🚩 patterns first, then reviewed, then † adjusted. */

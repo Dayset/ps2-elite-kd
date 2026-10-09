@@ -24,6 +24,19 @@ import { farmNote, statMark } from "../padding.mjs";
 import { findOutliers, guardStatus } from "../outlier-guard.mjs";
 import { hiddenList } from "../hidden.mjs";
 import { cleanTimes } from "../flairs.mjs";
+import { sessionMetrics, sessionFlag, sessionRuleText, distribution, SESSION_METRICS, SESSION_METRIC_IDS, SESSION_MIN, SESSION_RULE } from "../session-stats.mjs";
+
+/** Full Honu XP detail for a slug (data/xp/<slug>.json; requested players only), or null. */
+export function readXp(dataDir, slug) {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(dataDir, "xp", `${slug}.json`), "utf8"));
+  } catch {
+    return null;
+  }
+}
+
+/** Confirmed-cheater reference + top legit players shown side by side on build-log (🧪 Session stats). */
+export const SESSION_REFERENCE_LEGIT = Object.freeze(["yeezy", "zyr0sncx", "xclonekano", "shlodog", "justv6me"]);
 
 /** Metric ids (same ids as the app.js stats columns). */
 export const METRIC_COLS = Object.freeze([
@@ -121,16 +134,77 @@ export function buildRanksWithGuard(dataDir) {
   const ranks = buildRanks(dataDir, {
     hidden,
     onHidden(h) { hiddenFound.push(h); },
-    onPlayer(raw, row) {
+    onPlayer(raw, row, info) {
       const m = playerMetrics(normalizePlayer(raw));
       const f = reviewFlags(m); // raw metrics: same 🚩 result as build-log.html
       const values = {};
       METRIC_COLS.forEach((k, i) => { values[k] = row[4 + i]; });
-      players.push({ slug: row[2], name: row[0], flagged: f.flagged, patterns: f.patterns, values });
+      // 🧪 Honu session metrics (assists pass + data/xp detail); only measured players count.
+      const pl = raw.player || raw;
+      const sm = sessionMetrics({ assists: pl.assists, xp: readXp(dataDir, row[2]) });
+      const sf = sessionFlag(sm, { hsr: pl.hsr, kd: pl.global_kd });
+      for (const id of SESSION_METRIC_IDS) values[id] = sm && sm.measured ? sm.values[id] : null;
+      const patterns = sf.flagged ? [...f.patterns, "session"] : f.patterns;
+      players.push({ slug: row[2], name: row[0], flagged: f.flagged || sf.flagged, patterns, values, session: sm, sessionFlag: sf, hidden: !!(info && info.hidden) });
     },
   });
-  const guard = guardStatus(findOutliers(players, METRIC_COLS));
-  return { ranks, guard, hidden: hiddenSummary(dataDir, hiddenFound), bins: binCounts(players, guard) };
+  const guard = guardStatus(findOutliers(players, [...METRIC_COLS, ...SESSION_METRIC_IDS]));
+  return { ranks, guard, hidden: hiddenSummary(dataDir, hiddenFound), bins: binCounts(players, guard), session: sessionStatus(players, guard, dataDir) };
+}
+
+/**
+ * status.json "sessionStats" block (build-log.html 🧪 Session stats, never public):
+ * coverage, per-metric distributions over measured players, 🚩 "session" hits
+ * with evidence, the cheater-vs-top-legit reference table and the session-metric
+ * outliers (also inside outlierGuard, so 📉 lists them with everything else).
+ */
+export function sessionStatus(players, guard, dataDir) {
+  const r = (v, d = 3) => (typeof v === "number" && Number.isFinite(v) ? Math.round(v * 10 ** d) / 10 ** d : null);
+  const withData = players.filter((p) => p.session);
+  const measured = withData.filter((p) => p.session.measured);
+  const xpFull = measured.filter((p) => p.session.xpKills >= SESSION_MIN.MIN_KILLS);
+  const dist = {};
+  for (const m of SESSION_METRICS) {
+    const d = distribution(measured.map((p) => p.values[m.id]));
+    dist[m.id] = Object.fromEntries(Object.entries(d).map(([k, v]) => [k, k === "n" ? v : r(v)]));
+  }
+  const evidence = (p) => ({
+    slug: p.slug, name: p.name, hidden: !!p.hidden,
+    sessions: p.session ? p.session.sessions : 0, kills: p.session ? p.session.kills : 0, minutes: p.session ? p.session.minutes : 0,
+    source: p.session ? p.session.source : "", measured: !!(p.session && p.session.measured),
+    apk: r(p.sessionFlag.apk), hs: r(p.sessionFlag.hs), hsSrc: p.sessionFlag.hsSrc, kd: r(p.sessionFlag.kd, 2), kdSrc: p.sessionFlag.kdSrc,
+    flagged: !!p.sessionFlag.flagged, otherRed: classifyBins({ patterns: (p.patterns || []).filter((x) => x !== "session") }).red,
+    values: p.session ? Object.fromEntries(SESSION_METRIC_IDS.map((id) => [id, r(p.session.values[id])])) : {},
+  });
+  // Reference: hidden list (confirmed cheaters) + top legit players, whether measured or not.
+  const hiddenSlugs = players.filter((p) => p.hidden).map((p) => p.slug);
+  const refSlugs = [...hiddenSlugs, ...SESSION_REFERENCE_LEGIT];
+  const reference = refSlugs.map((s) => players.find((p) => p.slug === s)).filter(Boolean)
+    .map((p) => ({ ...evidence(p), group: p.hidden ? "confirmed cheater" : "top legit" }));
+  const outIds = new Set(SESSION_METRIC_IDS);
+  const outliers = (guard.players || [])
+    .map((g) => ({ ...g, metrics: g.metrics.filter((m) => outIds.has(m.id)) }))
+    .filter((g) => g.metrics.length);
+  return {
+    checkedAt: new Date().toISOString(),
+    min: { ...SESSION_MIN }, rule: { ...SESSION_RULE }, ruleText: sessionRuleText(),
+    coverage: {
+      players: players.length,
+      withSessions: withData.length,
+      measured: measured.length,
+      sessions: withData.reduce((n, p) => n + p.session.sessions, 0),
+      kills: withData.reduce((n, p) => n + p.session.kills, 0),
+      xpPlayers: withData.filter((p) => p.session.xpSessions > 0).length,
+      xpMeasured: xpFull.length,
+      xpSessions: withData.reduce((n, p) => n + p.session.xpSessions, 0),
+    },
+    metrics: SESSION_METRICS.map((m) => ({ id: m.id, tier: m.tier, label: m.label, tip: m.tip })),
+    distributions: dist,
+    flagged: measured.filter((p) => p.sessionFlag.flagged).map(evidence),
+    reference,
+    outliers,
+    outliersUnexplained: outliers.filter((g) => !g.explained).length,
+  };
 }
 
 /**
@@ -140,10 +214,11 @@ export function buildRanksWithGuard(dataDir) {
  */
 export function binCounts(players, guard) {
   const out = new Set((guard.players || []).map((g) => g.slug));
-  const c = { red: 0, padding: 0, adjusted: 0, outlier: out.size, chartOnly: 0, both: 0 };
+  const c = { red: 0, padding: 0, adjusted: 0, outlier: out.size, chartOnly: 0, both: 0, session: 0 };
   for (const p of players) {
     const b = classifyBins({ patterns: p.patterns || [], outlier: out.has(p.slug) });
     if (b.bin === "red") c.red += 1;
+    if (b.red.includes("session")) c.session += 1;
     if (b.bin === "chart") c.chartOnly += 1;
     if (b.both) c.both += 1;
     if (b.chart.includes("padding")) c.padding += 1;
@@ -174,7 +249,7 @@ const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPat
 if (isMain) {
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
   const dataDir = path.join(root, "data");
-  const { ranks: out, guard, hidden: hiddenInfo, bins } = buildRanksWithGuard(dataDir);
+  const { ranks: out, guard, hidden: hiddenInfo, bins, session } = buildRanksWithGuard(dataDir);
   fs.writeFileSync(path.join(dataDir, "ranks.json"), JSON.stringify(out) + "\n");
   console.log(`ranks.json: ${out.count} players (${hiddenInfo.count} on the 🙈 hide list)`);
   // 🧪 Outlier guard → data/status.json (build-log.html). Other status fields are kept.
@@ -184,6 +259,7 @@ if (isMain) {
   st.outlierGuard = guard;
   st.hidden = hiddenInfo;
   st.bins = { checkedAt: new Date().toISOString(), ...bins };
+  st.sessionStats = session;
   fs.writeFileSync(stPath, JSON.stringify(st, null, 2) + "\n");
   for (const o of guard.items.filter((x) => !x.explained)) {
     console.log(`::warning::outlier guard: ${o.name} ${o.id}=${o.value} (bound ${o.bound}, z ${o.z})`);

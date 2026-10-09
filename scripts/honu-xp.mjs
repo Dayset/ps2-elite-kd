@@ -101,7 +101,7 @@ export function mergeXp(prev, collected, { keep = XP_DETAIL_SESSIONS_KEPT, keepI
     const s1 = new Date(c.s + c.sec * 1000).toISOString();
     if (!out.first || s0 < out.first) out.first = s0;
     if (!out.last || s1 > out.last) out.last = s1;
-    out.sessions[sid] = { s: c.s, sec: c.sec, k: c.k, g: c.g, r: c.r };
+    out.sessions[sid] = { s: c.s, sec: c.sec, k: c.k, ...(Number.isFinite(c.d) ? { d: c.d } : {}), g: c.g, r: c.r };
   }
   const ids = Object.keys(out.sessions).sort((a, b) => out.sessions[b].s - out.sessions[a].s);
   for (const id of ids.slice(keep)) delete out.sessions[id];
@@ -135,7 +135,7 @@ export async function updateHonuXp(cid, prev, { getJson, budget = { calls: Infin
         aggregateXp(await getJson(`${HONU_API}exp/characters/other?charIDs=${cid}&${q}`), cid, "r", r);
       }
       const s = Date.parse(sess.start);
-      collected.push({ id: sess.id, s, sec: Math.round((Date.parse(sess.end) - s) / 1000), k: sess.kills, g, r });
+      collected.push({ id: sess.id, s, sec: Math.round((Date.parse(sess.end) - s) / 1000), k: sess.kills, d: Number.isFinite(+sess.deaths) ? +sess.deaths : null, g, r });
     }
     return { xp: collected.length ? mergeXp(keep, collected, { now }) : keep, calls };
   } catch (e) {
