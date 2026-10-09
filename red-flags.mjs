@@ -1,5 +1,5 @@
 /**
- * "Red flags 🚩" review rule for status.html (hidden page, never the main page).
+ * "Red flags 🚩" review rule for build-log.html (hidden page, never the main page).
  * Pattern the user spotted on suspected cheaters: very high skill + low
  * LionHeart + low Inflation. A lead for manual review, NOT proof.
  *
@@ -64,7 +64,7 @@ export function redFlag(m, rule = RED_FLAG_RULE) {
   return { flagged: highSkill && lowLion && lowInfl, skill, highSkill, lowLion, lowInfl };
 }
 
-/** Human-readable rule text (status.html header tooltip). */
+/** Human-readable rule text (build-log.html header tooltip). */
 export function redFlagRuleText(rule = RED_FLAG_RULE) {
   const pct = Math.round((1 - rule.ALMOST_FRACTION) * 100);
   return (

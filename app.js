@@ -794,7 +794,7 @@ import {
 
   /* math: imported from ./math.mjs */
 
-  /** Shared with status.html (player-metrics.mjs) so numbers always match. */
+  /** Shared with build-log.html (player-metrics.mjs) so numbers always match. */
   function normalizePlayer(raw) {
     return normalizePlayerShared(raw);
   }
@@ -2602,7 +2602,7 @@ import {
       return;
     }
 
-    // Same per-player metrics as status.html red flags (player-metrics.mjs).
+    // Same per-player metrics as build-log.html red flags (player-metrics.mjs).
     const metrics = list.map((p) => playerMetrics(p));
 
     const publicCols = [

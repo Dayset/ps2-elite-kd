@@ -1,5 +1,5 @@
 /**
- * 🌱 "Could use a hand" list for status.html (hidden page): players whose
+ * 🌱 "Could use a hand" list for build-log.html (hidden page): players whose
  * fights are going rough right now — the opposite end from the 🚩 red-flag
  * bin, and kept separate from it. Could be new, playing support / medic /
  * engi, or just learning. Shown so veterans can spot who might appreciate
@@ -35,7 +35,7 @@ export function sprout(m, events, rule = SPROUT_RULE) {
   return { sprout: lowIvi && enough, lowIvi, enough, adjs, events: fin(events) ? events : 0 };
 }
 
-/** Human-readable rule text (status.html). */
+/** Human-readable rule text (build-log.html). */
 export function sproutRuleText(rule = SPROUT_RULE) {
   return (
     `Listed when ⚔️ iVi (raw, before the main page rounds negatives up to 0) is ≤ ${rule.MAX_ADJS} ` +

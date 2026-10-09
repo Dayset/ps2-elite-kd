@@ -1016,7 +1016,7 @@ function readAllPayloads() {
   return out;
 }
 
-/** data/status.json: what the current run plans to fetch + last run summary (read by status.html). */
+/** data/status.json: what the current run plans to fetch + last run summary (read by build-log.html). */
 export function readStatus() {
   try {
     const s = JSON.parse(fs.readFileSync(STATUS_PATH, "utf8"));
@@ -1081,7 +1081,7 @@ async function main() {
   const failed = []; // { name, reason, outage }
   const startedAt = new Date(t0).toISOString();
   if (explicit) {
-    // On-demand runs have no flag-on commit; record the plan for status.html.
+    // On-demand runs have no flag-on commit; record the plan for build-log.html.
     writeStatus({ current: { kind: "on-demand", names, crawlCandidates: [] } });
   }
 
@@ -1147,7 +1147,7 @@ async function main() {
   const reserveMs = envInt("PLAYER_RESERVE_SEC", explicit ? 0 : 60) * 1000;
   const deadline = t0 + budgetMs;
   let ri = 0;
-  // Per-name view of this run for status.html: planned batch with its source,
+  // Per-name view of this run for build-log.html: planned batch with its source,
   // then done / failed / not-found / pending. Committed with the run's data.
   const SRC_LABEL = { live: "top-killers", crawl: "opponent-crawl", retry: "retry", "on-demand": "on-demand", refresh: "refresh" };
   const batch = [];

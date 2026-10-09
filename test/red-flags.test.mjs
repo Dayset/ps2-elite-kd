@@ -1,4 +1,4 @@
-/** Red-flag review rule (status.html) + shared player metrics. */
+/** Red-flag review rule (build-log.html) + shared player metrics. */
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { RED_FLAG_RULE as R, skillTier, redFlag, redFlagRuleText } from "../red-flags.mjs";

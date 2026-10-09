@@ -1,6 +1,6 @@
 /**
  * Player normalization + per-player table metrics, shared by the main page
- * (app.js stats tables) and status.html (red-flag review) so numbers match.
+ * (app.js stats tables) and build-log.html (red-flag review) so numbers match.
  * DOM-free; Node tests import it too.
  */
 import {

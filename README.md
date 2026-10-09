@@ -94,7 +94,6 @@ The static Pages site cannot write `data/`. Shared snapshots are committed autom
 - Real not-found names (no character, invalid name, empty killboard) are never retried by discovery. Other failures (timeouts, outages) are retried at most 3 times, 15 min apart (tracked in `data/refresh-state.json`). A player is not saved if more than 10% of its opponent lookups fail, so rate limits can't save fake 0-KPM curves. If Census is unreachable, the run stops early and keeps the old data (retried 30 min later).
 - `status.json` → `lastRun.batch` lists each planned name with its source (`top-killers`, `opponent-crawl`, `retry`, `on-demand`) and result (done / failed / not-found / pending), committed with the run's data.
 - Each run re-enables the workflow, so GitHub's 60-day inactivity rule can't switch it off.
-- Hidden status page: `/status.html` (current run, live top killers, last run, queue).
 
 Browser Analyze still uses a local under-load note across tabs on the same device; the Actions load-flag is what other visitors see during a shared refresh.
 
