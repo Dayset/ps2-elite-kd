@@ -32,12 +32,13 @@ import {
   windowYValues,
   kpmBandCurve,
   bandReliability,
-} from "./math.mjs?v=20261008-census";
-import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261008-census";
-import GHOST_MODEL from "./data/ghost-model.mjs?v=20261008-census";
+} from "./math.mjs?v=20261008-robust";
+import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261008-robust";
+import GHOST_MODEL from "./data/ghost-model.mjs?v=20261008-robust";
 import {
   NameLoadError,
   classifyLoadError,
+  isTransientKind,
   failureReason,
   censusQueryName,
   loadEach,
@@ -57,24 +58,26 @@ import {
   estimateRemainingMs,
   nextEtaDeadline,
   formatEtaLeft,
-} from "./analyze-run.mjs?v=20261008-census";
+} from "./analyze-run.mjs?v=20261008-robust";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
-} from "./player-metrics.mjs?v=20261008-census";
+} from "./player-metrics.mjs?v=20261008-robust";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261008-census";
-import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261008-census";
+import "./name-peek.mjs?v=20261008-robust";
+import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261008-robust";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
-import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261008-census";
+import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261008-robust";
 // Live data: Daybreak Census only (batched, paced); Honu just for a rare history fallback.
-import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261008-census";
+import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261008-robust";
 import {
   censusBase,
+  censusRequest,
   defaultCensusRate,
   fetchPlayerCensus,
+  limitConcurrency,
   tokenBucket,
-} from "./census-fetch.mjs?v=20261008-census";
+} from "./census-fetch.mjs?v=20261008-robust";
 
   // Player palettes (dark + light theme) live in palette.mjs (shared with ranks.html).
   const COLORS = PALETTE_DARK;
@@ -91,6 +94,8 @@ import {
   const CENSUS = censusBase(CENSUS_SERVICE_ID);
   /** Client-side Census pacing (s:example allows 10 req/min per IP). Shared by every live fetch in this tab. */
   const censusBucket = tokenBucket(defaultCensusRate(CENSUS_SERVICE_ID));
+  /** At most 2 Census requests in flight per tab (big killboards + batched stats). */
+  const censusLimit = limitConcurrency(2);
   const DOT_R = 3;
 
   const LS_CACHE = "ps2-elite-kd-cache-v2";
@@ -1711,7 +1716,13 @@ import {
     } else {
       url = `${CENSUS}character?name.first_lower=${encodeURIComponent(raw.toLowerCase())}&c:resolve=outfit,stat_history`;
     }
-    const data = await censusJson(url, signal);
+    let data;
+    try {
+      data = await censusJson(url, signal);
+    } catch (e) {
+      if (isAbortError(e)) throw e;
+      throw new NameLoadError(e.message, e && e.kind === "census-busy" ? "census-busy" : "network");
+    }
     if (!data || typeof data !== "object") {
       throw new NameLoadError(`Census: bad response for ${raw}`, "bad-response");
     }
@@ -1726,21 +1737,32 @@ import {
   }
 
   /**
-   * One paced Census GET. Census reports throttling as 200 + {"error": ...}:
-   * wait and retry a couple of times (shared bucket pauses), then give up.
+   * One paced Census GET (census-fetch.mjs censusRequest): per-request
+   * timeout, exponential backoff + jitter on network errors / 5xx / 429 /
+   * Census "busy" answers, at most 2 in flight. While retrying, the status
+   * line says so; when Census stays down it throws CensusError
+   * (kind "census-busy") and the caller falls back to cached data.
    */
-  async function censusJson(url, signal) {
+  function censusJson(url, signal) {
     const big = url.includes("characters_event_grouped");
-    for (let attempt = 0; ; attempt++) {
-      checkAborted(signal);
-      await censusBucket.take();
-      checkAborted(signal);
-      const data = await fetchJson(url, signal, { timeoutMs: big ? CENSUS_BOARD_TIMEOUT_MS : CENSUS_TIMEOUT_MS });
-      const isErr = data && typeof data === "object" && !Array.isArray(data) && (data.error || data.errorCode) &&
-        !Object.keys(data).some((k) => k.endsWith("_list"));
-      if (!isErr || attempt >= 2) return data;
-      censusBucket.pause(20 * 1000 * (attempt + 1));
-    }
+    return censusLimit(() =>
+      censusRequest(url, {
+        signal,
+        bucket: censusBucket,
+        retries: 4,
+        timeoutMs: big ? CENSUS_BOARD_TIMEOUT_MS : CENSUS_TIMEOUT_MS,
+        expectData: big || url.includes("character?name.first_lower="),
+        baseMs: 1500,
+        capMs: 20000,
+        onRetry: ({ attempt, retries }) => {
+          if (signal && signal.aborted) return;
+          setStatus(
+            `<span class="warn">⏳ Daybreak Census is busy, retrying… (${attempt}/${retries})</span>`,
+            "warn census-retry"
+          );
+        },
+      })
+    );
   }
 
   /** Honu fallback ONLY for lifetime history Census lacks (no stat_history). */
@@ -1808,15 +1830,18 @@ import {
       });
     } catch (e) {
       if (isAbortError(e)) throw e;
-      if (e && e.name === "CensusError") throw new NameLoadError(e.message, "network");
+      if (e && e.name === "CensusError") throw new NameLoadError(e.message, "census-busy");
       throw e;
     }
     checkAborted(signal);
     if (!r.board.length) throw new NameLoadError(`Census: empty killboard for ${cid}`, "no-data");
+    if (r.ownFailed && !r.rows.length) {
+      throw new NameLoadError(`Census is busy or down (stats for ${display})`, "census-busy");
+    }
     const own = r.own || { kpm: 0, acc: 0, hsr: 0, ivi: 0 };
     const rows = r.rows;
 
-    return normalizePlayer({
+    const np = normalizePlayer({
       _source: "live:census",
       player: {
         display,
@@ -1832,6 +1857,9 @@ import {
         honu: `https://wt.honu.pw/c/${cid}/killboard`,
       },
     });
+    // Graceful partial result: opponents Census couldn't return are left out.
+    if (r.skipped || r.ownFailed) np.partialSkipped = r.skipped + (r.ownFailed ? 1 : 0);
+    return np;
   }
 
   /**
@@ -1846,6 +1874,21 @@ import {
         return await loadLive(name, run);
       } catch (e) {
         if (isAbortError(e)) throw e;
+        // Census busy/down: prefer the cached copy over failing the name.
+        if (isTransientKind(classifyLoadError(e))) {
+          let cached = null;
+          try {
+            cached = await loadLocal(name, signal);
+          } catch (e2) {
+            if (isAbortError(e2)) throw e2;
+            try {
+              cached = loadFromCache(name);
+            } catch {
+              cached = null;
+            }
+          }
+          if (cached) return { ...cached, cacheFallback: true };
+        }
         throw new NameLoadError(
           `Live fetch failed for ${JSON.stringify(name)}: ${e.message}`,
           classifyLoadError(e)
@@ -3014,8 +3057,9 @@ import {
           }
           const p = await loadOne(name, { fresh, run });
           if (cancelled()) throw makeAbortError();
-          // Only fully loaded players reach the cache (failures never do).
-          cachePut(name, p);
+          // Only fully loaded live players reach the cache (failures, partial
+          // results and cached fallbacks never do).
+          if (!p.partialSkipped && !p.cacheFallback) cachePut(name, p);
           setStatus(
             `Loaded <strong>${escapeHtml(p.display)}</strong> ` +
             `<span class="src">via ${escapeHtml(sourceLabel(p.source))}</span>…`
@@ -3102,10 +3146,11 @@ import {
     renderCacheChips();
     suggestSharedCache(result.loaded); // fire-and-forget, never awaited
 
+    const notes = censusNotesHtml(result.loaded);
     if (summary) {
-      setStatus(skippedWarningHtml(summary, { fresh }), "warn skipped");
+      setStatus(skippedWarningHtml(summary, { fresh }) + notes, "warn skipped");
     } else {
-      setStatus("");
+      setStatus(notes, notes ? "warn census-note" : "");
     }
     // Results are in: glide the input/header up out of view.
     scrollToResults();
@@ -3224,6 +3269,27 @@ import {
   }
 
   /** Amber status block for names that could not be fetched. */
+  /** Friendly notes when Census was busy: cached copies served / opponents left out. */
+  function censusNotesHtml(loaded) {
+    const fb = loaded.filter((x) => x.player && x.player.cacheFallback).map((x) => x.player.display || x.name);
+    const part = loaded.filter((x) => x.player && x.player.partialSkipped);
+    const out = [];
+    if (fb.length) {
+      out.push(
+        `<span class="warn">⚠️ Daybreak Census is busy or down — showing cached data for ` +
+        `${fb.map((n) => `<strong>${escapeHtml(n)}</strong>`).join(", ")}.</span> ` +
+        `<button type="button" class="census-retry-btn">↻ Try live again</button>`
+      );
+    }
+    for (const x of part) {
+      out.push(
+        `<span class="warn">⚠️ ${escapeHtml(x.player.display || x.name)}: ${x.player.partialSkipped} opponent(s) ` +
+        `left out (Census busy).</span>`
+      );
+    }
+    return out.length ? `<div class="census-note" role="status">${out.join("<br>")}</div>` : "";
+  }
+
   function skippedWarningHtml(summary, { extra = "", fresh = false } = {}) {
     if (!summary) return "";
     const items = summary.items
@@ -3236,12 +3302,13 @@ import {
     const tail = [summary.tail, extra].filter(Boolean).join(" ");
     const freshNote =
       fresh && summary.allFailed
-        ? ` <span class="src">Fetch fresh was on — live Honu/Census only.</span>`
+        ? ` <span class="src">Fetch fresh was on — live Census only.</span>`
         : "";
+    const retryBtn = summary.retryable ? ` <button type="button" class="census-retry-btn">↻ Try again</button>` : "";
     return (
       `<div class="skipped-warning" role="status">` +
       `<span class="warn">⚠️ ${escapeHtml(summary.lead)} ${items}.</span> ` +
-      `<span class="skipped-tail">${escapeHtml(tail)}</span>${freshNote}` +
+      `<span class="skipped-tail">${escapeHtml(tail)}</span>${freshNote}${retryBtn}` +
       `</div>`
     );
   }
@@ -3355,6 +3422,19 @@ import {
       names = [DEFAULT_PLACEHOLDER_NAME];
     }
     return analyzeNames(names);
+  }
+
+  // "↻ Try again" in Census busy/down messages: re-run with live data.
+  if (els.status) {
+    els.status.addEventListener("click", (ev) => {
+      const btn = ev.target && ev.target.closest ? ev.target.closest(".census-retry-btn") : null;
+      if (!btn || fetching) return;
+      const names = currentNamesInField();
+      if (!names.length) return;
+      clearNameFailures(names);
+      renderNameTokens();
+      analyzeNames(names, { forceFresh: !!btn.textContent.includes("live") });
+    });
   }
 
   if (els.analyzeBtn) {

@@ -1790,3 +1790,18 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
     line-height: 1.1;
   }
 }
+
+/* Census busy/down: friendly retry button + notes in the status line */
+.census-retry-btn {
+  margin-left: 0.4em;
+  padding: 0.15em 0.6em;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.9em;
+  cursor: pointer;
+}
+.census-retry-btn:hover { background: rgba(127, 127, 127, 0.15); }
+.census-note { margin-top: 0.25em; line-height: 1.5; }
