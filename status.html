@@ -14,7 +14,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261008-band" />
+  <link rel="stylesheet" href="styles.css?v=20261008-sprout" />
   <style>
     body { overflow: auto; }
     .st-wrap { max-width: 960px; margin: 0 auto; padding: 18px 16px 40px; }
@@ -55,6 +55,23 @@
     .st-flags .st-tag.aim { border-color: #c06060; }
     .st-flags .st-tag.vehicle { border-color: #c08050; }
     .st-flags .st-tag.rampage { border-color: #d04040; }
+    /* 🌱 Could use a hand (separate from 🚩; calm green, no alarm colours) */
+    .st-sprouts { border-color: color-mix(in srgb, #6fbf73 45%, var(--border)); }
+    .st-sprouts > summary { cursor: pointer; list-style: none; user-select: none; }
+    .st-sprouts > summary::-webkit-details-marker { display: none; }
+    .st-sprouts > summary h2 { display: inline; margin: 0; }
+    .st-sprouts > summary::before { content: "▸ "; color: var(--dim); }
+    .st-sprouts[open] > summary::before { content: "▾ "; }
+    .st-sprouts .st-count { display: inline-block; min-width: 1.4em; padding: 0 6px; margin-left: 4px; border-radius: 999px; font-size: 0.8rem; font-weight: 700; text-align: center; border: 1px solid #6fbf73; color: #8fd493; }
+    html[data-theme="light"] .st-sprouts .st-count { color: #2f7a35; border-color: #2f7a35; }
+    .st-sprouts .st-note { margin: 8px 0 2px; line-height: 1.45; }
+    .st-sprouts .st-rule { color: var(--dim); font-size: 0.8rem; margin: 4px 0 6px; line-height: 1.4; }
+    .st-sprouts .st-scroll { overflow: auto; max-height: 70vh; -webkit-overflow-scrolling: touch; }
+    .st-sprouts .st-table td, .st-sprouts .st-table th { white-space: nowrap; }
+    .st-sprouts .st-num { text-align: right; font-variant-numeric: tabular-nums; }
+    .st-sprouts th[data-sort] { cursor: pointer; user-select: none; }
+    .st-sprouts th[data-sort]:hover { color: var(--text); }
+    .st-sprouts th .st-arrow { color: var(--dim); font-size: 0.75em; }
   </style>
 </head>
 <body>
@@ -72,6 +89,12 @@
       <summary id="flagsSummary"><h2>Red flags 🚩 <span id="flagsCount" class="st-count">…</span></h2></summary>
       <div id="flagsRule" class="st-rule"></div>
       <div id="flags" class="st-dim">Loading…</div>
+    </details>
+    <details class="st-card st-sprouts" id="cardSprouts">
+      <summary id="sproutsSummary"><h2>🌱 Could use a hand <span id="sproutsCount" class="st-count">…</span></h2></summary>
+      <div class="st-note">Players whose fights are going rough right now. They could be new, playing support, medic or engineer, or just learning. They're listed so veterans can spot who might appreciate a tip or a squad invite. Please be kind; this is never a list to make fun of anyone.</div>
+      <div id="sproutsRule" class="st-rule"></div>
+      <div id="sprouts" class="st-dim">Loading…</div>
     </details>
   </main>
 
@@ -297,14 +320,15 @@
   <!-- Red flags 🚩: one automatic bin = aim OR vehicle OR rampage pattern (red-flags.mjs), using the
        same metrics as the main tables (player-metrics.mjs). Leads for review, not proof. -->
   <script type="module">
-    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261008-band";
-    import { reviewFlags, reviewRuleText } from "./red-flags.mjs?v=20261008-band";
-    import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261008-band";
-    import "./name-peek.mjs?v=20261008-band"; // full-name popup for truncated .nm names
+    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261008-sprout";
+    import { reviewFlags, reviewRuleText } from "./red-flags.mjs?v=20261008-sprout";
+    import { sprout, sampleEvents, sproutRuleText } from "./sprouts.mjs?v=20261008-sprout";
+    import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261008-sprout";
+    import "./name-peek.mjs?v=20261008-sprout"; // full-name popup for truncated .nm names
 
     const POLL_MS = 30 * 1000;
     const CONCURRENCY = 6;
-    const SS_KEY = "ps2-elite-kd:redflags:v3"; // { byFile: { file: { savedAt, row } } }
+    const SS_KEY = "ps2-elite-kd:redflags:v4"; // { byFile: { file: { savedAt, row } } }
     const $ = (id) => document.getElementById(id);
     const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
     const fmt = (v, d) => (typeof v === "number" && Number.isFinite(v) ? v.toFixed(d) : "—");
@@ -318,6 +342,9 @@
     const ruleText = reviewRuleText();
     $("flagsSummary").title = ruleText;
     $("flagsRule").textContent = "Rule: " + ruleText;
+    const sproutText = sproutRuleText();
+    $("sproutsSummary").title = sproutText;
+    $("sproutsRule").textContent = "Rule: " + sproutText;
 
     function readCache() {
       try { return JSON.parse(sessionStorage.getItem(SS_KEY)) || null; } catch { return null; }
@@ -333,14 +360,17 @@
 
     /** Small, JSON-safe summary of one player (what the table + rule need). */
     function summarize(entry, raw) {
-      const m = playerMetrics(normalizePlayer(raw));
+      const np = normalizePlayer(raw);
+      const m = playerMetrics(np);
       const num = (v) => (typeof v === "number" && Number.isFinite(v) ? v : null);
       const f = reviewFlags(m);
+      const sp = sprout(m, sampleEvents(np.rows));
       return {
         name: entry.name, cid: String(m.p.cid || ""), savedAt: entry.savedAt || 0,
         adj: num(m.adj), ivi: num(m.ivi), pvs: num(m.pvs), inflation: num(m.inflation),
         kd: num(m.kd), acc: num(m.acc), hsr: num(m.hsr),
         flagged: f.flagged, patterns: f.patterns, tier: f.skill.tier, basis: f.skill.basis,
+        adjs: num(m.adjs), kpm: num(m.ownKpm) ?? num(m.kpm), events: sp.events, sprout: sp.sprout,
       };
     }
 
@@ -368,7 +398,65 @@
         '<td title="' + esc(r.savedAt ? new Date(r.savedAt).toLocaleString() : "") + '">' + esc(ago(r.savedAt)) + "</td></tr>";
     }
 
+    /* ---------- 🌱 Could use a hand ---------- */
+    const SPROUT_COLS = [
+      { key: "name", label: "Player", num: false },
+      { key: "adjs", label: "⚔️ iVi", num: true, d: 0, tip: "Raw ⚔️ iVi (the main page shows negatives as 0)" },
+      { key: "kd", label: "KD", num: true, d: 2 },
+      { key: "kpm", label: "KPM", num: true, d: 2, tip: "Own kills per minute" },
+      { key: "acc", label: "Acc %", num: true, d: 1 },
+      { key: "hsr", label: "HSR %", num: true, d: 1 },
+      { key: "events", label: "Fights", num: true, d: 0, tip: "Kills + deaths against the top-50 opponents (the sample)" },
+    ];
+    let sproutSort = { key: "adjs", dir: 1 };
+    let sproutRows = [];
+
+    function nameCell(r) {
+      const url = honu(r.cid);
+      const full = esc(r.name);
+      return url
+        ? '<a class="nm" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer" data-full="' + full + '" title="Open ' + full + ' on Honu">' + full + "</a>"
+        : '<span class="nm" data-full="' + full + '" title="' + full + '">' + full + "</span>";
+    }
+
+    function renderSprouts() {
+      const { key, dir } = sproutSort;
+      const list = sproutRows.slice().sort((a, b) => {
+        if (key === "name") return dir * String(a.name).localeCompare(String(b.name), undefined, { sensitivity: "base" });
+        const va = a[key], vb = b[key];
+        if (va == null && vb == null) return 0;
+        if (va == null) return 1;
+        if (vb == null) return -1;
+        return dir * (va - vb);
+      });
+      const head = SPROUT_COLS.map((c) => {
+        const arrow = c.key === key ? ' <span class="st-arrow">' + (dir > 0 ? "▲" : "▼") + "</span>" : "";
+        return '<th data-sort="' + c.key + '"' + (c.num ? ' class="st-num"' : "") + (c.tip ? ' title="' + esc(c.tip) + '"' : "") + ">" + c.label + arrow + "</th>";
+      });
+      head.splice(1, 0, "<th></th>");
+      const body = list.map((r) => {
+        const chart = '<a href="./?names=' + encodeURIComponent(r.name) + '" title="Open the chart with this name (press Analyze)">chart</a>';
+        return "<tr><td>" + nameCell(r) + "</td><td>" + chart + "</td>" +
+          SPROUT_COLS.slice(1).map((c) => '<td class="st-num">' + fmt(r[c.key], c.d) + "</td>").join("") + "</tr>";
+      }).join("");
+      $("sprouts").innerHTML = '<div class="st-dim">' + list.length + " cached player" + (list.length === 1 ? "" : "s") + " right now. Click a column to sort.</div>" +
+        '<div class="st-scroll"><table class="st-table"><tr>' + head.join("") + "</tr>" + body + "</table></div>";
+    }
+
+    $("sprouts").addEventListener("click", (e) => {
+      const th = e.target.closest("th[data-sort]");
+      if (!th) return;
+      const k = th.dataset.sort;
+      sproutSort = sproutSort.key === k ? { key: k, dir: -sproutSort.dir } : { key: k, dir: k === "adjs" || k === "name" ? 1 : -1 };
+      renderSprouts();
+    });
+
     function render(rows, total, errors) {
+      sproutRows = rows.filter((r) => r && r.sprout);
+      $("sproutsCount").textContent = String(sproutRows.length);
+      if (sproutRows.length) renderSprouts();
+      else $("sprouts").innerHTML = '<div class="st-dim">Nobody right now.</div>';
+
       const flagged = rows.filter((r) => r && r.flagged).sort((a, b) => (b.adj ?? b.ivi ?? 0) - (a.adj ?? a.ivi ?? 0));
       const cnt = $("flagsCount");
       cnt.textContent = String(flagged.length);
@@ -396,7 +484,7 @@
         let errors = 0;
         if (todo.length) {
           let done = 0, i = 0;
-          const progress = () => { $("flags").innerHTML = '<span class="st-dim">Scoring players… ' + done + " / " + todo.length + "</span>"; };
+          const progress = () => { $("flags").innerHTML = $("sprouts").innerHTML = '<span class="st-dim">Scoring players… ' + done + " / " + todo.length + "</span>"; };
           progress();
           const worker = async () => {
             while (i < todo.length) {
@@ -415,6 +503,7 @@
         render(entries.map((e) => byFile[e.file] && byFile[e.file].row), entries.length, errors);
       } catch (e) {
         $("flags").innerHTML = '<span class="st-err">Couldn’t compute red flags (' + esc(e && e.message) + ").</span>";
+        $("sprouts").innerHTML = '<span class="st-err">Couldn’t load the list (' + esc(e && e.message) + ").</span>";
       } finally {
         busy = false;
       }

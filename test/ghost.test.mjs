@@ -13,7 +13,7 @@ import {
   cumulativeGhost,
   GHOST_BLEND_EVENTS,
 } from "../ghost.mjs";
-import GHOST_MODEL from "../ghost-model.mjs";
+import GHOST_MODEL from "../data/ghost-model.mjs";
 
 /** Rows whose per-opponent K/D follows exp(A + S·g(x)) exactly. */
 function synthRows(A, S, { from = 0.1, to = 2.4, n = 40, ev = 60 } = {}) {

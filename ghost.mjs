@@ -2,7 +2,8 @@
  * 👻 Ghost lines: a PREDICTED continuation of a player's chart line where
  * their real fights are sparse or missing. Predicted from play style, not
  * real fights. DOM-free; the population model is fitted offline over the
- * shared cache by scripts/build-ghost-model.mjs → ghost-model.mjs.
+ * shared cache by scripts/build-ghost-model.mjs → data/ghost-model.mjs (also refit by every
+ * cache refresh run in refresh-cache.yml, in the same single commit).
  *
  * Model (log K/D vs opponent KPM x):
  *   log KD(x) ≈ A + S · g(x),   g(x) = ln(x + G_SHIFT)
@@ -12,7 +13,7 @@
  * then a kernel-smoothed residual follows their real data near it and fades
  * back to the style model far from it.
  */
-import { isFiniteNum, kpmBandCurve } from "./math.mjs?v=20261008-band";
+import { isFiniteNum, kpmBandCurve } from "./math.mjs?v=20261008-sprout";
 
 export const G_SHIFT = 1.0;
 /** Fights (events) of prior weight on the slope S / level A from the population. */
