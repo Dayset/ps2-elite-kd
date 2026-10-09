@@ -7,13 +7,18 @@
  * every ranks.html metric. A value is an outlier when BOTH hold:
  *   - robust z = (v − median) / (1.4826 × MAD) beyond ±Z, and
  *   - it sits past p99 + K × (p99 − median)   (or p01 − K × (median − p01)).
- * Each outlier is "explained" when the player is already in the 🚩 bin or the
- * 📉 chart anomalies (adjusted) or reviewed in KNOWN_EXTREMES; anything else is a warning.
+ * Each outlier is "explained" when the player is already in the 🚩 bin, has a †
+ * adjusted entry, or is reviewed in KNOWN_EXTREMES; anything else is a warning.
+ * Bin routing (bins.mjs classifyBins, user rule t280u): an outlier is a 📉 chart
+ * anomaly; a player with only chart issues stays in 📉, a player who also has a
+ * 🚩 pattern is listed in 🚩 with a cross-reference to this 📉 entry.
  *
  * Used by scripts/build-ranks.mjs (writes data/status.json → build-log.html)
  * and test/outlier-guard.test.mjs (fails on unexplained outliers).
  * DOM-free.
  */
+import { classifyBins } from "./bins.mjs?v=20261009-bins";
+
 export const GUARD_RULE = Object.freeze({ Z: 6, SPAN_K: 3, MIN_N: 50 });
 
 /**
@@ -52,16 +57,12 @@ export const METRIC_LABELS = Object.freeze({
   kd: "KD", kpm: "KPM", ownKpm: "own KPM (public)", acc: "Acc %", hsr: "HSR %", ivi: "IvI",
 });
 
-const ANOMALY_ONLY = new Set(["adjusted"]);
-
-/** Why an outlier is already accounted for ("" = unexplained). 🚩 patterns first, then † adjusted, then reviewed. */
+/** Why an outlier is already accounted for ("" = unexplained). 🚩 patterns first, then reviewed, then † adjusted. */
 function outlierReason(p, known) {
-  const pats = p.patterns || [];
-  const red = pats.filter((x) => !ANOMALY_ONLY.has(x));
-  if (red.length) return "In 🚩 red flags (" + red.join(", ") + ")";
+  const b = classifyBins({ patterns: p.patterns || [], outlier: true });
+  if (b.red.length) return "Also in 🚩 red flags (" + b.red.join(", ") + "), listed there";
   if (known[p.slug]) return known[p.slug];
-  if (pats.length) return "In 📉 chart anomalies (" + pats.map((x) => (x === "adjusted" ? "† adjusted — needs review" : x)).join(", ") + ")";
-  if (p.flagged) return "In 🚩 red flags";
+  if (b.chart.includes("adjusted")) return "In 📉 chart anomalies only († adjusted — needs review)";
   return "";
 }
 
@@ -75,7 +76,7 @@ export function groupOutliers(items) {
   for (const o of items) {
     const key = o.slug || o.name;
     let g = by.get(key);
-    if (!g) { g = { slug: o.slug, name: o.name, explained: !!o.explained, reason: o.reason || "", maxZ: 0, metrics: [] }; by.set(key, g); }
+    if (!g) { g = { slug: o.slug, name: o.name, explained: !!o.explained, reason: o.reason || "", red: o.red || [], maxZ: 0, metrics: [] }; by.set(key, g); }
     g.explained = g.explained && !!o.explained;
     if (!o.explained) g.reason = "";
     g.maxZ = Math.max(g.maxZ, Math.abs(o.z) || 0);
@@ -107,6 +108,7 @@ export function findOutliers(players, ids, { rule = GUARD_RULE, known = KNOWN_EX
       const reason = outlierReason(p, known);
       items.push({
         slug: p.slug, name: p.name, id, value: v,
+        red: classifyBins({ patterns: p.patterns || [] }).red, // 🚩 patterns ([] = 📉 only)
         bound: side === "high" ? b.hi : b.lo, z, side,
         explained: !!reason, reason,
       });
@@ -121,7 +123,7 @@ export function guardStatus(result, rule = GUARD_RULE) {
   const r6 = (v) => (fin(v) ? Math.round(v * 1000) / 1000 : null);
   const items = result.items.map((o) => ({
     slug: o.slug, name: o.name, id: o.id, value: r6(o.value), bound: r6(o.bound), z: r6(o.z),
-    side: o.side, explained: o.explained, reason: o.reason,
+    side: o.side, explained: o.explained, reason: o.reason, red: o.red || [],
   }));
   const players = groupOutliers(items);
   return {
@@ -134,5 +136,8 @@ export function guardStatus(result, rule = GUARD_RULE) {
     players: players.map((g) => ({ ...g, maxZ: r6(g.maxZ) })),
     playersUnexplained: players.filter((g) => !g.explained).length,
     playersExplained: players.filter((g) => g.explained).length,
+    // Bin routing (bins.mjs): players also in 🚩 vs chart-only.
+    playersAlsoRed: players.filter((g) => (g.red || []).length).length,
+    playersChartOnly: players.filter((g) => !(g.red || []).length).length,
   };
 }

@@ -24,7 +24,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261009-foldnotes" />
+  <link rel="stylesheet" href="styles.css?v=20261009-bins" />
   <style>
     /* Ranks page: one long sortable table of every cached player. */
     body.ranks-page { overflow-x: hidden; }
@@ -249,7 +249,7 @@
       <div class="dist-note">Bars: % of players per value range (left axis). Line: cumulative % of players below (right axis). Tap / hover a bar for details. Picked players (✅) — or a search with ≤ 5 matches — are marked on the chart.</div>
     </details>
 
-    <details class="pooled-note fold-note" style="margin: 0.3rem 0 0.45rem"><summary>ℹ️ Vehicle kills note</summary><p>Vehicle and infantry kills are pooled together for now, so vehicle mains may look off in the graph and stats. Infantry-only numbers are coming later.</p></details>
+    <details class="pooled-note fold-note" style="margin: 0.3rem 0 0.45rem"><summary>ℹ️ What about vehicles?</summary><p>Vehicle and infantry kills are pooled together for now, so vehicle mains may look off in the graph and stats. Infantry-only numbers are coming later.</p></details>
     <div class="ranks-table-wrap" id="ranksScroll">
       <table class="ranks-table" id="ranksTable" aria-label="Population ranks">
         <thead id="ranksHead"></thead>
@@ -280,12 +280,12 @@
 
 
   <script type="module">
-    import "./name-peek.mjs?v=20261009-foldnotes";
-    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits } from "./dist.mjs?v=20261009-foldnotes";
-    import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261009-foldnotes";
-    import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261009-foldnotes";
-    import { paletteColor } from "./palette.mjs?v=20261009-foldnotes";
-    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-foldnotes";
+    import "./name-peek.mjs?v=20261009-bins";
+    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits } from "./dist.mjs?v=20261009-bins";
+    import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261009-bins";
+    import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261009-bins";
+    import { paletteColor } from "./palette.mjs?v=20261009-bins";
+    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-bins";
 
     const LS_THEME = "ps2-elite-kd-theme";
     const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";

@@ -32,9 +32,9 @@ import {
   windowYValues,
   kpmBandCurve,
   bandReliability,
-} from "./math.mjs?v=20261009-foldnotes";
-import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261009-foldnotes";
-import GHOST_MODEL from "./data/ghost-model.mjs?v=20261009-foldnotes";
+} from "./math.mjs?v=20261009-bins";
+import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261009-bins";
+import GHOST_MODEL from "./data/ghost-model.mjs?v=20261009-bins";
 import {
   NameLoadError,
   classifyLoadError,
@@ -60,7 +60,7 @@ import {
   formatEtaLeft,
   etaLearnLiveMs,
   expectedNameMs,
-} from "./analyze-run.mjs?v=20261009-foldnotes";
+} from "./analyze-run.mjs?v=20261009-bins";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
@@ -71,7 +71,7 @@ import {
   isLegacySample,
   LEGACY_SAMPLE_MARK,
   LEGACY_SAMPLE_TIP,
-} from "./player-metrics.mjs?v=20261009-foldnotes";
+} from "./player-metrics.mjs?v=20261009-bins";
 /** "22 kills / 60 deaths" in the opponent sample (MIN_FIGHTS counts). */
 function fightsText(r) {
   const k = r.sampleKills || 0;
@@ -83,16 +83,16 @@ function fightsText(r) {
 function thinCellTip(r) {
   return `${MIN_FIGHTS_TIP}. This sample: ${fightsText(r).replace(/[()]/g, "")}`;
 }
-import { farmNote, statMark } from "./padding.mjs?v=20261009-foldnotes";
+import { farmNote, statMark } from "./padding.mjs?v=20261009-bins";
 // Account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times: chart name list only.
-import { accountTimes, flairsHtml } from "./flairs.mjs?v=20261009-foldnotes";
+import { accountTimes, flairsHtml } from "./flairs.mjs?v=20261009-bins";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261009-foldnotes";
-import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261009-foldnotes";
+import "./name-peek.mjs?v=20261009-bins";
+import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261009-bins";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
-import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-foldnotes";
+import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-bins";
 // Live data: Daybreak Census only (batched, paced); Honu just for a rare history fallback.
-import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261009-foldnotes";
+import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261009-bins";
 import {
   censusBase,
   censusRequest,
@@ -101,7 +101,7 @@ import {
   limitConcurrency,
   tokenBucket,
   OPPONENT_TOP_N,
-} from "./census-fetch.mjs?v=20261009-foldnotes";
+} from "./census-fetch.mjs?v=20261009-bins";
 
   // Player palettes (dark + light theme) live in palette.mjs (shared with ranks.html).
   const COLORS = PALETTE_DARK;

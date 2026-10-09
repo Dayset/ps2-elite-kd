@@ -13,9 +13,10 @@
  *   🦁 LionHeart median ≈ 3.1; elite players usually 4–18 → low ≤ 2.0 (≈ bottom 40%)
  *   🎈 Inflation median ≈ 2.03 → low ≤ 1.5 (≈ bottom 10%)
  */
-import { PADDING_RULE, statMark, PADDING_MARK, PADDING_MARK_TIP } from "./padding.mjs?v=20261009-foldnotes";
+import { PADDING_RULE, statMark, PADDING_MARK, PADDING_MARK_TIP } from "./padding.mjs?v=20261009-bins";
+import { classifyBins, RED_PATTERNS, CHART_PATTERNS } from "./bins.mjs?v=20261009-bins";
 
-export { PADDING_MARK, PADDING_MARK_TIP };
+export { PADDING_MARK, PADDING_MARK_TIP, RED_PATTERNS, CHART_PATTERNS, classifyBins };
 
 export const RED_FLAG_RULE = Object.freeze({
   /** 🎯🎈 ivi (adjusted) at/above this = Exceptional. */
@@ -187,14 +188,12 @@ export function reviewFlags(m) {
   if (ram.flagged) patterns.push("rampage");
   if (pad.flagged) patterns.push("padding");
   if (adjusted) patterns.push("adjusted");
-  // 🚩 = cheating-style patterns only; "adjusted" is a 📉 chart anomaly (stats
-  // altered, human review), shown in its own build-log bin. flagged = either.
-  const red = patterns.some((p) => RED_PATTERNS.includes(p));
-  return { flagged: patterns.length > 0, red, anomaly: adjusted, patterns, skill: aim.skill, padding: pad };
+  // Bin routing via the shared classifier (bins.mjs, user rule t280u): chart-only
+  // patterns ("adjusted") → 📉 Chart anomalies only; any other pattern → 🚩.
+  // (The 🧪 outlier part of 📉 comes from status.json, see outlier-guard.mjs.)
+  const bins = classifyBins({ patterns });
+  return { flagged: patterns.length > 0, red: bins.bin === "red", anomaly: bins.chart.length > 0, bins, patterns, skill: aim.skill, padding: pad };
 }
-
-/** Patterns that put a player in the 🚩 bin (the rest, i.e. "adjusted", go to 📉 Chart anomalies). */
-export const RED_PATTERNS = Object.freeze(["aim", "vehicle", "rampage", "padding"]);
 
 /** Rule line for the 📉 Chart anomalies "adjusted — needs review" list. */
 export function anomalyRuleText() {
