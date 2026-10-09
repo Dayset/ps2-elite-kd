@@ -18,6 +18,7 @@
  * like an outage (network / 5xx / 429 / Census error). Misspelled or unknown
  * names are logged and skipped; their existing files are never touched.
  */
+import { updateHonuXp, compactExpTypes, EXP_TYPES_MAX_AGE_MS } from "./honu-xp.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -42,6 +43,9 @@ const STATE_PATH = path.join(DATA_DIR, "refresh-state.json");
 const STATUS_PATH = path.join(DATA_DIR, "status.json");
 const TOP_KILLERS_PATH = path.join(DATA_DIR, "top-killers.txt");
 const SCHEDULE_PATH = path.join(DATA_DIR, "schedule.json");
+const REQUESTED_PATH = path.join(DATA_DIR, "requested.json");
+const EXP_TYPES_PATH = path.join(DATA_DIR, "exp-types.json");
+const XP_DIR = path.join(DATA_DIR, "xp");
 
 const HONU = "https://wt.honu.pw/api/character/";
 /** Census service ID: env CENSUS_SERVICE_ID (workflow), else the site's registered ID. */
@@ -468,6 +472,117 @@ function readPrevAssists(slug) {
   } catch {
     return null;
   }
+}
+
+/* ------------------------------------------------- requested players: XP */
+
+/** Honu calls per run for full XP detail (shared 20/min limiter: ~1.5 min). */
+const XP_CALLS_PER_RUN = Number(process.env.XP_CALLS_PER_RUN) > 0 ? Number(process.env.XP_CALLS_PER_RUN) : 30;
+const XP_TIME_CAP_MS = 3 * 60_000;
+/** A requested player's session list is re-checked at most this often. */
+export const XP_RECHECK_MS = 6 * 3600 * 1000;
+/** A request keeps a player "requested" for this long. */
+export const REQUESTED_TTL_MS = 45 * 24 * 3600 * 1000;
+
+/**
+ * Merge request sources into { slug: atMs }: stored file, Worker /requested
+ * list, on-demand names (now). Unknown slugs and stale requests are dropped.
+ */
+export function mergeRequested(stored, fromWorker, explicitSlugs, indexSlugs, now = Date.now()) {
+  const out = {};
+  const put = (slug, at) => {
+    if (!slug || !indexSlugs.has(slug) || !(at > 0) || now - at > REQUESTED_TTL_MS) return;
+    out[slug] = Math.max(out[slug] || 0, at);
+  };
+  for (const [k, v] of Object.entries(stored || {})) put(k, +v);
+  for (const r of fromWorker || []) put(r && r.slug, +(r && r.at));
+  for (const k of explicitSlugs || []) put(k, now);
+  return out;
+}
+
+/** Requested players to work on: most recently requested first, not checked recently. */
+export function requestedXpQueue(requested, xpUpdatedAt, now = Date.now()) {
+  return Object.entries(requested || {})
+    .filter(([slug]) => !(xpUpdatedAt[slug] && now - xpUpdatedAt[slug] < XP_RECHECK_MS))
+    .sort((a, b) => b[1] - a[1])
+    .map(([slug]) => slug);
+}
+
+async function fetchWorkerRequested() {
+  if (!CENSUS_PROXY || !CENSUS_PROXY_KEY) return [];
+  try {
+    const res = await fetch(`${CENSUS_PROXY}/requested`, {
+      headers: { Accept: "application/json", "User-Agent": USER_AGENT, "X-Proxy-Key": CENSUS_PROXY_KEY },
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const d = await res.json();
+    return Array.isArray(d && d.players) ? d.players : [];
+  } catch (e) {
+    console.warn(`  Worker /requested unavailable: ${String(e && e.message).slice(0, 80)}`);
+    return [];
+  }
+}
+
+function readJsonSafe(file, fallback) {
+  try {
+    return JSON.parse(fs.readFileSync(file, "utf8"));
+  } catch {
+    return fallback;
+  }
+}
+
+async function requestedXpPhase(index, explicitNames, until) {
+  const indexSlugs = new Set((index.players || []).map((p) => p.slug).filter(Boolean));
+  // data/requested.json: { requested: {slug: atMs}, checked: {slug: atMs} }.
+  // Only names + times; "checked" spaces session-list checks (XP_RECHECK_MS).
+  const stored = readJsonSafe(REQUESTED_PATH, {});
+  const checked = { ...((stored && stored.checked) || {}) };
+  const requested = mergeRequested(
+    (stored && stored.requested) || {},
+    await fetchWorkerRequested(),
+    (explicitNames || []).map((n) => slugKey(String(n).replace(/^\[[^\]]*\]\s*/, ""))),
+    indexSlugs,
+  );
+  const save = () => {
+    const sortObj = (o) => Object.fromEntries(Object.entries(o).filter(([k]) => k in requested).sort(([a], [b]) => a.localeCompare(b)));
+    writeFileAtomic(REQUESTED_PATH, JSON.stringify({ requested: sortObj(requested), checked: sortObj(checked) }, null, 1) + "\n");
+  };
+  save();
+  if (!Object.keys(requested).length) return;
+
+  const queue = requestedXpQueue(requested, checked);
+  console.log(`Requested players: ${Object.keys(requested).length}; XP detail due: ${queue.length} (budget ${XP_CALLS_PER_RUN} Honu calls).`);
+  if (!queue.length) return;
+
+  const budget = { calls: XP_CALLS_PER_RUN };
+  const getJson = (u) => fetchJson(u, { retries: 2 });
+  // Experience type names (one call, refreshed monthly).
+  const types = readJsonSafe(EXP_TYPES_PATH, null);
+  if (!types || !types.fetchedAt || Date.now() - Date.parse(types.fetchedAt) > EXP_TYPES_MAX_AGE_MS) {
+    try {
+      budget.calls--;
+      const t = compactExpTypes(await getJson("https://wt.honu.pw/api/exp/types"));
+      if (Object.keys(t).length) writeFileAtomic(EXP_TYPES_PATH, JSON.stringify({ fetchedAt: new Date().toISOString(), types: t }) + "\n");
+    } catch (e) {
+      console.warn(`  Honu exp types skipped: ${String(e && e.message).slice(0, 80)}`);
+    }
+  }
+  fs.mkdirSync(XP_DIR, { recursive: true });
+  for (const slug of queue) {
+    if (budget.calls < 3 || Date.now() > until) break;
+    const pl = readJsonSafe(path.join(DATA_DIR, "players", `${slug}.json`), null);
+    const cid = pl && pl.player && pl.player.cid;
+    if (!cid) continue;
+    const file = path.join(XP_DIR, `${slug}.json`);
+    const prev = readJsonSafe(file, null);
+    const { xp, calls } = await updateHonuXp(cid, prev, { getJson, budget });
+    if (calls > 0) checked[slug] = Date.now();
+    // Only rewrite when new sessions were counted (no churn, no empty commits).
+    if (xp && xp !== prev) writeFileAtomic(file, JSON.stringify({ ...xp, slug, cid }) + "\n");
+    console.log(`  [xp] ${slug}: ${calls} Honu call(s), ${xp ? xp.sessions_counted : 0} session(s) counted${xp && xp !== prev ? " (updated)" : ""}`);
+  }
+  save();
 }
 
 async function resolveCensusOnly(raw) {
@@ -1058,6 +1173,14 @@ async function main() {
       if (d) added.push(d);
     }
     if (ri < names.length && !c.stoppedEarly) c.stoppedEarly = `time budget ${Math.round(budgetMs / 60000)} min reached`;
+  }
+
+  // Full Honu XP detail, requested players only (analyzed on the site /
+  // on-demand). Small, fixed Honu budget so the Census refresh isn't starved.
+  try {
+    await requestedXpPhase(index, explicit ? names : [], Math.min(deadline - reserveMs, Date.now() + XP_TIME_CAP_MS));
+  } catch (e) {
+    console.warn(`Requested XP phase skipped: ${String(e && e.message).slice(0, 120)}`);
   }
 
   const crawlFrom = Date.now();

@@ -99,7 +99,7 @@ jobs:
           NEW: ${{ steps.refresh.outputs.new || '0' }}
         run: |
           # Count saved player files from git itself (works even if the step was cut short).
-          changed=$(git status --porcelain -- data/players | wc -l)
+          changed=$(git status --porcelain -- data/players data/xp | wc -l)
           if [ "$changed" = "0" ]; then
             # Nothing refreshed (idle / outage / all names bad): don't spend a Pages
             # build on bookkeeping. Only a changed data/schedule.json (read by the
