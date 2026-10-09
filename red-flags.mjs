@@ -13,6 +13,8 @@
  *   🦁 LionHeart median ≈ 3.1; elite players usually 4–18 → low ≤ 2.0 (≈ bottom 40%)
  *   🎈 Inflation median ≈ 2.03 → low ≤ 1.5 (≈ bottom 10%)
  */
+import { PADDING_RULE } from "./padding.mjs?v=20261009-padding";
+
 export const RED_FLAG_RULE = Object.freeze({
   /** 🎯🎈 ivi (adjusted) at/above this = Exceptional. */
   EXCEPTIONAL_ADJ_IVI: 2200,
@@ -139,6 +141,28 @@ export function rampageFlag(m, rule = RAMPAGE_RULE) {
   return { flagged: extremeKd && fastKills, extremeKd, fastKills };
 }
 
+/* ---------- 🔴 Padding pattern ---------- */
+
+/**
+ * Stat padding (user-approved 2026-10-09): most kills on a few accounts that
+ * never fight back. Uses m.farm from player-metrics.mjs (padding.mjs rule):
+ * farm-victim kills ≥ PADDING_RULE.FLAG_SHARE of the sample. Those kills are
+ * already left out of the player's numbers; the flag says why they changed.
+ */
+export function paddingFlag(m, rule = PADDING_RULE) {
+  const farm = (m && m.farm) || { victims: [], kills: 0, share: 0 };
+  const flagged = !!(farm.victims && farm.victims.length) && farm.share >= rule.FLAG_SHARE;
+  return { flagged, share: farm.share || 0, kills: farm.kills || 0, victims: farm.victims || [] };
+}
+
+/** True when a metrics row is a 🚩 stat padder (for the "*" name marker). */
+export function isPadder(m) {
+  return paddingFlag(m).flagged;
+}
+
+export const PADDING_MARK = "*";
+export const PADDING_MARK_TIP = "* stat padding: kills on farm accounts excluded";
+
 /* ---------- combined Red flags 🚩 bin ---------- */
 
 /**
@@ -147,14 +171,19 @@ export function rampageFlag(m, rule = RAMPAGE_RULE) {
  * high KD + weak infantry aim). → { flagged, patterns: ["aim"|"vehicle", …], skill }
  */
 export function reviewFlags(m) {
-  const aim = redFlag(m);
-  const veh = vehicleFlag(m);
-  const ram = rampageFlag(m);
+  // aim / vehicle / rampage keep their original inputs: the sample WITH farm
+  // victims (m.raw), so adding the padding filter doesn't move those flags.
+  const base = (m && m.raw) || m;
+  const aim = redFlag(base);
+  const veh = vehicleFlag(base);
+  const ram = rampageFlag(base);
+  const pad = paddingFlag(m);
   const patterns = [];
   if (aim.flagged) patterns.push("aim");
   if (veh.flagged) patterns.push("vehicle");
   if (ram.flagged) patterns.push("rampage");
-  return { flagged: patterns.length > 0, patterns, skill: aim.skill };
+  if (pad.flagged) patterns.push("padding");
+  return { flagged: patterns.length > 0, patterns, skill: aim.skill, padding: pad };
 }
 
 /** Header tooltip / rule line for the combined bin. */
@@ -168,7 +197,9 @@ export function reviewRuleText() {
     `${Math.round(R.EXCEPTIONAL_IVI * R.ALMOST_FRACTION)}; Exceptional = ${R.EXCEPTIONAL_ADJ_IVI} / ${R.EXCEPTIONAL_IVI}) AND either ` +
     `[aim pattern] 🦁 Brave ≤ ${R.LIONHEART_LOW_MAX} (or curve slope ≤ ${R.SLOPE_COLLAPSE_MAX}) and 🎈 Inflation ≤ ${R.INFLATION_LOW_MAX}, or ` +
     `[vehicle pattern] KD ≥ ${V.KD_HIGH_MIN}, HSR ≤ ${V.HSR_LOW_MAX}% and accuracy ≤ ${V.ACC_LOW_MAX}% (Inflation ignored). ` +
-    `Also flagged regardless of skill: [rampage pattern] KD ≥ ${RAMPAGE_RULE.KD_MIN} and KPM ≥ ${RAMPAGE_RULE.KPM_MIN}. ` +
+    `Also flagged regardless of skill: [rampage pattern] KD ≥ ${RAMPAGE_RULE.KD_MIN} and KPM ≥ ${RAMPAGE_RULE.KPM_MIN}; ` +
+    `[padding pattern] ≥ ${Math.round(PADDING_RULE.FLAG_SHARE * 100)}% of sample kills on farm accounts (${PADDING_RULE.MIN_KILLS}+ kills on it, ` +
+    `it killed back ≤ ${PADDING_RULE.MAX_BACK * 100}%, its KPM < ${PADDING_RULE.MAX_KPM}; those kills are excluded from the stats). ` +
     `A lead for manual review, not proof of cheating.`
   );
 }

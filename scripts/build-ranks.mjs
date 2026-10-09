@@ -18,7 +18,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { normalizePlayer, playerMetrics, shownValue } from "../player-metrics.mjs";
-import { reviewFlags } from "../red-flags.mjs";
+import { reviewFlags, paddingFlag } from "../red-flags.mjs";
+import { farmNote } from "../padding.mjs";
 import { findOutliers, guardStatus } from "../outlier-guard.mjs";
 
 /** Metric ids (same ids as the app.js stats columns). */
@@ -34,9 +35,10 @@ export const METRIC_COLS = Object.freeze([
  * Values are stored as SHOWN on the main page (shownValue): opponent-sample
  * metrics (THIN_METRICS) are null below MIN_FIGHTS, so ranks / sorting /
  * distributions skip them. Trailing "thin" = 1 when the sample is below
- * MIN_FIGHTS (ranks.html hover text).
+ * MIN_FIGHTS (ranks.html hover text). "pad" = 1 for a 🚩 stat padder ("*" after
+ * the name); "farm" = note on farm-account kills excluded (null when none).
  */
-export const RANK_COLS = Object.freeze(["name", "query", "slug", "savedAt", ...METRIC_COLS, "thin"]);
+export const RANK_COLS = Object.freeze(["name", "query", "slug", "savedAt", ...METRIC_COLS, "thin", "pad", "farm"]);
 
 const round6 = (v) => (typeof v === "number" && Number.isFinite(v) ? Math.round(v * 1e6) / 1e6 : null);
 
@@ -55,7 +57,7 @@ export function rankRow(raw, { slug = "", savedAt = null } = {}) {
   if (!p || !p.display || p.display === "?") return null;
   const m = playerMetrics(p);
   const t = savedAt != null ? +savedAt : +raw.savedAt || null;
-  return [p.display, bareName(p.display) || p.display, slug, t, ...METRIC_COLS.map((k) => round6(shownValue(m, k))), m.thin ? 1 : 0];
+  return [p.display, bareName(p.display) || p.display, slug, t, ...METRIC_COLS.map((k) => round6(shownValue(m, k))), m.thin ? 1 : 0, paddingFlag(m).flagged ? 1 : 0, farmNote(m.farm) || null];
 }
 
 /** Build the whole ranks object from a data/ directory. */

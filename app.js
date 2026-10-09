@@ -32,9 +32,9 @@ import {
   windowYValues,
   kpmBandCurve,
   bandReliability,
-} from "./math.mjs?v=20261009-minfights";
-import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261009-minfights";
-import GHOST_MODEL from "./data/ghost-model.mjs?v=20261009-minfights";
+} from "./math.mjs?v=20261009-padding";
+import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261009-padding";
+import GHOST_MODEL from "./data/ghost-model.mjs?v=20261009-padding";
 import {
   NameLoadError,
   classifyLoadError,
@@ -58,7 +58,7 @@ import {
   estimateRemainingMs,
   nextEtaDeadline,
   formatEtaLeft,
-} from "./analyze-run.mjs?v=20261009-minfights";
+} from "./analyze-run.mjs?v=20261009-padding";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
@@ -66,14 +66,16 @@ import {
   MIN_FIGHTS_TIP,
   THIN_METRICS,
   shownValue,
-} from "./player-metrics.mjs?v=20261009-minfights";
+} from "./player-metrics.mjs?v=20261009-padding";
+import { paddingFlag, PADDING_MARK, PADDING_MARK_TIP } from "./red-flags.mjs?v=20261009-padding";
+import { farmNote } from "./padding.mjs?v=20261009-padding";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261009-minfights";
-import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261009-minfights";
+import "./name-peek.mjs?v=20261009-padding";
+import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261009-padding";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
-import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-minfights";
+import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-padding";
 // Live data: Daybreak Census only (batched, paced); Honu just for a rare history fallback.
-import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261009-minfights";
+import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261009-padding";
 import {
   censusBase,
   censusRequest,
@@ -81,7 +83,7 @@ import {
   fetchPlayerCensus,
   limitConcurrency,
   tokenBucket,
-} from "./census-fetch.mjs?v=20261009-minfights";
+} from "./census-fetch.mjs?v=20261009-padding";
 
   // Player palettes (dark + light theme) live in palette.mjs (shared with ranks.html).
   const COLORS = PALETTE_DARK;
@@ -813,8 +815,9 @@ import {
       acc: p.acc,
       hsr: p.hsr,
       ivi: p.ivi,
-      rows: p.rows,
-      curve: p.curve.map((pt) => ({
+      // Original sample (farm victims included): normalizePlayer re-applies the filter.
+      rows: p.rawRows || p.rows,
+      curve: (p.rawCurve || p.curve).map((pt) => ({
         kpm: pt.kpm,
         kd: isFiniteNum(pt.kd) ? pt.kd : null,
         kills: pt.kills,
@@ -2395,6 +2398,7 @@ import {
           x: anchor.kpm,
           y: anchor.kd,
           display: p.display,
+          pad: isPadderPlayer(p),
         });
       }
     });
@@ -2415,7 +2419,12 @@ import {
       num.setAttribute("font-size", "14");
       num.setAttribute("font-weight", "800");
       num.setAttribute("text-anchor", "end");
-      num.textContent = String(lab.i + 1);
+      num.textContent = String(lab.i + 1) + (lab.pad ? PADDING_MARK : "");
+      if (lab.pad) {
+        const t = ns("title");
+        t.textContent = `${lab.display}${PADDING_MARK}: ${PADDING_MARK_TIP}`;
+        num.appendChild(t);
+      }
       svg.appendChild(num);
       const link = ns("line");
       link.setAttribute("x1", PLOT.x - 4);
@@ -2775,7 +2784,7 @@ import {
           return (
             `<tr><th scope="row" class="stats-name" style="color:${col}">` +
             `<span class="player-num" aria-label="Series ${num}">${num}.</span>` +
-            `${nameSpanHtml(row.p.display)}</th>${vals}</tr>`
+            `${nameSpanHtml(row.p.display, farmTitle(row.p))}${padMarkHtml(row.p)}</th>${vals}</tr>`
           );
         })
         .join("");
@@ -2862,10 +2871,16 @@ import {
         : `<span class="nm" data-full="${full}" title="${full}">${full}</span>`;
       item.innerHTML = `
         <span class="legend-swatch" style="background:${col}"></span>
-        <span class="legend-label" style="color:${col}"><strong>${i + 1}.</strong>${nameHtml}</span>
+        <span class="legend-label" style="color:${col}"><strong>${i + 1}.</strong>${nameHtml}${padMarkHtml(p)}</span>
       `;
       els.legend.appendChild(item);
     });
+    if (list.some(isPadderPlayer)) {
+      const note = document.createElement("div");
+      note.className = "legend-note";
+      note.textContent = PADDING_MARK_TIP;
+      els.legend.appendChild(note);
+    }
   }
 
   /** Truncatable player name (.nm, ~18ch cap) with the full name in title / data-full. */
@@ -2878,9 +2893,27 @@ import {
     span.setAttribute("data-full", name);
     return span;
   }
-  function nameSpanHtml(name) {
+  /** 🚩 stat padder (padding.mjs / red-flags.mjs): its sample had farm accounts removed. */
+  function isPadderPlayer(p) {
+    return !!(p && paddingFlag({ farm: p.farm }).flagged);
+  }
+
+  /** "*" after a padder's name (tooltip explains); "" otherwise. */
+  function padMarkHtml(p) {
+    if (!isPadderPlayer(p)) return "";
+    const tip = `${PADDING_MARK_TIP}. ${farmNote(p.farm)}`;
+    return `<span class="pad-mark" title="${escapeHtml(tip)}">${PADDING_MARK}</span>`;
+  }
+
+  /** Name cell title: adds the farm note when farm accounts were excluded. */
+  function farmTitle(p) {
+    const note = p && farmNote(p.farm);
+    return note ? ` — ${note}` : "";
+  }
+
+  function nameSpanHtml(name, extraTitle = "") {
     const n = escapeHtml(name);
-    return `<span class="nm" data-full="${n}" title="${n}">${n}</span>`;
+    return `<span class="nm" data-full="${n}" title="${n}${escapeHtml(extraTitle)}">${n}</span>`;
   }
 
   function escapeHtml(s) {

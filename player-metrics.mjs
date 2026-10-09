@@ -15,7 +15,8 @@ import {
   pressureVolume,
   resolveIvi,
   deathMixLite,
-} from "./math.mjs?v=20261009-minfights";
+} from "./math.mjs?v=20261009-padding";
+import { splitFarm } from "./padding.mjs?v=20261009-padding";
 
 /**
  * Minimum fights before the opponent-sample metrics (THIN_METRICS: 🏃 Activity,
@@ -63,15 +64,24 @@ export function normalizePlayer(raw) {
     deaths: +r.deaths || 0,
     kpm: +r.kpm || 0,
   }));
-  let curve = p.curve;
-  if (!curve || !curve.length) curve = kpmCurve(rows);
-  curve = curve.map((pt) => ({
-    kpm: +pt.kpm,
-    kd: pt.kd == null || pt.kd !== pt.kd ? NaN : +pt.kd,
-    kills: +pt.kills || 0,
-    deaths: +pt.deaths || 0,
-    n: +pt.n || 0,
-  }));
+  const normCurve = (c) =>
+    c.map((pt) => ({
+      kpm: +pt.kpm,
+      kd: pt.kd == null || pt.kd !== pt.kd ? NaN : +pt.kd,
+      kills: +pt.kills || 0,
+      deaths: +pt.deaths || 0,
+      n: +pt.n || 0,
+    }));
+  let rawCurve = p.curve;
+  if (!rawCurve || !rawCurve.length) rawCurve = kpmCurve(rows);
+  rawCurve = normCurve(rawCurve);
+  // Farm victims (padding.mjs) leave the opponent sample for everyone: graph
+  // lines and every opponent-based metric use the kept rows only. rawRows /
+  // rawCurve keep the original sample (red-flag rules, browser cache).
+  const farm = splitFarm(rows);
+  const hasFarm = farm.victims.length > 0;
+  const keptRows = hasFarm ? farm.kept : rows;
+  const curve = hasFarm ? normCurve(kpmCurve(keptRows)) : rawCurve;
   return {
     display: p.display || p.name || "?",
     cid: p.cid || "",
@@ -81,15 +91,36 @@ export function normalizePlayer(raw) {
     acc: p.acc != null ? +p.acc : null,
     hsr: p.hsr != null ? +p.hsr : null,
     ivi: p.ivi != null ? +p.ivi : null,
-    rows,
+    rows: keptRows,
     curve,
+    rawRows: rows,
+    rawCurve,
+    farm: { victims: farm.victims, kills: farm.kills, deaths: farm.deaths, share: farm.share },
     honu: p.honu || (p.cid ? `https://wt.honu.pw/c/${p.cid}/killboard` : ""),
     source: raw._source || "local",
   };
 }
 
-/** One stats-table row (public + adjusted columns) for a normalized player. */
+/** The same player with the ORIGINAL opponent sample (farm victims kept). */
+export function rawSampleView(p) {
+  if (!p || !p.farm || !p.farm.victims || !p.farm.victims.length) return p;
+  return { ...p, rows: p.rawRows, curve: p.rawCurve, farm: { victims: [], kills: 0, deaths: 0, share: 0 } };
+}
+
+/**
+ * One stats-table row (public + adjusted columns) for a normalized player.
+ * Numbers use the sample without farm victims. m.raw = the same row on the
+ * original sample (only differs when farm victims were excluded): the older
+ * red-flag rules and 🌱 sprouts read it so their results don't shift.
+ */
 export function playerMetrics(p) {
+  const m = metricsRow(p);
+  const rawP = rawSampleView(p);
+  m.raw = rawP === p ? m : metricsRow(rawP);
+  return m;
+}
+
+function metricsRow(p) {
   const m = rfIf(p);
   const ivi = resolveIvi(p);
   const rf = m && isFiniteNum(m.rf) ? m.rf : NaN;
@@ -122,7 +153,7 @@ export function playerMetrics(p) {
     coi: combatOutput(rf),
     mech: projectedMech(rf),
     slope,
-    // Raw values (red flags / build-log use these unchanged).
+    // Unblanked values (build-log shows them; red-flag rules read m.raw).
     pvs,
     // Sample size; below MIN_FIGHTS the page shows THIN_METRICS as "—" (shownValue).
     sampleKills,
@@ -132,6 +163,8 @@ export function playerMetrics(p) {
     // ⚡ ivi: 🎯🎈 ivi adjusted for own kill speed (slow, safe KD counts for less).
     adjs: speedAdjustedIvi(adj, ownKpm),
     kd05: dm.kd05,
+    // Farm victims taken out of this sample (padding.mjs); empty for most players.
+    farm: p.farm || { victims: [], kills: 0, deaths: 0, share: 0 },
     inflation: dm.inflation,
   };
 }

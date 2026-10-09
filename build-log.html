@@ -14,7 +14,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261009-minfights" />
+  <link rel="stylesheet" href="styles.css?v=20261009-padding" />
   <style>
     body { overflow: auto; }
     .st-wrap { max-width: 960px; margin: 0 auto; padding: 18px 16px 40px; }
@@ -55,6 +55,7 @@
     .st-flags .st-tag.aim { border-color: #c06060; }
     .st-flags .st-tag.vehicle { border-color: #c08050; }
     .st-flags .st-tag.rampage { border-color: #d04040; }
+    .st-flags .st-tag.padding { border-color: #b070c0; }
     /* 🌱 Could use a hand (separate from 🚩; calm green, no alarm colours) */
     .st-sprouts { border-color: color-mix(in srgb, #6fbf73 45%, var(--border)); }
     .st-sprouts > summary { cursor: pointer; list-style: none; user-select: none; }
@@ -346,15 +347,15 @@
   <!-- Red flags 🚩: one automatic bin = aim OR vehicle OR rampage pattern (red-flags.mjs), using the
        same metrics as the main tables (player-metrics.mjs). Leads for review, not proof. -->
   <script type="module">
-    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261009-minfights";
-    import { reviewFlags, reviewRuleText } from "./red-flags.mjs?v=20261009-minfights";
-    import { sprout, sampleEvents, sproutRuleText } from "./sprouts.mjs?v=20261009-minfights";
-    import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261009-minfights";
-    import "./name-peek.mjs?v=20261009-minfights"; // full-name popup for truncated .nm names
+    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261009-padding";
+    import { reviewFlags, reviewRuleText } from "./red-flags.mjs?v=20261009-padding";
+    import { sprout, sampleEvents, sproutRuleText } from "./sprouts.mjs?v=20261009-padding";
+    import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261009-padding";
+    import "./name-peek.mjs?v=20261009-padding"; // full-name popup for truncated .nm names
 
     const POLL_MS = 30 * 1000;
     const CONCURRENCY = 6;
-    const SS_KEY = "ps2-elite-kd:redflags:v4"; // { byFile: { file: { savedAt, row } } }
+    const SS_KEY = "ps2-elite-kd:redflags:v5"; // { byFile: { file: { savedAt, row } } }
     const $ = (id) => document.getElementById(id);
     const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
     const fmt = (v, d) => (typeof v === "number" && Number.isFinite(v) ? v.toFixed(d) : "—");
@@ -362,6 +363,7 @@
       aim: { label: "aim", tip: "Aim pattern: high skill + low 🦁 Brave + low Inflation", hot: ["pvs", "inflation"] },
       vehicle: { label: "vehicle", tip: "Vehicle pattern: high skill + very high KD + weak infantry aim (HSR / accuracy)", hot: ["kd", "acc", "hsr"] },
       rampage: { label: "rampage", tip: "Rampage pattern: KD ≥ 15 and KPM ≥ 3 (short absurd kill spree, no skill test)", hot: ["kd"] },
+      padding: { label: "padding", tip: "Stat padding: most kills on a few accounts that never fight back (those kills are excluded from the stats)", hot: [] },
     };
     let busy = false;
 
@@ -390,13 +392,18 @@
       const m = playerMetrics(np);
       const num = (v) => (typeof v === "number" && Number.isFinite(v) ? v : null);
       const f = reviewFlags(m);
-      const sp = sprout(m, sampleEvents(np.rows));
+      // 🌱 keeps its original input (sample with farm victims), like the older 🚩 rules.
+      const sp = sprout(m.raw || m, sampleEvents(np.rawRows || np.rows));
+      const pad = f.padding && f.padding.flagged ? f.padding : null;
       return {
         name: entry.name, cid: String(m.p.cid || ""), savedAt: entry.savedAt || 0,
-        adj: num(m.adj), ivi: num(m.ivi), pvs: num(m.pvs), inflation: num(m.inflation),
+        // Same inputs the aim / vehicle rules read (sample with farm victims).
+        adj: num((m.raw || m).adj), ivi: num(m.ivi), pvs: num((m.raw || m).pvs), inflation: num((m.raw || m).inflation),
         kd: num(m.kd), acc: num(m.acc), hsr: num(m.hsr),
         flagged: f.flagged, patterns: f.patterns, tier: f.skill.tier, basis: f.skill.basis,
-        adjs: num(m.adjs), kpm: num(m.ownKpm) ?? num(m.kpm), events: sp.events, sprout: sp.sprout,
+        adjs: num((m.raw || m).adjs), kpm: num(m.ownKpm) ?? num(m.kpm), events: sp.events, sprout: sp.sprout,
+        // Evidence for the padding tag: share + farm accounts (kills/deaths).
+        padding: pad ? { share: pad.share, kills: pad.kills, victims: pad.victims.map((v) => ({ name: v.name, kills: v.kills, deaths: v.deaths })) } : null,
       };
     }
 
@@ -414,7 +421,9 @@
         : '<span class="nm" data-full="' + full + '" title="' + full + '">' + full + "</span>";
       const chart = '<a href="./?names=' + encodeURIComponent(r.name) + '" title="Open the chart with this name (press Analyze)">chart</a>';
       const pats = (r.patterns || []).filter((p) => TAGS[p]);
-      const tags = pats.map((p) => '<span class="st-tag ' + p + '" title="' + esc(TAGS[p].tip) + '">' + TAGS[p].label + "</span>").join("");
+      const tags = pats.map((p) => '<span class="st-tag ' + p + '" title="' + esc(TAGS[p].tip) + '">' + TAGS[p].label + "</span>").join("") +
+        (r.padding ? '<div class="st-dim" style="font-size:0.8em;white-space:normal">' + Math.round(r.padding.share * 100) + "% of kills on: " +
+          r.padding.victims.map((v) => esc(v.name) + " " + v.kills + "/" + v.deaths).join(", ") + "</div>" : "");
       const hot = pats.flatMap((p) => TAGS[p].hot);
       const skillCell = (r.basis === "ivi" ? "IvI " + fmt(r.ivi, 0) : "🎯🎈 " + fmt(r.adj, 0)) + ' <span class="st-tier">' + esc(r.tier) + "</span>";
       const cell = (k, v, d) => '<td class="st-num' + (hot.includes(k) ? " st-low" : "") + '">' + fmt(v, d) + "</td>";

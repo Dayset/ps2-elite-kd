@@ -1823,3 +1823,15 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
 .legend:empty + .pooled-note {
   display: none;
 }
+
+/* 🚩 stat padder marker "*" (padding.mjs): kills on farm accounts excluded. */
+.pad-mark {
+  margin-left: 0.1em;
+  font-weight: 800;
+  cursor: help;
+}
+.legend-note {
+  grid-column: 1 / -1;
+  font-size: 0.78rem;
+  opacity: 0.7;
+}

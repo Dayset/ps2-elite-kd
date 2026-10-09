@@ -24,7 +24,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261009-minfights" />
+  <link rel="stylesheet" href="styles.css?v=20261009-padding" />
   <style>
     /* Ranks page: one long sortable table of every cached player. */
     body.ranks-page { overflow-x: hidden; }
@@ -273,11 +273,12 @@
 
 
   <script type="module">
-    import "./name-peek.mjs?v=20261009-minfights";
-    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits } from "./dist.mjs?v=20261009-minfights";
-    import { MIN_FIGHTS, MIN_FIGHTS_TIP, THIN_METRICS } from "./player-metrics.mjs?v=20261009-minfights";
-    import { paletteColor } from "./palette.mjs?v=20261009-minfights";
-    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-minfights";
+    import "./name-peek.mjs?v=20261009-padding";
+    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits } from "./dist.mjs?v=20261009-padding";
+    import { MIN_FIGHTS, MIN_FIGHTS_TIP, THIN_METRICS } from "./player-metrics.mjs?v=20261009-padding";
+    import { PADDING_MARK, PADDING_MARK_TIP } from "./red-flags.mjs?v=20261009-padding";
+    import { paletteColor } from "./palette.mjs?v=20261009-padding";
+    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-padding";
 
     const LS_THEME = "ps2-elite-kd-theme";
     const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";
@@ -414,9 +415,13 @@
           slug: r[idx.slug],
           savedAt: r[idx.savedAt],
           thin: idx.thin != null && r[idx.thin] === 1,
+          // 🚩 stat padder (padding.mjs): "*" after the name; farm = excluded-kills note.
+          pad: idx.pad != null && r[idx.pad] === 1,
+          farm: idx.farm != null ? r[idx.farm] || "" : "",
           _bare: bare(r[idx.name]),
           pcts: {},
         };
+        o.label = o.name + (o.pad ? PADDING_MARK : "");
         for (const id of Object.keys(pools)) {
           const v = r[idx[id]];
           o[id] = v;
@@ -501,7 +506,8 @@
         `<tr data-q="${esc(r.query)}">` +
         `<td class="rk-pick"><input type="checkbox" aria-label="Pick ${esc(r.name)}"${checked}${disabled} /></td>` +
         `<td class="rk-num">${r.rank}</td>` +
-        `<td class="rk-name"><a href="${href}" title="Open on the main chart"><span class="nm" data-full="${esc(r.name)}" title="${esc(r.name)}">${esc(r.name)}</span></a></td>` +
+        `<td class="rk-name"><a href="${href}" title="Open on the main chart"><span class="nm" data-full="${esc(r.name)}" title="${esc(r.name + (r.farm ? " — " + r.farm : ""))}">${esc(r.name)}</span></a>` +
+        (r.pad ? `<span class="pad-mark" title="${esc(PADDING_MARK_TIP + ". " + r.farm)}">${PADDING_MARK}</span>` : "") + `</td>` +
         cols.map((c) => cellHtml(c, r)).join("") +
         `</tr>`
       );
@@ -776,11 +782,11 @@
         gm.appendChild(svgEl("line", { x1: x, x2: x, y1: ly + 2, y2: M.t + PH, stroke: color, "stroke-width": st.markW }));
         gm.appendChild(svgEl("circle", { cx: x, cy: M.t + PH, r: 3.5, fill: color }));
         const anchor = x > M.l + PW * 0.8 ? "end" : x < M.l + PW * 0.2 ? "start" : "middle";
-        const t = svgEl("text", { x, y: ly, fill: color, "font-size": fs, "font-weight": 700, "text-anchor": anchor }, shortName(r.name));
+        const t = svgEl("text", { x, y: ly, fill: color, "font-size": fs, "font-weight": 700, "text-anchor": anchor }, shortName(r.name) + (r.pad ? PADDING_MARK : ""));
         gm.appendChild(t);
         const shown = col.floorZero && fin(v) && v < 0 ? "0 (below scale)" : fin(v) ? (+v).toFixed(col.digits) : "—";
         const p = r.pcts[distMetric];
-        gm.appendChild(svgEl("title", {}, `${r.name}: ${col.label} ${shown}${p != null ? ` · p${p}` : ""} · rank #${r.rank} (current sort)`));
+        gm.appendChild(svgEl("title", {}, `${r.label}${r.pad ? ` (${PADDING_MARK_TIP})` : ""}: ${col.label} ${shown}${p != null ? ` · p${p}` : ""} · rank #${r.rank} (current sort)`));
         svg.appendChild(gm);
       });
 
@@ -959,7 +965,8 @@
       rebuildIndex(payload);
       restorePicks();
       syncPickedUi();
-      $("ranksStatus").textContent = "";
+      // Legend for the "*" marker, only when someone carries it.
+      $("ranksStatus").innerHTML = data.rows.some((r) => r.pad) ? `<span class="legend-note">${esc(PADDING_MARK_TIP)}</span>` : "";
       fillMetricSelect();
       render();
       drawDist();

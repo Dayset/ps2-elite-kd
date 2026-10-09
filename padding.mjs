@@ -1,0 +1,68 @@
+/**
+ * Farm-victim filter (user-approved 2026-10-09: "Flag them and remove farm
+ * victims from their stats").
+ *
+ * A farm victim is an opponent row where the player has ≥ MIN_KILLS kills on
+ * them, they killed the player back at most MAX_BACK of that, and their own
+ * weapon KPM is below MAX_KPM: an account that never fights back (bot / alt).
+ * Their kills and deaths are taken out of the opponent sample for EVERY player
+ * (graph lines and all opponent-based metrics). A player is flagged 🚩
+ * "padding" (red-flags.mjs) when farm victims are ≥ FLAG_SHARE of the
+ * sample's kills. Found on [LHEU] Megatake: 86% of 8944 kills on vulcan112,
+ * battletank112 and hammer111 (0 deaths back, KPM 0.00); sample K/D 7.52 → 1.03.
+ * DOM-free (browser + Node).
+ */
+export const PADDING_RULE = Object.freeze({
+  /** Kills on one opponent at/above this… */
+  MIN_KILLS: 100,
+  /** …with deaths back at/below this share of those kills… */
+  MAX_BACK: 0.02,
+  /** …and opponent weapon KPM below this = farm victim. */
+  MAX_KPM: 0.1,
+  /** Farm-victim kills at/above this share of the sample's kills = 🚩 padding. */
+  FLAG_SHARE: 0.2,
+});
+
+/** True when one opponent row is a farm victim. */
+export function isFarmVictim(r, rule = PADDING_RULE) {
+  const k = +r.kills || 0;
+  const d = +r.deaths || 0;
+  const kpm = +r.kpm || 0;
+  return k >= rule.MIN_KILLS && d <= rule.MAX_BACK * k && kpm < rule.MAX_KPM;
+}
+
+/**
+ * Split opponent rows into kept rows and farm victims.
+ * → { kept, victims: [{ name, kills, deaths, kpm }], kills, deaths, totalKills, share }
+ * share = farm kills / all sample kills (before exclusion).
+ */
+export function splitFarm(rows, rule = PADDING_RULE) {
+  const kept = [];
+  const victims = [];
+  let totalKills = 0;
+  let kills = 0;
+  let deaths = 0;
+  for (const r of rows || []) {
+    const k = +r.kills || 0;
+    totalKills += k;
+    if (isFarmVictim(r, rule)) {
+      victims.push({ name: r.name, kills: k, deaths: +r.deaths || 0, kpm: +r.kpm || 0 });
+      kills += k;
+      deaths += +r.deaths || 0;
+    } else kept.push(r);
+  }
+  victims.sort((a, b) => b.kills - a.kills);
+  return { kept, victims, kills, deaths, totalKills, share: totalKills ? kills / totalKills : 0 };
+}
+
+/** Short human text for a tooltip ("" when nothing was excluded). */
+export function farmNote(farm) {
+  if (!farm || !farm.victims || !farm.victims.length) return "";
+  const n = farm.victims.length;
+  const list = farm.victims.map((v) => `${v.name} ${v.kills}/${v.deaths}`).join(", ");
+  return (
+    `${farm.kills} kills on ${n} farm account${n === 1 ? "" : "s"} excluded ` +
+    `(${Math.round(farm.share * 100)}% of the sample; kills/deaths: ${list}). ` +
+    `Farm account = ${PADDING_RULE.MIN_KILLS}+ kills on it, it killed back ≤ ${PADDING_RULE.MAX_BACK * 100}%, its KPM < ${PADDING_RULE.MAX_KPM}.`
+  );
+}
