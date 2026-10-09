@@ -10,7 +10,8 @@ name: Refresh shared cache
 # CRAWL_INDEX_CAP, nothing due) makes no network calls at all.
 # Discovery: names from data/top-killers.txt (static seed, no live scraping)
 # and frequent opponents of cached players, up to CRAWL_INDEX_CAP. Then the
-# daily refresh: cached players saved > 24 h ago, oldest first, within the
+# refresh: one-time format sync backlog first (index fmt < 2, any age), then
+# weekly: cached players saved > 7 days ago, oldest first, within the
 # time budget (refresh-only runs are spaced ~1 h apart via schedule.json).
 # All per-player data comes from Census in ~5 batched calls (census-fetch.mjs).
 #

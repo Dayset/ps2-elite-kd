@@ -31,6 +31,11 @@ import {
   mergeAssists,
   updateHonuAssists,
   viaCensusProxy,
+  needsSync,
+  syncBacklog,
+  CACHE_FORMAT,
+  SYNC_RETRY_MS,
+  REFRESH_AFTER_MS,
 } from "../scripts/refresh-cache.mjs";
 
 const index = {
@@ -219,29 +224,49 @@ describe("Honu history_stats fallback (only when Census lacks stat_history)", ()
   });
 });
 
-describe("daily refresh + schedule.json", () => {
+describe("weekly refresh + format sync backlog + schedule.json", () => {
   const H = 3600e3;
+  const D = 24 * H;
   const NOW = Date.parse("2026-10-09T12:00:00Z");
+  const F = CACHE_FORMAT;
   const idx = {
     players: [
-      { name: "[A] Fresh", slug: "fresh", savedAt: NOW - 2 * H },
-      { name: "Old", slug: "old", savedAt: NOW - 50 * H },
+      { name: "[A] Fresh", slug: "fresh", savedAt: NOW - 2 * H, fmt: F },
+      { name: "Week", slug: "week", savedAt: NOW - 8 * D, fmt: F },
+      { name: "SixDays", slug: "sixdays", savedAt: NOW - 6 * D, fmt: F },
+      { name: "OldFmt", slug: "oldfmt", savedAt: NOW - 1 * H }, // fresh but old format -> due
+      { name: "OlderFmt", slug: "olderfmt", savedAt: NOW - 3 * D },
       { name: "Never", slug: "never", savedAt: null },
-      { name: "Tried", slug: "tried", savedAt: NOW - 40 * H },
+      { name: "TriedFmt", slug: "triedfmt", savedAt: NOW - 3 * D }, // failed 1 h ago -> waits SYNC_RETRY_MS
+      { name: "Gone", slug: "gone", savedAt: NOW - 30 * D }, // keeps being not found -> weekly
     ],
   };
-  const st = { players: { tried: { lastAttemptAt: NOW - 1 * H, fails: 1 } } };
-  it("stale = saved/tried > 24 h ago, oldest first (never-saved first)", () => {
-    assert.deepEqual(staleCandidates(idx, st, NOW), ["Never", "Old"]);
+  const st = { players: {
+    triedfmt: { lastAttemptAt: NOW - 1 * H, fails: 1, kind: "transient" },
+    gone: { lastAttemptAt: NOW - 2 * D, fails: 4, kind: "notfound" },
+  } };
+  it("format backlog first (oldest first, regardless of age), then players > 7 days old", () => {
+    assert.equal(REFRESH_AFTER_MS, 7 * D);
+    assert.deepEqual(staleCandidates(idx, st, NOW), ["Never", "OlderFmt", "OldFmt", "Week"]);
+    assert.equal(needsSync({ fmt: F }), false);
+    assert.equal(needsSync({}), true);
+    assert.equal(syncBacklog(idx), 5);
   });
-  it("nextStaleAt = earliest last-touch + 24 h", () => {
-    const fresh = { players: [idx.players[0], idx.players[3]] };
-    assert.equal(nextStaleAt(fresh, st), NOW - 2 * H + 24 * H);
+  it("after the backlog clears it is purely weekly", () => {
+    const done = { players: idx.players.map((p) => ({ ...p, fmt: F })) };
+    assert.deepEqual(staleCandidates(done, {}, NOW), ["Never", "Gone", "Week"]); // fresh-but-old-format ones wait a week now
+    assert.equal(syncBacklog(done), 0);
+  });
+  it("nextStaleAt = earliest due time (sync retry or last touch + 7 d)", () => {
+    assert.equal(nextStaleAt({ players: [idx.players[0], idx.players[2]] }, st), NOW - 6 * D + 7 * D);
+    assert.equal(nextStaleAt({ players: [idx.players[6]] }, st), NOW - 1 * H + SYNC_RETRY_MS);
     assert.equal(nextStaleAt({ players: [] }, st), null);
   });
-  it("computeSchedule: growth now, stale in ~1 h, else next stale time (deterministic), else idle", () => {
+  it("computeSchedule: growth now, due players in ~1 h, else next due time (deterministic), else idle", () => {
     assert.deepEqual(computeSchedule({ growthLeft: true, now: NOW }), { nextDueAt: new Date(NOW).toISOString(), reason: "growth" });
     assert.equal(computeSchedule({ staleLeft: 5, now: NOW }).nextDueAt, new Date(NOW + REFRESH_RUN_GAP_MS).toISOString());
+    assert.equal(computeSchedule({ staleLeft: 5, backlogLeft: 3, now: NOW }).reason, "format sync (3 left)");
+    assert.equal(computeSchedule({ staleLeft: 5, now: NOW }).reason, "weekly refresh (5 left)");
     const a = computeSchedule({ nextStaleAt: NOW + 5 * H, now: NOW });
     const b = computeSchedule({ nextStaleAt: NOW + 5 * H, now: NOW + 600e3 });
     assert.deepEqual(a, b); // idle runs produce the same file -> no commit

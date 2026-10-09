@@ -55,7 +55,16 @@ const FETCH_TIMEOUT_MS = 20_000;
 const CENSUS_TIMEOUT_MS = 90_000;
 const USER_AGENT = "ps2-elite-kd-cache-bot/2.0 (+https://github.com/Dayset/ps2-elite-kd; contact: github.com/Dayset)";
 /** Stale = last saved more than this long ago; background runs re-fetch stale players, oldest first. */
-const REFRESH_AFTER_MS = 24 * 3600 * 1000;
+/** Automatic refresh cadence per cached player (on-demand /add + browser "Fetch fresh" are unaffected). */
+export const REFRESH_AFTER_MS = 7 * 24 * 3600 * 1000;
+/**
+ * Cache format of a saved player: 2 = batched Census + Honu-exp assists.
+ * Index entries below it are the one-time sync backlog: due regardless of age
+ * (oldest first, ahead of the weekly refresh), retried at most every
+ * SYNC_RETRY_MS after a failed attempt.
+ */
+export const CACHE_FORMAT = 2;
+export const SYNC_RETRY_MS = 6 * 3600 * 1000;
 /** Stop the run early after this many outage-type failures in a row (be polite). */
 const MAX_CONSECUTIVE_OUTAGES = 4;
 /** On-demand runs (inputs.names, e.g. from the site's Worker) refresh at most this many. */
@@ -674,7 +683,7 @@ export function pickBatch(names, index, state, size) {
     .map((x) => x.name);
 }
 
-function upsertIndexEntry(index, { name, display, slug, file, savedAt, aliases }) {
+function upsertIndexEntry(index, { name, display, slug, file, savedAt, aliases, fmt }) {
   const players = index.players.slice();
   const i = players.findIndex((p) => p.slug === slug || slugKey(p.name) === slug);
   const entry = {
@@ -682,6 +691,7 @@ function upsertIndexEntry(index, { name, display, slug, file, savedAt, aliases }
     file,
     slug,
     savedAt,
+    ...(fmt ? { fmt } : {}),
     aliases: aliases && aliases.length ? aliases : [slug, String(name).trim().toLowerCase()].filter(
       (v, idx, a) => v && a.indexOf(v) === idx
     ),
@@ -979,7 +989,7 @@ async function main() {
       const payload = await loadLive(name, { prevAssists: readPrevAssists(slug) });
       const fileRel = `players/${slug}.json`;
       writeFileAtomic(path.join(DATA_DIR, fileRel), JSON.stringify(payload) + "\n");
-      upsertIndexEntry(index, { name, display: payload.player.display, slug, file: fileRel, savedAt: payload.savedAt });
+      upsertIndexEntry(index, { name, display: payload.player.display, slug, file: fileRel, savedAt: payload.savedAt, fmt: CACHE_FORMAT });
       writeIndex(index);
       state.players[slug] = { lastAttemptAt: now, lastOkAt: payload.savedAt, fails: 0 };
       c.ok++;
@@ -1023,7 +1033,7 @@ async function main() {
   let ri = 0;
   // Per-name view of this run for status.html: planned batch with its source,
   // then done / failed / not-found / pending. Committed with the run's data.
-  const SRC_LABEL = { live: "top-killers", crawl: "opponent-crawl", retry: "retry", "on-demand": "on-demand", refresh: "daily-refresh" };
+  const SRC_LABEL = { live: "top-killers", crawl: "opponent-crawl", retry: "retry", "on-demand": "on-demand", refresh: "refresh" };
   const batch = [];
   const plan = (name, src) => batch.push({ name, src: SRC_LABEL[src] || src, status: "pending" });
   const settle = (name, display) => {
@@ -1104,9 +1114,12 @@ async function main() {
       }
     }
 
-    // Daily refresh: cached players last saved (or tried) > 24 h ago, oldest first.
+    // Sync backlog (old cache format) first, then the weekly refresh; oldest first.
     const stale = staleCandidates(index, state, Date.now());
-    if (stale.length) console.log(`Stale cached players (> 24 h): ${stale.length}; refreshing oldest first.`);
+    if (stale.length) {
+      const backlog = syncBacklog(index);
+      console.log(`Due cached players: ${stale.length} (format sync backlog ${backlog}; weekly otherwise); oldest first.`);
+    }
     for (const name of stale) {
       if (c.stoppedEarly) break;
       if (Date.now() + reserveMs > deadline) {
@@ -1173,6 +1186,7 @@ async function main() {
     writeScheduleFile(computeSchedule({
       growthLeft,
       staleLeft: after.length,
+      backlogLeft: syncBacklog(index),
       nextStaleAt: nextStaleAt(index, state),
       outageStop: !!c.stoppedEarly && c.outage > 0,
       now: Date.now(),
@@ -1203,39 +1217,66 @@ function lastTouched(p, state) {
   return Math.max(+p.savedAt || 0, +st.lastAttemptAt || 0);
 }
 
+/** Saved in an older cache format (pre-Census / no assists pass yet)? */
+export function needsSync(p) {
+  return !(p && +p.fmt >= CACHE_FORMAT);
+}
+
+/** Number of index players still in the one-time format sync backlog. */
+export function syncBacklog(index) {
+  return ((index && index.players) || []).filter((p) => p && p.name && isPlausibleName(p.name) && needsSync(p)).length;
+}
+
 /**
- * Cached players due for their (at most daily) refresh, oldest first.
- * Uses the index name (Census resolves "[TAG] Name" by first name).
+ * When a cached player is next due (ms). Old format: as soon as possible
+ * (after SYNC_RETRY_MS since the last failed try; weekly if it keeps being
+ * "not found"). Current format: REFRESH_AFTER_MS after the last save/try.
+ */
+export function dueAt(p, state, maxAgeMs = REFRESH_AFTER_MS) {
+  if (needsSync(p)) {
+    const st = (state && state.players && state.players[p.slug || slugKey(p.name)]) || {};
+    const gone = st.kind === "notfound" && (st.fails || 0) >= 3;
+    return (+st.lastAttemptAt || 0) + (gone ? maxAgeMs : SYNC_RETRY_MS);
+  }
+  return lastTouched(p, state) + maxAgeMs;
+}
+
+/**
+ * Cached players due now: format-sync backlog first, then weekly-stale; each
+ * oldest first. Uses the index name (Census resolves "[TAG] Name" by first name).
  */
 export function staleCandidates(index, state, now = Date.now(), maxAgeMs = REFRESH_AFTER_MS) {
   return ((index && index.players) || [])
-    .map((p, i) => ({ p, i, last: lastTouched(p, state) }))
-    .filter((x) => x.p && x.p.name && now - x.last >= maxAgeMs && isPlausibleName(x.p.name))
-    .sort((a, b) => a.last - b.last || a.i - b.i)
+    .map((p, i) => ({ p, i, sync: needsSync(p) ? 0 : 1, last: p ? lastTouched(p, state) : 0 }))
+    .filter((x) => x.p && x.p.name && isPlausibleName(x.p.name) && dueAt(x.p, state, maxAgeMs) <= now)
+    .sort((a, b) => a.sync - b.sync || a.last - b.last || a.i - b.i)
     .map((x) => x.p.name);
 }
 
-/** When the next cached player becomes stale (ms), or null with an empty index. */
+/** When the next cached player becomes due (ms), or null with an empty index. */
 export function nextStaleAt(index, state, maxAgeMs = REFRESH_AFTER_MS) {
   let min = Infinity;
   for (const p of (index && index.players) || []) {
-    if (p && p.name && isPlausibleName(p.name)) min = Math.min(min, lastTouched(p, state) + maxAgeMs);
+    if (p && p.name && isPlausibleName(p.name)) min = Math.min(min, dueAt(p, state, maxAgeMs));
   }
   return Number.isFinite(min) ? min : null;
 }
 
 /**
  * When should the next background run start? null = nothing to do (idle).
- * Growth: right away. Stale players left: in ~an hour. Otherwise when the
- * next cached player turns 24 h old (deterministic, so idle runs don't commit).
+ * Growth: right away. Due players left: in ~an hour. Otherwise when the next
+ * cached player becomes due (deterministic, so idle runs don't commit).
  * @returns {{ nextDueAt: string|null, reason: string }}
  */
-export function computeSchedule({ growthLeft = false, staleLeft = 0, nextStaleAt: nextStale = null, outageStop = false, now = Date.now() } = {}) {
+export function computeSchedule({ growthLeft = false, staleLeft = 0, backlogLeft = 0, nextStaleAt: nextStale = null, outageStop = false, now = Date.now() } = {}) {
   const iso = (ms) => new Date(ms).toISOString();
   if (outageStop && (growthLeft || staleLeft)) return { nextDueAt: iso(now + 30 * 60_000), reason: "retry after outage" };
   if (growthLeft) return { nextDueAt: iso(now), reason: "growth" };
-  if (staleLeft > 0) return { nextDueAt: iso(now + REFRESH_RUN_GAP_MS), reason: `daily refresh (${staleLeft} left)` };
-  if (nextStale != null) return { nextDueAt: iso(nextStale), reason: "daily refresh" };
+  if (staleLeft > 0) {
+    const why = backlogLeft > 0 ? `format sync (${backlogLeft} left)` : `weekly refresh (${staleLeft} left)`;
+    return { nextDueAt: iso(now + REFRESH_RUN_GAP_MS), reason: why };
+  }
+  if (nextStale != null) return { nextDueAt: iso(nextStale), reason: "weekly refresh" };
   return { nextDueAt: null, reason: "idle" };
 }
 
