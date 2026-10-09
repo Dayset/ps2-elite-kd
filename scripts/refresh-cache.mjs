@@ -26,6 +26,7 @@ import {
   CENSUS_HOST,
   CensusError,
   censusBase,
+  censusRequest,
   defaultCensusRate,
   fetchPlayerCensus,
   tokenBucket,
@@ -129,17 +130,30 @@ export function backoffMs(attempt, retryAfterHeader) {
 }
 
 async function fetchJson(url, { retries = 4 } = {}) {
+  if (url.startsWith(CENSUS_HOST)) {
+    // Census: timeouts, exponential backoff + jitter, busy/overload detection (census-fetch.mjs).
+    return censusRequest(url, {
+      bucket: censusBucket,
+      retries,
+      timeoutMs: url.includes("characters_event_grouped") ? CENSUS_TIMEOUT_MS : FETCH_TIMEOUT_MS,
+      expectData: url.includes("characters_event_grouped") || url.includes("character?name.first_lower="),
+      headers: { Accept: "application/json", "User-Agent": USER_AGENT },
+      baseMs: 2000,
+      capMs: 30000,
+      onRetry: ({ attempt, retries: n, reason, waitMs }) =>
+        console.warn(`  Census retry ${attempt}/${n} in ${waitMs}ms (${reason})`),
+    });
+  }
   let lastErr;
   const isHonu = url.startsWith("https://wt.honu.pw/");
-  const isCensus = url.startsWith(CENSUS_HOST);
-  const bucket = isHonu ? honuBucket : isCensus ? censusBucket : null;
+  const bucket = isHonu ? honuBucket : null;
   for (let attempt = 0; attempt < retries; attempt++) {
     let wait = backoffMs(attempt);
     if (bucket) await bucket.take();
     try {
       const res = await fetch(url, {
         headers: { Accept: "application/json", "User-Agent": USER_AGENT },
-        signal: AbortSignal.timeout(isCensus ? CENSUS_TIMEOUT_MS : FETCH_TIMEOUT_MS),
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       });
       if (res.status === 429 || res.status >= 500) {
         wait = backoffMs(attempt, res.headers.get("retry-after"));
@@ -154,16 +168,7 @@ async function fetchJson(url, { retries = 4 } = {}) {
       } else if (res.status === 204) {
         return null;
       } else {
-        const body = await res.json();
-        // Census throttling / outages come back as 200 + {"error": ...}: back off and retry.
-        if (isCensus && body && !Array.isArray(body) && (body.error || body.errorCode) && !Object.keys(body).some((k) => k.endsWith("_list"))) {
-          lastErr = new CensusError(`Census unavailable: ${String(body.error || body.errorCode).slice(0, 100)}`);
-          wait = Math.max(wait, 15_000 * (attempt + 1));
-          bucket.pause(wait);
-          console.warn(`  Census said ${String(body.error || body.errorCode).slice(0, 60)}; retry in ${wait}ms`);
-        } else {
-          return body;
-        }
+        return await res.json();
       }
     } catch (e) {
       if (e instanceof HttpClientError) throw e; // 4xx: retrying won't help
@@ -310,6 +315,10 @@ async function loadLive(name) {
   // Census errors propagate as outages (old data is kept).
   const r = await fetchPlayerCensus(cid, { base: CENSUS, getJson: (u) => fetchJson(u), topN: TOP_N, memo: oppMemo });
   if (!r.board.length) throw new NotFoundError(`Census: empty killboard for ${cid}`);
+  // The shared cache never stores a partial curve: keep the old file, retry later.
+  if (r.ownFailed || r.skipped) {
+    throw new CensusError(`Census busy: ${r.skipped} opponent(s)${r.ownFailed ? " + own stats" : ""} not fetched; keeping old data`);
+  }
   const own = r.own || { kpm: 0, acc: 0, hsr: 0, ivi: 0 };
   const rows = r.rows;
   // A curve with many fake 0-KPM opponents is worse than yesterday's data.
