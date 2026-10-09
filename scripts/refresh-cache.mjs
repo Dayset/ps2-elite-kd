@@ -1019,6 +1019,7 @@ async function main() {
     state.updatedAt = new Date().toISOString();
     writeState(state);
     if (c.consecutiveOutage >= MAX_CONSECUTIVE_OUTAGES) {
+      c.outageStop = true;
       c.stoppedEarly = `${c.consecutiveOutage} outage-type failures in a row (Census/Honu down?)`;
     }
     return display;
@@ -1188,7 +1189,7 @@ async function main() {
       staleLeft: after.length,
       backlogLeft: syncBacklog(index),
       nextStaleAt: nextStaleAt(index, state),
-      outageStop: !!c.stoppedEarly && c.outage > 0,
+      outageStop: !!c.outageStop, // only a real outage stop, not a time-budget stop with one flaky player
       now: Date.now(),
     }));
   }
