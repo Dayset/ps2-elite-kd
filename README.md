@@ -132,3 +132,7 @@ Coverage includes pooled/sliceAt, Inflation@0.5, curveSlope (deaths>0), LionHear
 ## Credits
 
 Data via the [Daybreak Census API](https://census.daybreakgames.com/) and [HONU](https://wt.honu.pw/) (Varunda). History: the chart logic began as an earlier Python elite-K/D tool, since ported to JavaScript.
+
+## License
+
+[MIT](LICENSE) © 2026 Dayset. Free to use, provided "as is" with no warranty. All numbers are automated estimates, not facts.
