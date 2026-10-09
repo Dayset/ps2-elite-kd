@@ -119,8 +119,7 @@ jobs:
           node scripts/build-ranks.mjs || echo "::warning::build-ranks failed; data/ranks.json not updated this run"
           # Refit the 👻 ghost population model on the same cache (no network; same commit).
           node scripts/build-ghost-model.mjs || { git checkout -- data/ghost-model.mjs 2>/dev/null; echo "::warning::build-ghost failed; data/ghost-model.mjs not updated this run"; }
-          # status.json: mark idle. load-flag.json: background runs no longer raise
-          # the main page's "under load" banner; make sure it's cleared.
+          # status.json: mark idle.
           node -e '
             const fs = require("fs");
             let st = {};
@@ -129,14 +128,6 @@ jobs:
               st.running = false;
               st.current = null;
               fs.writeFileSync("data/status.json", JSON.stringify(st, null, 2) + "\n");
-            }
-            let cur = {};
-            try { cur = JSON.parse(fs.readFileSync("data/load-flag.json", "utf8")); } catch {}
-            if (cur.fetching !== false) {
-              fs.writeFileSync("data/load-flag.json", JSON.stringify({
-                fetching: false, ts: Date.now(), source: "actions",
-                runId: process.env.RUN_ID || null, message: null,
-              }, null, 2) + "\n");
             }
           '
           scripts/ci-commit-push.sh "chore(cache): ${RUN_KIND} refresh, ${changed} player file(s), ${NEW} new [bot]"

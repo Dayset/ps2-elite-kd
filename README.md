@@ -93,12 +93,12 @@ The static Pages site cannot write `data/`. Shared snapshots are committed autom
 - **🙈 Hidden from rankings:** `data/hidden.json` (owner-edited; key = player name or character id → `{ reason, at }`) leaves players out of `ranks.json` / ranks.html (tables, percentiles, distributions). They stay in the cache, can still be analyzed on the main page, still count in 🚩 red flags and the 🧪 outlier guard, and are listed on the build log.
 - **No scheduled refresh of cached players.** A cached player is only re-fetched when someone asks for fresh data (the Worker dispatches it on demand).
 - **On-demand:** a dispatch with `names` (from the Worker, or **Actions → Run workflow**) refreshes only those names at 2 req/s. Names that fetch OK are added to `watchlist.txt`; failures are left out. These runs queue behind a running background run and never cancel it.
-- **One commit per run** (Pages allows ~10 builds/hour). No commit if no player file changed. Background runs don't raise the main page's under-load banner.
+- **One commit per run** (Pages allows ~10 builds/hour). No commit if no player file changed.
 - Real not-found names (no character, invalid name, empty killboard) are never retried by discovery. Other failures (timeouts, outages) are retried at most 3 times, 15 min apart (tracked in `data/refresh-state.json`). A player is not saved if more than 10% of its opponent lookups fail, so rate limits can't save fake 0-KPM curves. If Census is unreachable, the run stops early and keeps the old data (retried 30 min later).
 - `status.json` → `lastRun.batch` lists each planned name with its source (`top-killers`, `opponent-crawl`, `retry`, `on-demand`) and result (done / failed / not-found / pending), committed with the run's data.
 - Each run re-enables the workflow, so GitHub's 60-day inactivity rule can't switch it off.
 
-Browser Analyze still uses a local under-load note across tabs on the same device; the Actions load-flag is what other visitors see during a shared refresh.
+The main page has no "server under load" banner (removed 2026-10-09: Census fetches are fast and background runs use their own connection). The only load messages are the real Census ones: "Daybreak Census is busy, retrying…", the cached fallback and ↻ Try again.
 
 ## Files
 
@@ -113,7 +113,6 @@ ps2-elite-kd/
     ranks.json            # precomputed rankings (scripts/build-ranks.mjs)
     watchlist.txt         # names in the hourly rotation
     refresh-state.json    # rotation bookkeeping
-    load-flag.json        # Actions under-load signal
     players/<slug>.json
   scripts/refresh-cache.mjs
   scripts/build-ranks.mjs   # data/ranks.json from the cache (run by the refresh workflow)

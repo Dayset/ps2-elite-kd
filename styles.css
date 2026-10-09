@@ -855,25 +855,6 @@ header .sub {
   margin-top: 0.15rem;
 }
 
-.under-load {
-  font-size: 0.78rem;
-  color: #ffd166;
-  margin: -0.25rem 0 0.75rem;
-  padding: 0.4rem 0.6rem;
-  background: rgba(255, 209, 102, 0.08);
-  border: 1px solid rgba(255, 209, 102, 0.3);
-  border-radius: 6px;
-  line-height: 1.35;
-}
-
-.under-load[hidden] { display: none; }
-
-.under-load-modal {
-  margin: 1rem 0 0;
-  text-align: left;
-  width: 100%;
-}
-
 /* Full-screen analyzing / fetching popup */
 .progress-modal {
   position: fixed;
@@ -1637,12 +1618,6 @@ footer .disclaimer p {
   font-size: 0.8em;
 }
 
-
-html[data-theme="light"] .under-load {
-  color: #9a6a00;
-  background: rgba(154, 106, 0, 0.1);
-  border-color: rgba(154, 106, 0, 0.35);
-}
 
 html[data-theme="light"] .cache-chips .chip.shared {
   background: var(--chip-bg);

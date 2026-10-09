@@ -32,9 +32,9 @@ import {
   windowYValues,
   kpmBandCurve,
   bandReliability,
-} from "./math.mjs?v=20261009-warnnote";
-import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261009-warnnote";
-import GHOST_MODEL from "./data/ghost-model.mjs?v=20261009-warnnote";
+} from "./math.mjs?v=20261009-noload";
+import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261009-noload";
+import GHOST_MODEL from "./data/ghost-model.mjs?v=20261009-noload";
 import {
   NameLoadError,
   classifyLoadError,
@@ -60,7 +60,7 @@ import {
   formatEtaLeft,
   etaLearnLiveMs,
   expectedNameMs,
-} from "./analyze-run.mjs?v=20261009-warnnote";
+} from "./analyze-run.mjs?v=20261009-noload";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
@@ -74,7 +74,7 @@ import {
   THIN_MARK,
   THIN_NOTE_HEAD,
   thinPlayerLine,
-} from "./player-metrics.mjs?v=20261009-warnnote";
+} from "./player-metrics.mjs?v=20261009-noload";
 /** "22 kills / 60 deaths" in the opponent sample (MIN_FIGHTS counts). */
 function fightsText(r) {
   const k = r.sampleKills || 0;
@@ -86,16 +86,16 @@ function fightsText(r) {
 function thinCellTip(r) {
   return `${MIN_FIGHTS_TIP}. This sample: ${fightsText(r).replace(/[()]/g, "")}`;
 }
-import { farmNote, statMark } from "./padding.mjs?v=20261009-warnnote";
+import { farmNote, statMark } from "./padding.mjs?v=20261009-noload";
 // Account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times: chart name list only.
-import { accountTimes, flairsHtml } from "./flairs.mjs?v=20261009-warnnote";
+import { accountTimes, flairsHtml } from "./flairs.mjs?v=20261009-noload";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261009-warnnote";
-import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261009-warnnote";
+import "./name-peek.mjs?v=20261009-noload";
+import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261009-noload";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
-import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-warnnote";
+import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-noload";
 // Live data: Daybreak Census only (batched, paced); Honu just for a rare history fallback.
-import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261009-warnnote";
+import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261009-noload";
 import {
   censusBase,
   censusRequest,
@@ -104,7 +104,7 @@ import {
   limitConcurrency,
   tokenBucket,
   OPPONENT_TOP_N,
-} from "./census-fetch.mjs?v=20261009-warnnote";
+} from "./census-fetch.mjs?v=20261009-noload";
 
   // Player palettes (dark + light theme) live in palette.mjs (shared with ranks.html).
   const COLORS = PALETTE_DARK;
@@ -141,21 +141,11 @@ import {
   const LS_CHART_MODE_OLD = "ps2-elite-kd-chart-mode";
   /** 👻 ghost (predicted) lines: "1" = on (explicit choice); anything else = off (default). */
   const LS_GHOSTS = "ps2-elite-kd-ghosts";
-  /** Cross-tab live-fetch flag (browser-local). */
+  /** Legacy cross-tab fetch flag (old under-load banner); only wiped now. */
   const LS_FETCHING = "ps2-elite-kd:fetching";
   /** Remembered live-fetch time per name in this browser (ms, moving average) → first ETA guess. */
   const LS_ETA_LIVE = "ps2-elite-kd-eta-live-ms";
-  const FETCHING_TTL_MS = 3 * 60 * 1000; // 3 min stale expiry
-  const FETCHING_HEARTBEAT_MS = 30 * 1000;
-  /** Shared Actions under-load flag on Pages (data/load-flag.json). */
-  const SERVER_LOAD_FLAG_URL = "data/load-flag.json";
-  const SERVER_LOAD_FLAG_TTL_MS = 20 * 60 * 1000; // 20 min freshness
-  const SERVER_LOAD_FLAG_POLL_MS = 30 * 1000;
   const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
-  const TAB_ID =
-    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
-      ? crypto.randomUUID()
-      : `t-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
   const DEFAULT_NAMES = [];
   /** Empty-field Analyze default + names input placeholder. */
   const DEFAULT_PLACEHOLDER_NAME = "ShloDog";
@@ -196,8 +186,6 @@ import {
     progressBar: document.getElementById("progressBar"),
     progressPct: document.getElementById("progressPct"),
     progressTiming: document.getElementById("progressTiming"),
-    underLoadNote: document.getElementById("underLoadNote"),
-    underLoadInModal: document.getElementById("underLoadInModal"),
     progressCancel: document.getElementById("progressCancel"),
     chart: document.getElementById("chart"),
     chartPlaceholder: document.getElementById("chartPlaceholder"),
@@ -225,10 +213,7 @@ import {
   let chartMode = readChartMode();
   let ghostsOn = readGhostsOn();
   let fetching = false;
-  /**
-   * Active analyze run: { controller, signal, live } or null.
-   * `live` = how many beginLiveFetch() holds this run still owns.
-   */
+  /** Active analyze run: { controller, signal } or null. */
   let activeRun = null;
   /** Progress modal timing for ETA (names completed). */
   let progressStartedAt = 0;
@@ -246,21 +231,6 @@ import {
   let progressTickTimer = null;
   /** Visual bar % (creeps forward for hope; snaps up on real done/total). */
   let progressDisplayPct = 0;
-  /** Nested depth of in-flight live Honu/Census loads owned by this tab. */
-  let liveFetchDepth = 0;
-  let fetchHeartbeatTimer = null;
-  let fetchExpireTimer = null;
-  let serverLoadPollTimer = null;
-  /** Last known Actions load-flag state (null = unknown / idle). */
-  let serverLoadFlag = null;
-  let fetchBroadcast = null;
-  try {
-    if (typeof BroadcastChannel !== "undefined") {
-      fetchBroadcast = new BroadcastChannel("ps2-elite-kd-fetch");
-    }
-  } catch {
-    fetchBroadcast = null;
-  }
   /** Locked name chips in the token input (order preserved). */
   let nameTokens = [];
   /** slug → { name, kind, reason } for names the last run(s) could not fetch. */
@@ -548,7 +518,6 @@ import {
       if (els.progressTitle) els.progressTitle.textContent = "Analyzing…";
       applyProgressBar(0);
       if (els.progressTiming) els.progressTiming.textContent = "";
-      updateUnderLoadNotice();
       return;
     }
 
@@ -623,164 +592,7 @@ import {
     applyProgressBar(progressDisplayPct);
     renderProgressTiming();
     startProgressTick();
-    updateUnderLoadNotice();
   }
-
-  function writeFetchFlag() {
-    const payload = JSON.stringify({ owner: TAB_ID, ts: Date.now() });
-    try {
-      localStorage.setItem(LS_FETCHING, payload);
-    } catch {
-      /* private mode / quota */
-    }
-    if (fetchBroadcast) {
-      try {
-        fetchBroadcast.postMessage({ type: "fetching", owner: TAB_ID, ts: Date.now() });
-      } catch {
-        /* ignore */
-      }
-    }
-  }
-
-  function clearFetchFlagIfOwned() {
-    try {
-      const raw = localStorage.getItem(LS_FETCHING);
-      if (!raw) return;
-      const data = JSON.parse(raw);
-      if (!data || data.owner !== TAB_ID) return;
-      localStorage.removeItem(LS_FETCHING);
-    } catch {
-      try {
-        localStorage.removeItem(LS_FETCHING);
-      } catch {
-        /* ignore */
-      }
-    }
-    if (fetchBroadcast) {
-      try {
-        fetchBroadcast.postMessage({ type: "idle", owner: TAB_ID });
-      } catch {
-        /* ignore */
-      }
-    }
-  }
-
-  function readFetchFlag() {
-    try {
-      const raw = localStorage.getItem(LS_FETCHING);
-      if (!raw) return null;
-      const data = JSON.parse(raw);
-      if (!data || !data.owner || typeof data.ts !== "number") return null;
-      if (Date.now() - data.ts > FETCHING_TTL_MS) {
-        try {
-          localStorage.removeItem(LS_FETCHING);
-        } catch {
-          /* ignore */
-        }
-        return null;
-      }
-      return data;
-    } catch {
-      return null;
-    }
-  }
-
-  function otherTabFetching() {
-    const data = readFetchFlag();
-    return !!(data && data.owner !== TAB_ID);
-  }
-
-  function serverSideFetching() {
-    const f = serverLoadFlag;
-    if (!f || !f.fetching) return false;
-    const ts = typeof f.ts === "number" ? f.ts : 0;
-    if (!ts || Date.now() - ts > SERVER_LOAD_FLAG_TTL_MS) return false;
-    return true;
-  }
-
-  async function pollServerLoadFlag() {
-    try {
-      const url = `${SERVER_LOAD_FLAG_URL}?t=${Date.now()}`;
-      const res = await fetch(url, { cache: "no-store" });
-      if (!res.ok) {
-        serverLoadFlag = null;
-      } else {
-        const data = await res.json();
-        serverLoadFlag =
-          data && typeof data === "object"
-            ? {
-                fetching: !!data.fetching,
-                ts: typeof data.ts === "number" ? data.ts : 0,
-                source: data.source || "actions",
-                runId: data.runId || null,
-                message: data.message || null,
-              }
-            : null;
-      }
-    } catch {
-      /* offline / blocked — keep last known */
-    }
-    updateUnderLoadNotice();
-  }
-
-  function startServerLoadFlagPolling() {
-    if (serverLoadPollTimer) return;
-    pollServerLoadFlag();
-    serverLoadPollTimer = setInterval(pollServerLoadFlag, SERVER_LOAD_FLAG_POLL_MS);
-  }
-
-  function updateUnderLoadNotice() {
-    const show = otherTabFetching() || serverSideFetching();
-    const modalOpen = !!(els.progress && !els.progress.hidden);
-    if (els.underLoadNote) {
-      // Page banner only when modal is closed (other tab / Actions refresh).
-      els.underLoadNote.hidden = !show || modalOpen;
-    }
-    if (els.underLoadInModal) {
-      // Keep under-load visible inside the analyzing popup when applicable.
-      els.underLoadInModal.hidden = !show || !modalOpen;
-    }
-    if (fetchExpireTimer) {
-      clearTimeout(fetchExpireTimer);
-      fetchExpireTimer = null;
-    }
-    const data = readFetchFlag();
-    let nextMs = null;
-    if (data) {
-      nextMs = FETCHING_TTL_MS - (Date.now() - data.ts) + 100;
-    }
-    if (serverSideFetching() && serverLoadFlag && serverLoadFlag.ts) {
-      const rem = SERVER_LOAD_FLAG_TTL_MS - (Date.now() - serverLoadFlag.ts) + 100;
-      nextMs = nextMs == null ? rem : Math.min(nextMs, rem);
-    }
-    if (nextMs != null) {
-      fetchExpireTimer = setTimeout(updateUnderLoadNotice, Math.max(1000, nextMs));
-    }
-  }
-
-  function beginLiveFetch() {
-    liveFetchDepth += 1;
-    writeFetchFlag();
-    if (liveFetchDepth === 1 && !fetchHeartbeatTimer) {
-      fetchHeartbeatTimer = setInterval(() => {
-        if (liveFetchDepth > 0) writeFetchFlag();
-      }, FETCHING_HEARTBEAT_MS);
-    }
-    updateUnderLoadNotice();
-  }
-
-  function endLiveFetch() {
-    liveFetchDepth = Math.max(0, liveFetchDepth - 1);
-    if (liveFetchDepth === 0) {
-      if (fetchHeartbeatTimer) {
-        clearInterval(fetchHeartbeatTimer);
-        fetchHeartbeatTimer = null;
-      }
-      clearFetchFlagIfOwned();
-    }
-    updateUnderLoadNotice();
-  }
-
 
   /* ---------- theme (dark / creamy light) ---------- */
 
@@ -1215,11 +1027,6 @@ import {
     );
     if (!ok) return;
 
-    try {
-      clearFetchFlagIfOwned();
-    } catch {
-      /* ignore */
-    }
     wipeAppStorageKeys();
     wipeAppCookies();
     // Keep the "show older debug stats" choice (not mentioned in the confirm text).
@@ -1244,7 +1051,6 @@ import {
     clearChartUi(); // idle chart + drops the auto-scroll bottom padding
     renderNameTokens();
     renderCacheChips();
-    updateUnderLoadNotice();
     // Default theme after wipe (persists fresh dark preference)
     applyTheme("dark", { redraw: false });
     setStatus('<span class="ok">Local app data cleared.</span>', "ok");
@@ -1851,25 +1657,11 @@ import {
     return 0;
   }
 
-  /**
-   * Live load. The under-load hold is tracked on `run` so a cancel can release
-   * it immediately (releaseRunLiveHolds) without a late double-decrement here.
-   */
+  /** Live load (Census); `run` carries the analyze run's abort signal. */
   async function loadLive(name, run) {
     const signal = run ? run.signal : undefined;
     checkAborted(signal);
-    beginLiveFetch();
-    if (run) run.live += 1;
-    try {
-      return await loadLiveInner(name, signal);
-    } finally {
-      if (!run) {
-        endLiveFetch();
-      } else if (run.live > 0) {
-        run.live -= 1;
-        endLiveFetch();
-      }
-    }
+    return loadLiveInner(name, signal);
   }
 
   async function loadLiveInner(name, signal) {
@@ -3044,15 +2836,6 @@ import {
     if (els.fetchFresh) els.fetchFresh.disabled = on;
   }
 
-  /** Release any under-load holds a (cancelled) run still owns. */
-  function releaseRunLiveHolds(run) {
-    if (!run) return;
-    while (run.live > 0) {
-      run.live -= 1;
-      endLiveFetch();
-    }
-  }
-
   /**
    * ✕ / Esc in the progress popup: abort the whole analyze run now.
    * Previous graph (if any) is left untouched; nothing half-done is rendered.
@@ -3071,14 +2854,12 @@ import {
     } catch {
       /* ignore */
     }
-    releaseRunLiveHolds(run);
     setFetching(false);
     setProgress(false);
     if (!players.length) {
       // No prior graph → back to idle placeholder.
       showIdleChart("▶️ Press Analyze");
     }
-    updateUnderLoadNotice();
     setStatus('<span class="warn">Fetch cancelled.</span>', "warn cancelled");
   }
 
@@ -3176,7 +2957,6 @@ import {
     const run = {
       controller: controller || { abort() { this.signal.aborted = true; }, signal: { aborted: false } },
       signal: null,
-      live: 0,
       fresh,
     };
     run.signal = run.controller.signal;
@@ -3190,7 +2970,6 @@ import {
       done: 0,
       total: clean.length,
     });
-    updateUnderLoadNotice();
     setStatus(`Analyzing ${clean.length} player${clean.length > 1 ? "s" : ""}…`);
 
     // ETA plan: which names will need a live Census fetch (vs cached / in memory).
@@ -3245,9 +3024,6 @@ import {
         activeRun = null;
         setFetching(false);
         setProgress(false);
-        updateUnderLoadNotice();
-      } else {
-        releaseRunLiveHolds(run);
       }
     }
 
@@ -3841,42 +3617,22 @@ import {
       SHARED_INDEX_URL,
       getSharedIndex: () => sharedIndex,
       findSharedEntry,
-      SERVER_LOAD_FLAG_URL,
-      getServerLoadFlag: () => serverLoadFlag,
       currentNamesInField,
       isNameFetched,
       getNameTokens: () => nameTokens.slice(),
       cancelAnalyze,
       isAnalyzing: () => !!activeRun,
-      getLiveFetchDepth: () => liveFetchDepth,
       getLastAnalyzedNames: () => lastAnalyzedNames.slice(),
       getFailedNames: () => [...failedNames.values()].map((f) => ({ ...f })),
       getPlayerNames: () => players.map((p) => p.display),
     };
   }
 
-  window.addEventListener("storage", (e) => {
-    if (e.key === LS_FETCHING || e.key === null) updateUnderLoadNotice();
-  });
-  if (fetchBroadcast) {
-    fetchBroadcast.addEventListener("message", () => {
-      updateUnderLoadNotice();
-    });
-  }
-  window.addEventListener("pagehide", () => {
-    if (liveFetchDepth > 0) clearFetchFlagIfOwned();
-  });
-  window.addEventListener("beforeunload", () => {
-    if (liveFetchDepth > 0) clearFetchFlagIfOwned();
-  });
-
   // Startup — fill chips only; wait for Analyze (Enter still works)
   // Never persist / restore "Fetch fresh"; always start clean on load/refresh.
   (async () => {
     applyTheme(getStoredTheme(), { redraw: false });
     if (els.fetchFresh) els.fetchFresh.checked = false;
-    startServerLoadFlagPolling();
-    updateUnderLoadNotice();
     await loadSharedIndex();
     const startup = resolveStartupNames();
     setNameTokens(startup.names); // >10 from ?names= → first 10 + limit hint

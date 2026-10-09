@@ -14,7 +14,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261009-warnnote" />
+  <link rel="stylesheet" href="styles.css?v=20261009-noload" />
   <style>
     body { overflow: auto; }
     .st-wrap { max-width: 960px; margin: 0 auto; padding: 18px 16px 40px; }
@@ -175,7 +175,6 @@
       "use strict";
       var REPO = "Dayset/ps2-elite-kd";
       var WORKER_URL = "https://ps2-elite-kd-cache.dayset.workers.dev";
-      var FLAG_TTL_MS = 20 * 60 * 1000; // same staleness rule as the main page
       var POLL_MS = 30 * 1000;
 
       function $(id) { return document.getElementById(id); }
@@ -223,18 +222,13 @@
         $(el).innerHTML = '<span class="st-err">Couldn’t load ' + esc(what) + " (" + esc(e && e.message) + ").</span>";
       }
 
-      function renderNow(flag, status) {
-        var ts = flag && typeof flag.ts === "number" ? flag.ts : 0;
-        var fresh = flag && flag.fetching && ts && Date.now() - ts <= FLAG_TTL_MS;
-        var html;
-        if (fresh) {
+      function renderNow(status) {
+        var html = "";
+        if (status && status.running) {
+          var st = status.current && status.current.startedAt ? Date.parse(status.current.startedAt) : NaN;
+          var rid = (status.current && status.current.runId) || status.runId;
           html = '<div class="st-big st-warn">⏳ Refresh running</div>' +
-            '<div>Started ' + when(ts) + " · " + runLink(flag.runId) + "</div>";
-        } else if (flag && flag.fetching) {
-          html = '<div class="st-big st-dim">Idle (stale flag ignored)</div>' +
-            '<div class="st-dim">The flag says “running” but is older than 20 min (' + when(ts) + "), so it’s ignored, like on the main page. " + runLink(flag.runId) + "</div>";
-        } else {
-          html = '<div class="st-dim">Main-page “under load” banner: off (background runs don’t raise it). Last flag change ' + when(ts) + (flag && flag.runId ? " · " + runLink(flag.runId) : "") + ".</div>";
+            "<div>" + (isFinite(st) ? "Started " + when(st) + " · " : "") + (rid ? runLink(rid) : "") + "</div>";
         }
         var cur = status && status.running && status.current;
         if (cur) {
@@ -370,12 +364,9 @@
       }
 
       function tick() {
-        Promise.all([
-          getJson("data/load-flag.json").catch(function () { return null; }),
-          getJson("data/status.json").catch(function () { return null; }),
-        ]).then(function (res) {
-          renderNow(res[0], res[1]);
-          renderLast(res[1]);
+        getJson("data/status.json").catch(function () { return null; }).then(function (st) {
+          renderNow(st);
+          renderLast(st);
         });
         getJson("data/index.json").then(renderRecent, function (e) { fail("recent", "data/index.json", e); });
         Promise.all([
@@ -400,14 +391,14 @@
        † "adjusted" + the 🧪 outlier guard (grouped by player) go to 📉 Chart anomalies. Uses the
        same metrics as the main tables (player-metrics.mjs). Leads for review, not proof. -->
   <script type="module">
-    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261009-warnnote";
-    import { reviewFlags, reviewRuleText, anomalyRuleText } from "./red-flags.mjs?v=20261009-warnnote";
-    import { groupOutliers } from "./outlier-guard.mjs?v=20261009-warnnote";
-    import { classifyBins, CHART_LABELS } from "./bins.mjs?v=20261009-warnnote";
-    import { sprout, sampleEvents, sproutRuleText } from "./sprouts.mjs?v=20261009-warnnote";
-    import { reviewDecision } from "./padding.mjs?v=20261009-warnnote";
-    import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261009-warnnote";
-    import "./name-peek.mjs?v=20261009-warnnote"; // full-name popup for truncated .nm names
+    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261009-noload";
+    import { reviewFlags, reviewRuleText, anomalyRuleText } from "./red-flags.mjs?v=20261009-noload";
+    import { groupOutliers } from "./outlier-guard.mjs?v=20261009-noload";
+    import { classifyBins, CHART_LABELS } from "./bins.mjs?v=20261009-noload";
+    import { sprout, sampleEvents, sproutRuleText } from "./sprouts.mjs?v=20261009-noload";
+    import { reviewDecision } from "./padding.mjs?v=20261009-noload";
+    import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261009-noload";
+    import "./name-peek.mjs?v=20261009-noload"; // full-name popup for truncated .nm names
 
     const POLL_MS = 30 * 1000;
     const CONCURRENCY = 6;

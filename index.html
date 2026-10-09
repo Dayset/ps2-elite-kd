@@ -39,7 +39,7 @@
     "codeRepository": "https://github.com/Dayset/ps2-elite-kd"
   }
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261009-warnnote" />
+  <link rel="stylesheet" href="styles.css?v=20261009-noload" />
 </head>
 <body>
   <div class="controls">
@@ -69,9 +69,6 @@
   </div>
 
   <div id="status"></div>
-  <div id="underLoadNote" class="under-load under-load-page" hidden role="status">
-    ⏳ The server is under load right now, please be patient.
-  </div>
 
   <div id="progress" class="progress-modal" hidden aria-hidden="true">
     <div class="progress-modal-backdrop" aria-hidden="true"></div>
@@ -88,9 +85,6 @@
       <div class="progress-meta">
         <span id="progressPct">0%</span>
         <span id="progressTiming" class="progress-timing"></span>
-      </div>
-      <div id="underLoadInModal" class="under-load under-load-modal" hidden role="status">
-        ⏳ The server is under load right now, please be patient.
       </div>
     </div>
   </div>
@@ -152,6 +146,6 @@
     </details>
   </footer>
 
-  <script type="module" src="app.js?v=20261009-warnnote"></script>
+  <script type="module" src="app.js?v=20261009-noload"></script>
 </body>
 </html>
