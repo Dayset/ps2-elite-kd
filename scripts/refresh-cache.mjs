@@ -1209,6 +1209,8 @@ async function main() {
 
 /** Gap between refresh-only runs (keeps Census load and Pages commits ~hourly). */
 export const REFRESH_RUN_GAP_MS = 55 * 60 * 1000;
+/** Shorter gap while the one-time format sync backlog lasts (Honu stays paced at <= 20/min inside a run). */
+export const SYNC_RUN_GAP_MS = 20 * 60 * 1000;
 
 /** Last time a cached player was saved or tried (ms; 0 = never). */
 function lastTouched(p, state) {
@@ -1273,8 +1275,8 @@ export function computeSchedule({ growthLeft = false, staleLeft = 0, backlogLeft
   if (outageStop && (growthLeft || staleLeft)) return { nextDueAt: iso(now + 30 * 60_000), reason: "retry after outage" };
   if (growthLeft) return { nextDueAt: iso(now), reason: "growth" };
   if (staleLeft > 0) {
-    const why = backlogLeft > 0 ? `format sync (${backlogLeft} left)` : `weekly refresh (${staleLeft} left)`;
-    return { nextDueAt: iso(now + REFRESH_RUN_GAP_MS), reason: why };
+    if (backlogLeft > 0) return { nextDueAt: iso(now + SYNC_RUN_GAP_MS), reason: `format sync (${backlogLeft} left)` };
+    return { nextDueAt: iso(now + REFRESH_RUN_GAP_MS), reason: `weekly refresh (${staleLeft} left)` };
   }
   if (nextStale != null) return { nextDueAt: iso(nextStale), reason: "weekly refresh" };
   return { nextDueAt: null, reason: "idle" };

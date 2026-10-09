@@ -265,7 +265,7 @@ describe("weekly refresh + format sync backlog + schedule.json", () => {
   it("computeSchedule: growth now, due players in ~1 h, else next due time (deterministic), else idle", () => {
     assert.deepEqual(computeSchedule({ growthLeft: true, now: NOW }), { nextDueAt: new Date(NOW).toISOString(), reason: "growth" });
     assert.equal(computeSchedule({ staleLeft: 5, now: NOW }).nextDueAt, new Date(NOW + REFRESH_RUN_GAP_MS).toISOString());
-    assert.equal(computeSchedule({ staleLeft: 5, backlogLeft: 3, now: NOW }).reason, "format sync (3 left)");
+    assert.deepEqual(computeSchedule({ staleLeft: 5, backlogLeft: 3, now: NOW }), { nextDueAt: new Date(NOW + 20 * 60e3).toISOString(), reason: "format sync (3 left)" });
     assert.equal(computeSchedule({ staleLeft: 5, now: NOW }).reason, "weekly refresh (5 left)");
     const a = computeSchedule({ nextStaleAt: NOW + 5 * H, now: NOW });
     const b = computeSchedule({ nextStaleAt: NOW + 5 * H, now: NOW + 600e3 });
