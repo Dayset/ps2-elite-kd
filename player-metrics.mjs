@@ -15,9 +15,9 @@ import {
   pressureVolume,
   resolveIvi,
   deathMixLite,
-} from "./math.mjs?v=20261009-top200";
-import { splitFarm } from "./padding.mjs?v=20261009-top200";
-import { OPPONENT_TOP_N, LEGACY_TOP_N, sampleTopN } from "./census-fetch.mjs?v=20261009-top200";
+} from "./math.mjs?v=20261009-fights";
+import { splitFarm } from "./padding.mjs?v=20261009-fights";
+import { OPPONENT_TOP_N, LEGACY_TOP_N, sampleTopN } from "./census-fetch.mjs?v=20261009-fights";
 
 /**
  * Older shared-cache files were scored on the top 50 opponents; new fetches use

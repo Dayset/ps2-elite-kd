@@ -32,9 +32,9 @@ import {
   windowYValues,
   kpmBandCurve,
   bandReliability,
-} from "./math.mjs?v=20261009-top200";
-import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261009-top200";
-import GHOST_MODEL from "./data/ghost-model.mjs?v=20261009-top200";
+} from "./math.mjs?v=20261009-fights";
+import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261009-fights";
+import GHOST_MODEL from "./data/ghost-model.mjs?v=20261009-fights";
 import {
   NameLoadError,
   classifyLoadError,
@@ -60,7 +60,7 @@ import {
   formatEtaLeft,
   etaLearnLiveMs,
   expectedNameMs,
-} from "./analyze-run.mjs?v=20261009-top200";
+} from "./analyze-run.mjs?v=20261009-fights";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
@@ -71,7 +71,7 @@ import {
   isLegacySample,
   LEGACY_SAMPLE_MARK,
   LEGACY_SAMPLE_TIP,
-} from "./player-metrics.mjs?v=20261009-top200";
+} from "./player-metrics.mjs?v=20261009-fights";
 /** "22 kills / 60 deaths" in the opponent sample (MIN_FIGHTS counts). */
 function fightsText(r) {
   const k = r.sampleKills || 0;
@@ -83,14 +83,14 @@ function fightsText(r) {
 function thinCellTip(r) {
   return `${MIN_FIGHTS_TIP}. This sample: ${fightsText(r).replace(/[()]/g, "")}`;
 }
-import { farmNote, statMark } from "./padding.mjs?v=20261009-top200";
+import { farmNote, statMark } from "./padding.mjs?v=20261009-fights";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261009-top200";
-import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261009-top200";
+import "./name-peek.mjs?v=20261009-fights";
+import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261009-fights";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
-import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-top200";
+import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-fights";
 // Live data: Daybreak Census only (batched, paced); Honu just for a rare history fallback.
-import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261009-top200";
+import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261009-fights";
 import {
   censusBase,
   censusRequest,
@@ -99,7 +99,7 @@ import {
   limitConcurrency,
   tokenBucket,
   OPPONENT_TOP_N,
-} from "./census-fetch.mjs?v=20261009-top200";
+} from "./census-fetch.mjs?v=20261009-fights";
 
   // Player palettes (dark + light theme) live in palette.mjs (shared with ranks.html).
   const COLORS = PALETTE_DARK;
