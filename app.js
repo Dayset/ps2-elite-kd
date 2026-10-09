@@ -32,9 +32,9 @@ import {
   windowYValues,
   kpmBandCurve,
   bandReliability,
-} from "./math.mjs?v=20261008-raw";
-import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261008-raw";
-import GHOST_MODEL from "./data/ghost-model.mjs?v=20261008-raw";
+} from "./math.mjs?v=20261008-ghostcap";
+import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261008-ghostcap";
+import GHOST_MODEL from "./data/ghost-model.mjs?v=20261008-ghostcap";
 import {
   NameLoadError,
   classifyLoadError,
@@ -57,16 +57,16 @@ import {
   estimateRemainingMs,
   nextEtaDeadline,
   formatEtaLeft,
-} from "./analyze-run.mjs?v=20261008-raw";
+} from "./analyze-run.mjs?v=20261008-ghostcap";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
-} from "./player-metrics.mjs?v=20261008-raw";
+} from "./player-metrics.mjs?v=20261008-ghostcap";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261008-raw";
-import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261008-raw";
+import "./name-peek.mjs?v=20261008-ghostcap";
+import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261008-ghostcap";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
-import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261008-raw";
+import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261008-ghostcap";
 
   // Player palettes (dark + light theme) live in palette.mjs (shared with ranks.html).
   const COLORS = PALETTE_DARK;
@@ -94,7 +94,7 @@ import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./j
   const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";
   /** Chart view: "banded" (🎚️ Smooth, opt-in) or anything else = cumulative (📈 Raw, default). Stored values unchanged. */
   const LS_CHART_MODE = "ps2-elite-kd-chart-mode";
-  /** 👻 ghost (predicted) lines: "0" = off; default on. */
+  /** 👻 ghost (predicted) lines: "1" = on (explicit choice); anything else = off (default). */
   const LS_GHOSTS = "ps2-elite-kd-ghosts";
   /** Cross-tab live-fetch flag (browser-local). */
   const LS_FETCHING = "ps2-elite-kd:fetching";
@@ -1913,9 +1913,11 @@ import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./j
 
   function readGhostsOn() {
     try {
-      return localStorage.getItem(LS_GHOSTS) !== "0";
+      // Old builds stored nothing for "on" (the old default) and "0" for off,
+      // so only an explicit "1" (saved by this build) means on.
+      return localStorage.getItem(LS_GHOSTS) === "1";
     } catch {
-      return true;
+      return false;
     }
   }
 
@@ -1936,8 +1938,7 @@ import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./j
   function setGhostsOn(on, { redraw = true } = {}) {
     ghostsOn = !!on;
     try {
-      if (ghostsOn) localStorage.removeItem(LS_GHOSTS);
-      else localStorage.setItem(LS_GHOSTS, "0");
+      localStorage.setItem(LS_GHOSTS, ghostsOn ? "1" : "0");
     } catch {
       /* private mode: session-only */
     }
@@ -2395,7 +2396,8 @@ import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./j
     }
 
     renderStatsTable(list);
-    renderLegend(list, { ghosts: drewGhost });
+    renderLegend(list);
+    setGhostCaptionVisible(ghostsOn && drewGhost);
   }
 
   /**
@@ -2775,7 +2777,12 @@ import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./j
     });
   }
 
-  function renderLegend(list, { ghosts = false } = {}) {
+  function setGhostCaptionVisible(show) {
+    const cap = document.getElementById("ghostCaption");
+    if (cap) cap.hidden = !show;
+  }
+
+  function renderLegend(list) {
     els.legend.innerHTML = "";
     list.forEach((p, i) => {
       const col = seriesColor(i);
@@ -2795,15 +2802,6 @@ import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./j
       `;
       els.legend.appendChild(item);
     });
-    if (ghosts) {
-      const note = document.createElement("div");
-      note.className = "legend-item legend-ghost-note";
-      note.title =
-        "Dashed lines are a prediction from play style (overall K/D, KPM, accuracy, HSR, RF, slope, 🦁 Brave, 🎈 Inflation) " +
-        "fitted on the shared cache and anchored to the player's own fights. Not real fights. Shade ≈ ±1σ.";
-      note.innerHTML = `<span class="legend-ghost-swatch" aria-hidden="true"></span><span class="legend-label">👻 dashed = predicted from play style, not real fights</span>`;
-      els.legend.appendChild(note);
-    }
   }
 
   /** Truncatable player name (.nm, ~18ch cap) with the full name in title / data-full. */
