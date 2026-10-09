@@ -30,7 +30,11 @@ import {
   Y_ZOOM_DEFAULT,
   xMaxForZoom,
   windowYValues,
-} from "./math.mjs?v=20261008-az";
+  kpmBandCurve,
+  bandReliability,
+} from "./math.mjs?v=20261008-band";
+import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261008-band";
+import GHOST_MODEL from "./ghost-model.mjs?v=20261008-band";
 import {
   NameLoadError,
   classifyLoadError,
@@ -53,16 +57,16 @@ import {
   estimateRemainingMs,
   nextEtaDeadline,
   formatEtaLeft,
-} from "./analyze-run.mjs?v=20261008-az";
+} from "./analyze-run.mjs?v=20261008-band";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
-} from "./player-metrics.mjs?v=20261008-az";
+} from "./player-metrics.mjs?v=20261008-band";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261008-az";
-import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261008-az";
+import "./name-peek.mjs?v=20261008-band";
+import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261008-band";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
-import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261008-az";
+import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261008-band";
 
   // Player palettes (dark + light theme) live in palette.mjs (shared with ranks.html).
   const COLORS = PALETTE_DARK;
@@ -88,6 +92,10 @@ import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./j
   const LS_THEME = "ps2-elite-kd-theme";
   /** "1" = show older debug columns in the Adjusted table (footer checkbox). */
   const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";
+  /** Chart view: "banded" (opt-in) or anything else = cumulative (default). */
+  const LS_CHART_MODE = "ps2-elite-kd-chart-mode";
+  /** 👻 ghost (predicted) lines: "0" = off; default on. */
+  const LS_GHOSTS = "ps2-elite-kd-ghosts";
   /** Cross-tab live-fetch flag (browser-local). */
   const LS_FETCHING = "ps2-elite-kd:fetching";
   const FETCHING_TTL_MS = 3 * 60 * 1000; // 3 min stale expiry
@@ -150,6 +158,7 @@ import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./j
     chartYZoom: document.getElementById("chartYZoom"),
     yZoomSlider: document.getElementById("yZoomSlider"),
     yZoomReset: document.getElementById("yZoomReset"),
+    chartModeBar: document.getElementById("chartModeBar"),
     stats: document.getElementById("statsPanel"),
     legend: document.getElementById("legend"),
     debugColsToggle: document.getElementById("debugColsToggle"),
@@ -165,6 +174,9 @@ import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./j
   let graphReadyHintTimer = 0;
   /** Y-axis zoom factor; 1 = auto-fit current data (default). */
   let yZoom = Y_ZOOM_DEFAULT;
+  /** "cumulative" (default) | "banded"; persisted in localStorage only. */
+  let chartMode = readChartMode();
+  let ghostsOn = readGhostsOn();
   let fetching = false;
   /**
    * Active analyze run: { controller, signal, live } or null.
@@ -1891,6 +1903,144 @@ import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./j
 
   /* yScale: imported from ./math.mjs */
 
+  function readChartMode() {
+    try {
+      return localStorage.getItem(LS_CHART_MODE) === "banded" ? "banded" : "cumulative";
+    } catch {
+      return "cumulative";
+    }
+  }
+
+  function readGhostsOn() {
+    try {
+      return localStorage.getItem(LS_GHOSTS) !== "0";
+    } catch {
+      return true;
+    }
+  }
+
+  function syncChartModeUi() {
+    if (!els.chartModeBar) return;
+    for (const b of els.chartModeBar.querySelectorAll("[data-mode]")) {
+      const on = b.dataset.mode === chartMode;
+      b.classList.toggle("active", on);
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+    }
+    const gb = els.chartModeBar.querySelector("[data-ghosts]");
+    if (gb) {
+      gb.classList.toggle("active", ghostsOn);
+      gb.setAttribute("aria-pressed", ghostsOn ? "true" : "false");
+    }
+  }
+
+  function setGhostsOn(on, { redraw = true } = {}) {
+    ghostsOn = !!on;
+    try {
+      if (ghostsOn) localStorage.removeItem(LS_GHOSTS);
+      else localStorage.setItem(LS_GHOSTS, "0");
+    } catch {
+      /* private mode: session-only */
+    }
+    syncChartModeUi();
+    if (redraw && players.length) drawChart(players);
+  }
+
+  /** playerMetrics() per rows array (ghost style features). */
+  const metricsCache = new WeakMap();
+  function metricsFor(p) {
+    const key = p && Array.isArray(p.rows) ? p.rows : null;
+    if (!key) return playerMetrics(p);
+    let m = metricsCache.get(key);
+    if (!m) {
+      m = playerMetrics(p);
+      metricsCache.set(key, m);
+    }
+    return m;
+  }
+
+  /**
+   * 👻 Ghost points for player p in the current mode (predicted from play
+   * style, never replacing real data): [{ kpm, kd, lo, hi, ghost }] on the
+   * chart grid; ghost = true where the dashed line should be drawn.
+   */
+  const ghostCache = new WeakMap();
+  function ghostPointsFor(p, pts) {
+    if (!ghostsOn || !p || !Array.isArray(p.rows) || !p.rows.length) return [];
+    const key = p.rows;
+    let byMode = ghostCache.get(key);
+    if (!byMode) {
+      byMode = {};
+      ghostCache.set(key, byMode);
+    }
+    if (byMode[chartMode]) return byMode[chartMode];
+    let out = [];
+    try {
+      const m = metricsFor(p);
+      if (chartMode === "banded") {
+        out = bandGhost(pts, p.rows, m, GHOST_MODEL);
+      } else {
+        const cg = cumulativeGhost(pts, p.rows, m, GHOST_MODEL);
+        out = pts.map((pt) => {
+          const g = pt.valid ? null : cg.get(Math.round(pt.kpm * 100) / 100);
+          return g
+            ? { kpm: pt.kpm, kd: g.kd, lo: g.lo, hi: g.hi, ghost: true }
+            : { kpm: pt.kpm, kd: pt.kd, lo: pt.kd, hi: pt.kd, ghost: false };
+        });
+      }
+    } catch {
+      out = [];
+    }
+    byMode[chartMode] = out;
+    return out;
+  }
+
+  function setChartMode(mode, { redraw = true } = {}) {
+    chartMode = mode === "banded" ? "banded" : "cumulative";
+    try {
+      if (chartMode === "banded") localStorage.setItem(LS_CHART_MODE, "banded");
+      else localStorage.removeItem(LS_CHART_MODE);
+    } catch {
+      /* private mode: session-only */
+    }
+    syncChartModeUi();
+    if (redraw && players.length) drawChart(players);
+  }
+
+  /** Banded curves are derived from rows; memoised per rows array. */
+  const bandCurveCache = new WeakMap();
+  function bandCurveFor(p) {
+    const rows = p && Array.isArray(p.rows) ? p.rows : null;
+    if (!rows) return [];
+    let c = bandCurveCache.get(rows);
+    if (!c) {
+      c = kpmBandCurve(rows);
+      bandCurveCache.set(rows, c);
+    }
+    return c;
+  }
+
+  /**
+   * Points to draw for player p in the current chart mode, each with
+   * rel (line strength 0..1) and valid (drawable). Same X grid either way.
+   */
+  function chartPoints(p) {
+    if (chartMode === "banded") {
+      return bandCurveFor(p)
+        .filter((pt) => pt.kpm <= X_MAX + 1e-9)
+        .map((pt) => {
+          const rel = bandReliability(pt.events);
+          return { ...pt, rel, valid: rel > 0 && isFiniteNum(pt.kd) };
+        });
+    }
+    return (p.curve || [])
+      .filter((pt) => pt.kpm <= X_MAX + 1e-9)
+      .map((pt) => ({
+        ...pt,
+        rel: reliability(pt),
+        valid: isFiniteNum(pt.kd) && pt.deaths > 0,
+      }));
+  }
+
   /** Right edge of the visible X window (X_MAX unless zoomed into the left). */
   let viewXMax = X_MAX;
   function xToPx(x) {
@@ -1993,16 +2143,30 @@ import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./j
       svg.appendChild(r);
     }
 
+    const banded = chartMode === "banded";
+    const ptsByPlayer = list.map((p) => chartPoints(p));
+    const validCurves = ptsByPlayer.map((pts) => pts.filter((pt) => pt.valid));
+    const ghostsByPlayer = list.map((p, i) => ghostPointsFor(p, ptsByPlayer[i]));
     const yvals = [];
-    for (const p of list) {
-      for (const pt of p.curve || []) {
-        if (pt.kpm <= X_MAX && isFiniteNum(pt.kd) && pt.deaths > 0) {
-          yvals.push(pt.kd);
+    for (const pts of validCurves) for (const pt of pts) yvals.push(pt.kd);
+    // Ghost centres may widen Y a little (so dashed lines stay visible) but
+    // never more than 1.5× the real max: predictions must not set the scale.
+    const realMax = yvals.length ? Math.max(...yvals) : 0;
+    const ghostY = [];
+    ghostsByPlayer.forEach((gs, i) => {
+      for (const gp of gs) {
+        if (gp.ghost && isFiniteNum(gp.kd) && gp.kd <= realMax * 1.5) {
+          yvals.push(gp.kd);
+          ghostY.push({ i, kpm: gp.kpm, kd: gp.kd, deaths: 1 });
         }
       }
-    }
+    });
     const scale = zoomedLeft
-      ? yScale(windowYValues(list.map((p) => p.curve || []), viewXMax)) // fit the left window
+      ? yScale(
+          windowYValues(validCurves, viewXMax).concat(
+            ghostY.filter((gp) => gp.kpm <= viewXMax + 1e-9).map((gp) => gp.kd)
+          )
+        ) // fit the left window
       : applyYZoom(yScale(yvals), yZoom);
     const yToPx = makeYMapper(scale);
     const xTicks = zoomedLeft ? niceLinTicks(0, viewXMax, 5) : [0, 0.5, 1.0, 1.5, 2.0];
@@ -2075,7 +2239,7 @@ import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./j
     ylab.setAttribute("font-size", "12");
     ylab.setAttribute("text-anchor", "middle");
     ylab.setAttribute("transform", `rotate(90 ${PLOT.x + PLOT.w + 44} ${PLOT.y + PLOT.h / 2})`);
-    ylab.textContent = "Projected K/D";
+    ylab.textContent = banded ? "K/D vs enemies near this KPM" : "Projected K/D";
     svg.appendChild(ylab);
 
     for (const x of xTicks) {
@@ -2117,23 +2281,23 @@ import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./j
 
     const labelAnchors = [];
     const lightLines = isLightTheme();
+    let drewGhost = false;
     list.forEach((p, i) => {
       const col = seriesColor(i);
-      const pts = (p.curve || [])
-        .filter((pt) => pt.kpm <= X_MAX + 1e-9)
-        .map((pt) => ({
-          ...pt,
-          rel: reliability(pt),
-          valid: isFiniteNum(pt.kd) && pt.deaths > 0,
-        }));
+      const pts = ptsByPlayer[i];
+      if (drawGhostRuns(seriesG, ghostsByPlayer[i], col, yToPx, p.display, th)) drewGhost = true;
 
       const faint = pts.filter((pt) => pt.valid);
       if (faint.length >= 2) {
         const path = ns("path");
+        // Banded: hidden (too few fights) stretches break the line instead of bridging.
         path.setAttribute(
           "d",
           faint
-            .map((pt, j) => `${j ? "L" : "M"}${xToPx(pt.kpm).toFixed(2)},${yToPx(pt.kd).toFixed(2)}`)
+            .map((pt, j) => {
+              const gap = banded && j && Math.abs(faint[j - 1].kpm - pt.kpm) > 0.051;
+              return `${j && !gap ? "L" : "M"}${xToPx(pt.kpm).toFixed(2)},${yToPx(pt.kd).toFixed(2)}`;
+            })
             .join(" ")
         );
         path.setAttribute("fill", "none");
@@ -2231,7 +2395,68 @@ import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./j
     }
 
     renderStatsTable(list);
-    renderLegend(list);
+    renderLegend(list, { ghosts: drewGhost });
+  }
+
+  /**
+   * Dashed, low-opacity 👻 ghost runs (plus a faint ±1σ shade) wherever the
+   * ghost flag is set; each run is extended one grid step into the real line
+   * so the prediction visibly continues it. Returns true if anything drew.
+   */
+  function drawGhostRuns(g, gpts, col, yToPx, display, th) {
+    if (!gpts || !gpts.length) return false;
+    const pts = gpts
+      .filter((gp) => isFiniteNum(gp.kd) && gp.kd > 0 && gp.kpm <= viewXMax + 0.051)
+      .sort((a, b) => a.kpm - b.kpm);
+    const runs = [];
+    let cur = null;
+    pts.forEach((gp, j) => {
+      if (gp.ghost) {
+        if (!cur) {
+          cur = [];
+          if (j > 0) cur.push(pts[j - 1]);
+        }
+        cur.push(gp);
+      } else if (cur) {
+        cur.push(gp);
+        runs.push(cur);
+        cur = null;
+      }
+    });
+    if (cur) runs.push(cur);
+    const light = isLightTheme();
+    const tip = `${display}: 👻 predicted from play style, not real fights`;
+    let drew = false;
+    for (const run of runs) {
+      if (run.length < 2) continue;
+      const xs = run.map((gp) => xToPx(gp.kpm).toFixed(2));
+      const band = ns("path");
+      const up = run.map((gp, j) => `${j ? "L" : "M"}${xs[j]},${yToPx(isFiniteNum(gp.hi) ? gp.hi : gp.kd).toFixed(2)}`);
+      const dn = run
+        .map((gp, j) => `L${xs[j]},${yToPx(isFiniteNum(gp.lo) ? gp.lo : gp.kd).toFixed(2)}`)
+        .reverse();
+      band.setAttribute("d", up.concat(dn).join(" ") + " Z");
+      band.setAttribute("fill", col);
+      band.setAttribute("fill-opacity", light ? "0.07" : "0.045");
+      band.setAttribute("stroke", "none");
+      band.setAttribute("class", "ghost-band");
+      g.appendChild(band);
+      const line = ns("path");
+      line.setAttribute("d", run.map((gp, j) => `${j ? "L" : "M"}${xs[j]},${yToPx(gp.kd).toFixed(2)}`).join(" "));
+      line.setAttribute("fill", "none");
+      line.setAttribute("stroke", col);
+      line.setAttribute("stroke-width", light ? "1.6" : "1.4");
+      line.setAttribute("stroke-opacity", light ? "0.7" : "0.55");
+      line.setAttribute("stroke-dasharray", "6 4");
+      line.setAttribute("stroke-linecap", "round");
+      line.setAttribute("class", "ghost-line");
+      const t = ns("title");
+      t.textContent = tip;
+      line.appendChild(t);
+      g.appendChild(line);
+      drew = true;
+    }
+    return drew;
   }
 
   function drawX(svg, cx, cy, s, col) {
@@ -2550,7 +2775,7 @@ import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./j
     });
   }
 
-  function renderLegend(list) {
+  function renderLegend(list, { ghosts = false } = {}) {
     els.legend.innerHTML = "";
     list.forEach((p, i) => {
       const col = seriesColor(i);
@@ -2570,6 +2795,15 @@ import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./j
       `;
       els.legend.appendChild(item);
     });
+    if (ghosts) {
+      const note = document.createElement("div");
+      note.className = "legend-item legend-ghost-note";
+      note.title =
+        "Dashed lines are a prediction from play style (overall K/D, KPM, accuracy, HSR, RF, slope, 🦁 Brave, 🎈 Inflation) " +
+        "fitted on the shared cache and anchored to the player's own fights. Not real fights. Shade ≈ ±1σ.";
+      note.innerHTML = `<span class="legend-ghost-swatch" aria-hidden="true"></span><span class="legend-label">👻 dashed = predicted from play style, not real fights</span>`;
+      els.legend.appendChild(note);
+    }
   }
 
   /** Truncatable player name (.nm, ~18ch cap) with the full name in title / data-full. */
@@ -3276,6 +3510,18 @@ import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./j
   }
   syncYZoomUi();
 
+  if (els.chartModeBar) {
+    els.chartModeBar.addEventListener("click", (e) => {
+      if (e.target.closest("[data-ghosts]")) {
+        setGhostsOn(!ghostsOn);
+        return;
+      }
+      const b = e.target.closest("[data-mode]");
+      if (b && b.dataset.mode !== chartMode) setChartMode(b.dataset.mode);
+    });
+  }
+  syncChartModeUi();
+
   if (els.themeToggle) {
     els.themeToggle.addEventListener("click", () => toggleTheme());
   }
@@ -3304,6 +3550,10 @@ import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./j
       clampYZoom,
       Y_ZOOM_DEFAULT,
       getYZoom: () => yZoom,
+      getChartMode: () => chartMode,
+      setChartMode,
+      getGhostsOn: () => ghostsOn,
+      setGhostsOn,
       setYZoom,
       INFLATION_KPM,
       RF_SOFT,

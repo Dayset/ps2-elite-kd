@@ -369,3 +369,55 @@ export function windowYValues(curves, xMax) {
   }
   return out;
 }
+
+/* ---------- Banded curve (opt-in chart view) ---------- */
+
+/** Gaussian window width (opponent KPM) for the banded view. */
+export const BAND_SIGMA = 0.2;
+/** Weighted kills+deaths at/above which a banded point is fully opaque. */
+export const BAND_FULL_EVENTS = 500;
+/** Weighted kills+deaths below which a banded point is hidden. */
+export const BAND_HIDE_EVENTS = 30;
+/** Minimum line strength for a visible (not hidden) banded point. */
+export const BAND_MIN_REL = 0.22;
+
+/**
+ * Banded K/D curve: for each X (same grid as kpmCurve), a Gaussian-weighted
+ * pooled K/D against opponents whose KPM is NEAR X (σ = BAND_SIGMA), instead
+ * of the cumulative "everyone at or above X".
+ * kills/deaths are the weighted sums; events = kills + deaths; n = Σ weights
+ * (effective opponent count). Weighted deaths are floored at 1 for the
+ * ratio so a deathless farm window can't explode (kd NaN only when no
+ * weighted events at all).
+ */
+export function kpmBandCurve(rows, { start = 2.5, end = 0.0, step = 0.05, sigma = BAND_SIGMA } = {}) {
+  const src = (rows || []).filter((r) => r && isFiniteNum(+r.kpm));
+  const pts = [];
+  const s = sigma > 0 ? sigma : BAND_SIGMA;
+  for (let t = start; t >= end - 1e-9; t -= step) {
+    const x = Math.round(t * 100) / 100;
+    let k = 0, d = 0, n = 0;
+    for (const r of src) {
+      const z = (+r.kpm - x) / s;
+      if (z > 4 || z < -4) continue;
+      const w = Math.exp(-0.5 * z * z);
+      k += w * (r.kills || 0);
+      d += w * (r.deaths || 0);
+      n += w;
+    }
+    const kd = k + d > 1e-9 ? k / Math.max(d, 1) : NaN;
+    pts.push({ kpm: x, kd, kills: k, deaths: d, events: k + d, n });
+  }
+  return pts;
+}
+
+/**
+ * Line strength 0..1 for a banded point from its weighted kills+deaths:
+ * 0 (hidden) below BAND_HIDE_EVENTS, else clamp(events / BAND_FULL_EVENTS)
+ * with a BAND_MIN_REL floor so visible points never vanish entirely.
+ */
+export function bandReliability(events) {
+  const e = +events || 0;
+  if (e < BAND_HIDE_EVENTS) return 0;
+  return Math.max(BAND_MIN_REL, Math.min(1, e / BAND_FULL_EVENTS));
+}
