@@ -24,9 +24,12 @@ import {
   parseTopKillers,
   formatTopKillers,
   liveCandidates,
-  summarizeAssists,
-  fetchHonuAssists,
-  ASSISTS_SINCE,
+  countAssistEvents,
+  assistStatsFromBlock,
+  pickNewSessions,
+  dayWindows,
+  mergeAssists,
+  updateHonuAssists,
   viaCensusProxy,
 } from "../scripts/refresh-cache.mjs";
 
@@ -247,42 +250,99 @@ describe("daily refresh + schedule.json", () => {
   });
 });
 
-describe("assists from Honu sessions", () => {
-  const S = (start, end, assists, kills = 10) => ({ start, end, assists, kills });
-  it("sums only finished sessions with assists >= 0", () => {
-    const a = summarizeAssists([
-      S("2026-10-03T10:00:00Z", "2026-10-03T11:00:00Z", 12, 20),
-      S("2026-10-04T10:00:00Z", "2026-10-04T10:30:00Z", 3, 5),
-      S("2026-09-01T10:00:00Z", "2026-09-01T11:00:00Z", -1, 50), // unknown (pre-assists)
-      S("2026-10-05T10:00:00Z", null, -1, -1), // still online
-      { start: "2026-10-06T10:00:00Z", end: "2026-10-06T11:00:00Z", kills: 9 }, // old Honu build: no field
+describe("assists from Honu exp events", () => {
+  const CID = "5429845372577334929";
+  const sess = (id, start, end, kills) => ({ id, start, end, kills });
+  it("counts only IsAssist exp ids earned by the player", () => {
+    const ev = (experienceID, sourceID = CID) => ({ experienceID, sourceID });
+    assert.equal(countAssistEvents({ events: [ev(2), ev(3), ev(371), ev(372), ev(1), ev(4), ev(2, "999")] }, CID), 4);
+    assert.equal(countAssistEvents(null, CID), 0);
+  });
+  it("damage share = amount / scoreMult / base, multiplier from kill XP (Honu's method)", () => {
+    const ev = (experienceID, amount, sourceID = CID) => ({ experienceID, amount, sourceID });
+    const plain = assistStatsFromBlock({ events: [ev(1, 100), ev(278, 150), ev(2, 50), ev(371, 75), ev(372, 300), ev(3, 40), ev(2, 90, "999")] }, CID);
+    assert.equal(plain.mult, 1);
+    assert.equal(plain.assists, 4); // spawn assist counted, other player's ignored
+    assert.equal(plain.shareN, 3); // spawn assist has no damage share
+    assert.equal(plain.shareSum, 0.5 + 0.5 + 1);
+    // Double XP: kills give 200 -> mult 2, assist 100 XP = 50%.
+    const dbl = assistStatsFromBlock({ events: [ev(1, 200), ev(1, 200), ev(2, 100)] }, CID);
+    assert.equal(dbl.mult, 2);
+    assert.equal(dbl.shareSum, 0.5);
+    // No kill events: mult 1; an impossible >100% share is halved (Honu heuristic) and capped.
+    const odd = assistStatsFromBlock({ events: [ev(2, 160), ev(2, 500)] }, CID);
+    assert.equal(odd.shareSum, 0.8 + 1);
+  });
+  it("picks finished, kill-ful, uncounted sessions newest first, capped", () => {
+    const list = [
+      sess(1, "2026-10-01T00:00:00Z", "2026-10-01T01:00:00Z", 5),
+      sess(2, "2026-10-02T00:00:00Z", "2026-10-02T01:00:00Z", 0), // no kills
+      sess(3, "2026-10-03T00:00:00Z", null, 9), // still online
+      sess(4, "2026-10-04T00:00:00Z", "2026-10-04T01:00:00Z", 7),
+      sess(5, "2026-10-05T00:00:00Z", "2026-10-05T01:00:00Z", 3), // already counted
+      sess(6, "2026-10-06T00:00:00Z", "2026-10-06T01:00:00Z", 1),
+      sess(7, "2026-10-07T00:00:00Z", "2026-10-07T01:00:00Z", 2),
+    ];
+    assert.deepEqual(pickNewSessions(list, { 5: [1, 3, 3600, 0] }, 3).map((x) => x.id), [7, 6, 4]);
+    assert.deepEqual(pickNewSessions(null, {}), []);
+  });
+  it("splits long sessions into <= 24 h windows", () => {
+    assert.deepEqual(dayWindows("2026-10-01T00:00:00Z", "2026-10-02T06:00:00Z"), [
+      ["2026-10-01T00:00:00.000Z", "2026-10-02T00:00:00.000Z"],
+      ["2026-10-02T00:00:00.000Z", "2026-10-02T06:00:00.000Z"],
     ]);
-    assert.deepEqual(a, {
-      total: 15,
-      sessions_counted: 2,
-      seconds_counted: 5400,
-      kills_counted: 25,
-      first: "2026-10-03T10:00:00.000Z",
-      last: "2026-10-04T10:30:00.000Z",
-      source: "honu-sessions",
-    });
   });
-  it("returns null when no session has assist data", () => {
-    assert.equal(summarizeAssists([S("2026-10-03T10:00:00Z", "2026-10-03T11:00:00Z", -1)]), null);
-    assert.equal(summarizeAssists(null), null);
-    assert.equal(summarizeAssists([{ start: "x", end: "y", assists: 4 }]), null);
+  it("merges incrementally, recomputes totals and prunes oldest", () => {
+    const t = Date.parse("2026-10-01T00:00:00Z");
+    const a1 = mergeAssists(null, [{ id: 1, assists: 10, kills: 20, seconds: 3600, startMs: t }]);
+    const a2 = mergeAssists(a1, [{ id: 2, assists: 5, kills: 5, seconds: 1800, startMs: t + 86400000 }]);
+    assert.equal(a2.total, 15);
+    assert.equal(a2.kills_counted, 25);
+    assert.equal(a2.seconds_counted, 5400);
+    assert.equal(a2.sessions_counted, 2);
+    assert.equal(a2.first, "2026-10-01T00:00:00.000Z");
+    assert.equal(a2.last, "2026-10-02T00:30:00.000Z");
+    assert.equal(a2.source, "honu-exp");
+    assert.equal(a2.assist_count, 15);
+    const a3 = mergeAssists(null, [{ id: 9, assists: 4, kills: 2, seconds: 60, startMs: t, shareSum: 1.5, shareN: 3, mult: 1 }]);
+    assert.equal(a3.assist_share_sum, 1.5);
+    assert.equal(a3.assist_share_n, 3);
+    assert.equal(a3.avg_share, 0.5);
+    const pruned = mergeAssists(a2, [], { maxKept: 1 });
+    assert.deepEqual(Object.keys(pruned.sessions), ["2"]);
+    assert.equal(pruned.total, 5);
+    assert.equal(mergeAssists(null, []), null);
   });
-  it("fetchHonuAssists asks the documented period endpoint and never throws", async () => {
-    let seen;
-    const a = await fetchHonuAssists("5428147970845751137", {
-      now: Date.parse("2026-10-08T00:00:00Z"),
-      getJson: async (u) => { seen = u; return [S("2026-10-03T10:00:00Z", "2026-10-03T10:10:00Z", 1)]; },
-    });
-    assert.match(seen, /^https:\/\/wt\.honu\.pw\/api\/session\/character\/5428147970845751137\/period\?start=/);
-    assert.ok(seen.includes(encodeURIComponent(ASSISTS_SINCE)));
-    assert.equal(a.total, 1);
-    assert.equal(await fetchHonuAssists("5428147970845751137", { getJson: async () => { throw new Error("429"); } }), null);
-    assert.equal(await fetchHonuAssists("not-an-id", { getJson: async () => { throw new Error("should not call"); } }), null);
+  it("updateHonuAssists: 1 list call + <= cap exp calls, only new sessions, never throws", async () => {
+    const urls = [];
+    const list = [
+      sess(11, "2026-10-06T02:46:32Z", "2026-10-06T06:20:43Z", 199),
+      sess(12, "2026-10-05T00:00:00Z", "2026-10-05T01:00:00Z", 3),
+      sess(13, "2026-10-04T00:00:00Z", "2026-10-04T01:00:00Z", 3),
+    ];
+    const getJson = async (u) => {
+      urls.push(u);
+      if (u.endsWith("/sessions")) return list;
+      return { events: [{ experienceID: 2, amount: 50, sourceID: CID }, { experienceID: 372, amount: 150, sourceID: CID }] };
+    };
+    const a = await updateHonuAssists(CID, null, { getJson, cap: 2 });
+    assert.equal(urls.length, 3);
+    assert.match(urls[0], /^https:\/\/wt\.honu\.pw\/api\/character\/\d+\/sessions$/);
+    assert.match(urls[1], /\/api\/exp\/\d+\/period2\?start=.*interestedEvents=2&interestedEvents=3&interestedEvents=371&interestedEvents=372/);
+    assert.deepEqual(Object.keys(a.sessions).sort(), ["11", "12"]);
+    assert.equal(a.total, 4);
+    assert.equal(a.assist_share_sum, 2); // 2 sessions x (0.5 + 0.5)
+    assert.equal(a.avg_share, 0.5);
+    assert.match(urls[1], /interestedEvents=1&interestedEvents=278&interestedEvents=279/);
+    urls.length = 0;
+    const b = await updateHonuAssists(CID, a, { getJson, cap: 2 });
+    assert.equal(urls.length, 2); // list + the one remaining session
+    assert.equal(b.sessions_counted, 3);
+    // Errors keep the previous record (or leave the field absent).
+    const boom = async () => { throw new Error("429"); };
+    assert.equal(await updateHonuAssists(CID, b, { getJson: boom }), b);
+    assert.equal(await updateHonuAssists(CID, null, { getJson: boom }), null);
+    assert.equal(await updateHonuAssists("bad", null, { getJson: boom }), null);
   });
 });
 

@@ -276,53 +276,171 @@ async function honuHistoryFallback(c) {
 }
 
 /**
- * Honu started recording per-session assists on ~2026-10-02 (column default
- * -1 = unknown for older sessions), so only ask for sessions since then.
- * Census has no assists stat; this is the one extra documented Honu call per
- * refreshed player (GET /api/session/character/{id}/period), paced by honuBucket.
+ * Assists (Census has no such stat). Honu session summaries carry no assists,
+ * so they are counted from Honu exp events, incrementally, via documented API:
+ *   1 call  GET /api/character/{id}/sessions               (session list)
+ *   <= 3    GET /api/exp/{id}/period2?start&end&interestedEvents=2,3,371,372
+ *           (one per new finished session with kills > 0; <= 24 h windows)
+ * All paced by honuBucket (20/min) and 429-aware. Stored per session so each
+ * session is only ever counted once; nothing here is shown in the UI.
  */
-export const ASSISTS_SINCE = "2026-09-25T00:00:00Z";
-const HONU_SESSIONS = "https://wt.honu.pw/api/session/character/";
+const HONU_API = "https://wt.honu.pw/api/";
+/** Honu Experience.IsAssist: ASSIST, SPAWN_ASSIST, PRIORITY_ASSIST, HIGH_PRIORITY_ASSIST. */
+export const ASSIST_EXP_IDS = [2, 3, 371, 372];
+/**
+ * Assist XP encodes the damage share (Varunda; Honu SessionActionLog.vue /
+ * outfitreport/InfantryDamage.ts): share = (amount / scoreMult) / base, base
+ * ASSIST 100, PRIORITY_ASSIST 150, HIGH_PRIORITY_ASSIST 300 (SPAWN_ASSIST has
+ * none). scoreMult is the EARNER's multiplier, derived like Honu's Report.ts
+ * from fixed-XP kill events (KILL 100, PRIORITY_KILL 150, HIGH_PRIORITY_KILL 300).
+ * Share > 1 means unseen double XP: halve (Honu's heuristic), then cap at 1.
+ */
+export const ASSIST_BASE_XP = { 2: 100, 371: 150, 372: 300 };
+export const KILL_BASE_XP = { 1: 100, 278: 150, 279: 300 };
+export const ASSIST_NEW_SESSIONS_PER_REFRESH = 3;
+export const ASSIST_MAX_SESSIONS_KEPT = 200;
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 /**
- * Sum assists over finished, summarized Honu sessions that have assists >= 0.
- * Returns null when no session carries assist data (field stays absent).
- * kills_counted = kills over the same sessions, for assists-per-kill.
+ * Per-window assist stats from an exp block holding the player's assist + kill
+ * events: { assists, shareSum, shareN, mult }.
  */
-export function summarizeAssists(sessions) {
-  let total = 0, n = 0, secs = 0, kills = 0, first = null, last = null;
-  for (const s of Array.isArray(sessions) ? sessions : []) {
-    if (!s || typeof s.assists !== "number" || !Number.isFinite(s.assists) || s.assists < 0) continue;
-    const t0 = Date.parse(s.start);
-    const t1 = Date.parse(s.end);
-    if (!Number.isFinite(t0) || !Number.isFinite(t1) || t1 < t0) continue; // still online / bad row
-    total += s.assists;
-    n++;
-    secs += Math.round((t1 - t0) / 1000);
-    if (s.kills >= 0) kills += s.kills;
-    if (first === null || t0 < first) first = t0;
-    if (last === null || t1 > last) last = t1;
+export function assistStatsFromBlock(block, cid) {
+  const evs = (block && Array.isArray(block.events) ? block.events : [])
+    .filter((e) => e && (!cid || String(e.sourceID) === String(cid)));
+  const ratios = evs
+    .filter((e) => KILL_BASE_XP[+e.experienceID] && +e.amount > 0)
+    .map((e) => +e.amount / KILL_BASE_XP[+e.experienceID])
+    .sort((a, b) => a - b);
+  const mult = ratios.length ? Math.max(1, ratios[ratios.length >> 1]) : 1;
+  let assists = 0, shareSum = 0, shareN = 0;
+  for (const e of evs) {
+    const id = +e.experienceID;
+    if (!ASSIST_EXP_IDS.includes(id)) continue;
+    assists++;
+    const base = ASSIST_BASE_XP[id];
+    if (!base || !(+e.amount >= 0)) continue;
+    let share = +e.amount / mult / base;
+    if (share > 1) share /= 2;
+    shareSum += Math.min(1, share);
+    shareN++;
   }
-  if (!n) return null;
+  return { assists, shareSum, shareN, mult };
+}
+
+/** Count assist events earned by `cid` in an exp block ({events:[…]}). */
+export function countAssistEvents(block, cid) {
+  let n = 0;
+  for (const e of (block && Array.isArray(block.events) ? block.events : [])) {
+    if (e && ASSIST_EXP_IDS.includes(+e.experienceID) && (!cid || String(e.sourceID) === String(cid))) n++;
+  }
+  return n;
+}
+
+/** Finished sessions with kills > 0 not counted yet, newest first, capped. */
+export function pickNewSessions(sessions, known, cap = ASSIST_NEW_SESSIONS_PER_REFRESH) {
+  const have = known || {};
+  return (Array.isArray(sessions) ? sessions : [])
+    .filter((x) => x && x.id != null && x.end && x.kills > 0 && !(String(x.id) in have)
+      && Number.isFinite(Date.parse(x.start)) && Date.parse(x.end) > Date.parse(x.start))
+    .sort((p, q) => Date.parse(q.start) - Date.parse(p.start))
+    .slice(0, cap);
+}
+
+/** <= 24 h windows covering [start, end] (Honu's period2 limit). */
+export function dayWindows(startIso, endIso) {
+  const out = [];
+  const end = Date.parse(endIso);
+  for (let t = Date.parse(startIso); t < end; t += DAY_MS) {
+    out.push([new Date(t).toISOString(), new Date(Math.min(t + DAY_MS, end)).toISOString()]);
+  }
+  return out;
+}
+
+/**
+ * Merge newly counted sessions into the stored record and recompute totals.
+ * sessions: { [sessionId]: [assists, kills, seconds, startMs] }; oldest pruned
+ * past `maxKept`. Returns null when there is nothing counted at all.
+ */
+export function mergeAssists(prev, counted, { maxKept = ASSIST_MAX_SESSIONS_KEPT } = {}) {
+  const sessions = { ...((prev && prev.sessions) || {}) };
+  for (const c of counted || []) {
+    sessions[String(c.id)] = [c.assists, c.kills, c.seconds, c.startMs,
+      Math.round((c.shareSum || 0) * 1000) / 1000, c.shareN || 0, Math.round((c.mult || 1) * 100) / 100];
+  }
+  let ids = Object.keys(sessions).filter((id) => Array.isArray(sessions[id]) && sessions[id].length >= 4);
+  ids.sort((x, y) => sessions[y][3] - sessions[x][3]);
+  for (const id of ids.slice(maxKept)) delete sessions[id];
+  ids = ids.slice(0, maxKept);
+  if (!ids.length) return null;
+  let total = 0, kills = 0, secs = 0, first = Infinity, last = -Infinity, shareSum = 0, shareN = 0;
+  for (const id of ids) {
+    const [a, k, sec, st, ss = 0, sn = 0] = sessions[id];
+    total += a; kills += k; secs += sec; shareSum += ss; shareN += sn;
+    first = Math.min(first, st);
+    last = Math.max(last, st + sec * 1000);
+  }
+  const kept = {};
+  for (const id of ids) kept[id] = sessions[id];
+  shareSum = Math.round(shareSum * 1000) / 1000;
   return {
     total,
-    sessions_counted: n,
-    seconds_counted: secs,
+    assist_count: total,
+    // Damage-share "equivalent kills" from assists; avg over share-able assists (not SPAWN_ASSIST).
+    assist_share_sum: shareSum,
+    assist_share_n: shareN,
+    avg_share: shareN ? Math.round((shareSum / shareN) * 1000) / 1000 : null,
     kills_counted: kills,
+    seconds_counted: secs,
+    sessions_counted: ids.length,
     first: new Date(first).toISOString(),
     last: new Date(last).toISOString(),
-    source: "honu-sessions",
+    source: "honu-exp",
+    sessions: kept,
   };
 }
 
-/** Never throws: any Honu problem just leaves player.assists absent. */
-export async function fetchHonuAssists(cid, { getJson = (u) => fetchJson(u, { retries: 2 }), now = Date.now() } = {}) {
-  if (!/^\d+$/.test(String(cid || ""))) return null;
-  const url = `${HONU_SESSIONS}${cid}/period?start=${encodeURIComponent(ASSISTS_SINCE)}&end=${encodeURIComponent(new Date(now).toISOString())}`;
+/**
+ * One refresh step for one player. Never throws: on any Honu problem the
+ * previous record is returned unchanged (or null = field absent).
+ */
+export async function updateHonuAssists(cid, prev, {
+  getJson = (u) => fetchJson(u, { retries: 2 }),
+  cap = ASSIST_NEW_SESSIONS_PER_REFRESH,
+} = {}) {
+  const keep = prev && prev.sessions ? prev : null;
+  if (!/^\d+$/.test(String(cid || ""))) return keep;
   try {
-    return summarizeAssists(await getJson(url));
+    const list = await getJson(`${HONU_API}character/${cid}/sessions`);
+    const todo = pickNewSessions(list, keep && keep.sessions, cap);
+    const counted = [];
+    for (const sess of todo) {
+      let assists = 0, shareSum = 0, shareN = 0, mult = 1;
+      for (const [w0, w1] of dayWindows(sess.start, sess.end)) {
+        // Kill events too: they give the score multiplier needed for damage share.
+        const q = [...ASSIST_EXP_IDS, ...Object.keys(KILL_BASE_XP)].map((id) => `&interestedEvents=${id}`).join("");
+        const block = await getJson(`${HONU_API}exp/${cid}/period2?start=${encodeURIComponent(w0)}&end=${encodeURIComponent(w1)}` +
+          `&includeCharacters=false&includeExpTypes=false${q}`);
+        const st = assistStatsFromBlock(block, cid);
+        assists += st.assists; shareSum += st.shareSum; shareN += st.shareN; mult = st.mult;
+      }
+      const startMs = Date.parse(sess.start);
+      counted.push({ id: sess.id, assists, kills: sess.kills, seconds: Math.round((Date.parse(sess.end) - startMs) / 1000), startMs, shareSum, shareN, mult });
+    }
+    return counted.length ? mergeAssists(keep, counted) : keep;
   } catch (e) {
-    console.warn(`  Honu sessions (assists) skipped: ${String(e && e.message).slice(0, 80)}`);
+    console.warn(`  Honu assists skipped: ${String(e && e.message).slice(0, 80)}`);
+    return keep;
+  }
+}
+
+/** Previously stored assists for a cached player (file may not exist yet). */
+function readPrevAssists(slug) {
+  try {
+    const p = JSON.parse(fs.readFileSync(path.join(DATA_DIR, "players", `${slug}.json`), "utf8"));
+    const a = p && p.player && p.player.assists;
+    return a && a.source === "honu-exp" ? a : null;
+  } catch {
     return null;
   }
 }
@@ -369,7 +487,7 @@ export function opponentRow(pair, meta, pace) {
   };
 }
 
-async function loadLive(name) {
+async function loadLive(name, { prevAssists = null } = {}) {
   const c = await resolveCensus(name);
   const cid = c.character_id;
   const outfit = c.outfit || {};
@@ -397,7 +515,7 @@ async function loadLive(name) {
 
   const curve = kpmCurve(rows);
   // Collected for later (assists per minute / per kill); not shown in the UI.
-  const assists = await fetchHonuAssists(cid);
+  const assists = await updateHonuAssists(cid, prevAssists);
   return {
     query: String(name).trim(),
     top: TOP_N,
@@ -842,7 +960,7 @@ async function main() {
     let display = null;
     try {
       if (!isPlausibleName(name)) throw new NotFoundError(`not a valid character name ${JSON.stringify(name)}`);
-      const payload = await loadLive(name);
+      const payload = await loadLive(name, { prevAssists: readPrevAssists(slug) });
       const fileRel = `players/${slug}.json`;
       writeFileAtomic(path.join(DATA_DIR, fileRel), JSON.stringify(payload) + "\n");
       upsertIndexEntry(index, { name, display: payload.player.display, slug, file: fileRel, savedAt: payload.savedAt });
