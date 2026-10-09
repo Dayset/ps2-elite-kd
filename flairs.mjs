@@ -1,6 +1,6 @@
 /**
- * 🎲 Just-for-fun account flairs shown next to player names (main page legend
- * + stats table, ranks.html). Not a skill rating. One list of rules
+ * Account flairs shown in the name list under the main page graph (in place
+ * of the colored dot). One list of rules
  * (FLAIR_RULES) so more flairs can be added later: each rule gets the
  * player's account times and returns a tooltip string (shown) or null.
  *
@@ -11,8 +11,6 @@
  */
 export const DAY_MS = 86400000;
 export const YEAR_MS = 365 * DAY_MS;
-
-export const FLAIR_NOTE = "just for fun, not a skill rating";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 /** "Apr 2014" (UTC month: plenty for a year-scale flair). */
@@ -47,8 +45,11 @@ export function cleanTimes(t) {
 /**
  * Rules in display order. test(times, nowMs) → tooltip text or null.
  * Thresholds: inactive = last activity > 365 days ago; veteran = created
- * ≥ 3×365 days ago AND last activity ≤ 365 days ago.
+ * ≥ VETERAN_YEARS×365 days ago AND last activity ≤ 365 days ago.
  */
+/** Account age (years) for 👴🏽. */
+export const VETERAN_YEARS = 8;
+
 export const FLAIR_RULES = Object.freeze([
   {
     id: "inactive",
@@ -63,24 +64,21 @@ export const FLAIR_RULES = Object.freeze([
     emoji: "👴🏽",
     test({ created, last }, now) {
       if (!created || !last) return null;
-      if (now - created * 1000 < 3 * YEAR_MS || now - last * 1000 > YEAR_MS) return null;
+      if (now - created * 1000 < VETERAN_YEARS * YEAR_MS || now - last * 1000 > YEAR_MS) return null;
       const yrs = Math.floor((now - created * 1000) / YEAR_MS);
-      return `Veteran: account ${yrs}+ years old (since ${monthYear(created)}) and active in the last year (last played ${monthYear(last)})`;
+      return `Veteran: account ${yrs}+ years old (since ${monthYear(created)}), active in the last year (last played ${monthYear(last)})`;
     },
   },
 ]);
 
-/** One-line key for pages that show flairs (only when at least one is shown). */
-export const FLAIR_LEGEND = "🎲 🪦 no activity for over a year · 👴🏽 3+ year old account, active in the last year (just for fun, not a skill rating)";
-
-/** All flairs for a player's times: [{ id, emoji, tip }] (tip ends with the fun note). */
+/** All flairs for a player's times: [{ id, emoji, tip }]. */
 export function flairsFor(times, now = Date.now(), rules = FLAIR_RULES) {
   const t = cleanTimes(times);
   if (!t) return [];
   const out = [];
   for (const r of rules) {
     const tip = r.test(t, now);
-    if (tip) out.push({ id: r.id, emoji: r.emoji, tip: `${tip} — ${FLAIR_NOTE}` });
+    if (tip) out.push({ id: r.id, emoji: r.emoji, tip });
   }
   return out;
 }

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { accountTimes, cleanTimes, flairsFor, flairsHtml, monthYear, YEAR_MS, FLAIR_RULES } from "../flairs.mjs";
+import { accountTimes, cleanTimes, flairsFor, flairsHtml, monthYear, YEAR_MS, FLAIR_RULES, VETERAN_YEARS } from "../flairs.mjs";
 import { normalizePlayer } from "../player-metrics.mjs";
 import { withTimes } from "../scripts/backfill-times.mjs";
 
@@ -17,20 +17,22 @@ test("accountTimes reads Census times (last = max(last_save, last_login))", () =
 test("🪦 inactive: last activity over a year ago (xMasterBobx, Apr 2014)", () => {
   const f = flairsFor({ created: 1398444038, last: 1398444230 }, NOW);
   assert.deepEqual(f.map((x) => x.emoji), ["🪦"]);
-  assert.match(f[0].tip, /Last played Apr 2014|last played Apr 2014/);
-  assert.match(f[0].tip, /just for fun/);
+  assert.equal(f[0].tip, "Inactive: no activity for over a year (last played Apr 2014)");
 });
 
-test("👴🏽 veteran: 3+ years old and active within a year", () => {
-  const f = flairsFor({ created: s(NOW - 5 * YEAR_MS), last: s(NOW - 10 * 86400000) }, NOW);
+test("👴🏽 veteran: 8+ years old and active within a year", () => {
+  assert.equal(VETERAN_YEARS, 8);
+  const f = flairsFor({ created: s(NOW - 10 * YEAR_MS), last: s(NOW - 10 * 86400000) }, NOW);
   assert.deepEqual(f.map((x) => x.id), ["veteran"]);
-  assert.match(f[0].tip, /5\+ years/);
+  assert.match(f[0].tip, /^Veteran: account 10\+ years old \(since \w{3} \d{4}\), active in the last year \(last played \w{3} \d{4}\)$/);
+  assert.doesNotMatch(f[0].tip, /fun/);
+  assert.deepEqual(flairsFor({ created: s(NOW - 5 * YEAR_MS), last: s(NOW) }, NOW), []);
 });
 
 test("boundaries: young active account and 3y-minus-a-day get nothing", () => {
   assert.deepEqual(flairsFor({ created: s(NOW - YEAR_MS), last: s(NOW - 1000) }, NOW), []);
-  assert.deepEqual(flairsFor({ created: s(NOW - 3 * YEAR_MS + 86400000), last: s(NOW) }, NOW), []);
-  assert.equal(flairsFor({ created: s(NOW - 3 * YEAR_MS), last: s(NOW) }, NOW)[0].id, "veteran");
+  assert.deepEqual(flairsFor({ created: s(NOW - 8 * YEAR_MS + 86400000), last: s(NOW) }, NOW), []);
+  assert.equal(flairsFor({ created: s(NOW - 8 * YEAR_MS), last: s(NOW) }, NOW)[0].id, "veteran");
   assert.deepEqual(flairsFor({ created: s(NOW - 9 * YEAR_MS), last: s(NOW - YEAR_MS) }, NOW).map((x) => x.id), ["veteran"]);
   assert.deepEqual(flairsFor({ created: s(NOW - 9 * YEAR_MS), last: s(NOW - YEAR_MS - 1000) }, NOW).map((x) => x.id), ["inactive"]);
 });

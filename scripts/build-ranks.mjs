@@ -41,7 +41,7 @@ export const METRIC_COLS = Object.freeze([
  * (padding.mjs statMark); "farm" = note on farm-account kills excluded (null when none).
  * "top" = opponents in the sample (50 for older files, 200 for new fetches).
  * "created" / "last" = Census account creation / last activity, UNIX seconds
- * (flairs.mjs 🎲 fun flairs; null when the cache file has no times yet).
+ * (not shown on Rankings; null when the cache file has no times yet).
  */
 export const RANK_COLS = Object.freeze(["name", "query", "slug", "savedAt", ...METRIC_COLS, "thin", "mark", "farm", "top", "created", "last"]);
 

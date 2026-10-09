@@ -32,9 +32,9 @@ import {
   windowYValues,
   kpmBandCurve,
   bandReliability,
-} from "./math.mjs?v=20261009-flairs";
-import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261009-flairs";
-import GHOST_MODEL from "./data/ghost-model.mjs?v=20261009-flairs";
+} from "./math.mjs?v=20261009-flairs2";
+import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261009-flairs2";
+import GHOST_MODEL from "./data/ghost-model.mjs?v=20261009-flairs2";
 import {
   NameLoadError,
   classifyLoadError,
@@ -60,7 +60,7 @@ import {
   formatEtaLeft,
   etaLearnLiveMs,
   expectedNameMs,
-} from "./analyze-run.mjs?v=20261009-flairs";
+} from "./analyze-run.mjs?v=20261009-flairs2";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
@@ -71,7 +71,7 @@ import {
   isLegacySample,
   LEGACY_SAMPLE_MARK,
   LEGACY_SAMPLE_TIP,
-} from "./player-metrics.mjs?v=20261009-flairs";
+} from "./player-metrics.mjs?v=20261009-flairs2";
 /** "22 kills / 60 deaths" in the opponent sample (MIN_FIGHTS counts). */
 function fightsText(r) {
   const k = r.sampleKills || 0;
@@ -83,16 +83,16 @@ function fightsText(r) {
 function thinCellTip(r) {
   return `${MIN_FIGHTS_TIP}. This sample: ${fightsText(r).replace(/[()]/g, "")}`;
 }
-import { farmNote, statMark } from "./padding.mjs?v=20261009-flairs";
-// 🎲 Just-for-fun account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times.
-import { accountTimes, flairsHtml, FLAIR_LEGEND } from "./flairs.mjs?v=20261009-flairs";
+import { farmNote, statMark } from "./padding.mjs?v=20261009-flairs2";
+// Account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times: chart name list only.
+import { accountTimes, flairsHtml } from "./flairs.mjs?v=20261009-flairs2";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261009-flairs";
-import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261009-flairs";
+import "./name-peek.mjs?v=20261009-flairs2";
+import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261009-flairs2";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
-import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-flairs";
+import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-flairs2";
 // Live data: Daybreak Census only (batched, paced); Honu just for a rare history fallback.
-import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261009-flairs";
+import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261009-flairs2";
 import {
   censusBase,
   censusRequest,
@@ -101,7 +101,7 @@ import {
   limitConcurrency,
   tokenBucket,
   OPPONENT_TOP_N,
-} from "./census-fetch.mjs?v=20261009-flairs";
+} from "./census-fetch.mjs?v=20261009-flairs2";
 
   // Player palettes (dark + light theme) live in palette.mjs (shared with ranks.html).
   const COLORS = PALETTE_DARK;
@@ -2841,7 +2841,7 @@ import {
           return (
             `<tr><th scope="row" class="stats-name" style="color:${col}">` +
             `<span class="player-num" aria-label="Series ${num}">${num}.</span>` +
-            `${nameSpanHtml(row.p.display, farmTitle(row.p))}${padMarkHtml(row.p)}${legacySampleHtml(row.p)}${flairsHtml(row.p.times)}</th>${vals}</tr>`
+            `${nameSpanHtml(row.p.display, farmTitle(row.p))}${padMarkHtml(row.p)}${legacySampleHtml(row.p)}</th>${vals}</tr>`
           );
         })
         .join("");
@@ -2935,7 +2935,7 @@ import {
           `rel="noopener noreferrer" data-full="${full}" title="Open ${full} on Honu">` +
           `${full}</a>`
         : `<span class="nm" data-full="${full}" title="${full}">${full}</span>`;
-      // 🎲 A fun flair (🪦 / 👴🏽) takes the colored dot's place; the name keeps
+      // A flair (🪦 / 👴🏽, hover = title) takes the colored dot's place; the name keeps
       // the line color. Players without a flair keep the dot.
       const flair = flairsHtml(p.times);
       const mark = flair
@@ -2949,7 +2949,6 @@ import {
     });
     // One note line per mark in use ("* stat padding…", "† stats adjusted…").
     const legends = [...new Set(list.map((p) => playerMark(p).legend).filter(Boolean))];
-    if (list.some((p) => flairsHtml(p.times))) legends.push(FLAIR_LEGEND);
     for (const text of legends) {
       const note = document.createElement("div");
       note.className = "legend-note";

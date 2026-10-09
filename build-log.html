@@ -14,7 +14,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261009-flairs" />
+  <link rel="stylesheet" href="styles.css?v=20261009-flairs2" />
   <style>
     body { overflow: auto; }
     .st-wrap { max-width: 960px; margin: 0 auto; padding: 18px 16px 40px; }
@@ -397,13 +397,13 @@
        † "adjusted" + the 🧪 outlier guard (grouped by player) go to 📉 Chart anomalies. Uses the
        same metrics as the main tables (player-metrics.mjs). Leads for review, not proof. -->
   <script type="module">
-    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261009-flairs";
-    import { reviewFlags, reviewRuleText, anomalyRuleText } from "./red-flags.mjs?v=20261009-flairs";
-    import { groupOutliers } from "./outlier-guard.mjs?v=20261009-flairs";
-    import { sprout, sampleEvents, sproutRuleText } from "./sprouts.mjs?v=20261009-flairs";
-    import { reviewDecision } from "./padding.mjs?v=20261009-flairs";
-    import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261009-flairs";
-    import "./name-peek.mjs?v=20261009-flairs"; // full-name popup for truncated .nm names
+    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261009-flairs2";
+    import { reviewFlags, reviewRuleText, anomalyRuleText } from "./red-flags.mjs?v=20261009-flairs2";
+    import { groupOutliers } from "./outlier-guard.mjs?v=20261009-flairs2";
+    import { sprout, sampleEvents, sproutRuleText } from "./sprouts.mjs?v=20261009-flairs2";
+    import { reviewDecision } from "./padding.mjs?v=20261009-flairs2";
+    import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261009-flairs2";
+    import "./name-peek.mjs?v=20261009-flairs2"; // full-name popup for truncated .nm names
 
     const POLL_MS = 30 * 1000;
     const CONCURRENCY = 6;
