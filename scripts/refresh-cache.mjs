@@ -25,6 +25,19 @@ import { fileURLToPath } from "node:url";
 import { censusQueryName } from "../analyze-run.mjs";
 import { accountTimes } from "../flairs.mjs";
 import {
+  CAP_STEPS,
+  isDormant,
+  isNewAccount,
+  lastActiveMs,
+  nextCap,
+  normalizeDiscovery,
+  rankQueue,
+  refreshIntervalMs,
+  sweepDue,
+  sweepDueAt,
+  sweepSlice,
+} from "./discovery.mjs";
+import {
   CENSUS_HOST,
   CensusError,
   censusBase,
@@ -44,7 +57,8 @@ const INDEX_PATH = path.join(DATA_DIR, "index.json");
 const WATCHLIST_PATH = path.join(DATA_DIR, "watchlist.txt");
 const STATE_PATH = path.join(DATA_DIR, "refresh-state.json");
 const STATUS_PATH = path.join(DATA_DIR, "status.json");
-const TOP_KILLERS_PATH = path.join(DATA_DIR, "top-killers.txt");
+const DISCOVERY_PATH = path.join(DATA_DIR, "discovery.json");
+const HONU_USAGE_PATH = path.join(DATA_DIR, "honu-usage.json");
 const SCHEDULE_PATH = path.join(DATA_DIR, "schedule.json");
 const REQUESTED_PATH = path.join(DATA_DIR, "requested.json");
 const EXP_TYPES_PATH = path.join(DATA_DIR, "exp-types.json");
@@ -139,6 +153,33 @@ if (Number(process.env.CENSUS_RPM) > 0) censusRate.perMinute = Number(process.en
 const censusBucket = tokenBucket(censusRate);
 const honuBucket = tokenBucket({ capacity: 3, perMinute: 20 });
 
+/**
+ * Daily Honu cap (all Honu calls: assists, full XP, history fallback), UTC day,
+ * kept in data/honu-usage.json. Discovery itself never calls Honu. When the cap
+ * is reached, assists / XP wait for the next day (the old values are kept).
+ */
+export const HONU_DAILY_CAP = Number(process.env.HONU_DAILY_CAP) > 0 ? Number(process.env.HONU_DAILY_CAP) : 2500;
+const honuUsage = (() => {
+  const day = new Date().toISOString().slice(0, 10);
+  try {
+    const u = JSON.parse(fs.readFileSync(HONU_USAGE_PATH, "utf8"));
+    if (u && u.day === day) return { day, calls: +u.calls || 0, cap: HONU_DAILY_CAP };
+  } catch {
+    /* first run / unreadable */
+  }
+  return { day, calls: 0, cap: HONU_DAILY_CAP };
+})();
+export function honuLeft() {
+  return Math.max(0, HONU_DAILY_CAP - honuUsage.calls);
+}
+function saveHonuUsage() {
+  try {
+    writeFileAtomic(HONU_USAGE_PATH, JSON.stringify(honuUsage) + "\n");
+  } catch {
+    /* best effort */
+  }
+}
+
 export function backoffMs(attempt, retryAfterHeader) {
   const ra = Number(retryAfterHeader);
   if (Number.isFinite(ra) && ra > 0) return Math.min(ra * 1000, 60_000);
@@ -184,6 +225,10 @@ async function fetchJson(url, { retries = 4 } = {}) {
   for (let attempt = 0; attempt < retries; attempt++) {
     let wait = backoffMs(attempt);
     if (bucket) await bucket.take();
+    if (isHonu) {
+      if (honuUsage.calls >= HONU_DAILY_CAP) throw new HttpClientError(`Honu daily cap ${HONU_DAILY_CAP} reached`, 429);
+      honuUsage.calls++;
+    }
     try {
       const res = await fetch(url, {
         headers: { Accept: "application/json", "User-Agent": USER_AGENT },
@@ -260,7 +305,7 @@ async function resolveCensus(name) {
   const raw = censusQueryName(name);
   if (!raw) throw new NotFoundError(`Census: empty name ${JSON.stringify(name)}`);
   const c = await resolveCensusOnly(raw);
-  if (!hasHistory(c)) await honuHistoryFallback(c);
+  if (!hasHistory(c) && honuLeft() > 0) await honuHistoryFallback(c);
   return c;
 }
 
@@ -559,7 +604,11 @@ async function requestedXpPhase(index, explicitNames, until) {
   console.log(`Requested players: ${Object.keys(requested).length}; XP detail due: ${queue.length} (budget ${XP_CALLS_PER_RUN} Honu calls).`);
   if (!queue.length) return;
 
-  const budget = { calls: XP_CALLS_PER_RUN };
+  const budget = { calls: Math.min(XP_CALLS_PER_RUN, honuLeft()) };
+  if (budget.calls < 3) {
+    console.log(`  Honu daily cap reached (${honuUsage.calls}/${HONU_DAILY_CAP}); XP detail waits.`);
+    return;
+  }
   const getJson = (u) => fetchJson(u, { retries: 2 });
   // Experience type names (one call, refreshed monthly).
   const types = readJsonSafe(EXP_TYPES_PATH, null);
@@ -659,7 +708,8 @@ async function loadLive(name, { prevAssists = null } = {}) {
 
   const curve = kpmCurve(rows);
   // Collected for later (assists per minute / per kill); not shown in the UI.
-  const assists = await updateHonuAssists(cid, prevAssists);
+  // Daily Honu cap: skip (keep the old assists) when fewer than 4 calls are left.
+  const assists = honuLeft() >= 4 ? await updateHonuAssists(cid, prevAssists) : prevAssists;
   return {
     query: String(name).trim(),
     top: TOP_N,
@@ -804,7 +854,7 @@ export function pickBatch(names, index, state, size) {
     .map((x) => x.name);
 }
 
-function upsertIndexEntry(index, { name, display, slug, file, savedAt, aliases, fmt, top }) {
+function upsertIndexEntry(index, { name, display, slug, file, savedAt, aliases, fmt, top, last }) {
   const players = index.players.slice();
   const i = players.findIndex((p) => p.slug === slug || slugKey(p.name) === slug);
   const entry = {
@@ -814,6 +864,7 @@ function upsertIndexEntry(index, { name, display, slug, file, savedAt, aliases, 
     savedAt,
     ...(fmt ? { fmt } : {}),
     ...(top ? { top } : {}),
+    ...(last ? { last } : {}),
     aliases: aliases && aliases.length ? aliases : [slug, String(name).trim().toLowerCase()].filter(
       (v, idx, a) => v && a.indexOf(v) === idx
     ),
@@ -859,91 +910,6 @@ function collectNames(cliArgs) {
   return { names: out, explicit: false };
 }
 
-/* ---------------- live top killers (data/top-killers.txt) ---------------- */
-
-const TK_KEEP_MS = 7 * 24 * 3600 * 1000;
-const TK_MAX_ROWS = 5000;
-const TK_HEADER =
-  "# Top killers seen live on Honu (120-min window), merged by every background run.\n" +
-  "# Kept 7 days. seen = runs that saw the player; kpm = best kills/min (>=10 min online).\n" +
-  "# name\tworld\tfirstSeen\tlastSeen\tseen\tkills\tdeaths\tminutes\tkpm";
-
-export function parseTopKillers(text) {
-  const map = new Map();
-  for (const line of String(text || "").split(/\r?\n/)) {
-    if (!line || line.startsWith("#")) continue;
-    const [name, world, firstSeen, lastSeen, seen, kills, deaths, minutes, kpm] = line.split("\t");
-    const k = slugKey(name);
-    if (!k) continue;
-    map.set(k, {
-      name, world: world || "", firstSeen: firstSeen || "", lastSeen: lastSeen || "",
-      seen: +seen || 0, kills: +kills || 0, deaths: +deaths || 0, minutes: +minutes || 0, kpm: +kpm || 0,
-    });
-  }
-  return map;
-}
-
-export function formatTopKillers(map) {
-  const rows = [...map.values()].sort((a, b) => b.seen - a.seen || b.kpm - a.kpm || a.name.localeCompare(b.name));
-  return (
-    TK_HEADER + "\n" +
-    rows.map((r) => [r.name, r.world, r.firstSeen, r.lastSeen, r.seen, r.kills, r.deaths, r.minutes, r.kpm.toFixed(2)].join("\t")).join("\n") +
-    (rows.length ? "\n" : "")
-  );
-}
-
-/**
- * Merge one discovery snapshot. Each player counts once per run (seen += 1).
- * @param {Map} map  slug -> row (mutated)
- * @param {{name:string, world:string, kills:number, deaths:number, secondsOnline:number}[]} entries
- */
-export function mergeTopKillers(map, entries, now = Date.now()) {
-  const iso = new Date(now).toISOString();
-  const seenNow = new Set();
-  for (const e of entries || []) {
-    const k = slugKey(e.name);
-    if (!k || seenNow.has(k)) continue;
-    seenNow.add(k);
-    const minutes = Math.round((+e.secondsOnline || 0) / 60);
-    const kpm = minutes >= 10 ? (+e.kills || 0) / minutes : 0;
-    const prev = map.get(k);
-    map.set(k, {
-      name: String(e.name).replace(/^\[\]\s*/, "").trim(),
-      world: e.world || (prev && prev.world) || "",
-      firstSeen: (prev && prev.firstSeen) || iso,
-      lastSeen: iso,
-      seen: ((prev && prev.seen) || 0) + 1,
-      kills: +e.kills || 0,
-      deaths: +e.deaths || 0,
-      minutes,
-      kpm: Math.max(kpm, (prev && prev.kpm) || 0),
-    });
-  }
-  for (const [k, r] of map) {
-    if (!r.lastSeen || now - Date.parse(r.lastSeen) > TK_KEEP_MS) map.delete(k);
-  }
-  if (map.size > TK_MAX_ROWS) {
-    const keep = [...map.entries()].sort((a, b) => Date.parse(b[1].lastSeen) - Date.parse(a[1].lastSeen)).slice(0, TK_MAX_ROWS);
-    map.clear();
-    for (const [k, r] of keep) map.set(k, r);
-  }
-  return map;
-}
-
-/** Live players not cached yet: most-seen first, then best KPM. Recent failures skipped. */
-export function liveCandidates(map, index, state, now = Date.now()) {
-  const known = new Set(((index && index.players) || []).map((p) => p.slug || slugKey(p.name)));
-  const st = (state && state.players) || {};
-  return [...map.entries()]
-    .filter(([k, r]) => {
-      if (known.has(k) || !isPlausibleName(r.name)) return false;
-      const prev = st[k];
-      return retryable(prev, now);
-    })
-    .sort((a, b) => b[1].seen - a[1].seen || b[1].kpm - a[1].kpm || a[1].name.localeCompare(b[1].name))
-    .map(([, r]) => r.name);
-}
-
 const NOT_FOUND_RE = /not found|not a valid|no character|empty killboard|unknown character/i;
 const MAX_TRANSIENT_TRIES = 3;
 const TRANSIENT_RETRY_AFTER_MS = 15 * 60 * 1000;
@@ -974,55 +940,6 @@ export function retryCandidates(index, state, now = Date.now()) {
     .map(([slug]) => slug);
 }
 
-/**
- * Discovery candidates: opponents that show up in already-cached players'
- * killboards but are not in the index yet. Ranked by how many cached players
- * met them, then by total kills+deaths. Unresolved ids, implausible names and
- * names that failed in the last 7 days are skipped.
- * @param {{player:{rows:{name:string,kills:number,deaths:number}[]}}[]} payloads
- */
-export function crawlCandidates(payloads, index, state, now = Date.now()) {
-  const known = new Set(((index && index.players) || []).map((p) => p.slug || slugKey(p.name)));
-  const st = (state && state.players) || {};
-  const agg = new Map();
-  for (const pl of payloads || []) {
-    const seenHere = new Set();
-    for (const r of (pl && pl.player && pl.player.rows) || []) {
-      const name = String((r && r.name) || "").trim();
-      if (!name || /^\d+$/.test(censusQueryName(name)) || !isPlausibleName(name)) continue;
-      if (/^RenamedPlayer\d*$/i.test(censusQueryName(name))) continue; // Honu placeholder for renamed chars
-      const k = slugKey(name);
-      if (!k || known.has(k)) continue;
-      const prev = st[k];
-      if (!retryable(prev, now)) continue;
-      const a = agg.get(k) || { name, seen: 0, volume: 0 };
-      a.volume += (+r.kills || 0) + (+r.deaths || 0);
-      if (!seenHere.has(k)) {
-        seenHere.add(k);
-        a.seen++;
-      }
-      a.name = name; // latest tag wins
-      agg.set(k, a);
-    }
-  }
-  return [...agg.values()]
-    .sort((x, y) => y.seen - x.seen || y.volume - x.volume || x.name.localeCompare(y.name))
-    .map((x) => x.name);
-}
-
-function readAllPayloads() {
-  const out = [];
-  for (const f of fs.existsSync(PLAYERS_DIR) ? fs.readdirSync(PLAYERS_DIR) : []) {
-    if (!f.endsWith(".json")) continue;
-    try {
-      out.push(JSON.parse(fs.readFileSync(path.join(PLAYERS_DIR, f), "utf8")));
-    } catch {
-      /* skip unreadable */
-    }
-  }
-  return out;
-}
-
 /** data/status.json: what the current run plans to fetch + last run summary (read by build-log.html). */
 export function readStatus() {
   try {
@@ -1041,13 +958,11 @@ export function writeStatus(patch) {
 
 function runPlan(argv) {
   const batchSize = envInt("BATCH_SIZE", 40);
-  const crawlMax = Number.isFinite(parseInt(process.env.CRAWL_MAX, 10)) ? Math.max(0, parseInt(process.env.CRAWL_MAX, 10)) : 10;
   const { names: all, explicit } = collectNames(argv);
   const index = readIndex();
   const state = readState();
   const names = explicit ? all : pickBatch(all, index, state, batchSize);
-  const crawl = explicit || !crawlMax ? [] : crawlCandidates(readAllPayloads(), index, state).slice(0, crawlMax * 2);
-  return { kind: explicit ? "on-demand" : "rotation", names, crawlCandidates: crawl };
+  return { kind: explicit ? "on-demand" : "rotation", names };
 }
 
 async function main() {
@@ -1064,8 +979,8 @@ async function main() {
     return;
   }
   fs.mkdirSync(PLAYERS_DIR, { recursive: true });
-  const crawlMax = Number.isFinite(parseInt(process.env.CRAWL_MAX, 10)) ? Math.max(0, parseInt(process.env.CRAWL_MAX, 10)) : 50;
-  const crawlIndexCap = envInt("CRAWL_INDEX_CAP", 1500);
+  // Max new players per run (the time budget usually binds first).
+  const growMax = Number.isFinite(parseInt(process.env.GROW_MAX, 10)) ? Math.max(0, parseInt(process.env.GROW_MAX, 10)) : 50;
   const t0 = Date.now();
 
   const { names: all, explicit } = collectNames(process.argv.slice(2));
@@ -1079,17 +994,17 @@ async function main() {
   const state = readState();
   const names = explicit ? all : [];
   if (explicit) console.log(`Refreshing ${names.length} explicit name(s): ${names.join(", ")}`);
-  else console.log(`Background discovery run (cached players are not re-fetched). Index: ${index.players.length}.`);
+  else console.log(`Background run (discovery + tiered refresh). Index: ${index.players.length}.`);
   console.log(CENSUS_PROXY ? `Census via proxy ${new URL(CENSUS_PROXY).host}${CENSUS_PROXY_KEY ? "" : " (WARNING: no CENSUS_PROXY_KEY)"}.` : "Census direct.");
   const c = { ok: 0, notFound: 0, outage: 0, consecutiveOutage: 0, stoppedEarly: "" };
   const added = []; // explicit names that fetched OK → watchlist
-  const discovered = []; // crawl successes → watchlist
+  const discovered = []; // new players from discovery → watchlist
   const updated = []; // every name saved this run
   const failed = []; // { name, reason, outage }
   const startedAt = new Date(t0).toISOString();
   if (explicit) {
     // On-demand runs have no flag-on commit; record the plan for build-log.html.
-    writeStatus({ current: { kind: "on-demand", names, crawlCandidates: [] } });
+    writeStatus({ current: { kind: "on-demand", names } });
   }
 
   const overBudget = (reserveMs = 0) => Date.now() - t0 + reserveMs > budgetMs;
@@ -1111,7 +1026,7 @@ async function main() {
       const payload = await loadLive(name, { prevAssists: readPrevAssists(slug) });
       const fileRel = `players/${slug}.json`;
       writeFileAtomic(path.join(DATA_DIR, fileRel), JSON.stringify(payload) + "\n");
-      upsertIndexEntry(index, { name, display: payload.player.display, slug, file: fileRel, savedAt: payload.savedAt, fmt: CACHE_FORMAT, top: payload.top });
+      upsertIndexEntry(index, { name, display: payload.player.display, slug, file: fileRel, savedAt: payload.savedAt, fmt: CACHE_FORMAT, top: payload.top, last: payload.player.times && payload.player.times.last });
       writeIndex(index);
       state.players[slug] = { lastAttemptAt: now, lastOkAt: payload.savedAt, fails: 0 };
       c.ok++;
@@ -1148,15 +1063,14 @@ async function main() {
   }
 
   // On-demand (Worker / manual names): refresh exactly those names.
-  // Background: growth only. Never re-fetch cached players. Discover who is
-  // playing well right now (Honu live top killers), fetch the ones not cached
-  // yet, then fall back to frequent opponents of cached players.
+  // Background: Census discovery sweep slice, then tiered refresh (format sync
+  // first) and new players from the discovery queue (scripts/discovery.mjs).
   const reserveMs = envInt("PLAYER_RESERVE_SEC", explicit ? 0 : 60) * 1000;
   const deadline = t0 + budgetMs;
   let ri = 0;
   // Per-name view of this run for build-log.html: planned batch with its source,
   // then done / failed / not-found / pending. Committed with the run's data.
-  const SRC_LABEL = { live: "top-killers", crawl: "opponent-crawl", retry: "retry", "on-demand": "on-demand", refresh: "refresh" };
+  const SRC_LABEL = { new: "discovery-new", active: "discovery", retry: "retry", "on-demand": "on-demand", refresh: "refresh" };
   const batch = [];
   const plan = (name, src) => batch.push({ name, src: SRC_LABEL[src] || src, status: "pending" });
   const settle = (name, display) => {
@@ -1190,82 +1104,127 @@ async function main() {
     console.warn(`Requested XP phase skipped: ${String(e && e.message).slice(0, 120)}`);
   }
 
-  const crawlFrom = Date.now();
+  const growFrom = Date.now();
 
-  let live = null;
-  let fromLive = 0;
   let more = false; // worth chaining another background run right away?
-  let growthLeft = false; // background: uncached names left with room under the cap
-  let refreshed = 0; // background: stale cached players re-fetched this run
+  let growthLeft = false; // background: queued names left with room under the cap
+  let refreshed = 0; // background: due cached players re-fetched this run
+  let disc = null; // background: discovery state (data/discovery.json)
+  let sweepOut = null;
   if (!explicit) {
-    // No live scraping any more (Honu's /ws/data feed is not an API). The
-    // top-killers list is read as a static seed; discovery is otherwise the
-    // opponents of cached players (their killboards come from Census).
-    const tk = parseTopKillers(fs.existsSync(TOP_KILLERS_PATH) ? fs.readFileSync(TOP_KILLERS_PATH, "utf8") : "");
-    const liveNames = liveCandidates(tk, index, state);
-    const room = Math.max(0, Math.min(crawlMax, crawlIndexCap - index.players.length));
-    if (!room) {
-      console.log(`Index has ${index.players.length} >= CRAWL_INDEX_CAP=${crawlIndexCap}: no discovery, no network.`);
+    disc = normalizeDiscovery(readJsonSafe(DISCOVERY_PATH, null));
+    // One-time backfill of index `last` (activity, UNIX s) from the saved files' Census times.
+    let filled = 0;
+    for (const p of index.players) {
+      if (p.last || !p.file) continue;
+      const t = (readJsonSafe(path.join(DATA_DIR, p.file), null) || {}).player;
+      const last = t && t.times && +t.times.last;
+      if (last > 0) { p.last = last; filled++; }
     }
-    const seen = new Set();
-    const queue = [];
-    for (const n of room ? liveNames : []) if (!seen.has(slugKey(n))) { seen.add(slugKey(n)); queue.push({ name: n, src: "live" }); }
-    const liveCount = queue.length;
-    for (const n of room ? retryCandidates(index, state) : []) if (!seen.has(slugKey(n))) { seen.add(slugKey(n)); queue.push({ name: n, src: "retry" }); }
-    const retryCount = queue.length - liveCount;
-    // Fallback only needs a few names; computing it reads every cached file.
-    if (room && queue.length < room) {
-      for (const n of crawlCandidates(readAllPayloads(), index, state)) {
-        if (queue.length >= room * 2 + 10) break;
-        if (!seen.has(slugKey(n))) { seen.add(slugKey(n)); queue.push({ name: n, src: "crawl" }); }
-      }
+    if (filled) {
+      writeIndex(index);
+      console.log(`Index: last-activity time filled for ${filled} player(s).`);
     }
-    console.log(`New-player queue: ${liveCount} live + ${retryCount} retry + ${queue.length - liveCount - retryCount} opponent fallback; room ${room} (cap ${crawlIndexCap}). Next: ${queue.slice(0, 12).map((q) => q.name).join(", ")}`);
-    queue.slice(0, Math.min(room, 20)).forEach((q) => plan(q.name, q.src));
-    writeStatus({ running: true, current: { kind: "discovery", runId: process.env.GITHUB_RUN_ID || null, startedAt, batch } });
-    let tried = 0;
-    // Chain the next run if there were more names than this run could take.
-    more = room > 0 && queue.length > 0;
-    growthLeft = more;
-    for (const q of queue) {
-      if (discovered.length >= room || c.stoppedEarly) break;
-      if (Date.now() + reserveMs > deadline) {
-        c.stoppedEarly = `time budget ${Math.round(budgetMs / 60000)} min reached`;
-        break;
-      }
-      if (tried) await sleep(BETWEEN_PLAYERS_MS);
-      tried++;
-      const wasCached = index.players.some((p) => (p.slug || slugKey(p.name)) === slugKey(q.name));
-      if (!batch.some((b) => b.name === q.name)) plan(q.name, q.src);
-      const d = await refreshOne(q.name, wasCached ? `[repair ${q.src}]` : `[new ${discovered.length + 1}/${room} ${q.src}]`);
-      settle(q.name, d);
-      if (d && !wasCached) {
-        discovered.push(d);
-        if (q.src === "live") fromLive++;
-      }
-    }
+    const known = new Set(index.players.map((p) => p.slug || slugKey(p.name)));
+    const st = state.players;
+    const skip = (slug) => !retryable(st[slug]);
+    const backlog0 = syncBacklog(index);
 
-    // Sync backlog (old cache format) first, then the weekly refresh; oldest first.
-    const stale = staleCandidates(index, state, Date.now());
-    if (stale.length) {
-      const backlog = syncBacklog(index);
-      console.log(`Due cached players: ${stale.length} (format sync backlog ${backlog}; weekly otherwise); oldest first.`);
-    }
-    for (const name of stale) {
-      if (c.stoppedEarly) break;
-      if (Date.now() + reserveMs > deadline) {
-        c.stoppedEarly = `time budget ${Math.round(budgetMs / 60000)} min reached`;
-        break;
+    // 1) Census login sweep + fight filter (resumable, <= SWEEP_SLICE_SEC per run).
+    if (sweepDue(disc)) {
+      const sliceMs = envInt("SWEEP_SLICE_SEC", 60) * 1000;
+      try {
+        let touched = 0;
+        sweepOut = await sweepSlice(disc, {
+          base: CENSUS,
+          getJson: (u) => fetchJson(u, { retries: 3 }),
+          known,
+          skip,
+          until: Math.min(deadline - reserveMs, Date.now() + sliceMs),
+          // Cached players seen logging in: refresh their activity (drives tiers).
+          onCached: (slug, lastS) => {
+            const p = index.players.find((x) => x.slug === slug);
+            if (p && lastS > (+p.last || 0)) { p.last = lastS; touched++; }
+          },
+          log: (m) => console.log(m),
+        });
+        if (touched) writeIndex(index);
+        console.log(`Discovery slice: ${sweepOut.calls} Census call(s), swept ${sweepOut.swept}, checked ${sweepOut.checked}, qualified ${sweepOut.qualified} (${sweepOut.newPlaying} new accounts), cached players' activity updated ${touched}${sweepOut.done ? "; sweep complete" : "; continues next run"}.`);
+      } catch (e) {
+        console.warn(`Discovery sweep paused: ${String(e && e.message).slice(0, 160)}`);
+        sweepOut = { error: String(e && e.message).slice(0, 160) };
       }
-      if (tried) await sleep(BETWEEN_PLAYERS_MS);
-      tried++;
-      if (!batch.some((b) => b.name === name)) plan(name, "refresh");
-      const d = await refreshOne(name, `[refresh ${tried}/${stale.length}]`);
-      settle(name, d);
-      if (d) refreshed++;
     }
+    disc.queue = rankQueue(disc.queue.filter((q) => !known.has(String(q.name).toLowerCase()) && !skip(String(q.name).toLowerCase())));
+
+    // 2) Cap step (3000, then 6000 once caught up).
+    const dueNow = staleCandidates(index, state, Date.now());
+    disc.cap = nextCap({ cap: disc.cap, indexSize: index.players.length, backlogLeft: backlog0, dueLeft: dueNow.length });
+    const cap = disc.cap;
+    const room = Math.max(0, Math.min(growMax, cap - index.players.length));
+    const growQueue = [];
+    const seen = new Set();
+    for (const n of room ? retryCandidates(index, state) : []) if (!seen.has(slugKey(n))) { seen.add(slugKey(n)); growQueue.push({ name: n, src: "retry" }); }
+    for (const q of room ? disc.queue : []) {
+      const k = slugKey(q.name);
+      if (!seen.has(k)) { seen.add(k); growQueue.push({ name: q.name, src: isNewAccountQ(q) ? "new" : "active", fights: q.fights }); }
+    }
+    console.log(`Cap ${cap} (steps ${CAP_STEPS.join(" → ")}), index ${index.players.length}, room ${room}; queue ${disc.queue.length}; format-sync backlog ${backlog0}; due refreshes ${dueNow.length}.`);
+
+    let tried = 0;
+    const runRefresh = async (untilMs) => {
+      const due = staleCandidates(index, state, Date.now());
+      for (const name of due) {
+        if (c.stoppedEarly || Date.now() + reserveMs > untilMs) break;
+        if (tried) await sleep(BETWEEN_PLAYERS_MS);
+        tried++;
+        if (!batch.some((b) => b.name === name)) plan(name, "refresh");
+        const d = await refreshOne(name, `[refresh ${refreshed + 1}/${due.length}]`);
+        settle(name, d);
+        if (d) refreshed++;
+      }
+    };
+    const runGrowth = async (untilMs) => {
+      while (growQueue.length && discovered.length < room && !c.stoppedEarly && Date.now() + reserveMs <= untilMs) {
+        const q = growQueue.shift();
+        if (tried) await sleep(BETWEEN_PLAYERS_MS);
+        tried++;
+        const wasCached = index.players.some((p) => (p.slug || slugKey(p.name)) === slugKey(q.name));
+        if (!batch.some((b) => b.name === q.name)) plan(q.name, q.src);
+        const d = await refreshOne(q.name, wasCached ? `[repair ${q.src}]` : `[new ${discovered.length + 1}/${room} ${q.src}${q.fights ? ` ${q.fights} fights/wk` : ""}]`);
+        settle(q.name, d);
+        if (d && !wasCached) discovered.push(d);
+        disc.queue = disc.queue.filter((x) => slugKey(x.name) !== slugKey(q.name));
+      }
+    };
+    growQueue.slice(0, Math.min(room, 20)).forEach((q) => plan(q.name, q.src));
+    writeStatus({ running: true, current: { kind: "discovery", runId: process.env.GITHUB_RUN_ID || null, startedAt, batch } });
+
+    // 3) Budget split. Format-sync backlog first: new names only get leftover
+    // time until it is done. Afterwards due refreshes get the first half of the
+    // run when both are waiting, new names the rest, then refresh again.
+    if (backlog0 > 0) {
+      await runRefresh(deadline);
+      await runGrowth(deadline);
+    } else if (dueNow.length && growQueue.length && room) {
+      await runRefresh(Date.now() + (deadline - Date.now()) / 2);
+      await runGrowth(deadline);
+      await runRefresh(deadline);
+    } else {
+      await runGrowth(deadline);
+      await runRefresh(deadline);
+    }
+    if (!c.stoppedEarly && Date.now() + reserveMs > deadline && (growQueue.length || staleCandidates(index, state, Date.now()).length)) {
+      c.stoppedEarly = `time budget ${Math.round(budgetMs / 60000)} min reached`;
+    }
+    growthLeft = index.players.length < cap && disc.queue.length > 0;
+    more = growthLeft;
+    disc.cap = nextCap({ cap: disc.cap, indexSize: index.players.length, backlogLeft: syncBacklog(index), dueLeft: staleCandidates(index, state, Date.now()).length });
+    disc.updatedAt = new Date().toISOString();
+    writeFileAtomic(DISCOVERY_PATH, JSON.stringify(disc) + "\n");
   }
-  const crawlSecs = Math.round((Date.now() - crawlFrom) / 1000);
+  const growSecs = Math.round((Date.now() - growFrom) / 1000);
+  saveHonuUsage();
 
   // Successful on-demand + discovered names join the watchlist (failures don't).
   let joined = [];
@@ -1278,7 +1237,8 @@ async function main() {
   const secs = Math.round((Date.now() - t0) / 1000);
   const summary =
     `Done in ${secs}s. ok=${c.ok} notFound=${c.notFound} outage=${c.outage} index=${index.players.length}` +
-    `${discovered.length ? ` new=${discovered.length} (live ${fromLive}, opponents ${discovered.length - fromLive}; ${crawlSecs}s)` : ""}` +
+    `${discovered.length ? ` new=${discovered.length} (${growSecs}s incl. refresh)` : ""}` +
+    ` honu=${honuUsage.calls}/${HONU_DAILY_CAP} today` +
     `${refreshed ? ` refreshed=${refreshed}` : ""}` +
     `${joined.length ? ` watchlist+=${joined.length}` : ""}` +
     `${c.stoppedEarly ? ` (stopped early: ${c.stoppedEarly})` : ""}`;
@@ -1296,9 +1256,8 @@ async function main() {
       failed,
       stoppedEarly: c.stoppedEarly || null,
       indexSize: index.players.length,
-      newFromLive: fromLive,
-      liveWorlds: live ? live.worlds : [],
-      liveErrors: live ? live.errors : [],
+      ...(disc ? { discovery: { cap: disc.cap, queue: disc.queue.length, slice: sweepOut, sweepInProgress: disc.sweep.cursor != null } } : {}),
+      honu: { day: honuUsage.day, calls: honuUsage.calls, cap: HONU_DAILY_CAP },
       batch,
     },
   });
@@ -1309,6 +1268,13 @@ async function main() {
       /* ignore */
     }
   }
+  // Storage size (build-log size line + sizeWarning for a backup reminder).
+  try {
+    const size = await measureSize();
+    writeStatus({ size, sizeWarning: size.warning });
+  } catch (e) {
+    console.warn(`Size check skipped: ${String(e && e.message).slice(0, 80)}`);
+  }
   if (!explicit) {
     // data/schedule.json tells the Worker cron whether a background run is due
     // (it polls this static file instead of dispatching blindly every 5 min).
@@ -1316,6 +1282,7 @@ async function main() {
     const after = staleCandidates(index, state, Date.now());
     writeScheduleFile(computeSchedule({
       growthLeft,
+      sweepAt: disc ? sweepDueAt(disc) : null,
       staleLeft: after.length,
       backlogLeft: syncBacklog(index),
       nextStaleAt: nextStaleAt(index, state),
@@ -1326,7 +1293,7 @@ async function main() {
   if (process.env.GITHUB_OUTPUT) {
     try {
       // Chain only after real progress (never loop on an outage), while names remain.
-      const chain = more && discovered.length > 0 && index.players.length < crawlIndexCap;
+      const chain = more && discovered.length > 0 && disc && index.players.length < disc.cap;
       fs.appendFileSync(process.env.GITHUB_OUTPUT, `ok=${c.ok}\nnew=${discovered.length}\nmore=${chain}\n`);
     } catch {
       /* ignore */
@@ -1336,6 +1303,64 @@ async function main() {
   // index entries are left untouched. Only a run where nothing refreshed and
   // something looked like a real outage fails the job.
   if (c.ok === 0 && c.outage > 0) process.exit(1);
+}
+
+const isNewAccountQ = (q) => isNewAccount(q && q.created);
+
+/** Warn (status.sizeWarning) well before GitHub's 1 GB soft limit: make a manual backup, then plan the Cloudflare move. */
+export const SIZE_WARN_BYTES = 700 * 1024 * 1024;
+
+function dirBytes(dir) {
+  let bytes = 0, files = 0;
+  if (!fs.existsSync(dir)) return { bytes, files };
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    const f = path.join(dir, e.name);
+    if (e.isDirectory()) {
+      const sub = dirBytes(f);
+      bytes += sub.bytes;
+      files += sub.files;
+    } else if (e.isFile()) {
+      bytes += fs.statSync(f).size;
+      files++;
+    }
+  }
+  return { bytes, files };
+}
+
+/**
+ * status.json `size`: data/ on disk now, plus GitHub's repo size (all history,
+ * packed; repos API `size` in KB; best effort with the workflow token).
+ */
+export function sizeWarning({ repoBytes = null, dataBytes = 0 } = {}, warnAt = SIZE_WARN_BYTES) {
+  return (repoBytes != null && repoBytes >= warnAt) || dataBytes >= warnAt;
+}
+
+async function measureSize() {
+  const data = dirBytes(DATA_DIR);
+  const players = dirBytes(PLAYERS_DIR);
+  let repoBytes = null;
+  const repo = process.env.GITHUB_REPOSITORY || "Dayset/ps2-elite-kd";
+  try {
+    const headers = { Accept: "application/vnd.github+json", "User-Agent": USER_AGENT };
+    if (process.env.GITHUB_TOKEN) headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
+    const res = await fetch(`https://api.github.com/repos/${repo}`, { headers, signal: AbortSignal.timeout(10_000) });
+    if (res.ok) {
+      const j = await res.json();
+      if (Number.isFinite(+j.size)) repoBytes = +j.size * 1024;
+    }
+  } catch {
+    /* offline: data size only */
+  }
+  const out = {
+    at: new Date().toISOString(),
+    repoBytes,
+    dataBytes: data.bytes,
+    playersBytes: players.bytes,
+    playerFiles: players.files,
+    warnAtBytes: SIZE_WARN_BYTES,
+  };
+  out.warning = sizeWarning(out);
+  return out;
 }
 
 /** Gap between refresh-only runs (keeps Census load and Pages commits ~hourly). */
@@ -1366,8 +1391,9 @@ export function needsUpgrade(p) {
 }
 
 /** Number of index players still in the one-time format sync backlog. */
-export function syncBacklog(index) {
-  return ((index && index.players) || []).filter((p) => p && p.name && isPlausibleName(p.name) && needsSync(p)).length;
+export function syncBacklog(index, now = Date.now()) {
+  // 🪦 players (inactive > 1 year) are never refreshed automatically, not even for the sync.
+  return ((index && index.players) || []).filter((p) => p && p.name && isPlausibleName(p.name) && needsSync(p) && !isDormant(p, now)).length;
 }
 
 /**
@@ -1375,7 +1401,10 @@ export function syncBacklog(index) {
  * (after SYNC_RETRY_MS since the last failed try; weekly if it keeps being
  * "not found"). Current format: REFRESH_AFTER_MS after the last save/try.
  */
-export function dueAt(p, state, maxAgeMs = REFRESH_AFTER_MS) {
+export function dueAt(p, state, maxAgeMs, now = Date.now()) {
+  // Refresh tier from last activity (index `last`): weekly / 2 weeks / monthly / never (🪦).
+  if (maxAgeMs == null) maxAgeMs = refreshIntervalMs(lastActiveMs(p), now);
+  if (maxAgeMs === Infinity) return Infinity;
   if (needsSync(p)) {
     const st = (state && state.players && state.players[p.slug || slugKey(p.name)]) || {};
     const gone = st.kind === "notfound" && (st.fails || 0) >= 3;
@@ -1388,19 +1417,19 @@ export function dueAt(p, state, maxAgeMs = REFRESH_AFTER_MS) {
  * Cached players due now: format-sync backlog first, then weekly-stale; within
  * each, 50-opponent players (needsUpgrade) before 200 ones, then oldest first. Uses the index name (Census resolves "[TAG] Name" by first name).
  */
-export function staleCandidates(index, state, now = Date.now(), maxAgeMs = REFRESH_AFTER_MS) {
+export function staleCandidates(index, state, now = Date.now(), maxAgeMs) {
   return ((index && index.players) || [])
     .map((p, i) => ({ p, i, sync: needsSync(p) ? 0 : 1, up: needsUpgrade(p) ? 0 : 1, last: p ? lastTouched(p, state) : 0 }))
-    .filter((x) => x.p && x.p.name && isPlausibleName(x.p.name) && dueAt(x.p, state, maxAgeMs) <= now)
+    .filter((x) => x.p && x.p.name && isPlausibleName(x.p.name) && dueAt(x.p, state, maxAgeMs, now) <= now)
     .sort((a, b) => a.sync - b.sync || a.up - b.up || a.last - b.last || a.i - b.i)
     .map((x) => x.p.name);
 }
 
 /** When the next cached player becomes due (ms), or null with an empty index. */
-export function nextStaleAt(index, state, maxAgeMs = REFRESH_AFTER_MS) {
+export function nextStaleAt(index, state, maxAgeMs, now = Date.now()) {
   let min = Infinity;
   for (const p of (index && index.players) || []) {
-    if (p && p.name && isPlausibleName(p.name)) min = Math.min(min, dueAt(p, state, maxAgeMs));
+    if (p && p.name && isPlausibleName(p.name)) min = Math.min(min, dueAt(p, state, maxAgeMs, now));
   }
   return Number.isFinite(min) ? min : null;
 }
@@ -1411,15 +1440,20 @@ export function nextStaleAt(index, state, maxAgeMs = REFRESH_AFTER_MS) {
  * cached player becomes due (deterministic, so idle runs don't commit).
  * @returns {{ nextDueAt: string|null, reason: string }}
  */
-export function computeSchedule({ growthLeft = false, staleLeft = 0, backlogLeft = 0, nextStaleAt: nextStale = null, outageStop = false, now = Date.now() } = {}) {
+export function computeSchedule({ growthLeft = false, staleLeft = 0, backlogLeft = 0, nextStaleAt: nextStale = null, sweepAt = null, outageStop = false, now = Date.now() } = {}) {
   const iso = (ms) => new Date(ms).toISOString();
   if (outageStop && (growthLeft || staleLeft)) return { nextDueAt: iso(now + 30 * 60_000), reason: "retry after outage" };
+  // While the format sync lasts, new names only get leftover time: keep its pace.
+  if (backlogLeft > 0 && staleLeft > 0) return { nextDueAt: iso(now + SYNC_RUN_GAP_MS), reason: `format sync (${backlogLeft} left)` };
   if (growthLeft) return { nextDueAt: iso(now), reason: "growth" };
+  const sweep = sweepAt != null && Number.isFinite(sweepAt) ? Math.max(sweepAt, now) : null;
   if (staleLeft > 0) {
-    if (backlogLeft > 0) return { nextDueAt: iso(now + SYNC_RUN_GAP_MS), reason: `format sync (${backlogLeft} left)` };
-    return { nextDueAt: iso(now + REFRESH_RUN_GAP_MS), reason: `weekly refresh (${staleLeft} left)` };
+    const t = now + REFRESH_RUN_GAP_MS;
+    if (sweep != null && sweep < t) return { nextDueAt: iso(sweep), reason: "discovery sweep" };
+    return { nextDueAt: iso(t), reason: `tiered refresh (${staleLeft} left)` };
   }
-  if (nextStale != null) return { nextDueAt: iso(nextStale), reason: "weekly refresh" };
+  if (sweep != null && (nextStale == null || sweep <= nextStale)) return { nextDueAt: iso(sweep), reason: "discovery sweep" };
+  if (nextStale != null) return { nextDueAt: iso(nextStale), reason: "tiered refresh" };
   return { nextDueAt: null, reason: "idle" };
 }
 

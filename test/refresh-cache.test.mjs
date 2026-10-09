@@ -10,8 +10,6 @@ import {
   backoffMs,
   newWatchlistNames,
   isPlausibleName,
-  crawlCandidates,
-  mergeTopKillers,
   opponentRow,
   honuHistoryToStatHistory,
   staleCandidates,
@@ -21,9 +19,6 @@ import {
   isConnectFailure,
   retryable,
   retryCandidates,
-  parseTopKillers,
-  formatTopKillers,
-  liveCandidates,
   countAssistEvents,
   assistStatsFromBlock,
   pickNewSessions,
@@ -108,71 +103,6 @@ describe("on-demand names join the watchlist", () => {
     assert.equal(isPlausibleName("bad name!"), false);
     assert.equal(isPlausibleName("x".repeat(40)), false);
     assert.equal(isPlausibleName("5428010618015189713"), true);
-  });
-});
-
-describe("crawlCandidates (discovery)", () => {
-  const pl = (rows) => ({ player: { rows } });
-  const idx = { players: [{ name: "[A] Known", slug: "known" }] };
-
-  it("ranks opponents seen by more cached players first, then by volume", () => {
-    const payloads = [
-      pl([{ name: "[X] Alpha", kills: 1, deaths: 1 }, { name: "Beta", kills: 50, deaths: 50 }, { name: "[A] Known", kills: 9, deaths: 9 }]),
-      pl([{ name: "[Y] Alpha", kills: 2, deaths: 0 }, { name: "Gamma", kills: 5, deaths: 5 }]),
-    ];
-    assert.deepEqual(crawlCandidates(payloads, idx, { players: {} }), ["[Y] Alpha", "Beta", "Gamma"]);
-  });
-
-  it("skips unresolved ids, junk, and names that failed recently", () => {
-    const now = 1_000_000_000_000;
-    const payloads = [pl([{ name: "5428011263335537297" }, { name: "0" }, { name: "bad name!" }, { name: "Typo" }, { name: "Old" }])];
-    const state = { players: { typo: { lastAttemptAt: now - 1000, fails: 1 }, old: { lastAttemptAt: now - 30 * 864e5, fails: 1 } } };
-    assert.deepEqual(crawlCandidates(payloads, idx, state, now), ["Old"]);
-  });
-});
-
-describe("live top killers list", () => {
-  const T0 = Date.parse("2026-10-07T22:00:00Z");
-  it("merges snapshots: seen counts once per run, best KPM kept, 7-day pruning", () => {
-    const m = new Map();
-    mergeTopKillers(m, [
-      { name: "[KlSS] UltramaxVS", world: "Connery", kills: 150, deaths: 36, secondsOnline: 7200 },
-      { name: "[KlSS] UltramaxVS", world: "Connery", kills: 150, deaths: 36, secondsOnline: 7200 },
-      { name: "Shorty", world: "Miller", kills: 9, deaths: 1, secondsOnline: 300 },
-    ], T0);
-    mergeTopKillers(m, [{ name: "[NEW] UltramaxVS", world: "Connery", kills: 60, deaths: 30, secondsOnline: 3600 }], T0 + 600e3);
-    const u = m.get("ultramaxvs");
-    assert.equal(u.seen, 2);
-    assert.equal(u.name, "[NEW] UltramaxVS");
-    assert.equal(u.kpm.toFixed(2), "1.25");
-    assert.equal(m.get("shorty").kpm, 0); // <10 min online: no KPM
-    mergeTopKillers(m, [], T0 + 8 * 864e5);
-    assert.equal(m.size, 0);
-  });
-
-  it("drops Honu's empty outfit tag", () => {
-    const m = mergeTopKillers(new Map(), [{ name: "[] DGOZZOvs4", world: "Connery", kills: 1, deaths: 1, secondsOnline: 60 }], T0);
-    assert.equal(m.get("dgozzovs4").name, "DGOZZOvs4");
-  });
-
-  it("round-trips through the text file", () => {
-    const m = mergeTopKillers(new Map(), [{ name: "A1", world: "Miller", kills: 30, deaths: 3, secondsOnline: 1200 }], T0);
-    const back = parseTopKillers(formatTopKillers(m));
-    assert.deepEqual([...back.values()], [...m.values()].map((r) => ({ ...r, kpm: +r.kpm.toFixed(2) })));
-  });
-
-  it("candidates: not cached, not recently failed, most-seen then best KPM", () => {
-    const m = new Map();
-    mergeTopKillers(m, [
-      { name: "Cached", kills: 99, secondsOnline: 3600 },
-      { name: "Twice", kills: 10, secondsOnline: 3600 },
-      { name: "HighKpm", kills: 120, secondsOnline: 3600 },
-      { name: "Typo", kills: 50, secondsOnline: 3600 },
-    ], T0);
-    mergeTopKillers(m, [{ name: "Twice", kills: 12, secondsOnline: 3700 }], T0 + 1);
-    const idx = { players: [{ name: "Cached", slug: "cached" }] };
-    const state = { players: { typo: { lastAttemptAt: T0, fails: 1 } } };
-    assert.deepEqual(liveCandidates(m, idx, state, T0 + 2), ["Twice", "HighKpm"]);
   });
 });
 
@@ -262,11 +192,27 @@ describe("weekly refresh + format sync backlog + schedule.json", () => {
     assert.equal(nextStaleAt({ players: [idx.players[6]] }, st), NOW - 1 * H + SYNC_RETRY_MS);
     assert.equal(nextStaleAt({ players: [] }, st), null);
   });
+  it("tiers: 🪦 players are never due and leave the sync backlog; monthly tier waits 30 days", () => {
+    const nowS = Math.floor(Date.now() / 1000);
+    const tidx = { players: [
+      { name: "Dead", slug: "dead", savedAt: 1, last: nowS - 400 * 86400 },
+      { name: "Monthly", slug: "monthly", savedAt: Date.now() - 20 * D, fmt: F, last: nowS - 60 * 86400 },
+      { name: "Biweekly", slug: "biweekly", savedAt: Date.now() - 15 * D, fmt: F, last: nowS - 10 * 86400 },
+      { name: "Weekly", slug: "weekly", savedAt: Date.now() - 8 * D, fmt: F, last: nowS - 86400 },
+    ] };
+    assert.deepEqual(staleCandidates(tidx, {}, Date.now()), ["Biweekly", "Weekly"]);
+    assert.equal(syncBacklog(tidx), 0);
+  });
   it("computeSchedule: growth now, due players in ~1 h, else next due time (deterministic), else idle", () => {
     assert.deepEqual(computeSchedule({ growthLeft: true, now: NOW }), { nextDueAt: new Date(NOW).toISOString(), reason: "growth" });
     assert.equal(computeSchedule({ staleLeft: 5, now: NOW }).nextDueAt, new Date(NOW + REFRESH_RUN_GAP_MS).toISOString());
     assert.deepEqual(computeSchedule({ staleLeft: 5, backlogLeft: 3, now: NOW }), { nextDueAt: new Date(NOW + 20 * 60e3).toISOString(), reason: "format sync (3 left)" });
-    assert.equal(computeSchedule({ staleLeft: 5, now: NOW }).reason, "weekly refresh (5 left)");
+    assert.equal(computeSchedule({ staleLeft: 5, now: NOW }).reason, "tiered refresh (5 left)");
+    // Format sync keeps its pace even with queued new names (they only get leftover time).
+    assert.equal(computeSchedule({ growthLeft: true, staleLeft: 5, backlogLeft: 3, now: NOW }).reason, "format sync (3 left)");
+    // A due discovery sweep wakes the schedule earlier than the next refresh.
+    assert.deepEqual(computeSchedule({ nextStaleAt: NOW + 5 * H, sweepAt: NOW + 1 * H, now: NOW }), { nextDueAt: new Date(NOW + H).toISOString(), reason: "discovery sweep" });
+    assert.equal(computeSchedule({ staleLeft: 5, sweepAt: NOW - H, now: NOW }).nextDueAt, new Date(NOW).toISOString());
     const a = computeSchedule({ nextStaleAt: NOW + 5 * H, now: NOW });
     const b = computeSchedule({ nextStaleAt: NOW + 5 * H, now: NOW + 600e3 });
     assert.deepEqual(a, b); // idle runs produce the same file -> no commit

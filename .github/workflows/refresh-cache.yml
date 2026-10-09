@@ -1,18 +1,20 @@
 name: Refresh shared cache
 
-# Grows the shared cache with NEW players; cached players are never re-fetched
-# by background runs (only on demand, e.g. "Fetch fresh" via the Worker).
+# Grows the shared cache with players who actually play, and keeps cached
+# players fresh on activity tiers (see scripts/discovery.mjs).
 #
 # Driver: each background run writes data/schedule.json (nextDueAt, or null
 # when idle). The Cloudflare Worker (ps2-elite-kd-cache) cron reads that static
 # file every 5 min and dispatches only when a run is due (or /add names are
 # stuck pending); GitHub's hourly cron is a fallback. An idle run (cache at
-# CRAWL_INDEX_CAP, nothing due) makes no network calls at all.
-# Discovery: names from data/top-killers.txt (static seed, no live scraping)
-# and frequent opponents of cached players, up to CRAWL_INDEX_CAP. Then the
-# refresh: one-time format sync backlog first (index fmt < 2, any age), then
-# weekly: cached players saved > 7 days ago, oldest first, within the
-# time budget (refresh-only runs are spaced ~1 h apart via schedule.json).
+# cap, nothing due) makes no network calls at all.
+# Discovery (Census only): a daily login sweep (character.times.last_login,
+# keyset-paged) + fight filter (characters_stat_history, >= 100 kills+deaths in
+# the last 7 days, 100 ids per call); queue in data/discovery.json, new
+# accounts that play first. Cap 3000, raised to 6000 once caught up. The
+# one-time format sync backlog goes first; new names only get leftover time
+# until it is done. Refresh tiers by last activity: weekly / 2 weeks / monthly
+# / never (🪦 > 1 year). Honu (assists, XP) is capped per day (HONU_DAILY_CAP).
 # All per-player data comes from Census in ~5 batched calls (census-fetch.mjs).
 #
 # Pages: exactly ONE commit per run, none if no player file changed.
@@ -42,8 +44,9 @@ concurrency:
 env:
   TIME_BUDGET_MIN: "9"       # background: stop starting new players after ~9 min
   ON_DEMAND_BUDGET_MIN: "10" # inputs.names runs
-  CRAWL_MAX: "50"            # background: max new players per run (time budget usually binds first)
-  CRAWL_INDEX_CAP: "1500"    # stop adding at this many cached players
+  GROW_MAX: "50"             # background: max new players per run (time budget usually binds first)
+  SWEEP_SLICE_SEC: "60"      # background: max discovery sweep time per run
+  HONU_DAILY_CAP: "2500"     # all Honu calls per UTC day (assists + XP + history fallback)
   # Daybreak Census service ID (registered, public client-side value; a repo
   # secret/variable CENSUS_SERVICE_ID overrides it). Data comes from Census;
   # Honu only as a paced fallback for missing history_stats.
@@ -89,6 +92,8 @@ jobs:
           # Worker's /census proxy (shared-secret header, read-only, our service ID only).
           CENSUS_PROXY: ${{ vars.CENSUS_PROXY || 'https://ps2-elite-kd-cache.dayset.workers.dev' }}
           CENSUS_PROXY_KEY: ${{ secrets.CENSUS_PROXY_KEY }}
+          # Read-only repo size for status.json `size` (build-log size line).
+          GITHUB_TOKEN: ${{ github.token }}
         run: node scripts/refresh-cache.mjs
 
       - name: Commit (one commit per run, skipped if nothing refreshed)
@@ -104,11 +109,15 @@ jobs:
             # Nothing refreshed (idle / outage / all names bad): don't spend a Pages
             # build on bookkeeping. Only a changed data/schedule.json (read by the
             # Worker cron to decide whether to dispatch) is committed on its own.
-            cp data/schedule.json /tmp/schedule.json 2>/dev/null || true
+            # Discovery progress (sweep cursor + queue) and the Honu day counter are kept too.
+            keep="schedule.json discovery.json honu-usage.json"
+            for f in $keep; do cp "data/$f" "/tmp/$f" 2>/dev/null || true; done
             git checkout -- data/ && git clean -fdq data/
-            if [ -f /tmp/schedule.json ] && ! cmp -s /tmp/schedule.json data/schedule.json; then
-              cp /tmp/schedule.json data/schedule.json
-              git add data/schedule.json
+            changed_meta=0
+            for f in $keep; do
+              if [ -f "/tmp/$f" ] && ! cmp -s "/tmp/$f" "data/$f"; then cp "/tmp/$f" "data/$f"; git add "data/$f"; changed_meta=1; fi
+            done
+            if [ "$changed_meta" = "1" ]; then
               scripts/ci-commit-push.sh "chore(cache): schedule $(node -p 'JSON.parse(require("fs").readFileSync("data/schedule.json","utf8")).reason') [bot]"
             else
               echo "No players refreshed; no commit."

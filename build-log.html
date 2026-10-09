@@ -14,7 +14,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261009-picksync" />
+  <link rel="stylesheet" href="styles.css?v=20261009-disco" />
   <style>
     body { overflow: auto; }
     .st-wrap { max-width: 960px; margin: 0 auto; padding: 18px 16px 40px; }
@@ -100,7 +100,7 @@
     <details class="st-card st-sec" id="cardNow" data-default="open"><summary><h2>Refresh now</h2></summary><div id="nowRun"></div><div id="now" class="st-dim">Loading…</div><div id="backup" class="st-label"></div></details>
     <details class="st-card st-sec" id="cardRuns" data-default="open"><summary><h2>GitHub Actions queue <span id="runsCount" class="st-count"></span></h2></summary><div id="runs" class="st-dim">Loading…</div></details>
     <details class="st-card st-sec" id="cardLast" data-default="open"><summary><h2>Last finished run</h2></summary><div id="last" class="st-dim">Loading…</div></details>
-    <details class="st-card st-sec" id="cardLive"><summary><h2>Live top killers (Honu) <span id="liveCount" class="st-count">…</span></h2></summary><div id="live" class="st-dim">Loading…</div></details>
+    <details class="st-card st-sec" id="cardDisc" data-default="open"><summary><h2>🔎 Discovery &amp; storage <span id="discCount" class="st-count">…</span></h2></summary><div id="sizeLine" class="st-dim">Loading…</div><div id="disc" class="st-dim">Loading…</div></details>
     <details class="st-card st-sec" id="cardPending"><summary><h2>Queued from the site (not cached yet) <span id="pendingCount" class="st-count">…</span></h2></summary><div id="pending" class="st-dim">Loading…</div></details>
     <details class="st-card st-sec" id="cardRecent"><summary><h2>Recently updated players <span id="recentCount" class="st-count">…</span></h2></summary><div id="recent" class="st-dim">Loading…</div></details>
     <details class="st-card st-sec st-flags" id="cardFlags">
@@ -238,9 +238,6 @@
         var cur = status && status.running && status.current;
         if (cur) {
           html += '<div class="st-label">Fetching now (' + esc(cur.kind || "rotation") + "):</div>" + chips(cur.names);
-          if (cur.crawlCandidates && cur.crawlCandidates.length) {
-            html += '<div class="st-label">Discovery candidates if time is left (best first):</div>' + chips(cur.crawlCandidates);
-          }
         }
         $("now").innerHTML = html;
       }
@@ -253,7 +250,7 @@
           return "<tr><td>" + nm(b.name) + "</td><td>" + esc(b.src) + '</td><td class="' + cls + '"' + (b.reason ? ' title="' + esc(b.reason) + '"' : "") + ">" + esc(txt) + "</td></tr>";
         }).join("") + "</table>";
       }
-      var predicted = []; // uncached live top killers, in the order a discovery run picks them
+      var predicted = []; // queued names (data/discovery.json), in the order a run picks them
 
       function renderLast(status) {
         var r = status && status.lastRun;
@@ -268,8 +265,11 @@
           '<div class="st-label">Updated (' + (r.updated || []).length + "):</div>" + chips(r.updated) +
           '<div class="st-label">Failed (' + failed.length + "):</div>" + chips(failed, "fail") +
           (r.batch && r.batch.length ? '<div class="st-label">Batch (planned names by source, and what happened to each):</div>' + batchTable(r.batch) : "") +
-          (r.liveWorlds && r.liveWorlds.length ? '<div class="st-label">Live worlds checked: ' + r.liveWorlds.map(function (w) { return esc(w.name) + " (" + esc(w.online) + " online)"; }).join(", ") +
-            " · new from live list: " + esc(r.newFromLive || 0) + "</div>" : "");
+          (r.discovery ? '<div class="st-label">Discovery: cap ' + esc(r.discovery.cap) + " · queue " + esc(r.discovery.queue) +
+            (r.discovery.slice && !r.discovery.slice.error ? " · this run's sweep slice: " + esc(r.discovery.slice.calls) + " Census calls, swept " + esc(r.discovery.slice.swept) +
+              ", checked " + esc(r.discovery.slice.checked) + ", qualified " + esc(r.discovery.slice.qualified) : "") +
+            (r.discovery.slice && r.discovery.slice.error ? ' · <span class="st-err">sweep paused: ' + esc(r.discovery.slice.error) + "</span>" : "") + "</div>" : "") +
+          (r.honu ? '<div class="st-label">Honu today: ' + esc(r.honu.calls) + " / " + esc(r.honu.cap) + " calls (UTC day " + esc(r.honu.day) + ")</div>" : "");
       }
 
       function renderRuns(data) {
@@ -342,36 +342,56 @@
         var a = runs.filter(function (r) { return r.status !== "completed"; })[0];
         $("nowRun").innerHTML = a
           ? '<div class="st-big st-warn">⏳ ' + (a.status === "in_progress" ? "Discovery run in progress" : "Run " + esc(a.status)) + "</div><div>" + runLink(a.id) +
-            " · started " + when(a.run_started_at || a.created_at) + '. It fetches live top killers that aren’t cached yet, then frequent opponents. Per-name results appear under “Last finished run” when it commits (one commit per run, so no live per-name progress).</div>' +
-            (predicted.length ? '<div class="st-label">Planned batch (top-killers source, best first; a discovery run takes these first):</div>' +
-              batchTable(predicted.slice(0, 12).map(function (n) { return { name: n, src: "top-killers", status: "pending" }; }), true) : "")
+            " · started " + when(a.run_started_at || a.created_at) + '. It continues the Census login sweep, refreshes due players (format sync first) and adds queued players who actually play. Per-name results appear under “Last finished run” when it commits (one commit per run, so no live per-name progress).</div>' +
+            (predicted.length ? '<div class="st-label">Next in the discovery queue (new accounts that play first, then most fights this week):</div>' +
+              batchTable(predicted.slice(0, 12).map(function (q) { return { name: q.name, src: q.isNew ? "discovery-new" : "discovery", status: "pending" }; }), true) : "")
           : "";
       }
 
-      function renderLive(text, index) {
-        var known = {};
-        ((index && index.players) || []).forEach(function (p) { known[p.slug] = 1; });
-        var rows = String(text || "").split(/\r?\n/).filter(function (l) { return l && l.charAt(0) !== "#"; }).map(function (l) {
-          var f = l.split("\t");
-          var slug = String(f[0] || "").toLowerCase().replace(/^\[.*?\]\s*/, "").replace(/[^a-z0-9]+/g, "");
-          return { name: f[0], world: f[1], lastSeen: f[3], seen: +f[4] || 0, kpm: +f[8] || 0, cached: !!known[slug] };
-        });
-        $("liveCount").textContent = String(rows.length);
-        $("liveCount").title = rows.length + " players seen in the last 7 days";
-        if (!rows.length) { $("live").innerHTML = '<span class="st-dim">No live list yet (written by the first discovery run).</span>'; return; }
-        var cached = rows.filter(function (r) { return r.cached; }).length;
-        predicted = rows.filter(function (r) { return !r.cached; }).sort(function (a, b) { return b.seen - a.seen || b.kpm - a.kpm; }).map(function (r) { return r.name; });
-        $("live").innerHTML = "<div>" + rows.length + " players seen in the last 7 days · " + cached + " cached · " + (rows.length - cached) + " still to fetch</div>" +
-          '<table class="st-table"><tr><th>Player</th><th>World</th><th>Seen</th><th>Best KPM</th><th>Last seen</th></tr>' +
-          rows.slice(0, 25).map(function (r) {
-            return "<tr><td>" + (r.cached ? "✓ " : "") + nm(r.name) + "</td><td>" + esc(r.world) + "</td><td>" + esc(r.seen) + "</td><td>" + esc(r.kpm.toFixed(2)) + "</td><td>" + when(r.lastSeen) + "</td></tr>";
-          }).join("") + "</table>";
+      var MB = 1024 * 1024;
+      function mb(b) { return b == null ? "?" : b >= 1024 * MB ? (b / 1024 / MB).toFixed(2) + " GB" : (b / MB).toFixed(1) + " MB"; }
+      /** Size line: repo (GitHub, all history packed) + data/ now, with the 700 MB backup/move warning (status.size, status.sizeWarning). */
+      function renderSize(status) {
+        var z = status && status.size;
+        if (!z) { $("sizeLine").innerHTML = '<span class="st-dim">💾 Size: not measured yet (next run).</span>'; return; }
+        var warnAt = z.warnAtBytes || 700 * MB;
+        var warn = !!status.sizeWarning;
+        var near = !warn && Math.max(z.repoBytes || 0, z.dataBytes || 0) >= warnAt * 0.8;
+        $("sizeLine").innerHTML = '<div class="' + (warn ? "st-err" : near ? "st-warn" : "") + '">💾 Repo ' + mb(z.repoBytes) + " (GitHub, incl. history) · data/ " + mb(z.dataBytes) +
+          " · " + esc(z.playerFiles) + " player files (" + mb(z.playersBytes) + ") · measured " + when(z.at) + "</div>" +
+          '<div class="' + (warn ? "st-err" : "st-dim") + '">' + (warn
+            ? "⚠️ Over " + mb(warnAt) + ": make a manual backup now, then move player files to Cloudflare (no history cleanup before the backup)."
+            : "Warning at " + mb(warnAt) + " (repo history or data/), well before GitHub’s 1 GB: then back up and move player files to Cloudflare.") + "</div>";
+      }
+
+      function renderDisc(d, index) {
+        if (!d) { $("discCount").textContent = ""; $("disc").innerHTML = '<span class="st-dim">No discovery state yet (written by the next background run).</span>'; return; }
+        var n = ((index && index.players) || []).length;
+        var nowS = Date.now() / 1000;
+        var q = (d.queue || []).map(function (x) { return { name: x.name, fights: x.fights, isNew: x.created && nowS - x.created <= 91 * 86400 }; });
+        predicted = q;
+        var sw = d.sweep || {}, ls = d.lastSweep || {};
+        $("discCount").textContent = n + " / " + d.cap;
+        $("discCount").title = n + " cached of cap " + d.cap + " (3000, then 6000 once caught up)";
+        $("disc").innerHTML =
+          "<div>Cached <strong>" + esc(n) + "</strong> · cap <strong>" + esc(d.cap) + "</strong> (steps 3000 → 6000) · queued <strong>" + esc(q.length) + "</strong> (" +
+            esc(q.filter(function (x) { return x.isNew; }).length) + " new accounts)</div>" +
+          '<div class="st-label">Login sweep (Census, PC): ' + (sw.cursor != null
+            ? "in progress, at logins from " + when(sw.cursor * 1000)
+            : "last finished " + when(sw.lastDoneAt) + ", next ~" + when(Date.parse(sw.lastDoneAt || "") + 20 * 3600e3)) +
+            " · this sweep: swept " + esc(ls.swept || 0) + ", checked " + esc(ls.checked || 0) + ", qualified " + esc(ls.qualified || 0) +
+            " (" + esc(ls.newPlaying || 0) + " new accounts), " + esc(ls.calls || 0) + " Census calls</div>" +
+          '<div class="st-dim">Rule: logged in since the last sweep, ≥ 30 min played, ≥ 100 kills+deaths in the last 7 days (new accounts too). Refresh tiers: played this week → weekly, this month → every 2 weeks, 1–12 months → monthly, 🪦 &gt; 1 year → never (only on lookup / Fetch fresh).</div>' +
+          (q.length ? '<table class="st-table"><tr><th>Next up</th><th>Fights / week</th><th></th></tr>' + q.slice(0, 15).map(function (x) {
+            return "<tr><td>" + nm(x.name) + "</td><td>" + esc(x.fights) + "</td><td>" + (x.isNew ? "👶 new" : "") + "</td></tr>";
+          }).join("") + "</table>" : "");
       }
 
       function tick() {
         getJson("data/status.json").catch(function () { return null; }).then(function (st) {
           renderNow(st);
           renderLast(st);
+          renderSize(st);
         });
         getJson("data/index.json").then(renderRecent, function (e) { fail("recent", "data/index.json", e); });
         Promise.all([
@@ -381,9 +401,9 @@
         getJson(WORKER_URL + "/health").then(renderBackup, function () { $("backup").textContent = "Backup timer: status unavailable."; });
         getJson(WORKER_URL + "/runs").then(function (d) { renderRuns(d); renderNowRun(d); }, function (e) { fail("runs", "GitHub Actions runs", e); });
         Promise.all([
-          fetch("data/top-killers.txt?t=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.ok ? r.text() : ""; }).catch(function () { return ""; }),
+          getJson("data/discovery.json").catch(function () { return null; }),
           getJson("data/index.json").catch(function () { return null; }),
-        ]).then(function (res) { renderLive(res[0], res[1]); });
+        ]).then(function (res) { renderDisc(res[0], res[1]); });
         $("stUpdated").textContent = "Last check " + new Date().toLocaleTimeString() + ".";
       }
 
@@ -396,14 +416,14 @@
        🌾 padding + † "adjusted" + the 🧪 outlier guard (grouped by player) go to 📉 Chart anomalies. Uses the
        same metrics as the main tables (player-metrics.mjs). Leads for review, not proof. -->
   <script type="module">
-    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261009-picksync";
-    import { reviewFlags, reviewRuleText, anomalyRuleText, paddingRuleText } from "./red-flags.mjs?v=20261009-picksync";
-    import { groupOutliers } from "./outlier-guard.mjs?v=20261009-picksync";
-    import { classifyBins, CHART_LABELS } from "./bins.mjs?v=20261009-picksync";
-    import { sprout, sampleEvents, sproutRuleText } from "./sprouts.mjs?v=20261009-picksync";
-    import { reviewDecision } from "./padding.mjs?v=20261009-picksync";
-    import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261009-picksync";
-    import "./name-peek.mjs?v=20261009-picksync"; // full-name popup for truncated .nm names
+    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261009-disco";
+    import { reviewFlags, reviewRuleText, anomalyRuleText, paddingRuleText } from "./red-flags.mjs?v=20261009-disco";
+    import { groupOutliers } from "./outlier-guard.mjs?v=20261009-disco";
+    import { classifyBins, CHART_LABELS } from "./bins.mjs?v=20261009-disco";
+    import { sprout, sampleEvents, sproutRuleText } from "./sprouts.mjs?v=20261009-disco";
+    import { reviewDecision } from "./padding.mjs?v=20261009-disco";
+    import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261009-disco";
+    import "./name-peek.mjs?v=20261009-disco"; // full-name popup for truncated .nm names
 
     const POLL_MS = 30 * 1000;
     const CONCURRENCY = 6;

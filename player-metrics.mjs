@@ -15,10 +15,10 @@ import {
   pressureVolume,
   resolveIvi,
   deathMixLite,
-} from "./math.mjs?v=20261009-picksync";
-import { splitFarm } from "./padding.mjs?v=20261009-picksync";
-import { OPPONENT_TOP_N, LEGACY_TOP_N, sampleTopN } from "./census-fetch.mjs?v=20261009-picksync";
-import { cleanTimes } from "./flairs.mjs?v=20261009-picksync";
+} from "./math.mjs?v=20261009-disco";
+import { splitFarm } from "./padding.mjs?v=20261009-disco";
+import { OPPONENT_TOP_N, LEGACY_TOP_N, sampleTopN } from "./census-fetch.mjs?v=20261009-disco";
+import { cleanTimes } from "./flairs.mjs?v=20261009-disco";
 
 /**
  * Older shared-cache files were scored on the top 50 opponents; new fetches use
