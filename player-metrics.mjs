@@ -15,9 +15,10 @@ import {
   pressureVolume,
   resolveIvi,
   deathMixLite,
-} from "./math.mjs?v=20261009-fights";
-import { splitFarm } from "./padding.mjs?v=20261009-fights";
-import { OPPONENT_TOP_N, LEGACY_TOP_N, sampleTopN } from "./census-fetch.mjs?v=20261009-fights";
+} from "./math.mjs?v=20261009-flairs";
+import { splitFarm } from "./padding.mjs?v=20261009-flairs";
+import { OPPONENT_TOP_N, LEGACY_TOP_N, sampleTopN } from "./census-fetch.mjs?v=20261009-flairs";
+import { cleanTimes } from "./flairs.mjs?v=20261009-flairs";
 
 /**
  * Older shared-cache files were scored on the top 50 opponents; new fetches use
@@ -126,6 +127,8 @@ export function normalizePlayer(raw) {
     // Opponents in the sample (missing in older files → 50).
     top: sampleTopN(raw),
     honu: p.honu || (p.cid ? `https://wt.honu.pw/c/${p.cid}/killboard` : ""),
+    // Census account times (flairs.mjs): { created, last } in seconds, or null.
+    times: cleanTimes(p.times),
     source: raw._source || "local",
   };
 }

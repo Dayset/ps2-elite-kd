@@ -24,7 +24,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261009-fights" />
+  <link rel="stylesheet" href="styles.css?v=20261009-flairs" />
   <style>
     /* Ranks page: one long sortable table of every cached player. */
     body.ranks-page { overflow-x: hidden; }
@@ -280,12 +280,13 @@
 
 
   <script type="module">
-    import "./name-peek.mjs?v=20261009-fights";
-    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits } from "./dist.mjs?v=20261009-fights";
-    import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261009-fights";
-    import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261009-fights";
-    import { paletteColor } from "./palette.mjs?v=20261009-fights";
-    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-fights";
+    import "./name-peek.mjs?v=20261009-flairs";
+    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits } from "./dist.mjs?v=20261009-flairs";
+    import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261009-flairs";
+    import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261009-flairs";
+    import { paletteColor } from "./palette.mjs?v=20261009-flairs";
+    import { flairsHtml, FLAIR_LEGEND } from "./flairs.mjs?v=20261009-flairs";
+    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-flairs";
 
     const LS_THEME = "ps2-elite-kd-theme";
     const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";
@@ -428,12 +429,15 @@
           farm: idx.farm != null ? r[idx.farm] || "" : "",
           // Older top-50 opponent sample (new fetches use 200): subtle "◦" after the name.
           legacy: idx.top != null ? (+r[idx.top] || 50) < 200 : false,
+          // 🎲 fun flairs (flairs.mjs): Census account creation / last activity (seconds).
+          times: idx.created != null ? { created: r[idx.created], last: r[idx.last] } : null,
           _bare: bare(r[idx.name]),
           pcts: {},
         };
         o.mark = o.markKind === "padding" ? PADDING_MARK : o.markKind === "adjusted" ? ADJUSTED_MARK : "";
         o.markTip = o.markKind === "padding" ? PADDING_MARK_TIP : o.markKind === "adjusted" ? ADJUSTED_MARK_TIP : "";
         o.label = o.name + o.mark;
+        o.flair = flairsHtml(o.times);
         for (const id of Object.keys(pools)) {
           const v = r[idx[id]];
           o[id] = v;
@@ -533,7 +537,8 @@
         rankCellHtml(r) +
         `<td class="rk-name"><a href="${href}" title="Open on the main chart"><span class="nm" data-full="${esc(r.name)}" title="${esc(r.name + (r.farm ? " — " + r.farm : ""))}">${esc(r.name)}</span></a>` +
         (r.mark ? `<span class="pad-mark mark-${r.markKind}" title="${esc(r.markTip + ". " + r.farm)}">${r.mark}</span>` : "") +
-        (r.legacy ? `<span class="sample-legacy" title="${esc(LEGACY_SAMPLE_TIP)}">${LEGACY_SAMPLE_MARK}</span>` : "") + `</td>` +
+        (r.legacy ? `<span class="sample-legacy" title="${esc(LEGACY_SAMPLE_TIP)}">${LEGACY_SAMPLE_MARK}</span>` : "") +
+        (r.flair || "") + `</td>` +
         cols.map((c) => cellHtml(c, r)).join("") +
         `</tr>`
       );
@@ -994,6 +999,7 @@
       // Legend for the "*" marker, only when someone carries it.
       const notes = [...new Set(data.rows.map((r) => r.markTip).filter(Boolean))];
       if (data.rows.some((r) => r.legacy)) notes.push(`${LEGACY_SAMPLE_MARK} ${LEGACY_SAMPLE_TIP}`);
+      if (data.rows.some((r) => r.flair)) notes.push(FLAIR_LEGEND);
       $("ranksStatus").innerHTML = notes.map((t) => `<span class="legend-note">${esc(t)}</span>`).join("<br />");
       fillMetricSelect();
       render();

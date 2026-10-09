@@ -22,6 +22,7 @@ import { reviewFlags } from "../red-flags.mjs";
 import { farmNote, statMark } from "../padding.mjs";
 import { findOutliers, guardStatus } from "../outlier-guard.mjs";
 import { hiddenList } from "../hidden.mjs";
+import { cleanTimes } from "../flairs.mjs";
 
 /** Metric ids (same ids as the app.js stats columns). */
 export const METRIC_COLS = Object.freeze([
@@ -39,8 +40,10 @@ export const METRIC_COLS = Object.freeze([
  * MIN_FIGHTS (ranks.html hover text). "mark" = "padding" ("*") / "adjusted" ("†") / null
  * (padding.mjs statMark); "farm" = note on farm-account kills excluded (null when none).
  * "top" = opponents in the sample (50 for older files, 200 for new fetches).
+ * "created" / "last" = Census account creation / last activity, UNIX seconds
+ * (flairs.mjs 🎲 fun flairs; null when the cache file has no times yet).
  */
-export const RANK_COLS = Object.freeze(["name", "query", "slug", "savedAt", ...METRIC_COLS, "thin", "mark", "farm", "top"]);
+export const RANK_COLS = Object.freeze(["name", "query", "slug", "savedAt", ...METRIC_COLS, "thin", "mark", "farm", "top", "created", "last"]);
 
 const round6 = (v) => (typeof v === "number" && Number.isFinite(v) ? Math.round(v * 1e6) / 1e6 : null);
 
@@ -59,7 +62,7 @@ export function rankRow(raw, { slug = "", savedAt = null } = {}) {
   if (!p || !p.display || p.display === "?") return null;
   const m = playerMetrics(p);
   const t = savedAt != null ? +savedAt : +raw.savedAt || null;
-  return [p.display, bareName(p.display) || p.display, slug, t, ...METRIC_COLS.map((k) => round6(shownValue(m, k))), m.thin ? 1 : 0, statMark(m.farm).kind || null, farmNote(m.farm) || null, p.top];
+  return [p.display, bareName(p.display) || p.display, slug, t, ...METRIC_COLS.map((k) => round6(shownValue(m, k))), m.thin ? 1 : 0, statMark(m.farm).kind || null, farmNote(m.farm) || null, p.top, (p.times && p.times.created) || null, (p.times && p.times.last) || null];
 }
 
 /** data/hidden.json → hiddenList lookup (missing / broken file = nobody hidden). */

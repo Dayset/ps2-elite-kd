@@ -23,6 +23,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { censusQueryName } from "../analyze-run.mjs";
+import { accountTimes } from "../flairs.mjs";
 import {
   CENSUS_HOST,
   CensusError,
@@ -676,6 +677,8 @@ async function loadLive(name, { prevAssists = null } = {}) {
       honu: `https://wt.honu.pw/c/${cid}/killboard`,
       source: "census",
       ...(assists ? { assists } : {}),
+      // Census character.times from the same lookup (flairs.mjs 🪦 / 👴🏽).
+      ...(accountTimes(c) ? { times: accountTimes(c) } : {}),
       rows,
       curve,
     },
