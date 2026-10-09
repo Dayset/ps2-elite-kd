@@ -1157,19 +1157,21 @@ html[data-theme="light"] .progress-modal-backdrop {
   outline-offset: 1px;
 }
 @media (max-width: 520px) {
-  /* Phones: caption drops onto its own line under the pill, left-aligned so
-     it never reaches the zoom slider at the plot's top-right. */
+  /* Phones: pill centred over the chart (as before the caption existed);
+     caption on its own line, centred beneath it, so it never moves the pill. */
   .chart-mode-row {
     display: grid;
     grid-template-columns: 1fr;
+    justify-items: center;
     row-gap: 0.25rem;
-    margin: 0 0.3rem 0.3rem;
+    margin: 0 auto 0.3rem;
   }
-  .chart-mode-bar { grid-row: 1; justify-self: end; }
+  .chart-mode-bar { grid-row: 1; justify-self: center; }
   .ghost-caption {
     grid-row: 2;
-    justify-self: start;
-    text-align: left;
+    justify-self: center;
+    justify-content: center;
+    text-align: center;
     font-size: 0.6rem;
   }
   .chart-mode-btn {
