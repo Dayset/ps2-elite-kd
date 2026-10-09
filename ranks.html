@@ -24,7 +24,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261009-padbin" />
+  <link rel="stylesheet" href="styles.css?v=20261009-picksync" />
   <style>
     /* Ranks page: one long sortable table of every cached player. */
     body.ranks-page { overflow-x: hidden; }
@@ -280,12 +280,13 @@
 
 
   <script type="module">
-    import "./name-peek.mjs?v=20261009-padbin";
-    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits } from "./dist.mjs?v=20261009-padbin";
-    import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261009-padbin";
-    import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261009-padbin";
-    import { paletteColor } from "./palette.mjs?v=20261009-padbin";
-    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-padbin";
+    import "./name-peek.mjs?v=20261009-picksync";
+    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits } from "./dist.mjs?v=20261009-picksync";
+    import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261009-picksync";
+    import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261009-picksync";
+    import { paletteColor } from "./palette.mjs?v=20261009-picksync";
+    import { PICK_PARAM, picksFromSearch, matchPicks, analyzeHref, MAIN_PENDING_KEY } from "./pick-sync.mjs?v=20261009-picksync";
+    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-picksync";
 
     const LS_THEME = "ps2-elite-kd-theme";
     const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";
@@ -387,12 +388,37 @@
         if (picked.size) localStorage.setItem(LS_PICKS, JSON.stringify([...picked.keys()]));
         else localStorage.removeItem(LS_PICKS);
       } catch {}
+      syncPickUrl();
     }
-    /** Re-tick saved picks that still exist in ranks.json (pick order, max 10). */
+    /** Keep ?pick= in the address bar equal to the ticks (shareable, refresh-safe). */
+    function syncPickUrl() {
+      try {
+        const url = new URL(location.href);
+        if (picked.size) url.searchParams.set(PICK_PARAM, [...picked.keys()].join(","));
+        else url.searchParams.delete(PICK_PARAM);
+        const next = url.toString().replace(/%2C/gi, ",");
+        if (next !== location.href) history.replaceState(history.state, "", next);
+      } catch {}
+    }
+    /**
+     * Re-tick picks. ?pick=a,b (from the main page's 🏆 link, or a shared
+     * Rankings link) replaces the saved picks (t289u); names not in ranks.json
+     * (hidden / uncached / unknown) are skipped. No usable ?pick= → the saved
+     * picks that still exist (pick order, max 10).
+     */
     function restorePicks() {
+      if (!data) return;
+      const carried = picksFromSearch(location.search);
+      const hits = carried ? matchPicks(carried, data.rows, MAX_NAMES) : [];
+      if (hits.length) {
+        picked.clear();
+        for (const h of hits) picked.set(h.query, h.name);
+        savePicks();
+        return;
+      }
       let saved = [];
       try { saved = JSON.parse(localStorage.getItem(LS_PICKS) || "[]"); } catch {}
-      if (!Array.isArray(saved) || !data) return;
+      if (!Array.isArray(saved)) return;
       const byQ = new Map(data.rows.map((r) => [r.query, r]));
       for (const q of saved) {
         if (picked.size >= MAX_NAMES) break;
@@ -582,6 +608,22 @@
       $("ranksPicked").textContent = `${picked.size} / ${MAX_NAMES}`;
       $("ranksCompare").disabled = picked.size === 0;
       $("ranksClearPicks").hidden = picked.size === 0;
+      // 🔍 back links take the picks along too (they replace the main page's
+      // field, t289u); nothing picked → plain back, main page left as it was.
+      const href = analyzeHref([...picked.keys()]);
+      for (const id of ["backLink", "backLinkFooter"]) {
+        const a = document.getElementById(id);
+        if (a) a.setAttribute("href", href);
+      }
+    }
+    /** Leaving for the main page with picks: forget its saved field so picks replace it. */
+    function handOffPicks() {
+      if (!picked.size) return;
+      try { localStorage.removeItem(MAIN_PENDING_KEY); } catch {}
+    }
+    for (const id of ["backLink", "backLinkFooter"]) {
+      const a = document.getElementById(id);
+      if (a) a.addEventListener("click", handOffPicks);
     }
 
     function showLimitToast() {
@@ -978,8 +1020,8 @@
 
     $("ranksCompare").addEventListener("click", () => {
       if (!picked.size) return;
-      const names = [...picked.keys()].join(",");
-      location.href = `index.html?names=${encodeURIComponent(names).replace(/%2C/g, ",")}`;
+      handOffPicks();
+      location.href = analyzeHref([...picked.keys()]);
     });
 
     // --- load ---
@@ -991,15 +1033,8 @@
       rebuildIndex(payload);
       restorePicks();
       syncPickedUi();
-      // Legend for the "*" marker, only when someone carries it.
-      const notes = [...new Set(data.rows.map((r) => r.markTip).filter(Boolean))];
-      if (data.rows.some((r) => r.legacy)) notes.push(`${LEGACY_SAMPLE_MARK} ${LEGACY_SAMPLE_TIP}`);
-      // Mark notes (* / † / ◦) start collapsed: one short muted line until opened.
-      const marks = [...new Set(notes.map((t) => t.trim().split(/\s+/)[0]))].join(" ");
-      $("ranksStatus").innerHTML = notes.length
-        ? `<details class="fold-note marks-note"><summary>♿ What ${esc(marks)} mean</summary>` +
-          notes.map((t) => `<p class="legend-note">${esc(t)}</p>`).join("") + `</details>`
-        : "";
+      // No mark legend on Rankings (t290u): * / † / ◦ explain themselves via their hover tooltips.
+      $("ranksStatus").innerHTML = "";
       fillMetricSelect();
       render();
       drawDist();

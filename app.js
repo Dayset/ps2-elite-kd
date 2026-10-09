@@ -32,9 +32,10 @@ import {
   windowYValues,
   kpmBandCurve,
   bandReliability,
-} from "./math.mjs?v=20261009-padbin";
-import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261009-padbin";
-import GHOST_MODEL from "./data/ghost-model.mjs?v=20261009-padbin";
+} from "./math.mjs?v=20261009-picksync";
+import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261009-picksync";
+import GHOST_MODEL from "./data/ghost-model.mjs?v=20261009-picksync";
+import { ranksHref } from "./pick-sync.mjs?v=20261009-picksync";
 import {
   NameLoadError,
   classifyLoadError,
@@ -60,7 +61,7 @@ import {
   formatEtaLeft,
   etaLearnLiveMs,
   expectedNameMs,
-} from "./analyze-run.mjs?v=20261009-padbin";
+} from "./analyze-run.mjs?v=20261009-picksync";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
@@ -74,7 +75,7 @@ import {
   THIN_MARK,
   THIN_NOTE_HEAD,
   thinPlayerLine,
-} from "./player-metrics.mjs?v=20261009-padbin";
+} from "./player-metrics.mjs?v=20261009-picksync";
 /** "22 kills / 60 deaths" in the opponent sample (MIN_FIGHTS counts). */
 function fightsText(r) {
   const k = r.sampleKills || 0;
@@ -86,16 +87,16 @@ function fightsText(r) {
 function thinCellTip(r) {
   return `${MIN_FIGHTS_TIP}. This sample: ${fightsText(r).replace(/[()]/g, "")}`;
 }
-import { farmNote, statMark } from "./padding.mjs?v=20261009-padbin";
+import { farmNote, statMark } from "./padding.mjs?v=20261009-picksync";
 // Account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times: chart name list only.
-import { accountTimes, flairsHtml } from "./flairs.mjs?v=20261009-padbin";
+import { accountTimes, flairsHtml } from "./flairs.mjs?v=20261009-picksync";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261009-padbin";
-import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261009-padbin";
+import "./name-peek.mjs?v=20261009-picksync";
+import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261009-picksync";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
-import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-padbin";
+import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-picksync";
 // Live data: Daybreak Census only (batched, paced); Honu just for a rare history fallback.
-import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261009-padbin";
+import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261009-picksync";
 import {
   censusBase,
   censusRequest,
@@ -104,7 +105,7 @@ import {
   limitConcurrency,
   tokenBucket,
   OPPONENT_TOP_N,
-} from "./census-fetch.mjs?v=20261009-padbin";
+} from "./census-fetch.mjs?v=20261009-picksync";
 
   // Player palettes (dark + light theme) live in palette.mjs (shared with ranks.html).
   const COLORS = PALETTE_DARK;
@@ -1210,6 +1211,28 @@ import {
       els.nameTokensEl.appendChild(btn);
     });
     syncNamesPlaceholder();
+    syncRanksLink();
+  }
+
+  /**
+   * 🏆 link carries the comparison to Rankings as ?pick=a,b (t289u) so they
+   * show up ✅ picked there. The lone default ShloDog starter carries nothing.
+   * Kept current on every chip change (long-press / middle-click work too)
+   * and refreshed on click to include text still being typed.
+   */
+  function syncRanksLink() {
+    const a = document.getElementById("ranksLink");
+    if (!a) return;
+    a.setAttribute("href", ranksHref(currentNamesInField(), { starter: DEFAULT_PLACEHOLDER_NAME, max: MAX_NAMES }));
+  }
+  {
+    const a = document.getElementById("ranksLink");
+    if (a) {
+      const refresh = () => syncRanksLink();
+      a.addEventListener("pointerdown", refresh);
+      a.addEventListener("focus", refresh);
+      a.addEventListener("click", refresh);
+    }
   }
 
   /**
@@ -3459,6 +3482,7 @@ import {
 
     els.namesInput.addEventListener("input", () => {
       clearGraphReadyHint();
+      syncRanksLink();
       const val = els.namesInput.value;
       // Completed token(s) when text ends with a separator
       if (/[\s,;]$/.test(val)) {
