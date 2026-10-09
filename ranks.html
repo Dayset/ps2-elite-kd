@@ -24,7 +24,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261009-activity" />
+  <link rel="stylesheet" href="styles.css?v=20261009-minfights" />
   <style>
     /* Ranks page: one long sortable table of every cached player. */
     body.ranks-page { overflow-x: hidden; }
@@ -273,10 +273,11 @@
 
 
   <script type="module">
-    import "./name-peek.mjs?v=20261009-activity";
-    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits } from "./dist.mjs?v=20261009-activity";
-    import { paletteColor } from "./palette.mjs?v=20261009-activity";
-    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-activity";
+    import "./name-peek.mjs?v=20261009-minfights";
+    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits } from "./dist.mjs?v=20261009-minfights";
+    import { MIN_FIGHTS, MIN_FIGHTS_TIP } from "./player-metrics.mjs?v=20261009-minfights";
+    import { paletteColor } from "./palette.mjs?v=20261009-minfights";
+    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-minfights";
 
     const LS_THEME = "ps2-elite-kd-theme";
     const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";
@@ -286,8 +287,8 @@
     const VISIBLE = [
       { id: "adjs", label: "⚔️ iVi", digits: 0, floorZero: true, tip: "ivi adjusted for your own kill speed" },
       { id: "rf", label: "🛡️ Resist", digits: 2, tip: "Resistance Factor" },
-      { id: "act", label: "🏃 Activity", digits: 2, tip: "K/D × own KPM" },
-      { id: "pvs", label: "🦁 Brave", digits: 2, tip: "Bravery (Activity × slope)" },
+      { id: "act", label: "🏃 Activity", digits: 2, thinTip: true, tip: `K/D × own KPM. Shows — below ${MIN_FIGHTS.KILLS} kills / ${MIN_FIGHTS.DEATHS} deaths` },
+      { id: "pvs", label: "🦁 Brave", digits: 2, thinTip: true, tip: `Bravery (Activity × slope). Shows — below ${MIN_FIGHTS.KILLS} kills / ${MIN_FIGHTS.DEATHS} deaths` },
       { id: "rkd", label: "☠️ K/D", digits: 3, tip: "Resistance-weighted K/D" },
       { id: "mech", label: "⚙️ Mech%", digits: 1, tip: "Projected mechanized share" },
       { id: "inflation", label: "🎈 Inflation", digits: 2, tip: "Global KD ÷ KD at ≥0.5 enemy KPM — lower is better", ascFirst: true },
@@ -405,6 +406,7 @@
           query: r[idx.query],
           slug: r[idx.slug],
           savedAt: r[idx.savedAt],
+          thin: idx.thin != null && r[idx.thin] === 1,
           _bare: bare(r[idx.name]),
           pcts: {},
         };
@@ -476,6 +478,7 @@
       if (c.floorZero && fin(v) && v < 0) {
         return `<td class="below-scale" title="Below the rating scale">0</td>`;
       }
+      if (!fin(v) && c.thinTip && row.thin) return `<td class="thin-sample" title="${esc(MIN_FIGHTS_TIP)}">—</td>`;
       if (!fin(v)) return `<td>—</td>`;
       const p = row.pcts[c.id];
       const pct = p == null ? "" : `<span class="pct" title="Population percentile: higher than ${p}% of cached players">p${p}</span>`;

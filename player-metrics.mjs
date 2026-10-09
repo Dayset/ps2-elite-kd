@@ -15,7 +15,26 @@ import {
   pressureVolume,
   resolveIvi,
   deathMixLite,
-} from "./math.mjs?v=20261009-activity";
+} from "./math.mjs?v=20261009-minfights";
+
+/**
+ * Minimum fights before 🏃 Activity and 🦁 Brave are shown (user, 2026-10-09:
+ * "a proper account is at least 100 kills", about an hour of play). The death
+ * floor stops a 100+ kill / 1-death sample from blowing up K/D. Counted over
+ * the same opponent rows Activity is built from (rfIf kills / deaths).
+ * Display only: red flags (red-flags.mjs) and 🌱 sprouts still read the raw
+ * act / pvs values, so they work exactly as before.
+ */
+export const MIN_FIGHTS = Object.freeze({ KILLS: 100, DEATHS: 5 });
+
+/** Hover text for a blanked 🏃 Activity / 🦁 Brave cell. */
+export const MIN_FIGHTS_TIP =
+  `Too few fights to measure (needs ${MIN_FIGHTS.KILLS}+ kills and ${MIN_FIGHTS.DEATHS}+ deaths)`;
+
+/** True when the sample is big enough for 🏃 Activity / 🦁 Brave. */
+export function enoughFights(kills, deaths, min = MIN_FIGHTS) {
+  return (+kills || 0) >= min.KILLS && (+deaths || 0) >= min.DEATHS;
+}
 
 /** Raw cache / live / shared player JSON → the shape the charts & tables use. */
 export function normalizePlayer(raw) {
@@ -64,6 +83,10 @@ export function playerMetrics(p) {
   const dm = deathMixLite(p);
   const adj = adjustedIvi(ivi, rf);
   const ownKpm = p.own_kpm || p.global_kpm;
+  const sampleKills = m && isFiniteNum(m.kills) ? m.kills : 0;
+  const sampleDeaths = m && isFiniteNum(m.deaths) ? m.deaths : 0;
+  const thin = !enoughFights(sampleKills, sampleDeaths);
+  const pvs = pressureVolume(act, slope);
   return {
     p,
     m,
@@ -81,7 +104,14 @@ export function playerMetrics(p) {
     coi: combatOutput(rf),
     mech: projectedMech(rf),
     slope,
-    pvs: pressureVolume(act, slope),
+    // Raw values (red flags / build-log use these unchanged).
+    pvs,
+    // Shown on the main table and ranks: blank (NaN) below MIN_FIGHTS.
+    sampleKills,
+    sampleDeaths,
+    thin,
+    actShown: thin ? NaN : act,
+    pvsShown: thin ? NaN : pvs,
     adj,
     // ⚡ ivi: 🎯🎈 ivi adjusted for own kill speed (slow, safe KD counts for less).
     adjs: speedAdjustedIvi(adj, ownKpm),

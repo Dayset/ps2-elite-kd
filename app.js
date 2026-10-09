@@ -32,9 +32,9 @@ import {
   windowYValues,
   kpmBandCurve,
   bandReliability,
-} from "./math.mjs?v=20261009-activity";
-import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261009-activity";
-import GHOST_MODEL from "./data/ghost-model.mjs?v=20261009-activity";
+} from "./math.mjs?v=20261009-minfights";
+import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261009-minfights";
+import GHOST_MODEL from "./data/ghost-model.mjs?v=20261009-minfights";
 import {
   NameLoadError,
   classifyLoadError,
@@ -58,18 +58,20 @@ import {
   estimateRemainingMs,
   nextEtaDeadline,
   formatEtaLeft,
-} from "./analyze-run.mjs?v=20261009-activity";
+} from "./analyze-run.mjs?v=20261009-minfights";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
-} from "./player-metrics.mjs?v=20261009-activity";
+  MIN_FIGHTS,
+  MIN_FIGHTS_TIP,
+} from "./player-metrics.mjs?v=20261009-minfights";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261009-activity";
-import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261009-activity";
+import "./name-peek.mjs?v=20261009-minfights";
+import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261009-minfights";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
-import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-activity";
+import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-minfights";
 // Live data: Daybreak Census only (batched, paced); Honu just for a rare history fallback.
-import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261009-activity";
+import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261009-minfights";
 import {
   censusBase,
   censusRequest,
@@ -77,7 +79,7 @@ import {
   fetchPlayerCensus,
   limitConcurrency,
   tokenBucket,
-} from "./census-fetch.mjs?v=20261009-activity";
+} from "./census-fetch.mjs?v=20261009-minfights";
 
   // Player palettes (dark + light theme) live in palette.mjs (shared with ranks.html).
   const COLORS = PALETTE_DARK;
@@ -2618,8 +2620,8 @@ import {
     const adjVisibleCols = [
       { id: "adjs", label: "⚔️ iVi", hint: "ivi adjusted for your own kill speed (🎯🎈 ivi in the debug columns is the unadjusted score). Own KPM 0.8–1.4 = unchanged; faster earns a growing bonus; slower scales the score down (at most halved), so a slow, safe KD counts for less but never goes negative. Below zero shows as 0.", fn: (r) => r.adjs, digits: 0, floorZero: true },
       { id: "rf", label: "🛡️ Resist", hint: "Resistance: how hard the players you die to are (Resistance Factor).", fn: (r) => r.rf, digits: 2 },
-      { id: "act", label: "🏃 Activity", hint: "How much high-pressure combat you see (☠️ K/D × own KPM).", fn: (r) => r.act, digits: 2 },
-      { id: "pvs", label: "🦁 Brave", hint: "Bravery (formerly LionHeart): 🏃 Activity × pressure slope — sustained elite volume under hard opposition.", fn: (r) => r.pvs, digits: 2 },
+      { id: "act", label: "🏃 Activity", hint: `How much high-pressure combat you see (☠️ K/D × own KPM). Shows — below ${MIN_FIGHTS.KILLS} kills / ${MIN_FIGHTS.DEATHS} deaths.`, fn: (r) => r.actShown, digits: 2, thinTip: true },
+      { id: "pvs", label: "🦁 Brave", hint: `Bravery (formerly LionHeart): 🏃 Activity × pressure slope — sustained elite volume under hard opposition. Shows — below ${MIN_FIGHTS.KILLS} kills / ${MIN_FIGHTS.DEATHS} deaths.`, fn: (r) => r.pvsShown, digits: 2, thinTip: true },
       { id: "rkd", label: "☠️ K/D", hint: "Resistance-weighted K/D against the opposition mix you actually face.", fn: (r) => r.rkd, digits: 3 },
       { id: "mech", label: "⚙️ Mech%", hint: "Projected mechanized / vehicle share implied by 🛡️ Resist.", fn: (r) => r.mech, digits: 1 },
       { id: "inflation", label: "🎈 Inflation", hint: "Global KD ÷ KD at ≥0.5 enemy KPM — how much soft opposition inflates your KD (avg planetman ~0.35).", fn: (r) => r.inflation, digits: 2, pctDir: "low", pctRefFloor: 1.0 },
@@ -2734,6 +2736,10 @@ import {
               // ⚡ ivi: below-zero values read as "0" (not rated); sort keeps true value so they stay lowest.
               if (c.floorZero && isFiniteNum(v) && v < 0) {
                 return `<td class="below-scale" title="Below the rating scale">0</td>`;
+              }
+              // 🏃 Activity / 🦁 Brave below MIN_FIGHTS: "—" with the reason on hover.
+              if (c.thinTip && row.thin && !isFiniteNum(v)) {
+                return `<td class="thin-sample" title="${escapeHtml(MIN_FIGHTS_TIP)}">—</td>`;
               }
               // Small dimmed % = gap to the column reference (none on the reference cell):
               // "−28%" below the highest value, or "+35%" above the lowest for pctDir "low".

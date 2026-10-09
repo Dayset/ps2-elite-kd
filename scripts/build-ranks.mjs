@@ -28,7 +28,13 @@ export const METRIC_COLS = Object.freeze([
   // 📊 Public
   "kd", "kpm", "ownKpm", "acc", "hsr", "ivi",
 ]);
-export const RANK_COLS = Object.freeze(["name", "query", "slug", "savedAt", ...METRIC_COLS]);
+/**
+ * 🏃 Activity / 🦁 Brave are stored as SHOWN on the main page: null below
+ * MIN_FIGHTS (player-metrics.mjs), so ranks / sorting / distributions skip them.
+ * Trailing "thin" = 1 when the sample is below MIN_FIGHTS (ranks.html hover text).
+ */
+const SHOWN_KEY = Object.freeze({ act: "actShown", pvs: "pvsShown" });
+export const RANK_COLS = Object.freeze(["name", "query", "slug", "savedAt", ...METRIC_COLS, "thin"]);
 
 const round6 = (v) => (typeof v === "number" && Number.isFinite(v) ? Math.round(v * 1e6) / 1e6 : null);
 
@@ -47,7 +53,7 @@ export function rankRow(raw, { slug = "", savedAt = null } = {}) {
   if (!p || !p.display || p.display === "?") return null;
   const m = playerMetrics(p);
   const t = savedAt != null ? +savedAt : +raw.savedAt || null;
-  return [p.display, bareName(p.display) || p.display, slug, t, ...METRIC_COLS.map((k) => round6(m[k]))];
+  return [p.display, bareName(p.display) || p.display, slug, t, ...METRIC_COLS.map((k) => round6(m[SHOWN_KEY[k] || k])), m.thin ? 1 : 0];
 }
 
 /** Build the whole ranks object from a data/ directory. */
