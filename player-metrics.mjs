@@ -15,7 +15,7 @@ import {
   pressureVolume,
   resolveIvi,
   deathMixLite,
-} from "./math.mjs?v=20261009-note";
+} from "./math.mjs?v=20261009-glyph";
 
 /** Raw cache / live / shared player JSON → the shape the charts & tables use. */
 export function normalizePlayer(raw) {

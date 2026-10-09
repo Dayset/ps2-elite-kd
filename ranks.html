@@ -24,7 +24,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261009-note" />
+  <link rel="stylesheet" href="styles.css?v=20261009-glyph" />
   <style>
     /* Ranks page: one long sortable table of every cached player. */
     body.ranks-page { overflow-x: hidden; }
@@ -246,7 +246,7 @@
         <svg id="distSvg" role="img" aria-label="Distribution of the selected metric across cached players"></svg>
         <div id="distTip" class="dist-tip" hidden></div>
       </div>
-      <div class="dist-note">Bars: % of players per value range (left axis). Line: cumulative % of players below (right axis). Tap / hover a bar for details. Picked players (☐) — or a search with ≤ 5 matches — are marked on the chart.</div>
+      <div class="dist-note">Bars: % of players per value range (left axis). Line: cumulative % of players below (right axis). Tap / hover a bar for details. Players you tick in the table (checkbox column) — or a search with ≤ 5 matches — are marked on the chart.</div>
     </details>
 
     <p class="pooled-note" style="margin: 0.3rem 0 0.45rem">ℹ️ Vehicle and infantry kills are pooled together for now, so vehicle mains may look off in the graph and stats. Infantry-only numbers are coming later.</p>
@@ -273,10 +273,10 @@
 
 
   <script type="module">
-    import "./name-peek.mjs?v=20261009-note";
-    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits } from "./dist.mjs?v=20261009-note";
-    import { paletteColor } from "./palette.mjs?v=20261009-note";
-    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-note";
+    import "./name-peek.mjs?v=20261009-glyph";
+    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits } from "./dist.mjs?v=20261009-glyph";
+    import { paletteColor } from "./palette.mjs?v=20261009-glyph";
+    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-glyph";
 
     const LS_THEME = "ps2-elite-kd-theme";
     const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";
