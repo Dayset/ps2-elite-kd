@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>PS2 Elite K/D — opposition-weighted curve</title>
   <meta name="description" content="PlanetSide 2 elite K/D vs enemy weapon KPM comparison chart" />
-  <link rel="stylesheet" href="styles.css?v=20261008-chips" />
+  <link rel="stylesheet" href="styles.css?v=20261008-raw" />
 </head>
 <body>
   <div class="controls">
@@ -66,9 +66,9 @@
   <div class="chart-wrap empty">
     <div id="chartModeBar" class="chart-mode-bar" role="group" aria-label="Graph view">
       <button type="button" class="chart-mode-btn" data-mode="cumulative" aria-pressed="true"
-              title="Cumulative (default): K/D against everyone at or above this enemy KPM. The left edge is roughly overall K/D.">📈 Cumulative</button>
+              title="Raw (default): K/D against everyone at or above this enemy KPM (cumulative). The left edge is roughly overall K/D.">📈 Raw</button>
       <button type="button" class="chart-mode-btn" data-mode="banded" aria-pressed="false"
-              title="Banded: K/D against enemies around this KPM (±0.2). Shows where a player wins or loses; faded / thin where there are few fights, hidden where almost none.">🎚️ Banded</button>
+              title="Smooth: K/D against enemies around this KPM (±0.2). Shows where a player wins or loses; faded / thin where there are few fights, hidden where almost none.">🎚️ Smooth</button>
       <span class="chart-mode-sep" aria-hidden="true"></span>
       <button type="button" class="chart-mode-btn chart-ghost-btn" data-ghosts aria-pressed="true"
               title="👻 Ghost lines on/off: a dashed, faint continuation predicted from play style (fitted on the shared cache, anchored to the player's own fights), so every line spans the whole graph. Not real fights; shade ≈ ±1σ.">👻 Ghost</button>
@@ -104,6 +104,6 @@
     <p>Thanks to <a href="https://wt.honu.pw/" target="_blank" rel="noopener noreferrer">HONU</a> / Varunda</p>
   </footer>
 
-  <script type="module" src="app.js?v=20261008-chips"></script>
+  <script type="module" src="app.js?v=20261008-raw"></script>
 </body>
 </html>

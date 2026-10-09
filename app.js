@@ -32,9 +32,9 @@ import {
   windowYValues,
   kpmBandCurve,
   bandReliability,
-} from "./math.mjs?v=20261008-chips";
-import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261008-chips";
-import GHOST_MODEL from "./data/ghost-model.mjs?v=20261008-chips";
+} from "./math.mjs?v=20261008-raw";
+import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261008-raw";
+import GHOST_MODEL from "./data/ghost-model.mjs?v=20261008-raw";
 import {
   NameLoadError,
   classifyLoadError,
@@ -57,16 +57,16 @@ import {
   estimateRemainingMs,
   nextEtaDeadline,
   formatEtaLeft,
-} from "./analyze-run.mjs?v=20261008-chips";
+} from "./analyze-run.mjs?v=20261008-raw";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
-} from "./player-metrics.mjs?v=20261008-chips";
+} from "./player-metrics.mjs?v=20261008-raw";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261008-chips";
-import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261008-chips";
+import "./name-peek.mjs?v=20261008-raw";
+import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261008-raw";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
-import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261008-chips";
+import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261008-raw";
 
   // Player palettes (dark + light theme) live in palette.mjs (shared with ranks.html).
   const COLORS = PALETTE_DARK;
@@ -92,7 +92,7 @@ import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./j
   const LS_THEME = "ps2-elite-kd-theme";
   /** "1" = show older debug columns in the Adjusted table (footer checkbox). */
   const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";
-  /** Chart view: "banded" (opt-in) or anything else = cumulative (default). */
+  /** Chart view: "banded" (🎚️ Smooth, opt-in) or anything else = cumulative (📈 Raw, default). Stored values unchanged. */
   const LS_CHART_MODE = "ps2-elite-kd-chart-mode";
   /** 👻 ghost (predicted) lines: "0" = off; default on. */
   const LS_GHOSTS = "ps2-elite-kd-ghosts";

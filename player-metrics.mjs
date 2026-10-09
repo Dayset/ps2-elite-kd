@@ -15,7 +15,7 @@ import {
   pressureVolume,
   resolveIvi,
   deathMixLite,
-} from "./math.mjs?v=20261008-chips";
+} from "./math.mjs?v=20261008-raw";
 
 /** Raw cache / live / shared player JSON → the shape the charts & tables use. */
 export function normalizePlayer(raw) {
