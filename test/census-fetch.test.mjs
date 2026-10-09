@@ -16,6 +16,11 @@ import {
   totalsByCharacter,
   defaultCensusRate,
   CENSUS_BATCH,
+  classifyCensus,
+  backoffDelay,
+  censusRequest,
+  limitConcurrency,
+  CensusError,
 } from "../census-fetch.mjs";
 
 const ME = "5428000000000000001";
@@ -106,11 +111,20 @@ describe("stat batching", () => {
     assert.match(u.stat, /characters_stat\?character_id=5428000000000000001,5428000000000000101&stat_name=weapon_deaths,weapon_play_time,weapon_fire_count,weapon_hit_count/);
     assert.match(u.faction, /stat_name=weapon_kills,weapon_headshots/);
   });
-  it("Census error object -> throws (caller treats it as an outage)", async () => {
-    await assert.rejects(
-      fetchCharacterInfo([id(1)], { base: censusBase(), getJson: async () => ({ error: "Missing Service ID" }) }),
-      /Census unavailable/
-    );
+  it("a batch that keeps failing marks its ids failed (partial result) instead of throwing", async () => {
+    const info = await fetchCharacterInfo([id(1), id(2)], { base: censusBase(), getJson: async () => ({ error: "service_unavailable" }) });
+    assert.deepEqual(info.get(id(1)), { pace: null, failed: true, name: "", outfitTag: "" });
+    assert.equal(info.get(id(2)).failed, true);
+  });
+  it("a failing names call only loses names (ids shown), stats still used", async () => {
+    const getJson = async (u) => {
+      if (u.includes("/character?")) throw new Error("busy");
+      if (u.includes("_by_faction")) return { characters_stat_by_faction_list: [{ character_id: id(1), stat_name: "weapon_kills", profile_id: "0", value_forever_vs: "60" }] };
+      return { characters_stat_list: [{ character_id: id(1), stat_name: "weapon_play_time", profile_id: "0", value_forever: "3600" }] };
+    };
+    const info = await fetchCharacterInfo([id(1)], { base: censusBase(), getJson });
+    assert.equal(info.get(id(1)).pace.kpm, 1);
+    assert.equal(info.get(id(1)).name, "");
   });
 });
 
@@ -168,5 +182,156 @@ describe("tokenBucket", () => {
     assert.ok(defaultCensusRate("example").perMinute < 10);
     assert.ok(defaultCensusRate("s:example").perMinute < 10);
     assert.ok(defaultCensusRate("daysetps2legends").perMinute > 10 && defaultCensusRate("daysetps2legends").perMinute <= 60);
+  });
+});
+
+describe("fetchPlayerCensus partial results", () => {
+  it("opponents whose batch failed are skipped (no fake 0-KPM rows); the player still loads", async () => {
+    let statCalls = 0;
+    const getJson = async (u) => {
+      if (u.includes("characters_event_grouped")) {
+        return { characters_event_grouped_list: Array.from({ length: 70 }, (_, i) => ({ table_type: "KILL", count: String(200 - i), character_id: id(i) })) };
+      }
+      const q = new URL(u).searchParams.get("character_id").split(",");
+      if (u.includes("characters_stat?")) {
+        statCalls++;
+        return { characters_stat_list: q.map((c) => ({ character_id: c, stat_name: "weapon_play_time", profile_id: "0", value_forever: "60" })) };
+      }
+      if (u.includes("_by_faction")) return { characters_stat_by_faction_list: q.map((c) => ({ character_id: c, stat_name: "weapon_kills", profile_id: "0", value_forever_vs: "1" })) };
+      return { character_list: [] };
+    };
+    const r = await fetchPlayerCensus(ME, { base: censusBase(), getJson, topN: 50, batch: 60 });
+    assert.equal(r.rows.length, 50);
+    assert.equal(r.skipped, 0);
+    const failing = async (u) => (u.includes("characters_stat") ? { error: "service_unavailable" } : getJson(u));
+    const r2 = await fetchPlayerCensus(ME, { base: censusBase(), getJson: failing, topN: 50 });
+    assert.equal(r2.rows.length, 0);
+    assert.equal(r2.skipped, 50);
+    assert.equal(r2.ownFailed, true);
+  });
+});
+
+describe("classifyCensus (error classification)", () => {
+  it("ok lists; retry on 429/5xx/network/timeout/error JSON/empty bodies; fail on other 4xx", () => {
+    assert.equal(classifyCensus({ body: { character_list: [{}], returned: 1 } }).action, "ok");
+    assert.equal(classifyCensus({ body: { character_list: [], returned: 0 } }).action, "ok"); // genuine "not found"
+    assert.equal(classifyCensus({ body: { character_list: [], returned: 0 }, expectData: true }).action, "retry");
+    assert.equal(classifyCensus({ status: 429 }).action, "retry");
+    assert.equal(classifyCensus({ status: 503 }).action, "retry");
+    assert.equal(classifyCensus({ status: 404 }).action, "fail");
+    assert.equal(classifyCensus({ body: { error: "service_unavailable" } }).action, "retry");
+    assert.equal(classifyCensus({ body: { errorCode: "SERVER_ERROR", errorMessage: "x" } }).action, "retry");
+    assert.equal(classifyCensus({ body: {} }).action, "retry");
+    assert.equal(classifyCensus({ body: null }).action, "retry");
+    assert.equal(classifyCensus({ error: new TypeError("Failed to fetch") }).reason, "network");
+    assert.equal(classifyCensus({ error: { name: "TimeoutError" } }).reason, "timeout");
+    assert.equal(classifyCensus({ error: { name: "AbortError" } }).action, "fail");
+  });
+});
+
+describe("backoffDelay (exponential + jitter)", () => {
+  it("doubles per attempt within [50%, 100%], capped, Retry-After wins", () => {
+    assert.equal(backoffDelay(0, { random: () => 1 }), 1000);
+    assert.equal(backoffDelay(0, { random: () => 0 }), 500);
+    assert.equal(backoffDelay(3, { random: () => 1 }), 8000);
+    assert.equal(backoffDelay(10, { random: () => 1 }), 20000);
+    assert.equal(backoffDelay(0, { random: () => 1, retryAfter: "30" }), 30000);
+    assert.equal(backoffDelay(0, { random: () => 1, retryAfter: "999" }), 40000);
+    const vals = new Set(Array.from({ length: 20 }, () => backoffDelay(2)));
+    assert.ok(vals.size > 1); // jitter
+  });
+});
+
+describe("censusRequest (retries)", () => {
+  const ok = { character_list: [{ character_id: "1" }], returned: 1 };
+  const res = (status, body, headers = {}) => ({
+    ok: status >= 200 && status < 300,
+    status,
+    headers: { get: (k) => headers[k.toLowerCase()] ?? null },
+    json: async () => (typeof body === "string" ? JSON.parse(body) : body),
+  });
+  function seq(...answers) {
+    let i = 0;
+    const calls = [];
+    return {
+      calls,
+      fetchImpl: async (url) => {
+        calls.push(url);
+        const a = answers[Math.min(i++, answers.length - 1)];
+        if (a instanceof Error) throw a;
+        return a;
+      },
+    };
+  }
+  const fast = { sleep: async () => {}, random: () => 1 };
+  it("retries 503 / error JSON / network errors / bad JSON, then succeeds", async () => {
+    const f = seq(res(503, {}), res(200, { error: "service_unavailable" }), new TypeError("Failed to fetch"), res(200, "{not json"), res(200, ok));
+    const retries = [];
+    const body = await censusRequest("u", { ...fast, fetchImpl: f.fetchImpl, onRetry: (r) => retries.push(r.reason) });
+    assert.deepEqual(body, ok);
+    assert.equal(f.calls.length, 5);
+    assert.deepEqual(retries, ["HTTP 503", "service_unavailable", "network", "bad JSON"]);
+  });
+  it("honors Retry-After on 429 and pauses the shared bucket", async () => {
+    const f = seq(res(429, {}, { "retry-after": "7" }), res(200, ok));
+    const waits = [];
+    const paused = [];
+    const bucket = { take: async () => {}, pause: (ms) => paused.push(ms) };
+    await censusRequest("u", { fetchImpl: f.fetchImpl, bucket, random: () => 1, sleep: async (ms) => waits.push(ms) });
+    assert.deepEqual(waits, [7000]);
+    assert.deepEqual(paused, [7000]);
+  });
+  it("gives up with CensusError kind census-busy after the retry budget", async () => {
+    const f = seq(res(200, { error: "service_unavailable" }));
+    await assert.rejects(
+      censusRequest("u", { ...fast, fetchImpl: f.fetchImpl, retries: 2 }),
+      (e) => e instanceof CensusError && e.kind === "census-busy" && /busy or down/.test(e.message)
+    );
+    assert.equal(f.calls.length, 3);
+  });
+  it("non-retryable 4xx fails at once", async () => {
+    const f = seq(res(400, {}));
+    await assert.rejects(censusRequest("u", { ...fast, fetchImpl: f.fetchImpl }), (e) => e.fatal === true);
+    assert.equal(f.calls.length, 1);
+  });
+  it("expectData: an empty list is retried once, then accepted as genuinely empty", async () => {
+    const empty = { characters_event_grouped_list: [], returned: 0 };
+    const f = seq(res(200, empty), res(200, empty));
+    assert.deepEqual(await censusRequest("u", { ...fast, fetchImpl: f.fetchImpl, expectData: true }), empty);
+    assert.equal(f.calls.length, 2);
+  });
+  it("per-request timeout counts as a retryable failure", async () => {
+    let n = 0;
+    const fetchImpl = (url, { signal }) => new Promise((resolve, reject) => {
+      if (n++ === 0) signal.addEventListener("abort", () => reject(Object.assign(new Error("aborted"), { name: "AbortError" })));
+      else resolve(res(200, ok));
+    });
+    const reasons = [];
+    const body = await censusRequest("u", { ...fast, fetchImpl, timeoutMs: 20, onRetry: (r) => reasons.push(r.reason) });
+    assert.deepEqual(body, ok);
+    assert.deepEqual(reasons, ["timeout"]);
+  });
+  it("a user abort stops immediately (no retries)", async () => {
+    const ctl = new AbortController();
+    ctl.abort();
+    await assert.rejects(censusRequest("u", { ...fast, signal: ctl.signal, fetchImpl: async () => res(200, ok) }), (e) => e.name === "AbortError");
+  });
+});
+
+describe("limitConcurrency", () => {
+  it("never runs more than n tasks at once", async () => {
+    const limit = limitConcurrency(2);
+    let active = 0;
+    let peak = 0;
+    const task = () => limit(async () => {
+      active++;
+      peak = Math.max(peak, active);
+      await new Promise((r) => setTimeout(r, 5));
+      active--;
+      return 1;
+    });
+    const out = await Promise.all(Array.from({ length: 7 }, task));
+    assert.equal(out.length, 7);
+    assert.equal(peak, 2);
   });
 });

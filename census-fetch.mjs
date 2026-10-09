@@ -32,10 +32,173 @@ export function censusBase(serviceId = "example") {
 
 /** Census answered with an error object instead of a list (throttled / bad service ID / down). */
 export class CensusError extends Error {
-  constructor(message) {
+  constructor(message, extra = {}) {
     super(message);
     this.name = "CensusError";
+    this.kind = "census-busy"; // analyze-run FAIL_REASONS kind
+    Object.assign(this, extra);
   }
+}
+
+/* ------------------------------------------------------------ resilience */
+
+/**
+ * Classify one Census answer.
+ *  - "ok":    usable JSON with a *_list
+ *  - "retry": network error, timeout, 429, 5xx, 200 + {error|errorCode}
+ *             (service_unavailable, throttling), non-JSON body, or an empty
+ *             list when the caller expects data (Census returns returned:0
+ *             when overloaded)
+ *  - "fail":  other 4xx (retrying won't help)
+ * @param {{status?:number, body?:any, error?:any, expectData?:boolean}} r
+ * @returns {{action:"ok"|"retry"|"fail", reason:string}}
+ */
+export function classifyCensus({ status = 0, body = undefined, error = null, expectData = false } = {}) {
+  if (error) {
+    if (error.name === "AbortError") return { action: "fail", reason: "aborted" };
+    if (error.name === "TimeoutError") return { action: "retry", reason: "timeout" };
+    if (error.name === "SyntaxError") return { action: "retry", reason: "bad JSON" };
+    return { action: "retry", reason: "network" };
+  }
+  if (status === 429) return { action: "retry", reason: "rate limited (429)" };
+  if (status >= 500) return { action: "retry", reason: `HTTP ${status}` };
+  if (status >= 400) return { action: "fail", reason: `HTTP ${status}` };
+  if (!body || typeof body !== "object" || Array.isArray(body)) return { action: "retry", reason: "empty response" };
+  const listKey = Object.keys(body).find((k) => k.endsWith("_list"));
+  if (!listKey) {
+    const msg = String(body.error || body.errorCode || body.errorMessage || "no list");
+    return { action: "retry", reason: msg.slice(0, 80) };
+  }
+  if (expectData && (!Array.isArray(body[listKey]) || body[listKey].length === 0)) {
+    return { action: "retry", reason: "empty list" };
+  }
+  return { action: "ok", reason: "" };
+}
+
+/**
+ * Exponential backoff with full jitter: random in [0.5, 1] x min(cap, base x 2^attempt).
+ * A Retry-After header (seconds) wins when larger (capped at 2 x cap).
+ */
+export function backoffDelay(attempt, { baseMs = 1000, capMs = 20000, retryAfter = null, random = Math.random } = {}) {
+  const exp = Math.min(capMs, baseMs * 2 ** Math.max(0, attempt));
+  const jittered = Math.round(exp * (0.5 + 0.5 * random()));
+  const ra = Number(retryAfter);
+  if (Number.isFinite(ra) && ra > 0) return Math.max(jittered, Math.min(ra * 1000, capMs * 2));
+  return jittered;
+}
+
+function abortError() {
+  const e = new Error("Aborted");
+  e.name = "AbortError";
+  return e;
+}
+
+/**
+ * GET a Census URL with per-request timeout, pacing, retries (exponential
+ * backoff + jitter) and error classification. Throws CensusError
+ * (kind "census-busy") when Census stays busy/down, or with fatal:true on a
+ * non-retryable 4xx. Works in browsers and Node 18+.
+ * @param {string} url
+ * @param {{
+ *   fetchImpl?: typeof fetch, timeoutMs?: number, retries?: number,
+ *   expectData?: boolean, emptyRetries?: number, signal?: AbortSignal,
+ *   bucket?: {take:()=>Promise<void>, pause:(ms:number)=>void},
+ *   sleep?: (ms:number)=>Promise<void>, random?: ()=>number,
+ *   onRetry?: (info:{attempt:number, retries:number, reason:string, waitMs:number})=>void,
+ *   headers?: object, baseMs?: number, capMs?: number,
+ * }} [o]
+ */
+export async function censusRequest(url, o = {}) {
+  const {
+    fetchImpl = (...a) => fetch(...a),
+    timeoutMs = 20000,
+    retries = 4,
+    expectData = false,
+    emptyRetries = 1,
+    signal = null,
+    bucket = null,
+    sleep = (ms) => new Promise((r) => setTimeout(r, ms)),
+    random = Math.random,
+    onRetry = null,
+    headers = undefined,
+    baseMs = 1000,
+    capMs = 20000,
+  } = o;
+  let empties = 0;
+  let last = "";
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    if (signal && signal.aborted) throw abortError();
+    if (bucket) await bucket.take();
+    if (signal && signal.aborted) throw abortError();
+    const ctl = typeof AbortController !== "undefined" ? new AbortController() : null;
+    let timedOut = false;
+    const timer = ctl ? setTimeout(() => { timedOut = true; ctl.abort(); }, timeoutMs) : 0;
+    const onOuter = () => ctl && ctl.abort();
+    if (signal && ctl) signal.addEventListener("abort", onOuter, { once: true });
+    let verdict;
+    let retryAfter = null;
+    let body;
+    try {
+      const res = await fetchImpl(url, { headers, signal: ctl ? ctl.signal : undefined, cache: "no-cache" });
+      retryAfter = res.headers && typeof res.headers.get === "function" ? res.headers.get("retry-after") : null;
+      if (res.ok) {
+        try {
+          body = await res.json();
+        } catch (e) {
+          if (timedOut) throw Object.assign(new Error("timeout"), { name: "TimeoutError" });
+          if (signal && signal.aborted) throw abortError();
+          verdict = classifyCensus({ error: { name: "SyntaxError" } });
+        }
+      }
+      if (!verdict) verdict = classifyCensus({ status: res.ok ? 0 : res.status, body, expectData: expectData && empties < emptyRetries });
+    } catch (e) {
+      if (signal && signal.aborted) throw abortError();
+      verdict = classifyCensus({ error: timedOut ? { name: "TimeoutError" } : e });
+    } finally {
+      if (timer) clearTimeout(timer);
+      if (signal && ctl) signal.removeEventListener("abort", onOuter);
+    }
+    if (verdict.action === "ok") return body;
+    if (verdict.reason === "empty list") {
+      empties++;
+      if (expectData && empties >= emptyRetries + 1) return body; // genuinely empty
+    }
+    last = verdict.reason;
+    if (verdict.action === "fail") throw new CensusError(`Census: ${verdict.reason}`, { fatal: true });
+    if (attempt >= retries) break;
+    const waitMs = backoffDelay(attempt, { baseMs, capMs, retryAfter, random });
+    if (bucket && (verdict.reason.includes("429") || /busy|unavailable|service id|throttl/i.test(verdict.reason))) {
+      bucket.pause(waitMs); // everyone slows down, not just this request
+    }
+    if (onRetry) onRetry({ attempt: attempt + 1, retries, reason: verdict.reason, waitMs });
+    await sleep(waitMs);
+  }
+  throw new CensusError(`Census is busy or down (${last || "no answer"})`);
+}
+
+/**
+ * Tiny semaphore: at most `n` tasks in flight (browser: keep concurrent
+ * Census requests low even with several tabs/players).
+ */
+export function limitConcurrency(n) {
+  let active = 0;
+  const queue = [];
+  const next = () => {
+    if (active >= n || !queue.length) return;
+    active++;
+    const { fn, res, rej } = queue.shift();
+    Promise.resolve()
+      .then(fn)
+      .then(res, rej)
+      .finally(() => {
+        active--;
+        next();
+      });
+  };
+  return (fn) => new Promise((res, rej) => {
+    queue.push({ fn, res, rej });
+    next();
+  });
 }
 
 function listOf(data, key) {
@@ -143,10 +306,26 @@ export async function fetchCharacterInfo(ids, { base, getJson, names = true, bat
   const out = new Map();
   for (const part of chunks(uniq, batch)) {
     const u = statUrls(base, part);
-    const statRows = listOf(await getJson(u.stat), "characters_stat_list");
-    const facRows = listOf(await getJson(u.faction), "characters_stat_by_faction_list");
+    let statRows;
+    let facRows;
+    try {
+      statRows = listOf(await getJson(u.stat), "characters_stat_list");
+      facRows = listOf(await getJson(u.faction), "characters_stat_by_faction_list");
+    } catch (e) {
+      if (e && e.name === "AbortError") throw e;
+      // Graceful partial result: these opponents are skipped, the player still loads.
+      for (const id of part) out.set(id, { pace: null, failed: true, name: "", outfitTag: "" });
+      continue;
+    }
     let nameRows = [];
-    if (names) nameRows = listOf(await getJson(u.names), "character_list");
+    if (names) {
+      try {
+        nameRows = listOf(await getJson(u.names), "character_list");
+      } catch (e) {
+        if (e && e.name === "AbortError") throw e;
+        nameRows = []; // names are cosmetic: fall back to ids
+      }
+    }
     const totals = totalsByCharacter(statRows, facRows);
     const nm = new Map();
     for (const ch of nameRows) {
@@ -192,26 +371,37 @@ export async function fetchPlayerCensus(charID, { base, getJson, topN = 50, memo
   const ownInfo = info(cid);
   let lookups = 0;
   let paceFails = 0;
-  const rows = sample.map((pair) => {
+  let skipped = 0;
+  const rows = [];
+  for (const pair of sample) {
     const oid = String(pair.otherCharacterID);
-    if (oid === "0") return { name: oid, kills: +pair.kills || 0, deaths: +pair.deaths || 0, kpm: 0 };
-    lookups++;
+    if (oid === "0") {
+      rows.push({ name: oid, kills: +pair.kills || 0, deaths: +pair.deaths || 0, kpm: 0 });
+      continue;
+    }
     const v = info(oid) || { pace: null, name: "", outfitTag: "" };
-    if (!v.pace) paceFails++;
+    if (v.failed) {
+      skipped++; // Census busy for this batch: leave the opponent out (no fake 0-KPM row)
+      continue;
+    }
+    lookups++;
+    if (!v.pace) paceFails++; // not in Census (deleted): kept as 0 KPM, same as before
     const tag = v.outfitTag ? `[${v.outfitTag}] ` : "";
-    return {
+    rows.push({
       name: tag + (v.name || oid),
       kills: +pair.kills || 0,
       deaths: +pair.deaths || 0,
       kpm: (v.pace && v.pace.kpm) || 0,
-    };
-  });
+    });
+  }
   return {
     own: (ownInfo && ownInfo.pace) || null,
+    ownFailed: !!(ownInfo && ownInfo.failed),
     board,
     rows,
     lookups,
     paceFails,
+    skipped,
   };
 }
 
