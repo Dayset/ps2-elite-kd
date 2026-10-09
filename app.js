@@ -32,9 +32,9 @@ import {
   windowYValues,
   kpmBandCurve,
   bandReliability,
-} from "./math.mjs?v=20261008-pillcenter";
-import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261008-pillcenter";
-import GHOST_MODEL from "./data/ghost-model.mjs?v=20261008-pillcenter";
+} from "./math.mjs?v=20261008-capword";
+import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261008-capword";
+import GHOST_MODEL from "./data/ghost-model.mjs?v=20261008-capword";
 import {
   NameLoadError,
   classifyLoadError,
@@ -57,16 +57,16 @@ import {
   estimateRemainingMs,
   nextEtaDeadline,
   formatEtaLeft,
-} from "./analyze-run.mjs?v=20261008-pillcenter";
+} from "./analyze-run.mjs?v=20261008-capword";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
-} from "./player-metrics.mjs?v=20261008-pillcenter";
+} from "./player-metrics.mjs?v=20261008-capword";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261008-pillcenter";
-import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261008-pillcenter";
+import "./name-peek.mjs?v=20261008-capword";
+import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261008-capword";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
-import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261008-pillcenter";
+import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261008-capword";
 
   // Player palettes (dark + light theme) live in palette.mjs (shared with ranks.html).
   const COLORS = PALETTE_DARK;
@@ -2797,9 +2797,9 @@ import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./j
     if (drawn) {
       text.innerHTML = "dashed = predicted from play style,<br />not real fights";
     } else if (chartMode === "banded") {
-      text.innerHTML = "👻 on: no gaps to predict here<br />(every line has enough fights)";
+      text.innerHTML = "Ghost on: no gaps to predict here<br />(every line has enough fights)";
     } else {
-      text.innerHTML = "👻 on: no gaps to predict here,<br />try 🎚️ Smooth";
+      text.innerHTML = "Ghost on: no gaps to predict here,<br />try 🎚️ Smooth";
     }
   }
 
