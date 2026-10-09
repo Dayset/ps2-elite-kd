@@ -13,8 +13,8 @@
  *   🦁 LionHeart median ≈ 3.1; elite players usually 4–18 → low ≤ 2.0 (≈ bottom 40%)
  *   🎈 Inflation median ≈ 2.03 → low ≤ 1.5 (≈ bottom 10%)
  */
-import { PADDING_RULE, statMark, PADDING_MARK, PADDING_MARK_TIP } from "./padding.mjs?v=20261009-nonan";
-import { classifyBins, RED_PATTERNS, CHART_PATTERNS } from "./bins.mjs?v=20261009-nonan";
+import { PADDING_RULE, statMark, PADDING_MARK, PADDING_MARK_TIP } from "./padding.mjs?v=20261009-padbin";
+import { classifyBins, RED_PATTERNS, CHART_PATTERNS } from "./bins.mjs?v=20261009-padbin";
 
 export { PADDING_MARK, PADDING_MARK_TIP, RED_PATTERNS, CHART_PATTERNS, classifyBins };
 
@@ -195,6 +195,15 @@ export function reviewFlags(m) {
   return { flagged: patterns.length > 0, red: bins.bin === "red", anomaly: bins.chart.length > 0, bins, patterns, skill: aim.skill, padding: pad };
 }
 
+/** Rule line for the 📉 Chart anomalies "🌾 Stat padding" list (its own sub-part, not 🚩; user t288u). */
+export function paddingRuleText() {
+  return (
+    `[padding] ≥ ${Math.round(PADDING_RULE.FLAG_SHARE * 100)}% of sample kills on farm accounts (${PADDING_RULE.MIN_KILLS}+ kills on it, ` +
+    `it killed back ≤ ${PADDING_RULE.MAX_BACK * 100}%, its KPM < ${PADDING_RULE.MAX_KPM}). Those kills are excluded from the stats and the name gets the public * mark. ` +
+    `A chart-integrity issue, not a 🚩 pattern; a human decides (record it in data/reviewed.json).`
+  );
+}
+
 /** Rule line for the 📉 Chart anomalies "adjusted — needs review" list. */
 export function anomalyRuleText() {
   return (
@@ -216,9 +225,7 @@ export function reviewRuleText() {
     `[aim pattern] 🦁 Brave ≤ ${R.LIONHEART_LOW_MAX} (or curve slope ≤ ${R.SLOPE_COLLAPSE_MAX}) and 🎈 Inflation ≤ ${R.INFLATION_LOW_MAX}, or ` +
     `[vehicle pattern] KD ≥ ${V.KD_HIGH_MIN}, HSR ≤ ${V.HSR_LOW_MAX}% and accuracy ≤ ${V.ACC_LOW_MAX}% (Inflation ignored). ` +
     `Also flagged regardless of skill: [rampage pattern] KD ≥ ${RAMPAGE_RULE.KD_MIN} and KPM ≥ ${RAMPAGE_RULE.KPM_MIN}; ` +
-    `[padding pattern] ≥ ${Math.round(PADDING_RULE.FLAG_SHARE * 100)}% of sample kills on farm accounts (${PADDING_RULE.MIN_KILLS}+ kills on it, ` +
-    `it killed back ≤ ${PADDING_RULE.MAX_BACK * 100}%, its KPM < ${PADDING_RULE.MAX_KPM}; those kills are excluded from the stats). ` +
-    `Smaller exclusions (adjusted, †) are listed under 📉 Chart anomalies, not here. ` +
+    `Stat padding (🌾 *) and smaller farm exclusions († adjusted) are chart-integrity issues listed under 📉 Chart anomalies, not here. ` +
     `A lead for manual review, not proof of cheating.`
   );
 }

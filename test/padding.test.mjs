@@ -35,10 +35,12 @@ describe("stat padding (farm victims)", () => {
     assert.equal(farmNote(splitFarm([{ name: "x", kills: 5, deaths: 5, kpm: 1 }])), "");
   });
 
-  it("Megatake: flagged 🚩 padding, sample K/D ≈ 1.03 after exclusion", () => {
+  it("Megatake: 🌾 padding (📉 chart anomaly, not 🚩 — t288u), sample K/D ≈ 1.03 after exclusion", () => {
     const m = metricsOf("megatake");
     const f = reviewFlags(m);
     assert.ok(f.patterns.includes("padding"));
+    assert.equal(f.red, false);
+    assert.equal(f.bins.bin, "chart");
     assert.ok(isPadder(m));
     assert.deepEqual(m.farm.victims.map((v) => v.name).sort(), ["battletank112", "hammer111", "vulcan112"]);
     assert.ok(Math.abs(m.rkd - 1.03) < 0.01, `rkd ${m.rkd}`);

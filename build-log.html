@@ -14,7 +14,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261009-nonan" />
+  <link rel="stylesheet" href="styles.css?v=20261009-padbin" />
   <style>
     body { overflow: auto; }
     .st-wrap { max-width: 960px; margin: 0 auto; padding: 18px 16px 40px; }
@@ -110,7 +110,12 @@
     </details>
     <details class="st-card st-sec st-flags st-anoms" id="cardAnoms">
       <summary id="anomsSummary"><h2>📉 Chart anomalies <span id="anomsCount" class="st-count">…</span></h2></summary>
-      <div class="st-note">Things about chart and stat integrity, not cheating patterns: players whose stats we changed automatically, and values far outside everyone else. Each needs a human look; nothing here is an accusation. Count = players needing a look (unreviewed † plus unexplained outliers).<br>Routing (bins.mjs): a player whose only issues are here stays only here; a player who also has another pattern (aim, vehicle, rampage, padding…) is listed in 🚩, with a 📉 link there and an "also in 🚩" link here, never a second full row.</div>
+      <div class="st-note">Things about chart and stat integrity, not cheating patterns: players whose stats we changed automatically, and values far outside everyone else. Each needs a human look; nothing here is an accusation. Count = players needing a look (unreviewed 🌾 and † plus unexplained outliers).<br>Routing (bins.mjs): 🌾 stat padding, † adjusted and 🧪 outliers live here, not in 🚩. A player whose only issues are here stays only here; a player who also has a 🚩 pattern (aim, vehicle, rampage…) is listed in 🚩, with a 📉 link there and an "also in 🚩" link here, never a second full row.</div>
+      <details class="st-sub-sec" id="secPadding">
+      <summary><h3>🌾 Stat padding <span id="padCount" class="st-count">…</span></h3></summary>
+      <div id="padRule" class="st-rule"></div>
+      <div id="padding" class="st-dim">Loading…</div>
+      </details>
       <details class="st-sub-sec" id="secAdjusted">
       <summary><h3>† Adjusted — needs review <span id="adjCount" class="st-count">…</span></h3></summary>
       <div id="adjRule" class="st-rule"></div>
@@ -118,7 +123,7 @@
       </details>
       <details class="st-sub-sec" id="secGuard">
       <summary><h3>🧪 Outlier guard <span id="guardCount" class="st-count">…</span></h3></summary>
-      <div class="st-rule">Checked on every refresh (scripts/build-ranks.mjs → outlier-guard.mjs) on the numbers as the site shows them, one row per player with every metric that's far out. Unexplained ones may be a formula gap like the old 🦁 Brave 6094; explained ones also have a 🚩 pattern (full row in 🚩), a † entry above, or were reviewed by hand.</div>
+      <div class="st-rule">Checked on every refresh (scripts/build-ranks.mjs → outlier-guard.mjs) on the numbers as the site shows them, one row per player with every metric that's far out. Unexplained ones may be a formula gap like the old 🦁 Brave 6094; explained ones also have a 🚩 pattern (full row in 🚩), a 🌾 or † entry above, or were reviewed by hand.</div>
       <div id="guardRule" class="st-rule"></div>
       <div id="guard" class="st-dim">Loading…</div>
       </details>
@@ -387,22 +392,22 @@
     })();
   </script>
 
-  <!-- Red flags 🚩: one automatic bin = aim OR vehicle OR rampage OR padding pattern (red-flags.mjs, RED_PATTERNS);
-       † "adjusted" + the 🧪 outlier guard (grouped by player) go to 📉 Chart anomalies. Uses the
+  <!-- Red flags 🚩: one automatic bin = aim OR vehicle OR rampage pattern (bins.mjs classifyBins);
+       🌾 padding + † "adjusted" + the 🧪 outlier guard (grouped by player) go to 📉 Chart anomalies. Uses the
        same metrics as the main tables (player-metrics.mjs). Leads for review, not proof. -->
   <script type="module">
-    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261009-nonan";
-    import { reviewFlags, reviewRuleText, anomalyRuleText } from "./red-flags.mjs?v=20261009-nonan";
-    import { groupOutliers } from "./outlier-guard.mjs?v=20261009-nonan";
-    import { classifyBins, CHART_LABELS } from "./bins.mjs?v=20261009-nonan";
-    import { sprout, sampleEvents, sproutRuleText } from "./sprouts.mjs?v=20261009-nonan";
-    import { reviewDecision } from "./padding.mjs?v=20261009-nonan";
-    import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261009-nonan";
-    import "./name-peek.mjs?v=20261009-nonan"; // full-name popup for truncated .nm names
+    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261009-padbin";
+    import { reviewFlags, reviewRuleText, anomalyRuleText, paddingRuleText } from "./red-flags.mjs?v=20261009-padbin";
+    import { groupOutliers } from "./outlier-guard.mjs?v=20261009-padbin";
+    import { classifyBins, CHART_LABELS } from "./bins.mjs?v=20261009-padbin";
+    import { sprout, sampleEvents, sproutRuleText } from "./sprouts.mjs?v=20261009-padbin";
+    import { reviewDecision } from "./padding.mjs?v=20261009-padbin";
+    import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261009-padbin";
+    import "./name-peek.mjs?v=20261009-padbin"; // full-name popup for truncated .nm names
 
     const POLL_MS = 30 * 1000;
     const CONCURRENCY = 6;
-    const SS_KEY = "ps2-elite-kd:redflags:v8"; // { byFile: { file: { savedAt, row } } }
+    const SS_KEY = "ps2-elite-kd:redflags:v9"; // { byFile: { file: { savedAt, row } } }
     const $ = (id) => document.getElementById(id);
     const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
     const fmt = (v, d) => (typeof v === "number" && Number.isFinite(v) ? v.toFixed(d) : "—");
@@ -423,7 +428,8 @@
     $("sproutsSummary").title = sproutText;
     $("sproutsRule").textContent = "Rule: " + sproutText;
     $("adjRule").textContent = "Rule: " + anomalyRuleText();
-    try { sessionStorage.removeItem("ps2-elite-kd:redflags:v6"); sessionStorage.removeItem("ps2-elite-kd:redflags:v7"); } catch { /* ignore */ }
+    $("padRule").textContent = "Rule: " + paddingRuleText();
+    try { sessionStorage.removeItem("ps2-elite-kd:redflags:v6"); sessionStorage.removeItem("ps2-elite-kd:redflags:v7"); sessionStorage.removeItem("ps2-elite-kd:redflags:v8"); } catch { /* ignore */ }
 
     function readCache() {
       try { return JSON.parse(sessionStorage.getItem(SS_KEY)) || null; } catch { return null; }
@@ -472,12 +478,11 @@
         ? '<a class="nm" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer" data-full="' + full + '" title="Open ' + full + ' on Honu">' + full + "</a>"
         : '<span class="nm" data-full="' + full + '" title="' + full + '">' + full + "</span>";
       const chart = '<a href="./?names=' + encodeURIComponent(r.name) + '" title="Open the chart with this name (press Analyze)">chart</a>';
-      const pats = (r.patterns || []).filter((p) => TAGS[p] && p !== "adjusted"); // † lives in 📉 Chart anomalies
+      const pats = classifyBins({ patterns: r.patterns }).red.filter((p) => TAGS[p]); // 🌾 / † live in 📉 Chart anomalies
       const rv = reviewDecision(reviewed, r.slug);
       const tags = pats.map((p) => '<span class="st-tag ' + p + '" title="' + esc(TAGS[p].tip) + '">' + TAGS[p].label + "</span>").join("") +
         (rv ? '<div class="st-ok" style="font-size:0.8em" title="' + esc(rv.note) + '">reviewed: ' + esc(rv.decision) + (rv.at ? " (" + esc(rv.at) + ")" : "") + "</div>" : "") +
-        (r.padding ? '<div class="st-dim" style="font-size:0.8em;white-space:normal">' + Math.round(r.padding.share * 100) + "% of kills on: " +
-          r.padding.victims.map((v) => esc(v.name) + " " + v.kills + "/" + v.deaths).join(", ") + "</div>" : "");
+        "";
       const hot = pats.flatMap((p) => TAGS[p].hot);
       const skillCell = (r.basis === "ivi" ? "IvI " + fmt(r.ivi, 0) : "🎯🎈 " + fmt(r.adj, 0)) + ' <span class="st-tier">' + esc(r.tier) + "</span>";
       const cell = (k, v, d) => '<td class="st-num' + (hot.includes(k) ? " st-low" : "") + '">' + fmt(v, d) + "</td>";
@@ -543,27 +548,33 @@
     });
 
     /* ---------- 📉 Chart anomalies: † adjusted + 🧪 outlier guard (grouped by player) ---------- */
-    let anomState = { adjOpen: null, guardOpen: null };
+    let anomState = { adjOpen: null, padOpen: null, guardOpen: null };
     function updateAnomCount() {
-      const { adjOpen, guardOpen } = anomState;
+      const { adjOpen, padOpen, guardOpen } = anomState;
       const cnt = $("anomsCount");
-      if (adjOpen == null && guardOpen == null) return;
-      const n = (adjOpen || 0) + (guardOpen || 0);
+      if (adjOpen == null && padOpen == null && guardOpen == null) return;
+      const n = (adjOpen || 0) + (padOpen || 0) + (guardOpen || 0);
       cnt.textContent = String(n);
       cnt.classList.toggle("hot", n > 0);
     }
 
-    function renderAdjusted(rows) {
-      const list = rows.filter((r) => r && (r.patterns || []).includes("adjusted"))
+    /** 📉 farm-exclusion lists: 🌾 stat padding (* mark) and † adjusted (both: farm kills excluded; human review). */
+    const FARM_LISTS = {
+      padding: { box: "padding", count: "padCount", open: "padOpen", mark: " *", idp: "chart-pad-" },
+      adjusted: { box: "adjusted", count: "adjCount", open: "adjOpen", mark: " †", idp: "chart-adj-" },
+    };
+    function renderFarmList(rows, kind) {
+      const L = FARM_LISTS[kind];
+      const list = rows.filter((r) => r && (r.patterns || []).includes(kind))
         .sort((a, b) => ((b.padding && b.padding.share) || 0) - ((a.padding && a.padding.share) || 0));
       const open = list.filter((r) => !reviewDecision(reviewed, r.slug)).length;
-      const c = $("adjCount");
+      const c = $(L.count);
       c.textContent = String(list.length);
       c.classList.toggle("hot", open > 0);
-      anomState.adjOpen = open;
+      anomState[L.open] = open;
       updateAnomCount();
-      adjSlugs = new Set(list.map((r) => r.slug));
-      if (!list.length) { $("adjusted").innerHTML = '<div class="st-dim">Nobody right now.</div>'; applyXrefs(); return; }
+      farmSlugs[kind] = new Set(list.map((r) => r.slug));
+      if (!list.length) { $(L.box).innerHTML = '<div class="st-dim">Nobody right now.</div>'; applyXrefs(); return; }
       const body = list.map((r) => {
         const chart = '<a href="./?names=' + encodeURIComponent(r.name) + '" title="Open the chart with this name (press Analyze)">chart</a>';
         const rv = reviewDecision(reviewed, r.slug);
@@ -574,26 +585,27 @@
           ? '<span class="st-ok" title="' + esc(rv.note) + '">' + esc(rv.decision) + (rv.at ? " (" + esc(rv.at) + ")" : "") + "</span>"
           : '<span class="st-dim">needs review</span>';
         const alsoRed = r.red ? '<div style="font-size:0.8em"><a href="#flag-' + esc(r.slug) + '" class="st-jump" title="This player also has a 🚩 pattern; the full row is in Red flags">also in 🚩 (' + esc(classifyBins({ patterns: r.patterns }).red.join(", ")) + ") ↑</a></div>" : "";
-        return '<tr id="chart-adj-' + esc(r.slug) + '"><td>' + nameCell(r) + " †</td><td>" + chart + '</td><td class="st-why">' + removed + alsoRed + "</td><td>" + review + "</td>" +
+        return '<tr id="' + L.idp + esc(r.slug) + '"><td>' + nameCell(r) + L.mark + "</td><td>" + chart + '</td><td class="st-why">' + removed + alsoRed + "</td><td>" + review + "</td>" +
           '<td class="st-num">' + fmt(r.adjs, 0) + '</td><td class="st-num">' + fmt(r.kd, 2) + "</td>" +
           '<td title="' + esc(r.savedAt ? new Date(r.savedAt).toLocaleString() : "") + '">' + esc(ago(r.savedAt)) + "</td></tr>";
       }).join("");
-      $("adjusted").innerHTML = '<div class="st-dim">' + list.length + " player" + (list.length === 1 ? "" : "s") + ", " + open + " not reviewed yet. After each farm account: the player's kills on it / its kills on the player.</div>" +
+      $(L.box).innerHTML = '<div class="st-dim">' + list.length + " player" + (list.length === 1 ? "" : "s") + ", " + open + " not reviewed yet. After each farm account: the player's kills on it / its kills on the player." +
+        (kind === "padding" ? " ⚔️ iVi / KD are after the exclusion." : "") + "</div>" +
         '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th></th><th>Farm kills excluded</th><th>Review</th>' +
         '<th class="st-num">⚔️ iVi</th><th class="st-num">KD</th><th>Updated</th></tr>' + body + "</table></div>";
       applyXrefs();
     }
 
     /* ---------- 🚩 ↔ 📉 cross-references (one shared classifier: bins.mjs) ---------- */
-    let adjSlugs = new Set();      // † adjusted players (📉)
+    let farmSlugs = { padding: new Set(), adjusted: new Set() }; // 🌾 / † players (📉)
     let guardBySlug = new Map();   // 🧪 outlier players (📉), slug → grouped row
     function applyXrefs() {
       document.querySelectorAll("#flags .st-xref[data-xref]").forEach((el) => {
         const slug = el.dataset.xref;
         const g = guardBySlug.get(slug);
-        const b = classifyBins({ patterns: adjSlugs.has(slug) ? ["adjusted"] : [], outlier: !!g });
+        const b = classifyBins({ patterns: Object.keys(farmSlugs).filter((k) => farmSlugs[k].has(slug)), outlier: !!g });
         el.innerHTML = b.chart.map((c) => {
-          const href = c === "outlier" ? "#chart-out-" + slug : "#chart-adj-" + slug;
+          const href = c === "outlier" ? "#chart-out-" + slug : (c === "padding" ? "#chart-pad-" : "#chart-adj-") + slug;
           const txt = c === "outlier" ? CHART_LABELS.outlier + " ×" + g.metrics.length : CHART_LABELS[c] || c;
           return '<a href="' + esc(href) + '" class="st-jump" title="Also a 📉 chart anomaly; details are in 📉 Chart anomalies">📉 ' + esc(txt) + " ↓</a>";
         }).join(" ");
@@ -692,7 +704,8 @@
       if (sproutRows.length) renderSprouts();
       else $("sprouts").innerHTML = '<div class="st-dim">Nobody right now.</div>';
 
-      renderAdjusted(rows);
+      renderFarmList(rows, "padding");
+      renderFarmList(rows, "adjusted");
       const flagged = rows.filter((r) => r && r.red).sort((a, b) => (b.adj ?? b.ivi ?? 0) - (a.adj ?? a.ivi ?? 0));
       const cnt = $("flagsCount");
       cnt.textContent = String(flagged.length);
@@ -726,7 +739,7 @@
         let errors = 0;
         if (todo.length) {
           let done = 0, i = 0;
-          const progress = () => { $("flags").innerHTML = $("sprouts").innerHTML = $("adjusted").innerHTML = '<span class="st-dim">Scoring players… ' + done + " / " + todo.length + "</span>"; };
+          const progress = () => { $("flags").innerHTML = $("sprouts").innerHTML = $("adjusted").innerHTML = $("padding").innerHTML = '<span class="st-dim">Scoring players… ' + done + " / " + todo.length + "</span>"; };
           progress();
           const worker = async () => {
             while (i < todo.length) {
@@ -746,7 +759,7 @@
       } catch (e) {
         $("flags").innerHTML = '<span class="st-err">Couldn’t compute red flags (' + esc(e && e.message) + ").</span>";
         $("sprouts").innerHTML = '<span class="st-err">Couldn’t load the list (' + esc(e && e.message) + ").</span>";
-        $("adjusted").innerHTML = '<span class="st-err">Couldn’t load the list (' + esc(e && e.message) + ").</span>";
+        $("adjusted").innerHTML = $("padding").innerHTML = '<span class="st-err">Couldn’t load the list (' + esc(e && e.message) + ").</span>";
       } finally {
         busy = false;
       }

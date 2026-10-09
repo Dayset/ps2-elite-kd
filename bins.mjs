@@ -5,10 +5,12 @@
  *
  * Two bins:
  *   📉 Chart anomalies — chart / stat-integrity issues only (CHART_PATTERNS):
+ *      "padding" (🌾 *: farm kills ≥ the padding line, excluded; user t288u:
+ *      "chart padding should not be in the same bin as red flags"),
  *      "adjusted" (†: farm kills excluded under the padding line) and
  *      "outlier" (🧪 outlier guard: a shown value far outside everyone else).
- *   🚩 Red flags — ANY other pattern (aim, vehicle, rampage, padding, and any
- *      future rule by default, so a new pattern can't silently drop out of 🚩).
+ *   🚩 Red flags — ANY other pattern (aim, vehicle, rampage, and any future
+ *      rule by default, so a new pattern can't silently drop out of 🚩).
  *
  * A player with only chart patterns → 📉 only. A player with a red pattern →
  * 🚩; if they also have chart patterns ("both") the 🚩 row carries a
@@ -16,10 +18,10 @@
  * Public marks (* padding, † adjusted) are NOT decided here (padding.mjs).
  * DOM-free, no imports (used by red-flags.mjs, outlier-guard.mjs, build-log.html).
  */
-export const CHART_PATTERNS = Object.freeze(["adjusted", "outlier"]);
+export const CHART_PATTERNS = Object.freeze(["padding", "adjusted", "outlier"]);
 
 /** Patterns that put a player in 🚩 (documentation / tests; classifyBins treats any non-chart pattern as red). */
-export const RED_PATTERNS = Object.freeze(["aim", "vehicle", "rampage", "padding"]);
+export const RED_PATTERNS = Object.freeze(["aim", "vehicle", "rampage"]);
 
 /**
  * { patterns: [...], outlier: bool } → { bin: "red" | "chart" | "", red: [...], chart: [...], both }
@@ -35,4 +37,4 @@ export function classifyBins({ patterns = [], outlier = false } = {}) {
 }
 
 /** Short labels for chart patterns (cross-reference chips / reasons). */
-export const CHART_LABELS = Object.freeze({ adjusted: "† adjusted", outlier: "🧪 outlier" });
+export const CHART_LABELS = Object.freeze({ padding: "🌾 stat padding", adjusted: "† adjusted", outlier: "🧪 outlier" });

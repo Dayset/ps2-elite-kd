@@ -7,8 +7,8 @@
  * every ranks.html metric. A value is an outlier when BOTH hold:
  *   - robust z = (v − median) / (1.4826 × MAD) beyond ±Z, and
  *   - it sits past p99 + K × (p99 − median)   (or p01 − K × (median − p01)).
- * Each outlier is "explained" when the player is already in the 🚩 bin, has a †
- * adjusted entry, or is reviewed in KNOWN_EXTREMES; anything else is a warning.
+ * Each outlier is "explained" when the player is already in the 🚩 bin, has a 🌾
+ * padding or † adjusted entry, or is reviewed in KNOWN_EXTREMES; anything else is a warning.
  * Bin routing (bins.mjs classifyBins, user rule t280u): an outlier is a 📉 chart
  * anomaly; a player with only chart issues stays in 📉, a player who also has a
  * 🚩 pattern is listed in 🚩 with a cross-reference to this 📉 entry.
@@ -17,7 +17,7 @@
  * and test/outlier-guard.test.mjs (fails on unexplained outliers).
  * DOM-free.
  */
-import { classifyBins } from "./bins.mjs?v=20261009-nonan";
+import { classifyBins } from "./bins.mjs?v=20261009-padbin";
 
 export const GUARD_RULE = Object.freeze({ Z: 6, SPAN_K: 3, MIN_N: 50 });
 
@@ -62,6 +62,7 @@ function outlierReason(p, known) {
   const b = classifyBins({ patterns: p.patterns || [], outlier: true });
   if (b.red.length) return "Also in 🚩 red flags (" + b.red.join(", ") + "), listed there";
   if (known[p.slug]) return known[p.slug];
+  if (b.chart.includes("padding")) return "In 📉 chart anomalies only (🌾 stat padding)";
   if (b.chart.includes("adjusted")) return "In 📉 chart anomalies only († adjusted — needs review)";
   return "";
 }

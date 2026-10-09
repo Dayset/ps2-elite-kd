@@ -19,6 +19,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { normalizePlayer, playerMetrics, shownValue } from "../player-metrics.mjs";
 import { reviewFlags } from "../red-flags.mjs";
+import { classifyBins } from "../bins.mjs";
 import { farmNote, statMark } from "../padding.mjs";
 import { findOutliers, guardStatus } from "../outlier-guard.mjs";
 import { hiddenList } from "../hidden.mjs";
@@ -128,7 +129,27 @@ export function buildRanksWithGuard(dataDir) {
       players.push({ slug: row[2], name: row[0], flagged: f.flagged, patterns: f.patterns, values });
     },
   });
-  return { ranks, guard: guardStatus(findOutliers(players, METRIC_COLS)), hidden: hiddenSummary(dataDir, hiddenFound) };
+  const guard = guardStatus(findOutliers(players, METRIC_COLS));
+  return { ranks, guard, hidden: hiddenSummary(dataDir, hiddenFound), bins: binCounts(players, guard) };
+}
+
+/**
+ * status.json "bins" block (bins.mjs classifyBins; user rules t280u + t288u):
+ * 🚩 = aim / vehicle / rampage; 📉 = 🌾 padding + † adjusted + 🧪 outliers.
+ * Counts are players; "both" = in 🚩 and also a 📉 entry (cross-referenced).
+ */
+export function binCounts(players, guard) {
+  const out = new Set((guard.players || []).map((g) => g.slug));
+  const c = { red: 0, padding: 0, adjusted: 0, outlier: out.size, chartOnly: 0, both: 0 };
+  for (const p of players) {
+    const b = classifyBins({ patterns: p.patterns || [], outlier: out.has(p.slug) });
+    if (b.bin === "red") c.red += 1;
+    if (b.bin === "chart") c.chartOnly += 1;
+    if (b.both) c.both += 1;
+    if (b.chart.includes("padding")) c.padding += 1;
+    if (b.chart.includes("adjusted")) c.adjusted += 1;
+  }
+  return c;
 }
 
 /**
@@ -153,7 +174,7 @@ const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPat
 if (isMain) {
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
   const dataDir = path.join(root, "data");
-  const { ranks: out, guard, hidden: hiddenInfo } = buildRanksWithGuard(dataDir);
+  const { ranks: out, guard, hidden: hiddenInfo, bins } = buildRanksWithGuard(dataDir);
   fs.writeFileSync(path.join(dataDir, "ranks.json"), JSON.stringify(out) + "\n");
   console.log(`ranks.json: ${out.count} players (${hiddenInfo.count} on the 🙈 hide list)`);
   // 🧪 Outlier guard → data/status.json (build-log.html). Other status fields are kept.
@@ -162,6 +183,7 @@ if (isMain) {
   try { st = JSON.parse(fs.readFileSync(stPath, "utf8")); } catch {}
   st.outlierGuard = guard;
   st.hidden = hiddenInfo;
+  st.bins = { checkedAt: new Date().toISOString(), ...bins };
   fs.writeFileSync(stPath, JSON.stringify(st, null, 2) + "\n");
   for (const o of guard.items.filter((x) => !x.explained)) {
     console.log(`::warning::outlier guard: ${o.name} ${o.id}=${o.value} (bound ${o.bound}, z ${o.z})`);
