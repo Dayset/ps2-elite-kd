@@ -32,9 +32,9 @@ import {
   windowYValues,
   kpmBandCurve,
   bandReliability,
-} from "./math.mjs?v=20261009-warn";
-import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261009-warn";
-import GHOST_MODEL from "./data/ghost-model.mjs?v=20261009-warn";
+} from "./math.mjs?v=20261009-warnnote";
+import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261009-warnnote";
+import GHOST_MODEL from "./data/ghost-model.mjs?v=20261009-warnnote";
 import {
   NameLoadError,
   classifyLoadError,
@@ -60,7 +60,7 @@ import {
   formatEtaLeft,
   etaLearnLiveMs,
   expectedNameMs,
-} from "./analyze-run.mjs?v=20261009-warn";
+} from "./analyze-run.mjs?v=20261009-warnnote";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
@@ -72,8 +72,9 @@ import {
   LEGACY_SAMPLE_MARK,
   LEGACY_SAMPLE_TIP,
   THIN_MARK,
-  thinMarkTip,
-} from "./player-metrics.mjs?v=20261009-warn";
+  THIN_NOTE_HEAD,
+  thinPlayerLine,
+} from "./player-metrics.mjs?v=20261009-warnnote";
 /** "22 kills / 60 deaths" in the opponent sample (MIN_FIGHTS counts). */
 function fightsText(r) {
   const k = r.sampleKills || 0;
@@ -85,16 +86,16 @@ function fightsText(r) {
 function thinCellTip(r) {
   return `${MIN_FIGHTS_TIP}. This sample: ${fightsText(r).replace(/[()]/g, "")}`;
 }
-import { farmNote, statMark } from "./padding.mjs?v=20261009-warn";
+import { farmNote, statMark } from "./padding.mjs?v=20261009-warnnote";
 // Account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times: chart name list only.
-import { accountTimes, flairsHtml } from "./flairs.mjs?v=20261009-warn";
+import { accountTimes, flairsHtml } from "./flairs.mjs?v=20261009-warnnote";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261009-warn";
-import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261009-warn";
+import "./name-peek.mjs?v=20261009-warnnote";
+import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261009-warnnote";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
-import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-warn";
+import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-warnnote";
 // Live data: Daybreak Census only (batched, paced); Honu just for a rare history fallback.
-import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261009-warn";
+import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261009-warnnote";
 import {
   censusBase,
   censusRequest,
@@ -103,7 +104,7 @@ import {
   limitConcurrency,
   tokenBucket,
   OPPONENT_TOP_N,
-} from "./census-fetch.mjs?v=20261009-warn";
+} from "./census-fetch.mjs?v=20261009-warnnote";
 
   // Player palettes (dark + light theme) live in palette.mjs (shared with ranks.html).
   const COLORS = PALETTE_DARK;
@@ -2667,6 +2668,7 @@ import {
   }
 
   /** "Why some cells show —" note: collapsed by default; remembered only while the page is open. */
+  let thinNoteOpen = false;
   function renderStatsTable(list) {
     if (!els.stats) return;
     lastStatsList = list;
@@ -2844,11 +2846,22 @@ import {
           return (
             `<tr><th scope="row" class="stats-name" style="color:${col}">` +
             `<span class="player-num" aria-label="Series ${num}">${num}.</span>` +
-            `${nameSpanHtml(row.p.display, farmTitle(row.p))}${padMarkHtml(row.p)}${legacySampleHtml(row.p)}${thinMarkHtml(row)}</th>${vals}</tr>`
+            `${nameSpanHtml(row.p.display, farmTitle(row.p))}${padMarkHtml(row.p)}${legacySampleHtml(row.p)}</th>${vals}</tr>`
           );
         })
         .join("");
     }
+
+    // One collapsed "⚠️" line under ✨ Adjusted (t283u): opens to the rule, then
+    // one line per player without stats. Nothing on the names themselves.
+    const thinRows = metrics.filter((r) => r.thin);
+    const thinBlock = thinRows.length
+      ? `<details class="stats-thin-note fold-note"${thinNoteOpen ? " open" : ""}>` +
+        `<summary title="Why some cells show —" aria-label="Why some cells show —">${THIN_MARK}</summary>` +
+        `<p>${escapeHtml(THIN_NOTE_HEAD)}` +
+        thinRows.map((r) => `<br />${escapeHtml(thinPlayerLine(r.p.display, r.sampleKills, r.sampleDeaths))}`).join("") +
+        `</p></details>`
+      : "";
 
     const pubSorted = sortRows(metrics, publicCols, statsSortState.public);
     const adjSorted = sortRows(metrics, adjCols, statsSortState.adjusted);
@@ -2871,8 +2884,13 @@ import {
             <tbody>${playerRows(adjCols, adjSorted)}</tbody>
           </table>
         </div>
+        ${thinBlock}
       </div>
     `;
+
+    // Keep the ⚠️ note open/closed across re-sorts (starts collapsed each page load).
+    const thinDet = els.stats.querySelector("details.stats-thin-note");
+    if (thinDet) thinDet.addEventListener("toggle", () => { thinNoteOpen = thinDet.open; });
 
     els.stats.querySelectorAll("th.sortable").forEach((th) => {
       th.addEventListener("click", () => {
@@ -2937,7 +2955,7 @@ import {
         : `<span class="legend-swatch" style="background:${col}"></span>`;
       item.innerHTML = `
         ${mark}
-        <span class="legend-label" style="color:${col}"><strong>${i + 1}.</strong>${nameHtml}${padMarkHtml(p)}${thinMarkHtml(playerMetrics(p))}</span>
+        <span class="legend-label" style="color:${col}"><strong>${i + 1}.</strong>${nameHtml}${padMarkHtml(p)}</span>
       `;
       els.legend.appendChild(item);
     });
@@ -2981,13 +2999,6 @@ import {
     const mk = playerMark(p);
     if (!mk.mark) return "";
     return `<span class="pad-mark mark-${mk.kind}" title="${escapeHtml(mk.tip)}">${mk.mark}</span>`;
-  }
-
-  /** ⚠️ after the name when the sample is below MIN_FIGHTS (cells show "—"); text only on hover. */
-  function thinMarkHtml(r) {
-    if (!r || !r.thin) return "";
-    const tip = escapeHtml(thinMarkTip(r.sampleKills, r.sampleDeaths));
-    return `<span class="thin-mark" title="${tip}" aria-label="${tip}">${THIN_MARK}</span>`;
   }
 
   /** Subtle "◦" after the name when the sample is the older top-50 one. */

@@ -12,7 +12,8 @@ import {
   THIN_METRICS,
   shownValue,
   THIN_MARK,
-  thinMarkTip,
+  THIN_NOTE_HEAD,
+  thinPlayerLine,
 } from "../player-metrics.mjs";
 import { reviewFlags, rampageFlag } from "../red-flags.mjs";
 import { sprout, sampleEvents } from "../sprouts.mjs";
@@ -130,14 +131,13 @@ describe("minimum fights for opponent-sample metrics (🏃 Activity, 🦁 Brave,
   });
 });
 
-describe("⚠️ thin mark (t282u: icon only, reason on hover)", () => {
-  it("is just the icon", () => assert.equal(THIN_MARK, "⚠️"));
-  it("tip names the player's counts and the rule", () => {
-    assert.equal(
-      thinMarkTip(22, 60),
-      `Too few fights to measure: 22 kills / 60 deaths, needs ${MIN_FIGHTS.FIGHTS}+ fights and ${MIN_FIGHTS.KILLS}+ of each`
-    );
-    assert.match(thinMarkTip(1, 1), /1 kill \/ 1 death,/);
-    assert.match(thinMarkTip(0, 0), /no fights on record/);
+describe("⚠️ note under ✨ Adjusted (t283u: icon summary, one line per player)", () => {
+  it("summary is just the icon", () => assert.equal(THIN_MARK, "⚠️"));
+  it("head states the rule", () =>
+    assert.equal(THIN_NOTE_HEAD, "Too few fights to measure (needs 100+ fights and 5+ kills and deaths):"));
+  it("one line per player with counts", () => {
+    assert.equal(thinPlayerLine("tupapacu", 22, 60), "tupapacu: 22 kills / 60 deaths");
+    assert.equal(thinPlayerLine("a", 1, 1), "a: 1 kill / 1 death");
+    assert.equal(thinPlayerLine("xMasterBobx", 0, 0), "xMasterBobx: no fights on record");
   });
 });

@@ -14,7 +14,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261009-warn" />
+  <link rel="stylesheet" href="styles.css?v=20261009-warnnote" />
   <style>
     body { overflow: auto; }
     .st-wrap { max-width: 960px; margin: 0 auto; padding: 18px 16px 40px; }
@@ -400,14 +400,14 @@
        † "adjusted" + the 🧪 outlier guard (grouped by player) go to 📉 Chart anomalies. Uses the
        same metrics as the main tables (player-metrics.mjs). Leads for review, not proof. -->
   <script type="module">
-    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261009-warn";
-    import { reviewFlags, reviewRuleText, anomalyRuleText } from "./red-flags.mjs?v=20261009-warn";
-    import { groupOutliers } from "./outlier-guard.mjs?v=20261009-warn";
-    import { classifyBins, CHART_LABELS } from "./bins.mjs?v=20261009-warn";
-    import { sprout, sampleEvents, sproutRuleText } from "./sprouts.mjs?v=20261009-warn";
-    import { reviewDecision } from "./padding.mjs?v=20261009-warn";
-    import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261009-warn";
-    import "./name-peek.mjs?v=20261009-warn"; // full-name popup for truncated .nm names
+    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261009-warnnote";
+    import { reviewFlags, reviewRuleText, anomalyRuleText } from "./red-flags.mjs?v=20261009-warnnote";
+    import { groupOutliers } from "./outlier-guard.mjs?v=20261009-warnnote";
+    import { classifyBins, CHART_LABELS } from "./bins.mjs?v=20261009-warnnote";
+    import { sprout, sampleEvents, sproutRuleText } from "./sprouts.mjs?v=20261009-warnnote";
+    import { reviewDecision } from "./padding.mjs?v=20261009-warnnote";
+    import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261009-warnnote";
+    import "./name-peek.mjs?v=20261009-warnnote"; // full-name popup for truncated .nm names
 
     const POLL_MS = 30 * 1000;
     const CONCURRENCY = 6;
