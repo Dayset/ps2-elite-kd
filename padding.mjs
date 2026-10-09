@@ -66,3 +66,46 @@ export function farmNote(farm) {
     `Farm account = ${PADDING_RULE.MIN_KILLS}+ kills on it, it killed back ≤ ${PADDING_RULE.MAX_BACK * 100}%, its KPM < ${PADDING_RULE.MAX_KPM}.`
   );
 }
+
+/* ---------- marks for altered stats (user rule 2026-10-09) ----------
+ * "If you alter the stats mark it and flag it, a human will review and decide
+ * if it's fluke or just bad luck." Every player whose sample had an automatic
+ * exclusion gets a public mark and a 🚩 review flag on build-log.html:
+ *   *  stat padding: farm accounts ≥ FLAG_SHARE of the sample's kills
+ *   †  stats adjusted: some farm-account kills excluded (under review)
+ */
+export const PADDING_MARK = "*";
+export const PADDING_MARK_TIP = "* stat padding: kills on farm accounts excluded";
+export const ADJUSTED_MARK = "†";
+export const ADJUSTED_MARK_TIP = "† stats adjusted: some kills on farm accounts excluded (under review)";
+
+/**
+ * Mark for a player's farm split ({ victims, kills, share }).
+ * → { kind: "padding" | "adjusted" | "", mark, legend, tip }
+ * Add future automatic exclusions here so they get marked + flagged too.
+ */
+export function statMark(farm, rule = PADDING_RULE) {
+  const has = !!(farm && farm.victims && farm.victims.length);
+  if (!has) return { kind: "", mark: "", legend: "", tip: "" };
+  const padding = (farm.share || 0) >= rule.FLAG_SHARE;
+  if (padding) {
+    return { kind: "padding", mark: PADDING_MARK, legend: PADDING_MARK_TIP, tip: `${PADDING_MARK_TIP}. ${farmNote(farm)}` };
+  }
+  const tip =
+    `${ADJUSTED_MARK} stats adjusted: ${farm.kills} kills on farm accounts excluded (under review). ` + farmNote(farm);
+  return { kind: "adjusted", mark: ADJUSTED_MARK, legend: ADJUSTED_MARK_TIP, tip };
+}
+
+/**
+ * Human review decisions (data/reviewed.json → { players: { slug: { decision, note, at } } }).
+ * decision: "fluke" | "bad-luck" | "padding". Recorded by hand; shown on
+ * build-log.html next to the review flag. The automatic mark stays either way
+ * (the numbers are still adjusted).
+ */
+export const REVIEW_DECISIONS = Object.freeze(["fluke", "bad-luck", "padding"]);
+
+export function reviewDecision(reviewed, slug) {
+  const e = reviewed && reviewed.players && reviewed.players[slug];
+  if (!e || !REVIEW_DECISIONS.includes(e.decision)) return null;
+  return { decision: e.decision, note: String(e.note || ""), at: e.at || null };
+}

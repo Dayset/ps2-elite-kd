@@ -3,7 +3,9 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { PADDING_RULE, isFarmVictim, splitFarm, farmNote } from "../padding.mjs";
+import {
+  PADDING_RULE, isFarmVictim, splitFarm, farmNote, statMark, ADJUSTED_MARK, REVIEW_DECISIONS, reviewDecision,
+} from "../padding.mjs";
 import { normalizePlayer, playerMetrics, shownValue } from "../player-metrics.mjs";
 import { reviewFlags, paddingFlag, isPadder, PADDING_MARK, PADDING_MARK_TIP } from "../red-flags.mjs";
 import { rankRow, RANK_COLS } from "../scripts/build-ranks.mjs";
@@ -68,10 +70,10 @@ describe("stat padding (farm victims)", () => {
 
   it("ranks.json carries the * marker flag and the farm note", () => {
     const meg = rankRow(load("megatake"), { slug: "megatake" });
-    assert.equal(meg[RANK_COLS.indexOf("pad")], 1);
+    assert.equal(meg[RANK_COLS.indexOf("mark")], "padding");
     assert.match(meg[RANK_COLS.indexOf("farm")], /7715 kills on 3 farm accounts excluded/);
     const shlo = rankRow(load("shlodog"), { slug: "shlodog" });
-    assert.equal(shlo[RANK_COLS.indexOf("pad")], 0);
+    assert.equal(shlo[RANK_COLS.indexOf("mark")], null);
     assert.equal(shlo[RANK_COLS.indexOf("farm")], null);
     assert.equal(PADDING_MARK, "*");
     assert.match(PADDING_MARK_TIP, /stat padding/);
@@ -82,5 +84,49 @@ describe("stat padding (farm victims)", () => {
     const again = normalizePlayer({ ...p, rows: p.rawRows, curve: p.rawCurve });
     assert.equal(again.farm.kills, p.farm.kills);
     assert.equal(again.rows.length, p.rows.length);
+  });
+
+  it("altered but under the padding line: † mark + 🚩 'adjusted' review flag (MathoMesa)", () => {
+    const m = metricsOf("mathomesa");
+    assert.ok(m.farm.victims.length > 0 && m.farm.share < PADDING_RULE.FLAG_SHARE);
+    const mk = statMark(m.farm);
+    assert.equal(mk.kind, "adjusted");
+    assert.equal(mk.mark, ADJUSTED_MARK);
+    assert.match(mk.tip, /stats adjusted: \d+ kills on farm accounts excluded \(under review\)/);
+    const f = reviewFlags(m);
+    assert.deepEqual(f.patterns, ["adjusted"]);
+    const row = rankRow(load("mathomesa"), { slug: "mathomesa" });
+    assert.equal(row[RANK_COLS.indexOf("mark")], "adjusted");
+  });
+
+  it("every player with any exclusion is marked and flagged; nobody else is", () => {
+    const index = JSON.parse(fs.readFileSync(path.join(root, "data", "index.json"), "utf8"));
+    const seen = new Set();
+    let altered = 0;
+    for (const e of index.players) {
+      if (seen.has(e.file)) continue;
+      seen.add(e.file);
+      let raw;
+      try { raw = JSON.parse(fs.readFileSync(path.join(root, "data", e.file), "utf8")); } catch { continue; }
+      const m = playerMetrics(normalizePlayer(raw));
+      const has = m.farm.victims.length > 0;
+      const mk = statMark(m.farm);
+      const pats = reviewFlags(m).patterns;
+      assert.equal(!!mk.mark, has, e.slug);
+      assert.equal(pats.includes("padding") || pats.includes("adjusted"), has, e.slug);
+      assert.ok(!(pats.includes("padding") && pats.includes("adjusted")), e.slug);
+      if (has) altered += 1;
+    }
+    assert.ok(altered >= 20, `altered ${altered}`);
+  });
+
+  it("reviewed.json scaffold: valid shape, decisions read back", () => {
+    const rv = JSON.parse(fs.readFileSync(path.join(root, "data", "reviewed.json"), "utf8"));
+    assert.equal(typeof rv.players, "object");
+    for (const [slug, e] of Object.entries(rv.players)) assert.ok(REVIEW_DECISIONS.includes(e.decision), slug);
+    const fake = { players: { a: { decision: "fluke", note: "one-off", at: "2026-10-09" }, b: { decision: "nope" } } };
+    assert.deepEqual(reviewDecision(fake, "a"), { decision: "fluke", note: "one-off", at: "2026-10-09" });
+    assert.equal(reviewDecision(fake, "b"), null);
+    assert.equal(reviewDecision(null, "a"), null);
   });
 });

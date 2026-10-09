@@ -32,9 +32,9 @@ import {
   windowYValues,
   kpmBandCurve,
   bandReliability,
-} from "./math.mjs?v=20261009-eta";
-import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261009-eta";
-import GHOST_MODEL from "./data/ghost-model.mjs?v=20261009-eta";
+} from "./math.mjs?v=20261009-review";
+import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261009-review";
+import GHOST_MODEL from "./data/ghost-model.mjs?v=20261009-review";
 import {
   NameLoadError,
   classifyLoadError,
@@ -60,7 +60,7 @@ import {
   formatEtaLeft,
   etaLearnLiveMs,
   expectedNameMs,
-} from "./analyze-run.mjs?v=20261009-eta";
+} from "./analyze-run.mjs?v=20261009-review";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
@@ -68,16 +68,15 @@ import {
   MIN_FIGHTS_TIP,
   THIN_METRICS,
   shownValue,
-} from "./player-metrics.mjs?v=20261009-eta";
-import { paddingFlag, PADDING_MARK, PADDING_MARK_TIP } from "./red-flags.mjs?v=20261009-eta";
-import { farmNote } from "./padding.mjs?v=20261009-eta";
+} from "./player-metrics.mjs?v=20261009-review";
+import { farmNote, statMark } from "./padding.mjs?v=20261009-review";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261009-eta";
-import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261009-eta";
+import "./name-peek.mjs?v=20261009-review";
+import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261009-review";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
-import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-eta";
+import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-review";
 // Live data: Daybreak Census only (batched, paced); Honu just for a rare history fallback.
-import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261009-eta";
+import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261009-review";
 import {
   censusBase,
   censusRequest,
@@ -85,7 +84,7 @@ import {
   fetchPlayerCensus,
   limitConcurrency,
   tokenBucket,
-} from "./census-fetch.mjs?v=20261009-eta";
+} from "./census-fetch.mjs?v=20261009-review";
 
   // Player palettes (dark + light theme) live in palette.mjs (shared with ranks.html).
   const COLORS = PALETTE_DARK;
@@ -2434,7 +2433,7 @@ import {
           x: anchor.kpm,
           y: anchor.kd,
           display: p.display,
-          pad: isPadderPlayer(p),
+          mark: playerMark(p),
         });
       }
     });
@@ -2455,10 +2454,10 @@ import {
       num.setAttribute("font-size", "14");
       num.setAttribute("font-weight", "800");
       num.setAttribute("text-anchor", "end");
-      num.textContent = String(lab.i + 1) + (lab.pad ? PADDING_MARK : "");
-      if (lab.pad) {
+      num.textContent = String(lab.i + 1) + lab.mark.mark;
+      if (lab.mark.mark) {
         const t = ns("title");
-        t.textContent = `${lab.display}${PADDING_MARK}: ${PADDING_MARK_TIP}`;
+        t.textContent = `${lab.display}${lab.mark.mark}: ${lab.mark.tip}`;
         num.appendChild(t);
       }
       svg.appendChild(num);
@@ -2911,10 +2910,12 @@ import {
       `;
       els.legend.appendChild(item);
     });
-    if (list.some(isPadderPlayer)) {
+    // One note line per mark in use ("* stat padding…", "† stats adjusted…").
+    const legends = [...new Set(list.map((p) => playerMark(p).legend).filter(Boolean))];
+    for (const text of legends) {
       const note = document.createElement("div");
       note.className = "legend-note";
-      note.textContent = PADDING_MARK_TIP;
+      note.textContent = text;
       els.legend.appendChild(note);
     }
   }
@@ -2929,16 +2930,16 @@ import {
     span.setAttribute("data-full", name);
     return span;
   }
-  /** 🚩 stat padder (padding.mjs / red-flags.mjs): its sample had farm accounts removed. */
-  function isPadderPlayer(p) {
-    return !!(p && paddingFlag({ farm: p.farm }).flagged);
+  /** Altered-stats mark (padding.mjs statMark): "*" padding, "†" adjusted, or none. */
+  function playerMark(p) {
+    return statMark(p && p.farm);
   }
 
-  /** "*" after a padder's name (tooltip explains); "" otherwise. */
+  /** Mark after the name (tooltip explains); "" when the stats weren't altered. */
   function padMarkHtml(p) {
-    if (!isPadderPlayer(p)) return "";
-    const tip = `${PADDING_MARK_TIP}. ${farmNote(p.farm)}`;
-    return `<span class="pad-mark" title="${escapeHtml(tip)}">${PADDING_MARK}</span>`;
+    const mk = playerMark(p);
+    if (!mk.mark) return "";
+    return `<span class="pad-mark mark-${mk.kind}" title="${escapeHtml(mk.tip)}">${mk.mark}</span>`;
   }
 
   /** Name cell title: adds the farm note when farm accounts were excluded. */

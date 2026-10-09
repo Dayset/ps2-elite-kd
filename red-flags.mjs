@@ -13,7 +13,9 @@
  *   🦁 LionHeart median ≈ 3.1; elite players usually 4–18 → low ≤ 2.0 (≈ bottom 40%)
  *   🎈 Inflation median ≈ 2.03 → low ≤ 1.5 (≈ bottom 10%)
  */
-import { PADDING_RULE } from "./padding.mjs?v=20261009-eta";
+import { PADDING_RULE, statMark, PADDING_MARK, PADDING_MARK_TIP } from "./padding.mjs?v=20261009-review";
+
+export { PADDING_MARK, PADDING_MARK_TIP };
 
 export const RED_FLAG_RULE = Object.freeze({
   /** 🎯🎈 ivi (adjusted) at/above this = Exceptional. */
@@ -160,8 +162,6 @@ export function isPadder(m) {
   return paddingFlag(m).flagged;
 }
 
-export const PADDING_MARK = "*";
-export const PADDING_MARK_TIP = "* stat padding: kills on farm accounts excluded";
 
 /* ---------- combined Red flags 🚩 bin ---------- */
 
@@ -178,11 +178,15 @@ export function reviewFlags(m) {
   const veh = vehicleFlag(base);
   const ram = rampageFlag(base);
   const pad = paddingFlag(m);
+  // Any automatic exclusion below the padding line still altered the stats:
+  // flag for human review (fluke vs bad luck), see padding.mjs statMark.
+  const adjusted = !pad.flagged && statMark(m && m.farm).kind === "adjusted";
   const patterns = [];
   if (aim.flagged) patterns.push("aim");
   if (veh.flagged) patterns.push("vehicle");
   if (ram.flagged) patterns.push("rampage");
   if (pad.flagged) patterns.push("padding");
+  if (adjusted) patterns.push("adjusted");
   return { flagged: patterns.length > 0, patterns, skill: aim.skill, padding: pad };
 }
 
@@ -199,7 +203,8 @@ export function reviewRuleText() {
     `[vehicle pattern] KD ≥ ${V.KD_HIGH_MIN}, HSR ≤ ${V.HSR_LOW_MAX}% and accuracy ≤ ${V.ACC_LOW_MAX}% (Inflation ignored). ` +
     `Also flagged regardless of skill: [rampage pattern] KD ≥ ${RAMPAGE_RULE.KD_MIN} and KPM ≥ ${RAMPAGE_RULE.KPM_MIN}; ` +
     `[padding pattern] ≥ ${Math.round(PADDING_RULE.FLAG_SHARE * 100)}% of sample kills on farm accounts (${PADDING_RULE.MIN_KILLS}+ kills on it, ` +
-    `it killed back ≤ ${PADDING_RULE.MAX_BACK * 100}%, its KPM < ${PADDING_RULE.MAX_KPM}; those kills are excluded from the stats). ` +
+    `it killed back ≤ ${PADDING_RULE.MAX_BACK * 100}%, its KPM < ${PADDING_RULE.MAX_KPM}; those kills are excluded from the stats); ` +
+    `[adjusted] any farm-account kills excluded below that share (stats altered, needs a human look: fluke or bad luck). ` +
     `A lead for manual review, not proof of cheating.`
   );
 }
