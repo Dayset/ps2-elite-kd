@@ -1,18 +1,30 @@
 # PS2 Elite K/D
 
-Opposition-weighted K/D chart for PlanetSide 2: how projected K/D holds as enemy weapon KPM rises. Vanilla HTML/CSS/JS — no build step, CDN, or runtime Python.
+**PlanetSide 2 player stats and comparison.** Compare up to 10 players on one chart of K/D against enemy weapon KPM, see who holds up as the opposition gets harder, and look them up in population rankings. Free and open source: plain HTML/CSS/JS served from GitHub Pages, with no build step and no backend.
 
 **Live:** [dayset.github.io/ps2-elite-kd](https://dayset.github.io/ps2-elite-kd/)
 
+## Features
+
+- **Comparison chart:** K/D vs enemy KPM per player. **📈 Raw** (cumulative: K/D vs everyone at or above each KPM, the default) or **🎚️ Smooth** (K/D vs enemies around each KPM, faded where there are few fights). Optional **👻 Ghost** lines: a dashed prediction from play style (fitted on the shared cache) that fills sparse ranges, clearly marked as not real fights.
+- **Stats table:** ⚔️ iVi skill rating, 🛡️ Resist, 🔥 Active, 🦁 Brave, ☠️ K/D, ⚙️ Mech%, 🎈 Inflation (details below), with population percentiles.
+- **[Rankings](https://dayset.github.io/ps2-elite-kd/ranks.html):** every cached player ranked on the same columns, with search, compare and a distribution chart per metric.
+- **Shared cache:** a GitHub Actions workflow refreshes player snapshots automatically, so most lookups load instantly without hitting the live APIs.
+- **Status page** (unlisted): refresh runs, queue, a 🚩 red-flag review list (leads, never accusations) and a 🌱 "Could use a hand" list of players who might appreciate tips or a squad invite.
+- Light / dark theme, share links (`?names=…` auto-runs), mobile layout.
+
+**Data sources:** [Daybreak Census API](https://census.daybreakgames.com/) and [HONU](https://wt.honu.pw/) (Varunda). Requests are kept polite: cached snapshots first, rate-limited refreshes, live fetches only when needed.
+
 ## Quick start
+
+Serve the folder with any static file server, for example:
 
 ```bash
 cd ps2-elite-kd
-python3 -m http.server 8080
-# open http://127.0.0.1:8080/
+npx serve .          # or any static server
 ```
 
-Prefer a local server (`file://` often blocks `fetch` of JSON).
+Prefer a local server (`file://` often blocks `fetch` of JSON). Tests: `npm test` (Node 18+).
 
 ## Use
 
@@ -120,4 +132,4 @@ Coverage includes pooled/sliceAt, Inflation@0.5, curveSlope (deaths>0), LionHear
 
 ## Credits
 
-Killboard / meta data via [HONU](https://wt.honu.pw/) (Varunda). Chart logic ported from the earlier Python elite-K/D tool.
+Data via the [Daybreak Census API](https://census.daybreakgames.com/) and [HONU](https://wt.honu.pw/) (Varunda). History: the chart logic began as an earlier Python elite-K/D tool, since ported to JavaScript.
