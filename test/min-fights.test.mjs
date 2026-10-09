@@ -9,6 +9,8 @@ import {
   MIN_FIGHTS,
   MIN_FIGHTS_TIP,
   enoughFights,
+  THIN_METRICS,
+  shownValue,
 } from "../player-metrics.mjs";
 import { reviewFlags, rampageFlag } from "../red-flags.mjs";
 import { sprout, sampleEvents } from "../sprouts.mjs";
@@ -19,7 +21,12 @@ const load = (slug) => JSON.parse(fs.readFileSync(path.join(root, "data", "playe
 const metricsOf = (raw) => playerMetrics(normalizePlayer(raw));
 const col = (id) => RANK_COLS.indexOf(id);
 
-describe("minimum fights for 🏃 Activity / 🦁 Brave", () => {
+describe("minimum fights for opponent-sample metrics (🏃 Activity, 🦁 Brave, ⚔️ iVi, …)", () => {
+  it("blanks every opponent-sample metric, never public Census ones", () => {
+    assert.deepEqual([...THIN_METRICS].sort(), ["act", "adj", "adjs", "coi", "inflation", "mech", "pvs", "rf", "rkd", "slope"]);
+    for (const id of ["kd", "kpm", "ownKpm", "acc", "hsr", "ivi", "ekpm", "own"]) assert.ok(!THIN_METRICS.includes(id), id);
+  });
+
   it("one shared threshold: 100 kills and 5 deaths", () => {
     assert.equal(MIN_FIGHTS.KILLS, 100);
     assert.equal(MIN_FIGHTS.DEATHS, 5);
@@ -52,14 +59,14 @@ describe("minimum fights for 🏃 Activity / 🦁 Brave", () => {
     assert.equal(m.sampleDeaths, 2);
     assert.equal(m.thin, true);
     assert.ok(Number.isFinite(m.act) && m.act > 50, "raw Activity kept");
-    assert.ok(Number.isNaN(m.actShown));
-    assert.ok(Number.isNaN(m.pvsShown));
+    for (const id of THIN_METRICS) assert.ok(Number.isNaN(shownValue(m, id)), id);
+    assert.equal(shownValue(m, "kd"), 30, "public KD untouched");
   });
 
   it("Add1ti0nal: Brave/Activity blank on display, still 🚩 rampage", () => {
     const m = metricsOf(load("add1ti0nal"));
     assert.equal(m.thin, true);
-    assert.ok(Number.isNaN(m.pvsShown) && Number.isNaN(m.actShown));
+    for (const id of THIN_METRICS) assert.ok(Number.isNaN(shownValue(m, id)), id);
     assert.ok(m.pvs > 1000, "raw Brave unchanged for build-log");
     const f = reviewFlags(m);
     assert.equal(f.flagged, true);
@@ -71,15 +78,15 @@ describe("minimum fights for 🏃 Activity / 🦁 Brave", () => {
     const m = metricsOf(load("geilovs"));
     assert.ok(m.sampleKills >= 100 && m.sampleDeaths < 5);
     assert.equal(m.thin, true);
-    assert.ok(Number.isNaN(m.actShown));
+    assert.ok(Number.isNaN(shownValue(m, "act")));
+    assert.ok(Number.isNaN(shownValue(m, "adjs")));
   });
 
   it("normal players are unchanged (YEEZY, ShloDog)", () => {
     for (const slug of ["yeezy", "shlodog"]) {
       const m = metricsOf(load(slug));
       assert.equal(m.thin, false, slug);
-      assert.equal(m.actShown, m.act, slug);
-      assert.equal(m.pvsShown, m.pvs, slug);
+      for (const id of THIN_METRICS) assert.equal(shownValue(m, id), m[id], `${slug} ${id}`);
     }
   });
 
@@ -98,7 +105,9 @@ describe("minimum fights for 🏃 Activity / 🦁 Brave", () => {
     assert.equal(tiny[col("act")], null);
     assert.equal(tiny[col("pvs")], null);
     assert.equal(tiny[col("thin")], 1);
-    assert.ok(typeof tiny[col("adjs")] === "number", "iVi untouched");
+    assert.equal(tiny[col("adjs")], null, "⚔️ iVi blank too");
+    assert.equal(tiny[col("rkd")], null);
+    assert.ok(typeof tiny[col("kd")] === "number", "public KD kept");
     const ok = rankRow(load("yeezy"), { slug: "yeezy" });
     assert.equal(ok[col("thin")], 0);
     assert.ok(typeof ok[col("pvs")] === "number" && ok[col("pvs")] > 0);

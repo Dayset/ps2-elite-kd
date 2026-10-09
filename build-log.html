@@ -96,6 +96,12 @@
       <div id="sproutsRule" class="st-rule"></div>
       <div id="sprouts" class="st-dim">Loading…</div>
     </details>
+    <details class="st-card st-flags" id="cardGuard">
+      <summary><h2>🧪 Outlier guard <span id="guardCount" class="st-count">…</span></h2></summary>
+      <div class="st-note">Values far outside everyone else, checked on every refresh (scripts/build-ranks.mjs → outlier-guard.mjs) on the numbers as the site shows them. Unexplained ones may be a formula gap like the old 🦁 Brave 6094; explained ones are already in 🚩 or reviewed by hand.</div>
+      <div id="guardRule" class="st-rule"></div>
+      <div id="guard" class="st-dim">Loading…</div>
+    </details>
   </main>
 
   <script>
@@ -201,6 +207,25 @@
             " · new from live list: " + esc(r.newFromLive || 0) + "</div>" : "");
       }
 
+      /** 🧪 Outlier guard (written into data/status.json by scripts/build-ranks.mjs). */
+      function renderGuard(status) {
+        var g = status && status.outlierGuard;
+        var cnt = $("guardCount");
+        if (!g) { cnt.textContent = "–"; $("guard").innerHTML = '<span class="st-dim">No check yet (written by the next refresh run).</span>'; return; }
+        cnt.textContent = String(g.unexplained);
+        cnt.classList.toggle("hot", g.unexplained > 0);
+        $("guardRule").textContent = "Rule: " + (g.rule || "");
+        var items = g.items || [];
+        $("guard").innerHTML = "<div" + (g.unexplained ? ' class="st-err"' : "") + ">" + esc(g.unexplained) + " unexplained, " + esc(g.explained) +
+          " explained · checked " + when(g.checkedAt) + "</div>" +
+          (items.length ? '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th>Metric</th><th class="st-num">Value</th><th class="st-num">Bound</th><th class="st-num">z</th><th>Why</th></tr>' +
+            items.map(function (o) {
+              return "<tr><td" + (o.explained ? "" : ' class="st-err"') + ">" + nm(o.name) + "</td><td>" + esc(o.id) + '</td><td class="st-num">' + esc(o.value) +
+                '</td><td class="st-num">' + esc(o.bound) + '</td><td class="st-num">' + esc(Math.round(o.z)) + "</td><td>" +
+                (o.explained ? esc(o.reason) : '<span class="st-err">unexplained: check for a formula gap</span>') + "</td></tr>";
+            }).join("") + "</table></div>" : "");
+      }
+
       function renderRuns(data) {
         var runs = (data && data.workflow_runs) || [];
         var active = runs.filter(function (r) { return r.status !== "completed"; });
@@ -297,6 +322,7 @@
         ]).then(function (res) {
           renderNow(res[0], res[1]);
           renderLast(res[1]);
+          renderGuard(res[1]);
         });
         getJson("data/index.json").then(renderRecent, function (e) { fail("recent", "data/index.json", e); });
         Promise.all([

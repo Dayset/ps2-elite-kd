@@ -18,20 +18,38 @@ import {
 } from "./math.mjs?v=20261009-minfights";
 
 /**
- * Minimum fights before 🏃 Activity and 🦁 Brave are shown (user, 2026-10-09:
+ * Minimum fights before the opponent-sample metrics (THIN_METRICS: 🏃 Activity,
+ * 🦁 Brave, ⚔️ iVi, …) are shown (user, 2026-10-09:
  * "a proper account is at least 100 kills", about an hour of play). The death
  * floor stops a 100+ kill / 1-death sample from blowing up K/D. Counted over
  * the same opponent rows Activity is built from (rfIf kills / deaths).
  * Display only: red flags (red-flags.mjs) and 🌱 sprouts still read the raw
- * act / pvs values, so they work exactly as before.
+ * metric values (m.pvs, m.adjs, …), so they work exactly as before.
  */
 export const MIN_FIGHTS = Object.freeze({ KILLS: 100, DEATHS: 5 });
 
-/** Hover text for a blanked 🏃 Activity / 🦁 Brave cell. */
+/** Hover text for a blanked cell. */
 export const MIN_FIGHTS_TIP =
   `Too few fights to measure (needs ${MIN_FIGHTS.KILLS}+ kills and ${MIN_FIGHTS.DEATHS}+ deaths)`;
 
-/** True when the sample is big enough for 🏃 Activity / 🦁 Brave. */
+/**
+ * Metrics built from the opponent sample (K/D against the cached rows): all
+ * blow up on tiny samples (a 75-kill / 2-death account showed 🦁 Brave 6094,
+ * 🛡️ Resist 21, ☠️ K/D 37, ⚔️ iVi 4343). Shown as "—" below MIN_FIGHTS on the
+ * main table and ranks.html. Public Census numbers (KD, KPM, Acc, HSR, IvI)
+ * are lifetime values and stay as reported.
+ */
+export const THIN_METRICS = Object.freeze(["adjs", "adj", "rf", "act", "pvs", "rkd", "mech", "coi", "slope", "inflation"]);
+const THIN_SET = new Set(THIN_METRICS);
+
+/** Value as shown on the page: NaN for THIN_METRICS when the sample is below MIN_FIGHTS. */
+export function shownValue(m, id) {
+  if (!m) return NaN;
+  if (m.thin && THIN_SET.has(id)) return NaN;
+  return m[id];
+}
+
+/** True when the sample is big enough for the THIN_METRICS. */
 export function enoughFights(kills, deaths, min = MIN_FIGHTS) {
   return (+kills || 0) >= min.KILLS && (+deaths || 0) >= min.DEATHS;
 }
@@ -106,12 +124,10 @@ export function playerMetrics(p) {
     slope,
     // Raw values (red flags / build-log use these unchanged).
     pvs,
-    // Shown on the main table and ranks: blank (NaN) below MIN_FIGHTS.
+    // Sample size; below MIN_FIGHTS the page shows THIN_METRICS as "—" (shownValue).
     sampleKills,
     sampleDeaths,
     thin,
-    actShown: thin ? NaN : act,
-    pvsShown: thin ? NaN : pvs,
     adj,
     // ⚡ ivi: 🎯🎈 ivi adjusted for own kill speed (slow, safe KD counts for less).
     adjs: speedAdjustedIvi(adj, ownKpm),

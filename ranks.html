@@ -275,7 +275,7 @@
   <script type="module">
     import "./name-peek.mjs?v=20261009-minfights";
     import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits } from "./dist.mjs?v=20261009-minfights";
-    import { MIN_FIGHTS, MIN_FIGHTS_TIP } from "./player-metrics.mjs?v=20261009-minfights";
+    import { MIN_FIGHTS, MIN_FIGHTS_TIP, THIN_METRICS } from "./player-metrics.mjs?v=20261009-minfights";
     import { paletteColor } from "./palette.mjs?v=20261009-minfights";
     import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-minfights";
 
@@ -287,8 +287,8 @@
     const VISIBLE = [
       { id: "adjs", label: "⚔️ iVi", digits: 0, floorZero: true, tip: "ivi adjusted for your own kill speed" },
       { id: "rf", label: "🛡️ Resist", digits: 2, tip: "Resistance Factor" },
-      { id: "act", label: "🏃 Activity", digits: 2, thinTip: true, tip: `K/D × own KPM. Shows — below ${MIN_FIGHTS.KILLS} kills / ${MIN_FIGHTS.DEATHS} deaths` },
-      { id: "pvs", label: "🦁 Brave", digits: 2, thinTip: true, tip: `Bravery (Activity × slope). Shows — below ${MIN_FIGHTS.KILLS} kills / ${MIN_FIGHTS.DEATHS} deaths` },
+      { id: "act", label: "🏃 Activity", digits: 2, tip: "K/D × own KPM" },
+      { id: "pvs", label: "🦁 Brave", digits: 2, tip: "Bravery (Activity × slope)" },
       { id: "rkd", label: "☠️ K/D", digits: 3, tip: "Resistance-weighted K/D" },
       { id: "mech", label: "⚙️ Mech%", digits: 1, tip: "Projected mechanized share" },
       { id: "inflation", label: "🎈 Inflation", digits: 2, tip: "Global KD ÷ KD at ≥0.5 enemy KPM — lower is better", ascFirst: true },
@@ -311,6 +311,13 @@
       { id: "ivi", label: "IvI", digits: 0, tip: "Public Infantry vs Infantry score" },
     ];
     const ALL_COLS = [...VISIBLE, ...DEBUG, ...PUBLIC];
+    // Opponent-sample metrics are null in ranks.json below MIN_FIGHTS (player-metrics.mjs):
+    // "—" with the reason on hover; they're left out of ranks, percentiles and histograms.
+    for (const c of ALL_COLS) {
+      if (!THIN_METRICS.includes(c.id)) continue;
+      c.thinTip = true;
+      c.tip = `${c.tip || c.label}. Shows — below ${MIN_FIGHTS.KILLS} kills / ${MIN_FIGHTS.DEATHS} deaths`;
+    }
     const colById = (id) => ALL_COLS.find((c) => c.id === id);
 
     const $ = (id) => document.getElementById(id);

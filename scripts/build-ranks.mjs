@@ -17,7 +17,9 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { normalizePlayer, playerMetrics } from "../player-metrics.mjs";
+import { normalizePlayer, playerMetrics, shownValue } from "../player-metrics.mjs";
+import { reviewFlags } from "../red-flags.mjs";
+import { findOutliers, guardStatus } from "../outlier-guard.mjs";
 
 /** Metric ids (same ids as the app.js stats columns). */
 export const METRIC_COLS = Object.freeze([
@@ -29,11 +31,11 @@ export const METRIC_COLS = Object.freeze([
   "kd", "kpm", "ownKpm", "acc", "hsr", "ivi",
 ]);
 /**
- * 🏃 Activity / 🦁 Brave are stored as SHOWN on the main page: null below
- * MIN_FIGHTS (player-metrics.mjs), so ranks / sorting / distributions skip them.
- * Trailing "thin" = 1 when the sample is below MIN_FIGHTS (ranks.html hover text).
+ * Values are stored as SHOWN on the main page (shownValue): opponent-sample
+ * metrics (THIN_METRICS) are null below MIN_FIGHTS, so ranks / sorting /
+ * distributions skip them. Trailing "thin" = 1 when the sample is below
+ * MIN_FIGHTS (ranks.html hover text).
  */
-const SHOWN_KEY = Object.freeze({ act: "actShown", pvs: "pvsShown" });
 export const RANK_COLS = Object.freeze(["name", "query", "slug", "savedAt", ...METRIC_COLS, "thin"]);
 
 const round6 = (v) => (typeof v === "number" && Number.isFinite(v) ? Math.round(v * 1e6) / 1e6 : null);
@@ -53,11 +55,11 @@ export function rankRow(raw, { slug = "", savedAt = null } = {}) {
   if (!p || !p.display || p.display === "?") return null;
   const m = playerMetrics(p);
   const t = savedAt != null ? +savedAt : +raw.savedAt || null;
-  return [p.display, bareName(p.display) || p.display, slug, t, ...METRIC_COLS.map((k) => round6(m[SHOWN_KEY[k] || k])), m.thin ? 1 : 0];
+  return [p.display, bareName(p.display) || p.display, slug, t, ...METRIC_COLS.map((k) => round6(shownValue(m, k))), m.thin ? 1 : 0];
 }
 
 /** Build the whole ranks object from a data/ directory. */
-export function buildRanks(dataDir) {
+export function buildRanks(dataDir, { onPlayer = null } = {}) {
   const index = JSON.parse(fs.readFileSync(path.join(dataDir, "index.json"), "utf8"));
   const rows = [];
   const seen = new Set();
@@ -72,16 +74,44 @@ export function buildRanks(dataDir) {
       continue; // listed but missing / unreadable: skip, never fail the run
     }
     const row = rankRow(raw, { slug: e.slug || path.basename(file, ".json"), savedAt: e.savedAt ?? raw.savedAt });
-    if (row) rows.push(row);
+    if (row) {
+      rows.push(row);
+      if (onPlayer) onPlayer(raw, row);
+    }
   }
   return { updatedAt: new Date().toISOString(), count: rows.length, cols: RANK_COLS.slice(), rows };
+}
+
+/** Ranks + 🧪 outlier guard over the same shown values (one pass over the cache). */
+export function buildRanksWithGuard(dataDir) {
+  const players = [];
+  const ranks = buildRanks(dataDir, {
+    onPlayer(raw, row) {
+      const m = playerMetrics(normalizePlayer(raw));
+      const f = reviewFlags(m); // raw metrics: same 🚩 result as build-log.html
+      const values = {};
+      METRIC_COLS.forEach((k, i) => { values[k] = row[4 + i]; });
+      players.push({ slug: row[2], name: row[0], flagged: f.flagged, patterns: f.patterns, values });
+    },
+  });
+  return { ranks, guard: guardStatus(findOutliers(players, METRIC_COLS)) };
 }
 
 const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (isMain) {
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
   const dataDir = path.join(root, "data");
-  const out = buildRanks(dataDir);
+  const { ranks: out, guard } = buildRanksWithGuard(dataDir);
   fs.writeFileSync(path.join(dataDir, "ranks.json"), JSON.stringify(out) + "\n");
   console.log(`ranks.json: ${out.count} players`);
+  // 🧪 Outlier guard → data/status.json (build-log.html). Other status fields are kept.
+  const stPath = path.join(dataDir, "status.json");
+  let st = {};
+  try { st = JSON.parse(fs.readFileSync(stPath, "utf8")); } catch {}
+  st.outlierGuard = guard;
+  fs.writeFileSync(stPath, JSON.stringify(st, null, 2) + "\n");
+  for (const o of guard.items.filter((x) => !x.explained)) {
+    console.log(`::warning::outlier guard: ${o.name} ${o.id}=${o.value} (bound ${o.bound}, z ${o.z})`);
+  }
+  console.log(`outlier guard: ${guard.unexplained} unexplained, ${guard.explained} explained`);
 }

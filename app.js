@@ -64,6 +64,8 @@ import {
   playerMetrics,
   MIN_FIGHTS,
   MIN_FIGHTS_TIP,
+  THIN_METRICS,
+  shownValue,
 } from "./player-metrics.mjs?v=20261009-minfights";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
 import "./name-peek.mjs?v=20261009-minfights";
@@ -2620,8 +2622,8 @@ import {
     const adjVisibleCols = [
       { id: "adjs", label: "⚔️ iVi", hint: "ivi adjusted for your own kill speed (🎯🎈 ivi in the debug columns is the unadjusted score). Own KPM 0.8–1.4 = unchanged; faster earns a growing bonus; slower scales the score down (at most halved), so a slow, safe KD counts for less but never goes negative. Below zero shows as 0.", fn: (r) => r.adjs, digits: 0, floorZero: true },
       { id: "rf", label: "🛡️ Resist", hint: "Resistance: how hard the players you die to are (Resistance Factor).", fn: (r) => r.rf, digits: 2 },
-      { id: "act", label: "🏃 Activity", hint: `How much high-pressure combat you see (☠️ K/D × own KPM). Shows — below ${MIN_FIGHTS.KILLS} kills / ${MIN_FIGHTS.DEATHS} deaths.`, fn: (r) => r.actShown, digits: 2, thinTip: true },
-      { id: "pvs", label: "🦁 Brave", hint: `Bravery (formerly LionHeart): 🏃 Activity × pressure slope — sustained elite volume under hard opposition. Shows — below ${MIN_FIGHTS.KILLS} kills / ${MIN_FIGHTS.DEATHS} deaths.`, fn: (r) => r.pvsShown, digits: 2, thinTip: true },
+      { id: "act", label: "🏃 Activity", hint: `How much high-pressure combat you see (☠️ K/D × own KPM).`, fn: (r) => r.act, digits: 2 },
+      { id: "pvs", label: "🦁 Brave", hint: `Bravery (formerly LionHeart): 🏃 Activity × pressure slope — sustained elite volume under hard opposition.`, fn: (r) => r.pvs, digits: 2 },
       { id: "rkd", label: "☠️ K/D", hint: "Resistance-weighted K/D against the opposition mix you actually face.", fn: (r) => r.rkd, digits: 3 },
       { id: "mech", label: "⚙️ Mech%", hint: "Projected mechanized / vehicle share implied by 🛡️ Resist.", fn: (r) => r.mech, digits: 1 },
       { id: "inflation", label: "🎈 Inflation", hint: "Global KD ÷ KD at ≥0.5 enemy KPM — how much soft opposition inflates your KD (avg planetman ~0.35).", fn: (r) => r.inflation, digits: 2, pctDir: "low", pctRefFloor: 1.0 },
@@ -2634,6 +2636,15 @@ import {
       { id: "coi", label: "📊 COI", hint: "Combat Output Index derived from 🛡️ Resist.", fn: (r) => r.coi, digits: 2 },
       { id: "slope", label: "📉 Slope", hint: "Overall graph angle: death-weighted K/D vs enemy KPM across the full curve — negative means K/D falls as opposition hardens (feeds 🦁 Brave).", fn: (r) => r.slope, digits: 2 },
     ];
+    // Opponent-sample metrics: "—" below MIN_FIGHTS (player-metrics.mjs), so they
+    // also drop out of sorting and the % column references.
+    const thinNote = ` Shows — below ${MIN_FIGHTS.KILLS} kills / ${MIN_FIGHTS.DEATHS} deaths (too few fights to measure).`;
+    for (const c of adjVisibleCols.concat(adjDebugCols)) {
+      if (!THIN_METRICS.includes(c.id) || c.thinTip) continue;
+      c.thinTip = true;
+      c.hint = (c.hint || c.label) + thinNote;
+      c.fn = (r) => shownValue(r, c.id);
+    }
     const adjCols = showDebugCols ? adjVisibleCols.concat(adjDebugCols) : adjVisibleCols;
     // Sorting by a hidden debug column falls back to the default (⚔️ iVi high→low).
     if (statsSortState.adjusted.key !== "name" && !adjCols.some((c) => c.id === statsSortState.adjusted.key)) {
@@ -2737,7 +2748,7 @@ import {
               if (c.floorZero && isFiniteNum(v) && v < 0) {
                 return `<td class="below-scale" title="Below the rating scale">0</td>`;
               }
-              // 🏃 Activity / 🦁 Brave below MIN_FIGHTS: "—" with the reason on hover.
+              // Opponent-sample metrics below MIN_FIGHTS: "—" with the reason on hover.
               if (c.thinTip && row.thin && !isFiniteNum(v)) {
                 return `<td class="thin-sample" title="${escapeHtml(MIN_FIGHTS_TIP)}">—</td>`;
               }
