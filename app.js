@@ -32,9 +32,9 @@ import {
   windowYValues,
   kpmBandCurve,
   bandReliability,
-} from "./math.mjs?v=20261008-distlight";
-import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261008-distlight";
-import GHOST_MODEL from "./data/ghost-model.mjs?v=20261008-distlight";
+} from "./math.mjs?v=20261008-ghostfix";
+import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261008-ghostfix";
+import GHOST_MODEL from "./data/ghost-model.mjs?v=20261008-ghostfix";
 import {
   NameLoadError,
   classifyLoadError,
@@ -57,16 +57,16 @@ import {
   estimateRemainingMs,
   nextEtaDeadline,
   formatEtaLeft,
-} from "./analyze-run.mjs?v=20261008-distlight";
+} from "./analyze-run.mjs?v=20261008-ghostfix";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
-} from "./player-metrics.mjs?v=20261008-distlight";
+} from "./player-metrics.mjs?v=20261008-ghostfix";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261008-distlight";
-import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261008-distlight";
+import "./name-peek.mjs?v=20261008-ghostfix";
+import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261008-ghostfix";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
-import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261008-distlight";
+import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261008-ghostfix";
 
   // Player palettes (dark + light theme) live in palette.mjs (shared with ranks.html).
   const COLORS = PALETTE_DARK;
@@ -93,7 +93,10 @@ import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./j
   /** "1" = show older debug columns in the Adjusted table (footer checkbox). */
   const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";
   /** Chart view: "banded" (🎚️ Smooth, opt-in) or anything else = cumulative (📈 Raw, default). Stored values unchanged. */
-  const LS_CHART_MODE = "ps2-elite-kd-chart-mode";
+  // v2: Smooth shipped 2026-10-08 and test taps left "banded" saved for some
+  // people, so everyone restarts on Raw once; choices saved from now on stick.
+  const LS_CHART_MODE = "ps2-elite-kd-chart-mode-v2";
+  const LS_CHART_MODE_OLD = "ps2-elite-kd-chart-mode";
   /** 👻 ghost (predicted) lines: "1" = on (explicit choice); anything else = off (default). */
   const LS_GHOSTS = "ps2-elite-kd-ghosts";
   /** Cross-tab live-fetch flag (browser-local). */
@@ -1905,6 +1908,7 @@ import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./j
 
   function readChartMode() {
     try {
+      localStorage.removeItem(LS_CHART_MODE_OLD);
       return localStorage.getItem(LS_CHART_MODE) === "banded" ? "banded" : "cumulative";
     } catch {
       return "cumulative";
@@ -1998,8 +2002,7 @@ import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./j
   function setChartMode(mode, { redraw = true } = {}) {
     chartMode = mode === "banded" ? "banded" : "cumulative";
     try {
-      if (chartMode === "banded") localStorage.setItem(LS_CHART_MODE, "banded");
-      else localStorage.removeItem(LS_CHART_MODE);
+      localStorage.setItem(LS_CHART_MODE, chartMode);
     } catch {
       /* private mode: session-only */
     }
@@ -2397,7 +2400,7 @@ import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./j
 
     renderStatsTable(list);
     renderLegend(list);
-    setGhostCaptionVisible(ghostsOn && drewGhost);
+    setGhostCaption(ghostsOn, drewGhost);
   }
 
   /**
@@ -2777,9 +2780,27 @@ import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./j
     });
   }
 
-  function setGhostCaptionVisible(show) {
+  /**
+   * Caption next to 👻: always shown while ghosts are on (so the toggle never
+   * looks dead). drawn = ghost segments exist in this mode for these players;
+   * otherwise say there's nothing to predict and point at Smooth / Raw.
+   */
+  function setGhostCaption(on, drawn) {
     const cap = document.getElementById("ghostCaption");
-    if (cap) cap.hidden = !show;
+    if (!cap) return;
+    cap.hidden = !on;
+    if (!on) return;
+    const text = cap.querySelector(".ghost-caption-text");
+    const sw = cap.querySelector(".ghost-caption-swatch");
+    if (sw) sw.hidden = !drawn;
+    if (!text) return;
+    if (drawn) {
+      text.innerHTML = "dashed = predicted from play style,<br />not real fights";
+    } else if (chartMode === "banded") {
+      text.innerHTML = "👻 on: no gaps to predict here<br />(every line has enough fights)";
+    } else {
+      text.innerHTML = "👻 on: no gaps to predict here,<br />try 🎚️ Smooth";
+    }
   }
 
   function renderLegend(list) {
