@@ -316,3 +316,20 @@ it("resolveStartupSelection: ?names= wins; saved field restored without URL", ()
   // junk in storage is ignored
   assert.equal(resolveStartupSelection({ pending: { names: "nope" }, last: ["A"] }).reason, "last");
 });
+
+import { summarizeFailures as sumF, classifyLoadError as clsF, isTransientKind, NameLoadError as NLE } from "../analyze-run.mjs";
+describe("Census busy/down failures", () => {
+  it("census-busy is transient and keeps its kind", () => {
+    assert.equal(isTransientKind("census-busy"), true);
+    assert.equal(isTransientKind("not-found"), false);
+    assert.equal(clsF(Object.assign(new Error("Census is busy or down"), { kind: "census-busy" })), "census-busy");
+    assert.equal(clsF(new NLE("x", "census-busy")), "census-busy");
+  });
+  it("friendly 'try again later' wording + retryable flag", () => {
+    const s = sumF([{ name: "A", kind: "census-busy" }], 0);
+    assert.match(s.tail, /Census is busy or down right now — try again later/);
+    assert.equal(s.retryable, true);
+    assert.equal(s.items[0].reason, "Census busy/down");
+    assert.equal(sumF([{ name: "Typo", kind: "not-found" }], 0).retryable, false);
+  });
+});

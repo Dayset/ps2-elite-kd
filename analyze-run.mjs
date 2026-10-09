@@ -10,11 +10,17 @@ export const FAIL_REASONS = {
   network: "network error",
   timeout: "timed out",
   "bad-response": "bad response",
+  "census-busy": "Census busy/down",
   error: "error",
 };
 
 /** Kinds that are probably temporary (worth a retry), not a typo. */
-const TRANSIENT_KINDS = new Set(["network", "timeout", "bad-response"]);
+const TRANSIENT_KINDS = new Set(["network", "timeout", "bad-response", "census-busy"]);
+
+/** True if the failure kind is probably temporary (show a "try again" button). */
+export function isTransientKind(kind) {
+  return TRANSIENT_KINDS.has(kind);
+}
 
 /** Error carrying a failure `kind` (see FAIL_REASONS). */
 export class NameLoadError extends Error {
@@ -139,7 +145,10 @@ export function summarizeFailures(failed, okCount) {
   else lead = "Couldn't fetch:";
 
   let why;
-  if (allTransient) {
+  const censusBusy = failed.filter((f) => f.kind === "census-busy").length;
+  if (allTransient && censusBusy) {
+    why = "Daybreak Census is busy or down right now — try again later.";
+  } else if (allTransient) {
     why = "Looks like a network hiccup — try again in a moment.";
   } else {
     why = many
@@ -149,7 +158,7 @@ export function summarizeFailures(failed, okCount) {
   }
   const tail = allFailed ? why : `${why} Showing the rest.`;
   const list = items.map((i) => `${i.name} (${i.reason})`).join(", ");
-  return { allFailed, lead, items, tail, text: `${lead} ${list}. ${tail}` };
+  return { allFailed, lead, items, tail, retryable: transient > 0, text: `${lead} ${list}. ${tail}` };
 }
 
 /* ---------- shared-cache chip ordering ---------- */
