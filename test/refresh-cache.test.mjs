@@ -24,6 +24,9 @@ import {
   parseTopKillers,
   formatTopKillers,
   liveCandidates,
+  summarizeAssists,
+  fetchHonuAssists,
+  ASSISTS_SINCE,
 } from "../scripts/refresh-cache.mjs";
 
 const index = {
@@ -240,5 +243,44 @@ describe("daily refresh + schedule.json", () => {
     assert.deepEqual(a, b); // idle runs produce the same file -> no commit
     assert.deepEqual(computeSchedule({ now: NOW }), { nextDueAt: null, reason: "idle" });
     assert.equal(computeSchedule({ growthLeft: true, outageStop: true, now: NOW }).nextDueAt, new Date(NOW + 30 * 60e3).toISOString());
+  });
+});
+
+describe("assists from Honu sessions", () => {
+  const S = (start, end, assists, kills = 10) => ({ start, end, assists, kills });
+  it("sums only finished sessions with assists >= 0", () => {
+    const a = summarizeAssists([
+      S("2026-10-03T10:00:00Z", "2026-10-03T11:00:00Z", 12, 20),
+      S("2026-10-04T10:00:00Z", "2026-10-04T10:30:00Z", 3, 5),
+      S("2026-09-01T10:00:00Z", "2026-09-01T11:00:00Z", -1, 50), // unknown (pre-assists)
+      S("2026-10-05T10:00:00Z", null, -1, -1), // still online
+      { start: "2026-10-06T10:00:00Z", end: "2026-10-06T11:00:00Z", kills: 9 }, // old Honu build: no field
+    ]);
+    assert.deepEqual(a, {
+      total: 15,
+      sessions_counted: 2,
+      seconds_counted: 5400,
+      kills_counted: 25,
+      first: "2026-10-03T10:00:00.000Z",
+      last: "2026-10-04T10:30:00.000Z",
+      source: "honu-sessions",
+    });
+  });
+  it("returns null when no session has assist data", () => {
+    assert.equal(summarizeAssists([S("2026-10-03T10:00:00Z", "2026-10-03T11:00:00Z", -1)]), null);
+    assert.equal(summarizeAssists(null), null);
+    assert.equal(summarizeAssists([{ start: "x", end: "y", assists: 4 }]), null);
+  });
+  it("fetchHonuAssists asks the documented period endpoint and never throws", async () => {
+    let seen;
+    const a = await fetchHonuAssists("5428147970845751137", {
+      now: Date.parse("2026-10-08T00:00:00Z"),
+      getJson: async (u) => { seen = u; return [S("2026-10-03T10:00:00Z", "2026-10-03T10:10:00Z", 1)]; },
+    });
+    assert.match(seen, /^https:\/\/wt\.honu\.pw\/api\/session\/character\/5428147970845751137\/period\?start=/);
+    assert.ok(seen.includes(encodeURIComponent(ASSISTS_SINCE)));
+    assert.equal(a.total, 1);
+    assert.equal(await fetchHonuAssists("5428147970845751137", { getJson: async () => { throw new Error("429"); } }), null);
+    assert.equal(await fetchHonuAssists("not-an-id", { getJson: async () => { throw new Error("should not call"); } }), null);
   });
 });

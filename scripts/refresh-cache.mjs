@@ -258,6 +258,58 @@ async function honuHistoryFallback(c) {
   }
 }
 
+/**
+ * Honu started recording per-session assists on ~2026-10-02 (column default
+ * -1 = unknown for older sessions), so only ask for sessions since then.
+ * Census has no assists stat; this is the one extra documented Honu call per
+ * refreshed player (GET /api/session/character/{id}/period), paced by honuBucket.
+ */
+export const ASSISTS_SINCE = "2026-09-25T00:00:00Z";
+const HONU_SESSIONS = "https://wt.honu.pw/api/session/character/";
+
+/**
+ * Sum assists over finished, summarized Honu sessions that have assists >= 0.
+ * Returns null when no session carries assist data (field stays absent).
+ * kills_counted = kills over the same sessions, for assists-per-kill.
+ */
+export function summarizeAssists(sessions) {
+  let total = 0, n = 0, secs = 0, kills = 0, first = null, last = null;
+  for (const s of Array.isArray(sessions) ? sessions : []) {
+    if (!s || typeof s.assists !== "number" || !Number.isFinite(s.assists) || s.assists < 0) continue;
+    const t0 = Date.parse(s.start);
+    const t1 = Date.parse(s.end);
+    if (!Number.isFinite(t0) || !Number.isFinite(t1) || t1 < t0) continue; // still online / bad row
+    total += s.assists;
+    n++;
+    secs += Math.round((t1 - t0) / 1000);
+    if (s.kills >= 0) kills += s.kills;
+    if (first === null || t0 < first) first = t0;
+    if (last === null || t1 > last) last = t1;
+  }
+  if (!n) return null;
+  return {
+    total,
+    sessions_counted: n,
+    seconds_counted: secs,
+    kills_counted: kills,
+    first: new Date(first).toISOString(),
+    last: new Date(last).toISOString(),
+    source: "honu-sessions",
+  };
+}
+
+/** Never throws: any Honu problem just leaves player.assists absent. */
+export async function fetchHonuAssists(cid, { getJson = (u) => fetchJson(u, { retries: 2 }), now = Date.now() } = {}) {
+  if (!/^\d+$/.test(String(cid || ""))) return null;
+  const url = `${HONU_SESSIONS}${cid}/period?start=${encodeURIComponent(ASSISTS_SINCE)}&end=${encodeURIComponent(new Date(now).toISOString())}`;
+  try {
+    return summarizeAssists(await getJson(url));
+  } catch (e) {
+    console.warn(`  Honu sessions (assists) skipped: ${String(e && e.message).slice(0, 80)}`);
+    return null;
+  }
+}
+
 async function resolveCensusOnly(raw) {
   let url;
   if (/^\d{16,}$/.test(raw)) {
@@ -327,6 +379,8 @@ async function loadLive(name) {
   }
 
   const curve = kpmCurve(rows);
+  // Collected for later (assists per minute / per kill); not shown in the UI.
+  const assists = await fetchHonuAssists(cid);
   return {
     query: String(name).trim(),
     top: TOP_N,
@@ -343,6 +397,7 @@ async function loadLive(name) {
       n_scored: rows.length,
       honu: `https://wt.honu.pw/c/${cid}/killboard`,
       source: "census",
+      ...(assists ? { assists } : {}),
       rows,
       curve,
     },
