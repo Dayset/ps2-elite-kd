@@ -1883,15 +1883,15 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
 }
 .legend-flair .flair { margin-left: 0; font-size: 0.8rem; }
 
-/* Under ✨ Adjusted: who is "—" and why (never an unexplained empty table). */
-.stats-thin-note {
-  margin: 0.4rem 0 0;
-  font-size: 0.76rem;
-  color: var(--muted);
+/* ⚠️ after a "—" player's name (too few fights): icon only, reason on hover. */
+.thin-mark {
+  margin-left: 0.25em;
+  font-size: 0.78em;
+  cursor: help;
   opacity: 0.85;
 }
 
-/* Collapsed-by-default small notes (vehicle pooling, "—" cells, * † ◦ marks):
+/* Collapsed-by-default small notes (vehicle pooling, * † ◦ marks; ♿ summary):
    one short muted summary line; the full text only when opened. */
 .fold-note > summary {
   cursor: pointer;

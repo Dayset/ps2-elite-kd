@@ -15,10 +15,10 @@ import {
   pressureVolume,
   resolveIvi,
   deathMixLite,
-} from "./math.mjs?v=20261009-bins";
-import { splitFarm } from "./padding.mjs?v=20261009-bins";
-import { OPPONENT_TOP_N, LEGACY_TOP_N, sampleTopN } from "./census-fetch.mjs?v=20261009-bins";
-import { cleanTimes } from "./flairs.mjs?v=20261009-bins";
+} from "./math.mjs?v=20261009-warn";
+import { splitFarm } from "./padding.mjs?v=20261009-warn";
+import { OPPONENT_TOP_N, LEGACY_TOP_N, sampleTopN } from "./census-fetch.mjs?v=20261009-warn";
+import { cleanTimes } from "./flairs.mjs?v=20261009-warn";
 
 /**
  * Older shared-cache files were scored on the top 50 opponents; new fetches use
@@ -58,6 +58,19 @@ export const MIN_FIGHTS_RULE =
 
 /** Hover text for a blanked cell. */
 export const MIN_FIGHTS_TIP = `Too few fights to measure (needs ${MIN_FIGHTS_RULE})`;
+
+/** Icon after a "—" player's name (no visible text; the reason lives in the hover tip). */
+export const THIN_MARK = "⚠️";
+
+/** Hover tip for THIN_MARK: "Too few fights to measure: 22 kills / 60 deaths, needs …". */
+export function thinMarkTip(kills, deaths) {
+  const k = +kills || 0;
+  const d = +deaths || 0;
+  const counts = !k && !d
+    ? "no fights on record"
+    : `${k} kill${k === 1 ? "" : "s"} / ${d} death${d === 1 ? "" : "s"}`;
+  return `Too few fights to measure: ${counts}, needs ${MIN_FIGHTS.FIGHTS}+ fights and ${MIN_FIGHTS.KILLS}+ of each`;
+}
 
 /**
  * Metrics built from the opponent sample (K/D against the cached rows): all

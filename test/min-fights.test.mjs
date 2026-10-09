@@ -11,6 +11,8 @@ import {
   enoughFights,
   THIN_METRICS,
   shownValue,
+  THIN_MARK,
+  thinMarkTip,
 } from "../player-metrics.mjs";
 import { reviewFlags, rampageFlag } from "../red-flags.mjs";
 import { sprout, sampleEvents } from "../sprouts.mjs";
@@ -125,5 +127,17 @@ describe("minimum fights for opponent-sample metrics (🏃 Activity, 🦁 Brave,
     const ok = rankRow(load("yeezy"), { slug: "yeezy" });
     assert.equal(ok[col("thin")], 0);
     assert.ok(typeof ok[col("pvs")] === "number" && ok[col("pvs")] > 0);
+  });
+});
+
+describe("⚠️ thin mark (t282u: icon only, reason on hover)", () => {
+  it("is just the icon", () => assert.equal(THIN_MARK, "⚠️"));
+  it("tip names the player's counts and the rule", () => {
+    assert.equal(
+      thinMarkTip(22, 60),
+      `Too few fights to measure: 22 kills / 60 deaths, needs ${MIN_FIGHTS.FIGHTS}+ fights and ${MIN_FIGHTS.KILLS}+ of each`
+    );
+    assert.match(thinMarkTip(1, 1), /1 kill \/ 1 death,/);
+    assert.match(thinMarkTip(0, 0), /no fights on record/);
   });
 });
