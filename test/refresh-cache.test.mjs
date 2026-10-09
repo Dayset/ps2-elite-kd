@@ -13,7 +13,11 @@ import {
   crawlCandidates,
   mergeTopKillers,
   opponentRow,
-  honuToCensusShape,
+  honuHistoryToStatHistory,
+  staleCandidates,
+  nextStaleAt,
+  computeSchedule,
+  REFRESH_RUN_GAP_MS,
   isConnectFailure,
   retryable,
   retryCandidates,
@@ -193,23 +197,48 @@ describe("opponent rows and retry policy", () => {
   });
 });
 
-describe("Census fallback via Honu", () => {
-  it("maps a Honu character + history_stats to the Census shape", () => {
-    const c = honuToCensusShape(
-      { id: "5429162266269045633", name: "RetiredRageteller", outfitTag: "MEME" },
-      [{ type: "kills", allTime: 38716 }, { type: "deaths", allTime: 13857 }, { type: "time", allTime: 954345 }, { type: "battle_rank", allTime: 101 }]
+describe("Honu history_stats fallback (only when Census lacks stat_history)", () => {
+  it("maps Honu history_stats to Census stat_history rows", () => {
+    assert.deepEqual(
+      honuHistoryToStatHistory([{ type: "kills", allTime: 38716 }, { type: "deaths", allTime: 13857 }, { type: "time", allTime: 954345 }, { type: "battle_rank", allTime: 101 }]),
+      [{ stat_name: "kills", all_time: "38716" }, { stat_name: "deaths", all_time: "13857" }, { stat_name: "time", all_time: "954345" }]
     );
-    assert.equal(c.character_id, "5429162266269045633");
-    assert.equal(c.name.first, "RetiredRageteller");
-    assert.equal(c.outfit.alias, "MEME");
-    assert.deepEqual(c.stats.stat_history, [
-      { stat_name: "kills", all_time: "38716" }, { stat_name: "deaths", all_time: "13857" }, { stat_name: "time", all_time: "954345" },
-    ]);
-    assert.deepEqual(honuToCensusShape({ id: "1", name: "X", outfitTag: null }, null).outfit, {});
+    assert.deepEqual(honuHistoryToStatHistory(null).map((r) => r.all_time), ["0", "0", "0"]);
   });
   it("classifies connect failures (runner can't reach Census)", () => {
     assert.equal(isConnectFailure(new Error("fetch failed (UND_ERR_CONNECT_TIMEOUT) for census.daybreakgames.com")), true);
     assert.equal(isConnectFailure(new Error("503 Service Unavailable for x")), true);
     assert.equal(isConnectFailure(new Error("Census: no character x")), false);
+  });
+});
+
+describe("daily refresh + schedule.json", () => {
+  const H = 3600e3;
+  const NOW = Date.parse("2026-10-09T12:00:00Z");
+  const idx = {
+    players: [
+      { name: "[A] Fresh", slug: "fresh", savedAt: NOW - 2 * H },
+      { name: "Old", slug: "old", savedAt: NOW - 50 * H },
+      { name: "Never", slug: "never", savedAt: null },
+      { name: "Tried", slug: "tried", savedAt: NOW - 40 * H },
+    ],
+  };
+  const st = { players: { tried: { lastAttemptAt: NOW - 1 * H, fails: 1 } } };
+  it("stale = saved/tried > 24 h ago, oldest first (never-saved first)", () => {
+    assert.deepEqual(staleCandidates(idx, st, NOW), ["Never", "Old"]);
+  });
+  it("nextStaleAt = earliest last-touch + 24 h", () => {
+    const fresh = { players: [idx.players[0], idx.players[3]] };
+    assert.equal(nextStaleAt(fresh, st), NOW - 2 * H + 24 * H);
+    assert.equal(nextStaleAt({ players: [] }, st), null);
+  });
+  it("computeSchedule: growth now, stale in ~1 h, else next stale time (deterministic), else idle", () => {
+    assert.deepEqual(computeSchedule({ growthLeft: true, now: NOW }), { nextDueAt: new Date(NOW).toISOString(), reason: "growth" });
+    assert.equal(computeSchedule({ staleLeft: 5, now: NOW }).nextDueAt, new Date(NOW + REFRESH_RUN_GAP_MS).toISOString());
+    const a = computeSchedule({ nextStaleAt: NOW + 5 * H, now: NOW });
+    const b = computeSchedule({ nextStaleAt: NOW + 5 * H, now: NOW + 600e3 });
+    assert.deepEqual(a, b); // idle runs produce the same file -> no commit
+    assert.deepEqual(computeSchedule({ now: NOW }), { nextDueAt: null, reason: "idle" });
+    assert.equal(computeSchedule({ growthLeft: true, outageStop: true, now: NOW }).nextDueAt, new Date(NOW + 30 * 60e3).toISOString());
   });
 });

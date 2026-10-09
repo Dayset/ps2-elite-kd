@@ -9,7 +9,10 @@ name: Refresh shared cache
 # stuck pending); GitHub's hourly cron is a fallback. An idle run (cache at
 # CRAWL_INDEX_CAP, nothing due) makes no network calls at all.
 # Discovery: names from data/top-killers.txt (static seed, no live scraping)
-# and frequent opponents of cached players, up to CRAWL_INDEX_CAP.
+# and frequent opponents of cached players, up to CRAWL_INDEX_CAP. Then the
+# daily refresh: cached players saved > 24 h ago, oldest first, within the
+# time budget (refresh-only runs are spaced ~1 h apart via schedule.json).
+# All per-player data comes from Census in ~5 batched calls (census-fetch.mjs).
 #
 # Pages: exactly ONE commit per run, none if no player file changed.
 
@@ -40,7 +43,10 @@ env:
   ON_DEMAND_BUDGET_MIN: "10" # inputs.names runs
   CRAWL_MAX: "50"            # background: max new players per run (time budget usually binds first)
   CRAWL_INDEX_CAP: "1500"    # stop adding at this many cached players
-  HONU_RPS: ${{ github.event.inputs.names != '' && github.event.inputs.names != null && '2' || '1' }}
+  # Daybreak Census service ID (registered, public client-side value; a repo
+  # secret/variable CENSUS_SERVICE_ID overrides it). Data comes from Census;
+  # Honu only as a paced fallback for missing history_stats.
+  CENSUS_SERVICE_ID: ${{ secrets.CENSUS_SERVICE_ID || vars.CENSUS_SERVICE_ID || 'daysetps2legends' }}
   ON_DEMAND: ${{ github.event.inputs.names != '' && github.event.inputs.names != null && 'true' || 'false' }}
   RUN_KIND: ${{ github.event_name == 'schedule' && 'scheduled' || (github.event.inputs.names != '' && github.event.inputs.names != null) && 'on-demand' || 'discovery' }}
 

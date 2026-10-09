@@ -22,6 +22,14 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { censusQueryName } from "../analyze-run.mjs";
+import {
+  CENSUS_HOST,
+  CensusError,
+  censusBase,
+  defaultCensusRate,
+  fetchPlayerCensus,
+  tokenBucket,
+} from "../census-fetch.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -35,12 +43,18 @@ const TOP_KILLERS_PATH = path.join(DATA_DIR, "top-killers.txt");
 const SCHEDULE_PATH = path.join(DATA_DIR, "schedule.json");
 
 const HONU = "https://wt.honu.pw/api/character/";
-const CENSUS = "https://census.daybreakgames.com/s:example/get/ps2:v2/";
+/** Census service ID: env CENSUS_SERVICE_ID (workflow), else the site's registered ID. */
+const CENSUS_SERVICE_ID = (process.env.CENSUS_SERVICE_ID || "").trim() || "daysetps2legends";
+const CENSUS = censusBase(CENSUS_SERVICE_ID);
 const TOP_N = 50;
 const OPP_CONCURRENCY = 4;
 const BETWEEN_PLAYERS_MS = 1500;
 const FETCH_TIMEOUT_MS = 20_000;
-const USER_AGENT = "ps2-elite-kd-cache-bot/1.1 (+https://github.com/Dayset/ps2-elite-kd)";
+/** Census killboards of very active players are ~100k rows (several MB). */
+const CENSUS_TIMEOUT_MS = 90_000;
+const USER_AGENT = "ps2-elite-kd-cache-bot/2.0 (+https://github.com/Dayset/ps2-elite-kd; contact: github.com/Dayset)";
+/** Stale = last saved more than this long ago; background runs re-fetch stale players, oldest first. */
+const REFRESH_AFTER_MS = 24 * 3600 * 1000;
 /** Stop the run early after this many outage-type failures in a row (be polite). */
 const MAX_CONSECUTIVE_OUTAGES = 4;
 /** On-demand runs (inputs.names, e.g. from the site's Worker) refresh at most this many. */
@@ -98,21 +112,14 @@ function parseNames(text) {
 }
 
 /**
- * Honu rate-limits per IP (Actions runners hit 429 + Retry-After: 60 after
- * ~300 requests in a minute). All Honu calls go through one paced queue:
- * at most HONU_RPS requests/second, and a 429 pauses every worker.
+ * Client-side token buckets. Census: s:example is throttled to 10 req/min per
+ * IP (registered IDs get more; CENSUS_RPM overrides). Honu (fallback only, for
+ * history_stats Census lacks): far below its 60/min per-IP API limit.
  */
-const HONU_RPS = Number(process.env.HONU_RPS) > 0 ? Number(process.env.HONU_RPS) : 2;
-let honuNextSlot = 0;
-async function honuSlot() {
-  const now = Date.now();
-  const at = Math.max(now, honuNextSlot);
-  honuNextSlot = at + Math.ceil(1000 / HONU_RPS);
-  if (at > now) await sleep(at - now);
-}
-function honuPause(ms) {
-  honuNextSlot = Math.max(honuNextSlot, Date.now() + ms);
-}
+const censusRate = defaultCensusRate(CENSUS_SERVICE_ID);
+if (Number(process.env.CENSUS_RPM) > 0) censusRate.perMinute = Number(process.env.CENSUS_RPM);
+const censusBucket = tokenBucket(censusRate);
+const honuBucket = tokenBucket({ capacity: 3, perMinute: 20 });
 
 export function backoffMs(attempt, retryAfterHeader) {
   const ra = Number(retryAfterHeader);
@@ -123,19 +130,21 @@ export function backoffMs(attempt, retryAfterHeader) {
 
 async function fetchJson(url, { retries = 4 } = {}) {
   let lastErr;
-  const isHonu = url.startsWith(HONU);
+  const isHonu = url.startsWith("https://wt.honu.pw/");
+  const isCensus = url.startsWith(CENSUS_HOST);
+  const bucket = isHonu ? honuBucket : isCensus ? censusBucket : null;
   for (let attempt = 0; attempt < retries; attempt++) {
     let wait = backoffMs(attempt);
-    if (isHonu) await honuSlot();
+    if (bucket) await bucket.take();
     try {
       const res = await fetch(url, {
         headers: { Accept: "application/json", "User-Agent": USER_AGENT },
-        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+        signal: AbortSignal.timeout(isCensus ? CENSUS_TIMEOUT_MS : FETCH_TIMEOUT_MS),
       });
       if (res.status === 429 || res.status >= 500) {
         wait = backoffMs(attempt, res.headers.get("retry-after"));
-        if (isHonu && res.status === 429) {
-          honuPause(wait); // slow everyone down, not just this request
+        if (bucket && res.status === 429) {
+          bucket.pause(wait); // slow everyone down, not just this request (honors Retry-After)
           wait = 0;
         }
         lastErr = new Error(`${res.status} ${res.statusText} for ${url}`);
@@ -145,7 +154,16 @@ async function fetchJson(url, { retries = 4 } = {}) {
       } else if (res.status === 204) {
         return null;
       } else {
-        return await res.json();
+        const body = await res.json();
+        // Census throttling / outages come back as 200 + {"error": ...}: back off and retry.
+        if (isCensus && body && !Array.isArray(body) && (body.error || body.errorCode) && !Object.keys(body).some((k) => k.endsWith("_list"))) {
+          lastErr = new CensusError(`Census unavailable: ${String(body.error || body.errorCode).slice(0, 100)}`);
+          wait = Math.max(wait, 15_000 * (attempt + 1));
+          bucket.pause(wait);
+          console.warn(`  Census said ${String(body.error || body.errorCode).slice(0, 60)}; retry in ${wait}ms`);
+        } else {
+          return body;
+        }
       }
     } catch (e) {
       if (e instanceof HttpClientError) throw e; // 4xx: retrying won't help
@@ -193,62 +211,45 @@ function kpmCurve(rows, start = 2.5, end = 0.0, step = 0.05) {
   return pts;
 }
 
-/**
- * Census is unreachable from some GitHub runner IPs (connect timeouts) and is
- * flaky in general. After one such failure, skip Census for the rest of the run
- * and resolve characters through Honu instead (same data, Census-shaped).
- */
-let censusDown = process.env.CENSUS_DISABLED === "1";
 export function isConnectFailure(e) {
   const m = String((e && e.message) || e);
   return /fetch failed|UND_ERR_CONNECT|ECONNREFUSED|ECONNRESET|ENOTFOUND|EAI_AGAIN|ETIMEDOUT|aborted due to timeout|Census unavailable|^5\d\d /.test(m);
-}
-
-/** Build the Census-shaped character object loadLive needs from Honu REST. */
-export function honuToCensusShape(ch, history) {
-  const pick = (t) => {
-    const r = (history || []).find((x) => x && x.type === t);
-    return r ? String(r.allTime || 0) : "0";
-  };
-  return {
-    character_id: String(ch.id),
-    name: { first: ch.name },
-    outfit: ch.outfitTag ? { alias: ch.outfitTag } : {},
-    stats: { stat_history: ["kills", "deaths", "time"].map((t) => ({ stat_name: t, all_time: pick(t) })) },
-  };
-}
-
-async function resolveHonu(raw) {
-  const isId = /^\d{16,}$/.test(raw);
-  let ch;
-  if (isId) {
-    ch = await fetchJson(`${HONU}${raw}`);
-  } else {
-    let list = [];
-    try {
-      list = await fetchJson(`${HONU.replace(/character\/$/, "characters/")}name/${encodeURIComponent(raw)}`);
-    } catch (e) {
-      if (!(e instanceof HttpClientError && e.status === 404)) throw e;
-    }
-    ch = (Array.isArray(list) ? list : []).find((x) => x && String(x.name).toLowerCase() === raw.toLowerCase()) || null;
-  }
-  if (!ch || !ch.id) throw new NotFoundError(`Honu: no character ${raw}`);
-  const history = await fetchJson(`${HONU}${ch.id}/history_stats`);
-  return honuToCensusShape(ch, Array.isArray(history) ? history : []);
 }
 
 async function resolveCensus(name) {
   // Census matches first name only; watchlist/index names may carry "[TAG] ".
   const raw = censusQueryName(name);
   if (!raw) throw new NotFoundError(`Census: empty name ${JSON.stringify(name)}`);
-  if (censusDown) return resolveHonu(raw);
+  const c = await resolveCensusOnly(raw);
+  if (!hasHistory(c)) await honuHistoryFallback(c);
+  return c;
+}
+
+function hasHistory(c) {
+  return ["kills", "deaths", "time"].every((t) => (((c.stats || {}).stat_history) || []).some((r) => r && r.stat_name === t));
+}
+
+/** Honu /history_stats rows -> Census stat_history rows (kills, deaths, time). */
+export function honuHistoryToStatHistory(history) {
+  const pick = (t) => {
+    const r = (history || []).find((x) => x && x.type === t);
+    return r ? String(r.allTime || 0) : "0";
+  };
+  return ["kills", "deaths", "time"].map((t) => ({ stat_name: t, all_time: pick(t) }));
+}
+
+/**
+ * Honu fallback, ONLY for history Census lacks (character without
+ * stat_history). Documented API: GET /api/character/{id}/history_stats, paced.
+ */
+async function honuHistoryFallback(c) {
   try {
-    return await resolveCensusOnly(raw);
+    const history = await fetchJson(`${HONU}${c.character_id}/history_stats`, { retries: 2 });
+    if (!Array.isArray(history) || !history.length) return;
+    c.stats = { ...(c.stats || {}), stat_history: honuHistoryToStatHistory(history) };
+    console.log(`  (history_stats from Honu: Census had none for ${c.character_id})`);
   } catch (e) {
-    if (e instanceof NotFoundError || !isConnectFailure(e)) throw e;
-    censusDown = true;
-    console.warn(`  Census unreachable (${String(e.message).slice(0, 80)}); using Honu for the rest of this run`);
-    return resolveHonu(raw);
+    console.warn(`  Honu history_stats fallback failed: ${String(e.message).slice(0, 80)}`);
   }
 }
 
@@ -259,7 +260,7 @@ async function resolveCensusOnly(raw) {
   } else {
     url = `${CENSUS}character?name.first_lower=${encodeURIComponent(raw.toLowerCase())}&c:resolve=outfit,stat_history`;
   }
-  const data = await fetchJson(url, { retries: 2 });
+  const data = await fetchJson(url, { retries: 3 });
   if (data && !Array.isArray(data.character_list) && (data.error || data.errorCode)) {
     throw new Error(`Census unavailable: ${data.error || data.errorCode}`);
   }
@@ -270,104 +271,11 @@ async function resolveCensusOnly(raw) {
   return chars[0];
 }
 
-async function honuKillboard(cid) {
-  let board;
-  try {
-    board = await fetchJson(`${HONU}${cid}/killboard`);
-  } catch (e) {
-    if (e instanceof HttpClientError && e.status === 404) {
-      throw new NotFoundError(`Honu: no killboard for ${cid}`);
-    }
-    throw e;
-  }
-  if (board == null) board = [];
-  if (!Array.isArray(board)) throw new Error(`Honu: unexpected killboard for ${cid}`);
-  // Never overwrite existing good data with an empty curve.
-  if (!board.length) throw new NotFoundError(`Honu: empty killboard for ${cid}`);
-  return board;
-}
-
-async function honuMeta(cid) {
-  try {
-    return (await fetchJson(`${HONU}${cid}`)) || {};
-  } catch {
-    return null;
-  }
-}
-
-/** Opponents repeat a lot between players on one server: memoize per run. */
+/** Opponents repeat a lot between players: reuse Census lookups within a run. */
 const oppMemo = new Map();
-/** Opponent display names from one batched Census call (saves ~50 Honu calls per player). */
-const nameMemo = new Map();
-function opponentInfo(oid) {
-  if (!oppMemo.has(oid)) {
-    const known = nameMemo.get(oid);
-    const metaP = known ? Promise.resolve(known) : honuMeta(oid);
-    const p = Promise.all([metaP, honuWeaponPace(oid)]).then(([meta, pace]) => {
-      if (!meta || !pace) oppMemo.delete(oid); // don't memoize failures
-      return { meta, pace };
-    });
-    oppMemo.set(oid, p);
-  }
-  return oppMemo.get(oid);
-}
-
-/** Fill nameMemo for ids via Census (best effort; Honu meta is the fallback). */
-async function censusOpponentNames(ids) {
-  if (censusDown) return;
-  const want = [...new Set(ids)].filter((id) => id && id !== "0" && !nameMemo.has(id) && !oppMemo.has(id));
-  for (let i = 0; i < want.length; i += 50) {
-    const chunk = want.slice(i, i + 50);
-    try {
-      const url =
-        `${CENSUS}character?character_id=${chunk.join(",")}` +
-        `&c:show=character_id,name.first&c:resolve=outfit(alias)&c:limit=${chunk.length}`;
-      const data = await fetchJson(url, { retries: 2 });
-      for (const ch of (data && data.character_list) || []) {
-        if (ch && ch.character_id && ch.name && ch.name.first) {
-          nameMemo.set(String(ch.character_id), { name: ch.name.first, outfitTag: (ch.outfit && ch.outfit.alias) || "" });
-        }
-      }
-    } catch (e) {
-      /* Census flaky: fall back to Honu per-opponent meta */
-      if (isConnectFailure(e)) censusDown = true;
-    }
-  }
-}
 
 /** Refuse to save a curve if more than this share of opponent KPM lookups failed. */
 export const MAX_OPP_FAIL_RATIO = 0.1;
-
-/** @returns stats, or null if Honu could not be read (not the same as zeros). */
-async function honuWeaponPace(cid) {
-  try {
-    const stats = await fetchJson(`${HONU}${cid}/stats`);
-    if (!Array.isArray(stats)) throw new Error("stats not a list");
-    let wk = 0;
-    let wd = 0;
-    let wt = 0;
-    let fire = 0;
-    let hitc = 0;
-    let hs = 0;
-    for (const row of stats) {
-      const n = row.statName;
-      const v = +row.valueForever || 0;
-      if (n === "weapon_kills") wk = v;
-      else if (n === "weapon_deaths") wd = v;
-      else if (n === "weapon_play_time") wt = v;
-      else if (n === "weapon_fire_count") fire = v;
-      else if (n === "weapon_hit_count") hitc = v;
-      else if (n === "weapon_headshots") hs = v;
-    }
-    const kpm = wt ? wk / (wt / 60) : 0;
-    const acc = fire ? (100 * hitc) / fire : 0;
-    const hsr = wk ? (100 * hs) / wk : 0;
-    const ivi = acc * hsr;
-    return { wk, wd, kpm, acc, hsr, ivi };
-  } catch {
-    return null;
-  }
-}
 
 /**
  * One killboard row. Null-safe: Honu answers 204 / null for some characters
@@ -399,34 +307,14 @@ async function loadLive(name) {
   const tag = outfit.alias ? `[${outfit.alias}] ` : "";
   const display = `${tag}${(c.name && c.name.first) || censusQueryName(name)}`;
 
-  const own = (await honuWeaponPace(cid)) || { kpm: 0, acc: 0, hsr: 0, ivi: 0 };
-  const board = await honuKillboard(cid);
-  board.sort((a, b) => b.kills + b.deaths - (a.kills + a.deaths));
-  const sample = board.slice(0, TOP_N);
-  await censusOpponentNames(sample.map((p) => String(p.otherCharacterID)));
-
-  const rows = [];
-  let i = 0;
-  let paceFails = 0;
-  let lookups = 0;
-  async function worker() {
-    while (i < sample.length) {
-      const idx = i++;
-      const pair = sample[idx];
-      const oid = String(pair.otherCharacterID);
-      // "0" = environment / unknown attacker: nothing to look up.
-      const { meta, pace } = oid === "0" ? { meta: {}, pace: { kpm: 0 } } : await opponentInfo(oid);
-      if (oid !== "0") {
-        lookups++;
-        if (!pace) paceFails++;
-      }
-      rows[idx] = opponentRow(pair, meta, pace);
-    }
-  }
-  await Promise.all(Array.from({ length: OPP_CONCURRENCY }, () => worker()));
+  // Census errors propagate as outages (old data is kept).
+  const r = await fetchPlayerCensus(cid, { base: CENSUS, getJson: (u) => fetchJson(u), topN: TOP_N, memo: oppMemo });
+  if (!r.board.length) throw new NotFoundError(`Census: empty killboard for ${cid}`);
+  const own = r.own || { kpm: 0, acc: 0, hsr: 0, ivi: 0 };
+  const rows = r.rows;
   // A curve with many fake 0-KPM opponents is worse than yesterday's data.
-  if (lookups && paceFails / lookups > MAX_OPP_FAIL_RATIO) {
-    throw new Error(`Honu: ${paceFails}/${lookups} opponent stats failed (rate-limited?); keeping old data`);
+  if (r.lookups && r.paceFails / r.lookups > MAX_OPP_FAIL_RATIO) {
+    throw new Error(`Census: ${r.paceFails}/${r.lookups} opponent stats missing; keeping old data`);
   }
 
   const curve = kpmCurve(rows);
@@ -445,6 +333,7 @@ async function loadLive(name) {
       ivi: own.ivi,
       n_scored: rows.length,
       honu: `https://wt.honu.pw/c/${cid}/killboard`,
+      source: "census",
       rows,
       curve,
     },
@@ -918,7 +807,7 @@ async function main() {
   let ri = 0;
   // Per-name view of this run for status.html: planned batch with its source,
   // then done / failed / not-found / pending. Committed with the run's data.
-  const SRC_LABEL = { live: "top-killers", crawl: "opponent-crawl", retry: "retry", "on-demand": "on-demand" };
+  const SRC_LABEL = { live: "top-killers", crawl: "opponent-crawl", retry: "retry", "on-demand": "on-demand", refresh: "daily-refresh" };
   const batch = [];
   const plan = (name, src) => batch.push({ name, src: SRC_LABEL[src] || src, status: "pending" });
   const settle = (name, display) => {
@@ -950,6 +839,7 @@ async function main() {
   let fromLive = 0;
   let more = false; // worth chaining another background run right away?
   let growthLeft = false; // background: uncached names left with room under the cap
+  let refreshed = 0; // background: stale cached players re-fetched this run
   if (!explicit) {
     // No live scraping any more (Honu's /ws/data feed is not an API). The
     // top-killers list is read as a static seed; discovery is otherwise the
@@ -997,6 +887,23 @@ async function main() {
         if (q.src === "live") fromLive++;
       }
     }
+
+    // Daily refresh: cached players last saved (or tried) > 24 h ago, oldest first.
+    const stale = staleCandidates(index, state, Date.now());
+    if (stale.length) console.log(`Stale cached players (> 24 h): ${stale.length}; refreshing oldest first.`);
+    for (const name of stale) {
+      if (c.stoppedEarly) break;
+      if (Date.now() + reserveMs > deadline) {
+        c.stoppedEarly = `time budget ${Math.round(budgetMs / 60000)} min reached`;
+        break;
+      }
+      if (tried) await sleep(BETWEEN_PLAYERS_MS);
+      tried++;
+      if (!batch.some((b) => b.name === name)) plan(name, "refresh");
+      const d = await refreshOne(name, `[refresh ${refreshed + 1}/${stale.length}]`);
+      settle(name, d);
+      if (d) refreshed++;
+    }
   }
   const crawlSecs = Math.round((Date.now() - crawlFrom) / 1000);
 
@@ -1012,6 +919,7 @@ async function main() {
   const summary =
     `Done in ${secs}s. ok=${c.ok} notFound=${c.notFound} outage=${c.outage} index=${index.players.length}` +
     `${discovered.length ? ` new=${discovered.length} (live ${fromLive}, opponents ${discovered.length - fromLive}; ${crawlSecs}s)` : ""}` +
+    `${refreshed ? ` refreshed=${refreshed}` : ""}` +
     `${joined.length ? ` watchlist+=${joined.length}` : ""}` +
     `${c.stoppedEarly ? ` (stopped early: ${c.stoppedEarly})` : ""}`;
   console.log(summary);
@@ -1045,7 +953,14 @@ async function main() {
     // data/schedule.json tells the Worker cron whether a background run is due
     // (it polls this static file instead of dispatching blindly every 5 min).
     // Deterministic when idle, so idle runs produce no diff and no commit.
-    writeScheduleFile(computeSchedule({ growthLeft, outageStop: !!c.stoppedEarly && c.outage > 0, now: Date.now() }));
+    const after = staleCandidates(index, state, Date.now());
+    writeScheduleFile(computeSchedule({
+      growthLeft,
+      staleLeft: after.length,
+      nextStaleAt: nextStaleAt(index, state),
+      outageStop: !!c.stoppedEarly && c.outage > 0,
+      now: Date.now(),
+    }));
   }
   if (process.env.GITHUB_OUTPUT) {
     try {
@@ -1062,16 +977,49 @@ async function main() {
   if (c.ok === 0 && c.outage > 0) process.exit(1);
 }
 
+/** Gap between refresh-only runs (keeps Census load and Pages commits ~hourly). */
+export const REFRESH_RUN_GAP_MS = 55 * 60 * 1000;
+
+/** Last time a cached player was saved or tried (ms; 0 = never). */
+function lastTouched(p, state) {
+  const k = p.slug || slugKey(p.name);
+  const st = (state && state.players && state.players[k]) || {};
+  return Math.max(+p.savedAt || 0, +st.lastAttemptAt || 0);
+}
+
+/**
+ * Cached players due for their (at most daily) refresh, oldest first.
+ * Uses the index name (Census resolves "[TAG] Name" by first name).
+ */
+export function staleCandidates(index, state, now = Date.now(), maxAgeMs = REFRESH_AFTER_MS) {
+  return ((index && index.players) || [])
+    .map((p, i) => ({ p, i, last: lastTouched(p, state) }))
+    .filter((x) => x.p && x.p.name && now - x.last >= maxAgeMs && isPlausibleName(x.p.name))
+    .sort((a, b) => a.last - b.last || a.i - b.i)
+    .map((x) => x.p.name);
+}
+
+/** When the next cached player becomes stale (ms), or null with an empty index. */
+export function nextStaleAt(index, state, maxAgeMs = REFRESH_AFTER_MS) {
+  let min = Infinity;
+  for (const p of (index && index.players) || []) {
+    if (p && p.name && isPlausibleName(p.name)) min = Math.min(min, lastTouched(p, state) + maxAgeMs);
+  }
+  return Number.isFinite(min) ? min : null;
+}
+
 /**
  * When should the next background run start? null = nothing to do (idle).
+ * Growth: right away. Stale players left: in ~an hour. Otherwise when the
+ * next cached player turns 24 h old (deterministic, so idle runs don't commit).
  * @returns {{ nextDueAt: string|null, reason: string }}
  */
-export function computeSchedule({ growthLeft = false, outageStop = false, now = Date.now() } = {}) {
-  if (growthLeft) {
-    // After an outage, back off 30 min instead of retrying every 5.
-    const at = outageStop ? now + 30 * 60_000 : now;
-    return { nextDueAt: new Date(at).toISOString(), reason: outageStop ? "growth (after outage)" : "growth" };
-  }
+export function computeSchedule({ growthLeft = false, staleLeft = 0, nextStaleAt: nextStale = null, outageStop = false, now = Date.now() } = {}) {
+  const iso = (ms) => new Date(ms).toISOString();
+  if (outageStop && (growthLeft || staleLeft)) return { nextDueAt: iso(now + 30 * 60_000), reason: "retry after outage" };
+  if (growthLeft) return { nextDueAt: iso(now), reason: "growth" };
+  if (staleLeft > 0) return { nextDueAt: iso(now + REFRESH_RUN_GAP_MS), reason: `daily refresh (${staleLeft} left)` };
+  if (nextStale != null) return { nextDueAt: iso(nextStale), reason: "daily refresh" };
   return { nextDueAt: null, reason: "idle" };
 }
 

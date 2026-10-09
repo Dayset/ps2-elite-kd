@@ -32,9 +32,9 @@ import {
   windowYValues,
   kpmBandCurve,
   bandReliability,
-} from "./math.mjs?v=20261008-capword";
-import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261008-capword";
-import GHOST_MODEL from "./data/ghost-model.mjs?v=20261008-capword";
+} from "./math.mjs?v=20261008-census";
+import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261008-census";
+import GHOST_MODEL from "./data/ghost-model.mjs?v=20261008-census";
 import {
   NameLoadError,
   classifyLoadError,
@@ -57,16 +57,24 @@ import {
   estimateRemainingMs,
   nextEtaDeadline,
   formatEtaLeft,
-} from "./analyze-run.mjs?v=20261008-capword";
+} from "./analyze-run.mjs?v=20261008-census";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
-} from "./player-metrics.mjs?v=20261008-capword";
+} from "./player-metrics.mjs?v=20261008-census";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261008-capword";
-import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261008-capword";
+import "./name-peek.mjs?v=20261008-census";
+import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261008-census";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
-import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261008-capword";
+import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261008-census";
+// Live data: Daybreak Census only (batched, paced); Honu just for a rare history fallback.
+import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261008-census";
+import {
+  censusBase,
+  defaultCensusRate,
+  fetchPlayerCensus,
+  tokenBucket,
+} from "./census-fetch.mjs?v=20261008-census";
 
   // Player palettes (dark + light theme) live in palette.mjs (shared with ranks.html).
   const COLORS = PALETTE_DARK;
@@ -80,7 +88,9 @@ import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./j
     return pal[i % pal.length];
   }
   const HONU = "https://wt.honu.pw/api/character/";
-  const CENSUS = "https://census.daybreakgames.com/s:example/get/ps2:v2/";
+  const CENSUS = censusBase(CENSUS_SERVICE_ID);
+  /** Client-side Census pacing (s:example allows 10 req/min per IP). Shared by every live fetch in this tab. */
+  const censusBucket = tokenBucket(defaultCensusRate(CENSUS_SERVICE_ID));
   const DOT_R = 3;
 
   const LS_CACHE = "ps2-elite-kd-cache-v2";
@@ -223,8 +233,9 @@ import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./j
   const failedNames = new Map();
   /** Per-request timeouts so one hung Census/Honu call can't stall the run. */
   const CENSUS_TIMEOUT_MS = 20 * 1000;
-  const HONU_BOARD_TIMEOUT_MS = 45 * 1000;
-  const HONU_SIDE_TIMEOUT_MS = 45 * 1000;
+  /** Census killboards of very active players are ~100k rows (several MB). */
+  const CENSUS_BOARD_TIMEOUT_MS = 90 * 1000;
+  const HONU_SIDE_TIMEOUT_MS = 30 * 1000;
 
   function ns(tag) {
     return document.createElementNS("http://www.w3.org/2000/svg", tag);
@@ -1700,7 +1711,7 @@ import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./j
     } else {
       url = `${CENSUS}character?name.first_lower=${encodeURIComponent(raw.toLowerCase())}&c:resolve=outfit,stat_history`;
     }
-    const data = await fetchJson(url, signal, { timeoutMs: CENSUS_TIMEOUT_MS });
+    const data = await censusJson(url, signal);
     if (!data || typeof data !== "object") {
       throw new NameLoadError(`Census: bad response for ${raw}`, "bad-response");
     }
@@ -1714,54 +1725,36 @@ import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./j
     return chars[0];
   }
 
-  async function honuKillboard(cid, signal) {
-    const board = await fetchJson(`${HONU}${cid}/killboard`, signal, {
-      timeoutMs: HONU_BOARD_TIMEOUT_MS,
-    });
-    if (!Array.isArray(board)) {
-      throw new NameLoadError(`Honu: unexpected killboard for ${cid}`, "bad-response");
-    }
-    if (!board.length) {
-      throw new NameLoadError(`Honu: empty killboard for ${cid}`, "no-data");
-    }
-    return board;
-  }
-
-  async function honuMeta(cid, signal) {
-    try {
-      return await fetchJson(`${HONU}${cid}`, signal, { timeoutMs: HONU_SIDE_TIMEOUT_MS });
-    } catch (e) {
-      if (isAbortError(e)) throw e;
-      return {};
+  /**
+   * One paced Census GET. Census reports throttling as 200 + {"error": ...}:
+   * wait and retry a couple of times (shared bucket pauses), then give up.
+   */
+  async function censusJson(url, signal) {
+    const big = url.includes("characters_event_grouped");
+    for (let attempt = 0; ; attempt++) {
+      checkAborted(signal);
+      await censusBucket.take();
+      checkAborted(signal);
+      const data = await fetchJson(url, signal, { timeoutMs: big ? CENSUS_BOARD_TIMEOUT_MS : CENSUS_TIMEOUT_MS });
+      const isErr = data && typeof data === "object" && !Array.isArray(data) && (data.error || data.errorCode) &&
+        !Object.keys(data).some((k) => k.endsWith("_list"));
+      if (!isErr || attempt >= 2) return data;
+      censusBucket.pause(20 * 1000 * (attempt + 1));
     }
   }
 
-  async function honuWeaponPace(cid, signal) {
+  /** Honu fallback ONLY for lifetime history Census lacks (no stat_history). */
+  async function honuHistoryFallback(c, signal) {
     try {
-      const stats = await fetchJson(`${HONU}${cid}/stats`, signal, {
-        timeoutMs: HONU_SIDE_TIMEOUT_MS,
-      });
-      if (!Array.isArray(stats)) throw new Error("Honu: stats not a list");
-      let wk = 0, wd = 0, wt = 0;
-      let fire = 0, hitc = 0, hs = 0;
-      for (const row of stats) {
-        const n = row.statName;
-        const v = +row.valueForever || 0;
-        if (n === "weapon_kills") wk = v;
-        else if (n === "weapon_deaths") wd = v;
-        else if (n === "weapon_play_time") wt = v;
-        else if (n === "weapon_fire_count") fire = v;
-        else if (n === "weapon_hit_count") hitc = v;
-        else if (n === "weapon_headshots") hs = v;
-      }
-      const kpm = wt ? wk / (wt / 60) : 0;
-      const acc = fire ? (100 * hitc) / fire : 0;
-      const hsr = wk ? (100 * hs) / wk : 0;
-      const ivi = acc * hsr;
-      return { wk, wd, kpm, acc, hsr, ivi };
+      const h = await fetchJson(`${HONU}${c.character_id}/history_stats`, signal, { timeoutMs: HONU_SIDE_TIMEOUT_MS });
+      if (!Array.isArray(h) || !h.length) return;
+      const pick = (t) => {
+        const r = h.find((x) => x && x.type === t);
+        return r ? String(r.allTime || 0) : "0";
+      };
+      c.stats = { ...(c.stats || {}), stat_history: ["kills", "deaths", "time"].map((t) => ({ stat_name: t, all_time: pick(t) })) };
     } catch (e) {
       if (isAbortError(e)) throw e;
-      return { wk: 0, wd: 0, kpm: 0, acc: 0, hsr: 0, ivi: 0 };
     }
   }
 
@@ -1796,6 +1789,9 @@ import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./j
   async function loadLiveInner(name, signal) {
     const c = await resolveCensus(name, signal);
     const cid = c.character_id;
+    if (!["kills", "deaths", "time"].every((t) => (((c.stats || {}).stat_history) || []).some((x) => x && x.stat_name === t))) {
+      await honuHistoryFallback(c, signal);
+    }
     const outfit = c.outfit || {};
     const gk = hist(c, "kills"), gd = hist(c, "deaths"), gt = hist(c, "time");
     const gkd = gd ? gk / gd : gk;
@@ -1803,38 +1799,25 @@ import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./j
     const tag = outfit.alias ? `[${outfit.alias}] ` : "";
     const display = `${tag}${(c.name && c.name.first) || censusQueryName(name)}`;
 
-    const own = await honuWeaponPace(cid, signal);
-    const board = await honuKillboard(cid, signal);
-    board.sort((a, b) => (b.kills + b.deaths) - (a.kills + a.deaths));
-    const sample = board.slice(0, 50);
-
-    const rows = [];
-    const concurrency = 4;
-    let i = 0;
-    async function worker() {
-      while (i < sample.length) {
-        checkAborted(signal); // stop pulling queued opponents after cancel
-        const idx = i++;
-        const pair = sample[idx];
-        const oid = String(pair.otherCharacterID);
-        const [meta, pace] = await Promise.all([
-          honuMeta(oid, signal),
-          honuWeaponPace(oid, signal),
-        ]);
-        const etag = meta.outfitTag ? `[${meta.outfitTag}] ` : "";
-        rows[idx] = {
-          name: etag + (meta.name || oid),
-          kills: +pair.kills || 0,
-          deaths: +pair.deaths || 0,
-          kpm: pace.kpm || 0,
-        };
-      }
+    let r;
+    try {
+      r = await fetchPlayerCensus(cid, {
+        base: CENSUS,
+        topN: 50,
+        getJson: (u) => censusJson(u, signal),
+      });
+    } catch (e) {
+      if (isAbortError(e)) throw e;
+      if (e && e.name === "CensusError") throw new NameLoadError(e.message, "network");
+      throw e;
     }
-    await Promise.all(Array.from({ length: concurrency }, () => worker()));
     checkAborted(signal);
+    if (!r.board.length) throw new NameLoadError(`Census: empty killboard for ${cid}`, "no-data");
+    const own = r.own || { kpm: 0, acc: 0, hsr: 0, ivi: 0 };
+    const rows = r.rows;
 
     return normalizePlayer({
-      _source: "live:honu",
+      _source: "live:census",
       player: {
         display,
         cid,

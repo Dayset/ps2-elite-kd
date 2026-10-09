@@ -304,10 +304,11 @@ export const fmtPctFromTop = (p) => fmtPctFromRef(p, "high");
 /* ---------- progress popup ETA ---------- */
 /*
  * Names load one by one; cached names (shared data/, browser cache, already in
- * memory) take well under a second, live Honu/Census fetches take many seconds.
+ * memory) take well under a second, live Census fetches take many seconds.
  * The ETA therefore sums a per-name expectation by kind instead of one average:
  * a fast cached first name must not set a ~0 s deadline for slow live names.
  */
+// Live = ~5 paced Census calls (60/min with the site's service ID) + a big killboard download.
 export const ETA_PRIOR_LIVE_MS = 15000;
 export const ETA_PRIOR_CACHED_MS = 300;
 

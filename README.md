@@ -13,7 +13,7 @@
 - **Status page** (unlisted): refresh runs, queue, a 🚩 red-flag review list (leads, never accusations) and a 🌱 "Could use a hand" list of players who might appreciate tips or a squad invite.
 - Light / dark theme, share links (`?names=…` auto-runs), mobile layout.
 
-**Data sources:** [Daybreak Census API](https://census.daybreakgames.com/) and [HONU](https://wt.honu.pw/) (Varunda). Requests are kept polite: cached snapshots first, rate-limited refreshes, live fetches only when needed.
+**Data sources:** [Daybreak Census API](https://census.daybreakgames.com/) for all per-player data (killboard via `characters_event_grouped`, stats via batched `characters_stat` / `characters_stat_by_faction`, ~5 calls per player, `census-fetch.mjs`). [HONU](https://wt.honu.pw/) (Varunda) is linked for killboards and used only as a paced fallback for lifetime history Census lacks. Requests are kept polite: cached snapshots first, client-side token buckets, live fetches only when needed.
 
 ## Quick start
 
@@ -32,13 +32,13 @@ Prefer a local server (`file://` often blocks `fetch` of JSON). Tests: `npm test
 2. Press **Analyze** (or Enter). Clear names with **×**.
 3. The square **🔗** button (same height as Analyze) copies a `?names=…` share link; it flashes ✓ when copied. Opening that link **auto-runs Analyze** once the page is ready — friends land straight on the graph (see *Sharing* below).
 4. **🏆** (left end of the 🗑️ / theme row) opens the [Rankings](ranks.html) page. **☀️ Light / 🌙 Dark** toggles a creamy haze light theme (~15% white).
-5. **Fetch fresh data** skips caches and hits Census + Honu live. Unchecked on every load.
+5. **Fetch fresh data** skips caches and hits Census live. Unchecked on every load.
 
 Lookup order per name:
 
 1. Shared `./data/players/<slug>.json` (catalog in `data/index.json`, filled by GitHub Actions)
 2. Browser `localStorage` payload cache (~30-day TTL) — personal to that browser only
-3. Live Census + Honu when network/CORS allow
+3. Live Census (service ID in `config.mjs`, paced client-side)
 
 Max 10 names. Deep link: `?names=JustV6me,ChrisJTTR`.
 
@@ -87,11 +87,11 @@ Older debug stats (hidden unless the footer box is ticked):
 The static Pages site cannot write `data/`. Shared snapshots are committed automatically by the **Refresh shared cache** Action, with no manual steps. Goal: grow the cache (1000+ players). Background runs only add **new** players and never re-fetch cached ones.
 
 - **Driver:** a background run that added players and still has names left dispatches the next run itself, so runs go back to back (~10 min each). If the chain stops (outage, empty queue), the Cloudflare Worker (`ps2-elite-kd-cache`) restarts it: its cron checks every 5 min (plus a fallback check on site visits) and dispatches a run when none is queued/running and the last one ended >1 min ago. GitHub's own `17 * * * *` schedule is a last fallback; it hasn't been firing.
-- **Discovery (~9 min per run):** the run reads Honu's live **top killers** on every active PC world (SignalR hub `wt.honu.pw/ws/data`, 120-min window, 8 per faction) and merges them into `data/top-killers.txt` (name, world, first/last seen, times seen, best KPM; kept 7 days). It fetches names that aren't cached yet, most-seen and best-KPM first. When that list runs short, it falls back to frequent opponents from cached killboards. Caps: max 50 new per run, stops at 1500 cached. Honu is paced to 1 req/s with 429 backoff. New names join `watchlist.txt`.
+- **Background runs (~9 min, driven by `data/schedule.json`):** growth first: names in `data/top-killers.txt` (static seed) and frequent opponents from cached killboards, max 50 new per run, stops at 1500 cached. Then the daily refresh: cached players last saved more than 24 h ago, oldest first. The Worker cron reads `schedule.json` every 5 min and dispatches only when a run is due; an idle run makes no network calls. Census uses the site's service ID `s:daysetps2legends` (`config.mjs` for the browser, `CENSUS_SERVICE_ID` in the workflow/Worker) and is paced client-side at ≤ 60 calls/min. New names join `watchlist.txt`.
 - **No scheduled refresh of cached players.** A cached player is only re-fetched when someone asks for fresh data (the Worker dispatches it on demand).
 - **On-demand:** a dispatch with `names` (from the Worker, or **Actions → Run workflow**) refreshes only those names at 2 req/s. Names that fetch OK are added to `watchlist.txt`; failures are left out. These runs queue behind a running background run and never cancel it.
 - **One commit per run** (Pages allows ~10 builds/hour). No commit if no player file changed. Background runs don't raise the main page's under-load banner.
-- Real not-found names (no character, invalid name, empty killboard) are never retried by discovery. Other failures (timeouts, outages) are retried at most 3 times, 15 min apart (tracked in `data/refresh-state.json`). A player is not saved if more than 10% of its opponent lookups fail, so rate limits can't save fake 0-KPM curves. If Census is unreachable from the runner, the run resolves characters through Honu instead.
+- Real not-found names (no character, invalid name, empty killboard) are never retried by discovery. Other failures (timeouts, outages) are retried at most 3 times, 15 min apart (tracked in `data/refresh-state.json`). A player is not saved if more than 10% of its opponent lookups fail, so rate limits can't save fake 0-KPM curves. If Census is unreachable, the run stops early and keeps the old data (retried 30 min later).
 - `status.json` → `lastRun.batch` lists each planned name with its source (`top-killers`, `opponent-crawl`, `retry`, `on-demand`) and result (done / failed / not-found / pending), committed with the run's data.
 - Each run re-enables the workflow, so GitHub's 60-day inactivity rule can't switch it off.
 - Hidden status page: `/status.html` (current run, live top killers, last run, queue).
