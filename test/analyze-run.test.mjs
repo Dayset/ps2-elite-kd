@@ -236,7 +236,7 @@ describe("stats tables: pctRefFloor (🎈 Inflation reference = max(lowest, 1.0)
   });
 });
 
-import { estimateRemainingMs, nextEtaDeadline, formatEtaLeft, ETA_PRIOR_LIVE_MS, ETA_PRIOR_CACHED_MS } from "../analyze-run.mjs";
+import { estimateRemainingMs, nextEtaDeadline, formatEtaLeft, ETA_PRIOR_LIVE_MS, ETA_PRIOR_CACHED_MS, etaLearnLiveMs, expectedNameMs, ETA_LEARN_MIN_MS, ETA_LEARN_MAX_MS } from "../analyze-run.mjs";
 
 describe("progress ETA (regression: stuck at 0s after a fast cached first name)", () => {
   it("a cached first name does not make the live names look instant", () => {
@@ -262,6 +262,26 @@ describe("progress ETA (regression: stuck at 0s after a fast cached first name)"
     assert.equal(nextEtaDeadline(31000, 2000, 40000), 31000); // estimate grew → keep counting down
     assert.equal(nextEtaDeadline(31000, 2000, 10000), 12000); // faster → move earlier
     assert.equal(nextEtaDeadline(31000, 32000, 15000), 47000); // ran out with work left → re-estimate
+  });
+  it("live prior reflects Census timing (seconds, not the old 15 s Honu budget)", () => {
+    assert.ok(ETA_PRIOR_LIVE_MS >= 2000 && ETA_PRIOR_LIVE_MS <= 6000, `prior ${ETA_PRIOR_LIVE_MS}`);
+    // 2 fresh names, nothing measured yet → ~8 s, not 30 s.
+    assert.equal(estimateRemainingMs({ plan: [true, true], done: 0 }).totalMs, 2 * ETA_PRIOR_LIVE_MS);
+  });
+  it("remembered prior is used until this run measures a live name", () => {
+    assert.equal(estimateRemainingMs({ plan: [true, true], done: 0, livePriorMs: 2500 }).totalMs, 5000);
+    assert.equal(estimateRemainingMs({ plan: [true, true], done: 1, liveAvgMs: 3000, livePriorMs: 2500 }).totalMs, 3000);
+    assert.equal(expectedNameMs(true, {}), ETA_PRIOR_LIVE_MS);
+    assert.equal(expectedNameMs(false, { livePriorMs: 9000 }), ETA_PRIOR_CACHED_MS);
+  });
+  it("learns live time as a clamped moving average", () => {
+    assert.equal(etaLearnLiveMs(0, 3000), 3000);
+    assert.equal(etaLearnLiveMs(4000, 2000), 3400);
+    assert.equal(etaLearnLiveMs(4000, NaN), 4000);
+    assert.equal(etaLearnLiveMs(0, 0), 0);
+    assert.equal(etaLearnLiveMs(0, 50), ETA_LEARN_MIN_MS); // instant failure can't set a 0 s prior
+    assert.equal(etaLearnLiveMs(0, 10 * 60000), ETA_LEARN_MAX_MS); // hung fetch is capped
+    assert.equal(etaLearnLiveMs(3000, 10 * 60000), Math.round(0.7 * 3000 + 0.3 * ETA_LEARN_MAX_MS));
   });
   it("formats with seconds rounded up, never '0s'", () => {
     assert.equal(formatEtaLeft(400), "~1s left");

@@ -313,28 +313,54 @@ export const fmtPctFromTop = (p) => fmtPctFromRef(p, "high");
 /* ---------- progress popup ETA ---------- */
 /*
  * Names load one by one; cached names (shared data/, browser cache, already in
- * memory) take well under a second, live Census fetches take many seconds.
+ * memory) take well under a second, live Census fetches take a few seconds.
  * The ETA therefore sums a per-name expectation by kind instead of one average:
  * a fast cached first name must not set a ~0 s deadline for slow live names.
+ *
+ * Prior for a live name (measured 2026-10-09, s:daysetps2legends, browser call
+ * sequence: character → killboard → stat → stat_by_faction → names): 0.8–3 s
+ * typical, ~5 s for the 2nd+ live name in a run (the 60/min pacing bucket has
+ * a burst of 5, i.e. one player), up to ~10 s when Census builds a cold killboard.
+ * The old Honu path (~102 calls/player) was budgeted at 15 s.
+ * Each tab also remembers its own recent live times (etaLearnLiveMs) and uses
+ * them as the prior next run, so the first estimate fits that connection.
  */
-// Live = ~5 paced Census calls (60/min with the site's service ID) + a big killboard download.
-export const ETA_PRIOR_LIVE_MS = 15000;
+export const ETA_PRIOR_LIVE_MS = 4000;
 export const ETA_PRIOR_CACHED_MS = 300;
+export const ETA_LEARN_MIN_MS = 500;
+export const ETA_LEARN_MAX_MS = 60000;
+
+/**
+ * Fold one measured live-name duration into the remembered prior
+ * (exponential moving average, weight 0.3; clamped so one hung fetch or a
+ * bogus value can't wreck later estimates).
+ * @param {number} prevMs remembered prior (0/NaN = none yet)
+ * @param {number} sampleMs measured live-name duration
+ */
+export function etaLearnLiveMs(prevMs, sampleMs) {
+  const clamp = (v) => Math.min(ETA_LEARN_MAX_MS, Math.max(ETA_LEARN_MIN_MS, v));
+  if (!Number.isFinite(sampleMs) || sampleMs <= 0) return Number.isFinite(prevMs) && prevMs > 0 ? clamp(prevMs) : 0;
+  if (!Number.isFinite(prevMs) || prevMs <= 0) return Math.round(clamp(sampleMs));
+  return Math.round(clamp(0.7 * prevMs + 0.3 * clamp(sampleMs)));
+}
+
+/** Expected duration of one name: measured average this run → remembered prior → default prior. */
+export function expectedNameMs(live, { liveAvgMs = 0, cachedAvgMs = 0, livePriorMs = 0 } = {}) {
+  if (live) return liveAvgMs > 0 ? liveAvgMs : livePriorMs > 0 ? livePriorMs : ETA_PRIOR_LIVE_MS;
+  return cachedAvgMs > 0 ? cachedAvgMs : ETA_PRIOR_CACHED_MS;
+}
 
 /**
  * @param {{ plan: boolean[], done: number, currentElapsedMs?: number,
- *           liveAvgMs?: number, cachedAvgMs?: number }} s
+ *           liveAvgMs?: number, cachedAvgMs?: number, livePriorMs?: number }} s
  *   plan[i] = true when name i is expected to need a live fetch.
  * @returns {{ totalMs: number, restMs: number, currentMs: number, overdue: boolean }}
  */
-export function estimateRemainingMs({ plan, done, currentElapsedMs = 0, liveAvgMs = 0, cachedAvgMs = 0 }) {
+export function estimateRemainingMs({ plan, done, currentElapsedMs = 0, liveAvgMs = 0, cachedAvgMs = 0, livePriorMs = 0 }) {
   const list = Array.isArray(plan) ? plan : [];
   const total = list.length;
   if (done >= total) return { totalMs: 0, restMs: 0, currentMs: 0, overdue: false };
-  const expect = (live) =>
-    live
-      ? liveAvgMs > 0 ? liveAvgMs : ETA_PRIOR_LIVE_MS
-      : cachedAvgMs > 0 ? cachedAvgMs : ETA_PRIOR_CACHED_MS;
+  const expect = (live) => expectedNameMs(live, { liveAvgMs, cachedAvgMs, livePriorMs });
   let restMs = 0;
   for (let i = done + 1; i < total; i++) restMs += expect(list[i]);
   const curExp = expect(list[done]);

@@ -32,9 +32,9 @@ import {
   windowYValues,
   kpmBandCurve,
   bandReliability,
-} from "./math.mjs?v=20261009-padding";
-import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261009-padding";
-import GHOST_MODEL from "./data/ghost-model.mjs?v=20261009-padding";
+} from "./math.mjs?v=20261009-eta";
+import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261009-eta";
+import GHOST_MODEL from "./data/ghost-model.mjs?v=20261009-eta";
 import {
   NameLoadError,
   classifyLoadError,
@@ -58,7 +58,9 @@ import {
   estimateRemainingMs,
   nextEtaDeadline,
   formatEtaLeft,
-} from "./analyze-run.mjs?v=20261009-padding";
+  etaLearnLiveMs,
+  expectedNameMs,
+} from "./analyze-run.mjs?v=20261009-eta";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
@@ -66,16 +68,16 @@ import {
   MIN_FIGHTS_TIP,
   THIN_METRICS,
   shownValue,
-} from "./player-metrics.mjs?v=20261009-padding";
-import { paddingFlag, PADDING_MARK, PADDING_MARK_TIP } from "./red-flags.mjs?v=20261009-padding";
-import { farmNote } from "./padding.mjs?v=20261009-padding";
+} from "./player-metrics.mjs?v=20261009-eta";
+import { paddingFlag, PADDING_MARK, PADDING_MARK_TIP } from "./red-flags.mjs?v=20261009-eta";
+import { farmNote } from "./padding.mjs?v=20261009-eta";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261009-padding";
-import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261009-padding";
+import "./name-peek.mjs?v=20261009-eta";
+import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261009-eta";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
-import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-padding";
+import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-eta";
 // Live data: Daybreak Census only (batched, paced); Honu just for a rare history fallback.
-import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261009-padding";
+import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261009-eta";
 import {
   censusBase,
   censusRequest,
@@ -83,7 +85,7 @@ import {
   fetchPlayerCensus,
   limitConcurrency,
   tokenBucket,
-} from "./census-fetch.mjs?v=20261009-padding";
+} from "./census-fetch.mjs?v=20261009-eta";
 
   // Player palettes (dark + light theme) live in palette.mjs (shared with ranks.html).
   const COLORS = PALETTE_DARK;
@@ -122,6 +124,8 @@ import {
   const LS_GHOSTS = "ps2-elite-kd-ghosts";
   /** Cross-tab live-fetch flag (browser-local). */
   const LS_FETCHING = "ps2-elite-kd:fetching";
+  /** Remembered live-fetch time per name in this browser (ms, moving average) → first ETA guess. */
+  const LS_ETA_LIVE = "ps2-elite-kd-eta-live-ms";
   const FETCHING_TTL_MS = 3 * 60 * 1000; // 3 min stale expiry
   const FETCHING_HEARTBEAT_MS = 30 * 1000;
   /** Shared Actions under-load flag on Pages (data/load-flag.json). */
@@ -388,6 +392,29 @@ import {
 
   const avgMs = (arr) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0);
 
+  function readEtaLivePrior() {
+    try {
+      const v = Number(localStorage.getItem(LS_ETA_LIVE));
+      return Number.isFinite(v) && v > 0 ? etaLearnLiveMs(0, v) : 0;
+    } catch {
+      return 0;
+    }
+  }
+  let etaLivePriorMs = readEtaLivePrior();
+  function learnEtaLive(ms) {
+    etaLivePriorMs = etaLearnLiveMs(etaLivePriorMs, ms);
+    try {
+      if (etaLivePriorMs > 0) localStorage.setItem(LS_ETA_LIVE, String(etaLivePriorMs));
+    } catch {
+      /* private mode / quota */
+    }
+  }
+  const etaKinds = () => ({
+    liveAvgMs: avgMs(progressLiveMs),
+    cachedAvgMs: avgMs(progressCachedMs),
+    livePriorMs: etaLivePriorMs,
+  });
+
   /** Recompute the ETA deadline from the plan + measured per-kind averages. */
   function updateEtaDeadline(now) {
     if (!progressStartedAt || progressTotalCount <= 0) return;
@@ -397,8 +424,7 @@ import {
       plan,
       done: progressDoneCount,
       currentElapsedMs: now - (progressCurrentStartedAt || progressStartedAt),
-      liveAvgMs: avgMs(progressLiveMs),
-      cachedAvgMs: avgMs(progressCachedMs),
+      ...etaKinds(),
     });
     progressEtaDeadline = nextEtaDeadline(progressEtaDeadline, now, est.totalMs);
   }
@@ -416,13 +442,19 @@ import {
     if (els.progressPct) els.progressPct.textContent = `${Math.round(progressDisplayPct)}%`;
   }
 
-  /** ~30s of random creep to fill the current name's slice (not the whole bar). */
+  /** Random creep fills the current name's slice (not the whole bar) over about its expected time. */
   const PROGRESS_TICK_MS = 220;
-  const FAKE_SEGMENT_MS = 30000; // one person's segment ≈ 30s of fake fill
+  const FAKE_SEGMENT_MIN_MS = 1500;
+
+  /** How long the current name's slice should take to fill: 1.3× its expected time (live Census ≈ 4 s). */
+  function fakeSegmentMs() {
+    const live = progressPlan.length === progressTotalCount ? progressPlan[progressDoneCount] !== false : true;
+    return Math.max(FAKE_SEGMENT_MIN_MS, 1.3 * expectedNameMs(live, etaKinds()));
+  }
 
   /**
-   * Creep within the current done→done+1 slice over ~FAKE_SEGMENT_MS.
-   * E.g. 2 names: 0–50% ~30s, then 50–100% ~30s. Snap on finish is in setProgress.
+   * Creep within the current done→done+1 slice over ~fakeSegmentMs().
+   * E.g. 2 live names: 0–50% ~5s, then 50–100% ~5s. Snap on finish is in setProgress.
    */
   function creepProgressBar() {
     if (!progressStartedAt || progressDisplayPct >= 100) return;
@@ -432,8 +464,8 @@ import {
     const ceil = ((progressDoneCount + 1) / progressTotalCount) * 100;
     const segmentWidth = Math.max(0.0001, ceil - floor);
 
-    // Average step so this slice alone fills in ~30s (not 0→100 in 30s).
-    const ticksPerSegment = FAKE_SEGMENT_MS / PROGRESS_TICK_MS;
+    // Average step so this slice alone fills in about the name's expected time.
+    const ticksPerSegment = fakeSegmentMs() / PROGRESS_TICK_MS;
     const avgStep = segmentWidth / ticksPerSegment;
 
     // Random walk around avg: crawl, burst, near-pause — stay inside this slice.
@@ -528,7 +560,11 @@ import {
     if (done > prevDone && done > 0) {
       for (let i = prevDone; i < done; i++) {
         const took = (now - (progressCurrentStartedAt || progressStartedAt)) / (done - prevDone);
-        (progressPlan[i] === false ? progressCachedMs : progressLiveMs).push(took);
+        if (progressPlan[i] === false) progressCachedMs.push(took);
+        else {
+          progressLiveMs.push(took);
+          learnEtaLive(took);
+        }
       }
       progressCurrentStartedAt = now;
     }
@@ -3091,7 +3127,7 @@ import {
     updateUnderLoadNotice();
     setStatus(`Analyzing ${clean.length} player${clean.length > 1 ? "s" : ""}…`);
 
-    // ETA plan: which names will need a live Honu/Census fetch (vs cached / in memory).
+    // ETA plan: which names will need a live Census fetch (vs cached / in memory).
     const etaPlan = clean.map((n) => fresh || !isNameFetched(n));
     let result = { loaded: [], failed: [], cancelled: false };
     try {
