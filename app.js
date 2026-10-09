@@ -32,9 +32,9 @@ import {
   windowYValues,
   kpmBandCurve,
   bandReliability,
-} from "./math.mjs?v=20261008-robust";
-import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261008-robust";
-import GHOST_MODEL from "./data/ghost-model.mjs?v=20261008-robust";
+} from "./math.mjs?v=20261009-seen";
+import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261009-seen";
+import GHOST_MODEL from "./data/ghost-model.mjs?v=20261009-seen";
 import {
   NameLoadError,
   classifyLoadError,
@@ -58,18 +58,18 @@ import {
   estimateRemainingMs,
   nextEtaDeadline,
   formatEtaLeft,
-} from "./analyze-run.mjs?v=20261008-robust";
+} from "./analyze-run.mjs?v=20261009-seen";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
-} from "./player-metrics.mjs?v=20261008-robust";
+} from "./player-metrics.mjs?v=20261009-seen";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261008-robust";
-import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261008-robust";
+import "./name-peek.mjs?v=20261009-seen";
+import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261009-seen";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
-import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261008-robust";
+import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-seen";
 // Live data: Daybreak Census only (batched, paced); Honu just for a rare history fallback.
-import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261008-robust";
+import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261009-seen";
 import {
   censusBase,
   censusRequest,
@@ -77,7 +77,7 @@ import {
   fetchPlayerCensus,
   limitConcurrency,
   tokenBucket,
-} from "./census-fetch.mjs?v=20261008-robust";
+} from "./census-fetch.mjs?v=20261009-seen";
 
   // Player palettes (dark + light theme) live in palette.mjs (shared with ranks.html).
   const COLORS = PALETTE_DARK;
@@ -3145,6 +3145,7 @@ import {
     renderNameTokens();
     renderCacheChips();
     suggestSharedCache(result.loaded); // fire-and-forget, never awaited
+    markRequested(result.loaded); // fire-and-forget: analyzed cached players get extra XP detail
 
     const notes = censusNotesHtml(result.loaded);
     if (summary) {
@@ -3245,6 +3246,44 @@ import {
           console.info("[ps2-elite-kd] shared-cache add skipped:", e && e.message);
         }
       });
+  }
+
+  /**
+   * Fire-and-forget: tell the Worker which shared-cache players were analyzed
+   * (names only), so the background refresh collects full Honu XP detail for
+   * them. Deduped per browser (24 h) and silent; no UI.
+   */
+  const SEEN_TTL_MS = 24 * 3600 * 1000;
+  const seenSent = new Set();
+  function markRequested(loaded) {
+    if (!WORKER_URL || typeof fetch === "undefined") return;
+    const now = Date.now();
+    const names = [];
+    for (const { name, player } of loaded || []) {
+      if (names.length >= 10) break; // Worker max per request
+      if (!findSharedEntry(name)) continue; // uncached names go through /add
+      const bare = String((player && player.display) || name).trim().replace(/^\[[^\]]*\]\s*/, "");
+      const key = slugKey(bare);
+      if (!key || seenSent.has(key)) continue;
+      seenSent.add(key);
+      try {
+        const last = Number(localStorage.getItem(`ps2ekd:seen:${key}`) || 0);
+        if (now - last < SEEN_TTL_MS) continue;
+        localStorage.setItem(`ps2ekd:seen:${key}`, String(now));
+      } catch {
+        /* storage blocked: the in-memory set still dedupes this tab */
+      }
+      names.push(bare);
+    }
+    if (!names.length) return;
+    const opts = {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ names: names.slice(0, 10) }),
+      keepalive: true,
+    };
+    if (typeof AbortSignal !== "undefined" && AbortSignal.timeout) opts.signal = AbortSignal.timeout(8000);
+    fetch(`${WORKER_URL}/seen`, opts).catch(() => {});
   }
 
   /** Small, self-dismissing note under the status line. */
