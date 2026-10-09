@@ -86,7 +86,7 @@ describe("stat padding (farm victims)", () => {
     assert.equal(again.rows.length, p.rows.length);
   });
 
-  it("altered but under the padding line: † mark + 🚩 'adjusted' review flag (MathoMesa)", () => {
+  it("altered but under the padding line: † mark + 'adjusted' review flag in 📉 Chart anomalies, not 🚩 (MathoMesa)", () => {
     const m = metricsOf("mathomesa");
     assert.ok(m.farm.victims.length > 0 && m.farm.share < PADDING_RULE.FLAG_SHARE);
     const mk = statMark(m.farm);
@@ -95,6 +95,8 @@ describe("stat padding (farm victims)", () => {
     assert.match(mk.tip, /stats adjusted: \d+ kills on farm accounts excluded \(under review\)/);
     const f = reviewFlags(m);
     assert.deepEqual(f.patterns, ["adjusted"]);
+    assert.equal(f.red, false);
+    assert.equal(f.anomaly, true);
     const row = rankRow(load("mathomesa"), { slug: "mathomesa" });
     assert.equal(row[RANK_COLS.indexOf("mark")], "adjusted");
   });

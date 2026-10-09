@@ -15,8 +15,8 @@ import {
   pressureVolume,
   resolveIvi,
   deathMixLite,
-} from "./math.mjs?v=20261009-disclaimer";
-import { splitFarm } from "./padding.mjs?v=20261009-disclaimer";
+} from "./math.mjs?v=20261009-anomalies";
+import { splitFarm } from "./padding.mjs?v=20261009-anomalies";
 
 /**
  * Minimum fights before the opponent-sample metrics (THIN_METRICS: 🏃 Activity,

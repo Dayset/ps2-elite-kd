@@ -32,9 +32,9 @@ import {
   windowYValues,
   kpmBandCurve,
   bandReliability,
-} from "./math.mjs?v=20261009-disclaimer";
-import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261009-disclaimer";
-import GHOST_MODEL from "./data/ghost-model.mjs?v=20261009-disclaimer";
+} from "./math.mjs?v=20261009-anomalies";
+import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261009-anomalies";
+import GHOST_MODEL from "./data/ghost-model.mjs?v=20261009-anomalies";
 import {
   NameLoadError,
   classifyLoadError,
@@ -60,7 +60,7 @@ import {
   formatEtaLeft,
   etaLearnLiveMs,
   expectedNameMs,
-} from "./analyze-run.mjs?v=20261009-disclaimer";
+} from "./analyze-run.mjs?v=20261009-anomalies";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
@@ -68,15 +68,15 @@ import {
   MIN_FIGHTS_TIP,
   THIN_METRICS,
   shownValue,
-} from "./player-metrics.mjs?v=20261009-disclaimer";
-import { farmNote, statMark } from "./padding.mjs?v=20261009-disclaimer";
+} from "./player-metrics.mjs?v=20261009-anomalies";
+import { farmNote, statMark } from "./padding.mjs?v=20261009-anomalies";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261009-disclaimer";
-import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261009-disclaimer";
+import "./name-peek.mjs?v=20261009-anomalies";
+import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261009-anomalies";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
-import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-disclaimer";
+import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-anomalies";
 // Live data: Daybreak Census only (batched, paced); Honu just for a rare history fallback.
-import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261009-disclaimer";
+import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261009-anomalies";
 import {
   censusBase,
   censusRequest,
@@ -84,7 +84,7 @@ import {
   fetchPlayerCensus,
   limitConcurrency,
   tokenBucket,
-} from "./census-fetch.mjs?v=20261009-disclaimer";
+} from "./census-fetch.mjs?v=20261009-anomalies";
 
   // Player palettes (dark + light theme) live in palette.mjs (shared with ranks.html).
   const COLORS = PALETTE_DARK;

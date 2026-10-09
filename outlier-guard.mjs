@@ -7,8 +7,8 @@
  * every ranks.html metric. A value is an outlier when BOTH hold:
  *   - robust z = (v − median) / (1.4826 × MAD) beyond ±Z, and
  *   - it sits past p99 + K × (p99 − median)   (or p01 − K × (median − p01)).
- * Each outlier is "explained" when the player is already in the 🚩 bin (any
- * pattern) or reviewed in KNOWN_EXTREMES; anything else is a warning.
+ * Each outlier is "explained" when the player is already in the 🚩 bin or the
+ * 📉 chart anomalies (adjusted) or reviewed in KNOWN_EXTREMES; anything else is a warning.
  *
  * Used by scripts/build-ranks.mjs (writes data/status.json → build-log.html)
  * and test/outlier-guard.test.mjs (fails on unexplained outliers).
@@ -45,6 +45,48 @@ export function metricBounds(values, rule = GUARD_RULE) {
   };
 }
 
+/** Short metric labels (same as ranks.html / app.js) for the grouped build-log rows. */
+export const METRIC_LABELS = Object.freeze({
+  adjs: "⚔️ iVi", rf: "🛡️ Resist", act: "🏃 Activity", pvs: "🦁 Brave", rkd: "☠️ K/D", mech: "⚙️ Mech%",
+  inflation: "🎈 Inflation", adj: "🎯🎈 ivi", ekpm: "eKPM", own: "own KPM", coi: "📊 COI", slope: "📉 Slope",
+  kd: "KD", kpm: "KPM", ownKpm: "own KPM (public)", acc: "Acc %", hsr: "HSR %", ivi: "IvI",
+});
+
+const ANOMALY_ONLY = new Set(["adjusted"]);
+
+/** Why an outlier is already accounted for ("" = unexplained). 🚩 patterns first, then † adjusted, then reviewed. */
+function outlierReason(p, known) {
+  const pats = p.patterns || [];
+  const red = pats.filter((x) => !ANOMALY_ONLY.has(x));
+  if (red.length) return "In 🚩 red flags (" + red.join(", ") + ")";
+  if (known[p.slug]) return known[p.slug];
+  if (pats.length) return "In 📉 chart anomalies (" + pats.map((x) => (x === "adjusted" ? "† adjusted — needs review" : x)).join(", ") + ")";
+  if (p.flagged) return "In 🚩 red flags";
+  return "";
+}
+
+/**
+ * Outlier hits → one row per player, all metrics inline. Sorted unexplained
+ * first, then by number of metrics (most first), then by the biggest |z|.
+ * items: findOutliers(...).items or guardStatus(...).items (same fields).
+ */
+export function groupOutliers(items) {
+  const by = new Map();
+  for (const o of items) {
+    const key = o.slug || o.name;
+    let g = by.get(key);
+    if (!g) { g = { slug: o.slug, name: o.name, explained: !!o.explained, reason: o.reason || "", maxZ: 0, metrics: [] }; by.set(key, g); }
+    g.explained = g.explained && !!o.explained;
+    if (!o.explained) g.reason = "";
+    g.maxZ = Math.max(g.maxZ, Math.abs(o.z) || 0);
+    g.metrics.push({ id: o.id, label: METRIC_LABELS[o.id] || o.id, value: o.value, bound: o.bound, z: o.z, side: o.side });
+  }
+  const out = [...by.values()];
+  for (const g of out) g.metrics.sort((a, b) => Math.abs(b.z) - Math.abs(a.z));
+  out.sort((a, b) => a.explained - b.explained || b.metrics.length - a.metrics.length || b.maxZ - a.maxZ);
+  return out;
+}
+
 /**
  * players: [{ slug, name, flagged: bool, values: { id: number|null } }]
  * → { bounds: { id: … }, items: [{ slug, name, id, value, bound, z, side, explained, reason }] }
@@ -62,7 +104,7 @@ export function findOutliers(players, ids, { rule = GUARD_RULE, known = KNOWN_EX
       const z = (v - b.median) / b.mad;
       const side = v > b.hi && z > rule.Z ? "high" : v < b.lo && z < -rule.Z ? "low" : "";
       if (!side) continue;
-      const reason = p.flagged ? "In 🚩 red flags (" + (p.patterns || []).join(", ") + ")" : known[p.slug] || "";
+      const reason = outlierReason(p, known);
       items.push({
         slug: p.slug, name: p.name, id, value: v,
         bound: side === "high" ? b.hi : b.lo, z, side,
@@ -81,11 +123,16 @@ export function guardStatus(result, rule = GUARD_RULE) {
     slug: o.slug, name: o.name, id: o.id, value: r6(o.value), bound: r6(o.bound), z: r6(o.z),
     side: o.side, explained: o.explained, reason: o.reason,
   }));
+  const players = groupOutliers(items);
   return {
     checkedAt: new Date().toISOString(),
     rule: `robust z beyond ±${rule.Z} AND past p99 + ${rule.SPAN_K}×(p99 − median) (or the mirror below p01)`,
     unexplained: items.filter((o) => !o.explained).length,
     explained: items.filter((o) => o.explained).length,
-    items,
+    items, // one row per metric hit (kept for older readers)
+    // One row per player (build-log.html 📉 Chart anomalies); counts are players, not hits.
+    players: players.map((g) => ({ ...g, maxZ: r6(g.maxZ) })),
+    playersUnexplained: players.filter((g) => !g.explained).length,
+    playersExplained: players.filter((g) => g.explained).length,
   };
 }

@@ -14,7 +14,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261009-disclaimer" />
+  <link rel="stylesheet" href="styles.css?v=20261009-anomalies" />
   <style>
     body { overflow: auto; }
     .st-wrap { max-width: 960px; margin: 0 auto; padding: 18px 16px 40px; }
@@ -57,6 +57,14 @@
     .st-flags .st-tag.rampage { border-color: #d04040; }
     .st-flags .st-tag.padding { border-color: #b070c0; }
     .st-flags .st-tag.adjusted { border-color: #8090a0; }
+    /* 📉 Chart anomalies (stat / chart integrity, separate from 🚩; calm blue-grey) */
+    .st-anoms { border-color: color-mix(in srgb, #8090a0 45%, var(--border)); }
+    .st-anoms h3 { font-size: 0.95rem; margin: 14px 0 4px; }
+    .st-anoms .st-note { margin: 8px 0 2px; line-height: 1.45; }
+    .st-anoms .st-count.hot { color: #e0b060; border-color: #b08840; }
+    html[data-theme="light"] .st-anoms .st-count.hot { color: #8a5a00; }
+    .st-anoms .st-metrics { white-space: normal !important; min-width: 16em; line-height: 1.5; }
+    .st-anoms .st-why { white-space: normal !important; min-width: 12em; font-size: 0.85em; }
     /* 🌱 Could use a hand (separate from 🚩; calm green, no alarm colours) */
     .st-sprouts { border-color: color-mix(in srgb, #6fbf73 45%, var(--border)); }
     .st-sprouts > summary { cursor: pointer; list-style: none; user-select: none; }
@@ -92,17 +100,22 @@
       <div id="flagsRule" class="st-rule"></div>
       <div id="flags" class="st-dim">Loading…</div>
     </details>
+    <details class="st-card st-flags st-anoms" id="cardAnoms">
+      <summary id="anomsSummary"><h2>📉 Chart anomalies <span id="anomsCount" class="st-count">…</span></h2></summary>
+      <div class="st-note">Things about chart and stat integrity, not cheating patterns: players whose stats we changed automatically, and values far outside everyone else. Each needs a human look; nothing here is an accusation. Count = players needing a look (unreviewed † plus unexplained outliers).</div>
+      <h3>† Adjusted — needs review <span id="adjCount" class="st-count">…</span></h3>
+      <div id="adjRule" class="st-rule"></div>
+      <div id="adjusted" class="st-dim">Loading…</div>
+      <h3>🧪 Outlier guard <span id="guardCount" class="st-count">…</span></h3>
+      <div class="st-rule">Checked on every refresh (scripts/build-ranks.mjs → outlier-guard.mjs) on the numbers as the site shows them, one row per player with every metric that's far out. Unexplained ones may be a formula gap like the old 🦁 Brave 6094; explained ones are already in 🚩, in † above, or reviewed by hand.</div>
+      <div id="guardRule" class="st-rule"></div>
+      <div id="guard" class="st-dim">Loading…</div>
+    </details>
     <details class="st-card st-sprouts" id="cardSprouts">
       <summary id="sproutsSummary"><h2>🌱 Could use a hand <span id="sproutsCount" class="st-count">…</span></h2></summary>
       <div class="st-note">Players whose fights are going rough right now. They could be new, playing support, medic or engineer, or just learning. They're listed so veterans can spot who might appreciate a tip or a squad invite. Please be kind; this is never a list to make fun of anyone.</div>
       <div id="sproutsRule" class="st-rule"></div>
       <div id="sprouts" class="st-dim">Loading…</div>
-    </details>
-    <details class="st-card st-flags" id="cardGuard">
-      <summary><h2>🧪 Outlier guard <span id="guardCount" class="st-count">…</span></h2></summary>
-      <div class="st-note">Values far outside everyone else, checked on every refresh (scripts/build-ranks.mjs → outlier-guard.mjs) on the numbers as the site shows them. Unexplained ones may be a formula gap like the old 🦁 Brave 6094; explained ones are already in 🚩 or reviewed by hand.</div>
-      <div id="guardRule" class="st-rule"></div>
-      <div id="guard" class="st-dim">Loading…</div>
     </details>
   </main>
 
@@ -209,25 +222,6 @@
             " · new from live list: " + esc(r.newFromLive || 0) + "</div>" : "");
       }
 
-      /** 🧪 Outlier guard (written into data/status.json by scripts/build-ranks.mjs). */
-      function renderGuard(status) {
-        var g = status && status.outlierGuard;
-        var cnt = $("guardCount");
-        if (!g) { cnt.textContent = "–"; $("guard").innerHTML = '<span class="st-dim">No check yet (written by the next refresh run).</span>'; return; }
-        cnt.textContent = String(g.unexplained);
-        cnt.classList.toggle("hot", g.unexplained > 0);
-        $("guardRule").textContent = "Rule: " + (g.rule || "");
-        var items = g.items || [];
-        $("guard").innerHTML = "<div" + (g.unexplained ? ' class="st-err"' : "") + ">" + esc(g.unexplained) + " unexplained, " + esc(g.explained) +
-          " explained · checked " + when(g.checkedAt) + "</div>" +
-          (items.length ? '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th>Metric</th><th class="st-num">Value</th><th class="st-num">Bound</th><th class="st-num">z</th><th>Why</th></tr>' +
-            items.map(function (o) {
-              return "<tr><td" + (o.explained ? "" : ' class="st-err"') + ">" + nm(o.name) + "</td><td>" + esc(o.id) + '</td><td class="st-num">' + esc(o.value) +
-                '</td><td class="st-num">' + esc(o.bound) + '</td><td class="st-num">' + esc(Math.round(o.z)) + "</td><td>" +
-                (o.explained ? esc(o.reason) : '<span class="st-err">unexplained: check for a formula gap</span>') + "</td></tr>";
-            }).join("") + "</table></div>" : "");
-      }
-
       function renderRuns(data) {
         var runs = (data && data.workflow_runs) || [];
         var active = runs.filter(function (r) { return r.status !== "completed"; });
@@ -324,7 +318,6 @@
         ]).then(function (res) {
           renderNow(res[0], res[1]);
           renderLast(res[1]);
-          renderGuard(res[1]);
         });
         getJson("data/index.json").then(renderRecent, function (e) { fail("recent", "data/index.json", e); });
         Promise.all([
@@ -345,19 +338,21 @@
     })();
   </script>
 
-  <!-- Red flags 🚩: one automatic bin = aim OR vehicle OR rampage pattern (red-flags.mjs), using the
+  <!-- Red flags 🚩: one automatic bin = aim OR vehicle OR rampage OR padding pattern (red-flags.mjs, RED_PATTERNS);
+       † "adjusted" + the 🧪 outlier guard (grouped by player) go to 📉 Chart anomalies. Uses the
        same metrics as the main tables (player-metrics.mjs). Leads for review, not proof. -->
   <script type="module">
-    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261009-disclaimer";
-    import { reviewFlags, reviewRuleText } from "./red-flags.mjs?v=20261009-disclaimer";
-    import { sprout, sampleEvents, sproutRuleText } from "./sprouts.mjs?v=20261009-disclaimer";
-    import { reviewDecision } from "./padding.mjs?v=20261009-disclaimer";
-    import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261009-disclaimer";
-    import "./name-peek.mjs?v=20261009-disclaimer"; // full-name popup for truncated .nm names
+    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261009-anomalies";
+    import { reviewFlags, reviewRuleText, anomalyRuleText } from "./red-flags.mjs?v=20261009-anomalies";
+    import { groupOutliers } from "./outlier-guard.mjs?v=20261009-anomalies";
+    import { sprout, sampleEvents, sproutRuleText } from "./sprouts.mjs?v=20261009-anomalies";
+    import { reviewDecision } from "./padding.mjs?v=20261009-anomalies";
+    import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261009-anomalies";
+    import "./name-peek.mjs?v=20261009-anomalies"; // full-name popup for truncated .nm names
 
     const POLL_MS = 30 * 1000;
     const CONCURRENCY = 6;
-    const SS_KEY = "ps2-elite-kd:redflags:v6"; // { byFile: { file: { savedAt, row } } }
+    const SS_KEY = "ps2-elite-kd:redflags:v7"; // { byFile: { file: { savedAt, row } } }
     const $ = (id) => document.getElementById(id);
     const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
     const fmt = (v, d) => (typeof v === "number" && Number.isFinite(v) ? v.toFixed(d) : "—");
@@ -377,6 +372,8 @@
     const sproutText = sproutRuleText();
     $("sproutsSummary").title = sproutText;
     $("sproutsRule").textContent = "Rule: " + sproutText;
+    $("adjRule").textContent = "Rule: " + anomalyRuleText();
+    try { sessionStorage.removeItem("ps2-elite-kd:redflags:v6"); } catch { /* ignore */ }
 
     function readCache() {
       try { return JSON.parse(sessionStorage.getItem(SS_KEY)) || null; } catch { return null; }
@@ -405,7 +402,7 @@
         // Same inputs the aim / vehicle rules read (sample with farm victims).
         adj: num((m.raw || m).adj), ivi: num(m.ivi), pvs: num((m.raw || m).pvs), inflation: num((m.raw || m).inflation),
         kd: num(m.kd), acc: num(m.acc), hsr: num(m.hsr),
-        flagged: f.flagged, patterns: f.patterns, tier: f.skill.tier, basis: f.skill.basis,
+        flagged: f.flagged, red: !!f.red, patterns: f.patterns, tier: f.skill.tier, basis: f.skill.basis,
         adjs: num((m.raw || m).adjs), kpm: num(m.ownKpm) ?? num(m.kpm), events: sp.events, sprout: sp.sprout,
         // Evidence for the padding tag: share + farm accounts (kills/deaths).
         padding: pad ? { share: pad.share, kills: pad.kills, victims: pad.victims.map((v) => ({ name: v.name, kills: v.kills, deaths: v.deaths })) } : null,
@@ -425,7 +422,7 @@
         ? '<a class="nm" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer" data-full="' + full + '" title="Open ' + full + ' on Honu">' + full + "</a>"
         : '<span class="nm" data-full="' + full + '" title="' + full + '">' + full + "</span>";
       const chart = '<a href="./?names=' + encodeURIComponent(r.name) + '" title="Open the chart with this name (press Analyze)">chart</a>';
-      const pats = (r.patterns || []).filter((p) => TAGS[p]);
+      const pats = (r.patterns || []).filter((p) => TAGS[p] && p !== "adjusted"); // † lives in 📉 Chart anomalies
       const rv = reviewDecision(reviewed, r.slug);
       const tags = pats.map((p) => '<span class="st-tag ' + p + '" title="' + esc(TAGS[p].tip) + '">' + TAGS[p].label + "</span>").join("") +
         (rv ? '<div class="st-ok" style="font-size:0.8em" title="' + esc(rv.note) + '">reviewed: ' + esc(rv.decision) + (rv.at ? " (" + esc(rv.at) + ")" : "") + "</div>" : "") +
@@ -493,13 +490,95 @@
       renderSprouts();
     });
 
+    /* ---------- 📉 Chart anomalies: † adjusted + 🧪 outlier guard (grouped by player) ---------- */
+    let anomState = { adjOpen: null, guardOpen: null };
+    function updateAnomCount() {
+      const { adjOpen, guardOpen } = anomState;
+      const cnt = $("anomsCount");
+      if (adjOpen == null && guardOpen == null) return;
+      const n = (adjOpen || 0) + (guardOpen || 0);
+      cnt.textContent = String(n);
+      cnt.classList.toggle("hot", n > 0);
+    }
+
+    function renderAdjusted(rows) {
+      const list = rows.filter((r) => r && (r.patterns || []).includes("adjusted"))
+        .sort((a, b) => ((b.padding && b.padding.share) || 0) - ((a.padding && a.padding.share) || 0));
+      const open = list.filter((r) => !reviewDecision(reviewed, r.slug)).length;
+      const c = $("adjCount");
+      c.textContent = String(list.length);
+      c.classList.toggle("hot", open > 0);
+      anomState.adjOpen = open;
+      updateAnomCount();
+      if (!list.length) { $("adjusted").innerHTML = '<div class="st-dim">Nobody right now.</div>'; return; }
+      const body = list.map((r) => {
+        const chart = '<a href="./?names=' + encodeURIComponent(r.name) + '" title="Open the chart with this name (press Analyze)">chart</a>';
+        const rv = reviewDecision(reviewed, r.slug);
+        const removed = r.padding
+          ? Math.round(r.padding.share * 100) + "% (" + r.padding.kills + " kills) on: " + r.padding.victims.map((v) => esc(v.name) + " " + v.kills + "/" + v.deaths).join(", ")
+          : "—";
+        const review = rv
+          ? '<span class="st-ok" title="' + esc(rv.note) + '">' + esc(rv.decision) + (rv.at ? " (" + esc(rv.at) + ")" : "") + "</span>"
+          : '<span class="st-dim">needs review</span>';
+        return "<tr><td>" + nameCell(r) + " †</td><td>" + chart + '</td><td class="st-why">' + removed + "</td><td>" + review + "</td>" +
+          '<td class="st-num">' + fmt(r.adjs, 0) + '</td><td class="st-num">' + fmt(r.kd, 2) + "</td>" +
+          '<td title="' + esc(r.savedAt ? new Date(r.savedAt).toLocaleString() : "") + '">' + esc(ago(r.savedAt)) + "</td></tr>";
+      }).join("");
+      $("adjusted").innerHTML = '<div class="st-dim">' + list.length + " player" + (list.length === 1 ? "" : "s") + ", " + open + " not reviewed yet. After each farm account: the player's kills on it / its kills on the player.</div>" +
+        '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th></th><th>Farm kills excluded</th><th>Review</th>' +
+        '<th class="st-num">⚔️ iVi</th><th class="st-num">KD</th><th>Updated</th></tr>' + body + "</table></div>";
+    }
+
+    const nfmt = (v) => {
+      if (typeof v !== "number" || !Number.isFinite(v)) return "—";
+      const a = Math.abs(v);
+      return a >= 100 ? v.toFixed(0) : a >= 10 ? v.toFixed(1) : v.toFixed(2);
+    };
+    function renderGuard(status) {
+      const g = status && status.outlierGuard;
+      const cnt = $("guardCount");
+      if (!g) {
+        cnt.textContent = "–";
+        anomState.guardOpen = 0; updateAnomCount();
+        $("guard").innerHTML = '<span class="st-dim">No check yet (written by the next refresh run).</span>';
+        return;
+      }
+      // Newer status.json carries players[]; older ones only items[] (one per metric hit).
+      const players = Array.isArray(g.players) ? g.players : groupOutliers(g.items || []);
+      const bad = players.filter((p) => !p.explained).length;
+      const hits = players.reduce((n, p) => n + p.metrics.length, 0);
+      cnt.textContent = String(players.length);
+      cnt.classList.toggle("hot", bad > 0);
+      anomState.guardOpen = bad; updateAnomCount();
+      $("guardRule").textContent = "Rule: " + (g.rule || "");
+      $("guard").innerHTML = "<div" + (bad ? ' class="st-err"' : "") + ">" + players.length + " player" + (players.length === 1 ? "" : "s") + ": " +
+        bad + " unexplained, " + (players.length - bad) + " explained (" + hits + " metric hit" + (hits === 1 ? "" : "s") + ") · checked " +
+        esc(g.checkedAt ? ago(Date.parse(g.checkedAt)) : "—") + "</div>" +
+        (players.length ? '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th class="st-num">#</th><th>Metrics far out (value, z)</th><th>Why</th></tr>' +
+          players.map((p) => {
+            const ms = p.metrics.map((m) => '<span title="' + esc(m.side + " bound " + nfmt(m.bound) + ", z " + Math.round(m.z)) + '">' +
+              esc(m.label) + " <strong>" + esc(nfmt(m.value)) + "</strong>" + (m.side === "low" ? " ↓" : "") + "</span>").join(", ");
+            return "<tr><td" + (p.explained ? "" : ' class="st-err"') + ">" + nameCell({ name: p.name, cid: "" }) + '</td><td class="st-num">' + p.metrics.length +
+              '</td><td class="st-metrics">' + ms + '</td><td class="st-why">' +
+              (p.explained ? esc(p.reason) : '<span class="st-err">unexplained: check for a formula gap</span>') + "</td></tr>";
+          }).join("") + "</table></div>" : "");
+    }
+
+    async function refreshGuard() {
+      try {
+        const r = await fetch("data/status.json?t=" + Date.now(), { cache: "no-store" });
+        renderGuard(r.ok ? await r.json() : null);
+      } catch { renderGuard(null); }
+    }
+
     function render(rows, total, errors) {
       sproutRows = rows.filter((r) => r && r.sprout);
       $("sproutsCount").textContent = String(sproutRows.length);
       if (sproutRows.length) renderSprouts();
       else $("sprouts").innerHTML = '<div class="st-dim">Nobody right now.</div>';
 
-      const flagged = rows.filter((r) => r && r.flagged).sort((a, b) => (b.adj ?? b.ivi ?? 0) - (a.adj ?? a.ivi ?? 0));
+      renderAdjusted(rows);
+      const flagged = rows.filter((r) => r && r.red).sort((a, b) => (b.adj ?? b.ivi ?? 0) - (a.adj ?? a.ivi ?? 0));
       const cnt = $("flagsCount");
       cnt.textContent = String(flagged.length);
       cnt.classList.toggle("hot", flagged.length > 0);
@@ -531,7 +610,7 @@
         let errors = 0;
         if (todo.length) {
           let done = 0, i = 0;
-          const progress = () => { $("flags").innerHTML = $("sprouts").innerHTML = '<span class="st-dim">Scoring players… ' + done + " / " + todo.length + "</span>"; };
+          const progress = () => { $("flags").innerHTML = $("sprouts").innerHTML = $("adjusted").innerHTML = '<span class="st-dim">Scoring players… ' + done + " / " + todo.length + "</span>"; };
           progress();
           const worker = async () => {
             while (i < todo.length) {
@@ -551,13 +630,15 @@
       } catch (e) {
         $("flags").innerHTML = '<span class="st-err">Couldn’t compute red flags (' + esc(e && e.message) + ").</span>";
         $("sprouts").innerHTML = '<span class="st-err">Couldn’t load the list (' + esc(e && e.message) + ").</span>";
+        $("adjusted").innerHTML = '<span class="st-err">Couldn’t load the list (' + esc(e && e.message) + ").</span>";
       } finally {
         busy = false;
       }
     }
 
     refreshFlags();
-    setInterval(refreshFlags, POLL_MS);
+    refreshGuard();
+    setInterval(() => { refreshFlags(); refreshGuard(); }, POLL_MS);
   </script>
 </body>
 </html>

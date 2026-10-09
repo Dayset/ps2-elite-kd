@@ -13,7 +13,7 @@
  *   🦁 LionHeart median ≈ 3.1; elite players usually 4–18 → low ≤ 2.0 (≈ bottom 40%)
  *   🎈 Inflation median ≈ 2.03 → low ≤ 1.5 (≈ bottom 10%)
  */
-import { PADDING_RULE, statMark, PADDING_MARK, PADDING_MARK_TIP } from "./padding.mjs?v=20261009-disclaimer";
+import { PADDING_RULE, statMark, PADDING_MARK, PADDING_MARK_TIP } from "./padding.mjs?v=20261009-anomalies";
 
 export { PADDING_MARK, PADDING_MARK_TIP };
 
@@ -187,7 +187,22 @@ export function reviewFlags(m) {
   if (ram.flagged) patterns.push("rampage");
   if (pad.flagged) patterns.push("padding");
   if (adjusted) patterns.push("adjusted");
-  return { flagged: patterns.length > 0, patterns, skill: aim.skill, padding: pad };
+  // 🚩 = cheating-style patterns only; "adjusted" is a 📉 chart anomaly (stats
+  // altered, human review), shown in its own build-log bin. flagged = either.
+  const red = patterns.some((p) => RED_PATTERNS.includes(p));
+  return { flagged: patterns.length > 0, red, anomaly: adjusted, patterns, skill: aim.skill, padding: pad };
+}
+
+/** Patterns that put a player in the 🚩 bin (the rest, i.e. "adjusted", go to 📉 Chart anomalies). */
+export const RED_PATTERNS = Object.freeze(["aim", "vehicle", "rampage", "padding"]);
+
+/** Rule line for the 📉 Chart anomalies "adjusted — needs review" list. */
+export function anomalyRuleText() {
+  return (
+    `[adjusted] some sample kills on farm accounts (${PADDING_RULE.MIN_KILLS}+ kills on it, it killed back ≤ ${PADDING_RULE.MAX_BACK * 100}%, ` +
+    `its KPM < ${PADDING_RULE.MAX_KPM}) were excluded automatically, below the ${Math.round(PADDING_RULE.FLAG_SHARE * 100)}% padding line. ` +
+    `The stats are altered, so a human decides: fluke, bad luck or padding (record it in data/reviewed.json).`
+  );
 }
 
 /** Header tooltip / rule line for the combined bin. */
@@ -203,8 +218,8 @@ export function reviewRuleText() {
     `[vehicle pattern] KD ≥ ${V.KD_HIGH_MIN}, HSR ≤ ${V.HSR_LOW_MAX}% and accuracy ≤ ${V.ACC_LOW_MAX}% (Inflation ignored). ` +
     `Also flagged regardless of skill: [rampage pattern] KD ≥ ${RAMPAGE_RULE.KD_MIN} and KPM ≥ ${RAMPAGE_RULE.KPM_MIN}; ` +
     `[padding pattern] ≥ ${Math.round(PADDING_RULE.FLAG_SHARE * 100)}% of sample kills on farm accounts (${PADDING_RULE.MIN_KILLS}+ kills on it, ` +
-    `it killed back ≤ ${PADDING_RULE.MAX_BACK * 100}%, its KPM < ${PADDING_RULE.MAX_KPM}; those kills are excluded from the stats); ` +
-    `[adjusted] any farm-account kills excluded below that share (stats altered, needs a human look: fluke or bad luck). ` +
+    `it killed back ≤ ${PADDING_RULE.MAX_BACK * 100}%, its KPM < ${PADDING_RULE.MAX_KPM}; those kills are excluded from the stats). ` +
+    `Smaller exclusions (adjusted, †) are listed under 📉 Chart anomalies, not here. ` +
     `A lead for manual review, not proof of cheating.`
   );
 }

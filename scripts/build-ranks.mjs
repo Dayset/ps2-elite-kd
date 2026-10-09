@@ -115,5 +115,5 @@ if (isMain) {
   for (const o of guard.items.filter((x) => !x.explained)) {
     console.log(`::warning::outlier guard: ${o.name} ${o.id}=${o.value} (bound ${o.bound}, z ${o.z})`);
   }
-  console.log(`outlier guard: ${guard.unexplained} unexplained, ${guard.explained} explained`);
+  console.log(`outlier guard: ${guard.playersUnexplained} unexplained / ${guard.playersExplained} explained players (${guard.items.length} metric hits)`);
 }
