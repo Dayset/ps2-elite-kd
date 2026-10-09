@@ -13,7 +13,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261008-ghostcap" />
+  <link rel="stylesheet" href="styles.css?v=20261008-distlight" />
   <style>
     /* Ranks page: one long sortable table of every cached player. */
     body.ranks-page { overflow-x: hidden; }
@@ -261,10 +261,10 @@
 
 
   <script type="module">
-    import "./name-peek.mjs?v=20261008-ghostcap";
-    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits } from "./dist.mjs?v=20261008-ghostcap";
-    import { paletteColor } from "./palette.mjs?v=20261008-ghostcap";
-    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261008-ghostcap";
+    import "./name-peek.mjs?v=20261008-distlight";
+    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits } from "./dist.mjs?v=20261008-distlight";
+    import { paletteColor } from "./palette.mjs?v=20261008-distlight";
+    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261008-distlight";
 
     const LS_THEME = "ps2-elite-kd-theme";
     const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";
@@ -647,6 +647,14 @@
         warn: cssVar("--warn", "#ffd166"),
       };
       const fs = narrow ? 10 : 11;
+      // Light theme: pronounced like the main chart's light palette (darker,
+      // more saturated, thicker); dark theme keeps its original look.
+      const LT = isLight();
+      const st = LT
+        ? { grid: "#b3a894", gridW: 1, axis: "#3d382f", bar: "#1f5f86", barOp: 0.82, barStroke: "#123f5c",
+            tail: "#5c5549", tailOp: 0.7, cum: "#b04a00", cumW: 2.8, cumOp: 1, stat: "#1c1914", statW: 1.4, statOp: 0.8, statTextOp: 1, markW: 2.6 }
+        : { grid: th.grid, gridW: 0.8, axis: th.dim, bar: th.accent, barOp: 0.6, barStroke: "none",
+            tail: th.dim, tailOp: 0.45, cum: th.warn, cumW: 2, cumOp: 0.9, stat: th.text, statW: 1, statOp: 0.55, statTextOp: 0.8, markW: 2 };
 
       if (!h.bins.length) {
         svg.appendChild(svgEl("text", { x: W / 2, y: H / 2, fill: th.dim, "text-anchor": "middle", "font-size": 12 }, "No data"));
@@ -679,9 +687,9 @@
       for (let k = 0; k <= 4; k++) {
         const p = k * yStep;
         const y = yL(p);
-        g.appendChild(svgEl("line", { x1: M.l, x2: M.l + PW, y1: y, y2: y, stroke: th.grid, "stroke-width": 0.8 }));
-        g.appendChild(svgEl("text", { x: M.l - 5, y: y + 3.5, fill: th.dim, "font-size": fs, "text-anchor": "end" }, (p % 1 ? p.toFixed(1) : p.toFixed(0)) + "%"));
-        g.appendChild(svgEl("text", { x: M.l + PW + 5, y: yR(k * 25) + 3.5, fill: th.dim, "font-size": fs, "text-anchor": "start" }, k * 25 + "%"));
+        g.appendChild(svgEl("line", { x1: M.l, x2: M.l + PW, y1: y, y2: y, stroke: st.grid, "stroke-width": st.gridW }));
+        g.appendChild(svgEl("text", { x: M.l - 5, y: y + 3.5, fill: st.axis, "font-size": fs, "text-anchor": "end" }, (p % 1 ? p.toFixed(1) : p.toFixed(0)) + "%"));
+        g.appendChild(svgEl("text", { x: M.l + PW + 5, y: yR(k * 25) + 3.5, fill: LT ? st.cum : st.axis, "font-size": fs, "text-anchor": "start" }, k * 25 + "%"));
       }
       svg.appendChild(g);
 
@@ -694,7 +702,8 @@
         const tail = b.kind !== "core";
         bars.appendChild(svgEl("rect", {
           x, y, width: w, height: Math.max(0, M.t + PH - y), rx: 1.5,
-          fill: tail ? th.dim : th.accent, "fill-opacity": tail ? 0.45 : (isLight() ? 0.55 : 0.6),
+          fill: tail ? st.tail : st.bar, "fill-opacity": tail ? st.tailOp : st.barOp,
+          stroke: tail ? "none" : st.barStroke, "stroke-width": LT ? 0.6 : 0,
         }));
       });
       svg.appendChild(bars);
@@ -703,7 +712,7 @@
       const maxLabels = narrow ? 5 : 9;
       const coreIdx = h.bins.map((b, i) => (b.kind === "core" ? i : -1)).filter((i) => i >= 0);
       const every = Math.max(1, Math.ceil((coreIdx.length + 1) / maxLabels));
-      const xl = svgEl("g", { fill: th.dim, "font-size": fs, "text-anchor": "middle" });
+      const xl = svgEl("g", { fill: st.axis, "font-size": fs, "text-anchor": "middle" });
       coreIdx.forEach((i, k) => {
         if (k % every === 0) xl.appendChild(svgEl("text", { x: slotX(i), y: M.t + PH + 14 }, fmtEdge(h.bins[i].x0, h)));
       });
@@ -719,16 +728,16 @@
       // cumulative line (right axis)
       let d = `M${slotX(0).toFixed(1)},${yR(0).toFixed(1)}`;
       h.bins.forEach((b, i) => { d += ` L${(slotX(i) + slotW).toFixed(1)},${yR(b.cumPct).toFixed(1)}`; });
-      svg.appendChild(svgEl("path", { d, fill: "none", stroke: th.warn, "stroke-width": 2, "stroke-linejoin": "round", opacity: 0.9 }));
+      svg.appendChild(svgEl("path", { d, fill: "none", stroke: st.cum, "stroke-width": st.cumW, "stroke-linejoin": "round", opacity: st.cumOp }));
 
       // median / p90 / p99
       const stats = [["median", h.median], ["p90", h.p90], ["p99", h.p99]];
       stats.forEach(([lab, v], k) => {
         const x = xOf(v);
         if (x == null) return;
-        svg.appendChild(svgEl("line", { x1: x, x2: x, y1: M.t, y2: M.t + PH, stroke: th.text, "stroke-width": 1, "stroke-dasharray": "4 3", opacity: 0.55 }));
+        svg.appendChild(svgEl("line", { x1: x, x2: x, y1: M.t, y2: M.t + PH, stroke: st.stat, "stroke-width": st.statW, "stroke-dasharray": "4 3", opacity: st.statOp }));
         const right = x > M.l + PW * 0.75; // keep labels inside the plot near the right edge
-        const t = svgEl("text", { x: right ? x - 3 : x + 3, y: M.t + 10 + k * 11, fill: th.text, "font-size": fs - 1, opacity: 0.8, "text-anchor": right ? "end" : "start" }, `${lab} ${(+v).toFixed(col.digits)}`);
+        const t = svgEl("text", { x: right ? x - 3 : x + 3, y: M.t + 10 + k * 11, fill: st.stat, "font-size": fs - 1, opacity: st.statTextOp, "font-weight": LT ? 600 : 400, "text-anchor": right ? "end" : "start" }, `${lab} ${(+v).toFixed(col.digits)}`);
         svg.appendChild(t);
       });
 
@@ -742,7 +751,7 @@
         const row = i % 3;
         const ly = 12 + row * 13;
         const gm = svgEl("g", {});
-        gm.appendChild(svgEl("line", { x1: x, x2: x, y1: ly + 2, y2: M.t + PH, stroke: color, "stroke-width": 2 }));
+        gm.appendChild(svgEl("line", { x1: x, x2: x, y1: ly + 2, y2: M.t + PH, stroke: color, "stroke-width": st.markW }));
         gm.appendChild(svgEl("circle", { cx: x, cy: M.t + PH, r: 3.5, fill: color }));
         const anchor = x > M.l + PW * 0.8 ? "end" : x < M.l + PW * 0.2 ? "start" : "middle";
         const t = svgEl("text", { x, y: ly, fill: color, "font-size": fs, "font-weight": 700, "text-anchor": anchor }, shortName(r.name));
