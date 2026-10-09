@@ -24,7 +24,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261009-seen" />
+  <link rel="stylesheet" href="styles.css?v=20261009-note" />
   <style>
     /* Ranks page: one long sortable table of every cached player. */
     body.ranks-page { overflow-x: hidden; }
@@ -249,6 +249,7 @@
       <div class="dist-note">Bars: % of players per value range (left axis). Line: cumulative % of players below (right axis). Tap / hover a bar for details. Picked players (☐) — or a search with ≤ 5 matches — are marked on the chart.</div>
     </details>
 
+    <p class="pooled-note" style="margin: 0.3rem 0 0.45rem">ℹ️ Vehicle and infantry kills are pooled together for now, so vehicle mains may look off in the graph and stats. Infantry-only numbers are coming later.</p>
     <div class="ranks-table-wrap" id="ranksScroll">
       <table class="ranks-table" id="ranksTable" aria-label="Population ranks">
         <thead id="ranksHead"></thead>
@@ -272,10 +273,10 @@
 
 
   <script type="module">
-    import "./name-peek.mjs?v=20261009-seen";
-    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits } from "./dist.mjs?v=20261009-seen";
-    import { paletteColor } from "./palette.mjs?v=20261009-seen";
-    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-seen";
+    import "./name-peek.mjs?v=20261009-note";
+    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits } from "./dist.mjs?v=20261009-note";
+    import { paletteColor } from "./palette.mjs?v=20261009-note";
+    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-note";
 
     const LS_THEME = "ps2-elite-kd-theme";
     const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";

@@ -1805,3 +1805,15 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
 }
 .census-retry-btn:hover { background: rgba(127, 127, 127, 0.15); }
 .census-note { margin-top: 0.25em; line-height: 1.5; }
+
+/* Small disclaimer under the legend; only once a graph (legend) is drawn. */
+.pooled-note {
+  margin: 0.6rem 0 0;
+  font-size: 0.74rem;
+  line-height: 1.4;
+  color: var(--dim);
+  overflow-wrap: anywhere;
+}
+.legend:empty + .pooled-note {
+  display: none;
+}

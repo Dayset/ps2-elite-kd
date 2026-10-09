@@ -32,9 +32,9 @@ import {
   windowYValues,
   kpmBandCurve,
   bandReliability,
-} from "./math.mjs?v=20261009-seen";
-import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261009-seen";
-import GHOST_MODEL from "./data/ghost-model.mjs?v=20261009-seen";
+} from "./math.mjs?v=20261009-note";
+import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261009-note";
+import GHOST_MODEL from "./data/ghost-model.mjs?v=20261009-note";
 import {
   NameLoadError,
   classifyLoadError,
@@ -58,18 +58,18 @@ import {
   estimateRemainingMs,
   nextEtaDeadline,
   formatEtaLeft,
-} from "./analyze-run.mjs?v=20261009-seen";
+} from "./analyze-run.mjs?v=20261009-note";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
-} from "./player-metrics.mjs?v=20261009-seen";
+} from "./player-metrics.mjs?v=20261009-note";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261009-seen";
-import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261009-seen";
+import "./name-peek.mjs?v=20261009-note";
+import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261009-note";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
-import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-seen";
+import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-note";
 // Live data: Daybreak Census only (batched, paced); Honu just for a rare history fallback.
-import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261009-seen";
+import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261009-note";
 import {
   censusBase,
   censusRequest,
@@ -77,7 +77,7 @@ import {
   fetchPlayerCensus,
   limitConcurrency,
   tokenBucket,
-} from "./census-fetch.mjs?v=20261009-seen";
+} from "./census-fetch.mjs?v=20261009-note";
 
   // Player palettes (dark + light theme) live in palette.mjs (shared with ranks.html).
   const COLORS = PALETTE_DARK;
