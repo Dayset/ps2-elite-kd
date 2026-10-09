@@ -27,20 +27,34 @@ describe("minimum fights for opponent-sample metrics (🏃 Activity, 🦁 Brave,
     for (const id of ["kd", "kpm", "ownKpm", "acc", "hsr", "ivi", "ekpm", "own"]) assert.ok(!THIN_METRICS.includes(id), id);
   });
 
-  it("one shared threshold: 100 kills and 5 deaths", () => {
-    assert.equal(MIN_FIGHTS.KILLS, 100);
+  it("one shared threshold: 100 fights (kills + deaths), 5+ kills, 5+ deaths", () => {
+    assert.equal(MIN_FIGHTS.FIGHTS, 100);
+    assert.equal(MIN_FIGHTS.KILLS, 5);
     assert.equal(MIN_FIGHTS.DEATHS, 5);
     assert.ok(Object.isFrozen(MIN_FIGHTS));
     assert.match(MIN_FIGHTS_TIP, /Too few fights to measure/);
-    assert.match(MIN_FIGHTS_TIP, /100\+ kills/);
+    assert.match(MIN_FIGHTS_TIP, /at least 100 kills \+ deaths combined/);
   });
 
   it("enoughFights boundaries", () => {
-    assert.equal(enoughFights(100, 5), true);
-    assert.equal(enoughFights(99, 500), false);
-    assert.equal(enoughFights(5000, 4), false);
+    assert.equal(enoughFights(95, 5), true);
+    assert.equal(enoughFights(5, 95), true);
+    assert.equal(enoughFights(99, 500), true, "big sample, low skill: measured");
+    assert.equal(enoughFights(94, 5), false);
+    assert.equal(enoughFights(4, 500), false, "under 5 kills");
+    assert.equal(enoughFights(5000, 4), false, "under 5 deaths");
     assert.equal(enoughFights(0, 0), false);
     assert.equal(enoughFights(undefined, undefined), false);
+  });
+
+  it("big-sample low-skill players are measured; tiny / near-deathless ones stay blank", () => {
+    const wantuss = metricsOf(load("wantuss"));
+    assert.ok(wantuss.sampleKills < 100 && wantuss.sampleKills + wantuss.sampleDeaths >= 100);
+    assert.equal(wantuss.thin, false, "66 kills / 221 deaths is a real sample");
+    for (const id of THIN_METRICS) assert.equal(shownValue(wantuss, id), wantuss[id], `wantuss ${id}`);
+    for (const slug of ["add1ti0nal", "geilovs", "1stfanofahorn", "xmasterbobx"]) {
+      assert.equal(metricsOf(load(slug)).thin, true, slug);
+    }
   });
 
   it("synthetic tiny sample: raw kept, shown values blank", () => {

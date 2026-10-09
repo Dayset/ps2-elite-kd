@@ -282,7 +282,7 @@
   <script type="module">
     import "./name-peek.mjs?v=20261009-top200";
     import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits } from "./dist.mjs?v=20261009-top200";
-    import { MIN_FIGHTS, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261009-top200";
+    import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261009-top200";
     import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261009-top200";
     import { paletteColor } from "./palette.mjs?v=20261009-top200";
     import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-top200";
@@ -324,7 +324,7 @@
     for (const c of ALL_COLS) {
       if (!THIN_METRICS.includes(c.id)) continue;
       c.thinTip = true;
-      c.tip = `${c.tip || c.label}. Shows — below ${MIN_FIGHTS.KILLS} kills / ${MIN_FIGHTS.DEATHS} deaths`;
+      c.tip = `${c.tip || c.label}. Shows — unless the sample has ${MIN_FIGHTS_RULE}`;
     }
     const colById = (id) => ALL_COLS.find((c) => c.id === id);
 
@@ -509,6 +509,19 @@
       return `<td>${fmt(v, c.digits)}${pct}</td>`;
     }
 
+    /**
+     * "#" cell. A player with no value for the current sort (e.g. "—" below the
+     * minimum fights) is listed after everyone else but gets no rank number:
+     * sitting "last" would wrongly read as "worst".
+     */
+    function rankCellHtml(r) {
+      if (sortKey !== "name" && !fin(r[sortKey])) {
+        const why = r.thin && colById(sortKey)?.thinTip ? `Not ranked: ${MIN_FIGHTS_TIP.charAt(0).toLowerCase()}${MIN_FIGHTS_TIP.slice(1)}` : "Not ranked: no value for this column";
+        return `<td class="rk-num thin-sample" title="${esc(why)}">—</td>`;
+      }
+      return `<td class="rk-num">${r.rank}</td>`;
+    }
+
     /** Row HTML for one player (plain strings: cheap for ~1000 rows). */
     function rowHtml(r, cols) {
       const checked = picked.has(r.query) ? " checked" : "";
@@ -517,7 +530,7 @@
       return (
         `<tr data-q="${esc(r.query)}">` +
         `<td class="rk-pick"><input type="checkbox" aria-label="Pick ${esc(r.name)}"${checked}${disabled} /></td>` +
-        `<td class="rk-num">${r.rank}</td>` +
+        rankCellHtml(r) +
         `<td class="rk-name"><a href="${href}" title="Open on the main chart"><span class="nm" data-full="${esc(r.name)}" title="${esc(r.name + (r.farm ? " — " + r.farm : ""))}">${esc(r.name)}</span></a>` +
         (r.mark ? `<span class="pad-mark mark-${r.markKind}" title="${esc(r.markTip + ". " + r.farm)}">${r.mark}</span>` : "") +
         (r.legacy ? `<span class="sample-legacy" title="${esc(LEGACY_SAMPLE_TIP)}">${LEGACY_SAMPLE_MARK}</span>` : "") + `</td>` +

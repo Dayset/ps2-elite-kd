@@ -37,18 +37,26 @@ export function isLegacySample(p) {
 
 /**
  * Minimum fights before the opponent-sample metrics (THIN_METRICS: 🏃 Activity,
- * 🦁 Brave, ⚔️ iVi, …) are shown (user, 2026-10-09:
- * "a proper account is at least 100 kills", about an hour of play). The death
- * floor stops a 100+ kill / 1-death sample from blowing up K/D. Counted over
- * the same opponent rows Activity is built from (rfIf kills / deaths).
+ * 🦁 Brave, ⚔️ iVi, …) are shown. The user's bar is "about an hour of play"
+ * (2026-10-09: "a proper account is at least 100 kills"). That was first coded
+ * as 100 KILLS, which also blanked big-sample low-skill players (e.g. 66 kills /
+ * 221 deaths): their sample is large, they just die a lot. So the size test is
+ * now FIGHTS = kills + deaths (an hour of play for anyone), plus a floor on
+ * each side: DEATHS stops a 100+ kill / 1-death sample from blowing up K/D
+ * (add1ti0nal 75/2, geiloVS 172/1, 1stFanOfAhorn 98/1 stay blank), KILLS keeps a
+ * 0-kill sample from posing as a measurement. Counted over the same opponent
+ * rows Activity is built from (rfIf kills / deaths).
  * Display only: red flags (red-flags.mjs) and 🌱 sprouts still read the raw
  * metric values (m.pvs, m.adjs, …), so they work exactly as before.
  */
-export const MIN_FIGHTS = Object.freeze({ KILLS: 100, DEATHS: 5 });
+export const MIN_FIGHTS = Object.freeze({ FIGHTS: 100, KILLS: 5, DEATHS: 5 });
+
+/** The rule in words (column hints, notes). */
+export const MIN_FIGHTS_RULE =
+  `at least ${MIN_FIGHTS.FIGHTS} kills + deaths combined, with ${MIN_FIGHTS.KILLS}+ kills and ${MIN_FIGHTS.DEATHS}+ deaths`;
 
 /** Hover text for a blanked cell. */
-export const MIN_FIGHTS_TIP =
-  `Too few fights to measure (needs ${MIN_FIGHTS.KILLS}+ kills and ${MIN_FIGHTS.DEATHS}+ deaths)`;
+export const MIN_FIGHTS_TIP = `Too few fights to measure (needs ${MIN_FIGHTS_RULE})`;
 
 /**
  * Metrics built from the opponent sample (K/D against the cached rows): all
@@ -69,7 +77,9 @@ export function shownValue(m, id) {
 
 /** True when the sample is big enough for the THIN_METRICS. */
 export function enoughFights(kills, deaths, min = MIN_FIGHTS) {
-  return (+kills || 0) >= min.KILLS && (+deaths || 0) >= min.DEATHS;
+  const k = +kills || 0;
+  const d = +deaths || 0;
+  return k + d >= min.FIGHTS && k >= min.KILLS && d >= min.DEATHS;
 }
 
 /** Raw cache / live / shared player JSON → the shape the charts & tables use. */

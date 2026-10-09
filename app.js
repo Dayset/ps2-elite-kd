@@ -64,7 +64,7 @@ import {
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
-  MIN_FIGHTS,
+  MIN_FIGHTS_RULE,
   MIN_FIGHTS_TIP,
   THIN_METRICS,
   shownValue,
@@ -72,6 +72,17 @@ import {
   LEGACY_SAMPLE_MARK,
   LEGACY_SAMPLE_TIP,
 } from "./player-metrics.mjs?v=20261009-top200";
+/** "22 kills / 60 deaths" in the opponent sample (MIN_FIGHTS counts). */
+function fightsText(r) {
+  const k = r.sampleKills || 0;
+  const d = r.sampleDeaths || 0;
+  if (!k && !d) return "(no fights on record)";
+  return `(${k} kill${k === 1 ? "" : "s"} / ${d} death${d === 1 ? "" : "s"})`;
+}
+/** Hover on a blanked cell: the reason plus this player's own counts. */
+function thinCellTip(r) {
+  return `${MIN_FIGHTS_TIP}. This sample: ${fightsText(r).replace(/[()]/g, "")}`;
+}
 import { farmNote, statMark } from "./padding.mjs?v=20261009-top200";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
 import "./name-peek.mjs?v=20261009-top200";
@@ -2688,7 +2699,7 @@ import {
     ];
     // Opponent-sample metrics: "—" below MIN_FIGHTS (player-metrics.mjs), so they
     // also drop out of sorting and the % column references.
-    const thinNote = ` Shows — below ${MIN_FIGHTS.KILLS} kills / ${MIN_FIGHTS.DEATHS} deaths (too few fights to measure).`;
+    const thinNote = ` Shows — (too few fights to measure) unless the sample has ${MIN_FIGHTS_RULE}.`;
     for (const c of adjVisibleCols.concat(adjDebugCols)) {
       if (!THIN_METRICS.includes(c.id) || c.thinTip) continue;
       c.thinTip = true;
@@ -2800,7 +2811,7 @@ import {
               }
               // Opponent-sample metrics below MIN_FIGHTS: "—" with the reason on hover.
               if (c.thinTip && row.thin && !isFiniteNum(v)) {
-                return `<td class="thin-sample" title="${escapeHtml(MIN_FIGHTS_TIP)}">—</td>`;
+                return `<td class="thin-sample" title="${escapeHtml(thinCellTip(row))}">—</td>`;
               }
               // Small dimmed % = gap to the column reference (none on the reference cell):
               // "−28%" below the highest value, or "+35%" above the lowest for pctDir "low".
@@ -2831,6 +2842,14 @@ import {
         .join("");
     }
 
+    // Never an unexplained all-"—" table: name every blanked player with their counts.
+    const thinRows = metrics.filter((r) => r.thin);
+    const thinBlock = thinRows.length
+      ? `<p class="stats-thin-note">— = too few fights to measure (needs ${escapeHtml(MIN_FIGHTS_RULE)}): ` +
+        thinRows.map((r) => `${escapeHtml(r.p.display)} ${fightsText(r)}`).join(", ") +
+        `.</p>`
+      : "";
+
     const pubSorted = sortRows(metrics, publicCols, statsSortState.public);
     const adjSorted = sortRows(metrics, adjCols, statsSortState.adjusted);
 
@@ -2852,6 +2871,7 @@ import {
             <tbody>${playerRows(adjCols, adjSorted)}</tbody>
           </table>
         </div>
+        ${thinBlock}
       </div>
     `;
 
