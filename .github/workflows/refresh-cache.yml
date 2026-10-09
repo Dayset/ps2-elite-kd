@@ -84,6 +84,10 @@ jobs:
         id: refresh
         env:
           NAMES: ${{ github.event.inputs.names || '' }}
+          # GitHub-hosted runners can't connect to Census; go through the cache
+          # Worker's /census proxy (shared-secret header, read-only, our service ID only).
+          CENSUS_PROXY: ${{ vars.CENSUS_PROXY || 'https://ps2-elite-kd-cache.dayset.workers.dev' }}
+          CENSUS_PROXY_KEY: ${{ secrets.CENSUS_PROXY_KEY }}
         run: node scripts/refresh-cache.mjs
 
       - name: Commit (one commit per run, skipped if nothing refreshed)

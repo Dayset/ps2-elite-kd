@@ -27,6 +27,7 @@ import {
   summarizeAssists,
   fetchHonuAssists,
   ASSISTS_SINCE,
+  viaCensusProxy,
 } from "../scripts/refresh-cache.mjs";
 
 const index = {
@@ -282,5 +283,15 @@ describe("assists from Honu sessions", () => {
     assert.equal(a.total, 1);
     assert.equal(await fetchHonuAssists("5428147970845751137", { getJson: async () => { throw new Error("429"); } }), null);
     assert.equal(await fetchHonuAssists("not-an-id", { getJson: async () => { throw new Error("should not call"); } }), null);
+  });
+});
+
+describe("Census proxy routing", () => {
+  it("rewrites only Census URLs when a proxy is set", () => {
+    const u = "https://census.daybreakgames.com/s:daysetps2legends/get/ps2:v2/character?name.first_lower=a";
+    assert.equal(viaCensusProxy(u, ""), u);
+    assert.equal(viaCensusProxy(u, "https://w.example.dev"), "https://w.example.dev/census/s:daysetps2legends/get/ps2:v2/character?name.first_lower=a");
+    assert.equal(viaCensusProxy("https://wt.honu.pw/api/x", "https://w.example.dev"), "https://wt.honu.pw/api/x");
+    assert.equal(viaCensusProxy("https://census.daybreakgames.com.evil.example/x", "https://w.example.dev"), "https://census.daybreakgames.com.evil.example/x");
   });
 });

@@ -129,15 +129,32 @@ export function backoffMs(attempt, retryAfterHeader) {
   return Math.min(1000 * 2 ** attempt, 15_000) + Math.floor(Math.random() * 250);
 }
 
+/**
+ * GitHub-hosted runners can't connect to Census (TCP connect timeouts), so the
+ * workflow sets CENSUS_PROXY (the cache Worker) + CENSUS_PROXY_KEY (shared
+ * secret header). Unset = direct Census (local runs).
+ */
+const CENSUS_PROXY = String(process.env.CENSUS_PROXY || "").trim().replace(/\/+$/, "");
+const CENSUS_PROXY_KEY = String(process.env.CENSUS_PROXY_KEY || "");
+
+/** Census URL -> proxy URL (`${proxy}/census/s:…/get/ps2:v2/…`); anything else unchanged. */
+export function viaCensusProxy(url, proxy = CENSUS_PROXY) {
+  if (!proxy || !url.startsWith(CENSUS_HOST + "/")) return url;
+  return `${proxy}/census${url.slice(CENSUS_HOST.length)}`;
+}
+
 async function fetchJson(url, { retries = 4 } = {}) {
   if (url.startsWith(CENSUS_HOST)) {
+    const proxied = viaCensusProxy(url);
+    const headers = { Accept: "application/json", "User-Agent": USER_AGENT };
+    if (proxied !== url && CENSUS_PROXY_KEY) headers["X-Proxy-Key"] = CENSUS_PROXY_KEY;
     // Census: timeouts, exponential backoff + jitter, busy/overload detection (census-fetch.mjs).
-    return censusRequest(url, {
+    return censusRequest(proxied, {
       bucket: censusBucket,
       retries,
       timeoutMs: url.includes("characters_event_grouped") ? CENSUS_TIMEOUT_MS : FETCH_TIMEOUT_MS,
       expectData: url.includes("characters_event_grouped") || url.includes("character?name.first_lower="),
-      headers: { Accept: "application/json", "User-Agent": USER_AGENT },
+      headers,
       baseMs: 2000,
       capMs: 30000,
       onRetry: ({ attempt, retries: n, reason, waitMs }) =>
@@ -797,6 +814,7 @@ async function main() {
   const names = explicit ? all : [];
   if (explicit) console.log(`Refreshing ${names.length} explicit name(s): ${names.join(", ")}`);
   else console.log(`Background discovery run (cached players are not re-fetched). Index: ${index.players.length}.`);
+  console.log(CENSUS_PROXY ? `Census via proxy ${new URL(CENSUS_PROXY).host}${CENSUS_PROXY_KEY ? "" : " (WARNING: no CENSUS_PROXY_KEY)"}.` : "Census direct.");
   const c = { ok: 0, notFound: 0, outage: 0, consecutiveOutage: 0, stoppedEarly: "" };
   const added = []; // explicit names that fetched OK → watchlist
   const discovered = []; // crawl successes → watchlist
@@ -964,7 +982,7 @@ async function main() {
       if (tried) await sleep(BETWEEN_PLAYERS_MS);
       tried++;
       if (!batch.some((b) => b.name === name)) plan(name, "refresh");
-      const d = await refreshOne(name, `[refresh ${refreshed + 1}/${stale.length}]`);
+      const d = await refreshOne(name, `[refresh ${tried}/${stale.length}]`);
       settle(name, d);
       if (d) refreshed++;
     }
