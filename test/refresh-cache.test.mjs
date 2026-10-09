@@ -269,6 +269,13 @@ describe("assists from Honu exp events", () => {
     const dbl = assistStatsFromBlock({ events: [ev(1, 200), ev(1, 200), ev(2, 100)] }, CID);
     assert.equal(dbl.mult, 2);
     assert.equal(dbl.shareSum, 0.5);
+    // x2 event starting mid-session: each assist uses the nearest kill's multiplier.
+    const tev = (experienceID, amount, ts) => ({ experienceID, amount, sourceID: CID, timestamp: ts });
+    const mid = assistStatsFromBlock({ events: [
+      tev(1, 100, "2026-10-06T01:00:00Z"), tev(2, 50, "2026-10-06T01:01:00Z"),
+      tev(1, 200, "2026-10-06T02:00:00Z"), tev(2, 100, "2026-10-06T02:01:00Z"),
+    ] }, CID);
+    assert.equal(mid.shareSum, 1); // 0.5 + 0.5, not 0.5 + 1
     // No kill events: mult 1; an impossible >100% share is halved (Honu heuristic) and capped.
     const odd = assistStatsFromBlock({ events: [ev(2, 160), ev(2, 500)] }, CID);
     assert.equal(odd.shareSum, 0.8 + 1);

@@ -288,12 +288,21 @@ const HONU_API = "https://wt.honu.pw/api/";
 /** Honu Experience.IsAssist: ASSIST, SPAWN_ASSIST, PRIORITY_ASSIST, HIGH_PRIORITY_ASSIST. */
 export const ASSIST_EXP_IDS = [2, 3, 371, 372];
 /**
- * Assist XP encodes the damage share (Varunda; Honu SessionActionLog.vue /
- * outfitreport/InfantryDamage.ts): share = (amount / scoreMult) / base, base
- * ASSIST 100, PRIORITY_ASSIST 150, HIGH_PRIORITY_ASSIST 300 (SPAWN_ASSIST has
- * none). scoreMult is the EARNER's multiplier, derived like Honu's Report.ts
- * from fixed-XP kill events (KILL 100, PRIORITY_KILL 150, HIGH_PRIORITY_KILL 300).
- * Share > 1 means unseen double XP: halve (Honu's heuristic), then cap at 1.
+ * Assist XP encodes the damage share (Varunda: "the amount of xp in an assist
+ * is the % of damage dealt to a player, multiplied by the score multiplier").
+ * Honu (SessionActionLog.vue, outfitreport/InfantryDamage.ts + Report.ts):
+ *   share = (amount / scoreMult) / base, base ASSIST 100, PRIORITY_ASSIST 150,
+ *   HIGH_PRIORITY_ASSIST 300 (SPAWN_ASSIST: no share); scoreMult is the
+ *   EARNER's multiplier, read off a fixed-XP event of the same player
+ *   (kill 100/150/300, revive 75/100, resupply 10/15, squad spawn 10); a share
+ *   > 1 is taken as unseen double XP and halved. Honu has no other handling of
+ *   x2 events, membership or boosts: they all live inside that multiplier.
+ * Here: scoreMult = the player's own kill XP / base at the kill event NEAREST
+ * IN TIME to each assist (falls back to the window median, then 1). Event x2,
+ * membership and boosts scale kill and assist XP alike, so the ratio cancels
+ * them even when a boost/event starts or ends mid-session. The victim's
+ * priority is already the assist type (base 100/150/300). Then halve if > 1
+ * (Honu's heuristic) and cap at 1.
  */
 export const ASSIST_BASE_XP = { 2: 100, 371: 150, 372: 300 };
 export const KILL_BASE_XP = { 1: 100, 278: 150, 279: 300 };
@@ -308,11 +317,18 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 export function assistStatsFromBlock(block, cid) {
   const evs = (block && Array.isArray(block.events) ? block.events : [])
     .filter((e) => e && (!cid || String(e.sourceID) === String(cid)));
-  const ratios = evs
+  const refs = evs
     .filter((e) => KILL_BASE_XP[+e.experienceID] && +e.amount > 0)
-    .map((e) => +e.amount / KILL_BASE_XP[+e.experienceID])
-    .sort((a, b) => a - b);
-  const mult = ratios.length ? Math.max(1, ratios[ratios.length >> 1]) : 1;
+    .map((e) => ({ t: Date.parse(e.timestamp), r: +e.amount / KILL_BASE_XP[+e.experienceID] }));
+  const sorted = refs.map((x) => x.r).sort((p, q) => p - q);
+  const median = sorted.length ? sorted[sorted.length >> 1] : 1;
+  const timed = refs.filter((x) => Number.isFinite(x.t));
+  const multAt = (t) => {
+    if (!timed.length || !Number.isFinite(t)) return median;
+    let best = timed[0];
+    for (const x of timed) if (Math.abs(x.t - t) < Math.abs(best.t - t)) best = x;
+    return best.r;
+  };
   let assists = 0, shareSum = 0, shareN = 0;
   for (const e of evs) {
     const id = +e.experienceID;
@@ -320,12 +336,12 @@ export function assistStatsFromBlock(block, cid) {
     assists++;
     const base = ASSIST_BASE_XP[id];
     if (!base || !(+e.amount >= 0)) continue;
-    let share = +e.amount / mult / base;
+    let share = +e.amount / Math.max(1, multAt(Date.parse(e.timestamp))) / base;
     if (share > 1) share /= 2;
     shareSum += Math.min(1, share);
     shareN++;
   }
-  return { assists, shareSum, shareN, mult };
+  return { assists, shareSum, shareN, mult: Math.max(1, median) };
 }
 
 /** Count assist events earned by `cid` in an exp block ({events:[…]}). */
