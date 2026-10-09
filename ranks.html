@@ -24,7 +24,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261009-review" />
+  <link rel="stylesheet" href="styles.css?v=20261009-disclaimer" />
   <style>
     /* Ranks page: one long sortable table of every cached player. */
     body.ranks-page { overflow-x: hidden; }
@@ -269,16 +269,22 @@
       </label>
     </div>
     <p>Thanks to <a href="https://wt.honu.pw/" target="_blank" rel="noopener noreferrer">HONU</a> / Varunda</p>
+    <details class="disclaimer">
+      <summary>Disclaimer</summary>
+      <p>All numbers, ratings, charts and flags on this site are automated estimates from public data (the Daybreak Census API and Honu). They can be wrong, incomplete or out of date, and they are not facts, proof or accusations about any player. Don't take them seriously, and don't use them to harass anyone.</p>
+      <p>This site is free and provided "as is", with no warranty of any kind. To the fullest extent allowed by law, the authors are not liable for any damage or loss from using it, including to your device or data.</p>
+      <p>Not affiliated with or endorsed by Daybreak Game Company or Honu. PlanetSide 2 is a trademark of its respective owners.</p>
+    </details>
   </footer>
 
 
   <script type="module">
-    import "./name-peek.mjs?v=20261009-review";
-    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits } from "./dist.mjs?v=20261009-review";
-    import { MIN_FIGHTS, MIN_FIGHTS_TIP, THIN_METRICS } from "./player-metrics.mjs?v=20261009-review";
-    import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261009-review";
-    import { paletteColor } from "./palette.mjs?v=20261009-review";
-    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-review";
+    import "./name-peek.mjs?v=20261009-disclaimer";
+    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits } from "./dist.mjs?v=20261009-disclaimer";
+    import { MIN_FIGHTS, MIN_FIGHTS_TIP, THIN_METRICS } from "./player-metrics.mjs?v=20261009-disclaimer";
+    import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261009-disclaimer";
+    import { paletteColor } from "./palette.mjs?v=20261009-disclaimer";
+    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-disclaimer";
 
     const LS_THEME = "ps2-elite-kd-theme";
     const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";

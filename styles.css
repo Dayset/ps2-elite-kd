@@ -1578,6 +1578,24 @@ footer .debug-cols-toggle {
 }
 footer .debug-cols-toggle input { margin: 0; cursor: pointer; }
 
+/* Collapsed legal-style disclaimer at the very bottom of the footer. */
+footer .disclaimer { margin: 0.5rem 0 0.75rem; color: var(--dim); }
+footer .disclaimer summary {
+  cursor: pointer;
+  display: inline-block;
+  min-height: 1.5rem;
+  opacity: 0.8;
+  user-select: none;
+}
+footer .disclaimer summary:hover,
+footer .disclaimer[open] summary { opacity: 1; color: var(--muted); }
+footer .disclaimer p {
+  margin: 0.4rem 0 0;
+  max-width: 60rem;
+  font-size: 0.7rem;
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 640px) {
   body { padding: 0.75rem; }
 }
