@@ -14,7 +14,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261009-anomalies" />
+  <link rel="stylesheet" href="styles.css?v=20261009-buildlog" />
   <style>
     body { overflow: auto; }
     .st-wrap { max-width: 960px; margin: 0 auto; padding: 18px 16px 40px; }
@@ -36,13 +36,24 @@
     .st-table th { color: var(--dim); font-weight: 500; }
     .st-wrap a { color: var(--accent); }
     .st-label { color: var(--dim); font-size: 0.82rem; margin-top: 8px; }
+    /* Every section is a <details> (open/closed remembered per section in localStorage). */
+    .st-sec > summary, .st-sub-sec > summary { cursor: pointer; list-style: none; user-select: none; -webkit-tap-highlight-color: transparent; padding: 2px 0; }
+    .st-sec > summary::-webkit-details-marker, .st-sub-sec > summary::-webkit-details-marker { display: none; }
+    .st-sec > summary::marker, .st-sub-sec > summary::marker { content: ""; }
+    .st-sec > summary h2, .st-sub-sec > summary h3 { display: inline; margin: 0; }
+    .st-sec > summary::before, .st-sub-sec > summary::before { content: "▸ "; color: var(--dim); display: inline-block; width: 1.1em; }
+    .st-sec[open] > summary::before, .st-sub-sec[open] > summary::before { content: "▾ "; }
+    .st-sec[open] > summary { margin-bottom: 8px; }
+    .st-sec > summary:focus-visible, .st-sub-sec > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+    .st-sub-sec { margin: 12px 0 0; padding-top: 8px; border-top: 1px solid var(--row-border); }
+    .st-sub-sec > summary h3 { font-size: 0.95rem; }
+    .st-sub-sec[open] > summary { margin-bottom: 4px; }
+    .st-count { display: inline-block; min-width: 1.4em; padding: 0 6px; margin-left: 4px; border-radius: 999px; font-size: 0.8rem; font-weight: 700; text-align: center; border: 1px solid var(--border); color: var(--dim); }
+    .st-count:empty { display: none; }
+    .st-tools { float: right; font-size: 0.8rem; }
+    .st-tools button { background: none; border: 1px solid var(--border); color: var(--dim); border-radius: 999px; padding: 1px 9px; margin-left: 4px; cursor: pointer; font: inherit; }
+    .st-tools button:hover { color: var(--text); }
     /* Red flags 🚩 (review leads, collapsed by default) */
-    .st-flags > summary { cursor: pointer; list-style: none; user-select: none; }
-    .st-flags > summary::-webkit-details-marker { display: none; }
-    .st-flags > summary h2 { display: inline; margin: 0; }
-    .st-flags > summary::before { content: "▸ "; color: var(--dim); }
-    .st-flags[open] > summary::before { content: "▾ "; }
-    .st-flags .st-count { display: inline-block; min-width: 1.4em; padding: 0 6px; margin-left: 4px; border-radius: 999px; font-size: 0.8rem; font-weight: 700; text-align: center; border: 1px solid var(--border); color: var(--dim); }
     .st-flags .st-count.hot { color: #ff8a8a; border-color: #c06060; }
     html[data-theme="light"] .st-flags .st-count.hot, html[data-theme="light"] .st-flags .st-low { color: #b03030; }
     .st-flags .st-low { color: #ff8a8a; font-weight: 600; }
@@ -59,7 +70,6 @@
     .st-flags .st-tag.adjusted { border-color: #8090a0; }
     /* 📉 Chart anomalies (stat / chart integrity, separate from 🚩; calm blue-grey) */
     .st-anoms { border-color: color-mix(in srgb, #8090a0 45%, var(--border)); }
-    .st-anoms h3 { font-size: 0.95rem; margin: 14px 0 4px; }
     .st-anoms .st-note { margin: 8px 0 2px; line-height: 1.45; }
     .st-anoms .st-count.hot { color: #e0b060; border-color: #b08840; }
     html[data-theme="light"] .st-anoms .st-count.hot { color: #8a5a00; }
@@ -67,11 +77,6 @@
     .st-anoms .st-why { white-space: normal !important; min-width: 12em; font-size: 0.85em; }
     /* 🌱 Could use a hand (separate from 🚩; calm green, no alarm colours) */
     .st-sprouts { border-color: color-mix(in srgb, #6fbf73 45%, var(--border)); }
-    .st-sprouts > summary { cursor: pointer; list-style: none; user-select: none; }
-    .st-sprouts > summary::-webkit-details-marker { display: none; }
-    .st-sprouts > summary h2 { display: inline; margin: 0; }
-    .st-sprouts > summary::before { content: "▸ "; color: var(--dim); }
-    .st-sprouts[open] > summary::before { content: "▾ "; }
     .st-sprouts .st-count { display: inline-block; min-width: 1.4em; padding: 0 6px; margin-left: 4px; border-radius: 999px; font-size: 0.8rem; font-weight: 700; text-align: center; border: 1px solid #6fbf73; color: #8fd493; }
     html[data-theme="light"] .st-sprouts .st-count { color: #2f7a35; border-color: #2f7a35; }
     .st-sprouts .st-note { margin: 8px 0 2px; line-height: 1.45; }
@@ -87,37 +92,75 @@
 <body>
   <main class="st-wrap">
     <h1>📦 Shared cache status</h1>
-    <div class="st-sub">Updates every 30 s. <span id="stUpdated"></span> · <a href="./">Back to the chart</a></div>
+    <div class="st-sub">Updates every 30 s. <span id="stUpdated"></span> · <a href="./">Back to the chart</a><span class="st-tools"><button type="button" id="openAll" title="Open every section">Open all</button><button type="button" id="closeAll" title="Collapse every section">Collapse all</button></span></div>
 
-    <section class="st-card" id="cardNow"><h2>Refresh now</h2><div id="nowRun"></div><div id="now" class="st-dim">Loading…</div><div id="backup" class="st-label"></div></section>
-    <section class="st-card" id="cardLive"><h2>Live top killers (Honu)</h2><div id="live" class="st-dim">Loading…</div></section>
-    <section class="st-card" id="cardRuns"><h2>GitHub Actions queue</h2><div id="runs" class="st-dim">Loading…</div></section>
-    <section class="st-card" id="cardLast"><h2>Last finished run</h2><div id="last" class="st-dim">Loading…</div></section>
-    <section class="st-card" id="cardPending"><h2>Queued from the site (not cached yet)</h2><div id="pending" class="st-dim">Loading…</div></section>
-    <section class="st-card" id="cardRecent"><h2>Recently updated players</h2><div id="recent" class="st-dim">Loading…</div></section>
-    <details class="st-card st-flags" id="cardFlags">
+    <details class="st-card st-sec" id="cardNow" data-default="open"><summary><h2>Refresh now</h2></summary><div id="nowRun"></div><div id="now" class="st-dim">Loading…</div><div id="backup" class="st-label"></div></details>
+    <details class="st-card st-sec" id="cardRuns" data-default="open"><summary><h2>GitHub Actions queue <span id="runsCount" class="st-count"></span></h2></summary><div id="runs" class="st-dim">Loading…</div></details>
+    <details class="st-card st-sec" id="cardLast" data-default="open"><summary><h2>Last finished run</h2></summary><div id="last" class="st-dim">Loading…</div></details>
+    <details class="st-card st-sec" id="cardLive"><summary><h2>Live top killers (Honu) <span id="liveCount" class="st-count">…</span></h2></summary><div id="live" class="st-dim">Loading…</div></details>
+    <details class="st-card st-sec" id="cardPending"><summary><h2>Queued from the site (not cached yet) <span id="pendingCount" class="st-count">…</span></h2></summary><div id="pending" class="st-dim">Loading…</div></details>
+    <details class="st-card st-sec" id="cardRecent"><summary><h2>Recently updated players <span id="recentCount" class="st-count">…</span></h2></summary><div id="recent" class="st-dim">Loading…</div></details>
+    <details class="st-card st-sec st-flags" id="cardFlags">
       <summary id="flagsSummary"><h2>Red flags 🚩 <span id="flagsCount" class="st-count">…</span></h2></summary>
       <div id="flagsRule" class="st-rule"></div>
       <div id="flags" class="st-dim">Loading…</div>
     </details>
-    <details class="st-card st-flags st-anoms" id="cardAnoms">
+    <details class="st-card st-sec st-flags st-anoms" id="cardAnoms">
       <summary id="anomsSummary"><h2>📉 Chart anomalies <span id="anomsCount" class="st-count">…</span></h2></summary>
       <div class="st-note">Things about chart and stat integrity, not cheating patterns: players whose stats we changed automatically, and values far outside everyone else. Each needs a human look; nothing here is an accusation. Count = players needing a look (unreviewed † plus unexplained outliers).</div>
-      <h3>† Adjusted — needs review <span id="adjCount" class="st-count">…</span></h3>
+      <details class="st-sub-sec" id="secAdjusted">
+      <summary><h3>† Adjusted — needs review <span id="adjCount" class="st-count">…</span></h3></summary>
       <div id="adjRule" class="st-rule"></div>
       <div id="adjusted" class="st-dim">Loading…</div>
-      <h3>🧪 Outlier guard <span id="guardCount" class="st-count">…</span></h3>
+      </details>
+      <details class="st-sub-sec" id="secGuard">
+      <summary><h3>🧪 Outlier guard <span id="guardCount" class="st-count">…</span></h3></summary>
       <div class="st-rule">Checked on every refresh (scripts/build-ranks.mjs → outlier-guard.mjs) on the numbers as the site shows them, one row per player with every metric that's far out. Unexplained ones may be a formula gap like the old 🦁 Brave 6094; explained ones are already in 🚩, in † above, or reviewed by hand.</div>
       <div id="guardRule" class="st-rule"></div>
       <div id="guard" class="st-dim">Loading…</div>
+      </details>
     </details>
-    <details class="st-card st-sprouts" id="cardSprouts">
+    <details class="st-card st-sec st-sprouts" id="cardSprouts">
       <summary id="sproutsSummary"><h2>🌱 Could use a hand <span id="sproutsCount" class="st-count">…</span></h2></summary>
       <div class="st-note">Players whose fights are going rough right now. They could be new, playing support, medic or engineer, or just learning. They're listed so veterans can spot who might appreciate a tip or a squad invite. Please be kind; this is never a list to make fun of anyone.</div>
       <div id="sproutsRule" class="st-rule"></div>
       <div id="sprouts" class="st-dim">Loading…</div>
     </details>
   </main>
+
+  <script>
+    // Collapsible sections: open/closed remembered per section id (localStorage).
+    // No saved choice = the section's default (data-default="open" → open, else collapsed).
+    (function () {
+      "use strict";
+      var KEY = "ps2-elite-kd:buildlog:open:v1";
+      var saved = {};
+      try { saved = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { saved = {}; }
+      var secs = document.querySelectorAll("details.st-sec, details.st-sub-sec");
+      Array.prototype.forEach.call(secs, function (d) {
+        var want = Object.prototype.hasOwnProperty.call(saved, d.id) ? !!saved[d.id] : d.getAttribute("data-default") === "open";
+        d.open = want;
+      });
+      function persist() {
+        try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) { /* private mode: not remembered */ }
+      }
+      // toggle doesn't bubble: listen in the capture phase (also catches nested sub-sections).
+      document.addEventListener("toggle", function (ev) {
+        var d = ev.target;
+        if (!d || !d.id || !d.classList || !(d.classList.contains("st-sec") || d.classList.contains("st-sub-sec"))) return;
+        // Store only choices that differ from the default, so the initial toggles are harmless
+        // and future default changes still apply to sections the user never touched.
+        if (d.open === (d.getAttribute("data-default") === "open")) delete saved[d.id];
+        else saved[d.id] = d.open;
+        persist();
+      }, true);
+      function setAll(open) {
+        Array.prototype.forEach.call(secs, function (d) { d.open = open; }); // toggle handler records each
+      }
+      document.getElementById("openAll").addEventListener("click", function () { setAll(true); });
+      document.getElementById("closeAll").addEventListener("click", function () { setAll(false); });
+    })();
+  </script>
 
   <script>
     (function () {
@@ -231,6 +274,8 @@
           return "<tr><td>" + runLink(r.id) + "</td><td>" + esc(r.event === "schedule" ? "scheduled" : r.event === "workflow_dispatch" ? "dispatch" : r.event) +
             '</td><td class="' + ok + '">' + esc(r.conclusion || r.status) + "</td><td>" + when(r.run_started_at || r.created_at) + "</td></tr>";
         };
+        $("runsCount").textContent = active.length ? String(active.length) : "";
+        $("runsCount").title = active.length + " running/queued";
         $("runs").innerHTML =
           (active.length ? "<div>" + active.length + " running/queued</div>" : '<div class="st-dim">Nothing running or queued.</div>') +
           '<table class="st-table"><tr><th>Run</th><th>Trigger</th><th>State</th><th>Started</th></tr>' +
@@ -261,11 +306,14 @@
             }).join("") + "</table>";
         }
         $("pending").innerHTML = html;
+        $("pendingCount").textContent = String(waiting.length) + (tried.length ? " +" + tried.length : "");
+        $("pendingCount").title = waiting.length + " waiting" + (tried.length ? ", " + tried.length + " tried but couldn’t be cached" : "");
       }
 
       function renderRecent(index) {
         var players = ((index && index.players) || []).slice().sort(function (a, b) { return (b.savedAt || 0) - (a.savedAt || 0); });
-        $("cardRecent").querySelector("h2").textContent = "Recently updated players (" + players.length + " cached)";
+        $("recentCount").textContent = String(players.length);
+        $("recentCount").title = players.length + " cached players (newest 30 listed)";
         $("recent").innerHTML = '<table class="st-table"><tr><th>Player</th><th>Updated</th></tr>' +
           players.slice(0, 30).map(function (p) { return "<tr><td>" + nm(p.name) + "</td><td>" + when(p.savedAt) + "</td></tr>"; }).join("") + "</table>";
       }
@@ -301,6 +349,8 @@
           var slug = String(f[0] || "").toLowerCase().replace(/^\[.*?\]\s*/, "").replace(/[^a-z0-9]+/g, "");
           return { name: f[0], world: f[1], lastSeen: f[3], seen: +f[4] || 0, kpm: +f[8] || 0, cached: !!known[slug] };
         });
+        $("liveCount").textContent = String(rows.length);
+        $("liveCount").title = rows.length + " players seen in the last 7 days";
         if (!rows.length) { $("live").innerHTML = '<span class="st-dim">No live list yet (written by the first discovery run).</span>'; return; }
         var cached = rows.filter(function (r) { return r.cached; }).length;
         predicted = rows.filter(function (r) { return !r.cached; }).sort(function (a, b) { return b.seen - a.seen || b.kpm - a.kpm; }).map(function (r) { return r.name; });
@@ -323,7 +373,7 @@
         Promise.all([
           getJson(WORKER_URL + "/pending"),
           getJson("data/refresh-state.json").catch(function () { return null; }),
-        ]).then(function (r) { renderPending(r[0], r[1]); }, function (e) { fail("pending", "the queue", e); });
+        ]).then(function (r) { renderPending(r[0], r[1]); }, function (e) { fail("pending", "the queue", e); $("pendingCount").textContent = "?"; });
         getJson(WORKER_URL + "/health").then(renderBackup, function () { $("backup").textContent = "Backup timer: status unavailable."; });
         getJson(WORKER_URL + "/runs").then(function (d) { renderRuns(d); renderNowRun(d); }, function (e) { fail("runs", "GitHub Actions runs", e); });
         Promise.all([
@@ -342,13 +392,13 @@
        † "adjusted" + the 🧪 outlier guard (grouped by player) go to 📉 Chart anomalies. Uses the
        same metrics as the main tables (player-metrics.mjs). Leads for review, not proof. -->
   <script type="module">
-    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261009-anomalies";
-    import { reviewFlags, reviewRuleText, anomalyRuleText } from "./red-flags.mjs?v=20261009-anomalies";
-    import { groupOutliers } from "./outlier-guard.mjs?v=20261009-anomalies";
-    import { sprout, sampleEvents, sproutRuleText } from "./sprouts.mjs?v=20261009-anomalies";
-    import { reviewDecision } from "./padding.mjs?v=20261009-anomalies";
-    import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261009-anomalies";
-    import "./name-peek.mjs?v=20261009-anomalies"; // full-name popup for truncated .nm names
+    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261009-buildlog";
+    import { reviewFlags, reviewRuleText, anomalyRuleText } from "./red-flags.mjs?v=20261009-buildlog";
+    import { groupOutliers } from "./outlier-guard.mjs?v=20261009-buildlog";
+    import { sprout, sampleEvents, sproutRuleText } from "./sprouts.mjs?v=20261009-buildlog";
+    import { reviewDecision } from "./padding.mjs?v=20261009-buildlog";
+    import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261009-buildlog";
+    import "./name-peek.mjs?v=20261009-buildlog"; // full-name popup for truncated .nm names
 
     const POLL_MS = 30 * 1000;
     const CONCURRENCY = 6;
