@@ -1890,3 +1890,26 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
   color: var(--muted);
   opacity: 0.85;
 }
+
+/* Collapsed-by-default small notes (vehicle pooling, "—" cells, * † ◦ marks):
+   one short muted summary line; the full text only when opened. */
+.fold-note > summary {
+  cursor: pointer;
+  list-style: none;
+  display: inline-block;
+  font-size: 0.74rem;
+  line-height: 1.4;
+  color: var(--dim, var(--muted));
+  opacity: 0.85;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  padding: 0.15rem 0;
+}
+.fold-note > summary::-webkit-details-marker { display: none; }
+.fold-note > summary::after { content: " ▸"; opacity: 0.7; }
+.fold-note[open] > summary::after { content: " ▾"; }
+.fold-note > summary:hover,
+.fold-note > summary:focus-visible { opacity: 1; text-decoration: underline dotted; }
+.fold-note > p { margin: 0.2rem 0 0; }
+.legend .fold-note { grid-column: 1 / -1; }
+.ranks-status .fold-note > p.legend-note { margin: 0.15rem 0 0; }

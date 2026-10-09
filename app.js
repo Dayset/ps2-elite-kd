@@ -32,9 +32,9 @@ import {
   windowYValues,
   kpmBandCurve,
   bandReliability,
-} from "./math.mjs?v=20261009-flairs3";
-import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261009-flairs3";
-import GHOST_MODEL from "./data/ghost-model.mjs?v=20261009-flairs3";
+} from "./math.mjs?v=20261009-foldnotes";
+import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261009-foldnotes";
+import GHOST_MODEL from "./data/ghost-model.mjs?v=20261009-foldnotes";
 import {
   NameLoadError,
   classifyLoadError,
@@ -60,7 +60,7 @@ import {
   formatEtaLeft,
   etaLearnLiveMs,
   expectedNameMs,
-} from "./analyze-run.mjs?v=20261009-flairs3";
+} from "./analyze-run.mjs?v=20261009-foldnotes";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
@@ -71,7 +71,7 @@ import {
   isLegacySample,
   LEGACY_SAMPLE_MARK,
   LEGACY_SAMPLE_TIP,
-} from "./player-metrics.mjs?v=20261009-flairs3";
+} from "./player-metrics.mjs?v=20261009-foldnotes";
 /** "22 kills / 60 deaths" in the opponent sample (MIN_FIGHTS counts). */
 function fightsText(r) {
   const k = r.sampleKills || 0;
@@ -83,16 +83,16 @@ function fightsText(r) {
 function thinCellTip(r) {
   return `${MIN_FIGHTS_TIP}. This sample: ${fightsText(r).replace(/[()]/g, "")}`;
 }
-import { farmNote, statMark } from "./padding.mjs?v=20261009-flairs3";
+import { farmNote, statMark } from "./padding.mjs?v=20261009-foldnotes";
 // Account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times: chart name list only.
-import { accountTimes, flairsHtml } from "./flairs.mjs?v=20261009-flairs3";
+import { accountTimes, flairsHtml } from "./flairs.mjs?v=20261009-foldnotes";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261009-flairs3";
-import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261009-flairs3";
+import "./name-peek.mjs?v=20261009-foldnotes";
+import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261009-foldnotes";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
-import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-flairs3";
+import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-foldnotes";
 // Live data: Daybreak Census only (batched, paced); Honu just for a rare history fallback.
-import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261009-flairs3";
+import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261009-foldnotes";
 import {
   censusBase,
   censusRequest,
@@ -101,7 +101,7 @@ import {
   limitConcurrency,
   tokenBucket,
   OPPONENT_TOP_N,
-} from "./census-fetch.mjs?v=20261009-flairs3";
+} from "./census-fetch.mjs?v=20261009-foldnotes";
 
   // Player palettes (dark + light theme) live in palette.mjs (shared with ranks.html).
   const COLORS = PALETTE_DARK;
@@ -2664,6 +2664,8 @@ import {
     });
   }
 
+  /** "Why some cells show —" note: collapsed by default; remembered only while the page is open. */
+  let thinNoteOpen = false;
   function renderStatsTable(list) {
     if (!els.stats) return;
     lastStatsList = list;
@@ -2850,9 +2852,10 @@ import {
     // Never an unexplained all-"—" table: name every blanked player with their counts.
     const thinRows = metrics.filter((r) => r.thin);
     const thinBlock = thinRows.length
-      ? `<p class="stats-thin-note">— = too few fights to measure (needs ${escapeHtml(MIN_FIGHTS_RULE)}): ` +
+      ? `<details class="stats-thin-note fold-note"${thinNoteOpen ? " open" : ""}><summary>ℹ️ Why some cells show —</summary>` +
+        `<p>— = too few fights to measure (needs ${escapeHtml(MIN_FIGHTS_RULE)}): ` +
         thinRows.map((r) => `${escapeHtml(r.p.display)} ${fightsText(r)}`).join(", ") +
-        `.</p>`
+        `.</p></details>`
       : "";
 
     const pubSorted = sortRows(metrics, publicCols, statsSortState.public);
@@ -2879,6 +2882,10 @@ import {
         ${thinBlock}
       </div>
     `;
+
+    // Keep the "—" note open/closed across re-sorts (starts collapsed each page load).
+    const thinDet = els.stats.querySelector("details.stats-thin-note");
+    if (thinDet) thinDet.addEventListener("toggle", () => { thinNoteOpen = thinDet.open; });
 
     els.stats.querySelectorAll("th.sortable").forEach((th) => {
       th.addEventListener("click", () => {
@@ -2948,12 +2955,22 @@ import {
       els.legend.appendChild(item);
     });
     // One note line per mark in use ("* stat padding…", "† stats adjusted…").
+    // Collapsed by default: a short "ℹ️ What * † mean" line, the full notes on open.
     const legends = [...new Set(list.map((p) => playerMark(p).legend).filter(Boolean))];
-    for (const text of legends) {
-      const note = document.createElement("div");
-      note.className = "legend-note";
-      note.textContent = text;
-      els.legend.appendChild(note);
+    if (legends.length) {
+      const det = document.createElement("details");
+      det.className = "fold-note legend-notes";
+      const sum = document.createElement("summary");
+      const marks = [...new Set(legends.map((t) => t.trim().split(/\s+/)[0]))].join(" ");
+      sum.textContent = `ℹ️ What ${marks} ${legends.length > 1 ? "mean" : "means"}`;
+      det.appendChild(sum);
+      for (const text of legends) {
+        const note = document.createElement("div");
+        note.className = "legend-note";
+        note.textContent = text;
+        det.appendChild(note);
+      }
+      els.legend.appendChild(det);
     }
   }
 
