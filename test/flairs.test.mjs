@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { accountTimes, cleanTimes, flairsFor, flairsHtml, monthYear, YEAR_MS, FLAIR_RULES, VETERAN_YEARS } from "../flairs.mjs";
+import { accountTimes, cleanTimes, flairsFor, flairsHtml, monthYear, YEAR_MS, DAY_MS, FLAIR_RULES, VETERAN_YEARS } from "../flairs.mjs";
 import { normalizePlayer } from "../player-metrics.mjs";
 import { withTimes } from "../scripts/backfill-times.mjs";
 
@@ -57,4 +57,24 @@ test("normalizePlayer keeps times; backfill only sets player.times", () => {
   assert.deepEqual(normalizePlayer(next).times, { created: 1, last: 2 });
   assert.equal(next.query, "x");
   assert.equal(withTimes(raw, null), raw);
+});
+
+test("👶 new account: created < 91 days ago", () => {
+  const f = flairsFor({ created: s(Date.UTC(2026, 7, 20)), last: s(NOW) }, NOW);
+  assert.deepEqual(f.map((x) => x.id), ["new"]);
+  assert.equal(f[0].tip, "New account: created Aug 2026");
+  assert.deepEqual(flairsFor({ created: s(NOW - 91 * DAY_MS), last: s(NOW) }, NOW), []);
+  assert.equal(flairsFor({ created: s(NOW - 90 * DAY_MS), last: null }, NOW)[0].id, "new");
+});
+
+test("one flair under the graph: priority 🪦 > 👴🏽 > 👶", () => {
+  assert.deepEqual(FLAIR_RULES.map((r) => r.emoji), ["🪦", "👴🏽", "👶"]);
+  const both = [
+    { id: "a", emoji: "🪦", test: () => "A" },
+    { id: "b", emoji: "👶", test: () => "B" },
+  ];
+  assert.equal(flairsFor({ created: 1, last: 2 }, NOW, both).length, 2);
+  const html = flairsHtml({ created: s(NOW - 30 * DAY_MS), last: s(NOW) }, NOW);
+  assert.equal((html.match(/class="flair /g) || []).length, 1);
+  assert.match(html, /👶/);
 });

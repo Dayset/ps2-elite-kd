@@ -42,14 +42,18 @@ export function cleanTimes(t) {
   return created || last ? { created, last } : null;
 }
 
-/**
- * Rules in display order. test(times, nowMs) → tooltip text or null.
- * Thresholds: inactive = last activity > 365 days ago; veteran = created
- * ≥ VETERAN_YEARS×365 days ago AND last activity ≤ 365 days ago.
- */
 /** Account age (years) for 👴🏽. */
 export const VETERAN_YEARS = 8;
+/** Account age (days) below which 👶 shows (~3 months). */
+export const NEW_ACCOUNT_DAYS = 91;
 
+/**
+ * Rules in PRIORITY order (the graph name list shows only the first match;
+ * a later personal page may show all). test(times, nowMs) → tooltip or null.
+ * Thresholds: inactive = last activity > 365 days ago; veteran = created
+ * ≥ VETERAN_YEARS×365 days ago AND last activity ≤ 365 days ago; new =
+ * created < NEW_ACCOUNT_DAYS days ago.
+ */
 export const FLAIR_RULES = Object.freeze([
   {
     id: "inactive",
@@ -69,6 +73,14 @@ export const FLAIR_RULES = Object.freeze([
       return `Veteran: account ${yrs}+ years old (since ${monthYear(created)}), active in the last year (last played ${monthYear(last)})`;
     },
   },
+  {
+    id: "new",
+    emoji: "👶",
+    test({ created }, now) {
+      if (!created || now - created * 1000 >= NEW_ACCOUNT_DAYS * DAY_MS) return null;
+      return `New account: created ${monthYear(created)}`;
+    },
+  },
 ]);
 
 /** All flairs for a player's times: [{ id, emoji, tip }]. */
@@ -86,9 +98,13 @@ export function flairsFor(times, now = Date.now(), rules = FLAIR_RULES) {
 const esc = (s) =>
   String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
-/** <span class="flair">…</span> per flair ("" when none). */
-export function flairsHtml(times, now = Date.now()) {
+/**
+ * <span class="flair">…</span> for the top-priority flair only (limit = how
+ * many to show; Infinity for all). "" when none.
+ */
+export function flairsHtml(times, now = Date.now(), limit = 1) {
   return flairsFor(times, now)
+    .slice(0, limit)
     .map((f) => `<span class="flair flair-${f.id}" title="${esc(f.tip)}" aria-label="${esc(f.tip)}">${f.emoji}</span>`)
     .join("");
 }
