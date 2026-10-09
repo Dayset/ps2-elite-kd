@@ -3,15 +3,13 @@ name: Refresh shared cache
 # Grows the shared cache with NEW players; cached players are never re-fetched
 # by background runs (only on demand, e.g. "Fetch fresh" via the Worker).
 #
-# Driver: each background run that added players and still has names left
-# dispatches the next one itself (chain step at the end; GITHUB_TOKEN may
-# trigger workflow_dispatch). Restarts if the chain stops: the Cloudflare
-# Worker (ps2-elite-kd-cache) cron every 5 min and GitHub's hourly cron, both
-# only when no run is queued or running.
-# A background run (~9 min): read Honu's live top killers on every active PC
-# world (data/top-killers.txt), fetch those not cached yet (most-seen, best
-# KPM first), then frequent opponents of cached players as a fallback, up to
-# CRAWL_INDEX_CAP. Honu is paced to 1 req/s (on-demand runs: 2 req/s).
+# Driver: each background run writes data/schedule.json (nextDueAt, or null
+# when idle). The Cloudflare Worker (ps2-elite-kd-cache) cron reads that static
+# file every 5 min and dispatches only when a run is due (or /add names are
+# stuck pending); GitHub's hourly cron is a fallback. An idle run (cache at
+# CRAWL_INDEX_CAP, nothing due) makes no network calls at all.
+# Discovery: names from data/top-killers.txt (static seed, no live scraping)
+# and frequent opponents of cached players, up to CRAWL_INDEX_CAP.
 #
 # Pages: exactly ONE commit per run, none if no player file changed.
 
@@ -92,9 +90,18 @@ jobs:
           # Count saved player files from git itself (works even if the step was cut short).
           changed=$(git status --porcelain -- data/players | wc -l)
           if [ "$changed" = "0" ]; then
-            # Nothing refreshed (outage / all names bad): don't spend a Pages build.
-            echo "No players refreshed; discarding bookkeeping changes, no commit."
+            # Nothing refreshed (idle / outage / all names bad): don't spend a Pages
+            # build on bookkeeping. Only a changed data/schedule.json (read by the
+            # Worker cron to decide whether to dispatch) is committed on its own.
+            cp data/schedule.json /tmp/schedule.json 2>/dev/null || true
             git checkout -- data/ && git clean -fdq data/
+            if [ -f /tmp/schedule.json ] && ! cmp -s /tmp/schedule.json data/schedule.json; then
+              cp /tmp/schedule.json data/schedule.json
+              git add data/schedule.json
+              scripts/ci-commit-push.sh "chore(cache): schedule $(node -p 'JSON.parse(require("fs").readFileSync("data/schedule.json","utf8")).reason') [bot]"
+            else
+              echo "No players refreshed; no commit."
+            fi
             exit 0
           fi
           # Keep ranks.html in sync with the cache (no network; same player-metrics.mjs).

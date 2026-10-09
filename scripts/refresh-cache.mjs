@@ -22,7 +22,6 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { censusQueryName } from "../analyze-run.mjs";
-import { PC_WORLDS, worldTopKillers } from "./honu-live.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -33,6 +32,7 @@ const WATCHLIST_PATH = path.join(DATA_DIR, "watchlist.txt");
 const STATE_PATH = path.join(DATA_DIR, "refresh-state.json");
 const STATUS_PATH = path.join(DATA_DIR, "status.json");
 const TOP_KILLERS_PATH = path.join(DATA_DIR, "top-killers.txt");
+const SCHEDULE_PATH = path.join(DATA_DIR, "schedule.json");
 
 const HONU = "https://wt.honu.pw/api/character/";
 const CENSUS = "https://census.daybreakgames.com/s:example/get/ps2:v2/";
@@ -708,37 +708,6 @@ export function liveCandidates(map, index, state, now = Date.now()) {
     .map(([, r]) => r.name);
 }
 
-/** Pull top killers from every PC world with players online (~5 paced requests per world). */
-async function discoverLive() {
-  const out = { worlds: [], entries: [], errors: [] };
-  let active = PC_WORLDS;
-  try {
-    await honuSlot();
-    const res = await fetch("https://wt.honu.pw/api/world/overview", {
-      headers: { Accept: "application/json", "User-Agent": USER_AGENT },
-      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-    });
-    if (res.ok) {
-      const body = await res.json();
-      const list = Array.isArray(body) ? body : (body && body.data) || [];
-      const online = new Map(list.map((w) => [+w.worldID, +w.playersOnline || 0]));
-      active = PC_WORLDS.filter((w) => (online.get(w.id) || 0) > 0);
-    }
-  } catch {
-    /* overview failed: try every PC world */
-  }
-  for (const w of active) {
-    try {
-      const r = await worldTopKillers(w.id, { userAgent: USER_AGENT, timeoutMs: 40_000, beforeRequest: honuSlot });
-      out.worlds.push({ name: w.name, online: r.onlineCount, killers: r.killers.length });
-      for (const k of r.killers) out.entries.push({ ...k, world: w.name });
-    } catch (e) {
-      out.errors.push(`${w.name}: ${String((e && e.message) || e).slice(0, 80)}`);
-    }
-  }
-  return out;
-}
-
 const NOT_FOUND_RE = /not found|not a valid|no character|empty killboard|unknown character/i;
 const MAX_TRANSIENT_TRIES = 3;
 const TRANSIENT_RETRY_AFTER_MS = 15 * 60 * 1000;
@@ -980,25 +949,25 @@ async function main() {
   let live = null;
   let fromLive = 0;
   let more = false; // worth chaining another background run right away?
+  let growthLeft = false; // background: uncached names left with room under the cap
   if (!explicit) {
-    live = await discoverLive();
+    // No live scraping any more (Honu's /ws/data feed is not an API). The
+    // top-killers list is read as a static seed; discovery is otherwise the
+    // opponents of cached players (their killboards come from Census).
     const tk = parseTopKillers(fs.existsSync(TOP_KILLERS_PATH) ? fs.readFileSync(TOP_KILLERS_PATH, "utf8") : "");
-    mergeTopKillers(tk, live.entries);
-    writeFileAtomic(TOP_KILLERS_PATH, formatTopKillers(tk));
-    console.log(
-      `Live: ${live.worlds.map((w) => `${w.name} ${w.online} online/${w.killers} top`).join(", ") || "no worlds"}` +
-      `${live.errors.length ? `; errors: ${live.errors.join("; ")}` : ""}; list has ${tk.size} names`
-    );
     const liveNames = liveCandidates(tk, index, state);
     const room = Math.max(0, Math.min(crawlMax, crawlIndexCap - index.players.length));
+    if (!room) {
+      console.log(`Index has ${index.players.length} >= CRAWL_INDEX_CAP=${crawlIndexCap}: no discovery, no network.`);
+    }
     const seen = new Set();
     const queue = [];
-    for (const n of liveNames) if (!seen.has(slugKey(n))) { seen.add(slugKey(n)); queue.push({ name: n, src: "live" }); }
+    for (const n of room ? liveNames : []) if (!seen.has(slugKey(n))) { seen.add(slugKey(n)); queue.push({ name: n, src: "live" }); }
     const liveCount = queue.length;
-    for (const n of retryCandidates(index, state)) if (!seen.has(slugKey(n))) { seen.add(slugKey(n)); queue.push({ name: n, src: "retry" }); }
+    for (const n of room ? retryCandidates(index, state) : []) if (!seen.has(slugKey(n))) { seen.add(slugKey(n)); queue.push({ name: n, src: "retry" }); }
     const retryCount = queue.length - liveCount;
     // Fallback only needs a few names; computing it reads every cached file.
-    if (queue.length < room) {
+    if (room && queue.length < room) {
       for (const n of crawlCandidates(readAllPayloads(), index, state)) {
         if (queue.length >= room * 2 + 10) break;
         if (!seen.has(slugKey(n))) { seen.add(slugKey(n)); queue.push({ name: n, src: "crawl" }); }
@@ -1007,10 +976,10 @@ async function main() {
     console.log(`New-player queue: ${liveCount} live + ${retryCount} retry + ${queue.length - liveCount - retryCount} opponent fallback; room ${room} (cap ${crawlIndexCap}). Next: ${queue.slice(0, 12).map((q) => q.name).join(", ")}`);
     queue.slice(0, Math.min(room, 20)).forEach((q) => plan(q.name, q.src));
     writeStatus({ running: true, current: { kind: "discovery", runId: process.env.GITHUB_RUN_ID || null, startedAt, batch } });
-    if (!room) console.log(`Index has ${index.players.length} ≥ CRAWL_INDEX_CAP=${crawlIndexCap}; nothing to add.`);
     let tried = 0;
     // Chain the next run if there were more names than this run could take.
     more = room > 0 && queue.length > 0;
+    growthLeft = more;
     for (const q of queue) {
       if (discovered.length >= room || c.stoppedEarly) break;
       if (Date.now() + reserveMs > deadline) {
@@ -1072,6 +1041,12 @@ async function main() {
       /* ignore */
     }
   }
+  if (!explicit) {
+    // data/schedule.json tells the Worker cron whether a background run is due
+    // (it polls this static file instead of dispatching blindly every 5 min).
+    // Deterministic when idle, so idle runs produce no diff and no commit.
+    writeScheduleFile(computeSchedule({ growthLeft, outageStop: !!c.stoppedEarly && c.outage > 0, now: Date.now() }));
+  }
   if (process.env.GITHUB_OUTPUT) {
     try {
       // Chain only after real progress (never loop on an outage), while names remain.
@@ -1085,6 +1060,23 @@ async function main() {
   // index entries are left untouched. Only a run where nothing refreshed and
   // something looked like a real outage fails the job.
   if (c.ok === 0 && c.outage > 0) process.exit(1);
+}
+
+/**
+ * When should the next background run start? null = nothing to do (idle).
+ * @returns {{ nextDueAt: string|null, reason: string }}
+ */
+export function computeSchedule({ growthLeft = false, outageStop = false, now = Date.now() } = {}) {
+  if (growthLeft) {
+    // After an outage, back off 30 min instead of retrying every 5.
+    const at = outageStop ? now + 30 * 60_000 : now;
+    return { nextDueAt: new Date(at).toISOString(), reason: outageStop ? "growth (after outage)" : "growth" };
+  }
+  return { nextDueAt: null, reason: "idle" };
+}
+
+function writeScheduleFile(sched) {
+  writeFileAtomic(SCHEDULE_PATH, JSON.stringify(sched, null, 2) + "\n");
 }
 
 const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
