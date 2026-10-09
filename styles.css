@@ -369,6 +369,8 @@ header .sub {
   line-height: 1.35;
   cursor: pointer;
   max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -544,16 +546,28 @@ header .sub {
   font-weight: 700;
 }
 
-/* Narrow portrait phones: names field full width, one name per line;
+/* Narrow portrait phones: names field full width, chips in an aligned grid of
+   two equal columns (each chip fills its cell; long names ellipsize only when
+   the cell is too narrow); the typing spot spans both columns.
    Analyze stretches so its right edge (with 🔗) lines up with the field. */
 @media (max-width: 600px) and (orientation: portrait) {
   .names-box { flex: 1 1 100%; }
   .names-box-main {
-    flex-direction: column;
-    flex-wrap: nowrap;
-    align-items: flex-start;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: center;
   }
+  .controls .names-box-main .name-token {
+    width: 100%;
+    justify-self: stretch;
+    /* Tighter sides than the generic .controls button padding: more room for the name */
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+  .controls .names-box-main .name-token.failed { padding-right: 0.3rem; }
+  .names-box-main .name-token.failed { justify-content: space-between; }
   .names-box input#namesInput {
+    grid-column: 1 / -1;
     flex: 0 0 auto;
     align-self: stretch;
     width: 100%;
@@ -1688,8 +1702,16 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
   white-space: nowrap;
   vertical-align: bottom;
 }
-.name-token .nm,
+/* Cache chips keep the 18ch cap (dense list). Input chips and legend names
+   truncate by SPACE instead: full name whenever it fits, ellipsis only when the
+   chip / cell is really too narrow (name-peek popup checks scrollWidth). */
 .chip .nm { max-width: min(18ch, 100%); }
+.name-token .nm,
+.legend-label .nm { max-width: 100%; }
+.name-token > .nm { flex: 0 1 auto; min-width: 0; }
+.name-token-retry .name-token-text { flex: 0 1 auto; min-width: 0; }
+.name-token-icon,
+.name-token-x { flex: 0 0 auto; }
 
 .name-peek {
   position: fixed;

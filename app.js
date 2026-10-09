@@ -32,9 +32,9 @@ import {
   windowYValues,
   kpmBandCurve,
   bandReliability,
-} from "./math.mjs?v=20261008-sprout";
-import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261008-sprout";
-import GHOST_MODEL from "./data/ghost-model.mjs?v=20261008-sprout";
+} from "./math.mjs?v=20261008-chips";
+import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261008-chips";
+import GHOST_MODEL from "./data/ghost-model.mjs?v=20261008-chips";
 import {
   NameLoadError,
   classifyLoadError,
@@ -57,16 +57,16 @@ import {
   estimateRemainingMs,
   nextEtaDeadline,
   formatEtaLeft,
-} from "./analyze-run.mjs?v=20261008-sprout";
+} from "./analyze-run.mjs?v=20261008-chips";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
-} from "./player-metrics.mjs?v=20261008-sprout";
+} from "./player-metrics.mjs?v=20261008-chips";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261008-sprout";
-import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261008-sprout";
+import "./name-peek.mjs?v=20261008-chips";
+import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261008-chips";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
-import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261008-sprout";
+import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261008-chips";
 
   // Player palettes (dark + light theme) live in palette.mjs (shared with ranks.html).
   const COLORS = PALETTE_DARK;

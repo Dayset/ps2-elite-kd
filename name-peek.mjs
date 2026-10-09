@@ -1,5 +1,6 @@
 /**
- * Long player names: CSS caps them (.nm → max-width NAME_MAX_CH ch + ellipsis) and
+ * Long player names: CSS truncates .nm with an ellipsis, either at NAME_MAX_CH ch
+ * (dense lists / tables) or by available space (name chips, legend), and
  * every .nm carries the full name in its title. Touch screens never show titles,
  * so this module adds a small "name peek" popup with the full name:
  *   - plain-text names (tables, lists): tap a truncated name;
