@@ -1888,3 +1888,21 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
 .fold-note > p { margin: 0.2rem 0 0; }
 .legend .fold-note { grid-column: 1 / -1; }
 .ranks-status .fold-note > p.legend-note { margin: 0.15rem 0 0; }
+
+/* ---------- Big desktop monitors (t299u) ----------
+ * At 2560×1440 the text stayed at 16px-root sizes while the graph scaled to the
+ * full width (~1450px tall, taller than the screen). From 1400px wide only:
+ * grow the root font with the viewport (16px → ~17.5px @1920 → ~21px @2560,
+ * so every rem-sized table / legend / control grows with it), keep content to a
+ * readable width, and cap the graph at ~62% of the screen height (its width
+ * follows the 1000:580 aspect). Mobile / narrow layouts are untouched. */
+@media (min-width: 1400px) {
+  html { font-size: clamp(16px, calc(0.6vw + 6px), 22px); }
+  body { max-width: 100rem; margin-inline: auto; }
+  .chart-wrap {
+    /* svg height = width × 0.58 ≤ 62vh; + horizontal padding/border */
+    max-width: calc(62vh * 1000 / 580 + 0.5rem + 2px);
+    margin-inline: auto;
+  }
+  #legend { max-width: calc(62vh * 1000 / 580 + 0.5rem + 2px); margin-inline: auto; }
+}

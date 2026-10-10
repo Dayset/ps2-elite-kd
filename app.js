@@ -3,6 +3,7 @@
  * Mirrors absolute_target_split / kpm_curve / rf_if / adjusted_ivi from ps2_elite_kd.py
  * Pure math lives in math.mjs (shared with Node tests).
  */
+import { chartFontScale } from "./desk-scale.mjs?v=20261009-desk";
 import {
   X_MAX,
   EASY_MAX,
@@ -32,10 +33,10 @@ import {
   windowYValues,
   kpmBandCurve,
   bandReliability,
-} from "./math.mjs?v=20261009-notfarm2";
-import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261009-notfarm2";
-import GHOST_MODEL from "./data/ghost-model.mjs?v=20261009-notfarm2";
-import { ranksHref } from "./pick-sync.mjs?v=20261009-notfarm2";
+} from "./math.mjs?v=20261009-desk";
+import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261009-desk";
+import GHOST_MODEL from "./data/ghost-model.mjs?v=20261009-desk";
+import { ranksHref } from "./pick-sync.mjs?v=20261009-desk";
 import {
   NameLoadError,
   classifyLoadError,
@@ -61,7 +62,7 @@ import {
   formatEtaLeft,
   etaLearnLiveMs,
   expectedNameMs,
-} from "./analyze-run.mjs?v=20261009-notfarm2";
+} from "./analyze-run.mjs?v=20261009-desk";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
@@ -75,7 +76,7 @@ import {
   THIN_MARK,
   THIN_NOTE_HEAD,
   thinPlayerLine,
-} from "./player-metrics.mjs?v=20261009-notfarm2";
+} from "./player-metrics.mjs?v=20261009-desk";
 /** "22 kills / 60 deaths" in the opponent sample (MIN_FIGHTS counts). */
 function fightsText(r) {
   const k = r.sampleKills || 0;
@@ -87,16 +88,16 @@ function fightsText(r) {
 function thinCellTip(r) {
   return `${MIN_FIGHTS_TIP}. This sample: ${fightsText(r).replace(/[()]/g, "")}`;
 }
-import { markNote, statMark, confirmedPadderSlugs } from "./padding.mjs?v=20261009-notfarm2";
+import { markNote, statMark, confirmedPadderSlugs } from "./padding.mjs?v=20261009-desk";
 // Account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times: chart name list only.
-import { accountTimes, flairsHtml } from "./flairs.mjs?v=20261009-notfarm2";
+import { accountTimes, flairsHtml } from "./flairs.mjs?v=20261009-desk";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261009-notfarm2";
-import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261009-notfarm2";
+import "./name-peek.mjs?v=20261009-desk";
+import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261009-desk";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
-import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-notfarm2";
+import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-desk";
 // Live data: Daybreak Census only (batched, paced); Honu just for a rare history fallback.
-import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261009-notfarm2";
+import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261009-desk";
 import {
   censusBase,
   censusRequest,
@@ -105,7 +106,7 @@ import {
   limitConcurrency,
   tokenBucket,
   OPPONENT_TOP_N,
-} from "./census-fetch.mjs?v=20261009-notfarm2";
+} from "./census-fetch.mjs?v=20261009-desk";
 
   // Player palettes (dark + light theme) live in palette.mjs (shared with ranks.html).
   const COLORS = PALETTE_DARK;
@@ -163,6 +164,8 @@ import {
   let confirmedPadders = new Set();
 
   const VB = { w: 1000, h: 580 };
+  /** SVG text multiplier for big desktop screens (desk-scale.mjs); 1 on mobile. */
+  let chartFs = 1;
   const M = { t: 20, r: 56, b: 72, l: 56 };
   const PLOT = {
     x: M.l,
@@ -2027,6 +2030,8 @@ import {
     svg.setAttribute("viewBox", `0 0 ${VB.w} ${VB.h}`);
     svg.setAttribute("role", "img");
     svg.setAttribute("aria-label", "Elite K/D vs Enemy KPM");
+    chartFs = currentChartFontScale();
+    const fz = (n) => String(Math.round(n * chartFs * 10) / 10);
 
     const th = chartTheme();
 
@@ -2155,7 +2160,7 @@ import {
     ylab.setAttribute("x", PLOT.x + PLOT.w + 44);
     ylab.setAttribute("y", PLOT.y + PLOT.h / 2);
     ylab.setAttribute("fill", th.text);
-    ylab.setAttribute("font-size", "12");
+    ylab.setAttribute("font-size", fz(12));
     ylab.setAttribute("text-anchor", "middle");
     ylab.setAttribute("transform", `rotate(90 ${PLOT.x + PLOT.w + 44} ${PLOT.y + PLOT.h / 2})`);
     ylab.textContent = banded ? "K/D vs enemies near this KPM" : "Projected K/D";
@@ -2164,9 +2169,9 @@ import {
     for (const x of xTicks) {
       const t = ns("text");
       t.setAttribute("x", xToPx(x));
-      t.setAttribute("y", PLOT.y + PLOT.h + 18);
+      t.setAttribute("y", PLOT.y + PLOT.h + 14 + 4 * chartFs);
       t.setAttribute("fill", th.text);
-      t.setAttribute("font-size", "11");
+      t.setAttribute("font-size", fz(11));
       t.setAttribute("text-anchor", "middle");
       t.textContent = x.toFixed(xTickDigits);
       svg.appendChild(t);
@@ -2176,14 +2181,14 @@ import {
       t.setAttribute("x", PLOT.x + PLOT.w + 8);
       t.setAttribute("y", yToPx(y) + 4);
       t.setAttribute("fill", th.text);
-      t.setAttribute("font-size", "11");
+      t.setAttribute("font-size", fz(11));
       t.setAttribute("text-anchor", "start");
       t.textContent = formatTick(y, scale.log);
       svg.appendChild(t);
     }
 
     // Short axis labels only (no farm % clutter)
-    const capY = PLOT.y + PLOT.h + 40;
+    const capY = PLOT.y + PLOT.h + 30 + 10 * chartFs;
     addText(svg, PLOT.x, capY, "🐣 Easy", th.muted, 10, "start");
     addText(svg, PLOT.x + PLOT.w / 2, capY, "Enemy 💪 KPM", th.muted, 10, "middle");
     if (zoomedLeft) {
@@ -2191,8 +2196,8 @@ import {
     } else {
       addText(svg, PLOT.x + PLOT.w, capY, "🥵 Hard", th.muted, 10, "end");
     }
-    if (EASY_MAX < viewXMax) addText(svg, xToPx(EASY_MAX), capY + 14, "0.75", th.muted, 9, "middle");
-    if (HARD_MIN < viewXMax) addText(svg, xToPx(HARD_MIN), capY + 14, "1.50", th.muted, 9, "middle");
+    if (EASY_MAX < viewXMax) addText(svg, xToPx(EASY_MAX), capY + 14 * chartFs, "0.75", th.muted, 9, "middle");
+    if (HARD_MIN < viewXMax) addText(svg, xToPx(HARD_MIN), capY + 14 * chartFs, "1.50", th.muted, 9, "middle");
 
     const seriesG = ns("g");
     seriesG.setAttribute("clip-path", "url(#plot-clip)");
@@ -2298,7 +2303,7 @@ import {
       num.setAttribute("x", PLOT.x - 10);
       num.setAttribute("y", fy + 4);
       num.setAttribute("fill", lab.col);
-      num.setAttribute("font-size", "14");
+      num.setAttribute("font-size", fz(14));
       num.setAttribute("font-weight", "800");
       num.setAttribute("text-anchor", "end");
       num.textContent = String(lab.i + 1) + lab.mark.mark;
@@ -2405,12 +2410,29 @@ import {
     svg.appendChild(g);
   }
 
+  function currentChartFontScale() {
+    if (typeof window === "undefined" || !els.chart) return 1;
+    const wrap = els.chart.closest(".chart-wrap");
+    const w = (wrap && wrap.clientWidth) || els.chart.clientWidth || 0;
+    const rootPx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    return chartFontScale(window.innerWidth, rootPx, w);
+  }
+  if (typeof window !== "undefined") {
+    let deskResizeT = 0;
+    window.addEventListener("resize", () => {
+      clearTimeout(deskResizeT);
+      deskResizeT = setTimeout(() => {
+        if (players.length && currentChartFontScale() !== chartFs) drawChart(players);
+      }, 150);
+    });
+  }
+
   function addText(svg, x, y, text, fill, size, anchor) {
     const t = ns("text");
     t.setAttribute("x", x);
     t.setAttribute("y", y);
     t.setAttribute("fill", fill);
-    t.setAttribute("font-size", String(size));
+    t.setAttribute("font-size", String(Math.round(size * chartFs * 10) / 10));
     t.setAttribute("text-anchor", anchor);
     t.textContent = text;
     svg.appendChild(t);

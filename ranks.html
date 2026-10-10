@@ -24,7 +24,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261009-notfarm2" />
+  <link rel="stylesheet" href="styles.css?v=20261009-desk" />
   <style>
     /* Ranks page: one long sortable table of every cached player. */
     body.ranks-page { overflow-x: hidden; }
@@ -280,13 +280,14 @@
 
 
   <script type="module">
-    import "./name-peek.mjs?v=20261009-notfarm2";
-    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits } from "./dist.mjs?v=20261009-notfarm2";
-    import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261009-notfarm2";
-    import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261009-notfarm2";
-    import { paletteColor } from "./palette.mjs?v=20261009-notfarm2";
-    import { PICK_PARAM, picksFromSearch, matchPicks, analyzeHref, MAIN_PENDING_KEY } from "./pick-sync.mjs?v=20261009-notfarm2";
-    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-notfarm2";
+    import "./name-peek.mjs?v=20261009-desk";
+    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits } from "./dist.mjs?v=20261009-desk";
+    import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261009-desk";
+    import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261009-desk";
+    import { paletteColor } from "./palette.mjs?v=20261009-desk";
+    import { deskUiScale } from "./desk-scale.mjs?v=20261009-desk";
+    import { PICK_PARAM, picksFromSearch, matchPicks, analyzeHref, MAIN_PENDING_KEY } from "./pick-sync.mjs?v=20261009-desk";
+    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-desk";
 
     const LS_THEME = "ps2-elite-kd-theme";
     const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";
@@ -724,9 +725,11 @@
       const box = $("distChart");
       const W = Math.max(320, Math.round(box.clientWidth || 640));
       const narrow = W < 560;
-      const H = Math.round(Math.min(380, Math.max(250, W * 0.42)));
+      // Big desktop screens (t299u): grow text / margins / height with the root font; 1 below 1400px.
+      const ui = deskUiScale(window.innerWidth, parseFloat(getComputedStyle(document.documentElement).fontSize) || 16);
+      const H = Math.round(Math.min(380 * ui, Math.max(250, W * 0.42)));
       const hl = highlightRows();
-      const M = { l: narrow ? 34 : 44, r: narrow ? 34 : 44, t: 18 + (hl.length ? Math.min(3, hl.length) * 13 : 0) + 14, b: 38 };
+      const M = { l: (narrow ? 34 : 44) * ui, r: (narrow ? 34 : 44) * ui, t: (18 + (hl.length ? Math.min(3, hl.length) * 13 : 0) + 14) * ui, b: 38 * ui };
       const PW = W - M.l - M.r;
       const PH = H - M.t - M.b;
       svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
@@ -742,7 +745,7 @@
         border: cssVar("--border", "#2a2e36"),
         warn: cssVar("--warn", "#ffd166"),
       };
-      const fs = narrow ? 10 : 11;
+      const fs = narrow ? 10 : Math.round(11 * ui);
       // Light theme: pronounced like the main chart's light palette (darker,
       // more saturated, thicker); dark theme keeps its original look.
       const LT = isLight();
@@ -784,8 +787,8 @@
         const p = k * yStep;
         const y = yL(p);
         g.appendChild(svgEl("line", { x1: M.l, x2: M.l + PW, y1: y, y2: y, stroke: st.grid, "stroke-width": st.gridW }));
-        g.appendChild(svgEl("text", { x: M.l - 5, y: y + 3.5, fill: st.axis, "font-size": fs, "text-anchor": "end" }, (p % 1 ? p.toFixed(1) : p.toFixed(0)) + "%"));
-        g.appendChild(svgEl("text", { x: M.l + PW + 5, y: yR(k * 25) + 3.5, fill: LT ? st.cum : st.axis, "font-size": fs, "text-anchor": "start" }, k * 25 + "%"));
+        g.appendChild(svgEl("text", { x: M.l - 5, y: y + 3.5 * ui, fill: st.axis, "font-size": fs, "text-anchor": "end" }, (p % 1 ? p.toFixed(1) : p.toFixed(0)) + "%"));
+        g.appendChild(svgEl("text", { x: M.l + PW + 5, y: yR(k * 25) + 3.5 * ui, fill: LT ? st.cum : st.axis, "font-size": fs, "text-anchor": "start" }, k * 25 + "%"));
       }
       svg.appendChild(g);
 
@@ -810,14 +813,14 @@
       const every = Math.max(1, Math.ceil((coreIdx.length + 1) / maxLabels));
       const xl = svgEl("g", { fill: st.axis, "font-size": fs, "text-anchor": "middle" });
       coreIdx.forEach((i, k) => {
-        if (k % every === 0) xl.appendChild(svgEl("text", { x: slotX(i), y: M.t + PH + 14 }, fmtEdge(h.bins[i].x0, h)));
+        if (k % every === 0) xl.appendChild(svgEl("text", { x: slotX(i), y: M.t + PH + 14 * ui }, fmtEdge(h.bins[i].x0, h)));
       });
       const lastCore = coreIdx[coreIdx.length - 1];
       if ((coreIdx.length) % every === 0 || coreIdx.length < 3) {
-        xl.appendChild(svgEl("text", { x: slotX(lastCore) + slotW, y: M.t + PH + 14 }, fmtEdge(h.hi, h)));
+        xl.appendChild(svgEl("text", { x: slotX(lastCore) + slotW, y: M.t + PH + 14 * ui }, fmtEdge(h.hi, h)));
       }
-      if (h.bins[0].kind === "under") xl.appendChild(svgEl("text", { x: slotX(0) + slotW / 2, y: M.t + PH + 26 }, `<${fmtEdge(h.lo, h)}`));
-      if (h.bins[nb - 1].kind === "over") xl.appendChild(svgEl("text", { x: slotX(nb - 1) + slotW / 2, y: M.t + PH + 26 }, `>${fmtEdge(h.hi, h)}`));
+      if (h.bins[0].kind === "under") xl.appendChild(svgEl("text", { x: slotX(0) + slotW / 2, y: M.t + PH + 26 * ui }, `<${fmtEdge(h.lo, h)}`));
+      if (h.bins[nb - 1].kind === "over") xl.appendChild(svgEl("text", { x: slotX(nb - 1) + slotW / 2, y: M.t + PH + 26 * ui }, `>${fmtEdge(h.hi, h)}`));
       xl.appendChild(svgEl("text", { x: M.l + PW / 2, y: H - 3, fill: th.text, "font-size": fs + 1 }, col.label));
       svg.appendChild(xl);
 
@@ -833,7 +836,7 @@
         if (x == null) return;
         svg.appendChild(svgEl("line", { x1: x, x2: x, y1: M.t, y2: M.t + PH, stroke: st.stat, "stroke-width": st.statW, "stroke-dasharray": "4 3", opacity: st.statOp }));
         const right = x > M.l + PW * 0.75; // keep labels inside the plot near the right edge
-        const t = svgEl("text", { x: right ? x - 3 : x + 3, y: M.t + 10 + k * 11, fill: st.stat, "font-size": fs - 1, opacity: st.statTextOp, "font-weight": LT ? 600 : 400, "text-anchor": right ? "end" : "start" }, `${lab} ${(+v).toFixed(col.digits)}`);
+        const t = svgEl("text", { x: right ? x - 3 : x + 3, y: M.t + (10 + k * 11) * ui, fill: st.stat, "font-size": fs - 1, opacity: st.statTextOp, "font-weight": LT ? 600 : 400, "text-anchor": right ? "end" : "start" }, `${lab} ${(+v).toFixed(col.digits)}`);
         svg.appendChild(t);
       });
 
@@ -845,7 +848,7 @@
         if (x == null) return;
         const color = paletteColor(i, light);
         const row = i % 3;
-        const ly = 12 + row * 13;
+        const ly = (12 + row * 13) * ui;
         const gm = svgEl("g", {});
         gm.appendChild(svgEl("line", { x1: x, x2: x, y1: ly + 2, y2: M.t + PH, stroke: color, "stroke-width": st.markW }));
         gm.appendChild(svgEl("circle", { cx: x, cy: M.t + PH, r: 3.5, fill: color }));
