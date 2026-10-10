@@ -3,7 +3,7 @@
  * Mirrors absolute_target_split / kpm_curve / rf_if / adjusted_ivi from ps2_elite_kd.py
  * Pure math lives in math.mjs (shared with Node tests).
  */
-import { chartFontScale } from "./desk-scale.mjs?v=20261010-type1";
+import { chartFontScale } from "./desk-scale.mjs?v=20261010-infl1";
 import {
   X_MAX,
   EASY_MAX,
@@ -33,12 +33,12 @@ import {
   windowYValues,
   kpmBandCurve,
   bandReliability,
-} from "./math.mjs?v=20261010-type1";
-import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261010-type1";
-import GHOST_MODEL from "./data/ghost-model.mjs?v=20261010-type1";
-import { ranksHref } from "./pick-sync.mjs?v=20261010-type1";
-import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-type1";
-import { entryFetchedAt, pickNewest, writeWithEviction } from "./cache-pick.mjs?v=20261010-type1";
+} from "./math.mjs?v=20261010-infl1";
+import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261010-infl1";
+import GHOST_MODEL from "./data/ghost-model.mjs?v=20261010-infl1";
+import { ranksHref } from "./pick-sync.mjs?v=20261010-infl1";
+import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-infl1";
+import { entryFetchedAt, pickNewest, writeWithEviction } from "./cache-pick.mjs?v=20261010-infl1";
 import {
   NameLoadError,
   classifyLoadError,
@@ -65,7 +65,7 @@ import {
   etaLearnLiveMs,
   freshEtaText,
   expectedNameMs,
-} from "./analyze-run.mjs?v=20261010-type1";
+} from "./analyze-run.mjs?v=20261010-infl1";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
@@ -79,7 +79,7 @@ import {
   THIN_MARK,
   THIN_NOTE_HEAD,
   thinPlayerLine,
-} from "./player-metrics.mjs?v=20261010-type1";
+} from "./player-metrics.mjs?v=20261010-infl1";
 /** "22 kills / 60 deaths" in the opponent sample (MIN_FIGHTS counts). */
 function fightsText(r) {
   const k = r.sampleKills || 0;
@@ -91,16 +91,16 @@ function fightsText(r) {
 function thinCellTip(r) {
   return `${MIN_FIGHTS_TIP}. This sample: ${fightsText(r).replace(/[()]/g, "")}`;
 }
-import { markNote, statMark, confirmedPadderSlugs } from "./padding.mjs?v=20261010-type1";
+import { markNote, statMark, confirmedPadderSlugs } from "./padding.mjs?v=20261010-infl1";
 // Account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times: chart name list only.
-import { accountTimes, flairsHtml } from "./flairs.mjs?v=20261010-type1";
+import { accountTimes, flairsHtml } from "./flairs.mjs?v=20261010-infl1";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261010-type1";
-import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261010-type1";
+import "./name-peek.mjs?v=20261010-infl1";
+import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261010-infl1";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
-import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-type1";
+import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-infl1";
 // Live data: Daybreak Census only (batched, paced); Honu just for a rare history fallback.
-import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-type1";
+import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-infl1";
 import {
   censusBase,
   censusRequest,
@@ -109,7 +109,7 @@ import {
   limitConcurrency,
   tokenBucket,
   OPPONENT_TOP_N,
-} from "./census-fetch.mjs?v=20261010-type1";
+} from "./census-fetch.mjs?v=20261010-infl1";
 
   // Player palettes (dark + light theme) live in palette.mjs (shared with ranks.html).
   const COLORS = PALETTE_DARK;
@@ -2705,7 +2705,6 @@ import {
       { id: "pvs", label: "🦁 Brave", hint: `Bravery (formerly LionHeart): 🏃 Activity × pressure slope — sustained elite volume under hard opposition.`, fn: (r) => r.pvs, digits: 2 },
       { id: "rkd", label: "☠️ K/D", hint: "Resistance-weighted K/D against the opposition mix you actually face.", fn: (r) => r.rkd, digits: 3 },
       { id: "mech", label: "⚙️ Mech%", hint: "Projected mechanized / vehicle share implied by 🛡️ Resist.", fn: (r) => r.mech, digits: 1 },
-      { id: "inflation", label: "🎈 Inflation", hint: "Global KD ÷ KD at ≥0.5 enemy KPM — how much soft opposition inflates your KD (avg planetman ~0.35).", fn: (r) => r.inflation, digits: 2, pctDir: "low", pctRefFloor: 1.0 },
     ];
     // Older debug columns: appended only when "show older debug stats" (footer) is ticked.
     const adjDebugCols = [
@@ -2714,6 +2713,8 @@ import {
       { id: "own", label: "own KPM", hint: "Your weapon pace used on the elite K/D curve and for the ⚔️ iVi speed adjustment.", fn: (r) => r.own, digits: 2 },
       { id: "coi", label: "📊 COI", hint: "Combat Output Index derived from 🛡️ Resist.", fn: (r) => r.coi, digits: 2 },
       { id: "slope", label: "📉 Slope", hint: "Overall graph angle: death-weighted K/D vs enemy KPM across the full curve — negative means K/D falls as opposition hardens (feeds 🦁 Brave).", fn: (r) => r.slope, digits: 2 },
+      // t345u: 🎈 Inflation rarely shows anything meaningful → older stats only.
+      { id: "inflation", label: "🎈 Inflation", hint: "Global KD ÷ KD at ≥0.5 enemy KPM — how much soft opposition inflates your KD (avg planetman ~0.35).", fn: (r) => r.inflation, digits: 2, pctDir: "low", pctRefFloor: 1.0 },
     ];
     // Opponent-sample metrics: "—" below MIN_FIGHTS (player-metrics.mjs), so they
     // also drop out of sorting and the % column references.

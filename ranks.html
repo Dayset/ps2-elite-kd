@@ -24,7 +24,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261010-type1" />
+  <link rel="stylesheet" href="styles.css?v=20261010-infl1" />
   <style>
     /* Ranks page: one long sortable table of every cached player. */
     body.ranks-page { overflow-x: hidden; }
@@ -323,7 +323,7 @@
         <a id="backLinkFooter" href="index.html" class="back-btn back-btn-up" aria-label="Back to player search" data-hint="Back to player search"><svg class="back-chev" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M15 4.5 7.5 12 15 19.5" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="back-ico" aria-hidden="true">🔍</span></a>
         <p><a href="https://github.com/Dayset/ps2-elite-kd">github.com/Dayset/ps2-elite-kd</a></p>
       </div>
-      <label class="debug-cols-toggle" title="Append the older debug columns (🎯🎈 ivi, eKPM, own KPM, 📊 COI, 📉 Slope) to the Rankings table">
+      <label class="debug-cols-toggle" title="Append the older debug columns (🎯🎈 ivi, eKPM, own KPM, 📊 COI, 📉 Slope, 🎈 Inflation) to the Rankings table">
         <input type="checkbox" id="debugColsToggle" /> show older debug stats
       </label>
     </div>
@@ -339,19 +339,19 @@
 
 
   <script type="module">
-    import "./name-peek.mjs?v=20261010-type1";
-    import { compareByCharName } from "./analyze-run.mjs?v=20261010-type1";
-    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits, binJumpTarget } from "./dist.mjs?v=20261010-type1";
-    import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261010-type1";
-    import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261010-type1";
-    import { paletteColor } from "./palette.mjs?v=20261010-type1";
-    import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-type1";
-    import { deskUiScale } from "./desk-scale.mjs?v=20261010-type1";
-    import { PICK_PARAM, picksFromSearch, matchPicks, analyzeHref, MAIN_PENDING_KEY } from "./pick-sync.mjs?v=20261010-type1";
-    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-type1";
-    import { mergeFreshRows } from "./rank-row.mjs?v=20261010-type1";
-    import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-type1";
-    import { confirmedPadderSlugs } from "./padding.mjs?v=20261010-type1";
+    import "./name-peek.mjs?v=20261010-infl1";
+    import { compareByCharName } from "./analyze-run.mjs?v=20261010-infl1";
+    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits, binJumpTarget } from "./dist.mjs?v=20261010-infl1";
+    import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261010-infl1";
+    import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261010-infl1";
+    import { paletteColor } from "./palette.mjs?v=20261010-infl1";
+    import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-infl1";
+    import { deskUiScale } from "./desk-scale.mjs?v=20261010-infl1";
+    import { PICK_PARAM, picksFromSearch, matchPicks, analyzeHref, MAIN_PENDING_KEY } from "./pick-sync.mjs?v=20261010-infl1";
+    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-infl1";
+    import { mergeFreshRows } from "./rank-row.mjs?v=20261010-infl1";
+    import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-infl1";
+    import { confirmedPadderSlugs } from "./padding.mjs?v=20261010-infl1";
 
     const LS_THEME = "ps2-elite-kd-theme";
     const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";
@@ -365,7 +365,6 @@
       { id: "pvs", label: "🦁 Brave", digits: 2, tip: "Bravery (Activity × slope)" },
       { id: "rkd", label: "☠️ K/D", digits: 3, tip: "Resistance-weighted K/D" },
       { id: "mech", label: "⚙️ Mech%", digits: 1, tip: "Projected mechanized share" },
-      { id: "inflation", label: "🎈 Inflation", digits: 2, tip: "Global KD ÷ KD at ≥0.5 enemy KPM — lower is better", ascFirst: true },
     ];
     const DEBUG = [
       { id: "adj", label: "🎯🎈 ivi", digits: 0, tip: "Opposition-weighted IvI (before speed adjustment)" },
@@ -373,6 +372,8 @@
       { id: "own", label: "own KPM", digits: 2, tip: "Your weapon pace" },
       { id: "coi", label: "📊 COI", digits: 2, tip: "Combat Output Index" },
       { id: "slope", label: "📉 Slope", digits: 2, tip: "Curve slope (death-weighted)" },
+      // t345u: rarely meaningful → older stats only (table with the debug box; not in the chart menu).
+      { id: "inflation", label: "🎈 Inflation", digits: 2, tip: "Global KD ÷ KD at ≥0.5 enemy KPM — lower is better", ascFirst: true },
     ];
 
     // Public stats (in ranks.json; chart only — the table keeps the main page's columns).
@@ -865,15 +866,19 @@
 
     function fillMetricSelect() {
       const sel = $("distMetric");
-      const groups = [["✨ Adjusted", VISIBLE], ["Older debug stats", DEBUG], ["📊 Public", PUBLIC]];
+      // t345u/t346u: only our own current metrics — no older / outdated stats
+      // (DEBUG, incl. 🎈 Inflation) and no 📊 Public lifetime Census stats.
+      const groups = [["✨ Adjusted", VISIBLE]];
       sel.innerHTML = groups
         .map(([g, cols]) => `<optgroup label="${esc(g)}">` + cols.map((c) => `<option value="${c.id}">${esc(c.label)}</option>`).join("") + `</optgroup>`)
         .join("");
       sel.value = distMetric;
     }
 
+    /** Metrics the 📊 chart menu offers (our own current stats only, t345u/t346u). */
+    const DIST_IDS = new Set(VISIBLE.map((c) => c.id));
     function setDistMetric(id) {
-      if (!colById(id)) return;
+      if (!DIST_IDS.has(id)) return; // older stat (debug column sort): chart keeps its metric
       distMetric = id;
       if ($("distMetric").value !== id) $("distMetric").value = id;
       drawDist();
