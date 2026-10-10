@@ -4,19 +4,19 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "38086548987",
+    "runId": "38087370125",
     "event": "workflow_dispatch",
     "kind": "on-demand",
-    "startedAt": "2026-10-10T21:09:56.662Z",
-    "endedAt": "2026-10-10T21:10:00.374Z",
-    "seconds": 4,
+    "startedAt": "2026-10-10T21:22:42.891Z",
+    "endedAt": "2026-10-10T21:22:48.953Z",
+    "seconds": 6,
     "updated": [],
     "added": [
-      "[SENT] DataDog"
+      "[FMAR] ReybNC"
     ],
     "failed": [],
     "stoppedEarly": null,
-    "indexSize": 3026,
+    "indexSize": 3027,
     "honu": {
       "day": "2026-10-10",
       "calls": 2499,
@@ -24,14 +24,14 @@
     },
     "batch": [
       {
-        "name": "[SENT] DataDog",
+        "name": "[FMAR] ReybNC",
         "src": "on-demand",
         "status": "done"
       }
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-10T21:10:02.732Z",
+    "checkedAt": "2026-10-10T21:22:51.348Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 1,
     "explained": 1,
@@ -170,7 +170,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-10T21:10:02.766Z",
+    "checkedAt": "2026-10-10T21:22:51.379Z",
     "red": 18,
     "padding": 22,
     "adjusted": 1,
@@ -181,7 +181,7 @@
     "forensics": 2
   },
   "sessionStats": {
-    "checkedAt": "2026-10-10T21:10:02.739Z",
+    "checkedAt": "2026-10-10T21:22:51.355Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -194,7 +194,7 @@
     },
     "ruleText": "[session pattern] in recent Honu sessions (≥ 100 kills counted): assists per kill ≤ 0.1, headshot share ≥ 50% (headshot XP per kill; Census lifetime HSR when no XP detail) and K/D ≥ 7 (session deaths; Census lifetime KD when none). A very one-sided record; a lead for manual review, not proof.",
     "coverage": {
-      "players": 3025,
+      "players": 3026,
       "withSessions": 1343,
       "measured": 729,
       "sessions": 4186,
@@ -1030,17 +1030,17 @@
     "outliersUnexplained": 0
   },
   "size": {
-    "at": "2026-10-10T21:10:00.699Z",
+    "at": "2026-10-10T21:22:49.289Z",
     "repoBytes": 29380608,
-    "dataBytes": 56134762,
-    "playersBytes": 52983277,
-    "playerFiles": 3026,
+    "dataBytes": 56153709,
+    "playersBytes": 53001569,
+    "playerFiles": 3027,
     "warnAtBytes": 734003200,
     "warning": false
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-10T21:10:02.750Z",
+    "checkedAt": "2026-10-10T21:22:51.363Z",
     "candidates": [
       "coldandhot",
       "alandwhale",
@@ -1730,7 +1730,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-10T21:10:02.753Z",
+    "checkedAt": "2026-10-10T21:22:51.366Z",
     "count": 48,
     "players": [
       {
