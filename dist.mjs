@@ -177,3 +177,31 @@ export function stepDigits(step) {
   if (step >= 1) return Number.isInteger(step) ? 0 : 1;
   return Math.min(4, Math.ceil(-Math.log10(step) + 1e-9) + (String(step).includes("25") ? 1 : 0));
 }
+
+/**
+ * Chart bar → table jump (t308u). `values` = the sort metric of each table row
+ * in display order (sorted by that metric, `dir` "desc" | "asc"; rows without a
+ * value — "—", thin samples — last). Returns where the bar's players start:
+ *  { index, count, exact }
+ *   exact: true  → rows [index, index + count) are the bar's players (contiguous);
+ *   exact: false → the bar is empty (or filtered out): index = the nearest row,
+ *                  i.e. where that range would begin in this order (the next
+ *                  lower value for "desc", next higher for "asc"), or the last
+ *                  ranked row when nothing lies beyond it; count = 0.
+ *  index = -1 when no row has a value.
+ */
+export function binJumpTarget(values, hist, bin, dir = "desc") {
+  const bi = (values || []).map((v) => binIndexOf(hist, v));
+  let first = bi.indexOf(bin);
+  if (first >= 0) {
+    let end = first;
+    while (end < bi.length && bi[end] === bin) end++;
+    return { index: first, count: end - first, exact: true };
+  }
+  const past = dir === "asc" ? (b) => b > bin : (b) => b >= 0 && b < bin;
+  first = bi.findIndex((b) => b >= 0 && past(b));
+  if (first < 0) {
+    for (let i = bi.length - 1; i >= 0; i--) if (bi[i] >= 0) { first = i; break; }
+  }
+  return { index: first, count: 0, exact: false };
+}

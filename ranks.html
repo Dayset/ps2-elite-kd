@@ -24,7 +24,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261009-namesort" />
+  <link rel="stylesheet" href="styles.css?v=20261009-binjump" />
   <style>
     /* Ranks page: one long sortable table of every cached player. */
     body.ranks-page { overflow-x: hidden; }
@@ -202,7 +202,14 @@
     .dist-summary { color: var(--dim); }
     .dist-chart { position: relative; width: 100%; }
     .dist-chart svg { display: block; width: 100%; height: auto; touch-action: manipulation; }
-    .dist-chart .dist-hit { cursor: pointer; }
+    .dist-chart .dist-hit { cursor: pointer; outline: none; }
+    .dist-chart .dist-hit:focus-visible { stroke: var(--accent); stroke-width: 1.5; }
+    .dist-tip .dist-jump-hint { display: block; margin-top: 0.2rem; color: var(--dim); font-size: 0.75rem; }
+    /* Chart bar → table jump (t308u): brief highlight of that range's rows. */
+    @keyframes rkFlash { 0%, 55% { background: var(--rk-flash); } 100% { background: var(--panel); } }
+    .ranks-table tbody tr.rk-flash td { animation: rkFlash 2.4s ease-out 1; }
+    :root { --rk-flash: rgba(159, 212, 238, 0.28); }
+    :root[data-theme="light"] { --rk-flash: rgba(31, 95, 134, 0.22); }
     .dist-tip {
       position: absolute; z-index: 5; pointer-events: none;
       max-width: min(20rem, calc(100% - 8px));
@@ -246,7 +253,7 @@
         <svg id="distSvg" role="img" aria-label="Distribution of the selected metric across cached players"></svg>
         <div id="distTip" class="dist-tip" hidden></div>
       </div>
-      <div class="dist-note">Bars: % of players per value range (left axis). Line: cumulative % of players below (right axis). Tap / hover a bar for details. Picked players (✅) — or a search with ≤ 5 matches — are marked on the chart.</div>
+      <div class="dist-note">Bars: % of players per value range (left axis). Line: cumulative % of players below (right axis). Hover / tap a bar for details; click it (tap twice on touch) to jump to those players in the list. Picked players (✅) — or a search with ≤ 5 matches — are marked on the chart.</div>
     </details>
 
     <details class="pooled-note fold-note" style="margin: 0.3rem 0 0.45rem"><summary>♿ What about vehicles?</summary><p>Vehicle and infantry kills are pooled together for now, so vehicle mains may look off in the graph and stats. Infantry-only numbers are coming later.</p></details>
@@ -280,15 +287,15 @@
 
 
   <script type="module">
-    import "./name-peek.mjs?v=20261009-namesort";
-    import { compareByCharName } from "./analyze-run.mjs?v=20261009-namesort";
-    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits } from "./dist.mjs?v=20261009-namesort";
-    import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261009-namesort";
-    import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261009-namesort";
-    import { paletteColor } from "./palette.mjs?v=20261009-namesort";
-    import { deskUiScale } from "./desk-scale.mjs?v=20261009-namesort";
-    import { PICK_PARAM, picksFromSearch, matchPicks, analyzeHref, MAIN_PENDING_KEY } from "./pick-sync.mjs?v=20261009-namesort";
-    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-namesort";
+    import "./name-peek.mjs?v=20261009-binjump";
+    import { compareByCharName } from "./analyze-run.mjs?v=20261009-binjump";
+    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits, binJumpTarget } from "./dist.mjs?v=20261009-binjump";
+    import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261009-binjump";
+    import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261009-binjump";
+    import { paletteColor } from "./palette.mjs?v=20261009-binjump";
+    import { deskUiScale } from "./desk-scale.mjs?v=20261009-binjump";
+    import { PICK_PARAM, picksFromSearch, matchPicks, analyzeHref, MAIN_PENDING_KEY } from "./pick-sync.mjs?v=20261009-binjump";
+    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-binjump";
 
     const LS_THEME = "ps2-elite-kd-theme";
     const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";
@@ -431,7 +438,11 @@
     }
 
     function colList() {
-      return showDebug ? VISIBLE.concat(DEBUG) : VISIBLE.slice();
+      const base = showDebug ? VISIBLE.concat(DEBUG) : VISIBLE.slice();
+      // Sorted by a metric the table doesn't show (a 📊 chart jump on a public /
+      // debug metric, t308u): append it so the order and values are visible.
+      const extra = sortKey !== "name" && !base.some((c) => c.id === sortKey) && colById(sortKey);
+      return extra ? base.concat(extra) : base;
     }
 
     function rebuildIndex(payload) {
@@ -572,6 +583,19 @@
     const FIRST_CHUNK = 80;
     const CHUNK = 200;
     let renderToken = 0;
+    let renderState = null; // { list, cols, at } of the current progressive render
+
+    /** Append rows synchronously until at least `n` are in the table (chart jumps). */
+    function renderRowsTo(n) {
+      const st = renderState;
+      if (!st) return;
+      const end = Math.min(st.list.length, n);
+      if (end <= st.at) return;
+      let html = "";
+      for (let i = st.at; i < end; i++) html += rowHtml(st.list[i], st.cols);
+      $("ranksBody").insertAdjacentHTML("beforeend", html);
+      st.at = end;
+    }
 
     function renderBody() {
       assignRanks();
@@ -581,24 +605,21 @@
       const body = $("ranksBody");
       const first = list.slice(0, FIRST_CHUNK).map((r) => rowHtml(r, cols)).join("");
       body.innerHTML = first;
-      let at = FIRST_CHUNK;
+      const st = { list, cols, at: Math.min(FIRST_CHUNK, list.length) };
+      renderState = st;
       const step = () => {
-        if (token !== renderToken || at >= list.length) return;
-        const end = Math.min(list.length, at + CHUNK);
-        let html = "";
-        for (let i = at; i < end; i++) html += rowHtml(list[i], cols);
-        body.insertAdjacentHTML("beforeend", html);
-        at = end;
-        if (at < list.length) requestAnimationFrame(() => setTimeout(step, 0));
+        if (token !== renderToken || st.at >= list.length) return;
+        renderRowsTo(st.at + CHUNK);
+        if (st.at < list.length) requestAnimationFrame(() => setTimeout(step, 0));
       };
-      if (at < list.length) requestAnimationFrame(() => setTimeout(step, 0));
+      if (st.at < list.length) requestAnimationFrame(() => setTimeout(step, 0));
       $("ranksMeta").textContent = `${list.length.toLocaleString()} of ${data.count.toLocaleString()} players · updated ${fmtUpdated(data.updatedAt)}`;
       syncPickedUi();
     }
 
     function render() {
       if (!data) return;
-      if (sortKey !== "name" && !colList().some((c) => c.id === sortKey)) {
+      if (sortKey !== "name" && !colById(sortKey)) {
         sortKey = "adjs";
         sortDir = "desc";
       }
@@ -716,6 +737,49 @@
 
     function hideTip() {
       $("distTip").hidden = true;
+      tipBin = -1;
+    }
+
+    /**
+     * 📊 bar → list (t308u): sort the table by the chart metric (descending unless
+     * it's already sorted by it), then glide to the first player of that bar's
+     * range and flash its rows. Empty bar → the nearest row (where the range
+     * would start). Players without a value ("—", thin samples) and hidden ones
+     * (not in ranks.json) never match.
+     */
+    let flashTimer = 0;
+    function jumpToBin(bi) {
+      if (!data) return;
+      const h = getHist(distMetric);
+      if (!h.bins[bi]) return;
+      if (sortKey !== distMetric) {
+        sortKey = distMetric;
+        sortDir = "desc";
+        render();
+      }
+      const list = renderState ? renderState.list : sortedFiltered();
+      const t = binJumpTarget(list.map((r) => r[distMetric]), h, bi, sortDir);
+      if (t.index < 0) return;
+      const span = Math.max(1, t.count);
+      renderRowsTo(t.index + span + 40);
+      const rows = $("ranksBody").rows;
+      const row = rows[t.index];
+      if (!row) return;
+      const behavior = scrollBehavior();
+      // Page: bring the list box to the top of the screen; box: the row just under the sticky header.
+      const wrap = tableScroll;
+      const pageY = window.scrollY || document.documentElement.scrollTop || 0;
+      window.scrollTo({ top: Math.max(0, wrap.getBoundingClientRect().top + pageY - 8), behavior });
+      const headH = $("ranksHead").getBoundingClientRect().height || 0;
+      const y = row.getBoundingClientRect().top - wrap.getBoundingClientRect().top + wrap.scrollTop - headH;
+      glideTo(wrap, Math.max(0, Math.round(y)), behavior);
+      clearTimeout(flashTimer);
+      $("ranksBody").querySelectorAll("tr.rk-flash").forEach((tr) => tr.classList.remove("rk-flash"));
+      void $("ranksBody").offsetWidth;
+      const end = Math.min(rows.length, t.index + (t.exact ? Math.min(t.count, 400) : 1));
+      for (let k = t.index; k < end; k++) rows[k].classList.add("rk-flash");
+      flashTimer = setTimeout(() => $("ranksBody").querySelectorAll("tr.rk-flash").forEach((tr) => tr.classList.remove("rk-flash")), 2600);
+      window.__lastBinJump = { bin: bi, metric: distMetric, dir: sortDir, ...t, q: row.getAttribute("data-q") };
     }
 
     function drawDist() {
@@ -865,11 +929,26 @@
       // hit areas (full-height, per slot) for hover / tap details
       const hits = svgEl("g", {});
       h.bins.forEach((b, i) => {
-        const rect = svgEl("rect", { x: slotX(i), y: M.t, width: slotW, height: PH, fill: "transparent", class: "dist-hit" });
-        const show = (ev) => showTip(ev, b, h, col);
-        rect.addEventListener("pointerenter", show);
-        rect.addEventListener("pointermove", show);
-        rect.addEventListener("click", show);
+        const rect = svgEl("rect", {
+          x: slotX(i), y: M.t, width: slotW, height: PH, fill: "transparent", class: "dist-hit",
+          tabindex: "0", role: "button", "data-bin": String(i),
+          "aria-label": `${col.label} ${binRangeText(b, h, col)}: ${b.count} players. Jump to players in this range`,
+        });
+        const show = (ev) => showTip(ev, b, h, col, i);
+        rect.addEventListener("pointerenter", (ev) => { if (ev.pointerType === "mouse") show(ev); });
+        rect.addEventListener("pointermove", (ev) => { if (ev.pointerType === "mouse") show(ev); });
+        rect.addEventListener("pointerdown", (ev) => { lastPointer = ev.pointerType || "mouse"; });
+        // Mouse: click jumps. Touch / pen: 1st tap shows the details, a 2nd tap on
+        // the same bar jumps (so the tip stays readable on phones).
+        rect.addEventListener("click", (ev) => {
+          const touch = lastPointer === "touch" || lastPointer === "pen";
+          lastPointer = "mouse";
+          if (touch && !(tipBin === i && !$("distTip").hidden)) { show(ev); return; }
+          jumpToBin(i);
+        });
+        rect.addEventListener("keydown", (ev) => {
+          if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); jumpToBin(i); }
+        });
         rect.addEventListener("pointerleave", (ev) => { if (ev.pointerType === "mouse") hideTip(); });
         hits.appendChild(rect);
       });
@@ -881,19 +960,28 @@
         (below ? ` · ${below} below scale (shown as 0)` : "");
     }
 
-    function showTip(ev, b, h, col) {
+    function binRangeText(b, h, col) {
+      if (b.kind === "under") return col.floorZero ? `below 0 (below scale)` : `below ${fmtEdge(h.lo, h)}`;
+      if (b.kind === "over") return `above ${fmtEdge(h.hi, h)}`;
+      return `${fmtEdge(b.x0, h)}–${fmtEdge(b.x1, h)}`;
+    }
+
+    let lastPointer = "mouse";
+    let tipBin = -1;
+
+    function showTip(ev, b, h, col, bi = -1) {
       const tip = $("distTip");
       const name = col.label;
-      let range;
-      if (b.kind === "under") range = col.floorZero ? `below 0 (below scale)` : `below ${fmtEdge(h.lo, h)}`;
-      else if (b.kind === "over") range = `above ${fmtEdge(h.hi, h)}`;
-      else range = `${fmtEdge(b.x0, h)}–${fmtEdge(b.x1, h)}`;
+      const range = binRangeText(b, h, col);
+      const touch = lastPointer === "touch" || lastPointer === "pen" || ev.pointerType === "touch" || ev.pointerType === "pen";
+      tipBin = bi;
       const from = b.kind === "under" ? -Infinity : b.x0;
       const top = b.kind === "under" ? 100 : shareAtOrAbove(h.sorted, from);
       tip.innerHTML =
         `<b>${fmtPct(b.pct)}</b> of players have ${esc(name)} ${esc(range)} ` +
         `(${b.count.toLocaleString()} player${b.count === 1 ? "" : "s"}); ` +
-        `top <b>${fmtPct(top)}</b> from here`;
+        `top <b>${fmtPct(top)}</b> from here` +
+        `<span class="dist-jump-hint">↓ ${touch ? "Tap again" : "Click"} to jump to players in this range</span>`;
       tip.hidden = false;
       const box = $("distChart").getBoundingClientRect();
       const tw = tip.offsetWidth;
