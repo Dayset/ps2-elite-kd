@@ -270,6 +270,8 @@ describe("Rankings chart clicks scroll the list with picks + search text (t349u/
         for (const type of ["mouseMoved", "mousePressed", "mouseReleased"]) await send("Input.dispatchMouseEvent", { type, x: c.x, y: c.y, button: "left", clickCount: 1 }, sessionId);
         await new Promise((r) => setTimeout(r, 1500));
       };
+      await ev(`document.querySelector('#distSvg .dist-hit[data-bin="3"]').scrollIntoView({ block: "center" }), 1`);
+      await new Promise((r) => setTimeout(r, 300));
       const y0 = await ev(`window.scrollY`);
       await click('#distSvg .dist-hit[data-bin="3"]');
       let st = await ev(`({ st: document.getElementById("ranksScroll").scrollTop, rows: document.querySelectorAll("#ranksBody tr[data-q]").length, filter: document.getElementById("ranksSearch").value, chips: document.querySelectorAll("#ranksChips .name-token").length, flashed: document.querySelectorAll("#ranksBody tr.rk-flash").length })`);
@@ -284,5 +286,67 @@ describe("Rankings chart clicks scroll the list with picks + search text (t349u/
       assert.equal(v.j, q);
       assert.ok(v.visible && v.flash, JSON.stringify(v));
     }, { width: 1400, height: 900, mobile: false });
+  });
+});
+
+describe("Analyze: removing a chip updates graph + tables right away; Analyze never drops players (t351u)", () => {
+  const NAMES = ["ReybNC", "ReybNS", "Reyb", "WHITEBROCOBALT", "[RWCN] R1QingTingDuiZhang", "RachelDoe"];
+  const have = NAMES.every((n) => fs.existsSync(path.join(root, "data/players", n.replace(/^\[.*?\]\s*/, "").toLowerCase() + ".json")));
+  it("chip × → legend / stats / URL follow; double Analyze and a failing live fetch keep the 5 players", { skip: !have || !chrome }, async () => {
+    await withPage(async ({ ev, nav }) => {
+      await nav("index.html?names=" + encodeURIComponent(NAMES.join(",")));
+      const legend = () => ev(`[...document.querySelectorAll("#legend .legend-item .nm")].map((e) => e.getAttribute("data-full") || e.textContent)`);
+      const idle = () => ev(`new Promise(async (res) => { for (let t = 0; t < 300; t++) { if (!document.getElementById("analyzeBtn").disabled && document.querySelectorAll("#legend .legend-item").length) break; await new Promise((r) => setTimeout(r, 50)); } await new Promise((r) => setTimeout(r, 400)); res(1); })`);
+      await idle();
+      assert.equal((await legend()).length, 6);
+      const statsHas = (n) => ev(`[...document.querySelectorAll("#statsPanel tbody")].some((tb) => tb.innerHTML.includes(${JSON.stringify(n)}))`);
+      assert.ok(await statsHas("RachelDoe"));
+      await ev(`[...document.querySelectorAll("#nameTokens .name-token")].find((b) => /RachelDoe/.test(b.textContent)).click(), 1`);
+      await new Promise((r) => setTimeout(r, 300));
+      let l = await legend();
+      assert.equal(l.length, 5, "graph follows the chip without Analyze: " + l);
+      assert.ok(!l.some((n) => /RachelDoe/.test(n)));
+      assert.ok(!(await statsHas("RachelDoe")), "tables follow too");
+      assert.ok(!(await ev(`decodeURIComponent(location.search)`)).includes("RachelDoe"), "URL follows");
+      assert.ok(!(await ev(`document.getElementById("ranksLink").getAttribute("href")`)).toLowerCase().includes("racheldoe"), "Rankings link follows");
+      for (let i = 0; i < 2; i++) {
+        await ev(`document.getElementById("analyzeBtn").click(), 1`);
+        await idle();
+        l = await legend();
+        assert.equal(l.length, 5, `Analyze #${i + 1}: ${l}`);
+      }
+      // "Fetch fresh" while Census says "no such character" for everyone: keep the saved copies.
+      await ev(`(() => { const of = window.fetch; window.fetch = (u, o) => { const s = String((u && u.url) || u); if (/^https?:/.test(s) && !s.startsWith(location.origin)) return Promise.resolve(new Response(JSON.stringify({ character_list: [], returned: 0 }), { status: 200, headers: { "content-type": "application/json" } })); return of(u, o); }; const f = document.getElementById("fetchFresh"); f.checked = true; f.dispatchEvent(new Event("change")); return 1; })()`);
+      await ev(`document.getElementById("analyzeBtn").click(), 1`);
+      await idle();
+      l = await legend();
+      assert.equal(l.length, 5, "failed live refresh keeps players: " + l);
+      assert.match(await ev(`document.getElementById("status").textContent`), /kept the saved copy/);
+      // Re-adding a saved name joins the graph without Analyze.
+      await ev(`(() => { const i = document.getElementById("namesInput"); i.value = "RachelDoe "; i.dispatchEvent(new Event("input", { bubbles: true })); return 1; })()`);
+      await idle();
+      assert.equal((await legend()).length, 6, "cached name added → graphed");
+    });
+  });
+});
+
+describe("Rankings: unpicking a chip updates ticks, chart and URL (t351u)", () => {
+  it("chip × → checkbox off, chart label gone, ?pick= updated", { skip: !chrome }, async () => {
+    const rk = JSON.parse(fs.readFileSync(path.join(root, "data/ranks.json"), "utf8"));
+    const qi = rk.cols.indexOf("query");
+    const picks = ["shlodog", "wrel", "yeezy"].filter((q) => rk.rows.some((r) => String(r[qi]).toLowerCase() === q));
+    if (picks.length < 3) return;
+    await withPage(async ({ ev, nav }) => {
+      await nav(`ranks.html?pick=${picks.join(",")}`);
+      await ev(`new Promise(async (res) => { for (let t = 0; t < 400 && !document.querySelector("#distSvg text.dist-name"); t++) await new Promise((r) => setTimeout(r, 50)); res(1); })`);
+      const q = await ev(`document.querySelector("#ranksChips .name-token").getAttribute("data-q")`);
+      await ev(`document.querySelector("#ranksChips .name-token").click(), 1`);
+      await new Promise((r) => setTimeout(r, 400));
+      const st = await ev(`({ chips: document.querySelectorAll("#ranksChips .name-token").length, label: !!document.querySelector('#distSvg text.dist-name[data-q="${q}"]'), cb: (() => { const c = document.querySelector('#ranksBody tr[data-q="${q}"] input[type=checkbox]'); return c ? c.checked : false; })(), url: location.search })`);
+      assert.equal(st.chips, 2);
+      assert.equal(st.label, false);
+      assert.equal(st.cb, false);
+      assert.ok(!decodeURIComponent(st.url).toLowerCase().split(/[=,&]/).includes(q.toLowerCase()), st.url);
+    });
   });
 });

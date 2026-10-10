@@ -24,7 +24,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261010-jump1" />
+  <link rel="stylesheet" href="styles.css?v=20261010-sync1" />
   <style>
     /* Ranks page: one long sortable table of every cached player. */
     body.ranks-page { overflow-x: hidden; }
@@ -102,6 +102,13 @@
       .rk-chips .name-token { width: 100%; justify-self: stretch; padding-left: 0.5rem; padding-right: 0.5rem; justify-content: space-between; }
       .ranks-toolbar .rk-pick-box input[type="search"] { grid-column: 1 / -1; width: 100%; min-width: 0; }
     }
+    /* t355u: same roomy typing line + bigger text as the Analyze names box. */
+    .rk-pick-box { min-height: 3.4rem; }
+    .ranks-toolbar .rk-pick-box input[type="search"] {
+      flex: 1 1 100%; width: 100%; min-width: 0;
+      min-height: 2.6rem; font-size: 1.1rem; padding: 0.35rem 0.3rem;
+    }
+    .rk-chips .name-token { font-size: 1rem; }
     .ranks-actions {
       flex: 1 1 100%;
       display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem;
@@ -361,19 +368,19 @@
 
 
   <script type="module">
-    import "./name-peek.mjs?v=20261010-jump1";
-    import { compareByCharName } from "./analyze-run.mjs?v=20261010-jump1";
-    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits, binJumpTarget } from "./dist.mjs?v=20261010-jump1";
-    import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261010-jump1";
-    import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261010-jump1";
-    import { paletteColor } from "./palette.mjs?v=20261010-jump1";
-    import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-jump1";
-    import { deskUiScale } from "./desk-scale.mjs?v=20261010-jump1";
-    import { PICK_PARAM, picksFromSearch, matchPicks, analyzeHref, MAIN_PENDING_KEY } from "./pick-sync.mjs?v=20261010-jump1";
-    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-jump1";
-    import { mergeFreshRows } from "./rank-row.mjs?v=20261010-jump1";
-    import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-jump1";
-    import { confirmedPadderSlugs } from "./padding.mjs?v=20261010-jump1";
+    import "./name-peek.mjs?v=20261010-sync1";
+    import { compareByCharName } from "./analyze-run.mjs?v=20261010-sync1";
+    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits, binJumpTarget } from "./dist.mjs?v=20261010-sync1";
+    import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261010-sync1";
+    import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261010-sync1";
+    import { paletteColor } from "./palette.mjs?v=20261010-sync1";
+    import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-sync1";
+    import { deskUiScale } from "./desk-scale.mjs?v=20261010-sync1";
+    import { PICK_PARAM, picksFromSearch, matchPicks, analyzeHref, MAIN_PENDING_KEY } from "./pick-sync.mjs?v=20261010-sync1";
+    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-sync1";
+    import { mergeFreshRows } from "./rank-row.mjs?v=20261010-sync1";
+    import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-sync1";
+    import { confirmedPadderSlugs } from "./padding.mjs?v=20261010-sync1";
 
     const LS_THEME = "ps2-elite-kd-theme";
     const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";
@@ -382,8 +389,8 @@
     // Column definitions: same ids / labels / digits / floorZero as app.js.
     const VISIBLE = [
       { id: "adjs", label: "⚔️ iVi", digits: 0, floorZero: true, tip: "ivi adjusted for your own kill speed: includes a bonus for fast killing and a penalty for slow, safe play (own KPM 0.8–1.4 = unchanged)" },
-      { id: "rf", label: "🛡️ Resist", digits: 2, tip: "Resistance Factor" },
       { id: "act", label: "🏃 Activity", digits: 2, tip: "K/D × own KPM" },
+      { id: "rf", label: "🛡️ Resist", digits: 2, tip: "Resistance Factor" },
       { id: "pvs", label: "🦁 Brave", digits: 2, tip: "Bravery (Activity × slope)" },
       { id: "rkd", label: "☠️ K/D", digits: 3, tip: "Resistance-weighted K/D" },
       { id: "mech", label: "⚙️ Mech%", digits: 1, tip: "Projected mechanized share" },

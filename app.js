@@ -3,7 +3,7 @@
  * Mirrors absolute_target_split / kpm_curve / rf_if / adjusted_ivi from ps2_elite_kd.py
  * Pure math lives in math.mjs (shared with Node tests).
  */
-import { chartFontScale } from "./desk-scale.mjs?v=20261010-jump1";
+import { chartFontScale } from "./desk-scale.mjs?v=20261010-sync1";
 import {
   X_MAX,
   EASY_MAX,
@@ -33,12 +33,12 @@ import {
   windowYValues,
   kpmBandCurve,
   bandReliability,
-} from "./math.mjs?v=20261010-jump1";
-import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261010-jump1";
-import GHOST_MODEL from "./data/ghost-model.mjs?v=20261010-jump1";
-import { ranksHref } from "./pick-sync.mjs?v=20261010-jump1";
-import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-jump1";
-import { entryFetchedAt, pickNewest, writeWithEviction } from "./cache-pick.mjs?v=20261010-jump1";
+} from "./math.mjs?v=20261010-sync1";
+import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261010-sync1";
+import GHOST_MODEL from "./data/ghost-model.mjs?v=20261010-sync1";
+import { ranksHref } from "./pick-sync.mjs?v=20261010-sync1";
+import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-sync1";
+import { entryFetchedAt, pickNewest, writeWithEviction } from "./cache-pick.mjs?v=20261010-sync1";
 import {
   NameLoadError,
   classifyLoadError,
@@ -65,7 +65,7 @@ import {
   etaLearnLiveMs,
   freshEtaText,
   expectedNameMs,
-} from "./analyze-run.mjs?v=20261010-jump1";
+} from "./analyze-run.mjs?v=20261010-sync1";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
@@ -79,7 +79,7 @@ import {
   THIN_MARK,
   THIN_NOTE_HEAD,
   thinPlayerLine,
-} from "./player-metrics.mjs?v=20261010-jump1";
+} from "./player-metrics.mjs?v=20261010-sync1";
 /** "22 kills / 60 deaths" in the opponent sample (MIN_FIGHTS counts). */
 function fightsText(r) {
   const k = r.sampleKills || 0;
@@ -91,16 +91,16 @@ function fightsText(r) {
 function thinCellTip(r) {
   return `${MIN_FIGHTS_TIP}. This sample: ${fightsText(r).replace(/[()]/g, "")}`;
 }
-import { markNote, statMark, confirmedPadderSlugs } from "./padding.mjs?v=20261010-jump1";
+import { markNote, statMark, confirmedPadderSlugs } from "./padding.mjs?v=20261010-sync1";
 // Account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times: chart name list only.
-import { accountTimes, flairsHtml } from "./flairs.mjs?v=20261010-jump1";
+import { accountTimes, flairsHtml } from "./flairs.mjs?v=20261010-sync1";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261010-jump1";
-import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261010-jump1";
+import "./name-peek.mjs?v=20261010-sync1";
+import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261010-sync1";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
-import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-jump1";
+import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-sync1";
 // Live data: Daybreak Census only (batched, paced); Honu just for a rare history fallback.
-import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-jump1";
+import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sync1";
 import {
   censusBase,
   censusRequest,
@@ -109,7 +109,7 @@ import {
   limitConcurrency,
   tokenBucket,
   OPPONENT_TOP_N,
-} from "./census-fetch.mjs?v=20261010-jump1";
+} from "./census-fetch.mjs?v=20261010-sync1";
 
   // Player palettes (dark + light theme) live in palette.mjs (shared with ranks.html).
   const COLORS = PALETTE_DARK;
@@ -213,6 +213,9 @@ import {
   let lastAnalyzedNames = [];
   /** Subset of lastAnalyzedNames that actually loaded (graphed) last run. */
   let lastLoadedNames = [];
+  /** t351u: slugKey(input name) → graphed player from the last run (removal / re-Analyze reuse). */
+  let lastPlayerByKey = new Map();
+  let graphSyncTimer = 0;
   /** Preferred open state for shared-cache <details> (collapsed by default). */
   let sharedCacheWantOpen = false;
   /** Shared-cache letter blocks the user opened / closed (letter → open), kept across re-renders. */
@@ -1158,6 +1161,7 @@ import {
     nameTokens.push(clean);
     renderNameTokens();
     renderCacheChips();
+    scheduleGraphSync(); // t351u: a saved name joins the graph without Analyze
     return true;
   }
 
@@ -1187,6 +1191,7 @@ import {
       nameTokens = nameTokens.filter((n) => !namesMatch(n, clean));
       renderNameTokens();
       renderCacheChips();
+      scheduleGraphSync();
       return;
     }
     // Field full: the status line may be far off-screen from the cache list,
@@ -1199,6 +1204,7 @@ import {
     nameTokens = nameTokens.filter((n) => !namesEqualIgnoreCase(n, name));
     renderNameTokens();
     renderCacheChips();
+    scheduleGraphSync(); // t351u: graph + tables follow right away
   }
 
   /** Hide ShloDog placeholder whenever chips or typed text occupy the field. */
@@ -1948,10 +1954,11 @@ import {
       } catch (e) {
         if (isAbortError(e)) throw e;
         // Census busy/down: prefer the cached copy over failing the name.
-        if (isTransientKind(classifyLoadError(e))) {
-          const cached = await loadStoredNewest(name, signal, []);
-          if (cached) return { ...cached, cacheFallback: true };
-        }
+        // t351u: any live failure keeps a saved copy (shared / browser) instead
+        // of dropping a player that was already on the graph.
+        const transient = isTransientKind(classifyLoadError(e));
+        const cached = await loadStoredNewest(name, signal, []);
+        if (cached) return { ...cached, cacheFallback: transient ? true : "kept" };
         throw new NameLoadError(
           `Live fetch failed for ${JSON.stringify(name)}: ${e.message}`,
           classifyLoadError(e)
@@ -2700,8 +2707,8 @@ import {
     // Column order is fixed (sort only reorders rows). Visible by default:
     const adjVisibleCols = [
       { id: "adjs", label: "⚔️ iVi", hint: "ivi adjusted for your own kill speed (🎯🎈 ivi in the debug columns is the unadjusted score). Own KPM 0.8–1.4 = unchanged; faster earns a growing bonus; slower scales the score down (at most halved), so a slow, safe KD counts for less but never goes negative. Below zero shows as 0.", fn: (r) => r.adjs, digits: 0, floorZero: true },
-      { id: "rf", label: "🛡️ Resist", hint: "Resistance: how hard the players you die to are (Resistance Factor).", fn: (r) => r.rf, digits: 2 },
       { id: "act", label: "🏃 Activity", hint: `How much high-pressure combat you see (☠️ K/D × own KPM).`, fn: (r) => r.act, digits: 2 },
+      { id: "rf", label: "🛡️ Resist", hint: "Resistance: how hard the players you die to are (Resistance Factor).", fn: (r) => r.rf, digits: 2 },
       { id: "pvs", label: "🦁 Brave", hint: `Bravery (formerly LionHeart): 🏃 Activity × pressure slope — sustained elite volume under hard opposition.`, fn: (r) => r.pvs, digits: 2 },
       { id: "rkd", label: "☠️ K/D", hint: "Resistance-weighted K/D against the opposition mix you actually face.", fn: (r) => r.rkd, digits: 3 },
       { id: "mech", label: "⚙️ Mech%", hint: "Projected mechanized / vehicle share implied by 🛡️ Resist.", fn: (r) => r.mech, digits: 1 },
@@ -3140,7 +3147,7 @@ import {
     return players.find((p) => slugKey(p.display) === slug || namesEqualIgnoreCase(p.display, name));
   }
 
-  async function analyzeNames(names, { forceFresh = false } = {}) {
+  async function analyzeNames(names, { forceFresh = false, quiet = false } = {}) {
     if (fetching) return;
     const clean = names.map((n) => String(n).trim()).filter(Boolean);
     if (!clean.length) {
@@ -3174,7 +3181,7 @@ import {
       return;
     }
 
-    collapseSharedCache();
+    if (!quiet) collapseSharedCache();
     // Every Analyze retries previously failed names: back to pending.
     if (clearNameFailures(clean)) {
       renderNameTokens();
@@ -3193,12 +3200,14 @@ import {
     /** True once this run was cancelled (or superseded) — stop touching UI. */
     const cancelled = () => signal.aborted || activeRun !== run;
     setFetching(true);
-    setProgress(true, {
-      title: "Analyzing…",
-      done: 0,
-      total: clean.length,
-    });
-    setStatus(`Analyzing ${clean.length} player${clean.length > 1 ? "s" : ""}…`);
+    if (!quiet) {
+      setProgress(true, {
+        title: "Analyzing…",
+        done: 0,
+        total: clean.length,
+      });
+      setStatus(`Analyzing ${clean.length} player${clean.length > 1 ? "s" : ""}…`);
+    }
 
     // ETA plan: which names will need a live Census fetch (vs cached / in memory).
     const etaPlan = clean.map((n) => fresh || !isNameFetched(n));
@@ -3208,18 +3217,26 @@ import {
         clean,
         async (name) => {
           // Reuse in-memory player when names changed but this one is still present
-          if (!fresh) {
-            const existing = findLoadedPlayer(name);
-            if (existing && lastAnalyzedNames.some((n) => namesEqualIgnoreCase(n, name))) {
-              return existing;
-            }
+          // t351u: keyed by the typed name (tagged displays like "[ReSt] X" too).
+          const existing = graphedPlayerFor(name);
+          if (!fresh && existing) {
+            if (!existing.cacheFallback) return existing;
+            const { cacheFallback: _drop, ...plain } = existing; // old note, not news
+            return plain;
           }
-          const p = await loadOne(name, { fresh, run });
+          let p;
+          try {
+            p = await loadOne(name, { fresh, run });
+          } catch (e) {
+            // Never lose a player that is already graphed: keep that copy.
+            if (existing && !isAbortError(e) && !cancelled()) return { ...existing, cacheFallback: "kept" };
+            throw e;
+          }
           if (cancelled()) throw makeAbortError();
           // Only fully loaded live players reach the cache (failures, partial
           // results and cached fallbacks never do).
           if (!p.partialSkipped && !p.cacheFallback) cachePut(name, p);
-          setStatus(
+          if (!quiet) setStatus(
             `Loaded <strong>${escapeHtml(p.display)}</strong> ` +
             `<span class="src">via ${escapeHtml(sourceLabel(p.source))}</span>…`
           );
@@ -3228,11 +3245,12 @@ import {
         {
           isCancelled: cancelled,
           onStart: (name, idx, total) => {
+            if (quiet) return;
             setProgress(true, { title: "Analyzing…", done: idx, total, name, plan: etaPlan });
           },
           // Success or failure, the name counts as done so the bar/ETA advance.
           onDone: (name, idx, total) => {
-            if (cancelled()) return;
+            if (cancelled() || quiet) return;
             setProgress(true, {
               title: idx + 1 >= total ? "Finishing…" : "Analyzing…",
               done: idx + 1,
@@ -3258,6 +3276,13 @@ import {
     // Cancelled: keep previous graph as-is; lastAnalyzedNames unchanged.
     if (result.cancelled || signal.aborted) return;
 
+    // t351u: chips removed while this run was loading must not come back.
+    const nowKeys = new Set(currentNamesInField().map(slugKey));
+    const keepNow = (x) => nowKeys.has(slugKey(x.name));
+    result.loaded = result.loaded.filter(keepNow);
+    result.failed = result.failed.filter(keepNow);
+    const cleanNow = clean.filter((n) => nowKeys.has(slugKey(n)));
+
     for (const ok of result.loaded) failedNames.delete(slugKey(ok.name));
     for (const f of result.failed) {
       const key = slugKey(f.name);
@@ -3273,6 +3298,11 @@ import {
     const summary = summarizeFailures(result.failed, result.loaded.length);
 
     if (!result.loaded.length) {
+      if (!cleanNow.length) {
+        // Every name was removed mid-run: same as removing them all.
+        syncGraphToInput();
+        return;
+      }
       // Nothing usable: keep the previous graph if there is one, else idle.
       const hadGraph = players.length > 0;
       if (!hadGraph) clearChartUi();
@@ -3295,8 +3325,9 @@ import {
     // t328u: a different set of graphed players (one added / removed) → back to
     // Auto zoom so the axes refit; same set (Fetch fresh re-run) keeps manual zoom.
     if (namesSetKey(successNames) !== namesSetKey(lastLoadedNames)) resetYZoom({ redraw: false });
-    lastAnalyzedNames = clean.slice();
+    lastAnalyzedNames = cleanNow.slice();
     lastLoadedNames = successNames.slice();
+    lastPlayerByKey = new Map(result.loaded.map((x) => [slugKey(x.name), x.player]));
     drawChart(players);
     // Recent / share link only ever carry names that actually loaded.
     saveLastComparison(successNames);
@@ -3314,7 +3345,61 @@ import {
       setStatus(notes, notes ? "warn census-note" : "");
     }
     // Results are in: glide the input/header up out of view.
-    scrollToResults();
+    if (!quiet) scrollToResults();
+    // Chips added while loading: bring them in too (cached → no button press).
+    scheduleGraphSync();
+  }
+
+  /** The player graphed last run for this typed name (slug match, tag-insensitive). */
+  function graphedPlayerFor(name) {
+    if (!players.length) return null;
+    const key = slugKey(name);
+    return (key && lastPlayerByKey.get(key)) || findLoadedPlayer(name) || null;
+  }
+
+  /** Chip change → keep graph / tables / URL / 🏆 link in step (t351u). */
+  function scheduleGraphSync() {
+    clearTimeout(graphSyncTimer);
+    graphSyncTimer = setTimeout(syncGraphToInput, 0);
+  }
+
+  /**
+   * t351u: the graph always shows exactly the chips. Removing a chip redraws
+   * right away from players already in memory (no fetch, no reload); adding a
+   * name that is saved (shared or browser cache) loads it quietly. A name that
+   * would need a live Census fetch waits for 🔍 Analyze. Only acts once a graph
+   * exists; never while a run is loading (that run re-checks the chips at the end).
+   */
+  function syncGraphToInput() {
+    if (fetching || activeRun || !players.length) return;
+    const names = nameTokens.slice();
+    if (!names.length) {
+      clearChartUi();
+      syncUrlNames([]);
+      forgetLastComparison();
+      return;
+    }
+    if (namesSetKey(names) === namesSetKey(lastLoadedNames) && names.every((n) => graphedPlayerFor(n))) return;
+    const have = names.map((n) => graphedPlayerFor(n));
+    if (have.every(Boolean)) {
+      const keys = names.map(slugKey);
+      if (namesSetKey(names) !== namesSetKey(lastLoadedNames)) resetYZoom({ redraw: false });
+      players = have;
+      lastAnalyzedNames = names.slice();
+      lastLoadedNames = names.slice();
+      lastPlayerByKey = new Map(keys.map((k, i) => [k, have[i]]));
+      drawChart(players);
+      saveLastComparison(names);
+      syncUrlNames(names);
+      renderNameTokens();
+      renderCacheChips();
+      clearGraphReadyHint();
+      return;
+    }
+    const missing = names.filter((n, i) => !have[i]);
+    if (missing.every((n) => !getNameFailure(n) && (findSharedEntry(n) || cacheGet(n)))) {
+      analyzeNames(names, { quiet: true });
+    }
   }
 
   /**
@@ -3508,7 +3593,8 @@ import {
   /** Amber status block for names that could not be fetched. */
   /** Friendly notes when Census was busy: cached copies served / opponents left out. */
   function censusNotesHtml(loaded) {
-    const fb = loaded.filter((x) => x.player && x.player.cacheFallback).map((x) => x.player.display || x.name);
+    const fb = loaded.filter((x) => x.player && x.player.cacheFallback === true).map((x) => x.player.display || x.name);
+    const kept = loaded.filter((x) => x.player && x.player.cacheFallback === "kept").map((x) => x.player.display || x.name);
     const part = loaded.filter((x) => x.player && x.player.partialSkipped);
     const out = [];
     if (fb.length) {
@@ -3516,6 +3602,12 @@ import {
         `<span class="warn">⚠️ Daybreak Census is busy or down — showing cached data for ` +
         `${fb.map((n) => `<strong>${escapeHtml(n)}</strong>`).join(", ")}.</span> ` +
         `<button type="button" class="census-retry-btn">↻ Try live again</button>`
+      );
+    }
+    if (kept.length) {
+      out.push(
+        `<span class="warn">⚠️ Couldn't refresh ` +
+        `${kept.map((n) => `<strong>${escapeHtml(n)}</strong>`).join(", ")} — kept the saved copy.</span>`
       );
     }
     for (const x of part) {
@@ -3725,6 +3817,7 @@ import {
         clearNameFailures([popped]);
         renderNameTokens();
         renderCacheChips();
+        scheduleGraphSync();
       }
     });
 

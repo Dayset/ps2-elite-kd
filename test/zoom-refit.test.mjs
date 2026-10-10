@@ -14,7 +14,7 @@ const read = (f) => fs.readFileSync(path.join(root, f), "utf8");
 
 describe("Auto zoom when the analyzed set changes (t328u)", () => {
   it("static wiring", () => {
-    assert.match(read("app.js"), /if \(namesSetKey\(successNames\) !== namesSetKey\(lastLoadedNames\)\) resetYZoom\(\{ redraw: false \}\);\s*lastAnalyzedNames = clean\.slice\(\);/);
+    assert.match(read("app.js"), /if \(namesSetKey\(successNames\) !== namesSetKey\(lastLoadedNames\)\) resetYZoom\(\{ redraw: false \}\);\s*lastAnalyzedNames = clean(?:Now)?\.slice\(\);/);
   });
 
   const chrome = ["google-chrome", "chromium", "chromium-browser", "google-chrome-stable"].find((b) => {
