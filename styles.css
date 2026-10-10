@@ -2113,7 +2113,6 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
  * t356u: 🏆 Rankings on the main page (was ranks.html; rankings.mjs).
  * ====================================================================== */
 .rankings { margin: 1.25rem 0 0.5rem; }
-.rk-title { font-size: 1.2rem; margin: 0 0 0.6rem; font-weight: 700; }
 .ranks-meta { color: var(--dim); font-size: 0.85rem; margin: 0 0 0.5rem; }
 .ranks-meta:empty { display: none; }
 /* 🏅 where the selected players rank (rank # + percentile per metric) */
@@ -2266,3 +2265,7 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
 .rk-table-section[open] > summary { margin-bottom: 0.5rem; }
 .rk-table-section .rk-table-count { color: var(--dim); font-weight: 400; font-size: 0.85rem; }
 .rk-table-section .ranks-table-wrap { border-radius: 6px; }
+
+/* t358u: 🏅 positions block folds like the chart / table */
+.rk-pos-section[open] > summary { margin-bottom: 0.5rem; }
+.rk-pos-section .rk-positions { margin: 0; }

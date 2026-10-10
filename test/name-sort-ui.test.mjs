@@ -19,9 +19,13 @@ test("one page (t356u): no 🏆 / › buttons; order controls → stats → grap
   // t341u/t342u: 📦 Shared cache line with 🗑️ / ☀️ is the first row of the controls, above the names box.
   assert.match(index, /<div class="controls">\s*<div class="cache-row">\s*<div id="cacheChips"[\s\S]*?<span class="cache-row-end">[\s\S]*?id="wipeLocalBtn"[\s\S]*?id="themeToggle"[\s\S]*?<\/span>\s*<\/div>\s*<div id="namesBox"/);
   const at = (re) => { const m = index.search(re); assert.ok(m >= 0, String(re)); return m; };
-  const order = [/id="namesBox"/, /id="analyzeBtn"/, /id="statsPanel"/, /<svg id="chart"/, /What about vehicles\?/, /<section id="rankings"/, /id="rkPositions"/, /id="distSection"/, /id="ranksSearch"/, /id="ranksTable"/, /<footer>/, /id="ranksMeta"/].map(at);
+  const order = [/id="namesBox"/, /id="analyzeBtn"/, /id="statsPanel"/, /<svg id="chart"/, /What about vehicles\?/, /<section id="rankings"/, /id="distSection"/, /id="rkPosSection"/, /id="rkPositions"/, /id="ranksTableSection"/, /id="ranksSearch"/, /id="ranksTable"/, /<footer>/, /id="ranksMeta"/].map(at);
   assert.deepEqual(order, order.slice().sort((a, b) => a - b));
   assert.match(app, /import\("\.\/rankings\.mjs\?v=/, "Rankings load lazily");
+  // t358u: no "🏆 Rankings" title; positions + big table folded by default.
+  assert.doesNotMatch(index, /🏆 Rankings|class="rk-title"/);
+  assert.match(index, /<details id="rkPosSection" class="dist-section rk-pos-section">/);
+  assert.match(index, /<details id="ranksTableSection" class="dist-section rk-table-section">/);
 });
 test("shared-cache letters are collapsible blocks with counts", () => {
   assert.match(app, /block\.className = "chip-group"/);

@@ -82,8 +82,9 @@ describe("Rankings filter typing (t324u)", () => {
         const q0 = rows[0][qi], q1 = rows[1][qi];
         await send("Page.navigate", { url: `http://127.0.0.1:${port}/index.html?names=${encodeURIComponent(q0)},${encodeURIComponent(q1)}#rankings` }, sessionId);
         await ev(`new Promise(async (r) => { for (let t = 0; t < 400 && !document.querySelector("#ranksBody tr[data-q]"); t++) await new Promise((q) => setTimeout(q, 50)); r(1); })`);
+        await ev(`(document.getElementById("ranksTableSection").open = true, 1)`); // folded by default (t358u)
         // Let the initial progressive render finish (row count stable).
-        await ev(`new Promise(async (r) => { let n = -1; for (let t = 0; t < 100; t++) { await new Promise((q) => setTimeout(q, 150)); const m = document.querySelectorAll("#ranksBody tr").length; if (m === n) break; n = m; } r(1); })`);
+        await ev(`new Promise(async (r) => { let n = -1; for (let t = 0; t < 100; t++) { await new Promise((q) => setTimeout(q, 300)); const m = document.querySelectorAll("#ranksBody tr").length; if (m === n) break; n = m; } r(1); })`);
         await ev(`(() => { const el = document.getElementById("ranksSearch"); window.__el = el; el.focus(); window.__mut = 0; new MutationObserver(() => { __mut++; }).observe(document.getElementById("ranksBody"), { childList: true }); return 1; })()`);
         for (const ch of word) {
           const code = /[a-z]/.test(ch) ? "Key" + ch.toUpperCase() : "";

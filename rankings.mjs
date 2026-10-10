@@ -4,18 +4,18 @@
 // Everything Rankings had stays: fresh-fetch ↻ rows, band dividers, marks,
 // hidden players left out (ranks.json), 📊 distribution with jumps.
 
-import { compareByCharName } from "./analyze-run.mjs?v=20261010-one1";
-import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits, binJumpTarget } from "./dist.mjs?v=20261010-one1";
-import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261010-one1";
-import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261010-one1";
-import { paletteColor } from "./palette.mjs?v=20261010-one1";
-import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-one1";
-import { deskUiScale } from "./desk-scale.mjs?v=20261010-one1";
-import { matchPicks } from "./pick-sync.mjs?v=20261010-one1";
-import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-one1";
-import { mergeFreshRows } from "./rank-row.mjs?v=20261010-one1";
-import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-one1";
-import { confirmedPadderSlugs } from "./padding.mjs?v=20261010-one1";
+import { compareByCharName } from "./analyze-run.mjs?v=20261010-pos1";
+import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits, binJumpTarget } from "./dist.mjs?v=20261010-pos1";
+import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261010-pos1";
+import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261010-pos1";
+import { paletteColor } from "./palette.mjs?v=20261010-pos1";
+import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-pos1";
+import { deskUiScale } from "./desk-scale.mjs?v=20261010-pos1";
+import { matchPicks } from "./pick-sync.mjs?v=20261010-pos1";
+import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-pos1";
+import { mergeFreshRows } from "./rank-row.mjs?v=20261010-pos1";
+import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-pos1";
+import { confirmedPadderSlugs } from "./padding.mjs?v=20261010-pos1";
 
 /**
  * @param {{ getNames: () => string[], toggleName: (name: string, anchor: Element, add: boolean) => void }} host
@@ -384,7 +384,12 @@ export function initRankings(host) {
     if (!box || !data) return;
     const names = host.getNames();
     const byQ = new Map(data.rows.map((r) => [r.query, r]));
-    const rows = [...picked.keys()].map((q) => byQ.get(q)).filter(Boolean);
+    // Colours follow the graph (names-box order); rows sort by ⚔️ iVi rank (t358u).
+    const picks = [...picked.keys()].map((q) => byQ.get(q)).filter(Boolean);
+    const colorOf = new Map(picks.map((r, i) => [r.query, i]));
+    const ivi = (r) => (fin(r.adjs) ? r.adjs : -Infinity);
+    const rows = picks.slice().sort((a, b) => ivi(b) - ivi(a) || compareByCharName(a.name, b.name));
+    if ($("rkPosCount")) $("rkPosCount").textContent = picks.length ? `(${picks.length})` : "";
     const missing = names.filter((n) => !matchPicks([n], rows, 1).length);
     if (!rows.length && !missing.length) {
       box.innerHTML = `<p class="rk-pos-hint">Add players in the names box (or tick ✅ in the table below) to see where they rank.</p>`;
@@ -392,7 +397,8 @@ export function initRankings(host) {
     }
     const light = document.documentElement.getAttribute("data-theme") === "light";
     const head = `<tr><th scope="col" class="rk-pos-name">Player</th>` + VISIBLE.map((c) => `<th scope="col" title="${esc(c.tip || c.label)}">${esc(c.label)}</th>`).join("") + `</tr>`;
-    const body = rows.map((r, i) => {
+    const body = rows.map((r) => {
+      const i = colorOf.get(r.query);
       const cells = VISIBLE.map((c) => {
         const v = r[c.id];
         if (!fin(v)) return r.thin && c.thinTip ? `<td class="thin-sample" title="${esc(MIN_FIGHTS_TIP)}">—</td>` : `<td>—</td>`;
@@ -513,14 +519,17 @@ export function initRankings(host) {
   let flashTimer = 0;
   /* t357u: the table block is a <details>; open / closed is remembered.
    * Chart jumps (bar / name label / 🏅 name) open it before scrolling. */
-  const LS_TABLE_OPEN = "ps2-elite-kd-ranks-table-open";
-  const tableSection = $("ranksTableSection");
-  if (tableSection) {
-    try { if (localStorage.getItem(LS_TABLE_OPEN) === "0") tableSection.open = false; } catch {}
-    tableSection.addEventListener("toggle", () => {
-      try { localStorage.setItem(LS_TABLE_OPEN, tableSection.open ? "1" : "0"); } catch {}
+  // t358u: folded by default; "1" = the user opened it last time.
+  function rememberOpen(el, key) {
+    if (!el) return;
+    try { el.open = localStorage.getItem(key) === "1"; } catch {}
+    el.addEventListener("toggle", () => {
+      try { localStorage.setItem(key, el.open ? "1" : "0"); } catch {}
     });
   }
+  const tableSection = $("ranksTableSection");
+  rememberOpen(tableSection, "ps2-elite-kd-ranks-table-open");
+  rememberOpen($("rkPosSection"), "ps2-elite-kd-ranks-pos-open");
   function openTable() {
     if (tableSection && !tableSection.open) tableSection.open = true;
   }

@@ -128,6 +128,7 @@ describe("sort keeps horizontal scroll at 390px (t329u)", () => {
     await withPage(async ({ ev, nav }) => {
       await nav("index.html#rankings");
       await ev(`new Promise(async (r) => { for (let t = 0; t < 400 && !document.querySelector("#ranksBody tr[data-q]"); t++) await new Promise((q) => setTimeout(q, 50)); r(1); })`);
+      await ev(`new Promise((r) => { document.getElementById("ranksTableSection").open = true; setTimeout(() => r(1), 200); })`); // folded by default (t358u)
       const s = await ev(clickFar(".ranks-table-wrap", "#ranksHead th.sortable"));
       assert.ok(s.scrollable && s.before > 0, JSON.stringify(s));
       assert.ok(s.after > 0 && s.visible, JSON.stringify(s));
@@ -348,14 +349,16 @@ describe("Rankings: removing a names-box chip unticks, unmarks and updates ?name
   });
 });
 
-describe("Rankings table block folds away and remembers it (t357u)", () => {
+describe("Rankings table / positions fold away and remember it (t357u/t358u)", () => {
   it("closed state survives a reload; a chart bar click opens it and scrolls", { skip: !chrome, timeout: 120000 }, async () => {
     await withPage(async ({ ev, nav }) => {
       const ready = `new Promise(async (res) => { for (let t = 0; t < 400 && !document.querySelector("#distSvg .dist-hit"); t++) await new Promise((r) => setTimeout(r, 50)); res(1); })`;
       await nav("index.html#rankings");
       await ev(ready);
-      assert.equal(await ev(`document.getElementById("ranksTableSection").open`), true, "open by default");
-      await ev(`(async () => { document.querySelector("#ranksTableSection > summary").click(); await new Promise((r) => setTimeout(r, 200)); })()`);
+      assert.equal(await ev(`document.getElementById("ranksTableSection").open`), false, "folded by default (t358u)");
+      assert.equal(await ev(`document.getElementById("rkPosSection").open`), false, "positions folded by default (t358u)");
+      // Open, then close again → remembered closed.
+      await ev(`(async () => { const s = document.querySelector("#ranksTableSection > summary"); s.click(); await new Promise((r) => setTimeout(r, 200)); s.click(); await new Promise((r) => setTimeout(r, 200)); })()`);
       assert.equal(await ev(`localStorage.getItem("ps2-elite-kd-ranks-table-open")`), "0");
       await nav("index.html#rankings");
       await ev(ready);
@@ -364,5 +367,25 @@ describe("Rankings table block folds away and remembers it (t357u)", () => {
       const st = await ev(`({ open: document.getElementById("ranksTableSection").open, st: document.getElementById("ranksScroll").scrollTop, jump: !!window.__lastBinJump })`);
       assert.ok(st.open && st.jump && st.st > 0, JSON.stringify(st));
     }, { width: 1400, height: 900, mobile: false });
+  });
+});
+
+describe("🏅 positions table sorted by ⚔️ iVi, #1 on top (t358u)", () => {
+  it("rows follow iVi (highest first), not names-box order", { skip: !chrome, timeout: 120000 }, async () => {
+    const rk = JSON.parse(fs.readFileSync(path.join(root, "data/ranks.json"), "utf8"));
+    const qi = rk.cols.indexOf("query"), ai = rk.cols.indexOf("adjs");
+    const withIvi = rk.rows.filter((r) => Number.isFinite(r[ai]));
+    if (withIvi.length < 3) return;
+    const srt = withIvi.slice().sort((a, b) => b[ai] - a[ai]);
+    // Lowest, middle, highest iVi typed in that (worst-first) order.
+    const picks = [srt[srt.length - 1], srt[Math.floor(srt.length / 2)], srt[0]].map((r) => String(r[qi]));
+    await withPage(async ({ ev, nav }) => {
+      await nav(`index.html?names=${picks.map(encodeURIComponent).join(",")}#rankings`);
+      await ev(`new Promise(async (res) => { for (let t = 0; t < 400 && document.querySelectorAll("#rkPositions .rk-pos-jump").length < 3; t++) await new Promise((r) => setTimeout(r, 50)); res(1); })`);
+      const st = await ev(`({ order: [...document.querySelectorAll("#rkPositions .rk-pos-jump")].map((a) => a.dataset.q.toLowerCase()), count: document.getElementById("rkPosCount").textContent, open: document.getElementById("rkPosSection").open })`);
+      assert.deepEqual(st.order, picks.slice().reverse().map((q) => q.toLowerCase()), "highest iVi first");
+      assert.equal(st.count, "(3)");
+      assert.equal(st.open, false, "folded by default");
+    });
   });
 });

@@ -39,7 +39,7 @@
     "codeRepository": "https://github.com/Dayset/ps2-elite-kd"
   }
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261010-one1" />
+  <link rel="stylesheet" href="styles.css?v=20261010-pos1" />
 </head>
 <body class="main-page">
   <div class="controls">
@@ -131,10 +131,8 @@
   <details class="pooled-note fold-note"><summary>♿ What about vehicles?</summary><p>Vehicle and infantry kills are pooled together for now, so vehicle mains may look off in the graph and stats. Infantry-only numbers are coming later.</p></details>
 
   <!-- t356u: Rankings (was ranks.html) — rankings.mjs fills this lazily after the graph. -->
-  <section id="rankings" class="rankings" aria-labelledby="rankingsTitle">
-    <h2 id="rankingsTitle" class="rk-title">🏆 Rankings</h2>
+  <section id="rankings" class="rankings" aria-label="Rankings">
     <div id="ranksStatus" class="ranks-status" role="status"></div>
-    <div id="rkPositions" class="rk-positions" aria-live="polite"></div>
     <details id="distSection" class="dist-section" open>
       <summary>📊 Distribution</summary>
       <div class="dist-controls">
@@ -147,8 +145,13 @@
       </div>
       <div class="dist-note">Bars: % of players per value range (left axis). Line: cumulative % of players below (right axis). Hover / tap a bar for details; click it (tap twice on touch) to jump to those players in the table. Your players from the names box — or a table filter with ≤ 5 matches — are marked; click a name to see its row.</div>
     </details>
-    <!-- t357u: the big table folds away like the chart (state remembered). -->
-    <details id="ranksTableSection" class="dist-section rk-table-section" open>
+    <!-- t358u: your players' positions under the chart, folded by default (state remembered). -->
+    <details id="rkPosSection" class="dist-section rk-pos-section">
+      <summary>🏅 Your players' positions <span id="rkPosCount" class="rk-table-count"></span></summary>
+      <div id="rkPositions" class="rk-positions" aria-live="polite"></div>
+    </details>
+    <!-- t357u/t358u: the big table folds away like the chart, folded by default (state remembered). -->
+    <details id="ranksTableSection" class="dist-section rk-table-section">
       <summary>📋 All players <span id="ranksTableCount" class="rk-table-count"></span></summary>
     <div class="rk-filter-row">
       <input id="ranksSearch" type="search" placeholder="Filter the table by name…" aria-label="Filter the Rankings table by player name" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="search" />
@@ -180,6 +183,6 @@
     </details>
   </footer>
 
-  <script type="module" src="app.js?v=20261010-one1"></script>
+  <script type="module" src="app.js?v=20261010-pos1"></script>
 </body>
 </html>
