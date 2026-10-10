@@ -54,3 +54,29 @@ describe("build-ranks", () => {
     assert.ok(typeof shlo[4] === "number" && shlo[4] > 0);
   });
 });
+
+import { mergeFreshRows } from "../rank-row.mjs";
+describe("Rankings use this browser's fresher copy (t338u)", () => {
+  it("recomputes only players whose browser copy is newer; others stay shared", () => {
+    const raw = JSON.parse(fs.readFileSync(path.join(dataDir, "players", "brackiense.json"), "utf8"));
+    const old = rankRow(raw, { slug: "brackiense", savedAt: 1000 });
+    const other = old.slice(); other[0] = "Other"; other[1] = "Other"; other[2] = "other";
+    const payload = { cols: RANK_COLS.slice(), rows: [old, other] };
+    const p = raw.player || raw;
+    const tweaked = { ...p, global_kd: (+p.global_kd || 1) * 2 };
+    const now = Date.now();
+    const store = { brackiense: { name: "BrackieNSE", savedAt: now, fetchedAt: now, player: tweaked } };
+    const { rows, fresh } = mergeFreshRows(payload, store, { now });
+    assert.equal(fresh.get("brackiense"), now);
+    assert.equal(fresh.size, 1);
+    assert.equal(rows[1], other);
+    assert.equal(rows[0][3], now);
+    const kd = RANK_COLS.indexOf("kd");
+    assert.ok(Math.abs(rows[0][kd] - old[kd] * 2) < 1e-3 * Math.max(1, old[kd]));
+    // Older browser copy → shared row kept.
+    const stale = { brackiense: { name: "BrackieNSE", savedAt: now, fetchedAt: 500, player: tweaked } };
+    const r2 = mergeFreshRows(payload, stale, { now });
+    assert.equal(r2.fresh.size, 0);
+    assert.equal(r2.rows[0], old);
+  });
+});

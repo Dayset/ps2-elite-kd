@@ -14,7 +14,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261010-radar1" />
+  <link rel="stylesheet" href="styles.css?v=20261010-fresh1" />
   <style>
     body { overflow: auto; }
     .st-wrap { max-width: 960px; margin: 0 auto; padding: 18px 16px 40px; }
@@ -422,9 +422,9 @@
         predicted = q;
         var sw = d.sweep || {}, ls = d.lastSweep || {};
         $("discCount").textContent = n + " / " + d.cap;
-        $("discCount").title = n + " cached of cap " + d.cap + " (3000, then 6000 once caught up)";
+        $("discCount").title = n + " cached of cap " + d.cap + " (steps 3000 → 6000 → 9000 → 12000, next one once caught up)";
         $("disc").innerHTML =
-          "<div>Cached <strong>" + esc(n) + "</strong> · cap <strong>" + esc(d.cap) + "</strong> (steps 3000 → 6000) · queued <strong>" + esc(q.length) + "</strong> (" +
+          "<div>Cached <strong>" + esc(n) + "</strong> · cap <strong>" + esc(d.cap) + "</strong> (steps 3000 → 6000 → 9000 → 12000) · queued <strong>" + esc(q.length) + "</strong> (" +
             esc(q.filter(function (x) { return x.isNew; }).length) + " new accounts)</div>" +
           '<div class="st-label">Login sweep (Census, PC): ' + (sw.cursor != null
             ? "in progress, at logins from " + when(sw.cursor * 1000)
@@ -466,16 +466,16 @@
        🌾 padding + † "adjusted" + the 🧪 outlier guard (grouped by player) go to 📉 Chart anomalies. Uses the
        same metrics as the main tables (player-metrics.mjs). Leads for review, not proof. -->
   <script type="module">
-    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261010-radar1";
-    import { reviewFlags, reviewRuleText, anomalyRuleText, paddingRuleText } from "./red-flags.mjs?v=20261010-radar1";
-    import { groupOutliers } from "./outlier-guard.mjs?v=20261010-radar1";
-    import { classifyBins, CHART_LABELS } from "./bins.mjs?v=20261010-radar1";
-    import { forensicsRuleText } from "./session-forensics.mjs?v=20261010-radar1";
-    import { sprout, sampleEvents, sproutRuleText, farmAccount, farmAccountRuleText } from "./sprouts.mjs?v=20261010-radar1";
-    import { reviewDecision, isNotFarm, farmListEntry } from "./padding.mjs?v=20261010-radar1";
-    import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261010-radar1";
-    import "./name-peek.mjs?v=20261010-radar1"; // full-name popup for truncated .nm names
-    import { radarProfileUrl, radarBadge, radarPriority } from "./radar.mjs?v=20261010-radar1";
+    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261010-fresh1";
+    import { reviewFlags, reviewRuleText, anomalyRuleText, paddingRuleText } from "./red-flags.mjs?v=20261010-fresh1";
+    import { groupOutliers } from "./outlier-guard.mjs?v=20261010-fresh1";
+    import { classifyBins, CHART_LABELS } from "./bins.mjs?v=20261010-fresh1";
+    import { forensicsRuleText } from "./session-forensics.mjs?v=20261010-fresh1";
+    import { sprout, sampleEvents, sproutRuleText, farmAccount, farmAccountRuleText } from "./sprouts.mjs?v=20261010-fresh1";
+    import { reviewDecision, isNotFarm, farmListEntry } from "./padding.mjs?v=20261010-fresh1";
+    import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261010-fresh1";
+    import "./name-peek.mjs?v=20261010-fresh1"; // full-name popup for truncated .nm names
+    import { radarProfileUrl, radarBadge, radarPriority } from "./radar.mjs?v=20261010-fresh1";
 
     const POLL_MS = 30 * 1000;
     const CONCURRENCY = 6;
@@ -661,7 +661,11 @@
       if (!th) return;
       const k = th.dataset.sort;
       sproutSort = sproutSort.key === k ? { key: k, dir: -sproutSort.dir } : { key: k, dir: k === "adjs" || k === "name" ? 1 : -1 };
+      const sc = $("sprouts").querySelector(".st-scroll");
+      const left = sc ? sc.scrollLeft : 0;
       renderSprouts();
+      const sc2 = $("sprouts").querySelector(".st-scroll");
+      if (sc2) sc2.scrollLeft = left; // keep the sideways scroll on phones
     });
 
     /* ---------- 🤖 Likely farm accounts (moved out of 🌱; sprouts.mjs farmAccount) ---------- */

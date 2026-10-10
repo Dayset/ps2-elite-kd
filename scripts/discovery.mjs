@@ -30,7 +30,7 @@ export const SWEEP_OVERLAP_S = 2 * 3600;
 export const QUEUE_KEEP_MS = 14 * DAY_MS;
 export const QUEUE_MAX = 10000;
 /** Cap steps: stay at a step until caught up, then move to the next. */
-export const CAP_STEPS = [3000, 6000];
+export const CAP_STEPS = [3000, 6000, 9000, 12000];
 
 /* ------------------------------------------------------------ refresh tiers */
 

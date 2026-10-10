@@ -17,7 +17,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { normalizePlayer, playerMetrics, shownValue } from "../player-metrics.mjs";
+import { normalizePlayer, playerMetrics } from "../player-metrics.mjs";
 import { reviewFlags } from "../red-flags.mjs";
 import { classifyBins } from "../bins.mjs";
 import { markNote, statMark, confirmedPadderSlugs, isFarmListed, isNotFarm, farmListEntry } from "../padding.mjs";
@@ -40,46 +40,10 @@ export function readXp(dataDir, slug) {
 /** Confirmed-cheater reference + top legit players shown side by side on build-log (🧪 Session stats). */
 export const SESSION_REFERENCE_LEGIT = Object.freeze(["yeezy", "zyr0sncx", "xclonekano", "shlodog", "justv6me"]);
 
-/** Metric ids (same ids as the app.js stats columns). */
-export const METRIC_COLS = Object.freeze([
-  // ✨ Adjusted (visible by default, main-table order)
-  "adjs", "rf", "act", "pvs", "rkd", "mech", "inflation",
-  // older debug columns
-  "adj", "ekpm", "own", "coi", "slope",
-  // 📊 Public
-  "kd", "kpm", "ownKpm", "acc", "hsr", "ivi",
-]);
-/**
- * Values are stored as SHOWN on the main page (shownValue): opponent-sample
- * metrics (THIN_METRICS) are null below MIN_FIGHTS, so ranks / sorting /
- * distributions skip them. Trailing "thin" = 1 when the sample is below
- * MIN_FIGHTS (ranks.html hover text). "mark" = "padding" ("*") / "adjusted" ("†") / null
- * (padding.mjs statMark); "farm" = note on farm-account kills excluded (null when none).
- * "top" = opponents in the sample (50 for older files, 200 for new fetches).
- * "created" / "last" = Census account creation / last activity, UNIX seconds
- * (not shown on Rankings; null when the cache file has no times yet).
- */
-export const RANK_COLS = Object.freeze(["name", "query", "slug", "savedAt", ...METRIC_COLS, "thin", "mark", "farm", "top", "created", "last"]);
-
-const round6 = (v) => (typeof v === "number" && Number.isFinite(v) ? Math.round(v * 1e6) / 1e6 : null);
-
-/** "[TAG] Name" → "Name" (what ?names= / Analyze expects). */
-export function bareName(display) {
-  return String(display || "").replace(/^\s*\[[^\]]*\]\s*/, "").trim();
-}
-
-/**
- * One ranks row from a raw cached player JSON (same shape as data/players/*.json).
- * Returns null when the file has no usable player.
- */
-export function rankRow(raw, { slug = "", savedAt = null, confirmed = false } = {}) {
-  if (!raw) return null;
-  const p = normalizePlayer(raw);
-  if (!p || !p.display || p.display === "?") return null;
-  const m = playerMetrics(p);
-  const t = savedAt != null ? +savedAt : +raw.savedAt || null;
-  return [p.display, bareName(p.display) || p.display, slug, t, ...METRIC_COLS.map((k) => round6(shownValue(m, k))), m.thin ? 1 : 0, statMark(m.farm, undefined, { confirmed }).kind || null, markNote(m.farm, { confirmed }) || null, p.top, (p.times && p.times.created) || null, (p.times && p.times.last) || null];
-}
+// Row format + rankRow live in ../rank-row.mjs (browser-safe: ranks.html
+// recomputes a player's row from a fresher browser copy with the same code).
+export { METRIC_COLS, RANK_COLS, bareName, rankRow } from "../rank-row.mjs";
+import { METRIC_COLS, RANK_COLS, rankRow } from "../rank-row.mjs";
 
 /** data/reviewed.json → Set of slugs confirmed as stat padders (decision "padding"; missing file = none). */
 export function readConfirmedPadders(dataDir) {

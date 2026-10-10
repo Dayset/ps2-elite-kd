@@ -11,7 +11,7 @@ name: Refresh shared cache
 # Discovery (Census only): a daily login sweep (character.times.last_login,
 # keyset-paged) + fight filter (characters_stat_history, >= 100 kills+deaths in
 # the last 7 days, 100 ids per call); queue in data/discovery.json, new
-# accounts that play first. Cap 3000, raised to 6000 once caught up. The
+# accounts that play first. Cap steps 3000 → 6000 → 9000 → 12000, next step once caught up. The
 # one-time format sync backlog goes first; new names only get leftover time
 # until it is done. Refresh tiers by last activity: weekly / 2 weeks / monthly
 # / never (🪦 > 1 year). Honu (assists, XP) is capped per day (HONU_DAILY_CAP).
