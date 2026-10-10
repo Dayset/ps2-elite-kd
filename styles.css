@@ -1969,3 +1969,16 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
   }
   #legend { max-width: calc(62vh * 1000 / 580 + 0.5rem + 2px); margin-inline: auto; }
 }
+/* t313u: main page — one shared desktop content width for header / controls,
+ * stats table, graph, legend and footer, all aligned. The graph fills it, so
+ * the width is set by the graph's height cap: svg height = width × 0.58 ≤ 68vh
+ * (2560×1440 → ~1700px wide graph, 1920×1080 → ~1280px), in between the old
+ * graph (62vh) and the old 100rem header. Other pages keep the 100rem rule. */
+@media (min-width: 1400px) {
+  body.main-page {
+    --desk-w: calc(68vh * 1000 / 580 + 0.5rem + 2px);
+    max-width: calc(var(--desk-w) + 2.5rem); /* + body side padding (border-box) */
+  }
+  body.main-page .chart-wrap,
+  body.main-page #legend { max-width: none; }
+}

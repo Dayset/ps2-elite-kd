@@ -24,7 +24,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261009-analyzeleft" />
+  <link rel="stylesheet" href="styles.css?v=20261009-deskwidth" />
   <style>
     /* Ranks page: one long sortable table of every cached player. */
     body.ranks-page { overflow-x: hidden; }
@@ -39,13 +39,23 @@
       display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem;
       margin: 0 0 0.75rem;
     }
-    .ranks-toolbar input[type="search"] {
-      flex: 1 1 14rem; min-width: 10rem; max-width: 28rem;
-      font: inherit; font-size: 0.95rem; padding: 0.45rem 0.75rem;
-      border-radius: 8px; border: 1px solid var(--border); background: var(--input-bg);
-      color: var(--text); box-sizing: border-box; height: var(--ctl-h, 2.9rem);
+    /* Picked players as chips inside the filter field, like the main page's names box (t314u). */
+    .rk-pick-box {
+      flex: 1 1 14rem; min-width: 10rem; max-width: 40rem;
+      display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem;
+      padding: 0.25rem 0.45rem; min-height: var(--ctl-h, 2.9rem); box-sizing: border-box;
+      border-radius: 8px; border: 1px solid var(--border); background: var(--input-bg); cursor: text;
     }
-    .ranks-toolbar input[type="search"]:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .rk-pick-box:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .rk-chips { display: contents; }
+    .rk-chips .name-token .rk-chip-x { opacity: 0.7; margin-left: 0.1rem; }
+    .rk-chips .name-token:hover .rk-chip-x { opacity: 1; }
+    .ranks-toolbar input[type="search"] {
+      flex: 1 1 6rem; min-width: 6rem;
+      font: inherit; font-size: 0.95rem; padding: 0.2rem 0.3rem;
+      border: none; background: transparent; outline: none;
+      color: var(--text); box-sizing: border-box;
+    }
     .ranks-toolbar .ranks-compare {
       font: inherit; font-weight: 700; font-size: 0.95rem; padding: 0 1.1rem;
       height: var(--ctl-h, 2.9rem); border-radius: 8px; border: 1px solid #6cb2ff;
@@ -249,7 +259,10 @@
 
     <div class="ranks-toolbar">
       <a id="backLink" href="index.html" class="back-btn" aria-label="Back to player search" data-hint="Back to player search"><svg class="back-chev" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M15 4.5 7.5 12 15 19.5" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="back-ico" aria-hidden="true">🔍</span></a>
-      <input id="ranksSearch" type="search" placeholder="Filter names…" aria-label="Filter player names" autocomplete="off" spellcheck="false" />
+      <div id="ranksPickBox" class="rk-pick-box" role="group" aria-label="Picked players and name filter">
+        <span id="ranksChips" class="rk-chips"></span>
+        <input id="ranksSearch" type="search" placeholder="Filter names…" aria-label="Filter player names" autocomplete="off" spellcheck="false" />
+      </div>
       <button id="ranksCompare" type="button" class="ranks-compare" disabled title="Open the main page with the checked players (up to 10)">Compare</button>
       <span id="ranksPicked" class="ranks-picked" aria-live="polite">0 / 10</span>
       <button id="ranksClearPicks" type="button" class="ranks-clear-picks" hidden title="Untick all checked players" aria-label="Clear checked players">✕ Clear</button>
@@ -301,15 +314,15 @@
 
 
   <script type="module">
-    import "./name-peek.mjs?v=20261009-analyzeleft";
-    import { compareByCharName } from "./analyze-run.mjs?v=20261009-analyzeleft";
-    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits, binJumpTarget } from "./dist.mjs?v=20261009-analyzeleft";
-    import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261009-analyzeleft";
-    import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261009-analyzeleft";
-    import { paletteColor } from "./palette.mjs?v=20261009-analyzeleft";
-    import { deskUiScale } from "./desk-scale.mjs?v=20261009-analyzeleft";
-    import { PICK_PARAM, picksFromSearch, matchPicks, analyzeHref, MAIN_PENDING_KEY } from "./pick-sync.mjs?v=20261009-analyzeleft";
-    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-analyzeleft";
+    import "./name-peek.mjs?v=20261009-deskwidth";
+    import { compareByCharName } from "./analyze-run.mjs?v=20261009-deskwidth";
+    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits, binJumpTarget } from "./dist.mjs?v=20261009-deskwidth";
+    import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261009-deskwidth";
+    import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261009-deskwidth";
+    import { paletteColor } from "./palette.mjs?v=20261009-deskwidth";
+    import { deskUiScale } from "./desk-scale.mjs?v=20261009-deskwidth";
+    import { PICK_PARAM, picksFromSearch, matchPicks, analyzeHref, MAIN_PENDING_KEY } from "./pick-sync.mjs?v=20261009-deskwidth";
+    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-deskwidth";
 
     const LS_THEME = "ps2-elite-kd-theme";
     const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";
@@ -664,7 +677,31 @@
       renderBody();
     }
 
+    /** ✅ picks as chips in the filter field (t314u); × / click on a chip unpicks. */
+    function renderPickChips() {
+      const box = $("ranksChips");
+      if (!box) return;
+      box.innerHTML = [...picked.entries()].map(([q, name]) =>
+        `<button type="button" class="name-token fetched" data-q="${esc(q)}" title="Unpick ${esc(name)}" aria-label="Unpick ${esc(name)}"><span class="nm" data-full="${esc(name)}">${esc(name)}</span><span class="rk-chip-x" aria-hidden="true">×</span></button>`).join("");
+      $("ranksSearch").placeholder = picked.size ? "Filter…" : "Filter names…";
+    }
+    /** Unpick one player from anywhere (chip ×, Backspace): table box, URL, chart. */
+    function unpick(q) {
+      if (!picked.has(q)) return;
+      picked.delete(q);
+      savePicks();
+      $("ranksBody").querySelectorAll("tr[data-q]").forEach((tr) => {
+        const cb = tr.querySelector('input[type="checkbox"]');
+        if (!cb) return;
+        if (tr.getAttribute("data-q") === q) cb.checked = false;
+        if (!cb.checked) cb.disabled = false;
+      });
+      syncPickedUi();
+      drawDist();
+    }
+
     function syncPickedUi() {
+      renderPickChips();
       $("ranksPicked").textContent = `${picked.size} / ${MAX_NAMES}`;
       $("ranksCompare").disabled = picked.size === 0;
       $("ranksClearPicks").hidden = picked.size === 0;
@@ -1065,6 +1102,25 @@
         renderBody();
         drawDist();
       }, 80);
+    });
+
+    $("ranksChips").addEventListener("click", (e) => {
+      const chip = e.target.closest("button.name-token");
+      if (!chip) return;
+      e.preventDefault();
+      e.stopPropagation();
+      unpick(chip.getAttribute("data-q"));
+      $("ranksSearch").focus({ preventScroll: true });
+    });
+    $("ranksPickBox").addEventListener("click", (e) => {
+      if (e.target === e.currentTarget) $("ranksSearch").focus({ preventScroll: true });
+    });
+    $("ranksSearch").addEventListener("keydown", (e) => {
+      // Backspace in an empty filter removes the last chip, like the main page.
+      if (e.key === "Backspace" && !e.target.value && picked.size) {
+        e.preventDefault();
+        unpick([...picked.keys()].pop());
+      }
     });
 
     $("ranksHead").addEventListener("click", (e) => {
