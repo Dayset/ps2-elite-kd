@@ -4,19 +4,19 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "38095253003",
+    "runId": "38095388062",
     "event": "workflow_dispatch",
     "kind": "on-demand",
-    "startedAt": "2026-10-10T23:30:30.296Z",
-    "endedAt": "2026-10-10T23:30:33.926Z",
-    "seconds": 4,
+    "startedAt": "2026-10-10T23:32:44.584Z",
+    "endedAt": "2026-10-10T23:34:20.572Z",
+    "seconds": 96,
     "updated": [],
     "added": [
-      "[R4ND] NSGDXv2"
+      "[YUMS] VlaineTR2"
     ],
     "failed": [],
     "stoppedEarly": null,
-    "indexSize": 3048,
+    "indexSize": 3049,
     "honu": {
       "day": "2026-10-10",
       "calls": 2499,
@@ -24,14 +24,14 @@
     },
     "batch": [
       {
-        "name": "[R4ND] NSGDXv2",
+        "name": "[YUMS] VlaineTR2",
         "src": "on-demand",
         "status": "done"
       }
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-10T23:30:36.251Z",
+    "checkedAt": "2026-10-10T23:34:22.452Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 1,
     "explained": 1,
@@ -42,7 +42,7 @@
         "id": "kd",
         "value": 247,
         "bound": 19.849,
-        "z": 234.662,
+        "z": 234.683,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -54,7 +54,7 @@
         "id": "kd",
         "value": 150,
         "bound": 19.849,
-        "z": 141.999,
+        "z": 142.012,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (aim), listed there",
@@ -70,14 +70,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 234.662,
+        "maxZ": 234.683,
         "metrics": [
           {
             "id": "kd",
             "label": "KD",
             "value": 247,
             "bound": 19.849,
-            "z": 234.662,
+            "z": 234.683,
             "side": "high"
           }
         ]
@@ -90,14 +90,14 @@
         "red": [
           "aim"
         ],
-        "maxZ": 141.999,
+        "maxZ": 142.012,
         "metrics": [
           {
             "id": "kd",
             "label": "KD",
             "value": 150,
             "bound": 19.849,
-            "z": 141.999,
+            "z": 142.012,
             "side": "high"
           }
         ]
@@ -170,7 +170,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-10T23:30:36.284Z",
+    "checkedAt": "2026-10-10T23:34:22.480Z",
     "red": 18,
     "padding": 22,
     "adjusted": 1,
@@ -181,7 +181,7 @@
     "forensics": 2
   },
   "sessionStats": {
-    "checkedAt": "2026-10-10T23:30:36.258Z",
+    "checkedAt": "2026-10-10T23:34:22.458Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -194,7 +194,7 @@
     },
     "ruleText": "[session pattern] in recent Honu sessions (≥ 100 kills counted): assists per kill ≤ 0.1, headshot share ≥ 50% (headshot XP per kill; Census lifetime HSR when no XP detail) and K/D ≥ 7 (session deaths; Census lifetime KD when none). A very one-sided record; a lead for manual review, not proof.",
     "coverage": {
-      "players": 3047,
+      "players": 3048,
       "withSessions": 1343,
       "measured": 729,
       "sessions": 4186,
@@ -1030,17 +1030,17 @@
     "outliersUnexplained": 0
   },
   "size": {
-    "at": "2026-10-10T23:30:34.210Z",
+    "at": "2026-10-10T23:34:20.822Z",
     "repoBytes": 26910720,
-    "dataBytes": 56555709,
-    "playersBytes": 53388618,
-    "playerFiles": 3048,
+    "dataBytes": 56575365,
+    "playersBytes": 53407556,
+    "playerFiles": 3049,
     "warnAtBytes": 734003200,
     "warning": false
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-10T23:30:36.268Z",
+    "checkedAt": "2026-10-10T23:34:22.467Z",
     "candidates": [
       "coldandhot",
       "alandwhale",
@@ -1731,7 +1731,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-10T23:30:36.271Z",
+    "checkedAt": "2026-10-10T23:34:22.469Z",
     "count": 48,
     "players": [
       {
