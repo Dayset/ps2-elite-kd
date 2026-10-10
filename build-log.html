@@ -594,7 +594,7 @@
       head.splice(1, 0, "<th></th>");
       const body = list.map((r) => {
         const chart = '<a href="./?names=' + encodeURIComponent(r.name) + '" title="Open the chart with this name (press Analyze)">chart</a>';
-        return "<tr><td>" + nameCell(r) + (fa.confirmed ? ' <span class="st-dim" title="Confirmed bot / farm account on owner review (data/farm.json)">✅ confirmed</span>' : "") + "</td><td>" + chart + "</td>" +
+        return "<tr><td>" + nameCell(r) + "</td><td>" + chart + "</td>" +
           SPROUT_COLS.slice(1).map((c) => '<td class="st-num">' + fmt(r[c.key], c.d) + "</td>").join("") + "</tr>";
       }).join("");
       $("sprouts").innerHTML = '<div class="st-dim">' + list.length + " cached player" + (list.length === 1 ? "" : "s") + " right now. Click a column to sort.</div>" +
