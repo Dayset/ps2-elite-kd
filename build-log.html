@@ -14,7 +14,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261010-guardcheat" />
+  <link rel="stylesheet" href="styles.css?v=20261010-forensics" />
   <style>
     body { overflow: auto; }
     .st-wrap { max-width: 960px; margin: 0 auto; padding: 18px 16px 40px; }
@@ -155,6 +155,12 @@
       <summary><h3>Session-metric outliers <span id="sessOutCount" class="st-count">…</span></h3></summary>
       <div id="sessOut" class="st-dim">Loading…</div>
       </details>
+    </details>
+    <details class="st-card st-sec st-flags st-sess" id="cardForensics">
+      <summary id="fxSummary"><h2>🔎 Session forensics <span id="fxCount" class="st-count">…</span></h2></summary>
+      <div class="st-note">The refresh pipeline opens the top session(s) (most kills, highest KPM) of a few suspicious players per run (🚩, 📉 outliers, 👶 new accounts with a high KPM, high session KPM, top iVi), reads the Honu kill events and looks at how fast the kills came, with what weapon and on whom. Each session is analyzed once. ⚡ / 🔥 hits go to 🚩 (pattern “session-forensics”); other oddities go to 📉 for review. Count = 🚩 hits.</div>
+      <div id="fxRule" class="st-rule"></div>
+      <div id="fx" class="st-dim">Loading…</div>
     </details>
     <details class="st-card st-sec" id="cardHidden">
       <summary><h2>🙈 Hidden from rankings <span id="hiddenCount" class="st-count">…</span></h2></summary>
@@ -450,14 +456,15 @@
        🌾 padding + † "adjusted" + the 🧪 outlier guard (grouped by player) go to 📉 Chart anomalies. Uses the
        same metrics as the main tables (player-metrics.mjs). Leads for review, not proof. -->
   <script type="module">
-    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261010-guardcheat";
-    import { reviewFlags, reviewRuleText, anomalyRuleText, paddingRuleText } from "./red-flags.mjs?v=20261010-guardcheat";
-    import { groupOutliers } from "./outlier-guard.mjs?v=20261010-guardcheat";
-    import { classifyBins, CHART_LABELS } from "./bins.mjs?v=20261010-guardcheat";
-    import { sprout, sampleEvents, sproutRuleText, farmAccount, farmAccountRuleText } from "./sprouts.mjs?v=20261010-guardcheat";
-    import { reviewDecision, isNotFarm, farmListEntry } from "./padding.mjs?v=20261010-guardcheat";
-    import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261010-guardcheat";
-    import "./name-peek.mjs?v=20261010-guardcheat"; // full-name popup for truncated .nm names
+    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261010-forensics";
+    import { reviewFlags, reviewRuleText, anomalyRuleText, paddingRuleText } from "./red-flags.mjs?v=20261010-forensics";
+    import { groupOutliers } from "./outlier-guard.mjs?v=20261010-forensics";
+    import { classifyBins, CHART_LABELS } from "./bins.mjs?v=20261010-forensics";
+    import { forensicsRuleText } from "./session-forensics.mjs?v=20261010-forensics";
+    import { sprout, sampleEvents, sproutRuleText, farmAccount, farmAccountRuleText } from "./sprouts.mjs?v=20261010-forensics";
+    import { reviewDecision, isNotFarm, farmListEntry } from "./padding.mjs?v=20261010-forensics";
+    import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261010-forensics";
+    import "./name-peek.mjs?v=20261010-forensics"; // full-name popup for truncated .nm names
 
     const POLL_MS = 30 * 1000;
     const CONCURRENCY = 6;
@@ -471,9 +478,11 @@
       rampage: { label: "rampage", tip: "Rampage pattern: KD ≥ 15 and KPM ≥ 3 (short absurd kill spree, no skill test)", hot: ["kd"] },
       adjusted: { label: "adjusted — needs review", tip: "Stats adjusted: some kills on farm accounts were excluded automatically (under the padding share). A human decides: fluke, bad luck, or padding (record it in data/reviewed.json)", hot: [] },
       padding: { label: "padding", tip: "Stat padding: most kills on a few accounts that never fight back (those kills are excluded from the stats)", hot: [] },
+      "session-forensics": { label: "session-forensics", tip: "🔎 Session forensics: a top session with an impossible kill rate (⚡ many kills in the same second / 0 s apart) or a 🔥 burst (50+ kills in 5 minutes at a very one-sided K/D)", hot: [] },
       session: { label: "session", tip: "Session pattern (🧪 Session stats): very few assists per kill + headshot-heavy kills + a very one-sided session K/D", hot: [] },
     };
     let sessionSlugs = new Set(); // status.json sessionStats.flagged (needs data/xp, so computed by build-ranks.mjs)
+    let forensicSlugs = new Set(); // status.json forensics.players[].flagged (🔎, data/forensics.json)
     let busy = false;
     let reviewed = null; // data/reviewed.json
 
@@ -731,7 +740,9 @@
         esc(g.checkedAt ? ago(Date.parse(g.checkedAt)) : "—") + "</div>" +
         (players.length ? '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th class="st-num">#</th><th>Metrics far out (value, z)</th><th>Why</th></tr>' +
           players.map((p) => {
-            const ms = p.metrics.map((m) => '<span title="' + esc(m.side + " bound " + nfmt(m.bound) + ", z " + Math.round(m.z)) + '">' +
+            const ms = p.metrics.map((m) => m.id === "forensics"
+              ? '<a href="#cardForensics" title="' + esc(m.note || "") + '">' + esc(m.label) + ": " + esc(m.note || "") + "</a>"
+              : '<span title="' + esc(m.side + " bound " + nfmt(m.bound) + ", z " + Math.round(m.z)) + '">' +
               esc(m.label) + " <strong>" + esc(nfmt(m.value)) + "</strong>" + (m.side === "low" ? " ↓" : "") + "</span>").join(", ");
             const red = (p.red || []);
             const why = red.length
@@ -745,6 +756,36 @@
 
     /* ---------- 🧪 Session stats (status.json sessionStats; never public) ---------- */
     const SESS_REF_COLS = ["s_apk", "s_hsk", "s_kd", "s_maxKd", "s_kpm", "s_maxKpm", "s_ksk", "s_domk", "s_revDom", "s_savk", "s_spotk", "s_share"];
+    /** 🔎 Session forensics (status.json forensics, build-ranks.mjs over data/forensics.json). */
+    function renderForensics(status) {
+      const f = status && status.forensics;
+      $("fxRule").textContent = "Rule: " + forensicsRuleText();
+      if (!f) { $("fxCount").textContent = "–"; $("fx").innerHTML = '<span class="st-dim">No check yet (written by the next refresh run).</span>'; return; }
+      $("fxCount").textContent = String(f.flagged || 0);
+      $("fxCount").classList.toggle("hot", (f.flagged || 0) > 0);
+      const pct = (v) => (typeof v === "number" ? Math.round(v * 100) + "%" : "—");
+      const rows = (f.players || []).map((p) => {
+        const w = p.worst;
+        const tag = p.flagged ? '<span class="st-tag hot">🚩</span> ' : p.odd ? '<span class="st-tag">📉 review</span> ' : "";
+        const who = esc(p.name) + (p.confirmedCheater ? ' <span class="st-dim" title="On the 🙈 hide list as a confirmed cheater">(confirmed)</span>' : "");
+        if (!w) return "<tr><td>" + who + '</td><td colspan="5" class="st-dim">No Honu sessions with 30+ kills · checked ' + esc(p.checkedAt ? ago(Date.parse(p.checkedAt)) : "—") + "</td></tr>";
+        const weap = (w.weapons || []).map((x) => esc(x.name) + ' <span class="st-dim">' + x.kills + " (" + pct(x.share) + ", max " + x.max1s + "/s)</span>").join("<br>");
+        const v = w.victims || {};
+        const vic = (v.unique ?? "—") + " unique, median BR " + (v.medianBr ?? "—") + (v.farmLike && v.farmLike.length ? ', <span class="st-err">farm-like: ' + v.farmLike.map((x) => esc(x.name) + " ×" + x.kills).join(", ") + "</span>" : "");
+        const acct = w.account ? "BR " + (w.account.br ?? "—") + " now, account " + (w.account.ageDaysAtSession == null ? "—" : w.account.ageDaysAtSession < 2 ? (Math.round(w.account.ageDaysAtSession * 24) + " h") : Math.round(w.account.ageDaysAtSession) + " d") + " old at the session" : "";
+        const notes = (w.reasons || []).concat(w.oddities || []).map(esc).join("<br>") || '<span class="st-dim">nothing odd</span>';
+        return "<tr><td>" + tag + who + '<br><a href="' + esc(w.url) + '" target="_blank" rel="noopener noreferrer">Honu session ' + esc(w.sessionId) + "</a>" +
+          '<br><span class="st-dim">' + esc(w.start ? new Date(w.start).toLocaleString() : "") + "</span></td>" +
+          '<td class="st-num">' + w.kills + " / " + w.deaths + '<br><span class="st-dim">K/D ' + fmt(w.kd, 1) + "</span></td>" +
+          "<td>" + fmt(w.activeMin, 1) + " min active, " + fmt(w.activeKpm, 1) + " KPM<br>peak: " + w.max1s + " in 1 s · " + w.max5s + " in 5 s · " + w.peak60s + " in 1 min · " + w.max5min + " in 5 min" +
+          '<br><span class="st-dim">0 s gaps ' + pct(w.zeroGapShare) + ", median gap " + (w.medianGap ?? "—") + " s, headshots " + pct(w.hs) + "</span></td>" +
+          "<td>" + weap + "</td><td>" + vic + '<br><span class="st-dim">' + esc(acct) + "</span></td><td>" + notes + "</td></tr>";
+      }).join("");
+      $("fx").innerHTML = '<div class="st-dim">' + (f.analyzed || 0) + " player(s) analyzed · " + (f.flagged || 0) + " 🚩 · " + (f.review || 0) + " 📉 review · " +
+        ((f.candidates || []).length) + " candidates in line · checked " + esc(f.checkedAt ? ago(Date.parse(f.checkedAt)) : "—") + "</div>" +
+        (rows ? '<div class="st-scroll"><table class="st-table"><tr><th>Player / session</th><th class="st-num">Kills / deaths</th><th>Kill rate</th><th>Top weapons</th><th>Victims / account</th><th>Findings</th></tr>' + rows + "</table></div>" : "");
+    }
+
     function renderSession(status) {
       const s = status && status.sessionStats;
       if (!s) {
@@ -827,12 +868,19 @@
       renderGuard(st);
       renderHidden(st);
       renderSession(st);
+      renderForensics(st);
     }
 
     /** Add the 🚩 "session" pattern (from status.json) to a summarized row. */
     function withSession(r) {
       if (!r || !sessionSlugs.has(r.slug) || (r.patterns || []).includes("session")) return r;
       return Object.assign({}, r, { patterns: (r.patterns || []).concat("session"), red: true, flagged: true });
+    }
+
+    /** Add the 🚩 "session-forensics" pattern (🔎, status.json) to a summarized row. */
+    function withForensics(r) {
+      if (!r || !forensicSlugs.has(r.slug) || (r.patterns || []).includes("session-forensics")) return r;
+      return Object.assign({}, r, { patterns: (r.patterns || []).concat("session-forensics"), red: true, flagged: true });
     }
 
     /** Confirmed on review (reviewed.json "padding") → 🌾 padding (*) whatever the current farm share, never † adjusted. */
@@ -843,7 +891,7 @@
     }
 
     function render(rows, total, errors) {
-      rows = rows.map(withSession).map(withConfirmed);
+      rows = rows.map(withSession).map(withForensics).map(withConfirmed);
       sproutRows = rows.filter((r) => r && r.sprout);
       $("sproutsCount").textContent = String(sproutRows.length);
       if (sproutRows.length) renderSprouts();
@@ -883,6 +931,7 @@
           const sr = await fetch("data/status.json?t=" + Date.now(), { cache: "no-store" });
           const st = sr.ok ? await sr.json() : null;
           sessionSlugs = new Set(((st && st.sessionStats && st.sessionStats.flagged) || []).map((f) => f.slug));
+          forensicSlugs = new Set(((st && st.forensics && st.forensics.players) || []).filter((f) => f.flagged).map((f) => f.slug));
         } catch { /* keep the last set */ }
         const entries = (index.players || []).filter((e) => e && e.file && e.name);
         const byFile = (readCache() || {}).byFile || {};

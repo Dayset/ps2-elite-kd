@@ -31,9 +31,9 @@
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-10T05:38:12.860Z",
+    "checkedAt": "2026-10-10T05:49:54.389Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
-    "unexplained": 7,
+    "unexplained": 1,
     "explained": 1,
     "items": [
       {
@@ -43,78 +43,6 @@
         "value": 247,
         "bound": 22.776,
         "z": 217.814,
-        "side": "high",
-        "explained": false,
-        "reason": "",
-        "red": []
-      },
-      {
-        "slug": "manimami",
-        "name": "manimami",
-        "id": "slope",
-        "value": -14.533,
-        "bound": -5.961,
-        "z": -73.894,
-        "side": "low",
-        "explained": false,
-        "reason": "",
-        "red": []
-      },
-      {
-        "slug": "manimami",
-        "name": "manimami",
-        "id": "act",
-        "value": 45.628,
-        "bound": 30.875,
-        "z": 63.703,
-        "side": "high",
-        "explained": false,
-        "reason": "",
-        "red": []
-      },
-      {
-        "slug": "manimami",
-        "name": "manimami",
-        "id": "rkd",
-        "value": 24.875,
-        "bound": 14.59,
-        "z": 40.044,
-        "side": "high",
-        "explained": false,
-        "reason": "",
-        "red": []
-      },
-      {
-        "slug": "manimami",
-        "name": "manimami",
-        "id": "rf",
-        "value": 12.531,
-        "bound": 10.411,
-        "z": 19.462,
-        "side": "high",
-        "explained": false,
-        "reason": "",
-        "red": []
-      },
-      {
-        "slug": "manimami",
-        "name": "manimami",
-        "id": "coi",
-        "value": 20.885,
-        "bound": 17.352,
-        "z": 19.462,
-        "side": "high",
-        "explained": false,
-        "reason": "",
-        "red": []
-      },
-      {
-        "slug": "manimami",
-        "name": "manimami",
-        "id": "kd",
-        "value": 23.176,
-        "bound": 22.776,
-        "z": 19.316,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -136,64 +64,6 @@
       }
     ],
     "players": [
-      {
-        "slug": "manimami",
-        "name": "manimami",
-        "explained": false,
-        "reason": "",
-        "red": [],
-        "maxZ": 73.894,
-        "metrics": [
-          {
-            "id": "slope",
-            "label": "📉 Slope",
-            "value": -14.533,
-            "bound": -5.961,
-            "z": -73.894,
-            "side": "low"
-          },
-          {
-            "id": "act",
-            "label": "🏃 Activity",
-            "value": 45.628,
-            "bound": 30.875,
-            "z": 63.703,
-            "side": "high"
-          },
-          {
-            "id": "rkd",
-            "label": "☠️ K/D",
-            "value": 24.875,
-            "bound": 14.59,
-            "z": 40.044,
-            "side": "high"
-          },
-          {
-            "id": "rf",
-            "label": "🛡️ Resist",
-            "value": 12.531,
-            "bound": 10.411,
-            "z": 19.462,
-            "side": "high"
-          },
-          {
-            "id": "coi",
-            "label": "📊 COI",
-            "value": 20.885,
-            "bound": 17.352,
-            "z": 19.462,
-            "side": "high"
-          },
-          {
-            "id": "kd",
-            "label": "KD",
-            "value": 23.176,
-            "bound": 22.776,
-            "z": 19.316,
-            "side": "high"
-          }
-        ]
-      },
       {
         "slug": "anniversay",
         "name": "Anniversay",
@@ -233,13 +103,13 @@
         ]
       }
     ],
-    "playersUnexplained": 2,
+    "playersUnexplained": 1,
     "playersExplained": 1,
     "playersAlsoRed": 1,
-    "playersChartOnly": 2
+    "playersChartOnly": 1
   },
   "hidden": {
-    "count": 6,
+    "count": 7,
     "players": [
       {
         "name": "[RMBT] lololollala",
@@ -274,6 +144,14 @@
         "matched": true
       },
       {
+        "name": "manimami",
+        "slug": "manimami",
+        "cid": "5429845372588791105",
+        "reason": "confirmed cheater (impossible MANA turret kill rate, rampage) — kept for comparison only",
+        "at": "2026-10-10",
+        "matched": true
+      },
+      {
         "name": "SnowfallV",
         "slug": "snowfallv",
         "cid": "5429078932898658897",
@@ -292,17 +170,18 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-10T05:38:12.882Z",
-    "red": 14,
+    "checkedAt": "2026-10-10T05:49:54.415Z",
+    "red": 15,
     "padding": 21,
     "adjusted": 0,
-    "outlier": 3,
-    "chartOnly": 23,
+    "outlier": 2,
+    "chartOnly": 22,
     "both": 1,
-    "session": 4
+    "session": 4,
+    "forensics": 2
   },
   "sessionStats": {
-    "checkedAt": "2026-10-10T05:38:12.867Z",
+    "checkedAt": "2026-10-10T05:49:54.395Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -824,7 +703,8 @@
         "kdSrc": "",
         "flagged": false,
         "otherRed": [
-          "rampage"
+          "rampage",
+          "session-forensics"
         ],
         "values": {
           "s_apk": 0.04,
@@ -883,6 +763,27 @@
           "s_prik": 0.163,
           "s_stopk": 0.027
         },
+        "group": "confirmed cheater"
+      },
+      {
+        "slug": "manimami",
+        "name": "manimami",
+        "hidden": true,
+        "sessions": 0,
+        "kills": 0,
+        "minutes": 0,
+        "source": "",
+        "measured": false,
+        "apk": null,
+        "hs": null,
+        "hsSrc": "",
+        "kd": null,
+        "kdSrc": "",
+        "flagged": false,
+        "otherRed": [
+          "session-forensics"
+        ],
+        "values": {},
         "group": "confirmed cheater"
       },
       {
@@ -1137,5 +1038,689 @@
     "warnAtBytes": 734003200,
     "warning": false
   },
-  "sizeWarning": false
+  "sizeWarning": false,
+  "forensics": {
+    "checkedAt": "2026-10-10T05:49:54.402Z",
+    "candidates": [
+      "coldandhot",
+      "alandwhale",
+      "geilovs",
+      "alandwhalenc",
+      "dizzyknight",
+      "bobeqh",
+      "mentis2k6",
+      "adhdasd",
+      "anniversay",
+      "averagejpopenjoyer",
+      "tyienbchikdvar",
+      "lilcccc",
+      "slowmotionbear",
+      "aipacenjoyer",
+      "hydromellus",
+      "lsolated",
+      "086",
+      "1os",
+      "whoasssos",
+      "pikaqiuill",
+      "ss1bull",
+      "zaazaawuying",
+      "cdma2008",
+      "justfarmmena",
+      "geusx",
+      "flowsyyyy",
+      "52chainx",
+      "laotieyun",
+      "liebaobaoxczn",
+      "lololollala",
+      "terzzz798",
+      "ihatenanites",
+      "isawyourtoesunderthedoor",
+      "warongs44",
+      "tibetlilc",
+      "9527w0w",
+      "hiltjavondertrinkhalle",
+      "falcofr",
+      "medicschlumpf",
+      "whlspers",
+      "averagecpopenjoyer",
+      "1ryokoasakura",
+      "0ida",
+      "arneen",
+      "beansstupideridiot",
+      "cheetler",
+      "coward72",
+      "gogoingn",
+      "huzhentr",
+      "hydromelus",
+      "kastaaar",
+      "macintoshtr",
+      "manimami",
+      "opopt",
+      "poggausseu",
+      "rektv1",
+      "supernsobotxaki",
+      "tylenbchikdvar",
+      "whoasssoseu",
+      "wontstoptillbauminator33isbaned6",
+      "wyyyyyyhhh",
+      "xdfkla",
+      "yoooooooeu",
+      "zyntschnur",
+      "motormaker",
+      "dream8nc",
+      "baumblue",
+      "blackbirdeunc",
+      "knaroef",
+      "spaceman",
+      "grrog",
+      "clonekano",
+      "macintoshnc",
+      "plasmanc",
+      "justfarmmevs",
+      "plasmatr",
+      "gx20",
+      "malswar",
+      "xzyr0s",
+      "trizomique",
+      "plasma",
+      "sputnikvs",
+      "zyr0sncx",
+      "heeeyahh",
+      "schlumpfen",
+      "xclonekano",
+      "snowfallv",
+      "sircerealboxvs",
+      "professionalbiolabdefender",
+      "yeezy",
+      "nebelhexe",
+      "zyr0s",
+      "alandwhalens",
+      "grillgamesvs",
+      "dizzyknightnc",
+      "coopznc",
+      "dontmakemecry",
+      "alandwhaletr",
+      "cionekano",
+      "simplenubb",
+      "lemenace",
+      "aekris",
+      "brackiense",
+      "dvartr",
+      "1stfanofahorn",
+      "add1ti0nal"
+    ],
+    "analyzed": 7,
+    "flagged": 2,
+    "review": 0,
+    "players": [
+      {
+        "slug": "manimami",
+        "name": "manimami",
+        "hidden": true,
+        "confirmedCheater": true,
+        "flagged": true,
+        "odd": false,
+        "analyzed": 1,
+        "checkedAt": "2026-10-10T05:46:38.499Z",
+        "worst": {
+          "sessionId": "77603087",
+          "url": "https://wt.honu.pw/s/77603087",
+          "start": "2026-10-09T10:42:01Z",
+          "kills": 260,
+          "deaths": 2,
+          "kd": 130,
+          "activeMin": 16.267,
+          "activeKpm": 15.984,
+          "max1s": 19,
+          "max5s": 33,
+          "peak60s": 67,
+          "max5min": 178,
+          "secs5plus": 21,
+          "zeroGapShare": 0.792,
+          "medianGap": 0,
+          "hs": 0.715,
+          "vehicleKillShare": 0.988,
+          "weapons": [
+            {
+              "id": "503",
+              "name": "MANA Anti-Vehicle Turret",
+              "vehicle": true,
+              "kills": 257,
+              "share": 0.988,
+              "hs": 0.724,
+              "max1s": 19,
+              "max60s": 66
+            },
+            {
+              "id": "0",
+              "name": "unknown / environment",
+              "vehicle": false,
+              "kills": 2,
+              "share": 0.008,
+              "hs": 0,
+              "max1s": 1,
+              "max60s": 1
+            },
+            {
+              "id": "432",
+              "name": "C-4",
+              "vehicle": false,
+              "kills": 1,
+              "share": 0.004,
+              "hs": 0,
+              "max1s": 1,
+              "max60s": 1
+            }
+          ],
+          "victims": {
+            "unique": 92,
+            "top": [
+              {
+                "name": "pashtetspi0",
+                "kills": 11,
+                "br": 11
+              },
+              {
+                "name": "EscapeNC",
+                "kills": 7,
+                "br": 34
+              },
+              {
+                "name": "WWSSSS",
+                "kills": 6,
+                "br": 76
+              }
+            ],
+            "medianBr": 68,
+            "lowBrShare": 0.085,
+            "farmLike": []
+          },
+          "account": {
+            "br": 17,
+            "created": "2026-10-09T05:45:01Z",
+            "ageDaysAtSession": 0.214
+          },
+          "reasons": [
+            "⚡ impossible kill rate: 21 separate seconds with 5+ kills (max 19 in one second)",
+            "⚡ impossible kill rate: 79% of 260 kills came 0 s after the previous kill",
+            "🔥 burst: 178 kills inside 5 minutes, session K/D 130"
+          ],
+          "oddities": [
+            "peak minute 67 kills",
+            "account under 1 day old: 260 kills at K/D 130"
+          ]
+        }
+      },
+      {
+        "slug": "add1ti0nal",
+        "name": "Add1ti0nal",
+        "hidden": true,
+        "confirmedCheater": true,
+        "flagged": true,
+        "odd": false,
+        "analyzed": 1,
+        "checkedAt": "2026-10-10T05:46:38.499Z",
+        "worst": {
+          "sessionId": "60367634",
+          "url": "https://wt.honu.pw/s/60367634",
+          "start": "2024-10-04T12:15:53.000Z",
+          "kills": 64,
+          "deaths": 1,
+          "kd": 64,
+          "activeMin": 7.1,
+          "activeKpm": 9.014,
+          "max1s": 2,
+          "max5s": 6,
+          "peak60s": 27,
+          "max5min": 56,
+          "secs5plus": 0,
+          "zeroGapShare": 0.111,
+          "medianGap": 4,
+          "hs": 0.672,
+          "vehicleKillShare": 0.453,
+          "weapons": [
+            {
+              "id": "556",
+              "name": "MANA Anti-Infantry Turret",
+              "vehicle": true,
+              "kills": 29,
+              "share": 0.453,
+              "hs": 0.828,
+              "max1s": 2,
+              "max60s": 27
+            },
+            {
+              "id": "43",
+              "name": "TRAC-5",
+              "vehicle": false,
+              "kills": 24,
+              "share": 0.375,
+              "hs": 0.667,
+              "max1s": 2,
+              "max60s": 12
+            },
+            {
+              "id": "13",
+              "name": "Chainblade",
+              "vehicle": false,
+              "kills": 8,
+              "share": 0.125,
+              "hs": 0.125,
+              "max1s": 1,
+              "max60s": 5
+            }
+          ],
+          "victims": {
+            "unique": 28,
+            "top": [
+              {
+                "name": "BeansStupidestIdiot",
+                "kills": 7,
+                "br": 72
+              },
+              {
+                "name": "Owyoushotme90",
+                "kills": 7,
+                "br": 81
+              },
+              {
+                "name": "VioletKnight7",
+                "kills": 5,
+                "br": 116
+              }
+            ],
+            "medianBr": 79,
+            "lowBrShare": 0.031,
+            "farmLike": []
+          },
+          "account": {
+            "br": 13,
+            "created": "2024-10-04T12:12:55Z",
+            "ageDaysAtSession": 0.002
+          },
+          "reasons": [
+            "🔥 burst: 56 kills inside 5 minutes, session K/D 64"
+          ],
+          "oddities": [
+            "peak minute 27 kills"
+          ]
+        }
+      },
+      {
+        "slug": "xclonekano",
+        "name": "[ZUoC] xCloneKano",
+        "hidden": false,
+        "confirmedCheater": false,
+        "flagged": false,
+        "odd": false,
+        "analyzed": 1,
+        "checkedAt": "2026-10-10T05:46:38.499Z",
+        "worst": {
+          "sessionId": "74873189",
+          "url": "https://wt.honu.pw/s/74873189",
+          "start": "2026-04-19T02:08:55.000Z",
+          "kills": 501,
+          "deaths": 144,
+          "kd": 3.479,
+          "activeMin": 125.367,
+          "activeKpm": 3.996,
+          "max1s": 4,
+          "max5s": 6,
+          "peak60s": 17,
+          "max5min": 41,
+          "secs5plus": 0,
+          "zeroGapShare": 0.026,
+          "medianGap": 6,
+          "hs": 0.373,
+          "vehicleKillShare": 0.006,
+          "weapons": [
+            {
+              "id": "1894",
+              "name": "Betelgeuse 54-A",
+              "vehicle": false,
+              "kills": 445,
+              "share": 0.888,
+              "hs": 0.391,
+              "max1s": 2,
+              "max60s": 15
+            },
+            {
+              "id": "6011930",
+              "name": "NS-44 \"Jackpot\" Commissioner",
+              "vehicle": false,
+              "kills": 14,
+              "share": 0.028,
+              "hs": 0.429,
+              "max1s": 1,
+              "max60s": 2
+            },
+            {
+              "id": "6015932",
+              "name": "Love Bomber Plasma Grenade",
+              "vehicle": false,
+              "kills": 11,
+              "share": 0.022,
+              "hs": 0,
+              "max1s": 3,
+              "max60s": 3
+            }
+          ],
+          "victims": {
+            "unique": 264,
+            "top": [
+              {
+                "name": "aaaddddsss",
+                "kills": 9,
+                "br": 29
+              },
+              {
+                "name": "Dracotettix",
+                "kills": 8,
+                "br": 55
+              },
+              {
+                "name": "TriumpTussyToupe",
+                "kills": 8,
+                "br": 14
+              }
+            ],
+            "medianBr": 75,
+            "lowBrShare": 0.082,
+            "farmLike": []
+          },
+          "account": {
+            "br": 100,
+            "created": "2021-05-22T04:16:07Z",
+            "ageDaysAtSession": 1792.912
+          },
+          "reasons": [],
+          "oddities": []
+        }
+      },
+      {
+        "slug": "zyr0sncx",
+        "name": "[RSN] Zyr0sNCx",
+        "hidden": false,
+        "confirmedCheater": false,
+        "flagged": false,
+        "odd": false,
+        "analyzed": 1,
+        "checkedAt": "2026-10-10T05:46:38.499Z",
+        "worst": {
+          "sessionId": "76541977",
+          "url": "https://wt.honu.pw/s/76541977",
+          "start": "2026-07-29T21:59:31.000Z",
+          "kills": 310,
+          "deaths": 81,
+          "kd": 3.827,
+          "activeMin": 84.35,
+          "activeKpm": 3.675,
+          "max1s": 2,
+          "max5s": 3,
+          "peak60s": 11,
+          "max5min": 29,
+          "secs5plus": 0,
+          "zeroGapShare": 0.006,
+          "medianGap": 10,
+          "hs": 0.668,
+          "vehicleKillShare": 0.01,
+          "weapons": [
+            {
+              "id": "804252",
+              "name": "NSX Tomoe",
+              "vehicle": false,
+              "kills": 268,
+              "share": 0.865,
+              "hs": 0.72,
+              "max1s": 2,
+              "max60s": 9
+            },
+            {
+              "id": "2001",
+              "name": "NS-44P Commissioner",
+              "vehicle": false,
+              "kills": 27,
+              "share": 0.087,
+              "hs": 0.444,
+              "max1s": 1,
+              "max60s": 4
+            },
+            {
+              "id": "804795",
+              "name": "NSX Amaterasu",
+              "vehicle": false,
+              "kills": 11,
+              "share": 0.035,
+              "hs": 0.182,
+              "max1s": 1,
+              "max60s": 3
+            }
+          ],
+          "victims": {
+            "unique": 67,
+            "top": [
+              {
+                "name": "TALAL0C",
+                "kills": 31,
+                "br": 54
+              },
+              {
+                "name": "J117MasterChief",
+                "kills": 20,
+                "br": 40
+              },
+              {
+                "name": "offtheyerkys",
+                "kills": 19,
+                "br": 72
+              }
+            ],
+            "medianBr": 68,
+            "lowBrShare": 0.003,
+            "farmLike": []
+          },
+          "account": {
+            "br": 92,
+            "created": "2026-05-07T20:01:07Z",
+            "ageDaysAtSession": 83.082
+          },
+          "reasons": [],
+          "oddities": []
+        }
+      },
+      {
+        "slug": "justv6me",
+        "name": "JustV6me",
+        "hidden": false,
+        "confirmedCheater": false,
+        "flagged": false,
+        "odd": false,
+        "analyzed": 1,
+        "checkedAt": "2026-10-10T05:46:38.499Z",
+        "worst": {
+          "sessionId": "77561394",
+          "url": "https://wt.honu.pw/s/77561394",
+          "start": "2026-10-06T02:50:36.000Z",
+          "kills": 199,
+          "deaths": 64,
+          "kd": 3.109,
+          "activeMin": 208.1,
+          "activeKpm": 0.956,
+          "max1s": 2,
+          "max5s": 3,
+          "peak60s": 6,
+          "max5min": 20,
+          "secs5plus": 0,
+          "zeroGapShare": 0.015,
+          "medianGap": 28,
+          "hs": 0.221,
+          "vehicleKillShare": 0,
+          "weapons": [
+            {
+              "id": "6004197",
+              "name": "NSX-P Naginata",
+              "vehicle": false,
+              "kills": 133,
+              "share": 0.668,
+              "hs": 0.256,
+              "max1s": 1,
+              "max60s": 6
+            },
+            {
+              "id": "7233",
+              "name": "GD-22S",
+              "vehicle": false,
+              "kills": 27,
+              "share": 0.136,
+              "hs": 0.296,
+              "max1s": 1,
+              "max60s": 6
+            },
+            {
+              "id": "3",
+              "name": "AF-19 Mercenary",
+              "vehicle": false,
+              "kills": 15,
+              "share": 0.075,
+              "hs": 0.067,
+              "max1s": 1,
+              "max60s": 5
+            }
+          ],
+          "victims": {
+            "unique": 107,
+            "top": [
+              {
+                "name": "MoxieVS",
+                "kills": 6,
+                "br": 93
+              },
+              {
+                "name": "Razorflame9312",
+                "kills": 6,
+                "br": 26
+              },
+              {
+                "name": "Shakoyboss",
+                "kills": 6,
+                "br": 30
+              }
+            ],
+            "medianBr": 85,
+            "lowBrShare": 0.035,
+            "farmLike": []
+          },
+          "account": {
+            "br": 20,
+            "created": "2026-10-05T21:13:30Z",
+            "ageDaysAtSession": 0.234
+          },
+          "reasons": [],
+          "oddities": []
+        }
+      },
+      {
+        "slug": "shlodog",
+        "name": "[RITE] ShloDog",
+        "hidden": false,
+        "confirmedCheater": false,
+        "flagged": false,
+        "odd": false,
+        "analyzed": 1,
+        "checkedAt": "2026-10-10T05:46:38.499Z",
+        "worst": {
+          "sessionId": "77481368",
+          "url": "https://wt.honu.pw/s/77481368",
+          "start": "2026-10-01T00:23:17.000Z",
+          "kills": 101,
+          "deaths": 118,
+          "kd": 0.856,
+          "activeMin": 218.517,
+          "activeKpm": 0.462,
+          "max1s": 2,
+          "max5s": 3,
+          "peak60s": 5,
+          "max5min": 11,
+          "secs5plus": 0,
+          "zeroGapShare": 0.03,
+          "medianGap": 52,
+          "hs": 0.149,
+          "vehicleKillShare": 0.059,
+          "weapons": [
+            {
+              "id": "7232",
+              "name": "EM1",
+              "vehicle": false,
+              "kills": 39,
+              "share": 0.386,
+              "hs": 0.231,
+              "max1s": 1,
+              "max60s": 3
+            },
+            {
+              "id": "7528",
+              "name": "NC05 Jackhammer",
+              "vehicle": false,
+              "kills": 16,
+              "share": 0.158,
+              "hs": 0.188,
+              "max1s": 1,
+              "max60s": 3
+            },
+            {
+              "id": "16025",
+              "name": "AF-41 Hacksaw",
+              "vehicle": false,
+              "kills": 10,
+              "share": 0.099,
+              "hs": 0.2,
+              "max1s": 1,
+              "max60s": 3
+            }
+          ],
+          "victims": {
+            "unique": 65,
+            "top": [
+              {
+                "name": "DogMeatFestival",
+                "kills": 5,
+                "br": 87
+              },
+              {
+                "name": "PoseidonsGreedTR",
+                "kills": 5,
+                "br": 90
+              },
+              {
+                "name": "JonBernthal",
+                "kills": 3,
+                "br": 14
+              }
+            ],
+            "medianBr": 77,
+            "lowBrShare": 0.059,
+            "farmLike": []
+          },
+          "account": {
+            "br": 100,
+            "created": "2013-12-05T22:45:55Z",
+            "ageDaysAtSession": 4682.068
+          },
+          "reasons": [],
+          "oddities": []
+        }
+      },
+      {
+        "slug": "yeezy",
+        "name": "[187r] YEEZY",
+        "hidden": false,
+        "confirmedCheater": false,
+        "flagged": false,
+        "odd": false,
+        "analyzed": 0,
+        "checkedAt": "2026-10-10T05:46:38.499Z",
+        "worst": null
+      }
+    ]
+  }
 }

@@ -15,10 +15,10 @@ import {
   pressureVolume,
   resolveIvi,
   deathMixLite,
-} from "./math.mjs?v=20261010-guardcheat";
-import { splitFarm } from "./padding.mjs?v=20261010-guardcheat";
-import { OPPONENT_TOP_N, LEGACY_TOP_N, sampleTopN } from "./census-fetch.mjs?v=20261010-guardcheat";
-import { cleanTimes } from "./flairs.mjs?v=20261010-guardcheat";
+} from "./math.mjs?v=20261010-forensics";
+import { splitFarm } from "./padding.mjs?v=20261010-forensics";
+import { OPPONENT_TOP_N, LEGACY_TOP_N, sampleTopN } from "./census-fetch.mjs?v=20261010-forensics";
+import { cleanTimes } from "./flairs.mjs?v=20261010-forensics";
 
 /**
  * Older shared-cache files were scored on the top 50 opponents; new fetches use

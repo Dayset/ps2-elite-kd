@@ -3,7 +3,7 @@
  * Mirrors absolute_target_split / kpm_curve / rf_if / adjusted_ivi from ps2_elite_kd.py
  * Pure math lives in math.mjs (shared with Node tests).
  */
-import { chartFontScale } from "./desk-scale.mjs?v=20261010-guardcheat";
+import { chartFontScale } from "./desk-scale.mjs?v=20261010-forensics";
 import {
   X_MAX,
   EASY_MAX,
@@ -33,11 +33,11 @@ import {
   windowYValues,
   kpmBandCurve,
   bandReliability,
-} from "./math.mjs?v=20261010-guardcheat";
-import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261010-guardcheat";
-import GHOST_MODEL from "./data/ghost-model.mjs?v=20261010-guardcheat";
-import { ranksHref } from "./pick-sync.mjs?v=20261010-guardcheat";
-import { entryFetchedAt, pickNewest, writeWithEviction } from "./cache-pick.mjs?v=20261010-guardcheat";
+} from "./math.mjs?v=20261010-forensics";
+import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261010-forensics";
+import GHOST_MODEL from "./data/ghost-model.mjs?v=20261010-forensics";
+import { ranksHref } from "./pick-sync.mjs?v=20261010-forensics";
+import { entryFetchedAt, pickNewest, writeWithEviction } from "./cache-pick.mjs?v=20261010-forensics";
 import {
   NameLoadError,
   classifyLoadError,
@@ -64,7 +64,7 @@ import {
   etaLearnLiveMs,
   freshEtaText,
   expectedNameMs,
-} from "./analyze-run.mjs?v=20261010-guardcheat";
+} from "./analyze-run.mjs?v=20261010-forensics";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
@@ -78,7 +78,7 @@ import {
   THIN_MARK,
   THIN_NOTE_HEAD,
   thinPlayerLine,
-} from "./player-metrics.mjs?v=20261010-guardcheat";
+} from "./player-metrics.mjs?v=20261010-forensics";
 /** "22 kills / 60 deaths" in the opponent sample (MIN_FIGHTS counts). */
 function fightsText(r) {
   const k = r.sampleKills || 0;
@@ -90,16 +90,16 @@ function fightsText(r) {
 function thinCellTip(r) {
   return `${MIN_FIGHTS_TIP}. This sample: ${fightsText(r).replace(/[()]/g, "")}`;
 }
-import { markNote, statMark, confirmedPadderSlugs } from "./padding.mjs?v=20261010-guardcheat";
+import { markNote, statMark, confirmedPadderSlugs } from "./padding.mjs?v=20261010-forensics";
 // Account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times: chart name list only.
-import { accountTimes, flairsHtml } from "./flairs.mjs?v=20261010-guardcheat";
+import { accountTimes, flairsHtml } from "./flairs.mjs?v=20261010-forensics";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261010-guardcheat";
-import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261010-guardcheat";
+import "./name-peek.mjs?v=20261010-forensics";
+import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261010-forensics";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
-import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-guardcheat";
+import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-forensics";
 // Live data: Daybreak Census only (batched, paced); Honu just for a rare history fallback.
-import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-guardcheat";
+import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-forensics";
 import {
   censusBase,
   censusRequest,
@@ -108,7 +108,7 @@ import {
   limitConcurrency,
   tokenBucket,
   OPPONENT_TOP_N,
-} from "./census-fetch.mjs?v=20261010-guardcheat";
+} from "./census-fetch.mjs?v=20261010-forensics";
 
   // Player palettes (dark + light theme) live in palette.mjs (shared with ranks.html).
   const COLORS = PALETTE_DARK;

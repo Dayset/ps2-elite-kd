@@ -17,8 +17,8 @@
  * and test/outlier-guard.test.mjs (fails on unexplained outliers).
  * DOM-free.
  */
-import { classifyBins } from "./bins.mjs?v=20261010-guardcheat";
-import { SESSION_LABELS } from "./session-stats.mjs?v=20261010-guardcheat";
+import { classifyBins } from "./bins.mjs?v=20261010-forensics";
+import { SESSION_LABELS } from "./session-stats.mjs?v=20261010-forensics";
 
 export const GUARD_RULE = Object.freeze({ Z: 6, SPAN_K: 3, MIN_N: 50 });
 
@@ -59,6 +59,8 @@ export const METRIC_LABELS = Object.freeze({
   kd: "KD", kpm: "KPM", ownKpm: "own KPM (public)", acc: "Acc %", hsr: "HSR %", ivi: "IvI",
   // 🧪 Honu session metrics (session-stats.mjs; build-log only, never public).
   ...SESSION_LABELS,
+  // 🔎 session forensics oddity (value = peak kills in one minute of that session).
+  forensics: "🔎 Session forensics",
 });
 
 /** Why an outlier is already accounted for ("" = unexplained). 🚩 patterns first, then reviewed, then † adjusted. */
@@ -85,7 +87,7 @@ export function groupOutliers(items) {
     g.explained = g.explained && !!o.explained;
     if (!o.explained) g.reason = "";
     g.maxZ = Math.max(g.maxZ, Math.abs(o.z) || 0);
-    g.metrics.push({ id: o.id, label: METRIC_LABELS[o.id] || o.id, value: o.value, bound: o.bound, z: o.z, side: o.side });
+    g.metrics.push({ id: o.id, label: METRIC_LABELS[o.id] || o.id, value: o.value, bound: o.bound, z: o.z, side: o.side, ...(o.note ? { note: o.note } : {}) });
   }
   const out = [...by.values()];
   for (const g of out) g.metrics.sort((a, b) => Math.abs(b.z) - Math.abs(a.z));
@@ -132,7 +134,7 @@ export function guardStatus(result, rule = GUARD_RULE) {
   const r6 = (v) => (fin(v) ? Math.round(v * 1000) / 1000 : null);
   const items = result.items.map((o) => ({
     slug: o.slug, name: o.name, id: o.id, value: r6(o.value), bound: r6(o.bound), z: r6(o.z),
-    side: o.side, explained: o.explained, reason: o.reason, red: o.red || [],
+    side: o.side, explained: o.explained, reason: o.reason, red: o.red || [], ...(o.note ? { note: o.note } : {}),
   }));
   const players = groupOutliers(items);
   return {

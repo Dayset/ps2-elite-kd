@@ -24,6 +24,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { censusQueryName } from "../analyze-run.mjs";
 import { accountTimes } from "../flairs.mjs";
+import { analyzeSessionKills, knownSessions, pickForensicSessions } from "../session-forensics.mjs";
 import {
   CAP_STEPS,
   isDormant,
@@ -62,6 +63,7 @@ const HONU_USAGE_PATH = path.join(DATA_DIR, "honu-usage.json");
 const SCHEDULE_PATH = path.join(DATA_DIR, "schedule.json");
 const REQUESTED_PATH = path.join(DATA_DIR, "requested.json");
 const EXP_TYPES_PATH = path.join(DATA_DIR, "exp-types.json");
+const FORENSICS_PATH = path.join(DATA_DIR, "forensics.json");
 const XP_DIR = path.join(DATA_DIR, "xp");
 
 const HONU = "https://wt.honu.pw/api/character/";
@@ -163,14 +165,26 @@ const honuUsage = (() => {
   const day = new Date().toISOString().slice(0, 10);
   try {
     const u = JSON.parse(fs.readFileSync(HONU_USAGE_PATH, "utf8"));
-    if (u && u.day === day) return { day, calls: +u.calls || 0, cap: HONU_DAILY_CAP };
+    if (u && u.day === day) return { day, calls: +u.calls || 0, forensics: +u.forensics || 0, cap: HONU_DAILY_CAP };
   } catch {
     /* first run / unreadable */
   }
-  return { day, calls: 0, cap: HONU_DAILY_CAP };
+  return { day, calls: 0, forensics: 0, cap: HONU_DAILY_CAP };
 })();
+/**
+ * 🔎 Session forensics (t325u) gets a slice INSIDE the daily cap: assists / XP /
+ * history stop FORENSICS_DAILY_RESERVE calls early unless forensics already used
+ * that slice; forensics itself never goes past the reserve or the cap.
+ */
+export const FORENSICS_DAILY_RESERVE = Number(process.env.FORENSICS_DAILY_RESERVE) >= 0 && process.env.FORENSICS_DAILY_RESERVE !== undefined && process.env.FORENSICS_DAILY_RESERVE !== ""
+  ? Number(process.env.FORENSICS_DAILY_RESERVE) : 150;
+/** Honu calls left today for everything except forensics (the unused forensics reserve is kept free). */
 export function honuLeft() {
-  return Math.max(0, HONU_DAILY_CAP - honuUsage.calls);
+  return Math.max(0, HONU_DAILY_CAP - honuUsage.calls - Math.max(0, FORENSICS_DAILY_RESERVE - honuUsage.forensics));
+}
+/** Honu calls left today for session forensics. */
+export function forensicsHonuLeft() {
+  return Math.max(0, Math.min(HONU_DAILY_CAP - honuUsage.calls, FORENSICS_DAILY_RESERVE - honuUsage.forensics));
 }
 function saveHonuUsage() {
   try {
@@ -681,6 +695,107 @@ async function requestedXpPhase(index, explicitNames, until) {
   save();
 }
 
+/* ------------------------------------------------ 🔎 session forensics */
+
+/** Players analyzed per run (≤ 3 Honu calls each: session list if needed + ≤ 2 kill lists). */
+export const FORENSICS_PER_RUN = Number(process.env.FORENSICS_PER_RUN) > 0 ? Number(process.env.FORENSICS_PER_RUN) : 3;
+const FORENSICS_TIME_CAP_MS = 2 * 60_000;
+/** A candidate's session list is re-checked at most this often. */
+export const FORENSICS_RECHECK_MS = 3 * 24 * 3600 * 1000;
+export const FORENSICS_MAX_SESSIONS_KEPT = 6;
+
+/**
+ * Candidates (status.json forensics.candidates, written by build-ranks.mjs, in
+ * priority order) not checked within FORENSICS_RECHECK_MS → slugs to work on.
+ */
+export function forensicsQueue(candidates, store, now = Date.now(), max = FORENSICS_PER_RUN) {
+  const players = (store && store.players) || {};
+  const out = [];
+  for (const c of Array.isArray(candidates) ? candidates : []) {
+    const slug = c && (c.slug || c);
+    if (!slug || typeof slug !== "string" || out.includes(slug)) continue;
+    const p = players[slug];
+    if (p && p.checkedAt && now - Date.parse(p.checkedAt) < FORENSICS_RECHECK_MS) continue;
+    out.push(slug);
+    if (out.length >= max) break;
+  }
+  return out;
+}
+
+/** Store one analyzed session (each session id analyzed once; worst / newest kept). */
+export function mergeForensics(store, slug, { cid, name, report, checkedAt }) {
+  const s = store && store.players ? store : { players: {} };
+  const p = s.players[slug] || { cid: String(cid || ""), name: name || slug, sessions: {} };
+  p.cid = String(cid || p.cid || "");
+  p.name = name || p.name;
+  if (checkedAt) p.checkedAt = checkedAt;
+  if (report && report.sessionId) {
+    p.sessions[report.sessionId] = report;
+    const ids = Object.keys(p.sessions).sort((a, b) =>
+      (p.sessions[b].flagged - p.sessions[a].flagged) || (p.sessions[b].kills - p.sessions[a].kills));
+    for (const id of ids.slice(FORENSICS_MAX_SESSIONS_KEPT)) delete p.sessions[id];
+  }
+  s.players[slug] = p;
+  return s;
+}
+
+async function forensicsPhase(index, until) {
+  const status = readJsonSafe(STATUS_PATH, {});
+  const candidates = (status && status.forensics && status.forensics.candidates) || [];
+  if (!candidates.length) return;
+  const store = readJsonSafe(FORENSICS_PATH, { players: {} });
+  if (!store.players) store.players = {};
+  const queue = forensicsQueue(candidates, store);
+  if (!queue.length) return;
+  if (forensicsHonuLeft() < 2) {
+    console.log(`Session forensics: ${queue.length} due, waiting for Honu budget (forensics ${honuUsage.forensics}/${FORENSICS_DAILY_RESERVE}, all ${honuUsage.calls}/${HONU_DAILY_CAP} today).`);
+    return;
+  }
+  const getJson = async (u) => {
+    if (forensicsHonuLeft() < 1) throw new HttpClientError("forensics Honu reserve used up", 429);
+    honuUsage.forensics++;
+    return fetchJson(u, { retries: 2 });
+  };
+  const bySlug = new Map((index.players || []).map((p) => [p.slug, p]));
+  let calls0 = honuUsage.calls;
+  for (const slug of queue) {
+    if (forensicsHonuLeft() < 2 || Date.now() > until) break;
+    const pl = readJsonSafe(path.join(DATA_DIR, "players", `${slug}.json`), null);
+    const p = pl && pl.player;
+    const cid = p && p.cid;
+    if (!cid) continue;
+    const name = (p && p.display) || (bySlug.get(slug) || {}).name || slug;
+    const done = (store.players[slug] && store.players[slug].sessions) || {};
+    let known = knownSessions({ assists: p.assists, xp: readJsonSafe(path.join(XP_DIR, `${slug}.json`), null) });
+    let list = null;
+    try {
+      if (!pickForensicSessions(known, {}).length || !store.players[slug]) {
+        // No (or never checked) stored sessions: one Honu session-list call.
+        list = await getJson(`${HONU_API}character/${cid}/sessions`);
+        known = knownSessions({ assists: p.assists, xp: null, honuList: list });
+      }
+      const todo = pickForensicSessions(known, done);
+      for (const id of todo) {
+        if (forensicsHonuLeft() < 1) break;
+        const events = await getJson(`${HONU_API}kills/session/${encodeURIComponent(id)}`);
+        const sess = Array.isArray(list) ? list.find((x) => String(x && x.id) === id) : null;
+        const report = analyzeSessionKills(events, cid, { sessionId: id, session: sess });
+        report.analyzedAt = new Date().toISOString();
+        mergeForensics(store, slug, { cid, name, report });
+        console.log(`  [forensics] ${slug} session ${id}: ${report.kills} kills / ${report.deaths} deaths` +
+          (report.flagged ? ` → 🚩 ${report.reasons.join("; ")}` : report.oddities.length ? ` → 📉 ${report.oddities.join("; ")}` : " → nothing odd"));
+      }
+      mergeForensics(store, slug, { cid, name, checkedAt: new Date().toISOString() });
+    } catch (e) {
+      console.warn(`  [forensics] ${slug} skipped: ${String(e && e.message).slice(0, 80)}`);
+    }
+  }
+  store.updatedAt = new Date().toISOString();
+  writeFileAtomic(FORENSICS_PATH, JSON.stringify(store) + "\n");
+  saveHonuUsage();
+  console.log(`Session forensics: ${honuUsage.calls - calls0} Honu call(s) this run; forensics ${honuUsage.forensics}/${FORENSICS_DAILY_RESERVE} today.`);
+}
+
 async function resolveCensusOnly(raw) {
   let url;
   if (/^\d{16,}$/.test(raw)) {
@@ -1145,6 +1260,13 @@ async function main() {
     await requestedXpPhase(index, explicit ? names : [], Math.min(deadline - reserveMs, Date.now() + XP_TIME_CAP_MS));
   } catch (e) {
     console.warn(`Requested XP phase skipped: ${String(e && e.message).slice(0, 120)}`);
+  }
+
+  // 🔎 Session forensics: a few suspicious players' top sessions, from the forensics reserve.
+  try {
+    await forensicsPhase(index, Math.min(deadline - reserveMs, Date.now() + FORENSICS_TIME_CAP_MS));
+  } catch (e) {
+    console.warn(`Session forensics phase skipped: ${String(e && e.message).slice(0, 120)}`);
   }
 
   const growFrom = Date.now();

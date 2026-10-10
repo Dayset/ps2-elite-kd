@@ -21,7 +21,8 @@ import { normalizePlayer, playerMetrics, shownValue } from "../player-metrics.mj
 import { reviewFlags } from "../red-flags.mjs";
 import { classifyBins } from "../bins.mjs";
 import { markNote, statMark, confirmedPadderSlugs, isFarmListed } from "../padding.mjs";
-import { findOutliers, guardStatus } from "../outlier-guard.mjs";
+import { findOutliers, guardStatus, KNOWN_EXTREMES } from "../outlier-guard.mjs";
+import { forensicsSummary, honuSessionUrl } from "../session-forensics.mjs";
 import { hiddenList, isConfirmedCheater } from "../hidden.mjs";
 import { cleanTimes } from "../flairs.mjs";
 import { sessionMetrics, sessionFlag, sessionRuleText, distribution, SESSION_METRICS, SESSION_METRIC_IDS, SESSION_MIN, SESSION_RULE } from "../session-stats.mjs";
@@ -144,6 +145,7 @@ export function buildRanksWithGuard(dataDir) {
   const hidden = readHidden(dataDir);
   const confirmed = readConfirmedPadders(dataDir);
   const hiddenFound = [];
+  const forensics = readForensics(dataDir);
   const ranks = buildRanks(dataDir, {
     hidden,
     confirmed,
@@ -158,12 +160,20 @@ export function buildRanksWithGuard(dataDir) {
       const sm = sessionMetrics({ assists: pl.assists, xp: readXp(dataDir, row[2]) });
       const sf = sessionFlag(sm, { hsr: pl.hsr, kd: pl.global_kd });
       for (const id of SESSION_METRIC_IDS) values[id] = sm && sm.measured ? sm.values[id] : null;
-      const patterns = sf.flagged ? [...f.patterns, "session"] : f.patterns;
-      players.push({ slug: row[2], name: row[0], flagged: f.flagged || sf.flagged, patterns, values, session: sm, sessionFlag: sf, hidden: !!(info && info.hidden), confirmedCheater: !!(info && info.confirmedCheater) });
+      const patterns = sf.flagged ? [...f.patterns, "session"] : f.patterns.slice();
+      // 🔎 session forensics (data/forensics.json, refresh pipeline): ⚡ / 🔥 → 🚩 "session-forensics".
+      const fx = forensicsSummary(forensics.players[row[2]]);
+      if (fx.flagged) patterns.push("session-forensics");
+      players.push({ slug: row[2], name: row[0], flagged: f.flagged || sf.flagged || fx.flagged, patterns, values, session: sm, sessionFlag: sf, forensics: fx, row, hidden: !!(info && info.hidden), confirmedCheater: !!(info && info.confirmedCheater) });
     },
   });
-  const guard = guardStatus(findOutliers(players, [...METRIC_COLS, ...SESSION_METRIC_IDS]));
-  return { ranks, guard, hidden: hiddenSummary(dataDir, hiddenFound), bins: binCounts(players, guard), session: sessionStatus(players, guard, dataDir) };
+  const found = findOutliers(players, [...METRIC_COLS, ...SESSION_METRIC_IDS]);
+  found.items.push(...forensicsGuardItems(players));
+  const guard = guardStatus(found);
+  return {
+    ranks, guard, hidden: hiddenSummary(dataDir, hiddenFound), bins: binCounts(players, guard), session: sessionStatus(players, guard, dataDir),
+    forensics: forensicsStatus(players, guard, forensics),
+  };
 }
 
 /**
@@ -228,17 +238,103 @@ export function sessionStatus(players, guard, dataDir) {
  */
 export function binCounts(players, guard) {
   const out = new Set((guard.players || []).map((g) => g.slug));
-  const c = { red: 0, padding: 0, adjusted: 0, outlier: out.size, chartOnly: 0, both: 0, session: 0 };
+  const c = { red: 0, padding: 0, adjusted: 0, outlier: out.size, chartOnly: 0, both: 0, session: 0, forensics: 0 };
   for (const p of players) {
     const b = classifyBins({ patterns: p.patterns || [], outlier: out.has(p.slug) });
     if (b.bin === "red") c.red += 1;
     if (b.red.includes("session")) c.session += 1;
+    if (b.red.includes("session-forensics")) c.forensics += 1;
     if (b.bin === "chart") c.chartOnly += 1;
     if (b.both) c.both += 1;
     if (b.chart.includes("padding")) c.padding += 1;
     if (b.chart.includes("adjusted")) c.adjusted += 1;
   }
   return c;
+}
+
+/** data/forensics.json (🔎 session forensics store, refresh pipeline); missing = empty. */
+export function readForensics(dataDir) {
+  try {
+    const j = JSON.parse(fs.readFileSync(path.join(dataDir, "forensics.json"), "utf8"));
+    return j && j.players ? j : { players: {} };
+  } catch {
+    return { players: {} };
+  }
+}
+
+/** 🔎 oddities (not ⚡ / 🔥) → 📉 outlier-guard rows "forensics" (explained when the player is in 🚩 or reviewed). */
+export function forensicsGuardItems(players) {
+  const items = [];
+  for (const p of players) {
+    const fx = p.forensics;
+    if (!fx || !fx.odd || !fx.worst || p.confirmedCheater) continue;
+    const red = classifyBins({ patterns: p.patterns || [] }).red;
+    const reason = red.length ? "Also in 🚩 red flags (" + red.join(", ") + "), listed there" : KNOWN_EXTREMES[p.slug] || "";
+    items.push({
+      slug: p.slug, name: p.name, id: "forensics", value: fx.worst.peak60s, red,
+      bound: null, z: null, side: "high", explained: !!reason, reason,
+      note: (fx.worst.oddities || []).join("; ") + " (session " + fx.worst.sessionId + ")",
+    });
+  }
+  return items;
+}
+
+/** Candidate priority for the refresh pipeline's 🔎 phase (status.json forensics.candidates). */
+export const FORENSICS_CANDIDATES = Object.freeze({ MAX: 200, TOP_IVI: 30, NEW_DAYS: 90, NEW_OWN_KPM: 1.5, SESSION_MAX_KPM: 3 });
+
+/**
+ * status.json "forensics" block: candidates (in priority order) + per-player
+ * summary for build-log.html 🔎 Session forensics. Priority: 🚩 red flags,
+ * 📉 outliers, 👶 new accounts (< 90 days) with own KPM ≥ 1.5 or top-10% iVi,
+ * session KPM peak ≥ 3, top 30 iVi, then hide-list cheaters (references).
+ */
+export function forensicsStatus(players, guard, store, rule = FORENSICS_CANDIDATES, now = Date.now()) {
+  const col = (name) => RANK_COLS.indexOf(name);
+  const iAdjs = col("adjs"), iCreated = col("created"), iOwn = col("ownKpm");
+  const fin = (v) => typeof v === "number" && Number.isFinite(v);
+  const outl = new Set((guard.players || []).map((g) => g.slug));
+  const adjs = players.map((p) => p.row && p.row[iAdjs]).filter(fin).sort((a, b) => b - a);
+  const p90 = adjs.length ? adjs[Math.floor(adjs.length * 0.1)] : Infinity;
+  const top = new Set(players.filter((p) => !p.hidden && p.row && fin(p.row[iAdjs])).sort((a, b) => b.row[iAdjs] - a.row[iAdjs]).slice(0, rule.TOP_IVI).map((p) => p.slug));
+  const tiers = [[], [], [], [], [], []];
+  for (const p of players) {
+    const r = p.row || [];
+    const created = +r[iCreated] || 0;
+    const isNew = created > 0 && now / 1000 - created < rule.NEW_DAYS * 86400;
+    if (!p.hidden && classifyBins({ patterns: p.patterns || [] }).red.length) tiers[0].push(p);
+    else if (outl.has(p.slug)) tiers[1].push(p);
+    else if (isNew && ((fin(r[iOwn]) && r[iOwn] >= rule.NEW_OWN_KPM) || (fin(r[iAdjs]) && r[iAdjs] >= p90))) tiers[2].push(p);
+    else if (fin(p.values && p.values.s_maxKpm) && p.values.s_maxKpm >= rule.SESSION_MAX_KPM) tiers[3].push(p);
+    else if (top.has(p.slug)) tiers[4].push(p);
+    else if (p.confirmedCheater) tiers[5].push(p);
+  }
+  const candidates = tiers.flat().slice(0, rule.MAX).map((p) => p.slug);
+  const rows = [];
+  for (const p of players) {
+    const e = store.players[p.slug];
+    if (!e) continue;
+    const fx = p.forensics || forensicsSummary(e);
+    const w = fx.worst;
+    rows.push({
+      slug: p.slug, name: p.name, hidden: !!p.hidden, confirmedCheater: !!p.confirmedCheater,
+      flagged: fx.flagged, odd: fx.odd, analyzed: fx.analyzed, checkedAt: e.checkedAt || null,
+      worst: w ? {
+        sessionId: w.sessionId, url: honuSessionUrl(w.sessionId), start: w.start, kills: w.kills, deaths: w.deaths, kd: w.kd,
+        activeMin: w.activeMin, activeKpm: w.activeKpm, max1s: w.max1s, max5s: w.max5s, peak60s: w.peak60s, max5min: w.max5min,
+        secs5plus: w.secs5plus, zeroGapShare: w.zeroGapShare, medianGap: w.medianGap, hs: w.hs, vehicleKillShare: w.vehicleKillShare,
+        weapons: (w.weapons || []).slice(0, 3), victims: w.victims, account: w.account, reasons: w.reasons || [], oddities: w.oddities || [],
+      } : null,
+    });
+  }
+  rows.sort((a, b) => (b.flagged - a.flagged) || (b.odd - a.odd) || ((b.worst && b.worst.kills) || 0) - ((a.worst && a.worst.kills) || 0));
+  return {
+    checkedAt: new Date().toISOString(),
+    candidates,
+    analyzed: rows.length,
+    flagged: rows.filter((r) => r.flagged).length,
+    review: rows.filter((r) => r.odd).length,
+    players: rows,
+  };
 }
 
 /**
@@ -263,7 +359,7 @@ const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPat
 if (isMain) {
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
   const dataDir = path.join(root, "data");
-  const { ranks: out, guard, hidden: hiddenInfo, bins, session } = buildRanksWithGuard(dataDir);
+  const { ranks: out, guard, hidden: hiddenInfo, bins, session, forensics: forensicsInfo } = buildRanksWithGuard(dataDir);
   fs.writeFileSync(path.join(dataDir, "ranks.json"), JSON.stringify(out) + "\n");
   console.log(`ranks.json: ${out.count} players (${hiddenInfo.count} on the 🙈 hide list)`);
   // 🧪 Outlier guard → data/status.json (build-log.html). Other status fields are kept.
@@ -274,6 +370,7 @@ if (isMain) {
   st.hidden = hiddenInfo;
   st.bins = { checkedAt: new Date().toISOString(), ...bins };
   st.sessionStats = session;
+  st.forensics = forensicsInfo;
   fs.writeFileSync(stPath, JSON.stringify(st, null, 2) + "\n");
   for (const o of guard.items.filter((x) => !x.explained)) {
     console.log(`::warning::outlier guard: ${o.name} ${o.id}=${o.value} (bound ${o.bound}, z ${o.z})`);

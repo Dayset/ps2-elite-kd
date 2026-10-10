@@ -47,6 +47,8 @@ env:
   GROW_MAX: "50"             # background: max new players per run (time budget usually binds first)
   SWEEP_SLICE_SEC: "60"      # background: max discovery sweep time per run
   HONU_DAILY_CAP: "2500"     # all Honu calls per UTC day (assists + XP + history fallback)
+  FORENSICS_DAILY_RESERVE: "150" # 🔎 session forensics slice INSIDE the daily cap (kill events of top sessions)
+  FORENSICS_PER_RUN: "3"         # 🔎 players per run (≤ 3 Honu calls each)
   # Daybreak Census service ID (registered, public client-side value; a repo
   # secret/variable CENSUS_SERVICE_ID overrides it). Data comes from Census;
   # Honu only as a paced fallback for missing history_stats.
@@ -104,7 +106,7 @@ jobs:
           NEW: ${{ steps.refresh.outputs.new || '0' }}
         run: |
           # Count saved player files from git itself (works even if the step was cut short).
-          changed=$(git status --porcelain -- data/players data/xp | wc -l)
+          changed=$(git status --porcelain -- data/players data/xp data/forensics.json | wc -l)
           if [ "$changed" = "0" ]; then
             # Nothing refreshed (idle / outage / all names bad): don't spend a Pages
             # build on bookkeeping. Only a changed data/schedule.json (read by the
