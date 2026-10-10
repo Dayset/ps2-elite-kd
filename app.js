@@ -3,7 +3,7 @@
  * Mirrors absolute_target_split / kpm_curve / rf_if / adjusted_ivi from ps2_elite_kd.py
  * Pure math lives in math.mjs (shared with Node tests).
  */
-import { chartFontScale } from "./desk-scale.mjs?v=20261010-bar2";
+import { chartFontScale } from "./desk-scale.mjs?v=20261010-type1";
 import {
   X_MAX,
   EASY_MAX,
@@ -33,12 +33,12 @@ import {
   windowYValues,
   kpmBandCurve,
   bandReliability,
-} from "./math.mjs?v=20261010-bar2";
-import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261010-bar2";
-import GHOST_MODEL from "./data/ghost-model.mjs?v=20261010-bar2";
-import { ranksHref } from "./pick-sync.mjs?v=20261010-bar2";
-import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-bar2";
-import { entryFetchedAt, pickNewest, writeWithEviction } from "./cache-pick.mjs?v=20261010-bar2";
+} from "./math.mjs?v=20261010-type1";
+import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261010-type1";
+import GHOST_MODEL from "./data/ghost-model.mjs?v=20261010-type1";
+import { ranksHref } from "./pick-sync.mjs?v=20261010-type1";
+import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-type1";
+import { entryFetchedAt, pickNewest, writeWithEviction } from "./cache-pick.mjs?v=20261010-type1";
 import {
   NameLoadError,
   classifyLoadError,
@@ -65,7 +65,7 @@ import {
   etaLearnLiveMs,
   freshEtaText,
   expectedNameMs,
-} from "./analyze-run.mjs?v=20261010-bar2";
+} from "./analyze-run.mjs?v=20261010-type1";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
@@ -79,7 +79,7 @@ import {
   THIN_MARK,
   THIN_NOTE_HEAD,
   thinPlayerLine,
-} from "./player-metrics.mjs?v=20261010-bar2";
+} from "./player-metrics.mjs?v=20261010-type1";
 /** "22 kills / 60 deaths" in the opponent sample (MIN_FIGHTS counts). */
 function fightsText(r) {
   const k = r.sampleKills || 0;
@@ -91,16 +91,16 @@ function fightsText(r) {
 function thinCellTip(r) {
   return `${MIN_FIGHTS_TIP}. This sample: ${fightsText(r).replace(/[()]/g, "")}`;
 }
-import { markNote, statMark, confirmedPadderSlugs } from "./padding.mjs?v=20261010-bar2";
+import { markNote, statMark, confirmedPadderSlugs } from "./padding.mjs?v=20261010-type1";
 // Account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times: chart name list only.
-import { accountTimes, flairsHtml } from "./flairs.mjs?v=20261010-bar2";
+import { accountTimes, flairsHtml } from "./flairs.mjs?v=20261010-type1";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261010-bar2";
-import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261010-bar2";
+import "./name-peek.mjs?v=20261010-type1";
+import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261010-type1";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
-import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-bar2";
+import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-type1";
 // Live data: Daybreak Census only (batched, paced); Honu just for a rare history fallback.
-import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-bar2";
+import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-type1";
 import {
   censusBase,
   censusRequest,
@@ -109,7 +109,7 @@ import {
   limitConcurrency,
   tokenBucket,
   OPPONENT_TOP_N,
-} from "./census-fetch.mjs?v=20261010-bar2";
+} from "./census-fetch.mjs?v=20261010-type1";
 
   // Player palettes (dark + light theme) live in palette.mjs (shared with ranks.html).
   const COLORS = PALETTE_DARK;
@@ -1444,11 +1444,97 @@ import {
     el.hidden = !text;
   }
 
+  /**
+   * t343u: typing used to rebuild + re-sort the whole 3,000-name shared list on
+   * every key (~130 ms PC, ~550 ms phone). Now: the sorted letter groups are
+   * memoized (re-sorted only when the shared list changes), "is this chip
+   * picked?" is a Set lookup, and keystrokes only update chip classes in place
+   * after a short pause (updateCacheSelection, debounced).
+   */
+  let cacheGroupsMemo = null; // { sig, groups, byLetter }
+  function sharedGroups(shared) {
+    const sig = shared.length + "|" + (sharedIndex.players ? sharedIndex.players.length : 0) + "|" + (shared[0] ? shared[0].key + shared[0].savedAt : "") + "|" + (sharedIndex.updatedAt || "");
+    if (cacheGroupsMemo && cacheGroupsMemo.sig === sig) return cacheGroupsMemo;
+    for (const it of shared) it.k = slugKey(it.name);
+    const groups = groupByCharName(shared);
+    cacheGroupsMemo = { sig, groups, byLetter: new Map(groups.map((g) => [g.letter, g])) };
+    return cacheGroupsMemo;
+  }
+  /** Lookup set for the names in the field (same rule as namesMatch: lower-case or slug). */
+  function selectionKeys(inField) {
+    const set = new Set();
+    for (const n of inField) {
+      set.add("l:" + String(n).trim().toLowerCase());
+      const k = slugKey(n);
+      if (k) set.add("k:" + k);
+    }
+    return set;
+  }
+  function isSelected(sel, item) {
+    if (sel.has("l:" + String(item.name).trim().toLowerCase())) return true;
+    const k = item.k != null ? item.k : (item.k = slugKey(item.name));
+    return !!k && sel.has("k:" + k);
+  }
+  function chipTitle(item, selected) {
+    const when = item.savedAt ? new Date(item.savedAt).toLocaleDateString() : "";
+    const src = item.source === "shared" ? "Shared cache" : "Browser cache";
+    return `${src}${when ? ` · ${when}` : ""} — ${selected ? "remove" : "add"} ${item.name}`;
+  }
+  function setChipSelected(btn, item, selected) {
+    if (btn.classList.contains("selected") === selected) return; // unchanged: no DOM write
+    btn.classList.toggle("active", selected);
+    btn.classList.toggle("selected", selected);
+    btn.setAttribute("aria-pressed", selected ? "true" : "false");
+    btn.title = chipTitle(item, selected);
+  }
+  function setGroupPicked(block, sep, group, picked) {
+    if (+(block.dataset.picked || 0) === picked) return;
+    block.dataset.picked = String(picked);
+    block.classList.toggle("has-picked", picked > 0);
+    const what = group.letter === "#" ? "digits / symbols" : group.letter;
+    sep.title = `${group.items.length} name${group.items.length === 1 ? "" : "s"} under ${what}${picked ? `, ${picked} picked` : ""}`;
+    let tag = sep.querySelector(".chip-group-picked");
+    if (picked) {
+      if (!tag) { tag = document.createElement("span"); tag.className = "chip-group-picked"; sep.appendChild(tag); }
+      tag.textContent = ` · ✅ ${picked}`;
+    } else if (tag) tag.remove();
+  }
+
+  /** In-place selection refresh (no rebuild): chip classes, letter counts, ETA, 🏆 link. */
+  function updateCacheSelection() {
+    updateFreshEta();
+    syncRanksLink();
+    if (!els.cacheChips) return;
+    const sel = selectionKeys(currentNamesInField());
+    for (const btn of els.cacheChips.querySelectorAll("button.chip")) {
+      if (btn._item) setChipSelected(btn, btn._item, isSelected(sel, btn._item));
+    }
+    const memo = cacheGroupsMemo;
+    if (!memo) return;
+    for (const block of els.cacheChips.querySelectorAll("details.chip-group")) {
+      const g = memo.byLetter.get(block.getAttribute("data-letter"));
+      if (!g) continue;
+      let picked = 0;
+      for (const it of g.items) if (isSelected(sel, it)) picked++;
+      setGroupPicked(block, block.querySelector("summary.chip-sep"), g, picked);
+      // Same as a full render: a block holding a picked name opens unless the user chose otherwise.
+      if (picked && !block.open && !cacheLetterOpen.has(g.letter)) { block._auto = true; block.open = true; }
+    }
+  }
+  let cacheSelTimer = 0;
+  const CACHE_SEL_DEBOUNCE_MS = 200;
+  function scheduleCacheSelection() {
+    clearTimeout(cacheSelTimer);
+    cacheSelTimer = setTimeout(updateCacheSelection, CACHE_SEL_DEBOUNCE_MS);
+  }
+
   function renderCacheChips() {
+    clearTimeout(cacheSelTimer);
     updateFreshEta();
     if (!els.cacheChips) return;
     const cached = listCachedNames();
     const inField = currentNamesInField();
+    const sel = selectionKeys(inField);
     els.cacheChips.innerHTML = "";
     if (!cached.length) { syncCacheJump(); return; }
 
@@ -1457,20 +1543,17 @@ import {
       return [...items].sort((a, b) => compareByCharName(a.name, b.name));
     }
 
-    function makeChip(item) {
+    function makeChip(item, sel = selectionKeys(currentNamesInField())) {
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "chip";
       if (item.source === "shared") btn.classList.add("shared");
-      const selected = inField.some((n) => namesMatch(n, item.name));
+      const selected = isSelected(sel, item);
       if (selected) btn.classList.add("active", "selected");
       btn.setAttribute("aria-pressed", selected ? "true" : "false");
       btn.appendChild(nameSpan(item.name, { title: false }));
-      const when = item.savedAt
-        ? new Date(item.savedAt).toLocaleDateString()
-        : "";
-      const src = item.source === "shared" ? "Shared cache" : "Browser cache";
-      btn.title = `${src}${when ? ` · ${when}` : ""} — ${selected ? "remove" : "add"} ${item.name}`;
+      btn.title = chipTitle(item, selected);
+      btn._item = item;
       btn.addEventListener("click", () => toggleNameInField(item.name, btn));
       return btn;
     }
@@ -1495,16 +1578,18 @@ import {
       inner.className = "cache-shared-chips";
       inner.setAttribute("aria-label", "Shared cached character names");
       // Letter separators: [#] (digits/symbols) first, then [A], [B], …
-      const groups = groupByCharName(shared);
+      const groups = sharedGroups(shared).groups;
       // t305u: each letter is a collapsible block, closed by default, summary
       // "[A] 123" (+ "· ✅ 2" when names in it are picked). Blocks holding a
       // picked name start open; a user's own open/close wins across re-renders.
       for (const group of groups) {
-        const picked = group.items.filter((item) => inField.some((n) => namesMatch(n, item.name))).length;
+        let picked = 0;
+        for (const item of group.items) if (isSelected(sel, item)) picked++;
         const block = document.createElement("details");
         block.className = "chip-group";
         block.setAttribute("data-letter", group.letter);
         if (picked) block.classList.add("has-picked");
+        block.dataset.picked = String(picked);
         const want = cacheLetterOpen.has(group.letter) ? cacheLetterOpen.get(group.letter) : picked > 0;
         if (want) block.open = true;
         const sep = document.createElement("summary");
@@ -1525,11 +1610,16 @@ import {
         // Build chips lazily on first open (1,700+ names → fewer nodes up front).
         const fill = () => {
           if (chips.childElementCount) return;
-          for (const item of group.items) chips.appendChild(makeChip(item));
+          // Selection as of now (the block may open long after this render).
+          const now = block.open && fillSel ? fillSel : selectionKeys(currentNamesInField());
+          for (const item of group.items) chips.appendChild(makeChip(item, now));
         };
+        let fillSel = sel;
         if (block.open) fill();
+        fillSel = null;
         block.addEventListener("toggle", () => {
           if (block.open) fill();
+          if (block._auto) { block._auto = false; syncCacheJump(); return; } // opened for a picked name, not by the user
           cacheLetterOpen.set(group.letter, block.open);
           syncCacheJump();
         });
@@ -1549,7 +1639,7 @@ import {
       label.style.marginRight = "0.35rem";
       label.textContent = "💾 Browser:";
       els.cacheChips.appendChild(label);
-      for (const item of browser) els.cacheChips.appendChild(makeChip(item));
+      for (const item of browser) els.cacheChips.appendChild(makeChip(item, sel));
     }
   }
 
@@ -3584,7 +3674,6 @@ import {
   }
 
   if (els.fetchFresh) els.fetchFresh.addEventListener("change", updateFreshEta);
-  if (els.namesInput) els.namesInput.addEventListener("input", updateFreshEta);
   if (els.analyzeBtn) {
     els.analyzeBtn.addEventListener("click", () => {
       runAnalyzeFromUi();
@@ -3640,7 +3729,6 @@ import {
 
     els.namesInput.addEventListener("input", () => {
       clearGraphReadyHint();
-      syncRanksLink();
       const val = els.namesInput.value;
       // Completed token(s) when text ends with a separator
       if (/[\s,;]$/.test(val)) {
@@ -3652,12 +3740,14 @@ import {
         clearLimitHint();
       }
       syncNamesPlaceholder();
-      renderCacheChips();
+      // t343u: no rebuild per key — chip highlights / ETA / 🏆 link follow after a short pause.
+      scheduleCacheSelection();
     });
 
     els.namesInput.addEventListener("blur", () => {
       // Do not auto-commit on blur — only separator / Analyze / Enter
-      renderCacheChips();
+      clearTimeout(cacheSelTimer);
+      updateCacheSelection();
     });
 
     els.namesInput.addEventListener("paste", () => {

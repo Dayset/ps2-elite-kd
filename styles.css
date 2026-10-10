@@ -223,19 +223,14 @@ header.top-bar {
 }
 
 /* index: spacer | 🏆 Rankings | 🗑️ ☀️. Mobile: 🏆 pinned left (spacer hidden).
-   t304u: desktop centres 🏆 with a 1fr | auto | 1fr grid. */
+   t344u: desktop puts [🏆 Rankings][›] at the left, same left edge as
+   [🔍 Analyze][🔗] above it (was centred, t304u). */
 .ranks-row .ranks-row-spacer { display: none; }
 .ranks-row .ranks-row-end { display: inline-flex; align-items: center; gap: 0.4rem; }
 @media (min-width: 601px) {
-  .controls-theme-row.ranks-row {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    align-items: center;
-  }
-  .ranks-row .ranks-row-spacer { display: block; }
-  .controls .ranks-row .ranks-link { margin: 0; justify-self: center; }
-  .ranks-row .ranks-pair { justify-self: center; }
-  .ranks-row .ranks-row-end { justify-self: end; }
+  .controls-theme-row.ranks-row { justify-content: flex-start; }
+  .controls .ranks-row .ranks-link { margin: 0; }
+  .ranks-row .ranks-row-end { display: none; }
 }
 
 /* t341u: 🗑️ and ☀️ Light sit on the 📦 Shared cache line, right-aligned, as

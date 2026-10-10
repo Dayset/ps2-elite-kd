@@ -14,7 +14,7 @@ test("Rankings Player sort uses the shared comparator", () => {
   assert.match(ranks, /import \{ compareByCharName \} from "\.\/analyze-run\.mjs/);
   assert.match(ranks, /byName = \(a, b\) => compareByCharName\(a\.name, b\.name\)/);
 });
-test("🏆 Rankings is a labelled button, centred row on desktop", () => {
+test("🏆 Rankings is a labelled button + › (left-aligned on desktop)", () => {
   assert.match(index, /id="ranksLink"[^>]*>🏆 Rankings<\/a>\s*<a id="ranksGoBtn" href="ranks\.html" class="ranks-go"[\s\S]*?<svg class="ranks-chev"/);
   assert.match(index, /class="controls-theme-row ranks-row"/);
   // t341u/t342u: 📦 Shared cache line with 🗑️ / ☀️ is the first row of the controls, above the names box.

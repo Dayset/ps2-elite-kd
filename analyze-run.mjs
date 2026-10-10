@@ -185,12 +185,18 @@ export function charNameSortKey(name) {
  * ties broken by the full display string. Shared by the Analyze stats table,
  * the Rankings Player column and the shared-cache chips.
  */
+// One shared collator: String#localeCompare with options builds one per call,
+// which made sorting the 3,000-name shared cache take ~100 ms (t343u).
+const NAME_COLLATOR = new Intl.Collator(undefined, NAME_COLLATE);
+function compareKeyed(ka, da, kb, db) {
+  const byName = NAME_COLLATOR.compare(ka, kb);
+  if (byName) return byName;
+  return NAME_COLLATOR.compare(da, db) || (da < db ? -1 : da > db ? 1 : 0);
+}
 export function compareByCharName(a, b) {
   const da = String(a ?? "");
   const db = String(b ?? "");
-  const byName = charNameSortKey(da).localeCompare(charNameSortKey(db), undefined, NAME_COLLATE);
-  if (byName) return byName;
-  return da.localeCompare(db, undefined, NAME_COLLATE) || (da < db ? -1 : da > db ? 1 : 0);
+  return compareKeyed(charNameSortKey(da), da, charNameSortKey(db), db);
 }
 
 /** Group label for a display name: uppercased first letter of the tag-free name, or "#". */
@@ -208,15 +214,21 @@ export function nameGroupLetter(name) {
  * @returns {{ letter: string, items: T[] }[]}
  */
 export function groupByCharName(items, getName = (x) => (x && typeof x === "object" ? x.name : x)) {
-  const sorted = [...(items || [])].sort((a, b) => compareByCharName(getName(a), getName(b)));
+  // Sort keys computed once per item (not twice per comparison).
+  const keyed = (items || []).map((item) => {
+    const d = String(getName(item) ?? "");
+    const k = charNameSortKey(d);
+    const first = k.normalize("NFD").charAt(0);
+    return { item, d, k, letter: /\p{L}/u.test(first) ? first.toUpperCase() : "#" };
+  });
+  keyed.sort((x, y) => compareKeyed(x.k, x.d, y.k, y.d));
   const groups = new Map();
-  for (const item of sorted) {
-    const letter = nameGroupLetter(getName(item));
+  for (const { item, letter } of keyed) {
     if (!groups.has(letter)) groups.set(letter, []);
     groups.get(letter).push(item);
   }
   return [...groups.entries()]
-    .sort(([a], [b]) => (a === "#" ? -1 : b === "#" ? 1 : a.localeCompare(b, undefined, NAME_COLLATE)))
+    .sort(([a], [b]) => (a === "#" ? -1 : b === "#" ? 1 : NAME_COLLATOR.compare(a, b)))
     .map(([letter, list]) => ({ letter, items: list }));
 }
 

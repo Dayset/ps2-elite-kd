@@ -187,3 +187,34 @@ describe("Rankings: fresh browser copy + readable chart names (t338u)", () => {
     });
   }
 });
+
+describe("Analyze names box typing stays fast with a big shared cache (t343u)", () => {
+  const haveData = ["shlodog", "yeezy"].every((n) => fs.existsSync(path.join(root, "data/players", n + ".json")));
+  it("no rebuild per key; highlights follow after the pause", { skip: (!chrome && "no Chrome") || (!haveData && "player files missing"), timeout: 120000 }, async () => {
+    await withPage(async ({ ev, nav }) => {
+      await nav("index.html?names=shlodog");
+      assert.equal(await ev(`new Promise(async (r) => { for (let t = 0; t < 600; t++) { const a = window.__ps2EliteKd; if (a && !a.isAnalyzing() && document.querySelector("details.cache-shared")) return r(1); await new Promise((q) => setTimeout(q, 50)); } r(0); })`), 1);
+      const res = await ev(`(async () => {
+        const inp = document.getElementById("namesInput");
+        const details = document.querySelector("details.cache-shared");
+        inp.focus();
+        const per = [];
+        for (const ch of "yeezy") {
+          const t = performance.now();
+          inp.value += ch;
+          inp.dispatchEvent(new InputEvent("input", { bubbles: true, data: ch, inputType: "insertText" }));
+          per.push(performance.now() - t);
+        }
+        const sameNode = document.querySelector("details.cache-shared") === details;
+        await new Promise((r) => setTimeout(r, 450));
+        const y = document.querySelector('details.chip-group[data-letter="Y"]');
+        const chip = y && [...y.querySelectorAll("button.chip")].find((b) => b.textContent.trim().toLowerCase().endsWith("yeezy"));
+        return { max: Math.max(...per), sameNode, focused: document.activeElement === inp, yPicked: y && y.classList.contains("has-picked"), yOpen: y && y.open, chipSel: !!(chip && chip.classList.contains("selected")), value: inp.value };
+      })()`);
+      assert.ok(res.sameNode, "cache list not rebuilt while typing");
+      assert.ok(res.focused && res.value === "yeezy", JSON.stringify(res));
+      assert.ok(res.max < 40, "per-key handler time " + res.max);
+      assert.ok(res.yPicked && res.yOpen && res.chipSel, JSON.stringify(res));
+    });
+  });
+});

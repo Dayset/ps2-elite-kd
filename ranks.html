@@ -24,7 +24,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261010-bar2" />
+  <link rel="stylesheet" href="styles.css?v=20261010-type1" />
   <style>
     /* Ranks page: one long sortable table of every cached player. */
     body.ranks-page { overflow-x: hidden; }
@@ -339,19 +339,19 @@
 
 
   <script type="module">
-    import "./name-peek.mjs?v=20261010-bar2";
-    import { compareByCharName } from "./analyze-run.mjs?v=20261010-bar2";
-    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits, binJumpTarget } from "./dist.mjs?v=20261010-bar2";
-    import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261010-bar2";
-    import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261010-bar2";
-    import { paletteColor } from "./palette.mjs?v=20261010-bar2";
-    import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-bar2";
-    import { deskUiScale } from "./desk-scale.mjs?v=20261010-bar2";
-    import { PICK_PARAM, picksFromSearch, matchPicks, analyzeHref, MAIN_PENDING_KEY } from "./pick-sync.mjs?v=20261010-bar2";
-    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-bar2";
-    import { mergeFreshRows } from "./rank-row.mjs?v=20261010-bar2";
-    import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-bar2";
-    import { confirmedPadderSlugs } from "./padding.mjs?v=20261010-bar2";
+    import "./name-peek.mjs?v=20261010-type1";
+    import { compareByCharName } from "./analyze-run.mjs?v=20261010-type1";
+    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits, binJumpTarget } from "./dist.mjs?v=20261010-type1";
+    import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261010-type1";
+    import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261010-type1";
+    import { paletteColor } from "./palette.mjs?v=20261010-type1";
+    import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-type1";
+    import { deskUiScale } from "./desk-scale.mjs?v=20261010-type1";
+    import { PICK_PARAM, picksFromSearch, matchPicks, analyzeHref, MAIN_PENDING_KEY } from "./pick-sync.mjs?v=20261010-type1";
+    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-type1";
+    import { mergeFreshRows } from "./rank-row.mjs?v=20261010-type1";
+    import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-type1";
+    import { confirmedPadderSlugs } from "./padding.mjs?v=20261010-type1";
 
     const LS_THEME = "ps2-elite-kd-theme";
     const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";
