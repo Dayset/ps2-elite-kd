@@ -3,7 +3,7 @@
  * Mirrors absolute_target_split / kpm_curve / rf_if / adjusted_ivi from ps2_elite_kd.py
  * Pure math lives in math.mjs (shared with Node tests).
  */
-import { chartFontScale } from "./desk-scale.mjs?v=20261009-desk";
+import { chartFontScale } from "./desk-scale.mjs?v=20261009-fresh";
 import {
   X_MAX,
   EASY_MAX,
@@ -33,10 +33,11 @@ import {
   windowYValues,
   kpmBandCurve,
   bandReliability,
-} from "./math.mjs?v=20261009-desk";
-import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261009-desk";
-import GHOST_MODEL from "./data/ghost-model.mjs?v=20261009-desk";
-import { ranksHref } from "./pick-sync.mjs?v=20261009-desk";
+} from "./math.mjs?v=20261009-fresh";
+import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261009-fresh";
+import GHOST_MODEL from "./data/ghost-model.mjs?v=20261009-fresh";
+import { ranksHref } from "./pick-sync.mjs?v=20261009-fresh";
+import { entryFetchedAt, pickNewest, writeWithEviction } from "./cache-pick.mjs?v=20261009-fresh";
 import {
   NameLoadError,
   classifyLoadError,
@@ -62,7 +63,7 @@ import {
   formatEtaLeft,
   etaLearnLiveMs,
   expectedNameMs,
-} from "./analyze-run.mjs?v=20261009-desk";
+} from "./analyze-run.mjs?v=20261009-fresh";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
@@ -76,7 +77,7 @@ import {
   THIN_MARK,
   THIN_NOTE_HEAD,
   thinPlayerLine,
-} from "./player-metrics.mjs?v=20261009-desk";
+} from "./player-metrics.mjs?v=20261009-fresh";
 /** "22 kills / 60 deaths" in the opponent sample (MIN_FIGHTS counts). */
 function fightsText(r) {
   const k = r.sampleKills || 0;
@@ -88,16 +89,16 @@ function fightsText(r) {
 function thinCellTip(r) {
   return `${MIN_FIGHTS_TIP}. This sample: ${fightsText(r).replace(/[()]/g, "")}`;
 }
-import { markNote, statMark, confirmedPadderSlugs } from "./padding.mjs?v=20261009-desk";
+import { markNote, statMark, confirmedPadderSlugs } from "./padding.mjs?v=20261009-fresh";
 // Account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times: chart name list only.
-import { accountTimes, flairsHtml } from "./flairs.mjs?v=20261009-desk";
+import { accountTimes, flairsHtml } from "./flairs.mjs?v=20261009-fresh";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261009-desk";
-import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261009-desk";
+import "./name-peek.mjs?v=20261009-fresh";
+import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261009-fresh";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
-import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-desk";
+import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-fresh";
 // Live data: Daybreak Census only (batched, paced); Honu just for a rare history fallback.
-import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261009-desk";
+import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261009-fresh";
 import {
   censusBase,
   censusRequest,
@@ -106,7 +107,7 @@ import {
   limitConcurrency,
   tokenBucket,
   OPPONENT_TOP_N,
-} from "./census-fetch.mjs?v=20261009-desk";
+} from "./census-fetch.mjs?v=20261009-fresh";
 
   // Player palettes (dark + light theme) live in palette.mjs (shared with ranks.html).
   const COLORS = PALETTE_DARK;
@@ -861,13 +862,19 @@ import {
     const key = slugKey(name);
     if (!key) return;
     const store = getCacheStore();
+    const now = Date.now();
+    const live = String(player.source || "").startsWith("live:");
     store[key] = {
       name: String(name).trim(),
-      savedAt: Date.now(),
+      savedAt: now,
+      // When the DATA was fetched (t300u: newest copy wins on reload). Unknown
+      // for an undated shared file → 1, so it never beats a dated copy.
+      fetchedAt: +player.fetchedAt > 0 ? +player.fetchedAt : live ? now : 1,
       player: trimForCache(player),
     };
     pruneCache(store);
-    writeJsonLS(LS_CACHE, store);
+    // Quota full (200-opponent copies are bigger): drop the oldest, keep this one.
+    writeWithEviction(store, key, (st) => writeJsonLS(LS_CACHE, st));
     renderNameTokens();
     renderCacheChips();
   }
@@ -1592,7 +1599,9 @@ import {
       try {
         const data = await fetchJson(path, signal);
         data._source = `shared:${path}`;
-        return normalizePlayer(data);
+        const np = normalizePlayer(data);
+        np.fetchedAt = +data.savedAt || (shared && +shared.savedAt) || 0;
+        return np;
       } catch (e) {
         if (isAbortError(e)) throw e;
         lastErr = e;
@@ -1604,10 +1613,12 @@ import {
   function loadFromCache(name) {
     const entry = cacheGet(name);
     if (!entry) throw new Error(`No cache for ${name}`);
-    return normalizePlayer({
+    const np = normalizePlayer({
       _source: "cache:localStorage",
       player: entry.player,
     });
+    np.fetchedAt = entryFetchedAt(entry);
+    return np;
   }
 
   async function resolveCensus(name, signal) {
@@ -1749,14 +1760,40 @@ import {
         times: accountTimes(c),
       },
     });
+    np.fetchedAt = Date.now();
     // Graceful partial result: opponents Census couldn't return are left out.
     if (r.skipped || r.ownFailed) np.partialSkipped = r.skipped + (r.ownFailed ? 1 : 0);
     return np;
   }
 
+  /** Newest stored copy (shared file vs browser cache), or null. */
+  async function loadStoredNewest(name, signal, errors) {
+    let sharedP = null;
+    let localP = null;
+    try {
+      sharedP = await loadLocal(name, signal);
+    } catch (e) {
+      if (isAbortError(e)) throw e;
+      errors.push(`shared: ${e.message}`);
+    }
+    checkAborted(signal);
+    try {
+      localP = loadFromCache(name);
+    } catch (e) {
+      errors.push(`cache: ${e.message}`);
+    }
+    const pick = pickNewest([
+      sharedP && { player: sharedP, fetchedAt: sharedP.fetchedAt, top: sharedP.top, kind: "shared" },
+      localP && { player: localP, fetchedAt: localP.fetchedAt, top: localP.top, kind: "local" },
+    ]);
+    return pick ? pick.player : null;
+  }
+
   /**
-   * Default: shared data/ → browser localStorage → live.
-   * Fresh: live only (error if live fails).
+   * Default: the newest of shared data/ and browser localStorage (t300u:
+   * a "Fetch fresh" result must survive F5 — an older shared file never
+   * overrides it; cache-pick.mjs) → live when neither has the player.
+   * Fresh: live only (cached copy only when Census is busy/down).
    */
   async function loadOne(name, { fresh = false, run = null } = {}) {
     const signal = run ? run.signal : undefined;
@@ -1768,17 +1805,7 @@ import {
         if (isAbortError(e)) throw e;
         // Census busy/down: prefer the cached copy over failing the name.
         if (isTransientKind(classifyLoadError(e))) {
-          let cached = null;
-          try {
-            cached = await loadLocal(name, signal);
-          } catch (e2) {
-            if (isAbortError(e2)) throw e2;
-            try {
-              cached = loadFromCache(name);
-            } catch {
-              cached = null;
-            }
-          }
+          const cached = await loadStoredNewest(name, signal, []);
           if (cached) return { ...cached, cacheFallback: true };
         }
         throw new NameLoadError(
@@ -1788,18 +1815,8 @@ import {
       }
     }
     const errors = [];
-    try {
-      return await loadLocal(name, signal);
-    } catch (e) {
-      if (isAbortError(e)) throw e;
-      errors.push(`shared: ${e.message}`);
-    }
-    checkAborted(signal);
-    try {
-      return loadFromCache(name);
-    } catch (e) {
-      errors.push(`cache: ${e.message}`);
-    }
+    const stored = await loadStoredNewest(name, signal, errors);
+    if (stored) return stored;
     let liveErr = null;
     try {
       return await loadLive(name, run);
