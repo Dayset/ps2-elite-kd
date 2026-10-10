@@ -24,7 +24,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261010-fresh1" />
+  <link rel="stylesheet" href="styles.css?v=20261010-fresh2" />
   <style>
     /* Ranks page: one long sortable table of every cached player. */
     body.ranks-page { overflow-x: hidden; }
@@ -75,7 +75,30 @@
     .ranks-toolbar .ranks-clear-picks:hover, .ranks-toolbar .ranks-clear-picks:focus-visible { border-color: var(--accent); color: var(--text); background: var(--ctrl-btn-hover); }
     .ranks-toolbar .ranks-clear-picks:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
     .ranks-toolbar .ranks-clear-picks[hidden] { display: none; }
-    .ranks-toolbar .theme-toggle { margin-left: auto; }
+    .ranks-head .theme-toggle { margin-left: auto; order: 2; align-self: center; }
+    @media (max-width: 600px) {
+      /* Phones: ☀️ Light on the title line, player count below. */
+      .ranks-head .theme-toggle { order: 1; }
+      .ranks-head .ranks-meta { order: 2; flex-basis: 100%; }
+    }
+    /* t340u: filter box on its own line; below it ‹ 🔍 and Compare side by side, same size. */
+    .ranks-toolbar .rk-pick-box { flex: 1 1 100%; max-width: 40rem; }
+    .ranks-actions {
+      flex: 1 1 100%;
+      display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem;
+    }
+    .ranks-actions .back-btn,
+    .ranks-actions .ranks-compare {
+      box-sizing: border-box; width: 7.5rem; min-width: 0;
+      height: var(--ctl-h, 2.9rem); border-radius: 8px; padding: 0 0.6rem;
+    }
+    .ranks-actions .back-btn { border-width: 1px; }
+    @media (max-width: 600px) {
+      .ranks-actions { gap: 0.5rem; }
+      .ranks-actions .back-btn,
+      .ranks-actions .ranks-compare { width: 6rem; }
+      .ranks-actions .ranks-picked { min-width: 0; }
+    }
     /* ‹ 🔍 back to player search: big pill, same height as the search box */
     .back-btn {
       position: relative;
@@ -254,19 +277,21 @@
   <div class="ranks-wrap">
     <div class="ranks-head">
       <h1>🏆 Rankings</h1>
+      <button id="themeToggle" type="button" class="theme-toggle" title="Toggle light / dark theme" aria-label="Toggle light / dark theme">☀️ Light</button>
       <span id="ranksMeta" class="ranks-meta">Loading…</span>
     </div>
 
     <div class="ranks-toolbar">
-      <a id="backLink" href="index.html" class="back-btn" aria-label="Back to player search" data-hint="Back to player search"><svg class="back-chev" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M15 4.5 7.5 12 15 19.5" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="back-ico" aria-hidden="true">🔍</span></a>
       <div id="ranksPickBox" class="rk-pick-box" role="group" aria-label="Picked players and name filter">
         <span id="ranksChips" class="rk-chips"></span>
         <input id="ranksSearch" type="search" placeholder="Filter names…" aria-label="Filter player names" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="search" />
       </div>
-      <button id="ranksCompare" type="button" class="ranks-compare" disabled title="Open the main page with the checked players (up to 10)">Compare</button>
-      <span id="ranksPicked" class="ranks-picked" aria-live="polite">0 / 10</span>
-      <button id="ranksClearPicks" type="button" class="ranks-clear-picks" hidden title="Untick all checked players" aria-label="Clear checked players">✕ Clear</button>
-      <button id="themeToggle" type="button" class="theme-toggle" title="Toggle light / dark theme" aria-label="Toggle light / dark theme">☀️ Light</button>
+      <div class="ranks-actions">
+        <a id="backLink" href="index.html" class="back-btn" aria-label="Back to player search" data-hint="Back to player search"><svg class="back-chev" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M15 4.5 7.5 12 15 19.5" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="back-ico" aria-hidden="true">🔍</span></a>
+        <button id="ranksCompare" type="button" class="ranks-compare" disabled title="Open the main page with the checked players (up to 10)">Compare</button>
+        <span id="ranksPicked" class="ranks-picked" aria-live="polite">0 / 10</span>
+        <button id="ranksClearPicks" type="button" class="ranks-clear-picks" hidden title="Untick all checked players" aria-label="Clear checked players">✕ Clear</button>
+      </div>
     </div>
     <div id="ranksStatus" class="ranks-status" role="status"></div>
 
@@ -314,19 +339,19 @@
 
 
   <script type="module">
-    import "./name-peek.mjs?v=20261010-fresh1";
-    import { compareByCharName } from "./analyze-run.mjs?v=20261010-fresh1";
-    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits, binJumpTarget } from "./dist.mjs?v=20261010-fresh1";
-    import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261010-fresh1";
-    import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261010-fresh1";
-    import { paletteColor } from "./palette.mjs?v=20261010-fresh1";
-    import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-fresh1";
-    import { deskUiScale } from "./desk-scale.mjs?v=20261010-fresh1";
-    import { PICK_PARAM, picksFromSearch, matchPicks, analyzeHref, MAIN_PENDING_KEY } from "./pick-sync.mjs?v=20261010-fresh1";
-    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-fresh1";
-    import { mergeFreshRows } from "./rank-row.mjs?v=20261010-fresh1";
-    import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-fresh1";
-    import { confirmedPadderSlugs } from "./padding.mjs?v=20261010-fresh1";
+    import "./name-peek.mjs?v=20261010-fresh2";
+    import { compareByCharName } from "./analyze-run.mjs?v=20261010-fresh2";
+    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits, binJumpTarget } from "./dist.mjs?v=20261010-fresh2";
+    import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261010-fresh2";
+    import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261010-fresh2";
+    import { paletteColor } from "./palette.mjs?v=20261010-fresh2";
+    import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-fresh2";
+    import { deskUiScale } from "./desk-scale.mjs?v=20261010-fresh2";
+    import { PICK_PARAM, picksFromSearch, matchPicks, analyzeHref, MAIN_PENDING_KEY } from "./pick-sync.mjs?v=20261010-fresh2";
+    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-fresh2";
+    import { mergeFreshRows } from "./rank-row.mjs?v=20261010-fresh2";
+    import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-fresh2";
+    import { confirmedPadderSlugs } from "./padding.mjs?v=20261010-fresh2";
 
     const LS_THEME = "ps2-elite-kd-theme";
     const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";

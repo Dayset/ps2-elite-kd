@@ -73,9 +73,12 @@ describe("Rankings pick chips (t314u)", () => {
         return r.result.value;
       };
       await send("Page.enable", {}, sessionId);
-      const rows = JSON.parse(read("data/ranks.json")).rows;
-      const cols = JSON.parse(read("data/ranks.json")).cols;
-      const q0 = rows[0][cols.indexOf("query")], q1 = rows[1][cols.indexOf("query")], q2 = rows[2][cols.indexOf("query")];
+      // Use the first rows the table actually shows (top of the default sort): the
+      // list renders progressively, so rows deep in ranks.json's file order may not
+      // be in the table yet when the test ticks them (the old test picked those).
+      await send("Page.navigate", { url: `http://127.0.0.1:${port}/ranks.html` }, sessionId);
+      const [q0, q1, q2] = await ev(`new Promise(async (r) => { for (let t = 0; t < 400 && document.querySelectorAll("#ranksBody tr[data-q]").length < 3; t++) await new Promise((q) => setTimeout(q, 50)); r([...document.querySelectorAll("#ranksBody tr[data-q]")].slice(0, 3).map((t) => t.dataset.q)); })`);
+      assert.equal(new Set([q0, q1, q2]).size, 3);
       await send("Page.navigate", { url: `http://127.0.0.1:${port}/ranks.html?pick=${encodeURIComponent(q0)},${encodeURIComponent(q1)}` }, sessionId);
       await ev(`new Promise(async (r) => { for (let t = 0; t < 400 && !document.querySelector("#ranksBody tr[data-q]"); t++) await new Promise((q) => setTimeout(q, 50)); r(1); })`);
       const state = () => ev(`({ chips: [...document.querySelectorAll("#ranksChips .name-token")].map((b) => b.dataset.q), pick: new URL(location.href).searchParams.get("pick"), checked: [...document.querySelectorAll('#ranksBody input[type="checkbox"]:checked')].map((c) => c.closest("tr").dataset.q) })`);
