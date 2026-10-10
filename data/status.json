@@ -4,55 +4,19 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "38076473902",
-    "event": "schedule",
-    "kind": "discovery",
-    "startedAt": "2026-10-10T18:36:53.670Z",
-    "endedAt": "2026-10-10T18:38:05.036Z",
-    "seconds": 71,
-    "updated": [
-      "[MIUO] UwUUwUUwU",
-      "LILKAtr",
-      "[KlYA] PIkaqiuIll",
-      "[3EPG] Nebelhexe",
-      "[C0D] DontMakeMeCry"
+    "runId": "38077037073",
+    "event": "workflow_dispatch",
+    "kind": "on-demand",
+    "startedAt": "2026-10-10T18:45:24.102Z",
+    "endedAt": "2026-10-10T18:45:28.076Z",
+    "seconds": 4,
+    "updated": [],
+    "added": [
+      "RailMe"
     ],
-    "added": [],
-    "failed": [
-      {
-        "name": "[FEMx] ShrimpeHxxTR",
-        "reason": "Census: 36/200 opponent stats missing; keeping old data",
-        "outage": true
-      },
-      {
-        "name": "[xxSx] ShrimpeHxxNC",
-        "reason": "Census: 20/199 opponent stats missing; keeping old data",
-        "outage": true
-      },
-      {
-        "name": "LtGenISLJeffreyEpstein1488thEgoz",
-        "reason": "Census: no character LtGenISLJeffreyEpstein1488thEgoz",
-        "outage": false
-      },
-      {
-        "name": "[K4T5] ShrimpeHxxVS",
-        "reason": "Census: 26/200 opponent stats missing; keeping old data",
-        "outage": true
-      },
-      {
-        "name": "Runnerdeconfianza",
-        "reason": "Census: 1/1 opponent stats missing; keeping old data",
-        "outage": true
-      }
-    ],
-    "stoppedEarly": "4 outage-type failures in a row (Census/Honu down?)",
-    "indexSize": 3000,
-    "discovery": {
-      "cap": 3000,
-      "queue": 4549,
-      "slice": null,
-      "sweepInProgress": false
-    },
+    "failed": [],
+    "stoppedEarly": null,
+    "indexSize": 3001,
     "honu": {
       "day": "2026-10-10",
       "calls": 2499,
@@ -60,64 +24,14 @@
     },
     "batch": [
       {
-        "name": "[MIUO] UwUUwUUwU",
-        "src": "fresh-request",
+        "name": "RailMe",
+        "src": "on-demand",
         "status": "done"
-      },
-      {
-        "name": "LILKAtr",
-        "src": "fresh-request",
-        "status": "done"
-      },
-      {
-        "name": "[KlYA] PIkaqiuIll",
-        "src": "fresh-request",
-        "status": "done"
-      },
-      {
-        "name": "[3EPG] Nebelhexe",
-        "src": "fresh-request",
-        "status": "done"
-      },
-      {
-        "name": "[C0D] DontMakeMeCry",
-        "src": "fresh-request",
-        "status": "done"
-      },
-      {
-        "name": "[FEMx] ShrimpeHxxTR",
-        "src": "refresh",
-        "status": "failed",
-        "reason": "Census: 36/200 opponent stats missing; keeping old data"
-      },
-      {
-        "name": "[xxSx] ShrimpeHxxNC",
-        "src": "refresh",
-        "status": "failed",
-        "reason": "Census: 20/199 opponent stats missing; keeping old data"
-      },
-      {
-        "name": "LtGenISLJeffreyEpstein1488thEgoz",
-        "src": "refresh",
-        "status": "not-found",
-        "reason": "Census: no character LtGenISLJeffreyEpstein1488thEgoz"
-      },
-      {
-        "name": "[K4T5] ShrimpeHxxVS",
-        "src": "refresh",
-        "status": "failed",
-        "reason": "Census: 26/200 opponent stats missing; keeping old data"
-      },
-      {
-        "name": "Runnerdeconfianza",
-        "src": "refresh",
-        "status": "failed",
-        "reason": "Census: 1/1 opponent stats missing; keeping old data"
       }
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-10T18:38:07.398Z",
+    "checkedAt": "2026-10-10T18:45:30.266Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 1,
     "explained": 1,
@@ -127,8 +41,8 @@
         "name": "Anniversay",
         "id": "kd",
         "value": 247,
-        "bound": 20.014,
-        "z": 236.46,
+        "bound": 20.019,
+        "z": 237.02,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -139,8 +53,8 @@
         "name": "[B54A] geiloVS",
         "id": "kd",
         "value": 150,
-        "bound": 20.014,
-        "z": 143.09,
+        "bound": 20.019,
+        "z": 143.429,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (aim), listed there",
@@ -156,14 +70,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 236.46,
+        "maxZ": 237.02,
         "metrics": [
           {
             "id": "kd",
             "label": "KD",
             "value": 247,
-            "bound": 20.014,
-            "z": 236.46,
+            "bound": 20.019,
+            "z": 237.02,
             "side": "high"
           }
         ]
@@ -176,14 +90,14 @@
         "red": [
           "aim"
         ],
-        "maxZ": 143.09,
+        "maxZ": 143.429,
         "metrics": [
           {
             "id": "kd",
             "label": "KD",
             "value": 150,
-            "bound": 20.014,
-            "z": 143.09,
+            "bound": 20.019,
+            "z": 143.429,
             "side": "high"
           }
         ]
@@ -256,7 +170,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-10T18:38:07.430Z",
+    "checkedAt": "2026-10-10T18:45:30.297Z",
     "red": 18,
     "padding": 22,
     "adjusted": 1,
@@ -267,7 +181,7 @@
     "forensics": 2
   },
   "sessionStats": {
-    "checkedAt": "2026-10-10T18:38:07.407Z",
+    "checkedAt": "2026-10-10T18:45:30.273Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -280,7 +194,7 @@
     },
     "ruleText": "[session pattern] in recent Honu sessions (≥ 100 kills counted): assists per kill ≤ 0.1, headshot share ≥ 50% (headshot XP per kill; Census lifetime HSR when no XP detail) and K/D ≥ 7 (session deaths; Census lifetime KD when none). A very one-sided record; a lead for manual review, not proof.",
     "coverage": {
-      "players": 2999,
+      "players": 3000,
       "withSessions": 1343,
       "measured": 729,
       "sessions": 4186,
@@ -1116,17 +1030,17 @@
     "outliersUnexplained": 0
   },
   "size": {
-    "at": "2026-10-10T18:38:05.327Z",
+    "at": "2026-10-10T18:45:28.430Z",
     "repoBytes": 28369920,
-    "dataBytes": 55633040,
-    "playersBytes": 52497484,
-    "playerFiles": 3000,
+    "dataBytes": 55648976,
+    "playersBytes": 52515365,
+    "playerFiles": 3001,
     "warnAtBytes": 734003200,
     "warning": false
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-10T18:38:07.414Z",
+    "checkedAt": "2026-10-10T18:45:30.282Z",
     "candidates": [
       "coldandhot",
       "alandwhale",
@@ -1816,7 +1730,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-10T18:38:07.417Z",
+    "checkedAt": "2026-10-10T18:45:30.285Z",
     "count": 48,
     "players": [
       {
