@@ -24,7 +24,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261010-pick1" />
+  <link rel="stylesheet" href="styles.css?v=20261010-jump1" />
   <style>
     /* Ranks page: one long sortable table of every cached player. */
     body.ranks-page { overflow-x: hidden; }
@@ -284,6 +284,9 @@
       border-left-width: 3px; box-shadow: 0 6px 20px var(--shadow);
     }
     .dist-tip[hidden] { display: none; }
+    #distSvg .dist-name { cursor: pointer; }
+    #distSvg .dist-name:hover { text-decoration: underline; }
+    #distSvg .dist-name:focus-visible { outline: 2px solid var(--accent); }
     .dist-tip b { color: var(--accent); }
     .dist-note { color: var(--dim); font-size: 0.75rem; margin-top: 0.25rem; }
     @media (max-width: 600px) {
@@ -358,19 +361,19 @@
 
 
   <script type="module">
-    import "./name-peek.mjs?v=20261010-pick1";
-    import { compareByCharName } from "./analyze-run.mjs?v=20261010-pick1";
-    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits, binJumpTarget } from "./dist.mjs?v=20261010-pick1";
-    import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261010-pick1";
-    import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261010-pick1";
-    import { paletteColor } from "./palette.mjs?v=20261010-pick1";
-    import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-pick1";
-    import { deskUiScale } from "./desk-scale.mjs?v=20261010-pick1";
-    import { PICK_PARAM, picksFromSearch, matchPicks, analyzeHref, MAIN_PENDING_KEY } from "./pick-sync.mjs?v=20261010-pick1";
-    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-pick1";
-    import { mergeFreshRows } from "./rank-row.mjs?v=20261010-pick1";
-    import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-pick1";
-    import { confirmedPadderSlugs } from "./padding.mjs?v=20261010-pick1";
+    import "./name-peek.mjs?v=20261010-jump1";
+    import { compareByCharName } from "./analyze-run.mjs?v=20261010-jump1";
+    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits, binJumpTarget } from "./dist.mjs?v=20261010-jump1";
+    import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261010-jump1";
+    import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261010-jump1";
+    import { paletteColor } from "./palette.mjs?v=20261010-jump1";
+    import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-jump1";
+    import { deskUiScale } from "./desk-scale.mjs?v=20261010-jump1";
+    import { PICK_PARAM, picksFromSearch, matchPicks, analyzeHref, MAIN_PENDING_KEY } from "./pick-sync.mjs?v=20261010-jump1";
+    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-jump1";
+    import { mergeFreshRows } from "./rank-row.mjs?v=20261010-jump1";
+    import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-jump1";
+    import { confirmedPadderSlugs } from "./padding.mjs?v=20261010-jump1";
 
     const LS_THEME = "ps2-elite-kd-theme";
     const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";
@@ -920,15 +923,72 @@
     function listOnlyJump(touch) {
       return !touch && (window.innerWidth || 0) > 600;
     }
+    /*
+     * t349u: a chart click works on the WHOLE list. Before, text left in the
+     * name box (e.g. after searching for the players you then ticked) kept the
+     * table filtered to those few names, so a column's range had no rows to
+     * scroll to and the click seemed dead. Picks stay; only the filter text goes.
+     */
+    function clearFilterForJump() {
+      if (!bare(filter) && !bare($("ranksSearch").value || "")) return false;
+      clearTimeout(searchTimer);
+      $("ranksSearch").value = "";
+      filter = "";
+      return true;
+    }
+    function chartAfterFilterClear() {
+      const sig = hlSignature();
+      if (sig !== hlSig) { hlSig = sig; requestAnimationFrame(() => drawDist()); }
+    }
+    /** Scroll the list box to a row (desktop: list only; touch / phones: page too) and flash rows. */
+    function scrollListTo(anchor, flashRows, touch) {
+      const behavior = scrollBehavior();
+      const wrap = tableScroll;
+      if (!listOnlyJump(touch)) {
+        const pageY = window.scrollY || document.documentElement.scrollTop || 0;
+        window.scrollTo({ top: Math.max(0, wrap.getBoundingClientRect().top + pageY - 8), behavior });
+      }
+      const headH = $("ranksHead").getBoundingClientRect().height || 0;
+      const y = anchor.getBoundingClientRect().top - wrap.getBoundingClientRect().top + wrap.scrollTop - headH;
+      glideTo(wrap, Math.max(0, Math.round(y)), behavior);
+      clearTimeout(flashTimer);
+      $("ranksBody").querySelectorAll("tr.rk-flash").forEach((tr) => tr.classList.remove("rk-flash"));
+      void $("ranksBody").offsetWidth;
+      for (const tr of flashRows) tr && tr.classList.add("rk-flash");
+      flashTimer = setTimeout(() => $("ranksBody").querySelectorAll("tr.rk-flash").forEach((tr) => tr.classList.remove("rk-flash")), 2600);
+    }
+    /** Click on a picked player's name on the chart → their row (neighbours around it). */
+    function jumpToPlayer(q, { touch = false } = {}) {
+      if (!data) return;
+      const cleared = clearFilterForJump();
+      if (cleared) renderBody();
+      const list = renderState ? renderState.list : sortedFiltered();
+      const k = list.findIndex((r) => r.query === q);
+      if (k < 0) return;
+      renderRowsTo(k + 40);
+      const row = $("ranksBody").querySelector(`tr[data-q="${CSS.escape(q)}"]`);
+      if (!row) return;
+      // Centre-ish: land a few rows above so neighbours on both sides show.
+      let anchor = row;
+      for (let n = 0; n < 4 && anchor.previousElementSibling; n++) anchor = anchor.previousElementSibling;
+      scrollListTo(anchor, [row], touch);
+      if (cleared) chartAfterFilterClear();
+      window.__lastPlayerJump = { q, index: k };
+    }
+
     function jumpToBin(bi, { touch = false } = {}) {
       if (!data) return;
       const h = getHist(distMetric);
       if (!h.bins[bi]) return;
+      const cleared = clearFilterForJump();
       if (sortKey !== distMetric) {
         sortKey = distMetric;
         sortDir = "desc";
         render();
+      } else if (cleared) {
+        renderBody();
       }
+      if (cleared) chartAfterFilterClear();
       const list = renderState ? renderState.list : sortedFiltered();
       const t = binJumpTarget(list.map((r) => r[distMetric]), h, bi, sortDir);
       if (t.index < 0) return;
@@ -941,23 +1001,12 @@
       // Land on the band's separator (t310u) when the jump starts a band.
       const prev = row.previousElementSibling;
       const anchor = t.exact && prev && prev.classList.contains("rk-sep") ? prev : row;
-      const behavior = scrollBehavior();
       // Desktop (mouse / keyboard, wide screen, t309u): only the list box scrolls —
       // the page and the chart stay put. Touch / phones: also bring the box to the top.
-      const wrap = tableScroll;
-      if (!listOnlyJump(touch)) {
-        const pageY = window.scrollY || document.documentElement.scrollTop || 0;
-        window.scrollTo({ top: Math.max(0, wrap.getBoundingClientRect().top + pageY - 8), behavior });
-      }
-      const headH = $("ranksHead").getBoundingClientRect().height || 0;
-      const y = anchor.getBoundingClientRect().top - wrap.getBoundingClientRect().top + wrap.scrollTop - headH;
-      glideTo(wrap, Math.max(0, Math.round(y)), behavior);
-      clearTimeout(flashTimer);
-      $("ranksBody").querySelectorAll("tr.rk-flash").forEach((tr) => tr.classList.remove("rk-flash"));
-      void $("ranksBody").offsetWidth;
       const end = t.index + (t.exact ? Math.min(t.count, 400) : 1);
-      for (let k = t.index; k < end; k++) rowOf(k)?.classList.add("rk-flash");
-      flashTimer = setTimeout(() => $("ranksBody").querySelectorAll("tr.rk-flash").forEach((tr) => tr.classList.remove("rk-flash")), 2600);
+      const flash = [];
+      for (let k = t.index; k < end; k++) flash.push(rowOf(k));
+      scrollListTo(anchor, flash, touch);
       window.__lastBinJump = { bin: bi, metric: distMetric, dir: sortDir, ...t, q: row.getAttribute("data-q") };
     }
 
@@ -1128,7 +1177,13 @@
         const t = svgEl("text", {
           x: L.cx, y: ly, fill: color, "font-size": lfs, "font-weight": 700, "text-anchor": "middle",
           stroke: halo, "stroke-width": 3 * ui, "stroke-linejoin": "round", "paint-order": "stroke",
+          class: "dist-name", "data-q": r.query, tabindex: "0", role: "button",
+          "aria-label": `Show ${r.name} in the list`,
         }, it.text);
+        // t350u: click / tap a picked player's name → scroll the list to their row.
+        t.addEventListener("pointerdown", (ev) => { lastPointer = ev.pointerType || "mouse"; });
+        t.addEventListener("click", () => { const touch = lastPointer === "touch" || lastPointer === "pen"; lastPointer = "mouse"; jumpToPlayer(r.query, { touch }); });
+        t.addEventListener("keydown", (ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); jumpToPlayer(r.query); } });
         gm.appendChild(t);
         const shown = col.floorZero && fin(v) && v < 0 ? "0 (below scale)" : fin(v) ? (+v).toFixed(col.digits) : "—";
         const p = r.pcts[distMetric];

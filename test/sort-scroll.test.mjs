@@ -73,7 +73,7 @@ async function withPage(fn, { width = 390, height = 844, mobile = true } = {}) {
       return r.result.value;
     };
     const nav = (u) => send("Page.navigate", { url: `http://127.0.0.1:${port}/${u}` }, sessionId);
-    await fn({ ev, nav });
+    await fn({ ev, nav, send, sessionId });
   } finally {
     proc.kill("SIGKILL");
     server.close();
@@ -248,5 +248,41 @@ describe("Rankings: typing a full name + space picks it (t348u)", () => {
       assert.equal(s.value.trim(), others[8]);
       assert.equal(await ev(`!document.getElementById("limitToast").hidden`), true);
     });
+  });
+});
+
+describe("Rankings chart clicks scroll the list with picks + search text (t349u/t350u)", () => {
+  it("column click and name-label click", { skip: !chrome && "no Chrome", timeout: 120000 }, async () => {
+    const rk = JSON.parse(fs.readFileSync(path.join(root, "data/ranks.json"), "utf8"));
+    const qi = rk.cols.indexOf("query");
+    const picks = ["shlodog", "wrel", "yeezy"].filter((q) => rk.rows.some((r) => String(r[qi]).toLowerCase() === q));
+    if (picks.length < 3) return;
+    await withPage(async ({ ev, nav, send, sessionId }) => {
+      await nav(`ranks.html?pick=${picks.join(",")}`);
+      await ev(`new Promise(async (res) => { for (let t = 0; t < 400 && !document.querySelector("#distSvg .dist-hit"); t++) await new Promise((r) => setTimeout(r, 50)); res(1); })`);
+      // Left-over search text (the old cause: table filtered to 1 row → nothing to scroll to).
+      await ev(`(async () => { const i = document.getElementById("ranksSearch"); i.value = "yeez"; i.dispatchEvent(new Event("input", { bubbles: true })); await new Promise((r) => setTimeout(r, 500)); })()`);
+      assert.equal(await ev(`document.querySelectorAll("#ranksBody tr[data-q]").length`), 1);
+      const click = async (sel) => {
+        await ev(`document.querySelector(${JSON.stringify(sel)}).scrollIntoView({ block: "center" }), 1`);
+        await new Promise((r) => setTimeout(r, 300));
+        const c = await ev(`(() => { const r = document.querySelector(${JSON.stringify(sel)}).getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height * 0.6 }; })()`);
+        for (const type of ["mouseMoved", "mousePressed", "mouseReleased"]) await send("Input.dispatchMouseEvent", { type, x: c.x, y: c.y, button: "left", clickCount: 1 }, sessionId);
+        await new Promise((r) => setTimeout(r, 1500));
+      };
+      const y0 = await ev(`window.scrollY`);
+      await click('#distSvg .dist-hit[data-bin="3"]');
+      let st = await ev(`({ st: document.getElementById("ranksScroll").scrollTop, rows: document.querySelectorAll("#ranksBody tr[data-q]").length, filter: document.getElementById("ranksSearch").value, chips: document.querySelectorAll("#ranksChips .name-token").length, flashed: document.querySelectorAll("#ranksBody tr.rk-flash").length })`);
+      assert.ok(st.rows > 100 && st.st > 0 && st.flashed >= 1, JSON.stringify(st));
+      assert.equal(st.filter, "");
+      assert.equal(st.chips, 3, "picks kept");
+      assert.equal(await ev(`window.scrollY`), y0, "page / chart stay put on PC");
+      // Name label → that player's row, visible in the list box.
+      const q = await ev(`document.querySelector("#distSvg text.dist-name").getAttribute("data-q")`);
+      await click(`#distSvg text.dist-name[data-q="${q}"]`);
+      const v = await ev(`(() => { const wrap = document.getElementById("ranksScroll"); const tr = document.querySelector('#ranksBody tr[data-q="' + CSS.escape(${JSON.stringify(q)}) + '"]'); const wr = wrap.getBoundingClientRect(), rr = tr.getBoundingClientRect(); return { j: window.__lastPlayerJump && window.__lastPlayerJump.q, visible: rr.top >= wr.top && rr.bottom <= wr.bottom, flash: tr.classList.contains("rk-flash") }; })()`);
+      assert.equal(v.j, q);
+      assert.ok(v.visible && v.flash, JSON.stringify(v));
+    }, { width: 1400, height: 900, mobile: false });
   });
 });
