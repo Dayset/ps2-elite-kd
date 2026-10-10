@@ -13,7 +13,7 @@
  * then a kernel-smoothed residual follows their real data near it and fades
  * back to the style model far from it.
  */
-import { isFiniteNum, kpmBandCurve } from "./math.mjs?v=20261009-widenames";
+import { isFiniteNum, kpmBandCurve } from "./math.mjs?v=20261009-analyzeleft";
 
 export const G_SHIFT = 1.0;
 /** Fights (events) of prior weight on the slope S / level A from the population. */
