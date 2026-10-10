@@ -80,3 +80,31 @@ describe("Rankings use this browser's fresher copy (t338u)", () => {
     assert.equal(r2.rows[0], old);
   });
 });
+
+describe("Graphed players missing from ranks.json join as local-only rows (t359u)", () => {
+  it("adds an unranked graphed name from the browser copy; skips hidden / ungraphed", () => {
+    const raw = JSON.parse(fs.readFileSync(path.join(dataDir, "players", "brackiense.json"), "utf8"));
+    const old = rankRow(raw, { slug: "brackiense", savedAt: 1000 });
+    const payload = { cols: RANK_COLS.slice(), rows: [old] };
+    const p = raw.player || raw;
+    const now = Date.now();
+    const neu = { ...p, display: "[NEW] Newbie", name: "Newbie" };
+    const store = {
+      newbie: { name: "Newbie", savedAt: now, fetchedAt: now, player: neu },
+      other: { name: "Other", savedAt: now, fetchedAt: now, player: { ...p, display: "Other" } },
+    };
+    // Not graphed → stays out (old behaviour).
+    assert.equal(mergeFreshRows(payload, store, { now }).rows.length, 1);
+    const m = mergeFreshRows(payload, store, { now, extra: ["Newbie"] });
+    assert.equal(m.rows.length, 2);
+    assert.equal(m.rows[0], old, "shared row untouched");
+    assert.equal(m.rows[1][1], "Newbie");
+    assert.equal(m.rows[1][2], "newbie");
+    assert.equal(m.rows[1][3], now);
+    assert.ok(m.localOnly.has("newbie") && m.fresh.get("newbie") === now);
+    assert.ok(Number.isFinite(m.rows[1][RANK_COLS.indexOf("kd")]));
+    // Already ranked → never duplicated; 🙈 hidden → skipped.
+    assert.equal(mergeFreshRows(payload, store, { now, extra: ["BrackieNSE"] }).rows.length, 1);
+    assert.equal(mergeFreshRows(payload, store, { now, extra: ["Newbie"], skip: (e, k) => k === "newbie" }).rows.length, 1);
+  });
+});

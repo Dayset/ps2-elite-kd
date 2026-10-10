@@ -4,18 +4,20 @@
 // Everything Rankings had stays: fresh-fetch ↻ rows, band dividers, marks,
 // hidden players left out (ranks.json), 📊 distribution with jumps.
 
-import { compareByCharName } from "./analyze-run.mjs?v=20261010-pos1";
-import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits, binJumpTarget } from "./dist.mjs?v=20261010-pos1";
-import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261010-pos1";
-import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261010-pos1";
-import { paletteColor } from "./palette.mjs?v=20261010-pos1";
-import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-pos1";
-import { deskUiScale } from "./desk-scale.mjs?v=20261010-pos1";
-import { matchPicks } from "./pick-sync.mjs?v=20261010-pos1";
-import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-pos1";
-import { mergeFreshRows } from "./rank-row.mjs?v=20261010-pos1";
-import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-pos1";
-import { confirmedPadderSlugs } from "./padding.mjs?v=20261010-pos1";
+import { compareByCharName } from "./analyze-run.mjs?v=20261010-loc1";
+import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits, binJumpTarget } from "./dist.mjs?v=20261010-loc1";
+import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261010-loc1";
+import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261010-loc1";
+import { paletteColor } from "./palette.mjs?v=20261010-loc1";
+import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-loc1";
+import { deskUiScale } from "./desk-scale.mjs?v=20261010-loc1";
+import { matchPicks } from "./pick-sync.mjs?v=20261010-loc1";
+import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-loc1";
+import { mergeFreshRows } from "./rank-row.mjs?v=20261010-loc1";
+import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-loc1";
+import { confirmedPadderSlugs } from "./padding.mjs?v=20261010-loc1";
+import { slugKey } from "./rank-row.mjs?v=20261010-loc1";
+import { hiddenList } from "./hidden.mjs?v=20261010-loc1";
 
 /**
  * @param {{ getNames: () => string[], toggleName: (name: string, anchor: Element, add: boolean) => void }} host
@@ -108,6 +110,9 @@ export function initRankings(host) {
   /** Names box → ✅ boxes / chart / positions. Cheap no-op when nothing changed. */
   function syncPicks({ force = false } = {}) {
     if (!data) return;
+    // t359u: a graphed name that's new to this browser's cache (quick fetch /
+    // Fetch fresh after Rankings loaded) → re-merge so it joins 📊 / 🏅 / the table.
+    if (base && localSig() !== mergedSig) { remerge(); render(); drawDist(); force = true; }
     const hits = matchPicks(host.getNames(), data.rows, MAX_NAMES);
     const sig = hits.map((h) => h.query).join("\n") + "|" + host.getNames().join("\n");
     if (!force && sig === pickSig) return;
@@ -144,11 +149,13 @@ export function initRankings(host) {
     try { const o = JSON.parse(localStorage.getItem(LS_CACHE) || "null"); return o && typeof o === "object" && !Array.isArray(o) ? o : null; } catch { return null; }
   }
   const FRESH_MARK = "↻";
-  function freshTip(at) {
+  const LOCAL_ONLY_TIP = "Not in the shared Rankings yet: stats from the copy this browser fetched (this browser only). It's queued for the shared cache; everyone else sees it after the background refresh.";
+  function freshTip(at, localOnly = false) {
+    if (localOnly) return `${LOCAL_ONLY_TIP} Fetched ${fmtUpdated(at)}.`;
     return `Fresh: your own "Fetch fresh" copy from ${fmtUpdated(at)} (this browser only). Others still see the shared copy until the background refresh catches up.`;
   }
 
-  function rebuildIndex(payload, freshMap = new Map()) {
+  function rebuildIndex(payload, freshMap = new Map(), localOnly = new Set()) {
     const cols = payload.cols;
     const idx = Object.fromEntries(cols.map((c, i) => [c, i]));
     // Population percentiles once, over every finite value of each metric.
@@ -173,6 +180,8 @@ export function initRankings(host) {
         _bare: bare(r[idx.name]),
         // Recomputed from this browser's newer "Fetch fresh" copy (t338u): subtle ↻.
         freshAt: freshMap.get(r[idx.slug]) || 0,
+        // t359u: not in ranks.json at all; added from this browser's own copy.
+        localOnly: localOnly.has(r[idx.slug]),
         pcts: {},
       };
       o.mark = o.markKind === "padding" ? PADDING_MARK : o.markKind === "adjusted" ? ADJUSTED_MARK : "";
@@ -185,7 +194,7 @@ export function initRankings(host) {
       }
       return o;
     });
-    data = { updatedAt: payload.updatedAt, count: payload.count, rows, pools };
+    data = { updatedAt: payload.updatedAt, count: (+payload.count || payload.rows.length - localOnly.size) + localOnly.size, rows, pools };
     histCache.clear();
   }
 
@@ -275,10 +284,10 @@ export function initRankings(host) {
       `<tr data-q="${esc(r.query)}">` +
       `<td class="rk-pick"><input type="checkbox" aria-label="Pick ${esc(r.name)}"${checked}${disabled} /></td>` +
       rankCellHtml(r) +
-      `<td class="rk-name"><a href="${href}" class="rk-open" title="Add to the comparison (graph above)"><span class="nm" data-full="${esc(r.name)}" title="${esc(r.name + (r.farm ? " — " + r.farm : "") + (r.freshAt ? " — " + freshTip(r.freshAt) : ""))}">${esc(r.name)}</span></a>` +
+      `<td class="rk-name"><a href="${href}" class="rk-open" title="Add to the comparison (graph above)"><span class="nm" data-full="${esc(r.name)}" title="${esc(r.name + (r.farm ? " — " + r.farm : "") + (r.freshAt ? " — " + freshTip(r.freshAt, r.localOnly) : ""))}">${esc(r.name)}</span></a>` +
       (r.mark ? `<span class="pad-mark mark-${r.markKind}" title="${esc(r.markTip + ". " + r.farm)}">${r.mark}</span>` : "") +
       (r.legacy ? `<span class="sample-legacy" title="${esc(LEGACY_SAMPLE_TIP)}">${LEGACY_SAMPLE_MARK}</span>` : "") +
-      (r.freshAt ? `<span class="sample-fresh" title="${esc(freshTip(r.freshAt))}">${FRESH_MARK}</span>` : "") + `</td>` +
+      (r.freshAt ? `<span class="sample-fresh" title="${esc(freshTip(r.freshAt, r.localOnly))}">${FRESH_MARK}</span>` : "") + `</td>` +
       cols.map((c) => cellHtml(c, r)).join("") +
       `</tr>`
     );
@@ -348,11 +357,13 @@ export function initRankings(host) {
       if (st.at < list.length) requestAnimationFrame(() => setTimeout(step, 0));
     };
     if (st.at < list.length) requestAnimationFrame(() => setTimeout(step, 0));
-    const nFresh = data.rows.reduce((n, r) => n + (r.freshAt ? 1 : 0), 0);
+    const nLocal = data.rows.reduce((n, r) => n + (r.localOnly ? 1 : 0), 0);
+    const nFresh = data.rows.reduce((n, r) => n + (r.freshAt && !r.localOnly ? 1 : 0), 0);
     if ($("ranksTableCount")) $("ranksTableCount").textContent = `(${data.count.toLocaleString()})`;
     $("ranksMeta").textContent = `${list.length.toLocaleString()} of ${data.count.toLocaleString()} players · updated ${fmtUpdated(data.updatedAt)}` +
-      (nFresh ? ` · ${FRESH_MARK} ${nFresh} from your fresh fetch` : "");
-    $("ranksMeta").title = nFresh ? `${FRESH_MARK} = stats from your own "Fetch fresh" on Analyze (this browser only); everyone else uses the shared copy.` : "";
+      (nFresh ? ` · ${FRESH_MARK} ${nFresh} from your fresh fetch` : "") +
+      (nLocal ? ` · ${FRESH_MARK} ${nLocal} only in this browser (not shared yet)` : "");
+    $("ranksMeta").title = nFresh || nLocal ? `${FRESH_MARK} = stats from your own fetch on Analyze (this browser only); everyone else uses the shared copy.` : "";
     syncPickedUi();
   }
 
@@ -408,7 +419,7 @@ export function initRankings(host) {
         return `<td title="${esc(c.label)} ${fmt(v, c.digits)}: rank ${k.toLocaleString()} of ${pool.length.toLocaleString()} cached players">` +
           `<b>#${k.toLocaleString()}</b>${p != null ? `<span class="pct">p${p}</span>` : ""}</td>`;
       }).join("");
-      return `<tr><th scope="row" class="rk-pos-name"><a href="#" class="rk-pos-jump" data-q="${esc(r.query)}" style="color:${paletteColor(i, light)}" title="Show ${esc(r.name)} in the table"><span class="nm" data-full="${esc(r.name)}">${esc(r.name)}</span></a>${r.mark ? `<span class="pad-mark mark-${r.markKind}" title="${esc(r.markTip)}">${r.mark}</span>` : ""}</th>${cells}</tr>`;
+      return `<tr><th scope="row" class="rk-pos-name"><a href="#" class="rk-pos-jump" data-q="${esc(r.query)}" style="color:${paletteColor(i, light)}" title="Show ${esc(r.name)} in the table"><span class="nm" data-full="${esc(r.name)}">${esc(r.name)}</span></a>${r.freshAt ? `<span class="sample-fresh" title="${esc(freshTip(r.freshAt, r.localOnly))}">${FRESH_MARK}</span>` : ""}${r.mark ? `<span class="pad-mark mark-${r.markKind}" title="${esc(r.markTip)}">${r.mark}</span>` : ""}</th>${cells}</tr>`;
     }).join("");
     const miss = missing.length ? `<p class="rk-pos-hint">Not in the Rankings (new, hidden or not cached yet): ${missing.map((n) => `<strong>${esc(n)}</strong>`).join(", ")}</p>` : "";
     box.innerHTML = (rows.length ? `<div class="rk-pos-wrap"><table class="rk-pos-table" aria-label="Rank of the selected players among ${data.count.toLocaleString()} cached players"><thead>${head}</thead><tbody>${body}</tbody></table></div>` : "") + miss;
@@ -1008,28 +1019,60 @@ export function initRankings(host) {
   }
   mountJumpButtons({ state: jumpState, jump: jumpTo, scrollers: [tableScroll], ids: { top: "jumpTop", bottom: "jumpBottom" }, topLabel: "Top of the Rankings", bottomLabel: "End of the Rankings" });
 
+  /* ---------- this browser's own copies (t338u fresh rows, t359u local-only rows) ---------- */
+  let base = null; // ranks.json as fetched (never mutated)
+  let confirmedSet = new Set();
+  let hidden = hiddenList(null);
+  let mergedSig = "";
+  /** Graphed names + their browser-cache copy times: changes when a name is fetched / added / removed. */
+  function localSig() {
+    const store = readLocalStore() || {};
+    const keys = host.getNames().map(slugKey).filter(Boolean).sort();
+    // Only names that would change the merge: unranked ones with a browser copy,
+    // ranked ones whose browser copy is newer (Fetch fresh). Plain ranked picks
+    // don't re-render the big table.
+    return keys.filter((k) => {
+      const e = store[k];
+      if (!e || !e.player) return false;
+      const at = baseAt.get(k);
+      return at == null || (+e.fetchedAt || 0) > at;
+    }).map((k) => `${k}:${+store[k].fetchedAt || 0}/${+store[k].savedAt || 0}`).join(",");
+  }
+  let baseAt = new Map();
+  function remerge() {
+    if (!base) return;
+    mergedSig = localSig();
+    let rows = base.rows, fresh = new Map(), localOnly = new Set();
+    const store = readLocalStore();
+    if (store) {
+      try {
+        const m = mergeFreshRows(base, store, {
+          confirmed: confirmedSet,
+          extra: host.getNames(),
+          skip: (e, key) => !!hidden.match({ slug: key, name: (e.player && e.player.display) || e.name, cid: e.player && e.player.cid }),
+        });
+        ({ rows, fresh, localOnly } = m);
+      } catch (e) { console.warn("fresh merge skipped", e); }
+    }
+    rebuildIndex({ ...base, rows }, fresh, localOnly);
+  }
+
   async function load() {
     // --- load ---
     $("ranksStatus").textContent = "Loading ranks…";
     try {
+      const hiddenP = fetch("data/hidden.json", { cache: "no-cache" }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
       const reviewedP = fetch("data/reviewed.json", { cache: "no-cache" }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
       const res = await fetch("data/ranks.json", { cache: "no-cache" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const payload = await res.json();
-      // Players this browser fetched fresh on Analyze: use the newer copy (same metric code).
-      let freshMap = new Map();
-      const store = readLocalStore();
-      if (store) {
-        try {
-          const reviewed = await reviewedP;
-          let confirmed = new Set();
-          try { confirmed = confirmedPadderSlugs(reviewed); } catch {}
-          const merged = mergeFreshRows(payload, store, { confirmed });
-          payload.rows = merged.rows;
-          freshMap = merged.fresh;
-        } catch (e) { console.warn("fresh merge skipped", e); }
-      }
-      rebuildIndex(payload, freshMap);
+      // Players this browser fetched on Analyze: newer copies replace shared rows,
+      // brand-new graphed names join as local-only rows (remerge, t338u/t359u).
+      try { confirmedSet = confirmedPadderSlugs(await reviewedP); } catch {}
+      try { hidden = hiddenList(await hiddenP); } catch {}
+      base = payload;
+      { const ix = payload.cols.indexOf("query"), it = payload.cols.indexOf("savedAt"); baseAt = new Map(payload.rows.map((r) => [slugKey(r[ix]), +r[it] || 0])); }
+      remerge();
       syncPicks({ force: true });
       // No mark legend on Rankings (t290u): * / † / ◦ explain themselves via their hover tooltips.
       $("ranksStatus").innerHTML = "";

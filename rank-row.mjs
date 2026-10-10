@@ -3,9 +3,9 @@
  * (scripts/build-ranks.mjs → data/ranks.json) and ranks.html (a player's own
  * fresher browser copy after "Fetch fresh", t338u) use the SAME code.
  */
-import { normalizePlayer, playerMetrics, shownValue } from "./player-metrics.mjs?v=20261010-pos1";
-import { markNote, statMark } from "./padding.mjs?v=20261010-pos1";
-import { pickNewest, entryFetchedAt } from "./cache-pick.mjs?v=20261010-pos1";
+import { normalizePlayer, playerMetrics, shownValue } from "./player-metrics.mjs?v=20261010-loc1";
+import { markNote, statMark } from "./padding.mjs?v=20261010-loc1";
+import { pickNewest, entryFetchedAt } from "./cache-pick.mjs?v=20261010-loc1";
 
 /** Metric ids (same ids as the app.js stats columns). */
 export const METRIC_COLS = Object.freeze([
@@ -60,16 +60,24 @@ export function rankRow(raw, { slug = "", savedAt = null, confirmed = false } = 
  * still has the older one until the background refresh catches up. For every
  * ranked player whose browser copy is newer (cache-pick.mjs pickNewest, same
  * rule as Analyze), the row is recomputed from that copy with rankRow.
- * Only players already ranked are touched (hidden / unranked names stay out).
+ * Ranked players are recomputed in place; unranked ones only join via `extra`.
  * @param payload  ranks.json ({ cols, rows })
  * @param store    the browser cache object (or null)
  * @param opts.confirmed  Set of confirmed-padder slugs (data/reviewed.json)
- * @returns {{ rows, fresh: Map<slug, fetchedAtMs> }}
+ * t359u: `extra` = slug keys of players on the graph right now. Any of them
+ * missing from ranks.json but in the browser cache (a brand-new name from a
+ * quick fetch) is APPENDED as a local-only row, so the 📊 chart, 🏅 positions
+ * and percentiles include them in this browser. `skip(entry, key)` → true
+ * keeps one out (the 🙈 hide list).
+ * @param opts.extra  Iterable of slug keys to add when unranked
+ * @param opts.skip   (entry, key) => boolean
+ * @returns {{ rows, fresh: Map<slug, fetchedAtMs>, localOnly: Set<slug> }}
  */
-export function mergeFreshRows(payload, store, { confirmed = new Set(), maxAgeMs = 30 * 24 * 3600 * 1000, now = Date.now() } = {}) {
+export function mergeFreshRows(payload, store, { confirmed = new Set(), maxAgeMs = 30 * 24 * 3600 * 1000, now = Date.now(), extra = [], skip = null } = {}) {
   const fresh = new Map();
+  const localOnly = new Set();
   const rows = payload && Array.isArray(payload.rows) ? payload.rows : [];
-  if (!store || typeof store !== "object" || !rows.length) return { rows, fresh };
+  if (!store || typeof store !== "object" || !rows.length) return { rows, fresh, localOnly };
   const cols = payload.cols || RANK_COLS;
   const ix = Object.fromEntries(cols.map((c, i) => [c, i]));
   const local = new Map();
@@ -79,7 +87,7 @@ export function mergeFreshRows(payload, store, { confirmed = new Set(), maxAgeMs
     local.set(key, e);
     if (!local.has(k)) local.set(k, e);
   }
-  if (!local.size) return { rows, fresh };
+  if (!local.size) return { rows, fresh, localOnly };
   const out = rows.map((r) => {
     const slug = r[ix.slug];
     const e = local.get(slugKey(r[ix.query])) || local.get(String(slug || ""));
@@ -96,5 +104,21 @@ export function mergeFreshRows(payload, store, { confirmed = new Set(), maxAgeMs
     fresh.set(slug, pick.fetchedAt);
     return row;
   });
-  return { rows: out, fresh };
+  // t359u: graphed players the shared file doesn't have yet → local-only rows.
+  const ranked = new Set();
+  for (const r of rows) { ranked.add(slugKey(r[ix.query])); if (r[ix.slug]) ranked.add(String(r[ix.slug])); }
+  for (const key of new Set([...(extra || [])].map((k) => slugKey(k)).filter(Boolean))) {
+    if (ranked.has(key)) continue;
+    const e = local.get(key);
+    if (!e || (skip && skip(e, key))) continue;
+    const f = entryFetchedAt(e);
+    const at = f > 1 ? f : +e.savedAt || now; // 1 = undated shared copy
+    const nr = rankRow({ player: e.player }, { slug: key, savedAt: at, confirmed: confirmed.has(key) });
+    if (!nr) continue;
+    ranked.add(key);
+    out.push(cols.map((c) => { const i = RANK_COLS.indexOf(c); return i >= 0 ? nr[i] : null; }));
+    fresh.set(key, at);
+    localOnly.add(key);
+  }
+  return { rows: out, fresh, localOnly };
 }

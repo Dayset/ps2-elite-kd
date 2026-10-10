@@ -389,3 +389,43 @@ describe("🏅 positions table sorted by ⚔️ iVi, #1 on top (t358u)", () => {
     });
   });
 });
+
+describe("A graphed player not in the shared Rankings still shows on 📊 / 🏅 (t359u)", () => {
+  it("local-only row from this browser's copy", { skip: !chrome, timeout: 120000 }, async () => {
+    const raw = JSON.parse(fs.readFileSync(path.join(root, "data/players/brackiense.json"), "utf8"));
+    const p = raw.player || raw;
+    const now = Date.now();
+    const fake = { ...p, display: "Zzlocalonly", name: "Zzlocalonly", source: "live:quick" };
+    const store = { zzlocalonly: { name: "Zzlocalonly", savedAt: now, fetchedAt: now, player: fake } };
+    await withPage(async ({ ev, nav }) => {
+      await nav("index.html");
+      await ev(`new Promise((r) => setTimeout(r, 500))`);
+      await ev(`(localStorage.setItem("ps2-elite-kd-cache-v2", ${JSON.stringify(JSON.stringify(store))}), localStorage.setItem("ps2-elite-kd-ranks-pos-open", "1"), 1)`);
+      await nav("index.html?names=Zzlocalonly,ShloDog#rankings");
+      await ev(`new Promise(async (res) => { for (let t = 0; t < 400 && !document.querySelector('#distSvg text.dist-name[data-q="Zzlocalonly"]'); t++) await new Promise((r) => setTimeout(r, 50)); res(1); })`);
+      const st = await ev(`({ legend: document.querySelectorAll("#legend .legend-item").length, label: !!document.querySelector('#distSvg text.dist-name[data-q="Zzlocalonly"]'), pos: [...document.querySelectorAll("#rkPositions .rk-pos-jump")].map((a) => a.dataset.q), fresh: !!document.querySelector("#rkPositions .sample-fresh"), missing: /Not in the Rankings/.test(document.getElementById("rkPositions").textContent), meta: document.getElementById("ranksMeta").textContent, row: !!document.querySelector('#ranksBody tr[data-q="Zzlocalonly"]') || null })`);
+      assert.equal(st.legend, 2, "both on the skill graph");
+      assert.ok(st.label, "on the 📊 chart");
+      assert.ok(st.pos.includes("Zzlocalonly"), JSON.stringify(st));
+      assert.ok(st.pos.includes("ShloDog"));
+      assert.ok(st.fresh, "↻ mark");
+      assert.equal(st.missing, false);
+      assert.match(st.meta, /1 only in this browser/);
+      // Removing the name drops the local-only row again.
+      await ev(`[...document.querySelectorAll("#nameTokens .name-token")].find((b) => /zzlocalonly/i.test(b.textContent)).click(), 1`);
+      await new Promise((r) => setTimeout(r, 800));
+      const st2 = await ev(`({ label: !!document.querySelector('#distSvg text.dist-name[data-q="Zzlocalonly"]'), meta: document.getElementById("ranksMeta").textContent })`);
+      assert.equal(st2.label, false);
+      assert.doesNotMatch(st2.meta, /only in this browser/);
+      // The bug's order: Rankings already loaded, then the new name is fetched + added.
+      await ev(`(localStorage.removeItem("ps2-elite-kd-cache-v2"), 1)`);
+      await nav("index.html?names=ShloDog#rankings");
+      await ev(`new Promise(async (res) => { for (let t = 0; t < 400 && !document.querySelector('#distSvg text.dist-name[data-q="ShloDog"]'); t++) await new Promise((r) => setTimeout(r, 50)); res(1); })`);
+      await ev(`(() => { localStorage.setItem("ps2-elite-kd-cache-v2", ${JSON.stringify(JSON.stringify(store))}); const i = document.getElementById("namesInput"); i.value = "Zzlocalonly "; i.dispatchEvent(new Event("input", { bubbles: true })); return 1; })()`);
+      await ev(`new Promise(async (res) => { for (let t = 0; t < 200 && !document.querySelector('#distSvg text.dist-name[data-q="Zzlocalonly"]'); t++) await new Promise((r) => setTimeout(r, 50)); res(1); })`);
+      const st3 = await ev(`({ legend: document.querySelectorAll("#legend .legend-item").length, label: !!document.querySelector('#distSvg text.dist-name[data-q="Zzlocalonly"]'), pos: [...document.querySelectorAll("#rkPositions .rk-pos-jump")].map((a) => a.dataset.q) })`);
+      assert.ok(st3.label, "added after Rankings loaded → on the 📊 chart");
+      assert.ok(st3.pos.includes("Zzlocalonly"));
+    });
+  });
+});
