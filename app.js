@@ -37,6 +37,7 @@ import {
 import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261010-forensics";
 import GHOST_MODEL from "./data/ghost-model.mjs?v=20261010-forensics";
 import { ranksHref } from "./pick-sync.mjs?v=20261010-forensics";
+import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-sortscroll";
 import { entryFetchedAt, pickNewest, writeWithEviction } from "./cache-pick.mjs?v=20261010-forensics";
 import {
   NameLoadError,
@@ -2814,7 +2815,14 @@ import {
           // Name defaults A→Z; numeric defaults high→low
           state.dir = key === "name" ? "asc" : "desc";
         }
+        // t329u: the re-render resets the table's horizontal scroll; restore it
+        // and keep the sorted column in view (no vertical page jump).
+        const wrap = th.closest(".stats-table-wrap");
+        const prevLeft = wrap ? wrap.scrollLeft : 0;
         renderStatsTable(list);
+        const tbl = els.stats.querySelector(`table[data-stats-table="${tableId}"]`);
+        const newTh = tbl && [...tbl.querySelectorAll("th.sortable")].find((h) => h.getAttribute("data-sort") === key);
+        if (newTh) keepSortedColumnVisible(newTh.closest(".stats-table-wrap"), newTh, prevLeft);
       });
     });
   }

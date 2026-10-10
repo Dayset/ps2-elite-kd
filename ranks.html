@@ -320,6 +320,7 @@
     import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261010-forensics";
     import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261010-forensics";
     import { paletteColor } from "./palette.mjs?v=20261010-forensics";
+    import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-sortscroll";
     import { deskUiScale } from "./desk-scale.mjs?v=20261010-forensics";
     import { PICK_PARAM, picksFromSearch, matchPicks, analyzeHref, MAIN_PENDING_KEY } from "./pick-sync.mjs?v=20261010-forensics";
     import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-forensics";
@@ -1159,9 +1160,14 @@
         const col = [...VISIBLE, ...DEBUG].find((c) => c.id === key);
         sortDir = col && col.ascFirst ? "asc" : (key === "name" ? "asc" : "desc");
       }
+      const wrap = th.closest(".ranks-table-wrap");
+      const prevLeft = wrap ? wrap.scrollLeft : 0;
       render();
       // Sorting by a metric also shows its distribution.
       if (key !== "name" && colById(key)) setDistMetric(key);
+      // t329u: keep the sorted column in view horizontally (wrapper only).
+      const newTh = [...$("ranksHead").querySelectorAll("th.sortable")].find((h) => h.getAttribute("data-key") === key);
+      if (newTh) keepSortedColumnVisible(newTh.closest(".ranks-table-wrap"), newTh, prevLeft);
     });
 
     $("ranksBody").addEventListener("change", (e) => {
