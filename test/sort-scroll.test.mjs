@@ -218,3 +218,35 @@ describe("Analyze names box typing stays fast with a big shared cache (t343u)", 
     });
   });
 });
+
+describe("Rankings: typing a full name + space picks it (t348u)", () => {
+  it("exact names only, tag ignored, limit respected", { skip: !chrome && "no Chrome", timeout: 120000 }, async () => {
+    const rk = JSON.parse(fs.readFileSync(path.join(root, "data/ranks.json"), "utf8"));
+    const qi = rk.cols.indexOf("query");
+    const has = (q) => rk.rows.some((r) => String(r[qi]).toLowerCase() === q);
+    if (!has("shlodog") || !has("wrel")) return;
+    await withPage(async ({ ev, nav }) => {
+      await nav("ranks.html");
+      await ev(`new Promise(async (r) => { for (let t = 0; t < 400 && !document.querySelector("#ranksBody tr[data-q]"); t++) await new Promise((q) => setTimeout(q, 50)); r(1); })`);
+      const type = (txt) => ev(`(async () => { const i = document.getElementById("ranksSearch"); i.focus(); for (const ch of ${JSON.stringify(txt)}) { i.value += ch; i.dispatchEvent(new InputEvent("input", { bubbles: true, data: ch, inputType: "insertText" })); } await new Promise((r) => setTimeout(r, 300)); return { value: i.value, chips: [...document.querySelectorAll("#ranksChips .name-token")].map((b) => b.dataset.q.toLowerCase()), pick: new URL(location.href).searchParams.get("pick"), focused: document.activeElement === i }; })()`);
+      let s = await type("shlodo ");
+      assert.deepEqual(s.chips, [], "partial name is only a filter");
+      await ev(`(() => { const i = document.getElementById("ranksSearch"); i.value = ""; i.dispatchEvent(new Event("input", { bubbles: true })); })()`);
+      s = await type("SHLODOG ");
+      assert.deepEqual(s.chips, ["shlodog"]);
+      assert.equal(s.value, "");
+      assert.ok(s.focused);
+      s = await type("[XYZ] wrel,");
+      assert.deepEqual(s.chips, ["shlodog", "wrel"]);
+      assert.equal(s.pick.toLowerCase(), "shlodog,wrel");
+      // Fill to 10, then one more typed name → note, text kept.
+      const others = rk.rows.map((r) => String(r[qi])).filter((q) => !["shlodog", "wrel"].includes(q.toLowerCase())).slice(0, 9);
+      s = await type(others.slice(0, 8).join(" ") + " ");
+      assert.equal(s.chips.length, 10);
+      s = await type(others[8] + " ");
+      assert.equal(s.chips.length, 10);
+      assert.equal(s.value.trim(), others[8]);
+      assert.equal(await ev(`!document.getElementById("limitToast").hidden`), true);
+    });
+  });
+});

@@ -24,7 +24,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261010-infl1" />
+  <link rel="stylesheet" href="styles.css?v=20261010-pick1" />
   <style>
     /* Ranks page: one long sortable table of every cached player. */
     body.ranks-page { overflow-x: hidden; }
@@ -82,7 +82,26 @@
       .ranks-head .ranks-meta { order: 2; flex-basis: 100%; }
     }
     /* t340u: filter box on its own line; below it ‹ 🔍 and Compare side by side, same size. */
-    .ranks-toolbar .rk-pick-box { flex: 1 1 100%; max-width: 40rem; }
+    .ranks-toolbar .rk-pick-box { flex: 1 1 100%; max-width: none; }
+    /* t348u: same field as the Analyze names box — width (its desktop content
+       width on big screens), corner, chip size / padding, typing spot. */
+    .rk-pick-box { border-radius: 6px; gap: 0.3rem; padding: 0.25rem 0.3rem 0.25rem 0.45rem; }
+    @media (min-width: 1400px) {
+      .ranks-toolbar .rk-pick-box { max-width: calc(68vh * 1000 / 580 - 1.3rem); }
+    }
+    .rk-chips .name-token {
+      font: inherit; font-size: 0.9rem; line-height: 1.35;
+      padding: 0.45rem 0.9rem; border-radius: 6px;
+    }
+    .ranks-toolbar .rk-pick-box input[type="search"] {
+      flex: 1 1 4rem; min-width: 3rem; min-height: 1.6rem; padding: 0.2rem 0.25rem;
+    }
+    @media (max-width: 600px) and (orientation: portrait) {
+      /* Two equal chip columns, typing spot on its own full row (like Analyze). */
+      .rk-pick-box { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: center; }
+      .rk-chips .name-token { width: 100%; justify-self: stretch; padding-left: 0.5rem; padding-right: 0.5rem; justify-content: space-between; }
+      .ranks-toolbar .rk-pick-box input[type="search"] { grid-column: 1 / -1; width: 100%; min-width: 0; }
+    }
     .ranks-actions {
       flex: 1 1 100%;
       display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem;
@@ -339,19 +358,19 @@
 
 
   <script type="module">
-    import "./name-peek.mjs?v=20261010-infl1";
-    import { compareByCharName } from "./analyze-run.mjs?v=20261010-infl1";
-    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits, binJumpTarget } from "./dist.mjs?v=20261010-infl1";
-    import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261010-infl1";
-    import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261010-infl1";
-    import { paletteColor } from "./palette.mjs?v=20261010-infl1";
-    import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-infl1";
-    import { deskUiScale } from "./desk-scale.mjs?v=20261010-infl1";
-    import { PICK_PARAM, picksFromSearch, matchPicks, analyzeHref, MAIN_PENDING_KEY } from "./pick-sync.mjs?v=20261010-infl1";
-    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-infl1";
-    import { mergeFreshRows } from "./rank-row.mjs?v=20261010-infl1";
-    import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-infl1";
-    import { confirmedPadderSlugs } from "./padding.mjs?v=20261010-infl1";
+    import "./name-peek.mjs?v=20261010-pick1";
+    import { compareByCharName } from "./analyze-run.mjs?v=20261010-pick1";
+    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits, binJumpTarget } from "./dist.mjs?v=20261010-pick1";
+    import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261010-pick1";
+    import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261010-pick1";
+    import { paletteColor } from "./palette.mjs?v=20261010-pick1";
+    import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-pick1";
+    import { deskUiScale } from "./desk-scale.mjs?v=20261010-pick1";
+    import { PICK_PARAM, picksFromSearch, matchPicks, analyzeHref, MAIN_PENDING_KEY } from "./pick-sync.mjs?v=20261010-pick1";
+    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-pick1";
+    import { mergeFreshRows } from "./rank-row.mjs?v=20261010-pick1";
+    import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-pick1";
+    import { confirmedPadderSlugs } from "./padding.mjs?v=20261010-pick1";
 
     const LS_THEME = "ps2-elite-kd-theme";
     const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";
@@ -1220,8 +1239,64 @@
       const sig = hlSignature();
       if (sig !== hlSig) { hlSig = sig; requestAnimationFrame(() => drawDist()); }
     }
-    $("ranksSearch").addEventListener("input", () => {
+    /*
+     * t348u: typing a full player name then space / comma / Enter picks that
+     * player (✅ box, chip, Analyze link), like the Analyze names field. Exact
+     * matches only (case-insensitive, outfit tag ignored); partial text stays a
+     * filter. The 10-player limit shows the usual gentle note.
+     */
+    let byBareName = null; // bare name → row (first wins), built once per data load
+    function rowForTyped(token) {
+      if (!data) return null;
+      if (!byBareName || byBareName.rows !== data.rows) {
+        const m = new Map();
+        for (const r of data.rows) if (r._bare && !m.has(r._bare)) m.set(r._bare, r);
+        byBareName = { rows: data.rows, m };
+      }
+      const k = bare(token);
+      return k ? byBareName.m.get(k) || null : null;
+    }
+    /** Pick one row from the keyboard (same effect as ticking its box). */
+    function pickRow(r) {
+      if (picked.has(r.query)) return true;
+      if (picked.size >= MAX_NAMES) { showLimitToast(); return false; }
+      picked.set(r.query, r.name);
+      savePicks();
+      const full = picked.size >= MAX_NAMES;
+      $("ranksBody").querySelectorAll("tr[data-q]").forEach((tr) => {
+        const cb = tr.querySelector('input[type="checkbox"]');
+        if (!cb) return;
+        if (tr.getAttribute("data-q") === r.query) { cb.checked = true; cb.disabled = false; }
+        else if (!cb.checked) cb.disabled = full;
+      });
+      syncPickedUi();
+      drawDist();
+      return true;
+    }
+    /** "[TAG] Name, other " → picks exact matches, returns the text left in the field. */
+    const TYPED_TOKEN = /(\[[^\]]*\]\s*)?[^\s,;\[]+/g;
+    function pickTyped(text, { all = false } = {}) {
+      const tokens = [...String(text).matchAll(TYPED_TOKEN)].map((m) => m[0]);
+      if (!tokens.length) return { left: text, n: 0 };
+      // Only finished tokens (followed by a separator), unless Enter (all).
+      const done = all || /[\s,;]$/.test(text) ? tokens : tokens.slice(0, -1);
+      const left = [];
+      let n = 0, stop = false;
+      for (const t of tokens) {
+        const r = !stop && done.includes(t) ? rowForTyped(t) : null;
+        if (r && pickRow(r)) { n++; continue; }
+        if (r) stop = true; // limit reached: keep the rest as typed
+        left.push(t);
+      }
+      return { left: n ? left.join(" ") : text, n };
+    }
+    $("ranksSearch").addEventListener("input", (e) => {
       lastTypeAt = performance.now();
+      const inp = e.target;
+      if (/[\s,;]$/.test(inp.value)) {
+        const { left, n } = pickTyped(inp.value);
+        if (n) { inp.value = left; applyFilter(); return; }
+      }
       clearTimeout(searchTimer);
       searchTimer = setTimeout(applyFilter, 150);
     });
@@ -1238,7 +1313,12 @@
       if (e.target === e.currentTarget) $("ranksSearch").focus({ preventScroll: true });
     });
     $("ranksSearch").addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && !e.isComposing) { applyFilter(); return; } // no wait on Enter
+      if (e.key === "Enter" && !e.isComposing) {
+        const { left, n } = pickTyped(e.target.value, { all: true });
+        if (n) e.target.value = left;
+        applyFilter(); // no wait on Enter
+        return;
+      }
       // Backspace in an empty filter removes the last chip, like the main page.
       // Held / auto-repeated Backspace stops at the empty field (never eats chips).
       if (e.key === "Backspace" && !e.target.value && picked.size && !e.repeat && !e.isComposing) {
