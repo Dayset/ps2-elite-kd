@@ -4,19 +4,19 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "38095195175",
+    "runId": "38095253003",
     "event": "workflow_dispatch",
     "kind": "on-demand",
-    "startedAt": "2026-10-10T23:29:39.214Z",
-    "endedAt": "2026-10-10T23:29:40.697Z",
-    "seconds": 1,
+    "startedAt": "2026-10-10T23:30:30.296Z",
+    "endedAt": "2026-10-10T23:30:33.926Z",
+    "seconds": 4,
     "updated": [],
     "added": [
-      "[NGDX] NSGDXvs"
+      "[R4ND] NSGDXv2"
     ],
     "failed": [],
     "stoppedEarly": null,
-    "indexSize": 3047,
+    "indexSize": 3048,
     "honu": {
       "day": "2026-10-10",
       "calls": 2499,
@@ -24,14 +24,14 @@
     },
     "batch": [
       {
-        "name": "[NGDX] NSGDXvs",
+        "name": "[R4ND] NSGDXv2",
         "src": "on-demand",
         "status": "done"
       }
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-10T23:29:42.620Z",
+    "checkedAt": "2026-10-10T23:30:36.251Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 1,
     "explained": 1,
@@ -41,8 +41,8 @@
         "name": "Anniversay",
         "id": "kd",
         "value": 247,
-        "bound": 19.85,
-        "z": 234.83,
+        "bound": 19.849,
+        "z": 234.662,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -53,8 +53,8 @@
         "name": "[B54A] geiloVS",
         "id": "kd",
         "value": 150,
-        "bound": 19.85,
-        "z": 142.101,
+        "bound": 19.849,
+        "z": 141.999,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (aim), listed there",
@@ -70,14 +70,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 234.83,
+        "maxZ": 234.662,
         "metrics": [
           {
             "id": "kd",
             "label": "KD",
             "value": 247,
-            "bound": 19.85,
-            "z": 234.83,
+            "bound": 19.849,
+            "z": 234.662,
             "side": "high"
           }
         ]
@@ -90,14 +90,14 @@
         "red": [
           "aim"
         ],
-        "maxZ": 142.101,
+        "maxZ": 141.999,
         "metrics": [
           {
             "id": "kd",
             "label": "KD",
             "value": 150,
-            "bound": 19.85,
-            "z": 142.101,
+            "bound": 19.849,
+            "z": 141.999,
             "side": "high"
           }
         ]
@@ -170,7 +170,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-10T23:29:42.647Z",
+    "checkedAt": "2026-10-10T23:30:36.284Z",
     "red": 18,
     "padding": 22,
     "adjusted": 1,
@@ -181,7 +181,7 @@
     "forensics": 2
   },
   "sessionStats": {
-    "checkedAt": "2026-10-10T23:29:42.626Z",
+    "checkedAt": "2026-10-10T23:30:36.258Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -194,7 +194,7 @@
     },
     "ruleText": "[session pattern] in recent Honu sessions (≥ 100 kills counted): assists per kill ≤ 0.1, headshot share ≥ 50% (headshot XP per kill; Census lifetime HSR when no XP detail) and K/D ≥ 7 (session deaths; Census lifetime KD when none). A very one-sided record; a lead for manual review, not proof.",
     "coverage": {
-      "players": 3046,
+      "players": 3047,
       "withSessions": 1343,
       "measured": 729,
       "sessions": 4186,
@@ -1030,17 +1030,17 @@
     "outliersUnexplained": 0
   },
   "size": {
-    "at": "2026-10-10T23:29:41.026Z",
+    "at": "2026-10-10T23:30:34.210Z",
     "repoBytes": 26910720,
-    "dataBytes": 56536828,
-    "playersBytes": 53370349,
-    "playerFiles": 3047,
+    "dataBytes": 56555709,
+    "playersBytes": 53388618,
+    "playerFiles": 3048,
     "warnAtBytes": 734003200,
     "warning": false
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-10T23:29:42.633Z",
+    "checkedAt": "2026-10-10T23:30:36.268Z",
     "candidates": [
       "coldandhot",
       "alandwhale",
@@ -1731,7 +1731,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-10T23:29:42.635Z",
+    "checkedAt": "2026-10-10T23:30:36.271Z",
     "count": 48,
     "players": [
       {
