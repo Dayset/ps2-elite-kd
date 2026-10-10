@@ -4,19 +4,29 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "38091795356",
-    "event": "workflow_dispatch",
-    "kind": "on-demand",
-    "startedAt": "2026-10-10T22:32:30.866Z",
-    "endedAt": "2026-10-10T22:32:37.497Z",
-    "seconds": 7,
-    "updated": [],
-    "added": [
-      "[FACS] Warpisok"
+    "runId": "38091830452",
+    "event": "schedule",
+    "kind": "discovery",
+    "startedAt": "2026-10-10T22:33:00.879Z",
+    "endedAt": "2026-10-10T22:33:37.515Z",
+    "seconds": 37,
+    "updated": [
+      "[FMAR] ReybNC",
+      "ReybNS",
+      "[RMAR] Reyb",
+      "[RWCN] R1QingTingDuiZhang",
+      "[2KD] DuWurstTR"
     ],
+    "added": [],
     "failed": [],
     "stoppedEarly": null,
     "indexSize": 3035,
+    "discovery": {
+      "cap": 3000,
+      "queue": 4539,
+      "slice": null,
+      "sweepInProgress": false
+    },
     "honu": {
       "day": "2026-10-10",
       "calls": 2499,
@@ -24,14 +34,34 @@
     },
     "batch": [
       {
-        "name": "[FACS] Warpisok",
-        "src": "on-demand",
+        "name": "[FMAR] ReybNC",
+        "src": "fresh-request",
+        "status": "done"
+      },
+      {
+        "name": "ReybNS",
+        "src": "fresh-request",
+        "status": "done"
+      },
+      {
+        "name": "[RMAR] Reyb",
+        "src": "fresh-request",
+        "status": "done"
+      },
+      {
+        "name": "[RWCN] R1QingTingDuiZhang",
+        "src": "fresh-request",
+        "status": "done"
+      },
+      {
+        "name": "[2KD] DuWurstTR",
+        "src": "fresh-request",
         "status": "done"
       }
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-10T22:32:39.818Z",
+    "checkedAt": "2026-10-10T22:33:39.006Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 1,
     "explained": 1,
@@ -170,7 +200,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-10T22:32:39.849Z",
+    "checkedAt": "2026-10-10T22:33:39.027Z",
     "red": 18,
     "padding": 22,
     "adjusted": 1,
@@ -181,7 +211,7 @@
     "forensics": 2
   },
   "sessionStats": {
-    "checkedAt": "2026-10-10T22:32:39.825Z",
+    "checkedAt": "2026-10-10T22:33:39.011Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -1030,17 +1060,17 @@
     "outliersUnexplained": 0
   },
   "size": {
-    "at": "2026-10-10T22:32:37.752Z",
+    "at": "2026-10-10T22:33:37.835Z",
     "repoBytes": 26025984,
-    "dataBytes": 56310419,
-    "playersBytes": 53152015,
+    "dataBytes": 56321476,
+    "playersBytes": 53163252,
     "playerFiles": 3035,
     "warnAtBytes": 734003200,
     "warning": false
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-10T22:32:39.833Z",
+    "checkedAt": "2026-10-10T22:33:39.016Z",
     "candidates": [
       "coldandhot",
       "alandwhale",
@@ -1730,7 +1760,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-10T22:32:39.836Z",
+    "checkedAt": "2026-10-10T22:33:39.018Z",
     "count": 48,
     "players": [
       {
