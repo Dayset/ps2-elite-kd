@@ -4,29 +4,19 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "38091830452",
-    "event": "schedule",
-    "kind": "discovery",
-    "startedAt": "2026-10-10T22:33:00.879Z",
-    "endedAt": "2026-10-10T22:33:37.515Z",
-    "seconds": 37,
-    "updated": [
-      "[FMAR] ReybNC",
-      "ReybNS",
-      "[RMAR] Reyb",
-      "[RWCN] R1QingTingDuiZhang",
-      "[2KD] DuWurstTR"
+    "runId": "38092876751",
+    "event": "workflow_dispatch",
+    "kind": "on-demand",
+    "startedAt": "2026-10-10T22:50:21.972Z",
+    "endedAt": "2026-10-10T22:50:25.374Z",
+    "seconds": 3,
+    "updated": [],
+    "added": [
+      "[FACS] Martinus59"
     ],
-    "added": [],
     "failed": [],
     "stoppedEarly": null,
-    "indexSize": 3035,
-    "discovery": {
-      "cap": 3000,
-      "queue": 4539,
-      "slice": null,
-      "sweepInProgress": false
-    },
+    "indexSize": 3036,
     "honu": {
       "day": "2026-10-10",
       "calls": 2499,
@@ -34,34 +24,14 @@
     },
     "batch": [
       {
-        "name": "[FMAR] ReybNC",
-        "src": "fresh-request",
-        "status": "done"
-      },
-      {
-        "name": "ReybNS",
-        "src": "fresh-request",
-        "status": "done"
-      },
-      {
-        "name": "[RMAR] Reyb",
-        "src": "fresh-request",
-        "status": "done"
-      },
-      {
-        "name": "[RWCN] R1QingTingDuiZhang",
-        "src": "fresh-request",
-        "status": "done"
-      },
-      {
-        "name": "[2KD] DuWurstTR",
-        "src": "fresh-request",
+        "name": "[FACS] Martinus59",
+        "src": "on-demand",
         "status": "done"
       }
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-10T22:33:39.006Z",
+    "checkedAt": "2026-10-10T22:50:27.741Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 1,
     "explained": 1,
@@ -71,8 +41,8 @@
         "name": "Anniversay",
         "id": "kd",
         "value": 247,
-        "bound": 19.86,
-        "z": 235.47,
+        "bound": 19.859,
+        "z": 235.484,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -83,8 +53,8 @@
         "name": "[B54A] geiloVS",
         "id": "kd",
         "value": 150,
-        "bound": 19.86,
-        "z": 142.49,
+        "bound": 19.859,
+        "z": 142.498,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (aim), listed there",
@@ -100,14 +70,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 235.47,
+        "maxZ": 235.484,
         "metrics": [
           {
             "id": "kd",
             "label": "KD",
             "value": 247,
-            "bound": 19.86,
-            "z": 235.47,
+            "bound": 19.859,
+            "z": 235.484,
             "side": "high"
           }
         ]
@@ -120,14 +90,14 @@
         "red": [
           "aim"
         ],
-        "maxZ": 142.49,
+        "maxZ": 142.498,
         "metrics": [
           {
             "id": "kd",
             "label": "KD",
             "value": 150,
-            "bound": 19.86,
-            "z": 142.49,
+            "bound": 19.859,
+            "z": 142.498,
             "side": "high"
           }
         ]
@@ -200,7 +170,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-10T22:33:39.027Z",
+    "checkedAt": "2026-10-10T22:50:27.771Z",
     "red": 18,
     "padding": 22,
     "adjusted": 1,
@@ -211,7 +181,7 @@
     "forensics": 2
   },
   "sessionStats": {
-    "checkedAt": "2026-10-10T22:33:39.011Z",
+    "checkedAt": "2026-10-10T22:50:27.747Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -224,7 +194,7 @@
     },
     "ruleText": "[session pattern] in recent Honu sessions (≥ 100 kills counted): assists per kill ≤ 0.1, headshot share ≥ 50% (headshot XP per kill; Census lifetime HSR when no XP detail) and K/D ≥ 7 (session deaths; Census lifetime KD when none). A very one-sided record; a lead for manual review, not proof.",
     "coverage": {
-      "players": 3034,
+      "players": 3035,
       "withSessions": 1343,
       "measured": 729,
       "sessions": 4186,
@@ -1060,17 +1030,17 @@
     "outliersUnexplained": 0
   },
   "size": {
-    "at": "2026-10-10T22:33:37.835Z",
+    "at": "2026-10-10T22:50:25.745Z",
     "repoBytes": 26025984,
-    "dataBytes": 56321476,
-    "playersBytes": 53163252,
-    "playerFiles": 3035,
+    "dataBytes": 56340486,
+    "playersBytes": 53182307,
+    "playerFiles": 3036,
     "warnAtBytes": 734003200,
     "warning": false
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-10T22:33:39.016Z",
+    "checkedAt": "2026-10-10T22:50:27.755Z",
     "candidates": [
       "coldandhot",
       "alandwhale",
@@ -1760,7 +1730,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-10T22:33:39.018Z",
+    "checkedAt": "2026-10-10T22:50:27.758Z",
     "count": 48,
     "players": [
       {
