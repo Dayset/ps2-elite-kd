@@ -71,13 +71,13 @@ describe("no NaN in the Rankings", () => {
       const settle = `(async () => {
         const body = document.getElementById("ranksBody");
         for (let t = 0; t < 400; t++) {
-          if (body.rows.length >= ${expected}) break;
+          if (body.querySelectorAll("tr[data-q]").length >= ${expected}) break;
           await new Promise((r) => setTimeout(r, 50));
         }
         const bad = [];
-        for (const tr of body.rows) for (const td of tr.cells) if (/NaN/.test(td.innerHTML)) bad.push((tr.dataset.q || "?") + " col" + td.cellIndex + ": " + td.textContent);
+        for (const tr of body.rows) if (tr.dataset.q) for (const td of tr.cells) if (/NaN/.test(td.innerHTML)) bad.push((tr.dataset.q || "?") + " col" + td.cellIndex + ": " + td.textContent);
         const head = document.getElementById("ranksHead").innerHTML;
-        return { rows: body.rows.length, bad: bad.slice(0, 10), nBad: bad.length, headNaN: /NaN/.test(head), pageNaN: /NaN/.test(document.body.innerText) };
+        return { rows: body.querySelectorAll("tr[data-q]").length, bad: bad.slice(0, 10), nBad: bad.length, headNaN: /NaN/.test(head), pageNaN: /NaN/.test(document.body.innerText) };
       })()`;
       await send("Page.enable", {}, sessionId);
       await send("Page.navigate", { url: `http://127.0.0.1:${port}/ranks.html` }, sessionId);

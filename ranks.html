@@ -24,7 +24,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261009-binjump" />
+  <link rel="stylesheet" href="styles.css?v=20261009-listjump" />
   <style>
     /* Ranks page: one long sortable table of every cached player. */
     body.ranks-page { overflow-x: hidden; }
@@ -208,6 +208,15 @@
     /* Chart bar → table jump (t308u): brief highlight of that range's rows. */
     @keyframes rkFlash { 0%, 55% { background: var(--rk-flash); } 100% { background: var(--panel); } }
     .ranks-table tbody tr.rk-flash td { animation: rkFlash 2.4s ease-out 1; }
+    .ranks-table tbody tr.rk-sep td {
+      padding: 0.18rem 0.55rem 0.12rem; text-align: left; font-size: 0.72rem; font-weight: 600;
+      color: var(--dim); background: var(--input-bg, var(--panel)); letter-spacing: 0.01em;
+      border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+    }
+    .ranks-table tbody tr.rk-sep td span { position: sticky; left: 0.55rem; white-space: nowrap; }
+    .ranks-table tbody tr.rk-sep td span::before { content: "— "; }
+    .ranks-table tbody tr.rk-sep td span::after { content: " —"; }
+    .ranks-table tbody tr.rk-sep:hover td { background: var(--input-bg, var(--panel)); }
     :root { --rk-flash: rgba(159, 212, 238, 0.28); }
     :root[data-theme="light"] { --rk-flash: rgba(31, 95, 134, 0.22); }
     .dist-tip {
@@ -287,15 +296,15 @@
 
 
   <script type="module">
-    import "./name-peek.mjs?v=20261009-binjump";
-    import { compareByCharName } from "./analyze-run.mjs?v=20261009-binjump";
-    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits, binJumpTarget } from "./dist.mjs?v=20261009-binjump";
-    import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261009-binjump";
-    import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261009-binjump";
-    import { paletteColor } from "./palette.mjs?v=20261009-binjump";
-    import { deskUiScale } from "./desk-scale.mjs?v=20261009-binjump";
-    import { PICK_PARAM, picksFromSearch, matchPicks, analyzeHref, MAIN_PENDING_KEY } from "./pick-sync.mjs?v=20261009-binjump";
-    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-binjump";
+    import "./name-peek.mjs?v=20261009-listjump";
+    import { compareByCharName } from "./analyze-run.mjs?v=20261009-listjump";
+    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits, binJumpTarget } from "./dist.mjs?v=20261009-listjump";
+    import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261009-listjump";
+    import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261009-listjump";
+    import { paletteColor } from "./palette.mjs?v=20261009-listjump";
+    import { deskUiScale } from "./desk-scale.mjs?v=20261009-listjump";
+    import { PICK_PARAM, picksFromSearch, matchPicks, analyzeHref, MAIN_PENDING_KEY } from "./pick-sync.mjs?v=20261009-listjump";
+    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-listjump";
 
     const LS_THEME = "ps2-elite-kd-theme";
     const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";
@@ -592,9 +601,31 @@
       const end = Math.min(st.list.length, n);
       if (end <= st.at) return;
       let html = "";
-      for (let i = st.at; i < end; i++) html += rowHtml(st.list[i], st.cols);
+      for (let i = st.at; i < end; i++) {
+        const r = st.list[i];
+        // Band separators (t310u): a thin divider wherever the sorted metric
+        // crosses into another 📊 chart bin (same ranges as the bars).
+        if (st.hist) {
+          const bi = binIndexOf(st.hist, r[sortKey]);
+          if (bi >= 0 && bi !== st.prevBin) html += sepRowHtml(bi, st);
+          st.prevBin = bi;
+        }
+        html += rowHtml(r, st.cols);
+      }
       $("ranksBody").insertAdjacentHTML("beforeend", html);
       st.at = end;
+    }
+
+    /** Divider row before the first player of chart bin `bi`: "⚔️ iVi 1100–1200 · top 36%". */
+    function sepRowHtml(bi, st) {
+      const h = st.hist;
+      const b = h.bins[bi];
+      const col = colById(sortKey);
+      const share = sortDir === "asc"
+        ? `bottom ${fmtPct(b.cumPct)}`
+        : `top ${fmtPct(b.kind === "under" ? 100 : shareAtOrAbove(h.sorted, b.x0))}`;
+      const label = `${col.label} ${binRangeText(b, h, col)} · ${share}`;
+      return `<tr class="rk-sep" data-bin="${bi}" aria-hidden="true"><td colspan="${3 + st.cols.length}"><span>${esc(label)}</span></td></tr>`;
     }
 
     function renderBody() {
@@ -603,10 +634,11 @@
       const list = sortedFiltered();
       const token = ++renderToken;
       const body = $("ranksBody");
-      const first = list.slice(0, FIRST_CHUNK).map((r) => rowHtml(r, cols)).join("");
-      body.innerHTML = first;
-      const st = { list, cols, at: Math.min(FIRST_CHUNK, list.length) };
+      body.innerHTML = "";
+      // Separators only for a metric sort (not by name).
+      const st = { list, cols, at: 0, prevBin: -1, hist: sortKey !== "name" && colById(sortKey) ? getHist(sortKey) : null };
       renderState = st;
+      renderRowsTo(FIRST_CHUNK);
       const step = () => {
         if (token !== renderToken || st.at >= list.length) return;
         renderRowsTo(st.at + CHUNK);
@@ -748,7 +780,11 @@
      * (not in ranks.json) never match.
      */
     let flashTimer = 0;
-    function jumpToBin(bi) {
+    /** Desktop jump: list scroll only (no page scroll). Matches the 600px mobile breakpoint. */
+    function listOnlyJump(touch) {
+      return !touch && (window.innerWidth || 0) > 600;
+    }
+    function jumpToBin(bi, { touch = false } = {}) {
       if (!data) return;
       const h = getHist(distMetric);
       if (!h.bins[bi]) return;
@@ -762,22 +798,29 @@
       if (t.index < 0) return;
       const span = Math.max(1, t.count);
       renderRowsTo(t.index + span + 40);
-      const rows = $("ranksBody").rows;
-      const row = rows[t.index];
+      const body = $("ranksBody");
+      const rowOf = (k) => (list[k] ? body.querySelector(`tr[data-q="${CSS.escape(list[k].query)}"]`) : null);
+      const row = rowOf(t.index);
       if (!row) return;
+      // Land on the band's separator (t310u) when the jump starts a band.
+      const prev = row.previousElementSibling;
+      const anchor = t.exact && prev && prev.classList.contains("rk-sep") ? prev : row;
       const behavior = scrollBehavior();
-      // Page: bring the list box to the top of the screen; box: the row just under the sticky header.
+      // Desktop (mouse / keyboard, wide screen, t309u): only the list box scrolls —
+      // the page and the chart stay put. Touch / phones: also bring the box to the top.
       const wrap = tableScroll;
-      const pageY = window.scrollY || document.documentElement.scrollTop || 0;
-      window.scrollTo({ top: Math.max(0, wrap.getBoundingClientRect().top + pageY - 8), behavior });
+      if (!listOnlyJump(touch)) {
+        const pageY = window.scrollY || document.documentElement.scrollTop || 0;
+        window.scrollTo({ top: Math.max(0, wrap.getBoundingClientRect().top + pageY - 8), behavior });
+      }
       const headH = $("ranksHead").getBoundingClientRect().height || 0;
-      const y = row.getBoundingClientRect().top - wrap.getBoundingClientRect().top + wrap.scrollTop - headH;
+      const y = anchor.getBoundingClientRect().top - wrap.getBoundingClientRect().top + wrap.scrollTop - headH;
       glideTo(wrap, Math.max(0, Math.round(y)), behavior);
       clearTimeout(flashTimer);
       $("ranksBody").querySelectorAll("tr.rk-flash").forEach((tr) => tr.classList.remove("rk-flash"));
       void $("ranksBody").offsetWidth;
-      const end = Math.min(rows.length, t.index + (t.exact ? Math.min(t.count, 400) : 1));
-      for (let k = t.index; k < end; k++) rows[k].classList.add("rk-flash");
+      const end = t.index + (t.exact ? Math.min(t.count, 400) : 1);
+      for (let k = t.index; k < end; k++) rowOf(k)?.classList.add("rk-flash");
       flashTimer = setTimeout(() => $("ranksBody").querySelectorAll("tr.rk-flash").forEach((tr) => tr.classList.remove("rk-flash")), 2600);
       window.__lastBinJump = { bin: bi, metric: distMetric, dir: sortDir, ...t, q: row.getAttribute("data-q") };
     }
@@ -944,7 +987,7 @@
           const touch = lastPointer === "touch" || lastPointer === "pen";
           lastPointer = "mouse";
           if (touch && !(tipBin === i && !$("distTip").hidden)) { show(ev); return; }
-          jumpToBin(i);
+          jumpToBin(i, { touch });
         });
         rect.addEventListener("keydown", (ev) => {
           if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); jumpToBin(i); }

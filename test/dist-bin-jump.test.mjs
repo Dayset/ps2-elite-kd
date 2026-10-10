@@ -57,7 +57,8 @@ describe("Rankings chart bar click", () => {
     assert.match(s, /to jump to players in this range/);
     assert.match(s, /Jump to players in this range/);
     assert.match(s, /lastPointer === "touch"/);
-    assert.match(s, /function jumpToBin\(bi\)/);
+    assert.match(s, /function jumpToBin\(bi, \{ touch = false \} = \{\}\)/);
+    assert.match(s, /if \(!listOnlyJump\(touch\)\)/);
   });
 
   const chrome = ["google-chrome", "chromium", "chromium-browser", "google-chrome-stable"].find((b) => {
@@ -110,14 +111,24 @@ describe("Rankings chart bar click", () => {
       const pick = await ev(`(() => { const hs = [...document.querySelectorAll("#distSvg .dist-hit")]; return hs.length - 3; })()`);
       await ev(`document.querySelector('#distSvg .dist-hit[data-bin="${pick}"]').scrollIntoView({ block: "center" }), 1`);
       let c = await center(`#distSvg .dist-hit[data-bin="${pick}"]`);
+      const y0 = await ev(`window.scrollY`);
       for (const type of ["mouseMoved", "mousePressed", "mouseReleased"]) await send("Input.dispatchMouseEvent", { type, x: c.x, y: c.y, button: "left", clickCount: 1 }, sessionId);
       await sleep(1500);
+      assert.equal(await ev(`window.scrollY`), y0, "desktop click doesn't scroll the page (t309u)");
       const r = await ev(`(() => { const j = window.__lastBinJump; const wrap = document.getElementById("ranksScroll"); const tr = document.querySelector('#ranksBody tr[data-q="' + CSS.escape(j.q) + '"]'); const wr = wrap.getBoundingClientRect(), rr = tr.getBoundingClientRect(); const head = document.getElementById("ranksHead").getBoundingClientRect().height; return { j, sorted: document.querySelector("#ranksHead th.sorted")?.getAttribute("data-key"), visible: rr.top >= wr.top + head - 3 && rr.bottom <= wr.bottom + 3, flashed: document.querySelectorAll("#ranksBody tr.rk-flash").length, firstOfRange: tr.rowIndex }; })()`);
       assert.equal(r.sorted, "adjs", "table sorted by the chart metric");
       assert.equal(r.j.dir, "desc");
       assert.equal(r.j.bin, pick);
       assert.ok(r.visible, "target row scrolled into the list box");
       assert.ok(r.flashed >= 1, "range rows highlighted");
+      // Band separators (t310u): the jump lands on the band's divider, right under the sticky header.
+      const sep = await ev(`(() => { const wrap = document.getElementById("ranksScroll"); const tr = document.querySelector('#ranksBody tr[data-q="' + CSS.escape(window.__lastBinJump.q) + '"]'); const s = tr.previousElementSibling; const head = document.getElementById("ranksHead").getBoundingClientRect().height; return { isSep: !!s && s.classList.contains("rk-sep"), bin: s && s.dataset.bin, gap: s ? Math.round(s.getBoundingClientRect().top - wrap.getBoundingClientRect().top - head) : null, label: s && s.textContent, n: document.querySelectorAll("#ranksBody tr.rk-sep").length }; })()`);
+      assert.ok(sep.isSep && +sep.bin === pick, "separator before the band's first player");
+      assert.ok(Math.abs(sep.gap) <= 3, "separator sits under the sticky header, gap " + sep.gap);
+      assert.match(sep.label, /top /);
+      assert.ok(sep.n >= 3, "several separators");
+      await ev(`document.querySelector('#ranksHead th[data-key="name"]').click(), 1`);
+      assert.equal(await ev(`document.querySelectorAll("#ranksBody tr.rk-sep").length`), 0, "no separators when sorted by name");
       // Touch: first tap only shows details, second tap on the same bar jumps.
       await ev(`window.__lastBinJump = null, 1`);
       const tbin = 2;
