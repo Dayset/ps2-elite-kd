@@ -51,10 +51,15 @@ describe("minimum fights for opponent-sample metrics (🏃 Activity, 🦁 Brave,
   });
 
   it("big-sample low-skill players are measured; tiny / near-deathless ones stay blank", () => {
-    const wantuss = metricsOf(load("wantuss"));
-    assert.ok(wantuss.sampleKills < 100 && wantuss.sampleKills + wantuss.sampleDeaths >= 100);
-    assert.equal(wantuss.thin, false, "66 kills / 221 deaths is a real sample");
-    for (const id of THIN_METRICS) assert.equal(shownValue(wantuss, id), wantuss[id], `wantuss ${id}`);
+    // Synthetic fixture (stable; live cached players like Wantuss change as the cache refreshes):
+    // 66 kills / 221 deaths spread over many opponents = big sample, low skill.
+    const rows = [];
+    for (let i = 0; i < 13; i++) rows.push({ name: "opp" + i, kills: i < 1 ? 6 : 5, deaths: 17, kpm: 0.8 + i * 0.05 });
+    const low = playerMetrics(normalizePlayer({ display: "LowSkill", own_kpm: 0.3, global_kd: 0.3, global_kpm: 0.3, rows }));
+    assert.equal(low.sampleKills, 66);
+    assert.equal(low.sampleDeaths, 221);
+    assert.equal(low.thin, false, "66 kills / 221 deaths is a real sample");
+    for (const id of THIN_METRICS) assert.equal(shownValue(low, id), low[id], `low-skill ${id}`);
     for (const slug of ["add1ti0nal", "geilovs", "1stfanofahorn", "xmasterbobx"]) {
       assert.equal(metricsOf(load(slug)).thin, true, slug);
     }

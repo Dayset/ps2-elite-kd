@@ -13,9 +13,9 @@
  *   🦁 LionHeart median ≈ 3.1; elite players usually 4–18 → low ≤ 2.0 (≈ bottom 40%)
  *   🎈 Inflation median ≈ 2.03 → low ≤ 1.5 (≈ bottom 10%)
  */
-import { PADDING_RULE, statMark, PADDING_MARK, PADDING_MARK_TIP } from "./padding.mjs?v=20261009-farmacct";
-import { classifyBins, RED_PATTERNS, CHART_PATTERNS } from "./bins.mjs?v=20261009-farmacct";
-import { sessionRuleText } from "./session-stats.mjs?v=20261009-farmacct";
+import { PADDING_RULE, statMark, PADDING_MARK, PADDING_MARK_TIP } from "./padding.mjs?v=20261009-pad";
+import { classifyBins, RED_PATTERNS, CHART_PATTERNS } from "./bins.mjs?v=20261009-pad";
+import { sessionRuleText } from "./session-stats.mjs?v=20261009-pad";
 
 export { PADDING_MARK, PADDING_MARK_TIP, RED_PATTERNS, CHART_PATTERNS, classifyBins };
 
@@ -153,9 +153,10 @@ export function rampageFlag(m, rule = RAMPAGE_RULE) {
  * farm-victim kills ≥ PADDING_RULE.FLAG_SHARE of the sample. Those kills are
  * already left out of the player's numbers; the flag says why they changed.
  */
-export function paddingFlag(m, rule = PADDING_RULE) {
+export function paddingFlag(m, rule = PADDING_RULE, { confirmed = false } = {}) {
   const farm = (m && m.farm) || { victims: [], kills: 0, share: 0 };
-  const flagged = !!(farm.victims && farm.victims.length) && farm.share >= rule.FLAG_SHARE;
+  // Confirmed on review (reviewed.json "padding") → padding whatever the current share.
+  const flagged = confirmed || (!!(farm.victims && farm.victims.length) && farm.share >= rule.FLAG_SHARE);
   return { flagged, share: farm.share || 0, kills: farm.kills || 0, victims: farm.victims || [] };
 }
 
@@ -172,14 +173,14 @@ export function isPadder(m) {
  * LionHeart + low Inflation) and "vehicle" (vehicleFlag: high skill + very
  * high KD + weak infantry aim). → { flagged, patterns: ["aim"|"vehicle", …], skill }
  */
-export function reviewFlags(m) {
+export function reviewFlags(m, { confirmed = false } = {}) {
   // aim / vehicle / rampage keep their original inputs: the sample WITH farm
   // victims (m.raw), so adding the padding filter doesn't move those flags.
   const base = (m && m.raw) || m;
   const aim = redFlag(base);
   const veh = vehicleFlag(base);
   const ram = rampageFlag(base);
-  const pad = paddingFlag(m);
+  const pad = paddingFlag(m, PADDING_RULE, { confirmed });
   // Any automatic exclusion below the padding line still altered the stats:
   // flag for human review (fluke vs bad luck), see padding.mjs statMark.
   const adjusted = !pad.flagged && statMark(m && m.farm).kind === "adjusted";

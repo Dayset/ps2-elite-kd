@@ -5,7 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { classifyBins, CHART_PATTERNS, RED_PATTERNS } from "../bins.mjs";
 import { reviewFlags } from "../red-flags.mjs";
-import { buildRanksWithGuard } from "../scripts/build-ranks.mjs";
+import { buildRanksWithGuard, readConfirmedPadders } from "../scripts/build-ranks.mjs";
 import { normalizePlayer, playerMetrics } from "../player-metrics.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -44,10 +44,11 @@ describe("bin classifier (user rules t280u + t288u: chart-only incl. 🌾 paddin
     const { guard, session } = buildRanksWithGuard(dataDir);
     const idx = JSON.parse(fs.readFileSync(path.join(dataDir, "index.json"), "utf8"));
     const red = new Set();
+    const confirmed = readConfirmedPadders(dataDir); // reviewed.json "padding" → always 🌾
     let pads = 0;
     for (const e of idx.players || []) {
       let raw; try { raw = JSON.parse(fs.readFileSync(path.join(dataDir, e.file), "utf8")); } catch { continue; }
-      const f = reviewFlags(playerMetrics(normalizePlayer(raw)));
+      const f = reviewFlags(playerMetrics(normalizePlayer(raw)), { confirmed: confirmed.has(e.slug) });
       if (f.patterns.every((p) => CHART_PATTERNS.includes(p))) assert.equal(f.red, false, e.slug);
       if (f.patterns.includes("padding")) { pads += 1; assert.equal(f.red, f.patterns.some((p) => RED_PATTERNS.includes(p)), e.slug); }
       if (f.red) assert.ok(f.patterns.some((p) => RED_PATTERNS.includes(p)), e.slug);

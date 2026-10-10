@@ -39,3 +39,45 @@ describe("wall of shame (hidden misc.html, user t295u)", () => {
     for (const f of ["index.html", "ranks.html", "app.js", "sitemap.xml", "robots.txt", "README.md"]) assert.ok(!read(f).includes("misc.html"), f);
   });
 });
+
+import { statMark, markNote, confirmedPadderSlugs, CONFIRMED_PADDING_TIP } from "../padding.mjs";
+import { reviewFlags } from "../red-flags.mjs";
+import { rankRow, RANK_COLS, buildRanks } from "../scripts/build-ranks.mjs";
+
+describe("confirmed padders always get * (reviewed.json 'padding', t295u follow-up)", () => {
+  const farm = splitFarm([{ name: "botA", kills: 120, deaths: 0, kpm: 0 }, { name: "real", kills: 900, deaths: 700, kpm: 1 }]);
+  it("below the 20% line: † normally, * when confirmed; tooltip has names, no share or counts", () => {
+    assert.ok(farm.share < 0.2);
+    assert.equal(statMark(farm).kind, "adjusted");
+    const mk = statMark(farm, undefined, { confirmed: true });
+    assert.equal(mk.kind, "padding");
+    assert.equal(mk.mark, "*");
+    assert.ok(mk.tip.startsWith(CONFIRMED_PADDING_TIP));
+    assert.match(mk.tip, /botA/);
+    assert.ok(!/%|\d+\/\d+/.test(mk.tip), mk.tip);
+    assert.ok(!/%|\d+\/\d+/.test(markNote(farm, { confirmed: true })));
+    assert.equal(statMark({ victims: [] }, undefined, { confirmed: true }).kind, "padding", "even with no farm in the current sample");
+  });
+  it("reviewFlags: confirmed → 'padding' (📉 🌾 bin), not 'adjusted', not 🚩", () => {
+    const m = { farm, raw: {} };
+    const f = reviewFlags(m, { confirmed: true });
+    assert.ok(f.patterns.includes("padding"));
+    assert.ok(!f.patterns.includes("adjusted"));
+    assert.equal(f.red, false);
+  });
+  it("all 7 confirmed padders get mark 'padding' in ranks rows (live data)", () => {
+    const slugs = confirmedPadderSlugs(JSON.parse(read("data/reviewed.json")));
+    assert.equal(slugs.size >= 7, true);
+    const ranks = buildRanks(path.join(root, "data"));
+    const mi = RANK_COLS.indexOf("mark");
+    const fi = RANK_COLS.indexOf("farm");
+    for (const s of ["megatake", "guidetooblivion", "unicorn0nketamin", "rxxpvs", "xzhuzhu", "chennuo1", "nirl"]) {
+      const row = ranks.rows.find((r) => r[2] === s);
+      assert.ok(row, s);
+      assert.equal(row[mi], "padding", s);
+      assert.ok(!/%/.test(row[fi] || ""), s + " farm note has no share");
+    }
+    const unconfirmed = rankRow(JSON.parse(read("data/players/guidetooblivion.json")), { slug: "guidetooblivion" });
+    assert.notEqual(unconfirmed[mi], "padding", "without the review it's the 20% rule");
+  });
+});

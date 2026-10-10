@@ -32,10 +32,10 @@ import {
   windowYValues,
   kpmBandCurve,
   bandReliability,
-} from "./math.mjs?v=20261009-farmacct";
-import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261009-farmacct";
-import GHOST_MODEL from "./data/ghost-model.mjs?v=20261009-farmacct";
-import { ranksHref } from "./pick-sync.mjs?v=20261009-farmacct";
+} from "./math.mjs?v=20261009-pad";
+import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261009-pad";
+import GHOST_MODEL from "./data/ghost-model.mjs?v=20261009-pad";
+import { ranksHref } from "./pick-sync.mjs?v=20261009-pad";
 import {
   NameLoadError,
   classifyLoadError,
@@ -61,7 +61,7 @@ import {
   formatEtaLeft,
   etaLearnLiveMs,
   expectedNameMs,
-} from "./analyze-run.mjs?v=20261009-farmacct";
+} from "./analyze-run.mjs?v=20261009-pad";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
@@ -75,7 +75,7 @@ import {
   THIN_MARK,
   THIN_NOTE_HEAD,
   thinPlayerLine,
-} from "./player-metrics.mjs?v=20261009-farmacct";
+} from "./player-metrics.mjs?v=20261009-pad";
 /** "22 kills / 60 deaths" in the opponent sample (MIN_FIGHTS counts). */
 function fightsText(r) {
   const k = r.sampleKills || 0;
@@ -87,16 +87,16 @@ function fightsText(r) {
 function thinCellTip(r) {
   return `${MIN_FIGHTS_TIP}. This sample: ${fightsText(r).replace(/[()]/g, "")}`;
 }
-import { farmNote, statMark } from "./padding.mjs?v=20261009-farmacct";
+import { markNote, statMark, confirmedPadderSlugs } from "./padding.mjs?v=20261009-pad";
 // Account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times: chart name list only.
-import { accountTimes, flairsHtml } from "./flairs.mjs?v=20261009-farmacct";
+import { accountTimes, flairsHtml } from "./flairs.mjs?v=20261009-pad";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261009-farmacct";
-import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261009-farmacct";
+import "./name-peek.mjs?v=20261009-pad";
+import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261009-pad";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
-import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-farmacct";
+import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-pad";
 // Live data: Daybreak Census only (batched, paced); Honu just for a rare history fallback.
-import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261009-farmacct";
+import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261009-pad";
 import {
   censusBase,
   censusRequest,
@@ -105,7 +105,7 @@ import {
   limitConcurrency,
   tokenBucket,
   OPPONENT_TOP_N,
-} from "./census-fetch.mjs?v=20261009-farmacct";
+} from "./census-fetch.mjs?v=20261009-pad";
 
   // Player palettes (dark + light theme) live in palette.mjs (shared with ranks.html).
   const COLORS = PALETTE_DARK;
@@ -159,6 +159,8 @@ import {
   /** Catalog from data/index.json (shared Pages cache). */
   let sharedIndex = { updatedAt: null, players: [] };
   let sharedIndexLoaded = false;
+  /** Slugs confirmed as stat padders on review (data/reviewed.json "padding") → always "*". */
+  let confirmedPadders = new Set();
 
   const VB = { w: 1000, h: 580 };
   const M = { t: 20, r: 56, b: 72, l: 56 };
@@ -760,6 +762,11 @@ import {
       };
     } catch {
       sharedIndex = { updatedAt: null, players: [] };
+    }
+    try {
+      confirmedPadders = confirmedPadderSlugs(await fetchJson("data/reviewed.json"));
+    } catch {
+      /* keep the last set (missing file = nobody confirmed) */
     }
     sharedIndexLoaded = true;
     return sharedIndex;
@@ -2805,8 +2812,11 @@ import {
     return span;
   }
   /** Altered-stats mark (padding.mjs statMark): "*" padding, "†" adjusted, or none. */
+  function isConfirmedPadder(p) {
+    return !!p && confirmedPadders.has(slugKey(p.display));
+  }
   function playerMark(p) {
-    return statMark(p && p.farm);
+    return statMark(p && p.farm, undefined, { confirmed: isConfirmedPadder(p) });
   }
 
   /** Mark after the name (tooltip explains); "" when the stats weren't altered. */
@@ -2824,7 +2834,7 @@ import {
 
   /** Name cell title: adds the farm note when farm accounts were excluded. */
   function farmTitle(p) {
-    const note = p && farmNote(p.farm);
+    const note = p && markNote(p.farm, { confirmed: isConfirmedPadder(p) });
     return note ? ` — ${note}` : "";
   }
 

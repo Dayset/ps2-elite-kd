@@ -79,12 +79,26 @@ export const PADDING_MARK_TIP = "* stat padding: kills on farm accounts excluded
 export const ADJUSTED_MARK = "†";
 export const ADJUSTED_MARK_TIP = "† stats adjusted: some kills on farm accounts excluded (under review)";
 
+/** Tooltip for a confirmed padder (reviewed.json "padding"): farm accounts by name, no share or counts. */
+export const CONFIRMED_PADDING_TIP = "* stat padding (confirmed on review): kills on farm accounts excluded";
+export function confirmedFarmNote(farm) {
+  const names = ((farm && farm.victims) || []).map((v) => String(v.name || v.cid || "").trim()).filter(Boolean);
+  return names.length ? `Farm accounts: ${names.join(", ")}.` : "";
+}
+
 /**
  * Mark for a player's farm split ({ victims, kills, share }).
  * → { kind: "padding" | "adjusted" | "", mark, legend, tip }
+ * opts.confirmed (user t295u follow-up): a human confirmed this player as a stat
+ * padder (data/reviewed.json decision "padding") → always "*", whatever the
+ * current farm share (bigger samples dilute it). Others keep the FLAG_SHARE rule.
  * Add future automatic exclusions here so they get marked + flagged too.
  */
-export function statMark(farm, rule = PADDING_RULE) {
+export function statMark(farm, rule = PADDING_RULE, { confirmed = false } = {}) {
+  if (confirmed) {
+    const note = confirmedFarmNote(farm);
+    return { kind: "padding", mark: PADDING_MARK, legend: PADDING_MARK_TIP, tip: CONFIRMED_PADDING_TIP + "." + (note ? " " + note : "") };
+  }
   const has = !!(farm && farm.victims && farm.victims.length);
   if (!has) return { kind: "", mark: "", legend: "", tip: "" };
   const padding = (farm.share || 0) >= rule.FLAG_SHARE;
@@ -94,6 +108,11 @@ export function statMark(farm, rule = PADDING_RULE) {
   const tip =
     `${ADJUSTED_MARK} stats adjusted: ${farm.kills} kills on farm accounts excluded (under review). ` + farmNote(farm);
   return { kind: "adjusted", mark: ADJUSTED_MARK, legend: ADJUSTED_MARK_TIP, tip };
+}
+
+/** Note shown with a name: confirmed padders get farm-account names only (no share / counts). */
+export function markNote(farm, { confirmed = false } = {}) {
+  return confirmed ? confirmedFarmNote(farm) : farmNote(farm);
 }
 
 /**
@@ -129,4 +148,9 @@ export function confirmedPadders(reviewed) {
 /** Farm accounts for display: name, or the character ID when it has no name (no kill/death counts). */
 export function farmAccountLabels(farm) {
   return ((farm && farm.victims) || []).map((v) => String(v.name || v.cid || "").trim()).filter(Boolean);
+}
+
+/** Set of slugs confirmed as stat padders (reviewed.json decision "padding"). */
+export function confirmedPadderSlugs(reviewed) {
+  return new Set(confirmedPadders(reviewed).map((x) => x.slug));
 }

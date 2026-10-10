@@ -833,8 +833,15 @@
       return Object.assign({}, r, { patterns: (r.patterns || []).concat("session"), red: true, flagged: true });
     }
 
+    /** Confirmed on review (reviewed.json "padding") → 🌾 padding (*) whatever the current farm share, never † adjusted. */
+    function withConfirmed(r) {
+      const rv = r && reviewDecision(reviewed, r.slug);
+      if (!rv || rv.decision !== "padding" || (r.patterns || []).includes("padding")) return r;
+      return Object.assign({}, r, { patterns: (r.patterns || []).filter((p) => p !== "adjusted").concat("padding"), flagged: true });
+    }
+
     function render(rows, total, errors) {
-      rows = rows.map(withSession);
+      rows = rows.map(withSession).map(withConfirmed);
       sproutRows = rows.filter((r) => r && r.sprout);
       $("sproutsCount").textContent = String(sproutRows.length);
       if (sproutRows.length) renderSprouts();

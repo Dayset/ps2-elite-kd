@@ -20,7 +20,7 @@ import { fileURLToPath } from "node:url";
 import { normalizePlayer, playerMetrics, shownValue } from "../player-metrics.mjs";
 import { reviewFlags } from "../red-flags.mjs";
 import { classifyBins } from "../bins.mjs";
-import { farmNote, statMark } from "../padding.mjs";
+import { markNote, statMark, confirmedPadderSlugs } from "../padding.mjs";
 import { findOutliers, guardStatus } from "../outlier-guard.mjs";
 import { hiddenList } from "../hidden.mjs";
 import { cleanTimes } from "../flairs.mjs";
@@ -70,13 +70,22 @@ export function bareName(display) {
  * One ranks row from a raw cached player JSON (same shape as data/players/*.json).
  * Returns null when the file has no usable player.
  */
-export function rankRow(raw, { slug = "", savedAt = null } = {}) {
+export function rankRow(raw, { slug = "", savedAt = null, confirmed = false } = {}) {
   if (!raw) return null;
   const p = normalizePlayer(raw);
   if (!p || !p.display || p.display === "?") return null;
   const m = playerMetrics(p);
   const t = savedAt != null ? +savedAt : +raw.savedAt || null;
-  return [p.display, bareName(p.display) || p.display, slug, t, ...METRIC_COLS.map((k) => round6(shownValue(m, k))), m.thin ? 1 : 0, statMark(m.farm).kind || null, farmNote(m.farm) || null, p.top, (p.times && p.times.created) || null, (p.times && p.times.last) || null];
+  return [p.display, bareName(p.display) || p.display, slug, t, ...METRIC_COLS.map((k) => round6(shownValue(m, k))), m.thin ? 1 : 0, statMark(m.farm, undefined, { confirmed }).kind || null, markNote(m.farm, { confirmed }) || null, p.top, (p.times && p.times.created) || null, (p.times && p.times.last) || null];
+}
+
+/** data/reviewed.json → Set of slugs confirmed as stat padders (decision "padding"; missing file = none). */
+export function readConfirmedPadders(dataDir) {
+  try {
+    return confirmedPadderSlugs(JSON.parse(fs.readFileSync(path.join(dataDir, "reviewed.json"), "utf8")));
+  } catch {
+    return new Set();
+  }
 }
 
 /** data/hidden.json → hiddenList lookup (missing / broken file = nobody hidden). */
@@ -94,7 +103,7 @@ export function readHidden(dataDir) {
  * onHidden; onPlayer still sees them (outlier-guard population / red-flag
  * reference points unchanged); their cache files are untouched.
  */
-export function buildRanks(dataDir, { onPlayer = null, onHidden = null, hidden = readHidden(dataDir) } = {}) {
+export function buildRanks(dataDir, { onPlayer = null, onHidden = null, hidden = readHidden(dataDir), confirmed = readConfirmedPadders(dataDir) } = {}) {
   const index = JSON.parse(fs.readFileSync(path.join(dataDir, "index.json"), "utf8"));
   const rows = [];
   const seen = new Set();
@@ -111,7 +120,7 @@ export function buildRanks(dataDir, { onPlayer = null, onHidden = null, hidden =
     const slug = e.slug || path.basename(file, ".json");
     const pl = raw && (raw.player || raw);
     const hit = hidden.match({ slug, name: (pl && pl.display) || e.name, cid: pl && pl.cid });
-    const row = rankRow(raw, { slug, savedAt: e.savedAt ?? raw.savedAt });
+    const row = rankRow(raw, { slug, savedAt: e.savedAt ?? raw.savedAt, confirmed: confirmed.has(slug) });
     if (hit) {
       // Not ranked, but still a reference point for the 🧪 outlier guard (onPlayer).
       if (onHidden) onHidden({ slug, name: (pl && pl.display) || e.name || slug, cid: (pl && pl.cid) || "", key: hit.key, reason: hit.reason, at: hit.at });
@@ -130,13 +139,15 @@ export function buildRanks(dataDir, { onPlayer = null, onHidden = null, hidden =
 export function buildRanksWithGuard(dataDir) {
   const players = [];
   const hidden = readHidden(dataDir);
+  const confirmed = readConfirmedPadders(dataDir);
   const hiddenFound = [];
   const ranks = buildRanks(dataDir, {
     hidden,
+    confirmed,
     onHidden(h) { hiddenFound.push(h); },
     onPlayer(raw, row, info) {
       const m = playerMetrics(normalizePlayer(raw));
-      const f = reviewFlags(m); // raw metrics: same 🚩 result as build-log.html
+      const f = reviewFlags(m, { confirmed: confirmed.has(row[2]) }); // raw metrics: same 🚩 result as build-log.html
       const values = {};
       METRIC_COLS.forEach((k, i) => { values[k] = row[4 + i]; });
       // 🧪 Honu session metrics (assists pass + data/xp detail); only measured players count.
