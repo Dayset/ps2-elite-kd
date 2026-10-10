@@ -1982,3 +1982,18 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
   body.main-page .chart-wrap,
   body.main-page #legend { max-width: none; }
 }
+
+/* ---------- t315u: full player names on wide screens (main page) ----------
+ * Same caps as the Rankings (t311u): phones keep the 18ch cap / 10rem legend
+ * columns; >600px names may use 28ch, >1100px 42ch ([TAG] + 32-char name).
+ * Ellipsis + title / name-peek stay for anything longer or truly cramped. */
+@media (min-width: 601px) {
+  .stats-table .nm { max-width: 28ch; }
+  .chip .nm { max-width: min(28ch, 100%); }
+  .legend { grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr)); }
+}
+@media (min-width: 1100px) {
+  .stats-table .nm { max-width: 42ch; }
+  .chip .nm { max-width: min(42ch, 100%); }
+  .legend { grid-template-columns: repeat(auto-fill, minmax(min(100%, 21rem), 1fr)); }
+}
