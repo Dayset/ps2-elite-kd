@@ -24,7 +24,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261009-listjump" />
+  <link rel="stylesheet" href="styles.css?v=20261009-widenames" />
   <style>
     /* Ranks page: one long sortable table of every cached player. */
     body.ranks-page { overflow-x: hidden; }
@@ -178,6 +178,11 @@
       color: inherit; text-decoration: none;
     }
     .ranks-table td.rk-name a:hover { color: var(--accent); text-decoration: underline; }
+    /* Player names (t311u): phones keep the global 18ch cap (styles.css .nm);
+       wider screens have room, so names show in full ([TAG] + 32-char name ≈ 40ch)
+       and only truly huge ones still get the ellipsis + title / name-peek. */
+    @media (min-width: 601px) { .ranks-table td.rk-name .nm { max-width: 28ch; } }
+    @media (min-width: 1100px) { .ranks-table td.rk-name .nm { max-width: 42ch; } }
     .ranks-table tbody tr:hover td { background: var(--input-hover); }
     .ranks-table td .pct {
       margin-left: 0.3em; font-size: 0.72em; color: var(--dim);
@@ -296,15 +301,15 @@
 
 
   <script type="module">
-    import "./name-peek.mjs?v=20261009-listjump";
-    import { compareByCharName } from "./analyze-run.mjs?v=20261009-listjump";
-    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits, binJumpTarget } from "./dist.mjs?v=20261009-listjump";
-    import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261009-listjump";
-    import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261009-listjump";
-    import { paletteColor } from "./palette.mjs?v=20261009-listjump";
-    import { deskUiScale } from "./desk-scale.mjs?v=20261009-listjump";
-    import { PICK_PARAM, picksFromSearch, matchPicks, analyzeHref, MAIN_PENDING_KEY } from "./pick-sync.mjs?v=20261009-listjump";
-    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-listjump";
+    import "./name-peek.mjs?v=20261009-widenames";
+    import { compareByCharName } from "./analyze-run.mjs?v=20261009-widenames";
+    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits, binJumpTarget } from "./dist.mjs?v=20261009-widenames";
+    import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261009-widenames";
+    import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261009-widenames";
+    import { paletteColor } from "./palette.mjs?v=20261009-widenames";
+    import { deskUiScale } from "./desk-scale.mjs?v=20261009-widenames";
+    import { PICK_PARAM, picksFromSearch, matchPicks, analyzeHref, MAIN_PENDING_KEY } from "./pick-sync.mjs?v=20261009-widenames";
+    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-widenames";
 
     const LS_THEME = "ps2-elite-kd-theme";
     const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";

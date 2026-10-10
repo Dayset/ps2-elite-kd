@@ -152,3 +152,11 @@ describe("Rankings chart bar click", () => {
     }
   });
 });
+
+describe("Rankings Player column width (t311u)", () => {
+  it("desktop widths lift the 18ch name cap; mobile keeps it", () => {
+    const s = fs.readFileSync(path.join(root, "ranks.html"), "utf8");
+    assert.match(s, /@media \(min-width: 1100px\) \{ \.ranks-table td\.rk-name \.nm \{ max-width: 42ch; \} \}/);
+    assert.match(s, /@media \(min-width: 601px\) \{ \.ranks-table td\.rk-name \.nm \{ max-width: 28ch; \} \}/);
+  });
+});
