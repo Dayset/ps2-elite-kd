@@ -17,8 +17,8 @@
  * and test/outlier-guard.test.mjs (fails on unexplained outliers).
  * DOM-free.
  */
-import { classifyBins } from "./bins.mjs?v=20261009-widenames2";
-import { SESSION_LABELS } from "./session-stats.mjs?v=20261009-widenames2";
+import { classifyBins } from "./bins.mjs?v=20261010-hide-add1";
+import { SESSION_LABELS } from "./session-stats.mjs?v=20261010-hide-add1";
 
 export const GUARD_RULE = Object.freeze({ Z: 6, SPAN_K: 3, MIN_N: 50 });
 
@@ -29,6 +29,7 @@ export const GUARD_RULE = Object.freeze({ Z: 6, SPAN_K: 3, MIN_N: 50 });
 export const KNOWN_EXTREMES = Object.freeze({
   lololollala: "Reviewed 2026-10-09: 826 kills / 48 deaths, K/D 17 vs opponents; real data, big sample",
   geilovs: "Reviewed 2026-10-09: lifetime Census KD 146 (LA bail-out vehicle hunter, user: stays unflagged); opponent metrics already — (1 death)",
+  add1ti0nal: "Confirmed cheater 2026-10-10 (t319u): throwaway account, rampage (75 kills / 2 deaths, KD 24.7); on the 🙈 hide list as a reference",
   teritch: "Reviewed 2026-10-09: steep slope −6.7 from 278 kills / 37 deaths; real data, watch as it grows",
 });
 
