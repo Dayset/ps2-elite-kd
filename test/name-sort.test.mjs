@@ -72,3 +72,22 @@ describe("groupByCharName", () => {
     ]);
   });
 });
+
+describe("compareByCharName — marks, flairs, natural order (t302u)", () => {
+  it("ignores [TAG], marks and flairs; case-insensitive; natural", () => {
+    const names = ["[LHEU] Megatake*", "🪦 zed", "Alpha10", "👴🏽 [XYZ] beta†", "alpha2", "◦Gamma", "[AA] delta ◦"];
+    assert.deepEqual([...names].sort(compareByCharName), [
+      "alpha2",
+      "Alpha10",
+      "👴🏽 [XYZ] beta†",
+      "[AA] delta ◦",
+      "◦Gamma",
+      "[LHEU] Megatake*",
+      "🪦 zed",
+    ]);
+  });
+  it("Megatake sorts under M, not L", () => {
+    assert.equal(nameGroupLetter("[LHEU] Megatake"), "M");
+    assert.ok(compareByCharName("[LHEU] Megatake", "Lima") > 0);
+  });
+});

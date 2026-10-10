@@ -39,7 +39,7 @@
     "codeRepository": "https://github.com/Dayset/ps2-elite-kd"
   }
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261009-freshq" />
+  <link rel="stylesheet" href="styles.css?v=20261009-namesort" />
 </head>
 <body>
   <div class="controls">
@@ -58,13 +58,17 @@
         <input id="fetchFresh" type="checkbox" autocomplete="off" />
         Fetch fresh data
       </label>
+      <span id="freshEta" class="fresh-eta" aria-live="polite" hidden></span>
     </div>
 
     <div id="cacheChips" class="cache-chips" aria-label="Cached character names"></div>
-    <div class="controls-theme-row">
-      <a id="ranksLink" href="ranks.html" class="ranks-link" title="Rankings" aria-label="Rankings">🏆</a>
+    <div class="controls-theme-row ranks-row">
+      <span class="ranks-row-spacer" aria-hidden="true"></span>
+      <a id="ranksLink" href="ranks.html" class="ranks-link" title="Rankings" aria-label="Rankings">🏆 Rankings</a>
+      <span class="ranks-row-end">
       <button id="wipeLocalBtn" type="button" class="wipe-local" title="Clear all local app data (cache, theme, flags)" aria-label="Clear all local app data">🗑️</button>
       <button id="themeToggle" type="button" class="theme-toggle" title="Toggle light / dark theme" aria-label="Toggle light / dark theme">☀️ Light</button>
+      </span>
     </div>
   </div>
 
@@ -146,6 +150,6 @@
     </details>
   </footer>
 
-  <script type="module" src="app.js?v=20261009-freshq"></script>
+  <script type="module" src="app.js?v=20261009-namesort"></script>
 </body>
 </html>

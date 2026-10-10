@@ -24,7 +24,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261009-freshq" />
+  <link rel="stylesheet" href="styles.css?v=20261009-namesort" />
   <style>
     /* Ranks page: one long sortable table of every cached player. */
     body.ranks-page { overflow-x: hidden; }
@@ -280,14 +280,15 @@
 
 
   <script type="module">
-    import "./name-peek.mjs?v=20261009-freshq";
-    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits } from "./dist.mjs?v=20261009-freshq";
-    import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261009-freshq";
-    import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261009-freshq";
-    import { paletteColor } from "./palette.mjs?v=20261009-freshq";
-    import { deskUiScale } from "./desk-scale.mjs?v=20261009-freshq";
-    import { PICK_PARAM, picksFromSearch, matchPicks, analyzeHref, MAIN_PENDING_KEY } from "./pick-sync.mjs?v=20261009-freshq";
-    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-freshq";
+    import "./name-peek.mjs?v=20261009-namesort";
+    import { compareByCharName } from "./analyze-run.mjs?v=20261009-namesort";
+    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits } from "./dist.mjs?v=20261009-namesort";
+    import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261009-namesort";
+    import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261009-namesort";
+    import { paletteColor } from "./palette.mjs?v=20261009-namesort";
+    import { deskUiScale } from "./desk-scale.mjs?v=20261009-namesort";
+    import { PICK_PARAM, picksFromSearch, matchPicks, analyzeHref, MAIN_PENDING_KEY } from "./pick-sync.mjs?v=20261009-namesort";
+    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-namesort";
 
     const LS_THEME = "ps2-elite-kd-theme";
     const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";
@@ -494,7 +495,7 @@
       rankedFor = sig;
       const key = sortKey;
       const dir = sortDir === "asc" ? 1 : -1;
-      const byName = (a, b) => (a._bare < b._bare ? -1 : a._bare > b._bare ? 1 : 0);
+      const byName = (a, b) => compareByCharName(a.name, b.name); // shared helper (analyze-run.mjs)
       const all = data.rows.slice().sort((a, b) => {
         if (key === "name") return byName(a, b) * dir; // Player: A→Z first (tag ignored)
         const av = a[key], bv = b[key];

@@ -163,23 +163,39 @@ export function summarizeFailures(failed, okCount) {
 
 /* ---------- shared-cache chip ordering ---------- */
 
-const NAME_COLLATE = { sensitivity: "base" };
+const NAME_COLLATE = { sensitivity: "base", numeric: true };
+
+// Marks / flairs that may sit around a display name: * † ◦ ⚠️, emoji (🪦 👴🏽 👶 …),
+// variation selectors, ZWJ, skin-tone modifiers, whitespace.
+const NAME_DECOR = /^[\s*†◦\u2022\u00B7\uFE0E\uFE0F\u200D\p{Extended_Pictographic}\p{Emoji_Modifier}\p{Emoji_Presentation}]+|[\s*†◦\u2022\u00B7\uFE0E\uFE0F\u200D\p{Extended_Pictographic}\p{Emoji_Modifier}\p{Emoji_Presentation}]+$/gu;
 
 /**
- * Compare two display names by character name only (leading "[TAG] " ignored),
- * case-insensitive / locale-aware; ties broken by the full display string.
+ * Sort key for a display name: character name only — leading flair/marks,
+ * "[TAG] " and trailing marks (* † ◦ emoji) stripped. Case is left to the collator.
+ */
+export function charNameSortKey(name) {
+  let s = String(name ?? "").replace(NAME_DECOR, "");
+  s = s.replace(/^\[[^\]]*\]\s*/, "");
+  return s.replace(NAME_DECOR, "").trim();
+}
+
+/**
+ * Compare two display names by character name only (leading "[TAG] " and any
+ * marks / flairs ignored), case-insensitive, natural order (Foo2 < Foo10);
+ * ties broken by the full display string. Shared by the Analyze stats table,
+ * the Rankings Player column and the shared-cache chips.
  */
 export function compareByCharName(a, b) {
   const da = String(a ?? "");
   const db = String(b ?? "");
-  const byName = censusQueryName(da).localeCompare(censusQueryName(db), undefined, NAME_COLLATE);
+  const byName = charNameSortKey(da).localeCompare(charNameSortKey(db), undefined, NAME_COLLATE);
   if (byName) return byName;
   return da.localeCompare(db, undefined, NAME_COLLATE) || (da < db ? -1 : da > db ? 1 : 0);
 }
 
 /** Group label for a display name: uppercased first letter of the tag-free name, or "#". */
 export function nameGroupLetter(name) {
-  const first = censusQueryName(name).normalize("NFD").charAt(0);
+  const first = charNameSortKey(name).normalize("NFD").charAt(0);
   return /\p{L}/u.test(first) ? first.toUpperCase() : "#";
 }
 
@@ -350,6 +366,25 @@ export function etaLearnLiveMs(prevMs, sampleMs) {
 export function expectedNameMs(live, { liveAvgMs = 0, cachedAvgMs = 0, livePriorMs = 0 } = {}) {
   if (live) return liveAvgMs > 0 ? liveAvgMs : livePriorMs > 0 ? livePriorMs : ETA_PRIOR_LIVE_MS;
   return cachedAvgMs > 0 ? cachedAvgMs : ETA_PRIOR_CACHED_MS;
+}
+
+/**
+ * t306u: pre-Analyze hint next to "Fetch fresh data" — every name is a live
+ * fetch then, so n × learned live time (default 7 s):
+ * "(it will take approximately 1 min 10 s)" (t307u). "" when no names.
+ * @param {number} count names in the input
+ * @param {number} [livePriorMs] remembered per-name live time (0 = default)
+ */
+export function freshEtaText(count, livePriorMs = 0) {
+  const n = Math.max(0, Math.floor(Number(count) || 0));
+  if (!n) return "";
+  const ms = n * expectedNameMs(true, { livePriorMs });
+  let sec = Math.max(1, Math.round(ms / 1000));
+  if (sec >= 60) sec = Math.round(sec / 5) * 5; // "1 min 10 s", not "1 min 13 s"
+  const m = Math.floor(sec / 60);
+  const r = sec % 60;
+  const t = m ? `${m} min${r ? ` ${r} s` : ""}` : `${sec} s`;
+  return `(it will take approximately ${t})`;
 }
 
 /**

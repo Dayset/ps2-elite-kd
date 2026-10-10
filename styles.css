@@ -205,6 +205,32 @@ header.top-bar {
   outline-offset: 2px;
 }
 
+/* t303u: on index the 🏆 Rankings link is a full-size button, same height /
+   padding / font as 🔍 Analyze (but neutral colours, it's navigation). */
+.controls a.ranks-link#ranksLink {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  padding: 0 1.2rem;
+  height: var(--ctl-h);
+  white-space: nowrap;
+}
+
+/* index: spacer | 🏆 Rankings | 🗑️ ☀️. Mobile: 🏆 pinned left (spacer hidden).
+   t304u: desktop centres 🏆 with a 1fr | auto | 1fr grid. */
+.ranks-row .ranks-row-spacer { display: none; }
+.ranks-row .ranks-row-end { display: inline-flex; align-items: center; gap: 0.4rem; }
+@media (min-width: 601px) {
+  .controls-theme-row.ranks-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+  }
+  .ranks-row .ranks-row-spacer { display: block; }
+  .controls .ranks-row .ranks-link { margin: 0; justify-self: center; }
+  .ranks-row .ranks-row-end { justify-self: end; }
+}
+
 .theme-toggle {
   margin-left: 0;
   font: inherit;
@@ -619,6 +645,13 @@ header .sub {
   user-select: none;
 }
 
+.fresh-eta {
+  margin-left: -0.35rem; /* sits right after the checkbox label */
+  font-size: 0.8rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.fresh-eta[hidden] { display: none; }
 .fresh-label input {
   accent-color: var(--accent);
 }
@@ -764,11 +797,35 @@ header .sub {
   }
   .alpha-bar .alpha-btn { width: 100%; height: 1.95rem; font-size: 0.8rem; justify-self: stretch; }
 }
-.chip-sep:not(:first-child) {
-  margin-top: 0.25rem;
-  padding-top: 0.45rem;
+.chip-group:not(:first-child) {
+  margin-top: 0.1rem;
+  padding-top: 0.3rem;
   border-top: 1px dashed color-mix(in srgb, var(--muted) 35%, transparent);
 }
+/* t305u: collapsible letter blocks — the [A] heading is the clickable summary. */
+.chip-group { flex: 0 0 100%; min-width: 0; }
+.chip-group > summary.chip-sep {
+  display: block;
+  list-style: none;
+  cursor: pointer;
+  pointer-events: auto;
+  padding: 0.3rem 0;
+  min-height: 1.6rem;
+  -webkit-tap-highlight-color: transparent;
+}
+.chip-group > summary.chip-sep::-webkit-details-marker { display: none; }
+.chip-group > summary.chip-sep::before { content: "▸ "; color: var(--dim); }
+.chip-group[open] > summary.chip-sep::before { content: "▾ "; }
+.chip-group > summary.chip-sep:hover { color: var(--text); }
+.chip-group-picked { color: var(--accent); font-weight: 700; }
+.chip-group-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0 0.35rem;
+}
+.chip-group-chips .chip { max-width: 100%; min-width: 0; }
 
 .chip {
   appearance: none;

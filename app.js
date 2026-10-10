@@ -3,7 +3,7 @@
  * Mirrors absolute_target_split / kpm_curve / rf_if / adjusted_ivi from ps2_elite_kd.py
  * Pure math lives in math.mjs (shared with Node tests).
  */
-import { chartFontScale } from "./desk-scale.mjs?v=20261009-freshq";
+import { chartFontScale } from "./desk-scale.mjs?v=20261009-namesort";
 import {
   X_MAX,
   EASY_MAX,
@@ -33,11 +33,11 @@ import {
   windowYValues,
   kpmBandCurve,
   bandReliability,
-} from "./math.mjs?v=20261009-freshq";
-import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261009-freshq";
-import GHOST_MODEL from "./data/ghost-model.mjs?v=20261009-freshq";
-import { ranksHref } from "./pick-sync.mjs?v=20261009-freshq";
-import { entryFetchedAt, pickNewest, writeWithEviction } from "./cache-pick.mjs?v=20261009-freshq";
+} from "./math.mjs?v=20261009-namesort";
+import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261009-namesort";
+import GHOST_MODEL from "./data/ghost-model.mjs?v=20261009-namesort";
+import { ranksHref } from "./pick-sync.mjs?v=20261009-namesort";
+import { entryFetchedAt, pickNewest, writeWithEviction } from "./cache-pick.mjs?v=20261009-namesort";
 import {
   NameLoadError,
   classifyLoadError,
@@ -62,8 +62,9 @@ import {
   nextEtaDeadline,
   formatEtaLeft,
   etaLearnLiveMs,
+  freshEtaText,
   expectedNameMs,
-} from "./analyze-run.mjs?v=20261009-freshq";
+} from "./analyze-run.mjs?v=20261009-namesort";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
@@ -77,7 +78,7 @@ import {
   THIN_MARK,
   THIN_NOTE_HEAD,
   thinPlayerLine,
-} from "./player-metrics.mjs?v=20261009-freshq";
+} from "./player-metrics.mjs?v=20261009-namesort";
 /** "22 kills / 60 deaths" in the opponent sample (MIN_FIGHTS counts). */
 function fightsText(r) {
   const k = r.sampleKills || 0;
@@ -89,16 +90,16 @@ function fightsText(r) {
 function thinCellTip(r) {
   return `${MIN_FIGHTS_TIP}. This sample: ${fightsText(r).replace(/[()]/g, "")}`;
 }
-import { markNote, statMark, confirmedPadderSlugs } from "./padding.mjs?v=20261009-freshq";
+import { markNote, statMark, confirmedPadderSlugs } from "./padding.mjs?v=20261009-namesort";
 // Account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times: chart name list only.
-import { accountTimes, flairsHtml } from "./flairs.mjs?v=20261009-freshq";
+import { accountTimes, flairsHtml } from "./flairs.mjs?v=20261009-namesort";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261009-freshq";
-import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261009-freshq";
+import "./name-peek.mjs?v=20261009-namesort";
+import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261009-namesort";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
-import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-freshq";
+import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-namesort";
 // Live data: Daybreak Census only (batched, paced); Honu just for a rare history fallback.
-import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261009-freshq";
+import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261009-namesort";
 import {
   censusBase,
   censusRequest,
@@ -107,7 +108,7 @@ import {
   limitConcurrency,
   tokenBucket,
   OPPONENT_TOP_N,
-} from "./census-fetch.mjs?v=20261009-freshq";
+} from "./census-fetch.mjs?v=20261009-namesort";
 
   // Player palettes (dark + light theme) live in palette.mjs (shared with ranks.html).
   const COLORS = PALETTE_DARK;
@@ -185,6 +186,7 @@ import {
     copyLinkBtn: document.getElementById("copyLinkBtn"),
     clearNamesBtn: document.getElementById("clearNamesBtn"),
     fetchFresh: document.getElementById("fetchFresh"),
+    freshEta: document.getElementById("freshEta"),
     cacheChips: document.getElementById("cacheChips") || document.getElementById("recentChips"),
     status: document.getElementById("status"),
     progress: document.getElementById("progress"),
@@ -212,6 +214,8 @@ import {
   let lastLoadedNames = [];
   /** Preferred open state for shared-cache <details> (collapsed by default). */
   let sharedCacheWantOpen = false;
+  /** Shared-cache letter blocks the user opened / closed (letter → open), kept across re-renders. */
+  const cacheLetterOpen = new Map();
   /** Timer for graph-ready hint auto-dismiss. */
   let graphReadyHintTimer = 0;
   /** Y-axis zoom factor; 1 = auto-fit current data (default). */
@@ -1061,7 +1065,7 @@ import {
     // In-memory UI reset
     nameTokens = [];
     if (els.namesInput) els.namesInput.value = "";
-    if (els.fetchFresh) els.fetchFresh.checked = false;
+    if (els.fetchFresh) { els.fetchFresh.checked = false; updateFreshEta(); }
     players = [];
     lastAnalyzedNames = [];
     lastLoadedNames = [];
@@ -1368,6 +1372,8 @@ import {
   function jumpToCacheLetter(letter, list, bar) {
     const sep = [...list.querySelectorAll(".chip-sep")].find((el) => el.getAttribute("data-letter") === letter);
     if (!sep) return;
+    const block = sep.closest("details.chip-group");
+    if (block && !block.open) block.open = true; // jump opens the letter's block
     // Land the [X] header just below the sticky jump bar.
     const offset = (bar ? bar.getBoundingClientRect().height : 0) + 8;
     const top = window.scrollY + sep.getBoundingClientRect().top - offset;
@@ -1422,7 +1428,18 @@ import {
     cacheJump.sync();
   }
 
+  /** t306u: "~20 s for 3 names" next to Fetch fresh while it's ticked (hidden otherwise). */
+  function updateFreshEta() {
+    const el = els.freshEta;
+    if (!el) return;
+    const on = !!(els.fetchFresh && els.fetchFresh.checked && !els.fetchFresh.disabled);
+    const text = on ? freshEtaText(currentNamesInField().length, etaLivePriorMs) : "";
+    el.textContent = text;
+    el.hidden = !text;
+  }
+
   function renderCacheChips() {
+    updateFreshEta();
     if (!els.cacheChips) return;
     const cached = listCachedNames();
     const inField = currentNamesInField();
@@ -1473,14 +1490,45 @@ import {
       inner.setAttribute("aria-label", "Shared cached character names");
       // Letter separators: [#] (digits/symbols) first, then [A], [B], …
       const groups = groupByCharName(shared);
+      // t305u: each letter is a collapsible block, closed by default, summary
+      // "[A] 123" (+ "· ✅ 2" when names in it are picked). Blocks holding a
+      // picked name start open; a user's own open/close wins across re-renders.
       for (const group of groups) {
-        const sep = document.createElement("span");
+        const picked = group.items.filter((item) => inField.some((n) => namesMatch(n, item.name))).length;
+        const block = document.createElement("details");
+        block.className = "chip-group";
+        block.setAttribute("data-letter", group.letter);
+        if (picked) block.classList.add("has-picked");
+        const want = cacheLetterOpen.has(group.letter) ? cacheLetterOpen.get(group.letter) : picked > 0;
+        if (want) block.open = true;
+        const sep = document.createElement("summary");
         sep.className = "chip-sep";
-        sep.setAttribute("aria-hidden", "true");
         sep.setAttribute("data-letter", group.letter);
-        sep.textContent = `[${group.letter}]`;
-        inner.appendChild(sep);
-        for (const item of group.items) inner.appendChild(makeChip(item));
+        const what = group.letter === "#" ? "digits / symbols" : group.letter;
+        sep.title = `${group.items.length} name${group.items.length === 1 ? "" : "s"} under ${what}${picked ? `, ${picked} picked` : ""}`;
+        sep.textContent = `[${group.letter}] ${group.items.length}`;
+        if (picked) {
+          const tag = document.createElement("span");
+          tag.className = "chip-group-picked";
+          tag.textContent = ` · ✅ ${picked}`;
+          sep.appendChild(tag);
+        }
+        block.appendChild(sep);
+        const chips = document.createElement("div");
+        chips.className = "chip-group-chips";
+        // Build chips lazily on first open (1,700+ names → fewer nodes up front).
+        const fill = () => {
+          if (chips.childElementCount) return;
+          for (const item of group.items) chips.appendChild(makeChip(item));
+        };
+        if (block.open) fill();
+        block.addEventListener("toggle", () => {
+          if (block.open) fill();
+          cacheLetterOpen.set(group.letter, block.open);
+          syncCacheJump();
+        });
+        block.appendChild(chips);
+        inner.appendChild(block);
       }
       // Alphabet jump bar (# A … Z): sticky at the top of the open list.
       details.appendChild(makeAlphaBar(groups.map((g) => g.letter), inner));
@@ -2590,11 +2638,8 @@ import {
       const sorted = rows.slice();
       sorted.sort((a, b) => {
         if (key === "name") {
-          const an = String(a.p.display || "").toLowerCase();
-          const bn = String(b.p.display || "").toLowerCase();
-          if (an < bn) return -1 * (state.dir === "asc" ? 1 : -1);
-          if (an > bn) return 1 * (state.dir === "asc" ? 1 : -1);
-          return 0;
+          // Character name only: "[TAG] " and marks/flairs ignored, natural, case-insensitive.
+          return compareByCharName(a.p.display, b.p.display) * (state.dir === "asc" ? 1 : -1);
         }
         // Numeric: default desc means higher first when dir==="desc"
         const col = cols.find((c) => c.id === key);
@@ -2905,7 +2950,7 @@ import {
     if (els.analyzeBtn) els.analyzeBtn.disabled = on;
     if (els.copyLinkBtn) els.copyLinkBtn.disabled = on;
     // Keep × always clickable so users can clear mid-fetch
-    if (els.fetchFresh) els.fetchFresh.disabled = on;
+    if (els.fetchFresh) { els.fetchFresh.disabled = on; updateFreshEta(); }
   }
 
   /**
@@ -2913,7 +2958,7 @@ import {
    * Previous graph (if any) is left untouched; nothing half-done is rendered.
    */
   function uncheckFetchFresh() {
-    if (els.fetchFresh) els.fetchFresh.checked = false;
+    if (els.fetchFresh) { els.fetchFresh.checked = false; updateFreshEta(); }
   }
 
   function cancelAnalyze() {
@@ -3515,6 +3560,8 @@ import {
     });
   }
 
+  if (els.fetchFresh) els.fetchFresh.addEventListener("change", updateFreshEta);
+  if (els.namesInput) els.namesInput.addEventListener("input", updateFreshEta);
   if (els.analyzeBtn) {
     els.analyzeBtn.addEventListener("click", () => {
       runAnalyzeFromUi();
@@ -3531,7 +3578,7 @@ import {
   async function autoRunFromLink(startup) {
     if (!startup || startup.reason !== "url" || !startup.names.length) return;
     if (fetching || activeRun || players.length) return;
-    if (els.fetchFresh) els.fetchFresh.checked = false;
+    if (els.fetchFresh) { els.fetchFresh.checked = false; updateFreshEta(); }
     const overLimit = startup.names.length > MAX_NAMES;
     await runAnalyzeFromUi();
     if (overLimit && els.status && !String(els.status.textContent || "").trim()) showLimitHint();
@@ -3744,7 +3791,7 @@ import {
   // Never persist / restore "Fetch fresh"; always start clean on load/refresh.
   (async () => {
     applyTheme(getStoredTheme(), { redraw: false });
-    if (els.fetchFresh) els.fetchFresh.checked = false;
+    if (els.fetchFresh) { els.fetchFresh.checked = false; updateFreshEta(); }
     await loadSharedIndex();
     const startup = resolveStartupNames();
     setNameTokens(startup.names); // >10 from ?names= → first 10 + limit hint
