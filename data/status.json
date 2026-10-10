@@ -4,19 +4,19 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "38094789723",
+    "runId": "38094861980",
     "event": "workflow_dispatch",
     "kind": "on-demand",
-    "startedAt": "2026-10-10T23:22:31.498Z",
-    "endedAt": "2026-10-10T23:22:35.448Z",
-    "seconds": 4,
+    "startedAt": "2026-10-10T23:23:46.194Z",
+    "endedAt": "2026-10-10T23:23:51.768Z",
+    "seconds": 6,
     "updated": [],
     "added": [
-      "[SPRT] vsae"
+      "[NCIB] 400msClientSideEnthusiast"
     ],
     "failed": [],
     "stoppedEarly": null,
-    "indexSize": 3039,
+    "indexSize": 3040,
     "honu": {
       "day": "2026-10-10",
       "calls": 2499,
@@ -24,14 +24,14 @@
     },
     "batch": [
       {
-        "name": "[SPRT] vsae",
+        "name": "[NCIB] 400msClientSideEnthusiast",
         "src": "on-demand",
         "status": "done"
       }
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-10T23:22:37.867Z",
+    "checkedAt": "2026-10-10T23:23:54.127Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 1,
     "explained": 1,
@@ -41,8 +41,8 @@
         "name": "Anniversay",
         "id": "kd",
         "value": 247,
-        "bound": 19.858,
-        "z": 235.616,
+        "bound": 19.855,
+        "z": 235.288,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -53,8 +53,8 @@
         "name": "[B54A] geiloVS",
         "id": "kd",
         "value": 150,
-        "bound": 19.858,
-        "z": 142.578,
+        "bound": 19.855,
+        "z": 142.379,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (aim), listed there",
@@ -70,14 +70,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 235.616,
+        "maxZ": 235.288,
         "metrics": [
           {
             "id": "kd",
             "label": "KD",
             "value": 247,
-            "bound": 19.858,
-            "z": 235.616,
+            "bound": 19.855,
+            "z": 235.288,
             "side": "high"
           }
         ]
@@ -90,14 +90,14 @@
         "red": [
           "aim"
         ],
-        "maxZ": 142.578,
+        "maxZ": 142.379,
         "metrics": [
           {
             "id": "kd",
             "label": "KD",
             "value": 150,
-            "bound": 19.858,
-            "z": 142.578,
+            "bound": 19.855,
+            "z": 142.379,
             "side": "high"
           }
         ]
@@ -170,7 +170,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-10T23:22:37.901Z",
+    "checkedAt": "2026-10-10T23:23:54.164Z",
     "red": 18,
     "padding": 22,
     "adjusted": 1,
@@ -181,7 +181,7 @@
     "forensics": 2
   },
   "sessionStats": {
-    "checkedAt": "2026-10-10T23:22:37.876Z",
+    "checkedAt": "2026-10-10T23:23:54.137Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -194,7 +194,7 @@
     },
     "ruleText": "[session pattern] in recent Honu sessions (≥ 100 kills counted): assists per kill ≤ 0.1, headshot share ≥ 50% (headshot XP per kill; Census lifetime HSR when no XP detail) and K/D ≥ 7 (session deaths; Census lifetime KD when none). A very one-sided record; a lead for manual review, not proof.",
     "coverage": {
-      "players": 3038,
+      "players": 3039,
       "withSessions": 1343,
       "measured": 729,
       "sessions": 4186,
@@ -1030,17 +1030,17 @@
     "outliersUnexplained": 0
   },
   "size": {
-    "at": "2026-10-10T23:22:35.820Z",
+    "at": "2026-10-10T23:23:52.113Z",
     "repoBytes": 26910720,
-    "dataBytes": 56394245,
-    "playersBytes": 53233860,
-    "playerFiles": 3039,
+    "dataBytes": 56413728,
+    "playersBytes": 53252499,
+    "playerFiles": 3040,
     "warnAtBytes": 734003200,
     "warning": false
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-10T23:22:37.884Z",
+    "checkedAt": "2026-10-10T23:23:54.147Z",
     "candidates": [
       "coldandhot",
       "alandwhale",
@@ -1731,7 +1731,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-10T23:22:37.888Z",
+    "checkedAt": "2026-10-10T23:23:54.150Z",
     "count": 48,
     "players": [
       {
