@@ -559,8 +559,46 @@ export function requestedXpQueue(requested, xpUpdatedAt, now = Date.now()) {
     .map(([slug]) => slug);
 }
 
+/**
+ * "Fetch fresh" priority (t300u): cached players someone fetched fresh in the
+ * browser (Worker /requested → fresh: [{slug, at}], names only) are refreshed
+ * first in the next background run, so the shared copy catches up for
+ * everyone. Only players whose shared file is older than minAgeMs and older
+ * than the fresh request; at most max per run so the format-sync backlog
+ * keeps nearly all of the run. Returns index names, newest request first.
+ */
+export const FRESH_PRIORITY_MAX = 5;
+export const FRESH_PRIORITY_MIN_AGE_MS = 3600 * 1000;
+export function freshPriority(fresh, index, now = Date.now(), { max = FRESH_PRIORITY_MAX, minAgeMs = FRESH_PRIORITY_MIN_AGE_MS } = {}) {
+  const bySlug = new Map((index && index.players || []).map((p) => [p.slug || slugKey(p.name), p]));
+  const out = [];
+  const seen = new Set();
+  for (const e of (Array.isArray(fresh) ? fresh : []).filter((x) => x && typeof x === "object").sort((a, b) => (+b.at || 0) - (+a.at || 0))) {
+    if (out.length >= max) break;
+    const slug = e && typeof e.slug === "string" ? e.slug : "";
+    const p = slug && bySlug.get(slug);
+    if (!p || seen.has(slug)) continue;
+    const saved = +p.savedAt || 0;
+    if (now - saved < minAgeMs || saved >= (+e.at || 0)) continue;
+    seen.add(slug);
+    out.push(p.name);
+  }
+  return out;
+}
+
+let workerRequestedMemo = null;
+/** One GET /requested per run: { players, fresh }. */
+function fetchWorkerRequestedAll() {
+  if (!workerRequestedMemo) workerRequestedMemo = fetchWorkerRequestedRaw();
+  return workerRequestedMemo;
+}
+
 async function fetchWorkerRequested() {
-  if (!CENSUS_PROXY || !CENSUS_PROXY_KEY) return [];
+  return (await fetchWorkerRequestedAll()).players;
+}
+
+async function fetchWorkerRequestedRaw() {
+  if (!CENSUS_PROXY || !CENSUS_PROXY_KEY) return { players: [], fresh: [] };
   try {
     const res = await fetch(`${CENSUS_PROXY}/requested`, {
       headers: { Accept: "application/json", "User-Agent": USER_AGENT, "X-Proxy-Key": CENSUS_PROXY_KEY },
@@ -568,10 +606,13 @@ async function fetchWorkerRequested() {
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const d = await res.json();
-    return Array.isArray(d && d.players) ? d.players : [];
+    return {
+      players: Array.isArray(d && d.players) ? d.players : [],
+      fresh: Array.isArray(d && d.fresh) ? d.fresh : [],
+    };
   } catch (e) {
     console.warn(`  Worker /requested unavailable: ${String(e && e.message).slice(0, 80)}`);
-    return [];
+    return { players: [], fresh: [] };
   }
 }
 
@@ -1072,7 +1113,7 @@ async function main() {
   let ri = 0;
   // Per-name view of this run for build-log.html: planned batch with its source,
   // then done / failed / not-found / pending. Committed with the run's data.
-  const SRC_LABEL = { new: "discovery-new", active: "discovery", retry: "retry", "on-demand": "on-demand", refresh: "refresh" };
+  const SRC_LABEL = { fresh: "fresh-request", new: "discovery-new", active: "discovery", retry: "retry", "on-demand": "on-demand", refresh: "refresh" };
   const batch = [];
   const plan = (name, src) => batch.push({ name, src: SRC_LABEL[src] || src, status: "pending" });
   const settle = (name, display) => {
@@ -1201,6 +1242,19 @@ async function main() {
     };
     growQueue.slice(0, Math.min(room, 20)).forEach((q) => plan(q.name, q.src));
     writeStatus({ running: true, current: { kind: "discovery", runId: process.env.GITHUB_RUN_ID || null, startedAt, batch } });
+
+    // 2b) "Fetch fresh" requests from the site first (<= FRESH_PRIORITY_MAX).
+    const freshNames = freshPriority((await fetchWorkerRequestedAll()).fresh, index, Date.now());
+    if (freshNames.length) console.log(`Fresh-fetch requests first: ${freshNames.join(", ")}.`);
+    for (const name of freshNames) {
+      if (c.stoppedEarly || Date.now() + reserveMs > deadline) break;
+      if (tried) await sleep(BETWEEN_PLAYERS_MS);
+      tried++;
+      if (!batch.some((b) => b.name === name)) plan(name, "fresh");
+      const d = await refreshOne(name, `[fresh request ${tried}/${freshNames.length}]`);
+      settle(name, d);
+      if (d) refreshed++;
+    }
 
     // 3) Budget split. Format-sync backlog first: new names only get leftover
     // time until it is done. Afterwards due refreshes get the first half of the

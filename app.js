@@ -3,7 +3,7 @@
  * Mirrors absolute_target_split / kpm_curve / rf_if / adjusted_ivi from ps2_elite_kd.py
  * Pure math lives in math.mjs (shared with Node tests).
  */
-import { chartFontScale } from "./desk-scale.mjs?v=20261009-fresh";
+import { chartFontScale } from "./desk-scale.mjs?v=20261009-freshq";
 import {
   X_MAX,
   EASY_MAX,
@@ -33,11 +33,11 @@ import {
   windowYValues,
   kpmBandCurve,
   bandReliability,
-} from "./math.mjs?v=20261009-fresh";
-import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261009-fresh";
-import GHOST_MODEL from "./data/ghost-model.mjs?v=20261009-fresh";
-import { ranksHref } from "./pick-sync.mjs?v=20261009-fresh";
-import { entryFetchedAt, pickNewest, writeWithEviction } from "./cache-pick.mjs?v=20261009-fresh";
+} from "./math.mjs?v=20261009-freshq";
+import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261009-freshq";
+import GHOST_MODEL from "./data/ghost-model.mjs?v=20261009-freshq";
+import { ranksHref } from "./pick-sync.mjs?v=20261009-freshq";
+import { entryFetchedAt, pickNewest, writeWithEviction } from "./cache-pick.mjs?v=20261009-freshq";
 import {
   NameLoadError,
   classifyLoadError,
@@ -63,7 +63,7 @@ import {
   formatEtaLeft,
   etaLearnLiveMs,
   expectedNameMs,
-} from "./analyze-run.mjs?v=20261009-fresh";
+} from "./analyze-run.mjs?v=20261009-freshq";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
@@ -77,7 +77,7 @@ import {
   THIN_MARK,
   THIN_NOTE_HEAD,
   thinPlayerLine,
-} from "./player-metrics.mjs?v=20261009-fresh";
+} from "./player-metrics.mjs?v=20261009-freshq";
 /** "22 kills / 60 deaths" in the opponent sample (MIN_FIGHTS counts). */
 function fightsText(r) {
   const k = r.sampleKills || 0;
@@ -89,16 +89,16 @@ function fightsText(r) {
 function thinCellTip(r) {
   return `${MIN_FIGHTS_TIP}. This sample: ${fightsText(r).replace(/[()]/g, "")}`;
 }
-import { markNote, statMark, confirmedPadderSlugs } from "./padding.mjs?v=20261009-fresh";
+import { markNote, statMark, confirmedPadderSlugs } from "./padding.mjs?v=20261009-freshq";
 // Account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times: chart name list only.
-import { accountTimes, flairsHtml } from "./flairs.mjs?v=20261009-fresh";
+import { accountTimes, flairsHtml } from "./flairs.mjs?v=20261009-freshq";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261009-fresh";
-import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261009-fresh";
+import "./name-peek.mjs?v=20261009-freshq";
+import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261009-freshq";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
-import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-fresh";
+import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261009-freshq";
 // Live data: Daybreak Census only (batched, paced); Honu just for a rare history fallback.
-import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261009-fresh";
+import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261009-freshq";
 import {
   censusBase,
   censusRequest,
@@ -107,7 +107,7 @@ import {
   limitConcurrency,
   tokenBucket,
   OPPONENT_TOP_N,
-} from "./census-fetch.mjs?v=20261009-fresh";
+} from "./census-fetch.mjs?v=20261009-freshq";
 
   // Player palettes (dark + light theme) live in palette.mjs (shared with ranks.html).
   const COLORS = PALETTE_DARK;
@@ -3146,6 +3146,7 @@ import {
     renderCacheChips();
     suggestSharedCache(result.loaded); // fire-and-forget, never awaited
     markRequested(result.loaded); // fire-and-forget: analyzed cached players get extra XP detail
+    if (fresh) markFresh(result.loaded); // fire-and-forget: shared copy catches up (names only)
 
     const notes = censusNotesHtml(result.loaded);
     if (summary) {
@@ -3280,6 +3281,44 @@ import {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ names: names.slice(0, 10) }),
+      keepalive: true,
+    };
+    if (typeof AbortSignal !== "undefined" && AbortSignal.timeout) opts.signal = AbortSignal.timeout(8000);
+    fetch(`${WORKER_URL}/seen`, opts).catch(() => {});
+  }
+
+  /**
+   * Fire-and-forget (t300u): after "Fetch fresh", tell the Worker which cached
+   * players were just fetched live so the next background run refreshes their
+   * shared file first. Names only (POST /seen with fresh:true); the browser's
+   * data is never uploaded. Deduped per browser for FRESH_PING_GAP_MS.
+   */
+  const FRESH_PING_GAP_MS = 3600 * 1000;
+  function markFresh(loaded) {
+    if (!WORKER_URL || typeof fetch === "undefined") return;
+    const now = Date.now();
+    const names = [];
+    for (const { name, player } of loaded || []) {
+      if (names.length >= 10) break; // Worker max per request
+      if (!String((player && player.source) || "").startsWith("live:")) continue; // cache fallback: nothing new
+      if (!findSharedEntry(name)) continue; // uncached names go through /add
+      const bare = String((player && player.display) || name).trim().replace(/^\[[^\]]*\]\s*/, "");
+      const key = slugKey(bare);
+      if (!key) continue;
+      try {
+        const last = Number(localStorage.getItem(`ps2ekd:fresh:${key}`) || 0);
+        if (now - last < FRESH_PING_GAP_MS) continue;
+        localStorage.setItem(`ps2ekd:fresh:${key}`, String(now));
+      } catch {
+        /* storage blocked: the Worker dedupes too */
+      }
+      names.push(bare);
+    }
+    if (!names.length) return;
+    const opts = {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ names, fresh: true }),
       keepalive: true,
     };
     if (typeof AbortSignal !== "undefined" && AbortSignal.timeout) opts.signal = AbortSignal.timeout(8000);
