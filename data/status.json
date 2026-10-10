@@ -4,16 +4,13 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "38013150598",
+    "runId": "38015421656",
     "event": "workflow_dispatch",
     "kind": "discovery",
-    "startedAt": "2026-10-10T01:26:09.765Z",
-    "endedAt": "2026-10-10T01:28:37.612Z",
-    "seconds": 148,
-    "updated": [
-      "[1RPC] Nero",
-      "[1RPC] Nero"
-    ],
+    "startedAt": "2026-10-10T02:01:48.205Z",
+    "endedAt": "2026-10-10T02:03:24.994Z",
+    "seconds": 97,
+    "updated": [],
     "added": [],
     "failed": [
       {
@@ -35,21 +32,6 @@
         "name": "shrimpehxxtr",
         "reason": "Census: 36/200 opponent stats missing; keeping old data",
         "outage": true
-      },
-      {
-        "name": "shrimpehxxnc",
-        "reason": "Census: 20/199 opponent stats missing; keeping old data",
-        "outage": true
-      },
-      {
-        "name": "shrimpehxxvs",
-        "reason": "Census: 26/200 opponent stats missing; keeping old data",
-        "outage": true
-      },
-      {
-        "name": "runnerdeconfianza",
-        "reason": "Census: 1/1 opponent stats missing; keeping old data",
-        "outage": true
       }
     ],
     "stoppedEarly": "4 outage-type failures in a row (Census/Honu down?)",
@@ -62,7 +44,7 @@
     },
     "honu": {
       "day": "2026-10-10",
-      "calls": 268,
+      "calls": 296,
       "cap": 2500
     },
     "batch": [
@@ -85,11 +67,6 @@
         "reason": "Census: 23/200 opponent stats missing; keeping old data"
       },
       {
-        "name": "[1RPC] Nero",
-        "src": "retry",
-        "status": "done"
-      },
-      {
         "name": "shrimpehxxtr",
         "src": "retry",
         "status": "failed",
@@ -98,20 +75,7 @@
       {
         "name": "shrimpehxxnc",
         "src": "retry",
-        "status": "failed",
-        "reason": "Census: 20/199 opponent stats missing; keeping old data"
-      },
-      {
-        "name": "shrimpehxxvs",
-        "src": "retry",
-        "status": "failed",
-        "reason": "Census: 26/200 opponent stats missing; keeping old data"
-      },
-      {
-        "name": "runnerdeconfianza",
-        "src": "retry",
-        "status": "failed",
-        "reason": "Census: 1/1 opponent stats missing; keeping old data"
+        "status": "pending"
       },
       {
         "name": "sAsPoLp",
@@ -174,14 +138,24 @@
         "status": "pending"
       },
       {
-        "name": "[1RPC] Nero",
-        "src": "refresh",
-        "status": "done"
+        "name": "WhyUSoPr0",
+        "src": "discovery-new",
+        "status": "pending"
+      },
+      {
+        "name": "SmoKa43",
+        "src": "discovery-new",
+        "status": "pending"
+      },
+      {
+        "name": "LIUXIANG61",
+        "src": "discovery-new",
+        "status": "pending"
       }
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-10T01:28:38.915Z",
+    "checkedAt": "2026-10-10T02:03:26.227Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 0,
     "explained": 14,
@@ -616,7 +590,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-10T01:28:38.929Z",
+    "checkedAt": "2026-10-10T02:03:26.245Z",
     "red": 13,
     "padding": 7,
     "adjusted": 13,
@@ -626,7 +600,7 @@
     "session": 3
   },
   "sessionStats": {
-    "checkedAt": "2026-10-10T01:28:38.920Z",
+    "checkedAt": "2026-10-10T02:03:26.235Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -640,13 +614,13 @@
     "ruleText": "[session pattern] in recent Honu sessions (≥ 100 kills counted): assists per kill ≤ 0.1, headshot share ≥ 50% (headshot XP per kill; Census lifetime HSR when no XP detail) and K/D ≥ 7 (session deaths; Census lifetime KD when none). A very one-sided record; a lead for manual review, not proof.",
     "coverage": {
       "players": 1503,
-      "withSessions": 837,
+      "withSessions": 838,
       "measured": 555,
-      "sessions": 2633,
-      "kills": 205892,
-      "xpPlayers": 45,
-      "xpMeasured": 34,
-      "xpSessions": 271
+      "sessions": 2642,
+      "kills": 206777,
+      "xpPlayers": 47,
+      "xpMeasured": 35,
+      "xpSessions": 283
     },
     "metrics": [
       {
@@ -772,7 +746,7 @@
         "min": 0.133,
         "p01": 0.216,
         "p05": 0.308,
-        "median": 0.89,
+        "median": 0.896,
         "p95": 2.449,
         "p99": 3.141,
         "max": 6.683
@@ -818,7 +792,7 @@
         "max": 169.625
       },
       "s_hsk": {
-        "n": 35,
+        "n": 36,
         "min": 0.074,
         "p01": 0.074,
         "p05": 0.086,
@@ -828,27 +802,27 @@
         "max": 0.709
       },
       "s_ksk": {
-        "n": 35,
+        "n": 36,
         "min": 0.052,
         "p01": 0.052,
         "p05": 0.075,
-        "median": 0.443,
+        "median": 0.421,
         "p95": 0.84,
         "p99": 0.922,
         "max": 0.953
       },
       "s_domk": {
-        "n": 35,
+        "n": 36,
         "min": 0.021,
         "p01": 0.021,
         "p05": 0.032,
-        "median": 0.093,
+        "median": 0.088,
         "p95": 0.188,
         "p99": 0.192,
         "max": 0.233
       },
       "s_revk": {
-        "n": 35,
+        "n": 36,
         "min": 0.002,
         "p01": 0.002,
         "p05": 0.004,
@@ -858,7 +832,7 @@
         "max": 0.151
       },
       "s_revDom": {
-        "n": 35,
+        "n": 36,
         "min": 0.008,
         "p01": 0.008,
         "p05": 0.023,
@@ -868,27 +842,27 @@
         "max": 3
       },
       "s_savk": {
-        "n": 35,
+        "n": 36,
         "min": 0.012,
         "p01": 0.012,
         "p05": 0.013,
-        "median": 0.059,
+        "median": 0.058,
         "p95": 0.107,
         "p99": 0.107,
         "max": 0.118
       },
       "s_spotk": {
-        "n": 35,
+        "n": 36,
         "min": 0,
         "p01": 0,
         "p05": 0,
-        "median": 0.031,
+        "median": 0.024,
         "p95": 0.137,
         "p99": 0.139,
         "max": 0.145
       },
       "s_prik": {
-        "n": 35,
+        "n": 36,
         "min": 0.082,
         "p01": 0.082,
         "p05": 0.111,
@@ -898,11 +872,11 @@
         "max": 0.252
       },
       "s_stopk": {
-        "n": 35,
+        "n": 36,
         "min": 0.027,
         "p01": 0.027,
         "p05": 0.036,
-        "median": 0.07,
+        "median": 0.069,
         "p95": 0.135,
         "p99": 0.145,
         "max": 0.174
@@ -1340,9 +1314,9 @@
     "outliersUnexplained": 0
   },
   "size": {
-    "at": "2026-10-10T01:28:37.934Z",
+    "at": "2026-10-10T02:03:25.296Z",
     "repoBytes": 16593920,
-    "dataBytes": 28012812,
+    "dataBytes": 28023706,
     "playersBytes": 25858439,
     "playerFiles": 1503,
     "warnAtBytes": 734003200,
