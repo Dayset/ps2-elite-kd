@@ -4,19 +4,19 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "38083599316",
+    "runId": "38083647722",
     "event": "workflow_dispatch",
     "kind": "on-demand",
-    "startedAt": "2026-10-10T20:24:20.560Z",
-    "endedAt": "2026-10-10T20:24:24.006Z",
-    "seconds": 3,
+    "startedAt": "2026-10-10T20:25:01.829Z",
+    "endedAt": "2026-10-10T20:25:06.394Z",
+    "seconds": 5,
     "updated": [],
     "added": [
-      "[RVSD] Boges"
+      "[RVSD] Mepulan"
     ],
     "failed": [],
     "stoppedEarly": null,
-    "indexSize": 3014,
+    "indexSize": 3015,
     "honu": {
       "day": "2026-10-10",
       "calls": 2499,
@@ -24,14 +24,14 @@
     },
     "batch": [
       {
-        "name": "[RVSD] Boges",
+        "name": "[RVSD] Mepulan",
         "src": "on-demand",
         "status": "done"
       }
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-10T20:24:26.359Z",
+    "checkedAt": "2026-10-10T20:25:07.925Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 1,
     "explained": 1,
@@ -42,7 +42,7 @@
         "id": "kd",
         "value": 247,
         "bound": 19.87,
-        "z": 235.978,
+        "z": 236.075,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -54,7 +54,7 @@
         "id": "kd",
         "value": 150,
         "bound": 19.87,
-        "z": 142.798,
+        "z": 142.857,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (aim), listed there",
@@ -70,14 +70,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 235.978,
+        "maxZ": 236.075,
         "metrics": [
           {
             "id": "kd",
             "label": "KD",
             "value": 247,
             "bound": 19.87,
-            "z": 235.978,
+            "z": 236.075,
             "side": "high"
           }
         ]
@@ -90,14 +90,14 @@
         "red": [
           "aim"
         ],
-        "maxZ": 142.798,
+        "maxZ": 142.857,
         "metrics": [
           {
             "id": "kd",
             "label": "KD",
             "value": 150,
             "bound": 19.87,
-            "z": 142.798,
+            "z": 142.857,
             "side": "high"
           }
         ]
@@ -170,7 +170,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-10T20:24:26.392Z",
+    "checkedAt": "2026-10-10T20:25:07.946Z",
     "red": 18,
     "padding": 22,
     "adjusted": 1,
@@ -181,7 +181,7 @@
     "forensics": 2
   },
   "sessionStats": {
-    "checkedAt": "2026-10-10T20:24:26.367Z",
+    "checkedAt": "2026-10-10T20:25:07.929Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -194,7 +194,7 @@
     },
     "ruleText": "[session pattern] in recent Honu sessions (≥ 100 kills counted): assists per kill ≤ 0.1, headshot share ≥ 50% (headshot XP per kill; Census lifetime HSR when no XP detail) and K/D ≥ 7 (session deaths; Census lifetime KD when none). A very one-sided record; a lead for manual review, not proof.",
     "coverage": {
-      "players": 3013,
+      "players": 3014,
       "withSessions": 1343,
       "measured": 729,
       "sessions": 4186,
@@ -1030,17 +1030,17 @@
     "outliersUnexplained": 0
   },
   "size": {
-    "at": "2026-10-10T20:24:24.262Z",
+    "at": "2026-10-10T20:25:06.725Z",
     "repoBytes": 29200384,
-    "dataBytes": 55901492,
-    "playersBytes": 52758550,
-    "playerFiles": 3014,
+    "dataBytes": 55921197,
+    "playersBytes": 52777594,
+    "playerFiles": 3015,
     "warnAtBytes": 734003200,
     "warning": false
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-10T20:24:26.377Z",
+    "checkedAt": "2026-10-10T20:25:07.935Z",
     "candidates": [
       "coldandhot",
       "alandwhale",
@@ -1730,7 +1730,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-10T20:24:26.380Z",
+    "checkedAt": "2026-10-10T20:25:07.937Z",
     "count": 48,
     "players": [
       {
