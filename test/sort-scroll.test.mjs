@@ -124,9 +124,9 @@ describe("sort keeps horizontal scroll at 390px (t329u)", () => {
       assert.equal(n, 2);
     });
   });
-  it("ranks.html table", { skip: !chrome && "no Chrome", timeout: 120000 }, async () => {
+  it("Rankings table", { skip: !chrome && "no Chrome", timeout: 120000 }, async () => {
     await withPage(async ({ ev, nav }) => {
-      await nav("ranks.html");
+      await nav("index.html#rankings");
       await ev(`new Promise(async (r) => { for (let t = 0; t < 400 && !document.querySelector("#ranksBody tr[data-q]"); t++) await new Promise((q) => setTimeout(q, 50)); r(1); })`);
       const s = await ev(clickFar(".ranks-table-wrap", "#ranksHead th.sortable"));
       assert.ok(s.scrollable && s.before > 0, JSON.stringify(s));
@@ -167,9 +167,9 @@ describe("Rankings: fresh browser copy + readable chart names (t338u)", () => {
       const now = Date.now();
       const store = { shlodog: { name: "ShloDog", savedAt: now, fetchedAt: now, player: { ...p, global_kd: 0.5 } } };
       await withPage(async ({ ev, nav }) => {
-        await nav("ranks.html");
+        await nav("index.html");
         await ev(`localStorage.setItem("ps2-elite-kd-cache-v2", ${JSON.stringify(JSON.stringify(store))}); 1`);
-        await nav(`ranks.html?pick=${picks.map(encodeURIComponent).join(",")},shlodog`);
+        await nav(`index.html?names=${picks.map(encodeURIComponent).join(",")},shlodog#rankings`);
         await ev(`new Promise(async (r) => { for (let t = 0; t < 400 && !document.querySelector("#ranksBody tr[data-q]"); t++) await new Promise((q) => setTimeout(q, 50)); r(1); })`);
         await new Promise((r) => setTimeout(r, 500));
         await ev(`(async () => { const i = document.getElementById("ranksSearch"); i.value = "shlodog"; i.dispatchEvent(new Event("input", { bubbles: true })); await new Promise((r) => setTimeout(r, 400)); })()`);
@@ -219,34 +219,30 @@ describe("Analyze names box typing stays fast with a big shared cache (t343u)", 
   });
 });
 
-describe("Rankings: typing a full name + space picks it (t348u)", () => {
-  it("exact names only, tag ignored, limit respected", { skip: !chrome && "no Chrome", timeout: 120000 }, async () => {
+describe("One page: names typed in the names box tick the Rankings table (t348u → t356u)", () => {
+  it("typed chips ✅ in the table; 10 limit keeps the text", { skip: !chrome && "no Chrome", timeout: 120000 }, async () => {
     const rk = JSON.parse(fs.readFileSync(path.join(root, "data/ranks.json"), "utf8"));
     const qi = rk.cols.indexOf("query");
     const has = (q) => rk.rows.some((r) => String(r[qi]).toLowerCase() === q);
     if (!has("shlodog") || !has("wrel")) return;
     await withPage(async ({ ev, nav }) => {
-      await nav("ranks.html");
+      await nav("index.html#rankings");
       await ev(`new Promise(async (r) => { for (let t = 0; t < 400 && !document.querySelector("#ranksBody tr[data-q]"); t++) await new Promise((q) => setTimeout(q, 50)); r(1); })`);
-      const type = (txt) => ev(`(async () => { const i = document.getElementById("ranksSearch"); i.focus(); for (const ch of ${JSON.stringify(txt)}) { i.value += ch; i.dispatchEvent(new InputEvent("input", { bubbles: true, data: ch, inputType: "insertText" })); } await new Promise((r) => setTimeout(r, 300)); return { value: i.value, chips: [...document.querySelectorAll("#ranksChips .name-token")].map((b) => b.dataset.q.toLowerCase()), pick: new URL(location.href).searchParams.get("pick"), focused: document.activeElement === i }; })()`);
-      let s = await type("shlodo ");
-      assert.deepEqual(s.chips, [], "partial name is only a filter");
-      await ev(`(() => { const i = document.getElementById("ranksSearch"); i.value = ""; i.dispatchEvent(new Event("input", { bubbles: true })); })()`);
-      s = await type("SHLODOG ");
+      await ev(`(() => { document.getElementById("clearNamesBtn").click(); return 1; })()`);
+      const type = (txt) => ev(`(async () => { const i = document.getElementById("namesInput"); i.focus(); for (const ch of ${JSON.stringify(txt)}) { i.value += ch; i.dispatchEvent(new InputEvent("input", { bubbles: true, data: ch, inputType: "insertText" })); } await new Promise((r) => setTimeout(r, 400)); return { value: i.value, chips: [...document.querySelectorAll("#nameTokens .name-token")].map((b) => b.textContent.trim().toLowerCase()), ticked: [...document.querySelectorAll('#ranksBody input[type="checkbox"]:checked')].map((c) => c.closest("tr").dataset.q.toLowerCase()).sort(), focused: document.activeElement === i }; })()`);
+      let s = await type("SHLODOG ");
       assert.deepEqual(s.chips, ["shlodog"]);
       assert.equal(s.value, "");
       assert.ok(s.focused);
       s = await type("[XYZ] wrel,");
-      assert.deepEqual(s.chips, ["shlodog", "wrel"]);
-      assert.equal(s.pick.toLowerCase(), "shlodog,wrel");
-      // Fill to 10, then one more typed name → note, text kept.
-      const others = rk.rows.map((r) => String(r[qi])).filter((q) => !["shlodog", "wrel"].includes(q.toLowerCase())).slice(0, 9);
+      assert.deepEqual(s.ticked, ["shlodog", "wrel"], "table ✅ follow the names box");
+      const others = rk.rows.map((r) => String(r[qi])).filter((q) => /^[A-Za-z0-9]+$/.test(q) && !["shlodog", "wrel"].includes(q.toLowerCase())).slice(0, 9);
       s = await type(others.slice(0, 8).join(" ") + " ");
       assert.equal(s.chips.length, 10);
+      assert.equal(await ev(`document.querySelectorAll('#ranksBody input[type="checkbox"]:disabled').length > 0`), true, "unticked boxes disabled at 10");
       s = await type(others[8] + " ");
       assert.equal(s.chips.length, 10);
-      assert.equal(s.value.trim(), others[8]);
-      assert.equal(await ev(`!document.getElementById("limitToast").hidden`), true);
+      assert.ok(s.value.includes(others[8]), "11th name stays as text: " + s.value);
     });
   });
 });
@@ -258,7 +254,7 @@ describe("Rankings chart clicks scroll the list with picks + search text (t349u/
     const picks = ["shlodog", "wrel", "yeezy"].filter((q) => rk.rows.some((r) => String(r[qi]).toLowerCase() === q));
     if (picks.length < 3) return;
     await withPage(async ({ ev, nav, send, sessionId }) => {
-      await nav(`ranks.html?pick=${picks.join(",")}`);
+      await nav(`index.html?names=${picks.join(",")}#rankings`);
       await ev(`new Promise(async (res) => { for (let t = 0; t < 400 && !document.querySelector("#distSvg .dist-hit"); t++) await new Promise((r) => setTimeout(r, 50)); res(1); })`);
       // Left-over search text (the old cause: table filtered to 1 row → nothing to scroll to).
       await ev(`(async () => { const i = document.getElementById("ranksSearch"); i.value = "yeez"; i.dispatchEvent(new Event("input", { bubbles: true })); await new Promise((r) => setTimeout(r, 500)); })()`);
@@ -274,7 +270,7 @@ describe("Rankings chart clicks scroll the list with picks + search text (t349u/
       await new Promise((r) => setTimeout(r, 300));
       const y0 = await ev(`window.scrollY`);
       await click('#distSvg .dist-hit[data-bin="3"]');
-      let st = await ev(`({ st: document.getElementById("ranksScroll").scrollTop, rows: document.querySelectorAll("#ranksBody tr[data-q]").length, filter: document.getElementById("ranksSearch").value, chips: document.querySelectorAll("#ranksChips .name-token").length, flashed: document.querySelectorAll("#ranksBody tr.rk-flash").length })`);
+      let st = await ev(`({ st: document.getElementById("ranksScroll").scrollTop, rows: document.querySelectorAll("#ranksBody tr[data-q]").length, filter: document.getElementById("ranksSearch").value, chips: document.querySelectorAll("#nameTokens .name-token").length, flashed: document.querySelectorAll("#ranksBody tr.rk-flash").length })`);
       assert.ok(st.rows > 100 && st.st > 0 && st.flashed >= 1, JSON.stringify(st));
       assert.equal(st.filter, "");
       assert.equal(st.chips, 3, "picks kept");
@@ -308,7 +304,6 @@ describe("Analyze: removing a chip updates graph + tables right away; Analyze ne
       assert.ok(!l.some((n) => /RachelDoe/.test(n)));
       assert.ok(!(await statsHas("RachelDoe")), "tables follow too");
       assert.ok(!(await ev(`decodeURIComponent(location.search)`)).includes("RachelDoe"), "URL follows");
-      assert.ok(!(await ev(`document.getElementById("ranksLink").getAttribute("href")`)).toLowerCase().includes("racheldoe"), "Rankings link follows");
       for (let i = 0; i < 2; i++) {
         await ev(`document.getElementById("analyzeBtn").click(), 1`);
         await idle();
@@ -330,23 +325,44 @@ describe("Analyze: removing a chip updates graph + tables right away; Analyze ne
   });
 });
 
-describe("Rankings: unpicking a chip updates ticks, chart and URL (t351u)", () => {
-  it("chip × → checkbox off, chart label gone, ?pick= updated", { skip: !chrome }, async () => {
+describe("Rankings: removing a names-box chip unticks, unmarks and updates ?names= (t351u/t356u)", () => {
+  it("chip × → checkbox off, chart label gone, ?names= updated", { skip: !chrome }, async () => {
     const rk = JSON.parse(fs.readFileSync(path.join(root, "data/ranks.json"), "utf8"));
     const qi = rk.cols.indexOf("query");
     const picks = ["shlodog", "wrel", "yeezy"].filter((q) => rk.rows.some((r) => String(r[qi]).toLowerCase() === q));
     if (picks.length < 3) return;
     await withPage(async ({ ev, nav }) => {
-      await nav(`ranks.html?pick=${picks.join(",")}`);
-      await ev(`new Promise(async (res) => { for (let t = 0; t < 400 && !document.querySelector("#distSvg text.dist-name"); t++) await new Promise((r) => setTimeout(r, 50)); res(1); })`);
-      const q = await ev(`document.querySelector("#ranksChips .name-token").getAttribute("data-q")`);
-      await ev(`document.querySelector("#ranksChips .name-token").click(), 1`);
-      await new Promise((r) => setTimeout(r, 400));
-      const st = await ev(`({ chips: document.querySelectorAll("#ranksChips .name-token").length, label: !!document.querySelector('#distSvg text.dist-name[data-q="${q}"]'), cb: (() => { const c = document.querySelector('#ranksBody tr[data-q="${q}"] input[type=checkbox]'); return c ? c.checked : false; })(), url: location.search })`);
+      await nav(`index.html?names=${picks.join(",")}#rankings`);
+      await ev(`new Promise(async (res) => { for (let t = 0; t < 400 && !(document.querySelectorAll("#distSvg text.dist-name").length >= 3 && document.querySelectorAll("#legend .legend-item").length >= 3); t++) await new Promise((r) => setTimeout(r, 50)); res(1); })`);
+      const q = await ev(`document.querySelector("#distSvg text.dist-name").getAttribute("data-q")`);
+      await ev(`[...document.querySelectorAll("#nameTokens .name-token")].find((b) => b.textContent.trim().toLowerCase() === ${JSON.stringify(q)}.toLowerCase()).click(), 1`);
+      await new Promise((r) => setTimeout(r, 500));
+      const st = await ev(`({ chips: document.querySelectorAll("#nameTokens .name-token").length, legend: document.querySelectorAll("#legend .legend-item").length, label: !!document.querySelector('#distSvg text.dist-name[data-q="${q}"]'), cb: (() => { const c = document.querySelector('#ranksBody tr[data-q="${q}"] input[type=checkbox]'); return c ? c.checked : false; })(), names: new URL(location.href).searchParams.get("names") || "", pos: document.getElementById("rkPositions").textContent })`);
       assert.equal(st.chips, 2);
+      assert.equal(st.legend, 2, "graph follows");
       assert.equal(st.label, false);
       assert.equal(st.cb, false);
-      assert.ok(!decodeURIComponent(st.url).toLowerCase().split(/[=,&]/).includes(q.toLowerCase()), st.url);
+      assert.ok(!st.names.toLowerCase().split(",").includes(q.toLowerCase()), st.names);
+      assert.ok(!st.pos.toLowerCase().includes(q.toLowerCase()), "🏅 positions follow");
     });
+  });
+});
+
+describe("Rankings table block folds away and remembers it (t357u)", () => {
+  it("closed state survives a reload; a chart bar click opens it and scrolls", { skip: !chrome, timeout: 120000 }, async () => {
+    await withPage(async ({ ev, nav }) => {
+      const ready = `new Promise(async (res) => { for (let t = 0; t < 400 && !document.querySelector("#distSvg .dist-hit"); t++) await new Promise((r) => setTimeout(r, 50)); res(1); })`;
+      await nav("index.html#rankings");
+      await ev(ready);
+      assert.equal(await ev(`document.getElementById("ranksTableSection").open`), true, "open by default");
+      await ev(`(async () => { document.querySelector("#ranksTableSection > summary").click(); await new Promise((r) => setTimeout(r, 200)); })()`);
+      assert.equal(await ev(`localStorage.getItem("ps2-elite-kd-ranks-table-open")`), "0");
+      await nav("index.html#rankings");
+      await ev(ready);
+      assert.equal(await ev(`document.getElementById("ranksTableSection").open`), false, "remembered closed");
+      await ev(`(async () => { document.querySelector('#distSvg .dist-hit[data-bin="3"]').dispatchEvent(new MouseEvent("click", { bubbles: true })); await new Promise((r) => setTimeout(r, 1500)); })()`);
+      const st = await ev(`({ open: document.getElementById("ranksTableSection").open, st: document.getElementById("ranksScroll").scrollTop, jump: !!window.__lastBinJump })`);
+      assert.ok(st.open && st.jump && st.st > 0, JSON.stringify(st));
+    }, { width: 1400, height: 900, mobile: false });
   });
 });

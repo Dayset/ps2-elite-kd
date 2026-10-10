@@ -10,6 +10,7 @@ import path from "node:path";
 import { spawn, execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { histogram, binIndexOf, binJumpTarget } from "../dist.mjs";
+import { rankingsSource } from "./rankings-src.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -52,7 +53,7 @@ describe("binJumpTarget", () => {
 
 describe("Rankings chart bar click", () => {
   it("static wiring: pointer cursor, hint, touch double-tap, extra column", () => {
-    const s = fs.readFileSync(path.join(root, "ranks.html"), "utf8");
+    const s = rankingsSource();
     assert.match(s, /\.dist-chart \.dist-hit \{ cursor: pointer;/);
     assert.match(s, /to jump to players in this range/);
     assert.match(s, /Jump to players in this range/);
@@ -103,7 +104,7 @@ describe("Rankings chart bar click", () => {
       };
       const sleep = (ms) => ev(`new Promise((r) => setTimeout(() => r(1), ${ms}))`);
       await send("Page.enable", {}, sessionId);
-      await send("Page.navigate", { url: `http://127.0.0.1:${port}/ranks.html` }, sessionId);
+      await send("Page.navigate", { url: `http://127.0.0.1:${port}/index.html#rankings` }, sessionId);
       await ev(`new Promise(async (res) => { for (let t = 0; t < 400 && !document.querySelector("#distSvg .dist-hit"); t++) await new Promise((r) => setTimeout(r, 50)); res(1); })`);
       // Mouse click on a high bar (last non-empty core bar) while sorted by name.
       await ev(`document.querySelector('#ranksHead th[data-key="name"]').click(), 1`);
@@ -155,7 +156,7 @@ describe("Rankings chart bar click", () => {
 
 describe("Rankings Player column width (t311u)", () => {
   it("desktop widths lift the 18ch name cap; mobile keeps it", () => {
-    const s = fs.readFileSync(path.join(root, "ranks.html"), "utf8");
+    const s = rankingsSource();
     assert.match(s, /@media \(min-width: 1100px\) \{ \.ranks-table td\.rk-name \.nm \{ max-width: 42ch; \} \}/);
     assert.match(s, /@media \(min-width: 601px\) \{ \.ranks-table td\.rk-name \.nm \{ max-width: 28ch; \} \}/);
   });

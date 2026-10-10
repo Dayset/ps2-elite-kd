@@ -39,7 +39,7 @@
     "codeRepository": "https://github.com/Dayset/ps2-elite-kd"
   }
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261010-sync1" />
+  <link rel="stylesheet" href="styles.css?v=20261010-one1" />
 </head>
 <body class="main-page">
   <div class="controls">
@@ -66,15 +66,6 @@
         Fetch fresh data
       </label>
       <span id="freshEta" class="fresh-eta" aria-live="polite" hidden></span>
-    </div>
-
-    <div class="controls-theme-row ranks-row">
-      <span class="ranks-row-spacer" aria-hidden="true"></span>
-      <span class="ranks-pair">
-        <a id="ranksLink" href="ranks.html" class="ranks-link" title="Rankings" aria-label="Rankings">🏆 Rankings</a>
-        <a id="ranksGoBtn" href="ranks.html" class="ranks-go" title="Rankings" aria-label="Open Rankings"><svg class="ranks-chev" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M9 4.5 16.5 12 9 19.5" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
-      </span>
-      <span class="ranks-row-end" aria-hidden="true"></span>
     </div>
   </div>
 
@@ -139,10 +130,43 @@
   <div id="legend" class="legend"></div>
   <details class="pooled-note fold-note"><summary>♿ What about vehicles?</summary><p>Vehicle and infantry kills are pooled together for now, so vehicle mains may look off in the graph and stats. Infantry-only numbers are coming later.</p></details>
 
+  <!-- t356u: Rankings (was ranks.html) — rankings.mjs fills this lazily after the graph. -->
+  <section id="rankings" class="rankings" aria-labelledby="rankingsTitle">
+    <h2 id="rankingsTitle" class="rk-title">🏆 Rankings</h2>
+    <div id="ranksStatus" class="ranks-status" role="status"></div>
+    <div id="rkPositions" class="rk-positions" aria-live="polite"></div>
+    <details id="distSection" class="dist-section" open>
+      <summary>📊 Distribution</summary>
+      <div class="dist-controls">
+        <label>Metric <select id="distMetric" aria-label="Distribution metric"></select></label>
+        <span id="distSummary" class="dist-summary"></span>
+      </div>
+      <div class="dist-chart" id="distChart">
+        <svg id="distSvg" role="img" aria-label="Distribution of the selected metric across cached players"></svg>
+        <div id="distTip" class="dist-tip" hidden></div>
+      </div>
+      <div class="dist-note">Bars: % of players per value range (left axis). Line: cumulative % of players below (right axis). Hover / tap a bar for details; click it (tap twice on touch) to jump to those players in the table. Your players from the names box — or a table filter with ≤ 5 matches — are marked; click a name to see its row.</div>
+    </details>
+    <!-- t357u: the big table folds away like the chart (state remembered). -->
+    <details id="ranksTableSection" class="dist-section rk-table-section" open>
+      <summary>📋 All players <span id="ranksTableCount" class="rk-table-count"></span></summary>
+    <div class="rk-filter-row">
+      <input id="ranksSearch" type="search" placeholder="Filter the table by name…" aria-label="Filter the Rankings table by player name" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="search" />
+    </div>
+    <div class="ranks-table-wrap" id="ranksScroll">
+      <table class="ranks-table" id="ranksTable" aria-label="Rankings">
+        <thead id="ranksHead"></thead>
+        <tbody id="ranksBody"></tbody>
+      </table>
+    </div>
+    </details>
+  </section>
+
   <footer>
+    <p id="ranksMeta" class="ranks-meta"></p>
     <div class="footer-row">
       <p><a href="https://github.com/Dayset/ps2-elite-kd">github.com/Dayset/ps2-elite-kd</a></p>
-      <label class="debug-cols-toggle" title="Append the older debug columns (🎯🎈 ivi, eKPM, own KPM, 📊 COI, 📉 Slope, 🎈 Inflation) to the ✨ Adjusted table">
+      <label class="debug-cols-toggle" title="Append the older debug columns (🎯🎈 ivi, eKPM, own KPM, 📊 COI, 📉 Slope, 🎈 Inflation) to the ✨ Adjusted and Rankings tables">
         <input type="checkbox" id="debugColsToggle" /> show older debug stats
       </label>
     </div>
@@ -156,6 +180,6 @@
     </details>
   </footer>
 
-  <script type="module" src="app.js?v=20261010-sync1"></script>
+  <script type="module" src="app.js?v=20261010-one1"></script>
 </body>
 </html>

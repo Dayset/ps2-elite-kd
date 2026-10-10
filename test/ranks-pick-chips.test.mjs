@@ -1,5 +1,5 @@
-// t314u: Rankings ✅ picks show as chips in the filter field (like the main page's
-// names box); × on a chip / Backspace in an empty filter unpicks; ?pick= stays in sync.
+// t356u (was t314u): one page — Rankings ✅ ticks ARE the names box chips:
+// a tick adds a chip (graph + ?names= follow), removing a chip unticks.
 // t313u: main page shared desktop content width (static check).
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
@@ -8,6 +8,7 @@ import http from "node:http";
 import path from "node:path";
 import { spawn, execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { rankingsSource } from "./rankings-src.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (f) => fs.readFileSync(path.join(root, f), "utf8");
@@ -23,20 +24,19 @@ describe("main page desktop width (t313u)", () => {
   });
 });
 
-describe("Rankings pick chips (t314u)", () => {
+describe("Rankings ✅ ↔ names box (t356u)", () => {
   it("static wiring", () => {
-    const s = read("ranks.html");
-    assert.match(s, /id="ranksPickBox"[\s\S]*id="ranksChips"[\s\S]*id="ranksSearch"/);
-    assert.match(s, /function renderPickChips\(\)/);
-    assert.match(s, /function syncPickedUi\(\) \{\s*renderPickChips\(\);/);
-    assert.match(s, /e\.key === "Backspace" && !e\.target\.value && picked\.size/);
+    const s = rankingsSource();
+    assert.doesNotMatch(s, /id="ranksPickBox"|id="ranksChips"|id="ranksCompare"|id="backLink"/);
+    assert.match(s, /host\.toggleName\(q, inp, want\)/);
+    assert.match(read("app.js"), /function rankingsSync\(\) \{\s*if \(rankingsApi\) rankingsApi\.syncPicks\(\);/);
   });
 
   const chrome = ["google-chrome", "chromium", "chromium-browser", "google-chrome-stable"].find((b) => {
     try { execFileSync("which", [b], { stdio: "ignore" }); return true; } catch { return false; }
   });
 
-  it("pick → chip, chip × → unpick, Backspace → unpick, ?pick= follows", { skip: !chrome && "no Chrome installed", timeout: 90000 }, async () => {
+  it("tick → chip + graph + ?names=, chip × → untick", { skip: !chrome && "no Chrome installed", timeout: 90000 }, async () => {
     const types = { ".html": "text/html", ".js": "text/javascript", ".mjs": "text/javascript", ".json": "application/json", ".css": "text/css" };
     const server = http.createServer((req, res) => {
       const p = path.join(root, decodeURIComponent(new URL(req.url, "http://x").pathname));
@@ -76,32 +76,37 @@ describe("Rankings pick chips (t314u)", () => {
       // Use the first rows the table actually shows (top of the default sort): the
       // list renders progressively, so rows deep in ranks.json's file order may not
       // be in the table yet when the test ticks them (the old test picked those).
-      await send("Page.navigate", { url: `http://127.0.0.1:${port}/ranks.html` }, sessionId);
+      await send("Page.navigate", { url: `http://127.0.0.1:${port}/index.html#rankings` }, sessionId);
       const [q0, q1, q2] = await ev(`new Promise(async (r) => { for (let t = 0; t < 400 && document.querySelectorAll("#ranksBody tr[data-q]").length < 3; t++) await new Promise((q) => setTimeout(q, 50)); r([...document.querySelectorAll("#ranksBody tr[data-q]")].slice(0, 3).map((t) => t.dataset.q)); })`);
       assert.equal(new Set([q0, q1, q2]).size, 3);
-      await send("Page.navigate", { url: `http://127.0.0.1:${port}/ranks.html?pick=${encodeURIComponent(q0)},${encodeURIComponent(q1)}` }, sessionId);
-      await ev(`new Promise(async (r) => { for (let t = 0; t < 400 && !document.querySelector("#ranksBody tr[data-q]"); t++) await new Promise((q) => setTimeout(q, 50)); r(1); })`);
-      const state = () => ev(`({ chips: [...document.querySelectorAll("#ranksChips .name-token")].map((b) => b.dataset.q), pick: new URL(location.href).searchParams.get("pick"), checked: [...document.querySelectorAll('#ranksBody input[type="checkbox"]:checked')].map((c) => c.closest("tr").dataset.q) })`);
+      await send("Page.navigate", { url: `http://127.0.0.1:${port}/index.html?names=${encodeURIComponent(q0)},${encodeURIComponent(q1)}#rankings` }, sessionId);
+      await ev(`new Promise(async (r) => { for (let t = 0; t < 400 && !(document.querySelector("#ranksBody tr[data-q]") && document.querySelectorAll("#legend .legend-item").length >= 2); t++) await new Promise((q) => setTimeout(q, 50)); r(1); })`);
+      const settle = () => new Promise((r) => setTimeout(r, 900));
+      const state = () => ev(`({ chips: [...document.querySelectorAll("#nameTokens .name-token")].map((b) => b.textContent.trim().toLowerCase()), names: (new URL(location.href).searchParams.get("names") || "").toLowerCase(), legend: document.querySelectorAll("#legend .legend-item").length, checked: [...document.querySelectorAll('#ranksBody input[type="checkbox"]:checked')].map((c) => c.closest("tr").dataset.q) })`);
+      const lc = (a) => a.map((x) => String(x).toLowerCase());
       let s = await state();
-      assert.deepEqual(s.chips, [q0, q1], "?pick= → chips");
-      // Tick a third player in the table → chip appears, URL follows.
-      await ev(`(() => { const cb = document.querySelector('#ranksBody tr[data-q="' + CSS.escape(${JSON.stringify(q2)}) + '"] input[type="checkbox"]'); cb.checked = true; cb.dispatchEvent(new Event("change", { bubbles: true })); return 1; })()`);
+      assert.deepEqual(s.chips, lc([q0, q1]), "?names= → chips");
+      assert.deepEqual(s.checked.sort(), [q0, q1].sort(), "chips → ✅");
+      // Tick a third player in the table → chip appears, graph + URL follow (no Analyze).
+      await ev(`(() => { const cb = document.querySelector('#ranksBody tr[data-q="' + CSS.escape(${JSON.stringify(q2)}) + '"] input[type="checkbox"]'); cb.click(); return 1; })()`);
+      await settle();
       s = await state();
-      assert.deepEqual(s.chips, [q0, q1, q2]);
-      assert.equal(s.pick, [q0, q1, q2].join(","));
-      // Click the first chip → unpicked everywhere.
-      await ev(`document.querySelector('#ranksChips .name-token[data-q="' + CSS.escape(${JSON.stringify(q0)}) + '"]').click(), 1`);
+      assert.deepEqual(s.chips, lc([q0, q1, q2]));
+      assert.equal(s.legend, 3, "graph follows the tick");
+      assert.equal(s.names, lc([q0, q1, q2]).join(","));
+      // Untick it in the table → chip goes.
+      await ev(`document.querySelector('#ranksBody tr[data-q="' + CSS.escape(${JSON.stringify(q2)}) + '"] input[type="checkbox"]').click(), 1`);
+      await settle();
       s = await state();
-      assert.deepEqual(s.chips, [q1, q2]);
-      assert.deepEqual(s.checked.sort(), [q1, q2].sort());
-      assert.equal(s.pick, [q1, q2].join(","));
-      // Backspace in the empty filter → last chip goes.
-      await ev(`document.getElementById("ranksSearch").focus(), 1`);
-      await send("Input.dispatchKeyEvent", { type: "rawKeyDown", key: "Backspace", code: "Backspace", windowsVirtualKeyCode: 8 }, sessionId);
-      await send("Input.dispatchKeyEvent", { type: "keyUp", key: "Backspace", code: "Backspace", windowsVirtualKeyCode: 8 }, sessionId);
+      assert.deepEqual(s.chips, lc([q0, q1]));
+      assert.equal(s.legend, 2);
+      // Remove the first chip in the names box → unticked in the table.
+      await ev(`[...document.querySelectorAll("#nameTokens .name-token")][0].click(), 1`);
+      await settle();
       s = await state();
-      assert.deepEqual(s.chips, [q1]);
-      assert.equal(s.pick, q1);
+      assert.deepEqual(s.chips, lc([q1]));
+      assert.deepEqual(s.checked, [q1]);
+      assert.equal(s.names, lc([q1]).join(","));
     } finally {
       proc.kill("SIGKILL");
       server.close();

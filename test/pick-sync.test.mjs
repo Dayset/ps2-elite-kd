@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { namesToCarry, ranksHref, picksFromSearch, matchPicks, analyzeHref, MAIN_PENDING_KEY } from "../pick-sync.mjs";
+import { rankingsSource } from "./rankings-src.mjs";
 
 const rows = [
   { name: "[00] danisantini", query: "danisantini", slug: "danisantini" },
@@ -46,9 +47,13 @@ describe("pick-sync", () => {
   it("pending key matches app.js LS_PENDING; pages wire the helpers", () => {
     const app = fs.readFileSync(new URL("../app.js", import.meta.url), "utf8");
     assert.ok(app.includes(`LS_PENDING = "${MAIN_PENDING_KEY}"`));
-    assert.match(app, /ranksHref\(currentNamesInField\(\)/);
-    const ranks = fs.readFileSync(new URL("../ranks.html", import.meta.url), "utf8");
-    assert.match(ranks, /picksFromSearch\(location\.search\)/);
-    assert.match(ranks, /handOffPicks\(\);\s*location\.href = analyzeHref/);
+    // t356u: one page — the names box is the selection; Rankings match it with matchPicks.
+    assert.match(app, /getNames: \(\) => nameTokens\.slice\(\)/);
+    const ranks = rankingsSource();
+    assert.match(ranks, /matchPicks\(host\.getNames\(\), data\.rows, MAX_NAMES\)/);
+    // Old links: ranks.html → index.html keeping ?names= / ?pick=.
+    const redirect = fs.readFileSync(new URL("../ranks.html", import.meta.url), "utf8");
+    assert.match(redirect, /p\.get\("names"\) \|\| p\.get\("pick"\)/);
+    assert.match(redirect, /location\.replace\("index\.html" \+ q \+ "#rankings"\)/);
   });
 });

@@ -3,7 +3,7 @@
  * Mirrors absolute_target_split / kpm_curve / rf_if / adjusted_ivi from ps2_elite_kd.py
  * Pure math lives in math.mjs (shared with Node tests).
  */
-import { chartFontScale } from "./desk-scale.mjs?v=20261010-sync1";
+import { chartFontScale } from "./desk-scale.mjs?v=20261010-one1";
 import {
   X_MAX,
   EASY_MAX,
@@ -33,12 +33,11 @@ import {
   windowYValues,
   kpmBandCurve,
   bandReliability,
-} from "./math.mjs?v=20261010-sync1";
-import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261010-sync1";
-import GHOST_MODEL from "./data/ghost-model.mjs?v=20261010-sync1";
-import { ranksHref } from "./pick-sync.mjs?v=20261010-sync1";
-import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-sync1";
-import { entryFetchedAt, pickNewest, writeWithEviction } from "./cache-pick.mjs?v=20261010-sync1";
+} from "./math.mjs?v=20261010-one1";
+import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261010-one1";
+import GHOST_MODEL from "./data/ghost-model.mjs?v=20261010-one1";
+import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-one1";
+import { entryFetchedAt, pickNewest, writeWithEviction } from "./cache-pick.mjs?v=20261010-one1";
 import {
   NameLoadError,
   classifyLoadError,
@@ -65,7 +64,7 @@ import {
   etaLearnLiveMs,
   freshEtaText,
   expectedNameMs,
-} from "./analyze-run.mjs?v=20261010-sync1";
+} from "./analyze-run.mjs?v=20261010-one1";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
@@ -79,7 +78,7 @@ import {
   THIN_MARK,
   THIN_NOTE_HEAD,
   thinPlayerLine,
-} from "./player-metrics.mjs?v=20261010-sync1";
+} from "./player-metrics.mjs?v=20261010-one1";
 /** "22 kills / 60 deaths" in the opponent sample (MIN_FIGHTS counts). */
 function fightsText(r) {
   const k = r.sampleKills || 0;
@@ -91,16 +90,16 @@ function fightsText(r) {
 function thinCellTip(r) {
   return `${MIN_FIGHTS_TIP}. This sample: ${fightsText(r).replace(/[()]/g, "")}`;
 }
-import { markNote, statMark, confirmedPadderSlugs } from "./padding.mjs?v=20261010-sync1";
+import { markNote, statMark, confirmedPadderSlugs } from "./padding.mjs?v=20261010-one1";
 // Account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times: chart name list only.
-import { accountTimes, flairsHtml } from "./flairs.mjs?v=20261010-sync1";
+import { accountTimes, flairsHtml } from "./flairs.mjs?v=20261010-one1";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261010-sync1";
-import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261010-sync1";
+import "./name-peek.mjs?v=20261010-one1";
+import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261010-one1";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
-import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-sync1";
+import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-one1";
 // Live data: Daybreak Census only (batched, paced); Honu just for a rare history fallback.
-import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sync1";
+import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-one1";
 import {
   censusBase,
   censusRequest,
@@ -109,7 +108,7 @@ import {
   limitConcurrency,
   tokenBucket,
   OPPONENT_TOP_N,
-} from "./census-fetch.mjs?v=20261010-sync1";
+} from "./census-fetch.mjs?v=20261010-one1";
 
   // Player palettes (dark + light theme) live in palette.mjs (shared with ranks.html).
   const COLORS = PALETTE_DARK;
@@ -1241,32 +1240,73 @@ import {
       els.nameTokensEl.appendChild(btn);
     });
     syncNamesPlaceholder();
-    syncRanksLink();
+    rankingsSync();
   }
 
-  /**
-   * 🏆 link carries the comparison to Rankings as ?pick=a,b (t289u) so they
-   * show up ✅ picked there. The lone default ShloDog starter carries nothing.
-   * Kept current on every chip change (long-press / middle-click work too)
-   * and refreshed on click to include text still being typed.
+  /*
+   * t356u: Rankings live on this page (rankings.mjs, loaded lazily after the
+   * graph so phones stay fast). The names box is the ONE selection: ✅ in the
+   * table adds / removes chips here, and every chip change ticks the table,
+   * marks the 📊 chart and refreshes the 🏅 positions.
    */
-  function syncRanksLink() {
-    const href = ranksHref(currentNamesInField(), { starter: DEFAULT_PLACEHOLDER_NAME, max: MAX_NAMES });
-    // 🏆 Rankings and its › button (t342u) both open Rankings with the picks.
-    for (const id of ["ranksLink", "ranksGoBtn"]) {
-      const a = document.getElementById(id);
-      if (a) a.setAttribute("href", href);
+  let rankingsApi = null;
+  let userMovedPage = false;
+  if (typeof window !== "undefined") {
+    for (const t of ["wheel", "touchmove", "keydown", "pointerdown"]) {
+      window.addEventListener(t, () => { userMovedPage = true; }, { once: true, passive: true });
     }
   }
-  for (const id of ["ranksLink", "ranksGoBtn"]) {
-    const a = document.getElementById(id);
-    if (a) {
-      const refresh = () => syncRanksLink();
-      a.addEventListener("pointerdown", refresh);
-      a.addEventListener("focus", refresh);
-      a.addEventListener("click", refresh);
-    }
+  let rankingsLoading = null;
+  const rankingsHost = {
+    getNames: () => nameTokens.slice(),
+    toggleName(name, anchor, add) {
+      const has = nameTokens.some((n) => namesMatch(n, name));
+      if (add === has) return;
+      toggleNameInField(name, anchor);
+      scheduleGraphSync({ start: true }); // a pick from the table graphs right away (saved data)
+    },
+  };
+  function rankingsSync() {
+    if (rankingsApi) rankingsApi.syncPicks();
   }
+  function loadRankings() {
+    if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
+    rankingsLoading = import("./rankings.mjs?v=20261010-one1")
+      .then((m) => {
+        rankingsApi = m.initRankings(rankingsHost);
+        return rankingsApi.ready;
+      })
+      .then(() => {
+        // Old ranks.html links land on #rankings: keep them there once the
+        // content above (graph, tables) has settled, unless the user scrolled.
+        if (location.hash === "#rankings" && !userMovedPage) {
+          requestAnimationFrame(() => document.getElementById("rankings").scrollIntoView({ block: "start" }));
+        }
+      })
+      .catch((e) => {
+        console.warn("[ps2-elite-kd] rankings failed to load", e);
+        const st = document.getElementById("ranksStatus");
+        if (st) st.innerHTML = '<span class="err">Could not load the Rankings.</span>';
+      });
+    return rankingsLoading;
+  }
+  /** Start loading once the graph is up, the user scrolls near, or after a short idle. */
+  function scheduleRankingsLoad() {
+    if (typeof window === "undefined" || typeof document === "undefined") return;
+    const sec = document.getElementById("rankings");
+    if (!sec) return;
+    if (location.hash === "#rankings") { loadRankings(); return; }
+    if (typeof IntersectionObserver !== "undefined") {
+      const io = new IntersectionObserver((ents) => {
+        if (ents.some((e) => e.isIntersecting)) { io.disconnect(); loadRankings(); }
+      }, { rootMargin: "900px 0px" });
+      io.observe(sec);
+    }
+    const idle = () => setTimeout(loadRankings, 3500);
+    if (document.readyState === "complete") idle();
+    else window.addEventListener("load", idle, { once: true });
+  }
+  if (typeof window !== "undefined") window.__loadRankings = loadRankings;
 
   /**
    * Failed chip: struck name is a retry button (clears failed state → pending,
@@ -1509,7 +1549,6 @@ import {
   /** In-place selection refresh (no rebuild): chip classes, letter counts, ETA, 🏆 link. */
   function updateCacheSelection() {
     updateFreshEta();
-    syncRanksLink();
     if (!els.cacheChips) return;
     const sel = selectionKeys(currentNamesInField());
     for (const btn of els.cacheChips.querySelectorAll("button.chip")) {
@@ -3329,6 +3368,7 @@ import {
     lastLoadedNames = successNames.slice();
     lastPlayerByKey = new Map(result.loaded.map((x) => [slugKey(x.name), x.player]));
     drawChart(players);
+    setTimeout(loadRankings, 300); // t356u: Rankings after the graph
     // Recent / share link only ever carry names that actually loaded.
     saveLastComparison(successNames);
     syncUrlNames(successNames); // refresh re-opens exactly this comparison
@@ -3345,7 +3385,10 @@ import {
       setStatus(notes, notes ? "warn census-note" : "");
     }
     // Results are in: glide the input/header up out of view.
-    if (!quiet) scrollToResults();
+    if (!quiet && location.hash === "#rankings" && !userMovedPage) {
+      const sec = document.getElementById("rankings");
+      if (sec) requestAnimationFrame(() => sec.scrollIntoView({ block: "start" }));
+    } else if (!quiet) scrollToResults();
     // Chips added while loading: bring them in too (cached → no button press).
     scheduleGraphSync();
   }
@@ -3357,10 +3400,16 @@ import {
     return (key && lastPlayerByKey.get(key)) || findLoadedPlayer(name) || null;
   }
 
-  /** Chip change → keep graph / tables / URL / 🏆 link in step (t351u). */
-  function scheduleGraphSync() {
+  /** Chip change → keep graph / tables / URL / Rankings in step (t351u). */
+  let graphSyncStart = false;
+  function scheduleGraphSync({ start = false } = {}) {
     clearTimeout(graphSyncTimer);
-    graphSyncTimer = setTimeout(syncGraphToInput, 0);
+    graphSyncStart = graphSyncStart || start;
+    graphSyncTimer = setTimeout(() => {
+      const st = graphSyncStart;
+      graphSyncStart = false;
+      syncGraphToInput({ start: st });
+    }, 0);
   }
 
   /**
@@ -3370,8 +3419,9 @@ import {
    * would need a live Census fetch waits for 🔍 Analyze. Only acts once a graph
    * exists; never while a run is loading (that run re-checks the chips at the end).
    */
-  function syncGraphToInput() {
-    if (fetching || activeRun || !players.length) return;
+  function syncGraphToInput({ start = false } = {}) {
+    // start: a ✅ pick in the Rankings table may draw the first graph too.
+    if (fetching || activeRun || (!players.length && !start)) return;
     const names = nameTokens.slice();
     if (!names.length) {
       clearChartUi();
@@ -4005,6 +4055,7 @@ import {
     setNameTokens(startup.names); // >10 from ?names= → first 10 + limit hint
     renderCacheChips();
     showIdleChart("▶️ Press Analyze");
+    scheduleRankingsLoad(); // t356u: Rankings below load lazily
     // No idle "Ready — press Analyze" line; the status area only shows progress / errors
     // (and the limit hint if ?names= had more than 10).
     // Opened from a shared 🔗 link → draw the graph without a click.

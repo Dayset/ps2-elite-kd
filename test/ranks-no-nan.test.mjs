@@ -12,6 +12,7 @@ import http from "node:http";
 import path from "node:path";
 import { spawn, execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { rankingsSource } from "./rankings-src.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -80,7 +81,7 @@ describe("no NaN in the Rankings", () => {
         return { rows: body.querySelectorAll("tr[data-q]").length, bad: bad.slice(0, 10), nBad: bad.length, headNaN: /NaN/.test(head), pageNaN: /NaN/.test(document.body.innerText) };
       })()`;
       await send("Page.enable", {}, sessionId);
-      await send("Page.navigate", { url: `http://127.0.0.1:${port}/ranks.html` }, sessionId);
+      await send("Page.navigate", { url: `http://127.0.0.1:${port}/index.html#rankings` }, sessionId);
       for (const debugOn of [false, true]) {
         await ev(`new Promise(async (res) => { for (let t = 0; t < 400 && !(window.document.getElementById("ranksHead")?.querySelector("th.sortable")); t++) await new Promise((r) => setTimeout(r, 50)); res(1); })`);
         if (debugOn) await ev(`(() => { const d = document.getElementById("debugColsToggle"); d.checked = true; d.dispatchEvent(new Event("change")); return 1; })()`);

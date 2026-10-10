@@ -3,8 +3,9 @@
 import { it } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import { rankingsSource } from "./rankings-src.mjs";
 
-const ranks = fs.readFileSync(new URL("../ranks.html", import.meta.url), "utf8");
+const ranks = rankingsSource();
 it("ranks.html: no mark legend, marks keep tooltips", () => {
   assert.ok(!/marks-note/.test(ranks), "marks-note legend removed");
   assert.ok(!/♿ What \$\{/.test(ranks), "no '♿ What … mean' summary");

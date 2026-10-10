@@ -1,4 +1,4 @@
-// t324u: typing into the Rankings filter (the field that also holds ✅ pick chips)
+// t324u: typing into the Rankings filter (t356u: a table-only filter; picks live in the names box)
 // must be smooth: debounced filtering, the input is never re-created/refocused,
 // the table isn't touched between fast keystrokes, no per-key chart redraw,
 // no mobile autocapitalize/autocorrect, held Backspace doesn't eat chips.
@@ -9,20 +9,20 @@ import http from "node:http";
 import path from "node:path";
 import { spawn, execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { rankingsSource } from "./rankings-src.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (f) => fs.readFileSync(path.join(root, f), "utf8");
 
 describe("Rankings filter typing (t324u)", () => {
   it("static wiring", () => {
-    const s = read("ranks.html");
+    const s = rankingsSource();
     const inp = s.match(/<input id="ranksSearch"[^>]*>/)[0];
     for (const a of ['autocapitalize="off"', 'autocorrect="off"', 'spellcheck="false"', 'autocomplete="off"']) assert.ok(inp.includes(a), a);
     assert.match(s, /searchTimer = setTimeout\(applyFilter, 150\)/);
     assert.match(s, /if \(bare\(next\) === bare\(filter\)\) \{ filter = next; return; \}/);
     assert.match(s, /if \(sig !== hlSig\)/);
     assert.match(s, /TYPING_QUIET_MS - \(performance\.now\(\) - lastTypeAt\)/);
-    assert.match(s, /!e\.repeat && !e\.isComposing/);
     // The filter handler never rebuilds the field or its box.
     assert.doesNotMatch(s, /ranksPickBox"\)\.innerHTML|ranksSearch"\)\.outerHTML/);
   });
@@ -80,7 +80,7 @@ describe("Rankings filter typing (t324u)", () => {
         // A lowercase-only name of 6+ letters, like "manimami" (fallback: the first row).
         const word = (rows.map((r) => String(r[qi])).find((q) => /^[a-z]{6,}$/.test(q)) || String(rows[0][qi])).toLowerCase();
         const q0 = rows[0][qi], q1 = rows[1][qi];
-        await send("Page.navigate", { url: `http://127.0.0.1:${port}/ranks.html?pick=${encodeURIComponent(q0)},${encodeURIComponent(q1)}` }, sessionId);
+        await send("Page.navigate", { url: `http://127.0.0.1:${port}/index.html?names=${encodeURIComponent(q0)},${encodeURIComponent(q1)}#rankings` }, sessionId);
         await ev(`new Promise(async (r) => { for (let t = 0; t < 400 && !document.querySelector("#ranksBody tr[data-q]"); t++) await new Promise((q) => setTimeout(q, 50)); r(1); })`);
         // Let the initial progressive render finish (row count stable).
         await ev(`new Promise(async (r) => { let n = -1; for (let t = 0; t < 100; t++) { await new Promise((q) => setTimeout(q, 150)); const m = document.querySelectorAll("#ranksBody tr").length; if (m === n) break; n = m; } r(1); })`);
@@ -95,19 +95,19 @@ describe("Rankings filter typing (t324u)", () => {
         assert.equal(mid.v, word, "every keystroke landed");
         assert.equal(mid.mut, 0, "table untouched while typing fast (debounced)");
         await new Promise((r) => setTimeout(r, 700));
-        const s = await ev(`({ v: __el.value, same: document.getElementById("ranksSearch") === __el, focused: document.activeElement === __el, caret: __el.selectionStart, rows: [...document.querySelectorAll("#ranksBody tr[data-q]")].map((t) => t.dataset.q.toLowerCase()), chips: document.querySelectorAll("#ranksChips .name-token").length })`);
+        const s = await ev(`({ v: __el.value, same: document.getElementById("ranksSearch") === __el, focused: document.activeElement === __el, caret: __el.selectionStart, rows: [...document.querySelectorAll("#ranksBody tr[data-q]")].map((t) => t.dataset.q.toLowerCase()), chips: document.querySelectorAll("#nameTokens .name-token").length })`);
         assert.equal(s.v, word);
         assert.ok(s.same, "input element never re-created");
         assert.ok(s.focused, "focus stays in the field");
         assert.equal(s.caret, word.length, "caret at the end");
         assert.ok(s.rows.length >= 1 && s.rows.every((q) => q.includes(word)), "filtered to the typed name");
-        assert.equal(s.chips, 2, "chips untouched by typing");
+        assert.equal(s.chips, 2, "names-box chips untouched by filter typing (t356u: separate table filter)");
         // Clear the field with a held Backspace (auto-repeat): chips must survive.
         for (let i = 0; i < word.length + 3; i++) {
           await send("Input.dispatchKeyEvent", { type: "rawKeyDown", key: "Backspace", code: "Backspace", windowsVirtualKeyCode: 8, autoRepeat: i > 0 }, sessionId);
         }
         await send("Input.dispatchKeyEvent", { type: "keyUp", key: "Backspace", code: "Backspace", windowsVirtualKeyCode: 8 }, sessionId);
-        const after = await ev(`({ v: __el.value, chips: document.querySelectorAll("#ranksChips .name-token").length })`);
+        const after = await ev(`({ v: __el.value, chips: document.querySelectorAll("#nameTokens .name-token").length })`);
         assert.equal(after.v, "");
         assert.equal(after.chips, 2, "held Backspace stops at the empty field");
       } finally {
