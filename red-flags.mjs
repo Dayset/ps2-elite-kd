@@ -13,9 +13,9 @@
  *   🦁 LionHeart median ≈ 3.1; elite players usually 4–18 → low ≤ 2.0 (≈ bottom 40%)
  *   🎈 Inflation median ≈ 2.03 → low ≤ 1.5 (≈ bottom 10%)
  */
-import { PADDING_RULE, statMark, PADDING_MARK, PADDING_MARK_TIP } from "./padding.mjs?v=20261009-pad";
-import { classifyBins, RED_PATTERNS, CHART_PATTERNS } from "./bins.mjs?v=20261009-pad";
-import { sessionRuleText } from "./session-stats.mjs?v=20261009-pad";
+import { PADDING_RULE, statMark, PADDING_MARK, PADDING_MARK_TIP } from "./padding.mjs?v=20261009-notfarm";
+import { classifyBins, RED_PATTERNS, CHART_PATTERNS } from "./bins.mjs?v=20261009-notfarm";
+import { sessionRuleText } from "./session-stats.mjs?v=20261009-notfarm";
 
 export { PADDING_MARK, PADDING_MARK_TIP, RED_PATTERNS, CHART_PATTERNS, classifyBins };
 

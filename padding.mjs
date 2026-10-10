@@ -23,8 +23,57 @@ export const PADDING_RULE = Object.freeze({
   FLAG_SHARE: 0.2,
 });
 
-/** True when one opponent row is a farm victim. */
+/* ---------- not-farm allowlist (user t297u, 2026-10-09) ----------
+ * data/not-farm.json: accounts a human confirmed are real players ("Dziey looks
+ * like a real player, with an attempt to be alive and at least shoot someone").
+ * isFarmVictim() never matches them, so every caller of this shared helper
+ * (graph, metrics, marks, ranks.json, build-log, misc.html) counts kills on
+ * them again. Loaded once at import (browser: fetch next to this module; Node:
+ * fs), or set explicitly with setNotFarm() (tests). Missing file = empty list.
+ */
+const notFarm = { names: new Set(), cids: new Set() };
+
+/** Bare lowercase name: outfit tag "[TAG] " stripped. */
+export function bareFarmKey(name) {
+  return String(name || "").replace(/^\s*\[[^\]]*\]\s*/, "").trim().toLowerCase();
+}
+
+/** Replace the allowlist from not-farm.json content ({ players: { name: { cid } } }); null clears it. */
+export function setNotFarm(json) {
+  notFarm.names = new Set();
+  notFarm.cids = new Set();
+  const players = (json && json.players) || {};
+  for (const [key, e] of Object.entries(players)) {
+    const k = bareFarmKey(key);
+    if (k) notFarm.names.add(k);
+    if (e && e.display) notFarm.names.add(bareFarmKey(e.display));
+    if (e && e.cid) notFarm.cids.add(String(e.cid));
+  }
+}
+
+/** True when a human confirmed this opponent row is a real player (data/not-farm.json). */
+export function isNotFarm(r) {
+  if (!r) return false;
+  if (r.cid && notFarm.cids.has(String(r.cid))) return true;
+  const k = bareFarmKey(r.name);
+  return !!k && notFarm.names.has(k);
+}
+
+try {
+  if (typeof window !== "undefined" && typeof fetch === "function") {
+    const res = await fetch(new URL("./data/not-farm.json", import.meta.url).href, { cache: "no-cache" });
+    if (res.ok) setNotFarm(await res.json());
+  } else {
+    const fs = await import("node:fs");
+    setNotFarm(JSON.parse(fs.readFileSync(new URL("./data/not-farm.json", import.meta.url), "utf8")));
+  }
+} catch {
+  /* no allowlist → nobody exempt */
+}
+
+/** True when one opponent row is a farm victim (never for allowlisted real players). */
 export function isFarmVictim(r, rule = PADDING_RULE) {
+  if (isNotFarm(r)) return false;
   const k = +r.kills || 0;
   const d = +r.deaths || 0;
   const kpm = +r.kpm || 0;
