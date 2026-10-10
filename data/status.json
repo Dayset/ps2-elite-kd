@@ -4,37 +4,50 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "38010865301",
-    "event": "schedule",
+    "runId": "38013150598",
+    "event": "workflow_dispatch",
     "kind": "discovery",
-    "startedAt": "2026-10-10T00:52:13.960Z",
-    "endedAt": "2026-10-10T00:54:02.423Z",
-    "seconds": 108,
-    "updated": [],
+    "startedAt": "2026-10-10T01:26:09.765Z",
+    "endedAt": "2026-10-10T01:28:37.612Z",
+    "seconds": 148,
+    "updated": [
+      "[1RPC] Nero",
+      "[1RPC] Nero"
+    ],
     "added": [],
     "failed": [
       {
-        "name": "[FEMx] ShrimpeHxxTR",
+        "name": "tupapacu",
+        "reason": "Census: 6/56 opponent stats missing; keeping old data",
+        "outage": true
+      },
+      {
+        "name": "aries666",
+        "reason": "Census: 3/22 opponent stats missing; keeping old data",
+        "outage": true
+      },
+      {
+        "name": "dizzyknight",
+        "reason": "Census: 23/200 opponent stats missing; keeping old data",
+        "outage": true
+      },
+      {
+        "name": "shrimpehxxtr",
         "reason": "Census: 36/200 opponent stats missing; keeping old data",
         "outage": true
       },
       {
-        "name": "[xxSx] ShrimpeHxxNC",
+        "name": "shrimpehxxnc",
         "reason": "Census: 20/199 opponent stats missing; keeping old data",
         "outage": true
       },
       {
-        "name": "[K4T5] ShrimpeHxxVS",
+        "name": "shrimpehxxvs",
         "reason": "Census: 26/200 opponent stats missing; keeping old data",
         "outage": true
       },
       {
-        "name": "Branbot420",
-        "reason": "Census: no character Branbot420",
-        "outage": false
-      },
-      {
-        "name": "Runnerdeconfianza",
+        "name": "runnerdeconfianza",
         "reason": "Census: 1/1 opponent stats missing; keeping old data",
         "outage": true
       }
@@ -49,39 +62,56 @@
     },
     "honu": {
       "day": "2026-10-10",
-      "calls": 232,
+      "calls": 268,
       "cap": 2500
     },
     "batch": [
       {
         "name": "tupapacu",
         "src": "retry",
-        "status": "pending"
-      },
-      {
-        "name": "shrimpehxxvs",
-        "src": "retry",
-        "status": "pending"
+        "status": "failed",
+        "reason": "Census: 6/56 opponent stats missing; keeping old data"
       },
       {
         "name": "aries666",
         "src": "retry",
-        "status": "pending"
+        "status": "failed",
+        "reason": "Census: 3/22 opponent stats missing; keeping old data"
       },
       {
         "name": "dizzyknight",
         "src": "retry",
-        "status": "pending"
+        "status": "failed",
+        "reason": "Census: 23/200 opponent stats missing; keeping old data"
+      },
+      {
+        "name": "[1RPC] Nero",
+        "src": "retry",
+        "status": "done"
+      },
+      {
+        "name": "shrimpehxxtr",
+        "src": "retry",
+        "status": "failed",
+        "reason": "Census: 36/200 opponent stats missing; keeping old data"
+      },
+      {
+        "name": "shrimpehxxnc",
+        "src": "retry",
+        "status": "failed",
+        "reason": "Census: 20/199 opponent stats missing; keeping old data"
+      },
+      {
+        "name": "shrimpehxxvs",
+        "src": "retry",
+        "status": "failed",
+        "reason": "Census: 26/200 opponent stats missing; keeping old data"
       },
       {
         "name": "runnerdeconfianza",
         "src": "retry",
-        "status": "pending"
-      },
-      {
-        "name": "nero",
-        "src": "retry",
-        "status": "pending"
+        "status": "failed",
+        "reason": "Census: 1/1 opponent stats missing; keeping old data"
       },
       {
         "name": "sAsPoLp",
@@ -144,49 +174,14 @@
         "status": "pending"
       },
       {
-        "name": "WhyUSoPr0",
-        "src": "discovery-new",
-        "status": "pending"
-      },
-      {
-        "name": "SmoKa43",
-        "src": "discovery-new",
-        "status": "pending"
-      },
-      {
-        "name": "[FEMx] ShrimpeHxxTR",
+        "name": "[1RPC] Nero",
         "src": "refresh",
-        "status": "failed",
-        "reason": "Census: 36/200 opponent stats missing; keeping old data"
-      },
-      {
-        "name": "[xxSx] ShrimpeHxxNC",
-        "src": "refresh",
-        "status": "failed",
-        "reason": "Census: 20/199 opponent stats missing; keeping old data"
-      },
-      {
-        "name": "[K4T5] ShrimpeHxxVS",
-        "src": "refresh",
-        "status": "failed",
-        "reason": "Census: 26/200 opponent stats missing; keeping old data"
-      },
-      {
-        "name": "Branbot420",
-        "src": "refresh",
-        "status": "not-found",
-        "reason": "Census: no character Branbot420"
-      },
-      {
-        "name": "Runnerdeconfianza",
-        "src": "refresh",
-        "status": "failed",
-        "reason": "Census: 1/1 opponent stats missing; keeping old data"
+        "status": "done"
       }
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-10T01:23:48.685Z",
+    "checkedAt": "2026-10-10T01:28:38.915Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 0,
     "explained": 14,
@@ -268,10 +263,10 @@
       {
         "slug": "cheetler",
         "name": "cheetler",
-        "id": "rf",
-        "value": 40.432,
-        "bound": 9.894,
-        "z": 68.658,
+        "id": "coi",
+        "value": 67.387,
+        "bound": 16.494,
+        "z": 68.746,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (aim, rampage, session), listed there",
@@ -284,10 +279,10 @@
       {
         "slug": "cheetler",
         "name": "cheetler",
-        "id": "coi",
-        "value": 67.387,
-        "bound": 16.49,
-        "z": 68.657,
+        "id": "rf",
+        "value": 40.432,
+        "bound": 9.896,
+        "z": 68.746,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (aim, rampage, session), listed there",
@@ -390,8 +385,8 @@
         "name": "cheetler",
         "id": "mech",
         "value": 141.722,
-        "bound": 141.157,
-        "z": 10.271,
+        "bound": 141.189,
+        "z": 10.278,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (aim, rampage, session), listed there",
@@ -432,19 +427,19 @@
             "side": "high"
           },
           {
-            "id": "rf",
-            "label": "🛡️ Resist",
-            "value": 40.432,
-            "bound": 9.894,
-            "z": 68.658,
-            "side": "high"
-          },
-          {
             "id": "coi",
             "label": "📊 COI",
             "value": 67.387,
-            "bound": 16.49,
-            "z": 68.657,
+            "bound": 16.494,
+            "z": 68.746,
+            "side": "high"
+          },
+          {
+            "id": "rf",
+            "label": "🛡️ Resist",
+            "value": 40.432,
+            "bound": 9.896,
+            "z": 68.746,
             "side": "high"
           },
           {
@@ -467,8 +462,8 @@
             "id": "mech",
             "label": "⚙️ Mech%",
             "value": 141.722,
-            "bound": 141.157,
-            "z": 10.271,
+            "bound": 141.189,
+            "z": 10.278,
             "side": "high"
           }
         ]
@@ -621,7 +616,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-10T01:23:48.702Z",
+    "checkedAt": "2026-10-10T01:28:38.929Z",
     "red": 13,
     "padding": 7,
     "adjusted": 13,
@@ -631,7 +626,7 @@
     "session": 3
   },
   "sessionStats": {
-    "checkedAt": "2026-10-10T01:23:48.690Z",
+    "checkedAt": "2026-10-10T01:28:38.920Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -645,13 +640,13 @@
     "ruleText": "[session pattern] in recent Honu sessions (≥ 100 kills counted): assists per kill ≤ 0.1, headshot share ≥ 50% (headshot XP per kill; Census lifetime HSR when no XP detail) and K/D ≥ 7 (session deaths; Census lifetime KD when none). A very one-sided record; a lead for manual review, not proof.",
     "coverage": {
       "players": 1503,
-      "withSessions": 836,
-      "measured": 554,
-      "sessions": 2627,
-      "kills": 205348,
-      "xpPlayers": 41,
-      "xpMeasured": 31,
-      "xpSessions": 259
+      "withSessions": 837,
+      "measured": 555,
+      "sessions": 2633,
+      "kills": 205892,
+      "xpPlayers": 45,
+      "xpMeasured": 34,
+      "xpSessions": 271
     },
     "metrics": [
       {
@@ -753,7 +748,7 @@
     ],
     "distributions": {
       "s_apk": {
-        "n": 554,
+        "n": 555,
         "min": 0,
         "p01": 0.039,
         "p05": 0.142,
@@ -763,7 +758,7 @@
         "max": 1.074
       },
       "s_share": {
-        "n": 527,
+        "n": 528,
         "min": 0.467,
         "p01": 0.489,
         "p05": 0.517,
@@ -773,7 +768,7 @@
         "max": 0.718
       },
       "s_kpm": {
-        "n": 554,
+        "n": 555,
         "min": 0.133,
         "p01": 0.216,
         "p05": 0.308,
@@ -783,17 +778,17 @@
         "max": 6.683
       },
       "s_maxKpm": {
-        "n": 554,
+        "n": 555,
         "min": 0.18,
         "p01": 0.3,
         "p05": 0.391,
-        "median": 1.119,
+        "median": 1.122,
         "p95": 2.986,
         "p99": 3.656,
         "max": 7.187
       },
       "s_kpmCv": {
-        "n": 528,
+        "n": 529,
         "min": 0.001,
         "p01": 0.01,
         "p05": 0.041,
@@ -803,7 +798,7 @@
         "max": 0.985
       },
       "s_kd": {
-        "n": 397,
+        "n": 398,
         "min": 0.425,
         "p01": 0.507,
         "p05": 0.885,
@@ -813,7 +808,7 @@
         "max": 67.188
       },
       "s_maxKd": {
-        "n": 397,
+        "n": 398,
         "min": 0.466,
         "p01": 0.569,
         "p05": 1.104,
@@ -823,27 +818,27 @@
         "max": 169.625
       },
       "s_hsk": {
-        "n": 31,
+        "n": 35,
         "min": 0.074,
         "p01": 0.074,
         "p05": 0.086,
-        "median": 0.36,
+        "median": 0.311,
         "p95": 0.65,
         "p99": 0.696,
         "max": 0.709
       },
       "s_ksk": {
-        "n": 31,
+        "n": 35,
         "min": 0.052,
         "p01": 0.052,
         "p05": 0.075,
-        "median": 0.466,
+        "median": 0.443,
         "p95": 0.84,
         "p99": 0.922,
         "max": 0.953
       },
       "s_domk": {
-        "n": 31,
+        "n": 35,
         "min": 0.021,
         "p01": 0.021,
         "p05": 0.032,
@@ -853,27 +848,27 @@
         "max": 0.233
       },
       "s_revk": {
-        "n": 31,
+        "n": 35,
         "min": 0.002,
         "p01": 0.002,
         "p05": 0.004,
-        "median": 0.051,
-        "p95": 0.084,
+        "median": 0.052,
+        "p95": 0.097,
         "p99": 0.097,
-        "max": 0.097
+        "max": 0.151
       },
       "s_revDom": {
-        "n": 31,
+        "n": 35,
         "min": 0.008,
         "p01": 0.008,
         "p05": 0.023,
-        "median": 0.507,
+        "median": 0.514,
         "p95": 2.167,
         "p99": 3,
         "max": 3
       },
       "s_savk": {
-        "n": 31,
+        "n": 35,
         "min": 0.012,
         "p01": 0.012,
         "p05": 0.013,
@@ -883,7 +878,7 @@
         "max": 0.118
       },
       "s_spotk": {
-        "n": 31,
+        "n": 35,
         "min": 0,
         "p01": 0,
         "p05": 0,
@@ -893,24 +888,24 @@
         "max": 0.145
       },
       "s_prik": {
-        "n": 31,
+        "n": 35,
         "min": 0.082,
         "p01": 0.082,
         "p05": 0.111,
-        "median": 0.15,
+        "median": 0.151,
         "p95": 0.243,
-        "p99": 0.243,
+        "p99": 0.247,
         "max": 0.252
       },
       "s_stopk": {
-        "n": 31,
+        "n": 35,
         "min": 0.027,
         "p01": 0.027,
         "p05": 0.036,
         "median": 0.07,
-        "p95": 0.098,
-        "p99": 0.135,
-        "max": 0.145
+        "p95": 0.135,
+        "p99": 0.145,
+        "max": 0.174
       }
     },
     "flagged": [
@@ -1345,10 +1340,10 @@
     "outliersUnexplained": 0
   },
   "size": {
-    "at": "2026-10-10T00:54:02.726Z",
-    "repoBytes": 19268608,
-    "dataBytes": 27983697,
-    "playersBytes": 25846440,
+    "at": "2026-10-10T01:28:37.934Z",
+    "repoBytes": 16593920,
+    "dataBytes": 28012812,
+    "playersBytes": 25858439,
     "playerFiles": 1503,
     "warnAtBytes": 734003200,
     "warning": false
