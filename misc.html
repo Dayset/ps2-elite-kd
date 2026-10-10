@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" href="data:," />
+  <title>PS2 Elite K/D: list</title>
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="styles.css?v=20261009-shame" />
+  <style>
+    body { overflow: auto; }
+    .st-wrap { max-width: 960px; margin: 0 auto; padding: 18px 16px 40px; }
+    .st-wrap h1 { font-size: 1.25rem; margin: 0 0 4px; }
+    .st-sub { color: var(--dim); font-size: 0.85rem; margin-bottom: 16px; }
+    .st-card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
+    .st-dim { color: var(--dim); }
+    .st-err { color: #ff8a8a; }
+    .st-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .st-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    .st-table td, .st-table th { padding: 4px 6px; border-bottom: 1px solid var(--row-border); text-align: left; vertical-align: top; }
+    .st-table th { color: var(--dim); font-weight: 500; }
+    .st-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .st-wrap a { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <!-- Hidden page (user t295u): confirmed stat padders. Not linked from public pages, not in sitemap/README.
+       Data-driven: data/reviewed.json decision "padding" (padding.mjs confirmedPadders) + the farm split
+       from player-metrics.mjs (same numbers as build-log.html 🌾). -->
+  <main class="st-wrap">
+    <h1>🌾 Wall of shame: stat padders</h1>
+    <div class="st-sub">Confirmed by hand. Share = the player's sample kills that were on farm accounts (accounts that never fight back); those kills are excluded from their stats. <a href="build-log.html">build-log</a></div>
+    <div class="st-card"><div id="list" class="st-dim">Loading…</div></div>
+  </main>
+  <script type="module">
+    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261009-shame";
+    import { confirmedPadders, farmAccountLabels } from "./padding.mjs?v=20261009-shame";
+
+    const $ = (id) => document.getElementById(id);
+    const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+    const getJson = async (u) => { const r = await fetch(u, { cache: "no-store" }); if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); };
+
+    async function load() {
+      const [reviewed, index] = await Promise.all([
+        getJson("data/reviewed.json?t=" + Date.now()),
+        getJson("data/index.json?t=" + Date.now()),
+      ]);
+      const bySlug = new Map((index.players || []).filter((e) => e && e.slug).map((e) => [e.slug, e]));
+      const rows = await Promise.all(confirmedPadders(reviewed).map(async (c) => {
+        const e = bySlug.get(c.slug);
+        if (!e || !e.file) return { name: c.slug, share: null, farms: [], note: "not cached" };
+        try {
+          const m = playerMetrics(normalizePlayer(await getJson("data/" + e.file + "?v=" + (e.savedAt || 0))));
+          const f = m.farm || {};
+          return { name: e.name, cid: String((m.p && m.p.cid) || ""), share: f.victims && f.victims.length ? f.share : 0, farms: farmAccountLabels(f) };
+        } catch (err) {
+          return { name: e.name, share: null, farms: [], note: "couldn’t load" };
+        }
+      }));
+      rows.sort((a, b) => (b.share ?? -1) - (a.share ?? -1));
+      if (!rows.length) { $("list").innerHTML = "Nobody yet."; return; }
+      $("list").className = "";
+      $("list").innerHTML = '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th class="st-num">Kills on farm accounts</th><th>Farm accounts</th></tr>' +
+        rows.map((r) => {
+          const name = r.cid
+            ? '<a href="https://wt.honu.pw/c/' + esc(r.cid) + '/killboard" target="_blank" rel="noopener noreferrer">' + esc(r.name) + "</a>"
+            : esc(r.name);
+          const share = r.share == null ? '<span class="st-dim">' + esc(r.note || "—") + "</span>" : Math.round(r.share * 100) + "%";
+          const farms = r.farms.length ? r.farms.map(esc).join(", ") : '<span class="st-dim">none in the current sample</span>';
+          return "<tr><td>" + name + '</td><td class="st-num">' + share + "</td><td>" + farms + "</td></tr>";
+        }).join("") + "</table></div>";
+    }
+    load().catch((e) => { $("list").innerHTML = '<span class="st-err">Couldn’t load the list (' + esc(e && e.message) + ").</span>"; });
+  </script>
+</body>
+</html>

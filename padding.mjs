@@ -109,3 +109,24 @@ export function reviewDecision(reviewed, slug) {
   if (!e || !REVIEW_DECISIONS.includes(e.decision)) return null;
   return { decision: e.decision, note: String(e.note || ""), at: e.at || null };
 }
+
+/**
+ * Confirmed stat padders (user t295u, 2026-10-09: "all the statpadders are
+ * confirmed, make a separate wall of shame"): slugs whose human review
+ * decision in data/reviewed.json is "padding". Drives the hidden list page
+ * (misc.html), so any future "padding" decision shows up there automatically.
+ * → [{ slug, note, at }] sorted by slug.
+ */
+export function confirmedPadders(reviewed) {
+  const players = (reviewed && reviewed.players) || {};
+  return Object.keys(players)
+    .map((slug) => ({ slug, r: reviewDecision(reviewed, slug) }))
+    .filter((x) => x.r && x.r.decision === "padding")
+    .map((x) => ({ slug: x.slug, note: x.r.note, at: x.r.at }))
+    .sort((a, b) => a.slug.localeCompare(b.slug));
+}
+
+/** Farm accounts for display: name, or the character ID when it has no name (no kill/death counts). */
+export function farmAccountLabels(farm) {
+  return ((farm && farm.victims) || []).map((v) => String(v.name || v.cid || "").trim()).filter(Boolean);
+}
