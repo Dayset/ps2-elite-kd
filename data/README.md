@@ -33,3 +33,13 @@ Analyze it on the site (the Worker queues it), or run the workflow with `names`.
 Background runs don't raise the banner; `load-flag.json` stays `fetching: false` (each run's commit makes sure of it).
 
 Browser **Analyze** / live fetch cannot write this file (GitHub Pages is static). Cross-tab browser load still uses `localStorage`.
+
+## radar.json (optional PS2 Radar second opinion)
+
+Written by `scripts/radar-lookup.mjs` (rules in `radar.mjs`): once per UTC day the
+refresh workflow looks up only the players on build-log's review lists
+(🚩, 📉 🌾/†/🧪, 🔎, 🤖, 🙈) on https://ps2radar.com (public API v1), at most 50 a
+day, one request every 2–3 s, each player at most every 3 days. Strictly
+optional: only build-log.html reads it (PS2 Radar link, badge, sort hint). A
+Radar mark never hides or flags anyone. If the API fails or disappears the step
+is skipped for the day, `unavailableSince` is set, and the cached answers stay.

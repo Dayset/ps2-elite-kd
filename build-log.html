@@ -14,7 +14,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261010-honu1000" />
+  <link rel="stylesheet" href="styles.css?v=20261010-radar1" />
   <style>
     body { overflow: auto; }
     .st-wrap { max-width: 960px; margin: 0 auto; padding: 18px 16px 40px; }
@@ -96,12 +96,22 @@
     .st-sprouts th[data-sort] { cursor: pointer; user-select: none; }
     .st-sprouts th[data-sort]:hover { color: var(--text); }
     .st-sprouts th .st-arrow { color: var(--dim); font-size: 0.75em; }
+    /* 🛰️ PS2 Radar second opinion (radar.mjs, data/radar.json): small link + badge, never a verdict */
+    .st-radar { font-size: 0.74rem; white-space: nowrap; margin-left: 4px; }
+    .st-radar a { color: var(--dim); }
+    .st-radar a:hover { color: var(--text); }
+    .st-rb { display: inline-block; margin-left: 3px; padding: 0 5px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); }
+    .st-rb.hot { color: #ff8a8a; border-color: #c06060; font-weight: 600; }
+    .st-rb.warn { color: var(--warn); border-color: #b08840; }
+    .st-rb.ok { color: #8fd493; border-color: #6fbf73; }
+    html[data-theme="light"] .st-rb.hot { color: #b03030; }
+    html[data-theme="light"] .st-rb.ok { color: #2f7a35; }
   </style>
 </head>
 <body>
   <main class="st-wrap">
     <h1>📦 Shared cache status</h1>
-    <div class="st-sub">Updates every 30 s. <span id="stUpdated"></span> · <a href="./">Back to the chart</a> · <a href="misc.html" title="Confirmed stat padders (hidden page)">🌾 Wall of shame</a><span class="st-tools"><button type="button" id="openAll" title="Open every section">Open all</button><button type="button" id="closeAll" title="Collapse every section">Collapse all</button></span></div>
+    <div class="st-sub">Updates every 30 s. <span id="stUpdated"></span> · <a href="./">Back to the chart</a> · <a href="misc.html" title="Confirmed stat padders (hidden page)">🌾 Wall of shame</a> · <span id="radarLine" title="PS2 Radar (ps2radar.com, independent community cheat radar) is looked up once a day for players on the review lists below, at most 50 a day, each at most every 3 days. Its badge is a second opinion only: a Radar Confirmed / Banned mark moves a player up in review order but never hides or flags anyone here, and nothing else on the site reads it. If the radar goes away, the last cached answers stay.">🛰️ PS2 Radar</span><span class="st-tools"><button type="button" id="openAll" title="Open every section">Open all</button><button type="button" id="closeAll" title="Collapse every section">Collapse all</button></span></div>
 
     <details class="st-card st-sec" id="cardNow" data-default="open"><summary><h2>Refresh now</h2></summary><div id="nowRun"></div><div id="now" class="st-dim">Loading…</div><div id="backup" class="st-label"></div></details>
     <details class="st-card st-sec" id="cardRuns" data-default="open"><summary><h2>GitHub Actions queue <span id="runsCount" class="st-count"></span></h2></summary><div id="runs" class="st-dim">Loading…</div></details>
@@ -456,15 +466,16 @@
        🌾 padding + † "adjusted" + the 🧪 outlier guard (grouped by player) go to 📉 Chart anomalies. Uses the
        same metrics as the main tables (player-metrics.mjs). Leads for review, not proof. -->
   <script type="module">
-    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261010-honu1000";
-    import { reviewFlags, reviewRuleText, anomalyRuleText, paddingRuleText } from "./red-flags.mjs?v=20261010-honu1000";
-    import { groupOutliers } from "./outlier-guard.mjs?v=20261010-honu1000";
-    import { classifyBins, CHART_LABELS } from "./bins.mjs?v=20261010-honu1000";
-    import { forensicsRuleText } from "./session-forensics.mjs?v=20261010-honu1000";
-    import { sprout, sampleEvents, sproutRuleText, farmAccount, farmAccountRuleText } from "./sprouts.mjs?v=20261010-honu1000";
-    import { reviewDecision, isNotFarm, farmListEntry } from "./padding.mjs?v=20261010-honu1000";
-    import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261010-honu1000";
-    import "./name-peek.mjs?v=20261010-honu1000"; // full-name popup for truncated .nm names
+    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261010-radar1";
+    import { reviewFlags, reviewRuleText, anomalyRuleText, paddingRuleText } from "./red-flags.mjs?v=20261010-radar1";
+    import { groupOutliers } from "./outlier-guard.mjs?v=20261010-radar1";
+    import { classifyBins, CHART_LABELS } from "./bins.mjs?v=20261010-radar1";
+    import { forensicsRuleText } from "./session-forensics.mjs?v=20261010-radar1";
+    import { sprout, sampleEvents, sproutRuleText, farmAccount, farmAccountRuleText } from "./sprouts.mjs?v=20261010-radar1";
+    import { reviewDecision, isNotFarm, farmListEntry } from "./padding.mjs?v=20261010-radar1";
+    import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261010-radar1";
+    import "./name-peek.mjs?v=20261010-radar1"; // full-name popup for truncated .nm names
+    import { radarProfileUrl, radarBadge, radarPriority } from "./radar.mjs?v=20261010-radar1";
 
     const POLL_MS = 30 * 1000;
     const CONCURRENCY = 6;
@@ -507,6 +518,41 @@
       if (!t) return "—";
       const s = Math.max(0, Math.round((Date.now() - t) / 1000));
       return s < 3600 ? Math.round(s / 60) + " min ago" : s < 172800 ? Math.round(s / 3600) + " h ago" : Math.round(s / 86400) + " d ago";
+    }
+
+    /* ---------- 🛰️ PS2 Radar second opinion (data/radar.json; status.json review → character ids) ---------- */
+    let radar = { players: {} };
+    let cidBySlug = new Map();
+    function setReview(st) {
+      for (const p of (st && st.review && st.review.players) || []) if (p.slug && p.cid) cidBySlug.set(p.slug, p.cid);
+      for (const p of (st && st.hidden && st.hidden.players) || []) if (p.slug && p.cid) cidBySlug.set(p.slug, p.cid);
+    }
+    async function loadRadar() {
+      try {
+        const r = await fetch("data/radar.json?t=" + Date.now(), { cache: "no-store" });
+        if (r.ok) radar = (await r.json()) || { players: {} };
+      } catch { /* keep the last copy */ }
+      const lp = radar.lastPass;
+      const n = Object.keys(radar.players || {}).length;
+      // Optional third-party source: when it fails / disappears, say so and keep showing the last cached answers.
+      const since = radar.unavailableSince ? new Date(radar.unavailableSince) : null;
+      const el = $("radarLine");
+      el.textContent = since && Number.isFinite(since.getTime())
+        ? "🛰️ Radar unavailable since " + since.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }) + (n ? " (showing the last " + n + " cached answers)" : "")
+        : "🛰️ PS2 Radar: " + (n ? n + " checked" + (radar.lastPassAt ? ", last pass " + ago(Date.parse(radar.lastPassAt)) : "") +
+          (lp && lp.stopped && !radar.passDone ? " (" + lp.stopped + ")" : "") : "no lookups yet");
+      el.classList.toggle("st-dim", !!since);
+    }
+    const radarOf = (slug) => (slug && radar.players && radar.players[slug]) || null;
+    const radarUp = (slug) => (radarPriority(radarOf(slug)) ? 1 : 0);
+    /** Small "PS2 Radar" profile link + second-opinion badge (build-log only). */
+    function radarCell(slug, cid) {
+      const e = radarOf(slug);
+      const url = radarProfileUrl(cid || (e && e.cid) || cidBySlug.get(slug) || "");
+      if (!url) return "";
+      const b = radarBadge(e);
+      return '<span class="st-radar"><a href="' + esc(url) + '" target="_blank" rel="noopener noreferrer" title="Open on PS2 Radar (independent community cheat radar)">PS2 Radar</a>' +
+        (b ? '<span class="st-rb' + (b.cls ? " " + b.cls : "") + '" title="' + esc(b.tip) + '">' + esc(b.text) + "</span>" : "") + "</span>";
     }
 
     /** Small, JSON-safe summary of one player (what the table + rule need). */
@@ -559,7 +605,7 @@
       const cell = (k, v, d) => '<td class="st-num' + (hot.includes(k) ? " st-low" : "") + '">' + fmt(v, d) + "</td>";
       // 📉 cross-reference (bins.mjs: 🚩 + chart issues → one 🚩 row + a link to the 📉 entry); filled by applyXrefs().
       const xref = '<div class="st-xref" data-xref="' + esc(r.slug) + '"></div>';
-      return '<tr id="flag-' + esc(r.slug) + '"><td>' + nameHtml + "</td><td>" + chart + "</td><td>" + tags + xref + "</td><td>" + skillCell + "</td>" +
+      return '<tr id="flag-' + esc(r.slug) + '"><td>' + nameHtml + radarCell(r.slug, r.cid) + "</td><td>" + chart + "</td><td>" + tags + xref + "</td><td>" + skillCell + "</td>" +
         cell("adj", r.adj, 0) + cell("ivi", r.ivi, 0) + cell("kd", r.kd, 2) + cell("acc", r.acc, 1) + cell("hsr", r.hsr, 1) +
         cell("pvs", r.pvs, 2) + cell("inflation", r.inflation, 2) +
         '<td title="' + esc(r.savedAt ? new Date(r.savedAt).toLocaleString() : "") + '">' + esc(ago(r.savedAt)) + "</td></tr>";
@@ -626,7 +672,7 @@
       const body = list.slice().sort((a, b) => b.farmAcct.share - a.farmAcct.share).map((r) => {
         const fa = r.farmAcct;
         const feeds = fa.feeders.map((f) => esc(f.name) + ' <span class="st-dim">(died ' + f.deaths + "×, killed back " + f.kills + ")</span>").join("<br>");
-        return "<tr><td>" + nameCell(r) + (fa.confirmed ? ' <span class="st-dim" title="Confirmed bot / farm account on owner review (data/farm.json)">✅ confirmed</span>' : "") + "</td><td>" + chartLink([r.name].concat(fa.feeders.map((f) => f.name)), "chart") + "</td><td>" + feeds +
+        return "<tr><td>" + nameCell(r) + radarCell(r.slug, r.cid) + (fa.confirmed ? ' <span class="st-dim" title="Confirmed bot / farm account on owner review (data/farm.json)">✅ confirmed</span>' : "") + "</td><td>" + chartLink([r.name].concat(fa.feeders.map((f) => f.name)), "chart") + "</td><td>" + feeds +
           '</td><td class="st-num">' + Math.round(fa.share * 100) + '%</td><td class="st-num">' + fmt(r.kpm, 2) + '</td><td class="st-num">' + fmt(r.events, 0) + "</td></tr>";
       }).join("");
       $("farmAcct").innerHTML = '<div class="st-scroll"><table class="st-table"><tr><th>Account</th><th></th><th>Feeds</th>' +
@@ -652,7 +698,7 @@
     function renderFarmList(rows, kind) {
       const L = FARM_LISTS[kind];
       const list = rows.filter((r) => r && (r.patterns || []).includes(kind))
-        .sort((a, b) => ((b.padding && b.padding.share) || 0) - ((a.padding && a.padding.share) || 0));
+        .sort((a, b) => radarUp(b.slug) - radarUp(a.slug) || ((b.padding && b.padding.share) || 0) - ((a.padding && a.padding.share) || 0));
       const open = list.filter((r) => !reviewDecision(reviewed, r.slug)).length;
       const c = $(L.count);
       c.textContent = String(list.length);
@@ -671,7 +717,7 @@
           ? '<span class="st-ok" title="' + esc(rv.note) + '">' + esc(rv.decision) + (rv.at ? " (" + esc(rv.at) + ")" : "") + "</span>"
           : '<span class="st-dim">needs review</span>';
         const alsoRed = r.red ? '<div style="font-size:0.8em"><a href="#flag-' + esc(r.slug) + '" class="st-jump" title="This player also has a 🚩 pattern; the full row is in Red flags">also in 🚩 (' + esc(classifyBins({ patterns: r.patterns }).red.join(", ")) + ") ↑</a></div>" : "";
-        return '<tr id="' + L.idp + esc(r.slug) + '"><td>' + nameCell(r) + L.mark + "</td><td>" + chart + '</td><td class="st-why">' + removed + alsoRed + "</td><td>" + review + "</td>" +
+        return '<tr id="' + L.idp + esc(r.slug) + '"><td>' + nameCell(r) + L.mark + radarCell(r.slug, r.cid) + "</td><td>" + chart + '</td><td class="st-why">' + removed + alsoRed + "</td><td>" + review + "</td>" +
           '<td class="st-num">' + fmt(r.adjs, 0) + '</td><td class="st-num">' + fmt(r.kd, 2) + "</td>" +
           '<td title="' + esc(r.savedAt ? new Date(r.savedAt).toLocaleString() : "") + '">' + esc(ago(r.savedAt)) + "</td></tr>";
       }).join("");
@@ -725,7 +771,7 @@
         return;
       }
       // Newer status.json carries players[]; older ones only items[] (one per metric hit).
-      const players = Array.isArray(g.players) ? g.players : groupOutliers(g.items || []);
+      const players = (Array.isArray(g.players) ? g.players : groupOutliers(g.items || [])).slice().sort((a, b) => radarUp(b.slug) - radarUp(a.slug));
       guardBySlug = new Map(players.filter((p) => p.slug).map((p) => [p.slug, p]));
       applyXrefs();
       const bad = players.filter((p) => !p.explained).length;
@@ -748,7 +794,7 @@
             const why = red.length
               ? '<a href="#flag-' + esc(p.slug) + '" class="st-jump" title="Full row in 🚩 Red flags">Also in 🚩 red flags (' + esc(red.join(", ")) + "), listed there ↑</a>"
               : esc(p.reason);
-            return '<tr id="chart-out-' + esc(p.slug || "") + '"><td' + (p.explained ? "" : ' class="st-err"') + ">" + nameCell({ name: p.name, cid: "" }) + '</td><td class="st-num">' + p.metrics.length +
+            return '<tr id="chart-out-' + esc(p.slug || "") + '"><td' + (p.explained ? "" : ' class="st-err"') + ">" + nameCell({ name: p.name, cid: "" }) + radarCell(p.slug) + '</td><td class="st-num">' + p.metrics.length +
               '</td><td class="st-metrics">' + ms + '</td><td class="st-why">' +
               (p.explained ? why : '<span class="st-err">unexplained: check for a formula gap</span>') + "</td></tr>";
           }).join("") + "</table></div>" : "");
@@ -764,10 +810,10 @@
       $("fxCount").textContent = String(f.flagged || 0);
       $("fxCount").classList.toggle("hot", (f.flagged || 0) > 0);
       const pct = (v) => (typeof v === "number" ? Math.round(v * 100) + "%" : "—");
-      const rows = (f.players || []).map((p) => {
+      const rows = (f.players || []).slice().sort((a, b) => radarUp(b.slug) - radarUp(a.slug)).map((p) => {
         const w = p.worst;
         const tag = p.flagged ? '<span class="st-tag hot">🚩</span> ' : p.odd ? '<span class="st-tag">📉 review</span> ' : "";
-        const who = esc(p.name) + (p.confirmedCheater ? ' <span class="st-dim" title="On the 🙈 hide list as a confirmed cheater">(confirmed)</span>' : "");
+        const who = esc(p.name) + (p.confirmedCheater ? ' <span class="st-dim" title="On the 🙈 hide list as a confirmed cheater">(confirmed)</span>' : "") + radarCell(p.slug);
         if (!w) return "<tr><td>" + who + '</td><td colspan="5" class="st-dim">No Honu sessions with 30+ kills · checked ' + esc(p.checkedAt ? ago(Date.parse(p.checkedAt)) : "—") + "</td></tr>";
         const weap = (w.weapons || []).map((x) => esc(x.name) + ' <span class="st-dim">' + x.kills + " (" + pct(x.share) + ", max " + x.max1s + "/s)</span>").join("<br>");
         const v = w.victims || {};
@@ -848,12 +894,12 @@
       const key = (s) => String(s || "").trim().toLowerCase().replace(/^\[.*?\]\s*/, "").replace(/[^a-z0-9]+/g, "");
       const rows = Object.entries(list).map(([k, v]) => {
         const m = matched.find((x) => x.matched && (x.cid === k || x.slug === key(k)));
-        return { name: (m && m.name) || k, cid: (m && m.cid) || (/^\d{5,25}$/.test(k) ? k : ""), reason: (v && v.reason) || "", at: (v && v.at) || "", cached: !!m };
+        return { name: (m && m.name) || k, slug: (m && m.slug) || "", cid: (m && m.cid) || (/^\d{5,25}$/.test(k) ? k : ""), reason: (v && v.reason) || "", at: (v && v.at) || "", cached: !!m };
       });
       $("hiddenCount").textContent = String(rows.length);
       $("hidden").innerHTML = rows.length
         ? '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th>Reason</th><th>Since</th><th></th></tr>' +
-          rows.map((r) => "<tr><td>" + nameCell(r) + "</td><td>" + esc(r.reason) + "</td><td>" + esc(r.at) + "</td><td>" +
+          rows.map((r) => "<tr><td>" + nameCell(r) + radarCell(r.slug, r.cid) + "</td><td>" + esc(r.reason) + "</td><td>" + esc(r.at) + "</td><td>" +
             (r.cached ? "" : '<span class="st-dim" title="Not matched in ranks.json build yet (not cached, or the next refresh will pick it up)">not matched yet</span>') + "</td></tr>").join("") +
           "</table></div>"
         : '<div class="st-dim">Nobody hidden.</div>';
@@ -865,6 +911,8 @@
         const r = await fetch("data/status.json?t=" + Date.now(), { cache: "no-store" });
         st = r.ok ? await r.json() : null;
       } catch { st = null; }
+      setReview(st);
+      await loadRadar();
       renderGuard(st);
       renderHidden(st);
       renderSession(st);
@@ -900,7 +948,8 @@
 
       renderFarmList(rows, "padding");
       renderFarmList(rows, "adjusted");
-      const flagged = rows.filter((r) => r && r.red).sort((a, b) => (b.adj ?? b.ivi ?? 0) - (a.adj ?? a.ivi ?? 0));
+      // A PS2 Radar Confirmed / Banned mark only moves a player up (never hides / flags).
+      const flagged = rows.filter((r) => r && r.red).sort((a, b) => radarUp(b.slug) - radarUp(a.slug) || (b.adj ?? b.ivi ?? 0) - (a.adj ?? a.ivi ?? 0));
       const cnt = $("flagsCount");
       cnt.textContent = String(flagged.length);
       cnt.classList.toggle("hot", flagged.length > 0);
@@ -932,7 +981,9 @@
           const st = sr.ok ? await sr.json() : null;
           sessionSlugs = new Set(((st && st.sessionStats && st.sessionStats.flagged) || []).map((f) => f.slug));
           forensicSlugs = new Set(((st && st.forensics && st.forensics.players) || []).filter((f) => f.flagged).map((f) => f.slug));
+          setReview(st);
         } catch { /* keep the last set */ }
+        await loadRadar();
         const entries = (index.players || []).filter((e) => e && e.file && e.name);
         const byFile = (readCache() || {}).byFile || {};
         // Only (re)load players that are new or changed since the cached pass.

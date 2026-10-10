@@ -20,7 +20,8 @@ import { fileURLToPath } from "node:url";
 import { normalizePlayer, playerMetrics, shownValue } from "../player-metrics.mjs";
 import { reviewFlags } from "../red-flags.mjs";
 import { classifyBins } from "../bins.mjs";
-import { markNote, statMark, confirmedPadderSlugs, isFarmListed } from "../padding.mjs";
+import { markNote, statMark, confirmedPadderSlugs, isFarmListed, isNotFarm, farmListEntry } from "../padding.mjs";
+import { sprout, sampleEvents, farmAccount } from "../sprouts.mjs";
 import { findOutliers, guardStatus, KNOWN_EXTREMES } from "../outlier-guard.mjs";
 import { forensicsSummary, honuSessionUrl } from "../session-forensics.mjs";
 import { hiddenList, isConfirmedCheater } from "../hidden.mjs";
@@ -104,7 +105,7 @@ export function readHidden(dataDir) {
  * onHidden; onPlayer still sees them (outlier-guard population / red-flag
  * reference points unchanged); their cache files are untouched.
  */
-export function buildRanks(dataDir, { onPlayer = null, onHidden = null, hidden = readHidden(dataDir), confirmed = readConfirmedPadders(dataDir) } = {}) {
+export function buildRanks(dataDir, { onPlayer = null, onHidden = null, onFarm = null, hidden = readHidden(dataDir), confirmed = readConfirmedPadders(dataDir) } = {}) {
   const index = JSON.parse(fs.readFileSync(path.join(dataDir, "index.json"), "utf8"));
   const rows = [];
   const seen = new Set();
@@ -122,7 +123,10 @@ export function buildRanks(dataDir, { onPlayer = null, onHidden = null, hidden =
     const pl = raw && (raw.player || raw);
     // 🤖 confirmed bot / farm accounts (data/farm.json, t322u): not players — never
     // ranked, never a reference point for the outlier guard / session comparison.
-    if (isFarmListed({ name: (pl && pl.display) || e.name || slug, cid: pl && pl.cid }) || isFarmListed({ name: slug })) continue;
+    if (isFarmListed({ name: (pl && pl.display) || e.name || slug, cid: pl && pl.cid }) || isFarmListed({ name: slug })) {
+      if (onFarm) onFarm({ slug, name: (pl && pl.display) || e.name || slug, cid: String((pl && pl.cid) || "") });
+      continue;
+    }
     const hit = hidden.match({ slug, name: (pl && pl.display) || e.name, cid: pl && pl.cid });
     const row = rankRow(raw, { slug, savedAt: e.savedAt ?? raw.savedAt, confirmed: confirmed.has(slug) });
     if (hit) {
@@ -146,12 +150,15 @@ export function buildRanksWithGuard(dataDir) {
   const confirmed = readConfirmedPadders(dataDir);
   const hiddenFound = [];
   const forensics = readForensics(dataDir);
+  const farmFound = [];
   const ranks = buildRanks(dataDir, {
     hidden,
     confirmed,
     onHidden(h) { hiddenFound.push(h); },
+    onFarm(f) { farmFound.push(f); },
     onPlayer(raw, row, info) {
-      const m = playerMetrics(normalizePlayer(raw));
+      const np = normalizePlayer(raw);
+      const m = playerMetrics(np);
       const f = reviewFlags(m, { confirmed: confirmed.has(row[2]) }); // raw metrics: same 🚩 result as build-log.html
       const values = {};
       METRIC_COLS.forEach((k, i) => { values[k] = row[4 + i]; });
@@ -164,7 +171,10 @@ export function buildRanksWithGuard(dataDir) {
       // 🔎 session forensics (data/forensics.json, refresh pipeline): ⚡ / 🔥 → 🚩 "session-forensics".
       const fx = forensicsSummary(forensics.players[row[2]]);
       if (fx.flagged) patterns.push("session-forensics");
-      players.push({ slug: row[2], name: row[0], flagged: f.flagged || sf.flagged || fx.flagged, patterns, values, session: sm, sessionFlag: sf, forensics: fx, row, hidden: !!(info && info.hidden), confirmedCheater: !!(info && info.confirmedCheater) });
+      // 🤖 likely farm account (same rule as build-log.html: a 🌱 that mostly feeds a few killers).
+      const sp = sprout(m.raw || m, sampleEvents(np.rawRows || np.rows));
+      const fa = sp.sprout && !isNotFarm({ name: np.display, cid: np.cid }) ? farmAccount(np.rawRows || np.rows, m.ownKpm) : null;
+      players.push({ slug: row[2], name: row[0], cid: String(np.cid || ""), farmAcct: !!(fa && fa.farm), flagged: f.flagged || sf.flagged || fx.flagged, patterns, values, session: sm, sessionFlag: sf, forensics: fx, row, hidden: !!(info && info.hidden), confirmedCheater: !!(info && info.confirmedCheater) });
     },
   });
   const found = findOutliers(players, [...METRIC_COLS, ...SESSION_METRIC_IDS]);
@@ -173,7 +183,44 @@ export function buildRanksWithGuard(dataDir) {
   return {
     ranks, guard, hidden: hiddenSummary(dataDir, hiddenFound), bins: binCounts(players, guard), session: sessionStatus(players, guard, dataDir),
     forensics: forensicsStatus(players, guard, forensics),
+    review: reviewStatus(players, guard, forensics, farmFound),
   };
+}
+
+/**
+ * status.json "review": every player on a build-log review list (🚩, 📉 🌾/†/🧪,
+ * 🔎, 🤖, 🙈) with slug / name / character id and the lists it is on, in lookup
+ * priority order (REVIEW_LISTS). Built from our own data only; the optional
+ * PS2 Radar step (scripts/radar-lookup.mjs) and build-log's Radar links read it.
+ */
+/** Review lists in priority order (unconfirmed leads first, known cheaters last). Our own; never depends on PS2 Radar. */
+export const REVIEW_LISTS = Object.freeze(["red", "outlier", "adjusted", "forensics", "farm", "padding", "hidden"]);
+
+export function reviewStatus(players, guard, store, farmFound = []) {
+  const out = new Set((guard.players || []).map((g) => g.slug));
+  const by = new Map();
+  const add = (p, list) => {
+    if (!p || !p.slug) return;
+    let e = by.get(p.slug);
+    if (!e) by.set(p.slug, (e = { slug: p.slug, name: p.name || p.slug, cid: p.cid || "", lists: [] }));
+    if (!e.cid && p.cid) e.cid = p.cid;
+    if (!e.lists.includes(list)) e.lists.push(list);
+  };
+  for (const p of players) {
+    const b = classifyBins({ patterns: p.patterns || [], outlier: out.has(p.slug) });
+    if (b.red.length) add(p, "red");
+    if (out.has(p.slug)) add(p, "outlier");
+    if (b.chart.includes("adjusted")) add(p, "adjusted");
+    if (b.chart.includes("padding")) add(p, "padding");
+    if (store && store.players && store.players[p.slug]) add(p, "forensics");
+    if (p.farmAcct) add(p, "farm");
+    if (p.hidden) add(p, "hidden");
+  }
+  for (const f of farmFound) add(f, "farm");
+  const rank = (e) => Math.min(...e.lists.map((l) => REVIEW_LISTS.indexOf(l)));
+  const list = [...by.values()].map((e) => ({ ...e, lists: e.lists.sort((a, b) => REVIEW_LISTS.indexOf(a) - REVIEW_LISTS.indexOf(b)) }));
+  list.sort((a, b) => rank(a) - rank(b) || a.slug.localeCompare(b.slug));
+  return { checkedAt: new Date().toISOString(), count: list.length, players: list };
 }
 
 /**
@@ -359,7 +406,7 @@ const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPat
 if (isMain) {
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
   const dataDir = path.join(root, "data");
-  const { ranks: out, guard, hidden: hiddenInfo, bins, session, forensics: forensicsInfo } = buildRanksWithGuard(dataDir);
+  const { ranks: out, guard, hidden: hiddenInfo, bins, session, forensics: forensicsInfo, review } = buildRanksWithGuard(dataDir);
   fs.writeFileSync(path.join(dataDir, "ranks.json"), JSON.stringify(out) + "\n");
   console.log(`ranks.json: ${out.count} players (${hiddenInfo.count} on the 🙈 hide list)`);
   // 🧪 Outlier guard → data/status.json (build-log.html). Other status fields are kept.
@@ -371,6 +418,7 @@ if (isMain) {
   st.bins = { checkedAt: new Date().toISOString(), ...bins };
   st.sessionStats = session;
   st.forensics = forensicsInfo;
+  st.review = review;
   fs.writeFileSync(stPath, JSON.stringify(st, null, 2) + "\n");
   for (const o of guard.items.filter((x) => !x.explained)) {
     console.log(`::warning::outlier guard: ${o.name} ${o.id}=${o.value} (bound ${o.bound}, z ${o.z})`);

@@ -17,8 +17,8 @@
  * and test/outlier-guard.test.mjs (fails on unexplained outliers).
  * DOM-free.
  */
-import { classifyBins } from "./bins.mjs?v=20261010-honu1000";
-import { SESSION_LABELS } from "./session-stats.mjs?v=20261010-honu1000";
+import { classifyBins } from "./bins.mjs?v=20261010-radar1";
+import { SESSION_LABELS } from "./session-stats.mjs?v=20261010-radar1";
 
 export const GUARD_RULE = Object.freeze({ Z: 6, SPAN_K: 3, MIN_N: 50 });
 

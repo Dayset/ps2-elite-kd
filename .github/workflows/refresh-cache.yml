@@ -98,6 +98,17 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: node scripts/refresh-cache.mjs
 
+      - name: PS2 Radar second opinion (once per UTC day, flagged players only)
+        # radar.mjs / scripts/radar-lookup.mjs: <= 50 lookups per UTC day, one
+        # request every 2-3 s, 429/503 + Retry-After backoff, recheck <= every
+        # 3 days. No network after today's pass is done. Never fails the run.
+        if: always() && env.ON_DEMAND != 'true'
+        continue-on-error: true
+        timeout-minutes: 6
+        env:
+          RADAR_BUDGET_SEC: "240"
+        run: node scripts/radar-lookup.mjs
+
       - name: Commit (one commit per run, skipped if nothing refreshed)
         if: always()
         env:
@@ -111,8 +122,8 @@ jobs:
             # Nothing refreshed (idle / outage / all names bad): don't spend a Pages
             # build on bookkeeping. Only a changed data/schedule.json (read by the
             # Worker cron to decide whether to dispatch) is committed on its own.
-            # Discovery progress (sweep cursor + queue) and the Honu day counter are kept too.
-            keep="schedule.json discovery.json honu-usage.json"
+            # Discovery progress (sweep cursor + queue), the Honu day counter and the PS2 Radar cache are kept too.
+            keep="schedule.json discovery.json honu-usage.json radar.json"
             for f in $keep; do cp "data/$f" "/tmp/$f" 2>/dev/null || true; done
             git checkout -- data/ && git clean -fdq data/
             changed_meta=0
