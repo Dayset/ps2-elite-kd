@@ -14,7 +14,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261009-shame" />
+  <link rel="stylesheet" href="styles.css?v=20261009-farmacct" />
   <style>
     body { overflow: auto; }
     .st-wrap { max-width: 960px; margin: 0 auto; padding: 18px 16px 40px; }
@@ -166,6 +166,12 @@
       <div class="st-note">Players whose fights are going rough right now. They could be new, playing support, medic or engineer, or just learning. They're listed so veterans can spot who might appreciate a tip or a squad invite. Please be kind; this is never a list to make fun of anyone.</div>
       <div id="sproutsRule" class="st-rule"></div>
       <div id="sprouts" class="st-dim">Loading…</div>
+      <details class="st-sub-sec" id="secFarmAcct">
+      <summary><h3>🤖 Likely farm accounts <span id="farmAcctCount" class="st-count">…</span></h3></summary>
+      <div class="st-note">Accounts that would be on 🌱 but look parked for someone else to farm: most of their deaths go to one or a few killers they never kill back, and they barely fight. They are not counted above. Linked to the player they feed.</div>
+      <div id="farmAcctRule" class="st-rule"></div>
+      <div id="farmAcct" class="st-dim">Loading…</div>
+      </details>
     </details>
   </main>
 
@@ -444,18 +450,18 @@
        🌾 padding + † "adjusted" + the 🧪 outlier guard (grouped by player) go to 📉 Chart anomalies. Uses the
        same metrics as the main tables (player-metrics.mjs). Leads for review, not proof. -->
   <script type="module">
-    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261009-shame";
-    import { reviewFlags, reviewRuleText, anomalyRuleText, paddingRuleText } from "./red-flags.mjs?v=20261009-shame";
-    import { groupOutliers } from "./outlier-guard.mjs?v=20261009-shame";
-    import { classifyBins, CHART_LABELS } from "./bins.mjs?v=20261009-shame";
-    import { sprout, sampleEvents, sproutRuleText } from "./sprouts.mjs?v=20261009-shame";
-    import { reviewDecision } from "./padding.mjs?v=20261009-shame";
-    import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261009-shame";
-    import "./name-peek.mjs?v=20261009-shame"; // full-name popup for truncated .nm names
+    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261009-farmacct";
+    import { reviewFlags, reviewRuleText, anomalyRuleText, paddingRuleText } from "./red-flags.mjs?v=20261009-farmacct";
+    import { groupOutliers } from "./outlier-guard.mjs?v=20261009-farmacct";
+    import { classifyBins, CHART_LABELS } from "./bins.mjs?v=20261009-farmacct";
+    import { sprout, sampleEvents, sproutRuleText, farmAccount, farmAccountRuleText } from "./sprouts.mjs?v=20261009-farmacct";
+    import { reviewDecision } from "./padding.mjs?v=20261009-farmacct";
+    import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261009-farmacct";
+    import "./name-peek.mjs?v=20261009-farmacct"; // full-name popup for truncated .nm names
 
     const POLL_MS = 30 * 1000;
     const CONCURRENCY = 6;
-    const SS_KEY = "ps2-elite-kd:redflags:v9"; // { byFile: { file: { savedAt, row } } }
+    const SS_KEY = "ps2-elite-kd:redflags:v10"; // { byFile: { file: { savedAt, row } } }
     const $ = (id) => document.getElementById(id);
     const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
     const fmt = (v, d) => (typeof v === "number" && Number.isFinite(v) ? v.toFixed(d) : "—");
@@ -477,9 +483,10 @@
     const sproutText = sproutRuleText();
     $("sproutsSummary").title = sproutText;
     $("sproutsRule").textContent = "Rule: " + sproutText;
+    $("farmAcctRule").textContent = "Rule: " + farmAccountRuleText();
     $("adjRule").textContent = "Rule: " + anomalyRuleText();
     $("padRule").textContent = "Rule: " + paddingRuleText();
-    try { sessionStorage.removeItem("ps2-elite-kd:redflags:v6"); sessionStorage.removeItem("ps2-elite-kd:redflags:v7"); sessionStorage.removeItem("ps2-elite-kd:redflags:v8"); } catch { /* ignore */ }
+    try { sessionStorage.removeItem("ps2-elite-kd:redflags:v6"); sessionStorage.removeItem("ps2-elite-kd:redflags:v7"); sessionStorage.removeItem("ps2-elite-kd:redflags:v8"); sessionStorage.removeItem("ps2-elite-kd:redflags:v9"); } catch { /* ignore */ }
 
     function readCache() {
       try { return JSON.parse(sessionStorage.getItem(SS_KEY)) || null; } catch { return null; }
@@ -501,6 +508,9 @@
       const f = reviewFlags(m);
       // 🌱 keeps its original input (sample with farm victims), like the older 🚩 rules.
       const sp = sprout(m.raw || m, sampleEvents(np.rawRows || np.rows));
+      // 🤖 a 🌱 that mostly dies to a few killers it never kills back = likely farm account (not a sprout).
+      const fa = sp.sprout ? farmAccount(np.rawRows || np.rows, m.ownKpm) : null;
+      const farmAcct = fa && fa.farm ? { share: fa.share, deaths: fa.deaths, feeders: fa.feeders.slice(0, 3) } : null;
       // Evidence for padding AND adjusted (any farm-account kills excluded).
       const pad = m.farm && m.farm.victims && m.farm.victims.length ? m.farm : null;
       return {
@@ -509,7 +519,7 @@
         adj: num((m.raw || m).adj), ivi: num(m.ivi), pvs: num((m.raw || m).pvs), inflation: num((m.raw || m).inflation),
         kd: num(m.kd), acc: num(m.acc), hsr: num(m.hsr),
         flagged: f.flagged, red: !!f.red, patterns: f.patterns, tier: f.skill.tier, basis: f.skill.basis,
-        adjs: num((m.raw || m).adjs), kpm: num(m.ownKpm) ?? num(m.kpm), events: sp.events, sprout: sp.sprout,
+        adjs: num((m.raw || m).adjs), kpm: num(m.ownKpm) ?? num(m.kpm), events: sp.events, sprout: sp.sprout && !farmAcct, farmAcct,
         // Evidence for the padding tag: share + farm accounts (kills/deaths).
         padding: pad ? { share: pad.share, kills: pad.kills, victims: pad.victims.map((v) => ({ name: v.name, kills: v.kills, deaths: v.deaths })) } : null,
       };
@@ -596,6 +606,21 @@
       sproutSort = sproutSort.key === k ? { key: k, dir: -sproutSort.dir } : { key: k, dir: k === "adjs" || k === "name" ? 1 : -1 };
       renderSprouts();
     });
+
+    /* ---------- 🤖 Likely farm accounts (moved out of 🌱; sprouts.mjs farmAccount) ---------- */
+    function renderFarmAccounts(list) {
+      $("farmAcctCount").textContent = String(list.length);
+      if (!list.length) { $("farmAcct").innerHTML = '<div class="st-dim">Nobody right now.</div>'; return; }
+      const chartLink = (names, label) => '<a href="./?names=' + encodeURIComponent(names.join(",")) + '" title="Open the chart with these names (press Analyze)">' + label + "</a>";
+      const body = list.slice().sort((a, b) => b.farmAcct.share - a.farmAcct.share).map((r) => {
+        const fa = r.farmAcct;
+        const feeds = fa.feeders.map((f) => esc(f.name) + ' <span class="st-dim">(died ' + f.deaths + "×, killed back " + f.kills + ")</span>").join("<br>");
+        return "<tr><td>" + nameCell(r) + "</td><td>" + chartLink([r.name].concat(fa.feeders.map((f) => f.name)), "chart") + "</td><td>" + feeds +
+          '</td><td class="st-num">' + Math.round(fa.share * 100) + '%</td><td class="st-num">' + fmt(r.kpm, 2) + '</td><td class="st-num">' + fmt(r.events, 0) + "</td></tr>";
+      }).join("");
+      $("farmAcct").innerHTML = '<div class="st-scroll"><table class="st-table"><tr><th>Account</th><th></th><th>Feeds</th>' +
+        '<th class="st-num" title="Share of sampled deaths that go to the player(s) it feeds">Fed %</th><th class="st-num">KPM</th><th class="st-num">Fights</th></tr>' + body + "</table></div>";
+    }
 
     /* ---------- 📉 Chart anomalies: † adjusted + 🧪 outlier guard (grouped by player) ---------- */
     let anomState = { adjOpen: null, padOpen: null, guardOpen: null };
@@ -814,6 +839,7 @@
       $("sproutsCount").textContent = String(sproutRows.length);
       if (sproutRows.length) renderSprouts();
       else $("sprouts").innerHTML = '<div class="st-dim">Nobody right now.</div>';
+      renderFarmAccounts(rows.filter((r) => r && r.farmAcct));
 
       renderFarmList(rows, "padding");
       renderFarmList(rows, "adjusted");
@@ -856,7 +882,7 @@
         let errors = 0;
         if (todo.length) {
           let done = 0, i = 0;
-          const progress = () => { $("flags").innerHTML = $("sprouts").innerHTML = $("adjusted").innerHTML = $("padding").innerHTML = '<span class="st-dim">Scoring players… ' + done + " / " + todo.length + "</span>"; };
+          const progress = () => { $("flags").innerHTML = $("sprouts").innerHTML = $("farmAcct").innerHTML = $("adjusted").innerHTML = $("padding").innerHTML = '<span class="st-dim">Scoring players… ' + done + " / " + todo.length + "</span>"; };
           progress();
           const worker = async () => {
             while (i < todo.length) {
@@ -875,7 +901,7 @@
         render(entries.map((e) => byFile[e.file] && byFile[e.file].row), entries.length, errors);
       } catch (e) {
         $("flags").innerHTML = '<span class="st-err">Couldn’t compute red flags (' + esc(e && e.message) + ").</span>";
-        $("sprouts").innerHTML = '<span class="st-err">Couldn’t load the list (' + esc(e && e.message) + ").</span>";
+        $("sprouts").innerHTML = $("farmAcct").innerHTML = '<span class="st-err">Couldn’t load the list (' + esc(e && e.message) + ").</span>";
         $("adjusted").innerHTML = $("padding").innerHTML = '<span class="st-err">Couldn’t load the list (' + esc(e && e.message) + ").</span>";
       } finally {
         busy = false;
