@@ -261,7 +261,7 @@
       <a id="backLink" href="index.html" class="back-btn" aria-label="Back to player search" data-hint="Back to player search"><svg class="back-chev" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M15 4.5 7.5 12 15 19.5" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="back-ico" aria-hidden="true">🔍</span></a>
       <div id="ranksPickBox" class="rk-pick-box" role="group" aria-label="Picked players and name filter">
         <span id="ranksChips" class="rk-chips"></span>
-        <input id="ranksSearch" type="search" placeholder="Filter names…" aria-label="Filter player names" autocomplete="off" spellcheck="false" />
+        <input id="ranksSearch" type="search" placeholder="Filter names…" aria-label="Filter player names" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="search" />
       </div>
       <button id="ranksCompare" type="button" class="ranks-compare" disabled title="Open the main page with the checked players (up to 10)">Compare</button>
       <span id="ranksPicked" class="ranks-picked" aria-live="polite">0 / 10</span>
@@ -608,6 +608,8 @@
     // Progressive render: the first screenful goes in at once, the rest is
     // appended in small chunks on later frames so phones stay responsive.
     const FIRST_CHUNK = 80;
+    const TYPING_QUIET_MS = 300; // filter typing pause before the rest of the list goes in
+    let lastTypeAt = -1e9;
     const CHUNK = 200;
     let renderToken = 0;
     let renderState = null; // { list, cols, at } of the current progressive render
@@ -659,6 +661,10 @@
       renderRowsTo(FIRST_CHUNK);
       const step = () => {
         if (token !== renderToken || st.at >= list.length) return;
+        // Typing in the filter (t324u): don't append (and relayout) the big table
+        // between keystrokes — wait until the typing pauses.
+        const quiet = TYPING_QUIET_MS - (performance.now() - lastTypeAt);
+        if (quiet > 0) { setTimeout(step, quiet + 10); return; }
         renderRowsTo(st.at + CHUNK);
         if (st.at < list.length) requestAnimationFrame(() => setTimeout(step, 0));
       };
@@ -867,6 +873,7 @@
       window.__lastBinJump = { bin: bi, metric: distMetric, dir: sortDir, ...t, q: row.getAttribute("data-q") };
     }
 
+    let hlSig = "";
     function drawDist() {
       const svg = $("distSvg");
       if (!data || !svg || !$("distSection").open) return;
@@ -879,6 +886,7 @@
       const ui = deskUiScale(window.innerWidth, parseFloat(getComputedStyle(document.documentElement).fontSize) || 16);
       const H = Math.round(Math.min(380 * ui, Math.max(250, W * 0.42)));
       const hl = highlightRows();
+      hlSig = hl.map((r) => r.query).join("\n"); // what the chart now marks (filter typing skips no-op redraws)
       const M = { l: (narrow ? 34 : 44) * ui, r: (narrow ? 34 : 44) * ui, t: (18 + (hl.length ? Math.min(3, hl.length) * 13 : 0) + 14) * ui, b: 38 * ui };
       const PW = W - M.l - M.r;
       const PH = H - M.t - M.b;
@@ -1094,14 +1102,28 @@
       render();
     });
 
+    /*
+     * Filter typing (t324u). The input element is never re-created or refocused
+     * here; filtering is debounced, skipped when the bare name didn't change
+     * (tag / case / spaces), the rest of the list waits for a typing pause, and
+     * the 📊 chart only redraws when the highlighted players actually change —
+     * a full table + chart redraw on every key made typing stutter.
+     */
     let searchTimer = 0;
-    $("ranksSearch").addEventListener("input", (e) => {
+    const hlSignature = () => highlightRows().map((r) => r.query).join("\n");
+    function applyFilter() {
       clearTimeout(searchTimer);
-      searchTimer = setTimeout(() => {
-        filter = e.target.value || "";
-        renderBody();
-        drawDist();
-      }, 80);
+      const next = $("ranksSearch").value || "";
+      if (bare(next) === bare(filter)) { filter = next; return; }
+      filter = next;
+      renderBody();
+      const sig = hlSignature();
+      if (sig !== hlSig) { hlSig = sig; requestAnimationFrame(() => drawDist()); }
+    }
+    $("ranksSearch").addEventListener("input", () => {
+      lastTypeAt = performance.now();
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(applyFilter, 150);
     });
 
     $("ranksChips").addEventListener("click", (e) => {
@@ -1116,8 +1138,10 @@
       if (e.target === e.currentTarget) $("ranksSearch").focus({ preventScroll: true });
     });
     $("ranksSearch").addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.isComposing) { applyFilter(); return; } // no wait on Enter
       // Backspace in an empty filter removes the last chip, like the main page.
-      if (e.key === "Backspace" && !e.target.value && picked.size) {
+      // Held / auto-repeated Backspace stops at the empty field (never eats chips).
+      if (e.key === "Backspace" && !e.target.value && picked.size && !e.repeat && !e.isComposing) {
         e.preventDefault();
         unpick([...picked.keys()].pop());
       }
