@@ -138,7 +138,7 @@ describe("size warning + Honu cap", () => {
     assert.equal(sizeWarning({ repoBytes: SIZE_WARN_BYTES, dataBytes: 0 }), true);
     assert.equal(sizeWarning({ repoBytes: null, dataBytes: SIZE_WARN_BYTES + 1 }), true);
   });
-  it("Honu daily cap default 2500", () => {
-    assert.equal(HONU_DAILY_CAP, 2500);
+  it("Honu daily cap default 1000", () => {
+    assert.equal(HONU_DAILY_CAP, 1000);
   });
 });

@@ -46,7 +46,7 @@ env:
   ON_DEMAND_BUDGET_MIN: "10" # inputs.names runs
   GROW_MAX: "50"             # background: max new players per run (time budget usually binds first)
   SWEEP_SLICE_SEC: "60"      # background: max discovery sweep time per run
-  HONU_DAILY_CAP: "2500"     # all Honu calls per UTC day (assists + XP + history fallback)
+  HONU_DAILY_CAP: "1000"     # all Honu calls per UTC day (assists + XP + history fallback)
   FORENSICS_DAILY_RESERVE: "150" # 🔎 session forensics slice INSIDE the daily cap (kill events of top sessions)
   FORENSICS_PER_RUN: "3"         # 🔎 players per run (≤ 3 Honu calls each)
   # Daybreak Census service ID (registered, public client-side value; a repo

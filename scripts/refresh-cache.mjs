@@ -160,7 +160,7 @@ const honuBucket = tokenBucket({ capacity: 3, perMinute: 20 });
  * kept in data/honu-usage.json. Discovery itself never calls Honu. When the cap
  * is reached, assists / XP wait for the next day (the old values are kept).
  */
-export const HONU_DAILY_CAP = Number(process.env.HONU_DAILY_CAP) > 0 ? Number(process.env.HONU_DAILY_CAP) : 2500;
+export const HONU_DAILY_CAP = Number(process.env.HONU_DAILY_CAP) > 0 ? Number(process.env.HONU_DAILY_CAP) : 1000;
 const honuUsage = (() => {
   const day = new Date().toISOString().slice(0, 10);
   try {
