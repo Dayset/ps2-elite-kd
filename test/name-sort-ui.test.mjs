@@ -15,8 +15,10 @@ test("Rankings Player sort uses the shared comparator", () => {
   assert.match(ranks, /byName = \(a, b\) => compareByCharName\(a\.name, b\.name\)/);
 });
 test("🏆 Rankings is a labelled button, centred row on desktop", () => {
-  assert.match(index, /id="ranksLink"[^>]*>🏆 Rankings<\/a>/);
+  assert.match(index, /id="ranksLink"[^>]*>🏆 Rankings<svg class="ranks-chev"[\s\S]*?<\/svg><\/a>/);
   assert.match(index, /class="controls-theme-row ranks-row"/);
+  // t341u: 🗑️ / ☀️ on the 📦 Shared cache line, not the Rankings row.
+  assert.match(index, /class="cache-row">\s*<div id="cacheChips"[\s\S]*?<span class="cache-row-end">[\s\S]*?id="wipeLocalBtn"[\s\S]*?id="themeToggle"[\s\S]*?<\/span>\s*<\/div>/);
 });
 test("shared-cache letters are collapsible blocks with counts", () => {
   assert.match(app, /block\.className = "chip-group"/);

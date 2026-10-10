@@ -39,7 +39,7 @@
     "codeRepository": "https://github.com/Dayset/ps2-elite-kd"
   }
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261010-fresh2" />
+  <link rel="stylesheet" href="styles.css?v=20261010-bar1" />
 </head>
 <body class="main-page">
   <div class="controls">
@@ -61,14 +61,17 @@
       <span id="freshEta" class="fresh-eta" aria-live="polite" hidden></span>
     </div>
 
-    <div id="cacheChips" class="cache-chips" aria-label="Cached character names"></div>
+    <div class="cache-row">
+      <div id="cacheChips" class="cache-chips" aria-label="Cached character names"></div>
+      <span class="cache-row-end">
+        <button id="wipeLocalBtn" type="button" class="wipe-local" title="Clear all local app data (cache, theme, flags)" aria-label="Clear all local app data">🗑️</button>
+        <button id="themeToggle" type="button" class="theme-toggle" title="Toggle light / dark theme" aria-label="Toggle light / dark theme">☀️ Light</button>
+      </span>
+    </div>
     <div class="controls-theme-row ranks-row">
       <span class="ranks-row-spacer" aria-hidden="true"></span>
-      <a id="ranksLink" href="ranks.html" class="ranks-link" title="Rankings" aria-label="Rankings">🏆 Rankings</a>
-      <span class="ranks-row-end">
-      <button id="wipeLocalBtn" type="button" class="wipe-local" title="Clear all local app data (cache, theme, flags)" aria-label="Clear all local app data">🗑️</button>
-      <button id="themeToggle" type="button" class="theme-toggle" title="Toggle light / dark theme" aria-label="Toggle light / dark theme">☀️ Light</button>
-      </span>
+      <a id="ranksLink" href="ranks.html" class="ranks-link" title="Rankings" aria-label="Rankings">🏆 Rankings<svg class="ranks-chev" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M9 4.5 16.5 12 9 19.5" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      <span class="ranks-row-end" aria-hidden="true"></span>
     </div>
   </div>
 
@@ -150,6 +153,6 @@
     </details>
   </footer>
 
-  <script type="module" src="app.js?v=20261010-fresh2"></script>
+  <script type="module" src="app.js?v=20261010-bar1"></script>
 </body>
 </html>
