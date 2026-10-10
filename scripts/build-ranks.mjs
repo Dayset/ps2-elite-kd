@@ -22,7 +22,7 @@ import { reviewFlags } from "../red-flags.mjs";
 import { classifyBins } from "../bins.mjs";
 import { markNote, statMark, confirmedPadderSlugs, isFarmListed } from "../padding.mjs";
 import { findOutliers, guardStatus } from "../outlier-guard.mjs";
-import { hiddenList } from "../hidden.mjs";
+import { hiddenList, isConfirmedCheater } from "../hidden.mjs";
 import { cleanTimes } from "../flairs.mjs";
 import { sessionMetrics, sessionFlag, sessionRuleText, distribution, SESSION_METRICS, SESSION_METRIC_IDS, SESSION_MIN, SESSION_RULE } from "../session-stats.mjs";
 
@@ -127,7 +127,7 @@ export function buildRanks(dataDir, { onPlayer = null, onHidden = null, hidden =
     if (hit) {
       // Not ranked, but still a reference point for the 🧪 outlier guard (onPlayer).
       if (onHidden) onHidden({ slug, name: (pl && pl.display) || e.name || slug, cid: (pl && pl.cid) || "", key: hit.key, reason: hit.reason, at: hit.at });
-      if (row && onPlayer) onPlayer(raw, row, { hidden: true });
+      if (row && onPlayer) onPlayer(raw, row, { hidden: true, confirmedCheater: isConfirmedCheater(hit) });
       continue;
     }
     if (row) {
@@ -159,7 +159,7 @@ export function buildRanksWithGuard(dataDir) {
       const sf = sessionFlag(sm, { hsr: pl.hsr, kd: pl.global_kd });
       for (const id of SESSION_METRIC_IDS) values[id] = sm && sm.measured ? sm.values[id] : null;
       const patterns = sf.flagged ? [...f.patterns, "session"] : f.patterns;
-      players.push({ slug: row[2], name: row[0], flagged: f.flagged || sf.flagged, patterns, values, session: sm, sessionFlag: sf, hidden: !!(info && info.hidden) });
+      players.push({ slug: row[2], name: row[0], flagged: f.flagged || sf.flagged, patterns, values, session: sm, sessionFlag: sf, hidden: !!(info && info.hidden), confirmedCheater: !!(info && info.confirmedCheater) });
     },
   });
   const guard = guardStatus(findOutliers(players, [...METRIC_COLS, ...SESSION_METRIC_IDS]));

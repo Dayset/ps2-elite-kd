@@ -17,8 +17,8 @@
  * and test/outlier-guard.test.mjs (fails on unexplained outliers).
  * DOM-free.
  */
-import { classifyBins } from "./bins.mjs?v=20261010-farmlist";
-import { SESSION_LABELS } from "./session-stats.mjs?v=20261010-farmlist";
+import { classifyBins } from "./bins.mjs?v=20261010-guardcheat";
+import { SESSION_LABELS } from "./session-stats.mjs?v=20261010-guardcheat";
 
 export const GUARD_RULE = Object.freeze({ Z: 6, SPAN_K: 3, MIN_N: 50 });
 
@@ -94,7 +94,8 @@ export function groupOutliers(items) {
 }
 
 /**
- * players: [{ slug, name, flagged: bool, values: { id: number|null } }]
+ * players: [{ slug, name, flagged: bool, confirmedCheater?: bool, values: { id: number|null } }]
+ * confirmedCheater players count toward the bounds but are omitted from items.
  * → { bounds: { id: … }, items: [{ slug, name, id, value, bound, z, side, explained, reason }] }
  */
 export function findOutliers(players, ids, { rule = GUARD_RULE, known = KNOWN_EXTREMES } = {}) {
@@ -105,6 +106,9 @@ export function findOutliers(players, ids, { rule = GUARD_RULE, known = KNOWN_EX
     bounds[id] = b;
     if (!b.ok) continue;
     for (const p of players) {
+      // Confirmed cheaters (data/hidden.json, t323u) are fully explained: they still
+      // shape the population bounds above, but never show as an outlier row.
+      if (p.confirmedCheater) continue;
       const v = p.values[id];
       if (!fin(v)) continue;
       const z = (v - b.median) / b.mad;

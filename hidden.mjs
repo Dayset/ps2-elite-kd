@@ -44,3 +44,8 @@ export function hiddenList(json) {
     },
   };
 }
+
+/** True when a hide-list entry is a confirmed cheater (reason starts "confirmed cheater"; t323u). */
+export function isConfirmedCheater(hit) {
+  return !!hit && /^\s*confirmed cheater/i.test(String(hit.reason || ""));
+}
