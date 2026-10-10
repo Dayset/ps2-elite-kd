@@ -4,44 +4,42 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "38009020017",
-    "event": "workflow_dispatch",
+    "runId": "38010865301",
+    "event": "schedule",
     "kind": "discovery",
-    "startedAt": "2026-10-10T00:26:13.704Z",
-    "endedAt": "2026-10-10T00:34:29.865Z",
-    "seconds": 496,
-    "updated": [
-      "[MM] 99Ivan99",
-      "[1COG] JaroNC",
-      "[SICH] F81818D",
-      "[SICH] lbCanon",
-      "[SICH] AntonSosnicev",
-      "[SICH] VadikTheKiller",
-      "[VX15] Vova70",
-      "[ALDl] Tangrisnir14",
-      "[CLER] BaumBLue",
-      "[aHoe] AhornVS",
-      "MaskaraNc",
-      "CATEXE10",
-      "[CTIA] SadmanTR",
-      "[VCO] gagalehe",
-      "ANDY789",
-      "MamboFive",
-      "[VOLT] JaguarOP",
-      "[DY3] SofaKinglolz",
-      "HardcoreParkourTrainer",
-      "[TPN] heeeyahh",
-      "[MCOR] BlasterDoc",
-      "[OO] leMenace",
-      "[TYFC] ThankYouForComing",
-      "[ZUoC] xCloneKano",
-      "cheetler",
-      "[DPSO] Tupapcu",
-      "[lKPM] xMasterBobxx"
-    ],
+    "startedAt": "2026-10-10T00:52:13.960Z",
+    "endedAt": "2026-10-10T00:54:02.423Z",
+    "seconds": 108,
+    "updated": [],
     "added": [],
-    "failed": [],
-    "stoppedEarly": "time budget 9 min reached",
+    "failed": [
+      {
+        "name": "[FEMx] ShrimpeHxxTR",
+        "reason": "Census: 36/200 opponent stats missing; keeping old data",
+        "outage": true
+      },
+      {
+        "name": "[xxSx] ShrimpeHxxNC",
+        "reason": "Census: 20/199 opponent stats missing; keeping old data",
+        "outage": true
+      },
+      {
+        "name": "[K4T5] ShrimpeHxxVS",
+        "reason": "Census: 26/200 opponent stats missing; keeping old data",
+        "outage": true
+      },
+      {
+        "name": "Branbot420",
+        "reason": "Census: no character Branbot420",
+        "outage": false
+      },
+      {
+        "name": "Runnerdeconfianza",
+        "reason": "Census: 1/1 opponent stats missing; keeping old data",
+        "outage": true
+      }
+    ],
+    "stoppedEarly": "4 outage-type failures in a row (Census/Honu down?)",
     "indexSize": 1503,
     "discovery": {
       "cap": 3000,
@@ -51,7 +49,7 @@
     },
     "honu": {
       "day": "2026-10-10",
-      "calls": 203,
+      "calls": 232,
       "cap": 2500
     },
     "batch": [
@@ -156,144 +154,39 @@
         "status": "pending"
       },
       {
-        "name": "[MM] 99Ivan99",
+        "name": "[FEMx] ShrimpeHxxTR",
         "src": "refresh",
-        "status": "done"
+        "status": "failed",
+        "reason": "Census: 36/200 opponent stats missing; keeping old data"
       },
       {
-        "name": "[1COG] JaroNC",
+        "name": "[xxSx] ShrimpeHxxNC",
         "src": "refresh",
-        "status": "done"
+        "status": "failed",
+        "reason": "Census: 20/199 opponent stats missing; keeping old data"
       },
       {
-        "name": "[SICH] F81818D",
+        "name": "[K4T5] ShrimpeHxxVS",
         "src": "refresh",
-        "status": "done"
+        "status": "failed",
+        "reason": "Census: 26/200 opponent stats missing; keeping old data"
       },
       {
-        "name": "[SICH] lbCanon",
+        "name": "Branbot420",
         "src": "refresh",
-        "status": "done"
+        "status": "not-found",
+        "reason": "Census: no character Branbot420"
       },
       {
-        "name": "[SICH] AntonSosnicev",
+        "name": "Runnerdeconfianza",
         "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "[SICH] VadikTheKiller",
-        "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "[VX15] Vova70",
-        "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "[ALDl] Tangrisnir14",
-        "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "[CLER] BaumBLue",
-        "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "[aHoe] AhornVS",
-        "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "MaskaraNc",
-        "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "CATEXE10",
-        "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "[CTIA] SadmanTR",
-        "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "[VCO] gagalehe",
-        "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "ANDY789",
-        "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "MamboFive",
-        "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "[VOLT] JaguarOP",
-        "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "[DY3] SofaKinglolz",
-        "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "HardcoreParkourTrainer",
-        "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "[TPN] heeeyahh",
-        "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "[MCOR] BlasterDoc",
-        "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "[OO] leMenace",
-        "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "[TYFC] ThankYouForComing",
-        "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "[ZUoC] xCloneKano",
-        "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "cheetler",
-        "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "[DPSO] Tupapcu",
-        "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "[lKPM] xMasterBobxx",
-        "src": "refresh",
-        "status": "done"
+        "status": "failed",
+        "reason": "Census: 1/1 opponent stats missing; keeping old data"
       }
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-10T00:34:31.032Z",
+    "checkedAt": "2026-10-10T00:54:03.644Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 0,
     "explained": 14,
@@ -728,7 +621,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-10T00:34:31.048Z",
+    "checkedAt": "2026-10-10T00:54:03.658Z",
     "red": 13,
     "padding": 1,
     "adjusted": 21,
@@ -738,7 +631,7 @@
     "session": 3
   },
   "sessionStats": {
-    "checkedAt": "2026-10-10T00:34:31.038Z",
+    "checkedAt": "2026-10-10T00:54:03.649Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -754,11 +647,11 @@
       "players": 1503,
       "withSessions": 836,
       "measured": 554,
-      "sessions": 2615,
-      "kills": 204477,
+      "sessions": 2627,
+      "kills": 205348,
       "xpPlayers": 41,
       "xpMeasured": 31,
-      "xpSessions": 247
+      "xpSessions": 259
     },
     "metrics": [
       {
@@ -863,7 +756,7 @@
         "n": 554,
         "min": 0,
         "p01": 0.039,
-        "p05": 0.143,
+        "p05": 0.142,
         "median": 0.337,
         "p95": 0.613,
         "p99": 0.746,
@@ -885,8 +778,8 @@
         "p01": 0.216,
         "p05": 0.308,
         "median": 0.89,
-        "p95": 2.453,
-        "p99": 3.168,
+        "p95": 2.449,
+        "p99": 3.141,
         "max": 6.683
       },
       "s_maxKpm": {
@@ -916,7 +809,7 @@
         "p05": 0.885,
         "median": 2.302,
         "p95": 5.156,
-        "p99": 32.688,
+        "p99": 31.611,
         "max": 67.188
       },
       "s_maxKd": {
@@ -931,8 +824,8 @@
       },
       "s_hsk": {
         "n": 31,
-        "min": 0.078,
-        "p01": 0.078,
+        "min": 0.074,
+        "p01": 0.074,
         "p05": 0.086,
         "median": 0.36,
         "p95": 0.65,
@@ -955,7 +848,7 @@
         "p01": 0.021,
         "p05": 0.032,
         "median": 0.093,
-        "p95": 0.189,
+        "p95": 0.188,
         "p99": 0.192,
         "max": 0.233
       },
@@ -964,7 +857,7 @@
         "min": 0.002,
         "p01": 0.002,
         "p05": 0.004,
-        "median": 0.052,
+        "median": 0.051,
         "p95": 0.084,
         "p99": 0.097,
         "max": 0.097
@@ -974,7 +867,7 @@
         "min": 0.008,
         "p01": 0.008,
         "p05": 0.023,
-        "median": 0.514,
+        "median": 0.507,
         "p95": 2.167,
         "p99": 3,
         "max": 3
@@ -1013,7 +906,7 @@
         "n": 31,
         "min": 0.027,
         "p01": 0.027,
-        "p05": 0.034,
+        "p05": 0.036,
         "median": 0.07,
         "p95": 0.098,
         "p99": 0.135,
@@ -1452,9 +1345,9 @@
     "outliersUnexplained": 0
   },
   "size": {
-    "at": "2026-10-10T00:34:30.281Z",
+    "at": "2026-10-10T00:54:02.726Z",
     "repoBytes": 19268608,
-    "dataBytes": 27975813,
+    "dataBytes": 27983697,
     "playersBytes": 25846440,
     "playerFiles": 1503,
     "warnAtBytes": 734003200,
