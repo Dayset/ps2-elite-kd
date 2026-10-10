@@ -20,7 +20,7 @@ import { fileURLToPath } from "node:url";
 import { normalizePlayer, playerMetrics, shownValue } from "../player-metrics.mjs";
 import { reviewFlags } from "../red-flags.mjs";
 import { classifyBins } from "../bins.mjs";
-import { markNote, statMark, confirmedPadderSlugs } from "../padding.mjs";
+import { markNote, statMark, confirmedPadderSlugs, isFarmListed } from "../padding.mjs";
 import { findOutliers, guardStatus } from "../outlier-guard.mjs";
 import { hiddenList } from "../hidden.mjs";
 import { cleanTimes } from "../flairs.mjs";
@@ -119,6 +119,9 @@ export function buildRanks(dataDir, { onPlayer = null, onHidden = null, hidden =
     }
     const slug = e.slug || path.basename(file, ".json");
     const pl = raw && (raw.player || raw);
+    // 🤖 confirmed bot / farm accounts (data/farm.json, t322u): not players — never
+    // ranked, never a reference point for the outlier guard / session comparison.
+    if (isFarmListed({ name: (pl && pl.display) || e.name || slug, cid: pl && pl.cid }) || isFarmListed({ name: slug })) continue;
     const hit = hidden.match({ slug, name: (pl && pl.display) || e.name, cid: pl && pl.cid });
     const row = rankRow(raw, { slug, savedAt: e.savedAt ?? raw.savedAt, confirmed: confirmed.has(slug) });
     if (hit) {

@@ -71,9 +71,60 @@ try {
   /* no allowlist → nobody exempt */
 }
 
-/** True when one opponent row is a farm victim (never for allowlisted real players). */
+/* ---------- confirmed farm list (user t322u, 2026-10-10) ----------
+ * data/farm.json: accounts a human confirmed are bots / farm accounts ("KKLKK is
+ * a bot"). The inverse of not-farm.json: isFarmVictim() always matches them,
+ * whatever MIN_KILLS / MAX_BACK / MAX_KPM say, so kills on them are excluded for
+ * every caller. not-farm.json still wins if an account is on both lists.
+ * Missing file = empty list.
+ */
+const farmList = { names: new Set(), cids: new Set(), entries: [] };
+
+/** Replace the confirmed farm list from farm.json content; null clears it. */
+export function setFarmList(json) {
+  farmList.names = new Set();
+  farmList.cids = new Set();
+  farmList.entries = [];
+  const players = (json && json.players) || {};
+  for (const [key, e] of Object.entries(players)) {
+    const k = bareFarmKey(key);
+    if (k) farmList.names.add(k);
+    if (e && e.display) farmList.names.add(bareFarmKey(e.display));
+    if (e && e.cid) farmList.cids.add(String(e.cid));
+    farmList.entries.push({ key: k, cid: e && e.cid ? String(e.cid) : "", display: (e && e.display) || key, reason: String((e && e.reason) || ""), at: String((e && e.at) || "") });
+  }
+}
+
+/** The confirmed farm list entry for a row / player ({ name|display, cid }), or null. */
+export function farmListEntry(r) {
+  if (!r) return null;
+  const cid = r.cid ? String(r.cid) : "";
+  const k = bareFarmKey(r.name || r.display);
+  if (!(cid && farmList.cids.has(cid)) && !(k && farmList.names.has(k))) return null;
+  return farmList.entries.find((e) => (cid && e.cid === cid) || (k && (e.key === k || bareFarmKey(e.display) === k))) || { key: k, cid, display: r.name || r.display || k, reason: "", at: "" };
+}
+
+/** True when a human confirmed this account is a bot / farm account (data/farm.json). */
+export function isFarmListed(r) {
+  return !!farmListEntry(r);
+}
+
+try {
+  if (typeof window !== "undefined" && typeof fetch === "function") {
+    const res = await fetch(new URL("./data/farm.json", import.meta.url).href, { cache: "no-cache" });
+    if (res.ok) setFarmList(await res.json());
+  } else {
+    const fs = await import("node:fs");
+    setFarmList(JSON.parse(fs.readFileSync(new URL("./data/farm.json", import.meta.url), "utf8")));
+  }
+} catch {
+  /* no farm list → automatic rule only */
+}
+
+/** True when one opponent row is a farm victim (never for allowlisted real players; always for data/farm.json accounts). */
 export function isFarmVictim(r, rule = PADDING_RULE) {
   if (isNotFarm(r)) return false;
+  if (isFarmListed(r)) return true;
   const k = +r.kills || 0;
   const d = +r.deaths || 0;
   const kpm = +r.kpm || 0;

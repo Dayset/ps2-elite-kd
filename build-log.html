@@ -14,7 +14,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261010-padders13" />
+  <link rel="stylesheet" href="styles.css?v=20261010-farmlist" />
   <style>
     body { overflow: auto; }
     .st-wrap { max-width: 960px; margin: 0 auto; padding: 18px 16px 40px; }
@@ -450,14 +450,14 @@
        🌾 padding + † "adjusted" + the 🧪 outlier guard (grouped by player) go to 📉 Chart anomalies. Uses the
        same metrics as the main tables (player-metrics.mjs). Leads for review, not proof. -->
   <script type="module">
-    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261010-padders13";
-    import { reviewFlags, reviewRuleText, anomalyRuleText, paddingRuleText } from "./red-flags.mjs?v=20261010-padders13";
-    import { groupOutliers } from "./outlier-guard.mjs?v=20261010-padders13";
-    import { classifyBins, CHART_LABELS } from "./bins.mjs?v=20261010-padders13";
-    import { sprout, sampleEvents, sproutRuleText, farmAccount, farmAccountRuleText } from "./sprouts.mjs?v=20261010-padders13";
-    import { reviewDecision, isNotFarm } from "./padding.mjs?v=20261010-padders13";
-    import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261010-padders13";
-    import "./name-peek.mjs?v=20261010-padders13"; // full-name popup for truncated .nm names
+    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261010-farmlist";
+    import { reviewFlags, reviewRuleText, anomalyRuleText, paddingRuleText } from "./red-flags.mjs?v=20261010-farmlist";
+    import { groupOutliers } from "./outlier-guard.mjs?v=20261010-farmlist";
+    import { classifyBins, CHART_LABELS } from "./bins.mjs?v=20261010-farmlist";
+    import { sprout, sampleEvents, sproutRuleText, farmAccount, farmAccountRuleText } from "./sprouts.mjs?v=20261010-farmlist";
+    import { reviewDecision, isNotFarm, farmListEntry } from "./padding.mjs?v=20261010-farmlist";
+    import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261010-farmlist";
+    import "./name-peek.mjs?v=20261010-farmlist"; // full-name popup for truncated .nm names
 
     const POLL_MS = 30 * 1000;
     const CONCURRENCY = 6;
@@ -509,8 +509,10 @@
       // 🌱 keeps its original input (sample with farm victims), like the older 🚩 rules.
       const sp = sprout(m.raw || m, sampleEvents(np.rawRows || np.rows));
       // 🤖 a 🌱 that mostly dies to a few killers it never kills back = likely farm account (not a sprout).
-      const fa = sp.sprout && !isNotFarm({ name: np.display, cid: np.cid }) ? farmAccount(np.rawRows || np.rows, m.ownKpm) : null;
-      const farmAcct = fa && fa.farm ? { share: fa.share, deaths: fa.deaths, feeders: fa.feeders.slice(0, 3) } : null;
+      // data/farm.json (owner-confirmed bot, t322u) always lands in 🤖, whatever the 🌱 / 🤖 thresholds.
+      const listed = farmListEntry({ name: np.display, cid: np.cid });
+      const fa = (sp.sprout || listed) && !isNotFarm({ name: np.display, cid: np.cid }) ? farmAccount(np.rawRows || np.rows, m.ownKpm) : null;
+      const farmAcct = fa && (fa.farm || listed) ? { share: fa.share, deaths: fa.deaths, feeders: fa.feeders.slice(0, 3), confirmed: !!listed } : null;
       // Evidence for padding AND adjusted (any farm-account kills excluded).
       const pad = m.farm && m.farm.victims && m.farm.victims.length ? m.farm : null;
       return {
@@ -592,7 +594,7 @@
       head.splice(1, 0, "<th></th>");
       const body = list.map((r) => {
         const chart = '<a href="./?names=' + encodeURIComponent(r.name) + '" title="Open the chart with this name (press Analyze)">chart</a>';
-        return "<tr><td>" + nameCell(r) + "</td><td>" + chart + "</td>" +
+        return "<tr><td>" + nameCell(r) + (fa.confirmed ? ' <span class="st-dim" title="Confirmed bot / farm account on owner review (data/farm.json)">✅ confirmed</span>' : "") + "</td><td>" + chart + "</td>" +
           SPROUT_COLS.slice(1).map((c) => '<td class="st-num">' + fmt(r[c.key], c.d) + "</td>").join("") + "</tr>";
       }).join("");
       $("sprouts").innerHTML = '<div class="st-dim">' + list.length + " cached player" + (list.length === 1 ? "" : "s") + " right now. Click a column to sort.</div>" +
@@ -615,7 +617,7 @@
       const body = list.slice().sort((a, b) => b.farmAcct.share - a.farmAcct.share).map((r) => {
         const fa = r.farmAcct;
         const feeds = fa.feeders.map((f) => esc(f.name) + ' <span class="st-dim">(died ' + f.deaths + "×, killed back " + f.kills + ")</span>").join("<br>");
-        return "<tr><td>" + nameCell(r) + "</td><td>" + chartLink([r.name].concat(fa.feeders.map((f) => f.name)), "chart") + "</td><td>" + feeds +
+        return "<tr><td>" + nameCell(r) + (fa.confirmed ? ' <span class="st-dim" title="Confirmed bot / farm account on owner review (data/farm.json)">✅ confirmed</span>' : "") + "</td><td>" + chartLink([r.name].concat(fa.feeders.map((f) => f.name)), "chart") + "</td><td>" + feeds +
           '</td><td class="st-num">' + Math.round(fa.share * 100) + '%</td><td class="st-num">' + fmt(r.kpm, 2) + '</td><td class="st-num">' + fmt(r.events, 0) + "</td></tr>";
       }).join("");
       $("farmAcct").innerHTML = '<div class="st-scroll"><table class="st-table"><tr><th>Account</th><th></th><th>Feeds</th>' +
