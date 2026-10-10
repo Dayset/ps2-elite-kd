@@ -4,50 +4,36 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "38034760404",
-    "event": "workflow_dispatch",
+    "runId": "38076473902",
+    "event": "schedule",
     "kind": "discovery",
-    "startedAt": "2026-10-10T07:32:30.919Z",
-    "endedAt": "2026-10-10T07:37:58.027Z",
-    "seconds": 327,
-    "updated": [],
-    "added": [
-      "[BB20] 1michael11",
-      "[CNZY] azazbllll",
-      "[3EPG] Sladost",
-      "[GRDD] UNCHA1NED",
-      "[NRVN] 11Alpha",
-      "[PA13] NeedtoKill2",
-      "[FACA] YuOkIlErDestroyerEMERALD",
-      "[FUN5] Zeylven",
-      "[KITV] anakinlol112",
-      "[HARM] Leplax",
-      "[BHuu] Mifuniy",
-      "[JBDA] MorcoBEUvs",
-      "[G8] IodineNC",
-      "[4444] Zyr0sEUNC",
-      "[ROYS] M812nor",
-      "[PLuC] NomySG",
-      "[Cya9] RWThecoldw",
-      "[3EPG] golt22",
-      "MagicianG",
-      "[NFFN] SuKamote",
-      "[VCO] deeplyhacked",
-      "[PvOS] hagiaNC",
-      "[M4R5] patrickid26",
-      "[GSLD] TekkitBeasting",
-      "[KRU3] valkerbalker",
-      "[B0IS] 5KIPP3R",
-      "[3EPG] 99Mengsk99",
-      "[DIGT] BK1337",
-      "[BRTD] cupid",
-      "[91AP] RevoNooBion",
-      "[RWCN] starmao",
-      "Suchy101",
-      "[Brr] Strixxer",
-      "[koep] ebrofii"
+    "startedAt": "2026-10-10T18:36:53.670Z",
+    "endedAt": "2026-10-10T18:38:05.036Z",
+    "seconds": 71,
+    "updated": [
+      "[MIUO] UwUUwUUwU",
+      "LILKAtr",
+      "[KlYA] PIkaqiuIll",
+      "[3EPG] Nebelhexe",
+      "[C0D] DontMakeMeCry"
     ],
+    "added": [],
     "failed": [
+      {
+        "name": "[FEMx] ShrimpeHxxTR",
+        "reason": "Census: 36/200 opponent stats missing; keeping old data",
+        "outage": true
+      },
+      {
+        "name": "[xxSx] ShrimpeHxxNC",
+        "reason": "Census: 20/199 opponent stats missing; keeping old data",
+        "outage": true
+      },
+      {
+        "name": "LtGenISLJeffreyEpstein1488thEgoz",
+        "reason": "Census: no character LtGenISLJeffreyEpstein1488thEgoz",
+        "outage": false
+      },
       {
         "name": "[K4T5] ShrimpeHxxVS",
         "reason": "Census: 26/200 opponent stats missing; keeping old data",
@@ -59,7 +45,7 @@
         "outage": true
       }
     ],
-    "stoppedEarly": null,
+    "stoppedEarly": "4 outage-type failures in a row (Census/Honu down?)",
     "indexSize": 3000,
     "discovery": {
       "cap": 3000,
@@ -74,104 +60,47 @@
     },
     "batch": [
       {
-        "name": "[BB20] 1michael11",
-        "src": "discovery",
+        "name": "[MIUO] UwUUwUUwU",
+        "src": "fresh-request",
         "status": "done"
       },
       {
-        "name": "[CNZY] azazbllll",
-        "src": "discovery",
+        "name": "LILKAtr",
+        "src": "fresh-request",
         "status": "done"
       },
       {
-        "name": "[3EPG] Sladost",
-        "src": "discovery",
+        "name": "[KlYA] PIkaqiuIll",
+        "src": "fresh-request",
         "status": "done"
       },
       {
-        "name": "[GRDD] UNCHA1NED",
-        "src": "discovery",
+        "name": "[3EPG] Nebelhexe",
+        "src": "fresh-request",
         "status": "done"
       },
       {
-        "name": "[NRVN] 11Alpha",
-        "src": "discovery",
+        "name": "[C0D] DontMakeMeCry",
+        "src": "fresh-request",
         "status": "done"
       },
       {
-        "name": "[PA13] NeedtoKill2",
-        "src": "discovery",
-        "status": "done"
+        "name": "[FEMx] ShrimpeHxxTR",
+        "src": "refresh",
+        "status": "failed",
+        "reason": "Census: 36/200 opponent stats missing; keeping old data"
       },
       {
-        "name": "[FACA] YuOkIlErDestroyerEMERALD",
-        "src": "discovery",
-        "status": "done"
+        "name": "[xxSx] ShrimpeHxxNC",
+        "src": "refresh",
+        "status": "failed",
+        "reason": "Census: 20/199 opponent stats missing; keeping old data"
       },
       {
-        "name": "[FUN5] Zeylven",
-        "src": "discovery",
-        "status": "done"
-      },
-      {
-        "name": "[KITV] anakinlol112",
-        "src": "discovery",
-        "status": "done"
-      },
-      {
-        "name": "[HARM] Leplax",
-        "src": "discovery",
-        "status": "done"
-      },
-      {
-        "name": "[BHuu] Mifuniy",
-        "src": "discovery",
-        "status": "done"
-      },
-      {
-        "name": "[JBDA] MorcoBEUvs",
-        "src": "discovery",
-        "status": "done"
-      },
-      {
-        "name": "[G8] IodineNC",
-        "src": "discovery",
-        "status": "done"
-      },
-      {
-        "name": "[4444] Zyr0sEUNC",
-        "src": "discovery",
-        "status": "done"
-      },
-      {
-        "name": "[ROYS] M812nor",
-        "src": "discovery",
-        "status": "done"
-      },
-      {
-        "name": "[PLuC] NomySG",
-        "src": "discovery",
-        "status": "done"
-      },
-      {
-        "name": "[Cya9] RWThecoldw",
-        "src": "discovery",
-        "status": "done"
-      },
-      {
-        "name": "[3EPG] golt22",
-        "src": "discovery",
-        "status": "done"
-      },
-      {
-        "name": "MagicianG",
-        "src": "discovery",
-        "status": "done"
-      },
-      {
-        "name": "[NFFN] SuKamote",
-        "src": "discovery",
-        "status": "done"
+        "name": "LtGenISLJeffreyEpstein1488thEgoz",
+        "src": "refresh",
+        "status": "not-found",
+        "reason": "Census: no character LtGenISLJeffreyEpstein1488thEgoz"
       },
       {
         "name": "[K4T5] ShrimpeHxxVS",
@@ -184,81 +113,11 @@
         "src": "refresh",
         "status": "failed",
         "reason": "Census: 1/1 opponent stats missing; keeping old data"
-      },
-      {
-        "name": "[VCO] deeplyhacked",
-        "src": "discovery",
-        "status": "done"
-      },
-      {
-        "name": "[PvOS] hagiaNC",
-        "src": "discovery",
-        "status": "done"
-      },
-      {
-        "name": "[M4R5] patrickid26",
-        "src": "discovery",
-        "status": "done"
-      },
-      {
-        "name": "[GSLD] TekkitBeasting",
-        "src": "discovery",
-        "status": "done"
-      },
-      {
-        "name": "[KRU3] valkerbalker",
-        "src": "discovery",
-        "status": "done"
-      },
-      {
-        "name": "[B0IS] 5KIPP3R",
-        "src": "discovery",
-        "status": "done"
-      },
-      {
-        "name": "[3EPG] 99Mengsk99",
-        "src": "discovery",
-        "status": "done"
-      },
-      {
-        "name": "[DIGT] BK1337",
-        "src": "discovery",
-        "status": "done"
-      },
-      {
-        "name": "[BRTD] cupid",
-        "src": "discovery",
-        "status": "done"
-      },
-      {
-        "name": "[91AP] RevoNooBion",
-        "src": "discovery",
-        "status": "done"
-      },
-      {
-        "name": "[RWCN] starmao",
-        "src": "discovery",
-        "status": "done"
-      },
-      {
-        "name": "Suchy101",
-        "src": "discovery",
-        "status": "done"
-      },
-      {
-        "name": "[Brr] Strixxer",
-        "src": "discovery",
-        "status": "done"
-      },
-      {
-        "name": "[koep] ebrofii",
-        "src": "discovery",
-        "status": "done"
       }
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-10T07:38:00.421Z",
+    "checkedAt": "2026-10-10T18:38:07.398Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 1,
     "explained": 1,
@@ -397,8 +256,8 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-10T07:38:00.452Z",
-    "red": 17,
+    "checkedAt": "2026-10-10T18:38:07.430Z",
+    "red": 18,
     "padding": 22,
     "adjusted": 1,
     "outlier": 2,
@@ -408,7 +267,7 @@
     "forensics": 2
   },
   "sessionStats": {
-    "checkedAt": "2026-10-10T07:38:00.429Z",
+    "checkedAt": "2026-10-10T18:38:07.407Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -1257,21 +1116,22 @@
     "outliersUnexplained": 0
   },
   "size": {
-    "at": "2026-10-10T07:37:58.323Z",
-    "repoBytes": 23619584,
-    "dataBytes": 55616916,
-    "playersBytes": 52486262,
+    "at": "2026-10-10T18:38:05.327Z",
+    "repoBytes": 28369920,
+    "dataBytes": 55633040,
+    "playersBytes": 52497484,
     "playerFiles": 3000,
     "warnAtBytes": 734003200,
     "warning": false
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-10T07:38:00.437Z",
+    "checkedAt": "2026-10-10T18:38:07.414Z",
     "candidates": [
       "coldandhot",
       "alandwhale",
       "geilovs",
+      "dontmakemecry",
       "l4zonetr",
       "alandwhalenc",
       "dizzyknight",
@@ -1369,7 +1229,6 @@
       "zyr0s",
       "alandwhalens",
       "coopznc",
-      "dontmakemecry",
       "alandwhaletr",
       "cionekano",
       "wobblychampion",
@@ -1957,8 +1816,8 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-10T07:38:00.439Z",
-    "count": 47,
+    "checkedAt": "2026-10-10T18:38:07.417Z",
+    "count": 48,
     "players": [
       {
         "slug": "1stfanofahorn",
@@ -2032,6 +1891,14 @@
         "slug": "dizzyknight",
         "name": "[HSR] DizzyKnight",
         "cid": "5428139972583269857",
+        "lists": [
+          "red"
+        ]
+      },
+      {
+        "slug": "dontmakemecry",
+        "name": "[C0D] DontMakeMeCry",
+        "cid": "5428082720383709617",
         "lists": [
           "red"
         ]
