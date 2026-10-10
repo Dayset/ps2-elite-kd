@@ -3,9 +3,9 @@
  * (scripts/build-ranks.mjs → data/ranks.json) and ranks.html (a player's own
  * fresher browser copy after "Fetch fresh", t338u) use the SAME code.
  */
-import { normalizePlayer, playerMetrics, shownValue } from "./player-metrics.mjs?v=20261010-bar1";
-import { markNote, statMark } from "./padding.mjs?v=20261010-bar1";
-import { pickNewest, entryFetchedAt } from "./cache-pick.mjs?v=20261010-bar1";
+import { normalizePlayer, playerMetrics, shownValue } from "./player-metrics.mjs?v=20261010-bar2";
+import { markNote, statMark } from "./padding.mjs?v=20261010-bar2";
+import { pickNewest, entryFetchedAt } from "./cache-pick.mjs?v=20261010-bar2";
 
 /** Metric ids (same ids as the app.js stats columns). */
 export const METRIC_COLS = Object.freeze([

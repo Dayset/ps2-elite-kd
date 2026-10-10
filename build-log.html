@@ -14,7 +14,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261010-bar1" />
+  <link rel="stylesheet" href="styles.css?v=20261010-bar2" />
   <style>
     body { overflow: auto; }
     .st-wrap { max-width: 960px; margin: 0 auto; padding: 18px 16px 40px; }
@@ -173,7 +173,7 @@
       <div id="fx" class="st-dim">Loading…</div>
     </details>
     <details class="st-card st-sec" id="cardHidden">
-      <summary><h2>🙈 Hidden from rankings <span id="hiddenCount" class="st-count">…</span></h2></summary>
+      <summary><h2>🙈 Hidden from Rankings <span id="hiddenCount" class="st-count">…</span></h2></summary>
       <div class="st-note">Players left out of ranks.html (tables, percentiles, distributions) by hand, via data/hidden.json. They stay in the cache, can still be analyzed on the main page, and still count in 🚩 red flags and the 🧪 outlier guard.</div>
       <div id="hidden" class="st-dim">Loading…</div>
     </details>
@@ -466,16 +466,16 @@
        🌾 padding + † "adjusted" + the 🧪 outlier guard (grouped by player) go to 📉 Chart anomalies. Uses the
        same metrics as the main tables (player-metrics.mjs). Leads for review, not proof. -->
   <script type="module">
-    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261010-bar1";
-    import { reviewFlags, reviewRuleText, anomalyRuleText, paddingRuleText } from "./red-flags.mjs?v=20261010-bar1";
-    import { groupOutliers } from "./outlier-guard.mjs?v=20261010-bar1";
-    import { classifyBins, CHART_LABELS } from "./bins.mjs?v=20261010-bar1";
-    import { forensicsRuleText } from "./session-forensics.mjs?v=20261010-bar1";
-    import { sprout, sampleEvents, sproutRuleText, farmAccount, farmAccountRuleText } from "./sprouts.mjs?v=20261010-bar1";
-    import { reviewDecision, isNotFarm, farmListEntry } from "./padding.mjs?v=20261010-bar1";
-    import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261010-bar1";
-    import "./name-peek.mjs?v=20261010-bar1"; // full-name popup for truncated .nm names
-    import { radarProfileUrl, radarBadge, radarPriority } from "./radar.mjs?v=20261010-bar1";
+    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261010-bar2";
+    import { reviewFlags, reviewRuleText, anomalyRuleText, paddingRuleText } from "./red-flags.mjs?v=20261010-bar2";
+    import { groupOutliers } from "./outlier-guard.mjs?v=20261010-bar2";
+    import { classifyBins, CHART_LABELS } from "./bins.mjs?v=20261010-bar2";
+    import { forensicsRuleText } from "./session-forensics.mjs?v=20261010-bar2";
+    import { sprout, sampleEvents, sproutRuleText, farmAccount, farmAccountRuleText } from "./sprouts.mjs?v=20261010-bar2";
+    import { reviewDecision, isNotFarm, farmListEntry } from "./padding.mjs?v=20261010-bar2";
+    import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261010-bar2";
+    import "./name-peek.mjs?v=20261010-bar2"; // full-name popup for truncated .nm names
+    import { radarProfileUrl, radarBadge, radarPriority } from "./radar.mjs?v=20261010-bar2";
 
     const POLL_MS = 30 * 1000;
     const CONCURRENCY = 6;

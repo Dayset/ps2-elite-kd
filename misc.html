@@ -14,7 +14,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261010-bar1" />
+  <link rel="stylesheet" href="styles.css?v=20261010-bar2" />
   <style>
     body { overflow: auto; }
     .st-wrap { max-width: 960px; margin: 0 auto; padding: 18px 16px 40px; }
@@ -41,8 +41,8 @@
     <div class="st-card"><div id="list" class="st-dim">Loading…</div></div>
   </main>
   <script type="module">
-    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261010-bar1";
-    import { confirmedPadders, farmAccountLabels } from "./padding.mjs?v=20261010-bar1";
+    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261010-bar2";
+    import { confirmedPadders, farmAccountLabels } from "./padding.mjs?v=20261010-bar2";
 
     const $ = (id) => document.getElementById(id);
     const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);

@@ -3,7 +3,7 @@
  * Mirrors absolute_target_split / kpm_curve / rf_if / adjusted_ivi from ps2_elite_kd.py
  * Pure math lives in math.mjs (shared with Node tests).
  */
-import { chartFontScale } from "./desk-scale.mjs?v=20261010-bar1";
+import { chartFontScale } from "./desk-scale.mjs?v=20261010-bar2";
 import {
   X_MAX,
   EASY_MAX,
@@ -33,12 +33,12 @@ import {
   windowYValues,
   kpmBandCurve,
   bandReliability,
-} from "./math.mjs?v=20261010-bar1";
-import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261010-bar1";
-import GHOST_MODEL from "./data/ghost-model.mjs?v=20261010-bar1";
-import { ranksHref } from "./pick-sync.mjs?v=20261010-bar1";
-import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-bar1";
-import { entryFetchedAt, pickNewest, writeWithEviction } from "./cache-pick.mjs?v=20261010-bar1";
+} from "./math.mjs?v=20261010-bar2";
+import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261010-bar2";
+import GHOST_MODEL from "./data/ghost-model.mjs?v=20261010-bar2";
+import { ranksHref } from "./pick-sync.mjs?v=20261010-bar2";
+import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-bar2";
+import { entryFetchedAt, pickNewest, writeWithEviction } from "./cache-pick.mjs?v=20261010-bar2";
 import {
   NameLoadError,
   classifyLoadError,
@@ -65,7 +65,7 @@ import {
   etaLearnLiveMs,
   freshEtaText,
   expectedNameMs,
-} from "./analyze-run.mjs?v=20261010-bar1";
+} from "./analyze-run.mjs?v=20261010-bar2";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
@@ -79,7 +79,7 @@ import {
   THIN_MARK,
   THIN_NOTE_HEAD,
   thinPlayerLine,
-} from "./player-metrics.mjs?v=20261010-bar1";
+} from "./player-metrics.mjs?v=20261010-bar2";
 /** "22 kills / 60 deaths" in the opponent sample (MIN_FIGHTS counts). */
 function fightsText(r) {
   const k = r.sampleKills || 0;
@@ -91,16 +91,16 @@ function fightsText(r) {
 function thinCellTip(r) {
   return `${MIN_FIGHTS_TIP}. This sample: ${fightsText(r).replace(/[()]/g, "")}`;
 }
-import { markNote, statMark, confirmedPadderSlugs } from "./padding.mjs?v=20261010-bar1";
+import { markNote, statMark, confirmedPadderSlugs } from "./padding.mjs?v=20261010-bar2";
 // Account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times: chart name list only.
-import { accountTimes, flairsHtml } from "./flairs.mjs?v=20261010-bar1";
+import { accountTimes, flairsHtml } from "./flairs.mjs?v=20261010-bar2";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261010-bar1";
-import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261010-bar1";
+import "./name-peek.mjs?v=20261010-bar2";
+import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261010-bar2";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
-import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-bar1";
+import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-bar2";
 // Live data: Daybreak Census only (batched, paced); Honu just for a rare history fallback.
-import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-bar1";
+import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-bar2";
 import {
   censusBase,
   censusRequest,
@@ -109,7 +109,7 @@ import {
   limitConcurrency,
   tokenBucket,
   OPPONENT_TOP_N,
-} from "./census-fetch.mjs?v=20261010-bar1";
+} from "./census-fetch.mjs?v=20261010-bar2";
 
   // Player palettes (dark + light theme) live in palette.mjs (shared with ranks.html).
   const COLORS = PALETTE_DARK;
@@ -1245,12 +1245,15 @@ import {
    * and refreshed on click to include text still being typed.
    */
   function syncRanksLink() {
-    const a = document.getElementById("ranksLink");
-    if (!a) return;
-    a.setAttribute("href", ranksHref(currentNamesInField(), { starter: DEFAULT_PLACEHOLDER_NAME, max: MAX_NAMES }));
+    const href = ranksHref(currentNamesInField(), { starter: DEFAULT_PLACEHOLDER_NAME, max: MAX_NAMES });
+    // 🏆 Rankings and its › button (t342u) both open Rankings with the picks.
+    for (const id of ["ranksLink", "ranksGoBtn"]) {
+      const a = document.getElementById(id);
+      if (a) a.setAttribute("href", href);
+    }
   }
-  {
-    const a = document.getElementById("ranksLink");
+  for (const id of ["ranksLink", "ranksGoBtn"]) {
+    const a = document.getElementById(id);
     if (a) {
       const refresh = () => syncRanksLink();
       a.addEventListener("pointerdown", refresh);

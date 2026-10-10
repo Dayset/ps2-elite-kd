@@ -3,18 +3,18 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>PS2 Elite K/D — PlanetSide 2 player rankings</title>
-  <meta name="description" content="PlanetSide 2 population rankings: every cached player ranked by iVi skill rating, K/D, Resist, Brave and more, with percentiles, search, compare and distribution charts." />
+  <title>PS2 Elite K/D — Rankings of PlanetSide 2 players</title>
+  <meta name="description" content="PlanetSide 2 Rankings: every cached player ranked by iVi skill rating, K/D, Resist, Brave and more, with percentiles, search, compare and distribution charts." />
   <link rel="canonical" href="https://dayset.github.io/ps2-elite-kd/ranks.html" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="PS2 Elite K/D" />
-  <meta property="og:title" content="PS2 Elite K/D — PlanetSide 2 player rankings" />
-  <meta property="og:description" content="PlanetSide 2 population rankings: every cached player ranked by iVi skill rating, K/D, Resist, Brave and more, with percentiles, search, compare and distribution charts." />
+  <meta property="og:title" content="PS2 Elite K/D — Rankings of PlanetSide 2 players" />
+  <meta property="og:description" content="PlanetSide 2 Rankings: every cached player ranked by iVi skill rating, K/D, Resist, Brave and more, with percentiles, search, compare and distribution charts." />
   <meta property="og:url" content="https://dayset.github.io/ps2-elite-kd/ranks.html" />
   <meta property="og:image" content="https://dayset.github.io/ps2-elite-kd/assets/placeholder-graph.png" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="PS2 Elite K/D — PlanetSide 2 player rankings" />
-  <meta name="twitter:description" content="PlanetSide 2 population rankings: every cached player ranked by iVi skill rating, K/D, Resist, Brave and more, with percentiles, search, compare and distribution charts." />
+  <meta name="twitter:title" content="PS2 Elite K/D — Rankings of PlanetSide 2 players" />
+  <meta name="twitter:description" content="PlanetSide 2 Rankings: every cached player ranked by iVi skill rating, K/D, Resist, Brave and more, with percentiles, search, compare and distribution charts." />
   <meta name="twitter:image" content="https://dayset.github.io/ps2-elite-kd/assets/placeholder-graph.png" />
   <link rel="icon" href="data:," />
   <script>
@@ -24,7 +24,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261010-bar1" />
+  <link rel="stylesheet" href="styles.css?v=20261010-bar2" />
   <style>
     /* Ranks page: one long sortable table of every cached player. */
     body.ranks-page { overflow-x: hidden; }
@@ -310,7 +310,7 @@
 
     <details class="pooled-note fold-note" style="margin: 0.3rem 0 0.45rem"><summary>♿ What about vehicles?</summary><p>Vehicle and infantry kills are pooled together for now, so vehicle mains may look off in the graph and stats. Infantry-only numbers are coming later.</p></details>
     <div class="ranks-table-wrap" id="ranksScroll">
-      <table class="ranks-table" id="ranksTable" aria-label="Population ranks">
+      <table class="ranks-table" id="ranksTable" aria-label="Rankings">
         <thead id="ranksHead"></thead>
         <tbody id="ranksBody"></tbody>
       </table>
@@ -323,7 +323,7 @@
         <a id="backLinkFooter" href="index.html" class="back-btn back-btn-up" aria-label="Back to player search" data-hint="Back to player search"><svg class="back-chev" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M15 4.5 7.5 12 15 19.5" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="back-ico" aria-hidden="true">🔍</span></a>
         <p><a href="https://github.com/Dayset/ps2-elite-kd">github.com/Dayset/ps2-elite-kd</a></p>
       </div>
-      <label class="debug-cols-toggle" title="Append the older debug columns (🎯🎈 ivi, eKPM, own KPM, 📊 COI, 📉 Slope) to the rankings table">
+      <label class="debug-cols-toggle" title="Append the older debug columns (🎯🎈 ivi, eKPM, own KPM, 📊 COI, 📉 Slope) to the Rankings table">
         <input type="checkbox" id="debugColsToggle" /> show older debug stats
       </label>
     </div>
@@ -339,19 +339,19 @@
 
 
   <script type="module">
-    import "./name-peek.mjs?v=20261010-bar1";
-    import { compareByCharName } from "./analyze-run.mjs?v=20261010-bar1";
-    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits, binJumpTarget } from "./dist.mjs?v=20261010-bar1";
-    import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261010-bar1";
-    import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261010-bar1";
-    import { paletteColor } from "./palette.mjs?v=20261010-bar1";
-    import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-bar1";
-    import { deskUiScale } from "./desk-scale.mjs?v=20261010-bar1";
-    import { PICK_PARAM, picksFromSearch, matchPicks, analyzeHref, MAIN_PENDING_KEY } from "./pick-sync.mjs?v=20261010-bar1";
-    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-bar1";
-    import { mergeFreshRows } from "./rank-row.mjs?v=20261010-bar1";
-    import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-bar1";
-    import { confirmedPadderSlugs } from "./padding.mjs?v=20261010-bar1";
+    import "./name-peek.mjs?v=20261010-bar2";
+    import { compareByCharName } from "./analyze-run.mjs?v=20261010-bar2";
+    import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits, binJumpTarget } from "./dist.mjs?v=20261010-bar2";
+    import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261010-bar2";
+    import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261010-bar2";
+    import { paletteColor } from "./palette.mjs?v=20261010-bar2";
+    import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-bar2";
+    import { deskUiScale } from "./desk-scale.mjs?v=20261010-bar2";
+    import { PICK_PARAM, picksFromSearch, matchPicks, analyzeHref, MAIN_PENDING_KEY } from "./pick-sync.mjs?v=20261010-bar2";
+    import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-bar2";
+    import { mergeFreshRows } from "./rank-row.mjs?v=20261010-bar2";
+    import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-bar2";
+    import { confirmedPadderSlugs } from "./padding.mjs?v=20261010-bar2";
 
     const LS_THEME = "ps2-elite-kd-theme";
     const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";
