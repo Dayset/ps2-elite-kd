@@ -220,6 +220,8 @@ import {
   let graphReadyHintTimer = 0;
   /** Y-axis zoom factor; 1 = auto-fit current data (default). */
   let yZoom = Y_ZOOM_DEFAULT;
+  /** Last Y scale drawChart used (tests / console). */
+  let lastChartScale = null;
   /** "cumulative" (default) | "banded"; persisted in localStorage only. */
   let chartMode = readChartMode();
   let ghostsOn = readGhostsOn();
@@ -2157,6 +2159,7 @@ import {
           )
         ) // fit the left window
       : applyYZoom(yScale(yvals), yZoom);
+    lastChartScale = scale;
     const yToPx = makeYMapper(scale);
     const xTicks = zoomedLeft ? niceLinTicks(0, viewXMax, 5) : [0, 0.5, 1.0, 1.5, 2.0];
     const xTickDigits = zoomedLeft && xTicks.length > 1 && xTicks[1] - xTicks[0] < 0.1 ? 2 : 1;
@@ -3181,6 +3184,9 @@ import {
     players = result.loaded.map((x) => x.player);
     // Attempted set (incl. skipped names) so a repeat press shows the
     // "graph is ready" hint instead of refetching the same bad name.
+    // t328u: a different set of graphed players (one added / removed) → back to
+    // Auto zoom so the axes refit; same set (Fetch fresh re-run) keeps manual zoom.
+    if (namesSetKey(successNames) !== namesSetKey(lastLoadedNames)) resetYZoom({ redraw: false });
     lastAnalyzedNames = clean.slice();
     lastLoadedNames = successNames.slice();
     drawChart(players);
@@ -3758,6 +3764,7 @@ import {
       clampYZoom,
       Y_ZOOM_DEFAULT,
       getYZoom: () => yZoom,
+      getChartScale: () => (lastChartScale ? { ...lastChartScale } : null),
       getChartMode: () => chartMode,
       setChartMode,
       getGhostsOn: () => ghostsOn,
