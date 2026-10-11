@@ -4,19 +4,27 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "38150720569",
-    "event": "workflow_dispatch",
-    "kind": "on-demand",
-    "startedAt": "2026-10-11T15:18:37.789Z",
-    "endedAt": "2026-10-11T15:18:41.216Z",
-    "seconds": 3,
-    "updated": [],
-    "added": [
-      "[DIG] GigiErBullo"
+    "runId": "38152354776",
+    "event": "schedule",
+    "kind": "discovery",
+    "startedAt": "2026-10-11T15:42:05.201Z",
+    "endedAt": "2026-10-11T15:42:21.875Z",
+    "seconds": 17,
+    "updated": [
+      "Arneen",
+      "[H0LY] ALandWhaleNC",
+      "[YBuS] Mentis2k6"
     ],
+    "added": [],
     "failed": [],
     "stoppedEarly": null,
     "indexSize": 3130,
+    "discovery": {
+      "cap": 3000,
+      "queue": 4910,
+      "slice": null,
+      "sweepInProgress": false
+    },
     "honu": {
       "day": "2026-10-11",
       "calls": 999,
@@ -24,14 +32,24 @@
     },
     "batch": [
       {
-        "name": "[DIG] GigiErBullo",
-        "src": "on-demand",
+        "name": "Arneen",
+        "src": "fresh-request",
+        "status": "done"
+      },
+      {
+        "name": "[H0LY] ALandWhaleNC",
+        "src": "fresh-request",
+        "status": "done"
+      },
+      {
+        "name": "[YBuS] Mentis2k6",
+        "src": "fresh-request",
         "status": "done"
       }
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-11T15:18:43.803Z",
+    "checkedAt": "2026-10-11T15:42:23.967Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 3,
     "explained": 2,
@@ -256,7 +274,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-11T15:18:43.843Z",
+    "checkedAt": "2026-10-11T15:42:23.997Z",
     "red": 18,
     "padding": 22,
     "adjusted": 1,
@@ -267,7 +285,7 @@
     "forensics": 5
   },
   "sessionStats": {
-    "checkedAt": "2026-10-11T15:18:43.814Z",
+    "checkedAt": "2026-10-11T15:42:23.974Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -1143,17 +1161,17 @@
     "outliersUnexplained": 0
   },
   "size": {
-    "at": "2026-10-11T15:18:41.650Z",
-    "repoBytes": 27357184,
-    "dataBytes": 58911881,
-    "playersBytes": 54967041,
+    "at": "2026-10-11T15:42:22.274Z",
+    "repoBytes": 27410432,
+    "dataBytes": 58934548,
+    "playersBytes": 54989473,
     "playerFiles": 3130,
     "warnAtBytes": 734003200,
     "warning": false
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-11T15:18:43.825Z",
+    "checkedAt": "2026-10-11T15:42:23.982Z",
     "candidates": [
       "coldandhot",
       "alandwhale",
@@ -6766,7 +6784,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-11T15:18:43.828Z",
+    "checkedAt": "2026-10-11T15:42:23.985Z",
     "count": 89,
     "players": [
       {
