@@ -4,72 +4,34 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "38103399422",
-    "event": "schedule",
-    "kind": "discovery",
-    "startedAt": "2026-10-11T01:54:43.206Z",
-    "endedAt": "2026-10-11T01:58:03.984Z",
-    "seconds": 201,
-    "updated": [
-      "[DIGT] RaziGx",
-      "4UA",
-      "[GOBS] VoodooMonkey",
-      "[RMBT] TopGunMasterEUTR",
-      "[1RPC] ursuak"
+    "runId": "38104857039",
+    "event": "workflow_dispatch",
+    "kind": "on-demand",
+    "startedAt": "2026-10-11T02:21:08.322Z",
+    "endedAt": "2026-10-11T02:22:40.448Z",
+    "seconds": 92,
+    "updated": [],
+    "added": [
+      "[V] UpInTheAir89"
     ],
-    "added": [],
     "failed": [],
     "stoppedEarly": null,
-    "indexSize": 3076,
-    "discovery": {
-      "cap": 3000,
-      "queue": 4923,
-      "slice": {
-        "calls": 61,
-        "swept": 6665,
-        "prefiltered": 5105,
-        "checked": 5105,
-        "qualified": 2149,
-        "newPlaying": 72,
-        "done": true
-      },
-      "sweepInProgress": false
-    },
+    "indexSize": 3077,
     "honu": {
       "day": "2026-10-11",
-      "calls": 808,
+      "calls": 840,
       "cap": 1000
     },
     "batch": [
       {
-        "name": "[DIGT] RaziGx",
-        "src": "fresh-request",
-        "status": "done"
-      },
-      {
-        "name": "4UA",
-        "src": "fresh-request",
-        "status": "done"
-      },
-      {
-        "name": "[GOBS] VoodooMonkey",
-        "src": "fresh-request",
-        "status": "done"
-      },
-      {
-        "name": "[RMBT] TopGunMasterEUTR",
-        "src": "fresh-request",
-        "status": "done"
-      },
-      {
-        "name": "[1RPC] ursuak",
-        "src": "fresh-request",
+        "name": "[V] UpInTheAir89",
+        "src": "on-demand",
         "status": "done"
       }
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-11T01:58:05.935Z",
+    "checkedAt": "2026-10-11T02:22:42.971Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 3,
     "explained": 2,
@@ -79,8 +41,8 @@
         "name": "Anniversay",
         "id": "kd",
         "value": 247,
-        "bound": 19.978,
-        "z": 234.297,
+        "bound": 19.979,
+        "z": 234.324,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -91,8 +53,8 @@
         "name": "[B54A] geiloVS",
         "id": "kd",
         "value": 150,
-        "bound": 19.978,
-        "z": 141.777,
+        "bound": 19.979,
+        "z": 141.793,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (aim), listed there",
@@ -148,14 +110,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 234.297,
+        "maxZ": 234.324,
         "metrics": [
           {
             "id": "kd",
             "label": "KD",
             "value": 247,
-            "bound": 19.978,
-            "z": 234.297,
+            "bound": 19.979,
+            "z": 234.324,
             "side": "high"
           }
         ]
@@ -206,14 +168,14 @@
         "red": [
           "aim"
         ],
-        "maxZ": 141.777,
+        "maxZ": 141.793,
         "metrics": [
           {
             "id": "kd",
             "label": "KD",
             "value": 150,
-            "bound": 19.978,
-            "z": 141.777,
+            "bound": 19.979,
+            "z": 141.793,
             "side": "high"
           },
           {
@@ -294,7 +256,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-11T01:58:05.962Z",
+    "checkedAt": "2026-10-11T02:22:43.007Z",
     "red": 18,
     "padding": 22,
     "adjusted": 1,
@@ -305,7 +267,7 @@
     "forensics": 5
   },
   "sessionStats": {
-    "checkedAt": "2026-10-11T01:58:05.942Z",
+    "checkedAt": "2026-10-11T02:22:42.979Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -318,14 +280,14 @@
     },
     "ruleText": "[session pattern] in recent Honu sessions (≥ 100 kills counted): assists per kill ≤ 0.1, headshot share ≥ 50% (headshot XP per kill; Census lifetime HSR when no XP detail) and K/D ≥ 7 (session deaths; Census lifetime KD when none). A very one-sided record; a lead for manual review, not proof.",
     "coverage": {
-      "players": 3075,
-      "withSessions": 1409,
+      "players": 3076,
+      "withSessions": 1410,
       "measured": 774,
-      "sessions": 4393,
-      "kills": 274299,
-      "xpPlayers": 141,
-      "xpMeasured": 95,
-      "xpSessions": 594
+      "sessions": 4396,
+      "kills": 274364,
+      "xpPlayers": 145,
+      "xpMeasured": 96,
+      "xpSessions": 606
     },
     "metrics": [
       {
@@ -497,93 +459,93 @@
         "max": 169.625
       },
       "s_hsk": {
-        "n": 99,
+        "n": 102,
         "min": 0.006,
-        "p01": 0.006,
-        "p05": 0.076,
-        "median": 0.299,
-        "p95": 0.563,
-        "p99": 0.709,
+        "p01": 0.029,
+        "p05": 0.081,
+        "median": 0.294,
+        "p95": 0.537,
+        "p99": 0.696,
         "max": 0.73
       },
       "s_ksk": {
-        "n": 99,
+        "n": 102,
         "min": 0.04,
-        "p01": 0.04,
-        "p05": 0.121,
-        "median": 0.43,
-        "p95": 0.761,
-        "p99": 0.922,
+        "p01": 0.071,
+        "p05": 0.127,
+        "median": 0.427,
+        "p95": 0.722,
+        "p99": 0.869,
         "max": 0.953
       },
       "s_domk": {
-        "n": 99,
+        "n": 102,
         "min": 0.007,
-        "p01": 0.007,
+        "p01": 0.021,
         "p05": 0.025,
         "median": 0.085,
-        "p95": 0.155,
-        "p99": 0.233,
+        "p95": 0.154,
+        "p99": 0.192,
         "max": 0.239
       },
       "s_revk": {
-        "n": 99,
+        "n": 102,
         "min": 0,
-        "p01": 0,
+        "p01": 0.002,
         "p05": 0.007,
-        "median": 0.05,
+        "median": 0.051,
         "p95": 0.099,
-        "p99": 0.132,
+        "p99": 0.125,
         "max": 0.151
       },
       "s_revDom": {
-        "n": 99,
+        "n": 102,
         "min": 0,
-        "p01": 0,
-        "p05": 0.043,
-        "median": 0.513,
+        "p01": 0.008,
+        "p05": 0.074,
+        "median": 0.525,
         "p95": 2.333,
-        "p99": 4.6,
+        "p99": 3.5,
         "max": 10
       },
       "s_savk": {
-        "n": 99,
+        "n": 102,
         "min": 0.011,
-        "p01": 0.011,
-        "p05": 0.016,
+        "p01": 0.012,
+        "p05": 0.017,
         "median": 0.056,
-        "p95": 0.118,
-        "p99": 0.153,
+        "p95": 0.117,
+        "p99": 0.132,
         "max": 0.167
       },
       "s_spotk": {
-        "n": 99,
+        "n": 102,
         "min": 0,
         "p01": 0,
         "p05": 0,
-        "median": 0.018,
-        "p95": 0.138,
-        "p99": 0.16,
+        "median": 0.016,
+        "p95": 0.137,
+        "p99": 0.158,
         "max": 0.206
       },
       "s_prik": {
-        "n": 99,
+        "n": 102,
         "min": 0.034,
-        "p01": 0.034,
-        "p05": 0.1,
+        "p01": 0.06,
+        "p05": 0.111,
         "median": 0.164,
-        "p95": 0.273,
-        "p99": 0.328,
+        "p95": 0.265,
+        "p99": 0.315,
         "max": 0.412
       },
       "s_stopk": {
-        "n": 99,
+        "n": 102,
         "min": 0.013,
-        "p01": 0.013,
-        "p05": 0.033,
+        "p01": 0.018,
+        "p05": 0.035,
         "median": 0.069,
         "p95": 0.138,
-        "p99": 0.162,
+        "p99": 0.152,
         "max": 0.174
       }
     },
@@ -1165,7 +1127,7 @@
         "red": [
           "aim"
         ],
-        "maxZ": 141.777,
+        "maxZ": 141.793,
         "metrics": [
           {
             "id": "s_kd",
@@ -1181,17 +1143,17 @@
     "outliersUnexplained": 0
   },
   "size": {
-    "at": "2026-10-11T01:58:04.243Z",
+    "at": "2026-10-11T02:22:40.860Z",
     "repoBytes": 26575872,
-    "dataBytes": 57778390,
-    "playersBytes": 53958565,
-    "playerFiles": 3076,
+    "dataBytes": 57816725,
+    "playersBytes": 53978105,
+    "playerFiles": 3077,
     "warnAtBytes": 734003200,
     "warning": false
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-11T01:58:05.948Z",
+    "checkedAt": "2026-10-11T02:22:42.989Z",
     "candidates": [
       "coldandhot",
       "alandwhale",
@@ -6801,7 +6763,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-11T01:58:05.950Z",
+    "checkedAt": "2026-10-11T02:22:42.992Z",
     "count": 89,
     "players": [
       {
