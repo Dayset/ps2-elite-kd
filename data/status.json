@@ -4,50 +4,19 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "38120529832",
+    "runId": "38121842439",
     "event": "workflow_dispatch",
-    "kind": "discovery",
-    "startedAt": "2026-10-11T07:11:41.384Z",
-    "endedAt": "2026-10-11T07:15:07.475Z",
-    "seconds": 206,
-    "updated": [
-      "[V] FredK",
-      "[H0UR] ShotMadikov",
-      "[B1ck] CallMeYZ",
-      "[ARES] 1nfinity666",
-      "[RELY] DuWurstVS"
+    "kind": "on-demand",
+    "startedAt": "2026-10-11T07:35:05.324Z",
+    "endedAt": "2026-10-11T07:36:09.144Z",
+    "seconds": 64,
+    "updated": [],
+    "added": [
+      "[GOB] EternalRebel"
     ],
-    "added": [],
-    "failed": [
-      {
-        "name": "[FEMx] ShrimpeHxxTR",
-        "reason": "Census: 36/200 opponent stats missing; keeping old data",
-        "outage": true
-      },
-      {
-        "name": "[xxSx] ShrimpeHxxNC",
-        "reason": "Census: 20/199 opponent stats missing; keeping old data",
-        "outage": true
-      },
-      {
-        "name": "[K4T5] ShrimpeHxxVS",
-        "reason": "Census: 26/200 opponent stats missing; keeping old data",
-        "outage": true
-      },
-      {
-        "name": "Runnerdeconfianza",
-        "reason": "Census: 1/1 opponent stats missing; keeping old data",
-        "outage": true
-      }
-    ],
-    "stoppedEarly": "4 outage-type failures in a row (Census/Honu down?)",
-    "indexSize": 3114,
-    "discovery": {
-      "cap": 3000,
-      "queue": 4915,
-      "slice": null,
-      "sweepInProgress": false
-    },
+    "failed": [],
+    "stoppedEarly": null,
+    "indexSize": 3115,
     "honu": {
       "day": "2026-10-11",
       "calls": 999,
@@ -55,58 +24,14 @@
     },
     "batch": [
       {
-        "name": "[V] FredK",
-        "src": "fresh-request",
+        "name": "[GOB] EternalRebel",
+        "src": "on-demand",
         "status": "done"
-      },
-      {
-        "name": "[H0UR] ShotMadikov",
-        "src": "fresh-request",
-        "status": "done"
-      },
-      {
-        "name": "[B1ck] CallMeYZ",
-        "src": "fresh-request",
-        "status": "done"
-      },
-      {
-        "name": "[ARES] 1nfinity666",
-        "src": "fresh-request",
-        "status": "done"
-      },
-      {
-        "name": "[RELY] DuWurstVS",
-        "src": "fresh-request",
-        "status": "done"
-      },
-      {
-        "name": "[FEMx] ShrimpeHxxTR",
-        "src": "refresh",
-        "status": "failed",
-        "reason": "Census: 36/200 opponent stats missing; keeping old data"
-      },
-      {
-        "name": "[xxSx] ShrimpeHxxNC",
-        "src": "refresh",
-        "status": "failed",
-        "reason": "Census: 20/199 opponent stats missing; keeping old data"
-      },
-      {
-        "name": "[K4T5] ShrimpeHxxVS",
-        "src": "refresh",
-        "status": "failed",
-        "reason": "Census: 26/200 opponent stats missing; keeping old data"
-      },
-      {
-        "name": "Runnerdeconfianza",
-        "src": "refresh",
-        "status": "failed",
-        "reason": "Census: 1/1 opponent stats missing; keeping old data"
       }
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-11T07:15:10.080Z",
+    "checkedAt": "2026-10-11T07:36:11.236Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 3,
     "explained": 2,
@@ -331,7 +256,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-11T07:15:10.115Z",
+    "checkedAt": "2026-10-11T07:36:11.266Z",
     "red": 18,
     "padding": 22,
     "adjusted": 1,
@@ -342,7 +267,7 @@
     "forensics": 5
   },
   "sessionStats": {
-    "checkedAt": "2026-10-11T07:15:10.087Z",
+    "checkedAt": "2026-10-11T07:36:11.242Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -355,7 +280,7 @@
     },
     "ruleText": "[session pattern] in recent Honu sessions (≥ 100 kills counted): assists per kill ≤ 0.1, headshot share ≥ 50% (headshot XP per kill; Census lifetime HSR when no XP detail) and K/D ≥ 7 (session deaths; Census lifetime KD when none). A very one-sided record; a lead for manual review, not proof.",
     "coverage": {
-      "players": 3113,
+      "players": 3114,
       "withSessions": 1424,
       "measured": 784,
       "sessions": 4438,
@@ -1218,17 +1143,17 @@
     "outliersUnexplained": 0
   },
   "size": {
-    "at": "2026-10-11T07:15:07.904Z",
+    "at": "2026-10-11T07:36:09.581Z",
     "repoBytes": 27559936,
-    "dataBytes": 58599918,
-    "playersBytes": 54663841,
-    "playerFiles": 3114,
+    "dataBytes": 58617519,
+    "playersBytes": 54683123,
+    "playerFiles": 3115,
     "warnAtBytes": 734003200,
     "warning": false
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-11T07:15:10.096Z",
+    "checkedAt": "2026-10-11T07:36:11.251Z",
     "candidates": [
       "coldandhot",
       "alandwhale",
@@ -6841,7 +6766,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-11T07:15:10.100Z",
+    "checkedAt": "2026-10-11T07:36:11.254Z",
     "count": 89,
     "players": [
       {
