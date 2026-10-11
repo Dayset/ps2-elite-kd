@@ -4,76 +4,39 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "38105060980",
+    "runId": "38105673224",
     "event": "workflow_dispatch",
     "kind": "on-demand",
-    "startedAt": "2026-10-11T02:26:43.106Z",
-    "endedAt": "2026-10-11T02:30:01.449Z",
-    "seconds": 198,
+    "startedAt": "2026-10-11T02:36:13.749Z",
+    "endedAt": "2026-10-11T02:37:35.091Z",
+    "seconds": 81,
     "updated": [],
-    "added": [
-      "[V] Defonotfromnieuwe",
-      "[V] Supr3ssor",
-      "[V] Kotyr",
-      "[V] Vindicore",
-      "[V] TotalFrost",
-      "[V] ImNotSpez",
-      "[V] Schrael",
-      "[V] Negator"
+    "added": [],
+    "failed": [
+      {
+        "name": "TxgeiloNC",
+        "reason": "Census: 38/200 opponent stats missing; keeping old data",
+        "outage": true
+      }
     ],
-    "failed": [],
     "stoppedEarly": null,
     "indexSize": 3086,
     "honu": {
       "day": "2026-10-11",
-      "calls": 932,
+      "calls": 960,
       "cap": 1000
     },
     "batch": [
       {
-        "name": "[V] Defonotfromnieuwe",
+        "name": "TxgeiloNC",
         "src": "on-demand",
-        "status": "done"
-      },
-      {
-        "name": "[V] Supr3ssor",
-        "src": "on-demand",
-        "status": "done"
-      },
-      {
-        "name": "[V] Kotyr",
-        "src": "on-demand",
-        "status": "done"
-      },
-      {
-        "name": "[V] Vindicore",
-        "src": "on-demand",
-        "status": "done"
-      },
-      {
-        "name": "[V] TotalFrost",
-        "src": "on-demand",
-        "status": "done"
-      },
-      {
-        "name": "[V] ImNotSpez",
-        "src": "on-demand",
-        "status": "done"
-      },
-      {
-        "name": "[V] Schrael",
-        "src": "on-demand",
-        "status": "done"
-      },
-      {
-        "name": "[V] Negator",
-        "src": "on-demand",
-        "status": "done"
+        "status": "failed",
+        "reason": "Census: 38/200 opponent stats missing; keeping old data"
       }
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-11T02:30:02.942Z",
+    "checkedAt": "2026-10-11T02:37:37.592Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 3,
     "explained": 2,
@@ -298,7 +261,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-11T02:30:02.965Z",
+    "checkedAt": "2026-10-11T02:37:37.624Z",
     "red": 18,
     "padding": 22,
     "adjusted": 1,
@@ -309,7 +272,7 @@
     "forensics": 5
   },
   "sessionStats": {
-    "checkedAt": "2026-10-11T02:30:02.947Z",
+    "checkedAt": "2026-10-11T02:37:37.599Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -327,9 +290,9 @@
       "measured": 781,
       "sessions": 4429,
       "kills": 275757,
-      "xpPlayers": 153,
-      "xpMeasured": 103,
-      "xpSessions": 630
+      "xpPlayers": 157,
+      "xpMeasured": 104,
+      "xpSessions": 642
     },
     "metrics": [
       {
@@ -501,7 +464,7 @@
         "max": 169.625
       },
       "s_hsk": {
-        "n": 109,
+        "n": 110,
         "min": 0.006,
         "p01": 0.019,
         "p05": 0.076,
@@ -511,27 +474,27 @@
         "max": 0.73
       },
       "s_ksk": {
-        "n": 109,
+        "n": 110,
         "min": 0.04,
         "p01": 0.071,
         "p05": 0.127,
-        "median": 0.427,
+        "median": 0.421,
         "p95": 0.722,
         "p99": 0.869,
         "max": 0.953
       },
       "s_domk": {
-        "n": 109,
+        "n": 110,
         "min": 0.007,
         "p01": 0.021,
         "p05": 0.025,
-        "median": 0.082,
+        "median": 0.081,
         "p95": 0.154,
         "p99": 0.192,
         "max": 0.239
       },
       "s_revk": {
-        "n": 109,
+        "n": 110,
         "min": 0,
         "p01": 0.002,
         "p05": 0.007,
@@ -541,7 +504,7 @@
         "max": 0.151
       },
       "s_revDom": {
-        "n": 109,
+        "n": 110,
         "min": 0,
         "p01": 0.008,
         "p05": 0.074,
@@ -551,7 +514,7 @@
         "max": 10
       },
       "s_savk": {
-        "n": 109,
+        "n": 110,
         "min": 0.011,
         "p01": 0.012,
         "p05": 0.017,
@@ -561,7 +524,7 @@
         "max": 0.167
       },
       "s_spotk": {
-        "n": 109,
+        "n": 110,
         "min": 0,
         "p01": 0,
         "p05": 0,
@@ -571,7 +534,7 @@
         "max": 0.277
       },
       "s_prik": {
-        "n": 109,
+        "n": 110,
         "min": 0.034,
         "p01": 0.06,
         "p05": 0.111,
@@ -581,7 +544,7 @@
         "max": 0.412
       },
       "s_stopk": {
-        "n": 109,
+        "n": 110,
         "min": 0.013,
         "p01": 0.018,
         "p05": 0.033,
@@ -1185,9 +1148,9 @@
     "outliersUnexplained": 0
   },
   "size": {
-    "at": "2026-10-11T02:30:01.805Z",
-    "repoBytes": 26575872,
-    "dataBytes": 58030925,
+    "at": "2026-10-11T02:37:35.525Z",
+    "repoBytes": 27270144,
+    "dataBytes": 58045495,
     "playersBytes": 54151298,
     "playerFiles": 3086,
     "warnAtBytes": 734003200,
@@ -1195,7 +1158,7 @@
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-11T02:30:02.953Z",
+    "checkedAt": "2026-10-11T02:37:37.608Z",
     "candidates": [
       "coldandhot",
       "alandwhale",
@@ -6805,7 +6768,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-11T02:30:02.955Z",
+    "checkedAt": "2026-10-11T02:37:37.611Z",
     "count": 89,
     "players": [
       {
