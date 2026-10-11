@@ -4,29 +4,19 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "38126351923",
-    "event": "schedule",
-    "kind": "discovery",
-    "startedAt": "2026-10-11T08:52:47.533Z",
-    "endedAt": "2026-10-11T08:53:43.677Z",
-    "seconds": 56,
-    "updated": [
-      "[DRIP] RaziTR",
-      "[TRNK] StillBreathing",
-      "[ROYS] IHateNanites",
-      "ADHDASD",
-      "[RWCN] RWtravel"
+    "runId": "38130170156",
+    "event": "workflow_dispatch",
+    "kind": "on-demand",
+    "startedAt": "2026-10-11T09:56:59.217Z",
+    "endedAt": "2026-10-11T09:57:04.408Z",
+    "seconds": 5,
+    "updated": [],
+    "added": [
+      "[B54A] Squiqqles"
     ],
-    "added": [],
     "failed": [],
     "stoppedEarly": null,
-    "indexSize": 3116,
-    "discovery": {
-      "cap": 3000,
-      "queue": 4914,
-      "slice": null,
-      "sweepInProgress": false
-    },
+    "indexSize": 3117,
     "honu": {
       "day": "2026-10-11",
       "calls": 999,
@@ -34,34 +24,14 @@
     },
     "batch": [
       {
-        "name": "[DRIP] RaziTR",
-        "src": "fresh-request",
-        "status": "done"
-      },
-      {
-        "name": "[TRNK] StillBreathing",
-        "src": "fresh-request",
-        "status": "done"
-      },
-      {
-        "name": "[ROYS] IHateNanites",
-        "src": "fresh-request",
-        "status": "done"
-      },
-      {
-        "name": "ADHDASD",
-        "src": "fresh-request",
-        "status": "done"
-      },
-      {
-        "name": "[RWCN] RWtravel",
-        "src": "fresh-request",
+        "name": "[B54A] Squiqqles",
+        "src": "on-demand",
         "status": "done"
       }
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-11T08:53:46.326Z",
+    "checkedAt": "2026-10-11T09:57:06.275Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 3,
     "explained": 2,
@@ -286,7 +256,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-11T08:53:46.363Z",
+    "checkedAt": "2026-10-11T09:57:06.304Z",
     "red": 18,
     "padding": 22,
     "adjusted": 1,
@@ -297,7 +267,7 @@
     "forensics": 5
   },
   "sessionStats": {
-    "checkedAt": "2026-10-11T08:53:46.335Z",
+    "checkedAt": "2026-10-11T09:57:06.282Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -310,7 +280,7 @@
     },
     "ruleText": "[session pattern] in recent Honu sessions (≥ 100 kills counted): assists per kill ≤ 0.1, headshot share ≥ 50% (headshot XP per kill; Census lifetime HSR when no XP detail) and K/D ≥ 7 (session deaths; Census lifetime KD when none). A very one-sided record; a lead for manual review, not proof.",
     "coverage": {
-      "players": 3115,
+      "players": 3116,
       "withSessions": 1424,
       "measured": 784,
       "sessions": 4438,
@@ -1173,17 +1143,17 @@
     "outliersUnexplained": 0
   },
   "size": {
-    "at": "2026-10-11T08:53:44.093Z",
-    "repoBytes": 27787264,
-    "dataBytes": 58638128,
-    "playersBytes": 54702151,
-    "playerFiles": 3116,
+    "at": "2026-10-11T09:57:04.720Z",
+    "repoBytes": 27986944,
+    "dataBytes": 58657090,
+    "playersBytes": 54721325,
+    "playerFiles": 3117,
     "warnAtBytes": 734003200,
     "warning": false
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-11T08:53:46.345Z",
+    "checkedAt": "2026-10-11T09:57:06.291Z",
     "candidates": [
       "coldandhot",
       "alandwhale",
@@ -6796,7 +6766,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-11T08:53:46.348Z",
+    "checkedAt": "2026-10-11T09:57:06.293Z",
     "count": 89,
     "players": [
       {
