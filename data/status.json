@@ -4,19 +4,29 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "38123957912",
-    "event": "workflow_dispatch",
-    "kind": "on-demand",
-    "startedAt": "2026-10-11T08:12:05.998Z",
-    "endedAt": "2026-10-11T08:12:09.409Z",
-    "seconds": 3,
-    "updated": [],
-    "added": [
-      "BERlC"
+    "runId": "38126351923",
+    "event": "schedule",
+    "kind": "discovery",
+    "startedAt": "2026-10-11T08:52:47.533Z",
+    "endedAt": "2026-10-11T08:53:43.677Z",
+    "seconds": 56,
+    "updated": [
+      "[DRIP] RaziTR",
+      "[TRNK] StillBreathing",
+      "[ROYS] IHateNanites",
+      "ADHDASD",
+      "[RWCN] RWtravel"
     ],
+    "added": [],
     "failed": [],
     "stoppedEarly": null,
     "indexSize": 3116,
+    "discovery": {
+      "cap": 3000,
+      "queue": 4914,
+      "slice": null,
+      "sweepInProgress": false
+    },
     "honu": {
       "day": "2026-10-11",
       "calls": 999,
@@ -24,14 +34,34 @@
     },
     "batch": [
       {
-        "name": "BERlC",
-        "src": "on-demand",
+        "name": "[DRIP] RaziTR",
+        "src": "fresh-request",
+        "status": "done"
+      },
+      {
+        "name": "[TRNK] StillBreathing",
+        "src": "fresh-request",
+        "status": "done"
+      },
+      {
+        "name": "[ROYS] IHateNanites",
+        "src": "fresh-request",
+        "status": "done"
+      },
+      {
+        "name": "ADHDASD",
+        "src": "fresh-request",
+        "status": "done"
+      },
+      {
+        "name": "[RWCN] RWtravel",
+        "src": "fresh-request",
         "status": "done"
       }
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-11T08:12:10.981Z",
+    "checkedAt": "2026-10-11T08:53:46.326Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 3,
     "explained": 2,
@@ -256,7 +286,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-11T08:12:11.005Z",
+    "checkedAt": "2026-10-11T08:53:46.363Z",
     "red": 18,
     "padding": 22,
     "adjusted": 1,
@@ -267,7 +297,7 @@
     "forensics": 5
   },
   "sessionStats": {
-    "checkedAt": "2026-10-11T08:12:10.986Z",
+    "checkedAt": "2026-10-11T08:53:46.335Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -1143,17 +1173,17 @@
     "outliersUnexplained": 0
   },
   "size": {
-    "at": "2026-10-11T08:12:09.749Z",
+    "at": "2026-10-11T08:53:44.093Z",
     "repoBytes": 27787264,
-    "dataBytes": 58637160,
-    "playersBytes": 54702123,
+    "dataBytes": 58638128,
+    "playersBytes": 54702151,
     "playerFiles": 3116,
     "warnAtBytes": 734003200,
     "warning": false
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-11T08:12:10.993Z",
+    "checkedAt": "2026-10-11T08:53:46.345Z",
     "candidates": [
       "coldandhot",
       "alandwhale",
@@ -6766,7 +6796,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-11T08:12:10.996Z",
+    "checkedAt": "2026-10-11T08:53:46.348Z",
     "count": 89,
     "players": [
       {
