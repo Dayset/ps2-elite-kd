@@ -4,19 +4,50 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "38120292631",
+    "runId": "38120529832",
     "event": "workflow_dispatch",
-    "kind": "on-demand",
-    "startedAt": "2026-10-11T07:07:18.447Z",
-    "endedAt": "2026-10-11T07:07:21.985Z",
-    "seconds": 4,
-    "updated": [],
-    "added": [
-      "BraveHeart300"
+    "kind": "discovery",
+    "startedAt": "2026-10-11T07:11:41.384Z",
+    "endedAt": "2026-10-11T07:15:07.475Z",
+    "seconds": 206,
+    "updated": [
+      "[V] FredK",
+      "[H0UR] ShotMadikov",
+      "[B1ck] CallMeYZ",
+      "[ARES] 1nfinity666",
+      "[RELY] DuWurstVS"
     ],
-    "failed": [],
-    "stoppedEarly": null,
+    "added": [],
+    "failed": [
+      {
+        "name": "[FEMx] ShrimpeHxxTR",
+        "reason": "Census: 36/200 opponent stats missing; keeping old data",
+        "outage": true
+      },
+      {
+        "name": "[xxSx] ShrimpeHxxNC",
+        "reason": "Census: 20/199 opponent stats missing; keeping old data",
+        "outage": true
+      },
+      {
+        "name": "[K4T5] ShrimpeHxxVS",
+        "reason": "Census: 26/200 opponent stats missing; keeping old data",
+        "outage": true
+      },
+      {
+        "name": "Runnerdeconfianza",
+        "reason": "Census: 1/1 opponent stats missing; keeping old data",
+        "outage": true
+      }
+    ],
+    "stoppedEarly": "4 outage-type failures in a row (Census/Honu down?)",
     "indexSize": 3114,
+    "discovery": {
+      "cap": 3000,
+      "queue": 4915,
+      "slice": null,
+      "sweepInProgress": false
+    },
     "honu": {
       "day": "2026-10-11",
       "calls": 999,
@@ -24,14 +55,58 @@
     },
     "batch": [
       {
-        "name": "BraveHeart300",
-        "src": "on-demand",
+        "name": "[V] FredK",
+        "src": "fresh-request",
         "status": "done"
+      },
+      {
+        "name": "[H0UR] ShotMadikov",
+        "src": "fresh-request",
+        "status": "done"
+      },
+      {
+        "name": "[B1ck] CallMeYZ",
+        "src": "fresh-request",
+        "status": "done"
+      },
+      {
+        "name": "[ARES] 1nfinity666",
+        "src": "fresh-request",
+        "status": "done"
+      },
+      {
+        "name": "[RELY] DuWurstVS",
+        "src": "fresh-request",
+        "status": "done"
+      },
+      {
+        "name": "[FEMx] ShrimpeHxxTR",
+        "src": "refresh",
+        "status": "failed",
+        "reason": "Census: 36/200 opponent stats missing; keeping old data"
+      },
+      {
+        "name": "[xxSx] ShrimpeHxxNC",
+        "src": "refresh",
+        "status": "failed",
+        "reason": "Census: 20/199 opponent stats missing; keeping old data"
+      },
+      {
+        "name": "[K4T5] ShrimpeHxxVS",
+        "src": "refresh",
+        "status": "failed",
+        "reason": "Census: 26/200 opponent stats missing; keeping old data"
+      },
+      {
+        "name": "Runnerdeconfianza",
+        "src": "refresh",
+        "status": "failed",
+        "reason": "Census: 1/1 opponent stats missing; keeping old data"
       }
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-11T07:07:24.986Z",
+    "checkedAt": "2026-10-11T07:15:10.080Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 3,
     "explained": 2,
@@ -256,7 +331,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-11T07:07:25.021Z",
+    "checkedAt": "2026-10-11T07:15:10.115Z",
     "red": 18,
     "padding": 22,
     "adjusted": 1,
@@ -267,7 +342,7 @@
     "forensics": 5
   },
   "sessionStats": {
-    "checkedAt": "2026-10-11T07:07:24.993Z",
+    "checkedAt": "2026-10-11T07:15:10.087Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -1143,17 +1218,17 @@
     "outliersUnexplained": 0
   },
   "size": {
-    "at": "2026-10-11T07:07:22.440Z",
+    "at": "2026-10-11T07:15:07.904Z",
     "repoBytes": 27559936,
-    "dataBytes": 58586763,
-    "playersBytes": 54652139,
+    "dataBytes": 58599918,
+    "playersBytes": 54663841,
     "playerFiles": 3114,
     "warnAtBytes": 734003200,
     "warning": false
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-11T07:07:25.003Z",
+    "checkedAt": "2026-10-11T07:15:10.096Z",
     "candidates": [
       "coldandhot",
       "alandwhale",
@@ -6766,7 +6841,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-11T07:07:25.007Z",
+    "checkedAt": "2026-10-11T07:15:10.100Z",
     "count": 89,
     "players": [
       {
