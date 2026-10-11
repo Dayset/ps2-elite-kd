@@ -4,34 +4,34 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "38102484371",
+    "runId": "38102506943",
     "event": "workflow_dispatch",
     "kind": "on-demand",
-    "startedAt": "2026-10-11T01:39:12.007Z",
-    "endedAt": "2026-10-11T01:41:29.705Z",
-    "seconds": 138,
+    "startedAt": "2026-10-11T01:41:49.271Z",
+    "endedAt": "2026-10-11T01:43:47.549Z",
+    "seconds": 118,
     "updated": [],
     "added": [
-      "[H0LY] Xurious"
+      "[B54A] Meruby"
     ],
     "failed": [],
     "stoppedEarly": null,
-    "indexSize": 3074,
+    "indexSize": 3075,
     "honu": {
       "day": "2026-10-11",
-      "calls": 647,
+      "calls": 688,
       "cap": 1000
     },
     "batch": [
       {
-        "name": "[H0LY] Xurious",
+        "name": "[B54A] Meruby",
         "src": "on-demand",
         "status": "done"
       }
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-11T01:41:32.099Z",
+    "checkedAt": "2026-10-11T01:43:49.097Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 3,
     "explained": 2,
@@ -256,7 +256,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-11T01:41:32.131Z",
+    "checkedAt": "2026-10-11T01:43:49.118Z",
     "red": 18,
     "padding": 22,
     "adjusted": 1,
@@ -267,7 +267,7 @@
     "forensics": 4
   },
   "sessionStats": {
-    "checkedAt": "2026-10-11T01:41:32.107Z",
+    "checkedAt": "2026-10-11T01:43:49.102Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -280,14 +280,14 @@
     },
     "ruleText": "[session pattern] in recent Honu sessions (≥ 100 kills counted): assists per kill ≤ 0.1, headshot share ≥ 50% (headshot XP per kill; Census lifetime HSR when no XP detail) and K/D ≥ 7 (session deaths; Census lifetime KD when none). A very one-sided record; a lead for manual review, not proof.",
     "coverage": {
-      "players": 3073,
-      "withSessions": 1395,
-      "measured": 762,
-      "sessions": 4345,
-      "kills": 270639,
-      "xpPlayers": 124,
-      "xpMeasured": 83,
-      "xpSessions": 546
+      "players": 3074,
+      "withSessions": 1398,
+      "measured": 764,
+      "sessions": 4354,
+      "kills": 270986,
+      "xpPlayers": 129,
+      "xpMeasured": 86,
+      "xpSessions": 558
     },
     "metrics": [
       {
@@ -389,7 +389,7 @@
     ],
     "distributions": {
       "s_apk": {
-        "n": 762,
+        "n": 764,
         "min": 0,
         "p01": 0.046,
         "p05": 0.15,
@@ -399,7 +399,7 @@
         "max": 1.467
       },
       "s_share": {
-        "n": 706,
+        "n": 707,
         "min": 0.424,
         "p01": 0.471,
         "p05": 0.503,
@@ -409,7 +409,7 @@
         "max": 0.718
       },
       "s_kpm": {
-        "n": 762,
+        "n": 764,
         "min": 0.08,
         "p01": 0.15,
         "p05": 0.269,
@@ -419,7 +419,7 @@
         "max": 6.683
       },
       "s_maxKpm": {
-        "n": 762,
+        "n": 764,
         "min": 0.137,
         "p01": 0.19,
         "p05": 0.347,
@@ -429,17 +429,17 @@
         "max": 7.187
       },
       "s_kpmCv": {
-        "n": 719,
+        "n": 720,
         "min": 0,
         "p01": 0.01,
         "p05": 0.039,
         "median": 0.218,
-        "p95": 0.544,
-        "p99": 0.699,
-        "max": 0.985
+        "p95": 0.548,
+        "p99": 0.721,
+        "max": 1.226
       },
       "s_kd": {
-        "n": 613,
+        "n": 615,
         "min": 0.298,
         "p01": 0.482,
         "p05": 0.689,
@@ -449,17 +449,17 @@
         "max": 113
       },
       "s_maxKd": {
-        "n": 613,
+        "n": 615,
         "min": 0.392,
         "p01": 0.552,
         "p05": 0.882,
         "median": 2.676,
-        "p95": 9.556,
+        "p95": 9.625,
         "p99": 35,
         "max": 169.625
       },
       "s_hsk": {
-        "n": 86,
+        "n": 89,
         "min": 0.006,
         "p01": 0.006,
         "p05": 0.076,
@@ -469,27 +469,27 @@
         "max": 0.73
       },
       "s_ksk": {
-        "n": 86,
+        "n": 89,
         "min": 0.04,
         "p01": 0.04,
         "p05": 0.121,
-        "median": 0.437,
+        "median": 0.438,
         "p95": 0.761,
         "p99": 0.922,
         "max": 0.953
       },
       "s_domk": {
-        "n": 86,
+        "n": 89,
         "min": 0.021,
         "p01": 0.021,
-        "p05": 0.036,
-        "median": 0.086,
+        "p05": 0.029,
+        "median": 0.092,
         "p95": 0.155,
         "p99": 0.233,
         "max": 0.239
       },
       "s_revk": {
-        "n": 86,
+        "n": 89,
         "min": 0,
         "p01": 0,
         "p05": 0.007,
@@ -499,52 +499,52 @@
         "max": 0.151
       },
       "s_revDom": {
-        "n": 86,
+        "n": 89,
         "min": 0,
         "p01": 0,
         "p05": 0.043,
         "median": 0.5,
-        "p95": 1.952,
+        "p95": 2,
         "p99": 3,
         "max": 4.6
       },
       "s_savk": {
-        "n": 86,
+        "n": 89,
         "min": 0.011,
         "p01": 0.011,
         "p05": 0.016,
-        "median": 0.054,
+        "median": 0.055,
         "p95": 0.117,
         "p99": 0.153,
         "max": 0.167
       },
       "s_spotk": {
-        "n": 86,
+        "n": 89,
         "min": 0,
         "p01": 0,
         "p05": 0,
         "median": 0.018,
-        "p95": 0.137,
+        "p95": 0.138,
         "p99": 0.16,
         "max": 0.206
       },
       "s_prik": {
-        "n": 86,
+        "n": 89,
         "min": 0.034,
         "p01": 0.034,
         "p05": 0.111,
-        "median": 0.163,
-        "p95": 0.261,
+        "median": 0.164,
+        "p95": 0.265,
         "p99": 0.328,
         "max": 0.412
       },
       "s_stopk": {
-        "n": 86,
+        "n": 89,
         "min": 0.013,
         "p01": 0.013,
         "p05": 0.035,
-        "median": 0.069,
-        "p95": 0.126,
+        "median": 0.07,
+        "p95": 0.131,
         "p99": 0.162,
         "max": 0.174
       }
@@ -1141,17 +1141,17 @@
     "outliersUnexplained": 0
   },
   "size": {
-    "at": "2026-10-11T01:41:30.039Z",
+    "at": "2026-10-11T01:43:47.890Z",
     "repoBytes": 26575872,
-    "dataBytes": 57555143,
-    "playersBytes": 53896052,
-    "playerFiles": 3074,
+    "dataBytes": 57603411,
+    "playersBytes": 53915310,
+    "playerFiles": 3075,
     "warnAtBytes": 734003200,
     "warning": false
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-11T01:41:32.115Z",
+    "checkedAt": "2026-10-11T01:43:49.107Z",
     "candidates": [
       "coldandhot",
       "alandwhale",
@@ -1272,7 +1272,7 @@
       "1stfanofahorn",
       "add1ti0nal"
     ],
-    "analyzed": 54,
+    "analyzed": 57,
     "flagged": 4,
     "review": 2,
     "players": [
@@ -3850,6 +3850,97 @@
         }
       },
       {
+        "slug": "beansstupideridiot",
+        "name": "Beansstupideridiot",
+        "hidden": false,
+        "confirmedCheater": false,
+        "flagged": false,
+        "odd": false,
+        "analyzed": 2,
+        "checkedAt": "2026-10-11T01:43:47.544Z",
+        "worst": {
+          "sessionId": "77552033",
+          "url": "https://wt.honu.pw/s/77552033",
+          "start": "2026-10-05T13:01:51Z",
+          "kills": 255,
+          "deaths": 71,
+          "kd": 3.592,
+          "activeMin": 156.817,
+          "activeKpm": 1.626,
+          "max1s": 3,
+          "max5s": 3,
+          "peak60s": 10,
+          "max5min": 23,
+          "secs5plus": 0,
+          "zeroGapShare": 0.016,
+          "medianGap": 16,
+          "hs": 0.439,
+          "vehicleKillShare": 0.02,
+          "weapons": [
+            {
+              "id": "79",
+              "name": "T9 CARV",
+              "vehicle": false,
+              "kills": 244,
+              "share": 0.957,
+              "hs": 0.451,
+              "max1s": 2,
+              "max60s": 10
+            },
+            {
+              "id": "4015",
+              "name": "E540 Halberd",
+              "vehicle": true,
+              "kills": 4,
+              "share": 0.016,
+              "hs": 0,
+              "max1s": 1,
+              "max60s": 4
+            },
+            {
+              "id": "15",
+              "name": "TX1 Repeater",
+              "vehicle": false,
+              "kills": 3,
+              "share": 0.012,
+              "hs": 0.667,
+              "max1s": 1,
+              "max60s": 1
+            }
+          ],
+          "victims": {
+            "unique": 122,
+            "top": [
+              {
+                "name": "ValleKas",
+                "kills": 11,
+                "br": 120
+              },
+              {
+                "name": "Biloutazelle",
+                "kills": 9,
+                "br": 87
+              },
+              {
+                "name": "m4attyr21xd",
+                "kills": 7,
+                "br": 54
+              }
+            ],
+            "medianBr": 82,
+            "lowBrShare": 0.027,
+            "farmLike": []
+          },
+          "account": {
+            "br": 35,
+            "created": "2026-09-24T16:59:06Z",
+            "ageDaysAtSession": 10.845
+          },
+          "reasons": [],
+          "oddities": []
+        }
+      },
+      {
         "slug": "warongs44",
         "name": "[ROYS] WARONGS44",
         "hidden": false,
@@ -5033,6 +5124,97 @@
         }
       },
       {
+        "slug": "0ida",
+        "name": "0ida",
+        "hidden": false,
+        "confirmedCheater": false,
+        "flagged": false,
+        "odd": false,
+        "analyzed": 2,
+        "checkedAt": "2026-10-11T01:43:32.240Z",
+        "worst": {
+          "sessionId": "77536553",
+          "url": "https://wt.honu.pw/s/77536553",
+          "start": "2026-10-04T13:54:27Z",
+          "kills": 178,
+          "deaths": 52,
+          "kd": 3.423,
+          "activeMin": 70.45,
+          "activeKpm": 2.527,
+          "max1s": 2,
+          "max5s": 3,
+          "peak60s": 11,
+          "max5min": 35,
+          "secs5plus": 0,
+          "zeroGapShare": 0.011,
+          "medianGap": 10,
+          "hs": 0.393,
+          "vehicleKillShare": 0,
+          "weapons": [
+            {
+              "id": "79",
+              "name": "T9 CARV",
+              "vehicle": false,
+              "kills": 168,
+              "share": 0.944,
+              "hs": 0.405,
+              "max1s": 2,
+              "max60s": 11
+            },
+            {
+              "id": "75063",
+              "name": "NS-44 Commissioner",
+              "vehicle": false,
+              "kills": 4,
+              "share": 0.022,
+              "hs": 0.5,
+              "max1s": 1,
+              "max60s": 2
+            },
+            {
+              "id": "44605",
+              "name": "Frag Grenade",
+              "vehicle": false,
+              "kills": 4,
+              "share": 0.022,
+              "hs": 0,
+              "max1s": 2,
+              "max60s": 2
+            }
+          ],
+          "victims": {
+            "unique": 129,
+            "top": [
+              {
+                "name": "KurvaJozo",
+                "kills": 5,
+                "br": 58
+              },
+              {
+                "name": "Zappellin",
+                "kills": 4,
+                "br": 95
+              },
+              {
+                "name": "SCKJ",
+                "kills": 4,
+                "br": 97
+              }
+            ],
+            "medianBr": 65,
+            "lowBrShare": 0.034,
+            "farmLike": []
+          },
+          "account": {
+            "br": 20,
+            "created": "2026-10-04T12:22:40Z",
+            "ageDaysAtSession": 0.066
+          },
+          "reasons": [],
+          "oddities": []
+        }
+      },
+      {
         "slug": "lilcccc",
         "name": "[C4CC] LilcCcC",
         "hidden": false,
@@ -5761,6 +5943,97 @@
         }
       },
       {
+        "slug": "arneen",
+        "name": "Arneen",
+        "hidden": false,
+        "confirmedCheater": false,
+        "flagged": false,
+        "odd": false,
+        "analyzed": 1,
+        "checkedAt": "2026-10-11T01:43:38.284Z",
+        "worst": {
+          "sessionId": "77553460",
+          "url": "https://wt.honu.pw/s/77553460",
+          "start": "2026-10-05T15:07:03Z",
+          "kills": 64,
+          "deaths": 8,
+          "kd": 8,
+          "activeMin": 18.05,
+          "activeKpm": 3.546,
+          "max1s": 2,
+          "max5s": 3,
+          "peak60s": 9,
+          "max5min": 26,
+          "secs5plus": 0,
+          "zeroGapShare": 0.032,
+          "medianGap": 8,
+          "hs": 0.328,
+          "vehicleKillShare": 0,
+          "weapons": [
+            {
+              "id": "79",
+              "name": "T9 CARV",
+              "vehicle": false,
+              "kills": 58,
+              "share": 0.906,
+              "hs": 0.345,
+              "max1s": 1,
+              "max60s": 9
+            },
+            {
+              "id": "34004",
+              "name": "ASP-30 Grounder",
+              "vehicle": false,
+              "kills": 4,
+              "share": 0.063,
+              "hs": 0,
+              "max1s": 2,
+              "max60s": 2
+            },
+            {
+              "id": "44605",
+              "name": "Frag Grenade",
+              "vehicle": false,
+              "kills": 1,
+              "share": 0.016,
+              "hs": 0,
+              "max1s": 1,
+              "max60s": 1
+            }
+          ],
+          "victims": {
+            "unique": 40,
+            "top": [
+              {
+                "name": "OmegaUltra1x",
+                "kills": 8,
+                "br": 100
+              },
+              {
+                "name": "Nickk0000",
+                "kills": 4,
+                "br": 92
+              },
+              {
+                "name": "9527WOW",
+                "kills": 3,
+                "br": 94
+              }
+            ],
+            "medianBr": 92,
+            "lowBrShare": 0.016,
+            "farmLike": []
+          },
+          "account": {
+            "br": 13,
+            "created": "2026-10-05T15:06:38Z",
+            "ageDaysAtSession": 0.003
+          },
+          "reasons": [],
+          "oddities": []
+        }
+      },
+      {
         "slug": "anniversay",
         "name": "Anniversay",
         "hidden": false,
@@ -6058,8 +6331,8 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-11T01:41:32.118Z",
-    "count": 82,
+    "checkedAt": "2026-10-11T01:43:49.109Z",
+    "count": 85,
     "players": [
       {
         "slug": "1stfanofahorn",
@@ -6271,6 +6544,14 @@
         ]
       },
       {
+        "slug": "0ida",
+        "name": "0ida",
+        "cid": "5429845372577307265",
+        "lists": [
+          "forensics"
+        ]
+      },
+      {
         "slug": "1os",
         "name": "[Iies] 1Os",
         "cid": "5429841912863350753",
@@ -6311,6 +6592,14 @@
         ]
       },
       {
+        "slug": "arneen",
+        "name": "Arneen",
+        "cid": "5429845372577329665",
+        "lists": [
+          "forensics"
+        ]
+      },
+      {
         "slug": "averagecpopenjoyer",
         "name": "[WoXi] averageCPOPenjoyer",
         "cid": "5429840294898435649",
@@ -6322,6 +6611,14 @@
         "slug": "averagejpopenjoyer",
         "name": "[1OK] averageJPOPenjoyer",
         "cid": "5429814569744218241",
+        "lists": [
+          "forensics"
+        ]
+      },
+      {
+        "slug": "beansstupideridiot",
+        "name": "Beansstupideridiot",
+        "cid": "5429841912863301473",
         "lists": [
           "forensics"
         ]
