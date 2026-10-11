@@ -4,39 +4,72 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "38103208267",
-    "event": "workflow_dispatch",
-    "kind": "on-demand",
-    "startedAt": "2026-10-11T01:51:17.806Z",
-    "endedAt": "2026-10-11T01:53:14.139Z",
-    "seconds": 116,
-    "updated": [],
-    "added": [],
-    "failed": [
-      {
-        "name": "TxgeiloNC",
-        "reason": "Census: 38/200 opponent stats missing; keeping old data",
-        "outage": true
-      }
+    "runId": "38103399422",
+    "event": "schedule",
+    "kind": "discovery",
+    "startedAt": "2026-10-11T01:54:43.206Z",
+    "endedAt": "2026-10-11T01:58:03.984Z",
+    "seconds": 201,
+    "updated": [
+      "[DIGT] RaziGx",
+      "4UA",
+      "[GOBS] VoodooMonkey",
+      "[RMBT] TopGunMasterEUTR",
+      "[1RPC] ursuak"
     ],
+    "added": [],
+    "failed": [],
     "stoppedEarly": null,
     "indexSize": 3076,
+    "discovery": {
+      "cap": 3000,
+      "queue": 4923,
+      "slice": {
+        "calls": 61,
+        "swept": 6665,
+        "prefiltered": 5105,
+        "checked": 5105,
+        "qualified": 2149,
+        "newPlaying": 72,
+        "done": true
+      },
+      "sweepInProgress": false
+    },
     "honu": {
       "day": "2026-10-11",
-      "calls": 760,
+      "calls": 808,
       "cap": 1000
     },
     "batch": [
       {
-        "name": "TxgeiloNC",
-        "src": "on-demand",
-        "status": "failed",
-        "reason": "Census: 38/200 opponent stats missing; keeping old data"
+        "name": "[DIGT] RaziGx",
+        "src": "fresh-request",
+        "status": "done"
+      },
+      {
+        "name": "4UA",
+        "src": "fresh-request",
+        "status": "done"
+      },
+      {
+        "name": "[GOBS] VoodooMonkey",
+        "src": "fresh-request",
+        "status": "done"
+      },
+      {
+        "name": "[RMBT] TopGunMasterEUTR",
+        "src": "fresh-request",
+        "status": "done"
+      },
+      {
+        "name": "[1RPC] ursuak",
+        "src": "fresh-request",
+        "status": "done"
       }
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-11T01:53:16.363Z",
+    "checkedAt": "2026-10-11T01:58:05.935Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 3,
     "explained": 2,
@@ -261,7 +294,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-11T01:53:16.393Z",
+    "checkedAt": "2026-10-11T01:58:05.962Z",
     "red": 18,
     "padding": 22,
     "adjusted": 1,
@@ -272,7 +305,7 @@
     "forensics": 5
   },
   "sessionStats": {
-    "checkedAt": "2026-10-11T01:53:16.370Z",
+    "checkedAt": "2026-10-11T01:58:05.942Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -286,13 +319,13 @@
     "ruleText": "[session pattern] in recent Honu sessions (≥ 100 kills counted): assists per kill ≤ 0.1, headshot share ≥ 50% (headshot XP per kill; Census lifetime HSR when no XP detail) and K/D ≥ 7 (session deaths; Census lifetime KD when none). A very one-sided record; a lead for manual review, not proof.",
     "coverage": {
       "players": 3075,
-      "withSessions": 1404,
-      "measured": 769,
-      "sessions": 4372,
-      "kills": 272344,
-      "xpPlayers": 137,
-      "xpMeasured": 92,
-      "xpSessions": 582
+      "withSessions": 1409,
+      "measured": 774,
+      "sessions": 4393,
+      "kills": 274299,
+      "xpPlayers": 141,
+      "xpMeasured": 95,
+      "xpSessions": 594
     },
     "metrics": [
       {
@@ -394,17 +427,17 @@
     ],
     "distributions": {
       "s_apk": {
-        "n": 769,
+        "n": 774,
         "min": 0,
         "p01": 0.046,
         "p05": 0.15,
-        "median": 0.347,
+        "median": 0.346,
         "p95": 0.658,
         "p99": 0.831,
         "max": 1.467
       },
       "s_share": {
-        "n": 708,
+        "n": 711,
         "min": 0.424,
         "p01": 0.471,
         "p05": 0.503,
@@ -414,7 +447,7 @@
         "max": 0.718
       },
       "s_kpm": {
-        "n": 769,
+        "n": 774,
         "min": 0.08,
         "p01": 0.15,
         "p05": 0.269,
@@ -424,7 +457,7 @@
         "max": 6.683
       },
       "s_maxKpm": {
-        "n": 769,
+        "n": 774,
         "min": 0.137,
         "p01": 0.19,
         "p05": 0.347,
@@ -434,7 +467,7 @@
         "max": 7.187
       },
       "s_kpmCv": {
-        "n": 724,
+        "n": 728,
         "min": 0,
         "p01": 0.01,
         "p05": 0.04,
@@ -444,57 +477,57 @@
         "max": 1.226
       },
       "s_kd": {
-        "n": 621,
+        "n": 626,
         "min": 0.298,
         "p01": 0.482,
         "p05": 0.704,
         "median": 2.143,
-        "p95": 5.19,
+        "p95": 5.156,
         "p99": 28.083,
         "max": 113
       },
       "s_maxKd": {
-        "n": 621,
+        "n": 626,
         "min": 0.392,
         "p01": 0.552,
         "p05": 0.89,
         "median": 2.7,
-        "p95": 9.625,
+        "p95": 9.556,
         "p99": 35,
         "max": 169.625
       },
       "s_hsk": {
-        "n": 95,
+        "n": 99,
         "min": 0.006,
         "p01": 0.006,
         "p05": 0.076,
-        "median": 0.31,
-        "p95": 0.537,
+        "median": 0.299,
+        "p95": 0.563,
         "p99": 0.709,
         "max": 0.73
       },
       "s_ksk": {
-        "n": 95,
+        "n": 99,
         "min": 0.04,
         "p01": 0.04,
         "p05": 0.121,
-        "median": 0.431,
+        "median": 0.43,
         "p95": 0.761,
         "p99": 0.922,
         "max": 0.953
       },
       "s_domk": {
-        "n": 95,
-        "min": 0.021,
-        "p01": 0.021,
-        "p05": 0.029,
+        "n": 99,
+        "min": 0.007,
+        "p01": 0.007,
+        "p05": 0.025,
         "median": 0.085,
         "p95": 0.155,
         "p99": 0.233,
         "max": 0.239
       },
       "s_revk": {
-        "n": 95,
+        "n": 99,
         "min": 0,
         "p01": 0,
         "p05": 0.007,
@@ -504,17 +537,17 @@
         "max": 0.151
       },
       "s_revDom": {
-        "n": 95,
+        "n": 99,
         "min": 0,
         "p01": 0,
         "p05": 0.043,
-        "median": 0.508,
-        "p95": 2,
-        "p99": 3,
-        "max": 4.6
+        "median": 0.513,
+        "p95": 2.333,
+        "p99": 4.6,
+        "max": 10
       },
       "s_savk": {
-        "n": 95,
+        "n": 99,
         "min": 0.011,
         "p01": 0.011,
         "p05": 0.016,
@@ -524,7 +557,7 @@
         "max": 0.167
       },
       "s_spotk": {
-        "n": 95,
+        "n": 99,
         "min": 0,
         "p01": 0,
         "p05": 0,
@@ -534,22 +567,22 @@
         "max": 0.206
       },
       "s_prik": {
-        "n": 95,
+        "n": 99,
         "min": 0.034,
         "p01": 0.034,
         "p05": 0.1,
-        "median": 0.163,
-        "p95": 0.265,
+        "median": 0.164,
+        "p95": 0.273,
         "p99": 0.328,
         "max": 0.412
       },
       "s_stopk": {
-        "n": 95,
+        "n": 99,
         "min": 0.013,
         "p01": 0.013,
         "p05": 0.033,
         "median": 0.069,
-        "p95": 0.131,
+        "p95": 0.138,
         "p99": 0.162,
         "max": 0.174
       }
@@ -1148,17 +1181,17 @@
     "outliersUnexplained": 0
   },
   "size": {
-    "at": "2026-10-11T01:53:14.495Z",
+    "at": "2026-10-11T01:58:04.243Z",
     "repoBytes": 26575872,
-    "dataBytes": 57683720,
-    "playersBytes": 53934896,
+    "dataBytes": 57778390,
+    "playersBytes": 53958565,
     "playerFiles": 3076,
     "warnAtBytes": 734003200,
     "warning": false
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-11T01:53:16.377Z",
+    "checkedAt": "2026-10-11T01:58:05.948Z",
     "candidates": [
       "coldandhot",
       "alandwhale",
@@ -6768,7 +6801,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-11T01:53:16.380Z",
+    "checkedAt": "2026-10-11T01:58:05.950Z",
     "count": 89,
     "players": [
       {
