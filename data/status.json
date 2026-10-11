@@ -4,19 +4,20 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "38111161092",
+    "runId": "38111225549",
     "event": "workflow_dispatch",
     "kind": "on-demand",
-    "startedAt": "2026-10-11T04:18:40.439Z",
-    "endedAt": "2026-10-11T04:18:42.672Z",
-    "seconds": 2,
+    "startedAt": "2026-10-11T04:19:52.898Z",
+    "endedAt": "2026-10-11T04:20:04.360Z",
+    "seconds": 11,
     "updated": [],
     "added": [
-      "[N0AM] Zer0Aims"
+      "ClankinItEveryNight",
+      "SendRageTellsNoBallz"
     ],
     "failed": [],
     "stoppedEarly": null,
-    "indexSize": 3100,
+    "indexSize": 3102,
     "honu": {
       "day": "2026-10-11",
       "calls": 999,
@@ -24,14 +25,19 @@
     },
     "batch": [
       {
-        "name": "[N0AM] Zer0Aims",
+        "name": "ClankinItEveryNight",
+        "src": "on-demand",
+        "status": "done"
+      },
+      {
+        "name": "SendRageTellsNoBallz",
         "src": "on-demand",
         "status": "done"
       }
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-11T04:18:44.857Z",
+    "checkedAt": "2026-10-11T04:20:06.652Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 3,
     "explained": 2,
@@ -41,8 +47,8 @@
         "name": "Anniversay",
         "id": "kd",
         "value": 247,
-        "bound": 19.958,
-        "z": 232.824,
+        "bound": 19.957,
+        "z": 232.67,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -53,8 +59,8 @@
         "name": "[B54A] geiloVS",
         "id": "kd",
         "value": 150,
-        "bound": 19.958,
-        "z": 140.883,
+        "bound": 19.957,
+        "z": 140.79,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (aim), listed there",
@@ -110,14 +116,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 232.824,
+        "maxZ": 232.67,
         "metrics": [
           {
             "id": "kd",
             "label": "KD",
             "value": 247,
-            "bound": 19.958,
-            "z": 232.824,
+            "bound": 19.957,
+            "z": 232.67,
             "side": "high"
           }
         ]
@@ -168,14 +174,14 @@
         "red": [
           "aim"
         ],
-        "maxZ": 140.883,
+        "maxZ": 140.79,
         "metrics": [
           {
             "id": "kd",
             "label": "KD",
             "value": 150,
-            "bound": 19.958,
-            "z": 140.883,
+            "bound": 19.957,
+            "z": 140.79,
             "side": "high"
           },
           {
@@ -256,7 +262,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-11T04:18:44.889Z",
+    "checkedAt": "2026-10-11T04:20:06.692Z",
     "red": 18,
     "padding": 22,
     "adjusted": 1,
@@ -267,7 +273,7 @@
     "forensics": 5
   },
   "sessionStats": {
-    "checkedAt": "2026-10-11T04:18:44.864Z",
+    "checkedAt": "2026-10-11T04:20:06.663Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -280,7 +286,7 @@
     },
     "ruleText": "[session pattern] in recent Honu sessions (≥ 100 kills counted): assists per kill ≤ 0.1, headshot share ≥ 50% (headshot XP per kill; Census lifetime HSR when no XP detail) and K/D ≥ 7 (session deaths; Census lifetime KD when none). A very one-sided record; a lead for manual review, not proof.",
     "coverage": {
-      "players": 3099,
+      "players": 3101,
       "withSessions": 1424,
       "measured": 784,
       "sessions": 4438,
@@ -1127,7 +1133,7 @@
         "red": [
           "aim"
         ],
-        "maxZ": 140.883,
+        "maxZ": 140.79,
         "metrics": [
           {
             "id": "s_kd",
@@ -1143,17 +1149,17 @@
     "outliersUnexplained": 0
   },
   "size": {
-    "at": "2026-10-11T04:18:42.967Z",
+    "at": "2026-10-11T04:20:04.628Z",
     "repoBytes": 27387904,
-    "dataBytes": 58325796,
-    "playersBytes": 54401358,
-    "playerFiles": 3100,
+    "dataBytes": 58363578,
+    "playersBytes": 54437724,
+    "playerFiles": 3102,
     "warnAtBytes": 734003200,
     "warning": false
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-11T04:18:44.872Z",
+    "checkedAt": "2026-10-11T04:20:06.674Z",
     "candidates": [
       "coldandhot",
       "alandwhale",
@@ -1208,6 +1214,7 @@
       "beansstupideridiot",
       "boomdeboossa",
       "cheetler",
+      "clankiniteverynight",
       "coward72",
       "falcofrnc",
       "gogoingn",
@@ -6764,7 +6771,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-11T04:18:44.874Z",
+    "checkedAt": "2026-10-11T04:20:06.677Z",
     "count": 89,
     "players": [
       {
