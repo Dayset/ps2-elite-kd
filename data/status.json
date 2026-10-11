@@ -4,14 +4,14 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "38167685569",
+    "runId": "38178572675",
     "event": "workflow_dispatch",
     "kind": "discovery",
-    "startedAt": "2026-10-11T19:21:55.687Z",
-    "endedAt": "2026-10-11T19:23:28.390Z",
-    "seconds": 93,
+    "startedAt": "2026-10-11T21:59:23.230Z",
+    "endedAt": "2026-10-11T22:01:14.096Z",
+    "seconds": 111,
     "updated": [
-      "[RITE] ShloDog"
+      "JustV6me"
     ],
     "added": [],
     "failed": [
@@ -29,20 +29,23 @@
         "name": "[K4T5] ShrimpeHxxVS",
         "reason": "Census: 26/200 opponent stats missing; keeping old data",
         "outage": true
-      },
-      {
-        "name": "Runnerdeconfianza",
-        "reason": "Census: 1/1 opponent stats missing; keeping old data",
-        "outage": true
       }
     ],
-    "stoppedEarly": "4 outage-type failures in a row (Census/Honu down?)",
+    "stoppedEarly": null,
     "indexSize": 3130,
     "discovery": {
       "cap": 3000,
-      "queue": 4910,
-      "slice": null,
-      "sweepInProgress": false
+      "queue": 4954,
+      "slice": {
+        "calls": 10,
+        "swept": 1000,
+        "prefiltered": 840,
+        "checked": 840,
+        "qualified": 327,
+        "newPlaying": 11,
+        "done": false
+      },
+      "sweepInProgress": true
     },
     "honu": {
       "day": "2026-10-11",
@@ -51,38 +54,32 @@
     },
     "batch": [
       {
-        "name": "[RITE] ShloDog",
+        "name": "JustV6me",
         "src": "fresh-request",
         "status": "done"
       },
       {
         "name": "[FEMx] ShrimpeHxxTR",
-        "src": "refresh",
+        "src": "fresh-request",
         "status": "failed",
         "reason": "Census: 36/200 opponent stats missing; keeping old data"
       },
       {
         "name": "[xxSx] ShrimpeHxxNC",
-        "src": "refresh",
+        "src": "fresh-request",
         "status": "failed",
         "reason": "Census: 20/199 opponent stats missing; keeping old data"
       },
       {
         "name": "[K4T5] ShrimpeHxxVS",
-        "src": "refresh",
+        "src": "fresh-request",
         "status": "failed",
         "reason": "Census: 26/200 opponent stats missing; keeping old data"
-      },
-      {
-        "name": "Runnerdeconfianza",
-        "src": "refresh",
-        "status": "failed",
-        "reason": "Census: 1/1 opponent stats missing; keeping old data"
       }
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-11T19:23:30.029Z",
+    "checkedAt": "2026-10-11T22:01:16.739Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 3,
     "explained": 2,
@@ -307,7 +304,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-11T19:23:30.054Z",
+    "checkedAt": "2026-10-11T22:01:16.783Z",
     "red": 18,
     "padding": 22,
     "adjusted": 1,
@@ -318,7 +315,7 @@
     "forensics": 5
   },
   "sessionStats": {
-    "checkedAt": "2026-10-11T19:23:30.035Z",
+    "checkedAt": "2026-10-11T22:01:16.750Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -1194,17 +1191,17 @@
     "outliersUnexplained": 0
   },
   "size": {
-    "at": "2026-10-11T19:23:28.786Z",
-    "repoBytes": 27427840,
-    "dataBytes": 58947510,
-    "playersBytes": 55000941,
+    "at": "2026-10-11T22:01:14.472Z",
+    "repoBytes": 27660288,
+    "dataBytes": 58952979,
+    "playersBytes": 55000969,
     "playerFiles": 3130,
     "warnAtBytes": 734003200,
     "warning": false
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-11T19:23:30.042Z",
+    "checkedAt": "2026-10-11T22:01:16.763Z",
     "candidates": [
       "coldandhot",
       "alandwhale",
@@ -6817,7 +6814,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-11T19:23:30.043Z",
+    "checkedAt": "2026-10-11T22:01:16.766Z",
     "count": 89,
     "players": [
       {
