@@ -4,20 +4,20 @@
 // Everything Rankings had stays: fresh-fetch ↻ rows, band dividers, marks,
 // hidden players left out (ranks.json), 📊 distribution with jumps.
 
-import { compareByCharName } from "./analyze-run.mjs?v=20261010-loc1";
-import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits, binJumpTarget } from "./dist.mjs?v=20261010-loc1";
-import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261010-loc1";
-import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261010-loc1";
-import { paletteColor } from "./palette.mjs?v=20261010-loc1";
-import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-loc1";
-import { deskUiScale } from "./desk-scale.mjs?v=20261010-loc1";
-import { matchPicks } from "./pick-sync.mjs?v=20261010-loc1";
-import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-loc1";
-import { mergeFreshRows } from "./rank-row.mjs?v=20261010-loc1";
-import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-loc1";
-import { confirmedPadderSlugs } from "./padding.mjs?v=20261010-loc1";
-import { slugKey } from "./rank-row.mjs?v=20261010-loc1";
-import { hiddenList } from "./hidden.mjs?v=20261010-loc1";
+import { compareByCharName } from "./analyze-run.mjs?v=20261010-sav1";
+import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits, binJumpTarget } from "./dist.mjs?v=20261010-sav1";
+import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261010-sav1";
+import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261010-sav1";
+import { paletteColor } from "./palette.mjs?v=20261010-sav1";
+import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-sav1";
+import { deskUiScale } from "./desk-scale.mjs?v=20261010-sav1";
+import { matchPicks } from "./pick-sync.mjs?v=20261010-sav1";
+import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-sav1";
+import { mergeFreshRows } from "./rank-row.mjs?v=20261010-sav1";
+import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-sav1";
+import { confirmedPadderSlugs } from "./padding.mjs?v=20261010-sav1";
+import { slugKey } from "./rank-row.mjs?v=20261010-sav1";
+import { hiddenList } from "./hidden.mjs?v=20261010-sav1";
 
 /**
  * @param {{ getNames: () => string[], toggleName: (name: string, anchor: Element, add: boolean) => void }} host
@@ -194,6 +194,9 @@ export function initRankings(host) {
       }
       return o;
     });
+    // t360u: new row objects carry no .rank yet → force assignRanks() to run again
+    // (it skipped on an unchanged sort and left "undefined" ranks / a broken order).
+    rankedFor = "";
     data = { updatedAt: payload.updatedAt, count: (+payload.count || payload.rows.length - localOnly.size) + localOnly.size, rows, pools };
     histCache.clear();
   }

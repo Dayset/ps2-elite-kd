@@ -280,6 +280,11 @@ header.top-bar {
   }
   .cache-row:has(.cache-shared[open]) .cache-row-end button.wipe-local { width: calc(var(--ctl-h) - 0.6rem) !important; }
   .cache-row:has(.cache-shared[open]) .cache-shared > summary { padding-right: 9rem; }
+  /* t360u: open 💾 list gets the full width too (🗑️ ☀️ float top-right). */
+  .cache-row:has(.cache-browser[open]) .cache-row-end {
+    position: absolute; top: 0; right: 0;
+  }
+  .cache-row:has(.cache-browser[open]) .cache-shared { margin-right: 9.2rem; width: auto; }
 }
 
 /* t341u/t342u: 🏆 Rankings exactly as big as 🔍 Analyze, and a separate
@@ -790,6 +795,41 @@ header .sub {
 }
 
 .cache-shared > summary::-webkit-details-marker { display: none; }
+
+/* t360u: 💾 names saved only in this browser — icon-only toggle, chips inside. */
+.cache-browser { flex: 1 1 100%; min-width: 0; margin: 0; }
+.cache-browser > summary {
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 2.5rem;
+  height: 2.5rem;
+  font-size: 1.45rem;
+  line-height: 1;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+.cache-browser > summary::-webkit-details-marker { display: none; }
+.cache-browser > summary:hover { border-color: var(--accent, var(--muted)); }
+.cache-browser[open] > summary { border-color: var(--accent, var(--muted)); }
+.cache-browser-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+  max-height: 11.5rem; /* ~50 names: scrolls instead of pushing the page down */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.35rem;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
 
 .cache-shared > summary::before {
   content: "▸ ";

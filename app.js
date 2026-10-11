@@ -3,7 +3,7 @@
  * Mirrors absolute_target_split / kpm_curve / rf_if / adjusted_ivi from ps2_elite_kd.py
  * Pure math lives in math.mjs (shared with Node tests).
  */
-import { chartFontScale } from "./desk-scale.mjs?v=20261010-loc1";
+import { chartFontScale } from "./desk-scale.mjs?v=20261010-sav1";
 import {
   X_MAX,
   EASY_MAX,
@@ -33,11 +33,11 @@ import {
   windowYValues,
   kpmBandCurve,
   bandReliability,
-} from "./math.mjs?v=20261010-loc1";
-import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261010-loc1";
-import GHOST_MODEL from "./data/ghost-model.mjs?v=20261010-loc1";
-import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-loc1";
-import { entryFetchedAt, pickNewest, writeWithEviction } from "./cache-pick.mjs?v=20261010-loc1";
+} from "./math.mjs?v=20261010-sav1";
+import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261010-sav1";
+import GHOST_MODEL from "./data/ghost-model.mjs?v=20261010-sav1";
+import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-sav1";
+import { entryFetchedAt, pickNewest, writeWithEviction } from "./cache-pick.mjs?v=20261010-sav1";
 import {
   NameLoadError,
   classifyLoadError,
@@ -64,7 +64,7 @@ import {
   etaLearnLiveMs,
   freshEtaText,
   expectedNameMs,
-} from "./analyze-run.mjs?v=20261010-loc1";
+} from "./analyze-run.mjs?v=20261010-sav1";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
@@ -78,7 +78,7 @@ import {
   THIN_MARK,
   THIN_NOTE_HEAD,
   thinPlayerLine,
-} from "./player-metrics.mjs?v=20261010-loc1";
+} from "./player-metrics.mjs?v=20261010-sav1";
 /** "22 kills / 60 deaths" in the opponent sample (MIN_FIGHTS counts). */
 function fightsText(r) {
   const k = r.sampleKills || 0;
@@ -90,16 +90,16 @@ function fightsText(r) {
 function thinCellTip(r) {
   return `${MIN_FIGHTS_TIP}. This sample: ${fightsText(r).replace(/[()]/g, "")}`;
 }
-import { markNote, statMark, confirmedPadderSlugs } from "./padding.mjs?v=20261010-loc1";
+import { markNote, statMark, confirmedPadderSlugs } from "./padding.mjs?v=20261010-sav1";
 // Account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times: chart name list only.
-import { accountTimes, flairsHtml } from "./flairs.mjs?v=20261010-loc1";
+import { accountTimes, flairsHtml } from "./flairs.mjs?v=20261010-sav1";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261010-loc1";
-import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261010-loc1";
+import "./name-peek.mjs?v=20261010-sav1";
+import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261010-sav1";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
-import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-loc1";
+import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-sav1";
 // Live data: Daybreak Census only (batched, paced); Honu just for a rare history fallback.
-import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-loc1";
+import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import {
   censusBase,
   censusRequest,
@@ -108,7 +108,7 @@ import {
   limitConcurrency,
   tokenBucket,
   OPPONENT_TOP_N,
-} from "./census-fetch.mjs?v=20261010-loc1";
+} from "./census-fetch.mjs?v=20261010-sav1";
 
   // Player palettes (dark + light theme) live in palette.mjs (shared with ranks.html).
   const COLORS = PALETTE_DARK;
@@ -1271,7 +1271,7 @@ import {
   }
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261010-loc1")
+    rankingsLoading = import("./rankings.mjs?v=20261010-sav1")
       .then((m) => {
         rankingsApi = m.initRankings(rankingsHost);
         return rankingsApi.ready;
@@ -1573,6 +1573,14 @@ import {
     cacheSelTimer = setTimeout(updateCacheSelection, CACHE_SEL_DEBOUNCE_MS);
   }
 
+  /** t360u: 💾 browser-only names: "1" / "0" once the user toggled it. */
+  const LS_BROWSER_CACHE_OPEN = "ps2-elite-kd-browser-cache-open";
+  const BROWSER_CACHE_OPEN_MAX = 6; // up to this many names start open
+  function browserCacheOpen(n) {
+    let v = null;
+    try { v = localStorage.getItem(LS_BROWSER_CACHE_OPEN); } catch {}
+    return v === "1" ? true : v === "0" ? false : n <= BROWSER_CACHE_OPEN_MAX;
+  }
   function renderCacheChips() {
     clearTimeout(cacheSelTimer);
     updateFreshEta();
@@ -1678,13 +1686,29 @@ import {
     }
     syncCacheJump();
 
+    // t360u: names saved only in this browser → a 💾 toggle (no title text).
+    // Hidden when there are none; open by default for a few names, folded for
+    // many; the user's own open / close is remembered.
     if (browser.length) {
-      const label = document.createElement("span");
-      label.className = "fresh-hint";
-      label.style.marginRight = "0.35rem";
-      label.textContent = "💾 Browser:";
-      els.cacheChips.appendChild(label);
-      for (const item of browser) els.cacheChips.appendChild(makeChip(item, sel));
+      const details = document.createElement("details");
+      details.className = "cache-browser";
+      details.open = browserCacheOpen(browser.length);
+      const summary = document.createElement("summary");
+      // Remember only the user's own taps (setting .open also fires "toggle").
+      summary.addEventListener("click", () => setTimeout(() => {
+        try { localStorage.setItem(LS_BROWSER_CACHE_OPEN, details.open ? "1" : "0"); } catch {}
+      }, 0));
+      const what = `${browser.length} name${browser.length === 1 ? "" : "s"} saved only in this browser`;
+      summary.title = `💾 ${what} (tap to show / hide)`;
+      summary.setAttribute("aria-label", `💾 ${what}`);
+      summary.textContent = "💾";
+      details.appendChild(summary);
+      const inner = document.createElement("div");
+      inner.className = "cache-browser-chips";
+      inner.setAttribute("aria-label", "Names saved in this browser");
+      for (const item of browser) inner.appendChild(makeChip(item, sel));
+      details.appendChild(inner);
+      els.cacheChips.appendChild(details);
     }
   }
 

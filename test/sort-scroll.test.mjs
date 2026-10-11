@@ -429,3 +429,59 @@ describe("A graphed player not in the shared Rankings still shows on 📊 / 🏅
     });
   });
 });
+
+describe("Big table after a browser-only player joins: no 'undefined' (t360u)", () => {
+  it("every row has a rank number and values after the local-only merge", { skip: !chrome, timeout: 120000 }, async () => {
+    const raw = JSON.parse(fs.readFileSync(path.join(root, "data/players/brackiense.json"), "utf8"));
+    const p = raw.player || raw;
+    const now = Date.now();
+    const store = { zzlocalonly: { name: "Zzlocalonly", savedAt: now, fetchedAt: now, player: { ...p, display: "Zzlocalonly", name: "Zzlocalonly", source: "live:quick" } } };
+    await withPage(async ({ ev, nav }) => {
+      // Rankings first (the bug's order), then the browser-only name is added.
+      await nav("index.html?names=ShloDog#rankings");
+      await ev(`new Promise(async (res) => { for (let t = 0; t < 400 && !document.querySelector("#ranksBody tr[data-q]"); t++) await new Promise((r) => setTimeout(r, 50)); res(1); })`);
+      await ev(`(() => { localStorage.setItem("ps2-elite-kd-cache-v2", ${JSON.stringify(JSON.stringify(store))}); document.getElementById("ranksTableSection").open = true; const i = document.getElementById("namesInput"); i.value = "Zzlocalonly "; i.dispatchEvent(new Event("input", { bubbles: true })); return 1; })()`);
+      await ev(`new Promise(async (res) => { for (let t = 0; t < 200 && !document.querySelector('#ranksBody tr[data-q="Zzlocalonly"]'); t++) await new Promise((r) => setTimeout(r, 100)); res(1); })`);
+      // Whole list rendered (progressive chunks finish).
+      await ev(`new Promise(async (r) => { let n = -1; for (let t = 0; t < 200; t++) { await new Promise((q) => setTimeout(q, 250)); const m = document.querySelectorAll("#ranksBody tr[data-q]").length; if (m === n) break; n = m; } r(1); })`);
+      const st = await ev(`(() => { const trs = [...document.querySelectorAll("#ranksBody tr[data-q]")]; const ranks = trs.map((tr) => tr.querySelector(".rk-num")?.textContent || ""); const txt = document.getElementById("ranksBody").textContent; return { n: trs.length, undef: (txt.match(/undefined/g) || []).length, nan: (txt.match(/NaN/g) || []).length, local: trs.some((tr) => tr.dataset.q === "Zzlocalonly"), seq: ranks.filter((x) => x !== "—").every((x, i, a) => i === 0 || +x === +a[i - 1] + 1), first: ranks[0], meta: document.getElementById("ranksMeta").textContent }; })()`);
+      assert.ok(st.local, JSON.stringify(st));
+      assert.equal(st.undef, 0, "no 'undefined' anywhere in the table");
+      assert.equal(st.nan, 0, "no NaN");
+      assert.equal(st.first, "1");
+      assert.ok(st.seq, "ranks 1, 2, 3, … in order");
+      const total = +st.meta.match(/of ([\d,]+) players/)[1].replace(/,/g, "");
+      assert.equal(st.n, total, "full list rendered");
+    });
+  });
+});
+
+describe("💾 browser-only names: icon toggle, hidden when empty (t360u)", () => {
+  it("no title text; hidden with none; open for a few, folded for 50; remembered", { skip: !chrome, timeout: 120000 }, async () => {
+    const raw = JSON.parse(fs.readFileSync(path.join(root, "data/players/brackiense.json"), "utf8"));
+    const p = raw.player || raw;
+    const now = Date.now();
+    const mk = (n) => Object.fromEntries(Array.from({ length: n }, (_, i) => { const nm = `Zzsaved${String(i).padStart(2, "0")}`; return [nm.toLowerCase(), { name: nm, savedAt: now, fetchedAt: now, player: { ...p, display: nm, name: nm } }]; }));
+    await withPage(async ({ ev, nav }) => {
+      const look = () => ev(`(() => { const d = document.querySelector("#cacheChips details.cache-browser"); return { has: !!d, open: d ? d.open : null, chips: d ? d.querySelectorAll(".cache-browser-chips button.chip").length : 0, summary: d ? d.querySelector("summary").textContent : "", browserWord: /Browser/.test(document.getElementById("cacheChips").textContent) }; })()`);
+      await nav("index.html");
+      await ev(`new Promise((r) => setTimeout(r, 600))`);
+      let st = await look();
+      assert.equal(st.has, false, "no 💾 with nothing saved");
+      await ev(`(localStorage.setItem("ps2-elite-kd-cache-v2", ${JSON.stringify(JSON.stringify(mk(2)))}), 1)`);
+      await nav("index.html"); await ev(`new Promise((r) => setTimeout(r, 800))`);
+      st = await look();
+      assert.deepEqual([st.has, st.open, st.chips, st.summary, st.browserWord], [true, true, 2, "💾", false], JSON.stringify(st));
+      await ev(`(localStorage.setItem("ps2-elite-kd-cache-v2", ${JSON.stringify(JSON.stringify(mk(50)))}), 1)`);
+      await nav("index.html"); await ev(`new Promise((r) => setTimeout(r, 800))`);
+      st = await look();
+      assert.deepEqual([st.has, st.open, st.chips], [true, false, 50], "50 names → folded");
+      // Open it: the chips box scrolls instead of growing past ~12rem.
+      await ev(`new Promise((r) => { document.querySelector("#cacheChips details.cache-browser > summary").click(); setTimeout(() => r(1), 200); })`);
+      const box = await ev(`(() => { const b = document.querySelector(".cache-browser-chips"); return { h: b.getBoundingClientRect().height, sh: b.scrollHeight, rem: parseFloat(getComputedStyle(document.documentElement).fontSize) }; })()`);
+      assert.ok(box.h <= 12.5 * box.rem + 2, JSON.stringify(box));
+      await nav("index.html"); await ev(`new Promise((r) => setTimeout(r, 800))`);
+      assert.equal((await look()).open, true, "remembered open");
+    }, { width: 390, height: 844, mobile: true });
+  });
+});
