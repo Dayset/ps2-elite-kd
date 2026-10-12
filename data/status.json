@@ -4,45 +4,225 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "38304449853",
+    "runId": "38307386005",
     "event": "workflow_dispatch",
-    "kind": "on-demand",
-    "startedAt": "2026-10-12T20:28:45.275Z",
-    "endedAt": "2026-10-12T20:30:19.569Z",
-    "seconds": 94,
+    "kind": "discovery",
+    "startedAt": "2026-10-12T20:56:07.552Z",
+    "endedAt": "2026-10-12T21:04:53.663Z",
+    "seconds": 526,
     "updated": [],
     "added": [
-      "HoneyBadgerNSO"
+      "FIodmoon",
+      "Flodmoon",
+      "SaltDispenserNC",
+      "[C4CC] derHarribert",
+      "[ROYS] NcFalconEU",
+      "[3EPG] Kolpachpok",
+      "[RMBJ] soulbiscuits",
+      "zhoumy",
+      "[TDCo] Brenkles",
+      "[RGTV] sdfgvdsffg",
+      "PleaseRunOP",
+      "Nayuri",
+      "[DWHQ] YOOOOOOOVS",
+      "Badd3Pee",
+      "[F00I] GetPractisedVS",
+      "[RGTV] OneDeathIsOneStory",
+      "[RWCN] ChinaPLAmx",
+      "[LHEU] lasere",
+      "Dadiaoluo",
+      "[NG1] RISOTTOVS",
+      "TaktikFilosofia",
+      "3213214214",
+      "penetreitor666"
     ],
-    "failed": [],
-    "stoppedEarly": null,
-    "indexSize": 3175,
+    "failed": [
+      {
+        "name": "[FEMx] ShrimpeHxxTR",
+        "reason": "Census: 36/200 opponent stats missing; keeping old data",
+        "outage": true
+      },
+      {
+        "name": "[xxSx] ShrimpeHxxNC",
+        "reason": "Census: 20/199 opponent stats missing; keeping old data",
+        "outage": true
+      },
+      {
+        "name": "[K4T5] ShrimpeHxxVS",
+        "reason": "Census: 26/200 opponent stats missing; keeping old data",
+        "outage": true
+      }
+    ],
+    "stoppedEarly": "time budget 9 min reached",
+    "indexSize": 3198,
+    "discovery": {
+      "cap": 6000,
+      "queue": 5553,
+      "slice": {
+        "calls": 60,
+        "swept": 6281,
+        "prefiltered": 4783,
+        "checked": 4783,
+        "qualified": 2123,
+        "newPlaying": 123,
+        "done": true
+      },
+      "sweepInProgress": false
+    },
     "honu": {
       "day": "2026-10-12",
-      "calls": 1030,
+      "calls": 1146,
       "cap": 3000
     },
     "batch": [
       {
-        "name": "HoneyBadgerNSO",
-        "src": "on-demand",
+        "name": "FIodmoon",
+        "src": "discovery-new",
+        "status": "done"
+      },
+      {
+        "name": "Flodmoon",
+        "src": "discovery-new",
+        "status": "done"
+      },
+      {
+        "name": "SaltDispenserNC",
+        "src": "discovery-new",
+        "status": "done"
+      },
+      {
+        "name": "[C4CC] derHarribert",
+        "src": "discovery-new",
+        "status": "done"
+      },
+      {
+        "name": "[ROYS] NcFalconEU",
+        "src": "discovery-new",
+        "status": "done"
+      },
+      {
+        "name": "[3EPG] Kolpachpok",
+        "src": "discovery-new",
+        "status": "done"
+      },
+      {
+        "name": "[RMBJ] soulbiscuits",
+        "src": "discovery-new",
+        "status": "done"
+      },
+      {
+        "name": "zhoumy",
+        "src": "discovery-new",
+        "status": "done"
+      },
+      {
+        "name": "[TDCo] Brenkles",
+        "src": "discovery-new",
+        "status": "done"
+      },
+      {
+        "name": "[RGTV] sdfgvdsffg",
+        "src": "discovery-new",
+        "status": "done"
+      },
+      {
+        "name": "PleaseRunOP",
+        "src": "discovery-new",
+        "status": "done"
+      },
+      {
+        "name": "Nayuri",
+        "src": "discovery-new",
+        "status": "done"
+      },
+      {
+        "name": "[DWHQ] YOOOOOOOVS",
+        "src": "discovery-new",
+        "status": "done"
+      },
+      {
+        "name": "Badd3Pee",
+        "src": "discovery-new",
+        "status": "done"
+      },
+      {
+        "name": "[F00I] GetPractisedVS",
+        "src": "discovery-new",
+        "status": "done"
+      },
+      {
+        "name": "[RGTV] OneDeathIsOneStory",
+        "src": "discovery-new",
+        "status": "done"
+      },
+      {
+        "name": "[RWCN] ChinaPLAmx",
+        "src": "discovery-new",
+        "status": "done"
+      },
+      {
+        "name": "[LHEU] lasere",
+        "src": "discovery-new",
+        "status": "done"
+      },
+      {
+        "name": "Dadiaoluo",
+        "src": "discovery-new",
+        "status": "done"
+      },
+      {
+        "name": "[NG1] RISOTTOVS",
+        "src": "discovery-new",
+        "status": "done"
+      },
+      {
+        "name": "[FEMx] ShrimpeHxxTR",
+        "src": "fresh-request",
+        "status": "failed",
+        "reason": "Census: 36/200 opponent stats missing; keeping old data"
+      },
+      {
+        "name": "[xxSx] ShrimpeHxxNC",
+        "src": "fresh-request",
+        "status": "failed",
+        "reason": "Census: 20/199 opponent stats missing; keeping old data"
+      },
+      {
+        "name": "[K4T5] ShrimpeHxxVS",
+        "src": "fresh-request",
+        "status": "failed",
+        "reason": "Census: 26/200 opponent stats missing; keeping old data"
+      },
+      {
+        "name": "TaktikFilosofia",
+        "src": "discovery-new",
+        "status": "done"
+      },
+      {
+        "name": "3213214214",
+        "src": "discovery-new",
+        "status": "done"
+      },
+      {
+        "name": "penetreitor666",
+        "src": "discovery-new",
         "status": "done"
       }
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-12T20:30:22.100Z",
+    "checkedAt": "2026-10-12T21:04:56.238Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
-    "unexplained": 12,
-    "explained": 1,
+    "unexplained": 14,
+    "explained": 18,
     "items": [
       {
         "slug": "anniversay",
         "name": "Anniversay",
         "id": "kd",
         "value": 247,
-        "bound": 22.57,
-        "z": 228.493,
+        "bound": 23.143,
+        "z": 227.764,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -53,8 +233,20 @@
         "name": "[GOLD] IRunANetLimiter",
         "id": "s_maxKd",
         "value": 355,
-        "bound": 260.143,
-        "z": 191.545,
+        "bound": 275.667,
+        "z": 192.574,
+        "side": "high",
+        "explained": false,
+        "reason": "",
+        "red": []
+      },
+      {
+        "slug": "dadiaoluo",
+        "name": "Dadiaoluo",
+        "id": "pvs",
+        "value": 90.068,
+        "bound": 38.132,
+        "z": 67.974,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -65,8 +257,20 @@
         "name": "[N00O] Fretec",
         "id": "pvs",
         "value": 45.763,
-        "bound": 37.55,
-        "z": 34.009,
+        "bound": 38.132,
+        "z": 34.097,
+        "side": "high",
+        "explained": false,
+        "reason": "",
+        "red": []
+      },
+      {
+        "slug": "dadiaoluo",
+        "name": "Dadiaoluo",
+        "id": "rkd",
+        "value": 15.5,
+        "bound": 15.198,
+        "z": 25.285,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -77,8 +281,8 @@
         "name": "[N00O] Fretec",
         "id": "slope",
         "value": 2.155,
-        "bound": 0.795,
-        "z": 13.05,
+        "bound": 0.807,
+        "z": 12.968,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -89,25 +293,291 @@
         "name": "[vaIk] MyPilotIsCompletelyCrazyHelpMe",
         "id": "slope",
         "value": 1.217,
-        "bound": 0.795,
-        "z": 7.982,
+        "bound": 0.807,
+        "z": 7.932,
         "side": "high",
         "explained": false,
         "reason": "",
         "red": []
       },
       {
+        "slug": "fiodmoon",
+        "name": "FIodmoon",
+        "id": "act",
+        "value": 1693.451,
+        "bound": 34.118,
+        "z": 2705.097,
+        "side": "high",
+        "explained": true,
+        "reason": "Also in 🚩 red flags (aim, rampage, session), listed there",
+        "red": [
+          "aim",
+          "rampage",
+          "session"
+        ]
+      },
+      {
+        "slug": "flodmoon",
+        "name": "Flodmoon",
+        "id": "act",
+        "value": 115.683,
+        "bound": 34.118,
+        "z": 184.014,
+        "side": "high",
+        "explained": true,
+        "reason": "Also in 🚩 red flags (rampage, session), listed there",
+        "red": [
+          "rampage",
+          "session"
+        ]
+      },
+      {
+        "slug": "fiodmoon",
+        "name": "FIodmoon",
+        "id": "rkd",
+        "value": 84.688,
+        "bound": 15.198,
+        "z": 144.314,
+        "side": "high",
+        "explained": true,
+        "reason": "Also in 🚩 red flags (aim, rampage, session), listed there",
+        "red": [
+          "aim",
+          "rampage",
+          "session"
+        ]
+      },
+      {
+        "slug": "fiodmoon",
+        "name": "FIodmoon",
+        "id": "slope",
+        "value": -26.719,
+        "bound": -6.315,
+        "z": -142.004,
+        "side": "low",
+        "explained": true,
+        "reason": "Also in 🚩 red flags (aim, rampage, session), listed there",
+        "red": [
+          "aim",
+          "rampage",
+          "session"
+        ]
+      },
+      {
         "slug": "geilovs",
         "name": "[B54A] geiloVS",
         "id": "kd",
         "value": 150,
-        "bound": 22.57,
-        "z": 138.258,
+        "bound": 23.143,
+        "z": 137.817,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (aim), listed there",
         "red": [
           "aim"
+        ]
+      },
+      {
+        "slug": "fiodmoon",
+        "name": "FIodmoon",
+        "id": "kd",
+        "value": 92.6,
+        "bound": 23.143,
+        "z": 84.591,
+        "side": "high",
+        "explained": true,
+        "reason": "Also in 🚩 red flags (aim, rampage, session), listed there",
+        "red": [
+          "aim",
+          "rampage",
+          "session"
+        ]
+      },
+      {
+        "slug": "flodmoon",
+        "name": "Flodmoon",
+        "id": "slope",
+        "value": -13.774,
+        "bound": -6.315,
+        "z": -72.529,
+        "side": "low",
+        "explained": true,
+        "reason": "Also in 🚩 red flags (rampage, session), listed there",
+        "red": [
+          "rampage",
+          "session"
+        ]
+      },
+      {
+        "slug": "fiodmoon",
+        "name": "FIodmoon",
+        "id": "rf",
+        "value": 41.758,
+        "bound": 10.67,
+        "z": 72.355,
+        "side": "high",
+        "explained": true,
+        "reason": "Also in 🚩 red flags (aim, rampage, session), listed there",
+        "red": [
+          "aim",
+          "rampage",
+          "session"
+        ]
+      },
+      {
+        "slug": "fiodmoon",
+        "name": "FIodmoon",
+        "id": "coi",
+        "value": 69.597,
+        "bound": 17.784,
+        "z": 72.355,
+        "side": "high",
+        "explained": true,
+        "reason": "Also in 🚩 red flags (aim, rampage, session), listed there",
+        "red": [
+          "aim",
+          "rampage",
+          "session"
+        ]
+      },
+      {
+        "slug": "flodmoon",
+        "name": "Flodmoon",
+        "id": "rkd",
+        "value": 32.389,
+        "bound": 15.198,
+        "z": 54.34,
+        "side": "high",
+        "explained": true,
+        "reason": "Also in 🚩 red flags (rampage, session), listed there",
+        "red": [
+          "rampage",
+          "session"
+        ]
+      },
+      {
+        "slug": "fiodmoon",
+        "name": "FIodmoon",
+        "id": "kpm",
+        "value": 17.669,
+        "bound": 8.2,
+        "z": 48.119,
+        "side": "high",
+        "explained": true,
+        "reason": "Also in 🚩 red flags (aim, rampage, session), listed there",
+        "red": [
+          "aim",
+          "rampage",
+          "session"
+        ]
+      },
+      {
+        "slug": "fiodmoon",
+        "name": "FIodmoon",
+        "id": "ownKpm",
+        "value": 19.996,
+        "bound": 10.632,
+        "z": 39.949,
+        "side": "high",
+        "explained": true,
+        "reason": "Also in 🚩 red flags (aim, rampage, session), listed there",
+        "red": [
+          "aim",
+          "rampage",
+          "session"
+        ]
+      },
+      {
+        "slug": "fiodmoon",
+        "name": "FIodmoon",
+        "id": "own",
+        "value": 19.996,
+        "bound": 10.627,
+        "z": 39.949,
+        "side": "high",
+        "explained": true,
+        "reason": "Also in 🚩 red flags (aim, rampage, session), listed there",
+        "red": [
+          "aim",
+          "rampage",
+          "session"
+        ]
+      },
+      {
+        "slug": "flodmoon",
+        "name": "Flodmoon",
+        "id": "kd",
+        "value": 34.765,
+        "bound": 23.143,
+        "z": 30.961,
+        "side": "high",
+        "explained": true,
+        "reason": "Also in 🚩 red flags (rampage, session), listed there",
+        "red": [
+          "rampage",
+          "session"
+        ]
+      },
+      {
+        "slug": "flodmoon",
+        "name": "Flodmoon",
+        "id": "rf",
+        "value": 16.34,
+        "bound": 10.67,
+        "z": 27.548,
+        "side": "high",
+        "explained": true,
+        "reason": "Also in 🚩 red flags (rampage, session), listed there",
+        "red": [
+          "rampage",
+          "session"
+        ]
+      },
+      {
+        "slug": "flodmoon",
+        "name": "Flodmoon",
+        "id": "coi",
+        "value": 27.234,
+        "bound": 17.784,
+        "z": 27.548,
+        "side": "high",
+        "explained": true,
+        "reason": "Also in 🚩 red flags (rampage, session), listed there",
+        "red": [
+          "rampage",
+          "session"
+        ]
+      },
+      {
+        "slug": "fiodmoon",
+        "name": "FIodmoon",
+        "id": "s_kpm",
+        "value": 16.526,
+        "bound": 10.412,
+        "z": 27.13,
+        "side": "high",
+        "explained": true,
+        "reason": "Also in 🚩 red flags (aim, rampage, session), listed there",
+        "red": [
+          "aim",
+          "rampage",
+          "session"
+        ]
+      },
+      {
+        "slug": "fiodmoon",
+        "name": "FIodmoon",
+        "id": "s_maxKpm",
+        "value": 16.526,
+        "bound": 11.688,
+        "z": 22.194,
+        "side": "high",
+        "explained": true,
+        "reason": "Also in 🚩 red flags (aim, rampage, session), listed there",
+        "red": [
+          "aim",
+          "rampage",
+          "session"
         ]
       },
       {
@@ -204,27 +674,53 @@
     ],
     "players": [
       {
+        "slug": "dadiaoluo",
+        "name": "Dadiaoluo",
+        "explained": false,
+        "reason": "",
+        "red": [],
+        "maxZ": 67.974,
+        "metrics": [
+          {
+            "id": "pvs",
+            "label": "🦁 Brave",
+            "value": 90.068,
+            "bound": 38.132,
+            "z": 67.974,
+            "side": "high"
+          },
+          {
+            "id": "rkd",
+            "label": "☠️ K/D",
+            "value": 15.5,
+            "bound": 15.198,
+            "z": 25.285,
+            "side": "high"
+          }
+        ]
+      },
+      {
         "slug": "fretec",
         "name": "[N00O] Fretec",
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 34.009,
+        "maxZ": 34.097,
         "metrics": [
           {
             "id": "pvs",
             "label": "🦁 Brave",
             "value": 45.763,
-            "bound": 37.55,
-            "z": 34.009,
+            "bound": 38.132,
+            "z": 34.097,
             "side": "high"
           },
           {
             "id": "slope",
             "label": "📉 Slope",
             "value": 2.155,
-            "bound": 0.795,
-            "z": 13.05,
+            "bound": 0.807,
+            "z": 12.968,
             "side": "high"
           }
         ]
@@ -235,14 +731,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 228.493,
+        "maxZ": 227.764,
         "metrics": [
           {
             "id": "kd",
             "label": "KD",
             "value": 247,
-            "bound": 22.57,
-            "z": 228.493,
+            "bound": 23.143,
+            "z": 227.764,
             "side": "high"
           }
         ]
@@ -253,14 +749,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 191.545,
+        "maxZ": 192.574,
         "metrics": [
           {
             "id": "s_maxKd",
             "label": "🧪 Best-session K/D",
             "value": 355,
-            "bound": 260.143,
-            "z": 191.545,
+            "bound": 275.667,
+            "z": 192.574,
             "side": "high"
           }
         ]
@@ -271,14 +767,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 7.982,
+        "maxZ": 7.932,
         "metrics": [
           {
             "id": "slope",
             "label": "📉 Slope",
             "value": 1.217,
-            "bound": 0.795,
-            "z": 7.982,
+            "bound": 0.807,
+            "z": 7.932,
             "side": "high"
           }
         ]
@@ -417,6 +913,169 @@
         ]
       },
       {
+        "slug": "fiodmoon",
+        "name": "FIodmoon",
+        "explained": true,
+        "reason": "Also in 🚩 red flags (aim, rampage, session), listed there",
+        "red": [
+          "aim",
+          "rampage",
+          "session"
+        ],
+        "maxZ": 2705.097,
+        "metrics": [
+          {
+            "id": "act",
+            "label": "🏃 Activity",
+            "value": 1693.451,
+            "bound": 34.118,
+            "z": 2705.097,
+            "side": "high"
+          },
+          {
+            "id": "rkd",
+            "label": "☠️ K/D",
+            "value": 84.688,
+            "bound": 15.198,
+            "z": 144.314,
+            "side": "high"
+          },
+          {
+            "id": "slope",
+            "label": "📉 Slope",
+            "value": -26.719,
+            "bound": -6.315,
+            "z": -142.004,
+            "side": "low"
+          },
+          {
+            "id": "kd",
+            "label": "KD",
+            "value": 92.6,
+            "bound": 23.143,
+            "z": 84.591,
+            "side": "high"
+          },
+          {
+            "id": "rf",
+            "label": "🛡️ Resist",
+            "value": 41.758,
+            "bound": 10.67,
+            "z": 72.355,
+            "side": "high"
+          },
+          {
+            "id": "coi",
+            "label": "📊 COI",
+            "value": 69.597,
+            "bound": 17.784,
+            "z": 72.355,
+            "side": "high"
+          },
+          {
+            "id": "kpm",
+            "label": "KPM",
+            "value": 17.669,
+            "bound": 8.2,
+            "z": 48.119,
+            "side": "high"
+          },
+          {
+            "id": "ownKpm",
+            "label": "own KPM (public)",
+            "value": 19.996,
+            "bound": 10.632,
+            "z": 39.949,
+            "side": "high"
+          },
+          {
+            "id": "own",
+            "label": "own KPM",
+            "value": 19.996,
+            "bound": 10.627,
+            "z": 39.949,
+            "side": "high"
+          },
+          {
+            "id": "s_kpm",
+            "label": "🧪 Session KPM",
+            "value": 16.526,
+            "bound": 10.412,
+            "z": 27.13,
+            "side": "high"
+          },
+          {
+            "id": "s_maxKpm",
+            "label": "🧪 Best-session KPM",
+            "value": 16.526,
+            "bound": 11.688,
+            "z": 22.194,
+            "side": "high"
+          }
+        ]
+      },
+      {
+        "slug": "flodmoon",
+        "name": "Flodmoon",
+        "explained": true,
+        "reason": "Also in 🚩 red flags (rampage, session), listed there",
+        "red": [
+          "rampage",
+          "session"
+        ],
+        "maxZ": 184.014,
+        "metrics": [
+          {
+            "id": "act",
+            "label": "🏃 Activity",
+            "value": 115.683,
+            "bound": 34.118,
+            "z": 184.014,
+            "side": "high"
+          },
+          {
+            "id": "slope",
+            "label": "📉 Slope",
+            "value": -13.774,
+            "bound": -6.315,
+            "z": -72.529,
+            "side": "low"
+          },
+          {
+            "id": "rkd",
+            "label": "☠️ K/D",
+            "value": 32.389,
+            "bound": 15.198,
+            "z": 54.34,
+            "side": "high"
+          },
+          {
+            "id": "kd",
+            "label": "KD",
+            "value": 34.765,
+            "bound": 23.143,
+            "z": 30.961,
+            "side": "high"
+          },
+          {
+            "id": "rf",
+            "label": "🛡️ Resist",
+            "value": 16.34,
+            "bound": 10.67,
+            "z": 27.548,
+            "side": "high"
+          },
+          {
+            "id": "coi",
+            "label": "📊 COI",
+            "value": 27.234,
+            "bound": 17.784,
+            "z": 27.548,
+            "side": "high"
+          }
+        ]
+      },
+      {
         "slug": "geilovs",
         "name": "[B54A] geiloVS",
         "explained": true,
@@ -424,23 +1083,23 @@
         "red": [
           "aim"
         ],
-        "maxZ": 138.258,
+        "maxZ": 137.817,
         "metrics": [
           {
             "id": "kd",
             "label": "KD",
             "value": 150,
-            "bound": 22.57,
-            "z": 138.258,
+            "bound": 23.143,
+            "z": 137.817,
             "side": "high"
           }
         ]
       }
     ],
-    "playersUnexplained": 11,
-    "playersExplained": 1,
-    "playersAlsoRed": 1,
-    "playersChartOnly": 11
+    "playersUnexplained": 12,
+    "playersExplained": 3,
+    "playersAlsoRed": 3,
+    "playersChartOnly": 12
   },
   "hidden": {
     "count": 7,
@@ -504,18 +1163,18 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-12T20:30:22.134Z",
-    "red": 20,
+    "checkedAt": "2026-10-12T21:04:56.274Z",
+    "red": 22,
     "padding": 22,
     "adjusted": 1,
-    "outlier": 12,
-    "chartOnly": 34,
-    "both": 1,
-    "session": 4,
+    "outlier": 15,
+    "chartOnly": 35,
+    "both": 3,
+    "session": 6,
     "forensics": 8
   },
   "sessionStats": {
-    "checkedAt": "2026-10-12T20:30:22.107Z",
+    "checkedAt": "2026-10-12T21:04:56.245Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -528,14 +1187,14 @@
     },
     "ruleText": "[session pattern] in recent Honu sessions (≥ 100 kills counted): assists per kill ≤ 0.1, headshot share ≥ 50% (headshot XP per kill; Census lifetime HSR when no XP detail) and K/D ≥ 7 (session deaths; Census lifetime KD when none). A very one-sided record; a lead for manual review, not proof.",
     "coverage": {
-      "players": 3174,
-      "withSessions": 1495,
-      "measured": 835,
-      "sessions": 4758,
-      "kills": 299588,
+      "players": 3197,
+      "withSessions": 1518,
+      "measured": 847,
+      "sessions": 4835,
+      "kills": 305090,
       "xpPlayers": 224,
-      "xpMeasured": 161,
-      "xpSessions": 953
+      "xpMeasured": 162,
+      "xpSessions": 965
     },
     "metrics": [
       {
@@ -637,77 +1296,77 @@
     ],
     "distributions": {
       "s_apk": {
-        "n": 835,
+        "n": 847,
         "min": 0,
-        "p01": 0.039,
-        "p05": 0.149,
+        "p01": 0.02,
+        "p05": 0.143,
         "median": 0.346,
-        "p95": 0.661,
+        "p95": 0.658,
         "p99": 0.831,
         "max": 1.467
       },
       "s_share": {
-        "n": 726,
+        "n": 737,
         "min": 0.424,
         "p01": 0.471,
-        "p05": 0.504,
+        "p05": 0.503,
         "median": 0.572,
-        "p95": 0.64,
+        "p95": 0.642,
         "p99": 0.676,
-        "max": 0.718
+        "max": 0.803
       },
       "s_kpm": {
-        "n": 835,
+        "n": 847,
         "min": 0.08,
         "p01": 0.15,
         "p05": 0.263,
         "median": 0.824,
-        "p95": 2.408,
-        "p99": 3.141,
-        "max": 6.683
+        "p95": 2.437,
+        "p99": 3.221,
+        "max": 16.526
       },
       "s_maxKpm": {
-        "n": 835,
+        "n": 847,
         "min": 0.137,
         "p01": 0.191,
         "p05": 0.341,
-        "median": 1.028,
-        "p95": 2.85,
-        "p99": 3.611,
-        "max": 7.187
+        "median": 1.021,
+        "p95": 2.853,
+        "p99": 3.687,
+        "max": 16.526
       },
       "s_kpmCv": {
-        "n": 785,
+        "n": 794,
         "min": 0,
         "p01": 0.01,
         "p05": 0.041,
-        "median": 0.218,
+        "median": 0.219,
         "p95": 0.548,
         "p99": 0.721,
         "max": 1.226
       },
       "s_kd": {
-        "n": 692,
+        "n": 704,
         "min": 0.298,
-        "p01": 0.482,
+        "p01": 0.483,
         "p05": 0.727,
         "median": 2.179,
-        "p95": 5.432,
-        "p99": 38.636,
+        "p95": 5.521,
+        "p99": 41,
         "max": 113
       },
       "s_maxKd": {
-        "n": 692,
+        "n": 704,
         "min": 0.392,
-        "p01": 0.552,
+        "p01": 0.569,
         "p05": 0.912,
-        "median": 2.786,
-        "p95": 10,
-        "p99": 67.125,
+        "median": 2.778,
+        "p95": 10.25,
+        "p99": 71,
         "max": 355
       },
       "s_hsk": {
-        "n": 167,
+        "n": 168,
         "min": 0,
         "p01": 0.006,
         "p05": 0.071,
@@ -717,47 +1376,47 @@
         "max": 0.73
       },
       "s_ksk": {
-        "n": 167,
+        "n": 168,
         "min": 0,
         "p01": 0.04,
         "p05": 0.13,
-        "median": 0.418,
+        "median": 0.41,
         "p95": 0.717,
         "p99": 0.904,
         "max": 0.953
       },
       "s_domk": {
-        "n": 167,
+        "n": 168,
         "min": 0,
         "p01": 0.007,
-        "p05": 0.024,
-        "median": 0.078,
-        "p95": 0.155,
+        "p05": 0.023,
+        "median": 0.077,
+        "p95": 0.156,
         "p99": 0.233,
         "max": 0.241
       },
       "s_revk": {
-        "n": 167,
+        "n": 168,
         "min": 0,
         "p01": 0,
         "p05": 0.007,
-        "median": 0.051,
+        "median": 0.052,
         "p95": 0.099,
         "p99": 0.144,
         "max": 0.206
       },
       "s_revDom": {
-        "n": 166,
+        "n": 167,
         "min": 0,
         "p01": 0,
         "p05": 0.095,
-        "median": 0.652,
+        "median": 0.667,
         "p95": 2.333,
         "p99": 4.6,
         "max": 10
       },
       "s_savk": {
-        "n": 167,
+        "n": 168,
         "min": 0,
         "p01": 0.009,
         "p05": 0.017,
@@ -767,17 +1426,17 @@
         "max": 0.167
       },
       "s_spotk": {
-        "n": 167,
+        "n": 168,
         "min": 0,
         "p01": 0,
         "p05": 0,
         "median": 0.018,
-        "p95": 0.161,
+        "p95": 0.16,
         "p99": 0.206,
         "max": 0.277
       },
       "s_prik": {
-        "n": 167,
+        "n": 168,
         "min": 0,
         "p01": 0.022,
         "p05": 0.1,
@@ -787,7 +1446,7 @@
         "max": 0.412
       },
       "s_stopk": {
-        "n": 167,
+        "n": 168,
         "min": 0,
         "p01": 0.005,
         "p05": 0.033,
@@ -872,6 +1531,81 @@
           "s_spotk": 0.057,
           "s_prik": 0.163,
           "s_stopk": 0.027
+        }
+      },
+      {
+        "slug": "fiodmoon",
+        "name": "FIodmoon",
+        "hidden": false,
+        "sessions": 1,
+        "kills": 1852,
+        "minutes": 112,
+        "source": "assists",
+        "measured": true,
+        "apk": 0.011,
+        "hs": 0.829,
+        "hsSrc": "lifetime",
+        "kd": 102.89,
+        "kdSrc": "session",
+        "flagged": true,
+        "otherRed": [
+          "aim",
+          "rampage"
+        ],
+        "values": {
+          "s_apk": 0.011,
+          "s_share": 0.621,
+          "s_kpm": 16.526,
+          "s_maxKpm": 16.526,
+          "s_kpmCv": null,
+          "s_kd": 102.889,
+          "s_maxKd": 102.889,
+          "s_hsk": null,
+          "s_ksk": null,
+          "s_domk": null,
+          "s_revk": null,
+          "s_revDom": null,
+          "s_savk": null,
+          "s_spotk": null,
+          "s_prik": null,
+          "s_stopk": null
+        }
+      },
+      {
+        "slug": "flodmoon",
+        "name": "Flodmoon",
+        "hidden": false,
+        "sessions": 3,
+        "kills": 633,
+        "minutes": 105,
+        "source": "assists",
+        "measured": true,
+        "apk": 0.017,
+        "hs": 0.969,
+        "hsSrc": "lifetime",
+        "kd": 90.43,
+        "kdSrc": "session",
+        "flagged": true,
+        "otherRed": [
+          "rampage"
+        ],
+        "values": {
+          "s_apk": 0.017,
+          "s_share": 0.803,
+          "s_kpm": 6.017,
+          "s_maxKpm": 8.247,
+          "s_kpmCv": 0.258,
+          "s_kd": 90.429,
+          "s_maxKd": 253,
+          "s_hsk": null,
+          "s_ksk": null,
+          "s_domk": null,
+          "s_revk": null,
+          "s_revDom": null,
+          "s_savk": null,
+          "s_spotk": null,
+          "s_prik": null,
+          "s_stopk": null
         }
       },
       {
@@ -1375,14 +2109,44 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 191.545,
+        "maxZ": 192.574,
         "metrics": [
           {
             "id": "s_maxKd",
             "label": "🧪 Best-session K/D",
             "value": 355,
-            "bound": 260.143,
-            "z": 191.545,
+            "bound": 275.667,
+            "z": 192.574,
+            "side": "high"
+          }
+        ]
+      },
+      {
+        "slug": "fiodmoon",
+        "name": "FIodmoon",
+        "explained": true,
+        "reason": "Also in 🚩 red flags (aim, rampage, session), listed there",
+        "red": [
+          "aim",
+          "rampage",
+          "session"
+        ],
+        "maxZ": 2705.097,
+        "metrics": [
+          {
+            "id": "s_kpm",
+            "label": "🧪 Session KPM",
+            "value": 16.526,
+            "bound": 10.412,
+            "z": 27.13,
+            "side": "high"
+          },
+          {
+            "id": "s_maxKpm",
+            "label": "🧪 Best-session KPM",
+            "value": 16.526,
+            "bound": 11.688,
+            "z": 22.194,
             "side": "high"
           }
         ]
@@ -1391,17 +2155,17 @@
     "outliersUnexplained": 1
   },
   "size": {
-    "at": "2026-10-12T20:30:19.953Z",
-    "repoBytes": 31411200,
-    "dataBytes": 60494347,
-    "playersBytes": 55848086,
-    "playerFiles": 3175,
+    "at": "2026-10-12T21:04:54.006Z",
+    "repoBytes": 31566848,
+    "dataBytes": 60956854,
+    "playersBytes": 56253711,
+    "playerFiles": 3198,
     "warnAtBytes": 734003200,
     "warning": false
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-12T20:30:22.116Z",
+    "checkedAt": "2026-10-12T21:04:56.256Z",
     "candidates": [
       "nebelhexe",
       "coldandhot",
@@ -1415,6 +2179,8 @@
       "bobeqh",
       "mentis2k6",
       "adhdasd",
+      "fiodmoon",
+      "flodmoon",
       "simplenubbnc",
       "delusionalplayerbase",
       "irunanetlimiter",
@@ -1425,6 +2191,7 @@
       "sputnikvs",
       "mypilotiscompletelycrazyhelpme",
       "anniversay",
+      "dadiaoluo",
       "ghostonly",
       "tylenbchikdvar",
       "simplenubbtr",
@@ -1432,6 +2199,7 @@
       "tyienbchikdvar",
       "lilcccc",
       "slowmotionbear",
+      "yooooooovs",
       "aipacenjoyer",
       "hydromellus",
       "lsolated",
@@ -1523,10 +2291,8 @@
       "omegadude4321",
       "geilonc",
       "simplenubb",
-      "lemenace",
       "aekris",
       "brackiense",
-      "lilkatr",
       "1stfanofahorn",
       "add1ti0nal"
     ],
@@ -11913,8 +12679,8 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-12T20:30:22.118Z",
-    "count": 141,
+    "checkedAt": "2026-10-12T21:04:56.259Z",
+    "count": 144,
     "players": [
       {
         "slug": "1stfanofahorn",
@@ -12006,6 +12772,24 @@
         "lists": [
           "red",
           "forensics"
+        ]
+      },
+      {
+        "slug": "fiodmoon",
+        "name": "FIodmoon",
+        "cid": "5429845372588854625",
+        "lists": [
+          "red",
+          "outlier"
+        ]
+      },
+      {
+        "slug": "flodmoon",
+        "name": "Flodmoon",
+        "cid": "5429845372588836993",
+        "lists": [
+          "red",
+          "outlier"
         ]
       },
       {
@@ -12119,6 +12903,14 @@
         "lists": [
           "outlier",
           "forensics"
+        ]
+      },
+      {
+        "slug": "dadiaoluo",
+        "name": "Dadiaoluo",
+        "cid": "5429845372588849361",
+        "lists": [
+          "outlier"
         ]
       },
       {
