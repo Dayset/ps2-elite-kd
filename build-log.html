@@ -249,12 +249,17 @@
         var copyBtn = document.getElementById("hideCopy");
         var ghLink = document.getElementById("hideGithub");
         if (!btn) return;
-        // Derive owner/repo from the page URL (works on *.github.io and custom domains via meta).
+        // Derive owner/repo from the page URL.
         function repoPath() {
-          var m = location.hostname.match(/^([a-z0-9-]+)\.github\.io$/i);
-          if (m) return m[1] + "/" + m[1] + ".github.io";
           var meta = document.querySelector('meta[name="github-repo"]');
           if (meta) return meta.getAttribute("content");
+          // Project page: username.github.io/repo/ -> username/repo
+          var m = location.hostname.match(/^([a-z0-9-]+)\.github\.io$/i);
+          if (m) {
+            var parts = location.pathname.split("/").filter(Boolean);
+            if (parts.length > 0) return m[1] + "/" + parts[0];
+            return m[1] + "/" + m[1] + ".github.io";
+          }
           return "Dayset/ps2-elite-kd"; // fallback
         }
         btn.addEventListener("click", function () {
