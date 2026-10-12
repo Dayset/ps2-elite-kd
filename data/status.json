@@ -4,11 +4,11 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "38313666500",
+    "runId": "38313668341",
     "event": "workflow_dispatch",
     "kind": "on-demand",
-    "startedAt": "2026-10-12T21:56:07.001Z",
-    "endedAt": "2026-10-12T21:57:38.589Z",
+    "startedAt": "2026-10-12T21:58:01.876Z",
+    "endedAt": "2026-10-12T21:59:33.560Z",
     "seconds": 92,
     "updated": [
       "[69KD] SaltyVet"
@@ -19,7 +19,7 @@
     "indexSize": 3365,
     "honu": {
       "day": "2026-10-12",
-      "calls": 1999,
+      "calls": 2031,
       "cap": 3000
     },
     "batch": [
@@ -31,7 +31,7 @@
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-12T21:57:41.206Z",
+    "checkedAt": "2026-10-12T21:59:36.009Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 12,
     "explained": 1,
@@ -528,7 +528,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-12T21:57:41.252Z",
+    "checkedAt": "2026-10-12T21:59:36.049Z",
     "red": 22,
     "padding": 22,
     "adjusted": 1,
@@ -539,7 +539,7 @@
     "forensics": 8
   },
   "sessionStats": {
-    "checkedAt": "2026-10-12T21:57:41.219Z",
+    "checkedAt": "2026-10-12T21:59:36.020Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -553,13 +553,13 @@
     "ruleText": "[session pattern] in recent Honu sessions (≥ 100 kills counted): assists per kill ≤ 0.1, headshot share ≥ 50% (headshot XP per kill; Census lifetime HSR when no XP detail) and K/D ≥ 7 (session deaths; Census lifetime KD when none). A very one-sided record; a lead for manual review, not proof.",
     "coverage": {
       "players": 3364,
-      "withSessions": 1696,
+      "withSessions": 1699,
       "measured": 878,
-      "sessions": 5345,
-      "kills": 322643,
-      "xpPlayers": 245,
-      "xpMeasured": 180,
-      "xpSessions": 1073
+      "sessions": 5357,
+      "kills": 322793,
+      "xpPlayers": 249,
+      "xpMeasured": 181,
+      "xpSessions": 1085
     },
     "metrics": [
       {
@@ -731,7 +731,7 @@
         "max": 355
       },
       "s_hsk": {
-        "n": 186,
+        "n": 187,
         "min": 0,
         "p01": 0.006,
         "p05": 0.071,
@@ -741,27 +741,27 @@
         "max": 0.972
       },
       "s_ksk": {
-        "n": 186,
+        "n": 187,
         "min": 0,
         "p01": 0.04,
         "p05": 0.127,
-        "median": 0.406,
+        "median": 0.409,
         "p95": 0.739,
         "p99": 0.953,
         "max": 0.983
       },
       "s_domk": {
-        "n": 186,
+        "n": 187,
         "min": 0,
         "p01": 0.007,
         "p05": 0.023,
-        "median": 0.077,
+        "median": 0.078,
         "p95": 0.167,
         "p99": 0.231,
         "max": 0.239
       },
       "s_revk": {
-        "n": 186,
+        "n": 187,
         "min": 0,
         "p01": 0,
         "p05": 0.007,
@@ -771,7 +771,7 @@
         "max": 0.257
       },
       "s_revDom": {
-        "n": 185,
+        "n": 186,
         "min": 0,
         "p01": 0,
         "p05": 0.057,
@@ -781,7 +781,7 @@
         "max": 10
       },
       "s_savk": {
-        "n": 186,
+        "n": 187,
         "min": 0,
         "p01": 0.003,
         "p05": 0.016,
@@ -791,27 +791,27 @@
         "max": 0.167
       },
       "s_spotk": {
-        "n": 186,
+        "n": 187,
         "min": 0,
         "p01": 0,
         "p05": 0,
-        "median": 0.018,
+        "median": 0.021,
         "p95": 0.168,
         "p99": 0.208,
         "max": 0.277
       },
       "s_prik": {
-        "n": 186,
+        "n": 187,
         "min": 0,
         "p01": 0.022,
-        "p05": 0.087,
+        "p05": 0.084,
         "median": 0.163,
         "p95": 0.263,
         "p99": 0.315,
         "max": 0.412
       },
       "s_stopk": {
-        "n": 186,
+        "n": 187,
         "min": 0,
         "p01": 0.005,
         "p05": 0.03,
@@ -1603,17 +1603,17 @@
     "outliersUnexplained": 1
   },
   "size": {
-    "at": "2026-10-12T21:57:38.975Z",
+    "at": "2026-10-12T21:59:33.977Z",
     "repoBytes": 31566848,
-    "dataBytes": 63543272,
-    "playersBytes": 58623330,
+    "dataBytes": 63554400,
+    "playersBytes": 58623469,
     "playerFiles": 3365,
     "warnAtBytes": 734003200,
     "warning": false
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-12T21:57:41.233Z",
+    "checkedAt": "2026-10-12T21:59:36.032Z",
     "candidates": [
       "nebelhexe",
       "coldandhot",
@@ -12135,7 +12135,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-12T21:57:41.236Z",
+    "checkedAt": "2026-10-12T21:59:36.034Z",
     "count": 144,
     "players": [
       {
