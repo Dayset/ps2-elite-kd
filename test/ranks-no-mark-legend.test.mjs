@@ -9,6 +9,6 @@ const ranks = rankingsSource();
 it("ranks.html: no mark legend, marks keep tooltips", () => {
   assert.ok(!/marks-note/.test(ranks), "marks-note legend removed");
   assert.ok(!/♿ What \$\{/.test(ranks), "no '♿ What … mean' summary");
-  assert.match(ranks, /class="pad-mark mark-\$\{r\.markKind\}" title="/);
+  assert.match(ranks, /class="pad-mark mark-\$\{\["padding","adjusted"\]\.includes\(r\.markKind\)/);
   assert.match(ranks, /class="sample-legacy" title="\$\{esc\(LEGACY_SAMPLE_TIP\)\}"/);
 });
