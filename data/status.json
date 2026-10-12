@@ -4,36 +4,36 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "38299645055",
+    "runId": "38299794794",
     "event": "workflow_dispatch",
     "kind": "on-demand",
-    "startedAt": "2026-10-12T19:44:45.228Z",
-    "endedAt": "2026-10-12T19:46:30.096Z",
-    "seconds": 105,
+    "startedAt": "2026-10-12T19:46:53.365Z",
+    "endedAt": "2026-10-12T19:48:27.140Z",
+    "seconds": 94,
     "updated": [],
     "added": [
-      "[SeFR] Dredre0"
+      "[1FR] DredreMaisEnViolet"
     ],
     "failed": [],
     "stoppedEarly": null,
-    "indexSize": 3170,
+    "indexSize": 3171,
     "honu": {
       "day": "2026-10-12",
-      "calls": 877,
+      "calls": 910,
       "cap": 1000
     },
     "batch": [
       {
-        "name": "[SeFR] Dredre0",
+        "name": "[1FR] DredreMaisEnViolet",
         "src": "on-demand",
         "status": "done"
       }
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-12T19:46:32.719Z",
+    "checkedAt": "2026-10-12T19:48:29.826Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
-    "unexplained": 11,
+    "unexplained": 12,
     "explained": 1,
     "items": [
       {
@@ -43,6 +43,18 @@
         "value": 247,
         "bound": 22.572,
         "z": 228.664,
+        "side": "high",
+        "explained": false,
+        "reason": "",
+        "red": []
+      },
+      {
+        "slug": "irunanetlimiter",
+        "name": "[GOLD] IRunANetLimiter",
+        "id": "s_maxKd",
+        "value": 355,
+        "bound": 260.143,
+        "z": 191.545,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -65,8 +77,8 @@
         "name": "[N00O] Fretec",
         "id": "slope",
         "value": 2.155,
-        "bound": 0.794,
-        "z": 13.064,
+        "bound": 0.795,
+        "z": 13.039,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -77,8 +89,8 @@
         "name": "[vaIk] MyPilotIsCompletelyCrazyHelpMe",
         "id": "slope",
         "value": 1.217,
-        "bound": 0.794,
-        "z": 7.99,
+        "bound": 0.795,
+        "z": 7.976,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -211,8 +223,8 @@
             "id": "slope",
             "label": "📉 Slope",
             "value": 2.155,
-            "bound": 0.794,
-            "z": 13.064,
+            "bound": 0.795,
+            "z": 13.039,
             "side": "high"
           }
         ]
@@ -236,19 +248,37 @@
         ]
       },
       {
+        "slug": "irunanetlimiter",
+        "name": "[GOLD] IRunANetLimiter",
+        "explained": false,
+        "reason": "",
+        "red": [],
+        "maxZ": 191.545,
+        "metrics": [
+          {
+            "id": "s_maxKd",
+            "label": "🧪 Best-session K/D",
+            "value": 355,
+            "bound": 260.143,
+            "z": 191.545,
+            "side": "high"
+          }
+        ]
+      },
+      {
         "slug": "mypilotiscompletelycrazyhelpme",
         "name": "[vaIk] MyPilotIsCompletelyCrazyHelpMe",
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 7.99,
+        "maxZ": 7.976,
         "metrics": [
           {
             "id": "slope",
             "label": "📉 Slope",
             "value": 1.217,
-            "bound": 0.794,
-            "z": 7.99,
+            "bound": 0.795,
+            "z": 7.976,
             "side": "high"
           }
         ]
@@ -407,10 +437,10 @@
         ]
       }
     ],
-    "playersUnexplained": 10,
+    "playersUnexplained": 11,
     "playersExplained": 1,
     "playersAlsoRed": 1,
-    "playersChartOnly": 10
+    "playersChartOnly": 11
   },
   "hidden": {
     "count": 7,
@@ -474,18 +504,18 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-12T19:46:32.760Z",
+    "checkedAt": "2026-10-12T19:48:29.874Z",
     "red": 20,
     "padding": 22,
     "adjusted": 1,
-    "outlier": 11,
-    "chartOnly": 33,
+    "outlier": 12,
+    "chartOnly": 34,
     "both": 1,
     "session": 4,
     "forensics": 8
   },
   "sessionStats": {
-    "checkedAt": "2026-10-12T19:46:32.728Z",
+    "checkedAt": "2026-10-12T19:48:29.840Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -498,14 +528,14 @@
     },
     "ruleText": "[session pattern] in recent Honu sessions (≥ 100 kills counted): assists per kill ≤ 0.1, headshot share ≥ 50% (headshot XP per kill; Census lifetime HSR when no XP detail) and K/D ≥ 7 (session deaths; Census lifetime KD when none). A very one-sided record; a lead for manual review, not proof.",
     "coverage": {
-      "players": 3169,
-      "withSessions": 1490,
-      "measured": 828,
-      "sessions": 4708,
-      "kills": 294049,
-      "xpPlayers": 217,
-      "xpMeasured": 152,
-      "xpSessions": 897
+      "players": 3170,
+      "withSessions": 1491,
+      "measured": 829,
+      "sessions": 4720,
+      "kills": 295495,
+      "xpPlayers": 218,
+      "xpMeasured": 153,
+      "xpSessions": 909
     },
     "metrics": [
       {
@@ -607,11 +637,11 @@
     ],
     "distributions": {
       "s_apk": {
-        "n": 828,
+        "n": 829,
         "min": 0,
         "p01": 0.039,
         "p05": 0.149,
-        "median": 0.345,
+        "median": 0.346,
         "p95": 0.664,
         "p99": 0.831,
         "max": 1.467
@@ -627,7 +657,7 @@
         "max": 0.718
       },
       "s_kpm": {
-        "n": 828,
+        "n": 829,
         "min": 0.08,
         "p01": 0.15,
         "p05": 0.263,
@@ -637,17 +667,17 @@
         "max": 6.683
       },
       "s_maxKpm": {
-        "n": 828,
+        "n": 829,
         "min": 0.137,
         "p01": 0.191,
         "p05": 0.341,
-        "median": 1.021,
-        "p95": 2.827,
+        "median": 1.026,
+        "p95": 2.85,
         "p99": 3.611,
         "max": 7.187
       },
       "s_kpmCv": {
-        "n": 778,
+        "n": 779,
         "min": 0,
         "p01": 0.01,
         "p05": 0.04,
@@ -657,87 +687,87 @@
         "max": 1.226
       },
       "s_kd": {
-        "n": 684,
+        "n": 685,
         "min": 0.298,
         "p01": 0.482,
         "p05": 0.727,
-        "median": 2.179,
+        "median": 2.18,
         "p95": 5.44,
         "p99": 31.611,
         "max": 113
       },
       "s_maxKd": {
-        "n": 684,
+        "n": 685,
         "min": 0.392,
         "p01": 0.552,
         "p05": 0.912,
-        "median": 2.778,
+        "median": 2.786,
         "p95": 9.909,
-        "p99": 66,
-        "max": 169.625
+        "p99": 67.125,
+        "max": 355
       },
       "s_hsk": {
-        "n": 158,
+        "n": 159,
         "min": 0.006,
-        "p01": 0.021,
+        "p01": 0.013,
         "p05": 0.074,
-        "median": 0.298,
+        "median": 0.299,
         "p95": 0.537,
         "p99": 0.696,
         "max": 0.73
       },
       "s_ksk": {
-        "n": 158,
+        "n": 159,
         "min": 0.04,
-        "p01": 0.071,
-        "p05": 0.148,
-        "median": 0.427,
-        "p95": 0.722,
+        "p01": 0.07,
+        "p05": 0.13,
+        "median": 0.421,
+        "p95": 0.717,
         "p99": 0.869,
         "max": 0.953
       },
       "s_domk": {
-        "n": 158,
+        "n": 159,
         "min": 0.007,
-        "p01": 0.01,
-        "p05": 0.025,
+        "p01": 0.009,
+        "p05": 0.024,
         "median": 0.08,
         "p95": 0.155,
         "p99": 0.233,
         "max": 0.241
       },
       "s_revk": {
-        "n": 158,
+        "n": 159,
         "min": 0,
         "p01": 0,
-        "p05": 0.008,
+        "p05": 0.007,
         "median": 0.051,
         "p95": 0.102,
         "p99": 0.144,
         "max": 0.206
       },
       "s_revDom": {
-        "n": 158,
+        "n": 159,
         "min": 0,
         "p01": 0,
         "p05": 0.095,
-        "median": 0.643,
+        "median": 0.647,
         "p95": 2.333,
         "p99": 4.6,
         "max": 10
       },
       "s_savk": {
-        "n": 158,
-        "min": 0.011,
-        "p01": 0.012,
-        "p05": 0.018,
+        "n": 159,
+        "min": 0.009,
+        "p01": 0.011,
+        "p05": 0.017,
         "median": 0.056,
         "p95": 0.103,
         "p99": 0.132,
         "max": 0.167
       },
       "s_spotk": {
-        "n": 158,
+        "n": 159,
         "min": 0,
         "p01": 0,
         "p05": 0,
@@ -747,21 +777,21 @@
         "max": 0.277
       },
       "s_prik": {
-        "n": 158,
-        "min": 0.034,
-        "p01": 0.047,
-        "p05": 0.111,
+        "n": 159,
+        "min": 0.022,
+        "p01": 0.034,
+        "p05": 0.1,
         "median": 0.163,
         "p95": 0.265,
         "p99": 0.318,
         "max": 0.412
       },
       "s_stopk": {
-        "n": 158,
-        "min": 0.011,
-        "p01": 0.013,
+        "n": 159,
+        "min": 0.005,
+        "p01": 0.006,
         "p05": 0.033,
-        "median": 0.07,
+        "median": 0.071,
         "p95": 0.138,
         "p99": 0.153,
         "max": 0.174
@@ -1338,21 +1368,40 @@
         "group": "top legit"
       }
     ],
-    "outliers": [],
-    "outliersUnexplained": 0
+    "outliers": [
+      {
+        "slug": "irunanetlimiter",
+        "name": "[GOLD] IRunANetLimiter",
+        "explained": false,
+        "reason": "",
+        "red": [],
+        "maxZ": 191.545,
+        "metrics": [
+          {
+            "id": "s_maxKd",
+            "label": "🧪 Best-session K/D",
+            "value": 355,
+            "bound": 260.143,
+            "z": 191.545,
+            "side": "high"
+          }
+        ]
+      }
+    ],
+    "outliersUnexplained": 1
   },
   "size": {
-    "at": "2026-10-12T19:46:30.421Z",
+    "at": "2026-10-12T19:48:27.624Z",
     "repoBytes": 31411200,
-    "dataBytes": 60333659,
-    "playersBytes": 55754240,
-    "playerFiles": 3170,
+    "dataBytes": 60361813,
+    "playersBytes": 55773427,
+    "playerFiles": 3171,
     "warnAtBytes": 734003200,
     "warning": false
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-12T19:46:32.739Z",
+    "checkedAt": "2026-10-12T19:48:29.854Z",
     "candidates": [
       "nebelhexe",
       "coldandhot",
@@ -1368,6 +1417,7 @@
       "adhdasd",
       "simplenubbnc",
       "delusionalplayerbase",
+      "irunanetlimiter",
       "pikaqiuill",
       "geilo20",
       "cdma2008",
@@ -1470,7 +1520,6 @@
       "alandwhaletr",
       "omegadude1234",
       "cionekano",
-      "irunanetlimiter",
       "omegadude4321",
       "geilonc",
       "simplenubb",
@@ -11864,8 +11913,8 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-12T19:46:32.743Z",
-    "count": 140,
+    "checkedAt": "2026-10-12T19:48:29.859Z",
+    "count": 141,
     "players": [
       {
         "slug": "1stfanofahorn",
@@ -12106,6 +12155,14 @@
         "lists": [
           "outlier",
           "forensics"
+        ]
+      },
+      {
+        "slug": "irunanetlimiter",
+        "name": "[GOLD] IRunANetLimiter",
+        "cid": "5428546332527749057",
+        "lists": [
+          "outlier"
         ]
       },
       {
