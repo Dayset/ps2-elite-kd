@@ -4,178 +4,34 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "38287454275",
-    "event": "schedule",
-    "kind": "discovery",
-    "startedAt": "2026-10-12T17:55:44.641Z",
-    "endedAt": "2026-10-12T17:57:48.811Z",
-    "seconds": 124,
+    "runId": "38292877178",
+    "event": "workflow_dispatch",
+    "kind": "on-demand",
+    "startedAt": "2026-10-12T18:44:02.617Z",
+    "endedAt": "2026-10-12T18:46:20.324Z",
+    "seconds": 138,
     "updated": [],
-    "added": [],
-    "failed": [
-      {
-        "name": "[FEMx] ShrimpeHxxTR",
-        "reason": "Census: 36/200 opponent stats missing; keeping old data",
-        "outage": true
-      },
-      {
-        "name": "[xxSx] ShrimpeHxxNC",
-        "reason": "Census: 20/199 opponent stats missing; keeping old data",
-        "outage": true
-      },
-      {
-        "name": "[K4T5] ShrimpeHxxVS",
-        "reason": "Census: 26/200 opponent stats missing; keeping old data",
-        "outage": true
-      },
-      {
-        "name": "Runnerdeconfianza",
-        "reason": "Census: 1/1 opponent stats missing; keeping old data",
-        "outage": true
-      }
+    "added": [
+      "[1337] softcoreNC"
     ],
-    "stoppedEarly": "4 outage-type failures in a row (Census/Honu down?)",
-    "indexSize": 3168,
-    "discovery": {
-      "cap": 6000,
-      "queue": 5279,
-      "slice": null,
-      "sweepInProgress": false
-    },
+    "failed": [],
+    "stoppedEarly": null,
+    "indexSize": 3169,
     "honu": {
       "day": "2026-10-12",
-      "calls": 810,
+      "calls": 843,
       "cap": 1000
     },
     "batch": [
       {
-        "name": "Nayuri",
-        "src": "discovery-new",
-        "status": "pending"
-      },
-      {
-        "name": "derHarribert",
-        "src": "discovery-new",
-        "status": "pending"
-      },
-      {
-        "name": "Badd3Pee",
-        "src": "discovery-new",
-        "status": "pending"
-      },
-      {
-        "name": "ChinaPLAmx",
-        "src": "discovery-new",
-        "status": "pending"
-      },
-      {
-        "name": "MoroccanProdigy",
-        "src": "discovery-new",
-        "status": "pending"
-      },
-      {
-        "name": "NcFalconEU",
-        "src": "discovery-new",
-        "status": "pending"
-      },
-      {
-        "name": "Smithdun",
-        "src": "discovery-new",
-        "status": "pending"
-      },
-      {
-        "name": "FleshtradiolNCW",
-        "src": "discovery-new",
-        "status": "pending"
-      },
-      {
-        "name": "lasere",
-        "src": "discovery-new",
-        "status": "pending"
-      },
-      {
-        "name": "soulbiscuits",
-        "src": "discovery-new",
-        "status": "pending"
-      },
-      {
-        "name": "wwwCeobe",
-        "src": "discovery-new",
-        "status": "pending"
-      },
-      {
-        "name": "BritishBoomerang",
-        "src": "discovery-new",
-        "status": "pending"
-      },
-      {
-        "name": "OnkelArgail",
-        "src": "discovery-new",
-        "status": "pending"
-      },
-      {
-        "name": "HoneyBadgerNSO",
-        "src": "discovery-new",
-        "status": "pending"
-      },
-      {
-        "name": "3213214214",
-        "src": "discovery-new",
-        "status": "pending"
-      },
-      {
-        "name": "Kyndra",
-        "src": "discovery-new",
-        "status": "pending"
-      },
-      {
-        "name": "xuryubao",
-        "src": "discovery-new",
-        "status": "pending"
-      },
-      {
-        "name": "Biaccu",
-        "src": "discovery-new",
-        "status": "pending"
-      },
-      {
-        "name": "Brenkles",
-        "src": "discovery-new",
-        "status": "pending"
-      },
-      {
-        "name": "Kolpachpok",
-        "src": "discovery-new",
-        "status": "pending"
-      },
-      {
-        "name": "[FEMx] ShrimpeHxxTR",
-        "src": "fresh-request",
-        "status": "failed",
-        "reason": "Census: 36/200 opponent stats missing; keeping old data"
-      },
-      {
-        "name": "[xxSx] ShrimpeHxxNC",
-        "src": "fresh-request",
-        "status": "failed",
-        "reason": "Census: 20/199 opponent stats missing; keeping old data"
-      },
-      {
-        "name": "[K4T5] ShrimpeHxxVS",
-        "src": "fresh-request",
-        "status": "failed",
-        "reason": "Census: 26/200 opponent stats missing; keeping old data"
-      },
-      {
-        "name": "Runnerdeconfianza",
-        "src": "refresh",
-        "status": "failed",
-        "reason": "Census: 1/1 opponent stats missing; keeping old data"
+        "name": "[1337] softcoreNC",
+        "src": "on-demand",
+        "status": "done"
       }
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-12T17:57:51.433Z",
+    "checkedAt": "2026-10-12T18:46:22.649Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 11,
     "explained": 1,
@@ -209,8 +65,8 @@
         "name": "[N00O] Fretec",
         "id": "slope",
         "value": 2.155,
-        "bound": 0.794,
-        "z": 13.064,
+        "bound": 0.795,
+        "z": 13.039,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -221,8 +77,8 @@
         "name": "[vaIk] MyPilotIsCompletelyCrazyHelpMe",
         "id": "slope",
         "value": 1.217,
-        "bound": 0.794,
-        "z": 7.99,
+        "bound": 0.795,
+        "z": 7.976,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -355,8 +211,8 @@
             "id": "slope",
             "label": "📉 Slope",
             "value": 2.155,
-            "bound": 0.794,
-            "z": 13.064,
+            "bound": 0.795,
+            "z": 13.039,
             "side": "high"
           }
         ]
@@ -385,14 +241,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 7.99,
+        "maxZ": 7.976,
         "metrics": [
           {
             "id": "slope",
             "label": "📉 Slope",
             "value": 1.217,
-            "bound": 0.794,
-            "z": 7.99,
+            "bound": 0.795,
+            "z": 7.976,
             "side": "high"
           }
         ]
@@ -618,7 +474,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-12T17:57:51.484Z",
+    "checkedAt": "2026-10-12T18:46:22.685Z",
     "red": 20,
     "padding": 22,
     "adjusted": 1,
@@ -629,7 +485,7 @@
     "forensics": 8
   },
   "sessionStats": {
-    "checkedAt": "2026-10-12T17:57:51.445Z",
+    "checkedAt": "2026-10-12T18:46:22.656Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -642,14 +498,14 @@
     },
     "ruleText": "[session pattern] in recent Honu sessions (≥ 100 kills counted): assists per kill ≤ 0.1, headshot share ≥ 50% (headshot XP per kill; Census lifetime HSR when no XP detail) and K/D ≥ 7 (session deaths; Census lifetime KD when none). A very one-sided record; a lead for manual review, not proof.",
     "coverage": {
-      "players": 3167,
-      "withSessions": 1487,
-      "measured": 825,
-      "sessions": 4690,
-      "kills": 292465,
-      "xpPlayers": 213,
-      "xpMeasured": 147,
-      "xpSessions": 873
+      "players": 3168,
+      "withSessions": 1489,
+      "measured": 827,
+      "sessions": 4699,
+      "kills": 293162,
+      "xpPlayers": 216,
+      "xpMeasured": 150,
+      "xpSessions": 885
     },
     "metrics": [
       {
@@ -751,11 +607,11 @@
     ],
     "distributions": {
       "s_apk": {
-        "n": 825,
+        "n": 827,
         "min": 0,
         "p01": 0.039,
         "p05": 0.149,
-        "median": 0.345,
+        "median": 0.346,
         "p95": 0.664,
         "p99": 0.831,
         "max": 1.467
@@ -771,27 +627,27 @@
         "max": 0.718
       },
       "s_kpm": {
-        "n": 825,
+        "n": 827,
         "min": 0.08,
         "p01": 0.15,
         "p05": 0.263,
-        "median": 0.82,
+        "median": 0.824,
         "p95": 2.437,
         "p99": 3.141,
         "max": 6.683
       },
       "s_maxKpm": {
-        "n": 825,
+        "n": 827,
         "min": 0.137,
         "p01": 0.191,
         "p05": 0.341,
-        "median": 1.018,
+        "median": 1.021,
         "p95": 2.827,
         "p99": 3.611,
         "max": 7.187
       },
       "s_kpmCv": {
-        "n": 775,
+        "n": 777,
         "min": 0,
         "p01": 0.01,
         "p05": 0.04,
@@ -801,57 +657,57 @@
         "max": 1.226
       },
       "s_kd": {
-        "n": 680,
+        "n": 682,
         "min": 0.298,
         "p01": 0.482,
-        "p05": 0.704,
+        "p05": 0.727,
         "median": 2.179,
-        "p95": 5.488,
+        "p95": 5.44,
         "p99": 31.611,
         "max": 113
       },
       "s_maxKd": {
-        "n": 680,
+        "n": 682,
         "min": 0.392,
         "p01": 0.552,
-        "p05": 0.89,
-        "median": 2.778,
-        "p95": 10,
+        "p05": 0.912,
+        "median": 2.786,
+        "p95": 9.909,
         "p99": 66,
         "max": 169.625
       },
       "s_hsk": {
-        "n": 154,
+        "n": 157,
         "min": 0.006,
         "p01": 0.021,
         "p05": 0.074,
-        "median": 0.297,
+        "median": 0.299,
         "p95": 0.537,
         "p99": 0.696,
         "max": 0.73
       },
       "s_ksk": {
-        "n": 154,
+        "n": 157,
         "min": 0.04,
         "p01": 0.071,
         "p05": 0.148,
-        "median": 0.421,
+        "median": 0.427,
         "p95": 0.722,
         "p99": 0.869,
         "max": 0.953
       },
       "s_domk": {
-        "n": 154,
+        "n": 157,
         "min": 0.007,
         "p01": 0.01,
         "p05": 0.025,
-        "median": 0.079,
+        "median": 0.08,
         "p95": 0.155,
         "p99": 0.233,
         "max": 0.241
       },
       "s_revk": {
-        "n": 154,
+        "n": 157,
         "min": 0,
         "p01": 0,
         "p05": 0.008,
@@ -861,7 +717,7 @@
         "max": 0.206
       },
       "s_revDom": {
-        "n": 154,
+        "n": 157,
         "min": 0,
         "p01": 0,
         "p05": 0.095,
@@ -871,17 +727,17 @@
         "max": 10
       },
       "s_savk": {
-        "n": 154,
+        "n": 157,
         "min": 0.011,
         "p01": 0.012,
-        "p05": 0.017,
+        "p05": 0.018,
         "median": 0.057,
         "p95": 0.103,
         "p99": 0.132,
         "max": 0.167
       },
       "s_spotk": {
-        "n": 154,
+        "n": 157,
         "min": 0,
         "p01": 0,
         "p05": 0,
@@ -891,7 +747,7 @@
         "max": 0.277
       },
       "s_prik": {
-        "n": 154,
+        "n": 157,
         "min": 0.034,
         "p01": 0.047,
         "p05": 0.1,
@@ -901,11 +757,11 @@
         "max": 0.412
       },
       "s_stopk": {
-        "n": 154,
+        "n": 157,
         "min": 0.011,
         "p01": 0.013,
         "p05": 0.033,
-        "median": 0.07,
+        "median": 0.071,
         "p95": 0.138,
         "p99": 0.153,
         "max": 0.174
@@ -1486,17 +1342,17 @@
     "outliersUnexplained": 0
   },
   "size": {
-    "at": "2026-10-12T17:57:49.092Z",
-    "repoBytes": 30964736,
-    "dataBytes": 60263620,
-    "playersBytes": 55715704,
-    "playerFiles": 3168,
+    "at": "2026-10-12T18:46:20.677Z",
+    "repoBytes": 31138816,
+    "dataBytes": 60300133,
+    "playersBytes": 55734818,
+    "playerFiles": 3169,
     "warnAtBytes": 734003200,
     "warning": false
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-12T17:57:51.458Z",
+    "checkedAt": "2026-10-12T18:46:22.665Z",
     "candidates": [
       "nebelhexe",
       "coldandhot",
@@ -12008,7 +11864,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-12T17:57:51.464Z",
+    "checkedAt": "2026-10-12T18:46:22.669Z",
     "count": 140,
     "players": [
       {
