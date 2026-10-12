@@ -117,7 +117,7 @@ export async function loadEach(names, loadFn, opts = {}) {
       });
     }
     // Failed names count as done so progress / ETA keep moving.
-    if (onDone) onDone(name, idx, total, outcome);
+    if (onDone) { try { onDone(name, idx, total, outcome); } catch (e) { console.warn(`onDone threw for ${name}:`, e && e.message); } }
   }
   return { loaded, failed, cancelled: false };
 }
