@@ -176,6 +176,22 @@
       <summary><h2>🙈 Hidden from Rankings <span id="hiddenCount" class="st-count">…</span></h2></summary>
       <div class="st-note">Players left out of the Rankings (tables, percentiles, distributions) by hand, via data/hidden.json. They stay in the cache, can still be analyzed on the main page, and still count in 🚩 red flags and the 🧪 outlier guard.</div>
       <div id="hidden" class="st-dim">Loading…</div>
+      <div class="st-hide-form" style="margin-top:12px;padding:10px;border:1px dashed var(--border);border-radius:8px;">
+        <div style="font-weight:bold;margin-bottom:8px;">🙈 Hide a player</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <input type="text" id="hideName" placeholder="Player name" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);min-width:160px;" />
+          <input type="text" id="hideReason" placeholder="Reason (e.g. confirmed cheater)" value="confirmed cheater — kept for comparison only, not promoted in rankings" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);flex:1;min-width:200px;" />
+          <button type="button" id="hideBtn" style="padding:4px 12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);cursor:pointer;">Hide</button>
+        </div>
+        <div id="hideResult" style="margin-top:8px;display:none;">
+          <div style="margin-bottom:4px;">Copy this into <code>data/hidden.json</code> under <code>"players"</code>:</div>
+          <pre id="hideJson" style="background:var(--bg2,#1a1a1a);padding:8px;border-radius:4px;overflow-x:auto;font-size:0.85em;"></pre>
+          <div style="margin-top:8px;display:flex;gap:8px;">
+            <button type="button" id="hideCopy" style="padding:4px 12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);cursor:pointer;">📋 Copy JSON</button>
+            <a id="hideGithub" href="#" target="_blank" style="padding:4px 12px;border:1px solid var(--border);border-radius:4px;text-decoration:none;color:var(--text);">✏️ Open in GitHub editor</a>
+          </div>
+        </div>
+      </div>
     </details>
     <details class="st-card st-sec st-sprouts" id="cardSprouts">
       <summary id="sproutsSummary"><h2>🌱 Could use a hand <span id="sproutsCount" class="st-count">…</span></h2></summary>
@@ -222,6 +238,47 @@
       }
       document.getElementById("openAll").addEventListener("click", function () { setAll(true); });
       document.getElementById("closeAll").addEventListener("click", function () { setAll(false); });
+
+      // 🙈 Hide-a-player helper: generates the hidden.json entry + GitHub edit link.
+      (function () {
+        var nameEl = document.getElementById("hideName");
+        var reasonEl = document.getElementById("hideReason");
+        var btn = document.getElementById("hideBtn");
+        var result = document.getElementById("hideResult");
+        var jsonEl = document.getElementById("hideJson");
+        var copyBtn = document.getElementById("hideCopy");
+        var ghLink = document.getElementById("hideGithub");
+        if (!btn) return;
+        // Derive owner/repo from the page URL (works on *.github.io and custom domains via meta).
+        function repoPath() {
+          var m = location.hostname.match(/^([a-z0-9-]+)\.github\.io$/i);
+          if (m) return m[1] + "/" + m[1] + ".github.io";
+          var meta = document.querySelector('meta[name="github-repo"]');
+          if (meta) return meta.getAttribute("content");
+          return "Dayset/ps2-elite-kd"; // fallback
+        }
+        btn.addEventListener("click", function () {
+          var name = (nameEl.value || "").trim();
+          if (!name) { nameEl.focus(); return; }
+          var reason = (reasonEl.value || "").trim() || "confirmed cheater";
+          var today = new Date().toISOString().slice(0, 10);
+          var entry = {};
+          entry[name] = { reason: reason, at: today };
+          var snippet = JSON.stringify(entry, null, 4).slice(1, -1).trim().replace(/\n$/, "");
+          // Indent to match the file (4 spaces inside "players").
+          snippet = snippet.split("\n").map(function (l) { return "    " + l; }).join("\n");
+          jsonEl.textContent = snippet + ",";
+          result.style.display = "";
+          ghLink.href = "https://github.com/" + repoPath() + "/edit/main/data/hidden.json";
+        });
+        copyBtn.addEventListener("click", function () {
+          var t = jsonEl.textContent;
+          if (navigator.clipboard) navigator.clipboard.writeText(t).then(function () { copyBtn.textContent = "✅ Copied!"; setTimeout(function(){ copyBtn.textContent = "📋 Copy JSON"; }, 1500); });
+          else { var ta = document.createElement("textarea"); ta.value = t; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); copyBtn.textContent = "✅ Copied!"; setTimeout(function(){ copyBtn.textContent = "📋 Copy JSON"; }, 1500); }
+        });
+        // Enter key in the name field triggers Hide.
+        nameEl.addEventListener("keydown", function (e) { if (e.key === "Enter") btn.click(); });
+      })();
     })();
   </script>
 
