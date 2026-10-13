@@ -4066,15 +4066,16 @@ import {
   syncChartModeUi();
 
   // Y-scale display switch: K/D / A (iVi-median) / B (iVi-start)
+  function setYScaleMode(mode) {
+    yScaleMode = mode;
+    syncYScaleUi();
+    if (players.length) drawChart(players);
+  }
   const yScaleBar = document.getElementById("yScaleBar");
   if (yScaleBar) {
     yScaleBar.addEventListener("click", (e) => {
       const b = e.target.closest("[data-yscale]");
-      if (b && b.dataset.yscale !== yScaleMode) {
-        yScaleMode = b.dataset.yscale;
-        syncYScaleUi();
-        renderChart();
-      }
+      if (b && b.dataset.yscale !== yScaleMode) setYScaleMode(b.dataset.yscale);
     });
   }
   syncYScaleUi();
