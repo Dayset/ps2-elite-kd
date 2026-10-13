@@ -2713,9 +2713,16 @@ import {
     if (log) {
       if (y >= 10) return y.toFixed(0);
       if (y >= 1) return y.toFixed(1);
-      return y.toFixed(2);
+      if (y >= 0.1) return y.toFixed(2);
+      if (y >= 0.01) return y.toFixed(3);
+      return y.toFixed(4);
     }
-    if (Math.abs(y) >= 10) return y.toFixed(0);
+    const ay = Math.abs(y);
+    if (ay >= 10) return y.toFixed(0);
+    if (ay >= 1) return y.toFixed(1);
+    if (ay >= 0.1) return y.toFixed(2);
+    if (ay >= 0.01) return y.toFixed(3);
+    if (ay > 0) return y.toFixed(4);
     return y.toFixed(1);
   }
 
