@@ -98,23 +98,23 @@
          title="Dashed lines are a prediction from play style (overall K/D, KPM, accuracy, HSR, RF, slope, 🦁 Brave, 🎈 Inflation) fitted on the shared cache and anchored to the player's own fights. Not real fights. Shade ≈ ±1σ.">
       <span class="ghost-caption-swatch" aria-hidden="true"></span><span class="ghost-caption-text">dashed = predicted from play style,<br />not real fights</span>
     </div>
-    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
-    <div id="yScaleBar" class="chart-mode-bar" role="group" aria-label="Y-axis scale">
-      <button type="button" class="chart-mode-btn" data-yscale="a" aria-pressed="false"
-              title="iVi vs 50%: Y = iVi × K/D(x)/K/D_median. Curve passes through the player's iVi at its median point.">iVi vs 50%</button>
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; width:100%;">
+    <div id="yScaleBar" class="chart-mode-bar" role="group" aria-label="Y-axis scale" style="justify-content:flex-start;">
       <button type="button" class="chart-mode-btn" data-yscale="b" aria-pressed="false"
-              title="iVi vs 100%: Y = iVi × K/D(x)/K/D(0). Curve starts at the player's iVi against easy enemies, decays from there.">iVi vs 100%</button>
+              title="100: Y = iVi × K/D(x)/K/D(0). Curve starts at the player's iVi against easy enemies.">100</button>
+      <button type="button" class="chart-mode-btn" data-yscale="a" aria-pressed="false"
+              title="50: Y = iVi × K/D(x)/K/D_median. Curve passes through the player's iVi at its median.">50</button>
       <button type="button" class="chart-mode-btn" data-yscale="c" aria-pressed="false"
-              title="iVi vs 10%: Y = iVi × K/D(x)/K/D_p90. Curve passes through the player's iVi at the 90th percentile point (top 10% threshold).">iVi vs 10%</button>
+              title="10: Y = iVi × K/D(x)/K/D_p90. Curve passes through the player's iVi at the top-10% point.">10</button>
       <button type="button" class="chart-mode-btn" data-yscale="kd" aria-pressed="true"
-              title="K/D (default): pace-adjusted K/D on the Y-axis.">K/D</button>
+              title="K/D: pace-adjusted K/D on the Y-axis.">K/D</button>
     </div>
-    <div id="chartModeBar" class="chart-mode-bar" role="group" aria-label="Graph view">
+    <div id="chartModeBar" class="chart-mode-bar" role="group" aria-label="Graph view" style="margin-left:auto;">
       <button type="button" class="chart-mode-btn" data-mode="cumulative" aria-pressed="true"
-              title="Raw (default): K/D against everyone at or above this enemy KPM (cumulative). The left edge is roughly overall K/D.">📈</button>
+              title="Raw: cumulative K/D.">📈</button>
       <button type="button" class="chart-mode-btn" data-mode="banded" aria-pressed="false"
-              title="Smooth: K/D against enemies around this KPM (±0.2). Shows where a player wins or loses; faded / thin where there are few fights, hidden where almost none.">🎚️</button>
-      <button type="button" class="chart-mode-btn chart-ghost-btn" data-ghosts aria-pressed="false">👻</button>
+              title="Smooth: banded K/D.">🎚️</button>
+      <button type="button" class="chart-mode-btn chart-ghost-btn" data-ghosts aria-pressed="false" title="">👻</button>
     </div>
     </div>
     </div>
