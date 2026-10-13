@@ -33,6 +33,7 @@ import {
   windowYValues,
   kpmBandCurve,
   bandReliability,
+  speedSlowFactor,
 } from "./math.mjs?v=20261010-sav1";
 import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261010-sav1";
 import GHOST_MODEL from "./data/ghost-model.mjs?v=20261010-sav1";
@@ -2177,18 +2178,28 @@ import {
    * rel (line strength 0..1) and valid (drawable). Same X grid either way.
    */
   function chartPoints(p) {
+    // KPM-adjusted Y-axis: scale K/D by the player's speed slow factor so
+    // low-activity KD padding (e.g. 10 KD at 0.7 KPM) doesn't inflate the
+    // visual ranking. Uses the same formula as the ⚔️ iVi speed adjustment
+    // (math.mjs speedSlowFactor): 1.0 at/above 0.8 KPM, (kpm/0.8)^0.415
+    // below, floored at 0.5. Curve shape is preserved; only the height
+    // is corrected to match the skill rating.
+    const rawFactor = speedSlowFactor(p.own_kpm || p.global_kpm);
+    const yKpmFactor = Number.isFinite(rawFactor) ? rawFactor : 1;
+    const scaleKd = (kd) => (isFiniteNum(kd) ? kd * yKpmFactor : kd);
     if (chartMode === "banded") {
       return bandCurveFor(p)
         .filter((pt) => pt.kpm <= X_MAX + 1e-9)
         .map((pt) => {
           const rel = bandReliability(pt.events);
-          return { ...pt, rel, valid: rel > 0 && isFiniteNum(pt.kd) };
+          return { ...pt, kd: scaleKd(pt.kd), rel, valid: rel > 0 && isFiniteNum(pt.kd) };
         });
     }
     return (p.curve || [])
       .filter((pt) => pt.kpm <= X_MAX + 1e-9)
       .map((pt) => ({
         ...pt,
+        kd: scaleKd(pt.kd),
         rel: reliability(pt),
         valid: isFiniteNum(pt.kd) && pt.deaths > 0,
       }));
