@@ -4,34 +4,40 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "38354261226",
+    "runId": "38354718175",
     "event": "workflow_dispatch",
     "kind": "on-demand",
-    "startedAt": "2026-10-13T06:04:11.090Z",
-    "endedAt": "2026-10-13T06:04:18.946Z",
-    "seconds": 8,
+    "startedAt": "2026-10-13T06:04:50.463Z",
+    "endedAt": "2026-10-13T06:05:04.370Z",
+    "seconds": 14,
     "updated": [],
     "added": [
-      "[96] PressUtoRedeploy"
+      "[P4LE] TillnTheLand72",
+      "[9966] bodyshotmeta"
     ],
     "failed": [],
     "stoppedEarly": null,
-    "indexSize": 5502,
+    "indexSize": 5504,
     "honu": {
       "day": "2026-10-13",
-      "calls": 2947,
+      "calls": 2950,
       "cap": 3000
     },
     "batch": [
       {
-        "name": "[96] PressUtoRedeploy",
+        "name": "[P4LE] TillnTheLand72",
+        "src": "on-demand",
+        "status": "done"
+      },
+      {
+        "name": "[9966] bodyshotmeta",
         "src": "on-demand",
         "status": "done"
       }
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-13T06:04:22.667Z",
+    "checkedAt": "2026-10-13T06:05:06.825Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 16,
     "explained": 2,
@@ -41,8 +47,8 @@
         "name": "Anniversay",
         "id": "kd",
         "value": 247,
-        "bound": 20.152,
-        "z": 267.896,
+        "bound": 20.146,
+        "z": 267.758,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -65,8 +71,8 @@
         "name": "[N00O] Fretec",
         "id": "pvs",
         "value": 45.763,
-        "bound": 36.334,
-        "z": 45.337,
+        "bound": 36.705,
+        "z": 45.292,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -77,8 +83,8 @@
         "name": "[CYA6] KurtChew",
         "id": "kd",
         "value": 28.524,
-        "bound": 20.152,
-        "z": 29.734,
+        "bound": 20.146,
+        "z": 29.718,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -90,7 +96,7 @@
         "id": "inflation",
         "value": 10.542,
         "bound": 9.925,
-        "z": 23.824,
+        "z": 23.839,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -102,7 +108,7 @@
         "id": "inflation",
         "value": 10.533,
         "bound": 9.925,
-        "z": 23.799,
+        "z": 23.814,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -114,7 +120,7 @@
         "id": "slope",
         "value": 2.155,
         "bound": 0.689,
-        "z": 14.258,
+        "z": 14.267,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -126,7 +132,7 @@
         "id": "slope",
         "value": 1.217,
         "bound": 0.689,
-        "z": 8.667,
+        "z": 8.672,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -137,8 +143,8 @@
         "name": "[B54A] geiloVS",
         "id": "kd",
         "value": 150,
-        "bound": 20.152,
-        "z": 162.156,
+        "bound": 20.146,
+        "z": 162.072,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (aim), listed there",
@@ -272,14 +278,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 267.896,
+        "maxZ": 267.758,
         "metrics": [
           {
             "id": "kd",
             "label": "KD",
             "value": 247,
-            "bound": 20.152,
-            "z": 267.896,
+            "bound": 20.146,
+            "z": 267.758,
             "side": "high"
           },
           {
@@ -298,14 +304,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 45.337,
+        "maxZ": 45.292,
         "metrics": [
           {
             "id": "pvs",
             "label": "🦁 Brave",
             "value": 45.763,
-            "bound": 36.334,
-            "z": 45.337,
+            "bound": 36.705,
+            "z": 45.292,
             "side": "high"
           },
           {
@@ -313,7 +319,7 @@
             "label": "📉 Slope",
             "value": 2.155,
             "bound": 0.689,
-            "z": 14.258,
+            "z": 14.267,
             "side": "high"
           }
         ]
@@ -324,14 +330,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 29.734,
+        "maxZ": 29.718,
         "metrics": [
           {
             "id": "kd",
             "label": "KD",
             "value": 28.524,
-            "bound": 20.152,
-            "z": 29.734,
+            "bound": 20.146,
+            "z": 29.718,
             "side": "high"
           }
         ]
@@ -342,14 +348,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 23.824,
+        "maxZ": 23.839,
         "metrics": [
           {
             "id": "inflation",
             "label": "🎈 Inflation",
             "value": 10.542,
             "bound": 9.925,
-            "z": 23.824,
+            "z": 23.839,
             "side": "high"
           }
         ]
@@ -360,14 +366,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 23.799,
+        "maxZ": 23.814,
         "metrics": [
           {
             "id": "inflation",
             "label": "🎈 Inflation",
             "value": 10.533,
             "bound": 9.925,
-            "z": 23.799,
+            "z": 23.814,
             "side": "high"
           }
         ]
@@ -378,14 +384,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 8.667,
+        "maxZ": 8.672,
         "metrics": [
           {
             "id": "slope",
             "label": "📉 Slope",
             "value": 1.217,
             "bound": 0.689,
-            "z": 8.667,
+            "z": 8.672,
             "side": "high"
           }
         ]
@@ -550,14 +556,14 @@
         "red": [
           "aim"
         ],
-        "maxZ": 162.156,
+        "maxZ": 162.072,
         "metrics": [
           {
             "id": "kd",
             "label": "KD",
             "value": 150,
-            "bound": 20.152,
-            "z": 162.156,
+            "bound": 20.146,
+            "z": 162.072,
             "side": "high"
           },
           {
@@ -670,18 +676,18 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-13T06:04:22.721Z",
-    "red": 27,
+    "checkedAt": "2026-10-13T06:05:06.865Z",
+    "red": 28,
     "padding": 29,
     "adjusted": 8,
     "outlier": 15,
     "chartOnly": 50,
     "both": 2,
     "session": 6,
-    "forensics": 14
+    "forensics": 15
   },
   "sessionStats": {
-    "checkedAt": "2026-10-13T06:04:22.680Z",
+    "checkedAt": "2026-10-13T06:05:06.833Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -694,7 +700,7 @@
     },
     "ruleText": "[session pattern] in recent Honu sessions (≥ 100 kills counted): assists per kill ≤ 0.1, headshot share ≥ 50% (headshot XP per kill; Census lifetime HSR when no XP detail) and K/D ≥ 7 (session deaths; Census lifetime KD when none). A very one-sided record; a lead for manual review, not proof.",
     "coverage": {
-      "players": 5501,
+      "players": 5503,
       "withSessions": 2472,
       "measured": 1311,
       "sessions": 7893,
@@ -1769,7 +1775,7 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 267.896,
+        "maxZ": 267.758,
         "metrics": [
           {
             "id": "s_kd",
@@ -1789,7 +1795,7 @@
         "red": [
           "aim"
         ],
-        "maxZ": 162.156,
+        "maxZ": 162.072,
         "metrics": [
           {
             "id": "s_kd",
@@ -1805,19 +1811,20 @@
     "outliersUnexplained": 1
   },
   "size": {
-    "at": "2026-10-13T06:04:19.303Z",
+    "at": "2026-10-13T06:05:04.735Z",
     "repoBytes": 44531712,
-    "dataBytes": 105512139,
-    "playersBytes": 98868796,
-    "playerFiles": 5502,
+    "dataBytes": 105553498,
+    "playersBytes": 98906355,
+    "playerFiles": 5504,
     "warnAtBytes": 734003200,
     "warning": false
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-13T06:04:22.696Z",
+    "checkedAt": "2026-10-13T06:05:06.845Z",
     "candidates": [
       "nebelhexe",
+      "pressutoredeploy",
       "coldandhot",
       "xstargonx",
       "alandwhale",
@@ -1954,20 +1961,19 @@
       "xmakeplanetsidegreatagain",
       "yeezy",
       "zyr0seunc",
-      "pressutoredeploy",
+      "bodyshotmeta",
       "adansonia",
       "alandwhaletr",
       "artofdying",
       "cionekano",
-      "omegadude4321",
       "simplenubb",
       "aekris",
       "brackiense",
       "1stfanofahorn",
       "add1ti0nal"
     ],
-    "analyzed": 151,
-    "flagged": 14,
+    "analyzed": 152,
+    "flagged": 15,
     "review": 11,
     "players": [
       {
@@ -2281,6 +2287,99 @@
             "peak minute 31 kills",
             "account under 1 day old: 1074 kills at K/D 63.2"
           ]
+        }
+      },
+      {
+        "slug": "pressutoredeploy",
+        "name": "[96] PressUtoRedeploy",
+        "hidden": false,
+        "confirmedCheater": false,
+        "flagged": true,
+        "odd": false,
+        "analyzed": 2,
+        "checkedAt": "2026-10-13T06:05:04.335Z",
+        "worst": {
+          "sessionId": "43437129",
+          "url": "https://wt.honu.pw/s/43437129",
+          "start": "2023-08-14T02:44:01Z",
+          "kills": 781,
+          "deaths": 185,
+          "kd": 4.222,
+          "activeMin": 204.083,
+          "activeKpm": 3.827,
+          "max1s": 5,
+          "max5s": 6,
+          "peak60s": 16,
+          "max5min": 46,
+          "secs5plus": 4,
+          "zeroGapShare": 0.069,
+          "medianGap": 6,
+          "hs": 0.229,
+          "vehicleKillShare": 0,
+          "weapons": [
+            {
+              "id": "1894",
+              "name": "Betelgeuse 54-A",
+              "vehicle": false,
+              "kills": 592,
+              "share": 0.758,
+              "hs": 0.274,
+              "max1s": 2,
+              "max60s": 16
+            },
+            {
+              "id": "44",
+              "name": "Solstice VE3",
+              "vehicle": false,
+              "kills": 76,
+              "share": 0.097,
+              "hs": 0.197,
+              "max1s": 1,
+              "max60s": 9
+            },
+            {
+              "id": "44705",
+              "name": "Plasma Grenade",
+              "vehicle": false,
+              "kills": 65,
+              "share": 0.083,
+              "hs": 0,
+              "max1s": 5,
+              "max60s": 8
+            }
+          ],
+          "victims": {
+            "unique": 286,
+            "top": [
+              {
+                "name": "backdusan",
+                "kills": 21,
+                "br": 74
+              },
+              {
+                "name": "ShenZhenMM",
+                "kills": 14,
+                "br": 92
+              },
+              {
+                "name": "BloodyRedstone",
+                "kills": 14,
+                "br": 100
+              }
+            ],
+            "medianBr": 66,
+            "lowBrShare": 0.076,
+            "farmLike": []
+          },
+          "account": {
+            "br": 89,
+            "created": "2022-08-17T10:22:56Z",
+            "ageDaysAtSession": 361.683
+          },
+          "reasons": [
+            "⚡ impossible kill rate: 4 separate seconds with 5+ kills (max 5 in one second)"
+          ],
+          "oddities": []
         }
       },
       {
@@ -15598,8 +15697,8 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-13T06:04:22.699Z",
-    "count": 188,
+    "checkedAt": "2026-10-13T06:05:06.848Z",
+    "count": 189,
     "players": [
       {
         "slug": "1stfanofahorn",
@@ -15812,6 +15911,15 @@
         "slug": "oooozerooooo",
         "name": "OOOOZeroOOOO",
         "cid": "5429779050915582225",
+        "lists": [
+          "red",
+          "forensics"
+        ]
+      },
+      {
+        "slug": "pressutoredeploy",
+        "name": "[96] PressUtoRedeploy",
+        "cid": "5429297074850603393",
         "lists": [
           "red",
           "forensics"
