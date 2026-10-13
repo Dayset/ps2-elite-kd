@@ -4097,16 +4097,21 @@ import {
   const WAVE_MIN = 0.1, WAVE_MAX = 98;
   const WAVE_MID = (WAVE_MIN + WAVE_MAX) / 2; // 49.05
   const WAVE_AMP = (WAVE_MAX - WAVE_MIN) / 2; // 48.95
+  let waveLastDrawn = -1;
   function waveTick() {
     if (!waveOn) return;
-    waveT += 0.02; // speed
+    waveT += 0.008; // slower for smoothness
     const pct = WAVE_MID + WAVE_AMP * Math.sin(waveT);
     yScalePct = pct;
     if (ySlider) ySlider.value = pct;
-    if (ySliderVal) ySliderVal.textContent = pct >= 10 ? pct.toFixed(0) + "%" : pct.toFixed(1) + "%";
-    yScaleMode = "ivi";
-    syncYScaleUi();
-    if (players.length) drawChart(players);
+    // Only redraw when pct moved >= 0.01 (5.55% -> 5.56% steps), avoids jank
+    if (Math.abs(pct - waveLastDrawn) >= 0.01) {
+      waveLastDrawn = pct;
+      if (ySliderVal) ySliderVal.textContent = pct >= 10 ? pct.toFixed(0) + "%" : pct.toFixed(1) + "%";
+      yScaleMode = "ivi";
+      syncYScaleUi();
+      if (players.length) drawChart(players);
+    }
     waveRaf = requestAnimationFrame(waveTick);
   }
   function startWave() {
