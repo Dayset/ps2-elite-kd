@@ -227,9 +227,10 @@ import {
   let lastChartScale = null;
   /** "cumulative" (default) | "banded"; persisted in localStorage only. */
   let chartMode = readChartMode();
-  // Y-scale display mode: "kd" (pace-adjusted K/D), "a" (iVi-anchored median), "b" (iVi-anchored start).
-  // Representation only — does not change underlying data.
-  let yScaleMode = "kd";
+  // Y-scale: "kd" (pace-adjusted K/D via 💀) or "ivi" (slider-anchored percentile).
+  // Slider 100%→0.1%: Y = iVi × K/D(x)/K/D_p(slider). Representation only.
+  let yScaleMode = "ivi";
+  let yScalePct = 50;
   let ghostsOn = readGhostsOn();
   let fetching = false;
   /** Active analyze run: { controller, signal } or null. */
@@ -2078,12 +2079,18 @@ import {
   }
 
   function syncYScaleUi() {
-    const bar = document.getElementById("yScaleBar");
-    if (!bar) return;
-    for (const b of bar.querySelectorAll("[data-yscale]")) {
-      const on = b.dataset.yscale === yScaleMode;
-      b.classList.toggle("active", on);
-      b.setAttribute("aria-pressed", on ? "true" : "false");
+    const kdBtn = document.querySelector('[data-yscale="kd-btn"]');
+    if (kdBtn) {
+      const on = yScaleMode === "kd";
+      kdBtn.classList.toggle("active", on);
+      kdBtn.setAttribute("aria-pressed", on ? "true" : "false");
+    }
+    const ySlider = document.getElementById("yScaleSlider");
+    if (ySlider) {
+      ySlider.disabled = yScaleMode === "kd";
+      if (document.activeElement !== ySlider) ySlider.value = yScalePct;
+      const ySliderVal = document.getElementById("yScaleVal");
+      if (ySliderVal) ySliderVal.textContent = yScalePct >= 10 ? yScalePct.toFixed(0) + "%" : yScalePct.toFixed(1) + "%";
     }
   }
 
@@ -2214,31 +2221,21 @@ import {
           valid: isFiniteNum(pt.kd) && pt.deaths > 0,
         }));
     }
-    // Y-scale display modes: rescale pace-adjusted K/D into iVi units.
-    // "a" (iVi vs 50%): anchor median to iVi — curve passes through iVi at median.
-    // "b" (iVi vs 100%): anchor start/max to iVi — curve starts at iVi, decays from there.
-    // "c" (iVi vs 10%): anchor p90 to iVi — curve passes through iVi at the 90th percentile point.
-    if (yScaleMode === "a" || yScaleMode === "b" || yScaleMode === "c") {
+    // Y-scale iVi mode: anchor the slider percentile to iVi.
+    // Y = iVi × K/D(x) / K/D_p(slider), slider 100% (max) → 0.1% (min).
+    if (yScaleMode === "ivi") {
       const ivi = p.ivi;
       if (isFiniteNum(ivi) && ivi > 0) {
         const validKds = pts.filter((pt) => pt.valid && isFiniteNum(pt.kd)).map((pt) => pt.kd);
-        let anchor = 0;
         if (validKds.length > 0) {
-          if (yScaleMode === "a") {
-            const sorted = [...validKds].sort((a, b) => a - b);
-            anchor = sorted[Math.floor(sorted.length / 2)];
-          } else if (yScaleMode === "c") {
-            const sorted = [...validKds].sort((a, b) => a - b);
-            anchor = sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * 0.9))];
-          } else {
-            // b: first valid point (lowest KPM = max K/D)
-            const first = pts.find((pt) => pt.valid && isFiniteNum(pt.kd));
-            anchor = first ? first.kd : 0;
+          const sorted = [...validKds].sort((a, b) => a - b);
+          const frac = Math.max(0.001, Math.min(1, yScalePct / 100));
+          const idx = Math.min(sorted.length - 1, Math.floor(sorted.length * frac));
+          const anchor = sorted[idx];
+          if (anchor > 0) {
+            const scale = ivi / anchor;
+            pts = pts.map((pt) => ({ ...pt, kd: isFiniteNum(pt.kd) ? pt.kd * scale : pt.kd }));
           }
-        }
-        if (anchor > 0) {
-          const scale = ivi / anchor;
-          pts = pts.map((pt) => ({ ...pt, kd: isFiniteNum(pt.kd) ? pt.kd * scale : pt.kd }));
         }
       }
     }
@@ -2479,8 +2476,7 @@ import {
     } else {
       addText(svg, PLOT.x + PLOT.w, capY, "🥵 Hard", th.muted, 10, "end");
     }
-    if (EASY_MAX < viewXMax) addText(svg, xToPx(EASY_MAX), capY + 14 * chartFs, "0.75", th.muted, 9, "middle");
-    if (HARD_MIN < viewXMax) addText(svg, xToPx(HARD_MIN), capY + 14 * chartFs, "1.50", th.muted, 9, "middle");
+    // Dayset 2026-10-13: 0.75/1.50 threshold numbers removed
 
     const seriesG = ns("g");
     seriesG.setAttribute("clip-path", "url(#plot-clip)");
@@ -4070,16 +4066,27 @@ import {
   syncChartModeUi();
 
   // Y-scale display switch: K/D / A (iVi-median) / B (iVi-start)
-  function setYScaleMode(mode) {
+  function setYScaleMode(mode, pct) {
     yScaleMode = mode;
+    if (pct !== undefined) yScalePct = pct;
     syncYScaleUi();
     if (players.length) drawChart(players);
   }
-  const yScaleBar = document.getElementById("yScaleBar");
-  if (yScaleBar) {
-    yScaleBar.addEventListener("click", (e) => {
-      const b = e.target.closest("[data-yscale]");
-      if (b && b.dataset.yscale !== yScaleMode) setYScaleMode(b.dataset.yscale);
+  // 💀 button toggles K/D mode (in chartModeBar)
+  const kdBtn = document.querySelector('[data-yscale="kd-btn"]');
+  if (kdBtn) {
+    kdBtn.addEventListener("click", () => {
+      setYScaleMode(yScaleMode === "kd" ? "ivi" : "kd");
+    });
+  }
+  // Slider input
+  const ySlider = document.getElementById("yScaleSlider");
+  const ySliderVal = document.getElementById("yScaleVal");
+  if (ySlider) {
+    ySlider.addEventListener("input", () => {
+      const v = parseFloat(ySlider.value);
+      if (ySliderVal) ySliderVal.textContent = v >= 10 ? v.toFixed(0) + "%" : v.toFixed(1) + "%";
+      setYScaleMode("ivi", v);
     });
   }
   syncYScaleUi();
