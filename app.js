@@ -2177,18 +2177,25 @@ import {
    * rel (line strength 0..1) and valid (drawable). Same X grid either way.
    */
   function chartPoints(p) {
+    // Pace-adjusted K/D (Dayset 2026-10-13): quadratic penalty for low KPM.
+    // factor = (own_kpm / 2.0)^2 capped [0.25, 1.0] — penalize only, never boost.
+    // Raw K/D stays in tooltips; the line expresses skill.
+    const _kpm = p.own_kpm || p.global_kpm;
+    const _paceFactor = (_kpm > 0) ? Math.min(1.0, Math.max(0.25, Math.pow(_kpm / 2.0, 2))) : 1;
+    const _paceKd = (kd) => (isFiniteNum(kd) ? kd * _paceFactor : kd);
     if (chartMode === "banded") {
       return bandCurveFor(p)
         .filter((pt) => pt.kpm <= X_MAX + 1e-9)
         .map((pt) => {
           const rel = bandReliability(pt.events);
-          return { ...pt, rel, valid: rel > 0 && isFiniteNum(pt.kd) };
+          return { ...pt, kd: _paceKd(pt.kd), rel, valid: rel > 0 && isFiniteNum(pt.kd) };
         });
     }
     return (p.curve || [])
       .filter((pt) => pt.kpm <= X_MAX + 1e-9)
       .map((pt) => ({
         ...pt,
+        kd: _paceKd(pt.kd),
         rel: reliability(pt),
         valid: isFiniteNum(pt.kd) && pt.deaths > 0,
       }));
