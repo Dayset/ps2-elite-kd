@@ -107,6 +107,7 @@
       <button type="button" class="chart-mode-btn chart-ghost-btn" data-ghosts aria-pressed="false"
               title="👻 Ghost lines on/off: a dashed, faint continuation predicted from play style (fitted on the shared cache, anchored to the player's own fights), so every line spans the whole graph. Not real fights; shade ≈ ±1σ. Off by default.">👻 Ghost</button>
     </div>
+    <div style="clear:both; margin-top:6px;">
     <div id="yScaleBar" class="chart-mode-bar" role="group" aria-label="Y-axis scale">
       <span class="chart-mode-label">Y-scale:</span>
       <button type="button" class="chart-mode-btn" data-yscale="kd" aria-pressed="true"
@@ -115,6 +116,7 @@
               title="A: iVi-anchored at median — Y = iVi × K/D(x)/K/D_median. Curve passes through the player's iVi at its median point.">A: iVi median</button>
       <button type="button" class="chart-mode-btn" data-yscale="b" aria-pressed="false"
               title="B: iVi-anchored at start — Y = iVi × K/D(x)/K/D(0). Curve starts at the player's iVi against easy enemies, decays from there.">B: iVi start</button>
+    </div>
     </div>
     </div>
     <div id="chartYZoom" class="chart-y-zoom" hidden title="Zoom. Middle = auto-fit. Up zooms hard into the start of the graph (enemy KPM near 0): X shrinks from the right, Y re-fits to the left side. Down fits extreme / high-tier K/D.">
