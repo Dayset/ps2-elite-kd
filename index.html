@@ -98,8 +98,8 @@
          title="Dashed lines are a prediction from play style (overall K/D, KPM, accuracy, HSR, RF, slope, 🦁 Brave, 🎈 Inflation) fitted on the shared cache and anchored to the player's own fights. Not real fights. Shade ≈ ±1σ.">
       <span class="ghost-caption-swatch" aria-hidden="true"></span><span class="ghost-caption-text">dashed = predicted from play style,<br />not real fights</span>
     </div>
-    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:nowrap; gap:6px; width:100%; max-width:100%;">
-    <div id="yScaleBar" class="chart-mode-bar" role="group" aria-label="Y-axis scale" style="justify-content:flex-start;">
+    <div style="display:flex; align-items:center; flex-wrap:nowrap; gap:6px; width:100%; max-width:100%;">
+    <div id="yScaleBar" class="chart-mode-bar" role="group" aria-label="Y-axis scale" style="justify-content:flex-start; margin-left:24px; flex-shrink:0;">
       <button type="button" class="chart-mode-btn" data-yscale="b" aria-pressed="false"
               title="100: Y = iVi × K/D(x)/K/D(0). Curve starts at the player's iVi against easy enemies.">100</button>
       <button type="button" class="chart-mode-btn" data-yscale="a" aria-pressed="false"
@@ -109,7 +109,7 @@
       <button type="button" class="chart-mode-btn" data-yscale="kd" aria-pressed="true"
               title="K/D: pace-adjusted K/D on the Y-axis.">K/D</button>
     </div>
-    <div id="chartModeBar" class="chart-mode-bar" role="group" aria-label="Graph view" style="margin-left:auto; flex-shrink:0;">
+    <div id="chartModeBar" class="chart-mode-bar" role="group" aria-label="Graph view" style="margin-left:auto; margin-right:0; flex-shrink:0;">
       <button type="button" class="chart-mode-btn" data-mode="cumulative" aria-pressed="true"
               title="Raw: cumulative K/D.">📈</button>
       <button type="button" class="chart-mode-btn" data-mode="banded" aria-pressed="false"
