@@ -3063,8 +3063,8 @@ import {
   function setGhostCaption(on, drawn) {
     const cap = document.getElementById("ghostCaption");
     if (!cap) return;
-    cap.hidden = !on;
-    if (!on) return;
+    cap.hidden = true; // Dayset 2026-10-13: ghost hint removed entirely
+    return;
     const text = cap.querySelector(".ghost-caption-text");
     const sw = cap.querySelector(".ghost-caption-swatch");
     if (sw) sw.hidden = !drawn;
