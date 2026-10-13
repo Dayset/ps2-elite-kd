@@ -4,37 +4,19 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "38364446852",
-    "event": "schedule",
-    "kind": "discovery",
-    "startedAt": "2026-10-13T07:49:24.926Z",
-    "endedAt": "2026-10-13T07:51:18.933Z",
-    "seconds": 114,
+    "runId": "38365908691",
+    "event": "workflow_dispatch",
+    "kind": "on-demand",
+    "startedAt": "2026-10-13T07:56:46.501Z",
+    "endedAt": "2026-10-13T07:56:51.384Z",
+    "seconds": 5,
     "updated": [],
     "added": [
-      "KetamineEnjoyer",
-      "[3EPG] KOPEECHKA",
-      "[50V4] LuigiBonfinelli",
-      "[ROYS] LyraDE",
-      "[CBMC] m0wie",
-      "[MOXO] MolliEmr",
-      "[LSRI] MupyMup",
-      "[CBMC] PapyPitivier",
-      "[W1XP] Printempss",
-      "[HOT] r00ckieNC",
-      "VSGrandoZ",
-      "[RWCN] AdelaideA",
-      "[LHEU] BamBazl"
+      "[LWAE] utterchaosVS"
     ],
     "failed": [],
     "stoppedEarly": null,
-    "indexSize": 6000,
-    "discovery": {
-      "cap": 6000,
-      "queue": 2759,
-      "slice": null,
-      "sweepInProgress": false
-    },
+    "indexSize": 6001,
     "honu": {
       "day": "2026-10-13",
       "calls": 2956,
@@ -42,74 +24,14 @@
     },
     "batch": [
       {
-        "name": "KetamineEnjoyer",
-        "src": "discovery",
-        "status": "done"
-      },
-      {
-        "name": "[3EPG] KOPEECHKA",
-        "src": "discovery",
-        "status": "done"
-      },
-      {
-        "name": "[50V4] LuigiBonfinelli",
-        "src": "discovery",
-        "status": "done"
-      },
-      {
-        "name": "[ROYS] LyraDE",
-        "src": "discovery",
-        "status": "done"
-      },
-      {
-        "name": "[CBMC] m0wie",
-        "src": "discovery",
-        "status": "done"
-      },
-      {
-        "name": "[MOXO] MolliEmr",
-        "src": "discovery",
-        "status": "done"
-      },
-      {
-        "name": "[LSRI] MupyMup",
-        "src": "discovery",
-        "status": "done"
-      },
-      {
-        "name": "[CBMC] PapyPitivier",
-        "src": "discovery",
-        "status": "done"
-      },
-      {
-        "name": "[W1XP] Printempss",
-        "src": "discovery",
-        "status": "done"
-      },
-      {
-        "name": "[HOT] r00ckieNC",
-        "src": "discovery",
-        "status": "done"
-      },
-      {
-        "name": "VSGrandoZ",
-        "src": "discovery",
-        "status": "done"
-      },
-      {
-        "name": "[RWCN] AdelaideA",
-        "src": "discovery",
-        "status": "done"
-      },
-      {
-        "name": "[LHEU] BamBazl",
-        "src": "discovery",
+        "name": "[LWAE] utterchaosVS",
+        "src": "on-demand",
         "status": "done"
       }
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-13T07:51:21.667Z",
+    "checkedAt": "2026-10-13T07:56:55.516Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 16,
     "explained": 2,
@@ -167,8 +89,8 @@
         "name": "mc6151",
         "id": "inflation",
         "value": 10.542,
-        "bound": 10.339,
-        "z": 23.425,
+        "bound": 10.338,
+        "z": 23.422,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -179,8 +101,8 @@
         "name": "LumiaAgilis",
         "id": "inflation",
         "value": 10.533,
-        "bound": 10.339,
-        "z": 23.4,
+        "bound": 10.338,
+        "z": 23.397,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -192,7 +114,7 @@
         "id": "slope",
         "value": 2.155,
         "bound": 0.67,
-        "z": 14.285,
+        "z": 14.283,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -204,7 +126,7 @@
         "id": "slope",
         "value": 1.217,
         "bound": 0.67,
-        "z": 8.673,
+        "z": 8.672,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -391,7 +313,7 @@
             "label": "📉 Slope",
             "value": 2.155,
             "bound": 0.67,
-            "z": 14.285,
+            "z": 14.283,
             "side": "high"
           }
         ]
@@ -420,14 +342,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 23.425,
+        "maxZ": 23.422,
         "metrics": [
           {
             "id": "inflation",
             "label": "🎈 Inflation",
             "value": 10.542,
-            "bound": 10.339,
-            "z": 23.425,
+            "bound": 10.338,
+            "z": 23.422,
             "side": "high"
           }
         ]
@@ -438,14 +360,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 23.4,
+        "maxZ": 23.397,
         "metrics": [
           {
             "id": "inflation",
             "label": "🎈 Inflation",
             "value": 10.533,
-            "bound": 10.339,
-            "z": 23.4,
+            "bound": 10.338,
+            "z": 23.397,
             "side": "high"
           }
         ]
@@ -456,14 +378,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 8.673,
+        "maxZ": 8.672,
         "metrics": [
           {
             "id": "slope",
             "label": "📉 Slope",
             "value": 1.217,
             "bound": 0.67,
-            "z": 8.673,
+            "z": 8.672,
             "side": "high"
           }
         ]
@@ -748,7 +670,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-13T07:51:21.703Z",
+    "checkedAt": "2026-10-13T07:56:55.578Z",
     "red": 28,
     "padding": 31,
     "adjusted": 8,
@@ -759,7 +681,7 @@
     "forensics": 15
   },
   "sessionStats": {
-    "checkedAt": "2026-10-13T07:51:21.674Z",
+    "checkedAt": "2026-10-13T07:56:55.532Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -772,7 +694,7 @@
     },
     "ruleText": "[session pattern] in recent Honu sessions (≥ 100 kills counted): assists per kill ≤ 0.1, headshot share ≥ 50% (headshot XP per kill; Census lifetime HSR when no XP detail) and K/D ≥ 7 (session deaths; Census lifetime KD when none). A very one-sided record; a lead for manual review, not proof.",
     "coverage": {
-      "players": 5999,
+      "players": 6000,
       "withSessions": 2472,
       "measured": 1311,
       "sessions": 7893,
@@ -1883,17 +1805,17 @@
     "outliersUnexplained": 1
   },
   "size": {
-    "at": "2026-10-13T07:51:19.394Z",
+    "at": "2026-10-13T07:56:51.773Z",
     "repoBytes": 50452480,
-    "dataBytes": 115054090,
-    "playersBytes": 108129841,
-    "playerFiles": 6000,
+    "dataBytes": 115074137,
+    "playersBytes": 108149017,
+    "playerFiles": 6001,
     "warnAtBytes": 734003200,
     "warning": false
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-13T07:51:21.685Z",
+    "checkedAt": "2026-10-13T07:56:55.550Z",
     "candidates": [
       "nebelhexe",
       "pressutoredeploy",
@@ -15952,7 +15874,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-13T07:51:21.687Z",
+    "checkedAt": "2026-10-13T07:56:55.554Z",
     "count": 193,
     "players": [
       {
