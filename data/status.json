@@ -4,19 +4,19 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "38475297069",
+    "runId": "38475442223",
     "event": "workflow_dispatch",
     "kind": "on-demand",
-    "startedAt": "2026-10-13T22:06:39.916Z",
-    "endedAt": "2026-10-13T22:06:52.690Z",
-    "seconds": 13,
+    "startedAt": "2026-10-13T22:07:26.767Z",
+    "endedAt": "2026-10-13T22:07:36.244Z",
+    "seconds": 9,
     "updated": [],
     "added": [
-      "[0O] AmethystLulu"
+      "[0O] PurpleLulu"
     ],
     "failed": [],
     "stoppedEarly": null,
-    "indexSize": 8152,
+    "indexSize": 8153,
     "honu": {
       "day": "2026-10-13",
       "calls": 2981,
@@ -24,14 +24,14 @@
     },
     "batch": [
       {
-        "name": "[0O] AmethystLulu",
+        "name": "[0O] PurpleLulu",
         "src": "on-demand",
         "status": "done"
       }
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-13T22:06:58.164Z",
+    "checkedAt": "2026-10-13T22:07:39.170Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 22,
     "explained": 5,
@@ -102,7 +102,7 @@
         "id": "inflation",
         "value": 19.181,
         "bound": 11.579,
-        "z": 44.793,
+        "z": 44.779,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -125,8 +125,8 @@
         "name": "[FKNC] RenamedSoldier12345",
         "id": "slope",
         "value": 5.773,
-        "bound": 0.626,
-        "z": 37.489,
+        "bound": 0.627,
+        "z": 37.498,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -185,8 +185,8 @@
         "name": "[N00O] Fretec",
         "id": "slope",
         "value": 2.155,
-        "bound": 0.626,
-        "z": 14.862,
+        "bound": 0.627,
+        "z": 14.866,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -197,8 +197,8 @@
         "name": "[vaIk] MyPilotIsCompletelyCrazyHelpMe",
         "id": "slope",
         "value": 1.217,
-        "bound": 0.626,
-        "z": 8.993,
+        "bound": 0.627,
+        "z": 8.995,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -422,8 +422,8 @@
             "id": "slope",
             "label": "📉 Slope",
             "value": 5.773,
-            "bound": 0.626,
-            "z": 37.489,
+            "bound": 0.627,
+            "z": 37.498,
             "side": "high"
           },
           {
@@ -472,8 +472,8 @@
             "id": "slope",
             "label": "📉 Slope",
             "value": 2.155,
-            "bound": 0.626,
-            "z": 14.862,
+            "bound": 0.627,
+            "z": 14.866,
             "side": "high"
           }
         ]
@@ -510,14 +510,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 44.793,
+        "maxZ": 44.779,
         "metrics": [
           {
             "id": "inflation",
             "label": "🎈 Inflation",
             "value": 19.181,
             "bound": 11.579,
-            "z": 44.793,
+            "z": 44.779,
             "side": "high"
           }
         ]
@@ -546,14 +546,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 8.993,
+        "maxZ": 8.995,
         "metrics": [
           {
             "id": "slope",
             "label": "📉 Slope",
             "value": 1.217,
-            "bound": 0.626,
-            "z": 8.993,
+            "bound": 0.627,
+            "z": 8.995,
             "side": "high"
           }
         ]
@@ -876,7 +876,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-13T22:06:58.249Z",
+    "checkedAt": "2026-10-13T22:07:39.215Z",
     "red": 31,
     "padding": 33,
     "adjusted": 13,
@@ -887,7 +887,7 @@
     "forensics": 17
   },
   "sessionStats": {
-    "checkedAt": "2026-10-13T22:06:58.183Z",
+    "checkedAt": "2026-10-13T22:07:39.180Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -900,7 +900,7 @@
     },
     "ruleText": "[session pattern] in recent Honu sessions (≥ 100 kills counted): assists per kill ≤ 0.1, headshot share ≥ 50% (headshot XP per kill; Census lifetime HSR when no XP detail) and K/D ≥ 7 (session deaths; Census lifetime KD when none). A very one-sided record; a lead for manual review, not proof.",
     "coverage": {
-      "players": 8151,
+      "players": 8152,
       "withSessions": 2472,
       "measured": 1311,
       "sessions": 7893,
@@ -2011,17 +2011,17 @@
     "outliersUnexplained": 1
   },
   "size": {
-    "at": "2026-10-13T22:06:53.116Z",
+    "at": "2026-10-13T22:07:36.623Z",
     "repoBytes": 65496064,
-    "dataBytes": 156026166,
-    "playersBytes": 147892327,
-    "playerFiles": 8152,
+    "dataBytes": 156045689,
+    "playersBytes": 147911192,
+    "playerFiles": 8153,
     "warnAtBytes": 734003200,
     "warning": false
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-13T22:06:58.207Z",
+    "checkedAt": "2026-10-13T22:07:39.191Z",
     "candidates": [
       "nebelhexe",
       "pressutoredeploy",
@@ -16800,7 +16800,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-13T22:06:58.216Z",
+    "checkedAt": "2026-10-13T22:07:39.194Z",
     "count": 209,
     "players": [
       {
