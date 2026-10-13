@@ -227,6 +227,9 @@ import {
   let lastChartScale = null;
   /** "cumulative" (default) | "banded"; persisted in localStorage only. */
   let chartMode = readChartMode();
+  // Y-scale display mode: "kd" (pace-adjusted K/D), "a" (iVi-anchored median), "b" (iVi-anchored start).
+  // Representation only — does not change underlying data.
+  let yScaleMode = "kd";
   let ghostsOn = readGhostsOn();
   let fetching = false;
   /** Active analyze run: { controller, signal } or null. */
@@ -2074,6 +2077,16 @@ import {
     }
   }
 
+  function syncYScaleUi() {
+    const bar = document.getElementById("yScaleBar");
+    if (!bar) return;
+    for (const b of bar.querySelectorAll("[data-yscale]")) {
+      const on = b.dataset.yscale === yScaleMode;
+      b.classList.toggle("active", on);
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+    }
+  }
+
   function syncChartModeUi() {
     if (!els.chartModeBar) return;
     for (const b of els.chartModeBar.querySelectorAll("[data-mode]")) {
@@ -2178,27 +2191,54 @@ import {
    */
   function chartPoints(p) {
     // Pace-adjusted K/D (Dayset 2026-10-13): quadratic penalty for low KPM.
-    // factor = (own_kpm / 2.0)^2 capped [0.25, 1.0] — penalize only, never boost.
+    // factor = (own_kpm / 2.0)^2 capped [0, 1.0] — penalize only, never boost.
     // Raw K/D stays in tooltips; the line expresses skill.
     const _kpm = p.own_kpm || p.global_kpm;
     const _paceFactor = (_kpm > 0) ? Math.min(1.0, Math.pow(_kpm / 2.0, 2)) : 1;
     const _paceKd = (kd) => (isFiniteNum(kd) ? kd * _paceFactor : kd);
+    let pts;
     if (chartMode === "banded") {
-      return bandCurveFor(p)
+      pts = bandCurveFor(p)
         .filter((pt) => pt.kpm <= X_MAX + 1e-9)
         .map((pt) => {
           const rel = bandReliability(pt.events);
           return { ...pt, kd: _paceKd(pt.kd), rel, valid: rel > 0 && isFiniteNum(pt.kd) };
         });
+    } else {
+      pts = (p.curve || [])
+        .filter((pt) => pt.kpm <= X_MAX + 1e-9)
+        .map((pt) => ({
+          ...pt,
+          kd: _paceKd(pt.kd),
+          rel: reliability(pt),
+          valid: isFiniteNum(pt.kd) && pt.deaths > 0,
+        }));
     }
-    return (p.curve || [])
-      .filter((pt) => pt.kpm <= X_MAX + 1e-9)
-      .map((pt) => ({
-        ...pt,
-        kd: _paceKd(pt.kd),
-        rel: reliability(pt),
-        valid: isFiniteNum(pt.kd) && pt.deaths > 0,
-      }));
+    // Y-scale display modes A/B: rescale pace-adjusted K/D into iVi units.
+    // A: anchor median to iVi (Y = iVi * KD(x)/KD_median) — curve passes through iVi at median.
+    // B: anchor start to iVi (Y = iVi * KD(x)/KD(0)) — curve starts at iVi, decays from there.
+    if (yScaleMode === "a" || yScaleMode === "b") {
+      const ivi = p.ivi;
+      if (isFiniteNum(ivi) && ivi > 0) {
+        const validKds = pts.filter((pt) => pt.valid && isFiniteNum(pt.kd)).map((pt) => pt.kd);
+        let anchor = 0;
+        if (yScaleMode === "a") {
+          if (validKds.length > 0) {
+            const sorted = [...validKds].sort((a, b) => a - b);
+            anchor = sorted[Math.floor(sorted.length / 2)];
+          }
+        } else {
+          // B: first valid point (lowest KPM)
+          const first = pts.find((pt) => pt.valid && isFiniteNum(pt.kd));
+          anchor = first ? first.kd : 0;
+        }
+        if (anchor > 0) {
+          const scale = ivi / anchor;
+          pts = pts.map((pt) => ({ ...pt, kd: isFiniteNum(pt.kd) ? pt.kd * scale : pt.kd }));
+        }
+      }
+    }
+    return pts;
   }
 
   /** Right edge of the visible X window (X_MAX unless zoomed into the left). */
@@ -4024,6 +4064,20 @@ import {
     });
   }
   syncChartModeUi();
+
+  // Y-scale display switch: K/D / A (iVi-median) / B (iVi-start)
+  const yScaleBar = document.getElementById("yScaleBar");
+  if (yScaleBar) {
+    yScaleBar.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-yscale]");
+      if (b && b.dataset.yscale !== yScaleMode) {
+        yScaleMode = b.dataset.yscale;
+        syncYScaleUi();
+        renderChart();
+      }
+    });
+  }
+  syncYScaleUi();
 
   if (els.themeToggle) {
     els.themeToggle.addEventListener("click", () => toggleTheme());
