@@ -98,7 +98,8 @@
          title="Dashed lines are a prediction from play style (overall K/D, KPM, accuracy, HSR, RF, slope, 🦁 Brave, 🎈 Inflation) fitted on the shared cache and anchored to the player's own fights. Not real fights. Shade ≈ ±1σ.">
       <span class="ghost-caption-swatch" aria-hidden="true"></span><span class="ghost-caption-text">dashed = predicted from play style,<br />not real fights</span>
     </div>
-    <div id="yScaleBar" class="chart-mode-bar" role="group" aria-label="Y-axis scale" style="display:block; width:100%; margin-bottom:6px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+    <div id="yScaleBar" class="chart-mode-bar" role="group" aria-label="Y-axis scale">
       <button type="button" class="chart-mode-btn" data-yscale="a" aria-pressed="false"
               title="iVi vs 50%: Y = iVi × K/D(x)/K/D_median. Curve passes through the player's iVi at its median point.">iVi vs 50%</button>
       <button type="button" class="chart-mode-btn" data-yscale="b" aria-pressed="false"
@@ -110,12 +111,11 @@
     </div>
     <div id="chartModeBar" class="chart-mode-bar" role="group" aria-label="Graph view">
       <button type="button" class="chart-mode-btn" data-mode="cumulative" aria-pressed="true"
-              title="Raw (default): K/D against everyone at or above this enemy KPM (cumulative). The left edge is roughly overall K/D.">📈 Raw</button>
+              title="Raw (default): K/D against everyone at or above this enemy KPM (cumulative). The left edge is roughly overall K/D.">📈</button>
       <button type="button" class="chart-mode-btn" data-mode="banded" aria-pressed="false"
-              title="Smooth: K/D against enemies around this KPM (±0.2). Shows where a player wins or loses; faded / thin where there are few fights, hidden where almost none.">🎚️ Smooth</button>
-      <span class="chart-mode-sep" aria-hidden="true"></span>
-      <button type="button" class="chart-mode-btn chart-ghost-btn" data-ghosts aria-pressed="false"
-              title="👻 Ghost lines on/off: a dashed, faint continuation predicted from play style (fitted on the shared cache, anchored to the player's own fights), so every line spans the whole graph. Not real fights; shade ≈ ±1σ. Off by default.">👻 Ghost</button>
+              title="Smooth: K/D against enemies around this KPM (±0.2). Shows where a player wins or loses; faded / thin where there are few fights, hidden where almost none.">🎚️</button>
+      <button type="button" class="chart-mode-btn chart-ghost-btn" data-ghosts aria-pressed="false">👻</button>
+    </div>
     </div>
     </div>
     <div id="chartYZoom" class="chart-y-zoom" hidden title="Zoom. Middle = auto-fit. Up zooms hard into the start of the graph (enemy KPM near 0): X shrinks from the right, Y re-fits to the left side. Down fits extreme / high-tier K/D.">
