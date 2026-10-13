@@ -4084,10 +4084,51 @@ import {
   const ySliderVal = document.getElementById("yScaleVal");
   if (ySlider) {
     ySlider.addEventListener("input", () => {
+      stopWave();
       const v = parseFloat(ySlider.value);
       if (ySliderVal) ySliderVal.textContent = v >= 10 ? v.toFixed(0) + "%" : v.toFixed(1) + "%";
       setYScaleMode("ivi", v);
     });
+  }
+  // Wave animation: slider oscillates 0.1% <-> 98% on a sine (ease-in-out free).
+  let waveOn = false;
+  let waveT = 0;
+  let waveRaf = 0;
+  const WAVE_MIN = 0.1, WAVE_MAX = 98;
+  const WAVE_MID = (WAVE_MIN + WAVE_MAX) / 2; // 49.05
+  const WAVE_AMP = (WAVE_MAX - WAVE_MIN) / 2; // 48.95
+  function waveTick() {
+    if (!waveOn) return;
+    waveT += 0.02; // speed
+    const pct = WAVE_MID + WAVE_AMP * Math.sin(waveT);
+    yScalePct = pct;
+    if (ySlider) ySlider.value = pct;
+    if (ySliderVal) ySliderVal.textContent = pct >= 10 ? pct.toFixed(0) + "%" : pct.toFixed(1) + "%";
+    yScaleMode = "ivi";
+    syncYScaleUi();
+    if (players.length) drawChart(players);
+    waveRaf = requestAnimationFrame(waveTick);
+  }
+  function startWave() {
+    if (waveOn) return;
+    waveOn = true;
+    // start phase from current slider so there's no jump
+    const frac = (yScalePct - WAVE_MID) / WAVE_AMP;
+    waveT = Math.asin(Math.max(-1, Math.min(1, frac)));
+    const wb = document.getElementById("yWaveBtn");
+    if (wb) { wb.textContent = "⏸️"; wb.classList.add("active"); }
+    waveTick();
+  }
+  function stopWave() {
+    if (!waveOn) return;
+    waveOn = false;
+    cancelAnimationFrame(waveRaf);
+    const wb = document.getElementById("yWaveBtn");
+    if (wb) { wb.textContent = "🌊"; wb.classList.remove("active"); }
+  }
+  const waveBtn = document.getElementById("yWaveBtn");
+  if (waveBtn) {
+    waveBtn.addEventListener("click", () => (waveOn ? stopWave() : startWave()));
   }
   syncYScaleUi();
 
