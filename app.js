@@ -2214,23 +2214,27 @@ import {
           valid: isFiniteNum(pt.kd) && pt.deaths > 0,
         }));
     }
-    // Y-scale display modes A/B: rescale pace-adjusted K/D into iVi units.
-    // A: anchor median to iVi (Y = iVi * KD(x)/KD_median) — curve passes through iVi at median.
-    // B: anchor start to iVi (Y = iVi * KD(x)/KD(0)) — curve starts at iVi, decays from there.
-    if (yScaleMode === "a" || yScaleMode === "b") {
+    // Y-scale display modes: rescale pace-adjusted K/D into iVi units.
+    // "a" (iVi vs 50%): anchor median to iVi — curve passes through iVi at median.
+    // "b" (iVi vs 100%): anchor start/max to iVi — curve starts at iVi, decays from there.
+    // "c" (iVi vs 10%): anchor p90 to iVi — curve passes through iVi at the 90th percentile point.
+    if (yScaleMode === "a" || yScaleMode === "b" || yScaleMode === "c") {
       const ivi = p.ivi;
       if (isFiniteNum(ivi) && ivi > 0) {
         const validKds = pts.filter((pt) => pt.valid && isFiniteNum(pt.kd)).map((pt) => pt.kd);
         let anchor = 0;
-        if (yScaleMode === "a") {
-          if (validKds.length > 0) {
+        if (validKds.length > 0) {
+          if (yScaleMode === "a") {
             const sorted = [...validKds].sort((a, b) => a - b);
             anchor = sorted[Math.floor(sorted.length / 2)];
+          } else if (yScaleMode === "c") {
+            const sorted = [...validKds].sort((a, b) => a - b);
+            anchor = sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * 0.9))];
+          } else {
+            // b: first valid point (lowest KPM = max K/D)
+            const first = pts.find((pt) => pt.valid && isFiniteNum(pt.kd));
+            anchor = first ? first.kd : 0;
           }
-        } else {
-          // B: first valid point (lowest KPM)
-          const first = pts.find((pt) => pt.valid && isFiniteNum(pt.kd));
-          anchor = first ? first.kd : 0;
         }
         if (anchor > 0) {
           const scale = ivi / anchor;
