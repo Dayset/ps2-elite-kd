@@ -2239,7 +2239,8 @@ import {
       if (isFiniteNum(ivi) && ivi > 0) {
         // Cache sorted K/D per player-curve (avoids re-sort every wave frame)
         let sorted = waveSortedCache.get(p);
-        const cacheKey = pts.length;
+        // Raw and Smooth curves can have the same length: key on the mode too.
+        const cacheKey = `${chartMode}:${pts.length}`;
         if (!sorted || sorted._n !== cacheKey) {
           const validKds = pts.filter((pt) => pt.valid && isFiniteNum(pt.kd)).map((pt) => pt.kd);
           sorted = [...validKds].sort((a, b) => a - b);
@@ -2326,7 +2327,143 @@ import {
     while (svg.firstChild) svg.removeChild(svg.firstChild);
   }
 
-  function drawChart(list) {
+  /**
+   * Retained chart elements from the last full draw, so 🌊 wave frames can
+   * move the existing lines / dots instead of rebuilding the SVG and the
+   * stats table + legend (~60x a second). Null = next draw is a full draw.
+   */
+  let waveRig = null;
+  function waveRigSig() {
+    return `${chartMode}|${ghostsOn}|${yZoom}|${yScaleMode}|${isLightTheme()}|${currentChartFontScale()}`;
+  }
+
+  /** Y scale for the visible curves (shared by full draws and wave frames). */
+  function chartYScale(validCurves, ghostY, yvals, zoomedLeft) {
+    return zoomedLeft
+      ? yScale(
+          windowYValues(validCurves, viewXMax).concat(
+            ghostY.filter((gp) => gp.kpm <= viewXMax + 1e-9).map((gp) => gp.kd)
+          )
+        ) // fit the left window
+      : applyYZoom(yScale(yvals), yZoom);
+  }
+
+  /** Horizontal grid lines + right-hand tick labels for `scale`. */
+  function drawYAxis(gLines, gText, scale, yToPx, th, fz) {
+    const yTicks = scale.log ? niceLogTicks(scale.lo, scale.hi) : niceLinTicks(scale.lo, scale.hi, 6);
+    for (const y of yTicks) {
+      const line = ns("line");
+      line.setAttribute("x1", PLOT.x);
+      line.setAttribute("x2", PLOT.x + PLOT.w);
+      line.setAttribute("y1", yToPx(y));
+      line.setAttribute("y2", yToPx(y));
+      gLines.appendChild(line);
+      const t = ns("text");
+      t.setAttribute("x", PLOT.x + PLOT.w + 8);
+      t.setAttribute("y", yToPx(y) + 4);
+      t.setAttribute("fill", th.text);
+      t.setAttribute("font-size", fz(11));
+      t.setAttribute("text-anchor", "start");
+      t.textContent = formatTick(y, scale.log);
+      gText.appendChild(t);
+    }
+  }
+
+  /** Player number labels on the left edge, de-overlapped, with leader lines. */
+  function drawChartLabels(g, labelAnchors, yToPx, fz) {
+    labelAnchors.sort((a, b) => yToPx(a.y) - yToPx(b.y));
+    const placed = [];
+    for (const lab of labelAnchors) {
+      let fy = yToPx(lab.y);
+      for (const prev of placed) {
+        if (Math.abs(fy - prev) < 16) fy = prev + 16;
+      }
+      fy = Math.min(PLOT.y + PLOT.h - 8, Math.max(PLOT.y + 10, fy));
+      placed.push(fy);
+      const num = ns("text");
+      num.setAttribute("x", PLOT.x - 10);
+      num.setAttribute("y", fy + 4);
+      num.setAttribute("fill", lab.col);
+      num.setAttribute("font-size", fz(14));
+      num.setAttribute("font-weight", "800");
+      num.setAttribute("text-anchor", "end");
+      num.textContent = String(lab.i + 1) + lab.mark.mark;
+      if (lab.mark.mark) {
+        const t = ns("title");
+        t.textContent = `${lab.display}${lab.mark.mark}: ${lab.mark.tip}`;
+        num.appendChild(t);
+      }
+      g.appendChild(num);
+      const link = ns("line");
+      link.setAttribute("x1", PLOT.x - 4);
+      link.setAttribute("y1", fy);
+      link.setAttribute("x2", xToPx(lab.x));
+      link.setAttribute("y2", yToPx(lab.y));
+      link.setAttribute("stroke", lab.col);
+      link.setAttribute("stroke-width", "0.7");
+      link.setAttribute("stroke-opacity", "0.7");
+      g.appendChild(link);
+    }
+  }
+
+  /** "M x,y L x,y …" for the faint full-curve path (banded: gaps break the line). */
+  function faintPathD(faint, banded, yToPx) {
+    let d = "";
+    for (let j = 0; j < faint.length; j++) {
+      const pt = faint[j];
+      const gap = banded && j && Math.abs(faint[j - 1].kpm - pt.kpm) > 0.051;
+      d += `${j ? " " : ""}${j && !gap ? "L" : "M"}${xToPx(pt.kpm).toFixed(2)},${yToPx(pt.kd).toFixed(2)}`;
+    }
+    return d;
+  }
+
+  /**
+   * 🌊 Wave frame: same players / mode / zoom as the last full draw, only the
+   * Y anchor moved. Moves the retained elements; returns false when a full
+   * draw is needed instead.
+   */
+  function updateWaveFrame(list) {
+    const rig = waveRig;
+    if (!rig || rig.list !== list || rig.sig !== waveRigSig() || ghostsOn) return false;
+    const ptsByPlayer = list.map((p) => chartPoints(p));
+    const validCurves = ptsByPlayer.map((pts) => pts.filter((pt) => pt.valid));
+    const yvals = [];
+    for (const pts of validCurves) for (const pt of pts) yvals.push(pt.kd);
+    const scale = chartYScale(validCurves, [], yvals, rig.zoomedLeft);
+    lastChartScale = scale;
+    const yToPx = makeYMapper(scale);
+
+    rig.gYGrid.replaceChildren();
+    rig.gYText.replaceChildren();
+    drawYAxis(rig.gYGrid, rig.gYText, scale, yToPx, rig.th, rig.fz);
+
+    const labelAnchors = [];
+    rig.series.forEach((s, i) => {
+      const pts = ptsByPlayer[i];
+      if (pts.length !== s.n) return;
+      if (s.path) s.path.setAttribute("d", faintPathD(validCurves[i], rig.banded, yToPx));
+      for (const sg of s.segs) {
+        sg.el.setAttribute("y1", yToPx(pts[sg.a].kd));
+        sg.el.setAttribute("y2", yToPx(pts[sg.b].kd));
+      }
+      for (const m of s.marks) {
+        const pt = pts[m.k];
+        if (m.x) m.el.setAttribute("transform", `translate(${xToPx(pt.kpm)} ${yToPx(pt.kd)})`);
+        else m.el.setAttribute("cy", yToPx(pt.kd));
+      }
+      if (s.anchor) {
+        const a = pts[s.anchor.k];
+        labelAnchors.push({ ...s.anchor, x: a.kpm, y: a.kd });
+      }
+    });
+    rig.gLabels.replaceChildren();
+    drawChartLabels(rig.gLabels, labelAnchors, yToPx, rig.fz);
+    return true;
+  }
+
+  function drawChart(list, { waveFrame = false } = {}) {
+    if (waveFrame && updateWaveFrame(list)) return;
+    waveRig = null;
     const svg = els.chart;
     clearSvg(svg);
     setPlaceholderVisible(false);
@@ -2388,13 +2525,7 @@ import {
         }
       }
     });
-    const scale = zoomedLeft
-      ? yScale(
-          windowYValues(validCurves, viewXMax).concat(
-            ghostY.filter((gp) => gp.kpm <= viewXMax + 1e-9).map((gp) => gp.kd)
-          )
-        ) // fit the left window
-      : applyYZoom(yScale(yvals), yZoom);
+    const scale = chartYScale(validCurves, ghostY, yvals, zoomedLeft);
     lastChartScale = scale;
     const yToPx = makeYMapper(scale);
     const xTicks = zoomedLeft ? niceLinTicks(0, viewXMax, 5) : [0, 0.5, 1.0, 1.5, 2.0];
@@ -2411,18 +2542,15 @@ import {
       line.setAttribute("y2", PLOT.y + PLOT.h);
       gGrid.appendChild(line);
     }
-    const yTicks = scale.log
-      ? niceLogTicks(scale.lo, scale.hi)
-      : niceLinTicks(scale.lo, scale.hi, 6);
-    for (const y of yTicks) {
-      const line = ns("line");
-      line.setAttribute("x1", PLOT.x);
-      line.setAttribute("x2", PLOT.x + PLOT.w);
-      line.setAttribute("y1", yToPx(y));
-      line.setAttribute("y2", yToPx(y));
-      gGrid.appendChild(line);
-    }
     svg.appendChild(gGrid);
+    // Y grid lines in their own group (same look, same layer) so wave frames
+    // can redraw just these; their tick labels go in gYText further down.
+    const gYGrid = ns("g");
+    gYGrid.setAttribute("stroke", th.grid);
+    gYGrid.setAttribute("stroke-width", "0.8");
+    svg.appendChild(gYGrid);
+    const gYText = ns("g");
+    drawYAxis(gYGrid, gYText, scale, yToPx, th, fz);
 
     for (const xv of [EASY_MAX, HARD_MIN]) {
       if (xv >= viewXMax) continue;
@@ -2480,16 +2608,7 @@ import {
       t.textContent = x.toFixed(xTickDigits);
       svg.appendChild(t);
     }
-    for (const y of yTicks) {
-      const t = ns("text");
-      t.setAttribute("x", PLOT.x + PLOT.w + 8);
-      t.setAttribute("y", yToPx(y) + 4);
-      t.setAttribute("fill", th.text);
-      t.setAttribute("font-size", fz(11));
-      t.setAttribute("text-anchor", "start");
-      t.textContent = formatTick(y, scale.log);
-      svg.appendChild(t);
-    }
+    svg.appendChild(gYText);
 
     // Short axis labels only (no farm % clutter)
     const capY = PLOT.y + PLOT.h + 30 + 10 * chartFs;
@@ -2509,24 +2628,20 @@ import {
     const labelAnchors = [];
     const lightLines = isLightTheme();
     let drewGhost = false;
+    const rigSeries = [];
     list.forEach((p, i) => {
       const col = seriesColor(i);
       const pts = ptsByPlayer[i];
       if (drawGhostRuns(seriesG, ghostsByPlayer[i], col, yToPx, p.display, th)) drewGhost = true;
+      const rs = { n: pts.length, path: null, segs: [], marks: [], anchor: null };
+      rigSeries.push(rs);
 
       const faint = pts.filter((pt) => pt.valid);
       if (faint.length >= 2) {
         const path = ns("path");
+        rs.path = path;
         // Banded: hidden (too few fights) stretches break the line instead of bridging.
-        path.setAttribute(
-          "d",
-          faint
-            .map((pt, j) => {
-              const gap = banded && j && Math.abs(faint[j - 1].kpm - pt.kpm) > 0.051;
-              return `${j && !gap ? "L" : "M"}${xToPx(pt.kpm).toFixed(2)},${yToPx(pt.kd).toFixed(2)}`;
-            })
-            .join(" ")
-        );
+        path.setAttribute("d", faintPathD(faint, banded, yToPx));
         path.setAttribute("fill", "none");
         path.setAttribute("stroke", col);
         path.setAttribute("stroke-width", lightLines ? "0.9" : "0.7");
@@ -2549,13 +2664,18 @@ import {
         seg.setAttribute("stroke-opacity", (lightLines ? 0.5 + 0.5 * r : 0.3 + 0.7 * r).toFixed(2));
         seg.setAttribute("stroke-linecap", "round");
         seriesG.appendChild(seg);
+        rs.segs.push({ el: seg, a, b: a + 1 });
       }
 
       // Fixed small markers (no √deaths sizing)
-      for (const pt of pts) {
+      for (let k = 0; k < pts.length; k++) {
+        const pt = pts[k];
         if (!pt.valid) continue;
         if (pt.rel < 0.35) {
-          drawX(seriesG, xToPx(pt.kpm), yToPx(pt.kd), DOT_R, col);
+          // ✕ drawn around 0,0 and placed by transform, so a wave frame moves it with one attribute.
+          const g = drawX(seriesG, 0, 0, DOT_R, col);
+          g.setAttribute("transform", `translate(${xToPx(pt.kpm)} ${yToPx(pt.kd)})`);
+          rs.marks.push({ el: g, k, x: true });
         } else {
           const c = ns("circle");
           c.setAttribute("cx", xToPx(pt.kpm));
@@ -2566,66 +2686,31 @@ import {
           c.setAttribute("stroke", th.markerStroke);
           c.setAttribute("stroke-width", "0.6");
           seriesG.appendChild(c);
+          rs.marks.push({ el: c, k, x: false });
         }
       }
 
-      let anchor = null;
-      const easyPts = pts.filter((pt) => pt.valid && pt.kpm <= 0.25);
-      if (easyPts.length) {
-        easyPts.sort((a, b) => a.kpm - b.kpm);
-        anchor = easyPts[0];
-      } else {
-        const finite = pts.filter((pt) => pt.valid);
-        if (finite.length) {
-          finite.sort((a, b) => a.kpm - b.kpm);
-          anchor = finite[0];
-        }
+      // Label anchor: lowest-KPM valid point (prefer the easy end ≤ 0.25).
+      let ak = -1;
+      for (let k = 0; k < pts.length; k++) {
+        const pt = pts[k];
+        if (!pt.valid) continue;
+        const easy = pt.kpm <= 0.25;
+        const best = ak >= 0 ? pts[ak] : null;
+        const bestEasy = best && best.kpm <= 0.25;
+        if (!best || (easy && !bestEasy) || (easy === bestEasy && pt.kpm < best.kpm)) ak = k;
       }
-      if (anchor) {
-        labelAnchors.push({
-          i,
-          col,
-          x: anchor.kpm,
-          y: anchor.kd,
-          display: p.display,
-          mark: playerMark(p),
-        });
+      if (ak >= 0) {
+        rs.anchor = { i, col, k: ak, display: p.display, mark: playerMark(p) };
+        labelAnchors.push({ ...rs.anchor, x: pts[ak].kpm, y: pts[ak].kd });
       }
     });
 
-    labelAnchors.sort((a, b) => yToPx(a.y) - yToPx(b.y));
-    const placed = [];
-    for (const lab of labelAnchors) {
-      let fy = yToPx(lab.y);
-      for (const prev of placed) {
-        if (Math.abs(fy - prev) < 16) fy = prev + 16;
-      }
-      fy = Math.min(PLOT.y + PLOT.h - 8, Math.max(PLOT.y + 10, fy));
-      placed.push(fy);
-      const num = ns("text");
-      num.setAttribute("x", PLOT.x - 10);
-      num.setAttribute("y", fy + 4);
-      num.setAttribute("fill", lab.col);
-      num.setAttribute("font-size", fz(14));
-      num.setAttribute("font-weight", "800");
-      num.setAttribute("text-anchor", "end");
-      num.textContent = String(lab.i + 1) + lab.mark.mark;
-      if (lab.mark.mark) {
-        const t = ns("title");
-        t.textContent = `${lab.display}${lab.mark.mark}: ${lab.mark.tip}`;
-        num.appendChild(t);
-      }
-      svg.appendChild(num);
-      const link = ns("line");
-      link.setAttribute("x1", PLOT.x - 4);
-      link.setAttribute("y1", fy);
-      link.setAttribute("x2", xToPx(lab.x));
-      link.setAttribute("y2", yToPx(lab.y));
-      link.setAttribute("stroke", lab.col);
-      link.setAttribute("stroke-width", "0.7");
-      link.setAttribute("stroke-opacity", "0.7");
-      svg.appendChild(link);
-    }
+    const gLabels = ns("g");
+    svg.appendChild(gLabels);
+    drawChartLabels(gLabels, labelAnchors, yToPx, fz);
+
+    waveRig = { list, sig: waveRigSig(), zoomedLeft, banded, th, fz, gYGrid, gYText, gLabels, series: rigSeries };
 
     renderStatsTable(list);
     renderLegend(list);
@@ -2711,6 +2796,7 @@ import {
     g.appendChild(a);
     g.appendChild(b);
     svg.appendChild(g);
+    return g;
   }
 
   function currentChartFontScale() {
@@ -4216,15 +4302,30 @@ import {
     const ePhase = (cyc < 0.5 ? e * 0.5 : 0.5 + e * 0.5) * Math.PI * 2;
     return Math.sin(ePhase);
   }
-  let waveFrame = 0;
-  function waveTick() {
+  // Time-based: one full cycle every WAVE_PERIOD_MS whatever the screen's
+  // refresh rate (the old per-frame step ran 2x faster at 120 Hz than at 60 Hz
+  // and stuttered on any dropped frame). 1250 ms = what a 120 Hz screen showed.
+  const WAVE_PERIOD_MS = 1250;
+  const WAVE_RAD_PER_MS = (Math.PI * 2) / WAVE_PERIOD_MS;
+  let waveLastTs = 0;
+  // Pause while the chart is scrolled out of view (no point drawing it).
+  let chartOnScreen = true;
+  if (typeof IntersectionObserver === "function" && els.chart) {
+    new IntersectionObserver((entries) => {
+      for (const e of entries) chartOnScreen = e.isIntersecting;
+    }).observe(els.chart);
+  }
+  function waveTick(ts) {
     if (!waveOn) return;
-    waveFrame++;
-    // Adaptive fps: 60fps when All-players table closed, 30fps when open (huge table reflows)
-    const tableOpen = (() => { const d = document.getElementById("ranksTableSection"); return d && d.open; })();
-    const skip = tableOpen ? 2 : 1;
-    if (waveFrame % skip !== 0) { waveRaf = requestAnimationFrame(waveTick); return; }
-    waveT += (tableOpen ? 0.042 : 0.021) * waveSpeed;
+    waveRaf = requestAnimationFrame(waveTick);
+    if (!chartOnScreen || typeof ts !== "number") {
+      waveLastTs = 0;
+      return;
+    }
+    // Cap the step after a long pause (tab switch, GC) so it resumes, not jumps.
+    const dt = waveLastTs ? Math.min(50, ts - waveLastTs) : 0;
+    waveLastTs = ts;
+    waveT += dt * WAVE_RAD_PER_MS;
     let w = waveShape === "smooth" ? waveFormSmooth(waveT) : waveForm(waveT);
     // Snappier reversals: sharpen peaks so less time lingers at 0%/100%
     w = Math.sign(w) * Math.pow(Math.abs(w), 0.2); // Dayset: aggressive snap
@@ -4234,11 +4335,13 @@ import {
     if (Math.abs(yScalePct - waveLastDrawn) >= 0.02) {
       waveLastDrawn = yScalePct;
       if (ySliderVal) ySliderVal.textContent = yScalePct >= 10 ? yScalePct.toFixed(0) + "%" : yScalePct.toFixed(1) + "%";
-      yScaleMode = "ivi";
-      syncYScaleUi();
-      if (players.length) drawChart(players);
+      if (yScaleMode !== "ivi") {
+        yScaleMode = "ivi";
+        syncYScaleUi();
+      }
+      // Wave frame: moves the existing chart elements only (no table/legend rebuild).
+      if (players.length) drawChart(players, { waveFrame: true });
     }
-    waveRaf = requestAnimationFrame(waveTick);
   }
   function startWave() {
     if (waveOn) return;
@@ -4265,7 +4368,8 @@ import {
     // Disable ghost button while wave runs
     const gb = document.querySelector("[data-ghosts]");
     if (gb) gb.disabled = true;
-    waveTick();
+    waveLastTs = 0;
+    waveRaf = requestAnimationFrame(waveTick);
   }
   function stopWave() {
     if (!waveOn) return;
