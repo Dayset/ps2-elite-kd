@@ -4137,7 +4137,7 @@ import {
     waveT += 0.021 * waveSpeed;
     let w = waveShape === "smooth" ? waveFormSmooth(waveT) : waveForm(waveT);
     // Snappier reversals: sharpen peaks so less time lingers at 0%/100%
-    w = Math.sign(w) * Math.pow(Math.abs(w), 0.6);
+    w = Math.sign(w) * Math.pow(Math.abs(w), 0.3); // 50% more aggressive
     const pct = WAVE_MID + WAVE_AMP * w;
     yScalePct = Math.max(WAVE_MIN, Math.min(WAVE_MAX, pct));
     if (ySlider) ySlider.value = yScalePct;
