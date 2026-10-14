@@ -241,7 +241,12 @@ async function fetchJson(url, { retries = 4 } = {}) {
     let wait = backoffMs(attempt);
     if (bucket) await bucket.take();
     if (isHonu) {
-      if (honuUsage.calls >= HONU_DAILY_CAP) throw new HttpClientError(`Honu daily cap ${HONU_DAILY_CAP} reached`, 429);
+      if (honuUsage.calls >= HONU_DAILY_CAP) {
+        // Our own limit, not an outage: the caller skips this player and retries later.
+        const capErr = new HttpClientError(`Honu daily cap ${HONU_DAILY_CAP} reached`, 429);
+        capErr.skip = true;
+        throw capErr;
+      }
       honuUsage.calls++;
     }
     try {
@@ -1208,6 +1213,12 @@ async function main() {
       console.log(`  wrote data/${fileRel} (${display})`);
     } catch (e) {
       const msg = String((e && e.message) || e);
+      if (e && e.skip) {
+        // Self-imposed pacing/cap: not a failure, keep the player's state as it was.
+        c.skipped = (c.skipped || 0) + 1;
+        console.warn(`  SKIP (paced) ${name}: ${msg}`);
+        return display;
+      }
       state.players[slug] = {
         lastAttemptAt: now,
         lastOkAt: prev.lastOkAt || null,
@@ -1495,7 +1506,9 @@ async function main() {
   // Bad / misspelled names are logged and skipped; their existing files and
   // index entries are left untouched. Only a run where nothing refreshed and
   // something looked like a real outage fails the job.
-  if (c.ok === 0 && c.outage > 0) process.exit(1);
+  // Outage with nothing refreshed: not a job failure. The schedule already
+  // holds a retry (computeSchedule "retry after outage"), so exit cleanly.
+  if (c.ok === 0 && c.outage > 0) console.warn(`::warning::Census/Honu unreachable; nothing refreshed this run. Retry scheduled.`);
 }
 
 const isNewAccountQ = (q) => isNewAccount(q && q.created);

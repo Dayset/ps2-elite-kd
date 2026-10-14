@@ -95,6 +95,8 @@ jobs:
 
       - name: Fetch players (new-player discovery, or on-demand names)
         id: refresh
+        # An outage or bad reply must not fail the job: the commit step still runs (if: always()).
+        continue-on-error: true
         env:
           NAMES: ${{ github.event.inputs.names || '' }}
           # GitHub-hosted runners can't connect to Census; go through the cache
