@@ -2169,6 +2169,7 @@ import {
   }
 
   function setChartMode(mode, { redraw = true } = {}) {
+    const wasBanded = chartMode === "banded";
     chartMode = mode === "banded" ? "banded" : "cumulative";
     try {
       localStorage.setItem(LS_CHART_MODE, chartMode);
@@ -2176,6 +2177,12 @@ import {
       /* private mode: session-only */
     }
     syncChartModeUi();
+    // Dayset: wave auto-starts on Smooth, stops on Raw
+    if (chartMode === "banded" && !wasBanded) {
+      if (typeof startWave === "function") startWave();
+    } else if (chartMode !== "banded" && wasBanded) {
+      if (typeof stopWave === "function") stopWave();
+    }
     if (redraw && players.length) drawChart(players);
   }
 
@@ -4104,8 +4111,8 @@ import {
   const WAVE_MID = (WAVE_MIN + WAVE_MAX) / 2; // 50.05
   const WAVE_AMP = (WAVE_MAX - WAVE_MIN) / 2; // 49.95
   let waveLastDrawn = -1;
-  let waveShape = "sine"; // sine | linear | smooth
-  let waveSpeed = 1; // 0.25x - 3x multiplier
+  let waveShape = "smooth"; // Dayset: fixed
+  let waveSpeed = 2; // Dayset: fixed 2x
   // Waveform: phase 0..2π -> -1..1 with selected easing
   function waveForm(phase) {
     const cyc = ((phase % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2) / (Math.PI * 2); // 0..1
@@ -4137,7 +4144,7 @@ import {
     waveT += 0.021 * waveSpeed;
     let w = waveShape === "smooth" ? waveFormSmooth(waveT) : waveForm(waveT);
     // Snappier reversals: sharpen peaks so less time lingers at 0%/100%
-    w = Math.sign(w) * Math.pow(Math.abs(w), 0.3); // 50% more aggressive
+    w = Math.sign(w) * Math.pow(Math.abs(w), 0.2); // Dayset: aggressive snap
     const pct = WAVE_MID + WAVE_AMP * w;
     yScalePct = Math.max(WAVE_MIN, Math.min(WAVE_MAX, pct));
     if (ySlider) ySlider.value = yScalePct;
@@ -4178,18 +4185,7 @@ import {
   if (waveBtn) {
     waveBtn.addEventListener("click", () => (waveOn ? stopWave() : startWave()));
   }
-  const waveShapeSel = document.getElementById("waveShape");
-  if (waveShapeSel) {
-    waveShapeSel.addEventListener("change", () => { waveShape = waveShapeSel.value; });
-  }
-  const waveSpeedSlider = document.getElementById("waveSpeed");
-  const waveSpeedVal = document.getElementById("waveSpeedVal");
-  if (waveSpeedSlider) {
-    waveSpeedSlider.addEventListener("input", () => {
-      waveSpeed = parseFloat(waveSpeedSlider.value);
-      if (waveSpeedVal) waveSpeedVal.textContent = waveSpeed.toFixed(2).replace(/\.00$/, "") + "x";
-    });
-  }
+
   syncYScaleUi();
 
   if (els.themeToggle) {
