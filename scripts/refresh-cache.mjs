@@ -154,14 +154,14 @@ function parseNames(text) {
 const censusRate = defaultCensusRate(CENSUS_SERVICE_ID);
 if (Number(process.env.CENSUS_RPM) > 0) censusRate.perMinute = Number(process.env.CENSUS_RPM);
 const censusBucket = tokenBucket(censusRate);
-const honuBucket = tokenBucket({ capacity: 3, perMinute: 20 });
+const honuBucket = tokenBucket({ capacity: 3, perMinute: 10 });
 
 /**
  * Daily Honu cap (all Honu calls: assists, full XP, history fallback), UTC day,
  * kept in data/honu-usage.json. Discovery itself never calls Honu. When the cap
  * is reached, assists / XP wait for the next day (the old values are kept).
  */
-export const HONU_DAILY_CAP = Number(process.env.HONU_DAILY_CAP) > 0 ? Number(process.env.HONU_DAILY_CAP) : 3000;
+export const HONU_DAILY_CAP = Number(process.env.HONU_DAILY_CAP) > 0 ? Number(process.env.HONU_DAILY_CAP) : 10000;
 const honuUsage = (() => {
   const day = new Date().toISOString().slice(0, 10);
   try {

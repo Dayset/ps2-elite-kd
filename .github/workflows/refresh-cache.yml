@@ -50,7 +50,7 @@ env:
   ON_DEMAND_BUDGET_MIN: "10" # inputs.names runs
   GROW_MAX: "150"            # background: max new players per run (time budget usually binds first)
   SWEEP_SLICE_SEC: "120"     # background: max discovery sweep time per run
-  HONU_DAILY_CAP: "3000"     # all Honu calls per UTC day (assists + XP + history fallback)
+  HONU_DAILY_CAP: "10000"     # all Honu calls per UTC day (assists + XP + history fallback)
   FORENSICS_DAILY_RESERVE: "150" # 🔎 session forensics slice INSIDE the daily cap (kill events of top sessions)
   # 🔎 forensics players per run (≤ 3 Honu calls each) and Honu XP detail calls
   # per run; on-demand runs keep the old small values so they stay quick.
