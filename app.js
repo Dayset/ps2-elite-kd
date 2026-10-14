@@ -3087,19 +3087,21 @@ import {
     }
   }
 
-  // Wave swing: vertical distance (iVi units) the median point travels over a full wave cycle.
-  // swing = iVi * KD_median * |1/anchor(0.2%) - 1/anchor(98.8%)|
+  // Wave swing area: total area (iVi units × KPM) swept by the full line over a wave cycle.
+  // area = iVi * |1/anchor(0.2%) - 1/anchor(98.8%)| * ∫ KD(x) dx (trapezoidal)
   function waveSwing(p) {
     try {
       const ivi = p.ivi;
       if (!isFiniteNum(ivi) || ivi <= 0) return 0;
       const kpm = p.own_kpm || p.global_kpm;
       const pf = kpm > 0 ? Math.min(1.0, Math.pow(kpm / 2.0, 2)) : 1;
-      const kds = (p.curve || [])
-        .filter((pt) => isFiniteNum(pt.kd) && pt.deaths > 0)
-        .map((pt) => pt.kd * pf)
-        .filter((v) => v > 0);
-      if (kds.length < 2) return 0;
+      const pts = (p.curve || [])
+        .filter((pt) => isFiniteNum(pt.kd) && isFiniteNum(pt.kpm) && pt.deaths > 0)
+        .map((pt) => ({ x: pt.kpm, kd: pt.kd * pf }))
+        .filter((pt) => pt.kd > 0)
+        .sort((a, b) => a.x - b.x);
+      if (pts.length < 2) return 0;
+      const kds = pts.map((pt) => pt.kd);
       const sorted = [...kds].sort((a, b) => a - b);
       const anchorAt = (pct) => {
         const frac = Math.max(0.00001, Math.min(1, pct / 100));
@@ -3112,8 +3114,13 @@ import {
       };
       const aLo = anchorAt(0.2), aHi = anchorAt(98.8);
       if (aLo <= 0 || aHi <= 0) return 0;
-      const med = sorted[Math.floor(sorted.length / 2)];
-      return Math.abs(ivi * med * (1 / aLo - 1 / aHi));
+      // Trapezoidal integral of KD(x) over x
+      let areaKd = 0;
+      for (let i = 1; i < pts.length; i++) {
+        const dx = pts[i].x - pts[i - 1].x;
+        areaKd += dx * (pts[i].kd + pts[i - 1].kd) / 2;
+      }
+      return Math.abs(ivi * (1 / aLo - 1 / aHi) * areaKd);
     } catch { return 0; }
   }
 
