@@ -4,34 +4,178 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "38476713037",
-    "event": "workflow_dispatch",
-    "kind": "on-demand",
-    "startedAt": "2026-10-13T22:17:18.112Z",
-    "endedAt": "2026-10-13T22:17:23.348Z",
-    "seconds": 5,
+    "runId": "38489583590",
+    "event": "schedule",
+    "kind": "discovery",
+    "startedAt": "2026-10-14T00:20:37.177Z",
+    "endedAt": "2026-10-14T00:22:23.752Z",
+    "seconds": 107,
     "updated": [],
-    "added": [
-      "YourPersonalEnemy"
+    "added": [],
+    "failed": [
+      {
+        "name": "[FEMx] ShrimpeHxxTR",
+        "reason": "Census: 36/200 opponent stats missing; keeping old data",
+        "outage": true
+      },
+      {
+        "name": "[xxSx] ShrimpeHxxNC",
+        "reason": "Census: 20/199 opponent stats missing; keeping old data",
+        "outage": true
+      },
+      {
+        "name": "[K4T5] ShrimpeHxxVS",
+        "reason": "Census: 26/200 opponent stats missing; keeping old data",
+        "outage": true
+      },
+      {
+        "name": "Runnerdeconfianza",
+        "reason": "Census: 1/1 opponent stats missing; keeping old data",
+        "outage": true
+      }
     ],
-    "failed": [],
-    "stoppedEarly": null,
+    "stoppedEarly": "4 outage-type failures in a row (Census/Honu down?)",
     "indexSize": 8161,
+    "discovery": {
+      "cap": 9000,
+      "queue": 798,
+      "slice": null,
+      "sweepInProgress": false
+    },
     "honu": {
-      "day": "2026-10-13",
-      "calls": 2981,
+      "day": "2026-10-14",
+      "calls": 30,
       "cap": 3000
     },
     "batch": [
       {
-        "name": "YourPersonalEnemy",
-        "src": "on-demand",
-        "status": "done"
+        "name": "psnso",
+        "src": "retry",
+        "status": "pending"
+      },
+      {
+        "name": "psonline",
+        "src": "retry",
+        "status": "pending"
+      },
+      {
+        "name": "etmars",
+        "src": "retry",
+        "status": "pending"
+      },
+      {
+        "name": "FlorjussDz",
+        "src": "discovery-new",
+        "status": "pending"
+      },
+      {
+        "name": "TerribleTerrain",
+        "src": "discovery-new",
+        "status": "pending"
+      },
+      {
+        "name": "92JohnMarston",
+        "src": "discovery-new",
+        "status": "pending"
+      },
+      {
+        "name": "HackerDetector",
+        "src": "discovery-new",
+        "status": "pending"
+      },
+      {
+        "name": "0Lucker0",
+        "src": "discovery-new",
+        "status": "pending"
+      },
+      {
+        "name": "Darkboon1",
+        "src": "discovery-new",
+        "status": "pending"
+      },
+      {
+        "name": "FinnasFoRealus",
+        "src": "discovery-new",
+        "status": "pending"
+      },
+      {
+        "name": "Softbear1",
+        "src": "discovery-new",
+        "status": "pending"
+      },
+      {
+        "name": "LadniyVS",
+        "src": "discovery-new",
+        "status": "pending"
+      },
+      {
+        "name": "NotKaine",
+        "src": "discovery-new",
+        "status": "pending"
+      },
+      {
+        "name": "ElKumonGaming",
+        "src": "discovery-new",
+        "status": "pending"
+      },
+      {
+        "name": "PandaShipping",
+        "src": "discovery-new",
+        "status": "pending"
+      },
+      {
+        "name": "dinoborg",
+        "src": "discovery-new",
+        "status": "pending"
+      },
+      {
+        "name": "PointRain",
+        "src": "discovery-new",
+        "status": "pending"
+      },
+      {
+        "name": "SOUSOUFAR",
+        "src": "discovery-new",
+        "status": "pending"
+      },
+      {
+        "name": "GrapeExpectations",
+        "src": "discovery-new",
+        "status": "pending"
+      },
+      {
+        "name": "SKFalconEU",
+        "src": "discovery-new",
+        "status": "pending"
+      },
+      {
+        "name": "[FEMx] ShrimpeHxxTR",
+        "src": "refresh",
+        "status": "failed",
+        "reason": "Census: 36/200 opponent stats missing; keeping old data"
+      },
+      {
+        "name": "[xxSx] ShrimpeHxxNC",
+        "src": "refresh",
+        "status": "failed",
+        "reason": "Census: 20/199 opponent stats missing; keeping old data"
+      },
+      {
+        "name": "[K4T5] ShrimpeHxxVS",
+        "src": "refresh",
+        "status": "failed",
+        "reason": "Census: 26/200 opponent stats missing; keeping old data"
+      },
+      {
+        "name": "Runnerdeconfianza",
+        "src": "refresh",
+        "status": "failed",
+        "reason": "Census: 1/1 opponent stats missing; keeping old data"
       }
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-13T22:17:26.385Z",
+    "checkedAt": "2026-10-14T00:24:45.446Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 22,
     "explained": 5,
@@ -66,7 +210,7 @@
         "id": "s_kd",
         "value": 100,
         "bound": 79.714,
-        "z": 82.879,
+        "z": 82.845,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -224,7 +368,7 @@
         "id": "s_kd",
         "value": 113,
         "bound": 79.714,
-        "z": 93.874,
+        "z": 93.835,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (aim), listed there",
@@ -499,7 +643,7 @@
             "label": "🧪 Session K/D",
             "value": 100,
             "bound": 79.714,
-            "z": 82.879,
+            "z": 82.845,
             "side": "high"
           }
         ]
@@ -771,7 +915,7 @@
             "label": "🧪 Session K/D",
             "value": 113,
             "bound": 79.714,
-            "z": 93.874,
+            "z": 93.835,
             "side": "high"
           }
         ]
@@ -876,7 +1020,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-13T22:17:26.436Z",
+    "checkedAt": "2026-10-14T00:24:45.517Z",
     "red": 31,
     "padding": 33,
     "adjusted": 13,
@@ -887,7 +1031,7 @@
     "forensics": 17
   },
   "sessionStats": {
-    "checkedAt": "2026-10-13T22:17:26.395Z",
+    "checkedAt": "2026-10-14T00:24:45.461Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -901,13 +1045,13 @@
     "ruleText": "[session pattern] in recent Honu sessions (≥ 100 kills counted): assists per kill ≤ 0.1, headshot share ≥ 50% (headshot XP per kill; Census lifetime HSR when no XP detail) and K/D ≥ 7 (session deaths; Census lifetime KD when none). A very one-sided record; a lead for manual review, not proof.",
     "coverage": {
       "players": 8160,
-      "withSessions": 2472,
-      "measured": 1311,
-      "sessions": 7893,
-      "kills": 452334,
-      "xpPlayers": 292,
-      "xpMeasured": 218,
-      "xpSessions": 1433
+      "withSessions": 2476,
+      "measured": 1314,
+      "sessions": 7905,
+      "kills": 453269,
+      "xpPlayers": 296,
+      "xpMeasured": 221,
+      "xpSessions": 1445
     },
     "metrics": [
       {
@@ -1009,7 +1153,7 @@
     ],
     "distributions": {
       "s_apk": {
-        "n": 1311,
+        "n": 1314,
         "min": 0,
         "p01": 0.071,
         "p05": 0.162,
@@ -1029,67 +1173,67 @@
         "max": 0.803
       },
       "s_kpm": {
-        "n": 1311,
+        "n": 1314,
         "min": 0.08,
         "p01": 0.157,
         "p05": 0.239,
         "median": 0.703,
-        "p95": 2.308,
+        "p95": 2.312,
         "p99": 3.025,
         "max": 16.526
       },
       "s_maxKpm": {
-        "n": 1311,
+        "n": 1314,
         "min": 0.137,
         "p01": 0.199,
         "p05": 0.307,
         "median": 0.892,
-        "p95": 2.737,
+        "p95": 2.738,
         "p99": 3.507,
         "max": 16.526
       },
       "s_kpmCv": {
-        "n": 1239,
+        "n": 1242,
         "min": 0,
         "p01": 0.01,
-        "p05": 0.042,
+        "p05": 0.043,
         "median": 0.226,
-        "p95": 0.555,
+        "p95": 0.554,
         "p99": 0.721,
         "max": 0.985
       },
       "s_kd": {
-        "n": 1176,
+        "n": 1179,
         "min": 0.298,
         "p01": 0.483,
         "p05": 0.727,
         "median": 2,
-        "p95": 5.342,
+        "p95": 5.393,
         "p99": 21.429,
         "max": 113
       },
       "s_maxKd": {
-        "n": 1176,
+        "n": 1179,
         "min": 0.392,
         "p01": 0.569,
         "p05": 0.912,
-        "median": 2.545,
+        "median": 2.551,
         "p95": 10.167,
         "p99": 57,
         "max": 355
       },
       "s_hsk": {
-        "n": 222,
+        "n": 225,
         "min": 0,
         "p01": 0.008,
-        "p05": 0.071,
+        "p05": 0.041,
         "median": 0.312,
         "p95": 0.563,
         "p99": 0.709,
         "max": 0.972
       },
       "s_ksk": {
-        "n": 222,
+        "n": 225,
         "min": 0,
         "p01": 0.042,
         "p05": 0.127,
@@ -1099,7 +1243,7 @@
         "max": 0.983
       },
       "s_domk": {
-        "n": 222,
+        "n": 225,
         "min": 0,
         "p01": 0.007,
         "p05": 0.022,
@@ -1109,7 +1253,7 @@
         "max": 0.239
       },
       "s_revk": {
-        "n": 222,
+        "n": 225,
         "min": 0,
         "p01": 0,
         "p05": 0.007,
@@ -1119,7 +1263,7 @@
         "max": 0.257
       },
       "s_revDom": {
-        "n": 221,
+        "n": 224,
         "min": 0,
         "p01": 0,
         "p05": 0.086,
@@ -1129,7 +1273,7 @@
         "max": 10
       },
       "s_savk": {
-        "n": 222,
+        "n": 225,
         "min": 0,
         "p01": 0.005,
         "p05": 0.017,
@@ -1139,7 +1283,7 @@
         "max": 0.153
       },
       "s_spotk": {
-        "n": 222,
+        "n": 225,
         "min": 0,
         "p01": 0,
         "p05": 0,
@@ -1149,7 +1293,7 @@
         "max": 0.26
       },
       "s_prik": {
-        "n": 222,
+        "n": 225,
         "min": 0,
         "p01": 0.034,
         "p05": 0.089,
@@ -1159,10 +1303,10 @@
         "max": 0.328
       },
       "s_stopk": {
-        "n": 222,
+        "n": 225,
         "min": 0,
         "p01": 0.004,
-        "p05": 0.033,
+        "p05": 0.031,
         "median": 0.073,
         "p95": 0.13,
         "p99": 0.154,
@@ -1982,7 +2126,7 @@
             "label": "🧪 Session K/D",
             "value": 100,
             "bound": 79.714,
-            "z": 82.879,
+            "z": 82.845,
             "side": "high"
           }
         ]
@@ -2002,7 +2146,7 @@
             "label": "🧪 Session K/D",
             "value": 113,
             "bound": 79.714,
-            "z": 93.874,
+            "z": 93.835,
             "side": "high"
           }
         ]
@@ -2011,9 +2155,9 @@
     "outliersUnexplained": 1
   },
   "size": {
-    "at": "2026-10-13T22:17:23.725Z",
-    "repoBytes": 65726464,
-    "dataBytes": 156201530,
+    "at": "2026-10-14T00:22:24.196Z",
+    "repoBytes": 67647488,
+    "dataBytes": 156229369,
     "playersBytes": 148061311,
     "playerFiles": 8161,
     "warnAtBytes": 734003200,
@@ -2021,7 +2165,7 @@
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-13T22:17:26.410Z",
+    "checkedAt": "2026-10-14T00:24:45.481Z",
     "candidates": [
       "nebelhexe",
       "pressutoredeploy",
@@ -2134,6 +2278,7 @@
       "wyyyyyyhhh",
       "xdfkla",
       "yoooooooeu",
+      "purplelulu",
       "zyr0s",
       "ghastl",
       "zyntschnur",
@@ -7164,8 +7309,8 @@
         "confirmedCheater": false,
         "flagged": false,
         "odd": false,
-        "analyzed": 2,
-        "checkedAt": "2026-10-11T00:08:46.995Z",
+        "analyzed": 3,
+        "checkedAt": "2026-10-14T00:21:56.188Z",
         "worst": {
           "sessionId": "11996209",
           "url": "https://wt.honu.pw/s/11996209",
@@ -13332,8 +13477,8 @@
         "confirmedCheater": false,
         "flagged": false,
         "odd": false,
-        "analyzed": 2,
-        "checkedAt": "2026-10-11T00:08:50.751Z",
+        "analyzed": 3,
+        "checkedAt": "2026-10-14T00:21:59.249Z",
         "worst": {
           "sessionId": "17128801",
           "url": "https://wt.honu.pw/s/17128801",
@@ -16800,7 +16945,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-13T22:17:26.414Z",
+    "checkedAt": "2026-10-14T00:24:45.486Z",
     "count": 209,
     "players": [
       {
