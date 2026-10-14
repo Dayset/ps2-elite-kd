@@ -2235,7 +2235,9 @@ import {
           const i0 = Math.floor(pos);
           const i1 = Math.min(sorted.length - 1, i0 + 1);
           const t = pos - i0;
-          const anchor = sorted[i0] * (1 - t) + sorted[i1] * t;
+          // Cosine interpolation: smoother than linear, eases between points
+          const tc = (1 - Math.cos(Math.PI * t)) / 2;
+          const anchor = sorted[i0] * (1 - tc) + sorted[i1] * tc;
           if (anchor > 0) {
             const scale = ivi / anchor;
             pts = pts.map((pt) => ({ ...pt, kd: isFiniteNum(pt.kd) ? pt.kd * scale : pt.kd }));
@@ -4098,9 +4100,9 @@ import {
   let waveOn = false;
   let waveT = 0;
   let waveRaf = 0;
-  const WAVE_MIN = 0.1, WAVE_MAX = 98;
-  const WAVE_MID = (WAVE_MIN + WAVE_MAX) / 2; // 49.05
-  const WAVE_AMP = (WAVE_MAX - WAVE_MIN) / 2; // 48.95
+  const WAVE_MIN = 0.1, WAVE_MAX = 100;
+  const WAVE_MID = (WAVE_MIN + WAVE_MAX) / 2; // 50.05
+  const WAVE_AMP = (WAVE_MAX - WAVE_MIN) / 2; // 49.95
   let waveLastDrawn = -1;
   function waveTick() {
     if (!waveOn) return;
