@@ -42,13 +42,20 @@ concurrency:
   queue: max
 
 env:
-  TIME_BUDGET_MIN: "9"       # background: stop starting new players after ~9 min
+  # Background runs are long so each commits (and redeploys Pages) only every
+  # ~30 min instead of every ~9; they stop early as soon as another run is
+  # waiting (scripts/yield-check.mjs), so site requests are not held up.
+  # Per-run caps below are ~3x the old 9-min values to keep the same daily pace.
+  TIME_BUDGET_MIN: "27"      # background: stop starting new players after ~27 min
   ON_DEMAND_BUDGET_MIN: "10" # inputs.names runs
-  GROW_MAX: "50"             # background: max new players per run (time budget usually binds first)
-  SWEEP_SLICE_SEC: "60"      # background: max discovery sweep time per run
+  GROW_MAX: "150"            # background: max new players per run (time budget usually binds first)
+  SWEEP_SLICE_SEC: "120"     # background: max discovery sweep time per run
   HONU_DAILY_CAP: "3000"     # all Honu calls per UTC day (assists + XP + history fallback)
   FORENSICS_DAILY_RESERVE: "150" # 🔎 session forensics slice INSIDE the daily cap (kill events of top sessions)
-  FORENSICS_PER_RUN: "3"         # 🔎 players per run (≤ 3 Honu calls each)
+  # 🔎 forensics players per run (≤ 3 Honu calls each) and Honu XP detail calls
+  # per run; on-demand runs keep the old small values so they stay quick.
+  FORENSICS_PER_RUN: ${{ github.event.inputs.names != '' && github.event.inputs.names != null && '3' || '9' }}
+  XP_CALLS_PER_RUN: ${{ github.event.inputs.names != '' && github.event.inputs.names != null && '30' || '90' }}
   # Daybreak Census service ID (registered, public client-side value; a repo
   # secret/variable CENSUS_SERVICE_ID overrides it). Data comes from Census;
   # Honu only as a paced fallback for missing history_stats.
@@ -59,7 +66,7 @@ env:
 jobs:
   refresh:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40 # 27-min budget + XP/forensics/radar/commit
     steps:
       - name: Checkout
         uses: actions/checkout@v4
