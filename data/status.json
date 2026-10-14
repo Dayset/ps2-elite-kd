@@ -4,162 +4,244 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "38490884597",
+    "runId": "38491693120",
     "event": "workflow_dispatch",
     "kind": "discovery",
-    "startedAt": "2026-10-14T00:34:12.260Z",
-    "endedAt": "2026-10-14T00:42:18.399Z",
+    "startedAt": "2026-10-14T00:42:58.795Z",
+    "endedAt": "2026-10-14T00:51:04.686Z",
     "seconds": 486,
     "updated": [],
     "added": [
-      "EdeaFlorence",
-      "ArsyaTorodoki",
-      "Cubemind",
-      "[CTIA] WarLordSkeletor",
-      "[RMBJ] zekalc",
-      "MAPKYTAH",
-      "TvoiO",
-      "[xyst] LounidasMaximilIion",
-      "CliqueAquiNc",
-      "[RWCN] RWsiqianyiCN",
-      "[M2F] IamNotGoodAtGames",
-      "4Redacted",
-      "[CTIA] McEspresso",
-      "[CBMC] Saiga0",
-      "[CTIA] ScratchyNS0",
-      "[8RIG] DoYouGottaSpareCiggy",
-      "SorrySnack",
-      "TopKiler",
-      "QZDNM"
+      "0Lucker0",
+      "[GDEX] DELIKONC",
+      "[LHEU] HHCN033",
+      "[ISV] mssd",
+      "[YEEB] GeneralScrag",
+      "[CTIA] HTTDC",
+      "[1COG] GoergeTheBlobfish",
+      "KudeliaaNS",
+      "AliceWang2009",
+      "shadowsmile7",
+      "[SlCt] xXColdblueXx",
+      "[RWCN] w1233111",
+      "[B1ck] kIrmIzItaraflI",
+      "[YEEB] SengertEmployeee",
+      "LotusDragon",
+      "CalhounNC",
+      "[NoTa] 0Fuchs",
+      "BLUEeeeeee",
+      "[0FR] boyan85",
+      "[ISV] BigFeesh",
+      "[DPS0] DanGlycerin",
+      "MsOpafama",
+      "[GOTR] dimetime70c",
+      "[CTIA] SirNomNomTheSecond",
+      "[CNZY] HHBBBB",
+      "Theman2022",
+      "[FR0S] comeshootme",
+      "imsupercool",
+      "TREllipsis"
     ],
     "failed": [
       {
-        "name": "05073922893928789243836433652",
-        "reason": "Census is busy or down (SERVER_ERROR)",
+        "name": "psnso",
+        "reason": "Census: 26/199 opponent stats missing; keeping old data",
+        "outage": true
+      },
+      {
+        "name": "psonline",
+        "reason": "Census: 34/199 opponent stats missing; keeping old data",
+        "outage": true
+      },
+      {
+        "name": "etmars",
+        "reason": "Census: 23/199 opponent stats missing; keeping old data",
         "outage": true
       }
     ],
     "stoppedEarly": "time budget 9 min reached",
-    "indexSize": 8204,
+    "indexSize": 8233,
     "discovery": {
       "cap": 9000,
-      "queue": 752,
+      "queue": 724,
       "slice": null,
       "sweepInProgress": false
     },
     "honu": {
       "day": "2026-10-14",
-      "calls": 256,
+      "calls": 403,
       "cap": 3000
     },
     "batch": [
       {
-        "name": "EdeaFlorence",
-        "src": "discovery-new",
-        "status": "done"
-      },
-      {
-        "name": "ArsyaTorodoki",
-        "src": "discovery-new",
-        "status": "done"
-      },
-      {
-        "name": "Cubemind",
-        "src": "discovery-new",
-        "status": "done"
-      },
-      {
-        "name": "[CTIA] WarLordSkeletor",
-        "src": "discovery-new",
-        "status": "done"
-      },
-      {
-        "name": "[RMBJ] zekalc",
-        "src": "discovery-new",
-        "status": "done"
-      },
-      {
-        "name": "05073922893928789243836433652",
-        "src": "discovery-new",
+        "name": "psnso",
+        "src": "retry",
         "status": "failed",
-        "reason": "Census is busy or down (SERVER_ERROR)"
+        "reason": "Census: 26/199 opponent stats missing; keeping old data"
       },
       {
-        "name": "MAPKYTAH",
-        "src": "discovery-new",
+        "name": "psonline",
+        "src": "retry",
+        "status": "failed",
+        "reason": "Census: 34/199 opponent stats missing; keeping old data"
+      },
+      {
+        "name": "etmars",
+        "src": "retry",
+        "status": "failed",
+        "reason": "Census: 23/199 opponent stats missing; keeping old data"
+      },
+      {
+        "name": "0Lucker0",
+        "src": "retry",
         "status": "done"
       },
       {
-        "name": "TvoiO",
-        "src": "discovery-new",
-        "status": "done"
-      },
-      {
-        "name": "[xyst] LounidasMaximilIion",
+        "name": "[GDEX] DELIKONC",
         "src": "discovery",
         "status": "done"
       },
       {
-        "name": "CliqueAquiNc",
+        "name": "[LHEU] HHCN033",
         "src": "discovery",
         "status": "done"
       },
       {
-        "name": "[RWCN] RWsiqianyiCN",
+        "name": "[ISV] mssd",
         "src": "discovery",
         "status": "done"
       },
       {
-        "name": "[M2F] IamNotGoodAtGames",
+        "name": "[YEEB] GeneralScrag",
         "src": "discovery",
         "status": "done"
       },
       {
-        "name": "4Redacted",
+        "name": "[CTIA] HTTDC",
         "src": "discovery",
         "status": "done"
       },
       {
-        "name": "[CTIA] McEspresso",
+        "name": "[1COG] GoergeTheBlobfish",
         "src": "discovery",
         "status": "done"
       },
       {
-        "name": "[CBMC] Saiga0",
+        "name": "KudeliaaNS",
         "src": "discovery",
         "status": "done"
       },
       {
-        "name": "[CTIA] ScratchyNS0",
+        "name": "AliceWang2009",
         "src": "discovery",
         "status": "done"
       },
       {
-        "name": "[8RIG] DoYouGottaSpareCiggy",
+        "name": "shadowsmile7",
         "src": "discovery",
         "status": "done"
       },
       {
-        "name": "SorrySnack",
+        "name": "[SlCt] xXColdblueXx",
         "src": "discovery",
         "status": "done"
       },
       {
-        "name": "TopKiler",
+        "name": "[RWCN] w1233111",
         "src": "discovery",
         "status": "done"
       },
       {
-        "name": "QZDNM",
+        "name": "[B1ck] kIrmIzItaraflI",
+        "src": "discovery",
+        "status": "done"
+      },
+      {
+        "name": "[YEEB] SengertEmployeee",
+        "src": "discovery",
+        "status": "done"
+      },
+      {
+        "name": "LotusDragon",
+        "src": "discovery",
+        "status": "done"
+      },
+      {
+        "name": "CalhounNC",
+        "src": "discovery",
+        "status": "done"
+      },
+      {
+        "name": "[NoTa] 0Fuchs",
+        "src": "discovery",
+        "status": "done"
+      },
+      {
+        "name": "BLUEeeeeee",
+        "src": "discovery",
+        "status": "done"
+      },
+      {
+        "name": "[0FR] boyan85",
+        "src": "discovery",
+        "status": "done"
+      },
+      {
+        "name": "[ISV] BigFeesh",
+        "src": "discovery",
+        "status": "done"
+      },
+      {
+        "name": "[DPS0] DanGlycerin",
+        "src": "discovery",
+        "status": "done"
+      },
+      {
+        "name": "MsOpafama",
+        "src": "discovery",
+        "status": "done"
+      },
+      {
+        "name": "[GOTR] dimetime70c",
+        "src": "discovery",
+        "status": "done"
+      },
+      {
+        "name": "[CTIA] SirNomNomTheSecond",
+        "src": "discovery",
+        "status": "done"
+      },
+      {
+        "name": "[CNZY] HHBBBB",
+        "src": "discovery",
+        "status": "done"
+      },
+      {
+        "name": "Theman2022",
+        "src": "discovery",
+        "status": "done"
+      },
+      {
+        "name": "[FR0S] comeshootme",
+        "src": "discovery",
+        "status": "done"
+      },
+      {
+        "name": "imsupercool",
+        "src": "discovery",
+        "status": "done"
+      },
+      {
+        "name": "TREllipsis",
         "src": "discovery",
         "status": "done"
       }
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-14T00:42:22.626Z",
+    "checkedAt": "2026-10-14T00:51:10.009Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
-    "unexplained": 21,
+    "unexplained": 22,
     "explained": 7,
     "items": [
       {
@@ -167,8 +249,8 @@
         "name": "[FKNC] RenamedSoldier12345",
         "id": "pvs",
         "value": 263.979,
-        "bound": 35.066,
-        "z": 324.835,
+        "bound": 34.952,
+        "z": 324.871,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -179,8 +261,8 @@
         "name": "Anniversay",
         "id": "kd",
         "value": 247,
-        "bound": 20.011,
-        "z": 295.299,
+        "bound": 20.013,
+        "z": 295.518,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -191,8 +273,8 @@
         "name": "Anniversay",
         "id": "s_kd",
         "value": 100,
-        "bound": 79.714,
-        "z": 82.625,
+        "bound": 79.333,
+        "z": 82.879,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -203,8 +285,8 @@
         "name": "[FKNC] RenamedSoldier12345",
         "id": "rkd",
         "value": 26.32,
-        "bound": 13.076,
-        "z": 55.572,
+        "bound": 12.954,
+        "z": 55.602,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -215,8 +297,8 @@
         "name": "[N00O] Fretec",
         "id": "pvs",
         "value": 45.763,
-        "bound": 35.066,
-        "z": 55.542,
+        "bound": 34.952,
+        "z": 55.548,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -239,8 +321,8 @@
         "name": "[FKNC] RenamedSoldier12345",
         "id": "kd",
         "value": 32.978,
-        "bound": 20.011,
-        "z": 38.211,
+        "bound": 20.013,
+        "z": 38.24,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -251,20 +333,8 @@
         "name": "[FKNC] RenamedSoldier12345",
         "id": "slope",
         "value": 5.773,
-        "bound": 0.632,
-        "z": 37.447,
-        "side": "high",
-        "explained": false,
-        "reason": "",
-        "red": []
-      },
-      {
-        "slug": "renamedsoldier12345",
-        "name": "[FKNC] RenamedSoldier12345",
-        "id": "coi",
-        "value": 25.256,
-        "bound": 15.452,
-        "z": 34.057,
+        "bound": 0.629,
+        "z": 37.498,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -275,8 +345,20 @@
         "name": "[FKNC] RenamedSoldier12345",
         "id": "rf",
         "value": 15.153,
-        "bound": 9.271,
-        "z": 34.056,
+        "bound": 9.201,
+        "z": 34.058,
+        "side": "high",
+        "explained": false,
+        "reason": "",
+        "red": []
+      },
+      {
+        "slug": "renamedsoldier12345",
+        "name": "[FKNC] RenamedSoldier12345",
+        "id": "coi",
+        "value": 25.256,
+        "bound": 15.334,
+        "z": 34.057,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -287,8 +369,20 @@
         "name": "[CYA6] KurtChew",
         "id": "kd",
         "value": 28.524,
-        "bound": 20.011,
-        "z": 32.86,
+        "bound": 20.013,
+        "z": 32.885,
+        "side": "high",
+        "explained": false,
+        "reason": "",
+        "red": []
+      },
+      {
+        "slug": "fretec",
+        "name": "[N00O] Fretec",
+        "id": "rkd",
+        "value": 12.995,
+        "bound": 12.954,
+        "z": 26.724,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -299,8 +393,8 @@
         "name": "[N00O] Fretec",
         "id": "slope",
         "value": 2.155,
-        "bound": 0.632,
-        "z": 14.846,
+        "bound": 0.629,
+        "z": 14.866,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -311,8 +405,8 @@
         "name": "[vaIk] MyPilotIsCompletelyCrazyHelpMe",
         "id": "slope",
         "value": 1.217,
-        "bound": 0.632,
-        "z": 8.983,
+        "bound": 0.629,
+        "z": 8.995,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -323,8 +417,8 @@
         "name": "[B54A] geiloVS",
         "id": "kd",
         "value": 150,
-        "bound": 20.011,
-        "z": 178.78,
+        "bound": 20.013,
+        "z": 178.913,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (aim), listed there",
@@ -337,8 +431,8 @@
         "name": "[B54A] geiloVS",
         "id": "s_kd",
         "value": 113,
-        "bound": 79.714,
-        "z": 93.586,
+        "bound": 79.333,
+        "z": 93.874,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (aim), listed there",
@@ -351,8 +445,8 @@
         "name": "HackerDetector",
         "id": "pvs",
         "value": 62.198,
-        "bound": 35.066,
-        "z": 75.824,
+        "bound": 34.952,
+        "z": 75.832,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (session, session-forensics), listed there",
@@ -366,24 +460,8 @@
         "name": "[MBBT] igOrRrRrR",
         "id": "rkd",
         "value": 21.687,
-        "bound": 13.076,
-        "z": 45.536,
-        "side": "high",
-        "explained": true,
-        "reason": "Also in 🚩 red flags (aim, vehicle, session-forensics), listed there",
-        "red": [
-          "aim",
-          "vehicle",
-          "session-forensics"
-        ]
-      },
-      {
-        "slug": "igorrrrrr",
-        "name": "[MBBT] igOrRrRrR",
-        "id": "coi",
-        "value": 20.895,
-        "bound": 15.452,
-        "z": 27.941,
+        "bound": 12.954,
+        "z": 45.561,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (aim, vehicle, session-forensics), listed there",
@@ -398,7 +476,23 @@
         "name": "[MBBT] igOrRrRrR",
         "id": "rf",
         "value": 12.537,
-        "bound": 9.271,
+        "bound": 9.201,
+        "z": 27.941,
+        "side": "high",
+        "explained": true,
+        "reason": "Also in 🚩 red flags (aim, vehicle, session-forensics), listed there",
+        "red": [
+          "aim",
+          "vehicle",
+          "session-forensics"
+        ]
+      },
+      {
+        "slug": "igorrrrrr",
+        "name": "[MBBT] igOrRrRrR",
+        "id": "coi",
+        "value": 20.895,
+        "bound": 15.334,
         "z": 27.941,
         "side": "high",
         "explained": true,
@@ -414,8 +508,8 @@
         "name": "HackerDetector",
         "id": "slope",
         "value": 1.613,
-        "bound": 0.632,
-        "z": 11.459,
+        "bound": 0.629,
+        "z": 11.475,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (session, session-forensics), listed there",
@@ -536,80 +630,54 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 324.835,
+        "maxZ": 324.871,
         "metrics": [
           {
             "id": "pvs",
             "label": "🦁 Brave",
             "value": 263.979,
-            "bound": 35.066,
-            "z": 324.835,
+            "bound": 34.952,
+            "z": 324.871,
             "side": "high"
           },
           {
             "id": "rkd",
             "label": "☠️ K/D",
             "value": 26.32,
-            "bound": 13.076,
-            "z": 55.572,
+            "bound": 12.954,
+            "z": 55.602,
             "side": "high"
           },
           {
             "id": "kd",
             "label": "KD",
             "value": 32.978,
-            "bound": 20.011,
-            "z": 38.211,
+            "bound": 20.013,
+            "z": 38.24,
             "side": "high"
           },
           {
             "id": "slope",
             "label": "📉 Slope",
             "value": 5.773,
-            "bound": 0.632,
-            "z": 37.447,
-            "side": "high"
-          },
-          {
-            "id": "coi",
-            "label": "📊 COI",
-            "value": 25.256,
-            "bound": 15.452,
-            "z": 34.057,
+            "bound": 0.629,
+            "z": 37.498,
             "side": "high"
           },
           {
             "id": "rf",
             "label": "🛡️ Resist",
             "value": 15.153,
-            "bound": 9.271,
-            "z": 34.056,
-            "side": "high"
-          }
-        ]
-      },
-      {
-        "slug": "anniversay",
-        "name": "Anniversay",
-        "explained": false,
-        "reason": "",
-        "red": [],
-        "maxZ": 295.299,
-        "metrics": [
-          {
-            "id": "kd",
-            "label": "KD",
-            "value": 247,
-            "bound": 20.011,
-            "z": 295.299,
+            "bound": 9.201,
+            "z": 34.058,
             "side": "high"
           },
           {
-            "id": "s_kd",
-            "label": "🧪 Session K/D",
-            "value": 100,
-            "bound": 79.714,
-            "z": 82.625,
+            "id": "coi",
+            "label": "📊 COI",
+            "value": 25.256,
+            "bound": 15.334,
+            "z": 34.057,
             "side": "high"
           }
         ]
@@ -620,22 +688,56 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 55.542,
+        "maxZ": 55.548,
         "metrics": [
           {
             "id": "pvs",
             "label": "🦁 Brave",
             "value": 45.763,
-            "bound": 35.066,
-            "z": 55.542,
+            "bound": 34.952,
+            "z": 55.548,
+            "side": "high"
+          },
+          {
+            "id": "rkd",
+            "label": "☠️ K/D",
+            "value": 12.995,
+            "bound": 12.954,
+            "z": 26.724,
             "side": "high"
           },
           {
             "id": "slope",
             "label": "📉 Slope",
             "value": 2.155,
-            "bound": 0.632,
-            "z": 14.846,
+            "bound": 0.629,
+            "z": 14.866,
+            "side": "high"
+          }
+        ]
+      },
+      {
+        "slug": "anniversay",
+        "name": "Anniversay",
+        "explained": false,
+        "reason": "",
+        "red": [],
+        "maxZ": 295.518,
+        "metrics": [
+          {
+            "id": "kd",
+            "label": "KD",
+            "value": 247,
+            "bound": 20.013,
+            "z": 295.518,
+            "side": "high"
+          },
+          {
+            "id": "s_kd",
+            "label": "🧪 Session K/D",
+            "value": 100,
+            "bound": 79.333,
+            "z": 82.879,
             "side": "high"
           }
         ]
@@ -664,14 +766,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 32.86,
+        "maxZ": 32.885,
         "metrics": [
           {
             "id": "kd",
             "label": "KD",
             "value": 28.524,
-            "bound": 20.011,
-            "z": 32.86,
+            "bound": 20.013,
+            "z": 32.885,
             "side": "high"
           }
         ]
@@ -682,14 +784,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 8.983,
+        "maxZ": 8.995,
         "metrics": [
           {
             "id": "slope",
             "label": "📉 Slope",
             "value": 1.217,
-            "bound": 0.632,
-            "z": 8.983,
+            "bound": 0.629,
+            "z": 8.995,
             "side": "high"
           }
         ]
@@ -856,29 +958,29 @@
           "vehicle",
           "session-forensics"
         ],
-        "maxZ": 45.536,
+        "maxZ": 45.561,
         "metrics": [
           {
             "id": "rkd",
             "label": "☠️ K/D",
             "value": 21.687,
-            "bound": 13.076,
-            "z": 45.536,
-            "side": "high"
-          },
-          {
-            "id": "coi",
-            "label": "📊 COI",
-            "value": 20.895,
-            "bound": 15.452,
-            "z": 27.941,
+            "bound": 12.954,
+            "z": 45.561,
             "side": "high"
           },
           {
             "id": "rf",
             "label": "🛡️ Resist",
             "value": 12.537,
-            "bound": 9.271,
+            "bound": 9.201,
+            "z": 27.941,
+            "side": "high"
+          },
+          {
+            "id": "coi",
+            "label": "📊 COI",
+            "value": 20.895,
+            "bound": 15.334,
             "z": 27.941,
             "side": "high"
           }
@@ -892,22 +994,22 @@
         "red": [
           "aim"
         ],
-        "maxZ": 178.78,
+        "maxZ": 178.913,
         "metrics": [
           {
             "id": "kd",
             "label": "KD",
             "value": 150,
-            "bound": 20.011,
-            "z": 178.78,
+            "bound": 20.013,
+            "z": 178.913,
             "side": "high"
           },
           {
             "id": "s_kd",
             "label": "🧪 Session K/D",
             "value": 113,
-            "bound": 79.714,
-            "z": 93.586,
+            "bound": 79.333,
+            "z": 93.874,
             "side": "high"
           }
         ]
@@ -921,22 +1023,22 @@
           "session",
           "session-forensics"
         ],
-        "maxZ": 75.824,
+        "maxZ": 75.832,
         "metrics": [
           {
             "id": "pvs",
             "label": "🦁 Brave",
             "value": 62.198,
-            "bound": 35.066,
-            "z": 75.824,
+            "bound": 34.952,
+            "z": 75.832,
             "side": "high"
           },
           {
             "id": "slope",
             "label": "📉 Slope",
             "value": 1.613,
-            "bound": 0.632,
-            "z": 11.459,
+            "bound": 0.629,
+            "z": 11.475,
             "side": "high"
           }
         ]
@@ -1041,7 +1143,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-14T00:42:22.695Z",
+    "checkedAt": "2026-10-14T00:51:10.083Z",
     "red": 32,
     "padding": 33,
     "adjusted": 13,
@@ -1052,7 +1154,7 @@
     "forensics": 18
   },
   "sessionStats": {
-    "checkedAt": "2026-10-14T00:42:22.639Z",
+    "checkedAt": "2026-10-14T00:51:10.026Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -1065,14 +1167,14 @@
     },
     "ruleText": "[session pattern] in recent Honu sessions (≥ 100 kills counted): assists per kill ≤ 0.1, headshot share ≥ 50% (headshot XP per kill; Census lifetime HSR when no XP detail) and K/D ≥ 7 (session deaths; Census lifetime KD when none). A very one-sided record; a lead for manual review, not proof.",
     "coverage": {
-      "players": 8203,
-      "withSessions": 2525,
-      "measured": 1332,
-      "sessions": 8042,
-      "kills": 459975,
-      "xpPlayers": 304,
-      "xpMeasured": 226,
-      "xpSessions": 1469
+      "players": 8232,
+      "withSessions": 2558,
+      "measured": 1354,
+      "sessions": 8139,
+      "kills": 465838,
+      "xpPlayers": 308,
+      "xpMeasured": 228,
+      "xpSessions": 1481
     },
     "metrics": [
       {
@@ -1174,17 +1276,17 @@
     ],
     "distributions": {
       "s_apk": {
-        "n": 1332,
+        "n": 1354,
         "min": 0,
         "p01": 0.062,
         "p05": 0.162,
-        "median": 0.37,
-        "p95": 0.706,
-        "p99": 0.909,
+        "median": 0.371,
+        "p95": 0.71,
+        "p99": 0.914,
         "max": 1.467
       },
       "s_share": {
-        "n": 1148,
+        "n": 1168,
         "min": 0.424,
         "p01": 0.465,
         "p05": 0.496,
@@ -1194,57 +1296,57 @@
         "max": 0.803
       },
       "s_kpm": {
-        "n": 1332,
+        "n": 1354,
         "min": 0.08,
         "p01": 0.157,
-        "p05": 0.239,
+        "p05": 0.238,
         "median": 0.705,
         "p95": 2.308,
         "p99": 3.025,
         "max": 16.526
       },
       "s_maxKpm": {
-        "n": 1332,
+        "n": 1354,
         "min": 0.137,
         "p01": 0.199,
-        "p05": 0.307,
+        "p05": 0.306,
         "median": 0.896,
         "p95": 2.738,
         "p99": 3.507,
         "max": 16.526
       },
       "s_kpmCv": {
-        "n": 1259,
+        "n": 1280,
         "min": 0,
-        "p01": 0.01,
-        "p05": 0.043,
+        "p01": 0.008,
+        "p05": 0.042,
         "median": 0.225,
         "p95": 0.555,
         "p99": 0.726,
         "max": 0.985
       },
       "s_kd": {
-        "n": 1197,
+        "n": 1219,
         "min": 0.298,
         "p01": 0.483,
         "p05": 0.727,
         "median": 2,
-        "p95": 5.393,
-        "p99": 21.429,
+        "p95": 5.342,
+        "p99": 21.333,
         "max": 113
       },
       "s_maxKd": {
-        "n": 1197,
+        "n": 1219,
         "min": 0.392,
-        "p01": 0.552,
+        "p01": 0.569,
         "p05": 0.903,
-        "median": 2.55,
-        "p95": 10.167,
-        "p99": 57,
+        "median": 2.545,
+        "p95": 10,
+        "p99": 50.143,
         "max": 355
       },
       "s_hsk": {
-        "n": 230,
+        "n": 232,
         "min": 0,
         "p01": 0.008,
         "p05": 0.041,
@@ -1254,7 +1356,7 @@
         "max": 0.972
       },
       "s_ksk": {
-        "n": 230,
+        "n": 232,
         "min": 0,
         "p01": 0.042,
         "p05": 0.127,
@@ -1264,7 +1366,7 @@
         "max": 0.983
       },
       "s_domk": {
-        "n": 230,
+        "n": 232,
         "min": 0,
         "p01": 0.007,
         "p05": 0.022,
@@ -1274,7 +1376,7 @@
         "max": 0.239
       },
       "s_revk": {
-        "n": 230,
+        "n": 232,
         "min": 0,
         "p01": 0,
         "p05": 0.007,
@@ -1284,7 +1386,7 @@
         "max": 0.257
       },
       "s_revDom": {
-        "n": 229,
+        "n": 231,
         "min": 0,
         "p01": 0,
         "p05": 0.086,
@@ -1294,27 +1396,27 @@
         "max": 10
       },
       "s_savk": {
-        "n": 230,
+        "n": 232,
         "min": 0,
         "p01": 0.005,
         "p05": 0.017,
-        "median": 0.056,
+        "median": 0.057,
         "p95": 0.109,
         "p99": 0.124,
         "max": 0.153
       },
       "s_spotk": {
-        "n": 230,
+        "n": 232,
         "min": 0,
         "p01": 0,
         "p05": 0,
-        "median": 0.022,
+        "median": 0.021,
         "p95": 0.163,
         "p99": 0.202,
         "max": 0.26
       },
       "s_prik": {
-        "n": 230,
+        "n": 232,
         "min": 0,
         "p01": 0.034,
         "p05": 0.089,
@@ -1324,7 +1426,7 @@
         "max": 0.328
       },
       "s_stopk": {
-        "n": 230,
+        "n": 232,
         "min": 0,
         "p01": 0.004,
         "p05": 0.031,
@@ -2177,14 +2279,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 295.299,
+        "maxZ": 295.518,
         "metrics": [
           {
             "id": "s_kd",
             "label": "🧪 Session K/D",
             "value": 100,
-            "bound": 79.714,
-            "z": 82.625,
+            "bound": 79.333,
+            "z": 82.879,
             "side": "high"
           }
         ]
@@ -2197,14 +2299,14 @@
         "red": [
           "aim"
         ],
-        "maxZ": 178.78,
+        "maxZ": 178.913,
         "metrics": [
           {
             "id": "s_kd",
             "label": "🧪 Session K/D",
             "value": 113,
-            "bound": 79.714,
-            "z": 93.586,
+            "bound": 79.333,
+            "z": 93.874,
             "side": "high"
           }
         ]
@@ -2213,17 +2315,17 @@
     "outliersUnexplained": 1
   },
   "size": {
-    "at": "2026-10-14T00:42:18.879Z",
+    "at": "2026-10-14T00:51:05.045Z",
     "repoBytes": 67647488,
-    "dataBytes": 156974584,
-    "playersBytes": 148724891,
-    "playerFiles": 8204,
+    "dataBytes": 157559961,
+    "playersBytes": 149269918,
+    "playerFiles": 8233,
     "warnAtBytes": 734003200,
     "warning": false
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-14T00:42:22.655Z",
+    "checkedAt": "2026-10-14T00:51:10.045Z",
     "candidates": [
       "nebelhexe",
       "pressutoredeploy",
@@ -2799,8 +2901,8 @@
         "confirmedCheater": false,
         "flagged": true,
         "odd": false,
-        "analyzed": 2,
-        "checkedAt": "2026-10-11T00:36:01.674Z",
+        "analyzed": 4,
+        "checkedAt": "2026-10-14T00:44:20.532Z",
         "worst": {
           "sessionId": "60445963",
           "url": "https://wt.honu.pw/s/60445963",
@@ -12996,8 +13098,8 @@
         "confirmedCheater": false,
         "flagged": false,
         "odd": false,
-        "analyzed": 2,
-        "checkedAt": "2026-10-11T00:36:16.487Z",
+        "analyzed": 4,
+        "checkedAt": "2026-10-14T00:44:29.851Z",
         "worst": {
           "sessionId": "77514968",
           "url": "https://wt.honu.pw/s/77514968",
@@ -17062,7 +17164,7 @@
         "flagged": false,
         "odd": false,
         "analyzed": 1,
-        "checkedAt": "2026-10-11T00:36:07.808Z",
+        "checkedAt": "2026-10-14T00:44:23.281Z",
         "worst": {
           "sessionId": "14730191",
           "url": "https://wt.honu.pw/s/14730191",
@@ -17192,7 +17294,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-14T00:42:22.659Z",
+    "checkedAt": "2026-10-14T00:51:10.052Z",
     "count": 211,
     "players": [
       {
