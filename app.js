@@ -4213,8 +4213,11 @@ import {
   function waveTick() {
     if (!waveOn) return;
     waveFrame++;
-    if (waveFrame % 2 === 0) { waveRaf = requestAnimationFrame(waveTick); return; } // 30fps
-    waveT += 0.042 * waveSpeed; // 2x step to keep ~5s cycle at 30fps
+    // Adaptive fps: 60fps when All-players table closed, 30fps when open (huge table reflows)
+    const tableOpen = (() => { const d = document.getElementById("ranksTableSection"); return d && d.open; })();
+    const skip = tableOpen ? 2 : 1;
+    if (waveFrame % skip !== 0) { waveRaf = requestAnimationFrame(waveTick); return; }
+    waveT += (tableOpen ? 0.042 : 0.021) * waveSpeed;
     let w = waveShape === "smooth" ? waveFormSmooth(waveT) : waveForm(waveT);
     // Snappier reversals: sharpen peaks so less time lingers at 0%/100%
     w = Math.sign(w) * Math.pow(Math.abs(w), 0.2); // Dayset: aggressive snap
