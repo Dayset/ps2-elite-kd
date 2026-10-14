@@ -2092,8 +2092,13 @@ import {
     }
   }
 
+  function syncSmoothBtn() {
+    const b = document.querySelector('[data-mode="banded"]');
+    if (b) b.hidden = !showDebugCols;
+  }
   function syncChartModeUi() {
     if (!els.chartModeBar) return;
+    syncSmoothBtn();
     for (const b of els.chartModeBar.querySelectorAll("[data-mode]")) {
       const on = b.dataset.mode === chartMode;
       b.classList.toggle("active", on);
@@ -2114,6 +2119,7 @@ import {
       /* private mode: session-only */
     }
     syncChartModeUi();
+  syncSmoothBtn();
     if (redraw && players.length) drawChart(players);
   }
 
@@ -2813,6 +2819,7 @@ import {
       }
       if (lastStatsList) renderStatsTable(lastStatsList);
       if (lastLegendList) renderLegend(lastLegendList);
+      syncSmoothBtn();
     });
   }
 
