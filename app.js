@@ -4104,16 +4104,44 @@ import {
   const WAVE_MID = (WAVE_MIN + WAVE_MAX) / 2; // 50.05
   const WAVE_AMP = (WAVE_MAX - WAVE_MIN) / 2; // 49.95
   let waveLastDrawn = -1;
+  let waveShape = "sine"; // sine | linear | smooth
+  let waveSpeed = 1; // 0.25x - 3x multiplier
+  // Waveform: phase 0..2π -> -1..1 with selected easing
+  function waveForm(phase) {
+    const cyc = ((phase % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2) / (Math.PI * 2); // 0..1
+    if (waveShape === "linear") {
+      // Triangle: constant speed, sharp turns
+      return cyc < 0.5 ? (cyc * 4 - 1) : (3 - cyc * 4);
+    }
+    if (waveShape === "smooth") {
+      // Smootherstep on triangle: longer dwells at ends, snappier middle
+      const tri = cyc < 0.5 ? cyc * 2 : (1 - cyc) * 2; // 0..1..0
+      const s = tri * tri * tri * (tri * (tri * 6 - 15) + 10); // smootherstep
+      const sign = cyc < 0.5 ? 1 : -1;
+      // map 0..1 to -1..1 with sign for direction
+      return sign * (s * 2 - 1) * (cyc < 0.25 || cyc >= 0.75 ? 1 : 1);
+    }
+    return Math.sin(phase); // sine: natural ease-in-out
+  }
+  // Smooth variant: use sine of eased phase for extra dwell
+  function waveFormSmooth(phase) {
+    const cyc = ((phase % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2) / (Math.PI * 2);
+    // ease the phase itself with smootherstep on each half
+    const half = cyc < 0.5 ? cyc * 2 : (cyc - 0.5) * 2; // 0..1 per half
+    const e = half * half * half * (half * (half * 6 - 15) + 10);
+    const ePhase = (cyc < 0.5 ? e * 0.5 : 0.5 + e * 0.5) * Math.PI * 2;
+    return Math.sin(ePhase);
+  }
   function waveTick() {
     if (!waveOn) return;
-    waveT += 0.021; // ~5s full cycle
-    const pct = WAVE_MID + WAVE_AMP * Math.sin(waveT);
-    yScalePct = pct;
-    if (ySlider) ySlider.value = pct;
-    // Only redraw when pct moved >= 0.01 (5.55% -> 5.56% steps), avoids jank
-    if (Math.abs(pct - waveLastDrawn) >= 0.01) {
-      waveLastDrawn = pct;
-      if (ySliderVal) ySliderVal.textContent = pct >= 10 ? pct.toFixed(0) + "%" : pct.toFixed(1) + "%";
+    waveT += 0.021 * waveSpeed;
+    const w = waveShape === "smooth" ? waveFormSmooth(waveT) : waveForm(waveT);
+    const pct = WAVE_MID + WAVE_AMP * w;
+    yScalePct = Math.max(WAVE_MIN, Math.min(WAVE_MAX, pct));
+    if (ySlider) ySlider.value = yScalePct;
+    if (Math.abs(yScalePct - waveLastDrawn) >= 0.01) {
+      waveLastDrawn = yScalePct;
+      if (ySliderVal) ySliderVal.textContent = yScalePct >= 10 ? yScalePct.toFixed(0) + "%" : yScalePct.toFixed(1) + "%";
       yScaleMode = "ivi";
       syncYScaleUi();
       if (players.length) drawChart(players);
@@ -4147,6 +4175,18 @@ import {
   const waveBtn = document.getElementById("yWaveBtn");
   if (waveBtn) {
     waveBtn.addEventListener("click", () => (waveOn ? stopWave() : startWave()));
+  }
+  const waveShapeSel = document.getElementById("waveShape");
+  if (waveShapeSel) {
+    waveShapeSel.addEventListener("change", () => { waveShape = waveShapeSel.value; });
+  }
+  const waveSpeedSlider = document.getElementById("waveSpeed");
+  const waveSpeedVal = document.getElementById("waveSpeedVal");
+  if (waveSpeedSlider) {
+    waveSpeedSlider.addEventListener("input", () => {
+      waveSpeed = parseFloat(waveSpeedSlider.value);
+      if (waveSpeedVal) waveSpeedVal.textContent = waveSpeed.toFixed(2).replace(/\.00$/, "") + "x";
+    });
   }
   syncYScaleUi();
 
