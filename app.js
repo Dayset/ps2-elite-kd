@@ -2230,8 +2230,12 @@ import {
         if (validKds.length > 0) {
           const sorted = [...validKds].sort((a, b) => a - b);
           const frac = Math.max(0.001, Math.min(1, yScalePct / 100));
-          const idx = Math.min(sorted.length - 1, Math.floor(sorted.length * frac));
-          const anchor = sorted[idx];
+          // Smooth interpolation: continuous anchor, no discrete jumps
+          const pos = frac * (sorted.length - 1);
+          const i0 = Math.floor(pos);
+          const i1 = Math.min(sorted.length - 1, i0 + 1);
+          const t = pos - i0;
+          const anchor = sorted[i0] * (1 - t) + sorted[i1] * t;
           if (anchor > 0) {
             const scale = ivi / anchor;
             pts = pts.map((pt) => ({ ...pt, kd: isFiniteNum(pt.kd) ? pt.kd * scale : pt.kd }));
