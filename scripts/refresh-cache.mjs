@@ -1219,15 +1219,21 @@ async function main() {
         console.warn(`  SKIP (paced) ${name}: ${msg}`);
         return display;
       }
+      // Census answered but some opponent stats were missing: a data problem for
+      // this player, not an outage. Keep the old file and try again on its tier.
+      const partial = /opponent stats missing/i.test(msg);
       state.players[slug] = {
         lastAttemptAt: now,
         lastOkAt: prev.lastOkAt || null,
         fails: (prev.fails || 0) + 1,
-        kind: isOutageError(e) ? "transient" : "notfound",
+        kind: partial ? "partial" : isOutageError(e) ? "transient" : "notfound",
         lastError: msg.slice(0, 200),
       };
-      failed.push({ name, reason: msg.slice(0, 120), outage: isOutageError(e) });
-      if (isOutageError(e)) {
+      failed.push({ name, reason: msg.slice(0, 120), outage: isOutageError(e) && !partial });
+      if (partial) {
+        c.partial = (c.partial || 0) + 1;
+        console.warn(`  PARTIAL (kept old data) ${name}: ${msg}`);
+      } else if (isOutageError(e)) {
         c.outage++;
         c.consecutiveOutage++;
         console.error(`  FAIL (outage?) ${name}: ${msg}`);
