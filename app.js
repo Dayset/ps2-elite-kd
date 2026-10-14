@@ -4106,7 +4106,7 @@ import {
   let waveLastDrawn = -1;
   function waveTick() {
     if (!waveOn) return;
-    waveT += 0.016; // 2x faster in the middle
+    waveT += 0.021; // ~5s full cycle
     const pct = WAVE_MID + WAVE_AMP * Math.sin(waveT);
     yScalePct = pct;
     if (ySlider) ySlider.value = pct;
