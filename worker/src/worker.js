@@ -206,11 +206,37 @@ function ghHeaders(env) {
   };
 }
 
-async function dueWork(env, c, now = Date.now()) {
+// KV budget (free plan: 1,000 writes and 1,000 lists a day). The cron runs 288
+// times a day, so it must not list or write on every tick:
+//  - the stuck-pending scan (one KV list + the index download) runs at most
+//    once per REPENDING_GAP_MINUTES; its time is kept in backup:last;
+//  - backup:last is rewritten only when the outcome changes, after a pending
+//    scan, or once BACKUP_WRITE_MAX_GAP_MS has passed.
+const BACKUP_WRITE_MAX_GAP_MS = 60 * 60 * 1e3;
+// Visitor fallback only kicks in when the log is older than this (cron dead).
+const VISITOR_TICK_STALE_MS = BACKUP_WRITE_MAX_GAP_MS + 10 * 60 * 1e3;
+
+/** Same outcome as the previous log entry (nothing new worth a KV write)? */
+function sameOutcome(prev, result) {
+  if (!prev) return false;
+  return prev.decision === result.decision && (prev.reason || "") === (result.reason || "") && (prev.runId || null) === (result.runId || null);
+}
+
+/** Write backup:last this tick? */
+function shouldWriteBackup(prev, result, now) {
+  if (!prev || result.decision === "dispatched" || !sameOutcome(prev, result)) return true;
+  if ((result.pendingCheckAt || 0) !== (prev.pendingCheckAt || 0)) return true;
+  const at = Date.parse(prev.at);
+  return !Number.isFinite(at) || now - at >= BACKUP_WRITE_MAX_GAP_MS;
+}
+
+async function dueWork(env, c, now = Date.now(), prev = null, mark = {}) {
   try {
     if (env.QUEUE) {
-      const last = Number(await env.QUEUE.get(REPENDING_KEY)) || 0;
-      if (now - last >= c.rependingGapMs) {
+      const lastDispatch = Number(await env.QUEUE.get(REPENDING_KEY)) || 0;
+      const lastScan = (prev && Number(prev.pendingCheckAt)) || 0;
+      if (now - Math.max(lastDispatch, lastScan) >= c.rependingGapMs) {
+        mark.pendingCheckAt = now;
         const stuck = (await listPending(env, c, now))
           .filter((p) => p.queuedAtMs && now - p.queuedAtMs >= c.stuckPendingMs)
           .map((p) => p.name)
@@ -242,9 +268,11 @@ const REPENDING_KEY = "backup:repending";
 
 async function backupCheck(env, now = Date.now(), via = "cron") {
   const c = cfg(env);
+  const prev = await readBackup(env);
+  const mark = {};
   let result;
   try {
-    const work = env.GH_TOKEN ? await dueWork(env, c, now) : null;
+    const work = env.GH_TOKEN ? await dueWork(env, c, now, prev, mark) : null;
     if (!env.GH_TOKEN) {
       result = { decision: "error", reason: "no_token" };
     } else if (!work.due) {
@@ -281,10 +309,10 @@ async function backupCheck(env, now = Date.now(), via = "cron") {
     console.error("[cache-worker] backup error:", e && e.name);
     result = { decision: "error", reason: "network" };
   }
-  result = { at: new Date(now).toISOString(), via, ...result };
-  if (env.QUEUE) {
+  const pendingCheckAt = mark.pendingCheckAt || (prev && prev.pendingCheckAt) || 0;
+  result = { at: new Date(now).toISOString(), via, ...result, ...(pendingCheckAt ? { pendingCheckAt } : {}) };
+  if (env.QUEUE && shouldWriteBackup(prev, result, now)) {
     try {
-      const prev = await readBackup(env);
       const history = [
         { at: result.at, via, decision: result.decision, ...(result.runId ? { runId: result.runId } : {}), ...(result.reason ? { reason: result.reason } : {}) },
         ...((prev && Array.isArray(prev.history) && prev.history) || []),
@@ -301,7 +329,7 @@ async function maybeVisitorTick(env, now = Date.now()) {
   if (now - lastVisitorTick < 6e4) return null;
   lastVisitorTick = now;
   const prev = await readBackup(env);
-  if (prev && now - Date.parse(prev.at) < 5 * 60 * 1e3) return null;
+  if (prev && now - Date.parse(prev.at) < VISITOR_TICK_STALE_MS) return null;
   const r = await backupCheck(env, now, "visitor");
   return r;
 }
