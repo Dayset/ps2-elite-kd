@@ -60,8 +60,8 @@ describe("fight filter + queue", () => {
 });
 
 describe("cap steps", () => {
-  it("3000 until caught up (index at step, no sync backlog, due fits one run), then next step up to 12000; never above", () => {
-    assert.deepEqual(CAP_STEPS, [3000, 6000, 9000, 12000]);
+  it("3000 until caught up (index at step, no sync backlog, due fits one run), then next step up to 24000; never above", () => {
+    assert.deepEqual(CAP_STEPS, [3000, 6000, 9000, 12000, 15000, 18000, 21000, 24000]);
     assert.equal(nextCap({ cap: 3000, indexSize: 2000 }), 3000);
     assert.equal(nextCap({ cap: 3000, indexSize: 3000, backlogLeft: 5 }), 3000);
     assert.equal(nextCap({ cap: 3000, indexSize: 3000, dueLeft: 200 }), 3000);
@@ -71,7 +71,9 @@ describe("cap steps", () => {
     assert.equal(nextCap({ cap: 6000, indexSize: 6000 }), 9000);
     assert.equal(nextCap({ cap: 9000, indexSize: 9000, dueLeft: 100 }), 9000);
     assert.equal(nextCap({ cap: 9000, indexSize: 9000 }), 12000);
-    assert.equal(nextCap({ cap: 12000, indexSize: 13000 }), 12000);
+    assert.equal(nextCap({ cap: 12000, indexSize: 12000 }), 15000);
+    assert.equal(nextCap({ cap: 21000, indexSize: 21000 }), 24000);
+    assert.equal(nextCap({ cap: 24000, indexSize: 25000 }), 24000);
     assert.equal(nextCap({ cap: 0 }), 3000);
   });
 });

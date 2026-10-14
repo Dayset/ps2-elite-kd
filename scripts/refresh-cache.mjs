@@ -1336,7 +1336,7 @@ async function main() {
     }
     disc.queue = rankQueue(disc.queue.filter((q) => !known.has(String(q.name).toLowerCase()) && !skip(String(q.name).toLowerCase())));
 
-    // 2) Cap step (3000 → 6000 → 9000 → 12000, next step once caught up).
+    // 2) Cap step (3000 → 6000 → … → 24000, next step once caught up).
     const dueNow = staleCandidates(index, state, Date.now());
     disc.cap = nextCap({ cap: disc.cap, indexSize: index.players.length, backlogLeft: backlog0, dueLeft: dueNow.length });
     const cap = disc.cap;
