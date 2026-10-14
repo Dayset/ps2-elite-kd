@@ -2060,12 +2060,10 @@ import {
   /* yScale: imported from ./math.mjs */
 
   function readChartMode() {
-    try {
-      localStorage.removeItem(LS_CHART_MODE_OLD);
-      return localStorage.getItem(LS_CHART_MODE) === "banded" ? "banded" : "cumulative";
-    } catch {
-      return "cumulative";
-    }
+    // Dayset 2026-10-13: always default to Raw, never remember Smooth
+    try { localStorage.removeItem(LS_CHART_MODE); } catch {}
+    try { localStorage.removeItem(LS_CHART_MODE_OLD); } catch {}
+    return "cumulative";
   }
 
   function readGhostsOn() {
