@@ -825,6 +825,9 @@ const oppMemo = new Map();
 
 /** Refuse to save a curve if more than this share of opponent KPM lookups failed. */
 export const MAX_OPP_FAIL_RATIO = 0.1;
+/** After this many partial attempts, ship the data we have if at least half the opponent lookups worked. */
+export const PARTIAL_SHIP_AFTER = 3;
+export const PARTIAL_SHIP_MIN_OK = 0.5;
 
 /**
  * One killboard row. Null-safe: Honu answers 204 / null for some characters
@@ -844,7 +847,7 @@ export function opponentRow(pair, meta, pace) {
   };
 }
 
-async function loadLive(name, { prevAssists = null } = {}) {
+async function loadLive(name, { prevAssists = null, acceptPartial = false } = {}) {
   const c = await resolveCensus(name);
   const cid = c.character_id;
   const outfit = c.outfit || {};
@@ -866,7 +869,9 @@ async function loadLive(name, { prevAssists = null } = {}) {
   const own = r.own || { kpm: 0, acc: 0, hsr: 0, ivi: 0 };
   const rows = r.rows;
   // A curve with many fake 0-KPM opponents is worse than yesterday's data.
-  if (r.lookups && r.paceFails / r.lookups > MAX_OPP_FAIL_RATIO) {
+  const failRatio = r.lookups ? r.paceFails / r.lookups : 0;
+  const shipAnyway = acceptPartial && failRatio <= 1 - PARTIAL_SHIP_MIN_OK;
+  if (!shipAnyway && r.lookups && failRatio > MAX_OPP_FAIL_RATIO) {
     throw new Error(`Census: ${r.paceFails}/${r.lookups} opponent stats missing; keeping old data`);
   }
 
@@ -1200,7 +1205,9 @@ async function main() {
     let display = null;
     try {
       if (!isPlausibleName(name)) throw new NotFoundError(`not a valid character name ${JSON.stringify(name)}`);
-      const payload = await loadLive(name, { prevAssists: readPrevAssists(slug) });
+      // Enough failed tries on partial data: ship what we have instead of retrying forever.
+      const acceptPartial = prev.kind === "partial" && (prev.fails || 0) >= PARTIAL_SHIP_AFTER;
+      const payload = await loadLive(name, { prevAssists: readPrevAssists(slug), acceptPartial });
       const fileRel = `players/${slug}.json`;
       writeFileAtomic(path.join(DATA_DIR, fileRel), JSON.stringify(payload) + "\n");
       upsertIndexEntry(index, { name, display: payload.player.display, slug, file: fileRel, savedAt: payload.savedAt, fmt: CACHE_FORMAT, top: payload.top, last: payload.player.times && payload.player.times.last });
