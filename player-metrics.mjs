@@ -162,6 +162,33 @@ export function rawSampleView(p) {
  * original sample (only differs when farm victims were excluded): the older
  * red-flag rules and 🌱 sprouts read it so their results don't shift.
  */
+/**
+ * 🧱 Consistency: K/D against the hardest third of enemy KPM ÷ K/D against the
+ * easiest third, capped at 1.0. 1.0 = holds up; low = K/D falls as opposition
+ * hardens. Same rule as the ≡ debug badge on the main page.
+ */
+export function consistencyOf(p) {
+  try {
+    const kpm = p.own_kpm || p.global_kpm;
+    const pf = kpm > 0 ? Math.min(1.0, Math.pow(kpm / 2.0, 2)) : 1;
+    const pts = (p.curve || [])
+      .filter((pt) => isFiniteNum(pt.kd) && isFiniteNum(pt.kpm) && pt.deaths > 0)
+      .map((pt) => ({ x: pt.kpm, kd: pt.kd * pf }))
+      .filter((pt) => pt.kd > 0)
+      .sort((a, b) => a.x - b.x);
+    if (pts.length < 6) return NaN;
+    const n = pts.length;
+    const lo = pts.slice(0, Math.floor(n / 3));
+    const hi = pts.slice(Math.ceil((2 * n) / 3));
+    const avg = (arr) => arr.reduce((s, pt) => s + pt.kd, 0) / arr.length;
+    const loAvg = avg(lo), hiAvg = avg(hi);
+    if (!(loAvg > 0)) return NaN;
+    return Math.max(0, Math.min(1, hiAvg / loAvg));
+  } catch {
+    return NaN;
+  }
+}
+
 export function playerMetrics(p) {
   const m = metricsRow(p);
   const rawP = rawSampleView(p);
@@ -201,6 +228,8 @@ function metricsRow(p) {
     act,
     coi: combatOutput(rf),
     mech: projectedMech(rf),
+    // 🧱 Consistency (0–1): holds up vs hard opposition; main page shows its population percentile.
+    cons: consistencyOf(p),
     slope,
     // Unblanked values (build-log shows them; red-flag rules read m.raw).
     pvs,

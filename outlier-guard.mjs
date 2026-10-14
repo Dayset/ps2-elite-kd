@@ -54,7 +54,7 @@ export function metricBounds(values, rule = GUARD_RULE) {
 
 /** Short metric labels (same as ranks.html / app.js) for the grouped build-log rows. */
 export const METRIC_LABELS = Object.freeze({
-  adjs: "⚔️ iVi", rf: "🛡️ Resist", act: "🏃 Activity", pvs: "🦁 Brave", rkd: "☠️ K/D", mech: "⚙️ Mech%",
+  adjs: "⚔️ iVi", rf: "🛡️ Resist", act: "🏃 Activity", pvs: "🦁 Brave", rkd: "☠️ K/D", mech: "⚙️ Mech%", cons: "🧱 Const",
   inflation: "🎈 Inflation", adj: "🎯🎈 ivi", ekpm: "eKPM", own: "own KPM", coi: "📊 COI", slope: "📉 Slope",
   kd: "KD", kpm: "KPM", ownKpm: "own KPM (public)", acc: "Acc %", hsr: "HSR %", ivi: "IvI",
   // 🧪 Honu session metrics (session-stats.mjs; build-log only, never public).

@@ -37,6 +37,7 @@ import {
 import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261010-sav1";
 import GHOST_MODEL from "./data/ghost-model.mjs?v=20261010-sav1";
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-sav1";
+import { percentileOf } from "./dist.mjs?v=20261010-sav1";
 import { entryFetchedAt, pickNewest, writeWithEviction } from "./cache-pick.mjs?v=20261010-sav1";
 import {
   NameLoadError,
@@ -2915,7 +2916,25 @@ import {
   let thinNoteOpen = false;
   /** 📊 Public section open/closed, kept across re-sorts / re-renders (t339u: sorting collapsed it). */
   let publicStatsOpen = false;
+  // 🧱 Const percentile: population pool from the shared ranks.json (one fetch, cached).
+  let consPool = null;
+  let consPoolLoad = null;
+  function loadConsPool() {
+    if (consPoolLoad) return consPoolLoad;
+    consPoolLoad = fetch("data/ranks.json", { cache: "no-cache" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((payload) => {
+        const i = payload && Array.isArray(payload.cols) ? payload.cols.indexOf("cons") : -1;
+        if (i < 0 || !Array.isArray(payload.rows)) return;
+        consPool = payload.rows.map((row) => row[i]).filter(isFiniteNum).sort((a, b) => a - b);
+        if (lastStatsList) renderStatsTable(lastStatsList);
+      })
+      .catch(() => {});
+    return consPoolLoad;
+  }
+
   function renderStatsTable(list) {
+    loadConsPool();
     if (!els.stats) return;
     lastStatsList = list;
     if (!list.length) {
@@ -2943,6 +2962,7 @@ import {
       { id: "pvs", label: "🦁 Brave", hint: `Bravery (formerly LionHeart): 🏃 Activity × pressure slope — sustained elite volume under hard opposition.`, fn: (r) => r.pvs, digits: 2 },
       { id: "rkd", label: "☠️ K/D", hint: "Resistance-weighted K/D against the opposition mix you actually face.", fn: (r) => r.rkd, digits: 3 },
       { id: "mech", label: "⚙️ Mech%", hint: "Projected mechanized / vehicle share implied by 🛡️ Resist.", fn: (r) => r.mech, digits: 1 },
+      { id: "cons", label: "🧱 Const", hint: "Consistency as a population percentile across cached players: higher = holds up better against hard opposition (p90 = better than 90% of players). Compares K/D against hard enemies with K/D against easy ones.", fn: (r) => (consPool ? percentileOf(consPool, r.cons) ?? NaN : NaN), digits: 0, pctileCell: true },
     ];
     // Older debug columns: appended only when "show older debug stats" (footer) is ticked.
     const adjDebugCols = [
@@ -3066,6 +3086,11 @@ import {
               // Opponent-sample metrics below MIN_FIGHTS: "—" with the reason on hover.
               if (c.thinTip && row.thin && !isFiniteNum(v)) {
                 return `<td class="thin-sample" title="${escapeHtml(thinCellTip(row))}">—</td>`;
+              }
+              // 🧱 Const: shown as a population percentile (p88), no gap % against the column.
+              if (c.pctileCell) {
+                if (!isFiniteNum(v)) return `<td>—</td>`;
+                return `<td title="Population percentile: higher than ${v}% of cached players">p${v}</td>`;
               }
               // Small dimmed % = gap to the column reference (none on the reference cell):
               // "−28%" below the highest value, or "+35%" above the lowest for pctDir "low".

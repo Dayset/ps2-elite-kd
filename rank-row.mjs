@@ -10,7 +10,7 @@ import { pickNewest, entryFetchedAt } from "./cache-pick.mjs?v=20261010-sav1";
 /** Metric ids (same ids as the app.js stats columns). */
 export const METRIC_COLS = Object.freeze([
   // ✨ Adjusted (visible by default, main-table order)
-  "adjs", "rf", "act", "pvs", "rkd", "mech", "inflation",
+  "adjs", "rf", "act", "pvs", "rkd", "mech", "cons", "inflation",
   // older debug columns
   "adj", "ekpm", "own", "coi", "slope",
   // 📊 Public
