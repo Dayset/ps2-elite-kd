@@ -2616,7 +2616,6 @@ import {
     // Short axis labels only (no farm % clutter)
     const capY = PLOT.y + PLOT.h + 30 + 10 * chartFs;
     addText(svg, PLOT.x, capY, "🐣 Easy", th.muted, 10, "start");
-    addText(svg, PLOT.x + PLOT.w / 2, capY, "Enemy 💪 KPM", th.muted, 10, "middle");
     if (zoomedLeft) {
       addText(svg, PLOT.x + PLOT.w, capY, `🔍 0–${viewXMax.toFixed(2)}`, th.muted, 10, "end");
     } else {
