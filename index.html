@@ -92,7 +92,7 @@
 
   <div id="statsPanel" class="stats-panel" aria-label="Player stats comparison"></div>
 
-  <div class="chart-wrap empty">
+  <div class="chart-wrap empty" style="contain: layout paint style;">
     <div class="chart-mode-row">
     <div id="ghostCaption" class="ghost-caption" hidden
          title="Dashed lines are a prediction from play style (overall K/D, KPM, accuracy, HSR, RF, slope, 🦁 Brave, 🎈 Inflation) fitted on the shared cache and anchored to the player's own fights. Not real fights. Shade ≈ ±1σ.">
@@ -157,7 +157,7 @@
     <div class="rk-filter-row">
       <input id="ranksSearch" type="search" placeholder="Filter the table by name…" aria-label="Filter the Rankings table by player name" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="search" />
     </div>
-    <div class="ranks-table-wrap" id="ranksScroll">
+    <div class="ranks-table-wrap" id="ranksScroll" style="content-visibility: auto; contain-intrinsic-size: auto 800px;">
       <table class="ranks-table" id="ranksTable" aria-label="Rankings">
         <thead id="ranksHead"></thead>
         <tbody id="ranksBody"></tbody>
