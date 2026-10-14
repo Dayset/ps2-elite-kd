@@ -3087,6 +3087,28 @@ import {
     }
   }
 
+  // Consistency: K/D retention in hard region (top third of X) vs easy region (bottom third).
+  // 1.0 = perfectly consistent, near 0 = only farms easy enemies.
+  function consistency(p) {
+    try {
+      const kpm = p.own_kpm || p.global_kpm;
+      const pf = kpm > 0 ? Math.min(1.0, Math.pow(kpm / 2.0, 2)) : 1;
+      const pts = (p.curve || [])
+        .filter((pt) => isFiniteNum(pt.kd) && isFiniteNum(pt.kpm) && pt.deaths > 0)
+        .map((pt) => ({ x: pt.kpm, kd: pt.kd * pf }))
+        .filter((pt) => pt.kd > 0)
+        .sort((a, b) => a.x - b.x);
+      if (pts.length < 6) return 0;
+      const n = pts.length;
+      const lo = pts.slice(0, Math.floor(n / 3));
+      const hi = pts.slice(Math.ceil((2 * n) / 3));
+      const avg = (arr) => arr.reduce((s, pt) => s + pt.kd, 0) / arr.length;
+      const loAvg = avg(lo), hiAvg = avg(hi);
+      if (loAvg <= 0) return 0;
+      return Math.max(0, Math.min(1, hiAvg / loAvg));
+    } catch { return 0; }
+  }
+
   // Wave swing area: total area (iVi units × KPM) swept by the full line over a wave cycle.
   // area = iVi * |1/anchor(0.2%) - 1/anchor(98.8%)| * ∫ KD(x) dx (trapezoidal)
   function waveSwing(p) {
@@ -3145,10 +3167,12 @@ import {
         ? `<span class="legend-flair">${flair}</span>`
         : `<span class="legend-swatch" style="background:${col}"></span>`;
       const sw = waveSwing(p);
-      const swHtml = sw > 0 ? ` <span class="legend-swing" title="Wave swing (iVi units)">↕${Math.round(sw)}</span>` : "";
+      const cs = consistency(p);
+      const swHtml = sw > 0 ? ` <span class="legend-swing" title="Wave swing area (iVi×KPM)">↕${Math.round(sw)}</span>` : "";
+      const csHtml = cs > 0 ? ` <span class="legend-cons" title="Consistency: K/D retention hard vs easy (1.0 = holds up)">≡${cs.toFixed(2)}</span>` : "";
       item.innerHTML = `
         ${mark}
-        <span class="legend-label" style="color:${col}"><strong>${i + 1}.</strong>${nameHtml}${padMarkHtml(p)}${swHtml}</span>
+        <span class="legend-label" style="color:${col}"><strong>${i + 1}.</strong>${nameHtml}${padMarkHtml(p)}${swHtml}${csHtml}</span>
       `;
       els.legend.appendChild(item);
     });
