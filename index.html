@@ -98,8 +98,7 @@
          title="Dashed lines are a prediction from play style (overall K/D, KPM, accuracy, HSR, RF, slope, 🦁 Brave, 🎈 Inflation) fitted on the shared cache and anchored to the player's own fights. Not real fights. Shade ≈ ±1σ.">
       <span class="ghost-caption-swatch" aria-hidden="true"></span><span class="ghost-caption-text">dashed = predicted from play style,<br />not real fights</span>
     </div>
-    <div style="display:flex; align-items:center; flex-wrap:nowrap; gap:6px; width:100%; max-width:100%;">
-    <div id="chartModeBar" class="chart-mode-bar" role="group" aria-label="Graph view" style="margin-left:auto; margin-right:0; flex-shrink:0;">
+    <div id="chartModeBar" class="chart-mode-bar" role="group" aria-label="Graph view">
       <button type="button" class="chart-mode-btn" data-mode="cumulative" aria-pressed="true"
               title="Raw: cumulative K/D.">📈</button>
       <button type="button" class="chart-mode-btn" data-mode="banded" aria-pressed="false"
@@ -108,7 +107,6 @@
               title="👻 Ghost lines on/off: a dashed, faint continuation predicted from play style (fitted on the shared cache, anchored to the player's own fights), so every line spans the whole graph. Not real fights; shade ≈ ±1σ. Off by default.">👻</button>
       <button type="button" class="chart-mode-btn" data-yscale="kd-btn" aria-pressed="false"
               title="💀 K/D mode: Y-axis shows pace-adjusted K/D instead of iVi-anchored scale.">💀</button>
-    </div>
     </div>
     </div>
     <div id="chartYZoom" class="chart-y-zoom" hidden title="Zoom. Middle = auto-fit. Up zooms hard into the start of the graph (enemy KPM near 0): X shrinks from the right, Y re-fits to the left side. Down fits extreme / high-tier K/D.">
