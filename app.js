@@ -4121,11 +4121,16 @@ import {
   function startWave() {
     if (waveOn) return;
     waveOn = true;
+    // Ghost off while wave is on (Dayset 2026-10-13)
+    if (ghostsOn) setGhostsOn(false, { redraw: false });
     // start phase from current slider so there's no jump
     const frac = (yScalePct - WAVE_MID) / WAVE_AMP;
     waveT = Math.asin(Math.max(-1, Math.min(1, frac)));
     const wb = document.getElementById("yWaveBtn");
     if (wb) { wb.textContent = "⏸️"; wb.classList.add("active"); }
+    // Disable ghost button while wave runs
+    const gb = document.querySelector("[data-ghosts]");
+    if (gb) gb.disabled = true;
     waveTick();
   }
   function stopWave() {
@@ -4134,6 +4139,8 @@ import {
     cancelAnimationFrame(waveRaf);
     const wb = document.getElementById("yWaveBtn");
     if (wb) { wb.textContent = "🌊"; wb.classList.remove("active"); }
+    const gb = document.querySelector("[data-ghosts]");
+    if (gb) gb.disabled = false;
   }
   const waveBtn = document.getElementById("yWaveBtn");
   if (waveBtn) {
