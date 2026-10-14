@@ -4304,10 +4304,17 @@ import {
   }
   // Time-based: one full cycle every WAVE_PERIOD_MS whatever the screen's
   // refresh rate (the old per-frame step ran 2x faster at 120 Hz than at 60 Hz
-  // and stuttered on any dropped frame). 1250 ms = what a 120 Hz screen showed.
+  // and stuttered on any dropped frame). 1250 ms ≈ the speed it ran at
+  // before (~125 drawn frames a second).
   const WAVE_PERIOD_MS = 1250;
   const WAVE_RAD_PER_MS = (Math.PI * 2) / WAVE_PERIOD_MS;
+  // Draw at most ~this many frames a second, on an even divisor of the
+  // screen's refresh (360 Hz → every 3rd frame, 240 → every 2nd, 144 → every
+  // one), so the cadence stays even. 0 = draw every frame.
+  const WAVE_MAX_FPS = 120;
   let waveLastTs = 0;
+  let waveFrameNo = 0;
+  let waveDtAvg = 0; // smoothed frame interval (ms) → refresh rate estimate
   // Pause while the chart is scrolled out of view (no point drawing it).
   let chartOnScreen = true;
   if (typeof IntersectionObserver === "function" && els.chart) {
@@ -4326,6 +4333,11 @@ import {
     const dt = waveLastTs ? Math.min(50, ts - waveLastTs) : 0;
     waveLastTs = ts;
     waveT += dt * WAVE_RAD_PER_MS;
+    if (WAVE_MAX_FPS > 0 && dt > 0) {
+      waveDtAvg = waveDtAvg ? waveDtAvg * 0.9 + dt * 0.1 : dt;
+      const skip = Math.max(1, Math.floor(1000 / waveDtAvg / WAVE_MAX_FPS + 0.15));
+      if (++waveFrameNo % skip !== 0) return;
+    }
     let w = waveShape === "smooth" ? waveFormSmooth(waveT) : waveForm(waveT);
     // Snappier reversals: sharpen peaks so less time lingers at 0%/100%
     w = Math.sign(w) * Math.pow(Math.abs(w), 0.2); // Dayset: aggressive snap
@@ -4369,6 +4381,8 @@ import {
     const gb = document.querySelector("[data-ghosts]");
     if (gb) gb.disabled = true;
     waveLastTs = 0;
+    waveFrameNo = 0;
+    waveDtAvg = 0;
     waveRaf = requestAnimationFrame(waveTick);
   }
   function stopWave() {
