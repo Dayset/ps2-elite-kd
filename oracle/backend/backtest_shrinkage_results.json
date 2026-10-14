@@ -1,0 +1,184 @@
+{
+ "meta": {
+  "design": "OUT-OF-SAMPLE: tree trained on 4955 pre-2024 Hossin alerts, tested on 2024+ alerts",
+  "train_cutoff": "2024-01-01",
+  "train_alerts": 4955,
+  "test_alerts_sampled": 1500,
+  "times": [
+   30,
+   60,
+   75
+  ],
+  "no_cell_skipped": 77
+ },
+ "brier_by_time": {
+  "raw": {
+   "30": 0.19756862634076122,
+   "60": 0.14800397722492795,
+   "75": 0.10448434286881374
+  },
+  "A": {
+   "30": 0.19751151747211393,
+   "60": 0.14794317738078183,
+   "75": 0.10473743703620905
+  },
+  "B": {
+   "30": 0.19782886240241718,
+   "60": 0.14867469908097616,
+   "75": 0.10674095483428396
+  },
+  "C": {
+   "30": 0.19772712842628185,
+   "60": 0.14870783553165187,
+   "75": 0.10680617503206771
+  }
+ },
+ "brier_overall": {
+  "raw": 0.15005161433006609,
+  "A": 0.15009664707668194,
+  "B": 0.15111374564219404,
+  "C": 0.15111253964690655
+ },
+ "brier_by_stars_raw_vs_A": {
+  "1star_A": 0.07126436231499429,
+  "1star_raw": 0.07126436231499429,
+  "2star_A": 0.22964066183019433,
+  "2star_raw": 0.23033863330262316,
+  "3star_A": 0.15034135225532777,
+  "3star_raw": 0.14997896400835006,
+  "4star_A": 0.11492106449019805,
+  "4star_raw": 0.1173112661983962,
+  "5star_A": 0.1495333762594028,
+  "5star_raw": 0.1495333762594028
+ },
+ "level_distribution": {
+  "30": {
+   "twig": 2445,
+   "leaf": 1678,
+   "shoot": 168,
+   "branch": 137,
+   "trunk": 54
+  },
+  "60": {
+   "leaf": 1662,
+   "twig": 2325,
+   "shoot": 257,
+   "branch": 171,
+   "trunk": 53
+  },
+  "75": {
+   "twig": 2248,
+   "leaf": 1712,
+   "shoot": 241,
+   "trunk": 83,
+   "branch": 189
+  }
+ },
+ "in_sample_reference": {
+  "note": "Same alerts the tree was trained on (6,986 Hossin alerts). Leakage favors raw; included for reference only.",
+  "brier_overall": {
+   "raw": 0.1351,
+   "A": 0.1358,
+   "B": 0.1383,
+   "C": 0.1384
+  },
+  "brier_by_time": {
+   "raw": {
+    "30": 0.1859,
+    "60": 0.1293,
+    "75": 0.09
+   },
+   "A": {
+    "30": 0.1862,
+    "60": 0.1303,
+    "75": 0.091
+   },
+   "B": {
+    "30": 0.1877,
+    "60": 0.1337,
+    "75": 0.0936
+   },
+   "C": {
+    "30": 0.188,
+    "60": 0.1337,
+    "75": 0.0936
+   }
+  }
+ },
+ "calibration_oos": {
+  "note": "Raw tree predictions vs actual win rate by decile, OOS test set. Positive gap = overconfident.",
+  "deciles": [
+   {
+    "range": "0-10",
+    "n": 3527,
+    "mean_pred": 0.033,
+    "actual": 0.053,
+    "gap": -0.02
+   },
+   {
+    "range": "10-20",
+    "n": 1964,
+    "mean_pred": 0.153,
+    "actual": 0.171,
+    "gap": -0.018
+   },
+   {
+    "range": "20-30",
+    "n": 1814,
+    "mean_pred": 0.238,
+    "actual": 0.249,
+    "gap": -0.011
+   },
+   {
+    "range": "30-40",
+    "n": 1851,
+    "mean_pred": 0.34,
+    "actual": 0.343,
+    "gap": -0.002
+   },
+   {
+    "range": "40-50",
+    "n": 903,
+    "mean_pred": 0.446,
+    "actual": 0.429,
+    "gap": 0.018
+   },
+   {
+    "range": "50-60",
+    "n": 968,
+    "mean_pred": 0.546,
+    "actual": 0.529,
+    "gap": 0.018
+   },
+   {
+    "range": "60-70",
+    "n": 539,
+    "mean_pred": 0.644,
+    "actual": 0.622,
+    "gap": 0.022
+   },
+   {
+    "range": "70-80",
+    "n": 428,
+    "mean_pred": 0.759,
+    "actual": 0.71,
+    "gap": 0.049
+   },
+   {
+    "range": "80-90",
+    "n": 431,
+    "mean_pred": 0.851,
+    "actual": 0.8,
+    "gap": 0.05
+   },
+   {
+    "range": "90-100",
+    "n": 1066,
+    "mean_pred": 0.973,
+    "actual": 0.939,
+    "gap": 0.034
+   }
+  ]
+ },
+ "recommendation": "DO NOT SHIP the star-shrinkage formula. Variant A (stars only) is a statistical tie with raw out-of-sample (Brier 0.1501 vs 0.1501, per-timepoint diffs <=0.0002 = noise). Variants B/C (n-penalties) are clearly worse (+0.0010 OOS). The tree's MIN_N=20 gate + backoff lookup already handles thin-data uncertainty; extra shrinkage is redundant. HOWEVER: calibration shows the raw tree is 2-5pp overconfident above 60% and 1-2pp underconfident below 30%. Shrinking toward TRUNK cannot fix this because the trunk shares the bias. The correct follow-up is shrinkage toward the global base rate (~33%) or post-hoc recalibration (Platt/isotonic) -- a different experiment."
+}
