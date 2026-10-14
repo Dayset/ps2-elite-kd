@@ -113,19 +113,18 @@
     <h1>📦 Shared cache status</h1>
     <div class="st-sub">Updates every 30 s. <span id="stUpdated"></span> · <a href="./">Back to the chart</a> · <a href="misc.html" title="Confirmed stat padders (hidden page)">🌾 Wall of shame</a> · <span id="radarLine" title="PS2 Radar (ps2radar.com, independent community cheat radar) is looked up once a day for players on the review lists below, at most 50 a day, each at most every 3 days. Its badge is a second opinion only: a Radar Confirmed / Banned mark moves a player up in review order but never hides or flags anyone here, and nothing else on the site reads it. If the radar goes away, the last cached answers stay.">🛰️ PS2 Radar</span><span class="st-tools"><button type="button" id="openAll" title="Open every section">Open all</button><button type="button" id="closeAll" title="Collapse every section">Collapse all</button></span></div>
 
-    <div class="st-card" id="statusBar" style="padding:10px 14px;margin-bottom:10px;line-height:1.7;"><span id="sbState" class="st-dim">Loading status…</span><br><span id="sbLast" class="st-dim"></span><br><span id="sbHonu" class="st-dim"></span><br><span id="sbReview" class="st-dim"></span></div>
-    <details class="st-card st-sec" id="cardNow" data-default="open"><summary><h2>Refresh now</h2></summary><div id="nowRun"></div><div id="now" class="st-dim">Loading…</div><div id="backup" class="st-label"></div></details>
-    <details class="st-card st-sec" id="cardRuns"><summary><h2>GitHub Actions queue <span id="runsCount" class="st-count"></span></h2></summary><div id="runs" class="st-dim">Loading…</div></details>
-    <details class="st-card st-sec" id="cardLast"><summary><h2>Last finished run</h2></summary><div id="last" class="st-dim">Loading…</div></details>
-    <details class="st-card st-sec" id="cardDisc"><summary><h2>🔎 Discovery &amp; storage <span id="discCount" class="st-count">…</span></h2></summary><div id="sizeLine" class="st-dim">Loading…</div><div id="disc" class="st-dim">Loading…</div></details>
-    <details class="st-card st-sec" id="cardPending"><summary><h2>Queued from the site (not cached yet) <span id="pendingCount" class="st-count">…</span></h2></summary><div id="pending" class="st-dim">Loading…</div></details>
-    <details class="st-card st-sec" id="cardRecent"><summary><h2>Recently updated players <span id="recentCount" class="st-count">…</span></h2></summary><div id="recent" class="st-dim">Loading…</div></details>
-    <details class="st-card st-sec st-flags" id="cardFlags">
+    <div class="st-card" id="statusBar" style="padding:10px 14px;margin-bottom:10px;line-height:1.7;"><span id="sbState" class="st-dim">Loading status…</span><br><span id="sbLast" class="st-dim"></span><br><span id="sbHonu" class="st-dim"></span><br><span id="sbReview" class="st-dim"></span><br><span class="st-dim">Jump to: <a href="#cardFlags">🚩 Red flags</a> · <a href="#cardAnoms">📉 Anomalies</a> · <a href="#cardSession">🧪 Session</a> · <a href="#cardForensics">🔎 Forensics</a> · <a href="#cardSprouts">🌱 Hand</a></span></div>
+    <details class="st-card st-sec st-group" id="groupQueue" data-default="open"><summary><h2>Queue</h2></summary>
+      <details class="st-card st-sec" id="cardNow" data-default="open"><summary><h2>Refresh now</h2></summary><div id="nowRun"></div><div id="now" class="st-dim">Loading…</div><div id="backup" class="st-label"></div></details>
+      <details class="st-card st-sec" id="cardPending"><summary><h2>Queued from the site (not cached yet) <span id="pendingCount" class="st-count">…</span></h2></summary><div id="pending" class="st-dim">Loading…</div></details>
+    </details>
+    <details class="st-card st-sec st-group" id="groupReview"><summary><h2>Needs review</h2></summary>
+      <details class="st-card st-sec st-flags" id="cardFlags">
       <summary id="flagsSummary"><h2>Red flags 🚩 <span id="flagsCount" class="st-count">…</span></h2></summary>
       <div id="flagsRule" class="st-rule"></div>
       <div id="flags" class="st-dim">Loading…</div>
     </details>
-    <details class="st-card st-sec st-flags st-anoms" id="cardAnoms">
+      <details class="st-card st-sec st-flags st-anoms" id="cardAnoms">
       <summary id="anomsSummary"><h2>📉 Chart anomalies <span id="anomsCount" class="st-count">…</span></h2></summary>
       <div class="st-note">Things about chart and stat integrity, not cheating patterns: players whose stats we changed automatically, and values far outside everyone else. Each needs a human look; nothing here is an accusation. Count = players needing a look (unreviewed 🌾 and † plus unexplained outliers).<br>Routing (bins.mjs): 🌾 stat padding, † adjusted and 🧪 outliers live here, not in 🚩. A player whose only issues are here stays only here; a player who also has a 🚩 pattern (aim, vehicle, rampage…) is listed in 🚩, with a 📉 link there and an "also in 🚩" link here, never a second full row.</div>
       <details class="st-sub-sec" id="secPadding">
@@ -145,7 +144,7 @@
       <div id="guard" class="st-dim">Loading…</div>
       </details>
     </details>
-    <details class="st-card st-sec st-flags st-sess" id="cardSession">
+      <details class="st-card st-sec st-flags st-sess" id="cardSession">
       <summary id="sessSummary"><h2>🧪 Session stats <span id="sessCount" class="st-count">…</span></h2></summary>
       <div class="st-note">Recent Honu sessions we already collect quietly (assists on every refresh; full XP detail for analyzed / requested players), as rates per kill / minute / death. Assists stay off the public pages; this section is the only place they show. Count = 🚩 session-pattern hits. Session-metric outliers also go through the 🧪 outlier guard (📉), and a player with the session pattern is listed in 🚩.</div>
       <div id="sessRule" class="st-rule"></div>
@@ -167,11 +166,30 @@
       <div id="sessOut" class="st-dim">Loading…</div>
       </details>
     </details>
-    <details class="st-card st-sec st-flags st-sess" id="cardForensics">
+      <details class="st-card st-sec st-flags st-sess" id="cardForensics">
       <summary id="fxSummary"><h2>🔎 Session forensics <span id="fxCount" class="st-count">…</span></h2></summary>
       <div class="st-note">The refresh pipeline opens the top session(s) (most kills, highest KPM) of a few suspicious players per run (🚩, 📉 outliers, 👶 new accounts with a high KPM, high session KPM, top iVi), reads the Honu kill events and looks at how fast the kills came, with what weapon and on whom. Each session is analyzed once. ⚡ / 🔥 hits go to 🚩 (pattern “session-forensics”); other oddities go to 📉 for review. Count = 🚩 hits.</div>
       <div id="fxRule" class="st-rule"></div>
       <div id="fx" class="st-dim">Loading…</div>
+    </details>
+      <details class="st-card st-sec st-sprouts" id="cardSprouts">
+      <summary id="sproutsSummary"><h2>🌱 Could use a hand <span id="sproutsCount" class="st-count">…</span></h2></summary>
+      <div class="st-note">Players whose fights are going rough right now. They could be new, playing support, medic or engineer, or just learning. They're listed so veterans can spot who might appreciate a tip or a squad invite. Please be kind; this is never a list to make fun of anyone.</div>
+      <div id="sproutsRule" class="st-rule"></div>
+      <div id="sprouts" class="st-dim">Loading…</div>
+      <details class="st-sub-sec" id="secFarmAcct">
+      <summary><h3>🤖 Likely farm accounts <span id="farmAcctCount" class="st-count">…</span></h3></summary>
+      <div class="st-note">Accounts that would be on 🌱 but look parked for someone else to farm: most of their deaths go to one or a few killers they never kill back, and they barely fight. They are not counted above. Linked to the player they feed.</div>
+      <div id="farmAcctRule" class="st-rule"></div>
+      <div id="farmAcct" class="st-dim">Loading…</div>
+      </details>
+    </details>
+    </details>
+    <details class="st-card st-sec st-group" id="groupPipeline"><summary><h2>Pipeline</h2></summary>
+      <details class="st-card st-sec" id="cardRuns"><summary><h2>GitHub Actions queue <span id="runsCount" class="st-count"></span></h2></summary><div id="runs" class="st-dim">Loading…</div></details>
+      <details class="st-card st-sec" id="cardLast"><summary><h2>Last finished run</h2></summary><div id="last" class="st-dim">Loading…</div></details>
+      <details class="st-card st-sec" id="cardDisc"><summary><h2>🔎 Discovery &amp; storage <span id="discCount" class="st-count">…</span></h2></summary><div id="sizeLine" class="st-dim">Loading…</div><div id="disc" class="st-dim">Loading…</div></details>
+      <details class="st-card st-sec" id="cardRecent"><summary><h2>Recently updated players <span id="recentCount" class="st-count">…</span></h2></summary><div id="recent" class="st-dim">Loading…</div></details>
     </details>
     <details class="st-card st-sec" id="cardHidden">
       <summary><h2>🙈 Hidden from Rankings <span id="hiddenCount" class="st-count">…</span></h2></summary>
@@ -194,19 +212,7 @@
         </div>
       </div>
     </details>
-    <details class="st-card st-sec st-sprouts" id="cardSprouts">
-      <summary id="sproutsSummary"><h2>🌱 Could use a hand <span id="sproutsCount" class="st-count">…</span></h2></summary>
-      <div class="st-note">Players whose fights are going rough right now. They could be new, playing support, medic or engineer, or just learning. They're listed so veterans can spot who might appreciate a tip or a squad invite. Please be kind; this is never a list to make fun of anyone.</div>
-      <div id="sproutsRule" class="st-rule"></div>
-      <div id="sprouts" class="st-dim">Loading…</div>
-      <details class="st-sub-sec" id="secFarmAcct">
-      <summary><h3>🤖 Likely farm accounts <span id="farmAcctCount" class="st-count">…</span></h3></summary>
-      <div class="st-note">Accounts that would be on 🌱 but look parked for someone else to farm: most of their deaths go to one or a few killers they never kill back, and they barely fight. They are not counted above. Linked to the player they feed.</div>
-      <div id="farmAcctRule" class="st-rule"></div>
-      <div id="farmAcct" class="st-dim">Loading…</div>
-      </details>
-    </details>
-  </main>
+                                                  </main>
 
   <script>
     // Collapsible sections: open/closed remembered per section id (localStorage).
