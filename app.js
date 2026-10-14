@@ -2962,10 +2962,10 @@ import {
       { id: "pvs", label: "🦁 Brave", hint: `Bravery (formerly LionHeart): 🏃 Activity × pressure slope — sustained elite volume under hard opposition.`, fn: (r) => r.pvs, digits: 2 },
       { id: "rkd", label: "☠️ K/D", hint: "Resistance-weighted K/D against the opposition mix you actually face.", fn: (r) => r.rkd, digits: 3 },
       { id: "mech", label: "⚙️ Mech%", hint: "Projected mechanized / vehicle share implied by 🛡️ Resist.", fn: (r) => r.mech, digits: 1 },
-      { id: "cons", label: "🧱 Const", hint: "Consistency as a population percentile across cached players: higher = holds up better against hard opposition (p90 = better than 90% of players). Compares K/D against hard enemies with K/D against easy ones.", fn: (r) => r.cons, digits: 2, pctileCell: true },
     ];
     // Older debug columns: appended only when "show older debug stats" (footer) is ticked.
     const adjDebugCols = [
+      { id: "cons", label: "🧱 Const", hint: "Consistency as a population percentile across cached players: higher = holds up better against hard opposition (p90 = better than 90% of players). Compares K/D against hard enemies with K/D against easy ones.", fn: (r) => r.cons, digits: 2, pctileCell: true },
       { id: "adj", label: "🎯🎈 ivi", hint: "Opposition-weighted IvI before the kill-speed adjustment: public IvI adjusted by 🛡️ Resist so soft-farm padding is tempered. The 🎈 is a reminder that this score is still inflated (slow, safe play is not penalised here — see ⚔️ iVi).", fn: (r) => r.adj, digits: 0 },
       { id: "ekpm", label: "eKPM", hint: "Average enemy weapon KPM faced (how hard the opposition shoots).", fn: (r) => r.ekpm, digits: 2 },
       { id: "own", label: "own KPM", hint: "Your weapon pace used on the elite K/D curve and for the ⚔️ iVi speed adjustment.", fn: (r) => r.own, digits: 2 },

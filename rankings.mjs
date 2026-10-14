@@ -36,9 +36,9 @@ export function initRankings(host) {
     { id: "pvs", label: "🦁 Brave", digits: 2, tip: "Bravery (Activity × slope)" },
     { id: "rkd", label: "☠️ K/D", digits: 3, tip: "Resistance-weighted K/D" },
     { id: "mech", label: "⚙️ Mech%", digits: 1, tip: "Projected mechanized share" },
-    { id: "cons", label: "🧱 Const", digits: 2, tip: "Consistency: K/D against hard opposition ÷ K/D against easy (1.0 = holds up). Higher = holds up better against hard opposition." },
   ];
   const DEBUG = [
+    { id: "cons", label: "🧱 Const", digits: 2, tip: "Consistency: K/D against hard opposition ÷ K/D against easy (1.0 = holds up). Higher = holds up better against hard opposition." },
     { id: "adj", label: "🎯🎈 ivi", digits: 0, tip: "Opposition-weighted IvI (before speed adjustment)" },
     { id: "ekpm", label: "eKPM", digits: 2, tip: "Average enemy weapon KPM faced" },
     { id: "own", label: "own KPM", digits: 2, tip: "Your weapon pace" },
