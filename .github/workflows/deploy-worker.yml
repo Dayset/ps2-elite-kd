@@ -1,0 +1,60 @@
+name: Deploy cache Worker
+
+# Manual only: Actions → "Deploy cache Worker" → Run workflow.
+# Leave "deploy" unticked for a dry run (tests + bundle check, nothing changes).
+#
+# One-time setup (repo Settings → Secrets and variables → Actions):
+#   CLOUDFLARE_API_TOKEN   token from the "Edit Cloudflare Workers" template,
+#                          limited to this account
+#   CLOUDFLARE_ACCOUNT_ID  Cloudflare dashboard → Workers & Pages → Account ID
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: "Actually deploy (unticked = dry run only)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-worker
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            worker
+            test/worker-kv-budget.test.mjs
+            package.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Worker tests
+        run: node --test test/worker-kv-budget.test.mjs
+
+      - name: Dry run (bundle only)
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: worker
+          command: deploy --dry-run --outdir dist
+
+      - name: Deploy
+        if: inputs.deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: worker
+          command: deploy

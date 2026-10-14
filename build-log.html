@@ -442,8 +442,9 @@
         if (!b) { $("backup").textContent = ""; return; }
         var l = b.last;
         var label = { "dispatched": "dispatched a run", "skipped-recent": "skipped (recent run)", "skipped-running": "skipped (run in progress)", "error": "error" };
-        $("backup").innerHTML = "Worker timer (every 5 min, starts a discovery run when idle): " + (l
-          ? "last check " + when(l.at) + ", " + esc(label[l.decision] || l.decision) +
+        // The Worker checks every 5 min but logs only changes (and at least hourly).
+        $("backup").innerHTML = "Worker timer (checks every 5 min, starts a discovery run when idle): " + (l
+          ? "last logged " + when(l.at) + ", " + esc(label[l.decision] || l.decision) +
             (l.reason ? " (" + esc(l.reason) + ")" : "") + (l.runId ? " · " + runLink(l.runId) : "")
           : "no check yet.");
       }

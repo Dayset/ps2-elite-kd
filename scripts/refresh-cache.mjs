@@ -25,6 +25,7 @@ import { fileURLToPath } from "node:url";
 import { censusQueryName } from "../analyze-run.mjs";
 import { accountTimes } from "../flairs.mjs";
 import { analyzeSessionKills, knownSessions, pickForensicSessions } from "../session-forensics.mjs";
+import { startYieldWatch } from "./yield-check.mjs";
 import {
   CAP_STEPS,
   isDormant,
@@ -1167,6 +1168,19 @@ async function main() {
 
   const overBudget = (reserveMs = 0) => Date.now() - t0 + reserveMs > budgetMs;
 
+  // Background runs are long (one commit per ~27 min); give way as soon as a
+  // site request (or the fallback cron) is waiting. Every loop below checks
+  // c.stoppedEarly, so the run ends at the next player boundary and commits.
+  const stopYieldWatch = explicit
+    ? () => {}
+    : startYieldWatch({
+        onWaiting: (why) => {
+          if (c.stoppedEarly) return;
+          c.stoppedEarly = why;
+          console.log(`Yielding: ${why}.`);
+        },
+      });
+
   /** Fetch + save one player. Returns display name on success, else null. */
   async function refreshOne(name, label) {
     const slug = slugKey(name);
@@ -1401,6 +1415,7 @@ async function main() {
     disc.updatedAt = new Date().toISOString();
     writeFileAtomic(DISCOVERY_PATH, JSON.stringify(disc) + "\n");
   }
+  stopYieldWatch();
   const growSecs = Math.round((Date.now() - growFrom) / 1000);
   saveHonuUsage();
 

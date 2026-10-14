@@ -1,0 +1,19 @@
+# ps2-elite-kd-cache: matches the live Worker's bindings (2026-10-13).
+# Deployed only by .github/workflows/deploy-worker.yml (manual run).
+name = "ps2-elite-kd-cache"
+main = "src/worker.js"
+# Check Cloudflare dashboard → Worker → Settings → Runtime and keep this equal
+# to the live value before the first deploy.
+compatibility_date = "2026-10-01"
+workers_dev = true
+
+# Keep the plain-text variables set in the dashboard (GH_REPO, limits, …).
+# Secrets (GH_TOKEN, CENSUS_PROXY_KEY) are never touched by a deploy.
+keep_vars = true
+
+[triggers]
+crons = ["*/5 * * * *"]
+
+[[kv_namespaces]]
+binding = "QUEUE"
+id = "3adfe0d9994a4b92b32c132168faf3cd"
