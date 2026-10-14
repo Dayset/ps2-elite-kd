@@ -113,10 +113,11 @@
     <h1>📦 Shared cache status</h1>
     <div class="st-sub">Updates every 30 s. <span id="stUpdated"></span> · <a href="./">Back to the chart</a> · <a href="misc.html" title="Confirmed stat padders (hidden page)">🌾 Wall of shame</a> · <span id="radarLine" title="PS2 Radar (ps2radar.com, independent community cheat radar) is looked up once a day for players on the review lists below, at most 50 a day, each at most every 3 days. Its badge is a second opinion only: a Radar Confirmed / Banned mark moves a player up in review order but never hides or flags anyone here, and nothing else on the site reads it. If the radar goes away, the last cached answers stay.">🛰️ PS2 Radar</span><span class="st-tools"><button type="button" id="openAll" title="Open every section">Open all</button><button type="button" id="closeAll" title="Collapse every section">Collapse all</button></span></div>
 
+    <div class="st-card" id="statusBar" style="padding:10px 14px;margin-bottom:10px;line-height:1.7;"><span id="sbState" class="st-dim">Loading status…</span><br><span id="sbLast" class="st-dim"></span><br><span id="sbHonu" class="st-dim"></span><br><span id="sbReview" class="st-dim"></span></div>
     <details class="st-card st-sec" id="cardNow" data-default="open"><summary><h2>Refresh now</h2></summary><div id="nowRun"></div><div id="now" class="st-dim">Loading…</div><div id="backup" class="st-label"></div></details>
-    <details class="st-card st-sec" id="cardRuns" data-default="open"><summary><h2>GitHub Actions queue <span id="runsCount" class="st-count"></span></h2></summary><div id="runs" class="st-dim">Loading…</div></details>
-    <details class="st-card st-sec" id="cardLast" data-default="open"><summary><h2>Last finished run</h2></summary><div id="last" class="st-dim">Loading…</div></details>
-    <details class="st-card st-sec" id="cardDisc" data-default="open"><summary><h2>🔎 Discovery &amp; storage <span id="discCount" class="st-count">…</span></h2></summary><div id="sizeLine" class="st-dim">Loading…</div><div id="disc" class="st-dim">Loading…</div></details>
+    <details class="st-card st-sec" id="cardRuns"><summary><h2>GitHub Actions queue <span id="runsCount" class="st-count"></span></h2></summary><div id="runs" class="st-dim">Loading…</div></details>
+    <details class="st-card st-sec" id="cardLast"><summary><h2>Last finished run</h2></summary><div id="last" class="st-dim">Loading…</div></details>
+    <details class="st-card st-sec" id="cardDisc"><summary><h2>🔎 Discovery &amp; storage <span id="discCount" class="st-count">…</span></h2></summary><div id="sizeLine" class="st-dim">Loading…</div><div id="disc" class="st-dim">Loading…</div></details>
     <details class="st-card st-sec" id="cardPending"><summary><h2>Queued from the site (not cached yet) <span id="pendingCount" class="st-count">…</span></h2></summary><div id="pending" class="st-dim">Loading…</div></details>
     <details class="st-card st-sec" id="cardRecent"><summary><h2>Recently updated players <span id="recentCount" class="st-count">…</span></h2></summary><div id="recent" class="st-dim">Loading…</div></details>
     <details class="st-card st-sec st-flags" id="cardFlags">
@@ -981,6 +982,7 @@
       setReview(st);
       await loadRadar();
       renderGuard(st);
+      if (window.renderStatusBar) window.renderStatusBar(st);
       renderHidden(st);
       renderSession(st);
       renderForensics(st);
@@ -1088,5 +1090,24 @@
     refreshGuard();
     setInterval(() => { refreshFlags(); refreshGuard(); }, POLL_MS);
   </script>
+<script>
+/* Status bar: plain text only (textContent), from data/status.json. */
+window.renderStatusBar = function (st) {
+  var set = function (id, text) { var el = document.getElementById(id); if (el) el.textContent = text; };
+  if (!st) { set("sbState", "Status unavailable"); return; }
+  var lr = st.lastRun || {};
+  var when = lr.endedAt ? new Date(lr.endedAt).toLocaleString() : "never";
+  var updated = (lr.updated || []).length, added = (lr.added || []).length, failed = (lr.failed || []).length;
+  var state;
+  if (st.running) state = "🟢 Refresh running";
+  else if (lr.stoppedEarly) state = "🟠 Last run stopped early: " + lr.stoppedEarly;
+  else state = "⚪ Idle";
+  set("sbState", state);
+  set("sbLast", "Last run finished " + when + " · updated " + updated + " · added " + added + " · failed " + failed);
+  if (lr.honu) set("sbHonu", "Honu today " + lr.honu.calls + " / " + lr.honu.cap + " (pacing 10/min)");
+  var unexplained = st.outlierGuard && st.outlierGuard.unexplained;
+  set("sbReview", "Unreviewed outliers: " + (unexplained == null ? "?" : unexplained) + " · open a section below to review");
+};
+</script>
 </body>
 </html>
