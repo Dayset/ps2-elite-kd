@@ -2229,7 +2229,7 @@ import {
         const validKds = pts.filter((pt) => pt.valid && isFiniteNum(pt.kd)).map((pt) => pt.kd);
         if (validKds.length > 0) {
           const sorted = [...validKds].sort((a, b) => a - b);
-          const frac = Math.max(0.001, Math.min(1, yScalePct / 100));
+          const frac = Math.max(0.00001, Math.min(1, yScalePct / 100));
           // Smooth interpolation: continuous anchor, no discrete jumps
           const pos = frac * (sorted.length - 1);
           const i0 = Math.floor(pos);
@@ -4100,7 +4100,7 @@ import {
   let waveOn = false;
   let waveT = 0;
   let waveRaf = 0;
-  const WAVE_MIN = 0.1, WAVE_MAX = 100;
+  const WAVE_MIN = 0.001, WAVE_MAX = 100;
   const WAVE_MID = (WAVE_MIN + WAVE_MAX) / 2; // 50.05
   const WAVE_AMP = (WAVE_MAX - WAVE_MIN) / 2; // 49.95
   let waveLastDrawn = -1;
