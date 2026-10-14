@@ -4162,6 +4162,18 @@ import {
     waveOn = true;
     // Ghost off while wave is on (Dayset 2026-10-13)
     if (ghostsOn) setGhostsOn(false, { redraw: false });
+    // Warn if iVi range is extreme (causes wave flicker)
+    const ivis = players.map((p) => p.ivi).filter((v) => isFiniteNum(v) && v > 0);
+    const warnEl = document.getElementById("waveRangeWarn");
+    if (warnEl && ivis.length >= 2) {
+      const mn = Math.min(...ivis), mx = Math.max(...ivis);
+      if (mx / mn > 4) {
+        warnEl.textContent = `⚠️ Wave flickers: iVi range ${Math.round(mn)}–${Math.round(mx)} is extreme`;
+        warnEl.hidden = false;
+      } else {
+        warnEl.hidden = true;
+      }
+    }
     // start phase from current slider so there's no jump
     const frac = (yScalePct - WAVE_MID) / WAVE_AMP;
     waveT = Math.asin(Math.max(-1, Math.min(1, frac)));
@@ -4176,6 +4188,8 @@ import {
     if (!waveOn) return;
     waveOn = false;
     cancelAnimationFrame(waveRaf);
+    const warnEl = document.getElementById("waveRangeWarn");
+    if (warnEl) warnEl.hidden = true;
     const wb = document.getElementById("yWaveBtn");
     if (wb) { wb.textContent = "🌊"; wb.classList.remove("active"); }
     const gb = document.querySelector("[data-ghosts]");
