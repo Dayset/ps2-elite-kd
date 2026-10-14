@@ -2100,7 +2100,8 @@ import {
     if (!els.chartModeBar) return;
     syncSmoothBtn();
     for (const b of els.chartModeBar.querySelectorAll("[data-mode]")) {
-      const on = b.dataset.mode === chartMode;
+      // Raw (📈) and KD (💀) are one choice: while 💀 is lit, Raw is not.
+      const on = b.dataset.mode === chartMode && !(b.dataset.mode === "cumulative" && yScaleMode === "kd");
       b.classList.toggle("active", on);
       b.setAttribute("aria-pressed", on ? "true" : "false");
     }
@@ -4235,7 +4236,13 @@ import {
         return;
       }
       const b = e.target.closest("[data-mode]");
-      if (b && b.dataset.mode !== chartMode) setChartMode(b.dataset.mode);
+      if (!b) return;
+      if (b.dataset.mode === "cumulative" && yScaleMode === "kd") {
+        // Clicking Raw while 💀 is lit switches 💀 off and lights Raw.
+        setYScaleMode("ivi");
+        return;
+      }
+      if (b.dataset.mode !== chartMode) setChartMode(b.dataset.mode);
     });
   }
   syncChartModeUi();
@@ -4245,6 +4252,7 @@ import {
     yScaleMode = mode;
     if (pct !== undefined) yScalePct = pct;
     syncYScaleUi();
+    syncChartModeUi();
     if (players.length) drawChart(players);
   }
   // 💀 button toggles K/D mode (in chartModeBar)
