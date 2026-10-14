@@ -2962,7 +2962,7 @@ import {
       { id: "pvs", label: "🦁 Brave", hint: `Bravery (formerly LionHeart): 🏃 Activity × pressure slope — sustained elite volume under hard opposition.`, fn: (r) => r.pvs, digits: 2 },
       { id: "rkd", label: "☠️ K/D", hint: "Resistance-weighted K/D against the opposition mix you actually face.", fn: (r) => r.rkd, digits: 3 },
       { id: "mech", label: "⚙️ Mech%", hint: "Projected mechanized / vehicle share implied by 🛡️ Resist.", fn: (r) => r.mech, digits: 1 },
-      { id: "cons", label: "🧱 Const", hint: "Consistency as a population percentile across cached players: higher = holds up better against hard opposition (p90 = better than 90% of players). Compares K/D against hard enemies with K/D against easy ones.", fn: (r) => (consPool ? percentileOf(consPool, r.cons) ?? NaN : NaN), digits: 0, pctileCell: true },
+      { id: "cons", label: "🧱 Const", hint: "Consistency as a population percentile across cached players: higher = holds up better against hard opposition (p90 = better than 90% of players). Compares K/D against hard enemies with K/D against easy ones.", fn: (r) => r.cons, digits: 2, pctileCell: true },
     ];
     // Older debug columns: appended only when "show older debug stats" (footer) is ticked.
     const adjDebugCols = [
@@ -3087,11 +3087,6 @@ import {
               if (c.thinTip && row.thin && !isFiniteNum(v)) {
                 return `<td class="thin-sample" title="${escapeHtml(thinCellTip(row))}">—</td>`;
               }
-              // 🧱 Const: shown as a population percentile (p88), no gap % against the column.
-              if (c.pctileCell) {
-                if (!isFiniteNum(v)) return `<td>—</td>`;
-                return `<td title="Population percentile: higher than ${v}% of cached players">p${v}</td>`;
-              }
               // Small dimmed % = gap to the column reference (none on the reference cell):
               // "−28%" below the highest value, or "+35%" above the lowest for pctDir "low".
               const dir = c.pctDir || "high";
@@ -3108,6 +3103,12 @@ import {
                 p == null && floor != null && isFiniteNum(v) && v < floor
                   ? ` title="${escapeHtml(`Below ${fmtNum(floor, c.digits)} = no inflation`)}"`
                   : "";
+              // 🧱 Const: main value is the population percentile ("19%"); the dimmed gap to the highest value still applies.
+              if (c.pctileCell) {
+                const pctl = isFiniteNum(v) && consPool ? percentileOf(consPool, v) : null;
+                const txt = pctl == null ? "—" : `${pctl}%`;
+                return `<td title="Population percentile: higher than ${pctl ?? "—"}% of cached players">${txt}${pct}</td>`;
+              }
               return `<td${tdTitle}>${fmtNum(v, c.digits)}${pct}</td>`;
             })
             .join("");
