@@ -4107,7 +4107,7 @@ import {
   let waveOn = false;
   let waveT = 0;
   let waveRaf = 0;
-  const WAVE_MIN = 0.001, WAVE_MAX = 100;
+  const WAVE_MIN = 2, WAVE_MAX = 98; // Dayset: cut 2% each end, no clipping
   const WAVE_MID = (WAVE_MIN + WAVE_MAX) / 2; // 50.05
   const WAVE_AMP = (WAVE_MAX - WAVE_MIN) / 2; // 49.95
   let waveLastDrawn = -1;
