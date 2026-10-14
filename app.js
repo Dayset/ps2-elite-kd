@@ -2231,9 +2231,16 @@ import {
     if (yScaleMode === "ivi") {
       const ivi = p.ivi;
       if (isFiniteNum(ivi) && ivi > 0) {
-        const validKds = pts.filter((pt) => pt.valid && isFiniteNum(pt.kd)).map((pt) => pt.kd);
-        if (validKds.length > 0) {
-          const sorted = [...validKds].sort((a, b) => a - b);
+        // Cache sorted K/D per player-curve (avoids re-sort every wave frame)
+        let sorted = waveSortedCache.get(p);
+        const cacheKey = pts.length;
+        if (!sorted || sorted._n !== cacheKey) {
+          const validKds = pts.filter((pt) => pt.valid && isFiniteNum(pt.kd)).map((pt) => pt.kd);
+          sorted = [...validKds].sort((a, b) => a - b);
+          sorted._n = cacheKey;
+          waveSortedCache.set(p, sorted);
+        }
+        if (sorted.length > 0) {
           const frac = Math.max(0.00001, Math.min(1, yScalePct / 100));
           // Smooth interpolation: continuous anchor, no discrete jumps
           const pos = frac * (sorted.length - 1);
@@ -4175,6 +4182,7 @@ import {
   let waveLastDrawn = -1;
   let waveShape = "smooth"; // Dayset: fixed
   let waveSpeed = 2; // Dayset: fixed 2x
+  const waveSortedCache = new WeakMap(); // player -> sorted pace-KD array
   // Waveform: phase 0..2π -> -1..1 with selected easing
   function waveForm(phase) {
     const cyc = ((phase % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2) / (Math.PI * 2); // 0..1
@@ -4201,16 +4209,19 @@ import {
     const ePhase = (cyc < 0.5 ? e * 0.5 : 0.5 + e * 0.5) * Math.PI * 2;
     return Math.sin(ePhase);
   }
+  let waveFrame = 0;
   function waveTick() {
     if (!waveOn) return;
-    waveT += 0.021 * waveSpeed;
+    waveFrame++;
+    if (waveFrame % 2 === 0) { waveRaf = requestAnimationFrame(waveTick); return; } // 30fps
+    waveT += 0.042 * waveSpeed; // 2x step to keep ~5s cycle at 30fps
     let w = waveShape === "smooth" ? waveFormSmooth(waveT) : waveForm(waveT);
     // Snappier reversals: sharpen peaks so less time lingers at 0%/100%
     w = Math.sign(w) * Math.pow(Math.abs(w), 0.2); // Dayset: aggressive snap
     const pct = WAVE_MID + WAVE_AMP * w;
     yScalePct = Math.max(WAVE_MIN, Math.min(WAVE_MAX, pct));
     if (ySlider) ySlider.value = yScalePct;
-    if (Math.abs(yScalePct - waveLastDrawn) >= 0.01) {
+    if (Math.abs(yScalePct - waveLastDrawn) >= 0.02) {
       waveLastDrawn = yScalePct;
       if (ySliderVal) ySliderVal.textContent = yScalePct >= 10 ? yScalePct.toFixed(0) + "%" : yScalePct.toFixed(1) + "%";
       yScaleMode = "ivi";
