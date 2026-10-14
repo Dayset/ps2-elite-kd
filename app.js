@@ -2805,6 +2805,7 @@ import {
         /* private mode: keep the in-memory choice */
       }
       if (lastStatsList) renderStatsTable(lastStatsList);
+      if (lastLegendList) renderLegend(lastLegendList);
     });
   }
 
@@ -3144,7 +3145,9 @@ import {
     } catch { return 0; }
   }
 
+  let lastLegendList = null;
   function renderLegend(list) {
+    lastLegendList = list;
     els.legend.innerHTML = "";
     list.forEach((p, i) => {
       const col = seriesColor(i);
@@ -3164,10 +3167,8 @@ import {
       const mark = flair
         ? `<span class="legend-flair">${flair}</span>`
         : `<span class="legend-swatch" style="background:${col}"></span>`;
-      const sw = waveSwing(p);
-      const cs = consistency(p);
-      const swHtml = sw > 0 ? ` <span class="legend-swing" title="Wave swing area (iVi×KPM)">↕${Math.round(sw)}</span>` : "";
-      const csHtml = cs > 0 ? ` <span class="legend-cons" title="Consistency: K/D retention hard vs easy (1.0 = holds up)">≡${cs.toFixed(2)}</span>` : "";
+      const swHtml = showDebugCols ? (() => { const sw = waveSwing(p); return sw > 0 ? ` <span class="legend-swing" title="Wave swing area (iVi×KPM)">↕${Math.round(sw)}</span>` : ""; })() : "";
+      const csHtml = showDebugCols ? (() => { const cs = consistency(p); return cs > 0 ? ` <span class="legend-cons" title="Consistency: K/D retention hard vs easy (1.0 = holds up)">≡${cs.toFixed(2)}</span>` : ""; })() : "";
       item.innerHTML = `
         ${mark}
         <span class="legend-label" style="color:${col}"><strong>${i + 1}.</strong>${nameHtml}${padMarkHtml(p)}${swHtml}${csHtml}</span>
