@@ -4104,7 +4104,7 @@ import {
   let waveLastDrawn = -1;
   function waveTick() {
     if (!waveOn) return;
-    waveT += 0.008; // slower for smoothness
+    waveT += 0.016; // 2x faster in the middle
     const pct = WAVE_MID + WAVE_AMP * Math.sin(waveT);
     yScalePct = pct;
     if (ySlider) ySlider.value = pct;
