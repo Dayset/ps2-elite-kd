@@ -139,6 +139,15 @@
     </div>
     <div style="font-size:0.72rem; color:var(--muted, #888); margin-top:2px;">
       iVi anchored at <span id="yScaleVal">50%</span> of K/D
+      &nbsp;·&nbsp;
+      <select id="waveShape" aria-label="Wave shape" style="font-size:0.72rem;">
+        <option value="sine" selected>Sine</option>
+        <option value="linear">Linear</option>
+        <option value="smooth">Smooth</option>
+      </select>
+      &nbsp;·&nbsp;
+      speed <input id="waveSpeed" type="range" min="0.25" max="3" step="0.25" value="1" style="width:90px; vertical-align:middle;" aria-label="Wave speed" />
+      <span id="waveSpeedVal">1x</span>
     </div>
   </div>
   <details class="pooled-note fold-note"><summary>♿ What about vehicles?</summary><p>Vehicle and infantry kills are pooled together for now, so vehicle mains may look off in the graph and stats. Infantry-only numbers are coming later.</p></details>
