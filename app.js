@@ -2463,6 +2463,7 @@ import {
   }
 
   function drawChart(list, { waveFrame = false } = {}) {
+    updateWaveRangeWarn(list);
     if (waveFrame && updateWaveFrame(list)) return;
     waveRig = null;
     const svg = els.chart;
@@ -4363,23 +4364,35 @@ import {
       if (players.length) drawChart(players, { waveFrame: true });
     }
   }
+  /** Wave flicker warning while waving: names the lowest and highest public iVi
+   *  players; hidden again as soon as the spread is no longer extreme. */
+  function updateWaveRangeWarn(list) {
+    const warnEl = document.getElementById("waveRangeWarn");
+    if (!warnEl) return;
+    let show = false;
+    const withIvi = (list || []).filter((p) => isFiniteNum(p.ivi) && p.ivi > 0);
+    if (waveOn && withIvi.length >= 2) {
+      let lo = withIvi[0], hi = withIvi[0];
+      for (const p of withIvi) {
+        if (p.ivi < lo.ivi) lo = p;
+        if (p.ivi > hi.ivi) hi = p;
+      }
+      if (hi.ivi / lo.ivi > 4) {
+        const nameOf = (p) => escapeHtml(p.display || p.name || "?");
+        warnEl.innerHTML =
+          `⚠️ Wave flickers: iVi ranges from ${Math.round(lo.ivi)} (${nameOf(lo)}) ` +
+          `to ${Math.round(hi.ivi)} (${nameOf(hi)})`;
+        show = true;
+      }
+    }
+    warnEl.hidden = !show;
+  }
   function startWave() {
     if (waveOn) return;
     waveOn = true;
     // Ghost off while wave is on (Dayset 2026-10-13)
     if (ghostsOn) setGhostsOn(false, { redraw: false });
-    // Warn if iVi range is extreme (causes wave flicker)
-    const ivis = players.map((p) => p.ivi).filter((v) => isFiniteNum(v) && v > 0);
-    const warnEl = document.getElementById("waveRangeWarn");
-    if (warnEl && ivis.length >= 2) {
-      const mn = Math.min(...ivis), mx = Math.max(...ivis);
-      if (mx / mn > 4) {
-        warnEl.textContent = `⚠️ Wave flickers: iVi range ${Math.round(mn)}–${Math.round(mx)} is extreme`;
-        warnEl.hidden = false;
-      } else {
-        warnEl.hidden = true;
-      }
-    }
+    updateWaveRangeWarn(players);
     // start phase from current slider so there's no jump
     const frac = (yScalePct - WAVE_MID) / WAVE_AMP;
     waveT = Math.asin(Math.max(-1, Math.min(1, frac)));
