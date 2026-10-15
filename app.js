@@ -163,6 +163,14 @@ import {
   /** Catalog from data/index.json (shared Pages cache). */
   let sharedIndex = { updatedAt: null, players: [] };
   let sharedIndexLoaded = false;
+  // Short player descriptions (data/descriptions.json, keyed by slug). Shown on the name hover in ✨ Adjusted.
+  let playerDescs = {};
+  try {
+    fetch("data/descriptions.json?t=" + Date.now(), { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d && d.players) playerDescs = d.players; })
+      .catch(() => {});
+  } catch (e) { /* no descriptions: names keep the normal hover */ }
   /** Slugs confirmed as stat padders on review (data/reviewed.json "padding") → always "*". */
   let confirmedPadders = new Set();
 
@@ -3051,7 +3059,7 @@ import {
       return nameTh + rest;
     }
 
-    function playerRows(cols, ordered) {
+    function playerRows(cols, ordered, { withDesc = false } = {}) {
       // Column references over every analysed player (not just the visible order).
       const colRefs = new Map(
         cols.map((c) => [
@@ -3115,7 +3123,7 @@ import {
           return (
             `<tr><th scope="row" class="stats-name" style="color:${col}">` +
             `<span class="player-num" aria-label="Series ${num}">${num}.</span>` +
-            `${nameSpanHtml(row.p.display, farmTitle(row.p))}${padMarkHtml(row.p)}${legacySampleHtml(row.p)}</th>${vals}</tr>`
+            `${nameSpanHtml(row.p.display, farmTitle(row.p) + (withDesc ? descTitle(row.p) : ""))}${padMarkHtml(row.p)}${legacySampleHtml(row.p)}</th>${vals}</tr>`
           );
         })
         .join("");
@@ -3150,7 +3158,7 @@ import {
         <div class="stats-table-wrap">
           <table class="stats-table stats-table-transposed" data-stats-table="adjusted">
             <thead><tr>${metricHead(adjCols, "adjusted", statsSortState.adjusted)}</tr></thead>
-            <tbody>${playerRows(adjCols, adjSorted)}</tbody>
+            <tbody>${playerRows(adjCols, adjSorted, { withDesc: true })}</tbody>
           </table>
         </div>
         ${thinBlock}
@@ -3354,6 +3362,11 @@ import {
   }
 
   /** Name cell title: adds the farm note when farm accounts were excluded. */
+  function descTitle(p) {
+    const text = playerDescs[slugKey(p && p.display)];
+    return text ? `\n\n${text}` : "";
+  }
+
   function farmTitle(p) {
     const note = p && markNote(p.farm, { confirmed: isConfirmedPadder(p) });
     return note ? ` — ${note}` : "";
