@@ -164,14 +164,53 @@ import {
   /** Catalog from data/index.json (shared Pages cache). */
   let sharedIndex = { updatedAt: null, players: [] };
   let sharedIndexLoaded = false;
-  // Short player descriptions (data/descriptions.json, keyed by slug). Shown on the name hover in ✨ Adjusted.
+  // Story-style player legends (data/descriptions/<first-char>.json, keyed by slug).
+  // Shown on the name hover in ✨ Adjusted. Shards load lazily for the players
+  // currently shown; index.json supplies the version param, so a new deploy
+  // still picks up new text without a no-store full download.
   let playerDescs = {};
-  try {
-    fetch("data/descriptions.json?t=" + Date.now(), { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (d && d.players) playerDescs = d.players; })
-      .catch(() => {});
-  } catch (e) { /* no descriptions: names keep the normal hover */ }
+  let legendIndexLoad = null;
+  let legendIndexVersion = null;
+  const legendShardsLoaded = new Set();
+  const legendShardsPending = new Map();
+  function loadLegendIndex() {
+    if (!legendIndexLoad) {
+      legendIndexLoad = fetch("data/descriptions/index.json", { cache: "no-cache" })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => {
+          if (d && typeof d.updatedAt === "string") legendIndexVersion = d.updatedAt;
+          return d;
+        })
+        .catch(() => null);
+    }
+    return legendIndexLoad;
+  }
+  function loadLegendShards(slugs) {
+    const needed = new Set();
+    for (const s of slugs || []) {
+      const key = String(s || "").charAt(0).toLowerCase();
+      if (key && !legendShardsLoaded.has(key) && !legendShardsPending.has(key)) needed.add(key);
+    }
+    if (!needed.size) return;
+    const list = lastStatsList; // re-render only if this list is still current
+    loadLegendIndex().then(() => {
+      for (const key of needed) {
+        const url = `data/descriptions/${key}.json` + (legendIndexVersion ? `?v=${encodeURIComponent(legendIndexVersion)}` : "");
+        const p = fetch(url)
+          .then((r) => (r.ok ? r.json() : null))
+          .then((d) => {
+            if (d && d.players) Object.assign(playerDescs, d.players);
+            legendShardsLoaded.add(key);
+            legendShardsPending.delete(key);
+            if (lastStatsList === list && lastStatsList) renderStatsTable(lastStatsList);
+          })
+          .catch(() => {
+            legendShardsPending.delete(key);
+          });
+        legendShardsPending.set(key, p);
+      }
+    });
+  }
   /** Slugs confirmed as stat padders on review (data/reviewed.json "padding") → always "*". */
   let confirmedPadders = new Set();
 
@@ -3013,6 +3052,7 @@ import {
     loadConsPool();
     if (!els.stats) return;
     lastStatsList = list;
+    loadLegendShards(list.map((e) => slugKey(e && e.display)).filter(Boolean));
     if (!list.length) {
       els.stats.innerHTML = "";
       return;

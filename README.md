@@ -73,6 +73,18 @@ Hidden by default. Tick *show older debug stats* to show these: 🎯 **Aim** (Me
 
 Each value is explained in [docs/metrics.md](docs/metrics.md).
 
+## 📖 Player legends
+
+Hover a name in the ✨ Adjusted table and you get a short story-style legend: a standalone story about how that person behaved on the battlefield, written from the visible stats only (✨ Adjusted defaults + 📊 Public), judged against the whole population. No numbers except years, no role or loadout claims unless the owner wrote one down, and never related to any other player.
+
+- **Where they live:** `data/descriptions/<first char of slug>.json`, with `{ text, basis, at }` per player, plus a tiny `data/descriptions/index.json` (`updatedAt`) that the page uses as a version param. The page fetches only the shards for the players currently shown.
+- **Eligibility:** every player in `data/ranks.json` gets one, except thin samples (`thin = 1`) and confirmed padders (`data/reviewed.json` decision `padding`). Hidden players are already out of `ranks.json`.
+- **Cards:** `node scripts/build-legend-cards.mjs` builds the fact cards writers see (visible metrics + population percentile + band word + tenure + eligibility + owner note). Writers never see raw player files or debug columns.
+- **Staleness:** a legend's `basis` is its bands plus tenure state. When a later refresh moves a band, `node scripts/build-legend-cards.mjs --stale` lists the legend for rewriting; numbers drifting inside a band don't invalidate it.
+- **Validator:** `node scripts/check-legends.mjs` enforces the style rules (45–90 words, no digits except years, no gendered pronouns, no cheating/padding/farming/flag or role words without an owner note, no words relating players to each other — no teammates, rivals, alts, same-outfit claims, no named references or comparisons — no repeated openings or phrases, basis matches the current card).
+- **Owner notes:** `data/legend-notes.json` holds the only role facts legends may use (role, class, outfit), written by the owner. Everything else must come from the stats.
+- **Writing more:** pick a chunk with `--chunk N --chunk-size 40` (active players by ⚔️ iVi first, then the rest, then 🪦), write from the cards, validate, and after writing shards run `node scripts/build-legend-cards.mjs --reindex` so the page picks up the new version.
+
 ## 🛠️ Development
 
 ```bash
