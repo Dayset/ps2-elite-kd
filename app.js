@@ -38,6 +38,7 @@ import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261010-sav1";
 import GHOST_MODEL from "./data/ghost-model.mjs?v=20261010-sav1";
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-sav1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
+import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261015-tip1";
 import { entryFetchedAt, pickNewest, writeWithEviction } from "./cache-pick.mjs?v=20261010-sav1";
 import {
   NameLoadError,
@@ -3249,6 +3250,8 @@ import {
         const tbl = els.stats.querySelector(`table[data-stats-table="${tableId}"]`);
         const newTh = tbl && [...tbl.querySelectorAll("th.sortable")].find((h) => h.getAttribute("data-sort") === key);
         if (newTh) keepSortedColumnVisible(newTh.closest(".stats-table-wrap"), newTh, prevLeft);
+        // Phones have no hover: show the column's description for 5 s after a tap.
+        if (newTh && isTouchUi()) showHeadTip(newTh.getAttribute("title"), newTh);
       });
     });
   }

@@ -2297,6 +2297,8 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
   border-left-width: 3px; box-shadow: 0 6px 20px var(--shadow);
 }
 .dist-tip[hidden] { display: none; }
+/* Column-header hint on touch screens (head-tip.mjs): shown 5 s after a tap-sort. */
+.head-tip { position: absolute; z-index: 20; pointer-events: none; max-width: min(18rem, calc(100vw - 16px)); }
 #distSvg .dist-name { cursor: pointer; }
 #distSvg .dist-name:hover { text-decoration: underline; }
 #distSvg .dist-name:focus-visible { outline: 2px solid var(--accent); }
