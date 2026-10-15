@@ -2983,11 +2983,9 @@ import {
     ];
     // Opponent-sample metrics: "—" below MIN_FIGHTS (player-metrics.mjs), so they
     // also drop out of sorting and the % column references.
-    const thinNote = ` Shows — (too few fights to measure) unless the sample has ${MIN_FIGHTS_RULE}.`;
     for (const c of adjVisibleCols.concat(adjDebugCols)) {
       if (!THIN_METRICS.includes(c.id) || c.thinTip) continue;
       c.thinTip = true;
-      c.hint = (c.hint || c.label) + thinNote;
       c.fn = (r) => shownValue(r, c.id);
     }
     const adjCols = showDebugCols ? adjVisibleCols.concat(adjDebugCols) : adjVisibleCols;

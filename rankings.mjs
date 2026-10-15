@@ -63,7 +63,6 @@ export function initRankings(host) {
   for (const c of ALL_COLS) {
     if (!THIN_METRICS.includes(c.id)) continue;
     c.thinTip = true;
-    c.tip = `${c.tip || c.label}. Shows — unless the sample has ${MIN_FIGHTS_RULE}`;
   }
   const colById = (id) => ALL_COLS.find((c) => c.id === id);
 
