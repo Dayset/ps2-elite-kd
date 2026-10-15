@@ -38,7 +38,7 @@ function renderError(out, message) {
 
 function renderResult(out, champ, result) {
   const block = el("div", null, "battle-block");
-  const verdict = result.win ? "Champion wins" : "Champion loses";
+  const verdict = result.win ? "Champion favored" : "Champion underdog";
   block.append(el("h4", `${verdict}: ${champ.name}`, result.win ? "battle-win" : "battle-lose"));
 
   const modeText =
@@ -54,13 +54,14 @@ function renderResult(out, champ, result) {
     el("li", `Champion strength: ${num(result.a, 2)}`),
     el("li", `Enemy strength used: ${num(result.enemy, 2)}`),
     el("li", `Activity similarity (min ÷ max): ${num(result.similarity, 3)}`),
-    el("li", `Champion remaining strength: ${pct(result.remaining)}`)
+    el("li", `Champion win rate: ${pct(result.winRate)}${result.trials ? ` (${result.trials} simulated fights)` : " (exact 1v1 odds)"}`),
+    el("li", `Champion remaining strength (avg, when he wins): ${pct(result.remaining)}`)
   );
   block.append(summary);
 
   const table = el("table", null, "battle-table");
   const head = el("tr");
-  for (const h of ["Opponent", "adjS", "Activity", "Consistency", "Strength", "1v1 win chance"]) {
+  for (const h of ["Opponent", "adjS", "Activity", "Consistency", "Mean strength", "1v1 win chance"]) {
     head.append(el("th", h));
   }
   const thead = el("thead");

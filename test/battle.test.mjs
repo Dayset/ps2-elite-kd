@@ -9,6 +9,9 @@ import {
   findFighter,
   pickOpponents,
   runBattle,
+  duelOdds,
+  normalCdf,
+  seededRandom,
 } from "../battle.mjs";
 
 const COLS = ["name", "query", "adjs", "act", "cons"];
@@ -16,21 +19,26 @@ const row = (name, adjs, act, cons, query = name.toLowerCase()) => [name, query,
 const fighter = (name, adjs, act, cons) => fighterFromRow(row(name, adjs, act, cons), COLS);
 
 describe("fighterFromRow", () => {
-  it("computes strength as 2^(adjS/600) × √act × cons", () => {
+  it("mean strength is 2^(adjS/600) × √act, independent of consistency", () => {
     const f = fighter("A", 600, 4, 0.5);
-    assert.ok(Math.abs(f.strength - 2 * 2 * 0.5) < 1e-9);
+    assert.ok(Math.abs(f.mu - 2 * 2) < 1e-9);
+    assert.ok(Math.abs(fighter("A2", 600, 4, 1).mu - 4) < 1e-9);
   });
 
-  it("floors negative adjusted scores at 0 (strength 1 before activity/consistency)", () => {
-    const f = fighter("B", -300, 1, 1);
-    assert.equal(f.strength, 1);
+  it("spread is SPREAD_K × (1 − consistency)", () => {
+    assert.ok(Math.abs(fighter("A", 0, 1, 0.6).sigma - 0.4) < 1e-9);
+    assert.equal(fighter("A", 0, 1, 1).sigma, 0);
+  });
+
+  it("floors negative adjusted scores at 0", () => {
+    assert.ok(Math.abs(fighter("B", -300, 1, 1).mu - 1) < 1e-9);
   });
 
   it("returns null when a required stat is missing", () => {
     assert.equal(fighterFromRow(["X", "x", null, 1, 1], COLS), null);
   });
 
-  it("clamps consistency to 0..1 and activity to ≥ 0", () => {
+  it("clamps activity to ≥ 0 and consistency to 0..1", () => {
     const f = fighterFromRow(row("C", 0, -2, 3), COLS);
     assert.equal(f.act, 0);
     assert.equal(f.cons, 1);
@@ -41,13 +49,11 @@ describe("findFighter", () => {
   const rows = [row("[lKPM] Simplenubb", 2459, 12, 0.6, "simplenubb"), row("Other", 100, 1, 1)];
 
   it("matches the query column exactly, case-insensitively", () => {
-    const r = findFighter(rows, COLS, "SIMPLENUBB");
-    assert.equal(r.fighter.name, "[lKPM] Simplenubb");
+    assert.equal(findFighter(rows, COLS, "SIMPLENUBB").fighter.name, "[lKPM] Simplenubb");
   });
 
   it("falls back to a single unambiguous substring match", () => {
-    const r = findFighter(rows, COLS, "nubb");
-    assert.equal(r.fighter.name, "[lKPM] Simplenubb");
+    assert.equal(findFighter(rows, COLS, "nubb").fighter.name, "[lKPM] Simplenubb");
   });
 
   it("reports an error for an empty or unknown name", () => {
@@ -72,8 +78,7 @@ describe("pickOpponents", () => {
   const champ = fighter("Champ", 1400, 1, 1);
 
   it("returns the n closest by adjusted score, excluding the champion", () => {
-    const picked = pickOpponents(rows, COLS, champ, 2).map((f) => f.name);
-    assert.deepEqual(picked, ["Near1", "Near2"]);
+    assert.deepEqual(pickOpponents(rows, COLS, champ, 2).map((f) => f.name), ["Near1", "Near2"]);
   });
 
   it("returns fewer when not enough candidates exist", () => {
@@ -81,62 +86,105 @@ describe("pickOpponents", () => {
   });
 });
 
-describe("runBattle: 1v1 and concentrated fights", () => {
-  it("1v1: the stronger fighter wins", () => {
-    const a = fighter("A", 1200, 2, 1);
-    const b = fighter("B", 600, 2, 1);
-    assert.equal(runBattle(a, [b]).win, true);
-    assert.equal(runBattle(b, [a]).win, false);
+describe("normalCdf", () => {
+  it("is 0.5 at zero and symmetric", () => {
+    assert.ok(Math.abs(normalCdf(0) - 0.5) < 1e-6);
+    assert.ok(Math.abs(normalCdf(1) + normalCdf(-1) - 1) < 1e-6);
   });
 
-  it("concentrated enemy strength is (Σ√b)²", () => {
-    const champ = fighter("Champ", 600, 4, 1);
-    const opps = [fighter("O1", 0, 4, 1), fighter("O2", 0, 4, 1)];
-    const r = runBattle(champ, opps);
-    // Each opponent has b = 2, so E = (√2 + √2)² = 8.
-    assert.ok(Math.abs(r.enemy - 8) < 1e-9);
-    assert.equal(r.win, 4 > 8);
+  it("matches a known value", () => {
+    assert.ok(Math.abs(normalCdf(1.96) - 0.975) < 1e-3);
+  });
+});
+
+describe("duelOdds", () => {
+  it("two identical fighters are exactly 50/50, whatever their consistency", () => {
+    const a = fighter("A", 1433, 2.6, 0.5);
+    const b = fighter("B", 1433, 2.6, 0.5);
+    assert.ok(Math.abs(duelOdds(a, b) - 0.5) < 1e-9);
+    const c = fighter("C", 1433, 2.6, 0.9);
+    const d = fighter("D", 1433, 2.6, 0.9);
+    assert.ok(Math.abs(duelOdds(c, d) - 0.5) < 1e-9);
   });
 
-  it("a concentrated group of similarly-active enemies beats a stronger single fighter", () => {
+  it("with a 2× mean gap, low consistency pulls the odds toward 50%", () => {
+    const strong = fighter("S", 1200, 1, 0.6); // mean 4
+    const weak = fighter("W", 600, 1, 0.6); // mean 2^1 = 2, strong mean 2^2 = 4
+    const swingy = duelOdds(strong, weak);
+    const steady = duelOdds(fighter("S2", 1200, 1, 0.9), fighter("W2", 600, 1, 0.9));
+    assert.ok(swingy < steady);
+    assert.ok(swingy > 0.5 && swingy < 1);
+    assert.ok(steady > 0.99);
+  });
+
+  it("steady fighters with equal means are exactly 50/50 (no spread, tie)", () => {
+    assert.equal(duelOdds(fighter("X", 600, 1, 1), fighter("Y", 600, 1, 1)), 0.5);
+  });
+});
+
+describe("runBattle", () => {
+  it("two identical fighters: Monte Carlo win rate is close to 50%", () => {
+    const a = fighter("A", 1433, 2.6, 0.6);
+    const b = fighter("B", 1433, 2.6, 0.6);
+    const r = runBattle(a, [b], { trials: 8000, seed: 42 });
+    // Single opponent uses the closed-form odds, so this must be exact.
+    assert.ok(Math.abs(r.winRate - 0.5) < 1e-9);
+  });
+
+  it("two identical enemies beat an identical champion more often than not", () => {
+    const a = fighter("A", 1433, 2.6, 0.6);
+    const r = runBattle(a, [fighter("B", 1433, 2.6, 0.6), fighter("C", 1433, 2.6, 0.6)], { trials: 8000, seed: 42 });
+    assert.ok(r.winRate < 0.5);
+  });
+
+  it("is reproducible: same seed, same result", () => {
+    const a = fighter("A", 1433, 2.6, 0.6);
+    const opps = [fighter("B", 1420, 2.4, 0.5), fighter("C", 1440, 2.8, 0.7)];
+    const r1 = runBattle(a, opps, { trials: 2000, seed: 9 });
+    const r2 = runBattle(a, opps, { trials: 2000, seed: 9 });
+    assert.equal(r1.winRate, r2.winRate);
+  });
+
+  it("concentrated group of similar enemies beats an equal-strength champion", () => {
     const champ = fighter("Champ", 1000, 1, 1);
-    const group = Array.from({ length: 6 }, (_, i) => fighter(`G${i}`, 1000, 1, 1));
-    const r = runBattle(champ, group);
+    const group = Array.from({ length: 6 }, (_, i) => fighter(`G${i}`, 1000, 1, 0.8));
+    const r = runBattle(champ, group, { trials: 3000, seed: 5 });
     assert.equal(r.mode, "concentrated");
-    assert.equal(r.win, false);
+    assert.ok(r.winRate < 0.5);
   });
-});
 
-describe("runBattle: sequential (dissimilar activity)", () => {
-  it("chokes many low-activity opponents one at a time", () => {
-    const champ = fighter("Spartan", 2000, 12, 1);
-    const weak = Array.from({ length: 10 }, (_, i) => fighter(`W${i}`, 0, 0.1 + i * 0.01, 1));
-    const strong = fighter("Strong", 0, 12, 1);
-    const r = runBattle(champ, [...weak, strong]);
+  it("sequential mode: a strong champion chokes many weak opponents", () => {
+    const champ = fighter("Spartan", 2000, 12, 0.9);
+    const weak = Array.from({ length: 10 }, (_, i) => fighter(`W${i}`, 0, 0.1 + i * 0.01, 0.9));
+    const strong = fighter("Strong", 0, 12, 0.9);
+    const r = runBattle(champ, [...weak, strong], { trials: 2000, seed: 3 });
     assert.equal(r.mode, "sequential");
-    assert.equal(r.win, true);
-    assert.ok(r.remaining > 0 && r.remaining <= 1);
+    assert.ok(r.winRate > 0.9);
   });
 
-  it("uses concentration once activity levels are similar again", () => {
-    const champ = fighter("Champ", 1000, 4, 1);
-    const similar = [fighter("S1", 600, 3, 1), fighter("S2", 600, 4, 1)];
-    assert.equal(runBattle(champ, similar).mode, "concentrated");
-  });
-});
-
-describe("runBattle: edge cases", () => {
   it("no opponents: the champion wins with full strength", () => {
     const r = runBattle(fighter("Solo", 600, 2, 1), []);
     assert.equal(r.win, true);
     assert.equal(r.remaining, 1);
   });
 
-  it("exposes each opponent's 1v1 win chance", () => {
+  it("exposes each opponent's closed-form 1v1 win chance", () => {
     const champ = fighter("Champ", 600, 4, 1);
     const r = runBattle(champ, [fighter("O", 600, 4, 1)]);
     assert.equal(r.duels.length, 1);
-    assert.ok(Math.abs(r.duels[0].championWinChance - 0.5) < 1e-9); // equal strengths
+    assert.ok(Math.abs(r.duels[0].championWinChance - 0.5) < 1e-9);
+  });
+});
+
+describe("seededRandom", () => {
+  it("returns values in [0, 1) and is deterministic per seed", () => {
+    const r1 = seededRandom(123);
+    const r2 = seededRandom(123);
+    for (let i = 0; i < 20; i++) {
+      const x = r1();
+      assert.ok(x >= 0 && x < 1);
+      assert.equal(x, r2());
+    }
   });
 });
 
