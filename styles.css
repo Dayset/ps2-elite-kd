@@ -2349,6 +2349,11 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
 .battle-result { margin-top: 0.75rem; }
 .battle-result table { border-collapse: collapse; font-size: 0.85rem; width: 100%; }
 .battle-result th, .battle-result td { padding: 0.2rem 0.4rem; border-bottom: 1px solid var(--dim); text-align: left; }
+/* Member tables scroll sideways inside the panel instead of pushing columns off a phone. */
+.battle-table-wrap { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.battle-table-wrap table { min-width: 22rem; }
+.battle-table-wrap td, .battle-table-wrap th { white-space: nowrap; }
+.battle-table-wrap td:first-child { white-space: normal; word-break: break-word; min-width: 6rem; }
 .battle-win { color: var(--good, #2a9d4a); }
 .battle-lose { color: var(--bad, #c0392b); }
 .battle-error { color: var(--bad, #c0392b); }

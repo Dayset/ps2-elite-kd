@@ -94,7 +94,9 @@ function membersTable(players) {
     body.append(tr);
   }
   table.append(body);
-  return table;
+  const wrap = el("div", null, "battle-table-wrap");
+  wrap.append(table);
+  return wrap;
 }
 
 function renderGroupResult(fighters, opposition, result) {
