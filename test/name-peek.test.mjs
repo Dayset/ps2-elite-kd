@@ -20,3 +20,15 @@ describe("name-peek helpers", () => {
     assert.deepEqual(peekPosition({ left: -50, top: 300, width: 40, bottom: 320 }, size, vp), { left: 8, top: 252 });
   });
 });
+
+import { peekParts } from "../name-peek.mjs";
+describe("name-peek legend", () => {
+  it("returns the full name and an empty legend when none is stored", () => {
+    const el = { getAttribute: (k) => ({ "data-full": "[TAG] Someone" })[k] ?? null, textContent: "Someone" };
+    assert.deepEqual(peekParts(el), { name: "[TAG] Someone", desc: "" });
+  });
+  it("includes the stored legend from data-desc", () => {
+    const el = { getAttribute: (k) => ({ "data-full": "Zyr0sNCx", "data-desc": "  Quick on the trigger.  " })[k] ?? null, textContent: "" };
+    assert.deepEqual(peekParts(el), { name: "Zyr0sNCx", desc: "Quick on the trigger." });
+  });
+});

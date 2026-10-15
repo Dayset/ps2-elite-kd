@@ -39,6 +39,14 @@ function fullName(el) {
   return (el.getAttribute("data-full") || el.getAttribute("title") || el.textContent || "").trim();
 }
 
+/**
+ * What the popup shows for a .nm element: the full name, plus its stored legend
+ * (data-desc, set on the stats-table name cells) when there is one.
+ */
+export function peekParts(el) {
+  return { name: fullName(el), desc: ((el && el.getAttribute && el.getAttribute("data-desc")) || "").trim() };
+}
+
 let peekEl = null;
 let peekTimer = 0;
 
@@ -50,7 +58,7 @@ export function hideNamePeek() {
   if (peekEl) peekEl.hidden = true;
 }
 
-export function showNamePeek(anchor, text) {
+export function showNamePeek(anchor, text, desc = "") {
   if (typeof document === "undefined" || !anchor) return;
   if (!peekEl) {
     peekEl = document.createElement("div");
@@ -61,7 +69,17 @@ export function showNamePeek(anchor, text) {
     document.body.appendChild(peekEl);
   }
   if (peekTimer) clearTimeout(peekTimer);
-  peekEl.textContent = text;
+  peekEl.textContent = "";
+  const nameLine = document.createElement("div");
+  nameLine.className = "np-name";
+  nameLine.textContent = text;
+  peekEl.appendChild(nameLine);
+  if (desc) {
+    const descLine = document.createElement("div");
+    descLine.className = "np-desc";
+    descLine.textContent = desc;
+    peekEl.appendChild(descLine);
+  }
   peekEl.hidden = false;
   peekEl.style.left = "0px";
   peekEl.style.top = "0px";
@@ -79,9 +97,15 @@ export function showNamePeek(anchor, text) {
   peekTimer = setTimeout(hideNamePeek, PEEK_MS);
 }
 
-function nameTarget(t) {
+/**
+ * A .nm worth a popup: truncated, or (when allowDesc) carrying a legend.
+ * Touch only: a mouse click on a full name gets the native title on hover instead.
+ */
+function nameTarget(t, allowDesc = false) {
   const el = t && t.closest ? t.closest(".nm") : null;
-  return el && isTruncated(el) ? el : null;
+  if (!el) return null;
+  if (isTruncated(el)) return el;
+  return allowDesc && el.hasAttribute("data-desc") ? el : null;
 }
 function inInteractive(el) {
   return !!(el && el.closest && el.closest("a, button, label, summary, [role='button']"));
@@ -93,6 +117,7 @@ export function installNamePeek() {
   installed = true;
   let press = null; // { el, x, y, timer, fired }
   let swallowClickUntil = 0;
+  let lastPointer = "mouse";
 
   const cancelPress = () => {
     if (press && press.timer) clearTimeout(press.timer);
@@ -102,8 +127,9 @@ export function installNamePeek() {
   document.addEventListener(
     "pointerdown",
     (e) => {
+      lastPointer = e.pointerType || "mouse";
       if (e.pointerType === "mouse") return;
-      const el = nameTarget(e.target);
+      const el = nameTarget(e.target, true);
       if (!el || !inInteractive(el)) return;
       cancelPress();
       press = { el, x: e.clientX, y: e.clientY, fired: false, timer: 0 };
@@ -111,7 +137,8 @@ export function installNamePeek() {
         if (!press) return;
         press.fired = true;
         swallowClickUntil = Date.now() + 800;
-        showNamePeek(press.el, fullName(press.el));
+        const parts = peekParts(press.el);
+        showNamePeek(press.el, parts.name, parts.desc);
       }, LONG_PRESS_MS);
     },
     { passive: true }
@@ -127,7 +154,7 @@ export function installNamePeek() {
   document.addEventListener("pointercancel", cancelPress, { passive: true });
   // Long-press on a link opens the OS menu on some phones; skip it when we peeked.
   document.addEventListener("contextmenu", (e) => {
-    if (Date.now() < swallowClickUntil && nameTarget(e.target)) e.preventDefault();
+    if (Date.now() < swallowClickUntil && nameTarget(e.target, true)) e.preventDefault();
   });
 
   document.addEventListener(
@@ -135,15 +162,19 @@ export function installNamePeek() {
     (e) => {
       if (Date.now() < swallowClickUntil) {
         // The click that ends a long-press must not add/remove a name or follow a link.
-        if (nameTarget(e.target) || (e.target.closest && e.target.closest(".name-peek"))) {
+        if (nameTarget(e.target, true) || (e.target.closest && e.target.closest(".name-peek"))) {
           e.preventDefault();
           e.stopPropagation();
           swallowClickUntil = 0;
           return;
         }
       }
-      const el = nameTarget(e.target);
-      if (el && !inInteractive(el)) showNamePeek(el, fullName(el));
+      // Touch taps also open the legend popup; a mouse click only for truncated names.
+      const el = nameTarget(e.target, lastPointer !== "mouse");
+      if (el && !inInteractive(el)) {
+        const parts = peekParts(el);
+        showNamePeek(el, parts.name, parts.desc);
+      }
     },
     true
   );

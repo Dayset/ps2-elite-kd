@@ -3190,7 +3190,7 @@ import {
           return (
             `<tr><th scope="row" class="stats-name" style="color:${col}">` +
             `<span class="player-num" aria-label="Series ${num}">${num}.</span>` +
-            `${nameSpanHtml(row.p.display, farmTitle(row.p) + (withDesc ? descTitle(row.p) : ""))}${padMarkHtml(row.p)}${legacySampleHtml(row.p)}</th>${vals}</tr>`
+            `${nameSpanHtml(row.p.display, farmTitle(row.p) + (withDesc ? descTitle(row.p) : ""), withDesc ? descText(row.p) : "")}${padMarkHtml(row.p)}${legacySampleHtml(row.p)}</th>${vals}</tr>`
           );
         })
         .join("");
@@ -3431,8 +3431,11 @@ import {
   }
 
   /** Name cell title: adds the farm note when farm accounts were excluded. */
+  function descText(p) {
+    return playerDescs[slugKey(p && p.display)] || "";
+  }
   function descTitle(p) {
-    const text = playerDescs[slugKey(p && p.display)];
+    const text = descText(p);
     return text ? `\n\n${text}` : "";
   }
 
@@ -3441,9 +3444,10 @@ import {
     return note ? ` — ${note}` : "";
   }
 
-  function nameSpanHtml(name, extraTitle = "") {
+  function nameSpanHtml(name, extraTitle = "", desc = "") {
     const n = escapeHtml(name);
-    return `<span class="nm" data-full="${n}" title="${n}${escapeHtml(extraTitle)}">${n}</span>`;
+    const d = desc ? ` data-desc="${escapeHtml(desc)}"` : "";
+    return `<span class="nm" data-full="${n}"${d} title="${n}${escapeHtml(extraTitle)}">${n}</span>`;
   }
 
   function escapeHtml(s) {

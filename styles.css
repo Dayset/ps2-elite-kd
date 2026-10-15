@@ -1985,6 +1985,16 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
   user-select: text;
 }
 .name-peek[hidden] { display: none; }
+/* Legend under the name in the popup (stats-table names with a stored legend). */
+.name-peek .np-desc {
+  margin-top: 0.35rem;
+  max-width: 34ch;
+  font-size: 0.8rem;
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--dim);
+  white-space: normal;
+}
 .name-peek.name-peek-pop { animation: limit-toast-pop 0.18s ease-out; }
 
 /* Stats tables: small dimmed "−28%" gap to the column top beside each value */
