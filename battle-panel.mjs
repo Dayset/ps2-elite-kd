@@ -3,8 +3,8 @@
  * "show older debug stats" box is ticked. Pure math lives in battle.mjs.
  *
  * The players come from the names box on the main page (no retyping). Each
- * name has a "Fights" box: ticked = fights, unticked = opposition. Every ticked
- * player is run against the group of unticked players.
+ * name has an "Opposition" box: ticked = opposition, unticked = fighter.
+ * Every unticked player is run against the whole ticked group, which fights together.
  */
 import { findFighter, runBattle } from "./battle.mjs?v=20261015-battle1";
 
@@ -36,7 +36,7 @@ function el(tag, text, cls) {
   return node;
 }
 
-/** Names from the main page, and whether each one fights (default: yes). */
+/** Names from the main page, and whether each one is opposition (default: no, it fights). */
 let names = [];
 const fights = new Map();
 
@@ -48,7 +48,8 @@ function renderNameList(list) {
   const items = names.map((name) => {
     const box = el("input", null, "battle-fight");
     box.type = "checkbox";
-    box.checked = fights.get(name) !== false;
+    box.checked = fights.get(name) === true;
+    box.title = "Ticked = opposition";
     box.dataset.name = name;
     box.addEventListener("change", () => {
       fights.set(name, box.checked);
@@ -65,9 +66,9 @@ function renderNameList(list) {
 function updateSideText(list) {
   const side = list.parentElement && list.parentElement.querySelector(".battle-sides");
   if (!side) return;
-  const f = names.filter((n) => fights.get(n) !== false);
-  const o = names.filter((n) => fights.get(n) === false);
-  side.textContent = `Fighting: ${f.length ? f.join(", ") : "none"} · Opposition: ${o.length ? o.join(", ") : "none"}`;
+  const f = names.filter((n) => fights.get(n) !== true);
+  const o = names.filter((n) => fights.get(n) === true);
+  side.textContent = `Fighting: ${f.length ? f.join(", ") : "none"} · Opposition (fights as one group): ${o.length ? o.join(", ") : "none"}`;
 }
 
 function renderResult(champ, result) {
@@ -120,11 +121,11 @@ function renderResult(champ, result) {
 }
 
 async function runSelected(out) {
-  const fighting = names.filter((n) => fights.get(n) !== false);
-  const opposition = names.filter((n) => fights.get(n) === false);
+  const fighting = names.filter((n) => fights.get(n) !== true);
+  const opposition = names.filter((n) => fights.get(n) === true);
   out.replaceChildren(el("p", "Running battle…", "battle-status"));
   if (!fighting.length || !opposition.length) {
-    out.replaceChildren(el("p", "Tick at least one player to fight and leave at least one unticked as opposition.", "battle-error"));
+    out.replaceChildren(el("p", "Leave at least one player unticked to fight, and tick at least one as opposition.", "battle-error"));
     return;
   }
   let payload;
