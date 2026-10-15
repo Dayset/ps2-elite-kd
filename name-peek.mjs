@@ -7,13 +7,13 @@
  *   - names inside a link / button / chip (Honu links, name chips, cache chips):
  *     long-press (~0.45 s) — a normal tap keeps its usual action (open link,
  *     add / remove name); the click after a long-press is swallowed.
- * One reusable popup, auto-hides after 3 s, on tap, scroll or resize. Import once per page.
+ * One reusable popup, auto-hides after 10 s, on tap, scroll or resize. Import once per page.
  */
 
 /** ~80% of cached names (incl. "[TAG] ") are ≤ 18 characters (2026-10-07, 461 players). */
 export const NAME_MAX_CH = 18;
 export const LONG_PRESS_MS = 450;
-const PEEK_MS = 3000;
+const PEEK_MS = 10000;
 const MOVE_TOLERANCE_PX = 10;
 
 /** True when the element's text is cut off (ellipsis showing). */
