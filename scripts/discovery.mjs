@@ -206,9 +206,10 @@ export function nextCap({ cap = CAP_STEPS[0], indexSize = 0, backlogLeft = 0, du
   // If over cap, step up immediately — the cap is not containing growth,
   // so waiting for backlog/due to clear just deadlocks the queue.
   // Otherwise, step up only when caught up (backlog clear, due fits one run).
-  const overCap = indexSize > c;
-  const caughtUp = indexSize >= c && backlogLeft === 0 && dueLeft <= perRun;
-  if ((overCap || caughtUp) && i >= 0 && i < steps.length - 1) c = steps[i + 1];
+  // Faster growth: step up as soon as the index reaches the cap (backlog and
+  // due refreshes no longer hold it back; they just run longer).
+  const reached = indexSize >= c;
+  if (reached && i >= 0 && i < steps.length - 1) c = steps[i + 1];
   return c;
 }
 
