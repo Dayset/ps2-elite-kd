@@ -75,7 +75,7 @@ function updateSideText(list) {
 function membersTable(players) {
   const table = el("table", null, "battle-table");
   const head = el("tr");
-  for (const h of ["Player", "adjS", "Activity", "Consistency", "Mean strength"]) {
+  for (const h of ["Player", "adjS", "Activity", "⚡ Const", "Mean strength"]) {
     head.append(el("th", h));
   }
   const thead = el("thead");
