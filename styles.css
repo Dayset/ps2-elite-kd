@@ -636,6 +636,14 @@ header .sub {
   cursor: pointer;
 }
 .controls button.btn-muted,
+.controls button#diceBtn {
+  margin-left: auto;
+  min-width: var(--ctl-h);
+  height: var(--ctl-h);
+  background: var(--ctrl-btn-muted-bg);
+  border-color: var(--ctrl-btn-border);
+  color: var(--text);
+}
 .controls button#copyLinkBtn {
   background: var(--ctrl-btn-muted-bg);
   color: var(--muted);

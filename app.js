@@ -193,6 +193,7 @@ import {
     namesInput: document.getElementById("namesInput") || document.getElementById("names"),
     analyzeBtn: document.getElementById("analyzeBtn") || document.getElementById("loadBtn"),
     copyLinkBtn: document.getElementById("copyLinkBtn"),
+    diceBtn: document.getElementById("diceBtn"),
     clearNamesBtn: document.getElementById("clearNamesBtn"),
     fetchFresh: document.getElementById("fetchFresh"),
     freshEta: document.getElementById("freshEta"),
@@ -1185,6 +1186,44 @@ import {
   }
 
   /** Cache chip click: add if absent, remove (chip or trailing text) if present. */
+  /* 🎲 Random player: ⚔️ iVi (adjusted) range of the names in the box, widened by 25% each side. */
+  let rankVals = null;
+  async function loadRankVals() {
+    if (rankVals) return rankVals;
+    try {
+      const r = await fetch("data/ranks.json?t=" + Date.now(), { cache: "no-store" });
+      if (!r.ok) return (rankVals = new Map());
+      const d = await r.json();
+      const ci = d.cols.indexOf("adjs");
+      const si = d.cols.indexOf("slug");
+      rankVals = new Map(
+        d.rows
+          .filter((x) => isFiniteNum(x[ci]) && x[ci] > 0)
+          .map((x) => [x[si], { name: x[0], adjs: x[ci] }])
+      );
+    } catch (e) {
+      rankVals = new Map();
+    }
+    return rankVals;
+  }
+
+  async function rollDice() {
+    const btn = els.diceBtn;
+    const say = (msg) => { if (btn) { btn.title = msg; btn.setAttribute("aria-label", msg); } };
+    const vals = await loadRankVals();
+    const listVals = nameTokens.map((n) => vals.get(slugKey(n))).filter(Boolean).map((v) => v.adjs);
+    if (!listVals.length) { say("Add a name with an iVi first"); return; }
+    if (nameTokens.length >= MAX_NAMES) { say("The list is full (10 names)"); return; }
+    const lo = Math.min(...listVals) * 0.75;
+    const hi = Math.max(...listVals) * 1.25;
+    const used = new Set(nameTokens.map((n) => slugKey(n)));
+    const pool = [...vals.entries()].filter(([slug, v]) => !used.has(slug) && v.adjs >= lo && v.adjs <= hi);
+    if (!pool.length) { say(`Nobody in ${Math.round(lo)}–${Math.round(hi)}`); return; }
+    const [, pick] = pool[Math.floor(Math.random() * pool.length)];
+    addNameToField(pick.name);
+    say(`Added ${pick.name} (${Math.round(pick.adjs)} in ${Math.round(lo)}–${Math.round(hi)}). Press Analyze to load.`);
+  }
+
   function toggleNameInField(name, anchor) {
     const clean = String(name).trim();
     if (!clean) return;
@@ -4240,6 +4279,7 @@ import {
   });
 
   if (els.copyLinkBtn) {
+    els.diceBtn?.addEventListener("click", () => { rollDice(); });
     els.copyLinkBtn.addEventListener("click", () => {
       commitFragment({ clearInput: true });
       copyShareLink();
