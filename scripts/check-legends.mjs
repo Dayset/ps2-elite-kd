@@ -6,7 +6,10 @@
  *   node scripts/check-legends.mjs --json   # same report as JSON
  *
  * Rules (issue #3 Validator): 45–90 words; no digits after removing the
- * player's own name except years 2012–2026; no he/him/his/she/her; no
+ * player's own name except years 2012–2026; the player's own name forms are
+ * not content, so they are stripped before the pronoun / banned / role /
+ * relational word checks (a player actually named Aimbot, Tank, or Squad can
+ * still be named); no he/him/his/she/her; no
  * cheating/padding/farming/flag words; no role words and no words relating
  * players to each other (teammate, squad, rival, alt, …) unless the player has
  * an owner note; no 3-word opening used by more than 1% of legends; no
@@ -75,12 +78,18 @@ export function wordCount(text) {
   return String(text || "").trim().split(/\s+/).filter(Boolean).length;
 }
 
-/** Digit runs left after removing the player's own name forms; each must be a year. */
-export function badDigits(text, { name = "", query = "", slug = "" } = {}) {
+/** Text with the player's own name forms removed (the name is not content). */
+export function stripNameForms(text, { name = "", query = "", slug = "" } = {}) {
   let t = String(text || "");
   for (const form of [name, bareName(name), query, slug]) {
     if (form) t = t.split(form).join("");
   }
+  return t;
+}
+
+/** Digit runs left after removing the player's own name forms; each must be a year. */
+export function badDigits(text, { name = "", query = "", slug = "" } = {}) {
+  const t = stripNameForms(text, { name, query, slug });
   const out = [];
   for (const m of t.match(/\d+/g) || []) {
     const n = Number(m);
@@ -112,13 +121,15 @@ export function validateLegend({ slug, text, basis, card, hasOwnerNote = false }
   if (words > WORD_MAX) v.push(`${words} words (max ${WORD_MAX})`);
   const digits = badDigits(text, { name: card?.name || "", query: card?.query || "", slug });
   if (digits.length) v.push(`digits other than years ${YEAR_MIN}–${YEAR_MAX}: ${[...new Set(digits)].join(", ")}`);
-  if (PRONOUN_RE.test(text)) v.push(`gendered pronoun (${(text.match(PRONOUN_RE) || [])[0]})`);
-  const banned = firstMatch(text, BANNED_PATTERNS);
+  // The player's own name is not content: strip its forms before the word checks.
+  const content = stripNameForms(text, { name: card?.name || "", query: card?.query || "", slug });
+  if (PRONOUN_RE.test(content)) v.push(`gendered pronoun (${(content.match(PRONOUN_RE) || [])[0]})`);
+  const banned = firstMatch(content, BANNED_PATTERNS);
   if (banned) v.push(`banned word: "${banned}"`);
   if (!hasOwnerNote) {
-    const role = firstMatch(text, ROLE_PATTERNS);
+    const role = firstMatch(content, ROLE_PATTERNS);
     if (role) v.push(`role word without owner note: "${role}"`);
-    const rel = firstMatch(text, RELATIONAL_PATTERNS);
+    const rel = firstMatch(content, RELATIONAL_PATTERNS);
     if (rel) v.push(`relates players to each other without owner note: "${rel}"`);
   }
   if (!card) {

@@ -6,6 +6,7 @@ import {
   buildCard,
   buildCards,
   findStale,
+  remainingCards,
   shardFileFor,
   CARD_METRICS,
 } from "../scripts/build-legend-cards.mjs";
@@ -135,6 +136,13 @@ test("findStale flags basis drift, ineligible and not-ranked legends", () => {
     ["b", "ineligible"],
     ["ghost", "not-ranked"],
   ]);
+});
+
+test("remainingCards drops slugs already stored in shards", () => {
+  const cards = [{ slug: "a" }, { slug: "b" }, { slug: "c" }];
+  const legends = new Map([["a", { text: "x" }], ["c", { text: "y" }]]);
+  assert.deepEqual(remainingCards(cards, legends).map((c) => c.slug), ["b"]);
+  assert.deepEqual(remainingCards(cards, new Map()).map((c) => c.slug), ["a", "b", "c"]);
 });
 
 test("shardFileFor uses the slug's first char", () => {

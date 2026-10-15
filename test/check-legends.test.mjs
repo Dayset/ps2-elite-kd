@@ -62,6 +62,25 @@ test("banned words: cheating/padding/farming/flag family fails", () => {
   }
 });
 
+test("own name is not content: a name that is itself a banned/role/relational/pronoun word passes", () => {
+  // A player actually named Aimbot / Tank / Squad / Her can still be named:
+  // the name forms are stripped before the word checks.
+  const aimbot = card({ slug: "aimbot", name: "[PENG] Aimbot", query: "Aimbot" });
+  assert.deepEqual(validateLegend({ slug: "aimbot", text: `${filler(44)} Aimbot`, basis: aimbot.basis, card: aimbot }).filter((m) => m.includes("banned")), []);
+  const tank = card({ slug: "tank", name: "Tank", query: "Tank" });
+  assert.deepEqual(validateLegend({ slug: "tank", text: `${filler(44)} Tank`, basis: tank.basis, card: tank }).filter((m) => m.includes("role")), []);
+  const squad = card({ slug: "squad", name: "Squad", query: "Squad" });
+  assert.deepEqual(validateLegend({ slug: "squad", text: `${filler(44)} Squad`, basis: squad.basis, card: squad }).filter((m) => m.includes("relates players")), []);
+  const her = card({ slug: "her", name: "Her", query: "Her" });
+  assert.deepEqual(validateLegend({ slug: "her", text: `${filler(44)} Her`, basis: her.basis, card: her }).filter((m) => m.includes("pronoun")), []);
+  // …but the same words still fail for a differently-named player.
+  const other = card();
+  assert.ok(validateLegend({ slug: "testy", text: `${filler(44)} Aimbot`, basis: other.basis, card: other }).some((m) => m.includes("banned")));
+  assert.ok(validateLegend({ slug: "testy", text: `${filler(44)} Tank`, basis: other.basis, card: other }).some((m) => m.includes("role")));
+  assert.ok(validateLegend({ slug: "testy", text: `${filler(44)} Squad`, basis: other.basis, card: other }).some((m) => m.includes("relates players")));
+  assert.ok(validateLegend({ slug: "testy", text: `${filler(44)} Her`, basis: other.basis, card: other }).some((m) => m.includes("pronoun")));
+});
+
 test("role words fail without an owner note, pass with one; lowercase maximum is fine", () => {
   const ok = card();
   for (const w of ["MAX", "stalker", "infiltrator", "medic", "heavy", "tank", "ESF", "light assault"]) {

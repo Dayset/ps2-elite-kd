@@ -11,6 +11,7 @@
  *   node scripts/build-legend-cards.mjs                  # all cards (JSON array)
  *   node scripts/build-legend-cards.mjs --slug bhorn     # one card (comma-separated)
  *   node scripts/build-legend-cards.mjs --chunk 0 --chunk-size 40
+ *   node scripts/build-legend-cards.mjs --chunk 0 --skip-done  # chunk over players without a legend yet
  *   node scripts/build-legend-cards.mjs --stale          # legends whose basis moved
  *   node scripts/build-legend-cards.mjs --reindex        # rebuild data/descriptions/index.json
  *
@@ -193,6 +194,11 @@ export function buildCards({ ranks, padders = new Set(), notes = { players: {} }
   return [...groupA, ...groupB, ...groupC];
 }
 
+/** Cards still needing a legend: drop slugs already stored in shards. */
+export function remainingCards(cards, legends) {
+  return cards.filter((c) => !legends.has(c.slug));
+}
+
 /** Shard filename for a slug: data/descriptions/<first char>.json */
 export function shardFileFor(slug) {
   const first = String(slug || "").charAt(0).toLowerCase() || "_";
@@ -263,12 +269,13 @@ export function reindex(dataDir, nowMs = Date.now()) {
 }
 
 function parseArgs(argv) {
-  const out = { slugs: [], chunk: null, chunkSize: 40, stale: false, reindex: false, data: null };
+  const out = { slugs: [], chunk: null, chunkSize: 40, stale: false, reindex: false, data: null, skipDone: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--slug" && argv[i + 1]) out.slugs.push(...argv[++i].split(",").map((s) => s.trim()).filter(Boolean));
     else if (a === "--chunk" && argv[i + 1]) out.chunk = Number(argv[++i]);
     else if (a === "--chunk-size" && argv[i + 1]) out.chunkSize = Number(argv[++i]);
+    else if (a === "--skip-done") out.skipDone = true;
     else if (a === "--stale") out.stale = true;
     else if (a === "--reindex") out.reindex = true;
     else if (a === "--data" && argv[i + 1]) out.data = argv[++i];
@@ -297,9 +304,12 @@ function main(argv) {
     const want = new Set(opts.slugs.map((s) => s.toLowerCase()));
     out = cards.filter((c) => want.has(c.slug) || want.has(c.bareName.toLowerCase()));
   } else if (opts.chunk !== null) {
-    const eligible = cards.filter((c) => c.eligible);
+    let eligible = cards.filter((c) => c.eligible);
+    if (opts.skipDone) eligible = remainingCards(eligible, readLegends(dataDir));
     const start = opts.chunk * opts.chunkSize;
     out = eligible.slice(start, start + opts.chunkSize);
+  } else if (opts.skipDone) {
+    out = remainingCards(cards, readLegends(dataDir));
   }
   console.log(JSON.stringify(out, null, 2));
 }
