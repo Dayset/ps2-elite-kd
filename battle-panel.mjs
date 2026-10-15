@@ -1,8 +1,12 @@
 /**
  * Debug-only battle panel in the footer. Shown only while the
  * "show older debug stats" box is ticked. Pure math lives in battle.mjs.
+ *
+ * The players come from the names box on the main page (no retyping). Each
+ * name has a "Fights" box: ticked = fights, unticked = opposition. Every ticked
+ * player is run against the group of unticked players.
  */
-import { findFighter, pickOpponents, runBattle } from "./battle.mjs?v=20261015-battle1";
+import { findFighter, runBattle } from "./battle.mjs?v=20261015-battle1";
 
 const pct = (x) => `${(x * 100).toFixed(1)}%`;
 const num = (x, d = 2) => (Number.isFinite(x) ? x.toFixed(d) : "—");
@@ -32,11 +36,41 @@ function el(tag, text, cls) {
   return node;
 }
 
-function renderError(out, message) {
-  out.replaceChildren(el("p", message, "battle-error"));
+/** Names from the main page, and whether each one fights (default: yes). */
+let names = [];
+const fights = new Map();
+
+function renderNameList(list) {
+  if (!names.length) {
+    list.replaceChildren(el("p", "Add players in the names box above first.", "battle-mode"));
+    return;
+  }
+  const items = names.map((name) => {
+    const box = el("input", null, "battle-fight");
+    box.type = "checkbox";
+    box.checked = fights.get(name) !== false;
+    box.dataset.name = name;
+    box.addEventListener("change", () => {
+      fights.set(name, box.checked);
+      updateSideText(list);
+    });
+    const label = el("label", null, "battle-name");
+    label.append(box, el("span", name));
+    return label;
+  });
+  list.replaceChildren(...items);
+  updateSideText(list);
 }
 
-function renderResult(out, champ, result) {
+function updateSideText(list) {
+  const side = list.parentElement && list.parentElement.querySelector(".battle-sides");
+  if (!side) return;
+  const f = names.filter((n) => fights.get(n) !== false);
+  const o = names.filter((n) => fights.get(n) === false);
+  side.textContent = `Fighting: ${f.length ? f.join(", ") : "none"} · Opposition: ${o.length ? o.join(", ") : "none"}`;
+}
+
+function renderResult(champ, result) {
   const block = el("div", null, "battle-block");
   const verdict = result.win ? "Champion favored" : "Champion underdog";
   block.append(el("h4", `${verdict}: ${champ.name}`, result.win ? "battle-win" : "battle-lose"));
@@ -82,44 +116,60 @@ function renderResult(out, champ, result) {
   }
   table.append(body);
   block.append(table);
-  out.replaceChildren(block);
+  return block;
 }
 
-async function runFromInput(nameInput, countInput, out) {
-  const typed = nameInput.value;
-  const count = Math.max(1, Math.min(20, Math.floor(+countInput.value) || 0));
+async function runSelected(out) {
+  const fighting = names.filter((n) => fights.get(n) !== false);
+  const opposition = names.filter((n) => fights.get(n) === false);
   out.replaceChildren(el("p", "Running battle…", "battle-status"));
+  if (!fighting.length || !opposition.length) {
+    out.replaceChildren(el("p", "Tick at least one player to fight and leave at least one unticked as opposition.", "battle-error"));
+    return;
+  }
   let payload;
   try {
     payload = await loadRanks();
   } catch (err) {
-    renderError(out, err.message || "Could not load ranks data.");
+    out.replaceChildren(el("p", err.message || "Could not load ranks data.", "battle-error"));
     return;
   }
   const { cols, rows } = payload;
-  const found = findFighter(rows, cols, typed);
-  if (found.error) {
-    renderError(out, found.error);
+  const resolve = (name) => findFighter(rows, cols, name);
+
+  const oppFighters = [];
+  const missing = [];
+  for (const n of opposition) {
+    const r = resolve(n);
+    if (r.fighter) oppFighters.push(r.fighter);
+    else missing.push(`${n} (${r.error})`);
+  }
+  const blocks = [];
+  if (!oppFighters.length) {
+    out.replaceChildren(el("p", "None of the opposition players are in the Rankings data.", "battle-error"));
     return;
   }
-  const champ = found.fighter;
-  const opponents = pickOpponents(rows, cols, champ, count);
-  if (!opponents.length) {
-    renderError(out, "No opponents available in the ranks data.");
-    return;
+  for (const n of fighting) {
+    const r = resolve(n);
+    if (!r.fighter) {
+      missing.push(`${n} (${r.error})`);
+      continue;
+    }
+    blocks.push(renderResult(r.fighter, runBattle(r.fighter, oppFighters)));
   }
-  const result = runBattle(champ, opponents);
-  renderResult(out, champ, result);
+  const nodes = [];
+  if (missing.length) nodes.push(el("p", `Not in the Rankings data, skipped: ${missing.join("; ")}`, "battle-mode"));
+  nodes.push(...blocks);
+  out.replaceChildren(...nodes);
 }
 
 function mount() {
   const panel = document.getElementById("battlePanel");
   const debugToggle = document.getElementById("debugColsToggle");
   const form = document.getElementById("battleForm");
-  const nameInput = document.getElementById("battleName");
-  const countInput = document.getElementById("battleCount");
+  const list = document.getElementById("battleNames");
   const out = document.getElementById("battleResult");
-  if (!panel || !debugToggle || !form || !nameInput || !countInput || !out) return;
+  if (!panel || !debugToggle || !form || !list || !out) return;
 
   const sync = () => {
     panel.hidden = !debugToggle.checked;
@@ -127,9 +177,17 @@ function mount() {
   sync();
   debugToggle.addEventListener("change", sync);
 
+  // The main page announces every change to the names box (renderNameTokens).
+  document.addEventListener("ps2-names", (ev) => {
+    names = Array.isArray(ev.detail) ? ev.detail.slice() : [];
+    for (const k of [...fights.keys()]) if (!names.includes(k)) fights.delete(k);
+    renderNameList(list);
+  });
+  renderNameList(list);
+
   form.addEventListener("submit", (ev) => {
     ev.preventDefault();
-    runFromInput(nameInput, countInput, out);
+    runSelected(out);
   });
 }
 

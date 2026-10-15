@@ -181,9 +181,10 @@
     </div>
     <section id="battlePanel" class="battle-panel" hidden aria-label="Debug battle simulator">
       <h3>⚔️ Battle simulator (debug)</h3>
+      <p class="battle-mode">Players come from the names box above. Tick <b>Fights</b> for the players on your side; untick them to make them the opposition.</p>
       <form id="battleForm" class="battle-form">
-        <label>Player <input id="battleName" type="text" autocomplete="off" placeholder="e.g. Simplenubb" /></label>
-        <label>Opponents <input id="battleCount" type="number" min="1" max="20" value="6" /></label>
+        <div id="battleNames" class="battle-names"></div>
+        <div class="battle-sides battle-mode"></div>
         <button type="submit" id="battleRun">Run battle</button>
       </form>
       <div id="battleResult" class="battle-result" aria-live="polite"></div>

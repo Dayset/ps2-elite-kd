@@ -1281,6 +1281,8 @@ import {
     clearGraphReadyHint();
     if (nameTokens.length < MAX_NAMES) clearLimitHint();
     persistPendingNames(); // every chip change goes through here
+    // Debug battle panel reads the same names (no retyping).
+    if (typeof document !== "undefined") document.dispatchEvent(new CustomEvent("ps2-names", { detail: nameTokens.slice() }));
     if (!els.nameTokensEl) return;
     els.nameTokensEl.innerHTML = "";
     nameTokens.forEach((name, idx) => {
