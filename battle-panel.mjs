@@ -100,8 +100,9 @@ function membersTable(players) {
 function renderGroupResult(fighters, opposition, result) {
   const block = el("div", null, "battle-block");
   const fighterNames = fighters.map((f) => f.name).join(", ");
-  const verdict = result.win ? "Fighters favored" : "Fighters underdogs";
-  block.append(el("h4", `${verdict} (one fight, ${fighters.length} vs ${opposition.length})`, result.win ? "battle-win" : "battle-lose"));
+  const winner = result.win ? "Fighting side" : "Opposition";
+  const chance = result.win ? result.winRate : 1 - result.winRate;
+  block.append(el("h4", `Winner: ${winner} (${pct(chance)} chance)`, result.win ? "battle-win" : "battle-lose"));
 
   const modeText =
     result.mode === "concentrated"
