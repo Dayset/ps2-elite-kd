@@ -5,6 +5,7 @@ import {
   refreshIntervalMs, tierName, weekFights, prefilter, sweepRow, rankQueue, mergeQueue, nextCap,
   normalizeDiscovery, sweepDue, sweepSlice, MIN_WEEK_FIGHTS, CAP_STEPS, DAY_MS, QUEUE_KEEP_MS,
 } from "../scripts/discovery.mjs";
+import { emptyDiscovery, BACKFILL_LOOKBACK_S, DAY_S } from "../scripts/discovery.mjs";
 import { sizeWarning, SIZE_WARN_BYTES, HONU_DAILY_CAP } from "../scripts/refresh-cache.mjs";
 
 const NOW = Date.parse("2026-10-09T12:00:00Z");
@@ -147,5 +148,12 @@ describe("size warning + Honu cap", () => {
   });
   it("Honu daily cap default 10000", () => {
     assert.equal(HONU_DAILY_CAP, 10000);
+  });
+});
+
+describe("one-time 30-day backfill", () => {
+  it("starts pending and looks back 30 days; the daily lookback stays 7", () => {
+    assert.equal(emptyDiscovery().backfillDone, false);
+    assert.equal(BACKFILL_LOOKBACK_S, 30 * DAY_S);
   });
 });

@@ -25,6 +25,8 @@ export const MIN_MINUTES_PLAYED = 30;
 export const SWEEP_PAGE = 1000;
 export const STAT_BATCH = 100;
 export const FIRST_LOOKBACK_S = 7 * DAY_S;
+/** One-time backfill: the first full sweep looks 30 days back for logins (fight rule unchanged). */
+export const BACKFILL_LOOKBACK_S = 30 * DAY_S;
 export const SWEEP_EVERY_MS = 20 * 3600 * 1000;
 export const SWEEP_OVERLAP_S = 2 * 3600;
 export const QUEUE_KEEP_MS = 14 * DAY_MS;
@@ -76,6 +78,7 @@ export function emptyDiscovery(now = Date.now()) {
   return {
     cap: CAP_STEPS[0],
     sweep: { cursor: null, until: null, startedAt: null, lastDoneAt: null, nextFrom: null },
+    backfillDone: false,
     queue: [],
     totals: { swept: 0, prefiltered: 0, checked: 0, qualified: 0, newPlaying: 0 },
     lastSweep: null,
@@ -228,7 +231,11 @@ export async function sweepSlice(d, { base, getJson, known, skip = () => false, 
   if (sw.cursor == null) {
     // Start a new sweep: from where the last one ended (minus overlap), or 7 days back.
     const nowS = Math.floor(now / 1000);
-    const from = sw.nextFrom ? Math.max(sw.nextFrom - SWEEP_OVERLAP_S, nowS - FIRST_LOOKBACK_S) : nowS - FIRST_LOOKBACK_S;
+    const backfill = !d.backfillDone;
+    const from = backfill
+      ? nowS - BACKFILL_LOOKBACK_S
+      : sw.nextFrom ? Math.max(sw.nextFrom - SWEEP_OVERLAP_S, nowS - FIRST_LOOKBACK_S) : nowS - FIRST_LOOKBACK_S;
+    sw.backfill = backfill;
     sw.cursor = from;
     sw.until = nowS;
     sw.startedAt = new Date(now).toISOString();
@@ -290,6 +297,7 @@ export async function sweepSlice(d, { base, getJson, known, skip = () => false, 
     }
   }
   if (out.done) {
+    if (sw.backfill) d.backfillDone = true;
     sw.nextFrom = sw.until;
     sw.cursor = null;
     sw.cursorIds = [];
