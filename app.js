@@ -1216,8 +1216,9 @@ import {
     const vals = await loadRankVals();
     if (nameTokens.length >= MAX_NAMES) { say("The list is full (10 names)"); return; }
     const used = new Set(nameTokens.map((n) => slugKey(n)));
-    if (mode === "range") {
-      // 🎲: any cached player with ⚔️ iVi above 0 (not already in the box).
+    const listVals = nameTokens.map((n) => vals.get(slugKey(n))).filter(Boolean).map((v) => v.adjs);
+    if (mode === "range" && !listVals.length) {
+      // 🎲 on an empty box: any cached player with ⚔️ iVi above 0.
       const pool = [...vals.entries()].filter(([slug]) => !used.has(slug));
       if (!pool.length) { say("No cached players with iVi above 0"); return; }
       const [, pick] = pool[Math.floor(Math.random() * pool.length)];
@@ -1225,7 +1226,6 @@ import {
       say(`Added ${pick.name} (${Math.round(pick.adjs)} iVi). Press Analyze to load.`);
       return;
     }
-    const listVals = nameTokens.map((n) => vals.get(slugKey(n))).filter(Boolean).map((v) => v.adjs);
     if (!listVals.length) { say("Add a name with an iVi first"); return; }
     const sorted = [...listVals].sort((a, b) => a - b);
     const median = sorted.length % 2
@@ -1234,7 +1234,8 @@ import {
     let lo;
     let hi;
     if (mode === "low") { lo = median * 0.75; hi = median; }
-    else { lo = median; hi = median * 1.25; }
+    else if (mode === "high") { lo = median; hi = median * 1.25; }
+    else { lo = sorted[0] * 0.75; hi = sorted[sorted.length - 1] * 1.25; }
     const pool = [...vals.entries()].filter(([slug, v]) => !used.has(slug) && v.adjs >= lo && v.adjs <= hi);
     if (!pool.length) { say(`Nobody in ${Math.round(lo)}–${Math.round(hi)}`); return; }
     const [, pick] = pool[Math.floor(Math.random() * pool.length)];
