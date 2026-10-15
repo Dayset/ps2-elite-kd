@@ -32,13 +32,13 @@ export function initRankings(host) {
   const VISIBLE = [
     { id: "adjs", label: "⚔️ iVi", digits: 0, floorZero: true, tip: "ivi adjusted for your own kill speed: includes a bonus for fast killing and a penalty for slow, safe play (own KPM 0.8–1.4 = unchanged)" },
     { id: "act", label: "🏃 Activity", digits: 2, tip: "K/D × own KPM" },
-    { id: "rf", label: "🛡️ Resist", digits: 2, tip: "Resistance Factor" },
     { id: "pvs", label: "🦁 Brave", digits: 2, tip: "Bravery (Activity × slope)" },
+    { id: "rf", label: "🛡️ Resist", digits: 2, tip: "Resistance Factor" },
+    { id: "cons", label: "⚡ Const", digits: 2, tip: "Consistency: K/D against hard opposition ÷ K/D against easy (1.0 = holds up). Higher = holds up better against hard opposition." },
+    { id: "mech", label: "🎯 Aim", digits: 1, tip: "Projected mechanized share (previously Mech%)" },
     { id: "rkd", label: "☠️ K/D", digits: 3, tip: "Resistance-weighted K/D" },
-    { id: "mech", label: "⚙️ Mech%", digits: 1, tip: "Projected mechanized share" },
   ];
   const DEBUG = [
-    { id: "cons", label: "🧱 Const", digits: 2, tip: "Consistency: K/D against hard opposition ÷ K/D against easy (1.0 = holds up). Higher = holds up better against hard opposition." },
     { id: "adj", label: "🎯🎈 ivi", digits: 0, tip: "Opposition-weighted IvI (before speed adjustment)" },
     { id: "ekpm", label: "eKPM", digits: 2, tip: "Average enemy weapon KPM faced" },
     { id: "own", label: "own KPM", digits: 2, tip: "Your weapon pace" },
