@@ -1233,10 +1233,19 @@ import {
     persistPendingNames(); // every chip change goes through here
     if (!els.nameTokensEl) return;
     els.nameTokensEl.innerHTML = "";
-    nameTokens.forEach((name) => {
+    nameTokens.forEach((name, idx) => {
+      // Position number (1, 2, 3 …) so long lists are easy to count.
+      const addNum = (el) => {
+        const n = document.createElement("span");
+        n.className = "name-token-num";
+        n.textContent = `${idx + 1}.`;
+        n.setAttribute("aria-hidden", "true");
+        el.insertBefore(n, el.firstChild);
+        return el;
+      };
       const fail = getNameFailure(name);
       if (fail) {
-        els.nameTokensEl.appendChild(makeFailedToken(name, fail));
+        els.nameTokensEl.appendChild(addNum(makeFailedToken(name, fail)));
         return;
       }
       const btn = document.createElement("button");
@@ -1250,7 +1259,7 @@ import {
         e.stopPropagation();
         removeNameToken(name);
       });
-      els.nameTokensEl.appendChild(btn);
+      els.nameTokensEl.appendChild(addNum(btn));
     });
     syncNamesPlaceholder();
     rankingsSync();
