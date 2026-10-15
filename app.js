@@ -97,6 +97,7 @@ import { markNote, statMark, confirmedPadderSlugs } from "./padding.mjs?v=202610
 import { accountTimes, flairsHtml } from "./flairs.mjs?v=20261010-sav1";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
 import "./name-peek.mjs?v=20261010-sav1";
+import "./battle-panel.mjs?v=20261015-battle1";
 import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261010-sav1";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
 import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-sav1";
