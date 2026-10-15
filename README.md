@@ -1,23 +1,23 @@
 # PS2 Elite K/D
 
-**Judge PlanetSide 2 players by how their K/D holds up against harder opposition, not just the raw number.**
+**Player statistics for PlanetSide 2: K/D plotted against the weapon KPM of the enemies each player faced, with opposition-weighted and pace-adjusted metrics.**
 
-🎮 **[Open the live site](https://dayset.github.io/ps2-elite-kd/)** · 📘 [Using the site](docs/using-the-site.md) · 📐 [How the numbers work](docs/metrics.md) · ⚙️ [How the shared cache works](docs/pipeline.md)
+🎮 **[Open the live site](https://dayset.github.io/ps2-elite-kd/)** · 📘 [Using the site](docs/using-the-site.md) · 📐 [How the numbers are calculated](docs/metrics.md) · ⚙️ [How the shared cache works](docs/pipeline.md)
 
 Free and open source. It's plain HTML, CSS and JavaScript on GitHub Pages, with no backend.
 
 ---
 
-## 🤔 Why not just raw K/D?
+## 📊 Why plot K/D against enemy KPM?
 
-Raw K/D treats every kill the same. Someone farming weak enemies can look elite, and someone who fights the best players can look average.
+Raw K/D counts every kill and death equally. The enemies in those fights vary, so one K/D figure mixes different opposition levels together.
 
-PS2 Elite K/D plots each player's K/D against the **weapon KPM (kills per minute) of the enemies they fought**. You can see who keeps up as the opposition gets harder.
+PS2 Elite K/D groups each player's fights by the **weapon KPM (kills per minute) of the enemies involved**, and plots K/D across that range. Each player's curve shows how their K/D changes as enemy KPM increases.
 
 ## ✨ What you can do
 
 - **Compare up to 10 players** on one chart.
-- **Switch between two curves:** 📈 *Raw* (cumulative, the default) or 🎚️ *Smooth* (local around each enemy KPM).
+- **Choose a chart view:** 📈 *Raw* (cumulative, the default). 🎚️ *Smooth* (banded) is available in the debug box.
 - **Read the stats table** with adjusted metrics and population percentiles.
 - **Browse 🏆 Rankings** of every cached player, with a distribution chart for each metric.
 - **Share a comparison** with one link. Opening it runs the analysis automatically.
@@ -44,11 +44,11 @@ Full details are in [docs/using-the-site.md](docs/using-the-site.md).
 
 ## 🗄️ Where the data comes from
 
-Player data comes from the [Daybreak Census API](https://census.daybreakgames.com/). Each player's lookup costs about 5 Census calls, and each player is scored against their top 200 opponents.
+Player data comes from the [Daybreak Census API](https://census.daybreakgames.com/). Each player's lookup uses about 5 Census calls, and each player is calculated from their top 200 opponents.
 
 [HONU](https://wt.honu.pw/) (Varunda) is linked for killboards. It's also used as a paced fallback for lifetime history that Census doesn't have.
 
-Requests are kept polite. The site checks cached snapshots first, uses client-side token buckets, and fetches live only when it has to.
+Requests are paced. The site checks cached snapshots first, uses client-side token buckets, and fetches live only when needed.
 
 Each lookup goes in this order:
 
@@ -60,16 +60,16 @@ Details are in [docs/pipeline.md](docs/pipeline.md).
 
 ## 📊 The metrics at a glance
 
-| Metric | Meaning |
+| Metric | What it measures |
 |---|---|
-| ⚔️ **iVi** | Skill rating. Opposition-weighted, then adjusted for your kill speed. Sorts by default. |
-| 🏃 **Activity** | How many hard fights you've taken (K/D × your KPM). |
-| 🛡️ **Resist** | How hard the players you die to are. |
-| ⚡ **Const** | How much of your K/D holds up against the strongest third of opponents. |
-| 🦁 **Brave** | Activity weighted by how the curve drops under hard opposition. |
+| ⚔️ **iVi** | Opposition-weighted rating, adjusted for kill speed. Sorts by default. |
+| 🏃 **Activity** | K/D × your own KPM: fight volume at your kill pace. |
+| 🛡️ **Resist** | The Resistance Factor of the enemies you die to. |
+| ⚡ **Const** | How much of your K/D remains against the strongest third of opponents compared with the weakest third. |
+| 🦁 **Brave** | Activity × the slope of your K/D curve under higher enemy KPM. |
 | ☠️ **K/D** | Resistance-weighted K/D. |
 
-Hidden by default, and shown when you tick *show older debug stats*: 🎯 **Aim** (Mech%, projected from Resist), 🎈 **Inflation** (easy-fight padding), and a few others.
+Hidden by default. Tick *show older debug stats* to show these: 🎯 **Aim** (Mech%, estimated from Resist), 🎈 **Inflation** (overall K/D ÷ K/D against enemies at 0.5 KPM or higher), and a few others.
 
 Each value is explained in [docs/metrics.md](docs/metrics.md).
 
@@ -90,4 +90,4 @@ Pure math lives in `math.mjs`, which the browser's `app.js` imports. The file tr
 
 ## 📄 License
 
-[MIT](LICENSE) © 2026 Dayset. Provided "as is," with no warranty. All numbers are automated estimates, not facts.
+[MIT](LICENSE) © 2026 Dayset. Provided "as is," with no warranty. All numbers are automated estimates.

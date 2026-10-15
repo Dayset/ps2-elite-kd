@@ -98,7 +98,7 @@ If the warning fires, back up manually first. Then move player files to Cloudfla
 
 - **Not-found names** (no character, invalid name, or an empty killboard) are never retried by discovery.
 - **Other failures** (timeouts, outages) are retried at most 3 times, 15 minutes apart. Retry state is tracked in `data/refresh-state.json`.
-- **Partial data:** a player isn't saved if more than 10% of their opponent lookups fail. This stops rate limits from saving fake 0-KPM curves.
+- **Partial data:** a player isn't saved if more than 10% of their opponent lookups fail. This stops incomplete lookups (for example, rate limiting) from producing curves with missing opponent data.
 - **Outages:** if Census is unreachable, the run stops early and keeps the old data. It's retried 30 minutes later.
 - `status.json` → `lastRun.batch` lists each planned name with its source (`discovery-new`, `discovery`, `refresh`, `retry`, `on-demand`) and its result (done, failed, not-found or pending), committed with the run's data.
 

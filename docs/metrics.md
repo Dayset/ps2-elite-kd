@@ -17,7 +17,7 @@ The opposition-weighted iVi score, adjusted for your own kill speed (`adjs`).
 
 ### 🛡️ Resist
 
-Resistance: how hard the players you die to are. It's the Resistance Factor.
+The Resistance Factor of the enemies you die to.
 
 ### 🏃 Activity
 
@@ -40,8 +40,8 @@ Resistance-weighted K/D. Each death counts for more or less depending on how har
 These are hidden by default. Tick **show older debug stats** in the footer to see them.
 
 - **🎯 Aim** (Mech%): the estimated share of your fights that are vehicle or mech play. It's projected from Resist, not measured from shooting.
-- **🎈 Inflation**: global K/D ÷ K/D among deaths against opponents at **0.5 weapon KPM or higher**. The average planetman is about 0.35, and values above 1.0 mean padding is inflating the overall K/D. Lower is better. It's hidden by default because it rarely shows anything meaningful.
-- **🎯🎈 ivi**: the opposition-weighted IvI before the speed adjustment. It's public IvI × Resistance tempering. The 🎈 means the score is still inflated. The status page's red-flag bin uses this value.
+- **🎈 Inflation**: overall K/D ÷ K/D against enemies at **0.5 weapon KPM or higher**. Values above 1.0 mean the overall K/D is higher than the K/D against those enemies. The average player's enemy KPM is about 0.35 for reference. It's hidden by default because it rarely shows anything meaningful.
+- **🎯🎈 ivi**: the opposition-weighted IvI before the speed adjustment. It's public IvI × Resistance tempering. The 🎈 is a label, not a value. The status page's red-flag review uses this value.
 - **eKPM / own KPM**: the average enemy weapon pace, and your own pace. They're kept separate.
 - **📊 COI**: the combat output index, derived from Resist.
 - **📉 Slope**: the whole-curve, death-weighted angle of K/D against enemy KPM. A negative value means K/D falls as the opposition gets harder.
@@ -59,6 +59,6 @@ The regression suite covers the metrics code:
 - curveSlope (deaths > 0)
 - LionHeart bounds
 - adjIvI
-- yScale containment, for cheater spikes and low players
+- yScale containment, for extreme values and low-volume players
 
 Run it with `npm test`.

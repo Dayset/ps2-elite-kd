@@ -77,7 +77,7 @@ A walkthrough of the main page. For a short version, see the [README](../README.
 
 ## Other pages and features
 
-- **🔎 Status page** (unlisted): refresh runs, the queue, a 🚩 red-flag review list (leads, never accusations), and a 🌱 "Could use a hand" list of players who might appreciate tips or a squad invite.
+- **🔎 Status page** (unlisted): refresh runs, the queue, a 🚩 list of flagged players for manual review, and a 🌱 "Could use a hand" list of players who might appreciate tips or a squad invite.
 - **Account flairs** appear under the graph in the name list:
   - 🪦 no activity for over a year.
   - 👴🏽 account 8+ years old and active in the last year.
