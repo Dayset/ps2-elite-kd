@@ -194,6 +194,8 @@ import {
     analyzeBtn: document.getElementById("analyzeBtn") || document.getElementById("loadBtn"),
     copyLinkBtn: document.getElementById("copyLinkBtn"),
     diceBtn: document.getElementById("diceBtn"),
+    diceLowBtn: document.getElementById("diceLowBtn"),
+    diceHighBtn: document.getElementById("diceHighBtn"),
     clearNamesBtn: document.getElementById("clearNamesBtn"),
     fetchFresh: document.getElementById("fetchFresh"),
     freshEta: document.getElementById("freshEta"),
@@ -1207,15 +1209,22 @@ import {
     return rankVals;
   }
 
-  async function rollDice() {
-    const btn = els.diceBtn;
+  async function rollDice(mode = "range") {
+    const btn = mode === "low" ? els.diceLowBtn : mode === "high" ? els.diceHighBtn : els.diceBtn;
     const say = (msg) => { if (btn) { btn.title = msg; btn.setAttribute("aria-label", msg); } };
     const vals = await loadRankVals();
     const listVals = nameTokens.map((n) => vals.get(slugKey(n))).filter(Boolean).map((v) => v.adjs);
     if (!listVals.length) { say("Add a name with an iVi first"); return; }
     if (nameTokens.length >= MAX_NAMES) { say("The list is full (10 names)"); return; }
-    const lo = Math.min(...listVals) * 0.75;
-    const hi = Math.max(...listVals) * 1.25;
+    const sorted = [...listVals].sort((a, b) => a - b);
+    const median = sorted.length % 2
+      ? sorted[(sorted.length - 1) / 2]
+      : (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2;
+    let lo;
+    let hi;
+    if (mode === "low") { lo = median * 0.75; hi = median; }
+    else if (mode === "high") { lo = median; hi = median * 1.25; }
+    else { lo = sorted[0] * 0.75; hi = sorted[sorted.length - 1] * 1.25; }
     const used = new Set(nameTokens.map((n) => slugKey(n)));
     const pool = [...vals.entries()].filter(([slug, v]) => !used.has(slug) && v.adjs >= lo && v.adjs <= hi);
     if (!pool.length) { say(`Nobody in ${Math.round(lo)}–${Math.round(hi)}`); return; }
@@ -4279,7 +4288,9 @@ import {
   });
 
   if (els.copyLinkBtn) {
-    els.diceBtn?.addEventListener("click", () => { rollDice(); });
+    els.diceBtn?.addEventListener("click", () => { rollDice("range"); });
+    els.diceLowBtn?.addEventListener("click", () => { rollDice("low"); });
+    els.diceHighBtn?.addEventListener("click", () => { rollDice("high"); });
     els.copyLinkBtn.addEventListener("click", () => {
       commitFragment({ clearInput: true });
       copyShareLink();

@@ -59,7 +59,11 @@
     </div>
     <button id="analyzeBtn" type="button">🔍 Analyze</button>
     <button id="copyLinkBtn" type="button" title="Copy link" aria-label="Copy link">🔗</button>
-    <button id="diceBtn" type="button" title="Add a random player in range of the list" aria-label="Random player in range">🎲</button>
+    <div class="dice-group" role="group" aria-label="Random players">
+      <button id="diceLowBtn" type="button" title="Random player with less ⚔️ iVi (−25% of the list)" aria-label="Random player with less iVi">&lt;</button>
+      <button id="diceBtn" type="button" title="Random player in range of the list" aria-label="Random player in range">🎲</button>
+      <button id="diceHighBtn" type="button" title="Random player with more ⚔️ iVi (+25% of the list)" aria-label="Random player with more iVi">&gt;</button>
+    </div>
 
     <div class="fresh-row">
       <label class="fresh-label" for="fetchFresh">

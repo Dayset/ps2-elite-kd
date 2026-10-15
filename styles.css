@@ -636,14 +636,6 @@ header .sub {
   cursor: pointer;
 }
 .controls button.btn-muted,
-.controls button#diceBtn {
-  margin-left: auto;
-  min-width: var(--ctl-h);
-  height: var(--ctl-h);
-  background: var(--ctrl-btn-muted-bg);
-  border-color: var(--ctrl-btn-border);
-  color: var(--text);
-}
 .controls button#copyLinkBtn {
   background: var(--ctrl-btn-muted-bg);
   color: var(--muted);
@@ -2323,3 +2315,21 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
 /* t358u: 🏅 positions block folds like the chart / table */
 .rk-pos-section[open] > summary { margin-bottom: 0.5rem; }
 .rk-pos-section .rk-positions { margin: 0; }
+
+/* 🎲 group: same square size as 🔗, pushed to the right edge of the row */
+.controls .dice-group {
+  margin-left: auto;
+  display: flex;
+  gap: 0.35rem;
+}
+.controls .dice-group button {
+  min-width: var(--ctl-h);
+  height: var(--ctl-h);
+  padding: 0;
+  background: var(--ctrl-btn-muted-bg);
+  color: var(--text);
+  border: 1px solid var(--ctrl-btn-border);
+  border-radius: inherit;
+  cursor: pointer;
+}
+.controls .dice-group button:hover { background: var(--ctrl-btn-muted-hover); }
