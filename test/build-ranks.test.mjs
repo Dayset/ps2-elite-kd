@@ -1,10 +1,11 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { normalizePlayer, playerMetrics } from "../player-metrics.mjs";
-import { bareName, rankRow, buildRanks, METRIC_COLS, RANK_COLS } from "../scripts/build-ranks.mjs";
+import { bareName, rankRow, buildRanks, autoHideFreshExceptional, isFreshHeld, FRESH_HOLD, METRIC_COLS, RANK_COLS } from "../scripts/build-ranks.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const dataDir = path.join(root, "data");
@@ -52,6 +53,63 @@ describe("build-ranks", () => {
     assert.ok(shlo, "shlodog in ranks");
     assert.equal(shlo[1], "ShloDog");
     assert.ok(typeof shlo[4] === "number" && shlo[4] > 0);
+  });
+
+  it("fresh-account auto-hide: ≤7d + exceptional stats are held out of ranks (Dayset rule 2026-10-15)", () => {
+    const NOW = Date.now() / 1000;
+    const fakeRow = ({ ageDays, adj, ekpm, created = NOW - ageDays * 86400 }) => {
+      const row = new Array(RANK_COLS.length).fill(null);
+      row[RANK_COLS.indexOf("created")] = created;
+      row[4 + METRIC_COLS.indexOf("adj")] = adj;
+      row[4 + METRIC_COLS.indexOf("ekpm")] = ekpm;
+      return row;
+    };
+    assert.equal(isFreshHeld(fakeRow({ ageDays: 3, adj: 3000, ekpm: 0.5 }), NOW), true);
+    assert.equal(isFreshHeld(fakeRow({ ageDays: 7, adj: FRESH_HOLD.MIN_ADJ, ekpm: FRESH_HOLD.MAX_EKPM }), NOW), true, "boundary inclusive");
+    assert.equal(isFreshHeld(fakeRow({ ageDays: 8, adj: 3000, ekpm: 0.5 }), NOW), false, "aged out");
+    assert.equal(isFreshHeld(fakeRow({ ageDays: 3, adj: 1000, ekpm: 0.5 }), NOW), false, "not exceptional");
+    assert.equal(isFreshHeld(fakeRow({ ageDays: 3, adj: 3000, ekpm: 0.9 }), NOW), false, "opponents not slow");
+    assert.equal(isFreshHeld(fakeRow({ ageDays: 3, adj: 3000, ekpm: 0.5, created: null }), NOW), false, "unknown age never held");
+    assert.equal(isFreshHeld(fakeRow({ ageDays: -1, adj: 3000, ekpm: 0.5 }), NOW), false, "future created never held");
+  });
+
+  it("autoHideFreshExceptional appends fresh exceptional players to hidden.json; rebuild excludes them", () => {
+    const NOW = Date.now() / 1000;
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "fresh-hide-"));
+    try {
+      const dd = path.join(tmp, "data");
+      fs.mkdirSync(path.join(dd, "players"), { recursive: true });
+      // Same exceptional stats (invisbleman3, adj 4351), two account ages.
+      const base = JSON.parse(fs.readFileSync(path.join(dataDir, "players", "invisbleman3.json"), "utf8"));
+      const mk = (name, ageDays) => {
+        const copy = JSON.parse(JSON.stringify(base));
+        copy.player.display = name;
+        copy.player.times = { ...copy.player.times, created: NOW - ageDays * 86400 };
+        fs.writeFileSync(path.join(dd, "players", `${name.toLowerCase()}.json`), JSON.stringify(copy));
+        return { name, file: `players/${name.toLowerCase()}.json`, slug: name.toLowerCase(), savedAt: base.savedAt };
+      };
+      const entries = [mk("FreshCopy", 2), mk("OldCopy", 30)];
+      fs.writeFileSync(path.join(dd, "index.json"), JSON.stringify({ players: entries }));
+      fs.writeFileSync(path.join(dd, "hidden.json"), JSON.stringify({ _note: "kept", players: {} }, null, 2));
+      const added = autoHideFreshExceptional(dd, { nowSec: NOW });
+      assert.equal(added.length, 1);
+      assert.equal(added[0].name, "FreshCopy");
+      const hiddenAfter = JSON.parse(fs.readFileSync(path.join(dd, "hidden.json"), "utf8"));
+      assert.equal(hiddenAfter._note, "kept", "existing fields preserved");
+      assert.ok(hiddenAfter.players.FreshCopy, "fresh copy auto-hidden");
+      assert.ok(!hiddenAfter.players.OldCopy, "old copy untouched");
+      assert.match(hiddenAfter.players.FreshCopy.reason, /auto-hidden/);
+      assert.ok(!/^confirmed cheater/i.test(hiddenAfter.players.FreshCopy.reason), "auto-hide is not a confirmed-cheater claim");
+      // Idempotent: second run adds nothing.
+      assert.equal(autoHideFreshExceptional(dd, { nowSec: NOW }).length, 0);
+      // Rebuild with the updated hidden.json excludes the fresh copy via the normal hidden path.
+      const out = buildRanks(dd);
+      const slugs = new Set(out.rows.map((r) => r[2]));
+      assert.ok(!slugs.has("freshcopy"), "fresh copy excluded from ranks");
+      assert.ok(slugs.has("oldcopy"), "old copy still ranked");
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
   });
 });
 

@@ -43,7 +43,7 @@ export const SESSION_REFERENCE_LEGIT = Object.freeze(["yeezy", "zyr0sncx", "xclo
 // Row format + rankRow live in ../rank-row.mjs (browser-safe: ranks.html
 // recomputes a player's row from a fresher browser copy with the same code).
 export { METRIC_COLS, RANK_COLS, bareName, rankRow } from "../rank-row.mjs";
-import { METRIC_COLS, RANK_COLS, rankRow } from "../rank-row.mjs";
+import { METRIC_COLS, RANK_COLS, rankRow, bareName } from "../rank-row.mjs";
 
 /** data/reviewed.json → Set of slugs confirmed as stat padders (decision "padding"; missing file = none). */
 export function readConfirmedPadders(dataDir) {
@@ -52,6 +52,80 @@ export function readConfirmedPadders(dataDir) {
   } catch {
     return new Set();
   }
+}
+
+/**
+ * Fresh-account auto-hide (Dayset rule 2026-10-15): an account ≤7 days old
+ * (Census account age, now − times.created) with exceptional stats is hidden
+ * — not top, not bottom, into the hidden list — automatically, permanently,
+ * with no manual review. Thresholds are the measured hidden-cheater signature
+ * (adj ≥ 2200 is the site's Exceptional bar; ekpm ≤ 0.729 is the population
+ * 25th percentile): 15/15 hidden players with data match, 16 false positives
+ * in 10,497. Auto-entries carry their own reason (never "confirmed cheater"),
+ * so they stay distinguishable from Dayset's manual confirmed-cheater hides.
+ * The rule writes to hidden.json (CLI main only, before the build reads it);
+ * buildRanks itself never writes. Once hidden, an account stays hidden even
+ * after it ages past 7 days — no age-out, no review queue.
+ */
+export const FRESH_HOLD = Object.freeze({ MAX_AGE_DAYS: 7, MIN_ADJ: 2200, MAX_EKPM: 0.729 });
+export const FRESH_HOLD_HIDDEN_REASON = "auto-hidden: fresh account (≤7d) with exceptional stats (adj ≥ 2200, ekpm ≤ 0.729) — no manual review";
+
+/** True when a ranks row is a fresh account with exceptional stats (auto-hide target). */
+export function isFreshHeld(row, nowSec = Date.now() / 1000) {
+  if (!row) return false;
+  const created = row[RANK_COLS.indexOf("created")];
+  const adj = row[4 + METRIC_COLS.indexOf("adj")];
+  const ekpm = row[4 + METRIC_COLS.indexOf("ekpm")];
+  if (!(created > 0) || !Number.isFinite(adj) || !Number.isFinite(ekpm)) return false;
+  const ageDays = (nowSec - created) / 86400;
+  return ageDays >= 0 && ageDays <= FRESH_HOLD.MAX_AGE_DAYS && adj >= FRESH_HOLD.MIN_ADJ && ekpm <= FRESH_HOLD.MAX_EKPM;
+}
+
+/**
+ * Append fresh + exceptional players to hidden.json (CLI main only, before
+ * the build). Idempotent: skips players already on the list. Returns the
+ * newly added entries. The file's existing ASCII-escaped style (non-ASCII as
+ * \uXXXX) is preserved so the diff stays minimal.
+ */
+export function autoHideFreshExceptional(dataDir, { nowSec = Date.now() / 1000 } = {}) {
+  const hiddenPath = path.join(dataDir, "hidden.json");
+  let hiddenJson = {};
+  try {
+    hiddenJson = JSON.parse(fs.readFileSync(hiddenPath, "utf8"));
+  } catch {}
+  if (!hiddenJson || typeof hiddenJson !== "object") hiddenJson = {};
+  const hidden = hiddenList(hiddenJson);
+  const players = (hiddenJson.players && typeof hiddenJson.players === "object") ? hiddenJson.players : {};
+  const index = JSON.parse(fs.readFileSync(path.join(dataDir, "index.json"), "utf8"));
+  const added = [];
+  const seen = new Set();
+  for (const e of index.players || []) {
+    const file = e && e.file;
+    if (!file || seen.has(file)) continue;
+    seen.add(file);
+    let raw;
+    try {
+      raw = JSON.parse(fs.readFileSync(path.join(dataDir, file), "utf8"));
+    } catch {
+      continue;
+    }
+    const slug = e.slug || path.basename(file, ".json");
+    const pl = raw && (raw.player || raw);
+    const name = (pl && pl.display) || e.name || slug;
+    if (hidden.match({ slug, name, cid: pl && pl.cid })) continue;
+    const row = rankRow(raw, { slug, savedAt: e.savedAt ?? raw.savedAt });
+    if (!row || !isFreshHeld(row, nowSec)) continue;
+    const key = bareName(name);
+    if (!key || players[key]) continue;
+    players[key] = { reason: FRESH_HOLD_HIDDEN_REASON, at: new Date(nowSec * 1000).toISOString().slice(0, 10) };
+    added.push({ slug, name: key, cid: String((pl && pl.cid) || "") });
+  }
+  if (added.length) {
+    hiddenJson.players = players;
+    const text = JSON.stringify(hiddenJson, null, 2).replace(/[^\x00-\x7F]/g, (c) => "\\u" + c.charCodeAt(0).toString(16).padStart(4, "0"));
+    fs.writeFileSync(hiddenPath, text + "\n");
+  }
+  return added;
 }
 
 /** data/hidden.json → hiddenList lookup (missing / broken file = nobody hidden). */
@@ -370,6 +444,10 @@ const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPat
 if (isMain) {
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
   const dataDir = path.join(root, "data");
+  // Fresh-account auto-hide runs first so this build already excludes the
+  // newly hidden players via the normal hidden path.
+  const autoHidden = autoHideFreshExceptional(dataDir);
+  if (autoHidden.length) console.log(`auto-hide: ${autoHidden.length} fresh exceptional account(s) added to hidden.json: ${autoHidden.map((a) => a.name).join(", ")}`);
   const { ranks: out, guard, hidden: hiddenInfo, bins, session, forensics: forensicsInfo, review } = buildRanksWithGuard(dataDir);
   fs.writeFileSync(path.join(dataDir, "ranks.json"), JSON.stringify(out) + "\n");
   console.log(`ranks.json: ${out.count} players (${hiddenInfo.count} on the 🙈 hide list)`);
