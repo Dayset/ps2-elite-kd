@@ -4,9 +4,10 @@
  *
  * The players come from the names box on the main page (no retyping). Each
  * name has an "Opposition" box: ticked = opposition, unticked = fighter.
- * Every unticked player is run against the whole ticked group, which fights together.
+ * All fighters form one side and all opposition players form the other;
+ * they fight once, as two groups.
  */
-import { findFighter, runBattle } from "./battle.mjs?v=20261015-battle1";
+import { findFighter, runGroupBattle } from "./battle.mjs?v=20261015-battle2";
 
 const pct = (x) => `${(x * 100).toFixed(1)}%`;
 const num = (x, d = 2) => (Number.isFinite(x) ? x.toFixed(d) : "—");
@@ -68,55 +69,62 @@ function updateSideText(list) {
   if (!side) return;
   const f = names.filter((n) => fights.get(n) !== true);
   const o = names.filter((n) => fights.get(n) === true);
-  side.textContent = `Fighting: ${f.length ? f.join(", ") : "none"} · Opposition (fights as one group): ${o.length ? o.join(", ") : "none"}`;
+  side.textContent = `Fighting (one group): ${f.length ? f.join(", ") : "none"} · Opposition (one group): ${o.length ? o.join(", ") : "none"}`;
 }
 
-function renderResult(champ, result) {
-  const block = el("div", null, "battle-block");
-  const verdict = result.win ? "Champion favored" : "Champion underdog";
-  block.append(el("h4", `${verdict}: ${champ.name}`, result.win ? "battle-win" : "battle-lose"));
-
-  const modeText =
-    result.mode === "concentrated"
-      ? "Opponents fight together (similar activity): combined strength (Σ√b)²."
-      : result.mode === "sequential"
-        ? "Opponents fight one by one (dissimilar activity): each duel costs b²/a."
-        : "No opponents found.";
-  block.append(el("p", modeText, "battle-mode"));
-
-  const summary = el("ul", null, "battle-summary");
-  summary.append(
-    el("li", `Champion strength: ${num(result.a, 2)}`),
-    el("li", `Enemy strength used: ${num(result.enemy, 2)}`),
-    el("li", `Activity similarity (min ÷ max): ${num(result.similarity, 3)}`),
-    el("li", `Champion win rate: ${pct(result.winRate)}${result.trials ? ` (${result.trials} simulated fights)` : " (exact 1v1 odds)"}`),
-    el("li", `Champion remaining strength (avg, when he wins): ${pct(result.remaining)}`)
-  );
-  block.append(summary);
-
+function membersTable(players) {
   const table = el("table", null, "battle-table");
   const head = el("tr");
-  for (const h of ["Opponent", "adjS", "Activity", "Consistency", "Mean strength", "1v1 win chance"]) {
+  for (const h of ["Player", "adjS", "Activity", "Consistency", "Mean strength"]) {
     head.append(el("th", h));
   }
   const thead = el("thead");
   thead.append(head);
   table.append(thead);
   const body = el("tbody");
-  for (const d of result.duels) {
+  for (const p of players) {
     const tr = el("tr");
     tr.append(
-      el("td", d.name),
-      el("td", num(d.adjs, 0)),
-      el("td", num(d.act, 2)),
-      el("td", num(d.cons, 2)),
-      el("td", num(d.strength, 2)),
-      el("td", pct(d.championWinChance))
+      el("td", p.name),
+      el("td", num(p.adjs, 0)),
+      el("td", num(p.act, 2)),
+      el("td", num(p.cons, 2)),
+      el("td", num(p.mu, 2))
     );
     body.append(tr);
   }
   table.append(body);
-  block.append(table);
+  return table;
+}
+
+function renderGroupResult(fighters, opposition, result) {
+  const block = el("div", null, "battle-block");
+  const fighterNames = fighters.map((f) => f.name).join(", ");
+  const verdict = result.win ? "Fighters favored" : "Fighters underdogs";
+  block.append(el("h4", `${verdict} (one fight, ${fighters.length} vs ${opposition.length})`, result.win ? "battle-win" : "battle-lose"));
+
+  const modeText =
+    result.mode === "concentrated"
+      ? "Opposition fights together (similar activity): combined strength (Σ√b)²."
+      : result.mode === "sequential"
+        ? "Opposition fights one by one (dissimilar activity): each duel costs b²/a."
+        : "No players on one side.";
+  block.append(el("p", modeText, "battle-mode"));
+
+  const summary = el("ul", null, "battle-summary");
+  summary.append(
+    el("li", `Fighting side combined strength (Σ√s)²: ${num(result.a, 2)}`),
+    el("li", `Opposition strength used: ${num(result.enemy, 2)}`),
+    el("li", `Activity similarity of opposition (min ÷ max): ${num(result.similarity, 3)}`),
+    el("li", `Fighting side win rate: ${pct(result.winRate)} (${result.trials} simulated fights)`),
+    el("li", `Fighting side remaining strength (avg, when it wins): ${pct(result.remaining)}`)
+  );
+  block.append(summary);
+
+  block.append(el("p", `Fighting side: ${fighterNames}`, "battle-mode"));
+  block.append(membersTable(fighters));
+  block.append(el("p", "Opposition:", "battle-mode"));
+  block.append(membersTable(opposition));
   return block;
 }
 
@@ -138,29 +146,26 @@ async function runSelected(out) {
   const { cols, rows } = payload;
   const resolve = (name) => findFighter(rows, cols, name);
 
+  const fighters = [];
   const oppFighters = [];
   const missing = [];
+  for (const n of fighting) {
+    const r = resolve(n);
+    if (r.fighter) fighters.push(r.fighter);
+    else missing.push(`${n} (${r.error})`);
+  }
   for (const n of opposition) {
     const r = resolve(n);
     if (r.fighter) oppFighters.push(r.fighter);
     else missing.push(`${n} (${r.error})`);
   }
-  const blocks = [];
-  if (!oppFighters.length) {
-    out.replaceChildren(el("p", "None of the opposition players are in the Rankings data.", "battle-error"));
+  if (!fighters.length || !oppFighters.length) {
+    out.replaceChildren(el("p", "Both sides need at least one player in the Rankings data.", "battle-error"));
     return;
-  }
-  for (const n of fighting) {
-    const r = resolve(n);
-    if (!r.fighter) {
-      missing.push(`${n} (${r.error})`);
-      continue;
-    }
-    blocks.push(renderResult(r.fighter, runBattle(r.fighter, oppFighters)));
   }
   const nodes = [];
   if (missing.length) nodes.push(el("p", `Not in the Rankings data, skipped: ${missing.join("; ")}`, "battle-mode"));
-  nodes.push(...blocks);
+  nodes.push(renderGroupResult(fighters, oppFighters, runGroupBattle(fighters, oppFighters)));
   out.replaceChildren(...nodes);
 }
 

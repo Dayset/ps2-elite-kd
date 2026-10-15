@@ -167,6 +167,47 @@ function trialOutcome(mode, a, bs) {
 }
 
 /**
+ * One fight between two groups. The fighting side is combined into a single
+ * strength (Σ√sᵢ)², the same rule used for a group of opponents. The opposition
+ * is resolved with the usual group rule (together if activity is similar, one
+ * by one otherwise). Seeded Monte Carlo over `trials` fights.
+ */
+export function runGroupBattle(fighters, opposition, { trials = DEFAULT_TRIALS, seed = 1 } = {}) {
+  const A = (fighters || []).slice();
+  const B = (opposition || []).slice();
+  const combinedMu = Math.pow(A.reduce((s, f) => s + Math.sqrt(f.mu), 0), 2);
+  if (!A.length || !B.length) {
+    return { mode: "none", winRate: 0, win: false, a: combinedMu, enemy: 0, remaining: 0, similarity: null, trials: 0 };
+  }
+  const { mode, similarity } = groupMode(B);
+  const rand = seededRandom(seed);
+  let wins = 0;
+  let remainingSum = 0;
+  let enemySum = 0;
+  for (let t = 0; t < trials; t++) {
+    const a = Math.pow(A.reduce((s, f) => s + Math.sqrt(sampleStrength(f, rand)), 0), 2);
+    const bs = B.map((o) => sampleStrength(o, rand));
+    const out = trialOutcome(mode, a, bs);
+    if (out.win) wins++;
+    remainingSum += out.remaining;
+    enemySum += mode === "concentrated"
+      ? Math.pow(bs.reduce((s, b) => s + Math.sqrt(b), 0), 2)
+      : bs.reduce((s, b) => s + b, 0);
+  }
+  const winRate = wins / trials;
+  return {
+    mode,
+    winRate,
+    win: winRate >= 0.5,
+    a: combinedMu,
+    enemy: enemySum / trials,
+    remaining: remainingSum / trials,
+    similarity,
+    trials,
+  };
+}
+
+/**
  * Run the fight. Single opponent: closed-form odds. Several opponents:
  * seeded Monte Carlo over `trials` fights.
  */
