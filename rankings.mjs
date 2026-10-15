@@ -30,13 +30,13 @@ export function initRankings(host) {
 
   // Column definitions: same ids / labels / digits / floorZero as app.js.
   const VISIBLE = [
-    { id: "adjs", label: "⚔️ iVi", digits: 0, floorZero: true, tip: "ivi adjusted for your own kill speed: includes a bonus for fast killing and a penalty for slow, safe play (own KPM 0.8–1.4 = unchanged)" },
-    { id: "act", label: "🏃 Activity", digits: 2, tip: "K/D × own KPM" },
-    { id: "pvs", label: "🦁 Brave", digits: 2, tip: "Bravery (Activity × slope)" },
-    { id: "rf", label: "🛡️ Resist", digits: 2, tip: "Resistance Factor" },
-    { id: "cons", label: "⚡ Const", digits: 2, tip: "Consistency: K/D against hard opposition ÷ K/D against easy (1.0 = holds up). Higher = holds up better against hard opposition." },
-    { id: "mech", label: "🎯 Aim", digits: 1, tip: "Projected mechanized share (previously Mech%)" },
-    { id: "rkd", label: "☠️ K/D", digits: 3, tip: "Resistance-weighted K/D" },
+    { id: "adjs", label: "⚔️ iVi", digits: 0, floorZero: true, tip: "Overall rating from how you do against the ~200 players you fight most, worth more the stronger they are, with a bonus for fast killing and a cut for slow, safe play." },
+    { id: "act", label: "🏃 Activity", digits: 2, tip: "How much winning combat you put out: your K/D against the players you fight most, multiplied by how fast you kill." },
+    { id: "pvs", label: "🦁 Brave", digits: 2, tip: "Activity that keeps up as enemies get stronger: high when you stay productive even against the fastest-killing players you meet." },
+    { id: "rf", label: "🛡️ Resist", digits: 2, tip: "How well you stand up to strong players: your K/D against the players you fight most, scaled up by how fast those players kill." },
+    { id: "mech", label: "🎯 Aim", digits: 1, tip: "Currently estimated from 🛡️ Resist rather than from shooting data, so it ranks players the same way Resist does." },
+    { id: "cons", label: "⚡ Const", digits: 2, tip: "How much of your K/D you keep against the strongest third of your opponents compared with the weakest third: 1.00 means it holds completely, 0.50 means it halves." },
+    { id: "rkd", label: "☠️ K/D", digits: 3, tip: "Kills ÷ deaths against the ~200 players you fight most, so it reflects real matchups rather than your whole lifetime." },
   ];
   const DEBUG = [
     { id: "adj", label: "🎯🎈 ivi", digits: 0, tip: "Opposition-weighted IvI (before speed adjustment)" },

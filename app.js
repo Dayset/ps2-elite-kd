@@ -2963,13 +2963,13 @@ import {
 
     // Column order is fixed (sort only reorders rows). Visible by default:
     const adjVisibleCols = [
-      { id: "adjs", label: "⚔️ iVi", hint: "ivi adjusted for your own kill speed (🎯🎈 ivi in the debug columns is the unadjusted score). Own KPM 0.8–1.4 = unchanged; faster earns a growing bonus; slower scales the score down (at most halved), so a slow, safe KD counts for less but never goes negative. Below zero shows as 0.", fn: (r) => r.adjs, digits: 0, floorZero: true },
-      { id: "act", label: "🏃 Activity", hint: `How much high-pressure combat you see (☠️ K/D × own KPM).`, fn: (r) => r.act, digits: 2 },
-      { id: "pvs", label: "🦁 Brave", hint: `Bravery (formerly LionHeart): 🏃 Activity × pressure slope — sustained elite volume under hard opposition.`, fn: (r) => r.pvs, digits: 2 },
-      { id: "rf", label: "🛡️ Resist", hint: "Resistance: how hard the players you die to are (Resistance Factor).", fn: (r) => r.rf, digits: 2 },
-      { id: "cons", label: "⚡ Const", hint: "Consistency as a population percentile across cached players: higher = holds up better against hard opposition (p90 = better than 90% of players). Compares K/D against hard enemies with K/D against easy ones.", fn: (r) => r.cons, digits: 2, pctileCell: true },
-      { id: "mech", label: "🎯 Aim", hint: "Projected mechanized / vehicle share implied by 🛡️ Resist (previously Mech%).", fn: (r) => r.mech, digits: 1 },
-      { id: "rkd", label: "☠️ K/D", hint: "Resistance-weighted K/D against the opposition mix you actually face.", fn: (r) => r.rkd, digits: 3 },
+      { id: "adjs", label: "⚔️ iVi", hint: "Overall rating from how you do against the ~200 players you fight most, worth more the stronger they are, with a bonus for fast killing and a cut for slow, safe play.", fn: (r) => r.adjs, digits: 0, floorZero: true },
+      { id: "act", label: "🏃 Activity", hint: "How much winning combat you put out: your K/D against the players you fight most, multiplied by how fast you kill.", fn: (r) => r.act, digits: 2 },
+      { id: "pvs", label: "🦁 Brave", hint: "Activity that keeps up as enemies get stronger: high when you stay productive even against the fastest-killing players you meet.", fn: (r) => r.pvs, digits: 2 },
+      { id: "rf", label: "🛡️ Resist", hint: "How well you stand up to strong players: your K/D against the players you fight most, scaled up by how fast those players kill.", fn: (r) => r.rf, digits: 2 },
+      { id: "mech", label: "🎯 Aim", hint: "Currently estimated from 🛡️ Resist rather than from shooting data, so it ranks players the same way Resist does.", fn: (r) => r.mech, digits: 1 },
+      { id: "cons", label: "⚡ Const", hint: "How much of your K/D you keep against the strongest third of your opponents compared with the weakest third, as a percentile of all tracked players.", fn: (r) => r.cons, digits: 2, pctileCell: true },
+      { id: "rkd", label: "☠️ K/D", hint: "Kills ÷ deaths against the ~200 players you fight most, so it reflects real matchups rather than your whole lifetime.", fn: (r) => r.rkd, digits: 3 },
     ];
     // Older debug columns: appended only when "show older debug stats" (footer) is ticked.
     const adjDebugCols = [
