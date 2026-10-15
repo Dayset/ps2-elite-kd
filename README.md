@@ -65,10 +65,11 @@ Details are in [docs/pipeline.md](docs/pipeline.md).
 | ⚔️ **iVi** | Skill rating. Opposition-weighted, then adjusted for your kill speed. Sorts by default. |
 | 🏃 **Activity** | How many hard fights you've taken (K/D × your KPM). |
 | 🛡️ **Resist** | How hard the players you die to are. |
+| ⚡ **Const** | How much of your K/D holds up against the strongest third of opponents. |
 | 🦁 **Brave** | Activity weighted by how the curve drops under hard opposition. |
 | ☠️ **K/D** | Resistance-weighted K/D. |
-| ⚙️ **Mech%** | Projected mech share, implied by Resist. |
-| 🎈 **Inflation** | How much easy-fight padding lifts your overall K/D. Above 1.0 means inflated. |
+
+Hidden by default, and shown when you tick *show older debug stats*: 🎯 **Aim** (Mech%, projected from Resist), 🎈 **Inflation** (easy-fight padding), and a few others.
 
 Each value is explained in [docs/metrics.md](docs/metrics.md).
 

@@ -27,26 +27,20 @@ The volume of hard fights: ☠️ K/D × your own KPM.
 
 Formerly LionHeart. Activity × shifted slope pressure under hard opposition.
 
+### ⚡ Const
+
+How much of your K/D you keep against the strongest third of your opponents, compared with the weakest third. 1.00 means it holds completely, and 0.50 means it halves.
+
 ### ☠️ K/D
 
 Resistance-weighted K/D. Each death counts for more or less depending on how hard the opponent was.
 
-### ⚙️ Mech%
-
-The projected share of mech play, implied by Resist.
-
-### 🎈 Inflation
-
-Global K/D ÷ K/D among deaths against opponents at **0.5 weapon KPM or higher**.
-
-- The average planetman is about 0.35.
-- Values above 1.0 mean padding is inflating the overall K/D.
-- Padding above this threshold is treated as soft.
-
 ## Debug columns
 
-Tick **show older debug stats** in the footer to see these.
+These are hidden by default. Tick **show older debug stats** in the footer to see them.
 
+- **🎯 Aim** (Mech%): the estimated share of your fights that are vehicle or mech play. It's projected from Resist, not measured from shooting.
+- **🎈 Inflation**: global K/D ÷ K/D among deaths against opponents at **0.5 weapon KPM or higher**. The average planetman is about 0.35, and values above 1.0 mean padding is inflating the overall K/D. Lower is better. It's hidden by default because it rarely shows anything meaningful.
 - **🎯🎈 ivi**: the opposition-weighted IvI before the speed adjustment. It's public IvI × Resistance tempering. The 🎈 means the score is still inflated. The status page's red-flag bin uses this value.
 - **eKPM / own KPM**: the average enemy weapon pace, and your own pace. They're kept separate.
 - **📊 COI**: the combat output index, derived from Resist.

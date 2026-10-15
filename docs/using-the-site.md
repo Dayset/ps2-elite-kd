@@ -47,13 +47,13 @@ A walkthrough of the main page. For a short version, see the [README](../README.
 ## The stats table
 
 - **Public (Census/Honu)** columns are collapsed by default: KD, KPM, own KPM, Acc %, HSR %, IvI.
-- **Adjusted** columns are shown by default: ⚔️ iVi, 🏃 Activity, 🛡️ Resist, 🦁 Brave, ☠️ K/D, ⚙️ Mech%, 🎈 Inflation.
-- Tick **show older debug stats** in the footer to add 🎯🎈 ivi, eKPM, own KPM, 📊 COI and 📉 Slope. The choice is remembered.
+- **Adjusted** columns are shown by default: ⚔️ iVi, 🏃 Activity, 🦁 Brave, 🛡️ Resist, ⚡ Const, ☠️ K/D.
+- Tick **show older debug stats** in the footer to add 🎯 Aim (Mech%), 🎯🎈 ivi, eKPM, own KPM, 📊 COI, 📉 Slope and 🎈 Inflation. The choice is remembered.
 - Click any header to sort. Names sort alphabetically, and metrics sort numerically. The default is ⚔️ iVi, descending. Sorting by a debug column falls back to iVi when the debug columns are hidden.
 - Hover a header for a short hint.
 - Each value shows a small dimmed percentage against a reference value in its column:
   - By default it's **−N%**, the gap below the highest value.
-  - For 🎈 Inflation it's **+N%** above the reference, which is the greater of the lowest value and 1.0. Values at or below the reference show no percentage, so anything below 1.0 means no inflation.
+  - For 🎈 Inflation (a debug column) it's **+N%** above the reference, which is the greater of the lowest value and 1.0. Values at or below the reference show no percentage, so anything below 1.0 means no inflation.
   - No percentage appears on the reference value itself, on iVi cells shown as 0, or when the reference is 0 or less (such as 📉 Slope).
   - On phones the percentage sits under the number.
 
