@@ -2967,12 +2967,12 @@ import {
       { id: "act", label: "🏃 Activity", hint: "How much winning combat you put out: your K/D against the players you fight most, multiplied by how fast you kill.", fn: (r) => r.act, digits: 2 },
       { id: "pvs", label: "🦁 Brave", hint: "Activity that keeps up as enemies get stronger: high when you stay productive even against the fastest-killing players you meet.", fn: (r) => r.pvs, digits: 2 },
       { id: "rf", label: "🛡️ Resist", hint: "How well you stand up to strong players: your K/D against the players you fight most, scaled up by how fast those players kill.", fn: (r) => r.rf, digits: 2 },
-      { id: "mech", label: "🎯 Aim", hint: "Estimated share of your fights that are vehicle or mech play, projected from 🛡️ Resist rather than measured from shooting.", fn: (r) => r.mech, digits: 1 },
       { id: "cons", label: "⚡ Const", hint: "How much of your K/D you keep against the strongest third of your opponents compared with the weakest third, as a percentile of all tracked players.", fn: (r) => r.cons, digits: 2, pctileCell: true },
       { id: "rkd", label: "☠️ K/D", hint: "Kills ÷ deaths against the ~200 players you fight most, so it reflects real matchups rather than your whole lifetime.", fn: (r) => r.rkd, digits: 3 },
     ];
     // Older debug columns: appended only when "show older debug stats" (footer) is ticked.
     const adjDebugCols = [
+      { id: "mech", label: "🎯 Aim", hint: "Estimated share of your fights that are vehicle or mech play, projected from 🛡️ Resist rather than measured from shooting.", fn: (r) => r.mech, digits: 1 },
       { id: "adj", label: "🎯🎈 ivi", hint: "Opposition-weighted IvI before the kill-speed adjustment: public IvI adjusted by 🛡️ Resist so soft-farm padding is tempered. The 🎈 is a reminder that this score is still inflated (slow, safe play is not penalised here — see ⚔️ iVi).", fn: (r) => r.adj, digits: 0 },
       { id: "ekpm", label: "eKPM", hint: "Average enemy weapon KPM faced (how hard the opposition shoots).", fn: (r) => r.ekpm, digits: 2 },
       { id: "own", label: "own KPM", hint: "Your weapon pace used on the elite K/D curve and for the ⚔️ iVi speed adjustment.", fn: (r) => r.own, digits: 2 },

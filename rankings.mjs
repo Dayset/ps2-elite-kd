@@ -34,11 +34,11 @@ export function initRankings(host) {
     { id: "act", label: "🏃 Activity", digits: 2, tip: "How much winning combat you put out: your K/D against the players you fight most, multiplied by how fast you kill." },
     { id: "pvs", label: "🦁 Brave", digits: 2, tip: "Activity that keeps up as enemies get stronger: high when you stay productive even against the fastest-killing players you meet." },
     { id: "rf", label: "🛡️ Resist", digits: 2, tip: "How well you stand up to strong players: your K/D against the players you fight most, scaled up by how fast those players kill." },
-    { id: "mech", label: "🎯 Aim", digits: 1, tip: "Estimated share of your fights that are vehicle or mech play, projected from 🛡️ Resist rather than measured from shooting." },
     { id: "cons", label: "⚡ Const", digits: 2, tip: "How much of your K/D you keep against the strongest third of your opponents compared with the weakest third: 1.00 means it holds completely, 0.50 means it halves." },
     { id: "rkd", label: "☠️ K/D", digits: 3, tip: "Kills ÷ deaths against the ~200 players you fight most, so it reflects real matchups rather than your whole lifetime." },
   ];
   const DEBUG = [
+    { id: "mech", label: "🎯 Aim", digits: 1, tip: "Estimated share of your fights that are vehicle or mech play, projected from 🛡️ Resist rather than measured from shooting." },
     { id: "adj", label: "🎯🎈 ivi", digits: 0, tip: "Opposition-weighted IvI (before speed adjustment)" },
     { id: "ekpm", label: "eKPM", digits: 2, tip: "Average enemy weapon KPM faced" },
     { id: "own", label: "own KPM", digits: 2, tip: "Your weapon pace" },
