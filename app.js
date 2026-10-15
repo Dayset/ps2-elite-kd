@@ -3471,8 +3471,11 @@ import {
   }
 
   /** Name cell title: adds the farm note when farm accounts were excluded. */
+  /** Legend text for a player. Shards store { text, basis, at }; older entries are plain strings. */
   function descText(p) {
-    return playerDescs[slugKey(p && p.display)] || "";
+    const v = playerDescs[slugKey(p && p.display)];
+    if (typeof v === "string") return v;
+    return (v && typeof v.text === "string" && v.text) || "";
   }
   function descTitle(p) {
     const text = descText(p);
