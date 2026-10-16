@@ -1,0 +1,119 @@
+/**
+ * Name suggestions (name-suggest.mjs): pure helpers only.
+ */
+import { describe, it } from "node:test";
+import assert from "node:assert/strict";
+import {
+  MIN_CHARS,
+  suggestFragment,
+  censusSuggestUrl,
+  parseCensusSuggestions,
+  namesFromRanks,
+  localMatches,
+  mergeSuggestions,
+  replaceFragment,
+} from "../name-suggest.mjs";
+
+describe("suggestFragment", () => {
+  it("needs at least 4 characters", () => {
+    assert.equal(MIN_CHARS, 4);
+    assert.equal(suggestFragment("sim"), null);
+    assert.equal(suggestFragment("simp"), "simp");
+  });
+
+  it("uses only the name being typed after earlier names", () => {
+    assert.equal(suggestFragment("Dayset, Simplen"), "Simplen");
+    assert.equal(suggestFragment("Dayset Sim"), null);
+  });
+
+  it("stays quiet right after a separator (the name was just committed)", () => {
+    assert.equal(suggestFragment("Simplenubb "), null);
+    assert.equal(suggestFragment("Simplenubb,"), null);
+  });
+
+  it("ignores text that can't be a character name", () => {
+    assert.equal(suggestFragment("[TAG]"), null);
+    assert.equal(suggestFragment("abc-d"), null);
+    assert.equal(suggestFragment(""), null);
+  });
+});
+
+describe("censusSuggestUrl", () => {
+  it("builds a lower-case starts-with query sorted by last login", () => {
+    const url = censusSuggestUrl("https://census.daybreakgames.com/s:x/get/ps2:v2/", "SimpleN");
+    assert.ok(url.startsWith("https://census.daybreakgames.com/s:x/get/ps2:v2/character?"));
+    assert.ok(url.includes("name.first_lower=%5Esimplen"));
+    assert.ok(url.includes("c:sort=times.last_login:-1"));
+    assert.ok(url.includes("c:limit=10"));
+  });
+});
+
+describe("parseCensusSuggestions", () => {
+  it("reads name, faction, BR and last login", () => {
+    const out = parseCensusSuggestions({
+      character_list: [
+        { character_id: "1", name: { first: "Simplenubb" }, times: { last_login: "1792169438" }, battle_rank: { value: "89" }, faction_id: "1" },
+        { character_id: "2", name: { first: "SimplenubbNS" }, faction_id: "4" },
+      ],
+    });
+    assert.deepEqual(out[0], { name: "Simplenubb", faction: "VS", br: 89, lastLogin: 1792169438, source: "census" });
+    assert.equal(out[1].faction, "NSO");
+    assert.equal(out[1].br, null);
+  });
+
+  it("returns [] for errors and skips malformed names", () => {
+    assert.deepEqual(parseCensusSuggestions({ error: "throttled" }), []);
+    assert.deepEqual(parseCensusSuggestions(null), []);
+    assert.deepEqual(parseCensusSuggestions({ character_list: [{ name: { first: "bad name" } }, {}] }), []);
+  });
+});
+
+describe("local matches and merging", () => {
+  const ranks = {
+    cols: ["name", "query"],
+    rows: [
+      ["[lKPM] Simplenubb", "Simplenubb"],
+      ["[1KPM] SimplenubbTR", "SimplenubbTR"],
+      ["Other", "Other"],
+    ],
+  };
+
+  it("reads bare names from ranks.json", () => {
+    const names = namesFromRanks(ranks);
+    assert.equal(names.length, 3);
+    assert.equal(names[0].display, "[lKPM] Simplenubb");
+    assert.deepEqual(namesFromRanks(null), []);
+  });
+
+  it("matches cached names by prefix, case-insensitive, shortest first", () => {
+    const m = localMatches(namesFromRanks(ranks), "simpLE");
+    assert.deepEqual(m.map((x) => x.name), ["Simplenubb", "SimplenubbTR"]);
+    assert.equal(m[0].source, "cached");
+  });
+
+  it("puts cached names first, adds Census faction/BR, removes duplicates", () => {
+    const local = localMatches(namesFromRanks(ranks), "simp");
+    const remote = [
+      { name: "simplenubb", faction: "VS", br: 89, source: "census" },
+      { name: "SimplenubbNC", faction: "NC", br: 22, source: "census" },
+    ];
+    const out = mergeSuggestions(local, remote);
+    assert.deepEqual(out.map((x) => x.name), ["simplenubb", "SimplenubbTR", "SimplenubbNC"]);
+    assert.equal(out[0].source, "cached");
+    assert.equal(out[0].faction, "VS");
+  });
+
+  it("leaves out names already in the box and respects the limit", () => {
+    const remote = [{ name: "SimplenubbNC", source: "census" }, { name: "SimplenubbNS", source: "census" }];
+    assert.deepEqual(mergeSuggestions([], remote, ["simplenubbnc"]).map((x) => x.name), ["SimplenubbNS"]);
+    assert.equal(mergeSuggestions([], remote, [], 1).length, 1);
+  });
+});
+
+describe("replaceFragment", () => {
+  it("swaps the typed fragment for the picked name and adds a space", () => {
+    assert.equal(replaceFragment("simp", "Simplenubb"), "Simplenubb ");
+    assert.equal(replaceFragment("Dayset, simp", "Simplenubb"), "Dayset, Simplenubb ");
+    assert.equal(replaceFragment("Dayset simp", "Simplenubb"), "Dayset Simplenubb ");
+  });
+});
