@@ -11,7 +11,8 @@ describe("build-log 🤖 Likely farm accounts", () => {
     assert.match(card, /id="farmAcct"/);
   });
   it("farm accounts don't count as sprouts", () => {
-    assert.match(html, /sprout: sp\.sprout && !farmAcct/);
+    // Row summary moved to flags-summary.mjs (precomputed into data/flags.json, t367u).
+    assert.match(fs.readFileSync(new URL("../flags-summary.mjs", import.meta.url), "utf8"), /sprout: sp\.sprout && !farmAcct/);
     assert.match(html, /renderFarmAccounts\(/);
   });
 });

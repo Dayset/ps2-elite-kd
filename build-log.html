@@ -536,20 +536,17 @@
        🌾 padding + † "adjusted" + the 🧪 outlier guard (grouped by player) go to 📉 Chart anomalies. Uses the
        same metrics as the main tables (player-metrics.mjs). Leads for review, not proof. -->
   <script type="module">
-    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261010-sav1";
-    import { reviewFlags, reviewRuleText, anomalyRuleText, paddingRuleText } from "./red-flags.mjs?v=20261010-sav1";
+    import { reviewRuleText, anomalyRuleText, paddingRuleText } from "./red-flags.mjs?v=20261010-sav1";
     import { groupOutliers } from "./outlier-guard.mjs?v=20261010-sav1";
     import { classifyBins, CHART_LABELS } from "./bins.mjs?v=20261010-sav1";
     import { forensicsRuleText } from "./session-forensics.mjs?v=20261010-sav1";
-    import { sprout, sampleEvents, sproutRuleText, farmAccount, farmAccountRuleText } from "./sprouts.mjs?v=20261010-sav1";
-    import { reviewDecision, isNotFarm, farmListEntry } from "./padding.mjs?v=20261010-sav1";
+    import { sproutRuleText, farmAccountRuleText } from "./sprouts.mjs?v=20261010-sav1";
+    import { reviewDecision } from "./padding.mjs?v=20261010-sav1";
     import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261010-sav1";
     import "./name-peek.mjs?v=20261010-sav1"; // full-name popup for truncated .nm names
     import { radarProfileUrl, radarBadge, radarPriority } from "./radar.mjs?v=20261010-sav1";
 
     const POLL_MS = 30 * 1000;
-    const CONCURRENCY = 6;
-    const SS_KEY = "ps2-elite-kd:redflags:v10"; // { byFile: { file: { savedAt, row } } }
     const $ = (id) => document.getElementById(id);
     const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
     const fmt = (v, d) => (typeof v === "number" && Number.isFinite(v) ? v.toFixed(d) : "—");
@@ -576,14 +573,8 @@
     $("farmAcctRule").textContent = "Rule: " + farmAccountRuleText();
     $("adjRule").textContent = "Rule: " + anomalyRuleText();
     $("padRule").textContent = "Rule: " + paddingRuleText();
-    try { sessionStorage.removeItem("ps2-elite-kd:redflags:v6"); sessionStorage.removeItem("ps2-elite-kd:redflags:v7"); sessionStorage.removeItem("ps2-elite-kd:redflags:v8"); sessionStorage.removeItem("ps2-elite-kd:redflags:v9"); } catch { /* ignore */ }
+    try { sessionStorage.removeItem("ps2-elite-kd:redflags:v6"); sessionStorage.removeItem("ps2-elite-kd:redflags:v7"); sessionStorage.removeItem("ps2-elite-kd:redflags:v8"); sessionStorage.removeItem("ps2-elite-kd:redflags:v9"); sessionStorage.removeItem("ps2-elite-kd:redflags:v10"); } catch { /* ignore */ }
 
-    function readCache() {
-      try { return JSON.parse(sessionStorage.getItem(SS_KEY)) || null; } catch { return null; }
-    }
-    function writeCache(c) {
-      try { sessionStorage.setItem(SS_KEY, JSON.stringify(c)); } catch { /* quota / private mode: just recompute */ }
-    }
     function ago(t) {
       if (!t) return "—";
       const s = Math.max(0, Math.round((Date.now() - t) / 1000));
@@ -623,39 +614,6 @@
       const b = radarBadge(e);
       return '<span class="st-radar"><a href="' + esc(url) + '" target="_blank" rel="noopener noreferrer" title="Open on PS2 Radar (independent community cheat radar)">PS2 Radar</a>' +
         (b ? '<span class="st-rb' + (b.cls ? " " + b.cls : "") + '" title="' + esc(b.tip) + '">' + esc(b.text) + "</span>" : "") + "</span>";
-    }
-
-    /** Small, JSON-safe summary of one player (what the table + rule need). */
-    function summarize(entry, raw) {
-      const np = normalizePlayer(raw);
-      const m = playerMetrics(np);
-      const num = (v) => (typeof v === "number" && Number.isFinite(v) ? v : null);
-      const f = reviewFlags(m);
-      // 🌱 keeps its original input (sample with farm victims), like the older 🚩 rules.
-      const sp = sprout(m.raw || m, sampleEvents(np.rawRows || np.rows));
-      // 🤖 a 🌱 that mostly dies to a few killers it never kills back = likely farm account (not a sprout).
-      // data/farm.json (owner-confirmed bot, t322u) always lands in 🤖, whatever the 🌱 / 🤖 thresholds.
-      const listed = farmListEntry({ name: np.display, cid: np.cid });
-      const fa = (sp.sprout || listed) && !isNotFarm({ name: np.display, cid: np.cid }) ? farmAccount(np.rawRows || np.rows, m.ownKpm) : null;
-      const farmAcct = fa && (fa.farm || listed) ? { share: fa.share, deaths: fa.deaths, feeders: fa.feeders.slice(0, 3), confirmed: !!listed } : null;
-      // Evidence for padding AND adjusted (any farm-account kills excluded).
-      const pad = m.farm && m.farm.victims && m.farm.victims.length ? m.farm : null;
-      return {
-        name: entry.name, slug: entry.slug || "", cid: String(m.p.cid || ""), savedAt: entry.savedAt || 0,
-        // Same inputs the aim / vehicle rules read (sample with farm victims).
-        adj: num((m.raw || m).adj), ivi: num(m.ivi), pvs: num((m.raw || m).pvs), inflation: num((m.raw || m).inflation),
-        kd: num(m.kd), acc: num(m.acc), hsr: num(m.hsr),
-        flagged: f.flagged, red: !!f.red, patterns: f.patterns, tier: f.skill.tier, basis: f.skill.basis,
-        adjs: num((m.raw || m).adjs), kpm: num(m.ownKpm) ?? num(m.kpm), events: sp.events, sprout: sp.sprout && !farmAcct, farmAcct,
-        // Evidence for the padding tag: share + farm accounts (kills/deaths).
-        padding: pad ? { share: pad.share, kills: pad.kills, victims: pad.victims.map((v) => ({ name: v.name, kills: v.kills, deaths: v.deaths })) } : null,
-      };
-    }
-
-    async function fetchPlayer(entry) {
-      const r = await fetch("data/" + entry.file + "?v=" + (entry.savedAt || 0), { cache: "no-cache" });
-      if (!r.ok) throw new Error("HTTP " + r.status);
-      return r.json();
     }
 
     function rowHtml(r) {
@@ -1042,9 +1000,6 @@
       if (busy) return;
       busy = true;
       try {
-        const ir = await fetch("data/index.json?t=" + Date.now(), { cache: "no-store" });
-        if (!ir.ok) throw new Error("HTTP " + ir.status);
-        const index = await ir.json();
         // Human review decisions (optional file; missing = nothing reviewed yet).
         try {
           const rr = await fetch("data/reviewed.json?t=" + Date.now(), { cache: "no-store" });
@@ -1059,30 +1014,11 @@
           setReview(st);
         } catch { /* keep the last set */ }
         await loadRadar();
-        const entries = (index.players || []).filter((e) => e && e.file && e.name);
-        const byFile = (readCache() || {}).byFile || {};
-        // Only (re)load players that are new or changed since the cached pass.
-        const todo = entries.filter((e) => !byFile[e.file] || byFile[e.file].savedAt !== (e.savedAt || 0));
-        let errors = 0;
-        if (todo.length) {
-          let done = 0, i = 0;
-          const progress = () => { $("flags").innerHTML = $("sprouts").innerHTML = $("farmAcct").innerHTML = $("adjusted").innerHTML = $("padding").innerHTML = '<span class="st-dim">Scoring players… ' + done + " / " + todo.length + "</span>"; };
-          progress();
-          const worker = async () => {
-            while (i < todo.length) {
-              const e = todo[i++];
-              try { byFile[e.file] = { savedAt: e.savedAt || 0, row: summarize(e, await fetchPlayer(e)) }; }
-              catch { errors += 1; }
-              done += 1;
-              progress();
-            }
-          };
-          await Promise.all(Array.from({ length: Math.min(CONCURRENCY, todo.length) }, worker));
-        }
-        const live = new Set(entries.map((e) => e.file));
-        for (const f of Object.keys(byFile)) if (!live.has(f)) delete byFile[f];
-        writeCache({ byFile });
-        render(entries.map((e) => byFile[e.file] && byFile[e.file].row), entries.length, errors);
+        // Rows are precomputed once per refresh run (scripts/build-flags.mjs, same flags-summary.mjs rules).
+        const fr = await fetch("data/flags.json?t=" + Date.now(), { cache: "no-store" });
+        if (!fr.ok) throw new Error("flags.json HTTP " + fr.status);
+        const flags = await fr.json();
+        render(flags.rows || [], flags.total || 0, flags.errors || 0);
       } catch (e) {
         $("flags").innerHTML = '<span class="st-err">Couldn’t compute red flags (' + esc(e && e.message) + ").</span>";
         $("sprouts").innerHTML = $("farmAcct").innerHTML = '<span class="st-err">Couldn’t load the list (' + esc(e && e.message) + ").</span>";
