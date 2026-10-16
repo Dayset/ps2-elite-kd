@@ -23,20 +23,33 @@
     .st-card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
     .st-card h2 { font-size: 1rem; margin: 0 0 6px; }
     .st-card h3 { font-size: 0.95rem; margin: 0 0 4px; }
+    .st-card h4 { font-size: 0.85rem; margin: 10px 0 2px; color: var(--accent); }
     .st-dim { color: var(--dim); }
     .st-wrap a { color: var(--accent); }
     .st-section { font-size: 1.05rem; margin: 22px 0 10px; }
+    .st-debug-sep { margin: 56px 0 20px; border: none; border-top: 2px solid var(--border); }
+    .st-debug-box { background: var(--panel); border: 1px dashed var(--border); border-radius: 10px; padding: 12px 14px; }
+    .st-debug-box summary { cursor: pointer; font-weight: 600; }
+    .st-debug-box summary h2 { display: inline; font-size: 1rem; margin: 0; }
+    .st-num { font-variant-numeric: tabular-nums; }
   </style>
 </head>
 <body>
   <main class="st-wrap">
     <h1>What every column means</h1>
-    <div class="st-sub">Plain words, one column at a time. <a href="index.html">Back to the stats</a> · <a href="updates.html">Update log</a> · Formulas live in <a href="https://github.com/Dayset/ps2-elite-kd/blob/main/docs/metrics.md">docs/metrics.md</a>.</div>
+    <div class="st-sub">Plain words, one column at a time: what it measures, how it was invented, and why the public trackers don’t have it. <a href="index.html">Back to the stats</a> · <a href="updates.html">Update log</a> · Formulas live in <a href="https://github.com/Dayset/ps2-elite-kd/blob/main/docs/metrics.md">docs/metrics.md</a>.</div>
 
     <div class="st-card">
       <h2>The picture behind most columns</h2>
       <p>Most ✨ Adjusted columns come from one picture: your K/D curve. On the horizontal axis is how strong the opponents are — their KPM, how fast they kill. On the vertical axis is your K/D against them. Left side = slow, easy opponents. Right side = fast, hard opponents. The columns below are different ways of reading that picture.</p>
       <p>Unless a card says otherwise, a column is built from the ~200 players you fight most — your real matchups, not your whole lifetime.</p>
+    </div>
+
+    <div class="st-card">
+      <h2>Why Honu and Fisu don’t have these columns</h2>
+      <p>Honu and Fisu are per-player lookup pages: type a name, get that player’s own lifetime / session / weapon numbers straight from Census. That is one character’s aggregates — no second step.</p>
+      <p>Every ✨ Adjusted column needs the opposite: for one player, fetch their whole killboard, then fetch the stats of their ~200 most-fought opponents, build the curve, and keep it fresh for thousands of players on refresh tiers. That is a standing cache plus a refresh pipeline, not a lookup. Done per visit it would take minutes and hammer Census. So the adjusted columns are a property of this site’s cache — no per-player tracker computes them, because no per-player tracker keeps the opponent graph.</p>
+      <p>The 📊 Public columns below are the exception: those <em>are</em> the tracker numbers. The site reuses them as raw material — and the gap between them and the adjusted ones is where the story lives.</p>
     </div>
 
     <h2 class="st-section">✨ Adjusted (the default columns)</h2>
@@ -45,24 +58,40 @@
       <h3>⚔️ iVi — your overall rating</h3>
       <p>In simple words: how good you are, once the strength of your opponents is taken into account. It asks: against the ~200 players you fight most, how do you do — and how strong are they? Wins against strong opponents count more than wins against weak ones. Then it adjusts for pace: fast killing adds a bonus, slow safe play gets a cut.</p>
       <p><span class="st-dim">High means:</span> you beat strong players at a good pace. <span class="st-dim">Low means:</span> your wins come mostly against weak opposition, or at a slow pace. Values below zero show as 0.</p>
+      <h4>How it was invented</h4>
+      <p>The problem was fight selection. Lifetime K/D treats every kill the same, so a player who only fights weak opposition looks like a god: Bhorn showed 3.96 lifetime K/D against a 1.15 K/D once only real opponents were counted. The rating had to be rebuilt from matchups only — the ~200 most-fought opponents, weighted by their strength. That gave 🎯🎈 ivi. Then came the pace problem: a player can hold a 9.77 K/D at 0.78 KPM simply by barely fighting, so in October 2026 the kill-speed adjustment was added — neutral between 0.8 and 1.4 own KPM, a bonus above it, a cut below it. One number that answers “how good are you, really?” instead of “how good is your opposition selection?”</p>
+      <h4>Why trackers don’t have it</h4>
+      <p>It needs the full opponent graph (see the box above). Honu and Fisu show Census’s own IvI instead — a lifetime aggregate with no opponent weighting and no pace adjustment.</p>
     </div>
 
     <div class="st-card">
       <h3>🏃 Activity — how much winning combat you put out</h3>
       <p>In simple words: your K/D against the players you fight most, multiplied by how fast you kill. It is volume times tempo.</p>
       <p><span class="st-dim">High means:</span> lots of winning fights, quickly. <span class="st-dim">Low means:</span> you lose more than you win, or you kill slowly.</p>
+      <h4>How it was invented</h4>
+      <p>K/D alone says nothing about volume: a 5.0 K/D at 0.2 KPM is one kill every five minutes. Activity was invented to separate “wins fights” from “wins fights constantly” — the same matchup K/D, multiplied by your own kill pace. (It started life as 🔥 Active and was renamed 🏃 Activity.)</p>
+      <h4>Why trackers don’t have it</h4>
+      <p>It is built on the matchup K/D, which trackers don’t compute. Their closest number is raw KPM — pace with no mention of whether the fights were won.</p>
     </div>
 
     <div class="st-card">
       <h3>🦁 Brave — does your Activity survive hard opposition?</h3>
       <p>In simple words: take your Activity and check how much of it is left against the fastest-killing opponents you meet. It is Activity that keeps up as enemies get stronger.</p>
       <p><span class="st-dim">High means:</span> you stay productive even when the other side is strong. <span class="st-dim">Low, next to a high iVi, means:</span> selective play — you pick your fights, hit and run, and avoid long even fights.</p>
+      <h4>How it was invented</h4>
+      <p>Activity doesn’t say whether it survives hard opposition. Some players put up huge Activity numbers that collapse the moment the enemy gets fast — one such collapse is what put the floor under the slope in the formula (a curve falling to −2 or steeper counts as minimum pressure). Brave is Activity multiplied by the pressure the curve is under, so it answers “and against real opposition?” It started as LionHeart and was renamed Brave.</p>
+      <h4>Why trackers don’t have it</h4>
+      <p>It needs the whole curve — its slope across all opponent strengths. A tracker that shows one player’s aggregates has no curve to take a slope from.</p>
     </div>
 
     <div class="st-card">
       <h3>🛡️ Resist — how well you stand up to strong players</h3>
       <p>In simple words: your K/D against the players you fight most, scaled up by how fast those players kill. The faster your opponents kill, the more your K/D against them counts.</p>
       <p><span class="st-dim">High means:</span> you hold your own even against people who kill fast. <span class="st-dim">Low means:</span> your K/D comes mostly against slower opponents.</p>
+      <h4>How it was invented</h4>
+      <p>Matchup K/D alone doesn’t say who those opponents were — 1.0 K/D against killers is worth more than 1.0 against beginners. Resist is that missing piece: K/D multiplied by the average KPM of the opposition. It became the load-bearing number of the whole system: the adjusted IvI, the Combat Output Index and the Aim projection are all derived from it.</p>
+      <h4>Why trackers don’t have it</h4>
+      <p>It needs the opponent sample and their KPMs. Trackers show your KPM and your K/D, but never the KPM of the people you fought — that requires fetching the opponents too.</p>
     </div>
 
     <div class="st-card">
@@ -70,15 +99,24 @@
       <p>In simple words: compare the two ends of your curve. Take the average height of the left third (easiest opponents) and the right third (hardest opponents). Const = right ÷ left, capped at 1. The middle third is ignored entirely — no central point involved.</p>
       <p><span class="st-dim">Line stays flat →</span> right height ≈ left height → Const near 1: you hold up against strong opponents. <span class="st-dim">Line drops to the right →</span> right height much lower → Const low: you feast on easy opponents and fall apart against hard ones.</p>
       <p><span class="st-dim">Catch:</span> a flat line near the bottom also scores high — someone equally modest everywhere looks “consistent” too. That is why Const is only a colour hint, never the headline, and never praised when iVi is below the middle of the pack. On the page it shows as a percentile: where you stand among all tracked players.</p>
+      <h4>How it was invented</h4>
+      <p>Matchup K/D is an average — it hides whether you hold up across the whole curve or only farm the easy end. Const was added as the shape check: the two ends of the curve, divided. It has been moved around ever since because it keeps getting misread as a skill rating: added as a column, shown as a population percentile, demoted to the debug columns, then brought back as colour-only. The lesson stuck — it colours the picture, it never headlines it.</p>
+      <h4>Why trackers don’t have it</h4>
+      <p>It needs the full curve split into thirds. A single lifetime K/D has no thirds to compare.</p>
     </div>
 
     <div class="st-card">
       <h3>☠️ K/D — your matchup K/D</h3>
       <p>In simple words: kills ÷ deaths against the ~200 players you fight most. Not your lifetime K/D — only real matchups against people you actually fight.</p>
       <p><span class="st-dim">High means:</span> you win most of those fights. <span class="st-dim">Low means:</span> you die more than you kill in them.</p>
+      <h4>How it was invented</h4>
+      <p>Lifetime K/D mixes everything — farm accounts, soft opposition, fights from years ago. Matchup K/D throws all of that away and counts only the people you actually fight, most often. It is the honest answer to “against people you really meet, do you win?” — and the raw material every other adjusted column is built from.</p>
+      <h4>Why trackers don’t have it</h4>
+      <p>It needs the per-opponent kill/death breakdown of your killboard, pooled over your most-fought opponents. Trackers show the lifetime total; they never split it by opponent.</p>
     </div>
 
     <h2 class="st-section">📊 Public (lifetime Census numbers, no adjustment)</h2>
+    <p class="st-dim">These are the tracker numbers — Honu and Fisu show these, and the site reuses them as raw material. No invention here; the invention is everything above, built on top of them.</p>
 
     <div class="st-card">
       <h3>KD — lifetime kill/death ratio</h3>
@@ -107,45 +145,117 @@
 
     <div class="st-card">
       <h3>IvI — public Infantry vs Infantry score</h3>
-      <p>A lifetime rating from Census, with no opponent weighting. Compare it with ⚔️ iVi to see how much the matchup adjustment changes the picture.</p>
+      <p>A lifetime rating from Census, with no opponent weighting. Compare it with ⚔️ iVi to see how much the matchup adjustment changes the picture — the worked example below shows a player whose public IvI says below average while the adjusted rating says clearly above.</p>
     </div>
 
-    <h2 class="st-section">Debug-only columns (hidden unless “show older debug stats” is ticked in the footer)</h2>
+    <h2 class="st-section">Worked example: YuigahamaYui, slightly above average</h2>
+    <p class="st-dim">One real player, every step recomputed from their cached data. Adjusted ⚔️ iVi 713 — percentile 66 of all tracked players (population median 394). Slightly above average, not a star — which is exactly why the example is useful: the machinery is the same for everyone.</p>
 
     <div class="st-card">
-      <h3>🎯 Aim — estimated vehicle / mech share</h3>
-      <p>An estimate, not a measurement: the share of your fights guessed to be vehicle or mech play, projected from 🛡️ Resist. It guesses from your numbers; it never watched you shoot.</p>
-    </div>
-
-    <div class="st-card">
-      <h3>🎯🎈 ivi — IvI before the speed adjustment</h3>
-      <p>Public IvI adjusted by 🛡️ Resist — opposition-weighted, but before the kill-speed adjustment. Still inflated: slow, safe play is not penalised here. ⚔️ iVi is the one with the speed adjustment.</p>
+      <h3>Step 1 — what the trackers show (public stats)</h3>
+      <p class="st-num">KD 1.71 · KPM 0.36 · own KPM 0.57 · Acc 15.5% · HSR 14.0% · IvI 217</p>
+      <p>Read that the way Honu or Fisu would: a below-average player. IvI 217 is a lifetime aggregate — it mixes everything, including a pile of soft-opposition fights. It says nothing about <em>who</em> those fights were against.</p>
     </div>
 
     <div class="st-card">
-      <h3>eKPM — how fast the opposition shoots</h3>
-      <p>Average enemy weapon KPM you face. Higher = harder opposition on average.</p>
+      <h3>Step 2 — the opponent sample (what the site adds)</h3>
+      <p>Take the 200 most-fought opponents. Pool their kills and deaths against YuigahamaYui: <span class="st-num">826 kills / 1025 deaths</span>. Their average KPM: <span class="st-num">0.96</span> — nearly triple the ~0.35 of the average player’s opposition. This is very hard opposition.</p>
     </div>
 
     <div class="st-card">
-      <h3>own KPM (debug) — your weapon pace</h3>
-      <p>Your weapon pace, used to draw the curve and for the ⚔️ iVi speed adjustment. Same number as 📊 Public own KPM.</p>
+      <h3>Step 3 — matchup K/D and Resist</h3>
+      <p class="st-num">☠️ K/D = 826 ÷ 1025 = 0.81</p>
+      <p>Against their most-fought opponents they lose slightly more than they win. But those opponents kill fast, so:</p>
+      <p class="st-num">🛡️ Resist = 0.81 × 0.96 = 0.776</p>
     </div>
 
     <div class="st-card">
-      <h3>📊 COI — Combat Output Index</h3>
-      <p>Derived from 🛡️ Resist: a summary of how much combat output you produce against the opposition you face.</p>
+      <h3>Step 4 — from Resist to the rating</h3>
+      <p class="st-num">🎯🎈 ivi = 600 × (1 + log₂(0.776 ÷ 0.6)) = 600 × (1 + 0.37) = 823</p>
+      <p>The 0.6 baseline is the “soft” Resist that corresponds to a public IvI of 600. Then the pace cut: own KPM 0.57 is below the neutral band (0.8–1.4), so the rating is scaled by <span class="st-num">(0.57 ÷ 0.8)^0.415 = 0.87</span>:</p>
+      <p class="st-num">⚔️ iVi = 823 × 0.87 = 713</p>
+      <p>That is the whole story in one line: losing 0.81 K/D against very strong opposition is worth 713 — while the public IvI said 217.</p>
     </div>
 
     <div class="st-card">
-      <h3>📉 Slope — the overall angle of your curve</h3>
-      <p>K/D against enemy KPM, weighted by deaths, across the whole curve. Negative = your K/D falls as the opposition gets harder. Feeds 🦁 Brave.</p>
+      <h3>Step 5 — the rest of the row, from the same sample</h3>
+      <p class="st-num">🏃 Activity = 0.81 × 0.57 = 0.46</p>
+      <p class="st-num">📉 Slope = −0.25 → shifted pressure 1.80 → 🦁 Brave = 0.457 × 2.41 = 1.10</p>
+      <p class="st-num">⚡ Const: easiest third 0.703 K/D, hardest third 0.466 K/D → 0.466 ÷ 0.703 = 0.66</p>
+      <p class="st-num">🎈 Inflation = 1.71 ÷ 0.67 = 2.55 — lifetime KD is 2.55× the K/D against ≥0.5 KPM opponents</p>
+      <p class="st-num">📊 COI = 0.776 ÷ 0.6 = 1.29 · 🎯 Aim ≈ 47% (projection, not a measurement)</p>
+      <p>Every adjusted number on the row comes out of the same 200-opponent sample. Nothing else was fetched, nothing was guessed.</p>
     </div>
 
-    <div class="st-card">
-      <h3>🎈 Inflation — how much soft opposition inflates your KD</h3>
-      <p>Global KD ÷ KD against enemies at 0.5 KPM or higher. Above 1 = your overall KD is higher than your KD against decent opponents. The average player’s enemy KPM is about 0.35. Lower is better.</p>
-    </div>
+    <hr class="st-debug-sep" />
+
+    <details class="st-debug-box">
+      <summary><h2>Debug-only columns — not part of the visible stats</h2></summary>
+      <p class="st-dim">These live far away from the visible columns on purpose. They are older or intermediate numbers, kept for debugging and for the few readers who want them. Tick “show older debug stats” in the footer of the main page to see them in the tables. Nothing below is used to judge a player.</p>
+
+      <div class="st-card">
+        <h3>🎯 Aim — estimated vehicle / mech share</h3>
+        <p>An estimate, not a measurement: the share of your fights guessed to be vehicle or mech play, projected from 🛡️ Resist. It guesses from your numbers; it never watched you shoot.</p>
+        <h4>How it was invented</h4>
+        <p>Census doesn’t report vehicle / mech share at all, so there was nothing to display — only a projection from Resist was possible (the formula is experimental). It was hidden from the visible tables while being reworked, because readers took it as measured aim. The tooltip now says what it estimates, not aim.</p>
+        <h4>Why trackers don’t have it</h4>
+        <p>Nobody has it — Census doesn’t publish the underlying split, so every tracker is in the same position. This site shows an explicit projection instead of nothing, labelled as a guess.</p>
+      </div>
+
+      <div class="st-card">
+        <h3>🎯🎈 ivi — IvI before the speed adjustment</h3>
+        <p>Public IvI adjusted by 🛡️ Resist — opposition-weighted, but before the kill-speed adjustment. Still inflated: slow, safe play is not penalised here. ⚔️ iVi is the one with the speed adjustment.</p>
+        <h4>How it was invented</h4>
+        <p>It is the intermediate step on the way to ⚔️ iVi: public IvI × Resist tempering, then the pace adjustment on top. It stays visible in debug because it shows the rating before pace is considered — the 🎈 marks that it is still inflated.</p>
+        <h4>Why trackers don’t have it</h4>
+        <p>Same reason as ⚔️ iVi: it needs the opponent graph. Trackers stop at public IvI.</p>
+      </div>
+
+      <div class="st-card">
+        <h3>eKPM — how fast the opposition shoots</h3>
+        <p>Average enemy weapon KPM you face. Higher = harder opposition on average.</p>
+        <h4>How it was invented</h4>
+        <p>It is the denominator of the whole system — the “how hard is your opposition” input that Resist, and everything derived from Resist, is built on. Not a rating; a measurement of the opposition.</p>
+        <h4>Why trackers don’t have it</h4>
+        <p>It needs the opponents’ KPMs, which means fetching the opponents. Trackers show your KPM, never your opponents’.</p>
+      </div>
+
+      <div class="st-card">
+        <h3>own KPM (debug) — your weapon pace</h3>
+        <p>Your weapon pace, used to draw the curve and for the ⚔️ iVi speed adjustment. Same number as 📊 Public own KPM.</p>
+        <h4>How it was invented</h4>
+        <p>Same number as the public column, listed here because the adjusted machinery reads it: it drives the speed adjustment and the graph’s pace factor.</p>
+        <h4>Why trackers don’t have it</h4>
+        <p>They do — this one is a tracker number, repeated in debug for convenience.</p>
+      </div>
+
+      <div class="st-card">
+        <h3>📊 COI — Combat Output Index</h3>
+        <p>Derived from 🛡️ Resist: Resist ÷ 0.6, so 1.0 means soft opposition. A readable rescaling of Resist.</p>
+        <h4>How it was invented</h4>
+        <p>Resist is hard to read at a glance (is 0.78 good?). Dividing by the 0.6 “soft” baseline turns it into an index where 1.0 = soft opposition and higher = harder. A convenience rescaling, nothing more.</p>
+        <h4>Why trackers don’t have it</h4>
+        <p>It is a rescaling of Resist, which trackers don’t compute.</p>
+      </div>
+
+      <div class="st-card">
+        <h3>📉 Slope — the overall angle of your curve</h3>
+        <p>K/D against enemy KPM, weighted by deaths, across the whole curve. Negative = your K/D falls as the opposition gets harder. Feeds 🦁 Brave.</p>
+        <h4>How it was invented</h4>
+        <p>The curve needed one number for its angle: a death-weighted regression line through it. It feeds Brave, and it doubles as a red-flag input — a slope at or below −2 means the player’s numbers collapse under pressure.</p>
+        <h4>Why trackers don’t have it</h4>
+        <p>No curve, no slope. A tracker showing one player’s aggregates has no line to fit.</p>
+      </div>
+
+      <div class="st-card">
+        <h3>🎈 Inflation — how much soft opposition inflates your KD</h3>
+        <p>Global KD ÷ KD against enemies at 0.5 KPM or higher. Above 1 = your overall KD is higher than your KD against decent opponents. The average player’s enemy KPM is about 0.35. Lower is better.</p>
+        <h4>How it was invented</h4>
+        <p>The Bhorn case: 3.96 lifetime K/D against 1.15 once only real opponents were counted. Inflation is the number that exposes exactly that gap — lifetime KD divided by KD against opponents who kill at 0.5 KPM or faster. The worked example above shows the same pattern on an ordinary player: YuigahamaYui’s lifetime 1.71 is 2.55× their 0.67 against decent opponents.</p>
+        <h4>Why trackers don’t have it</h4>
+        <p>It needs the per-opponent split of your KD by enemy KPM. Trackers show the lifetime total; they never split it by opponent strength.</p>
+      </div>
+    </details>
   </main>
 </body>
 </html>
