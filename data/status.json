@@ -4,27 +4,18 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "38981769352",
-    "event": "workflow_dispatch",
+    "runId": "38982315442",
+    "event": "schedule",
     "kind": "discovery",
-    "startedAt": "2026-10-16T23:32:31.522Z",
-    "endedAt": "2026-10-16T23:34:16.706Z",
-    "seconds": 105,
+    "startedAt": "2026-10-16T23:36:44.059Z",
+    "endedAt": "2026-10-16T23:37:42.872Z",
+    "seconds": 59,
     "updated": [
-      "[PYRE] Estok8805",
-      "[CBMC] IpdanNSO",
-      "[MDK] emdiblei",
-      "THExDRUNKxBOY",
-      "[lLOV] Vanulien",
-      "[MYTH] Martin1112",
-      "[FRE2] PolloBowl",
-      "[SubG] Upperhand1",
-      "PartOfMeInsideYou",
-      "[ALDl] BladeShotBlood",
-      "[4334] Millina",
-      "[HftA] BaneofSnails",
-      "[ROYS] WajjaNC",
-      "[GENU] JustFarmMe"
+      "[SAVI] BossoBeedio",
+      "Gengerem",
+      "MustardBot",
+      "Amonasro",
+      "[1COG] jack4321123443"
     ],
     "added": [],
     "failed": [],
@@ -43,79 +34,34 @@
     },
     "batch": [
       {
-        "name": "[PYRE] Estok8805",
+        "name": "[SAVI] BossoBeedio",
         "src": "refresh",
         "status": "done"
       },
       {
-        "name": "[CBMC] IpdanNSO",
+        "name": "Gengerem",
         "src": "refresh",
         "status": "done"
       },
       {
-        "name": "[MDK] emdiblei",
+        "name": "MustardBot",
         "src": "refresh",
         "status": "done"
       },
       {
-        "name": "THExDRUNKxBOY",
+        "name": "Amonasro",
         "src": "refresh",
         "status": "done"
       },
       {
-        "name": "[lLOV] Vanulien",
-        "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "[MYTH] Martin1112",
-        "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "[FRE2] PolloBowl",
-        "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "[SubG] Upperhand1",
-        "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "PartOfMeInsideYou",
-        "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "[ALDl] BladeShotBlood",
-        "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "[4334] Millina",
-        "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "[HftA] BaneofSnails",
-        "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "[ROYS] WajjaNC",
-        "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "[GENU] JustFarmMe",
+        "name": "[1COG] jack4321123443",
         "src": "refresh",
         "status": "done"
       }
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-16T23:34:27.874Z",
+    "checkedAt": "2026-10-16T23:37:50.683Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 26,
     "explained": 13,
@@ -125,8 +71,8 @@
         "name": "[FKNC] RenamedSoldier12345",
         "id": "pvs",
         "value": 263.979,
-        "bound": 33.718,
-        "z": 360.463,
+        "bound": 33.716,
+        "z": 360.086,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -161,8 +107,8 @@
         "name": "[N00O] Fretec",
         "id": "pvs",
         "value": 45.763,
-        "bound": 33.718,
-        "z": 61.73,
+        "bound": 33.716,
+        "z": 61.665,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -210,7 +156,7 @@
         "id": "slope",
         "value": 5.773,
         "bound": 0.62,
-        "z": 38.541,
+        "z": 38.542,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -222,7 +168,7 @@
         "id": "rf",
         "value": 15.153,
         "bound": 9.038,
-        "z": 36.007,
+        "z": 36.012,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -234,7 +180,7 @@
         "id": "coi",
         "value": 25.256,
         "bound": 15.063,
-        "z": 36.006,
+        "z": 36.012,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -336,8 +282,8 @@
         "name": "HackerDetector",
         "id": "pvs",
         "value": 62.198,
-        "bound": 33.718,
-        "z": 84.23,
+        "bound": 33.716,
+        "z": 84.141,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (session, session-forensics), listed there",
@@ -413,7 +359,7 @@
         "id": "rf",
         "value": 12.537,
         "bound": 9.038,
-        "z": 29.562,
+        "z": 29.566,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (aim, vehicle, session-forensics), listed there",
@@ -429,7 +375,7 @@
         "id": "coi",
         "value": 20.895,
         "bound": 15.063,
-        "z": 29.562,
+        "z": 29.566,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (aim, vehicle, session-forensics), listed there",
@@ -649,14 +595,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 360.463,
+        "maxZ": 360.086,
         "metrics": [
           {
             "id": "pvs",
             "label": "🦁 Brave",
             "value": 263.979,
-            "bound": 33.718,
-            "z": 360.463,
+            "bound": 33.716,
+            "z": 360.086,
             "side": "high"
           },
           {
@@ -680,7 +626,7 @@
             "label": "📉 Slope",
             "value": 5.773,
             "bound": 0.62,
-            "z": 38.541,
+            "z": 38.542,
             "side": "high"
           },
           {
@@ -688,7 +634,7 @@
             "label": "🛡️ Resist",
             "value": 15.153,
             "bound": 9.038,
-            "z": 36.007,
+            "z": 36.012,
             "side": "high"
           },
           {
@@ -696,7 +642,7 @@
             "label": "📊 COI",
             "value": 25.256,
             "bound": 15.063,
-            "z": 36.006,
+            "z": 36.012,
             "side": "high"
           }
         ]
@@ -707,14 +653,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 61.73,
+        "maxZ": 61.665,
         "metrics": [
           {
             "id": "pvs",
             "label": "🦁 Brave",
             "value": 45.763,
-            "bound": 33.718,
-            "z": 61.73,
+            "bound": 33.716,
+            "z": 61.665,
             "side": "high"
           },
           {
@@ -1068,7 +1014,7 @@
             "label": "🛡️ Resist",
             "value": 12.537,
             "bound": 9.038,
-            "z": 29.562,
+            "z": 29.566,
             "side": "high"
           },
           {
@@ -1076,7 +1022,7 @@
             "label": "📊 COI",
             "value": 20.895,
             "bound": 15.063,
-            "z": 29.562,
+            "z": 29.566,
             "side": "high"
           },
           {
@@ -1155,14 +1101,14 @@
           "session",
           "session-forensics"
         ],
-        "maxZ": 84.23,
+        "maxZ": 84.141,
         "metrics": [
           {
             "id": "pvs",
             "label": "🦁 Brave",
             "value": 62.198,
-            "bound": 33.718,
-            "z": 84.23,
+            "bound": 33.716,
+            "z": 84.141,
             "side": "high"
           },
           {
@@ -1394,7 +1340,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-16T23:34:28.000Z",
+    "checkedAt": "2026-10-16T23:37:50.765Z",
     "red": 47,
     "padding": 41,
     "adjusted": 16,
@@ -1405,7 +1351,7 @@
     "forensics": 27
   },
   "sessionStats": {
-    "checkedAt": "2026-10-16T23:34:27.905Z",
+    "checkedAt": "2026-10-16T23:37:50.703Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -3159,17 +3105,17 @@
     "outliersUnexplained": 1
   },
   "size": {
-    "at": "2026-10-16T23:34:17.131Z",
+    "at": "2026-10-16T23:37:43.243Z",
     "repoBytes": 105498624,
-    "dataBytes": 234464894,
-    "playersBytes": 218667400,
+    "dataBytes": 234463837,
+    "playersBytes": 218667573,
     "playerFiles": 12046,
     "warnAtBytes": 734003200,
     "warning": false
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-16T23:34:27.932Z",
+    "checkedAt": "2026-10-16T23:37:50.725Z",
     "candidates": [
       "nebelhexe",
       "oshurpogchamp",
@@ -24955,7 +24901,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-16T23:34:27.943Z",
+    "checkedAt": "2026-10-16T23:37:50.731Z",
     "count": 296,
     "players": [
       {
