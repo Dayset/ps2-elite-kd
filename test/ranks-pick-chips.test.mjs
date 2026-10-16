@@ -113,3 +113,21 @@ describe("Rankings ✅ ↔ names box (t356u)", () => {
     }
   });
 });
+
+describe("Hide adjusted-iVi ≤ 0 players (footer checkbox)", () => {
+  it("checkbox under the debug box; table browse hides, name search still finds", () => {
+    const index = read("index.html");
+    const dbgAt = index.indexOf('id="debugColsToggle"');
+    const hideAt = index.indexOf('id="hideZeroIviToggle"');
+    assert.ok(dbgAt >= 0 && hideAt > dbgAt, "hide checkbox sits under the debug checkbox");
+    assert.match(index, /hide players with adjusted iVi ≤ 0/);
+    const s = rankingsSource();
+    assert.match(s, /LS_HIDE_ZERO_IVI = "ps2-elite-kd-hide-zero-ivi"/);
+    // Browse filter: a name query skips the drop (search finds them), otherwise
+    // rows with a real adjusted iVi ≤ 0 are left out of the table list.
+    assert.match(s, /else if \(hideZeroIvi\)/);
+    assert.match(s, /!\(fin\(r\.adjs\) && r\.adjs <= 0\)/);
+    assert.match(read("app.js"), /hideZeroIviToggle/);
+    assert.match(read("app.js"), /LS_HIDE_ZERO_IVI/);
+  });
+});

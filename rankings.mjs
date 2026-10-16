@@ -27,6 +27,7 @@ import { hiddenList } from "./hidden.mjs?v=20261010-sav1";
 export function initRankings(host) {
 
   const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";
+  const LS_HIDE_ZERO_IVI = "ps2-elite-kd-hide-zero-ivi";
   const MAX_NAMES = 10;
 
   // Column definitions: same ids / labels / digits / floorZero as app.js.
@@ -77,6 +78,10 @@ export function initRankings(host) {
     try { return localStorage.getItem(LS_DEBUG_COLS) === "1"; } catch { return false; }
   }
 
+  function readHideZeroIvi() {
+    try { return localStorage.getItem(LS_HIDE_ZERO_IVI) === "1"; } catch { return false; }
+  }
+
   /** America/Winnipeg label for an ISO / ms timestamp. */
   function fmtUpdated(iso) {
     if (!iso) return "—";
@@ -100,6 +105,7 @@ export function initRankings(host) {
 
   let data = null; // { cols, idx, rows:[{name,query,slug,savedAt, metrics…, rank, pcts}] }
   let showDebug = readDebug();
+  let hideZeroIvi = readHideZeroIvi();
   let sortKey = "adjs";
   let sortDir = "desc"; // Inflation starts asc on first click
   let filter = "";
@@ -209,6 +215,11 @@ export function initRankings(host) {
     if (q) {
       // Name only — the outfit tag is ignored ("rite" doesn't list every [RITE] member).
       list = list.filter((r) => r._bare.includes(q));
+    } else if (hideZeroIvi) {
+      // Browse only: hide adjusted-iVi ≤ 0 rows. A name search above still
+      // finds them, and the names box / chart never filter. Thin rows (no
+      // adjs) stay — only players with a real adjusted iVi ≤ 0 are hidden.
+      list = list.filter((r) => !(fin(r.adjs) && r.adjs <= 0));
     }
     // assignRanks() already ordered the whole population for the current
     // sort; the filtered view keeps that order and the true rank numbers.
@@ -899,6 +910,12 @@ export function initRankings(host) {
   const dbg = $("debugColsToggle");
   dbg.addEventListener("change", () => {
     showDebug = !!dbg.checked;
+    render();
+  });
+
+  const hideZero = $("hideZeroIviToggle");
+  hideZero.addEventListener("change", () => {
+    hideZeroIvi = !!hideZero.checked;
     render();
   });
 

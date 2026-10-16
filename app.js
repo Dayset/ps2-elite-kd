@@ -140,6 +140,8 @@ import {
   const LS_THEME = "ps2-elite-kd-theme";
   /** "1" = show older debug columns in the Adjusted table (footer checkbox). */
   const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";
+  /** "1" = hide adjusted-iVi ≤ 0 players from the Rankings table browse (footer checkbox). */
+  const LS_HIDE_ZERO_IVI = "ps2-elite-kd-hide-zero-ivi";
   /** Chart view: "banded" (🎚️ Smooth, opt-in) or anything else = cumulative (📈 Raw, default). Stored values unchanged. */
   // v2: Smooth shipped 2026-10-08 and test taps left "banded" saved for some
   // people, so everyone restarts on Raw once; choices saved from now on stick.
@@ -258,6 +260,7 @@ import {
     stats: document.getElementById("statsPanel"),
     legend: document.getElementById("legend"),
     debugColsToggle: document.getElementById("debugColsToggle"),
+    hideZeroIviToggle: document.getElementById("hideZeroIviToggle"),
   };
 
   let players = [];
@@ -3024,6 +3027,19 @@ import {
       if (lastStatsList) renderStatsTable(lastStatsList);
       if (lastLegendList) renderLegend(lastLegendList);
       syncSmoothBtn();
+    });
+  }
+
+  /* Hide adjusted-iVi ≤ 0 players from the Rankings table browse (footer box). */
+  if (els.hideZeroIviToggle) {
+    try { els.hideZeroIviToggle.checked = localStorage.getItem(LS_HIDE_ZERO_IVI) === "1"; } catch (_) { /* private mode */ }
+    els.hideZeroIviToggle.addEventListener("change", () => {
+      try {
+        if (els.hideZeroIviToggle.checked) localStorage.setItem(LS_HIDE_ZERO_IVI, "1");
+        else localStorage.removeItem(LS_HIDE_ZERO_IVI);
+      } catch (_) {
+        /* private mode: Rankings keeps its own in-memory choice */
+      }
     });
   }
 
