@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" href="data:," />
+  <title>PS2 Elite K/D: what every column means</title>
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="styles.css?v=20261010-sav1" />
+  <style>
+    body { overflow: auto; }
+    .st-wrap { max-width: 960px; margin: 0 auto; padding: 18px 16px 40px; }
+    .st-wrap h1 { font-size: 1.25rem; margin: 0 0 4px; }
+    .st-sub { color: var(--dim); font-size: 0.85rem; margin-bottom: 16px; }
+    .st-card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
+    .st-card h2 { font-size: 1rem; margin: 0 0 6px; }
+    .st-card h3 { font-size: 0.95rem; margin: 0 0 4px; }
+    .st-dim { color: var(--dim); }
+    .st-wrap a { color: var(--accent); }
+    .st-section { font-size: 1.05rem; margin: 22px 0 10px; }
+  </style>
+</head>
+<body>
+  <main class="st-wrap">
+    <h1>What every column means</h1>
+    <div class="st-sub">Plain words, one column at a time. <a href="index.html">Back to the stats</a> · <a href="updates.html">Update log</a> · Formulas live in <a href="https://github.com/Dayset/ps2-elite-kd/blob/main/docs/metrics.md">docs/metrics.md</a>.</div>
+
+    <div class="st-card">
+      <h2>The picture behind most columns</h2>
+      <p>Most ✨ Adjusted columns come from one picture: your K/D curve. On the horizontal axis is how strong the opponents are — their KPM, how fast they kill. On the vertical axis is your K/D against them. Left side = slow, easy opponents. Right side = fast, hard opponents. The columns below are different ways of reading that picture.</p>
+      <p>Unless a card says otherwise, a column is built from the ~200 players you fight most — your real matchups, not your whole lifetime.</p>
+    </div>
+
+    <h2 class="st-section">✨ Adjusted (the default columns)</h2>
+
+    <div class="st-card">
+      <h3>⚔️ iVi — your overall rating</h3>
+      <p>In simple words: how good you are, once the strength of your opponents is taken into account. It asks: against the ~200 players you fight most, how do you do — and how strong are they? Wins against strong opponents count more than wins against weak ones. Then it adjusts for pace: fast killing adds a bonus, slow safe play gets a cut.</p>
+      <p><span class="st-dim">High means:</span> you beat strong players at a good pace. <span class="st-dim">Low means:</span> your wins come mostly against weak opposition, or at a slow pace. Values below zero show as 0.</p>
+    </div>
+
+    <div class="st-card">
+      <h3>🏃 Activity — how much winning combat you put out</h3>
+      <p>In simple words: your K/D against the players you fight most, multiplied by how fast you kill. It is volume times tempo.</p>
+      <p><span class="st-dim">High means:</span> lots of winning fights, quickly. <span class="st-dim">Low means:</span> you lose more than you win, or you kill slowly.</p>
+    </div>
+
+    <div class="st-card">
+      <h3>🦁 Brave — does your Activity survive hard opposition?</h3>
+      <p>In simple words: take your Activity and check how much of it is left against the fastest-killing opponents you meet. It is Activity that keeps up as enemies get stronger.</p>
+      <p><span class="st-dim">High means:</span> you stay productive even when the other side is strong. <span class="st-dim">Low, next to a high iVi, means:</span> selective play — you pick your fights, hit and run, and avoid long even fights.</p>
+    </div>
+
+    <div class="st-card">
+      <h3>🛡️ Resist — how well you stand up to strong players</h3>
+      <p>In simple words: your K/D against the players you fight most, scaled up by how fast those players kill. The faster your opponents kill, the more your K/D against them counts.</p>
+      <p><span class="st-dim">High means:</span> you hold your own even against people who kill fast. <span class="st-dim">Low means:</span> your K/D comes mostly against slower opponents.</p>
+    </div>
+
+    <div class="st-card">
+      <h3>⚡ Const — how much of your K/D survives against the strongest opponents</h3>
+      <p>In simple words: compare the two ends of your curve. Take the average height of the left third (easiest opponents) and the right third (hardest opponents). Const = right ÷ left, capped at 1. The middle third is ignored entirely — no central point involved.</p>
+      <p><span class="st-dim">Line stays flat →</span> right height ≈ left height → Const near 1: you hold up against strong opponents. <span class="st-dim">Line drops to the right →</span> right height much lower → Const low: you feast on easy opponents and fall apart against hard ones.</p>
+      <p><span class="st-dim">Catch:</span> a flat line near the bottom also scores high — someone equally modest everywhere looks “consistent” too. That is why Const is only a colour hint, never the headline, and never praised when iVi is below the middle of the pack. On the page it shows as a percentile: where you stand among all tracked players.</p>
+    </div>
+
+    <div class="st-card">
+      <h3>☠️ K/D — your matchup K/D</h3>
+      <p>In simple words: kills ÷ deaths against the ~200 players you fight most. Not your lifetime K/D — only real matchups against people you actually fight.</p>
+      <p><span class="st-dim">High means:</span> you win most of those fights. <span class="st-dim">Low means:</span> you die more than you kill in them.</p>
+    </div>
+
+    <h2 class="st-section">📊 Public (lifetime Census numbers, no adjustment)</h2>
+
+    <div class="st-card">
+      <h3>KD — lifetime kill/death ratio</h3>
+      <p>Your whole career, all opponents, no adjustment. It flatters players who spent a lot of time against weak opposition, and undersells players who mostly fight strong ones.</p>
+    </div>
+
+    <div class="st-card">
+      <h3>KPM — lifetime kills per minute</h3>
+      <p>How fast you kill on average across your whole career.</p>
+    </div>
+
+    <div class="st-card">
+      <h3>own KPM — your own weapon pace</h3>
+      <p>Kills per minute with your own weapons. The adjusted columns use this for the speed bonus / cut.</p>
+    </div>
+
+    <div class="st-card">
+      <h3>Acc % — hit accuracy</h3>
+      <p>Share of shots that hit. Aim feel, nothing more.</p>
+    </div>
+
+    <div class="st-card">
+      <h3>HSR % — headshot rate</h3>
+      <p>Share of kills that were headshots.</p>
+    </div>
+
+    <div class="st-card">
+      <h3>IvI — public Infantry vs Infantry score</h3>
+      <p>A lifetime rating from Census, with no opponent weighting. Compare it with ⚔️ iVi to see how much the matchup adjustment changes the picture.</p>
+    </div>
+
+    <h2 class="st-section">Debug-only columns (hidden unless “show older debug stats” is ticked in the footer)</h2>
+
+    <div class="st-card">
+      <h3>🎯 Aim — estimated vehicle / mech share</h3>
+      <p>An estimate, not a measurement: the share of your fights guessed to be vehicle or mech play, projected from 🛡️ Resist. It guesses from your numbers; it never watched you shoot.</p>
+    </div>
+
+    <div class="st-card">
+      <h3>🎯🎈 ivi — IvI before the speed adjustment</h3>
+      <p>Public IvI adjusted by 🛡️ Resist — opposition-weighted, but before the kill-speed adjustment. Still inflated: slow, safe play is not penalised here. ⚔️ iVi is the one with the speed adjustment.</p>
+    </div>
+
+    <div class="st-card">
+      <h3>eKPM — how fast the opposition shoots</h3>
+      <p>Average enemy weapon KPM you face. Higher = harder opposition on average.</p>
+    </div>
+
+    <div class="st-card">
+      <h3>own KPM (debug) — your weapon pace</h3>
+      <p>Your weapon pace, used to draw the curve and for the ⚔️ iVi speed adjustment. Same number as 📊 Public own KPM.</p>
+    </div>
+
+    <div class="st-card">
+      <h3>📊 COI — Combat Output Index</h3>
+      <p>Derived from 🛡️ Resist: a summary of how much combat output you produce against the opposition you face.</p>
+    </div>
+
+    <div class="st-card">
+      <h3>📉 Slope — the overall angle of your curve</h3>
+      <p>K/D against enemy KPM, weighted by deaths, across the whole curve. Negative = your K/D falls as the opposition gets harder. Feeds 🦁 Brave.</p>
+    </div>
+
+    <div class="st-card">
+      <h3>🎈 Inflation — how much soft opposition inflates your KD</h3>
+      <p>Global KD ÷ KD against enemies at 0.5 KPM or higher. Above 1 = your overall KD is higher than your KD against decent opponents. The average player’s enemy KPM is about 0.35. Lower is better.</p>
+    </div>
+  </main>
+</body>
+</html>

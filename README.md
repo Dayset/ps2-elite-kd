@@ -40,7 +40,7 @@ Use a local server rather than opening the file directly, because `file://` ofte
 2. **Press Analyze** (or Enter).
 3. **Share it** with the 🔗 button. Opening the link runs Analyze automatically.
 
-Full details are in [docs/using-the-site.md](docs/using-the-site.md).
+Full details are in [docs/using-the-site.md](docs/using-the-site.md). [What every column means](columns.html), in plain words. [Update log](updates.html): latest changes, live from GitHub.
 
 ## 🗄️ Where the data comes from
 
