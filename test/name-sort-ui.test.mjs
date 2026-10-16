@@ -31,6 +31,12 @@ test("shared-cache letters are collapsible blocks with counts", () => {
   assert.match(app, /block\.className = "chip-group"/);
   assert.match(app, /cacheLetterOpen/);
 });
+test("shared-cache section is visually hidden, code kept (plenty of players)", () => {
+  const css = readFileSync(new URL("../styles.css", import.meta.url), "utf8");
+  assert.match(css, /details\.cache-shared\s*\{\s*display:\s*none/);
+  // Rendering still exists — only the display is hidden.
+  assert.match(app, /details\.className = "cache-shared"/);
+});
 
 import { freshEtaText } from "../analyze-run.mjs";
 import { rankingsSource } from "./rankings-src.mjs";

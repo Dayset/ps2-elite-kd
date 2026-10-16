@@ -782,6 +782,9 @@ header .sub {
 .cache-chips:empty { display: none; }
 
 /* Collapsible shared-cache chip list (matches Public Census details style) */
+/* Shared cache hidden visually: plenty of players already. Rendering code stays
+   (app.js still builds it); remove this rule to show it again. */
+details.cache-shared { display: none; }
 .cache-shared {
   flex: 1 1 100%;
   background: var(--panel);
