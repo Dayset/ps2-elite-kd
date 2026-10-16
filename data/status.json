@@ -4,23 +4,31 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "38981768048",
+    "runId": "38981769352",
     "event": "workflow_dispatch",
     "kind": "discovery",
-    "startedAt": "2026-10-16T23:30:35.178Z",
-    "endedAt": "2026-10-16T23:31:42.604Z",
-    "seconds": 67,
+    "startedAt": "2026-10-16T23:32:31.522Z",
+    "endedAt": "2026-10-16T23:34:16.706Z",
+    "seconds": 105,
     "updated": [
-      "[RBRN] Lanfranchino",
-      "[ITER] Igrockai",
-      "[1GRU] BalleDeBouette",
-      "[KOTV] ktelios",
-      "[A] melonman314",
-      "nepunina"
+      "[PYRE] Estok8805",
+      "[CBMC] IpdanNSO",
+      "[MDK] emdiblei",
+      "THExDRUNKxBOY",
+      "[lLOV] Vanulien",
+      "[MYTH] Martin1112",
+      "[FRE2] PolloBowl",
+      "[SubG] Upperhand1",
+      "PartOfMeInsideYou",
+      "[ALDl] BladeShotBlood",
+      "[4334] Millina",
+      "[HftA] BaneofSnails",
+      "[ROYS] WajjaNC",
+      "[GENU] JustFarmMe"
     ],
     "added": [],
     "failed": [],
-    "stoppedEarly": "another run is waiting (site request or fallback cron)",
+    "stoppedEarly": null,
     "indexSize": 12046,
     "discovery": {
       "cap": 15000,
@@ -35,39 +43,79 @@
     },
     "batch": [
       {
-        "name": "[RBRN] Lanfranchino",
+        "name": "[PYRE] Estok8805",
         "src": "refresh",
         "status": "done"
       },
       {
-        "name": "[ITER] Igrockai",
+        "name": "[CBMC] IpdanNSO",
         "src": "refresh",
         "status": "done"
       },
       {
-        "name": "[1GRU] BalleDeBouette",
+        "name": "[MDK] emdiblei",
         "src": "refresh",
         "status": "done"
       },
       {
-        "name": "[KOTV] ktelios",
+        "name": "THExDRUNKxBOY",
         "src": "refresh",
         "status": "done"
       },
       {
-        "name": "[A] melonman314",
+        "name": "[lLOV] Vanulien",
         "src": "refresh",
         "status": "done"
       },
       {
-        "name": "nepunina",
+        "name": "[MYTH] Martin1112",
+        "src": "refresh",
+        "status": "done"
+      },
+      {
+        "name": "[FRE2] PolloBowl",
+        "src": "refresh",
+        "status": "done"
+      },
+      {
+        "name": "[SubG] Upperhand1",
+        "src": "refresh",
+        "status": "done"
+      },
+      {
+        "name": "PartOfMeInsideYou",
+        "src": "refresh",
+        "status": "done"
+      },
+      {
+        "name": "[ALDl] BladeShotBlood",
+        "src": "refresh",
+        "status": "done"
+      },
+      {
+        "name": "[4334] Millina",
+        "src": "refresh",
+        "status": "done"
+      },
+      {
+        "name": "[HftA] BaneofSnails",
+        "src": "refresh",
+        "status": "done"
+      },
+      {
+        "name": "[ROYS] WajjaNC",
+        "src": "refresh",
+        "status": "done"
+      },
+      {
+        "name": "[GENU] JustFarmMe",
         "src": "refresh",
         "status": "done"
       }
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-16T23:31:52.959Z",
+    "checkedAt": "2026-10-16T23:34:27.874Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 26,
     "explained": 13,
@@ -126,7 +174,7 @@
         "id": "rkd",
         "value": 26.32,
         "bound": 12.878,
-        "z": 58.248,
+        "z": 58.317,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -210,7 +258,7 @@
         "id": "rkd",
         "value": 12.995,
         "bound": 12.878,
-        "z": 28.041,
+        "z": 28.074,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -304,7 +352,7 @@
         "id": "act",
         "value": 25.317,
         "bound": 24.725,
-        "z": 76.693,
+        "z": 76.697,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (aim), listed there",
@@ -349,7 +397,7 @@
         "id": "rkd",
         "value": 21.687,
         "bound": 12.878,
-        "z": 47.745,
+        "z": 47.801,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (aim, vehicle, session-forensics), listed there",
@@ -616,7 +664,7 @@
             "label": "☠️ K/D",
             "value": 26.32,
             "bound": 12.878,
-            "z": 58.248,
+            "z": 58.317,
             "side": "high"
           },
           {
@@ -674,7 +722,7 @@
             "label": "☠️ K/D",
             "value": 12.995,
             "bound": 12.878,
-            "z": 28.041,
+            "z": 28.074,
             "side": "high"
           },
           {
@@ -1005,14 +1053,14 @@
           "vehicle",
           "session-forensics"
         ],
-        "maxZ": 47.745,
+        "maxZ": 47.801,
         "metrics": [
           {
             "id": "rkd",
             "label": "☠️ K/D",
             "value": 21.687,
             "bound": 12.878,
-            "z": 47.745,
+            "z": 47.801,
             "side": "high"
           },
           {
@@ -1135,14 +1183,14 @@
         "red": [
           "aim"
         ],
-        "maxZ": 76.693,
+        "maxZ": 76.697,
         "metrics": [
           {
             "id": "act",
             "label": "🏃 Activity",
             "value": 25.317,
             "bound": 24.725,
-            "z": 76.693,
+            "z": 76.697,
             "side": "high"
           }
         ]
@@ -1346,7 +1394,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-16T23:31:53.059Z",
+    "checkedAt": "2026-10-16T23:34:28.000Z",
     "red": 47,
     "padding": 41,
     "adjusted": 16,
@@ -1357,7 +1405,7 @@
     "forensics": 27
   },
   "sessionStats": {
-    "checkedAt": "2026-10-16T23:31:52.984Z",
+    "checkedAt": "2026-10-16T23:34:27.905Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -3111,17 +3159,17 @@
     "outliersUnexplained": 1
   },
   "size": {
-    "at": "2026-10-16T23:31:43.049Z",
+    "at": "2026-10-16T23:34:17.131Z",
     "repoBytes": 105498624,
-    "dataBytes": 234463962,
-    "playersBytes": 218667477,
+    "dataBytes": 234464894,
+    "playersBytes": 218667400,
     "playerFiles": 12046,
     "warnAtBytes": 734003200,
     "warning": false
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-16T23:31:53.010Z",
+    "checkedAt": "2026-10-16T23:34:27.932Z",
     "candidates": [
       "nebelhexe",
       "oshurpogchamp",
@@ -24907,7 +24955,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-16T23:31:53.017Z",
+    "checkedAt": "2026-10-16T23:34:27.943Z",
     "count": 296,
     "players": [
       {
