@@ -81,8 +81,11 @@ describe("🧪 session stats", () => {
     assert.equal(cheaters.length, hiddenInfo.players.filter((p) => p.matched).length);
     assert.equal(Object.keys(hidden).length, hiddenInfo.players.length);
     for (const r of cheaters) {
-      // Only an aim-style cheater with enough recent sessions can match; report the rest.
-      if (r.measured && r.values.s_hsk >= SESSION_RULE.HS_MIN) assert.ok(flagged.has(r.slug), r.slug);
+      // The session flag is a 3-leg conjunction (apk ≤ max AND hs ≥ min AND kd ≥ min).
+      // Check all three on the flag's effective inputs (r.apk/hs/kd, with lifetime
+      // fallbacks) — a cheater meeting only one leg is correctly unflagged, e.g.
+      // YouHaveBeenKickedFromTheServer: hs 0.704 + kd 16.23 but apk 0.145 > 0.1.
+      if (r.measured && r.apk != null && r.apk <= SESSION_RULE.APK_MAX && r.hs != null && r.hs >= SESSION_RULE.HS_MIN && r.kd != null && r.kd >= SESSION_RULE.KD_MIN) assert.ok(flagged.has(r.slug), r.slug);
     }
     for (const s of ["yeezy", "zyr0sncx", "xclonekano", "shlodog", "justv6me"]) assert.ok(!flagged.has(s), s);
     // Every hit is an explained 🚩 player, and session outliers never go unexplained silently.
