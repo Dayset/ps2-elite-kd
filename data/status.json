@@ -4,34 +4,46 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "38974680632",
+    "runId": "38977111767",
     "event": "workflow_dispatch",
-    "kind": "on-demand",
-    "startedAt": "2026-10-16T22:17:40.073Z",
-    "endedAt": "2026-10-16T22:20:37.049Z",
-    "seconds": 177,
-    "updated": [],
-    "added": [
-      "dweqos"
+    "kind": "discovery",
+    "startedAt": "2026-10-16T22:40:32.957Z",
+    "endedAt": "2026-10-16T22:41:43.909Z",
+    "seconds": 71,
+    "updated": [
+      "[AMOL] LauritaLaHuerfanita",
+      "[PreV] MaIeficient"
     ],
+    "added": [],
     "failed": [],
-    "stoppedEarly": null,
+    "stoppedEarly": "another run is waiting (site request or fallback cron)",
     "indexSize": 12046,
+    "discovery": {
+      "cap": 15000,
+      "queue": 0,
+      "slice": null,
+      "sweepInProgress": false
+    },
     "honu": {
       "day": "2026-10-16",
-      "calls": 9933,
+      "calls": 9936,
       "cap": 10000
     },
     "batch": [
       {
-        "name": "dweqos",
-        "src": "on-demand",
+        "name": "[AMOL] LauritaLaHuerfanita",
+        "src": "refresh",
+        "status": "done"
+      },
+      {
+        "name": "[PreV] MaIeficient",
+        "src": "refresh",
         "status": "done"
       }
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-16T22:20:48.174Z",
+    "checkedAt": "2026-10-16T22:41:52.306Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 26,
     "explained": 13,
@@ -1310,7 +1322,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-16T22:20:48.291Z",
+    "checkedAt": "2026-10-16T22:41:52.409Z",
     "red": 47,
     "padding": 41,
     "adjusted": 16,
@@ -1321,7 +1333,7 @@
     "forensics": 27
   },
   "sessionStats": {
-    "checkedAt": "2026-10-16T22:20:48.206Z",
+    "checkedAt": "2026-10-16T22:41:52.328Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -1337,11 +1349,11 @@
       "players": 12045,
       "withSessions": 6479,
       "measured": 2877,
-      "sessions": 22103,
-      "kills": 1042410,
+      "sessions": 22104,
+      "kills": 1042460,
       "xpPlayers": 617,
       "xpMeasured": 474,
-      "xpSessions": 3334
+      "xpSessions": 3335
     },
     "metrics": [
       {
@@ -3075,17 +3087,17 @@
     "outliersUnexplained": 1
   },
   "size": {
-    "at": "2026-10-16T22:20:37.478Z",
+    "at": "2026-10-16T22:41:44.340Z",
     "repoBytes": 104127488,
-    "dataBytes": 234457858,
-    "playersBytes": 218663745,
+    "dataBytes": 234459706,
+    "playersBytes": 218663775,
     "playerFiles": 12046,
     "warnAtBytes": 734003200,
     "warning": false
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-16T22:20:48.232Z",
+    "checkedAt": "2026-10-16T22:41:52.348Z",
     "candidates": [
       "nebelhexe",
       "oshurpogchamp",
@@ -24871,7 +24883,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-16T22:20:48.243Z",
+    "checkedAt": "2026-10-16T22:41:52.353Z",
     "count": 296,
     "players": [
       {
