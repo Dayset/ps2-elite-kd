@@ -132,20 +132,20 @@
     </details>
       <details class="st-card st-sec st-flags st-anoms" id="cardAnoms">
       <summary id="anomsSummary"><h2>📉 Chart anomalies <span id="anomsCount" class="st-count">…</span></h2></summary>
-      <div class="st-note">Things about chart and stat integrity, not cheating patterns: players whose stats we changed automatically, and values far outside everyone else. Each needs a human look; nothing here is an accusation. Count = players needing a look (unreviewed 🌾 and † plus unexplained outliers).<br>Routing (bins.mjs): 🌾 stat padding, † adjusted and 🧪 outliers live here, not in 🚩. A player whose only issues are here stays only here; a player who also has a 🚩 pattern (aim, vehicle, rampage…) is listed in 🚩, with a 📉 link there and an "also in 🚩" link here, never a second full row.</div>
+      <div class="st-note">Things about chart and stat integrity, not cheating patterns: players whose stats we changed automatically, and values far outside everyone else. Each needs a human look; nothing here is an accusation. Count = players needing a look (borderline 🌾 and † plus unexplained outliers; the rest is automatic and listed for review).<br>Routing (bins.mjs): 🌾 stat padding, † adjusted and 🧪 outliers live here, not in 🚩. A player whose only issues are here stays only here; a player who also has a 🚩 pattern (aim, vehicle, rampage…) is listed in 🚩, with a 📉 link there and an "also in 🚩" link here, never a second full row.</div>
       <details class="st-sub-sec" id="secPadding">
       <summary><h3>🌾 Stat padding (auto-confirmed) <span id="padCount" class="st-count">…</span></h3></summary>
       <div id="padRule" class="st-rule"></div>
       <div id="padding" class="st-dim">Loading…</div>
       </details>
       <details class="st-sub-sec" id="secAdjusted">
-      <summary><h3>† Adjusted — needs review <span id="adjCount" class="st-count">…</span></h3></summary>
+      <summary><h3>† Adjusted (auto-accepted) <span id="adjCount" class="st-count">…</span></h3></summary>
       <div id="adjRule" class="st-rule"></div>
       <div id="adjusted" class="st-dim">Loading…</div>
       </details>
       <details class="st-sub-sec" id="secGuard">
-      <summary><h3>🧪 Outlier guard <span id="guardCount" class="st-count">…</span></h3></summary>
-      <div class="st-rule">Checked on every refresh (scripts/build-ranks.mjs → outlier-guard.mjs) on the numbers as the site shows them, one row per player with every metric that's far out. Unexplained ones may be a formula gap like the old 🦁 Brave 6094; explained ones also have a 🚩 pattern (full row in 🚩), a 🌾 or † entry above, or were reviewed by hand.</div>
+      <summary><h3>🧪 Outlier guard (explained ones auto-accepted) <span id="guardCount" class="st-count">…</span></h3></summary>
+      <div class="st-rule">Checked on every refresh (scripts/build-ranks.mjs → outlier-guard.mjs) on the numbers as the site shows them, one row per player with every metric that's far out. Unexplained ones may be a formula gap like the old 🦁 Brave 6094; explained ones also have a 🚩 pattern (full row in 🚩), a 🌾 or † entry above, or were reviewed by hand, and are auto-accepted (t375u): no manual check, folded away below. Only unexplained ones need a look.</div>
       <div id="guardRule" class="st-rule"></div>
       <div id="guard" class="st-dim">Loading…</div>
       </details>
@@ -559,7 +559,7 @@
     import { classifyBins, CHART_LABELS } from "./bins.mjs?v=20261010-sav1";
     import { forensicsRuleText } from "./session-forensics.mjs?v=20261010-sav1";
     import { sproutRuleText, farmAccountRuleText } from "./sprouts.mjs?v=20261010-sav1";
-    import { reviewDecision, CLEARING_DECISIONS, PADDING_BORDERLINE_SHARE } from "./padding.mjs?v=20261010-sav1";
+    import { reviewDecision, CLEARING_DECISIONS, PADDING_BORDERLINE_SHARE, ADJUSTED_BORDERLINE_SHARE } from "./padding.mjs?v=20261010-sav1";
     import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261010-sav1";
     import "./name-peek.mjs?v=20261010-sav1"; // full-name popup for truncated .nm names
     import { radarProfileUrl, radarBadge, radarPriority } from "./radar.mjs?v=20261010-sav1";
@@ -589,7 +589,7 @@
     $("sproutsSummary").title = sproutText;
     $("sproutsRule").textContent = "Rule: " + sproutText;
     $("farmAcctRule").textContent = "Rule: " + farmAccountRuleText();
-    $("adjRule").textContent = "Rule: " + anomalyRuleText();
+    $("adjRule").textContent = "Rule: " + anomalyRuleText() + " Auto-accepted (t375u): marked † and excluded without a manual check. Only borderline cases (farm share " + Math.round(ADJUSTED_BORDERLINE_SHARE * 100) + "% or more) need a look. Overrides: data/not-farm.json (counts the kills again), or data/reviewed.json \"cleared\" / \"fluke\" / \"bad-luck\" / \"padding\".";
     $("padRule").textContent = "Rule: " + paddingRuleText() + " Auto-confirmed (t368u): marked * and excluded without a manual check. Only borderline cases (farm share under " + Math.round(PADDING_BORDERLINE_SHARE * 100) + "%) need a look. Overrides: data/not-farm.json (counts the kills again), or data/reviewed.json \"cleared\" / \"fluke\" / \"bad-luck\".";
     $("stalkerRule").textContent = "Rule: " + stalkerRuleText();
     try { sessionStorage.removeItem("ps2-elite-kd:redflags:v6"); sessionStorage.removeItem("ps2-elite-kd:redflags:v7"); sessionStorage.removeItem("ps2-elite-kd:redflags:v8"); sessionStorage.removeItem("ps2-elite-kd:redflags:v9"); sessionStorage.removeItem("ps2-elite-kd:redflags:v10"); } catch { /* ignore */ }
@@ -703,9 +703,11 @@
       const list = rows.filter((r) => r && (r.patterns || []).includes(kind))
         .sort((a, b) => radarUp(b.slug) - radarUp(a.slug) || ((b.padding && b.padding.share) || 0) - ((a.padding && a.padding.share) || 0));
       const isCleared = (r) => { const rv = reviewDecision(reviewed, r.slug); return !!rv && CLEARING_DECISIONS.includes(rv.decision); };
-      const isBorder = (r) => !reviewDecision(reviewed, r.slug) && !!r.padding && r.padding.share < PADDING_BORDERLINE_SHARE;
-      // 🌾 is auto-confirmed (t368u): only borderline shares count as open; † still needs review.
-      const open = kind === "padding" ? list.filter(isBorder).length : list.filter((r) => !reviewDecision(reviewed, r.slug)).length;
+      const isBorder = (r) => !reviewDecision(reviewed, r.slug) && (kind === "padding"
+        ? !!r.padding && r.padding.share < PADDING_BORDERLINE_SHARE
+        : !r.padding || r.padding.share >= ADJUSTED_BORDERLINE_SHARE);
+      // 🌾 auto-confirmed (t368u), † auto-accepted (t375u): only borderline shares count as open.
+      const open = list.filter(isBorder).length;
       const c = $(L.count);
       c.textContent = String(list.length);
       c.classList.toggle("hot", open > 0);
@@ -720,9 +722,8 @@
           ? Math.round(r.padding.share * 100) + "% (" + r.padding.kills + " kills) on: " + r.padding.victims.map((v) => esc(v.name) + " " + v.kills + "/" + v.deaths).join(", ")
           : "—";
         const review = rv
-          ? '<span class="st-ok" title="' + esc(rv.note) + '">' + (kind === "padding" && isCleared(r) ? "cleared: " : "") + esc(rv.decision) + (rv.at ? " (" + esc(rv.at) + ")" : "") + "</span>"
-          : kind === "padding" ? (isBorder(r) ? '<span class="st-err">needs a look (borderline)</span>' : '<span class="st-ok">auto-confirmed</span>')
-          : '<span class="st-dim">needs review</span>';
+          ? '<span class="st-ok" title="' + esc(rv.note) + '">' + (isCleared(r) ? "cleared: " : "") + esc(rv.decision) + (rv.at ? " (" + esc(rv.at) + ")" : "") + "</span>"
+          : isBorder(r) ? '<span class="st-err">needs a look (borderline)</span>' : '<span class="st-ok">' + (kind === "padding" ? "auto-confirmed" : "auto-accepted") + "</span>";
         const alsoRed = r.red ? '<div style="font-size:0.8em"><a href="#flag-' + esc(r.slug) + '" class="st-jump" title="This player also has a 🚩 pattern; the full row is in Red flags">also in 🚩 (' + esc(classifyBins({ patterns: r.patterns }).red.join(", ")) + ") ↑</a></div>" : "";
         return '<tr id="' + L.idp + esc(r.slug) + '"><td>' + nameCell(r) + L.mark + radarCell(r.slug, r.cid) + "</td><td>" + chart + '</td><td class="st-why">' + removed + alsoRed + "</td><td>" + review + "</td>" +
           '<td class="st-num">' + fmt(r.adjs, 0) + '</td><td class="st-num">' + fmt(r.kd, 2) + "</td>" +
@@ -791,8 +792,10 @@
         bad + " unexplained, " + (players.length - bad) + " explained; " +
         players.filter((p) => !(p.red || []).length).length + " chart-only, " + players.filter((p) => (p.red || []).length).length + " also in 🚩 (" + hits + " metric hit" + (hits === 1 ? "" : "s") + ") · checked " +
         esc(g.checkedAt ? ago(Date.parse(g.checkedAt)) : "—") + "</div>" +
-        (players.length ? '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th class="st-num">#</th><th>Metrics far out (value, z)</th><th>Why</th></tr>' +
-          players.map((p) => {
+        guardTables(players);
+      function guardTables(players) {
+        const head = '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th class="st-num">#</th><th>Metrics far out (value, z)</th><th>Why</th></tr>';
+        const rowOf = (p) => {
             const ms = p.metrics.map((m) => m.id === "forensics"
               ? '<a href="#cardForensics" title="' + esc(m.note || "") + '">' + esc(m.label) + ": " + esc(m.note || "") + "</a>"
               : '<span title="' + esc(m.side + " bound " + nfmt(m.bound) + ", z " + Math.round(m.z)) + '">' +
@@ -804,7 +807,11 @@
             return '<tr id="chart-out-' + esc(p.slug || "") + '"><td' + (p.explained ? "" : ' class="st-err"') + ">" + nameCell({ name: p.name, cid: "" }) + radarCell(p.slug) + '</td><td class="st-num">' + p.metrics.length +
               '</td><td class="st-metrics">' + ms + '</td><td class="st-why">' +
               (p.explained ? why : '<span class="st-err">unexplained: check for a formula gap</span>') + "</td></tr>";
-          }).join("") + "</table></div>" : "");
+        };
+        const un = players.filter((p) => !p.explained), ex = players.filter((p) => p.explained);
+        return (un.length ? head + un.map(rowOf).join("") + "</table></div>" : "") +
+          (ex.length ? '<details><summary>✅ ' + ex.length + " explained, auto-accepted (t375u; no manual check)</summary>" + head + ex.map(rowOf).join("") + "</table></div></details>" : "");
+      }
     }
 
     /* ---------- 🧪 Session stats (status.json sessionStats; never public) ---------- */

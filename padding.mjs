@@ -226,6 +226,8 @@ export const REVIEW_DECISIONS = Object.freeze(["fluke", "bad-luck", "padding", "
 export const CLEARING_DECISIONS = Object.freeze(["fluke", "bad-luck", "cleared"]);
 /** 🌾 padding auto-confirmed (t368u); farm share below this = borderline "needs a look". */
 export const PADDING_BORDERLINE_SHARE = 0.25;
+/** † adjusted auto-accepted (t375u); farm share at or above this (up to FLAG_SHARE) = borderline "needs a look". */
+export const ADJUSTED_BORDERLINE_SHARE = 0.15;
 
 export function reviewDecision(reviewed, slug) {
   const e = reviewed && reviewed.players && reviewed.players[slug];
