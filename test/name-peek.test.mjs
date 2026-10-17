@@ -47,4 +47,18 @@ describe("name-peek legend", () => {
     };
     assert.equal(peekParts(el2).url, "");
   });
+  it("takes the profile link from data-profile (plain legend names, no anchor)", () => {
+    const el = {
+      getAttribute: (k) => ({ "data-full": "Zyr0sNCx", "data-profile": "https://wt.honu.pw/c/5428010618035323201" })[k] ?? null,
+      textContent: "",
+      closest: () => null,
+    };
+    assert.equal(peekParts(el).url, "https://wt.honu.pw/c/5428010618035323201");
+    const bad = {
+      getAttribute: (k) => ({ "data-full": "Zyr0sNCx", "data-profile": "javascript:alert(1)" })[k] ?? null,
+      textContent: "",
+      closest: () => null,
+    };
+    assert.equal(peekParts(bad).url, "");
+  });
 });

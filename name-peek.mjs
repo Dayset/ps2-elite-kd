@@ -48,16 +48,21 @@ function fullName(el) {
 /**
  * What the popup shows for a .nm element: the full name, plus its stored legend
  * (data-desc, set on the stats-table name cells) when there is one, plus the
- * profile link when the name sits inside one (stats-table / chart-legend
- * Honu links). Only real profile URLs count: "#" / in-page links are ignored.
+ * profile link. The link comes from the enclosing profile anchor (stats-table /
+ * chart-legend Honu links) or from the element's own data-profile (chart-legend
+ * names carry it — their name under the graph is plain text, not a link, so
+ * the profile link isn't duplicated). Only real profile URLs count:
+ * "#" / in-page links are ignored.
  */
 export function peekParts(el) {
   const urlEl = el && el.closest ? el.closest("a[href]") : null;
   const href = (urlEl && urlEl.getAttribute && urlEl.getAttribute("href")) || "";
+  const profile = (el && el.getAttribute && el.getAttribute("data-profile")) || "";
+  const url = href.startsWith("https://") ? href : profile.startsWith("https://") ? profile : "";
   return {
     name: fullName(el),
     desc: ((el && el.getAttribute && el.getAttribute("data-desc")) || "").trim(),
-    url: href.startsWith("https://") ? href : "",
+    url,
   };
 }
 
@@ -127,14 +132,16 @@ export function showNamePeek(anchor, text, desc = "", url = "") {
 }
 
 /**
- * A .nm worth a popup: truncated, or (when allowDesc) carrying a legend.
- * Touch only: a mouse click on a full name gets the native title on hover instead.
+ * A .nm worth a popup: truncated, or (when allowDesc) carrying a legend or a
+ * profile link (data-desc / data-profile). Touch only: a mouse click on a
+ * full name gets the native title on hover instead — except plain (non-link)
+ * names, where the click handler passes allowDesc so the popup is reachable.
  */
 function nameTarget(t, allowDesc = false) {
   const el = t && t.closest ? t.closest(".nm") : null;
   if (!el) return null;
   if (isTruncated(el)) return el;
-  return allowDesc && el.hasAttribute("data-desc") ? el : null;
+  return allowDesc && (el.hasAttribute("data-desc") || el.hasAttribute("data-profile")) ? el : null;
 }
 function inInteractive(el) {
   return !!(el && el.closest && el.closest("a, button, label, summary, [role='button']"));
@@ -198,8 +205,12 @@ export function installNamePeek() {
           return;
         }
       }
-      // Touch taps also open the legend popup; a mouse click only for truncated names.
-      const el = nameTarget(e.target, lastPointer !== "mouse");
+      // Touch taps open the legend popup; a mouse click too when the name is
+      // plain text (chart-legend names) — its only action is the popup, since
+      // the profile link lives inside it. Names inside links keep their
+      // usual action (a mouse click only opens the popup for truncated ones).
+      const cand = e.target && e.target.closest ? e.target.closest(".nm") : null;
+      const el = nameTarget(e.target, lastPointer !== "mouse" || (cand && !inInteractive(cand)));
       if (el && !inInteractive(el)) {
         const parts = peekParts(el);
         showNamePeek(el, parts.name, parts.desc, parts.url);

@@ -40,7 +40,6 @@ import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-sav1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261015-tip1";
 import { swipeStep, createWheelSwiper } from "./dist-cycle.mjs?v=20261017-swipe1";
-import { slideSwap } from "./chart-slide.mjs?v=20261017-slide1";
 import { entryFetchedAt, pickNewest, writeWithEviction } from "./cache-pick.mjs?v=20261010-sav1";
 import {
   NameLoadError,
@@ -98,7 +97,7 @@ import { markNote, statMark, confirmedPadderSlugs } from "./padding.mjs?v=202610
 // Account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times: chart name list only.
 import { accountTimes, flairsHtml, flairsFor } from "./flairs.mjs?v=20261010-sav1";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261017-peek1";
+import "./name-peek.mjs?v=20261017-peekdedup";
 import { sfx, recentGesture, mountSfxToggle } from "./sfx.mjs?v=20261017-sfx1";
 import { mountNameSuggest } from "./name-suggest.mjs?v=20261016-sug1";
 import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261010-sav1";
@@ -1496,7 +1495,7 @@ import {
   }
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261017-slide1")
+    rankingsLoading = import("./rankings.mjs?v=20261017-swipe1")
       .then((m) => {
         rankingsApi = m.initRankings(rankingsHost);
         return rankingsApi.ready;
@@ -3553,13 +3552,11 @@ import {
       const inactive = flairsFor(p.times)[0]?.id === "inactive";
       item.className = "legend-item" + (inactive ? " legend-inactive" : "");
       // Name links to the player's Honu profile (plain text if no character id).
+      // No link under the graph: the name is plain text and its Honu profile
+      // lives in the name popup (data-profile), so the link isn't duplicated.
       const url = honuProfileUrl(p.cid);
       const full = escapeHtml(p.display);
-      const nameHtml = url
-        ? `<a class="legend-link nm" href="${escapeHtml(url)}" target="_blank" ` +
-          `rel="noopener noreferrer" data-full="${full}" title="Open ${full} on Honu">` +
-          `${full}</a>`
-        : `<span class="nm" data-full="${full}" title="${full}">${full}</span>`;
+      const nameHtml = `<span class="nm" data-full="${full}"${url ? ` data-profile="${escapeHtml(url)}"` : ""} title="${full}">${full}</span>`;
       // A flair (🪦 / 👴🏽, hover = title) takes the colored dot's place; the name keeps
       // the line color. Players without a flair keep the dot.
       const flair = flairsHtml(p.times);
@@ -4651,11 +4648,8 @@ import {
    * swipe; vertical drags keep scrolling the page. Phones also get the short
    * "who wins fights / who aims best" tip for the view they landed on. */
   if (els.chart) {
-    const flipView = (dir = 1) => {
-      // t384u: the other view slides in (from the right for a "next" swipe).
-      const wrap = els.chart.closest(".chart-wrap");
-      const panel = wrap ? getComputedStyle(wrap).backgroundColor : "";
-      slideSwap({ container: wrap, svg: els.chart, dir, background: panel, draw: () => setYScaleMode(yScaleMode === "kd" ? "ivi" : "kd") });
+    const flipView = () => {
+      setYScaleMode(yScaleMode === "kd" ? "ivi" : "kd");
       if (isTouchUi()) {
         const on = document.querySelector(yScaleMode === "kd" ? '[data-yscale="kd-btn"]' : '.chart-mode-btn[data-mode="cumulative"]');
         if (on && on.getAttribute("data-tip")) showHeadTip(on.getAttribute("data-tip"), on);
@@ -4670,14 +4664,14 @@ import {
       if (!sw || e.pointerId !== sw.id) return;
       const dir = swipeStep({ dx: e.clientX - sw.x, dy: e.clientY - sw.y, dt: performance.now() - sw.t });
       sw = null;
-      if (dir && players.length) flipView(dir);
+      if (dir && players.length) flipView();
     }, { passive: true });
     els.chart.addEventListener("pointercancel", () => { sw = null; }, { passive: true });
     const wheelSw = createWheelSwiper();
     els.chart.addEventListener("wheel", (e) => {
       const dir = wheelSw.push(e.deltaX, e.deltaY);
       if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) e.preventDefault(); // not browser back / forward
-      if (dir && players.length) flipView(dir);
+      if (dir && players.length) flipView();
     }, { passive: false });
   }
   // t380u: phones have no hover — tapping 💀 / 📈 also shows what that view means.
