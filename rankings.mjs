@@ -1039,6 +1039,21 @@ export function initRankings(host) {
     $("distSummary").textContent =
       `${h.n.toLocaleString()} players · median ${(+h.median).toFixed(col.digits)} · p90 ${(+h.p90).toFixed(col.digits)} · p99 ${(+h.p99).toFixed(col.digits)}` +
       (below ? ` · ${below} below scale (shown as 0)` : "");
+    holdSummaryHeight(W);
+  }
+
+  /* t374u: the stats line can wrap to 2 lines for one metric and 1 for the
+   * next (phones), which made the block jump while auto-cycling. Keep it at
+   * the tallest height it needed at this chart width. */
+  let sumMax = { w: 0, h: 0 };
+  function holdSummaryHeight(w) {
+    const el = $("distSummary");
+    if (!el) return;
+    if (sumMax.w !== w) sumMax = { w, h: 0 };
+    el.style.minHeight = "";
+    const hNow = el.getBoundingClientRect().height;
+    if (hNow > sumMax.h) sumMax.h = hNow;
+    if (sumMax.h > 0) el.style.minHeight = `${Math.ceil(sumMax.h)}px`;
   }
 
   function binRangeText(b, h, col) {
@@ -1201,6 +1216,9 @@ export function initRankings(host) {
       ghost.querySelectorAll("[id]").forEach((el) => el.removeAttribute("id"));
       ghost.setAttribute("aria-hidden", "true");
       ghost.classList.add("dist-ghost");
+      // Inline so a cached stylesheet can't drop the overlay below the chart (t374u).
+      Object.assign(ghost.style, { position: "absolute", top: "0", left: "0", width: "100%", pointerEvents: "none", opacity: "1" });
+      if (getComputedStyle(box).position === "static") box.style.position = "relative";
       box.appendChild(ghost);
     }
     distMetric = id;
