@@ -440,6 +440,15 @@ header .sub {
   cursor: not-allowed;
 }
 
+/* Why the input is locked: own line inside the names box, shown only
+ * while the list is full (syncLimitLock toggles `hidden`). */
+.names-box-main .names-limit-note {
+  flex: 1 1 100%;
+  font-size: 0.78rem;
+  line-height: 1.3;
+  color: var(--warn);
+}
+
 /* Name chips inside the input box */
 .name-token-num {
   font-size: 0.7em;

@@ -234,6 +234,7 @@ import {
     namesBox: document.getElementById("namesBox"),
     nameTokensEl: document.getElementById("nameTokens"),
     namesInput: document.getElementById("namesInput") || document.getElementById("names"),
+    namesLimitNote: document.getElementById("namesLimitNote"),
     analyzeBtn: document.getElementById("analyzeBtn") || document.getElementById("loadBtn"),
     copyLinkBtn: document.getElementById("copyLinkBtn"),
     diceBtn: document.getElementById("diceBtn"),
@@ -1386,6 +1387,9 @@ import {
       if (full) els.namesInput.setAttribute("title", `List is full (${MAX_NAMES} names) — remove a name to add more`);
       else els.namesInput.removeAttribute("title");
     }
+    // Visible why: a disabled field alone says nothing (and a title only
+    // shows on mouse hover), so the box itself explains the lock.
+    if (els.namesLimitNote) els.namesLimitNote.hidden = !full;
     for (const b of [els.diceBtn, els.diceLowBtn, els.diceHighBtn]) {
       if (!b) continue;
       b.classList.toggle("is-locked", full);
