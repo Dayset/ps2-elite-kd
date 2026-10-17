@@ -8,8 +8,8 @@
  * (test/dist-cycle.test.mjs); rankings.mjs supplies the chart hooks.
  */
 
-export const STEP_MS = 5000;
-export const HOLD_MS = 15000;
+export const STEP_MS = 15000;
+export const HOLD_MS = 30000;
 /** How often a paused cycle (can't run right now) checks again. */
 export const RETRY_MS = 1000;
 

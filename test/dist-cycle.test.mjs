@@ -46,32 +46,32 @@ function setup({ canRun = () => true } = {}) {
 }
 
 describe("dist auto-cycle", () => {
-  it("uses 5 s steps and a 15 s hold", () => {
-    assert.equal(STEP_MS, 5000);
-    assert.equal(HOLD_MS, 15000);
+  it("uses 15 s steps and a 30 s hold", () => {
+    assert.equal(STEP_MS, 15000);
+    assert.equal(HOLD_MS, 30000);
   });
 
-  it("switches every 5 s in menu order and wraps around", () => {
+  it("switches every 15 s in menu order and wraps around", () => {
     const { clock, c, shown } = setup();
     c.start();
-    clock.advance(4999);
+    clock.advance(14999);
     assert.equal(shown.length, 0);
     clock.advance(1);
-    clock.advance(10000);
-    assert.deepEqual(shown, [[5000, "rf"], [10000, "act"], [15000, "adjs"]]);
+    clock.advance(30000);
+    assert.deepEqual(shown, [[15000, "rf"], [30000, "act"], [45000, "adjs"]]);
   });
 
-  it("an interaction holds for 15 s, then cycling resumes every 5 s", () => {
+  it("an interaction holds for 30 s, then cycling resumes every 15 s", () => {
     const { clock, c, shown } = setup();
     c.start();
     clock.advance(3000);
     c.interact(); // at 3 s
-    clock.advance(14999); // up to 17.999 s: nothing
+    clock.advance(29999); // up to 32.999 s: nothing
     assert.equal(shown.length, 0);
-    clock.advance(1); // 18 s
-    assert.deepEqual(shown, [[18000, "rf"]]);
-    clock.advance(5000);
-    assert.deepEqual(shown.at(-1), [23000, "act"]);
+    clock.advance(1); // 33 s
+    assert.deepEqual(shown, [[33000, "rf"]]);
+    clock.advance(15000);
+    assert.deepEqual(shown.at(-1), [48000, "act"]);
   });
 
   it("repeated interactions keep extending the hold", () => {
@@ -79,11 +79,11 @@ describe("dist auto-cycle", () => {
     c.start();
     c.interact();
     clock.advance(10000);
-    c.interact(); // at 10 s → hold to 25 s
-    clock.advance(14999);
+    c.interact(); // at 10 s → hold to 40 s
+    clock.advance(29999);
     assert.equal(shown.length, 0);
     clock.advance(1);
-    assert.deepEqual(shown, [[25000, "rf"]]);
+    assert.deepEqual(shown, [[40000, "rf"]]);
   });
 
   it("waits while it can't run (folded / hidden / tooltip) and resumes after", () => {
@@ -106,7 +106,7 @@ describe("dist auto-cycle", () => {
     assert.equal(n, 0);
     const s = setup();
     s.c.start();
-    s.clock.advance(5000);
+    s.clock.advance(15000);
     s.c.stop();
     s.clock.advance(30000);
     assert.equal(s.shown.length, 1);
@@ -117,7 +117,7 @@ describe("dist auto-cycle", () => {
     c.start();
     c.interact();
     clock.advance(5000);
-    assert.equal(c.holdLeft(), 10000);
+    assert.equal(c.holdLeft(), 25000);
   });
 });
 
@@ -151,22 +151,5 @@ describe("swipe between metrics (t383u)", () => {
     let t = 0;
     const w = createWheelSwiper({ now: () => t });
     for (let i = 0; i < 20; i++) { t += 16; assert.equal(w.push(5, 40), 0); }
-  });
-});
-
-import { dragCommits, DRAG_COMMIT } from "../chart-slide.mjs";
-
-describe("drag carousel release (t386u)", () => {
-  it("finishes past a quarter of the width, either direction", () => {
-    assert.equal(DRAG_COMMIT, 0.25);
-    assert.equal(dragCommits({ dx: -100, width: 380 }), true);
-    assert.equal(dragCommits({ dx: 100, width: 380 }), true);
-  });
-  it("springs back on a short slow drag", () => {
-    assert.equal(dragCommits({ dx: -60, width: 380, vx: -0.1 }), false);
-  });
-  it("a quick flick finishes even when short", () => {
-    assert.equal(dragCommits({ dx: -40, width: 380, vx: -0.8 }), true);
-    assert.equal(dragCommits({ dx: -40, width: 380, vx: 0.8 }), false); // flick back the other way
   });
 });

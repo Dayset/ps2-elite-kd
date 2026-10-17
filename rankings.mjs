@@ -15,8 +15,8 @@ import { deskUiScale } from "./desk-scale.mjs?v=20261010-sav1";
 import { matchPicks } from "./pick-sync.mjs?v=20261010-sav1";
 import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-sav1";
 import { groupByTier, openTierIds, pickedInGroup, groupIndexAt, tierOf } from "./tiers.mjs?v=20261017-tier1";
-import { createDistCycler, createWheelSwiper } from "./dist-cycle.mjs?v=20261017-carousel1";
-import { slideSwap, attachDragCarousel } from "./chart-slide.mjs?v=20261017-drag3";
+import { createDistCycler, swipeStep, createWheelSwiper } from "./dist-cycle.mjs?v=20261017-cycle15";
+import { slideSwap } from "./chart-slide.mjs?v=20261017-slide1";
 import { mergeFreshRows } from "./rank-row.mjs?v=20261010-sav1";
 import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-sav1";
 import { confirmedPadderSlugs } from "./padding.mjs?v=20261010-sav1";
@@ -1271,9 +1271,9 @@ export function initRankings(host) {
   $("distSection").addEventListener("toggle", () => drawDist());
 
   /* ---------- 📊 auto-cycle (t373u) ----------
-   * The chart steps through the menu's metrics every 5 s with a short
+   * The chart steps through the menu's metrics every 15 s with a short
    * crossfade. Any interaction with the chart block (pointer, keys, focus,
-   * the menu, a column sort) holds it for 15 s, then it carries on. It waits
+   * the menu, a column sort) holds it for 30 s, then it carries on. It waits
    * while the block is folded or off screen, the tab is hidden, or a bar
    * tooltip is open. Reduced motion: the switch is instant (no fade). */
   const DIST_FADE_MS = 800;
@@ -1289,7 +1289,6 @@ export function initRankings(host) {
     const box = $("distChart");
     const svg = $("distSvg");
     hideTip();
-    if (distDrag && distDrag.busy()) distDrag.reset(); // t387u: never stack on a carousel glide
     // A switch during a fade: finish the previous one at once.
     box.querySelectorAll("svg.dist-ghost").forEach((g) => g.remove());
     const canFade = svg && svg.childNodes.length && $("distSection").open;
@@ -1337,11 +1336,11 @@ export function initRankings(host) {
     ids: () => [...$("distMetric").options].map((o) => o.value).filter((v) => DIST_IDS.has(v)),
     current: () => distMetric,
     show: crossfadeDistTo,
-    canRun: () => !!data && $("distSection").open && !document.hidden && distOnScreen && $("distTip").hidden && !(distDrag && distDrag.busy()),
+    canRun: () => !!data && $("distSection").open && !document.hidden && distOnScreen && $("distTip").hidden,
   });
   /* t383u: 👆 swipe on the chart — finger / mouse drag to the right = next
    * metric, to the left = previous (two-finger sideways on a trackpad too).
-   * Same path as clicking an emoji: dissolve + 15 s hold of the auto-cycle.
+   * Same path as clicking an emoji: dissolve + 30 s hold of the auto-cycle.
    * A swipe that ends on a bar doesn't also count as a bar click. */
   function stepDist(dir) {
     const ids = [...$("distPills").querySelectorAll(".dist-pill")].map((b) => b.getAttribute("data-id"));
@@ -1352,7 +1351,6 @@ export function initRankings(host) {
     // left); the auto-cycle and emoji clicks keep the dissolve.
     if (distCycler) distCycler.interact();
     hideTip();
-    if (distDrag && distDrag.busy()) distDrag.reset(); // t387u
     $("distChart").querySelectorAll("svg.dist-ghost").forEach((g) => g.remove());
     slideSwap({
       container: $("distChart"),
@@ -1366,42 +1364,33 @@ export function initRankings(host) {
       },
     });
   }
-  /* t386u: 👆 finger-following carousel on the chart (drag left = next from
-   * the right, drag right = previous from the left; both charts visible
-   * mid-drag; release past ¼ width or flick to finish, else spring back). */
-  let distDrag = null;
   {
     const chart = $("distChart");
-    const ids = () => [...$("distPills").querySelectorAll(".dist-pill")].map((b) => b.getAttribute("data-id"));
-    let orig = null;
-    const setMetric = (id) => {
-      distMetric = id;
-      if ($("distMetric").value !== id) $("distMetric").value = id;
-      drawDist();
+    let start = null;
+    let swallowClick = false;
+    chart.addEventListener("pointerdown", (e) => {
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      start = { x: e.clientX, y: e.clientY, t: performance.now(), id: e.pointerId };
+    }, { passive: true });
+    const finish = (e) => {
+      if (!start || e.pointerId !== start.id) return;
+      const dir = swipeStep({ dx: e.clientX - start.x, dy: e.clientY - start.y, dt: performance.now() - start.t });
+      start = null;
+      if (!dir) return;
+      swallowClick = true;
+      setTimeout(() => { swallowClick = false; }, 400);
+      hideTip();
+      stepDist(dir);
     };
-    distDrag = attachDragCarousel({
-      target: chart,
-      container: chart,
-      svg: () => $("distSvg"),
-      background: () => cssVar("--panel", "#14161a"),
-      canStart: () => !!data && $("distSection").open && $("distSvg").childNodes.length > 0 && ids().length > 1,
-      onStart: () => {
-        orig = distMetric;
-        if (distCycler) distCycler.interact();
-        hideTip();
-        chart.querySelectorAll("svg.dist-ghost").forEach((g) => g.remove());
-      },
-      show: (dir) => {
-        const list = ids();
-        const i = Math.max(0, list.indexOf(orig));
-        setMetric(list[(i + dir + list.length) % list.length]);
-      },
-      restore: () => { if (orig) setMetric(orig); },
-      onCommit: () => { if (distCycler) distCycler.interact(); },
-    });
-  }
-  {
-    const chart = $("distChart");
+    chart.addEventListener("pointerup", finish, { passive: true });
+    chart.addEventListener("pointercancel", () => { start = null; }, { passive: true });
+    // The click that follows a swipe must not open / jump a bar.
+    chart.addEventListener("click", (e) => {
+      if (!swallowClick) return;
+      swallowClick = false;
+      e.stopPropagation();
+      e.preventDefault();
+    }, true);
     const wheel = createWheelSwiper();
     chart.addEventListener("wheel", (e) => {
       const dir = wheel.push(e.deltaX, e.deltaY);
