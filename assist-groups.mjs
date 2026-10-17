@@ -1,6 +1,6 @@
 /**
  * 🤝 Assist groups experiment (build-log.html only; user t378u). Assists are
- * NEVER public. Uses the 🧪 session metrics s_apk (assists / kill) and s_share
+ * Groups are build-log only (assists per kill itself is a public 🤝 column since t382u). Uses the 🧪 session metrics s_apk (assists / kill) and s_share
  * (assist damage share) with public K/D / iVi to find three groups. For now
  * every player counts as infantry (vehicle / air not separated yet; later:
  * infantry.mjs tags). Only measured players (≥ SESSION_MIN.MIN_KILLS kills in

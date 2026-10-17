@@ -38,6 +38,7 @@ export function initRankings(host) {
     { id: "pvs", label: "🦁 Brave", digits: 2, tip: "Activity that keeps up as enemies get stronger: high when you stay productive even against the fastest-killing players you meet." },
     { id: "rf", label: "🛡️ Resist", digits: 2, tip: "How well you stand up to strong players: your K/D against the players you fight most, scaled up by how fast those players kill." },
     { id: "cons", label: "⚡ Const", digits: 2, tip: "How much of your K/D you keep against the strongest third of your opponents compared with the weakest third: 1.00 means it holds completely, 0.50 means it halves." },
+    { id: "apk", label: "🤝 Assists", digits: 2, apk: true, tip: "Assists per kill in recent Honu sessions: how often you help damage enemies that teammates finish, for each kill of your own. Shown from 100 session kills." },
     { id: "rkd", label: "☠️ K/D", digits: 3, tip: "Kills ÷ deaths against the ~200 players you fight most, so it reflects real matchups rather than your whole lifetime." },
   ];
   const DEBUG = [
@@ -280,11 +281,20 @@ export function initRankings(host) {
     $("ranksHead").innerHTML = `<tr>${cells.join("")}</tr>`;
   }
 
+  /** 🤝 Assists per kill (t382u): raw value, percentile (among players with ≥100 session kills. */
+  function apkCell(v, p) {
+    if (!fin(v)) return `<td title="Not enough recent sessions (needs 100 kills in Honu sessions)">—</td>`;
+    const rel = p == null ? "" : p >= 50 ? ` — top ${Math.max(1, 100 - p)}%` : ` — bottom ${Math.max(1, p)}%`;
+    const tip = `Assists per kill: ${fmt(v, 2)}${rel}. Helps damage enemies that teammates finish.`;
+    return `<td title="${esc(tip)}">${fmt(v, 2)}</td>`;
+  }
+
   function cellHtml(c, row) {
     const v = row[c.id];
     if (c.floorZero && fin(v) && v < 0) {
       return `<td class="below-scale" title="Below the rating scale">0</td>`;
     }
+    if (c.apk) return apkCell(v, row.pcts[c.id]);
     if (!fin(v) && c.thinTip && row.thin) return `<td class="thin-sample" title="${esc(MIN_FIGHTS_TIP)}">—</td>`;
     if (!fin(v)) return `<td>—</td>`;
     const p = row.pcts[c.id];
@@ -582,6 +592,7 @@ export function initRankings(host) {
       const i = colorOf.get(r.query);
       const cells = VISIBLE.map((c) => {
         const v = r[c.id];
+        if (c.apk) return apkCell(v, r.pcts[c.id]);
         if (!fin(v)) return r.thin && c.thinTip ? `<td class="thin-sample" title="${esc(MIN_FIGHTS_TIP)}">—</td>` : `<td>—</td>`;
         const pool = data.pools[c.id] || [];
         const k = rankIn(pool, v, !!c.ascFirst);

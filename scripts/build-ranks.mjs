@@ -212,9 +212,12 @@ export function buildRanksWithGuard(dataDir) {
       // 🤖 likely farm account (same rule as build-log.html: a 🌱 that mostly feeds a few killers).
       const sp = sprout(m.raw || m, sampleEvents(np.rawRows || np.rows));
       const fa = sp.sprout && !isNotFarm({ name: np.display, cid: np.cid }) ? farmAccount(np.rawRows || np.rows, m.ownKpm) : null;
+      // 🤝 Assists per kill (t382u: public now) — null below SESSION_MIN.MIN_KILLS session kills.
+      if (!info || !info.hidden) row.push(sm && sm.measured && Number.isFinite(sm.values.s_apk) ? Math.round(sm.values.s_apk * 1000) / 1000 : null);
       players.push({ infTag: (pl.infantry && pl.infantry.tag) || null, slug: row[2], name: row[0], cid: String(np.cid || ""), farmAcct: !!(fa && fa.farm), flagged: f.flagged || sf.flagged || fx.flagged, patterns, values, session: sm, sessionFlag: sf, forensics: fx, row, hidden: !!(info && info.hidden), confirmedCheater: !!(info && info.confirmedCheater) });
     },
   });
+  ranks.cols.push("apk"); // 🤝 trailing column (see onPlayer); not part of RANK_COLS / rankRow
   const found = findOutliers(players, [...METRIC_COLS, ...SESSION_METRIC_IDS]);
   found.items.push(...forensicsGuardItems(players));
   const guard = guardStatus(found);
@@ -222,7 +225,7 @@ export function buildRanksWithGuard(dataDir) {
     ranks, guard, hidden: hiddenSummary(dataDir, hiddenFound), bins: binCounts(players, guard), session: sessionStatus(players, guard, dataDir),
     forensics: forensicsStatus(players, guard, forensics),
     review: reviewStatus(players, guard, forensics, farmFound),
-    assistGroups: assistGroups(players), // 🤝 build-log only (assists never public)
+    assistGroups: assistGroups(players), // 🤝 groups stay build-log only (the 🤝 apk column itself is public since t382u)
   };
 }
 

@@ -57,7 +57,7 @@ export const METRIC_LABELS = Object.freeze({
   adjs: "⚔️ iVi", rf: "🛡️ Resist", act: "🏃 Activity", pvs: "🦁 Brave", rkd: "☠️ K/D", mech: "⚙️ Mech%", cons: "🧱 Const",
   inflation: "🎈 Inflation", adj: "🎯🎈 ivi", ekpm: "eKPM", own: "own KPM", coi: "📊 COI", slope: "📉 Slope",
   kd: "KD", kpm: "KPM", ownKpm: "own KPM (public)", acc: "Acc %", hsr: "HSR %", ivi: "IvI",
-  // 🧪 Honu session metrics (session-stats.mjs; build-log only, never public).
+  // 🧪 Honu session metrics (session-stats.mjs; build-log only — except 🤝 assists per kill, public since t382u).
   ...SESSION_LABELS,
   // 🔎 session forensics oddity (value = peak kills in one minute of that session).
   forensics: "🔎 Session forensics",
