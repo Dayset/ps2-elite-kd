@@ -39,16 +39,12 @@
     "codeRepository": "https://github.com/Dayset/ps2-elite-kd"
   }
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261017-cyc2" />
+  <link rel="stylesheet" href="styles.css?v=20261017-hdr1" />
 </head>
 <body class="main-page">
   <div class="controls">
     <div class="cache-row">
       <div id="cacheChips" class="cache-chips" aria-label="Cached character names"></div>
-      <span class="cache-row-end">
-        <button id="wipeLocalBtn" type="button" class="wipe-local" title="Clear all local app data (cache, theme, flags)" aria-label="Clear all local app data">🗑️</button>
-        <button id="themeToggle" type="button" class="theme-toggle" title="Toggle light / dark theme" aria-label="Toggle light / dark theme">☀️ Light</button>
-      </span>
     </div>
     <div id="namesBox" class="names-box" role="group" aria-label="Player names">
       <div class="names-box-main">
@@ -71,6 +67,11 @@
         Fetch fresh data
       </label>
       <span id="freshEta" class="fresh-eta" aria-live="polite" hidden></span>
+      <!-- t375u: 🗑️ / theme moved here from the top row, small icon buttons on the right. -->
+      <span class="fresh-row-end">
+        <button id="wipeLocalBtn" type="button" class="mini-btn wipe-local" title="Clear all local app data (cache, theme, flags)" aria-label="Clear all local app data">🗑️</button>
+        <button id="themeToggle" type="button" class="mini-btn theme-toggle" title="Switch to light theme" aria-label="Switch to light theme">☀️</button>
+      </span>
     </div>
   </div>
 
@@ -133,6 +134,9 @@
   </div>
 
   <div id="legend" class="legend"></div>
+
+  <!-- t375u: 📊 Public (Census / Honu) table, folded, under the skill graph. -->
+  <div id="statsPublic" class="stats-panel stats-panel-public" aria-label="Public stats (Census / Honu)"></div>
   
   <details class="pooled-note fold-note"><summary>♿ What about vehicles?</summary><p>Vehicle and infantry kills are pooled together for now, so vehicle mains may look off in the graph and stats. Infantry-only numbers are coming later.</p></details>
 
@@ -195,6 +199,6 @@
     </details>
   </footer>
 
-  <script type="module" src="app.js?v=20261017-cyc2"></script>
+  <script type="module" src="app.js?v=20261017-hdr1"></script>
 </body>
 </html>

@@ -259,6 +259,7 @@ import {
     yZoomReset: document.getElementById("yZoomReset"),
     chartModeBar: document.getElementById("chartModeBar"),
     stats: document.getElementById("statsPanel"),
+    statsPublic: document.getElementById("statsPublic"),
     legend: document.getElementById("legend"),
     debugColsToggle: document.getElementById("debugColsToggle"),
     hideZeroIviToggle: document.getElementById("hideZeroIviToggle"),
@@ -692,11 +693,11 @@ import {
     }
     if (els.themeToggle) {
       if (mode === "light") {
-        els.themeToggle.textContent = "🌙 Dark";
+        els.themeToggle.textContent = "🌙";
         els.themeToggle.title = "Switch to dark theme";
         els.themeToggle.setAttribute("aria-label", "Switch to dark theme");
       } else {
-        els.themeToggle.textContent = "☀️ Light";
+        els.themeToggle.textContent = "☀️";
         els.themeToggle.title = "Switch to light theme";
         els.themeToggle.setAttribute("aria-label", "Switch to light theme");
       }
@@ -3083,6 +3084,7 @@ import {
     loadLegendShards(list.map((e) => slugKey(e && e.display)).filter(Boolean));
     if (!list.length) {
       els.stats.innerHTML = "";
+      if (els.statsPublic) els.statsPublic.innerHTML = "";
       return;
     }
 
@@ -3286,7 +3288,9 @@ import {
     const pubSorted = sortRows(metrics, publicCols, statsSortState.public);
     const adjSorted = sortRows(metrics, adjCols, statsSortState.adjusted);
 
-    els.stats.innerHTML = `
+    // t375u: 📊 Public lives under the skill graph (#statsPublic, folded);
+    // ✨ Adjusted stays above it without a title line.
+    const publicHtml = `
       <details class="stats-section stats-public"${publicStatsOpen ? " open" : ""}>
         <summary>📊 Public (Census / Honu)</summary>
         <div class="stats-table-wrap">
@@ -3295,9 +3299,10 @@ import {
             <tbody>${playerRows(publicCols, pubSorted)}</tbody>
           </table>
         </div>
-      </details>
-      <div class="stats-section">
-        <div class="section-title">✨ Adjusted (calculated)</div>
+      </details>`;
+    if (els.statsPublic) els.statsPublic.innerHTML = publicHtml;
+    els.stats.innerHTML = (els.statsPublic ? "" : publicHtml) + `
+      <div class="stats-section stats-adjusted">
         <div class="stats-table-wrap">
           <table class="stats-table stats-table-transposed" data-stats-table="adjusted">
             <thead><tr>${metricHead(adjCols, "adjusted", statsSortState.adjusted)}</tr></thead>
@@ -3311,10 +3316,12 @@ import {
     // Keep the ⚠️ note open/closed across re-sorts (starts collapsed each page load).
     const thinDet = els.stats.querySelector("details.stats-thin-note");
     if (thinDet) thinDet.addEventListener("toggle", () => { thinNoteOpen = thinDet.open; });
-    const pubDet = els.stats.querySelector("details.stats-public");
+    const statsRoots = [els.stats, els.statsPublic].filter(Boolean);
+    const inStats = (sel) => statsRoots.map((r) => r.querySelector(sel)).find(Boolean) || null;
+    const pubDet = inStats("details.stats-public");
     if (pubDet) pubDet.addEventListener("toggle", () => { publicStatsOpen = pubDet.open; });
 
-    els.stats.querySelectorAll("th.sortable").forEach((th) => {
+    statsRoots.flatMap((r) => [...r.querySelectorAll("th.sortable")]).forEach((th) => {
       th.addEventListener("click", (ev) => {
         // A header inside a <details> must never toggle it (t339u).
         ev.stopPropagation();
@@ -3334,7 +3341,7 @@ import {
         const wrap = th.closest(".stats-table-wrap");
         const prevLeft = wrap ? wrap.scrollLeft : 0;
         renderStatsTable(list);
-        const tbl = els.stats.querySelector(`table[data-stats-table="${tableId}"]`);
+        const tbl = inStats(`table[data-stats-table="${tableId}"]`);
         const newTh = tbl && [...tbl.querySelectorAll("th.sortable")].find((h) => h.getAttribute("data-sort") === key);
         if (newTh) keepSortedColumnVisible(newTh.closest(".stats-table-wrap"), newTh, prevLeft);
         // Phones have no hover: show the column's description for 5 s after a tap.
@@ -3608,6 +3615,7 @@ import {
   function showIdleChart(message) {
     clearSvg(els.chart);
     if (els.stats) els.stats.innerHTML = "";
+    if (els.statsPublic) els.statsPublic.innerHTML = "";
     els.legend.innerHTML = "";
     players = [];
     lastAnalyzedNames = [];
