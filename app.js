@@ -3051,6 +3051,9 @@ import {
   // 🧱 Const percentile: population pool from the shared ranks.json (one fetch, cached).
   let consPool = null;
   let consPoolLoad = null;
+  // 🤝 Assists per kill (t385u): shared value by slug + population pool from ranks.json.
+  let apkBySlug = null;
+  let apkPool = null;
   function loadConsPool() {
     if (consPoolLoad) return consPoolLoad;
     consPoolLoad = fetch("data/ranks.json", { cache: "no-cache" })
@@ -3059,6 +3062,13 @@ import {
         const i = payload && Array.isArray(payload.cols) ? payload.cols.indexOf("cons") : -1;
         if (i < 0 || !Array.isArray(payload.rows)) return;
         consPool = payload.rows.map((row) => row[i]).filter(isFiniteNum).sort((a, b) => a - b);
+        const ai = payload.cols.indexOf("apk");
+        const si = payload.cols.indexOf("slug");
+        if (ai >= 0 && si >= 0) {
+          apkBySlug = new Map();
+          for (const row of payload.rows) if (isFiniteNum(row[ai])) apkBySlug.set(row[si], row[ai]);
+          apkPool = [...apkBySlug.values()].sort((a, b) => a - b);
+        }
         if (lastStatsList) renderStatsTable(lastStatsList);
       })
       .catch(() => {});
@@ -3094,6 +3104,7 @@ import {
       { id: "pvs", label: "🦁 Brave", hint: "Activity that keeps up as enemies get stronger: high when you stay productive even against the fastest-killing players you meet.", fn: (r) => r.pvs, digits: 2 },
       { id: "rf", label: "🛡️ Resist", hint: "How well you stand up to strong players: your K/D against the players you fight most, scaled up by how fast those players kill.", fn: (r) => r.rf, digits: 2 },
       { id: "cons", label: "⚡ Const", hint: "How much of your K/D you keep against the strongest third of your opponents compared with the weakest third, as a percentile of all tracked players.", fn: (r) => r.cons, digits: 2, pctileCell: true },
+      { id: "apk", label: "🤝 Assists", hint: "Assists per kill in recent Honu sessions: how often you help damage enemies that teammates finish, for each kill of your own. Shown from 100 session kills.", fn: (r) => (apkBySlug && r.p ? apkBySlug.get(slugKey(r.p.display)) : undefined), digits: 2, apkCell: true },
       { id: "rkd", label: "☠️ K/D", hint: "Kills ÷ deaths against the ~200 players you fight most, so it reflects real matchups rather than your whole lifetime.", fn: (r) => r.rkd, digits: 3 },
     ];
     // Older debug columns: appended only when "show older debug stats" (footer) is ticked.
@@ -3235,6 +3246,13 @@ import {
                   ? ` title="${escapeHtml(`Below ${fmtNum(floor, c.digits)} = no inflation`)}"`
                   : "";
               // 🧱 Const: main value is the population percentile ("19%"); the dimmed gap to the highest value still applies.
+              // 🤝 Assists: plain number, percentile + meaning on hover, no % gap.
+              if (c.apkCell) {
+                if (!isFiniteNum(v)) return `<td title="Not enough recent sessions (needs 100 kills in Honu sessions)">—</td>`;
+                const pl = apkPool ? percentileOf(apkPool, v) : null;
+                const rel = pl == null ? "" : pl >= 50 ? ` — top ${Math.max(1, 100 - pl)}%` : ` — bottom ${Math.max(1, pl)}%`;
+                return `<td title="${escapeHtml(`Assists per kill: ${fmtNum(v, 2)}${rel}. Helps damage enemies that teammates finish.`)}">${fmtNum(v, 2)}</td>`;
+              }
               if (c.pctileCell) {
                 const pctl = isFiniteNum(v) && consPool ? percentileOf(consPool, v) : null;
                 const txt = pctl == null ? "—" : `${pctl}%`;
