@@ -745,6 +745,8 @@ export function initRankings(host) {
     if (!DIST_IDS.has(id)) return; // older stat (debug column sort): chart keeps its metric
     // Only user actions land here (menu / column sort): hold the auto-cycle.
     if (distCycler) distCycler.interact();
+    // t382u: clicked switches dissolve too (they used to jump).
+    if (id !== distMetric && distCycler) { crossfadeDistTo(id); return; }
     distMetric = id;
     if ($("distMetric").value !== id) $("distMetric").value = id;
     drawDist();
@@ -1273,38 +1275,61 @@ export function initRankings(host) {
    * the menu, a column sort) holds it for 15 s, then it carries on. It waits
    * while the block is folded or off screen, the tab is hidden, or a bar
    * tooltip is open. Reduced motion: the switch is instant (no fade). */
-  const DIST_FADE_MS = 400;
+  const DIST_FADE_MS = 800;
   let distOnScreen = true;
-  const reducedMotion = () => !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
-  function crossfadeDistTo(id) {
+  /**
+   * t382u: dissolve between two charts. A snapshot of the current chart (with
+   * a solid panel background, so it fully covers what's beneath) is laid over
+   * the chart, the new chart is drawn underneath, and the snapshot fades out —
+   * old losing opacity while the new one is revealed. Used for every switch
+   * (auto-cycle and clicks). Opacity only, so it also runs under reduced motion.
+   */
+  function crossfadeDist(draw) {
     const box = $("distChart");
     const svg = $("distSvg");
     hideTip();
-    const ghost = !reducedMotion() && svg && svg.childNodes.length ? svg.cloneNode(true) : null;
-    if (ghost) {
+    // A switch during a fade: finish the previous one at once.
+    box.querySelectorAll("svg.dist-ghost").forEach((g) => g.remove());
+    const canFade = svg && svg.childNodes.length && $("distSection").open;
+    let ghost = null;
+    if (canFade) {
+      ghost = svg.cloneNode(true);
       ghost.removeAttribute("id");
       ghost.querySelectorAll("[id]").forEach((el) => el.removeAttribute("id"));
       ghost.setAttribute("aria-hidden", "true");
       ghost.classList.add("dist-ghost");
+      const bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      const vb = (svg.getAttribute("viewBox") || "0 0 1000 400").split(/\s+/).map(Number);
+      bg.setAttribute("x", String(vb[0] || 0));
+      bg.setAttribute("y", String(vb[1] || 0));
+      bg.setAttribute("width", String(vb[2] || 1000));
+      bg.setAttribute("height", String(vb[3] || 400));
+      bg.setAttribute("fill", cssVar("--panel", "#14161a"));
+      ghost.insertBefore(bg, ghost.firstChild);
       // Inline so a cached stylesheet can't drop the overlay below the chart (t374u).
-      Object.assign(ghost.style, { position: "absolute", top: "0", left: "0", width: "100%", pointerEvents: "none", opacity: "1" });
+      Object.assign(ghost.style, { position: "absolute", top: "0", left: "0", width: "100%", pointerEvents: "none", opacity: "1", transition: "none", willChange: "opacity" });
       if (getComputedStyle(box).position === "static") box.style.position = "relative";
       box.appendChild(ghost);
     }
-    distMetric = id;
-    if ($("distMetric").value !== id) $("distMetric").value = id;
-    drawDist();
+    draw();
     if (!ghost) return;
-    svg.style.transition = "none";
-    svg.style.opacity = "0";
-    void svg.getBoundingClientRect(); // commit opacity 0 before fading in
-    svg.style.transition = `opacity ${DIST_FADE_MS}ms ease`;
-    ghost.style.transition = `opacity ${DIST_FADE_MS}ms ease`;
+    // The text under the chart (metric hint, stats line) fades in with it.
+    const texts = ["distHint", "distSummary"].map((id) => $(id)).filter(Boolean);
+    for (const t of texts) { t.style.transition = "none"; t.style.opacity = "0"; }
+    void ghost.getBoundingClientRect(); // commit opacity 1 before fading out
     requestAnimationFrame(() => {
-      svg.style.opacity = "1";
+      ghost.style.transition = `opacity ${DIST_FADE_MS}ms ease-in-out`;
       ghost.style.opacity = "0";
+      for (const t of texts) { t.style.transition = `opacity ${DIST_FADE_MS}ms ease-in-out`; t.style.opacity = "1"; }
     });
-    setTimeout(() => { ghost.remove(); svg.style.transition = ""; }, DIST_FADE_MS + 120);
+    setTimeout(() => ghost.remove(), DIST_FADE_MS + 150);
+  }
+  function crossfadeDistTo(id) {
+    crossfadeDist(() => {
+      distMetric = id;
+      if ($("distMetric").value !== id) $("distMetric").value = id;
+      drawDist();
+    });
   }
   distCycler = createDistCycler({
     ids: () => [...$("distMetric").options].map((o) => o.value).filter((v) => DIST_IDS.has(v)),
