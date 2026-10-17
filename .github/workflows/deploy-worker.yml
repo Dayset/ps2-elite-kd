@@ -32,6 +32,7 @@ jobs:
         with:
           sparse-checkout: |
             worker
+            data/monitor.json
             test/worker-kv-budget.test.mjs
             package.json
 

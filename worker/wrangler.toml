@@ -17,3 +17,12 @@ crons = ["*/5 * * * *"]
 [[kv_namespaces]]
 binding = "QUEUE"
 id = "3adfe0d9994a4b92b32c132168faf3cd"
+
+# Pilot live kill recorder (t372u): one SQLite-backed Durable Object (free plan).
+[[durable_objects.bindings]]
+name = "KILL_MONITOR"
+class_name = "KillMonitor"
+
+[[migrations]]
+tag = "v1-kill-monitor"
+new_sqlite_classes = ["KillMonitor"]

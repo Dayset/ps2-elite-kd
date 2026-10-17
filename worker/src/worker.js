@@ -761,14 +761,21 @@ async function handleCensusProxy(request, env, c) {
   return out;
 }
 
+import { KillMonitor, monitorRoute, monitorTick } from "./monitor.js";
+export { KillMonitor };
+
 export default {
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(backupCheck(env, event && event.scheduledTime ? event.scheduledTime : Date.now()));
+    ctx.waitUntil(Promise.all([backupCheck(env, event && event.scheduledTime ? event.scheduledTime : Date.now()), monitorTick(env)]));
   },
   async fetch(request, env, ctx) {
     const c = cfg(env);
     const cors = corsHeaders(request, c);
     const url = new URL(request.url);
+    if (url.pathname === "/monitor/status" || url.pathname === "/monitor/export") {
+      if (request.method !== "GET") return new Response(null, { status: 405 });
+      return await monitorRoute(request, env, url);
+    }
     if (url.pathname === "/requested") {
       if (request.method !== "GET") return new Response(null, { status: 405 });
       return await handleRequested(request, env);
