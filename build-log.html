@@ -14,7 +14,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261016-blur" />
+  <link rel="stylesheet" href="styles.css?v=20261017-tierleft" />
   <style>
     body { overflow: auto; }
     .st-wrap { max-width: min(1680px, 96vw); margin: 0 auto; padding: 18px 16px 40px; }
@@ -113,7 +113,7 @@
     <h1>📦 Shared cache status</h1>
     <div class="st-sub">Updates every 30 s. <span id="stUpdated"></span> · <a href="./">Back to the chart</a> · <a href="misc.html" title="Confirmed stat padders (hidden page)">🌾 Wall of shame</a> · <span id="radarLine" title="PS2 Radar (ps2radar.com, independent community cheat radar) is looked up once a day for players on the review lists below, at most 50 a day, each at most every 3 days. Its badge is a second opinion only: a Radar Confirmed / Banned mark moves a player up in review order but never hides or flags anyone here, and nothing else on the site reads it. If the radar goes away, the last cached answers stay.">🛰️ PS2 Radar</span><span class="st-tools"><button type="button" id="openAll" title="Open every section">Open all</button><button type="button" id="closeAll" title="Collapse every section">Collapse all</button></span></div>
 
-    <div class="st-card" id="statusBar" style="padding:10px 14px;margin-bottom:10px;line-height:1.7;"><span id="sbState" class="st-dim">Loading status…</span><br><span id="sbLast" class="st-dim"></span><br><span id="sbHonu" class="st-dim"></span><br><span id="sbReview" class="st-dim"></span><br><span class="st-dim">Jump to: <a href="#cardFlags">🚩 Red flags</a> · <a href="#cardAnoms">📉 Anomalies</a> · <a href="#cardSession">🧪 Session</a> · <a href="#cardForensics">🔎 Forensics</a> · <a href="#cardStalker">🚗 Stalkers</a> · <a href="#cardSprouts">🌱 Hand</a></span></div>
+    <div class="st-card" id="statusBar" style="padding:10px 14px;margin-bottom:10px;line-height:1.7;"><span id="sbState" class="st-dim">Loading status…</span><br><span id="sbLast" class="st-dim"></span><br><span id="sbHonu" class="st-dim"></span><br><span id="sbReview" class="st-dim"></span><br><span class="st-dim">Jump to: <a href="#cardFlags">🚩 Red flags</a> · <a href="#cardAnoms">📉 Anomalies</a> · <a href="#cardSession">🧪 Session</a> · <a href="#cardForensics">🔎 Forensics</a> · <a href="#cardSprouts">🌱 Hand</a></span></div>
     <details class="st-card st-sec st-group" id="groupQueue" data-default="open"><summary><h2>Queue</h2></summary>
       <details class="st-card st-sec" id="cardNow" data-default="open"><summary><h2>Refresh now</h2></summary><div id="nowRun"></div><div id="now" class="st-dim">Loading…</div><div id="backup" class="st-label"></div></details>
       <details class="st-card st-sec" id="cardPending"><summary><h2>Queued from the site (not cached yet) <span id="pendingCount" class="st-count">…</span></h2></summary><div id="pending" class="st-dim">Loading…</div></details>
@@ -124,17 +124,11 @@
       <div id="flagsRule" class="st-rule"></div>
       <div id="flags" class="st-dim">Loading…</div>
     </details>
-      <details class="st-card st-sec st-flags" id="cardStalker">
-      <summary id="stalkerSummary"><h2>🚗 Vehicle stalkers <span id="stalkerCount" class="st-count">…</span></h2></summary>
-      <div class="st-note">Would be 🚩 aim / vehicle, but the huge K/D comes slowly and with almost no headshots: typically hiding in a tank and bailing when hit. Moved out of 🚩 automatically and listed here; nothing to review unless something looks off.</div>
-      <div id="stalkerRule" class="st-rule"></div>
-      <div id="stalker" class="st-dim">Loading…</div>
-    </details>
       <details class="st-card st-sec st-flags st-anoms" id="cardAnoms">
       <summary id="anomsSummary"><h2>📉 Chart anomalies <span id="anomsCount" class="st-count">…</span></h2></summary>
       <div class="st-note">Things about chart and stat integrity, not cheating patterns: players whose stats we changed automatically, and values far outside everyone else. Each needs a human look; nothing here is an accusation. Count = players needing a look (unreviewed 🌾 and † plus unexplained outliers).<br>Routing (bins.mjs): 🌾 stat padding, † adjusted and 🧪 outliers live here, not in 🚩. A player whose only issues are here stays only here; a player who also has a 🚩 pattern (aim, vehicle, rampage…) is listed in 🚩, with a 📉 link there and an "also in 🚩" link here, never a second full row.</div>
       <details class="st-sub-sec" id="secPadding">
-      <summary><h3>🌾 Stat padding (auto-confirmed) <span id="padCount" class="st-count">…</span></h3></summary>
+      <summary><h3>🌾 Stat padding <span id="padCount" class="st-count">…</span></h3></summary>
       <div id="padRule" class="st-rule"></div>
       <div id="padding" class="st-dim">Loading…</div>
       </details>
@@ -554,12 +548,12 @@
        🌾 padding + † "adjusted" + the 🧪 outlier guard (grouped by player) go to 📉 Chart anomalies. Uses the
        same metrics as the main tables (player-metrics.mjs). Leads for review, not proof. -->
   <script type="module">
-    import { stalkerRuleText, reviewRuleText, anomalyRuleText, paddingRuleText } from "./red-flags.mjs?v=20261010-sav1";
+    import { reviewRuleText, anomalyRuleText, paddingRuleText } from "./red-flags.mjs?v=20261010-sav1";
     import { groupOutliers } from "./outlier-guard.mjs?v=20261010-sav1";
     import { classifyBins, CHART_LABELS } from "./bins.mjs?v=20261010-sav1";
     import { forensicsRuleText } from "./session-forensics.mjs?v=20261010-sav1";
     import { sproutRuleText, farmAccountRuleText } from "./sprouts.mjs?v=20261010-sav1";
-    import { reviewDecision, CLEARING_DECISIONS, PADDING_BORDERLINE_SHARE } from "./padding.mjs?v=20261010-sav1";
+    import { reviewDecision } from "./padding.mjs?v=20261010-sav1";
     import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261010-sav1";
     import "./name-peek.mjs?v=20261010-sav1"; // full-name popup for truncated .nm names
     import { radarProfileUrl, radarBadge, radarPriority } from "./radar.mjs?v=20261010-sav1";
@@ -590,8 +584,7 @@
     $("sproutsRule").textContent = "Rule: " + sproutText;
     $("farmAcctRule").textContent = "Rule: " + farmAccountRuleText();
     $("adjRule").textContent = "Rule: " + anomalyRuleText();
-    $("padRule").textContent = "Rule: " + paddingRuleText() + " Auto-confirmed (t368u): marked * and excluded without a manual check. Only borderline cases (farm share under " + Math.round(PADDING_BORDERLINE_SHARE * 100) + "%) need a look. Overrides: data/not-farm.json (counts the kills again), or data/reviewed.json \"cleared\" / \"fluke\" / \"bad-luck\".";
-    $("stalkerRule").textContent = "Rule: " + stalkerRuleText();
+    $("padRule").textContent = "Rule: " + paddingRuleText();
     try { sessionStorage.removeItem("ps2-elite-kd:redflags:v6"); sessionStorage.removeItem("ps2-elite-kd:redflags:v7"); sessionStorage.removeItem("ps2-elite-kd:redflags:v8"); sessionStorage.removeItem("ps2-elite-kd:redflags:v9"); sessionStorage.removeItem("ps2-elite-kd:redflags:v10"); } catch { /* ignore */ }
 
     function ago(t) {
@@ -659,6 +652,18 @@
     }
 
     /* ---------- 🌱 Could use a hand ---------- */
+    const SPROUT_COLS = [
+      { key: "name", label: "Player", num: false },
+      { key: "adjs", label: "⚔️ iVi", num: true, d: 0, tip: "Raw ⚔️ iVi (the main page shows negatives as 0)" },
+      { key: "kd", label: "KD", num: true, d: 2 },
+      { key: "kpm", label: "KPM", num: true, d: 2, tip: "Own kills per minute" },
+      { key: "acc", label: "Acc %", num: true, d: 1 },
+      { key: "hsr", label: "HSR %", num: true, d: 1 },
+      { key: "events", label: "Fights", num: true, d: 0, tip: "Kills + deaths against the top opponents in the sample (200; older files 50)" },
+    ];
+    let sproutSort = { key: "adjs", dir: 1 };
+    let sproutRows = [];
+
     function nameCell(r) {
       const url = honu(r.cid);
       const full = esc(r.name);
@@ -666,6 +671,42 @@
         ? '<a class="nm" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer" data-full="' + full + '" title="Open ' + full + ' on Honu">' + full + "</a>"
         : '<span class="nm" data-full="' + full + '" title="' + full + '">' + full + "</span>";
     }
+
+    function renderSprouts() {
+      const { key, dir } = sproutSort;
+      const list = sproutRows.slice().sort((a, b) => {
+        if (key === "name") return dir * String(a.name).localeCompare(String(b.name), undefined, { sensitivity: "base" });
+        const va = a[key], vb = b[key];
+        if (va == null && vb == null) return 0;
+        if (va == null) return 1;
+        if (vb == null) return -1;
+        return dir * (va - vb);
+      });
+      const head = SPROUT_COLS.map((c) => {
+        const arrow = c.key === key ? ' <span class="st-arrow">' + (dir > 0 ? "▲" : "▼") + "</span>" : "";
+        return '<th data-sort="' + c.key + '"' + (c.num ? ' class="st-num"' : "") + (c.tip ? ' title="' + esc(c.tip) + '"' : "") + ">" + c.label + arrow + "</th>";
+      });
+      head.splice(1, 0, "<th></th>");
+      const body = list.map((r) => {
+        const chart = '<a href="./?names=' + encodeURIComponent(r.name) + '" title="Open the chart with this name (press Analyze)">chart</a>';
+        return "<tr><td>" + nameCell(r) + "</td><td>" + chart + "</td>" +
+          SPROUT_COLS.slice(1).map((c) => '<td class="st-num">' + fmt(r[c.key], c.d) + "</td>").join("") + "</tr>";
+      }).join("");
+      $("sprouts").innerHTML = '<div class="st-dim">' + list.length + " cached player" + (list.length === 1 ? "" : "s") + " right now. Click a column to sort.</div>" +
+        '<div class="st-scroll"><table class="st-table"><tr>' + head.join("") + "</tr>" + body + "</table></div>";
+    }
+
+    $("sprouts").addEventListener("click", (e) => {
+      const th = e.target.closest("th[data-sort]");
+      if (!th) return;
+      const k = th.dataset.sort;
+      sproutSort = sproutSort.key === k ? { key: k, dir: -sproutSort.dir } : { key: k, dir: k === "adjs" || k === "name" ? 1 : -1 };
+      const sc = $("sprouts").querySelector(".st-scroll");
+      const left = sc ? sc.scrollLeft : 0;
+      renderSprouts();
+      const sc2 = $("sprouts").querySelector(".st-scroll");
+      if (sc2) sc2.scrollLeft = left; // keep the sideways scroll on phones
+    });
 
     /* ---------- 🤖 Likely farm accounts (moved out of 🌱; sprouts.mjs farmAccount) ---------- */
     function renderFarmAccounts(list) {
@@ -702,10 +743,7 @@
       const L = FARM_LISTS[kind];
       const list = rows.filter((r) => r && (r.patterns || []).includes(kind))
         .sort((a, b) => radarUp(b.slug) - radarUp(a.slug) || ((b.padding && b.padding.share) || 0) - ((a.padding && a.padding.share) || 0));
-      const isCleared = (r) => { const rv = reviewDecision(reviewed, r.slug); return !!rv && CLEARING_DECISIONS.includes(rv.decision); };
-      const isBorder = (r) => !reviewDecision(reviewed, r.slug) && !!r.padding && r.padding.share < PADDING_BORDERLINE_SHARE;
-      // 🌾 is auto-confirmed (t368u): only borderline shares count as open; † still needs review.
-      const open = kind === "padding" ? list.filter(isBorder).length : list.filter((r) => !reviewDecision(reviewed, r.slug)).length;
+      const open = list.filter((r) => !reviewDecision(reviewed, r.slug)).length;
       const c = $(L.count);
       c.textContent = String(list.length);
       c.classList.toggle("hot", open > 0);
@@ -720,15 +758,14 @@
           ? Math.round(r.padding.share * 100) + "% (" + r.padding.kills + " kills) on: " + r.padding.victims.map((v) => esc(v.name) + " " + v.kills + "/" + v.deaths).join(", ")
           : "—";
         const review = rv
-          ? '<span class="st-ok" title="' + esc(rv.note) + '">' + (kind === "padding" && isCleared(r) ? "cleared: " : "") + esc(rv.decision) + (rv.at ? " (" + esc(rv.at) + ")" : "") + "</span>"
-          : kind === "padding" ? (isBorder(r) ? '<span class="st-err">needs a look (borderline)</span>' : '<span class="st-ok">auto-confirmed</span>')
+          ? '<span class="st-ok" title="' + esc(rv.note) + '">' + esc(rv.decision) + (rv.at ? " (" + esc(rv.at) + ")" : "") + "</span>"
           : '<span class="st-dim">needs review</span>';
         const alsoRed = r.red ? '<div style="font-size:0.8em"><a href="#flag-' + esc(r.slug) + '" class="st-jump" title="This player also has a 🚩 pattern; the full row is in Red flags">also in 🚩 (' + esc(classifyBins({ patterns: r.patterns }).red.join(", ")) + ") ↑</a></div>" : "";
         return '<tr id="' + L.idp + esc(r.slug) + '"><td>' + nameCell(r) + L.mark + radarCell(r.slug, r.cid) + "</td><td>" + chart + '</td><td class="st-why">' + removed + alsoRed + "</td><td>" + review + "</td>" +
           '<td class="st-num">' + fmt(r.adjs, 0) + '</td><td class="st-num">' + fmt(r.kd, 2) + "</td>" +
           '<td title="' + esc(r.savedAt ? new Date(r.savedAt).toLocaleString() : "") + '">' + esc(ago(r.savedAt)) + "</td></tr>";
       }).join("");
-      $(L.box).innerHTML = '<div class="st-dim">' + list.length + " player" + (list.length === 1 ? "" : "s") + ", " + open + (kind === "padding" ? " borderline (need a look)." : " not reviewed yet.") + " After each farm account: the player's kills on it / its kills on the player." +
+      $(L.box).innerHTML = '<div class="st-dim">' + list.length + " player" + (list.length === 1 ? "" : "s") + ", " + open + " not reviewed yet. After each farm account: the player's kills on it / its kills on the player." +
         (kind === "padding" ? " ⚔️ iVi / KD are after the exclusion." : "") + "</div>" +
         '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th></th><th>Farm kills excluded</th><th>Review</th>' +
         '<th class="st-num">⚔️ iVi</th><th class="st-num">KD</th><th>Updated</th></tr>' + body + "</table></div>";
@@ -946,34 +983,12 @@
       return Object.assign({}, r, { patterns: (r.patterns || []).filter((p) => p !== "adjusted").concat("padding"), flagged: true });
     }
 
-    /** reviewed.json "not-stalker" → back to 🚩 (as the vehicle pattern). */
-    function withNotStalker(r) {
-      const rv = r && reviewDecision(reviewed, r.slug);
-      if (!rv || rv.decision !== "not-stalker" || !(r.patterns || []).includes("stalker")) return r;
-      return Object.assign({}, r, { patterns: r.patterns.map((p) => (p === "stalker" ? "vehicle" : p)), red: true, flagged: true });
-    }
-
-    /* ---------- 🚗 Vehicle stalkers (red-flags.mjs stalkerFlag; out of 🚩, t369u) ---------- */
-    function renderStalkers(list) {
-      $("stalkerCount").textContent = String(list.length);
-      if (!list.length) { $("stalker").innerHTML = '<div class="st-dim">Nobody right now.</div>'; return; }
-      const body = list.slice().sort((a, b) => (b.kd || 0) - (a.kd || 0)).map((r) => {
-        const chart = '<a href="./?names=' + encodeURIComponent(r.name) + '" title="Open the chart with this name (press Analyze)">chart</a>';
-        return '<tr id="stalker-' + esc(r.slug) + '"><td>' + nameCell(r) + " 🚗" + radarCell(r.slug, r.cid) + "</td><td>" + chart + '</td><td class="st-num">' + fmt(r.kd, 1) +
-          '</td><td class="st-num">' + fmt(r.kpm, 2) + '</td><td class="st-num">' + fmt(r.hsr, 1) + '</td><td class="st-num">' + fmt(r.acc, 1) + '</td><td class="st-num">' + fmt(r.ivi, 0) + "</td></tr>";
-      }).join("");
-      $("stalker").innerHTML = '<div class="st-dim">' + list.length + " player" + (list.length === 1 ? "" : "s") + ", out of 🚩 automatically.</div>" +
-        '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th></th><th class="st-num">KD</th><th class="st-num">KPM</th><th class="st-num">HSR %</th><th class="st-num">Acc %</th><th class="st-num">IvI</th></tr>' + body + "</table></div>";
-    }
-
-    let sproutCount = null;
     function render(rows, total, errors) {
-      rows = rows.map(withSession).map(withForensics).map(withConfirmed).map(withNotStalker);
-      // 🌱 count only (t368u: the names list was removed; flags.json carries the count).
-      const nSprout = sproutCount != null ? sproutCount : rows.filter((r) => r && r.sprout).length;
-      $("sproutsCount").textContent = nSprout.toLocaleString();
-      $("sprouts").innerHTML = '<div>🌱 ' + nSprout.toLocaleString() + " player" + (nSprout === 1 ? "" : "s") + " (not listed)</div>";
-      renderStalkers(rows.filter((r) => r && classifyBins({ patterns: r.patterns }).bin === "stalker"));
+      rows = rows.map(withSession).map(withForensics).map(withConfirmed);
+      sproutRows = rows.filter((r) => r && r.sprout);
+      $("sproutsCount").textContent = String(sproutRows.length);
+      if (sproutRows.length) renderSprouts();
+      else $("sprouts").innerHTML = '<div class="st-dim">Nobody right now.</div>';
       renderFarmAccounts(rows.filter((r) => r && r.farmAcct));
 
       renderFarmList(rows, "padding");
@@ -1015,11 +1030,10 @@
         const fr = await fetch("data/flags.json?t=" + Date.now(), { cache: "no-store" });
         if (!fr.ok) throw new Error("flags.json HTTP " + fr.status);
         const flags = await fr.json();
-        sproutCount = typeof flags.sproutCount === "number" ? flags.sproutCount : null;
         render(flags.rows || [], flags.total || 0, flags.errors || 0);
       } catch (e) {
         $("flags").innerHTML = '<span class="st-err">Couldn’t compute red flags (' + esc(e && e.message) + ").</span>";
-        $("stalker").innerHTML = $("sprouts").innerHTML = $("farmAcct").innerHTML = '<span class="st-err">Couldn’t load the list (' + esc(e && e.message) + ").</span>";
+        $("sprouts").innerHTML = $("farmAcct").innerHTML = '<span class="st-err">Couldn’t load the list (' + esc(e && e.message) + ").</span>";
         $("adjusted").innerHTML = $("padding").innerHTML = '<span class="st-err">Couldn’t load the list (' + esc(e && e.message) + ").</span>";
       } finally {
         busy = false;
