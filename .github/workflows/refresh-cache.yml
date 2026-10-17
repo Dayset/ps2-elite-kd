@@ -163,6 +163,7 @@ jobs:
               fs.writeFileSync("data/status.json", JSON.stringify(st, null, 2) + "\n");
             }
           '
+          export REBUILD_DERIVED='node scripts/build-ranks.mjs && node scripts/build-flags.mjs && node scripts/build-ghost-model.mjs'
           scripts/ci-commit-push.sh "chore(cache): ${RUN_KIND} refresh, ${changed} player file(s), ${NEW} new [bot]"
 
       - name: Chain next background run (growth)
