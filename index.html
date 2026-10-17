@@ -104,9 +104,9 @@
     <div class="chart-corner">
       <div id="chartModeBar" class="chart-mode-bar" role="group" aria-label="Graph view">
         <button type="button" class="chart-mode-btn" data-yscale="kd-btn" aria-pressed="true"
-                title="💀 K/D: lines at each player's real (pace-adjusted) K/D. Axis fits the names on the graph.">💀</button>
+                title="💀 Who wins fights: kills per death against easy → hard enemies. Higher line = wins more fights." data-tip="💀 Who wins fights: kills per death vs easy → hard enemies. Higher = wins more.">💀</button>
         <button type="button" class="chart-mode-btn" data-mode="cumulative" aria-pressed="false"
-                title="📈 iVi: each player's K/D curve keeps its shape but sits at their iVi level. Axis fits the names on the graph.">📈</button>
+                title="📈 Who aims best: each line keeps its shape but is lifted to the player's aim score (public IvI = accuracy × headshot %). Higher line = better aim, not more wins. Players can swap places between the two views: sharp aim doesn't always win fights, and vehicle / explosive players win without headshots." data-tip="📈 Who aims best: lines lifted to each player's aim score (accuracy × headshot %). Higher = better aim, not more wins, so players can swap places.">📈</button>
         <button type="button" class="chart-mode-btn" data-mode="banded" aria-pressed="false"
                 title="Smooth: banded K/D.">🎚️</button>
       </div>
@@ -206,6 +206,6 @@
     </details>
   </footer>
 
-  <script type="module" src="app.js?v=20261017-reload2"></script>
+  <script type="module" src="app.js?v=20261017-modes1"></script>
 </body>
 </html>

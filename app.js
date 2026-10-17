@@ -2811,7 +2811,7 @@ import {
     ylab.setAttribute("text-anchor", "middle");
     ylab.setAttribute("transform", `rotate(90 ${PLOT.x + PLOT.w + 44} ${PLOT.y + PLOT.h / 2})`);
     // t378u: 📈 iVi mode rescales each curve to its player's iVi; say so on the axis.
-    ylab.textContent = banded ? "K/D vs enemies near this KPM" : yScaleMode === "ivi" ? "K/D curve at iVi level" : "Projected K/D";
+    ylab.textContent = banded ? "K/D vs enemies near this KPM" : yScaleMode === "ivi" ? "Aim score (public IvI)" : "Kills per death";
     svg.appendChild(ylab);
 
     for (const x of xTicks) {
@@ -4615,6 +4615,13 @@ import {
     syncYScaleUi();
     syncChartModeUi();
     if (players.length) drawChart(players);
+  }
+  // t380u: phones have no hover — tapping 💀 / 📈 also shows what that view means.
+  if (els.chartModeBar) {
+    els.chartModeBar.addEventListener("click", (e) => {
+      const b = e.target.closest && e.target.closest("[data-tip]");
+      if (b && isTouchUi()) showHeadTip(b.getAttribute("data-tip"), b);
+    });
   }
   // 💀 button toggles K/D mode (in chartModeBar)
   const kdBtn = document.querySelector('[data-yscale="kd-btn"]');
