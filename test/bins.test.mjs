@@ -13,11 +13,11 @@ const dataDir = path.join(root, "data");
 
 describe("bin classifier (user rules t280u + t288u: chart-only incl. 🌾 padding → 📉, any other anomaly → 🚩)", () => {
   it("chart-only patterns go to 📉 only", () => {
-    assert.deepEqual(classifyBins({ patterns: ["adjusted"] }), { bin: "chart", red: [], chart: ["adjusted"], both: false });
+    assert.deepEqual(classifyBins({ patterns: ["adjusted"] }), { bin: "chart", red: [], chart: ["adjusted"], stalker: [], both: false });
     assert.equal(classifyBins({ outlier: true }).bin, "chart");
     assert.deepEqual(classifyBins({ patterns: ["adjusted"], outlier: true }).chart, ["adjusted", "outlier"]);
     // t288u: stat padding is a chart-integrity issue, not a 🚩 pattern.
-    assert.deepEqual(classifyBins({ patterns: ["padding"] }), { bin: "chart", red: [], chart: ["padding"], both: false });
+    assert.deepEqual(classifyBins({ patterns: ["padding"] }), { bin: "chart", red: [], chart: ["padding"], stalker: [], both: false });
     assert.ok(!RED_PATTERNS.includes("padding"));
     const both = classifyBins({ patterns: ["aim", "padding"] });
     assert.equal(both.bin, "red"); assert.equal(both.both, true); assert.deepEqual(both.chart, ["padding"]);

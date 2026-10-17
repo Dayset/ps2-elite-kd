@@ -61,7 +61,8 @@ export function buildFlags({ root = ROOT, full = false } = {}) {
   const extra = overlaySlugs(dataDir);
   const rows = entries.map((e) => byFile[e.file] && byFile[e.file].row).filter((r) => keepRow(r, extra));
   fs.writeFileSync(cachePath, JSON.stringify({ hash, byFile }));
-  const out = { builtAt: new Date().toISOString(), total: entries.length, errors, rows };
+  const sproutCount = entries.reduce((n, e) => n + (byFile[e.file] && byFile[e.file].row && byFile[e.file].row.sprout ? 1 : 0), 0);
+  const out = { builtAt: new Date().toISOString(), total: entries.length, errors, sproutCount, rows };
   fs.writeFileSync(path.join(dataDir, "flags.json"), JSON.stringify(out) + "\n");
   return { total: entries.length, computed, errors, kept: rows.length };
 }

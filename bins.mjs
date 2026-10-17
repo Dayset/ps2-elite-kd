@@ -21,6 +21,8 @@
  * DOM-free, no imports (used by red-flags.mjs, outlier-guard.mjs, build-log.html).
  */
 export const CHART_PATTERNS = Object.freeze(["padding", "adjusted", "outlier"]);
+/** 🚗 vehicle-stalker (user t369u): routed out of 🚩 into its own listed bin (red-flags.mjs stalkerFlag). */
+export const STALKER_PATTERNS = Object.freeze(["stalker"]);
 
 /** Patterns that put a player in 🚩 (documentation / tests; classifyBins treats any non-chart pattern as red). */
 export const RED_PATTERNS = Object.freeze(["aim", "vehicle", "rampage", "session", "session-forensics"]);
@@ -31,11 +33,12 @@ export const RED_PATTERNS = Object.freeze(["aim", "vehicle", "rampage", "session
  */
 export function classifyBins({ patterns = [], outlier = false } = {}) {
   const pats = Array.isArray(patterns) ? patterns.filter(Boolean) : [];
-  const red = [...new Set(pats.filter((p) => !CHART_PATTERNS.includes(p)))];
+  const red = [...new Set(pats.filter((p) => !CHART_PATTERNS.includes(p) && !STALKER_PATTERNS.includes(p)))];
+  const stalker = [...new Set(pats.filter((p) => STALKER_PATTERNS.includes(p)))];
   const chart = [...new Set(pats.filter((p) => CHART_PATTERNS.includes(p)))];
   if (outlier && !chart.includes("outlier")) chart.push("outlier");
-  const bin = red.length ? "red" : chart.length ? "chart" : "";
-  return { bin, red, chart, both: red.length > 0 && chart.length > 0 };
+  const bin = red.length ? "red" : stalker.length ? "stalker" : chart.length ? "chart" : "";
+  return { bin, red, chart, stalker, both: red.length > 0 && chart.length > 0 };
 }
 
 /** Short labels for chart patterns (cross-reference chips / reasons). */

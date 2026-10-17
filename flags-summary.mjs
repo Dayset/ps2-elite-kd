@@ -29,7 +29,7 @@ export function summarize(entry, raw) {
   };
 }
 
-/** Rows build-log can ever show: any pattern / flag / 🌱 / 🤖, or a slug a later overlay (session, forensics, review) may tag. */
+/** Rows build-log can ever show: any pattern / flag / 🤖 (🌱 is a count only, t368u), or a slug a later overlay (session, forensics, review) may tag. */
 export function keepRow(r, extraSlugs) {
-  return !!r && !!(r.red || r.flagged || (r.patterns || []).length > 0 || r.sprout || !!r.farmAcct || (extraSlugs && extraSlugs.has(r.slug)));
+  return !!r && !!(r.red || r.flagged || (r.patterns || []).length > 0 || !!r.farmAcct || (extraSlugs && extraSlugs.has(r.slug)));
 }

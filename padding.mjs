@@ -221,7 +221,11 @@ export function markNote(farm, { confirmed = false } = {}) {
  * build-log.html next to the review flag. The automatic mark stays either way
  * (the numbers are still adjusted).
  */
-export const REVIEW_DECISIONS = Object.freeze(["fluke", "bad-luck", "padding"]);
+export const REVIEW_DECISIONS = Object.freeze(["fluke", "bad-luck", "padding", "cleared", "not-stalker"]);
+/** Decisions that clear an automatic 🌾 padding verdict on build-log (t368u: human overrides win). */
+export const CLEARING_DECISIONS = Object.freeze(["fluke", "bad-luck", "cleared"]);
+/** 🌾 padding auto-confirmed (t368u); farm share below this = borderline "needs a look". */
+export const PADDING_BORDERLINE_SHARE = 0.25;
 
 export function reviewDecision(reviewed, slug) {
   const e = reviewed && reviewed.players && reviewed.players[slug];

@@ -123,6 +123,28 @@ export function vehicleRuleText(rule = VEHICLE_RULE, skillRule = RED_FLAG_RULE) 
   );
 }
 
+/* ---------- 🚗 Vehicle stalker (user t369u) ---------- */
+
+/**
+ * "Stalker infiltrator vehicle hunters": huge K/D but a slow own KPM and almost
+ * no headshots (vehicle kills can't headshot), e.g. hiding in an MBT and bailing
+ * when hit. Only aim / vehicle hits are re-routed; a rampage (fast KPM), any
+ * session / forensics evidence, or fast / headshot-heavy aim keeps 🚩.
+ */
+export const STALKER_RULE = Object.freeze({ KD_MIN: 8, KPM_MAX: 1.0, HSR_MAX: 12 });
+
+export function stalkerFlag(m, rule = STALKER_RULE) {
+  const kpm = fin(m && m.ownKpm) ? m.ownKpm : m && m.kpm;
+  const flagged = !!m && fin(m.kd) && m.kd >= rule.KD_MIN && fin(kpm) && kpm < rule.KPM_MAX && fin(m.hsr) && m.hsr <= rule.HSR_MAX;
+  return { flagged, kd: m && m.kd, kpm, hsr: m && m.hsr };
+}
+
+export function stalkerRuleText(rule = STALKER_RULE) {
+  return `[🚗 vehicle-stalker] would be 🚩 aim / vehicle, but K/D ≥ ${rule.KD_MIN}, own KPM < ${rule.KPM_MAX} and HSR ≤ ${rule.HSR_MAX}% ` +
+    `(slow, almost no headshots: kills mostly from / on vehicles). Moved out of 🚩 automatically; a rampage, session or forensics hit keeps 🚩. ` +
+    `Override: data/reviewed.json decision "not-stalker" puts the player back in 🚩.`;
+}
+
 /* ---------- 🔴 Rampage pattern ---------- */
 
 /**
@@ -185,8 +207,13 @@ export function reviewFlags(m, { confirmed = false } = {}) {
   // flag for human review (fluke vs bad luck), see padding.mjs statMark.
   const adjusted = !pad.flagged && statMark(m && m.farm).kind === "adjusted";
   const patterns = [];
-  if (aim.flagged) patterns.push("aim");
-  if (veh.flagged) patterns.push("vehicle");
+  // 🚗 slow, headshot-free huge K/D → its own bin instead of aim / vehicle (t369u).
+  const stalker = (aim.flagged || veh.flagged) && !ram.flagged && stalkerFlag(Object.assign({}, base, { ownKpm: fin(base.ownKpm) ? base.ownKpm : m.ownKpm })).flagged;
+  if (stalker) patterns.push("stalker");
+  else {
+    if (aim.flagged) patterns.push("aim");
+    if (veh.flagged) patterns.push("vehicle");
+  }
   if (ram.flagged) patterns.push("rampage");
   if (pad.flagged) patterns.push("padding");
   if (adjusted) patterns.push("adjusted");
