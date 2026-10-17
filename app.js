@@ -4370,11 +4370,67 @@ import {
    * (analyzeNames' "graph is ready" check also stops a repeat of the same set).
    * More than 10 names → the first 10 run and the limit hint stays visible.
    */
+  /** t379u: this load is a browser refresh / back-forward, not a newly opened link. */
+  function isReloadNavigation() {
+    try {
+      const nav = performance.getEntriesByType && performance.getEntriesByType("navigation")[0];
+      if (nav) return nav.type === "reload" || nav.type === "back_forward";
+      return performance.navigation && (performance.navigation.type === 1 || performance.navigation.type === 2);
+    } catch {
+      return false;
+    }
+  }
+
+  /* t379u: keep the reading position across a refresh. The browser restores
+   * it before the graph / Rankings are rebuilt (page still short), so we save
+   * it on the way out and return to it once the page is tall enough again —
+   * unless the person scrolls first. */
+  const LS_SCROLL_Y = "ps2-elite-kd-scroll-y";
+  if (typeof window !== "undefined") {
+    window.addEventListener("pagehide", () => {
+      try { sessionStorage.setItem(LS_SCROLL_Y, String(Math.round(window.scrollY || 0))); } catch {}
+    });
+  }
+  function restoreScrollAfterReload() {
+    let want = 0;
+    try { want = +sessionStorage.getItem(LS_SCROLL_Y) || 0; sessionStorage.removeItem(LS_SCROLL_Y); } catch {}
+    if (want <= 0) return;
+    let stop = false;
+    const quit = () => { stop = true; };
+    const evs = ["wheel", "touchstart", "keydown", "pointerdown"];
+    evs.forEach((e) => window.addEventListener(e, quit, { once: true, passive: true }));
+    const until = Date.now() + 6000;
+    const step = () => {
+      if (stop) return;
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      if (max >= want - 2) { window.scrollTo(0, want); evs.forEach((e) => window.removeEventListener(e, quit)); return; }
+      if (Date.now() > until) { window.scrollTo(0, Math.max(0, max)); return; }
+      requestAnimationFrame(step);
+    };
+    step();
+  }
+
   async function autoRunFromLink(startup) {
     if (!startup || startup.reason !== "url" || !startup.names.length) return;
     if (fetching || activeRun || players.length) return;
     if (els.fetchFresh) { els.fetchFresh.checked = false; updateFreshEta(); }
     const overLimit = startup.names.length > MAX_NAMES;
+    // t379u: a refresh just puts the same graph back — quietly (no "Analyzing…"
+    // pop-up, no jump to the results; the browser keeps your scroll position).
+    // Only when every name is saved (shared file / this browser); a name that
+    // needs a live Census fetch still gets the normal run with its progress.
+    const names = currentNamesInField();
+    if (isReloadNavigation() && names.length && names.every((n) => !getNameFailure(n) && (findSharedEntry(n) || cacheGet(n)))) {
+      const cta = els.chartPlaceholder ? els.chartPlaceholder.querySelector(".chart-placeholder-cta") : null;
+      if (cta) cta.textContent = "⏳ Loading…";
+      try {
+        await analyzeNames(names, { quiet: true });
+      } finally {
+        if (cta && !players.length) cta.textContent = "▶️ Press Analyze";
+      }
+      restoreScrollAfterReload();
+      return;
+    }
     await runAnalyzeFromUi();
     if (overLimit && els.status && !String(els.status.textContent || "").trim()) showLimitHint();
   }
