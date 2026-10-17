@@ -153,3 +153,20 @@ describe("swipe between metrics (t383u)", () => {
     for (let i = 0; i < 20; i++) { t += 16; assert.equal(w.push(5, 40), 0); }
   });
 });
+
+import { dragCommits, DRAG_COMMIT } from "../chart-slide.mjs";
+
+describe("drag carousel release (t386u)", () => {
+  it("finishes past a quarter of the width, either direction", () => {
+    assert.equal(DRAG_COMMIT, 0.25);
+    assert.equal(dragCommits({ dx: -100, width: 380 }), true);
+    assert.equal(dragCommits({ dx: 100, width: 380 }), true);
+  });
+  it("springs back on a short slow drag", () => {
+    assert.equal(dragCommits({ dx: -60, width: 380, vx: -0.1 }), false);
+  });
+  it("a quick flick finishes even when short", () => {
+    assert.equal(dragCommits({ dx: -40, width: 380, vx: -0.8 }), true);
+    assert.equal(dragCommits({ dx: -40, width: 380, vx: 0.8 }), false); // flick back the other way
+  });
+});
