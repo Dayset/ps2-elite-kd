@@ -15,6 +15,7 @@ import { deskUiScale } from "./desk-scale.mjs?v=20261010-sav1";
 import { matchPicks } from "./pick-sync.mjs?v=20261010-sav1";
 import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-sav1";
 import { groupByTier, openTierIds, pickedInGroup, groupIndexAt, tierOf } from "./tiers.mjs?v=20261017-tier1";
+import { createDistCycler } from "./dist-cycle.mjs?v=20261017-cyc1";
 import { mergeFreshRows } from "./rank-row.mjs?v=20261010-sav1";
 import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-sav1";
 import { confirmedPadderSlugs } from "./padding.mjs?v=20261010-sav1";
@@ -610,6 +611,7 @@ export function initRankings(host) {
 
   const SVGNS = "http://www.w3.org/2000/svg";
   let distMetric = "adjs";
+  let distCycler = null; // 📊 auto-cycle (t373u), set up with the chart's events
   const histCache = new Map();
 
   function cssVar(name, fallback) {
@@ -691,6 +693,8 @@ export function initRankings(host) {
   const DIST_IDS = new Set(VISIBLE.map((c) => c.id));
   function setDistMetric(id) {
     if (!DIST_IDS.has(id)) return; // older stat (debug column sort): chart keeps its metric
+    // Only user actions land here (menu / column sort): hold the auto-cycle.
+    if (distCycler) distCycler.interact();
     distMetric = id;
     if ($("distMetric").value !== id) $("distMetric").value = id;
     drawDist();
@@ -1177,6 +1181,58 @@ export function initRankings(host) {
 
   $("distMetric").addEventListener("change", (e) => setDistMetric(e.target.value));
   $("distSection").addEventListener("toggle", () => drawDist());
+
+  /* ---------- 📊 auto-cycle (t373u) ----------
+   * The chart steps through the menu's metrics every 5 s with a short
+   * crossfade. Any interaction with the chart block (pointer, keys, focus,
+   * the menu, a column sort) holds it for 15 s, then it carries on. It waits
+   * while the block is folded or off screen, the tab is hidden, or a bar
+   * tooltip is open. Reduced motion: the switch is instant (no fade). */
+  const DIST_FADE_MS = 400;
+  let distOnScreen = true;
+  const reducedMotion = () => !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  function crossfadeDistTo(id) {
+    const box = $("distChart");
+    const svg = $("distSvg");
+    hideTip();
+    const ghost = !reducedMotion() && svg && svg.childNodes.length ? svg.cloneNode(true) : null;
+    if (ghost) {
+      ghost.removeAttribute("id");
+      ghost.querySelectorAll("[id]").forEach((el) => el.removeAttribute("id"));
+      ghost.setAttribute("aria-hidden", "true");
+      ghost.classList.add("dist-ghost");
+      box.appendChild(ghost);
+    }
+    distMetric = id;
+    if ($("distMetric").value !== id) $("distMetric").value = id;
+    drawDist();
+    if (!ghost) return;
+    svg.style.transition = "none";
+    svg.style.opacity = "0";
+    void svg.getBoundingClientRect(); // commit opacity 0 before fading in
+    svg.style.transition = `opacity ${DIST_FADE_MS}ms ease`;
+    ghost.style.transition = `opacity ${DIST_FADE_MS}ms ease`;
+    requestAnimationFrame(() => {
+      svg.style.opacity = "1";
+      ghost.style.opacity = "0";
+    });
+    setTimeout(() => { ghost.remove(); svg.style.transition = ""; }, DIST_FADE_MS + 120);
+  }
+  distCycler = createDistCycler({
+    ids: () => [...$("distMetric").options].map((o) => o.value).filter((v) => DIST_IDS.has(v)),
+    current: () => distMetric,
+    show: crossfadeDistTo,
+    canRun: () => !!data && $("distSection").open && !document.hidden && distOnScreen && $("distTip").hidden,
+  });
+  for (const ev of ["pointerdown", "pointermove", "wheel", "keydown", "focusin", "touchstart"]) {
+    $("distSection").addEventListener(ev, () => distCycler.interact(), { passive: true });
+  }
+  if ("IntersectionObserver" in window) {
+    new IntersectionObserver((entries) => {
+      for (const e of entries) distOnScreen = e.isIntersecting;
+    }, { threshold: 0.25 }).observe($("distChart"));
+  }
+  distCycler.start();
   let distResizeTimer = 0;
   let lastDistW = 0;
   window.addEventListener("resize", () => {

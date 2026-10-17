@@ -2455,3 +2455,6 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
 .rk-tier-meta { color: var(--dim); font-size: 0.82rem; white-space: nowrap; }
 .rk-tier-picks { color: var(--accent); font-size: 0.82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 22rem; }
 .ranks-table tbody tr.rk-tier.open td { border-bottom-color: transparent; }
+
+/* 📊 auto-cycle crossfade (t373u): the previous chart fades out on top. */
+.dist-chart svg.dist-ghost { position: absolute; top: 0; left: 0; width: 100%; pointer-events: none; opacity: 1; }
