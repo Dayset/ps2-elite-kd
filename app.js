@@ -2798,7 +2798,8 @@ import {
     ylab.setAttribute("font-size", fz(12));
     ylab.setAttribute("text-anchor", "middle");
     ylab.setAttribute("transform", `rotate(90 ${PLOT.x + PLOT.w + 44} ${PLOT.y + PLOT.h / 2})`);
-    ylab.textContent = banded ? "K/D vs enemies near this KPM" : "Projected K/D";
+    // t378u: 📈 iVi mode rescales each curve to its player's iVi; say so on the axis.
+    ylab.textContent = banded ? "K/D vs enemies near this KPM" : yScaleMode === "ivi" ? "K/D curve at iVi level" : "Projected K/D";
     svg.appendChild(ylab);
 
     for (const x of xTicks) {

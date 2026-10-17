@@ -137,19 +137,15 @@ describe("sort keeps horizontal scroll at 390px (t329u)", () => {
   });
 });
 
-describe("PC: Raw / Smooth / Ghost toggle centred under the graph (t338u)", () => {
+describe("PC: 💀 / 📈 switch in the graph's top-right corner (t378u)", () => {
   const need = ["shlodog", "justv6me"];
   const haveData = need.every((n) => fs.existsSync(path.join(root, "data/players", n + ".json")));
-  it("pill centre = graph centre at 1280px", { skip: (!chrome && "no Chrome") || (!haveData && "player files missing"), timeout: 120000 }, async () => {
+  it("switch sits top-right, above the zoom, at 1280px", { skip: (!chrome && "no Chrome") || (!haveData && "player files missing"), timeout: 120000 }, async () => {
     await withPage(async ({ ev, nav }) => {
       await nav(`index.html?names=${need.join(",")}`);
       assert.equal(await ev(`new Promise(async (r) => { for (let t = 0; t < 600; t++) { const a = window.__ps2EliteKd; if (a && !a.isAnalyzing() && document.querySelector(".chart-wrap:not(.empty) .chart-mode-bar")) return r(1); await new Promise((q) => setTimeout(q, 50)); } r(0); })`), 1);
-      const g = await ev(`(() => { const b = document.querySelector(".chart-mode-bar").getBoundingClientRect(); const w = document.querySelector(".chart-mode-row").getBoundingClientRect(); return { b: (b.left + b.right) / 2, w: (w.left + w.right) / 2 }; })()`);
-      assert.ok(Math.abs(g.b - g.w) < 2, JSON.stringify(g));
-      // Ghost on: the caption appears but the pill stays centred.
-      await ev(`(async () => { document.querySelector(".chart-ghost-btn").click(); await new Promise((r) => setTimeout(r, 300)); })()`);
-      const g2 = await ev(`(() => { const b = document.querySelector(".chart-mode-bar").getBoundingClientRect(); const w = document.querySelector(".chart-mode-row").getBoundingClientRect(); return { b: (b.left + b.right) / 2, w: (w.left + w.right) / 2 }; })()`);
-      assert.ok(Math.abs(g2.b - g2.w) < 2, JSON.stringify(g2));
+      const g = await ev(`(() => { const b = document.querySelector(".chart-mode-bar").getBoundingClientRect(); const w = document.querySelector(".chart-wrap").getBoundingClientRect(); const z = document.getElementById("yZoomSlider").getBoundingClientRect(); return { right: w.right - b.right, top: b.top - w.top, mid: (b.left + b.right) / 2 - (w.left + w.right) / 2, zoomBelow: z.top >= b.bottom }; })()`);
+      assert.ok(g.mid > 0 && g.top < 40 && g.zoomBelow, JSON.stringify(g));
     }, { width: 1280, height: 900, mobile: false });
   });
 });

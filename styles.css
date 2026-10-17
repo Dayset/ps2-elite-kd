@@ -2528,3 +2528,42 @@ html[data-theme="light"] .dist-pill:hover { opacity: 1; }
   .dist-pill { min-width: 1.45rem; height: 1.5rem; padding: 0 0.18rem; font-size: 0.76rem; }
   .dist-pill.on { padding: 0 0.18rem; }
 }
+
+/* t378u: 💀 / 📈 switch in the graph's top-right corner, above the zoom
+   (zoom keeps its upper half + Auto). The row under the graph only shows
+   when it has something (ghost caption / wave warning). */
+.chart-corner {
+  position: absolute;
+  top: 0.45rem;
+  right: 6%;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+  pointer-events: none; /* only its controls take clicks; lines underneath stay hoverable */
+}
+.chart-corner > * { pointer-events: auto; }
+.chart-wrap.empty .chart-corner { display: none; }
+.chart-corner .chart-y-zoom {
+  position: static;
+  top: auto;
+  right: auto;
+  align-self: flex-end;
+}
+.chart-corner .chart-mode-btn { font-size: 0.78rem; padding: 0.16rem 0.45rem; }
+#yZoomSlider { height: min(70px, 16vh); }
+.chart-mode-row:not(:has(> :not([hidden]))) { display: none; }
+@media (max-width: 520px) {
+  .chart-corner { top: 0.3rem; right: 7%; gap: 0.25rem; }
+  .chart-corner .chart-mode-btn { font-size: 0.72rem; padding: 0.12rem 0.38rem; }
+  #yZoomSlider { height: min(54px, 14vh); }
+}
+/* t378u: phones — the corner stays small over the (small) graph. */
+@media (max-width: 520px) {
+  .chart-corner .chart-mode-bar { padding: 1px; gap: 1px; }
+  .chart-corner .chart-mode-btn { font-size: 0.62rem; padding: 0.1rem 0.32rem; line-height: 1.15; }
+  .chart-corner #yZoomSlider { height: min(40px, 11vh); width: 18px; }
+  .chart-corner .chart-y-zoom { gap: 0.15rem; }
+  .chart-corner .chart-y-zoom-reset { font-size: 0.56rem; padding: 0.08rem 0.28rem; min-height: 0; min-width: 0; line-height: 1.1; }
+}
