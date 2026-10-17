@@ -124,9 +124,9 @@ describe("dist auto-cycle", () => {
 import { swipeStep, createWheelSwiper } from "../dist-cycle.mjs";
 
 describe("swipe between metrics (t383u)", () => {
-  it("finger right = next, left = previous", () => {
-    assert.equal(swipeStep({ dx: 120, dy: 10, dt: 200 }), 1);
-    assert.equal(swipeStep({ dx: -120, dy: -10, dt: 200 }), -1);
+  it("carousel: finger left = next, finger right = previous", () => {
+    assert.equal(swipeStep({ dx: -120, dy: 10, dt: 200 }), 1);
+    assert.equal(swipeStep({ dx: 120, dy: -10, dt: 200 }), -1);
   });
   it("ignores taps, short moves, vertical scrolls and slow drags", () => {
     assert.equal(swipeStep({ dx: 3, dy: 2, dt: 80 }), 0);
@@ -138,13 +138,13 @@ describe("swipe between metrics (t383u)", () => {
   it("trackpad: one switch per sideways gesture, direction matches the fingers", () => {
     let t = 0;
     const w = createWheelSwiper({ now: () => t });
-    // fingers moving right → negative deltaX
+    // fingers moving left → positive deltaX → next
     const out = [];
-    for (let i = 0; i < 10; i++) { t += 16; out.push(w.push(-20, 2)); }
+    for (let i = 0; i < 10; i++) { t += 16; out.push(w.push(20, 2)); }
     assert.deepEqual(out.filter(Boolean), [1]);
     t += 400; // pause → new gesture
     const out2 = [];
-    for (let i = 0; i < 10; i++) { t += 16; out2.push(w.push(25, 1)); }
+    for (let i = 0; i < 10; i++) { t += 16; out2.push(w.push(-25, 1)); }
     assert.deepEqual(out2.filter(Boolean), [-1]);
   });
   it("trackpad: vertical scrolling never switches", () => {

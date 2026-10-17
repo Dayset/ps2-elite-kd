@@ -95,8 +95,9 @@ export function createDistCycler(opts) {
   };
 }
 
-/* ---------- 👆 swipe between metrics (t383u) ----------
- * Per the site owner: finger / drag to the RIGHT = next chart, LEFT = previous.
+/* ---------- 👆 swipe between metrics (t383u, carousel direction t385u) ----------
+ * Normal carousel: the chart follows the finger. Drag LEFT = next (it comes
+ * in from the right), drag RIGHT = previous (comes in from the left).
  * A swipe must be mostly sideways, long enough and quick enough, so taps on
  * bars and vertical page scrolls never count. */
 export const SWIPE_MIN_PX = 50;
@@ -108,14 +109,14 @@ export function swipeStep({ dx, dy, dt }, { minPx = SWIPE_MIN_PX, maxMs = SWIPE_
   const ax = Math.abs(+dx || 0);
   const ay = Math.abs(+dy || 0);
   if (!(ax >= minPx) || ax < ratio * ay || !(dt >= 0) || dt > maxMs) return 0;
-  return dx > 0 ? 1 : -1;
+  return dx < 0 ? 1 : -1;
 }
 
 /**
  * Trackpad two-finger sideways swipes arrive as wheel events: add up deltaX
  * (only while it dominates deltaY) and fire once per gesture.
- * Wheel deltaX > 0 = fingers moving LEFT (content scrolls right), so a
- * finger-right swipe gives negative deltaX → next.
+ * Wheel deltaX > 0 = fingers moving LEFT (content scrolls right) → next,
+ * like a carousel.
  */
 export function createWheelSwiper({ threshold = 80, quietMs = 250, now = () => Date.now() } = {}) {
   let acc = 0;
@@ -131,7 +132,7 @@ export function createWheelSwiper({ threshold = 80, quietMs = 250, now = () => D
       acc += dx;
       if (fired || Math.abs(acc) < threshold) return 0;
       fired = true;
-      return acc < 0 ? 1 : -1;
+      return acc > 0 ? 1 : -1;
     },
     /** True while a sideways gesture is in progress (to stop browser back / forward). */
     active() { return now() - last <= quietMs && acc !== 0; },
