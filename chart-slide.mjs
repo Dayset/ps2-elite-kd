@@ -134,8 +134,8 @@ export function dragCommits({ dx, width, vx = 0 }) {
  */
 export function attachDragCarousel(o) {
   const { target, container } = o;
-  let st = null; // { id, x, y, t, phase, dir, ghost, w, samples }
-  let settling = null; // { finish: () => void }
+  let st = null; // active gesture: { id, x, y, phase: "pending"|"drag", dir, ghost, w, samples, watchdog }
+  let settling = null; // glide after release: { finish }
   let swallowClick = false;
 
   const setX = (el, x, anim) => {
@@ -143,14 +143,20 @@ export function attachDragCarousel(o) {
     el.style.transform = `translateX(${x}px)`;
   };
 
-  function cleanup(ghost) {
+  /* t387u safeguard: put the box back to a clean resting state — no
+   * snapshots of any kind (drag, trackpad slide, auto crossfade), the live
+   * chart unshifted, no clipping. Run at every gesture start and whenever a
+   * gesture ends abnormally, so nothing can be left stacked on screen. */
+  function purge() {
+    container.querySelectorAll("svg.slide-ghost, svg.dist-ghost").forEach((g) => g.remove());
     const svg = o.svg();
-    if (ghost) ghost.remove();
-    svg.style.transition = "";
-    svg.style.transform = "";
-    svg.style.willChange = "";
-    container.style.overflow = container._dragPrevOverflow || "";
-    container._dragPrevOverflow = undefined;
+    if (svg) {
+      svg.style.transition = "";
+      svg.style.transform = "";
+      svg.style.willChange = "";
+    }
+    container._slideToken = 0; // cancels a pending trackpad-slide cleanup (it checks its token)
+    container.style.overflow = "";
   }
 
   function makeGhost(svg) {
@@ -186,10 +192,16 @@ export function attachDragCarousel(o) {
     return ghost;
   }
 
+  function armWatchdog() {
+    clearTimeout(st.watchdog);
+    // No movement / release for a while (a lost "finger up"): spring back.
+    st.watchdog = setTimeout(() => { if (st && st.phase === "drag") settle(false); }, 2500);
+  }
+
   function beginDrag(dx) {
     const svg = o.svg();
+    purge();
     if (o.onStart) o.onStart();
-    container._dragPrevOverflow = container.style.overflow || "";
     container.style.overflow = "hidden";
     st.w = container.clientWidth || svg.getBoundingClientRect().width;
     st.ghost = makeGhost(svg); // the CURRENT chart, now moved by the finger
@@ -197,6 +209,7 @@ export function attachDragCarousel(o) {
     st.phase = "drag";
     st.dir = 0;
     moveTo(dx);
+    armWatchdog();
   }
 
   function moveTo(dx) {
@@ -205,41 +218,56 @@ export function attachDragCarousel(o) {
       st.dir = dir;
       o.show(dir); // live svg now holds the neighbour on that side
     }
-    const svg = o.svg();
     setX(st.ghost, dx, false);
-    setX(svg, dx + st.dir * st.w, false);
+    setX(o.svg(), dx + st.dir * st.w, false);
   }
 
   function settle(commit) {
-    const { ghost, dir, w } = st;
-    const svg = o.svg();
+    const g = st;
     st = null;
+    clearTimeout(g.watchdog);
+    if (!g.dir) { purge(); return; }
+    const svg = o.svg();
     void svg.getBoundingClientRect();
     if (commit) {
-      setX(ghost, -dir * w, true);
+      setX(g.ghost, -g.dir * g.w, true);
       setX(svg, 0, true);
     } else {
-      setX(ghost, 0, true);
-      setX(svg, dir * w, true);
+      setX(g.ghost, 0, true);
+      setX(svg, g.dir * g.w, true);
     }
     let done = false;
     const finish = () => {
       if (done) return;
       done = true;
-      settling = null;
+      if (settling && settling.finish === finish) settling = null;
       if (!commit) o.restore();
-      cleanup(ghost);
-      if (commit && o.onCommit) o.onCommit(dir);
+      purge();
+      if (commit && o.onCommit) o.onCommit(g.dir);
     };
     settling = { finish };
     setTimeout(finish, SETTLE_MS + 40);
   }
 
+  /** End whatever is going on right now, cleanly (new gesture, lost events, tab hidden). */
+  function landNow() {
+    if (st && st.phase === "drag") settle(false);
+    if (settling) settling.finish();
+    st = null;
+  }
+
   target.addEventListener("pointerdown", (e) => {
     if (e.pointerType === "mouse" && e.button !== 0) return;
-    if (settling) settling.finish(); // a new drag during a glide: land it now
+    if (!e.isPrimary) {
+      // A second finger during a drag: spring back (it's a pinch, not a swipe).
+      if (st) landNow();
+      return;
+    }
+    landNow(); // a new swipe while the last one is still gliding: land it first
+    purge();
     if (o.canStart && !o.canStart()) return;
-    st = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now(), phase: "pending", samples: [[performance.now(), e.clientX]] };
+    const t = performance.now();
+    st = { id: e.pointerId, x: e.clientX, y: e.clientY, phase: "pending", samples: [[t, e.clientX]], watchdog: 0 };
   }, { passive: true });
 
   target.addEventListener("pointermove", (e) => {
@@ -253,6 +281,7 @@ export function attachDragCarousel(o) {
       beginDrag(dx);
     } else {
       moveTo(dx);
+      armWatchdog();
     }
     st.samples.push([performance.now(), e.clientX]);
     if (st.samples.length > 6) st.samples.shift();
@@ -262,16 +291,22 @@ export function attachDragCarousel(o) {
     if (!st || e.pointerId !== st.id) return;
     if (st.phase !== "drag") { st = null; return; } // a tap: let the click through
     const dx = e.clientX - st.x;
+    const dy = e.clientY - st.y;
     const s = st.samples;
     const [t0, x0] = s[0];
     const [t1, x1] = s[s.length - 1];
     const vx = t1 > t0 ? (x1 - x0) / (t1 - t0) : 0;
     swallowClick = true;
     setTimeout(() => { swallowClick = false; }, 400);
-    settle(!cancelled && dragCommits({ dx, width: st.w, vx }));
+    // Ended mostly vertical (it turned into a scroll): don't switch.
+    const vertical = Math.abs(dy) > 1.5 * Math.abs(dx);
+    settle(!cancelled && !vertical && dragCommits({ dx, width: st.w, vx }));
   };
   target.addEventListener("pointerup", (e) => end(e, false));
   target.addEventListener("pointercancel", (e) => end(e, true));
+  // Capture lost without a pointerup (browser took the gesture): spring back.
+  target.addEventListener("lostpointercapture", (e) => { if (st && e.pointerId === st.id && st.phase === "drag") end(e, true); });
+  document.addEventListener("visibilitychange", () => { if (document.hidden) landNow(); });
   // The click that ends a drag must not also open / jump a bar.
   target.addEventListener("click", (e) => {
     if (!swallowClick) return;
@@ -280,5 +315,5 @@ export function attachDragCarousel(o) {
     e.preventDefault();
   }, true);
 
-  return { busy: () => !!st || !!settling };
+  return { busy: () => !!st || !!settling, reset: () => { landNow(); purge(); } };
 }

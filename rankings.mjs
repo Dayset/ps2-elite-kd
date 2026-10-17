@@ -16,7 +16,7 @@ import { matchPicks } from "./pick-sync.mjs?v=20261010-sav1";
 import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-sav1";
 import { groupByTier, openTierIds, pickedInGroup, groupIndexAt, tierOf } from "./tiers.mjs?v=20261017-tier1";
 import { createDistCycler, createWheelSwiper } from "./dist-cycle.mjs?v=20261017-carousel1";
-import { slideSwap, attachDragCarousel } from "./chart-slide.mjs?v=20261017-drag1";
+import { slideSwap, attachDragCarousel } from "./chart-slide.mjs?v=20261017-drag3";
 import { mergeFreshRows } from "./rank-row.mjs?v=20261010-sav1";
 import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-sav1";
 import { confirmedPadderSlugs } from "./padding.mjs?v=20261010-sav1";
@@ -1289,6 +1289,7 @@ export function initRankings(host) {
     const box = $("distChart");
     const svg = $("distSvg");
     hideTip();
+    if (distDrag && distDrag.busy()) distDrag.reset(); // t387u: never stack on a carousel glide
     // A switch during a fade: finish the previous one at once.
     box.querySelectorAll("svg.dist-ghost").forEach((g) => g.remove());
     const canFade = svg && svg.childNodes.length && $("distSection").open;
@@ -1351,6 +1352,7 @@ export function initRankings(host) {
     // left); the auto-cycle and emoji clicks keep the dissolve.
     if (distCycler) distCycler.interact();
     hideTip();
+    if (distDrag && distDrag.busy()) distDrag.reset(); // t387u
     $("distChart").querySelectorAll("svg.dist-ghost").forEach((g) => g.remove());
     slideSwap({
       container: $("distChart"),

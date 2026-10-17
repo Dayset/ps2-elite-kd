@@ -40,7 +40,7 @@ import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-sav1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261015-tip1";
 import { createWheelSwiper } from "./dist-cycle.mjs?v=20261017-carousel1";
-import { slideSwap, attachDragCarousel } from "./chart-slide.mjs?v=20261017-drag1";
+import { slideSwap, attachDragCarousel } from "./chart-slide.mjs?v=20261017-drag3";
 import { entryFetchedAt, pickNewest, writeWithEviction } from "./cache-pick.mjs?v=20261010-sav1";
 import {
   NameLoadError,
@@ -1495,7 +1495,7 @@ import {
   }
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261017-drag1")
+    rankingsLoading = import("./rankings.mjs?v=20261017-drag3")
       .then((m) => {
         rankingsApi = m.initRankings(rankingsHost);
         return rankingsApi.ready;
