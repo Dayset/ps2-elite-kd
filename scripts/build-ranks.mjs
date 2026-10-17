@@ -37,8 +37,6 @@ export function readXp(dataDir, slug) {
   }
 }
 
-/** Confirmed-cheater reference + top legit players shown side by side on build-log (🧪 Session stats). */
-export const SESSION_REFERENCE_LEGIT = Object.freeze(["yeezy", "zyr0sncx", "xclonekano", "shlodog", "justv6me"]);
 
 // Row format + rankRow live in ../rank-row.mjs (browser-safe: ranks.html
 // recomputes a player's row from a fresher browser copy with the same code).
@@ -264,7 +262,7 @@ export function reviewStatus(players, guard, store, farmFound = []) {
 /**
  * status.json "sessionStats" block (build-log.html 🧪 Session stats, never public):
  * coverage, per-metric distributions over measured players, 🚩 "session" hits
- * with evidence, the cheater-vs-top-legit reference table and the session-metric
+ * with evidence, the confirmed-cheater reference table and the session-metric
  * outliers (also inside outlierGuard, so 📉 lists them with everything else).
  */
 export function sessionStatus(players, guard, dataDir) {
@@ -285,11 +283,11 @@ export function sessionStatus(players, guard, dataDir) {
     flagged: !!p.sessionFlag.flagged, otherRed: classifyBins({ patterns: (p.patterns || []).filter((x) => x !== "session") }).red,
     values: p.session ? Object.fromEntries(SESSION_METRIC_IDS.map((id) => [id, r(p.session.values[id])])) : {},
   });
-  // Reference: hidden list (confirmed cheaters) + top legit players, whether measured or not.
+  // Reference: hidden list (confirmed cheaters), whether measured or not.
   const hiddenSlugs = players.filter((p) => p.hidden).map((p) => p.slug);
-  const refSlugs = [...hiddenSlugs, ...SESSION_REFERENCE_LEGIT];
+  const refSlugs = hiddenSlugs;
   const reference = refSlugs.map((s) => players.find((p) => p.slug === s)).filter(Boolean)
-    .map((p) => ({ ...evidence(p), group: p.hidden ? "confirmed cheater" : "top legit" }));
+    .map((p) => ({ ...evidence(p), group: "confirmed cheater" }));
   const outIds = new Set(SESSION_METRIC_IDS);
   const outliers = (guard.players || [])
     .map((g) => ({ ...g, metrics: g.metrics.filter((m) => outIds.has(m.id)) }))
