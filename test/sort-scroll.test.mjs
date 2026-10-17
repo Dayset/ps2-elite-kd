@@ -137,7 +137,7 @@ describe("sort keeps horizontal scroll at 390px (t329u)", () => {
   });
 });
 
-describe("PC: Raw / Smooth / Ghost toggle centred over the graph (t338u)", () => {
+describe("PC: Raw / Smooth / Ghost toggle centred under the graph (t338u)", () => {
   const need = ["shlodog", "justv6me"];
   const haveData = need.every((n) => fs.existsSync(path.join(root, "data/players", n + ".json")));
   it("pill centre = graph centre at 1280px", { skip: (!chrome && "no Chrome") || (!haveData && "player files missing"), timeout: 120000 }, async () => {

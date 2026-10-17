@@ -1213,14 +1213,14 @@ html[data-theme="light"] .progress-modal-backdrop {
   display: none;
 }
 
-/* Graph view toggle (📈 Raw = cumulative | 🎚️ Smooth = banded) — small segmented pill above the plot */
-/* Row above the plot: [ghost caption] [toggle pill], right-aligned */
+/* Graph view toggle (💀 K/D | 📈 Raw = cumulative | 🎚️ Smooth = banded) — small segmented pill below the plot */
+/* Row below the plot: [ghost caption] [toggle pill], pill centred */
 .chart-mode-row {
   display: flex;
   justify-content: flex-end;
   align-items: center;
   gap: 0.5rem;
-  margin: 0 0.6rem 0.3rem;
+  margin: 0.3rem 0.6rem 0;
 }
 .chart-wrap.empty .chart-mode-row {
   display: none;
@@ -1311,7 +1311,7 @@ html[data-theme="light"] .progress-modal-backdrop {
     grid-template-columns: 1fr;
     justify-items: center;
     row-gap: 0.25rem;
-    margin: 0 auto 0.3rem;
+    margin: 0.3rem auto 0;
   }
   .chart-mode-bar { grid-row: 1; justify-self: center; }
   .ghost-caption {
@@ -1343,7 +1343,7 @@ html[data-theme="light"] .progress-modal-backdrop {
 /* Y-axis zoom — bare overlay on plot top-right (may overlap lines; no chrome box) */
 .chart-y-zoom {
   position: absolute;
-  /* A bit lower than the plot top edge (+ the view-toggle row above the plot) */
+  /* A bit lower than the plot top edge */
   top: calc(9% + 1.4rem);
   right: 6.5%;
   z-index: 5;
