@@ -2420,3 +2420,37 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
 .name-suggest-item .ns-name b { color: var(--accent); font-weight: 600; }
 .name-suggest-item .ns-meta { color: var(--dim); font-size: 0.8rem; white-space: nowrap; }
 .name-suggest-status { padding: 0.35rem 0.6rem; color: var(--dim); font-size: 0.8rem; }
+
+/* ⚔️ iVi tiers in the Rankings table (t371u): collapsible header rows. */
+.ranks-table tbody tr.rk-tier td {
+  padding: 0;
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.ranks-table tbody tr.rk-tier .rk-tier-btn {
+  position: sticky;
+  left: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.2rem 0.75rem;
+  width: auto;
+  max-width: 100vw;
+  min-height: 2.4rem;
+  padding: 0.45rem 0.6rem;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.ranks-table tbody tr.rk-tier:hover td,
+.ranks-table tbody tr.rk-tier .rk-tier-btn:focus-visible { background: var(--grid); }
+.ranks-table tbody tr.rk-tier .rk-tier-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.rk-tier-caret { color: var(--accent); width: 0.8rem; display: inline-block; }
+.rk-tier-label { font-weight: 700; white-space: nowrap; }
+.rk-tier-meta { color: var(--dim); font-size: 0.82rem; white-space: nowrap; }
+.rk-tier-picks { color: var(--accent); font-size: 0.82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 22rem; }
+.ranks-table tbody tr.rk-tier.open td { border-bottom-color: transparent; }

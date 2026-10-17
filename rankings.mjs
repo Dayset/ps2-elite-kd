@@ -14,6 +14,7 @@ import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261015-tip1";
 import { deskUiScale } from "./desk-scale.mjs?v=20261010-sav1";
 import { matchPicks } from "./pick-sync.mjs?v=20261010-sav1";
 import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-sav1";
+import { groupByTier, openTierIds, pickedInGroup, groupIndexAt, tierOf } from "./tiers.mjs?v=20261017-tier1";
 import { mergeFreshRows } from "./rank-row.mjs?v=20261010-sav1";
 import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-sav1";
 import { confirmedPadderSlugs } from "./padding.mjs?v=20261010-sav1";
@@ -124,8 +125,22 @@ export function initRankings(host) {
     const sig = hits.map((h) => h.query).join("\n") + "|" + host.getNames().join("\n");
     if (!force && sig === pickSig) return;
     pickSig = sig;
+    const before = new Set(picked.keys());
     picked.clear();
     for (const h of hits) picked.set(h.query, h.name);
+    // ⚔️ tiers: a newly added name opens its tier, even one closed by hand.
+    for (const h of hits) {
+      if (before.has(h.query)) continue;
+      const row = data.rows.find((r) => r.query === h.query);
+      if (row) tierManual.delete(tierOf(row.adjs, data.pools.adjs || []));
+    }
+    if (renderState && renderState.groups) {
+      const st = renderState;
+      const next = openTierIds(st.groups, { list: st.list, picked, filtering: st.filtering, manual: tierManual });
+      const same = next.size === st.open.size && [...next].every((id) => st.open.has(id));
+      // Headers show the selected names, so they re-render whenever picks change.
+      if (!same || before.size !== picked.size || hits.some((h) => !before.has(h.query))) rerenderKeepingView();
+    }
     updateTicks();
     syncPickedUi();
     drawDist();
@@ -321,10 +336,25 @@ export function initRankings(host) {
   function renderRowsTo(n) {
     const st = renderState;
     if (!st) return;
-    const end = Math.min(st.list.length, n);
+    let end = Math.min(st.list.length, n);
     if (end <= st.at) return;
     let html = "";
-    for (let i = st.at; i < end; i++) {
+    let i = st.at;
+    for (; i < end; i++) {
+      // ⚔️ iVi tiers (t371u): a header row starts each tier; a collapsed tier's
+      // rows are skipped (and don't use up this chunk's budget).
+      if (st.groups) {
+        const g = st.startAt.get(i);
+        if (g) {
+          html += tierRowHtml(g, st);
+          st.prevBin = -1;
+          if (!st.open.has(g.id)) {
+            end = Math.min(st.list.length, end + (g.end - i));
+            i = g.end - 1;
+            continue;
+          }
+        }
+      }
       const r = st.list[i];
       // Band separators (t310u): a thin divider wherever the sorted metric
       // crosses into another 📊 chart bin (same ranges as the bars).
@@ -336,7 +366,92 @@ export function initRankings(host) {
       html += rowHtml(r, st.cols);
     }
     $("ranksBody").insertAdjacentHTML("beforeend", html);
-    st.at = end;
+    st.at = i;
+  }
+
+  /* ---------- ⚔️ iVi tiers (t371u) ----------
+   * Sorted by ⚔️ iVi (the default), the table is split into collapsible tiers
+   * by population share (tiers.mjs). All start collapsed; a tier opens by
+   * itself when it holds a player from the names box, or when the name filter
+   * is used. Header clicks win for the rest of the visit (reset by a new
+   * filter, or when a newly added name lands in that tier). Other sorts stay
+   * one flat list with the thin chart-bin dividers. */
+  const tierManual = new Map(); // tier id → open (true) / closed (false)
+  const tieredView = () => sortKey === "adjs";
+
+  function tierRowHtml(g, st) {
+    const open = st.open.has(g.id);
+    const fmt0 = (v) => (+v).toLocaleString(undefined, { maximumFractionDigits: 0 });
+    const range = Number.isFinite(g.lo) && g.id !== "below"
+      ? ` · iVi ${fmt0(sortDir === "asc" ? g.lo : g.hi)}–${fmt0(sortDir === "asc" ? g.hi : g.lo)}`
+      : "";
+    const what = st.filtering ? (g.count === 1 ? "match" : "matches") : (g.count === 1 ? "player" : "players");
+    const picks = pickedInGroup(g, st.list, picked);
+    const pickTxt = picks.length
+      ? `<span class="rk-tier-picks" title="Selected in this tier">✅ ${picks.slice(0, 3).map((r) => esc(r.name)).join(", ")}${picks.length > 3 ? ` +${picks.length - 3}` : ""}</span>`
+      : "";
+    return `<tr class="rk-tier${open ? " open" : ""}" data-tier="${esc(g.id)}"><td colspan="${3 + st.cols.length}">` +
+      `<button type="button" class="rk-tier-btn" aria-expanded="${open}" title="${open ? "Collapse" : "Open"} this tier">` +
+      `<span class="rk-tier-caret" aria-hidden="true">${open ? "▾" : "▸"}</span>` +
+      `<span class="rk-tier-label">${esc(g.label)}</span>` +
+      `<span class="rk-tier-meta">${g.count.toLocaleString()} ${what}${range}</span>` +
+      pickTxt + `</button></td></tr>`;
+  }
+
+  /** Open / close one tier; the clicked header stays where it was on screen. */
+  function toggleTier(id) {
+    const st = renderState;
+    if (!st || !st.groups) return;
+    const was = st.open.has(id);
+    tierManual.set(id, !was);
+    const sel = `tr.rk-tier[data-tier="${CSS.escape(id)}"]`;
+    const before = $("ranksBody").querySelector(sel);
+    const y0 = before ? before.getBoundingClientRect().top : null;
+    renderBody();
+    const st2 = renderState;
+    const g = st2.groups.find((x) => x.id === id);
+    if (g) renderRowsTo(g.start + FIRST_CHUNK);
+    const after = $("ranksBody").querySelector(sel);
+    if (after && y0 != null && tableScroll) {
+      tableScroll.scrollTop += after.getBoundingClientRect().top - y0;
+    }
+  }
+
+  /**
+   * Re-render the table without moving what's on screen: the first visible
+   * player row keeps its position (ticking a box deep in the list must not
+   * throw the view back to the top).
+   */
+  function rerenderKeepingView() {
+    const wrap = typeof tableScroll !== "undefined" ? tableScroll : null;
+    const prevAt = renderState ? renderState.at : 0;
+    let anchorQ = null, y0 = 0;
+    if (wrap) {
+      const top = wrap.getBoundingClientRect().top + ($("ranksHead").getBoundingClientRect().height || 0);
+      for (const tr of $("ranksBody").querySelectorAll("tr[data-q]")) {
+        const r = tr.getBoundingClientRect();
+        if (r.bottom > top) { anchorQ = tr.getAttribute("data-q"); y0 = r.top; break; }
+      }
+    }
+    renderBody();
+    renderRowsTo(prevAt);
+    if (wrap && anchorQ) {
+      const tr = $("ranksBody").querySelector(`tr[data-q="${CSS.escape(anchorQ)}"]`);
+      if (tr) wrap.scrollTop += tr.getBoundingClientRect().top - y0;
+    }
+  }
+
+  /** Make sure the tiers covering list indices [from, to) are open (jumps). Re-renders when needed. */
+  function openTiersFor(from, to) {
+    const st = renderState;
+    if (!st || !st.groups) return false;
+    let changed = false;
+    for (const g of st.groups) {
+      if (g.end <= from || g.start >= to) continue;
+      if (!st.open.has(g.id)) { tierManual.set(g.id, true); changed = true; }
+    }
+    if (changed) renderBody();
+    return changed;
   }
 
   /** Divider row before the first player of chart bin `bi`: "⚔️ iVi 1100–1200 · top 36%". */
@@ -360,6 +475,12 @@ export function initRankings(host) {
     body.innerHTML = "";
     // Separators only for a metric sort (not by name).
     const st = { list, cols, at: 0, prevBin: -1, hist: sortKey !== "name" && colById(sortKey) ? getHist(sortKey) : null };
+    if (tieredView()) {
+      st.filtering = !!bare(filter);
+      st.groups = groupByTier(list, data.pools.adjs || []);
+      st.startAt = new Map(st.groups.map((g) => [g.start, g]));
+      st.open = openTierIds(st.groups, { list, picked, filtering: st.filtering, manual: tierManual });
+    }
     renderState = st;
     renderRowsTo(FIRST_CHUNK);
     const step = () => {
@@ -606,6 +727,7 @@ export function initRankings(host) {
     const list = renderState ? renderState.list : sortedFiltered();
     const k = list.findIndex((r) => r.query === q);
     if (k < 0) return;
+    openTiersFor(k, k + 1);
     renderRowsTo(k + 40);
     const row = $("ranksBody").querySelector(`tr[data-q="${CSS.escape(q)}"]`);
     if (!row) return;
@@ -635,6 +757,7 @@ export function initRankings(host) {
     const t = binJumpTarget(list.map((r) => r[distMetric]), h, bi, sortDir);
     if (t.index < 0) return;
     const span = Math.max(1, t.count);
+    openTiersFor(t.index, t.index + span);
     renderRowsTo(t.index + span + 40);
     const body = $("ranksBody");
     const rowOf = (k) => (list[k] ? body.querySelector(`tr[data-q="${CSS.escape(list[k].query)}"]`) : null);
@@ -933,6 +1056,7 @@ export function initRankings(host) {
     const next = $("ranksSearch").value || "";
     if (bare(next) === bare(filter)) { filter = next; return; }
     filter = next;
+    tierManual.clear();
     renderBody();
     const sig = hlSignature();
     if (sig !== hlSig) { hlSig = sig; requestAnimationFrame(() => drawDist()); }
@@ -991,6 +1115,13 @@ export function initRankings(host) {
     const q = a.closest("tr").getAttribute("data-q");
     if (q && !picked.has(q)) host.toggleName(q, a, true);
     syncPicks({ force: true });
+  });
+  $("ranksBody").addEventListener("click", (e) => {
+    const btn = e.target.closest && e.target.closest("button.rk-tier-btn");
+    if (!btn) return;
+    e.preventDefault();
+    const tr = btn.closest("tr.rk-tier");
+    if (tr) toggleTier(tr.getAttribute("data-tier"));
   });
   $("rkPositions").addEventListener("click", (e) => {
     const a = e.target.closest && e.target.closest("a.rk-pos-jump");
