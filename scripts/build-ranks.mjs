@@ -23,6 +23,7 @@ import { classifyBins } from "../bins.mjs";
 import { markNote, statMark, confirmedPadderSlugs, isFarmListed, isNotFarm, farmListEntry } from "../padding.mjs";
 import { sprout, sampleEvents, farmAccount } from "../sprouts.mjs";
 import { findOutliers, guardStatus, KNOWN_EXTREMES } from "../outlier-guard.mjs";
+import { infantryTagCounts, INFANTRY_TAG } from "../infantry.mjs";
 import { forensicsSummary, honuSessionUrl } from "../session-forensics.mjs";
 import { hiddenList, isConfirmedCheater } from "../hidden.mjs";
 import { cleanTimes } from "../flairs.mjs";
@@ -438,6 +439,24 @@ export function hiddenSummary(dataDir, found) {
   return { count: players.length, players };
 }
 
+/**
+ * status.json "infantry" block (build-log only, collected silently): tag counts
+ * of the per-player infantry/vehicle split (infantry.mjs), filled in as players refresh.
+ */
+export function infantryStatus(dataDir) {
+  const dir = path.join(dataDir, "players");
+  const list = [];
+  let files = [];
+  try { files = fs.readdirSync(dir).filter((f) => f.endsWith(".json")); } catch {}
+  for (const f of files) {
+    try {
+      const p = JSON.parse(fs.readFileSync(path.join(dir, f), "utf8"));
+      list.push({ infantry: (p && p.player && p.player.infantry) || null });
+    } catch {}
+  }
+  return { checkedAt: new Date().toISOString(), players: list.length, counts: infantryTagCounts(list), rule: INFANTRY_TAG };
+}
+
 const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (isMain) {
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -459,6 +478,7 @@ if (isMain) {
   st.sessionStats = session;
   st.forensics = forensicsInfo;
   st.review = review;
+  st.infantry = infantryStatus(dataDir);
   fs.writeFileSync(stPath, JSON.stringify(st, null, 2) + "\n");
   for (const o of guard.items.filter((x) => !x.explained)) {
     console.log(`::warning::outlier guard: ${o.name} ${o.id}=${o.value} (bound ${o.bound}, z ${o.z})`);

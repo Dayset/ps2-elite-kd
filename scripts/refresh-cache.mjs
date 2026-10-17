@@ -19,6 +19,7 @@
  * names are logged and skipped; their existing files are never touched.
  */
 import { updateHonuXp, compactExpTypes, EXP_TYPES_MAX_AGE_MS } from "./honu-xp.mjs";
+import { fetchInfantry } from "../infantry.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -535,6 +536,19 @@ export async function updateHonuAssists(cid, prev, {
 }
 
 /** Previously stored assists for a cached player (file may not exist yet). */
+/** Previous infantry/vehicle summary (kept when this run's weapon-stat calls fail). */
+function readPrevInfantry(slug) {
+  try {
+    const p = JSON.parse(fs.readFileSync(path.join(DATA_DIR, "players", `${slug}.json`), "utf8"));
+    return (p && p.player && p.player.infantry) || null;
+  } catch {
+    return null;
+  }
+}
+
+/** Run totals for the infantry split (logged + written to status). */
+export const infantryStats = { ok: 0, failed: 0, empty: 0, calls: 0 };
+
 function readPrevAssists(slug) {
   try {
     const p = JSON.parse(fs.readFileSync(path.join(DATA_DIR, "players", `${slug}.json`), "utf8"));
@@ -847,7 +861,7 @@ export function opponentRow(pair, meta, pace) {
   };
 }
 
-async function loadLive(name, { prevAssists = null, acceptPartial = false } = {}) {
+async function loadLive(name, { prevAssists = null, prevInfantry = null, acceptPartial = false } = {}) {
   const c = await resolveCensus(name);
   const cid = c.character_id;
   const outfit = c.outfit || {};
@@ -879,6 +893,17 @@ async function loadLive(name, { prevAssists = null, acceptPartial = false } = {}
   // Collected for later (assists per minute / per kill); not shown in the UI.
   // Daily Honu cap: skip (keep the old assists) when fewer than 4 calls are left.
   const assists = honuLeft() >= 4 ? await updateHonuAssists(cid, prevAssists) : prevAssists;
+  // Infantry vs vehicle split (infantry.mjs): 2 Census calls, collected silently.
+  // Failure never blocks the player; the previous summary is kept.
+  let infantry = prevInfantry;
+  try {
+    infantryStats.calls += 2;
+    const inf = await fetchInfantry(cid, { base: CENSUS, getJson: (u) => fetchJson(u, { retries: 2 }) });
+    if (inf) { infantry = inf; infantryStats.ok++; } else infantryStats.empty++;
+  } catch (e) {
+    infantryStats.failed++;
+    console.warn(`  infantry split skipped: ${String(e && e.message).slice(0, 80)}`);
+  }
   return {
     query: String(name).trim(),
     top: TOP_N,
@@ -896,6 +921,7 @@ async function loadLive(name, { prevAssists = null, acceptPartial = false } = {}
       honu: `https://wt.honu.pw/c/${cid}/killboard`,
       source: "census",
       ...(assists ? { assists } : {}),
+      ...(infantry ? { infantry } : {}),
       // Census character.times from the same lookup (flairs.mjs 🪦 / 👴🏽).
       ...(accountTimes(c) ? { times: accountTimes(c) } : {}),
       rows,
@@ -1207,7 +1233,7 @@ async function main() {
       if (!isPlausibleName(name)) throw new NotFoundError(`not a valid character name ${JSON.stringify(name)}`);
       // Enough failed tries on partial data: ship what we have instead of retrying forever.
       const acceptPartial = prev.kind === "partial" && (prev.fails || 0) >= PARTIAL_SHIP_AFTER;
-      const payload = await loadLive(name, { prevAssists: readPrevAssists(slug), acceptPartial });
+      const payload = await loadLive(name, { prevAssists: readPrevAssists(slug), prevInfantry: readPrevInfantry(slug), acceptPartial });
       const fileRel = `players/${slug}.json`;
       writeFileAtomic(path.join(DATA_DIR, fileRel), JSON.stringify(payload) + "\n");
       upsertIndexEntry(index, { name, display: payload.player.display, slug, file: fileRel, savedAt: payload.savedAt, fmt: CACHE_FORMAT, top: payload.top, last: payload.player.times && payload.player.times.last });

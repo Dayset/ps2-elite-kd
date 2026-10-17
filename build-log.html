@@ -188,7 +188,7 @@
     <details class="st-card st-sec st-group" id="groupPipeline"><summary><h2>Pipeline</h2></summary>
       <details class="st-card st-sec" id="cardRuns"><summary><h2>GitHub Actions queue <span id="runsCount" class="st-count"></span></h2></summary><div id="runs" class="st-dim">Loading…</div></details>
       <details class="st-card st-sec" id="cardLast"><summary><h2>Last finished run</h2></summary><div id="last" class="st-dim">Loading…</div></details>
-      <details class="st-card st-sec" id="cardDisc"><summary><h2>🔎 Discovery &amp; storage <span id="discCount" class="st-count">…</span></h2></summary><div id="sizeLine" class="st-dim">Loading…</div><div id="disc" class="st-dim">Loading…</div></details>
+      <details class="st-card st-sec" id="cardDisc"><summary><h2>🔎 Discovery &amp; storage <span id="discCount" class="st-count">…</span></h2></summary><div id="sizeLine" class="st-dim">Loading…</div><div id="infLine" class="st-dim"></div><div id="disc" class="st-dim">Loading…</div></details>
       <details class="st-card st-sec" id="cardRecent"><summary><h2>Recently updated players <span id="recentCount" class="st-count">…</span></h2></summary><div id="recent" class="st-dim">Loading…</div></details>
     </details>
     <details class="st-card st-sec" id="cardHidden">
@@ -471,6 +471,17 @@
       var MB = 1024 * 1024;
       function mb(b) { return b == null ? "?" : b >= 1024 * MB ? (b / 1024 / MB).toFixed(2) + " GB" : (b / MB).toFixed(1) + " MB"; }
       /** Size line: repo (GitHub, all history packed) + data/ now, with the 700 MB backup/move warning (status.size, status.sizeWarning). */
+      // 🪖 Infantry / vehicle split (infantry.mjs): counts only, collected silently, not public yet.
+      function renderInfantry(status) {
+        var b = status && status.infantry;
+        if (!b || !b.counts) { $("infLine").innerHTML = "🪖 Infantry split: not built yet (next run)."; return; }
+        var c = b.counts, r = b.rule || {};
+        var have = c.infantry + c.mixed + c.vehicle + c.low;
+        $("infLine").innerHTML = "<div>🪖 Infantry split (collected quietly, backfills with weekly refreshes): " + esc(have) + " of " + esc(b.players) + " players measured · " +
+          "🪖 infantry <strong>" + esc(c.infantry) + "</strong> · 🔀 mixed <strong>" + esc(c.mixed) + "</strong> · 🚜 vehicle <strong>" + esc(c.vehicle) + "</strong> · too few kills " + esc(c.low) + "</div>" +
+          '<div class="st-dim">Rule: share of kills from a vehicle seat or turret &lt; ' + esc(Math.round((r.INFANTRY_MAX || 0.25) * 100)) + "% = infantry, ≥ " + esc(Math.round((r.VEHICLE_MIN || 0.6) * 100)) + "% = vehicle, otherwise mixed; under " + esc(r.MIN_KILLS || 100) + " kills = not judged.</div>";
+      }
+
       function renderSize(status) {
         var z = status && status.size;
         if (!z) { $("sizeLine").innerHTML = '<span class="st-dim">💾 Size: not measured yet (next run).</span>'; return; }
@@ -512,6 +523,7 @@
           renderNow(st);
           renderLast(st);
           renderSize(st);
+          renderInfantry(st);
         });
         getJson("data/index.json").then(renderRecent, function (e) { fail("recent", "data/index.json", e); });
         Promise.all([
