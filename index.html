@@ -39,7 +39,7 @@
     "codeRepository": "https://github.com/Dayset/ps2-elite-kd"
   }
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261017-peekdedup" />
+  <link rel="stylesheet" href="styles.css?v=20261017-nolegend" />
 </head>
 <body class="main-page">
   <div class="controls">
@@ -138,8 +138,6 @@
     </div>
   </div>
 
-  <div id="legend" class="legend"></div>
-
   <!-- t356u: Rankings (was ranks.html) — rankings.mjs fills this lazily after the graph. -->
   <section id="rankings" class="rankings" aria-label="Rankings">
     <div id="ranksStatus" class="ranks-status" role="status"></div>
@@ -180,7 +178,7 @@
 
   <footer>
     <!-- "What about vehicles?" + 📊 Public table live in the footer now;
-         the note stays hidden until a comparison is loaded (renderLegend). -->
+         the note stays hidden until a comparison is loaded (renderStatsTable). -->
     <details id="vehiclesNote" class="pooled-note fold-note" hidden><summary>♿ What about vehicles?</summary><p>Vehicle and infantry kills are pooled together for now, so vehicle mains may look off in the graph and stats. Infantry-only numbers are coming later.</p></details>
     <div id="statsPublic" class="stats-panel stats-panel-public" aria-label="Public stats (Census / Honu)"></div>
     <p id="ranksMeta" class="ranks-meta"></p>
@@ -206,6 +204,6 @@
     </details>
   </footer>
 
-  <script type="module" src="app.js?v=20261017-sliderestore"></script>
+  <script type="module" src="app.js?v=20261017-nolegend"></script>
 </body>
 </html>

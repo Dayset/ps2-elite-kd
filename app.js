@@ -264,7 +264,6 @@ import {
     chartModeBar: document.getElementById("chartModeBar"),
     stats: document.getElementById("statsPanel"),
     statsPublic: document.getElementById("statsPublic"),
-    legend: document.getElementById("legend"),
     vehiclesNote: document.getElementById("vehiclesNote"),
     debugColsToggle: document.getElementById("debugColsToggle"),
     hideZeroIviToggle: document.getElementById("hideZeroIviToggle"),
@@ -2943,7 +2942,6 @@ import {
     waveRig = { list, sig: waveRigSig(), zoomedLeft, banded, th, fz, gYGrid, gYText, gLabels, series: rigSeries };
 
     renderStatsTable(list);
-    renderLegend(list);
     setGhostCaption(ghostsOn, drewGhost);
   }
 
@@ -3134,7 +3132,6 @@ import {
         /* private mode: keep the in-memory choice */
       }
       if (lastStatsList) renderStatsTable(lastStatsList);
-      if (lastLegendList) renderLegend(lastLegendList);
       syncSmoothBtn();
     });
   }
@@ -3154,6 +3151,8 @@ import {
 
   /** "Why some cells show —" note: collapsed by default; remembered only while the page is open. */
   let thinNoteOpen = false;
+  /** "What * † mean" note: same treatment as the thin note. */
+  let markNotesOpen = false;
   /** 📊 Public section open/closed, kept across re-sorts / re-renders (t339u: sorting collapsed it). */
   let publicStatsOpen = false;
   // 🧱 Const percentile: population pool from the shared ranks.json (one fetch, cached).
@@ -3186,6 +3185,7 @@ import {
     loadConsPool();
     if (!els.stats) return;
     lastStatsList = list;
+    syncVehiclesNote(list);
     loadLegendShards(list.map((e) => slugKey(e && e.display)).filter(Boolean));
     if (!list.length) {
       els.stats.innerHTML = "";
@@ -3373,7 +3373,7 @@ import {
           return (
             `<tr><th scope="row" class="stats-name" style="color:${col}">` +
             `<span class="player-num" aria-label="Series ${num}">${num}.</span>` +
-            `${nameSpanHtml(row.p.display, farmTitle(row.p) + (withDesc ? descTitle(row.p) : ""), withDesc ? descText(row.p) : "")}${padMarkHtml(row.p)}${legacySampleHtml(row.p)}</th>${vals}</tr>`
+            `${nameSpanHtml(row.p.display, farmTitle(row.p) + (withDesc ? descTitle(row.p) : ""), withDesc ? descText(row.p) : "", honuProfileUrl(row.p.cid))}${padMarkHtml(row.p)}${legacySampleHtml(row.p)}</th>${vals}</tr>`
           );
         })
         .join("");
@@ -3388,6 +3388,16 @@ import {
         `<p>${escapeHtml(THIN_NOTE_HEAD)}` +
         thinRows.map((r) => `<br />${escapeHtml(thinPlayerLine(r.p.display, r.sampleKills, r.sampleDeaths))}`).join("") +
         `</p></details>`
+      : "";
+
+    // Mark notes (used to live in the chart legend, now removed): one collapsed
+    // line explaining the * / † marks used in the table.
+    const markLegends = [...new Set(metrics.map((r) => playerMark(r.p).legend).filter(Boolean))];
+    const markNotesBlock = markLegends.length
+      ? `<details class="fold-note mark-notes"${markNotesOpen ? " open" : ""}>` +
+        `<summary>♿ What ${[...new Set(markLegends.map((t) => t.trim().split(/\s+/)[0]))].join(" ")} ${markLegends.length > 1 ? "mean" : "means"}</summary>` +
+        markLegends.map((t) => `<div class="mark-note">${escapeHtml(t)}</div>`).join("") +
+        `</details>`
       : "";
 
     const pubSorted = sortRows(metrics, publicCols, statsSortState.public);
@@ -3415,12 +3425,15 @@ import {
           </table>
         </div>
         ${thinBlock}
+        ${markNotesBlock}
       </div>
     `;
 
     // Keep the ⚠️ note open/closed across re-sorts (starts collapsed each page load).
     const thinDet = els.stats.querySelector("details.stats-thin-note");
     if (thinDet) thinDet.addEventListener("toggle", () => { thinNoteOpen = thinDet.open; });
+    const markDet = els.stats.querySelector("details.mark-notes");
+    if (markDet) markDet.addEventListener("toggle", () => { markNotesOpen = markDet.open; });
     const statsRoots = [els.stats, els.statsPublic].filter(Boolean);
     const inStats = (sel) => statsRoots.map((r) => r.querySelector(sel)).find(Boolean) || null;
     const pubDet = inStats("details.stats-public");
@@ -3537,60 +3550,10 @@ import {
     } catch { return 0; }
   }
 
-  let lastLegendList = null;
   /** Vehicles note lives in the footer now: it shows only while a comparison
    * is loaded (this used to be the `.legend:empty + .pooled-note` CSS rule). */
-  function syncVehiclesNote() {
-    if (els.vehiclesNote) els.vehiclesNote.hidden = !els.legend || els.legend.childElementCount === 0;
-  }
-
-  function renderLegend(list) {
-    lastLegendList = list;
-    els.legend.innerHTML = "";
-    list.forEach((p, i) => {
-      const col = seriesColor(i);
-      const item = document.createElement("div");
-      const inactive = flairsFor(p.times)[0]?.id === "inactive";
-      item.className = "legend-item" + (inactive ? " legend-inactive" : "");
-      // Name links to the player's Honu profile (plain text if no character id).
-      // No link under the graph: the name is plain text and its Honu profile
-      // lives in the name popup (data-profile), so the link isn't duplicated.
-      const url = honuProfileUrl(p.cid);
-      const full = escapeHtml(p.display);
-      const nameHtml = `<span class="nm" data-full="${full}"${url ? ` data-profile="${escapeHtml(url)}"` : ""} title="${full}">${full}</span>`;
-      // A flair (🪦 / 👴🏽, hover = title) takes the colored dot's place; the name keeps
-      // the line color. Players without a flair keep the dot.
-      const flair = flairsHtml(p.times);
-      const mark = flair
-        ? `<span class="legend-flair">${flair}</span>`
-        : `<span class="legend-swatch" style="background:${col}"></span>`;
-      const swHtml = showDebugCols ? (() => { const sw = waveSwing(p); return sw > 0 ? ` <span class="legend-swing" title="Wave swing area (iVi×KPM)">↕${Math.round(sw)}</span>` : ""; })() : "";
-      const csHtml = showDebugCols ? (() => { const cs = consistency(p); return cs > 0 ? ` <span class="legend-cons" title="Consistency: K/D retention hard vs easy (1.0 = holds up)">≡${cs.toFixed(2)}</span>` : ""; })() : "";
-      item.innerHTML = `
-        ${mark}
-        <span class="legend-label" style="color:${col}"><strong>${i + 1}.</strong>${nameHtml}${padMarkHtml(p)}${swHtml}${csHtml}</span>
-      `;
-      els.legend.appendChild(item);
-    });
-    // One note line per mark in use ("* stat padding…", "† stats adjusted…").
-    // Collapsed by default: a short "♿ What * † mean" line, the full notes on open.
-    const legends = [...new Set(list.map((p) => playerMark(p).legend).filter(Boolean))];
-    if (legends.length) {
-      const det = document.createElement("details");
-      det.className = "fold-note legend-notes";
-      const sum = document.createElement("summary");
-      const marks = [...new Set(legends.map((t) => t.trim().split(/\s+/)[0]))].join(" ");
-      sum.textContent = `♿ What ${marks} ${legends.length > 1 ? "mean" : "means"}`;
-      det.appendChild(sum);
-      for (const text of legends) {
-        const note = document.createElement("div");
-        note.className = "legend-note";
-        note.textContent = text;
-        det.appendChild(note);
-      }
-      els.legend.appendChild(det);
-    }
-    syncVehiclesNote();
+  function syncVehiclesNote(list) {
+    if (els.vehiclesNote) els.vehiclesNote.hidden = !list || list.length === 0;
   }
 
   /** Truncatable player name (.nm, ~18ch cap) with the full name in title / data-full. */
@@ -3641,10 +3604,11 @@ import {
     return note ? ` — ${note}` : "";
   }
 
-  function nameSpanHtml(name, extraTitle = "", desc = "") {
+  function nameSpanHtml(name, extraTitle = "", desc = "", profileUrl = "") {
     const n = escapeHtml(name);
     const d = desc ? ` data-desc="${escapeHtml(desc)}"` : "";
-    return `<span class="nm" data-full="${n}"${d} title="${n}${escapeHtml(extraTitle)}">${n}</span>`;
+    const pf = profileUrl ? ` data-profile="${escapeHtml(profileUrl)}"` : "";
+    return `<span class="nm" data-full="${n}"${d}${pf} title="${n}${escapeHtml(extraTitle)}">${n}</span>`;
   }
 
   function escapeHtml(s) {
@@ -3727,8 +3691,7 @@ import {
     clearSvg(els.chart);
     if (els.stats) els.stats.innerHTML = "";
     if (els.statsPublic) els.statsPublic.innerHTML = "";
-    els.legend.innerHTML = "";
-    syncVehiclesNote();
+    syncVehiclesNote([]);
     players = [];
     lastAnalyzedNames = [];
     lastLoadedNames = [];

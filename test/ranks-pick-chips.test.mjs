@@ -18,7 +18,7 @@ describe("main page desktop width (t313u)", () => {
     const css = read("styles.css");
     assert.match(read("index.html"), /<body class="main-page">/);
     assert.match(css, /body\.main-page \{\s*--desk-w: calc\(68vh \* 1000 \/ 580 \+ 0\.5rem \+ 2px\);\s*max-width: calc\(var\(--desk-w\) \+ 2\.5rem\);/);
-    assert.match(css, /body\.main-page \.chart-wrap,\s*body\.main-page #legend \{ max-width: none; \}/);
+    assert.match(css, /body\.main-page \.chart-wrap \{ max-width: none; \}/);
     const i = css.indexOf("body.main-page {");
     assert.ok(css.lastIndexOf("@media (min-width: 1400px)", i) > css.lastIndexOf("}\n}", i) - 400, "inside the ≥1400px block");
   });
@@ -81,9 +81,9 @@ describe("Rankings ✅ ↔ names box (t356u)", () => {
       const [q0, q1, q2] = await ev(`new Promise(async (r) => { for (let t = 0; t < 400 && document.querySelectorAll("#ranksBody tr[data-q]").length < 3; t++) await new Promise((q) => setTimeout(q, 50)); r([...document.querySelectorAll("#ranksBody tr[data-q]")].slice(0, 3).map((t) => t.dataset.q)); })`);
       assert.equal(new Set([q0, q1, q2]).size, 3);
       await send("Page.navigate", { url: `http://127.0.0.1:${port}/index.html?names=${encodeURIComponent(q0)},${encodeURIComponent(q1)}#rankings` }, sessionId);
-      await ev(`new Promise(async (r) => { for (let t = 0; t < 400 && !(document.querySelector("#ranksBody tr[data-q]") && document.querySelectorAll("#legend .legend-item").length >= 2); t++) await new Promise((q) => setTimeout(q, 50)); r(1); })`);
+      await ev(`new Promise(async (r) => { for (let t = 0; t < 400 && !(document.querySelector("#ranksBody tr[data-q]") && document.querySelectorAll("#statsPanel .stats-name").length >= 2); t++) await new Promise((q) => setTimeout(q, 50)); r(1); })`);
       const settle = () => new Promise((r) => setTimeout(r, 900));
-      const state = () => ev(`({ chips: [...document.querySelectorAll("#nameTokens .name-token")].map((b) => b.textContent.trim().toLowerCase()), names: (new URL(location.href).searchParams.get("names") || "").toLowerCase(), legend: document.querySelectorAll("#legend .legend-item").length, checked: [...document.querySelectorAll('#ranksBody input[type="checkbox"]:checked')].map((c) => c.closest("tr").dataset.q) })`);
+      const state = () => ev(`({ chips: [...document.querySelectorAll("#nameTokens .name-token")].map((b) => b.textContent.trim().toLowerCase()), names: (new URL(location.href).searchParams.get("names") || "").toLowerCase(), stats: document.querySelectorAll("#statsPanel .stats-name").length, checked: [...document.querySelectorAll('#ranksBody input[type="checkbox"]:checked')].map((c) => c.closest("tr").dataset.q) })`);
       const lc = (a) => a.map((x) => String(x).toLowerCase());
       let s = await state();
       assert.deepEqual(s.chips, lc([q0, q1]), "?names= → chips");
@@ -93,14 +93,14 @@ describe("Rankings ✅ ↔ names box (t356u)", () => {
       await settle();
       s = await state();
       assert.deepEqual(s.chips, lc([q0, q1, q2]));
-      assert.equal(s.legend, 3, "graph follows the tick");
+      assert.equal(s.stats, 3, "graph follows the tick");
       assert.equal(s.names, lc([q0, q1, q2]).join(","));
       // Untick it in the table → chip goes.
       await ev(`document.querySelector('#ranksBody tr[data-q="' + CSS.escape(${JSON.stringify(q2)}) + '"] input[type="checkbox"]').click(), 1`);
       await settle();
       s = await state();
       assert.deepEqual(s.chips, lc([q0, q1]));
-      assert.equal(s.legend, 2);
+      assert.equal(s.stats, 2);
       // Remove the first chip in the names box → unticked in the table.
       await ev(`[...document.querySelectorAll("#nameTokens .name-token")][0].click(), 1`);
       await settle();

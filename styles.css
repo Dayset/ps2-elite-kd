@@ -1683,38 +1683,6 @@ td.thin-sample {
   border-bottom: none;
 }
 
-/* Legend: real grid so every column starts at the same x (2 columns on phones). */
-.legend {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 10rem), 1fr));
-  gap: 0.6rem 1.25rem;
-  margin-top: 0.85rem;
-  font-size: 0.85rem;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  min-width: 0;
-}
-.legend-label {
-  display: flex;
-  align-items: baseline;
-  gap: 0.3rem;
-  min-width: 0;
-}
-.legend-label .nm { flex: 0 1 auto; min-width: 0; }
-
-.legend-swatch {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  /* Same box as .legend-flair so names line up with or without a flair. */
-  margin: 0 3px;
-}
-
 footer {
   margin-top: 1.5rem;
   font-size: 0.75rem;
@@ -1943,12 +1911,11 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
   white-space: nowrap;
   vertical-align: bottom;
 }
-/* Cache chips keep the 18ch cap (dense list). Input chips and legend names
+/* Cache chips keep the 18ch cap (dense list). Input chips and stats-table names
    truncate by SPACE instead: full name whenever it fits, ellipsis only when the
    chip / cell is really too narrow (name-peek popup checks scrollWidth). */
 .chip .nm { max-width: min(18ch, 100%); }
-.name-token .nm,
-.legend-label .nm { max-width: 100%; }
+.name-token .nm { max-width: 100%; }
 .name-token > .nm { flex: 0 1 auto; min-width: 0; }
 .name-token-retry .name-token-text { flex: 0 1 auto; min-width: 0; }
 .name-token-icon,
@@ -2021,7 +1988,7 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
 .census-retry-btn:hover { background: rgba(127, 127, 127, 0.15); }
 .census-note { margin-top: 0.25em; line-height: 1.5; }
 
-/* Small disclaimer under the legend; only once a graph (legend) is drawn. */
+/* Small disclaimer in the footer; only once a comparison is loaded. */
 .pooled-note {
   margin: 0.6rem 0 0;
   font-size: 0.74rem;
@@ -2036,8 +2003,7 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
   font-weight: 800;
   cursor: help;
 }
-.legend-note {
-  grid-column: 1 / -1;
+.mark-note {
   font-size: 0.78rem;
   opacity: 0.7;
 }
@@ -2068,19 +2034,6 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
   cursor: help;
   white-space: nowrap;
 }
-/* In the chart legend the flair takes the colored dot's place (name keeps the line color). */
-.legend-flair {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  line-height: 1;
-}
-/* 🪦 inactive accounts: name fades (marker stays full). */
-.legend-inactive .legend-label { opacity: 0.5; }
-.legend-flair .flair { margin-left: 0; font-size: 0.8rem; }
-
 /* Under ✨ Adjusted: collapsed "⚠️" note, opens to who is "—" and why. */
 .stats-thin-note {
   margin: 0.4rem 0 0;
@@ -2109,14 +2062,12 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
 .fold-note > summary:hover,
 .fold-note > summary:focus-visible { opacity: 1; text-decoration: underline dotted; }
 .fold-note > p { margin: 0.2rem 0 0; }
-.legend .fold-note { grid-column: 1 / -1; }
-.ranks-status .fold-note > p.legend-note { margin: 0.15rem 0 0; }
 
 /* ---------- Big desktop monitors (t299u) ----------
  * At 2560×1440 the text stayed at 16px-root sizes while the graph scaled to the
  * full width (~1450px tall, taller than the screen). From 1400px wide only:
  * grow the root font with the viewport (16px → ~17.5px @1920 → ~21px @2560,
- * so every rem-sized table / legend / control grows with it), keep content to a
+ * so every rem-sized table / control grows with it), keep content to a
  * readable width, and cap the graph at ~62% of the screen height (its width
  * follows the 1000:580 aspect). Mobile / narrow layouts are untouched. */
 @media (min-width: 1400px) {
@@ -2127,10 +2078,9 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
     max-width: calc(62vh * 1000 / 580 + 0.5rem + 2px);
     margin-inline: auto;
   }
-  #legend { max-width: calc(62vh * 1000 / 580 + 0.5rem + 2px); margin-inline: auto; }
 }
 /* t313u: main page — one shared desktop content width for header / controls,
- * stats table, graph, legend and footer, all aligned. The graph fills it, so
+ * stats table, graph and footer, all aligned. The graph fills it, so
  * the width is set by the graph's height cap: svg height = width × 0.58 ≤ 68vh
  * (2560×1440 → ~1700px wide graph, 1920×1080 → ~1280px), in between the old
  * graph (62vh) and the old 100rem header. Other pages keep the 100rem rule. */
@@ -2139,23 +2089,20 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
     --desk-w: calc(68vh * 1000 / 580 + 0.5rem + 2px);
     max-width: calc(var(--desk-w) + 2.5rem); /* + body side padding (border-box) */
   }
-  body.main-page .chart-wrap,
-  body.main-page #legend { max-width: none; }
+  body.main-page .chart-wrap { max-width: none; }
 }
 
 /* ---------- t315u: full player names on wide screens (main page) ----------
- * Same caps as the Rankings (t311u): phones keep the 18ch cap / 10rem legend
- * columns; >600px names may use 28ch, >1100px 42ch ([TAG] + 32-char name).
+ * Same caps as the Rankings (t311u): phones keep the 18ch cap;
+ * >600px names may use 28ch, >1100px 42ch ([TAG] + 32-char name).
  * Ellipsis + title / name-peek stay for anything longer or truly cramped. */
 @media (min-width: 601px) {
   .stats-table .nm { max-width: 28ch; }
   .chip .nm { max-width: min(28ch, 100%); }
-  .legend { grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr)); }
 }
 @media (min-width: 1100px) {
   .stats-table .nm { max-width: 42ch; }
   .chip .nm { max-width: min(42ch, 100%); }
-  .legend { grid-template-columns: repeat(auto-fill, minmax(min(100%, 21rem), 1fr)); }
 }
 
 /* ======================================================================
