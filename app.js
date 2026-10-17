@@ -847,19 +847,35 @@ import {
     return sharedIndex;
   }
 
+  /* t376u: name → shared entry lookup, rebuilt only when sharedIndex is
+   * replaced. findSharedEntry ran a full scan (12k players, a regex slug per
+   * name) for every chip on every chip change, which made 🎲 / < / > lag. */
+  let sharedLookup = { src: null, byKey: new Map(), byLower: new Map() };
+  function sharedLookupTable() {
+    const list = sharedIndex.players || [];
+    if (sharedLookup.src === list) return sharedLookup;
+    const byKey = new Map();
+    const byLower = new Map();
+    const put = (m, k, p) => { if (k && !m.has(k)) m.set(k, p); };
+    for (const p of list) {
+      if (!p) continue;
+      put(byKey, p.slug, p);
+      put(byKey, slugKey(p.name), p);
+      put(byLower, String(p.name || "").trim().toLowerCase(), p);
+      for (const a of p.aliases || []) {
+        put(byLower, String(a).toLowerCase(), p);
+        put(byKey, slugKey(a), p);
+      }
+    }
+    sharedLookup = { src: list, byKey, byLower };
+    return sharedLookup;
+  }
+
   function findSharedEntry(name) {
     const key = slugKey(name);
     const lower = String(name || "").trim().toLowerCase();
-    for (const p of sharedIndex.players || []) {
-      if (!p) continue;
-      if ((p.slug && p.slug === key) || slugKey(p.name) === key) return p;
-      if (String(p.name || "").trim().toLowerCase() === lower) return p;
-      const aliases = p.aliases || [];
-      for (const a of aliases) {
-        if (String(a).toLowerCase() === lower || slugKey(a) === key) return p;
-      }
-    }
-    return null;
+    const t = sharedLookupTable();
+    return (key && t.byKey.get(key)) || t.byLower.get(lower) || null;
   }
 
   function listSharedNames() {
@@ -1235,13 +1251,28 @@ import {
 
   /** Cache chip click: add if absent, remove (chip or trailing text) if present. */
   /* 🎲 Random player: ⚔️ iVi (adjusted) range of the names in the box, widened by 25% each side. */
+  /* t376u: ONE ranks.json load (normal HTTP cache, revalidated) shared by 🎲
+   * and the 🧱 / 🤝 pools. It used to be fetched twice here, once with
+   * no-store + a timestamp, so the first 🎲 re-downloaded 3.4 MB. */
+  let ranksPayloadLoad = null;
+  function loadRanksPayload() {
+    if (!ranksPayloadLoad) {
+      ranksPayloadLoad = fetch("data/ranks.json", { cache: "no-cache" })
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null)
+        .then((d) => {
+          if (!d || !Array.isArray(d.cols) || !Array.isArray(d.rows)) ranksPayloadLoad = null; // allow a retry
+          return d;
+        });
+    }
+    return ranksPayloadLoad;
+  }
   let rankVals = null;
   async function loadRankVals() {
     if (rankVals) return rankVals;
     try {
-      const r = await fetch("data/ranks.json?t=" + Date.now(), { cache: "no-store" });
-      if (!r.ok) return (rankVals = new Map());
-      const d = await r.json();
+      const d = await loadRanksPayload();
+      if (!d) return new Map();
       const ci = d.cols.indexOf("adjs");
       const si = d.cols.indexOf("slug");
       rankVals = new Map(
@@ -1258,7 +1289,17 @@ import {
   async function rollDice(mode = "range") {
     const btn = mode === "low" ? els.diceLowBtn : mode === "high" ? els.diceHighBtn : els.diceBtn;
     const say = (msg) => { if (btn) { btn.title = msg; btn.setAttribute("aria-label", msg); } };
-    const vals = await loadRankVals();
+    // t376u: data still loading (slow link / very first second) → the button
+    // pulses until it's ready; normally it was prefetched while idle.
+    let busyTimer = 0;
+    if (!rankVals && btn) busyTimer = setTimeout(() => { btn.classList.add("is-loading"); btn.setAttribute("aria-busy", "true"); }, 120);
+    let vals;
+    try {
+      vals = await loadRankVals();
+    } finally {
+      clearTimeout(busyTimer);
+      if (btn) { btn.classList.remove("is-loading"); btn.removeAttribute("aria-busy"); }
+    }
     if (nameTokens.length >= MAX_NAMES) { say("The list is full (10 names)"); return; }
     const used = new Set(nameTokens.map((n) => slugKey(n)));
     const listVals = nameTokens.map((n) => vals.get(slugKey(n))).filter(Boolean).map((v) => v.adjs);
@@ -1385,6 +1426,7 @@ import {
   }
   let rankingsLoading = null;
   const rankingsHost = {
+    loadRanks: () => loadRanksPayload(), // t376u: one shared ranks.json parse
     getNames: () => nameTokens.slice(),
     toggleName(name, anchor, add) {
       const has = nameTokens.some((n) => namesMatch(n, name));
@@ -1393,12 +1435,19 @@ import {
       scheduleGraphSync({ start: true }); // a pick from the table graphs right away (saved data)
     },
   };
+  /* t376u: the chips paint first; the Rankings table follows on the next
+   * frame (it used to re-render synchronously inside every chip change). */
+  let rankingsSyncQueued = false;
   function rankingsSync() {
-    if (rankingsApi) rankingsApi.syncPicks();
+    if (!rankingsApi || rankingsSyncQueued) return;
+    rankingsSyncQueued = true;
+    const run = () => { rankingsSyncQueued = false; if (rankingsApi) rankingsApi.syncPicks(); };
+    if (typeof requestAnimationFrame === "function") requestAnimationFrame(() => setTimeout(run, 0));
+    else setTimeout(run, 0);
   }
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261017-cyc2")
+    rankingsLoading = import("./rankings.mjs?v=20261017-dice1")
       .then((m) => {
         rankingsApi = m.initRankings(rankingsHost);
         return rankingsApi.ready;
@@ -1739,6 +1788,7 @@ import {
     }
 
     const shared = cached.filter((c) => c.source === "shared");
+    let sharedHiddenSkip = false;
     const browser = sortAlpha(cached.filter((c) => c.source !== "shared"));
 
     if (shared.length) {
@@ -1754,6 +1804,13 @@ import {
       const summary = document.createElement("summary");
       summary.textContent = `📦 Shared cache (${shared.length})`;
       details.appendChild(summary);
+      // t376u: the section is hidden by CSS (code kept): don't build its
+      // letter blocks / chips (hundreds of nodes on every name change).
+      els.cacheChips.appendChild(details);
+      if (getComputedStyle(details).display === "none") sharedHiddenSkip = true;
+    }
+    if (shared.length && !sharedHiddenSkip) {
+      const details = els.cacheChips.querySelector("details.cache-shared");
       const inner = document.createElement("div");
       inner.className = "cache-shared-chips";
       inner.setAttribute("aria-label", "Shared cached character names");
@@ -1809,7 +1866,6 @@ import {
       // Alphabet jump bar (# A … Z): sticky at the top of the open list.
       details.appendChild(makeAlphaBar(groups.map((g) => g.letter), inner));
       details.appendChild(inner);
-      els.cacheChips.appendChild(details);
     }
     syncCacheJump();
 
@@ -3058,8 +3114,7 @@ import {
   let apkPool = null;
   function loadConsPool() {
     if (consPoolLoad) return consPoolLoad;
-    consPoolLoad = fetch("data/ranks.json", { cache: "no-cache" })
-      .then((r) => (r.ok ? r.json() : null))
+    consPoolLoad = loadRanksPayload()
       .then((payload) => {
         const i = payload && Array.isArray(payload.cols) ? payload.cols.indexOf("cons") : -1;
         if (i < 0 || !Array.isArray(payload.rows)) return;
@@ -4401,6 +4456,11 @@ import {
 
   if (els.copyLinkBtn) {
     els.diceBtn?.addEventListener("click", () => { rollDice("range"); });
+    // t376u: warm the 🎲 data while the page is idle so the first roll is instant.
+    {
+      const idle = typeof requestIdleCallback === "function" ? (f) => requestIdleCallback(f, { timeout: 4000 }) : (f) => setTimeout(f, 1500);
+      idle(() => { loadRankVals(); });
+    }
     els.diceLowBtn?.addEventListener("click", () => { rollDice("low"); });
     els.diceHighBtn?.addEventListener("click", () => { rollDice("high"); });
     els.copyLinkBtn.addEventListener("click", () => {

@@ -29,7 +29,8 @@ describe("Rankings ✅ ↔ names box (t356u)", () => {
     const s = rankingsSource();
     assert.doesNotMatch(s, /id="ranksPickBox"|id="ranksChips"|id="ranksCompare"|id="backLink"/);
     assert.match(s, /host\.toggleName\(q, inp, want\)/);
-    assert.match(read("app.js"), /function rankingsSync\(\) \{\s*if \(rankingsApi\) rankingsApi\.syncPicks\(\);/);
+    // t376u: still syncs the Rankings, but on the next frame so the chip paints first.
+    assert.match(read("app.js"), /function rankingsSync\(\) \{(?=[\s\S]{0,500}?rankingsApi\.syncPicks\(\))(?=[\s\S]{0,500}?requestAnimationFrame)/);
   });
 
   const chrome = ["google-chrome", "chromium", "chromium-browser", "google-chrome-stable"].find((b) => {

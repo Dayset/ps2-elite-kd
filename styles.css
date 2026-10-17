@@ -2450,3 +2450,8 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
 /* t375u: 📊 Public table under the skill graph. */
 .stats-panel-public:empty { display: none; }
 .stats-panel-public { margin-top: 0.5rem; }
+
+/* t376u: 🎲 / < / > waiting for the player list (rare: it's prefetched). */
+@keyframes diceBusy { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+.dice-group button.is-loading { animation: diceBusy 0.8s ease-in-out infinite; cursor: progress; }
+@media (prefers-reduced-motion: reduce) { .dice-group button.is-loading { animation: none; opacity: 0.5; } }

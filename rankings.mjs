@@ -140,8 +140,10 @@ export function initRankings(host) {
       const st = renderState;
       const next = openTierIds(st.groups, { list: st.list, picked, filtering: st.filtering, manual: tierManual });
       const same = next.size === st.open.size && [...next].every((id) => st.open.has(id));
-      // Headers show the selected names, so they re-render whenever picks change.
-      if (!same || before.size !== picked.size || hits.some((h) => !before.has(h.query))) rerenderKeepingView();
+      // t376u: same tiers open → only the header labels (selected names)
+      // change, so patch those rows instead of re-rendering the whole table.
+      if (!same) rerenderKeepingView();
+      else refreshTierHeaders();
     }
     updateTicks();
     syncPickedUi();
@@ -437,18 +439,36 @@ export function initRankings(host) {
     const wrap = typeof tableScroll !== "undefined" ? tableScroll : null;
     const prevAt = renderState ? renderState.at : 0;
     let anchorQ = null, y0 = 0;
-    if (wrap) {
+    // Folded table: nothing on screen to keep in place (t376u: skip the measuring).
+    const sec = $("ranksTableSection");
+    if (wrap && (!sec || sec.open) && wrap.scrollTop > 0) {
+      // t376u: binary search for the first visible row (was one
+      // getBoundingClientRect per row: ~0.8 s on a big open tier).
       const top = wrap.getBoundingClientRect().top + ($("ranksHead").getBoundingClientRect().height || 0);
-      for (const tr of $("ranksBody").querySelectorAll("tr[data-q]")) {
-        const r = tr.getBoundingClientRect();
-        if (r.bottom > top) { anchorQ = tr.getAttribute("data-q"); y0 = r.top; break; }
+      const rows = $("ranksBody").querySelectorAll("tr[data-q]");
+      let lo = 0, hi = rows.length - 1, hit = -1;
+      while (lo <= hi) {
+        const mid = (lo + hi) >> 1;
+        if (rows[mid].getBoundingClientRect().bottom > top) { hit = mid; hi = mid - 1; } else lo = mid + 1;
       }
+      if (hit >= 0) { anchorQ = rows[hit].getAttribute("data-q"); y0 = rows[hit].getBoundingClientRect().top; }
     }
     renderBody();
     renderRowsTo(prevAt);
     if (wrap && anchorQ) {
       const tr = $("ranksBody").querySelector(`tr[data-q="${CSS.escape(anchorQ)}"]`);
       if (tr) wrap.scrollTop += tr.getBoundingClientRect().top - y0;
+    }
+  }
+
+  /** Re-draw just the tier header rows (selected names in them), no table re-render. */
+  function refreshTierHeaders() {
+    const st = renderState;
+    if (!st || !st.groups) return;
+    const byId = new Map(st.groups.map((g) => [g.id, g]));
+    for (const tr of $("ranksBody").querySelectorAll("tr.rk-tier")) {
+      const g = byId.get(tr.getAttribute("data-tier"));
+      if (g) tr.outerHTML = tierRowHtml(g, st);
     }
   }
 
@@ -1336,9 +1356,13 @@ export function initRankings(host) {
     try {
       const hiddenP = fetch("data/hidden.json", { cache: "no-cache" }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
       const reviewedP = fetch("data/reviewed.json", { cache: "no-cache" }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
-      const res = await fetch("data/ranks.json", { cache: "no-cache" });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const payload = await res.json();
+      // t376u: the page already loads ranks.json once (🎲, 🧱 / 🤝 pools); reuse it.
+      let payload = host.loadRanks ? await host.loadRanks() : null;
+      if (!payload) {
+        const res = await fetch("data/ranks.json", { cache: "no-cache" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        payload = await res.json();
+      }
       // Players this browser fetched on Analyze: newer copies replace shared rows,
       // brand-new graphed names join as local-only rows (remerge, t338u/t359u).
       try { confirmedSet = confirmedPadderSlugs(await reviewedP); } catch {}
