@@ -97,6 +97,7 @@ import { markNote, statMark, confirmedPadderSlugs } from "./padding.mjs?v=202610
 import { accountTimes, flairsHtml, flairsFor } from "./flairs.mjs?v=20261010-sav1";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
 import "./name-peek.mjs?v=20261010-sav1";
+import { sfx, recentGesture, mountSfxToggle } from "./sfx.mjs?v=20261017-sfx1";
 import { mountNameSuggest } from "./name-suggest.mjs?v=20261016-sug1";
 import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261010-sav1";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
@@ -351,6 +352,7 @@ import {
 
   /** Warn (status line) that the field is full; replaces any "graph is ready" hint. */
   function showLimitHint() {
+    sfx("bonk");
     if (graphReadyHintTimer) {
       clearTimeout(graphReadyHintTimer);
       graphReadyHintTimer = 0;
@@ -374,6 +376,7 @@ import {
    * Auto-hides after 2.5 s, on tap, or on scroll; repeat calls restart it.
    */
   function showLimitToast(anchor) {
+    sfx("bonk");
     if (typeof document === "undefined") return;
     if (!limitToastEl) {
       limitToastEl = document.createElement("div");
@@ -1309,6 +1312,7 @@ import {
       const pool = [...vals.entries()].filter(([slug]) => !used.has(slug));
       if (!pool.length) { say("No cached players with iVi above 0"); return; }
       const [, pick] = pool[Math.floor(Math.random() * pool.length)];
+      sfx("sparkle"); sfxChipQuietUntil = Date.now() + 400;
       addNameToField(pick.name);
       say(`Added ${pick.name} (${Math.round(pick.adjs)} iVi). Press Analyze to load.`);
       return;
@@ -1404,7 +1408,15 @@ import {
     return true;
   }
 
+  let sfxChipCount = -1;
+  let sfxChipQuietUntil = 0;
   function renderNameTokens() {
+    // t402u: plink on a name added, plonk on removed (user gestures only).
+    if (sfxChipCount >= 0 && Date.now() > sfxChipQuietUntil) {
+      if (nameTokens.length > sfxChipCount) sfx("plink");
+      else if (nameTokens.length < sfxChipCount) sfx("plonk");
+    }
+    sfxChipCount = nameTokens.length;
     queueMicrotask(syncLimitLock);
     clearGraphReadyHint();
     if (nameTokens.length < MAX_NAMES) clearLimitHint();
@@ -3732,6 +3744,7 @@ import {
 
   async function analyzeNames(names, { forceFresh = false, quiet = false } = {}) {
     if (fetching) return;
+    const userRun = !quiet && recentGesture(); // t402u: no sounds for auto-restores
     const clean = names.map((n) => String(n).trim()).filter(Boolean);
     if (!clean.length) {
       clearChartUi();
@@ -3898,6 +3911,7 @@ import {
         }),
         "warn skipped all-failed"
       );
+      if (userRun) sfx("fail", { force: true });
       return;
     }
 
@@ -3927,6 +3941,10 @@ import {
       setStatus(skippedWarningHtml(summary, { fresh }) + notes, "warn skipped");
     } else {
       setStatus(notes, notes ? "warn census-note" : "");
+    }
+    if (userRun) {
+      if (summary) sfx("fail", { force: true });
+      else sfx(fresh ? "fresh" : "chime", { force: true });
     }
     // Results are in: glide the input/header up out of view.
     if (!quiet && location.hash === "#rankings" && !userMovedPage) {
@@ -4363,6 +4381,7 @@ import {
   if (els.fetchFresh) els.fetchFresh.addEventListener("change", updateFreshEta);
   if (els.analyzeBtn) {
     els.analyzeBtn.addEventListener("click", () => {
+      sfx("boop");
       runAnalyzeFromUi();
     });
   }
@@ -4791,6 +4810,7 @@ import {
 
   syncYScaleUi();
 
+  mountSfxToggle(document.getElementById("sfxToggle"));
   if (els.themeToggle) {
     els.themeToggle.addEventListener("click", () => toggleTheme());
   }
