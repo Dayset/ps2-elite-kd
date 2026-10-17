@@ -360,7 +360,7 @@ export function initRankings(host) {
       // crosses into another 📊 chart bin (same ranges as the bars).
       if (st.hist) {
         const bi = binIndexOf(st.hist, r[sortKey]);
-        if (bi >= 0 && bi !== st.prevBin) html += sepRowHtml(bi, st);
+        if (bi >= 0 && bi !== st.prevBin) html += st.groups ? tierSepRowHtml(bi, i, st) : sepRowHtml(bi, st);
         st.prevBin = bi;
       }
       html += rowHtml(r, st.cols);
@@ -463,6 +463,40 @@ export function initRankings(host) {
       ? `bottom ${fmtPct(b.cumPct)}`
       : `top ${fmtPct(b.kind === "under" ? 100 : shareAtOrAbove(h.sorted, b.x0))}`;
     const label = `${col.label} ${binRangeText(b, h, col)} · ${share}`;
+    return `<tr class="rk-sep" data-bin="${bi}" aria-hidden="true"><td colspan="${3 + st.cols.length}"><span>${esc(label)}</span></td></tr>`;
+  }
+
+  /**
+   * Divider inside a ⚔️ tier (t372u): a chart bin can straddle a tier edge
+   * (bin 1500–1600 vs the top-5% cut near 1571), so the label describes the
+   * rows actually under it — their own iVi range and the share of players at
+   * or above the lowest of them — instead of the whole bin's lower edge.
+   * Keeps "top x%" consistent with the tier header above it.
+   */
+  function tierSepRowHtml(bi, i, st) {
+    const h = st.hist;
+    const list = st.list;
+    const gi = groupIndexAt(st.groups, i);
+    const stop = gi >= 0 ? st.groups[gi].end : list.length;
+    let j = i + 1;
+    while (j < stop && binIndexOf(h, list[j][sortKey]) === bi) j++;
+    const a = list[i][sortKey], z = list[j - 1][sortKey];
+    const lo = Math.min(a, z), hi = Math.max(a, z);
+    const col = colById(sortKey);
+    const d = col && Number.isFinite(col.digits) ? col.digits : 0;
+    const f = (v) => (+v).toLocaleString(undefined, { maximumFractionDigits: d });
+    const n = h.sorted.length || 1;
+    let share;
+    if (sortDir === "asc") {
+      // bottom x% = players at or below the highest value in this segment
+      let k = 0, m = h.sorted.length;
+      while (k < m) { const c = (k + m) >> 1; if (h.sorted[c] <= hi) k = c + 1; else m = c; }
+      share = `bottom ${fmtPct((k / n) * 100)}`;
+    } else {
+      share = `top ${fmtPct(shareAtOrAbove(h.sorted, lo))}`;
+    }
+    const range = lo === hi ? f(lo) : `${f(lo)}–${f(hi)}`;
+    const label = `${col.label} ${range} · ${share}`;
     return `<tr class="rk-sep" data-bin="${bi}" aria-hidden="true"><td colspan="${3 + st.cols.length}"><span>${esc(label)}</span></td></tr>`;
   }
 
