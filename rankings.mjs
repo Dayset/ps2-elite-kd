@@ -15,8 +15,8 @@ import { deskUiScale } from "./desk-scale.mjs?v=20261010-sav1";
 import { matchPicks } from "./pick-sync.mjs?v=20261010-sav1";
 import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-sav1";
 import { groupByTier, openTierIds, pickedInGroup, groupIndexAt, tierOf } from "./tiers.mjs?v=20261017-tier1";
-import { createDistCycler, swipeStep, createWheelSwiper } from "./dist-cycle.mjs?v=20261017-carousel1";
-import { slideSwap } from "./chart-slide.mjs?v=20261017-slide1";
+import { createDistCycler, createWheelSwiper } from "./dist-cycle.mjs?v=20261017-carousel1";
+import { slideSwap, attachDragCarousel } from "./chart-slide.mjs?v=20261017-drag1";
 import { mergeFreshRows } from "./rank-row.mjs?v=20261010-sav1";
 import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-sav1";
 import { confirmedPadderSlugs } from "./padding.mjs?v=20261010-sav1";
@@ -1336,7 +1336,7 @@ export function initRankings(host) {
     ids: () => [...$("distMetric").options].map((o) => o.value).filter((v) => DIST_IDS.has(v)),
     current: () => distMetric,
     show: crossfadeDistTo,
-    canRun: () => !!data && $("distSection").open && !document.hidden && distOnScreen && $("distTip").hidden,
+    canRun: () => !!data && $("distSection").open && !document.hidden && distOnScreen && $("distTip").hidden && !(distDrag && distDrag.busy()),
   });
   /* t383u: 👆 swipe on the chart — finger / mouse drag to the right = next
    * metric, to the left = previous (two-finger sideways on a trackpad too).
@@ -1364,33 +1364,42 @@ export function initRankings(host) {
       },
     });
   }
+  /* t386u: 👆 finger-following carousel on the chart (drag left = next from
+   * the right, drag right = previous from the left; both charts visible
+   * mid-drag; release past ¼ width or flick to finish, else spring back). */
+  let distDrag = null;
   {
     const chart = $("distChart");
-    let start = null;
-    let swallowClick = false;
-    chart.addEventListener("pointerdown", (e) => {
-      if (e.pointerType === "mouse" && e.button !== 0) return;
-      start = { x: e.clientX, y: e.clientY, t: performance.now(), id: e.pointerId };
-    }, { passive: true });
-    const finish = (e) => {
-      if (!start || e.pointerId !== start.id) return;
-      const dir = swipeStep({ dx: e.clientX - start.x, dy: e.clientY - start.y, dt: performance.now() - start.t });
-      start = null;
-      if (!dir) return;
-      swallowClick = true;
-      setTimeout(() => { swallowClick = false; }, 400);
-      hideTip();
-      stepDist(dir);
+    const ids = () => [...$("distPills").querySelectorAll(".dist-pill")].map((b) => b.getAttribute("data-id"));
+    let orig = null;
+    const setMetric = (id) => {
+      distMetric = id;
+      if ($("distMetric").value !== id) $("distMetric").value = id;
+      drawDist();
     };
-    chart.addEventListener("pointerup", finish, { passive: true });
-    chart.addEventListener("pointercancel", () => { start = null; }, { passive: true });
-    // The click that follows a swipe must not open / jump a bar.
-    chart.addEventListener("click", (e) => {
-      if (!swallowClick) return;
-      swallowClick = false;
-      e.stopPropagation();
-      e.preventDefault();
-    }, true);
+    distDrag = attachDragCarousel({
+      target: chart,
+      container: chart,
+      svg: () => $("distSvg"),
+      background: () => cssVar("--panel", "#14161a"),
+      canStart: () => !!data && $("distSection").open && $("distSvg").childNodes.length > 0 && ids().length > 1,
+      onStart: () => {
+        orig = distMetric;
+        if (distCycler) distCycler.interact();
+        hideTip();
+        chart.querySelectorAll("svg.dist-ghost").forEach((g) => g.remove());
+      },
+      show: (dir) => {
+        const list = ids();
+        const i = Math.max(0, list.indexOf(orig));
+        setMetric(list[(i + dir + list.length) % list.length]);
+      },
+      restore: () => { if (orig) setMetric(orig); },
+      onCommit: () => { if (distCycler) distCycler.interact(); },
+    });
+  }
+  {
+    const chart = $("distChart");
     const wheel = createWheelSwiper();
     chart.addEventListener("wheel", (e) => {
       const dir = wheel.push(e.deltaX, e.deltaY);

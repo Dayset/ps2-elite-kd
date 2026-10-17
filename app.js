@@ -39,8 +39,8 @@ import GHOST_MODEL from "./data/ghost-model.mjs?v=20261010-sav1";
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-sav1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261015-tip1";
-import { swipeStep, createWheelSwiper } from "./dist-cycle.mjs?v=20261017-carousel1";
-import { slideSwap } from "./chart-slide.mjs?v=20261017-slide1";
+import { createWheelSwiper } from "./dist-cycle.mjs?v=20261017-carousel1";
+import { slideSwap, attachDragCarousel } from "./chart-slide.mjs?v=20261017-drag1";
 import { entryFetchedAt, pickNewest, writeWithEviction } from "./cache-pick.mjs?v=20261010-sav1";
 import {
   NameLoadError,
@@ -1495,7 +1495,7 @@ import {
   }
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261017-carousel1")
+    rankingsLoading = import("./rankings.mjs?v=20261017-drag1")
       .then((m) => {
         rankingsApi = m.initRankings(rankingsHost);
         return rankingsApi.ready;
@@ -4622,18 +4622,29 @@ import {
         if (on && on.getAttribute("data-tip")) showHeadTip(on.getAttribute("data-tip"), on);
       }
     };
-    let sw = null;
-    els.chart.addEventListener("pointerdown", (e) => {
-      if (e.pointerType === "mouse" && e.button !== 0) return;
-      sw = { x: e.clientX, y: e.clientY, t: performance.now(), id: e.pointerId };
-    }, { passive: true });
-    els.chart.addEventListener("pointerup", (e) => {
-      if (!sw || e.pointerId !== sw.id) return;
-      const dir = swipeStep({ dx: e.clientX - sw.x, dy: e.clientY - sw.y, dt: performance.now() - sw.t });
-      sw = null;
-      if (dir && players.length) flipView(dir);
-    }, { passive: true });
-    els.chart.addEventListener("pointercancel", () => { sw = null; }, { passive: true });
+    // t386u: 👆 finger-following carousel: the current view moves with the
+    // finger while the other view comes in from the edge (both visible
+    // mid-drag); release past ¼ width or flick to finish, else spring back.
+    const showViewTip = () => {
+      if (!isTouchUi()) return;
+      const on = document.querySelector(yScaleMode === "kd" ? '[data-yscale="kd-btn"]' : '.chart-mode-btn[data-mode="cumulative"]');
+      if (on && on.getAttribute("data-tip")) showHeadTip(on.getAttribute("data-tip"), on);
+    };
+    let viewAtDragStart = yScaleMode;
+    const chartWrap = els.chart.closest(".chart-wrap");
+    if (chartWrap) {
+      attachDragCarousel({
+        target: els.chart,
+        container: chartWrap,
+        svg: () => els.chart,
+        background: () => getComputedStyle(chartWrap).backgroundColor,
+        canStart: () => players.length > 0 && !els.chart.hasAttribute("hidden"),
+        onStart: () => { viewAtDragStart = yScaleMode; },
+        show: () => { const want = viewAtDragStart === "kd" ? "ivi" : "kd"; if (yScaleMode !== want) setYScaleMode(want); },
+        restore: () => { if (yScaleMode !== viewAtDragStart) setYScaleMode(viewAtDragStart); },
+        onCommit: showViewTip,
+      });
+    }
     const wheelSw = createWheelSwiper();
     els.chart.addEventListener("wheel", (e) => {
       const dir = wheelSw.push(e.deltaX, e.deltaY);
