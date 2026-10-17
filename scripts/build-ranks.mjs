@@ -43,6 +43,7 @@ export function readXp(dataDir, slug) {
 // recomputes a player's row from a fresher browser copy with the same code).
 export { METRIC_COLS, RANK_COLS, bareName, rankRow } from "../rank-row.mjs";
 import { METRIC_COLS, RANK_COLS, rankRow, bareName } from "../rank-row.mjs";
+import { assistGroups } from "../assist-groups.mjs";
 
 /** data/reviewed.json → Set of slugs confirmed as stat padders (decision "padding"; missing file = none). */
 export function readConfirmedPadders(dataDir) {
@@ -211,7 +212,7 @@ export function buildRanksWithGuard(dataDir) {
       // 🤖 likely farm account (same rule as build-log.html: a 🌱 that mostly feeds a few killers).
       const sp = sprout(m.raw || m, sampleEvents(np.rawRows || np.rows));
       const fa = sp.sprout && !isNotFarm({ name: np.display, cid: np.cid }) ? farmAccount(np.rawRows || np.rows, m.ownKpm) : null;
-      players.push({ slug: row[2], name: row[0], cid: String(np.cid || ""), farmAcct: !!(fa && fa.farm), flagged: f.flagged || sf.flagged || fx.flagged, patterns, values, session: sm, sessionFlag: sf, forensics: fx, row, hidden: !!(info && info.hidden), confirmedCheater: !!(info && info.confirmedCheater) });
+      players.push({ infTag: (pl.infantry && pl.infantry.tag) || null, slug: row[2], name: row[0], cid: String(np.cid || ""), farmAcct: !!(fa && fa.farm), flagged: f.flagged || sf.flagged || fx.flagged, patterns, values, session: sm, sessionFlag: sf, forensics: fx, row, hidden: !!(info && info.hidden), confirmedCheater: !!(info && info.confirmedCheater) });
     },
   });
   const found = findOutliers(players, [...METRIC_COLS, ...SESSION_METRIC_IDS]);
@@ -221,6 +222,7 @@ export function buildRanksWithGuard(dataDir) {
     ranks, guard, hidden: hiddenSummary(dataDir, hiddenFound), bins: binCounts(players, guard), session: sessionStatus(players, guard, dataDir),
     forensics: forensicsStatus(players, guard, forensics),
     review: reviewStatus(players, guard, forensics, farmFound),
+    assistGroups: assistGroups(players), // 🤝 build-log only (assists never public)
   };
 }
 
@@ -465,7 +467,7 @@ if (isMain) {
   // newly hidden players via the normal hidden path.
   const autoHidden = autoHideFreshExceptional(dataDir);
   if (autoHidden.length) console.log(`auto-hide: ${autoHidden.length} fresh exceptional account(s) added to hidden.json: ${autoHidden.map((a) => a.name).join(", ")}`);
-  const { ranks: out, guard, hidden: hiddenInfo, bins, session, forensics: forensicsInfo, review } = buildRanksWithGuard(dataDir);
+  const { ranks: out, guard, hidden: hiddenInfo, bins, session, forensics: forensicsInfo, review, assistGroups: assistInfo } = buildRanksWithGuard(dataDir);
   fs.writeFileSync(path.join(dataDir, "ranks.json"), JSON.stringify(out) + "\n");
   console.log(`ranks.json: ${out.count} players (${hiddenInfo.count} on the 🙈 hide list)`);
   // 🧪 Outlier guard → data/status.json (build-log.html). Other status fields are kept.
@@ -478,6 +480,7 @@ if (isMain) {
   st.sessionStats = session;
   st.forensics = forensicsInfo;
   st.review = review;
+  st.assistGroups = assistInfo;
   st.infantry = infantryStatus(dataDir);
   fs.writeFileSync(stPath, JSON.stringify(st, null, 2) + "\n");
   for (const o of guard.items.filter((x) => !x.explained)) {

@@ -155,6 +155,11 @@
       <div class="st-note">Recent Honu sessions we already collect quietly (assists on every refresh; full XP detail for analyzed / requested players), as rates per kill / minute / death. Assists stay off the public pages; this section is the only place they show. Count = 🚩 session-pattern hits. Session-metric outliers also go through the 🧪 outlier guard (📉), and a player with the session pattern is listed in 🚩.</div>
       <div id="sessRule" class="st-rule"></div>
       <div id="sessCoverage" class="st-dim">Loading…</div>
+      <details class="st-sub-sec" id="secAssistGroups">
+      <summary><h3>🤝 Assist groups (experiment) <span id="agCount" class="st-count">…</span></h3></summary>
+      <div class="st-note">Experiment (t378u): assists / kill and assist damage share next to K/D and iVi. Never public. ⚠️ Vehicle / air players are not separated yet: everyone counts as infantry for now (later filtered with the infantry tags), so vehicle assists can skew these numbers. Only players with 100+ kills in counted sessions. 💪 Carries fights = top-quarter K/D + top-quarter damage share. 🎯 Finishers = top-quarter K/D + bottom-quarter damage share. 🤝 Hidden support = top-10% assists / kill with a middle iVi (25th–75th percentile). 🚩 = already on a red-flag list.</div>
+      <div id="assistGroups" class="st-dim">Loading…</div>
+      </details>
       <details class="st-sub-sec" id="secSessFlags" data-default="open">
       <summary><h3>🚩 Session pattern <span id="sessFlagCount" class="st-count">…</span></h3></summary>
       <div id="sessFlags" class="st-dim">Loading…</div>
@@ -846,6 +851,25 @@
         (rows ? '<div class="st-scroll"><table class="st-table"><tr><th>Player / session</th><th class="st-num">Kills / deaths</th><th>Kill rate</th><th>Top weapons</th><th>Victims / account</th><th>Findings</th></tr>' + rows + "</table></div>" : "");
     }
 
+    function tagTbl(a) {
+      const T = a.byTag || {}, P = a.predict || {};
+      const rows = ["infantry", "mixed", "vehicle", "untagged"].map((t) => "<tr><td>" + t + '</td><td class="st-num">' + ((T[t] && T[t].count) || 0) + '</td><td class="st-num">' + (T[t] && T[t].medApk != null ? (+T[t].medApk).toFixed(2) : "—") + '</td><td class="st-num">' + (T[t] && T[t].medShare != null ? Math.round(T[t].medShare * 100) + "%" : "—") + "</td></tr>").join("");
+      const pr = (lbl, b) => b ? "<div>" + lbl + " " + b.dir + " " + b.threshold + ": catches " + Math.round(b.vehicleCaught * 100) + "% of vehicle mains, clears " + Math.round(b.infantryCleared * 100) + "% of infantry.</div>" : "";
+      const pred = P.apk || P.share ? pr("Assists / kill", P.apk) + pr("Damage share", P.share) : '<div class="st-dim">Too few tagged players yet for a vehicle-main threshold test (needs ' + (a.tagMin || 20) + " vehicle and " + (a.tagMin || 20) + " infantry).</div>";
+      return '<h4>🚜 By infantry tag (measured players only)</h4><div class="st-scroll"><table class="st-table"><tr><th>Tag</th><th class="st-num">Players</th><th class="st-num">Median assists / kill</th><th class="st-num">Median dmg share</th></tr>' + rows + "</table></div>" + pred;
+    }
+    function renderAssistGroups(status) {
+      const a = status && status.assistGroups;
+      if (!a) { $("agCount").textContent = "–"; $("assistGroups").innerHTML = '<span class="st-dim">No check yet (written by the next refresh run).</span>'; return; }
+      const c = a.coverage || {}, k = a.cuts || {}, G = a.groups || {};
+      const n3 = (v) => (v == null ? "—" : (+v).toFixed(2));
+      $("agCount").textContent = c.measured || 0;
+      const tbl = (title, g) => "<h4>" + title + " · " + ((g && g.count) || 0) + " players</h4>" + (g && g.top && g.top.length ?
+        '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th class="st-num">K/D</th><th class="st-num">KPM</th><th class="st-num">iVi</th><th class="st-num">Assists / kill</th><th class="st-num">Dmg share</th><th class="st-num">Kills</th></tr>' +
+        g.top.map((r) => "<tr><td>" + (r.flagged ? "🚩 " : "") + esc(r.name) + '</td><td class="st-num">' + n3(r.kd) + '</td><td class="st-num">' + n3(r.kpm) + '</td><td class="st-num">' + (r.ivi == null ? "—" : Math.round(r.ivi)) + '</td><td class="st-num">' + n3(r.apk) + '</td><td class="st-num">' + (r.share == null ? "—" : Math.round(r.share * 100) + "%") + '</td><td class="st-num">' + r.kills + "</td></tr>").join("") + "</table></div>" : '<div class="st-dim">None.</div>');
+      $("assistGroups").innerHTML = "<div>Coverage: " + (c.measured || 0) + " of " + (c.players || 0) + " players (" + (c.measuredPct || 0) + "%) have enough session data; " + (c.withSessions || 0) + " have some. Cut-offs: K/D ≥ " + n3(k.kd) + ", damage share ≥ " + Math.round((k.shareHi || 0) * 100) + "% / ≤ " + Math.round((k.shareLo || 0) * 100) + "%, assists / kill ≥ " + n3(k.apk) + " (median " + n3(k.medApk) + "), iVi " + Math.round(k.iviLo || 0) + "–" + Math.round(k.iviHi || 0) + " · checked " + esc(a.checkedAt ? ago(Date.parse(a.checkedAt)) : "—") + "</div>" +
+        tbl("💪 Carries fights", G.carries) + tbl("🎯 Finishers", G.finishers) + tbl("🤝 Hidden support", G.support) + tagTbl(a);
+    }
     function renderSession(status) {
       const s = status && status.sessionStats;
       if (!s) {
@@ -931,6 +955,7 @@
       if (window.renderStatusBar) window.renderStatusBar(st);
       renderHidden(st);
       renderSession(st);
+      try { renderAssistGroups(st); } catch (e) { console.warn(e); }
       renderForensics(st);
     }
 
