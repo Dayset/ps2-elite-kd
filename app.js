@@ -285,7 +285,8 @@ import {
   let chartMode = readChartMode();
   // Y-scale: "kd" (pace-adjusted K/D via 💀) or "ivi" (slider-anchored percentile).
   // Slider 100%→0.1%: Y = iVi × K/D(x)/K/D_p(slider). Representation only.
-  let yScaleMode = "ivi";
+  // Default is K/D first, iVi second (Dayset 2026-10-17).
+  let yScaleMode = "kd";
   let yScalePct = 50;
   let ghostsOn = readGhostsOn();
   let fetching = false;
