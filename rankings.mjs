@@ -16,6 +16,7 @@ import { matchPicks } from "./pick-sync.mjs?v=20261010-sav1";
 import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-sav1";
 import { groupByTier, openTierIds, pickedInGroup, groupIndexAt, tierOf } from "./tiers.mjs?v=20261017-tier1";
 import { createDistCycler, swipeStep, createWheelSwiper } from "./dist-cycle.mjs?v=20261017-swipe1";
+import { slideSwap } from "./chart-slide.mjs?v=20261017-slide1";
 import { mergeFreshRows } from "./rank-row.mjs?v=20261010-sav1";
 import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-sav1";
 import { confirmedPadderSlugs } from "./padding.mjs?v=20261010-sav1";
@@ -1345,7 +1346,23 @@ export function initRankings(host) {
     const ids = [...$("distPills").querySelectorAll(".dist-pill")].map((b) => b.getAttribute("data-id"));
     if (ids.length < 2) return;
     const i = Math.max(0, ids.indexOf(distMetric));
-    setDistMetric(ids[(i + dir + ids.length) % ids.length]);
+    const id = ids[(i + dir + ids.length) % ids.length];
+    // t384u: a swipe slides (next comes in from the right, previous from the
+    // left); the auto-cycle and emoji clicks keep the dissolve.
+    if (distCycler) distCycler.interact();
+    hideTip();
+    $("distChart").querySelectorAll("svg.dist-ghost").forEach((g) => g.remove());
+    slideSwap({
+      container: $("distChart"),
+      svg: $("distSvg"),
+      dir,
+      background: cssVar("--panel", "#14161a"),
+      draw: () => {
+        distMetric = id;
+        if ($("distMetric").value !== id) $("distMetric").value = id;
+        drawDist();
+      },
+    });
   }
   {
     const chart = $("distChart");
