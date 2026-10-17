@@ -143,7 +143,7 @@ import {
   const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";
   /** "1" = hide adjusted-iVi ≤ 0 players from the Rankings table browse (footer checkbox). */
   const LS_HIDE_ZERO_IVI = "ps2-elite-kd-hide-zero-ivi";
-  /** Chart view: "banded" (🎚️ Smooth, opt-in) or anything else = cumulative (📈 Raw, default). Stored values unchanged. */
+  /** Chart view: "banded" (🎚️ Smooth, opt-in) or anything else = cumulative (default; 💀 K/D / 🎯 aim views). Stored values unchanged. */
   // v2: Smooth shipped 2026-10-08 and test taps left "banded" saved for some
   // people, so everyone restarts on Raw once; choices saved from now on stick.
   const LS_CHART_MODE = "ps2-elite-kd-chart-mode-v2";
@@ -1481,7 +1481,7 @@ import {
   }
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261017-pill1")
+    rankingsLoading = import("./rankings.mjs?v=20261017-aim1")
       .then((m) => {
         rankingsApi = m.initRankings(rankingsHost);
         return rankingsApi.ready;
@@ -2810,7 +2810,7 @@ import {
     ylab.setAttribute("font-size", fz(12));
     ylab.setAttribute("text-anchor", "middle");
     ylab.setAttribute("transform", `rotate(90 ${PLOT.x + PLOT.w + 44} ${PLOT.y + PLOT.h / 2})`);
-    // t378u: 📈 iVi mode rescales each curve to its player's iVi; say so on the axis.
+    // t378u/t381u: 🎯 aim mode rescales each curve to its player's iVi; say so on the axis.
     ylab.textContent = banded ? "K/D vs enemies near this KPM" : yScaleMode === "ivi" ? "Aim score (public IvI)" : "Kills per death";
     svg.appendChild(ylab);
 
@@ -3202,7 +3202,7 @@ import {
     ];
     // Older debug columns: appended only when "show older debug stats" (footer) is ticked.
     const adjDebugCols = [
-      { id: "mech", label: "🎯 Aim", hint: "Estimated share of your fights that are vehicle or mech play, projected from 🛡️ Resist rather than measured from shooting.", fn: (r) => r.mech, digits: 1 },
+      { id: "mech", label: "⚙️ Mech%", hint: "Estimated share of your fights that are vehicle or mech play, projected from 🛡️ Resist rather than measured from shooting.", fn: (r) => r.mech, digits: 1 },
       { id: "adj", label: "🎯🎈 ivi", hint: "Opposition-weighted IvI before the kill-speed adjustment: public IvI adjusted by 🛡️ Resist so soft-farm padding is tempered. The 🎈 is a reminder that this score is still inflated (slow, safe play is not penalised here — see ⚔️ iVi).", fn: (r) => r.adj, digits: 0 },
       { id: "ekpm", label: "eKPM", hint: "Average enemy weapon KPM faced (how hard the opposition shoots).", fn: (r) => r.ekpm, digits: 2 },
       { id: "own", label: "own KPM", hint: "Your weapon pace used on the elite K/D curve and for the ⚔️ iVi speed adjustment.", fn: (r) => r.own, digits: 2 },

@@ -39,7 +39,7 @@ Resistance-weighted K/D. Each death counts for more or less depending on how har
 
 These are hidden by default. Tick **show older debug stats** in the footer to see them.
 
-- **🎯 Aim** (Mech%): the estimated share of your fights that are vehicle or mech play. It's projected from Resist, not measured from shooting.
+- **⚙️ Mech%**: the estimated share of your fights that are vehicle or mech play. It's projected from Resist, not measured from shooting.
 - **🎈 Inflation**: overall K/D ÷ K/D against enemies at **0.5 weapon KPM or higher**. Values above 1.0 mean the overall K/D is higher than the K/D against those enemies. The average player's enemy KPM is about 0.35 for reference. It's hidden by default because it rarely shows anything meaningful.
 - **🎯🎈 ivi**: the opposition-weighted IvI before the speed adjustment. It's public IvI × Resistance tempering. The 🎈 is a label, not a value. The status page's red-flag review uses this value.
 - **eKPM / own KPM**: the average enemy weapon pace, and your own pace. They're kept separate.

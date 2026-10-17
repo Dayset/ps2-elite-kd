@@ -43,7 +43,7 @@ export function initRankings(host) {
     { id: "rkd", label: "☠️ K/D", digits: 3, tip: "Kills ÷ deaths against the ~200 players you fight most, so it reflects real matchups rather than your whole lifetime." },
   ];
   const DEBUG = [
-    { id: "mech", label: "🎯 Aim", digits: 1, tip: "Estimated share of your fights that are vehicle or mech play, projected from 🛡️ Resist rather than measured from shooting." },
+    { id: "mech", label: "⚙️ Mech%", digits: 1, tip: "Estimated share of your fights that are vehicle or mech play, projected from 🛡️ Resist rather than measured from shooting." },
     { id: "adj", label: "🎯🎈 ivi", digits: 0, tip: "Opposition-weighted IvI (before speed adjustment)" },
     { id: "ekpm", label: "eKPM", digits: 2, tip: "Average enemy weapon KPM faced" },
     { id: "own", label: "own KPM", digits: 2, tip: "Your weapon pace" },

@@ -30,25 +30,30 @@ A walkthrough of the main page. For a short version, see the [README](../README.
 
 ## Theme and navigation
 
-- **☀️ Light / 🌙 Dark** toggles the theme. The light theme is a creamy haze of about 15% white.
+- **☀️ / 🌙** (small button at the right of the "Fetch fresh data" line) toggles the theme. The light theme is a creamy haze of about 15% white.
 - **🏆 Rankings** sit below the graph, and the old `ranks.html` links redirect to `index.html#rankings`, keeping any `?names=`.
 
 ## The chart
 
-- **📈 Raw** (default): cumulative. It shows K/D against everyone at or above each enemy KPM.
+Two views, switched in the graph's top-right corner:
+
+- **💀 Who wins fights** (default): kills per death against easy → hard enemies. Higher line = wins more fights.
+- **🎯 Who aims best**: each line keeps its shape but is lifted to the player's aim score (public IvI = accuracy × headshot %). Higher line = better aim, not more wins. Players can swap places between the two views: sharp aim doesn't always win fights, and vehicle / explosive players win without headshots.
+
+Both are cumulative: K/D against everyone at or above each enemy KPM. The axis fits the names on the graph.
+
 - **🎚️ Smooth**: K/D against enemies near each KPM. Faded where there are few fights.
 - **👻 Ghost** (optional): a dashed prediction based on play style, fitted on the shared cache. It fills sparse ranges and is clearly marked as not real fights.
 - Bands mark **Easy** and **Hard** at 0.75 and 1.50 enemy KPM.
-- The **zoom** slider (top-right):
-  - **Middle / Auto** shows the full graph, auto-fitted.
-  - **Up** zooms into the start of the graph. The X maximum shrinks quickly (about 0.71 at +1, 0.25 at the top), and Y refits to the visible left side. Lines leaving the right edge are clipped.
-  - **Down** keeps the full X range and flattens Y to fit extreme or high-tier K/D.
+- The **zoom** slider (top-right, under 💀 / 🎯):
+  - **Bottom / Auto** shows the full graph, auto-fitted.
+  - **Up** zooms into the start of the graph. The X maximum shrinks quickly (about 0.71 halfway, 0.25 at the top), and Y refits to the visible left side. Lines leaving the right edge are clipped.
 
 ## The stats table
 
 - **Public (Census/Honu)** columns are collapsed by default: KD, KPM, own KPM, Acc %, HSR %, IvI.
 - **Adjusted** columns are shown by default: ⚔️ iVi, 🏃 Activity, 🦁 Brave, 🛡️ Resist, ⚡ Const, ☠️ K/D.
-- Tick **show older debug stats** in the footer to add 🎯 Aim (Mech%), 🎯🎈 ivi, eKPM, own KPM, 📊 COI, 📉 Slope and 🎈 Inflation. The choice is remembered.
+- Tick **show older debug stats** in the footer to add ⚙️ Mech%, 🎯🎈 ivi, eKPM, own KPM, 📊 COI, 📉 Slope and 🎈 Inflation. The choice is remembered.
 - Click any header to sort. Names sort alphabetically, and metrics sort numerically. The default is ⚔️ iVi, descending. Sorting by a debug column falls back to iVi when the debug columns are hidden.
 - Hover a header for a short hint.
 - Each value shows a small dimmed percentage against a reference value in its column:
