@@ -105,12 +105,12 @@
     </div>
     <span id="waveRangeWarn" hidden style="font-size:0.72rem; color:#c90; margin-left:8px;"></span>
     <div id="chartModeBar" class="chart-mode-bar" role="group" aria-label="Graph view">
-      <button type="button" class="chart-mode-btn" data-mode="cumulative" aria-pressed="true"
+      <button type="button" class="chart-mode-btn" data-yscale="kd-btn" aria-pressed="true"
+              title="💀 K/D mode: Y-axis shows pace-adjusted K/D instead of iVi-anchored scale.">💀</button>
+      <button type="button" class="chart-mode-btn" data-mode="cumulative" aria-pressed="false"
               title="Raw: cumulative K/D.">📈</button>
       <button type="button" class="chart-mode-btn" data-mode="banded" aria-pressed="false"
               title="Smooth: banded K/D.">🎚️</button>
-      <button type="button" class="chart-mode-btn" data-yscale="kd-btn" aria-pressed="false"
-              title="💀 K/D mode: Y-axis shows pace-adjusted K/D instead of iVi-anchored scale.">💀</button>
     </div>
     </div>
     <div id="chartYZoom" class="chart-y-zoom" hidden title="Zoom. Middle = auto-fit. Up zooms hard into the start of the graph (enemy KPM near 0): X shrinks from the right, Y re-fits to the left side. Down fits extreme / high-tier K/D.">
