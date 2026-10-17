@@ -1706,6 +1706,8 @@ td.thin-sample {
   height: 12px;
   border-radius: 50%;
   flex-shrink: 0;
+  /* Same box as .legend-flair so names line up with or without a flair. */
+  margin: 0 3px;
 }
 
 footer {
@@ -2061,8 +2063,12 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  width: 18px;
   line-height: 1;
 }
+/* 🪦 inactive accounts: name fades (marker stays full). */
+.legend-inactive .legend-label { opacity: 0.5; }
 .legend-flair .flair { margin-left: 0; font-size: 0.8rem; }
 
 /* Under ✨ Adjusted: collapsed "⚠️" note, opens to who is "—" and why. */
@@ -2453,6 +2459,7 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
 
 /* t376u: 🎲 / < / > waiting for the player list (rare: it's prefetched). */
 @keyframes diceBusy { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+.dice-group button.is-locked { opacity: 0.4; filter: grayscale(1); cursor: not-allowed; }
 .dice-group button.is-loading { animation: diceBusy 0.8s ease-in-out infinite; cursor: progress; }
 @media (prefers-reduced-motion: reduce) { .dice-group button.is-loading { animation: none; opacity: 0.5; } }
 

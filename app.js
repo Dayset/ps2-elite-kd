@@ -94,7 +94,7 @@ function thinCellTip(r) {
 }
 import { markNote, statMark, confirmedPadderSlugs } from "./padding.mjs?v=20261010-sav1";
 // Account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times: chart name list only.
-import { accountTimes, flairsHtml } from "./flairs.mjs?v=20261010-sav1";
+import { accountTimes, flairsHtml, flairsFor } from "./flairs.mjs?v=20261010-sav1";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
 import "./name-peek.mjs?v=20261010-sav1";
 import { mountNameSuggest } from "./name-suggest.mjs?v=20261016-sug1";
@@ -345,8 +345,8 @@ import {
   }
 
   /* ---------- 10-name cap ---------- */
-  const MAX_NAMES = 10;
-  const LIMIT_HINT_HTML = '<span class="warn">10 players limit reached</span>';
+  const MAX_NAMES = 6;
+  const LIMIT_HINT_HTML = `<span class="warn">${MAX_NAMES} players limit reached</span>`;
 
   /** Warn (status line) that the field is full; replaces any "graph is ready" hint. */
   function showLimitHint() {
@@ -368,7 +368,7 @@ import {
     if (limitToastEl) limitToastEl.hidden = true;
   }
   /**
-   * Show "10 players limit reached" next to `anchor` (above it, or below when
+   * Show "N players limit reached" next to `anchor` (above it, or below when
    * there's no room), clamped to the viewport; bottom-centre if no anchor.
    * Auto-hides after 2.5 s, on tap, or on scroll; repeat calls restart it.
    */
@@ -380,7 +380,7 @@ import {
       limitToastEl.className = "limit-toast";
       limitToastEl.setAttribute("role", "alert");
       limitToastEl.innerHTML =
-        '<strong>10 players limit reached</strong><span class="limit-toast-sub">remove a name to add another</span>';
+        `<strong>Limit of ${MAX_NAMES} names reached</strong><span class="limit-toast-sub">remove a name to add more</span>`;
       limitToastEl.addEventListener("click", hideLimitToast);
       document.body.appendChild(limitToastEl);
       window.addEventListener("scroll", () => { if (limitToastEl && !limitToastEl.hidden) hideLimitToast(); }, { passive: true });
@@ -1217,7 +1217,7 @@ import {
   }
 
   /**
-   * Add one name as a chip. Returns false (and shows "10 players limit reached")
+   * Add one name as a chip. Returns false (and shows "N players limit reached")
    * when the field is already full, so callers can keep the text instead of eating it.
    */
   function addNameToField(name) {
@@ -1300,7 +1300,7 @@ import {
       clearTimeout(busyTimer);
       if (btn) { btn.classList.remove("is-loading"); btn.removeAttribute("aria-busy"); }
     }
-    if (nameTokens.length >= MAX_NAMES) { say("The list is full (10 names)"); return; }
+    if (nameTokens.length >= MAX_NAMES) { say(`The list is full (${MAX_NAMES} names)`); return; }
     const used = new Set(nameTokens.map((n) => slugKey(n)));
     const listVals = nameTokens.map((n) => vals.get(slugKey(n))).filter(Boolean).map((v) => v.adjs);
     if (mode === "range" && !listVals.length) {
@@ -1371,7 +1371,29 @@ import {
     els.namesInput.placeholder = hasChips || hasTyped ? "" : DEFAULT_PLACEHOLDER_NAME;
   }
 
+  // t400u: at MAX_NAMES the 🎲 / < / > buttons lock (gray, aria-disabled but
+  // still clickable so a click/tap explains why) and the analysis starts once.
+  let limitWasFull = false;
+  let limitLockReady = false; // false during startup (?names= / restore)
+  const isListFull = () => nameTokens.length >= MAX_NAMES;
+  function syncLimitLock() {
+    const full = isListFull();
+    for (const b of [els.diceBtn, els.diceLowBtn, els.diceHighBtn]) {
+      if (!b) continue;
+      b.classList.toggle("is-locked", full);
+      if (full) b.setAttribute("aria-disabled", "true"); else b.removeAttribute("aria-disabled");
+    }
+    if (full && !limitWasFull && limitLockReady) setTimeout(() => { if (isListFull()) runAnalyzeFromUi(); }, 0);
+    limitWasFull = full;
+  }
+  function lockedClick(btn) {
+    if (!isListFull()) return false;
+    showLimitToast(btn);
+    return true;
+  }
+
   function renderNameTokens() {
+    queueMicrotask(syncLimitLock);
     clearGraphReadyHint();
     if (nameTokens.length < MAX_NAMES) clearLimitHint();
     persistPendingNames(); // every chip change goes through here
@@ -3494,7 +3516,8 @@ import {
     list.forEach((p, i) => {
       const col = seriesColor(i);
       const item = document.createElement("div");
-      item.className = "legend-item";
+      const inactive = flairsFor(p.times)[0]?.id === "inactive";
+      item.className = "legend-item" + (inactive ? " legend-inactive" : "");
       // Name links to the player's Honu profile (plain text if no character id).
       const url = honuProfileUrl(p.cid);
       const full = escapeHtml(p.display);
@@ -4455,14 +4478,14 @@ import {
   });
 
   if (els.copyLinkBtn) {
-    els.diceBtn?.addEventListener("click", () => { rollDice("range"); });
+    els.diceBtn?.addEventListener("click", () => { if (!lockedClick(els.diceBtn)) rollDice("range"); });
     // t376u: warm the 🎲 data while the page is idle so the first roll is instant.
     {
       const idle = typeof requestIdleCallback === "function" ? (f) => requestIdleCallback(f, { timeout: 4000 }) : (f) => setTimeout(f, 1500);
       idle(() => { loadRankVals(); });
     }
-    els.diceLowBtn?.addEventListener("click", () => { rollDice("low"); });
-    els.diceHighBtn?.addEventListener("click", () => { rollDice("high"); });
+    els.diceLowBtn?.addEventListener("click", () => { if (!lockedClick(els.diceLowBtn)) rollDice("low"); });
+    els.diceHighBtn?.addEventListener("click", () => { if (!lockedClick(els.diceHighBtn)) rollDice("high"); });
     els.copyLinkBtn.addEventListener("click", () => {
       commitFragment({ clearInput: true });
       copyShareLink();
@@ -4757,7 +4780,7 @@ import {
     if (els.fetchFresh) { els.fetchFresh.checked = false; updateFreshEta(); }
     await loadSharedIndex();
     const startup = resolveStartupNames();
-    setNameTokens(startup.names); // >10 from ?names= → first 10 + limit hint
+    setNameTokens(startup.names); // >6 from ?names= → first 6 + limit hint
     renderCacheChips();
     showIdleChart("▶️ Press Analyze");
     scheduleRankingsLoad(); // t356u: Rankings below load lazily
@@ -4772,5 +4795,7 @@ import {
       if (startup.restoreAfter) setNameTokens(startup.restoreAfter);
       persistNamesOn = true;
       persistPendingNames();
+      // After the startup lock sync (FIFO): only user edits auto-start Analyze.
+      queueMicrotask(() => { limitLockReady = true; });
     }
   })();
