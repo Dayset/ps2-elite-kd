@@ -2500,6 +2500,11 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
   transition: background-color 0.3s ease, opacity 0.3s ease;
 }
 .dist-pill:hover { opacity: 0.9; }
+/* Light theme: unselected pills render at 55% opacity, which washes the
+ * emojis pale against the light background — keep them fully opaque.
+ * The selected pill still stands out via its accent background + ring. */
+html[data-theme="light"] .dist-pill { opacity: 1; }
+html[data-theme="light"] .dist-pill:hover { opacity: 1; }
 .dist-pill:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; opacity: 1; }
 .dist-pill .dist-pill-text { display: none; font-weight: 600; white-space: nowrap; }
 .dist-pill.on { opacity: 1; background: var(--grid); padding: 0 0.55rem 0 0.4rem; }
