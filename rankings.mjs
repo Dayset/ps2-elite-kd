@@ -707,6 +707,36 @@ export function initRankings(host) {
       .map(([g, cols]) => `<optgroup label="${esc(g)}">` + cols.map((c) => `<option value="${c.id}">${esc(c.label)}</option>`).join("") + `</optgroup>`)
       .join("");
     sel.value = distMetric;
+    buildDistPills(groups.flatMap(([, cols]) => cols));
+  }
+
+  /* t377u: the metric row. Emoji per metric; the current one also shows
+   * its name. Click / arrow keys pick (counts as an interaction, so the
+   * auto-cycle holds); syncDistPills() follows every switch, auto or not. */
+  function splitLabel(label) {
+    const s = String(label || "").trim();
+    const i = s.indexOf(" ");
+    return i > 0 ? { icon: s.slice(0, i), text: s.slice(i + 1) } : { icon: s, text: "" };
+  }
+  function buildDistPills(cols) {
+    const box = $("distPills");
+    if (!box) return;
+    box.innerHTML = cols.map((c) => {
+      const { icon, text } = splitLabel(c.label);
+      return `<button type="button" class="dist-pill" role="radio" data-id="${esc(c.id)}" aria-checked="false" tabindex="-1" title="${esc(c.label)}" aria-label="${esc(c.label)}">` +
+        `<span class="dist-pill-icon" aria-hidden="true">${esc(icon)}</span><span class="dist-pill-text" aria-hidden="true">${esc(text)}</span></button>`;
+    }).join("");
+    syncDistPills();
+  }
+  function syncDistPills() {
+    const box = $("distPills");
+    if (!box) return;
+    for (const b of box.querySelectorAll(".dist-pill")) {
+      const on = b.getAttribute("data-id") === distMetric;
+      b.classList.toggle("on", on);
+      b.setAttribute("aria-checked", on ? "true" : "false");
+      b.tabIndex = on ? 0 : -1;
+    }
   }
 
   /** Metrics the 📊 chart menu offers (our own current stats only, t345u/t346u). */
@@ -847,6 +877,7 @@ export function initRankings(host) {
   let hlSig = "";
   function drawDist() {
     const svg = $("distSvg");
+    syncDistPills();
     if (!data || !svg || !$("distSection").open) return;
     const col = colById(distMetric);
     const h = getHist(distMetric);
@@ -1215,6 +1246,21 @@ export function initRankings(host) {
   });
 
   $("distMetric").addEventListener("change", (e) => setDistMetric(e.target.value));
+  $("distPills").addEventListener("click", (e) => {
+    const b = e.target.closest && e.target.closest(".dist-pill");
+    if (b) setDistMetric(b.getAttribute("data-id"));
+  });
+  $("distPills").addEventListener("keydown", (e) => {
+    const keys = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
+    if (!(e.key in keys) && e.key !== "Home" && e.key !== "End") return;
+    const pills = [...$("distPills").querySelectorAll(".dist-pill")];
+    if (!pills.length) return;
+    e.preventDefault();
+    let i = pills.findIndex((b) => b.getAttribute("data-id") === distMetric);
+    i = e.key === "Home" ? 0 : e.key === "End" ? pills.length - 1 : (i + keys[e.key] + pills.length) % pills.length;
+    setDistMetric(pills[i].getAttribute("data-id"));
+    pills[i].focus();
+  });
   $("distSection").addEventListener("toggle", () => drawDist());
 
   /* ---------- 📊 auto-cycle (t373u) ----------

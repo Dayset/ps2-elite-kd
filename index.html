@@ -39,7 +39,7 @@
     "codeRepository": "https://github.com/Dayset/ps2-elite-kd"
   }
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261017-dice1" />
+  <link rel="stylesheet" href="styles.css?v=20261017-pill2" />
 </head>
 <body class="main-page">
   <div class="controls">
@@ -145,15 +145,17 @@
     <div id="ranksStatus" class="ranks-status" role="status"></div>
     <details id="distSection" class="dist-section" open>
       <summary>📊 Distribution</summary>
-      <div class="dist-controls">
-        <label>Metric <select id="distMetric" aria-label="Distribution metric"></select></label>
-        <span id="distSummary" class="dist-summary"></span>
-      </div>
+      <!-- t377u: metric picker = a row of emojis on the summary line (current one
+           highlighted with its name); doubles as the auto-cycle's "you are here".
+           The <select> stays (hidden) as the value holder the code reads. -->
+      <div id="distPills" class="dist-pills" role="radiogroup" aria-label="Distribution metric"></div>
+      <select id="distMetric" aria-label="Distribution metric" hidden></select>
       <div class="dist-chart" id="distChart">
         <svg id="distSvg" role="img" aria-label="Distribution of the selected metric across cached players"></svg>
         <div id="distTip" class="dist-tip" hidden></div>
       </div>
       <div class="dist-note">Bars show how many players have each value; the line shows what % are below it. Click a bar (tap twice on phones) to see those players in the table. Your players are marked on top.</div>
+      <div id="distSummary" class="dist-summary"></div>
     </details>
     <!-- t358u: your players' positions under the chart, folded by default (state remembered). -->
     <details id="rkPosSection" class="dist-section rk-pos-section">
@@ -199,6 +201,6 @@
     </details>
   </footer>
 
-  <script type="module" src="app.js?v=20261017-dice1"></script>
+  <script type="module" src="app.js?v=20261017-pill1"></script>
 </body>
 </html>
