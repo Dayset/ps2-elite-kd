@@ -94,3 +94,46 @@ export function createDistCycler(opts) {
     holdLeft() { return Math.max(0, holdUntil - now()); },
   };
 }
+
+/* ---------- 👆 swipe between metrics (t383u) ----------
+ * Per the site owner: finger / drag to the RIGHT = next chart, LEFT = previous.
+ * A swipe must be mostly sideways, long enough and quick enough, so taps on
+ * bars and vertical page scrolls never count. */
+export const SWIPE_MIN_PX = 50;
+export const SWIPE_MAX_MS = 900;
+export const SWIPE_RATIO = 1.5; // |dx| must beat |dy| by this much
+
+/** +1 = next, -1 = previous, 0 = not a swipe. */
+export function swipeStep({ dx, dy, dt }, { minPx = SWIPE_MIN_PX, maxMs = SWIPE_MAX_MS, ratio = SWIPE_RATIO } = {}) {
+  const ax = Math.abs(+dx || 0);
+  const ay = Math.abs(+dy || 0);
+  if (!(ax >= minPx) || ax < ratio * ay || !(dt >= 0) || dt > maxMs) return 0;
+  return dx > 0 ? 1 : -1;
+}
+
+/**
+ * Trackpad two-finger sideways swipes arrive as wheel events: add up deltaX
+ * (only while it dominates deltaY) and fire once per gesture.
+ * Wheel deltaX > 0 = fingers moving LEFT (content scrolls right), so a
+ * finger-right swipe gives negative deltaX → next.
+ */
+export function createWheelSwiper({ threshold = 80, quietMs = 250, now = () => Date.now() } = {}) {
+  let acc = 0;
+  let last = 0;
+  let fired = false;
+  return {
+    /** Feed one wheel event; returns +1 / -1 when a swipe completes, else 0. */
+    push(dx, dy) {
+      const t = now();
+      if (t - last > quietMs) { acc = 0; fired = false; } // new gesture
+      last = t;
+      if (Math.abs(dx) <= Math.abs(dy)) return 0;
+      acc += dx;
+      if (fired || Math.abs(acc) < threshold) return 0;
+      fired = true;
+      return acc < 0 ? 1 : -1;
+    },
+    /** True while a sideways gesture is in progress (to stop browser back / forward). */
+    active() { return now() - last <= quietMs && acc !== 0; },
+  };
+}

@@ -2590,3 +2590,10 @@ html[data-theme="light"] .dist-pill:hover { opacity: 1; }
   .chart-corner .chart-y-zoom { gap: 0.15rem; }
   .chart-corner .chart-y-zoom-reset { font-size: 0.56rem; padding: 0.08rem 0.28rem; min-height: 0; min-width: 0; line-height: 1.1; }
 }
+
+/* t383u: horizontal swipes on the distribution chart switch metrics; vertical
+   scrolling and pinch-zoom stay with the browser. */
+.dist-chart, .dist-chart svg { touch-action: pan-y pinch-zoom; }
+
+/* t383u: sideways swipes on the skill graph flip 💀 ⇄ 🎯; vertical scroll stays. */
+#chart { touch-action: pan-y pinch-zoom; }

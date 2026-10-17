@@ -39,6 +39,7 @@ import GHOST_MODEL from "./data/ghost-model.mjs?v=20261010-sav1";
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-sav1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261015-tip1";
+import { swipeStep, createWheelSwiper } from "./dist-cycle.mjs?v=20261017-swipe1";
 import { entryFetchedAt, pickNewest, writeWithEviction } from "./cache-pick.mjs?v=20261010-sav1";
 import {
   NameLoadError,
@@ -1494,7 +1495,7 @@ import {
   }
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261017-fade3")
+    rankingsLoading = import("./rankings.mjs?v=20261017-swipe1")
       .then((m) => {
         rankingsApi = m.initRankings(rankingsHost);
         return rankingsApi.ready;
@@ -4643,6 +4644,37 @@ import {
     syncYScaleUi();
     syncChartModeUi();
     if (players.length) drawChart(players);
+  }
+  /* t383u: 👆 swipe sideways on the skill graph switches 💀 ⇄ 🎯 (two views,
+   * so either direction flips). Touch, mouse drag, or a two-finger trackpad
+   * swipe; vertical drags keep scrolling the page. Phones also get the short
+   * "who wins fights / who aims best" tip for the view they landed on. */
+  if (els.chart) {
+    const flipView = () => {
+      setYScaleMode(yScaleMode === "kd" ? "ivi" : "kd");
+      if (isTouchUi()) {
+        const on = document.querySelector(yScaleMode === "kd" ? '[data-yscale="kd-btn"]' : '.chart-mode-btn[data-mode="cumulative"]');
+        if (on && on.getAttribute("data-tip")) showHeadTip(on.getAttribute("data-tip"), on);
+      }
+    };
+    let sw = null;
+    els.chart.addEventListener("pointerdown", (e) => {
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      sw = { x: e.clientX, y: e.clientY, t: performance.now(), id: e.pointerId };
+    }, { passive: true });
+    els.chart.addEventListener("pointerup", (e) => {
+      if (!sw || e.pointerId !== sw.id) return;
+      const dir = swipeStep({ dx: e.clientX - sw.x, dy: e.clientY - sw.y, dt: performance.now() - sw.t });
+      sw = null;
+      if (dir && players.length) flipView();
+    }, { passive: true });
+    els.chart.addEventListener("pointercancel", () => { sw = null; }, { passive: true });
+    const wheelSw = createWheelSwiper();
+    els.chart.addEventListener("wheel", (e) => {
+      const dir = wheelSw.push(e.deltaX, e.deltaY);
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) e.preventDefault(); // not browser back / forward
+      if (dir && players.length) flipView();
+    }, { passive: false });
   }
   // t380u: phones have no hover — tapping 💀 / 📈 also shows what that view means.
   if (els.chartModeBar) {

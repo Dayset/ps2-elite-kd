@@ -15,7 +15,7 @@ import { deskUiScale } from "./desk-scale.mjs?v=20261010-sav1";
 import { matchPicks } from "./pick-sync.mjs?v=20261010-sav1";
 import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-sav1";
 import { groupByTier, openTierIds, pickedInGroup, groupIndexAt, tierOf } from "./tiers.mjs?v=20261017-tier1";
-import { createDistCycler } from "./dist-cycle.mjs?v=20261017-cyc1";
+import { createDistCycler, swipeStep, createWheelSwiper } from "./dist-cycle.mjs?v=20261017-swipe1";
 import { mergeFreshRows } from "./rank-row.mjs?v=20261010-sav1";
 import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-sav1";
 import { confirmedPadderSlugs } from "./padding.mjs?v=20261010-sav1";
@@ -1337,6 +1337,51 @@ export function initRankings(host) {
     show: crossfadeDistTo,
     canRun: () => !!data && $("distSection").open && !document.hidden && distOnScreen && $("distTip").hidden,
   });
+  /* t383u: 👆 swipe on the chart — finger / mouse drag to the right = next
+   * metric, to the left = previous (two-finger sideways on a trackpad too).
+   * Same path as clicking an emoji: dissolve + 15 s hold of the auto-cycle.
+   * A swipe that ends on a bar doesn't also count as a bar click. */
+  function stepDist(dir) {
+    const ids = [...$("distPills").querySelectorAll(".dist-pill")].map((b) => b.getAttribute("data-id"));
+    if (ids.length < 2) return;
+    const i = Math.max(0, ids.indexOf(distMetric));
+    setDistMetric(ids[(i + dir + ids.length) % ids.length]);
+  }
+  {
+    const chart = $("distChart");
+    let start = null;
+    let swallowClick = false;
+    chart.addEventListener("pointerdown", (e) => {
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      start = { x: e.clientX, y: e.clientY, t: performance.now(), id: e.pointerId };
+    }, { passive: true });
+    const finish = (e) => {
+      if (!start || e.pointerId !== start.id) return;
+      const dir = swipeStep({ dx: e.clientX - start.x, dy: e.clientY - start.y, dt: performance.now() - start.t });
+      start = null;
+      if (!dir) return;
+      swallowClick = true;
+      setTimeout(() => { swallowClick = false; }, 400);
+      hideTip();
+      stepDist(dir);
+    };
+    chart.addEventListener("pointerup", finish, { passive: true });
+    chart.addEventListener("pointercancel", () => { start = null; }, { passive: true });
+    // The click that follows a swipe must not open / jump a bar.
+    chart.addEventListener("click", (e) => {
+      if (!swallowClick) return;
+      swallowClick = false;
+      e.stopPropagation();
+      e.preventDefault();
+    }, true);
+    const wheel = createWheelSwiper();
+    chart.addEventListener("wheel", (e) => {
+      const dir = wheel.push(e.deltaX, e.deltaY);
+      // Sideways gesture on the chart: keep the browser from treating it as back / forward.
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) e.preventDefault();
+      if (dir) { hideTip(); stepDist(dir); }
+    }, { passive: false });
+  }
   for (const ev of ["pointerdown", "pointermove", "wheel", "keydown", "focusin", "touchstart"]) {
     $("distSection").addEventListener(ev, () => distCycler.interact(), { passive: true });
   }
