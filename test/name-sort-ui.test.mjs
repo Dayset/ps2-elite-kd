@@ -14,13 +14,13 @@ test("Rankings Player sort uses the shared comparator", () => {
   assert.match(ranks, /import \{ compareByCharName \} from "\.\/analyze-run\.mjs/);
   assert.match(ranks, /byName = \(a, b\) => compareByCharName\(a\.name, b\.name\)/);
 });
-test("one page (t356u): no 🏆 / › buttons; order controls → stats → graph → note → Rankings → footer", () => {
+test("one page (t356u): no 🏆 / › buttons; order controls → stats → graph → Rankings → footer (vehicles note + 📊 Public in the footer)", () => {
   assert.doesNotMatch(index, /id="ranksLink"|id="ranksGoBtn"|ranks-row|href="ranks\.html"/);
   // t375u: 📦 cache line is the first row (chips only); 🗑️ / theme are small icon buttons at the right of "Fetch fresh data".
   assert.match(index, /<div class="controls">\s*<div class="cache-row">\s*<div id="cacheChips"[^>]*><\/div>\s*<\/div>\s*<div id="namesBox"/);
   assert.match(index, /<div class="fresh-row">[\s\S]*?id="fetchFresh"[\s\S]*?<span class="fresh-row-end">[\s\S]*?id="wipeLocalBtn"[\s\S]*?id="themeToggle"[\s\S]*?<\/span>\s*<\/div>/);
   const at = (re) => { const m = index.search(re); assert.ok(m >= 0, String(re)); return m; };
-  const order = [/id="namesBox"/, /id="analyzeBtn"/, /id="statsPanel"/, /<svg id="chart"/, /id="legend"/, /id="statsPublic"/, /What about vehicles\?/, /<section id="rankings"/, /id="distSection"/, /id="rkPosSection"/, /id="rkPositions"/, /id="ranksTableSection"/, /id="ranksSearch"/, /id="ranksTable"/, /<footer>/, /id="ranksMeta"/].map(at);
+  const order = [/id="namesBox"/, /id="analyzeBtn"/, /id="statsPanel"/, /<svg id="chart"/, /id="legend"/, /<section id="rankings"/, /id="distSection"/, /id="rkPosSection"/, /id="rkPositions"/, /id="ranksTableSection"/, /id="ranksSearch"/, /id="ranksTable"/, /<footer>/, /What about vehicles\?/, /id="statsPublic"/, /id="ranksMeta"/].map(at);
   assert.deepEqual(order, order.slice().sort((a, b) => a - b));
   assert.match(app, /import\("\.\/rankings\.mjs\?v=/, "Rankings load lazily");
   // t358u: no "🏆 Rankings" title; positions + big table folded by default.

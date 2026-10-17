@@ -7,6 +7,12 @@
  *   - names inside a link / button / chip (Honu links, name chips, cache chips):
  *     long-press (~0.45 s) — a normal tap keeps its usual action (open link,
  *     add / remove name); the click after a long-press is swallowed.
+ * The popup shows the player's legend (data-desc) with a 📖 icon, and the
+ * name itself links to the player's profile when the tapped name sits inside
+ * a profile link. The link target is NOT chosen here: the popup reuses the
+ * page's own profile link (built by honuProfileUrl), so when a settings
+ * switch later points names at Fisu or another site, the popup follows
+ * automatically. That switch is not implemented.
  * One reusable popup, auto-hides after 10 s, on tap, scroll or resize. Import once per page.
  */
 
@@ -41,10 +47,18 @@ function fullName(el) {
 
 /**
  * What the popup shows for a .nm element: the full name, plus its stored legend
- * (data-desc, set on the stats-table name cells) when there is one.
+ * (data-desc, set on the stats-table name cells) when there is one, plus the
+ * profile link when the name sits inside one (stats-table / chart-legend
+ * Honu links). Only real profile URLs count: "#" / in-page links are ignored.
  */
 export function peekParts(el) {
-  return { name: fullName(el), desc: ((el && el.getAttribute && el.getAttribute("data-desc")) || "").trim() };
+  const urlEl = el && el.closest ? el.closest("a[href]") : null;
+  const href = (urlEl && urlEl.getAttribute && urlEl.getAttribute("href")) || "";
+  return {
+    name: fullName(el),
+    desc: ((el && el.getAttribute && el.getAttribute("data-desc")) || "").trim(),
+    url: href.startsWith("https://") ? href : "",
+  };
 }
 
 let peekEl = null;
@@ -58,7 +72,7 @@ export function hideNamePeek() {
   if (peekEl) peekEl.hidden = true;
 }
 
-export function showNamePeek(anchor, text, desc = "") {
+export function showNamePeek(anchor, text, desc = "", url = "") {
   if (typeof document === "undefined" || !anchor) return;
   if (!peekEl) {
     peekEl = document.createElement("div");
@@ -72,12 +86,27 @@ export function showNamePeek(anchor, text, desc = "") {
   peekEl.textContent = "";
   const nameLine = document.createElement("div");
   nameLine.className = "np-name";
-  nameLine.textContent = text;
+  if (url) {
+    const link = document.createElement("a");
+    link.href = url;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.textContent = text;
+    nameLine.appendChild(link);
+  } else {
+    nameLine.textContent = text;
+  }
   peekEl.appendChild(nameLine);
   if (desc) {
     const descLine = document.createElement("div");
     descLine.className = "np-desc";
-    descLine.textContent = desc;
+    const icon = document.createElement("span");
+    icon.className = "np-desc-icon";
+    icon.setAttribute("aria-hidden", "true");
+    icon.textContent = "📖";
+    const body = document.createElement("span");
+    body.textContent = desc;
+    descLine.append(icon, body);
     peekEl.appendChild(descLine);
   }
   peekEl.hidden = false;
@@ -138,7 +167,7 @@ export function installNamePeek() {
         press.fired = true;
         swallowClickUntil = Date.now() + 800;
         const parts = peekParts(press.el);
-        showNamePeek(press.el, parts.name, parts.desc);
+        showNamePeek(press.el, parts.name, parts.desc, parts.url);
       }, LONG_PRESS_MS);
     },
     { passive: true }
@@ -173,7 +202,7 @@ export function installNamePeek() {
       const el = nameTarget(e.target, lastPointer !== "mouse");
       if (el && !inInteractive(el)) {
         const parts = peekParts(el);
-        showNamePeek(el, parts.name, parts.desc);
+        showNamePeek(el, parts.name, parts.desc, parts.url);
       }
     },
     true

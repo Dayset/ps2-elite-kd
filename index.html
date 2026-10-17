@@ -39,7 +39,7 @@
     "codeRepository": "https://github.com/Dayset/ps2-elite-kd"
   }
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261017-namenotewide" />
+  <link rel="stylesheet" href="styles.css?v=20261017-footer1" />
 </head>
 <body class="main-page">
   <div class="controls">
@@ -140,11 +140,6 @@
 
   <div id="legend" class="legend"></div>
 
-  <!-- t375u: 📊 Public (Census / Honu) table, folded, under the skill graph. -->
-  <div id="statsPublic" class="stats-panel stats-panel-public" aria-label="Public stats (Census / Honu)"></div>
-  
-  <details class="pooled-note fold-note"><summary>♿ What about vehicles?</summary><p>Vehicle and infantry kills are pooled together for now, so vehicle mains may look off in the graph and stats. Infantry-only numbers are coming later.</p></details>
-
   <!-- t356u: Rankings (was ranks.html) — rankings.mjs fills this lazily after the graph. -->
   <section id="rankings" class="rankings" aria-label="Rankings">
     <div id="ranksStatus" class="ranks-status" role="status"></div>
@@ -184,6 +179,10 @@
   </section>
 
   <footer>
+    <!-- "What about vehicles?" + 📊 Public table live in the footer now;
+         the note stays hidden until a comparison is loaded (renderLegend). -->
+    <details id="vehiclesNote" class="pooled-note fold-note" hidden><summary>♿ What about vehicles?</summary><p>Vehicle and infantry kills are pooled together for now, so vehicle mains may look off in the graph and stats. Infantry-only numbers are coming later.</p></details>
+    <div id="statsPublic" class="stats-panel stats-panel-public" aria-label="Public stats (Census / Honu)"></div>
     <p id="ranksMeta" class="ranks-meta"></p>
     <div class="footer-row">
       <p><a href="https://github.com/Dayset/ps2-elite-kd">github.com/Dayset/ps2-elite-kd</a></p>
@@ -207,6 +206,6 @@
     </details>
   </footer>
 
-  <script type="module" src="app.js?v=20261017-sfx1"></script>
+  <script type="module" src="app.js?v=20261017-footer1"></script>
 </body>
 </html>

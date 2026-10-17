@@ -1737,6 +1737,10 @@ footer {
 
 footer a { color: var(--accent); }
 
+/* 📊 Public table lives in the footer now: the footer dims its text,
+ * the table should read like everywhere else. */
+footer #statsPublic { color: var(--text); }
+
 /* Footer first line: repo link left, "show older debug stats" right (wraps on narrow screens). */
 footer .footer-row {
   display: flex;
@@ -1992,6 +1996,10 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
   color: var(--dim);
   white-space: normal;
 }
+/* Popup name is a profile link when the tapped name sits inside one:
+ * keep the name's own look, underline marks it as a link. */
+.name-peek .np-name a { color: inherit; text-decoration: underline; }
+.name-peek .np-desc-icon { margin-right: 0.3rem; }
 .name-peek.name-peek-pop { animation: limit-toast-pop 0.18s ease-out; }
 
 /* Stats tables: small dimmed "−28%" gap to the column top beside each value */
@@ -2033,9 +2041,6 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
   line-height: 1.4;
   color: var(--dim);
   overflow-wrap: anywhere;
-}
-.legend:empty + .pooled-note {
-  display: none;
 }
 
 /* 🚩 stat padder marker "*" (padding.mjs): kills on farm accounts excluded. */

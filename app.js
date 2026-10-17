@@ -96,7 +96,7 @@ import { markNote, statMark, confirmedPadderSlugs } from "./padding.mjs?v=202610
 // Account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times: chart name list only.
 import { accountTimes, flairsHtml, flairsFor } from "./flairs.mjs?v=20261010-sav1";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261010-sav1";
+import "./name-peek.mjs?v=20261017-peek1";
 import { sfx, recentGesture, mountSfxToggle } from "./sfx.mjs?v=20261017-sfx1";
 import { mountNameSuggest } from "./name-suggest.mjs?v=20261016-sug1";
 import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261010-sav1";
@@ -263,6 +263,7 @@ import {
     stats: document.getElementById("statsPanel"),
     statsPublic: document.getElementById("statsPublic"),
     legend: document.getElementById("legend"),
+    vehiclesNote: document.getElementById("vehiclesNote"),
     debugColsToggle: document.getElementById("debugColsToggle"),
     hideZeroIviToggle: document.getElementById("hideZeroIviToggle"),
   };
@@ -3390,7 +3391,7 @@ import {
     const pubSorted = sortRows(metrics, publicCols, statsSortState.public);
     const adjSorted = sortRows(metrics, adjCols, statsSortState.adjusted);
 
-    // t375u: 📊 Public lives under the skill graph (#statsPublic, folded);
+    // 📊 Public lives in the footer (#statsPublic, folded);
     // ✨ Adjusted stays above it without a title line.
     const publicHtml = `
       <details class="stats-section stats-public"${publicStatsOpen ? " open" : ""}>
@@ -3535,6 +3536,12 @@ import {
   }
 
   let lastLegendList = null;
+  /** Vehicles note lives in the footer now: it shows only while a comparison
+   * is loaded (this used to be the `.legend:empty + .pooled-note` CSS rule). */
+  function syncVehiclesNote() {
+    if (els.vehiclesNote) els.vehiclesNote.hidden = !els.legend || els.legend.childElementCount === 0;
+  }
+
   function renderLegend(list) {
     lastLegendList = list;
     els.legend.innerHTML = "";
@@ -3583,6 +3590,7 @@ import {
       }
       els.legend.appendChild(det);
     }
+    syncVehiclesNote();
   }
 
   /** Truncatable player name (.nm, ~18ch cap) with the full name in title / data-full. */
@@ -3720,6 +3728,7 @@ import {
     if (els.stats) els.stats.innerHTML = "";
     if (els.statsPublic) els.statsPublic.innerHTML = "";
     els.legend.innerHTML = "";
+    syncVehiclesNote();
     players = [];
     lastAnalyzedNames = [];
     lastLoadedNames = [];

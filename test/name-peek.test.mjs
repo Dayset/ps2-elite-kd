@@ -25,10 +25,26 @@ import { peekParts } from "../name-peek.mjs";
 describe("name-peek legend", () => {
   it("returns the full name and an empty legend when none is stored", () => {
     const el = { getAttribute: (k) => ({ "data-full": "[TAG] Someone" })[k] ?? null, textContent: "Someone" };
-    assert.deepEqual(peekParts(el), { name: "[TAG] Someone", desc: "" });
+    assert.deepEqual(peekParts(el), { name: "[TAG] Someone", desc: "", url: "" });
   });
   it("includes the stored legend from data-desc", () => {
     const el = { getAttribute: (k) => ({ "data-full": "Zyr0sNCx", "data-desc": "  Quick on the trigger.  " })[k] ?? null, textContent: "" };
-    assert.deepEqual(peekParts(el), { name: "Zyr0sNCx", desc: "Quick on the trigger." });
+    assert.deepEqual(peekParts(el), { name: "Zyr0sNCx", desc: "Quick on the trigger.", url: "" });
+  });
+  it("takes the profile link from the enclosing anchor, ignores '#' links", () => {
+    const honu = { getAttribute: (k) => (k === "href" ? "https://wt.honu.pw/c/5428010618035323201" : null) };
+    const el = {
+      getAttribute: (k) => ({ "data-full": "Zyr0sNCx" })[k] ?? null,
+      textContent: "",
+      closest: () => honu,
+    };
+    assert.equal(peekParts(el).url, "https://wt.honu.pw/c/5428010618035323201");
+    const hash = { getAttribute: (k) => (k === "href" ? "#" : null) };
+    const el2 = {
+      getAttribute: (k) => ({ "data-full": "Zyr0sNCx" })[k] ?? null,
+      textContent: "",
+      closest: () => hash,
+    };
+    assert.equal(peekParts(el2).url, "");
   });
 });
