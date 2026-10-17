@@ -592,12 +592,12 @@ export function initRankings(host) {
       const i = colorOf.get(r.query);
       const cells = VISIBLE.map((c) => {
         const v = r[c.id];
-        if (c.apk) return apkCell(v, r.pcts[c.id]);
+        if (c.apk && !fin(v)) return `<td>—</td>`; // t396u: APK ranks like the other columns
         if (!fin(v)) return r.thin && c.thinTip ? `<td class="thin-sample" title="${esc(MIN_FIGHTS_TIP)}">—</td>` : `<td>—</td>`;
         const pool = data.pools[c.id] || [];
         const k = rankIn(pool, v, !!c.ascFirst);
         const p = r.pcts[c.id];
-        return `<td title="${esc(c.label)} ${fmt(v, c.digits)}: rank ${k.toLocaleString()} of ${pool.length.toLocaleString()} cached players">` +
+        return `<td title="${esc(c.label)} ${fmt(v, c.digits)}: rank ${k.toLocaleString()} of ${pool.length.toLocaleString()}${c.apk ? " players with 100+ session kills" : " cached players"}">` +
           `<b>#${k.toLocaleString()}</b>${p != null ? `<span class="pct">p${p}</span>` : ""}</td>`;
       }).join("");
       return `<tr><th scope="row" class="rk-pos-name"><a href="#" class="rk-pos-jump" data-q="${esc(r.query)}" style="color:${paletteColor(i, light)}" title="Show ${esc(r.name)} in the table"><span class="nm" data-full="${esc(r.name)}">${esc(r.name)}</span></a>${r.freshAt ? `<span class="sample-fresh" title="${esc(freshTip(r.freshAt, r.localOnly))}">${FRESH_MARK}</span>` : ""}${r.mark ? `<span class="pad-mark mark-${["padding","adjusted"].includes(r.markKind) ? r.markKind : ""}" title="${esc(r.markTip)}">${r.mark}</span>` : ""}</th>${cells}</tr>`;
