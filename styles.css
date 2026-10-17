@@ -433,6 +433,13 @@ header .sub {
   border: none;
 }
 
+/* At MAX_NAMES the input is disabled (see syncLimitLock): dim it and
+ * show the not-allowed cursor so it reads as locked, not broken. */
+.names-box input#namesInput:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 /* Name chips inside the input box */
 .name-token-num {
   font-size: 0.7em;

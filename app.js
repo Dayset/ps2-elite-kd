@@ -1373,11 +1373,19 @@ import {
 
   // t400u: at MAX_NAMES the 🎲 / < / > buttons lock (gray, aria-disabled but
   // still clickable so a click/tap explains why) and the analysis starts once.
+  // The name input itself locks too (disabled): with 6 names in the box
+  // there is nothing left to type, and it re-enables as soon as a chip
+  // is removed (every chip change re-runs this via renderNameTokens).
   let limitWasFull = false;
   let limitLockReady = false; // false during startup (?names= / restore)
   const isListFull = () => nameTokens.length >= MAX_NAMES;
   function syncLimitLock() {
     const full = isListFull();
+    if (els.namesInput) {
+      els.namesInput.disabled = full;
+      if (full) els.namesInput.setAttribute("title", `List is full (${MAX_NAMES} names) — remove a name to add more`);
+      else els.namesInput.removeAttribute("title");
+    }
     for (const b of [els.diceBtn, els.diceLowBtn, els.diceHighBtn]) {
       if (!b) continue;
       b.classList.toggle("is-locked", full);
