@@ -39,7 +39,7 @@ import GHOST_MODEL from "./data/ghost-model.mjs?v=20261010-sav1";
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-sav1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261015-tip1";
-import { swipeStep, createWheelSwiper } from "./dist-cycle.mjs?v=20261017-swipe1";
+import { swipeStep, createWheelSwiper } from "./dist-cycle.mjs?v=20261017-carousel1";
 import { slideSwap } from "./chart-slide.mjs?v=20261017-slide1";
 import { entryFetchedAt, pickNewest, writeWithEviction } from "./cache-pick.mjs?v=20261010-sav1";
 import {
@@ -1496,7 +1496,7 @@ import {
   }
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261017-slide1")
+    rankingsLoading = import("./rankings.mjs?v=20261017-carousel1")
       .then((m) => {
         rankingsApi = m.initRankings(rankingsHost);
         return rankingsApi.ready;
@@ -4650,7 +4650,7 @@ import {
    * "who wins fights / who aims best" tip for the view they landed on. */
   if (els.chart) {
     const flipView = (dir = 1) => {
-      // t384u: the other view slides in (from the right for a "next" swipe).
+      // t384u: the other view slides in, carousel-style (restored after d758c9e dropped it).
       const wrap = els.chart.closest(".chart-wrap");
       const panel = wrap ? getComputedStyle(wrap).backgroundColor : "";
       slideSwap({ container: wrap, svg: els.chart, dir, background: panel, draw: () => setYScaleMode(yScaleMode === "kd" ? "ivi" : "kd") });
