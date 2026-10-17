@@ -880,6 +880,10 @@ export function initRankings(host) {
     syncDistPills();
     if (!data || !svg || !$("distSection").open) return;
     const col = colById(distMetric);
+    // Metric explanation underneath the chart: the same text as the
+    // table column's tooltip (col.tip), updated on every metric switch.
+    const hintEl = $("distHint");
+    if (hintEl) hintEl.textContent = col?.tip || "";
     const h = getHist(distMetric);
     const box = $("distChart");
     const W = Math.max(320, Math.round(box.clientWidth || 640));

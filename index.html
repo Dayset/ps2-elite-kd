@@ -39,7 +39,7 @@
     "codeRepository": "https://github.com/Dayset/ps2-elite-kd"
   }
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261017-max6b" />
+  <link rel="stylesheet" href="styles.css?v=20261017-disthint" />
 </head>
 <body class="main-page">
   <div class="controls">
@@ -154,7 +154,8 @@
         <svg id="distSvg" role="img" aria-label="Distribution of the selected metric across cached players"></svg>
         <div id="distTip" class="dist-tip" hidden></div>
       </div>
-      <div class="dist-note">Bars show how many players have each value; the line shows what % are below it. Click a bar (tap twice on phones) to see those players in the table. Your players are marked on top.</div>
+      <div id="distHint" class="dist-hint"></div>
+      <div class="dist-note">Click a bar (tap twice on phones) to see those players in the table.</div>
       <div id="distSummary" class="dist-summary"></div>
     </details>
     <!-- t358u: your players' positions under the chart, folded by default (state remembered). -->

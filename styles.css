@@ -2297,6 +2297,9 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
 #distSvg .dist-name:focus-visible { outline: 2px solid var(--accent); }
 .dist-tip b { color: var(--accent); }
 .dist-note { color: var(--dim); font-size: 0.75rem; margin-top: 0.25rem; }
+/* Metric explanation under the distribution chart: same text as the
+ * table column tooltip for the current metric. */
+.dist-hint { color: var(--dim); font-size: 0.8rem; margin-top: 0.25rem; }
 @media (max-width: 600px) {
   .ranks-table td .pct { display: block; margin-left: 0; line-height: 1.1; }
   .ranks-table-wrap { max-height: calc(100vh - 13rem); }
