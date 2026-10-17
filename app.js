@@ -3246,12 +3246,12 @@ import {
                   ? ` title="${escapeHtml(`Below ${fmtNum(floor, c.digits)} = no inflation`)}"`
                   : "";
               // 🧱 Const: main value is the population percentile ("19%"); the dimmed gap to the highest value still applies.
-              // 🤝 Assists: plain number, percentile + meaning on hover, no % gap.
+              // 🤝 Assists: plain number, percentile + meaning on hover, plus the dimmed % gap to the highest (t398u).
               if (c.apkCell) {
                 if (!isFiniteNum(v)) return `<td title="Not enough recent sessions (needs 100 kills in Honu sessions)">—</td>`;
                 const pl = apkPool ? percentileOf(apkPool, v) : null;
                 const rel = pl == null ? "" : pl >= 50 ? ` — top ${Math.max(1, 100 - pl)}%` : ` — bottom ${Math.max(1, pl)}%`;
-                return `<td title="${escapeHtml(`Assists per kill: ${fmtNum(v, 2)}${rel}. Helps damage enemies that teammates finish.`)}">${fmtNum(v, 2)}</td>`;
+                return `<td title="${escapeHtml(`Assists per kill: ${fmtNum(v, 2)}${rel}. Helps damage enemies that teammates finish.`)}">${fmtNum(v, 2)}${pct}</td>`;
               }
               if (c.pctileCell) {
                 const pctl = isFiniteNum(v) && consPool ? percentileOf(consPool, v) : null;
