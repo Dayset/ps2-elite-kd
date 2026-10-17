@@ -4,23 +4,14 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "39073558138",
-    "event": "workflow_dispatch",
+    "runId": "39074603740",
+    "event": "schedule",
     "kind": "discovery",
-    "startedAt": "2026-10-17T22:04:44.378Z",
-    "endedAt": "2026-10-17T22:10:45.774Z",
-    "seconds": 361,
-    "updated": [
-      "[RITE] ShloDog",
-      "[CHMP] BjoerekTR"
-    ],
-    "added": [
-      "[CBMC] DazeDream",
-      "[TWTY] TweetyWhale27",
-      "[BOIS] Airhawker",
-      "[Sik1] MgStylee",
-      "[SUIF] sirshakal"
-    ],
+    "startedAt": "2026-10-17T22:19:52.075Z",
+    "endedAt": "2026-10-17T22:22:53.021Z",
+    "seconds": 181,
+    "updated": [],
+    "added": [],
     "failed": [],
     "stoppedEarly": null,
     "indexSize": 12276,
@@ -32,49 +23,13 @@
     },
     "honu": {
       "day": "2026-10-17",
-      "calls": 6788,
+      "calls": 6821,
       "cap": 10000
     },
-    "batch": [
-      {
-        "name": "[CBMC] DazeDream",
-        "src": "discovery",
-        "status": "done"
-      },
-      {
-        "name": "[TWTY] TweetyWhale27",
-        "src": "discovery",
-        "status": "done"
-      },
-      {
-        "name": "[BOIS] Airhawker",
-        "src": "discovery",
-        "status": "done"
-      },
-      {
-        "name": "[Sik1] MgStylee",
-        "src": "discovery",
-        "status": "done"
-      },
-      {
-        "name": "[SUIF] sirshakal",
-        "src": "discovery",
-        "status": "done"
-      },
-      {
-        "name": "[RITE] ShloDog",
-        "src": "fresh-request",
-        "status": "done"
-      },
-      {
-        "name": "[CHMP] BjoerekTR",
-        "src": "refresh",
-        "status": "done"
-      }
-    ]
+    "batch": []
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-17T22:10:52.371Z",
+    "checkedAt": "2026-10-17T22:23:30.197Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 28,
     "explained": 15,
@@ -1444,7 +1399,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-17T22:10:52.488Z",
+    "checkedAt": "2026-10-17T22:23:30.353Z",
     "red": 43,
     "padding": 41,
     "adjusted": 16,
@@ -1455,7 +1410,7 @@
     "forensics": 27
   },
   "sessionStats": {
-    "checkedAt": "2026-10-17T22:10:52.411Z",
+    "checkedAt": "2026-10-17T22:23:30.231Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -1469,13 +1424,13 @@
     "ruleText": "[session pattern] in recent Honu sessions (≥ 100 kills counted): assists per kill ≤ 0.1, headshot share ≥ 50% (headshot XP per kill; Census lifetime HSR when no XP detail) and K/D ≥ 7 (session deaths; Census lifetime KD when none). A very one-sided record; a lead for manual review, not proof.",
     "coverage": {
       "players": 12275,
-      "withSessions": 7498,
-      "measured": 3470,
-      "sessions": 26432,
-      "kills": 1228809,
-      "xpPlayers": 681,
-      "xpMeasured": 528,
-      "xpSessions": 3822
+      "withSessions": 7501,
+      "measured": 3471,
+      "sessions": 26441,
+      "kills": 1229037,
+      "xpPlayers": 686,
+      "xpMeasured": 531,
+      "xpSessions": 3836
     },
     "metrics": [
       {
@@ -1577,7 +1532,7 @@
     ],
     "distributions": {
       "s_apk": {
-        "n": 3470,
+        "n": 3471,
         "min": 0,
         "p01": 0.063,
         "p05": 0.172,
@@ -1597,7 +1552,7 @@
         "max": 0.803
       },
       "s_kpm": {
-        "n": 3470,
+        "n": 3471,
         "min": 0.07,
         "p01": 0.149,
         "p05": 0.222,
@@ -1607,7 +1562,7 @@
         "max": 16.526
       },
       "s_maxKpm": {
-        "n": 3470,
+        "n": 3471,
         "min": 0.127,
         "p01": 0.196,
         "p05": 0.294,
@@ -1617,17 +1572,17 @@
         "max": 16.526
       },
       "s_kpmCv": {
-        "n": 3299,
+        "n": 3300,
         "min": 0,
         "p01": 0.011,
         "p05": 0.046,
         "median": 0.235,
-        "p95": 0.546,
+        "p95": 0.547,
         "p99": 0.728,
         "max": 1.028
       },
       "s_kd": {
-        "n": 3406,
+        "n": 3407,
         "min": 0.255,
         "p01": 0.46,
         "p05": 0.667,
@@ -1637,7 +1592,7 @@
         "max": 162.667
       },
       "s_maxKd": {
-        "n": 3406,
+        "n": 3407,
         "min": 0.256,
         "p01": 0.554,
         "p05": 0.815,
@@ -1647,27 +1602,27 @@
         "max": 355
       },
       "s_hsk": {
-        "n": 549,
+        "n": 552,
         "min": 0,
         "p01": 0.008,
         "p05": 0.06,
-        "median": 0.277,
+        "median": 0.276,
         "p95": 0.523,
         "p99": 0.73,
         "max": 0.972
       },
       "s_ksk": {
-        "n": 549,
+        "n": 552,
         "min": 0,
         "p01": 0.053,
         "p05": 0.135,
-        "median": 0.35,
+        "median": 0.346,
         "p95": 0.637,
         "p99": 0.932,
         "max": 0.983
       },
       "s_domk": {
-        "n": 549,
+        "n": 552,
         "min": 0,
         "p01": 0.005,
         "p05": 0.024,
@@ -1677,7 +1632,7 @@
         "max": 0.243
       },
       "s_revk": {
-        "n": 549,
+        "n": 552,
         "min": 0,
         "p01": 0,
         "p05": 0.01,
@@ -1687,7 +1642,7 @@
         "max": 0.357
       },
       "s_revDom": {
-        "n": 544,
+        "n": 547,
         "min": 0,
         "p01": 0,
         "p05": 0.094,
@@ -1697,7 +1652,7 @@
         "max": 10
       },
       "s_savk": {
-        "n": 549,
+        "n": 552,
         "min": 0,
         "p01": 0.006,
         "p05": 0.018,
@@ -1707,17 +1662,17 @@
         "max": 0.2
       },
       "s_spotk": {
-        "n": 549,
+        "n": 552,
         "min": 0,
         "p01": 0,
         "p05": 0,
-        "median": 0.023,
-        "p95": 0.176,
+        "median": 0.024,
+        "p95": 0.179,
         "p99": 0.225,
         "max": 0.354
       },
       "s_prik": {
-        "n": 549,
+        "n": 552,
         "min": 0,
         "p01": 0.037,
         "p05": 0.115,
@@ -1727,7 +1682,7 @@
         "max": 0.49
       },
       "s_stopk": {
-        "n": 549,
+        "n": 552,
         "min": 0,
         "p01": 0.013,
         "p05": 0.036,
@@ -3133,9 +3088,9 @@
     "outliersUnexplained": 0
   },
   "size": {
-    "at": "2026-10-17T22:10:46.103Z",
+    "at": "2026-10-17T22:22:53.402Z",
     "repoBytes": 106202112,
-    "dataBytes": 239565323,
+    "dataBytes": 239585779,
     "playersBytes": 223941613,
     "playerFiles": 12276,
     "warnAtBytes": 734003200,
@@ -3143,7 +3098,7 @@
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-17T22:10:52.431Z",
+    "checkedAt": "2026-10-17T22:23:30.260Z",
     "candidates": [
       "nebelhexe",
       "oshurpogchamp",
@@ -25475,7 +25430,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-17T22:10:52.436Z",
+    "checkedAt": "2026-10-17T22:23:30.271Z",
     "count": 302,
     "players": [
       {
@@ -27985,7 +27940,7 @@
     ]
   },
   "infantry": {
-    "checkedAt": "2026-10-17T22:10:53.361Z",
+    "checkedAt": "2026-10-17T22:23:31.884Z",
     "players": 12276,
     "counts": {
       "infantry": 515,
@@ -28040,10 +27995,10 @@
       }
     },
     "tagMin": 20,
-    "checkedAt": "2026-10-17T22:10:52.457Z",
+    "checkedAt": "2026-10-17T22:23:30.308Z",
     "coverage": {
       "players": 12257,
-      "withSessions": 7480,
+      "withSessions": 7483,
       "measured": 3063,
       "measuredPct": 25
     },
