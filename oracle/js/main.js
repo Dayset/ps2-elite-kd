@@ -3,6 +3,7 @@ import { S, FACS, COLOR, esc, $, stars, mins, bar, pct1, det, info, wide, syncDe
 import { get } from "./api.js";
 import { drawMap, highlightBase } from "./map.js";
 import { chart, chartHover } from "./chart.js";
+import { lockCard, lockTick } from "./lock.js";
 import { commander } from "./commander.js";
 import { reportPanel } from "./players.js";
 import { benchPanel, initResults, refreshHistory, renderHist } from "./results.js";
@@ -124,7 +125,7 @@ function render2(now) {
     <div class="grid">
       <section class="card map"><h2>Map</h2><div id="map"></div></section>
       <section class="card win"><h2>Win chance</h2>${kindNote}${suspectNote}<div class="odds" aria-live="polite" aria-atomic="true">${oddsHtml}</div>${oddLine}${result}${popAdj}${second}${rows || popRows ? det("wdet", "Details", `<div class="rows">${rows}${popRows}</div>${popTot ? `<div class="note">Population: Honu (wt.honu.pw), ${popTot} on continent${s.pop_ns ? ` + ${s.pop_ns} NSO` : ""}.</div>` : ""}`, "wdet") : ""}${calls}</section>
-      ${a.status === "live" ? `<div id="voteHere"></div>` : ""}
+      ${a.status === "live" ? `<div id="voteHere"></div><div id="lockHere"></div>` : ""}
     </div>
     <section class="card chart" style="margin-top:14px"><h2>Win chance over time</h2><div id="chart"><div class="sk sk-chart" aria-label="Loading"></div></div></section>
     ${a.status === "live" ? commander(a.commander || (s && s.commander), a.commander_ts, now, lead) : reportPanel(a)}
@@ -135,6 +136,8 @@ function render2(now) {
   $("mini").innerHTML = `<b>${esc(a.world_name)} · ${esc(a.zone_name)}</b>${win ? `<span>${FACS.map((f) => `<span class="${f}">${f} ${pct1(win[f].pct)}%</span>`).join(" ")}</span>` : ""}`;
   miniSync();
   if (S.ticksFor === a.key) { const c = $("chart"); c.innerHTML = chart(S.ticks, a.dur, c.clientWidth); chartHover(c, S.ticks, a.dur); }
+  const lh = $("lockHere");
+  if (lh && a.status === "live") lh.innerHTML = `<section class="card lock">${lockCard(a, now)}</section>`;
   drawMap(a);
 }
 
@@ -196,5 +199,6 @@ initAuth();
 
 refreshLive(); refreshHistory();
 setInterval(refreshLive, 30000);
+setInterval(lockTick, 1000); // ⏱ live countdown ticks every second, no re-render
 setInterval(loadTicks, 60000);
 setInterval(refreshHistory, 120000);
