@@ -60,8 +60,20 @@ jobs:
           cat deploy.log
           if [ $rc -ne 0 ]; then
             grep -vE '^\s*$|^─|wrangler [0-9]' deploy.log | tail -n 15 | while IFS= read -r l; do echo "::error::$l"; done
+          else
+            grep -iE 'schedule|trigger|cron|deployed|warn|version' deploy.log | head -n 12 | while IFS= read -r l; do echo "::notice::$l"; done
           fi
           exit $rc
+
+      - name: Show registered triggers
+        working-directory: oracle-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          curl -s -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/ps2-oracle/schedules" > sched.json || true
+          echo "::notice::schedules: $(head -c 600 sched.json | tr -d '\n')"
 
       # After the deploy: secrets can only be uploaded to a Worker that exists.
       - name: Set ORACLE_KEY
