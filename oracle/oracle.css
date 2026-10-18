@@ -215,3 +215,19 @@ footer { color: var(--dim); font-size: var(--fs-12); margin-top: var(--s-5); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+
+/* ---------------------------------------------------------------- map zoom/pan, sheet (#19) */
+.map svg { touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+.map svg.zoomed { touch-action: none; cursor: grab; }
+.map svg.zoomed:active { cursor: grabbing; }
+.map svg .vp { will-change: transform; }
+.sw.hatch { background: repeating-linear-gradient(45deg, var(--neutral) 0 3px, #5a5f69 3px 5px); }
+.sw.wgs { background: var(--wg); outline: 1px dashed #e8e6df; outline-offset: -1px; }
+.map .legend .hint { color: var(--dim); }
+.map .sheet { position: absolute; z-index: 6; left: var(--s-2); right: var(--s-2); bottom: var(--s-2); background: rgba(16,18,22,.97); border: 1px solid var(--border); border-radius: var(--r-md); padding: var(--s-3); font-size: var(--fs-14); box-shadow: 0 8px 24px rgba(0,0,0,.55); max-height: 60%; overflow: auto; }
+.map .sheet[hidden] { display: none; }
+.map .sheet ul { margin: var(--s-2) 0 0; padding-left: var(--s-4); }
+.map .sheet li { margin: var(--s-1) 0; }
+.map .sheet .x { position: absolute; top: 2px; right: 2px; min-width: 44px; min-height: 44px; background: none; border: 0; color: var(--dim); font-size: var(--fs-16); cursor: pointer; }
+@media (min-width: 861px) { .map .sheet { left: auto; width: 320px; } }
+@media (max-width: 600px) { .map .legend .hint { display: none; } }
