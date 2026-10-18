@@ -356,6 +356,24 @@ async function handle(request, env) {
     return json({ ok: ageS !== null && ageS < 180, service: "ps2-oracle", now, last_cycle_age_s: ageS, last_ok_age_s: lastOk ? now - lastOk : null, last_cycle: last }, 200, { "Cache-Control": "no-store" });
   }
 
+  // Manual kick + diagnostics: runs one cycle now unless one ran in the last
+  // 50 s (same pace as the cron, so it cannot add Census load).
+  if (url.pathname === "/cycle") {
+    const last = await getMeta(db, "last_cycle");
+    if (last && now - last.ts < 50) return json({ skipped: "recent cycle", age_s: now - last.ts, last_cycle: last }, 429, { "Cache-Control": "no-store" });
+    const t = Date.now();
+    try {
+      const report = await runCycle(env, Date.now());
+      return json({ ran: true, wall_ms: Date.now() - t, report }, 200, { "Cache-Control": "no-store" });
+    } catch (e) {
+      return json({ ran: false, error: String(e && e.stack || e) }, 500, { "Cache-Control": "no-store" });
+    }
+  }
+
+  if (url.pathname === "/crash") {
+    return json({ last_crash: await getMeta(db, "last_crash"), cron_seen: await getMeta(db, "cron_seen") }, 200, { "Cache-Control": "no-store" });
+  }
+
   if (url.pathname === "/live") {
     const rows = (await db.prepare("SELECT * FROM alert WHERE status IN ('live','settling','sudden_death') OR (end_ts IS NOT NULL AND end_ts > ?) ORDER BY start_ts DESC").bind(now - 3 * 3600).all()).results || [];
     return json({ now, worlds: WORLD_NAMES, alerts: rows.map(parseRow) });
@@ -416,6 +434,8 @@ async function handle(request, env) {
 
 export default {
   async scheduled(event, env, ctx) {
+    // Breadcrumb before any work: tells a cron that never fires apart from one that dies mid-run.
+    try { await setMeta(env.DB, "cron_seen", { ts: Math.floor(Date.now() / 1000), cron: event.cron }); } catch {}
     ctx.waitUntil(runCycle(env, event.scheduledTime || Date.now()).catch(async (e) => {
       try { await setMeta(env.DB, "last_crash", { ts: Math.floor(Date.now() / 1000), error: String(e && e.stack || e) }); } catch {}
     }));
