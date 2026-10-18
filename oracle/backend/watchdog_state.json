@@ -1,0 +1,23 @@
+{
+  "healthy_streak": 12,
+  "last_check": "2026-10-18T05:06:23Z",
+  "last_check_note": "2026-10-18T05:06:23Z: Both pollers running (map PID 2069, events PID 2071, unchanged since 04:44Z relaunch). No restarts. Freshness FRESH/FRESH (map 0min, events 0min). healthy_streak 11->12. Schedule already 5m, no change. Map log: transient Census IncompleteRead retry + world 25 Census-dark; cycle done 05:05:54Z (15 ok, 1 failed). Events windows saving normally (262 kills last window).",
+  "last_restart": {
+    "map_poller.py": {
+      "at": "2026-10-18T04:44:40Z",
+      "new_pid": 2069,
+      "old_pid": 1964,
+      "reason": "Cell replacement (cell booted 04:36:08Z). Logs froze 04:36:35, 8min silence over 3 probes. Relaunch took over stale lockfile (pid 1964). Verified collecting (cycle done 04:46:23, 14 ok, 1 failed, 5 skipped Census-dark; Census timeout retries)."
+    },
+    "census_events.py": {
+      "at": "2026-10-18T04:44:42Z",
+      "new_pid": 2071,
+      "old_pid": 1966,
+      "reason": "Cell replacement (cell booted 04:36:08Z). Log froze 04:36:36 on stream error retry-never-fired; 8min silence over 3 probes. Relaunch took over stale lockfile (pid 1966). Verified collecting (WS connected 04:44:43, window saved 04:46:44, 167 kills)."
+    }
+  },
+  "last_run": "2026-10-18T05:06:23Z",
+  "pgrep_note": "2026-10-15T05:25Z: pgrep//proc checks are BLIND in the watchdog exec sandbox when the runtime cell is fresh (this cell booted ~05:22 UTC, /proc held only 7 processes: systemd/journald/hatch/shells). pgrep matched only the own shell. Do NOT trust an empty pgrep here as 'pollers dead' on its own, and do NOT trust it as 'pollers alive' either \u2014 decide from lockfile PIDs + log freeze time + cell boot time + freshness probe. This run: lockfile PIDs 1908/1910 nonexistent + logs froze at cell boot + no writes for 5+ min = dead; relaunch was correct. Prior 2026-10-14 note about /proc reliability applies only when the cell is the pollers' host. 2026-10-15T14:05Z: same pattern again \u2014 cell booted 13:59Z, both logs froze at reboot, relaunch correct. Lockfile PID verification (map checks PID liveness, events checks /proc/<pid>/cmdline) makes relaunch safe against duplicates. 2026-10-15T22:10Z: third occurrence, same signature \u2014 cell booted ~22:05:30Z, both logs froze at boot, relaunch verified collecting. 2026-10-16T21:06Z: fourth occurrence \u2014 cell booted 21:01:04Z, both pollers froze ~21:00-21:01 (events retry never fired), 6-min silence confirmed over a 75s re-probe before relaunch; both verified collecting after relaunch. 2026-10-18T01:00Z: fifth occurrence \u2014 cell booted 00:54Z, logs froze 00:54:06/00:54:32 (events 'retry in 10s' never fired), 6+ min silence over 3 probes before relaunch; both verified collecting.",
+  "stale_notified_at": null,
+  "stale_streak": 0
+}

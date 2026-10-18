@@ -1,0 +1,75 @@
+{
+ "brier_by_time": {
+  "30": {
+   "raw": 0.19833503835955624,
+   "platt": 0.19912779217801346,
+   "isotonic": 0.19826160463714698
+  },
+  "60": {
+   "raw": 0.14701283685006306,
+   "platt": 0.1479055655484688,
+   "isotonic": 0.14707938585834476
+  },
+  "75": {
+   "raw": 0.1002354326996563,
+   "platt": 0.10248913687228471,
+   "isotonic": 0.10033480863087677
+  }
+ },
+ "brier_overall": {
+  "raw": 0.1487804277652109,
+  "platt": 0.15009055441159955,
+  "isotonic": 0.14881075137134694
+ },
+ "meta": {
+  "design": "OOS: tree on pre-2024 Hossin alerts; recalibration fit on 500 2024+ validation alerts, evaluated on 1000 disjoint 2024+ test alerts",
+  "train_alerts": 4955,
+  "pool_alerts": 2031,
+  "validation_alerts": 500,
+  "test_alerts": 1000,
+  "times": [
+   30,
+   60,
+   75
+  ],
+  "seed": 7,
+  "platt": {
+   "A": 5.583903450186521,
+   "B": -2.7688492499305526
+  },
+  "isotonic_knots": 131,
+  "no_cell_skipped": {
+   "validation": 24,
+   "test": 55
+  }
+ },
+ "brier_by_time_2b": {
+  "30": {
+   "base_w0.9": 0.19831232112611052,
+   "base_w0.8": 0.19882547847482282,
+   "base_w0.7": 0.19987451040569318,
+   "base_star_w": 0.19851620133295986
+  },
+  "60": {
+   "base_w0.9": 0.1480075285079687,
+   "base_w0.8": 0.15045249725016524,
+   "base_w0.7": 0.15434774307665308,
+   "base_star_w": 0.1496102030001674
+  },
+  "75": {
+   "base_w0.9": 0.10148958360197731,
+   "base_w0.8": 0.10517585184872888,
+   "base_w0.7": 0.11129423743991054,
+   "base_star_w": 0.10283315987224273
+  }
+ },
+ "brier_overall_2b": {
+  "raw": 0.1487804277652109,
+  "base_w0.9": 0.1495187459124987,
+  "base_w0.8": 0.15172503323720962,
+  "base_w0.7": 0.15539928973934092,
+  "base_star_w": 0.15056485503919786
+ },
+ "recommendation": "SHIP NOTHING. Neither recalibration (2a) nor base-rate shrinkage (2b) beats raw by the 0.0005 bar OOS. Raw tree stands; the calibration bias is real but no tested correction earns its keep.",
+ "shipped": null
+}

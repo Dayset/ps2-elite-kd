@@ -1,0 +1,176 @@
+{
+ "generated": "2026-10-08",
+ "source": "continent_transfer_2026-10-08.md/.out (38,020 known-outcome alerts; 70/30 held-out Brier test)",
+ "rule": "Keep the single pooled debute book. Add these adjustments only: Esamir territory-momentum pricing (early_rusher discount, early_collapse penalty shortened), Esamir VS pop_favorite discount, Oshur faction base rates, Oshur NC/TR pop_favorite boost. Population archetypes and all other continents use pooled rates unchanged.",
+ "application": "price(continent, archetype, faction) = pooled_win_rate + delta_pp/100; for archetype='base_rate' the pooled value is the pooled faction base rate.",
+ "adjustments": [
+  {
+   "continent": "Esamir",
+   "archetype": "early_rusher",
+   "faction": "VS",
+   "pooled_win_rate": 0.5022,
+   "continent_win_rate": 0.435,
+   "ci_95": [
+    0.413,
+    0.458
+   ],
+   "delta_pp": -6.7,
+   "direction": "discount",
+   "raw_star": true
+  },
+  {
+   "continent": "Esamir",
+   "archetype": "early_rusher",
+   "faction": "NC",
+   "pooled_win_rate": 0.4678,
+   "continent_win_rate": 0.383,
+   "ci_95": [
+    0.359,
+    0.406
+   ],
+   "delta_pp": -8.5,
+   "direction": "discount",
+   "raw_star": true
+  },
+  {
+   "continent": "Esamir",
+   "archetype": "early_rusher",
+   "faction": "TR",
+   "pooled_win_rate": 0.4298,
+   "continent_win_rate": 0.369,
+   "ci_95": [
+    0.345,
+    0.393
+   ],
+   "delta_pp": -6.1,
+   "direction": "discount",
+   "raw_star": true
+  },
+  {
+   "continent": "Esamir",
+   "archetype": "early_collapse",
+   "faction": "VS",
+   "pooled_win_rate": 0.2422,
+   "continent_win_rate": 0.276,
+   "ci_95": [
+    0.255,
+    0.299
+   ],
+   "delta_pp": 3.4,
+   "direction": "boost",
+   "raw_star": false
+  },
+  {
+   "continent": "Esamir",
+   "archetype": "early_collapse",
+   "faction": "NC",
+   "pooled_win_rate": 0.1993,
+   "continent_win_rate": 0.235,
+   "ci_95": [
+    0.215,
+    0.256
+   ],
+   "delta_pp": 3.6,
+   "direction": "boost",
+   "raw_star": true
+  },
+  {
+   "continent": "Esamir",
+   "archetype": "early_collapse",
+   "faction": "TR",
+   "pooled_win_rate": 0.1757,
+   "continent_win_rate": 0.223,
+   "ci_95": [
+    0.204,
+    0.244
+   ],
+   "delta_pp": 4.7,
+   "direction": "boost",
+   "raw_star": true
+  },
+  {
+   "continent": "Esamir",
+   "archetype": "pop_favorite",
+   "faction": "VS",
+   "pooled_win_rate": 0.4379,
+   "continent_win_rate": 0.383,
+   "ci_95": [
+    0.35,
+    0.416
+   ],
+   "delta_pp": -5.5,
+   "direction": "discount",
+   "raw_star": true
+  },
+  {
+   "continent": "Oshur",
+   "archetype": "base_rate",
+   "faction": "VS",
+   "pooled_win_rate": 0.3669,
+   "continent_win_rate": 0.336,
+   "ci_95": [
+    0.321,
+    0.351
+   ],
+   "delta_pp": -3.1,
+   "direction": "discount",
+   "raw_star": true
+  },
+  {
+   "continent": "Oshur",
+   "archetype": "base_rate",
+   "faction": "NC",
+   "pooled_win_rate": 0.3059,
+   "continent_win_rate": 0.333,
+   "ci_95": [
+    0.318,
+    0.348
+   ],
+   "delta_pp": 2.7,
+   "direction": "boost",
+   "raw_star": true
+  },
+  {
+   "continent": "Oshur",
+   "archetype": "base_rate",
+   "faction": "TR",
+   "pooled_win_rate": 0.2815,
+   "continent_win_rate": 0.297,
+   "ci_95": [
+    0.283,
+    0.312
+   ],
+   "delta_pp": 1.6,
+   "direction": "boost",
+   "raw_star": true
+  },
+  {
+   "continent": "Oshur",
+   "archetype": "pop_favorite",
+   "faction": "NC",
+   "pooled_win_rate": 0.3812,
+   "continent_win_rate": 0.451,
+   "ci_95": [
+    0.421,
+    0.482
+   ],
+   "delta_pp": 7.0,
+   "direction": "boost",
+   "raw_star": true
+  },
+  {
+   "continent": "Oshur",
+   "archetype": "pop_favorite",
+   "faction": "TR",
+   "pooled_win_rate": 0.3519,
+   "continent_win_rate": 0.414,
+   "ci_95": [
+    0.378,
+    0.45
+   ],
+   "delta_pp": 6.2,
+   "direction": "boost",
+   "raw_star": true
+  }
+ ]
+}
