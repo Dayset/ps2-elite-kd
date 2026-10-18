@@ -1,7 +1,10 @@
 // t402u: tiny synthetic UI sounds (Web Audio oscillators only, no files).
-// AudioContext is created lazily on the first user gesture (autoplay rules).
-// Sounds only play shortly after a real user gesture, so page-load restores
-// stay silent. 🔊/🔇 preference in localStorage ("ps2_sfx", default on).
+// The AudioContext is created at page load ("preloaded") but stays suspended
+// until a real user gesture resumes it (autoplay rules), so page-load
+// restores stay silent. A sound requested right after a gesture is scheduled
+// even if the resume hasn't landed yet — the tones play the moment the
+// context runs, instead of being dropped and only the next sound heard.
+// 🔊/🔇 preference in localStorage ("ps2_sfx", default on).
 const KEY = "ps2_sfx";
 let ctx = null;
 let lastGesture = -1e9;
@@ -32,6 +35,11 @@ if (typeof window !== "undefined") {
   };
   for (const ev of ["pointerdown", "keydown", "touchstart"]) window.addEventListener(ev, onGesture, { capture: true, passive: true });
 }
+
+// Preload: create the context at page load (suspended until a gesture).
+// Creation is cheap and no sound can play before the first gesture resumes
+// it, so this only removes the first-click setup cost from the click path.
+if (typeof window !== "undefined" && sfxEnabled()) ensureCtx();
 
 /** One soft note: freq (Hz, or [from,to] glide), start offset s, length s. */
 function tone(c, out, { f, t = 0, d = 0.12, type = "sine", g = 0.06 }) {
@@ -65,7 +73,14 @@ export function sfx(name, { force = false } = {}) {
   if (!sfxEnabled() || !SOUNDS[name]) return;
   if (!force && !recentGesture()) return;
   const c = ensureCtx();
-  if (!c || c.state !== "running") return;
+  if (!c) return;
+  // The gesture that just happened resumes the context asynchronously; the
+  // click's sound must not wait for that promise — schedule the tones now
+  // and they play as soon as the context runs (same gesture, milliseconds).
+  // Without this the click sound was dropped whenever the resume hadn't
+  // landed yet, and only the next sound (e.g. the ~2 s-later completion
+  // chime) was heard, which read as a delayed button sound.
+  if (c.state === "suspended") c.resume().catch(() => {});
   const out = c.createGain();
   out.gain.value = 0.8;
   out.connect(c.destination);

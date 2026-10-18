@@ -99,7 +99,7 @@ import { markNote, statMark, confirmedPadderSlugs } from "./padding.mjs?v=202610
 import { accountTimes, flairsHtml, flairsFor } from "./flairs.mjs?v=20261010-sav1";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
 import "./name-peek.mjs?v=20261017-peekdedup";
-import { sfx, recentGesture, mountSfxToggle } from "./sfx.mjs?v=20261017-sfx1";
+import { sfx, recentGesture, mountSfxToggle } from "./sfx.mjs?v=20261017-sfxpreload";
 import { mountNameSuggest } from "./name-suggest.mjs?v=20261016-sug1";
 import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261010-sav1";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
