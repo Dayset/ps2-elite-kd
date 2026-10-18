@@ -270,6 +270,11 @@ footer { color: var(--dim); font-size: var(--fs-12); margin-top: var(--s-5); }
 .card.collapsed > :not(h2) { display: none !important; }
 .card.opening > :not(h2) { animation: secOpen .16s ease-out; }
 @keyframes secOpen { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+/* Collapsed-card summary: one-line top-priority info under the header, click-to-copy. */
+.ch-sum { display: none; }
+.card.collapsed .ch-sum { all: unset; display: block; margin-top: var(--s-1); font-size: var(--fs-14); color: var(--muted); cursor: pointer; }
+.card.collapsed .ch-sum:hover, .card.collapsed .ch-sum:focus-visible { color: var(--text); }
+.card.collapsed .ch-sum:focus-visible { box-shadow: var(--focus); border-radius: var(--r-sm); }
 @media (max-width: 600px) {
   .card.map h2 { display: block; }
   .card > h2 > button.ch { min-height: 44px; margin-bottom: var(--s-2); }

@@ -8,7 +8,7 @@ import { commander } from "./commander.js?v=20261018-oracestyle2";
 import { reportPanel } from "./players.js?v=20261018-oracestyle2";
 import { benchPanel, initResults, refreshHistory, renderHist } from "./results.js?v=20261018-oracestyle2";
 import { initAuth } from "./auth.js?v=20261018-oracestyle2";
-import { enhance, onSectionExpand } from "./collapse.js?v=20261018-oracestyle2";
+import { enhance, onSectionExpand, refreshSummary } from "./collapse.js?v=20261018-oracestyle4";
 
 // Shareable links: keep ?alert=<key> in the address bar (other params such as ?api= stay).
 function setUrlAlert(key) {
@@ -201,6 +201,6 @@ initAuth();
 
 refreshLive(); refreshHistory();
 setInterval(refreshLive, 30000);
-setInterval(lockTick, 1000); // ⏱ live countdown ticks every second, no re-render
+setInterval(() => { lockTick(); const c = document.querySelector("#lockHere .card"); if (c) refreshSummary(c); }, 1000); // ⏱ live countdown ticks every second, no re-render
 setInterval(loadTicks, 60000);
 setInterval(refreshHistory, 120000);
