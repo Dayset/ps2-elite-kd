@@ -560,3 +560,21 @@ export function runCommander({ world, zone, startTs, t, dur, own, own15, flips, 
     : { deviation: false, text: fu.lines.join("\n") };
   return out;
 }
+
+/**
+ * Make the commander's win_pct agree with the header odds (engine.computeWin):
+ * eliminated factions get 0, a lone survivor 100, then renormalise. The raw tree
+ * value stays in win_pct_raw. Kept outside runCommander so the Python parity
+ * suite still compares the untouched port.
+ */
+export function applyElimination(cmd) {
+  const F = cmd && cmd.factions;
+  if (!F) return cmd;
+  const facs = Object.keys(F);
+  for (const f of facs) { F[f].win_pct_raw = F[f].win_pct; if (F[f].eliminated) F[f].win_pct = 0; }
+  const alive = facs.filter((f) => !F[f].eliminated);
+  if (alive.length === 1) F[alive[0]].win_pct = 100;
+  const tot = facs.reduce((t, f) => t + F[f].win_pct, 0);
+  if (tot > 0) for (const f of facs) F[f].win_pct = Math.round((1000 * F[f].win_pct) / tot) / 10;
+  return cmd;
+}

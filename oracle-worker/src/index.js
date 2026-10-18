@@ -19,7 +19,7 @@ import {
   buildState, computeWin, territory, sliceMinutes, brier, scoreWinner, popAdjusted,
 } from "./engine.js";
 import { binGetter, hasTree, regionMap, latticeFor, captureModel, resistanceModel } from "./models.js";
-import { runCommander, ownership } from "./commander.js";
+import { runCommander, ownership, applyElimination } from "./commander.js";
 import { handleAuth } from "./auth.js";
 import { handleBet, settleStatements } from "./bet.js";
 export { AuthWatcher } from "./auth-watcher.js";
@@ -114,6 +114,23 @@ async function getMeta(db, k) {
 // ---------------------------------------------------------------- cycle
 
 /** Group METAGAME rows into alert instances keyed world-zone-instance. */
+/**
+ * Live-state input guard -> list of reasons (empty = clean).
+ *   neutral_heavy:<owned%>  under 90 % of regions owned (Census map gone neutral)
+ *   map_frozen              zone map identical to 10+ min ago while 2+ captures happened
+ *   map_stale               no fresh map for 5+ min
+ */
+export function dataSuspect(zNow, nowTs, s10, zone, flipsIn10, now) {
+  const out = [];
+  const terr = territory(zNow);
+  const owned = terr.VS + terr.NC + terr.TR;
+  if (owned < 90) out.push(`neutral_heavy:${owned.toFixed(1)}`);
+  const z10 = s10 && s10.zones[String(zone)];
+  if (z10 && now - s10.ts <= 900 && flipsIn10 >= 2 && JSON.stringify(z10) === JSON.stringify(zNow)) out.push("map_frozen");
+  if (now - nowTs > 300) out.push("map_stale");
+  return out;
+}
+
 export function groupAlerts(rows) {
   const by = new Map();
   for (const r of rows) {
@@ -195,6 +212,11 @@ export async function runCycle(env, nowMs = Date.now()) {
   const popFor = (world, zone) => db.prepare("SELECT ts, vs, nc, tr, ns FROM pop WHERE world=? AND zone=? AND ts>? ORDER BY ts DESC LIMIT 1")
     .bind(world, zone, now - POP_MAX_AGE_S).first();
   let live = 0, settled = 0;
+  // Input guard (corrupt Census map windows: many facilities neutral, or the map
+  // frozen while capture events keep arriving). Flips per zone over 10 min, one query.
+  const flips10 = new Map((((await db.prepare("SELECT world, zone, COUNT(*) AS n FROM flip WHERE ts > ? GROUP BY world, zone").bind(now - 600).all()).results) || [])
+    .map((r) => [`${r.world}-${r.zone}`, r.n]));
+  const snap10 = {};
 
   for (const a of groupAlerts(all)) {
     const prev = known.get(a.key);
@@ -218,6 +240,9 @@ export async function runCycle(env, nowMs = Date.now()) {
         getBin: binGetter(a.zone), world: a.world, zone: a.zone, eventId: a.event_id, instanceId: a.instance_id,
         startTs, dur, now, snapNow: zNow, snap15: z15 || null, regionMap: regionMap(a.zone),
       });
+      if (!(a.world in snap10)) snap10[a.world] = await latestSnap(db, a.world, now - 600);
+      const suspect = dataSuspect(zNow, snapNow.ts, snap10[a.world], a.zone, flips10.get(`${a.world}-${a.zone}`) || 0, now);
+      if (suspect.length) { state.suspect = suspect; (report.suspect ||= {})[a.key] = suspect; }
       const p = await popFor(a.world, a.zone);
       if (p) {
         state.pop = { VS: p.vs, NC: p.nc, TR: p.tr };
@@ -260,6 +285,7 @@ export async function runCycle(env, nowMs = Date.now()) {
     const endTs = a.end.ts;
     if (a.end.state === "canceled") { out.push({ ...base, status: "canceled", end_ts: endTs }); continue; }
     const final = { VS: a.end.vs, NC: a.end.nc, TR: a.end.tr };
+    const finalOk = FACS.every((f) => final[f] !== null && final[f] !== undefined && Number.isFinite(+final[f]));
     const checks = Math.min(3, 1 + Math.floor(Math.max(0, now - endTs) / 300));
     const flags = prev && prev.flags ? JSON.parse(prev.flags) : [];
     // Cross-check: our own last pre-end snapshot (never a post-end one).
@@ -271,23 +297,45 @@ export async function runCycle(env, nowMs = Date.now()) {
         const owned = terr.VS + terr.NC + terr.TR;
         if (owned < 90) flags.push(`neutral_heavy:${owned.toFixed(1)}`);
         const sw = scoreWinner(terr);
-        if (sw !== scoreWinner(final)) flags.push(`snapshot_winner_${sw}`);
+        if (finalOk && sw !== scoreWinner(final)) flags.push(`snapshot_winner_${sw}`);
         if (endTs - pre.ts > 600) flags.push("snapshot_stale");
         flags.push("checked");
       }
     }
-    const rec = { ...base, end_ts: endTs, final, checks, flags };
+    // A corrupt map window AND a disagreeing snapshot: keep Census's winner on the
+    // record, but refund every bet (we can't be sure who really won).
+    if (flags.some((f) => f.startsWith("neutral_heavy")) && flags.some((f) => f.startsWith("snapshot_winner_")) && !flags.includes("bets_void")) flags.push("bets_void");
+    const rec = { ...base, end_ts: endTs, final: finalOk ? final : null, checks, flags };
     if (checks < 3) { out.push({ ...rec, status: "settling" }); continue; }
+    // Census ended row without scores: fall back to our last pre-end snapshot when
+    // it is clean (fresh, not neutral-heavy); otherwise unresolved (bets refunded).
+    const finalWinner = async () => {
+      if (finalOk) return { winner: scoreWinner(final), basis: "census_final" };
+      if (!flags.includes("final_missing")) flags.push("final_missing");
+      const pre = await latestSnap(db, a.world, endTs);
+      const z = pre && pre.zones[String(a.zone)];
+      if (!z || endTs - pre.ts > 600) return null;
+      const terr = territory(z);
+      if (terr.VS + terr.NC + terr.TR < 90) return null;
+      const w = scoreWinner(terr);
+      return w === "draw" ? null : { winner: w, basis: "snapshot" };
+    };
     const sd = findSuddenDeath(all, a, endTs);
     let winner = null, basis = null;
     if (sd) {
       if (sd.end && sd.end.state === "ended") { winner = scoreWinner({ VS: sd.end.vs, NC: sd.end.nc, TR: sd.end.tr }); basis = "sudden_death"; }
-      else if (sd.end) { winner = scoreWinner(final); basis = "census_final"; flags.push("sudden_death_canceled"); }
+      else if (sd.end) {
+        flags.push("sudden_death_canceled");
+        const fw = await finalWinner();
+        if (!fw) { out.push({ ...rec, status: "unresolved" }); continue; }
+        ({ winner, basis } = fw);
+      }
       else if (now > sd.start.ts + 45 * 60) { out.push({ ...rec, status: "unresolved" }); continue; }
       else { out.push({ ...rec, status: "sudden_death" }); continue; }
     } else {
-      winner = scoreWinner(final);
-      basis = "census_final";
+      const fw = await finalWinner();
+      if (!fw) { out.push({ ...rec, status: finalOk ? "settling" : "unresolved" }); continue; }
+      ({ winner, basis } = fw);
       if (winner === "draw" && now < endTs + 1200) { out.push({ ...rec, status: "settling" }); continue; }
     }
     out.push({ ...rec, status: "settled", winner, basis });
@@ -330,7 +378,7 @@ export async function runCycle(env, nowMs = Date.now()) {
   report.written = changedRows.length;
 
   // 4c) Pay out bets on alerts that reached a final status.
-  const toSettle = ((await db.prepare(`SELECT DISTINCT a.key, a.status, a.winner FROM bet b JOIN alert a ON a.key = b.key
+  const toSettle = ((await db.prepare(`SELECT DISTINCT a.key, a.status, a.winner, a.flags FROM bet b JOIN alert a ON a.key = b.key
     WHERE b.status = 'open' AND a.status IN ('settled','canceled','unresolved')`).all()).results) || [];
   if (toSettle.length) { await db.batch(settleStatements(db, toSettle, now)); report.bets_settled = toSettle.length; }
 
@@ -340,6 +388,8 @@ export async function runCycle(env, nowMs = Date.now()) {
     await db.batch([
       db.prepare("DELETE FROM snap WHERE ts < ?").bind(now - 30 * 86400),
       db.prepare("DELETE FROM flip WHERE ts < ?").bind(now - 90 * 86400),
+      db.prepare("DELETE FROM tick WHERE ts < ?").bind(now - 90 * 86400),
+      db.prepare("DELETE FROM pop WHERE ts < ?").bind(now - 30 * 86400),
     ]);
   }
 
@@ -364,8 +414,10 @@ const FAC_NAME = { 1: "VS", 2: "NC", 3: "TR" };
 export async function commanderFor(env, key, nowMs = Date.now()) {
   const db = env.DB;
   const now = Math.floor(nowMs / 1000);
-  const a = await db.prepare("SELECT key, world, zone, start_ts, dur, status FROM alert WHERE key=?").bind(key).first();
+  const a = await db.prepare("SELECT key, world, zone, start_ts, dur, status, json_extract(state, '$.suspect') AS suspect FROM alert WHERE key=?").bind(key).first();
   if (!a || a.status !== "live") return { key, skipped: "not live" };
+  // Corrupt map window: keep the last good orders instead of computing from bad data.
+  if (a.suspect && JSON.parse(a.suspect).length) return { key, skipped: "data suspect" };
   const lattice = latticeFor(a.zone);
   const r2f = regionMap(a.zone);
   if (!lattice || !r2f || !hasTree(a.zone)) return { key, skipped: "no lattice" };
@@ -387,6 +439,7 @@ export async function commanderFor(env, key, nowMs = Date.now()) {
     lattice, pf: captureModel(a.zone), res: resistanceModel(a.zone), getBin: binGetter(a.zone),
   });
   if (!cmd) return { key, skipped: "empty ownership" };
+  applyElimination(cmd);
   cmd.source = "worker";
   await db.prepare("UPDATE alert SET commander=?, commander_ts=? WHERE key=? AND status='live'").bind(JSON.stringify(cmd), now, key).run();
   return { key, ok: true, ms: Date.now() - t0, flips: flips.length };

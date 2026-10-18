@@ -331,3 +331,100 @@ test("Honu bridge: queue -> oracle-honu job -> ingest (population, outlier repor
   const radarRows = DB.raw.prepare("SELECT COUNT(*) n FROM radar").get().n;
   assert.equal(radarRows, 2);
 });
+
+// ---- Review 2026-10-18: settlement fallbacks and corrupt-input guards ----
+
+const noScores = (m) => ({ ...m, faction_vs: "", faction_nc: "", faction_tr: "" });
+const betRow = (DB, id, key, outcome, stake, fee, ts) => {
+  DB.raw.prepare("INSERT OR IGNORE INTO wallet (cid, balance, created, last_auto_at) VALUES ('5428010618035300888', 500, 0, 0)").run();
+  DB.raw.prepare(`INSERT INTO bet (id, cid, key, outcome, stake, fee, net, shares, pct, progress, placed_ts, status)
+    VALUES (?, '5428010618035300888', ?, ?, ?, ?, ?, 300, 30, 0.6, ?, 'open')`).run(id, key, outcome, stake, fee, stake - fee, ts);
+};
+
+test("Census ended row without scores: settle from the clean pre-end snapshot", { skip }, async () => {
+  const { runCycle } = await import("../oracle-worker/src/index.js");
+  const DB = fakeD1();
+  const T0 = 1_792_500_000, END = T0 + 90 * 60;
+  const census = { map: { 1: 40, 2: 28, 3: 20 }, metagame: [mg(700, 153, "started", T0)], flips: [] };
+  installCensus(census);
+  await runCycle({ DB }, (END - 60) * 1000);
+  census.metagame.push(noScores(mg(700, 153, "ended", END)));
+  await runCycle({ DB }, (END + 660) * 1000);
+  const row = DB.raw.prepare("SELECT status, winner, basis, final, flags FROM alert").get();
+  assert.equal(row.status, "settled");
+  assert.equal(row.winner, "VS");
+  assert.equal(row.basis, "snapshot");
+  assert.equal(row.final, null);
+  assert.ok(JSON.parse(row.flags).includes("final_missing"));
+});
+
+test("no scores and a neutral-heavy snapshot: unresolved, bets refunded in full", { skip }, async () => {
+  const { runCycle } = await import("../oracle-worker/src/index.js");
+  const DB = fakeD1();
+  const T0 = 1_792_510_000, END = T0 + 90 * 60;
+  const census = { map: { 1: 30, 2: 20, 3: 10 }, metagame: [mg(710, 153, "started", T0)], flips: [] };
+  installCensus(census);
+  await runCycle({ DB }, (END - 60) * 1000);
+  betRow(DB, "v1", "1-4-710", "VS", 100, 5, END - 1800);
+  census.metagame.push(noScores(mg(710, 153, "ended", END)));
+  await runCycle({ DB }, (END + 660) * 1000);
+  assert.equal(DB.raw.prepare("SELECT status FROM alert").get().status, "unresolved");
+  const b = DB.raw.prepare("SELECT status, payout, credited FROM bet").get();
+  assert.deepEqual({ ...b }, { status: "void", payout: 100, credited: 1 }, "stake back, fee included");
+  assert.equal(DB.raw.prepare("SELECT balance FROM wallet").get().balance, 600);
+});
+
+test("corrupt map that disagrees with Census: Census winner recorded, bets voided", { skip }, async () => {
+  const { runCycle } = await import("../oracle-worker/src/index.js");
+  const DB = fakeD1();
+  const T0 = 1_792_520_000, END = T0 + 90 * 60;
+  const census = { map: { 1: 35, 2: 15, 3: 10 }, metagame: [mg(720, 153, "started", T0)], flips: [] };   // 68 % owned, VS ahead
+  installCensus(census);
+  await runCycle({ DB }, (END - 60) * 1000);
+  betRow(DB, "w1", "1-4-720", "TR", 100, 0, END - 1800);
+  census.metagame.push(mg(720, 153, "ended", END, 30, 31, 39));                                       // Census: TR
+  await runCycle({ DB }, (END + 660) * 1000);
+  const row = DB.raw.prepare("SELECT status, winner, flags FROM alert").get();
+  assert.equal(row.status, "settled");
+  assert.equal(row.winner, "TR");
+  const flags = JSON.parse(row.flags);
+  assert.ok(flags.includes("bets_void") && flags.some((f) => f.startsWith("neutral_heavy")) && flags.includes("snapshot_winner_VS"), row.flags);
+  assert.equal(DB.raw.prepare("SELECT status FROM bet").get().status, "void", "even the TR backer is refunded, not paid");
+  assert.equal(DB.raw.prepare("SELECT balance FROM wallet").get().balance, 600);
+});
+
+test("live guard: neutral-heavy map marks the state suspect, closes betting, holds the commander", { skip }, async () => {
+  const { runCycle, commanderFor, default: worker } = await import("../oracle-worker/src/index.js");
+  const DB = fakeD1();
+  const T0 = 1_792_530_000;
+  const census = { map: { 1: 30, 2: 20, 3: 10 }, metagame: [mg(730, 153, "started", T0)], flips: [] };
+  installCensus(census);
+  const now = T0 + 20 * 60;
+  await runCycle({ DB }, now * 1000);
+  const st = JSON.parse(DB.raw.prepare("SELECT state FROM alert").get().state);
+  assert.deepEqual(st.suspect, ["neutral_heavy:68.2"]);
+  const q = await (await worker.fetch(new Request("https://x/bet/quote?key=1-4-730"), { DB })).json();
+  assert.equal(q.open, false);
+  assert.equal(q.reason, "data_suspect", JSON.stringify(q));
+  assert.equal((await commanderFor({ DB }, "1-4-730", now * 1000)).skipped, "data suspect");
+});
+
+test("dataSuspect: frozen map while captures keep arriving; stale map", async () => {
+  const { dataSuspect } = await import("../oracle-worker/src/index.js");
+  const z = { 1: "1", 2: "2", 3: "3" };
+  const now = 1_792_540_000;
+  assert.deepEqual(dataSuspect(z, now, { ts: now - 600, zones: { 4: { ...z } } }, 4, 3, now), ["map_frozen"]);
+  assert.deepEqual(dataSuspect(z, now, { ts: now - 600, zones: { 4: { ...z } } }, 4, 0, now), [], "a quiet continent is not frozen");
+  assert.deepEqual(dataSuspect(z, now, { ts: now - 600, zones: { 4: { ...z, 3: "1" } } }, 4, 3, now), []);
+  assert.deepEqual(dataSuspect(z, now - 400, null, 4, 0, now), ["map_stale"]);
+});
+
+test("commander win_pct follows the elimination override (matches the header odds)", async () => {
+  const { applyElimination } = await import("../oracle-worker/src/commander.js");
+  const cmd = { factions: { VS: { win_pct: 70, eliminated: false }, NC: { win_pct: 20, eliminated: true }, TR: { win_pct: 10, eliminated: true } } };
+  applyElimination(cmd);
+  assert.deepEqual(Object.fromEntries(Object.entries(cmd.factions).map(([f, x]) => [f, [x.win_pct, x.win_pct_raw]])), { VS: [100, 70], NC: [0, 20], TR: [0, 10] });
+  const two = { factions: { VS: { win_pct: 50, eliminated: false }, NC: { win_pct: 30, eliminated: false }, TR: { win_pct: 20, eliminated: true } } };
+  applyElimination(two);
+  assert.deepEqual([two.factions.VS.win_pct, two.factions.NC.win_pct, two.factions.TR.win_pct], [62.5, 37.5, 0]);
+});

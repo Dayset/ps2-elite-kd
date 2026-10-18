@@ -12,7 +12,8 @@
  *
  * Fees (owner-approved ladder, oracle/goal/GOAL.md): 5 % after 50 % of the alert,
  * 15 % after 80 %, 30 % after 90 %, +10 % when the pick is above 75 %. Fees are a
- * points sink. Betting closes at 95 % of the alert; decided outcomes can't be bet.
+ * points sink (refunded in full when a market is voided). Betting closes at 95 % of
+ * the alert, and while the live map data looks corrupt; decided outcomes can't be bet.
  * Anti-throwing: a VS/NC/TR character may back only its own faction (NSO: any).
  */
 import { FACS } from "./engine.js";
@@ -70,19 +71,26 @@ export function marketFor(alert, now) {
   const progress = Math.max(0, (now - alert.start_ts) / (alert.dur * 60));
   if (progress >= BET.CLOSE_AT) return { open: false, reason: "closed", progress };
   if (now - st.ts > 180) return { open: false, reason: "odds_stale", progress };
+  if (st.suspect && st.suspect.length) return { open: false, reason: "data_suspect", progress, suspect: st.suspect };
   const pcts = Object.fromEntries(FACS.map((f) => [f, st.win[f].pct]));
   return { open: true, pcts, progress, state_ts: st.ts };
 }
 
-/** Settle every open bet of settled/canceled/unresolved alerts. Returns statements to batch. */
+/**
+ * Settle every open bet of settled/canceled/unresolved alerts. Returns statements to batch.
+ * Void (draw, canceled, unresolved, or flagged "bets_void" because the map data was
+ * corrupt and disagreed with Census) refunds the full stake, fee included: players
+ * don't pay for a market we couldn't settle.
+ */
 export function settleStatements(db, alerts, now) {
   const out = [];
   for (const a of alerts) {
-    if (a.status === "settled" && FACS.includes(a.winner)) {
+    const flags = typeof a.flags === "string" ? JSON.parse(a.flags || "[]") : a.flags || [];
+    if (a.status === "settled" && FACS.includes(a.winner) && !flags.includes("bets_void")) {
       out.push(db.prepare("UPDATE bet SET status=CASE WHEN outcome=? THEN 'won' ELSE 'lost' END, payout=CASE WHEN outcome=? THEN shares ELSE 0 END, settled_ts=? WHERE key=? AND status='open'")
         .bind(a.winner, a.winner, now, a.key));
     } else {
-      out.push(db.prepare("UPDATE bet SET status='void', payout=net, settled_ts=? WHERE key=? AND status='open'").bind(now, a.key));
+      out.push(db.prepare("UPDATE bet SET status='void', payout=stake, settled_ts=? WHERE key=? AND status='open'").bind(now, a.key));
     }
   }
   // Credit everything just settled (payout once: credited=0 -> 1).
@@ -102,7 +110,7 @@ export async function handleBet(request, env, url, json, now = Math.floor(Date.n
     const q = request.method === "POST" ? body : Object.fromEntries(url.searchParams);
     const a = await db.prepare("SELECT * FROM alert WHERE key=?").bind(String(q.key || "")).first();
     const m = marketFor(a, now);
-    if (!m.open) return json({ open: false, reason: m.reason }, 200, ns);
+    if (!m.open) return json({ open: false, reason: m.reason, ...(m.suspect ? { suspect: m.suspect } : {}) }, 200, ns);
     const out = {};
     for (const f of FACS) {
       out[f] = m.pcts[f] < BET.MIN_PCT || m.pcts[f] > BET.MAX_PCT ? null

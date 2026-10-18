@@ -123,14 +123,14 @@ test("place, guard, settle and pay out exactly once", { skip }, async () => {
   assert.equal(lb.body.leaders[0].name, "Vee");
 });
 
-test("a draw or cancellation refunds the stake minus fee", { skip }, async () => {
+test("a draw or cancellation refunds the full stake, fee included", { skip }, async () => {
   const { DB, call, settleStatements, T0, setState } = await setup();
   setState(T0 + 46 * 60, [40, 40, 20]);                  // 51 % in: 5 % fee
   const b = await call("POST", "/bet/place", T0 + 46 * 60 + 5, { key: "1-4-1", outcome: "NC", stake: 100 }, "NC");
   assert.equal(b.body.bet.fee, 5);
   DB.raw.prepare("UPDATE alert SET status='settled', winner='draw' WHERE key='1-4-1'").run();
   await DB.batch(settleStatements(DB, [{ key: "1-4-1", status: "settled", winner: "draw" }], T0 + 6000));
-  assert.equal((await call("GET", "/bet/me", T0 + 6100, null, "NC")).body.balance, 995);
+  assert.equal((await call("GET", "/bet/me", T0 + 6100, null, "NC")).body.balance, 1000);
 });
 
 test("BonusCheques: +25 once per UTC day; automatic +5/h only below 20, capped at 20", { skip }, async () => {

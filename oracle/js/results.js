@@ -34,7 +34,7 @@ export function renderHist() {
       <td class="num hlen">${a.dur ? esc(a.dur) + " min" : "—"}</td>
       <td class="hwin">${a.winner ? `<b class="${a.winner}">${a.winner}</b>` : esc(a.status)}</td>
       <td class="num hfin">${a.final ? FACS.map((f) => (+a.final[f]).toFixed(1)).join(" / ") : "—"}</td>
-      <td class="hbas">${a.basis === "sudden_death" ? "sudden death" : a.basis ? "Census final" : ""}</td>
+      <td class="hbas">${a.basis === "sudden_death" ? "sudden death" : a.basis === "snapshot" ? "map snapshot" : a.basis ? "Census final" : ""}</td>
       <td class="flag">${a.report && a.report.flagged ? `${a.report.confirmed ? `☠️${a.report.confirmed} ` : ""}${a.report.flagged - a.report.confirmed ? `⚠️${a.report.flagged - a.report.confirmed} ` : ""}` : ""}${(a.flags || []).map((f) => esc(f.replace(/_/g, " "))).join(", ")}</td></tr>`);
   $("hist").querySelector("tbody").innerHTML = rows.join("") || '<tr><td colspan="8" class="note">No settled alerts yet.</td></tr>';
   const more = $("histMore");

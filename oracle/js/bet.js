@@ -82,7 +82,7 @@ function render() {
   if (!pick && ownOnly) pick = own;
   const head = `<h2>Bet on the winner</h2>`;
   if (!q || !q.open) {
-    el.innerHTML = `<div class="card bet">${head}<div class="note">${q && q.reason === "closed" ? "Betting closed for this alert (last 5%)." : "Betting opens when fresh odds are available."}</div></div>`;
+    el.innerHTML = `<div class="card bet">${head}<div class="note">${q && q.reason === "closed" ? "Betting closed for this alert (last 5%)." : q && q.reason === "data_suspect" ? "Betting paused: Census map data looks broken right now. It reopens when the map is healthy again." : "Betting opens when fresh odds are available."}</div></div>`;
     return;
   }
   const facBtn = (f) => {

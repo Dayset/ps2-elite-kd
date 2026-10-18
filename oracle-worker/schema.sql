@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS alert (
   final TEXT,                    -- {"VS":..,"NC":..,"TR":..} Census ended scores
   flags TEXT,                    -- JSON array of data-quality flags
   state TEXT,                    -- latest live state (push_live contract)
-  commander TEXT,                -- latest commander block (from Actions)
+  commander TEXT,                -- latest commander block (Worker /internal/commander fan-out)
   commander_ts INTEGER,
   updated INTEGER NOT NULL
 );
