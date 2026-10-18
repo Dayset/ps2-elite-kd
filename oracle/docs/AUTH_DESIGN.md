@@ -1,5 +1,7 @@
 # PS2MapOracle — Auth Challenge Design (current)
 
+> **Renamed 2026-10-18:** betting is now **voting** (owner decision, #27). BonusCheques are a meme currency: no cash value, nothing is ever paid out, they can't be bought, sold, traded or cashed out. Current-state text below uses vote / amount / reward; dated history and code identifiers (`placebet`, the `bets` table, the `hex-betting-game` artifact) keep their original names. See `oracle/js/vote.js` (`DISCLAIMER`).
+
 **Supersedes** the suicide+logout flow still present in `backend/auth_challenge.py`
 and `backend/auth_test.py` (2026-10-12). Those files are kept for history; the
 live design is logout-only.
@@ -8,7 +10,7 @@ live design is logout-only.
 
 ## Goal
 
-Prove the person registering a betting account owns the PlanetSide 2 character,
+Prove the person registering a voting account owns the PlanetSide 2 character,
 using only server-side Census data. No client software, no screenshots, no
 fingerprinting.
 

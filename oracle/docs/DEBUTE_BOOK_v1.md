@@ -1,5 +1,7 @@
 # Debute Book v1 — can the opening 15 minutes predict the alert?
 
+> **Renamed 2026-10-18:** betting is now **voting** (owner decision, #27). BonusCheques are a meme currency: no cash value, nothing is ever paid out, they can't be bought, sold, traded or cashed out. Current-state text below uses vote / amount / reward; dated history and code identifiers (`placebet`, the `bets` table, the `hex-betting-game` artifact) keep their original names. See `oracle/js/vote.js` (`DISCLAIMER`).
+
 **Verdict: yes, but selectively.** Territory *momentum* in the first 15 minutes
 discriminates clearly. Population — the thing everyone watches — barely
 discriminates at all. That is the contrarian headline of this book.
@@ -66,7 +68,7 @@ factions, zergs stall).
 **5. A 45% leader at 15 minutes is not winning the alert.**
 The runaway_opening archetype (n=217) produces victor rates indistinguishable
 from base. Comebacks are the norm, not the exception — which is exactly why
-the betting sim's 50%/80% checkpoints stay interesting.
+the voting sim's 50%/80% checkpoints stay interesting.
 
 **6. The "faction too low" effect is real but modest — and faction-asymmetric.**
 Pop underdogs (<25%) win 23.9% vs 31.6% (−7.7pp, significant pooled), but the

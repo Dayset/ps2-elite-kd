@@ -1,5 +1,7 @@
 # PS2MapOracle — Frontend Rebuild Spec
 
+> **Renamed 2026-10-18:** betting is now **voting** (owner decision, #27). BonusCheques are a meme currency: no cash value, nothing is ever paid out, they can't be bought, sold, traded or cashed out. Current-state text below uses vote / amount / reward; dated history and code identifiers (`placebet`, the `bets` table, the `hex-betting-game` artifact) keep their original names. See `oracle/js/vote.js` (`DISCLAIMER`).
+
 How to recreate the `hex-betting-game` artifact from scratch. This documents every
 button, every server action, the data model, and the flows between them.
 
@@ -18,7 +20,7 @@ button, every server action, the data model, and the flows between them.
                                                ┌──────────────────┐
                                                │  Browser UI      │
                                                │  (map, charts,   │
-                                               │   betting, auth) │
+                                               │   voting, auth)  │
                                                └──────────────────┘
 ```
 
@@ -69,16 +71,16 @@ Per faction, two ranked lists:
 - War-shape badge: `1v1 LOCKED` / `TWO-FRONT WAR` / `FREE AGENT`.
 - Collapse warnings inline on defend rows for the leader.
 
-### 2f. Betting panel
+### 2f. Voting panel
 - Market tabs: **Winner** | **Second place** (second tab only when open).
 - Faction buttons (VS/NC/TR) with current odds %.
-- Stake buttons: **25 / 50 / 100 / 200** (fixed amounts only).
-- Place Bet button → `placebet`.
+- Amount buttons: **25 / 50 / 100 / 200** (fixed amounts only).
+- Vote button → `placebet`.
 - Fee display: fee-by-odds curve + time-weighted share note (1.0/0.8/0.6).
-- Simulated crowd volumes fill the pools (Dayset is the only real bettor).
+- Simulated crowd volumes fill the pools (Dayset is the only real voter).
 
 ### 2g. History panel (below bankroll)
-- Every vote, newest first: stake, odds at placement, payout, fee, per-vote P&L.
+- Every vote, newest first: amount, odds at placement, reward, fee, per-vote P&L.
 - Totals row + cumulative profit graph.
 - "Settle" per alert → `settleposition` (or auto on final check 3/3).
 - Corrected-settlement tag: rows can show `WON · corrected` / `LOST · corrected`.
@@ -99,7 +101,7 @@ Per faction, two ranked lists:
 ### 2j. Replay simulator
 - Alert picker (from `installreplaylibrary` / `push_replays`).
 - Scrubber + play button; probability overlay renders from tick data.
-- Bets in replay mode use `mode: "replay"` (segregated from live bankroll).
+- Votes in replay mode use `mode: "replay"` (segregated from live bankroll).
 
 ---
 
@@ -113,17 +115,17 @@ Per faction, two ranked lists:
 | `push_replays` | `{library: {alerts[]}}` | Stores replay tick bundles for the simulator. |
 | `installreplaylibrary` | `{}` | Seeds the built-in replay set. |
 
-### Betting
+### Voting
 | Action | Input | What it does |
 |---|---|---|
-| `placebet` | `{token, mode, alertId, market, faction, amount, t, progressPct, win}` — amount ∈ {25,50,100,200}, market ∈ {winner, second} | Validates token + market open, deducts stake, records vote with odds snapshot + fee. |
-| `settleposition` | `{token, mode, alertId}` | Pays out settled positions for one alert to bankroll. |
+| `placebet` | `{token, mode, alertId, market, faction, amount, t, progressPct, win}` — amount ∈ {25,50,100,200}, market ∈ {winner, second} | Validates token + market open, deducts amount, records vote with odds snapshot + fee. |
+| `settleposition` | `{token, mode, alertId}` | Returns cheques for settled positions for one alert to bankroll. |
 | `getdashboard` | `{token?}` | Returns everything the UI renders: bankroll, live alerts, history, bonus state. |
 
 ### Settlement
 | Action | Input | What it does |
 |---|---|---|
-| `record_final_check` | `{alertId, endedAt, snapshotAt, territory}` | Triple-check settlement. Settlement records keyed by (alertId, endedAt) since 2026-10-16 (migration 0015); bare-alertId keying caused recycled-ID collisions. | Holds payout on checks 1/3 and 2/3; releases on 3/3. Accepts a closer pre-end snapshot; logs winner disagreement. Never settles from a live push. |
+| `record_final_check` | `{alertId, endedAt, snapshotAt, territory}` | Triple-check settlement. Settlement records keyed by (alertId, endedAt) since 2026-10-16 (migration 0015); bare-alertId keying caused recycled-ID collisions. | Holds reward on checks 1/3 and 2/3; releases on 3/3. Accepts a closer pre-end snapshot; logs winner disagreement. Never settles from a live push. |
 | `record_sudden_death_result` | `{token, alertId, winner, runnerUp?}` | Records 15-min kill-overtime outcome for tied alerts (4.5% of alerts). |
 | `repair_alert_1_4_153` | — | One-off correction for a mis-settled alert (kept for audit). |
 
@@ -175,7 +177,7 @@ Full JSON schema is in the action definition; key sub-objects:
 - **challenges**: `challenge_id, character_id, status, accepted_at, window_ends_at`
 - **alerts**: `alert_id (world-zone-event_id), world, zone, event_id, start_ts, duration_min, status (live|settling|settled|sudden_death), winner, checks_done`
 - **ticks**: `alert_id, t, ts, territory, win_pct, pop` (win-history chart source)
-- **bets**: `id, token_hash, alert_id, market (winner|second), faction, amount, odds_pct, fee, t, progress_pct, mode (live|replay), status (open|won|lost|corrected), payout`
+- **bets** (table name kept): `id, token_hash, alert_id, market (winner|second), faction, amount, odds_pct, fee, t, progress_pct, mode (live|replay), status (open|won|lost|corrected), payout`
 - **pools**: `alert_id, market, faction, total_staked, crowd_simulated`
 - **bonus**: `token_hash, last_auto_at, last_manual_utc_day, balance`
 - **replays**: `alert_id, label, date, ticks[]` (simulator library)
@@ -184,16 +186,16 @@ Full JSON schema is in the action definition; key sub-objects:
 
 ## 6. Key flows
 
-### Placing a bet
-1. UI: user picks market tab → faction → stake → Place Bet.
-2. `placebet` validates token, market open (winner closes at 100% lock), deducts stake.
-3. Bet stored with odds snapshot; fee computed by fee-by-odds curve.
+### Placing a vote
+1. UI: user picks market tab → faction → amount → Vote.
+2. `placebet` validates token, market open (winner closes at 100% lock), deducts amount.
+3. Vote stored with odds snapshot; fee computed by fee-by-odds curve.
 4. Pools update; `getdashboard` reflects new bankroll + open position.
 
 ### Settlement (triple-check)
 1. Alert ends → status `settling`, UI shows "settling…".
 2. Backend sends `record_final_check` at +0/+5/+10 min with pre-end snapshots.
-3. Checks 1–2: hold. Check 3: payout = parimutuel share × time weight (1.0/0.8/0.6).
+3. Checks 1–2: hold. Check 3: reward = parimutuel share × time weight (1.0/0.8/0.6).
 4. `settleposition` (or auto) credits bankroll; History shows WON/LOST (+`· corrected` if repaired).
 5. Tie → `record_sudden_death_result` after 15-min overtime instead.
 
@@ -202,7 +204,7 @@ Full JSON schema is in the action definition; key sub-objects:
 2. ACCEPT → `accept_auth_challenge` → 60s window starts.
 3. User presses ESC → logout observed on Census stream → `check_auth_challenge` true.
 4. `complete_auth` → HMAC token → localStorage `ps2oracle_token`.
-5. Every bet/dashboard call sends the token; `verify_auth_token` gates.
+5. Every vote/dashboard call sends the token; `verify_auth_token` gates.
 
 ---
 

@@ -1,9 +1,12 @@
 # Game Theory for 3-Faction PS2 Alerts
+
+> **Renamed 2026-10-18:** betting is now **voting** (owner decision, #27). BonusCheques are a meme currency: no cash value, nothing is ever paid out, they can't be bought, sold, traded or cashed out. Current-state text below uses vote / amount / reward; dated history and code identifiers (`placebet`, the `bets` table, the `hex-betting-game` artifact) keep their original names. See `oracle/js/vote.js` (`DISCLAIMER`).
+
 ## Research notes — 2026-10-04 (Part I: in-game commander), 2026-10-11 (Part II: market design)
 
 ---
 
-# PART II — Market-design game theory (bettor behavior)
+# PART II — Market-design game theory (voter behavior, from betting-market research)
 ## Research dive 2026-10-11 — aimed at our parimutuel market design
 
 Product context for this part: 3-faction parimutuel prediction market on alert
@@ -108,12 +111,12 @@ mirrors the cognitive distortion. (Sources: Kahneman & Tversky 1979; Snowberg
   PUBLIC, not private; (3) pull markets when outcome known → the 100%-lock.
 
 ### DESIGN RECOMMENDATIONS (from the research, aimed at our market)
-1. **Show net-of-fee effective payouts, not gross oracle odds.** "Stake 100 →
+1. **Show net-of-fee effective rewards, not gross oracle odds.** "Amount 100 →
    132 net if VS wins" at current pool shares minus the faction's fee band.
    Makes the favorite-longshot donation (oracle 64% vs pool-implied 52%)
    visible — the cheapest debiasing tool in the literature.
 2. **Soft-suspension band before the 100% lock** (~95% oracle confidence:
-   suspend new bets or cap stakes). A hard 100% cutoff invites last-second
+   suspend new votes or cap amounts). A hard 100% cutoff invites last-second
    sniping into a nearly-decided pool — the CAW dynamic that makes casuals
    feel cheated. The lock rule is right; give it a ramp.
 3. **Publish a "smart money" indicator instead of profiling privately.**
@@ -127,12 +130,12 @@ mirrors the cognitive distortion. (Sources: Kahneman & Tversky 1979; Snowberg
    information, not punishment.
 5. **Display uncertainty as interval + labeled stars, never a bare high
    probability.** "Model range 55–75%, certainty 3/5 — certainty means model
-   confidence, not bet quality." A bare "92%, ★★★★★" maximally invites
-   overconfidence wagers.
-6. **Counter late-betting equilibrium: early-betting fee discount or late
-   stake caps.** Informed players optimally wait and dilute early bettors;
+   confidence, not vote quality." A bare "92%, ★★★★★" maximally invites
+   overconfidence votes.
+6. **Counter late-voting equilibrium: early-voting fee discount or late
+   amount caps.** Informed players optimally wait and dilute early voters;
    back-loaded pools harvest casuals. A small fee discount for first-half
-   bets, or per-account stake caps in the final minutes, protects the
+   votes, or per-account amount caps in the final minutes, protects the
    recreational players who fund the ecosystem.
 
 ### OPEN QUESTIONS (researcher could not verify)
@@ -147,7 +150,7 @@ mirrors the cognitive distortion. (Sources: Kahneman & Tversky 1979; Snowberg
 
 ---
 
-# PART II — Market-design game theory (bettor behavior)
+# PART II — Market-design game theory (voter behavior, from betting-market research)
 ## Research dive 2026-10-11 — aimed at our parimutuel market design
 
 Product context for this part: 3-faction parimutuel prediction market on alert
@@ -252,12 +255,12 @@ mirrors the cognitive distortion. (Sources: Kahneman & Tversky 1979; Snowberg
   PUBLIC, not private; (3) pull markets when outcome known → the 100%-lock.
 
 ### DESIGN RECOMMENDATIONS (from the research, aimed at our market)
-1. **Show net-of-fee effective payouts, not gross oracle odds.** "Stake 100 →
+1. **Show net-of-fee effective rewards, not gross oracle odds.** "Amount 100 →
    132 net if VS wins" at current pool shares minus the faction's fee band.
    Makes the favorite-longshot donation (oracle 64% vs pool-implied 52%)
    visible — the cheapest debiasing tool in the literature.
 2. **Soft-suspension band before the 100% lock** (~95% oracle confidence:
-   suspend new bets or cap stakes). A hard 100% cutoff invites last-second
+   suspend new votes or cap amounts). A hard 100% cutoff invites last-second
    sniping into a nearly-decided pool — the CAW dynamic that makes casuals
    feel cheated. The lock rule is right; give it a ramp.
 3. **Publish a "smart money" indicator instead of profiling privately.**
@@ -271,12 +274,12 @@ mirrors the cognitive distortion. (Sources: Kahneman & Tversky 1979; Snowberg
    information, not punishment.
 5. **Display uncertainty as interval + labeled stars, never a bare high
    probability.** "Model range 55–75%, certainty 3/5 — certainty means model
-   confidence, not bet quality." A bare "92%, ★★★★★" maximally invites
-   overconfidence wagers.
-6. **Counter late-betting equilibrium: early-betting fee discount or late
-   stake caps.** Informed players optimally wait and dilute early bettors;
+   confidence, not vote quality." A bare "92%, ★★★★★" maximally invites
+   overconfidence votes.
+6. **Counter late-voting equilibrium: early-voting fee discount or late
+   amount caps.** Informed players optimally wait and dilute early voters;
    back-loaded pools harvest casuals. A small fee discount for first-half
-   bets, or per-account stake caps in the final minutes, protects the
+   votes, or per-account amount caps in the final minutes, protects the
    recreational players who fund the ecosystem.
 
 ### OPEN QUESTIONS (researcher could not verify)

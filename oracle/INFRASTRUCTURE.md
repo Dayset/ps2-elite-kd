@@ -1,5 +1,7 @@
 > **Historical:** the pipeline before 2026-10-18. Current: [CLOUDFLARE.md](CLOUDFLARE.md).
 
+> **Renamed 2026-10-18:** betting is now **voting** (owner decision, #27). BonusCheques are a meme currency: no cash value, nothing is ever paid out, they can't be bought, sold, traded or cashed out. Current-state text below uses vote / amount / reward; dated history and code identifiers (`placebet`, the `bets` table, the `hex-betting-game` artifact) keep their original names. See `oracle/js/vote.js` (`DISCLAIMER`).
+
 # PS2MapOracle — Infrastructure
 
 How the live system works, end to end. All paths are relative to the backend

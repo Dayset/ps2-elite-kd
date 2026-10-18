@@ -1,5 +1,7 @@
 # PS2MapOracle — Errors Usually Encountered
 
+> **Renamed 2026-10-18:** betting is now **voting** (owner decision, #27). BonusCheques are a meme currency: no cash value, nothing is ever paid out, they can't be bought, sold, traded or cashed out. Current-state text below uses vote / amount / reward; dated history and code identifiers (`placebet`, the `bets` table, the `hex-betting-game` artifact) keep their original names. See `oracle/js/vote.js` (`DISCLAIMER`).
+
 Census API, PS2Alerts, and transport failure modes seen in practice, with the
 recorded incident where one exists. This is a field guide, not a theory list.
 

@@ -1,5 +1,7 @@
 # Artifact edit brief: multi-server / multi-continent live support
 
+> **Renamed 2026-10-18:** betting is now **voting** (owner decision, #27). BonusCheques are a meme currency: no cash value, nothing is ever paid out, they can't be bought, sold, traded or cashed out. Current-state text below uses vote / amount / reward; dated history and code identifiers (`placebet`, the `bets` table, the `hex-betting-game` artifact) keep their original names. See `oracle/js/vote.js` (`DISCLAIMER`).
+
 ## Context
 The Hex Betting Game (`hex-betting-game`) currently handles a single live alert (world 10 Wainwright/Hossin). The backend now pushes live states for ALL servers and continents. Each push_live call carries one alert's state; there can be 0–4 concurrent live alerts.
 
@@ -21,8 +23,8 @@ The Hex Betting Game (`hex-betting-game`) currently handles a single live alert 
 - Display names: use the reference above (e.g. "Wainwright — Hossin").
 - If no alerts are live anywhere, show a clean "no live alerts" state (not a stale final state).
 
-### 3. Per-alert betting pools
-- Betting pools, positions, and settlement must be scoped per alert key.
+### 3. Per-alert voting pools
+- Voting pools, positions, and settlement must be scoped per alert key.
 - Each alert gets independent winner + second-place pools (same fee model: 5/15/30 + 10% kicker).
 - Settlement triggers: alert end (new event_id or explicit end signal). Settle by final territory.
 - The shared 1,000-point bankroll stays global; positions are per-alert.
@@ -43,6 +45,6 @@ Use this to key storage. Multiple pushes per minute (one per live alert) are nor
 - The vivid Hossin map.
 
 ## Acceptance
-- Two simulated concurrent live alerts (different worlds) both appear in the picker, each with independent betting pools.
-- Placing a bet on one alert doesn't affect the other.
+- Two simulated concurrent live alerts (different worlds) both appear in the picker, each with independent voting pools.
+- Placing a vote on one alert doesn't affect the other.
 - Empty `owners` renders cleanly without the hex map.
