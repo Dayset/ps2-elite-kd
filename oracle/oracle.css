@@ -120,6 +120,9 @@ footer { color: var(--dim); font-size: var(--fs-12); margin-top: var(--s-5); }
    summary hidden, so the desktop layout is unchanged; phone-only bits are hidden there. */
 .det > summary { cursor: pointer; color: var(--muted); font-size: var(--fs-14); list-style: none; }
 .det > summary::-webkit-details-marker { display: none; }
+/* Unfold indicator for user-toggleable collapsibles (e.g. Win chance Details). */
+.det.keep > summary::before { content: "▸"; color: var(--dim); margin-right: var(--s-1); }
+.det.keep[open] > summary::before { content: "▾"; }
 .seg, .oddline, .tab .tl, .mini { display: none; }
 @media (min-width: 601px) {
   .det:not(.keep) > summary { display: none; }
@@ -188,7 +191,7 @@ footer { color: var(--dim); font-size: var(--fs-12); margin-top: var(--s-5); }
 }
 @media (max-width: 600px) and (prefers-reduced-motion: reduce) { .mini { transition: none; } }
 @media (max-width: 600px) {
-  .grid > .card:not(.map) { order: -1; }
+  .grid > .side { order: -1; }
   .map svg { max-height: 38vh; width: auto; max-width: 100%; margin: 0 auto; }
   .card.map h2 { display: none; }
 }
@@ -207,8 +210,9 @@ footer { color: var(--dim); font-size: var(--fs-12); margin-top: var(--s-5); }
 .cmd li[data-base]:hover { background: #1a2230; }
 @media (min-width: 861px) {
   .grid { grid-template-columns: minmax(0, 1.7fr) minmax(320px, 1fr); align-items: start; }
-  .grid > .map { grid-row: span 2; }
-  .grid > #voteSlot, .grid > #voteHere, .grid > #lockHere { grid-column: 2; }
+  /* Right column is one flex stack: the tall map no longer stretches the grid
+   * rows and scatters the cards with dead space between them. */
+  .grid > .side { display: flex; flex-direction: column; gap: var(--s-4); min-width: 0; }
   .map svg { max-height: calc(100vh - 360px); min-height: 300px; width: auto; max-width: 100%; margin: 0 auto; }
   /* ⓘ notes: small popovers instead of long text */
   .det.info { position: relative; display: inline-block; }
