@@ -57,6 +57,15 @@ function installCensus(state) {
       body = { world_event_list: state.metagame, returned: state.metagame.length };
     } else if (u.includes("type=FACILITY")) {
       body = { world_event_list: state.flips, returned: state.flips.length };
+    } else if (u.includes("wt.honu.pw/api/realtime-alert")) {
+      body = state.realtime || [];
+    } else if (u.includes("/participants")) {
+      if (!state.participants) return new Response("not finished", { status: 400 });
+      body = state.participants;
+    } else if (u.includes("ps2radar.com/api/v1/players/")) {
+      state.radarCalls = (state.radarCalls || 0) + 1;
+      if (u.endsWith("/5428010618035300002")) return new Response("{}", { status: 404 });
+      body = { player: { name: "Ace", character_id: "5428010618035300001", classification: { tier: "suspect", label: "Suspect" }, model: { tier: "blatant", blatant: true, sus_score: 91 } } };
     } else if (u.includes("wt.honu.pw/api/population/")) {
       // Honu: camelCase list; zoneID may carry instance bits above 16.
       body = state.honu ? [{ worldID: 1, zoneID: (3 << 16) | 4, timestamp: "2026-10-18T06:00:00Z", total: 300, vs: 150, nc: 90, tr: 50, ns: 10 },
@@ -240,4 +249,47 @@ test("commander runs per live alert, inline and through the SELF binding", { ski
   assert.match(noKey[0].error, /403/);
   const live = await (await worker.fetch(new Request("https://x/live"), env)).json();
   assert.ok(live.alerts[0].commander.factions.VS);
+});
+
+test("outlier report after settlement (Honu participants + PS2 Radar), live KD from Honu", { skip }, async () => {
+  const { runCycle, fanOutReport, default: worker } = await import("../oracle-worker/src/index.js");
+  const DB = fakeD1();
+  const env = { DB };
+  const T0 = 1_792_800_000, END = T0 + 90 * 60;
+  const census = { map: { 1: 40, 2: 30, 3: 18 }, flips: [], honu: true, metagame: [mg(950, 153, "started", T0)],
+    realtime: [{ worldID: 1, zoneID: 4, vs: { kills: 900, deaths: 600 }, nc: { kills: 500, deaths: 600 }, tr: { kills: 400, deaths: 600 } }] };
+  installCensus(census);
+  await runCycle(env, (T0 + 600) * 1000);
+  let live = await (await worker.fetch(new Request("https://x/live"), env)).json();
+  assert.deepEqual(live.alerts[0].state.kd, { VS: 1.5, NC: 0.833, TR: 0.667 });
+  assert.equal(live.alerts[0].state.kd_source, "honu");
+  census.metagame.push(mg(950, 153, "ended", END, 40, 35, 25));
+  await runCycle(env, (END + 60) * 1000);
+  let rep = await runCycle(env, (END + 660) * 1000);
+  assert.deepEqual(rep.report_keys, ["1-4-950"], "settled alert queued for its report");
+  // Honu not ready yet -> pending, retried later.
+  let r = await fanOutReport(env, rep.report_keys, (END + 660) * 1000);
+  assert.equal(r[0].pending, 400);
+  rep = await runCycle(env, (END + 700) * 1000);
+  assert.deepEqual(rep.report_keys, [], "not retried within 4 minutes");
+  census.participants = {
+    entries: [{ characterID: "5428010618035300001", kills: 300, deaths: 20, secondsOnline: 5400 }, { characterID: "5428010618035300002", kills: 120, deaths: 20, secondsOnline: 3000 },
+      { characterID: "5428010618035300003", kills: 40, deaths: 40, secondsOnline: 3000 }],
+    characters: [{ id: "5428010618035300001", name: "Ace", factionID: 1 }, { id: "5428010618035300002", name: "Bee", factionID: 2 }, { id: "5428010618035300003", name: "Cee", factionID: 3 }],
+  };
+  rep = await runCycle(env, (END + 960) * 1000);
+  r = await fanOutReport(env, rep.report_keys, (END + 960) * 1000);
+  assert.equal(r[0].ok, true, JSON.stringify(r));
+  assert.equal(r[0].radar_lookups, 2);
+  const one = await (await worker.fetch(new Request("https://x/alert?key=1-4-950"), env)).json();
+  assert.equal(one.alert.report.flagged, 2);
+  assert.equal(one.alert.report.faction.VS.kd, 15);
+  assert.equal(one.outliers[0].radar.modelTier, "blatant");
+  assert.equal(one.outliers[1].radar.stored, false);
+  const hist = await (await worker.fetch(new Request("https://x/history"), env)).json();
+  assert.equal(hist.alerts[0].report.confirmed, 1);
+  // Radar answers are cached: a second report run makes no new Radar calls.
+  const calls = census.radarCalls;
+  await fanOutReport(env, ["1-4-950"], (END + 1000) * 1000);
+  assert.equal(census.radarCalls, calls);
 });

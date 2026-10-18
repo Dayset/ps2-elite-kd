@@ -89,3 +89,24 @@ CREATE TABLE IF NOT EXISTS pop (
   vs INTEGER, nc INTEGER, tr INTEGER, ns INTEGER,
   PRIMARY KEY (world, zone, ts)
 );
+
+-- Per-alert outlier report from Honu participants (after the alert ends).
+CREATE TABLE IF NOT EXISTS report (
+  key TEXT PRIMARY KEY,
+  status TEXT NOT NULL,          -- ok | pending | error
+  attempts INTEGER NOT NULL DEFAULT 0,
+  ts INTEGER NOT NULL,
+  players INTEGER,
+  flagged INTEGER,
+  confirmed INTEGER,
+  faction TEXT,                  -- {"VS":{kills,deaths,kd,players},...}
+  outliers TEXT,                 -- [{cid,name,outfit,faction,kills,deaths,minutes,kd,kpm,severity,radar}]
+  err TEXT
+);
+
+-- PS2 Radar second-opinion cache (flagged players only), rechecked after 3 days.
+CREATE TABLE IF NOT EXISTS radar (
+  cid TEXT PRIMARY KEY,
+  ts INTEGER NOT NULL,
+  entry TEXT NOT NULL
+);

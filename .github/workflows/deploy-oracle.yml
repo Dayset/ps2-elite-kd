@@ -13,6 +13,7 @@ on:
       - "oracle/backend/winbins_*.json"
       - "oracle/backend/*_region_to_facility.json"
       - "test/oracle-*.test.mjs"
+      - "radar.mjs"
       - ".github/workflows/deploy-oracle.yml"
   workflow_dispatch:
 
@@ -34,6 +35,7 @@ jobs:
             oracle-worker
             oracle/backend
             test
+            radar.mjs
             package.json
 
       - uses: actions/setup-node@v4
@@ -44,7 +46,7 @@ jobs:
         run: node oracle-worker/build-trees.mjs
 
       - name: Oracle tests
-        run: node --test test/oracle-engine.test.mjs test/oracle-worker.test.mjs
+        run: node --test test/oracle-engine.test.mjs test/oracle-worker.test.mjs test/oracle-commander.test.mjs test/oracle-outliers.test.mjs
 
       # Plain wrangler (not wrangler-action) so a failure's message reaches the
       # run's annotations: job logs are not always readable where this is debugged.

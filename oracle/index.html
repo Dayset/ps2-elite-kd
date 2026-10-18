@@ -242,6 +242,22 @@ footer { color: var(--dim); font-size: 12px; margin-top: 18px; }
     svg.addEventListener("click", pick);
   }
 
+  const radarText = (r) => !r ? "" : !r.stored ? "Radar: no data" : r.mark ? `Radar: ${r.mark}` : r.modelTier ? `Radar: ${r.modelTier}${r.sus != null ? " · Sus " + Math.round(r.sus) : ""}` : `Radar: ${r.label || "not assessed"}`;
+  function reportPanel(a) {
+    const rep = a.report;
+    if (!rep) return a.status === "settled" ? `<section class="card" style="margin-top:14px"><h2>Players</h2><div class="note">Per-player report arrives from Honu a few minutes after the alert ends.</div></section>` : "";
+    if (rep.status !== "ok") return `<section class="card" style="margin-top:14px"><h2>Players</h2><div class="note">Waiting for Honu's per-player data (${esc(rep.status)}).</div></section>`;
+    const fk = rep.faction ? FACS.map((f) => rep.faction[f] ? `<span class="${f}">${f} KD ${rep.faction[f].kd ?? "–"}</span> <span class="note">(${rep.faction[f].players} ${rep.faction[f].players === 1 ? "player" : "players"})</span>` : "").join(" · ") : "";
+    const rows = (ticksFor === a.key && outliers ? outliers : []).map((o) => `<tr><td>${o.severity === "confirmed" ? "☠️" : "⚠️"}</td>
+      <td><span class="${o.faction || ""}">${esc(o.name || o.cid)}</span>${o.outfit ? ` <span class="note">[${esc(o.outfit)}]</span>` : ""}</td>
+      <td class="num">${o.kills}/${o.deaths}</td><td class="num">${o.kd}</td><td class="num">${o.kpm}</td><td class="num">${o.minutes}m</td>
+      <td class="note">${esc(radarText(o.radar))}</td>
+      <td><a href="https://wt.honu.pw/c/${encodeURIComponent(o.cid)}" target="_blank" rel="noopener">Honu</a> · <a href="https://ps2radar.com/#/player/${encodeURIComponent(o.cid)}" target="_blank" rel="noopener">Radar</a></td></tr>`).join("");
+    return `<section class="card" style="margin-top:14px"><h2>Players · ${rep.players} in alert</h2><div class="second">${fk}</div>
+      ${rep.flagged ? `<div class="scroll" style="margin-top:8px"><table><thead><tr><th></th><th>Player</th><th>K/D</th><th>KD</th><th>KPM</th><th>Time</th><th>Second opinion</th><th></th></tr></thead><tbody>${rows || '<tr><td colspan="8" class="note">Loading…</td></tr>'}</tbody></table></div>` : `<div class="note" style="margin-top:6px">No statistical outliers.</div>`}
+      <div class="note" style="margin-top:6px">⚠️ KD ≥ 5 and ≥ 2 kills/min · ☠️ ≥ 3 kills/min (at least 10 min and 25 kills). A statistical outlier, not an accusation; PS2 Radar is an independent second opinion.</div></section>`;
+  }
+
   function commander(c, ts, now) {
     if (!c || !c.factions) return "";
     const marks = (e) => `${e.heat >= 40 ? ` <span title="hot fight (heat ${e.heat})">🔥</span>` : ""}${e.freezing ? ' <span title="supply line runs through a threatened chokepoint">🥶</span>' : ""}${e.cut_severs ? ` <span title="capturing this cuts off ${e.cut_severs} enemy bases">✂️${e.cut_severs}</span>` : ""}`;
@@ -257,10 +273,10 @@ footer { color: var(--dim); font-size: 12px; margin-top: 18px; }
     }).join("")}</div>${(c.second_place_kingmaker || []).length ? `<div class="note" style="margin-top:8px">Second place: ${c.second_place_kingmaker.map((k) => esc(k.text)).join(" · ")}</div>` : ""}${c.fight_up && c.fight_up.text ? `<pre class="note" style="margin-top:8px;white-space:pre-wrap;font-family:inherit">${esc(c.fight_up.text)}</pre>` : ""}</section>`;
   }
 
-  let ticksFor = null, ticks = [];
+  let ticksFor = null, ticks = [], outliers = null;
   async function loadTicks() {
     if (!selected) return;
-    try { const j = await get("/alert?key=" + encodeURIComponent(selected)); ticksFor = selected; ticks = j.ticks || []; render(Math.floor(Date.now() / 1000)); } catch {}
+    try { const j = await get("/alert?key=" + encodeURIComponent(selected)); ticksFor = selected; ticks = j.ticks || []; outliers = j.outliers || null; render(Math.floor(Date.now() / 1000)); } catch {}
   }
 
   function render(now) {
@@ -274,7 +290,7 @@ footer { color: var(--dim); font-size: 12px; margin-top: 18px; }
     const win = s ? s.win : null;
     const lead = s && s.leader;
     const left = a.status === "live" ? `${mins(a.start_ts + a.dur * 60 - now)} min left` : statusLabel(a, now);
-    const oddsHtml = win ? FACS.map((f) => `<div class="fac ${f} ${f === lead ? "lead" : ""}"><div class="l">${f}</div><div class="n">${win[f].pct}%</div><div class="stars">${stars(win[f].pct)}</div></div>`).join("") : '<div class="note">Waiting for the first map snapshot…</div>';
+    const oddsHtml = win ? FACS.map((f) => `<div class="fac ${f} ${f === lead ? "lead" : ""}"><div class="l">${f}</div><div class="n">${win[f].pct}%</div><div class="stars">${stars(win[f].pct)}</div></div>`).join("") : `<div class="note">${a.status === "live" ? "Waiting for the first map snapshot…" : "No live odds were recorded for this alert."}</div>`;
     const rows = s ? FACS.map((f) => `<div class="row"><span class="lbl ${f}">${f} territory</span><div class="track"><span style="width:${s.territory[f]}%;background:${COLOR[f]}"></span></div><span class="v">${s.territory[f]}%</span></div>`).join("") +
       FACS.map((f) => {
         const base = s.territory[f] || 0, m = s.momentum[f];
@@ -283,6 +299,7 @@ footer { color: var(--dim); font-size: 12px; margin-top: 18px; }
       }).join("") : "";
     const popTot = s && s.pop ? FACS.reduce((t, f) => t + (s.pop[f] || 0), 0) : 0;
     const popRows = popTot ? FACS.map((f) => `<div class="row"><span class="lbl ${f}">${f} players</span><div class="track"><span style="width:${(100 * s.pop[f] / popTot).toFixed(1)}%;background:${COLOR[f]}"></span></div><span class="v">${s.pop[f]}</span></div>`).join("") : "";
+    const kdRows = s && s.kd_source ? FACS.map((f) => `<div class="row"><span class="lbl ${f}">${f} KD</span><span class="note">live</span><span class="v">${s.kd[f]}</span></div>`).join("") : "";
     const popAdj = s && s.win_popadj ? `<div class="second">With population weighting: ${FACS.map((f) => `<span class="${f}">${f} ${s.win_popadj[f].pct}%</span>`).join(" · ")} <span class="note">(experimental, fades out by minute 60)</span></div>` : "";
     const kindNote = a.kind === "meltdown" ? `<div class="note" style="color:var(--warn)">Unstable Meltdown: scored differently from territory alerts; these odds are not validated for this alert type yet.</div>` : "";
     const calls = s && s.calls && s.calls.length ? `<ul class="calls">${s.calls.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>` : "";
@@ -292,10 +309,10 @@ footer { color: var(--dim); font-size: 12px; margin-top: 18px; }
       <div class="title"><b>${esc(a.world_name)} · ${esc(a.zone_name)}${a.kind === "meltdown" ? " Meltdown" : ""}</b><span class="badge ${a.status}">${esc(a.status.replace("_", " "))}</span><span class="note">${esc(left)} · ${a.dur}-min alert</span></div>
       <div class="grid">
         <section class="card map"><h2>Map</h2><div id="map"></div></section>
-        <section class="card"><h2>Win chance</h2>${kindNote}<div class="odds">${oddsHtml}</div>${result}${popAdj}${second}<div class="rows">${rows}${popRows}</div>${popTot ? `<div class="note">Population: Honu (wt.honu.pw), ${popTot} on continent${s.pop_ns ? ` + ${s.pop_ns} NSO` : ""}.</div>` : ""}${calls}</section>
+        <section class="card"><h2>Win chance</h2>${kindNote}<div class="odds">${oddsHtml}</div>${result}${popAdj}${second}<div class="rows">${rows}${popRows}${kdRows}</div>${popTot ? `<div class="note">Population: Honu (wt.honu.pw), ${popTot} on continent${s.pop_ns ? ` + ${s.pop_ns} NSO` : ""}.</div>` : ""}${calls}</section>
       </div>
       <section class="card chart" style="margin-top:14px"><h2>Win chance over time</h2><div id="chart"><div class="note">Loading…</div></div></section>
-      ${a.status === "live" ? commander(a.commander || (s && s.commander), a.commander_ts, now) : ""}`;
+      ${a.status === "live" ? commander(a.commander || (s && s.commander), a.commander_ts, now) : reportPanel(a)}`;
     if (ticksFor === a.key) { const c = $("chart"); c.innerHTML = chart(ticks, a.dur, c.clientWidth); chartHover(c, ticks, a.dur); }
     drawMap(a);
   }
@@ -339,7 +356,7 @@ footer { color: var(--dim); font-size: 12px; margin-top: 18px; }
         <td>${a.winner ? `<b class="${a.winner}">${a.winner}</b>` : esc(a.status)}</td>
         <td class="num">${a.final ? FACS.map((f) => (+a.final[f]).toFixed(1)).join(" / ") : "—"}</td>
         <td>${a.basis === "sudden_death" ? "sudden death" : a.basis ? "Census final" : ""}</td>
-        <td class="flag">${(a.flags || []).map((f) => esc(f.replace(/_/g, " "))).join(", ")}</td></tr>`);
+        <td class="flag">${a.report && a.report.flagged ? `${a.report.confirmed ? `☠️${a.report.confirmed} ` : ""}${a.report.flagged - a.report.confirmed ? `⚠️${a.report.flagged - a.report.confirmed} ` : ""}` : ""}${(a.flags || []).map((f) => esc(f.replace(/_/g, " "))).join(", ")}</td></tr>`);
     $("hist").querySelector("tbody").innerHTML = rows.join("") || '<tr><td colspan="8" class="note">No settled alerts yet.</td></tr>';
     const more = $("histMore");
     more.hidden = histAll || histRows.length <= HIST_MAX;

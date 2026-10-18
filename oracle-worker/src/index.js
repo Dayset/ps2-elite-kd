@@ -20,6 +20,8 @@ import {
 } from "./engine.js";
 import { binGetter, hasTree, regionMap, latticeFor, captureModel, resistanceModel } from "./models.js";
 import { runCommander, ownership } from "./commander.js";
+import { outlierReport, liveKd } from "./outliers.js";
+import { radarEntry, RADAR_USER_AGENT, radarApiUrl } from "../../radar.mjs";
 
 const CENSUS = "https://census.daybreakgames.com";
 const UA = "ps2-oracle/1.0 (dayset.github.io/ps2-elite-kd/oracle)";
@@ -212,6 +214,11 @@ export async function runCycle(env, nowMs = Date.now()) {
   const snap15 = {};
   const honu = {};
   report.honu = {};
+  let realtime;
+  const realtimeList = () => (realtime ||= fetch(`${HONU}/realtime-alert`, { headers: { "User-Agent": UA, Accept: "application/json" }, signal: AbortSignal.timeout(10000) })
+    .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`honu realtime ${r.status}`))))
+    .then((j) => { report.honu_realtime = Array.isArray(j) ? `ok ${j.length}` : "ok ?"; return j; })
+    .catch((e) => { report.honu_realtime = "error"; report.errors.push(e.message); return null; }));
   const popFor = async (world) => {
     if (!(world in honu)) {
       try { honu[world] = await honuZones(world); report.honu[world] = `ok ${Object.keys(honu[world]).length} zones`; }
@@ -252,6 +259,8 @@ export async function runCycle(env, nowMs = Date.now()) {
         state.win_popadj = popAdjusted(state.win, state.pop, state.t);
         popRows.push({ world: a.world, zone: a.zone, ts: now, vs: p.VS, nc: p.NC, tr: p.TR, ns: p.NS });
       }
+      const kd = liveKd(await realtimeList(), a.world, a.zone);
+      if (kd) { state.kd = kd; state.kd_source = "honu"; }
       out.push({ ...base, status: "live", state });
       live++;
       (report.live_keys ||= []).push(a.key);
@@ -356,6 +365,12 @@ export async function runCycle(env, nowMs = Date.now()) {
   if (writes.length) await db.batch(writes);
   report.written = changedRows.length;
 
+  // 4b) Settled alerts still missing their outlier report (Honu needs a few minutes after the end).
+  report.report_keys = (((await db.prepare(
+    `SELECT a.key FROM alert a LEFT JOIN report r ON r.key = a.key
+     WHERE a.status = 'settled' AND a.end_ts > ? AND (r.key IS NULL OR (r.status != 'ok' AND r.attempts < 12 AND r.ts < ?))
+     ORDER BY a.end_ts DESC LIMIT 3`).bind(now - 6 * 3600, now - 240).all()).results) || []).map((r) => r.key);
+
   // 5) Daily pruning at 04:07 UTC: raw snapshots 30 days, flips 90 days.
   const d = new Date(nowMs);
   if (d.getUTCHours() === 4 && d.getUTCMinutes() === 7) {
@@ -414,18 +429,73 @@ export async function commanderFor(env, key, nowMs = Date.now()) {
   return { key, ok: true, ms: Date.now() - t0, flips: flips.length };
 }
 
-/** One separate Worker invocation per live alert via the SELF service binding (inline without one). */
-export async function fanOutCommander(env, keys, nowMs = Date.now()) {
+/** One separate Worker invocation per key via the SELF service binding (inline without one). */
+async function fanOut(env, path, fn, keys, nowMs) {
   if (!keys || !keys.length) return [];
-  if (!env.SELF) return Promise.all(keys.map((k) => commanderFor(env, k, nowMs).catch((e) => ({ key: k, error: String(e && e.message || e) }))));
+  if (!env.SELF) return Promise.all(keys.map((k) => fn(env, k, nowMs).catch((e) => ({ key: k, error: String(e && e.message || e) }))));
   return Promise.all(keys.map(async (k) => {
     try {
-      const r = await env.SELF.fetch(new Request("https://ps2-oracle/internal/commander", {
+      const r = await env.SELF.fetch(new Request(`https://ps2-oracle/internal/${path}`, {
         method: "POST", headers: { "Content-Type": "application/json", "X-Oracle-Key": env.ORACLE_KEY || "" }, body: JSON.stringify({ key: k }),
       }));
       return r.ok ? await r.json() : { key: k, error: `status ${r.status}` };
     } catch (e) { return { key: k, error: String(e && e.message || e) }; }
   }));
+}
+export const fanOutCommander = (env, keys, nowMs = Date.now()) => fanOut(env, "commander", commanderFor, keys, nowMs);
+export const fanOutReport = (env, keys, nowMs = Date.now()) => fanOut(env, "report", reportFor, keys, nowMs);
+
+const RADAR_MAX_PER_ALERT = 5, RADAR_GAP_MS = 2500, RADAR_RECHECK_S = 3 * 86400;
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * Outlier report for one settled alert: Honu participants -> faction KD +
+ * flagged players (outliers.js), plus a PS2 Radar second opinion for up to five
+ * flagged players (cached 3 days; stops on the first busy/failed reply).
+ */
+export async function reportFor(env, key, nowMs = Date.now()) {
+  const db = env.DB;
+  const now = Math.floor(nowMs / 1000);
+  const a = await db.prepare("SELECT key, world, zone, instance_id, status FROM alert WHERE key=?").bind(key).first();
+  if (!a || a.status !== "settled") return { key, skipped: "not settled" };
+  const prev = await db.prepare("SELECT attempts FROM report WHERE key=?").bind(key).first();
+  const attempts = ((prev && prev.attempts) || 0) + 1;
+  const save = (status, rep, err) => db.prepare(
+    `INSERT INTO report (key, status, attempts, ts, players, flagged, confirmed, faction, outliers, err) VALUES (?,?,?,?,?,?,?,?,?,?)
+     ON CONFLICT(key) DO UPDATE SET status=excluded.status, attempts=excluded.attempts, ts=excluded.ts, players=excluded.players,
+       flagged=excluded.flagged, confirmed=excluded.confirmed, faction=excluded.faction, outliers=excluded.outliers, err=excluded.err`)
+    .bind(key, status, attempts, now, rep ? rep.players : null, rep ? rep.flagged : null, rep ? rep.confirmed : null,
+      rep ? JSON.stringify(rep.faction) : null, rep ? JSON.stringify(rep.outliers) : null, err || null).run();
+  let body;
+  try {
+    const r = await fetch(`${HONU}/alerts/${a.world}/${a.instance_id}/participants?excludeOutfits=true`,
+      { headers: { "User-Agent": UA, Accept: "application/json" }, signal: AbortSignal.timeout(20000) });
+    if (r.status === 400 || r.status === 404) { await save("pending", null, `honu ${r.status}`); return { key, pending: r.status }; }
+    if (!r.ok) throw new Error(`honu ${r.status}`);
+    body = await r.json();
+  } catch (e) { await save(attempts >= 12 ? "error" : "pending", null, String(e.message || e)); return { key, error: String(e.message || e) }; }
+  const rep = outlierReport(body);
+  if (!rep.players) { await save("pending", null, "no participants yet"); return { key, pending: "empty" }; }
+  // PS2 Radar second opinion for the top flagged players.
+  let looked = 0;
+  for (const o of rep.outliers) {
+    const cached = await db.prepare("SELECT ts, entry FROM radar WHERE cid=?").bind(o.cid).first();
+    if (cached && now - cached.ts < RADAR_RECHECK_S) { o.radar = JSON.parse(cached.entry); continue; }
+    if (looked >= RADAR_MAX_PER_ALERT) continue;
+    const radarUrl = radarApiUrl({ cid: o.cid });
+    if (!radarUrl) continue;
+    if (looked) await sleep(RADAR_GAP_MS);
+    looked++;
+    try {
+      const rr = await fetch(radarUrl, { headers: { "User-Agent": RADAR_USER_AGENT, Accept: "application/json" }, signal: AbortSignal.timeout(10000) });
+      if (rr.status !== 200 && rr.status !== 404) break; // busy or failing: try again on a later alert
+      const entry = radarEntry(rr.status === 404 ? null : await rr.json(), { status: rr.status, checkedAt: new Date(nowMs).toISOString(), name: o.name || "", cid: o.cid });
+      o.radar = entry;
+      await db.prepare("INSERT INTO radar (cid, ts, entry) VALUES (?,?,?) ON CONFLICT(cid) DO UPDATE SET ts=excluded.ts, entry=excluded.entry").bind(o.cid, now, JSON.stringify(entry)).run();
+    } catch { break; }
+  }
+  await save("ok", rep, null);
+  return { key, ok: true, players: rep.players, flagged: rep.flagged, radar_lookups: looked };
 }
 
 // ---------------------------------------------------------------- API
@@ -439,7 +509,10 @@ const parseRow = (r) => ({
   flags: r.flags ? JSON.parse(r.flags).filter((f) => f !== "checked") : [],
   state: r.state ? JSON.parse(r.state) : null,
   commander: r.commander ? JSON.parse(r.commander) : null, commander_ts: r.commander_ts || null,
+  report: r.r_status ? { status: r.r_status, players: r.r_players, flagged: r.r_flagged, confirmed: r.r_confirmed,
+    faction: r.r_faction ? JSON.parse(r.r_faction) : null } : null,
 });
+const REPORT_COLS = "r.status AS r_status, r.players AS r_players, r.flagged AS r_flagged, r.confirmed AS r_confirmed, r.faction AS r_faction";
 
 function authed(request, env) {
   const key = typeof env.ORACLE_KEY === "string" ? env.ORACLE_KEY : "";
@@ -468,8 +541,8 @@ async function handle(request, env) {
     const t = Date.now();
     try {
       const report = await runCycle(env, Date.now());
-      const commander = await fanOutCommander(env, report.live_keys);
-      return json({ ran: true, wall_ms: Date.now() - t, report, commander }, 200, { "Cache-Control": "no-store" });
+      const [commander, reports] = await Promise.all([fanOutCommander(env, report.live_keys), fanOutReport(env, report.report_keys)]);
+      return json({ ran: true, wall_ms: Date.now() - t, report, commander, reports }, 200, { "Cache-Control": "no-store" });
     } catch (e) {
       return json({ ran: false, error: String(e && e.stack || e) }, 500, { "Cache-Control": "no-store" });
     }
@@ -480,23 +553,25 @@ async function handle(request, env) {
   }
 
   if (url.pathname === "/live") {
-    const rows = (await db.prepare("SELECT * FROM alert WHERE status IN ('live','settling','sudden_death') OR (end_ts IS NOT NULL AND end_ts > ?) ORDER BY start_ts DESC").bind(now - 3 * 3600).all()).results || [];
+    const rows = (await db.prepare(`SELECT a.*, ${REPORT_COLS} FROM alert a LEFT JOIN report r ON r.key = a.key WHERE a.status IN ('live','settling','sudden_death') OR (a.end_ts IS NOT NULL AND a.end_ts > ?) ORDER BY a.start_ts DESC`).bind(now - 3 * 3600).all()).results || [];
     return json({ now, worlds: WORLD_NAMES, alerts: rows.map(parseRow) });
   }
 
   if (url.pathname === "/alert") {
     const key = url.searchParams.get("key") || "";
-    const r = await db.prepare("SELECT * FROM alert WHERE key=?").bind(key).first();
+    const r = await db.prepare(`SELECT a.*, ${REPORT_COLS} FROM alert a LEFT JOIN report r ON r.key = a.key WHERE a.key=?`).bind(key).first();
     if (!r) return json({ error: "not_found" }, 404);
+    const rep = await db.prepare("SELECT outliers FROM report WHERE key=? AND status='ok'").bind(key).first();
     const ticks = ((await db.prepare("SELECT ts, t, terr, win FROM tick WHERE key=? ORDER BY ts").bind(key).all()).results || [])
       .map((x) => ({ ts: x.ts, t: x.t, terr: JSON.parse(x.terr), win: JSON.parse(x.win) }));
     const bench = await db.prepare("SELECT * FROM bench WHERE key=?").bind(key).first();
-    return json({ alert: parseRow(r), ticks, bench: bench ? { slices: JSON.parse(bench.slices), brier: bench.brier ? JSON.parse(bench.brier) : null } : null });
+    return json({ alert: parseRow(r), ticks, bench: bench ? { slices: JSON.parse(bench.slices), brier: bench.brier ? JSON.parse(bench.brier) : null } : null,
+      outliers: rep && rep.outliers ? JSON.parse(rep.outliers) : null });
   }
 
   if (url.pathname === "/history") {
     const days = Math.min(30, Math.max(1, +url.searchParams.get("days") || 7));
-    const rows = (await db.prepare("SELECT key, world, zone, instance_id, event_id, start_ts, dur, status, end_ts, checks, winner, basis, final, flags, NULL AS state, NULL AS commander FROM alert WHERE start_ts > ? AND status IN ('settled','canceled','unresolved') ORDER BY start_ts DESC").bind(now - days * 86400).all()).results || [];
+    const rows = (await db.prepare(`SELECT a.key, a.world, a.zone, a.instance_id, a.event_id, a.start_ts, a.dur, a.status, a.end_ts, a.checks, a.winner, a.basis, a.final, a.flags, NULL AS state, NULL AS commander, ${REPORT_COLS} FROM alert a LEFT JOIN report r ON r.key = a.key WHERE a.start_ts > ? AND a.status IN ('settled','canceled','unresolved') ORDER BY a.start_ts DESC`).bind(now - days * 86400).all()).results || [];
     const bench = (await db.prepare("SELECT key, dur, slices, winner, brier FROM bench WHERE settled_ts IS NOT NULL AND brier IS NOT NULL").all()).results || [];
     const agg = {};
     for (const b of bench) {
@@ -531,6 +606,13 @@ async function handle(request, env) {
     return json(await commanderFor(env, body.key), 200, { "Cache-Control": "no-store" });
   }
 
+  if (url.pathname === "/internal/report" && request.method === "POST") {
+    if (!authed(request, env)) return json({ error: "forbidden" }, 403);
+    const body = await request.json().catch(() => null);
+    if (!body || typeof body.key !== "string") return json({ error: "bad_request" }, 400);
+    return json(await reportFor(env, body.key), 200, { "Cache-Control": "no-store" });
+  }
+
   if (url.pathname === "/commander" && request.method === "POST") {
     if (!authed(request, env)) return json({ error: "forbidden" }, 403);
     const body = await request.json().catch(() => null);
@@ -549,8 +631,9 @@ export default {
     // Breadcrumb before any work: tells a cron that never fires apart from one that dies mid-run.
     try { await setMeta(env.DB, "cron_seen", { ts: Math.floor(Date.now() / 1000), cron: event.cron }); } catch {}
     ctx.waitUntil(runCycle(env, event.scheduledTime || Date.now()).then(async (rep) => {
-      const res = await fanOutCommander(env, rep.live_keys);
+      const [res, reps] = await Promise.all([fanOutCommander(env, rep.live_keys), fanOutReport(env, rep.report_keys)]);
       if (res.length) await setMeta(env.DB, "last_commander", { ts: Math.floor(Date.now() / 1000), results: res });
+      if (reps.length) await setMeta(env.DB, "last_report", { ts: Math.floor(Date.now() / 1000), results: reps });
     }).catch(async (e) => {
       try { await setMeta(env.DB, "last_crash", { ts: Math.floor(Date.now() / 1000), error: String(e && e.stack || e) }); } catch {}
     }));
