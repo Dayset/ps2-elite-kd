@@ -20,7 +20,7 @@ test("one page (t356u): no 🏆 / › buttons; order controls → stats → grap
   assert.match(index, /<div class="controls">\s*<div class="cache-row">\s*<div id="cacheChips"[^>]*><\/div>\s*<\/div>\s*<div id="namesBox"/);
   assert.match(index, /<div class="fresh-row">[\s\S]*?id="fetchFresh"[\s\S]*?<span class="fresh-row-end">[\s\S]*?id="wipeLocalBtn"[\s\S]*?id="themeToggle"[\s\S]*?<\/span>\s*<\/div>/);
   const at = (re) => { const m = index.search(re); assert.ok(m >= 0, String(re)); return m; };
-  const order = [/id="namesBox"/, /id="analyzeBtn"/, /id="statsPanel"/, /<svg id="chart"/, /<section id="rankings"/, /id="distSection"/, /id="rkPosSection"/, /id="rkPositions"/, /id="ranksTableSection"/, /id="ranksSearch"/, /id="ranksTable"/, /<footer>/, /What about vehicles\?/, /id="statsPublic"/, /id="ranksMeta"/].map(at);
+  const order = [/id="namesBox"/, /id="analyzeBtn"/, /id="statsPanel"/, /<svg id="chart"/, /<section id="rankings"/, /id="distSection"/, /id="rkPosSection"/, /id="rkPositions"/, /id="ranksTableSection"/, /id="ranksSearch"/, /id="ranksTable"/, /<footer>/, /id="statsPublic"/, /What about vehicles\?/, /id="ranksMeta"/].map(at);
   assert.deepEqual(order, order.slice().sort((a, b) => a - b));
   assert.match(app, /import\("\.\/rankings\.mjs\?v=/, "Rankings load lazily");
   // t358u: no "🏆 Rankings" title; positions + big table folded by default.

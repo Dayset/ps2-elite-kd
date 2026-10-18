@@ -39,7 +39,7 @@
     "codeRepository": "https://github.com/Dayset/ps2-elite-kd"
   }
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261017-maingray" />
+  <link rel="stylesheet" href="styles.css?v=20261018-footerblock" />
 </head>
 <body class="main-page">
   <div class="controls">
@@ -178,31 +178,35 @@
   </section>
 
   <footer>
-    <!-- "What about vehicles?" + 📊 Public table live in the footer now;
-         the note stays hidden until a comparison is loaded (renderStatsTable). -->
-    <details id="vehiclesNote" class="pooled-note fold-note" hidden><summary>♿ What about vehicles?</summary><p>Vehicle and infantry kills are pooled together for now, so vehicle mains may look off in the graph and stats. Infantry-only numbers are coming later.</p></details>
     <div id="statsPublic" class="stats-panel stats-panel-public" aria-label="Public stats (Census / Honu)"></div>
-    <p id="ranksMeta" class="ranks-meta"></p>
+    <section class="footer-block" aria-label="Site stats and options">
+      <!-- "What about vehicles?" sits directly on top of the stats line;
+           the note stays hidden until a comparison is loaded (renderStatsTable). -->
+      <details id="vehiclesNote" class="pooled-note fold-note" hidden><summary>♿ What about vehicles?</summary><p>Vehicle and infantry kills are pooled together for now, so vehicle mains may look off in the graph and stats. Infantry-only numbers are coming later.</p></details>
+      <p id="ranksMeta" class="ranks-meta"></p>
+      <div class="footer-row">
+        <label class="debug-cols-toggle" title="Append the older debug columns (🎯🎈 ivi, eKPM, own KPM, 📊 COI, 📉 Slope, 🎈 Inflation) to the ✨ Adjusted and Rankings tables">
+          <input type="checkbox" id="debugColsToggle" /> show older debug stats
+        </label>
+      </div>
+      <div class="footer-row">
+        <label class="hide-zero-ivi-toggle" title="Hide players with adjusted iVi ≤ 0 from the Rankings table browse; a name search still finds them">
+          <input type="checkbox" id="hideZeroIviToggle" /> hide players with adjusted iVi ≤ 0
+        </label>
+      </div>
+      <details class="disclaimer">
+        <summary>Disclaimer</summary>
+        <p>All numbers, ratings, charts and flags on this site are automated estimates from public data (the Daybreak Census API and Honu). They can be wrong, incomplete or out of date, and they are not facts, proof or accusations about any player. Don't take them seriously, and don't use them to harass anyone.</p>
+        <p>This site is free and provided "as is", with no warranty of any kind. To the fullest extent allowed by law, the authors are not liable for any damage or loss from using it, including to your device or data.</p>
+        <p>Not affiliated with or endorsed by Daybreak Game Company or Honu. PlanetSide 2 is a trademark of its respective owners.</p>
+        <p>Open source under the MIT License. See <a href="https://github.com/Dayset/ps2-elite-kd/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">LICENSE</a>.</p>
+      </details>
+    </section>
     <div class="footer-row">
       <p><a href="https://github.com/Dayset/ps2-elite-kd">github.com/Dayset/ps2-elite-kd</a></p>
       <p><a href="columns.html">What the columns mean</a> · <a href="updates.html">Update log</a></p>
-      <label class="debug-cols-toggle" title="Append the older debug columns (🎯🎈 ivi, eKPM, own KPM, 📊 COI, 📉 Slope, 🎈 Inflation) to the ✨ Adjusted and Rankings tables">
-        <input type="checkbox" id="debugColsToggle" /> show older debug stats
-      </label>
-    </div>
-    <div class="footer-row">
-      <label class="hide-zero-ivi-toggle" title="Hide players with adjusted iVi ≤ 0 from the Rankings table browse; a name search still finds them">
-        <input type="checkbox" id="hideZeroIviToggle" /> hide players with adjusted iVi ≤ 0
-      </label>
     </div>
     <p>Thanks to <a href="https://wt.honu.pw/" target="_blank" rel="noopener noreferrer">HONU</a> / Varunda</p>
-    <details class="disclaimer">
-      <summary>Disclaimer</summary>
-      <p>All numbers, ratings, charts and flags on this site are automated estimates from public data (the Daybreak Census API and Honu). They can be wrong, incomplete or out of date, and they are not facts, proof or accusations about any player. Don't take them seriously, and don't use them to harass anyone.</p>
-      <p>This site is free and provided "as is", with no warranty of any kind. To the fullest extent allowed by law, the authors are not liable for any damage or loss from using it, including to your device or data.</p>
-      <p>Not affiliated with or endorsed by Daybreak Game Company or Honu. PlanetSide 2 is a trademark of its respective owners.</p>
-      <p>Open source under the MIT License. See <a href="https://github.com/Dayset/ps2-elite-kd/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">LICENSE</a>.</p>
-    </details>
   </footer>
 
   <script type="module" src="app.js?v=20261017-bgbtn1"></script>

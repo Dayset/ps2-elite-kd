@@ -1730,6 +1730,19 @@ footer {
 
 footer a { color: var(--accent); }
 
+/* Footer meta block: vehicles note + stats line + debug toggles + disclaimer
+ * in one panel. */
+footer .footer-block {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  padding: 0.9rem 1.1rem;
+  margin: 1rem 0 1.25rem;
+}
+footer .footer-block #vehiclesNote { margin-top: 0; }
+footer .footer-block .ranks-meta { margin: 0.35rem 0 0.5rem; }
+footer .footer-block .disclaimer { margin: 0.5rem 0 0.25rem; }
+
 /* 📊 Public table lives in the footer now: the footer dims its text,
  * the table should read like everywhere else. */
 footer #statsPublic { color: var(--text); }
