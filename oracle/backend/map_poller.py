@@ -16,7 +16,10 @@ LOG = os.path.join(ROOT, "logs", "map_poller.log")
 LOCK = os.path.join(ROOT, "map_poller.lock")
 DARK_STATE = os.path.join(ROOT, "dark_worlds.json")
 
-WORLDS = [1, 10, 19, 25]
+# Public PC servers per Census /world (verified 2026-10-18): 1 Osprey,
+# 10 Wainwright, 25 Briggs, 40 SolTech. 19 is Jaeger (private events server,
+# usually empty) and was tracked by mistake under the name "Emerald".
+WORLDS = [1, 10, 25, 40]
 ZONES = [2, 4, 6, 8, 344]  # Indar, Hossin, Amerish, Esamir, Oshur
 INTERVAL = 60
 # Census sometimes serves empty map data for a whole world (w13 Cobalt and
@@ -25,7 +28,10 @@ INTERVAL = 60
 # resume full cadence automatically on recovery.
 DARK_PROBE_INTERVAL = 1800
 UA = {"User-Agent": "ps2polymarket-monitor/0.1 (pre-alert-research; 30 req/min)"}
-BASE = "https://census.daybreakgames.com/s:example/get/ps2:v2/map/"
+# Census service ID: env var wins; default is the project's own public ID
+# (never the throttled demo ID s:example, ~10 req/min).
+SERVICE_ID = os.environ.get("CENSUS_SERVICE_ID", "daysetps2legends").removeprefix("s:")
+BASE = f"https://census.daybreakgames.com/s:{SERVICE_ID}/get/ps2:v2/map/"
 
 
 def load_dark():

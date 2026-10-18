@@ -35,11 +35,14 @@ except Exception as _e:
     print(f"benchmark_log unavailable: {_e}", file=sys.stderr)
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-WORLDS = [1, 10, 19, 25]
+# Public PC servers per Census /world (verified 2026-10-18): 1 Osprey,
+# 10 Wainwright, 25 Briggs, 40 SolTech. 19 is Jaeger (private events server,
+# usually empty) and was tracked by mistake under the name "Emerald".
+WORLDS = [1, 10, 25, 40]
 ZONES = [2, 4, 6, 8, 344]
 # Canonical labels for log lines: workers copy these verbatim into run
 # summaries and user messages (prevents Indar/Esamir, Miller/Emerald mixups).
-WORLD_NAMES = {1: "Connery", 10: "Miller", 19: "Jaeger", 25: "Briggs"}
+WORLD_NAMES = {1: "Osprey", 10: "Wainwright", 25: "Briggs", 40: "SolTech"}
 ZONE_NAMES = {2: "Indar", 4: "Hossin", 6: "Amerish", 8: "Esamir", 344: "Oshur"}
 OUT = os.path.join(ROOT, "live_states.json")
 

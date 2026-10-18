@@ -22,10 +22,20 @@ OUT = os.path.join(ROOT, "data", "census_events")
 LOG = os.path.join(ROOT, "logs", "census_events.log")
 LOCK = os.path.join(ROOT, "census_events.lock")
 
-WORLDS = [1, 10, 19, 25]
+# Public PC servers per Census /world (verified 2026-10-18): 1 Osprey,
+# 10 Wainwright, 25 Briggs, 40 SolTech. 19 is Jaeger (private events server,
+# usually empty) and was tracked by mistake under the name "Emerald".
+WORLDS = [1, 10, 25, 40]
 INTERVAL = 60
 UA = "ps2polymarket-monitor/0.1 (pre-alert-research; census-direct)"
-WS_URL = "wss://push.planetside2.com/streaming?environment=ps2&service-id=s:example"
+# Census service ID: env var wins; default is the project's own public ID
+# (never the throttled demo ID s:example, ~10 req/min).
+SERVICE_ID = os.environ.get("CENSUS_SERVICE_ID", "daysetps2legends").removeprefix("s:")
+WS_URL = f"wss://push.planetside2.com/streaming?environment=ps2&service-id=s:{SERVICE_ID}"
+# Census sends a heartbeat roughly every 30s. No message at all for this
+# long means a half-open link: reconnect instead of waiting forever
+# (the 2026-10-18 "no close frame" freeze).
+IDLE_RECONNECT_S = 120
 
 # Loadout ID -> class name (covers VS/NC/TR; NSO loadouts map to same classes)
 LOADOUT_CLASS = {
@@ -355,13 +365,18 @@ async def run_stream(agg, duration=None):
 
         last_save = time.time()
         start_t = time.time()
+        last_msg = time.time()
         while True:
             if duration and (time.time() - start_t >= duration):
                 break
             try:
                 msg = await asyncio.wait_for(ws.recv(), timeout=30)
             except asyncio.TimeoutError:
+                idle = time.time() - last_msg
+                if idle >= IDLE_RECONNECT_S:
+                    raise ConnectionError(f"no messages for {idle:.0f}s (half-open link), reconnecting")
                 continue
+            last_msg = time.time()
             try:
                 d = json.loads(msg)
             except:

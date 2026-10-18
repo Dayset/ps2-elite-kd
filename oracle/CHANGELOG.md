@@ -177,3 +177,17 @@ approved it, "shipped" means it is live in the running pipeline.
 - Benchmark numbers in `README.md` (0.150 vs 0.177) are the 100-alert challenge
   reference values; the live `benchmark/benchmark_predictions.jsonl` keeps growing
   past the challenge set.
+
+## 2026-10-18 (GitHub, not yet in the running pipeline)
+
+- **Server IDs corrected.** Census `/world` today: 1 Osprey, 10 Wainwright, 19 Jaeger
+  (private events server), 25 Briggs, 40 SolTech. The live pipeline tracked
+  [1, 10, 19, 25] labelled Connery/Miller/Emerald/Cobalt; the "Emerald events gap"
+  was Jaeger being empty and SolTech was never tracked. Now [1, 10, 25, 40] in
+  `map_poller.py`, `census_events.py`, `push_live_state.py`. Docs that say
+  Connery/Miller/Emerald/Cobalt mean worlds 1/10/19/25.
+- **Service ID from `CENSUS_SERVICE_ID`, default `daysetps2legends`** in both pollers
+  (was the throttled demo ID `s:example`).
+- **Stream half-open fix.** `census_events.py` reconnects after 120s with no message
+  at all (Census heartbeats every ~30s) instead of waiting on `recv()` forever; this
+  is the "no close frame, then silence" freeze.
