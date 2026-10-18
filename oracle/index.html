@@ -76,6 +76,21 @@ td.num { font-variant-numeric: tabular-nums; }
 .bench { display: flex; gap: 10px; flex-wrap: wrap; font-size: 13px; }
 .bench div { background: var(--panel2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; }
 .bench b { font-variant-numeric: tabular-nums; }
+.who { font-size: 13px; color: var(--muted); display: flex; gap: 8px; align-items: center; }
+.btn { background: #1e2a3a; border: 1px solid var(--accent); color: var(--text); border-radius: 8px; padding: 6px 12px; font: inherit; font-size: 14px; cursor: pointer; }
+.btn:disabled { opacity: .45; cursor: default; }
+.btn.big { font-size: 18px; padding: 12px 22px; font-weight: 700; letter-spacing: .06em; }
+.link { background: none; border: 0; color: var(--accent); font: inherit; font-size: 13px; cursor: pointer; text-decoration: underline; padding: 0; }
+dialog.auth { background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 12px; padding: 18px; width: min(440px, calc(100vw - 32px)); }
+dialog.auth::backdrop { background: rgba(0,0,0,.6); }
+.auth .x { position: absolute; top: 8px; right: 8px; } .auth .x button { background: none; border: 0; color: var(--dim); font-size: 18px; cursor: pointer; }
+.auth h3 { margin: 0 0 10px; font-size: 17px; }
+.auth ol { padding-left: 20px; margin: 8px 0; font-size: 14px; } .auth li { margin: 4px 0; }
+.auth input { width: 100%; background: #0f1114; border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 8px 10px; font: inherit; margin: 8px 0; }
+.auth .row2 { display: flex; gap: 10px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
+.auth .err { color: var(--err); font-size: 13px; margin-top: 8px; } .auth .ok { color: var(--ok); }
+.auth .count { font-size: 34px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.auth .bar { height: 6px; background: var(--panel2); border-radius: 3px; overflow: hidden; margin-top: 8px; } .auth .bar span { display: block; height: 100%; background: var(--accent); }
 footer { color: var(--dim); font-size: 12px; margin-top: 18px; }
 .hoverline { min-height: 18px; font-size: 13px; color: var(--muted); margin-top: 6px; font-variant-numeric: tabular-nums; }
 .chart svg { touch-action: pan-y; }
@@ -95,8 +110,14 @@ footer { color: var(--dim); font-size: 12px; margin-top: 18px; }
     <h1>PS2<span>Map</span>Oracle</h1>
     <div class="status"><span id="dot" class="dot"></span><span id="statusText">connecting…</span></div>
     <div class="spacer"></div>
+    <div id="who" class="who"></div>
     <a class="back" href="../">← PS2 Elite K/D</a>
   </header>
+
+  <dialog id="auth" class="auth">
+    <form method="dialog" class="x"><button aria-label="Close">✕</button></form>
+    <div id="authBody"></div>
+  </dialog>
 
   <div id="tabs" class="tabs"></div>
   <div id="main"></div>
@@ -427,6 +448,126 @@ footer { color: var(--dim); font-size: 12px; margin-top: 18px; }
       renderHist();
     } catch {}
   }
+
+  // ---------------------------------------------------------------- sign-in (logout-only)
+  const TOKEN_KEY = "ps2oracle_token", PENDING_KEY = "ps2oracle_pending";
+  const store = {
+    get: (s, k) => { try { return window[s].getItem(k); } catch { return null; } },
+    set: (s, k, v) => { try { v == null ? window[s].removeItem(k) : window[s].setItem(k, v); } catch {} },
+  };
+  let me = null, authTimer = null;
+  async function authCall(path, method = "GET", body) {
+    const t = store.get("localStorage", TOKEN_KEY);
+    const r = await fetch(API + path, { method, cache: "no-store", headers: { "Content-Type": "application/json", ...(t ? { Authorization: "Bearer " + t } : {}) },
+      body: body ? JSON.stringify(body) : undefined });
+    return { status: r.status, body: await r.json().catch(() => ({})) };
+  }
+  function renderWho() {
+    $("who").innerHTML = me
+      ? `<span>Signed in as <b class="${esc(me.faction || "")}">${esc(me.name)}</b></span><button class="link" id="signOut">Sign out</button>`
+      : `<button class="btn" id="signIn">Sign in</button>`;
+    if (me) $("signOut").onclick = async () => { await authCall("/auth/logout", "POST", {}); store.set("localStorage", TOKEN_KEY, null); me = null; renderWho(); };
+    else $("signIn").onclick = () => openAuth();
+  }
+  async function loadMe() {
+    if (!store.get("localStorage", TOKEN_KEY)) { me = null; renderWho(); return; }
+    try {
+      const r = await authCall("/auth/me");
+      if (r.status === 200) me = r.body.character;
+      else if (r.status === 401) { store.set("localStorage", TOKEN_KEY, null); me = null; }
+    } catch { /* offline: keep the token, try again later */ }
+    renderWho();
+  }
+  const stopTimer = () => { clearInterval(authTimer); authTimer = null; };
+  function authView(html) { $("authBody").innerHTML = html; }
+  function openAuth() {
+    stopTimer();
+    authView(`<h3>Verify your character</h3>
+      <div class="note">Proves you own the character using the game itself: you log out once while we watch the public Census event stream. No password, nothing installed.</div>
+      <ol><li>Log into PlanetSide 2 with the character.</li><li>Enter its name and press Register.</li><li>Press ACCEPT when it unlocks, then log out in game (ESC → Logout) within 60 seconds.</li></ol>
+      <input id="authName" placeholder="Character name" autocomplete="off" maxlength="40">
+      <div class="row2"><button class="btn" id="authGo">Register</button></div><div class="err" id="authErr"></div>`);
+    const go = async () => {
+      const name = $("authName").value.trim();
+      $("authErr").textContent = "";
+      $("authGo").disabled = true;
+      try {
+        const r = await authCall("/auth/start", "POST", { name });
+        if (r.status !== 200) {
+          $("authErr").textContent = ({ invalid_name: "That doesn't look like a character name.", character_not_found: "No character with that name on Census.",
+            too_many_attempts: "Too many attempts. Try again in 10 minutes.", census_unavailable: "Census is not answering right now. Try again shortly." })[r.body.error] || "Something went wrong.";
+          $("authGo").disabled = false; return;
+        }
+        store.set("sessionStorage", PENDING_KEY, r.body.id);
+        acceptStep(r.body.id, r.body.character, r.body.accept_after_s);
+      } catch { $("authErr").textContent = "The oracle is not reachable."; $("authGo").disabled = false; }
+    };
+    $("authGo").onclick = go;
+    $("authName").onkeydown = (e) => { if (e.key === "Enter") go(); };
+    if (!$("auth").open) $("auth").showModal();
+    $("authName").focus();
+  }
+  function acceptStep(id, ch, wait) {
+    stopTimer();
+    authView(`<h3><span class="${esc(ch.faction || "")}">${esc(ch.name)}</span></h3>
+      ${ch.online === false ? '<div class="err">Census shows this character offline. Log in first, then press ACCEPT.</div>' : ""}
+      <div class="note">When ACCEPT unlocks, press it and then log out in game: <b>ESC → Logout</b>. You have 60 seconds.</div>
+      <div class="row2"><button class="btn big" id="authAccept" disabled>ACCEPT (<span id="authWait">${wait}</span>)</button></div><div class="err" id="authErr"></div>`);
+    let left = wait;
+    authTimer = setInterval(() => {
+      left--;
+      if (left > 0) { $("authWait").textContent = left; return; }
+      stopTimer();
+      $("authAccept").disabled = false;
+      $("authAccept").textContent = "ACCEPT";
+    }, 1000);
+    $("authAccept").onclick = async () => {
+      $("authAccept").disabled = true;
+      const r = await authCall("/auth/accept", "POST", { id });
+      if (r.status === 425) { $("authErr").textContent = `Wait ${r.body.wait_s}s.`; $("authAccept").disabled = false; return; }
+      if (r.status !== 200) { $("authErr").textContent = r.body.error === "unknown_challenge" ? "This attempt expired. Start again." : "Could not start the window."; return; }
+      watchStep(id, r.body.window_s);
+    };
+  }
+  function watchStep(id, total) {
+    stopTimer();
+    authView(`<h3>Log out now</h3><div class="note">In PlanetSide 2: <b>ESC → Logout</b>. Watching the Census stream…</div>
+      <div class="count" id="authLeft">${total}s</div><div class="bar"><span id="authBar" style="width:100%"></span></div><div class="err" id="authErr"></div>`);
+    const poll = async () => {
+      let r;
+      try { r = await authCall(`/auth/check?id=${encodeURIComponent(id)}`); } catch { return; }
+      if (r.status !== 200) { stopTimer(); store.set("sessionStorage", PENDING_KEY, null); authView(`<h3>That attempt is gone</h3><div class="row2"><button class="btn" id="authAgain">Start again</button></div>`); $("authAgain").onclick = openAuth; return; }
+      const b = r.body;
+      if (b.left_s != null) { $("authLeft").textContent = `${b.left_s}s`; $("authBar").style.width = `${(100 * b.left_s) / total}%`; }
+      if (b.status === "passed") {
+        stopTimer();
+        const c = await authCall("/auth/complete", "POST", { id });
+        store.set("sessionStorage", PENDING_KEY, null);
+        if (c.status === 200) {
+          store.set("localStorage", TOKEN_KEY, c.body.token);
+          me = c.body.character; renderWho();
+          authView(`<h3 class="ok">Verified ✓</h3><div class="note">Signed in as <b class="${esc(me.faction || "")}">${esc(me.name)}</b> on this browser. Verifying on another device signs this one out.</div><div class="row2"><button class="btn" id="authClose">Done</button></div>`);
+          $("authClose").onclick = () => $("auth").close();
+        } else authView(`<h3>Almost</h3><div class="err">The logout was seen but the sign-in could not be finished. Start again.</div><div class="row2"><button class="btn" id="authAgain">Start again</button></div>`), ($("authAgain").onclick = openAuth);
+      } else if (b.status === "expired") {
+        stopTimer(); store.set("sessionStorage", PENDING_KEY, null);
+        authView(`<h3>No logout seen</h3><div class="note">We didn't see that character log out within 60 seconds. Make sure you're logged in with it, then try again.</div><div class="row2"><button class="btn" id="authAgain">Try again</button></div>`);
+        $("authAgain").onclick = openAuth;
+      }
+    };
+    authTimer = setInterval(poll, 2000);
+    poll();
+  }
+  async function resumePending() {
+    const id = store.get("sessionStorage", PENDING_KEY);
+    if (!id || me) return;
+    const r = await authCall(`/auth/check?id=${encodeURIComponent(id)}`).catch(() => null);
+    if (!r || r.status !== 200 || !["accepted", "passed"].includes(r.body.status)) { store.set("sessionStorage", PENDING_KEY, null); return; }
+    $("auth").showModal();
+    watchStep(id, 60);
+  }
+  $("auth").addEventListener("close", stopTimer);
+  loadMe().then(resumePending);
 
   refreshLive(); refreshHistory();
   setInterval(refreshLive, 30000);

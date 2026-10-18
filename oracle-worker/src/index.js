@@ -479,7 +479,11 @@ async function handle(request, env) {
   const url = new URL(request.url);
   const db = env.DB;
   const now = Math.floor(Date.now() / 1000);
-  if (request.method === "OPTIONS") return json(null, 204);
+  if (request.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: {
+      "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Oracle-Key",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS", "Access-Control-Max-Age": "86400" } });
+  }
   if (url.pathname.startsWith("/auth/")) return handleAuth(request, env, url, json, now);
 
   if (url.pathname === "/" || url.pathname === "/health") {

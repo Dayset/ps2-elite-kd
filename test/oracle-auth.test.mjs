@@ -149,3 +149,11 @@ test("AuthWatcher passes the challenge in D1 and expires stale windows", { skip 
   const st = await (await w.fetch(new Request("https://auth/status"))).json();
   assert.equal(st.watching, 0);
 });
+
+test("CORS preflight for sign-in requests is a bodyless 204", async () => {
+  const { default: worker } = await import("../oracle-worker/src/index.js");
+  const r = await worker.fetch(new Request("https://x/auth/start", { method: "OPTIONS" }), {});
+  assert.equal(r.status, 204);
+  assert.match(r.headers.get("Access-Control-Allow-Headers"), /Authorization/);
+  assert.match(r.headers.get("Access-Control-Allow-Methods"), /POST/);
+});
