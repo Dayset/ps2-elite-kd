@@ -1,0 +1,82 @@
+-- PS2MapOracle D1 schema (database "ps2-oracle"). Idempotent.
+
+-- One map snapshot per world per poll: zones = {"<zone>": {"<region>": "<faction 0-3>"}}.
+CREATE TABLE IF NOT EXISTS snap (
+  world INTEGER NOT NULL,
+  ts INTEGER NOT NULL,
+  zones TEXT NOT NULL,
+  PRIMARY KEY (world, ts)
+);
+
+-- Census world_event type=METAGAME rows (alert start/end, final scores).
+CREATE TABLE IF NOT EXISTS metagame (
+  world INTEGER NOT NULL,
+  zone INTEGER NOT NULL,
+  instance_id INTEGER NOT NULL,
+  event_id INTEGER NOT NULL,
+  state TEXT NOT NULL,
+  ts INTEGER NOT NULL,
+  vs REAL, nc REAL, tr REAL,
+  PRIMARY KEY (world, instance_id, state, event_id)
+);
+CREATE INDEX IF NOT EXISTS metagame_ts ON metagame (ts);
+
+-- Census world_event type=FACILITY rows where the owner changed (base flips).
+CREATE TABLE IF NOT EXISTS flip (
+  world INTEGER NOT NULL,
+  zone INTEGER NOT NULL,
+  facility INTEGER NOT NULL,
+  ts INTEGER NOT NULL,
+  old INTEGER, new INTEGER, held INTEGER, outfit TEXT,
+  PRIMARY KEY (world, facility, ts)
+);
+CREATE INDEX IF NOT EXISTS flip_wz_ts ON flip (world, zone, ts);
+
+-- One row per territory alert instance. key = world-zone-instance_id.
+CREATE TABLE IF NOT EXISTS alert (
+  key TEXT PRIMARY KEY,
+  world INTEGER NOT NULL,
+  zone INTEGER NOT NULL,
+  instance_id INTEGER NOT NULL,
+  event_id INTEGER NOT NULL,
+  start_ts INTEGER NOT NULL,
+  dur INTEGER NOT NULL,
+  status TEXT NOT NULL,          -- live | settling | sudden_death | settled | canceled | unresolved
+  end_ts INTEGER,
+  checks INTEGER NOT NULL DEFAULT 0,
+  winner TEXT,                   -- VS | NC | TR | draw
+  basis TEXT,                    -- census_final | sudden_death
+  final TEXT,                    -- {"VS":..,"NC":..,"TR":..} Census ended scores
+  flags TEXT,                    -- JSON array of data-quality flags
+  state TEXT,                    -- latest live state (push_live contract)
+  commander TEXT,                -- latest commander block (from Actions)
+  commander_ts INTEGER,
+  updated INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS alert_status ON alert (status);
+CREATE INDEX IF NOT EXISTS alert_start ON alert (start_ts);
+
+-- Win-history ticks (one per minute per live alert).
+CREATE TABLE IF NOT EXISTS tick (
+  key TEXT NOT NULL,
+  ts INTEGER NOT NULL,
+  t REAL NOT NULL,
+  terr TEXT NOT NULL,
+  win TEXT NOT NULL,
+  PRIMARY KEY (key, ts)
+);
+
+-- Benchmark: predicted win probs per slice, Brier at settlement.
+CREATE TABLE IF NOT EXISTS bench (
+  key TEXT PRIMARY KEY,
+  dur INTEGER NOT NULL,
+  slices TEXT NOT NULL,          -- {"t0": {"VS":p,...,"t":min}, ...}
+  winner TEXT,
+  brier TEXT,                    -- {"t0": b, ...}
+  settled_ts INTEGER
+);
+
+CREATE TABLE IF NOT EXISTS meta (
+  k TEXT PRIMARY KEY,
+  v TEXT
+);

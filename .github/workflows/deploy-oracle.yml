@@ -1,0 +1,59 @@
+name: Deploy oracle Worker
+
+# ps2-oracle (PS2MapOracle backend). Deploys automatically when the Worker or
+# the model files change on main; can also be run by hand.
+# Uses the same CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID as deploy-worker.yml.
+# ORACLE_KEY (write key for /commander and /export) is set from CENSUS_PROXY_KEY.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "oracle-worker/**"
+      - "oracle/backend/winbins_*.json"
+      - "oracle/backend/*_region_to_facility.json"
+      - "test/oracle-*.test.mjs"
+      - ".github/workflows/deploy-oracle.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-oracle
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            oracle-worker
+            oracle/backend
+            test
+            package.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Rebuild split models
+        run: node oracle-worker/build-trees.mjs
+
+      - name: Oracle tests
+        run: node --test test/oracle-engine.test.mjs test/oracle-worker.test.mjs
+
+      - name: Deploy
+        uses: cloudflare/wrangler-action@v3
+        env:
+          ORACLE_KEY: ${{ secrets.CENSUS_PROXY_KEY }}
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: oracle-worker
+          command: deploy
+          secrets: |
+            ORACLE_KEY

@@ -1,0 +1,19 @@
+# ps2-oracle: PS2MapOracle collector + odds engine + settlement.
+# Deployed by .github/workflows/deploy-oracle.yml on every push that touches
+# oracle-worker/ or the model files. Secret ORACLE_KEY is set by that workflow.
+name = "ps2-oracle"
+main = "src/index.js"
+compatibility_date = "2025-07-18"
+workers_dev = true
+keep_vars = true
+
+[triggers]
+crons = ["* * * * *"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "ps2-oracle"
+database_id = "477a2214-ced3-429f-aaef-96c0f0e2edd1"
+
+[observability]
+enabled = true
