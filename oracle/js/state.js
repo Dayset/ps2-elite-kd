@@ -23,10 +23,12 @@ export const $ = (id) => document.getElementById(id);
 // same <details> are forced open and their <summary> is hidden, so desktop is unchanged.
 export const PHONE_MQ = matchMedia("(max-width: 600px)");
 export const wide = () => !PHONE_MQ.matches;
-export const det = (id, summary, body, cls = "") => `<details class="det ${cls}" data-d="${id}"${wide() || S.open[id] ? " open" : ""}><summary>${summary}</summary>${body}</details>`;
+// ⓘ notes (#17) are never forced open: on desktop they are small popovers.
+const forced = (cls) => wide() && !/\binfo\b/.test(cls);
+export const det = (id, summary, body, cls = "") => `<details class="det ${cls}" data-d="${id}"${forced(cls) || S.open[id] ? " open" : ""}><summary>${summary}</summary>${body}</details>`;
 export const info = (id, body, label = "") => det(id, `ⓘ${label ? " " + label : ""}`, body, "info");
 export function syncDetails(root = document) {
-  root.querySelectorAll("details.det[data-d]").forEach((d) => { d.open = wide() || !!S.open[d.dataset.d]; });
+  root.querySelectorAll("details.det[data-d]").forEach((d) => { d.open = forced(d.className) || !!S.open[d.dataset.d]; });
 }
 export const stars = (p) => p >= 80 ? "★★★★★" : p >= 60 ? "★★★★" : p >= 40 ? "★★★" : p >= 20 ? "★★" : p > 0 ? "★" : "";
 export const mins = (s) => Math.max(0, Math.round(s / 60));

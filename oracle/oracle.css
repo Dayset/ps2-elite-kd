@@ -113,6 +113,7 @@ footer { color: var(--dim); font-size: 12px; margin-top: 18px; }
   .tab .tl0 { display: none; } .tab .tl { display: block; font-size: 13px; }
   .tab .bar { min-width: 0; margin-top: 4px; }
   .grid { gap: 10px; }
+  .row .note { margin-top: 0; }
   .card { padding: 12px; }
   .title { gap: 8px; }
   .title b { font-size: 17px; }
@@ -167,4 +168,27 @@ footer { color: var(--dim); font-size: 12px; margin-top: 18px; }
   .grid > .card:not(.map) { order: -1; }
   .map svg { max-height: 38vh; width: auto; max-width: 100%; margin: 0 auto; }
   .card.map h2 { display: none; }
+}
+
+/* ---------------------------------------------------------------- desktop (#17) */
+#map { position: relative; }
+.map .tip { position: absolute; z-index: 5; pointer-events: none; background: rgba(16,18,22,.96); border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; font-size: 13px; white-space: nowrap; box-shadow: 0 4px 14px rgba(0,0,0,.5); }
+.clegend { display: flex; gap: 12px; font-size: 12px; color: var(--muted); margin: -4px 0 6px; }
+.cmd li[data-base] { cursor: default; border-radius: 4px; }
+.cmd li[data-base]:hover { background: #1a2230; }
+@media (min-width: 861px) {
+  .grid { grid-template-columns: minmax(0, 1.7fr) minmax(320px, 1fr); align-items: start; }
+  .grid > .map { grid-row: span 2; }
+  .grid > #betSlot, .grid > #betHere { grid-column: 2; }
+  .map svg { max-height: calc(100vh - 360px); min-height: 300px; width: auto; max-width: 100%; margin: 0 auto; }
+  /* ⓘ notes: small popovers instead of long text */
+  .det.info { position: relative; display: inline-block; }
+  .det.info > summary { display: inline-flex; align-items: center; gap: 4px; color: var(--dim); font-size: 13px; margin-top: 6px; }
+  .det.info > summary:hover { color: var(--muted); }
+  .det.info[open] > :not(summary) { position: absolute; z-index: 10; left: 0; bottom: calc(100% + 6px); width: min(440px, 80vw); background: var(--panel2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; box-shadow: 0 8px 24px rgba(0,0,0,.55); margin: 0; }
+  .det.info[open] > :not(summary) .note, .det.info[open] > .note { margin: 0; }
+  footer .det.info[open] > :not(summary) { bottom: calc(100% + 6px); }
+}
+@media (min-width: 1100px) {
+  .wrap { max-width: 1400px; }
 }

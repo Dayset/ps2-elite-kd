@@ -1,7 +1,7 @@
 // PS2MapOracle dashboard — split from index.html (#15). No behaviour change.
 import { S, FACS, COLOR, esc, $, stars, mins, bar, det, info, wide, syncDetails, PHONE_MQ } from "./state.js";
 import { get } from "./api.js";
-import { drawMap } from "./map.js";
+import { drawMap, highlightBase } from "./map.js";
 import { chart, chartHover } from "./chart.js";
 import { commander } from "./commander.js";
 import { reportPanel } from "./players.js";
@@ -120,13 +120,14 @@ function render2(now) {
     <div class="title"><b>${esc(a.world_name)} · ${esc(a.zone_name)}${a.kind === "meltdown" ? " Meltdown" : ""}</b><span class="badge ${a.status}">${esc(a.status.replace("_", " "))}</span><span class="note">${esc(left)} · ${a.dur}-min alert</span>${liveA ? "" : `<button type="button" class="more backlive" id="backLive">← Back to live</button>`}</div>
     <div class="grid">
       <section class="card map"><h2>Map</h2><div id="map"></div></section>
-      <section class="card"><h2>Win chance</h2>${kindNote}<div class="odds">${oddsHtml}</div>${oddLine}${result}${popAdj}${second}${rows || popRows || kdRows ? det("wdet", "Details", `<div class="rows">${rows}${popRows}${kdRows}</div>${popTot ? `<div class="note">Population: Honu (wt.honu.pw), ${popTot} on continent${s.pop_ns ? ` + ${s.pop_ns} NSO` : ""}.</div>` : ""}`, "wdet") : ""}${calls}</section>
+      <section class="card win"><h2>Win chance</h2>${kindNote}<div class="odds">${oddsHtml}</div>${oddLine}${result}${popAdj}${second}${rows || popRows || kdRows ? det("wdet", "Details", `<div class="rows">${rows}${popRows}${kdRows}</div>${popTot ? `<div class="note">Population: Honu (wt.honu.pw), ${popTot} on continent${s.pop_ns ? ` + ${s.pop_ns} NSO` : ""}.</div>` : ""}`, "wdet") : ""}${calls}</section>
+      ${a.status === "live" ? `<div id="betHere"></div>` : ""}
     </div>
-    ${a.status === "live" ? `<div id="betHere"></div>` : ""}
     <section class="card chart" style="margin-top:14px"><h2>Win chance over time</h2><div id="chart"><div class="note">Loading…</div></div></section>
     ${a.status === "live" ? commander(a.commander || (s && s.commander), a.commander_ts, now, lead) : reportPanel(a)}
     ${benchPanel(a)}`;
   if ($("backLive")) $("backLive").onclick = backToLive;
+  $("main").querySelectorAll("li[data-base]").forEach((li) => { li.onmouseenter = () => highlightBase(li.dataset.base); li.onmouseleave = () => highlightBase(null); });
   $("main").querySelectorAll("[data-cf]").forEach((b) => b.onclick = () => { S.cmdFac = b.dataset.cf; render(Math.floor(Date.now() / 1000)); });
   $("mini").innerHTML = `<b>${esc(a.world_name)} · ${esc(a.zone_name)}</b>${win ? `<span>${FACS.map((f) => `<span class="${f}">${f} ${win[f].pct}%</span>`).join(" ")}</span>` : ""}`;
   miniSync();
@@ -159,7 +160,7 @@ function miniSync() {
 }
 addEventListener("scroll", miniSync, { passive: true });
 // Remember which collapsibles the user opened on the phone, so 30-s re-renders keep them.
-document.addEventListener("toggle", (e) => { const d = e.target; if (d.dataset && d.dataset.d && !wide()) S.open[d.dataset.d] = d.open; }, true);
+document.addEventListener("toggle", (e) => { const d = e.target; if (d.dataset && d.dataset.d && (!wide() || d.classList.contains("info"))) S.open[d.dataset.d] = d.open; }, true);
 PHONE_MQ.addEventListener("change", () => { syncDetails(); render(Math.floor(Date.now() / 1000)); renderHist(); });
 syncDetails();
 
