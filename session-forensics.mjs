@@ -20,12 +20,14 @@
  * ≥ ODD.HS over ≥ ODD.HS_MIN_KILLS kills; a farm-like victim (≥ ODD.FARM_KILLS
  * kills on one victim, never killed back); a < 1-day-old account with
  * ≥ ODD.NEW_KILLS kills at K/D ≥ ODD.NEW_KD.
+ * Owner decision #10 (2026-10-18): PEAK_60S 25 → 27 and FARM_KILLS 20 → 25; peaks of
+ * 25–26 and 20–24 kills on one victim showed up in long legit zerg sessions.
  * DOM-free, no network (browser + Node).
  */
 export const FORENSICS_RULE = Object.freeze({
   IMPOSSIBLE: Object.freeze({ PER_SECOND: 5, SECONDS: 3, MIN_KILLS: 50, ZERO_GAP_SHARE: 0.5 }),
   BURST: Object.freeze({ KILLS_5MIN: 50, KD: 20 }),
-  ODD: Object.freeze({ PEAK_60S: 25, HS: 0.75, HS_MIN_KILLS: 100, FARM_KILLS: 20, NEW_KILLS: 100, NEW_KD: 10 }),
+  ODD: Object.freeze({ PEAK_60S: 27, HS: 0.75, HS_MIN_KILLS: 100, FARM_KILLS: 25, NEW_KILLS: 100, NEW_KD: 10 }),
 });
 
 /** Session picking: a session needs this many kills to be worth a look. */
@@ -196,8 +198,12 @@ export function forensicsVerdict(m, rule = FORENSICS_RULE) {
 const fmt1 = (v) => (fin(v) ? (Math.round(v * 10) / 10).toString() : "—");
 
 /** Per-player summary over its analyzed sessions (worst first). */
-export function forensicsSummary(entry) {
-  const sessions = Object.values((entry && entry.sessions) || {}).filter((s) => s && s.kills > 0);
+export function forensicsSummary(entry, rule = FORENSICS_RULE) {
+  // Re-apply the current rules to the stored session metrics, so a threshold change
+  // (e.g. #10: FARM_KILLS 20 → 25, PEAK_60S 25 → 27) takes effect without re-fetching.
+  // Stored farmLike lists were cut at the older, lower threshold, so filtering is exact.
+  const sessions = Object.values((entry && entry.sessions) || {}).filter((s) => s && s.kills > 0)
+    .map((s) => (Number.isFinite(s.peak60s) ? { ...s, ...forensicsVerdict({ ...s, victims: s.victims && { ...s.victims, farmLike: (s.victims.farmLike || []).filter((v) => v.kills >= rule.ODD.FARM_KILLS) } }, rule) } : s));
   sessions.sort((a, b) => (b.flagged - a.flagged) || (b.oddities || []).length - (a.oddities || []).length || b.kills - a.kills);
   const flagged = sessions.some((s) => s.flagged);
   const odd = !flagged && sessions.some((s) => (s.oddities || []).length);
