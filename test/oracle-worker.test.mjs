@@ -212,3 +212,32 @@ test("sudden death on another continent does not decide this draw", { skip }, as
   const row = DB.raw.prepare("SELECT status, winner, basis FROM alert").get();
   assert.deepEqual({ ...row }, { status: "settled", winner: "draw", basis: "census_final" });
 });
+
+test("commander runs per live alert, inline and through the SELF binding", { skip }, async () => {
+  const { runCycle, fanOutCommander, default: worker } = await import("../oracle-worker/src/index.js");
+  const DB = fakeD1();
+  const env = { DB, ORACLE_KEY: "k" };
+  // Anchored to the real clock: the internal endpoint computes "now" itself.
+  const T0 = Math.floor(Date.now() / 1000) - 21 * 60 - 5;
+  const census = { map: { 1: 40, 2: 30, 3: 18 }, metagame: [mg(900, 153, "started", T0)], honu: true,
+    flips: [{ event_type: "FacilityControl", world_id: "1", zone_id: "4", facility_id: "261000", faction_old: "2", faction_new: "1", timestamp: String(T0 + 20 * 60) }] };
+  installCensus(census);
+  await runCycle(env, (T0 + 300) * 1000);
+  const rep = await runCycle(env, (T0 + 21 * 60) * 1000);
+  assert.deepEqual(rep.live_keys, ["1-4-900"]);
+  const [inline] = await fanOutCommander(env, rep.live_keys, (T0 + 21 * 60) * 1000);
+  assert.equal(inline.ok, true, JSON.stringify(inline));
+  let row = DB.raw.prepare("SELECT commander, commander_ts FROM alert").get();
+  const cmd = JSON.parse(row.commander);
+  assert.deepEqual(Object.keys(cmd.factions).sort(), ["NC", "TR", "VS"]);
+  assert.equal(cmd.source, "worker");
+  assert.ok(cmd.fight_up && typeof cmd.fight_up.text === "string");
+  // Through a SELF binding: the internal endpoint requires the key.
+  const self = { fetch: (req) => worker.fetch(req, env) };
+  const viaSelf = await fanOutCommander({ ...env, SELF: self }, rep.live_keys);
+  assert.equal(viaSelf[0].ok, true, JSON.stringify(viaSelf));
+  const noKey = await fanOutCommander({ ...env, SELF: self, ORACLE_KEY: "" }, rep.live_keys);
+  assert.match(noKey[0].error, /403/);
+  const live = await (await worker.fetch(new Request("https://x/live"), env)).json();
+  assert.ok(live.alerts[0].commander.factions.VS);
+});

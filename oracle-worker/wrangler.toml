@@ -17,3 +17,9 @@ database_id = "477a2214-ced3-429f-aaef-96c0f0e2edd1"
 
 [observability]
 enabled = true
+
+# The cron fans the AI Commander out to one invocation per live alert through
+# this binding to itself, so its CPU never counts against the odds cycle.
+[[services]]
+binding = "SELF"
+service = "ps2-oracle"

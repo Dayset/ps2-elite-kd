@@ -1,13 +1,12 @@
 name: Oracle commander
 
-# Runs the Python AI Commander (oracle/backend/commander_live.py, unchanged)
-# for every live alert and posts the result to the ps2-oracle Worker.
-# Odds, map and settlement do not depend on this job; it only adds the
-# Commander panel. GitHub may delay scheduled runs by several minutes.
+# Manual cross-check only. Since 2026-10-18 the Worker computes the AI Commander
+# itself every minute (oracle-worker/src/commander.js, a parity-tested port of
+# commander_live.py). Running this posts the Python result for the live alerts
+# instead (it overwrites the Worker's until the next minute), useful to compare
+# the two by eye.
 
 on:
-  schedule:
-    - cron: "*/5 * * * *"
   workflow_dispatch:
 
 permissions:

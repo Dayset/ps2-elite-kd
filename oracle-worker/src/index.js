@@ -18,7 +18,8 @@ import {
   WORLDS, ZONES, WORLD_NAMES, ZONE_NAMES, TERRITORY_ALERTS, SUDDEN_DEATH, FACS, alertKind,
   buildState, computeWin, territory, sliceMinutes, brier, scoreWinner, popAdjusted,
 } from "./engine.js";
-import { binGetter, hasTree, regionMap } from "./models.js";
+import { binGetter, hasTree, regionMap, latticeFor, captureModel, resistanceModel } from "./models.js";
+import { runCommander, ownership } from "./commander.js";
 
 const CENSUS = "https://census.daybreakgames.com";
 const UA = "ps2-oracle/1.0 (dayset.github.io/ps2-elite-kd/oracle)";
@@ -253,6 +254,7 @@ export async function runCycle(env, nowMs = Date.now()) {
       }
       out.push({ ...base, status: "live", state });
       live++;
+      (report.live_keys ||= []).push(a.key);
       ticks.push({ key: a.key, ts: now, t: Math.round(((now - startTs) / 60) * 10) / 10, terr: JSON.stringify(state.territory),
         win: JSON.stringify(Object.fromEntries(FACS.map((f) => [f, state.win[f].pct]))) });
       // Benchmark slices: t0 only if first seen within 5 min of start (honest t0),
@@ -372,6 +374,60 @@ export async function runCycle(env, nowMs = Date.now()) {
   return report;
 }
 
+// ---------------------------------------------------------------- commander
+
+const FAC_NAME = { 1: "VS", 2: "NC", 3: "TR" };
+
+/**
+ * AI Commander for one live alert (port of commander_live.py --json), stored in
+ * alert.commander. Runs in its own invocation (see fanOutCommander) so its CPU
+ * never counts against the odds/settlement cycle.
+ */
+export async function commanderFor(env, key, nowMs = Date.now()) {
+  const db = env.DB;
+  const now = Math.floor(nowMs / 1000);
+  const a = await db.prepare("SELECT key, world, zone, start_ts, dur, status FROM alert WHERE key=?").bind(key).first();
+  if (!a || a.status !== "live") return { key, skipped: "not live" };
+  const lattice = latticeFor(a.zone);
+  const r2f = regionMap(a.zone);
+  if (!lattice || !r2f || !hasTree(a.zone)) return { key, skipped: "no lattice" };
+  const [sNow, s15, fl] = await Promise.all([
+    latestSnap(db, a.world, now), latestSnap(db, a.world, now - 900),
+    db.prepare("SELECT ts, old, new, facility FROM flip WHERE world=? AND zone=? AND ts>=? ORDER BY ts").bind(a.world, a.zone, a.start_ts - 600).all(),
+  ]);
+  const zNow = sNow && sNow.zones[String(a.zone)];
+  if (!zNow) return { key, skipped: "no snapshot" };
+  const z15 = s15 && s15.zones[String(a.zone)];
+  const flips = ((fl && fl.results) || [])
+    .map((r) => [r.ts, FAC_NAME[r.new], FAC_NAME[r.old], String(r.facility)])
+    .filter((x) => x[1] && x[2] && x[1] !== x[2])
+    .sort((x, y) => x[0] - y[0] || (x[1] < y[1] ? -1 : x[1] > y[1] ? 1 : 0) || (x[2] < y[2] ? -1 : x[2] > y[2] ? 1 : 0) || (x[3] < y[3] ? -1 : x[3] > y[3] ? 1 : 0));
+  const t0 = Date.now();
+  const cmd = runCommander({
+    world: a.world, zone: a.zone, startTs: a.start_ts, t: (now - a.start_ts) / 60, dur: a.dur,
+    own: ownership(zNow, r2f), own15: z15 ? ownership(z15, r2f) : null, flips,
+    lattice, pf: captureModel(a.zone), res: resistanceModel(a.zone), getBin: binGetter(a.zone),
+  });
+  if (!cmd) return { key, skipped: "empty ownership" };
+  cmd.source = "worker";
+  await db.prepare("UPDATE alert SET commander=?, commander_ts=? WHERE key=? AND status='live'").bind(JSON.stringify(cmd), now, key).run();
+  return { key, ok: true, ms: Date.now() - t0, flips: flips.length };
+}
+
+/** One separate Worker invocation per live alert via the SELF service binding (inline without one). */
+export async function fanOutCommander(env, keys, nowMs = Date.now()) {
+  if (!keys || !keys.length) return [];
+  if (!env.SELF) return Promise.all(keys.map((k) => commanderFor(env, k, nowMs).catch((e) => ({ key: k, error: String(e && e.message || e) }))));
+  return Promise.all(keys.map(async (k) => {
+    try {
+      const r = await env.SELF.fetch(new Request("https://ps2-oracle/internal/commander", {
+        method: "POST", headers: { "Content-Type": "application/json", "X-Oracle-Key": env.ORACLE_KEY || "" }, body: JSON.stringify({ key: k }),
+      }));
+      return r.ok ? await r.json() : { key: k, error: `status ${r.status}` };
+    } catch (e) { return { key: k, error: String(e && e.message || e) }; }
+  }));
+}
+
 // ---------------------------------------------------------------- API
 
 const parseRow = (r) => ({
@@ -400,7 +456,8 @@ async function handle(request, env) {
     const last = await getMeta(db, "last_cycle");
     const lastOk = await getMeta(db, "last_ok");
     const ageS = last ? now - last.ts : null;
-    return json({ ok: ageS !== null && ageS < 180, service: "ps2-oracle", now, last_cycle_age_s: ageS, last_ok_age_s: lastOk ? now - lastOk : null, last_cycle: last }, 200, { "Cache-Control": "no-store" });
+    const lastCmd = await getMeta(db, "last_commander");
+    return json({ ok: ageS !== null && ageS < 180, service: "ps2-oracle", now, last_cycle_age_s: ageS, last_ok_age_s: lastOk ? now - lastOk : null, last_cycle: last, last_commander: lastCmd }, 200, { "Cache-Control": "no-store" });
   }
 
   // Manual kick + diagnostics: runs one cycle now unless one ran in the last
@@ -411,7 +468,8 @@ async function handle(request, env) {
     const t = Date.now();
     try {
       const report = await runCycle(env, Date.now());
-      return json({ ran: true, wall_ms: Date.now() - t, report }, 200, { "Cache-Control": "no-store" });
+      const commander = await fanOutCommander(env, report.live_keys);
+      return json({ ran: true, wall_ms: Date.now() - t, report, commander }, 200, { "Cache-Control": "no-store" });
     } catch (e) {
       return json({ ran: false, error: String(e && e.stack || e) }, 500, { "Cache-Control": "no-store" });
     }
@@ -466,6 +524,13 @@ async function handle(request, env) {
     return json({ world, zone, snaps, metagame, flips }, 200, { "Cache-Control": "no-store" });
   }
 
+  if (url.pathname === "/internal/commander" && request.method === "POST") {
+    if (!authed(request, env)) return json({ error: "forbidden" }, 403);
+    const body = await request.json().catch(() => null);
+    if (!body || typeof body.key !== "string") return json({ error: "bad_request" }, 400);
+    return json(await commanderFor(env, body.key), 200, { "Cache-Control": "no-store" });
+  }
+
   if (url.pathname === "/commander" && request.method === "POST") {
     if (!authed(request, env)) return json({ error: "forbidden" }, 403);
     const body = await request.json().catch(() => null);
@@ -483,7 +548,10 @@ export default {
   async scheduled(event, env, ctx) {
     // Breadcrumb before any work: tells a cron that never fires apart from one that dies mid-run.
     try { await setMeta(env.DB, "cron_seen", { ts: Math.floor(Date.now() / 1000), cron: event.cron }); } catch {}
-    ctx.waitUntil(runCycle(env, event.scheduledTime || Date.now()).catch(async (e) => {
+    ctx.waitUntil(runCycle(env, event.scheduledTime || Date.now()).then(async (rep) => {
+      const res = await fanOutCommander(env, rep.live_keys);
+      if (res.length) await setMeta(env.DB, "last_commander", { ts: Math.floor(Date.now() / 1000), results: res });
+    }).catch(async (e) => {
       try { await setMeta(env.DB, "last_crash", { ts: Math.floor(Date.now() / 1000), error: String(e && e.stack || e) }); } catch {}
     }));
   },

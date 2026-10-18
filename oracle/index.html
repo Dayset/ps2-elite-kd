@@ -205,15 +205,19 @@ footer { color: var(--dim); font-size: 12px; margin-top: 18px; }
     return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Win chance over time">${grid}${xt}${lines}</svg>`;
   }
 
-  function commander(c) {
+  function commander(c, ts, now) {
     if (!c || !c.factions) return "";
-    return `<section class="card cmd" style="margin-top:14px"><h2>AI Commander</h2><div class="cmdgrid">${FACS.map((f) => {
+    const marks = (e) => `${e.heat >= 40 ? ` <span title="hot fight (heat ${e.heat})">🔥</span>` : ""}${e.freezing ? ' <span title="supply line runs through a threatened chokepoint">🥶</span>' : ""}${e.cut_severs ? ` <span title="capturing this cuts off ${e.cut_severs} enemy bases">✂️${e.cut_severs}</span>` : ""}`;
+    const prio = (e) => `<span class="note">${e.priority ? `P${e.priority}` : "dead"}</span>`;
+    const age = ts ? `<span class="note">updated ${Math.max(0, now - ts)}s ago</span>` : "";
+    return `<section class="card cmd" style="margin-top:14px"><h2>AI Commander ${age}</h2><div class="cmdgrid">${FACS.map((f) => {
       const x = c.factions[f]; if (!x) return "";
-      const atk = (x.attack || []).slice(0, 3).map((e) => `<li>${esc(e.name)} → ${esc(e.target || "")} <span class="note">+${esc(e.win_gain ?? "")}%</span></li>`).join("");
-      const def = (x.defend || []).slice(0, 3).map((e) => `<li>${esc(e.name)} vs ${esc(e.vs || "")} <span class="note">−${esc(e.win_drop ?? "")}%</span></li>`).join("");
+      if (x.eliminated) return `<div><h3 class="${f}">${f} · eliminated</h3><div class="note">Mathematically out: spoiler plays only (kingmaker below).</div>${(x.kingmaker || []).length ? `<ul>${x.kingmaker.slice(0, 2).map((k) => `<li>${esc(k.text || "")}</li>`).join("")}</ul>` : ""}</div>`;
+      const atk = (x.attack || []).slice(0, 3).map((e) => `<li>${esc(e.name)} → <span class="${esc(e.target || "")}">${esc(e.target || "")}</span> <span class="note">+${esc(e.win_gain ?? "")}%</span> ${prio(e)}${marks(e)}</li>`).join("");
+      const def = (x.defend || []).slice(0, 3).map((e) => `<li>${esc(e.name)} vs <span class="${esc(e.vs || "")}">${esc(e.vs || "")}</span> <span class="note">−${esc(e.win_drop ?? "")}%</span> ${prio(e)}${marks(e)}</li>`).join("");
       const km = (x.kingmaker || []).slice(0, 2).map((k) => `<li>${esc(k.text || "")}</li>`).join("");
       return `<div><h3 class="${f}">${f} · ${esc(x.war_shape || "")}</h3>${atk ? `<div class="note">Attack</div><ol>${atk}</ol>` : ""}${def ? `<div class="note">Defend</div><ol>${def}</ol>` : ""}${km ? `<div class="note">Kingmaker</div><ul>${km}</ul>` : ""}</div>`;
-    }).join("")}</div>${c.fight_up && c.fight_up.text ? `<div class="note" style="margin-top:8px">${esc(c.fight_up.text)}</div>` : ""}</section>`;
+    }).join("")}</div>${(c.second_place_kingmaker || []).length ? `<div class="note" style="margin-top:8px">Second place: ${c.second_place_kingmaker.map((k) => esc(k.text)).join(" · ")}</div>` : ""}${c.fight_up && c.fight_up.text ? `<pre class="note" style="margin-top:8px;white-space:pre-wrap;font-family:inherit">${esc(c.fight_up.text)}</pre>` : ""}</section>`;
   }
 
   let ticksFor = null, ticks = [];
@@ -254,7 +258,7 @@ footer { color: var(--dim); font-size: 12px; margin-top: 18px; }
         <section class="card"><h2>Win chance</h2>${kindNote}<div class="odds">${oddsHtml}</div>${result}${popAdj}${second}<div class="rows">${rows}${popRows}</div>${popTot ? `<div class="note">Population: Honu (wt.honu.pw), ${popTot} on continent${s.pop_ns ? ` + ${s.pop_ns} NSO` : ""}.</div>` : ""}${calls}</section>
       </div>
       <section class="card chart" style="margin-top:14px"><h2>Win chance over time</h2><div id="chart"><div class="note">Loading…</div></div></section>
-      ${commander(a.commander || (s && s.commander))}`;
+      ${a.status === "live" ? commander(a.commander || (s && s.commander), a.commander_ts, now) : ""}`;
     if (ticksFor === a.key) { const c = $("chart"); c.innerHTML = chart(ticks, a.dur, c.clientWidth); }
     drawMap(a);
   }
