@@ -762,11 +762,12 @@ async function handleCensusProxy(request, env, c) {
 }
 
 import { KillMonitor, monitorRoute, monitorTick } from "./monitor.js";
+import { oracleTick } from "./oracle-tick.js";
 export { KillMonitor };
 
 export default {
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(Promise.all([backupCheck(env, event && event.scheduledTime ? event.scheduledTime : Date.now()), monitorTick(env)]));
+    ctx.waitUntil(Promise.all([backupCheck(env, event && event.scheduledTime ? event.scheduledTime : Date.now()), monitorTick(env), oracleTick(env, cfg(env))]));
   },
   async fetch(request, env, ctx) {
     const c = cfg(env);

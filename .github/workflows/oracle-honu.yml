@@ -1,0 +1,41 @@
+name: Oracle Honu job
+
+# Honu's JSON API answers GitHub Actions but challenges Cloudflare's network,
+# so the ps2-oracle Worker queues its Honu work and this job does it:
+# population for live alerts, per-player outlier reports after alerts end,
+# PS2 Radar second opinions for flagged players (oracle-worker/honu-job.mjs).
+# Dispatched by the ps2-elite-kd-cache Worker's 5-minute cron only while the
+# oracle has work; the schedule below is a slow backstop.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "7,37 * * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: oracle-honu
+  cancel-in-progress: false
+
+jobs:
+  honu:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            oracle-worker/honu-job.mjs
+            oracle-worker/src/outliers.js
+            radar.mjs
+            package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Honu work for the oracle
+        env:
+          ORACLE_API: ${{ vars.ORACLE_API || 'https://ps2-oracle.dayset.workers.dev' }}
+          ORACLE_KEY: ${{ secrets.CENSUS_PROXY_KEY }}
+        run: node oracle-worker/honu-job.mjs

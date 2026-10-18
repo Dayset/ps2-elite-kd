@@ -34,6 +34,7 @@ jobs:
             worker
             data/monitor.json
             test/worker-kv-budget.test.mjs
+            test/worker-oracle-tick.test.mjs
             package.json
 
       - uses: actions/setup-node@v4
@@ -41,7 +42,7 @@ jobs:
           node-version: "20"
 
       - name: Worker tests
-        run: node --test test/worker-kv-budget.test.mjs
+        run: node --test test/worker-kv-budget.test.mjs test/worker-oracle-tick.test.mjs
 
       - name: Dry run (bundle only)
         uses: cloudflare/wrangler-action@v3

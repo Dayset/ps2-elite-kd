@@ -26,3 +26,9 @@ class_name = "KillMonitor"
 [[migrations]]
 tag = "v1-kill-monitor"
 new_sqlite_classes = ["KillMonitor"]
+
+# PS2MapOracle: the 5-minute cron asks ps2-oracle for queued Honu work
+# (src/oracle-tick.js). Worker-to-Worker calls need a service binding.
+[[services]]
+binding = "ORACLE"
+service = "ps2-oracle"

@@ -83,10 +83,12 @@ const mg = (instance, event, stateName, ts, vs = 30, nc = 30, tr = 30, world = 1
 });
 
 test("full alert lifecycle: live → settling → settled from Census final scores", { skip }, async () => {
-  const { runCycle, default: worker } = await import("../oracle-worker/src/index.js");
+  const { runCycle, honuIngest, default: worker } = await import("../oracle-worker/src/index.js");
   const DB = fakeD1();
   const env = { DB, ORACLE_KEY: "k" };
   const T0 = 1_792_300_000;
+  // Population arrives from the oracle-honu Actions job via /honu/ingest.
+  const feedPop = (ts) => honuIngest(DB, { pop: [{ world: 1, zone: 4, vs: 150, nc: 90, tr: 50, ns: 10 }] }, ts);
   const census = { map: { 1: 30, 2: 30, 3: 28 }, metagame: [], flips: [], honu: true };
   installCensus(census);
 
@@ -95,6 +97,7 @@ test("full alert lifecycle: live → settling → settled from Census final scor
   census.metagame = [mg(500, 153, "started", T0)];
   census.flips = [{ event_type: "FacilityControl", world_id: "1", zone_id: "4", facility_id: "261000", faction_old: "2", faction_new: "1", duration_held: "300", timestamp: String(T0 + 30), outfit_id: "1" },
     { event_type: "FacilityControl", world_id: "1", zone_id: "4", facility_id: "262000", faction_old: "3", faction_new: "3", timestamp: String(T0 + 40) }];
+  await feedPop(T0 + 30);
   DB.reset();
   let rep = await runCycle(env, (T0 + 60) * 1000);
   assert.equal(rep.live, 1, JSON.stringify(rep));
@@ -103,7 +106,7 @@ test("full alert lifecycle: live → settling → settled from Census final scor
 
   // Mid-alert: VS surges.
   census.map = { 1: 50, 2: 20, 3: 18 };
-  for (const m of [15, 30, 31, 60]) await runCycle(env, (T0 + m * 60) * 1000);
+  for (const m of [15, 30, 31, 60]) { await feedPop(T0 + m * 60 - 120); await runCycle(env, (T0 + m * 60) * 1000); }
   const live = await (await worker.fetch(new Request("https://x/live"), env)).json();
   assert.equal(live.alerts.length, 1);
   const a = live.alerts[0];
@@ -190,17 +193,17 @@ test("key-protected endpoints refuse without the key", { skip }, async () => {
   assert.equal((await worker.fetch(new Request("https://x/export?world=1&zone=4", { headers: { "X-Oracle-Key": "secret" } }), env)).status, 200);
 });
 
-test("Outfit Wars is ignored; Meltdown alerts are labelled; Honu outage does not stop odds", { skip }, async () => {
+test("Outfit Wars is ignored; Meltdown alerts are labelled; no population means no pop blend", { skip }, async () => {
   const { runCycle, default: worker } = await import("../oracle-worker/src/index.js");
   const DB = fakeD1();
   const env = { DB };
   const T0 = 1_792_500_000;
-  const census = { map: { 1: 30, 2: 30, 3: 28 }, flips: [], honuDown: true,
+  const census = { map: { 1: 30, 2: 30, 3: 28 }, flips: [],
     metagame: [mg(700, 227, "started", T0), mg(701, 177, "started", T0)] };
   installCensus(census);
   const rep = await runCycle(env, (T0 + 600) * 1000);
   assert.equal(rep.live, 1, "only the Meltdown alert is live");
-  assert.ok(rep.errors.some((e) => e.startsWith("honu")), JSON.stringify(rep.errors));
+  assert.deepEqual(rep.errors, []);
   const live = await (await worker.fetch(new Request("https://x/live"), env)).json();
   assert.equal(live.alerts.length, 1);
   assert.equal(live.alerts[0].kind, "meltdown");
@@ -251,45 +254,71 @@ test("commander runs per live alert, inline and through the SELF binding", { ski
   assert.ok(live.alerts[0].commander.factions.VS);
 });
 
-test("outlier report after settlement (Honu participants + PS2 Radar), live KD from Honu", { skip }, async () => {
-  const { runCycle, fanOutReport, default: worker } = await import("../oracle-worker/src/index.js");
+test("Honu bridge: queue -> oracle-honu job -> ingest (population, outlier report, PS2 Radar cache)", { skip }, async () => {
+  const { runCycle, default: worker } = await import("../oracle-worker/src/index.js");
+  const { runHonuJob } = await import("../oracle-worker/honu-job.mjs");
   const DB = fakeD1();
-  const env = { DB };
-  const T0 = 1_792_800_000, END = T0 + 90 * 60;
-  const census = { map: { 1: 40, 2: 30, 3: 18 }, flips: [], honu: true, metagame: [mg(950, 153, "started", T0)],
-    realtime: [{ worldID: 1, zoneID: 4, vs: { kills: 900, deaths: 600 }, nc: { kills: 500, deaths: 600 }, tr: { kills: 400, deaths: 600 } }] };
+  const env = { DB, ORACLE_KEY: "k" };
+  const NOW = Math.floor(Date.now() / 1000);       // ingest stamps real time; keep the cycle near it
+  const T0 = NOW - 20 * 60, END = T0 + 90 * 60;
+  const census = { map: { 1: 40, 2: 30, 3: 18 }, flips: [], metagame: [mg(950, 153, "started", T0)] };
   installCensus(census);
-  await runCycle(env, (T0 + 600) * 1000);
+  // Fake Honu / Radar for the job; the oracle API is the real Worker.
+  const calls = { honu: [], radar: 0 };
+  const job = async (participants) => runHonuJob({
+    api: "https://oracle", key: "k", log: () => {}, gapMs: { honu: 0, radar: 0 },
+    fetchImpl: async (url, init = {}) => {
+      const u = String(url);
+      if (u.startsWith("https://oracle/")) return worker.fetch(new Request(u, init), env);
+      if (u.includes("wt.honu.pw/api/population/1/zones")) { calls.honu.push("pop");
+        return new Response(JSON.stringify([{ worldID: 1, zoneID: (3 << 16) | 4, vs: 150, nc: 90, tr: 50, ns: 10 }, { worldID: 1, zoneID: 2, vs: 1, nc: 1, tr: 1 }])); }
+      if (u.includes("/participants")) { calls.honu.push("participants");
+        return participants ? new Response(JSON.stringify(participants)) : new Response("not finished", { status: 400 }); }
+      if (u.includes("ps2radar.com")) { calls.radar++;
+        if (u.endsWith("/5428010618035300002")) return new Response("{}", { status: 404 });
+        return new Response(JSON.stringify({ player: { name: "Ace", character_id: "5428010618035300001", classification: { tier: "suspect" }, model: { tier: "blatant", blatant: true, sus_score: 91 } } })); }
+      throw new Error("unexpected " + u);
+    },
+  });
+  await runCycle(env, NOW * 1000);
+  let pend = await (await worker.fetch(new Request("https://x/honu/pending"), env)).json();
+  assert.deepEqual(pend, { pending: true, pop: 1, reports: 0 });
+  assert.equal((await worker.fetch(new Request("https://x/honu/queue"), env)).status, 403, "queue needs the key");
+  await job(null);
+  await runCycle(env, (NOW + 60) * 1000);
   let live = await (await worker.fetch(new Request("https://x/live"), env)).json();
-  assert.deepEqual(live.alerts[0].state.kd, { VS: 1.5, NC: 0.833, TR: 0.667 });
-  assert.equal(live.alerts[0].state.kd_source, "honu");
+  assert.deepEqual(live.alerts[0].state.pop, { VS: 150, NC: 90, TR: 50 }, "zone id masked, population used");
+  assert.ok(live.alerts[0].state.win_popadj);
+
+  // Alert ends and settles; the job is asked for its report.
   census.metagame.push(mg(950, 153, "ended", END, 40, 35, 25));
-  await runCycle(env, (END + 60) * 1000);
-  let rep = await runCycle(env, (END + 660) * 1000);
-  assert.deepEqual(rep.report_keys, ["1-4-950"], "settled alert queued for its report");
-  // Honu not ready yet -> pending, retried later.
-  let r = await fanOutReport(env, rep.report_keys, (END + 660) * 1000);
-  assert.equal(r[0].pending, 400);
-  rep = await runCycle(env, (END + 700) * 1000);
-  assert.deepEqual(rep.report_keys, [], "not retried within 4 minutes");
-  census.participants = {
+  await runCycle(env, (END + 660) * 1000);
+  pend = await (await worker.fetch(new Request("https://x/honu/pending"), env)).json();
+  assert.equal(pend.reports, 1);
+  await job(null);                                          // Honu not ready yet
+  let row = DB.raw.prepare("SELECT status, attempts, err FROM report").get();
+  assert.deepEqual({ ...row }, { status: "pending", attempts: 1, err: "honu 400" });
+  pend = await (await worker.fetch(new Request("https://x/honu/pending"), env)).json();
+  assert.equal(pend.reports, 0, "not retried within 4 minutes");
+  DB.raw.prepare("UPDATE report SET ts = ts - 300").run();   // 5 minutes later
+  const participants = {
     entries: [{ characterID: "5428010618035300001", kills: 300, deaths: 20, secondsOnline: 5400 }, { characterID: "5428010618035300002", kills: 120, deaths: 20, secondsOnline: 3000 },
       { characterID: "5428010618035300003", kills: 40, deaths: 40, secondsOnline: 3000 }],
     characters: [{ id: "5428010618035300001", name: "Ace", factionID: 1 }, { id: "5428010618035300002", name: "Bee", factionID: 2 }, { id: "5428010618035300003", name: "Cee", factionID: 3 }],
   };
-  rep = await runCycle(env, (END + 960) * 1000);
-  r = await fanOutReport(env, rep.report_keys, (END + 960) * 1000);
-  assert.equal(r[0].ok, true, JSON.stringify(r));
-  assert.equal(r[0].radar_lookups, 2);
+  await job(participants);
+  row = DB.raw.prepare("SELECT status, flagged, confirmed FROM report").get();
+  assert.deepEqual({ ...row }, { status: "ok", flagged: 2, confirmed: 1 });
+  assert.equal(calls.radar, 2);
   const one = await (await worker.fetch(new Request("https://x/alert?key=1-4-950"), env)).json();
-  assert.equal(one.alert.report.flagged, 2);
   assert.equal(one.alert.report.faction.VS.kd, 15);
   assert.equal(one.outliers[0].radar.modelTier, "blatant");
   assert.equal(one.outliers[1].radar.stored, false);
   const hist = await (await worker.fetch(new Request("https://x/history"), env)).json();
   assert.equal(hist.alerts[0].report.confirmed, 1);
-  // Radar answers are cached: a second report run makes no new Radar calls.
-  const calls = census.radarCalls;
-  await fanOutReport(env, ["1-4-950"], (END + 1000) * 1000);
-  assert.equal(census.radarCalls, calls);
+  // Done: nothing left in the queue; Radar answers are cached for the next alert.
+  pend = await (await worker.fetch(new Request("https://x/honu/pending"), env)).json();
+  assert.deepEqual(pend, { pending: false, pop: 0, reports: 0 });
+  const radarRows = DB.raw.prepare("SELECT COUNT(*) n FROM radar").get().n;
+  assert.equal(radarRows, 2);
 });

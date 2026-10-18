@@ -20,8 +20,6 @@ import {
 } from "./engine.js";
 import { binGetter, hasTree, regionMap, latticeFor, captureModel, resistanceModel } from "./models.js";
 import { runCommander, ownership } from "./commander.js";
-import { outlierReport, liveKd } from "./outliers.js";
-import { radarEntry, RADAR_USER_AGENT, radarApiUrl } from "../../radar.mjs";
 
 const CENSUS = "https://census.daybreakgames.com";
 const UA = "ps2-elite-kd-oracle/1.0 (+https://github.com/Dayset/ps2-elite-kd; contact: github.com/Dayset)";
@@ -84,30 +82,6 @@ export function parseFlips(j) {
       world: +e.world_id, zone: +e.zone_id, facility: +e.facility_id, ts: +e.timestamp,
       old: +e.faction_old, new: +e.faction_new, held: num(e.duration_held), outfit: e.outfit_id || null,
     }));
-}
-
-// ---------------------------------------------------------------- Honu population
-
-const HONU = "https://wt.honu.pw/api";
-
-/** Honu /api/population/{world}/zones -> {zone: {VS,NC,TR,NS,total,ts}} (live, per continent). */
-export async function honuZones(world) {
-  const res = await fetch(`${HONU}/population/${world}/zones`, { headers: { "User-Agent": UA, Accept: "application/json" }, signal: AbortSignal.timeout(10000) });
-  if (!res.ok) throw new Error(`honu ${res.status}`);
-  return parseHonuZones(await res.json());
-}
-
-export function parseHonuZones(j) {
-  const list = Array.isArray(j) ? j : (j && Array.isArray(j.data) ? j.data : []);
-  const out = {};
-  for (const z of list) {
-    const raw = z.zoneID ?? z.zoneId ?? z.ZoneID;
-    if (raw === undefined) continue;
-    const zone = Number(raw) & 0xffff;
-    out[zone] = { VS: +(z.vs ?? z.Vs ?? 0), NC: +(z.nc ?? z.Nc ?? 0), TR: +(z.tr ?? z.Tr ?? 0), NS: +(z.ns ?? z.Ns ?? 0),
-      total: +(z.total ?? z.Total ?? 0), ts: z.timestamp || null };
-  }
-  return out;
 }
 
 // ---------------------------------------------------------------- D1 helpers
@@ -210,22 +184,12 @@ export async function runCycle(env, nowMs = Date.now()) {
   const known = new Map(((await db.prepare("SELECT key, status, checks, flags FROM alert WHERE start_ts > ?").bind(now - WINDOW_S).all()).results || []).map((r) => [r.key, r]));
   const benchRows = new Map(((await db.prepare("SELECT key, slices FROM bench WHERE settled_ts IS NULL").all()).results || []).map((r) => [r.key, JSON.parse(r.slices)]));
   const out = [];
-  const ticks = [], benchUp = [], benchSettle = [], popRows = [];
+  const ticks = [], benchUp = [], benchSettle = [];
   const snap15 = {};
-  const honu = {};
-  report.honu = {};
-  let realtime;
-  const realtimeList = () => (realtime ||= fetch(`${HONU}/realtime-alert`, { headers: { "User-Agent": UA, Accept: "application/json" }, signal: AbortSignal.timeout(10000) })
-    .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`honu realtime ${r.status}`))))
-    .then((j) => { report.honu_realtime = Array.isArray(j) ? `ok ${j.length}` : "ok ?"; return j; })
-    .catch((e) => { report.honu_realtime = "error"; report.errors.push(e.message); return null; }));
-  const popFor = async (world) => {
-    if (!(world in honu)) {
-      try { honu[world] = await honuZones(world); report.honu[world] = `ok ${Object.keys(honu[world]).length} zones`; }
-      catch (e) { honu[world] = null; report.honu[world] = "error"; report.errors.push(`honu w${world}: ${e.message}`); }
-    }
-    return honu[world];
-  };
+  // Population comes from Honu via the oracle-honu Actions job (/honu/ingest):
+  // Honu's API is not reachable from Cloudflare's network. Use it while fresh.
+  const popFor = (world, zone) => db.prepare("SELECT ts, vs, nc, tr, ns FROM pop WHERE world=? AND zone=? AND ts>? ORDER BY ts DESC LIMIT 1")
+    .bind(world, zone, now - POP_MAX_AGE_S).first();
   let live = 0, settled = 0;
 
   for (const a of groupAlerts(all)) {
@@ -250,17 +214,14 @@ export async function runCycle(env, nowMs = Date.now()) {
         getBin: binGetter(a.zone), world: a.world, zone: a.zone, eventId: a.event_id, instanceId: a.instance_id,
         startTs, dur, now, snapNow: zNow, snap15: z15 || null, regionMap: regionMap(a.zone),
       });
-      const hz = await popFor(a.world);
-      const p = hz && hz[a.zone];
+      const p = await popFor(a.world, a.zone);
       if (p) {
-        state.pop = { VS: p.VS, NC: p.NC, TR: p.TR };
-        state.pop_ns = p.NS;
+        state.pop = { VS: p.vs, NC: p.nc, TR: p.tr };
+        state.pop_ns = p.ns;
         state.pop_source = "honu";
+        state.pop_age_s = now - p.ts;
         state.win_popadj = popAdjusted(state.win, state.pop, state.t);
-        popRows.push({ world: a.world, zone: a.zone, ts: now, vs: p.VS, nc: p.NC, tr: p.TR, ns: p.NS });
       }
-      const kd = liveKd(await realtimeList(), a.world, a.zone);
-      if (kd) { state.kd = kd; state.kd_source = "honu"; }
       out.push({ ...base, status: "live", state });
       live++;
       (report.live_keys ||= []).push(a.key);
@@ -355,7 +316,6 @@ export async function runCycle(env, nowMs = Date.now()) {
         state=COALESCE(excluded.state, alert.state), updated=excluded.updated`).bind(JSON.stringify(changedRows)));
   }
   if (ticks.length) writes.push(bulkInsert(db, "tick", ["key", "ts", "t", "terr", "win"], ticks));
-  if (popRows.length) writes.push(bulkInsert(db, "pop", ["world", "zone", "ts", "vs", "nc", "tr", "ns"], popRows));
   if (benchUp.length) {
     writes.push(db.prepare(`INSERT INTO bench (key, dur, slices)
       SELECT json_extract(value,'$.key'), json_extract(value,'$.dur'), json_extract(value,'$.slices') FROM json_each(?) WHERE true
@@ -364,12 +324,6 @@ export async function runCycle(env, nowMs = Date.now()) {
   writes.push(...benchSettle);
   if (writes.length) await db.batch(writes);
   report.written = changedRows.length;
-
-  // 4b) Settled alerts still missing their outlier report (Honu needs a few minutes after the end).
-  report.report_keys = (((await db.prepare(
-    `SELECT a.key FROM alert a LEFT JOIN report r ON r.key = a.key
-     WHERE a.status = 'settled' AND a.end_ts > ? AND (r.key IS NULL OR (r.status != 'ok' AND r.attempts < 12 AND r.ts < ?))
-     ORDER BY a.end_ts DESC LIMIT 3`).bind(now - 6 * 3600, now - 240).all()).results) || []).map((r) => r.key);
 
   // 5) Daily pruning at 04:07 UTC: raw snapshots 30 days, flips 90 days.
   const d = new Date(nowMs);
@@ -443,64 +397,58 @@ async function fanOut(env, path, fn, keys, nowMs) {
   }));
 }
 export const fanOutCommander = (env, keys, nowMs = Date.now()) => fanOut(env, "commander", commanderFor, keys, nowMs);
-export const fanOutReport = (env, keys, nowMs = Date.now()) => fanOut(env, "report", reportFor, keys, nowMs);
 
-const RADAR_MAX_PER_ALERT = 5, RADAR_GAP_MS = 2500, RADAR_RECHECK_S = 3 * 86400;
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+// ---------------------------------------------------------------- Honu bridge
+
+const POP_MAX_AGE_S = 15 * 60;       // population older than this is not used
+const RADAR_RECHECK_S = 3 * 86400;   // PS2 Radar answers are reused for 3 days
+const REPORT_RETRY_S = 240, REPORT_MAX_ATTEMPTS = 12, REPORT_WINDOW_S = 6 * 3600;
+
+/** Work for the oracle-honu Actions job: live zones needing population, settled alerts needing reports. */
+export async function honuQueue(db, now) {
+  const live = ((await db.prepare("SELECT key, world, zone FROM alert WHERE status='live'").all()).results) || [];
+  const reports = ((await db.prepare(
+    `SELECT a.key, a.world, a.zone, a.instance_id FROM alert a LEFT JOIN report r ON r.key = a.key
+     WHERE a.status = 'settled' AND a.end_ts > ? AND (r.key IS NULL OR (r.status != 'ok' AND r.attempts < ? AND r.ts < ?))
+     ORDER BY a.end_ts DESC LIMIT 5`).bind(now - REPORT_WINDOW_S, REPORT_MAX_ATTEMPTS, now - REPORT_RETRY_S).all()).results) || [];
+  return { pop: live, reports };
+}
 
 /**
- * Outlier report for one settled alert: Honu participants -> faction KD +
- * flagged players (outliers.js), plus a PS2 Radar second opinion for up to five
- * flagged players (cached 3 days; stops on the first busy/failed reply).
+ * Results from the oracle-honu job:
+ *   pop:     [{world, zone, vs, nc, tr, ns}]                (Honu population/{world}/zones)
+ *   reports: [{key, status: ok|pending|error, report?, err?}] (outliers.js output)
+ *   radar:   [{cid, entry}]                                   (radar.mjs radarEntry)
  */
-export async function reportFor(env, key, nowMs = Date.now()) {
-  const db = env.DB;
-  const now = Math.floor(nowMs / 1000);
-  const a = await db.prepare("SELECT key, world, zone, instance_id, status FROM alert WHERE key=?").bind(key).first();
-  if (!a || a.status !== "settled") return { key, skipped: "not settled" };
-  const prev = await db.prepare("SELECT attempts FROM report WHERE key=?").bind(key).first();
-  const attempts = ((prev && prev.attempts) || 0) + 1;
-  const save = (status, rep, err) => db.prepare(
-    `INSERT INTO report (key, status, attempts, ts, players, flagged, confirmed, faction, outliers, err) VALUES (?,?,?,?,?,?,?,?,?,?)
-     ON CONFLICT(key) DO UPDATE SET status=excluded.status, attempts=excluded.attempts, ts=excluded.ts, players=excluded.players,
-       flagged=excluded.flagged, confirmed=excluded.confirmed, faction=excluded.faction, outliers=excluded.outliers, err=excluded.err`)
-    .bind(key, status, attempts, now, rep ? rep.players : null, rep ? rep.flagged : null, rep ? rep.confirmed : null,
-      rep ? JSON.stringify(rep.faction) : null, rep ? JSON.stringify(rep.outliers) : null, err || null).run();
-  let body;
-  try {
-    const r = await fetch(`${HONU}/alerts/${a.world}/${a.instance_id}/participants?excludeOutfits=true`,
-      { headers: { "User-Agent": UA, Accept: "application/json" }, signal: AbortSignal.timeout(20000) });
-    if (r.status === 400 || r.status === 404) { await save("pending", null, `honu ${r.status}`); return { key, pending: r.status }; }
-    if (!r.ok) throw new Error(`honu ${r.status}`);
-    const text = await r.text();
-    try { body = JSON.parse(text); }
-    catch {
-      const title = (text.match(/<title>([^<]{0,80})/i) || [])[1] || "";
-      throw new Error(`honu non-JSON ${r.status} ${r.headers.get("content-type") || ""} title="${title.trim()}" server=${r.headers.get("server") || ""} cf-ray=${r.headers.get("cf-ray") ? "yes" : "no"}`);
-    }
-  } catch (e) { await save(attempts >= 12 ? "error" : "pending", null, String(e.message || e)); return { key, error: String(e.message || e) }; }
-  const rep = outlierReport(body);
-  if (!rep.players) { await save("pending", null, "no participants yet"); return { key, pending: "empty" }; }
-  // PS2 Radar second opinion for the top flagged players.
-  let looked = 0;
-  for (const o of rep.outliers) {
-    const cached = await db.prepare("SELECT ts, entry FROM radar WHERE cid=?").bind(o.cid).first();
-    if (cached && now - cached.ts < RADAR_RECHECK_S) { o.radar = JSON.parse(cached.entry); continue; }
-    if (looked >= RADAR_MAX_PER_ALERT) continue;
-    const radarUrl = radarApiUrl({ cid: o.cid });
-    if (!radarUrl) continue;
-    if (looked) await sleep(RADAR_GAP_MS);
-    looked++;
-    try {
-      const rr = await fetch(radarUrl, { headers: { "User-Agent": RADAR_USER_AGENT, Accept: "application/json" }, signal: AbortSignal.timeout(10000) });
-      if (rr.status !== 200 && rr.status !== 404) break; // busy or failing: try again on a later alert
-      const entry = radarEntry(rr.status === 404 ? null : await rr.json(), { status: rr.status, checkedAt: new Date(nowMs).toISOString(), name: o.name || "", cid: o.cid });
-      o.radar = entry;
-      await db.prepare("INSERT INTO radar (cid, ts, entry) VALUES (?,?,?) ON CONFLICT(cid) DO UPDATE SET ts=excluded.ts, entry=excluded.entry").bind(o.cid, now, JSON.stringify(entry)).run();
-    } catch { break; }
+export async function honuIngest(db, body, now) {
+  const writes = [];
+  const pop = (Array.isArray(body.pop) ? body.pop : []).filter((p) => Number.isInteger(+p.world) && Number.isInteger(+p.zone))
+    .map((p) => ({ world: +p.world, zone: +p.zone, ts: now, vs: +p.vs || 0, nc: +p.nc || 0, tr: +p.tr || 0, ns: +p.ns || 0 }));
+  if (pop.length) writes.push(bulkInsert(db, "pop", ["world", "zone", "ts", "vs", "nc", "tr", "ns"], pop));
+  let reports = 0;
+  for (const r of (Array.isArray(body.reports) ? body.reports : []).slice(0, 20)) {
+    if (!r || typeof r.key !== "string") continue;
+    const rep = r.status === "ok" && r.report && typeof r.report === "object" ? r.report : null;
+    const status = rep ? "ok" : r.status === "error" ? "error" : "pending";
+    writes.push(db.prepare(
+      `INSERT INTO report (key, status, attempts, ts, players, flagged, confirmed, faction, outliers, err) VALUES (?,?,1,?,?,?,?,?,?,?)
+       ON CONFLICT(key) DO UPDATE SET status=excluded.status, attempts=report.attempts+1, ts=excluded.ts, players=excluded.players,
+         flagged=excluded.flagged, confirmed=excluded.confirmed, faction=excluded.faction, outliers=excluded.outliers, err=excluded.err`)
+      .bind(r.key, status, now, rep ? +rep.players || 0 : null, rep ? +rep.flagged || 0 : null, rep ? +rep.confirmed || 0 : null,
+        rep ? JSON.stringify(rep.faction || null) : null, rep ? JSON.stringify((rep.outliers || []).slice(0, 20)) : null,
+        rep ? null : String(r.err || "").slice(0, 300)));
+    reports++;
   }
-  await save("ok", rep, null);
-  return { key, ok: true, players: rep.players, flagged: rep.flagged, radar_lookups: looked };
+  let radar = 0;
+  for (const x of (Array.isArray(body.radar) ? body.radar : []).slice(0, 50)) {
+    if (!x || !/^\d{5,25}$/.test(String(x.cid)) || !x.entry) continue;
+    writes.push(db.prepare("INSERT INTO radar (cid, ts, entry) VALUES (?,?,?) ON CONFLICT(cid) DO UPDATE SET ts=excluded.ts, entry=excluded.entry")
+      .bind(String(x.cid), now, JSON.stringify(x.entry)));
+    radar++;
+  }
+  if (writes.length) await db.batch(writes);
+  await setMeta(db, "last_honu", { ts: now, pop: pop.length, reports, radar, errors: Array.isArray(body.errors) ? body.errors.slice(0, 10) : [] });
+  return { ok: true, pop: pop.length, reports, radar };
 }
 
 // ---------------------------------------------------------------- API
@@ -535,7 +483,8 @@ async function handle(request, env) {
     const lastOk = await getMeta(db, "last_ok");
     const ageS = last ? now - last.ts : null;
     const lastCmd = await getMeta(db, "last_commander");
-    return json({ ok: ageS !== null && ageS < 180, service: "ps2-oracle", now, last_cycle_age_s: ageS, last_ok_age_s: lastOk ? now - lastOk : null, last_cycle: last, last_commander: lastCmd }, 200, { "Cache-Control": "no-store" });
+    const lastHonu = await getMeta(db, "last_honu");
+    return json({ ok: ageS !== null && ageS < 180, service: "ps2-oracle", now, last_cycle_age_s: ageS, last_ok_age_s: lastOk ? now - lastOk : null, last_cycle: last, last_commander: lastCmd, last_honu: lastHonu }, 200, { "Cache-Control": "no-store" });
   }
 
   // Manual kick + diagnostics: runs one cycle now unless one ran in the last
@@ -546,8 +495,8 @@ async function handle(request, env) {
     const t = Date.now();
     try {
       const report = await runCycle(env, Date.now());
-      const [commander, reports] = await Promise.all([fanOutCommander(env, report.live_keys), fanOutReport(env, report.report_keys)]);
-      return json({ ran: true, wall_ms: Date.now() - t, report, commander, reports }, 200, { "Cache-Control": "no-store" });
+      const commander = await fanOutCommander(env, report.live_keys);
+      return json({ ran: true, wall_ms: Date.now() - t, report, commander }, 200, { "Cache-Control": "no-store" });
     } catch (e) {
       return json({ ran: false, error: String(e && e.stack || e) }, 500, { "Cache-Control": "no-store" });
     }
@@ -611,11 +560,31 @@ async function handle(request, env) {
     return json(await commanderFor(env, body.key), 200, { "Cache-Control": "no-store" });
   }
 
-  if (url.pathname === "/internal/report" && request.method === "POST") {
+  // ---- Honu bridge (Honu's API answers GitHub Actions, not Cloudflare's network) ----
+  if (url.pathname === "/honu/pending") {
+    const q = await honuQueue(db, now);
+    return json({ pending: q.pop.length + q.reports.length > 0, pop: q.pop.length, reports: q.reports.length }, 200, { "Cache-Control": "no-store" });
+  }
+  if (url.pathname === "/honu/queue") {
+    if (!authed(request, env)) return json({ error: "forbidden" }, 403);
+    const q = await honuQueue(db, now);
+    return json({ now, ...q }, 200, { "Cache-Control": "no-store" });
+  }
+  if (url.pathname === "/honu/radar") {
+    if (!authed(request, env)) return json({ error: "forbidden" }, 403);
+    const cids = (url.searchParams.get("cids") || "").split(",").filter((c) => /^\d{5,25}$/.test(c)).slice(0, 50);
+    const out = {};
+    for (const cid of cids) {
+      const r = await db.prepare("SELECT ts, entry FROM radar WHERE cid=? AND ts>?").bind(cid, now - RADAR_RECHECK_S).first();
+      if (r) out[cid] = JSON.parse(r.entry);
+    }
+    return json({ radar: out }, 200, { "Cache-Control": "no-store" });
+  }
+  if (url.pathname === "/honu/ingest" && request.method === "POST") {
     if (!authed(request, env)) return json({ error: "forbidden" }, 403);
     const body = await request.json().catch(() => null);
-    if (!body || typeof body.key !== "string") return json({ error: "bad_request" }, 400);
-    return json(await reportFor(env, body.key), 200, { "Cache-Control": "no-store" });
+    if (!body || typeof body !== "object") return json({ error: "bad_request" }, 400);
+    return json(await honuIngest(db, body, now), 200, { "Cache-Control": "no-store" });
   }
 
   if (url.pathname === "/commander" && request.method === "POST") {
@@ -636,9 +605,8 @@ export default {
     // Breadcrumb before any work: tells a cron that never fires apart from one that dies mid-run.
     try { await setMeta(env.DB, "cron_seen", { ts: Math.floor(Date.now() / 1000), cron: event.cron }); } catch {}
     ctx.waitUntil(runCycle(env, event.scheduledTime || Date.now()).then(async (rep) => {
-      const [res, reps] = await Promise.all([fanOutCommander(env, rep.live_keys), fanOutReport(env, rep.report_keys)]);
+      const res = await fanOutCommander(env, rep.live_keys);
       if (res.length) await setMeta(env.DB, "last_commander", { ts: Math.floor(Date.now() / 1000), results: res });
-      if (reps.length) await setMeta(env.DB, "last_report", { ts: Math.floor(Date.now() / 1000), results: reps });
     }).catch(async (e) => {
       try { await setMeta(env.DB, "last_crash", { ts: Math.floor(Date.now() / 1000), error: String(e && e.stack || e) }); } catch {}
     }));
