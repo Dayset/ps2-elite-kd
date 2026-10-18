@@ -112,6 +112,12 @@ body {
   margin: 0;
 }
 
+/* Main page background (Dayset 2026-10-18): flat dark gray in the dark
+ * theme instead of the near-black --bg; light theme keeps its own. */
+html:not([data-theme="light"]) body.main-page {
+  background-color: rgb(32, 32, 32);
+}
+
 /* PC-only page background (Dayset 2026-10-17): fine pointer + hover only,
  * so phones/tablets never get it. On html, per Dayset — and body goes
  * transparent inside the same query, or its opaque background would
@@ -126,9 +132,11 @@ body {
     background-repeat: no-repeat;
   }
   body { background: transparent; }
-  /* 🖼️ toggle off: back to the plain theme background. */
+  html:not([data-theme="light"]) body.main-page { background-color: transparent; }
+  /* 🖼️ toggle off: back to the plain backgrounds. */
   html.no-bg-image { background-image: none; }
   html.no-bg-image body { background: var(--bg); }
+  html.no-bg-image:not([data-theme="light"]) body.main-page { background-color: rgb(32, 32, 32); }
 }
 
 /* 🖼️ background-image toggle: PC only (the image itself is PC-only),
