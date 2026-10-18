@@ -228,3 +228,8 @@ approved it, "shipped" means it is live in the running pipeline.
   when it can change the winner or a place ("VS fading: at this pace drops to 3rd
   before the end (5 min left)", "NC slipping but holds the lead …"). New comeback
   note at any time: "TR closing in: takes the lead in about 5 min at this pace".
+- **Timeline scrub:** hovering (PC) or tapping/dragging (phone) the "Win chance over
+  time" chart replays the map and territory rows at that minute ("⏪ Replay · minute
+  37"), from the new Worker endpoint `/alert/frames?key=` (per-minute base owners
+  from stored snapshots, first frame full then changes only; snapshots are kept 30
+  days). Works for live alerts too. Heat/🥶 markers hide while replaying.

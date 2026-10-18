@@ -1,5 +1,5 @@
 // PS2MapOracle dashboard — split from index.html (#15). No behaviour change.
-import { S, FACS, esc, info } from "./state.js?v=20261018-oracestyle2";
+import { S, FACS, esc, info } from "./state.js?v=20261018-scrub";
 
 const radarText = (r) => !r ? "" : !r.stored ? "Radar: no data" : r.mark ? `Radar: ${r.mark}` : r.modelTier ? `Radar: ${r.modelTier}${r.sus != null ? " · Sus " + Math.round(r.sus) : ""}` : `Radar: ${r.label || "not assessed"}`;
 export function reportPanel(a) {

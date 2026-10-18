@@ -492,3 +492,22 @@ test("Meltdown: live zone odds, no false broken-map flag, voting open, settles a
   assert.ok(!/neutral_heavy|votes_void/.test(row.flags), row.flags);
   assert.equal(DB.raw.prepare("SELECT status FROM vote").get().status, "won");
 });
+
+test("map replay frames: full first frame, then only the bases that changed, minute-stamped", { skip }, async () => {
+  const { runCycle, default: worker } = await import("../oracle-worker/src/index.js");
+  const DB = fakeD1();
+  const T0 = 1_792_560_000;
+  const census = { map: { 1: 30, 2: 30, 3: 28 }, metagame: [mg(950, 153, "started", T0)], flips: [] };
+  installCensus(census);
+  await runCycle({ DB }, (T0 + 60) * 1000);
+  await runCycle({ DB }, (T0 + 120) * 1000);                       // no change -> no frame
+  census.map = { 1: 32, 2: 28, 3: 28 };                            // two bases go VS
+  await runCycle({ DB }, (T0 + 180) * 1000);
+  const j = await (await worker.fetch(new Request("https://x/alert/frames?key=1-4-950"), { DB })).json();
+  assert.equal(j.frames.length, 2, JSON.stringify(j.frames.map((f) => [f.t, Object.keys(f.set).length])));
+  assert.equal(j.frames[0].t, 1);
+  assert.equal(Object.keys(j.frames[0].set).length, 88, "first frame has every base");
+  assert.equal(j.frames[1].t, 3);
+  assert.deepEqual(Object.values(j.frames[1].set), ["VS", "VS"]);
+  assert.equal((await worker.fetch(new Request("https://x/alert/frames?key=nope"), { DB })).status, 404);
+});

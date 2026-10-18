@@ -599,6 +599,36 @@ async function handle(request, env) {
     return json({ now, worlds: WORLD_NAMES, alerts: rows.map(parseRow) });
   }
 
+  if (url.pathname === "/alert/frames") {
+    // Map replay for the "Win chance over time" scrub: base owners minute by minute
+    // (stored map snapshots, kept 30 days). First frame is complete, later frames
+    // carry only the bases that changed ({fid: "VS"|"NC"|"TR"|null}).
+    const key = url.searchParams.get("key") || "";
+    const a = await db.prepare("SELECT world, zone, start_ts, dur, status, end_ts FROM alert WHERE key=?").bind(key).first();
+    if (!a) return json({ error: "not_found" }, 404);
+    const r2f = regionMap(a.zone);
+    const until = (a.end_ts || a.start_ts + a.dur * 60) + 60;
+    const rows = (await db.prepare(`SELECT ts, json_extract(zones, '$.' || ?) AS z FROM snap WHERE world=? AND ts BETWEEN ? AND ? ORDER BY ts`)
+      .bind(String(a.zone), a.world, a.start_ts - 60, until).all()).results || [];
+    const frames = [];
+    let prev = {};
+    for (const row of rows) {
+      if (!row.z) continue;
+      const cur = {};
+      for (const [region, fac] of Object.entries(JSON.parse(row.z))) {
+        const fid = r2f ? r2f[String(region)] : region;
+        if (fid) cur[fid] = FAC_NAME[fac] || null;
+      }
+      const set = {};
+      for (const [fid, o] of Object.entries(cur)) if (prev[fid] !== o || !frames.length) set[fid] = o;
+      for (const fid of Object.keys(prev)) if (!(fid in cur)) set[fid] = null;
+      if (!frames.length || Object.keys(set).length) frames.push({ t: Math.round(((row.ts - a.start_ts) / 60) * 10) / 10, set });
+      prev = cur;
+    }
+    const final = a.status !== "live" && a.status !== "settling" && a.status !== "sudden_death";
+    return json({ key, start_ts: a.start_ts, dur: a.dur, frames }, 200, { "Cache-Control": final ? "public, max-age=86400" : "no-store" });
+  }
+
   if (url.pathname === "/alert") {
     const key = url.searchParams.get("key") || "";
     const r = await db.prepare(`SELECT a.*, ${REPORT_COLS} FROM alert a LEFT JOIN report r ON r.key = a.key WHERE a.key=?`).bind(key).first();

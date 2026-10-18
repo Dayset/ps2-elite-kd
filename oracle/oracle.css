@@ -279,3 +279,10 @@ footer { color: var(--dim); font-size: var(--fs-12); margin-top: var(--s-5); }
   .card.map h2 { display: block; }
   .card > h2 > button.ch { min-height: 44px; margin-bottom: var(--s-2); }
 }
+
+/* Timeline scrub (map replay of a past minute) */
+.replaytag { font-size: 13px; color: var(--accent); margin: -4px 0 8px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.replaytag[hidden] { display: none; }
+#map svg.replay .marks { display: none; }
+#map svg.replay { outline: 1px dashed var(--accent); outline-offset: 2px; }
+#chart svg { cursor: crosshair; }

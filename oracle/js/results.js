@@ -1,6 +1,6 @@
 // PS2MapOracle dashboard — split from index.html (#15). No behaviour change.
-import { S, FACS, esc, $, when, info, wide } from "./state.js?v=20261018-oracestyle2";
-import { get } from "./api.js?v=20261018-oracestyle2";
+import { S, FACS, esc, $, when, info, wide } from "./state.js?v=20261018-scrub";
+import { get } from "./api.js?v=20261018-scrub";
 
 // Benchmark slices recorded for one alert, with Brier once it settled.
 export function benchPanel(a) {

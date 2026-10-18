@@ -1,5 +1,5 @@
 // PS2MapOracle dashboard — split from index.html (#15). No behaviour change.
-import { FACS, COLOR } from "./state.js?v=20261018-oracestyle2";
+import { FACS, COLOR } from "./state.js?v=20261018-scrub";
 
 const SLICES = { 90: [30, 60], 45: [15, 30], 30: [10, 20] };
 export function chart(ticks, dur, width) {
@@ -13,11 +13,13 @@ export function chart(ticks, dur, width) {
   // Subtle markers at the benchmark slices (90-min: t30/t60, 45-min: t15/t30, 30-min: t10/t20).
   const marks = (SLICES[dur] || []).map((m) => `<line x1="${x(m)}" x2="${x(m)}" y1="${T}" y2="${H - B}" stroke="#3a3e46" stroke-width="1" stroke-dasharray="2 4"/><text x="${x(m) + 3}" y="${T + 10}" fill="#9a988f" font-size="10">t${m}</text>`).join("");
   const legend = `<div class="clegend">${FACS.map((f) => `<span><i class="sw" style="background:${COLOR[f]}"></i>${f}</span>`).join("")}</div>`;
-  return legend + `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Win chance over time">${grid}${marks}${xt}${lines}<line class="cursor" x1="0" x2="0" y1="${T}" y2="${H - B}" stroke="#c8c6c0" stroke-width="1" stroke-dasharray="3 3" visibility="hidden"/></svg><div class="hoverline">Hover or tap the chart for exact numbers.</div>`;
+  return legend + `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Win chance over time">${grid}${marks}${xt}${lines}<line class="cursor" x1="0" x2="0" y1="${T}" y2="${H - B}" stroke="#c8c6c0" stroke-width="1" stroke-dasharray="3 3" visibility="hidden"/></svg><div class="hoverline">Hover or tap the chart: the map and territory replay that minute.</div>`;
 }
 
-// Chart hover/tap: minute + VS/NC/TR win % at the nearest tick.
-export function chartHover(host, ticks, dur) {
+// Chart hover/tap: minute + VS/NC/TR win % at the nearest tick. onScrub(tick | null) drives the
+// map/territory replay: mouse hover replays while over the chart and restores on leave; touch
+// (tap or horizontal drag) keeps the chosen minute until "Back to now".
+export function chartHover(host, ticks, dur, onScrub) {
   const svg = host.querySelector("svg"), out = host.querySelector(".hoverline");
   if (!svg || !out || !ticks || ticks.length < 2) return;
   const vb = svg.viewBox.baseVal, L = 34, R = 20, line = svg.querySelector(".cursor");
@@ -31,7 +33,15 @@ export function chartHover(host, ticks, dur) {
     const bx = L + (Math.min(best.t, dur) / dur) * (vb.width - L - R);
     line.setAttribute("x1", bx); line.setAttribute("x2", bx); line.setAttribute("visibility", "visible");
     out.innerHTML = `minute ${Math.round(best.t)} · ${FACS.map((f) => `<span class="${f}">${f} ${(+best.win[f]).toFixed(1)}%</span>`).join(" · ")}`;
+    if (onScrub) onScrub(best, e.pointerType || "mouse");
   };
+  svg.style.touchAction = "pan-y";
   svg.addEventListener("pointermove", pick);
   svg.addEventListener("click", pick);
+  svg.addEventListener("pointerleave", (e) => {
+    if (e.pointerType !== "mouse") return;
+    line.setAttribute("visibility", "hidden");
+    out.textContent = "Hover or tap the chart: the map and territory replay that minute.";
+    if (onScrub) onScrub(null, "mouse");
+  });
 }

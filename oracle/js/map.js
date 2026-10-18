@@ -1,6 +1,6 @@
 // PS2MapOracle dashboard map (split in #15; zoom/pan, lattice, heat markers, base sheet in #19).
-import { COLOR, HEXFILE, SLUG, FACS, esc, $ } from "./state.js?v=20261018-oracestyle2";
-import { asset, names } from "./api.js?v=20261018-oracestyle2";
+import { COLOR, HEXFILE, SLUG, FACS, esc, $ } from "./state.js?v=20261018-scrub";
+import { asset, names } from "./api.js?v=20261018-scrub";
 
 export async function drawMap(a) {
   const host = $("map");
@@ -37,7 +37,7 @@ export async function drawMap(a) {
     const fill = own ? COLOR[own] : flag === 2 ? "var(--wg)" : "url(#hatch)";
     const ps = pts.map(([px, py]) => (x + px).toFixed(1) + "," + (y + py).toFixed(1)).join(" ");
     const g = geo[fid] || (geo[fid] = { pts: [], sx: 0, sy: 0, wg: false }); g.pts.push(ps); g.sx += x; g.sy += y; if (flag === 2) g.wg = true;
-    return `<polygon points="${ps}" fill="${fill}" data-f="${fid}"/>`;
+    return `<polygon points="${ps}" fill="${fill}" data-f="${fid}"${flag === 2 ? ' data-w="1"' : ""}/>`;
   });
   const cen = (f) => { const g = geo[f]; return g && [g.sx / g.pts.length, g.sy / g.pts.length]; };
   // Commander payload: heat / freezing / lines per base name.
@@ -82,7 +82,7 @@ export async function drawMap(a) {
     <div class="legend"><span><i class="sw" style="background:var(--vs)"></i>VS</span><span><i class="sw" style="background:var(--nc)"></i>NC</span><span><i class="sw" style="background:var(--tr)"></i>TR</span><span><i class="sw hatch"></i>neutral / unknown</span><span><i class="sw wgs"></i>warpgate</span><span class="hint">🔥 hot · 🥶 cut off or almost cut · scroll/pinch to zoom, double-click to reset</span></div>
     <div class="tip" hidden></div><div class="sheet" hidden role="dialog" aria-label="Base details"></div>`;
   const svg = host.querySelector("svg"), tip = host.querySelector(".tip"), sheet = host.querySelector(".sheet");
-  cur = { svg, geo, nm, r };
+  cur = { svg, geo, nm, r, owners };
   // ---------------------------------------------------------------- zoom / pan (#19)
   // One transform on <g class="vp">; hexes are never re-rendered while panning.
   const vp = svg.querySelector(".vp"), lbls = svg.querySelector(".lbls");
@@ -160,9 +160,26 @@ export async function drawMap(a) {
   });
   apply();
   if (hlName) highlightBase(hlName);
+  if (scrubOwners) recolorMap(scrubOwners);
 }
 
-let cur = null, hlName = null, view = null;
+let cur = null, hlName = null, view = null, scrubOwners = null;
+
+/**
+ * Timeline scrub: recolour the hexes in place to a past moment ({fid: "VS"|"NC"|"TR"|null});
+ * null restores the current map. Heat/🥶 markers belong to the current moment, so they
+ * are hidden while replaying (CSS: svg.replay .marks).
+ */
+export function recolorMap(owners) {
+  scrubOwners = owners || null;
+  if (!cur || !cur.svg.isConnected) return;
+  const src = scrubOwners || cur.owners || {};
+  for (const p of cur.svg.querySelectorAll("polygon[data-f]")) {
+    const o = src[p.dataset.f];
+    p.setAttribute("fill", o ? COLOR[o] : p.dataset.w ? "var(--wg)" : "url(#hatch)");
+  }
+  cur.svg.classList.toggle("replay", !!scrubOwners);
+}
 /** Outline every hex of the base called `name` and label it (commander row hover); null clears. */
 export function highlightBase(name) {
   hlName = name || null;

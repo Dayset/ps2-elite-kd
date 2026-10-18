@@ -1,13 +1,13 @@
 // PS2MapOracle dashboard — split from index.html (#15). No behaviour change.
-import { S, FACS, COLOR, esc, $, stars, mins, bar, pct1, det, info, wide, syncDetails, PHONE_MQ } from "./state.js?v=20261018-oracestyle2";
-import { get } from "./api.js?v=20261018-oracestyle2";
-import { drawMap, highlightBase } from "./map.js?v=20261018-oracestyle2";
-import { chart, chartHover } from "./chart.js?v=20261018-oracestyle2";
-import { lockCard, lockTick } from "./lock.js?v=20261018-oracestyle2";
-import { commander } from "./commander.js?v=20261018-oracestyle2";
-import { reportPanel } from "./players.js?v=20261018-oracestyle2";
-import { benchPanel, initResults, refreshHistory, renderHist } from "./results.js?v=20261018-oracestyle2";
-import { initAuth } from "./auth.js?v=20261018-oracestyle2";
+import { S, FACS, COLOR, esc, $, stars, mins, bar, pct1, det, info, wide, syncDetails, PHONE_MQ } from "./state.js?v=20261018-scrub";
+import { get } from "./api.js?v=20261018-scrub";
+import { drawMap, highlightBase, recolorMap } from "./map.js?v=20261018-scrub";
+import { chart, chartHover } from "./chart.js?v=20261018-scrub";
+import { lockCard, lockTick } from "./lock.js?v=20261018-scrub";
+import { commander } from "./commander.js?v=20261018-scrub";
+import { reportPanel } from "./players.js?v=20261018-scrub";
+import { benchPanel, initResults, refreshHistory, renderHist } from "./results.js?v=20261018-scrub";
+import { initAuth } from "./auth.js?v=20261018-scrub";
 import { enhance, onSectionExpand, refreshSummary } from "./collapse.js?v=20261018-oracestyle4";
 
 // Shareable links: keep ?alert=<key> in the address bar (other params such as ?api= stay).
@@ -37,6 +37,48 @@ function renderTabs(now) {
   const on = $("tabs").querySelector(".tab.on");
   if (on && !wide()) { const t = $("tabs"); const l = on.offsetLeft - t.offsetLeft; if (l < t.scrollLeft || l + on.offsetWidth > t.scrollLeft + t.clientWidth) t.scrollLeft = l - 8; }
   $("tabs").querySelectorAll(".tab").forEach((b) => b.onclick = () => { S.selected = b.dataset.k; S.pinned = false; setUrlAlert(S.selected); render(now); loadTicks(); });
+}
+
+// ---- Timeline scrub: hover (PC) or tap/drag (phone) on "Win chance over time" replays the map
+// and territory at that minute, from the Worker's per-minute map frames (kept 30 days).
+const framesFor = {};
+function loadFrames(key) {
+  if (!framesFor[key]) framesFor[key] = get("/alert/frames?key=" + encodeURIComponent(key)).then((j) => {
+    const acc = {}, out = [];
+    for (const f of j.frames || []) { Object.assign(acc, f.set); out.push({ t: f.t, owners: { ...acc } }); }
+    return out;
+  }).catch(() => []);
+  return framesFor[key];
+}
+function setTerritoryRows(terr) {
+  for (const f of FACS) {
+    const row = document.querySelector(`.row[data-terr="${f}"]`); if (!row || terr[f] == null) continue;
+    const bar = row.querySelector(".track span"), v = row.querySelector(".v");
+    if (bar) bar.style.width = `${terr[f]}%`;
+    if (v) v.textContent = `${Math.round(terr[f])}%`;
+  }
+}
+async function scrub(a, k, how) {
+  const tag = $("replayTag");
+  if (!k) {
+    S.scrub = null; recolorMap(null);
+    if (a.state && a.state.territory) setTerritoryRows(a.state.territory);
+    if (tag) tag.hidden = true;
+    return;
+  }
+  S.scrub = { key: a.key, tick: k, how };
+  if (k.terr) setTerritoryRows(k.terr);
+  const frames = await loadFrames(a.key);
+  if (!S.scrub || S.scrub.tick !== k) return;                 // the pointer moved on while loading
+  let fr = null;
+  for (const f of frames) { if (f.t <= k.t + 0.5) fr = f; else break; }
+  if (tag) {
+    tag.hidden = false;
+    tag.innerHTML = fr ? `⏪ Replay · minute ${Math.round(k.t)}${how !== "mouse" ? ' <button type="button" class="more" id="replayBack">Back to now</button>' : ""}`
+      : "No map history for this moment (maps are kept 30 days).";
+    const back = $("replayBack"); if (back) back.onclick = () => scrub(a, null);
+  }
+  recolorMap(fr ? fr.owners : null);
 }
 
 async function loadTicks() {
@@ -102,7 +144,7 @@ function render2(now) {
   const lead = s && s.leader;
   const left = a.status === "live" ? `${mins(a.start_ts + a.dur * 60 - now)} min left` : statusLabel(a, now);
   const oddsHtml = win ? FACS.map((f) => `<div class="fac ${f} ${f === lead ? "lead" : ""}"><div class="l">${f}</div><div class="n">${pct1(win[f].pct)}%</div><div class="stars">${stars(win[f].pct)}</div></div>`).join("") : `<div class="note">${a.status === "live" ? "Waiting for the first map snapshot…" : "No live odds were recorded for this alert."}</div>`;
-  const rows = s ? FACS.map((f) => `<div class="row"><span class="lbl ${f}">${f} territory</span><div class="track"><span style="width:${s.territory[f]}%;background:${COLOR[f]}"></span></div><span class="v">${Math.round(s.territory[f])}%</span></div>`).join("") +
+  const rows = s ? FACS.map((f) => `<div class="row" data-terr="${f}"><span class="lbl ${f}">${f} territory</span><div class="track"><span style="width:${s.territory[f]}%;background:${COLOR[f]}"></span></div><span class="v">${Math.round(s.territory[f])}%</span></div>`).join("") +
     FACS.map((f) => {
       const base = s.territory[f] || 0, m = s.momentum[f];
       const rel = base >= 1 ? (100 * m / base) : m;
@@ -123,7 +165,7 @@ function render2(now) {
   $("main").innerHTML = `
     <div class="title"><b>${esc(a.world_name)} · ${esc(a.zone_name)}${a.kind === "meltdown" ? " Meltdown" : ""}</b><span class="badge ${a.status}">${esc(a.status.replace("_", " "))}</span><span class="note">${esc(left)} · ${a.dur}-min alert</span>${liveA ? "" : `<button type="button" class="more backlive" id="backLive">← Back to live</button>`}</div>
     <div class="grid">
-      <section class="card map"><h2>Map</h2><div id="map"></div></section>
+      <section class="card map"><h2>Map</h2><div id="replayTag" class="replaytag" hidden></div><div id="map"></div></section>
       <div class="side">
       <section class="card win"><h2>Win chance</h2>${kindNote}${suspectNote}<div class="odds" aria-live="polite" aria-atomic="true">${oddsHtml}</div>${oddLine}${result}${second}${rows || popRows ? det("wdet", "Details", `${popAdj}<div class="rows">${rows}${popRows}</div>${popTot ? `<div class="note">Population: Honu (wt.honu.pw), ${popTot} on continent${s.pop_ns ? ` + ${s.pop_ns} NSO` : ""}.</div>` : ""}`, "wdet keep") : ""}${calls}</section>
       ${a.status === "live" ? `<div id="voteHere"></div><div id="lockHere"></div>` : ""}
@@ -137,7 +179,8 @@ function render2(now) {
   $("main").querySelectorAll("[data-cf]").forEach((b) => b.onclick = () => { S.cmdFac = b.dataset.cf; render(Math.floor(Date.now() / 1000)); });
   $("mini").innerHTML = `<b>${esc(a.world_name)} · ${esc(a.zone_name)}</b>${win ? `<span>${FACS.map((f) => `<span class="${f}">${f} ${pct1(win[f].pct)}%</span>`).join(" ")}</span>` : ""}`;
   miniSync();
-  if (S.ticksFor === a.key) { const c = $("chart"); c.innerHTML = chart(S.ticks, a.dur, c.clientWidth); chartHover(c, S.ticks, a.dur); }
+  if (S.ticksFor === a.key) { const c = $("chart"); c.innerHTML = chart(S.ticks, a.dur, c.clientWidth); chartHover(c, S.ticks, a.dur, (k, how) => scrub(a, k, how)); }
+  if (S.scrub && S.scrub.key === a.key) scrub(a, S.scrub.tick, S.scrub.how);
   const lh = $("lockHere");
   if (lh && a.status === "live") lh.innerHTML = `<section class="card lock">${lockCard(a, now)}</section>`;
   drawMap(a);

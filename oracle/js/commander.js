@@ -1,5 +1,5 @@
 // PS2MapOracle dashboard — split from index.html (#15). No behaviour change.
-import { S, FACS, esc, det } from "./state.js?v=20261018-oracestyle2";
+import { S, FACS, esc, det } from "./state.js?v=20261018-scrub";
 
 export function commander(c, ts, now, lead) {
   if (!c || !c.factions) return "";
