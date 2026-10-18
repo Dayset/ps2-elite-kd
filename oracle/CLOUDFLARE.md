@@ -108,7 +108,9 @@ GitHub Actions: deploy-oracle.yml (deploy) · oracle-commander.yml, oracle-honu-
 - **Outliers:** after an alert settles, the Honu job reads Honu
   `GET /api/alerts/{world}/{instance}/participants` (queued every 4 min, up to 12
   attempts, within 6 h of the end). Tiers: KD ≥ 5 and KPM ≥ 2 ⚠️ early, KPM ≥ 3 ☠️
-  confirmed; floor 10 minutes online and 25 kills. Flagged players get a PS2 Radar
+  confirmed; floor 10 minutes online and 25 kills. Burst tier (#21) for short
+  sessions, no floor or KD rule: KPM ≥ 5 and ≥ 15 kills in ≥ 2 min → ☠️ burst (counted as
+  confirmed). Flagged players get a PS2 Radar
   second opinion (≤ 5 per run, 2.5 s apart, 25/day, cached 3 days). Tables `report`,
   `radar`. A flag is a statistical outlier, never an accusation.
 - **Benchmark:** slices t0/t30/t60 (90-min), t0/t15/t30 (45-min), t0/t10/t20 (30-min).

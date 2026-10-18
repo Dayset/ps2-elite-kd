@@ -33,3 +33,26 @@ test("sample floor is part of the rule", () => {
   assert.equal(OUTLIER_RULE.MIN_KILLS, 25);
 });
 
+
+test("burst tier (#21): short blatant sessions are ☠️, a short spawn camp is not", () => {
+  const rep = outlierReport({
+    entries: [
+      entry("1", 25, 1, 4),       // KPM 6.25 in ~4 min -> burst
+      entry("2", 154, 30, 7.8),   // KPM 19.7 in 7.8 min -> burst
+      entry("3", 8, 0, 3),        // 3-min 8-kill spawn camp -> no
+      entry("4", 14, 0, 2),       // KPM 7 but < 15 kills -> no
+      entry("5", 20, 0, 1.5),     // < 2 min -> no
+      entry("6", 300, 20, 90),    // normal confirmed tier kept
+    ],
+    characters: [char("1", "Quick", 1), char("2", "Storm", 2), char("3", "Camp", 3), char("6", "Ace", 1)],
+  });
+  assert.equal(OUTLIER_RULE.BURST_KPM, 5);
+  assert.equal(OUTLIER_RULE.BURST_KILLS, 15);
+  assert.equal(OUTLIER_RULE.BURST_MIN_MINUTES, 2);
+  const sev = Object.fromEntries(rep.outliers.map((o) => [o.name, o.severity]));
+  assert.deepEqual(sev, { Storm: "burst", Quick: "burst", Ace: "confirmed" });
+  assert.equal(rep.flagged, 3);
+  assert.equal(rep.confirmed, 3);
+  assert.equal(rep.burst, 2);
+  assert.equal(rep.outliers.find((o) => o.name === "Storm").minutes, 7.8);
+});
