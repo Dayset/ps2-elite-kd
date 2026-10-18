@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>PS2MapOracle — live PlanetSide 2 alert odds</title>
 <meta name="description" content="Live PlanetSide 2 territory alert win chances, map and settled results. Data from the Daybreak Census API." />
+<link rel="icon" href="data:," />
 <link rel="canonical" href="https://dayset.github.io/ps2-elite-kd/oracle/" />
 <style>
 :root {
@@ -76,6 +77,11 @@ td.num { font-variant-numeric: tabular-nums; }
 .bench div { background: var(--panel2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; }
 .bench b { font-variant-numeric: tabular-nums; }
 footer { color: var(--dim); font-size: 12px; margin-top: 18px; }
+.hoverline { min-height: 18px; font-size: 13px; color: var(--muted); margin-top: 6px; font-variant-numeric: tabular-nums; }
+.chart svg { touch-action: pan-y; }
+.more { margin-top: 10px; background: var(--panel2); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 6px 12px; cursor: pointer; font: inherit; font-size: 13px; }
+.melt { color: var(--warn); font-size: 12px; margin-left: 4px; }
+.map svg polygon { cursor: pointer; }
 .VS { color: var(--vs); } .NC { color: var(--nc); } .TR { color: var(--tr); }
 </style>
 </head>
@@ -94,7 +100,8 @@ footer { color: var(--dim); font-size: 12px; margin-top: 18px; }
   <section class="card" style="margin-top:14px">
     <h2>Recent results</h2>
     <div id="bench" class="bench"></div>
-    <div class="scroll"><table id="hist"><thead><tr><th>Ended</th><th>Server</th><th>Continent</th><th>Winner</th><th>Final VS / NC / TR</th><th>Basis</th><th>Notes</th></tr></thead><tbody></tbody></table></div>
+    <div class="scroll"><table id="hist"><thead><tr><th>Ended</th><th>Server</th><th>Continent</th><th>Length</th><th>Winner</th><th>Final VS / NC / TR</th><th>Basis</th><th>Notes</th></tr></thead><tbody></tbody></table></div>
+    <button id="histMore" class="more" type="button" hidden>Show more</button>
   </section>
 
   <footer>Odds update every minute from Census map data. Results settle 10 minutes after an alert ends, from Census's own final scores (sudden death decides draws). Percentages are model estimates, not guarantees.</footer>
@@ -109,7 +116,14 @@ footer { color: var(--dim); font-size: 12px; margin-top: 18px; }
   const HEXFILE = { 2: "indar_hexmap.json", 4: "replay_hexmap.json", 6: "amerish_hexmap.json", 8: "esamir_hexmap.json", 344: "oshur_hexmap.json" };
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const $ = (id) => document.getElementById(id);
-  let alerts = [], selected = null, mapCache = {}, namesCache = {};
+  let alerts = [], selected = new URLSearchParams(location.search).get("alert"), mapCache = {}, namesCache = {};
+  // Shareable links: keep ?alert=<key> in the address bar (other params such as ?api= stay).
+  function setUrlAlert(key) {
+    const q = new URLSearchParams(location.search);
+    if (key) q.set("alert", key); else q.delete("alert");
+    const qs = q.toString();
+    history.replaceState(null, "", location.pathname + (qs ? "?" + qs : "") + location.hash);
+  }
 
   async function get(path) {
     const r = await fetch(API + path, { cache: "no-store" });
@@ -147,7 +161,7 @@ footer { color: var(--dim); font-size: 12px; margin-top: 18px; }
         <b>${esc(a.world_name)} · ${esc(a.zone_name)}</b><small>${esc(statusLabel(a, now))}</small>
         <div class="bar">${bar(terr)}</div></button>`;
     }).join("");
-    $("tabs").querySelectorAll(".tab").forEach((b) => b.onclick = () => { selected = b.dataset.k; render(now); loadTicks(); });
+    $("tabs").querySelectorAll(".tab").forEach((b) => b.onclick = () => { selected = b.dataset.k; setUrlAlert(selected); render(now); loadTicks(); });
   }
 
   async function drawMap(a) {
@@ -186,12 +200,15 @@ footer { color: var(--dim); font-size: 12px; margin-top: 18px; }
       <g stroke="#0b0c0e" stroke-width="${(r * 0.12).toFixed(1)}" stroke-linejoin="round">${polys.join("")}</g></svg>
       <div class="legend"><span><i class="sw" style="background:var(--vs)"></i>VS</span><span><i class="sw" style="background:var(--nc)"></i>NC</span><span><i class="sw" style="background:var(--tr)"></i>TR</span><span><i class="sw" style="background:var(--neutral)"></i>neutral / unknown</span><span id="hover"></span></div>`;
     const hov = host.querySelector("#hover");
-    host.querySelector("svg").addEventListener("mousemove", (e) => {
+    const show = (e) => {
       const f = e.target.dataset && e.target.dataset.f;
       if (!f) return;
       const n = nm[f]; const o = owners[f];
       hov.innerHTML = n ? `<b>${esc(n.name)}</b>${o ? ` · <span class="${o}">${o}</span>` : ""}` : "";
-    });
+    };
+    const svg = host.querySelector("svg");
+    svg.addEventListener("mousemove", show);   // desktop hover
+    svg.addEventListener("click", show);       // phone tap
   }
 
   function chart(ticks, dur, width) {
@@ -202,7 +219,27 @@ footer { color: var(--dim); font-size: 12px; margin-top: 18px; }
     const grid = [0, 25, 50, 75, 100].map((p) => `<line x1="${L}" x2="${W - R}" y1="${y(p)}" y2="${y(p)}" stroke="#2a2e36" stroke-width="1"/><text x="${L - 6}" y="${y(p) + 4}" fill="#8a8882" font-size="11" text-anchor="end">${p}%</text>`).join("");
     const xt = [0, dur / 2, dur].map((m) => `<text x="${x(m)}" y="${H - 6}" fill="#8a8882" font-size="11" text-anchor="middle">${Math.round(m)}m</text>`).join("");
     const lines = FACS.map((f) => `<polyline fill="none" stroke="${COLOR[f]}" stroke-width="2.2" stroke-linejoin="round" points="${ticks.map((k) => x(k.t).toFixed(1) + "," + y(k.win[f]).toFixed(1)).join(" ")}"/>`).join("");
-    return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Win chance over time">${grid}${xt}${lines}</svg>`;
+    return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Win chance over time">${grid}${xt}${lines}<line class="cursor" x1="0" x2="0" y1="${T}" y2="${H - B}" stroke="#c8c6c0" stroke-width="1" stroke-dasharray="3 3" visibility="hidden"/></svg><div class="hoverline">Hover or tap the chart for exact numbers.</div>`;
+  }
+
+  // Chart hover/tap: minute + VS/NC/TR win % at the nearest tick.
+  function chartHover(host, ticks, dur) {
+    const svg = host.querySelector("svg"), out = host.querySelector(".hoverline");
+    if (!svg || !out || !ticks || ticks.length < 2) return;
+    const vb = svg.viewBox.baseVal, L = 34, R = 20, line = svg.querySelector(".cursor");
+    const pick = (e) => {
+      const rect = svg.getBoundingClientRect();
+      if (!rect.width) return;
+      const sx = (e.clientX - rect.left) * vb.width / rect.width;
+      const t = Math.max(0, Math.min(dur, (sx - L) / (vb.width - L - R) * dur));
+      let best = ticks[0];
+      for (const k of ticks) if (Math.abs(k.t - t) < Math.abs(best.t - t)) best = k;
+      const bx = L + (Math.min(best.t, dur) / dur) * (vb.width - L - R);
+      line.setAttribute("x1", bx); line.setAttribute("x2", bx); line.setAttribute("visibility", "visible");
+      out.innerHTML = `minute ${Math.round(best.t)} · ${FACS.map((f) => `<span class="${f}">${f} ${(+best.win[f]).toFixed(1)}%</span>`).join(" · ")}`;
+    };
+    svg.addEventListener("pointermove", pick);
+    svg.addEventListener("click", pick);
   }
 
   function commander(c, ts, now) {
@@ -259,7 +296,7 @@ footer { color: var(--dim); font-size: 12px; margin-top: 18px; }
       </div>
       <section class="card chart" style="margin-top:14px"><h2>Win chance over time</h2><div id="chart"><div class="note">Loading…</div></div></section>
       ${a.status === "live" ? commander(a.commander || (s && s.commander), a.commander_ts, now) : ""}`;
-    if (ticksFor === a.key) { const c = $("chart"); c.innerHTML = chart(ticks, a.dur, c.clientWidth); }
+    if (ticksFor === a.key) { const c = $("chart"); c.innerHTML = chart(ticks, a.dur, c.clientWidth); chartHover(c, ticks, a.dur); }
     drawMap(a);
   }
 
@@ -268,7 +305,7 @@ footer { color: var(--dim); font-size: 12px; margin-top: 18px; }
     try {
       const [live, health] = await Promise.all([get("/live"), get("/health").catch(() => null)]);
       alerts = (live.alerts || []).sort((x, y) => (x.status === "live" ? 0 : 1) - (y.status === "live" ? 0 : 1) || y.start_ts - x.start_ts);
-      if (!alerts.find((x) => x.key === selected)) selected = alerts.length ? alerts[0].key : null;
+      if (!alerts.find((x) => x.key === selected)) { selected = alerts.length ? alerts[0].key : null; if (selected) setUrlAlert(selected); }
       const ok = health && health.ok && health.last_ok_age_s !== null && health.last_ok_age_s < 300;
       $("dot").className = "dot " + (ok ? "ok" : "bad");
       $("statusText").textContent = ok ? `live · updated ${health.last_cycle_age_s}s ago` : "data delayed";
@@ -281,18 +318,43 @@ footer { color: var(--dim); font-size: 12px; margin-top: 18px; }
     }
   }
 
-  async function refreshHistory() {
-    try {
-      const h = await get("/history?days=7");
-      const b = h.benchmark || {};
-      $("bench").innerHTML = Object.entries(b).map(([dur, sl]) => `<div>${dur}-min Brier: ${Object.entries(sl).map(([k, v]) => `${k} <b>${v.brier.toFixed(3)}</b> <span class="note">n=${v.n}</span>`).join(" · ")}</div>`).join("") +
-        (Object.keys(b).length ? `<div class="note">lower is better · coin-flip = ${h.uniform}</div>` : "");
-      const rows = (h.alerts || []).slice(0, 40).map((a) => `<tr><td>${a.end_ts ? when(a.end_ts) : "—"}</td><td>${esc(a.world_name)}</td><td>${esc(a.zone_name)}</td>
+  // Benchmark: keys ending in _pop are the population-weighted variant of the same slice.
+  function benchLine(sl) {
+    const cell = (v) => `<b>${v.brier.toFixed(3)}</b> <span class="note">n=${v.n}</span>`;
+    const keys = Object.keys(sl), out = [];
+    for (const k of keys) {
+      if (k.endsWith("_pop")) { if (!(k.slice(0, -4) in sl)) out.push(`${esc(k.slice(0, -4))} with pop ${cell(sl[k])}`); continue; }
+      const pop = sl[k + "_pop"];
+      out.push(`${esc(k)} ${cell(sl[k])}${pop ? ` <span class="note">/ with pop</span> ${cell(pop)}` : ""}`);
+    }
+    return out.join(" · ");
+  }
+
+  let histRows = [], histAll = false;
+  const HIST_MAX = 40;
+  function renderHist() {
+    const list = histAll ? histRows : histRows.slice(0, HIST_MAX);
+    const rows = list.map((a) => `<tr><td>${a.end_ts ? when(a.end_ts) : "—"}</td><td>${esc(a.world_name)}</td><td>${esc(a.zone_name)}${a.kind === "meltdown" ? '<span class="melt">Meltdown</span>' : ""}</td>
+        <td class="num">${a.dur ? esc(a.dur) + " min" : "—"}</td>
         <td>${a.winner ? `<b class="${a.winner}">${a.winner}</b>` : esc(a.status)}</td>
         <td class="num">${a.final ? FACS.map((f) => (+a.final[f]).toFixed(1)).join(" / ") : "—"}</td>
         <td>${a.basis === "sudden_death" ? "sudden death" : a.basis ? "Census final" : ""}</td>
         <td class="flag">${(a.flags || []).map((f) => esc(f.replace(/_/g, " "))).join(", ")}</td></tr>`);
-      $("hist").querySelector("tbody").innerHTML = rows.join("") || '<tr><td colspan="7" class="note">No settled alerts yet.</td></tr>';
+    $("hist").querySelector("tbody").innerHTML = rows.join("") || '<tr><td colspan="8" class="note">No settled alerts yet.</td></tr>';
+    const more = $("histMore");
+    more.hidden = histAll || histRows.length <= HIST_MAX;
+    more.textContent = `Show more (${histRows.length - HIST_MAX})`;
+  }
+  $("histMore").onclick = () => { histAll = true; renderHist(); };
+
+  async function refreshHistory() {
+    try {
+      const h = await get("/history?days=7");
+      const b = h.benchmark || {};
+      $("bench").innerHTML = Object.entries(b).map(([dur, sl]) => `<div>${dur}-min Brier: ${benchLine(sl)}</div>`).join("") +
+        (Object.keys(b).length ? `<div class="note">lower is better · coin-flip = ${h.uniform}</div>` : "");
+      histRows = h.alerts || [];
+      renderHist();
     } catch {}
   }
 
