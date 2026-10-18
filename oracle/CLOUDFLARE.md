@@ -99,8 +99,8 @@ GitHub Actions: deploy-oracle.yml (deploy) · oracle-commander.yml, oracle-honu-
   alert, fetched by the Honu job about every 5 minutes and stored in table `pop`;
   the odds use it while it is ≤ 15 minutes old. The state carries `pop`, `pop_ns` (NSO), `pop_source`
   and `win_popadj` (population-weighted odds; blend weight 1 at t0 falling to 0 at t60).
-- **Live KD:** removed. Honu's `realtime-alert` returns `[]`, so KD stays the neutral
-  1.0 default and the UI hides it.
+- **Live KD:** removed (Honu's `realtime-alert` returns `[]`); the state no longer carries
+  `kd` / `kd_source` and the dashboard has no KD rows (#22).
 - **AI Commander:** computed in the Worker (`commander.js`, exact port of
   `commander_live.py`) every minute for each live alert, in its own invocation through
   the `SELF` service binding (`/internal/commander`), stored in `alert.commander`. The

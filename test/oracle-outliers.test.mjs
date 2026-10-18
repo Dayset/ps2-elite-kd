@@ -1,7 +1,7 @@
 // Outlier report from Honu alert participants + live faction KD parsing.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { outlierReport, liveKd, OUTLIER_RULE } from "../oracle-worker/src/outliers.js";
+import { outlierReport, OUTLIER_RULE } from "../oracle-worker/src/outliers.js";
 
 const entry = (id, kills, deaths, minutes) => ({ characterID: id, kills, deaths, secondsOnline: minutes * 60 });
 const char = (id, name, factionID, outfitTag = null) => ({ id, name, factionID, outfitTag });
@@ -33,10 +33,3 @@ test("sample floor is part of the rule", () => {
   assert.equal(OUTLIER_RULE.MIN_KILLS, 25);
 });
 
-test("live KD from Honu realtime-alert mini list", () => {
-  const list = [{ worldID: 1, zoneID: (5 << 16) | 4, vs: { kills: 300, deaths: 200 }, nc: { kills: 200, deaths: 250 }, tr: { kills: 100, deaths: 150 } }];
-  assert.deepEqual(liveKd(list, 1, 4), { VS: 1.5, NC: 0.8, TR: 0.667 });
-  assert.equal(liveKd(list, 10, 4), null);
-  assert.equal(liveKd([{ worldID: 1, zoneID: 4, vs: { kills: 1, deaths: 0 }, nc: { kills: 1, deaths: 1 }, tr: { kills: 1, deaths: 1 } }], 1, 4), null);
-  assert.equal(liveKd(null, 1, 4), null);
-});

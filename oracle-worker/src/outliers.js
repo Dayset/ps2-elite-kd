@@ -51,20 +51,3 @@ export function outlierReport(body, rule = OUTLIER_RULE) {
     outliers: flagged.slice(0, rule.MAX_LISTED),
   };
 }
-
-/**
- * Honu GET /api/realtime-alert (mini: team totals, no events) -> live faction KD
- * for one world/zone, or null when Honu has no entry for it.
- */
-export function liveKd(list, world, zone) {
-  if (!Array.isArray(list)) return null;
-  const a = list.find((x) => +(x.worldID ?? x.worldId) === +world && ((+(x.zoneID ?? x.zoneId)) & 0xffff) === +zone);
-  if (!a) return null;
-  const kd = {};
-  for (const [k, f] of [["vs", "VS"], ["nc", "NC"], ["tr", "TR"]]) {
-    const t = a[k] || a[f];
-    if (!t || !(+t.deaths > 0)) return null;
-    kd[f] = Math.round((+t.kills / +t.deaths) * 1000) / 1000;
-  }
-  return kd;
-}

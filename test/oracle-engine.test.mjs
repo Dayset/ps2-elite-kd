@@ -69,7 +69,7 @@ test("buildState emits the push_live contract", () => {
   const r2f = REGION_TO_FACILITY["4"];
   Object.keys(r2f).forEach((r, i) => { snap[r] = String((i % 3) + 1); });
   const st = buildState({ getBin: binGetter(4), world: 1, zone: 4, eventId: 153, instanceId: 1, startTs: 1000, dur: 90, now: 1000 + 40 * 60, snapNow: snap, snap15: snap, regionMap: r2f });
-  for (const k of ["ts", "t", "live", "alert", "territory", "momentum", "kd", "win", "leader", "owners", "calls", "hints"]) assert.ok(k in st, k);
+  for (const k of ["ts", "t", "live", "alert", "territory", "momentum", "win", "leader", "owners", "calls", "hints"]) assert.ok(k in st, k);
   assert.equal(st.t, 40);
   assert.equal(Object.keys(st.owners).length, Object.keys(r2f).length);
   const sum = st.win.VS.pct + st.win.NC.pct + st.win.TR.pct;
