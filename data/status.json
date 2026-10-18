@@ -4,17 +4,14 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "39096474225",
+    "runId": "39099355655",
     "event": "workflow_dispatch",
     "kind": "discovery",
-    "startedAt": "2026-10-18T04:16:00.462Z",
-    "endedAt": "2026-10-18T04:20:49.917Z",
-    "seconds": 289,
+    "startedAt": "2026-10-18T05:06:01.285Z",
+    "endedAt": "2026-10-18T05:10:10.885Z",
+    "seconds": 250,
     "updated": [
-      "[RITE] ShloDog",
-      "[FwF] Voidy6Vanu",
-      "[RSN] Voidy6",
-      "[R] Voidy6TR"
+      "[lKPM] coopzVS"
     ],
     "added": [],
     "failed": [],
@@ -28,34 +25,19 @@
     },
     "honu": {
       "day": "2026-10-18",
-      "calls": 1405,
+      "calls": 1449,
       "cap": 10000
     },
     "batch": [
       {
-        "name": "[RITE] ShloDog",
-        "src": "fresh-request",
-        "status": "done"
-      },
-      {
-        "name": "[FwF] Voidy6Vanu",
-        "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "[RSN] Voidy6",
-        "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "[R] Voidy6TR",
+        "name": "[lKPM] coopzVS",
         "src": "refresh",
         "status": "done"
       }
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-18T04:20:59.179Z",
+    "checkedAt": "2026-10-18T05:10:22.712Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 28,
     "explained": 16,
@@ -272,7 +254,7 @@
         "id": "s_kd",
         "value": 142.333,
         "bound": 50.549,
-        "z": 131.218,
+        "z": 131.35,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (session, session-forensics), listed there",
@@ -287,7 +269,7 @@
         "id": "s_kd",
         "value": 113,
         "bound": 50.549,
-        "z": 103.826,
+        "z": 103.93,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (aim), listed there",
@@ -300,8 +282,8 @@
         "name": "[H0LY] ALandWhaleNC",
         "id": "s_maxKd",
         "value": 131,
-        "bound": 119.972,
-        "z": 86.81,
+        "bound": 119.976,
+        "z": 86.768,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (aim, session-forensics), listed there",
@@ -376,7 +358,7 @@
         "id": "s_kd",
         "value": 59,
         "bound": 50.549,
-        "z": 53.399,
+        "z": 53.453,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (rampage, session, session-forensics), listed there",
@@ -392,7 +374,7 @@
         "id": "s_kd",
         "value": 56.8,
         "bound": 50.549,
-        "z": 51.345,
+        "z": 51.396,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (aim, session-forensics), listed there",
@@ -1128,7 +1110,7 @@
             "label": "🧪 Session K/D",
             "value": 113,
             "bound": 50.549,
-            "z": 103.826,
+            "z": 103.93,
             "side": "high"
           }
         ]
@@ -1142,14 +1124,14 @@
           "session",
           "session-forensics"
         ],
-        "maxZ": 131.218,
+        "maxZ": 131.35,
         "metrics": [
           {
             "id": "s_kd",
             "label": "🧪 Session K/D",
             "value": 142.333,
             "bound": 50.549,
-            "z": 131.218,
+            "z": 131.35,
             "side": "high"
           },
           {
@@ -1171,14 +1153,14 @@
           "aim",
           "session-forensics"
         ],
-        "maxZ": 86.81,
+        "maxZ": 86.768,
         "metrics": [
           {
             "id": "s_maxKd",
             "label": "🧪 Best-session K/D",
             "value": 131,
-            "bound": 119.972,
-            "z": 86.81,
+            "bound": 119.976,
+            "z": 86.768,
             "side": "high"
           },
           {
@@ -1186,7 +1168,7 @@
             "label": "🧪 Session K/D",
             "value": 56.8,
             "bound": 50.549,
-            "z": 51.345,
+            "z": 51.396,
             "side": "high"
           }
         ]
@@ -1245,7 +1227,7 @@
             "label": "🧪 Session K/D",
             "value": 59,
             "bound": 50.549,
-            "z": 53.399,
+            "z": 53.453,
             "side": "high"
           }
         ]
@@ -1447,7 +1429,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-18T04:20:59.333Z",
+    "checkedAt": "2026-10-18T05:10:22.908Z",
     "red": 44,
     "padding": 41,
     "adjusted": 16,
@@ -1458,7 +1440,7 @@
     "forensics": 27
   },
   "sessionStats": {
-    "checkedAt": "2026-10-18T04:20:59.210Z",
+    "checkedAt": "2026-10-18T05:10:22.754Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -1472,13 +1454,13 @@
     "ruleText": "[session pattern] in recent Honu sessions (≥ 100 kills counted): assists per kill ≤ 0.1, headshot share ≥ 50% (headshot XP per kill; Census lifetime HSR when no XP detail) and K/D ≥ 7 (session deaths; Census lifetime KD when none). A very one-sided record; a lead for manual review, not proof.",
     "coverage": {
       "players": 12630,
-      "withSessions": 7910,
-      "measured": 3629,
-      "sessions": 27683,
-      "kills": 1277492,
-      "xpPlayers": 753,
-      "xpMeasured": 566,
-      "xpSessions": 4042
+      "withSessions": 7914,
+      "measured": 3630,
+      "sessions": 27695,
+      "kills": 1277716,
+      "xpPlayers": 758,
+      "xpMeasured": 567,
+      "xpSessions": 4057
     },
     "metrics": [
       {
@@ -1580,7 +1562,7 @@
     ],
     "distributions": {
       "s_apk": {
-        "n": 3629,
+        "n": 3630,
         "min": 0,
         "p01": 0.072,
         "p05": 0.173,
@@ -1590,7 +1572,7 @@
         "max": 1.5
       },
       "s_share": {
-        "n": 3225,
+        "n": 3226,
         "min": 0.383,
         "p01": 0.461,
         "p05": 0.49,
@@ -1600,7 +1582,7 @@
         "max": 0.803
       },
       "s_kpm": {
-        "n": 3629,
+        "n": 3630,
         "min": 0.07,
         "p01": 0.15,
         "p05": 0.222,
@@ -1610,7 +1592,7 @@
         "max": 16.526
       },
       "s_maxKpm": {
-        "n": 3629,
+        "n": 3630,
         "min": 0.127,
         "p01": 0.197,
         "p05": 0.293,
@@ -1620,7 +1602,7 @@
         "max": 16.526
       },
       "s_kpmCv": {
-        "n": 3440,
+        "n": 3441,
         "min": 0,
         "p01": 0.011,
         "p05": 0.046,
@@ -1630,7 +1612,7 @@
         "max": 1.028
       },
       "s_kd": {
-        "n": 3567,
+        "n": 3568,
         "min": 0.255,
         "p01": 0.46,
         "p05": 0.667,
@@ -1640,17 +1622,17 @@
         "max": 162.667
       },
       "s_maxKd": {
-        "n": 3567,
+        "n": 3568,
         "min": 0.256,
         "p01": 0.554,
         "p05": 0.818,
-        "median": 2.358,
-        "p95": 8.625,
+        "median": 2.357,
+        "p95": 8.5,
         "p99": 31.762,
         "max": 355
       },
       "s_hsk": {
-        "n": 590,
+        "n": 591,
         "min": 0,
         "p01": 0.008,
         "p05": 0.066,
@@ -1660,7 +1642,7 @@
         "max": 0.972
       },
       "s_ksk": {
-        "n": 590,
+        "n": 591,
         "min": 0,
         "p01": 0.042,
         "p05": 0.132,
@@ -1670,7 +1652,7 @@
         "max": 0.983
       },
       "s_domk": {
-        "n": 590,
+        "n": 591,
         "min": 0,
         "p01": 0,
         "p05": 0.024,
@@ -1680,7 +1662,7 @@
         "max": 0.243
       },
       "s_revk": {
-        "n": 590,
+        "n": 591,
         "min": 0,
         "p01": 0,
         "p05": 0.011,
@@ -1690,17 +1672,17 @@
         "max": 0.357
       },
       "s_revDom": {
-        "n": 584,
+        "n": 585,
         "min": 0,
         "p01": 0,
         "p05": 0.117,
-        "median": 0.829,
+        "median": 0.833,
         "p95": 2.75,
         "p99": 4.5,
         "max": 10
       },
       "s_savk": {
-        "n": 590,
+        "n": 591,
         "min": 0,
         "p01": 0.006,
         "p05": 0.022,
@@ -1710,7 +1692,7 @@
         "max": 0.2
       },
       "s_spotk": {
-        "n": 590,
+        "n": 591,
         "min": 0,
         "p01": 0,
         "p05": 0,
@@ -1720,7 +1702,7 @@
         "max": 0.354
       },
       "s_prik": {
-        "n": 590,
+        "n": 591,
         "min": 0,
         "p01": 0.037,
         "p05": 0.116,
@@ -1730,7 +1712,7 @@
         "max": 0.49
       },
       "s_stopk": {
-        "n": 590,
+        "n": 591,
         "min": 0,
         "p01": 0.013,
         "p05": 0.036,
@@ -3055,7 +3037,7 @@
             "label": "🧪 Session K/D",
             "value": 113,
             "bound": 50.549,
-            "z": 103.826,
+            "z": 103.93,
             "side": "high"
           }
         ]
@@ -3069,14 +3051,14 @@
           "session",
           "session-forensics"
         ],
-        "maxZ": 131.218,
+        "maxZ": 131.35,
         "metrics": [
           {
             "id": "s_kd",
             "label": "🧪 Session K/D",
             "value": 142.333,
             "bound": 50.549,
-            "z": 131.218,
+            "z": 131.35,
             "side": "high"
           }
         ]
@@ -3090,14 +3072,14 @@
           "aim",
           "session-forensics"
         ],
-        "maxZ": 86.81,
+        "maxZ": 86.768,
         "metrics": [
           {
             "id": "s_maxKd",
             "label": "🧪 Best-session K/D",
             "value": 131,
-            "bound": 119.972,
-            "z": 86.81,
+            "bound": 119.976,
+            "z": 86.768,
             "side": "high"
           },
           {
@@ -3105,7 +3087,7 @@
             "label": "🧪 Session K/D",
             "value": 56.8,
             "bound": 50.549,
-            "z": 51.345,
+            "z": 51.396,
             "side": "high"
           }
         ]
@@ -3127,7 +3109,7 @@
             "label": "🧪 Session K/D",
             "value": 59,
             "bound": 50.549,
-            "z": 53.399,
+            "z": 53.453,
             "side": "high"
           }
         ]
@@ -3136,17 +3118,17 @@
     "outliersUnexplained": 0
   },
   "size": {
-    "at": "2026-10-18T04:20:50.415Z",
+    "at": "2026-10-18T05:10:11.287Z",
     "repoBytes": 112451584,
-    "dataBytes": 246603102,
-    "playersBytes": 230362145,
+    "dataBytes": 246628728,
+    "playersBytes": 230362827,
     "playerFiles": 12631,
     "warnAtBytes": 734003200,
     "warning": false
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-18T04:20:59.237Z",
+    "checkedAt": "2026-10-18T05:10:22.790Z",
     "candidates": [
       "nebelhexe",
       "oshurpogchamp",
@@ -6085,7 +6067,7 @@
         "flagged": false,
         "odd": true,
         "analyzed": 4,
-        "checkedAt": "2026-10-15T04:44:38.748Z",
+        "checkedAt": "2026-10-18T05:09:14.132Z",
         "worst": {
           "sessionId": "76517431",
           "url": "https://wt.honu.pw/s/76517431",
@@ -6189,7 +6171,7 @@
         "flagged": false,
         "odd": true,
         "analyzed": 2,
-        "checkedAt": "2026-10-15T04:45:20.812Z",
+        "checkedAt": "2026-10-18T05:09:14.133Z",
         "worst": {
           "sessionId": "77649813",
           "url": "https://wt.honu.pw/s/77649813",
@@ -13415,8 +13397,8 @@
         "confirmedCheater": false,
         "flagged": false,
         "odd": false,
-        "analyzed": 2,
-        "checkedAt": "2026-10-15T04:44:44.496Z",
+        "analyzed": 4,
+        "checkedAt": "2026-10-18T05:09:32.937Z",
         "worst": {
           "sessionId": "77122436",
           "url": "https://wt.honu.pw/s/77122436",
@@ -14683,6 +14665,97 @@
         }
       },
       {
+        "slug": "supernsobotxaki",
+        "name": "[ImXP] SuperNsoBotxAki",
+        "hidden": false,
+        "confirmedCheater": false,
+        "flagged": false,
+        "odd": false,
+        "analyzed": 5,
+        "checkedAt": "2026-10-18T05:09:20.675Z",
+        "worst": {
+          "sessionId": "77699390",
+          "url": "https://wt.honu.pw/s/77699390",
+          "start": "2026-10-16T04:33:40.000Z",
+          "kills": 340,
+          "deaths": 157,
+          "kd": 2.166,
+          "activeMin": 128.683,
+          "activeKpm": 2.642,
+          "max1s": 4,
+          "max5s": 5,
+          "peak60s": 11,
+          "max5min": 29,
+          "secs5plus": 0,
+          "zeroGapShare": 0.047,
+          "medianGap": 12,
+          "hs": 0.35,
+          "vehicleKillShare": 0,
+          "weapons": [
+            {
+              "id": "6009899",
+              "name": "XMG-100",
+              "vehicle": false,
+              "kills": 118,
+              "share": 0.347,
+              "hs": 0.305,
+              "max1s": 2,
+              "max60s": 8
+            },
+            {
+              "id": "6009901",
+              "name": "XMG-200",
+              "vehicle": false,
+              "kills": 105,
+              "share": 0.309,
+              "hs": 0.457,
+              "max1s": 2,
+              "max60s": 8
+            },
+            {
+              "id": "6009893",
+              "name": "CB-100",
+              "vehicle": false,
+              "kills": 65,
+              "share": 0.191,
+              "hs": 0.385,
+              "max1s": 2,
+              "max60s": 8
+            }
+          ],
+          "victims": {
+            "unique": 116,
+            "top": [
+              {
+                "name": "GeneralScrag",
+                "kills": 17,
+                "br": 107
+              },
+              {
+                "name": "TheGrey",
+                "kills": 13,
+                "br": 95
+              },
+              {
+                "name": "sammy9807",
+                "kills": 10,
+                "br": 87
+              }
+            ],
+            "medianBr": 85,
+            "lowBrShare": 0.053,
+            "farmLike": []
+          },
+          "account": {
+            "br": 51,
+            "created": "2026-10-07T13:46:11Z",
+            "ageDaysAtSession": 8.616
+          },
+          "reasons": [],
+          "oddities": []
+        }
+      },
+      {
         "slug": "dadagegege",
         "name": "DADAgegege",
         "hidden": false,
@@ -14768,97 +14841,6 @@
             "br": 35,
             "created": "2026-09-01T01:42:08Z",
             "ageDaysAtSession": 18.97
-          },
-          "reasons": [],
-          "oddities": []
-        }
-      },
-      {
-        "slug": "supernsobotxaki",
-        "name": "[ImXP] SuperNsoBotxAki",
-        "hidden": false,
-        "confirmedCheater": false,
-        "flagged": false,
-        "odd": false,
-        "analyzed": 4,
-        "checkedAt": "2026-10-15T04:45:08.581Z",
-        "worst": {
-          "sessionId": "77633202",
-          "url": "https://wt.honu.pw/s/77633202",
-          "start": "2026-10-11T06:13:19Z",
-          "kills": 318,
-          "deaths": 126,
-          "kd": 2.524,
-          "activeMin": 134.767,
-          "activeKpm": 2.36,
-          "max1s": 2,
-          "max5s": 3,
-          "peak60s": 9,
-          "max5min": 26,
-          "secs5plus": 0,
-          "zeroGapShare": 0.022,
-          "medianGap": 16,
-          "hs": 0.289,
-          "vehicleKillShare": 0,
-          "weapons": [
-            {
-              "id": "6009899",
-              "name": "XMG-100",
-              "vehicle": false,
-              "kills": 226,
-              "share": 0.711,
-              "hs": 0.305,
-              "max1s": 2,
-              "max60s": 8
-            },
-            {
-              "id": "75034",
-              "name": "NS-15M1",
-              "vehicle": false,
-              "kills": 52,
-              "share": 0.164,
-              "hs": 0.365,
-              "max1s": 2,
-              "max60s": 8
-            },
-            {
-              "id": "75173",
-              "name": "NS-357B Underboss",
-              "vehicle": false,
-              "kills": 12,
-              "share": 0.038,
-              "hs": 0.083,
-              "max1s": 1,
-              "max60s": 1
-            }
-          ],
-          "victims": {
-            "unique": 106,
-            "top": [
-              {
-                "name": "PeteBootehjudge",
-                "kills": 13,
-                "br": 47
-              },
-              {
-                "name": "TearinScout",
-                "kills": 10,
-                "br": 42
-              },
-              {
-                "name": "jules11235",
-                "kills": 8,
-                "br": 94
-              }
-            ],
-            "medianBr": 81,
-            "lowBrShare": 0.097,
-            "farmLike": []
-          },
-          "account": {
-            "br": 32,
-            "created": "2026-10-07T13:46:11Z",
-            "ageDaysAtSession": 3.688
           },
           "reasons": [],
           "oddities": []
@@ -15054,7 +15036,7 @@
         "flagged": false,
         "odd": false,
         "analyzed": 1,
-        "checkedAt": "2026-10-15T04:44:44.497Z",
+        "checkedAt": "2026-10-18T05:09:38.529Z",
         "worst": {
           "sessionId": "77534300",
           "url": "https://wt.honu.pw/s/77534300",
@@ -16954,8 +16936,8 @@
         "confirmedCheater": false,
         "flagged": false,
         "odd": false,
-        "analyzed": 4,
-        "checkedAt": "2026-10-15T04:44:56.689Z",
+        "analyzed": 5,
+        "checkedAt": "2026-10-18T05:09:44.332Z",
         "worst": {
           "sessionId": "77468162",
           "url": "https://wt.honu.pw/s/77468162",
@@ -17045,8 +17027,8 @@
         "confirmedCheater": false,
         "flagged": false,
         "odd": false,
-        "analyzed": 1,
-        "checkedAt": "2026-10-15T04:44:44.497Z",
+        "analyzed": 2,
+        "checkedAt": "2026-10-18T05:09:38.528Z",
         "worst": {
           "sessionId": "77588752",
           "url": "https://wt.honu.pw/s/77588752",
@@ -19503,7 +19485,7 @@
         "flagged": false,
         "odd": false,
         "analyzed": 1,
-        "checkedAt": "2026-10-15T04:44:38.749Z",
+        "checkedAt": "2026-10-18T05:09:20.675Z",
         "worst": {
           "sessionId": "77573012",
           "url": "https://wt.honu.pw/s/77573012",
@@ -21647,7 +21629,7 @@
         "flagged": false,
         "odd": false,
         "analyzed": 2,
-        "checkedAt": "2026-10-15T04:44:38.749Z",
+        "checkedAt": "2026-10-18T05:09:20.675Z",
         "worst": {
           "sessionId": "77536508",
           "url": "https://wt.honu.pw/s/77536508",
@@ -26085,7 +26067,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-18T04:20:59.246Z",
+    "checkedAt": "2026-10-18T05:10:22.801Z",
     "count": 309,
     "players": [
       {
@@ -28652,14 +28634,14 @@
     ]
   },
   "infantry": {
-    "checkedAt": "2026-10-18T04:21:00.554Z",
+    "checkedAt": "2026-10-18T05:10:24.523Z",
     "players": 12631,
     "counts": {
-      "infantry": 702,
+      "infantry": 703,
       "mixed": 562,
       "vehicle": 158,
       "low": 98,
-      "none": 11111
+      "none": 11110
     },
     "rule": {
       "INFANTRY_MAX": 0.25,
@@ -28670,7 +28652,7 @@
   "assistGroups": {
     "byTag": {
       "infantry": {
-        "count": 409,
+        "count": 410,
         "medApk": 0.435,
         "medShare": 0.558
       },
@@ -28695,32 +28677,32 @@
         "threshold": 0.249,
         "dir": "<=",
         "vehicleCaught": 0.348,
-        "infantryCleared": 0.917,
-        "balanced": 0.632
+        "infantryCleared": 0.915,
+        "balanced": 0.631
       },
       "share": {
         "threshold": 0.533,
         "dir": "<=",
         "vehicleCaught": 0.37,
-        "infantryCleared": 0.719,
-        "balanced": 0.544
+        "infantryCleared": 0.72,
+        "balanced": 0.545
       }
     },
     "tagMin": 20,
-    "checkedAt": "2026-10-18T04:20:59.285Z",
+    "checkedAt": "2026-10-18T05:10:22.860Z",
     "coverage": {
       "players": 12612,
-      "withSessions": 7892,
-      "measured": 3213,
+      "withSessions": 7896,
+      "measured": 3214,
       "measuredPct": 25.5
     },
     "cuts": {
       "kd": 2.442,
-      "shareHi": 0.587,
+      "shareHi": 0.588,
       "shareLo": 0.532,
       "apk": 0.631,
-      "iviLo": 333.614,
-      "iviHi": 719.692,
+      "iviLo": 333.624,
+      "iviHi": 719.756,
       "medApk": 0.404,
       "medShare": 0.559
     },
@@ -28736,7 +28718,7 @@
     },
     "groups": {
       "carries": {
-        "count": 287,
+        "count": 288,
         "top": [
           {
             "slug": "pikaqiuill",
