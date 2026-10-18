@@ -785,7 +785,10 @@ details.cache-shared { display: none; }
 
 .cache-shared > summary::-webkit-details-marker { display: none; }
 
-/* t360u: 💾 names saved only in this browser — icon-only toggle, chips inside. */
+/* t360u: 💾 names saved only in this browser — icon-only toggle, chips inside.
+ * Hidden from the interface (Dayset 2026-10-17): the section still renders,
+ * remove this rule to show it again — same as the shared-cache section. */
+details.cache-browser { display: none; }
 .cache-browser { flex: 1 1 100%; min-width: 0; margin: 0; }
 .cache-browser > summary {
   list-style: none;

@@ -452,14 +452,14 @@ describe("Big table after a browser-only player joins: no 'undefined' (t360u)", 
   });
 });
 
-describe("💾 browser-only names: icon toggle, hidden when empty (t360u)", () => {
-  it("no title text; hidden with none; open for a few, folded for 50; remembered", { skip: !chrome, timeout: 120000 }, async () => {
+describe("💾 browser-only names: hidden from the interface, still rendered (t360u)", () => {
+  it("no title text; hidden with none; open for a few, folded for 50; remembered; never displayed", { skip: !chrome, timeout: 120000 }, async () => {
     const raw = JSON.parse(fs.readFileSync(path.join(root, "data/players/brackiense.json"), "utf8"));
     const p = raw.player || raw;
     const now = Date.now();
     const mk = (n) => Object.fromEntries(Array.from({ length: n }, (_, i) => { const nm = `Zzsaved${String(i).padStart(2, "0")}`; return [nm.toLowerCase(), { name: nm, savedAt: now, fetchedAt: now, player: { ...p, display: nm, name: nm } }]; }));
     await withPage(async ({ ev, nav }) => {
-      const look = () => ev(`(() => { const d = document.querySelector("#cacheChips details.cache-browser"); return { has: !!d, open: d ? d.open : null, chips: d ? d.querySelectorAll(".cache-browser-chips button.chip").length : 0, summary: d ? d.querySelector("summary").textContent : "", browserWord: /Browser/.test(document.getElementById("cacheChips").textContent) }; })()`);
+      const look = () => ev(`(() => { const d = document.querySelector("#cacheChips details.cache-browser"); return { has: !!d, open: d ? d.open : null, chips: d ? d.querySelectorAll(".cache-browser-chips button.chip").length : 0, summary: d ? d.querySelector("summary").textContent : "", browserWord: /Browser/.test(document.getElementById("cacheChips").textContent), display: d ? getComputedStyle(d).display : null }; })()`);
       await nav("index.html");
       await ev(`new Promise((r) => setTimeout(r, 600))`);
       let st = await look();
@@ -468,14 +468,15 @@ describe("💾 browser-only names: icon toggle, hidden when empty (t360u)", () =
       await nav("index.html"); await ev(`new Promise((r) => setTimeout(r, 800))`);
       st = await look();
       assert.deepEqual([st.has, st.open, st.chips, st.summary, st.browserWord], [true, true, 2, "💾", false], JSON.stringify(st));
+      assert.equal(st.display, "none", "💾 section renders but is never displayed");
       await ev(`(localStorage.setItem("ps2-elite-kd-cache-v2", ${JSON.stringify(JSON.stringify(mk(50)))}), 1)`);
       await nav("index.html"); await ev(`new Promise((r) => setTimeout(r, 800))`);
       st = await look();
       assert.deepEqual([st.has, st.open, st.chips], [true, false, 50], "50 names → folded");
-      // Open it: the chips box scrolls instead of growing past ~12rem.
+      // Hidden from the interface: the chips box takes no space even when open.
       await ev(`new Promise((r) => { document.querySelector("#cacheChips details.cache-browser > summary").click(); setTimeout(() => r(1), 200); })`);
       const box = await ev(`(() => { const b = document.querySelector(".cache-browser-chips"); return { h: b.getBoundingClientRect().height, sh: b.scrollHeight, rem: parseFloat(getComputedStyle(document.documentElement).fontSize) }; })()`);
-      assert.ok(box.h <= 12.5 * box.rem + 2, JSON.stringify(box));
+      assert.equal(box.h, 0, "hidden 💾 section takes no space: " + JSON.stringify(box));
       await nav("index.html"); await ev(`new Promise((r) => setTimeout(r, 800))`);
       assert.equal((await look()).open, true, "remembered open");
     }, { width: 390, height: 844, mobile: true });
