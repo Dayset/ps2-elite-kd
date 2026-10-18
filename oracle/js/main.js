@@ -113,7 +113,7 @@ function render2(now) {
   const oddLine = win && s ? `<div class="oddline">${FACS.map((f) => { const base = s.territory[f] || 0, m = s.momentum[f]; const rel = base >= 1 ? (100 * m / base) : m;
     return `<span class="${f}">${f}</span> <span class="stars">${stars(win[f].pct) || "·"}</span> <span class="note">${rel > 0.05 ? "▲" : rel < -0.05 ? "▼" : "·"}${rel >= 0 ? "+" : ""}${rel.toFixed(1)}%</span>`; }).join(" · ")}</div>` : "";
   const popAdj = s && s.win_popadj ? `<div class="second">With population weighting: ${FACS.map((f) => `<span class="${f}">${f} ${pct1(s.win_popadj[f].pct)}%</span>`).join(" · ")} <span class="note">(experimental, fades out by minute 60)</span></div>` : "";
-  const kindNote = a.kind === "meltdown" ? `<div class="note" style="color:var(--warn)">Unstable Meltdown: scored differently from territory alerts; these odds are not validated for this alert type yet.</div>` : "";
+  const kindNote = a.kind === "meltdown" ? `<div class="note">Unstable Meltdown: only the live part of the continent counts${s && s.zone ? ` (${s.zone.active} bases, ${s.zone.share}% of the map)` : ""}. Territory shares are of that zone; odds are kept cautious until more Meltdowns are scored.</div>` : "";
   const calls = s && s.calls && s.calls.length ? `<ul class="calls">${s.calls.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>` : "";
   const second = s && s.second ? `<div class="second">🥈 Second place: ${Object.entries(s.second.odds).map(([f, p]) => `<span class="${f}">${f} ${pct1(p)}%</span>`).join(" · ")} ${s.second.locked ? "(locked)" : ""}</div>` : "";
   const voided = (a.flags || []).includes("votes_void");

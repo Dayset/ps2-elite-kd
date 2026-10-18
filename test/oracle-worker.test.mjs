@@ -463,3 +463,32 @@ test("commander win_pct follows the elimination override (matches the header odd
   applyElimination(two);
   assert.deepEqual([two.factions.VS.win_pct, two.factions.NC.win_pct, two.factions.TR.win_pct], [62.5, 37.5, 0]);
 });
+
+test("Meltdown: live zone odds, no false broken-map flag, voting open, settles and pays from Census's ~35 % scores", { skip }, async () => {
+  const { runCycle, default: worker } = await import("../oracle-worker/src/index.js");
+  const DB = fakeD1();
+  const T0 = 1_792_550_000, END = T0 + 45 * 60;
+  const census = { map: { 1: 20, 2: 10, 3: 5 }, metagame: [mg(900, 177, "started", T0)], flips: [] };   // 35 live regions, rest locked
+  installCensus(census);
+  await runCycle({ DB }, (T0 + 60) * 1000);
+  let st = JSON.parse(DB.raw.prepare("SELECT state FROM alert").get().state);
+  assert.equal(st.suspect, undefined, "a Meltdown is mostly neutral by design, not a broken map");
+  assert.equal(st.alert.kind, "meltdown");
+  assert.equal(st.zone.active, 35);
+  assert.ok(Math.abs(st.territory.VS + st.territory.NC + st.territory.TR - 100) < 0.5, JSON.stringify(st.territory));
+  assert.ok(st.win_raw && st.win_v0);
+  const q = await (await worker.fetch(new Request("https://x/vote/quote?key=1-4-900"), { DB })).json();
+  assert.equal(q.open, true, JSON.stringify(q));
+  for (const m of [15, 30]) await runCycle({ DB }, (T0 + m * 60) * 1000);
+  const slices = JSON.parse(DB.raw.prepare("SELECT slices FROM bench").get().slices);
+  for (const k of ["t0", "t0_raw", "t0_v0", "t15", "t15_raw", "t15_v0", "t30", "t30_raw", "t30_v0"]) assert.ok(slices[k], `slice ${k}: ${Object.keys(slices)}`);
+  voteRow(DB, "m1", "1-4-900", "VS", 100, 0, T0 + 600);
+  census.metagame.push(mg(900, 177, "ended", END, 20.0, 11.8, 5.9));                                // Census: share of the whole map
+  await runCycle({ DB }, (END - 30) * 1000);
+  await runCycle({ DB }, (END + 660) * 1000);
+  const row = DB.raw.prepare("SELECT status, winner, flags FROM alert").get();
+  assert.equal(row.status, "settled");
+  assert.equal(row.winner, "VS");
+  assert.ok(!/neutral_heavy|votes_void/.test(row.flags), row.flags);
+  assert.equal(DB.raw.prepare("SELECT status FROM vote").get().status, "won");
+});

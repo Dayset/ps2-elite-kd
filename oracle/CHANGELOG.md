@@ -211,3 +211,15 @@ approved it, "shipped" means it is live in the running pipeline.
 - Voided votes (draw, canceled, unresolved, corrupt map) give back the full amount,
   fee included.
 
+## 2026-10-18 (evening): Meltdowns read on the live zone
+
+- **Finding:** Census Meltdown final scores add up to ~31–57 % because most of the
+  continent is locked (neutral) during a Meltdown; the winner holds most of the
+  live zone. The engine had been reading whole-map territory, out of the range the
+  tree was grown on, and the old pipeline made 0 %/100 % calls at minute 30 on 17 of
+  22 Meltdowns (Brier 0.241 vs Auraxify's 0.151 on shared alerts).
+- **Shipped (Worker):** live-zone shares, momentum, elimination and commander for
+  Meltdowns; odds pulled 60 % toward even (eliminated factions stay 0); no false
+  broken-map flag or vote voiding on Meltdowns; `_raw`/`_v0` bench slices for a
+  live re-fit. Territory alerts unchanged; Python parity untouched.
+

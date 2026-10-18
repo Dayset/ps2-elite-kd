@@ -16,7 +16,7 @@
  */
 import {
   WORLDS, ZONES, WORLD_NAMES, ZONE_NAMES, TERRITORY_ALERTS, SUDDEN_DEATH, FACS, alertKind,
-  buildState, computeWin, territory, sliceMinutes, brier, scoreWinner, popAdjusted,
+  buildState, forecast, liveZone, territory, sliceMinutes, brier, scoreWinner, popAdjusted,
 } from "./engine.js";
 import { binGetter, hasTree, regionMap, latticeFor, captureModel, resistanceModel } from "./models.js";
 import { runCommander, ownership, applyElimination } from "./commander.js";
@@ -121,20 +121,23 @@ async function getMeta(db, k) {
 /** Group METAGAME rows into alert instances keyed world-zone-instance. */
 /**
  * Live-state input guard -> list of reasons (empty = clean).
- *   neutral_heavy:<owned%>  under 90 % of regions owned (Census map gone neutral)
+ *   neutral_heavy:<owned%>  under 90 % of regions owned (Census map gone neutral);
+ *                           not checked for Meltdowns, which lock most of the map by design
  *   map_frozen              zone map identical to 10+ min ago while 2+ captures happened
  *   map_stale               no fresh map for 5+ min
  */
-export function dataSuspect(zNow, nowTs, s10, zone, flipsIn10, now) {
+export function dataSuspect(zNow, nowTs, s10, zone, flipsIn10, now, kind = "territory") {
   const out = [];
   const terr = territory(zNow);
   const owned = terr.VS + terr.NC + terr.TR;
-  if (owned < 90) out.push(`neutral_heavy:${owned.toFixed(1)}`);
+  if (kind !== "meltdown" && owned < 90) out.push(`neutral_heavy:${owned.toFixed(1)}`);
   const z10 = s10 && s10.zones[String(zone)];
   if (z10 && now - s10.ts <= 900 && flipsIn10 >= 2 && JSON.stringify(z10) === JSON.stringify(zNow)) out.push("map_frozen");
   if (now - nowTs > 300) out.push("map_stale");
   return out;
 }
+
+const sliceOf = (w, t) => ({ VS: w.VS.pct / 100, NC: w.NC.pct / 100, TR: w.TR.pct / 100, t: Math.round(t * 10) / 10 });
 
 export function groupAlerts(rows) {
   const by = new Map();
@@ -231,7 +234,7 @@ export async function runCycle(env, nowMs = Date.now()) {
     if (prev && FINAL.includes(prev.status)) continue;
     const dur = TERRITORY_ALERTS[a.event_id];
     const startTs = a.start.ts;
-    const base = { key: a.key, world: a.world, zone: a.zone, instance_id: a.instance_id, event_id: a.event_id, start_ts: startTs, dur };
+    const base = { key: a.key, world: a.world, zone: a.zone, instance_id: a.instance_id, event_id: a.event_id, start_ts: startTs, dur, kind: alertKind(a.event_id) };
 
     if (!a.end) {
       if (now > startTs + dur * 60 + 1800) { out.push({ ...base, status: "unresolved" }); continue; }
@@ -249,7 +252,7 @@ export async function runCycle(env, nowMs = Date.now()) {
         startTs, dur, now, snapNow: zNow, snap15: z15 || null, regionMap: regionMap(a.zone),
       });
       if (!(a.world in snap10)) snap10[a.world] = await latestSnap(db, a.world, now - 600);
-      const suspect = dataSuspect(zNow, snapNow.ts, snap10[a.world], a.zone, flips10.get(`${a.world}-${a.zone}`) || 0, now);
+      const suspect = dataSuspect(zNow, snapNow.ts, snap10[a.world], a.zone, flips10.get(`${a.world}-${a.zone}`) || 0, now, alertKind(a.event_id));
       if (suspect.length) { state.suspect = suspect; (report.suspect ||= {})[a.key] = suspect; }
       const p = await popFor(a.world, a.zone);
       if (p) {
@@ -273,15 +276,16 @@ export async function runCycle(env, nowMs = Date.now()) {
         if (slices[label] || t < m) continue;
         if (label === "t0") {
           if (t > 5) continue;
-          const terr = territory(zNow);
-          const { win } = computeWin(binGetter(a.zone), terr, { VS: 0, NC: 0, TR: 0 }, Math.max(t, 0), dur);
-          slices.t0 = { VS: win.VS.pct / 100, NC: win.NC.pct / 100, TR: win.TR.pct / 100, t: Math.round(t * 10) / 10 };
-          const pa = state.pop_source ? popAdjusted(win, state.pop, Math.max(t, 0)) : null;
-          if (pa) slices.t0_pop = { VS: pa.VS.pct / 100, NC: pa.NC.pct / 100, TR: pa.TR.pct / 100, t: slices.t0.t };
+          const f0 = forecast({ getBin: binGetter(a.zone), kind: alertKind(a.event_id), snapNow: zNow, snap15: null, t: Math.max(t, 0), dur, zeroMomentum: true });
+          slices.t0 = sliceOf(f0.win, t);
+          if (f0.winRaw) { slices.t0_raw = sliceOf(f0.winRaw, t); slices.t0_v0 = sliceOf(f0.winV0, t); }
+          const pa = state.pop_source ? popAdjusted(f0.win, state.pop, Math.max(t, 0)) : null;
+          if (pa) slices.t0_pop = sliceOf(pa, t);
         } else if (t <= m + 5) {
-          slices[label] = { VS: state.win.VS.pct / 100, NC: state.win.NC.pct / 100, TR: state.win.TR.pct / 100, t: Math.round(t * 10) / 10 };
+          slices[label] = sliceOf(state.win, t);
+          if (state.win_raw) { slices[label + "_raw"] = sliceOf(state.win_raw, t); slices[label + "_v0"] = sliceOf(state.win_v0, t); }
           const pa = state.win_popadj;
-          if (pa) slices[label + "_pop"] = { VS: pa.VS.pct / 100, NC: pa.NC.pct / 100, TR: pa.TR.pct / 100, t: Math.round(t * 10) / 10 };
+          if (pa) slices[label + "_pop"] = sliceOf(pa, t);
         } else continue;
         changed = true;
       }
@@ -303,7 +307,7 @@ export async function runCycle(env, nowMs = Date.now()) {
       if (z) {
         const terr = territory(z);
         const owned = terr.VS + terr.NC + terr.TR;
-        if (owned < 90) flags.push(`neutral_heavy:${owned.toFixed(1)}`);
+        if (base.kind !== "meltdown" && owned < 90) flags.push(`neutral_heavy:${owned.toFixed(1)}`);
         const sw = scoreWinner(terr);
         if (finalOk && sw !== scoreWinner(final)) flags.push(`snapshot_winner_${sw}`);
         if (endTs - pre.ts > 600) flags.push("snapshot_stale");
@@ -324,7 +328,7 @@ export async function runCycle(env, nowMs = Date.now()) {
       const z = pre && pre.zones[String(a.zone)];
       if (!z || endTs - pre.ts > 600) return null;
       const terr = territory(z);
-      if (terr.VS + terr.NC + terr.TR < 90) return null;
+      if (base.kind === "meltdown" ? liveZone(z).active < 3 : terr.VS + terr.NC + terr.TR < 90) return null;
       const w = scoreWinner(terr);
       return w === "draw" ? null : { winner: w, basis: "snapshot" };
     };
@@ -422,7 +426,7 @@ const FAC_NAME = { 1: "VS", 2: "NC", 3: "TR" };
 export async function commanderFor(env, key, nowMs = Date.now()) {
   const db = env.DB;
   const now = Math.floor(nowMs / 1000);
-  const a = await db.prepare("SELECT key, world, zone, start_ts, dur, status, json_extract(state, '$.suspect') AS suspect FROM alert WHERE key=?").bind(key).first();
+  const a = await db.prepare("SELECT key, world, zone, event_id, start_ts, dur, status, json_extract(state, '$.suspect') AS suspect, json_extract(state, '$.win') AS win FROM alert WHERE key=?").bind(key).first();
   if (!a || a.status !== "live") return { key, skipped: "not live" };
   // Corrupt map window: keep the last good orders instead of computing from bad data.
   if (a.suspect && JSON.parse(a.suspect).length) return { key, skipped: "data suspect" };
@@ -433,9 +437,12 @@ export async function commanderFor(env, key, nowMs = Date.now()) {
     latestSnap(db, a.world, now), latestSnap(db, a.world, now - 900),
     db.prepare("SELECT ts, old, new, facility FROM flip WHERE world=? AND zone=? AND ts>=? ORDER BY ts").bind(a.world, a.zone, a.start_ts - 600).all(),
   ]);
-  const zNow = sNow && sNow.zones[String(a.zone)];
+  const meltdown = alertKind(a.event_id) === "meltdown";
+  // Meltdowns: only the live zone exists for the commander (locked neutral regions dropped).
+  const live = (z) => (z && meltdown ? liveZone(z).snap : z);
+  const zNow = live(sNow && sNow.zones[String(a.zone)]);
   if (!zNow) return { key, skipped: "no snapshot" };
-  const z15 = s15 && s15.zones[String(a.zone)];
+  const z15 = live(s15 && s15.zones[String(a.zone)]);
   const flips = ((fl && fl.results) || [])
     .map((r) => [r.ts, FAC_NAME[r.new], FAC_NAME[r.old], String(r.facility)])
     .filter((x) => x[1] && x[2] && x[1] !== x[2])
@@ -448,6 +455,11 @@ export async function commanderFor(env, key, nowMs = Date.now()) {
   });
   if (!cmd) return { key, skipped: "empty ownership" };
   applyElimination(cmd);
+  if (meltdown && a.win) {
+    // Show the header's (cautious) Meltdown odds; the commander's own tree value stays in win_pct_raw.
+    const w = JSON.parse(a.win);
+    for (const f of FACS) if (cmd.factions[f] && w[f]) cmd.factions[f].win_pct = w[f].pct;
+  }
   cmd.source = "worker";
   await db.prepare("UPDATE alert SET commander=?, commander_ts=? WHERE key=? AND status='live'").bind(JSON.stringify(cmd), now, key).run();
   return { key, ok: true, ms: Date.now() - t0, flips: flips.length };

@@ -85,6 +85,16 @@ GitHub Actions: deploy-oracle.yml (deploy) · oracle-commander.yml, oracle-honu-
 - **Alert kinds:** Unstable Meltdown ids (176–179, 186–193, 248–250) are labelled
   `kind: "meltdown"`; everything else tracked is `territory`. 227 (Outfit Wars) is not
   tracked. Sudden Death (236–240) is matched to its alert by world + zone.
+- **Meltdowns (2026-10-18):** a Meltdown is fought on part of the continent; the rest
+  is locked and neutral on the Census map, and Census's scores are shares of the
+  whole map (final scores add up to ~31–57 %). The Worker reads Meltdowns on the
+  live zone only (`liveZone` in `engine.js`: neutral regions dropped) for shares,
+  momentum, elimination (live-zone base count) and the commander, then pulls the
+  odds toward even (`MELTDOWN_SHRINK` = 0.6, leave-one-out fit on 22 past Meltdowns;
+  mathematically eliminated factions stay at 0). The broken-map guard skips the
+  "under 90 % owned" check for Meltdowns. Bench logs `<slice>_raw` (live zone, no
+  pull) and `<slice>_v0` (old whole-map reading) beside each Meltdown slice so the
+  pull can be refit once ~20 live Meltdowns are scored.
 - **Transport:** none. The state the UI reads is the state the engine wrote — the
   paste-corruption failure class (CENSUS_ERRORS §C) is gone.
 - **Settlement:** from the `ended` METAGAME row's own `faction_vs/nc/tr` (Census's

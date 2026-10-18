@@ -75,3 +75,27 @@ test("buildState emits the push_live contract", () => {
   const sum = st.win.VS.pct + st.win.NC.pct + st.win.TR.pct;
   assert.ok(Math.abs(sum - 100) < 0.5, `win sums to ${sum}`);
 });
+
+test("Meltdowns: odds read the live zone only, stay cautious, and still eliminate when the math says so", async () => {
+  const { forecast, liveZone, shrinkToEven, MELTDOWN_SHRINK } = await import("../oracle-worker/src/engine.js");
+  const regions = Object.keys(JSON.parse(readFileSync(new URL("../oracle/backend/hossin_region_to_facility.json", import.meta.url), "utf8")));
+  const snap = (vs, nc, tr) => Object.fromEntries(regions.map((r, i) => [r, i < vs ? "1" : i < vs + nc ? "2" : i < vs + nc + tr ? "3" : "0"]));
+  const s = snap(20, 10, 5);                       // 35 live regions, the rest locked/neutral
+  assert.deepEqual([liveZone(s).active, liveZone(s).total], [35, regions.length]);
+  const f = forecast({ getBin: binGetter(4), kind: "meltdown", snapNow: s, snap15: s, t: 20, dur: 45 });
+  assert.ok(Math.abs(f.terr.VS + f.terr.NC + f.terr.TR - 100) < 1e-9, "shares of the live zone add up to 100");
+  assert.equal(Math.round(f.terr.VS), 57);
+  assert.ok(f.winRaw && f.winV0 && f.zone.active === 35);
+  assert.ok(["VS", "NC", "TR"].every((k) => f.win[k].pct > 0), JSON.stringify(f.win));
+  const alive = ["VS", "NC", "TR"].filter((k) => f.winRaw[k].pct > 0), even = 100 / alive.length;
+  for (const k of alive) assert.ok(Math.abs(f.win[k].pct - even) <= Math.abs(f.winRaw[k].pct - even) * (1 - MELTDOWN_SHRINK) + 0.2, `${k} pulled toward even: ${f.winRaw[k].pct} -> ${f.win[k].pct}`);
+  // 3 minutes left: one capture per lane moves at most 3 × 2 × 100/35 ≈ 17 %; gaps of 29 and 43 are decided.
+  const late = forecast({ getBin: binGetter(4), kind: "meltdown", snapNow: s, snap15: s, t: 42, dur: 45 });
+  assert.deepEqual([late.win.VS.pct, late.win.NC.pct, late.win.TR.pct], [100, 0, 0]);
+  // Territory alerts are untouched.
+  const terr = forecast({ getBin: binGetter(4), kind: "territory", snapNow: s, snap15: s, t: 20, dur: 45 });
+  assert.equal(terr.winRaw, undefined);
+  // Shrink arithmetic: eliminated stays 0, the rest mix with even odds.
+  const sh = shrinkToEven({ VS: { pct: 80 }, NC: { pct: 20 }, TR: { pct: 0 } }, MELTDOWN_SHRINK);
+  assert.deepEqual([sh.VS.pct, sh.NC.pct, sh.TR.pct], [62, 38, 0]);
+});

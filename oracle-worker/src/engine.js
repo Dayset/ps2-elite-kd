@@ -43,9 +43,41 @@ const N_FAC = 88;
 const PP_PER_FAC = 100.0 / N_FAC;
 const LANES = 3, MIN_PER_BASE = 3.0;
 
-export function maxSwingPP(t, dur = 90) {
+export function maxSwingPP(t, dur = 90, nFac = N_FAC) {
   const rem = dur - t;
-  return rem > 0 ? LANES * Math.floor(rem / MIN_PER_BASE) * (2 * PP_PER_FAC) : 0;
+  return rem > 0 ? LANES * Math.floor(rem / MIN_PER_BASE) * (2 * (100.0 / nFac)) : 0;
+}
+
+/**
+ * Unstable Meltdown alerts are fought on part of the continent only: the rest is
+ * locked and shows as neutral ("0") on the Census map, and Census scores each
+ * faction as a share of the whole map, so final scores add up to ~31-57 %.
+ * The winner is whoever holds most of the live zone. The tree was grown on
+ * normal alerts (owned territory ~100 %), so Meltdowns are read on the live zone
+ * only: neutral regions are dropped before shares, momentum, elimination and the
+ * commander. (Worker-only; the retired Python pipeline never did this.)
+ */
+export function liveZone(snap) {
+  const out = {};
+  let total = 0;
+  for (const [r, f] of Object.entries(snap || {})) { total++; if (f === "1" || f === "2" || f === "3") out[r] = f; }
+  const active = Object.keys(out).length;
+  return active >= 3 ? { snap: out, active, total } : { snap: snap || {}, active: total, total };
+}
+
+/** Meltdown odds are pulled toward even until live data validates them (leave-one-out fit on past Meltdowns, 2026-10-18). */
+export const MELTDOWN_SHRINK = 0.6;
+
+/** Mix even odds into every faction that is not mathematically out; renormalise. */
+export function shrinkToEven(win, alpha) {
+  const out = {};
+  const alive = FACS.filter((f) => win[f].pct > 0);
+  if (alive.length <= 1) { for (const f of FACS) out[f] = { ...win[f] }; return out; }
+  const even = 100 / alive.length;
+  let tot = 0;
+  for (const f of FACS) { const p = win[f].pct > 0 ? (1 - alpha) * win[f].pct + alpha * even : 0; out[f] = { ...win[f], pct: p }; tot += p; }
+  for (const f of FACS) out[f].pct = round1((100 * out[f].pct) / tot);
+  return out;
 }
 
 /** Python round(x, n): round-half-even on the decimal value, close enough for display. */
@@ -117,7 +149,7 @@ export function timeBin(t, dur = 90) {
  * push_live_state.compute_win. getBin(b) -> {bin, xbin}.
  * Returns {win, raw, trunkv}.
  */
-export function computeWin(getBin, terr, mom, t, dur = 90) {
+export function computeWin(getBin, terr, mom, t, dur = 90, nFac = N_FAC) {
   const b = timeBin(t, dur);
   const { bin, xbin } = getBin(b);
   const win = {}, raw = {}, trunkv = {};
@@ -136,7 +168,7 @@ export function computeWin(getBin, terr, mom, t, dur = 90) {
   }
   const leader = argmax(terr);
   for (const f of FACS) {
-    if (f !== leader && maxSwingPP(t, dur) < terr[leader] - terr[f]) win[f].pct = 0;
+    if (f !== leader && maxSwingPP(t, dur, nFac) < terr[leader] - terr[f]) win[f].pct = 0;
   }
   if (FACS.filter((f) => f !== leader).every((f) => win[f].pct === 0)) win[leader].pct = 100;
   const tot = FACS.reduce((s, f) => s + win[f].pct, 0);
@@ -145,9 +177,9 @@ export function computeWin(getBin, terr, mom, t, dur = 90) {
 }
 
 /** push_live_state.second_place: odds between the two non-winners once the winner is locked. */
-export function secondPlace(terr, raw, trunkv, t, dur = 90) {
+export function secondPlace(terr, raw, trunkv, t, dur = 90, nFac = N_FAC) {
   const leader = argmax(terr);
-  const swing = maxSwingPP(t, dur);
+  const swing = maxSwingPP(t, dur, nFac);
   if (!FACS.filter((f) => f !== leader).every((f) => swing < terr[leader] - terr[f])) return null;
   const [B, C] = FACS.filter((f) => f !== leader);
   if (swing < Math.abs(terr[B] - terr[C])) {
@@ -164,7 +196,7 @@ export function secondPlace(terr, raw, trunkv, t, dur = 90) {
 }
 
 /** build_state calls/hints (momentum as relative %, never pp). */
-export function callsAndHints(terr, mom, win, t, dur = 90) {
+export function callsAndHints(terr, mom, win, t, dur = 90, nFac = N_FAC) {
   const leader = argmax(terr);
   const momPct = (f) => {
     const base = terr[f] || 0;
@@ -177,7 +209,7 @@ export function callsAndHints(terr, mom, win, t, dur = 90) {
       const c = `collapse pattern forming for ${f} (${momPct(f)})`;
       calls.push(c); hints.push(c);
     }
-    if (f !== leader && win[f].pct === 0 && maxSwingPP(t, dur) < terr[leader] - terr[f]) {
+    if (f !== leader && win[f].pct === 0 && maxSwingPP(t, dur, nFac) < terr[leader] - terr[f]) {
       calls.push(`${f} mathematically eliminated`);
     }
   }
@@ -190,14 +222,36 @@ export function callsAndHints(terr, mom, win, t, dur = 90) {
  * Full live state in the push_live contract (FRONTEND_SPEC §4).
  * snapNow/snap15: {region: faction} maps for this zone; regionMap: region -> facility.
  */
+/**
+ * Win odds for one moment, Meltdown-aware. Territory alerts: unchanged engine.
+ * Meltdowns: live-zone shares, live-zone elimination, then shrinkToEven.
+ * Returns {terr, mom, win, raw, trunkv, nFac, zone?, winRaw?, winV0?}.
+ */
+export function forecast({ getBin, kind, snapNow, snap15, t, dur, zeroMomentum = false }) {
+  const momOf = (a, b) => Object.fromEntries(FACS.map((f) => [f, zeroMomentum ? 0 : a[f] - b[f]]));
+  if (kind !== "meltdown") {
+    const terr = territory(snapNow);
+    const mom = momOf(terr, snap15 ? territory(snap15) : terr);
+    return { terr, mom, nFac: N_FAC, ...computeWin(getBin, terr, mom, t, dur) };
+  }
+  const z = liveZone(snapNow);
+  const z15 = snap15 ? liveZone(snap15) : z;
+  const terr = territory(z.snap);
+  const mom = momOf(terr, territory(z15.snap));
+  const { win: winRaw, raw, trunkv } = computeWin(getBin, terr, mom, t, dur, z.active);
+  // What the engine said before 2026-10-18 (whole-map shares), logged for comparison.
+  const terrAll = territory(snapNow);
+  const winV0 = computeWin(getBin, terrAll, momOf(terrAll, snap15 ? territory(snap15) : terrAll), t, dur).win;
+  return { terr, mom, raw, trunkv, nFac: z.active, winRaw, winV0, win: shrinkToEven(winRaw, MELTDOWN_SHRINK),
+    zone: { active: z.active, total: z.total, share: round1((100 * z.active) / (z.total || 1)) } };
+}
+
 export function buildState({ getBin, world, zone, eventId, instanceId, startTs, dur, now, snapNow, snap15, regionMap }) {
   const t = (now - startTs) / 60;
-  const terr = territory(snapNow);
-  const terr15 = snap15 ? territory(snap15) : terr;
-  const mom = {};
-  for (const f of FACS) mom[f] = terr[f] - terr15[f];
-  const { win, raw, trunkv } = computeWin(getBin, terr, mom, t, dur);
-  const { leader, calls, hints } = callsAndHints(terr, mom, win, t, dur);
+  const kind = alertKind(eventId);
+  const f0 = forecast({ getBin, kind, snapNow, snap15, t, dur });
+  const { terr, mom, win, raw, trunkv, nFac } = f0;
+  const { leader, calls, hints } = callsAndHints(terr, mom, win, t, dur, nFac);
   const owners = {};
   if (regionMap) {
     for (const [region, fac] of Object.entries(snapNow)) {
@@ -209,7 +263,7 @@ export function buildState({ getBin, world, zone, eventId, instanceId, startTs, 
     ts: Math.trunc(now),
     t: Math.trunc(t),
     live: true,
-    alert: { world, zone, event_id: eventId, instance_id: instanceId, start_ts: startTs, duration_min: dur, kind: alertKind(eventId) },
+    alert: { world, zone, event_id: eventId, instance_id: instanceId, start_ts: startTs, duration_min: dur, kind },
     territory: Object.fromEntries(FACS.map((f) => [f, round1(terr[f])])),
     momentum: Object.fromEntries(FACS.map((f) => [f, round1(mom[f])])),
     pop: { VS: 0, NC: 0, TR: 0 },
@@ -221,7 +275,8 @@ export function buildState({ getBin, world, zone, eventId, instanceId, startTs, 
     hints,
     owners,
   };
-  const sp = secondPlace(terr, raw, trunkv, t, dur);
+  if (f0.zone) { state.zone = f0.zone; state.win_raw = f0.winRaw; state.win_v0 = f0.winV0; }
+  const sp = secondPlace(terr, raw, trunkv, t, dur, nFac);
   if (sp) state.second = sp;
   return state;
 }
