@@ -1,0 +1,35 @@
+name: Oracle commander
+
+# Runs the Python AI Commander (oracle/backend/commander_live.py, unchanged)
+# for every live alert and posts the result to the ps2-oracle Worker.
+# Odds, map and settlement do not depend on this job; it only adds the
+# Commander panel. GitHub may delay scheduled runs by several minutes.
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: oracle-commander
+  cancel-in-progress: true
+
+jobs:
+  commander:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: oracle/backend
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Commander for live alerts
+        env:
+          ORACLE_API: ${{ vars.ORACLE_API || 'https://ps2-oracle.dayset.workers.dev' }}
+          ORACLE_KEY: ${{ secrets.CENSUS_PROXY_KEY }}
+        run: python3 oracle/backend/commander_actions.py

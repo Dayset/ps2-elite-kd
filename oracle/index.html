@@ -66,6 +66,9 @@ td.num { font-variant-numeric: tabular-nums; }
 .scroll { overflow-x: auto; }
 .flag { color: var(--warn); font-size: 12px; }
 .cmd { font-size: 13px; }
+.cmdgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 860px) { .cmdgrid { grid-template-columns: 1fr; } }
+.cmd ul { margin: 0; padding-left: 18px; }
 .cmd h3 { font-size: 13px; margin: 10px 0 4px; }
 .cmd ol { margin: 0; padding-left: 18px; }
 .cmd li { margin: 2px 0; }
@@ -204,12 +207,13 @@ footer { color: var(--dim); font-size: 12px; margin-top: 18px; }
 
   function commander(c) {
     if (!c || !c.factions) return "";
-    return `<section class="card cmd" style="margin-top:14px"><h2>AI Commander</h2>${FACS.map((f) => {
+    return `<section class="card cmd" style="margin-top:14px"><h2>AI Commander</h2><div class="cmdgrid">${FACS.map((f) => {
       const x = c.factions[f]; if (!x) return "";
       const atk = (x.attack || []).slice(0, 3).map((e) => `<li>${esc(e.name)} → ${esc(e.target || "")} <span class="note">+${esc(e.win_gain ?? "")}%</span></li>`).join("");
       const def = (x.defend || []).slice(0, 3).map((e) => `<li>${esc(e.name)} vs ${esc(e.vs || "")} <span class="note">−${esc(e.win_drop ?? "")}%</span></li>`).join("");
-      return `<h3 class="${f}">${f} · ${esc(x.war_shape || "")}</h3>${atk ? `<div>Attack</div><ol>${atk}</ol>` : ""}${def ? `<div>Defend</div><ol>${def}</ol>` : ""}`;
-    }).join("")}</section>`;
+      const km = (x.kingmaker || []).slice(0, 2).map((k) => `<li>${esc(k.text || "")}</li>`).join("");
+      return `<div><h3 class="${f}">${f} · ${esc(x.war_shape || "")}</h3>${atk ? `<div class="note">Attack</div><ol>${atk}</ol>` : ""}${def ? `<div class="note">Defend</div><ol>${def}</ol>` : ""}${km ? `<div class="note">Kingmaker</div><ul>${km}</ul>` : ""}</div>`;
+    }).join("")}</div>${c.fight_up && c.fight_up.text ? `<div class="note" style="margin-top:8px">${esc(c.fight_up.text)}</div>` : ""}</section>`;
   }
 
   let ticksFor = null, ticks = [];
