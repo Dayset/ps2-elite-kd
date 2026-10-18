@@ -1,0 +1,25 @@
+name: Oracle Saerro probe
+
+# Manual diagnostic (#23): can GitHub Actions reach Saerro's open population API
+# (saerro.ps2.live, GraphQL), and what does it return per world / zone, how fresh?
+# Read-only, two requests, the oracle's own User-Agent.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Saerro population + health
+        env:
+          UA: "ps2-elite-kd-oracle/1.0 (+https://dayset.github.io/ps2-elite-kd/oracle/; github.com/dayset/ps2-elite-kd; population fallback probe)"
+        run: |
+          q() { curl -sS -m 20 -A "$UA" -H "Content-Type: application/json" -X POST https://saerro.ps2.live/graphql -d "$1" -w "\nHTTP %{http_code} in %{time_total}s\n" -D /tmp/h.txt; grep -i -E "^(ratelimit|x-ratelimit|retry-after|cache-control|cf-cache|server)" /tmp/h.txt || true; echo; }
+          echo "== health"; q '{"query":"{ health { database ingest ingestReachable worlds { name status lastEvent } } }"}'
+          sleep 2
+          echo "== population per world / zone"; q '{"query":"{ allWorlds { id name population { total vs nc tr } zones { all { id name population { total vs nc tr } } } } }"}'
