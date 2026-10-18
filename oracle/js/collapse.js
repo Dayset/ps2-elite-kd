@@ -1,7 +1,7 @@
 // Collapsible dashboard sections: every card's <h2> becomes a toggle button with a
 // chevron; open/closed is remembered per section in localStorage. Default: open.
-// Cards are re-rendered often (and bet.js renders its own), so enhance() is
-// idempotent and re-run after every render and on #betSlot mutations.
+// Cards are re-rendered often (and vote.js renders its own), so enhance() is
+// idempotent and re-run after every render and on #voteSlot mutations.
 const KEY = "ps2oracle_collapsed";
 let closed;
 try { closed = new Set(JSON.parse(localStorage.getItem(KEY) || "[]")); } catch { closed = new Set(); }

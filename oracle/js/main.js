@@ -184,8 +184,8 @@ document.addEventListener("toggle", (e) => { const d = e.target; if (d.dataset &
 PHONE_MQ.addEventListener("change", () => { syncDetails(); render(Math.floor(Date.now() / 1000)); renderHist(); });
 syncDetails();
 
-// Collapsible sections: bet.js renders its own card, so re-enhance when it changes.
-new MutationObserver(() => enhance(betNode)).observe(betNode, { childList: true });
+// Collapsible sections: vote.js renders its own card, so re-enhance when it changes.
+new MutationObserver(() => enhance(voteNode)).observe(voteNode, { childList: true });
 // Re-measure on expand: the map and chart are drawn for the width they had.
 onSectionExpand((id) => { if (id === "map" || id === "win-chance-over-time") render(Math.floor(Date.now() / 1000)); });
 enhance(document);
