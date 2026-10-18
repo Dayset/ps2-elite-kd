@@ -1,0 +1,152 @@
+// PS2MapOracle dashboard — split from index.html (#15). No behaviour change.
+import { S, FACS, COLOR, esc, $, stars, mins, bar } from "./state.js";
+import { get } from "./api.js";
+import { drawMap } from "./map.js";
+import { chart, chartHover } from "./chart.js";
+import { commander } from "./commander.js";
+import { reportPanel } from "./players.js";
+import { benchPanel, initResults, refreshHistory } from "./results.js";
+import { initAuth } from "./auth.js";
+
+// Shareable links: keep ?alert=<key> in the address bar (other params such as ?api= stay).
+function setUrlAlert(key) {
+  const q = new URLSearchParams(location.search);
+  if (key) q.set("alert", key); else q.delete("alert");
+  const qs = q.toString();
+  history.replaceState(null, "", location.pathname + (qs ? "?" + qs : "") + location.hash);
+}
+
+function statusLabel(a, now) {
+  if (a.status === "live") return `${mins(now - a.start_ts)} / ${a.dur} min`;
+  if (a.status === "settling") return "settling…";
+  if (a.status === "sudden_death") return "sudden death";
+  if (a.status === "settled") return `won by ${a.winner}`;
+  return a.status;
+}
+
+function renderTabs(now) {
+  if (!S.alerts.length) { $("tabs").innerHTML = ""; return; }
+  $("tabs").innerHTML = S.alerts.map((a) => {
+    const terr = (a.state && a.state.territory) || {};
+    return `<button class="tab ${a.key === S.selected ? "on" : ""}" data-k="${esc(a.key)}">
+      <b>${esc(a.world_name)} · ${esc(a.zone_name)}</b><small>${esc(statusLabel(a, now))}</small>
+      <div class="bar">${bar(terr)}</div></button>`;
+  }).join("");
+  $("tabs").querySelectorAll(".tab").forEach((b) => b.onclick = () => { S.selected = b.dataset.k; S.pinned = false; setUrlAlert(S.selected); render(now); loadTicks(); });
+}
+
+async function loadTicks() {
+  if (!S.selected) return;
+  const key = S.selected;
+  try {
+    const j = await get("/alert?key=" + encodeURIComponent(key));
+    if (key !== S.selected) return;
+    S.ticksFor = key; S.ticks = j.ticks || []; S.outliers = j.outliers || null; S.benchFor = j.bench || null;
+    S.extra = j.alert && j.alert.key === key ? j.alert : null;
+    render(Math.floor(Date.now() / 1000));
+  } catch (e) {
+    // Unknown key from a link: fall back to the live view.
+    if (key === S.selected && S.pinned && !S.alerts.find((x) => x.key === key)) { S.pinned = false; S.extra = null; S.selected = S.alerts.length ? S.alerts[0].key : null; setUrlAlert(S.selected); render(Math.floor(Date.now() / 1000)); if (S.selected) loadTicks(); }
+  }
+}
+
+function openAlert(key) {
+  if (!key) return;
+  S.selected = key; S.pinned = true;
+  if (!(S.extra && S.extra.key === key)) S.extra = null;
+  setUrlAlert(key);
+  render(Math.floor(Date.now() / 1000));
+  loadTicks();
+  $("main").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+function backToLive() {
+  S.pinned = false; S.extra = null;
+  S.selected = S.alerts.length ? S.alerts[0].key : null;
+  setUrlAlert(S.selected);
+  render(Math.floor(Date.now() / 1000));
+  if (S.selected) loadTicks();
+}
+
+
+function announceAlert(a) {
+  const sig = a ? `${a.key}|${a.status}|${a.state ? a.state.ts : ""}` : "";
+  if (sig === S.lastAlertEvt) return;
+  S.lastAlertEvt = sig;
+  dispatchEvent(new CustomEvent("oracle:alert", { detail: a || null }));
+}
+const betNode = document.getElementById("betSlot");
+function render(now) {
+  renderTabs(now);
+  render2(now);
+  const h = $("betHere");
+  if (h) h.replaceWith(betNode); else $("main").after(betNode);
+  announceAlert(S.alerts.find((x) => x.key === S.selected) || null);
+}
+function render2(now) {
+  const liveA = S.alerts.find((x) => x.key === S.selected);
+  const a = liveA || (S.pinned && S.extra && S.extra.key === S.selected ? S.extra : null);
+  if (!a && S.pinned && S.selected) { $("main").innerHTML = `<div class="empty">Loading alert…</div>`; return; }
+  if (!a) {
+    $("main").innerHTML = `<div class="empty">No territory alerts running on Osprey, Wainwright, Briggs or SolTech right now. Live odds appear here the minute one starts.</div>`;
+    return;
+  }
+  const s = a.state;
+  const win = s ? s.win : null;
+  const lead = s && s.leader;
+  const left = a.status === "live" ? `${mins(a.start_ts + a.dur * 60 - now)} min left` : statusLabel(a, now);
+  const oddsHtml = win ? FACS.map((f) => `<div class="fac ${f} ${f === lead ? "lead" : ""}"><div class="l">${f}</div><div class="n">${win[f].pct}%</div><div class="stars">${stars(win[f].pct)}</div></div>`).join("") : `<div class="note">${a.status === "live" ? "Waiting for the first map snapshot…" : "No live odds were recorded for this alert."}</div>`;
+  const rows = s ? FACS.map((f) => `<div class="row"><span class="lbl ${f}">${f} territory</span><div class="track"><span style="width:${s.territory[f]}%;background:${COLOR[f]}"></span></div><span class="v">${s.territory[f]}%</span></div>`).join("") +
+    FACS.map((f) => {
+      const base = s.territory[f] || 0, m = s.momentum[f];
+      const rel = base >= 1 ? (100 * m / base) : m;
+      return `<div class="row"><span class="lbl ${f}">${f} 15-min</span><span class="note">${rel > 0.05 ? "▲" : rel < -0.05 ? "▼" : "·"}</span><span class="v">${rel >= 0 ? "+" : ""}${rel.toFixed(1)}%</span></div>`;
+    }).join("") : "";
+  const popTot = s && s.pop ? FACS.reduce((t, f) => t + (s.pop[f] || 0), 0) : 0;
+  const popRows = popTot ? FACS.map((f) => `<div class="row"><span class="lbl ${f}">${f} players</span><div class="track"><span style="width:${(100 * s.pop[f] / popTot).toFixed(1)}%;background:${COLOR[f]}"></span></div><span class="v">${s.pop[f]}</span></div>`).join("") : "";
+  const kdRows = s && s.kd_source ? FACS.map((f) => `<div class="row"><span class="lbl ${f}">${f} KD</span><span class="note">live</span><span class="v">${s.kd[f]}</span></div>`).join("") : "";
+  const popAdj = s && s.win_popadj ? `<div class="second">With population weighting: ${FACS.map((f) => `<span class="${f}">${f} ${s.win_popadj[f].pct}%</span>`).join(" · ")} <span class="note">(experimental, fades out by minute 60)</span></div>` : "";
+  const kindNote = a.kind === "meltdown" ? `<div class="note" style="color:var(--warn)">Unstable Meltdown: scored differently from territory alerts; these odds are not validated for this alert type yet.</div>` : "";
+  const calls = s && s.calls && s.calls.length ? `<ul class="calls">${s.calls.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>` : "";
+  const second = s && s.second ? `<div class="second">Second place: ${Object.entries(s.second.odds).map(([f, p]) => `<span class="${f}">${f} ${p}%</span>`).join(" · ")} ${s.second.locked ? "(locked)" : ""}</div>` : "";
+  const result = a.status === "settled" ? `<div class="second">Census final: ${FACS.map((f) => `<span class="${f}">${f} ${a.final ? (+a.final[f]).toFixed(1) : "?"}</span>`).join(" · ")} — <b class="${a.winner}">${a.winner}</b> wins${a.basis === "sudden_death" ? " (sudden death)" : ""}</div>` : "";
+  $("main").innerHTML = `
+    <div class="title"><b>${esc(a.world_name)} · ${esc(a.zone_name)}${a.kind === "meltdown" ? " Meltdown" : ""}</b><span class="badge ${a.status}">${esc(a.status.replace("_", " "))}</span><span class="note">${esc(left)} · ${a.dur}-min alert</span>${liveA ? "" : `<button type="button" class="more backlive" id="backLive">← Back to live</button>`}</div>
+    <div class="grid">
+      <section class="card map"><h2>Map</h2><div id="map"></div></section>
+      <section class="card"><h2>Win chance</h2>${kindNote}<div class="odds">${oddsHtml}</div>${result}${popAdj}${second}<div class="rows">${rows}${popRows}${kdRows}</div>${popTot ? `<div class="note">Population: Honu (wt.honu.pw), ${popTot} on continent${s.pop_ns ? ` + ${s.pop_ns} NSO` : ""}.</div>` : ""}${calls}</section>
+    </div>
+    ${a.status === "live" ? `<div id="betHere"></div>` : ""}
+    <section class="card chart" style="margin-top:14px"><h2>Win chance over time</h2><div id="chart"><div class="note">Loading…</div></div></section>
+    ${a.status === "live" ? commander(a.commander || (s && s.commander), a.commander_ts, now) : reportPanel(a)}
+    ${benchPanel(a)}`;
+  if ($("backLive")) $("backLive").onclick = backToLive;
+  if (S.ticksFor === a.key) { const c = $("chart"); c.innerHTML = chart(S.ticks, a.dur, c.clientWidth); chartHover(c, S.ticks, a.dur); }
+  drawMap(a);
+}
+
+async function refreshLive() {
+  const now = Math.floor(Date.now() / 1000);
+  try {
+    const [live, health] = await Promise.all([get("/live"), get("/health").catch(() => null)]);
+    S.alerts = (live.alerts || []).sort((x, y) => (x.status === "live" ? 0 : 1) - (y.status === "live" ? 0 : 1) || y.start_ts - x.start_ts);
+    if (!S.alerts.find((x) => x.key === S.selected) && !S.pinned) { S.selected = S.alerts.length ? S.alerts[0].key : null; if (S.selected) setUrlAlert(S.selected); }
+    const ok = health && health.ok && health.last_ok_age_s !== null && health.last_ok_age_s < 300;
+    $("dot").className = "dot " + (ok ? "ok" : "bad");
+    $("statusText").textContent = ok ? `live · updated ${health.last_cycle_age_s}s ago` : "data delayed";
+    render(now);
+    if (S.selected && S.ticksFor !== S.selected) loadTicks();
+  } catch (e) {
+    $("dot").className = "dot bad";
+    $("statusText").textContent = "oracle unreachable";
+    if (!S.alerts.length) $("main").innerHTML = '<div class="empty">The oracle backend is not reachable right now.</div>';
+  }
+}
+
+S.hooks.openAlert = openAlert;
+initResults();
+initAuth();
+
+refreshLive(); refreshHistory();
+setInterval(refreshLive, 30000);
+setInterval(loadTicks, 60000);
+setInterval(refreshHistory, 120000);
