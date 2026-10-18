@@ -16,6 +16,7 @@ import { matchPicks } from "./pick-sync.mjs?v=20261010-sav1";
 import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-sav1";
 import { groupByTier, openTierIds, pickedInGroup, groupIndexAt, tierOf } from "./tiers.mjs?v=20261017-tier1";
 import { createDistCycler, createWheelSwiper } from "./dist-cycle.mjs?v=20261017-cycle15";
+import { sfx } from "./sfx.mjs?v=20261017-sfxpreload";
 import { slideSwap, attachDragCarousel } from "./chart-slide.mjs?v=20261017-drag3";
 import { mergeFreshRows } from "./rank-row.mjs?v=20261010-sav1";
 import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-sav1";
@@ -1255,7 +1256,7 @@ export function initRankings(host) {
   $("distMetric").addEventListener("change", (e) => setDistMetric(e.target.value));
   $("distPills").addEventListener("click", (e) => {
     const b = e.target.closest && e.target.closest(".dist-pill");
-    if (b) setDistMetric(b.getAttribute("data-id"));
+    if (b) { sfx("sparkle"); setDistMetric(b.getAttribute("data-id")); }
   });
   $("distPills").addEventListener("keydown", (e) => {
     const keys = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
@@ -1265,6 +1266,7 @@ export function initRankings(host) {
     e.preventDefault();
     let i = pills.findIndex((b) => b.getAttribute("data-id") === distMetric);
     i = e.key === "Home" ? 0 : e.key === "End" ? pills.length - 1 : (i + keys[e.key] + pills.length) % pills.length;
+    sfx("sparkle");
     setDistMetric(pills[i].getAttribute("data-id"));
     pills[i].focus();
   });
@@ -1530,5 +1532,5 @@ export function initRankings(host) {
     }
   }
   const ready = load();
-  return { syncPicks, ready };
+  return { syncPicks, ready, stepDist };
 }

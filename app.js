@@ -41,6 +41,7 @@ import { percentileOf } from "./dist.mjs?v=20261010-sav1";
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261015-tip1";
 import { createWheelSwiper } from "./dist-cycle.mjs?v=20261017-cycle15";
 import { slideSwap, attachDragCarousel } from "./chart-slide.mjs?v=20261017-drag3";
+import { pickGraphForKeys } from "./graph-keys.mjs?v=20261017-graphkeys1";
 import { entryFetchedAt, pickNewest, writeWithEviction } from "./cache-pick.mjs?v=20261010-sav1";
 import {
   NameLoadError,
@@ -1495,7 +1496,7 @@ import {
   }
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261017-cycle15")
+    rankingsLoading = import("./rankings.mjs?v=20261017-keys1")
       .then((m) => {
         rankingsApi = m.initRankings(rankingsHost);
         return rankingsApi.ready;
@@ -4651,6 +4652,33 @@ import {
       if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) e.preventDefault(); // not browser back / forward
       if (dir && players.length) flipView(dir);
     }, { passive: false });
+    // ⌨️ Global ←/→: whichever graph holds the middle of the screen gets the
+    // keys — 📊 steps to the next / previous metric, the skill graph flips
+    // 💀 ⇄ 🎯 (same as swiping). The pills' own focused-key handler owns
+    // arrows while a pill has focus; typing in any field is untouched, and
+    // when neither graph is centred the keys keep scrolling the page.
+    window.addEventListener("keydown", (e) => {
+      if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+      const t = e.target;
+      if (t && t.closest && t.closest("input, textarea, select, [contenteditable=true], #distPills")) return;
+      const dir = e.key === "ArrowRight" ? 1 : -1;
+      const distSection = document.getElementById("distSection");
+      const pick = pickGraphForKeys(
+        chartWrap ? chartWrap.getBoundingClientRect() : null,
+        document.getElementById("distChart")?.getBoundingClientRect() || null,
+        window.innerHeight,
+        { distOpen: !!distSection?.open, hasPlayers: players.length > 0 }
+      );
+      if (pick === "dist" && rankingsApi) {
+        e.preventDefault();
+        rankingsApi.stepDist(dir);
+        sfx("sparkle");
+      } else if (pick === "skill") {
+        e.preventDefault();
+        flipView(dir);
+      }
+    });
   }
   // t380u: phones have no hover — tapping 💀 / 📈 also shows what that view means.
   if (els.chartModeBar) {
