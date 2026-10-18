@@ -1,0 +1,537 @@
+{
+ "source": "rescored.json + Census world_event started rows",
+ "coin_flip": 0.2222,
+ "n_meltdowns": 24,
+ "n_scored": 24,
+ "missing_started_row": [],
+ "summary": {
+  "all": {
+   "uniform": {
+    "n": 24,
+    "mean": 0.2222,
+    "se": 0.0
+   },
+   "leader_loo": {
+    "n": 24,
+    "mean": 0.2411,
+    "se": 0.013
+   },
+   "proportional": {
+    "n": 24,
+    "mean": 0.2188,
+    "se": 0.0159
+   },
+   "model_t0": {
+    "n": 24,
+    "mean": 0.2297,
+    "se": 0.017
+   }
+  },
+  "same_alerts_as_model_t0": {
+   "uniform": {
+    "n": 24,
+    "mean": 0.2222,
+    "se": 0.0
+   },
+   "leader_loo": {
+    "n": 24,
+    "mean": 0.2411,
+    "se": 0.013
+   },
+   "proportional": {
+    "n": 24,
+    "mean": 0.2188,
+    "se": 0.0159
+   },
+   "model_t0": {
+    "n": 24,
+    "mean": 0.2297,
+    "se": 0.017
+   }
+  },
+  "paired_vs_uniform": {
+   "b_leader_loo": {
+    "n": 24,
+    "mean": 0.0189,
+    "se": 0.013
+   },
+   "b_proportional": {
+    "n": 24,
+    "mean": -0.0034,
+    "se": 0.0159
+   },
+   "model_t0_brier": {
+    "n": 24,
+    "mean": 0.0075,
+    "se": 0.017
+   }
+  },
+  "leader_p_full_fit": 0.46,
+  "start_leader_won": 9,
+  "start_leader_unique": 22,
+  "start_all_tied": 0,
+  "by_duration": {
+   "45": 24
+  }
+ },
+ "alerts": [
+  {
+   "alert": "1-8-176-1791797973",
+   "census_instance_id": "49288",
+   "duration": 45,
+   "winner": "TR",
+   "start_scores": {
+    "VS": 25.88235282898,
+    "NC": 45.49019622803,
+    "TR": 28.23529434204
+   },
+   "start_leader": [
+    "NC"
+   ],
+   "model_t0_brier": 0.231,
+   "b_uniform": 0.2222,
+   "b_leader_loo": 0.2819,
+   "leader_p_loo": 0.48,
+   "b_proportional": 0.2632
+  },
+  {
+   "alert": "1-4-177-1791821154",
+   "census_instance_id": "49291",
+   "duration": 45,
+   "winner": "NC",
+   "start_scores": {
+    "VS": 30.5882358551,
+    "NC": 38.82352828979,
+    "TR": 29.41176605225
+   },
+   "start_leader": [
+    "NC"
+   ],
+   "model_t0_brier": 0.1768,
+   "b_uniform": 0.2222,
+   "b_leader_loo": 0.1625,
+   "leader_p_loo": 0.43,
+   "b_proportional": 0.1843
+  },
+  {
+   "alert": "10-4-191-1791859791",
+   "census_instance_id": "46243",
+   "duration": 45,
+   "winner": "NC",
+   "start_scores": {
+    "VS": 20.0,
+    "NC": 35.29411697388,
+    "TR": 44.70588302612
+   },
+   "start_leader": [
+    "TR"
+   ],
+   "model_t0_brier": 0.1681,
+   "b_uniform": 0.2222,
+   "b_leader_loo": 0.2819,
+   "leader_p_loo": 0.48,
+   "b_proportional": 0.2195
+  },
+  {
+   "alert": "1-2-189-1791879285",
+   "census_instance_id": "49295",
+   "duration": 45,
+   "winner": "TR",
+   "start_scores": {
+    "VS": 54.50980377197,
+    "NC": 25.49019622803,
+    "TR": 9.019607543945
+   },
+   "start_leader": [
+    "VS"
+   ],
+   "model_t0_brier": 0.3093,
+   "b_uniform": 0.2222,
+   "b_leader_loo": 0.2819,
+   "leader_p_loo": 0.48,
+   "b_proportional": 0.4215
+  },
+  {
+   "alert": "10-2-179-1791881992",
+   "census_instance_id": "46245",
+   "duration": 45,
+   "winner": "TR",
+   "start_scores": {
+    "VS": 25.49019622803,
+    "NC": 40.3921585083,
+    "TR": 33.33333206177
+   },
+   "start_leader": [
+    "NC"
+   ],
+   "model_t0_brier": 0.3148,
+   "b_uniform": 0.2222,
+   "b_leader_loo": 0.2819,
+   "leader_p_loo": 0.48,
+   "b_proportional": 0.2242
+  },
+  {
+   "alert": "10-344-250-1791885324",
+   "census_instance_id": "46246",
+   "duration": 45,
+   "winner": "TR",
+   "start_scores": {
+    "VS": 18.03921508789,
+    "NC": 19.60784339905,
+    "TR": 19.60784339905
+   },
+   "start_leader": [
+    "NC",
+    "TR"
+   ],
+   "model_t0_brier": 0.3393,
+   "b_uniform": 0.2222,
+   "b_leader_loo": 0.3291,
+   "leader_p_loo": 0.43,
+   "b_proportional": 0.2163
+  },
+  {
+   "alert": "1-4-177-1791901602",
+   "census_instance_id": "49297",
+   "duration": 45,
+   "winner": "NC",
+   "start_scores": {
+    "VS": 29.41176605225,
+    "NC": 41.17647171021,
+    "TR": 28.23529434204
+   },
+   "start_leader": [
+    "NC"
+   ],
+   "model_t0_brier": 0.1316,
+   "b_uniform": 0.2222,
+   "b_leader_loo": 0.1625,
+   "leader_p_loo": 0.43,
+   "b_proportional": 0.1702
+  },
+  {
+   "alert": "1-8-186-1791923044",
+   "census_instance_id": "49299",
+   "duration": 45,
+   "winner": "TR",
+   "start_scores": {
+    "VS": 43.13725662231,
+    "NC": 17.25490188599,
+    "TR": 25.88235282898
+   },
+   "start_leader": [
+    "VS"
+   ],
+   "model_t0_brier": 0.2981,
+   "b_uniform": 0.2222,
+   "b_leader_loo": 0.2819,
+   "leader_p_loo": 0.48,
+   "b_proportional": 0.26
+  },
+  {
+   "alert": "1-344-249-1791926376",
+   "census_instance_id": "49300",
+   "duration": 45,
+   "winner": "VS",
+   "start_scores": {
+    "VS": 11.76470565796,
+    "NC": 10.5882358551,
+    "TR": 13.33333396912
+   },
+   "start_leader": [
+    "TR"
+   ],
+   "model_t0_brier": 0.0795,
+   "b_uniform": 0.2222,
+   "b_leader_loo": 0.2819,
+   "leader_p_loo": 0.48,
+   "b_proportional": 0.2257
+  },
+  {
+   "alert": "10-6-192-1791947560",
+   "census_instance_id": "46256",
+   "duration": 45,
+   "winner": "TR",
+   "start_scores": {
+    "VS": 26.66666793823,
+    "NC": 5.098039150238,
+    "TR": 50.98039245605
+   },
+   "start_leader": [
+    "TR"
+   ],
+   "model_t0_brier": 0.1956,
+   "b_uniform": 0.2222,
+   "b_leader_loo": 0.1625,
+   "leader_p_loo": 0.43,
+   "b_proportional": 0.085
+  },
+  {
+   "alert": "1-4-177-1791965908",
+   "census_instance_id": "49305",
+   "duration": 45,
+   "winner": "TR",
+   "start_scores": {
+    "VS": 29.41176605225,
+    "NC": 47.05882263184,
+    "TR": 23.52941131592
+   },
+   "start_leader": [
+    "NC"
+   ],
+   "model_t0_brier": 0.2418,
+   "b_uniform": 0.2222,
+   "b_leader_loo": 0.2819,
+   "leader_p_loo": 0.48,
+   "b_proportional": 0.2976
+  },
+  {
+   "alert": "1-8-176-1791987229",
+   "census_instance_id": "49307",
+   "duration": 45,
+   "winner": "NC",
+   "start_scores": {
+    "VS": 23.52941131592,
+    "NC": 54.11764907837,
+    "TR": 6.274509906769
+   },
+   "start_leader": [
+    "NC"
+   ],
+   "model_t0_brier": 0.172,
+   "b_uniform": 0.2222,
+   "b_leader_loo": 0.1625,
+   "leader_p_loo": 0.43,
+   "b_proportional": 0.0701
+  },
+  {
+   "alert": "1-2-189-1792009010",
+   "census_instance_id": "49309",
+   "duration": 45,
+   "winner": "TR",
+   "start_scores": {
+    "VS": 32.54901885986,
+    "NC": 30.19607925415,
+    "TR": 24.31372642517
+   },
+   "start_leader": [
+    "VS"
+   ],
+   "model_t0_brier": 0.2996,
+   "b_uniform": 0.2222,
+   "b_leader_loo": 0.2819,
+   "leader_p_loo": 0.48,
+   "b_proportional": 0.2598
+  },
+  {
+   "alert": "10-8-176-1792035065",
+   "census_instance_id": "46267",
+   "duration": 45,
+   "winner": "VS",
+   "start_scores": {
+    "VS": 36.86274719238,
+    "NC": 34.50980377197,
+    "TR": 28.23529434204
+   },
+   "start_leader": [
+    "VS"
+   ],
+   "model_t0_brier": 0.1353,
+   "b_uniform": 0.2222,
+   "b_leader_loo": 0.1625,
+   "leader_p_loo": 0.43,
+   "b_proportional": 0.1991
+  },
+  {
+   "alert": "10-2-179-1792057024",
+   "census_instance_id": "46269",
+   "duration": 45,
+   "winner": "TR",
+   "start_scores": {
+    "VS": 21.96078491211,
+    "NC": 35.68627548218,
+    "TR": 20.7843132019
+   },
+   "start_leader": [
+    "NC"
+   ],
+   "model_t0_brier": 0.3425,
+   "b_uniform": 0.2222,
+   "b_leader_loo": 0.2819,
+   "leader_p_loo": 0.48,
+   "b_proportional": 0.2752
+  },
+  {
+   "alert": "1-4-187-1792057809",
+   "census_instance_id": "49313",
+   "duration": 45,
+   "winner": "TR",
+   "start_scores": {
+    "VS": 38.82352828979,
+    "NC": 37.64706039429,
+    "TR": 22.35294151306
+   },
+   "start_leader": [
+    "VS"
+   ],
+   "model_t0_brier": 0.2228,
+   "b_uniform": 0.2222,
+   "b_leader_loo": 0.2819,
+   "leader_p_loo": 0.48,
+   "b_proportional": 0.2994
+  },
+  {
+   "alert": "1-8-186-1792096022",
+   "census_instance_id": "49316",
+   "duration": 45,
+   "winner": "VS",
+   "start_scores": {
+    "VS": 43.13725662231,
+    "NC": 19.2156867981,
+    "TR": 32.54901885986
+   },
+   "start_leader": [
+    "VS"
+   ],
+   "model_t0_brier": 0.1793,
+   "b_uniform": 0.2222,
+   "b_leader_loo": 0.1625,
+   "leader_p_loo": 0.43,
+   "b_proportional": 0.1521
+  },
+  {
+   "alert": "10-4-191-1792126655",
+   "census_instance_id": "46276",
+   "duration": 45,
+   "winner": "VS",
+   "start_scores": {
+    "VS": 20.0,
+    "NC": 29.41176605225,
+    "TR": 44.70588302612
+   },
+   "start_leader": [
+    "TR"
+   ],
+   "model_t0_brier": 0.2472,
+   "b_uniform": 0.2222,
+   "b_leader_loo": 0.2819,
+   "leader_p_loo": 0.48,
+   "b_proportional": 0.3145
+  },
+  {
+   "alert": "1-2-179-1792183418",
+   "census_instance_id": "49328",
+   "duration": 45,
+   "winner": "TR",
+   "start_scores": {
+    "VS": 21.96078491211,
+    "NC": 41.56862640381,
+    "TR": 34.50980377197
+   },
+   "start_leader": [
+    "NC"
+   ],
+   "model_t0_brier": 0.292,
+   "b_uniform": 0.2222,
+   "b_leader_loo": 0.2819,
+   "leader_p_loo": 0.48,
+   "b_proportional": 0.2166
+  },
+  {
+   "alert": "10-4-177-1792210482",
+   "census_instance_id": "46289",
+   "duration": 45,
+   "winner": "NC",
+   "start_scores": {
+    "VS": 25.88235282898,
+    "NC": 41.17647171021,
+    "TR": 31.76470565796
+   },
+   "start_leader": [
+    "NC"
+   ],
+   "model_t0_brier": 0.1316,
+   "b_uniform": 0.2222,
+   "b_leader_loo": 0.1625,
+   "leader_p_loo": 0.43,
+   "b_proportional": 0.1707
+  },
+  {
+   "alert": "1-2-193-1792235327",
+   "census_instance_id": "49335",
+   "duration": 45,
+   "winner": "TR",
+   "start_scores": {
+    "VS": 18.43137359619,
+    "NC": 20.7843132019,
+    "TR": 48.62745285034
+   },
+   "start_leader": [
+    "TR"
+   ],
+   "model_t0_brier": 0.2122,
+   "b_uniform": 0.2222,
+   "b_leader_loo": 0.1625,
+   "leader_p_loo": 0.43,
+   "b_proportional": 0.0998
+  },
+  {
+   "alert": "1-6-178-1792258726",
+   "census_instance_id": "49337",
+   "duration": 45,
+   "winner": "TR",
+   "start_scores": {
+    "VS": 26.66666793823,
+    "NC": 40.7843132019,
+    "TR": 30.5882358551
+   },
+   "start_leader": [
+    "NC"
+   ],
+   "model_t0_brier": 0.2533,
+   "b_uniform": 0.2222,
+   "b_leader_loo": 0.2819,
+   "leader_p_loo": 0.48,
+   "b_proportional": 0.2401
+  },
+  {
+   "alert": "1-344-248-1792262962",
+   "census_instance_id": "49339",
+   "duration": 45,
+   "winner": "NC",
+   "start_scores": {
+    "VS": 18.03921508789,
+    "NC": 19.60784339905,
+    "TR": 19.60784339905
+   },
+   "start_leader": [
+    "NC",
+    "TR"
+   ],
+   "model_t0_brier": 0.4103,
+   "b_uniform": 0.2222,
+   "b_leader_loo": 0.3291,
+   "leader_p_loo": 0.43,
+   "b_proportional": 0.2163
+  },
+  {
+   "alert": "10-4-177-1792294792",
+   "census_instance_id": "46303",
+   "duration": 45,
+   "winner": "VS",
+   "start_scores": {
+    "VS": 42.35294342041,
+    "NC": 40.0,
+    "TR": 15.29411792755
+   },
+   "start_leader": [
+    "VS"
+   ],
+   "model_t0_brier": 0.1291,
+   "b_uniform": 0.2222,
+   "b_leader_loo": 0.1625,
+   "leader_p_loo": 0.43,
+   "b_proportional": 0.171
+  }
+ ]
+}
