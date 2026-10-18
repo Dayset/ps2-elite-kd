@@ -121,6 +121,8 @@ footer { color: var(--dim); font-size: 12px; margin-top: 18px; }
 
   <div id="tabs" class="tabs"></div>
   <div id="main"></div>
+  <!-- Betting panel: filled by js/bet.js (listens for oracle:alert / oracle:auth). render() moves this node into #betHere. -->
+  <section id="betSlot"></section>
 
   <section class="card" style="margin-top:14px">
     <h2>Recent results</h2>
@@ -132,6 +134,7 @@ footer { color: var(--dim); font-size: 12px; margin-top: 18px; }
   <footer>Odds update every minute from Census map data. Results settle 10 minutes after an alert ends, from Census's own final scores (sudden death decides draws). Percentages are model estimates, not guarantees.</footer>
 </div>
 
+<script type="module" src="js/bet.js"></script>
 <script>
 (() => {
   const API = new URLSearchParams(location.search).get("api") || "https://ps2-oracle.dayset.workers.dev";
@@ -346,8 +349,22 @@ footer { color: var(--dim); font-size: 12px; margin-top: 18px; }
     return `<section class="card" style="margin-top:14px"><h2>Benchmark slices</h2><div class="scroll"><table class="slices"><thead><tr><th>Slice</th><th>VS</th><th>NC</th><th>TR</th><th>Brier</th></tr></thead><tbody>${rows}</tbody></table></div><div class="note">Win chance recorded at each slice; Brier against the Census winner (lower is better, coin-flip 0.222).</div></section>`;
   }
 
+  let lastAlertEvt = "";
+  function announceAlert(a) {
+    const sig = a ? `${a.key}|${a.status}|${a.state ? a.state.ts : ""}` : "";
+    if (sig === lastAlertEvt) return;
+    lastAlertEvt = sig;
+    dispatchEvent(new CustomEvent("oracle:alert", { detail: a || null }));
+  }
+  const betNode = document.getElementById("betSlot");
   function render(now) {
     renderTabs(now);
+    render2(now);
+    const h = $("betHere");
+    if (h) h.replaceWith(betNode); else $("main").after(betNode);
+    announceAlert(alerts.find((x) => x.key === selected) || null);
+  }
+  function render2(now) {
     const liveA = alerts.find((x) => x.key === selected);
     const a = liveA || (pinned && extra && extra.key === selected ? extra : null);
     if (!a && pinned && selected) { $("main").innerHTML = `<div class="empty">Loading alert…</div>`; return; }
@@ -380,6 +397,7 @@ footer { color: var(--dim); font-size: 12px; margin-top: 18px; }
         <section class="card map"><h2>Map</h2><div id="map"></div></section>
         <section class="card"><h2>Win chance</h2>${kindNote}<div class="odds">${oddsHtml}</div>${result}${popAdj}${second}<div class="rows">${rows}${popRows}${kdRows}</div>${popTot ? `<div class="note">Population: Honu (wt.honu.pw), ${popTot} on continent${s.pop_ns ? ` + ${s.pop_ns} NSO` : ""}.</div>` : ""}${calls}</section>
       </div>
+      ${a.status === "live" ? `<div id="betHere"></div>` : ""}
       <section class="card chart" style="margin-top:14px"><h2>Win chance over time</h2><div id="chart"><div class="note">Loading…</div></div></section>
       ${a.status === "live" ? commander(a.commander || (s && s.commander), a.commander_ts, now) : reportPanel(a)}
       ${benchPanel(a)}`;
@@ -463,6 +481,7 @@ footer { color: var(--dim); font-size: 12px; margin-top: 18px; }
     return { status: r.status, body: await r.json().catch(() => ({})) };
   }
   function renderWho() {
+    dispatchEvent(new CustomEvent("oracle:auth", { detail: me || null }));
     $("who").innerHTML = me
       ? `<span>Signed in as <b class="${esc(me.faction || "")}">${esc(me.name)}</b></span><button class="link" id="signOut">Sign out</button>`
       : `<button class="btn" id="signIn">Sign in</button>`;
