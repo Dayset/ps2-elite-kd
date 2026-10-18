@@ -18,6 +18,9 @@ const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&
 const token = () => { try { return localStorage.getItem("ps2oracle_token"); } catch { return null; } };
 const pts = (x) => (Math.round(x * 100) / 100).toLocaleString(undefined, { maximumFractionDigits: 2 });
 
+/** Grayed placeholder between alerts so users see voting exists. */
+const voteIdleHtml = () => `<div class="card vote idle"><h2>🎲 Vote for the winner</h2><div class="note">No live alert — voting opens when the next one starts.</div>${DISCLAIMER}</div>`;
+
 /** Shown on every voting card: short line + expandable fair-play rules. */
 export const DISCLAIMER = `<details class="fair"><summary>BonusCheques are a meme currency: no cash value, nothing is ever paid out. <b>Fair play rules</b></summary>
   <ul>
@@ -71,7 +74,7 @@ export async function fetchMyVotes() {
 async function refresh() {
   if (!slot()) return;
   if (!alert || alert.status !== "live") {
-    if (!me) { slot().innerHTML = ""; return; }
+    if (!me) { slot().innerHTML = voteIdleHtml(); return; }
     try { wallet = await fetchMyVotes(); } catch { wallet = null; }
     if (alert && alert.status === "live") return;   // switched while loading
     slot().innerHTML = myVotesHtml(wallet);
@@ -90,7 +93,7 @@ function render() {
   if (!el || !alert || alert.status !== "live") {
     // Between alerts: signed-in users see their vote history; everyone else
     // sees the panel grayed out so it's clear voting exists.
-    if (el) el.innerHTML = me ? myVotesHtml(wallet) : `<div class="card vote idle"><h2>🎲 Vote for the winner</h2><div class="note">No live alert — voting opens when the next one starts.</div>${DISCLAIMER}</div>`;
+    if (el) el.innerHTML = me ? myVotesHtml(wallet) : voteIdleHtml();
     return;
   }
   const q = quotes;
