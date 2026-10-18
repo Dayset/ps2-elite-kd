@@ -191,3 +191,8 @@ approved it, "shipped" means it is live in the running pipeline.
 - **Stream half-open fix.** `census_events.py` reconnects after 120s with no message
   at all (Census heartbeats every ~30s) instead of waiting on `recv()` forever; this
   is the "no close frame, then silence" freeze.
+- **Migrated to Cloudflare + GitHub Pages** (see `CLOUDFLARE.md`): `ps2-oracle` Worker
+  polls Census REST every minute into D1, computes odds with a JS port of the engine
+  (parity-tested against Python), settles from Census final scores with sudden death
+  for draws, serves `/oracle/` on GitHub Pages; the commander runs in Actions.
+  Betting/auth remain in the Muse artifact for now.
