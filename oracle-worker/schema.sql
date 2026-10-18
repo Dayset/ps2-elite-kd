@@ -137,3 +137,30 @@ CREATE TABLE IF NOT EXISTS account (
   created INTEGER NOT NULL,
   updated INTEGER NOT NULL
 );
+
+-- Virtual points (never purchasable, never cashable).
+CREATE TABLE IF NOT EXISTS wallet (
+  cid TEXT PRIMARY KEY,
+  balance REAL NOT NULL,
+  created INTEGER NOT NULL,
+  last_auto_at INTEGER NOT NULL,     -- automatic +5/h top-up bookkeeping
+  last_manual_day TEXT               -- UTC day of the last manual BonusCheque
+);
+
+CREATE TABLE IF NOT EXISTS bet (
+  id TEXT PRIMARY KEY,
+  cid TEXT NOT NULL,
+  key TEXT NOT NULL,                 -- alert key
+  outcome TEXT NOT NULL,             -- VS | NC | TR (winner market)
+  stake REAL NOT NULL, fee REAL NOT NULL, net REAL NOT NULL,
+  shares REAL NOT NULL,              -- points paid if the outcome wins
+  pct REAL NOT NULL,                 -- oracle win % when placed
+  progress REAL NOT NULL,            -- share of the alert elapsed when placed
+  placed_ts INTEGER NOT NULL,
+  status TEXT NOT NULL,              -- open | won | lost | void
+  payout REAL NOT NULL DEFAULT 0,
+  settled_ts INTEGER,
+  credited INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS bet_cid ON bet (cid, placed_ts);
+CREATE INDEX IF NOT EXISTS bet_open ON bet (status, key);

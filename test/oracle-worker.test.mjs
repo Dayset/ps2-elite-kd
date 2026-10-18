@@ -123,6 +123,11 @@ test("full alert lifecycle: live → settling → settled from Census final scor
   assert.equal(a.kind, "territory");
   assert.ok(DB.raw.prepare("SELECT COUNT(*) n FROM pop").get().n >= 4);
 
+  // A bettor backed TR with 100 points for 250 shares (paid by the cycle when it settles).
+  DB.raw.prepare("INSERT INTO wallet (cid, balance, created, last_auto_at) VALUES ('5428010618035300777', 900, 0, 0)").run();
+  DB.raw.prepare(`INSERT INTO bet (id, cid, key, outcome, stake, fee, net, shares, pct, progress, placed_ts, status)
+    VALUES ('b1', '5428010618035300777', '1-4-500', 'TR', 100, 0, 100, 250, 40, 0.3, ?, 'open')`).run(T0 + 1800);
+
   // Ends; Census final says TR (snapshot says VS → flagged, Census wins).
   const END = T0 + 90 * 60;
   census.metagame.push(mg(500, 153, "ended", END, 32.9, 31.8, 35.3));
@@ -142,9 +147,13 @@ test("full alert lifecycle: live → settling → settled from Census final scor
   assert.equal(b.winner, "TR");
   assert.ok(JSON.parse(b.brier).t60 > 0.2, "VS-favoured prediction scores badly when TR wins");
 
+  assert.deepEqual({ ...DB.raw.prepare("SELECT status, payout, credited FROM bet WHERE id='b1'").get() }, { status: "won", payout: 250, credited: 1 });
+  assert.equal(DB.raw.prepare("SELECT balance FROM wallet").get().balance, 1150, "paid once by the cycle");
+
   // Settled alerts are final: a later run does not touch them.
   await runCycle(env, (END + 900) * 1000);
   assert.equal(DB.raw.prepare("SELECT winner FROM alert").get().winner, "TR");
+  assert.equal(DB.raw.prepare("SELECT balance FROM wallet").get().balance, 1150, "no double payout");
 
   const hist = await (await worker.fetch(new Request("https://x/history"), env)).json();
   assert.equal(hist.alerts[0].winner, "TR");

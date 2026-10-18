@@ -21,6 +21,7 @@ import {
 import { binGetter, hasTree, regionMap, latticeFor, captureModel, resistanceModel } from "./models.js";
 import { runCommander, ownership } from "./commander.js";
 import { handleAuth } from "./auth.js";
+import { handleBet, settleStatements } from "./bet.js";
 export { AuthWatcher } from "./auth-watcher.js";
 
 const CENSUS = "https://census.daybreakgames.com";
@@ -328,6 +329,11 @@ export async function runCycle(env, nowMs = Date.now()) {
   if (writes.length) await db.batch(writes);
   report.written = changedRows.length;
 
+  // 4c) Pay out bets on alerts that reached a final status.
+  const toSettle = ((await db.prepare(`SELECT DISTINCT a.key, a.status, a.winner FROM bet b JOIN alert a ON a.key = b.key
+    WHERE b.status = 'open' AND a.status IN ('settled','canceled','unresolved')`).all()).results) || [];
+  if (toSettle.length) { await db.batch(settleStatements(db, toSettle, now)); report.bets_settled = toSettle.length; }
+
   // 5) Daily pruning at 04:07 UTC: raw snapshots 30 days, flips 90 days.
   const d = new Date(nowMs);
   if (d.getUTCHours() === 4 && d.getUTCMinutes() === 7) {
@@ -485,6 +491,7 @@ async function handle(request, env) {
       "Access-Control-Allow-Methods": "GET, POST, OPTIONS", "Access-Control-Max-Age": "86400" } });
   }
   if (url.pathname.startsWith("/auth/")) return handleAuth(request, env, url, json, now);
+  if (url.pathname.startsWith("/bet/")) return handleBet(request, env, url, json, now);
 
   if (url.pathname === "/" || url.pathname === "/health") {
     const last = await getMeta(db, "last_cycle");
