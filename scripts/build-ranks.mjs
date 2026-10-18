@@ -30,6 +30,25 @@ import { cleanTimes } from "../flairs.mjs";
 import { sessionMetrics, sessionFlag, sessionRuleText, distribution, SESSION_METRICS, SESSION_METRIC_IDS, SESSION_MIN, SESSION_RULE } from "../session-stats.mjs";
 
 /** Full Honu XP detail for a slug (data/xp/<slug>.json; requested players only), or null. */
+/** 💥 Burst sessions over the stored sessions of every cached player (no network). */
+export function burstStatus(dataDir) {
+  const index = JSON.parse(fs.readFileSync(path.join(dataDir, "index.json"), "utf8"));
+  const players = [];
+  const seen = new Set();
+  const hidden = readHidden(dataDir);
+  for (const e of index.players || []) {
+    if (!e || !e.file || seen.has(e.file)) continue;
+    seen.add(e.file);
+    let raw;
+    try { raw = JSON.parse(fs.readFileSync(path.join(dataDir, e.file), "utf8")); } catch { continue; }
+    const pl = (raw && (raw.player || raw)) || {};
+    const slug = e.slug || path.basename(e.file, ".json");
+    players.push({ slug, name: pl.display || e.name || slug, cid: pl.cid, assists: pl.assists, xp: readXp(dataDir, slug),
+      hidden: !!hidden.match({ slug, name: pl.display || e.name, cid: pl.cid }) });
+  }
+  return burstSessions(players);
+}
+
 export function readXp(dataDir, slug) {
   try {
     return JSON.parse(fs.readFileSync(path.join(dataDir, "xp", `${slug}.json`), "utf8"));
@@ -44,6 +63,7 @@ export function readXp(dataDir, slug) {
 export { METRIC_COLS, RANK_COLS, bareName, rankRow } from "../rank-row.mjs";
 import { METRIC_COLS, RANK_COLS, rankRow, bareName } from "../rank-row.mjs";
 import { assistGroups } from "../assist-groups.mjs";
+import { burstSessions } from "../burst-sessions.mjs";
 
 /** data/reviewed.json → Set of slugs confirmed as stat padders (decision "padding"; missing file = none). */
 export function readConfirmedPadders(dataDir) {
@@ -485,6 +505,8 @@ if (isMain) {
   st.review = review;
   st.assistGroups = assistInfo;
   st.infantry = infantryStatus(dataDir);
+  st.burst = burstStatus(dataDir); // 💥 review signal only: never changes ranks.json
+  console.log(`burst sessions: ${st.burst.sessions} session(s), ${st.burst.flaggedPlayers} player(s) to review, ${st.burst.clearedPlayers} cleared`);
   fs.writeFileSync(stPath, JSON.stringify(st, null, 2) + "\n");
   for (const o of guard.items.filter((x) => !x.explained)) {
     console.log(`::warning::outlier guard: ${o.name} ${o.id}=${o.value} (bound ${o.bound}, z ${o.z})`);

@@ -34,6 +34,12 @@ export const KNOWN_EXTREMES = Object.freeze({
   geilo20: "Owner reviewed 2026-10-18 (#10): Valkyrie (vehicle) user who also plays some infantry; 🔎 peak minute 47 kills is a vehicle burst",
   cdma2008: "Owner reviewed 2026-10-18 (#10): ordinary player, under 1 KPM in sessions; 🔎 high headshot share is legit",
   dade200: "Owner reviewed 2026-10-18 (#10): ordinary player, under 1 KPM in sessions; 🔎 high headshot share is legit",
+  // Owner (earlier review): Zugie and its alt/variant names are a high-skill solo player.
+  zugie: "Owner reviewed 2026-10-18: high-skill solo player (Zugie and its variants Zoogie, Zewgie, ZugieTR)",
+  zugiee: "Owner reviewed 2026-10-18: high-skill solo player (Zugie variant)",
+  zoogie: "Owner reviewed 2026-10-18: high-skill solo player (Zugie variant)",
+  zewgie: "Owner reviewed 2026-10-18: high-skill solo player (Zugie variant)",
+  zugietr: "Owner reviewed 2026-10-18: high-skill solo player (Zugie variant)",
   zyr0sncx: "Owner reviewed 2026-10-18 (#10): legit pro player (plays Valorant for prize money); 🔎 farm-like-victim oddity was JOHNK56 ×20 in a 449-kill session",
   renamedsoldier12345: "Owner reviewed 2026-10-18 (#10): vehicle main try-harding K/D (lifetime KD 33, 658 kills / 25 deaths vs 200 opponents); explained, not a cheater",
   fright1vs: "Reviewed 2026-10-18 (#10): 🎈 inflation 19.2 = lifetime KD 1.82 vs 121 kills / 992 deaths against 200 opponents; real data, big sample, the public board flatters",
