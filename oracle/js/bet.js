@@ -5,11 +5,12 @@
  *   POST /bet/place        {key, outcome, stake, seen_pct}
  *   POST /bet/bonus        +25 once per UTC day
  *   GET  /bet/leaderboard
+ * When signed in and no live alert is selected: a compact "My bets" card (#20) from /bet/me.
  * Listens for:  "oracle:alert" {detail: alert|null}   (selected alert changed / refreshed)
  *               "oracle:auth"  {detail: character|null} (signed in / out)
  * Renders into <section id="betSlot">. Uses localStorage "ps2oracle_token".
  */
-const API = new URLSearchParams(location.search).get("api") || "https://ps2-oracle.dayset.workers.dev";
+const API = new URLSearchParams(typeof location !== "undefined" ? location.search : "").get("api") || "https://ps2-oracle.dayset.workers.dev";
 const FACS = ["VS", "NC", "TR"];
 const STAKES = [25, 50, 100, 200];
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -25,12 +26,43 @@ async function call(path, method = "GET", body) {
   return { status: r.status, body: await r.json().catch(() => ({})) };
 }
 
-const slotEl = document.getElementById("betSlot");
+const slotEl = typeof document !== "undefined" ? document.getElementById("betSlot") : null;
 const slot = () => slotEl;
+
+// "My bets" (#20): alert key "world-zone-instance" -> "Server · Continent".
+const WORLD_NAMES = { 1: "Osprey", 10: "Wainwright", 25: "Briggs", 40: "SolTech" };
+const ZONE_NAMES = { 2: "Indar", 4: "Hossin", 6: "Amerish", 8: "Esamir", 344: "Oshur" };
+export function alertName(key) {
+  const [w, z] = String(key || "").split("-").map(Number);
+  return `${WORLD_NAMES[w] || "World " + w} · ${ZONE_NAMES[z & 0xffff] || "Zone " + z}`;
+}
+const signed = (x) => `${x > 0 ? "+" : x < 0 ? "−" : ""}${pts(Math.abs(x))}`;
+/** Compact card: balance, total profit, last 10 settled bets (one line each). */
+export function myBetsHtml(w) {
+  if (!w) return "";
+  const settled = (w.bets || []).filter((b) => b.status && b.status !== "open").slice(0, 10);
+  const rows = settled.map((b) => `<div class="mbrow ${esc(b.status)}"><span class="mbname">${esc(alertName(b.key))}</span>
+      <span class="${esc(b.outcome)}">${esc(b.outcome)}</span> <span class="mbnum">${pts(b.stake)} → ${pts(b.payout || 0)}</span>
+      <span class="mbst">${esc(b.status)}</span></div>`).join("");
+  return `<div class="card bet mybetscard"><h2>My bets</h2>
+    <div class="betbar"><span>Balance <b>${pts(w.balance)}</b></span><span>Total profit <b class="${w.profit > 0 ? "won" : w.profit < 0 ? "lost" : ""}">${signed(w.profit || 0)}</b></span></div>
+    ${rows ? `<div class="mbrows">${rows}</div>` : `<div class="note">No settled bets yet. Bets settle when their alert ends.</div>`}
+  </div>`;
+}
+export async function fetchMyBets() {
+  const r = await call("/bet/me");
+  return r.status === 200 ? r.body : null;
+}
 
 async function refresh() {
   if (!slot()) return;
-  if (!alert || alert.status !== "live") { slot().innerHTML = ""; return; }
+  if (!alert || alert.status !== "live") {
+    if (!me) { slot().innerHTML = ""; return; }
+    try { wallet = await fetchMyBets(); } catch { wallet = null; }
+    if (alert && alert.status === "live") return;   // switched while loading
+    slot().innerHTML = myBetsHtml(wallet);
+    return;
+  }
   try {
     const [q, w] = await Promise.all([call(`/bet/quote?key=${encodeURIComponent(alert.key)}`), me ? call("/bet/me") : Promise.resolve(null)]);
     quotes = q.body;
@@ -42,7 +74,7 @@ async function refresh() {
 
 function render() {
   const el = slot();
-  if (!el || !alert || alert.status !== "live") { if (el) el.innerHTML = ""; return; }
+  if (!el || !alert || alert.status !== "live") { if (el) el.innerHTML = me ? myBetsHtml(wallet) : ""; return; }
   const q = quotes;
   const own = wallet && wallet.own_faction;
   const ownOnly = q && q.own_faction_only && FACS.includes(own);
@@ -120,9 +152,15 @@ const css = `
 .betmsg { color: var(--accent); margin-top: 8px; }
 .mybets { margin-top: 10px; } .mybet { font-size: 13px; padding: 3px 0; font-variant-numeric: tabular-nums; }
 .bet details { margin-top: 10px; font-size: 13px; } .bet summary { cursor: pointer; color: var(--muted); }
+.mbrows { display: flex; flex-direction: column; }
+.mbrow { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; padding: 6px 0; border-bottom: 1px solid #1e222a; font-size: 14px; font-variant-numeric: tabular-nums; min-width: 0; }
+.mbrow .mbname { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mbrow .mbst { font-weight: 600; min-width: 3.2em; text-align: right; }
+.mbrow.won .mbst, .mybetscard b.won { color: var(--ok); } .mbrow.lost .mbst, .mybetscard b.lost { color: var(--err); } .mbrow.void .mbst { color: var(--dim); }
 `;
 
 function mount() {
+  if (typeof document === "undefined") return;   // imported by a Node test
   if (!document.getElementById("betCss")) {
     const s = document.createElement("style"); s.id = "betCss"; s.textContent = css; document.head.appendChild(s);
   }
