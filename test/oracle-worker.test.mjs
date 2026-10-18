@@ -358,6 +358,41 @@ test("Census ended row without scores: settle from the clean pre-end snapshot", 
   assert.ok(JSON.parse(row.flags).includes("final_missing"));
 });
 
+test("#26: Census corrects the ended row before +10 min: settle on the corrected scores; settled alerts never change", { skip }, async () => {
+  const { runCycle } = await import("../oracle-worker/src/index.js");
+  const DB = fakeD1();
+  const T0 = 1_792_600_000, END = T0 + 90 * 60;
+  const census = { map: { 1: 40, 2: 28, 3: 20 }, metagame: [mg(710, 153, "started", T0)], flips: [] };
+  installCensus(census);
+  await runCycle({ DB }, (END - 60) * 1000);
+  // The ended row first arrives with empty scores…
+  census.metagame.push(noScores(mg(710, 153, "ended", END)));
+  await runCycle({ DB }, (END + 60) * 1000);
+  assert.notEqual(DB.raw.prepare("SELECT status FROM alert").get().status, "settled");
+  // …then Census fills them in (TR wins, unlike the VS-leaning map).
+  census.metagame[1] = mg(710, 153, "ended", END, 30, 25, 45);
+  DB.reset();
+  await runCycle({ DB }, (END + 300) * 1000);
+  assert.ok(DB.queries <= 50, `D1 queries per run: ${DB.queries}`);
+  assert.deepEqual({ ...DB.raw.prepare("SELECT vs, nc, tr FROM metagame WHERE state='ended'").get() }, { vs: 30, nc: 25, tr: 45 });
+  await runCycle({ DB }, (END + 660) * 1000);
+  let row = DB.raw.prepare("SELECT status, winner, basis, final FROM alert").get();
+  assert.equal(row.status, "settled");
+  assert.equal(row.winner, "TR");
+  assert.equal(row.basis, "census_final");
+  assert.deepEqual(JSON.parse(row.final), { VS: 30, NC: 25, TR: 45 });
+  // A later "correction" after settlement updates the raw row but not the settled alert.
+  census.metagame[1] = mg(710, 153, "ended", END, 50, 25, 25);
+  await runCycle({ DB }, (END + 900) * 1000);
+  row = DB.raw.prepare("SELECT status, winner, basis, final FROM alert").get();
+  assert.equal(row.winner, "TR");
+  assert.deepEqual(JSON.parse(row.final), { VS: 30, NC: 25, TR: 45 });
+  // Empty scores never overwrite real ones.
+  census.metagame[1] = noScores(mg(710, 153, "ended", END));
+  await runCycle({ DB }, (END + 960) * 1000);
+  assert.equal(DB.raw.prepare("SELECT vs FROM metagame WHERE state='ended'").get().vs, 50);
+});
+
 test("no scores and a neutral-heavy snapshot: unresolved, bets refunded in full", { skip }, async () => {
   const { runCycle } = await import("../oracle-worker/src/index.js");
   const DB = fakeD1();

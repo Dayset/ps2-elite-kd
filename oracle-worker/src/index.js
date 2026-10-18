@@ -4,7 +4,7 @@
  * Every minute (cron):
  *  1. Census REST: map ownership for each tracked world (one call per world,
  *     all five continents), plus world_event METAGAME and FACILITY rows.
- *  2. Store in D1 (snap / metagame / flip), idempotent INSERT OR IGNORE.
+ *  2. Store in D1 (snap / flip: idempotent INSERT OR IGNORE; metagame: upsert of corrected scores).
  *  3. Rebuild every territory alert from the METAGAME rows: live alerts get a
  *     fresh state (push_live contract) + a win-history tick + benchmark slices;
  *     ended alerts settle from Census's own final scores at +0/+5/+10 min,
@@ -96,9 +96,14 @@ async function latestSnap(db, world, atOrBefore) {
 }
 
 /** One statement for any number of rows (D1 free plan: 50 queries per invocation). */
-function bulkInsert(db, table, cols, rows) {
+function bulkInsert(db, table, cols, rows, onConflict = null) {
   const sel = cols.map((c) => `json_extract(value,'$.${c}')`).join(", ");
-  return db.prepare(`INSERT OR IGNORE INTO ${table} (${cols.join(", ")}) SELECT ${sel} FROM json_each(?)`)
+  // onConflict: an upsert clause instead of OR IGNORE ("WHERE true" keeps SQLite's
+  // INSERT … SELECT … ON CONFLICT parse unambiguous).
+  const sql = onConflict
+    ? `INSERT INTO ${table} (${cols.join(", ")}) SELECT ${sel} FROM json_each(?) WHERE true ${onConflict}`
+    : `INSERT OR IGNORE INTO ${table} (${cols.join(", ")}) SELECT ${sel} FROM json_each(?)`;
+  return db.prepare(sql)
     .bind(JSON.stringify(rows.map((r) => Object.fromEntries(cols.map((c) => [c, r[c] ?? null])))));
 }
 
@@ -190,7 +195,10 @@ export async function runCycle(env, nowMs = Date.now()) {
   if (mg instanceof Error) report.errors.push(`metagame: ${mg.message}`);
   else {
     mgRows = parseMetagame(mg);
-    if (mgRows.length) stmts.push(bulkInsert(db, "metagame", ["world", "zone", "instance_id", "event_id", "state", "ts", "vs", "nc", "tr"], mgRows));
+    // #26: Census may correct an ended row later (scores filled in or changed): take the
+    // new scores. Alerts already settled are skipped by the cycle, so they never change.
+    if (mgRows.length) stmts.push(bulkInsert(db, "metagame", ["world", "zone", "instance_id", "event_id", "state", "ts", "vs", "nc", "tr"], mgRows,
+      "ON CONFLICT(world, instance_id, state, event_id) DO UPDATE SET vs=excluded.vs, nc=excluded.nc, tr=excluded.tr WHERE excluded.vs IS NOT NULL"));
   }
   if (fac instanceof Error) report.errors.push(`facility: ${fac.message}`);
   else {
