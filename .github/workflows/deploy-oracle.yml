@@ -48,12 +48,19 @@ jobs:
 
       - name: Deploy
         uses: cloudflare/wrangler-action@v3
-        env:
-          ORACLE_KEY: ${{ secrets.CENSUS_PROXY_KEY }}
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: oracle-worker
           command: deploy
-          secrets: |
-            ORACLE_KEY
+
+      # After the deploy: secrets can only be uploaded to a Worker that exists.
+      - name: Set ORACLE_KEY
+        working-directory: oracle-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          ORACLE_KEY: ${{ secrets.CENSUS_PROXY_KEY }}
+        run: |
+          if [ -z "$ORACLE_KEY" ]; then echo "::warning::CENSUS_PROXY_KEY not set; /export and /commander stay locked"; exit 0; fi
+          printf '%s' "$ORACLE_KEY" | npx --yes wrangler@4 secret put ORACLE_KEY
