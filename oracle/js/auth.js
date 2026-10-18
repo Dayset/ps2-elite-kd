@@ -25,7 +25,7 @@ function authView(html) { $("authBody").innerHTML = html; }
 function openAuth() {
   stopTimer();
   authView(`<h3>Verify your character</h3>
-    <div class="note">Proves you own the character using the game itself: you log out once while we watch the public Census event stream. No password, nothing installed.</div>
+    <div class="note">Proves you own the character using the game itself: you log out once while we watch the public Census event stream. No password, nothing installed. Voting is tied to a real character so it stays fair: you vote for your own faction, and riggers or cheaters aren't welcome.</div>
     <ol><li>Log into PlanetSide 2 with the character.</li><li>Enter its name and press Register.</li><li>Press ACCEPT when it unlocks, then log out in game (ESC → Logout) within 60 seconds.</li></ol>
     <input id="authName" placeholder="Character name" autocomplete="off" maxlength="40">
     <div class="row2"><button class="btn" id="authGo">Register</button></div><div class="err" id="authErr"></div>`);

@@ -33,7 +33,7 @@ GitHub Actions: deploy-oracle.yml (deploy) · oracle-commander.yml, oracle-honu-
 | Outliers | `oracle-worker/src/outliers.js` + `radar.mjs` (repo root) | Post-alert report rules (Honu participants, PS2 Radar second opinion); computed in the Honu job, stored by `/honu/ingest` in tables `report`, `radar` |
 | Honu job | `oracle-worker/honu-job.mjs`, run by `.github/workflows/oracle-honu.yml` | Reads `/honu/queue`, calls Honu (≥ 1 s apart) and PS2 Radar (≤ 5 per run, ≥ 2.5 s apart, own User-Agent, 25/day cap separate from build-log's 50/day), posts results to `/honu/ingest`. Secrets: `ORACLE_KEY` (repo secret `CENSUS_PROXY_KEY`), optional var `ORACLE_API` |
 | Honu trigger | `worker/src/oracle-tick.js` in the main site's cache Worker (service binding `ORACLE`, `GH_TOKEN`) | On its 5-minute cron: `GET /honu/pending`; dispatches `oracle-honu.yml` only when there is work. Backstop schedule in the workflow at :07 and :37 |
-| Accounts + betting | `oracle-worker/src/auth.js`, `auth-watcher.js` (Durable Object), `bet.js` | `/auth/*` logout-based character sign-in, `/bet/*` virtual-points betting (see those files' headers) |
+| Accounts + voting | `oracle-worker/src/auth.js`, `auth-watcher.js` (Durable Object), `vote.js` | `/auth/*` logout-based character sign-in, `/vote/*` fair-play voting with BonusCheques (meme currency, no cash value; see those files' headers) |
 | Dashboard | `oracle/index.html` → dayset.github.io/ps2-elite-kd/oracle/ | Reads the Worker; `?api=` overrides the URL, `?alert=<key>` opens an alert |
 | Commander cross-check | `.github/workflows/oracle-commander.yml` → `oracle/backend/commander_actions.py` | **Manual only** (`workflow_dispatch`): runs the Python `commander_live.py` on `/export` data and POSTs it to `/commander` (overwrites the Worker's result until the next minute) |
 | Honu probe | `.github/workflows/oracle-honu-probe.yml` | Manual diagnostic: does Honu's API answer from Actions vs from the Worker (which gets a challenge page) |
@@ -55,7 +55,7 @@ GitHub Actions: deploy-oracle.yml (deploy) · oracle-commander.yml, oracle-honu-
 | `GET /honu/queue` | `X-Oracle-Key` | Live zones needing population; settled alerts needing a report (retried every 4 min, up to 12 attempts, within 6 h of the end) |
 | `GET /honu/radar?cids=` | `X-Oracle-Key` | Cached PS2 Radar answers younger than 3 days + `looked_today` |
 | `POST /honu/ingest` | `X-Oracle-Key` | Results from the Honu job: `{pop, reports, radar, errors}` |
-| `/auth/*`, `/bet/*` | Bearer token where needed | Sign-in and betting (see `oracle-worker/src/auth.js`, `bet.js`) |
+| `/auth/*`, `/vote/*` | Bearer token where needed | Sign-in and voting (see `oracle-worker/src/auth.js`, `vote.js`) |
 
 ### D1 tables
 
@@ -136,8 +136,8 @@ GitHub Actions: deploy-oracle.yml (deploy) · oracle-commander.yml, oracle-honu-
 
 ## Not migrated yet
 
-- **BonusCheques and replays** still live only in the Muse artifact (`hex-betting-game`).
-  Accounts (`/auth/*`) and virtual-points betting (`/bet/*`) now run in the Worker.
+- **Replays** still live only in the old Muse artifact (historical name `hex-betting-game`).
+  Accounts (`/auth/*`) and voting with BonusCheques (`/vote/*`) now run in the Worker.
 - **No live per-player data:** per-player outliers need a Census kill stream, and an
   always-on stream does not fit the free plan, so outliers arrive only after an alert
   ends (Honu job). Population is refreshed about every 5 minutes, not every minute.

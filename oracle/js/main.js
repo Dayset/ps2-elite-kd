@@ -77,12 +77,12 @@ function announceAlert(a) {
   S.lastAlertEvt = sig;
   dispatchEvent(new CustomEvent("oracle:alert", { detail: a || null }));
 }
-const betNode = document.getElementById("betSlot");
+const voteNode = document.getElementById("voteSlot");
 function render(now) {
   renderTabs(now);
   render2(now);
-  const h = $("betHere");
-  if (h) h.replaceWith(betNode); else $("main").after(betNode);
+  const h = $("voteHere");
+  if (h) h.replaceWith(voteNode); else $("main").after(voteNode);
   syncDetails($("main"));
   enhance(document);
   announceAlert(S.alerts.find((x) => x.key === S.selected) || null);
@@ -116,15 +116,15 @@ function render2(now) {
   const kindNote = a.kind === "meltdown" ? `<div class="note" style="color:var(--warn)">Unstable Meltdown: scored differently from territory alerts; these odds are not validated for this alert type yet.</div>` : "";
   const calls = s && s.calls && s.calls.length ? `<ul class="calls">${s.calls.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>` : "";
   const second = s && s.second ? `<div class="second">Second place: ${Object.entries(s.second.odds).map(([f, p]) => `<span class="${f}">${f} ${pct1(p)}%</span>`).join(" · ")} ${s.second.locked ? "(locked)" : ""}</div>` : "";
-  const voided = (a.flags || []).includes("bets_void");
-  const result = a.status === "settled" ? `<div class="second">${a.final ? `Census final: ${FACS.map((f) => `<span class="${f}">${f} ${(+a.final[f]).toFixed(1)}</span>`).join(" · ")}` : "Census sent no final scores; decided from our last map snapshot"} — <b class="${a.winner}">${a.winner}</b> wins${a.basis === "sudden_death" ? " (sudden death)" : ""}</div>${voided ? `<div class="note" style="color:var(--warn)">Census map data was broken at the end and disagreed with the result, so all bets on this alert were refunded.</div>` : ""}` : "";
-  const suspectNote = s && s.suspect && s.suspect.length ? `<div class="note" style="color:var(--warn)">Census map data looks broken right now (${esc(s.suspect.map((x) => x.startsWith("neutral_heavy") ? `only ${x.split(":")[1]}% of bases owned` : x === "map_frozen" ? "map frozen while captures continue" : "no fresh map").join(", "))}). Odds may be wrong and betting is paused.</div>` : "";
+  const voided = (a.flags || []).includes("votes_void");
+  const result = a.status === "settled" ? `<div class="second">${a.final ? `Census final: ${FACS.map((f) => `<span class="${f}">${f} ${(+a.final[f]).toFixed(1)}</span>`).join(" · ")}` : "Census sent no final scores; decided from our last map snapshot"} — <b class="${a.winner}">${a.winner}</b> wins${a.basis === "sudden_death" ? " (sudden death)" : ""}</div>${voided ? `<div class="note" style="color:var(--warn)">Census map data was broken at the end and disagreed with the result, so every vote on this alert was given back.</div>` : ""}` : "";
+  const suspectNote = s && s.suspect && s.suspect.length ? `<div class="note" style="color:var(--warn)">Census map data looks broken right now (${esc(s.suspect.map((x) => x.startsWith("neutral_heavy") ? `only ${x.split(":")[1]}% of bases owned` : x === "map_frozen" ? "map frozen while captures continue" : "no fresh map").join(", "))}). Odds may be wrong and voting is paused.</div>` : "";
   $("main").innerHTML = `
     <div class="title"><b>${esc(a.world_name)} · ${esc(a.zone_name)}${a.kind === "meltdown" ? " Meltdown" : ""}</b><span class="badge ${a.status}">${esc(a.status.replace("_", " "))}</span><span class="note">${esc(left)} · ${a.dur}-min alert</span>${liveA ? "" : `<button type="button" class="more backlive" id="backLive">← Back to live</button>`}</div>
     <div class="grid">
       <section class="card map"><h2>Map</h2><div id="map"></div></section>
       <section class="card win"><h2>Win chance</h2>${kindNote}${suspectNote}<div class="odds" aria-live="polite" aria-atomic="true">${oddsHtml}</div>${oddLine}${result}${popAdj}${second}${rows || popRows ? det("wdet", "Details", `<div class="rows">${rows}${popRows}</div>${popTot ? `<div class="note">Population: Honu (wt.honu.pw), ${popTot} on continent${s.pop_ns ? ` + ${s.pop_ns} NSO` : ""}.</div>` : ""}`, "wdet") : ""}${calls}</section>
-      ${a.status === "live" ? `<div id="betHere"></div>` : ""}
+      ${a.status === "live" ? `<div id="voteHere"></div>` : ""}
     </div>
     <section class="card chart" style="margin-top:14px"><h2>Win chance over time</h2><div id="chart"><div class="sk sk-chart" aria-label="Loading"></div></div></section>
     ${a.status === "live" ? commander(a.commander || (s && s.commander), a.commander_ts, now, lead) : reportPanel(a)}

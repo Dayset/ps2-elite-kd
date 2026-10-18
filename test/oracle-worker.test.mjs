@@ -123,9 +123,9 @@ test("full alert lifecycle: live → settling → settled from Census final scor
   assert.equal(a.kind, "territory");
   assert.ok(DB.raw.prepare("SELECT COUNT(*) n FROM pop").get().n >= 4);
 
-  // A bettor backed TR with 100 points for 250 shares (paid by the cycle when it settles).
+  // A voter backed TR with 100 BonusCheques for 250 back (credited by the cycle when it settles).
   DB.raw.prepare("INSERT INTO wallet (cid, balance, created, last_auto_at) VALUES ('5428010618035300777', 900, 0, 0)").run();
-  DB.raw.prepare(`INSERT INTO bet (id, cid, key, outcome, stake, fee, net, shares, pct, progress, placed_ts, status)
+  DB.raw.prepare(`INSERT INTO vote (id, cid, key, outcome, amount, fee, net, potential, pct, progress, placed_ts, status)
     VALUES ('b1', '5428010618035300777', '1-4-500', 'TR', 100, 0, 100, 250, 40, 0.3, ?, 'open')`).run(T0 + 1800);
 
   // Ends; Census final says TR (snapshot says VS → flagged, Census wins).
@@ -147,13 +147,13 @@ test("full alert lifecycle: live → settling → settled from Census final scor
   assert.equal(b.winner, "TR");
   assert.ok(JSON.parse(b.brier).t60 > 0.2, "VS-favoured prediction scores badly when TR wins");
 
-  assert.deepEqual({ ...DB.raw.prepare("SELECT status, payout, credited FROM bet WHERE id='b1'").get() }, { status: "won", payout: 250, credited: 1 });
+  assert.deepEqual({ ...DB.raw.prepare("SELECT status, reward, credited FROM vote WHERE id='b1'").get() }, { status: "won", reward: 250, credited: 1 });
   assert.equal(DB.raw.prepare("SELECT balance FROM wallet").get().balance, 1150, "paid once by the cycle");
 
   // Settled alerts are final: a later run does not touch them.
   await runCycle(env, (END + 900) * 1000);
   assert.equal(DB.raw.prepare("SELECT winner FROM alert").get().winner, "TR");
-  assert.equal(DB.raw.prepare("SELECT balance FROM wallet").get().balance, 1150, "no double payout");
+  assert.equal(DB.raw.prepare("SELECT balance FROM wallet").get().balance, 1150, "credited once");
 
   const hist = await (await worker.fetch(new Request("https://x/history"), env)).json();
   assert.equal(hist.alerts[0].winner, "TR");
@@ -335,10 +335,10 @@ test("Honu bridge: queue -> oracle-honu job -> ingest (population, outlier repor
 // ---- Review 2026-10-18: settlement fallbacks and corrupt-input guards ----
 
 const noScores = (m) => ({ ...m, faction_vs: "", faction_nc: "", faction_tr: "" });
-const betRow = (DB, id, key, outcome, stake, fee, ts) => {
+const voteRow = (DB, id, key, outcome, amount, fee, ts) => {
   DB.raw.prepare("INSERT OR IGNORE INTO wallet (cid, balance, created, last_auto_at) VALUES ('5428010618035300888', 500, 0, 0)").run();
-  DB.raw.prepare(`INSERT INTO bet (id, cid, key, outcome, stake, fee, net, shares, pct, progress, placed_ts, status)
-    VALUES (?, '5428010618035300888', ?, ?, ?, ?, ?, 300, 30, 0.6, ?, 'open')`).run(id, key, outcome, stake, fee, stake - fee, ts);
+  DB.raw.prepare(`INSERT INTO vote (id, cid, key, outcome, amount, fee, net, potential, pct, progress, placed_ts, status)
+    VALUES (?, '5428010618035300888', ?, ?, ?, ?, ?, 300, 30, 0.6, ?, 'open')`).run(id, key, outcome, amount, fee, amount - fee, ts);
 };
 
 test("Census ended row without scores: settle from the clean pre-end snapshot", { skip }, async () => {
@@ -393,42 +393,42 @@ test("#26: Census corrects the ended row before +10 min: settle on the corrected
   assert.equal(DB.raw.prepare("SELECT vs FROM metagame WHERE state='ended'").get().vs, 50);
 });
 
-test("no scores and a neutral-heavy snapshot: unresolved, bets refunded in full", { skip }, async () => {
+test("no scores and a neutral-heavy snapshot: unresolved, votes given back in full", { skip }, async () => {
   const { runCycle } = await import("../oracle-worker/src/index.js");
   const DB = fakeD1();
   const T0 = 1_792_510_000, END = T0 + 90 * 60;
   const census = { map: { 1: 30, 2: 20, 3: 10 }, metagame: [mg(710, 153, "started", T0)], flips: [] };
   installCensus(census);
   await runCycle({ DB }, (END - 60) * 1000);
-  betRow(DB, "v1", "1-4-710", "VS", 100, 5, END - 1800);
+  voteRow(DB, "v1", "1-4-710", "VS", 100, 5, END - 1800);
   census.metagame.push(noScores(mg(710, 153, "ended", END)));
   await runCycle({ DB }, (END + 660) * 1000);
   assert.equal(DB.raw.prepare("SELECT status FROM alert").get().status, "unresolved");
-  const b = DB.raw.prepare("SELECT status, payout, credited FROM bet").get();
-  assert.deepEqual({ ...b }, { status: "void", payout: 100, credited: 1 }, "stake back, fee included");
+  const b = DB.raw.prepare("SELECT status, reward, credited FROM vote").get();
+  assert.deepEqual({ ...b }, { status: "void", reward: 100, credited: 1 }, "amount back, fee included");
   assert.equal(DB.raw.prepare("SELECT balance FROM wallet").get().balance, 600);
 });
 
-test("corrupt map that disagrees with Census: Census winner recorded, bets voided", { skip }, async () => {
+test("corrupt map that disagrees with Census: Census winner recorded, votes given back", { skip }, async () => {
   const { runCycle } = await import("../oracle-worker/src/index.js");
   const DB = fakeD1();
   const T0 = 1_792_520_000, END = T0 + 90 * 60;
   const census = { map: { 1: 35, 2: 15, 3: 10 }, metagame: [mg(720, 153, "started", T0)], flips: [] };   // 68 % owned, VS ahead
   installCensus(census);
   await runCycle({ DB }, (END - 60) * 1000);
-  betRow(DB, "w1", "1-4-720", "TR", 100, 0, END - 1800);
+  voteRow(DB, "w1", "1-4-720", "TR", 100, 0, END - 1800);
   census.metagame.push(mg(720, 153, "ended", END, 30, 31, 39));                                       // Census: TR
   await runCycle({ DB }, (END + 660) * 1000);
   const row = DB.raw.prepare("SELECT status, winner, flags FROM alert").get();
   assert.equal(row.status, "settled");
   assert.equal(row.winner, "TR");
   const flags = JSON.parse(row.flags);
-  assert.ok(flags.includes("bets_void") && flags.some((f) => f.startsWith("neutral_heavy")) && flags.includes("snapshot_winner_VS"), row.flags);
-  assert.equal(DB.raw.prepare("SELECT status FROM bet").get().status, "void", "even the TR backer is refunded, not paid");
+  assert.ok(flags.includes("votes_void") && flags.some((f) => f.startsWith("neutral_heavy")) && flags.includes("snapshot_winner_VS"), row.flags);
+  assert.equal(DB.raw.prepare("SELECT status FROM vote").get().status, "void", "even the TR voter just gets the amount back");
   assert.equal(DB.raw.prepare("SELECT balance FROM wallet").get().balance, 600);
 });
 
-test("live guard: neutral-heavy map marks the state suspect, closes betting, holds the commander", { skip }, async () => {
+test("live guard: neutral-heavy map marks the state suspect, pauses voting, holds the commander", { skip }, async () => {
   const { runCycle, commanderFor, default: worker } = await import("../oracle-worker/src/index.js");
   const DB = fakeD1();
   const T0 = 1_792_530_000;
@@ -438,7 +438,7 @@ test("live guard: neutral-heavy map marks the state suspect, closes betting, hol
   await runCycle({ DB }, now * 1000);
   const st = JSON.parse(DB.raw.prepare("SELECT state FROM alert").get().state);
   assert.deepEqual(st.suspect, ["neutral_heavy:68.2"]);
-  const q = await (await worker.fetch(new Request("https://x/bet/quote?key=1-4-730"), { DB })).json();
+  const q = await (await worker.fetch(new Request("https://x/vote/quote?key=1-4-730"), { DB })).json();
   assert.equal(q.open, false);
   assert.equal(q.reason, "data_suspect", JSON.stringify(q));
   assert.equal((await commanderFor({ DB }, "1-4-730", now * 1000)).skipped, "data suspect");

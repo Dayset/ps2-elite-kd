@@ -21,7 +21,7 @@ import {
 import { binGetter, hasTree, regionMap, latticeFor, captureModel, resistanceModel } from "./models.js";
 import { runCommander, ownership, applyElimination } from "./commander.js";
 import { handleAuth } from "./auth.js";
-import { handleBet, settleStatements } from "./bet.js";
+import { handleVote, settleStatements } from "./vote.js";
 export { AuthWatcher } from "./auth-watcher.js";
 
 const CENSUS = "https://census.daybreakgames.com";
@@ -311,12 +311,12 @@ export async function runCycle(env, nowMs = Date.now()) {
       }
     }
     // A corrupt map window AND a disagreeing snapshot: keep Census's winner on the
-    // record, but refund every bet (we can't be sure who really won).
-    if (flags.some((f) => f.startsWith("neutral_heavy")) && flags.some((f) => f.startsWith("snapshot_winner_")) && !flags.includes("bets_void")) flags.push("bets_void");
+    // record, but give every vote back (we can't be sure who really won).
+    if (flags.some((f) => f.startsWith("neutral_heavy")) && flags.some((f) => f.startsWith("snapshot_winner_")) && !flags.includes("votes_void")) flags.push("votes_void");
     const rec = { ...base, end_ts: endTs, final: finalOk ? final : null, checks, flags };
     if (checks < 3) { out.push({ ...rec, status: "settling" }); continue; }
     // Census ended row without scores: fall back to our last pre-end snapshot when
-    // it is clean (fresh, not neutral-heavy); otherwise unresolved (bets refunded).
+    // it is clean (fresh, not neutral-heavy); otherwise unresolved (votes given back).
     const finalWinner = async () => {
       if (finalOk) return { winner: scoreWinner(final), basis: "census_final" };
       if (!flags.includes("final_missing")) flags.push("final_missing");
@@ -385,10 +385,10 @@ export async function runCycle(env, nowMs = Date.now()) {
   if (writes.length) await db.batch(writes);
   report.written = changedRows.length;
 
-  // 4c) Pay out bets on alerts that reached a final status.
-  const toSettle = ((await db.prepare(`SELECT DISTINCT a.key, a.status, a.winner, a.flags FROM bet b JOIN alert a ON a.key = b.key
-    WHERE b.status = 'open' AND a.status IN ('settled','canceled','unresolved')`).all()).results) || [];
-  if (toSettle.length) { await db.batch(settleStatements(db, toSettle, now)); report.bets_settled = toSettle.length; }
+  // 4c) Settle votes on alerts that reached a final status (BonusCheques only).
+  const toSettle = ((await db.prepare(`SELECT DISTINCT a.key, a.status, a.winner, a.flags FROM vote v JOIN alert a ON a.key = v.key
+    WHERE v.status = 'open' AND a.status IN ('settled','canceled','unresolved')`).all()).results) || [];
+  if (toSettle.length) { await db.batch(settleStatements(db, toSettle, now)); report.votes_settled = toSettle.length; }
 
   // 5) Daily pruning at 04:07 UTC: raw snapshots 30 days, flips 90 days.
   const d = new Date(nowMs);
@@ -552,7 +552,7 @@ async function handle(request, env) {
       "Access-Control-Allow-Methods": "GET, POST, OPTIONS", "Access-Control-Max-Age": "86400" } });
   }
   if (url.pathname.startsWith("/auth/")) return handleAuth(request, env, url, json, now);
-  if (url.pathname.startsWith("/bet/")) return handleBet(request, env, url, json, now);
+  if (url.pathname.startsWith("/vote/")) return handleVote(request, env, url, json, now);
 
   if (url.pathname === "/" || url.pathname === "/health") {
     const last = await getMeta(db, "last_cycle");

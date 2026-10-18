@@ -196,3 +196,18 @@ approved it, "shipped" means it is live in the running pipeline.
   (parity-tested against Python), settles from Census final scores with sudden death
   for draws, serves `/oracle/` on GitHub Pages; the commander runs in Actions.
   Betting/auth remain in the Muse artifact for now.
+
+## 2026-10-18 (later): betting renamed to voting
+
+- **Owner decision: it's voting, not betting.** All user-facing text, the API
+  (`/vote/quote|me|place|bonus|leaderboard`, body `{key, outcome, amount, seen_pct}`),
+  the Worker module (`vote.js`), the D1 table (`vote`, was the empty `bet`) and the
+  frontend panel (`js/vote.js`, `#voteSlot`) now say vote. Older entries above keep the
+  wording of their time.
+- **BonusCheques are a meme currency**: no cash value, never bought, sold, traded or
+  cashed out, nothing paid out in any form. Every voting card carries this disclaimer
+  and the fair-play rules: voting exists to get people playing, own-faction votes
+  only, sign-in by in-game logout, riggers and cheaters not welcome.
+- Voided votes (draw, canceled, unresolved, corrupt map) give back the full amount,
+  fee included.
+

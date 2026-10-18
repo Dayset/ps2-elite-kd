@@ -1,6 +1,6 @@
 # PS2MapOracle
 
-**A PlanetSide 2 prediction game: virtual points staked per map hex, plus a global stake on the alert winner.**
+**A PlanetSide 2 alert oracle: live win odds, an AI Commander, and fair-play voting on the alert winner with BonusCheques (a meme currency, no cash value).**
 
 Live: Cloudflare Worker `ps2-oracle` + GitHub Pages `/oracle/` (see `CLOUDFLARE.md`; formerly a private Muse artifact) · Backend: Python/Census API · Status: active collection, not public
 
@@ -11,15 +11,17 @@ Package built **2026-10-18** from current source. This is the second migration p
 
 ## What it is
 
-PS2MapOracle turns PlanetSide 2 continent alerts into a prediction market. Viewers bet virtual points on:
+PS2MapOracle turns PlanetSide 2 continent alerts into a forecasting game that gets people into the fight. Signed-in players vote on:
 
-1. **Alert winner** — which faction (VS/NC/TR) wins the alert
-2. **Second place** — a separate market that opens when one faction locks the win at 100%
-3. **Per-hex stakes** (design) — which faction captures a given base and when
+1. **Alert winner**: which faction (VS/NC/TR) wins the alert (live)
+2. **Second place**: a separate vote that opens when one faction locks the win at 100% (design; computed, not yet votable)
+3. **Per-hex votes** (design): which faction captures a given base and when
 
-The pool is **parimutuel with no house cut**. Fees feed the winners' pot. Graded entries pay 5%/15%/30% at the 50%/80%/90% checkpoints, plus a 10% certainty kicker when model odds exceed 75%.
+**Votes use BonusCheques, a meme currency.** They have no cash value, can't be bought, sold, traded or cashed out, and nothing is ever paid out in any form. Everyone starts with 1,000 and gets +25 a day. Odds come from an LMSR seeded from the oracle's win probabilities; a late-vote fee of 5%/15%/30% applies after 50%/80%/90% of the alert, +10% when the pick is above 75%, and fees simply disappear.
 
-The product pairs an **optimal AI Commander** with viewer betting: the commander computes the mathematically best moves (attacks, defends, kingmaker plays), and the betting odds are the expert-read shortcut for new players. Design principle: *dummy-proof* — a new player with no map-reading skill can follow the percentages.
+**Fair play only.** Voting exists to engage people in playing the game: back your faction, then go help it win. Signing in needs an in-game logout of your character (no password or email), you can vote only for your own faction so nobody gains from throwing a fight, and riggers or cheaters aren't welcome.
+
+The product pairs an **optimal AI Commander** with voting: the commander computes the mathematically best moves (attacks, defends, kingmaker plays), and the odds are the expert-read shortcut for new players. Design principle: *dummy-proof*: a new player with no map-reading skill can follow the percentages.
 
 ---
 
@@ -45,7 +47,7 @@ Since 2026-10-18 the live pipeline runs on Cloudflare: the `ps2-oracle` Worker p
 ### Settlement (triple-check)
 1. Alert end → "settling…" hold
 2. Final map snapshot verified at +0/+5/+10 min (three `record_final_check` calls, 5 min apart)
-3. Payout released only after check 3 confirms
+3. Votes are counted only after check 3 confirms
 - Never settle from a live push; never use post-end snapshots (corrupt winner-owns-everything)
 - Settlement records keyed by **(alertId, endedAt)** since 2026-10-16 — bare alertId keying collided on recycled alert IDs
 - Ties (4.5% rate) → 15-min kill-based sudden death hold

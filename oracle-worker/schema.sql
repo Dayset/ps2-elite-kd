@@ -138,7 +138,7 @@ CREATE TABLE IF NOT EXISTS account (
   updated INTEGER NOT NULL
 );
 
--- Virtual points (never purchasable, never cashable).
+-- BonusCheques balance (meme currency: no cash value, never bought, sold, traded or paid out).
 CREATE TABLE IF NOT EXISTS wallet (
   cid TEXT PRIMARY KEY,
   balance REAL NOT NULL,
@@ -147,20 +147,23 @@ CREATE TABLE IF NOT EXISTS wallet (
   last_manual_day TEXT               -- UTC day of the last manual BonusCheque
 );
 
-CREATE TABLE IF NOT EXISTS bet (
+-- Votes on alert winners, in BonusCheques (meme currency: no cash value, never
+-- bought, sold, traded or paid out).
+CREATE TABLE IF NOT EXISTS vote (
   id TEXT PRIMARY KEY,
   cid TEXT NOT NULL,
   key TEXT NOT NULL,                 -- alert key
-  outcome TEXT NOT NULL,             -- VS | NC | TR (winner market)
-  stake REAL NOT NULL, fee REAL NOT NULL, net REAL NOT NULL,
-  shares REAL NOT NULL,              -- points paid if the outcome wins
-  pct REAL NOT NULL,                 -- oracle win % when placed
-  progress REAL NOT NULL,            -- share of the alert elapsed when placed
+  outcome TEXT NOT NULL,             -- VS | NC | TR (winner vote)
+  amount REAL NOT NULL, fee REAL NOT NULL, net REAL NOT NULL,
+  potential REAL NOT NULL,           -- cheques back if the outcome wins
+  pct REAL NOT NULL,                 -- oracle win % when voted
+  progress REAL NOT NULL,            -- share of the alert elapsed when voted
   placed_ts INTEGER NOT NULL,
   status TEXT NOT NULL,              -- open | won | lost | void
-  payout REAL NOT NULL DEFAULT 0,
+  reward REAL NOT NULL DEFAULT 0,    -- cheques credited at settlement
   settled_ts INTEGER,
   credited INTEGER NOT NULL DEFAULT 0
 );
-CREATE INDEX IF NOT EXISTS bet_cid ON bet (cid, placed_ts);
-CREATE INDEX IF NOT EXISTS bet_open ON bet (status, key);
+CREATE INDEX IF NOT EXISTS vote_cid ON vote (cid, placed_ts);
+CREATE INDEX IF NOT EXISTS vote_open ON vote (status, key);
+DROP TABLE IF EXISTS bet;            -- renamed to vote on 2026-10-18 (was empty)

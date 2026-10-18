@@ -165,7 +165,7 @@ export async function handleAuth(request, env, url, json, now = Math.floor(Date.
   return json({ error: "not_found" }, 404);
 }
 
-/** Bearer token -> account row (for later betting endpoints), or null. */
+/** Bearer token -> account row (for the voting endpoints), or null. */
 export async function accountFromRequest(request, db) {
   const token = (request.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
   if (!token) return null;
