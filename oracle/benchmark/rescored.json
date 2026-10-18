@@ -1,0 +1,1609 @@
+{
+ "generated_at": 1792307941,
+ "coin_flip_brier": 0.2222,
+ "settled_alerts": 64,
+ "rescored": 59,
+ "winners_changed": 8,
+ "changed_alerts": [
+  "10-4-155-1791796606",
+  "1-8-176-1791797973",
+  "10-8-150-1791832789",
+  "1-6-157-1791845557",
+  "10-8-152-1791914215",
+  "10-8-152-1792232143",
+  "1-6-178-1792258726",
+  "1-4-153-1792285909"
+ ],
+ "unresolved": [
+  {
+   "alert": "10-6-244",
+   "census_instance_id": "46215",
+   "reason": "instance is event 192 zone 6"
+  },
+  {
+   "alert": "10-2-149",
+   "reason": "no census_instance_id"
+  },
+  {
+   "alert": "1-4-153-1791759770",
+   "reason": "no census_instance_id"
+  },
+  {
+   "alert": "10-6-157-1791746503",
+   "reason": "no census_instance_id"
+  },
+  {
+   "alert": "10-8-186-1791772425",
+   "reason": "no census_instance_id"
+  }
+ ],
+ "summary": [
+  {
+   "kind": "meltdown",
+   "duration": 45,
+   "slice": "t0",
+   "n": 24,
+   "mean_brier": 0.2297
+  },
+  {
+   "kind": "meltdown",
+   "duration": 45,
+   "slice": "t30",
+   "n": 22,
+   "mean_brier": 0.2411
+  },
+  {
+   "kind": "meltdown",
+   "duration": 45,
+   "slice": "t30_popadj",
+   "n": 6,
+   "mean_brier": 0.1708
+  },
+  {
+   "kind": "territory",
+   "duration": 45,
+   "slice": "t0",
+   "n": 1,
+   "mean_brier": 0.2051
+  },
+  {
+   "kind": "territory",
+   "duration": 45,
+   "slice": "t30",
+   "n": 1,
+   "mean_brier": 0.2585
+  },
+  {
+   "kind": "territory",
+   "duration": 45,
+   "slice": "t30_popadj",
+   "n": 1,
+   "mean_brier": 0.2529
+  },
+  {
+   "kind": "territory",
+   "duration": 90,
+   "slice": "t0",
+   "n": 34,
+   "mean_brier": 0.2123
+  },
+  {
+   "kind": "territory",
+   "duration": 90,
+   "slice": "t30",
+   "n": 33,
+   "mean_brier": 0.1927
+  },
+  {
+   "kind": "territory",
+   "duration": 90,
+   "slice": "t30_popadj",
+   "n": 10,
+   "mean_brier": 0.2112
+  },
+  {
+   "kind": "territory",
+   "duration": 90,
+   "slice": "t60",
+   "n": 33,
+   "mean_brier": 0.1409
+  }
+ ],
+ "alerts": [
+  {
+   "alert": "10-6-157",
+   "census_instance_id": "46200",
+   "kind": "territory",
+   "duration": 90,
+   "old_winner": "NC",
+   "census_winner": "NC",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 31.76470565796,
+    "NC": 45.88235473633,
+    "TR": 16.47058868408
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.2623
+   },
+   "old_brier_by_slice": {
+    "t0": 0.2623,
+    "t30": null,
+    "t60": null
+   }
+  },
+  {
+   "alert": "1-2-148-1791771870",
+   "census_instance_id": "49286",
+   "kind": "territory",
+   "duration": 90,
+   "old_winner": "VS",
+   "census_winner": "VS",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 67.05882263184,
+    "NC": 11.37254905701,
+    "TR": 19.60784339905
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.1374,
+    "t30": 0.0432,
+    "t60": 0.0021
+   },
+   "old_brier_by_slice": {
+    "t0": 0.1374,
+    "t30": 0.0432,
+    "t60": 0.0021
+   }
+  },
+  {
+   "alert": "10-4-155-1791796606",
+   "census_instance_id": "46233",
+   "kind": "territory",
+   "duration": 90,
+   "old_winner": "TR",
+   "census_winner": "NC",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 25.88235282898,
+    "NC": 37.64706039429,
+    "TR": 36.47058868408
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.1808,
+    "t30": 0.2827,
+    "t60": 0.1175
+   },
+   "old_brier_by_slice": {
+    "t0": 0.3161,
+    "t30": 0.252,
+    "t60": 0.2769
+   }
+  },
+  {
+   "alert": "1-8-176-1791797973",
+   "census_instance_id": "49288",
+   "kind": "meltdown",
+   "duration": 45,
+   "old_winner": "VS",
+   "census_winner": "TR",
+   "basis": "sudden_death_kills",
+   "final_scores": {
+    "VS": 14.9019613266,
+    "NC": 6.274509906769,
+    "TR": 14.9019613266
+   },
+   "sudden_death": {
+    "instance_id": "49289",
+    "event": 239,
+    "kills": {
+     "VS": 52.0,
+     "NC": 42.0,
+     "TR": 68.0
+    }
+   },
+   "brier_by_slice": {
+    "t0": 0.231,
+    "t30": 0.3313
+   },
+   "old_brier_by_slice": {
+    "t0": 0.237,
+    "t30": 0.1147,
+    "t60": null
+   }
+  },
+  {
+   "alert": "10-6-158-1791811067",
+   "census_instance_id": "46235",
+   "kind": "territory",
+   "duration": 90,
+   "old_winner": "TR",
+   "census_winner": "TR",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 31.76470565796,
+    "NC": 13.72549057007,
+    "TR": 53.72549057007
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.3497,
+    "t30": 0.1734,
+    "t60": 0.0034
+   },
+   "old_brier_by_slice": {
+    "t0": 0.3497,
+    "t30": 0.1734,
+    "t60": 0.0034
+   }
+  },
+  {
+   "alert": "1-4-177-1791821154",
+   "census_instance_id": "49291",
+   "kind": "meltdown",
+   "duration": 45,
+   "old_winner": "NC",
+   "census_winner": "NC",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 3.529411792755,
+    "NC": 28.23529434204,
+    "TR": 1.176470637321
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.1768,
+    "t30": 0.0
+   },
+   "old_brier_by_slice": {
+    "t0": 0.1768,
+    "t30": 0.0,
+    "t60": null
+   }
+  },
+  {
+   "alert": "10-2-148-1791824448",
+   "census_instance_id": "46239",
+   "kind": "territory",
+   "duration": 90,
+   "old_winner": "TR",
+   "census_winner": "TR",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 26.66666793823,
+    "NC": 27.84313774109,
+    "TR": 45.09804153442
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.2759,
+    "t30": 0.1996,
+    "t60": 0.3263
+   },
+   "old_brier_by_slice": {
+    "t0": 0.2759,
+    "t30": 0.1996,
+    "t60": 0.3263
+   }
+  },
+  {
+   "alert": "10-8-150-1791832789",
+   "census_instance_id": "46241",
+   "kind": "territory",
+   "duration": 90,
+   "old_winner": "NC",
+   "census_winner": "TR",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 23.52941131592,
+    "NC": 28.23529434204,
+    "TR": 47.45098114014
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.2808,
+    "t30": 0.293,
+    "t60": 0.1666
+   },
+   "old_brier_by_slice": {
+    "t0": 0.2686,
+    "t30": 0.2227,
+    "t60": null
+   }
+  },
+  {
+   "alert": "1-6-157-1791845557",
+   "census_instance_id": "49293",
+   "kind": "territory",
+   "duration": 90,
+   "old_winner": "NC",
+   "census_winner": "VS",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 34.50980377197,
+    "NC": 31.76470565796,
+    "TR": 30.5882358551
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.1218,
+    "t30": 0.0785,
+    "t60": 0.2223
+   },
+   "old_brier_by_slice": {
+    "t0": 0.3038,
+    "t30": 0.3605,
+    "t60": 0.1237
+   }
+  },
+  {
+   "alert": "1-8-151-1791855760",
+   "census_instance_id": "49294",
+   "kind": "territory",
+   "duration": 90,
+   "old_winner": "VS",
+   "census_winner": "VS",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 49.80392074585,
+    "NC": 30.19607925415,
+    "TR": 14.9019613266
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.1936,
+    "t30": 0.1938,
+    "t60": 0.1033
+   },
+   "old_brier_by_slice": {
+    "t0": 0.1936,
+    "t30": 0.1938,
+    "t60": 0.1033
+   }
+  },
+  {
+   "alert": "10-4-191-1791859791",
+   "census_instance_id": "46243",
+   "kind": "meltdown",
+   "duration": 45,
+   "old_winner": "NC",
+   "census_winner": "NC",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 5.882352828979,
+    "NC": 17.64705848694,
+    "TR": 11.76470565796
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.1681,
+    "t30": 0.0216
+   },
+   "old_brier_by_slice": {
+    "t0": 0.1681,
+    "t30": 0.0216,
+    "t60": null
+   }
+  },
+  {
+   "alert": "1-2-189-1791879285",
+   "census_instance_id": "49295",
+   "kind": "meltdown",
+   "duration": 45,
+   "old_winner": "TR",
+   "census_winner": "TR",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 7.843137264252,
+    "NC": 14.9019613266,
+    "TR": 17.25490188599
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.3093,
+    "t30": 0.5129
+   },
+   "old_brier_by_slice": {
+    "t0": 0.3093,
+    "t30": 0.5129,
+    "t60": null
+   }
+  },
+  {
+   "alert": "10-2-179-1791881992",
+   "census_instance_id": "46245",
+   "kind": "meltdown",
+   "duration": 45,
+   "old_winner": "TR",
+   "census_winner": "TR",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 14.9019613266,
+    "NC": 12.54901981354,
+    "TR": 17.25490188599
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.3148,
+    "t30": 0.3401
+   },
+   "old_brier_by_slice": {
+    "t0": 0.3148,
+    "t30": 0.3401,
+    "t60": null
+   }
+  },
+  {
+   "alert": "10-344-250-1791885324",
+   "census_instance_id": "46246",
+   "kind": "meltdown",
+   "duration": 45,
+   "old_winner": "TR",
+   "census_winner": "TR",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 19.60784339905,
+    "NC": 13.33333396912,
+    "TR": 23.92156982422
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.3393
+   },
+   "old_brier_by_slice": {
+    "t0": 0.3393,
+    "t30": null,
+    "t60": null
+   }
+  },
+  {
+   "alert": "10-6-156-1791896748",
+   "census_instance_id": "46248",
+   "kind": "territory",
+   "duration": 90,
+   "old_winner": "NC",
+   "census_winner": "NC",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 29.41176605225,
+    "NC": 38.43137359619,
+    "TR": 31.76470565796
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.2837,
+    "t30": 0.1978,
+    "t60": 0.2847
+   },
+   "old_brier_by_slice": {
+    "t0": 0.2837,
+    "t30": 0.1978,
+    "t60": 0.2847
+   }
+  },
+  {
+   "alert": "1-4-177-1791901602",
+   "census_instance_id": "49297",
+   "kind": "meltdown",
+   "duration": 45,
+   "old_winner": "NC",
+   "census_winner": "NC",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 2.352941274643,
+    "NC": 28.23529434204,
+    "TR": 5.882352828979
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.1316,
+    "t30": 0.0
+   },
+   "old_brier_by_slice": {
+    "t0": 0.1316,
+    "t30": 0.0,
+    "t60": null
+   }
+  },
+  {
+   "alert": "10-4-153-1791906054",
+   "census_instance_id": "46250",
+   "kind": "territory",
+   "duration": 90,
+   "old_winner": "TR",
+   "census_winner": "TR",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 38.82352828979,
+    "NC": 21.17647171021,
+    "TR": 40.0
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.1865,
+    "t30": 0.0628,
+    "t60": 0.1419
+   },
+   "old_brier_by_slice": {
+    "t0": 0.1865,
+    "t30": 0.0628,
+    "t60": 0.1419
+   }
+  },
+  {
+   "alert": "10-8-152-1791914215",
+   "census_instance_id": "46253",
+   "kind": "territory",
+   "duration": 90,
+   "old_winner": "NC",
+   "census_winner": "VS",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 43.13725662231,
+    "NC": 36.86274719238,
+    "TR": 19.2156867981
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.3082,
+    "t30": 0.1648,
+    "t60": 0.4145
+   },
+   "old_brier_by_slice": {
+    "t0": 0.1702,
+    "t30": 0.2901,
+    "t60": 0.0965
+   }
+  },
+  {
+   "alert": "1-8-186-1791923044",
+   "census_instance_id": "49299",
+   "kind": "meltdown",
+   "duration": 45,
+   "old_winner": "TR",
+   "census_winner": "TR",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 6.274509906769,
+    "NC": 10.5882358551,
+    "TR": 17.25490188599
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.2981,
+    "t30": 0.1285
+   },
+   "old_brier_by_slice": {
+    "t0": 0.2981,
+    "t30": 0.1285,
+    "t60": null
+   }
+  },
+  {
+   "alert": "1-344-249-1791926376",
+   "census_instance_id": "49300",
+   "kind": "meltdown",
+   "duration": 45,
+   "old_winner": "VS",
+   "census_winner": "VS",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 22.35294151306,
+    "NC": 16.47058868408,
+    "TR": 18.03921508789
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.0795
+   },
+   "old_brier_by_slice": {
+    "t0": 0.0795,
+    "t30": null,
+    "t60": null
+   }
+  },
+  {
+   "alert": "10-2-147-1791924036",
+   "census_instance_id": "46255",
+   "kind": "territory",
+   "duration": 90,
+   "old_winner": "VS",
+   "census_winner": "VS",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 50.98039245605,
+    "NC": 21.96078491211,
+    "TR": 26.66666793823
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.1923,
+    "t30": 0.1435,
+    "t60": 0.0363
+   },
+   "old_brier_by_slice": {
+    "t0": 0.1923,
+    "t30": 0.1435,
+    "t60": 0.0363
+   }
+  },
+  {
+   "alert": "1-6-156-1791940785",
+   "census_instance_id": "49302",
+   "kind": "territory",
+   "duration": 90,
+   "old_winner": "TR",
+   "census_winner": "TR",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 26.66666793823,
+    "NC": 15.29411792755,
+    "TR": 52.54901885986
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.1849,
+    "t30": 0.1629,
+    "t60": 0.0346
+   },
+   "old_brier_by_slice": {
+    "t0": 0.1849,
+    "t30": 0.1629,
+    "t60": 0.0346
+   }
+  },
+  {
+   "alert": "10-6-192-1791947560",
+   "census_instance_id": "46256",
+   "kind": "meltdown",
+   "duration": 45,
+   "old_winner": "TR",
+   "census_winner": "TR",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 7.4509806633,
+    "NC": 11.37254905701,
+    "TR": 13.72549057007
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.1956,
+    "t30": 0.3323
+   },
+   "old_brier_by_slice": {
+    "t0": 0.1956,
+    "t30": 0.3323,
+    "t60": null
+   }
+  },
+  {
+   "alert": "1-4-177-1791965908",
+   "census_instance_id": "49305",
+   "kind": "meltdown",
+   "duration": 45,
+   "old_winner": "TR",
+   "census_winner": "TR",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 7.05882358551,
+    "NC": 12.94117641449,
+    "TR": 15.29411792755
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.2418,
+    "t30": 0.6667
+   },
+   "old_brier_by_slice": {
+    "t0": 0.2418,
+    "t30": 0.6667,
+    "t60": null
+   }
+  },
+  {
+   "alert": "10-4-154-1791970618",
+   "census_instance_id": "46258",
+   "kind": "territory",
+   "duration": 90,
+   "old_winner": "TR",
+   "census_winner": "TR",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 31.76470565796,
+    "NC": 17.64705848694,
+    "TR": 48.23529434204
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.3211,
+    "t30": 0.3621,
+    "t60": 0.1034
+   },
+   "old_brier_by_slice": {
+    "t0": 0.3211,
+    "t30": 0.3621,
+    "t60": 0.1034
+   }
+  },
+  {
+   "alert": "10-8-150-1791983699",
+   "census_instance_id": "46260",
+   "kind": "territory",
+   "duration": 90,
+   "old_winner": "NC",
+   "census_winner": "NC",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 23.52941131592,
+    "NC": 41.17647171021,
+    "TR": 34.50980377197
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.2686,
+    "t30": 0.1814,
+    "t60": 0.2023
+   },
+   "old_brier_by_slice": {
+    "t0": 0.2686,
+    "t30": 0.1814,
+    "t60": 0.2023
+   }
+  },
+  {
+   "alert": "1-8-176-1791987229",
+   "census_instance_id": "49307",
+   "kind": "meltdown",
+   "duration": 45,
+   "old_winner": "NC",
+   "census_winner": "NC",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 0.0,
+    "NC": 32.54901885986,
+    "TR": 0.0
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.172,
+    "t30": 0.0
+   },
+   "old_brier_by_slice": {
+    "t0": 0.172,
+    "t30": 0.0,
+    "t60": null
+   }
+  },
+  {
+   "alert": "10-2-147-1792001520",
+   "census_instance_id": "46264",
+   "kind": "territory",
+   "duration": 90,
+   "old_winner": "TR",
+   "census_winner": "TR",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 23.13725471497,
+    "NC": 31.37254905701,
+    "TR": 45.09804153442
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.1607,
+    "t30": 0.311,
+    "t60": 0.1113
+   },
+   "old_brier_by_slice": {
+    "t0": 0.1607,
+    "t30": 0.311,
+    "t60": 0.1113
+   }
+  },
+  {
+   "alert": "1-2-189-1792009010",
+   "census_instance_id": "49309",
+   "kind": "meltdown",
+   "duration": 45,
+   "old_winner": "TR",
+   "census_winner": "TR",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 14.9019613266,
+    "NC": 4.313725471497,
+    "TR": 19.60784339905
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.2996,
+    "t30": 0.4258
+   },
+   "old_brier_by_slice": {
+    "t0": 0.2996,
+    "t30": 0.4258,
+    "t60": null
+   }
+  },
+  {
+   "alert": "10-6-157-1792011541",
+   "census_instance_id": "46266",
+   "kind": "territory",
+   "duration": 90,
+   "old_winner": "VS",
+   "census_winner": "VS",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 58.82353210449,
+    "NC": 13.72549057007,
+    "TR": 26.66666793823
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.1376,
+    "t30": 0.1351,
+    "t60": 0.0726
+   },
+   "old_brier_by_slice": {
+    "t0": 0.1376,
+    "t30": 0.1351,
+    "t60": 0.0726
+   }
+  },
+  {
+   "alert": "1-6-158-1792030192",
+   "census_instance_id": "49311",
+   "kind": "territory",
+   "duration": 90,
+   "old_winner": "VS",
+   "census_winner": "VS",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 53.72549057007,
+    "NC": 29.41176605225,
+    "TR": 13.72549057007
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.2039,
+    "t30": 0.0999,
+    "t60": 0.372
+   },
+   "old_brier_by_slice": {
+    "t0": 0.2039,
+    "t30": 0.0999,
+    "t60": 0.372
+   }
+  },
+  {
+   "alert": "10-8-176-1792035065",
+   "census_instance_id": "46267",
+   "kind": "meltdown",
+   "duration": 45,
+   "old_winner": "VS",
+   "census_winner": "VS",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 17.25490188599,
+    "NC": 6.274509906769,
+    "TR": 12.94117641449
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.1353,
+    "t30": 0.2663
+   },
+   "old_brier_by_slice": {
+    "t0": 0.1353,
+    "t30": 0.2663,
+    "t60": null
+   }
+  },
+  {
+   "alert": "10-2-179-1792057024",
+   "census_instance_id": "46269",
+   "kind": "meltdown",
+   "duration": 45,
+   "old_winner": "TR",
+   "census_winner": "TR",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 12.54901981354,
+    "NC": 13.72549057007,
+    "TR": 18.43137359619
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.3425,
+    "t30": 0.3285
+   },
+   "old_brier_by_slice": {
+    "t0": 0.3425,
+    "t30": 0.3285,
+    "t60": null
+   }
+  },
+  {
+   "alert": "1-4-187-1792057809",
+   "census_instance_id": "49313",
+   "kind": "meltdown",
+   "duration": 45,
+   "old_winner": "TR",
+   "census_winner": "TR",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 7.05882358551,
+    "NC": 2.352941274643,
+    "TR": 16.47058868408
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.2228,
+    "t30": 0.0
+   },
+   "old_brier_by_slice": {
+    "t0": 0.2228,
+    "t30": 0.0,
+    "t60": null
+   }
+  },
+  {
+   "alert": "10-8-152-1792090533",
+   "census_instance_id": "46273",
+   "kind": "territory",
+   "duration": 90,
+   "old_winner": "VS",
+   "census_winner": "VS",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 52.15686416626,
+    "NC": 21.56862831116,
+    "TR": 25.88235282898
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.2199,
+    "t30": 0.2513,
+    "t60": 0.0456
+   },
+   "old_brier_by_slice": {
+    "t0": 0.2199,
+    "t30": 0.2513,
+    "t60": 0.0456
+   }
+  },
+  {
+   "alert": "1-8-186-1792096022",
+   "census_instance_id": "49316",
+   "kind": "meltdown",
+   "duration": 45,
+   "old_winner": "VS",
+   "census_winner": "VS",
+   "basis": "sudden_death_kills",
+   "final_scores": {
+    "VS": 12.94117641449,
+    "NC": 10.5882358551,
+    "TR": 12.94117641449
+   },
+   "sudden_death": {
+    "instance_id": "49317",
+    "event": 239,
+    "kills": {
+     "VS": 511.0,
+     "NC": 379.0,
+     "TR": 252.0
+    }
+   },
+   "brier_by_slice": {
+    "t0": 0.1793,
+    "t30": 0.3748
+   },
+   "old_brier_by_slice": {
+    "t0": 0.1793,
+    "t30": 0.3748,
+    "t60": null
+   }
+  },
+  {
+   "alert": "10-6-157-1792099294",
+   "census_instance_id": "46274",
+   "kind": "territory",
+   "duration": 90,
+   "old_winner": "VS",
+   "census_winner": "VS",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 58.82353210449,
+    "NC": 26.66666793823,
+    "TR": 13.72549057007
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.1227,
+    "t30": 0.1024,
+    "t60": 0.0073
+   },
+   "old_brier_by_slice": {
+    "t0": 0.1227,
+    "t30": 0.1024,
+    "t60": 0.0073
+   }
+  },
+  {
+   "alert": "1-6-157-1792118131",
+   "census_instance_id": "49320",
+   "kind": "territory",
+   "duration": 90,
+   "old_winner": "VS",
+   "census_winner": "VS",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 43.52941131592,
+    "NC": 24.31372642517,
+    "TR": 31.76470565796
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.1451,
+    "t30": 0.1362,
+    "t60": 0.0552
+   },
+   "old_brier_by_slice": {
+    "t0": 0.1451,
+    "t30": 0.1362,
+    "t60": 0.0552
+   }
+  },
+  {
+   "alert": "10-4-191-1792126655",
+   "census_instance_id": "46276",
+   "kind": "meltdown",
+   "duration": 45,
+   "old_winner": "VS",
+   "census_winner": "VS",
+   "basis": "sudden_death_kills",
+   "final_scores": {
+    "VS": 12.94117641449,
+    "NC": 12.94117641449,
+    "TR": 10.5882358551
+   },
+   "sudden_death": {
+    "instance_id": "46277",
+    "event": 237,
+    "kills": {
+     "VS": 160.0,
+     "NC": 106.0,
+     "TR": 65.0
+    }
+   },
+   "brier_by_slice": {
+    "t0": 0.2472,
+    "t30": 0.5042
+   },
+   "old_brier_by_slice": {
+    "t0": 0.2472,
+    "t30": 0.5042,
+    "t60": null
+   }
+  },
+  {
+   "alert": "1-4-154-1792128512",
+   "census_instance_id": "49323",
+   "kind": "territory",
+   "duration": 90,
+   "old_winner": "VS",
+   "census_winner": "VS",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 57.64706039429,
+    "NC": 29.41176605225,
+    "TR": 12.94117641449
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.1289,
+    "t30": 0.1416,
+    "t60": 0.0253
+   },
+   "old_brier_by_slice": {
+    "t0": 0.1289,
+    "t30": 0.1416,
+    "t60": 0.0253
+   }
+  },
+  {
+   "alert": "10-2-148-1792167759",
+   "census_instance_id": "46283",
+   "kind": "territory",
+   "duration": 90,
+   "old_winner": "NC",
+   "census_winner": "NC",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 13.72549057007,
+    "NC": 52.15686416626,
+    "TR": 26.66666793823
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.2806,
+    "t30": 0.1899,
+    "t60": 0.107
+   },
+   "old_brier_by_slice": {
+    "t0": 0.2806,
+    "t30": 0.1899,
+    "t60": 0.107
+   }
+  },
+  {
+   "alert": "10-8-150-1792174570",
+   "census_instance_id": "46285",
+   "kind": "territory",
+   "duration": 90,
+   "old_winner": "TR",
+   "census_winner": "TR",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 19.2156867981,
+    "NC": 28.23529434204,
+    "TR": 49.80392074585
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.2252,
+    "t30": 0.289,
+    "t60": 0.0639
+   },
+   "old_brier_by_slice": {
+    "t0": 0.2252,
+    "t30": 0.289,
+    "t60": 0.0639
+   }
+  },
+  {
+   "alert": "1-2-179-1792183418",
+   "census_instance_id": "49328",
+   "kind": "meltdown",
+   "duration": 45,
+   "old_winner": "TR",
+   "census_winner": "TR",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 13.72549057007,
+    "NC": 9.019607543945,
+    "TR": 21.96078491211
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.292,
+    "t30": 0.2039,
+    "t30_popadj": 0.204
+   },
+   "old_brier_by_slice": {
+    "t0": 0.292,
+    "t30": 0.2039,
+    "t60": null
+   }
+  },
+  {
+   "alert": "10-6-158-1792184140",
+   "census_instance_id": "46287",
+   "kind": "territory",
+   "duration": 90,
+   "old_winner": "NC",
+   "census_winner": "NC",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 39.6078453064,
+    "NC": 40.7843132019,
+    "TR": 19.2156867981
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.1707,
+    "t30": 0.1648,
+    "t30_popadj": 0.1772,
+    "t60": 0.1249
+   },
+   "old_brier_by_slice": {
+    "t0": 0.1707,
+    "t30": 0.1648,
+    "t60": 0.1249
+   }
+  },
+  {
+   "alert": "1-6-156-1792196499",
+   "census_instance_id": "49330",
+   "kind": "territory",
+   "duration": 90,
+   "old_winner": "NC",
+   "census_winner": "NC",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 33.33333206177,
+    "NC": 40.7843132019,
+    "TR": 25.49019622803
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.288,
+    "t30": 0.2223,
+    "t30_popadj": 0.2762,
+    "t60": 0.0578
+   },
+   "old_brier_by_slice": {
+    "t0": 0.288,
+    "t30": 0.2223,
+    "t60": 0.0578
+   }
+  },
+  {
+   "alert": "1-8-152-1792203240",
+   "census_instance_id": "49332",
+   "kind": "territory",
+   "duration": 90,
+   "old_winner": "VS",
+   "census_winner": "VS",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 54.11764907837,
+    "NC": 25.88235282898,
+    "TR": 17.25490188599
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.154,
+    "t30": 0.2003,
+    "t30_popadj": 0.1875,
+    "t60": 0.319
+   },
+   "old_brier_by_slice": {
+    "t0": 0.154,
+    "t30": 0.2003,
+    "t60": 0.319
+   }
+  },
+  {
+   "alert": "10-4-177-1792210482",
+   "census_instance_id": "46289",
+   "kind": "meltdown",
+   "duration": 45,
+   "old_winner": "NC",
+   "census_winner": "NC",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 8.235294342041,
+    "NC": 24.70588302612,
+    "TR": 3.529411792755
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.1316,
+    "t30": 0.0056,
+    "t30_popadj": 0.0387
+   },
+   "old_brier_by_slice": {
+    "t0": 0.1316,
+    "t30": 0.0056,
+    "t60": null
+   }
+  },
+  {
+   "alert": "1-4-155-1792211802",
+   "census_instance_id": "49334",
+   "kind": "territory",
+   "duration": 90,
+   "old_winner": "NC",
+   "census_winner": "NC",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 30.5882358551,
+    "NC": 35.29411697388,
+    "TR": 34.11764907837
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.1551,
+    "t30": 0.1162,
+    "t30_popadj": 0.1339,
+    "t60": 0.2088
+   },
+   "old_brier_by_slice": {
+    "t0": 0.1551,
+    "t30": 0.1162,
+    "t60": 0.2088
+   }
+  },
+  {
+   "alert": "10-8-152-1792232143",
+   "census_instance_id": "46291",
+   "kind": "territory",
+   "duration": 90,
+   "old_winner": "NC",
+   "census_winner": "TR",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 28.23529434204,
+    "NC": 34.50980377197,
+    "TR": 36.86274719238
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.2263,
+    "t30": 0.1845,
+    "t30_popadj": 0.1805,
+    "t60": 0.2063
+   },
+   "old_brier_by_slice": {
+    "t0": 0.1603,
+    "t30": 0.2958,
+    "t60": 0.259
+   }
+  },
+  {
+   "alert": "1-2-193-1792235327",
+   "census_instance_id": "49335",
+   "kind": "meltdown",
+   "duration": 45,
+   "old_winner": "TR",
+   "census_winner": "TR",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 13.72549057007,
+    "NC": 11.37254905701,
+    "TR": 19.60784339905
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.2122,
+    "t30": 0.2563,
+    "t30_popadj": 0.2506
+   },
+   "old_brier_by_slice": {
+    "t0": 0.2122,
+    "t30": 0.2563,
+    "t60": null
+   }
+  },
+  {
+   "alert": "10-6-156-1792240577",
+   "census_instance_id": "46293",
+   "kind": "territory",
+   "duration": 90,
+   "old_winner": "TR",
+   "census_winner": "TR",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 22.74509811401,
+    "NC": 34.50980377197,
+    "TR": 41.96078491211
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.1761,
+    "t30": 0.1786,
+    "t30_popadj": 0.1953,
+    "t60": 0.0319
+   },
+   "old_brier_by_slice": {
+    "t0": 0.1761,
+    "t30": 0.1786,
+    "t60": 0.0319
+   }
+  },
+  {
+   "alert": "10-344-222-1792246609",
+   "census_instance_id": "46294",
+   "kind": "territory",
+   "duration": 45,
+   "old_winner": "VS",
+   "census_winner": "VS",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 40.7843132019,
+    "NC": 23.92156982422,
+    "TR": 34.50980377197
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.2051,
+    "t30": 0.2585,
+    "t30_popadj": 0.2529
+   },
+   "old_brier_by_slice": {
+    "t0": 0.2051,
+    "t30": 0.2585,
+    "t60": null
+   }
+  },
+  {
+   "alert": "10-4-154-1792254692",
+   "census_instance_id": "46296",
+   "kind": "territory",
+   "duration": 90,
+   "old_winner": "TR",
+   "census_winner": "TR",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 31.76470565796,
+    "NC": 31.76470565796,
+    "TR": 36.47058868408
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.3075,
+    "t30": 0.2731,
+    "t30_popadj": 0.2288,
+    "t60": 0.2372
+   },
+   "old_brier_by_slice": {
+    "t0": 0.3075,
+    "t30": 0.2731,
+    "t60": 0.2372
+   }
+  },
+  {
+   "alert": "1-6-178-1792258726",
+   "census_instance_id": "49337",
+   "kind": "meltdown",
+   "duration": 45,
+   "old_winner": "VS",
+   "census_winner": "TR",
+   "basis": "sudden_death_kills",
+   "final_scores": {
+    "VS": 11.37254905701,
+    "NC": 7.4509806633,
+    "TR": 12.54901981354
+   },
+   "sudden_death": {
+    "instance_id": "49338",
+    "event": 238,
+    "kills": {
+     "VS": 234.0,
+     "NC": 397.0,
+     "TR": 419.0
+    }
+   },
+   "brier_by_slice": {
+    "t0": 0.2533,
+    "t30": 0.2756,
+    "t30_popadj": 0.1919
+   },
+   "old_brier_by_slice": {
+    "t0": 0.2046,
+    "t30": 0.085,
+    "t60": null
+   }
+  },
+  {
+   "alert": "1-344-248-1792262962",
+   "census_instance_id": "49339",
+   "kind": "meltdown",
+   "duration": 45,
+   "old_winner": "NC",
+   "census_winner": "NC",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 11.76470565796,
+    "NC": 27.05882453918,
+    "TR": 18.03921508789
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.4103,
+    "t30": 0.0,
+    "t30_popadj": 0.0428
+   },
+   "old_brier_by_slice": {
+    "t0": 0.4103,
+    "t30": 0.0,
+    "t60": null
+   }
+  },
+  {
+   "alert": "10-2-214-1792262807",
+   "census_instance_id": "46299",
+   "kind": "territory",
+   "duration": 90,
+   "old_winner": "NC",
+   "census_winner": "NC",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 24.31372642517,
+    "NC": 38.03921508789,
+    "TR": 36.86274719238
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.2775,
+    "t30": 0.2908,
+    "t30_popadj": 0.2894,
+    "t60": 0.212
+   },
+   "old_brier_by_slice": {
+    "t0": 0.2775,
+    "t30": 0.2908,
+    "t60": 0.212
+   }
+  },
+  {
+   "alert": "10-8-151-1792269196",
+   "census_instance_id": "46301",
+   "kind": "territory",
+   "duration": 90,
+   "old_winner": "VS",
+   "census_winner": "VS",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 49.80392074585,
+    "NC": 28.23529434204,
+    "TR": 21.56862831116
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.1127,
+    "t30": 0.1967,
+    "t30_popadj": 0.1851,
+    "t60": 0.0307
+   },
+   "old_brier_by_slice": {
+    "t0": 0.1127,
+    "t30": 0.1967,
+    "t60": 0.0307
+   }
+  },
+  {
+   "alert": "1-4-153-1792285909",
+   "census_instance_id": "49341",
+   "kind": "territory",
+   "duration": 90,
+   "old_winner": "VS",
+   "census_winner": "TR",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 32.94117736816,
+    "NC": 31.76470565796,
+    "TR": 35.29411697388
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.1793,
+    "t30": 0.336,
+    "t30_popadj": 0.2578,
+    "t60": 0.2012
+   },
+   "old_brier_by_slice": {
+    "t0": 0.2667,
+    "t30": 0.2153,
+    "t60": 0.2585
+   }
+  },
+  {
+   "alert": "10-4-177-1792294792",
+   "census_instance_id": "46303",
+   "kind": "meltdown",
+   "duration": 45,
+   "old_winner": "VS",
+   "census_winner": "VS",
+   "basis": "census_final_score",
+   "final_scores": {
+    "VS": 16.47058868408,
+    "NC": 11.76470565796,
+    "TR": 8.235294342041
+   },
+   "sudden_death": null,
+   "brier_by_slice": {
+    "t0": 0.1291,
+    "t30": 0.3295,
+    "t30_popadj": 0.2967
+   },
+   "old_brier_by_slice": {
+    "t0": 0.1291,
+    "t30": 0.3295,
+    "t60": null
+   }
+  }
+ ]
+}
