@@ -8,7 +8,7 @@ export function commander(c, ts, now, lead) {
   const mine = S.me && live.includes(S.me.faction) ? S.me.faction : null;
   const on = live.includes(S.cmdFac) ? S.cmdFac : mine || (live.includes(lead) ? lead : live[0]);
   const seg = `<div class="seg" role="tablist" aria-label="Faction">${live.map((f) => `<button type="button" role="tab" class="${f}${f === on ? " on" : ""}" aria-selected="${f === on}" data-cf="${f}">${f}</button>`).join("")}</div>`;
-  const marks = (e) => `${e.heat >= 40 ? ` <span title="hot fight (heat ${e.heat})">🔥</span>` : ""}${e.freezing ? ' <span title="supply line runs through a threatened chokepoint">🥶</span>' : ""}${e.cut_severs ? ` <span title="capturing this cuts off ${e.cut_severs} enemy bases">✂️${e.cut_severs}</span>` : ""}`;
+  const marks = (e) => `${e.heat >= 40 ? ` <span title="hot fight (heat ${e.heat})">🔥</span>` : ""}${e.freezing ? ` <span title="${e.cut_off ? "cut off: no lattice link back to the warpgate" : "almost cut: its only link to the warpgate runs through a chokepoint under attack"}">🥶</span>` : ""}${e.cut_severs ? ` <span title="capturing this cuts off ${e.cut_severs} enemy bases">✂️${e.cut_severs}</span>` : ""}`;
   const prio = (e) => `<span class="note">${e.priority ? `P${e.priority}` : "dead"}</span>`;
   const age = ts ? `<span class="note">updated ${Math.max(0, now - ts)}s ago</span>` : "";
   return `<section class="card cmd" style="margin-top:14px"><h2>🎖️ AI Commander ${age}</h2>${seg}<div class="cmdgrid">${FACS.map((f) => {

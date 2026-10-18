@@ -19,6 +19,7 @@ const FAC = { 1: "VS", 2: "NC", 3: "TR" };
 const INV = { VS: 1, NC: 2, TR: 3 };
 const LANES = 3, MIN_PER_BASE = 3.0;
 const FIGHT_UP_BASELINE = 0.67, FIGHT_UP_WINDOW_MIN = 20, FIGHT_UP_MIN_FLIPS = 5;
+const FREEZE_WINDOW_S = 600;
 
 /**
  * Python round(x, nd): rounds the double's exact decimal value, half-to-even
@@ -315,10 +316,15 @@ function rankedLive(sh, w0, own, adj, names, pf, winfn, flips, nowTs, res) {
         margin_gain: pyRound(mGain, 2), ev: pyRound(ev, 3), heat: heatScore(fid, flips, nowTs, adj), pred_heat: predHeat.get(fid) || 0,
         cut_off: cut, reconnect: isBridge, owner_cut: ownerCut, cut_severs: cutByFid.get(fid) || 0 });
     }
+    // 🥶 "almost cut": our bases whose warpgate link runs through a chokepoint
+    // that is actually being fought over: heat >= 30, or an enemy capture at the
+    // chokepoint or next to it in the last 10 min. (Until 2026-10-18 merely touching
+    // an enemy base counted, which flagged most of the front line.)
     const freezing = new Set();
     for (const [apFid, , severed] of cuts.get(fo) || []) {
-      const apHeat = heatScore(apFid, flips, nowTs, adj);
-      const threatened = apHeat >= 30 || nbrs(adj, apFid).some((nb) => { const v = get(own, nb, fo); return v !== fo && v !== 0; });
+      const apNbrs = new Set(nbrs(adj, apFid).map(String));
+      const threatened = heatScore(apFid, flips, nowTs, adj) >= 30 || flips.some(([ts, nw, , fac]) =>
+        ts >= nowTs - FREEZE_WINDOW_S && ts <= nowTs && nw !== f && (String(fac) === String(apFid) || apNbrs.has(String(fac))));
       if (threatened) severed.forEach((s) => freezing.add(s));
     }
     for (const fid of frontierOf(own, adj, f)) {
@@ -344,7 +350,7 @@ function rankedLive(sh, w0, own, adj, names, pf, winfn, flips, nowTs, res) {
     for (const a of [...attacks, ...defends]) {
       if (a.owner_cut) a.heat = 0;
       delete a.owner_cut;
-      if (a.cut_off) { delete a.cut_off; a.priority = 0; continue; }
+      if (a.cut_off) { delete a.cut_off; a.priority = 0; a.isolated = true; continue; }   // isolated: for the 🥶 label
       delete a.cut_off;
       const onWinner = lockedWinner && f !== lockedWinner && a.target === lockedWinner;
       const free = (a.p_cap || 0) >= 0.9;
@@ -527,7 +533,8 @@ export function runCommander({ world, zone, startTs, t, dur, own, own15, flips, 
   const fu = fightUpSignal(flips, startTs, target, sh);
   // heat only ever counts flips from the last 4 minutes: pre-filter once (same results).
   const nowTs = Math.trunc(target);
-  const recent = flips.filter((f) => f[0] >= nowTs - 4 * 60);
+  // (widened to the 10-min 🥶 window: heat itself still only counts 4 minutes).
+  const recent = flips.filter((f) => f[0] >= nowTs - FREEZE_WINDOW_S);
   const elim = Object.fromEntries(FACS.map((f) => [f, f === leader ? false : maxSwing(t, dur) < sh[leader] - sh[f]]));
   const ws = warShape(own, adj);
   const ranked = rankedLive(sh, w0j, own, adj, names, pf, winfn, recent, nowTs, res);
@@ -547,7 +554,7 @@ export function runCommander({ world, zone, startTs, t, dur, own, own15, flips, 
       war_shape: warShapeStr(ws, f),
       eliminated: !!elim[f],
       defend: ranked[f].defend.map((d) => ({ name: d.name, vs: d.attacker, win_drop: pyRound(d.win_drop, 1), p_loss: pyRound(d.p_loss, 2),
-        ev: pyRound(d.ev, 2), priority: d.priority || 0, heat: d.heat || 0, pred_heat: d.pred_heat || 0, freezing: !!d.freezing,
+        ev: pyRound(d.ev, 2), priority: d.priority || 0, heat: d.heat || 0, pred_heat: d.pred_heat || 0, freezing: !!d.freezing, cut_off: !!d.isolated,
         hold_factor: d.hold_factor ?? 1.0, resistance: d.resistance ?? null, median_hold_min: d.median_hold_min ?? null })),
       attack: ranked[f].attack.map((a) => ({ name: a.name, target: a.target, win_gain: pyRound(a.win_gain, 1), margin_gain: pyRound(a.margin_gain, 1),
         p_cap: pyRound(a.p_cap, 2), ev: pyRound(a.ev, 2), priority: a.priority || 0, heat: a.heat || 0, pred_heat: a.pred_heat || 0,

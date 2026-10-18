@@ -43,7 +43,7 @@ export async function drawMap(a) {
   // Commander payload: heat / freezing / lines per base name.
   const info = {};
   const cmd = a.commander || (a.state && a.state.commander);
-  const add = (name, e, line) => { const o = info[name] || (info[name] = { heat: 0, freezing: false, lines: [] }); o.heat = Math.max(o.heat, +e.heat || 0); o.freezing = o.freezing || !!e.freezing; o.lines.push(line); };
+  const add = (name, e, line) => { const o = info[name] || (info[name] = { heat: 0, freezing: false, cut: false, lines: [] }); o.heat = Math.max(o.heat, +e.heat || 0); o.freezing = o.freezing || !!e.freezing; o.cut = o.cut || !!e.cut_off; o.lines.push(line); };
   if (cmd && cmd.factions) for (const f of FACS) {
     const x = cmd.factions[f]; if (!x) continue;
     for (const e of x.attack || []) if (e && e.name) add(e.name, e, `<span class="${f}">${f}</span> attack → <span class="${esc(e.target || "")}">${esc(e.target || "")}</span> +${esc(e.win_gain ?? "")}%${e.priority ? ` P${e.priority}` : ""}`);
@@ -79,7 +79,7 @@ export async function drawMap(a) {
       <g class="marks" font-size="${(r * 1.6).toFixed(1)}" text-anchor="middle" pointer-events="none">${markers}</g>
       <g class="lbls" text-anchor="middle" fill="#fff" stroke="#0b0c0e" paint-order="stroke" font-weight="600" pointer-events="none">${labels}</g>
     </g></svg>
-    <div class="legend"><span><i class="sw" style="background:var(--vs)"></i>VS</span><span><i class="sw" style="background:var(--nc)"></i>NC</span><span><i class="sw" style="background:var(--tr)"></i>TR</span><span><i class="sw hatch"></i>neutral / unknown</span><span><i class="sw wgs"></i>warpgate</span><span class="hint">🔥 hot · 🥶 freezing · scroll/pinch to zoom, double-click to reset</span></div>
+    <div class="legend"><span><i class="sw" style="background:var(--vs)"></i>VS</span><span><i class="sw" style="background:var(--nc)"></i>NC</span><span><i class="sw" style="background:var(--tr)"></i>TR</span><span><i class="sw hatch"></i>neutral / unknown</span><span><i class="sw wgs"></i>warpgate</span><span class="hint">🔥 hot · 🥶 cut off or almost cut · scroll/pinch to zoom, double-click to reset</span></div>
     <div class="tip" hidden></div><div class="sheet" hidden role="dialog" aria-label="Base details"></div>`;
   const svg = host.querySelector("svg"), tip = host.querySelector(".tip"), sheet = host.querySelector(".sheet");
   cur = { svg, geo, nm, r };
@@ -153,7 +153,7 @@ export async function drawMap(a) {
     const km = cmd && cmd.factions ? FACS.flatMap((f) => ((cmd.factions[f] && cmd.factions[f].kingmaker) || []).filter((k) => k && k.text && k.text.includes(b.n.name)).map((k) => `<span class="${f}">${f}</span> ${esc(k.text)}`)) : [];
     const lines = [...(x ? x.lines : []), ...km];
     sheet.innerHTML = `<button type="button" class="x" aria-label="Close">✕</button><b>${esc(b.n.name)}</b>
-      <div>${o ? `Owner <span class="${o}">${o}</span>` : "Neutral / unknown"}${x && x.heat ? ` · heat ${x.heat}${x.heat >= 40 ? " 🔥" : ""}` : ""}${x && x.freezing ? " · 🥶 freezing" : ""}</div>
+      <div>${o ? `Owner <span class="${o}">${o}</span>` : "Neutral / unknown"}${x && x.heat ? ` · heat ${x.heat}${x.heat >= 40 ? " 🔥" : ""}` : ""}${x && x.freezing ? (x.cut ? " · 🥶 cut off from the warpgate" : " · 🥶 almost cut (supply chokepoint under attack)") : ""}</div>
       ${lines.length ? `<ul>${lines.map((l) => `<li>${l}</li>`).join("")}</ul>` : `<div class="note">No AI Commander line mentions this base.</div>`}`;
     sheet.hidden = false; tip.hidden = true;
     sheet.querySelector(".x").onclick = () => { sheet.hidden = true; };

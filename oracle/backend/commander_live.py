@@ -117,6 +117,9 @@ def load_flips(world, zone):
     return out
 
 
+FREEZE_WINDOW_S = 600  # enemy capture at/next to a chokepoint this recent = threatened
+
+
 def heat_score(fid, flips, now_ts, adj, window_min=4):
     """Heat 0-100 for a base: recent flips at or adjacent to it.
     
@@ -629,11 +632,17 @@ def ranked_live(sh, w0, own, adj, names, pf, winfn, flips=None, now_ts=None, res
         # 🥶 set: our bases whose warpgate link depends on a threatened chokepoint.
         # A chokepoint (our articulation point) is threatened if it's hot
         # (being fought over) or on the enemy frontier.
+        # 2026-10-18: Dayset — 🥶 showed "too often on territory that is not cut
+        # yet". A chokepoint that merely touches an enemy base is the normal front
+        # line, not a threat. Threatened now means real fighting at it: heat >= 30,
+        # or an enemy capture at the chokepoint or next to it in the last 10 min.
         freezing_fids = set()
         for ap_fid, _, severed in cuts.get(fo, []):
-            ap_heat = heat_score(ap_fid, flips, now_ts, adj)
-            ap_threatened = ap_heat >= 30 or any(
-                own.get(nb, fo) not in (fo, 0) for nb in adj.get(ap_fid, ()))
+            ap_nbrs = {str(n) for n in adj.get(ap_fid, ())}
+            ap_threatened = heat_score(ap_fid, flips, now_ts, adj) >= 30 or any(
+                ts >= now_ts - FREEZE_WINDOW_S and ts <= now_ts and new != f
+                and (str(fac) == str(ap_fid) or str(fac) in ap_nbrs)
+                for ts, new, old, fac in flips)
             if ap_threatened:
                 freezing_fids.update(severed)
         for fid in frontier_of(own, adj, f):
@@ -702,6 +711,7 @@ def ranked_live(sh, w0, own, adj, names, pf, winfn, flips=None, now_ts=None, res
                 # severed from the warpgate: abandon the fight, the lines
                 # can't be moved from a cut-off pocket.
                 a["priority"] = 0
+                a["isolated"] = True  # kept for the 🥶 label: cut vs almost cut
                 continue
             is_attack_on_winner = (locked_winner and f != locked_winner 
                                    and a.get("target") == locked_winner)
@@ -1027,6 +1037,7 @@ def main():
                      "heat": d.get("heat", 0),
                      "pred_heat": d.get("pred_heat", 0),
                      "freezing": bool(d.get("freezing", False)),
+                     "cut_off": bool(d.get("isolated", False)),
                      "hold_factor": d.get("hold_factor", 1.0),
                      "resistance": d.get("resistance"),
                      "median_hold_min": d.get("median_hold_min")}
