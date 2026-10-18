@@ -231,3 +231,19 @@ footer { color: var(--dim); font-size: var(--fs-12); margin-top: var(--s-5); }
 .map .sheet .x { position: absolute; top: 2px; right: 2px; min-width: 44px; min-height: 44px; background: none; border: 0; color: var(--dim); font-size: var(--fs-16); cursor: pointer; }
 @media (min-width: 861px) { .map .sheet { left: auto; width: 320px; } }
 @media (max-width: 600px) { .map .legend .hint { display: none; } }
+
+/* ---------------------------------------------------------------- collapsible sections */
+.card > h2:has(> button.ch) { margin: 0; }
+.card > h2 > button.ch { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: var(--s-2); width: 100%; min-height: 32px; margin: 0 0 var(--s-3); cursor: pointer; font: inherit; color: inherit; letter-spacing: inherit; text-transform: inherit; border-radius: var(--r-sm); }
+.card > h2 > button.ch:focus-visible { box-shadow: var(--focus); }
+.card > h2 > button.ch:hover { color: var(--muted); }
+.ch .chev { margin-left: auto; width: 8px; height: 8px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg); transition: transform .15s ease; flex: none; }
+.card.collapsed > h2 > button.ch { margin-bottom: 0; }
+.card.collapsed .ch .chev { transform: rotate(-45deg); }
+.card.collapsed > :not(h2) { display: none !important; }
+.card.opening > :not(h2) { animation: secOpen .16s ease-out; }
+@keyframes secOpen { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@media (max-width: 600px) {
+  .card.map h2 { display: block; }
+  .card > h2 > button.ch { min-height: 44px; margin-bottom: var(--s-2); }
+}

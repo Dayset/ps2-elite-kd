@@ -7,6 +7,7 @@ import { commander } from "./commander.js";
 import { reportPanel } from "./players.js";
 import { benchPanel, initResults, refreshHistory, renderHist } from "./results.js";
 import { initAuth } from "./auth.js";
+import { enhance, onSectionExpand } from "./collapse.js";
 
 // Shareable links: keep ?alert=<key> in the address bar (other params such as ?api= stay).
 function setUrlAlert(key) {
@@ -83,6 +84,7 @@ function render(now) {
   const h = $("betHere");
   if (h) h.replaceWith(betNode); else $("main").after(betNode);
   syncDetails($("main"));
+  enhance(document);
   announceAlert(S.alerts.find((x) => x.key === S.selected) || null);
 }
 function render2(now) {
@@ -181,6 +183,12 @@ addEventListener("scroll", miniSync, { passive: true });
 document.addEventListener("toggle", (e) => { const d = e.target; if (d.dataset && d.dataset.d && (!wide() || d.classList.contains("info"))) S.open[d.dataset.d] = d.open; }, true);
 PHONE_MQ.addEventListener("change", () => { syncDetails(); render(Math.floor(Date.now() / 1000)); renderHist(); });
 syncDetails();
+
+// Collapsible sections: bet.js renders its own card, so re-enhance when it changes.
+new MutationObserver(() => enhance(betNode)).observe(betNode, { childList: true });
+// Re-measure on expand: the map and chart are drawn for the width they had.
+onSectionExpand((id) => { if (id === "map" || id === "win-chance-over-time") render(Math.floor(Date.now() / 1000)); });
+enhance(document);
 
 S.hooks.openAlert = openAlert;
 initResults();
