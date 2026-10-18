@@ -31,6 +31,7 @@ export const KNOWN_EXTREMES = Object.freeze({
   geilovs: "Reviewed 2026-10-09: lifetime Census KD 146 (LA bail-out vehicle hunter, user: stays unflagged); opponent metrics already — (1 death)",
   add1ti0nal: "Confirmed cheater 2026-10-10 (t319u): throwaway account, rampage (75 kills / 2 deaths, KD 24.7); on the 🙈 hide list as a reference",
   teritch: "Reviewed 2026-10-09: steep slope −6.7 from 278 kills / 37 deaths; real data, watch as it grows",
+  fright1vs: "Reviewed 2026-10-18 (#10): 🎈 inflation 19.2 = lifetime KD 1.82 vs 121 kills / 992 deaths against 200 opponents; real data, big sample, the public board flatters",
 });
 
 const fin = (v) => typeof v === "number" && Number.isFinite(v);

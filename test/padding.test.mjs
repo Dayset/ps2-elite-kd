@@ -35,7 +35,7 @@ describe("stat padding (farm victims)", () => {
     assert.equal(farmNote(splitFarm([{ name: "x", kills: 5, deaths: 5, kpm: 1 }])), "");
   });
 
-  it("Megatake: 🌾 padding (📉 chart anomaly, not 🚩 — t288u), sample K/D ≈ 1.03 after exclusion", () => {
+  it("Megatake: 🌾 padding (📉 chart anomaly, not 🚩 — t288u), sample K/D ≈ 1.11 after exclusion", () => {
     const m = metricsOf("megatake");
     const f = reviewFlags(m);
     assert.ok(f.patterns.includes("padding"));
@@ -43,12 +43,14 @@ describe("stat padding (farm victims)", () => {
     assert.equal(f.bins.bin, "chart");
     assert.ok(isPadder(m));
     assert.deepEqual(m.farm.victims.map((v) => v.name).sort(), ["battletank112", "hammer111", "vulcan112"]);
-    assert.ok(Math.abs(m.rkd - 1.03) < 0.01, `rkd ${m.rkd}`);
-    assert.ok(m.raw.rkd > 7, "raw sample kept for the older rules");
+    // Was 1.03 on the top-50 sample (1229/1189 kept). The 2026-10-16 refresh grew it to
+    // top-200 (3619/3249 kept after the same 3 farm victims) → 1.11 (issue #10, data drift).
+    assert.ok(Math.abs(m.rkd - 1.11) < 0.01, `rkd ${m.rkd}`);
+    assert.ok(m.raw.rkd > 3, "raw sample kept for the older rules"); // 3.49 on top-200 (was > 7 on top-50; #10 drift)
     // Graph line uses the kept rows: lowest-KPM point no longer spikes.
     const p = normalizePlayer(load("megatake"));
     const low = p.curve.reduce((a, b) => (b.kpm < a.kpm ? b : a));
-    assert.ok(low.kd < 1.1, `curve K/D at kpm ${low.kpm} = ${low.kd}`);
+    assert.ok(low.kd < 1.15, `curve K/D at kpm ${low.kpm} = ${low.kd}`); // 1.11 on top-200 (#10 drift)
     assert.ok(shownValue(m, "adjs") < 1000);
   });
 
