@@ -1,5 +1,5 @@
 // PS2MapOracle dashboard — split from index.html (#15). No behaviour change.
-import { S, FACS, esc, $, when } from "./state.js";
+import { S, FACS, esc, $, when, info, wide } from "./state.js";
 import { get } from "./api.js";
 
 // Benchmark slices recorded for one alert, with Brier once it settled.
@@ -11,7 +11,7 @@ export function benchPanel(a) {
   const row = (k, label) => { const p = sl[k] || {}; return `<tr><td>${esc(label)}</td>${FACS.map((f) => `<td class="num ${f}">${p[f] != null ? Math.round(p[f] * 1000) / 10 + "%" : "—"}</td>`).join("")}<td class="num">${br[k] != null ? (+br[k]).toFixed(3) : "—"}</td></tr>`; };
   const rows = keys.map((k) => row(k, k.endsWith("_pop") ? k.slice(0, -4) + " with pop" : k) + (sl[k + "_pop"] ? row(k + "_pop", k + " with pop") : "")).join("");
   if (!rows) return "";
-  return `<section class="card" style="margin-top:14px"><h2>Benchmark slices</h2><div class="scroll"><table class="slices"><thead><tr><th>Slice</th><th>VS</th><th>NC</th><th>TR</th><th>Brier</th></tr></thead><tbody>${rows}</tbody></table></div><div class="note">Win chance recorded at each slice; Brier against the Census winner (lower is better, coin-flip 0.222).</div></section>`;
+  return `<section class="card" style="margin-top:14px"><h2>Benchmark slices</h2><div class="scroll"><table class="slices"><thead><tr><th>Slice</th><th>VS</th><th>NC</th><th>TR</th><th>Brier</th></tr></thead><tbody>${rows}</tbody></table></div>${info("bnote", `<div class="note">Win chance recorded at each slice; Brier against the Census winner (lower is better, coin-flip 0.222).</div>`)}</section>`;
 }
 
 // Benchmark: keys ending in _pop are the population-weighted variant of the same slice.
@@ -26,14 +26,15 @@ function benchLine(sl) {
   return out.join(" · ");
 }
 
-const HIST_MAX = 40;
-function renderHist() {
+const HIST_MAX_WIDE = 40, HIST_MAX_PHONE = 10;   // phone: shorter card list (#16)
+export function renderHist() {
+  const HIST_MAX = wide() ? HIST_MAX_WIDE : HIST_MAX_PHONE;
   const list = S.histAll ? S.histRows : S.histRows.slice(0, HIST_MAX);
-  const rows = list.map((a) => `<tr data-k="${esc(a.key)}" tabindex="0" role="button" aria-label="Open ${esc(a.world_name)} ${esc(a.zone_name)} alert"><td>${a.end_ts ? when(a.end_ts) : "—"}</td><td>${esc(a.world_name)}</td><td>${esc(a.zone_name)}${a.kind === "meltdown" ? '<span class="melt">Meltdown</span>' : ""}</td>
-      <td class="num">${a.dur ? esc(a.dur) + " min" : "—"}</td>
-      <td>${a.winner ? `<b class="${a.winner}">${a.winner}</b>` : esc(a.status)}</td>
-      <td class="num">${a.final ? FACS.map((f) => (+a.final[f]).toFixed(1)).join(" / ") : "—"}</td>
-      <td>${a.basis === "sudden_death" ? "sudden death" : a.basis ? "Census final" : ""}</td>
+  const rows = list.map((a) => `<tr data-k="${esc(a.key)}" tabindex="0" role="button" aria-label="Open ${esc(a.world_name)} ${esc(a.zone_name)} alert"><td class="hend">${a.end_ts ? when(a.end_ts) : "—"}</td><td class="hsrv">${esc(a.world_name)}</td><td class="hzone">${esc(a.zone_name)}${a.kind === "meltdown" ? '<span class="melt">Meltdown</span>' : ""}</td>
+      <td class="num hlen">${a.dur ? esc(a.dur) + " min" : "—"}</td>
+      <td class="hwin">${a.winner ? `<b class="${a.winner}">${a.winner}</b>` : esc(a.status)}</td>
+      <td class="num hfin">${a.final ? FACS.map((f) => (+a.final[f]).toFixed(1)).join(" / ") : "—"}</td>
+      <td class="hbas">${a.basis === "sudden_death" ? "sudden death" : a.basis ? "Census final" : ""}</td>
       <td class="flag">${a.report && a.report.flagged ? `${a.report.confirmed ? `☠️${a.report.confirmed} ` : ""}${a.report.flagged - a.report.confirmed ? `⚠️${a.report.flagged - a.report.confirmed} ` : ""}` : ""}${(a.flags || []).map((f) => esc(f.replace(/_/g, " "))).join(", ")}</td></tr>`);
   $("hist").querySelector("tbody").innerHTML = rows.join("") || '<tr><td colspan="8" class="note">No settled alerts yet.</td></tr>';
   const more = $("histMore");

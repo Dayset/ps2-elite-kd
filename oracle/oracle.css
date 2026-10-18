@@ -92,3 +92,79 @@ footer { color: var(--dim); font-size: 12px; margin-top: 18px; }
 .melt { color: var(--warn); font-size: 12px; margin-left: 4px; }
 .map svg polygon { cursor: pointer; }
 .VS { color: var(--vs); } .NC { color: var(--nc); } .TR { color: var(--tr); }
+
+/* ---------------------------------------------------------------- phone-first (#16)
+   Collapsibles (<details class="det">) are forced open on wider screens with the
+   summary hidden, so the desktop layout is unchanged; phone-only bits are hidden there. */
+.det > summary { cursor: pointer; color: var(--muted); font-size: 14px; list-style: none; }
+.det > summary::-webkit-details-marker { display: none; }
+.seg, .oddline, .tab .tl, .mini { display: none; }
+@media (min-width: 601px) {
+  .det > summary { display: none; }
+}
+@media (max-width: 600px) {
+  .wrap { padding: 10px; }
+  header { gap: 8px; margin-bottom: 10px; }
+  .btn, .more, .link { min-height: 44px; }
+  .link { padding: 0 6px; }
+  .tabs { flex-wrap: nowrap; overflow-x: auto; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; scrollbar-width: none; margin: 0 -10px 10px; padding: 0 10px; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { flex: 0 0 auto; scroll-snap-align: start; min-height: 44px; padding: 6px 12px; border-radius: 999px; }
+  .tab .tl0 { display: none; } .tab .tl { display: block; font-size: 13px; }
+  .tab .bar { min-width: 0; margin-top: 4px; }
+  .grid { gap: 10px; }
+  .card { padding: 12px; }
+  .title { gap: 8px; }
+  .title b { font-size: 17px; }
+  .title .note, .note, .second, .rows, .calls, .cmd, table, .bench, footer, .hoverline { font-size: 14px; }
+  .odds { gap: 6px; }
+  .fac { padding: 8px 4px; }
+  .fac .stars { display: none; }
+  .oddline { display: block; margin-top: 8px; font-size: 14px; color: var(--muted); }
+  .oddline .stars { color: var(--warn); font-size: 12px; }
+  .oddline .note { margin: 0; }
+  .det > summary { min-height: 44px; display: flex; align-items: center; gap: 6px; }
+  .det.wdet > summary::after, .det.why > summary::after { content: "▾"; color: var(--dim); }
+  .det.wdet[open] > summary::after, .det.why[open] > summary::after { content: "▴"; }
+  .det.info > summary { min-height: 44px; color: var(--dim); }
+  .row { grid-template-columns: 96px 1fr 56px; }
+  /* AI Commander: one faction at a time */
+  .seg { display: flex; gap: 6px; margin-bottom: 4px; }
+  .seg button { flex: 1; min-height: 44px; background: var(--panel2); border: 1px solid var(--border); border-radius: 8px; font: inherit; font-weight: 700; letter-spacing: .06em; cursor: pointer; }
+  .seg button.on { border-color: currentColor; background: #1a2230; }
+  .cmdgrid > .cf:not(.on) { display: none; }
+  .cmd ol, .cmd ul { padding-left: 20px; }
+  .cmd li { margin: 6px 0; }
+  /* Tables become card lists */
+  table.cards thead { display: none; }
+  table.cards, table.cards tbody { display: block; }
+  table.cards tr { display: flex; flex-wrap: wrap; gap: 2px 10px; padding: 10px 4px; border-bottom: 1px solid #1e222a; min-height: 44px; }
+  table.cards td { border: 0; padding: 0; white-space: normal; }
+  table.cards td[data-l]:not([data-l=""])::before { content: attr(data-l) " "; color: var(--dim); }
+  table.cards td:empty { display: none; }
+  #hist.cards td.hzone { font-weight: 600; } #hist.cards td.hsrv { order: -1; font-weight: 600; }
+  #hist.cards td.hend { order: 5; width: 100%; color: var(--dim); }
+  #hist.cards td.hfin::before { content: "VS/NC/TR "; color: var(--dim); }
+  #hist.cards td.hbas { color: var(--dim); }
+  #hist.cards td.flag { width: 100%; }
+  .ptable.cards td.pn { font-weight: 600; flex: 1 1 60%; }
+  .ptable.cards td.rad, .ptable.cards td:last-child { width: 100%; }
+  .scroll { overflow-x: visible; }
+  .slices { display: table; }
+  .card .scroll:has(.slices) { overflow-x: auto; }
+  /* Sticky mini-header */
+  .mini { display: flex; position: fixed; top: 0; left: 0; right: 0; z-index: 20; gap: 10px; align-items: center; justify-content: space-between;
+    padding: 8px 12px; background: rgba(16,18,22,.96); border-bottom: 1px solid var(--border); font-size: 14px;
+    transform: translateY(-100%); transition: transform .15s; }
+  .mini.show { transform: none; }
+  .mini > span { display: flex; gap: 8px; font-variant-numeric: tabular-nums; font-weight: 700; }
+  dialog.auth { padding: 16px; }
+  .auth .x button { min-width: 44px; min-height: 44px; }
+  .auth input { min-height: 44px; font-size: 16px; }
+}
+@media (max-width: 600px) and (prefers-reduced-motion: reduce) { .mini { transition: none; } }
+@media (max-width: 600px) {
+  .grid > .card:not(.map) { order: -1; }
+  .map svg { max-height: 38vh; width: auto; max-width: 100%; margin: 0 auto; }
+  .card.map h2 { display: none; }
+}

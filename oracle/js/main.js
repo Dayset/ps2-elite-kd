@@ -1,11 +1,11 @@
 // PS2MapOracle dashboard — split from index.html (#15). No behaviour change.
-import { S, FACS, COLOR, esc, $, stars, mins, bar } from "./state.js";
+import { S, FACS, COLOR, esc, $, stars, mins, bar, det, info, wide, syncDetails, PHONE_MQ } from "./state.js";
 import { get } from "./api.js";
 import { drawMap } from "./map.js";
 import { chart, chartHover } from "./chart.js";
 import { commander } from "./commander.js";
 import { reportPanel } from "./players.js";
-import { benchPanel, initResults, refreshHistory } from "./results.js";
+import { benchPanel, initResults, refreshHistory, renderHist } from "./results.js";
 import { initAuth } from "./auth.js";
 
 // Shareable links: keep ?alert=<key> in the address bar (other params such as ?api= stay).
@@ -29,9 +29,11 @@ function renderTabs(now) {
   $("tabs").innerHTML = S.alerts.map((a) => {
     const terr = (a.state && a.state.territory) || {};
     return `<button class="tab ${a.key === S.selected ? "on" : ""}" data-k="${esc(a.key)}">
-      <b>${esc(a.world_name)} · ${esc(a.zone_name)}</b><small>${esc(statusLabel(a, now))}</small>
+      <b>${esc(a.world_name)} · ${esc(a.zone_name)}</b><small class="tl0">${esc(statusLabel(a, now))}</small><small class="tl">${esc(a.status === "live" ? `${mins(a.start_ts + a.dur * 60 - now)} min left` : statusLabel(a, now))}</small>
       <div class="bar">${bar(terr)}</div></button>`;
   }).join("");
+  const on = $("tabs").querySelector(".tab.on");
+  if (on && !wide()) { const t = $("tabs"); const l = on.offsetLeft - t.offsetLeft; if (l < t.scrollLeft || l + on.offsetWidth > t.scrollLeft + t.clientWidth) t.scrollLeft = l - 8; }
   $("tabs").querySelectorAll(".tab").forEach((b) => b.onclick = () => { S.selected = b.dataset.k; S.pinned = false; setUrlAlert(S.selected); render(now); loadTicks(); });
 }
 
@@ -80,6 +82,7 @@ function render(now) {
   render2(now);
   const h = $("betHere");
   if (h) h.replaceWith(betNode); else $("main").after(betNode);
+  syncDetails($("main"));
   announceAlert(S.alerts.find((x) => x.key === S.selected) || null);
 }
 function render2(now) {
@@ -87,6 +90,7 @@ function render2(now) {
   const a = liveA || (S.pinned && S.extra && S.extra.key === S.selected ? S.extra : null);
   if (!a && S.pinned && S.selected) { $("main").innerHTML = `<div class="empty">Loading alert…</div>`; return; }
   if (!a) {
+    $("mini").innerHTML = ""; miniSync();
     $("main").innerHTML = `<div class="empty">No territory alerts running on Osprey, Wainwright, Briggs or SolTech right now. Live odds appear here the minute one starts.</div>`;
     return;
   }
@@ -103,6 +107,9 @@ function render2(now) {
     }).join("") : "";
   const popTot = s && s.pop ? FACS.reduce((t, f) => t + (s.pop[f] || 0), 0) : 0;
   const popRows = popTot ? FACS.map((f) => `<div class="row"><span class="lbl ${f}">${f} players</span><div class="track"><span style="width:${(100 * s.pop[f] / popTot).toFixed(1)}%;background:${COLOR[f]}"></span></div><span class="v">${s.pop[f]}</span></div>`).join("") : "";
+  // Phone: stars + 15-min momentum as one secondary line under the three tiles.
+  const oddLine = win && s ? `<div class="oddline">${FACS.map((f) => { const base = s.territory[f] || 0, m = s.momentum[f]; const rel = base >= 1 ? (100 * m / base) : m;
+    return `<span class="${f}">${f}</span> <span class="stars">${stars(win[f].pct) || "·"}</span> <span class="note">${rel > 0.05 ? "▲" : rel < -0.05 ? "▼" : "·"}${rel >= 0 ? "+" : ""}${rel.toFixed(1)}%</span>`; }).join(" · ")}</div>` : "";
   const kdRows = s && s.kd_source ? FACS.map((f) => `<div class="row"><span class="lbl ${f}">${f} KD</span><span class="note">live</span><span class="v">${s.kd[f]}</span></div>`).join("") : "";
   const popAdj = s && s.win_popadj ? `<div class="second">With population weighting: ${FACS.map((f) => `<span class="${f}">${f} ${s.win_popadj[f].pct}%</span>`).join(" · ")} <span class="note">(experimental, fades out by minute 60)</span></div>` : "";
   const kindNote = a.kind === "meltdown" ? `<div class="note" style="color:var(--warn)">Unstable Meltdown: scored differently from territory alerts; these odds are not validated for this alert type yet.</div>` : "";
@@ -113,13 +120,16 @@ function render2(now) {
     <div class="title"><b>${esc(a.world_name)} · ${esc(a.zone_name)}${a.kind === "meltdown" ? " Meltdown" : ""}</b><span class="badge ${a.status}">${esc(a.status.replace("_", " "))}</span><span class="note">${esc(left)} · ${a.dur}-min alert</span>${liveA ? "" : `<button type="button" class="more backlive" id="backLive">← Back to live</button>`}</div>
     <div class="grid">
       <section class="card map"><h2>Map</h2><div id="map"></div></section>
-      <section class="card"><h2>Win chance</h2>${kindNote}<div class="odds">${oddsHtml}</div>${result}${popAdj}${second}<div class="rows">${rows}${popRows}${kdRows}</div>${popTot ? `<div class="note">Population: Honu (wt.honu.pw), ${popTot} on continent${s.pop_ns ? ` + ${s.pop_ns} NSO` : ""}.</div>` : ""}${calls}</section>
+      <section class="card"><h2>Win chance</h2>${kindNote}<div class="odds">${oddsHtml}</div>${oddLine}${result}${popAdj}${second}${rows || popRows || kdRows ? det("wdet", "Details", `<div class="rows">${rows}${popRows}${kdRows}</div>${popTot ? `<div class="note">Population: Honu (wt.honu.pw), ${popTot} on continent${s.pop_ns ? ` + ${s.pop_ns} NSO` : ""}.</div>` : ""}`, "wdet") : ""}${calls}</section>
     </div>
     ${a.status === "live" ? `<div id="betHere"></div>` : ""}
     <section class="card chart" style="margin-top:14px"><h2>Win chance over time</h2><div id="chart"><div class="note">Loading…</div></div></section>
-    ${a.status === "live" ? commander(a.commander || (s && s.commander), a.commander_ts, now) : reportPanel(a)}
+    ${a.status === "live" ? commander(a.commander || (s && s.commander), a.commander_ts, now, lead) : reportPanel(a)}
     ${benchPanel(a)}`;
   if ($("backLive")) $("backLive").onclick = backToLive;
+  $("main").querySelectorAll("[data-cf]").forEach((b) => b.onclick = () => { S.cmdFac = b.dataset.cf; render(Math.floor(Date.now() / 1000)); });
+  $("mini").innerHTML = `<b>${esc(a.world_name)} · ${esc(a.zone_name)}</b>${win ? `<span>${FACS.map((f) => `<span class="${f}">${f} ${win[f].pct}%</span>`).join(" ")}</span>` : ""}`;
+  miniSync();
   if (S.ticksFor === a.key) { const c = $("chart"); c.innerHTML = chart(S.ticks, a.dur, c.clientWidth); chartHover(c, S.ticks, a.dur); }
   drawMap(a);
 }
@@ -141,6 +151,17 @@ async function refreshLive() {
     if (!S.alerts.length) $("main").innerHTML = '<div class="empty">The oracle backend is not reachable right now.</div>';
   }
 }
+
+// Phone: sticky mini-header (alert name + three win %) once the title scrolls away.
+function miniSync() {
+  const t = $("main").querySelector(".title"), m = $("mini");
+  m.classList.toggle("show", !wide() && !!t && !!m.innerHTML && t.getBoundingClientRect().bottom < 0);
+}
+addEventListener("scroll", miniSync, { passive: true });
+// Remember which collapsibles the user opened on the phone, so 30-s re-renders keep them.
+document.addEventListener("toggle", (e) => { const d = e.target; if (d.dataset && d.dataset.d && !wide()) S.open[d.dataset.d] = d.open; }, true);
+PHONE_MQ.addEventListener("change", () => { syncDetails(); render(Math.floor(Date.now() / 1000)); renderHist(); });
+syncDetails();
 
 S.hooks.openAlert = openAlert;
 initResults();

@@ -24,6 +24,7 @@
     <div id="authBody"></div>
   </dialog>
 
+  <div id="mini" class="mini" aria-hidden="true"></div>
   <div id="tabs" class="tabs"></div>
   <div id="main"></div>
   <!-- Betting panel: filled by js/bet.js (listens for oracle:alert / oracle:auth). render() moves this node into #betHere. -->
@@ -32,11 +33,11 @@
   <section class="card" style="margin-top:14px">
     <h2>Recent results</h2>
     <div id="bench" class="bench"></div>
-    <div class="scroll"><table id="hist"><thead><tr><th>Ended</th><th>Server</th><th>Continent</th><th>Length</th><th>Winner</th><th>Final VS / NC / TR</th><th>Basis</th><th>Notes</th></tr></thead><tbody></tbody></table></div>
+    <div class="scroll"><table id="hist" class="cards"><thead><tr><th>Ended</th><th>Server</th><th>Continent</th><th>Length</th><th>Winner</th><th>Final VS / NC / TR</th><th>Basis</th><th>Notes</th></tr></thead><tbody></tbody></table></div>
     <button id="histMore" class="more" type="button" hidden>Show more</button>
   </section>
 
-  <footer>Odds update every minute from Census map data. Results settle 10 minutes after an alert ends, from Census's own final scores (sudden death decides draws). Percentages are model estimates, not guarantees.</footer>
+  <footer><details class="det info" data-d="foot"><summary>ⓘ About these numbers</summary>Odds update every minute from Census map data. Results settle 10 minutes after an alert ends, from Census's own final scores (sudden death decides draws). Percentages are model estimates, not guarantees.</details></footer>
 </div>
 
 <script type="module" src="js/bet.js"></script>
