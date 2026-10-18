@@ -57,7 +57,7 @@ export function myVotesHtml(w) {
   const rows = settled.map((v) => `<div class="mvrow ${esc(v.status)}"><span class="mvname">${esc(alertName(v.key))}</span>
       <span class="${esc(v.outcome)}">${esc(v.outcome)}</span> <span class="mvnum">${pts(v.amount)} → ${pts(v.reward || 0)}</span>
       <span class="mvst">${esc(STATUS[v.status] || v.status)}</span></div>`).join("");
-  return `<div class="card vote myvotescard"><h2>My votes</h2>
+  return `<div class="card vote myvotescard"><h2>🗳️ My votes</h2>
     <div class="votebar"><span>BonusCheques <b>${pts(w.balance)}</b></span><span>Net <b class="${w.gain > 0 ? "won" : w.gain < 0 ? "lost" : ""}">${signed(w.gain || 0)}</b></span></div>
     ${rows ? `<div class="mvrows">${rows}</div>` : `<div class="note">No finished votes yet. Votes are counted when their alert ends.</div>`}
     ${DISCLAIMER}
@@ -93,7 +93,7 @@ function render() {
   const ownOnly = q && q.own_faction_only && FACS.includes(own);
   if (pick && ownOnly && pick !== own) pick = null;
   if (!pick && ownOnly) pick = own;
-  const head = `<h2>Vote for the winner</h2>`;
+  const head = `<h2>🎲 Vote for the winner</h2>`;
   if (!q || !q.open) {
     el.innerHTML = `<div class="card vote">${head}<div class="note">${q && q.reason === "closed" ? "Voting closed for this alert (last 5%)." : q && q.reason === "data_suspect" ? "Voting paused: Census map data looks broken right now. It reopens when the map is healthy again." : "Voting opens when fresh odds are available."}</div>${DISCLAIMER}</div>`;
     return;
@@ -112,15 +112,15 @@ function render() {
       ${sel ? `Vote ${pick} with ${amount}` : "Pick a faction"}</button>`;
   const mine = wallet ? wallet.votes.filter((v) => v.key === alert.key) : [];
   el.innerHTML = `<div class="card vote">${head}
-    ${wallet ? `<div class="votebar"><span>BonusCheques <b>${pts(wallet.balance)}</b></span>${wallet.bonus_available ? `<button class="link" id="voteBonus">Claim today's BonusCheque (+25)</button>` : ""}</div>` : ""}
+    ${wallet ? `<div class="votebar"><span>BonusCheques <b>${pts(wallet.balance)}</b></span>${wallet.bonus_available ? `<button class="link" id="voteBonus">🧻 Claim today's BonusCheque (+25)</button>` : ""}</div>` : ""}
     <div class="facrow">${FACS.map(facBtn).join("")}</div>
     ${ownOnly ? `<div class="note">You fly ${esc(own)}: vote for your faction, then go help it win.</div>` : ""}
     <div class="amounts">${AMOUNTS.map((s) => `<button class="amount ${s === amount ? "on" : ""}" data-s="${s}" aria-pressed="${s === amount}">${s}</button>`).join("")}</div>
     ${sel ? `<div class="note"><b>${pts(sel.reward)}</b> back if ${pick} wins · your odds ${(sel.odds * 100).toFixed(1)}% (oracle ${sel.pct}%)${feeNote(pick)}</div>` : ""}
     <div class="row2">${action}</div>
     ${msg ? `<div class="note votemsg">${esc(msg)}</div>` : ""}
-    ${mine.length ? `<div class="myvotes"><div class="note">Your votes on this alert</div>${mine.map((v) => `<div class="myvote"><span class="${v.outcome}">${v.outcome}</span> ${pts(v.amount)} → ${pts(v.potential)} <span class="note">at ${v.pct}%</span></div>`).join("")}</div>` : ""}
-    <details class="lb"><summary>Top forecasters</summary><div id="voteLb" class="note">Loading…</div></details>
+    ${mine.length ? `<div class="myvotes"><div class="note">🎫 Your votes on this alert</div>${mine.map((v) => `<div class="myvote"><span class="${v.outcome}">${v.outcome}</span> ${pts(v.amount)} → ${pts(v.potential)} <span class="note">at ${v.pct}%</span></div>`).join("")}</div>` : ""}
+    <details class="lb"><summary>🏆 Top forecasters</summary><div id="voteLb" class="note">Loading…</div></details>
     ${DISCLAIMER}
   </div>`;
   el.querySelectorAll(".facpick").forEach((b) => (b.onclick = () => { pick = b.dataset.f; msg = ""; render(); }));

@@ -21,7 +21,7 @@ function statusLabel(a, now) {
   if (a.status === "live") return `${mins(now - a.start_ts)} / ${a.dur} min`;
   if (a.status === "settling") return "settling…";
   if (a.status === "sudden_death") return "sudden death";
-  if (a.status === "settled") return `won by ${a.winner}`;
+  if (a.status === "settled") return `🏆 won by ${a.winner}`;
   return a.status;
 }
 
@@ -115,7 +115,7 @@ function render2(now) {
   const popAdj = s && s.win_popadj ? `<div class="second">With population weighting: ${FACS.map((f) => `<span class="${f}">${f} ${pct1(s.win_popadj[f].pct)}%</span>`).join(" · ")} <span class="note">(experimental, fades out by minute 60)</span></div>` : "";
   const kindNote = a.kind === "meltdown" ? `<div class="note" style="color:var(--warn)">Unstable Meltdown: scored differently from territory alerts; these odds are not validated for this alert type yet.</div>` : "";
   const calls = s && s.calls && s.calls.length ? `<ul class="calls">${s.calls.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>` : "";
-  const second = s && s.second ? `<div class="second">Second place: ${Object.entries(s.second.odds).map(([f, p]) => `<span class="${f}">${f} ${pct1(p)}%</span>`).join(" · ")} ${s.second.locked ? "(locked)" : ""}</div>` : "";
+  const second = s && s.second ? `<div class="second">🥈 Second place: ${Object.entries(s.second.odds).map(([f, p]) => `<span class="${f}">${f} ${pct1(p)}%</span>`).join(" · ")} ${s.second.locked ? "(locked)" : ""}</div>` : "";
   const voided = (a.flags || []).includes("votes_void");
   const result = a.status === "settled" ? `<div class="second">${a.final ? `Census final: ${FACS.map((f) => `<span class="${f}">${f} ${(+a.final[f]).toFixed(1)}</span>`).join(" · ")}` : "Census sent no final scores; decided from our last map snapshot"} — <b class="${a.winner}">${a.winner}</b> wins${a.basis === "sudden_death" ? " (sudden death)" : ""}</div>${voided ? `<div class="note" style="color:var(--warn)">Census map data was broken at the end and disagreed with the result, so every vote on this alert was given back.</div>` : ""}` : "";
   const suspectNote = s && s.suspect && s.suspect.length ? `<div class="note" style="color:var(--warn)">Census map data looks broken right now (${esc(s.suspect.map((x) => x.startsWith("neutral_heavy") ? `only ${x.split(":")[1]}% of bases owned` : x === "map_frozen" ? "map frozen while captures continue" : "no fresh map").join(", "))}). Odds may be wrong and voting is paused.</div>` : "";

@@ -54,14 +54,14 @@ function acceptStep(id, ch, wait) {
   authView(`<h3><span class="${esc(ch.faction || "")}">${esc(ch.name)}</span></h3>
     ${ch.online === false ? '<div class="err">Census shows this character offline. Log in first, then press ACCEPT.</div>' : ""}
     <div class="note">When ACCEPT unlocks, press it and then log out in game: <b>ESC → Logout</b>. You have 60 seconds.</div>
-    <div class="row2"><button class="btn big" id="authAccept" disabled>ACCEPT (<span id="authWait">${wait}</span>)</button></div><div class="err" id="authErr"></div>`);
+    <div class="row2"><button class="btn big" id="authAccept" disabled>⏰ ACCEPT (<span id="authWait">${wait}</span>)</button></div><div class="err" id="authErr"></div>`);
   let left = wait;
   S.authTimer = setInterval(() => {
     left--;
     if (left > 0) { $("authWait").textContent = left; return; }
     stopTimer();
     $("authAccept").disabled = false;
-    $("authAccept").textContent = "ACCEPT";
+    $("authAccept").textContent = "⏰ ACCEPT";
   }, 1000);
   $("authAccept").onclick = async () => {
     $("authAccept").disabled = true;
@@ -74,7 +74,7 @@ function acceptStep(id, ch, wait) {
 function watchStep(id, total) {
   stopTimer();
   authView(`<h3>Log out now</h3><div class="note">In PlanetSide 2: <b>ESC → Logout</b>. Watching the Census stream…</div>
-    <div class="count" id="authLeft">${total}s</div><div class="bar"><span id="authBar" style="width:100%"></span></div><div class="err" id="authErr"></div>`);
+    <div class="count">⏰ <span id="authLeft">${total}s</span></div><div class="bar"><span id="authBar" style="width:100%"></span></div><div class="err" id="authErr"></div>`);
   const poll = async () => {
     let r;
     try { r = await authCall(`/auth/check?id=${encodeURIComponent(id)}`); } catch { return; }
