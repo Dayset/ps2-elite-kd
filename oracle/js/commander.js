@@ -1,5 +1,5 @@
 // PS2MapOracle dashboard — split from index.html (#15). No behaviour change.
-import { S, FACS, esc, det } from "./state.js?v=20261018-scrub";
+import { S, FACS, esc, det } from "./state.js?v=20261018-scrub2";
 
 /** Grayed placeholder shown between alerts so users see the panel exists. */
 export function commanderIdle() {

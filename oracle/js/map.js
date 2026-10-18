@@ -1,6 +1,6 @@
 // PS2MapOracle dashboard map (split in #15; zoom/pan, lattice, heat markers, base sheet in #19).
-import { COLOR, HEXFILE, SLUG, FACS, esc, $ } from "./state.js?v=20261018-scrub";
-import { asset, names } from "./api.js?v=20261018-scrub";
+import { COLOR, HEXFILE, SLUG, FACS, esc, $ } from "./state.js?v=20261018-scrub2";
+import { asset, names } from "./api.js?v=20261018-scrub2";
 
 export async function drawMap(a) {
   const host = $("map");

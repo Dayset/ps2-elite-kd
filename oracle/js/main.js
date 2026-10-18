@@ -1,13 +1,13 @@
 // PS2MapOracle dashboard — split from index.html (#15). No behaviour change.
-import { S, FACS, COLOR, esc, $, stars, mins, bar, pct1, det, info, wide, syncDetails, PHONE_MQ } from "./state.js?v=20261018-scrub";
-import { get } from "./api.js?v=20261018-scrub";
-import { drawMap, highlightBase, recolorMap } from "./map.js?v=20261018-scrub";
-import { chart, chartHover } from "./chart.js?v=20261018-scrub";
-import { lockCard, lockTick } from "./lock.js?v=20261018-scrub";
+import { S, FACS, COLOR, esc, $, stars, mins, bar, pct1, det, info, wide, syncDetails, PHONE_MQ } from "./state.js?v=20261018-scrub2";
+import { get } from "./api.js?v=20261018-scrub2";
+import { drawMap, highlightBase, recolorMap } from "./map.js?v=20261018-scrub2";
+import { chart, chartHover } from "./chart.js?v=20261018-scrub2";
+import { lockCard, lockTick } from "./lock.js?v=20261018-scrub2";
 import { commander, commanderIdle } from "./commander.js?v=20261018-idle1";
-import { reportPanel } from "./players.js?v=20261018-scrub";
-import { benchPanel, initResults, refreshHistory, renderHist } from "./results.js?v=20261018-scrub";
-import { initAuth } from "./auth.js?v=20261018-scrub";
+import { reportPanel } from "./players.js?v=20261018-scrub2";
+import { benchPanel, initResults, refreshHistory, renderHist } from "./results.js?v=20261018-scrub2";
+import { initAuth } from "./auth.js?v=20261018-scrub2";
 import { enhance, onSectionExpand, refreshSummary } from "./collapse.js?v=20261018-oracestyle4";
 
 // Shareable links: keep ?alert=<key> in the address bar (other params such as ?api= stay).
