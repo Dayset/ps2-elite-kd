@@ -578,7 +578,9 @@ async function handle(request, env) {
       const r = await db.prepare("SELECT ts, entry FROM radar WHERE cid=? AND ts>?").bind(cid, now - RADAR_RECHECK_S).first();
       if (r) out[cid] = JSON.parse(r.entry);
     }
-    return json({ radar: out }, 200, { "Cache-Control": "no-store" });
+    const dayStart = now - (now % 86400);
+    const looked = await db.prepare("SELECT COUNT(*) AS n FROM radar WHERE ts>=?").bind(dayStart).first();
+    return json({ radar: out, looked_today: (looked && looked.n) || 0 }, 200, { "Cache-Control": "no-store" });
   }
   if (url.pathname === "/honu/ingest" && request.method === "POST") {
     if (!authed(request, env)) return json({ error: "forbidden" }, 403);

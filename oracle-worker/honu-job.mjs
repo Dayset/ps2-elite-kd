@@ -16,11 +16,15 @@
  * Env: ORACLE_API, ORACLE_KEY. Exit code 0 unless the Worker itself is unreachable.
  */
 import { outlierReport } from "./src/outliers.js";
-import { radarEntry, radarApiUrl, RADAR_USER_AGENT } from "../radar.mjs";
+import { radarEntry, radarApiUrl } from "../radar.mjs";
 
 export const HONU = "https://wt.honu.pw/api";
 export const UA = "ps2-elite-kd-oracle/1.0 (+https://github.com/Dayset/ps2-elite-kd; contact: github.com/Dayset)";
 const HONU_GAP_MS = 1000, RADAR_GAP_MS = 2500, RADAR_MAX = 5;
+// The oracle's own identity and budget at PS2 Radar, separate from the main
+// site's build-log lookups (radar.mjs RADAR_USER_AGENT, 50/day).
+export const RADAR_DAILY_CAP = 25;
+export const ORACLE_RADAR_UA = "ps2-elite-kd-oracle/1.0 (+https://dayset.github.io/ps2-elite-kd/oracle/; github.com/dayset/ps2-elite-kd; second-opinion lookups for statistically flagged alert players, max 25/day)";
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /** Honu population/{world}/zones -> [{zone, vs, nc, tr, ns}] (zoneID & 0xFFFF strips instance bits). */
@@ -79,14 +83,15 @@ export async function runHonuJob({ api, key, fetchImpl = fetch, log = console.lo
     const cids = [...new Set(flagged.map((o) => o.cid))].filter((c) => radarApiUrl({ cid: c }));
     const cached = cids.length ? await getJson(fetchImpl, `${api}/honu/radar?cids=${cids.join(",")}`, auth) : { body: { radar: {} } };
     const known = (cached.body && cached.body.radar) || {};
+    const budget = Math.max(0, Math.min(RADAR_MAX, RADAR_DAILY_CAP - ((cached.body && +cached.body.looked_today) || 0)));
     let looked = 0;
     for (const cid of cids) {
       if (known[cid]) continue;
-      if (looked >= RADAR_MAX) break;
+      if (looked >= budget) break;
       if (looked) await sleep(gapMs.radar);
       looked++;
-      const r = await getJson(fetchImpl, radarApiUrl({ cid }), { "User-Agent": RADAR_USER_AGENT });
-      if (r.status !== 200 && r.status !== 404) { out.errors.push(`radar ${r.status}`); break; }
+      const r = await getJson(fetchImpl, radarApiUrl({ cid }), { "User-Agent": ORACLE_RADAR_UA });
+      if (r.status !== 200 && r.status !== 404) { out.errors.push(`radar ${r.status}`); out.radar_refused = r.status; break; }
       const o = flagged.find((f) => f.cid === cid);
       known[cid] = radarEntry(r.status === 404 ? null : r.body, { status: r.status, name: (o && o.name) || "", cid });
       out.radar.push({ cid, entry: known[cid] });
