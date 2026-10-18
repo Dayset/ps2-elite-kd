@@ -195,33 +195,62 @@ export function secondPlace(terr, raw, trunkv, t, dur = 90, nFac = N_FAC) {
   return { odds: { [B]: round1((100 * qb) / tot), [C]: round1((100 * qc) / tot) }, locked: false, basis };
 }
 
-/** build_state calls/hints (momentum as relative %, never pp). */
+/**
+ * build_state calls/hints (momentum as relative %, never pp).
+ * Momentum is measured over 15 min. With 15+ min left the notes are unchanged
+ * ("collapse pattern forming for VS (-18.5%/15min)"). In the last minutes a
+ * per-15-min rate misleads, so the notes say what the trend means before the
+ * end: the trend is projected over the time left (linear, current pace) and a
+ * note is shown only when it can change the winner or the standings.
+ * A comeback note appears at any time when a challenger's pace overtakes the
+ * leader before the end.
+ */
 export function callsAndHints(terr, mom, win, t, dur = 90, nFac = N_FAC) {
   const leader = argmax(terr);
+  const rem = Math.max(0, dur - t);
+  const left = `${Math.max(1, Math.ceil(rem))} min left`;
+  const late = rem < 15;
   const momPct = (f) => {
     const base = terr[f] || 0;
     const v = base < 1 ? mom[f] : (100 * mom[f]) / base;
     return `${v >= 0 ? "+" : ""}${v.toFixed(1)}%/15min`;
   };
+  // Territory at the end if every faction keeps its current 15-min pace.
+  const proj = Object.fromEntries(FACS.map((f) => [f, terr[f] + (mom[f] * Math.min(rem, 15)) / 15]));
+  const rankOf = (sh, f) => FACS.filter((k) => sh[k] > sh[f]).length + 1;
+  const RANK = { 1: "1st", 2: "2nd", 3: "3rd" };
   const calls = [], hints = [];
   for (const f of FACS) {
     if (f !== leader && mom[f] <= -5) {
-      const c = `collapse pattern forming for ${f} (${momPct(f)})`;
-      calls.push(c); hints.push(c);
+      if (!late) {
+        const c = `collapse pattern forming for ${f} (${momPct(f)})`;
+        calls.push(c); hints.push(c);
+      } else if (rankOf(proj, f) > rankOf(terr, f)) {
+        calls.push(`${f} fading: at this pace drops to ${RANK[rankOf(proj, f)]} before the end (${left})`);
+      }
     }
     if (f !== leader && win[f].pct === 0 && maxSwingPP(t, dur, nFac) < terr[leader] - terr[f]) {
       calls.push(`${f} mathematically eliminated`);
     }
   }
-  if (mom[leader] >= 5) calls.push(`${leader} extending (${momPct(leader)})`);
-  if (mom[leader] <= -5) calls.push(`${leader} collapsing (${momPct(leader)})`);
+  // Comeback: a challenger closing on the leader fast enough to pass before the end.
+  let comeback = false;
+  for (const f of FACS) {
+    if (f === leader || win[f].pct === 0) continue;
+    const closing = (mom[f] - mom[leader]) / 15;          // territory points per minute
+    if (closing <= 0) continue;
+    const catchMin = (terr[leader] - terr[f]) / closing;
+    if (catchMin <= rem && catchMin <= 15) { calls.push(`${f} closing in: takes the lead in about ${Math.max(1, Math.round(catchMin))} min at this pace (${left})`); comeback = true; }
+  }
+  if (mom[leader] >= 5) calls.push(late ? `${leader} extending its lead (${left})` : `${leader} extending (${momPct(leader)})`);
+  if (mom[leader] <= -5) {
+    if (!late) calls.push(`${leader} collapsing (${momPct(leader)})`);
+    else if (argmax(proj) !== leader) { if (!comeback) calls.push(`${leader} collapsing: at this pace loses the lead to ${argmax(proj)} before the end (${left})`); }
+    else calls.push(`${leader} slipping but holds the lead at this pace (${left})`);
+  }
   return { leader, calls, hints };
 }
 
-/**
- * Full live state in the push_live contract (FRONTEND_SPEC §4).
- * snapNow/snap15: {region: faction} maps for this zone; regionMap: region -> facility.
- */
 /**
  * Win odds for one moment, Meltdown-aware. Territory alerts: unchanged engine.
  * Meltdowns: live-zone shares, live-zone elimination, then shrinkToEven.

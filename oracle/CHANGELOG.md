@@ -223,3 +223,8 @@ approved it, "shipped" means it is live in the running pipeline.
   broken-map flag or vote voiding on Meltdowns; `_raw`/`_v0` bench slices for a
   live re-fit. Territory alerts unchanged; Python parity untouched.
 
+- **Time-aware notes:** with under 15 min left, per-15-min warnings ("collapse pattern
+  forming … /15min") are replaced by what the trend means before the end, shown only
+  when it can change the winner or a place ("VS fading: at this pace drops to 3rd
+  before the end (5 min left)", "NC slipping but holds the lead …"). New comeback
+  note at any time: "TR closing in: takes the lead in about 5 min at this pace".

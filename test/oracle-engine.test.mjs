@@ -99,3 +99,25 @@ test("Meltdowns: odds read the live zone only, stay cautious, and still eliminat
   const sh = shrinkToEven({ VS: { pct: 80 }, NC: { pct: 20 }, TR: { pct: 0 } }, MELTDOWN_SHRINK);
   assert.deepEqual([sh.VS.pct, sh.NC.pct, sh.TR.pct], [62, 38, 0]);
 });
+
+test("notes fit the time left: per-15-min warnings early, end-of-alert meaning late", async () => {
+  const { callsAndHints } = await import("../oracle-worker/src/engine.js");
+  const W = (vs, nc, tr) => ({ VS: { pct: vs }, NC: { pct: nc }, TR: { pct: tr } });
+  const T = (vs, nc, tr) => ({ VS: vs, NC: nc, TR: tr });
+  // 50 min left: unchanged wording.
+  let c = callsAndHints(T(30, 45, 25), T(-8, 4, 4), W(20, 60, 20), 40, 90).calls;
+  assert.ok(c.some((x) => x.startsWith("collapse pattern forming for VS (")), c.join(" | "));
+  // 5 min left, same slide, VS stays 2nd: nothing to say (the old note was noise).
+  c = callsAndHints(T(30, 45, 25), T(-8, 4, 4), W(20, 60, 20), 85, 90).calls;
+  assert.ok(!c.some((x) => /VS/.test(x)), c.join(" | "));
+  // 5 min left, steep slide that costs a place: say so in plain words.
+  c = callsAndHints(T(30, 45, 25), T(-18, 4, 6), W(20, 60, 20), 85, 90).calls;
+  assert.ok(c.includes("VS fading: at this pace drops to 3rd before the end (5 min left)"), c.join(" | "));
+  // Comeback: TR closes 0.8/min on a 4-point gap with 10 min left.
+  c = callsAndHints(T(24, 40, 36), T(0, -6, 6), W(10, 55, 35), 80, 90).calls;
+  assert.ok(c.includes("TR closing in: takes the lead in about 5 min at this pace (10 min left)"), c.join(" | "));
+  assert.ok(!c.some((x) => /loses the lead/.test(x)), "no duplicate of the comeback note");
+  // Leader slipping late but safe.
+  c = callsAndHints(T(30, 50, 20), T(3, -6, 3), W(10, 85, 5), 85, 90).calls;
+  assert.ok(c.includes("NC slipping but holds the lead at this pace (5 min left)"), c.join(" | "));
+});
