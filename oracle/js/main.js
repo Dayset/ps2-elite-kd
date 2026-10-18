@@ -4,7 +4,7 @@ import { get } from "./api.js?v=20261018-scrub";
 import { drawMap, highlightBase, recolorMap } from "./map.js?v=20261018-scrub";
 import { chart, chartHover } from "./chart.js?v=20261018-scrub";
 import { lockCard, lockTick } from "./lock.js?v=20261018-scrub";
-import { commander } from "./commander.js?v=20261018-scrub";
+import { commander, commanderIdle } from "./commander.js?v=20261018-idle1";
 import { reportPanel } from "./players.js?v=20261018-scrub";
 import { benchPanel, initResults, refreshHistory, renderHist } from "./results.js?v=20261018-scrub";
 import { initAuth } from "./auth.js?v=20261018-scrub";
@@ -168,11 +168,11 @@ function render2(now) {
       <section class="card map"><h2>Map</h2><div id="replayTag" class="replaytag" hidden></div><div id="map"></div></section>
       <div class="side">
       <section class="card win"><h2>Win chance</h2>${kindNote}${suspectNote}<div class="odds" aria-live="polite" aria-atomic="true">${oddsHtml}</div>${oddLine}${result}${second}${rows || popRows ? det("wdet", "Details", `${popAdj}<div class="rows">${rows}${popRows}</div>${popTot ? `<div class="note">Population: Honu (wt.honu.pw), ${popTot} on continent${s.pop_ns ? ` + ${s.pop_ns} NSO` : ""}.</div>` : ""}`, "wdet keep") : ""}${calls}</section>
-      ${a.status === "live" ? `<div id="voteHere"></div><div id="lockHere"></div>` : ""}
+      <div id="voteHere"></div><div id="lockHere"></div>
       </div>
     </div>
     <section class="card chart" style="margin-top:14px"><h2>Win chance over time</h2><div id="chart"><div class="sk sk-chart" aria-label="Loading"></div></div></section>
-    ${a.status === "live" ? commander(a.commander || (s && s.commander), a.commander_ts, now, lead) : reportPanel(a)}
+    ${a.status === "live" ? commander(a.commander || (s && s.commander), a.commander_ts, now, lead) : `${commanderIdle()}${reportPanel(a)}`}
     ${benchPanel(a)}`;
   if ($("backLive")) $("backLive").onclick = backToLive;
   $("main").querySelectorAll("li[data-base]").forEach((li) => { li.onmouseenter = () => highlightBase(li.dataset.base); li.onmouseleave = () => highlightBase(null); });
@@ -182,7 +182,9 @@ function render2(now) {
   if (S.ticksFor === a.key) { const c = $("chart"); c.innerHTML = chart(S.ticks, a.dur, c.clientWidth); chartHover(c, S.ticks, a.dur, (k, how) => scrub(a, k, how)); }
   if (S.scrub && S.scrub.key === a.key) scrub(a, S.scrub.tick, S.scrub.how);
   const lh = $("lockHere");
-  if (lh && a.status === "live") lh.innerHTML = `<section class="card lock">${lockCard(a, now)}</section>`;
+  if (lh) lh.innerHTML = a.status === "live"
+    ? `<section class="card lock">${lockCard(a, now)}</section>`
+    : `<section class="card lock idle"><h2>⏱ Live timer</h2><div class="locktimer">--:--</div><div class="note">No live alert — the countdown starts when the next one begins.</div></section>`;
   drawMap(a);
 }
 

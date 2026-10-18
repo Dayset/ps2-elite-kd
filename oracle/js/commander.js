@@ -1,6 +1,11 @@
 // PS2MapOracle dashboard — split from index.html (#15). No behaviour change.
 import { S, FACS, esc, det } from "./state.js?v=20261018-scrub";
 
+/** Grayed placeholder shown between alerts so users see the panel exists. */
+export function commanderIdle() {
+  return `<section class="card cmd idle" style="margin-top:14px"><h2>🎖️ AI Commander</h2><div class="note">No live alert — the commander briefs when the next one starts.</div></section>`;
+}
+
 export function commander(c, ts, now, lead) {
   if (!c || !c.factions) return "";
   // Phone: one faction at a time. Default: the signed-in player's faction, else the leader.

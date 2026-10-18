@@ -87,7 +87,12 @@ async function refresh() {
 
 function render() {
   const el = slot();
-  if (!el || !alert || alert.status !== "live") { if (el) el.innerHTML = me ? myVotesHtml(wallet) : ""; return; }
+  if (!el || !alert || alert.status !== "live") {
+    // Between alerts: signed-in users see their vote history; everyone else
+    // sees the panel grayed out so it's clear voting exists.
+    if (el) el.innerHTML = me ? myVotesHtml(wallet) : `<div class="card vote idle"><h2>🎲 Vote for the winner</h2><div class="note">No live alert — voting opens when the next one starts.</div>${DISCLAIMER}</div>`;
+    return;
+  }
   const q = quotes;
   const own = wallet && wallet.own_faction;
   const ownOnly = q && q.own_faction_only && FACS.includes(own);
@@ -95,7 +100,7 @@ function render() {
   if (!pick && ownOnly) pick = own;
   const head = `<h2>🎲 Vote for the winner</h2>`;
   if (!q || !q.open) {
-    el.innerHTML = `<div class="card vote">${head}<div class="note">${q && q.reason === "closed" ? "Voting closed for this alert (last 5%)." : q && q.reason === "data_suspect" ? "Voting paused: Census map data looks broken right now. It reopens when the map is healthy again." : "Voting opens when fresh odds are available."}</div>${DISCLAIMER}</div>`;
+    el.innerHTML = `<div class="card vote idle">${head}<div class="note">${q && q.reason === "closed" ? "Voting closed for this alert (last 5%)." : q && q.reason === "data_suspect" ? "Voting paused: Census map data looks broken right now. It reopens when the map is healthy again." : "Voting opens when fresh odds are available."}</div>${DISCLAIMER}</div>`;
     return;
   }
   const facBtn = (f) => {
