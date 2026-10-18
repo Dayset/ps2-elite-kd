@@ -12,9 +12,12 @@
       if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
         document.documentElement.setAttribute("data-theme", "light");
       }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261017-htmlbg" />
+  <link rel="stylesheet" href="styles.css?v=20261017-bgbtn" />
   <style>
     body { overflow: auto; }
     .st-wrap { max-width: none; margin: 0; padding: 0; }

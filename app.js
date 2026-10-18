@@ -143,6 +143,8 @@ import {
   // Current name chips (analyzed or not) so a refresh keeps the selection.
   const LS_PENDING = "ps2-elite-kd-pending-names";
   const LS_THEME = "ps2-elite-kd-theme";
+  /** 🖼️ PC page background image: "0" = off (hidden); anything else = on (default). */
+  const LS_BG_IMAGE = "ps2-elite-kd-bg-image";
   /** "1" = show older debug columns in the Adjusted table (footer checkbox). */
   const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";
   /** "1" = hide adjusted-iVi ≤ 0 players from the Rankings table browse (footer checkbox). */
@@ -234,6 +236,7 @@ import {
 
   const els = {
     themeToggle: document.getElementById("themeToggle"),
+    bgToggleBtn: document.getElementById("bgToggleBtn"),
     wipeLocalBtn: document.getElementById("wipeLocalBtn"),
     namesBox: document.getElementById("namesBox"),
     nameTokensEl: document.getElementById("nameTokens"),
@@ -717,6 +720,34 @@ import {
     applyTheme(next);
   }
 
+  /** 🖼️ PC page background image: on by default, toggleable, remembered. */
+  function getStoredBgImage() {
+    try {
+      return localStorage.getItem(LS_BG_IMAGE) !== "0";
+    } catch {
+      return true;
+    }
+  }
+
+  function applyBgImage(on) {
+    document.documentElement.classList.toggle("no-bg-image", !on);
+    try {
+      localStorage.setItem(LS_BG_IMAGE, on ? "1" : "0");
+    } catch {
+      /* private mode */
+    }
+    if (els.bgToggleBtn) {
+      els.bgToggleBtn.classList.toggle("off", !on);
+      const label = on ? "Background image on — click to hide" : "Background image off — click to show";
+      els.bgToggleBtn.title = label;
+      els.bgToggleBtn.setAttribute("aria-label", label);
+    }
+  }
+
+  function toggleBgImage() {
+    applyBgImage(!getStoredBgImage());
+  }
+
   /** Chart chrome colors for current theme (series colours: seriesColor()). */
   function chartTheme() {
     const light = document.documentElement.getAttribute("data-theme") === "light";
@@ -1165,6 +1196,8 @@ import {
     renderCacheChips();
     // Default theme after wipe (persists fresh dark preference)
     applyTheme("dark", { redraw: false });
+    // Background image back on after wipe (its stored "0" is cleared too)
+    applyBgImage(true);
     setStatus('<span class="ok">Local app data cleared.</span>', "ok");
   }
 
@@ -4863,6 +4896,9 @@ import {
   if (els.themeToggle) {
     els.themeToggle.addEventListener("click", () => toggleTheme());
   }
+  if (els.bgToggleBtn) {
+    els.bgToggleBtn.addEventListener("click", () => toggleBgImage());
+  }
   if (els.wipeLocalBtn) {
     els.wipeLocalBtn.addEventListener("click", () => wipeAllLocalAppData());
   }
@@ -4922,6 +4958,7 @@ import {
   // Never persist / restore "Fetch fresh"; always start clean on load/refresh.
   (async () => {
     applyTheme(getStoredTheme(), { redraw: false });
+    applyBgImage(getStoredBgImage());
     if (els.fetchFresh) { els.fetchFresh.checked = false; updateFreshEta(); }
     await loadSharedIndex();
     const startup = resolveStartupNames();

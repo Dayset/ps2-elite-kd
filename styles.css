@@ -126,6 +126,17 @@ body {
     background-repeat: no-repeat;
   }
   body { background: transparent; }
+  /* 🖼️ toggle off: back to the plain theme background. */
+  html.no-bg-image { background-image: none; }
+  html.no-bg-image body { background: var(--bg); }
+}
+
+/* 🖼️ background-image toggle: PC only (the image itself is PC-only),
+ * hidden on phones/tablets where there is nothing to toggle. */
+#bgToggleBtn { display: none; }
+#bgToggleBtn.off { opacity: 0.4; }
+@media (hover: hover) and (pointer: fine) {
+  #bgToggleBtn { display: inline-flex; }
 }
 
 img {
