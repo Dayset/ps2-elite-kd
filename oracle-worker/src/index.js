@@ -472,7 +472,12 @@ export async function reportFor(env, key, nowMs = Date.now()) {
       { headers: { "User-Agent": UA, Accept: "application/json" }, signal: AbortSignal.timeout(20000) });
     if (r.status === 400 || r.status === 404) { await save("pending", null, `honu ${r.status}`); return { key, pending: r.status }; }
     if (!r.ok) throw new Error(`honu ${r.status}`);
-    body = await r.json();
+    const text = await r.text();
+    try { body = JSON.parse(text); }
+    catch {
+      const title = (text.match(/<title>([^<]{0,80})/i) || [])[1] || "";
+      throw new Error(`honu non-JSON ${r.status} ${r.headers.get("content-type") || ""} title="${title.trim()}" server=${r.headers.get("server") || ""} cf-ray=${r.headers.get("cf-ray") ? "yes" : "no"}`);
+    }
   } catch (e) { await save(attempts >= 12 ? "error" : "pending", null, String(e.message || e)); return { key, error: String(e.message || e) }; }
   const rep = outlierReport(body);
   if (!rep.players) { await save("pending", null, "no participants yet"); return { key, pending: "empty" }; }
