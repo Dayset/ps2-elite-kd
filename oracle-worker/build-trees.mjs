@@ -56,11 +56,14 @@ export function buildModels() {
       names: Object.fromEntries(load(`${slug}_regions.json`).map((r) => [String(r.facility_id), r.facility_name])),
     };
   }
-  // Hossin-only models (commander_live.load_capture_model / load_resistance).
+  // Capture model: Hossin only (commander_live.load_capture_model).
   const capture = { 4: load("hossin_capture_model.json").per_facility || {} };
-  const resistance = {
-    4: Object.fromEntries(Object.entries(load("base_resistance.json")).map(([k, v]) => [k, { median_hold_min: v.median_hold_min ?? null, class: v.class ?? null }])),
-  };
+  // Resistance (hold-factor) model for all five continents (#24), same files as
+  // commander_live.RESISTANCE_FILE: Hossin keeps base_resistance.json, the others
+  // base_resistance_<slug>.json.
+  const RES_FILE = { 2: "base_resistance_indar.json", 4: "base_resistance.json", 6: "base_resistance_amerish.json", 8: "base_resistance_esamir.json", 344: "base_resistance_oshur.json" };
+  const resistance = Object.fromEntries(Object.entries(RES_FILE).map(([zone, file]) => [zone,
+    Object.fromEntries(Object.entries(load(file)).map(([k, v]) => [k, { median_hold_min: v.median_hold_min ?? null, class: v.class ?? null }]))]));
   return { trees, xtrunk, regions, lattice, capture, resistance };
 }
 

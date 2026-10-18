@@ -356,16 +356,25 @@ def p_capture(pf, fid, pressured=True):
     return 0.33 if pressured else 0.18
 
 
-def load_resistance(zone):
-    """Per-base median hold times (base_resistance.json), Hossin only.
+RESISTANCE_FILE = {
+    2: "base_resistance_indar.json",
+    4: "base_resistance.json",  # Hossin: the original file (has the GLASS/... class)
+    6: "base_resistance_amerish.json",
+    8: "base_resistance_esamir.json",
+    344: "base_resistance_oshur.json",
+}
 
-    Other continents have no resistance file yet: return {} and defends
-    keep their unadjusted EV (hold factor 1.0), same graceful-degradation
-    pattern as load_capture_model.
+
+def load_resistance(zone):
+    """Per-base median hold times for the continent (RESISTANCE_FILE).
+
+    Unknown zone or missing file: return {} and defends keep their unadjusted
+    EV (hold factor 1.0), same graceful-degradation pattern as load_capture_model.
+    The JS port bundles the same files (oracle-worker/build-trees.mjs).
     """
-    if zone != 4:
+    if zone not in RESISTANCE_FILE:
         return {}
-    path = os.path.join(ROOT, "base_resistance.json")
+    path = os.path.join(ROOT, RESISTANCE_FILE[zone])
     if not os.path.exists(path):
         return {}
     return json.load(open(path))
