@@ -2,7 +2,7 @@
 
 **A PlanetSide 2 prediction game: virtual points staked per map hex, plus a global stake on the alert winner.**
 
-Live: private Muse artifact (`hex-betting-game`) · Backend: Python/Census API · Status: active collection, not public
+Live: Cloudflare Worker `ps2-oracle` + GitHub Pages `/oracle/` (see `CLOUDFLARE.md`; formerly a private Muse artifact) · Backend: Python/Census API · Status: active collection, not public
 
 Package built **2026-10-18** from current source. This is the second migration package
 (the first was `ps2maporacle.zip`, 2026-10-14). See `CHANGELOG.md` for what changed since.
@@ -25,11 +25,8 @@ The product pairs an **optimal AI Commander** with viewer betting: the commander
 
 ## How it works
 
-### Live data pipeline (60s baseline)
-- `map_poller.py` — Census facility-ownership snapshots every 60s, all servers/continents
-- `census_events.py` — WebSocket stream: Death events → faction KD/KPM, FacilityControl → base flips, MetagameEvent → alert start/end
-- Population is proxied by active fighters (Census has no population endpoint)
-- Per-character logging: all characters with 5+ kills (KD, KPM, outlier flags ⚠️/☠️)
+### Live data pipeline
+Since 2026-10-18 the live pipeline runs on Cloudflare: the `ps2-oracle` Worker polls Census REST every minute, stores live states and settlements in D1, the dashboard is served from GitHub Pages (`/oracle/`), and the commander runs in GitHub Actions. See [`CLOUDFLARE.md`](CLOUDFLARE.md) for the current architecture. The old VM pollers (`map_poller.py`, `census_events.py`) and the artifact push are historical (see `INFRASTRUCTURE.md`).
 
 ### Win probability model
 - `commander_live.py` — the tree model: per-base win contributions, elimination math, kingmaker detection, war-shape classification (1v1 LOCKED / TWO-FRONT WAR / FREE AGENT)
@@ -117,6 +114,7 @@ ps2maporacle/
 
 Brier challenge vs Auraxify alert predictor (peer), 100-alert target:
 - PS2MapOracle: **0.150** · Auraxify: 0.177
+- These are backtest/reference figures, not live results; for the current live pipeline and settlement see [`CLOUDFLARE.md`](CLOUDFLARE.md).
 - Slices: t0 / t30 / t60 (90-min) · t0 / t15 / t30 (45-min), never pooled
 - Live benchmark in `benchmark/benchmark_predictions.jsonl` (grows with each settled alert)
 

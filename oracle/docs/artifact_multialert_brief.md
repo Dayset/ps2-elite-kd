@@ -1,7 +1,7 @@
 # Artifact edit brief: multi-server / multi-continent live support
 
 ## Context
-The Hex Betting Game (`hex-betting-game`) currently handles a single live alert (Miller/Hossin). The backend now pushes live states for ALL servers and continents. Each push_live call carries one alert's state; there can be 0–4 concurrent live alerts.
+The Hex Betting Game (`hex-betting-game`) currently handles a single live alert (world 10 Wainwright/Hossin). The backend now pushes live states for ALL servers and continents. Each push_live call carries one alert's state; there can be 0–4 concurrent live alerts.
 
 ## Server/continent reference
 - Worlds: 1=Osprey, 10=Wainwright, 19=Jaeger, 25=Briggs, 40=SolTech

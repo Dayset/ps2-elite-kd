@@ -73,17 +73,17 @@ approved it, "shipped" means it is live in the running pipeline.
 
 ## 2026-10-13
 
-- **Neutral-facility corruption, case 1.** Connery Hossin: 54/88 facilities faction 0
+- **Neutral-facility corruption, case 1.** World 1 (Osprey) Hossin: 54/88 facilities faction 0
   (neutral), approx 14:27–15:12 UTC. Production unpatched; neutral-facility hold
   DEFERRED ("keep collecting").
-- **Settlement collision, case 1.** Connery Hossin 1-4-177 (Oct 13/14 instance reuse).
+- **Settlement collision, case 1.** World 1 (Osprey) Hossin 1-4-177 (Oct 13/14 instance reuse).
 
 ## 2026-10-14
 
-- **Settlement collision, case 2.** Miller Esamir 10-8-150 (ended 14:45 UTC, pre-end
+- **Settlement collision, case 2.** World 10 (Wainwright) Esamir 10-8-150 (ended 14:45 UTC, pre-end
   NC 96.1): settlement swallowed by the older instance; alert dropped unsettled,
   payout not released.
-- **Settlement collision, case 3.** Miller Indar 10-2-147: stale winner (VS, from
+- **Settlement collision, case 3.** World 10 (Wainwright) Indar 10-2-147: stale winner (VS, from
   Oct 13) contradicted today's winner (TR). Dashboard showed the wrong winner.
   Fix decision taken the same day.
 - **First migration package** (`ps2maporacle.zip`, 156 files, 2026-10-14).
@@ -95,7 +95,7 @@ approved it, "shipped" means it is live in the running pipeline.
 
 ## 2026-10-15
 
-- **Neutral-facility corruption, case 2 — commander contradiction.** Connery Esamir
+- **Neutral-facility corruption, case 2 — commander contradiction.** World 1 (Osprey) Esamir
   1-8-186: 31/51 facilities neutral (61%) from ~20:30Z through 21:25Z, territory
   summing to 39.2%. Header said VS 100 / NC 0 / TR 0 with "NC eliminated"; commander
   said NC 100%. Root cause: header applies the elimination override + leader-100
@@ -115,7 +115,7 @@ approved it, "shipped" means it is live in the running pipeline.
   sent `endedAt`; the fix was entirely in the artifact action. Sudden-death action,
   1-4-153 repair action, and dashboard verification lookup adjusted to the same
   instance keying.
-- **Re-settle 10-2-148 as NC (triple-check, production).** Today's Miller Indar
+- **Re-settle 10-2-148 as NC (triple-check, production).** Today's world 10 (Wainwright) Indar
   instance (ended 2026-10-16T17:52:40Z, pre-end NC 51.7 / TR 28.1 / VS 20.2) had
   been absorbed by the Oct 12 TR settlement. After the fix: check 1/3, 2/3, 3/3 →
   settled NC, runner-up TR, payoutDelta 0 (nobody had money on the alert; wrong
@@ -125,8 +125,8 @@ approved it, "shipped" means it is live in the running pipeline.
   (only at world level), so live pop read 0/0/0 and `win_popadj` was dead code.
   Reader now falls back to `len(per-zone players ID list)`. Caveat: the writer caps
   that list at 150 IDs, so the fallback undercounts above 150. Verified live:
-  Connery Esamir pop VS 48 / NC 76 / TR 98.
-- **Settlement collision averted (new instance).** Miller Esamir 10-8-150 ran again
+  World 1 (Osprey) Esamir pop VS 48 / NC 76 / TR 98.
+- **Settlement collision averted (new instance).** World 10 (Wainwright) Esamir 10-8-150 ran again
   as a new instance; with the fix live, its settlement keys by (alertId, endedAt).
 
 ## 2026-10-17
@@ -150,7 +150,7 @@ approved it, "shipped" means it is live in the running pipeline.
 - **Base resistance computed for all 5 continents** (`base_resistance_{amerish,
   esamir,hossin,indar,oshur}.json` in `backend/`). Commander wires Hossin only;
   other continents degrade gracefully (factor 1.0).
-- **Neutral-facility corruption, case 3 — first to reach a settlement.** Connery
+- **Neutral-facility corruption, case 3 — first to reach a settlement.** World 1 (Osprey)
   Oshur 1-344-248 (ended 2026-10-17T19:19:23Z): final pre-end snapshot summed to
   54.7% (VS 16.0 / NC 22.7 / TR 16.0), neutral locked at the same 34-facility set
   from 18:43Z through the last pre-end snapshot. Triple-check cannot catch this —
@@ -182,10 +182,10 @@ approved it, "shipped" means it is live in the running pipeline.
 
 - **Server IDs corrected.** Census `/world` today: 1 Osprey, 10 Wainwright, 19 Jaeger
   (private events server), 25 Briggs, 40 SolTech. The live pipeline tracked
-  [1, 10, 19, 25] labelled Connery/Miller/Emerald/Cobalt; the "Emerald events gap"
+  [1, 10, 19, 25] wrongly labelled with the pre-merge names Connery/Miller/Emerald/Cobalt; the "Emerald events gap"
   was Jaeger being empty and SolTech was never tracked. Now [1, 10, 25, 40] in
-  `map_poller.py`, `census_events.py`, `push_live_state.py`. Docs that say
-  Connery/Miller/Emerald/Cobalt mean worlds 1/10/19/25.
+  `map_poller.py`, `census_events.py`, `push_live_state.py`. Older docs that used the wrong pre-merge names Connery/Miller/Emerald/Cobalt
+  mean worlds 1/10/19/25.
 - **Service ID from `CENSUS_SERVICE_ID`, default `daysetps2legends`** in both pollers
   (was the throttled demo ID `s:example`).
 - **Stream half-open fix.** `census_events.py` reconnects after 120s with no message

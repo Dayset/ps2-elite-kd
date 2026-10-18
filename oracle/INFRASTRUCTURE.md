@@ -1,3 +1,5 @@
+> **Historical:** the pipeline before 2026-10-18. Current: [CLOUDFLARE.md](CLOUDFLARE.md).
+
 # PS2MapOracle — Infrastructure
 
 How the live system works, end to end. All paths are relative to the backend
@@ -20,7 +22,7 @@ only components that talk to Census.
 ### `map_poller.py` — facility-ownership snapshots
 
 - Polls the Census Map API (`.../get/ps2:v2/map/?world_id=…&zone_ids=…`) every 60s.
-- Worlds tracked: 1 (Connery), 10 (Miller), 19 (Emerald), 25 (Cobalt).
+- Worlds tracked: 1 (Osprey), 10 (Wainwright), 19 (Jaeger), 25 (Briggs).
 - Zones tracked: 2 (Indar), 4 (Hossin), 6 (Amerish), 8 (Esamir), 344 (Oshur).
 - Writes one JSON line per snapshot to `data/map_snapshots/<world>/<zone>/<YYYY-MM-DD>.jsonl`
   with `ts`, `facilities` (facility_id → owning faction), and per-facility owner map.
@@ -126,7 +128,7 @@ Cron job `ps2polymarket-poller-watchdog`:
 Cron job `cut-tracker-15m`:
 
 - Runs `python3 cut_tracker_run.py` (120s timeout). Reads the latest LOCAL map
-  snapshots (world 1 / Connery, all 5 zones — read-only, no Census calls).
+  snapshots (world 1 / Osprey, all 5 zones — read-only, no Census calls).
 - Detects articulation-point cuts (Tarjan DFS), appends new events to
   `cut_events.jsonl`, advances the watermark in `cut_tracker_state.json`.
 - Consecutive snapshot gaps > 600s are skipped by design.

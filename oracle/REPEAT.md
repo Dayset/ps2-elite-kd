@@ -1,3 +1,5 @@
+> **Historical:** the pipeline before 2026-10-18. Current: [CLOUDFLARE.md](CLOUDFLARE.md).
+
 # PS2MapOracle — Repeating / Migrating the Project
 
 What you need to stand this project up again from this package, and what this

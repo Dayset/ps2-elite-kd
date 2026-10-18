@@ -21,7 +21,7 @@ GET /get/ps2:v2/map?world_id=10&zone_ids=4
 
 **Returns:** `map_list[0].Regions.Row[]` — each `{RowData: {RegionId, FactionId}}`.
 - `FactionId`: 0=none, 1=VS, 2=NC, 3=TR.
-- Zone 4 = Hossin. World 10 = Miller, 1 = Connery, 40 = SolTech.
+- Zone 4 = Hossin. World 10 = Wainwright, 1 = Osprey, 40 = SolTech.
 
 **Verified 2026-10-04:** returns region→faction ownership only. **No population field exists.** There is no per-base or per-hex population anywhere in Census. Confirmed dead end.
 

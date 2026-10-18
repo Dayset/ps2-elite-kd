@@ -75,7 +75,7 @@ starting-lead mechanism only.
 ## Historical meltdown frequency / continent concentration
 
 Cannot be answered from local data (zero meltdowns collected). Live observation:
-recent meltdowns seen on Miller Hossin (10-4-191, 45-min). Frequency and
+recent meltdowns seen on world 10 (Wainwright) Hossin (10-4-191, 45-min). Frequency and
 continent/server concentration need the collection fix below.
 
 ## Recommendation

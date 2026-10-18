@@ -4,7 +4,7 @@
 discriminates clearly. Population — the thing everyone watches — barely
 discriminates at all. That is the contrarian headline of this book.
 
-**Dataset:** 600 completed 90-minute territory alerts, Connery + Miller,
+**Dataset:** 600 completed 90-minute territory alerts, world 1 (Osprey) + world 10 (Wainwright),
 Oct 2025 – Oct 2026. Per alert: full hex-flip history, per-minute population,
 final result. Two alerts with unresolvable victors excluded from outcome stats
 (n=598).
@@ -80,7 +80,7 @@ safe."
 
 **7. Time of day and continent busyness don't move the lines.**
 Dead-hours and prime-time alerts resolve at base rates. (Hours are UTC;
-Connery is US, Miller is EU — the pop buckets capture "busyness" better than
+World 1 (Osprey) is US, world 10 (Wainwright) is EU — the pop buckets capture "busyness" better than
 the clock does.)
 
 ---
@@ -116,7 +116,7 @@ the clock does.)
 - The `mapControl` counts on capture entries use a **different facility set**
   than the instance-entries feed; reconstruction uses the entries feed
   consistently and never mixes the two.
-- Only Connery and Miller (300 alerts each). No zone splits in v1 — per-zone
+- Only worlds 1 (Osprey) and 10 (Wainwright) (300 alerts each). No zone splits in v1 — per-zone
   cells would be too small to trust.
 - Correlation, not causation. A rush may *cause* wins, or good factions may
   both rush and win.

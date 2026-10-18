@@ -73,14 +73,14 @@ recorded incident where one exists. This is a field guide, not a theory list.
   stays frozen while the alert runs. Territory shares (divided by ALL
   facilities including neutral) are diluted and sum far below 100%.
 - **Seen three times:**
-  1. **2026-10-13, Connery Hossin:** 54/88 facilities neutral, ~14:27–15:12 UTC.
-  2. **2026-10-15, Connery Esamir 1-8-186:** 31/51 neutral (61%) from ~20:30Z
+  1. **2026-10-13, world 1 (Osprey) Hossin:** 54/88 facilities neutral, ~14:27–15:12 UTC.
+  2. **2026-10-15, world 1 (Osprey) Esamir 1-8-186:** 31/51 neutral (61%) from ~20:30Z
      through 21:25Z; territory summed to 39.2%. Caused a header↔commander
      contradiction (header: VS 100 / NC eliminated; commander: NC 100%) because
      the header applies the elimination override + leader-100 fallback while
      commander `win_pct` is the raw joint tree. Settlement NOT corrupted
      (settled VS, matching post-recovery reality).
-  3. **2026-10-17, Connery Oshur 1-344-248:** neutral locked at the same
+  3. **2026-10-17, world 1 (Osprey) Oshur 1-344-248:** neutral locked at the same
      34-facility set 18:43Z → last pre-end snapshot 19:18:27Z; final snapshot
      summed to 54.7%. FIRST case to reach a settlement. Triple-check cannot
      catch it (all three checks re-read the same corrupt feed). Winner NC
@@ -93,20 +93,20 @@ recorded incident where one exists. This is a field guide, not a theory list.
   corrupt-input. The validator checks ranges/enums only — no territory-sum or
   header↔commander consistency check exists yet.
 
-### 8. World 25 (Cobalt) Census-dark
+### 8. World 25 (Briggs) Census-dark
 
 - **Symptom:** map poller reports world 25 skipped / Census-dark while other
-  worlds are fine. Cobalt is effectively unserved by Census for long stretches.
+  worlds are fine. Briggs is effectively unserved by Census for long stretches.
 - **Handling:** expected; the watchdog tolerates per-world failures in a cycle.
-  Alert detection for Cobalt is degraded by the source, not by our code.
+  Alert detection for Briggs is degraded by the source, not by our code.
 
-### 9. Emerald (19) events gap
+### 9. Jaeger (19) events gap
 
-- **Symptom:** the Census event stream delivers only 2 worlds (Connery +
-  Miller). Emerald has zero event windows for 29+ hours (seen 2026-10-16 02:21
-  UTC → 2026-10-17 02:14 EST) while Emerald map snapshots stay fresh.
+- **Symptom:** the Census event stream delivers only 2 worlds (Osprey +
+  Wainwright). Jaeger (private events server) has zero event windows for 29+ hours (seen 2026-10-16 02:21
+  UTC → 2026-10-17 02:14 EST) while Jaeger map snapshots stay fresh.
 - **Handling:** alert detection is intact (map snapshots); only events-derived
-  fields (KD, pop, outliers) are degraded for an Emerald alert. The watchdog
+  fields (KD, pop, outliers) are degraded for a world 19 (Jaeger) alert. The watchdog
   freshness probe covers world 10 only — it does NOT check 19/25.
 
 ### 10. Stale character REST stats
