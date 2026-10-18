@@ -4279,6 +4279,7 @@ import {
 
   let copiedFlashTimer = 0;
   function flashCopied() {
+    sfx("sparkle"); // same dice-press sound: the copy landed
     const btn = els.copyLinkBtn;
     if (!btn) return;
     if (copiedFlashTimer) clearTimeout(copiedFlashTimer);
@@ -4593,6 +4594,7 @@ import {
       if (b.dataset.mode === "cumulative" && yScaleMode === "kd") {
         // Clicking Raw while 💀 is lit switches 💀 off and lights Raw.
         setYScaleMode("ivi");
+        sfx("sparkle"); // same dice-press sound: K/D ⇄ iVi mode switch
         return;
       }
       if (b.dataset.mode !== chartMode) setChartMode(b.dataset.mode);
@@ -4618,6 +4620,7 @@ import {
       const wrap = els.chart.closest(".chart-wrap");
       const panel = wrap ? getComputedStyle(wrap).backgroundColor : "";
       slideSwap({ container: wrap, svg: els.chart, dir, background: panel, draw: () => setYScaleMode(yScaleMode === "kd" ? "ivi" : "kd") });
+      sfx("sparkle"); // same dice-press sound: K/D ⇄ iVi mode switch (swipe / keys)
       if (isTouchUi()) {
         const on = document.querySelector(yScaleMode === "kd" ? '[data-yscale="kd-btn"]' : '.chart-mode-btn[data-mode="cumulative"]');
         if (on && on.getAttribute("data-tip")) showHeadTip(on.getAttribute("data-tip"), on);
@@ -4692,6 +4695,7 @@ import {
   if (kdBtn) {
     kdBtn.addEventListener("click", () => {
       setYScaleMode(yScaleMode === "kd" ? "ivi" : "kd");
+      sfx("sparkle"); // same dice-press sound: K/D ⇄ iVi mode switch
     });
   }
   // Slider input
