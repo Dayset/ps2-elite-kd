@@ -109,6 +109,19 @@ async function resumePending() {
   watchStep(id, 60);
 }
 export function initAuth() {
-  $("auth").addEventListener("close", stopTimer);
+  const dlg = $("auth");
+  let opener = null;
+  dlg.addEventListener("close", () => { stopTimer(); if (opener && opener.isConnected) opener.focus(); opener = null; });
+  // Accessibility (#18): Esc closes, Tab stays inside the dialog, focus returns to the opener.
+  new MutationObserver(() => { if (dlg.open && !opener) opener = document.activeElement; }).observe(dlg, { attributes: true, attributeFilter: ["open"] });
+  dlg.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") { e.preventDefault(); dlg.close(); return; }
+    if (e.key !== "Tab") return;
+    const f = [...dlg.querySelectorAll("button, input, a[href], [tabindex]:not([tabindex='-1'])")].filter((x) => !x.disabled && x.offsetParent !== null);
+    if (!f.length) return;
+    const first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
   loadMe().then(resumePending);
 }

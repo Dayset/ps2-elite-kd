@@ -5,6 +5,7 @@ import { asset, names } from "./api.js";
 export async function drawMap(a) {
   const host = $("map");
   if (!host) return;
+  if (!host.firstChild) host.innerHTML = '<div class="sk sk-map" aria-label="Loading map"></div>';
   const hm = await asset(HEXFILE[a.zone]);
   if (!hm || !hm.hexes || !hm.hexes.length) { host.innerHTML = '<div class="note">No map geometry for this continent.</div>'; return; }
   const nm = await names(a.zone);

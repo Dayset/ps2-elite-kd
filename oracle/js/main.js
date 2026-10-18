@@ -1,5 +1,5 @@
 // PS2MapOracle dashboard — split from index.html (#15). No behaviour change.
-import { S, FACS, COLOR, esc, $, stars, mins, bar, det, info, wide, syncDetails, PHONE_MQ } from "./state.js";
+import { S, FACS, COLOR, esc, $, stars, mins, bar, pct1, det, info, wide, syncDetails, PHONE_MQ } from "./state.js";
 import { get } from "./api.js";
 import { drawMap, highlightBase } from "./map.js";
 import { chart, chartHover } from "./chart.js";
@@ -59,7 +59,7 @@ function openAlert(key) {
   setUrlAlert(key);
   render(Math.floor(Date.now() / 1000));
   loadTicks();
-  $("main").scrollIntoView({ behavior: "smooth", block: "start" });
+  $("main").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
 }
 function backToLive() {
   S.pinned = false; S.extra = null;
@@ -98,8 +98,8 @@ function render2(now) {
   const win = s ? s.win : null;
   const lead = s && s.leader;
   const left = a.status === "live" ? `${mins(a.start_ts + a.dur * 60 - now)} min left` : statusLabel(a, now);
-  const oddsHtml = win ? FACS.map((f) => `<div class="fac ${f} ${f === lead ? "lead" : ""}"><div class="l">${f}</div><div class="n">${win[f].pct}%</div><div class="stars">${stars(win[f].pct)}</div></div>`).join("") : `<div class="note">${a.status === "live" ? "Waiting for the first map snapshot…" : "No live odds were recorded for this alert."}</div>`;
-  const rows = s ? FACS.map((f) => `<div class="row"><span class="lbl ${f}">${f} territory</span><div class="track"><span style="width:${s.territory[f]}%;background:${COLOR[f]}"></span></div><span class="v">${s.territory[f]}%</span></div>`).join("") +
+  const oddsHtml = win ? FACS.map((f) => `<div class="fac ${f} ${f === lead ? "lead" : ""}"><div class="l">${f}</div><div class="n">${pct1(win[f].pct)}%</div><div class="stars">${stars(win[f].pct)}</div></div>`).join("") : `<div class="note">${a.status === "live" ? "Waiting for the first map snapshot…" : "No live odds were recorded for this alert."}</div>`;
+  const rows = s ? FACS.map((f) => `<div class="row"><span class="lbl ${f}">${f} territory</span><div class="track"><span style="width:${s.territory[f]}%;background:${COLOR[f]}"></span></div><span class="v">${Math.round(s.territory[f])}%</span></div>`).join("") +
     FACS.map((f) => {
       const base = s.territory[f] || 0, m = s.momentum[f];
       const rel = base >= 1 ? (100 * m / base) : m;
@@ -111,28 +111,42 @@ function render2(now) {
   const oddLine = win && s ? `<div class="oddline">${FACS.map((f) => { const base = s.territory[f] || 0, m = s.momentum[f]; const rel = base >= 1 ? (100 * m / base) : m;
     return `<span class="${f}">${f}</span> <span class="stars">${stars(win[f].pct) || "·"}</span> <span class="note">${rel > 0.05 ? "▲" : rel < -0.05 ? "▼" : "·"}${rel >= 0 ? "+" : ""}${rel.toFixed(1)}%</span>`; }).join(" · ")}</div>` : "";
   const kdRows = s && s.kd_source ? FACS.map((f) => `<div class="row"><span class="lbl ${f}">${f} KD</span><span class="note">live</span><span class="v">${s.kd[f]}</span></div>`).join("") : "";
-  const popAdj = s && s.win_popadj ? `<div class="second">With population weighting: ${FACS.map((f) => `<span class="${f}">${f} ${s.win_popadj[f].pct}%</span>`).join(" · ")} <span class="note">(experimental, fades out by minute 60)</span></div>` : "";
+  const popAdj = s && s.win_popadj ? `<div class="second">With population weighting: ${FACS.map((f) => `<span class="${f}">${f} ${pct1(s.win_popadj[f].pct)}%</span>`).join(" · ")} <span class="note">(experimental, fades out by minute 60)</span></div>` : "";
   const kindNote = a.kind === "meltdown" ? `<div class="note" style="color:var(--warn)">Unstable Meltdown: scored differently from territory alerts; these odds are not validated for this alert type yet.</div>` : "";
   const calls = s && s.calls && s.calls.length ? `<ul class="calls">${s.calls.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>` : "";
-  const second = s && s.second ? `<div class="second">Second place: ${Object.entries(s.second.odds).map(([f, p]) => `<span class="${f}">${f} ${p}%</span>`).join(" · ")} ${s.second.locked ? "(locked)" : ""}</div>` : "";
+  const second = s && s.second ? `<div class="second">Second place: ${Object.entries(s.second.odds).map(([f, p]) => `<span class="${f}">${f} ${pct1(p)}%</span>`).join(" · ")} ${s.second.locked ? "(locked)" : ""}</div>` : "";
   const result = a.status === "settled" ? `<div class="second">Census final: ${FACS.map((f) => `<span class="${f}">${f} ${a.final ? (+a.final[f]).toFixed(1) : "?"}</span>`).join(" · ")} — <b class="${a.winner}">${a.winner}</b> wins${a.basis === "sudden_death" ? " (sudden death)" : ""}</div>` : "";
   $("main").innerHTML = `
     <div class="title"><b>${esc(a.world_name)} · ${esc(a.zone_name)}${a.kind === "meltdown" ? " Meltdown" : ""}</b><span class="badge ${a.status}">${esc(a.status.replace("_", " "))}</span><span class="note">${esc(left)} · ${a.dur}-min alert</span>${liveA ? "" : `<button type="button" class="more backlive" id="backLive">← Back to live</button>`}</div>
     <div class="grid">
       <section class="card map"><h2>Map</h2><div id="map"></div></section>
-      <section class="card win"><h2>Win chance</h2>${kindNote}<div class="odds">${oddsHtml}</div>${oddLine}${result}${popAdj}${second}${rows || popRows || kdRows ? det("wdet", "Details", `<div class="rows">${rows}${popRows}${kdRows}</div>${popTot ? `<div class="note">Population: Honu (wt.honu.pw), ${popTot} on continent${s.pop_ns ? ` + ${s.pop_ns} NSO` : ""}.</div>` : ""}`, "wdet") : ""}${calls}</section>
+      <section class="card win"><h2>Win chance</h2>${kindNote}<div class="odds" aria-live="polite" aria-atomic="true">${oddsHtml}</div>${oddLine}${result}${popAdj}${second}${rows || popRows || kdRows ? det("wdet", "Details", `<div class="rows">${rows}${popRows}${kdRows}</div>${popTot ? `<div class="note">Population: Honu (wt.honu.pw), ${popTot} on continent${s.pop_ns ? ` + ${s.pop_ns} NSO` : ""}.</div>` : ""}`, "wdet") : ""}${calls}</section>
       ${a.status === "live" ? `<div id="betHere"></div>` : ""}
     </div>
-    <section class="card chart" style="margin-top:14px"><h2>Win chance over time</h2><div id="chart"><div class="note">Loading…</div></div></section>
+    <section class="card chart" style="margin-top:14px"><h2>Win chance over time</h2><div id="chart"><div class="sk sk-chart" aria-label="Loading"></div></div></section>
     ${a.status === "live" ? commander(a.commander || (s && s.commander), a.commander_ts, now, lead) : reportPanel(a)}
     ${benchPanel(a)}`;
   if ($("backLive")) $("backLive").onclick = backToLive;
   $("main").querySelectorAll("li[data-base]").forEach((li) => { li.onmouseenter = () => highlightBase(li.dataset.base); li.onmouseleave = () => highlightBase(null); });
   $("main").querySelectorAll("[data-cf]").forEach((b) => b.onclick = () => { S.cmdFac = b.dataset.cf; render(Math.floor(Date.now() / 1000)); });
-  $("mini").innerHTML = `<b>${esc(a.world_name)} · ${esc(a.zone_name)}</b>${win ? `<span>${FACS.map((f) => `<span class="${f}">${f} ${win[f].pct}%</span>`).join(" ")}</span>` : ""}`;
+  $("mini").innerHTML = `<b>${esc(a.world_name)} · ${esc(a.zone_name)}</b>${win ? `<span>${FACS.map((f) => `<span class="${f}">${f} ${pct1(win[f].pct)}%</span>`).join(" ")}</span>` : ""}`;
   miniSync();
   if (S.ticksFor === a.key) { const c = $("chart"); c.innerHTML = chart(S.ticks, a.dur, c.clientWidth); chartHover(c, S.ticks, a.dur); }
   drawMap(a);
+}
+
+// Error banner (#18): Worker unreachable or /health stale; cleared on the next good poll.
+function banner(text, cls = "") {
+  const b = $("banner");
+  b.hidden = !text; b.className = "banner " + cls; b.textContent = text ? "⚠ " + text : "";
+}
+// Page title shows the leading live alert's win % (#18).
+const BASE_TITLE = document.title;
+function pageTitle() {
+  const a = S.alerts.find((x) => x.status === "live" && x.state && x.state.win);
+  if (!a) { document.title = BASE_TITLE; return; }
+  const f = FACS.reduce((m, x) => (+a.state.win[x].pct > +a.state.win[m].pct ? x : m), "VS");
+  document.title = `${f} ${pct1(a.state.win[f].pct)}% · ${a.world_name} ${a.zone_name} — PS2MapOracle`;
 }
 
 async function refreshLive() {
@@ -144,11 +158,14 @@ async function refreshLive() {
     const ok = health && health.ok && health.last_ok_age_s !== null && health.last_ok_age_s < 300;
     $("dot").className = "dot " + (ok ? "ok" : "bad");
     $("statusText").textContent = ok ? `live · updated ${health.last_cycle_age_s}s ago` : "data delayed";
+    banner(ok ? "" : `Live data is ${health && health.last_ok_age_s != null ? Math.round(health.last_ok_age_s / 60) + " min" : "a while"} old — retrying…`, "warn");
+    pageTitle();
     render(now);
     if (S.selected && S.ticksFor !== S.selected) loadTicks();
   } catch (e) {
     $("dot").className = "dot bad";
     $("statusText").textContent = "oracle unreachable";
+    banner("The oracle backend is not reachable — retrying…");
     if (!S.alerts.length) $("main").innerHTML = '<div class="empty">The oracle backend is not reachable right now.</div>';
   }
 }

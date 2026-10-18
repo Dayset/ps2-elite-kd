@@ -55,5 +55,7 @@ export async function refreshHistory() {
       (Object.keys(b).length ? `<div class="note">lower is better · coin-flip = ${h.uniform}</div>` : "");
     S.histRows = h.alerts || [];
     renderHist();
-  } catch {}
+  } catch {
+    if (!S.histRows.length) $("hist").querySelector("tbody").innerHTML = '<tr><td colspan="8" class="note">Results are unavailable right now — retrying…</td></tr>';
+  }
 }

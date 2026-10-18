@@ -7,11 +7,11 @@ export function chart(ticks, dur, width) {
   const W = Math.max(280, Math.round(width || 560)), H = 220, L = 34, B = 22, T = 8, R = 20;
   const x = (t) => L + (Math.min(t, dur) / dur) * (W - L - R);
   const y = (p) => T + (1 - p / 100) * (H - T - B);
-  const grid = [0, 25, 50, 75, 100].map((p) => `<line x1="${L}" x2="${W - R}" y1="${y(p)}" y2="${y(p)}" stroke="#2a2e36" stroke-width="1"/><text x="${L - 6}" y="${y(p) + 4}" fill="#8a8882" font-size="11" text-anchor="end">${p}%</text>`).join("");
-  const xt = [0, dur / 2, dur].map((m) => `<text x="${x(m)}" y="${H - 6}" fill="#8a8882" font-size="11" text-anchor="middle">${Math.round(m)}m</text>`).join("");
+  const grid = [0, 25, 50, 75, 100].map((p) => `<line x1="${L}" x2="${W - R}" y1="${y(p)}" y2="${y(p)}" stroke="#2a2e36" stroke-width="1"/><text x="${L - 6}" y="${y(p) + 4}" fill="#9a988f" font-size="11" text-anchor="end">${p}%</text>`).join("");
+  const xt = [0, dur / 2, dur].map((m) => `<text x="${x(m)}" y="${H - 6}" fill="#9a988f" font-size="11" text-anchor="middle">${Math.round(m)}m</text>`).join("");
   const lines = FACS.map((f) => `<polyline fill="none" stroke="${COLOR[f]}" stroke-width="2.2" stroke-linejoin="round" points="${ticks.map((k) => x(k.t).toFixed(1) + "," + y(k.win[f]).toFixed(1)).join(" ")}"/>`).join("");
   // Subtle markers at the benchmark slices (90-min: t30/t60, 45-min: t15/t30, 30-min: t10/t20).
-  const marks = (SLICES[dur] || []).map((m) => `<line x1="${x(m)}" x2="${x(m)}" y1="${T}" y2="${H - B}" stroke="#3a3e46" stroke-width="1" stroke-dasharray="2 4"/><text x="${x(m) + 3}" y="${T + 10}" fill="#6b6f78" font-size="10">t${m}</text>`).join("");
+  const marks = (SLICES[dur] || []).map((m) => `<line x1="${x(m)}" x2="${x(m)}" y1="${T}" y2="${H - B}" stroke="#3a3e46" stroke-width="1" stroke-dasharray="2 4"/><text x="${x(m) + 3}" y="${T + 10}" fill="#9a988f" font-size="10">t${m}</text>`).join("");
   const legend = `<div class="clegend">${FACS.map((f) => `<span><i class="sw" style="background:${COLOR[f]}"></i>${f}</span>`).join("")}</div>`;
   return legend + `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Win chance over time">${grid}${marks}${xt}${lines}<line class="cursor" x1="0" x2="0" y1="${T}" y2="${H - B}" stroke="#c8c6c0" stroke-width="1" stroke-dasharray="3 3" visibility="hidden"/></svg><div class="hoverline">Hover or tap the chart for exact numbers.</div>`;
 }

@@ -31,6 +31,8 @@ export function syncDetails(root = document) {
   root.querySelectorAll("details.det[data-d]").forEach((d) => { d.open = forced(d.className) || !!S.open[d.dataset.d]; });
 }
 export const stars = (p) => p >= 80 ? "★★★★★" : p >= 60 ? "★★★★" : p >= 40 ? "★★★" : p >= 20 ? "★★" : p > 0 ? "★" : "";
+// Odds always with 1 decimal; territory whole numbers where space is tight (#18).
+export const pct1 = (v) => (Math.round(+v * 10) / 10).toFixed(1);
 export const mins = (s) => Math.max(0, Math.round(s / 60));
 export const when = (ts) => new Date(ts * 1000).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 export const bar = (terr) => FACS.map((f) => `<span style="width:${terr[f] || 0}%;background:${COLOR[f]}"></span>`).join("");
