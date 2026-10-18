@@ -187,7 +187,7 @@ test("Census outage: errors are reported, nothing throws, health turns unhealthy
   const env = { DB };
   globalThis.fetch = async () => new Response("bad gateway", { status: 502 });
   const rep = await runCycle(env, Date.now());
-  assert.ok(rep.errors.length >= 6, JSON.stringify(rep.errors));
+  assert.ok(rep.errors.length >= 5, JSON.stringify(rep.errors));   // 3 worlds + metagame + facility
   const h = await (await worker.fetch(new Request("https://x/health"), env)).json();
   assert.equal(h.ok, true, "a cycle that ran is fresh");
   assert.equal(h.last_ok_age_s, null, "but it never succeeded");
