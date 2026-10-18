@@ -91,7 +91,7 @@ function render2(now) {
   if (!a && S.pinned && S.selected) { $("main").innerHTML = `<div class="empty">Loading alert…</div>`; return; }
   if (!a) {
     $("mini").innerHTML = ""; miniSync();
-    $("main").innerHTML = `<div class="empty">No territory alerts running on Osprey, Wainwright, Briggs or SolTech right now. Live odds appear here the minute one starts.</div>`;
+    $("main").innerHTML = `<div class="empty">No territory alerts running on Osprey, Wainwright or SolTech right now. Live odds appear here the minute one starts.</div>`;
     return;
   }
   const s = a.state;

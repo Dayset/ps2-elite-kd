@@ -13,7 +13,8 @@ export const FAC_ID = { 1: "VS", 2: "NC", 3: "TR" };
 
 export const WORLD_NAMES = { 1: "Osprey", 10: "Wainwright", 25: "Briggs", 40: "SolTech" };
 export const ZONE_NAMES = { 2: "Indar", 4: "Hossin", 6: "Amerish", 8: "Esamir", 344: "Oshur" };
-export const WORLDS = [1, 10, 25, 40];
+// Briggs (25) was merged in 2019; Census returns nothing for it (no map, events or flips since migration).
+export const WORLDS = [1, 10, 40];
 export const ZONES = [2, 4, 6, 8, 344];
 
 // Territory alert metagame_event_id -> duration (min). Same table as
