@@ -23,11 +23,18 @@ export const TERRITORY_ALERTS = {
   155: 90, 156: 90, 157: 90, 158: 90, 211: 90, 212: 90, 213: 90, 214: 90,
   176: 45, 177: 45, 178: 45, 179: 45, 186: 45, 187: 45, 188: 45, 189: 45,
   190: 45, 191: 45, 192: 45, 193: 45, 208: 45, 209: 45, 210: 45, 215: 45,
-  222: 45, 223: 45, 224: 45, 226: 45, 227: 45,
+  222: 45, 223: 45, 224: 45, 226: 45,
   248: 30, 249: 30, 250: 30,
 };
-// Kill-based 15-min overtime after a territory draw: Indar..Oshur.
-export const SUDDEN_DEATH = { 236: 2, 237: 4, 238: 6, 239: 8, 240: 344 };
+// 227 is OUTFIT WARS (Census metagame_event, 45 min): not a public alert, never tracked.
+// Unstable Meltdown (Census names, verified 2026-10-18). Their final score is not
+// whole-map territory (Census ended scores sum to ~30-40%) and the trees were
+// trained on 90-min territory alerts only, so odds for these are unvalidated.
+export const MELTDOWN = new Set([176, 177, 178, 179, 186, 187, 188, 189, 190, 191, 192, 193, 248, 249, 250]);
+export const alertKind = (eventId) => (MELTDOWN.has(+eventId) ? "meltdown" : "territory");
+// Kill-based overtime after a territory draw (Census: "Sudden Death", 15 min; 240 is 10 min).
+// Matched to the alert by the row's own world+zone, not by event id.
+export const SUDDEN_DEATH = { 236: 15, 237: 15, 238: 15, 239: 15, 240: 10 };
 
 // Elimination constants (live_oracle.py; Hossin's 88 facilities are used
 // for every continent there too — kept identical for parity).
@@ -201,7 +208,7 @@ export function buildState({ getBin, world, zone, eventId, instanceId, startTs, 
     ts: Math.trunc(now),
     t: Math.trunc(t),
     live: true,
-    alert: { world, zone, event_id: eventId, instance_id: instanceId, start_ts: startTs, duration_min: dur },
+    alert: { world, zone, event_id: eventId, instance_id: instanceId, start_ts: startTs, duration_min: dur, kind: alertKind(eventId) },
     territory: Object.fromEntries(FACS.map((f) => [f, round1(terr[f])])),
     momentum: Object.fromEntries(FACS.map((f) => [f, round1(mom[f])])),
     kd: { VS: 1.0, NC: 1.0, TR: 1.0 },
@@ -217,6 +224,22 @@ export function buildState({ getBin, world, zone, eventId, instanceId, startTs, 
   const sp = secondPlace(terr, raw, trunkv, t, dur);
   if (sp) state.second = sp;
   return state;
+}
+
+/**
+ * push_live_state's experimental time-weighted population blend:
+ * w = 1 at t0 falling to 0 at t60; adj = (1-w)·tree + w·pop share, renormalised.
+ * Returns {VS:{pct},...} or null when there is no population or w = 0.
+ */
+export function popAdjusted(win, pop, t) {
+  const total = FACS.reduce((s, f) => s + (pop[f] || 0), 0);
+  if (!(total > 0)) return null;
+  const w = Math.max(0, 1 - t / 60);
+  if (w <= 0) return null;
+  const adj = {};
+  for (const f of FACS) adj[f] = (1 - w) * (win[f].pct / 100) + w * ((pop[f] || 0) / total);
+  const sum = FACS.reduce((s, f) => s + adj[f], 0);
+  return Object.fromEntries(FACS.map((f) => [f, { pct: round1((100 * adj[f]) / sum) }]));
 }
 
 /** Benchmark slice minutes per alert length: t0 + two in-alert checkpoints. */

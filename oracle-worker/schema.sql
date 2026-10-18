@@ -80,3 +80,12 @@ CREATE TABLE IF NOT EXISTS meta (
   k TEXT PRIMARY KEY,
   v TEXT
 );
+
+-- Live continent population per faction (Honu), one row per minute per live-alert zone.
+CREATE TABLE IF NOT EXISTS pop (
+  world INTEGER NOT NULL,
+  zone INTEGER NOT NULL,
+  ts INTEGER NOT NULL,
+  vs INTEGER, nc INTEGER, tr INTEGER, ns INTEGER,
+  PRIMARY KEY (world, zone, ts)
+);

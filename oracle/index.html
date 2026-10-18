@@ -240,14 +240,18 @@ footer { color: var(--dim); font-size: 12px; margin-top: 18px; }
         const rel = base >= 1 ? (100 * m / base) : m;
         return `<div class="row"><span class="lbl ${f}">${f} 15-min</span><span class="note">${rel > 0.05 ? "▲" : rel < -0.05 ? "▼" : "·"}</span><span class="v">${rel >= 0 ? "+" : ""}${rel.toFixed(1)}%</span></div>`;
       }).join("") : "";
+    const popTot = s && s.pop ? FACS.reduce((t, f) => t + (s.pop[f] || 0), 0) : 0;
+    const popRows = popTot ? FACS.map((f) => `<div class="row"><span class="lbl ${f}">${f} players</span><div class="track"><span style="width:${(100 * s.pop[f] / popTot).toFixed(1)}%;background:${COLOR[f]}"></span></div><span class="v">${s.pop[f]}</span></div>`).join("") : "";
+    const popAdj = s && s.win_popadj ? `<div class="second">With population weighting: ${FACS.map((f) => `<span class="${f}">${f} ${s.win_popadj[f].pct}%</span>`).join(" · ")} <span class="note">(experimental, fades out by minute 60)</span></div>` : "";
+    const kindNote = a.kind === "meltdown" ? `<div class="note" style="color:var(--warn)">Unstable Meltdown: scored differently from territory alerts; these odds are not validated for this alert type yet.</div>` : "";
     const calls = s && s.calls && s.calls.length ? `<ul class="calls">${s.calls.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>` : "";
     const second = s && s.second ? `<div class="second">Second place: ${Object.entries(s.second.odds).map(([f, p]) => `<span class="${f}">${f} ${p}%</span>`).join(" · ")} ${s.second.locked ? "(locked)" : ""}</div>` : "";
     const result = a.status === "settled" ? `<div class="second">Census final: ${FACS.map((f) => `<span class="${f}">${f} ${a.final ? (+a.final[f]).toFixed(1) : "?"}</span>`).join(" · ")} — <b class="${a.winner}">${a.winner}</b> wins${a.basis === "sudden_death" ? " (sudden death)" : ""}</div>` : "";
     $("main").innerHTML = `
-      <div class="title"><b>${esc(a.world_name)} · ${esc(a.zone_name)}</b><span class="badge ${a.status}">${esc(a.status.replace("_", " "))}</span><span class="note">${esc(left)} · ${a.dur}-min alert</span></div>
+      <div class="title"><b>${esc(a.world_name)} · ${esc(a.zone_name)}${a.kind === "meltdown" ? " Meltdown" : ""}</b><span class="badge ${a.status}">${esc(a.status.replace("_", " "))}</span><span class="note">${esc(left)} · ${a.dur}-min alert</span></div>
       <div class="grid">
         <section class="card map"><h2>Map</h2><div id="map"></div></section>
-        <section class="card"><h2>Win chance</h2><div class="odds">${oddsHtml}</div>${result}${second}<div class="rows">${rows}</div>${calls}</section>
+        <section class="card"><h2>Win chance</h2>${kindNote}<div class="odds">${oddsHtml}</div>${result}${popAdj}${second}<div class="rows">${rows}${popRows}</div>${popTot ? `<div class="note">Population: Honu (wt.honu.pw), ${popTot} on continent${s.pop_ns ? ` + ${s.pop_ns} NSO` : ""}.</div>` : ""}${calls}</section>
       </div>
       <section class="card chart" style="margin-top:14px"><h2>Win chance over time</h2><div id="chart"><div class="note">Loading…</div></div></section>
       ${commander(a.commander || (s && s.commander))}`;

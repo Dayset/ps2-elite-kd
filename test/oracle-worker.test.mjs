@@ -57,6 +57,11 @@ function installCensus(state) {
       body = { world_event_list: state.metagame, returned: state.metagame.length };
     } else if (u.includes("type=FACILITY")) {
       body = { world_event_list: state.flips, returned: state.flips.length };
+    } else if (u.includes("wt.honu.pw/api/population/")) {
+      // Honu: camelCase list; zoneID may carry instance bits above 16.
+      body = state.honu ? [{ worldID: 1, zoneID: (3 << 16) | 4, timestamp: "2026-10-18T06:00:00Z", total: 300, vs: 150, nc: 90, tr: 50, ns: 10 },
+        { worldID: 1, zoneID: 2, total: 5, vs: 1, nc: 2, tr: 2, ns: 0 }] : [];
+      if (state.honuDown) return new Response("down", { status: 503 });
     } else throw new Error("unexpected " + u);
     return new Response(JSON.stringify(body), { status: 200, headers: { "Content-Type": "application/json" } });
   };
@@ -73,7 +78,7 @@ test("full alert lifecycle: live → settling → settled from Census final scor
   const DB = fakeD1();
   const env = { DB, ORACLE_KEY: "k" };
   const T0 = 1_792_300_000;
-  const census = { map: { 1: 30, 2: 30, 3: 28 }, metagame: [], flips: [] };
+  const census = { map: { 1: 30, 2: 30, 3: 28 }, metagame: [], flips: [], honu: true };
   installCensus(census);
 
   // Pre-alert minute (for 15-min momentum), then the alert starts.
@@ -100,7 +105,11 @@ test("full alert lifecycle: live → settling → settled from Census final scor
   assert.ok(a.state.win.VS.pct > 50, JSON.stringify(a.state.win));
   assert.equal(Object.keys(a.state.owners).length, 88);
   const bench = JSON.parse(DB.raw.prepare("SELECT slices FROM bench").get().slices);
-  assert.deepEqual(Object.keys(bench).sort(), ["t0", "t30", "t60"]);
+  assert.deepEqual(Object.keys(bench).sort(), ["t0", "t0_pop", "t30", "t30_pop", "t60"], "pop blend logged until t60, where its weight hits 0");
+  assert.deepEqual(a.state.pop, { VS: 150, NC: 90, TR: 50 }, "Honu zone id masked to 4");
+  assert.equal(a.state.pop_source, "honu");
+  assert.equal(a.kind, "territory");
+  assert.ok(DB.raw.prepare("SELECT COUNT(*) n FROM pop").get().n >= 4);
 
   // Ends; Census final says TR (snapshot says VS → flagged, Census wins).
   const END = T0 + 90 * 60;
@@ -170,4 +179,36 @@ test("key-protected endpoints refuse without the key", { skip }, async () => {
   const r = await worker.fetch(new Request("https://x/commander", { method: "POST", body: "{}", headers: { "X-Oracle-Key": "nope" } }), env);
   assert.equal(r.status, 403);
   assert.equal((await worker.fetch(new Request("https://x/export?world=1&zone=4", { headers: { "X-Oracle-Key": "secret" } }), env)).status, 200);
+});
+
+test("Outfit Wars is ignored; Meltdown alerts are labelled; Honu outage does not stop odds", { skip }, async () => {
+  const { runCycle, default: worker } = await import("../oracle-worker/src/index.js");
+  const DB = fakeD1();
+  const env = { DB };
+  const T0 = 1_792_500_000;
+  const census = { map: { 1: 30, 2: 30, 3: 28 }, flips: [], honuDown: true,
+    metagame: [mg(700, 227, "started", T0), mg(701, 177, "started", T0)] };
+  installCensus(census);
+  const rep = await runCycle(env, (T0 + 600) * 1000);
+  assert.equal(rep.live, 1, "only the Meltdown alert is live");
+  assert.ok(rep.errors.some((e) => e.startsWith("honu")), JSON.stringify(rep.errors));
+  const live = await (await worker.fetch(new Request("https://x/live"), env)).json();
+  assert.equal(live.alerts.length, 1);
+  assert.equal(live.alerts[0].kind, "meltdown");
+  assert.equal(live.alerts[0].state.alert.kind, "meltdown");
+  assert.equal(live.alerts[0].state.win_popadj, null);
+});
+
+test("sudden death on another continent does not decide this draw", { skip }, async () => {
+  const { runCycle } = await import("../oracle-worker/src/index.js");
+  const DB = fakeD1();
+  const env = { DB };
+  const T0 = 1_792_600_000, END = T0 + 45 * 60;
+  const census = { map: { 1: 30, 2: 30, 3: 28 }, flips: [],
+    metagame: [mg(800, 177, "started", T0), mg(800, 177, "ended", END, 12, 12, 9),
+      mg(801, 238, "started", END + 5, 0, 0, 0, 1, 6), mg(801, 238, "ended", END + 905, 1, 2, 3, 1, 6)] };
+  installCensus(census);
+  await runCycle(env, (END + 1300) * 1000);
+  const row = DB.raw.prepare("SELECT status, winner, basis FROM alert").get();
+  assert.deepEqual({ ...row }, { status: "settled", winner: "draw", basis: "census_final" });
 });

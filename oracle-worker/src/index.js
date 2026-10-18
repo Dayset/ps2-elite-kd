@@ -15,8 +15,8 @@
  * Key API (X-Oracle-Key): /export, POST /commander
  */
 import {
-  WORLDS, ZONES, WORLD_NAMES, ZONE_NAMES, TERRITORY_ALERTS, SUDDEN_DEATH, FACS,
-  buildState, computeWin, territory, sliceMinutes, brier, scoreWinner,
+  WORLDS, ZONES, WORLD_NAMES, ZONE_NAMES, TERRITORY_ALERTS, SUDDEN_DEATH, FACS, alertKind,
+  buildState, computeWin, territory, sliceMinutes, brier, scoreWinner, popAdjusted,
 } from "./engine.js";
 import { binGetter, hasTree, regionMap } from "./models.js";
 
@@ -83,6 +83,30 @@ export function parseFlips(j) {
     }));
 }
 
+// ---------------------------------------------------------------- Honu population
+
+const HONU = "https://wt.honu.pw/api";
+
+/** Honu /api/population/{world}/zones -> {zone: {VS,NC,TR,NS,total,ts}} (live, per continent). */
+export async function honuZones(world) {
+  const res = await fetch(`${HONU}/population/${world}/zones`, { headers: { "User-Agent": UA, Accept: "application/json" }, signal: AbortSignal.timeout(10000) });
+  if (!res.ok) throw new Error(`honu ${res.status}`);
+  return parseHonuZones(await res.json());
+}
+
+export function parseHonuZones(j) {
+  const list = Array.isArray(j) ? j : (j && Array.isArray(j.data) ? j.data : []);
+  const out = {};
+  for (const z of list) {
+    const raw = z.zoneID ?? z.zoneId ?? z.ZoneID;
+    if (raw === undefined) continue;
+    const zone = Number(raw) & 0xffff;
+    out[zone] = { VS: +(z.vs ?? z.Vs ?? 0), NC: +(z.nc ?? z.Nc ?? 0), TR: +(z.tr ?? z.Tr ?? 0), NS: +(z.ns ?? z.Ns ?? 0),
+      total: +(z.total ?? z.Total ?? 0), ts: z.timestamp || null };
+  }
+  return out;
+}
+
 // ---------------------------------------------------------------- D1 helpers
 
 async function latestSnap(db, world, atOrBefore) {
@@ -124,7 +148,7 @@ export function groupAlerts(rows) {
 
 /** Sudden-death instance on the same world+zone that began at this alert's end. */
 export function findSuddenDeath(rows, a, endTs) {
-  const sd = rows.filter((r) => SUDDEN_DEATH[r.event_id] === a.zone && r.world === a.world);
+  const sd = rows.filter((r) => SUDDEN_DEATH[r.event_id] && r.zone === a.zone && r.world === a.world);
   const start = sd.find((r) => r.state === "started" && r.ts >= endTs - 120 && r.ts <= endTs + 600);
   if (!start) return null;
   const end = sd.find((r) => r.instance_id === start.instance_id && (r.state === "ended" || r.state === "canceled"));
@@ -183,8 +207,17 @@ export async function runCycle(env, nowMs = Date.now()) {
   const known = new Map(((await db.prepare("SELECT key, status, checks, flags FROM alert WHERE start_ts > ?").bind(now - WINDOW_S).all()).results || []).map((r) => [r.key, r]));
   const benchRows = new Map(((await db.prepare("SELECT key, slices FROM bench WHERE settled_ts IS NULL").all()).results || []).map((r) => [r.key, JSON.parse(r.slices)]));
   const out = [];
-  const ticks = [], benchUp = [], benchSettle = [];
+  const ticks = [], benchUp = [], benchSettle = [], popRows = [];
   const snap15 = {};
+  const honu = {};
+  report.honu = {};
+  const popFor = async (world) => {
+    if (!(world in honu)) {
+      try { honu[world] = await honuZones(world); report.honu[world] = `ok ${Object.keys(honu[world]).length} zones`; }
+      catch (e) { honu[world] = null; report.honu[world] = "error"; report.errors.push(`honu w${world}: ${e.message}`); }
+    }
+    return honu[world];
+  };
   let live = 0, settled = 0;
 
   for (const a of groupAlerts(all)) {
@@ -209,6 +242,15 @@ export async function runCycle(env, nowMs = Date.now()) {
         getBin: binGetter(a.zone), world: a.world, zone: a.zone, eventId: a.event_id, instanceId: a.instance_id,
         startTs, dur, now, snapNow: zNow, snap15: z15 || null, regionMap: regionMap(a.zone),
       });
+      const hz = await popFor(a.world);
+      const p = hz && hz[a.zone];
+      if (p) {
+        state.pop = { VS: p.VS, NC: p.NC, TR: p.TR };
+        state.pop_ns = p.NS;
+        state.pop_source = "honu";
+        state.win_popadj = popAdjusted(state.win, state.pop, state.t);
+        popRows.push({ world: a.world, zone: a.zone, ts: now, vs: p.VS, nc: p.NC, tr: p.TR, ns: p.NS });
+      }
       out.push({ ...base, status: "live", state });
       live++;
       ticks.push({ key: a.key, ts: now, t: Math.round(((now - startTs) / 60) * 10) / 10, terr: JSON.stringify(state.territory),
@@ -225,8 +267,12 @@ export async function runCycle(env, nowMs = Date.now()) {
           const terr = territory(zNow);
           const { win } = computeWin(binGetter(a.zone), terr, { VS: 0, NC: 0, TR: 0 }, Math.max(t, 0), dur);
           slices.t0 = { VS: win.VS.pct / 100, NC: win.NC.pct / 100, TR: win.TR.pct / 100, t: Math.round(t * 10) / 10 };
+          const pa = state.pop_source ? popAdjusted(win, state.pop, Math.max(t, 0)) : null;
+          if (pa) slices.t0_pop = { VS: pa.VS.pct / 100, NC: pa.NC.pct / 100, TR: pa.TR.pct / 100, t: slices.t0.t };
         } else if (t <= m + 5) {
           slices[label] = { VS: state.win.VS.pct / 100, NC: state.win.NC.pct / 100, TR: state.win.TR.pct / 100, t: Math.round(t * 10) / 10 };
+          const pa = state.win_popadj;
+          if (pa) slices[label + "_pop"] = { VS: pa.VS.pct / 100, NC: pa.NC.pct / 100, TR: pa.TR.pct / 100, t: Math.round(t * 10) / 10 };
         } else continue;
         changed = true;
       }
@@ -298,6 +344,7 @@ export async function runCycle(env, nowMs = Date.now()) {
         state=COALESCE(excluded.state, alert.state), updated=excluded.updated`).bind(JSON.stringify(changedRows)));
   }
   if (ticks.length) writes.push(bulkInsert(db, "tick", ["key", "ts", "t", "terr", "win"], ticks));
+  if (popRows.length) writes.push(bulkInsert(db, "pop", ["world", "zone", "ts", "vs", "nc", "tr", "ns"], popRows));
   if (benchUp.length) {
     writes.push(db.prepare(`INSERT INTO bench (key, dur, slices)
       SELECT json_extract(value,'$.key'), json_extract(value,'$.dur'), json_extract(value,'$.slices') FROM json_each(?) WHERE true
@@ -330,7 +377,7 @@ export async function runCycle(env, nowMs = Date.now()) {
 const parseRow = (r) => ({
   key: r.key, world: r.world, world_name: WORLD_NAMES[r.world] || String(r.world),
   zone: r.zone, zone_name: ZONE_NAMES[r.zone] || String(r.zone),
-  instance_id: r.instance_id, event_id: r.event_id, start_ts: r.start_ts, dur: r.dur,
+  instance_id: r.instance_id, event_id: r.event_id, kind: alertKind(r.event_id), start_ts: r.start_ts, dur: r.dur,
   status: r.status, end_ts: r.end_ts, checks: r.checks, winner: r.winner, basis: r.basis,
   final: r.final ? JSON.parse(r.final) : null,
   flags: r.flags ? JSON.parse(r.flags).filter((f) => f !== "checked") : [],
