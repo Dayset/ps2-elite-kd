@@ -73,7 +73,11 @@ def main():
     if not KEY:
         print("ORACLE_KEY not set; nothing to do")
         return 0
-    live = [a for a in call("/live")["alerts"] if a["status"] == "live"]
+    try:
+        live = [a for a in call("/live")["alerts"] if a["status"] == "live"]
+    except Exception as e:  # Worker down or not deployed yet: not this job's failure
+        print(f"::warning::oracle Worker unreachable ({e}); skipping")
+        return 0
     print(f"{len(live)} live alert(s)")
     ok = fail = 0
     for a in live:
