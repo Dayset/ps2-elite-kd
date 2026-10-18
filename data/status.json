@@ -4,17 +4,14 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "39135192297",
+    "runId": "39136315147",
     "event": "workflow_dispatch",
     "kind": "discovery",
-    "startedAt": "2026-10-18T14:15:58.764Z",
-    "endedAt": "2026-10-18T14:20:54.262Z",
-    "seconds": 295,
+    "startedAt": "2026-10-18T14:31:01.239Z",
+    "endedAt": "2026-10-18T14:34:45.666Z",
+    "seconds": 224,
     "updated": [
-      "[BHO] Shattom",
-      "[JOKU] JimboInLimbo",
-      "[J0KE] JimboInLimboTR",
-      "[BAX] JimboInLimboNC"
+      "[FKTZ] Suilean"
     ],
     "added": [],
     "failed": [],
@@ -28,34 +25,19 @@
     },
     "honu": {
       "day": "2026-10-18",
-      "calls": 2123,
+      "calls": 2163,
       "cap": 10000
     },
     "batch": [
       {
-        "name": "[BHO] Shattom",
-        "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "[JOKU] JimboInLimbo",
-        "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "[J0KE] JimboInLimboTR",
-        "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "[BAX] JimboInLimboNC",
+        "name": "[FKTZ] Suilean",
         "src": "refresh",
         "status": "done"
       }
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-18T14:21:33.882Z",
+    "checkedAt": "2026-10-18T14:34:56.611Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 12,
     "explained": 26,
@@ -200,7 +182,7 @@
         "id": "s_kd",
         "value": 142.333,
         "bound": 50.55,
-        "z": 131.026,
+        "z": 131.001,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (session, session-forensics), listed there",
@@ -215,7 +197,7 @@
         "id": "s_kd",
         "value": 113,
         "bound": 50.55,
-        "z": 103.674,
+        "z": 103.654,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (aim), listed there",
@@ -229,7 +211,7 @@
         "id": "s_maxKd",
         "value": 131,
         "bound": 119.976,
-        "z": 86.917,
+        "z": 86.768,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (aim, session-forensics), listed there",
@@ -316,7 +298,7 @@
         "id": "s_kd",
         "value": 59,
         "bound": 50.55,
-        "z": 53.321,
+        "z": 53.311,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (rampage, session, session-forensics), listed there",
@@ -332,7 +314,7 @@
         "id": "s_kd",
         "value": 56.8,
         "bound": 50.55,
-        "z": 51.27,
+        "z": 51.26,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (aim, session-forensics), listed there",
@@ -861,7 +843,7 @@
             "label": "🧪 Session K/D",
             "value": 113,
             "bound": 50.55,
-            "z": 103.674,
+            "z": 103.654,
             "side": "high"
           }
         ]
@@ -875,14 +857,14 @@
           "session",
           "session-forensics"
         ],
-        "maxZ": 131.026,
+        "maxZ": 131.001,
         "metrics": [
           {
             "id": "s_kd",
             "label": "🧪 Session K/D",
             "value": 142.333,
             "bound": 50.55,
-            "z": 131.026,
+            "z": 131.001,
             "side": "high"
           },
           {
@@ -904,14 +886,14 @@
           "aim",
           "session-forensics"
         ],
-        "maxZ": 86.917,
+        "maxZ": 86.768,
         "metrics": [
           {
             "id": "s_maxKd",
             "label": "🧪 Best-session K/D",
             "value": 131,
             "bound": 119.976,
-            "z": 86.917,
+            "z": 86.768,
             "side": "high"
           },
           {
@@ -919,7 +901,7 @@
             "label": "🧪 Session K/D",
             "value": 56.8,
             "bound": 50.55,
-            "z": 51.27,
+            "z": 51.26,
             "side": "high"
           }
         ]
@@ -978,7 +960,7 @@
             "label": "🧪 Session K/D",
             "value": 59,
             "bound": 50.55,
-            "z": 53.321,
+            "z": 53.311,
             "side": "high"
           }
         ]
@@ -1255,7 +1237,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-18T14:21:34.057Z",
+    "checkedAt": "2026-10-18T14:34:56.791Z",
     "red": 44,
     "padding": 41,
     "adjusted": 16,
@@ -1266,7 +1248,7 @@
     "forensics": 27
   },
   "sessionStats": {
-    "checkedAt": "2026-10-18T14:21:33.918Z",
+    "checkedAt": "2026-10-18T14:34:56.644Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -1281,12 +1263,12 @@
     "coverage": {
       "players": 12634,
       "withSessions": 7936,
-      "measured": 3652,
-      "sessions": 27876,
-      "kills": 1284521,
+      "measured": 3654,
+      "sessions": 27891,
+      "kills": 1285012,
       "xpPlayers": 794,
-      "xpMeasured": 598,
-      "xpSessions": 4288
+      "xpMeasured": 600,
+      "xpSessions": 4303
     },
     "metrics": [
       {
@@ -1388,17 +1370,17 @@
     ],
     "distributions": {
       "s_apk": {
-        "n": 3652,
+        "n": 3654,
         "min": 0,
         "p01": 0.071,
         "p05": 0.173,
         "median": 0.4,
-        "p95": 0.705,
+        "p95": 0.707,
         "p99": 0.886,
         "max": 1.5
       },
       "s_share": {
-        "n": 3230,
+        "n": 3228,
         "min": 0.383,
         "p01": 0.461,
         "p05": 0.49,
@@ -1408,17 +1390,17 @@
         "max": 0.803
       },
       "s_kpm": {
-        "n": 3652,
+        "n": 3654,
         "min": 0.07,
         "p01": 0.149,
         "p05": 0.222,
-        "median": 0.628,
+        "median": 0.627,
         "p95": 2.112,
         "p99": 2.872,
         "max": 16.526
       },
       "s_maxKpm": {
-        "n": 3652,
+        "n": 3654,
         "min": 0.127,
         "p01": 0.196,
         "p05": 0.293,
@@ -1428,7 +1410,7 @@
         "max": 16.526
       },
       "s_kpmCv": {
-        "n": 3463,
+        "n": 3465,
         "min": 0,
         "p01": 0.011,
         "p05": 0.047,
@@ -1438,37 +1420,37 @@
         "max": 1.028
       },
       "s_kd": {
-        "n": 3591,
+        "n": 3593,
         "min": 0.255,
         "p01": 0.46,
         "p05": 0.667,
         "median": 1.817,
-        "p95": 4.925,
+        "p95": 4.931,
         "p99": 14,
         "max": 162.667
       },
       "s_maxKd": {
-        "n": 3591,
+        "n": 3593,
         "min": 0.256,
         "p01": 0.554,
         "p05": 0.819,
         "median": 2.357,
-        "p95": 8.653,
+        "p95": 8.667,
         "p99": 31.762,
         "max": 355
       },
       "s_hsk": {
-        "n": 623,
+        "n": 625,
         "min": 0,
         "p01": 0.009,
-        "p05": 0.066,
-        "median": 0.27,
+        "p05": 0.061,
+        "median": 0.269,
         "p95": 0.51,
         "p99": 0.72,
         "max": 0.972
       },
       "s_ksk": {
-        "n": 623,
+        "n": 625,
         "min": 0,
         "p01": 0.053,
         "p05": 0.127,
@@ -1478,7 +1460,7 @@
         "max": 0.983
       },
       "s_domk": {
-        "n": 623,
+        "n": 625,
         "min": 0,
         "p01": 0.007,
         "p05": 0.024,
@@ -1488,7 +1470,7 @@
         "max": 0.243
       },
       "s_revk": {
-        "n": 623,
+        "n": 625,
         "min": 0,
         "p01": 0,
         "p05": 0.013,
@@ -1498,7 +1480,7 @@
         "max": 0.357
       },
       "s_revDom": {
-        "n": 618,
+        "n": 620,
         "min": 0,
         "p01": 0,
         "p05": 0.105,
@@ -1508,7 +1490,7 @@
         "max": 10
       },
       "s_savk": {
-        "n": 623,
+        "n": 625,
         "min": 0,
         "p01": 0.008,
         "p05": 0.023,
@@ -1518,7 +1500,7 @@
         "max": 0.2
       },
       "s_spotk": {
-        "n": 623,
+        "n": 625,
         "min": 0,
         "p01": 0,
         "p05": 0,
@@ -1528,7 +1510,7 @@
         "max": 0.354
       },
       "s_prik": {
-        "n": 623,
+        "n": 625,
         "min": 0,
         "p01": 0.06,
         "p05": 0.118,
@@ -1538,7 +1520,7 @@
         "max": 0.49
       },
       "s_stopk": {
-        "n": 623,
+        "n": 625,
         "min": 0,
         "p01": 0.018,
         "p05": 0.037,
@@ -2863,7 +2845,7 @@
             "label": "🧪 Session K/D",
             "value": 113,
             "bound": 50.55,
-            "z": 103.674,
+            "z": 103.654,
             "side": "high"
           }
         ]
@@ -2877,14 +2859,14 @@
           "session",
           "session-forensics"
         ],
-        "maxZ": 131.026,
+        "maxZ": 131.001,
         "metrics": [
           {
             "id": "s_kd",
             "label": "🧪 Session K/D",
             "value": 142.333,
             "bound": 50.55,
-            "z": 131.026,
+            "z": 131.001,
             "side": "high"
           }
         ]
@@ -2898,14 +2880,14 @@
           "aim",
           "session-forensics"
         ],
-        "maxZ": 86.917,
+        "maxZ": 86.768,
         "metrics": [
           {
             "id": "s_maxKd",
             "label": "🧪 Best-session K/D",
             "value": 131,
             "bound": 119.976,
-            "z": 86.917,
+            "z": 86.768,
             "side": "high"
           },
           {
@@ -2913,7 +2895,7 @@
             "label": "🧪 Session K/D",
             "value": 56.8,
             "bound": 50.55,
-            "z": 51.27,
+            "z": 51.26,
             "side": "high"
           }
         ]
@@ -2935,7 +2917,7 @@
             "label": "🧪 Session K/D",
             "value": 59,
             "bound": 50.55,
-            "z": 53.321,
+            "z": 53.311,
             "side": "high"
           }
         ]
@@ -2944,17 +2926,17 @@
     "outliersUnexplained": 0
   },
   "size": {
-    "at": "2026-10-18T14:20:54.678Z",
-    "repoBytes": 135640064,
-    "dataBytes": 247013816,
-    "playersBytes": 230445101,
+    "at": "2026-10-18T14:34:46.025Z",
+    "repoBytes": 136474624,
+    "dataBytes": 247028341,
+    "playersBytes": 230445781,
     "playerFiles": 12635,
     "warnAtBytes": 734003200,
     "warning": false
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-18T14:21:33.948Z",
+    "checkedAt": "2026-10-18T14:34:56.679Z",
     "candidates": [
       "nebelhexe",
       "oshurpogchamp",
@@ -26059,7 +26041,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-18T14:21:33.956Z",
+    "checkedAt": "2026-10-18T14:34:56.691Z",
     "count": 311,
     "players": [
       {
@@ -28636,14 +28618,14 @@
     ]
   },
   "infantry": {
-    "checkedAt": "2026-10-18T14:21:35.660Z",
+    "checkedAt": "2026-10-18T14:34:58.181Z",
     "players": 12635,
     "counts": {
-      "infantry": 719,
+      "infantry": 720,
       "mixed": 566,
       "vehicle": 163,
       "low": 99,
-      "none": 11088
+      "none": 11087
     },
     "rule": {
       "INFANTRY_MAX": 0.25,
@@ -28669,7 +28651,7 @@
         "medShare": 0.556
       },
       "untagged": {
-        "count": 2537,
+        "count": 2535,
         "medApk": 0.395,
         "medShare": 0.561
       }
@@ -28691,20 +28673,20 @@
       }
     },
     "tagMin": 20,
-    "checkedAt": "2026-10-18T14:21:34.011Z",
+    "checkedAt": "2026-10-18T14:34:56.740Z",
     "coverage": {
       "players": 12616,
       "withSessions": 7918,
-      "measured": 3218,
+      "measured": 3216,
       "measuredPct": 25.5
     },
     "cuts": {
-      "kd": 2.449,
+      "kd": 2.448,
       "shareHi": 0.588,
       "shareLo": 0.532,
-      "apk": 0.63,
-      "iviLo": 333.718,
-      "iviHi": 720.264,
+      "apk": 0.631,
+      "iviLo": 333.691,
+      "iviHi": 720.181,
       "medApk": 0.404,
       "medShare": 0.559
     },
@@ -28813,7 +28795,7 @@
         ]
       },
       "finishers": {
-        "count": 149,
+        "count": 148,
         "top": [
           {
             "slug": "anniversay",
