@@ -1,0 +1,25 @@
+name: Oracle Honu probe
+
+# Manual diagnostic: does Honu's JSON API answer GitHub Actions (vs the
+# Cloudflare Worker, which gets an Anubis challenge page)? Prints status,
+# content-type and page title per endpoint as annotations.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Probe Honu API
+        run: |
+          UA="ps2-elite-kd-oracle/1.0 (+https://github.com/Dayset/ps2-elite-kd; contact: github.com/Dayset)"
+          for path in "population/1/zones" "realtime-alert" "alerts/1/49344/participants?excludeOutfits=true" "character/5428010618035323201"; do
+            out=$(curl -s -o body.txt -w "%{http_code} %{content_type}" -H "Accept: application/json" -A "$UA" "https://wt.honu.pw/api/$path")
+            title=$(grep -oiE "<title>[^<]{0,60}" body.txt | head -1)
+            echo "::notice::$path -> $out bytes=$(wc -c < body.txt) $title head=$(head -c 120 body.txt | tr -d '\n\"')"
+          done

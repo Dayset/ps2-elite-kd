@@ -24,7 +24,7 @@ import { outlierReport, liveKd } from "./outliers.js";
 import { radarEntry, RADAR_USER_AGENT, radarApiUrl } from "../../radar.mjs";
 
 const CENSUS = "https://census.daybreakgames.com";
-const UA = "ps2-oracle/1.0 (dayset.github.io/ps2-elite-kd/oracle)";
+const UA = "ps2-elite-kd-oracle/1.0 (+https://github.com/Dayset/ps2-elite-kd; contact: github.com/Dayset)";
 const FINAL = ["settled", "canceled", "unresolved"];
 const WINDOW_S = 8 * 3600; // how far back alerts are rebuilt from METAGAME rows
 
