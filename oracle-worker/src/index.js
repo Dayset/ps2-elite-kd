@@ -20,6 +20,8 @@ import {
 } from "./engine.js";
 import { binGetter, hasTree, regionMap, latticeFor, captureModel, resistanceModel } from "./models.js";
 import { runCommander, ownership } from "./commander.js";
+import { handleAuth } from "./auth.js";
+export { AuthWatcher } from "./auth-watcher.js";
 
 const CENSUS = "https://census.daybreakgames.com";
 const UA = "ps2-elite-kd-oracle/1.0 (+https://github.com/Dayset/ps2-elite-kd; contact: github.com/Dayset)";
@@ -32,7 +34,8 @@ const json = (data, status = 200, extra = {}) =>
     headers: {
       "Content-Type": "application/json",
       "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Headers": "Content-Type, X-Oracle-Key",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Oracle-Key",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
       "Cache-Control": "public, max-age=15",
       ...extra,
     },
@@ -477,6 +480,7 @@ async function handle(request, env) {
   const db = env.DB;
   const now = Math.floor(Date.now() / 1000);
   if (request.method === "OPTIONS") return json(null, 204);
+  if (url.pathname.startsWith("/auth/")) return handleAuth(request, env, url, json, now);
 
   if (url.pathname === "/" || url.pathname === "/health") {
     const last = await getMeta(db, "last_cycle");

@@ -110,3 +110,30 @@ CREATE TABLE IF NOT EXISTS radar (
   ts INTEGER NOT NULL,
   entry TEXT NOT NULL
 );
+
+-- Login challenges (logout-only verification, oracle/docs/AUTH_DESIGN.md).
+CREATE TABLE IF NOT EXISTS challenge (
+  id TEXT PRIMARY KEY,
+  cid TEXT NOT NULL,
+  name TEXT NOT NULL,
+  world INTEGER,
+  faction TEXT,
+  created INTEGER NOT NULL,
+  accepted INTEGER,
+  window_end INTEGER,
+  status TEXT NOT NULL,          -- created | accepted | passed | expired | completed
+  passed_at INTEGER,
+  ip_hash TEXT
+);
+CREATE INDEX IF NOT EXISTS challenge_ip ON challenge (ip_hash, created);
+
+-- Verified characters. token_id = the one active token (NULL after sign-out).
+CREATE TABLE IF NOT EXISTS account (
+  cid TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  world INTEGER,
+  faction TEXT,
+  token_id TEXT,
+  created INTEGER NOT NULL,
+  updated INTEGER NOT NULL
+);

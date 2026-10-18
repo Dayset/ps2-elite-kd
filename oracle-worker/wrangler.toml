@@ -23,3 +23,12 @@ enabled = true
 [[services]]
 binding = "SELF"
 service = "ps2-oracle"
+
+# Login: listens to the Census stream only while a challenge is open.
+[[durable_objects.bindings]]
+name = "AUTH"
+class_name = "AuthWatcher"
+
+[[migrations]]
+tag = "v1-auth-watcher"
+new_sqlite_classes = ["AuthWatcher"]
