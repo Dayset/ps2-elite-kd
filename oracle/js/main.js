@@ -3,7 +3,7 @@ import { S, FACS, COLOR, esc, $, stars, mins, bar, pct1, det, info, wide, syncDe
 import { get } from "./api.js";
 import { drawMap, highlightBase } from "./map.js";
 import { chart, chartHover } from "./chart.js";
-import { lockCard, lockTick } from "./lock.js";
+import { lockCard, lockTick } from "./lock.js?v=20261018-lock2";
 import { commander } from "./commander.js";
 import { reportPanel } from "./players.js";
 import { benchPanel, initResults, refreshHistory, renderHist } from "./results.js";

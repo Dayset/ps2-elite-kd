@@ -28,25 +28,37 @@ export function lockCdf(t) {
 const BLUE = "#7b8ff0", YELLOW = "#ffd166", NOW = "#ff9d5c";
 
 function lockSvg(tNow) {
-  const W = 360, H = 212, L = 34, R = 8, T = 8, B = 22;
+  // Compact 5:1 layout (360x72, about 1/3 the original height). Every element
+  // is re-placed for this ratio - nothing is scaled down from a taller
+  // drawing, so there is no squish: text stays 9px, bars keep proportions.
+  const W = 360, H = 72, L = 26, R = 6, T = 10, B = 14;
   const pw = W - L - R, ph = H - T - B;
   const yMax = Math.max(...LOCK_BINS);
   const x = (t) => L + (Math.min(t, 90) / 90) * pw;
   const y = (v) => T + (1 - v / yMax) * ph;
   const bw = pw / LOCK_BINS.length;
-  const grid = [0, 12000, 24000].map((v) =>
-    `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="#2a2e36" stroke-width="1" stroke-dasharray="2 4"/>` +
-    `<text x="${L - 5}" y="${y(v) + 4}" fill="#9a988f" font-size="10" text-anchor="end">${v / 1000}k</text>`).join("");
+  const grid = [12000, 24000].map((v) =>
+    `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="#2a2e36" stroke-width="1" stroke-dasharray="2 3"/>` +
+    `<text x="${L - 4}" y="${y(v) + 3}" fill="#9a988f" font-size="9" text-anchor="end">${v / 1000}k</text>`).join("") +
+    `<line x1="${L}" x2="${W - R}" y1="${T + ph}" y2="${T + ph}" stroke="#2a2e36" stroke-width="1"/>`;
   const bars = LOCK_BINS.map((v, i) => {
     if (!v) return "";
+    const h = Math.max(1.5, T + ph - y(v)); // near-zero bins stay visible
+    const yy = T + ph - h;
     const bx = L + i * bw + 1, w = bw - 2;
-    return `<rect x="${bx.toFixed(1)}" y="${y(v).toFixed(1)}" width="${w.toFixed(1)}" height="${(T + ph - y(v)).toFixed(1)}" fill="${i === LOCK_BINS.length - 1 ? YELLOW : BLUE}"><title>${i * 5}–${i * 5 + 5} min: ${v.toLocaleString()} alerts</title></rect>`;
+    return `<rect x="${bx.toFixed(1)}" y="${yy.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" fill="${i === LOCK_BINS.length - 1 ? YELLOW : BLUE}"><title>${i * 5}-${i * 5 + 5} min: ${v.toLocaleString()} alerts</title></rect>`;
   }).join("");
   const xt = [0, 30, 60, 90].map((m) =>
-    `<text x="${x(m)}" y="${H - 6}" fill="#9a988f" font-size="10" text-anchor="middle">${m}m</text>`).join("");
-  const median = `<line x1="${x(LOCK_MEDIAN_T)}" x2="${x(LOCK_MEDIAN_T)}" y1="${T}" y2="${T + ph}" stroke="${YELLOW}" stroke-width="1" stroke-dasharray="4 3"/><text x="${x(LOCK_MEDIAN_T) - 4}" y="${T + 10}" fill="${YELLOW}" font-size="10" text-anchor="end">median t=${LOCK_MEDIAN_T}</text>`;
+    `<text x="${x(m)}" y="${H - 4}" fill="#9a988f" font-size="9" text-anchor="middle">${m}m</text>`).join("");
+  const mx = x(LOCK_MEDIAN_T);
+  const median = `<line x1="${mx}" x2="${mx}" y1="${T}" y2="${T + ph}" stroke="${YELLOW}" stroke-width="1" stroke-dasharray="3 2"/><text x="${mx - 3}" y="${T - 1}" fill="${YELLOW}" font-size="9" text-anchor="end">median t=${LOCK_MEDIAN_T}</text>`;
   const t = Math.max(0, Math.min(90, tNow));
-  const nowMark = `<line x1="${x(t)}" x2="${x(t)}" y1="${T}" y2="${T + ph}" stroke="${NOW}" stroke-width="1.5"/><text x="${Math.min(x(t) + 4, W - R - 34)}" y="${T + 10}" fill="${NOW}" font-size="10">now t=${Math.round(tNow)}</text>`;
+  const nx = x(t);
+  // Late in the alert the "now" label would collide with the median label -
+  // the caption below already states the minute, so the line alone suffices.
+  const clash = Math.abs(nx - mx) < 44;
+  const nowMark = `<line x1="${nx}" x2="${nx}" y1="${T}" y2="${T + ph}" stroke="${NOW}" stroke-width="1.5"/>` +
+    (clash ? "" : `<text x="${Math.min(nx + 3, W - R - 30)}" y="${T - 1}" fill="${NOW}" font-size="9">now t=${Math.round(tNow)}</text>`);
   return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="When the 100% win lock landed in ${LOCK_TOTAL.toLocaleString()} past alerts">${grid}${bars}${xt}${median}${nowMark}</svg>`;
 }
 

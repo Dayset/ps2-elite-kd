@@ -24,8 +24,8 @@ describe("lockCdf (38,104 past alerts)", () => {
 describe("lockCard SVG", () => {
   const a = { start_ts: 1000000, dur: 90 };
   const html = lockCard(a, 1000000 + 65 * 60); // t = 65 min
-  it("has a viewBox and no NaN coordinates (never stretched/squished)", () => {
-    assert.match(html, /viewBox="0 0 360 212"/);
+  it("has a compact viewBox and no NaN coordinates (never stretched/squished)", () => {
+    assert.match(html, /viewBox="0 0 360 72"/); // ~1/3 the original 212px height, re-laid-out
     assert.match(html, /preserveAspectRatio="xMidYMid meet"/);
     assert.ok(!html.includes("NaN"), "no NaN in coordinates");
   });
