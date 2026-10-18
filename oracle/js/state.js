@@ -24,7 +24,8 @@ export const $ = (id) => document.getElementById(id);
 export const PHONE_MQ = matchMedia("(max-width: 600px)");
 export const wide = () => !PHONE_MQ.matches;
 // ⓘ notes (#17) are never forced open: on desktop they are small popovers.
-const forced = (cls) => wide() && !/\binfo\b/.test(cls);
+// .keep collapsibles (e.g. the Win chance Details) stay user-toggleable on desktop too.
+const forced = (cls) => wide() && !/\b(info|keep)\b/.test(cls);
 export const det = (id, summary, body, cls = "") => `<details class="det ${cls}" data-d="${id}"${forced(cls) || S.open[id] ? " open" : ""}><summary>${summary}</summary>${body}</details>`;
 export const info = (id, body, label = "") => det(id, `ⓘ${label ? " " + label : ""}`, body, "info");
 export function syncDetails(root = document) {

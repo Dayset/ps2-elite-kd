@@ -1,5 +1,5 @@
 // PS2MapOracle dashboard — split from index.html (#15). No behaviour change.
-import { S, SLUG } from "./state.js";
+import { S, SLUG } from "./state.js?v=20261018-oracestyle2";
 export const API = new URLSearchParams(location.search).get("api") || "https://ps2-oracle.dayset.workers.dev";
 
 export async function get(path) {

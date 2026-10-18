@@ -122,7 +122,8 @@ footer { color: var(--dim); font-size: var(--fs-12); margin-top: var(--s-5); }
 .det > summary::-webkit-details-marker { display: none; }
 .seg, .oddline, .tab .tl, .mini { display: none; }
 @media (min-width: 601px) {
-  .det > summary { display: none; }
+  .det:not(.keep) > summary { display: none; }
+  .det.keep > summary { display: block; }
 }
 @media (max-width: 600px) {
   .wrap { padding: var(--s-3); }
@@ -205,8 +206,6 @@ footer { color: var(--dim); font-size: var(--fs-12); margin-top: var(--s-5); }
 .cmd li[data-base] { cursor: default; border-radius: var(--r-sm); }
 .cmd li[data-base]:hover { background: #1a2230; }
 @media (min-width: 861px) {
-  /* PC width matches ps2-elite-kd: full viewport, no centered 1180px column. */
-  .wrap { max-width: none; margin: 0; padding: 1rem 1.25rem 2rem; }
   .grid { grid-template-columns: minmax(0, 1.7fr) minmax(320px, 1fr); align-items: start; }
   .grid > .map { grid-row: span 2; }
   .grid > #voteSlot, .grid > #voteHere, .grid > #lockHere { grid-column: 2; }

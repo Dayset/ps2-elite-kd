@@ -1,7 +1,7 @@
 // PS2MapOracle dashboard — split from index.html (#15). No behaviour change.
 // Sign-in dialog (logout-only verification).
-import { S, esc, $ } from "./state.js";
-import { authCall, store, TOKEN_KEY, PENDING_KEY } from "./api.js";
+import { S, esc, $ } from "./state.js?v=20261018-oracestyle2";
+import { authCall, store, TOKEN_KEY, PENDING_KEY } from "./api.js?v=20261018-oracestyle2";
 
 function renderWho() {
   dispatchEvent(new CustomEvent("oracle:auth", { detail: S.me || null }));

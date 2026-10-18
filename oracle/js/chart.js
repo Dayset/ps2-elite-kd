@@ -1,5 +1,5 @@
 // PS2MapOracle dashboard — split from index.html (#15). No behaviour change.
-import { FACS, COLOR } from "./state.js";
+import { FACS, COLOR } from "./state.js?v=20261018-oracestyle2";
 
 const SLICES = { 90: [30, 60], 45: [15, 30], 30: [10, 20] };
 export function chart(ticks, dur, width) {

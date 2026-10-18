@@ -1,14 +1,14 @@
 // PS2MapOracle dashboard — split from index.html (#15). No behaviour change.
-import { S, FACS, COLOR, esc, $, stars, mins, bar, pct1, det, info, wide, syncDetails, PHONE_MQ } from "./state.js";
-import { get } from "./api.js";
-import { drawMap, highlightBase } from "./map.js";
-import { chart, chartHover } from "./chart.js";
-import { lockCard, lockTick } from "./lock.js?v=20261018-lock2";
-import { commander } from "./commander.js";
-import { reportPanel } from "./players.js";
-import { benchPanel, initResults, refreshHistory, renderHist } from "./results.js";
-import { initAuth } from "./auth.js";
-import { enhance, onSectionExpand } from "./collapse.js";
+import { S, FACS, COLOR, esc, $, stars, mins, bar, pct1, det, info, wide, syncDetails, PHONE_MQ } from "./state.js?v=20261018-oracestyle2";
+import { get } from "./api.js?v=20261018-oracestyle2";
+import { drawMap, highlightBase } from "./map.js?v=20261018-oracestyle2";
+import { chart, chartHover } from "./chart.js?v=20261018-oracestyle2";
+import { lockCard, lockTick } from "./lock.js?v=20261018-oracestyle2";
+import { commander } from "./commander.js?v=20261018-oracestyle2";
+import { reportPanel } from "./players.js?v=20261018-oracestyle2";
+import { benchPanel, initResults, refreshHistory, renderHist } from "./results.js?v=20261018-oracestyle2";
+import { initAuth } from "./auth.js?v=20261018-oracestyle2";
+import { enhance, onSectionExpand } from "./collapse.js?v=20261018-oracestyle2";
 
 // Shareable links: keep ?alert=<key> in the address bar (other params such as ?api= stay).
 function setUrlAlert(key) {
@@ -124,7 +124,7 @@ function render2(now) {
     <div class="title"><b>${esc(a.world_name)} · ${esc(a.zone_name)}${a.kind === "meltdown" ? " Meltdown" : ""}</b><span class="badge ${a.status}">${esc(a.status.replace("_", " "))}</span><span class="note">${esc(left)} · ${a.dur}-min alert</span>${liveA ? "" : `<button type="button" class="more backlive" id="backLive">← Back to live</button>`}</div>
     <div class="grid">
       <section class="card map"><h2>Map</h2><div id="map"></div></section>
-      <section class="card win"><h2>Win chance</h2>${kindNote}${suspectNote}<div class="odds" aria-live="polite" aria-atomic="true">${oddsHtml}</div>${oddLine}${result}${popAdj}${second}${rows || popRows ? det("wdet", "Details", `<div class="rows">${rows}${popRows}</div>${popTot ? `<div class="note">Population: Honu (wt.honu.pw), ${popTot} on continent${s.pop_ns ? ` + ${s.pop_ns} NSO` : ""}.</div>` : ""}`, "wdet") : ""}${calls}</section>
+      <section class="card win"><h2>Win chance</h2>${kindNote}${suspectNote}<div class="odds" aria-live="polite" aria-atomic="true">${oddsHtml}</div>${oddLine}${result}${popAdj}${second}${rows || popRows ? det("wdet", "Details", `<div class="rows">${rows}${popRows}</div>${popTot ? `<div class="note">Population: Honu (wt.honu.pw), ${popTot} on continent${s.pop_ns ? ` + ${s.pop_ns} NSO` : ""}.</div>` : ""}`, "wdet keep") : ""}${calls}</section>
       ${a.status === "live" ? `<div id="voteHere"></div><div id="lockHere"></div>` : ""}
     </div>
     <section class="card chart" style="margin-top:14px"><h2>Win chance over time</h2><div id="chart"><div class="sk sk-chart" aria-label="Loading"></div></div></section>
@@ -183,7 +183,7 @@ function miniSync() {
 }
 addEventListener("scroll", miniSync, { passive: true });
 // Remember which collapsibles the user opened on the phone, so 30-s re-renders keep them.
-document.addEventListener("toggle", (e) => { const d = e.target; if (d.dataset && d.dataset.d && (!wide() || d.classList.contains("info"))) S.open[d.dataset.d] = d.open; }, true);
+document.addEventListener("toggle", (e) => { const d = e.target; if (d.dataset && d.dataset.d && (!wide() || d.classList.contains("info") || d.classList.contains("keep"))) S.open[d.dataset.d] = d.open; }, true);
 PHONE_MQ.addEventListener("change", () => { syncDetails(); render(Math.floor(Date.now() / 1000)); renderHist(); });
 syncDetails();
 
