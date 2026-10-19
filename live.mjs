@@ -215,9 +215,11 @@ function start() {
     // at the exact page middle because the empty spacer mirrors the time column.
     const cols = `<colgroup><col class="lv-c-time"><col class="lv-c-name">${"<col>".repeat(N)}<col class="lv-c-arrow"><col class="lv-c-name">${"<col>".repeat(N)}<col class="lv-c-spacer"></colgroup>`;
     const head = `<thead><tr><th></th><th></th>${LIVE_COLS.map((c) => `<th title="${esc(c.label + ": " + c.tip)}">${shortLab(c)}</th>`).join("")}<th></th><th></th>${LIVE_COLS.map((c) => `<th title="${esc(c.label + ": " + c.tip)}">${shortLab(c)}</th>`).join("")}<th class="lv-spacer"></th></tr></thead>`;
-    // No events yet: dummy first row so the table isn't empty while waiting.
+    // No events yet: skeleton first row — em dashes stand in for the numbers
+    // until real data arrives and fills the rows.
+    const dashCells = `<td class="lv-num">—</td>`.repeat(N);
     const body = rows.length ? rows.map(eventHtml).join("")
-      : `<tbody class="lv-ev lv-wait"><tr><td class="lv-time">⏱️ —</td><td class="lv-note" colspan="${2 * N + 3}">Live: <strong class="fac-${me.faction || ""}">${esc(me.name)}</strong> — waiting for kills and deaths…</td><td class="lv-spacer"></td></tr></tbody>`;
+      : `<tbody class="lv-ev lv-wait"><tr><td class="lv-time">⏱️ —</td><td class="lv-name-cell"><span class="lv-name fac-${me.faction || ""}">${esc(me.name)}</span></td>${dashCells}<td class="lv-arrow">❯</td><td class="lv-name-cell">—</td>${dashCells}<td class="lv-spacer"></td></tr></tbody>`;
     listEl.innerHTML = cols + head + body + (dropped ? eventHtml(dropped, -1).replace('class="lv-ev', 'class="lv-ev lv-fade') : "");
     if (dropped) setTimeout(() => { const f = listEl.querySelector(".lv-fade"); if (f) f.remove(); }, 600);
   }
