@@ -1367,9 +1367,10 @@ import {
       sfx("sparkle"); sfxChipQuietUntil = Date.now() + 400;
       addNameToField(pick.name);
       // First name in an empty field: drop the placeholder image right away
-      // instead of waiting for the quiet analysis to draw.
+      // and draw the first graph from cache instead of waiting for Analyze.
       setPlaceholderVisible(false);
-      say(`Added ${pick.name} (${Math.round(pick.adjs)} iVi). Press Analyze to load.`);
+      scheduleGraphSync({ start: true });
+      say(`Added ${pick.name} (${Math.round(pick.adjs)} iVi) — loading graph…`);
       return;
     }
     if (!listVals.length) { say("Add a name with an iVi first"); return; }
