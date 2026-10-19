@@ -135,7 +135,9 @@ export function focusPlan({ own, lattice, getBin, t, dur, mom, header, pf = () =
     return out;
   };
   const shown = (f) => base.win[f] + offset[f];
-  const then = (f, w) => (decided(w) ? Math.round(w[f]) : Math.max(0.5, Math.min(99.5, w[f] + offset[f])));
+  // "now → then" shows what the move is worth against doing nothing over the same
+  // minutes (delta added to the odds on screen); a decided position shows 0 / 100.
+  const then = (f, w, delta) => (decided(w) ? Math.round(w[f]) : Math.max(0.5, Math.min(99.5, shown(f) + delta)));
   const lostBy = (before, after, owner) => [...after].filter((fid) => !before.has(fid) && own.get(fid) === INV[owner]);
   const out = {};
   for (const f of FACS) {
@@ -198,7 +200,7 @@ export function focusPlan({ own, lattice, getBin, t, dur, mom, header, pf = () =
     }
     const fmt = (c) => {
       const now = Math.round(shown(f) * 10) / 10;
-      const after = c.kind === "hold" ? then(f, c.win) : then(f, c.win);
+      const after = then(f, c.win, c.kind === "hold" ? -c.gain : c.gain);
       return { kind: c.kind, bases: c.bases, target: c.target, p: c.p, cuts: c.cuts, reconnects: c.reconnects,
         now, then: Math.round(after * 10) / 10, text: describe(f, c) };
     };
@@ -211,7 +213,7 @@ export function focusPlan({ own, lattice, getBin, t, dur, mom, header, pf = () =
       .filter((c) => c.drop >= MIN_SWING).sort((a, b) => b.p * b.drop - a.p * a.drop)[0];
     out[f] = spoil
       ? { focus: { kind: "spoil", bases: spoil.bases, target: leader, p: spoil.p, cuts: spoil.cuts, reconnects: [], leader,
-          now: Math.round(shown(leader) * 10) / 10, then: Math.round(then(leader, spoil.win) * 10) / 10,
+          now: Math.round(shown(leader) * 10) / 10, then: Math.round(then(leader, spoil.win, -spoil.drop) * 10) / 10,
           text: `Spoiler: take ${spoil.bases[0]} from ${leader}${spoil.cuts.length ? ` — cuts off ${spoil.cuts.length} of theirs` : ""}` }, backups: [], quiet: false }
       : { focus: null, backups: [], quiet: true };
   }
