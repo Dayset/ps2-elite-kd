@@ -1675,10 +1675,17 @@ html[data-theme="light"] .chart-placeholder-overlay {
 
 .stats-table th,
 .stats-table td {
-  padding: 0.28rem 0.55rem;
+  padding: 0.28rem 0.35rem;
   border-bottom: 1px solid var(--row-border);
   text-align: left;
   white-space: nowrap;
+}
+
+/* Numbers sit under the header text, not the leading emoji
+   ("🪖 Infantry" → the number starts under "Infantry"). The public
+   table has no emoji headers, so it keeps the flush alignment. */
+.stats-table[data-stats-table="adjusted"] td:not(.stats-name) {
+  text-indent: 1.3em;
 }
 
 /* ⚡ ivi below zero shown as 0 ("Below the rating scale") */
@@ -2198,7 +2205,7 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
 .rk-pos-hint { color: var(--dim); font-size: 0.85rem; margin: 0.2rem 0 0.4rem; }
 .rk-pos-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); -webkit-overflow-scrolling: touch; }
 .rk-pos-table { border-collapse: separate; border-spacing: 0; width: max-content; min-width: 100%; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
-.rk-pos-table th, .rk-pos-table td { padding: 0.35rem 0.6rem; border-bottom: 1px solid var(--row-border); white-space: nowrap; text-align: right; background: var(--panel); }
+.rk-pos-table th, .rk-pos-table td { padding: 0.35rem 0.4rem; border-bottom: 1px solid var(--row-border); white-space: nowrap; text-align: right; background: var(--panel); }
 .rk-pos-table tbody tr:last-child th, .rk-pos-table tbody tr:last-child td { border-bottom: none; }
 .rk-pos-table thead th { color: var(--text); font-weight: 600; }
 .rk-pos-table .rk-pos-name { text-align: left; position: sticky; left: 0; z-index: 1; font-weight: 600; box-shadow: 4px 0 8px -4px var(--shadow); }
@@ -2233,7 +2240,7 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
   font-size: 0.8rem; font-variant-numeric: tabular-nums;
 }
 .ranks-table th, .ranks-table td {
-  padding: 0.28rem 0.55rem;
+  padding: 0.28rem 0.35rem;
   border-bottom: 1px solid var(--row-border);
   white-space: nowrap; text-align: right;
   background: var(--panel);
@@ -2313,7 +2320,7 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
 @keyframes rkFlash { 0%, 55% { background: var(--rk-flash); } 100% { background: var(--panel); } }
 .ranks-table tbody tr.rk-flash td { animation: rkFlash 2.4s ease-out 1; }
 .ranks-table tbody tr.rk-sep td {
-  padding: 0.18rem 0.55rem 0.12rem; text-align: left; font-size: 0.72rem; font-weight: 600;
+  padding: 0.18rem 0.35rem 0.12rem; text-align: left; font-size: 0.72rem; font-weight: 600;
   color: var(--dim); background: var(--input-bg, var(--panel)); letter-spacing: 0.01em;
   border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
 }
