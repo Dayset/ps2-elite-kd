@@ -255,6 +255,9 @@ test("commander runs per live alert, inline and through the SELF binding", { ski
   assert.deepEqual(Object.keys(cmd.factions).sort(), ["NC", "TR", "VS"]);
   assert.equal(cmd.source, "worker");
   assert.ok(cmd.fight_up && typeof cmd.fight_up.text === "string");
+  assert.ok(!cmd.focus_error, cmd.focus_error);
+  assert.deepEqual(Object.keys(cmd.focus).sort(), ["NC", "TR", "VS"], "focus plan per faction");
+  for (const f of ["VS", "NC", "TR"]) assert.ok(cmd.focus[f].quiet || cmd.focus[f].focus.text, JSON.stringify(cmd.focus[f]));
   // Through a SELF binding: the internal endpoint requires the key.
   const self = { fetch: (req) => worker.fetch(req, env) };
   const viaSelf = await fanOutCommander({ ...env, SELF: self }, rep.live_keys);

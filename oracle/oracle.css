@@ -87,6 +87,14 @@ td.num { font-variant-numeric: tabular-nums; }
 .cmd h3 { font-size: var(--fs-14); margin: var(--s-3) 0 var(--s-1); }
 .cmd ol { margin: 0; padding-left: var(--s-5); }
 .cmd li { margin: 2px 0; }
+.cmd .focus { border: 1px solid var(--border); border-radius: var(--r-sm, 6px); padding: var(--s-2, 6px) var(--s-3, 8px); margin: var(--s-2, 6px) 0; background: rgba(255,255,255,0.03); }
+.cmd .focus .fhead { line-height: 1.35; }
+.cmd .focus .fodds { margin-top: 2px; font-size: var(--fs-16, 16px); }
+.cmd .focus.hold { border-color: rgba(255, 170, 60, 0.45); }
+.cmd .focus.take, .cmd .focus.plan { border-color: rgba(90, 200, 120, 0.45); }
+.cmd .focus.quiet { opacity: 0.75; }
+.cmd ul.fback { margin: 0 0 var(--s-2, 6px); }
+.cmd details.allmoves { margin-top: var(--s-2, 6px); }
 .bench { display: flex; gap: var(--s-3); flex-wrap: wrap; font-size: var(--fs-14); }
 .bench div { background: var(--panel2); border: 1px solid var(--border); border-radius: var(--r-md); padding: var(--s-2) var(--s-3); }
 .bench b { font-variant-numeric: tabular-nums; }

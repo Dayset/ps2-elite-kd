@@ -23,6 +23,7 @@ import { runCommander, ownership, applyElimination } from "./commander.js";
 import { handleAuth } from "./auth.js";
 import { handleVote, settleStatements } from "./vote.js";
 import { cutAwareSnap } from "./cut.js";
+import { focusPlan } from "./focus.js";
 import { alertFrames, archiveAlert, nextToArchive, putBundle, validBundle } from "./archive.js";
 export { AuthWatcher } from "./auth-watcher.js";
 
@@ -473,6 +474,18 @@ export async function commanderFor(env, key, nowMs = Date.now()) {
     const w = JSON.parse(a.win);
     for (const f of FACS) if (cmd.factions[f] && w[f]) cmd.factions[f].win_pct = w[f].pct;
   }
+  // Focus: one clear move per faction, up to two captures ahead, scored the way the game scores (cuts).
+  try {
+    const terrNow = territory(zNow), terr15 = z15 ? territory(z15) : terrNow;
+    const pf = captureModel(a.zone);
+    cmd.focus = focusPlan({
+      own: ownership(zNow, r2f), lattice, getBin: binGetter(a.zone), t: Math.max(0, (now - a.start_ts) / 60), dur: a.dur,
+      mom: Object.fromEntries(FACS.map((f) => [f, terrNow[f] - terr15[f]])),
+      header: a.win ? JSON.parse(a.win) : null,
+      pf: (fid) => (pf[`${fid}|P1:pressured`] || {}).p ?? 0.33,
+      nFac: meltdown ? Object.keys(zNow).length : undefined, noCuts: meltdown,
+    });
+  } catch (e) { cmd.focus_error = String(e && e.message || e).slice(0, 200); }
   cmd.source = "worker";
   await db.prepare("UPDATE alert SET commander=?, commander_ts=? WHERE key=? AND status='live'").bind(JSON.stringify(cmd), now, key).run();
   return { key, ok: true, ms: Date.now() - t0, flips: flips.length };

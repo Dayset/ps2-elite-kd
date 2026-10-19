@@ -258,3 +258,25 @@ approved it, "shipped" means it is live in the running pipeline.
   minutes with cut bases 0.151 vs 0.137). The trees were grown on raw ownership, so
   feeding them cut-aware territory is out of distribution; the fix is regrown
   cut-aware trees, which needs the PS2Alerts backfill (#31). Live odds unchanged.
+
+## 2026-10-18 (late night): commander focus, looking ahead
+
+- **Shipped (Worker + dashboard):** `focus.js` gives each faction one clear move
+  ("🎯 All forces: Take Hurakan Western Pass, then Roothouse Distillery — cuts off 1
+  enemy base (Johari Cove) · NC 34.9% → 75.2%") with up to two backups worth at
+  least half of it, a "🛡️ Hold X — if lost: TR 85% → 0%" when the worst threat is
+  bigger, a spoiler play for a faction that can't win, and "No decisive move right
+  now" on a quiet front. Moves are judged when they land (~3 min per capture) against
+  doing nothing over the same time, with the cut rule (cut bases score for nobody),
+  the tree read smoothly across its 5 % / 5-minute steps, and the elimination rule;
+  two-capture plans when there are 8+ minutes left. The old ranked lists moved under
+  "All moves". Header odds unchanged.
+- Check on the last decisive alert (1-4-49349 at minute 86.6, NC 7.8 %): the focus
+  says NC take Hurakan Western Pass (or Roothouse Distillery, cutting Johari Cove)
+  → 100 %, and TR hold it (if lost → 0 %). NC took Roothouse a minute later and won.
+- **History pipeline:** `oracle-history.yml` fetches PS2Alerts alert history
+  (`oracle-worker/history/fetch.mjs`, ~1 req/s, resumable), then
+  `history/grow.mjs` grows standard and cut-aware trees (Node port of
+  `build_winbins_growtree.py`, identical cells on a synthetic check), checks the cut
+  rule against PS2Alerts' own score at every capture (`mapControl` carries
+  `cutoff`), and compares both trees on the newest 20 % of alerts.

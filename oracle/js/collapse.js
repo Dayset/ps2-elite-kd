@@ -31,6 +31,9 @@ const SUMMARIZERS = {
   },
   "ai-commander": (card) => {
     const scope = card.querySelector(".cf.on") || card;
+    // Focus first: the one move the commander wants (focus.js).
+    const fo = scope.querySelector(".focus:not(.quiet)");
+    if (fo) return `${(fo.querySelector(".fhead") || fo).textContent.replace(/All forces:\s*/, "").replace(/\s+/g, " ").trim()} · ${(fo.querySelector(".fodds") || {}).textContent || ""}`.trim();
     let atk = "", def = "";
     scope.querySelectorAll(".note").forEach((n) => {
       const ol = n.nextElementSibling;

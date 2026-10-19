@@ -4,11 +4,11 @@ import { get } from "./api.js?v=20261018-scrub2";
 import { drawMap, highlightBase, recolorMap } from "./map.js?v=20261018-scrub2";
 import { chart, chartHover } from "./chart.js?v=20261018-scrub2";
 import { lockCard, lockTick } from "./lock.js?v=20261018-scrub2";
-import { commander, commanderIdle } from "./commander.js?v=20261018-idle1";
+import { commander, commanderIdle } from "./commander.js?v=20261018-focus1";
 import { reportPanel } from "./players.js?v=20261018-scrub2";
 import { benchPanel, initResults, refreshHistory, renderHist } from "./results.js?v=20261018-scrub2";
 import { initAuth } from "./auth.js?v=20261018-scrub2";
-import { enhance, onSectionExpand, refreshSummary } from "./collapse.js?v=20261018-oracestyle4";
+import { enhance, onSectionExpand, refreshSummary } from "./collapse.js?v=20261018-focus1";
 
 // Shareable links: keep ?alert=<key> in the address bar (other params such as ?api= stay).
 function setUrlAlert(key) {
