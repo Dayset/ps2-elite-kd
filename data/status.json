@@ -31,7 +31,7 @@
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-19T08:16:28.451Z",
+    "checkedAt": "2026-10-19T10:04:10.754Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 14,
     "explained": 26,
@@ -1271,7 +1271,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-19T08:16:28.677Z",
+    "checkedAt": "2026-10-19T10:04:11.744Z",
     "red": 45,
     "padding": 41,
     "adjusted": 18,
@@ -1282,7 +1282,7 @@
     "forensics": 27
   },
   "sessionStats": {
-    "checkedAt": "2026-10-19T08:16:28.489Z",
+    "checkedAt": "2026-10-19T10:04:10.785Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -2988,7 +2988,7 @@
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-19T08:16:28.526Z",
+    "checkedAt": "2026-10-19T10:04:10.815Z",
     "candidates": [
       "nebelhexe",
       "oshurpogchamp",
@@ -26923,7 +26923,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-19T08:16:28.539Z",
+    "checkedAt": "2026-10-19T10:04:10.822Z",
     "count": 323,
     "players": [
       {
@@ -29597,15 +29597,17 @@
     ]
   },
   "infantry": {
-    "checkedAt": "2026-10-19T08:16:30.342Z",
+    "checkedAt": "2026-10-19T10:04:13.202Z",
     "players": 12987,
     "counts": {
-      "infantry": 907,
-      "mixed": 699,
-      "vehicle": 215,
-      "low": 151,
-      "none": 11015
+      "infantry": 7407,
+      "mixed": 2475,
+      "vehicle": 564,
+      "low": 756,
+      "none": 0
     },
+    "v2": 11202,
+    "pending": 1785,
     "rule": {
       "INFANTRY_MAX": 0.25,
       "VEHICLE_MIN": 0.6,
@@ -29615,44 +29617,44 @@
   "assistGroups": {
     "byTag": {
       "infantry": {
-        "count": 508,
-        "medApk": 0.432,
-        "medShare": 0.559
+        "count": 2291,
+        "medApk": 0.412,
+        "medShare": 0.56
       },
       "mixed": {
-        "count": 260,
-        "medApk": 0.471,
-        "medShare": 0.545
+        "count": 457,
+        "medApk": 0.407,
+        "medShare": 0.55
       },
       "vehicle": {
-        "count": 63,
-        "medApk": 0.32,
-        "medShare": 0.552
+        "count": 86,
+        "medApk": 0.215,
+        "medShare": 0.568
       },
       "untagged": {
-        "count": 2508,
-        "medApk": 0.395,
-        "medShare": 0.561
+        "count": 505,
+        "medApk": 0.387,
+        "medShare": 0.562
       }
     },
     "predict": {
       "apk": {
-        "threshold": 0.3,
+        "threshold": 0.308,
         "dir": "<=",
-        "vehicleCaught": 0.492,
-        "infantryCleared": 0.811,
-        "balanced": 0.652
+        "vehicleCaught": 0.767,
+        "infantryCleared": 0.764,
+        "balanced": 0.766
       },
       "share": {
-        "threshold": 0.532,
+        "threshold": 0.533,
         "dir": "<=",
-        "vehicleCaught": 0.397,
-        "infantryCleared": 0.754,
-        "balanced": 0.575
+        "vehicleCaught": 0.349,
+        "infantryCleared": 0.759,
+        "balanced": 0.554
       }
     },
     "tagMin": 20,
-    "checkedAt": "2026-10-19T08:16:28.626Z",
+    "checkedAt": "2026-10-19T10:04:11.687Z",
     "coverage": {
       "players": 12968,
       "withSessions": 8308,
@@ -29963,7 +29965,7 @@
   },
   "burst": {
     "rule": "KPM ≥ 5 and ≥ 15 kills in ≥ 2 min (one stored session, no 10-minute floor)",
-    "checkedAt": "2026-10-19T08:16:32.451Z",
+    "checkedAt": "2026-10-19T10:04:14.999Z",
     "sessions": 11,
     "flaggedPlayers": 3,
     "clearedPlayers": 0,
@@ -30122,6 +30124,227 @@
         "cleared": false,
         "hidden": true,
         "reason": "Confirmed cheater 2026-10-10 (t319u): throwaway account, rampage (75 kills / 2 deaths, KD 24.7); on the 🙈 hide list as a reference"
+      }
+    ]
+  },
+  "padderPenalty": {
+    "checkedAt": "2026-10-19T10:04:10.843Z",
+    "ranked": 12926,
+    "penalty": 0.1,
+    "ref": 610.6,
+    "rule": "Confirmed stat padders (data/reviewed.json \"padding\") get 💩 and −10% adjusted iVi, on top of the farm-kill removal and the * mark. A score at or below 0 gets a fixed −61 instead (10% of 610.6, the median positive iVi on 2026-10-19), so it always drops. Owner override: \"penalty\": \"cleared\" on the reviewed.json entry (or decision \"cleared\").",
+    "penalized": 21,
+    "cleared": 0,
+    "players": [
+      {
+        "slug": "supermedicxaki",
+        "name": "[ImXP] SuperMedicxAki",
+        "status": "penalized",
+        "before": 1695.4,
+        "after": 1525.8,
+        "rankBefore": 438,
+        "rankAfter": 720,
+        "fixedDrop": false
+      },
+      {
+        "slug": "rxxpvs",
+        "name": "[CBMC] RXXPVS",
+        "status": "penalized",
+        "before": 1596.4,
+        "after": 1436.8,
+        "rankBefore": 594,
+        "rankAfter": 930,
+        "fixedDrop": false
+      },
+      {
+        "slug": "whitebrother",
+        "name": "[XPEH] WHITEBROTHER",
+        "status": "penalized",
+        "before": 1454.7,
+        "after": 1309.2,
+        "rankBefore": 887,
+        "rankAfter": 1324,
+        "fixedDrop": false
+      },
+      {
+        "slug": "nirl",
+        "name": "[F00I] Nirl",
+        "status": "penalized",
+        "before": 1411.4,
+        "after": 1270.3,
+        "rankBefore": 1000,
+        "rankAfter": 1471,
+        "fixedDrop": false
+      },
+      {
+        "slug": "wzhnc",
+        "name": "[HZW] WZHNC",
+        "status": "penalized",
+        "before": 1400.6,
+        "after": 1260.5,
+        "rankBefore": 1035,
+        "rankAfter": 1512,
+        "fixedDrop": false
+      },
+      {
+        "slug": "capiscenc",
+        "name": "[CP0x] CapisCeNC",
+        "status": "penalized",
+        "before": 1292.8,
+        "after": 1163.5,
+        "rankBefore": 1389,
+        "rankAfter": 1880,
+        "fixedDrop": false
+      },
+      {
+        "slug": "unicorn0nketamin",
+        "name": "Unicorn0nKetamin",
+        "status": "penalized",
+        "before": 1288.5,
+        "after": 1159.7,
+        "rankBefore": 1406,
+        "rankAfter": 1898,
+        "fixedDrop": false
+      },
+      {
+        "slug": "mathomesa",
+        "name": "[R] MathoMesa",
+        "status": "penalized",
+        "before": 1285.1,
+        "after": 1156.6,
+        "rankBefore": 1421,
+        "rankAfter": 1916,
+        "fixedDrop": false
+      },
+      {
+        "slug": "foxycator",
+        "name": "[ACE] Foxycator",
+        "status": "penalized",
+        "before": 1251.8,
+        "after": 1126.6,
+        "rankBefore": 1550,
+        "rankAfter": 2043,
+        "fixedDrop": false
+      },
+      {
+        "slug": "xzhuzhu",
+        "name": "[B1ck] Xzhuzhu",
+        "status": "penalized",
+        "before": 1130.8,
+        "after": 1017.8,
+        "rankBefore": 2029,
+        "rankAfter": 2525,
+        "fixedDrop": false
+      },
+      {
+        "slug": "sheeprun2",
+        "name": "[SLNM] SheepRun2",
+        "status": "penalized",
+        "before": 1094.3,
+        "after": 984.9,
+        "rankBefore": 2192,
+        "rankAfter": 2685,
+        "fixedDrop": false
+      },
+      {
+        "slug": "chennuo1",
+        "name": "[F00I] chennuo1",
+        "status": "penalized",
+        "before": 1034.9,
+        "after": 931.4,
+        "rankBefore": 2447,
+        "rankAfter": 2996,
+        "fixedDrop": false
+      },
+      {
+        "slug": "tuture14",
+        "name": "[1FR] tuture14",
+        "status": "penalized",
+        "before": 1023.5,
+        "after": 921.1,
+        "rankBefore": 2507,
+        "rankAfter": 3047,
+        "fixedDrop": false
+      },
+      {
+        "slug": "boohaam",
+        "name": "[NBUS] boohaam",
+        "status": "penalized",
+        "before": 1013.6,
+        "after": 912.3,
+        "rankBefore": 2553,
+        "rankAfter": 3093,
+        "fixedDrop": false
+      },
+      {
+        "slug": "chsygmry",
+        "name": "[SLNM] chsYGMRY",
+        "status": "penalized",
+        "before": 1003.9,
+        "after": 903.5,
+        "rankBefore": 2604,
+        "rankAfter": 3137,
+        "fixedDrop": false
+      },
+      {
+        "slug": "vanusgreatestplayer",
+        "name": "[VFB] VanusGreatestPlayer",
+        "status": "penalized",
+        "before": 921.4,
+        "after": 829.3,
+        "rankBefore": 3050,
+        "rankAfter": 3548,
+        "fixedDrop": false
+      },
+      {
+        "slug": "megatake",
+        "name": "[LHEU] Megatake",
+        "status": "penalized",
+        "before": 792,
+        "after": 712.8,
+        "rankBefore": 3758,
+        "rankAfter": 4240,
+        "fixedDrop": false
+      },
+      {
+        "slug": "comandodeguerrabr",
+        "name": "[EXBR] COMANDODEGUERRABR",
+        "status": "penalized",
+        "before": 779.2,
+        "after": 701.3,
+        "rankBefore": 3824,
+        "rankAfter": 4315,
+        "fixedDrop": false
+      },
+      {
+        "slug": "guidetooblivion",
+        "name": "[C0DS] GuideToOblivion",
+        "status": "penalized",
+        "before": 747.7,
+        "after": 672.9,
+        "rankBefore": 4011,
+        "rankAfter": 4492,
+        "fixedDrop": false
+      },
+      {
+        "slug": "fbb37",
+        "name": "[MRPT] FBB37",
+        "status": "penalized",
+        "before": 450.1,
+        "after": 405.1,
+        "rankBefore": 5998,
+        "rankAfter": 6327,
+        "fixedDrop": false
+      },
+      {
+        "slug": "jinpingx",
+        "name": "[RMBT] JinpingX",
+        "status": "penalized",
+        "before": -12,
+        "after": -73.1,
+        "rankBefore": 9823,
+        "rankAfter": 10179,
+        "fixedDrop": true
       }
     ]
   }
