@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { buildLive } from "../scripts/build-live.mjs";
-import { classifyDeath, feedPush, graphNames, censusStats, cellText, LIVE_COLS, FEED_MAX } from "../live.mjs";
+import { classifyDeath, feedPush, graphNames, censusStats, cellText, fmtGap, LIVE_COLS, FEED_MAX } from "../live.mjs";
 
 const root = new URL("../", import.meta.url);
 
@@ -20,18 +20,27 @@ test("classifyDeath: kill, death, suicide, unrelated", () => {
   assert.equal(classifyDeath(d("3", "4"), "1"), null);
 });
 
-test("feedPush: repeats bump one row, 7th opponent drops the oldest", () => {
+test("feedPush: no repeats, 7th opponent drops the oldest, stopwatch freezes the old top", () => {
   let rows = [];
-  rows = feedPush(rows, { kind: "kill", opp: "a" }).rows;
-  rows = feedPush(rows, { kind: "kill", opp: "a" }).rows;
-  rows = feedPush(rows, { kind: "death", opp: "a" }).rows;
-  assert.equal(rows.length, 1);
-  assert.deepEqual([rows[0].kills, rows[0].deaths, rows[0].last], [2, 1, "death"]);
+  rows = feedPush(rows, { kind: "kill", opp: "a" }, 1000).rows;
+  assert.equal(rows[0].gap, null);
+  rows = feedPush(rows, { kind: "death", opp: "b" }, 4000).rows;
+  assert.equal(rows[1].gap, 3000);
+  assert.equal(rows[0].gap, null);
+  rows = feedPush(rows, { kind: "kill", opp: "a" }, 5000).rows;
+  assert.deepEqual(rows.map((r) => r.opp), ["a", "b"]);
+  assert.equal(rows[1].gap, 1000); // b froze when a came back
   let dropped = null;
-  for (const o of ["b", "c", "d", "e", "f", "g"]) ({ rows, dropped } = feedPush(rows, { kind: "kill", opp: o }));
+  for (const [i, o] of ["c", "d", "e", "f", "g"].entries()) ({ rows, dropped } = feedPush(rows, { kind: "kill", opp: o }, 6000 + i));
   assert.equal(rows.length, FEED_MAX);
-  assert.equal(dropped.opp, "a");
+  assert.equal(dropped.opp, "b");
   assert.equal(rows[0].opp, "g");
+});
+
+test("fmtGap", () => {
+  assert.equal(fmtGap(3400), "3s");
+  assert.equal(fmtGap(65000), "1m 05s");
+  assert.equal(fmtGap(3720000), "1h 02m");
 });
 
 test("graphNames: target first, 5 newest cached, no repeats", () => {

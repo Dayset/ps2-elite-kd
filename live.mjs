@@ -29,23 +29,27 @@ export function classifyDeath(payload, cid) {
 }
 
 /**
- * Feed state step: the opponent's row moves to the top with its counts bumped;
- * a new opponent pushes the oldest row out once there are FEED_MAX.
+ * Feed state step: newest event on top; a repeat opponent's row moves up (no
+ * repeats in the list); a new opponent pushes the oldest row out past FEED_MAX.
+ * ⏱️ stopwatch: the top row runs (gap null); when a new event lands, the old
+ * top row freezes at the time between the two events.
  * Returns { rows, dropped } (dropped = the row pushed out, or null).
  */
 export function feedPush(rows, ev, now = Date.now()) {
-  const old = rows.find((r) => r.opp === ev.opp);
-  const row = old
-    ? { ...old }
-    : { opp: ev.opp, kills: 0, deaths: 0 };
-  if (ev.kind === "kill") row.kills += 1; else row.deaths += 1;
-  row.last = ev.kind;
-  row.headshot = !!ev.headshot;
-  row.at = now;
-  const rest = rows.filter((r) => r.opp !== ev.opp);
+  const prev = rows.map((r, i) => (i === 0 && r.gap == null ? { ...r, gap: Math.max(0, now - r.at) } : r));
+  const row = { opp: ev.opp, last: ev.kind, headshot: !!ev.headshot, at: now, gap: null };
+  const rest = prev.filter((r) => r.opp !== ev.opp);
   const next = [row, ...rest];
   const dropped = next.length > FEED_MAX ? next[next.length - 1] : null;
   return { rows: next.slice(0, FEED_MAX), dropped };
+}
+
+/** ⏱️ "4s", "1m 05s", "1h 02m". */
+export function fmtGap(ms) {
+  const t = Math.max(0, Math.floor(ms / 1000));
+  if (t < 60) return `${t}s`;
+  if (t < 3600) return `${Math.floor(t / 60)}m ${String(t % 60).padStart(2, "0")}s`;
+  return `${Math.floor(t / 3600)}h ${String(Math.floor((t % 3600) / 60)).padStart(2, "0")}m`;
 }
 
 /** Graph list: target + the most recent cached opponents, newest first, no repeats. */
@@ -115,7 +119,9 @@ function start() {
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     return r.json();
   }
-  async function loadRanks() {
+  let ranksP = null;
+  function loadRanks() { return ranksP || (ranksP = loadRanksOnce()); }
+  async function loadRanksOnce() {
     try {
       const j = await getJson("data/ranks.json");
       const ci = (c) => j.cols.indexOf(c);
@@ -148,33 +154,38 @@ function start() {
   }
 
   const fmt = (v, d) => (typeof v === "number" && Number.isFinite(v) ? v.toFixed(d) : "—");
-  function line(p, isMe) {
-    const stats = isMe ? "" : p.cached
-      ? `<span class="lv-cells">${LIVE_COLS.map((c) => `<span class="lv-cell" title="${esc(c.tip)}"><span class="lv-lab">${c.label}</span><span class="lv-val">${cellText(c, p.cached[c.id])}</span></span>`).join("")}</span>`
-      : `<span class="lv-cells lv-uncached" title="Not in our cache: Census lifetime numbers only"><span class="lv-cell"><span class="lv-lab">K/D</span><span class="lv-val">${fmt(p.kd, 2)}</span></span><span class="lv-cell"><span class="lv-lab">KPM</span><span class="lv-val">${fmt(p.kpm, 2)}</span></span><span class="lv-cell lv-nocache"><span class="lv-lab">&nbsp;</span><span class="lv-val">not in cache</span></span></span>`;
-    return `<div class="lv-line${isMe ? " lv-me" : ""}"><span class="lv-name fac-${p.faction}">${esc(p.name)}</span>${stats}</div>`;
+  const N = LIVE_COLS.length;
+  const shortLab = (c) => c.label.split(" ")[0];
+  /** One player = name row (colspan) + stats row (one cell per column, aligned across events). */
+  function side(p, isMe, icon) {
+    const name = `<td class="lv-name-cell" colspan="${N}">${icon ? `<span class="lv-icon">${icon}</span>` : ""}<span class="lv-name fac-${p.faction || ""}${isMe ? " lv-me" : ""}" title="${esc(p.name)}">${esc(p.name)}</span></td>`;
+    let stats;
+    if (p.cached) stats = LIVE_COLS.map((c) => `<td class="lv-num" title="${esc(c.label + ": " + c.tip)}">${cellText(c, p.cached[c.id])}</td>`).join("");
+    else if (isMe) stats = `<td class="lv-num lv-uncached" colspan="${N}"></td>`;
+    else stats = `<td class="lv-num lv-uncached" colspan="${N}" title="Not in our cache: Census lifetime numbers">K/D ${fmt(p.kd, 2)} · KPM ${fmt(p.kpm, 2)} · not in cache</td>`;
+    return { name, stats };
   }
-  function render(fadeOpp) {
+  function eventHtml(r, i) {
+    const p = people.get(r.opp) || { name: r.opp };
+    const meP = { name: me.name, faction: me.faction, cached: me.cached };
+    const kill = r.last === "kill";
+    const hs = r.headshot ? "🎯" : "";
+    // Winner on the left: on a kill that's us (⚔️), on a death the killer (💀 next to him).
+    const left = kill ? side(meP, true, "⚔️" + hs) : side(p, false, "💀" + hs);
+    const right = kill ? side(p, false, "") : side(meP, true, "");
+    const t = r.gap == null ? `<span class="lv-timer" data-at="${r.at}">⏱️ ${fmtGap(Date.now() - r.at)}</span>` : `⏱️ ${fmtGap(r.gap)}`;
+    return `<tbody class="lv-ev lv-${r.last}${i === 0 ? " lv-new" : ""}"><tr><td class="lv-time" rowspan="2">${t}</td>${left.name}<td class="lv-arrow" rowspan="2">&gt;</td>${right.name}</tr><tr>${left.stats}${right.stats}</tr></tbody>`;
+  }
+  function render(dropped) {
     if (!listEl) return;
-    listEl.innerHTML = rows.map((r, i) => {
-      const p = people.get(r.opp) || { name: r.opp };
-      const meP = { name: me.name, faction: me.faction };
-      const top = r.last === "kill" ? line(meP, true) : line(p, false);
-      const bottom = r.last === "kill" ? line(p, false) : line(meP, true);
-      const icon = r.last === "kill" ? "⚔️" : "💀";
-      const hs = r.headshot ? `<span title="Headshot">🎯</span>` : "";
-      const count = r.kills + r.deaths > 1 ? `<span class="lv-count" title="Kills / deaths against this player">⚔️${r.kills} 💀${r.deaths}</span>` : "";
-      return `<li class="lv-row lv-${r.last}${i === 0 ? " lv-new" : ""}" data-opp="${esc(r.opp)}"><span class="lv-icon">${icon}${hs}</span><div class="lv-pair">${top}${bottom}</div>${count}</li>`;
-    }).join("");
-    if (fadeOpp) {
-      const p = people.get(fadeOpp) || { name: fadeOpp };
-      const li = document.createElement("li");
-      li.className = "lv-row lv-fade";
-      li.innerHTML = `<div class="lv-pair">${line(p, false)}</div>`;
-      listEl.appendChild(li);
-      setTimeout(() => li.remove(), 600);
-    }
+    const head = `<thead><tr><th></th>${LIVE_COLS.map((c) => `<th title="${esc(c.label + ": " + c.tip)}">${shortLab(c)}</th>`).join("")}<th></th>${LIVE_COLS.map((c) => `<th title="${esc(c.label + ": " + c.tip)}">${shortLab(c)}</th>`).join("")}</tr></thead>`;
+    listEl.innerHTML = head + rows.map(eventHtml).join("") + (dropped ? eventHtml(dropped, -1).replace('class="lv-ev', 'class="lv-ev lv-fade') : "");
+    if (dropped) setTimeout(() => { const f = listEl.querySelector(".lv-fade"); if (f) f.remove(); }, 600);
   }
+  setInterval(() => {
+    if (!listEl) return;
+    for (const el of listEl.querySelectorAll(".lv-timer[data-at]")) el.textContent = `⏱️ ${fmtGap(Date.now() - +el.dataset.at)}`;
+  }, 1000);
 
   // Graph: re-run quietly when the cached set changes; one run at a time.
   let graphWant = null, graphBusy = false;
@@ -195,7 +206,7 @@ function start() {
     const p = await person(ev.opp);
     const res = feedPush(rows, ev);
     rows = res.rows;
-    render(res.dropped && res.dropped.opp);
+    render(res.dropped);
     if (p.cached) {
       cachedOrder = [p.cached.name, ...cachedOrder.filter((n) => n !== p.cached.name)];
       const want = graphNames(target, cachedOrder);
@@ -237,7 +248,8 @@ function start() {
       const j = await getJson(`${CENSUS}character?name.first_lower=${encodeURIComponent(bare)}&c:show=character_id,name.first,faction_id`);
       const ch = (j.character_list || [])[0];
       if (!ch) { setState(`No character named <strong>${esc(target)}</strong> on Census.`, "err"); return; }
-      me = { cid: String(ch.character_id), name: ch.name.first, faction: FACTION[ch.faction_id] || "" };
+      me = { cid: String(ch.character_id), name: ch.name.first, faction: FACTION[ch.faction_id] || "", cached: null };
+      loadRanks().then(() => { me.cached = ranks.get(slugKey(me.name)) || null; });
       connect();
     } catch {
       setState("Census is not answering — reload to retry.", "err");
