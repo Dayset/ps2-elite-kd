@@ -33,7 +33,7 @@ describe("Auto zoom when the analyzed set changes (t328u)", () => {
     });
     await new Promise((r) => server.listen(0, "127.0.0.1", r));
     const port = server.address().port;
-    const proc = spawn(chrome, ["--headless=new", "--no-sandbox", "--disable-gpu", "--remote-debugging-pipe", "--user-data-dir=" + fs.mkdtempSync("/tmp/zoom-refit-"), "about:blank"], { stdio: ["ignore", "ignore", "ignore", "pipe", "pipe"] });
+    const proc = spawn(chrome, [...(process.env.HEADFUL ? [] : ["--headless=new"]), "--no-sandbox", "--disable-gpu", "--remote-debugging-pipe", "--user-data-dir=" + fs.mkdtempSync("/tmp/zoom-refit-"), "about:blank"], { stdio: ["ignore", "ignore", "ignore", "pipe", "pipe"] });
     let id = 0, buf = "";
     const pending = new Map();
     proc.stdio[4].on("data", (d) => {

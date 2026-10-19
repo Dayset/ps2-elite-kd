@@ -44,7 +44,7 @@ async function withPage(fn, { width = 390, height = 844, mobile = true } = {}) {
   });
   await new Promise((r) => server.listen(0, "127.0.0.1", r));
   const port = server.address().port;
-  const proc = spawn(chrome, ["--headless=new", "--no-sandbox", "--disable-gpu", "--remote-debugging-pipe", "--user-data-dir=" + fs.mkdtempSync("/tmp/sort-scroll-"), "about:blank"], { stdio: ["ignore", "ignore", "ignore", "pipe", "pipe"] });
+  const proc = spawn(chrome, [...(process.env.HEADFUL ? [] : ["--headless=new"]), "--no-sandbox", "--disable-gpu", "--remote-debugging-pipe", "--user-data-dir=" + fs.mkdtempSync("/tmp/sort-scroll-"), "about:blank"], { stdio: ["ignore", "ignore", "ignore", "pipe", "pipe"] });
   let id = 0, buf = "";
   const pending = new Map();
   proc.stdio[4].on("data", (d) => {
@@ -72,19 +72,7 @@ async function withPage(fn, { width = 390, height = 844, mobile = true } = {}) {
       if (r.exceptionDetails) throw new Error(r.exceptionDetails.text + " " + (r.exceptionDetails.exception?.description || ""));
       return r.result.value;
     };
-    // Page.navigate answers before the new page has parsed; an inline <script> in the body
-    // waits for styles.css, so a check sent right away could find no #analyzeBtn yet (or the
-    // old page). Wait for the new document to finish parsing (same-document jumps: no wait).
-    const nav = async (u) => {
-      await ev(`window.__oldPage = 1`).catch(() => {});
-      const r = await send("Page.navigate", { url: `http://127.0.0.1:${port}/${u}` }, sessionId);
-      if (!r.loaderId) return r;
-      for (let t = 0; t < 400; t++) {
-        if (await ev(`!window.__oldPage && document.readyState !== "loading"`).catch(() => false)) break;
-        await new Promise((q) => setTimeout(q, 25));
-      }
-      return r;
-    };
+    const nav = (u) => send("Page.navigate", { url: `http://127.0.0.1:${port}/${u}` }, sessionId);
     await fn({ ev, nav, send, sessionId });
   } finally {
     proc.kill("SIGKILL");
@@ -236,6 +224,8 @@ describe("One page: names typed in the names box tick the Rankings table (t348u 
     if (!has("shlodog") || !has("wrel")) return;
     await withPage(async ({ ev, nav }) => {
       await nav("index.html#rankings");
+      await ev(`new Promise(async (r) => { for (let t = 0; t < 200; t++) { const d = document.getElementById("ranksTableSection"); if (d) { d.open = true; return r(1); } await new Promise((q) => setTimeout(q, 50)); } r(0); })`);
+            await ev(`new Promise(async (r) => { for (let t = 0; t < 200; t++) { const b = document.querySelector("#ranksBody tr.rk-tier .rk-tier-btn"); if (b) { b.click(); return r(1); } await new Promise((q) => setTimeout(q, 50)); } r(0); })`);
       await ev(`new Promise(async (r) => { for (let t = 0; t < 400 && !document.querySelector("#ranksBody tr[data-q]"); t++) await new Promise((q) => setTimeout(q, 50)); r(1); })`);
       await ev(`(() => { document.getElementById("clearNamesBtn").click(); return 1; })()`);
       const type = (txt) => ev(`(async () => { const i = document.getElementById("namesInput"); i.focus(); for (const ch of ${JSON.stringify(txt)}) { i.value += ch; i.dispatchEvent(new InputEvent("input", { bubbles: true, data: ch, inputType: "insertText" })); } await new Promise((r) => setTimeout(r, 400)); return { value: i.value, chips: [...document.querySelectorAll("#nameTokens .name-token")].map((b) => b.textContent.trim().toLowerCase()), ticked: [...document.querySelectorAll('#ranksBody input[type="checkbox"]:checked')].map((c) => c.closest("tr").dataset.q.toLowerCase()).sort(), focused: document.activeElement === i }; })()`);

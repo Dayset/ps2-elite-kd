@@ -50,7 +50,7 @@ describe("Rankings ✅ ↔ names box (t356u)", () => {
     });
     await new Promise((r) => server.listen(0, "127.0.0.1", r));
     const port = server.address().port;
-    const proc = spawn(chrome, ["--headless=new", "--no-sandbox", "--disable-gpu", "--remote-debugging-pipe", "--user-data-dir=" + fs.mkdtempSync("/tmp/ranks-chips-"), "about:blank"], { stdio: ["ignore", "ignore", "ignore", "pipe", "pipe"] });
+    const proc = spawn(chrome, [...(process.env.HEADFUL ? [] : ["--headless=new"]), "--no-sandbox", "--disable-gpu", "--remote-debugging-pipe", "--user-data-dir=" + fs.mkdtempSync("/tmp/ranks-chips-"), "about:blank"], { stdio: ["ignore", "ignore", "ignore", "pipe", "pipe"] });
     let id = 0, buf = "";
     const pending = new Map();
     proc.stdio[4].on("data", (d) => {
@@ -80,13 +80,22 @@ describe("Rankings ✅ ↔ names box (t356u)", () => {
       // Use the first rows the table actually shows (top of the default sort): the
       // list renders progressively, so rows deep in ranks.json's file order may not
       // be in the table yet when the test ticks them (the old test picked those).
+      // t358u: the table is folded by default — open it so rows render.
+      // t371u: the default ⚔️ iVi sort groups rows into collapsed tiers — open the
+      // first tier so its data rows appear.
       await send("Page.navigate", { url: `http://127.0.0.1:${port}/index.html#rankings` }, sessionId);
+      await ev(`new Promise(async (r) => { for (let t = 0; t < 200; t++) { const d = document.getElementById("ranksTableSection"); if (d) { d.open = true; return r(1); } await new Promise((q) => setTimeout(q, 50)); } r(0); })`);
+      await ev(`new Promise(async (r) => { for (let t = 0; t < 200; t++) { const b = document.querySelector("#ranksBody tr.rk-tier .rk-tier-btn"); if (b) { b.click(); return r(1); } await new Promise((q) => setTimeout(q, 50)); } r(0); })`);
       const [q0, q1, q2] = await ev(`new Promise(async (r) => { for (let t = 0; t < 400 && document.querySelectorAll("#ranksBody tr[data-q]").length < 3; t++) await new Promise((q) => setTimeout(q, 50)); r([...document.querySelectorAll("#ranksBody tr[data-q]")].slice(0, 3).map((t) => t.dataset.q)); })`);
       assert.equal(new Set([q0, q1, q2]).size, 3);
       await send("Page.navigate", { url: `http://127.0.0.1:${port}/index.html?names=${encodeURIComponent(q0)},${encodeURIComponent(q1)}#rankings` }, sessionId);
+      await ev(`new Promise(async (r) => { for (let t = 0; t < 200; t++) { const d = document.getElementById("ranksTableSection"); if (d) { d.open = true; return r(1); } await new Promise((q) => setTimeout(q, 50)); } r(0); })`);
+      await ev(`new Promise(async (r) => { for (let t = 0; t < 200; t++) { const b = document.querySelector("#ranksBody tr.rk-tier .rk-tier-btn"); if (b) { b.click(); return r(1); } await new Promise((q) => setTimeout(q, 50)); } r(0); })`);
       await ev(`new Promise(async (r) => { for (let t = 0; t < 400 && !(document.querySelector("#ranksBody tr[data-q]") && document.querySelectorAll("#statsPanel .stats-name").length >= 2); t++) await new Promise((q) => setTimeout(q, 50)); r(1); })`);
+      // Wait for the chips to render from ?names= (they come from the same URL).
+      await ev(`new Promise(async (r) => { for (let t = 0; t < 200 && document.querySelectorAll("#nameTokens .name-token").length < 2; t++) await new Promise((q) => setTimeout(q, 50)); r(1); })`);
       const settle = () => new Promise((r) => setTimeout(r, 900));
-      const state = () => ev(`({ chips: [...document.querySelectorAll("#nameTokens .name-token")].map((b) => b.textContent.trim().toLowerCase()), names: (new URL(location.href).searchParams.get("names") || "").toLowerCase(), stats: document.querySelectorAll("#statsPanel .stats-name").length, checked: [...document.querySelectorAll('#ranksBody input[type="checkbox"]:checked')].map((c) => c.closest("tr").dataset.q) })`);
+      const state = () => ev(`({ chips: [...document.querySelectorAll("#nameTokens .name-token")].map((b) => { const c = b.cloneNode(true); c.querySelector(".name-token-num")?.remove(); return c.textContent.trim().toLowerCase(); }), names: (new URL(location.href).searchParams.get("names") || "").toLowerCase(), stats: document.querySelectorAll("#statsPanel .stats-name").length, checked: [...document.querySelectorAll('#ranksBody input[type="checkbox"]:checked')].map((c) => c.closest("tr").dataset.q) })`);
       const lc = (a) => a.map((x) => String(x).toLowerCase());
       let s = await state();
       assert.deepEqual(s.chips, lc([q0, q1]), "?names= → chips");

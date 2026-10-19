@@ -23,7 +23,10 @@ async function withPage(fn, { width = 1280, height = 900, mobile = false } = {})
   });
   await new Promise((r) => server.listen(0, "127.0.0.1", r));
   const port = server.address().port;
-  const proc = spawn(chrome, ["--headless=new", "--no-sandbox", "--disable-gpu", "--remote-debugging-pipe", "--user-data-dir=" + fs.mkdtempSync("/tmp/bg-toggle-"), "about:blank"], { stdio: ["ignore", "ignore", "ignore", "pipe", "pipe"] });
+  // Mobile emulation needs headless (no hover); desktop needs a display for
+  // (hover: hover) — use HEADFUL=1 with xvfb-run. Dayset 2026-10-19.
+  const headless = mobile || !process.env.HEADFUL;
+  const proc = spawn(chrome, [...(headless ? ["--headless=new"] : []), "--no-sandbox", "--disable-gpu", "--remote-debugging-pipe", "--user-data-dir=" + fs.mkdtempSync("/tmp/bg-toggle-"), "about:blank"], { stdio: ["ignore", "ignore", "ignore", "pipe", "pipe"] });
   let id = 0, buf = "";
   const pending = new Map();
   proc.stdio[4].on("data", (d) => {
