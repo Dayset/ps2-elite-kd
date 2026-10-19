@@ -127,9 +127,9 @@ ps2-elite-kd/
   .github/workflows/refresh-cache.yml
 ```
 
-## 🫡 Infantry split
+## 🪖 Infantry split
 
 - `player.infantry` (infantry.mjs, v2): kills split by Census lifetime weapon stats into on-foot, vehicle seat/turret and other. Vehicle kills are counted once per vehicle (the item 0 total row, or the seat-weapon sum if larger).
 - MAX arm weapons (static `MAX_ITEMS`, Census categories 9/10/20–23) count as infantry; `maxKills` / `maxShare` keep them visible.
 - Normal refreshes store the full summary (2 calls). Older files are filled with `node scripts/backfill-infantry.mjs` (one kills-only call per 10 players, `part: "kills"`: deaths / time stay null until the next refresh).
-- `ranks.json` carries `inf` / `infMax` / `infVeh` (% of kills, null below 100 kills) for the public 🫡 Infantry column. Tags (infantry / mixed / vehicle) stay build-log only; no automatic tag is shown publicly.
+- `ranks.json` carries `inf` / `infMax` / `infVeh` (% of kills, null below 100 kills) for the public 🪖 Infantry column, plus `vcut` (vehicle + MAX cut % already applied to `adjs`; uncapped, share − 10% per part, no visible mark). Tags (infantry / mixed / vehicle) stay build-log only; no automatic tag is shown publicly.

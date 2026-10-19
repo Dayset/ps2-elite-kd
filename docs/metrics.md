@@ -14,6 +14,12 @@ The opposition-weighted iVi score, adjusted for your own kill speed (`adjs`).
 - Above 1.4, add `+300 × log2(own / 1.4)^1.5` points.
 - Below 0.8, a positive 🎯🎈 ivi is multiplied by `max((own / 0.8)^0.415, 0.5)`. That means it's cut by at most half and never flipped negative. A score already at or below zero gets no extra penalty.
 - Values below zero display as **0** ("Below the rating scale") and sort to the bottom.
+- 💩 **Confirmed stat padders** (owner decision in `data/reviewed.json`) lose **10%** (a score at or below 0 gets a fixed drop instead, never a sign flip). 💩 shows after the name; the hover says why and to contact the site owner to clarify.
+- 🚜 **Vehicle + MAX cuts** (after the 💩 penalty; iVi measures infantry skill only): vehicle cut = `max(0, vehicle% − 10%)`, MAX cut = `max(0, MAX% − 10%)` of lifetime kills, added up with **no cap** (96% vehicle → −86%; 45% vehicle + 40% MAX → −65%). Pure infantry is untouched; no infantry data (under 100 kills) = no cut. No visible mark: the iVi value's hover lists each part. Owner exemption: `vehicleCutCleared` in `data/reviewed.json`.
+
+### 🪖 Infantry
+
+Share of lifetime kills made with infantry weapons (Census per-weapon stats). MAX weapon kills **count as infantry** in this %, but the MAX share is cut separately from ⚔️ iVi (see above). Hover shows the MAX and vehicle shares and the percentile.
 
 ### 🛡️ Resist
 

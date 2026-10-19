@@ -63,7 +63,7 @@
     <nav class="st-toc" aria-label="On this page">
       <div class="st-toc-title">On this page</div>
       <div class="st-toc-group"><a href="#picture">The picture behind most columns</a> <span class="sep">·</span> <a href="#why-trackers">Why trackers don’t have them</a></div>
-      <div class="st-toc-group"><a class="st-toc-sec" href="#adjusted">✨ Adjusted</a> <span class="sep">·</span> <a href="#ivi">iVi</a> <span class="sep">·</span> <a href="#activity">Activity</a> <span class="sep">·</span> <a href="#brave">Brave</a> <span class="sep">·</span> <a href="#resist">Resist</a> <span class="sep">·</span> <a href="#const">Const</a> <span class="sep">·</span> <a href="#matchup-kd">K/D</a> <span class="sep">·</span> <a href="#infantry">Infantry</a> <span class="sep">·</span> <a href="#vehicle-cut">‡ cuts</a></div>
+      <div class="st-toc-group"><a class="st-toc-sec" href="#adjusted">✨ Adjusted</a> <span class="sep">·</span> <a href="#ivi">iVi</a> <span class="sep">·</span> <a href="#activity">Activity</a> <span class="sep">·</span> <a href="#brave">Brave</a> <span class="sep">·</span> <a href="#resist">Resist</a> <span class="sep">·</span> <a href="#const">Const</a> <span class="sep">·</span> <a href="#matchup-kd">K/D</a> <span class="sep">·</span> <a href="#infantry">Infantry</a> <span class="sep">·</span> <a href="#vehicle-cut">Vehicle + MAX cuts</a> <span class="sep">·</span> <a href="#padder">💩 Padders</a></div>
       <div class="st-toc-group"><a class="st-toc-sec" href="#public">📊 Public</a> <span class="sep">·</span> <a href="#pub-kd">KD</a> <span class="sep">·</span> <a href="#pub-kpm">KPM</a> <span class="sep">·</span> <a href="#pub-own-kpm">own KPM</a> <span class="sep">·</span> <a href="#pub-acc">Acc %</a> <span class="sep">·</span> <a href="#pub-hsr">HSR %</a> <span class="sep">·</span> <a href="#pub-ivi">IvI</a></div>
       <div class="st-toc-group"><a href="#worked-example">Worked example: YuigahamaYui</a> <span class="sep">·</span> <a href="#debug">Debug-only columns</a></div>
     </nav>
@@ -85,7 +85,7 @@
 
     <div class="st-card">
       <h3 id="ivi">⚔️ iVi — your overall rating</h3>
-      <p>In simple words: how good you are, once the strength of your opponents is taken into account. It asks: against the ~200 players you fight most, how do you do — and how strong are they? Wins against strong opponents count more than wins against weak ones. Then it adjusts for pace: fast killing adds a bonus, slow safe play gets a cut.</p>
+      <p>In simple words: how good you are, once the strength of your opponents is taken into account. It asks: against the ~200 players you fight most, how do you do — and how strong are they? Wins against strong opponents count more than wins against weak ones. Then it adjusts for pace: fast killing adds a bonus, slow safe play gets a cut. iVi measures infantry skill only, so vehicle and MAX kills above 10% of your kills are taken off (<a href="#vehicle-cut">see below</a>), and confirmed stat padders lose 10% (<a href="#padder">💩</a>).</p>
       <p><span class="st-dim">High means:</span> you beat strong players at a good pace. <span class="st-dim">Low means:</span> your wins come mostly against weak opposition, or at a slow pace. Values below zero show as 0.</p>
       <h4>How it was invented</h4>
       <p>The problem was fight selection. Lifetime K/D treats every kill the same, so a player who only fights weak opposition looks like a god: Bhorn showed 3.96 lifetime K/D against a 1.15 K/D once only real opponents were counted. The rating had to be rebuilt from matchups only — the ~200 most-fought opponents, weighted by their strength. That gave 🎯🎈 ivi. Then came the pace problem: a player can hold a 9.77 K/D at 0.78 KPM simply by barely fighting, so in October 2026 the kill-speed adjustment was added — neutral between 0.8 and 1.4 own KPM, a bonus above it, a cut below it. One number that answers “how good are you, really?” instead of “how good is your opposition selection?”</p>
@@ -147,16 +147,23 @@
     <div class="st-card">
       <h3 id="infantry">🪖 Infantry — share of your kills made on foot</h3>
       <p>In simple words: the percentage of your lifetime kills made with infantry weapons. Kills from a vehicle seat (driver or gunner), road kills and turrets (MANA, AA, Glaive) don’t count. MAX suit weapons <strong>do</strong> count as infantry: a MAX is an infantry class and fights on foot. Hover shows how much of your kills were MAX kills, the vehicle share and your percentile.</p>
+      <p>Note: in this % MAX kills count as infantry kills, but for ⚔️ iVi the MAX share is cut separately (<a href="#vehicle-cut">see below</a>).</p>
       <p><span class="st-dim">High means:</span> you play infantry. <span class="st-dim">Low means:</span> most of your kills come from vehicles or aircraft.</p>
       <h4>Where it comes from</h4>
-      <p>Census lifetime weapon stats (kills per weapon and seat), one call per player. The column itself is a measurement; it also feeds the ‡ cut below. Shown from 100 kills; “—” until your file is measured.</p>
+      <p>Census lifetime weapon stats (kills per weapon and seat), one call per player. The column itself is a measurement; it also feeds the vehicle + MAX cuts below. Shown from 100 kills; “—” until your file is measured.</p>
     </div>
 
     <div class="st-card">
-      <h3 id="vehicle-cut">‡ Vehicle + MAX cuts on ⚔️ iVi</h3>
+      <h3 id="vehicle-cut">🚜 Vehicle + MAX cuts on ⚔️ iVi</h3>
       <p>In simple words: ⚔️ iVi ranks plain infantry skill, so kills you made from a vehicle or turret, and kills you made in a MAX suit, lower it. There are two separate cuts that add up, with no cap. Each one looks at its own share of your lifetime kills: the first 10% are free, every percent above that costs one percent of iVi.</p>
-      <p>Example: 45% vehicle kills = −35%, 40% MAX kills = −30%, so −65% iVi in total; 96% vehicle kills = −86%. A cut score shows a small ‡ after the iVi value; hover it to see each part. No infantry data yet (or under 100 kills) = no cut. It stacks with the 💩 confirmed-padder penalty.</p>
+      <p>Example: 45% vehicle kills = −35%, 40% MAX kills = −30%, so −65% iVi in total; 96% vehicle kills = −86%. Pure infantry (10% or less of each) is untouched. There is no mark next to the name or the number: hover the iVi value to see each part. No infantry data yet (or under 100 kills) = no cut. See your shares in the <a href="#infantry">🪖 Infantry</a> column. It stacks with the 💩 confirmed-padder penalty.</p>
       <p><span class="st-dim">Why:</span> farming infantry from a tank, an aircraft or a MAX suit is easier than doing it on foot, and iVi is meant to compare infantry. Vehicle and MAX play are fine; they just aren’t what this board ranks. The site owner can exempt a player (both parts).</p>
+    </div>
+
+    <div class="st-card">
+      <h3 id="padder">💩 Confirmed stat padders: −10% on ⚔️ iVi</h3>
+      <p>In simple words: players the site owner has checked and confirmed as stat padding (for example farming kills on their own or friendly alt accounts) get 💩 after their name and lose 10% of their adjusted iVi. This comes on top of the kills on farm accounts, which are already left out. It stacks with the vehicle + MAX cuts above.</p>
+      <p>Hover the 💩 to see the reason. Think it is wrong? Contact the site owner to clarify; a mistaken mark is removed by hand.</p>
     </div>
 
     <div class="st-sec-head">
