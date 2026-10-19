@@ -70,7 +70,7 @@ async function listWorld(w, page) {
 }
 
 async function probe() {
-  const p1 = await listWorld(10, 0), p2 = await listWorld(10, 1);
+  const p1 = await listWorld(10, 1), p2 = await listWorld(10, 2);   // pages are 1-based
   notice("probe list", `page0 ${p1.length} rows, page1 ${p2.length} rows, same first id: ${p1[0] && p2[0] ? p1[0].instanceId === p2[0].instanceId : "n/a"}; first ${p1[0] && p1[0].timeStarted}, last ${p1.at(-1) && p1.at(-1).timeStarted}, page1 last ${p2.at(-1) && p2.at(-1).timeStarted}`);
   const a = p1.find((x) => x.state === 2 && ZONES.has(x.zone)) || p1[0];
   if (!a) return;
@@ -101,12 +101,12 @@ async function main() {
   let added = 0, skipped = 0, failed = 0;
   const todo = [];
   for (const w of WORLDS) {
-    for (let page = 0; page < 100; page++) {
+    for (let page = 1; page <= 100; page++) {
       if (Date.now() - t0 > budgetMs * 0.1 && todo.length > 5000) break;
       const rows = await listWorld(w, page);
       const fresh = rows.filter((a) => a.state === 2 && ZONES.has(a.zone) && !have.has(a.instanceId));
       todo.push(...fresh);
-      if (rows.length < 1000 || (page > 0 && rows.length && lists[`${w}`] && rows.every((a) => have.has(a.instanceId)))) break;
+      if (rows.length < 1000 || (page > 1 && rows.length && lists[`${w}`] && rows.every((a) => have.has(a.instanceId)))) break;
     }
     lists[`${w}`] = Date.now();
   }
