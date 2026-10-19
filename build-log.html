@@ -492,15 +492,16 @@
       var MB = 1024 * 1024;
       function mb(b) { return b == null ? "?" : b >= 1024 * MB ? (b / 1024 / MB).toFixed(2) + " GB" : (b / MB).toFixed(1) + " MB"; }
       /** Size line: repo (GitHub, all history packed) + data/ now, with the 700 MB backup/move warning (status.size, status.sizeWarning). */
-      // 🪖 Infantry / vehicle split (infantry.mjs): counts only, collected silently, not public yet.
+      // 🪖 Infantry / vehicle split (infantry.mjs). The share itself is public as the 🫡 Infantry column; tags stay here (no public tag).
       function renderInfantry(status) {
         var b = status && status.infantry;
         if (!b || !b.counts) { $("infLine").innerHTML = "🪖 Infantry split: not built yet (next run)."; return; }
         var c = b.counts, r = b.rule || {};
         var have = c.infantry + c.mixed + c.vehicle + c.low;
-        $("infLine").innerHTML = "<div>🪖 Infantry split (collected quietly, backfills with weekly refreshes): " + esc(have) + " of " + esc(b.players) + " players measured · " +
+        var pend = b.pending != null ? " · ⏳ " + esc(b.pending) + " pending backfill" : "";
+        $("infLine").innerHTML = "<div>🪖 Infantry split (v2, public as 🫡 Infantry; MAX kills count as infantry, vehicle kills no longer doubled): " + esc(b.v2 != null ? b.v2 : have) + " of " + esc(b.players) + " players filled" + pend + " · " +
           "🪖 infantry <strong>" + esc(c.infantry) + "</strong> · 🔀 mixed <strong>" + esc(c.mixed) + "</strong> · 🚜 vehicle <strong>" + esc(c.vehicle) + "</strong> · too few kills " + esc(c.low) + "</div>" +
-          '<div class="st-dim">Rule: share of kills from a vehicle seat or turret &lt; ' + esc(Math.round((r.INFANTRY_MAX || 0.25) * 100)) + "% = infantry, ≥ " + esc(Math.round((r.VEHICLE_MIN || 0.6) * 100)) + "% = vehicle, otherwise mixed; under " + esc(r.MIN_KILLS || 100) + " kills = not judged.</div>";
+          '<div class="st-dim">Rule: share of kills from a vehicle seat or turret &lt; ' + esc(Math.round((r.INFANTRY_MAX || 0.25) * 100)) + "% = infantry, ≥ " + esc(Math.round((r.VEHICLE_MIN || 0.6) * 100)) + "% = vehicle, otherwise mixed; under " + esc(r.MIN_KILLS || 100) + " kills = not judged. Tags are build-log only (not shown publicly); no automatic tag uses them yet.</div>";
       }
 
       function renderSize(status) {

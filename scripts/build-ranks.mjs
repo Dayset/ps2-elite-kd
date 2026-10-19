@@ -23,7 +23,7 @@ import { classifyBins } from "../bins.mjs";
 import { markNote, statMark, confirmedPadderSlugs, isFarmListed, isNotFarm, farmListEntry } from "../padding.mjs";
 import { sprout, sampleEvents, farmAccount } from "../sprouts.mjs";
 import { findOutliers, guardStatus, KNOWN_EXTREMES } from "../outlier-guard.mjs";
-import { infantryTagCounts, INFANTRY_TAG } from "../infantry.mjs";
+import { infantryTagCounts, INFANTRY_TAG, infantryShares } from "../infantry.mjs";
 import { forensicsSummary, honuSessionUrl } from "../session-forensics.mjs";
 import { hiddenList, isConfirmedCheater } from "../hidden.mjs";
 import { cleanTimes } from "../flairs.mjs";
@@ -234,10 +234,13 @@ export function buildRanksWithGuard(dataDir) {
       const fa = sp.sprout && !isNotFarm({ name: np.display, cid: np.cid }) ? farmAccount(np.rawRows || np.rows, m.ownKpm) : null;
       // 🤝 Assists per kill (t382u: public now) — null below SESSION_MIN.MIN_KILLS session kills.
       if (!info || !info.hidden) row.push(sm && sm.measured && Number.isFinite(sm.values.s_apk) ? Math.round(sm.values.s_apk * 1000) / 1000 : null);
-      players.push({ infTag: (pl.infantry && pl.infantry.tag) || null, slug: row[2], name: row[0], cid: String(np.cid || ""), farmAcct: !!(fa && fa.farm), flagged: f.flagged || sf.flagged || fx.flagged, patterns, values, session: sm, sessionFlag: sf, forensics: fx, row, hidden: !!(info && info.hidden), confirmedCheater: !!(info && info.confirmedCheater) });
+      // 🫡 Infantry: % of lifetime weapon-stat kills on foot (MAX counted as infantry) + MAX / vehicle % for hover; null until filled.
+      if (!info || !info.hidden) { const sh = infantryShares(pl.infantry); row.push(sh ? sh.inf : null, sh ? sh.max : null, sh ? sh.veh : null); }
+      players.push({ infTag: (pl.infantry && pl.infantry.v >= 2 && pl.infantry.tag) || null, slug: row[2], name: row[0], cid: String(np.cid || ""), farmAcct: !!(fa && fa.farm), flagged: f.flagged || sf.flagged || fx.flagged, patterns, values, session: sm, sessionFlag: sf, forensics: fx, row, hidden: !!(info && info.hidden), confirmedCheater: !!(info && info.confirmedCheater) });
     },
   });
   ranks.cols.push("apk"); // 🤝 trailing column (see onPlayer); not part of RANK_COLS / rankRow
+  ranks.cols.push("inf", "infMax", "infVeh"); // 🫡 trailing columns (see onPlayer), % of lifetime kills
   const found = findOutliers(players, [...METRIC_COLS, ...SESSION_METRIC_IDS]);
   found.items.push(...forensicsGuardItems(players));
   const guard = guardStatus(found);
@@ -479,7 +482,9 @@ export function infantryStatus(dataDir) {
       list.push({ infantry: (p && p.player && p.player.infantry) || null });
     } catch {}
   }
-  return { checkedAt: new Date().toISOString(), players: list.length, counts: infantryTagCounts(list), rule: INFANTRY_TAG };
+  // 🫡 v2 summaries (infShare / MAX split, vehicle kills no longer doubled) vs older v1 / none = pending backfill.
+  const v2 = list.filter((p) => p.infantry && p.infantry.v >= 2);
+  return { checkedAt: new Date().toISOString(), players: list.length, counts: infantryTagCounts(v2), v2: v2.length, pending: list.length - v2.length, rule: INFANTRY_TAG };
 }
 
 const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
