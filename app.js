@@ -3783,6 +3783,8 @@ import {
 
     // Same names already graphed (all loaded, none failed) + fresh unchecked
     // → hint, no re-run. Failed / not-yet-loaded chips always run again.
+    // Quiet background syncs (live feed) never trigger the hint: the graph
+    // already shows this set, so there is nothing to say.
     if (
       shouldShowGraphReady({
         sameSet,
@@ -3792,6 +3794,7 @@ import {
         isFailed: (n) => !!getNameFailure(n),
       })
     ) {
+      if (quiet) return;
       collapseSharedCache();
       // Re-render chips so force-collapsed state sticks if a render follows
       renderCacheChips();
