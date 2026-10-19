@@ -47,7 +47,10 @@ export function burstStatus(dataDir) {
     players.push({ slug, name: pl.display || e.name || slug, cid: pl.cid, assists: pl.assists, xp: readXp(dataDir, slug),
       hidden: !!hidden.match({ slug, name: pl.display || e.name, cid: pl.cid }) });
   }
-  return burstSessions(players);
+  // Owner decisions: outlier-guard KNOWN_EXTREMES + reviewed.json "burst" entries (reviewed.json wins).
+  let rv = null;
+  try { rv = JSON.parse(fs.readFileSync(path.join(dataDir, "reviewed.json"), "utf8")); } catch { /* none */ }
+  return burstSessions(players, { reviewed: { ...KNOWN_EXTREMES, ...burstReviewed(rv) } });
 }
 
 export function readXp(dataDir, slug) {
@@ -64,7 +67,7 @@ export function readXp(dataDir, slug) {
 export { METRIC_COLS, RANK_COLS, bareName, rankRow } from "../rank-row.mjs";
 import { METRIC_COLS, RANK_COLS, rankRow, bareName } from "../rank-row.mjs";
 import { assistGroups } from "../assist-groups.mjs";
-import { burstSessions } from "../burst-sessions.mjs";
+import { burstSessions, burstReviewed } from "../burst-sessions.mjs";
 
 /** data/reviewed.json → Set of slugs confirmed as stat padders (decision "padding"; missing file = none). */
 export function readConfirmedPadders(dataDir) {

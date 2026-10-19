@@ -36,13 +36,27 @@ export function isBurst(s, r = BURST_RULE) {
  * status: "review" | "cleared" (KNOWN_EXTREMES legit/explained) | "cheater" (KNOWN_EXTREMES
  * says confirmed cheater) ; `hidden` = already on the 🙈 hide list.
  */
+/**
+ * Owner burst decisions from data/reviewed.json ("burst": "cleared" | "cheater", note, at)
+ * → slug → reason text in the KNOWN_EXTREMES style ("Confirmed cheater …" = status cheater).
+ */
+export function burstReviewed(reviewedJson) {
+  const out = {};
+  for (const [slug, e] of Object.entries((reviewedJson && reviewedJson.players) || {})) {
+    if (!e || (e.burst !== "cleared" && e.burst !== "cheater")) continue;
+    const when = e.at ? " " + e.at : "";
+    out[slug] = (e.burst === "cheater" ? "Confirmed cheater" + when + " (burst review)" : "Owner cleared" + when + " (burst review)") + (e.note ? ": " + e.note : "");
+  }
+  return out;
+}
+
 export function burstSessions(players, { rule = BURST_RULE, reviewed = KNOWN_EXTREMES } = {}) {
   const items = [];
   for (const p of players || []) {
     for (const [id, s] of Object.entries(storedSessions(p.assists, p.xp))) {
       if (!isBurst(s, rule)) continue;
       const why = reviewed[p.slug] || null;
-      const status = !why ? "review" : /cheater/i.test(why) ? "cheater" : "cleared";
+      const status = !why ? "review" : /^\s*confirmed cheater/i.test(why) ? "cheater" : "cleared"; // "not a cheater" / "rampage cheaters" in a note = cleared
       items.push({
         slug: p.slug, name: p.name || p.slug, cid: p.cid ? String(p.cid) : "", session: id,
         kills: s.kills, minutes: Math.round(s.seconds / 6) / 10, kpm: Math.round((s.kills / (s.seconds / 60)) * 100) / 100,

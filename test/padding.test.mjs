@@ -131,7 +131,8 @@ describe("stat padding (farm victims)", () => {
   it("reviewed.json scaffold: valid shape, decisions read back", () => {
     const rv = JSON.parse(fs.readFileSync(path.join(root, "data", "reviewed.json"), "utf8"));
     assert.equal(typeof rv.players, "object");
-    for (const [slug, e] of Object.entries(rv.players)) assert.ok(REVIEW_DECISIONS.includes(e.decision), slug);
+    // Every entry is a review decision, or a 💥 burst-only decision ("burst": "cleared" | "cheater", no "decision").
+    for (const [slug, e] of Object.entries(rv.players)) assert.ok(REVIEW_DECISIONS.includes(e.decision) || (e.decision === undefined && ["cleared", "cheater"].includes(e.burst)), slug);
     const fake = { players: { a: { decision: "fluke", note: "one-off", at: "2026-10-09" }, b: { decision: "nope" } } };
     assert.deepEqual(reviewDecision(fake, "a"), { decision: "fluke", note: "one-off", at: "2026-10-09" });
     assert.equal(reviewDecision(fake, "b"), null);

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { burstSessions, isBurst, storedSessions } from "../burst-sessions.mjs";
+import { burstSessions, burstReviewed, isBurst, storedSessions } from "../burst-sessions.mjs";
 
 test("burst rule: KPM >= 5, kills >= 15, >= 2 min, no 10-minute floor", () => {
   assert.equal(isBurst({ kills: 15, seconds: 180 }), true); // 3 min, 5 KPM
@@ -12,6 +12,15 @@ test("burst rule: KPM >= 5, kills >= 15, >= 2 min, no 10-minute floor", () => {
 test("stored sessions merge assists tuples and XP detail", () => {
   const s = storedSessions({ sessions: { 1: [3, 20, 200, 1000] } }, { sessions: { 2: { s: 2000, sec: 300, k: 30 } } });
   assert.deepEqual(s, { 1: { kills: 20, seconds: 200, startMs: 1000 }, 2: { kills: 30, seconds: 300, startMs: 2000 } });
+});
+
+test("reviewed.json burst decisions: cleared / cheater, other entries ignored", () => {
+  const m = burstReviewed({ players: { a: { burst: "cleared", note: "lucky orbital", at: "2026-10-19" }, b: { burst: "cheater", note: "rampage", at: "2026-10-19" }, c: { decision: "padding" } } });
+  assert.deepEqual(Object.keys(m), ["a", "b"]);
+  const p = (slug) => ({ slug, name: slug, cid: "1", assists: { sessions: { [slug]: [0, 30, 240, 1] } } });
+  const r = burstSessions([p("a"), p("b")], { reviewed: m });
+  assert.deepEqual(r.items.map((i) => [i.slug, i.status]), [["b", "cheater"], ["a", "cleared"]]);
+  assert.match(r.items[1].reason, /lucky orbital/);
 });
 
 test("human review wins: reviewed players are cleared, cheaters labelled, nothing else changes", () => {
