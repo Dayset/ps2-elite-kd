@@ -17,9 +17,12 @@ describe("main page desktop width (t313u)", () => {
   it("one shared width from the graph's 68vh height cap, main page only", () => {
     const css = read("styles.css");
     assert.match(read("index.html"), /<body class="main-page">/);
-    assert.match(css, /body\.main-page \{\s*--desk-w: calc\(68vh \* 1000 \/ 580 \+ 0\.5rem \+ 2px\);\s*max-width: calc\(var\(--desk-w\) \+ 2\.5rem\);/);
+    // #29: the width is the shared --page-w token (site-layout.css), same math as before.
+    assert.match(css, /^@import url\("site-layout\.css/);
+    assert.match(read("site-layout.css"), /--page-w: calc\(68vh \* 1000 \/ 580 \+ 0\.5 \* var\(--site-root\) \+ 2px \+ 2 \* var\(--page-gutter\)\);/);
+    assert.match(css, /body\.main-page, body\.site-page \{\s*--desk-w: calc\(var\(--page-w\) - 2 \* var\(--page-gutter\)\);\s*max-width: var\(--page-w\);/);
     assert.match(css, /body\.main-page \.chart-wrap \{ max-width: none; \}/);
-    const i = css.indexOf("body.main-page {");
+    const i = css.indexOf("body.main-page, body.site-page {");
     assert.ok(css.lastIndexOf("@media (min-width: 1400px)", i) > css.lastIndexOf("}\n}", i) - 400, "inside the ≥1400px block");
   });
 });

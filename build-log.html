@@ -17,10 +17,10 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261018-footerblock" />
+  <link rel="stylesheet" href="styles.css?v=20261018-pagew" />
   <style>
     body { overflow: auto; }
-    .st-wrap { max-width: min(1680px, 96vw); margin: 0 auto; padding: 18px 16px 40px; }
+    .st-wrap { max-width: none; margin: 0; padding: 18px 16px 40px; padding-inline: 0; } /* width: body.site-page (#29) */
     .st-wrap h1 { font-size: 1.25rem; margin: 0 0 4px; }
     .st-sub { color: var(--dim); font-size: 0.85rem; margin-bottom: 16px; }
     .st-card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
@@ -111,7 +111,7 @@
     html[data-theme="light"] .st-rb.ok { color: #2f7a35; }
   </style>
 </head>
-<body>
+<body class="site-page">
   <main class="st-wrap">
     <h1>📦 Shared cache status</h1>
     <div class="st-sub">Updates every 30 s. <span id="stUpdated"></span> · <a href="./">Back to the chart</a> · <a href="misc.html" title="Confirmed stat padders (hidden page)">🌾 Wall of shame</a> · <span id="radarLine" title="PS2 Radar (ps2radar.com, independent community cheat radar) is looked up once a day for players on the review lists below, at most 50 a day, each at most every 3 days. Its badge is a second opinion only: a Radar Confirmed / Banned mark moves a player up in review order but never hides or flags anyone here, and nothing else on the site reads it. If the radar goes away, the last cached answers stay.">🛰️ PS2 Radar</span><span class="st-tools"><button type="button" id="openAll" title="Open every section">Open all</button><button type="button" id="closeAll" title="Collapse every section">Collapse all</button></span></div>
