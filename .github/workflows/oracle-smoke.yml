@@ -1,0 +1,24 @@
+name: Oracle page smoke test
+# #28: load the real oracle/ page in headless Chromium and fail on any page error.
+on:
+  push:
+    paths: ["oracle/**", "test/oracle-smoke.test.mjs", ".github/workflows/oracle-smoke.yml"]
+  pull_request:
+    paths: ["oracle/**", "test/oracle-smoke.test.mjs"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm i --no-save playwright
+      - run: npx playwright install --with-deps chromium
+      - name: Smoke test (must not skip)
+        run: |
+          node --test test/oracle-smoke.test.mjs | tee smoke.txt
+          ! grep -q "^# skipped [1-9]" smoke.txt
