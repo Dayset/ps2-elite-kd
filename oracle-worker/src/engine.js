@@ -256,12 +256,15 @@ export function callsAndHints(terr, mom, win, t, dur = 90, nFac = N_FAC) {
  * Meltdowns: live-zone shares, live-zone elimination, then shrinkToEven.
  * Returns {terr, mom, win, raw, trunkv, nFac, zone?, winRaw?, winV0?}.
  */
-export function forecast({ getBin, kind, snapNow, snap15, t, dur, zeroMomentum = false }) {
+export function forecast({ getBin, kind, snapNow, snap15, t, dur, zeroMomentum = false, cutSnap = null }) {
   const momOf = (a, b) => Object.fromEntries(FACS.map((f) => [f, zeroMomentum ? 0 : a[f] - b[f]]));
   if (kind !== "meltdown") {
-    const terr = territory(snapNow);
-    const mom = momOf(terr, snap15 ? territory(snap15) : terr);
-    return { terr, mom, nFac: N_FAC, ...computeWin(getBin, terr, mom, t, dur) };
+    // Late game: read the map the way the game scores it (cut-off bases count for nobody).
+    const late = !!cutSnap && dur > 0 && t / dur >= CUT_AWARE_FROM;
+    const sNow = late ? cutSnap(snapNow) : snapNow, s15 = late && snap15 ? cutSnap(snap15) : snap15;
+    const terr = territory(sNow);
+    const mom = momOf(terr, s15 ? territory(s15) : terr);
+    return { terr, mom, nFac: N_FAC, cutAware: late, ...computeWin(getBin, terr, mom, t, dur) };
   }
   const z = liveZone(snapNow);
   const z15 = snap15 ? liveZone(snap15) : z;
@@ -275,10 +278,20 @@ export function forecast({ getBin, kind, snapNow, snap15, t, dur, zeroMomentum =
     zone: { active: z.active, total: z.total, share: round1((100 * z.active) / (z.total || 1)) } };
 }
 
-export function buildState({ getBin, world, zone, eventId, instanceId, startTs, dur, now, snapNow, snap15, regionMap }) {
+/**
+ * From 80 % of a territory alert on, the odds read the map cut-aware. Measured
+ * 2026-10-19 on 8,300 PS2Alerts alerts (oracle-worker/history/grow.mjs, newest 20 %
+ * held out): the production trees on cut-aware territory score Brier 0.0991 vs
+ * 0.0999 at minutes 72-84 and 0.0414 vs 0.0444 in the last 5 minutes, while earlier
+ * minutes are a wash or slightly worse (cuts still get reconnected then). PS2Alerts'
+ * own score confirms the rule: error 0.54 vs 1.68 score points when bases are cut.
+ */
+export const CUT_AWARE_FROM = 0.8;
+
+export function buildState({ getBin, world, zone, eventId, instanceId, startTs, dur, now, snapNow, snap15, regionMap, cutSnap = null }) {
   const t = (now - startTs) / 60;
   const kind = alertKind(eventId);
-  const f0 = forecast({ getBin, kind, snapNow, snap15, t, dur });
+  const f0 = forecast({ getBin, kind, snapNow, snap15, t, dur, cutSnap });
   const { terr, mom, win, raw, trunkv, nFac } = f0;
   const { leader, calls, hints } = callsAndHints(terr, mom, win, t, dur, nFac);
   const owners = {};
@@ -305,6 +318,7 @@ export function buildState({ getBin, world, zone, eventId, instanceId, startTs, 
     owners,
   };
   if (f0.zone) { state.zone = f0.zone; state.win_raw = f0.winRaw; state.win_v0 = f0.winV0; }
+  if (f0.cutAware) state.cut_aware = true;
   const sp = secondPlace(terr, raw, trunkv, t, dur, nFac);
   if (sp) state.second = sp;
   return state;

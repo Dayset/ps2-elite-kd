@@ -253,6 +253,7 @@ export async function runCycle(env, nowMs = Date.now()) {
       const state = buildState({
         getBin: binGetter(a.zone), world: a.world, zone: a.zone, eventId: a.event_id, instanceId: a.instance_id,
         startTs, dur, now, snapNow: zNow, snap15: z15 || null, regionMap: regionMap(a.zone),
+        cutSnap: (sn) => cutAwareSnap(sn, a.zone).snap,
       });
       if (!(a.world in snap10)) snap10[a.world] = await latestSnap(db, a.world, now - 600);
       const suspect = dataSuspect(zNow, snapNow.ts, snap10[a.world], a.zone, flips10.get(`${a.world}-${a.zone}`) || 0, now, alertKind(a.event_id));

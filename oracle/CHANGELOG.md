@@ -280,3 +280,22 @@ approved it, "shipped" means it is live in the running pipeline.
   `build_winbins_growtree.py`, identical cells on a synthetic check), checks the cut
   rule against PS2Alerts' own score at every capture (`mapControl` carries
   `cutoff`), and compares both trees on the newest 20 % of alerts.
+
+## 2026-10-19: cut-aware odds in the late game, measured on 8,300 past alerts
+
+- **History:** 17,340 PS2Alerts alerts fetched (2025-11 → 2026-10, newest first;
+  ~12.5k older ones still to fetch). Usable for trees: 8,300 territory alerts whose
+  base set matches the current lattice (Indar, Hossin, Amerish, Esamir; Oshur's
+  PS2Alerts map has 2 bases our lattice lacks, 400430/400431, so Oshur is skipped).
+- **The rule holds:** at 400,228 captures PS2Alerts' own score matches the
+  cut-aware count (mean error 0.54 score points when bases are cut) and not the raw
+  map (1.68). Cut-off bases don't score.
+- **Odds:** on the newest 20 % of alerts (held out), the production trees read on
+  cut-aware territory score better late (Brier 0.0991 vs 0.0999 at minutes 72–84;
+  0.0414 vs 0.0444 in the last 5 minutes, −7 %) and a wash or slightly worse earlier,
+  when cuts are still reconnected. Trees regrown cut-aware beat trees regrown the old
+  way (0.1776 vs 0.1779) but not the production trees (0.1693), which were grown on
+  ~36k alerts, so they are not used.
+- **Shipped (Worker):** from 80 % of a territory alert on, the header odds read the
+  map cut-aware (`engine.CUT_AWARE_FROM`); state gets `cut_aware`. The Win chance
+  card lists cut-off bases ("✂️ Cut off, not scoring: TR 1 (Johari Cove)").

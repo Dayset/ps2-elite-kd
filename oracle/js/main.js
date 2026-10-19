@@ -161,13 +161,16 @@ function render2(now) {
   const second = s && s.second ? `<div class="second">🥈 Second place: ${Object.entries(s.second.odds).map(([f, p]) => `<span class="${f}">${f} ${pct1(p)}%</span>`).join(" · ")} ${s.second.locked ? "(locked)" : ""}</div>` : "";
   const voided = (a.flags || []).includes("votes_void");
   const result = a.status === "settled" ? `<div class="second">${a.final ? `Census final: ${FACS.map((f) => `<span class="${f}">${f} ${(+a.final[f]).toFixed(1)}</span>`).join(" · ")}` : "Census sent no final scores; decided from our last map snapshot"} — <b class="${a.winner}">${a.winner}</b> wins${a.basis === "sudden_death" ? " (sudden death)" : ""}</div>${voided ? `<div class="note" style="color:var(--warn)">Census map data was broken at the end and disagreed with the result, so every vote on this alert was given back.</div>` : ""}` : "";
+  // Cut-off bases don't score in the game; from 80 % of the alert the odds count them for nobody.
+  const cutList = s && Array.isArray(s.cut) ? s.cut : [];
+  const cutNote = cutList.length && a.status === "live" ? `<div class="note">✂️ Cut off, not scoring: ${FACS.map((f) => { const n = cutList.filter((c) => c.fac === f); return n.length ? `<span class="${f}">${f} ${n.length}</span> (${esc(n.slice(0, 3).map((c) => c.name).join(", "))}${n.length > 3 ? ` +${n.length - 3}` : ""})` : ""; }).filter(Boolean).join(" · ")}${s.cut_aware ? " · counted in the odds" : ""}</div>` : "";
   const suspectNote = s && s.suspect && s.suspect.length ? `<div class="note" style="color:var(--warn)">Census map data looks broken right now (${esc(s.suspect.map((x) => x.startsWith("neutral_heavy") ? `only ${x.split(":")[1]}% of bases owned` : x === "map_frozen" ? "map frozen while captures continue" : "no fresh map").join(", "))}). Odds may be wrong and voting is paused.</div>` : "";
   $("main").innerHTML = `
     <div class="title"><b>${esc(a.world_name)} · ${esc(a.zone_name)}${a.kind === "meltdown" ? " Meltdown" : ""}</b><span class="badge ${a.status}">${esc(a.status.replace("_", " "))}</span><span class="note">${esc(left)} · ${a.dur}-min alert</span>${liveA ? "" : `<button type="button" class="more backlive" id="backLive">← Back to live</button>`}</div>
     <div class="grid">
       <section class="card map"><h2>Map</h2><div id="replayTag" class="replaytag" hidden></div><div id="map"></div></section>
       <div class="side">
-      <section class="card win"><h2>Win chance</h2>${kindNote}${suspectNote}<div class="odds" aria-live="polite" aria-atomic="true">${oddsHtml}</div>${oddLine}${result}${second}${rows || popRows ? det("wdet", "Details", `${popAdj}<div class="rows">${rows}${popRows}</div>${popTot ? `<div class="note">Population: Honu (wt.honu.pw), ${popTot} on continent${s.pop_ns ? ` + ${s.pop_ns} NSO` : ""}.</div>` : ""}`, "wdet keep") : ""}${calls}</section>
+      <section class="card win"><h2>Win chance</h2>${kindNote}${suspectNote}${cutNote}<div class="odds" aria-live="polite" aria-atomic="true">${oddsHtml}</div>${oddLine}${result}${second}${rows || popRows ? det("wdet", "Details", `${popAdj}<div class="rows">${rows}${popRows}</div>${popTot ? `<div class="note">Population: Honu (wt.honu.pw), ${popTot} on continent${s.pop_ns ? ` + ${s.pop_ns} NSO` : ""}.</div>` : ""}`, "wdet keep") : ""}${calls}</section>
       <div id="voteHere"></div><div id="lockHere"></div>
       </div>
     </div>

@@ -14,8 +14,12 @@
  *   node oracle-worker/history/grow.mjs --in history/alerts.jsonl --out oracle/backend [--commit true]
  *
  * --commit true writes cut-aware trees grown on ALL usable alerts
- * (winbins_growtree_cut*.json, winbins_xtrunk_cut.json) only when the cut-aware
- * trees beat the standard ones on the held-out alerts (overall and late game).
+ * (winbins_growtree_cut*.json, winbins_xtrunk_cut.json) only when they beat both
+ * the regrown standard trees and the production trees on the held-out alerts.
+ * First run (2026-10-19, 8,300 alerts): they beat the regrown standard trees but
+ * not the production trees (grown on ~36k alerts), so the Worker keeps the
+ * production trees and reads the map cut-aware from 80 % of the alert on
+ * (engine.CUT_AWARE_FROM), which the same comparison backs.
  * history_eval.json is always written. Exports are pure, for tests.
  */
 import fs from "node:fs";
@@ -281,8 +285,11 @@ async function main() {
   for (const v of ["std", "cut", "production", "production_cut_input"]) notice(`holdout ${v}`, `n=${ev.std ? ev.std.all.n : 0} min: ${line(ev, v)}`);
   if (evFresh.std) notice("fresh (after production trees)", `${freshAlerts.length} alerts: ${["std", "cut", "production", "production_cut_input"].map((v) => `${v} ${evFresh[v].all.brier}/final5 ${evFresh[v].final5 ? evFresh[v].final5.brier : "-"}`).join(" | ")}`);
   const better = (k) => ev.cut && ev.cut[k] && ev.cut[k].brier < ev.std[k].brier;
-  const verdict = better("all") && better("late") && better("final5");
-  notice("verdict", verdict ? "cut-aware trees beat standard on held-out alerts (all, late, final 5 min)" : "cut-aware trees do NOT beat standard on every held-out slice; live trees unchanged");
+  // Trees are only worth writing if they beat the trees the Worker runs today too.
+  const beatsProd = (k) => ev.cut && ev.cut[k] && ev.production && ev.production[k] && ev.cut[k].brier < ev.production[k].brier;
+  const verdict = better("all") && better("late") && better("final5") && beatsProd("all") && beatsProd("late");
+  notice("verdict", verdict ? "regrown cut-aware trees beat both the regrown standard and the production trees on held-out alerts"
+    : `regrown cut-aware trees not written (beat regrown standard: ${better("all") && better("late") && better("final5")}; beat production: ${beatsProd("all") && beatsProd("late")})`);
   const report = { at: new Date().toISOString(), records, usable, train: train.length, test: test.length, skipped: skips, lattice_mismatch: latticeSkips, mismatch_example: mismatchExample, rule, holdout: ev,
     fresh: { since: new Date(FRESH * 1000).toISOString(), alerts: freshAlerts.length, brier: evFresh }, verdict,
     cells: { std: Object.fromEntries(TREE_ZONES.map((z) => [z, std.t[z].meta.cells])), cut: Object.fromEntries(TREE_ZONES.map((z) => [z, cut.t[z].meta.cells])) } };

@@ -56,3 +56,18 @@ test("rescan: frames rebuild the map, both variants scored on the same minutes",
   assert.ok(s.minutes.with_cut.n === s.minutes.all.n);
   assert.deepEqual(rescanAlert({ key: "m", zone: 4, event_id: 177, dur: 90, winner: "VS" }, frames).skip, "meltdown");
 });
+
+test("odds read the map cut-aware from 80 % of a territory alert on (never for Meltdowns)", async () => {
+  const { forecast, CUT_AWARE_FROM } = await import("../oracle-worker/src/engine.js");
+  const { binGetter } = await import("../oracle-worker/src/models.js");
+  const a = S["10-4-46315"];
+  const cutSnap = (s) => cutAwareSnap(s, 4).snap;
+  const at = (t, kind = "territory") => forecast({ getBin: binGetter(4), kind, snapNow: a.z, snap15: a.z, t, dur: 90, cutSnap });
+  assert.equal(CUT_AWARE_FROM, 0.8);
+  const early = at(60), late = at(85);
+  assert.equal(early.cutAware, false);
+  assert.equal(late.cutAware, true);
+  assert.ok(late.terr.VS < early.terr.VS, `${late.terr.VS} vs ${early.terr.VS}`);
+  assert.equal(late.terr.NC, early.terr.NC);
+  assert.ok(!at(85, "meltdown").cutAware);
+});
