@@ -48,6 +48,9 @@
     .st-toc a { text-decoration: none; }
     .st-toc a:hover { text-decoration: underline; }
     .st-wrap h2[id], .st-wrap h3[id] { scroll-margin-top: 12px; }
+    .st-totop { position: fixed; right: 1.25rem; bottom: 1.25rem; width: 2.5rem; height: 2.5rem; border-radius: 50%; background: var(--panel); border: 1px solid var(--border); color: var(--text); font-size: 1.2rem; line-height: 1; cursor: pointer; opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 50; box-shadow: 0 2px 8px rgba(0,0,0,0.35); padding: 0; }
+    .st-totop.show { opacity: 1; pointer-events: auto; }
+    .st-totop:hover { border-color: var(--accent); }
   </style>
 </head>
 <body class="site-page">
@@ -285,6 +288,7 @@
       </div>
     </details>
   </main>
+  <button id="toTop" class="st-totop" aria-label="Back to top" title="Back to top">↑</button>
   <script>
     // TOC jump into the collapsed debug section opens it first.
     document.querySelectorAll('.st-toc a[href^="#"]').forEach(function (a) {
@@ -294,6 +298,12 @@
         if (d && !d.open) d.open = true;
       });
     });
+    // Floating back-to-top button.
+    var toTop = document.getElementById('toTop');
+    function syncToTop() { toTop.classList.toggle('show', window.scrollY > 400); }
+    window.addEventListener('scroll', syncToTop, { passive: true });
+    syncToTop();
+    toTop.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
   </script>
 </body>
 </html>
