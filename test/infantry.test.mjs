@@ -32,3 +32,26 @@ test("urls filter stats and counts", () => {
   assert.match(u.plain, /characters_weapon_stat\?character_id=123&stat_name=weapon_play_time/);
   assert.deepEqual(infantryTagCounts([{ infantry: { tag: "mixed" } }, { infantry: { tag: null } }, {}]), { infantry: 0, mixed: 1, vehicle: 0, low: 1, none: 1 });
 });
+
+test("v2: vehicle total row not double-counted, MAX kills counted as infantry", async () => {
+  const { summarizeInfantryKills, infantryShares, infantryKillsUrl, MAX_ITEMS } = await import("../infantry.mjs");
+  const rows = [
+    f("weapon_kills", "44505", "0", 600), // rifle on foot
+    f("weapon_kills", "7505", "0", 200), // MAX arm
+    f("weapon_kills", "0", "12", 150), // vehicle total (incl. road kills)
+    f("weapon_kills", "4905", "12", 100), // same vehicle, seat weapon (already in the total)
+    f("weapon_kills", "554", "0", 50), // MANA turret
+  ];
+  const s = summarizeInfantryKills(rows);
+  assert.ok(MAX_ITEMS.has("7505"));
+  assert.equal(s.v, 2);
+  assert.equal(s.kills, 1000);
+  assert.equal(s.vehKills, 200);
+  assert.equal(s.maxKills, 200);
+  assert.equal(s.part, "kills");
+  assert.equal(s.deaths, null);
+  assert.deepEqual(infantryShares(s), { inf: 80, max: 20, veh: 20 });
+  assert.equal(infantryShares({ ...s, kills: 50 }), null);
+  assert.equal(infantryShares({ ...s, v: 1 }), null);
+  assert.match(infantryKillsUrl("B/", ["1", "2"]), /character_id=1,2&stat_name=weapon_kills&c:show=character_id,stat_name,/);
+});
