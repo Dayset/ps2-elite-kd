@@ -147,8 +147,8 @@
       <div id="poop" class="st-dim">Loading…</div>
       </details>
       <details class="st-sub-sec" id="secVehCut">
-      <summary><h3>🚜 Vehicle + MAX cuts (‡ on adjusted iVi, no cap) <span id="vcutCount" class="st-count">…</span></h3></summary>
-      <div id="vcutRule" class="st-rule">Automatic: ⚔️ adjusted iVi ranks infantry skill only, so it gets two cuts that add up, no cap: vehicle cut = vehicle / turret share of lifetime kills − 10% (none up to 10%), MAX cut = MAX-weapon share − 10%. Example: vehicle 45% + MAX 40% → −35% − 30% = −65%. The shares add up to at most 100%, so the total stays under 100%. No infantry data (or under 100 kills) = no cut. Applied after the 💩 padder penalty (they stack). A score at or below 0 gets a fixed drop (cut × 610.6) so it never rises. Public: names stay clean; a small dimmed ‡ after the iVi value, the hover lists each part and the total. Owner override (exempts both parts): data/reviewed.json "vehicleCutCleared": { "slug": { "note": "…", "at": "YYYY-MM-DD" } }.</div>
+      <summary><h3>🚜 Vehicle / MAX cut (‡, up to −20% iVi) <span id="vcutCount" class="st-count">…</span></h3></summary>
+      <div id="vcutRule" class="st-rule">Automatic: ⚔️ adjusted iVi is cut by the share of lifetime kills NOT made as plain infantry: vehicle / turret kills + MAX-weapon kills, added together on one curve with one cap (never −40%). No cut up to 10%, growing linearly to −20% at 60%+. No infantry data (or under 100 kills) = no cut. Applied after the 💩 padder penalty (they stack). A score at or below 0 gets a fixed drop (cut × 610.6) so it never rises. Public: ‡ after the iVi value with the reason on hover. Owner override: data/reviewed.json "vehicleCutCleared": { "slug": { "note": "…", "at": "YYYY-MM-DD" } }.</div>
       <div id="vcut" class="st-dim">Loading…</div>
       </details>
       <details class="st-sub-sec" id="secAdjusted">
@@ -502,14 +502,14 @@
       var MB = 1024 * 1024;
       function mb(b) { return b == null ? "?" : b >= 1024 * MB ? (b / 1024 / MB).toFixed(2) + " GB" : (b / MB).toFixed(1) + " MB"; }
       /** Size line: repo (GitHub, all history packed) + data/ now, with the 700 MB backup/move warning (status.size, status.sizeWarning). */
-      // 🪖 Infantry / vehicle split (infantry.mjs). The share itself is public as the 🫡 Infantry column; tags stay here (no public tag).
+      // 🪖 Infantry / vehicle split (infantry.mjs). The share itself is public as the 🪖 Infantry column; tags stay here (no public tag).
       function renderInfantry(status) {
         var b = status && status.infantry;
         if (!b || !b.counts) { $("infLine").innerHTML = "🪖 Infantry split: not built yet (next run)."; return; }
         var c = b.counts, r = b.rule || {};
         var have = c.infantry + c.mixed + c.vehicle + c.low;
         var pend = b.pending != null ? " · ⏳ " + esc(b.pending) + " pending backfill" : "";
-        $("infLine").innerHTML = "<div>🪖 Infantry split (v2, public as 🫡 Infantry; MAX kills count as infantry, vehicle kills no longer doubled): " + esc(b.v2 != null ? b.v2 : have) + " of " + esc(b.players) + " players filled" + pend + " · " +
+        $("infLine").innerHTML = "<div>🪖 Infantry split (v2, public as 🪖 Infantry; MAX kills count as infantry, vehicle kills no longer doubled): " + esc(b.v2 != null ? b.v2 : have) + " of " + esc(b.players) + " players filled" + pend + " · " +
           "🪖 infantry <strong>" + esc(c.infantry) + "</strong> · 🔀 mixed <strong>" + esc(c.mixed) + "</strong> · 🚜 vehicle <strong>" + esc(c.vehicle) + "</strong> · too few kills " + esc(c.low) + "</div>" +
           '<div class="st-dim">Rule: share of kills from a vehicle seat or turret &lt; ' + esc(Math.round((r.INFANTRY_MAX || 0.25) * 100)) + "% = infantry, ≥ " + esc(Math.round((r.VEHICLE_MIN || 0.6) * 100)) + "% = vehicle, otherwise mixed; under " + esc(r.MIN_KILLS || 100) + " kills = not judged. Tags are build-log only (not shown publicly); no automatic tag uses them yet.</div>";
       }
@@ -991,18 +991,14 @@
       const rk = (v) => (v ? "#" + v.toLocaleString() : "—");
       $("vcutCount").textContent = b ? Number(b.cut).toLocaleString() : "?";
       if (!b) { $("vcut").innerHTML = "Not built yet (next refresh)."; return; }
-      const bk = Object.entries(b.buckets || {}).map(([k, v]) => esc(k) + " " + Number(v).toLocaleString()).join(" · ") +
-        (b.parts ? "; vehicle part " + Number(b.parts.vehicle).toLocaleString() + ", MAX part " + Number(b.parts.max).toLocaleString() + ", both " + Number(b.parts.both).toLocaleString() : "");
+      const bk = Object.entries(b.buckets || {}).map(([k, v]) => esc(k) + " " + Number(v).toLocaleString()).join(" · ");
       const cl = (b.cleared || []).length
         ? '<div style="margin-top:6px;">✅ Exempted by the owner: ' + b.cleared.map((c) => nameCell(c) + (c.veh != null ? " (vehicle " + c.veh + "% + MAX " + c.max + "%)" : "")).join(", ") + "</div>"
         : '<div class="st-dim" style="margin-top:6px;">No owner exemptions.</div>';
       $("vcut").innerHTML =
         '<div class="st-dim" style="margin-bottom:6px;">' + Number(b.cut).toLocaleString() + " of " + Number(b.withData).toLocaleString() + " players with infantry data are cut (" + bk + "). Ranks among " + Number(b.ranked).toLocaleString() + " ranked players by ⚔️ adjusted iVi; “before” = without this cut. Showing the " + items.length + " highest-ranked cut players.</div>" +
-        '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th>Vehicle kills</th><th>Vehicle cut</th><th>MAX kills</th><th>MAX cut</th><th>Total cut</th><th>iVi before</th><th>iVi after</th><th>Rank before</th><th>Rank after</th></tr>' +
-        items.map((i) => {
-          const pc = (v) => (v != null ? v + "%" : "—"), cut = (v) => (v > 0 ? "−" + v + "%" : "—");
-          return "<tr><td>" + nameCell(i) + "</td><td>" + pc(i.veh) + "</td><td>" + cut(i.cutVeh) + "</td><td>" + pc(i.max) + "</td><td>" + cut(i.cutMax) + "</td><td><strong>−" + i.cut + "%</strong></td><td>" + n(i.before) + "</td><td>" + n(i.after) + "</td><td>" + rk(i.rankBefore) + "</td><td>" + rk(i.rankAfter) + "</td></tr>";
-        }).join("") +
+        '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th>Vehicle kills</th><th>MAX kills</th><th>Cut</th><th>iVi before</th><th>iVi after</th><th>Rank before</th><th>Rank after</th></tr>' +
+        items.map((i) => "<tr><td>" + nameCell(i) + " ‡</td><td>" + (i.veh != null ? i.veh + "%" : "—") + "</td><td>−" + i.cut + "%</td><td>" + n(i.before) + "</td><td>" + n(i.after) + "</td><td>" + rk(i.rankBefore) + "</td><td>" + rk(i.rankAfter) + "</td></tr>").join("") +
         "</table></div>" + cl;
     }
 

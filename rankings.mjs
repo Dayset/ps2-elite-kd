@@ -24,7 +24,7 @@ import { confirmedPadderSlugs } from "./padding.mjs?v=20261010-sav1";
 import { slugKey } from "./rank-row.mjs?v=20261010-sav1";
 import { hiddenList } from "./hidden.mjs?v=20261010-sav1";
 import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261019-inf1";
-import { VEH_CUT_MARK, vehicleCutTip } from "./vehicle-cut.mjs?v=20261019-vcut3";
+import { VEH_CUT_MARK, vehicleCutTip } from "./vehicle-cut.mjs?v=20261019-vcut1";
 
 /**
  * @param {{ getNames: () => string[], toggleName: (name: string, anchor: Element, add: boolean) => void }} host
@@ -45,7 +45,7 @@ export function initRankings(host) {
     { id: "cons", label: "⚡ Const", digits: 2, tip: "How much of your K/D you keep against the strongest third of your opponents compared with the weakest third: 1.00 means it holds completely, 0.50 means it halves." },
     { id: "apk", label: "🤝 Assists", digits: 2, apk: true, tip: "Assists per kill in recent Honu sessions: how often you help damage enemies that teammates finish, for each kill of your own. Shown from 100 session kills." },
     { id: "rkd", label: "☠️ K/D", digits: 3, tip: "Kills ÷ deaths against the ~200 players you fight most, so it reflects real matchups rather than your whole lifetime." },
-    { id: "inf", label: "🫡 Infantry", digits: 1, inf: true, tip: INF_HINT },
+    { id: "inf", label: "🪖 Infantry", digits: 1, inf: true, tip: INF_HINT },
   ];
   const DEBUG = [
     { id: "mech", label: "⚙️ Mech%", digits: 1, tip: "Estimated share of your fights that are vehicle or mech play, projected from 🛡️ Resist rather than measured from shooting." },
@@ -214,7 +214,7 @@ export function initRankings(host) {
         // t359u: not in ranks.json at all; added from this browser's own copy.
         localOnly: localOnly.has(r[idx.slug]),
         pcts: {},
-        // 🫡 hover-only parts of the Infantry column (% of lifetime kills).
+        // 🪖 hover-only parts of the Infantry column (% of lifetime kills).
         infMax: idx.infMax != null ? r[idx.infMax] : null,
         infVeh: idx.infVeh != null ? r[idx.infVeh] : null,
         // 🚜 ‡ vehicle / MAX cut % already applied to adjs (null = none).
@@ -304,7 +304,7 @@ export function initRankings(host) {
     return `<td title="${esc(tip)}">${fmt(v, 2)}</td>`;
   }
 
-  /** 🚜 "‡" after the ⚔️ iVi value (vehicle-cut.mjs, uncapped: share − 10% per part): parts + total on hover; "" without a cut. */
+  /** 🚜 "‡" after the ⚔️ iVi value (vehicle-cut.mjs): shares + cut on hover; "" without a cut. */
   function vcutHtml(row) {
     if (!(row.vcut > 0)) return "";
     const tip = vehicleCutTip(row.infVeh, row.infMax, row.vcut);

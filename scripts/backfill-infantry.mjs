@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * 🫡 Infantry backfill: add the v2 infantry split (infantry.mjs: infShare / MAX /
+ * 🪖 Infantry backfill: add the v2 infantry split (infantry.mjs: infShare / MAX /
  * vehicle %) to cached player files that have none or an older v1 summary.
  * ONE kills-only Census call per BATCH characters (≈200 rows each, far under
  * c:limit; a full page is split and retried), ≥ 1.2 s between calls.

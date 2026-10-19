@@ -23,7 +23,7 @@
  *   vehShare     vehKills / kills
  *   tag          infantry (vehShare < 0.25) | vehicle (vehShare >= 0.6) | mixed
  *                (null below MIN_KILLS kills: too little to judge)
- *   v2 (🫡 Infantry column):
+ *   v2 (🪖 Infantry column):
  *   maxKills     part of footKills made with MAX arm weapons (MAX_ITEMS)
  *   infShare     footKills / kills — share of lifetime kills made with infantry
  *                weapons. MAX kills COUNT AS INFANTRY (a MAX is an infantry class,
@@ -157,7 +157,7 @@ export function summarizeInfantryKills(killRows, now = Date.now()) {
 }
 
 /**
- * 🫡 Infantry column values from a stored summary → { inf, max, veh } as % (1 decimal),
+ * 🪖 Infantry column values from a stored summary → { inf, max, veh } as % (1 decimal),
  * or null when there is no v2 summary or fewer than INF_SHARE_MIN_KILLS kills.
  */
 export function infantryShares(sum) {
@@ -188,7 +188,7 @@ export function infantryTagCounts(players) {
   return out;
 }
 
-/* ---------- 🫡 Infantry column texts (app.js stats table + rankings.mjs) ---------- */
+/* ---------- 🪖 Infantry column texts (app.js stats table + rankings.mjs) ---------- */
 
 export const INF_HINT =
   "Share of lifetime kills made with infantry weapons (Census weapon stats). Vehicle seats and turrets don't count; MAX suit weapons count as infantry (the MAX share is on hover). A measurement, not a stat change. Shown from 100 kills.";

@@ -39,7 +39,7 @@ import GHOST_MODEL from "./data/ghost-model.mjs?v=20261010-sav1";
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-sav1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
 import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261019-inf1";
-import { VEH_CUT_MARK, vehicleCutTip } from "./vehicle-cut.mjs?v=20261019-vcut3";
+import { VEH_CUT_MARK, vehicleCutTip } from "./vehicle-cut.mjs?v=20261019-vcut1";
 import { infantryKillsUrl, summarizeInfantryKills } from "./infantry.mjs?v=20261019-inf1";
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261015-tip1";
 import { createWheelSwiper } from "./dist-cycle.mjs?v=20261017-cycle15";
@@ -820,7 +820,7 @@ import {
       top: p.top,
       honu: p.honu,
       times: p.times || null,
-      // 🫡 / 🚜 just the kill split the Infantry column and the ‡ cut need (infantry.mjs v2).
+      // 🪖 / 🚜 just the kill split the Infantry column and the ‡ cut need (infantry.mjs v2).
       infantry: p.infantry && p.infantry.v >= 2
         ? { v: p.infantry.v, kills: p.infantry.kills, footKills: p.infantry.footKills, maxKills: p.infantry.maxKills, vehKills: p.infantry.vehKills, otherKills: p.infantry.otherKills }
         : null,
@@ -1551,7 +1551,7 @@ import {
   }
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261019-vcut3")
+    rankingsLoading = import("./rankings.mjs?v=20261019-infemoji1")
       .then((m) => {
         rankingsApi = m.initRankings(rankingsHost);
         return rankingsApi.ready;
@@ -2241,7 +2241,7 @@ import {
     }
     const own = r.own || { kpm: 0, acc: 0, hsr: 0, ivi: 0 };
     const rows = r.rows;
-    // 🫡 / 🚜 lifetime kill split (one kills-only Census call), so a fresh copy keeps the
+    // 🪖 / 🚜 lifetime kill split (one kills-only Census call), so a fresh copy keeps the
     // Infantry value and the ‡ vehicle / MAX cut; falls back to the shared copy's split.
     let infantry = null;
     try {
@@ -3237,7 +3237,7 @@ import {
   // 🤝 Assists per kill (t385u): shared value by slug + population pool from ranks.json.
   let apkBySlug = null;
   let apkPool = null;
-  // 🫡 Infantry (% of lifetime kills with infantry weapons): value + MAX / vehicle % by slug, pool for the percentile.
+  // 🪖 Infantry (% of lifetime kills with infantry weapons): value + MAX / vehicle % by slug, pool for the percentile.
   let infBySlug = null;
   let infPool = null;
   function loadConsPool() {
@@ -3301,7 +3301,7 @@ import {
       { id: "cons", label: "⚡ Const", hint: "How much of your K/D you keep against the strongest third of your opponents compared with the weakest third, as a percentile of all tracked players.", fn: (r) => r.cons, digits: 2, pctileCell: true },
       { id: "apk", label: "🤝 Assists", hint: "Assists per kill in recent Honu sessions: how often you help damage enemies that teammates finish, for each kill of your own. Shown from 100 session kills.", fn: (r) => (apkBySlug && r.p ? apkBySlug.get(slugKey(r.p.display)) : undefined), digits: 2, apkCell: true },
       { id: "rkd", label: "☠️ K/D", hint: "Kills ÷ deaths against the ~200 players you fight most, so it reflects real matchups rather than your whole lifetime.", fn: (r) => r.rkd, digits: 3 },
-      { id: "inf", label: "🫡 Infantry", hint: INF_HINT, fn: (r) => { const e = infBySlug && r.p ? infBySlug.get(slugKey(r.p.display)) : undefined; return e ? e.inf : undefined; }, digits: 1, infCell: true },
+      { id: "inf", label: "🪖 Infantry", hint: INF_HINT, fn: (r) => { const e = infBySlug && r.p ? infBySlug.get(slugKey(r.p.display)) : undefined; return e ? e.inf : undefined; }, digits: 1, infCell: true },
     ];
     // Older debug columns: appended only when "show older debug stats" (footer) is ticked.
     const adjDebugCols = [
@@ -3451,7 +3451,7 @@ import {
                 const rel = pl == null ? "" : pl >= 50 ? ` — top ${Math.max(1, 100 - pl)}%` : ` — bottom ${Math.max(1, pl)}%`;
                 return `<td title="${escapeHtml(`Assists per kill: ${fmtNum(v, 2)}${rel}. Helps damage enemies that teammates finish.`)}">${fmtNum(v, 2)}${pct}</td>`;
               }
-              // 🫡 Infantry: plain "%" value, one colour; percentile + MAX / vehicle share on hover, dimmed % gap like 🤝.
+              // 🪖 Infantry: plain "%" value, one colour; percentile + MAX / vehicle share on hover, dimmed % gap like 🤝.
               if (c.infCell) {
                 if (!isFiniteNum(v)) return `<td title="${escapeHtml(INF_PENDING_TIP)}">—</td>`;
                 const e = infBySlug && row.p ? infBySlug.get(slugKey(row.p.display)) : null;
@@ -3675,7 +3675,7 @@ import {
     return statMark(p && p.farm, undefined, { confirmed: isConfirmedPadder(p) });
   }
 
-  /** 🚜 "‡" after the ⚔️ iVi value (uncapped: share − 10% per part): parts + total on hover. */
+  /** 🚜 "‡" after the ⚔️ iVi value: vehicle / MAX kill shares and the cut on hover. */
   function vehCutHtml(vehPct, maxPct, cutPct) {
     const tip = vehicleCutTip(vehPct, maxPct, cutPct);
     return `<span class="veh-cut" title="${escapeHtml(tip)}" aria-label="${escapeHtml(tip)}">${VEH_CUT_MARK}</span>`;

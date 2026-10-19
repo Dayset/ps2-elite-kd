@@ -1,24 +1,25 @@
 /**
- * 🚜 Vehicle + MAX cuts (owner-approved 2026-10-19, curve set the same day):
- * ⚔️ adjusted iVi ranks infantry skill only, so two cuts that ADD UP, no cap:
- *   vehicle cut = max(0, vehicle-kill share − 10%)   (vehicle seats / turrets, infantry.mjs infVeh)
- *   MAX cut     = max(0, MAX-kill share − 10%)       (MAX weapons, infMax)
- * e.g. vehicle 96% → −86%; vehicle 45% + MAX 40% → −35% − 30% = −65%.
- * vehicle% + MAX% ≤ 100%, so the total stays under 100% (at most −80%).
- * (The 🫡 Infantry column still counts MAX as infantry; its hover shows the MAX share.)
+ * 🚜 Vehicle / MAX cut (owner-approved 2026-10-19): ⚔️ adjusted iVi is cut by
+ * the share of lifetime kills NOT made as plain infantry = vehicle / turret
+ * kills + MAX-weapon kills (infantry.mjs infVeh + infMax), on ONE curve with
+ * one cap (never −40%). Aimed at farming infantry from vehicles or a MAX suit,
+ * so the iVi board ranks plain infantry play. (The 🪖 Infantry column still
+ * counts MAX as infantry; its hover shows the MAX share.)
+ *
+ *   vehicle + MAX share ≤ 10%  → no cut
+ *   10% … 60%            → cut grows linearly
+ *   ≥ 60%                → −20% (cap)
  *
  * No infantry data (or < 100 kills) → no cut. Applied inside playerMetrics()
  * AFTER the 💩 padder penalty (they stack), so every page, ranks.json and the
- * regular refresh use the same number. A score at or below 0 never flips sign:
- * it gets the fixed drop cut × VEH_CUT.REF instead (same rule as 💩), so it only falls.
- * Public: names stay clean (owner: no name badges); a small dimmed ‡ after the iVi value,
- * the hover lists each part and the total.
- * Owner override (exempts both): data/reviewed.json "vehicleCutCleared": { "<slug>": { "note", "at" } }.
+ * regular refresh use the same number. A score at or below 0 gets the fixed
+ * drop cut × VEH_CUT.REF instead (same rule as the 💩 penalty, so it never rises).
+ * Public mark: "‡" after the ⚔️ iVi value with the reason on hover.
+ * Owner override: data/reviewed.json "vehicleCutCleared": { "<slug>": { "note", "at" } }.
  */
 import { infantryShares } from "./infantry.mjs?v=20261019-inf1";
 
-export const VEH_CUT = Object.freeze({ START: 0.1, REF: 610.6 });
-/** Small dimmed mark after the ⚔️ iVi value (public-marking rule for automatic changes); the hover explains. */
+export const VEH_CUT = Object.freeze({ START: 0.1, FULL: 0.6, CAP: 0.2, REF: 610.6 });
 export const VEH_CUT_MARK = "‡";
 
 const state = { cleared: {} };
@@ -33,39 +34,33 @@ export function isVehicleCutCleared(nameOrSlug) {
   return Object.prototype.hasOwnProperty.call(state.cleared, key(nameOrSlug));
 }
 
-/** One part's cut (fraction) for a share 0 … 1: max(0, share − 10%). */
+/** Cut fraction (0 … CAP) for a vehicle share 0 … 1. */
 export function vehicleCutFrac(share) {
   if (typeof share !== "number" || !Number.isFinite(share)) return 0;
-  return Math.max(0, share - VEH_CUT.START);
+  const t = (share - VEH_CUT.START) / (VEH_CUT.FULL - VEH_CUT.START);
+  return VEH_CUT.CAP * Math.min(1, Math.max(0, t));
 }
 
-/** { veh, max, cutVeh, cutMax, cut } (fractions; cut = cutVeh + cutMax) from a stored infantry summary, or null. */
+/** { share, veh, max, cut } (fractions) from a stored infantry summary, or null (no data / too few kills). */
 export function vehicleCutFor(infantry) {
   const sh = infantryShares(infantry);
   if (!sh) return null;
   const veh = sh.veh / 100, max = sh.max / 100;
-  const cutVeh = vehicleCutFrac(veh), cutMax = vehicleCutFrac(max);
-  return { veh, max, cutVeh, cutMax, cut: Math.min(0.99, cutVeh + cutMax) };
+  const share = Math.min(1, veh + max);
+  return { share, veh, max, cut: vehicleCutFrac(share) };
 }
 
-/** Score after the cut (non-finite values pass through; ≤ 0 gets a fixed drop, never a sign flip). */
+/** Score after the cut (non-finite values pass through). */
 export function applyVehicleCut(v, cut) {
   if (typeof v !== "number" || !Number.isFinite(v) || !(cut > 0)) return v;
   return v > 0 ? v * (1 - cut) : v - cut * VEH_CUT.REF;
 }
 
-const r0 = (x) => (typeof x === "number" && Number.isFinite(x) ? Math.round(x) : 0);
-/**
- * iVi hover text (shares and total cut in %):
- * "‡ vehicle kills 45%: −35% · MAX kills 40%: −30% → −65% iVi, infantry skill only".
- * Only the parts above 10% are listed; the arrow total only when both apply.
- */
+/** Hover text, e.g. "‡ vehicle kills 40% + MAX kills 5%: −14% iVi …" (percent values). */
 export function vehicleCutTip(vehPct, maxPct, cutPct) {
-  const parts = [];
-  if (vehPct > 10) parts.push(`vehicle kills ${r0(vehPct)}%: −${r0(vehPct - 10)}%`);
-  if (maxPct > 10) parts.push(`MAX kills ${r0(maxPct)}%: −${r0(maxPct - 10)}%`);
-  const total = Number.isFinite(cutPct) ? cutPct : Math.max(0, (vehPct || 0) - 10) + Math.max(0, (maxPct || 0) - 10);
-  return `${VEH_CUT_MARK} ${parts.join(" · ")}${parts.length > 1 ? ` → −${r0(total)}%` : ""} iVi, infantry skill only`;
+  const r = (x) => (typeof x === "number" && Number.isFinite(x) ? Math.round(x) : 0);
+  const c = Math.round(cutPct * 10) / 10;
+  return `${VEH_CUT_MARK} vehicle kills ${r(vehPct)}% + MAX kills ${r(maxPct)}%: −${c < 10 ? c.toFixed(1) : Math.round(c)}% iVi (cut starts above 10% vehicle + MAX kills, −20% at 60%+)`;
 }
 
 try {
