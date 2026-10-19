@@ -73,7 +73,7 @@
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-19T20:02:20.685Z",
+    "checkedAt": "2026-10-19T20:36:51.775Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 15,
     "explained": 23,
@@ -1269,7 +1269,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-19T20:02:23.168Z",
+    "checkedAt": "2026-10-19T20:36:53.317Z",
     "red": 45,
     "padding": 41,
     "adjusted": 18,
@@ -1280,7 +1280,7 @@
     "forensics": 27
   },
   "sessionStats": {
-    "checkedAt": "2026-10-19T20:02:20.725Z",
+    "checkedAt": "2026-10-19T20:36:51.806Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -3003,7 +3003,7 @@
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-19T20:02:20.764Z",
+    "checkedAt": "2026-10-19T20:36:51.835Z",
     "candidates": [
       "nebelhexe",
       "oshurpogchamp",
@@ -27851,7 +27851,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-19T20:02:20.774Z",
+    "checkedAt": "2026-10-19T20:36:51.843Z",
     "count": 333,
     "players": [
       {
@@ -30606,7 +30606,7 @@
     ]
   },
   "infantry": {
-    "checkedAt": "2026-10-19T20:02:24.846Z",
+    "checkedAt": "2026-10-19T20:36:54.731Z",
     "players": 13195,
     "counts": {
       "infantry": 8703,
@@ -30663,7 +30663,7 @@
       }
     },
     "tagMin": 20,
-    "checkedAt": "2026-10-19T20:02:23.110Z",
+    "checkedAt": "2026-10-19T20:36:53.249Z",
     "coverage": {
       "players": 13175,
       "withSessions": 8525,
@@ -30974,7 +30974,7 @@
   },
   "burst": {
     "rule": "KPM ≥ 5 and ≥ 15 kills in ≥ 2 min (one stored session, no 10-minute floor)",
-    "checkedAt": "2026-10-19T20:02:27.000Z",
+    "checkedAt": "2026-10-19T20:36:56.507Z",
     "sessions": 11,
     "flaggedPlayers": 0,
     "clearedPlayers": 2,
@@ -30992,7 +30992,8 @@
         "status": "review",
         "cleared": false,
         "hidden": true,
-        "reason": null
+        "reason": null,
+        "rampage": true
       },
       {
         "slug": "youhavebeenkickedfromtheserver",
@@ -31020,7 +31021,8 @@
         "status": "review",
         "cleared": false,
         "hidden": true,
-        "reason": null
+        "reason": null,
+        "rampage": true
       },
       {
         "slug": "cheetler",
@@ -31034,7 +31036,8 @@
         "status": "review",
         "cleared": false,
         "hidden": true,
-        "reason": null
+        "reason": null,
+        "rampage": true
       },
       {
         "slug": "getoutofhere",
@@ -31048,7 +31051,8 @@
         "status": "review",
         "cleared": false,
         "hidden": true,
-        "reason": null
+        "reason": null,
+        "rampage": true
       },
       {
         "slug": "safgsas",
@@ -31062,7 +31066,8 @@
         "status": "review",
         "cleared": false,
         "hidden": true,
-        "reason": null
+        "reason": null,
+        "rampage": true
       },
       {
         "slug": "flodmoon",
@@ -31076,7 +31081,8 @@
         "status": "review",
         "cleared": false,
         "hidden": true,
-        "reason": null
+        "reason": null,
+        "rampage": true
       },
       {
         "slug": "add1ti0nal",
@@ -31104,7 +31110,8 @@
         "status": "cheater",
         "cleared": false,
         "hidden": true,
-        "reason": "Confirmed cheater 2026-10-19 (burst review): Owner: CONFIRMED CHEATER (rampage). 175 LMG kills in about 15 min, 122 headshots (69.7%), 100% hipfire, 0 aim-down-sights."
+        "reason": "Confirmed cheater 2026-10-19 (burst review): Owner: CONFIRMED CHEATER (rampage). 175 LMG kills in about 15 min, 122 headshots (69.7%), 100% hipfire, 0 aim-down-sights.",
+        "rampage": true
       },
       {
         "slug": "enablescaleformfonts1",
@@ -31137,7 +31144,7 @@
     ]
   },
   "padderPenalty": {
-    "checkedAt": "2026-10-19T20:02:20.802Z",
+    "checkedAt": "2026-10-19T20:36:51.865Z",
     "ranked": 13133,
     "penalty": 0.1,
     "ref": 610.6,
@@ -31358,7 +31365,7 @@
     ]
   },
   "vehicleCut": {
-    "checkedAt": "2026-10-19T20:02:20.846Z",
+    "checkedAt": "2026-10-19T20:36:51.906Z",
     "ranked": 13133,
     "cut": 7954,
     "buckets": {
@@ -33766,6 +33773,133 @@
         "after": 455,
         "rankBefore": 6001,
         "rankAfter": 5311
+      }
+    ]
+  },
+  "rampage": {
+    "rule": "💥 burst session (KPM ≥ 5, ≥ 15 kills, ≥ 2 min) with ≥ 50 infantry kills, hipfire ≥ 90% and headshots ≥ 55% of them",
+    "thresholds": {
+      "MIN_KILLS": 50,
+      "HIP": 0.9,
+      "HSR": 0.55
+    },
+    "checkedAt": "2026-10-19T20:35:40.215Z",
+    "checked": 10,
+    "errors": 0,
+    "pending": 0,
+    "players": 6,
+    "caught": [
+      {
+        "slug": "cheetler",
+        "name": "cheetler",
+        "cid": "5429841912863323873",
+        "session": "77410391",
+        "inf": 1073,
+        "kills": 1074,
+        "minutes": 149.4,
+        "kpm": 7.19,
+        "startMs": 1790383431000,
+        "hsPct": 71,
+        "hipPct": 100,
+        "ads": 1,
+        "evidence": "session 77410391: 1073 infantry kills in 149.4 min (KPM 7.19), 762 headshots (71%), hipfire 100%, ADS 1",
+        "hiddenBy": "owner"
+      },
+      {
+        "slug": "getoutofhere",
+        "name": "GetOutOfHere",
+        "cid": "5429841912863378529",
+        "session": "77460886",
+        "inf": 456,
+        "kills": 952,
+        "minutes": 143.7,
+        "kpm": 6.63,
+        "startMs": 1790679534000,
+        "hsPct": 98,
+        "hipPct": 97,
+        "ads": 12,
+        "evidence": "session 77460886: 456 infantry kills in 143.7 min (KPM 6.63), 447 headshots (98%), hipfire 97%, ADS 12",
+        "hiddenBy": "owner"
+      },
+      {
+        "slug": "flodmoon",
+        "name": "Flodmoon",
+        "cid": "5429845372588836993",
+        "session": "77654598",
+        "inf": 378,
+        "kills": 378,
+        "minutes": 45.8,
+        "kpm": 8.25,
+        "startMs": 1791821027000,
+        "hsPct": 96,
+        "hipPct": 98,
+        "ads": 9,
+        "evidence": "session 77654598: 378 infantry kills in 45.8 min (KPM 8.25), 364 headshots (96%), hipfire 98%, ADS 9",
+        "hiddenBy": "owner"
+      },
+      {
+        "slug": "fiodmoon",
+        "name": "FIodmoon",
+        "cid": "5429845372588854625",
+        "session": "77656142",
+        "inf": 266,
+        "kills": 1852,
+        "minutes": 112.1,
+        "kpm": 16.53,
+        "startMs": 1791827557000,
+        "hsPct": 94,
+        "hipPct": 99,
+        "ads": 3,
+        "evidence": "session 77656142: 266 infantry kills in 112.1 min (KPM 16.53), 250 headshots (94%), hipfire 99%, ADS 3",
+        "hiddenBy": "owner"
+      },
+      {
+        "slug": "flodmoon",
+        "name": "Flodmoon",
+        "cid": "5429845372588836993",
+        "session": "77645705",
+        "inf": 238,
+        "kills": 253,
+        "minutes": 44.4,
+        "kpm": 5.7,
+        "startMs": 1791758014000,
+        "hsPct": 99,
+        "hipPct": 100,
+        "ads": 0,
+        "evidence": "session 77645705: 238 infantry kills in 44.4 min (KPM 5.7), 235 headshots (99%), hipfire 100%, ADS 0",
+        "hiddenBy": "owner"
+      },
+      {
+        "slug": "vanubestfaction2",
+        "name": "VanuBestFaction2",
+        "cid": "5429841912863370225",
+        "session": "77443917",
+        "inf": 177,
+        "kills": 177,
+        "minutes": 23.5,
+        "kpm": 7.53,
+        "startMs": 1790551047000,
+        "hsPct": 69,
+        "hipPct": 100,
+        "ads": 0,
+        "evidence": "session 77443917: 177 infantry kills in 23.5 min (KPM 7.53), 122 headshots (69%), hipfire 100%, ADS 0",
+        "hiddenBy": "owner"
+      },
+      {
+        "slug": "safgsas",
+        "name": "SAFGSAS",
+        "cid": "5429841912863362673",
+        "session": "77436216",
+        "inf": 117,
+        "kills": 667,
+        "minutes": 101.2,
+        "kpm": 6.59,
+        "startMs": 1790519248000,
+        "hsPct": 96,
+        "hipPct": 100,
+        "ads": 0,
+        "evidence": "session 77436216: 117 infantry kills in 101.2 min (KPM 6.59), 112 headshots (96%), hipfire 100%, ADS 0",
+        "hiddenBy": "owner"
       }
     ]
   }
