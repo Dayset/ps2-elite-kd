@@ -2371,6 +2371,10 @@ import {
     const b = document.querySelector('[data-mode="banded"]');
     if (b) b.hidden = !showDebugCols;
   }
+  /** The 🎥 Live button hides behind the same "show older debug stats" box. */
+  function syncLiveBtn() {
+    if (els.liveBtn) els.liveBtn.hidden = !showDebugCols;
+  }
   function syncChartModeUi() {
     if (!els.chartModeBar) return;
     syncSmoothBtn();
@@ -3181,8 +3185,10 @@ import {
       }
       if (lastStatsList) renderStatsTable(lastStatsList);
       syncSmoothBtn();
+      syncLiveBtn();
     });
   }
+  syncLiveBtn();
 
   /* Hide adjusted-iVi ≤ 0 players from the Rankings table browse (footer box). */
   if (els.hideZeroIviToggle) {
