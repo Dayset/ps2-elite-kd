@@ -3955,7 +3955,8 @@ import {
     syncUrlNames(successNames); // refresh re-opens exactly this comparison
     renderNameTokens();
     renderCacheChips();
-    suggestSharedCache(result.loaded); // fire-and-forget, never awaited
+    // 🎥 live.html batches its own /add calls (live.mjs, #33); the graph re-runs don't post.
+    if (!isLiveMode()) suggestSharedCache(result.loaded); // fire-and-forget, never awaited
     markRequested(result.loaded); // fire-and-forget: analyzed cached players get extra XP detail
     if (fresh) markFresh(result.loaded); // fire-and-forget: shared copy catches up (names only)
 
@@ -4083,7 +4084,11 @@ import {
    * shared data/ cache. Never blocks the UI; failures are console-only.
    * @param {{name:string, player:object}[]} loaded  result.loaded from loadEach
    */
-  function suggestSharedCache(loaded) {
+  function isLiveMode() {
+    return typeof document !== "undefined" && !!document.body && document.body.classList.contains("live-mode");
+  }
+
+  function suggestSharedCache(loaded, { quiet = isLiveMode() } = {}) {
     if (!WORKER_URL || typeof fetch === "undefined") return;
     const names = [];
     for (const { name, player } of loaded || []) {
@@ -4113,7 +4118,9 @@ import {
       .then((data) => {
         if (!data) return;
         if (Array.isArray(data.queued) && data.queued.length) {
-          showSharedAddNote(data.queued, data.etaMinutes);
+          // 🎥 live.html: no note over the feed (#33), console only.
+          if (quiet) console.info("[ps2-elite-kd] queued for the shared cache:", data.queued.join(", "));
+          else showSharedAddNote(data.queued, data.etaMinutes);
         }
         // Not queued for a transient reason → allow a retry on a later Analyze.
         for (const n of [...(data.unverified || []), ...(data.error ? names : [])]) {
@@ -4984,6 +4991,8 @@ import {
       isAnalyzing: () => !!activeRun,
       // 🎥 Live (#32): full Census fetch of one opponent in the background — no progress
       // modal, no chips; waits while an Analyze run is active; keeps a browser copy.
+      // 🎥 Live (#33): queue background-fetched opponents for the shared cache, no note.
+      queueSharedCache: (loaded) => suggestSharedCache(loaded, { quiet: true }),
       fetchPlayerBg: async (name) => {
         while (activeRun) await new Promise((r) => setTimeout(r, 1000));
         const p = await loadOne(name);

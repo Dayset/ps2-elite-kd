@@ -107,6 +107,17 @@ export function liveRowFromPlayer(player, name) {
   return o;
 }
 
+/** Shared-cache batching (#33): at most one POST /add a minute, at most 10 names each. */
+export const SHARE_EVERY_MS = 60000;
+export const SHARE_MAX = 10;
+/** ms to wait before the next /add flush: a full batch goes as soon as allowed, a partial one waits for the window. */
+export function shareDelay(now, lastSent, firstPendingAt, pending) {
+  if (!pending) return null;
+  const allowed = lastSent == null ? now : lastSent + SHARE_EVERY_MS;
+  const due = pending >= SHARE_MAX ? allowed : Math.max(allowed, firstPendingAt + SHARE_EVERY_MS);
+  return Math.max(0, due - now);
+}
+
 /** "1,357" / "2.80" / "—" for one cell. */
 export function cellText(col, v) {
   if (typeof v !== "number" || !Number.isFinite(v)) return "—";
@@ -258,7 +269,28 @@ function start() {
     bgBusy = false;
     bgPump();
   }
-  let onBgFetched = null;
+  // #33: background-fetched opponents → shared cache (/add), batched.
+  let sharePending = [], shareFirstAt = 0, shareLast = null, shareTimer = null;
+  function shareFlush() {
+    shareTimer = null;
+    const a = app();
+    if (!a || !a.queueSharedCache || !sharePending.length) return;
+    const batch = sharePending.splice(0, SHARE_MAX);
+    shareLast = Date.now();
+    shareFirstAt = shareLast;
+    a.queueSharedCache(batch);
+    shareSchedule();
+  }
+  function shareSchedule() {
+    if (shareTimer) clearTimeout(shareTimer);
+    const d = shareDelay(Date.now(), shareLast, shareFirstAt, sharePending.length);
+    shareTimer = d == null ? null : setTimeout(shareFlush, d);
+  }
+  const onBgFetched = (name, player) => {
+    if (!sharePending.length) shareFirstAt = Date.now();
+    sharePending.push({ name, player });
+    shareSchedule();
+  };
 
   async function onEvent(ev) {
     const p = await person(ev.opp);

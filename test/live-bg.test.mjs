@@ -19,3 +19,12 @@ test("liveRowFromPlayer: same LIVE_COLS numbers as the cache, Assists null (#32)
   assert.equal(row.apk, null);
   assert.equal(typeof row.rkd, "number");
 });
+
+import { shareDelay, SHARE_EVERY_MS } from "../live.mjs";
+test("shareDelay: one /add a minute, full batch of 10 goes as soon as allowed (#33)", () => {
+  assert.equal(shareDelay(1000, null, 1000, 0), null);
+  assert.equal(shareDelay(1000, null, 1000, 1), SHARE_EVERY_MS); // partial batch waits a minute to collect
+  assert.equal(shareDelay(5000, null, 1000, 10), 0); // full batch, nothing sent yet
+  assert.equal(shareDelay(5000, 1000, 2000, 10), SHARE_EVERY_MS - 4000); // full, but sent 4 s ago
+  assert.equal(shareDelay(100000, 1000, 2000, 2), 0); // window passed
+});
