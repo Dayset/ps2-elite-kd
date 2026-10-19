@@ -24,6 +24,7 @@ import { markNote, statMark, confirmedPadderSlugs, isFarmListed, isNotFarm, farm
 import { sprout, sampleEvents, farmAccount } from "../sprouts.mjs";
 import { findOutliers, guardStatus, KNOWN_EXTREMES } from "../outlier-guard.mjs";
 import { infantryTagCounts, INFANTRY_TAG, infantryShares } from "../infantry.mjs";
+import { VEH_CUT } from "../vehicle-cut.mjs";
 import { forensicsSummary, honuSessionUrl } from "../session-forensics.mjs";
 import { hiddenList, isConfirmedCheater } from "../hidden.mjs";
 import { cleanTimes } from "../flairs.mjs";
@@ -236,11 +237,15 @@ export function buildRanksWithGuard(dataDir) {
       if (!info || !info.hidden) row.push(sm && sm.measured && Number.isFinite(sm.values.s_apk) ? Math.round(sm.values.s_apk * 1000) / 1000 : null);
       // 🫡 Infantry: % of lifetime weapon-stat kills on foot (MAX counted as infantry) + MAX / vehicle % for hover; null until filled.
       if (!info || !info.hidden) { const sh = infantryShares(pl.infantry); row.push(sh ? sh.inf : null, sh ? sh.max : null, sh ? sh.veh : null); }
-      players.push({ poop: !!m.poop, adjsBase: m.poop && !m.thin ? m.adjsBase : null, confirmedPadder: confirmed.has(row[2]), infTag: (pl.infantry && pl.infantry.v >= 2 && pl.infantry.tag) || null, slug: row[2], name: row[0], cid: String(np.cid || ""), farmAcct: !!(fa && fa.farm), flagged: f.flagged || sf.flagged || fx.flagged, patterns, values, session: sm, sessionFlag: sf, forensics: fx, row, hidden: !!(info && info.hidden), confirmedCheater: !!(info && info.confirmedCheater) });
+      // 🚜 vehicle cut on ⚔️ iVi (vehicle-cut.mjs, inside playerMetrics): cut % (1 decimal) for the ‡ hover; null = no cut.
+      const vcut = m.vehCut > 0 && !m.thin ? Math.round(m.vehCut * 1000) / 10 : null;
+      if (!info || !info.hidden) row.push(vcut);
+      players.push({ vehCut: vcut, vehShare: Number.isFinite(m.vehShare) ? m.vehShare : null, vehOnly: Number.isFinite(m.vehOnly) ? m.vehOnly : null, maxShare: Number.isFinite(m.maxShare) ? m.maxShare : null, adjsPreVeh: vcut != null ? m.adjsPreVeh : null, vehCutCleared: !!m.vehCutCleared, poop: !!m.poop, adjsBase: m.poop && !m.thin ? m.adjsBase : null, confirmedPadder: confirmed.has(row[2]), infTag: (pl.infantry && pl.infantry.v >= 2 && pl.infantry.tag) || null, slug: row[2], name: row[0], cid: String(np.cid || ""), farmAcct: !!(fa && fa.farm), flagged: f.flagged || sf.flagged || fx.flagged, patterns, values, session: sm, sessionFlag: sf, forensics: fx, row, hidden: !!(info && info.hidden), confirmedCheater: !!(info && info.confirmedCheater) });
     },
   });
   ranks.cols.push("apk"); // 🤝 trailing column (see onPlayer); not part of RANK_COLS / rankRow
   ranks.cols.push("inf", "infMax", "infVeh"); // 🫡 trailing columns (see onPlayer), % of lifetime kills
+  ranks.cols.push("vcut"); // 🚜 ‡ vehicle cut % on adjs (adjs is already cut)
   const found = findOutliers(players, [...METRIC_COLS, ...SESSION_METRIC_IDS]);
   found.items.push(...forensicsGuardItems(players));
   const guard = guardStatus(found);
@@ -249,6 +254,7 @@ export function buildRanksWithGuard(dataDir) {
     forensics: forensicsStatus(players, guard, forensics),
     review: reviewStatus(players, guard, forensics, farmFound),
     padderPenalty: padderPenaltyStatus(players, ranks),
+    vehicleCut: vehicleCutStatus(players, ranks),
     assistGroups: assistGroups(players), // 🤝 groups stay build-log only (the 🤝 apk column itself is public since t382u)
   };
 }
@@ -283,6 +289,43 @@ export function padderPenaltyStatus(players, ranks) {
     rule: `Confirmed stat padders (data/reviewed.json "padding") get 💩 and −${PADDER_PENALTY * 100}% adjusted iVi, on top of the farm-kill removal and the * mark. A score at or below 0 gets a fixed −${Math.round(PADDER_PENALTY * PADDER_PENALTY_REF)} instead (10% of ${PADDER_PENALTY_REF}, the median positive iVi on 2026-10-19), so it always drops. Owner override: "penalty": "cleared" on the reviewed.json entry (or decision "cleared").`,
     penalized: list.filter((x) => x.status === "penalized").length, cleared: list.filter((x) => x.status === "cleared").length,
     players: list,
+  };
+}
+
+/**
+ * status.json "vehicleCut" (build-log 🚜, owner-approved 2026-10-19): players whose
+ * ⚔️ adjusted iVi is cut by their vehicle-kill share (vehicle-cut.mjs). ranks.json
+ * already carries the cut numbers; "before" = the same score without this cut
+ * (the 💩 penalty stays in both). Ranks = position by adjusted iVi among ranked
+ * players with a value. Lists the TOP_N highest-ranked cut players (before) plus
+ * the owner-exempted ones (data/reviewed.json "vehicleCutCleared").
+ */
+const WATCH = new Set(["igorrrrrr", "renamedsoldier12345", "pikaqiuill", "loontiq", "zugie", "nebelhexe", "shlodog", "lilkavs", "kijax", "libo2"]);
+export function vehicleCutStatus(players, ranks, { topN = 150 } = {}) {
+  const ia = ranks.cols.indexOf("adjs"), is = ranks.cols.indexOf("slug");
+  const fin = (v) => typeof v === "number" && Number.isFinite(v);
+  const after = new Map(ranks.rows.filter((r) => fin(r[ia])).map((r) => [r[is], r[ia]]));
+  const before = new Map(after);
+  const live = players.filter((p) => !p.hidden);
+  const cut = live.filter((p) => p.vehCut != null && fin(p.adjsPreVeh) && after.has(p.slug));
+  for (const p of cut) before.set(p.slug, p.adjsPreVeh);
+  const rankOf = (map) => { const o = [...map.entries()].sort((a, b) => b[1] - a[1]); return new Map(o.map(([s], i) => [s, i + 1])); };
+  const rb = rankOf(before), ra = rankOf(after);
+  const r1 = (v) => (fin(v) ? Math.round(v * 10) / 10 : null);
+  const pc = (v) => (fin(v) ? Math.round(v * 1000) / 10 : null);
+  const row = (p) => ({
+    slug: p.slug, name: p.name, cid: p.cid, share: pc(p.vehShare), veh: pc(p.vehOnly), max: pc(p.maxShare), cut: p.vehCut,
+    before: r1(before.get(p.slug)), after: r1(after.get(p.slug)), rankBefore: rb.get(p.slug) || null, rankAfter: ra.get(p.slug) || null,
+  });
+  const list = cut.map(row).sort((a, b) => (a.rankBefore || 1e9) - (b.rankBefore || 1e9));
+  const buckets = { "≤5%": 0, "5–10%": 0, "10–15%": 0, "15–<20%": 0, "20% (cap)": 0 };
+  for (const x of list) buckets[x.cut <= 5 ? "≤5%" : x.cut <= 10 ? "5–10%" : x.cut <= 15 ? "10–15%" : x.cut < 20 ? "15–<20%" : "20% (cap)"]++;
+  const cleared = live.filter((p) => p.vehCutCleared).map((p) => ({ slug: p.slug, name: p.name, cid: p.cid, share: pc(p.vehShare), veh: pc(p.vehOnly), max: pc(p.maxShare) }));
+  return {
+    checkedAt: new Date().toISOString(), ranked: after.size, cut: list.length, buckets, rule: VEH_CUT,
+    withData: live.filter((p) => p.vehShare != null).length,
+    players: list.slice(0, topN), cleared,
+    watch: list.filter((x) => WATCH.has(x.slug)),
   };
 }
 
@@ -529,7 +572,7 @@ if (isMain) {
   // newly hidden players via the normal hidden path.
   const autoHidden = autoHideFreshExceptional(dataDir);
   if (autoHidden.length) console.log(`auto-hide: ${autoHidden.length} fresh exceptional account(s) added to hidden.json: ${autoHidden.map((a) => a.name).join(", ")}`);
-  const { ranks: out, guard, hidden: hiddenInfo, bins, session, forensics: forensicsInfo, review, assistGroups: assistInfo, padderPenalty: padderInfo } = buildRanksWithGuard(dataDir);
+  const { ranks: out, guard, hidden: hiddenInfo, bins, session, forensics: forensicsInfo, review, assistGroups: assistInfo, padderPenalty: padderInfo, vehicleCut: vehCutInfo } = buildRanksWithGuard(dataDir);
   fs.writeFileSync(path.join(dataDir, "ranks.json"), JSON.stringify(out) + "\n");
   console.log(`ranks.json: ${out.count} players (${hiddenInfo.count} on the 🙈 hide list)`);
   // 🧪 Outlier guard → data/status.json (build-log.html). Other status fields are kept.
@@ -544,6 +587,8 @@ if (isMain) {
   st.review = review;
   st.assistGroups = assistInfo;
   st.padderPenalty = padderInfo; // 💩 build-log list (ranks.json already has the penalized numbers)
+  st.vehicleCut = vehCutInfo; // 🚜 build-log list (ranks.json already has the cut numbers)
+  console.log(`vehicle cut: ${vehCutInfo.cut} of ${vehCutInfo.withData} players with infantry data cut, ${vehCutInfo.cleared.length} exempted by the owner`);
   console.log(`padder penalty: ${padderInfo.penalized} penalized, ${padderInfo.cleared} cleared by the owner`);
   st.infantry = infantryStatus(dataDir);
   st.burst = burstStatus(dataDir); // 💥 review signal only: never changes ranks.json

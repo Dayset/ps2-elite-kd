@@ -146,6 +146,11 @@
       <div id="poopRule" class="st-rule"></div>
       <div id="poop" class="st-dim">Loading…</div>
       </details>
+      <details class="st-sub-sec" id="secVehCut">
+      <summary><h3>🚜 Vehicle / MAX cut (‡, up to −20% iVi) <span id="vcutCount" class="st-count">…</span></h3></summary>
+      <div id="vcutRule" class="st-rule">Automatic: ⚔️ adjusted iVi is cut by the share of lifetime kills NOT made as plain infantry: vehicle / turret kills + MAX-weapon kills, added together on one curve with one cap (never −40%). No cut up to 10%, growing linearly to −20% at 60%+. No infantry data (or under 100 kills) = no cut. Applied after the 💩 padder penalty (they stack). A score at or below 0 gets a fixed drop (cut × 610.6) so it never rises. Public: ‡ after the iVi value with the reason on hover. Owner override: data/reviewed.json "vehicleCutCleared": { "slug": { "note": "…", "at": "YYYY-MM-DD" } }.</div>
+      <div id="vcut" class="st-dim">Loading…</div>
+      </details>
       <details class="st-sub-sec" id="secAdjusted">
       <summary><h3>† Adjusted (auto-accepted) <span id="adjCount" class="st-count">…</span></h3></summary>
       <div id="adjRule" class="st-rule"></div>
@@ -975,6 +980,26 @@
       renderForensics(st);
       renderBurst(st);
       try { renderPoop(st); } catch (e) { console.warn(e); }
+      try { renderVehCut(st); } catch (e) { console.warn(e); }
+    }
+
+    /** 🚜 Vehicle cut (status.json "vehicleCut", scripts/build-ranks.mjs): top cut players with vehicle %, cut %, iVi and rank before / after. */
+    function renderVehCut(st) {
+      const b = st && st.vehicleCut;
+      const items = (b && b.players) || [];
+      const n = (v) => (typeof v === "number" ? Math.round(v).toLocaleString() : "—");
+      const rk = (v) => (v ? "#" + v.toLocaleString() : "—");
+      $("vcutCount").textContent = b ? Number(b.cut).toLocaleString() : "?";
+      if (!b) { $("vcut").innerHTML = "Not built yet (next refresh)."; return; }
+      const bk = Object.entries(b.buckets || {}).map(([k, v]) => esc(k) + " " + Number(v).toLocaleString()).join(" · ");
+      const cl = (b.cleared || []).length
+        ? '<div style="margin-top:6px;">✅ Exempted by the owner: ' + b.cleared.map((c) => nameCell(c) + (c.veh != null ? " (vehicle " + c.veh + "% + MAX " + c.max + "%)" : "")).join(", ") + "</div>"
+        : '<div class="st-dim" style="margin-top:6px;">No owner exemptions.</div>';
+      $("vcut").innerHTML =
+        '<div class="st-dim" style="margin-bottom:6px;">' + Number(b.cut).toLocaleString() + " of " + Number(b.withData).toLocaleString() + " players with infantry data are cut (" + bk + "). Ranks among " + Number(b.ranked).toLocaleString() + " ranked players by ⚔️ adjusted iVi; “before” = without this cut. Showing the " + items.length + " highest-ranked cut players.</div>" +
+        '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th>Vehicle kills</th><th>MAX kills</th><th>Cut</th><th>iVi before</th><th>iVi after</th><th>Rank before</th><th>Rank after</th></tr>' +
+        items.map((i) => "<tr><td>" + nameCell(i) + " ‡</td><td>" + (i.veh != null ? i.veh + "%" : "—") + "</td><td>−" + i.cut + "%</td><td>" + n(i.before) + "</td><td>" + n(i.after) + "</td><td>" + rk(i.rankBefore) + "</td><td>" + rk(i.rankAfter) + "</td></tr>").join("") +
+        "</table></div>" + cl;
     }
 
     /** 💩 Padder penalty (status.json "padderPenalty", scripts/build-ranks.mjs): before / after iVi and rank per confirmed padder. */
