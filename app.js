@@ -4982,6 +4982,14 @@ import {
       getNameTokens: () => nameTokens.slice(),
       cancelAnalyze,
       isAnalyzing: () => !!activeRun,
+      // 🎥 Live (#32): full Census fetch of one opponent in the background — no progress
+      // modal, no chips; waits while an Analyze run is active; keeps a browser copy.
+      fetchPlayerBg: async (name) => {
+        while (activeRun) await new Promise((r) => setTimeout(r, 1000));
+        const p = await loadOne(name);
+        if (p && String(p.source || "").startsWith("live:")) cachePut(name, p);
+        return p;
+      },
       getLastAnalyzedNames: () => lastAnalyzedNames.slice(),
       getFailedNames: () => [...failedNames.values()].map((f) => ({ ...f })),
       getPlayerNames: () => players.map((p) => p.display),

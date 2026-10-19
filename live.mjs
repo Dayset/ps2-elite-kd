@@ -4,10 +4,12 @@
  *   - lists the last 6 opponents (one row per person, repeats bump the count);
  *     on a kill our name sits on top, on a death the killer's name does;
  *   - pops cached opponents onto the skill graph (target + last 5 cached);
- *   - never fetches an uncached opponent's history: name + Census K/D only.
+ *   - uncached opponents first show Census K/D · KPM, then get a full 200-opponent Census
+ *     fetch in the background (one at a time, newest first, #32) and upgrade in place.
  * Pure helpers are exported for tests; the DOM part runs only in a browser.
  */
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
+import { normalizePlayer, playerMetrics, shownValue } from "./player-metrics.mjs?v=20261010-sav1";
 
 export const FEED_MAX = 6;
 export const GRAPH_OPPONENTS = 5; // + the target = MAX_NAMES (6)
@@ -84,6 +86,26 @@ export const LIVE_COLS = Object.freeze([
   { id: "apk", label: "🤝 Assists", digits: 2, tip: "Assists per kill in recent Honu sessions." },
   { id: "rkd", label: "☠️ K/D", digits: 3, tip: "Kills ÷ deaths against the ~200 players you fight most." },
 ]);
+
+/**
+ * Background-fetch queue step (#32): next opponent cid to fetch = newest-first queue entry
+ * that is still in the feed and was never tried this page load; or null.
+ */
+export function nextBgFetch(queue, rows, tried) {
+  const inFeed = new Set((rows || []).map((r) => r.opp));
+  return (queue || []).find((cid) => inFeed.has(cid) && !(tried && tried.has(cid))) || null;
+}
+
+/** A fetched player (app.js loadOne) → the LIVE_COLS row the cache would give; Assists is Honu-only (null). */
+export function liveRowFromPlayer(player, name) {
+  const m = playerMetrics(normalizePlayer(player));
+  const o = { name: name || (player && player.display) || "" };
+  for (const c of LIVE_COLS) {
+    const v = c.id === "apk" ? null : shownValue(m, c.id);
+    o[c.id] = typeof v === "number" && Number.isFinite(v) ? v : null;
+  }
+  return o;
+}
 
 /** "1,357" / "2.80" / "—" for one cell. */
 export function cellText(col, v) {
@@ -202,17 +224,49 @@ function start() {
     if (graphWant) syncGraph();
   }
 
+  function toGraph(p) {
+    cachedOrder = [p.cached.name, ...cachedOrder.filter((n) => n !== p.cached.name)];
+    const want = graphNames(target, cachedOrder);
+    const now = (app() && app().getNameTokens()) || [];
+    if (want.join("\n") !== now.join("\n")) { graphWant = want; syncGraph(); }
+  }
+
+  // #32: uncached opponents → full Census fetch in the background, one at a time.
+  let bgQueue = []; // cids, newest first
+  const bgTried = new Set();
+  let bgBusy = false;
+  async function bgPump() {
+    const a = app();
+    if (bgBusy || !a || !a.fetchPlayerBg) return;
+    const cid = nextBgFetch(bgQueue, rows, bgTried);
+    bgQueue = bgQueue.filter((c) => rows.some((r) => r.opp === c) && !bgTried.has(c));
+    if (!cid) return;
+    bgTried.add(cid);
+    bgQueue = bgQueue.filter((c) => c !== cid);
+    const p = people.get(cid);
+    if (!p || p.cached || p.name.startsWith("#")) { bgPump(); return; }
+    bgBusy = true;
+    try {
+      const player = await a.fetchPlayerBg(p.name);
+      if (player) {
+        p.cached = liveRowFromPlayer(player, p.name);
+        render();
+        if (rows.some((r) => r.opp === cid)) toGraph(p);
+        if (typeof onBgFetched === "function") onBgFetched(p.name, player);
+      }
+    } catch { /* keep the K/D · KPM row; never retried this page load */ }
+    bgBusy = false;
+    bgPump();
+  }
+  let onBgFetched = null;
+
   async function onEvent(ev) {
     const p = await person(ev.opp);
     const res = feedPush(rows, ev);
     rows = res.rows;
     render(res.dropped);
-    if (p.cached) {
-      cachedOrder = [p.cached.name, ...cachedOrder.filter((n) => n !== p.cached.name)];
-      const want = graphNames(target, cachedOrder);
-      const now = (app() && app().getNameTokens()) || [];
-      if (want.join("\n") !== now.join("\n")) { graphWant = want; syncGraph(); }
-    }
+    if (p.cached) toGraph(p);
+    else if (!bgTried.has(ev.opp)) { bgQueue = [ev.opp, ...bgQueue.filter((c) => c !== ev.opp)]; bgPump(); }
   }
 
   let ws = null, backoff = 2000;
