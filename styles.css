@@ -2687,7 +2687,7 @@ col.lv-c-statR { width: calc(7.143% - 3.3214ch); }
 
 /* ======================================================================
  * ✨ Stats ⇄ 🏅 Positions (2026-10-19): one spot, two modes, one look.
- * stats-carousel.mjs moves .sc-track; both tables share fonts, number
+ * .sc-viewport scroll-snaps between them; both tables share fonts, number
  * alignment (right), weights and column widths so a switch keeps every
  * number in place.
  * ====================================================================== */
@@ -2704,9 +2704,14 @@ col.lv-c-statR { width: calc(7.143% - 3.3214ch); }
 .sc-dots { display: inline-flex; gap: 5px; margin-left: auto; padding-right: 0.2rem; }
 .sc-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); transition: background 0.2s, transform 0.2s; }
 .sc-dot.on { background: var(--accent); transform: scale(1.25); }
-.sc-viewport { overflow: hidden; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); transition: height 0.26s cubic-bezier(0.22, 0.8, 0.3, 1); touch-action: pan-x pan-y; }
-.sc-track { display: flex; align-items: flex-start; will-change: transform; }
-.sc-slide { flex: 0 0 100%; min-width: 0; }
+/* Native scroll-snap (2026-10-19): the browser moves the slides on the compositor at the
+ * screen's own rate (the old JS drag ran on the main thread and stuttered on phones).
+ * A table that can still scroll sideways keeps the swipe; at its edge the swipe passes
+ * on to the slides. align-items: stretch = both modes always the same height. */
+.sc-viewport { overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; -webkit-overflow-scrolling: touch; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); }
+.sc-viewport::-webkit-scrollbar { display: none; }
+.sc-track { display: flex; align-items: stretch; }
+.sc-slide { flex: 0 0 100%; min-width: 0; scroll-snap-align: start; scroll-snap-stop: always; }
 
 /* Shared frame: the viewport is the box; the inner boxes lose theirs. */
 .stats-carousel .stats-panel { margin: 0; }
