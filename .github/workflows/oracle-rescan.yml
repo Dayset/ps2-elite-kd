@@ -1,0 +1,31 @@
+name: Oracle rescan
+
+# Re-scores every stored alert with the standard and the cut-aware odds
+# (oracle-worker/rescan.mjs) and checks which view matches Census' final scores.
+# Read-only: public Worker endpoints only. Results in the run summary.
+
+on:
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "Days of main-database history to add to the archive (max 30)"
+        default: "30"
+  schedule:
+    - cron: "17 6 * * 1"   # weekly, Monday 06:17 UTC
+
+permissions:
+  contents: read
+
+jobs:
+  rescan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Rescan
+        env:
+          ORACLE_API: ${{ vars.ORACLE_API || 'https://ps2-oracle.dayset.workers.dev' }}
+        run: node oracle-worker/rescan.mjs --days "${{ inputs.days || '30' }}"

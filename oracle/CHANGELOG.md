@@ -233,3 +233,22 @@ approved it, "shipped" means it is live in the running pipeline.
   37"), from the new Worker endpoint `/alert/frames?key=` (per-minute base owners
   from stored snapshots, first frame full then changes only; snapshots are kept 30
   days). Works for live alerts too. Heat/🥶 markers hide while replaying.
+
+## 2026-10-18 (night): archive and cut-aware odds (measuring)
+
+- **Finding:** a base cut off from its faction's warpgate stops counting toward
+  the alert score, but the Census map still shows it as owned, so the engine read
+  cut bases as held. Example: 10-4-46315 ended with 4 VS bases cut; Census scored
+  VS 21.2 %, the raw map said 26.1 %, cut-aware 21.6 %. One counter-example
+  (1-4-49349, Johari Cove cut ~2 min before the end, still counted), so it is
+  being measured before the live odds change.
+- **Shipped (Worker):** `cut.js` (bases cut off from their warpgate; cut-aware
+  snapshot), live `state.cut` list, and a `_cut` benchmark slice next to each
+  checkpoint. Live odds unchanged.
+- **Shipped (Worker):** alert archive in a second D1 database (`ps2-oracle-archive`):
+  every finished alert bundled once and kept for good; `/archive`, `/archive/list`,
+  keyed `/archive/ingest` for backfills.
+- **Rescan job** (`oracle-rescan.yml`, `oracle-worker/rescan.mjs`): re-scores every
+  stored alert with standard and cut-aware odds from the same per-minute maps
+  (Brier early/mid/late and on minutes with cut bases) and checks which view
+  matches Census' final scores. Weekly and on demand.

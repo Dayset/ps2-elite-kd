@@ -51,7 +51,8 @@ CREATE TABLE IF NOT EXISTS alert (
   state TEXT,                    -- latest live state (push_live contract)
   commander TEXT,                -- latest commander block (Worker /internal/commander fan-out)
   commander_ts INTEGER,
-  updated INTEGER NOT NULL
+  updated INTEGER NOT NULL,
+  archived_ts INTEGER                -- copied to the archive database (ARCHIVE) at this time
 );
 CREATE INDEX IF NOT EXISTS alert_status ON alert (status);
 CREATE INDEX IF NOT EXISTS alert_start ON alert (start_ts);

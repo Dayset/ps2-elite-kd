@@ -22,6 +22,8 @@ import { binGetter, hasTree, regionMap, latticeFor, captureModel, resistanceMode
 import { runCommander, ownership, applyElimination } from "./commander.js";
 import { handleAuth } from "./auth.js";
 import { handleVote, settleStatements } from "./vote.js";
+import { cutAwareSnap } from "./cut.js";
+import { alertFrames, archiveAlert, nextToArchive, putBundle, validBundle } from "./archive.js";
 export { AuthWatcher } from "./auth-watcher.js";
 
 const CENSUS = "https://census.daybreakgames.com";
@@ -254,6 +256,11 @@ export async function runCycle(env, nowMs = Date.now()) {
       if (!(a.world in snap10)) snap10[a.world] = await latestSnap(db, a.world, now - 600);
       const suspect = dataSuspect(zNow, snapNow.ts, snap10[a.world], a.zone, flips10.get(`${a.world}-${a.zone}`) || 0, now, alertKind(a.event_id));
       if (suspect.length) { state.suspect = suspect; (report.suspect ||= {})[a.key] = suspect; }
+      // Bases cut off from their warpgate (the game stops scoring them). Logged as the
+      // "_cut" benchmark variant; the live odds switch only if the rescan backs it.
+      const kindNow = alertKind(a.event_id);
+      const cutNow = kindNow === "meltdown" ? null : cutAwareSnap(zNow, a.zone);
+      if (cutNow && cutNow.cut.length) state.cut = cutNow.cut.map((c) => ({ fid: c.fid, name: c.name, fac: c.fac }));
       const p = await popFor(a.world, a.zone);
       if (p) {
         state.pop = { VS: p.vs, NC: p.nc, TR: p.tr };
@@ -283,6 +290,12 @@ export async function runCycle(env, nowMs = Date.now()) {
           if (pa) slices.t0_pop = sliceOf(pa, t);
         } else if (t <= m + 5) {
           slices[label] = sliceOf(state.win, t);
+          if (cutNow) {
+            const c15 = z15 ? cutAwareSnap(z15, a.zone) : null;
+            const fc = cutNow.cut.length || (c15 && c15.cut.length)
+              ? forecast({ getBin: binGetter(a.zone), kind: kindNow, snapNow: cutNow.snap, snap15: c15 ? c15.snap : null, t, dur }).win : state.win;
+            slices[label + "_cut"] = sliceOf(fc, t);
+          }
           if (state.win_raw) { slices[label + "_raw"] = sliceOf(state.win_raw, t); slices[label + "_v0"] = sliceOf(state.win_v0, t); }
           const pa = state.win_popadj;
           if (pa) slices[label + "_pop"] = sliceOf(pa, t);
@@ -479,6 +492,7 @@ async function fanOut(env, path, fn, keys, nowMs) {
   }));
 }
 export const fanOutCommander = (env, keys, nowMs = Date.now()) => fanOut(env, "commander", commanderFor, keys, nowMs);
+export const fanOutArchive = (env, keys, nowMs = Date.now()) => fanOut(env, "archive", archiveAlert, keys, nowMs);
 
 // ---------------------------------------------------------------- Honu bridge
 
@@ -606,25 +620,7 @@ async function handle(request, env) {
     const key = url.searchParams.get("key") || "";
     const a = await db.prepare("SELECT world, zone, start_ts, dur, status, end_ts FROM alert WHERE key=?").bind(key).first();
     if (!a) return json({ error: "not_found" }, 404);
-    const r2f = regionMap(a.zone);
-    const until = (a.end_ts || a.start_ts + a.dur * 60) + 60;
-    const rows = (await db.prepare(`SELECT ts, json_extract(zones, '$.' || ?) AS z FROM snap WHERE world=? AND ts BETWEEN ? AND ? ORDER BY ts`)
-      .bind(String(a.zone), a.world, a.start_ts - 60, until).all()).results || [];
-    const frames = [];
-    let prev = {};
-    for (const row of rows) {
-      if (!row.z) continue;
-      const cur = {};
-      for (const [region, fac] of Object.entries(JSON.parse(row.z))) {
-        const fid = r2f ? r2f[String(region)] : region;
-        if (fid) cur[fid] = FAC_NAME[fac] || null;
-      }
-      const set = {};
-      for (const [fid, o] of Object.entries(cur)) if (prev[fid] !== o || !frames.length) set[fid] = o;
-      for (const fid of Object.keys(prev)) if (!(fid in cur)) set[fid] = null;
-      if (!frames.length || Object.keys(set).length) frames.push({ t: Math.round(((row.ts - a.start_ts) / 60) * 10) / 10, set });
-      prev = cur;
-    }
+    const frames = await alertFrames(db, a);
     const final = a.status !== "live" && a.status !== "settling" && a.status !== "sudden_death";
     return json({ key, start_ts: a.start_ts, dur: a.dur, frames }, 200, { "Cache-Control": final ? "public, max-age=86400" : "no-store" });
   }
@@ -669,6 +665,43 @@ async function handle(request, env) {
     const metagame = (await db.prepare("SELECT * FROM metagame WHERE world=? AND ts>=? ORDER BY ts").bind(world, since - 6 * 3600).all()).results || [];
     const flips = (await db.prepare("SELECT * FROM flip WHERE world=? AND zone=? AND ts>=? ORDER BY ts").bind(world, zone, since - 1800).all()).results || [];
     return json({ world, zone, snaps, metagame, flips }, 200, { "Cache-Control": "no-store" });
+  }
+
+  if (url.pathname === "/internal/archive" && request.method === "POST") {
+    if (!authed(request, env)) return json({ error: "forbidden" }, 403);
+    const body = await request.json().catch(() => null);
+    if (!body || typeof body.key !== "string") return json({ error: "bad_request" }, 400);
+    return json(await archiveAlert(env, body.key), 200, { "Cache-Control": "no-store" });
+  }
+
+  // ---- Archive (second D1 database): finished alerts kept for good ----
+  if (url.pathname === "/archive" && env.ARCHIVE) {
+    const r = await env.ARCHIVE.prepare("SELECT data FROM alert_archive WHERE key=?").bind(url.searchParams.get("key") || "").first();
+    if (!r) return json({ error: "not_found" }, 404);
+    return new Response(r.data, { headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400" } });
+  }
+  if (url.pathname === "/archive/list" && env.ARCHIVE) {
+    const before = +url.searchParams.get("before") || 4e9;
+    const limit = Math.min(500, Math.max(1, +url.searchParams.get("limit") || 200));
+    const src = url.searchParams.get("source");
+    const rows = (await env.ARCHIVE.prepare(`SELECT key, source, world, zone, instance_id, event_id, start_ts, dur, winner, basis, bytes FROM alert_archive
+      WHERE start_ts < ? ${src ? "AND source = ?" : ""} ORDER BY start_ts DESC LIMIT ?`).bind(...(src ? [before, src, limit] : [before, limit])).all()).results || [];
+    const tot = await env.ARCHIVE.prepare("SELECT COUNT(*) AS n, COALESCE(SUM(bytes),0) AS bytes FROM alert_archive").first();
+    return json({ total: tot.n, total_bytes: tot.bytes, alerts: rows }, 200, { "Cache-Control": "public, max-age=60" });
+  }
+  if (url.pathname === "/archive/ingest" && request.method === "POST" && env.ARCHIVE) {
+    // Backfill (e.g. PS2Alerts history) from a GitHub Actions job; never overwrites the Worker's own bundles.
+    if (!authed(request, env)) return json({ error: "forbidden" }, 403);
+    const body = await request.json().catch(() => null);
+    const list = Array.isArray(body && body.bundles) ? body.bundles.slice(0, 20) : [];
+    const res = [];
+    for (const b of list) {
+      if (!validBundle(b)) { res.push({ key: b && b.key, error: "invalid" }); continue; }
+      const own = await env.ARCHIVE.prepare("SELECT source FROM alert_archive WHERE key=?").bind(b.key).first();
+      if (own && own.source === "worker") { res.push({ key: b.key, skipped: "worker bundle exists" }); continue; }
+      res.push({ key: b.key, ok: true, bytes: await putBundle(env.ARCHIVE, b, now) });
+    }
+    return json({ results: res }, 200, { "Cache-Control": "no-store" });
   }
 
   if (url.pathname === "/internal/commander" && request.method === "POST") {
@@ -727,6 +760,11 @@ export default {
     ctx.waitUntil(runCycle(env, event.scheduledTime || Date.now()).then(async (rep) => {
       const res = await fanOutCommander(env, rep.live_keys);
       if (res.length) await setMeta(env.DB, "last_commander", { ts: Math.floor(Date.now() / 1000), results: res });
+      // Archive one finished alert per minute (own invocation; catches up on its own).
+      if (env.ARCHIVE) {
+        const k = await nextToArchive(env.DB);
+        if (k) await setMeta(env.DB, "last_archive", { ts: Math.floor(Date.now() / 1000), result: (await fanOutArchive(env, [k]))[0] });
+      }
     }).catch(async (e) => {
       try { await setMeta(env.DB, "last_crash", { ts: Math.floor(Date.now() / 1000), error: String(e && e.stack || e) }); } catch {}
     }));

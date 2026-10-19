@@ -46,6 +46,11 @@ GitHub Actions: deploy-oracle.yml (deploy) · oracle-commander.yml, oracle-honu-
 | `GET /live` | none | Live, settling and sudden-death alerts plus recently ended ones (state, commander, report summary) |
 | `GET /alert?key=` | none | Any alert (live or settled): `alert`, `ticks`, `bench` (slices + Brier), `outliers` |
 | `GET /history?days=` | none | Settled/canceled/unresolved alerts (1–30 days, default 7) and mean Brier per duration and slice |
+| `GET /alert/frames?key=` | none | Per-minute base owners for the timeline scrub (first frame full, then changes; from 30-day snapshots) |
+| `GET /archive?key=` | none | Archived bundle of a finished alert (frames, ticks, captures, bench, result), kept for good |
+| `GET /archive/list?before=&limit=&source=` | none | Archived alerts, newest first, plus total count and bytes |
+| `POST /archive/ingest` | `X-Oracle-Key` | Backfill bundles (e.g. PS2Alerts history), up to 20 per call; never replaces the Worker's own bundles |
+| `POST /internal/archive` | `X-Oracle-Key` | Fan-out target: archive one finished alert |
 | `GET /cycle` | none | Manual debug cycle, refused (429) if a cycle ran in the last 50 s; also runs the commander fan-out |
 | `GET /crash` | none | `last_crash` and `cron_seen` breadcrumbs |
 | `GET /export?world=&zone=&since=` | `X-Oracle-Key` | Snapshots, METAGAME rows and flips for the Python cross-check |
@@ -60,6 +65,16 @@ GitHub Actions: deploy-oracle.yml (deploy) · oracle-commander.yml, oracle-honu-
 ### D1 tables
 
 `snap` (map snapshots, pruned at 30 days) · `metagame` (METAGAME rows) · `flip` (FACILITY rows, pruned at 90 days) · `alert` (one row per alert: state, status, winner, basis, final, flags, commander) · `tick` (win-history points) · `bench` (benchmark slices + Brier) · `meta` (`last_cycle`, `last_ok`, `last_commander`, `last_honu`, `last_crash`, `cron_seen`) · `pop` (Honu population per world/zone, written by `/honu/ingest` about every 5 min) · `report` (per-alert outlier report) · `radar` (PS2 Radar cache, rechecked after 3 days).
+
+**Archive database** (`ps2-oracle-archive`, binding `ARCHIVE`, table `alert_archive` in
+`oracle-worker/archive-schema.sql`): one JSON bundle per finished alert (~10–25 KB:
+per-minute map frames, win-chance ticks, captures, benchmark slices, Census result),
+written once per cron minute for the oldest finished alert not archived yet
+(`alert.archived_ts`), so it catches up on its own. The main database prunes
+snapshots at 30 days; the archive keeps alerts for good (a 500 MB database holds
+tens of thousands). Used by the rescan job and, later, for replays of older alerts.
+R2 (10 GB free) would hold more, but must be enabled once in the Cloudflare
+dashboard first; D1 is enough for now.
 
 ### External sources
 
@@ -143,6 +158,7 @@ GitHub Actions: deploy-oracle.yml (deploy) · oracle-commander.yml, oracle-honu-
   storage ≈ 30 MB/day of snapshots, pruned daily at 04:07 UTC: snapshots at 30 days,
   flips at 90 (`tick`, `bench`, `pop`, `report`, `radar` are not pruned yet).
 - CPU: each run parses only the ~20 KB tree bin it needs.
+- Archive: one extra invocation per finished alert (~30/day), ~1 MB/day of bundles.
 
 ## Not migrated yet
 

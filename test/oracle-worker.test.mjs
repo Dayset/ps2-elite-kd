@@ -13,9 +13,11 @@ const skip = !sqlite && "node:sqlite unavailable (needs Node >= 22.5)";
 
 const SCHEMA = readFileSync(new URL("../oracle-worker/schema.sql", import.meta.url), "utf8");
 
-function fakeD1() {
+const ARCHIVE_SCHEMA = readFileSync(new URL("../oracle-worker/archive-schema.sql", import.meta.url), "utf8");
+
+function fakeD1(schema = SCHEMA) {
   const db = new sqlite.DatabaseSync(":memory:");
-  db.exec(SCHEMA);
+  db.exec(schema);
   let queries = 0;
   const stmt = (sql, args = []) => ({
     bind: (...a) => stmt(sql, a),
@@ -117,7 +119,7 @@ test("full alert lifecycle: live → settling → settled from Census final scor
   assert.ok(a.state.win.VS.pct > 50, JSON.stringify(a.state.win));
   assert.equal(Object.keys(a.state.owners).length, 88);
   const bench = JSON.parse(DB.raw.prepare("SELECT slices FROM bench").get().slices);
-  assert.deepEqual(Object.keys(bench).sort(), ["t0", "t0_pop", "t30", "t30_pop", "t60"], "pop blend logged until t60, where its weight hits 0");
+  assert.deepEqual(Object.keys(bench).sort(), ["t0", "t0_pop", "t30", "t30_cut", "t30_pop", "t60", "t60_cut"], "pop blend logged until t60, where its weight hits 0; cut-aware variant at the checkpoints");
   assert.deepEqual(a.state.pop, { VS: 150, NC: 90, TR: 50 }, "Honu zone id masked to 4");
   assert.equal(a.state.pop_source, "honu");
   assert.equal(a.kind, "territory");
@@ -510,4 +512,47 @@ test("map replay frames: full first frame, then only the bases that changed, min
   assert.equal(j.frames[1].t, 3);
   assert.deepEqual(Object.values(j.frames[1].set), ["VS", "VS"]);
   assert.equal((await worker.fetch(new Request("https://x/alert/frames?key=nope"), { DB })).status, 404);
+});
+
+test("archive: finished alerts are bundled into the archive database once, readable and listable; backfill can't overwrite them", { skip }, async () => {
+  const { runCycle, default: worker } = await import("../oracle-worker/src/index.js");
+  const { archiveAlert, nextToArchive } = await import("../oracle-worker/src/archive.js");
+  const DB = fakeD1(), ARCHIVE = fakeD1(ARCHIVE_SCHEMA);
+  const env = { DB, ARCHIVE, ORACLE_KEY: "k" };
+  const T0 = 1_792_600_000, END = T0 + 90 * 60;
+  const census = { map: { 1: 30, 2: 30, 3: 28 }, metagame: [mg(960, 153, "started", T0)], flips: [] };
+  installCensus(census);
+  await runCycle(env, (T0 + 60) * 1000);
+  assert.equal(await nextToArchive(DB), null, "live alerts are not archived");
+  census.map = { 1: 34, 2: 28, 3: 26 };
+  await runCycle(env, (T0 + 30 * 60) * 1000);
+  census.metagame.push(mg(960, 153, "ended", END, 38, 32, 30));
+  await runCycle(env, (END - 30) * 1000);
+  await runCycle(env, (END + 660) * 1000);
+  assert.equal(DB.raw.prepare("SELECT status FROM alert").get().status, "settled");
+  assert.equal(await nextToArchive(DB), "1-4-960");
+  const r = await archiveAlert(env, "1-4-960", (END + 700) * 1000);
+  assert.equal(r.ok, true, JSON.stringify(r));
+  assert.ok(r.frames >= 2 && r.ticks >= 2, JSON.stringify(r));
+  assert.equal(await nextToArchive(DB), null, "archived once");
+  const b = await (await worker.fetch(new Request("https://x/archive?key=1-4-960"), env)).json();
+  assert.equal(b.v, 1);
+  assert.equal(b.winner, "VS");
+  assert.equal(Object.keys(b.frames[0].set).length, 88);
+  assert.deepEqual(b.final, { VS: 38, NC: 32, TR: 30 });
+  assert.ok(b.bench && b.bench.slices.t30, "benchmark slices kept");
+  assert.ok(b.bench.slices.t30_cut, "cut-aware slice logged next to the standard one");
+  const l = await (await worker.fetch(new Request("https://x/archive/list"), env)).json();
+  assert.equal(l.total, 1);
+  assert.equal(l.alerts[0].key, "1-4-960");
+  assert.equal((await worker.fetch(new Request("https://x/archive?key=nope"), env)).status, 404);
+  // Backfill: needs the key, rejects bad bundles, never replaces the Worker's own bundle.
+  const post = (body, key = "k") => worker.fetch(new Request("https://x/archive/ingest", { method: "POST", headers: { "X-Oracle-Key": key, "Content-Type": "application/json" }, body: JSON.stringify(body) }), env);
+  assert.equal((await post({ bundles: [] }, "bad")).status, 403);
+  const ext = { v: 1, key: "1-4-12", source: "ps2alerts", world: 1, zone: 4, instance_id: 12, start_ts: T0 - 86400 * 90, dur: 90, winner: "TR", frames: [] };
+  const res = (await (await post({ bundles: [ext, { ...ext, key: "1-4-960" }, { ...ext, key: "1-4-13", winner: "purple" }] })).json()).results;
+  assert.deepEqual(res.map((x) => x.ok || x.skipped || x.error), [true, "worker bundle exists", "invalid"]);
+  assert.equal(JSON.parse(ARCHIVE.raw.prepare("SELECT data FROM alert_archive WHERE key='1-4-960'").get().data).source, "worker");
+  const l2 = await (await worker.fetch(new Request("https://x/archive/list?source=ps2alerts"), env)).json();
+  assert.deepEqual(l2.alerts.map((x) => x.key), ["1-4-12"]);
 });

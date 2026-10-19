@@ -240,7 +240,7 @@ function findCutPoints(own, adj, names) {
   return cuts;
 }
 
-function warpgateConnected(own, adj, names) {
+export function warpgateConnected(own, adj, names) {
   const connected = new Map();
   for (const [fo, fids] of warpgatesByOwner(own, names)) {
     const seen = new Set(), stack = [...fids];

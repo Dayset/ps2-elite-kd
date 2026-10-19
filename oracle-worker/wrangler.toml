@@ -15,6 +15,12 @@ binding = "DB"
 database_name = "ps2-oracle"
 database_id = "477a2214-ced3-429f-aaef-96c0f0e2edd1"
 
+# Archive: one JSON bundle per finished alert, kept for good (main DB keeps snapshots 30 days).
+[[d1_databases]]
+binding = "ARCHIVE"
+database_name = "ps2-oracle-archive"
+database_id = "46ed9c33-8e79-424f-954f-f8e570467fc3"
+
 [observability]
 enabled = true
 
