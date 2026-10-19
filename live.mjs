@@ -205,26 +205,27 @@ function start() {
     // Winner on the left: on a kill that's us, on a death the killer.
     const left = kill ? side(meP, true) : side(p, false);
     const right = kill ? side(p, false) : side(meP, true);
-    const t = r.gap == null ? `<span class="lv-timer" data-at="${r.at}">⏱️ ${fmtGap(Date.now() - r.at)}</span>` : `⏱️ ${fmtGap(r.gap)}`;
-    return `<tbody class="lv-ev lv-${r.last}${i === 0 ? " lv-new" : ""}"><tr><td class="lv-time">${t}</td>${left.name}${left.stats}<td class="lv-arrow">❯</td>${right.name}${right.stats}<td class="lv-spacer"></td></tr></tbody>`;
+    const t = r.gap == null ? `<span class="lv-timer" data-at="${r.at}">${fmtGap(Date.now() - r.at)}</span>` : `${fmtGap(r.gap)}`;
+    return `<tbody class="lv-ev lv-${r.last}${i === 0 ? " lv-new" : ""}"><tr><td class="lv-time">${t}</td>${left.name}${left.stats}<td class="lv-arrow">❯</td>${right.name}${right.stats}</tr></tbody>`;
   }
   function render(dropped) {
     if (!listEl) return;
-    // Fixed layout: time/name/arrow/spacer columns are ch-sized; the ❯ arrow sits
-    // at the exact page middle because the empty spacer mirrors the time column.
-    const cols = `<colgroup><col class="lv-c-time"><col class="lv-c-name">${"<col>".repeat(N)}<col class="lv-c-arrow"><col class="lv-c-name">${"<col>".repeat(N)}<col class="lv-c-spacer"></colgroup>`;
-    const head = `<thead><tr><th></th><th></th>${LIVE_COLS.map((c) => `<th title="${esc(c.label + ": " + c.tip)}">${shortLab(c)}</th>`).join("")}<th></th><th></th>${LIVE_COLS.map((c) => `<th title="${esc(c.label + ": " + c.tip)}">${shortLab(c)}</th>`).join("")}<th class="lv-spacer"></th></tr></thead>`;
+    // Fixed layout: the ❯ arrow sits at the exact page middle. The timer column
+    // (10ch, left only) is balanced by making each right-side stat column
+    // 10ch/7 wider than the left-side ones — no dead space anywhere.
+    const cols = `<colgroup><col class="lv-c-time"><col class="lv-c-name">${'<col class="lv-c-statL">'.repeat(N)}<col class="lv-c-arrow"><col class="lv-c-name">${'<col class="lv-c-statR">'.repeat(N)}</colgroup>`;
+    const head = `<thead><tr><th></th><th></th>${LIVE_COLS.map((c) => `<th title="${esc(c.label + ": " + c.tip)}">${shortLab(c)}</th>`).join("")}<th></th><th></th>${LIVE_COLS.map((c) => `<th title="${esc(c.label + ": " + c.tip)}">${shortLab(c)}</th>`).join("")}</tr></thead>`;
     // No events yet: skeleton first row — em dashes stand in for the numbers
     // until real data arrives and fills the rows.
     const dashCells = `<td class="lv-num">—</td>`.repeat(N);
     const body = rows.length ? rows.map(eventHtml).join("")
-      : `<tbody class="lv-ev lv-wait"><tr><td class="lv-time">⏱️ —</td><td class="lv-name-cell"><span class="lv-name fac-${me.faction || ""}">${esc(me.name)}</span></td>${dashCells}<td class="lv-arrow">❯</td><td class="lv-name-cell">—</td>${dashCells}<td class="lv-spacer"></td></tr></tbody>`;
+      : `<tbody class="lv-ev lv-wait"><tr><td class="lv-time">—</td><td class="lv-name-cell"><span class="lv-name fac-${me.faction || ""}">${esc(me.name)}</span></td>${dashCells}<td class="lv-arrow">❯</td><td class="lv-name-cell">—</td>${dashCells}</tr></tbody>`;
     listEl.innerHTML = cols + head + body + (dropped ? eventHtml(dropped, -1).replace('class="lv-ev', 'class="lv-ev lv-fade') : "");
     if (dropped) setTimeout(() => { const f = listEl.querySelector(".lv-fade"); if (f) f.remove(); }, 600);
   }
   setInterval(() => {
     if (!listEl) return;
-    for (const el of listEl.querySelectorAll(".lv-timer[data-at]")) el.textContent = `⏱️ ${fmtGap(Date.now() - +el.dataset.at)}`;
+    for (const el of listEl.querySelectorAll(".lv-timer[data-at]")) el.textContent = `${fmtGap(Date.now() - +el.dataset.at)}`;
   }, 1000);
 
   // Graph: re-run quietly when the cached set changes; one run at a time.

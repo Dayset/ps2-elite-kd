@@ -2637,11 +2637,12 @@ html[data-theme="light"] .dist-pill:hover { opacity: 1; }
 .live-state .live-dot { color: #e53935; animation: liveBlink 1.2s ease-in-out infinite; }
 @keyframes liveBlink { 50% { opacity: 0.25; } }
 .live-table { border-collapse: collapse; width: 100%; table-layout: fixed; font-variant-numeric: tabular-nums; }
-col.lv-c-time { width: 10ch; }
+col.lv-c-time { width: 7.5ch; }
 col.lv-c-name { width: 22ch; } /* p80 of ranked names (12,955 players): 80% fit, longest 20% truncate */
 col.lv-c-arrow { width: 2.5ch; }
-col.lv-c-spacer { width: 10ch; }
-.live-table .lv-spacer { border: 0; }
+/* Right-side stat columns absorb the timer column's 10ch so ❯ stays centered. */
+col.lv-c-statL { width: calc(7.143% - 4.3929ch); }
+col.lv-c-statR { width: calc(7.143% - 3.3214ch); }
 /* Skeleton row while waiting for the first kill/death. */
 .lv-wait td { color: var(--dim); }
 /* Long names truncate with … instead of stretching the table (icon stays visible). */
@@ -2658,7 +2659,7 @@ col.lv-c-spacer { width: 10ch; }
 @keyframes lvIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes lvOut { to { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .lv-ev.lv-new, .lv-ev.lv-fade, .live-state .live-dot { animation: none; } }
-.lv-time { white-space: nowrap; font-size: 0.85rem; color: var(--dim); vertical-align: middle; text-align: right; min-width: 10ch; /* stopwatch ("9s"→"10s"→"59m 59s") reserves the widest reading so data columns never shift */ }
+.lv-time { white-space: nowrap; font-size: 0.85rem; color: var(--dim); vertical-align: middle; text-align: right; min-width: 7.5ch; /* stopwatch ("9s"→"10s"→"59m 59s") reserves the widest reading so data columns never shift */ }
 .lv-arrow { color: var(--dim); text-align: center; vertical-align: middle; }
 .lv-name-cell { white-space: nowrap; padding-top: 0.2rem !important; }
 .lv-num { text-align: right; font-size: 0.88rem; cursor: help; }
