@@ -909,8 +909,10 @@ export function initRankings(host) {
     const col = colById(distMetric);
     // Metric explanation underneath the chart: the same text as the
     // table column's tooltip (col.tip), updated on every metric switch.
+    // Dayset 2026-10-19: 🪖 Infantry's tip is far longer than the rest and
+    // made the block grow; its description lives in the table tooltip.
     const hintEl = $("distHint");
-    if (hintEl) hintEl.textContent = col?.tip || "";
+    if (hintEl) hintEl.textContent = col?.id === "inf" ? "" : (col?.tip || "");
     const h = getHist(distMetric);
     const box = $("distChart");
     const W = Math.max(320, Math.round(box.clientWidth || 640));
