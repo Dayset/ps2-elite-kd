@@ -141,6 +141,11 @@
       <div id="padRule" class="st-rule"></div>
       <div id="padding" class="st-dim">Loading…</div>
       </details>
+      <details class="st-sub-sec" id="secPoop">
+      <summary><h3>💩 Padder penalty (−10% iVi) <span id="poopCount" class="st-count">…</span></h3></summary>
+      <div id="poopRule" class="st-rule"></div>
+      <div id="poop" class="st-dim">Loading…</div>
+      </details>
       <details class="st-sub-sec" id="secAdjusted">
       <summary><h3>† Adjusted (auto-accepted) <span id="adjCount" class="st-count">…</span></h3></summary>
       <div id="adjRule" class="st-rule"></div>
@@ -969,6 +974,23 @@
       try { renderAssistGroups(st); } catch (e) { console.warn(e); }
       renderForensics(st);
       renderBurst(st);
+      try { renderPoop(st); } catch (e) { console.warn(e); }
+    }
+
+    /** 💩 Padder penalty (status.json "padderPenalty", scripts/build-ranks.mjs): before / after iVi and rank per confirmed padder. */
+    function renderPoop(st) {
+      const b = st && st.padderPenalty;
+      const items = (b && b.players) || [];
+      const n = (v) => (typeof v === "number" ? Math.round(v).toLocaleString() : "—");
+      const rk = (v) => (v ? "#" + v.toLocaleString() : "—");
+      $("poopCount").textContent = b ? String(b.penalized) : "?";
+      $("poopRule").textContent = b ? b.rule : "";
+      $("poop").innerHTML = !b ? "Not built yet (next refresh)." : items.length
+        ? '<div class="st-dim" style="margin-bottom:6px;">' + b.penalized + " penalized, " + b.cleared + " cleared by the owner. Ranks among " + Number(b.ranked).toLocaleString() + " ranked players by ⚔️ adjusted iVi.</div>" +
+          '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th>iVi before</th><th>iVi after</th><th>Rank before</th><th>Rank after</th><th>Status</th></tr>' +
+          items.map((i) => "<tr><td>" + nameCell(i) + (i.status === "penalized" ? " 💩" : "") + "</td><td>" + n(i.before) + "</td><td>" + n(i.after) + (i.fixedDrop ? ' <span class="st-dim" title="Score at or below 0: fixed drop instead of −10%">(fixed drop)</span>' : "") +
+            "</td><td>" + rk(i.rankBefore) + "</td><td>" + rk(i.rankAfter) + "</td><td>" + (i.status === "penalized" ? "−10% iVi" : "✅ cleared (owner)") + "</td></tr>").join("") + "</table></div>"
+        : "No confirmed padders.";
     }
 
     /** 💥 Burst sessions (status.json "burst", built by scripts/build-ranks.mjs) + the oracle's burst-tier players. */

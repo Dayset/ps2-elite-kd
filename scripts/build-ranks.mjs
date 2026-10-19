@@ -20,7 +20,7 @@ import { fileURLToPath } from "node:url";
 import { normalizePlayer, playerMetrics } from "../player-metrics.mjs";
 import { reviewFlags } from "../red-flags.mjs";
 import { classifyBins } from "../bins.mjs";
-import { markNote, statMark, confirmedPadderSlugs, isFarmListed, isNotFarm, farmListEntry } from "../padding.mjs";
+import { markNote, statMark, confirmedPadderSlugs, isFarmListed, isNotFarm, farmListEntry, isPenalizedPadder, PADDER_PENALTY, PADDER_PENALTY_REF } from "../padding.mjs";
 import { sprout, sampleEvents, farmAccount } from "../sprouts.mjs";
 import { findOutliers, guardStatus, KNOWN_EXTREMES } from "../outlier-guard.mjs";
 import { infantryTagCounts, INFANTRY_TAG, infantryShares } from "../infantry.mjs";
@@ -236,7 +236,7 @@ export function buildRanksWithGuard(dataDir) {
       if (!info || !info.hidden) row.push(sm && sm.measured && Number.isFinite(sm.values.s_apk) ? Math.round(sm.values.s_apk * 1000) / 1000 : null);
       // 🫡 Infantry: % of lifetime weapon-stat kills on foot (MAX counted as infantry) + MAX / vehicle % for hover; null until filled.
       if (!info || !info.hidden) { const sh = infantryShares(pl.infantry); row.push(sh ? sh.inf : null, sh ? sh.max : null, sh ? sh.veh : null); }
-      players.push({ infTag: (pl.infantry && pl.infantry.v >= 2 && pl.infantry.tag) || null, slug: row[2], name: row[0], cid: String(np.cid || ""), farmAcct: !!(fa && fa.farm), flagged: f.flagged || sf.flagged || fx.flagged, patterns, values, session: sm, sessionFlag: sf, forensics: fx, row, hidden: !!(info && info.hidden), confirmedCheater: !!(info && info.confirmedCheater) });
+      players.push({ poop: !!m.poop, adjsBase: m.poop && !m.thin ? m.adjsBase : null, confirmedPadder: confirmed.has(row[2]), infTag: (pl.infantry && pl.infantry.v >= 2 && pl.infantry.tag) || null, slug: row[2], name: row[0], cid: String(np.cid || ""), farmAcct: !!(fa && fa.farm), flagged: f.flagged || sf.flagged || fx.flagged, patterns, values, session: sm, sessionFlag: sf, forensics: fx, row, hidden: !!(info && info.hidden), confirmedCheater: !!(info && info.confirmedCheater) });
     },
   });
   ranks.cols.push("apk"); // 🤝 trailing column (see onPlayer); not part of RANK_COLS / rankRow
@@ -248,7 +248,41 @@ export function buildRanksWithGuard(dataDir) {
     ranks, guard, hidden: hiddenSummary(dataDir, hiddenFound), bins: binCounts(players, guard), session: sessionStatus(players, guard, dataDir),
     forensics: forensicsStatus(players, guard, forensics),
     review: reviewStatus(players, guard, forensics, farmFound),
+    padderPenalty: padderPenaltyStatus(players, ranks),
     assistGroups: assistGroups(players), // 🤝 groups stay build-log only (the 🤝 apk column itself is public since t382u)
+  };
+}
+
+/**
+ * status.json "padderPenalty" (build-log 💩, user-approved 2026-10-19): every
+ * confirmed padder (reviewed.json "padding") with adjusted iVi and board rank
+ * before / after the −10% penalty (padding.mjs padderPenalty, applied inside
+ * playerMetrics, so ranks.json already carries the "after" numbers). Ranks =
+ * position by ⚔️ adjusted iVi among ranked players with a value (thin samples
+ * have none). "cleared" = owner override ("penalty": "cleared"): no 💩, no penalty.
+ */
+export function padderPenaltyStatus(players, ranks) {
+  const ia = ranks.cols.indexOf("adjs"), is = ranks.cols.indexOf("slug");
+  const fin = (v) => typeof v === "number" && Number.isFinite(v);
+  const after = new Map(ranks.rows.filter((r) => fin(r[ia])).map((r) => [r[is], r[ia]]));
+  const before = new Map(after);
+  const pads = players.filter((p) => !p.hidden && (p.poop || p.confirmedPadder));
+  for (const p of pads) if (p.poop && fin(p.adjsBase) && before.has(p.slug)) before.set(p.slug, p.adjsBase);
+  const rankOf = (map) => { const o = [...map.entries()].sort((a, b) => b[1] - a[1]); return new Map(o.map(([s], i) => [s, i + 1])); };
+  const rb = rankOf(before), ra = rankOf(after);
+  const r1 = (v) => (fin(v) ? Math.round(v * 10) / 10 : null);
+  const list = pads.map((p) => ({
+    slug: p.slug, name: p.name, status: p.poop ? "penalized" : "cleared",
+    before: r1(before.get(p.slug)), after: r1(after.get(p.slug)),
+    rankBefore: rb.get(p.slug) || null, rankAfter: ra.get(p.slug) || null,
+    fixedDrop: !!(p.poop && fin(p.adjsBase) && p.adjsBase <= 0),
+  })).sort((a, b) => (a.rankBefore || 1e9) - (b.rankBefore || 1e9));
+  return {
+    checkedAt: new Date().toISOString(), ranked: after.size,
+    penalty: PADDER_PENALTY, ref: PADDER_PENALTY_REF,
+    rule: `Confirmed stat padders (data/reviewed.json "padding") get 💩 and −${PADDER_PENALTY * 100}% adjusted iVi, on top of the farm-kill removal and the * mark. A score at or below 0 gets a fixed −${Math.round(PADDER_PENALTY * PADDER_PENALTY_REF)} instead (10% of ${PADDER_PENALTY_REF}, the median positive iVi on 2026-10-19), so it always drops. Owner override: "penalty": "cleared" on the reviewed.json entry (or decision "cleared").`,
+    penalized: list.filter((x) => x.status === "penalized").length, cleared: list.filter((x) => x.status === "cleared").length,
+    players: list,
   };
 }
 
@@ -495,7 +529,7 @@ if (isMain) {
   // newly hidden players via the normal hidden path.
   const autoHidden = autoHideFreshExceptional(dataDir);
   if (autoHidden.length) console.log(`auto-hide: ${autoHidden.length} fresh exceptional account(s) added to hidden.json: ${autoHidden.map((a) => a.name).join(", ")}`);
-  const { ranks: out, guard, hidden: hiddenInfo, bins, session, forensics: forensicsInfo, review, assistGroups: assistInfo } = buildRanksWithGuard(dataDir);
+  const { ranks: out, guard, hidden: hiddenInfo, bins, session, forensics: forensicsInfo, review, assistGroups: assistInfo, padderPenalty: padderInfo } = buildRanksWithGuard(dataDir);
   fs.writeFileSync(path.join(dataDir, "ranks.json"), JSON.stringify(out) + "\n");
   console.log(`ranks.json: ${out.count} players (${hiddenInfo.count} on the 🙈 hide list)`);
   // 🧪 Outlier guard → data/status.json (build-log.html). Other status fields are kept.
@@ -509,6 +543,8 @@ if (isMain) {
   st.forensics = forensicsInfo;
   st.review = review;
   st.assistGroups = assistInfo;
+  st.padderPenalty = padderInfo; // 💩 build-log list (ranks.json already has the penalized numbers)
+  console.log(`padder penalty: ${padderInfo.penalized} penalized, ${padderInfo.cleared} cleared by the owner`);
   st.infantry = infantryStatus(dataDir);
   st.burst = burstStatus(dataDir); // 💥 review signal only: never changes ranks.json
   console.log(`burst sessions: ${st.burst.sessions} session(s), ${st.burst.flaggedPlayers} player(s) to review, ${st.burst.clearedPlayers} cleared`);

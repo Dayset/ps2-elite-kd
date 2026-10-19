@@ -7,7 +7,7 @@
 import { compareByCharName } from "./analyze-run.mjs?v=20261010-sav1";
 import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits, binJumpTarget } from "./dist.mjs?v=20261010-sav1";
 import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261010-sav1";
-import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261010-sav1";
+import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP, isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261010-sav1";
 import { paletteColor } from "./palette.mjs?v=20261010-sav1";
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-sav1";
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261015-tip1";
@@ -219,7 +219,9 @@ export function initRankings(host) {
       };
       o.mark = o.markKind === "padding" ? PADDING_MARK : o.markKind === "adjusted" ? ADJUSTED_MARK : "";
       o.markTip = o.markKind === "padding" ? PADDING_MARK_TIP : o.markKind === "adjusted" ? ADJUSTED_MARK_TIP : "";
-      o.label = o.name + o.mark;
+      // 💩 confirmed padder: −10% adjusted iVi already in the numbers (padding.mjs); owner override in reviewed.json.
+      o.poop = isPenalizedPadder(o.slug || o.query);
+      o.label = o.name + o.mark + (o.poop ? POOP_MARK : "");
       for (const id of Object.keys(pools)) {
         const v = r[idx[id]];
         o[id] = v;
@@ -327,6 +329,10 @@ export function initRankings(host) {
   }
 
   /** Row HTML for one player (plain strings: cheap for ~1000 rows). */
+  /** 💩 after a confirmed padder's name (hover explains the −10% iVi penalty). */
+  function poopHtml(r) {
+    return r && r.poop ? `<span class="poop-mark" title="${esc(POOP_TIP)}" aria-label="${esc(POOP_TIP)}">${POOP_MARK}</span>` : "";
+  }
   function rowHtml(r, cols) {
     const checked = picked.has(r.query) ? " checked" : "";
     const disabled = !picked.has(r.query) && fieldFull() ? " disabled" : "";
@@ -337,6 +343,7 @@ export function initRankings(host) {
       rankCellHtml(r) +
       `<td class="rk-name"><a href="${href}" class="rk-open" title="Add to the comparison (graph above)"><span class="nm" data-full="${esc(r.name)}" title="${esc(r.name + (r.farm ? " — " + r.farm : "") + (r.freshAt ? " — " + freshTip(r.freshAt, r.localOnly) : ""))}">${esc(r.name)}</span></a>` +
       (r.mark ? `<span class="pad-mark mark-${["padding","adjusted"].includes(r.markKind) ? r.markKind : ""}" title="${esc(r.markTip + ". " + r.farm)}">${r.mark}</span>` : "") +
+      poopHtml(r) +
       (r.legacy ? `<span class="sample-legacy" title="${esc(LEGACY_SAMPLE_TIP)}">${LEGACY_SAMPLE_MARK}</span>` : "") +
       (r.freshAt ? `<span class="sample-fresh" title="${esc(freshTip(r.freshAt, r.localOnly))}">${FRESH_MARK}</span>` : "") + `</td>` +
       cols.map((c) => cellHtml(c, r)).join("") +
@@ -629,7 +636,7 @@ export function initRankings(host) {
         return `<td title="${esc(c.label)} ${fmt(v, c.digits)}: rank ${k.toLocaleString()} of ${pool.length.toLocaleString()}${c.apk ? " players with 100+ session kills" : c.inf ? " measured players (100+ kills)" : " cached players"}">` +
           `<b>#${k.toLocaleString()}</b>${p != null ? `<span class="pct">p${p}</span>` : ""}</td>`;
       }).join("");
-      return `<tr><th scope="row" class="rk-pos-name"><a href="#" class="rk-pos-jump" data-q="${esc(r.query)}" style="color:${paletteColor(i, light)}" title="Show ${esc(r.name)} in the table"><span class="nm" data-full="${esc(r.name)}">${esc(r.name)}</span></a>${r.freshAt ? `<span class="sample-fresh" title="${esc(freshTip(r.freshAt, r.localOnly))}">${FRESH_MARK}</span>` : ""}${r.mark ? `<span class="pad-mark mark-${["padding","adjusted"].includes(r.markKind) ? r.markKind : ""}" title="${esc(r.markTip)}">${r.mark}</span>` : ""}</th>${cells}</tr>`;
+      return `<tr><th scope="row" class="rk-pos-name"><a href="#" class="rk-pos-jump" data-q="${esc(r.query)}" style="color:${paletteColor(i, light)}" title="Show ${esc(r.name)} in the table"><span class="nm" data-full="${esc(r.name)}">${esc(r.name)}</span></a>${r.freshAt ? `<span class="sample-fresh" title="${esc(freshTip(r.freshAt, r.localOnly))}">${FRESH_MARK}</span>` : ""}${r.mark ? `<span class="pad-mark mark-${["padding","adjusted"].includes(r.markKind) ? r.markKind : ""}" title="${esc(r.markTip)}">${r.mark}</span>` : ""}${poopHtml(r)}</th>${cells}</tr>`;
     }).join("");
     const miss = missing.length ? `<p class="rk-pos-hint">Not in the Rankings (new, hidden or not cached yet): ${missing.map((n) => `<strong>${esc(n)}</strong>`).join(", ")}</p>` : "";
     box.innerHTML = (rows.length ? `<div class="rk-pos-wrap"><table class="rk-pos-table" aria-label="Rank of the selected players among ${data.count.toLocaleString()} cached players"><thead>${head}</thead><tbody>${body}</tbody></table></div>` : "") + miss;
@@ -961,7 +968,7 @@ export function initRankings(host) {
     const hlItems = [];
     hl.forEach((r, i) => {
       const x = xOf(r[distMetric]);
-      if (x != null) hlItems.push({ r, i, x, text: shortName(r.name) + r.mark });
+      if (x != null) hlItems.push({ r, i, x, text: shortName(r.name) + r.mark + (r.poop ? POOP_MARK : "") });
     });
     const famly = getComputedStyle(svg).fontFamily || "sans-serif";
     const widthAt = (k, scale) => textWidth(hlItems[k].text, fs * scale, famly);
@@ -1066,7 +1073,7 @@ export function initRankings(host) {
       gm.appendChild(t);
       const shown = col.floorZero && fin(v) && v < 0 ? "0 (below scale)" : fin(v) ? (+v).toFixed(col.digits) : "—";
       const p = r.pcts[distMetric];
-      gm.appendChild(svgEl("title", {}, `${r.label}${r.mark ? ` (${r.markTip})` : ""}: ${col.label} ${shown}${p != null ? ` · p${p}` : ""} · rank #${r.rank} (current sort)${r.freshAt ? ` · ${FRESH_MARK} your fresh fetch` : ""}`));
+      gm.appendChild(svgEl("title", {}, `${r.label}${r.mark ? ` (${r.markTip})` : ""}${r.poop ? ` (${POOP_TIP})` : ""}: ${col.label} ${shown}${p != null ? ` · p${p}` : ""} · rank #${r.rank} (current sort)${r.freshAt ? ` · ${FRESH_MARK} your fresh fetch` : ""}`));
       marks.appendChild(gm);
     });
     svg.appendChild(leaders);

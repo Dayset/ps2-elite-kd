@@ -260,3 +260,51 @@ export function farmAccountLabels(farm) {
 export function confirmedPadderSlugs(reviewed) {
   return new Set(confirmedPadders(reviewed).map((x) => x.slug));
 }
+
+/* ---------- 💩 confirmed-padder penalty (user t431u follow-up, 2026-10-19) ----------
+ * Every confirmed stat padder (data/reviewed.json decision "padding") gets a 💩
+ * after the name everywhere it shows, and −10% on ⚔️ adjusted iVi (on top of the
+ * farm-kill removal and the "*" mark). Applied inside playerMetrics(), so the
+ * main tables, Rankings, ranks.json (rebuilt on every refresh), 🏅 positions,
+ * 📊 chart and 🎥 Live all get the same number.
+ * Score at or below zero (JinpingX, −12): −10% would move it UP, so it gets a
+ * fixed drop of PADDER_PENALTY × PADDER_PENALTY_REF instead (−61 iVi).
+ * PADDER_PENALTY_REF = median positive adjusted iVi of the board on 2026-10-19
+ * (610.6 over 9,742 players), frozen so the drop never depends on the board.
+ * Owner override (human wins): in data/reviewed.json either set the decision
+ * to "cleared" (removes "*" confirmed status, 💩 and the penalty), or keep
+ * "padding" and add "penalty": "cleared" (keeps "*", removes 💩 and the penalty).
+ */
+export const PADDER_PENALTY = 0.1;
+export const PADDER_PENALTY_REF = 610.6;
+export const POOP_MARK = "💩";
+export const POOP_TIP = "💩 Confirmed stat padding: −10% on adjusted iVi (on top of the kills on farm accounts already excluded). Think this is wrong? Contact the site owner to clarify.";
+
+const reviewedState = { players: {} };
+/** Replace the review decisions used for the 💩 penalty (reviewed.json content; null clears). */
+export function setReviewed(json) {
+  reviewedState.players = (json && json.players) || {};
+}
+const penKey = (s) => String(s || "").trim().toLowerCase().replace(/^\[.*?\]\s*/, "").replace(/[^a-z0-9]+/g, "");
+/** True when this slug / display name is a confirmed padder whose 💩 penalty is not overridden. */
+export function isPenalizedPadder(nameOrSlug) {
+  const e = reviewedState.players[penKey(nameOrSlug)];
+  return !!e && e.decision === "padding" && e.penalty !== "cleared" && e.penalty !== false;
+}
+/** Adjusted iVi after the 💩 penalty (non-finite values pass through). */
+export function padderPenalty(v) {
+  if (typeof v !== "number" || !Number.isFinite(v)) return v;
+  return v > 0 ? v * (1 - PADDER_PENALTY) : v - PADDER_PENALTY * PADDER_PENALTY_REF;
+}
+
+try {
+  if (typeof window !== "undefined" && typeof fetch === "function") {
+    const res = await fetch(new URL("./data/reviewed.json", import.meta.url).href, { cache: "no-cache" });
+    if (res.ok) setReviewed(await res.json());
+  } else {
+    const fs = await import("node:fs");
+    setReviewed(JSON.parse(fs.readFileSync(new URL("./data/reviewed.json", import.meta.url), "utf8")));
+  }
+} catch {
+  /* no reviewed.json → nobody penalized */
+}

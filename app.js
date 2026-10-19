@@ -96,7 +96,7 @@ function fightsText(r) {
 function thinCellTip(r) {
   return `${MIN_FIGHTS_TIP}. This sample: ${fightsText(r).replace(/[()]/g, "")}`;
 }
-import { markNote, statMark, confirmedPadderSlugs } from "./padding.mjs?v=20261010-sav1";
+import { markNote, statMark, confirmedPadderSlugs, isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261010-sav1";
 // Account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times: chart name list only.
 import { accountTimes, flairsHtml, flairsFor } from "./flairs.mjs?v=20261010-sav1";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
@@ -1490,6 +1490,7 @@ import {
       btn.type = "button";
       btn.className = "name-token " + (isNameFetched(name) ? "fetched" : "unfetched");
       btn.appendChild(nameSpan(name, { title: false }));
+      if (isPenalizedPadder(name)) btn.insertAdjacentHTML("beforeend", poopHtml());
       btn.setAttribute("aria-label", `Remove ${name}`);
       btn.title = `Remove ${name}`;
       btn.addEventListener("click", (e) => {
@@ -1878,6 +1879,7 @@ import {
       if (selected) btn.classList.add("active", "selected");
       btn.setAttribute("aria-pressed", selected ? "true" : "false");
       btn.appendChild(nameSpan(item.name, { title: false }));
+      if (isPenalizedPadder(item.name)) btn.insertAdjacentHTML("beforeend", poopHtml());
       btn.title = chipTitle(item, selected);
       btn._item = item;
       btn.addEventListener("click", () => toggleNameInField(item.name, btn));
@@ -2668,10 +2670,10 @@ import {
       num.setAttribute("font-size", fz(14));
       num.setAttribute("font-weight", "800");
       num.setAttribute("text-anchor", "end");
-      num.textContent = String(lab.i + 1) + lab.mark.mark;
-      if (lab.mark.mark) {
+      num.textContent = String(lab.i + 1) + lab.mark.mark + (lab.poop ? POOP_MARK : "");
+      if (lab.mark.mark || lab.poop) {
         const t = ns("title");
-        t.textContent = `${lab.display}${lab.mark.mark}: ${lab.mark.tip}`;
+        t.textContent = [lab.mark.mark ? `${lab.display}${lab.mark.mark}: ${lab.mark.tip}` : "", lab.poop ? `${lab.display} ${POOP_TIP}` : ""].filter(Boolean).join("\n");
         num.appendChild(t);
       }
       g.appendChild(num);
@@ -2983,7 +2985,7 @@ import {
         if (!best || (easy && !bestEasy) || (easy === bestEasy && pt.kpm < best.kpm)) ak = k;
       }
       if (ak >= 0) {
-        rs.anchor = { i, col, k: ak, display: p.display, mark: playerMark(p) };
+        rs.anchor = { i, col, k: ak, display: p.display, mark: playerMark(p), poop: isPenalizedPadder(p.display) };
         labelAnchors.push({ ...rs.anchor, x: pts[ak].kpm, y: pts[ak].kd });
       }
     });
@@ -3468,6 +3470,7 @@ import {
     // Mark notes (used to live in the chart legend, now removed): one collapsed
     // line explaining the * / † marks used in the table.
     const markLegends = [...new Set(metrics.map((r) => playerMark(r.p).legend).filter(Boolean))];
+    if (metrics.some((r) => r.p && isPenalizedPadder(r.p.display))) markLegends.push(POOP_TIP); // 💩 "What * 💩 mean"
     const markNotesBlock = markLegends.length
       ? `<details class="fold-note mark-notes"${markNotesOpen ? " open" : ""}>` +
         `<summary>♿ What ${[...new Set(markLegends.map((t) => t.trim().split(/\s+/)[0]))].join(" ")} ${markLegends.length > 1 ? "mean" : "means"}</summary>` +
@@ -3654,8 +3657,13 @@ import {
   /** Mark after the name (tooltip explains); "" when the stats weren't altered. */
   function padMarkHtml(p) {
     const mk = playerMark(p);
-    if (!mk.mark) return "";
-    return `<span class="pad-mark mark-${mk.kind}" title="${escapeHtml(mk.tip)}">${mk.mark}</span>`;
+    const poop = p && isPenalizedPadder(p.display) ? poopHtml() : "";
+    if (!mk.mark) return poop;
+    return `<span class="pad-mark mark-${mk.kind}" title="${escapeHtml(mk.tip)}">${mk.mark}</span>${poop}`;
+  }
+  /** 💩 confirmed padder (padding.mjs POOP_TIP): −10% adjusted iVi; owner override in data/reviewed.json. */
+  function poopHtml() {
+    return `<span class="poop-mark" title="${escapeHtml(POOP_TIP)}" aria-label="${escapeHtml(POOP_TIP)}">${POOP_MARK}</span>`;
   }
 
   /** Subtle "◦" after the name when the sample is the older top-50 one. */

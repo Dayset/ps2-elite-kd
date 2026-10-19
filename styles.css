@@ -2074,6 +2074,20 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
   font-size: 0.78rem;
   opacity: 0.7;
 }
+/* 💩 confirmed stat padder (padding.mjs POOP_TIP): −10% adjusted iVi; hover explains. */
+.poop-mark {
+  /* Fixed box: the emoji font loads late, so a sized box keeps column widths stable (sort-scroll.mjs). */
+  display: inline-block;
+  width: 1.25em;
+  margin-left: 0.15em;
+  font-size: 0.9em;
+  line-height: 1;
+  text-align: center;
+  overflow: hidden;
+  vertical-align: baseline;
+  cursor: help;
+}
+.live-table .lv-name:has(+ .poop-mark) { max-width: calc(100% - 1.4em); }
 /* † stats adjusted (under review): lighter than the padding "*" */
 .pad-mark.mark-adjusted {
   font-weight: 600;
@@ -2264,6 +2278,8 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
 /* Player names (t311u): phones keep the global 18ch cap (styles.css .nm);
    wider screens have room, so names show in full ([TAG] + 32-char name ≈ 40ch)
    and only truly huge ones still get the ellipsis + title / name-peek. */
+/* 💩 (padding.mjs) costs no extra name-column width on phones: the name gives up the room. */
+@media (max-width: 600px) { .ranks-table td.rk-name:has(.poop-mark) .nm { max-width: calc(18ch - 1.6em); } }
 @media (min-width: 601px) { .ranks-table td.rk-name .nm { max-width: 28ch; } }
 @media (min-width: 1100px) { .ranks-table td.rk-name .nm { max-width: 42ch; } }
 .ranks-table tbody tr:hover td { background: var(--input-hover); }

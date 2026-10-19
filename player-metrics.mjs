@@ -16,7 +16,7 @@ import {
   resolveIvi,
   deathMixLite,
 } from "./math.mjs?v=20261010-sav1";
-import { splitFarm } from "./padding.mjs?v=20261010-sav1";
+import { splitFarm, isPenalizedPadder, padderPenalty } from "./padding.mjs?v=20261010-sav1";
 import { OPPONENT_TOP_N, LEGACY_TOP_N, sampleTopN } from "./census-fetch.mjs?v=20261010-sav1";
 import { cleanTimes } from "./flairs.mjs?v=20261010-sav1";
 
@@ -193,6 +193,13 @@ export function playerMetrics(p) {
   const m = metricsRow(p);
   const rawP = rawSampleView(p);
   m.raw = rawP === p ? m : metricsRow(rawP);
+  // 💩 confirmed padder (padding.mjs): −10% adjusted iVi; m.adjsBase = before. m.raw stays unpenalized.
+  if (p && isPenalizedPadder(p.display)) {
+    if (m.raw === m) m.raw = { ...m };
+    m.adjsBase = m.adjs;
+    m.adjs = padderPenalty(m.adjs);
+    m.poop = true;
+  }
   return m;
 }
 

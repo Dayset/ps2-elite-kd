@@ -10,6 +10,7 @@
  */
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { normalizePlayer, playerMetrics, shownValue } from "./player-metrics.mjs?v=20261010-sav1";
+import { isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261010-sav1";
 
 export const FEED_MAX = 6;
 export const GRAPH_OPPONENTS = 5; // + the target = MAX_NAMES (6)
@@ -189,9 +190,13 @@ function start() {
   const fmt = (v, d) => (typeof v === "number" && Number.isFinite(v) ? v.toFixed(d) : "—");
   const N = LIVE_COLS.length;
   const shortLab = (c) => c.label.split(" ")[0];
+  /** 💩 after a confirmed padder's name (padding.mjs): hover explains the −10% iVi penalty. */
+  const poopFor = (name) => (isPenalizedPadder(name) ? `<span class="poop-mark" title="${esc(POOP_TIP)}" aria-label="${esc(POOP_TIP)}">${POOP_MARK}</span>` : "");
   /** One player = name cell + stats cells on one row (columns aligned across events). */
   function side(p, isMe) {
-    const name = `<td class="lv-name-cell"><span class="lv-name fac-${p.faction || ""}" title="${esc(p.name)}">${esc(p.name)}</span></td>`;
+    // 💩 confirmed padder (padding.mjs): hover explains the −10% iVi penalty.
+    const poop = poopFor(p.name);
+    const name = `<td class="lv-name-cell"><span class="lv-name fac-${p.faction || ""}" title="${esc(p.name)}">${esc(p.name)}</span>${poop}</td>`;
     let stats;
     if (p.cached) stats = LIVE_COLS.map((c) => `<td class="lv-num" title="${esc(c.label + ": " + c.tip)}">${cellText(c, p.cached[c.id])}</td>`).join("");
     else if (isMe) stats = `<td class="lv-num lv-uncached" colspan="${N}"></td>`;
@@ -219,7 +224,7 @@ function start() {
     // until real data arrives and fills the rows.
     const dashCells = `<td class="lv-num">—</td>`.repeat(N);
     const body = rows.length ? rows.map(eventHtml).join("")
-      : `<tbody class="lv-ev lv-wait"><tr><td class="lv-time">—</td><td class="lv-name-cell"><span class="lv-name fac-${me.faction || ""}">${esc(me.name)}</span></td>${dashCells}<td class="lv-arrow">❯</td><td class="lv-name-cell">—</td>${dashCells}</tr></tbody>`;
+      : `<tbody class="lv-ev lv-wait"><tr><td class="lv-time">—</td><td class="lv-name-cell"><span class="lv-name fac-${me.faction || ""}">${esc(me.name)}</span>${poopFor(me.name)}</td>${dashCells}<td class="lv-arrow">❯</td><td class="lv-name-cell">—</td>${dashCells}</tr></tbody>`;
     listEl.innerHTML = cols + head + body + (dropped ? eventHtml(dropped, -1).replace('class="lv-ev', 'class="lv-ev lv-fade') : "");
     if (dropped) setTimeout(() => { const f = listEl.querySelector(".lv-fade"); if (f) f.remove(); }, 600);
   }
