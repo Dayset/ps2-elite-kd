@@ -37,10 +37,10 @@
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-19T17:37:10.276Z",
+    "checkedAt": "2026-10-19T19:44:14.030Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 15,
-    "explained": 25,
+    "explained": 23,
     "items": [
       {
         "slug": "fretec",
@@ -299,38 +299,6 @@
         "explained": true,
         "reason": "Owner reviewed 2026-10-18 (#10): vehicle main try-harding K/D (lifetime KD 33, 658 kills / 25 deaths vs 200 opponents); explained, not a cheater",
         "red": []
-      },
-      {
-        "slug": "vanubestfaction2",
-        "name": "VanuBestFaction2",
-        "id": "kd",
-        "value": 44.25,
-        "bound": 19.757,
-        "z": 56.196,
-        "side": "high",
-        "explained": true,
-        "reason": "Also in 🚩 red flags (rampage, session, session-forensics), listed there",
-        "red": [
-          "rampage",
-          "session",
-          "session-forensics"
-        ]
-      },
-      {
-        "slug": "vanubestfaction2",
-        "name": "VanuBestFaction2",
-        "id": "s_kd",
-        "value": 59,
-        "bound": 47.041,
-        "z": 53.09,
-        "side": "high",
-        "explained": true,
-        "reason": "Also in 🚩 red flags (rampage, session, session-forensics), listed there",
-        "red": [
-          "rampage",
-          "session",
-          "session-forensics"
-        ]
       },
       {
         "slug": "alandwhalenc",
@@ -986,36 +954,6 @@
         ]
       },
       {
-        "slug": "vanubestfaction2",
-        "name": "VanuBestFaction2",
-        "explained": true,
-        "reason": "Also in 🚩 red flags (rampage, session, session-forensics), listed there",
-        "red": [
-          "rampage",
-          "session",
-          "session-forensics"
-        ],
-        "maxZ": 56.196,
-        "metrics": [
-          {
-            "id": "kd",
-            "label": "KD",
-            "value": 44.25,
-            "bound": 19.757,
-            "z": 56.196,
-            "side": "high"
-          },
-          {
-            "id": "s_kd",
-            "label": "🧪 Session K/D",
-            "value": 59,
-            "bound": 47.041,
-            "z": 53.09,
-            "side": "high"
-          }
-        ]
-      },
-      {
         "slug": "uou666",
         "name": "[RMBT] UOU666",
         "explained": true,
@@ -1133,12 +1071,12 @@
       }
     ],
     "playersUnexplained": 8,
-    "playersExplained": 13,
-    "playersAlsoRed": 8,
+    "playersExplained": 12,
+    "playersAlsoRed": 7,
     "playersChartOnly": 13
   },
   "hidden": {
-    "count": 18,
+    "count": 19,
     "players": [
       {
         "name": "[GOLD] IRunANetLimiter",
@@ -1261,6 +1199,14 @@
         "matched": true
       },
       {
+        "name": "VanuBestFaction2",
+        "slug": "vanubestfaction2",
+        "cid": "5429841912863370225",
+        "reason": "confirmed cheater — rampage (owner 2026-10-19: 175 LMG kills in ~15 min, 122 headshots = 69.7%, 100% hipfire, 0 ADS); kept for comparison only, not promoted in rankings",
+        "at": "2026-10-19",
+        "matched": true
+      },
+      {
         "name": "WontStopTillBauminator33isBaned5",
         "slug": "wontstoptillbauminator33isbaned5",
         "cid": "5429841912870614897",
@@ -1287,18 +1233,18 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-19T17:37:12.771Z",
+    "checkedAt": "2026-10-19T19:44:15.357Z",
     "red": 45,
     "padding": 41,
     "adjusted": 18,
-    "outlier": 21,
+    "outlier": 20,
     "chartOnly": 71,
-    "both": 9,
+    "both": 8,
     "session": 16,
     "forensics": 27
   },
   "sessionStats": {
-    "checkedAt": "2026-10-19T17:37:10.316Z",
+    "checkedAt": "2026-10-19T19:44:14.058Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -2076,7 +2022,7 @@
       {
         "slug": "vanubestfaction2",
         "name": "VanuBestFaction2",
-        "hidden": false,
+        "hidden": true,
         "sessions": 1,
         "kills": 177,
         "minutes": 24,
@@ -2765,6 +2711,45 @@
         "group": "confirmed cheater"
       },
       {
+        "slug": "vanubestfaction2",
+        "name": "VanuBestFaction2",
+        "hidden": true,
+        "sessions": 1,
+        "kills": 177,
+        "minutes": 24,
+        "source": "assists",
+        "measured": true,
+        "apk": 0.051,
+        "hs": 0.689,
+        "hsSrc": "lifetime",
+        "kd": 59,
+        "kdSrc": "session",
+        "flagged": true,
+        "otherRed": [
+          "rampage",
+          "session-forensics"
+        ],
+        "values": {
+          "s_apk": 0.051,
+          "s_share": 0.49,
+          "s_kpm": 7.527,
+          "s_maxKpm": 7.527,
+          "s_kpmCv": null,
+          "s_kd": 59,
+          "s_maxKd": 59,
+          "s_hsk": null,
+          "s_ksk": null,
+          "s_domk": null,
+          "s_revk": null,
+          "s_revDom": null,
+          "s_savk": null,
+          "s_spotk": null,
+          "s_prik": null,
+          "s_stopk": null
+        },
+        "group": "confirmed cheater"
+      },
+      {
         "slug": "wontstoptillbauminator33isbaned5",
         "name": "WontStopTillBauminator33isBaned5",
         "hidden": true,
@@ -2967,28 +2952,6 @@
             "side": "high"
           }
         ]
-      },
-      {
-        "slug": "vanubestfaction2",
-        "name": "VanuBestFaction2",
-        "explained": true,
-        "reason": "Also in 🚩 red flags (rampage, session, session-forensics), listed there",
-        "red": [
-          "rampage",
-          "session",
-          "session-forensics"
-        ],
-        "maxZ": 56.196,
-        "metrics": [
-          {
-            "id": "s_kd",
-            "label": "🧪 Session K/D",
-            "value": 59,
-            "bound": 47.041,
-            "z": 53.09,
-            "side": "high"
-          }
-        ]
       }
     ],
     "outliersUnexplained": 1
@@ -3004,7 +2967,7 @@
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-19T17:37:10.350Z",
+    "checkedAt": "2026-10-19T19:44:14.084Z",
     "candidates": [
       "nebelhexe",
       "oshurpogchamp",
@@ -3034,7 +2997,6 @@
       "hackerdetector",
       "liillliii",
       "newcomopr",
-      "vanubestfaction2",
       "delusionalplayerbase",
       "kurtchew",
       "renamedsoldier12345",
@@ -3165,6 +3127,7 @@
       "svip00465",
       "ts622",
       "ultramaniac",
+      "vanubestfaction2",
       "vexarivs",
       "waop",
       "whatayouwantfromme",
@@ -5267,8 +5230,8 @@
       {
         "slug": "vanubestfaction2",
         "name": "VanuBestFaction2",
-        "hidden": false,
-        "confirmedCheater": false,
+        "hidden": true,
+        "confirmedCheater": true,
         "flagged": true,
         "odd": false,
         "analyzed": 1,
@@ -27852,7 +27815,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-19T17:37:10.359Z",
+    "checkedAt": "2026-10-19T19:44:14.091Z",
     "count": 333,
     "players": [
       {
@@ -28232,8 +28195,8 @@
         "cid": "5429841912863370225",
         "lists": [
           "red",
-          "outlier",
-          "forensics"
+          "forensics",
+          "hidden"
         ]
       },
       {
@@ -30607,7 +30570,7 @@
     ]
   },
   "infantry": {
-    "checkedAt": "2026-10-19T17:37:14.494Z",
+    "checkedAt": "2026-10-19T19:44:16.682Z",
     "players": 13195,
     "counts": {
       "infantry": 8703,
@@ -30627,7 +30590,7 @@
   "assistGroups": {
     "byTag": {
       "infantry": {
-        "count": 2759,
+        "count": 2758,
         "medApk": 0.408,
         "medShare": 0.56
       },
@@ -30664,20 +30627,20 @@
       }
     },
     "tagMin": 20,
-    "checkedAt": "2026-10-19T17:37:12.713Z",
+    "checkedAt": "2026-10-19T19:44:15.299Z",
     "coverage": {
-      "players": 13176,
-      "withSessions": 8524,
-      "measured": 3387,
+      "players": 13175,
+      "withSessions": 8523,
+      "measured": 3386,
       "measuredPct": 25.7
     },
     "cuts": {
-      "kd": 2.453,
+      "kd": 2.451,
       "shareHi": 0.588,
       "shareLo": 0.532,
       "apk": 0.633,
-      "iviLo": 334.456,
-      "iviHi": 720.482,
+      "iviLo": 334.383,
+      "iviHi": 720.4,
       "medApk": 0.404,
       "medShare": 0.559
     },
@@ -30693,7 +30656,7 @@
     },
     "groups": {
       "carries": {
-        "count": 300,
+        "count": 301,
         "top": [
           {
             "slug": "pikaqiuill",
@@ -30786,7 +30749,7 @@
         ]
       },
       "finishers": {
-        "count": 161,
+        "count": 160,
         "top": [
           {
             "slug": "anniversay",
@@ -30798,17 +30761,6 @@
             "share": 0.488,
             "kills": 239,
             "flagged": false
-          },
-          {
-            "slug": "vanubestfaction2",
-            "name": "VanuBestFaction2",
-            "kd": 44.25,
-            "kpm": 6.484,
-            "ivi": 3019.612,
-            "apk": 0.051,
-            "share": 0.49,
-            "kills": 177,
-            "flagged": true
           },
           {
             "slug": "sgecsd",
@@ -30874,6 +30826,17 @@
             "apk": 0.357,
             "share": 0.516,
             "kills": 392,
+            "flagged": false
+          },
+          {
+            "slug": "daemon15",
+            "name": "daemon15",
+            "kd": 6.855,
+            "kpm": 0.192,
+            "ivi": 189.173,
+            "apk": 1.5,
+            "share": 0.427,
+            "kills": 140,
             "flagged": false
           }
         ]
@@ -30975,54 +30938,12 @@
   },
   "burst": {
     "rule": "KPM ≥ 5 and ≥ 15 kills in ≥ 2 min (one stored session, no 10-minute floor)",
-    "checkedAt": "2026-10-19T17:37:16.719Z",
+    "checkedAt": "2026-10-19T19:44:18.592Z",
     "sessions": 11,
-    "flaggedPlayers": 3,
-    "clearedPlayers": 0,
-    "hiddenPlayers": 7,
+    "flaggedPlayers": 0,
+    "clearedPlayers": 2,
+    "hiddenPlayers": 8,
     "items": [
-      {
-        "slug": "vanubestfaction2",
-        "name": "VanuBestFaction2",
-        "cid": "5429841912863370225",
-        "session": "77443917",
-        "kills": 177,
-        "minutes": 23.5,
-        "kpm": 7.53,
-        "startMs": 1790551047000,
-        "status": "review",
-        "cleared": false,
-        "hidden": false,
-        "reason": null
-      },
-      {
-        "slug": "enablescaleformfonts1",
-        "name": "[96] enablescaleformfonts1",
-        "cid": "5429436594061457665",
-        "session": "52619181",
-        "kills": 102,
-        "minutes": 18.5,
-        "kpm": 5.51,
-        "startMs": 1710304867000,
-        "status": "review",
-        "cleared": false,
-        "hidden": false,
-        "reason": null
-      },
-      {
-        "slug": "majorkek",
-        "name": "[FedX] MajorKek",
-        "cid": "5428549186539208481",
-        "session": "29331034",
-        "kills": 27,
-        "minutes": 5.1,
-        "kpm": 5.26,
-        "startMs": 1669573369000,
-        "status": "review",
-        "cleared": false,
-        "hidden": false,
-        "reason": null
-      },
       {
         "slug": "fiodmoon",
         "name": "FIodmoon",
@@ -31134,11 +31055,53 @@
         "cleared": false,
         "hidden": true,
         "reason": "Confirmed cheater 2026-10-10 (t319u): throwaway account, rampage (75 kills / 2 deaths, KD 24.7); on the 🙈 hide list as a reference"
+      },
+      {
+        "slug": "vanubestfaction2",
+        "name": "VanuBestFaction2",
+        "cid": "5429841912863370225",
+        "session": "77443917",
+        "kills": 177,
+        "minutes": 23.5,
+        "kpm": 7.53,
+        "startMs": 1790551047000,
+        "status": "cheater",
+        "cleared": false,
+        "hidden": true,
+        "reason": "Confirmed cheater 2026-10-19 (burst review): Owner: CONFIRMED CHEATER (rampage). 175 LMG kills in about 15 min, 122 headshots (69.7%), 100% hipfire, 0 aim-down-sights."
+      },
+      {
+        "slug": "enablescaleformfonts1",
+        "name": "[96] enablescaleformfonts1",
+        "cid": "5429436594061457665",
+        "session": "52619181",
+        "kills": 102,
+        "minutes": 18.5,
+        "kpm": 5.51,
+        "startMs": 1710304867000,
+        "status": "cleared",
+        "cleared": true,
+        "hidden": false,
+        "reason": "Owner cleared 2026-10-19 (burst review): Owner: cleared as a very capable player (102 kills in 18.5 min, KPM 5.5). The owner only cares about blatant rampage cheaters."
+      },
+      {
+        "slug": "majorkek",
+        "name": "[FedX] MajorKek",
+        "cid": "5428549186539208481",
+        "session": "29331034",
+        "kills": 27,
+        "minutes": 5.1,
+        "kpm": 5.26,
+        "startMs": 1669573369000,
+        "status": "cleared",
+        "cleared": true,
+        "hidden": false,
+        "reason": "Owner cleared 2026-10-19 (burst review): Owner: burst dismissed. His 27 Nov 2022 13:22 session (27 kills in 5 min) was a lucky orbital strike."
       }
     ]
   },
   "padderPenalty": {
-    "checkedAt": "2026-10-19T17:37:10.386Z",
+    "checkedAt": "2026-10-19T19:44:14.110Z",
     "ranked": 13133,
     "penalty": 0.1,
     "ref": 610.6,
@@ -31359,7 +31322,7 @@
     ]
   },
   "vehicleCut": {
-    "checkedAt": "2026-10-19T17:37:10.428Z",
+    "checkedAt": "2026-10-19T19:44:14.142Z",
     "ranked": 13133,
     "cut": 7954,
     "buckets": {
@@ -31378,7 +31341,7 @@
       "START": 0.1,
       "REF": 610.6
     },
-    "withData": 12268,
+    "withData": 12267,
     "players": [
       {
         "slug": "igorrrrrr",

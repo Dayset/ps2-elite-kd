@@ -1,5 +1,5 @@
 {
-  "_about": "Human review decisions for players whose stats were automatically adjusted (marked * or † on the site, flagged on build-log.html). Add entries by hand: \"slug\": { \"decision\": \"fluke\" | \"bad-luck\" | \"padding\", \"note\": \"why\", \"at\": \"YYYY-MM-DD\" }. The mark stays; the decision is shown next to the flag. 💩 penalty (2026-10-19): every \"padding\" player gets 💩 and −10% adjusted iVi. Owner override: add \"penalty\": \"cleared\" to the entry (keeps *, removes 💩 and the penalty) or set the decision to \"cleared\" (removes both).",
+  "_about": "Human review decisions for players whose stats were automatically adjusted (marked * or † on the site, flagged on build-log.html). Add entries by hand: \"slug\": { \"decision\": \"fluke\" | \"bad-luck\" | \"padding\", \"note\": \"why\", \"at\": \"YYYY-MM-DD\" }. The mark stays; the decision is shown next to the flag. 💩 penalty (2026-10-19): every \"padding\" player gets 💩 and −10% adjusted iVi. Owner override: add \"penalty\": \"cleared\" to the entry (keeps *, removes 💩 and the penalty) or set the decision to \"cleared\" (removes both). 💥 Burst sessions (build-log): add \"burst\": \"cleared\" | \"cheater\" with a note (no \"decision\" needed; it never touches */†/💩). A burst cheater also goes on data/hidden.json as \"confirmed cheater\".",
   "players": {
     "megatake": {
       "decision": "padding",
@@ -115,6 +115,21 @@
       "decision": "padding",
       "note": "confirmed on owner review (t322u): farms the bot account KKLKK",
       "at": "2026-10-10"
+    },
+    "majorkek": {
+      "burst": "cleared",
+      "note": "Owner: burst dismissed. His 27 Nov 2022 13:22 session (27 kills in 5 min) was a lucky orbital strike.",
+      "at": "2026-10-19"
+    },
+    "enablescaleformfonts1": {
+      "burst": "cleared",
+      "note": "Owner: cleared as a very capable player (102 kills in 18.5 min, KPM 5.5). The owner only cares about blatant rampage cheaters.",
+      "at": "2026-10-19"
+    },
+    "vanubestfaction2": {
+      "burst": "cheater",
+      "note": "Owner: CONFIRMED CHEATER (rampage). 175 LMG kills in about 15 min, 122 headshots (69.7%), 100% hipfire, 0 aim-down-sights.",
+      "at": "2026-10-19"
     }
   }
 }
