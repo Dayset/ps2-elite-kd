@@ -38,7 +38,11 @@ const latCache = new Map();
 export function lat(zone) {
   if (!latCache.has(zone)) {
     const L = latticeFor(zone);
-    latCache.set(zone, L ? { adj: L.adj, names: L.names, nodes: new Set(Object.keys(L.names)),
+    // Facilities with no lattice link (Esamir's The Wash and Shattered Warpgate) are out of
+    // play: PS2Alerts leaves them out, the Census map shows them neutral.
+    const linked = new Set();
+    if (L) for (const [a, l] of L.adj) { linked.add(a); l.forEach((x) => linked.add(x)); }
+    latCache.set(zone, L ? { adj: L.adj, names: L.names, nodes: new Set(Object.keys(L.names)), linked,
       wg: new Set(Object.keys(L.names).filter((f) => /warpgate/i.test(L.names[f]))) } : null);
   }
   return latCache.get(zone);
@@ -86,12 +90,13 @@ export function prepare(rec) {
   if (!L) return { skip: "no lattice" };
   const init = Object.entries(rec.init || {});
   if (!init.length) return { skip: "no initial map" };
-  let extra = 0;
-  for (const [fid] of init) if (!L.nodes.has(fid)) extra++;
-  const missing = L.nodes.size - (init.length - extra);
-  if (extra || missing) return { skip: "lattice mismatch", extra, missing, lattice: rec.lattice };
+  const extra = init.filter(([fid]) => !L.nodes.has(fid)).map(([fid]) => fid);
+  const have = new Set(init.map(([fid]) => fid));
+  const missing = [...L.nodes].filter((fid) => !have.has(fid) && L.linked.has(fid));
+  if (extra.length || missing.length) return { skip: "lattice mismatch", extra, missing, lattice: rec.lattice };
   const own = new Map(init.map(([f, o]) => [f, +o]));
-  const total = own.size;
+  for (const fid of L.nodes) if (!own.has(fid)) own.set(fid, 0);   // out-of-play: neutral, as on the Census map
+  const total = own.size;                                          // = the map's base count, like the live engine
   const raw = [], cut = [], cutN = [];
   const flips = rec.flips || [];
   let fi = 0;
@@ -215,7 +220,8 @@ const notice = (t, m) => console.log(`::notice title=${t}::${m}`);
 async function main() {
   const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : d; };
   const inFile = arg("--in", "history/alerts.jsonl"), outDir = arg("--out", "oracle/backend"), commit = arg("--commit", "false") === "true";
-  const skips = {}, latticeSkips = {};
+  const skips = {}, latticeSkips = {}, mismatchExample = {};
+  const FRESH = Date.parse(arg("--fresh", "2026-10-11T00:00:00Z")) / 1000;   // after the production trees were grown
   const byZone = Object.fromEntries(TREE_ZONES.map((z) => [z, []]));
   const ctl = { n: 0, errRaw: 0, errCut: 0, nCut: 0, errRawCut: 0, errCutCut: 0, alerts: 0 };
   let records = 0;
@@ -225,7 +231,10 @@ async function main() {
     const p = prepare(JSON.parse(line));
     if (p.skip) {
       skips[p.skip] = (skips[p.skip] || 0) + 1;
-      if (p.skip === "lattice mismatch") { const k = `${JSON.parse(line).zone}:${p.lattice}`; latticeSkips[k] = (latticeSkips[k] || 0) + 1; }
+      if (p.skip === "lattice mismatch") {
+        const k = `${JSON.parse(line).zone}:${p.lattice}`; latticeSkips[k] = (latticeSkips[k] || 0) + 1;
+        if (!mismatchExample[k]) mismatchExample[k] = { extra: p.extra.slice(0, 12), missing: p.missing.slice(0, 12).map((f) => `${f}:${lat(JSON.parse(line).zone).names[f]}`) };
+      }
       continue;
     }
     if (p.ctl) { ctl.alerts++; for (const k of ["n", "errRaw", "errCut", "nCut", "errRawCut", "errCutCut"]) ctl[k] += p.ctl[k]; }
@@ -258,15 +267,24 @@ async function main() {
     cut: { mode: "cut", getBin: (z) => cut.get[z] },
     std_tree_cut_input: { mode: "cut", getBin: (z) => std.get[z] },
     production: { mode: "raw", getBin: (z) => binGetter(z) },
+    production_cut_input: { mode: "cut", getBin: (z) => binGetter(z) },
   });
-  for (const k of ["all", "early", "mid", "late", "final5", "with_cut", "cut3plus"]) {
-    if (!ev.std || !ev.std[k]) continue;
-    notice(`holdout ${k}`, `n=${ev.std[k].n} std ${ev.std[k].brier} | cut-aware ${ev.cut[k].brier} | std tree on cut input ${ev.std_tree_cut_input[k].brier} | production trees ${ev.production[k].brier} (may have seen these alerts)`);
-  }
+  const freshAlerts = test.filter((a) => a.start >= FRESH);
+  const evFresh = evaluate(freshAlerts, {
+    std: { mode: "raw", getBin: (z) => std.get[z] },
+    cut: { mode: "cut", getBin: (z) => cut.get[z] },
+    production: { mode: "raw", getBin: (z) => binGetter(z) },
+    production_cut_input: { mode: "cut", getBin: (z) => binGetter(z) },
+  });
+  // GitHub keeps 10 annotations per step: one line per variant; full numbers in history_eval.json.
+  const line = (e, v) => ["all", "early", "mid", "late", "final5", "with_cut"].map((k) => (e[v] && e[v][k] ? `${k} ${e[v][k].brier}` : "")).join(" · ");
+  for (const v of ["std", "cut", "production", "production_cut_input"]) notice(`holdout ${v}`, `n=${ev.std ? ev.std.all.n : 0} min: ${line(ev, v)}`);
+  if (evFresh.std) notice("fresh (after production trees)", `${freshAlerts.length} alerts: ${["std", "cut", "production", "production_cut_input"].map((v) => `${v} ${evFresh[v].all.brier}/final5 ${evFresh[v].final5 ? evFresh[v].final5.brier : "-"}`).join(" | ")}`);
   const better = (k) => ev.cut && ev.cut[k] && ev.cut[k].brier < ev.std[k].brier;
   const verdict = better("all") && better("late") && better("final5");
   notice("verdict", verdict ? "cut-aware trees beat standard on held-out alerts (all, late, final 5 min)" : "cut-aware trees do NOT beat standard on every held-out slice; live trees unchanged");
-  const report = { at: new Date().toISOString(), records, usable, train: train.length, test: test.length, skipped: skips, lattice_mismatch: latticeSkips, rule, holdout: ev, verdict,
+  const report = { at: new Date().toISOString(), records, usable, train: train.length, test: test.length, skipped: skips, lattice_mismatch: latticeSkips, mismatch_example: mismatchExample, rule, holdout: ev,
+    fresh: { since: new Date(FRESH * 1000).toISOString(), alerts: freshAlerts.length, brier: evFresh }, verdict,
     cells: { std: Object.fromEntries(TREE_ZONES.map((z) => [z, std.t[z].meta.cells])), cut: Object.fromEntries(TREE_ZONES.map((z) => [z, cut.t[z].meta.cells])) } };
   fs.writeFileSync(path.join(outDir, "history_eval.json"), JSON.stringify(report, null, 1));
   if (commit && verdict) {
