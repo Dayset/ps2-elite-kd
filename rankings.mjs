@@ -1122,6 +1122,7 @@ export function initRankings(host) {
       `${h.n.toLocaleString()} players · median ${(+h.median).toFixed(col.digits)} · p90 ${(+h.p90).toFixed(col.digits)} · p99 ${(+h.p99).toFixed(col.digits)}` +
       (below ? ` · ${below} below scale (shown as 0)` : "");
     holdSummaryHeight(W);
+    holdHintHeight(W);
   }
 
   /* t374u: the stats line can wrap to 2 lines for one metric and 1 for the
@@ -1136,6 +1137,19 @@ export function initRankings(host) {
     const hNow = el.getBoundingClientRect().height;
     if (hNow > sumMax.h) sumMax.h = hNow;
     if (sumMax.h > 0) el.style.minHeight = `${Math.ceil(sumMax.h)}px`;
+  }
+
+  /* Same idea for the metric tip above the chart: tips run 1-3 lines, so
+   * hold the hint at the tallest height it needed at this chart width. */
+  let hintMax = { w: 0, h: 0 };
+  function holdHintHeight(w) {
+    const el = $("distHint");
+    if (!el) return;
+    if (hintMax.w !== w) hintMax = { w, h: 0 };
+    el.style.minHeight = "";
+    const hNow = el.getBoundingClientRect().height;
+    if (hNow > hintMax.h) hintMax.h = hNow;
+    if (hintMax.h > 0) el.style.minHeight = `${Math.ceil(hintMax.h)}px`;
   }
 
   function binRangeText(b, h, col) {

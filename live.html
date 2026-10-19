@@ -39,7 +39,7 @@
     "codeRepository": "https://github.com/Dayset/ps2-elite-kd"
   }
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261019-carousel1" />
+  <link rel="stylesheet" href="styles.css?v=20261019-dist1" />
 </head>
 <body class="main-page live-mode">
   <div class="controls">
@@ -164,7 +164,7 @@
   <section id="rankings" class="rankings" aria-label="Rankings">
     <div id="ranksStatus" class="ranks-status" role="status"></div>
     <details id="distSection" class="dist-section" open>
-      <summary>📊 Distribution</summary>
+      <summary title="Distribution">📊</summary>
       <!-- t377u: metric picker = a row of emojis on the summary line (current one
            highlighted with its name); doubles as the auto-cycle's "you are here".
            The <select> stays (hidden) as the value holder the code reads. -->
@@ -175,7 +175,6 @@
         <div id="distTip" class="dist-tip" hidden></div>
       </div>
       <div id="distHint" class="dist-hint"></div>
-      <div class="dist-note">Click a bar (tap twice on phones) to see those players in the table. Swipe sideways to change the stat.</div>
       <div id="distSummary" class="dist-summary"></div>
     </details>
     <!-- t357u/t358u: the big table folds away like the chart, folded by default (state remembered). -->
@@ -223,7 +222,7 @@
     </section>
   </footer>
 
-  <script type="module" src="app.js?v=20261019-carousel1"></script>
+  <script type="module" src="app.js?v=20261019-dist1"></script>
   <script type="module" src="live.mjs?v=20261019-vcut4"></script>
 </body>
 </html>
