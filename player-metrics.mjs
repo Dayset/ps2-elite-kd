@@ -17,7 +17,7 @@ import {
   deathMixLite,
 } from "./math.mjs?v=20261010-sav1";
 import { splitFarm, isPenalizedPadder, padderPenalty } from "./padding.mjs?v=20261010-sav1";
-import { vehicleCutFor, applyVehicleCut, isVehicleCutCleared } from "./vehicle-cut.mjs?v=20261019-vcut1";
+import { vehicleCutFor, applyVehicleCut, isVehicleCutCleared } from "./vehicle-cut.mjs?v=20261019-vcut3";
 import { OPPONENT_TOP_N, LEGACY_TOP_N, sampleTopN } from "./census-fetch.mjs?v=20261010-sav1";
 import { cleanTimes } from "./flairs.mjs?v=20261010-sav1";
 
@@ -203,12 +203,14 @@ export function playerMetrics(p) {
     m.adjs = padderPenalty(m.adjs);
     m.poop = true;
   }
-  // 🚜 vehicle cut (vehicle-cut.mjs): after the 💩 penalty (they stack). m.adjsPreVeh = before this cut.
+  // 🚜 vehicle + MAX cuts (vehicle-cut.mjs, additive): after the 💩 penalty (they stack). m.adjsPreVeh = before this cut.
   const vc = p && p.infantry ? vehicleCutFor(p.infantry) : null;
   if (vc) {
-    m.vehShare = vc.share; // vehicle + MAX
+    m.vehShare = vc.veh + vc.max; // vehicle + MAX (build-log)
     m.vehOnly = vc.veh;
     m.maxShare = vc.max;
+    m.vehCutVeh = vc.cutVeh;
+    m.vehCutMax = vc.cutMax;
     if (vc.cut > 0 && isVehicleCutCleared(p.display)) m.vehCutCleared = true;
     else if (vc.cut > 0 && Number.isFinite(m.adjs)) {
       if (m.raw === m) m.raw = { ...m };

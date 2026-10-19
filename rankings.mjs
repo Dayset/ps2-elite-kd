@@ -24,7 +24,7 @@ import { confirmedPadderSlugs } from "./padding.mjs?v=20261010-sav1";
 import { slugKey } from "./rank-row.mjs?v=20261010-sav1";
 import { hiddenList } from "./hidden.mjs?v=20261010-sav1";
 import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261019-inf1";
-import { VEH_CUT_MARK, vehicleCutTip } from "./vehicle-cut.mjs?v=20261019-vcut1";
+import { VEH_CUT_MARK, vehicleCutTip } from "./vehicle-cut.mjs?v=20261019-vcut3";
 
 /**
  * @param {{ getNames: () => string[], toggleName: (name: string, anchor: Element, add: boolean) => void }} host
@@ -304,7 +304,7 @@ export function initRankings(host) {
     return `<td title="${esc(tip)}">${fmt(v, 2)}</td>`;
   }
 
-  /** 🚜 "‡" after the ⚔️ iVi value (vehicle-cut.mjs): shares + cut on hover; "" without a cut. */
+  /** 🚜 "‡" after the ⚔️ iVi value (vehicle-cut.mjs, uncapped: share − 10% per part): parts + total on hover; "" without a cut. */
   function vcutHtml(row) {
     if (!(row.vcut > 0)) return "";
     const tip = vehicleCutTip(row.infVeh, row.infMax, row.vcut);
