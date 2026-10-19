@@ -252,3 +252,9 @@ approved it, "shipped" means it is live in the running pipeline.
   stored alert with standard and cut-aware odds from the same per-minute maps
   (Brier early/mid/late and on minutes with cut bases) and checks which view
   matches Census' final scores. Weekly and on demand.
+- **First rescan (6 alerts, the Worker's stored history so far):** cut-aware matched
+  Census final scores better in 2 of 3 alerts that ended with cuts (mean error
+  0.37 vs 1.05 pp), but cut-aware odds scored slightly worse (Brier 0.163 vs 0.159;
+  minutes with cut bases 0.151 vs 0.137). The trees were grown on raw ownership, so
+  feeding them cut-aware territory is out of distribution; the fix is regrown
+  cut-aware trees, which needs the PS2Alerts backfill (#31). Live odds unchanged.
