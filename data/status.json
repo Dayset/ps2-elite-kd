@@ -4,13 +4,15 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "39175599261",
-    "event": "schedule",
+    "runId": "39183343281",
+    "event": "workflow_dispatch",
     "kind": "discovery",
-    "startedAt": "2026-10-18T23:13:46.624Z",
-    "endedAt": "2026-10-18T23:16:59.579Z",
-    "seconds": 193,
-    "updated": [],
+    "startedAt": "2026-10-19T01:01:01.764Z",
+    "endedAt": "2026-10-19T01:04:51.334Z",
+    "seconds": 230,
+    "updated": [
+      "[GOLD] Omegadude4321"
+    ],
     "added": [],
     "failed": [],
     "stoppedEarly": null,
@@ -22,14 +24,20 @@
       "sweepInProgress": false
     },
     "honu": {
-      "day": "2026-10-18",
-      "calls": 4158,
+      "day": "2026-10-19",
+      "calls": 41,
       "cap": 10000
     },
-    "batch": []
+    "batch": [
+      {
+        "name": "[GOLD] Omegadude4321",
+        "src": "refresh",
+        "status": "done"
+      }
+    ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-18T23:17:28.194Z",
+    "checkedAt": "2026-10-19T01:08:25.357Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 14,
     "explained": 26,
@@ -1269,7 +1277,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-18T23:17:28.324Z",
+    "checkedAt": "2026-10-19T01:08:25.529Z",
     "red": 44,
     "padding": 41,
     "adjusted": 17,
@@ -1280,7 +1288,7 @@
     "forensics": 27
   },
   "sessionStats": {
-    "checkedAt": "2026-10-18T23:17:28.217Z",
+    "checkedAt": "2026-10-19T01:08:25.392Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -1294,13 +1302,13 @@
     "ruleText": "[session pattern] in recent Honu sessions (≥ 100 kills counted): assists per kill ≤ 0.1, headshot share ≥ 50% (headshot XP per kill; Census lifetime HSR when no XP detail) and K/D ≥ 7 (session deaths; Census lifetime KD when none). A very one-sided record; a lead for manual review, not proof.",
     "coverage": {
       "players": 12973,
-      "withSessions": 8300,
+      "withSessions": 8302,
       "measured": 3788,
-      "sessions": 29179,
-      "kills": 1331615,
-      "xpPlayers": 795,
-      "xpMeasured": 609,
-      "xpSessions": 4512
+      "sessions": 29185,
+      "kills": 1331698,
+      "xpPlayers": 800,
+      "xpMeasured": 611,
+      "xpSessions": 4527
     },
     "metrics": [
       {
@@ -1412,7 +1420,7 @@
         "max": 1.5
       },
       "s_share": {
-        "n": 3344,
+        "n": 3343,
         "min": 0.383,
         "p01": 0.462,
         "p05": 0.49,
@@ -1472,7 +1480,7 @@
         "max": 355
       },
       "s_hsk": {
-        "n": 634,
+        "n": 636,
         "min": 0,
         "p01": 0.008,
         "p05": 0.057,
@@ -1482,7 +1490,7 @@
         "max": 0.972
       },
       "s_ksk": {
-        "n": 634,
+        "n": 636,
         "min": 0,
         "p01": 0.054,
         "p05": 0.125,
@@ -1492,17 +1500,17 @@
         "max": 0.983
       },
       "s_domk": {
-        "n": 634,
+        "n": 636,
         "min": 0,
         "p01": 0.007,
-        "p05": 0.024,
+        "p05": 0.023,
         "median": 0.066,
         "p95": 0.151,
         "p99": 0.227,
         "max": 0.243
       },
       "s_revk": {
-        "n": 634,
+        "n": 636,
         "min": 0,
         "p01": 0,
         "p05": 0.012,
@@ -1512,17 +1520,17 @@
         "max": 0.357
       },
       "s_revDom": {
-        "n": 629,
+        "n": 631,
         "min": 0,
         "p01": 0,
         "p05": 0.118,
-        "median": 0.85,
+        "median": 0.857,
         "p95": 3,
-        "p99": 4.5,
+        "p99": 4.6,
         "max": 14
       },
       "s_savk": {
-        "n": 634,
+        "n": 636,
         "min": 0,
         "p01": 0.008,
         "p05": 0.023,
@@ -1532,7 +1540,7 @@
         "max": 0.2
       },
       "s_spotk": {
-        "n": 634,
+        "n": 636,
         "min": 0,
         "p01": 0,
         "p05": 0,
@@ -1542,7 +1550,7 @@
         "max": 0.354
       },
       "s_prik": {
-        "n": 634,
+        "n": 636,
         "min": 0,
         "p01": 0.047,
         "p05": 0.116,
@@ -1552,7 +1560,7 @@
         "max": 0.49
       },
       "s_stopk": {
-        "n": 634,
+        "n": 636,
         "min": 0,
         "p01": 0.018,
         "p05": 0.036,
@@ -2976,17 +2984,17 @@
     "outliersUnexplained": 1
   },
   "size": {
-    "at": "2026-10-18T23:16:59.951Z",
-    "repoBytes": 133720064,
-    "dataBytes": 253678136,
-    "playersBytes": 236622949,
+    "at": "2026-10-19T01:04:51.737Z",
+    "repoBytes": 135630848,
+    "dataBytes": 253705223,
+    "playersBytes": 236623312,
     "playerFiles": 12974,
     "warnAtBytes": 734003200,
     "warning": false
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-18T23:17:28.241Z",
+    "checkedAt": "2026-10-19T01:08:25.425Z",
     "candidates": [
       "nebelhexe",
       "oshurpogchamp",
@@ -6479,7 +6487,7 @@
         "flagged": false,
         "odd": true,
         "analyzed": 1,
-        "checkedAt": "2026-10-16T00:41:29.430Z",
+        "checkedAt": "2026-10-19T01:04:26.892Z",
         "worst": {
           "sessionId": "77652019",
           "url": "https://wt.honu.pw/s/77652019",
@@ -6571,8 +6579,8 @@
         "confirmedCheater": false,
         "flagged": false,
         "odd": true,
-        "analyzed": 2,
-        "checkedAt": "2026-10-16T00:14:47.651Z",
+        "analyzed": 3,
+        "checkedAt": "2026-10-19T01:04:21.171Z",
         "worst": {
           "sessionId": "57934977",
           "url": "https://wt.honu.pw/s/57934977",
@@ -8597,7 +8605,7 @@
         "flagged": false,
         "odd": false,
         "analyzed": 3,
-        "checkedAt": "2026-10-16T00:15:02.916Z",
+        "checkedAt": "2026-10-19T01:04:26.891Z",
         "worst": {
           "sessionId": "77377785",
           "url": "https://wt.honu.pw/s/77377785",
@@ -14878,7 +14886,7 @@
         "flagged": false,
         "odd": false,
         "analyzed": 3,
-        "checkedAt": "2026-10-16T00:41:29.430Z",
+        "checkedAt": "2026-10-19T01:04:26.892Z",
         "worst": {
           "sessionId": "77333730",
           "url": "https://wt.honu.pw/s/77333730",
@@ -16142,7 +16150,7 @@
         "flagged": false,
         "odd": false,
         "analyzed": 3,
-        "checkedAt": "2026-10-16T00:15:08.982Z",
+        "checkedAt": "2026-10-19T01:04:26.891Z",
         "worst": {
           "sessionId": "77155267",
           "url": "https://wt.honu.pw/s/77155267",
@@ -20227,7 +20235,7 @@
         "flagged": false,
         "odd": false,
         "analyzed": 2,
-        "checkedAt": "2026-10-16T00:41:23.604Z",
+        "checkedAt": "2026-10-19T01:04:26.891Z",
         "worst": {
           "sessionId": "77658402",
           "url": "https://wt.honu.pw/s/77658402",
@@ -21925,8 +21933,8 @@
         "confirmedCheater": false,
         "flagged": false,
         "odd": false,
-        "analyzed": 1,
-        "checkedAt": "2026-10-16T00:14:56.482Z",
+        "analyzed": 2,
+        "checkedAt": "2026-10-19T01:04:26.891Z",
         "worst": {
           "sessionId": "76559304",
           "url": "https://wt.honu.pw/s/76559304",
@@ -23918,7 +23926,7 @@
         "flagged": false,
         "odd": false,
         "analyzed": 1,
-        "checkedAt": "2026-10-16T00:41:17.775Z",
+        "checkedAt": "2026-10-19T01:04:26.891Z",
         "worst": {
           "sessionId": "77642343",
           "url": "https://wt.honu.pw/s/77642343",
@@ -25445,7 +25453,7 @@
         "flagged": false,
         "odd": false,
         "analyzed": 1,
-        "checkedAt": "2026-10-16T00:41:29.430Z",
+        "checkedAt": "2026-10-19T01:04:26.892Z",
         "worst": {
           "sessionId": "77564308",
           "url": "https://wt.honu.pw/s/77564308",
@@ -26910,7 +26918,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-18T23:17:28.248Z",
+    "checkedAt": "2026-10-19T01:08:25.436Z",
     "count": 321,
     "players": [
       {
@@ -29567,14 +29575,14 @@
     ]
   },
   "infantry": {
-    "checkedAt": "2026-10-18T23:17:29.268Z",
+    "checkedAt": "2026-10-19T01:08:26.810Z",
     "players": 12974,
     "counts": {
-      "infantry": 884,
+      "infantry": 885,
       "mixed": 688,
       "vehicle": 210,
       "low": 145,
-      "none": 11047
+      "none": 11046
     },
     "rule": {
       "INFANTRY_MAX": 0.25,
@@ -29600,7 +29608,7 @@
         "medShare": 0.549
       },
       "untagged": {
-        "count": 2522,
+        "count": 2521,
         "medApk": 0.395,
         "medShare": 0.561
       }
@@ -29622,11 +29630,11 @@
       }
     },
     "tagMin": 20,
-    "checkedAt": "2026-10-18T23:17:28.291Z",
+    "checkedAt": "2026-10-19T01:08:25.488Z",
     "coverage": {
       "players": 12955,
-      "withSessions": 8282,
-      "measured": 3332,
+      "withSessions": 8284,
+      "measured": 3331,
       "measuredPct": 25.7
     },
     "cuts": {
@@ -29634,8 +29642,8 @@
       "shareHi": 0.587,
       "shareLo": 0.532,
       "apk": 0.632,
-      "iviLo": 333.912,
-      "iviHi": 719.795,
+      "iviLo": 333.899,
+      "iviHi": 719.813,
       "medApk": 0.404,
       "medShare": 0.559
     },
@@ -29933,7 +29941,7 @@
   },
   "burst": {
     "rule": "KPM ≥ 5 and ≥ 15 kills in ≥ 2 min (one stored session, no 10-minute floor)",
-    "checkedAt": "2026-10-18T23:17:30.441Z",
+    "checkedAt": "2026-10-19T01:08:28.396Z",
     "sessions": 11,
     "flaggedPlayers": 3,
     "clearedPlayers": 0,
