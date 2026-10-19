@@ -1339,7 +1339,7 @@ export function initRankings(host) {
     ids: () => [...$("distMetric").options].map((o) => o.value).filter((v) => DIST_IDS.has(v)),
     current: () => distMetric,
     show: crossfadeDistTo,
-    canRun: () => !!data && $("distSection").open && !document.hidden && distOnScreen && $("distTip").hidden && !(distDrag && distDrag.busy()),
+    canRun: () => !document.body.classList.contains("live-mode") && !!data && $("distSection").open && !document.hidden && distOnScreen && $("distTip").hidden && !(distDrag && distDrag.busy()),
   });
   /* t383u: 👆 swipe on the chart — finger / mouse drag to the right = next
    * metric, to the left = previous (two-finger sideways on a trackpad too).

@@ -238,7 +238,10 @@ import {
     h: VB.h - M.t - M.b,
   };
 
+  /** 🎥 live.html: same app, stripped down; live.mjs drives the names. */
+  const LIVE_MODE = typeof document !== "undefined" && !!document.body && document.body.classList.contains("live-mode");
   const els = {
+    liveBtn: document.getElementById("liveBtn"),
     themeToggle: document.getElementById("themeToggle"),
     bgToggleBtn: document.getElementById("bgToggleBtn"),
     wipeLocalBtn: document.getElementById("wipeLocalBtn"),
@@ -1033,6 +1036,7 @@ import {
    * no reload, other query params kept) so a refresh always shows what's on screen.
    */
   function syncUrlNames(names) {
+    if (LIVE_MODE) return; // live.html keeps ?names=<target>
     try {
       const url = new URL(window.location.href);
       const param = (names || []).map((n) => String(n).trim()).filter(Boolean).join(",");
@@ -1057,6 +1061,7 @@ import {
   }
 
   function saveLastComparison(names) {
+    if (LIVE_MODE) return;
     writeJsonLS(LS_LAST, names.map((n) => String(n).trim()).filter(Boolean));
   }
 
@@ -1075,7 +1080,7 @@ import {
    */
   let persistNamesOn = false;
   function persistPendingNames() {
-    if (!persistNamesOn) return;
+    if (!persistNamesOn || LIVE_MODE) return;
     writeJsonLS(LS_PENDING, { names: nameTokens.slice(0, MAX_NAMES), base: namesListKey(namesFromQuery() || []) });
   }
   function getPendingNames() {
@@ -1427,19 +1432,19 @@ import {
   function syncLimitLock() {
     const full = isListFull();
     if (els.namesInput) {
-      els.namesInput.disabled = full;
+      els.namesInput.disabled = full || LIVE_MODE; // 🎥 live: field locked until Live is turned off
       if (full) els.namesInput.setAttribute("title", `List is full (${MAX_NAMES} names) — remove a name to add more`);
       else els.namesInput.removeAttribute("title");
     }
     // Visible why: a disabled field alone says nothing (and a title only
     // shows on mouse hover), so the box itself explains the lock.
-    if (els.namesLimitNote) els.namesLimitNote.hidden = !full;
+    if (els.namesLimitNote) els.namesLimitNote.hidden = !full || LIVE_MODE;
     for (const b of [els.diceBtn, els.diceLowBtn, els.diceHighBtn]) {
       if (!b) continue;
       b.classList.toggle("is-locked", full);
       if (full) b.setAttribute("aria-disabled", "true"); else b.removeAttribute("aria-disabled");
     }
-    if (full && !limitWasFull && limitLockReady) setTimeout(() => { if (isListFull()) runAnalyzeFromUi(); }, 0);
+    if (full && !limitWasFull && limitLockReady && !LIVE_MODE) setTimeout(() => { if (isListFull()) runAnalyzeFromUi(); }, 0);
     limitWasFull = full;
   }
   function lockedClick(btn) {
@@ -1491,6 +1496,11 @@ import {
         e.stopPropagation();
         removeNameToken(name);
       });
+      if (LIVE_MODE) {
+        btn.classList.add(idx === 0 ? "live-lit" : "live-dim");
+        btn.disabled = true;
+        btn.title = idx === 0 ? `🎥 Live: ${name}` : `${name}: from the live feed`;
+      }
       els.nameTokensEl.appendChild(addNum(btn));
     });
     syncNamesPlaceholder();
@@ -1533,7 +1543,7 @@ import {
   }
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261017-keys1")
+    rankingsLoading = import("./rankings.mjs?v=20261018-live1")
       .then((m) => {
         rankingsApi = m.initRankings(rankingsHost);
         return rankingsApi.ready;
@@ -4906,6 +4916,23 @@ import {
   if (els.bgToggleBtn) {
     els.bgToggleBtn.addEventListener("click", () => toggleBgImage());
   }
+  // 🎥 Live: main page → live.html with the first name; live.html → back.
+  if (els.liveBtn) {
+    els.liveBtn.addEventListener("click", () => {
+      if (LIVE_MODE) {
+        const t = currentNamesInField()[0];
+        window.location.href = "./" + (t ? `?names=${encodeURIComponent(t)}` : "");
+        return;
+      }
+      commitFragment({ clearInput: true });
+      const first = currentNamesInField()[0];
+      if (!first) {
+        setStatus('<span class="err">🎥 Live needs a name: add one first.</span>', "err");
+        return;
+      }
+      window.location.href = `live.html?names=${encodeURIComponent(first)}`;
+    });
+  }
   if (els.wipeLocalBtn) {
     els.wipeLocalBtn.addEventListener("click", () => wipeAllLocalAppData());
   }
@@ -4958,6 +4985,9 @@ import {
       getLastAnalyzedNames: () => lastAnalyzedNames.slice(),
       getFailedNames: () => [...failedNames.values()].map((f) => ({ ...f })),
       getPlayerNames: () => players.map((p) => p.display),
+      setNameTokens,
+      analyzeNames,
+      LIVE_MODE,
     };
   }
 

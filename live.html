@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>🎥 Live feed — PS2 Elite K/D</title>
+  <meta name="description" content="Compare PlanetSide 2 players: K/D vs enemy KPM chart (Raw / Smooth), iVi skill rating, Resist, Brave and Inflation stats, and Rankings. Free, data from Daybreak Census and Honu." />
+  <meta name="robots" content="noindex" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="PS2 Elite K/D" />
+  <meta property="og:title" content="PS2 Elite K/D — PlanetSide 2 player stats &amp; K/D comparison" />
+  <meta property="og:description" content="Compare PlanetSide 2 players: K/D vs enemy KPM chart (Raw / Smooth), iVi skill rating, Resist, Brave and Inflation stats, and Rankings. Free, data from Daybreak Census and Honu." />
+  <meta property="og:url" content="https://dayset.github.io/ps2-elite-kd/" />
+  <meta property="og:image" content="https://dayset.github.io/ps2-elite-kd/assets/placeholder-graph.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="PS2 Elite K/D — PlanetSide 2 player stats &amp; K/D comparison" />
+  <meta name="twitter:description" content="Compare PlanetSide 2 players: K/D vs enemy KPM chart (Raw / Smooth), iVi skill rating, Resist, Brave and Inflation stats, and Rankings. Free, data from Daybreak Census and Honu." />
+  <meta name="twitter:image" content="https://dayset.github.io/ps2-elite-kd/assets/placeholder-graph.png" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "PS2 Elite K/D",
+    "url": "https://dayset.github.io/ps2-elite-kd/",
+    "description": "Compare PlanetSide 2 players: K/D vs enemy KPM chart, iVi skill rating, Rankings. Data from the Daybreak Census API and Honu.",
+    "applicationCategory": "GameApplication",
+    "operatingSystem": "Any (web browser)",
+    "isAccessibleForFree": true,
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "about": {
+      "@type": "VideoGame",
+      "name": "PlanetSide 2"
+    },
+    "image": "https://dayset.github.io/ps2-elite-kd/assets/placeholder-graph.png",
+    "codeRepository": "https://github.com/Dayset/ps2-elite-kd"
+  }
+  </script>
+  <link rel="stylesheet" href="styles.css?v=20261018-live1" />
+</head>
+<body class="main-page live-mode">
+  <div class="controls">
+    <div class="cache-row">
+      <div id="cacheChips" class="cache-chips" aria-label="Cached character names"></div>
+    </div>
+    <div id="namesBox" class="names-box" role="group" aria-label="Player names">
+      <div class="names-box-main">
+        <div id="nameTokens" class="name-tokens"></div>
+        <input id="namesInput" type="text" placeholder="ShloDog" aria-label="Player names" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="go" />
+      </div>
+      <button id="clearNamesBtn" type="button" class="clear-names" title="Clear names from input" aria-label="Clear names from input">×</button>
+    </div>
+    <button id="analyzeBtn" type="button">🔍 Analyze</button>
+    <button id="copyLinkBtn" type="button" title="Copy link" aria-label="Copy link">🔗</button>
+    <div class="dice-group" role="group" aria-label="Random players">
+      <button id="diceLowBtn" type="button" title="Random player with less ⚔️ iVi (−25% of the list)" aria-label="Random player with less iVi">&lt;</button>
+      <button id="diceBtn" type="button" title="Random player in range of the list" aria-label="Random player in range">🎲</button>
+      <button id="diceHighBtn" type="button" title="Random player with more ⚔️ iVi (+25% of the list)" aria-label="Random player with more iVi">&gt;</button>
+    </div>
+    <button id="liveBtn" type="button" class="live-btn" aria-pressed="true" title="🎥 Live is on: click to turn it off and edit names" aria-label="Live kill and death feed">🎥</button>
+    <div id="namesLimitNote" class="names-limit-note" hidden aria-live="polite">Name field locked: the comparison shows up to 6 players at once. Remove a name to add another.</div>
+
+    <div class="fresh-row">
+      <label class="fresh-label" for="fetchFresh">
+        <input id="fetchFresh" type="checkbox" autocomplete="off" />
+        Fetch fresh data
+      </label>
+      <span id="freshEta" class="fresh-eta" aria-live="polite" hidden></span>
+      <!-- t375u: 🗑️ / theme moved here from the top row, small icon buttons on the right. -->
+      <span class="fresh-row-end">
+        <button id="wipeLocalBtn" type="button" class="mini-btn wipe-local" title="Clear all local app data (cache, theme, flags)" aria-label="Clear all local app data">🗑️</button>
+        <button id="bgToggleBtn" type="button" class="mini-btn bg-toggle" title="Background image on — click to hide" aria-label="Background image on — click to hide">🖼️</button>
+        <button id="sfxToggle" type="button" class="mini-btn sfx-toggle" title="Sounds on — click to mute" aria-label="Sounds on — click to mute">🔊</button>
+        <button id="themeToggle" type="button" class="mini-btn theme-toggle" title="Switch to light theme" aria-label="Switch to light theme">☀️</button>
+      </span>
+    </div>
+  </div>
+
+  <div id="status"></div>
+
+  <section id="liveFeed" class="live-feed" aria-label="Live kills and deaths" aria-live="polite">
+    <div id="liveState" class="live-state">Connecting…</div>
+    <ol id="liveList" class="live-list"></ol>
+  </section>
+
+  <div id="progress" class="progress-modal" hidden aria-hidden="true">
+    <div class="progress-modal-backdrop" aria-hidden="true"></div>
+    <div class="progress-modal-card" role="dialog" aria-modal="true" aria-labelledby="progressTitle" aria-describedby="progressText">
+      <button id="progressCancel" type="button" class="progress-cancel" aria-label="Cancel fetch" title="Cancel fetch (Esc)">✕</button>
+      <div class="progress-modal-spinner" aria-hidden="true">
+        <span class="spinner spinner-lg"></span>
+      </div>
+      <h2 id="progressTitle" class="progress-title">Analyzing…</h2>
+      <p id="progressText" class="progress-text"></p>
+      <div class="progress-bar-track" aria-hidden="true">
+        <div id="progressBar" class="progress-bar-fill" style="width: 0%"></div>
+      </div>
+      <div class="progress-meta">
+        <span id="progressPct">0%</span>
+        <span id="progressTiming" class="progress-timing"></span>
+      </div>
+    </div>
+  </div>
+
+  <div id="statsPanel" class="stats-panel" aria-label="Player stats comparison"></div>
+
+  <div class="chart-wrap empty" style="contain: layout paint style;">
+    <!-- t378u: top-right corner of the graph: 💀 / 📈 switch above the zoom (upper half + Auto only). -->
+    <div class="chart-corner">
+      <div id="chartModeBar" class="chart-mode-bar" role="group" aria-label="Graph view">
+        <button type="button" class="chart-mode-btn" data-yscale="kd-btn" aria-pressed="true"
+                title="💀 Who wins fights: kills per death against easy → hard enemies. Higher line = wins more fights." data-tip="💀 Who wins fights: kills per death vs easy → hard enemies. Higher = wins more.">💀</button>
+        <button type="button" class="chart-mode-btn" data-mode="cumulative" aria-pressed="false"
+                title="🎯 Who aims best: each line keeps its shape but is lifted to the player's aim score (public IvI = accuracy × headshot %). Higher line = better aim, not more wins. Players can swap places between the two views: sharp aim doesn't always win fights, and vehicle / explosive players win without headshots." data-tip="🎯 Who aims best: lines lifted to each player's aim score (accuracy × headshot %). Higher = better aim, not more wins, so players can swap places.">🎯</button>
+        <button type="button" class="chart-mode-btn" data-mode="banded" aria-pressed="false"
+                title="Smooth: banded K/D.">🎚️</button>
+      </div>
+      <div id="chartYZoom" class="chart-y-zoom" hidden title="Zoom into the start of the graph (enemy KPM near 0): X shrinks from the right, Y re-fits to the left side. Bottom = Auto (full graph).">
+        <input id="yZoomSlider" type="range" min="0" max="2" step="0.05" value="0"
+               orient="vertical"
+               aria-label="Zoom (bottom = auto fit, up = zoom into enemy KPM near 0)"
+               aria-orientation="vertical" />
+        <button type="button" id="yZoomReset" class="chart-y-zoom-reset" title="Reset zoom to auto-fit (full graph)">Auto</button>
+      </div>
+    </div>
+    <div id="chartPlaceholder" class="chart-placeholder" aria-hidden="false" title="Click to analyze">
+      <img class="ph-img ph-dark" src="assets/placeholder-graph.webp" alt=""
+           onerror="this.onerror=null;this.src='assets/placeholder-graph.png'" />
+      <img class="ph-img ph-light" src="assets/placeholder-graph-light.webp" alt=""
+           onerror="this.onerror=null;this.src='assets/placeholder-graph-light.png'" />
+      <div class="chart-placeholder-overlay">
+        <button type="button" id="phAnalyzeBtn" class="chart-placeholder-cta" aria-label="Analyze" title="Analyze (same as the 🔍 Analyze button)">▶️ Press Analyze</button>
+      </div>
+    </div>
+    <svg id="chart" viewBox="0 0 1000 580" preserveAspectRatio="xMidYMid meet" hidden></svg>
+    <div class="chart-mode-row">
+    <div id="ghostCaption" class="ghost-caption" hidden
+         title="Dashed lines are a prediction from play style (overall K/D, KPM, accuracy, HSR, RF, slope, 🦁 Brave, 🎈 Inflation) fitted on the shared cache and anchored to the player's own fights. Not real fights. Shade ≈ ±1σ.">
+      <span class="ghost-caption-swatch" aria-hidden="true"></span><span class="ghost-caption-text">dashed = predicted from play style,<br />not real fights</span>
+    </div>
+    <span id="waveRangeWarn" hidden style="font-size:0.72rem; color:#c90; margin-left:8px;"></span>
+    </div>
+  </div>
+
+  <!-- t356u: Rankings (was ranks.html) — rankings.mjs fills this lazily after the graph. -->
+  <section id="rankings" class="rankings" aria-label="Rankings">
+    <div id="ranksStatus" class="ranks-status" role="status"></div>
+    <details id="distSection" class="dist-section" open>
+      <summary>📊 Distribution</summary>
+      <!-- t377u: metric picker = a row of emojis on the summary line (current one
+           highlighted with its name); doubles as the auto-cycle's "you are here".
+           The <select> stays (hidden) as the value holder the code reads. -->
+      <div id="distPills" class="dist-pills" role="radiogroup" aria-label="Distribution metric"></div>
+      <select id="distMetric" aria-label="Distribution metric" hidden></select>
+      <div class="dist-chart" id="distChart">
+        <svg id="distSvg" role="img" aria-label="Distribution of the selected metric across cached players"></svg>
+        <div id="distTip" class="dist-tip" hidden></div>
+      </div>
+      <div id="distHint" class="dist-hint"></div>
+      <div class="dist-note">Click a bar (tap twice on phones) to see those players in the table. Swipe sideways to change the stat.</div>
+      <div id="distSummary" class="dist-summary"></div>
+    </details>
+    <!-- t358u: your players' positions under the chart, folded by default (state remembered). -->
+    <details id="rkPosSection" class="dist-section rk-pos-section">
+      <summary>🏅 Your players' positions <span id="rkPosCount" class="rk-table-count"></span></summary>
+      <div id="rkPositions" class="rk-positions" aria-live="polite"></div>
+    </details>
+    <!-- t357u/t358u: the big table folds away like the chart, folded by default (state remembered). -->
+    <details id="ranksTableSection" class="dist-section rk-table-section">
+      <summary>📋 All players <span id="ranksTableCount" class="rk-table-count"></span></summary>
+    <div class="rk-filter-row">
+      <input id="ranksSearch" type="search" placeholder="Filter the table by name…" aria-label="Filter the Rankings table by player name" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="search" />
+    </div>
+    <div class="ranks-table-wrap" id="ranksScroll" style="content-visibility: auto; contain-intrinsic-size: auto 800px;">
+      <table class="ranks-table" id="ranksTable" aria-label="Rankings">
+        <thead id="ranksHead"></thead>
+        <tbody id="ranksBody"></tbody>
+      </table>
+    </div>
+    </details>
+  </section>
+
+  <footer>
+    <section class="footer-block" aria-label="Site stats and options">
+      <div id="statsPublic" class="stats-panel stats-panel-public" aria-label="Public stats (Census / Honu)"></div>
+      <!-- "What about vehicles?" sits directly on top of the stats line;
+           the note stays hidden until a comparison is loaded (renderStatsTable). -->
+      <details id="vehiclesNote" class="pooled-note fold-note" hidden><summary>♿ What about vehicles?</summary><p>Vehicle and infantry kills are pooled together for now, so vehicle mains may look off in the graph and stats. Infantry-only numbers are coming later.</p></details>
+      <p id="ranksMeta" class="ranks-meta"></p>
+      <div class="footer-row">
+        <label class="debug-cols-toggle" title="Append the older debug columns (🎯🎈 ivi, eKPM, own KPM, 📊 COI, 📉 Slope, 🎈 Inflation) to the ✨ Adjusted and Rankings tables">
+          <input type="checkbox" id="debugColsToggle" /> show older debug stats
+        </label>
+      </div>
+      <div class="footer-row">
+        <label class="hide-zero-ivi-toggle" title="Hide players with adjusted iVi ≤ 0 from the Rankings table browse; a name search still finds them">
+          <input type="checkbox" id="hideZeroIviToggle" /> hide players with adjusted iVi ≤ 0
+        </label>
+      </div>
+      <details class="disclaimer">
+        <summary>Disclaimer</summary>
+        <p>All numbers, ratings, charts and flags on this site are automated estimates from public data (the Daybreak Census API and Honu). They can be wrong, incomplete or out of date, and they are not facts, proof or accusations about any player. Don't take them seriously, and don't use them to harass anyone.</p>
+        <p>This site is free and provided "as is", with no warranty of any kind. To the fullest extent allowed by law, the authors are not liable for any damage or loss from using it, including to your device or data.</p>
+        <p>Not affiliated with or endorsed by Daybreak Game Company or Honu. PlanetSide 2 is a trademark of its respective owners.</p>
+        <p>Open source under the MIT License. See <a href="https://github.com/Dayset/ps2-elite-kd/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">LICENSE</a>.</p>
+      </details>
+      <div class="footer-row">
+        <p><a href="https://github.com/Dayset/ps2-elite-kd">github.com/Dayset/ps2-elite-kd</a></p>
+        <p><a href="columns.html">What the columns mean</a> · <a href="updates.html">Update log</a></p>
+      </div>
+      <p>Thanks to <a href="https://wt.honu.pw/" target="_blank" rel="noopener noreferrer">HONU</a> / Varunda</p>
+    </section>
+  </footer>
+
+  <script type="module" src="app.js?v=20261018-live1"></script>
+  <script type="module" src="live.mjs?v=20261018-live1"></script>
+</body>
+</html>
