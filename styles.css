@@ -2748,4 +2748,15 @@ col.lv-c-statR { width: calc(7.143% - 3.3214ch); }
   .stats-carousel .stats-table td .pct,
   .stats-carousel .rk-pos-table td .pct { display: block; margin-left: 0; line-height: 1.1; }
 }
+/* PC alignment (2026-10-19): on wide screens the small % / pN sits beside the number,
+ * and its varying width ("−5%" vs "−78%" vs none) pushed the big numbers out of line.
+ * Give it a fixed slot (cells without one get an empty slot of the same width) so every
+ * big number in a column ends at the same edge. Phones (≤600px) stack it underneath
+ * instead and are untouched. */
+@media (min-width: 601px) {
+  .stats-carousel .stats-table td .pct,
+  .stats-carousel .rk-pos-table td .pct { display: inline-block; min-width: 3.2em; text-align: left; }
+  .stats-carousel .stats-table td:not(.stats-name):not(:has(.pct))::after,
+  .stats-carousel .rk-pos-table td:not(:has(.pct))::after { content: ""; display: inline-block; min-width: 3.2em; margin-left: 0.32em; font-size: 0.72em; }
+}
 .live-mode #statsCarousel { display: none !important; }
