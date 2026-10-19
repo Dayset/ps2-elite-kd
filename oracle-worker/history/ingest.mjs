@@ -140,7 +140,9 @@ async function main() {
   const st = loadState(fs.existsSync(statePath) ? fs.readFileSync(statePath, "utf8") : "");
   let have, totalBytes, total;
   if (listDue(st, nowS, flag("--list"))) {
-    ({ have, totalBytes, total } = await archived());
+    // A Worker that can't read its database (e.g. D1's daily read limit) is not this job's failure: retry next hour.
+    try { ({ have, totalBytes, total } = await archived()); }
+    catch (e) { warn(`archive unreachable (${e.message}); nothing posted, next hourly run retries`); return; }
     st.listed_ts = nowS; st.list_bytes = totalBytes || 0; st.list_total = total || 0; st.added_bytes = 0;
     for (const [k, v] of have) st.keys[k] = v.start_ts;
   } else {
