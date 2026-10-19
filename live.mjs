@@ -11,6 +11,7 @@
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { normalizePlayer, playerMetrics, shownValue } from "./player-metrics.mjs?v=20261010-sav1";
 import { isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261010-sav1";
+import { VEH_CUT_MARK, vehicleCutTip } from "./vehicle-cut.mjs?v=20261019-vcut1";
 
 export const FEED_MAX = 6;
 export const GRAPH_OPPONENTS = 5; // + the target = MAX_NAMES (6)
@@ -105,6 +106,10 @@ export function liveRowFromPlayer(player, name) {
     const v = c.id === "apk" ? null : shownValue(m, c.id);
     o[c.id] = typeof v === "number" && Number.isFinite(v) ? v : null;
   }
+  // 🚜 ‡ cut on ⚔️ iVi (same fields as ranks.json vcut / infVeh / infMax).
+  o.vcut = m.vehCut > 0 ? Math.round(m.vehCut * 1000) / 10 : null;
+  o.infVeh = Number.isFinite(m.vehOnly) ? m.vehOnly * 100 : null;
+  o.infMax = Number.isFinite(m.maxShare) ? m.maxShare * 100 : null;
   return o;
 }
 
@@ -160,7 +165,7 @@ function start() {
       const j = await getJson("data/ranks.json");
       const ci = (c) => j.cols.indexOf(c);
       const iS = ci("slug"), iN = ci("name");
-      const idx = LIVE_COLS.map((c) => [c.id, ci(c.id)]);
+      const idx = LIVE_COLS.map((c) => [c.id, ci(c.id)]).concat([["vcut", ci("vcut")], ["infVeh", ci("infVeh")], ["infMax", ci("infMax")]]);
       ranks = new Map(j.rows.map((r) => {
         const o = { name: r[iN] };
         for (const [id, i] of idx) o[id] = i >= 0 ? r[i] : null;
@@ -198,7 +203,8 @@ function start() {
     const poop = poopFor(p.name);
     const name = `<td class="lv-name-cell"><span class="lv-name fac-${p.faction || ""}" title="${esc(p.name)}">${esc(p.name)}</span>${poop}</td>`;
     let stats;
-    if (p.cached) stats = LIVE_COLS.map((c) => `<td class="lv-num" title="${esc(c.label + ": " + c.tip)}">${cellText(c, p.cached[c.id])}</td>`).join("");
+    const vcut = (o) => (c) => c.id === "adjs" && o.vcut > 0 ? `<span class="veh-cut" title="${esc(vehicleCutTip(o.infVeh, o.infMax, o.vcut))}">${VEH_CUT_MARK}</span>` : "";
+    if (p.cached) stats = LIVE_COLS.map((c) => `<td class="lv-num" title="${esc(c.label + ": " + c.tip)}">${cellText(c, p.cached[c.id])}${vcut(p.cached)(c)}</td>`).join("");
     else if (isMe) stats = `<td class="lv-num lv-uncached" colspan="${N}"></td>`;
     else stats = `<td class="lv-num lv-uncached" colspan="${N}" title="Not in our cache: Census lifetime numbers">K/D ${fmt(p.kd, 2)} · KPM ${fmt(p.kpm, 2)} · not in cache</td>`;
     return { name, stats };

@@ -24,6 +24,7 @@ import { confirmedPadderSlugs } from "./padding.mjs?v=20261010-sav1";
 import { slugKey } from "./rank-row.mjs?v=20261010-sav1";
 import { hiddenList } from "./hidden.mjs?v=20261010-sav1";
 import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261019-inf1";
+import { VEH_CUT_MARK, vehicleCutTip } from "./vehicle-cut.mjs?v=20261019-vcut1";
 
 /**
  * @param {{ getNames: () => string[], toggleName: (name: string, anchor: Element, add: boolean) => void }} host
@@ -216,6 +217,8 @@ export function initRankings(host) {
         // 🫡 hover-only parts of the Infantry column (% of lifetime kills).
         infMax: idx.infMax != null ? r[idx.infMax] : null,
         infVeh: idx.infVeh != null ? r[idx.infVeh] : null,
+        // 🚜 ‡ vehicle / MAX cut % already applied to adjs (null = none).
+        vcut: idx.vcut != null ? r[idx.vcut] : null,
       };
       o.mark = o.markKind === "padding" ? PADDING_MARK : o.markKind === "adjusted" ? ADJUSTED_MARK : "";
       o.markTip = o.markKind === "padding" ? PADDING_MARK_TIP : o.markKind === "adjusted" ? ADJUSTED_MARK_TIP : "";
@@ -301,10 +304,18 @@ export function initRankings(host) {
     return `<td title="${esc(tip)}">${fmt(v, 2)}</td>`;
   }
 
+  /** 🚜 "‡" after the ⚔️ iVi value (vehicle-cut.mjs): shares + cut on hover; "" without a cut. */
+  function vcutHtml(row) {
+    if (!(row.vcut > 0)) return "";
+    const tip = vehicleCutTip(row.infVeh, row.infMax, row.vcut);
+    return `<span class="veh-cut" title="${esc(tip)}" aria-label="${esc(tip)}">${VEH_CUT_MARK}</span>`;
+  }
+
   function cellHtml(c, row) {
     const v = row[c.id];
+    const vc = c.id === "adjs" ? vcutHtml(row) : "";
     if (c.floorZero && fin(v) && v < 0) {
-      return `<td class="below-scale" title="Below the rating scale">0</td>`;
+      return `<td class="below-scale" title="Below the rating scale">0${vc}</td>`;
     }
     if (c.apk) return apkCell(v, row.pcts[c.id]);
     if (c.inf) return fin(v) ? `<td title="${esc(infTip(v, row.infMax, row.infVeh, row.pcts[c.id]))}">${fmt(v, 1)}%</td>` : `<td title="${esc(INF_PENDING_TIP)}">—</td>`;
@@ -312,7 +323,7 @@ export function initRankings(host) {
     if (!fin(v)) return `<td>—</td>`;
     const p = row.pcts[c.id];
     const pct = p == null ? "" : `<span class="pct" title="Population percentile: higher than ${p}% of cached players">p${p}</span>`;
-    return `<td>${fmt(v, c.digits)}${pct}</td>`;
+    return `<td>${fmt(v, c.digits)}${vc}${pct}</td>`;
   }
 
   /**
@@ -634,7 +645,7 @@ export function initRankings(host) {
         const k = rankIn(pool, v, !!c.ascFirst);
         const p = r.pcts[c.id];
         return `<td title="${esc(c.label)} ${fmt(v, c.digits)}: rank ${k.toLocaleString()} of ${pool.length.toLocaleString()}${c.apk ? " players with 100+ session kills" : c.inf ? " measured players (100+ kills)" : " cached players"}">` +
-          `<b>#${k.toLocaleString()}</b>${p != null ? `<span class="pct">p${p}</span>` : ""}</td>`;
+          `<b>#${k.toLocaleString()}</b>${c.id === "adjs" ? vcutHtml(r) : ""}${p != null ? `<span class="pct">p${p}</span>` : ""}</td>`;
       }).join("");
       return `<tr><th scope="row" class="rk-pos-name"><a href="#" class="rk-pos-jump" data-q="${esc(r.query)}" style="color:${paletteColor(i, light)}" title="Show ${esc(r.name)} in the table"><span class="nm" data-full="${esc(r.name)}">${esc(r.name)}</span></a>${r.freshAt ? `<span class="sample-fresh" title="${esc(freshTip(r.freshAt, r.localOnly))}">${FRESH_MARK}</span>` : ""}${r.mark ? `<span class="pad-mark mark-${["padding","adjusted"].includes(r.markKind) ? r.markKind : ""}" title="${esc(r.markTip)}">${r.mark}</span>` : ""}${poopHtml(r)}</th>${cells}</tr>`;
     }).join("");
