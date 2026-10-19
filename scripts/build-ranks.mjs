@@ -50,7 +50,40 @@ export function burstStatus(dataDir) {
   // Owner decisions: outlier-guard KNOWN_EXTREMES + reviewed.json "burst" entries (reviewed.json wins).
   let rv = null;
   try { rv = JSON.parse(fs.readFileSync(path.join(dataDir, "reviewed.json"), "utf8")); } catch { /* none */ }
-  return burstSessions(players, { reviewed: { ...KNOWN_EXTREMES, ...burstReviewed(rv) } });
+  const b = burstSessions(players, { reviewed: { ...KNOWN_EXTREMES, ...burstReviewed(rv) } });
+  // 🚨 rampage gate result per session (data/rampage.json, scripts/rampage-gate.mjs).
+  let rp = null;
+  try { rp = JSON.parse(fs.readFileSync(path.join(dataDir, "rampage.json"), "utf8")); } catch { /* not run yet */ }
+  // Owner-cleared players never show a gate result in the UI (owner rule 2026-10-19).
+  for (const i of b.items) { const s = rp && rp.sessions && rp.sessions[i.session]; if (s && s.match && !rampageCleared(rv, i.slug)) i.rampage = true; }
+  return b;
+}
+
+/**
+ * 🚨 Rampage gate status for build-log (data/rampage.json + hidden.json + reviewed.json; no network).
+ * caught: matching sessions (one row per session) with evidence and how the player is hidden.
+ * Owner rule 2026-10-19: players cleared in reviewed.json are left out entirely (their result stays
+ * in data/rampage.json only): no row, no count, no "cleared but flagged" note.
+ */
+export function rampageStatus(dataDir) {
+  let rp = null, rv = null, hj = null;
+  try { rp = JSON.parse(fs.readFileSync(path.join(dataDir, "rampage.json"), "utf8")); } catch {}
+  try { rv = JSON.parse(fs.readFileSync(path.join(dataDir, "reviewed.json"), "utf8")); } catch {}
+  try { hj = JSON.parse(fs.readFileSync(path.join(dataDir, "hidden.json"), "utf8")); } catch {}
+  const hidden = hiddenList(hj);
+  const sessions = Object.entries((rp && rp.sessions) || {}).map(([id, s]) => ({ ...s, session: id }));
+  const checked = sessions.filter((s) => !s.error);
+  const pc = (a, b) => (b ? Math.round((100 * a) / b) : null);
+  const row = (s) => {
+    const h = hidden.match({ slug: s.slug, name: s.name, cid: s.cid });
+    return { slug: s.slug, name: s.name, cid: s.cid, session: s.session, inf: s.inf, kills: s.kills, minutes: s.minutes, kpm: s.kpm, startMs: s.startMs,
+      hsPct: pc(s.hs, s.inf), hipPct: pc(s.hip, s.inf), ads: s.ads, evidence: rampageEvidence(s),
+      hiddenBy: !h ? null : String(h.reason || "").startsWith(RAMPAGE_REASON_PREFIX) ? "gate" : "owner" };
+  };
+  const caught = checked.filter((s) => s.match && !rampageCleared(rv, s.slug)).map(row).sort((a, b) => b.inf - a.inf);
+  return { rule: rampageRuleText(), thresholds: RAMPAGE_RULE, checkedAt: (rp && rp.checkedAt) || null, checked: checked.length,
+    errors: sessions.length - checked.length, pending: (rp && rp.pending) || 0,
+    players: new Set(caught.map((c) => c.slug)).size, caught };
 }
 
 export function readXp(dataDir, slug) {
@@ -68,6 +101,7 @@ export { METRIC_COLS, RANK_COLS, bareName, rankRow } from "../rank-row.mjs";
 import { METRIC_COLS, RANK_COLS, rankRow, bareName } from "../rank-row.mjs";
 import { assistGroups } from "../assist-groups.mjs";
 import { burstSessions, burstReviewed } from "../burst-sessions.mjs";
+import { RAMPAGE_RULE, RAMPAGE_REASON_PREFIX, rampageCleared, rampageEvidence, rampageRuleText } from "../rampage-gate.mjs";
 
 /** data/reviewed.json → Set of slugs confirmed as stat padders (decision "padding"; missing file = none). */
 export function readConfirmedPadders(dataDir) {
@@ -596,6 +630,8 @@ if (isMain) {
   console.log(`padder penalty: ${padderInfo.penalized} penalized, ${padderInfo.cleared} cleared by the owner`);
   st.infantry = infantryStatus(dataDir);
   st.burst = burstStatus(dataDir); // 💥 review signal only: never changes ranks.json
+  st.rampage = rampageStatus(dataDir); // 🚨 auto confirmed cheaters (hidden.json synced by scripts/rampage-gate.mjs)
+  console.log(`rampage gate: ${st.rampage.caught.length} matching session(s), ${st.rampage.players} player(s), ${st.rampage.checked} checked, ${st.rampage.pending} pending`);
   console.log(`burst sessions: ${st.burst.sessions} session(s), ${st.burst.flaggedPlayers} player(s) to review, ${st.burst.clearedPlayers} cleared`);
   fs.writeFileSync(stPath, JSON.stringify(st, null, 2) + "\n");
   for (const o of guard.items.filter((x) => !x.explained)) {

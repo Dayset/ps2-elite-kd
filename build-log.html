@@ -163,6 +163,13 @@
         <div id="burstOracle" class="st-dim">Loading…</div>
       </details>
 
+      <details class="st-card st-sec" id="cardRampage">
+        <summary><h2>🚨 Rampage gate <span id="rampageCount" class="st-count">…</span></h2></summary>
+        <p class="st-note">Burst sessions that are blatant hipfire headshot spraying. A match is a confirmed cheater and is hidden automatically.</p>
+        <details class="st-info"><summary>ⓘ How it works</summary><div class="st-rule" id="rampageRule">A 💥 burst session with ≥ 50 infantry kills, hipfire ≥ 90% and headshots ≥ 55% of them (Honu kill list, checked once per session on the regular refresh) = confirmed cheater, put on the 🙈 hide list with the reason “auto: rampage gate” and the evidence. Owner override: data/reviewed.json "burst": "cleared" un-hides the player and removes them from this list.</div></details>
+        <div id="rampage" class="st-dim">Loading…</div>
+      </details>
+
       <details class="st-card st-sec st-flags st-sess" id="cardForensics">
         <summary id="fxSummary"><h2>🔎 Session forensics <span id="fxCount" class="st-count">…</span></h2></summary>
         <p class="st-note">The top session of a few suspicious players, read kill by kill: speed, weapons, victims. ⚡ / 🔥 hits go to 🚩.</p>
@@ -247,7 +254,6 @@
       <details class="st-card st-sec" id="cardDisc"><summary><h2>🔎 Discovery &amp; storage <span id="discCount" class="st-count">…</span></h2></summary><div id="sizeLine" class="st-dim">Loading…</div><div id="infLine" class="st-dim"></div><div id="disc" class="st-dim">Loading…</div></details>
       <details class="st-card st-sec" id="cardRecent"><summary><h2>Recently updated players <span id="recentCount" class="st-count">…</span></h2></summary><div id="recent" class="st-dim">Loading…</div></details>
     </details>
-
     <details class="st-card st-sec" id="cardHidden">
       <summary><h2>🙈 Hidden from Rankings <span id="hiddenCount" class="st-count">…</span></h2></summary>
       <p class="st-note">Left out of Rankings by hand (data/hidden.json). Still cached, still analyzable, still checked for 🚩.</p>
@@ -981,6 +987,7 @@
       try { renderAssistGroups(st); } catch (e) { console.warn(e); }
       renderForensics(st);
       renderBurst(st);
+      renderRampage(st);
       try { renderPoop(st); } catch (e) { console.warn(e); }
       try { renderVehCut(st); } catch (e) { console.warn(e); }
     }
@@ -1024,12 +1031,29 @@
         : "No confirmed padders.";
     }
 
+    /** 🚨 Rampage gate (status.json "rampage", scripts/build-ranks.mjs): uncleared auto-catches only. */
+    function renderRampage(st) {
+      const g = st && st.rampage;
+      const items = (g && g.caught) || [];
+      $("rampageCount").textContent = g ? String(g.players) : "?";
+      if (!g) { $("rampage").innerHTML = "Not built yet (next refresh)."; return; }
+      const when = (ms) => (ms ? new Date(ms).toLocaleString([], { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "—");
+      $("rampage").innerHTML =
+        '<div class="st-dim" style="margin-bottom:6px;">' + g.checked + " burst session(s) checked" + (g.pending ? ", " + g.pending + " waiting for the next refresh" : "") + (g.errors ? ", " + g.errors + " fetch error(s), retried next run" : "") + ". " + g.players + " player(s) caught.</div>" +
+        (items.length
+          ? '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th>Inf. kills</th><th>Min</th><th>KPM</th><th>Headshots</th><th>Hipfire</th><th>ADS</th><th>Session start</th><th>Hidden</th><th></th></tr>' +
+            items.map((i) => "<tr><td>" + nameCell(i) + "</td><td>" + i.inf + "</td><td>" + i.minutes + "</td><td>" + i.kpm + "</td><td>" + i.hsPct + "%</td><td>" + i.hipPct + "%</td><td>" + i.ads + "</td><td>" + esc(when(i.startMs)) + "</td><td>" +
+              (i.hiddenBy === "gate" ? "🚨 by the gate" : i.hiddenBy === "owner" ? "🙈 already (owner)" : '<span class="st-err">not yet (next refresh)</span>') +
+              '</td><td><a href="https://wt.honu.pw/s/' + encodeURIComponent(i.session) + '" target="_blank" rel="noopener noreferrer">Honu session</a></td></tr>').join("") + "</table></div>"
+          : "No rampage sessions.");
+    }
+
     /** 💥 Burst sessions (status.json "burst", built by scripts/build-ranks.mjs) + the oracle's burst-tier players. */
     function renderBurst(st) {
       const b = st && st.burst;
       const items = (b && b.items) || [];
       const when = (ms) => (ms ? new Date(ms).toLocaleString([], { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "—");
-      const badge = (i) => i.status === "cleared" ? '<span title="' + esc(i.reason || "") + '">✅ cleared</span>'
+      const badge = (i) => i.rampage ? '<span class="st-dim" title="Rampage gate: auto confirmed cheater">🚨 rampage gate</span>' : i.status === "cleared" ? '<span title="' + esc(i.reason || "") + '">✅ cleared</span>'
         : i.status === "cheater" ? '<span class="st-dim" title="' + esc(i.reason || "") + '">confirmed cheater</span>'
         : i.hidden ? '<span class="st-dim">🙈 already hidden</span>' : '<span class="st-err">needs a look</span>';
       $("burstCount").textContent = b ? String(b.flaggedPlayers) : "?";

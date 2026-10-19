@@ -146,6 +146,9 @@ jobs:
             fi
             exit 0
           fi
+          # 🚨 Rampage gate: new 💥 burst sessions (≥ 50 kills) checked once against Honu's kill list
+          # (≤ 20 calls, 6.5 s apart, inside the Honu daily cap); syncs data/hidden.json before the build.
+          node scripts/rampage-gate.mjs || echo "::warning::rampage-gate failed; hidden.json not updated this run"
           # Keep ranks.html in sync with the cache (no network; same player-metrics.mjs).
           node scripts/build-ranks.mjs || echo "::warning::build-ranks failed; data/ranks.json not updated this run"
           # build-log 🚩 / 🌱 / 🤖 / 🌾 rows, precomputed once (~5 s) so build-log just reads data/flags.json.
@@ -163,7 +166,7 @@ jobs:
               fs.writeFileSync("data/status.json", JSON.stringify(st, null, 2) + "\n");
             }
           '
-          export REBUILD_DERIVED='node scripts/build-ranks.mjs && node scripts/build-flags.mjs && node scripts/build-ghost-model.mjs'
+          export REBUILD_DERIVED='node scripts/rampage-gate.mjs --offline; node scripts/build-ranks.mjs && node scripts/build-flags.mjs && node scripts/build-ghost-model.mjs'
           scripts/ci-commit-push.sh "chore(cache): ${RUN_KIND} refresh, ${changed} player file(s), ${NEW} new [bot]"
 
       - name: Chain next background run (growth)
