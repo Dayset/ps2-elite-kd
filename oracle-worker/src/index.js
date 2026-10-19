@@ -217,7 +217,10 @@ export async function runCycle(env, nowMs = Date.now()) {
   // 3) Alerts from stored METAGAME rows (not just this poll's 60).
   const all = (await db.prepare("SELECT * FROM metagame WHERE ts > ? ORDER BY ts").bind(now - WINDOW_S).all()).results || [];
   const known = new Map(((await db.prepare("SELECT key, status, checks, flags FROM alert WHERE start_ts > ?").bind(now - WINDOW_S).all()).results || []).map((r) => [r.key, r]));
-  const benchRows = new Map(((await db.prepare("SELECT key, slices FROM bench WHERE settled_ts IS NULL").all()).results || []).map((r) => [r.key, JSON.parse(r.slices)]));
+  // D1 row reads are the free plan's scarce budget (5M/day for the account): every per-minute
+  // query here must use an index. Open benchmarks only matter for alerts this cycle rebuilds.
+  const benchRows = new Map(((await db.prepare("SELECT b.key, b.slices FROM alert a JOIN bench b ON b.key = a.key WHERE a.start_ts > ? AND b.settled_ts IS NULL")
+    .bind(now - 2 * WINDOW_S).all()).results || []).map((r) => [r.key, JSON.parse(r.slices)]));
   const out = [];
   const ticks = [], benchUp = [], benchSettle = [];
   const snap15 = {};
@@ -228,7 +231,9 @@ export async function runCycle(env, nowMs = Date.now()) {
   let live = 0, settled = 0;
   // Input guard (corrupt Census map windows: many facilities neutral, or the map
   // frozen while capture events keep arriving). Flips per zone over 10 min, one query.
-  const flips10 = new Map((((await db.prepare("SELECT world, zone, COUNT(*) AS n FROM flip WHERE ts > ? GROUP BY world, zone").bind(now - 600).all()).results) || [])
+  // world/zone IN lists let the (world, zone, ts) index answer this; a filter on ts alone scanned every stored flip each minute.
+  const flips10 = new Map((((await db.prepare(`SELECT world, zone, COUNT(*) AS n FROM flip WHERE world IN (${WORLDS.join(",")}) AND zone IN (${ZONES.join(",")}) AND ts > ? GROUP BY world, zone`)
+    .bind(now - 600).all()).results) || [])
     .map((r) => [`${r.world}-${r.zone}`, r.n]));
   const snap10 = {};
 
@@ -778,7 +783,10 @@ export default {
       if (res.length) await setMeta(env.DB, "last_commander", { ts: Math.floor(Date.now() / 1000), results: res });
       // Archive one finished alert per minute (own invocation; catches up on its own).
       if (env.ARCHIVE) {
-        const k = await nextToArchive(env.DB);
+        // Recent alerts only (index range); once a day at 04:07 UTC, everything, to catch stragglers.
+        const t = new Date(event.scheduledTime || Date.now());
+        const all = t.getUTCHours() === 4 && t.getUTCMinutes() === 7;
+        const k = await nextToArchive(env.DB, all ? 0 : Math.floor(t.getTime() / 1000) - 2 * 86400);
         if (k) await setMeta(env.DB, "last_archive", { ts: Math.floor(Date.now() / 1000), result: (await fanOutArchive(env, [k]))[0] });
       }
     }).catch(async (e) => {

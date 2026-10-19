@@ -560,3 +560,34 @@ test("archive: finished alerts are bundled into the archive database once, reada
   const l2 = await (await worker.fetch(new Request("https://x/archive/list?source=ps2alerts"), env)).json();
   assert.deepEqual(l2.alerts.map((x) => x.key), ["1-4-12"]);
 });
+
+// ---- D1 row-read budget (2026-10-19: the account hit the free plan's 5M rows/day) ----
+// Every SELECT the per-minute cron issues must reach growing tables through an index:
+// a full SCAN of flip / snap / tick / bench / alert / pop / metagame runs 1,440 times a day.
+test("cron cycle + archive pick: no full scans of growing tables", { skip }, async () => {
+  const { runCycle, commanderFor } = await import("../oracle-worker/src/index.js");
+  const { nextToArchive } = await import("../oracle-worker/src/archive.js");
+  const DB = fakeD1();
+  const seen = new Set();
+  const prep = DB.prepare;
+  DB.prepare = (sql) => { if (/^\s*(SELECT|WITH)/i.test(sql)) seen.add(sql); return prep(sql); };
+  const env = { DB, ORACLE_KEY: "k" };
+  const T0 = 1_792_300_000;
+  const census = { map: { 1: 30, 2: 30, 3: 28 }, metagame: [], flips: [] };
+  installCensus(census);
+  await runCycle(env, (T0 - 1200) * 1000);
+  census.metagame = [mg(700, 153, "started", T0)];
+  census.flips = [{ event_type: "FacilityControl", world_id: "1", zone_id: "4", facility_id: "261000", faction_old: "2", faction_new: "1", duration_held: "300", timestamp: String(T0 + 30), outfit_id: "1" }];
+  for (const m of [1, 15, 31]) await runCycle(env, (T0 + m * 60) * 1000);
+  await commanderFor(env, "1-4-700", (T0 + 31 * 60) * 1000);
+  census.metagame.push(mg(700, 153, "ended", T0 + 5400, 32.9, 31.8, 35.3));
+  for (const s of [60, 660]) await runCycle(env, (T0 + 5400 + s) * 1000);
+  await nextToArchive(DB, T0 - 2 * 86400);
+  const GROWING = /^SCAN (flip|snap|tick|bench|alert|pop|metagame)\b/;
+  const bad = [];
+  for (const sql of seen) {
+    for (const r of DB.raw.prepare("EXPLAIN QUERY PLAN " + sql).all()) if (GROWING.test(r.detail)) bad.push(`${r.detail}  <-  ${sql.replace(/\s+/g, " ").slice(0, 140)}`);
+  }
+  assert.ok(seen.size >= 8, `recorded ${seen.size} queries`);
+  assert.deepEqual(bad, []);
+});

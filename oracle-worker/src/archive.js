@@ -87,9 +87,13 @@ export async function archiveAlert(env, key, nowMs = Date.now()) {
   return { key, ok: true, bytes, frames: b.frames.length, ticks: b.ticks.length };
 }
 
-/** Oldest finished alert not archived yet (one per cron minute catches up quickly). */
-export async function nextToArchive(db) {
-  const r = await db.prepare("SELECT key FROM alert WHERE status IN ('settled','canceled','unresolved') AND archived_ts IS NULL ORDER BY start_ts LIMIT 1").first();
+/**
+ * Oldest finished alert not archived yet that started after `since` (one per cron
+ * minute catches up quickly). `+status` keeps SQLite on the start_ts index: the
+ * status index would read every finished alert ever, each minute (D1 row reads).
+ */
+export async function nextToArchive(db, since = 0) {
+  const r = await db.prepare("SELECT key FROM alert WHERE start_ts > ? AND +status IN ('settled','canceled','unresolved') AND archived_ts IS NULL ORDER BY start_ts LIMIT 1").bind(since).first();
   return r ? r.key : null;
 }
 
