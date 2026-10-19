@@ -64,14 +64,23 @@ export function compact(inst, entries) {
   };
 }
 
+let lastListOdd = null;
 async function listWorld(w, page) {
-  const d = await get(`/instances/territory-control?world=${w}&pageSize=1000&page=${page}&sortBy=timeStarted&order=desc`);
-  return Array.isArray(d) ? d : Array.isArray(d && d.data) ? d.data : [];
+  for (let i = 0; i < 3; i++) {
+    const d = await get(`/instances/territory-control?world=${w}&pageSize=1000&page=${page}&sortBy=timeStarted&order=desc`);
+    const rows = Array.isArray(d) ? d : Array.isArray(d && d.data) ? d.data : null;
+    if (rows && (rows.length || i === 2)) return rows;
+    console.log(`list world ${w} page ${page} try ${i}: ${JSON.stringify(d).slice(0, 200)}`);
+    if (rows) lastListOdd = JSON.stringify(d).slice(0, 200); else lastListOdd = JSON.stringify(d).slice(0, 200);
+    await sleep(3000);
+  }
+  return [];
 }
 
 async function probe() {
   const p1 = await listWorld(10, 1), p2 = await listWorld(10, 2);   // pages are 1-based
-  notice("probe list", `page0 ${p1.length} rows, page1 ${p2.length} rows, same first id: ${p1[0] && p2[0] ? p1[0].instanceId === p2[0].instanceId : "n/a"}; first ${p1[0] && p1[0].timeStarted}, last ${p1.at(-1) && p1.at(-1).timeStarted}, page1 last ${p2.at(-1) && p2.at(-1).timeStarted}`);
+  if (lastListOdd) notice("probe list oddity", lastListOdd);
+  notice("probe list", `page1 ${p1.length} rows, page2 ${p2.length} rows, same first id: ${p1[0] && p2[0] ? p1[0].instanceId === p2[0].instanceId : "n/a"}; first ${p1[0] && p1[0].timeStarted}, last ${p1.at(-1) && p1.at(-1).timeStarted}, page2 last ${p2.at(-1) && p2.at(-1).timeStarted}`);
   const a = p1.find((x) => x.state === 2 && ZONES.has(x.zone)) || p1[0];
   if (!a) return;
   notice("probe instance keys", Object.keys(a).join(","));
