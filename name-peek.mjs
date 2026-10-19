@@ -101,6 +101,10 @@ export function showNamePeek(anchor, text, desc = "", url = "") {
   } else {
     nameLine.textContent = text;
   }
+  // 🟢/🔴 online dot (online-status.mjs) from the player's table row, if known.
+  const row = anchor.closest ? anchor.closest("tr") : null;
+  const dot = row ? row.querySelector(".online-slot .online-dot") : null;
+  if (dot) nameLine.insertBefore(dot.cloneNode(true), nameLine.firstChild);
   peekEl.appendChild(nameLine);
   if (desc) {
     const descLine = document.createElement("div");
