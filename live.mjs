@@ -215,7 +215,10 @@ function start() {
     // at the exact page middle because the empty spacer mirrors the time column.
     const cols = `<colgroup><col class="lv-c-time"><col class="lv-c-name">${"<col>".repeat(N)}<col class="lv-c-arrow"><col class="lv-c-name">${"<col>".repeat(N)}<col class="lv-c-spacer"></colgroup>`;
     const head = `<thead><tr><th></th><th></th>${LIVE_COLS.map((c) => `<th title="${esc(c.label + ": " + c.tip)}">${shortLab(c)}</th>`).join("")}<th></th><th></th>${LIVE_COLS.map((c) => `<th title="${esc(c.label + ": " + c.tip)}">${shortLab(c)}</th>`).join("")}<th class="lv-spacer"></th></tr></thead>`;
-    listEl.innerHTML = cols + head + rows.map(eventHtml).join("") + (dropped ? eventHtml(dropped, -1).replace('class="lv-ev', 'class="lv-ev lv-fade') : "");
+    // No events yet: dummy first row so the table isn't empty while waiting.
+    const body = rows.length ? rows.map(eventHtml).join("")
+      : `<tbody class="lv-ev lv-wait"><tr><td class="lv-time">⏱️ —</td><td class="lv-note" colspan="${2 * N + 3}">Live: <strong class="fac-${me.faction || ""}">${esc(me.name)}</strong> — waiting for kills and deaths…</td><td class="lv-spacer"></td></tr></tbody>`;
+    listEl.innerHTML = cols + head + body + (dropped ? eventHtml(dropped, -1).replace('class="lv-ev', 'class="lv-ev lv-fade') : "");
     if (dropped) setTimeout(() => { const f = listEl.querySelector(".lv-fade"); if (f) f.remove(); }, 600);
   }
   setInterval(() => {
@@ -312,6 +315,7 @@ function start() {
       backoff = 2000;
       ws.send(JSON.stringify({ service: "event", action: "subscribe", characters: [me.cid], eventNames: ["Death"] }));
       setState(`<span class="live-dot">●</span> Live: <strong class="fac-${me.faction}">${esc(me.name)}</strong> — waiting for kills and deaths…`, "on");
+      render();
     };
     ws.onmessage = (m) => {
       let j; try { j = JSON.parse(m.data); } catch { return; }

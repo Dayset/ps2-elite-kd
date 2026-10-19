@@ -2642,6 +2642,8 @@ col.lv-c-name { width: 22ch; } /* p80 of ranked names (12,955 players): 80% fit,
 col.lv-c-arrow { width: 2.5ch; }
 col.lv-c-spacer { width: 10ch; }
 .live-table .lv-spacer { border: 0; }
+/* Placeholder row while waiting for the first kill/death. */
+.lv-wait .lv-note { color: var(--dim); font-style: italic; }
 /* Long names truncate with … instead of stretching the table (icon stays visible). */
 .live-table .lv-name { display: inline-block; max-width: calc(100% - 3.5ch); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
 .live-table th { font-size: 0.75rem; font-weight: 400; color: var(--dim); padding: 0 0.3rem; text-align: right; cursor: help; }
