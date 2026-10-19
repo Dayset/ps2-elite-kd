@@ -316,7 +316,8 @@ test("Honu bridge: queue -> oracle-honu job -> ingest (population, outlier repor
   assert.equal(pend.reports, 0, "not retried within 4 minutes");
   DB.raw.prepare("UPDATE report SET ts = ts - 300").run();   // 5 minutes later
   const participants = {
-    entries: [{ characterID: "5428010618035300001", kills: 300, deaths: 20, secondsOnline: 5400 }, { characterID: "5428010618035300002", kills: 120, deaths: 20, secondsOnline: 3000 },
+    // Tiers since 28256afc: early KD>=6 & KPM>=3, confirmed KD>=6 & KPM>=4. Ace: KD 15, KPM 4.0 (confirmed); Bee: KD 6, KPM 3.0 (early).
+    entries: [{ characterID: "5428010618035300001", kills: 300, deaths: 20, secondsOnline: 4500 }, { characterID: "5428010618035300002", kills: 120, deaths: 20, secondsOnline: 2400 },
       { characterID: "5428010618035300003", kills: 40, deaths: 40, secondsOnline: 3000 }],
     characters: [{ id: "5428010618035300001", name: "Ace", factionID: 1 }, { id: "5428010618035300002", name: "Bee", factionID: 2 }, { id: "5428010618035300003", name: "Cee", factionID: 3 }],
   };
