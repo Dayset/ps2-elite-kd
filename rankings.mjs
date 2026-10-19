@@ -12,7 +12,7 @@ import { paletteColor } from "./palette.mjs?v=20261010-sav1";
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-sav1";
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261015-tip1";
 import { deskUiScale } from "./desk-scale.mjs?v=20261010-sav1";
-import { matchPicks } from "./pick-sync.mjs?v=20261010-sav1";
+import { matchPicks } from "./pick-sync.mjs?v=20261019-speed1";
 import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-sav1";
 import { groupByTier, openTierIds, pickedInGroup, groupIndexAt, tierOf } from "./tiers.mjs?v=20261017-tier1";
 import { createDistCycler, createWheelSwiper } from "./dist-cycle.mjs?v=20261017-cycle15";
@@ -122,6 +122,9 @@ export function initRankings(host) {
   const picked = new Map(); // query → display
   const fieldFull = () => host.getNames().length >= MAX_NAMES;
   let pickSig = "";
+  // 2026-10-19: the big table re-renders (13k rows, ~0.2 s desktop / ~1 s phone) only
+  // when it's open; a name change while it's folded just marks it stale.
+  let tableStale = false;
   /** Names box → ✅ boxes / chart / positions. Cheap no-op when nothing changed. */
   function syncPicks({ force = false } = {}) {
     if (!data) return;
@@ -147,8 +150,11 @@ export function initRankings(host) {
       const same = next.size === st.open.size && [...next].every((id) => st.open.has(id));
       // t376u: same tiers open → only the header labels (selected names)
       // change, so patch those rows instead of re-rendering the whole table.
-      if (!same) rerenderKeepingView();
-      else refreshTierHeaders();
+      if (!same) {
+        const sec = $("ranksTableSection");
+        if (sec && !sec.open) tableStale = true;
+        else rerenderKeepingView();
+      } else refreshTierHeaders();
     }
     updateTicks();
     syncPickedUi();
@@ -360,13 +366,12 @@ export function initRankings(host) {
     );
   }
 
-  // Progressive render: the first screenful goes in at once, the rest is
-  // appended in small chunks on later frames so phones stay responsive.
+  // Progressive render: the first screenful goes in at once, more in small chunks
+  // as the list box scrolls (fillAhead) so phones stay responsive.
   const FIRST_CHUNK = 80;
   const TYPING_QUIET_MS = 300; // filter typing pause before the rest of the list goes in
   let lastTypeAt = -1e9;
   const CHUNK = 200;
-  let renderToken = 0;
   let renderState = null; // { list, cols, at } of the current progressive render
 
   /** Append rows synchronously until at least `n` are in the table (chart jumps). */
@@ -556,10 +561,10 @@ export function initRankings(host) {
   }
 
   function renderBody() {
+    tableStale = false;
     assignRanks();
     const cols = colList();
     const list = sortedFiltered();
-    const token = ++renderToken;
     const body = $("ranksBody");
     body.innerHTML = "";
     // Separators only for a metric sort (not by name).
@@ -572,16 +577,7 @@ export function initRankings(host) {
     }
     renderState = st;
     renderRowsTo(FIRST_CHUNK);
-    const step = () => {
-      if (token !== renderToken || st.at >= list.length) return;
-      // Typing in the filter (t324u): don't append (and relayout) the big table
-      // between keystrokes — wait until the typing pauses.
-      const quiet = TYPING_QUIET_MS - (performance.now() - lastTypeAt);
-      if (quiet > 0) { setTimeout(step, quiet + 10); return; }
-      renderRowsTo(st.at + CHUNK);
-      if (st.at < list.length) requestAnimationFrame(() => setTimeout(step, 0));
-    };
-    if (st.at < list.length) requestAnimationFrame(() => setTimeout(step, 0));
+    scheduleFill();
     const nLocal = data.rows.reduce((n, r) => n + (r.localOnly ? 1 : 0), 0);
     const nFresh = data.rows.reduce((n, r) => n + (r.freshAt && !r.localOnly ? 1 : 0), 0);
     if ($("ranksTableCount")) $("ranksTableCount").textContent = `(${data.count.toLocaleString()})`;
@@ -591,6 +587,45 @@ export function initRankings(host) {
     $("ranksMeta").title = nFresh || nLocal ? `${FRESH_MARK} = stats from your own fetch on Analyze (this browser only); everyone else uses the shared copy.` : "";
     syncPickedUi();
   }
+
+  /* Loaded in parts (2026-10-19): rows go in as the list box scrolls, a few screens
+   * ahead, instead of all ~13k in the background. Every appended chunk re-lays out the
+   * whole table, so the background fill got slower as it grew (0.1 → 0.5 s per chunk,
+   * ~20 s of a stuttering page after each sort). Chart jumps render up to their row
+   * (renderRowsTo); ⬇ renders the rest when it is small. A folded table renders nothing more. */
+  const AHEAD_SCREENS = 3;
+  let fillQueued = false;
+  function fillAhead() {
+    fillQueued = false;
+    const st = renderState;
+    if (!st || st.at >= st.list.length) return;
+    const sec = $("ranksTableSection");
+    if (sec && !sec.open) return;
+    // Typing in the filter (t324u): don't append (and relayout) between keystrokes.
+    const quiet = TYPING_QUIET_MS - (performance.now() - lastTypeAt);
+    if (quiet > 0) { setTimeout(scheduleFill, quiet + 10); return; }
+    const box = $("ranksScroll");
+    if (!box) { renderRowsTo(st.list.length); return; }
+    const want = box.scrollTop + box.clientHeight * (1 + AHEAD_SCREENS);
+    if (box.scrollHeight >= want) return;
+    renderRowsTo(st.at + CHUNK);
+    scheduleFill();
+  }
+  function scheduleFill() {
+    if (fillQueued) return;
+    fillQueued = true;
+    requestAnimationFrame(() => setTimeout(fillAhead, 0));
+  }
+  /** ⬇ End of the Rankings: the whole list when it is small (a filter, a few open tiers).
+   *  The full ~13k rows take ~4 s to lay out on a desktop (much longer on a phone), so a
+   *  big list goes to the end of what is in; scrolling on loads more. */
+  const RENDER_ALL_MAX = 2500;
+  function renderAllRows() {
+    const st = renderState;
+    if (st && st.list.length - st.at <= RENDER_ALL_MAX) renderRowsTo(st.list.length);
+  }
+  if ($("ranksScroll")) $("ranksScroll").addEventListener("scroll", scheduleFill, { passive: true });
+  window.addEventListener("resize", scheduleFill, { passive: true });
 
   function render() {
     if (!data) return;
@@ -804,8 +839,14 @@ export function initRankings(host) {
   rememberOpen(tableSection, "ps2-elite-kd-ranks-table-open");
   // 🏅 positions: no longer a fold of their own; they share the ✨ Stats spot (stats-carousel.mjs).
   function openTable() {
+    if (tableStale) renderBody(); // picks changed while folded: bring the rows up to date first
     if (tableSection && !tableSection.open) tableSection.open = true;
   }
+  if (tableSection) tableSection.addEventListener("toggle", () => {
+    if (!tableSection.open) return;
+    if (tableStale) rerenderKeepingView();
+    scheduleFill();
+  });
   /** Desktop jump: list scroll only (no page scroll). Matches the 600px mobile breakpoint. */
   function listOnlyJump(touch) {
     return !touch && (window.innerWidth || 0) > 600;
@@ -1506,6 +1547,7 @@ export function initRankings(host) {
   }
   function jumpTo(end) {
     const behavior = scrollBehavior();
+    if (end) renderAllRows();
     if (tableScroll) glideTo(tableScroll, end ? Math.max(0, tableScroll.scrollHeight - tableScroll.clientHeight) : 0, behavior);
     const sec = $("rankings");
     const secTop = sec ? sec.getBoundingClientRect().top + (window.scrollY || 0) - 8 : 0;

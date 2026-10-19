@@ -61,15 +61,25 @@ const bareName = (s) => String(s || "").replace(/^\s*\[[^\]]*\]\s*/, "").trim().
  * with or without outfit tag). Returns [{query,name}] in carried order, unique,
  * max; names with no row are skipped.
  */
-export function matchPicks(names, rows, max = 10) {
-  const idx = new Map();
+// One name index per rows array (13k rows: rebuilding it on every chip change cost ~25 ms).
+const pickIdx = new WeakMap();
+function pickIndex(rows) {
+  let idx = rows && pickIdx.get(rows);
+  if (idx && idx.n === rows.length) return idx.map;
+  const map = new Map();
   for (const r of rows || []) {
     if (!r || !r.query) continue;
     for (const k of [r.query, r.slug, r.name, bareName(r.name)]) {
       const key = String(k || "").trim().toLowerCase();
-      if (key && !idx.has(key)) idx.set(key, r);
+      if (key && !map.has(key)) map.set(key, r);
     }
   }
+  if (rows && typeof rows === "object") pickIdx.set(rows, { map, n: rows.length });
+  return map;
+}
+
+export function matchPicks(names, rows, max = 10) {
+  const idx = pickIndex(rows);
   const out = [];
   const seen = new Set();
   for (const n of clean(names)) {

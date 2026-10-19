@@ -98,7 +98,7 @@ export function readXp(dataDir, slug) {
 // Row format + rankRow live in ../rank-row.mjs (browser-safe: ranks.html
 // recomputes a player's row from a fresher browser copy with the same code).
 export { METRIC_COLS, RANK_COLS, bareName, rankRow } from "../rank-row.mjs";
-import { METRIC_COLS, RANK_COLS, rankRow, bareName } from "../rank-row.mjs";
+import { METRIC_COLS, RANK_COLS, rankRow, bareName, slugKey } from "../rank-row.mjs";
 import { assistGroups } from "../assist-groups.mjs";
 import { burstSessions, burstReviewed } from "../burst-sessions.mjs";
 import { RAMPAGE_RULE, RAMPAGE_REASON_PREFIX, rampageCleared, rampageEvidence, rampageRuleText } from "../rampage-gate.mjs";
@@ -602,6 +602,45 @@ export function infantryStatus(dataDir) {
   return { checkedAt: new Date().toISOString(), players: list.length, counts: infantryTagCounts(v2), v2: v2.length, pending: list.length - v2.length, rule: INFANTRY_TAG };
 }
 
+/**
+ * data/names.json: the slim name list the main page needs at startup (2026-10-19).
+ * index.json is ~3.4 MB (≈490 KB gzipped) because every entry repeats file,
+ * slug, aliases, fmt, top and last; the page only needs the name (slug and
+ * file follow from it: players/<slugKey(name)>.json) and savedAt. ≈150 KB gzipped.
+ * The page falls back to index.json when this file is missing or older.
+ */
+export function buildNames(index) {
+  const players = [];
+  const seen = new Set();
+  for (const e of (index && index.players) || []) {
+    if (!e || !e.name || !e.file) continue;
+    const slug = slugKey(e.name);
+    if (!slug || seen.has(slug) || e.file !== `players/${slug}.json`) continue; // anything unusual stays in index.json only
+    seen.add(slug);
+    players.push([e.name, +e.savedAt || 0]);
+  }
+  return { v: 1, updatedAt: (index && index.updatedAt) || null, count: players.length, players };
+}
+
+/**
+ * data/ranks-lite.json: the few ranks columns the main page needs before the
+ * Rankings section loads (2026-10-19): 🎲 (name, slug, ⚔️ iVi) and the ✨ Stats
+ * percentiles (⚡ Const, 🤝 Assists, 🪖 Infantry). ≈400 KB gzipped instead of
+ * ≈1.7 MB; the full ranks.json is only fetched by the Rankings section.
+ */
+export const LITE_COLS = ["name", "slug", "adjs", "cons", "apk", "inf", "infMax", "infVeh"];
+const LITE_DIGITS = { adjs: 1, cons: 4, apk: 3, inf: 1, infMax: 1, infVeh: 1 };
+export function buildRanksLite(ranks) {
+  const ix = LITE_COLS.map((k) => (ranks && Array.isArray(ranks.cols) ? ranks.cols.indexOf(k) : -1));
+  if (ix.some((i) => i < 0) || !Array.isArray(ranks.rows)) return null;
+  const rows = ranks.rows.map((r) => ix.map((i, j) => {
+    const v = r[i];
+    const d = LITE_DIGITS[LITE_COLS[j]];
+    return d != null && typeof v === "number" && Number.isFinite(v) ? +v.toFixed(d) : v;
+  }));
+  return { v: 1, updatedAt: ranks.updatedAt || null, count: rows.length, cols: LITE_COLS, rows };
+}
+
 const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (isMain) {
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -612,6 +651,13 @@ if (isMain) {
   if (autoHidden.length) console.log(`auto-hide: ${autoHidden.length} fresh exceptional account(s) added to hidden.json: ${autoHidden.map((a) => a.name).join(", ")}`);
   const { ranks: out, guard, hidden: hiddenInfo, bins, session, forensics: forensicsInfo, review, assistGroups: assistInfo, padderPenalty: padderInfo, vehicleCut: vehCutInfo } = buildRanksWithGuard(dataDir);
   fs.writeFileSync(path.join(dataDir, "ranks.json"), JSON.stringify(out) + "\n");
+  try {
+    const names = buildNames(JSON.parse(fs.readFileSync(path.join(dataDir, "index.json"), "utf8")));
+    fs.writeFileSync(path.join(dataDir, "names.json"), JSON.stringify(names) + "\n");
+    console.log(`names.json: ${names.count} names`);
+  } catch (e) { console.log(`names.json not written: ${e.message}`); }
+  const lite = buildRanksLite(out);
+  if (lite) fs.writeFileSync(path.join(dataDir, "ranks-lite.json"), JSON.stringify(lite) + "\n");
   console.log(`ranks.json: ${out.count} players (${hiddenInfo.count} on the 🙈 hide list)`);
   // 🧪 Outlier guard → data/status.json (build-log.html). Other status fields are kept.
   const stPath = path.join(dataDir, "status.json");

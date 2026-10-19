@@ -72,7 +72,19 @@ async function withPage(fn, { width = 390, height = 844, mobile = true } = {}) {
       if (r.exceptionDetails) throw new Error(r.exceptionDetails.text + " " + (r.exceptionDetails.exception?.description || ""));
       return r.result.value;
     };
-    const nav = (u) => send("Page.navigate", { url: `http://127.0.0.1:${port}/${u}` }, sessionId);
+    // Page.navigate answers before the new page has parsed; an inline <script> in the body
+    // waits for styles.css, so a check sent right away could find no #analyzeBtn yet (or the
+    // old page). Wait for the new document to finish parsing (same-document jumps: no wait).
+    const nav = async (u) => {
+      await ev(`window.__oldPage = 1`).catch(() => {});
+      const r = await send("Page.navigate", { url: `http://127.0.0.1:${port}/${u}` }, sessionId);
+      if (!r.loaderId) return r;
+      for (let t = 0; t < 400; t++) {
+        if (await ev(`!window.__oldPage && document.readyState !== "loading"`).catch(() => false)) break;
+        await new Promise((q) => setTimeout(q, 25));
+      }
+      return r;
+    };
     await fn({ ev, nav, send, sessionId });
   } finally {
     proc.kill("SIGKILL");

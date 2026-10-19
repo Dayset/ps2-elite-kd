@@ -59,10 +59,20 @@ export function isNotFarm(r) {
   return !!k && notFarm.names.has(k);
 }
 
+/* The three review files load in parallel (2026-10-19): index.html starts them with
+ * the page (window.__ps2Early); otherwise all three requests go out at once here.
+ * They used to be three top-level awaits in a row, holding up app.js start. */
+const jsonEarly = (k, rel) => (typeof window !== "undefined" && typeof fetch === "function")
+  ? ((window.__ps2Early && window.__ps2Early[k]) || fetch(new URL(rel, import.meta.url).href, { cache: "no-cache" }).then((r) => (r.ok ? r.json() : null)).catch(() => null))
+  : null;
+const P_NOT_FARM = jsonEarly("notFarm", "./data/not-farm.json");
+const P_FARM = jsonEarly("farm", "./data/farm.json");
+const P_REVIEWED = jsonEarly("reviewed", "./data/reviewed.json");
+
 try {
-  if (typeof window !== "undefined" && typeof fetch === "function") {
-    const res = await fetch(new URL("./data/not-farm.json", import.meta.url).href, { cache: "no-cache" });
-    if (res.ok) setNotFarm(await res.json());
+  if (P_NOT_FARM) {
+    const d = await P_NOT_FARM;
+    if (d) setNotFarm(d);
   } else {
     const fs = await import("node:fs");
     setNotFarm(JSON.parse(fs.readFileSync(new URL("./data/not-farm.json", import.meta.url), "utf8")));
@@ -110,9 +120,9 @@ export function isFarmListed(r) {
 }
 
 try {
-  if (typeof window !== "undefined" && typeof fetch === "function") {
-    const res = await fetch(new URL("./data/farm.json", import.meta.url).href, { cache: "no-cache" });
-    if (res.ok) setFarmList(await res.json());
+  if (P_FARM) {
+    const d = await P_FARM;
+    if (d) setFarmList(d);
   } else {
     const fs = await import("node:fs");
     setFarmList(JSON.parse(fs.readFileSync(new URL("./data/farm.json", import.meta.url), "utf8")));
@@ -298,9 +308,9 @@ export function padderPenalty(v) {
 }
 
 try {
-  if (typeof window !== "undefined" && typeof fetch === "function") {
-    const res = await fetch(new URL("./data/reviewed.json", import.meta.url).href, { cache: "no-cache" });
-    if (res.ok) setReviewed(await res.json());
+  if (P_REVIEWED) {
+    const d = await P_REVIEWED;
+    if (d) setReviewed(d);
   } else {
     const fs = await import("node:fs");
     setReviewed(JSON.parse(fs.readFileSync(new URL("./data/reviewed.json", import.meta.url), "utf8")));

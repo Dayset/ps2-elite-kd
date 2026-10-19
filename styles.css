@@ -1738,62 +1738,48 @@ footer {
 
 footer a { color: var(--accent); }
 
-/* Footer meta block: vehicles note + stats line + debug toggles + disclaimer
- * in one panel. */
+/* Footer (2026-10-19): data first, then one card with three columns —
+ * about + data line, links, options (switches) — and a quiet bottom row. */
+footer .footer-data { margin: 1rem 0 0.75rem; }
+footer .footer-data #vehiclesNote { margin: 0.45rem 0 0; padding-left: 0.75rem; }
+footer #statsPublic { color: var(--text); }
 footer .footer-block {
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 0.75rem;
-  padding: 0.9rem 1.1rem;
-  margin: 1rem 0 1.25rem;
+  padding: 1rem 1.15rem 0.75rem;
+  margin: 0.75rem 0 1.25rem;
 }
-footer .footer-block #vehiclesNote { margin-top: 0; }
-footer .footer-block .ranks-meta { margin: 0.35rem 0 0.5rem; }
-footer .footer-block .disclaimer { margin: 0.5rem 0 0.25rem; }
-footer .footer-block > :last-child { margin-bottom: 0; }
-
-/* 📊 Public table lives in the footer now: the footer dims its text,
- * the table should read like everywhere else. */
-footer #statsPublic { color: var(--text); }
-
-/* Footer first line: repo link left, "show older debug stats" right (wraps on narrow screens). */
-footer .footer-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.25rem 1rem;
+footer .foot-grid { display: grid; grid-template-columns: 1.4fr 1fr 1.2fr; gap: 1rem 1.5rem; }
+@media (max-width: 760px) { footer .foot-grid { grid-template-columns: 1fr 1fr; } footer .foot-about { grid-column: 1 / -1; } }
+@media (max-width: 460px) { footer .foot-grid { grid-template-columns: 1fr; } }
+footer .foot-col { min-width: 0; display: flex; flex-direction: column; gap: 0.35rem; }
+footer .foot-brand { font-size: 0.95rem; font-weight: 700; color: var(--text); }
+footer .foot-h { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--dim); margin-bottom: 0.1rem; }
+footer .foot-about .ranks-meta { margin: 0; font-size: 0.78rem; }
+footer .footer-thanks { margin: 0; color: var(--dim); }
+footer .foot-links a { text-decoration: none; font-size: 0.82rem; width: fit-content; }
+footer .foot-links a:hover { text-decoration: underline; }
+footer .footer-row { margin: 0; }
+footer .foot-switch { display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; user-select: none; min-height: 1.75rem; font-size: 0.8rem; color: var(--muted, var(--dim)); }
+footer .foot-switch:hover { color: var(--text); }
+footer .foot-switch input {
+  appearance: none; -webkit-appearance: none; flex: 0 0 auto; margin: 0; cursor: pointer;
+  width: 2rem; height: 1.1rem; border-radius: 999px; position: relative;
+  background: var(--border); transition: background 0.18s;
 }
-footer .footer-row { margin: 0.75rem 0; }
-footer .footer-row p { margin: 0; }
-/* Footer site links: tidy stacked lines. */
-footer .footer-site { margin: 0.45rem 0; }
-footer .footer-thanks { margin: 0.45rem 0 0; color: var(--dim); }
-footer .debug-cols-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  margin-left: auto;
-  cursor: pointer;
-  user-select: none;
-  min-height: 1.75rem; /* comfortable tap target on mobile */
+footer .foot-switch input::after {
+  content: ""; position: absolute; top: 2px; left: 2px; width: calc(1.1rem - 4px); height: calc(1.1rem - 4px);
+  border-radius: 50%; background: var(--text); transition: transform 0.18s;
 }
-footer .debug-cols-toggle input { margin: 0; cursor: pointer; }
-
-/* Footer second line: "hide players with adjusted iVi ≤ 0" (right-aligned, under the debug box). */
-footer .hide-zero-ivi-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  margin-left: auto;
-  cursor: pointer;
-  user-select: none;
-  min-height: 1.75rem; /* comfortable tap target on mobile */
-}
-footer .hide-zero-ivi-toggle input { margin: 0; cursor: pointer; }
+footer .foot-switch input:checked { background: var(--accent); }
+footer .foot-switch input:checked::after { transform: translateX(0.9rem); background: var(--panel); }
+footer .foot-switch input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+footer .foot-bottom { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.25rem 1rem; margin-top: 0.85rem; padding-top: 0.6rem; border-top: 1px solid var(--row-border); }
+footer .foot-legal { color: var(--dim); font-size: 0.7rem; opacity: 0.85; }
 
 /* Collapsed legal-style disclaimer at the very bottom of the footer. */
-footer .disclaimer { margin: 0.5rem 0 0.75rem; color: var(--dim); }
+footer .disclaimer { margin: 0; color: var(--dim); flex: 1 1 18rem; min-width: 0; }
 footer .disclaimer summary {
   cursor: pointer;
   display: inline-block;
@@ -2653,7 +2639,7 @@ html[data-theme="light"] .dist-pill:hover { opacity: 1; }
 .live-mode #statsPublic,
 .live-mode #vehiclesNote,
 .live-mode #ranksMeta,
-.live-mode .footer-row { display: none !important; }
+.live-mode .footer-row, .live-mode .foot-opts { display: none !important; }
 .live-mode #nameTokens { pointer-events: none; }
 .live-mode .name-token.live-dim { opacity: 0.35; filter: grayscale(0.8); }
 .live-mode .name-token.live-lit { opacity: 1; box-shadow: 0 0 0 2px rgba(198, 40, 40, 0.6); }
@@ -2707,6 +2693,7 @@ col.lv-c-statR { width: calc(7.143% - 3.3214ch); }
  * ====================================================================== */
 .stats-carousel { margin: 0.35rem 0 0.85rem; }
 .stats-carousel:has(#statsPanel:empty) { display: none; }
+.stats-carousel.sc-reserve { display: block !important; } /* room kept while the startup graph loads (app.js reserveStatsSpace) */
 .sc-bar { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.3rem; }
 .sc-tabs { display: inline-flex; gap: 2px; padding: 2px; border: 1px solid var(--border); border-radius: 999px; background: var(--panel); }
 .sc-tab { font: inherit; font-size: 0.8rem; font-weight: 600; color: var(--dim); background: none; border: 0; border-radius: 999px; padding: 0.18rem 0.7rem; cursor: pointer; white-space: nowrap; }

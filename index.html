@@ -6,6 +6,7 @@
   <title>PS2 Elite K/D — PlanetSide 2 player stats &amp; K/D comparison</title>
   <meta name="description" content="Compare PlanetSide 2 players: K/D vs enemy KPM chart (Raw / Smooth), iVi skill rating, Resist, Brave and Inflation stats, and Rankings. Free, data from Daybreak Census and Honu." />
   <link rel="canonical" href="https://dayset.github.io/ps2-elite-kd/" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%94%EF%B8%8F%3C/text%3E%3C/svg%3E" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="PS2 Elite K/D" />
   <meta property="og:title" content="PS2 Elite K/D — PlanetSide 2 player stats &amp; K/D comparison" />
@@ -39,7 +40,24 @@
     "codeRepository": "https://github.com/Dayset/ps2-elite-kd"
   }
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261019-dist2" />
+  <script>
+    // Start the two big data files together with the page, instead of after
+    // app.js and its ~40 modules have loaded (2026-10-19). app.js takes these
+    // names / ranksLite promises once (takeEarly); the review files are shared.
+    // The browser cache still revalidates every one of them.
+    window.__ps2Early = {};
+    try {
+      // Small review files first (padding.mjs / vehicle-cut.mjs wait for them before app.js runs),
+      // then the startup name list and the few ranks columns 🎲 / ✨ Stats need. The full
+      // ranks.json (1.7 MB) is left to the Rankings section, which loads lazily.
+      [["reviewed", "data/reviewed.json"], ["notFarm", "data/not-farm.json"], ["farm", "data/farm.json"], ["names", "data/names.json"], ["ranksLite", "data/ranks-lite.json"]].forEach(function (e) {
+        var opt = { cache: "no-cache" };
+        if (e[2]) opt.priority = e[2];
+        window.__ps2Early[e[0]] = fetch(e[1], opt).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
+      });
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="styles.css?v=20261019-speed2" />
 </head>
 <body class="main-page">
   <div class="controls">
@@ -49,6 +67,31 @@
     <div id="namesBox" class="names-box" role="group" aria-label="Player names">
       <div class="names-box-main">
         <div id="nameTokens" class="name-tokens"></div>
+        <script>
+          // First paint: show the startup chips (link → saved field → last comparison) right
+          // away, so the names box doesn't grow when app.js takes over (it re-renders them).
+          (function () {
+            try {
+              var q = new URLSearchParams(location.search).get("names");
+              var list = q ? q.split(",") : null;
+              var rd = function (k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } };
+              if (!list) { var p = rd("ps2-elite-kd-pending-names"); list = p && Array.isArray(p.names) ? p.names : null; }
+              if (!list || !list.length) list = rd("ps2-elite-kd-last");
+              if (!Array.isArray(list)) return;
+              var box = document.getElementById("nameTokens"), n = 0;
+              list.forEach(function (raw) {
+                var name = String(raw || "").trim();
+                if (!name || n >= 6) return;
+                n++;
+                var b = document.createElement("button");
+                b.type = "button"; b.className = "name-token unfetched"; b.tabIndex = -1;
+                var num = document.createElement("span"); num.className = "name-token-num"; num.textContent = n + ".";
+                var nm = document.createElement("span"); nm.className = "nm"; nm.textContent = name;
+                b.appendChild(num); b.appendChild(nm); box.appendChild(b);
+              });
+            } catch (e) {}
+          })();
+        </script>
         <input id="namesInput" type="text" placeholder="ShloDog" aria-label="Player names" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="go" />
       </div>
       <button id="clearNamesBtn" type="button" class="clear-names" title="Clear names from input" aria-label="Clear names from input">×</button>
@@ -116,6 +159,20 @@
       </div>
     </div>
   </section>
+  <script>
+    // Same first-paint idea for the table spot: keep room for the startup chips' stats
+    // (app.js reserveStatsSpace keeps or releases it once it knows the names are saved).
+    (function () {
+      try {
+        var n = document.querySelectorAll("#nameTokens .name-token").length;
+        if (!n) return;
+        var sc = document.getElementById("statsCarousel");
+        var ph = window.matchMedia && matchMedia("(max-width: 600px)").matches;
+        sc.classList.add("sc-reserve");
+        sc.style.minHeight = (31 + 30 + n * (ph ? 41 : 27) + 2) + "px";
+      } catch (e) {}
+    })();
+  </script>
 
   <div class="chart-wrap empty" style="contain: layout paint style;">
     <!-- t378u: top-right corner of the graph: 💀 / 📈 switch above the zoom (upper half + Auto only). -->
@@ -192,35 +249,49 @@
   </section>
 
   <footer>
-    <section class="footer-block" aria-label="Site stats and options">
+    <!-- 2026-10-19: footer redesign. Data first (📊 Public, vehicles note), then one card:
+         about + data line, links, options; disclaimer and legal line at the bottom. -->
+    <section class="footer-data" aria-label="Public stats">
       <div id="statsPublic" class="stats-panel stats-panel-public" aria-label="Public stats (Census / Honu)"></div>
-      <!-- "What about vehicles?" sits directly on top of the stats line;
-           the note stays hidden until a comparison is loaded (renderStatsTable). -->
+      <!-- "What about vehicles?" stays hidden until a comparison is loaded (renderStatsTable). -->
       <details id="vehiclesNote" class="pooled-note fold-note" hidden><summary>♿ What about vehicles?</summary><p>⚔️ iVi measures infantry skill only. If more than 10% of your lifetime kills come from vehicles (seats, turrets), the share above 10% is subtracted from adjusted iVi; MAX kills above 10% are subtracted the same way, separately. The two add up, with no cap: e.g. 96% vehicle kills → −86%; 45% vehicle + 40% MAX → −65%. Pure infantry is untouched. Hover a player’s iVi value to see the cut, and the <a href="columns.html#infantry">🪖 Infantry</a> column for the shares (<a href="columns.html#vehicle-cut">details</a>).</p></details>
-      <p id="ranksMeta" class="ranks-meta"></p>
-      <div class="footer-row">
-        <label class="debug-cols-toggle" title="Append the older debug columns (🎯🎈 ivi, eKPM, own KPM, 📊 COI, 📉 Slope, 🎈 Inflation) to the ✨ Adjusted and Rankings tables">
-          <input type="checkbox" id="debugColsToggle" /> show older debug stats
-        </label>
+    </section>
+    <section class="footer-block" aria-label="About, links and options">
+      <div class="foot-grid">
+        <div class="foot-col foot-about">
+          <div class="foot-brand">⚔️ PS2 Elite K/D</div>
+          <p id="ranksMeta" class="ranks-meta"></p>
+          <p class="footer-thanks">Data from the Daybreak Census API · thanks to <a href="https://wt.honu.pw/" target="_blank" rel="noopener noreferrer">HONU</a> / Varunda</p>
+        </div>
+        <nav class="foot-col foot-links" aria-label="More pages">
+          <div class="foot-h">Learn more</div>
+          <a href="columns.html">📖 What the columns mean</a>
+          <a href="updates.html">📝 Update log</a>
+          <a href="https://github.com/Dayset/ps2-elite-kd" target="_blank" rel="noopener noreferrer">💻 Dayset</a>
+        </nav>
+        <div class="foot-col foot-opts footer-row">
+          <div class="foot-h">Options</div>
+          <label class="debug-cols-toggle foot-switch" title="Append the older debug columns (🎯🎈 ivi, eKPM, own KPM, 📊 COI, 📉 Slope, 🎈 Inflation) to the ✨ Adjusted and Rankings tables">
+            <input type="checkbox" id="debugColsToggle" /> <span>show older debug stats</span>
+          </label>
+          <label class="hide-zero-ivi-toggle foot-switch" title="Hide players with adjusted iVi ≤ 0 from the Rankings table browse; a name search still finds them">
+            <input type="checkbox" id="hideZeroIviToggle" /> <span>hide players with adjusted iVi ≤ 0</span>
+          </label>
+        </div>
       </div>
-      <div class="footer-row">
-        <label class="hide-zero-ivi-toggle" title="Hide players with adjusted iVi ≤ 0 from the Rankings table browse; a name search still finds them">
-          <input type="checkbox" id="hideZeroIviToggle" /> hide players with adjusted iVi ≤ 0
-        </label>
-      </div>
-      <details class="disclaimer">
+      <div class="foot-bottom">
+        <details class="disclaimer">
         <summary>Disclaimer</summary>
         <p>All numbers, ratings, charts and flags on this site are automated estimates from public data (the Daybreak Census API and Honu). They can be wrong, incomplete or out of date, and they are not facts, proof or accusations about any player. Don't take them seriously, and don't use them to harass anyone.</p>
         <p>This site is free and provided "as is", with no warranty of any kind. To the fullest extent allowed by law, the authors are not liable for any damage or loss from using it, including to your device or data.</p>
         <p>Not affiliated with or endorsed by Daybreak Game Company or Honu. PlanetSide 2 is a trademark of its respective owners.</p>
         <p>Open source under the MIT License. See <a href="https://github.com/Dayset/ps2-elite-kd/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">LICENSE</a>.</p>
       </details>
-      <p class="footer-site"><a href="https://github.com/Dayset/ps2-elite-kd">Dayset</a></p>
-      <p class="footer-site"><a href="columns.html">What the columns mean</a> · <a href="updates.html">Update log</a></p>
-      <p class="footer-thanks">Thanks to <a href="https://wt.honu.pw/" target="_blank" rel="noopener noreferrer">HONU</a> / Varunda</p>
+        <span class="foot-legal">MIT licensed · not affiliated with Daybreak or Honu</span>
+      </div>
     </section>
   </footer>
 
-  <script type="module" src="app.js?v=20261019-dist2"></script>
+  <script type="module" src="app.js?v=20261019-speed2"></script>
 </body>
 </html>

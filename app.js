@@ -173,6 +173,7 @@ import {
   /** Empty-field Analyze default + names input placeholder. */
   const DEFAULT_PLACEHOLDER_NAME = "ShloDog";
   const SHARED_INDEX_URL = "data/index.json";
+  const SHARED_NAMES_URL = "data/names.json"; // slim startup list (scripts/build-ranks.mjs buildNames)
   /** Cloudflare Worker that queues names into the shared data/ cache. "" disables. */
   const WORKER_URL = "https://ps2-elite-kd-cache.dayset.workers.dev";
   /** Slugs already sent this page session (avoid re-posting on every Analyze). */
@@ -868,9 +869,35 @@ import {
 
   /* ---------- shared data/ cache (GitHub Pages / Actions) ---------- */
 
+  /** A data file index.html already started downloading (once; later loads fetch again). */
+  function takeEarly(key) {
+    const box = typeof window !== "undefined" && window.__ps2Early;
+    const p = box && box[key];
+    if (!p) return null;
+    box[key] = null;
+    return p;
+  }
+
+  /** data/names.json ([name, savedAt] pairs, built with ranks.json) → index entries. */
+  function namesToIndex(d) {
+    if (!d || d.v !== 1 || !Array.isArray(d.players) || !d.players.length) return null;
+    const players = [];
+    for (const row of d.players) {
+      const name = row && row[0];
+      const slug = slugKey(name);
+      if (!slug) continue;
+      players.push({ name, slug, file: `players/${slug}.json`, savedAt: +row[1] || 0, aliases: [slug, String(name).toLowerCase()] });
+    }
+    return players.length ? { updatedAt: d.updatedAt || null, players } : null;
+  }
+
   async function loadSharedIndex() {
     try {
-      const data = await fetchJson(SHARED_INDEX_URL);
+      // Slim list first (≈150 KB gzipped, started by index.html); the full index.json (≈490 KB) only as a fallback.
+      const early = takeEarly("names");
+      let data = early ? namesToIndex(await early) : null;
+      if (!data) data = namesToIndex(await fetchJson(SHARED_NAMES_URL).catch(() => null));
+      if (!data) data = await fetchJson(SHARED_INDEX_URL);
       let players = [];
       if (Array.isArray(data.players)) {
         players = data.players;
@@ -894,7 +921,8 @@ import {
       sharedIndex = { updatedAt: null, players: [] };
     }
     try {
-      confirmedPadders = confirmedPadderSlugs(await fetchJson("data/reviewed.json"));
+      const early = typeof window !== "undefined" && window.__ps2Early && window.__ps2Early.reviewed;
+      confirmedPadders = confirmedPadderSlugs((early && (await early)) || (await fetchJson("data/reviewed.json")));
     } catch {
       /* keep the last set (missing file = nobody confirmed) */
     }
@@ -922,8 +950,25 @@ import {
         put(byKey, slugKey(a), p);
       }
     }
-    sharedLookup = { src: list, byKey, byLower };
+    sharedLookup = { src: list, byKey, byLower, sortedKeys: null };
     return sharedLookup;
+  }
+
+  /**
+   * A typed (unfinished) name that is exactly one saved player and not the start
+   * of another one ("Bhorn" while "BhornVS" exists is still ambiguous). Used to
+   * lock the last name in by itself after a typing pause (2026-10-19).
+   */
+  function uniqueSavedName(text) {
+    const key = slugKey(text);
+    if (!key || key.length < 3 || !isSavedName(text)) return false;
+    const t = sharedLookupTable();
+    if (!t.sortedKeys) t.sortedKeys = [...t.byKey.keys()].sort();
+    const keys = t.sortedKeys;
+    let lo = 0, hi = keys.length;
+    while (lo < hi) { const m = (lo + hi) >> 1; if (keys[m] < key) lo = m + 1; else hi = m; }
+    for (let i = lo; i < keys.length && keys[i].startsWith(key); i++) if (keys[i] !== key) return false;
+    return true;
   }
 
   function findSharedEntry(name) {
@@ -933,8 +978,12 @@ import {
     return (key && t.byKey.get(key)) || t.byLower.get(lower) || null;
   }
 
+  // 13k entries: build once per index (was rebuilt + sorted on every chip change).
+  let sharedNamesMemo = { src: null, list: [] };
   function listSharedNames() {
-    return (sharedIndex.players || [])
+    const src = sharedIndex.players || [];
+    if (sharedNamesMemo.src === src) return sharedNamesMemo.list;
+    const list = src
       .filter((p) => p && p.name)
       .map((p) => ({
         key: p.slug || slugKey(p.name),
@@ -943,6 +992,8 @@ import {
         source: "shared",
       }))
       .sort((a, b) => b.savedAt - a.savedAt);
+    sharedNamesMemo = { src, list };
+    return list;
   }
 
   /* ---------- localStorage helpers ---------- */
@@ -967,9 +1018,17 @@ import {
     }
   }
 
+  // Parsed once per stored value: the browser copy can be large and was
+  // JSON.parsed again for every name check (cacheGet) on every chip change.
+  let cacheStoreMemo = { raw: null, obj: null };
   function getCacheStore() {
-    const obj = readJsonLS(LS_CACHE, {});
-    return obj && typeof obj === "object" && !Array.isArray(obj) ? obj : {};
+    let raw = null;
+    try { raw = localStorage.getItem(LS_CACHE); } catch { raw = null; }
+    if (raw !== null && raw === cacheStoreMemo.raw && cacheStoreMemo.obj) return cacheStoreMemo.obj;
+    const parsed = readJsonLS(LS_CACHE, {});
+    const obj = parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+    cacheStoreMemo = { raw, obj };
+    return obj;
   }
 
   function pruneCache(store) {
@@ -1017,6 +1076,7 @@ import {
     pruneCache(store);
     // Quota full (200-opponent copies are bigger): drop the oldest, keep this one.
     writeWithEviction(store, key, (st) => writeJsonLS(LS_CACHE, st));
+    cacheStoreMemo = { raw: null, obj: null }; // the object was edited in place: read it back fresh
     renderNameTokens();
     renderCacheChips();
   }
@@ -1316,8 +1376,8 @@ import {
   let ranksPayloadLoad = null;
   function loadRanksPayload() {
     if (!ranksPayloadLoad) {
-      ranksPayloadLoad = fetch("data/ranks.json", { cache: "no-cache" })
-        .then((r) => (r.ok ? r.json() : null))
+      const early = takeEarly("ranks"); // only if a page started it (index.html leaves the full table to Rankings)
+      ranksPayloadLoad = (early || fetch("data/ranks.json", { cache: "no-cache" }).then((r) => (r.ok ? r.json() : null)))
         .catch(() => null)
         .then((d) => {
           if (!d || !Array.isArray(d.cols) || !Array.isArray(d.rows)) ranksPayloadLoad = null; // allow a retry
@@ -1326,11 +1386,24 @@ import {
     }
     return ranksPayloadLoad;
   }
+  /* 2026-10-19: 🎲 and the ✨ Stats percentiles only need a few columns:
+   * data/ranks-lite.json (≈400 KB gzipped, started by index.html) instead of
+   * the full ranks.json (≈1.7 MB, now only loaded by the Rankings section). */
+  let ranksLiteLoad = null;
+  function loadRanksLite() {
+    if (!ranksLiteLoad) {
+      const early = takeEarly("ranksLite");
+      ranksLiteLoad = (early || fetch("data/ranks-lite.json", { cache: "no-cache" }).then((r) => (r.ok ? r.json() : null)))
+        .catch(() => null)
+        .then((d) => (d && Array.isArray(d.cols) && Array.isArray(d.rows) ? d : loadRanksPayload()));
+    }
+    return ranksLiteLoad;
+  }
   let rankVals = null;
   async function loadRankVals() {
     if (rankVals) return rankVals;
     try {
-      const d = await loadRanksPayload();
+      const d = await loadRanksLite();
       if (!d) return new Map();
       const ci = d.cols.indexOf("adjs");
       const si = d.cols.indexOf("slug");
@@ -1390,7 +1463,7 @@ import {
     if (!pool.length) { say(`Nobody in ${Math.round(lo)}–${Math.round(hi)}`); return; }
     const [, pick] = pool[Math.floor(Math.random() * pool.length)];
     addNameToField(pick.name);
-    say(`Added ${pick.name} (${Math.round(pick.adjs)} in ${Math.round(lo)}–${Math.round(hi)}). Press Analyze to load.`);
+    say(`Added ${pick.name} (${Math.round(pick.adjs)} in ${Math.round(lo)}–${Math.round(hi)})${isSavedName(pick.name) ? " — loading graph…" : ". Press Analyze to load."}`);
   }
 
   function toggleNameInField(name, anchor) {
@@ -1565,7 +1638,7 @@ import {
   }
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261019-dist4")
+    rankingsLoading = import("./rankings.mjs?v=20261019-speed2")
       .then((m) => {
         rankingsApi = m.initRankings(rankingsHost);
         return rankingsApi.ready;
@@ -2096,11 +2169,9 @@ import {
       const rel = String(shared.file).replace(/^\.?\/?data\//, "");
       candidates.push(`data/${rel}`);
     }
-    candidates.push(
-      `data/players/${key}.json`,
-      `data/${key}.json`,
-      `data/${key}_top50.json`
-    );
+    // (The old data/<key>.json and data/<key>_top50.json layouts are gone: probing them
+    // just added two 404s to every unknown name.)
+    candidates.push(`data/players/${key}.json`);
     const seen = new Set();
     const unique = [];
     for (const p of candidates) {
@@ -3255,7 +3326,7 @@ import {
   let infPool = null;
   function loadConsPool() {
     if (consPoolLoad) return consPoolLoad;
-    consPoolLoad = loadRanksPayload()
+    consPoolLoad = loadRanksLite()
       .then((payload) => {
         const i = payload && Array.isArray(payload.cols) ? payload.cols.indexOf("cons") : -1;
         if (i < 0 || !Array.isArray(payload.rows)) return;
@@ -3281,9 +3352,32 @@ import {
     return consPoolLoad;
   }
 
+  /**
+   * Startup with names whose graph draws by itself (link / restored / typed early):
+   * keep room for the ✨ Stats table so the graph below doesn't jump down when the
+   * table appears (2026-10-19). Released when the table renders (or after 8 s).
+   */
+  function reserveStatsSpace() {
+    const sc = document.getElementById("statsCarousel");
+    if (!sc || LIVE_MODE) return;
+    // Names that need a live fetch (or none): nothing will draw by itself, give the room back.
+    if (!nameTokens.length || !nameTokens.every(isSavedName)) { releaseStatsSpace(); return; }
+    const phone = typeof matchMedia === "function" && matchMedia("(max-width: 600px)").matches;
+    sc.classList.add("sc-reserve");
+    sc.style.minHeight = Math.round(31 + 30 + nameTokens.length * (phone ? 41 : 27) + 2) + "px";
+    setTimeout(releaseStatsSpace, 8000);
+  }
+  function releaseStatsSpace() {
+    const sc = document.getElementById("statsCarousel");
+    if (!sc || !sc.classList.contains("sc-reserve")) return;
+    sc.classList.remove("sc-reserve");
+    sc.style.minHeight = "";
+  }
+
   function renderStatsTable(list) {
     loadConsPool();
     if (!els.stats) return;
+    if (list.length) requestAnimationFrame(releaseStatsSpace);
     lastStatsList = list;
     syncVehiclesNote(list);
     loadLegendShards(list.map((e) => slugKey(e && e.display)).filter(Boolean));
@@ -3898,7 +3992,9 @@ import {
         done: 0,
         total: clean.length,
       });
-      setStatus(`Analyzing ${clean.length} player${clean.length > 1 ? "s" : ""}…`);
+      // Only when something has to come from Census: saved copies are instant, and the
+      // line flashing in and out pushed the table and graph down and up (2026-10-19).
+      if (fresh || !clean.every(isSavedName)) setStatus(`Analyzing ${clean.length} player${clean.length > 1 ? "s" : ""}…`);
     }
 
     // ETA plan: which names will need a live Census fetch (vs cached / in memory).
@@ -3928,7 +4024,8 @@ import {
           // Only fully loaded live players reach the cache (failures, partial
           // results and cached fallbacks never do).
           if (!p.partialSkipped && !p.cacheFallback) cachePut(name, p);
-          if (!quiet) setStatus(
+          // Saved copies load in a blink: no flash of "Loaded X…" (it pushed the page down and up).
+          if (!quiet && !/^(shared:|local)/.test(String(p.source || ""))) setStatus(
             `Loaded <strong>${escapeHtml(p.display)}</strong> ` +
             `<span class="src">via ${escapeHtml(sourceLabel(p.source))}</span>…`
           );
@@ -4080,8 +4177,12 @@ import {
    */
   function syncGraphToInput({ start = false } = {}) {
     // start: a ✅ pick in the Rankings table may draw the first graph too.
-    if (fetching || activeRun || (!players.length && !start)) return;
+    if (fetching || activeRun) return;
     const names = nameTokens.slice();
+    // 2026-10-19: the FIRST graph also draws by itself when every typed name is
+    // saved (shared file or this browser): typing cached names one by one never
+    // has to wait for 🔍 Analyze. A name needing a live Census fetch still does.
+    if (!players.length && !start && !(names.length && names.every(isSavedName))) return;
     if (!names.length) {
       clearChartUi();
       syncUrlNames([]);
@@ -4106,9 +4207,15 @@ import {
       return;
     }
     const missing = names.filter((n, i) => !have[i]);
-    if (missing.every((n) => !getNameFailure(n) && (findSharedEntry(n) || cacheGet(n)))) {
+    if (missing.every(isSavedName)) {
+      if (!players.length) setPlaceholderVisible(false);
       analyzeNames(names, { quiet: true });
     }
+  }
+
+  /** Saved copy available (shared data/ file or this browser) and not marked failed: no live fetch needed. */
+  function isSavedName(n) {
+    return !getNameFailure(n) && !!(findSharedEntry(n) || cacheGet(n));
   }
 
   /**
@@ -4601,9 +4708,18 @@ import {
       }
     });
 
+    let autoCommitTimer = 0;
     els.namesInput.addEventListener("input", () => {
       clearGraphReadyHint();
       const val = els.namesInput.value;
+      // A complete saved name typed without a space/Enter: lock it in after a short pause.
+      clearTimeout(autoCommitTimer);
+      if (val.trim() && !/[\s,;]/.test(val.trim()) && nameTokens.length < MAX_NAMES) {
+        autoCommitTimer = setTimeout(() => {
+          const now = String(els.namesInput.value || "");
+          if (now === val && document.activeElement === els.namesInput && uniqueSavedName(now.trim())) commitFragment({ clearInput: true });
+        }, 1100);
+      }
       // Completed token(s) when text ends with a separator
       if (/[\s,;]$/.test(val)) {
         commitFragment({ clearInput: true });
@@ -5087,11 +5203,19 @@ import {
     applyTheme(getStoredTheme(), { redraw: false });
     applyBgImage(getStoredBgImage());
     if (els.fetchFresh) { els.fetchFresh.checked = false; updateFreshEta(); }
-    await loadSharedIndex();
+    // Chips first (they come from the link / this browser, not the name list), so the
+    // names box has its final height on the first paint instead of growing later.
     const startup = resolveStartupNames();
-    setNameTokens(startup.names); // >6 from ?names= → first 6 + limit hint
+    const typedEarly = nameTokens.length > 0 || !!String((els.namesInput && els.namesInput.value) || "").trim();
+    if (typedEarly && startup.reason !== "url") startup.names = nameTokens.slice();
+    else setNameTokens(startup.names); // >6 from ?names= → first 6 + limit hint
+    await loadSharedIndex();
+    // Typed while the name list was still loading: keep it (startup used to wipe it).
+    if (!typedEarly && startup.reason !== "url" && nameTokens.length && namesSetKey(nameTokens) !== namesSetKey(startup.names)) startup.names = nameTokens.slice();
+    renderNameTokens();
     renderCacheChips();
-    showIdleChart("▶️ Press Analyze");
+    if (!players.length) showIdleChart("▶️ Press Analyze");
+    reserveStatsSpace();
     scheduleRankingsLoad(); // t356u: Rankings below load lazily
     // No idle "Ready — press Analyze" line; the status area only shows progress / errors
     // (and the limit hint if ?names= had more than 10).
@@ -5104,6 +5228,8 @@ import {
       if (startup.restoreAfter) setNameTokens(startup.restoreAfter);
       persistNamesOn = true;
       persistPendingNames();
+      // Restored / typed names that are all saved: show their graph right away (no Analyze).
+      if (!players.length && !activeRun && nameTokens.length) scheduleGraphSync();
       // After the startup lock sync (FIFO): only user edits auto-start Analyze.
       queueMicrotask(() => { limitLockReady = true; });
     }

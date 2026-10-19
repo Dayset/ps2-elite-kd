@@ -67,8 +67,10 @@ export function vehicleCutTip(vehPct, maxPct, cutPct) {
 
 try {
   if (typeof window !== "undefined" && typeof fetch === "function") {
-    const res = await fetch(new URL("./data/reviewed.json", import.meta.url).href, { cache: "no-cache" });
-    if (res.ok) setVehicleCutReviewed(await res.json());
+    // Shares the request index.html started with the page (window.__ps2Early), if any.
+    const early = window.__ps2Early && window.__ps2Early.reviewed;
+    const d = early ? await early : await fetch(new URL("./data/reviewed.json", import.meta.url).href, { cache: "no-cache" }).then((r) => (r.ok ? r.json() : null));
+    if (d) setVehicleCutReviewed(d);
   } else {
     const fs = await import("node:fs");
     setVehicleCutReviewed(JSON.parse(fs.readFileSync(new URL("./data/reviewed.json", import.meta.url), "utf8")));
