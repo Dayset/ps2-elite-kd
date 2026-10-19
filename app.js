@@ -107,6 +107,7 @@ import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette
 import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-sav1";
 // Live data: Daybreak Census only (batched, paced); Honu just for a rare history fallback.
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
+import { dotSlot, refreshOnline } from "./online-status.mjs?v=20261018-onl1";
 import {
   censusBase,
   censusRequest,
@@ -131,6 +132,9 @@ import {
   const HONU = "https://wt.honu.pw/api/character/";
   const CENSUS = censusBase(CENSUS_SERVICE_ID);
   /** Client-side Census pacing (s:example allows 10 req/min per IP). Shared by every live fetch in this tab. */
+  setInterval(() => {
+    if (typeof document !== "undefined" && document.visibilityState === "visible") refreshOnline(CENSUS, [els.stats, els.statsPublic]);
+  }, 60_000);
   const censusBucket = tokenBucket(defaultCensusRate(CENSUS_SERVICE_ID));
   /** At most 2 Census requests in flight per tab (big killboards + batched stats). */
   const censusLimit = limitConcurrency(2);
@@ -3406,6 +3410,7 @@ import {
           const num = i + 1;
           return (
             `<tr><th scope="row" class="stats-name" style="color:${col}">` +
+            dotSlot(row.p.cid) +
             `<span class="player-num" aria-label="Series ${num}">${num}.</span>` +
             `${nameSpanHtml(row.p.display, farmTitle(row.p) + (withDesc ? descTitle(row.p) : ""), withDesc ? descText(row.p) : "", honuProfileUrl(row.p.cid))}${padMarkHtml(row.p)}${legacySampleHtml(row.p)}</th>${vals}</tr>`
           );
@@ -3463,6 +3468,8 @@ import {
       </div>
     `;
 
+    // 🟢/🔴 online dots: paint from cache now, fetch stale ids from Census.
+    refreshOnline(CENSUS, [els.stats, els.statsPublic]);
     // Keep the ⚠️ note open/closed across re-sorts (starts collapsed each page load).
     const thinDet = els.stats.querySelector("details.stats-thin-note");
     if (thinDet) thinDet.addEventListener("toggle", () => { thinNoteOpen = thinDet.open; });
