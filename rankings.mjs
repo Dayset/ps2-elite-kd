@@ -909,10 +909,8 @@ export function initRankings(host) {
     const col = colById(distMetric);
     // Metric explanation underneath the chart: the same text as the
     // table column's tooltip (col.tip), updated on every metric switch.
-    // Dayset 2026-10-19: 🪖 Infantry's tip is far longer than the rest and
-    // made the block grow; its description lives in the table tooltip.
     const hintEl = $("distHint");
-    if (hintEl) hintEl.textContent = col?.id === "inf" ? "" : (col?.tip || "");
+    if (hintEl) hintEl.textContent = col?.tip || "";
     const h = getHist(distMetric);
     const box = $("distChart");
     const W = Math.max(320, Math.round(box.clientWidth || 640));
@@ -1119,10 +1117,8 @@ export function initRankings(host) {
     });
     svg.appendChild(hits);
 
-    const below = col.floorZero ? h.sorted.filter((v) => v < 0).length : 0;
     $("distSummary").textContent =
-      `${h.n.toLocaleString()} players · median ${(+h.median).toFixed(col.digits)} · p90 ${(+h.p90).toFixed(col.digits)} · p99 ${(+h.p99).toFixed(col.digits)}` +
-      (below ? ` · ${below} below scale (shown as 0)` : "");
+      `${h.n.toLocaleString()} players · median ${(+h.median).toFixed(col.digits)} · p90 ${(+h.p90).toFixed(col.digits)} · p99 ${(+h.p99).toFixed(col.digits)}`;
     holdSummaryHeight(W);
     holdHintHeight(W);
   }
@@ -1142,12 +1138,23 @@ export function initRankings(host) {
   }
 
   /* Same idea for the metric tip above the chart: tips run 1-3 lines, so
-   * hold the hint at the tallest height it needed at this chart width. */
+   * hold the hint at the tallest height it needed at this chart width.
+   * Dayset 2026-10-19: measure every tip on first pass, so the block never
+   * grows when switching to a longer description (🪖 Infantry). */
   let hintMax = { w: 0, h: 0 };
   function holdHintHeight(w) {
     const el = $("distHint");
     if (!el) return;
-    if (hintMax.w !== w) hintMax = { w, h: 0 };
+    if (hintMax.w !== w) {
+      hintMax = { w, h: 0 };
+      const cur = el.textContent;
+      for (const c of VISIBLE) {
+        el.textContent = c.tip || "";
+        const h = el.getBoundingClientRect().height;
+        if (h > hintMax.h) hintMax.h = h;
+      }
+      el.textContent = cur;
+    }
     el.style.minHeight = "";
     const hNow = el.getBoundingClientRect().height;
     if (hNow > hintMax.h) hintMax.h = hNow;
