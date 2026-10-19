@@ -20,6 +20,8 @@ import { binGetter, hasTree, regionMap, latticeFor } from "./src/models.js";
 import { cutAwareSnap } from "./src/cut.js";
 
 const INV = { VS: "1", NC: "2", TR: "3" };
+const CONCURRENCY = 8;   // parallel bundle fetches
+const LIST_MAX = 40;     // alerts listed by name in the run summary
 
 /** Region snapshots per frame from delta frames: [{t, snap}]. */
 export function snapsFromFrames(frames, zone) {
@@ -149,17 +151,26 @@ async function main() {
   }
   const h = await get(`/history?days=${days}`);
   for (const x of (h && h.alerts) || []) if (!seen.has(x.key) || !seen.get(x.key).final) seen.set(x.key, { ...seen.get(x.key), ...x, src: seen.has(x.key) ? "archive" : "live" });
-  const results = [];
-  for (const a of seen.values()) {
-    if (a.status && a.status !== "settled") continue;
-    let frames = null, info = a;
-    if (a.src === "archive") {
-      const b = await get(`/archive?key=${a.key}`);
-      if (b) { frames = b.frames; info = { ...a, ...b }; }
+  // Bundles are fetched a few at a time: the archive holds thousands since the PS2Alerts backfill.
+  const todo = [...seen.values()].filter((a) => !a.status || a.status === "settled");
+  const results = new Array(todo.length);
+  const sources = {};
+  let next = 0;
+  const worker = async () => {
+    while (next < todo.length) {
+      const i = next++, a = todo[i];
+      let frames = null, info = a;
+      if (a.src === "archive") {
+        const b = await get(`/archive?key=${a.key}`);
+        if (b) { frames = b.frames; info = { ...a, ...b }; }
+      }
+      if (!frames) { const f = await get(`/alert/frames?key=${a.key}`); frames = f && f.frames; }
+      const src = info.source || a.src || "live";
+      sources[src] = (sources[src] || 0) + 1;
+      results[i] = rescanAlert(info, frames);
     }
-    if (!frames) { const f = await get(`/alert/frames?key=${a.key}`); frames = f && f.frames; }
-    results.push(rescanAlert(info, frames));
-  }
+  };
+  await Promise.all(Array.from({ length: CONCURRENCY }, worker));
   const s = summarize(results);
   const lines = [`# Cut-aware rescan (${s.alerts} alerts scored)`, "", "Brier per scored minute (lower is better; uniform 0.2222):", "",
     "| slice | minutes | standard | cut-aware | change |", "|---|---|---|---|---|"];
@@ -170,14 +181,17 @@ async function main() {
   const fc = s.final_check;
   lines.push("", `Final-score check: ${fc.with_cut_at_end} of ${fc.alerts} alerts ended with cut bases. Mean error vs Census final scores: raw map ${fc.mae_raw} pp, cut-aware ${fc.mae_cut} pp (cut-aware closer in ${fc.cut_closer}, raw closer in ${fc.raw_closer}).`,
     "", `Skipped: ${JSON.stringify(s.skipped)}`, "", "Alerts that ended with cut bases:", "");
-  for (const r of results.filter((x) => x.end && x.end.cutN)) lines.push(`- ${r.key}: ${r.end.cutBases.join(", ")} — error raw ${r.end.rawErr.toFixed(2)} / cut ${r.end.cutErr.toFixed(2)} pp`);
+  const endedCut = results.filter((x) => x.end && x.end.cutN);
+  for (const r of endedCut.slice(0, LIST_MAX)) lines.push(`- ${r.key}: ${r.end.cutBases.join(", ")} — error raw ${r.end.rawErr.toFixed(2)} / cut ${r.end.cutErr.toFixed(2)} pp`);
+  if (endedCut.length > LIST_MAX) lines.push(`- … and ${endedCut.length - LIST_MAX} more`);
   const md = lines.join("\n");
   console.log(md);
   console.log("\nJSON " + JSON.stringify(s));
   if (process.env.GITHUB_STEP_SUMMARY) (await import("node:fs")).appendFileSync(process.env.GITHUB_STEP_SUMMARY, md + "\n");
   for (const k of ["all", "late", "with_cut"]) if (s.minutes[k]) console.log(`::notice title=rescan ${k}::n=${s.minutes[k].n} std=${s.minutes[k].std} cut=${s.minutes[k].cut}`);
-  console.log(`::notice title=rescan coverage::alerts scored ${s.alerts}, skipped ${JSON.stringify(s.skipped)}, ends with cuts ${fc.with_cut_at_end}/${fc.alerts}`);
-  for (const r of results.filter((x) => x.end && x.end.cutN)) console.log(`::notice title=ended with cut ${r.key}::${r.end.cutBases.join(", ")}; error raw ${r.end.rawErr.toFixed(2)} / cut ${r.end.cutErr.toFixed(2)} pp`);
+  console.log(`::notice title=rescan coverage::alerts scored ${s.alerts}, skipped ${JSON.stringify(s.skipped)}, ends with cuts ${fc.with_cut_at_end}/${fc.alerts}; sources ${JSON.stringify(sources)}`);
+  // GitHub keeps 10 annotations per step: the 4 summary notices above/below plus a few examples.
+  for (const r of endedCut.slice(0, 4)) console.log(`::notice title=ended with cut ${r.key}::${r.end.cutBases.join(", ")}; error raw ${r.end.rawErr.toFixed(2)} / cut ${r.end.cutErr.toFixed(2)} pp`);
   console.log(`::notice title=final-score check::cut-aware closer ${fc.cut_closer}, raw closer ${fc.raw_closer}, mae raw ${fc.mae_raw} cut ${fc.mae_cut}`);
 }
 

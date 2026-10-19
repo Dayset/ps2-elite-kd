@@ -81,6 +81,22 @@ function shares(own, cut, total) {
 }
 
 /**
+ * Does a record's starting map fit our lattice for its zone? null when it does, else
+ * {skip}. Facilities PS2Alerts leaves out are fine when they have no lattice link
+ * (out of play); any facility we don't know, or a linked one missing, is a mismatch.
+ * Shared with history/bundle.mjs so the archive keeps exactly the alerts the trees use.
+ */
+export function latticeCheck(rec, L) {
+  const init = Object.entries(rec.init || {});
+  if (!init.length) return { skip: "no initial map" };
+  const extra = init.filter(([fid]) => !L.nodes.has(fid)).map(([fid]) => fid);
+  const have = new Set(init.map(([fid]) => fid));
+  const missing = [...L.nodes].filter((fid) => !have.has(fid) && L.linked.has(fid));
+  if (extra.length || missing.length) return { skip: "lattice mismatch", extra, missing, lattice: rec.lattice };
+  return null;
+}
+
+/**
  * One record -> {zone, start, durMin, winner, raw:[91], cut:[91], cutN:[91], ctl:{n, errRaw, errCut}} or {skip}.
  * Minute m = ownership after every capture at or before start + m*60 (build_winbins.territory_minutes).
  */
@@ -93,11 +109,8 @@ export function prepare(rec) {
   const L = lat(rec.zone);
   if (!L) return { skip: "no lattice" };
   const init = Object.entries(rec.init || {});
-  if (!init.length) return { skip: "no initial map" };
-  const extra = init.filter(([fid]) => !L.nodes.has(fid)).map(([fid]) => fid);
-  const have = new Set(init.map(([fid]) => fid));
-  const missing = [...L.nodes].filter((fid) => !have.has(fid) && L.linked.has(fid));
-  if (extra.length || missing.length) return { skip: "lattice mismatch", extra, missing, lattice: rec.lattice };
+  const bad = latticeCheck(rec, L);
+  if (bad) return bad;
   const own = new Map(init.map(([f, o]) => [f, +o]));
   for (const fid of L.nodes) if (!own.has(fid)) own.set(fid, 0);   // out-of-play: neutral, as on the Census map
   const total = own.size;                                          // = the map's base count, like the live engine

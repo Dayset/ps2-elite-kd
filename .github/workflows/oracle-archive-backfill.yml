@@ -1,0 +1,54 @@
+name: Oracle archive backfill (PS2Alerts history)
+
+# Posts PS2Alerts history (fetched by oracle-history.yml into the Actions cache)
+# to the oracle's alert archive as v1 bundles (oracle-worker/history/ingest.mjs).
+# Makes no PS2Alerts calls itself. Incremental: keys already archived are skipped,
+# so the hourly run is a quick no-op once caught up and picks up whatever later
+# history fetches add. At most `max` bundles per run (D1 write budget), and it
+# stops below the archive's 350 MB budget (D1 cap 500 MB).
+
+on:
+  workflow_dispatch:
+    inputs:
+      max:
+        description: "Bundles to ingest this run"
+        default: "300"
+      since:
+        description: "Only alerts that started on/after (YYYY-MM-DD)"
+        default: "2024-10-01"
+      dry_run:
+        description: "Report queue and sizes only (true/false)"
+        default: "false"
+  schedule:
+    - cron: "41 * * * *"   # hourly; a no-op when nothing is left
+
+permissions:
+  contents: read
+
+concurrency:
+  group: oracle-archive-backfill
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Restore history cache
+        uses: actions/cache/restore@v4
+        with:
+          path: history
+          key: ps2a-history-${{ github.run_id }}
+          restore-keys: ps2a-history-
+      - name: Ingest
+        env:
+          ORACLE_API: ${{ vars.ORACLE_API || 'https://ps2-oracle.dayset.workers.dev' }}
+          ORACLE_KEY: ${{ secrets.CENSUS_PROXY_KEY }}
+        run: |
+          DRY=""; if [ "${{ inputs.dry_run }}" = "true" ]; then DRY="--dry-run"; fi
+          node oracle-worker/history/ingest.mjs --in history/alerts.jsonl \
+            --max "${{ inputs.max || '300' }}" --since "${{ inputs.since || '2024-10-01' }}" $DRY
