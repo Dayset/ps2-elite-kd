@@ -39,7 +39,7 @@
     "codeRepository": "https://github.com/Dayset/ps2-elite-kd"
   }
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261019-dist1" />
+  <link rel="stylesheet" href="styles.css?v=20261019-dist2" />
 </head>
 <body class="main-page">
   <div class="controls">
@@ -158,21 +158,24 @@
   <!-- t356u: Rankings (was ranks.html) — rankings.mjs fills this lazily after the graph. -->
   <section id="rankings" class="rankings" aria-label="Rankings">
     <div id="ranksStatus" class="ranks-status" role="status"></div>
+    <!-- t377u: metric picker = a row of emojis on the summary line (current one
+         highlighted with its name); doubles as the auto-cycle's "you are here".
+         Lives outside the <details> so the row stays visible when collapsed;
+         clicking a pill opens the graph on that metric right away.
+         The <select> stays (hidden) as the value holder the code reads. -->
+    <div class="dist-wrap">
+      <div id="distPills" class="dist-pills" role="radiogroup" aria-label="Distribution metric"></div>
     <details id="distSection" class="dist-section" open>
       <summary title="Distribution">📊</summary>
-      <!-- t377u: metric picker = a row of emojis on the summary line (current one
-           highlighted with its name); doubles as the auto-cycle's "you are here".
-           The <select> stays (hidden) as the value holder the code reads. -->
-      <div id="distPills" class="dist-pills" role="radiogroup" aria-label="Distribution metric"></div>
       <select id="distMetric" aria-label="Distribution metric" hidden></select>
       <div class="dist-chart" id="distChart">
         <svg id="distSvg" role="img" aria-label="Distribution of the selected metric across cached players"></svg>
         <div id="distTip" class="dist-tip" hidden></div>
       </div>
       <div id="distHint" class="dist-hint"></div>
-      <div class="dist-note">Click a bar (tap twice on phones) to see those players in the table. Swipe sideways to change the stat.</div>
       <div id="distSummary" class="dist-summary"></div>
     </details>
+    </div>
     <!-- t357u/t358u: the big table folds away like the chart, folded by default (state remembered). -->
     <details id="ranksTableSection" class="dist-section rk-table-section">
       <summary>📋 All players <span id="ranksTableCount" class="rk-table-count"></span></summary>
@@ -218,6 +221,6 @@
     </section>
   </footer>
 
-  <script type="module" src="app.js?v=20261019-dist1"></script>
+  <script type="module" src="app.js?v=20261019-dist2"></script>
 </body>
 </html>

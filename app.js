@@ -1565,7 +1565,7 @@ import {
   }
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261019-dist1")
+    rankingsLoading = import("./rankings.mjs?v=20261019-dist2")
       .then((m) => {
         rankingsApi = m.initRankings(rankingsHost);
         return rankingsApi.ready;

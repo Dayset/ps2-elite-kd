@@ -2301,6 +2301,10 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
   margin: 0 0 0.85rem; border: 1px solid var(--border); border-radius: 8px;
   background: var(--panel); padding: 0.45rem 0.75rem 0.6rem;
 }
+/* Emoji picker row lives outside the <details> so it stays visible when the
+ * section is collapsed; absolutely positioned on the summary line. */
+.dist-wrap { position: relative; }
+.dist-wrap > .dist-pills { z-index: 2; }
 .dist-section > summary { cursor: pointer; list-style: none; user-select: none; font-weight: 600; font-size: 0.95rem; }
 .dist-section > summary::-webkit-details-marker { display: none; }
 .dist-section > summary::before { content: "▸ "; color: var(--dim); }

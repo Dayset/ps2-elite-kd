@@ -1293,7 +1293,12 @@ export function initRankings(host) {
   $("distMetric").addEventListener("change", (e) => setDistMetric(e.target.value));
   $("distPills").addEventListener("click", (e) => {
     const b = e.target.closest && e.target.closest(".dist-pill");
-    if (b) { sfx("sparkle"); setDistMetric(b.getAttribute("data-id")); }
+    if (b) {
+      sfx("sparkle");
+      const sec = $("distSection");
+      if (sec && !sec.open) sec.open = true; // collapsed: open the graph on this metric right away
+      setDistMetric(b.getAttribute("data-id"));
+    }
   });
   $("distPills").addEventListener("keydown", (e) => {
     const keys = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
