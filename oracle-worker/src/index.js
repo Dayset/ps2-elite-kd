@@ -700,8 +700,10 @@ async function handle(request, env) {
     const src = url.searchParams.get("source");
     const rows = (await env.ARCHIVE.prepare(`SELECT key, source, world, zone, instance_id, event_id, start_ts, dur, winner, basis, bytes FROM alert_archive
       WHERE start_ts < ? ${src ? "AND source = ?" : ""} ORDER BY start_ts DESC LIMIT ?`).bind(...(src ? [before, src, limit] : [before, limit])).all()).results || [];
-    const tot = await env.ARCHIVE.prepare("SELECT COUNT(*) AS n, COALESCE(SUM(bytes),0) AS bytes FROM alert_archive").first();
-    return json({ total: tot.n, total_bytes: tot.bytes, alerts: rows }, 200, { "Cache-Control": "public, max-age=60" });
+    // Totals read every row of the archive (D1 row reads are the free plan's scarce budget): first page only.
+    const tot = url.searchParams.has("before") ? null
+      : await env.ARCHIVE.prepare("SELECT COUNT(*) AS n, COALESCE(SUM(bytes),0) AS bytes FROM alert_archive").first();
+    return json({ total: tot ? tot.n : null, total_bytes: tot ? tot.bytes : null, alerts: rows }, 200, { "Cache-Control": "public, max-age=60" });
   }
   if (url.pathname === "/archive/ingest" && request.method === "POST" && env.ARCHIVE) {
     // Backfill (e.g. PS2Alerts history) from a GitHub Actions job; never overwrites the Worker's own bundles.

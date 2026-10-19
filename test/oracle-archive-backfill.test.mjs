@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { compact } from "../oracle-worker/history/fetch.mjs";
 import { bundleFrom, keyOf } from "../oracle-worker/history/bundle.mjs";
-import { plan, sizes } from "../oracle-worker/history/ingest.mjs";
+import { plan, sizes, loadState, listDue, LIST_EVERY_S } from "../oracle-worker/history/ingest.mjs";
 import { validBundle } from "../oracle-worker/src/archive.js";
 import { snapsFromFrames, rescanAlert } from "../oracle-worker/rescan.mjs";
 import { regionMap } from "../oracle-worker/src/models.js";
@@ -101,4 +101,15 @@ test("rescanAlert scores a backfilled bundle like a Worker bundle", () => {
   const res = rescanAlert({ ...b, frames }, frames);
   assert.ok(res.rows && res.rows.length > 10, JSON.stringify(res).slice(0, 200));
   assert.ok(res.end, "final-score check runs on PS2Alerts finals");
+});
+
+test("ingest state: survives bad input, lists at most once a day", () => {
+  const empty = loadState("not json");
+  assert.deepEqual(empty, { keys: {}, listed_ts: 0, list_bytes: 0, list_total: 0, added_bytes: 0 });
+  assert.equal(listDue(empty, 1_800_000_000), true, "no state: list");
+  const st = loadState(JSON.stringify({ keys: { "10-4-46315": 1 }, listed_ts: 1_800_000_000, list_bytes: 5, list_total: 1, added_bytes: 7 }));
+  assert.equal(st.keys["10-4-46315"], 1);
+  assert.equal(listDue(st, 1_800_000_000 + 3600), false, "an hour later: use the state");
+  assert.equal(listDue(st, 1_800_000_000 + LIST_EVERY_S), true, "a day later: list again");
+  assert.equal(listDue(st, 1_800_000_000 + 60, true), true, "--list forces it");
 });

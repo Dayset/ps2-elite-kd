@@ -12,11 +12,17 @@
  * Guards: stops below the D1 cap (BUDGET_BYTES, the database holds 500 MB) and
  * counting what this run would add; at most --max bundles per run; batches of 20
  * (the Worker's limit), halved on a server error.
+ *
+ * D1 reads are the scarce resource (free plan: 5M rows/day for the whole account,
+ * shared with the live oracle). Listing the whole archive reads every row, so it
+ * happens at most once a day (LIST_EVERY_S); in between, --state (a small file kept
+ * in its own Actions cache) remembers what was posted and the bytes added since.
  */
 import fs from "node:fs";
 import { bundleFrom } from "./bundle.mjs";
 
 export const BUDGET_BYTES = 350 * 1024 * 1024;
+export const LIST_EVERY_S = 86400;
 const API = process.env.ORACLE_API || "https://ps2-oracle.dayset.workers.dev";
 const KEY = process.env.ORACLE_KEY || "";
 const UA = "ps2-oracle-archive-backfill (github.com/dayset/ps2-elite-kd)";
@@ -82,7 +88,8 @@ async function archived() {
   const have = new Map();
   let totalBytes = null, total = null;
   for (let before = 4e9, page = 0; page < 200; page++) {
-    const l = await getJson(`/archive/list?limit=500&before=${before}`);
+    // The first page carries the totals (the Worker only computes them without `before`).
+    const l = await getJson(`/archive/list?limit=500${page ? `&before=${before}` : ""}`);
     if (!l || !Array.isArray(l.alerts)) { if (page === 0) throw new Error("archive list unavailable"); break; }
     if (page === 0) { totalBytes = l.total_bytes; total = l.total; }
     for (const x of l.alerts) have.set(x.key, { source: x.source, start_ts: x.start_ts });
@@ -108,22 +115,46 @@ async function post(batch) {
   return { error: "server error" };
 }
 
+/** Ingest state: keys this job posted (or found archived) and the archive size at the last full listing. */
+export function loadState(text) {
+  try {
+    const s = JSON.parse(text);
+    if (s && typeof s.keys === "object") return { keys: s.keys, listed_ts: s.listed_ts || 0, list_bytes: s.list_bytes || 0, list_total: s.list_total || 0, added_bytes: s.added_bytes || 0 };
+  } catch {}
+  return { keys: {}, listed_ts: 0, list_bytes: 0, list_total: 0, added_bytes: 0 };
+}
+
+/** Is a full listing due? Yes without state, after LIST_EVERY_S, or when asked. */
+export const listDue = (st, nowS, force = false) => force || !st.listed_ts || nowS - st.listed_ts >= LIST_EVERY_S;
+
 async function main() {
   const input = arg("--in", "history/alerts.jsonl");
+  const statePath = arg("--state", "history-state/ingest.json");
   const max = +arg("--max", 300) || 300;
   const since = Math.floor(Date.parse(arg("--since", "2024-10-01T00:00:00Z")) / 1000);
   const dry = flag("--dry-run");
   if (!fs.existsSync(input)) { notice("archive backfill", `no history cache at ${input}; run oracle-history.yml (fetch) first`); return; }
   if (!dry && !KEY) throw new Error("ORACLE_KEY is not set");
 
-  const { have, totalBytes, total } = await archived();
+  const nowS = Math.floor(Date.now() / 1000);
+  const st = loadState(fs.existsSync(statePath) ? fs.readFileSync(statePath, "utf8") : "");
+  let have, totalBytes, total;
+  if (listDue(st, nowS, flag("--list"))) {
+    ({ have, totalBytes, total } = await archived());
+    st.listed_ts = nowS; st.list_bytes = totalBytes || 0; st.list_total = total || 0; st.added_bytes = 0;
+    for (const [k, v] of have) st.keys[k] = v.start_ts;
+  } else {
+    have = new Map(Object.entries(st.keys).map(([k, t]) => [k, { start_ts: t }]));
+    totalBytes = st.list_bytes + st.added_bytes; total = st.list_total;
+  }
+  const saveState = () => { fs.mkdirSync(statePath.replace(/\/[^/]*$/, ""), { recursive: true }); fs.writeFileSync(statePath, JSON.stringify(st)); };
   const lines = fs.readFileSync(input, "utf8").split("\n");
   const { todo, stats } = plan(lines, have, { since, score: !flag("--no-score") });
   const all = sizes(todo);
   notice("archive queue", `${stats.usable} usable PS2Alerts alerts since ${new Date(since * 1000).toISOString().slice(0, 10)} (${stats.unique} unique keys, ${stats.collisions} recycled ids), ${stats.archived} already archived (${stats.archiveCollisions} with a different start), ${todo.length} to go; skipped ${JSON.stringify(stats.skipped)}`);
-  notice("archive sizes", `to go: mean ${all.mean} B, p50 ${all.p50}, p95 ${all.p95}, max ${all.max}; all of it ${(all.total / 1048576).toFixed(1)} MB; archive now ${total} bundles, ${((totalBytes || 0) / 1048576).toFixed(1)} MB of ${(BUDGET_BYTES / 1048576).toFixed(0)} MB budget`);
+  notice("archive sizes", `to go: mean ${all.mean} B, p50 ${all.p50}, p95 ${all.p95}, max ${all.max}; all of it ${(all.total / 1048576).toFixed(1)} MB; archive ~${((totalBytes || 0) / 1048576).toFixed(1)} MB of ${(BUDGET_BYTES / 1048576).toFixed(0)} MB budget (${st.listed_ts === nowS ? "listed now" : "from state, listed " + new Date(st.listed_ts * 1000).toISOString().slice(0, 16) + "Z"}, ${total} bundles then)`);
   if ((totalBytes || 0) > BUDGET_BYTES) { warn(`archive is over the ${BUDGET_BYTES / 1048576} MB budget (${(totalBytes / 1048576).toFixed(1)} MB); not ingesting`); return; }
-  if (!todo.length) { notice("archive backfill", "nothing left to ingest"); return; }
+  if (!todo.length) { saveState(); notice("archive backfill", "nothing left to ingest"); return; }
 
   // Take the newest first, within the per-run cap and what is left of the byte budget.
   const run = [];
@@ -146,9 +177,14 @@ async function main() {
       if (size > 5) { size = Math.ceil(size / 2); continue; }   // retry the same bundles in smaller batches
       res.failed += batch.length; i += batch.length; continue;
     }
+    const byKey = new Map(batch.map((b) => [b.key, b]));
     for (const x of r.results) {
-      if (x.ok) res.ok++; else if (x.skipped) res.skipped++; else if (x.error === "invalid") { res.invalid++; if (res.invalid <= 3) warn(`invalid bundle ${x.key}`); } else res.failed++;
+      const b = byKey.get(x.key);
+      if (x.ok) { res.ok++; st.keys[x.key] = b.start_ts; st.added_bytes += x.bytes || JSON.stringify(b).length; }
+      else if (x.skipped) { res.skipped++; st.keys[x.key] = b.start_ts; }
+      else if (x.error === "invalid") { res.invalid++; if (res.invalid <= 3) warn(`invalid bundle ${x.key}`); } else res.failed++;
     }
+    saveState();
     i += batch.length;
     await sleep(250);
   }
