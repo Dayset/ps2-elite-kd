@@ -189,9 +189,9 @@ function start() {
   const fmt = (v, d) => (typeof v === "number" && Number.isFinite(v) ? v.toFixed(d) : "—");
   const N = LIVE_COLS.length;
   const shortLab = (c) => c.label.split(" ")[0];
-  /** One player = name row (colspan) + stats row (one cell per column, aligned across events). */
+  /** One player = name cell + stats cells on one row (columns aligned across events). */
   function side(p, isMe, icon) {
-    const name = `<td class="lv-name-cell" colspan="${N}">${icon ? `<span class="lv-icon">${icon}</span>` : ""}<span class="lv-name fac-${p.faction || ""}${isMe ? " lv-me" : ""}" title="${esc(p.name)}">${esc(p.name)}</span></td>`;
+    const name = `<td class="lv-name-cell">${icon ? `<span class="lv-icon">${icon}</span>` : ""}<span class="lv-name fac-${p.faction || ""}${isMe ? " lv-me" : ""}" title="${esc(p.name)}">${esc(p.name)}</span></td>`;
     let stats;
     if (p.cached) stats = LIVE_COLS.map((c) => `<td class="lv-num" title="${esc(c.label + ": " + c.tip)}">${cellText(c, p.cached[c.id])}</td>`).join("");
     else if (isMe) stats = `<td class="lv-num lv-uncached" colspan="${N}"></td>`;
@@ -207,11 +207,11 @@ function start() {
     const left = kill ? side(meP, true, "⚔️" + hs) : side(p, false, "💀" + hs);
     const right = kill ? side(p, false, "") : side(meP, true, "");
     const t = r.gap == null ? `<span class="lv-timer" data-at="${r.at}">⏱️ ${fmtGap(Date.now() - r.at)}</span>` : `⏱️ ${fmtGap(r.gap)}`;
-    return `<tbody class="lv-ev lv-${r.last}${i === 0 ? " lv-new" : ""}"><tr><td class="lv-time" rowspan="2">${t}</td>${left.name}<td class="lv-arrow" rowspan="2">&gt;</td>${right.name}</tr><tr>${left.stats}${right.stats}</tr></tbody>`;
+    return `<tbody class="lv-ev lv-${r.last}${i === 0 ? " lv-new" : ""}"><tr><td class="lv-time">${t}</td>${left.name}${left.stats}<td class="lv-arrow">❯</td>${right.name}${right.stats}</tr></tbody>`;
   }
   function render(dropped) {
     if (!listEl) return;
-    const head = `<thead><tr><th></th>${LIVE_COLS.map((c) => `<th title="${esc(c.label + ": " + c.tip)}">${shortLab(c)}</th>`).join("")}<th></th>${LIVE_COLS.map((c) => `<th title="${esc(c.label + ": " + c.tip)}">${shortLab(c)}</th>`).join("")}</tr></thead>`;
+    const head = `<thead><tr><th></th><th></th>${LIVE_COLS.map((c) => `<th title="${esc(c.label + ": " + c.tip)}">${shortLab(c)}</th>`).join("")}<th></th><th></th>${LIVE_COLS.map((c) => `<th title="${esc(c.label + ": " + c.tip)}">${shortLab(c)}</th>`).join("")}</tr></thead>`;
     listEl.innerHTML = head + rows.map(eventHtml).join("") + (dropped ? eventHtml(dropped, -1).replace('class="lv-ev', 'class="lv-ev lv-fade') : "");
     if (dropped) setTimeout(() => { const f = listEl.querySelector(".lv-fade"); if (f) f.remove(); }, 600);
   }
