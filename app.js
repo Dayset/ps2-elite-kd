@@ -233,7 +233,7 @@ import {
   const VB = { w: 1000, h: 580 };
   /** SVG text multiplier for big desktop screens (desk-scale.mjs); 1 on mobile. */
   let chartFs = 1;
-  const M = { t: 20, r: 56, b: 72, l: 56 };
+  const M = { t: 20, r: 56, b: 44, l: 56 };
   const PLOT = {
     x: M.l,
     y: M.t,
@@ -2923,17 +2923,28 @@ import {
       t.textContent = x.toFixed(xTickDigits);
       svg.appendChild(t);
     }
-    svg.appendChild(gYText);
-
-    // Short axis labels only (no farm % clutter)
-    const capY = PLOT.y + PLOT.h + 30 + 10 * chartFs;
-    addText(svg, PLOT.x, capY, "🐣 Easy", th.muted, 10, "start");
-    if (zoomedLeft) {
-      addText(svg, PLOT.x + PLOT.w, capY, `🔍 0–${viewXMax.toFixed(2)}`, th.muted, 10, "end");
-    } else {
-      addText(svg, PLOT.x + PLOT.w, capY, "🥵 Hard", th.muted, 10, "end");
+    // Dayset 2026-10-19: 🐣Easy / 🥵 Hard sit on the tick line itself —
+    // right after 0.0, right before the last tick. No separate caption line.
+    {
+      const tickY = PLOT.y + PLOT.h + 14 + 4 * chartFs;
+      const easyT = ns("text");
+      easyT.setAttribute("x", xToPx(xTicks[0]) + 14);
+      easyT.setAttribute("y", tickY);
+      easyT.setAttribute("fill", th.muted);
+      easyT.setAttribute("font-size", fz(11));
+      easyT.setAttribute("text-anchor", "start");
+      easyT.textContent = "🐣Easy";
+      svg.appendChild(easyT);
+      const hardT = ns("text");
+      hardT.setAttribute("x", xToPx(xTicks[xTicks.length - 1]) - 14);
+      hardT.setAttribute("y", tickY);
+      hardT.setAttribute("fill", th.muted);
+      hardT.setAttribute("font-size", fz(11));
+      hardT.setAttribute("text-anchor", "end");
+      hardT.textContent = "🥵 Hard";
+      svg.appendChild(hardT);
     }
-    // Dayset 2026-10-13: 0.75/1.50 threshold numbers removed
+    svg.appendChild(gYText);
 
     const seriesG = ns("g");
     seriesG.setAttribute("clip-path", "url(#plot-clip)");
@@ -3127,18 +3138,6 @@ import {
         if (players.length && currentChartFontScale() !== chartFs) drawChart(players);
       }, 150);
     });
-  }
-
-  function addText(svg, x, y, text, fill, size, anchor) {
-    const t = ns("text");
-    t.setAttribute("x", x);
-    t.setAttribute("y", y);
-    t.setAttribute("fill", fill);
-    t.setAttribute("font-size", String(Math.round(size * chartFs * 10) / 10));
-    t.setAttribute("text-anchor", anchor);
-    t.textContent = text;
-    svg.appendChild(t);
-    return t;
   }
 
   function niceLinTicks(lo, hi, n) {
