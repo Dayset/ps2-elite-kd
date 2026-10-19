@@ -39,7 +39,7 @@ import GHOST_MODEL from "./data/ghost-model.mjs?v=20261010-sav1";
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-sav1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
 import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261019-inf1";
-import { VEH_CUT_MARK, vehicleCutTip } from "./vehicle-cut.mjs?v=20261019-vcut1";
+import { VEH_CUT_MARK, vehicleCutTip } from "./vehicle-cut.mjs?v=20261019-vcut3";
 import { infantryKillsUrl, summarizeInfantryKills } from "./infantry.mjs?v=20261019-inf1";
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261015-tip1";
 import { createWheelSwiper } from "./dist-cycle.mjs?v=20261017-cycle15";
@@ -1551,7 +1551,7 @@ import {
   }
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261019-vcut1")
+    rankingsLoading = import("./rankings.mjs?v=20261019-vcut3")
       .then((m) => {
         rankingsApi = m.initRankings(rankingsHost);
         return rankingsApi.ready;
@@ -3675,7 +3675,7 @@ import {
     return statMark(p && p.farm, undefined, { confirmed: isConfirmedPadder(p) });
   }
 
-  /** 🚜 "‡" after the ⚔️ iVi value: vehicle / MAX kill shares and the cut on hover. */
+  /** 🚜 "‡" after the ⚔️ iVi value (uncapped: share − 10% per part): parts + total on hover. */
   function vehCutHtml(vehPct, maxPct, cutPct) {
     const tip = vehicleCutTip(vehPct, maxPct, cutPct);
     return `<span class="veh-cut" title="${escapeHtml(tip)}" aria-label="${escapeHtml(tip)}">${VEH_CUT_MARK}</span>`;

@@ -11,7 +11,7 @@
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { normalizePlayer, playerMetrics, shownValue } from "./player-metrics.mjs?v=20261010-sav1";
 import { isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261010-sav1";
-import { VEH_CUT_MARK, vehicleCutTip } from "./vehicle-cut.mjs?v=20261019-vcut1";
+import { VEH_CUT_MARK, vehicleCutTip } from "./vehicle-cut.mjs?v=20261019-vcut3";
 
 export const FEED_MAX = 6;
 export const GRAPH_OPPONENTS = 5; // + the target = MAX_NAMES (6)

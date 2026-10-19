@@ -63,7 +63,7 @@
     <nav class="st-toc" aria-label="On this page">
       <div class="st-toc-title">On this page</div>
       <div class="st-toc-group"><a href="#picture">The picture behind most columns</a> <span class="sep">·</span> <a href="#why-trackers">Why trackers don’t have them</a></div>
-      <div class="st-toc-group"><a class="st-toc-sec" href="#adjusted">✨ Adjusted</a> <span class="sep">·</span> <a href="#ivi">iVi</a> <span class="sep">·</span> <a href="#activity">Activity</a> <span class="sep">·</span> <a href="#brave">Brave</a> <span class="sep">·</span> <a href="#resist">Resist</a> <span class="sep">·</span> <a href="#const">Const</a> <span class="sep">·</span> <a href="#matchup-kd">K/D</a> <span class="sep">·</span> <a href="#infantry">Infantry</a> <span class="sep">·</span> <a href="#vehicle-cut">‡ cut</a></div>
+      <div class="st-toc-group"><a class="st-toc-sec" href="#adjusted">✨ Adjusted</a> <span class="sep">·</span> <a href="#ivi">iVi</a> <span class="sep">·</span> <a href="#activity">Activity</a> <span class="sep">·</span> <a href="#brave">Brave</a> <span class="sep">·</span> <a href="#resist">Resist</a> <span class="sep">·</span> <a href="#const">Const</a> <span class="sep">·</span> <a href="#matchup-kd">K/D</a> <span class="sep">·</span> <a href="#infantry">Infantry</a> <span class="sep">·</span> <a href="#vehicle-cut">‡ cuts</a></div>
       <div class="st-toc-group"><a class="st-toc-sec" href="#public">📊 Public</a> <span class="sep">·</span> <a href="#pub-kd">KD</a> <span class="sep">·</span> <a href="#pub-kpm">KPM</a> <span class="sep">·</span> <a href="#pub-own-kpm">own KPM</a> <span class="sep">·</span> <a href="#pub-acc">Acc %</a> <span class="sep">·</span> <a href="#pub-hsr">HSR %</a> <span class="sep">·</span> <a href="#pub-ivi">IvI</a></div>
       <div class="st-toc-group"><a href="#worked-example">Worked example: YuigahamaYui</a> <span class="sep">·</span> <a href="#debug">Debug-only columns</a></div>
     </nav>
@@ -153,10 +153,10 @@
     </div>
 
     <div class="st-card">
-      <h3 id="vehicle-cut">‡ Vehicle / MAX cut on ⚔️ iVi</h3>
-      <p>In simple words: ⚔️ iVi ranks plain infantry play, so kills you made from a vehicle, a turret or a MAX suit lower it a little. The share of your lifetime kills from vehicles and turrets plus the share from MAX weapons is added up. Up to 10%: no cut. Above that the cut grows evenly, up to −20% at 60% or more. One cut in total, never more than −20%.</p>
-      <p>Example: 40% vehicle kills + 5% MAX kills = 45% → −14% iVi. A cut score shows a small ‡ after the iVi value; hover it to see both shares and the cut. No infantry data yet (or under 100 kills) = no cut. It stacks with the 💩 confirmed-padder penalty.</p>
-      <p><span class="st-dim">Why:</span> farming infantry from a tank, an aircraft or a MAX suit is easier than doing it on foot, and iVi is meant to compare infantry. Vehicle play itself is fine; it just isn’t what this board ranks. The site owner can exempt a player.</p>
+      <h3 id="vehicle-cut">‡ Vehicle + MAX cuts on ⚔️ iVi</h3>
+      <p>In simple words: ⚔️ iVi ranks plain infantry skill, so kills you made from a vehicle or turret, and kills you made in a MAX suit, lower it. There are two separate cuts that add up, with no cap. Each one looks at its own share of your lifetime kills: the first 10% are free, every percent above that costs one percent of iVi.</p>
+      <p>Example: 45% vehicle kills = −35%, 40% MAX kills = −30%, so −65% iVi in total; 96% vehicle kills = −86%. A cut score shows a small ‡ after the iVi value; hover it to see each part. No infantry data yet (or under 100 kills) = no cut. It stacks with the 💩 confirmed-padder penalty.</p>
+      <p><span class="st-dim">Why:</span> farming infantry from a tank, an aircraft or a MAX suit is easier than doing it on foot, and iVi is meant to compare infantry. Vehicle and MAX play are fine; they just aren’t what this board ranks. The site owner can exempt a player (both parts).</p>
     </div>
 
     <div class="st-sec-head">
