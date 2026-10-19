@@ -82,7 +82,7 @@ Both are cumulative: K/D against everyone at or above each enemy KPM. The axis f
 
 ## Other pages and features
 
-- **🔎 Status page** (unlisted): refresh runs, the queue, a 🚩 list of flagged players for manual review, and a 🌱 "Could use a hand" list of players who might appreciate tips or a squad invite.
+- **🔎 Status page** (unlisted): refresh runs, the queue, and a 🚩 list of flagged players for manual review.
 - **Account flairs** appear under the graph in the name list:
   - 🪦 no activity for over a year.
   - 👴🏽 account 8+ years old and active in the last year.

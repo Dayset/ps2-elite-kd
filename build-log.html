@@ -87,18 +87,6 @@
     .st-xref { margin-top: 2px; }
     tr.st-hl > td { background: rgba(120, 160, 220, 0.25); transition: background 0.3s; }
     .st-anoms .st-why { white-space: normal !important; min-width: 12em; font-size: 0.85em; }
-    /* 🌱 Could use a hand (separate from 🚩; calm green, no alarm colours) */
-    .st-sprouts { border-color: color-mix(in srgb, #6fbf73 45%, var(--border)); }
-    .st-sprouts .st-count { display: inline-block; min-width: 1.4em; padding: 0 6px; margin-left: 4px; border-radius: 999px; font-size: 0.8rem; font-weight: 700; text-align: center; border: 1px solid #6fbf73; color: #8fd493; }
-    html[data-theme="light"] .st-sprouts .st-count { color: #2f7a35; border-color: #2f7a35; }
-    .st-sprouts .st-note { margin: 8px 0 2px; line-height: 1.45; }
-    .st-sprouts .st-rule { color: var(--dim); font-size: 0.8rem; margin: 4px 0 6px; line-height: 1.4; }
-    .st-sprouts .st-scroll { overflow: auto; max-height: 70vh; -webkit-overflow-scrolling: touch; }
-    .st-sprouts .st-table td, .st-sprouts .st-table th { white-space: nowrap; }
-    .st-sprouts .st-num { text-align: right; font-variant-numeric: tabular-nums; }
-    .st-sprouts th[data-sort] { cursor: pointer; user-select: none; }
-    .st-sprouts th[data-sort]:hover { color: var(--text); }
-    .st-sprouts th .st-arrow { color: var(--dim); font-size: 0.75em; }
     /* 🛰️ PS2 Radar second opinion (radar.mjs, data/radar.json): small link + badge, never a verdict */
     .st-radar { font-size: 0.74rem; white-space: nowrap; margin-left: 4px; }
     .st-radar a { color: var(--dim); }
@@ -116,7 +104,7 @@
     <h1>📦 Shared cache status</h1>
     <div class="st-sub">Updates every 30 s. <span id="stUpdated"></span> · <a href="./">Back to the chart</a> · <a href="misc.html" title="Confirmed stat padders (hidden page)">🌾 Wall of shame</a> · <span id="radarLine" title="PS2 Radar (ps2radar.com, independent community cheat radar) is looked up once a day for players on the review lists below, at most 50 a day, each at most every 3 days. Its badge is a second opinion only: a Radar Confirmed / Banned mark moves a player up in review order but never hides or flags anyone here, and nothing else on the site reads it. If the radar goes away, the last cached answers stay.">🛰️ PS2 Radar</span><span class="st-tools"><button type="button" id="openAll" title="Open every section">Open all</button><button type="button" id="closeAll" title="Collapse every section">Collapse all</button></span></div>
 
-    <div class="st-card" id="statusBar" style="padding:10px 14px;margin-bottom:10px;line-height:1.7;"><span id="sbState" class="st-dim">Loading status…</span><br><span id="sbLast" class="st-dim"></span><br><span id="sbHonu" class="st-dim"></span><br><span id="sbReview" class="st-dim"></span><br><span class="st-dim">Jump to: <a href="#cardFlags">🚩 Red flags</a> · <a href="#cardAnoms">📉 Anomalies</a> · <a href="#cardSession">🧪 Session</a> · <a href="#cardForensics">🔎 Forensics</a> · <a href="#cardStalker">🚗 Stalkers</a> · <a href="#cardSprouts">🌱 Hand</a></span></div>
+    <div class="st-card" id="statusBar" style="padding:10px 14px;margin-bottom:10px;line-height:1.7;"><span id="sbState" class="st-dim">Loading status…</span><br><span id="sbLast" class="st-dim"></span><br><span id="sbHonu" class="st-dim"></span><br><span id="sbReview" class="st-dim"></span><br><span class="st-dim">Jump to: <a href="#cardFlags">🚩 Red flags</a> · <a href="#cardAnoms">📉 Anomalies</a> · <a href="#cardSession">🧪 Session</a> · <a href="#cardForensics">🔎 Forensics</a> · <a href="#cardStalker">🚗 Stalkers</a></span></div>
     <details class="st-card st-sec st-group" id="groupQueue" data-default="open"><summary><h2>Queue</h2></summary>
       <details class="st-card st-sec" id="cardNow" data-default="open"><summary><h2>Refresh now</h2></summary><div id="nowRun"></div><div id="now" class="st-dim">Loading…</div><div id="backup" class="st-label"></div></details>
       <details class="st-card st-sec" id="cardPending"><summary><h2>Queued from the site (not cached yet) <span id="pendingCount" class="st-count">…</span></h2></summary><div id="pending" class="st-dim">Loading…</div></details>
@@ -196,18 +184,6 @@
       <div id="fxRule" class="st-rule"></div>
       <div id="fx" class="st-dim">Loading…</div>
     </details>
-      <details class="st-card st-sec st-sprouts" id="cardSprouts">
-      <summary id="sproutsSummary"><h2>🌱 Could use a hand <span id="sproutsCount" class="st-count">…</span></h2></summary>
-      <div class="st-note">Players whose fights are going rough right now. They could be new, playing support, medic or engineer, or just learning. They're listed so veterans can spot who might appreciate a tip or a squad invite. Please be kind; this is never a list to make fun of anyone.</div>
-      <div id="sproutsRule" class="st-rule"></div>
-      <div id="sprouts" class="st-dim">Loading…</div>
-      <details class="st-sub-sec" id="secFarmAcct">
-      <summary><h3>🤖 Likely farm accounts <span id="farmAcctCount" class="st-count">…</span></h3></summary>
-      <div class="st-note">Accounts that would be on 🌱 but look parked for someone else to farm: most of their deaths go to one or a few killers they never kill back, and they barely fight. They are not counted above. Linked to the player they feed.</div>
-      <div id="farmAcctRule" class="st-rule"></div>
-      <div id="farmAcct" class="st-dim">Loading…</div>
-      </details>
-    </details>
     </details>
     <details class="st-card st-sec st-group" id="groupPipeline"><summary><h2>Pipeline</h2></summary>
       <details class="st-card st-sec" id="cardRuns"><summary><h2>GitHub Actions queue <span id="runsCount" class="st-count"></span></h2></summary><div id="runs" class="st-dim">Loading…</div></details>
@@ -217,7 +193,7 @@
     </details>
     <details class="st-card st-sec" id="cardBurst">
       <summary><h2>💥 Burst sessions <span id="burstCount" class="st-count">…</span></h2></summary>
-      <div class="st-note">Short, extreme sessions: ≥ 5 kills/min with ≥ 15 kills in ≥ 2 minutes, no 10-minute minimum (same rule as the oracle's ☠️ burst tier). Built from sessions we already store (no extra Honu calls). <b>Review signal only:</b> it never changes anyone's stats, adds no * or †, hides nobody. Owner decisions (data/reviewed.json "burst": "cleared" / "cheater", or outlier-guard.mjs KNOWN_EXTREMES) show as ✅ cleared or confirmed cheater; a confirmed cheater is also put on the 🙈 hide list by hand.</div>
+      <div class="st-note">Short, extreme sessions: ≥ 5 kills/min with ≥ 15 kills in ≥ 2 minutes, no 10-minute minimum (same rule as the oracle's ☠️ burst tier). Built from sessions we already store (no extra Honu calls). <b>Review signal only:</b> it never changes anyone's stats, adds no * or †, hides nobody. Owner-reviewed players (outlier-guard.mjs KNOWN_EXTREMES) show as ✅ cleared.</div>
       <div id="burst" class="st-dim">Loading…</div>
       <h3 style="margin:14px 0 6px;font-size:1em;">From the oracle (alert reports, last 7 days)</h3>
       <div id="burstOracle" class="st-dim">Loading…</div>
@@ -584,7 +560,6 @@
     import { groupOutliers } from "./outlier-guard.mjs?v=20261010-sav1";
     import { classifyBins, CHART_LABELS } from "./bins.mjs?v=20261010-sav1";
     import { forensicsRuleText } from "./session-forensics.mjs?v=20261010-sav1";
-    import { sproutRuleText, farmAccountRuleText } from "./sprouts.mjs?v=20261010-sav1";
     import { reviewDecision, CLEARING_DECISIONS, PADDING_BORDERLINE_SHARE, ADJUSTED_BORDERLINE_SHARE } from "./padding.mjs?v=20261010-sav1";
     import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261010-sav1";
     import "./name-peek.mjs?v=20261017-peekdedup"; // full-name popup for truncated .nm names
@@ -611,10 +586,6 @@
     const ruleText = reviewRuleText();
     $("flagsSummary").title = ruleText;
     $("flagsRule").textContent = "Rule: " + ruleText;
-    const sproutText = sproutRuleText();
-    $("sproutsSummary").title = sproutText;
-    $("sproutsRule").textContent = "Rule: " + sproutText;
-    $("farmAcctRule").textContent = "Rule: " + farmAccountRuleText();
     $("adjRule").textContent = "Rule: " + anomalyRuleText() + " Auto-accepted (t375u): marked † and excluded without a manual check. Only borderline cases (farm share " + Math.round(ADJUSTED_BORDERLINE_SHARE * 100) + "% or more) need a look. Overrides: data/not-farm.json (counts the kills again), or data/reviewed.json \"cleared\" / \"fluke\" / \"bad-luck\" / \"padding\".";
     $("padRule").textContent = "Rule: " + paddingRuleText() + " Auto-confirmed (t368u): marked * and excluded without a manual check. Only borderline cases (farm share under " + Math.round(PADDING_BORDERLINE_SHARE * 100) + "%) need a look. Overrides: data/not-farm.json (counts the kills again), or data/reviewed.json \"cleared\" / \"fluke\" / \"bad-luck\".";
     $("stalkerRule").textContent = "Rule: " + stalkerRuleText();
@@ -684,28 +655,12 @@
         '<td title="' + esc(r.savedAt ? new Date(r.savedAt).toLocaleString() : "") + '">' + esc(ago(r.savedAt)) + "</td></tr>";
     }
 
-    /* ---------- 🌱 Could use a hand ---------- */
     function nameCell(r) {
       const url = honu(r.cid);
       const full = esc(r.name);
       return url
         ? '<a class="nm" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer" data-full="' + full + '" title="Open ' + full + ' on Honu">' + full + "</a>"
         : '<span class="nm" data-full="' + full + '" title="' + full + '">' + full + "</span>";
-    }
-
-    /* ---------- 🤖 Likely farm accounts (moved out of 🌱; sprouts.mjs farmAccount) ---------- */
-    function renderFarmAccounts(list) {
-      $("farmAcctCount").textContent = String(list.length);
-      if (!list.length) { $("farmAcct").innerHTML = '<div class="st-dim">Nobody right now.</div>'; return; }
-      const chartLink = (names, label) => '<a href="./?names=' + encodeURIComponent(names.join(",")) + '" title="Open the chart with these names (press Analyze)">' + label + "</a>";
-      const body = list.slice().sort((a, b) => b.farmAcct.share - a.farmAcct.share).map((r) => {
-        const fa = r.farmAcct;
-        const feeds = fa.feeders.map((f) => esc(f.name) + ' <span class="st-dim">(died ' + f.deaths + "×, killed back " + f.kills + ")</span>").join("<br>");
-        return "<tr><td>" + nameCell(r) + radarCell(r.slug, r.cid) + (fa.confirmed ? ' <span class="st-dim" title="Confirmed bot / farm account on owner review (data/farm.json)">✅ confirmed</span>' : "") + "</td><td>" + chartLink([r.name].concat(fa.feeders.map((f) => f.name)), "chart") + "</td><td>" + feeds +
-          '</td><td class="st-num">' + Math.round(fa.share * 100) + '%</td><td class="st-num">' + fmt(r.kpm, 2) + '</td><td class="st-num">' + fmt(r.events, 0) + "</td></tr>";
-      }).join("");
-      $("farmAcct").innerHTML = '<div class="st-scroll"><table class="st-table"><tr><th>Account</th><th></th><th>Feeds</th>' +
-        '<th class="st-num" title="Share of sampled deaths that go to the player(s) it feeds">Fed %</th><th class="st-num">KPM</th><th class="st-num">Fights</th></tr>' + body + "</table></div>";
     }
 
     /* ---------- 📉 Chart anomalies: † adjusted + 🧪 outlier guard (grouped by player) ---------- */
@@ -1100,15 +1055,9 @@
         '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th></th><th class="st-num">KD</th><th class="st-num">KPM</th><th class="st-num">HSR %</th><th class="st-num">Acc %</th><th class="st-num">IvI</th></tr>' + body + "</table></div>";
     }
 
-    let sproutCount = null;
     function render(rows, total, errors) {
       rows = rows.map(withSession).map(withForensics).map(withConfirmed).map(withNotStalker);
-      // 🌱 count only (t368u: the names list was removed; flags.json carries the count).
-      const nSprout = sproutCount != null ? sproutCount : rows.filter((r) => r && r.sprout).length;
-      $("sproutsCount").textContent = nSprout.toLocaleString();
-      $("sprouts").innerHTML = '<div>🌱 ' + nSprout.toLocaleString() + " player" + (nSprout === 1 ? "" : "s") + " (not listed)</div>";
       renderStalkers(rows.filter((r) => r && classifyBins({ patterns: r.patterns }).bin === "stalker"));
-      renderFarmAccounts(rows.filter((r) => r && r.farmAcct));
 
       renderFarmList(rows, "padding");
       renderFarmList(rows, "adjusted");
@@ -1149,11 +1098,10 @@
         const fr = await fetch("data/flags.json?t=" + Date.now(), { cache: "no-store" });
         if (!fr.ok) throw new Error("flags.json HTTP " + fr.status);
         const flags = await fr.json();
-        sproutCount = typeof flags.sproutCount === "number" ? flags.sproutCount : null;
         render(flags.rows || [], flags.total || 0, flags.errors || 0);
       } catch (e) {
         $("flags").innerHTML = '<span class="st-err">Couldn’t compute red flags (' + esc(e && e.message) + ").</span>";
-        $("stalker").innerHTML = $("sprouts").innerHTML = $("farmAcct").innerHTML = '<span class="st-err">Couldn’t load the list (' + esc(e && e.message) + ").</span>";
+        $("stalker").innerHTML = '<span class="st-err">Couldn’t load the list (' + esc(e && e.message) + ").</span>";
         $("adjusted").innerHTML = $("padding").innerHTML = '<span class="st-err">Couldn’t load the list (' + esc(e && e.message) + ").</span>";
       } finally {
         busy = false;
