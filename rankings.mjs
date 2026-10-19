@@ -23,6 +23,7 @@ import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-sav1";
 import { confirmedPadderSlugs } from "./padding.mjs?v=20261010-sav1";
 import { slugKey } from "./rank-row.mjs?v=20261010-sav1";
 import { hiddenList } from "./hidden.mjs?v=20261010-sav1";
+import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261019-inf1";
 
 /**
  * @param {{ getNames: () => string[], toggleName: (name: string, anchor: Element, add: boolean) => void }} host
@@ -43,6 +44,7 @@ export function initRankings(host) {
     { id: "cons", label: "⚡ Const", digits: 2, tip: "How much of your K/D you keep against the strongest third of your opponents compared with the weakest third: 1.00 means it holds completely, 0.50 means it halves." },
     { id: "apk", label: "🤝 Assists", digits: 2, apk: true, tip: "Assists per kill in recent Honu sessions: how often you help damage enemies that teammates finish, for each kill of your own. Shown from 100 session kills." },
     { id: "rkd", label: "☠️ K/D", digits: 3, tip: "Kills ÷ deaths against the ~200 players you fight most, so it reflects real matchups rather than your whole lifetime." },
+    { id: "inf", label: "🫡 Infantry", digits: 1, inf: true, tip: INF_HINT },
   ];
   const DEBUG = [
     { id: "mech", label: "⚙️ Mech%", digits: 1, tip: "Estimated share of your fights that are vehicle or mech play, projected from 🛡️ Resist rather than measured from shooting." },
@@ -211,6 +213,9 @@ export function initRankings(host) {
         // t359u: not in ranks.json at all; added from this browser's own copy.
         localOnly: localOnly.has(r[idx.slug]),
         pcts: {},
+        // 🫡 hover-only parts of the Infantry column (% of lifetime kills).
+        infMax: idx.infMax != null ? r[idx.infMax] : null,
+        infVeh: idx.infVeh != null ? r[idx.infVeh] : null,
       };
       o.mark = o.markKind === "padding" ? PADDING_MARK : o.markKind === "adjusted" ? ADJUSTED_MARK : "";
       o.markTip = o.markKind === "padding" ? PADDING_MARK_TIP : o.markKind === "adjusted" ? ADJUSTED_MARK_TIP : "";
@@ -300,6 +305,7 @@ export function initRankings(host) {
       return `<td class="below-scale" title="Below the rating scale">0</td>`;
     }
     if (c.apk) return apkCell(v, row.pcts[c.id]);
+    if (c.inf) return fin(v) ? `<td title="${esc(infTip(v, row.infMax, row.infVeh, row.pcts[c.id]))}">${fmt(v, 1)}%</td>` : `<td title="${esc(INF_PENDING_TIP)}">—</td>`;
     if (!fin(v) && c.thinTip && row.thin) return `<td class="thin-sample" title="${esc(MIN_FIGHTS_TIP)}">—</td>`;
     if (!fin(v)) return `<td>—</td>`;
     const p = row.pcts[c.id];
@@ -615,12 +621,12 @@ export function initRankings(host) {
       const i = colorOf.get(r.query);
       const cells = VISIBLE.map((c) => {
         const v = r[c.id];
-        if (c.apk && !fin(v)) return `<td>—</td>`; // t396u: APK ranks like the other columns
+        if ((c.apk || c.inf) && !fin(v)) return `<td>—</td>`; // t396u: APK ranks like the other columns
         if (!fin(v)) return r.thin && c.thinTip ? `<td class="thin-sample" title="${esc(MIN_FIGHTS_TIP)}">—</td>` : `<td>—</td>`;
         const pool = data.pools[c.id] || [];
         const k = rankIn(pool, v, !!c.ascFirst);
         const p = r.pcts[c.id];
-        return `<td title="${esc(c.label)} ${fmt(v, c.digits)}: rank ${k.toLocaleString()} of ${pool.length.toLocaleString()}${c.apk ? " players with 100+ session kills" : " cached players"}">` +
+        return `<td title="${esc(c.label)} ${fmt(v, c.digits)}: rank ${k.toLocaleString()} of ${pool.length.toLocaleString()}${c.apk ? " players with 100+ session kills" : c.inf ? " measured players (100+ kills)" : " cached players"}">` +
           `<b>#${k.toLocaleString()}</b>${p != null ? `<span class="pct">p${p}</span>` : ""}</td>`;
       }).join("");
       return `<tr><th scope="row" class="rk-pos-name"><a href="#" class="rk-pos-jump" data-q="${esc(r.query)}" style="color:${paletteColor(i, light)}" title="Show ${esc(r.name)} in the table"><span class="nm" data-full="${esc(r.name)}">${esc(r.name)}</span></a>${r.freshAt ? `<span class="sample-fresh" title="${esc(freshTip(r.freshAt, r.localOnly))}">${FRESH_MARK}</span>` : ""}${r.mark ? `<span class="pad-mark mark-${["padding","adjusted"].includes(r.markKind) ? r.markKind : ""}" title="${esc(r.markTip)}">${r.mark}</span>` : ""}</th>${cells}</tr>`;

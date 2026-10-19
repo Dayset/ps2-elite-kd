@@ -38,6 +38,7 @@ import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261010-sav1";
 import GHOST_MODEL from "./data/ghost-model.mjs?v=20261010-sav1";
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-sav1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
+import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261019-inf1";
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261015-tip1";
 import { createWheelSwiper } from "./dist-cycle.mjs?v=20261017-cycle15";
 import { slideSwap, attachDragCarousel } from "./chart-slide.mjs?v=20261017-drag3";
@@ -1543,7 +1544,7 @@ import {
   }
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261018-live1")
+    rankingsLoading = import("./rankings.mjs?v=20261019-inf1")
       .then((m) => {
         rankingsApi = m.initRankings(rankingsHost);
         return rankingsApi.ready;
@@ -3215,6 +3216,9 @@ import {
   // 🤝 Assists per kill (t385u): shared value by slug + population pool from ranks.json.
   let apkBySlug = null;
   let apkPool = null;
+  // 🫡 Infantry (% of lifetime kills with infantry weapons): value + MAX / vehicle % by slug, pool for the percentile.
+  let infBySlug = null;
+  let infPool = null;
   function loadConsPool() {
     if (consPoolLoad) return consPoolLoad;
     consPoolLoad = loadRanksPayload()
@@ -3228,6 +3232,14 @@ import {
           apkBySlug = new Map();
           for (const row of payload.rows) if (isFiniteNum(row[ai])) apkBySlug.set(row[si], row[ai]);
           apkPool = [...apkBySlug.values()].sort((a, b) => a - b);
+        }
+        const ii = payload.cols.indexOf("inf");
+        if (ii >= 0 && si >= 0) {
+          const mi = payload.cols.indexOf("infMax");
+          const vi = payload.cols.indexOf("infVeh");
+          infBySlug = new Map();
+          for (const row of payload.rows) if (isFiniteNum(row[ii])) infBySlug.set(row[si], { inf: row[ii], max: mi >= 0 ? row[mi] : null, veh: vi >= 0 ? row[vi] : null });
+          infPool = [...infBySlug.values()].map((e) => e.inf).sort((a, b) => a - b);
         }
         if (lastStatsList) renderStatsTable(lastStatsList);
       })
@@ -3268,6 +3280,7 @@ import {
       { id: "cons", label: "⚡ Const", hint: "How much of your K/D you keep against the strongest third of your opponents compared with the weakest third, as a percentile of all tracked players.", fn: (r) => r.cons, digits: 2, pctileCell: true },
       { id: "apk", label: "🤝 Assists", hint: "Assists per kill in recent Honu sessions: how often you help damage enemies that teammates finish, for each kill of your own. Shown from 100 session kills.", fn: (r) => (apkBySlug && r.p ? apkBySlug.get(slugKey(r.p.display)) : undefined), digits: 2, apkCell: true },
       { id: "rkd", label: "☠️ K/D", hint: "Kills ÷ deaths against the ~200 players you fight most, so it reflects real matchups rather than your whole lifetime.", fn: (r) => r.rkd, digits: 3 },
+      { id: "inf", label: "🫡 Infantry", hint: INF_HINT, fn: (r) => { const e = infBySlug && r.p ? infBySlug.get(slugKey(r.p.display)) : undefined; return e ? e.inf : undefined; }, digits: 1, infCell: true },
     ];
     // Older debug columns: appended only when "show older debug stats" (footer) is ticked.
     const adjDebugCols = [
@@ -3414,6 +3427,13 @@ import {
                 const pl = apkPool ? percentileOf(apkPool, v) : null;
                 const rel = pl == null ? "" : pl >= 50 ? ` — top ${Math.max(1, 100 - pl)}%` : ` — bottom ${Math.max(1, pl)}%`;
                 return `<td title="${escapeHtml(`Assists per kill: ${fmtNum(v, 2)}${rel}. Helps damage enemies that teammates finish.`)}">${fmtNum(v, 2)}${pct}</td>`;
+              }
+              // 🫡 Infantry: plain "%" value, one colour; percentile + MAX / vehicle share on hover, dimmed % gap like 🤝.
+              if (c.infCell) {
+                if (!isFiniteNum(v)) return `<td title="${escapeHtml(INF_PENDING_TIP)}">—</td>`;
+                const e = infBySlug && row.p ? infBySlug.get(slugKey(row.p.display)) : null;
+                const pl = infPool ? percentileOf(infPool, v) : null;
+                return `<td title="${escapeHtml(infTip(v, e && e.max, e && e.veh, pl))}">${fmtNum(v, 1)}%${pct}</td>`;
               }
               if (c.pctileCell) {
                 const pctl = isFiniteNum(v) && consPool ? percentileOf(consPool, v) : null;

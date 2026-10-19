@@ -187,3 +187,16 @@ export function infantryTagCounts(players) {
   }
   return out;
 }
+
+/* ---------- 🫡 Infantry column texts (app.js stats table + rankings.mjs) ---------- */
+
+export const INF_HINT =
+  "Share of lifetime kills made with infantry weapons (Census weapon stats). Vehicle seats and turrets don't count; MAX suit weapons count as infantry (the MAX share is on hover). A measurement, not a stat change. Shown from 100 kills.";
+export const INF_PENDING_TIP = "Not measured yet (fills in with the background refresh), or fewer than 100 kills";
+
+/** Hover text: value, percentile, MAX and vehicle share. */
+export function infTip(v, max, veh, pctl) {
+  const f = (x) => (typeof x === "number" && Number.isFinite(x) ? `${x.toFixed(1)}%` : "?");
+  const rel = pctl == null ? "" : pctl >= 50 ? ` — top ${Math.max(1, 100 - pctl)}%` : ` — bottom ${Math.max(1, pctl)}%`;
+  return `Infantry: ${f(v)} of lifetime kills${rel}. Of all kills: MAX ${f(max)} (counted as infantry), vehicles/turrets ${f(veh)}.`;
+}
