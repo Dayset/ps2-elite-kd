@@ -82,7 +82,7 @@ export function rescanAlert(a, frames) {
   const rows = [];
   for (const m of grid(dur)) {
     const now = at(snaps, m), then = at(snaps, m - 15);
-    if (!now || m - now.t > 3) continue;
+    if (!now) continue;   // frames hold only changes, so the latest earlier frame is the map at m
     const std = forecast({ getBin, kind, snapNow: now.snap, snap15: then ? then.snap : null, t: m, dur });
     const c = cutAwareSnap(now.snap, a.zone), c15 = then ? cutAwareSnap(then.snap, a.zone) : null;
     const cut = c.cut.length || (c15 && c15.cut.length)
@@ -176,6 +176,8 @@ async function main() {
   console.log("\nJSON " + JSON.stringify(s));
   if (process.env.GITHUB_STEP_SUMMARY) (await import("node:fs")).appendFileSync(process.env.GITHUB_STEP_SUMMARY, md + "\n");
   for (const k of ["all", "late", "with_cut"]) if (s.minutes[k]) console.log(`::notice title=rescan ${k}::n=${s.minutes[k].n} std=${s.minutes[k].std} cut=${s.minutes[k].cut}`);
+  console.log(`::notice title=rescan coverage::alerts scored ${s.alerts}, skipped ${JSON.stringify(s.skipped)}, ends with cuts ${fc.with_cut_at_end}/${fc.alerts}`);
+  for (const r of results.filter((x) => x.end && x.end.cutN)) console.log(`::notice title=ended with cut ${r.key}::${r.end.cutBases.join(", ")}; error raw ${r.end.rawErr.toFixed(2)} / cut ${r.end.cutErr.toFixed(2)} pp`);
   console.log(`::notice title=final-score check::cut-aware closer ${fc.cut_closer}, raw closer ${fc.raw_closer}, mae raw ${fc.mae_raw} cut ${fc.mae_cut}`);
 }
 
