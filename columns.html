@@ -63,7 +63,7 @@
     <nav class="st-toc" aria-label="On this page">
       <div class="st-toc-title">On this page</div>
       <div class="st-toc-group"><a href="#picture">The picture behind most columns</a> <span class="sep">·</span> <a href="#why-trackers">Why trackers don’t have them</a></div>
-      <div class="st-toc-group"><a class="st-toc-sec" href="#adjusted">✨ Adjusted</a> <span class="sep">·</span> <a href="#ivi">iVi</a> <span class="sep">·</span> <a href="#activity">Activity</a> <span class="sep">·</span> <a href="#brave">Brave</a> <span class="sep">·</span> <a href="#resist">Resist</a> <span class="sep">·</span> <a href="#const">Const</a> <span class="sep">·</span> <a href="#matchup-kd">K/D</a></div>
+      <div class="st-toc-group"><a class="st-toc-sec" href="#adjusted">✨ Adjusted</a> <span class="sep">·</span> <a href="#ivi">iVi</a> <span class="sep">·</span> <a href="#activity">Activity</a> <span class="sep">·</span> <a href="#brave">Brave</a> <span class="sep">·</span> <a href="#resist">Resist</a> <span class="sep">·</span> <a href="#const">Const</a> <span class="sep">·</span> <a href="#matchup-kd">K/D</a> <span class="sep">·</span> <a href="#infantry">Infantry</a></div>
       <div class="st-toc-group"><a class="st-toc-sec" href="#public">📊 Public</a> <span class="sep">·</span> <a href="#pub-kd">KD</a> <span class="sep">·</span> <a href="#pub-kpm">KPM</a> <span class="sep">·</span> <a href="#pub-own-kpm">own KPM</a> <span class="sep">·</span> <a href="#pub-acc">Acc %</a> <span class="sep">·</span> <a href="#pub-hsr">HSR %</a> <span class="sep">·</span> <a href="#pub-ivi">IvI</a></div>
       <div class="st-toc-group"><a href="#worked-example">Worked example: YuigahamaYui</a> <span class="sep">·</span> <a href="#debug">Debug-only columns</a></div>
     </nav>
@@ -142,6 +142,14 @@
       <p>Lifetime K/D mixes everything — farm accounts, soft opposition, fights from years ago. Matchup K/D throws all of that away and counts only the people you actually fight, most often. It is the honest answer to “against people you really meet, do you win?” — and the raw material every other adjusted column is built from.</p>
       <h4>Why trackers don’t have it</h4>
       <p>It needs the per-opponent kill/death breakdown of your killboard, pooled over your most-fought opponents. Trackers show the lifetime total; they never split it by opponent.</p>
+    </div>
+
+    <div class="st-card">
+      <h3 id="infantry">🫡 Infantry — share of your kills made on foot</h3>
+      <p>In simple words: the percentage of your lifetime kills made with infantry weapons. Kills from a vehicle seat (driver or gunner), road kills and turrets (MANA, AA, Glaive) don’t count. MAX suit weapons <strong>do</strong> count as infantry: a MAX is an infantry class and fights on foot. Hover shows how much of your kills were MAX kills, the vehicle share and your percentile.</p>
+      <p><span class="st-dim">High means:</span> you play infantry. <span class="st-dim">Low means:</span> most of your kills come from vehicles or aircraft.</p>
+      <h4>Where it comes from</h4>
+      <p>Census lifetime weapon stats (kills per weapon and seat), one call per player. It is a measurement, not a stat change: no other number moves because of it. Shown from 100 kills; “—” until your file is measured.</p>
     </div>
 
     <div class="st-sec-head">
