@@ -1,0 +1,65 @@
+name: Oracle history (PS2Alerts) + tree regrow
+
+# Fetches PS2Alerts alert history (oracle-worker/history/fetch.mjs, ~1 req/s,
+# resumable via the Actions cache), then grows standard and cut-aware win trees
+# and compares them on held-out alerts (history/grow.mjs). Results as notices.
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "probe | fetch | grow | all"
+        default: "all"
+      minutes:
+        description: "Fetch time budget (minutes)"
+        default: "300"
+      commit:
+        description: "Commit regrown trees if the cut-aware ones win (true/false)"
+        default: "false"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: oracle-history
+  cancel-in-progress: false
+
+jobs:
+  history:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Probe PS2Alerts
+        if: inputs.mode == 'probe'
+        run: node oracle-worker/history/fetch.mjs --probe
+      - name: Restore history cache
+        if: inputs.mode != 'probe'
+        uses: actions/cache/restore@v4
+        with:
+          path: history
+          key: ps2a-history-${{ github.run_id }}
+          restore-keys: ps2a-history-
+      - name: Fetch
+        if: inputs.mode == 'fetch' || inputs.mode == 'all'
+        run: node oracle-worker/history/fetch.mjs --out history/alerts.jsonl --minutes "${{ inputs.minutes }}"
+      - name: Save history cache
+        if: always() && (inputs.mode == 'fetch' || inputs.mode == 'all')
+        uses: actions/cache/save@v4
+        with:
+          path: history
+          key: ps2a-history-${{ github.run_id }}
+      - name: Grow and compare trees
+        if: inputs.mode == 'grow' || inputs.mode == 'all'
+        run: node oracle-worker/history/grow.mjs --in history/alerts.jsonl --out oracle/backend --commit "${{ inputs.commit }}"
+      - name: Commit trees
+        if: (inputs.mode == 'grow' || inputs.mode == 'all') && inputs.commit == 'true'
+        run: |
+          if [ -z "$(git status --porcelain oracle/backend)" ]; then echo "::notice::no tree changes"; exit 0; fi
+          git config user.name "oracle-history[bot]"; git config user.email "oracle-history@users.noreply.github.com"
+          git add oracle/backend/winbins_*.json oracle/backend/history_eval.json
+          git commit -m "oracle: regrow win trees from PS2Alerts history [bot]"
+          for i in 1 2 3; do git pull --rebase origin main && git push origin HEAD:main && break; sleep 5; done
