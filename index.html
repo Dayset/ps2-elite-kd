@@ -39,7 +39,7 @@
     "codeRepository": "https://github.com/Dayset/ps2-elite-kd"
   }
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261019-vcut3" />
+  <link rel="stylesheet" href="styles.css?v=20261019-vcut4" />
 </head>
 <body class="main-page">
   <div class="controls">
@@ -183,7 +183,7 @@
       <div id="statsPublic" class="stats-panel stats-panel-public" aria-label="Public stats (Census / Honu)"></div>
       <!-- "What about vehicles?" sits directly on top of the stats line;
            the note stays hidden until a comparison is loaded (renderStatsTable). -->
-      <details id="vehiclesNote" class="pooled-note fold-note" hidden><summary>♿ What about vehicles?</summary><p>Vehicle and infantry kills are pooled together for now, so vehicle mains may look off in the graph and stats. Infantry-only numbers are coming later.</p></details>
+      <details id="vehiclesNote" class="pooled-note fold-note" hidden><summary>♿ What about vehicles?</summary><p>⚔️ iVi measures infantry skill only. If more than 10% of your lifetime kills come from vehicles (seats, turrets), the share above 10% is subtracted from adjusted iVi; MAX kills above 10% are subtracted the same way, separately. The two add up, with no cap: e.g. 96% vehicle kills → −86%; 45% vehicle + 40% MAX → −65%. Pure infantry is untouched. Hover a player’s iVi value to see the cut, and the <a href="columns.html#infantry">🪖 Infantry</a> column for the shares (<a href="columns.html#vehicle-cut">details</a>).</p></details>
       <p id="ranksMeta" class="ranks-meta"></p>
       <div class="footer-row">
         <label class="debug-cols-toggle" title="Append the older debug columns (🎯🎈 ivi, eKPM, own KPM, 📊 COI, 📉 Slope, 🎈 Inflation) to the ✨ Adjusted and Rankings tables">
@@ -208,6 +208,6 @@
     </section>
   </footer>
 
-  <script type="module" src="app.js?v=20261019-dice3"></script>
+  <script type="module" src="app.js?v=20261019-vcut4"></script>
 </body>
 </html>

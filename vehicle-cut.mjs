@@ -11,16 +11,13 @@
  * AFTER the 💩 padder penalty (they stack), so every page, ranks.json and the
  * regular refresh use the same number. A score at or below 0 never flips sign:
  * it gets the fixed drop cut × VEH_CUT.REF instead (same rule as 💩), so it only falls.
- * Public: names stay clean (owner: no name badges); a small dimmed ‡ after the iVi value,
- * the hover lists each part and the total.
+ * Public: NO visible mark (owner's explicit override of the * / † convention for this cut);
+ * the iVi cell's own hover lists each part and the total; build-log lists every cut player.
  * Owner override (exempts both): data/reviewed.json "vehicleCutCleared": { "<slug>": { "note", "at" } }.
  */
 import { infantryShares } from "./infantry.mjs?v=20261019-inf1";
 
 export const VEH_CUT = Object.freeze({ START: 0.1, REF: 610.6 });
-/** Small dimmed mark after the ⚔️ iVi value (public-marking rule for automatic changes); the hover explains. */
-export const VEH_CUT_MARK = "‡";
-
 const state = { cleared: {} };
 const key = (s) => String(s || "").trim().toLowerCase().replace(/^\[.*?\]\s*/, "").replace(/[^a-z0-9]+/g, "");
 
@@ -57,7 +54,7 @@ export function applyVehicleCut(v, cut) {
 const r0 = (x) => (typeof x === "number" && Number.isFinite(x) ? Math.round(x) : 0);
 /**
  * iVi hover text (shares and total cut in %):
- * "‡ vehicle kills 45%: −35% · MAX kills 40%: −30% → −65% iVi, infantry skill only".
+ * "vehicle kills 45%: −35% · MAX kills 40%: −30% → −65% iVi, infantry skill only".
  * Only the parts above 10% are listed; the arrow total only when both apply.
  */
 export function vehicleCutTip(vehPct, maxPct, cutPct) {
@@ -65,7 +62,7 @@ export function vehicleCutTip(vehPct, maxPct, cutPct) {
   if (vehPct > 10) parts.push(`vehicle kills ${r0(vehPct)}%: −${r0(vehPct - 10)}%`);
   if (maxPct > 10) parts.push(`MAX kills ${r0(maxPct)}%: −${r0(maxPct - 10)}%`);
   const total = Number.isFinite(cutPct) ? cutPct : Math.max(0, (vehPct || 0) - 10) + Math.max(0, (maxPct || 0) - 10);
-  return `${VEH_CUT_MARK} ${parts.join(" · ")}${parts.length > 1 ? ` → −${r0(total)}%` : ""} iVi, infantry skill only`;
+  return `${parts.join(" · ")}${parts.length > 1 ? ` → −${r0(total)}%` : ""} iVi, infantry skill only`;
 }
 
 try {

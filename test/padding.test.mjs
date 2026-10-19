@@ -60,7 +60,7 @@ describe("stat padding (farm victims)", () => {
       const p = normalizePlayer(raw);
       const m = playerMetrics(p);
       assert.equal(m.farm.victims.length, 0, slug);
-      // 🚜 a ‡ vehicle / MAX cut copies m.raw (uncut adjs for the red-flag rules); everything else equal.
+      // 🚜 a vehicle / MAX cut copies m.raw (uncut adjs for the red-flag rules); everything else equal.
       if (m.vehCut > 0) { assert.equal(m.raw.adjs, m.adjsPreVeh, slug); assert.equal(m.raw.rkd, m.rkd, slug); }
       else assert.equal(m.raw, m, slug);
       assert.equal(p.rows.length, (raw.player.rows || []).length, slug);

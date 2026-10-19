@@ -39,7 +39,7 @@ import GHOST_MODEL from "./data/ghost-model.mjs?v=20261010-sav1";
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-sav1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
 import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261019-inf1";
-import { VEH_CUT_MARK, vehicleCutTip } from "./vehicle-cut.mjs?v=20261019-vcut3";
+import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261019-vcut4";
 import { infantryKillsUrl, summarizeInfantryKills } from "./infantry.mjs?v=20261019-inf1";
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261015-tip1";
 import { createWheelSwiper } from "./dist-cycle.mjs?v=20261017-cycle15";
@@ -820,7 +820,7 @@ import {
       top: p.top,
       honu: p.honu,
       times: p.times || null,
-      // 🪖 / 🚜 just the kill split the Infantry column and the ‡ cut need (infantry.mjs v2).
+      // 🪖 / 🚜 just the kill split the Infantry column and the vehicle / MAX cut need (infantry.mjs v2).
       infantry: p.infantry && p.infantry.v >= 2
         ? { v: p.infantry.v, kills: p.infantry.kills, footKills: p.infantry.footKills, maxKills: p.infantry.maxKills, vehKills: p.infantry.vehKills, otherKills: p.infantry.otherKills }
         : null,
@@ -2253,7 +2253,7 @@ import {
     const own = r.own || { kpm: 0, acc: 0, hsr: 0, ivi: 0 };
     const rows = r.rows;
     // 🪖 / 🚜 lifetime kill split (one kills-only Census call), so a fresh copy keeps the
-    // Infantry value and the ‡ vehicle / MAX cut; falls back to the shared copy's split.
+    // Infantry value and the vehicle / MAX cut; falls back to the shared copy's split.
     let infantry = null;
     try {
       const j = await censusJson(infantryKillsUrl(CENSUS, [cid]), signal);
@@ -3429,10 +3429,10 @@ import {
             .map((c) => {
               const v = c.fn(row);
               // ⚡ ivi: below-zero values read as "0" (not rated); sort keeps true value so they stay lowest.
-              // 🚜 ‡ vehicle / MAX cut on ⚔️ iVi (vehicle-cut.mjs): mark after the value, reason on hover.
-              const vc = c.id === "adjs" && row.vehCut > 0 ? vehCutHtml(row.vehOnly * 100, row.maxShare * 100, row.vehCut * 100) : "";
+              // 🚜 vehicle / MAX cut on ⚔️ iVi (vehicle-cut.mjs): no visible mark (owner), reason in the cell's hover.
+              const vc = c.id === "adjs" && row.vehCut > 0 ? vehicleCutTip(row.vehOnly * 100, row.maxShare * 100, row.vehCut * 100) : "";
               if (c.floorZero && isFiniteNum(v) && v < 0) {
-                return `<td class="below-scale" title="Below the rating scale">0${vc}</td>`;
+                return `<td class="below-scale" title="${escapeHtml("Below the rating scale" + (vc ? ". " + vc : ""))}">0</td>`;
               }
               // Opponent-sample metrics below MIN_FIGHTS: "—" with the reason on hover.
               if (c.thinTip && row.thin && !isFiniteNum(v)) {
@@ -3453,7 +3453,9 @@ import {
               const tdTitle =
                 p == null && floor != null && isFiniteNum(v) && v < floor
                   ? ` title="${escapeHtml(`Below ${fmtNum(floor, c.digits)} = no inflation`)}"`
-                  : "";
+                  : vc
+                    ? ` title="${escapeHtml(vc)}"`
+                    : "";
               // 🧱 Const: main value is the population percentile ("19%"); the dimmed gap to the highest value still applies.
               // 🤝 Assists: plain number, percentile + meaning on hover, plus the dimmed % gap to the highest (t398u).
               if (c.apkCell) {
@@ -3474,7 +3476,7 @@ import {
                 const txt = pctl == null ? "—" : `${pctl}%`;
                 return `<td title="Population percentile: higher than ${pctl ?? "—"}% of cached players">${txt}${pct}</td>`;
               }
-              return `<td${tdTitle}>${fmtNum(v, c.digits)}${vc}${pct}</td>`;
+              return `<td${tdTitle}>${fmtNum(v, c.digits)}${pct}</td>`;
             })
             .join("");
           const num = i + 1;
@@ -3684,12 +3686,6 @@ import {
   }
   function playerMark(p) {
     return statMark(p && p.farm, undefined, { confirmed: isConfirmedPadder(p) });
-  }
-
-  /** 🚜 "‡" after the ⚔️ iVi value (uncapped: share − 10% per part): parts + total on hover. */
-  function vehCutHtml(vehPct, maxPct, cutPct) {
-    const tip = vehicleCutTip(vehPct, maxPct, cutPct);
-    return `<span class="veh-cut" title="${escapeHtml(tip)}" aria-label="${escapeHtml(tip)}">${VEH_CUT_MARK}</span>`;
   }
 
   /** Mark after the name (tooltip explains); "" when the stats weren't altered. */

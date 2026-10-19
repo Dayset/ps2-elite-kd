@@ -32,9 +32,9 @@ test("two parts (vehicle, MAX) added up; no data = no cut", () => {
 });
 
 test("hover text lists each part and the total", () => {
-  assert.equal(vehicleCutTip(45, 40, 65), "‡ vehicle kills 45%: −35% · MAX kills 40%: −30% → −65% iVi, infantry skill only");
-  assert.equal(vehicleCutTip(96, 2, 86), "‡ vehicle kills 96%: −86% iVi, infantry skill only");
-  assert.equal(vehicleCutTip(5, 23, 13), "‡ MAX kills 23%: −13% iVi, infantry skill only");
+  assert.equal(vehicleCutTip(45, 40, 65), "vehicle kills 45%: −35% · MAX kills 40%: −30% → −65% iVi, infantry skill only");
+  assert.equal(vehicleCutTip(96, 2, 86), "vehicle kills 96%: −86% iVi, infantry skill only");
+  assert.equal(vehicleCutTip(5, 23, 13), "MAX kills 23%: −13% iVi, infantry skill only");
 });
 
 test("owner override (reviewed.json vehicleCutCleared)", () => {

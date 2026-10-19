@@ -237,7 +237,7 @@ export function buildRanksWithGuard(dataDir) {
       if (!info || !info.hidden) row.push(sm && sm.measured && Number.isFinite(sm.values.s_apk) ? Math.round(sm.values.s_apk * 1000) / 1000 : null);
       // 🪖 Infantry: % of lifetime weapon-stat kills on foot (MAX counted as infantry) + MAX / vehicle % for hover; null until filled.
       if (!info || !info.hidden) { const sh = infantryShares(pl.infantry); row.push(sh ? sh.inf : null, sh ? sh.max : null, sh ? sh.veh : null); }
-      // 🚜 vehicle cut on ⚔️ iVi (vehicle-cut.mjs, inside playerMetrics): cut % (1 decimal) for the ‡ hover; null = no cut.
+      // 🚜 vehicle cut on ⚔️ iVi (vehicle-cut.mjs, inside playerMetrics): cut % (1 decimal) for the iVi hover; null = no cut.
       const vcut = m.vehCut > 0 && !m.thin ? Math.round(m.vehCut * 1000) / 10 : null;
       if (!info || !info.hidden) row.push(vcut);
       players.push({ vehCut: vcut, vehCutVeh: vcut != null ? Math.round(m.vehCutVeh * 1000) / 10 : null, vehCutMax: vcut != null ? Math.round(m.vehCutMax * 1000) / 10 : null, vehShare: Number.isFinite(m.vehShare) ? m.vehShare : null, vehOnly: Number.isFinite(m.vehOnly) ? m.vehOnly : null, maxShare: Number.isFinite(m.maxShare) ? m.maxShare : null, adjsPreVeh: vcut != null ? m.adjsPreVeh : null, vehCutCleared: !!m.vehCutCleared, poop: !!m.poop, adjsBase: m.poop && !m.thin ? m.adjsBase : null, confirmedPadder: confirmed.has(row[2]), infTag: (pl.infantry && pl.infantry.v >= 2 && pl.infantry.tag) || null, slug: row[2], name: row[0], cid: String(np.cid || ""), farmAcct: !!(fa && fa.farm), flagged: f.flagged || sf.flagged || fx.flagged, patterns, values, session: sm, sessionFlag: sf, forensics: fx, row, hidden: !!(info && info.hidden), confirmedCheater: !!(info && info.confirmedCheater) });
@@ -245,7 +245,7 @@ export function buildRanksWithGuard(dataDir) {
   });
   ranks.cols.push("apk"); // 🤝 trailing column (see onPlayer); not part of RANK_COLS / rankRow
   ranks.cols.push("inf", "infMax", "infVeh"); // 🪖 trailing columns (see onPlayer), % of lifetime kills
-  ranks.cols.push("vcut"); // 🚜 ‡ vehicle cut % on adjs (adjs is already cut)
+  ranks.cols.push("vcut"); // 🚜 vehicle cut % on adjs (adjs is already cut)
   const found = findOutliers(players, [...METRIC_COLS, ...SESSION_METRIC_IDS]);
   found.items.push(...forensicsGuardItems(players));
   const guard = guardStatus(found);
