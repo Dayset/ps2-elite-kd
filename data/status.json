@@ -4,32 +4,34 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "39211290142",
+    "runId": "39211484096",
     "event": "workflow_dispatch",
-    "kind": "discovery",
-    "startedAt": "2026-10-19T06:41:03.330Z",
-    "endedAt": "2026-10-19T06:44:34.093Z",
-    "seconds": 211,
+    "kind": "on-demand",
+    "startedAt": "2026-10-19T06:45:49.926Z",
+    "endedAt": "2026-10-19T06:50:06.873Z",
+    "seconds": 257,
     "updated": [],
-    "added": [],
+    "added": [
+      "[R18] MBENBEN"
+    ],
     "failed": [],
-    "stoppedEarly": "another run is waiting (site request or fallback cron)",
-    "indexSize": 12978,
-    "discovery": {
-      "cap": 15000,
-      "queue": 0,
-      "slice": null,
-      "sweepInProgress": false
-    },
+    "stoppedEarly": null,
+    "indexSize": 12979,
     "honu": {
       "day": "2026-10-19",
-      "calls": 209,
+      "calls": 241,
       "cap": 10000
     },
-    "batch": []
+    "batch": [
+      {
+        "name": "[R18] MBENBEN",
+        "src": "on-demand",
+        "status": "done"
+      }
+    ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-19T06:45:15.472Z",
+    "checkedAt": "2026-10-19T06:50:18.622Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 14,
     "explained": 26,
@@ -39,8 +41,8 @@
         "name": "[N00O] Fretec",
         "id": "pvs",
         "value": 45.763,
-        "bound": 33.953,
-        "z": 62.336,
+        "bound": 33.952,
+        "z": 62.315,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -88,7 +90,7 @@
         "id": "rkd",
         "value": 16.316,
         "bound": 12.866,
-        "z": 35.707,
+        "z": 35.686,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -112,7 +114,7 @@
         "id": "rkd",
         "value": 12.995,
         "bound": 12.866,
-        "z": 28.151,
+        "z": 28.134,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -124,7 +126,7 @@
         "id": "rf",
         "value": 10.435,
         "bound": 9.052,
-        "z": 24.73,
+        "z": 24.719,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -136,7 +138,7 @@
         "id": "coi",
         "value": 17.392,
         "bound": 15.086,
-        "z": 24.73,
+        "z": 24.719,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -160,7 +162,7 @@
         "id": "slope",
         "value": 1.217,
         "bound": 0.617,
-        "z": 9.172,
+        "z": 9.171,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -171,8 +173,8 @@
         "name": "[FKNC] RenamedSoldier12345",
         "id": "pvs",
         "value": 263.979,
-        "bound": 33.953,
-        "z": 363.964,
+        "bound": 33.952,
+        "z": 363.841,
         "side": "high",
         "explained": true,
         "reason": "Owner reviewed 2026-10-18 (#10): vehicle main try-harding K/D (lifetime KD 33, 658 kills / 25 deaths vs 200 opponents); explained, not a cheater",
@@ -241,8 +243,8 @@
         "name": "HackerDetector",
         "id": "pvs",
         "value": 62.198,
-        "bound": 33.953,
-        "z": 85.054,
+        "bound": 33.952,
+        "z": 85.025,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (session, session-forensics), listed there",
@@ -257,7 +259,7 @@
         "id": "act",
         "value": 25.317,
         "bound": 24.591,
-        "z": 77.652,
+        "z": 77.632,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (aim), listed there",
@@ -286,7 +288,7 @@
         "id": "rkd",
         "value": 26.32,
         "bound": 12.866,
-        "z": 58.469,
+        "z": 58.434,
         "side": "high",
         "explained": true,
         "reason": "Owner reviewed 2026-10-18 (#10): vehicle main try-harding K/D (lifetime KD 33, 658 kills / 25 deaths vs 200 opponents); explained, not a cheater",
@@ -345,7 +347,7 @@
         "id": "rkd",
         "value": 21.687,
         "bound": 12.866,
-        "z": 47.927,
+        "z": 47.898,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (session-forensics), listed there",
@@ -383,7 +385,7 @@
         "id": "slope",
         "value": 5.773,
         "bound": 0.617,
-        "z": 38.427,
+        "z": 38.426,
         "side": "high",
         "explained": true,
         "reason": "Owner reviewed 2026-10-18 (#10): vehicle main try-harding K/D (lifetime KD 33, 658 kills / 25 deaths vs 200 opponents); explained, not a cheater",
@@ -395,7 +397,7 @@
         "id": "rf",
         "value": 15.153,
         "bound": 9.052,
-        "z": 36.512,
+        "z": 36.495,
         "side": "high",
         "explained": true,
         "reason": "Owner reviewed 2026-10-18 (#10): vehicle main try-harding K/D (lifetime KD 33, 658 kills / 25 deaths vs 200 opponents); explained, not a cheater",
@@ -407,7 +409,7 @@
         "id": "coi",
         "value": 25.256,
         "bound": 15.086,
-        "z": 36.512,
+        "z": 36.495,
         "side": "high",
         "explained": true,
         "reason": "Owner reviewed 2026-10-18 (#10): vehicle main try-harding K/D (lifetime KD 33, 658 kills / 25 deaths vs 200 opponents); explained, not a cheater",
@@ -419,7 +421,7 @@
         "id": "rf",
         "value": 12.537,
         "bound": 9.052,
-        "z": 29.979,
+        "z": 29.966,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (session-forensics), listed there",
@@ -433,7 +435,7 @@
         "id": "coi",
         "value": 20.895,
         "bound": 15.086,
-        "z": 29.979,
+        "z": 29.966,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (session-forensics), listed there",
@@ -461,7 +463,7 @@
         "id": "slope",
         "value": 1.613,
         "bound": 0.617,
-        "z": 11.717,
+        "z": 11.716,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (session, session-forensics), listed there",
@@ -602,7 +604,7 @@
             "label": "☠️ K/D",
             "value": 16.316,
             "bound": 12.866,
-            "z": 35.707,
+            "z": 35.686,
             "side": "high"
           },
           {
@@ -610,7 +612,7 @@
             "label": "🛡️ Resist",
             "value": 10.435,
             "bound": 9.052,
-            "z": 24.73,
+            "z": 24.719,
             "side": "high"
           },
           {
@@ -618,7 +620,7 @@
             "label": "📊 COI",
             "value": 17.392,
             "bound": 15.086,
-            "z": 24.73,
+            "z": 24.719,
             "side": "high"
           }
         ]
@@ -629,14 +631,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 62.336,
+        "maxZ": 62.315,
         "metrics": [
           {
             "id": "pvs",
             "label": "🦁 Brave",
             "value": 45.763,
-            "bound": 33.953,
-            "z": 62.336,
+            "bound": 33.952,
+            "z": 62.315,
             "side": "high"
           },
           {
@@ -644,7 +646,7 @@
             "label": "☠️ K/D",
             "value": 12.995,
             "bound": 12.866,
-            "z": 28.151,
+            "z": 28.134,
             "side": "high"
           },
           {
@@ -681,14 +683,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 9.172,
+        "maxZ": 9.171,
         "metrics": [
           {
             "id": "slope",
             "label": "📉 Slope",
             "value": 1.217,
             "bound": 0.617,
-            "z": 9.172,
+            "z": 9.171,
             "side": "high"
           }
         ]
@@ -756,14 +758,14 @@
         "explained": true,
         "reason": "Owner reviewed 2026-10-18 (#10): vehicle main try-harding K/D (lifetime KD 33, 658 kills / 25 deaths vs 200 opponents); explained, not a cheater",
         "red": [],
-        "maxZ": 363.964,
+        "maxZ": 363.841,
         "metrics": [
           {
             "id": "pvs",
             "label": "🦁 Brave",
             "value": 263.979,
-            "bound": 33.953,
-            "z": 363.964,
+            "bound": 33.952,
+            "z": 363.841,
             "side": "high"
           },
           {
@@ -771,7 +773,7 @@
             "label": "☠️ K/D",
             "value": 26.32,
             "bound": 12.866,
-            "z": 58.469,
+            "z": 58.434,
             "side": "high"
           },
           {
@@ -787,7 +789,7 @@
             "label": "📉 Slope",
             "value": 5.773,
             "bound": 0.617,
-            "z": 38.427,
+            "z": 38.426,
             "side": "high"
           },
           {
@@ -795,7 +797,7 @@
             "label": "🛡️ Resist",
             "value": 15.153,
             "bound": 9.052,
-            "z": 36.512,
+            "z": 36.495,
             "side": "high"
           },
           {
@@ -803,7 +805,7 @@
             "label": "📊 COI",
             "value": 25.256,
             "bound": 15.086,
-            "z": 36.512,
+            "z": 36.495,
             "side": "high"
           }
         ]
@@ -816,14 +818,14 @@
         "red": [
           "session-forensics"
         ],
-        "maxZ": 47.927,
+        "maxZ": 47.898,
         "metrics": [
           {
             "id": "rkd",
             "label": "☠️ K/D",
             "value": 21.687,
             "bound": 12.866,
-            "z": 47.927,
+            "z": 47.898,
             "side": "high"
           },
           {
@@ -831,7 +833,7 @@
             "label": "🛡️ Resist",
             "value": 12.537,
             "bound": 9.052,
-            "z": 29.979,
+            "z": 29.966,
             "side": "high"
           },
           {
@@ -839,7 +841,7 @@
             "label": "📊 COI",
             "value": 20.895,
             "bound": 15.086,
-            "z": 29.979,
+            "z": 29.966,
             "side": "high"
           },
           {
@@ -947,14 +949,14 @@
           "session",
           "session-forensics"
         ],
-        "maxZ": 85.054,
+        "maxZ": 85.025,
         "metrics": [
           {
             "id": "pvs",
             "label": "🦁 Brave",
             "value": 62.198,
-            "bound": 33.953,
-            "z": 85.054,
+            "bound": 33.952,
+            "z": 85.025,
             "side": "high"
           },
           {
@@ -962,7 +964,7 @@
             "label": "📉 Slope",
             "value": 1.613,
             "bound": 0.617,
-            "z": 11.717,
+            "z": 11.716,
             "side": "high"
           }
         ]
@@ -1005,14 +1007,14 @@
         "red": [
           "aim"
         ],
-        "maxZ": 77.652,
+        "maxZ": 77.632,
         "metrics": [
           {
             "id": "act",
             "label": "🏃 Activity",
             "value": 25.317,
             "bound": 24.591,
-            "z": 77.652,
+            "z": 77.632,
             "side": "high"
           }
         ]
@@ -1269,7 +1271,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-19T06:45:15.674Z",
+    "checkedAt": "2026-10-19T06:50:18.819Z",
     "red": 44,
     "padding": 41,
     "adjusted": 17,
@@ -1280,7 +1282,7 @@
     "forensics": 27
   },
   "sessionStats": {
-    "checkedAt": "2026-10-19T06:45:15.514Z",
+    "checkedAt": "2026-10-19T06:50:18.660Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -1293,14 +1295,14 @@
     },
     "ruleText": "[session pattern] in recent Honu sessions (≥ 100 kills counted): assists per kill ≤ 0.1, headshot share ≥ 50% (headshot XP per kill; Census lifetime HSR when no XP detail) and K/D ≥ 7 (session deaths; Census lifetime KD when none). A very one-sided record; a lead for manual review, not proof.",
     "coverage": {
-      "players": 12977,
-      "withSessions": 8310,
+      "players": 12978,
+      "withSessions": 8312,
       "measured": 3791,
-      "sessions": 29218,
-      "kills": 1332778,
-      "xpPlayers": 818,
-      "xpMeasured": 621,
-      "xpSessions": 4593
+      "sessions": 29224,
+      "kills": 1332859,
+      "xpPlayers": 822,
+      "xpMeasured": 623,
+      "xpSessions": 4605
     },
     "metrics": [
       {
@@ -1472,7 +1474,7 @@
         "max": 355
       },
       "s_hsk": {
-        "n": 647,
+        "n": 649,
         "min": 0,
         "p01": 0.008,
         "p05": 0.06,
@@ -1482,7 +1484,7 @@
         "max": 0.972
       },
       "s_ksk": {
-        "n": 647,
+        "n": 649,
         "min": 0,
         "p01": 0.054,
         "p05": 0.125,
@@ -1492,7 +1494,7 @@
         "max": 0.983
       },
       "s_domk": {
-        "n": 647,
+        "n": 649,
         "min": 0,
         "p01": 0.005,
         "p05": 0.023,
@@ -1502,17 +1504,17 @@
         "max": 0.243
       },
       "s_revk": {
-        "n": 647,
+        "n": 649,
         "min": 0,
         "p01": 0,
         "p05": 0.013,
-        "median": 0.055,
-        "p95": 0.12,
+        "median": 0.056,
+        "p95": 0.124,
         "p99": 0.175,
         "max": 0.357
       },
       "s_revDom": {
-        "n": 641,
+        "n": 643,
         "min": 0,
         "p01": 0,
         "p05": 0.122,
@@ -1522,7 +1524,7 @@
         "max": 10
       },
       "s_savk": {
-        "n": 647,
+        "n": 649,
         "min": 0,
         "p01": 0.008,
         "p05": 0.023,
@@ -1532,7 +1534,7 @@
         "max": 0.2
       },
       "s_spotk": {
-        "n": 647,
+        "n": 649,
         "min": 0,
         "p01": 0,
         "p05": 0,
@@ -1542,7 +1544,7 @@
         "max": 0.354
       },
       "s_prik": {
-        "n": 647,
+        "n": 649,
         "min": 0,
         "p01": 0.047,
         "p05": 0.116,
@@ -1552,7 +1554,7 @@
         "max": 0.49
       },
       "s_stopk": {
-        "n": 647,
+        "n": 649,
         "min": 0,
         "p01": 0.018,
         "p05": 0.036,
@@ -2976,17 +2978,17 @@
     "outliersUnexplained": 1
   },
   "size": {
-    "at": "2026-10-19T06:44:34.621Z",
+    "at": "2026-10-19T06:50:07.336Z",
     "repoBytes": 139917312,
-    "dataBytes": 253850320,
-    "playersBytes": 236663786,
-    "playerFiles": 12978,
+    "dataBytes": 253886175,
+    "playersBytes": 236683294,
+    "playerFiles": 12979,
     "warnAtBytes": 734003200,
     "warning": false
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-19T06:45:15.553Z",
+    "checkedAt": "2026-10-19T06:50:18.694Z",
     "candidates": [
       "nebelhexe",
       "oshurpogchamp",
@@ -26910,7 +26912,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-19T06:45:15.563Z",
+    "checkedAt": "2026-10-19T06:50:18.703Z",
     "count": 321,
     "players": [
       {
@@ -29567,11 +29569,11 @@
     ]
   },
   "infantry": {
-    "checkedAt": "2026-10-19T06:45:17.193Z",
-    "players": 12978,
+    "checkedAt": "2026-10-19T06:50:20.471Z",
+    "players": 12979,
     "counts": {
       "infantry": 886,
-      "mixed": 688,
+      "mixed": 689,
       "vehicle": 210,
       "low": 147,
       "none": 11047
@@ -29622,10 +29624,10 @@
       }
     },
     "tagMin": 20,
-    "checkedAt": "2026-10-19T06:45:15.627Z",
+    "checkedAt": "2026-10-19T06:50:18.768Z",
     "coverage": {
-      "players": 12959,
-      "withSessions": 8292,
+      "players": 12960,
+      "withSessions": 8294,
       "measured": 3330,
       "measuredPct": 25.7
     },
@@ -29933,7 +29935,7 @@
   },
   "burst": {
     "rule": "KPM ≥ 5 and ≥ 15 kills in ≥ 2 min (one stored session, no 10-minute floor)",
-    "checkedAt": "2026-10-19T06:45:19.099Z",
+    "checkedAt": "2026-10-19T06:50:22.548Z",
     "sessions": 11,
     "flaggedPlayers": 3,
     "clearedPlayers": 0,
