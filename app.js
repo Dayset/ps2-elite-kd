@@ -391,7 +391,7 @@ import {
    * there's no room), clamped to the viewport; bottom-centre if no anchor.
    * Auto-hides after 2.5 s, on tap, or on scroll; repeat calls restart it.
    */
-  function showLimitToast(anchor) {
+  function showLimitToast(anchor, html) {
     sfx("bonk");
     if (typeof document === "undefined") return;
     if (!limitToastEl) {
@@ -399,13 +399,13 @@ import {
       limitToastEl.id = "limitToast";
       limitToastEl.className = "limit-toast";
       limitToastEl.setAttribute("role", "alert");
-      limitToastEl.innerHTML =
-        `<strong>Limit of ${MAX_NAMES} names reached</strong><span class="limit-toast-sub">remove a name to add more</span>`;
       limitToastEl.addEventListener("click", hideLimitToast);
       document.body.appendChild(limitToastEl);
       window.addEventListener("scroll", () => { if (limitToastEl && !limitToastEl.hidden) hideLimitToast(); }, { passive: true });
       window.addEventListener("resize", () => { if (limitToastEl && !limitToastEl.hidden) hideLimitToast(); });
     }
+    limitToastEl.innerHTML =
+      html || `<strong>Limit of ${MAX_NAMES} names reached</strong><span class="limit-toast-sub">remove a name to add more</span>`;
     const el = limitToastEl;
     if (limitToastTimer) clearTimeout(limitToastTimer);
     el.hidden = false;
@@ -1433,6 +1433,8 @@ import {
 
   // t400u: at MAX_NAMES the 🎲 / < / > buttons lock (gray, aria-disabled but
   // still clickable so a click/tap explains why) and the analysis starts once.
+  // < / > also lock on an empty field: they roll inside the iVi range of the
+  // names in the box, so there is nothing to roll until the first name lands.
   // The name input itself locks too (disabled): with 6 names in the box
   // there is nothing left to type, and it re-enables as soon as a chip
   // is removed (every chip change re-runs this via renderNameTokens).
@@ -1441,6 +1443,7 @@ import {
   const isListFull = () => nameTokens.length >= MAX_NAMES;
   function syncLimitLock() {
     const full = isListFull();
+    const empty = nameTokens.length === 0;
     if (els.namesInput) {
       els.namesInput.disabled = full || LIVE_MODE; // 🎥 live: field locked until Live is turned off
       if (full) els.namesInput.setAttribute("title", `List is full (${MAX_NAMES} names) — remove a name to add more`);
@@ -1451,16 +1454,20 @@ import {
     if (els.namesLimitNote) els.namesLimitNote.hidden = !full || LIVE_MODE;
     for (const b of [els.diceBtn, els.diceLowBtn, els.diceHighBtn]) {
       if (!b) continue;
-      b.classList.toggle("is-locked", full);
-      if (full) b.setAttribute("aria-disabled", "true"); else b.removeAttribute("aria-disabled");
+      const lock = full || (empty && b !== els.diceBtn);
+      b.classList.toggle("is-locked", lock);
+      if (lock) b.setAttribute("aria-disabled", "true"); else b.removeAttribute("aria-disabled");
     }
     if (full && !limitWasFull && limitLockReady && !LIVE_MODE) setTimeout(() => { if (isListFull()) runAnalyzeFromUi(); }, 0);
     limitWasFull = full;
   }
   function lockedClick(btn) {
-    if (!isListFull()) return false;
-    showLimitToast(btn);
-    return true;
+    if (isListFull()) { showLimitToast(btn); return true; }
+    if (nameTokens.length === 0 && (btn === els.diceLowBtn || btn === els.diceHighBtn)) {
+      showLimitToast(btn, `<strong>Add a name first</strong><span class="limit-toast-sub">🎲 roll or type one, then use &lt; / &gt;</span>`);
+      return true;
+    }
+    return false;
   }
 
   let sfxChipCount = -1;
