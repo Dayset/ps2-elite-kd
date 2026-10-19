@@ -17,10 +17,10 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261018-pagew" />
+  <link rel="stylesheet" href="styles.css?v=20261018-footerblock" />
   <style>
     body { overflow: auto; }
-    .st-wrap { max-width: none; margin: 0; padding: 0; padding-inline: 0; } /* width: body.site-page (#29) */
+    .st-wrap { max-width: 1180px; margin: 0 auto; padding: 0; }
     .st-head { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
     .st-head h1 { font-size: 1.25rem; margin: 0 0 4px; }
     .st-head .st-sub { margin-bottom: 0; }
@@ -32,6 +32,9 @@
     .st-dim { color: var(--dim); }
     .st-wrap a { color: var(--accent); }
     .st-section { font-size: 1.05rem; margin: 22px 0 10px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; }
+    .st-sec-head { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; margin: 22px 0 10px; }
+    .st-sec-head .st-section { background: none; border: none; border-radius: 0; padding: 0; margin: 0 0 6px; }
+    .st-sec-head .st-dim { margin: 0; }
     .st-debug-sep { margin: 56px 0 20px; border: none; border-top: 2px solid var(--border); }
     .st-debug-box { background: var(--panel); border: 1px dashed var(--border); border-radius: 10px; padding: 12px 14px; }
     .st-debug-box summary { cursor: pointer; font-weight: 600; }
@@ -39,7 +42,7 @@
     .st-num { font-variant-numeric: tabular-nums; }
   </style>
 </head>
-<body class="site-page">
+<body>
   <main class="st-wrap">
     <div class="st-head">
     <h1>What every column means</h1>
@@ -122,8 +125,10 @@
       <p>It needs the per-opponent kill/death breakdown of your killboard, pooled over your most-fought opponents. Trackers show the lifetime total; they never split it by opponent.</p>
     </div>
 
+    <div class="st-sec-head">
     <h2 class="st-section">📊 Public (lifetime Census numbers, no adjustment)</h2>
     <p class="st-dim">These are the tracker numbers — Honu and Fisu show these, and the site reuses them as raw material. No invention here; the invention is everything above, built on top of them.</p>
+    </div>
 
     <div class="st-card">
       <h3>KD — lifetime kill/death ratio</h3>
