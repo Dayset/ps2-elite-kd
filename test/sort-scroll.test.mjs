@@ -352,7 +352,7 @@ describe("Rankings table / positions fold away and remember it (t357u/t358u)", (
       await nav("index.html#rankings");
       await ev(ready);
       assert.equal(await ev(`document.getElementById("ranksTableSection").open`), false, "folded by default (t358u)");
-      assert.equal(await ev(`document.getElementById("rkPosSection").open`), false, "positions folded by default (t358u)");
+      assert.equal(await ev(`document.getElementById("statsCarousel").dataset.mode`), "0", "✨ Stats is the default mode; 🏅 Positions is the second one");
       // Open, then close again → remembered closed.
       await ev(`(async () => { const s = document.querySelector("#ranksTableSection > summary"); s.click(); await new Promise((r) => setTimeout(r, 200)); s.click(); await new Promise((r) => setTimeout(r, 200)); })()`);
       assert.equal(await ev(`localStorage.getItem("ps2-elite-kd-ranks-table-open")`), "0");
@@ -378,10 +378,10 @@ describe("🏅 positions table sorted by ⚔️ iVi, #1 on top (t358u)", () => {
     await withPage(async ({ ev, nav }) => {
       await nav(`index.html?names=${picks.map(encodeURIComponent).join(",")}#rankings`);
       await ev(`new Promise(async (res) => { for (let t = 0; t < 400 && document.querySelectorAll("#rkPositions .rk-pos-jump").length < 3; t++) await new Promise((r) => setTimeout(r, 50)); res(1); })`);
-      const st = await ev(`({ order: [...document.querySelectorAll("#rkPositions .rk-pos-jump")].map((a) => a.dataset.q.toLowerCase()), count: document.getElementById("rkPosCount").textContent, open: document.getElementById("rkPosSection").open })`);
+      const st = await ev(`({ order: [...document.querySelectorAll("#rkPositions .rk-pos-jump")].map((a) => a.dataset.q.toLowerCase()), count: document.getElementById("rkPosCount").textContent, mode: document.getElementById("statsCarousel").dataset.mode })`);
       assert.deepEqual(st.order, picks.slice().reverse().map((q) => q.toLowerCase()), "highest iVi first");
       assert.equal(st.count, "(3)");
-      assert.equal(st.open, false, "folded by default");
+      assert.equal(st.mode, "0", "✨ Stats shown first");
     });
   });
 });
@@ -396,7 +396,7 @@ describe("A graphed player not in the shared Rankings still shows on 📊 / 🏅
     await withPage(async ({ ev, nav }) => {
       await nav("index.html");
       await ev(`new Promise((r) => setTimeout(r, 500))`);
-      await ev(`(localStorage.setItem("ps2-elite-kd-cache-v2", ${JSON.stringify(JSON.stringify(store))}), localStorage.setItem("ps2-elite-kd-ranks-pos-open", "1"), 1)`);
+      await ev(`(localStorage.setItem("ps2-elite-kd-cache-v2", ${JSON.stringify(JSON.stringify(store))}), localStorage.setItem("ps2-elite-kd-stats-mode", "1"), 1)`);
       await nav("index.html?names=Zzlocalonly,ShloDog#rankings");
       await ev(`new Promise(async (res) => { for (let t = 0; t < 400 && !document.querySelector('#distSvg text.dist-name[data-q="Zzlocalonly"]'); t++) await new Promise((r) => setTimeout(r, 50)); res(1); })`);
       const st = await ev(`({ stats: document.querySelectorAll("#statsPanel .stats-name").length, label: !!document.querySelector('#distSvg text.dist-name[data-q="Zzlocalonly"]'), pos: [...document.querySelectorAll("#rkPositions .rk-pos-jump")].map((a) => a.dataset.q), fresh: !!document.querySelector("#rkPositions .sample-fresh"), missing: /Not in the Rankings/.test(document.getElementById("rkPositions").textContent), meta: document.getElementById("ranksMeta").textContent, row: !!document.querySelector('#ranksBody tr[data-q="Zzlocalonly"]') || null })`);

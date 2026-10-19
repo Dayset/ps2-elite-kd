@@ -2696,3 +2696,62 @@ col.lv-c-statR { width: calc(7.143% - 3.3214ch); }
 .fac-tr { color: #e0453a; }
 .fac-nso { color: #9e9e9e; }
 
+
+/* ======================================================================
+ * ✨ Stats ⇄ 🏅 Positions (2026-10-19): one spot, two modes, one look.
+ * stats-carousel.mjs moves .sc-track; both tables share fonts, number
+ * alignment (right), weights and column widths so a switch keeps every
+ * number in place.
+ * ====================================================================== */
+.stats-carousel { margin: 0.35rem 0 0.85rem; }
+.stats-carousel:has(#statsPanel:empty) { display: none; }
+.sc-bar { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.3rem; }
+.sc-tabs { display: inline-flex; gap: 2px; padding: 2px; border: 1px solid var(--border); border-radius: 999px; background: var(--panel); }
+.sc-tab { font: inherit; font-size: 0.8rem; font-weight: 600; color: var(--dim); background: none; border: 0; border-radius: 999px; padding: 0.18rem 0.7rem; cursor: pointer; white-space: nowrap; }
+.sc-tab:hover { color: var(--text); }
+.sc-tab.on { color: var(--text); background: color-mix(in srgb, var(--accent) 24%, transparent); }
+.sc-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.sc-tab .rk-table-count { color: var(--dim); font-weight: 400; }
+.sc-dots { display: inline-flex; gap: 5px; margin-left: auto; padding-right: 0.2rem; }
+.sc-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); transition: background 0.2s, transform 0.2s; }
+.sc-dot.on { background: var(--accent); transform: scale(1.25); }
+.sc-viewport { overflow: hidden; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); transition: height 0.26s cubic-bezier(0.22, 0.8, 0.3, 1); touch-action: pan-x pan-y; }
+.sc-track { display: flex; align-items: flex-start; will-change: transform; }
+.sc-slide { flex: 0 0 100%; min-width: 0; }
+
+/* Shared frame: the viewport is the box; the inner boxes lose theirs. */
+.stats-carousel .stats-panel { margin: 0; }
+.stats-carousel .stats-section { border: 0; border-radius: 0; background: none; margin: 0; padding: 0; }
+.stats-carousel .stats-table-wrap { margin-top: 0; }
+.stats-carousel .stats-section > details.fold-note { margin: 0.35rem 0.6rem 0.45rem; }
+.stats-carousel .rk-positions { margin: 0; }
+.stats-carousel .rk-pos-wrap { border: 0; border-radius: 0; background: none; }
+.stats-carousel .rk-pos-hint { margin: 0.45rem 0.6rem; }
+
+/* One table look for both modes. */
+.stats-carousel .stats-table,
+.stats-carousel .rk-pos-table { width: max-content; min-width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+.stats-carousel .stats-table th,
+.stats-carousel .stats-table td,
+.stats-carousel .rk-pos-table th,
+.stats-carousel .rk-pos-table td { padding: 0.34rem 0.42rem; border-bottom: 1px solid var(--row-border); white-space: nowrap; text-align: right; background: var(--panel); }
+.stats-carousel .stats-table[data-stats-table="adjusted"] td:not(.stats-name) { text-indent: 0; }
+.stats-carousel .stats-table thead th,
+.stats-carousel .rk-pos-table thead th { color: var(--text); font-weight: 600; border-bottom-color: var(--border); }
+.stats-carousel .stats-table .stats-name,
+.stats-carousel .rk-pos-table .rk-pos-name { text-align: left; font-weight: 600; position: sticky; left: 0; z-index: 1; box-shadow: 4px 0 8px -4px var(--shadow); }
+.stats-carousel .stats-table thead th.stats-name,
+.stats-carousel .rk-pos-table thead th.rk-pos-name { color: var(--dim); font-weight: 500; z-index: 2; }
+.stats-carousel .stats-table td,
+.stats-carousel .rk-pos-table td,
+.stats-carousel .rk-pos-table td b { font-weight: 600; }
+.stats-carousel .stats-table td .pct,
+.stats-carousel .rk-pos-table td .pct { margin-left: 0.32em; font-size: 0.72em; font-weight: 400; color: var(--dim); }
+.stats-carousel .stats-table tbody tr:last-child > *,
+.stats-carousel .rk-pos-table tbody tr:last-child > * { border-bottom: none; }
+.stats-carousel .rk-pos-table .player-num { font-weight: 700; margin-right: 0.2rem; opacity: 0.95; }
+@media (max-width: 600px) {
+  .stats-carousel .stats-table td .pct,
+  .stats-carousel .rk-pos-table td .pct { display: block; margin-left: 0; line-height: 1.1; }
+}
+.live-mode #statsCarousel { display: none !important; }

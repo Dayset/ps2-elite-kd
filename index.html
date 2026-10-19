@@ -39,7 +39,7 @@
     "codeRepository": "https://github.com/Dayset/ps2-elite-kd"
   }
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261019-tables1" />
+  <link rel="stylesheet" href="styles.css?v=20261019-carousel1" />
 </head>
 <body class="main-page">
   <div class="controls">
@@ -100,7 +100,22 @@
     </div>
   </div>
 
-  <div id="statsPanel" class="stats-panel" aria-label="Player stats comparison"></div>
+  <!-- One spot, two modes (2026-10-19): ✨ Stats ⇄ 🏅 Positions, swipe / tabs (stats-carousel.mjs). -->
+  <section id="statsCarousel" class="stats-carousel" aria-label="Your players: stats and positions">
+    <div class="sc-bar">
+      <div class="sc-tabs" role="tablist" aria-label="Table mode">
+        <button type="button" role="tab" class="sc-tab on" id="scTabStats" data-sc="0" aria-selected="true" aria-controls="scSlideStats" title="Adjusted stats of your players">✨ Stats</button>
+        <button type="button" role="tab" class="sc-tab" id="scTabPos" data-sc="1" aria-selected="false" aria-controls="scSlidePos" title="Where your players rank among every cached player">🏅 Positions <span id="rkPosCount" class="rk-table-count"></span></button>
+      </div>
+      <span class="sc-dots" aria-hidden="true" title="Swipe sideways to switch"><span class="sc-dot on"></span><span class="sc-dot"></span></span>
+    </div>
+    <div class="sc-viewport">
+      <div class="sc-track">
+        <div class="sc-slide" id="scSlideStats" role="tabpanel" aria-labelledby="scTabStats"><div id="statsPanel" class="stats-panel" aria-label="Player stats comparison"></div></div>
+        <div class="sc-slide" id="scSlidePos" role="tabpanel" aria-labelledby="scTabPos"><div id="rkPositions" class="rk-positions" aria-live="polite"><p class="rk-pos-hint">Loading positions…</p></div></div>
+      </div>
+    </div>
+  </section>
 
   <div class="chart-wrap empty" style="contain: layout paint style;">
     <!-- t378u: top-right corner of the graph: 💀 / 📈 switch above the zoom (upper half + Auto only). -->
@@ -158,11 +173,6 @@
       <div class="dist-note">Click a bar (tap twice on phones) to see those players in the table. Swipe sideways to change the stat.</div>
       <div id="distSummary" class="dist-summary"></div>
     </details>
-    <!-- t358u: your players' positions under the chart, folded by default (state remembered). -->
-    <details id="rkPosSection" class="dist-section rk-pos-section">
-      <summary>🏅 Your players' positions <span id="rkPosCount" class="rk-table-count"></span></summary>
-      <div id="rkPositions" class="rk-positions" aria-live="polite"></div>
-    </details>
     <!-- t357u/t358u: the big table folds away like the chart, folded by default (state remembered). -->
     <details id="ranksTableSection" class="dist-section rk-table-section">
       <summary>📋 All players <span id="ranksTableCount" class="rk-table-count"></span></summary>
@@ -208,6 +218,6 @@
     </section>
   </footer>
 
-  <script type="module" src="app.js?v=20261019-axis1"></script>
+  <script type="module" src="app.js?v=20261019-carousel1"></script>
 </body>
 </html>

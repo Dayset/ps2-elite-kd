@@ -20,12 +20,15 @@ test("one page (t356u): no 🏆 / › buttons; order controls → stats → grap
   assert.match(index, /<div class="controls">\s*<div class="cache-row">\s*<div id="cacheChips"[^>]*><\/div>\s*<\/div>\s*<div id="namesBox"/);
   assert.match(index, /<div class="fresh-row">[\s\S]*?id="fetchFresh"[\s\S]*?<span class="fresh-row-end">[\s\S]*?id="wipeLocalBtn"[\s\S]*?id="themeToggle"[\s\S]*?<\/span>\s*<\/div>/);
   const at = (re) => { const m = index.search(re); assert.ok(m >= 0, String(re)); return m; };
-  const order = [/id="namesBox"/, /id="analyzeBtn"/, /id="statsPanel"/, /<svg id="chart"/, /<section id="rankings"/, /id="distSection"/, /id="rkPosSection"/, /id="rkPositions"/, /id="ranksTableSection"/, /id="ranksSearch"/, /id="ranksTable"/, /<footer>/, /id="statsPublic"/, /What about vehicles\?/, /id="ranksMeta"/].map(at);
+  // 2026-10-19: ✨ Stats and 🏅 Positions share one spot under the names box (stats-carousel.mjs).
+  const order = [/id="namesBox"/, /id="analyzeBtn"/, /id="statsCarousel"/, /id="statsPanel"/, /id="rkPositions"/, /<svg id="chart"/, /<section id="rankings"/, /id="distSection"/, /id="ranksTableSection"/, /id="ranksSearch"/, /id="ranksTable"/, /<footer>/, /id="statsPublic"/, /What about vehicles\?/, /id="ranksMeta"/].map(at);
   assert.deepEqual(order, order.slice().sort((a, b) => a - b));
   assert.match(app, /import\("\.\/rankings\.mjs\?v=/, "Rankings load lazily");
-  // t358u: no "🏆 Rankings" title; positions + big table folded by default.
+  // t358u: no "🏆 Rankings" title; big table folded by default.
   assert.doesNotMatch(index, /🏆 Rankings|class="rk-title"/);
-  assert.match(index, /<details id="rkPosSection" class="dist-section rk-pos-section">/);
+  assert.doesNotMatch(index, /id="rkPosSection"/, "positions are a carousel mode now, not a fold");
+  assert.match(index, /<section id="statsCarousel" class="stats-carousel"[\s\S]*?data-sc="0"[\s\S]*?data-sc="1"[\s\S]*?class="sc-dots"/);
+  assert.match(app, /mountStatsCarousel\(\{ root: document\.getElementById\("statsCarousel"\)/);
   assert.match(index, /<details id="ranksTableSection" class="dist-section rk-table-section">/);
 });
 test("shared-cache letters are collapsible blocks with counts", () => {
