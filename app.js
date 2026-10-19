@@ -1366,6 +1366,9 @@ import {
       const [, pick] = pool[Math.floor(Math.random() * pool.length)];
       sfx("sparkle"); sfxChipQuietUntil = Date.now() + 400;
       addNameToField(pick.name);
+      // First name in an empty field: drop the placeholder image right away
+      // instead of waiting for the quiet analysis to draw.
+      setPlaceholderVisible(false);
       say(`Added ${pick.name} (${Math.round(pick.adjs)} iVi). Press Analyze to load.`);
       return;
     }
