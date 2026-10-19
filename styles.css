@@ -2645,7 +2645,7 @@ col.lv-c-spacer { width: 10ch; }
 /* Skeleton row while waiting for the first kill/death. */
 .lv-wait td { color: var(--dim); }
 /* Long names truncate with … instead of stretching the table (icon stays visible). */
-.live-table .lv-name { display: inline-block; max-width: calc(100% - 3.5ch); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
+.live-table .lv-name { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
 .live-table th { font-size: 0.75rem; font-weight: 400; color: var(--dim); padding: 0 0.3rem; text-align: right; cursor: help; }
 .live-table th, .live-table td { border: 1px solid var(--border); }
 .live-table td { padding: 0 0.3rem; line-height: 1.25; }
@@ -2661,9 +2661,6 @@ col.lv-c-spacer { width: 10ch; }
 .lv-time { white-space: nowrap; font-size: 0.85rem; color: var(--dim); vertical-align: middle; text-align: right; min-width: 10ch; /* stopwatch ("9s"→"10s"→"59m 59s") reserves the widest reading so data columns never shift */ }
 .lv-arrow { color: var(--dim); text-align: center; vertical-align: middle; }
 .lv-name-cell { white-space: nowrap; padding-top: 0.2rem !important; }
-.lv-icon { margin-right: 0.3rem; }
-.lv-name { font-weight: 700; }
-.lv-me { text-decoration: underline dotted; }
 .lv-num { text-align: right; font-size: 0.88rem; cursor: help; }
 .lv-uncached { text-align: left; opacity: 0.6; font-style: italic; }
 .live-feed { overflow-x: auto; }

@@ -190,8 +190,8 @@ function start() {
   const N = LIVE_COLS.length;
   const shortLab = (c) => c.label.split(" ")[0];
   /** One player = name cell + stats cells on one row (columns aligned across events). */
-  function side(p, isMe, icon) {
-    const name = `<td class="lv-name-cell">${icon ? `<span class="lv-icon">${icon}</span>` : ""}<span class="lv-name fac-${p.faction || ""}${isMe ? " lv-me" : ""}" title="${esc(p.name)}">${esc(p.name)}</span></td>`;
+  function side(p, isMe) {
+    const name = `<td class="lv-name-cell"><span class="lv-name fac-${p.faction || ""}" title="${esc(p.name)}">${esc(p.name)}</span></td>`;
     let stats;
     if (p.cached) stats = LIVE_COLS.map((c) => `<td class="lv-num" title="${esc(c.label + ": " + c.tip)}">${cellText(c, p.cached[c.id])}</td>`).join("");
     else if (isMe) stats = `<td class="lv-num lv-uncached" colspan="${N}"></td>`;
@@ -202,10 +202,9 @@ function start() {
     const p = people.get(r.opp) || { name: r.opp };
     const meP = { name: me.name, faction: me.faction, cached: me.cached };
     const kill = r.last === "kill";
-    const hs = r.headshot ? "🎯" : "";
-    // Winner on the left: on a kill that's us (⚔️), on a death the killer (💀 next to him).
-    const left = kill ? side(meP, true, "⚔️" + hs) : side(p, false, "💀" + hs);
-    const right = kill ? side(p, false, "") : side(meP, true, "");
+    // Winner on the left: on a kill that's us, on a death the killer.
+    const left = kill ? side(meP, true) : side(p, false);
+    const right = kill ? side(p, false) : side(meP, true);
     const t = r.gap == null ? `<span class="lv-timer" data-at="${r.at}">⏱️ ${fmtGap(Date.now() - r.at)}</span>` : `⏱️ ${fmtGap(r.gap)}`;
     return `<tbody class="lv-ev lv-${r.last}${i === 0 ? " lv-new" : ""}"><tr><td class="lv-time">${t}</td>${left.name}${left.stats}<td class="lv-arrow">❯</td>${right.name}${right.stats}<td class="lv-spacer"></td></tr></tbody>`;
   }
