@@ -62,12 +62,30 @@ export function graphNames(target, cachedNewestFirst) {
   return out;
 }
 
-/** K/D from a Census character with c:resolve=stat_history. */
-export function censusKd(ch) {
+/** Lifetime K/D and KPM from a Census character with c:resolve=stat_history ("time" is seconds played). */
+export function censusStats(ch) {
   const list = (ch && ch.stats && ch.stats.stat_history) || [];
   const at = (name) => +((list.find((s) => s.stat_name === name) || {}).all_time || 0);
-  const k = at("kills"), d = at("deaths");
-  return d > 0 ? k / d : null;
+  const k = at("kills"), d = at("deaths"), t = at("time");
+  return { kd: d > 0 ? k / d : null, kpm: t > 0 ? k / (t / 60) : null };
+}
+
+/** ✨ Adjusted columns as on the main page (no debug columns); same ids / labels / digits as rankings.mjs VISIBLE. */
+export const LIVE_COLS = Object.freeze([
+  { id: "adjs", label: "⚔️ iVi", digits: 0, floorZero: true, tip: "Overall rating from how you do against the ~200 players you fight most, worth more the stronger they are." },
+  { id: "act", label: "🏃 Activity", digits: 2, tip: "Your K/D against the players you fight most, multiplied by how fast you kill." },
+  { id: "pvs", label: "🦁 Brave", digits: 2, tip: "Activity that keeps up as enemies get stronger." },
+  { id: "rf", label: "🛡️ Resist", digits: 2, tip: "How well you stand up to strong players." },
+  { id: "cons", label: "⚡ Const", digits: 2, tip: "K/D kept against the strongest third of opponents vs the weakest third (1.00 = holds completely)." },
+  { id: "apk", label: "🤝 Assists", digits: 2, tip: "Assists per kill in recent Honu sessions." },
+  { id: "rkd", label: "☠️ K/D", digits: 3, tip: "Kills ÷ deaths against the ~200 players you fight most." },
+]);
+
+/** "1,357" / "2.80" / "—" for one cell. */
+export function cellText(col, v) {
+  if (typeof v !== "number" || !Number.isFinite(v)) return "—";
+  if (col.floorZero && v < 0) v = 0;
+  return v.toLocaleString("en-US", { minimumFractionDigits: col.digits, maximumFractionDigits: col.digits });
 }
 
 const slugKey = (name) => String(name || "").trim().toLowerCase().replace(/^\[.*?\]\s*/, "").replace(/[^a-z0-9]+/g, "");
@@ -101,13 +119,18 @@ function start() {
     try {
       const j = await getJson("data/ranks.json");
       const ci = (c) => j.cols.indexOf(c);
-      const iS = ci("slug"), iA = ci("adjs"), iK = ci("kd"), iN = ci("name");
-      ranks = new Map(j.rows.map((r) => [r[iS], { adjs: r[iA], kd: r[iK], name: r[iN] }]));
+      const iS = ci("slug"), iN = ci("name");
+      const idx = LIVE_COLS.map((c) => [c.id, ci(c.id)]);
+      ranks = new Map(j.rows.map((r) => {
+        const o = { name: r[iN] };
+        for (const [id, i] of idx) o[id] = i >= 0 ? r[i] : null;
+        return [r[iS], o];
+      }));
     } catch { ranks = new Map(); }
   }
   async function person(cid) {
     if (people.has(cid)) return people.get(cid);
-    const p = { name: `#${cid}`, faction: "", kd: null, cached: null };
+    const p = { name: `#${cid}`, faction: "", kd: null, kpm: null, cached: null };
     people.set(cid, p);
     try {
       const j = await getJson(`${CENSUS}character?character_id=${cid}&c:show=character_id,name.first,faction_id&c:resolve=stat_history(stat_name,all_time)`);
@@ -115,7 +138,7 @@ function start() {
       if (ch) {
         p.name = (ch.name && ch.name.first) || p.name;
         p.faction = FACTION[ch.faction_id] || "";
-        p.kd = censusKd(ch);
+        Object.assign(p, censusStats(ch));
       }
     } catch { /* keep #id */ }
     if (!ranks) await loadRanks();
@@ -127,8 +150,8 @@ function start() {
   const fmt = (v, d) => (typeof v === "number" && Number.isFinite(v) ? v.toFixed(d) : "—");
   function line(p, isMe) {
     const stats = isMe ? "" : p.cached
-      ? `<span class="lv-stat" title="From our cache">⚔️ ${fmt(p.cached.adjs, 0)} · K/D ${fmt(p.cached.kd, 2)}</span>`
-      : `<span class="lv-stat lv-uncached" title="Not in our cache: Census lifetime K/D only">K/D ${fmt(p.kd, 2)}</span>`;
+      ? `<span class="lv-cells">${LIVE_COLS.map((c) => `<span class="lv-cell" title="${esc(c.tip)}"><span class="lv-lab">${c.label}</span><span class="lv-val">${cellText(c, p.cached[c.id])}</span></span>`).join("")}</span>`
+      : `<span class="lv-cells lv-uncached" title="Not in our cache: Census lifetime numbers only"><span class="lv-cell"><span class="lv-lab">K/D</span><span class="lv-val">${fmt(p.kd, 2)}</span></span><span class="lv-cell"><span class="lv-lab">KPM</span><span class="lv-val">${fmt(p.kpm, 2)}</span></span><span class="lv-cell lv-nocache"><span class="lv-lab">&nbsp;</span><span class="lv-val">not in cache</span></span></span>`;
     return `<div class="lv-line${isMe ? " lv-me" : ""}"><span class="lv-name fac-${p.faction}">${esc(p.name)}</span>${stats}</div>`;
   }
   function render(fadeOpp) {

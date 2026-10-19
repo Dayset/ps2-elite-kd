@@ -2652,9 +2652,22 @@ html[data-theme="light"] .dist-pill:hover { opacity: 1; }
 @media (prefers-reduced-motion: reduce) { .lv-row.lv-new, .lv-row.lv-fade, .live-state .live-dot { animation: none; } }
 .lv-icon { font-size: 1.1rem; min-width: 2.2rem; }
 .lv-pair { display: grid; flex: 1; min-width: 0; }
-.lv-line { display: flex; gap: 0.6rem; align-items: baseline; }
+.lv-line { display: flex; flex-wrap: wrap; gap: 0.25rem 0.8rem; align-items: center; }
+.lv-line .lv-name { min-width: 9rem; }
+.lv-cells { display: flex; flex-wrap: wrap; gap: 0.15rem 0.35rem; }
+.lv-cell {
+  display: grid; justify-items: center; min-width: 3.6rem;
+  padding: 0.1rem 0.35rem; border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  font-variant-numeric: tabular-nums; cursor: help;
+}
+.lv-lab { font-size: 0.68rem; color: var(--dim); white-space: nowrap; }
+.lv-val { font-size: 0.9rem; font-weight: 600; }
+.lv-uncached .lv-cell { opacity: 0.65; }
+.lv-nocache .lv-val { font-weight: 400; font-style: italic; font-size: 0.78rem; }
 .lv-line:first-child .lv-name { font-weight: 700; font-size: 1.05rem; }
-.lv-line:last-child { opacity: 0.75; font-size: 0.88rem; }
+.lv-line:last-child { opacity: 0.85; }
+.lv-line:last-child .lv-name { font-size: 0.9rem; }
 .lv-me .lv-name { text-decoration: underline dotted; }
 .lv-stat { font-size: 0.82rem; font-variant-numeric: tabular-nums; color: var(--dim); }
 .lv-uncached { opacity: 0.6; font-style: italic; }

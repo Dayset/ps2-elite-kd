@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { buildLive } from "../scripts/build-live.mjs";
-import { classifyDeath, feedPush, graphNames, censusKd, FEED_MAX } from "../live.mjs";
+import { classifyDeath, feedPush, graphNames, censusStats, cellText, LIVE_COLS, FEED_MAX } from "../live.mjs";
 
 const root = new URL("../", import.meta.url);
 
@@ -38,7 +38,16 @@ test("graphNames: target first, 5 newest cached, no repeats", () => {
   assert.deepEqual(graphNames("Me", ["a", "b", "a", "me", "c", "d", "e", "f"]), ["Me", "a", "b", "c", "d", "e"]);
 });
 
-test("censusKd from stat_history", () => {
-  assert.equal(censusKd({ stats: { stat_history: [{ stat_name: "kills", all_time: "30" }, { stat_name: "deaths", all_time: "10" }] } }), 3);
-  assert.equal(censusKd({}), null);
+test("censusStats: K/D and KPM from stat_history", () => {
+  const s = censusStats({ stats: { stat_history: [{ stat_name: "kills", all_time: "30" }, { stat_name: "deaths", all_time: "10" }, { stat_name: "time", all_time: "1800" }] } });
+  assert.equal(s.kd, 3);
+  assert.equal(s.kpm, 1);
+  assert.deepEqual(censusStats({}), { kd: null, kpm: null });
+});
+
+test("cellText: digits, floor at zero, missing", () => {
+  const adjs = LIVE_COLS.find((c) => c.id === "adjs");
+  assert.equal(cellText(adjs, 1357.3), "1,357");
+  assert.equal(cellText(adjs, -20), "0");
+  assert.equal(cellText(LIVE_COLS.find((c) => c.id === "rkd"), null), "—");
 });
