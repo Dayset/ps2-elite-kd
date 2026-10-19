@@ -59,6 +59,7 @@ export function compact(inst, entries) {
   return {
     id: inst.instanceId, world: inst.world, zone: inst.zone, event: inst.censusMetagameEventType ?? null,
     start, end, dur: inst.duration ? Math.round(inst.duration / 60000) : null,
+    map: inst.mapVersion ?? null, lattice: inst.latticeVersion ?? null, perBase: r.perBasePercentage ?? null,
     result: { victor: r.victor ?? null, draw: !!r.draw, vs: r.vs ?? null, nc: r.nc ?? null, tr: r.tr ?? null, cutoff: r.cutoff ?? null, outOfPlay: r.outOfPlay ?? null },
     init, flips, ...(ctl.length ? { ctl } : {}),
   };
@@ -101,6 +102,7 @@ async function main() {
   if (flag("--probe")) return probe();
   const out = arg("--out", "history/alerts.jsonl");
   const budgetMs = +arg("--minutes", 300) * 60000;
+  const since = Date.parse(arg("--since", "2023-01-01T00:00:00Z"));
   const t0 = Date.now();
   fs.mkdirSync(out.replace(/\/[^/]*$/, ""), { recursive: true });
   const have = new Set();
@@ -113,12 +115,14 @@ async function main() {
     for (let page = 1; page <= 100; page++) {
       if (Date.now() - t0 > budgetMs * 0.1 && todo.length > 5000) break;
       const rows = await listWorld(w, page);
-      const fresh = rows.filter((a) => a.state === 2 && ZONES.has(a.zone) && !have.has(a.instanceId));
+      const fresh = rows.filter((a) => a.state === 2 && ZONES.has(a.zone) && !have.has(a.instanceId) && Date.parse(a.timeStarted) >= since);
       todo.push(...fresh);
+      if (rows.length && Date.parse(rows.at(-1).timeStarted) < since) break;
       if (rows.length < 1000 || (page > 1 && rows.length && lists[`${w}`] && rows.every((a) => have.has(a.instanceId)))) break;
     }
     lists[`${w}`] = Date.now();
   }
+  todo.sort((a, b) => Date.parse(b.timeStarted) - Date.parse(a.timeStarted));   // newest first across worlds
   notice("history todo", `${todo.length} new alerts listed (${have.size} already stored), ${calls} list calls`);
   const fd = fs.openSync(out, "a");
   for (const a of todo) {
