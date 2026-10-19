@@ -97,129 +97,179 @@
     .st-rb.ok { color: #8fd493; border-color: #6fbf73; }
     html[data-theme="light"] .st-rb.hot { color: #b03030; }
     html[data-theme="light"] .st-rb.ok { color: #2f7a35; }
+    /* Page layout (2026-10-19 redesign): glance tiles, one-line notes, rules folded behind ⓘ. */
+    .st-top { margin-bottom: 12px; }
+    .st-top .st-sub { margin-bottom: 0; }
+    .st-glance { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-bottom: 12px; }
+    .st-tile { display: block; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; color: var(--text); text-decoration: none; min-width: 0; }
+    a.st-tile.st-jump { font-size: inherit; white-space: normal; }
+    a.st-tile:hover { border-color: var(--accent); }
+    .st-tile.st-state { grid-column: span 2; }
+    .st-tv { font-size: 1.35rem; font-weight: 700; line-height: 1.25; font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .st-state .st-tv { font-size: 1.1rem; }
+    .st-tl { color: var(--dim); font-size: 0.8rem; margin-top: 2px; }
+    .st-tile.hot { border-color: #c06060; }
+    .st-tile.hot .st-tv { color: #ff8a8a; }
+    html[data-theme="light"] .st-tile.hot .st-tv { color: #b03030; }
+    .st-tile.zero .st-tv { color: var(--dim); }
+    @media (max-width: 520px) { .st-glance { grid-template-columns: repeat(2, minmax(0, 1fr)); } .st-tile.st-state { grid-column: span 2; } }
+    .st-note { margin: 0 0 6px; color: var(--muted, var(--dim)); line-height: 1.45; }
+    .st-info { margin: 0 0 8px; }
+    .st-info > summary { cursor: pointer; color: var(--dim); font-size: 0.8rem; list-style: none; display: inline-block; }
+    .st-info > summary::-webkit-details-marker { display: none; }
+    .st-info > summary:hover { color: var(--text); }
+    .st-info[open] > summary { margin-bottom: 2px; }
+    .st-info .st-rule { color: var(--dim); font-size: 0.8rem; margin: 4px 0; line-height: 1.45; }
+    .st-h3 { margin: 14px 0 6px; font-size: 1em; }
+    .st-sec.st-hl { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .st-hide-form { margin-top: 12px; padding: 10px; border: 1px dashed var(--border); border-radius: 8px; }
+    .st-hide-title { font-weight: 700; margin-bottom: 8px; }
+    .st-hide-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .st-in { padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text); }
+    .st-btn { padding: 4px 12px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text); cursor: pointer; font: inherit; }
+    .st-pre { background: var(--bg2, #1a1a1a); padding: 8px; border-radius: 4px; overflow-x: auto; font-size: 0.85em; }
   </style>
 </head>
 <body class="site-page">
   <main class="st-wrap">
-    <h1>📦 Shared cache status</h1>
-    <div class="st-sub">Updates every 30 s. <span id="stUpdated"></span> · <a href="./">Back to the chart</a> · <a href="misc.html" title="Confirmed stat padders (hidden page)">🌾 Wall of shame</a> · <span id="radarLine" title="PS2 Radar (ps2radar.com, independent community cheat radar) is looked up once a day for players on the review lists below, at most 50 a day, each at most every 3 days. Its badge is a second opinion only: a Radar Confirmed / Banned mark moves a player up in review order but never hides or flags anyone here, and nothing else on the site reads it. If the radar goes away, the last cached answers stay.">🛰️ PS2 Radar</span><span class="st-tools"><button type="button" id="openAll" title="Open every section">Open all</button><button type="button" id="closeAll" title="Collapse every section">Collapse all</button></span></div>
+    <div class="st-top">
+      <h1>📦 Cache status</h1>
+      <div class="st-sub"><span id="stUpdated">Auto-updates every 30 s.</span> · <a href="./">Back to the chart</a> · <a href="misc.html" title="Confirmed stat padders (hidden page)">🌾 Wall of shame</a> · <span id="radarLine" title="PS2 Radar (ps2radar.com, an independent community cheat radar) is looked up once a day for players on the review lists, at most 50 a day, each at most every 3 days. Its badge is a second opinion only: a Confirmed / Banned mark moves a player up in review order but never hides or flags anyone, and nothing else on the site reads it.">🛰️ PS2 Radar</span><span class="st-tools"><button type="button" id="openAll" title="Open every section">Open all</button><button type="button" id="closeAll" title="Collapse every section">Collapse all</button></span></div>
+    </div>
 
-    <div class="st-card" id="statusBar" style="padding:10px 14px;margin-bottom:10px;line-height:1.7;"><span id="sbState" class="st-dim">Loading status…</span><br><span id="sbLast" class="st-dim"></span><br><span id="sbHonu" class="st-dim"></span><br><span id="sbReview" class="st-dim"></span><br><span class="st-dim">Jump to: <a href="#cardFlags">🚩 Red flags</a> · <a href="#cardAnoms">📉 Anomalies</a> · <a href="#cardSession">🧪 Session</a> · <a href="#cardForensics">🔎 Forensics</a> · <a href="#cardStalker">🚗 Stalkers</a></span></div>
-    <details class="st-card st-sec st-group" id="groupQueue" data-default="open"><summary><h2>Queue</h2></summary>
-      <details class="st-card st-sec" id="cardNow" data-default="open"><summary><h2>Refresh now</h2></summary><div id="nowRun"></div><div id="now" class="st-dim">Loading…</div><div id="backup" class="st-label"></div></details>
-      <details class="st-card st-sec" id="cardPending"><summary><h2>Queued from the site (not cached yet) <span id="pendingCount" class="st-count">…</span></h2></summary><div id="pending" class="st-dim">Loading…</div></details>
-    </details>
-    <details class="st-card st-sec st-group" id="groupReview"><summary><h2>Needs review</h2></summary>
+    <section class="st-glance" id="statusBar" aria-label="At a glance">
+      <div class="st-tile st-state"><div class="st-tv" id="sbState">Loading…</div><div class="st-tl" id="sbLast"></div></div>
+      <div class="st-tile"><div class="st-tv" id="sbHonu">—</div><div class="st-tl">Honu calls today</div></div>
+      <a class="st-tile st-jump" href="#cardFlags" data-count="flagsCount"><div class="st-tv">…</div><div class="st-tl">🚩 Red flags</div></a>
+      <a class="st-tile st-jump" href="#cardBurst" data-count="burstCount"><div class="st-tv">…</div><div class="st-tl">💥 Bursts to check</div></a>
+      <a class="st-tile st-jump" href="#cardAnoms" data-count="anomsCount"><div class="st-tv">…</div><div class="st-tl">📉 Anomalies to check</div></a>
+      <a class="st-tile st-jump" href="#cardPending" data-count="pendingCount"><div class="st-tv">…</div><div class="st-tl">⏳ Queued</div></a>
+    </section>
+
+    <details class="st-card st-sec st-group" id="groupReview" data-default="open"><summary><h2>🔍 Needs review</h2></summary>
       <details class="st-card st-sec st-flags" id="cardFlags">
-      <summary id="flagsSummary"><h2>Red flags 🚩 <span id="flagsCount" class="st-count">…</span></h2></summary>
-      <div id="flagsRule" class="st-rule"></div>
-      <div id="flags" class="st-dim">Loading…</div>
-    </details>
-      <details class="st-card st-sec st-flags" id="cardStalker">
-      <summary id="stalkerSummary"><h2>🚗 Vehicle stalkers <span id="stalkerCount" class="st-count">…</span></h2></summary>
-      <div class="st-note">Would be 🚩 aim / vehicle, but the huge K/D comes slowly and with almost no headshots: typically hiding in a tank and bailing when hit. Moved out of 🚩 automatically and listed here; nothing to review unless something looks off.</div>
-      <div id="stalkerRule" class="st-rule"></div>
-      <div id="stalker" class="st-dim">Loading…</div>
-    </details>
-      <details class="st-card st-sec st-flags st-anoms" id="cardAnoms">
-      <summary id="anomsSummary"><h2>📉 Chart anomalies <span id="anomsCount" class="st-count">…</span></h2></summary>
-      <div class="st-note">Things about chart and stat integrity, not cheating patterns: players whose stats we changed automatically, and values far outside everyone else. Each needs a human look; nothing here is an accusation. Count = players needing a look (borderline 🌾 and † plus unexplained outliers; the rest is automatic and listed for review).<br>Routing (bins.mjs): 🌾 stat padding, † adjusted and 🧪 outliers live here, not in 🚩. A player whose only issues are here stays only here; a player who also has a 🚩 pattern (aim, vehicle, rampage…) is listed in 🚩, with a 📉 link there and an "also in 🚩" link here, never a second full row.</div>
-      <details class="st-sub-sec" id="secPadding">
-      <summary><h3>🌾 Stat padding (auto-confirmed) <span id="padCount" class="st-count">…</span></h3></summary>
-      <div id="padRule" class="st-rule"></div>
-      <div id="padding" class="st-dim">Loading…</div>
+        <summary id="flagsSummary"><h2>🚩 Red flags <span id="flagsCount" class="st-count">…</span></h2></summary>
+        <p class="st-note">Top players whose numbers fit an aim, vehicle, rampage or session pattern. Leads, not proof.</p>
+        <details class="st-info"><summary>ⓘ How it works</summary><div id="flagsRule" class="st-rule"></div></details>
+        <div id="flags" class="st-dim">Loading…</div>
       </details>
-      <details class="st-sub-sec" id="secPoop">
-      <summary><h3>💩 Padder penalty (−10% iVi) <span id="poopCount" class="st-count">…</span></h3></summary>
-      <div id="poopRule" class="st-rule"></div>
-      <div id="poop" class="st-dim">Loading…</div>
+
+      <details class="st-card st-sec" id="cardBurst">
+        <summary><h2>💥 Burst sessions <span id="burstCount" class="st-count">…</span></h2></summary>
+        <p class="st-note">Short, extreme sessions. A review signal only: never changes stats or hides anyone.</p>
+        <details class="st-info"><summary>ⓘ How it works</summary><div class="st-rule">≥ 5 kills/min with ≥ 15 kills in ≥ 2 minutes, no 10-minute minimum (same rule as the oracle’s ☠️ burst tier). Built from stored sessions (no extra Honu calls). Owner-reviewed players (outlier-guard.mjs KNOWN_EXTREMES, data/reviewed.json “burst”) show as ✅ cleared.</div></details>
+        <div id="burst" class="st-dim">Loading…</div>
+        <h3 class="st-h3">From the oracle (alert reports, last 7 days)</h3>
+        <div id="burstOracle" class="st-dim">Loading…</div>
       </details>
-      <details class="st-sub-sec" id="secVehCut">
-      <summary><h3>🚜 Vehicle + MAX cuts (adjusted iVi, no cap) <span id="vcutCount" class="st-count">…</span></h3></summary>
-      <div id="vcutRule" class="st-rule">Automatic: ⚔️ adjusted iVi ranks infantry skill only, so it gets two cuts that add up, no cap: vehicle cut = vehicle / turret share of lifetime kills − 10% (none up to 10%), MAX cut = MAX-weapon share − 10%. Example: vehicle 45% + MAX 40% → −35% − 30% = −65%. The shares add up to at most 100%, so the total stays under 100%. No infantry data (or under 100 kills) = no cut. Applied after the 💩 padder penalty (they stack). A score at or below 0 gets a fixed drop (cut × 610.6) so it never rises. Public: no visible mark (owner override); the iVi value's own hover lists each part and the total. Owner override (exempts both parts): data/reviewed.json "vehicleCutCleared": { "slug": { "note": "…", "at": "YYYY-MM-DD" } }.</div>
-      <div id="vcut" class="st-dim">Loading…</div>
-      </details>
-      <details class="st-sub-sec" id="secAdjusted">
-      <summary><h3>† Adjusted (auto-accepted) <span id="adjCount" class="st-count">…</span></h3></summary>
-      <div id="adjRule" class="st-rule"></div>
-      <div id="adjusted" class="st-dim">Loading…</div>
-      </details>
-      <details class="st-sub-sec" id="secGuard">
-      <summary><h3>🧪 Outlier guard (explained ones auto-accepted) <span id="guardCount" class="st-count">…</span></h3></summary>
-      <div class="st-rule">Checked on every refresh (scripts/build-ranks.mjs → outlier-guard.mjs) on the numbers as the site shows them, one row per player with every metric that's far out. Unexplained ones may be a formula gap like the old 🦁 Brave 6094; explained ones also have a 🚩 pattern (full row in 🚩), a 🌾 or † entry above, or were reviewed by hand, and are auto-accepted (t375u): no manual check, folded away below. Only unexplained ones need a look.</div>
-      <div id="guardRule" class="st-rule"></div>
-      <div id="guard" class="st-dim">Loading…</div>
-      </details>
-    </details>
-      <details class="st-card st-sec st-flags st-sess" id="cardSession">
-      <summary id="sessSummary"><h2>🧪 Session stats <span id="sessCount" class="st-count">…</span></h2></summary>
-      <div class="st-note">Recent Honu sessions we already collect quietly (assists on every refresh; full XP detail for analyzed / requested players), as rates per kill / minute / death. Assists stay off the public pages; this section is the only place they show. Count = 🚩 session-pattern hits. Session-metric outliers also go through the 🧪 outlier guard (📉), and a player with the session pattern is listed in 🚩.</div>
-      <div id="sessRule" class="st-rule"></div>
-      <div id="sessCoverage" class="st-dim">Loading…</div>
-      <details class="st-sub-sec" id="secAssistGroups">
-      <summary><h3>🤝 Assist groups (experiment) <span id="agCount" class="st-count">…</span></h3></summary>
-      <div class="st-note">Experiment (t378u): assists / kill and assist damage share next to K/D and iVi. The groups stay here; assists per kill itself is public as 🤝 Assists since t382u. ⚠️ Vehicle / air players are not separated yet: everyone counts as infantry for now (later filtered with the infantry tags), so vehicle assists can skew these numbers. Only players with 100+ kills in counted sessions. 💪 Carries fights = top-quarter K/D + top-quarter damage share. 🎯 Finishers = top-quarter K/D + bottom-quarter damage share. 🤝 Hidden support = top-10% assists / kill with a middle iVi (25th–75th percentile). 🚩 = already on a red-flag list.</div>
-      <div id="assistGroups" class="st-dim">Loading…</div>
-      </details>
-      <details class="st-sub-sec" id="secSessFlags" data-default="open">
-      <summary><h3>🚩 Session pattern <span id="sessFlagCount" class="st-count">…</span></h3></summary>
-      <div id="sessFlags" class="st-dim">Loading…</div>
-      </details>
-      <details class="st-sub-sec" id="secSessRef">
-      <summary><h3>Reference: confirmed cheaters</h3></summary>
-      <div id="sessRef" class="st-dim">Loading…</div>
-      </details>
-      <details class="st-sub-sec" id="secSessDist">
-      <summary><h3>Distributions <span id="sessDistCount" class="st-count">…</span></h3></summary>
-      <div id="sessDist" class="st-dim">Loading…</div>
-      </details>
-      <details class="st-sub-sec" id="secSessOut">
-      <summary><h3>Session-metric outliers <span id="sessOutCount" class="st-count">…</span></h3></summary>
-      <div id="sessOut" class="st-dim">Loading…</div>
-      </details>
-    </details>
+
       <details class="st-card st-sec st-flags st-sess" id="cardForensics">
-      <summary id="fxSummary"><h2>🔎 Session forensics <span id="fxCount" class="st-count">…</span></h2></summary>
-      <div class="st-note">The refresh pipeline opens the top session(s) (most kills, highest KPM) of a few suspicious players per run (🚩, 📉 outliers, 👶 new accounts with a high KPM, high session KPM, top iVi), reads the Honu kill events and looks at how fast the kills came, with what weapon and on whom. Each session is analyzed once. ⚡ / 🔥 hits go to 🚩 (pattern “session-forensics”); other oddities go to 📉 for review. Count = 🚩 hits.</div>
-      <div id="fxRule" class="st-rule"></div>
-      <div id="fx" class="st-dim">Loading…</div>
+        <summary id="fxSummary"><h2>🔎 Session forensics <span id="fxCount" class="st-count">…</span></h2></summary>
+        <p class="st-note">The top session of a few suspicious players, read kill by kill: speed, weapons, victims. ⚡ / 🔥 hits go to 🚩.</p>
+        <details class="st-info"><summary>ⓘ How it works</summary><div class="st-rule">Each run opens the top session(s) (most kills, highest KPM) of a few players: 🚩, 📉 outliers, 👶 new accounts with a high KPM, high session KPM, top iVi. Each session is analyzed once. Other oddities go to 📉. Count = 🚩 hits.</div><div id="fxRule" class="st-rule"></div></details>
+        <div id="fx" class="st-dim">Loading…</div>
+      </details>
+
+      <details class="st-card st-sec st-flags st-anoms" id="cardAnoms">
+        <summary id="anomsSummary"><h2>📉 Chart anomalies <span id="anomsCount" class="st-count">…</span></h2></summary>
+        <p class="st-note">Stats we changed automatically, and values far outside everyone else. Not accusations. Count = ones that need a look.</p>
+        <details class="st-info"><summary>ⓘ How it works</summary><div class="st-rule">🌾 stat padding, † adjusted and 🧪 outliers are listed here, not in 🚩 (bins.mjs). A player who also has a 🚩 pattern keeps the full row in 🚩, with a 📉 link there and an “also in 🚩” link here.</div></details>
+        <details class="st-sub-sec" id="secPadding">
+          <summary><h3>🌾 Stat padding <span id="padCount" class="st-count">…</span></h3></summary>
+          <details class="st-info"><summary>ⓘ How it works</summary><div id="padRule" class="st-rule"></div></details>
+          <div id="padding" class="st-dim">Loading…</div>
+        </details>
+        <details class="st-sub-sec" id="secPoop">
+          <summary><h3>💩 Padder penalty (−10% iVi) <span id="poopCount" class="st-count">…</span></h3></summary>
+          <details class="st-info"><summary>ⓘ How it works</summary><div id="poopRule" class="st-rule"></div></details>
+          <div id="poop" class="st-dim">Loading…</div>
+        </details>
+        <details class="st-sub-sec" id="secVehCut">
+          <summary><h3>🚜 Vehicle + MAX cuts <span id="vcutCount" class="st-count">…</span></h3></summary>
+          <details class="st-info"><summary>ⓘ How it works</summary><div id="vcutRule" class="st-rule">⚔️ adjusted iVi ranks infantry only. Vehicle cut = vehicle / turret share of lifetime kills − 10%; MAX cut = MAX share − 10%. They add up, no cap (45% + 40% → −65%); the shares can’t pass 100%, so the total stays under 100%. No infantry data or under 100 kills = no cut. Stacks with the 💩 penalty (applied after it). A score at or below 0 gets a fixed drop (cut × 610.6). No public mark; the iVi hover lists each part. Owner exemption (both parts): data/reviewed.json “vehicleCutCleared”: {{ "slug": {{ "note": "…", "at": "YYYY-MM-DD" }} }}.</div></details>
+          <div id="vcut" class="st-dim">Loading…</div>
+        </details>
+        <details class="st-sub-sec" id="secAdjusted">
+          <summary><h3>† Adjusted <span id="adjCount" class="st-count">…</span></h3></summary>
+          <details class="st-info"><summary>ⓘ How it works</summary><div id="adjRule" class="st-rule"></div></details>
+          <div id="adjusted" class="st-dim">Loading…</div>
+        </details>
+        <details class="st-sub-sec" id="secGuard">
+          <summary><h3>🧪 Outlier guard <span id="guardCount" class="st-count">…</span></h3></summary>
+          <p class="st-note">Values far outside everyone else, checked every refresh. Only unexplained ones need a look.</p>
+          <details class="st-info"><summary>ⓘ How it works</summary><div class="st-rule">Run by scripts/build-ranks.mjs → outlier-guard.mjs on the numbers the site shows, one row per player. Unexplained may mean a formula gap (like the old 🦁 Brave 6094). Explained = also a 🚩 pattern, a 🌾 or † entry, or reviewed by hand: auto-accepted and folded away.</div><div id="guardRule" class="st-rule"></div></details>
+          <div id="guard" class="st-dim">Loading…</div>
+        </details>
+      </details>
+
+      <details class="st-card st-sec st-flags" id="cardStalker">
+        <summary id="stalkerSummary"><h2>🚗 Vehicle stalkers <span id="stalkerCount" class="st-count">…</span></h2></summary>
+        <p class="st-note">Huge K/D, but slow and almost no headshots: usually hiding in a vehicle. Kept out of 🚩; nothing to do unless something looks off.</p>
+        <details class="st-info"><summary>ⓘ How it works</summary><div id="stalkerRule" class="st-rule"></div></details>
+        <div id="stalker" class="st-dim">Loading…</div>
+      </details>
+
+      <details class="st-card st-sec st-flags st-sess" id="cardSession">
+        <summary id="sessSummary"><h2>🧪 Session stats <span id="sessCount" class="st-count">…</span></h2></summary>
+        <p class="st-note">Rates from recent Honu sessions (assists, headshots, K/D). Count = 🚩 session-pattern hits.</p>
+        <details class="st-info"><summary>ⓘ How it works</summary><div class="st-rule">Assists come with every refresh; full XP detail only for analyzed / requested players. Session-metric outliers also go through the 🧪 outlier guard (📉); a player with the session pattern is listed in 🚩.</div><div id="sessRule" class="st-rule"></div></details>
+        <div id="sessCoverage" class="st-dim">Loading…</div>
+        <details class="st-sub-sec" id="secSessFlags" data-default="open">
+          <summary><h3>🚩 Session pattern <span id="sessFlagCount" class="st-count">…</span></h3></summary>
+          <div id="sessFlags" class="st-dim">Loading…</div>
+        </details>
+        <details class="st-sub-sec" id="secAssistGroups">
+          <summary><h3>🤝 Assist groups (experiment) <span id="agCount" class="st-count">…</span></h3></summary>
+          <p class="st-note">Who carries fights, who finishes, who quietly supports. Vehicle players aren’t separated yet.</p>
+          <details class="st-info"><summary>ⓘ How it works</summary><div class="st-rule">Players with 100+ kills in counted sessions. 💪 Carries fights = top-quarter K/D + top-quarter damage share. 🎯 Finishers = top-quarter K/D + bottom-quarter damage share. 🤝 Hidden support = top-10% assists / kill with a middle iVi (25th–75th percentile). 🚩 = already on a red-flag list. Assists per kill itself is public as 🤝 Assists.</div></details>
+          <div id="assistGroups" class="st-dim">Loading…</div>
+        </details>
+        <details class="st-sub-sec" id="secSessRef">
+          <summary><h3>Reference: confirmed cheaters</h3></summary>
+          <div id="sessRef" class="st-dim">Loading…</div>
+        </details>
+        <details class="st-sub-sec" id="secSessDist">
+          <summary><h3>Distributions <span id="sessDistCount" class="st-count">…</span></h3></summary>
+          <div id="sessDist" class="st-dim">Loading…</div>
+        </details>
+        <details class="st-sub-sec" id="secSessOut">
+          <summary><h3>Session-metric outliers <span id="sessOutCount" class="st-count">…</span></h3></summary>
+          <div id="sessOut" class="st-dim">Loading…</div>
+        </details>
+      </details>
     </details>
-    </details>
-    <details class="st-card st-sec st-group" id="groupPipeline"><summary><h2>Pipeline</h2></summary>
-      <details class="st-card st-sec" id="cardRuns"><summary><h2>GitHub Actions queue <span id="runsCount" class="st-count"></span></h2></summary><div id="runs" class="st-dim">Loading…</div></details>
+
+    <details class="st-card st-sec st-group" id="groupPipeline"><summary><h2>⚙️ Refresh pipeline</h2></summary>
+      <details class="st-card st-sec" id="cardNow" data-default="open"><summary><h2>Now</h2></summary><div id="nowRun"></div><div id="now" class="st-dim"></div><div id="backup" class="st-label"></div></details>
+      <details class="st-card st-sec" id="cardPending"><summary><h2>⏳ Queued from the site <span id="pendingCount" class="st-count">…</span></h2></summary><div id="pending" class="st-dim">Loading…</div></details>
       <details class="st-card st-sec" id="cardLast"><summary><h2>Last finished run</h2></summary><div id="last" class="st-dim">Loading…</div></details>
+      <details class="st-card st-sec" id="cardRuns"><summary><h2>GitHub Actions runs <span id="runsCount" class="st-count"></span></h2></summary><div id="runs" class="st-dim">Loading…</div></details>
       <details class="st-card st-sec" id="cardDisc"><summary><h2>🔎 Discovery &amp; storage <span id="discCount" class="st-count">…</span></h2></summary><div id="sizeLine" class="st-dim">Loading…</div><div id="infLine" class="st-dim"></div><div id="disc" class="st-dim">Loading…</div></details>
       <details class="st-card st-sec" id="cardRecent"><summary><h2>Recently updated players <span id="recentCount" class="st-count">…</span></h2></summary><div id="recent" class="st-dim">Loading…</div></details>
     </details>
-    <details class="st-card st-sec" id="cardBurst">
-      <summary><h2>💥 Burst sessions <span id="burstCount" class="st-count">…</span></h2></summary>
-      <div class="st-note">Short, extreme sessions: ≥ 5 kills/min with ≥ 15 kills in ≥ 2 minutes, no 10-minute minimum (same rule as the oracle's ☠️ burst tier). Built from sessions we already store (no extra Honu calls). <b>Review signal only:</b> it never changes anyone's stats, adds no * or †, hides nobody. Owner-reviewed players (outlier-guard.mjs KNOWN_EXTREMES) show as ✅ cleared.</div>
-      <div id="burst" class="st-dim">Loading…</div>
-      <h3 style="margin:14px 0 6px;font-size:1em;">From the oracle (alert reports, last 7 days)</h3>
-      <div id="burstOracle" class="st-dim">Loading…</div>
-    </details>
+
     <details class="st-card st-sec" id="cardHidden">
       <summary><h2>🙈 Hidden from Rankings <span id="hiddenCount" class="st-count">…</span></h2></summary>
-      <div class="st-note">Players left out of the Rankings (tables, percentiles, distributions) by hand, via data/hidden.json. They stay in the cache, can still be analyzed on the main page, and still count in 🚩 red flags and the 🧪 outlier guard.</div>
+      <p class="st-note">Left out of Rankings by hand (data/hidden.json). Still cached, still analyzable, still checked for 🚩.</p>
       <div id="hidden" class="st-dim">Loading…</div>
-      <div class="st-hide-form" style="margin-top:12px;padding:10px;border:1px dashed var(--border);border-radius:8px;">
-        <div style="font-weight:bold;margin-bottom:8px;">🙈 Hide a player</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-          <input type="text" id="hideName" placeholder="Player name" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);min-width:160px;" />
-          <input type="text" id="hideReason" placeholder="Reason (e.g. confirmed cheater)" value="confirmed cheater — kept for comparison only, not promoted in rankings" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);flex:1;min-width:200px;" />
-          <button type="button" id="hideBtn" style="padding:4px 12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);cursor:pointer;">Hide</button>
+      <div class="st-hide-form">
+        <div class="st-hide-title">🙈 Hide a player</div>
+        <div class="st-hide-row">
+          <input type="text" id="hideName" placeholder="Player name" class="st-in" style="min-width:160px;" />
+          <input type="text" id="hideReason" placeholder="Reason (e.g. confirmed cheater)" value="confirmed cheater — kept for comparison only, not promoted in rankings" class="st-in" style="flex:1;min-width:200px;" />
+          <button type="button" id="hideBtn" class="st-btn">Hide</button>
         </div>
         <div id="hideResult" style="margin-top:8px;display:none;">
           <div style="margin-bottom:4px;">Copy this into <code>data/hidden.json</code> under <code>"players"</code>:</div>
-          <pre id="hideJson" style="background:var(--bg2,#1a1a1a);padding:8px;border-radius:4px;overflow-x:auto;font-size:0.85em;"></pre>
+          <pre id="hideJson" class="st-pre"></pre>
           <div style="margin-top:8px;display:flex;gap:8px;">
-            <button type="button" id="hideCopy" style="padding:4px 12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);cursor:pointer;">📋 Copy JSON</button>
-            <a id="hideGithub" href="#" target="_blank" style="padding:4px 12px;border:1px solid var(--border);border-radius:4px;text-decoration:none;color:var(--text);">✏️ Open in GitHub editor</a>
+            <button type="button" id="hideCopy" class="st-btn">📋 Copy JSON</button>
+            <a id="hideGithub" href="#" target="_blank" class="st-btn" style="text-decoration:none;">✏️ Open in GitHub editor</a>
           </div>
         </div>
       </div>
     </details>
-                                                  </main>
+  </main>
 
   <script>
     // Collapsible sections: open/closed remembered per section id (localStorage).
@@ -363,7 +413,7 @@
         }
         var cur = status && status.running && status.current;
         if (cur) {
-          html += '<div class="st-label">Fetching now (' + esc(cur.kind || "rotation") + "):</div>" + chips(cur.names);
+          html += '<div class="st-label">Fetching (' + esc(cur.kind || "rotation") + "):</div>" + chips(cur.names);
         }
         $("now").innerHTML = html;
       }
@@ -390,7 +440,7 @@
           '<div class="st-label">Added (' + (r.added || []).length + "):</div>" + chips(r.added, "add") +
           '<div class="st-label">Updated (' + (r.updated || []).length + "):</div>" + chips(r.updated) +
           '<div class="st-label">Failed (' + failed.length + "):</div>" + chips(failed, "fail") +
-          (r.batch && r.batch.length ? '<div class="st-label">Batch (planned names by source, and what happened to each):</div>' + batchTable(r.batch) : "") +
+          (r.batch && r.batch.length ? '<div class="st-label">Batch:</div>' + batchTable(r.batch) : "") +
           (r.discovery ? '<div class="st-label">Discovery: cap ' + esc(r.discovery.cap) + " · queue " + esc(r.discovery.queue) +
             (r.discovery.slice && !r.discovery.slice.error ? " · this run's sweep slice: " + esc(r.discovery.slice.calls) + " Census calls, swept " + esc(r.discovery.slice.swept) +
               ", checked " + esc(r.discovery.slice.checked) + ", qualified " + esc(r.discovery.slice.qualified) : "") +
@@ -457,7 +507,7 @@
         var l = b.last;
         var label = { "dispatched": "dispatched a run", "skipped-recent": "skipped (recent run)", "skipped-running": "skipped (run in progress)", "error": "error" };
         // The Worker checks every 5 min but logs only changes (and at least hourly).
-        $("backup").innerHTML = "Worker timer (checks every 5 min, starts a discovery run when idle): " + (l
+        $("backup").innerHTML = '<span title="The cache Worker checks every 5 min and starts a discovery run when idle">Worker timer</span>: ' + (l
           ? "last logged " + when(l.at) + ", " + esc(label[l.decision] || l.decision) +
             (l.reason ? " (" + esc(l.reason) + ")" : "") + (l.runId ? " · " + runLink(l.runId) : "")
           : "no check yet.");
@@ -469,8 +519,8 @@
         var a = runs.filter(function (r) { return r.status !== "completed"; })[0];
         $("nowRun").innerHTML = a
           ? '<div class="st-big st-warn">⏳ ' + (a.status === "in_progress" ? "Discovery run in progress" : "Run " + esc(a.status)) + "</div><div>" + runLink(a.id) +
-            " · started " + when(a.run_started_at || a.created_at) + '. It continues the Census login sweep, refreshes due players (format sync first) and adds queued players who actually play. Per-name results appear under “Last finished run” when it commits (one commit per run, so no live per-name progress).</div>' +
-            (predicted.length ? '<div class="st-label">Next in the discovery queue (new accounts that play first, then most fights this week):</div>' +
+            " · started " + when(a.run_started_at || a.created_at) + '. Results show under “Last finished run” when it commits.</div>' +
+            (predicted.length ? '<div class="st-label" title="New accounts that play first, then most fights this week">Next up:</div>' +
               batchTable(predicted.slice(0, 12).map(function (q) { return { name: q.name, src: q.isNew ? "discovery-new" : "discovery", status: "pending" }; }), true) : "")
           : "";
       }
@@ -485,9 +535,9 @@
         var c = b.counts, r = b.rule || {};
         var have = c.infantry + c.mixed + c.vehicle + c.low;
         var pend = b.pending != null ? " · ⏳ " + esc(b.pending) + " pending backfill" : "";
-        $("infLine").innerHTML = "<div>🪖 Infantry split (v2, public as 🪖 Infantry; MAX kills count as infantry, vehicle kills no longer doubled): " + esc(b.v2 != null ? b.v2 : have) + " of " + esc(b.players) + " players filled" + pend + " · " +
-          "🪖 infantry <strong>" + esc(c.infantry) + "</strong> · 🔀 mixed <strong>" + esc(c.mixed) + "</strong> · 🚜 vehicle <strong>" + esc(c.vehicle) + "</strong> · too few kills " + esc(c.low) + "</div>" +
-          '<div class="st-dim">Rule: share of kills from a vehicle seat or turret &lt; ' + esc(Math.round((r.INFANTRY_MAX || 0.25) * 100)) + "% = infantry, ≥ " + esc(Math.round((r.VEHICLE_MIN || 0.6) * 100)) + "% = vehicle, otherwise mixed; under " + esc(r.MIN_KILLS || 100) + " kills = not judged. Tags are build-log only (not shown publicly); no automatic tag uses them yet.</div>";
+        const infRule = "Vehicle-seat / turret share of kills under " + Math.round((r.INFANTRY_MAX || 0.25) * 100) + "% = infantry, " + Math.round((r.VEHICLE_MIN || 0.6) * 100) + "%+ = vehicle, otherwise mixed; under " + (r.MIN_KILLS || 100) + " kills = not judged. MAX kills count as infantry. Tags are build-log only.";
+        $("infLine").innerHTML = '<div title="' + esc(infRule) + '">🪖 Infantry split: ' + esc(b.v2 != null ? b.v2 : have) + " of " + esc(b.players) + " filled" + pend + " · " +
+          "🪖 <strong>" + esc(c.infantry) + "</strong> infantry · 🔀 <strong>" + esc(c.mixed) + "</strong> mixed · 🚜 <strong>" + esc(c.vehicle) + "</strong> vehicle · " + esc(c.low) + " too few kills</div>";
       }
 
       function renderSize(status) {
@@ -496,11 +546,9 @@
         var warnAt = z.warnAtBytes || 700 * MB;
         var warn = !!status.sizeWarning;
         var near = !warn && Math.max(z.repoBytes || 0, z.dataBytes || 0) >= warnAt * 0.8;
-        $("sizeLine").innerHTML = '<div class="' + (warn ? "st-err" : near ? "st-warn" : "") + '">💾 Repo ' + mb(z.repoBytes) + " (GitHub, incl. history) · data/ " + mb(z.dataBytes) +
+        $("sizeLine").innerHTML = '<div class="' + (warn ? "st-err" : near ? "st-warn" : "") + '" title="Warning at ' + esc(mb(warnAt)) + ' (repo or data/), well before GitHub’s 1 GB: then back up and move player files to Cloudflare.">💾 Repo ' + mb(z.repoBytes) + " · data/ " + mb(z.dataBytes) +
           " · " + esc(z.playerFiles) + " player files (" + mb(z.playersBytes) + ") · measured " + when(z.at) + "</div>" +
-          '<div class="' + (warn ? "st-err" : "st-dim") + '">' + (warn
-            ? "⚠️ Over " + mb(warnAt) + ": make a manual backup now, then move player files to Cloudflare (no history cleanup before the backup)."
-            : "Warning at " + mb(warnAt) + " (repo history or data/), well before GitHub’s 1 GB: then back up and move player files to Cloudflare.") + "</div>";
+          (warn ? '<div class="st-err">⚠️ Over ' + mb(warnAt) + ": back up now, then move player files to Cloudflare (no history cleanup before the backup).</div>" : "");
       }
 
       function renderDisc(d, index) {
@@ -511,16 +559,16 @@
         predicted = q;
         var sw = d.sweep || {}, ls = d.lastSweep || {};
         $("discCount").textContent = n + " / " + d.cap;
-        $("discCount").title = n + " cached of cap " + d.cap + " (steps 3000 → 6000 → 9000 → 12000, next one once caught up)";
+        $("discCount").title = n + " cached of cap " + d.cap + " (the cap grows in 3,000 steps up to 24,000 once caught up)";
         $("disc").innerHTML =
-          "<div>Cached <strong>" + esc(n) + "</strong> · cap <strong>" + esc(d.cap) + "</strong> (steps 3000 → 6000 → 9000 → 12000) · queued <strong>" + esc(q.length) + "</strong> (" +
+          "<div>Cached <strong>" + esc(n) + "</strong> · cap <strong>" + esc(d.cap) + "</strong> · queued <strong>" + esc(q.length) + "</strong> (" +
             esc(q.filter(function (x) { return x.isNew; }).length) + " new accounts)</div>" +
           '<div class="st-label">Login sweep (Census, PC): ' + (sw.cursor != null
             ? "in progress, at logins from " + when(sw.cursor * 1000)
             : "last finished " + when(sw.lastDoneAt) + ", next ~" + when(Date.parse(sw.lastDoneAt || "") + 20 * 3600e3)) +
             " · this sweep: swept " + esc(ls.swept || 0) + ", checked " + esc(ls.checked || 0) + ", qualified " + esc(ls.qualified || 0) +
             " (" + esc(ls.newPlaying || 0) + " new accounts), " + esc(ls.calls || 0) + " Census calls</div>" +
-          '<div class="st-dim">Rule: logged in since the last sweep, ≥ 30 min played, ≥ 100 kills+deaths in the last 7 days (new accounts too). Refresh tiers: played this week → weekly, this month → every 2 weeks, 1–12 months → monthly, 🪦 &gt; 1 year → never (only on lookup / Fetch fresh).</div>' +
+          '<details class="st-info"><summary>ⓘ How it works</summary><div class="st-rule">Added when: logged in since the last sweep, ≥ 30 min played and ≥ 100 kills+deaths in the last 7 days (new accounts too). Refreshed: played this week → weekly, this month → every 2 weeks, 1–12 months → monthly, 🪦 over a year → only on lookup / Fetch fresh.</div></details>' +
           (q.length ? '<table class="st-table"><tr><th>Next up</th><th>Fights / week</th><th></th></tr>' + q.slice(0, 15).map(function (x) {
             return "<tr><td>" + nm(x.name) + "</td><td>" + esc(x.fights) + "</td><td>" + (x.isNew ? "👶 new" : "") + "</td></tr>";
           }).join("") + "</table>" : "");
@@ -538,13 +586,13 @@
           getJson(WORKER_URL + "/pending"),
           getJson("data/refresh-state.json").catch(function () { return null; }),
         ]).then(function (r) { renderPending(r[0], r[1]); }, function (e) { fail("pending", "the queue", e); $("pendingCount").textContent = "?"; });
-        getJson(WORKER_URL + "/health").then(renderBackup, function () { $("backup").textContent = "Backup timer: status unavailable."; });
+        getJson(WORKER_URL + "/health").then(renderBackup, function () { $("backup").textContent = "Worker timer: unavailable."; });
         getJson(WORKER_URL + "/runs").then(function (d) { renderRuns(d); renderNowRun(d); }, function (e) { fail("runs", "GitHub Actions runs", e); });
         Promise.all([
           getJson("data/discovery.json").catch(function () { return null; }),
           getJson("data/index.json").catch(function () { return null; }),
         ]).then(function (res) { renderDisc(res[0], res[1]); });
-        $("stUpdated").textContent = "Last check " + new Date().toLocaleTimeString() + ".";
+        $("stUpdated").textContent = "Auto-updates every 30 s · checked " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
       }
 
       tick();
@@ -585,10 +633,10 @@
 
     const ruleText = reviewRuleText();
     $("flagsSummary").title = ruleText;
-    $("flagsRule").textContent = "Rule: " + ruleText;
-    $("adjRule").textContent = "Rule: " + anomalyRuleText() + " Auto-accepted (t375u): marked † and excluded without a manual check. Only borderline cases (farm share " + Math.round(ADJUSTED_BORDERLINE_SHARE * 100) + "% or more) need a look. Overrides: data/not-farm.json (counts the kills again), or data/reviewed.json \"cleared\" / \"fluke\" / \"bad-luck\" / \"padding\".";
-    $("padRule").textContent = "Rule: " + paddingRuleText() + " Auto-confirmed (t368u): marked * and excluded without a manual check. Only borderline cases (farm share under " + Math.round(PADDING_BORDERLINE_SHARE * 100) + "%) need a look. Overrides: data/not-farm.json (counts the kills again), or data/reviewed.json \"cleared\" / \"fluke\" / \"bad-luck\".";
-    $("stalkerRule").textContent = "Rule: " + stalkerRuleText();
+    $("flagsRule").textContent = ruleText;
+    $("adjRule").textContent = anomalyRuleText() + " Auto-accepted: marked † and excluded without a manual check. Only borderline cases (farm share " + Math.round(ADJUSTED_BORDERLINE_SHARE * 100) + "% or more) need a look. Overrides: data/not-farm.json (counts the kills again), or data/reviewed.json \"cleared\" / \"fluke\" / \"bad-luck\" / \"padding\".";
+    $("padRule").textContent = paddingRuleText() + " Auto-confirmed: marked * and excluded without a manual check. Only borderline cases (farm share under " + Math.round(PADDING_BORDERLINE_SHARE * 100) + "%) need a look. Overrides: data/not-farm.json (counts the kills again), or data/reviewed.json \"cleared\" / \"fluke\" / \"bad-luck\".";
+    $("stalkerRule").textContent = stalkerRuleText();
     try { sessionStorage.removeItem("ps2-elite-kd:redflags:v6"); sessionStorage.removeItem("ps2-elite-kd:redflags:v7"); sessionStorage.removeItem("ps2-elite-kd:redflags:v8"); sessionStorage.removeItem("ps2-elite-kd:redflags:v9"); sessionStorage.removeItem("ps2-elite-kd:redflags:v10"); } catch { /* ignore */ }
 
     function ago(t) {
@@ -627,8 +675,10 @@
       const e = radarOf(slug);
       const url = radarProfileUrl(cid || (e && e.cid) || cidBySlug.get(slug) || "");
       if (!url) return "";
-      const b = radarBadge(e);
-      return '<span class="st-radar"><a href="' + esc(url) + '" target="_blank" rel="noopener noreferrer" title="Open on PS2 Radar (independent community cheat radar)">PS2 Radar</a>' +
+      let b = radarBadge(e);
+      const tip = b ? b.tip : "Open on PS2 Radar (independent community cheat radar)";
+      if (b && !b.cls && /^not (stored|assessed)$/i.test(b.text)) b = null;   // nothing to say: keep the row quiet (details in the link's hover)
+      return '<span class="st-radar"><a href="' + esc(url) + '" target="_blank" rel="noopener noreferrer" title="' + esc(tip) + '">PS2 Radar</a>' +
         (b ? '<span class="st-rb' + (b.cls ? " " + b.cls : "") + '" title="' + esc(b.tip) + '">' + esc(b.text) + "</span>" : "") + "</span>";
     }
 
@@ -645,7 +695,8 @@
         (rv ? '<div class="st-ok" style="font-size:0.8em" title="' + esc(rv.note) + '">reviewed: ' + esc(rv.decision) + (rv.at ? " (" + esc(rv.at) + ")" : "") + "</div>" : "") +
         "";
       const hot = pats.flatMap((p) => TAGS[p].hot);
-      const skillCell = (r.basis === "ivi" ? "IvI " + fmt(r.ivi, 0) : "🎯🎈 " + fmt(r.adj, 0)) + ' <span class="st-tier">' + esc(r.tier) + "</span>";
+      // The numbers are in the 🎯🎈 ivi / IvI columns; this cell only says which tier (and on which basis).
+      const skillCell = '<span class="st-tier" title="Judged on ' + (r.basis === "ivi" ? "public IvI " + fmt(r.ivi, 0) : "🎯🎈 ivi " + fmt(r.adj, 0)) + '">' + esc(r.tier) + "</span>" + (r.basis === "ivi" ? ' <span class="st-dim">(IvI)</span>' : "");
       const cell = (k, v, d) => '<td class="st-num' + (hot.includes(k) ? " st-low" : "") + '">' + fmt(v, d) + "</td>";
       // 📉 cross-reference (bins.mjs: 🚩 + chart issues → one 🚩 row + a link to the 📉 entry); filled by applyXrefs().
       const xref = '<div class="st-xref" data-xref="' + esc(r.slug) + '"></div>';
@@ -710,8 +761,7 @@
           '<td class="st-num">' + fmt(r.adjs, 0) + '</td><td class="st-num">' + fmt(r.kd, 2) + "</td>" +
           '<td title="' + esc(r.savedAt ? new Date(r.savedAt).toLocaleString() : "") + '">' + esc(ago(r.savedAt)) + "</td></tr>";
       }).join("");
-      $(L.box).innerHTML = '<div class="st-dim">' + list.length + " player" + (list.length === 1 ? "" : "s") + ", " + open + (kind === "padding" ? " borderline (need a look)." : " not reviewed yet.") + " After each farm account: the player's kills on it / its kills on the player." +
-        (kind === "padding" ? " ⚔️ iVi / KD are after the exclusion." : "") + "</div>" +
+      $(L.box).innerHTML = '<div class="st-dim" title="After each farm account: the player’s kills on it / its kills on the player.' + (kind === "padding" ? " ⚔️ iVi / KD are after the exclusion." : "") + '">' + list.length + " player" + (list.length === 1 ? "" : "s") + " · " + open + (kind === "padding" ? " borderline, need a look" : " not reviewed yet") + "</div>" +
         '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th></th><th>Farm kills excluded</th><th>Review</th>' +
         '<th class="st-num">⚔️ iVi</th><th class="st-num">KD</th><th>Updated</th></tr>' + body + "</table></div>";
       applyXrefs();
@@ -768,11 +818,9 @@
       cnt.textContent = String(players.length);
       cnt.classList.toggle("hot", bad > 0);
       anomState.guardOpen = bad; updateAnomCount();
-      $("guardRule").textContent = "Rule: " + (g.rule || "");
-      $("guard").innerHTML = "<div" + (bad ? ' class="st-err"' : "") + ">" + players.length + " player" + (players.length === 1 ? "" : "s") + ": " +
-        bad + " unexplained, " + (players.length - bad) + " explained; " +
-        players.filter((p) => !(p.red || []).length).length + " chart-only, " + players.filter((p) => (p.red || []).length).length + " also in 🚩 (" + hits + " metric hit" + (hits === 1 ? "" : "s") + ") · checked " +
-        esc(g.checkedAt ? ago(Date.parse(g.checkedAt)) : "—") + "</div>" +
+      $("guardRule").textContent = "Far out = " + (g.rule || "") + ".";
+      $("guard").innerHTML = "<div" + (bad ? ' class="st-err"' : "") + ' title="' + players.filter((p) => !(p.red || []).length).length + " chart-only, " + players.filter((p) => (p.red || []).length).length + " also in 🚩, " + hits + " metric hit" + (hits === 1 ? "" : "s") + '">' + players.length + " player" + (players.length === 1 ? "" : "s") + " · " +
+        bad + " unexplained · checked " + esc(g.checkedAt ? ago(Date.parse(g.checkedAt)) : "—") + "</div>" +
         guardTables(players);
       function guardTables(players) {
         const head = '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th class="st-num">#</th><th>Metrics far out (value, z)</th><th>Why</th></tr>';
@@ -787,11 +835,11 @@
               : esc(p.reason);
             return '<tr id="chart-out-' + esc(p.slug || "") + '"><td' + (p.explained ? "" : ' class="st-err"') + ">" + nameCell({ name: p.name, cid: "" }) + radarCell(p.slug) + '</td><td class="st-num">' + p.metrics.length +
               '</td><td class="st-metrics">' + ms + '</td><td class="st-why">' +
-              (p.explained ? why : '<span class="st-err">unexplained: check for a formula gap</span>') + "</td></tr>";
+              (p.explained ? why : '<span class="st-err" title="Unexplained: may be a formula gap">needs a look</span>') + "</td></tr>";
         };
         const un = players.filter((p) => !p.explained), ex = players.filter((p) => p.explained);
         return (un.length ? head + un.map(rowOf).join("") + "</table></div>" : "") +
-          (ex.length ? '<details><summary>✅ ' + ex.length + " explained, auto-accepted (t375u; no manual check)</summary>" + head + ex.map(rowOf).join("") + "</table></div></details>" : "");
+          (ex.length ? '<details><summary>✅ ' + ex.length + " explained (auto-accepted)</summary>" + head + ex.map(rowOf).join("") + "</table></div></details>" : "");
       }
     }
 
@@ -800,7 +848,7 @@
     /** 🔎 Session forensics (status.json forensics, build-ranks.mjs over data/forensics.json). */
     function renderForensics(status) {
       const f = status && status.forensics;
-      $("fxRule").textContent = "Rule: " + forensicsRuleText();
+      $("fxRule").textContent = forensicsRuleText();
       if (!f) { $("fxCount").textContent = "–"; $("fx").innerHTML = '<span class="st-dim">No check yet (written by the next refresh run).</span>'; return; }
       $("fxCount").textContent = String(f.flagged || 0);
       $("fxCount").classList.toggle("hot", (f.flagged || 0) > 0);
@@ -822,8 +870,8 @@
           '<br><span class="st-dim">0 s gaps ' + pct(w.zeroGapShare) + ", median gap " + (w.medianGap ?? "—") + " s, headshots " + pct(w.hs) + "</span></td>" +
           "<td>" + weap + "</td><td>" + vic + '<br><span class="st-dim">' + esc(acct) + "</span></td><td>" + notes + "</td></tr>";
       }).join("");
-      $("fx").innerHTML = '<div class="st-dim">' + (f.analyzed || 0) + " player(s) analyzed · " + (f.flagged || 0) + " 🚩 · " + (f.review || 0) + " 📉 review · " +
-        ((f.candidates || []).length) + " candidates in line · checked " + esc(f.checkedAt ? ago(Date.parse(f.checkedAt)) : "—") + "</div>" +
+      $("fx").innerHTML = '<div class="st-dim">' + (f.analyzed || 0) + " analyzed · " + (f.flagged || 0) + " 🚩 · " + (f.review || 0) + " 📉 · " +
+        ((f.candidates || []).length) + " waiting · checked " + esc(f.checkedAt ? ago(Date.parse(f.checkedAt)) : "—") + "</div>" +
         (rows ? '<div class="st-scroll"><table class="st-table"><tr><th>Player / session</th><th class="st-num">Kills / deaths</th><th>Kill rate</th><th>Top weapons</th><th>Victims / account</th><th>Findings</th></tr>' + rows + "</table></div>" : "");
     }
 
@@ -843,7 +891,7 @@
       const tbl = (title, g) => "<h4>" + title + " · " + ((g && g.count) || 0) + " players</h4>" + (g && g.top && g.top.length ?
         '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th class="st-num">K/D</th><th class="st-num">KPM</th><th class="st-num">iVi</th><th class="st-num">Assists / kill</th><th class="st-num">Dmg share</th><th class="st-num">Kills</th></tr>' +
         g.top.map((r) => "<tr><td>" + (r.flagged ? "🚩 " : "") + esc(r.name) + '</td><td class="st-num">' + n3(r.kd) + '</td><td class="st-num">' + n3(r.kpm) + '</td><td class="st-num">' + (r.ivi == null ? "—" : Math.round(r.ivi)) + '</td><td class="st-num">' + n3(r.apk) + '</td><td class="st-num">' + (r.share == null ? "—" : Math.round(r.share * 100) + "%") + '</td><td class="st-num">' + r.kills + "</td></tr>").join("") + "</table></div>" : '<div class="st-dim">None.</div>');
-      $("assistGroups").innerHTML = "<div>Coverage: " + (c.measured || 0) + " of " + (c.players || 0) + " players (" + (c.measuredPct || 0) + "%) have enough session data; " + (c.withSessions || 0) + " have some. Cut-offs: K/D ≥ " + n3(k.kd) + ", damage share ≥ " + Math.round((k.shareHi || 0) * 100) + "% / ≤ " + Math.round((k.shareLo || 0) * 100) + "%, assists / kill ≥ " + n3(k.apk) + " (median " + n3(k.medApk) + "), iVi " + Math.round(k.iviLo || 0) + "–" + Math.round(k.iviHi || 0) + " · checked " + esc(a.checkedAt ? ago(Date.parse(a.checkedAt)) : "—") + "</div>" +
+      $("assistGroups").innerHTML = '<div title="Cut-offs: K/D ≥ ' + n3(k.kd) + ", damage share ≥ " + Math.round((k.shareHi || 0) * 100) + "% / ≤ " + Math.round((k.shareLo || 0) * 100) + "%, assists / kill ≥ " + n3(k.apk) + " (median " + n3(k.medApk) + "), iVi " + Math.round(k.iviLo || 0) + "–" + Math.round(k.iviHi || 0) + '">' + (c.measured || 0) + " of " + (c.players || 0) + " players measured (" + (c.measuredPct || 0) + "%) · checked " + esc(a.checkedAt ? ago(Date.parse(a.checkedAt)) : "—") + "</div>" +
         tbl("💪 Carries fights", G.carries) + tbl("🎯 Finishers", G.finishers) + tbl("🤝 Hidden support", G.support) + tagTbl(a);
     }
     function renderSession(status) {
@@ -861,10 +909,9 @@
       $("sessCount").classList.toggle("hot", flagged.length > 0);
       $("sessFlagCount").textContent = String(flagged.length);
       $("sessSummary").title = s.ruleText || "";
-      $("sessRule").textContent = "Rule: " + (s.ruleText || "") + " Minimum: " + ((s.min && s.min.MIN_KILLS) || 100) + " kills in counted sessions.";
-      $("sessCoverage").innerHTML = "<div>" + (c.withSessions || 0) + " of " + (c.players || 0) + " cached players have session data (" + (c.sessions || 0) + " sessions, " +
-        (c.kills || 0).toLocaleString() + " kills); " + (c.measured || 0) + " measured (≥ " + ((s.min && s.min.MIN_KILLS) || 100) + " kills). Full XP detail: " +
-        (c.xpPlayers || 0) + " players (" + (c.xpSessions || 0) + " sessions), " + (c.xpMeasured || 0) + " measured; XP-only metrics join the outlier guard at 50 measured players. · checked " +
+      $("sessRule").textContent = (s.ruleText || "") + " Minimum: " + ((s.min && s.min.MIN_KILLS) || 100) + " kills in counted sessions.";
+      $("sessCoverage").innerHTML = '<div title="' + (c.sessions || 0) + " sessions, " + (c.kills || 0).toLocaleString() + " kills. Full XP detail: " + (c.xpPlayers || 0) + " players (" + (c.xpSessions || 0) + " sessions), " + (c.xpMeasured || 0) + ' measured; XP-only metrics join the outlier guard at 50 measured players.">' +
+        (c.withSessions || 0) + " of " + (c.players || 0) + " players have session data · " + (c.measured || 0) + " measured (≥ " + ((s.min && s.min.MIN_KILLS) || 100) + " kills) · checked " +
         esc(s.checkedAt ? ago(Date.parse(s.checkedAt)) : "—") + "</div>";
       const ev = (r) => "assists/kill <strong>" + nfmt(r.apk) + "</strong>, headshots " + (r.hs == null ? "—" : "<strong>" + Math.round(r.hs * 100) + "%</strong>") + " (" + esc(r.hsSrc || "—") +
         "), K/D <strong>" + nfmt(r.kd) + "</strong> (" + esc(r.kdSrc || "—") + ")";
@@ -891,7 +938,7 @@
       $("sessOutCount").textContent = String(outs.length);
       $("sessOutCount").classList.toggle("hot", (s.outliersUnexplained || 0) > 0);
       $("sessOut").innerHTML = outs.length
-        ? '<div class="st-dim">Also listed in 📉 Chart anomalies → 🧪 Outlier guard.</div><div class="st-scroll"><table class="st-table"><tr><th>Player</th><th>Metrics far out</th><th>Why</th></tr>' +
+        ? '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th>Metrics far out</th><th>Why</th></tr>' +
           outs.map((g) => '<tr><td><a href="#chart-out-' + esc(g.slug) + '" class="st-jump">' + esc(g.name) + ' ↑</a></td><td class="st-metrics">' + g.metrics.map((m) => esc(m.label) + " <strong>" + nfmt(m.value) + "</strong>" + (m.side === "low" ? " ↓" : "")).join(", ") +
             "</td><td>" + (g.explained ? esc(g.reason) : '<span class="st-err">unexplained</span>') + "</td></tr>").join("") + "</table></div>"
         : '<div class="st-dim">None under the guard rule (robust z beyond ±6 and far past p99).</div>';
@@ -952,7 +999,7 @@
         ? '<div style="margin-top:6px;">✅ Exempted by the owner: ' + b.cleared.map((c) => nameCell(c) + (c.veh != null ? " (vehicle " + c.veh + "% + MAX " + c.max + "%)" : "")).join(", ") + "</div>"
         : '<div class="st-dim" style="margin-top:6px;">No owner exemptions.</div>';
       $("vcut").innerHTML =
-        '<div class="st-dim" style="margin-bottom:6px;">' + Number(b.cut).toLocaleString() + " of " + Number(b.withData).toLocaleString() + " players with infantry data are cut (" + bk + "). Ranks among " + Number(b.ranked).toLocaleString() + " ranked players by ⚔️ adjusted iVi; “before” = without this cut. Showing the " + items.length + " highest-ranked cut players.</div>" +
+        '<div class="st-dim" style="margin-bottom:6px;" title="' + esc(bk) + '">' + Number(b.cut).toLocaleString() + " of " + Number(b.withData).toLocaleString() + " players cut · top " + items.length + " shown · “before” = without the cut (ranks among " + Number(b.ranked).toLocaleString() + ")</div>" +
         '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th>Vehicle kills</th><th>Vehicle cut</th><th>MAX kills</th><th>MAX cut</th><th>Total cut</th><th>iVi before</th><th>iVi after</th><th>Rank before</th><th>Rank after</th></tr>' +
         items.map((i) => {
           const pc = (v) => (v != null ? v + "%" : "—"), cut = (v) => (v > 0 ? "−" + v + "%" : "—");
@@ -970,7 +1017,7 @@
       $("poopCount").textContent = b ? String(b.penalized) : "?";
       $("poopRule").textContent = b ? b.rule : "";
       $("poop").innerHTML = !b ? "Not built yet (next refresh)." : items.length
-        ? '<div class="st-dim" style="margin-bottom:6px;">' + b.penalized + " penalized, " + b.cleared + " cleared by the owner. Ranks among " + Number(b.ranked).toLocaleString() + " ranked players by ⚔️ adjusted iVi.</div>" +
+        ? '<div class="st-dim" style="margin-bottom:6px;">' + b.penalized + " penalized · " + b.cleared + " cleared by the owner</div>" +
           '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th>iVi before</th><th>iVi after</th><th>Rank before</th><th>Rank after</th><th>Status</th></tr>' +
           items.map((i) => "<tr><td>" + nameCell(i) + (i.status === "penalized" ? " 💩" : "") + "</td><td>" + n(i.before) + "</td><td>" + n(i.after) + (i.fixedDrop ? ' <span class="st-dim" title="Score at or below 0: fixed drop instead of −10%">(fixed drop)</span>' : "") +
             "</td><td>" + rk(i.rankBefore) + "</td><td>" + rk(i.rankAfter) + "</td><td>" + (i.status === "penalized" ? "−10% iVi" : "✅ cleared (owner)") + "</td></tr>").join("") + "</table></div>"
@@ -988,7 +1035,7 @@
       $("burstCount").textContent = b ? String(b.flaggedPlayers) : "?";
       $("burstCount").classList.toggle("hot", !!(b && b.flaggedPlayers));
       $("burst").innerHTML = !b ? "Not built yet (next refresh)." : items.length
-        ? '<div class="st-dim" style="margin-bottom:6px;">' + b.sessions + " session(s): " + b.flaggedPlayers + " player(s) to review, " + b.clearedPlayers + " cleared, " + b.hiddenPlayers + " already hidden / confirmed.</div>" +
+        ? '<div class="st-dim" style="margin-bottom:6px;">' + b.sessions + " sessions · " + b.flaggedPlayers + " to check · " + b.clearedPlayers + " cleared · " + b.hiddenPlayers + " already hidden</div>" +
           '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th>Kills</th><th>Min</th><th>KPM</th><th>Session start</th><th>Status</th><th></th></tr>' +
           items.map((i) => "<tr><td>" + nameCell(i) + "</td><td>" + i.kills + "</td><td>" + i.minutes + "</td><td>" + i.kpm + "</td><td>" + esc(when(i.startMs)) + "</td><td>" + badge(i) +
             '</td><td><a href="https://wt.honu.pw/s/' + encodeURIComponent(i.session) + '" target="_blank" rel="noopener noreferrer">Honu session</a></td></tr>').join("") + "</table></div>"
@@ -1051,7 +1098,7 @@
         return '<tr id="stalker-' + esc(r.slug) + '"><td>' + nameCell(r) + " 🚗" + radarCell(r.slug, r.cid) + "</td><td>" + chart + '</td><td class="st-num">' + fmt(r.kd, 1) +
           '</td><td class="st-num">' + fmt(r.kpm, 2) + '</td><td class="st-num">' + fmt(r.hsr, 1) + '</td><td class="st-num">' + fmt(r.acc, 1) + '</td><td class="st-num">' + fmt(r.ivi, 0) + "</td></tr>";
       }).join("");
-      $("stalker").innerHTML = '<div class="st-dim">' + list.length + " player" + (list.length === 1 ? "" : "s") + ", out of 🚩 automatically.</div>" +
+      $("stalker").innerHTML = '<div class="st-dim">' + list.length + " player" + (list.length === 1 ? "" : "s") + "</div>" +
         '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th></th><th class="st-num">KD</th><th class="st-num">KPM</th><th class="st-num">HSR %</th><th class="st-num">Acc %</th><th class="st-num">IvI</th></tr>' + body + "</table></div>";
     }
 
@@ -1113,23 +1160,37 @@
     setInterval(() => { refreshFlags(); refreshGuard(); }, POLL_MS);
   </script>
 <script>
-/* Status bar: plain text only (textContent), from data/status.json. */
+/* At-a-glance tiles: run state + Honu from data/status.json (plain text only),
+   section tiles mirror their section's count badge (and its "hot" state). */
 window.renderStatusBar = function (st) {
   var set = function (id, text) { var el = document.getElementById(id); if (el) el.textContent = text; };
   if (!st) { set("sbState", "Status unavailable"); return; }
   var lr = st.lastRun || {};
-  var when = lr.endedAt ? new Date(lr.endedAt).toLocaleString() : "never";
-  var updated = (lr.updated || []).length, added = (lr.added || []).length, failed = (lr.failed || []).length;
-  var state;
-  if (st.running) state = "🟢 Refresh running";
-  else if (lr.stoppedEarly) state = "🟠 Last run stopped early: " + lr.stoppedEarly;
-  else state = "⚪ Idle";
-  set("sbState", state);
-  set("sbLast", "Last run finished " + when + " · updated " + updated + " · added " + added + " · failed " + failed);
-  if (lr.honu) set("sbHonu", "Honu today " + lr.honu.calls + " / " + lr.honu.cap + " (pacing 10/min)");
-  var unexplained = st.outlierGuard && st.outlierGuard.unexplained;
-  set("sbReview", "Unreviewed outliers: " + (unexplained == null ? "?" : unexplained) + " · open a section below to review");
+  var t = lr.endedAt ? Date.parse(lr.endedAt) : NaN;
+  var s = isFinite(t) ? Math.max(0, Math.round((Date.now() - t) / 1000)) : null;
+  var ago = s == null ? "never" : s < 3600 ? Math.round(s / 60) + " min ago" : s < 172800 ? Math.round(s / 3600) + " h ago" : Math.round(s / 86400) + " d ago";
+  set("sbState", st.running ? "🟢 Refresh running" : lr.stoppedEarly ? "🟠 Stopped early" : "⚪ Idle");
+  var el = document.getElementById("sbState"); if (el) el.title = lr.stoppedEarly ? "Last run stopped early: " + lr.stoppedEarly : "";
+  set("sbLast", "Last run " + ago + " · " + (lr.updated || []).length + " updated · " + (lr.added || []).length + " new · " + (lr.failed || []).length + " failed");
+  var k = function (n) { return n >= 1000 && n % 1000 === 0 ? n / 1000 + "k" : String(n); };
+  if (lr.honu) { set("sbHonu", lr.honu.calls + " / " + k(lr.honu.cap)); var h = document.getElementById("sbHonu"); if (h) h.title = lr.honu.calls + " of " + lr.honu.cap + " Honu calls today (UTC), paced 10 a minute"; }
 };
+(function () {
+  document.querySelectorAll(".st-tile[data-count]").forEach(function (tile) {
+    var src = document.getElementById(tile.getAttribute("data-count"));
+    var val = tile.querySelector(".st-tv");
+    if (!src || !val) return;
+    var sync = function () {
+      var v = (src.textContent || "").trim() || "0";
+      val.textContent = v;
+      tile.classList.toggle("hot", src.classList.contains("hot"));
+      tile.classList.toggle("zero", /^0$|^–$/.test(v));
+      if (src.title) tile.title = src.title;
+    };
+    new MutationObserver(sync).observe(src, { childList: true, characterData: true, subtree: true, attributes: true, attributeFilter: ["class", "title"] });
+    sync();
+  });
+})();
 </script>
 </body>
 </html>
