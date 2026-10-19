@@ -6,24 +6,25 @@ import { outlierReport, OUTLIER_RULE } from "../oracle-worker/src/outliers.js";
 const entry = (id, kills, deaths, minutes) => ({ characterID: id, kills, deaths, secondsOnline: minutes * 60 });
 const char = (id, name, factionID, outfitTag = null) => ({ id, name, factionID, outfitTag });
 
-test("flags KD>=5 & KPM>=2 as early, KPM>=3 as confirmed, above the sample floor", () => {
+test("flags KD>=6 & KPM>=3 as early, KPM>=4 as confirmed, above the sample floor", () => {
   const rep = outlierReport({
     entries: [
-      entry("1", 300, 20, 90),  // KD 15, KPM 3.33 -> confirmed
-      entry("2", 120, 20, 50),  // KD 6, KPM 2.4 -> early
+      entry("1", 300, 20, 90),  // KD 15, KPM 3.33 -> early
+      entry("2", 240, 20, 50),  // KD 12, KPM 4.8 -> confirmed
       entry("3", 60, 20, 20),   // KD 3 -> no
       entry("4", 24, 0, 8),     // under floor (8 min, 24 kills) -> no
-      entry("5", 200, 39, 60),  // KD 5.13, KPM 3.33 -> confirmed
-      entry("6", 50, 50, 60),
+      entry("5", 200, 39, 60),  // KD 5.13 < 6 -> no (KD bar)
+      entry("6", 50, 50, 60),   // KD 1 -> no
+      entry("7", 150, 25, 60),  // KD 6, KPM 2.5 < 3 -> no (KPM bar)
     ],
-    characters: [char("1", "Ace", 1, "TAG"), char("2", "Bee", 2), char("3", "Cee", 3), char("4", "Dee", 1), char("5", "Eff", 4), char("6", "Gee", 3)],
+    characters: [char("1", "Ace", 1, "TAG"), char("2", "Bee", 2), char("3", "Cee", 3), char("4", "Dee", 1), char("5", "Eff", 4), char("6", "Gee", 3), char("7", "Heh", 2)],
   });
-  assert.equal(rep.players, 6);
-  assert.equal(rep.flagged, 3);
-  assert.equal(rep.confirmed, 2);
-  assert.deepEqual(rep.outliers.map((o) => [o.name, o.severity]), [["Ace", "confirmed"], ["Eff", "confirmed"], ["Bee", "early"]]);
-  assert.equal(rep.outliers[0].outfit, "TAG");
-  assert.equal(rep.outliers[1].faction, "NSO");
+  assert.equal(rep.players, 7);
+  assert.equal(rep.flagged, 2);
+  assert.equal(rep.confirmed, 1);
+  assert.deepEqual(rep.outliers.map((o) => [o.name, o.severity]), [["Bee", "confirmed"], ["Ace", "early"]]);
+  assert.equal(rep.outliers[1].outfit, "TAG");
+  assert.equal(rep.outliers[1].faction, "VS");
   assert.deepEqual(rep.faction.VS, { kills: 324, deaths: 20, players: 2, kd: 16.2 });
   assert.equal(rep.faction.TR.kd, 1.57);
 });
@@ -42,7 +43,7 @@ test("burst tier (#21): short blatant sessions are ☠️, a short spawn camp is
       entry("3", 8, 0, 3),        // 3-min 8-kill spawn camp -> no
       entry("4", 14, 0, 2),       // KPM 7 but < 15 kills -> no
       entry("5", 20, 0, 1.5),     // < 2 min -> no
-      entry("6", 300, 20, 90),    // normal confirmed tier kept
+      entry("6", 360, 20, 90),    // KD 18, KPM 4 -> normal confirmed tier kept
     ],
     characters: [char("1", "Quick", 1), char("2", "Storm", 2), char("3", "Camp", 3), char("6", "Ace", 1)],
   });

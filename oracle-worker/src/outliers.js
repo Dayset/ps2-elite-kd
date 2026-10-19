@@ -3,9 +3,9 @@
  * (GET wt.honu.pw/api/alerts/{world}/{instance}/participants, available once the
  * alert has ended). Pure functions, no I/O.
  *
- * Rule (old pipeline's tiers, oracle/README "outlier flags"):
- *   KD >= 5 and KPM >= 2  -> "early"      ⚠️
- *   KD >= 5 and KPM >= 3  -> "confirmed"  ☠️
+ * Rule:
+ *   KD >= 6 and KPM >= 3  -> "early"      ⚠️
+ *   KD >= 6 and KPM >= 4  -> "confirmed"  ☠️
  * Sample floor (added here so a lucky 5-minute spawn camp is not flagged):
  *   at least MIN_MINUTES online and MIN_KILLS kills.
  * Burst tier (#21), for short blatant sessions the floor lets through, no KD or
@@ -15,7 +15,7 @@
  * A flag is a statistical outlier, never an accusation; PS2 Radar is shown as a
  * second opinion only.
  */
-export const OUTLIER_RULE = Object.freeze({ KD: 5, KPM_EARLY: 2, KPM_CONFIRMED: 3, MIN_MINUTES: 10, MIN_KILLS: 25, MAX_LISTED: 10,
+export const OUTLIER_RULE = Object.freeze({ KD: 6, KPM_EARLY: 3, KPM_CONFIRMED: 4, MIN_MINUTES: 10, MIN_KILLS: 25, MAX_LISTED: 10,
   BURST_KPM: 5, BURST_KILLS: 15, BURST_MIN_MINUTES: 2 });
 
 const FAC = { 1: "VS", 2: "NC", 3: "TR", 4: "NSO" };
