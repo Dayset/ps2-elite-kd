@@ -45,7 +45,8 @@ header h1 span { color: var(--accent); }
 .grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: var(--s-4); }
 @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
 .card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--r-lg); padding: var(--s-4); min-width: 0; }
-.card h2 { font-size: var(--fs-14); text-transform: uppercase; letter-spacing: .08em; color: var(--dim); margin: 0 0 var(--s-3); font-weight: 600; }
+/* Section headers in the main site style (#30, same as build-log .st-card h2): normal case, bold, accent. */
+.card h2 { font-size: 0.95rem; text-transform: none; letter-spacing: normal; color: var(--accent); margin: 0 0 var(--s-3); font-weight: 600; }
 .title { display: flex; align-items: baseline; gap: var(--s-3); flex-wrap: wrap; margin-bottom: var(--s-3); }
 .title b { font-size: var(--fs-20); }
 .badge { font-size: var(--fs-12); padding: 2px var(--s-2); border-radius: var(--r-pill); border: 1px solid var(--border); color: var(--muted); }
@@ -263,10 +264,13 @@ footer { color: var(--dim); font-size: var(--fs-12); margin-top: var(--s-5); }
 .card > h2:has(> button.ch) { margin: 0; }
 .card > h2 > button.ch { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: var(--s-2); width: 100%; min-height: 32px; margin: 0 0 var(--s-3); cursor: pointer; font: inherit; color: inherit; letter-spacing: inherit; text-transform: inherit; border-radius: var(--r-sm); }
 .card > h2 > button.ch:focus-visible { box-shadow: var(--focus); }
-.card > h2 > button.ch:hover { color: var(--muted); }
-.ch .chev { margin-left: auto; width: 8px; height: 8px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg); transition: transform .15s ease; flex: none; }
+.card > h2 > button.ch:hover { opacity: .85; }
+/* Chevron on the left with the main site's ▾ / ▸ glyphs (build-log .st-sec summary::before). */
+.card > h2 > button.ch { gap: 0; }
+.ch .chev { order: -1; flex: none; display: inline-block; width: 1.1em; color: var(--dim); }
+.ch .chev::before { content: "▾"; }
 .card.collapsed > h2 > button.ch { margin-bottom: 0; }
-.card.collapsed .ch .chev { transform: rotate(-45deg); }
+.card.collapsed .ch .chev::before { content: "▸"; }
 .card.collapsed > :not(h2) { display: none !important; }
 .card.opening > :not(h2) { animation: secOpen .16s ease-out; }
 @keyframes secOpen { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
