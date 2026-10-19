@@ -171,6 +171,12 @@ export function rawSampleView(p) {
  * hardens. Same rule as the ≡ debug badge on the main page.
  */
 export function consistencyOf(p) {
+  const c = consistencyParts(p);
+  return c ? c.value : NaN;
+}
+
+/** consistencyOf with its two ends ({ lo, hi, value }: easiest / hardest third K/D, before the shared pace factor that cancels in the ratio), or null. columns.html worked example. */
+export function consistencyParts(p) {
   try {
     const kpm = p.own_kpm || p.global_kpm;
     const pf = kpm > 0 ? Math.min(1.0, Math.pow(kpm / 2.0, 2)) : 1;
@@ -179,16 +185,16 @@ export function consistencyOf(p) {
       .map((pt) => ({ x: pt.kpm, kd: pt.kd * pf }))
       .filter((pt) => pt.kd > 0)
       .sort((a, b) => a.x - b.x);
-    if (pts.length < 6) return NaN;
+    if (pts.length < 6) return null;
     const n = pts.length;
     const lo = pts.slice(0, Math.floor(n / 3));
     const hi = pts.slice(Math.ceil((2 * n) / 3));
     const avg = (arr) => arr.reduce((s, pt) => s + pt.kd, 0) / arr.length;
     const loAvg = avg(lo), hiAvg = avg(hi);
-    if (!(loAvg > 0)) return NaN;
-    return Math.max(0, Math.min(1, hiAvg / loAvg));
+    if (!(loAvg > 0)) return null;
+    return { lo: loAvg / pf, hi: hiAvg / pf, value: Math.max(0, Math.min(1, hiAvg / loAvg)) };
   } catch {
-    return NaN;
+    return null;
   }
 }
 
