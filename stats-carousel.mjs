@@ -112,7 +112,33 @@ export function mountStatsCarousel({ root, onChange }) {
     heads.forEach((h) => { for (let c = 0; c < n; c++) h[c].style.minWidth = Math.ceil(w[c]) + "px"; });
   }
   const queueSync = () => { if (!syncQueued) { syncQueued = true; requestAnimationFrame(syncColumns); } };
+  /* ----- t459u: every value cell gets the small grey tag slot -----
+   * Cells without a −5% / p99 tag get an invisible copy of one (same class,
+   * hidden, aria-hidden), so every cell has the same structure: on phones the
+   * number sits on the same line as its tagged neighbours (the tag stacks
+   * underneath), on PC nothing moves (the tag is out of the flow there).
+   * Text = the widest real tag in that column, so the column never widens. */
+  function fillTagSlots() {
+    for (const t of root.querySelectorAll(".sc-slide table")) {
+      const longest = [];
+      const bodyRows = [...t.querySelectorAll("tbody tr")];
+      for (const tr of bodyRows) [...tr.children].forEach((td, c) => {
+        const p = td.querySelector(".pct:not(.pct-ph)");
+        if (p && p.textContent.length > (longest[c] || "").length) longest[c] = p.textContent;
+      });
+      for (const tr of bodyRows) [...tr.children].forEach((td, c) => {
+        if (td.tagName !== "TD" || td.matches(".stats-name, .rk-pos-name") || td.querySelector(".pct")) return;
+        const ph = document.createElement("span");
+        ph.className = "pct pct-ph";
+        ph.setAttribute("aria-hidden", "true");
+        ph.textContent = longest[c] || "−0%";
+        td.appendChild(ph);
+      });
+    }
+  }
   const mo = new MutationObserver((recs) => {
+    // Runs before the next paint: the new rows never show without their slots.
+    if (recs.some((r) => r.type === "childList")) fillTagSlots();
     // Our own minWidth writes are attribute changes on th: ignore those.
     if (recs.some((r) => r.type === "childList")) queueSync();
   });
@@ -167,6 +193,7 @@ export function mountStatsCarousel({ root, onChange }) {
   });
 
   paint();
+  fillTagSlots();
   keepPlace();
   queueSync();
   return { go, mode: () => i, sync: queueSync };

@@ -44,7 +44,7 @@ import { infantryKillsUrl, summarizeInfantryKills } from "./infantry.mjs?v=20261
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261015-tip1";
 import { createWheelSwiper } from "./dist-cycle.mjs?v=20261017-cycle15";
 import { slideSwap, attachDragCarousel } from "./chart-slide.mjs?v=20261017-drag3";
-import { mountStatsCarousel } from "./stats-carousel.mjs?v=20261019-carousel3";
+import { mountStatsCarousel } from "./stats-carousel.mjs?v=20261020-tagslots";
 import { pickGraphForKeys } from "./graph-keys.mjs?v=20261017-graphkeys1";
 import { entryFetchedAt, pickNewest, writeWithEviction } from "./cache-pick.mjs?v=20261010-sav1";
 import {
