@@ -288,8 +288,29 @@ export function initRankings(host) {
     all.forEach((r, i) => { r.rank = i + 1; });
   }
 
+  // Fixed metric column widths in ch (Dayset 2026-10-19): with
+  // table-layout: fixed these come from the header row, so widths never depend
+  // on which data rows happen to be rendered — no jumping on sort / tier toggle.
+  // Sized to fit the header label + sort indicator, the widest thing in the column.
+  const COL_W = {
+    adjs: 9, act: 13, pvs: 10, rf: 11, cons: 10, apk: 12, rkd: 8, inf: 13,
+    mech: 11, adj: 10, ekpm: 8, own: 10, coi: 9, slope: 10, inflation: 13,
+    kd: 8, kpm: 8, ownKpm: 12, acc: 8, hsr: 8, ivi: 8,
+  };
+
   function renderHead() {
     const cols = colList();
+    // Fixed column widths via <colgroup> (Dayset 2026-10-19): with
+    // table-layout: fixed the colgroup wins over cell widths, so widths never
+    // depend on which data rows happen to be rendered — no jumping on sort or
+    // tier toggle. The name column's width lives in CSS (media queries).
+    const colEls = [
+      `<col style="width:1.6rem">`,
+      `<col style="width:2.6rem">`,
+      `<col class="rk-name-col">`,
+    ];
+    for (const c of cols) colEls.push(`<col style="width:${COL_W[c.id] || 10}ch">`);
+    $("ranksCols").innerHTML = colEls.join("");
     const cells = [
       `<th class="rk-pick" scope="col" title="Pick up to ${MAX_NAMES} to Compare"></th>`,
       `<th class="rk-num" scope="col" title="Rank under the current sort">#</th>`,

@@ -66,7 +66,7 @@
       });
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261019-scsplit" />
+  <link rel="stylesheet" href="styles.css?v=20261019-fixcols" />
   <style>
     /* Installed-app launch splash (t450u–t456u). The whole transparent logo
        (favicon-512x512.png, 512×512 file) drawn at a fixed 188×188 px, medal ≈ 181 px
@@ -340,6 +340,7 @@
     </div>
     <div class="ranks-table-wrap" id="ranksScroll" style="content-visibility: auto; contain-intrinsic-size: auto 800px;">
       <table class="ranks-table" id="ranksTable" aria-label="Rankings">
+        <colgroup id="ranksCols"></colgroup>
         <thead id="ranksHead"></thead>
         <tbody id="ranksBody"></tbody>
       </table>

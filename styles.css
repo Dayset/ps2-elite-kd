@@ -2231,11 +2231,20 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--panel);
+  /* Always reserve the vertical scrollbar gutter (Dayset 2026-10-19): if the
+   * scrollbar appears/disappears as sorts or tier toggles change the row
+   * count, the inner width changes and fixed-layout columns still shift. */
+  scrollbar-gutter: stable;
 }
 .ranks-table {
-  width: max-content; min-width: 100%;
+  width: 100%;
   border-collapse: separate; border-spacing: 0;
   font-size: 0.8rem; font-variant-numeric: tabular-nums;
+  /* Fixed layout (Dayset 2026-10-19): column widths come from the <colgroup>,
+   * never from the rendered data rows — sorting or collapsing tiers no longer
+   * makes the table jump. (width must be definite, not max-content, or the
+   * browser still measures cell content in fixed layout.) */
+  table-layout: fixed;
 }
 .ranks-table th, .ranks-table td {
   padding: 0.28rem 0.35rem;
@@ -2255,8 +2264,9 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
 .ranks-table thead th.sortable:hover,
 .ranks-table thead th.sortable.sorted { color: var(--accent); }
 .ranks-table .sort-ind {
-  display: inline-block; min-width: 0.85em; margin-left: 0.15rem;
+  display: inline-block; width: 0.85em; margin-left: 0.15rem;
   font-size: 0.7em; opacity: 0.35; vertical-align: middle;
+  text-align: center; overflow: hidden;
 }
 .ranks-table .sort-ind.active { opacity: 1; }
 /* Sticky left: checkbox + # + Player */
@@ -2273,6 +2283,11 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
   position: sticky; left: 4.2rem; z-index: 1; font-weight: 600;
   box-shadow: 4px 0 8px -4px var(--shadow);
 }
+/* Name column width under table-layout: fixed (Dayset 2026-10-19) — mirrors
+ * the .nm caps below plus padding, so the column never jumps with content. */
+.ranks-table col.rk-name-col { width: 21ch; }
+@media (min-width: 601px) { .ranks-table col.rk-name-col { width: 31ch; } }
+@media (min-width: 1100px) { .ranks-table col.rk-name-col { width: 45ch; } }
 .ranks-table thead th.rk-pick,
 .ranks-table thead th.rk-num,
 .ranks-table thead th.rk-name { z-index: 4; }
