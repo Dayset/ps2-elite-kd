@@ -4671,6 +4671,41 @@ import {
   }
 
   if (els.fetchFresh) els.fetchFresh.addEventListener("change", updateFreshEta);
+
+  // 📝 Update log counter (Dayset 2026-10-20): "(N commits since Oct 7, 2026)"
+  // beside the footer link — page commits only: the repo's contributors list
+  // minus every [bot] identity (routine cache refreshes + service bots), so
+  // the number grows with real work. One API call, cached 6h in localStorage;
+  // on any failure the counter simply stays hidden.
+  (function pageCommitCount() {
+    const el = document.getElementById("pageCommitCount");
+    if (!el) return;
+    const show = (n) => {
+      if (n > 0) {
+        el.textContent = `(${n} commits since Oct 7, 2026)`;
+        el.hidden = false;
+      }
+    };
+    const KEY = "ps2ekd-page-commits";
+    try {
+      const c = JSON.parse(localStorage.getItem(KEY) || "null");
+      if (c && Date.now() - c.t < 6 * 3600e3) { show(c.n); return; }
+    } catch {}
+    fetch("https://api.github.com/repos/Dayset/ps2-elite-kd/contributors?per_page=100&anon=1")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((list) => {
+        if (!Array.isArray(list)) return;
+        let n = 0;
+        for (const c of list) {
+          const who = String(c.login || c.name || "");
+          if (/\[bot\]$/i.test(who)) continue;
+          if (Number.isFinite(c.contributions)) n += c.contributions;
+        }
+        try { localStorage.setItem(KEY, JSON.stringify({ t: Date.now(), n })); } catch {}
+        show(n);
+      })
+      .catch(() => {});
+  })();
   if (els.analyzeBtn) {
     els.analyzeBtn.addEventListener("click", () => {
       sfx("boop");

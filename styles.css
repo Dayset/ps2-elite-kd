@@ -1831,6 +1831,10 @@ footer .foot-about .ranks-meta { margin: 0; font-size: 0.78rem; }
 footer .footer-thanks { margin: 0; color: var(--dim); }
 footer .foot-links a { text-decoration: none; font-size: 0.82rem; width: fit-content; }
 footer .foot-links a:hover { text-decoration: underline; }
+/* "(N commits since Oct 7, 2026)" counter beside 📝 Update log (Dayset 2026-10-20):
+ * page commits only — the number grows as real commits land, bots excluded. */
+.foot-update-row { display: flex; align-items: baseline; gap: 0.45rem; flex-wrap: wrap; }
+.commit-count { color: var(--dim); font-size: 0.78rem; white-space: nowrap; }
 footer .footer-row { margin: 0; }
 footer .foot-switch { display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; user-select: none; min-height: 1.75rem; font-size: 0.8rem; color: var(--muted, var(--dim)); }
 footer .foot-switch:hover { color: var(--text); }
