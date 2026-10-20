@@ -27,14 +27,13 @@
 <link rel="stylesheet" href="../site-layout.css?v=20261019-graph564" />
 <link rel="stylesheet" href="oracle.css?v=20261018-focus1" />
 <style>
-  /* Installed-app launch splash (t450u–t453u). Draws the same picture Android
+  /* Installed-app launch splash (t450u–t455u). Draws the same picture Android
      12+ draws for this app's launch: the maskable icon (the WebAPK's adaptive
      launcher icon) as a 288×288 canvas seen through a 192 px circle
      (AOSP SplashscreenContentDrawer: starting_surface_icon_size 160dp ×
      splash_icon_no_background_scale_factor 1.2; adaptive canvas = 1.5× the
      visible mask). Fixed px only, frozen once by the script below, so a
-     viewport change can't move or rescale it. Tunable per phone from
-     the hidden debug page (localStorage "ps2-splash-tune"). */
+     viewport change can't move or rescale it. */
   .splash { display: none; }
   html.pwa-launch, html.pwa-launch body { background: #202020 !important; }
   html.pwa-launch .splash {
@@ -56,6 +55,9 @@
 </style>
 <script>
   (function () {
+    // t455u: the per-phone splash tuning was removed; clear any saved tune
+    // so it can never apply again (harmless when absent).
+    try { localStorage.removeItem("ps2-splash-tune"); } catch (e) {}
     try {
       var app = (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true;
       if (!app) return;
@@ -74,7 +76,7 @@
     <div class="splash-mask"><img class="splash-logo" data-src="../icon-maskable-512.png" width="512" height="512" alt="" decoding="sync" /></div>
   </div>
   <script>
-    // Installed-app splash (t450u–t453u): shown still, held at least 1 s and
+    // Installed-app splash (t450u–t455u): shown still, held at least 1 s and
     // until the page is parsed (its loading skeleton is
     // the first screen), then the whole overlay
     // fades out over 1 s and is removed. The fade is driven from JS (Web
@@ -90,27 +92,15 @@
       if (!sp || !mask || !img) { root.classList.remove("pwa-launch"); return; }
       // Image only in the installed app (already preloaded in <head>).
       img.src = img.getAttribute("data-src");
-      // Geometry: canvas 288 px seen through a 192 px circle, centred in the
-      // page; per-phone tweak from the hidden debug page. Frozen in px once.
-      var T = { canvas: 288, mask: 192, dy: 0, circle: 1 };
-      try {
-        var o = JSON.parse(localStorage.getItem("ps2-splash-tune") || "null");
-        if (o) {
-          if (o.canvas >= 96 && o.canvas <= 480) T.canvas = +o.canvas;
-          if (o.mask >= 64 && o.mask <= 480) T.mask = +o.mask;
-          if (o.dy >= -120 && o.dy <= 120) T.dy = +o.dy;
-          if (o.circle === 0 || o.circle === 1) T.circle = o.circle;
-        }
-      } catch (e) {}
+      // Canvas 288 px seen through a 192 px circle, centred in the page,
+      // frozen in px once.
+      var CANVAS = 288, MASK = 192;
       var w = window.innerWidth, h = window.innerHeight;
       if (w > 0 && h > 0) {
-        mask.style.width = mask.style.height = T.mask + "px";
         mask.style.margin = "0";
-        mask.style.left = Math.round(w / 2 - T.mask / 2) + "px";
-        mask.style.top = Math.round(h / 2 + T.dy - T.mask / 2) + "px";
-        mask.style.borderRadius = T.circle ? "50%" : "0";
-        img.style.width = img.style.height = T.canvas + "px";
-        img.style.left = img.style.top = Math.round((T.mask - T.canvas) / 2) + "px";
+        mask.style.left = Math.round(w / 2 - MASK / 2) + "px";
+        mask.style.top = Math.round(h / 2 - MASK / 2) + "px";
+        img.style.left = img.style.top = Math.round((MASK - CANVAS) / 2) + "px";
       }
       // The 1 s hold counts from the first frame the logo is actually on screen.
       var shownAt = Date.now(), fading = false;
