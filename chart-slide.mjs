@@ -270,7 +270,14 @@ export function attachDragCarousel(o) {
     st = { id: e.pointerId, x: e.clientX, y: e.clientY, phase: "pending", samples: [[t, e.clientX]], watchdog: 0 };
   }, { passive: true });
 
-  target.addEventListener("pointermove", (e) => {
+  /* t471u (owner, Pixel 9): a flick as fast as a human can do it froze the
+   * chart for ~2.5 s and then sprang back. The drag start redraws the chart,
+   * which removes the node the finger touched; if the pointer capture had not
+   * taken yet, the finger-up was hit-tested where it lifted (off the chart
+   * after a fast flick) and never reached `target`, so only the 2.5 s watchdog
+   * ended the drag. Moves and the finger-up are now heard on the window (capture
+   * phase) wherever they land, and the touched node's touchend is a backup. */
+  const onMove = (e) => {
     if (!st || e.pointerId !== st.id) return;
     const dx = e.clientX - st.x;
     const dy = e.clientY - st.y;
@@ -285,13 +292,21 @@ export function attachDragCarousel(o) {
     }
     st.samples.push([performance.now(), e.clientX]);
     if (st.samples.length > 6) st.samples.shift();
-  });
+    st.lx = e.clientX; st.ly = e.clientY;
+  };
+  window.addEventListener("pointermove", onMove, { capture: true, passive: true });
 
   const end = (e, cancelled) => {
     if (!st || e.pointerId !== st.id) return;
+    finishAt(e.clientX, e.clientY, cancelled);
+  };
+  const finishAt = (x, y, cancelled) => {
+    if (!st) return;
     if (st.phase !== "drag") { st = null; return; } // a tap: let the click through
-    const dx = e.clientX - st.x;
-    const dy = e.clientY - st.y;
+    const last = st.samples[st.samples.length - 1];
+    if (last && last[1] !== x) st.samples.push([performance.now(), x]);
+    const dx = x - st.x;
+    const dy = y - st.y;
     const s = st.samples;
     const [t0, x0] = s[0];
     const [t1, x1] = s[s.length - 1];
@@ -321,7 +336,13 @@ export function attachDragCarousel(o) {
       const dx = t.clientX - x0, dy = t.clientY - y0;
       if ((st && st.phase === "drag") || (st && Math.abs(dx) > 1.2 * Math.abs(dy))) ev.preventDefault();
     };
-    const done = () => {
+    const done = (ev) => {
+      // Backup for a finger-up that reached no pointer listener (see t471u).
+      const t = ev && ev.changedTouches && ev.changedTouches[0];
+      if (t && st && st.phase === "drag") {
+        const x = t.clientX, y = t.clientY, cancel = ev.type === "touchcancel";
+        setTimeout(() => { if (st && st.phase === "drag") finishAt(x, y, cancel); }, 50);
+      }
       node.removeEventListener("touchmove", move);
       node.removeEventListener("touchend", done);
       node.removeEventListener("touchcancel", done);
@@ -330,8 +351,8 @@ export function attachDragCarousel(o) {
     node.addEventListener("touchend", done);
     node.addEventListener("touchcancel", done);
   }, { passive: true });
-  target.addEventListener("pointerup", (e) => end(e, false));
-  target.addEventListener("pointercancel", (e) => end(e, true));
+  window.addEventListener("pointerup", (e) => end(e, false), { capture: true, passive: true });
+  window.addEventListener("pointercancel", (e) => end(e, true), { capture: true, passive: true });
   // Capture lost without a pointerup (browser took the gesture): spring back.
   target.addEventListener("lostpointercapture", (e) => { if (st && e.pointerId === st.id && st.phase === "drag") end(e, true); });
   document.addEventListener("visibilitychange", () => { if (document.hidden) landNow(); });

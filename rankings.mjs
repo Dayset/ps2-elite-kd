@@ -20,7 +20,7 @@ import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from ".
 import { groupByTier, openTierIds, pickedInGroup, groupIndexAt, tierOf } from "./tiers.mjs?v=20261017-tier1";
 import { createDistCycler, createWheelSwiper } from "./dist-cycle.mjs?v=20261017-cycle15";
 import { sfx } from "./sfx.mjs?v=20261020-poof";
-import { slideSwap, attachDragCarousel } from "./chart-slide.mjs?v=20261020-swipefix";
+import { slideSwap, attachDragCarousel } from "./chart-slide.mjs?v=20261020-flick1";
 import { mergeFreshRows } from "./rank-row.mjs?v=20261010-sav1";
 import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-sav1";
 import { confirmedPadderSlugs } from "./padding.mjs?v=20261020-i18n2";
