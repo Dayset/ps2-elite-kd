@@ -247,7 +247,7 @@ header.top-bar {
   font-size: 0.95rem;
   font-weight: 700;
   letter-spacing: 0.01em;
-  padding: 0 1.2rem;
+  padding: 0 0.55rem; /* slim, same as #analyzeBtn (Dayset 2026-10-20) */
   height: var(--ctl-h);
   white-space: nowrap;
 }
@@ -718,6 +718,22 @@ header .sub {
   .controls .names-box .clear-names { align-self: flex-start; }
 }
 
+/* Dayset 2026-10-20: phones — the options group (language / wipe / sounds /
+ * theme) sits inside the names field at its bottom-right (app.js moves the
+ * node here at this breakpoint). The field reserves a bottom strip so chips
+ * and the input never slide under it; the × stays pinned top-right. The
+ * fresh row then holds only 🆕 (absolute, left) and the ❓📖❓ link, which
+ * stays centered on the row. */
+@media (max-width: 600px) and (orientation: portrait) {
+  .controls .names-box { padding-bottom: 2.5rem; }
+  .controls .names-box .fresh-row-end {
+    position: absolute; right: 0.35rem; bottom: 0.35rem;
+    flex: none; z-index: 3;
+  }
+  .fresh-row { position: relative; justify-content: center; align-items: center; min-height: 1.9rem; }
+  .fresh-row .fresh-left { position: absolute; left: 0; top: 50%; transform: translateY(-50%); }
+}
+
 /* t355u: roomy typing — the typing spot always gets its own full-width line
    under the chips (a comfortable empty line to type into), bigger text for
    typed names and chips. Rankings' pick box uses the same numbers. */
@@ -740,7 +756,11 @@ header .sub {
   border: 1px solid #6cb2ff;
   font-weight: 700;
   font-size: 0.95rem;
-  padding: 0 1.2rem;
+  /* Slim side padding (Dayset 2026-10-20): long labels (de "Analysieren")
+   * fit the standard button footprint instead of stretching it; every
+   * language gets the same design. Matches #ranksLink below. */
+  padding: 0 0.55rem;
+  white-space: nowrap;
   box-sizing: border-box;
   height: var(--ctl-h);
   letter-spacing: 0.01em;

@@ -294,6 +294,24 @@ import {
   // ✨ Stats ⇄ 🏅 Positions share one spot (stats-carousel.mjs); same switch sound as the graph modes.
   if (!LIVE_MODE) mountStatsCarousel({ root: document.getElementById("statsCarousel"), onChange: (_i, o) => { if (!(o && o.poof)) sfx("sparkle"); }, onThumbGone: () => sfx("poof", { force: true }) });
 
+  // Dayset 2026-10-20: on phones (portrait) the options group (language /
+  // wipe / sounds / theme) lives inside the names field, bottom-right — the
+  // fresh row then holds only 🆕 and the centered ❓📖❓. The portrait CSS
+  // positions it there; this only moves the node with the breakpoint.
+  if (!LIVE_MODE) {
+    const phoneMq = matchMedia("(max-width: 600px) and (orientation: portrait)");
+    const placeOpts = () => {
+      const end = document.querySelector(".fresh-row-end");
+      const box = document.getElementById("namesBox");
+      const row = document.querySelector(".fresh-row");
+      if (!end || !box || !row) return;
+      if (phoneMq.matches) { if (end.parentElement !== box) box.appendChild(end); }
+      else if (end.parentElement !== row) row.appendChild(end);
+    };
+    placeOpts();
+    if (phoneMq.addEventListener) phoneMq.addEventListener("change", placeOpts);
+  }
+
   let players = [];
   let lastAnalyzedNames = [];
   /** Subset of lastAnalyzedNames that actually loaded (graphed) last run. */
