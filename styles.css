@@ -1890,7 +1890,9 @@ footer .disclaimer p {
 }
 
 @media (max-width: 640px) {
-  body { padding: 0.75rem; }
+  /* Dayset 2026-10-20: 0 top padding on phones — no background spacer above
+   * the input; the page starts flush with the top of the screen. */
+  body { padding: 0 0.75rem 0.75rem; }
 }
 
 
