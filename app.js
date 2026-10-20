@@ -460,7 +460,7 @@ import {
       "</div>",
       "graph-ready"
     );
-    // Auto-fade after ~5s
+    // Auto-fade after ~2s
     graphReadyHintTimer = setTimeout(() => {
       if (!els.status || !els.status.classList.contains("graph-ready")) return;
       els.status.classList.add("graph-ready-fade");
@@ -468,7 +468,7 @@ import {
         graphReadyHintTimer = 0;
         if (els.status && els.status.classList.contains("graph-ready")) setStatus("");
       }, 450);
-    }, 5000);
+    }, 2000);
   }
 
   function formatClock(ms) {
