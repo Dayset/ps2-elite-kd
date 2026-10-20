@@ -1599,10 +1599,13 @@ import {
     // Visible why: a disabled field alone says nothing (and a title only
     // shows on mouse hover), so the box itself explains the lock — briefly:
     // the note fades after 5 s and compacts away.
+    // Dayset 2026-10-19: the note only ever explains a lock the user just hit
+    // in this session (adding the last name, or tapping the locked field).
+    // A refresh that restores a full list never shows it.
     if (els.namesLimitNote) {
-      const showNote = full && !LIVE_MODE;
-      if (showNote && els.namesLimitNote.hidden && !limitNoteFaded) showLimitNote();
-      else if (!showNote && !els.namesLimitNote.hidden) hideLimitNote();
+      const becameFull = full && !limitWasFull && limitLockReady && !LIVE_MODE;
+      if (becameFull && els.namesLimitNote.hidden) showLimitNote();
+      else if (!full && !els.namesLimitNote.hidden) hideLimitNote();
     }
     for (const b of [els.diceBtn, els.diceLowBtn, els.diceHighBtn]) {
       if (!b) continue;
@@ -4761,6 +4764,20 @@ import {
   }
 
   if (els.namesInput) {
+    // Dayset 2026-10-19: the field is disabled when the list is full, so
+    // taps on the locked box itself re-show the lock note (it never shows
+    // on a plain refresh — see syncLimitLock). Taps on a name chip don't
+    // count: that click is removing the name, which unlocks anyway.
+    const lockBox = document.getElementById("namesBox") || els.namesInput.parentElement;
+    if (lockBox) {
+      lockBox.addEventListener("pointerdown", (e) => {
+        if (e.target && e.target.closest && e.target.closest(".name-token")) return;
+        if (isListFull() && !LIVE_MODE && els.namesLimitNote && els.namesLimitNote.hidden) {
+          limitNoteFaded = false;
+          showLimitNote();
+        }
+      });
+    }
     // Name suggestions after 4 characters (cached players + Census, most recently active first).
     mountNameSuggest({
       input: els.namesInput,
