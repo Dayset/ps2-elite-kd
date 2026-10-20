@@ -733,8 +733,15 @@ header .sub {
     position: absolute; right: 0.35rem; bottom: 0.35rem;
     flex: none; z-index: 3;
   }
-  .fresh-row { position: relative; justify-content: center; align-items: center; min-height: 1.9rem; }
+  .fresh-row { position: relative; justify-content: flex-end; align-items: center; min-height: 1.9rem; }
   .fresh-row .fresh-left { position: absolute; left: 0; top: 50%; transform: translateY(-50%); }
+  /* Owner 2026-10-20: with the row's right side free, the columns link is
+   * the text again (not ❓📖❓), aligned right. (The extra .fresh-row in the
+   * selector is deliberate: the base .cols-txt hide sits later in the file,
+   * so this needs the specificity, not just the order.) */
+  .fresh-cols-link { font-size: 1rem; }
+  .fresh-row .fresh-cols-link .cols-txt { display: inline; }
+  .fresh-cols-link .cols-emoji { display: none; }
 }
 
 /* t355u: roomy typing — the typing spot always gets its own full-width line
@@ -858,14 +865,16 @@ header .sub {
 }
 .fresh-cols-link {
   flex: 0 0 auto;
-  /* Emoji-only since 2026-10-20 (owner: ❓📖❓ instead of the text) — a bit
-   * larger so the triple emoji reads as a button; the phrase survives as the
-   * link's title / aria-label via the columnsLink key. */
+  /* Two faces in the markup: .cols-emoji (❓📖❓, the default) and .cols-txt
+   * (the 📖 text). On phones the row's right side freed up when the options
+   * moved into the field, so portrait shows the text, right-aligned (see
+   * the portrait block below); everywhere else the emoji stays. */
   font-size: 1.1rem;
   color: var(--text);
   text-decoration: none;
   white-space: nowrap;
 }
+.fresh-cols-link .cols-txt { display: none; }
 .fresh-cols-link:hover {
   text-decoration: underline;
 }
