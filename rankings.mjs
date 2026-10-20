@@ -698,7 +698,7 @@ export function initRankings(host) {
     const rows = picks.slice().sort((a, b) => ivi(b) - ivi(a) || compareByCharName(a.name, b.name));
     const missing = names.filter((n) => !matchPicks([n], rows, 1).length);
     if (!rows.length && !missing.length) {
-      box.innerHTML = `<p class="rk-pos-hint">Add players in the names box (or tick ✅ in the table below) to see where they rank.</p>`;
+      box.innerHTML = `<p class="rk-pos-hint">${tr("rk.posHintEmpty", "Add players in the names box (or tick ✅ in the table below) to see where they rank.")}</p>`;
       return;
     }
     const light = document.documentElement.getAttribute("data-theme") === "light";

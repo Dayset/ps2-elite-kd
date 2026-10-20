@@ -1721,7 +1721,7 @@ import {
   }
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261020-footstats1")
+    rankingsLoading = import("./rankings.mjs?v=20261020-i18nfix1")
       .then((m) => {
         rankingsApi = m.initRankings(rankingsHost);
         return rankingsApi.ready;
@@ -1852,7 +1852,7 @@ import {
   function makeAlphaBar(present, list) {
     const nav = document.createElement("nav");
     nav.className = "alpha-bar";
-    nav.setAttribute("aria-label", "Jump to letter");
+    nav.setAttribute("aria-label", tr("nav.jumpAria", "Jump to letter"));
     for (const { letter, enabled } of alphabetJumpLetters(present)) {
       const b = document.createElement("button");
       b.type = "button";
@@ -1860,9 +1860,9 @@ import {
       b.textContent = letter;
       if (!enabled) {
         b.disabled = true;
-        b.title = `No names under ${letter}`;
+        b.title = tr("nav.noNamesUnder", "No names under {letter}", { letter });
       } else {
-        b.title = `Jump to ${letter === "#" ? "digits / symbols" : letter}`;
+        b.title = tr("nav.jumpTo", "Jump to {target}", { target: letter === "#" ? tr("nav.digitsSymbols", "digits / symbols") : letter });
         b.setAttribute("aria-label", b.title);
         b.addEventListener("click", () => jumpToCacheLetter(letter, list, nav));
       }
@@ -1987,8 +1987,11 @@ import {
     if (+(block.dataset.picked || 0) === picked) return;
     block.dataset.picked = String(picked);
     block.classList.toggle("has-picked", picked > 0);
-    const what = group.letter === "#" ? "digits / symbols" : group.letter;
-    sep.title = `${group.items.length} name${group.items.length === 1 ? "" : "s"} under ${what}${picked ? `, ${picked} picked` : ""}`;
+    const what = group.letter === "#" ? tr("nav.digitsSymbols", "digits / symbols") : group.letter;
+    const pickedPart = picked ? tr("cache.groupPicked", ", {n} picked", { n: picked }) : "";
+    sep.title = group.items.length === 1
+      ? tr("cache.groupTitleOne", "1 name under {what}{picked}", { what, picked: pickedPart })
+      : tr("cache.groupTitle", "{n} names under {what}{picked}", { n: group.items.length, what, picked: pickedPart });
     let tag = sep.querySelector(".chip-group-picked");
     if (picked) {
       if (!tag) { tag = document.createElement("span"); tag.className = "chip-group-picked"; sep.appendChild(tag); }
@@ -2107,8 +2110,11 @@ import {
         const sep = document.createElement("summary");
         sep.className = "chip-sep";
         sep.setAttribute("data-letter", group.letter);
-        const what = group.letter === "#" ? "digits / symbols" : group.letter;
-        sep.title = `${group.items.length} name${group.items.length === 1 ? "" : "s"} under ${what}${picked ? `, ${picked} picked` : ""}`;
+        const what = group.letter === "#" ? tr("nav.digitsSymbols", "digits / symbols") : group.letter;
+        const pickedPart = picked ? tr("cache.groupPicked", ", {n} picked", { n: picked }) : "";
+        sep.title = group.items.length === 1
+          ? tr("cache.groupTitleOne", "1 name under {what}{picked}", { what, picked: pickedPart })
+          : tr("cache.groupTitle", "{n} names under {what}{picked}", { n: group.items.length, what, picked: pickedPart });
         sep.textContent = `[${group.letter}] ${group.items.length}`;
         if (picked) {
           const tag = document.createElement("span");
@@ -2156,14 +2162,16 @@ import {
       summary.addEventListener("click", () => setTimeout(() => {
         try { localStorage.setItem(LS_BROWSER_CACHE_OPEN, details.open ? "1" : "0"); } catch {}
       }, 0));
-      const what = `${browser.length} name${browser.length === 1 ? "" : "s"} saved only in this browser`;
-      summary.title = `💾 ${what} (tap to show / hide)`;
-      summary.setAttribute("aria-label", `💾 ${what}`);
+      const what = browser.length === 1
+        ? tr("cache.browserSavedOne", "1 name saved only in this browser")
+        : tr("cache.browserSaved", "{n} names saved only in this browser", { n: browser.length });
+      summary.title = tr("cache.browserTitle", "💾 {what} (tap to show / hide)", { what });
+      summary.setAttribute("aria-label", tr("cache.browserAria", "💾 {what}", { what }));
       summary.textContent = "💾";
       details.appendChild(summary);
       const inner = document.createElement("div");
       inner.className = "cache-browser-chips";
-      inner.setAttribute("aria-label", "Names saved in this browser");
+      inner.setAttribute("aria-label", tr("cache.browserNamesAria", "Names saved in this browser"));
       for (const item of browser) inner.appendChild(makeChip(item, sel));
       details.appendChild(inner);
       els.cacheChips.appendChild(details);
@@ -4492,8 +4500,8 @@ import {
       els.status.parentNode.insertBefore(note, els.status.nextSibling);
     }
     const list = queued.map((n) => `<strong>${escapeHtml(n)}</strong>`).join(", ");
-    const eta = etaMinutes ? ` (~${Math.round(etaMinutes)} min)` : "";
-    note.innerHTML = `📦 Adding ${list} to the shared cache — ready for everyone in a few minutes${eta}.`;
+    const eta = etaMinutes ? tr("cache.addingEta", " (~{n} min)", { n: Math.round(etaMinutes) }) : "";
+    note.innerHTML = tr("cache.addingNote", "📦 Adding {names} to the shared cache — ready for everyone in a few minutes{eta}.", { names: list, eta });
     note.hidden = false;
     clearTimeout(showSharedAddNote._t);
     showSharedAddNote._t = setTimeout(() => {
