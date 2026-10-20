@@ -24,6 +24,10 @@ describe("sortScrollTarget (t329u)", () => {
     const left = sortScrollTarget({ ...g, prevLeft: 500, colL: 520, colW: 80 });
     assert.ok(left + 100 <= 520);
   });
+  it("column wider than the free area → its right (number) side shows (issue #35)", () => {
+    const left = sortScrollTarget({ maxLeft: 593, viewW: 338, stickyW: 237, prevLeft: 593, colL: 826, colW: 105 });
+    assert.equal(left, 593);
+  });
   it("clamped to the scroll range", () => {
     assert.equal(sortScrollTarget({ ...g, prevLeft: 0, colL: 1300, colW: 90 }), 1000);
     assert.equal(sortScrollTarget({ ...g, prevLeft: 0, colL: 105, colW: 90 }), 0);

@@ -9,7 +9,7 @@ import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits, binJum
 import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261010-sav1";
 import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP, isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261010-sav1";
 import { paletteColor } from "./palette.mjs?v=20261010-sav1";
-import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-sav1";
+import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261020-wide1";
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261015-tip1";
 import { deskUiScale } from "./desk-scale.mjs?v=20261010-sav1";
 import { matchPicks } from "./pick-sync.mjs?v=20261019-speed1";

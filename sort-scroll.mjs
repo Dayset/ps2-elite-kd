@@ -16,6 +16,9 @@ export function sortScrollTarget({ prevLeft = 0, maxLeft = 0, viewW = 0, stickyW
   const visR = left + viewW;
   const free = Math.max(0, viewW - stickyW);
   if (colL >= visL - 1 && colL + colW <= visR + 1) return left; // already in view
+  // Wider than the free area (phones: the sticky name column takes most of the box):
+  // it can't be shown whole, so show its right part, where the right-aligned numbers are.
+  if (colW > free) return clamp(colL + colW - viewW);
   // Off-screen (or partly): centre it in the area not covered by sticky columns.
   return clamp(colL - stickyW - Math.max(0, (free - colW) / 2));
 }

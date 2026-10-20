@@ -36,7 +36,7 @@ import {
 } from "./math.mjs?v=20261010-sav1";
 import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261010-sav1";
 import GHOST_MODEL from "./data/ghost-model.mjs?v=20261010-sav1";
-import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-sav1";
+import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261020-wide1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
 import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261020-hintcut";
 import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261019-vcut4";
@@ -1717,7 +1717,7 @@ import {
   }
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261020-disthint")
+    rankingsLoading = import("./rankings.mjs?v=20261020-wide1")
       .then((m) => {
         rankingsApi = m.initRankings(rankingsHost);
         return rankingsApi.ready;
