@@ -27,14 +27,16 @@ import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261019-inf
 import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261019-vcut4";
 
 /**
- * @param {{ getNames: () => string[], toggleName: (name: string, anchor: Element, add: boolean) => void }} host
+ * @param {{ getNames: () => string[], toggleName: (name: string, anchor: Element, add: boolean) => void, maxNames?: number }} host
  * @returns {{ syncPicks: Function, ready: Promise<void> }}
  */
 export function initRankings(host) {
 
   const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";
   const LS_HIDE_ZERO_IVI = "ps2-elite-kd-hide-zero-ivi";
-  const MAX_NAMES = 10;
+  // Same limit as the names box (app.js MAX_NAMES, 6 since t400u; this said 10, so the
+  // table let you tick a 7th name the box then refused — issue #35).
+  const MAX_NAMES = host.maxNames || 6;
 
   // Column definitions: same ids / labels / digits / floorZero as app.js.
   const VISIBLE = [

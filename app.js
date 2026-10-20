@@ -1617,6 +1617,7 @@ import {
   }
   let rankingsLoading = null;
   const rankingsHost = {
+    maxNames: MAX_NAMES,
     loadRanks: () => loadRanksPayload(), // t376u: one shared ranks.json parse
     getNames: () => nameTokens.slice(),
     toggleName(name, anchor, add) {
@@ -1638,7 +1639,7 @@ import {
   }
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261019-speed5")
+    rankingsLoading = import("./rankings.mjs?v=20261019-speed6")
       .then((m) => {
         rankingsApi = m.initRankings(rankingsHost);
         return rankingsApi.ready;
@@ -4720,8 +4721,10 @@ import {
           if (now === val && document.activeElement === els.namesInput && uniqueSavedName(now.trim())) commitFragment({ clearInput: true });
         }, 1100);
       }
-      // Completed token(s) when text ends with a separator
-      if (/[\s,;]$/.test(val)) {
+      // Completed token(s) when text ends with a separator. A space right after an
+      // outfit tag ("[XYZ] ") is not one: the name comes next (issue #35, t348u).
+      const tagPending = /(^|[\s,;])\[[^\]]*\]\s+$/.test(val);
+      if (/[\s,;]$/.test(val) && !tagPending) {
         commitFragment({ clearInput: true });
       } else if (val.trim() && nameTokens.length >= MAX_NAMES) {
         // Typing an 11th name: say so right away (text is kept).

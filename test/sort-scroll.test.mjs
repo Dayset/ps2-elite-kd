@@ -72,13 +72,35 @@ async function withPage(fn, { width = 390, height = 844, mobile = true } = {}) {
       if (r.exceptionDetails) throw new Error(r.exceptionDetails.text + " " + (r.exceptionDetails.exception?.description || ""));
       return r.result.value;
     };
-    const nav = (u) => send("Page.navigate", { url: `http://127.0.0.1:${port}/${u}` }, sessionId);
+    // Page.navigate answers before the new page has parsed; an inline <script> in the body
+    // waits for styles.css, so a check sent right away could find no #analyzeBtn yet (or the
+    // old page) and fail with "Promise was collected". Wait for the new document to finish
+    // parsing (same-document jumps: no wait). Keep this (issue #35).
+    const nav = async (u) => {
+      await ev(`window.__oldPage = 1`).catch(() => {});
+      const r = await send("Page.navigate", { url: `http://127.0.0.1:${port}/${u}` }, sessionId);
+      if (!r.loaderId) return r;
+      for (let t = 0; t < 400; t++) {
+        if (await ev(`!window.__oldPage && document.readyState !== "loading"`).catch(() => false)) break;
+        await new Promise((q) => setTimeout(q, 25));
+      }
+      return r;
+    };
     await fn({ ev, nav, send, sessionId });
   } finally {
     proc.kill("SIGKILL");
     server.close();
   }
 }
+
+// The 📋 All players table is folded by default (t358u) and sorted by ⚔️ iVi it is split
+// into collapsed tiers (t371u): open both. Rows still load in parts as the box scrolls.
+const openBigTable = (ev) => ev(`new Promise(async (r) => { for (let t = 0; t < 200; t++) { const d = document.getElementById("ranksTableSection"); if (d) { d.open = true; break; } await new Promise((q) => setTimeout(q, 50)); } for (let t = 0; t < 200; t++) { const b = [...document.querySelectorAll("#ranksBody tr.rk-tier:not(.open) .rk-tier-btn")]; if (b.length) { b.forEach((x) => x.click()); break; } await new Promise((q) => setTimeout(q, 50)); } r(1); })`);
+// ✅ state of one player's row, found through the table's own name filter (rows load in
+// parts, so a deep row may not be in the table yet). null = no such row.
+const tickOf = (ev, q) => ev(`(async () => { const i = document.getElementById("ranksSearch"); const set = async (v) => { i.value = v; i.dispatchEvent(new Event("input", { bubbles: true })); await new Promise((r) => setTimeout(r, 500)); }; await set(${JSON.stringify(q)}); const tr = [...document.querySelectorAll("#ranksBody tr[data-q]")].find((t) => t.dataset.q.toLowerCase() === ${JSON.stringify(String(q).toLowerCase())}); const c = tr && tr.querySelector('input[type="checkbox"]'); const v = c ? c.checked : null; await set(""); return v; })()`);
+// A chip's name without its "1." series number.
+const CHIP_NAME = `((b) => { const c = b.cloneNode(true); const n = c.querySelector(".name-token-num"); if (n) n.remove(); return c.textContent.trim(); })`;
 
 // In-page: scroll wrapper to show the last sortable header, click it, report.
 const clickFar = (wrapSel, thSel) => `(async () => {
@@ -167,8 +189,7 @@ describe("Rankings: fresh browser copy + readable chart names (t338u)", () => {
         await nav("index.html");
         await ev(`localStorage.setItem("ps2-elite-kd-cache-v2", ${JSON.stringify(JSON.stringify(store))}); 1`);
         await nav(`index.html?names=${picks.map(encodeURIComponent).join(",")},shlodog#rankings`);
-      await ev(`new Promise(async (r) => { for (let t = 0; t < 200; t++) { const d = document.getElementById("ranksTableSection"); if (d) { d.open = true; return r(1); } await new Promise((q) => setTimeout(q, 50)); } r(0); })`);
-            await ev(`new Promise(async (r) => { for (let t = 0; t < 200; t++) { const btns = [...document.querySelectorAll("#ranksBody tr.rk-tier:not(.open) .rk-tier-btn")]; if (btns.length) { btns.forEach(b => b.click()); return r(1); } await new Promise((q) => setTimeout(q, 50)); } r(0); })`);
+      await openBigTable(ev);
         await ev(`new Promise(async (r) => { for (let t = 0; t < 400 && !document.querySelector("#ranksBody tr[data-q]"); t++) await new Promise((q) => setTimeout(q, 50)); r(1); })`);
         await new Promise((r) => setTimeout(r, 500));
         await ev(`(async () => { const i = document.getElementById("ranksSearch"); i.value = "shlodog"; i.dispatchEvent(new Event("input", { bubbles: true })); await new Promise((r) => setTimeout(r, 400)); })()`);
@@ -206,28 +227,26 @@ describe("Analyze names box typing stays fast with a big shared cache (t343u)", 
         }
         const sameNode = document.querySelector("details.cache-shared") === details;
         await new Promise((r) => setTimeout(r, 450));
-        const y = document.querySelector('details.chip-group[data-letter="Y"]');
-        const chip = y && [...y.querySelectorAll("button.chip")].find((b) => b.textContent.trim().toLowerCase().endsWith("yeezy"));
-        return { max: Math.max(...per), sameNode, focused: document.activeElement === inp, yPicked: y && y.classList.contains("has-picked"), yOpen: y && y.open, chipSel: !!(chip && chip.classList.contains("selected")), value: inp.value };
+        // t376u: the 📦 shared list is hidden by CSS, so its letter blocks / chips are never built.
+        return { max: Math.max(...per), sameNode, focused: document.activeElement === inp, groups: document.querySelectorAll("details.chip-group").length, value: inp.value };
       })()`);
       assert.ok(res.sameNode, "cache list not rebuilt while typing");
       assert.ok(res.focused && res.value === "yeezy", JSON.stringify(res));
       assert.ok(res.max < 40, "per-key handler time " + res.max);
-      assert.ok(res.yPicked && res.yOpen && res.chipSel, JSON.stringify(res));
+      assert.equal(res.groups, 0, "hidden shared list not built (t376u)");
     });
   });
 });
 
 describe("One page: names typed in the names box tick the Rankings table (t348u → t356u)", () => {
-  it("typed chips ✅ in the table; 10 limit keeps the text", { skip: !chrome && "no Chrome", timeout: 120000 }, async () => {
+  it("typed chips ✅ in the table; 6 limit locks the field", { skip: !chrome && "no Chrome", timeout: 120000 }, async () => {
     const rk = JSON.parse(fs.readFileSync(path.join(root, "data/ranks.json"), "utf8"));
     const qi = rk.cols.indexOf("query");
     const has = (q) => rk.rows.some((r) => String(r[qi]).toLowerCase() === q);
     if (!has("shlodog") || !has("wrel")) return;
     await withPage(async ({ ev, nav }) => {
       await nav("index.html#rankings");
-      await ev(`new Promise(async (r) => { for (let t = 0; t < 200; t++) { const d = document.getElementById("ranksTableSection"); if (d) { d.open = true; return r(1); } await new Promise((q) => setTimeout(q, 50)); } r(0); })`);
-            await ev(`new Promise(async (r) => { for (let t = 0; t < 200; t++) { const btns = [...document.querySelectorAll("#ranksBody tr.rk-tier:not(.open) .rk-tier-btn")]; if (btns.length) { btns.forEach(b => b.click()); return r(1); } await new Promise((q) => setTimeout(q, 50)); } r(0); })`);
+      await openBigTable(ev);
       await ev(`new Promise(async (r) => { for (let t = 0; t < 400 && !document.querySelector("#ranksBody tr[data-q]"); t++) await new Promise((q) => setTimeout(q, 50)); r(1); })`);
       await ev(`(() => { document.getElementById("clearNamesBtn").click(); return 1; })()`);
       const type = (txt) => ev(`(async () => { const i = document.getElementById("namesInput"); i.focus(); for (const ch of ${JSON.stringify(txt)}) { i.value += ch; i.dispatchEvent(new InputEvent("input", { bubbles: true, data: ch, inputType: "insertText" })); } await new Promise((r) => setTimeout(r, 400)); return { value: i.value, chips: [...document.querySelectorAll("#nameTokens .name-token")].map((b) => { const c = b.cloneNode(true); const n = c.querySelector(".name-token-num"); if (n) n.remove(); return c.textContent.trim().toLowerCase(); }), ticked: [...document.querySelectorAll('#ranksBody input[type="checkbox"]:checked')].map((c) => c.closest("tr").dataset.q.toLowerCase()).sort(), focused: document.activeElement === i }; })()`);
@@ -236,14 +255,14 @@ describe("One page: names typed in the names box tick the Rankings table (t348u 
       assert.equal(s.value, "");
       assert.ok(s.focused);
       s = await type("[XYZ] wrel,");
-      assert.deepEqual(s.ticked, ["shlodog", "wrel"], "table ✅ follow the names box");
-      const others = rk.rows.map((r) => String(r[qi])).filter((q) => /^[A-Za-z0-9]+$/.test(q) && !["shlodog", "wrel"].includes(q.toLowerCase())).slice(0, 9);
-      s = await type(others.slice(0, 8).join(" ") + " ");
-      assert.equal(s.chips.length, 10);
-      assert.equal(await ev(`document.querySelectorAll('#ranksBody input[type="checkbox"]:disabled').length > 0`), true, "unticked boxes disabled at 10");
-      s = await type(others[8] + " ");
-      assert.equal(s.chips.length, 10);
-      assert.ok(s.value.includes(others[8]), "11th name stays as text: " + s.value);
+      assert.deepEqual(s.chips.map((c) => c.replace(/^\[.*?\]\s*/, "")), ["shlodog", "wrel"], "the [XYZ] tag stays with its name");
+      assert.deepEqual([await tickOf(ev, "shlodog"), await tickOf(ev, "wrel")], [true, true], "table ✅ follow the names box");
+      // t400u: the names box holds 6; full → unticked table boxes disabled, the field locks.
+      const others = rk.rows.map((r) => String(r[qi])).filter((q) => /^[A-Za-z0-9]+$/.test(q) && !["shlodog", "wrel"].includes(q.toLowerCase())).slice(0, 4);
+      s = await type(others.join(" ") + " ");
+      assert.equal(s.chips.length, 6, JSON.stringify({ others, s }));
+      assert.equal(await ev(`document.querySelectorAll('#ranksBody input[type="checkbox"]:disabled').length > 0`), true, "unticked boxes disabled at 6");
+      assert.equal(await ev(`document.getElementById("namesInput").disabled`), true, "field locked at 6");
     });
   });
 });
@@ -256,8 +275,7 @@ describe("Rankings chart clicks scroll the list with picks + search text (t349u/
     if (picks.length < 3) return;
     await withPage(async ({ ev, nav, send, sessionId }) => {
       await nav(`index.html?names=${picks.join(",")}#rankings`);
-      await ev(`new Promise(async (r) => { for (let t = 0; t < 200; t++) { const d = document.getElementById("ranksTableSection"); if (d) { d.open = true; return r(1); } await new Promise((q) => setTimeout(q, 50)); } r(0); })`);
-            await ev(`new Promise(async (r) => { for (let t = 0; t < 200; t++) { const btns = [...document.querySelectorAll("#ranksBody tr.rk-tier:not(.open) .rk-tier-btn")]; if (btns.length) { btns.forEach(b => b.click()); return r(1); } await new Promise((q) => setTimeout(q, 50)); } r(0); })`);
+      await openBigTable(ev);
       await ev(`new Promise(async (res) => { for (let t = 0; t < 400 && !document.querySelector("#distSvg .dist-hit"); t++) await new Promise((r) => setTimeout(r, 50)); res(1); })`);
       // Left-over search text (the old cause: table filtered to 1 row → nothing to scroll to).
       await ev(`(async () => { const i = document.getElementById("ranksSearch"); i.value = "yeez"; i.dispatchEvent(new Event("input", { bubbles: true })); await new Promise((r) => setTimeout(r, 500)); })()`);
@@ -336,13 +354,14 @@ describe("Rankings: removing a names-box chip unticks, unmarks and updates ?name
     if (picks.length < 3) return;
     await withPage(async ({ ev, nav }) => {
       await nav(`index.html?names=${picks.join(",")}#rankings`);
-      await ev(`new Promise(async (r) => { for (let t = 0; t < 200; t++) { const d = document.getElementById("ranksTableSection"); if (d) { d.open = true; return r(1); } await new Promise((q) => setTimeout(q, 50)); } r(0); })`);
-            await ev(`new Promise(async (r) => { for (let t = 0; t < 200; t++) { const btns = [...document.querySelectorAll("#ranksBody tr.rk-tier:not(.open) .rk-tier-btn")]; if (btns.length) { btns.forEach(b => b.click()); return r(1); } await new Promise((q) => setTimeout(q, 50)); } r(0); })`);
+      await openBigTable(ev);
       await ev(`new Promise(async (res) => { for (let t = 0; t < 400 && !(document.querySelectorAll("#distSvg text.dist-name").length >= 3 && document.querySelectorAll('#statsPanel th[scope="row"].stats-name').length >= 3); t++) await new Promise((r) => setTimeout(r, 50)); res(1); })`);
       const q = await ev(`document.querySelector("#distSvg text.dist-name").getAttribute("data-q")`);
-      await ev(`[...document.querySelectorAll("#nameTokens .name-token")].find((b) => b.textContent.trim().toLowerCase() === ${JSON.stringify(q)}.toLowerCase()).click(), 1`);
+      assert.equal(await tickOf(ev, q), true, "ticked before");
+      await ev(`[...document.querySelectorAll("#nameTokens .name-token")].find((b) => ${CHIP_NAME}(b).toLowerCase() === ${JSON.stringify(q)}.toLowerCase()).click(), 1`);
       await new Promise((r) => setTimeout(r, 500));
-      const st = await ev(`({ chips: document.querySelectorAll("#nameTokens .name-token").length, stats: document.querySelectorAll('#statsPanel th[scope="row"].stats-name').length, label: !!document.querySelector('#distSvg text.dist-name[data-q="${q}"]'), cb: (() => { const c = document.querySelector('#ranksBody tr[data-q="${q}"] input[type=checkbox]'); return c ? c.checked : false; })(), names: new URL(location.href).searchParams.get("names") || "", pos: document.getElementById("rkPositions").textContent })`);
+      const st = await ev(`({ chips: document.querySelectorAll("#nameTokens .name-token").length, stats: document.querySelectorAll('#statsPanel th[scope="row"].stats-name').length, label: !!document.querySelector('#distSvg text.dist-name[data-q="${q}"]'), names: new URL(location.href).searchParams.get("names") || "", pos: document.getElementById("rkPositions").textContent })`);
+      st.cb = await tickOf(ev, q);
       assert.equal(st.chips, 2);
       assert.equal(st.stats, 2, "graph follows");
       assert.equal(st.label, false);
@@ -385,8 +404,7 @@ describe("🏅 positions table sorted by ⚔️ iVi, #1 on top (t358u)", () => {
     const picks = [srt[srt.length - 1], srt[Math.floor(srt.length / 2)], srt[0]].map((r) => String(r[qi]));
     await withPage(async ({ ev, nav }) => {
       await nav(`index.html?names=${picks.map(encodeURIComponent).join(",")}#rankings`);
-      await ev(`new Promise(async (r) => { for (let t = 0; t < 200; t++) { const d = document.getElementById("ranksTableSection"); if (d) { d.open = true; return r(1); } await new Promise((q) => setTimeout(q, 50)); } r(0); })`);
-            await ev(`new Promise(async (r) => { for (let t = 0; t < 200; t++) { const btns = [...document.querySelectorAll("#ranksBody tr.rk-tier:not(.open) .rk-tier-btn")]; if (btns.length) { btns.forEach(b => b.click()); return r(1); } await new Promise((q) => setTimeout(q, 50)); } r(0); })`);
+      await openBigTable(ev);
       await ev(`new Promise(async (res) => { for (let t = 0; t < 400 && document.querySelectorAll("#rkPositions .rk-pos-jump").length < 3; t++) await new Promise((r) => setTimeout(r, 50)); res(1); })`);
       const st = await ev(`({ order: [...document.querySelectorAll("#rkPositions .rk-pos-jump")].map((a) => a.dataset.q.toLowerCase()), count: document.getElementById("rkPosCount").textContent, mode: document.getElementById("statsCarousel").dataset.mode })`);
       assert.deepEqual(st.order, picks.slice().reverse().map((q) => q.toLowerCase()), "highest iVi first");
@@ -408,8 +426,7 @@ describe("A graphed player not in the shared Rankings still shows on 📊 / 🏅
       await ev(`new Promise((r) => setTimeout(r, 500))`);
       await ev(`(localStorage.setItem("ps2-elite-kd-cache-v2", ${JSON.stringify(JSON.stringify(store))}), localStorage.setItem("ps2-elite-kd-stats-mode", "1"), 1)`);
       await nav("index.html?names=Zzlocalonly,ShloDog#rankings");
-      await ev(`new Promise(async (r) => { for (let t = 0; t < 200; t++) { const d = document.getElementById("ranksTableSection"); if (d) { d.open = true; return r(1); } await new Promise((q) => setTimeout(q, 50)); } r(0); })`);
-            await ev(`new Promise(async (r) => { for (let t = 0; t < 200; t++) { const btns = [...document.querySelectorAll("#ranksBody tr.rk-tier:not(.open) .rk-tier-btn")]; if (btns.length) { btns.forEach(b => b.click()); return r(1); } await new Promise((q) => setTimeout(q, 50)); } r(0); })`);
+      await openBigTable(ev);
       await ev(`new Promise(async (res) => { for (let t = 0; t < 400 && !document.querySelector('#distSvg text.dist-name[data-q="Zzlocalonly"]'); t++) await new Promise((r) => setTimeout(r, 50)); res(1); })`);
       const st = await ev(`({ stats: document.querySelectorAll('#statsPanel th[scope="row"].stats-name').length, label: !!document.querySelector('#distSvg text.dist-name[data-q="Zzlocalonly"]'), pos: [...document.querySelectorAll("#rkPositions .rk-pos-jump")].map((a) => a.dataset.q), fresh: !!document.querySelector("#rkPositions .sample-fresh"), missing: /Not in the Rankings/.test(document.getElementById("rkPositions").textContent), meta: document.getElementById("ranksMeta").textContent, row: !!document.querySelector('#ranksBody tr[data-q="Zzlocalonly"]') || null })`);
       assert.equal(st.stats, 2, "both on the skill graph");
@@ -428,8 +445,7 @@ describe("A graphed player not in the shared Rankings still shows on 📊 / 🏅
       // The bug's order: Rankings already loaded, then the new name is fetched + added.
       await ev(`(localStorage.removeItem("ps2-elite-kd-cache-v2"), 1)`);
       await nav("index.html?names=ShloDog#rankings");
-      await ev(`new Promise(async (r) => { for (let t = 0; t < 200; t++) { const d = document.getElementById("ranksTableSection"); if (d) { d.open = true; return r(1); } await new Promise((q) => setTimeout(q, 50)); } r(0); })`);
-            await ev(`new Promise(async (r) => { for (let t = 0; t < 200; t++) { const btns = [...document.querySelectorAll("#ranksBody tr.rk-tier:not(.open) .rk-tier-btn")]; if (btns.length) { btns.forEach(b => b.click()); return r(1); } await new Promise((q) => setTimeout(q, 50)); } r(0); })`);
+      await openBigTable(ev);
       await ev(`new Promise(async (res) => { for (let t = 0; t < 400 && !document.querySelector('#distSvg text.dist-name[data-q="ShloDog"]'); t++) await new Promise((r) => setTimeout(r, 50)); res(1); })`);
       await ev(`(() => { localStorage.setItem("ps2-elite-kd-cache-v2", ${JSON.stringify(JSON.stringify(store))}); const i = document.getElementById("namesInput"); i.value = "Zzlocalonly "; i.dispatchEvent(new Event("input", { bubbles: true })); return 1; })()`);
       await ev(`new Promise(async (res) => { for (let t = 0; t < 200 && !document.querySelector('#distSvg text.dist-name[data-q="Zzlocalonly"]'); t++) await new Promise((r) => setTimeout(r, 50)); res(1); })`);
@@ -452,16 +468,18 @@ describe("Big table after a browser-only player joins: no 'undefined' (t360u)", 
       await ev(`new Promise(async (res) => { for (let t = 0; t < 400 && !document.querySelector("#ranksBody tr[data-q]"); t++) await new Promise((r) => setTimeout(r, 50)); res(1); })`);
       await ev(`(() => { localStorage.setItem("ps2-elite-kd-cache-v2", ${JSON.stringify(JSON.stringify(store))}); document.getElementById("ranksTableSection").open = true; const i = document.getElementById("namesInput"); i.value = "Zzlocalonly "; i.dispatchEvent(new Event("input", { bubbles: true })); return 1; })()`);
       await ev(`new Promise(async (res) => { for (let t = 0; t < 200 && !document.querySelector('#ranksBody tr[data-q="Zzlocalonly"]'); t++) await new Promise((r) => setTimeout(r, 100)); res(1); })`);
-      // Whole list rendered (progressive chunks finish).
-      await ev(`new Promise(async (r) => { let n = -1; for (let t = 0; t < 200; t++) { await new Promise((q) => setTimeout(q, 250)); const m = document.querySelectorAll("#ranksBody tr[data-q]").length; if (m === n) break; n = m; } r(1); })`);
-      const st = await ev(`(() => { const trs = [...document.querySelectorAll("#ranksBody tr[data-q]")]; const ranks = trs.map((tr) => tr.querySelector(".rk-num")?.textContent || ""); const txt = document.getElementById("ranksBody").textContent; return { n: trs.length, undef: (txt.match(/undefined/g) || []).length, nan: (txt.match(/NaN/g) || []).length, local: trs.some((tr) => tr.dataset.q === "Zzlocalonly"), seq: ranks.filter((x) => x !== "—").every((x, i, a) => i === 0 || +x === +a[i - 1] + 1), first: ranks[0], meta: document.getElementById("ranksMeta").textContent }; })()`);
+      // Rows load in parts as the box scrolls (2026-10-19): scroll a few screens down.
+      await ev(`new Promise(async (r) => { const box = document.getElementById("ranksScroll"); for (let t = 0; t < 8; t++) { box.scrollTop = box.scrollHeight; await new Promise((q) => setTimeout(q, 250)); } r(1); })`);
+      const st = await ev(`(() => { const trs = [...document.querySelectorAll("#ranksBody tr[data-q]")]; const ranks = trs.map((tr) => tr.querySelector(".rk-num")?.textContent || ""); const txt = document.getElementById("ranksBody").textContent; return { n: trs.length, undef: (txt.match(/undefined/g) || []).length, nan: (txt.match(/NaN/g) || []).length, local: trs.some((tr) => tr.dataset.q === "Zzlocalonly"), seq: (() => { let prev = null; for (const tr of document.getElementById("ranksBody").rows) { if (tr.classList.contains("rk-tier")) { prev = null; continue; } if (!tr.dataset.q) continue; const x = tr.querySelector(".rk-num")?.textContent || ""; if (x === "—") continue; if (prev != null && +x !== prev + 1) return false; prev = +x; } return true; })(), first: ranks[0], meta: document.getElementById("ranksMeta").textContent }; })()`);
       assert.ok(st.local, JSON.stringify(st));
       assert.equal(st.undef, 0, "no 'undefined' anywhere in the table");
       assert.equal(st.nan, 0, "no NaN");
       assert.equal(st.first, "1");
-      assert.ok(st.seq, "ranks 1, 2, 3, … in order");
+      assert.ok(st.seq, "ranks 1, 2, 3, … in order (inside each open tier)");
       const total = +st.meta.match(/of ([\d,]+) players/)[1].replace(/,/g, "");
-      assert.equal(st.n, total, "full list rendered");
+      const shared = JSON.parse(fs.readFileSync(path.join(root, "data/ranks.json"), "utf8")).rows.length;
+      assert.equal(total, shared + 1, "the browser-only player joins the count");
+      assert.ok(st.n > 80 && st.n <= total, "rows load in parts: " + st.n);
     });
   });
 });

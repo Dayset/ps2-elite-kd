@@ -70,8 +70,13 @@ describe("Auto zoom when the analyzed set changes (t328u)", () => {
       const zoomed4 = await ev(`${api}.getChartScale()`);
       assert.notDeepEqual(zoomed4, auto4);
       // Same set again via Fetch fresh path isn't exercised (network); Raw/Smooth toggle keeps zoom:
+      // Toggle there and back: 🎚️ Smooth runs the "wave" animation (its scale moves all the
+      // time), so the refit checks below run in the starting mode (issue #35).
+      const mode0 = await ev(`${api}.getChartMode()`);
       await ev(`${api}.setChartMode(${api}.getChartMode() === "banded" ? "cumulative" : "banded"), 1`);
       assert.equal(await ev(`${api}.getYZoom()`), 0.5, "mode toggle keeps manual zoom");
+      await ev(`${api}.setChartMode(${JSON.stringify(mode0)}), 1`);
+      const zoomedMode = await ev(`${api}.getChartScale()`);
       // Remove manimami's chip, press Analyze.
       const removed = await ev(`(() => { const b = [...document.querySelectorAll("#nameTokens .name-token, .name-token")].find((x) => /manimami/i.test(x.textContent)); if (!b) return 0; b.click(); return 1; })()`);
       assert.equal(removed, 1, "manimami chip found");
@@ -79,7 +84,7 @@ describe("Auto zoom when the analyzed set changes (t328u)", () => {
       assert.equal(await waitPlayers(3), 1, "3 players graphed");
       assert.equal(await ev(`${api}.getYZoom()`), 1, "zoom back to Auto");
       const s3 = await ev(`${api}.getChartScale()`);
-      assert.ok(s3.hi < zoomed4.hi, `axis refit: hi ${s3.hi} < ${zoomed4.hi}`);
+      assert.ok(s3.hi < zoomedMode.hi, `axis refit: hi ${s3.hi} < ${zoomedMode.hi}`);
       // Fresh auto-fit for the 3 players equals what Auto would give.
       await ev(`${api}.setYZoom(1), 1`);
       assert.deepEqual(await ev(`${api}.getChartScale()`), s3);
