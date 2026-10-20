@@ -4,133 +4,34 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "39510419305",
+    "runId": "39510710776",
     "event": "workflow_dispatch",
-    "kind": "discovery",
-    "startedAt": "2026-10-20T22:46:14.005Z",
-    "endedAt": "2026-10-20T22:49:27.332Z",
-    "seconds": 193,
+    "kind": "on-demand",
+    "startedAt": "2026-10-20T22:50:36.249Z",
+    "endedAt": "2026-10-20T22:53:35.173Z",
+    "seconds": 179,
     "updated": [],
-    "added": [],
+    "added": [
+      "[CABO] IfYouCanReadThisOneOfUsIsDead"
+    ],
     "failed": [],
-    "stoppedEarly": "another run is waiting (site request or fallback cron)",
-    "indexSize": 13197,
-    "discovery": {
-      "cap": 15000,
-      "queue": 196,
-      "slice": null,
-      "sweepInProgress": false
-    },
+    "stoppedEarly": null,
+    "indexSize": 13198,
     "honu": {
       "day": "2026-10-20",
-      "calls": 7038,
+      "calls": 7070,
       "cap": 10000
     },
     "batch": [
       {
-        "name": "mikardo",
-        "src": "retry",
-        "status": "pending"
-      },
-      {
-        "name": "Flowqwat",
-        "src": "discovery-new",
-        "status": "pending"
-      },
-      {
-        "name": "aUnknownTRNoob",
-        "src": "discovery-new",
-        "status": "pending"
-      },
-      {
-        "name": "Locctar",
-        "src": "discovery-new",
-        "status": "pending"
-      },
-      {
-        "name": "SirJerry06",
-        "src": "discovery-new",
-        "status": "pending"
-      },
-      {
-        "name": "sidesaeri",
-        "src": "discovery-new",
-        "status": "pending"
-      },
-      {
-        "name": "FirePagoED",
-        "src": "discovery-new",
-        "status": "pending"
-      },
-      {
-        "name": "huangshan1",
-        "src": "discovery-new",
-        "status": "pending"
-      },
-      {
-        "name": "diebich",
-        "src": "discovery-new",
-        "status": "pending"
-      },
-      {
-        "name": "LysQc",
-        "src": "discovery-new",
-        "status": "pending"
-      },
-      {
-        "name": "justplaying247",
-        "src": "discovery-new",
-        "status": "pending"
-      },
-      {
-        "name": "Simonioi",
-        "src": "discovery-new",
-        "status": "pending"
-      },
-      {
-        "name": "Papay2539k",
-        "src": "discovery-new",
-        "status": "pending"
-      },
-      {
-        "name": "Snuttefilten",
-        "src": "discovery-new",
-        "status": "pending"
-      },
-      {
-        "name": "arber26",
-        "src": "discovery-new",
-        "status": "pending"
-      },
-      {
-        "name": "JaZvOyTkO13",
-        "src": "discovery-new",
-        "status": "pending"
-      },
-      {
-        "name": "GGLOU",
-        "src": "discovery-new",
-        "status": "pending"
-      },
-      {
-        "name": "Brakmar2000",
-        "src": "discovery-new",
-        "status": "pending"
-      },
-      {
-        "name": "166266",
-        "src": "discovery-new",
-        "status": "pending"
-      },
-      {
-        "name": "sagitha",
-        "src": "discovery-new",
-        "status": "pending"
+        "name": "[CABO] IfYouCanReadThisOneOfUsIsDead",
+        "src": "on-demand",
+        "status": "done"
       }
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-20T22:49:42.329Z",
+    "checkedAt": "2026-10-20T22:53:44.108Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 15,
     "explained": 25,
@@ -141,7 +42,7 @@
         "id": "pvs",
         "value": 45.763,
         "bound": 33.966,
-        "z": 62.941,
+        "z": 62.932,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -153,7 +54,7 @@
         "id": "kd",
         "value": 44.833,
         "bound": 19.72,
-        "z": 56.951,
+        "z": 56.94,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -165,7 +66,7 @@
         "id": "slope",
         "value": -7.805,
         "bound": -5.261,
-        "z": -49.018,
+        "z": -49.015,
         "side": "low",
         "explained": false,
         "reason": "",
@@ -189,7 +90,7 @@
         "id": "rkd",
         "value": 16.316,
         "bound": 12.673,
-        "z": 35.923,
+        "z": 35.919,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -201,7 +102,7 @@
         "id": "kd",
         "value": 28.524,
         "bound": 19.72,
-        "z": 35.73,
+        "z": 35.723,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -213,7 +114,7 @@
         "id": "rkd",
         "value": 12.995,
         "bound": 12.673,
-        "z": 28.322,
+        "z": 28.319,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -224,8 +125,8 @@
         "name": "Anniversay",
         "id": "coi",
         "value": 17.392,
-        "bound": 14.979,
-        "z": 24.937,
+        "bound": 14.978,
+        "z": 24.926,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -237,7 +138,7 @@
         "id": "rf",
         "value": 10.435,
         "bound": 8.987,
-        "z": 24.937,
+        "z": 24.926,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -249,7 +150,7 @@
         "id": "slope",
         "value": 2.155,
         "bound": 0.61,
-        "z": 15.269,
+        "z": 15.268,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -261,7 +162,7 @@
         "id": "slope",
         "value": 1.217,
         "bound": 0.61,
-        "z": 9.213,
+        "z": 9.212,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -273,7 +174,7 @@
         "id": "pvs",
         "value": 263.979,
         "bound": 33.966,
-        "z": 367.466,
+        "z": 367.413,
         "side": "high",
         "explained": true,
         "reason": "Owner reviewed 2026-10-18 (#10): vehicle main try-harding K/D (lifetime KD 33, 658 kills / 25 deaths vs 200 opponents); explained, not a cheater",
@@ -285,7 +186,7 @@
         "id": "kd",
         "value": 156.375,
         "bound": 19.72,
-        "z": 202.081,
+        "z": 202.042,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (aim), listed there",
@@ -343,7 +244,7 @@
         "id": "pvs",
         "value": 62.198,
         "bound": 33.966,
-        "z": 85.877,
+        "z": 85.865,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (session, session-forensics), listed there",
@@ -358,7 +259,7 @@
         "id": "act",
         "value": 25.317,
         "bound": 24.74,
-        "z": 78.269,
+        "z": 78.261,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (aim), listed there",
@@ -387,7 +288,7 @@
         "id": "kd",
         "value": 46.667,
         "bound": 19.72,
-        "z": 59.336,
+        "z": 59.325,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (session, session-forensics), listed there",
@@ -402,7 +303,7 @@
         "id": "rkd",
         "value": 26.32,
         "bound": 12.673,
-        "z": 58.82,
+        "z": 58.814,
         "side": "high",
         "explained": true,
         "reason": "Owner reviewed 2026-10-18 (#10): vehicle main try-harding K/D (lifetime KD 33, 658 kills / 25 deaths vs 200 opponents); explained, not a cheater",
@@ -429,7 +330,7 @@
         "id": "rkd",
         "value": 21.687,
         "bound": 12.673,
-        "z": 48.215,
+        "z": 48.211,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (session-forensics), listed there",
@@ -443,7 +344,7 @@
         "id": "inflation",
         "value": 19.181,
         "bound": 11.929,
-        "z": 43.311,
+        "z": 43.31,
         "side": "high",
         "explained": true,
         "reason": "Reviewed 2026-10-18 (#10): 🎈 inflation 19.2 = lifetime KD 1.82 vs 121 kills / 992 deaths against 200 opponents; real data, big sample, the public board flatters",
@@ -455,7 +356,7 @@
         "id": "kd",
         "value": 32.978,
         "bound": 19.72,
-        "z": 41.526,
+        "z": 41.518,
         "side": "high",
         "explained": true,
         "reason": "Owner reviewed 2026-10-18 (#10): vehicle main try-harding K/D (lifetime KD 33, 658 kills / 25 deaths vs 200 opponents); explained, not a cheater",
@@ -467,7 +368,7 @@
         "id": "slope",
         "value": 5.773,
         "bound": 0.61,
-        "z": 38.615,
+        "z": 38.613,
         "side": "high",
         "explained": true,
         "reason": "Owner reviewed 2026-10-18 (#10): vehicle main try-harding K/D (lifetime KD 33, 658 kills / 25 deaths vs 200 opponents); explained, not a cheater",
@@ -478,8 +379,8 @@
         "name": "[FKNC] RenamedSoldier12345",
         "id": "coi",
         "value": 25.256,
-        "bound": 14.979,
-        "z": 36.816,
+        "bound": 14.978,
+        "z": 36.799,
         "side": "high",
         "explained": true,
         "reason": "Owner reviewed 2026-10-18 (#10): vehicle main try-harding K/D (lifetime KD 33, 658 kills / 25 deaths vs 200 opponents); explained, not a cheater",
@@ -491,7 +392,7 @@
         "id": "rf",
         "value": 15.153,
         "bound": 8.987,
-        "z": 36.816,
+        "z": 36.799,
         "side": "high",
         "explained": true,
         "reason": "Owner reviewed 2026-10-18 (#10): vehicle main try-harding K/D (lifetime KD 33, 658 kills / 25 deaths vs 200 opponents); explained, not a cheater",
@@ -502,8 +403,8 @@
         "name": "[MBBT] igOrRrRrR",
         "id": "coi",
         "value": 20.895,
-        "bound": 14.979,
-        "z": 30.229,
+        "bound": 14.978,
+        "z": 30.216,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (session-forensics), listed there",
@@ -517,7 +418,7 @@
         "id": "rf",
         "value": 12.537,
         "bound": 8.987,
-        "z": 30.229,
+        "z": 30.216,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (session-forensics), listed there",
@@ -531,7 +432,7 @@
         "id": "kd",
         "value": 19.723,
         "bound": 19.72,
-        "z": 24.278,
+        "z": 24.274,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (session-forensics), listed there",
@@ -545,7 +446,7 @@
         "id": "slope",
         "value": 1.613,
         "bound": 0.61,
-        "z": 11.771,
+        "z": 11.77,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (session, session-forensics), listed there",
@@ -668,14 +569,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 56.951,
+        "maxZ": 56.94,
         "metrics": [
           {
             "id": "kd",
             "label": "KD",
             "value": 44.833,
             "bound": 19.72,
-            "z": 56.951,
+            "z": 56.94,
             "side": "high"
           },
           {
@@ -683,7 +584,7 @@
             "label": "📉 Slope",
             "value": -7.805,
             "bound": -5.261,
-            "z": -49.018,
+            "z": -49.015,
             "side": "low"
           },
           {
@@ -699,15 +600,15 @@
             "label": "☠️ K/D",
             "value": 16.316,
             "bound": 12.673,
-            "z": 35.923,
+            "z": 35.919,
             "side": "high"
           },
           {
             "id": "coi",
             "label": "📊 COI",
             "value": 17.392,
-            "bound": 14.979,
-            "z": 24.937,
+            "bound": 14.978,
+            "z": 24.926,
             "side": "high"
           },
           {
@@ -715,7 +616,7 @@
             "label": "🛡️ Resist",
             "value": 10.435,
             "bound": 8.987,
-            "z": 24.937,
+            "z": 24.926,
             "side": "high"
           }
         ]
@@ -726,14 +627,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 62.941,
+        "maxZ": 62.932,
         "metrics": [
           {
             "id": "pvs",
             "label": "🦁 Brave",
             "value": 45.763,
             "bound": 33.966,
-            "z": 62.941,
+            "z": 62.932,
             "side": "high"
           },
           {
@@ -741,7 +642,7 @@
             "label": "☠️ K/D",
             "value": 12.995,
             "bound": 12.673,
-            "z": 28.322,
+            "z": 28.319,
             "side": "high"
           },
           {
@@ -749,7 +650,7 @@
             "label": "📉 Slope",
             "value": 2.155,
             "bound": 0.61,
-            "z": 15.269,
+            "z": 15.268,
             "side": "high"
           }
         ]
@@ -760,14 +661,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 35.73,
+        "maxZ": 35.723,
         "metrics": [
           {
             "id": "kd",
             "label": "KD",
             "value": 28.524,
             "bound": 19.72,
-            "z": 35.73,
+            "z": 35.723,
             "side": "high"
           }
         ]
@@ -778,14 +679,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 9.213,
+        "maxZ": 9.212,
         "metrics": [
           {
             "id": "slope",
             "label": "📉 Slope",
             "value": 1.217,
             "bound": 0.61,
-            "z": 9.213,
+            "z": 9.212,
             "side": "high"
           }
         ]
@@ -872,14 +773,14 @@
         "explained": true,
         "reason": "Owner reviewed 2026-10-18 (#10): vehicle main try-harding K/D (lifetime KD 33, 658 kills / 25 deaths vs 200 opponents); explained, not a cheater",
         "red": [],
-        "maxZ": 367.466,
+        "maxZ": 367.413,
         "metrics": [
           {
             "id": "pvs",
             "label": "🦁 Brave",
             "value": 263.979,
             "bound": 33.966,
-            "z": 367.466,
+            "z": 367.413,
             "side": "high"
           },
           {
@@ -887,7 +788,7 @@
             "label": "☠️ K/D",
             "value": 26.32,
             "bound": 12.673,
-            "z": 58.82,
+            "z": 58.814,
             "side": "high"
           },
           {
@@ -895,7 +796,7 @@
             "label": "KD",
             "value": 32.978,
             "bound": 19.72,
-            "z": 41.526,
+            "z": 41.518,
             "side": "high"
           },
           {
@@ -903,15 +804,15 @@
             "label": "📉 Slope",
             "value": 5.773,
             "bound": 0.61,
-            "z": 38.615,
+            "z": 38.613,
             "side": "high"
           },
           {
             "id": "coi",
             "label": "📊 COI",
             "value": 25.256,
-            "bound": 14.979,
-            "z": 36.816,
+            "bound": 14.978,
+            "z": 36.799,
             "side": "high"
           },
           {
@@ -919,7 +820,7 @@
             "label": "🛡️ Resist",
             "value": 15.153,
             "bound": 8.987,
-            "z": 36.816,
+            "z": 36.799,
             "side": "high"
           }
         ]
@@ -932,22 +833,22 @@
         "red": [
           "session-forensics"
         ],
-        "maxZ": 48.215,
+        "maxZ": 48.211,
         "metrics": [
           {
             "id": "rkd",
             "label": "☠️ K/D",
             "value": 21.687,
             "bound": 12.673,
-            "z": 48.215,
+            "z": 48.211,
             "side": "high"
           },
           {
             "id": "coi",
             "label": "📊 COI",
             "value": 20.895,
-            "bound": 14.979,
-            "z": 30.229,
+            "bound": 14.978,
+            "z": 30.216,
             "side": "high"
           },
           {
@@ -955,7 +856,7 @@
             "label": "🛡️ Resist",
             "value": 12.537,
             "bound": 8.987,
-            "z": 30.229,
+            "z": 30.216,
             "side": "high"
           },
           {
@@ -963,7 +864,7 @@
             "label": "KD",
             "value": 19.723,
             "bound": 19.72,
-            "z": 24.278,
+            "z": 24.274,
             "side": "high"
           }
         ]
@@ -1000,7 +901,7 @@
             "label": "KD",
             "value": 46.667,
             "bound": 19.72,
-            "z": 59.336,
+            "z": 59.325,
             "side": "high"
           }
         ]
@@ -1013,14 +914,14 @@
         "red": [
           "aim"
         ],
-        "maxZ": 202.081,
+        "maxZ": 202.042,
         "metrics": [
           {
             "id": "kd",
             "label": "KD",
             "value": 156.375,
             "bound": 19.72,
-            "z": 202.081,
+            "z": 202.042,
             "side": "high"
           },
           {
@@ -1071,14 +972,14 @@
           "session",
           "session-forensics"
         ],
-        "maxZ": 85.877,
+        "maxZ": 85.865,
         "metrics": [
           {
             "id": "pvs",
             "label": "🦁 Brave",
             "value": 62.198,
             "bound": 33.966,
-            "z": 85.877,
+            "z": 85.865,
             "side": "high"
           },
           {
@@ -1086,7 +987,7 @@
             "label": "📉 Slope",
             "value": 1.613,
             "bound": 0.61,
-            "z": 11.771,
+            "z": 11.77,
             "side": "high"
           }
         ]
@@ -1099,14 +1000,14 @@
         "red": [
           "aim"
         ],
-        "maxZ": 78.269,
+        "maxZ": 78.261,
         "metrics": [
           {
             "id": "act",
             "label": "🏃 Activity",
             "value": 25.317,
             "bound": 24.74,
-            "z": 78.269,
+            "z": 78.261,
             "side": "high"
           }
         ]
@@ -1117,14 +1018,14 @@
         "explained": true,
         "reason": "Reviewed 2026-10-18 (#10): 🎈 inflation 19.2 = lifetime KD 1.82 vs 121 kills / 992 deaths against 200 opponents; real data, big sample, the public board flatters",
         "red": [],
-        "maxZ": 43.311,
+        "maxZ": 43.31,
         "metrics": [
           {
             "id": "inflation",
             "label": "🎈 Inflation",
             "value": 19.181,
             "bound": 11.929,
-            "z": 43.311,
+            "z": 43.31,
             "side": "high"
           }
         ]
@@ -1371,7 +1272,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-20T22:49:45.494Z",
+    "checkedAt": "2026-10-20T22:53:45.770Z",
     "red": 45,
     "padding": 41,
     "adjusted": 18,
@@ -1382,7 +1283,7 @@
     "forensics": 27
   },
   "sessionStats": {
-    "checkedAt": "2026-10-20T22:49:42.371Z",
+    "checkedAt": "2026-10-20T22:53:44.139Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -1395,14 +1296,14 @@
     },
     "ruleText": "[session pattern] in recent Honu sessions (≥ 100 kills counted): assists per kill ≤ 0.1, headshot share ≥ 50% (headshot XP per kill; Census lifetime HSR when no XP detail) and K/D ≥ 7 (session deaths; Census lifetime KD when none). A very one-sided record; a lead for manual review, not proof.",
     "coverage": {
-      "players": 13196,
-      "withSessions": 9398,
+      "players": 13197,
+      "withSessions": 9400,
       "measured": 4464,
-      "sessions": 35013,
-      "kills": 1576055,
-      "xpPlayers": 1013,
-      "xpMeasured": 746,
-      "xpSessions": 5429
+      "sessions": 35019,
+      "kills": 1576153,
+      "xpPlayers": 1017,
+      "xpMeasured": 747,
+      "xpSessions": 5441
     },
     "metrics": [
       {
@@ -1574,7 +1475,7 @@
         "max": 355
       },
       "s_hsk": {
-        "n": 787,
+        "n": 788,
         "min": 0,
         "p01": 0.008,
         "p05": 0.066,
@@ -1584,7 +1485,7 @@
         "max": 0.972
       },
       "s_ksk": {
-        "n": 787,
+        "n": 788,
         "min": 0,
         "p01": 0.056,
         "p05": 0.118,
@@ -1594,7 +1495,7 @@
         "max": 0.983
       },
       "s_domk": {
-        "n": 787,
+        "n": 788,
         "min": 0,
         "p01": 0,
         "p05": 0.022,
@@ -1604,7 +1505,7 @@
         "max": 0.243
       },
       "s_revk": {
-        "n": 787,
+        "n": 788,
         "min": 0,
         "p01": 0,
         "p05": 0.016,
@@ -1614,17 +1515,17 @@
         "max": 0.357
       },
       "s_revDom": {
-        "n": 778,
+        "n": 779,
         "min": 0,
         "p01": 0,
         "p05": 0.167,
-        "median": 0.877,
+        "median": 0.879,
         "p95": 3,
         "p99": 5,
         "max": 10
       },
       "s_savk": {
-        "n": 787,
+        "n": 788,
         "min": 0,
         "p01": 0.005,
         "p05": 0.023,
@@ -1634,7 +1535,7 @@
         "max": 0.2
       },
       "s_spotk": {
-        "n": 787,
+        "n": 788,
         "min": 0,
         "p01": 0,
         "p05": 0,
@@ -1644,7 +1545,7 @@
         "max": 0.354
       },
       "s_prik": {
-        "n": 787,
+        "n": 788,
         "min": 0,
         "p01": 0.047,
         "p05": 0.115,
@@ -1654,7 +1555,7 @@
         "max": 0.49
       },
       "s_stopk": {
-        "n": 787,
+        "n": 788,
         "min": 0,
         "p01": 0.013,
         "p05": 0.037,
@@ -3009,7 +2910,7 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 56.951,
+        "maxZ": 56.94,
         "metrics": [
           {
             "id": "s_kd",
@@ -3058,7 +2959,7 @@
         "red": [
           "aim"
         ],
-        "maxZ": 202.081,
+        "maxZ": 202.042,
         "metrics": [
           {
             "id": "s_kd",
@@ -3103,17 +3004,17 @@
     "outliersUnexplained": 1
   },
   "size": {
-    "at": "2026-10-20T22:49:27.787Z",
+    "at": "2026-10-20T22:53:35.642Z",
     "repoBytes": 187395072,
-    "dataBytes": 265014329,
-    "playersBytes": 244828646,
-    "playerFiles": 13197,
+    "dataBytes": 265044712,
+    "playersBytes": 244847865,
+    "playerFiles": 13198,
     "warnAtBytes": 734003200,
     "warning": false
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-20T22:49:42.406Z",
+    "checkedAt": "2026-10-20T22:53:44.171Z",
     "candidates": [
       "nebelhexe",
       "oshurpogchamp",
@@ -28052,7 +27953,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-20T22:49:42.418Z",
+    "checkedAt": "2026-10-20T22:53:44.179Z",
     "count": 334,
     "players": [
       {
@@ -30815,16 +30716,16 @@
     ]
   },
   "infantry": {
-    "checkedAt": "2026-10-20T22:49:47.176Z",
-    "players": 13197,
+    "checkedAt": "2026-10-20T22:53:46.790Z",
+    "players": 13198,
     "counts": {
       "infantry": 8705,
       "mixed": 2923,
-      "vehicle": 658,
+      "vehicle": 659,
       "low": 911,
       "none": 0
     },
-    "v2": 13197,
+    "v2": 13198,
     "pending": 0,
     "rule": {
       "INFANTRY_MAX": 0.25,
@@ -30872,10 +30773,10 @@
       }
     },
     "tagMin": 20,
-    "checkedAt": "2026-10-20T22:49:45.368Z",
+    "checkedAt": "2026-10-20T22:53:45.682Z",
     "coverage": {
-      "players": 13177,
-      "withSessions": 9379,
+      "players": 13178,
+      "withSessions": 9381,
       "measured": 3954,
       "measuredPct": 30
     },
@@ -31183,7 +31084,7 @@
   },
   "burst": {
     "rule": "KPM ≥ 5 and ≥ 15 kills in ≥ 2 min (one stored session, no 10-minute floor)",
-    "checkedAt": "2026-10-20T22:49:49.400Z",
+    "checkedAt": "2026-10-20T22:53:48.066Z",
     "sessions": 11,
     "flaggedPlayers": 0,
     "clearedPlayers": 2,
@@ -31353,8 +31254,8 @@
     ]
   },
   "padderPenalty": {
-    "checkedAt": "2026-10-20T22:49:42.446Z",
-    "ranked": 13134,
+    "checkedAt": "2026-10-20T22:53:44.200Z",
+    "ranked": 13135,
     "penalty": 0.1,
     "ref": 610.6,
     "rule": "Confirmed stat padders (data/reviewed.json \"padding\") get 💩 and −10% adjusted iVi, on top of the farm-kill removal and the * mark. A score at or below 0 gets a fixed −61 instead (10% of 610.6, the median positive iVi on 2026-10-19), so it always drops. Owner override: \"penalty\": \"cleared\" on the reviewed.json entry (or decision \"cleared\").",
@@ -31528,7 +31429,7 @@
         "before": 792,
         "after": 434.8,
         "rankBefore": 3159,
-        "rankAfter": 5472,
+        "rankAfter": 5473,
         "fixedDrop": false
       },
       {
@@ -31538,7 +31439,7 @@
         "before": 779.2,
         "after": 385,
         "rankBefore": 3229,
-        "rankAfter": 5887,
+        "rankAfter": 5888,
         "fixedDrop": false
       },
       {
@@ -31557,8 +31458,8 @@
         "status": "penalized",
         "before": 450.1,
         "after": 384,
-        "rankBefore": 5346,
-        "rankAfter": 5894,
+        "rankBefore": 5347,
+        "rankAfter": 5895,
         "fixedDrop": false
       },
       {
@@ -31567,25 +31468,25 @@
         "status": "penalized",
         "before": -12,
         "after": -106.6,
-        "rankBefore": 9928,
-        "rankAfter": 10221,
+        "rankBefore": 9929,
+        "rankAfter": 10222,
         "fixedDrop": true
       }
     ]
   },
   "vehicleCut": {
-    "checkedAt": "2026-10-20T22:49:42.490Z",
-    "ranked": 13134,
-    "cut": 7957,
+    "checkedAt": "2026-10-20T22:53:44.233Z",
+    "ranked": 13135,
+    "cut": 7958,
     "buckets": {
       "≤5%": 1710,
       "5–10%": 1395,
       "10–25%": 2615,
       "25–50%": 1536,
-      ">50%": 701
+      ">50%": 702
     },
     "parts": {
-      "vehicle": 7811,
+      "vehicle": 7812,
       "max": 773,
       "both": 627
     },
@@ -31593,7 +31494,7 @@
       "START": 0.1,
       "REF": 610.6
     },
-    "withData": 12269,
+    "withData": 12270,
     "players": [
       {
         "slug": "igorrrrrr",
@@ -31608,7 +31509,7 @@
         "before": 2925.1,
         "after": 418.3,
         "rankBefore": 1,
-        "rankAfter": 5606
+        "rankAfter": 5607
       },
       {
         "slug": "renamedsoldier12345",
@@ -31668,7 +31569,7 @@
         "before": 2502.9,
         "after": 415.5,
         "rankBefore": 10,
-        "rankAfter": 5624
+        "rankAfter": 5625
       },
       {
         "slug": "lilkanc",
@@ -31743,7 +31644,7 @@
         "before": 2219.7,
         "after": 235.3,
         "rankBefore": 42,
-        "rankAfter": 7285
+        "rankAfter": 7286
       },
       {
         "slug": "1otus",
@@ -31863,7 +31764,7 @@
         "before": 2150.8,
         "after": 275.3,
         "rankBefore": 64,
-        "rankAfter": 6841
+        "rankAfter": 6842
       },
       {
         "slug": "niceps2022",
@@ -31893,7 +31794,7 @@
         "before": 2134.7,
         "after": 273.2,
         "rankBefore": 68,
-        "rankAfter": 6871
+        "rankAfter": 6872
       },
       {
         "slug": "pinkoctapus",
@@ -32133,7 +32034,7 @@
         "before": 2008,
         "after": 333.3,
         "rankBefore": 109,
-        "rankAfter": 6327
+        "rankAfter": 6328
       },
       {
         "slug": "violetsexy",
@@ -32163,7 +32064,7 @@
         "before": 1998.9,
         "after": 273.8,
         "rankBefore": 114,
-        "rankAfter": 6861
+        "rankAfter": 6862
       },
       {
         "slug": "derrosabaron",
@@ -32283,7 +32184,7 @@
         "before": 1983.2,
         "after": 321.3,
         "rankBefore": 130,
-        "rankAfter": 6433
+        "rankAfter": 6434
       },
       {
         "slug": "modopop",
@@ -32328,7 +32229,7 @@
         "before": 1960.2,
         "after": 266.6,
         "rankBefore": 144,
-        "rankAfter": 6945
+        "rankAfter": 6946
       },
       {
         "slug": "oldmustachetr",
@@ -32508,7 +32409,7 @@
         "before": 1884,
         "after": 397.5,
         "rankBefore": 200,
-        "rankAfter": 5770
+        "rankAfter": 5771
       },
       {
         "slug": "daber222",
@@ -32673,7 +32574,7 @@
         "before": 1836.5,
         "after": 378.3,
         "rankBefore": 251,
-        "rankAfter": 5950
+        "rankAfter": 5951
       },
       {
         "slug": "daemon17",
@@ -32973,7 +32874,7 @@
         "before": 1781.1,
         "after": 445.3,
         "rankBefore": 319,
-        "rankAfter": 5386
+        "rankAfter": 5387
       },
       {
         "slug": "daemon15",
@@ -33138,7 +33039,7 @@
         "before": 1760.1,
         "after": 258.7,
         "rankBefore": 346,
-        "rankAfter": 7035
+        "rankAfter": 7036
       },
       {
         "slug": "activaterogue",
@@ -33228,7 +33129,7 @@
         "before": 1753.9,
         "after": 343.8,
         "rankBefore": 354,
-        "rankAfter": 6250
+        "rankAfter": 6251
       },
       {
         "slug": "toxicallylvs",
@@ -33468,7 +33369,7 @@
         "before": 1727.4,
         "after": 487.1,
         "rankBefore": 397,
-        "rankAfter": 5056
+        "rankAfter": 5057
       },
       {
         "slug": "rivaa",
@@ -33528,7 +33429,7 @@
         "before": 1719.7,
         "after": 275.2,
         "rankBefore": 412,
-        "rankAfter": 6842
+        "rankAfter": 6843
       },
       {
         "slug": "nouturns",
@@ -33543,7 +33444,7 @@
         "before": 1718.6,
         "after": 254.3,
         "rankBefore": 416,
-        "rankAfter": 7082
+        "rankAfter": 7083
       },
       {
         "slug": "tapext",
@@ -33573,7 +33474,7 @@
         "before": 1713.6,
         "after": 277.6,
         "rankBefore": 425,
-        "rankAfter": 6821
+        "rankAfter": 6822
       },
       {
         "slug": "iviagicns",
@@ -33861,7 +33762,7 @@
         "before": 2925.1,
         "after": 418.3,
         "rankBefore": 1,
-        "rankAfter": 5606
+        "rankAfter": 5607
       },
       {
         "slug": "renamedsoldier12345",
@@ -33891,7 +33792,7 @@
         "before": 2502.9,
         "after": 415.5,
         "rankBefore": 10,
-        "rankAfter": 5624
+        "rankAfter": 5625
       },
       {
         "slug": "lilkavs",
@@ -33965,8 +33866,8 @@
         "cut": 48.5,
         "before": 592.4,
         "after": 305.1,
-        "rankBefore": 5049,
-        "rankAfter": 6577
+        "rankBefore": 5050,
+        "rankAfter": 6578
       },
       {
         "slug": "shlodog",
@@ -33980,8 +33881,8 @@
         "cut": 0.6,
         "before": 457.8,
         "after": 455.1,
-        "rankBefore": 5999,
-        "rankAfter": 5305
+        "rankBefore": 6000,
+        "rankAfter": 5306
       }
     ]
   },
@@ -33992,7 +33893,7 @@
       "HIP": 0.9,
       "HSR": 0.55
     },
-    "checkedAt": "2026-10-20T22:49:30.741Z",
+    "checkedAt": "2026-10-20T22:53:37.180Z",
     "checked": 10,
     "errors": 0,
     "pending": 0,
