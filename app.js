@@ -2558,8 +2558,12 @@ import {
   }
 
   function syncSmoothBtn() {
+    // Dayset 2026-10-20: Smooth (banded) and its 🌊 wave are retired from the
+    // UI — "fancy but useless". The button now stays hidden even with the
+    // debug stats on (buried deeper than the debug box that used to reveal
+    // it). The banded / wave code itself is left in place, untouched.
     const b = document.querySelector('[data-mode="banded"]');
-    if (b) b.hidden = !showDebugCols;
+    if (b) b.hidden = true;
   }
   /** The 🎥 Live button hides behind the same "show older debug stats" box. */
   function syncLiveBtn() {
