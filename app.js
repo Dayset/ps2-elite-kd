@@ -4711,6 +4711,55 @@ import {
       })
       .catch(() => {});
   })();
+
+  /**
+   * Footer cache-growth line, under the commit count: how many new names
+   * the shared cache adds per day = total cached names (data/names.json)
+   * ÷ days online (launch = first commit, Oct 7, 2026). Computed in the
+   * page like the commit counter above; the total is re-fetched at most
+   * once a day (localStorage day stamp), the per-day rate is recomputed
+   * from the stored total on every load.
+   */
+  (function pageNameRate() {
+    const el = document.getElementById("pageNameRate");
+    if (!el) return;
+    const LAUNCH_UTC = Date.UTC(2026, 9, 7);
+    const compute = (total) => {
+      const now = new Date();
+      const todayUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+      const days = Math.max(1, Math.round((todayUtc - LAUNCH_UTC) / 86400000));
+      return { total, perDay: Math.round(total / days) };
+    };
+    const show = (r) => {
+      if (r && r.total > 0) {
+        el.textContent = tr("foot.namesPerDay", "(≈{perDay} new names a day · {total} cached since Oct 7, 2026)", {
+          perDay: r.perDay.toLocaleString(),
+          total: r.total.toLocaleString(),
+        });
+        el.hidden = false;
+      }
+    };
+    const KEY = "ps2ekd-page-namerate";
+    const today = new Date().toDateString();
+    try {
+      const c = JSON.parse(localStorage.getItem(KEY) || "null");
+      if (c && c.day === today && c.total > 0) {
+        show(compute(c.total));
+        return;
+      }
+    } catch {}
+    fetch("data/names.json", { cache: "no-cache" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        const total = d && (Number.isFinite(d.count) ? d.count : Array.isArray(d.players) ? d.players.length : 0);
+        if (!total) return;
+        try {
+          localStorage.setItem(KEY, JSON.stringify({ day: today, total }));
+        } catch {}
+        show(compute(total));
+      })
+      .catch(() => {});
+  })();
   if (els.analyzeBtn) {
     els.analyzeBtn.addEventListener("click", () => {
       sfx("boop");
