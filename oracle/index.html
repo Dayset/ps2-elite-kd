@@ -24,6 +24,21 @@
 <link rel="stylesheet" href="oracle.css?v=20261018-focus1" />
 </head>
 <body>
+  <div id="splash" class="splash" aria-hidden="true" hidden>
+    <img class="splash-logo" src="../favicon-512x512.png" alt="" />
+  </div>
+  <script>
+    // Installed-app launch splash: the logo fades in, holds 2.5 s, then cuts
+    // to the app. Only when launched as an installed app (standalone), never
+    // in a regular browser tab.
+    (function () {
+      var app = (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone;
+      if (!app) return;
+      var sp = document.getElementById("splash");
+      sp.hidden = false;
+      setTimeout(function () { sp.hidden = true; }, 2500);
+    })();
+  </script>
 <div class="wrap">
   <header>
     <h1>PS2<span>Map</span>Oracle</h1>
