@@ -302,6 +302,34 @@ export function attachDragCarousel(o) {
     const vertical = Math.abs(dy) > 1.5 * Math.abs(dx);
     settle(!cancelled && !vertical && dragCommits({ dx, width: st.w, vx }));
   };
+  /* t461u: a horizontal drag must not also start a page scroll. With
+   * touch-action: pan-y the browser still turned the swipe's tiny vertical
+   * drift into a scroll + fling of the page, and the next tap / swipe was
+   * spent stopping that fling (on phones: ignored for a few seconds, until the
+   * fling ran out). Sideways-dominant touch moves are cancelled from the first
+   * one; vertical ones still scroll the page. The listener sits on the touched
+   * node itself: the chart redraw at drag start removes that node, and touch
+   * events keep going to it (they no longer reach `target`). */
+  target.addEventListener("touchstart", (e) => {
+    const t0 = e.touches && e.touches[0];
+    const node = e.target;
+    if (!t0 || !node || e.touches.length > 1) return;
+    const x0 = t0.clientX, y0 = t0.clientY;
+    const move = (ev) => {
+      const t = ev.touches && ev.touches[0];
+      if (!t || ev.touches.length > 1 || !ev.cancelable) return;
+      const dx = t.clientX - x0, dy = t.clientY - y0;
+      if ((st && st.phase === "drag") || (st && Math.abs(dx) > 1.2 * Math.abs(dy))) ev.preventDefault();
+    };
+    const done = () => {
+      node.removeEventListener("touchmove", move);
+      node.removeEventListener("touchend", done);
+      node.removeEventListener("touchcancel", done);
+    };
+    node.addEventListener("touchmove", move, { passive: false });
+    node.addEventListener("touchend", done);
+    node.addEventListener("touchcancel", done);
+  }, { passive: true });
   target.addEventListener("pointerup", (e) => end(e, false));
   target.addEventListener("pointercancel", (e) => end(e, true));
   // Capture lost without a pointerup (browser took the gesture): spring back.

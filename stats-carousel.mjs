@@ -66,7 +66,7 @@ export function mountStatsCarousel({ root, onChange }) {
   // sound 3 times per click (and flipped the tabs back and forth). The tab's
   // mode now stands until the scroll lands (or the user takes over).
   // Finger / trackpad swipes are unchanged.
-  let programmatic = false, progTimer = 0;
+  let programmatic = false, progTimer = 0, progTarget = 0, lastViewportScroll = -1e9;
   const endProgrammatic = () => { programmatic = false; clearTimeout(progTimer); };
   function go(n, { anim = true, quiet = false } = {}) {
     n = clampMode(n, slides.length);
@@ -74,23 +74,36 @@ export function mountStatsCarousel({ root, onChange }) {
     const left = n * width();
     if (Math.abs(viewport.scrollLeft - left) < 1) return;
     programmatic = true;
+    progTarget = n;
     clearTimeout(progTimer);
     progTimer = setTimeout(endProgrammatic, 1200); // no scrollend (older Safari)
-    viewport.scrollTo({ left, behavior: anim && !reduced() ? "smooth" : "auto" });
+    // t461u: right after a swipe the browser's own snap glide is still running;
+    // an instant jump (reduce-motion, e.g. phone battery saver) did not stop it,
+    // so the glide carried the slides back and the tap was undone. A smooth
+    // scroll replaces that glide, so use it while the slides are still moving.
+    const moving = performance.now() - lastViewportScroll < 150;
+    viewport.scrollTo({ left, behavior: anim && (!reduced() || moving) ? "smooth" : "auto" });
   }
 
   // The scroll position is the truth: the mode follows it as soon as the
   // middle is crossed (tabs / dots light up while the finger is still down).
   let readQueued = false;
   viewport.addEventListener("scroll", (e) => {
-    if (e.target !== viewport || readQueued) return;
+    if (e.target !== viewport) return;
+    lastViewportScroll = performance.now();
+    if (readQueued) return;
     readQueued = true;
     requestAnimationFrame(() => {
       readQueued = false;
       if (!programmatic) setMode(Math.round(viewport.scrollLeft / width()));
     });
   }, { passive: true });
-  viewport.addEventListener("scrollend", (e) => { if (e.target === viewport) endProgrammatic(); }, { passive: true });
+  viewport.addEventListener("scrollend", (e) => {
+    if (e.target !== viewport || !programmatic) return;
+    // Landed somewhere else (an older glide won): go to the tab's slide after all.
+    if (Math.abs(viewport.scrollLeft - progTarget * width()) >= 1) viewport.scrollTo({ left: progTarget * width(), behavior: "auto" });
+    else endProgrammatic();
+  }, { passive: true });
   for (const ev of ["touchstart", "pointerdown"]) viewport.addEventListener(ev, endProgrammatic, { passive: true });
   viewport.addEventListener("wheel", (e) => { if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) endProgrammatic(); }, { passive: true });
 
