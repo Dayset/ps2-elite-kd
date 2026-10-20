@@ -72,7 +72,7 @@
     // to the app. Only when launched as an installed app (standalone), never
     // in a regular browser tab.
     (function () {
-      var app = (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone;
+      var app = (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone || new URLSearchParams(location.search).has("splash"); // TEMP-VERIFY
       if (!app) return;
       var sp = document.getElementById("splash");
       sp.hidden = false;
