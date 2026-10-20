@@ -23,7 +23,7 @@ import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-sav1";
 import { confirmedPadderSlugs } from "./padding.mjs?v=20261010-sav1";
 import { slugKey } from "./rank-row.mjs?v=20261010-sav1";
 import { hiddenList } from "./hidden.mjs?v=20261010-sav1";
-import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261019-inf1";
+import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261020-hintcut";
 import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261019-vcut4";
 
 /**
@@ -45,7 +45,7 @@ export function initRankings(host) {
     { id: "pvs", label: "🦁 Brave", digits: 2, tip: "Activity that keeps up as enemies get stronger: high when you stay productive even against the fastest-killing players you meet." },
     { id: "rf", label: "🛡️ Resist", digits: 2, tip: "How well you stand up to strong players: your K/D against the players you fight most, scaled up by how fast those players kill." },
     { id: "cons", label: "⚡ Const", digits: 2, tip: "How much of your K/D you keep against the strongest third of your opponents compared with the weakest third: 1.00 means it holds completely, 0.50 means it halves." },
-    { id: "apk", label: "🤝 Assists", digits: 2, apk: true, tip: "Assists per kill in recent Honu sessions: how often you help damage enemies that teammates finish, for each kill of your own. Shown from 100 session kills." },
+    { id: "apk", label: "🤝 Assists", digits: 2, apk: true, tip: "Assists per kill in recent Honu sessions: how often you help damage enemies that teammates finish, for each kill of your own." },
     { id: "rkd", label: "☠️ K/D", digits: 3, tip: "Kills ÷ deaths against the ~200 players you fight most, so it reflects real matchups rather than your whole lifetime." },
     { id: "inf", label: "🪖 Infantry", digits: 1, inf: true, tip: INF_HINT },
   ];

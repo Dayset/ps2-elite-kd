@@ -38,13 +38,13 @@ import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261010-sav1";
 import GHOST_MODEL from "./data/ghost-model.mjs?v=20261010-sav1";
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261010-sav1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
-import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261019-inf1";
+import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261020-hintcut";
 import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261019-vcut4";
-import { infantryKillsUrl, summarizeInfantryKills } from "./infantry.mjs?v=20261019-inf1";
+import { infantryKillsUrl, summarizeInfantryKills } from "./infantry.mjs?v=20261020-hintcut";
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261015-tip1";
 import { createWheelSwiper } from "./dist-cycle.mjs?v=20261017-cycle15";
 import { slideSwap, attachDragCarousel } from "./chart-slide.mjs?v=20261017-drag3";
-import { mountStatsCarousel } from "./stats-carousel.mjs?v=20261020-scroll0";
+import { mountStatsCarousel } from "./stats-carousel.mjs?v=20261019-carousel3";
 import { pickGraphForKeys } from "./graph-keys.mjs?v=20261017-graphkeys1";
 import { entryFetchedAt, pickNewest, writeWithEviction } from "./cache-pick.mjs?v=20261010-sav1";
 import {
@@ -1717,7 +1717,7 @@ import {
   }
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261019-fixcols")
+    rankingsLoading = import("./rankings.mjs?v=20261020-hintcut")
       .then((m) => {
         rankingsApi = m.initRankings(rankingsHost);
         return rankingsApi.ready;
@@ -3487,7 +3487,7 @@ import {
       { id: "pvs", label: "🦁 Brave", hint: "Activity that keeps up as enemies get stronger: high when you stay productive even against the fastest-killing players you meet.", fn: (r) => r.pvs, digits: 2 },
       { id: "rf", label: "🛡️ Resist", hint: "How well you stand up to strong players: your K/D against the players you fight most, scaled up by how fast those players kill.", fn: (r) => r.rf, digits: 2 },
       { id: "cons", label: "⚡ Const", hint: "How much of your K/D you keep against the strongest third of your opponents compared with the weakest third, as a percentile of all tracked players.", fn: (r) => r.cons, digits: 2, pctileCell: true },
-      { id: "apk", label: "🤝 Assists", hint: "Assists per kill in recent Honu sessions: how often you help damage enemies that teammates finish, for each kill of your own. Shown from 100 session kills.", fn: (r) => (apkBySlug && r.p ? apkBySlug.get(slugKey(r.p.display)) : undefined), digits: 2, apkCell: true, pctDir: "low", pctLowPhrase: "more assists" },
+      { id: "apk", label: "🤝 Assists", hint: "Assists per kill in recent Honu sessions: how often you help damage enemies that teammates finish, for each kill of your own.", fn: (r) => (apkBySlug && r.p ? apkBySlug.get(slugKey(r.p.display)) : undefined), digits: 2, apkCell: true, pctDir: "low", pctLowPhrase: "more assists" },
       { id: "rkd", label: "☠️ K/D", hint: "Kills ÷ deaths against the ~200 players you fight most, so it reflects real matchups rather than your whole lifetime.", fn: (r) => r.rkd, digits: 3 },
       { id: "inf", label: "🪖 Infantry", hint: INF_HINT, fn: (r) => { const e = infBySlug && r.p ? infBySlug.get(slugKey(r.p.display)) : undefined; return e ? e.inf : undefined; }, digits: 1, infCell: true },
     ];
