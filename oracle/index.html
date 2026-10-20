@@ -57,5 +57,10 @@
 
 <script type="module" src="js/vote.js?v=20261018-idle2"></script>
 <script type="module" src="js/main.js?v=20261019-cut1"></script>
+<script>
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("../sw.js").catch(function () {});
+  }
+</script>
 </body>
 </html>
