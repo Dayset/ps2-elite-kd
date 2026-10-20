@@ -47,7 +47,7 @@ import { infantryKillsUrl, summarizeInfantryKills } from "./infantry.mjs?v=20261
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261015-tip1";
 import { createWheelSwiper } from "./dist-cycle.mjs?v=20261017-cycle15";
 import { slideSwap, attachDragCarousel } from "./chart-slide.mjs?v=20261020-swipefix";
-import { mountStatsCarousel } from "./stats-carousel.mjs?v=20261020-poof3";
+import { mountStatsCarousel } from "./stats-carousel.mjs?v=20261020-poofearly1";
 import { pickGraphForKeys } from "./graph-keys.mjs?v=20261017-graphkeys1";
 import { entryFetchedAt, pickNewest, writeWithEviction } from "./cache-pick.mjs?v=20261010-sav1";
 import {
@@ -292,7 +292,7 @@ import {
     hideZeroIviToggle: document.getElementById("hideZeroIviToggle"),
   };
   // ✨ Stats ⇄ 🏅 Positions share one spot (stats-carousel.mjs); same switch sound as the graph modes.
-  if (!LIVE_MODE) mountStatsCarousel({ root: document.getElementById("statsCarousel"), onChange: (_i, o) => { if (!(o && o.poof)) sfx("sparkle"); }, onThumbGone: () => sfx("poof", { force: true }) });
+  if (!LIVE_MODE) mountStatsCarousel({ root: document.getElementById("statsCarousel"), onChange: (_i, o) => { if (!(o && o.poof)) sfx("sparkle"); }, onThumbPoof: () => sfx("poof", { force: true }) });
 
   // Dayset 2026-10-20: on phones (portrait) the options group (language /
   // wipe / sounds / theme) lives inside the names field, bottom-right — the

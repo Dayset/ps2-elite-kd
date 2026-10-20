@@ -37,9 +37,11 @@ export function flipBurst(times, n = FLIPS_TO_POOF, windowMs = FLIP_WINDOW_MS) {
 }
 const phoneUi = () => { try { return matchMedia("(max-width: 600px) and (pointer: coarse)").matches; } catch { return false; } };
 
-/** Fold the tab / dots line away. animate: 👍 for THUMB_MS (onThumbGone fires
- * as it disappears — the app plays the 💨 sfx there), then the line collapses. */
-export function collapseScBar(root, { animate = true, onThumbGone = null } = {}) {
+/** Fold the tab / dots line away. animate: 👍 for THUMB_MS, then the line
+ * collapses. onThumbPoof fires 0.5 s BEFORE the thumb disappears (owner
+ * 2026-10-20 — the app plays the 💨 sfx there); onThumbGone fires as it
+ * disappears. */
+export function collapseScBar(root, { animate = true, onThumbGone = null, onThumbPoof = null } = {}) {
   const bar = root && root.querySelector(".sc-bar");
   if (!bar || root.classList.contains("sc-bar-gone") || root.classList.contains("sc-bar-poofed")) return;
   const fold = () => {
@@ -59,6 +61,7 @@ export function collapseScBar(root, { animate = true, onThumbGone = null } = {})
     thumb.animate([{ transform: "rotate(-15deg)" }, { transform: "rotate(15deg)" }],
       { duration: 250, iterations: THUMB_MS / 250, direction: "alternate", easing: "ease-in-out" });
   } catch {}
+  if (onThumbPoof) setTimeout(() => { try { onThumbPoof(); } catch {} }, Math.max(0, THUMB_MS - 500));
   setTimeout(() => {
     thumb.remove();
     if (onThumbGone) { try { onThumbGone(); } catch {} }
@@ -82,7 +85,7 @@ export const clampMode = (i, n) => Math.max(0, Math.min(n - 1, i | 0));
  * @param {{ root: HTMLElement, onChange?: (i: number) => void }} o
  * root holds .sc-tab buttons (data-sc), .sc-viewport > .sc-track > .sc-slide, .sc-dot.
  */
-export function mountStatsCarousel({ root, onChange, onThumbGone = null }) {
+export function mountStatsCarousel({ root, onChange, onThumbGone = null, onThumbPoof = null }) {
   if (!root) return null;
   const viewport = root.querySelector(".sc-viewport");
   const track = root.querySelector(".sc-track");
@@ -117,8 +120,8 @@ export function mountStatsCarousel({ root, onChange, onThumbGone = null }) {
     flips.push(performance.now());
     if (flips.length > FLIPS_TO_POOF) flips.shift();
     const poof = !poofed && phoneUi() && flipBurst(flips);
-    if (poof) { poofed = true; collapseScBar(root, { onThumbGone }); }
-    if (onChange) onChange(i, { poof }); // poof: no switch sound now — the 💨 sfx plays when the 👍 disappears
+    if (poof) { poofed = true; collapseScBar(root, { onThumbGone, onThumbPoof }); }
+    if (onChange) onChange(i, { poof }); // poof: no switch sound now — the 💨 sfx plays 0.5 s before the 👍 disappears
   }
   const flips = [];
   let poofed = false;
