@@ -116,6 +116,39 @@ function saveLang(code) {
   try { localStorage.setItem(STORE, code); } catch {}
 }
 
+const BANNER_FLAG = "ps2-elite-kd-lang-banner";
+
+/** One-time notice when the language was picked from the browser (nothing saved yet): says which
+ *  language is shown, that the 🌐 menu changes it, and offers English in one click. Only when that
+ *  language really has translations, and never again after it is dismissed or a choice is saved. */
+function showDetectedBanner() {
+  try {
+    if (savedLang() || lang === "en" || !Object.keys(table).length) return;
+    if (localStorage.getItem(BANNER_FLAG)) return;
+  } catch { return; }
+  const name = (LANGS.find((l) => l.code === lang) || {}).name || lang;
+  const bar = document.createElement("div");
+  bar.id = "langBanner";
+  bar.setAttribute("role", "status");
+  bar.style.cssText = "display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:center;padding:8px 40px 8px 16px;position:relative;background:var(--card,var(--bg));color:var(--text);border-bottom:1px solid var(--border);font-size:14px;line-height:1.4;text-align:center";
+  const msg = document.createElement("span");
+  msg.textContent = t("banner.text", "Showing this page in {lang}. Change it anytime with the 🌐 menu.", { lang: name });
+  const en = document.createElement("button");
+  en.type = "button";
+  en.textContent = "English";
+  en.style.cssText = "cursor:pointer;font:inherit;color:var(--accent);background:none;border:1px solid var(--border);border-radius:6px;padding:2px 10px";
+  const x = document.createElement("button");
+  x.type = "button";
+  x.textContent = "×";
+  x.setAttribute("aria-label", t("banner.close", "Dismiss"));
+  x.style.cssText = "position:absolute;right:8px;top:50%;transform:translateY(-50%);cursor:pointer;font:inherit;font-size:20px;line-height:1;color:var(--muted);background:none;border:0;padding:4px 8px";
+  const hide = () => { try { localStorage.setItem(BANNER_FLAG, "1"); } catch {} bar.remove(); };
+  en.addEventListener("click", () => { saveLang("en"); hide(); location.reload(); });
+  x.addEventListener("click", hide);
+  bar.append(msg, en, x);
+  document.body.prepend(bar);
+}
+
 /** Resolves once the first language is applied (app.js waits for it, so its own text is translated too). */
 export const ready = typeof document === "undefined" ? Promise.resolve("en") : (async () => {
   const first = pickLang(savedLang(), typeof navigator !== "undefined" ? navigator.languages : []);
@@ -127,7 +160,9 @@ export const ready = typeof document === "undefined" ? Promise.resolve("en") : (
       location.reload();
     });
   }
-  return setLang(first);
+  const shown = await setLang(first);
+  if (document.body) showDetectedBanner(); else document.addEventListener("DOMContentLoaded", showDetectedBanner, { once: true });
+  return shown;
 })();
 
 if (typeof window !== "undefined") window.ps2I18n = { t, setLang, currentLang, LANGS };
