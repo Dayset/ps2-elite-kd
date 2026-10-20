@@ -416,7 +416,7 @@ import {
       window.addEventListener("resize", () => { if (limitToastEl && !limitToastEl.hidden) hideLimitToast(); });
     }
     limitToastEl.innerHTML =
-      html || `<strong>Limit of ${MAX_NAMES} names reached</strong><span class="limit-toast-sub">remove a name to add more</span>`;
+      html || `<strong>${tr("msg.limitToast", "Limit of {n} names reached", { n: MAX_NAMES })}</strong><span class="limit-toast-sub">${tr("msg.limitToastSub", "remove a name to add more")}</span>`;
     const el = limitToastEl;
     if (limitToastTimer) clearTimeout(limitToastTimer);
     el.hidden = false;
@@ -462,8 +462,8 @@ import {
     }
     setStatus(
       '<div class="graph-ready-hint">' +
-        "<div>Your Graph is ready.</div>" +
-        "<div>Enter a new name to analyze.</div>" +
+        `<div>${tr("msg.graphReady", "Your Graph is ready.")}</div>` +
+        `<div>${tr("msg.graphReadySub", "Enter a new name to analyze.")}</div>` +
       "</div>",
       "graph-ready"
     );
@@ -2340,7 +2340,7 @@ import {
         onRetry: ({ attempt, retries }) => {
           if (signal && signal.aborted) return;
           setStatus(
-            `<span class="warn">⏳ Daybreak Census is busy, retrying… (${attempt}/${retries})</span>`,
+            `<span class="warn">${tr("msg.censusRetry", "⏳ Daybreak Census is busy, retrying… ({a}/{r})", { a: attempt, r: retries })}</span>`,
             "warn census-retry"
           );
         },
@@ -3921,12 +3921,12 @@ import {
   }
 
   function sourceLabel(src) {
-    if (!src) return "unknown";
+    if (!src) return tr("src.unknown", "unknown");
     if (src.startsWith("shared:") || src.startsWith("local:")) {
-      return `shared cache (${src.split(":").slice(1).join(":")})`;
+      return tr("src.shared", "shared cache ({d})", { d: src.split(":").slice(1).join(":") });
     }
-    if (src === "cache:localStorage") return "browser cache";
-    if (src.startsWith("live:")) return "live Honu/Census";
+    if (src === "cache:localStorage") return tr("src.browser", "browser cache");
+    if (src.startsWith("live:")) return tr("src.live", "live Honu/Census");
     return src;
   }
 
@@ -4112,8 +4112,7 @@ import {
           if (!p.partialSkipped && !p.cacheFallback) cachePut(name, p);
           // Saved copies load in a blink: no flash of "Loaded X…" (it pushed the page down and up).
           if (!quiet && !/^(shared:|local)/.test(String(p.source || ""))) setStatus(
-            `Loaded <strong>${escapeHtml(p.display)}</strong> ` +
-            `<span class="src">via ${escapeHtml(sourceLabel(p.source))}</span>…`
+            tr("msg.loadedVia", "Loaded <strong>{name}</strong> <span class=\"src\">via {src}</span>…", { name: escapeHtml(p.display), src: escapeHtml(sourceLabel(p.source)) })
           );
           return p;
         },
@@ -4185,7 +4184,7 @@ import {
       renderCacheChips();
       setStatus(
         skippedWarningHtml(summary, {
-          extra: hadGraph ? "Previous graph kept." : "",
+          extra: hadGraph ? tr("msg.prevKept", "Previous graph kept.") : "",
           fresh,
         }),
         "warn skipped all-failed"
@@ -4507,21 +4506,18 @@ import {
     const out = [];
     if (fb.length) {
       out.push(
-        `<span class="warn">⚠️ Daybreak Census is busy or down — showing cached data for ` +
-        `${fb.map((n) => `<strong>${escapeHtml(n)}</strong>`).join(", ")}.</span> ` +
-        `<button type="button" class="census-retry-btn">↻ Try live again</button>`
+        `<span class="warn">${tr("msg.cacheFallback", "⚠️ Daybreak Census is busy or down — showing cached data for {names}.", { names: fb.map((n) => `<strong>${escapeHtml(n)}</strong>`).join(", ") })}</span> ` +
+        `<button type="button" class="census-retry-btn">${tr("msg.tryLive", "↻ Try live again")}</button>`
       );
     }
     if (kept.length) {
       out.push(
-        `<span class="warn">⚠️ Couldn't refresh ` +
-        `${kept.map((n) => `<strong>${escapeHtml(n)}</strong>`).join(", ")} — kept the saved copy.</span>`
+        `<span class="warn">${tr("msg.keptCopy", "⚠️ Couldn't refresh {names} — kept the saved copy.", { names: kept.map((n) => `<strong>${escapeHtml(n)}</strong>`).join(", ") })}</span>`
       );
     }
     for (const x of part) {
       out.push(
-        `<span class="warn">⚠️ ${escapeHtml(x.player.display || x.name)}: ${x.player.partialSkipped} opponent(s) ` +
-        `left out (Census busy).</span>`
+        `<span class="warn">${tr("msg.partial", "⚠️ {name}: {n} opponent(s) left out (Census busy).", { name: escapeHtml(x.player.display || x.name), n: x.player.partialSkipped })}</span>`
       );
     }
     return out.length ? `<div class="census-note" role="status">${out.join("<br>")}</div>` : "";
@@ -4539,9 +4535,9 @@ import {
     const tail = [summary.tail, extra].filter(Boolean).join(" ");
     const freshNote =
       fresh && summary.allFailed
-        ? ` <span class="src">Fetch fresh was on — live Census only.</span>`
+        ? ` <span class="src">${tr("msg.freshOnly", "Fetch fresh was on — live Census only.")}</span>`
         : "";
-    const retryBtn = summary.retryable ? ` <button type="button" class="census-retry-btn">↻ Try again</button>` : "";
+    const retryBtn = summary.retryable ? ` <button type="button" class="census-retry-btn">${tr("msg.tryAgain", "↻ Try again")}</button>` : "";
     return (
       `<div class="skipped-warning" role="status">` +
       `<span class="warn">⚠️ ${escapeHtml(summary.lead)} ${items}.</span> ` +
