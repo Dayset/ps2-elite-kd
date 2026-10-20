@@ -24,6 +24,11 @@
     .st-head { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
     .st-head { position: relative; }
     .st-head .lang-select { position: absolute; top: 10px; right: 12px; }
+    /* Owner 2026-10-20: a good big visible way back — 🔙 only, no text,
+       top-left of the header, mirroring the language menu top-right. */
+    .st-head { padding-left: 4.75rem; }
+    .st-back { position: absolute; top: 10px; left: 12px; width: 3rem; height: 3rem; display: inline-flex; align-items: center; justify-content: center; font-size: 1.7rem; line-height: 1; text-decoration: none; background: var(--ctrl-btn-bg); border: 1px solid var(--border); border-radius: 10px; }
+    .st-back:hover { border-color: var(--accent); }
     .st-head h1 { font-size: 1.25rem; margin: 0 0 4px; padding-right: 8.5rem; }
     .st-head .st-sub { margin-bottom: 0; }
     .st-sub { color: var(--dim); font-size: 0.85rem; margin-bottom: 16px; }
@@ -78,6 +83,7 @@
 <body class="site-page">
   <main class="st-wrap">
     <div class="st-head">
+    <a class="st-back" href="index.html" aria-label="Back to the stats" data-i18n-aria-label="cp.back">🔙</a>
     <select id="langSelect" class="lang-select" title="Language" aria-label="Language" data-i18n-title="lang.label" data-i18n-aria-label="lang.label">
       <option value="en" selected>🇬🇧</option>
       <option value="ja">🇯🇵</option>
