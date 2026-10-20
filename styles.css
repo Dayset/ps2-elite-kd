@@ -2830,6 +2830,14 @@ col.lv-c-statR { width: calc(7.143% - 3.3214ch); }
 .sc-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .sc-tab .rk-table-count { color: var(--dim); font-weight: 400; }
 .sc-dots { display: inline-flex; gap: 5px; }
+/* t470u 💨 (stats-carousel.mjs collapseScBar): phones only. Tabs + dots vanish, a rocking 👍
+ * sits where the dots were for 2 s, then the line folds to nothing (refresh restores it). */
+@media (max-width: 600px) {
+  .stats-carousel.sc-bar-poofed .sc-bar { position: relative; overflow: hidden; }
+  .stats-carousel.sc-bar-poofed .sc-bar > :not(.sc-thumb) { visibility: hidden; }
+  .stats-carousel .sc-thumb { position: absolute; left: 50%; top: 50%; margin: -0.6em 0 0 -0.6em; width: 1.2em; height: 1.2em; line-height: 1.2em; text-align: center; font-size: 1.1rem; pointer-events: none; }
+  .stats-carousel.sc-bar-gone .sc-bar { display: none; }
+}
 .sc-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); transition: background 0.2s, transform 0.2s; }
 .sc-dot.on { background: var(--accent); transform: scale(1.25); }
 /* Native scroll-snap (2026-10-19): the browser moves the slides on the compositor at the

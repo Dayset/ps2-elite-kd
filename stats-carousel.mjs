@@ -21,6 +21,57 @@ export function canScrollToward(el, dx) {
   return dx < 0 ? el.scrollLeft < max - 1 : el.scrollLeft > 1;
 }
 
+/* t470u: phones, flip the tables back and forth 4 times (within FLIP_WINDOW_MS)
+ * → 💨 poof, the tab / dots line gives way to a rocking 👍 for 2 s, then the
+ * line folds away and only swiping switches. Page session only (a refresh
+ * brings it back); a future "hide forever" setting can call collapseScBar(root,
+ * { animate: false }) at startup. */
+export const FLIPS_TO_POOF = 4;
+export const FLIP_WINDOW_MS = 10000;
+export const THUMB_MS = 2000;
+const COLLAPSE_MS = 280;
+/** True when the last FLIPS_TO_POOF switch times all fall within FLIP_WINDOW_MS. */
+export function flipBurst(times, n = FLIPS_TO_POOF, windowMs = FLIP_WINDOW_MS) {
+  return times.length >= n && times[times.length - 1] - times[times.length - n] <= windowMs;
+}
+const phoneUi = () => { try { return matchMedia("(max-width: 600px) and (pointer: coarse)").matches; } catch { return false; } };
+
+/** Fold the tab / dots line away. animate: 👍 for THUMB_MS, then the line collapses smoothly. */
+export function collapseScBar(root, { animate = true } = {}) {
+  const bar = root && root.querySelector(".sc-bar");
+  if (!bar || root.classList.contains("sc-bar-gone") || root.classList.contains("sc-bar-poofed")) return;
+  const fold = () => {
+    root.classList.add("sc-bar-gone"); // final state (CSS, phones only): no line, no gap
+    bar.setAttribute("inert", "");
+    bar.setAttribute("aria-hidden", "true");
+  };
+  if (!animate) { fold(); return; }
+  root.classList.add("sc-bar-poofed"); // tabs + dots hidden at once, the line keeps its height
+  const thumb = document.createElement("span");
+  thumb.className = "sc-thumb";
+  thumb.setAttribute("aria-hidden", "true");
+  thumb.textContent = "👍";
+  bar.appendChild(thumb);
+  // Web Animations, not a CSS @media-dependent rule: plays with reduced motion too (owner, battery saver).
+  try {
+    thumb.animate([{ transform: "rotate(-15deg)" }, { transform: "rotate(15deg)" }],
+      { duration: 250, iterations: THUMB_MS / 250, direction: "alternate", easing: "ease-in-out" });
+  } catch {}
+  setTimeout(() => {
+    thumb.remove();
+    const h = bar.getBoundingClientRect().height;
+    const mb = parseFloat(getComputedStyle(bar).marginBottom) || 0;
+    let anim = null;
+    try {
+      anim = bar.animate([{ height: `${h}px`, marginBottom: `${mb}px` }, { height: "0px", marginBottom: "0px" }],
+        { duration: COLLAPSE_MS, easing: "ease-in-out", fill: "forwards" });
+    } catch {}
+    const done = () => { fold(); root.classList.remove("sc-bar-poofed"); if (anim) anim.cancel(); };
+    if (anim) anim.onfinish = done; else done();
+    setTimeout(done, COLLAPSE_MS + 200); // fallback if onfinish never comes
+  }, THUMB_MS);
+}
+
 /** Clamp a mode index to the slides that exist. */
 export const clampMode = (i, n) => Math.max(0, Math.min(n - 1, i | 0));
 
@@ -58,8 +109,16 @@ export function mountStatsCarousel({ root, onChange }) {
     i = n;
     paint();
     try { localStorage.setItem(KEY, String(i)); } catch {}
-    if (!quiet && onChange) onChange(i);
+    if (quiet) return;
+    // t470u: count switches (tap or swipe); the 4th quick one on a phone poofs the line away.
+    flips.push(performance.now());
+    if (flips.length > FLIPS_TO_POOF) flips.shift();
+    const poof = !poofed && phoneUi() && flipBurst(flips);
+    if (poof) { poofed = true; collapseScBar(root); }
+    if (onChange) onChange(i, { poof }); // the app plays the 💨 poof instead of the switch sound
   }
+  const flips = [];
+  let poofed = false;
   // t448u: a tab / key switch already played its sound in go(); while that
   // smooth scroll runs, the scroll-follow below briefly read the old mode
   // (first frames) and then crossed the middle again, which played the switch

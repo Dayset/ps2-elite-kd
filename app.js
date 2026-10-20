@@ -47,7 +47,7 @@ import { infantryKillsUrl, summarizeInfantryKills } from "./infantry.mjs?v=20261
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261015-tip1";
 import { createWheelSwiper } from "./dist-cycle.mjs?v=20261017-cycle15";
 import { slideSwap, attachDragCarousel } from "./chart-slide.mjs?v=20261020-swipefix";
-import { mountStatsCarousel } from "./stats-carousel.mjs?v=20261020-swipefix";
+import { mountStatsCarousel } from "./stats-carousel.mjs?v=20261020-poof";
 import { pickGraphForKeys } from "./graph-keys.mjs?v=20261017-graphkeys1";
 import { entryFetchedAt, pickNewest, writeWithEviction } from "./cache-pick.mjs?v=20261010-sav1";
 import {
@@ -107,7 +107,7 @@ import { markNote, statMark, confirmedPadderSlugs, isPenalizedPadder, POOP_MARK,
 import { accountTimes, flairsHtml, flairsFor } from "./flairs.mjs?v=20261010-sav1";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
 import "./name-peek.mjs?v=20261020-peekwin1";
-import { sfx, recentGesture, mountSfxToggle } from "./sfx.mjs?v=20261017-sfxpreload";
+import { sfx, recentGesture, mountSfxToggle } from "./sfx.mjs?v=20261020-poof";
 import { mountNameSuggest } from "./name-suggest.mjs?v=20261016-sug1";
 import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261010-sav1";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
@@ -292,7 +292,7 @@ import {
     hideZeroIviToggle: document.getElementById("hideZeroIviToggle"),
   };
   // ✨ Stats ⇄ 🏅 Positions share one spot (stats-carousel.mjs); same switch sound as the graph modes.
-  if (!LIVE_MODE) mountStatsCarousel({ root: document.getElementById("statsCarousel"), onChange: () => sfx("sparkle") });
+  if (!LIVE_MODE) mountStatsCarousel({ root: document.getElementById("statsCarousel"), onChange: (_i, o) => sfx(o && o.poof ? "poof" : "sparkle") });
 
   let players = [];
   let lastAnalyzedNames = [];
