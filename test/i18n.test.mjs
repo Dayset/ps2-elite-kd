@@ -82,11 +82,15 @@ test("every data-i18n key used by index.html exists in en.json", () => {
   assert.deepEqual(missing, []);
 });
 
-test("every tr(\"key\", …) call in app.js exists in en.json", () => {
-  const js = read("app.js");
-  const used = new Set([...js.matchAll(/\btr\("([^"]+)"/g)].map((m) => m[1]));
-  assert.ok(used.size > 0, "app.js uses the translator");
-  const missing = [...used].filter((k) => !(k in en));
+test("every tr(\"key\", …) call in the UI modules exists in en.json", () => {
+  const used = new Set();
+  for (const file of ["app.js", "rankings.mjs", "name-suggest.mjs"]) {
+    for (const m of read(file).matchAll(/\btr\("([^"]+)"/g)) used.add(m[1]);
+  }
+  assert.ok(used.size > 30, "the UI modules use the translator");
+  // "tip." + id and "tier." + id build keys at run time: check the prefixes have keys below them.
+  for (const p of [...used].filter((k) => k.endsWith("."))) assert.ok(Object.keys(en).some((k) => k.startsWith(p)), p + " has keys");
+  const missing = [...used].filter((k) => !k.endsWith(".") && !(k in en));
   assert.deepEqual(missing, []);
 });
 

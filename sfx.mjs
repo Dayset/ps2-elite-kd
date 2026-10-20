@@ -1,3 +1,4 @@
+import { t as tr } from "./i18n.mjs";
 // t402u: tiny synthetic UI sounds (Web Audio oscillators only, no files).
 // The AudioContext is created at page load ("preloaded") but stays suspended
 // until a real user gesture resumes it (autoplay rules), so page-load
@@ -94,7 +95,7 @@ export function mountSfxToggle(btn) {
   const paint = () => {
     const on = sfxEnabled();
     btn.textContent = on ? "🔊" : "🔇";
-    const t = on ? "Sounds on — click to mute" : "Sounds off — click to unmute";
+    const t = on ? tr("sfx.on", "Sounds on — click to mute") : tr("sfx.off", "Sounds off — click to unmute");
     btn.title = t; btn.setAttribute("aria-label", t); btn.setAttribute("aria-pressed", on ? "true" : "false");
   };
   btn.addEventListener("click", () => { setSfxEnabled(!sfxEnabled()); paint(); sfx("plink"); });

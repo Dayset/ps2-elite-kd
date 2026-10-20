@@ -184,7 +184,7 @@
   </script>
   <div class="controls">
     <div class="cache-row">
-      <div id="cacheChips" class="cache-chips" aria-label="Cached character names"></div>
+      <div id="cacheChips" class="cache-chips" aria-label="Cached character names" data-i18n-aria-label="cache.chipsAria"></div>
     </div>
     <div id="namesBox" class="names-box" role="group" data-i18n-aria-label="names.label" aria-label="Player names">
       <div class="names-box-main">
@@ -248,7 +248,7 @@
           <option value="zh">中文</option>
           <option value="es">Español</option>
         </select>
-        <button id="wipeLocalBtn" type="button" class="mini-btn wipe-local" title="Clear all local app data (cache, theme, flags)" aria-label="Clear all local app data">🗑️</button>
+        <button id="wipeLocalBtn" type="button" class="mini-btn wipe-local" title="Clear all local app data (cache, theme, flags)" aria-label="Clear all local app data" data-i18n-title="wipe.title" data-i18n-aria-label="wipe.title">🗑️</button>
         <button id="bgToggleBtn" type="button" class="mini-btn bg-toggle" title="Background image on — click to hide" aria-label="Background image on — click to hide">🖼️</button>
         <button id="sfxToggle" type="button" class="mini-btn sfx-toggle" title="Sounds on — click to mute" aria-label="Sounds on — click to mute">🔊</button>
         <button id="themeToggle" type="button" class="mini-btn theme-toggle" title="Switch to light theme" aria-label="Switch to light theme">☀️</button>
@@ -291,7 +291,7 @@
     </div>
     <div class="sc-viewport">
       <div class="sc-track">
-        <div class="sc-slide" id="scSlideStats" role="tabpanel" aria-labelledby="scTabStats"><div id="statsPanel" class="stats-panel" aria-label="Player stats comparison"></div></div>
+        <div class="sc-slide" id="scSlideStats" role="tabpanel" aria-labelledby="scTabStats"><div id="statsPanel" class="stats-panel" aria-label="Player stats comparison" data-i18n-aria-label="stats.panelAria"></div></div>
         <div class="sc-slide" id="scSlidePos" role="tabpanel" aria-labelledby="scTabPos"><div id="rkPositions" class="rk-positions" aria-live="polite"><p class="rk-pos-hint" data-i18n="sc.loadingPositions">Loading positions…</p></div></div>
       </div>
     </div>
@@ -314,16 +314,16 @@
   <div class="chart-wrap empty" style="contain: layout paint style;">
     <!-- t378u: top-right corner of the graph: 💀 / 📈 switch above the zoom (upper half + Auto only). -->
     <div class="chart-corner">
-      <div id="chartModeBar" class="chart-mode-bar" role="group" aria-label="Graph view">
-        <button type="button" class="chart-mode-btn" data-yscale="kd-btn" aria-pressed="true"
+      <div id="chartModeBar" class="chart-mode-bar" role="group" data-i18n-aria-label="chart.modeLabel" aria-label="Graph view">
+        <button type="button" class="chart-mode-btn" data-yscale="kd-btn" aria-pressed="true" data-i18n-title="chart.modeKd" data-i18n-tip="chart.modeKdTip"
                 title="💀 Who wins fights: kills per death against easy → hard enemies. Higher line = wins more fights." data-tip="💀 Who wins fights: kills per death vs easy → hard enemies. Higher = wins more.">💀</button>
-        <button type="button" class="chart-mode-btn" data-mode="cumulative" aria-pressed="false"
+        <button type="button" class="chart-mode-btn" data-mode="cumulative" aria-pressed="false" data-i18n-title="chart.modeAim" data-i18n-tip="chart.modeAimTip"
                 title="🎯 Who aims best: each line keeps its shape but is lifted to the player's aim score (public IvI = accuracy × headshot %). Higher line = better aim, not more wins. Players can swap places between the two views: sharp aim doesn't always win fights, and vehicle / explosive players win without headshots." data-tip="🎯 Who aims best: lines lifted to each player's aim score (accuracy × headshot %). Higher = better aim, not more wins, so players can swap places.">🎯</button>
-        <button type="button" class="chart-mode-btn" data-mode="banded" aria-pressed="false"
+        <button type="button" class="chart-mode-btn" data-mode="banded" aria-pressed="false" data-i18n-title="chart.modeBanded"
                 title="Smooth: banded K/D.">🎚️</button>
       </div>
       <div id="chartYZoom" class="chart-y-zoom" hidden data-i18n-title="chart.zoomTitle" title="Zoom into the start of the graph (enemy KPM near 0): X shrinks from the right, Y re-fits to the left side. Bottom = Auto (full graph).">
-        <input id="yZoomSlider" type="range" min="0" max="2" step="0.05" value="0"
+        <input id="yZoomSlider" data-i18n-aria-label="chart.yZoomAria" type="range" min="0" max="2" step="0.05" value="0"
                orient="vertical"
                aria-label="Zoom (bottom = auto fit, up = zoom into enemy KPM near 0)"
                aria-orientation="vertical" />
@@ -341,9 +341,9 @@
     </div>
     <svg id="chart" viewBox="0 0 1000 564" preserveAspectRatio="xMidYMid meet" hidden></svg>
     <div class="chart-mode-row">
-    <div id="ghostCaption" class="ghost-caption" hidden
+    <div id="ghostCaption" class="ghost-caption" hidden data-i18n-title="ghost.title"
          title="Dashed lines are a prediction from play style (overall K/D, KPM, accuracy, HSR, RF, slope, 🦁 Brave, 🎈 Inflation) fitted on the shared cache and anchored to the player's own fights. Not real fights. Shade ≈ ±1σ.">
-      <span class="ghost-caption-swatch" aria-hidden="true"></span><span class="ghost-caption-text">dashed = predicted from play style,<br />not real fights</span>
+      <span class="ghost-caption-swatch" aria-hidden="true"></span><span class="ghost-caption-text" data-i18n="ghost.text">dashed = predicted from play style,<br />not real fights</span>
     </div>
     <span id="waveRangeWarn" hidden style="font-size:0.72rem; color:#c90; margin-left:8px;"></span>
     </div>
@@ -363,7 +363,7 @@
       <summary title="Distribution" data-i18n-title="ranks.distribution">📊</summary>
       <select id="distMetric" aria-label="Distribution metric" data-i18n-aria-label="ranks.distributionMetric" hidden></select>
       <div class="dist-chart" id="distChart">
-        <svg id="distSvg" role="img" aria-label="Distribution of the selected metric across cached players"></svg>
+        <svg id="distSvg" role="img" aria-label="Distribution of the selected metric across cached players" data-i18n-aria-label="dist.svgAria"></svg>
         <div id="distTip" class="dist-tip" hidden></div>
       </div>
     </details>
@@ -390,7 +390,7 @@
     <section class="footer-data" aria-label="Public stats">
       <div id="statsPublic" class="stats-panel stats-panel-public" aria-label="Public stats (Census / Honu)"></div>
       <!-- "What about vehicles?" stays hidden until a comparison is loaded (renderStatsTable). -->
-      <details id="vehiclesNote" class="pooled-note fold-note" hidden><summary>♿ What about vehicles?</summary><p>⚔️ iVi measures infantry skill only. If more than 10% of your lifetime kills come from vehicles (seats, turrets), the share above 10% is subtracted from adjusted iVi; MAX kills above 10% are subtracted the same way, separately. The two add up, with no cap: e.g. 96% vehicle kills → −86%; 45% vehicle + 40% MAX → −65%. Pure infantry is untouched. Hover a player’s iVi value to see the cut, and the <a href="columns.html#infantry">🪖 Infantry</a> column for the shares (<a href="columns.html#vehicle-cut">details</a>).</p></details>
+      <details id="vehiclesNote" class="pooled-note fold-note" hidden><summary data-i18n="vehicles.summary">♿ What about vehicles?</summary><p>⚔️ iVi measures infantry skill only. If more than 10% of your lifetime kills come from vehicles (seats, turrets), the share above 10% is subtracted from adjusted iVi; MAX kills above 10% are subtracted the same way, separately. The two add up, with no cap: e.g. 96% vehicle kills → −86%; 45% vehicle + 40% MAX → −65%. Pure infantry is untouched. Hover a player’s iVi value to see the cut, and the <a href="columns.html#infantry">🪖 Infantry</a> column for the shares (<a href="columns.html#vehicle-cut">details</a>).</p></details>
     </section>
     <section class="footer-block" aria-label="About, links and options">
       <div class="foot-grid">
@@ -420,9 +420,9 @@
       <div class="foot-bottom">
         <details class="disclaimer">
         <summary data-i18n="foot.disclaimer">Disclaimer</summary>
-        <p>All numbers, ratings, charts and flags on this site are automated estimates from public data (the Daybreak Census API and Honu). They can be wrong, incomplete or out of date, and they are not facts, proof or accusations about any player. Don't take them seriously, and don't use them to harass anyone.</p>
-        <p>This site is free and provided "as is", with no warranty of any kind. To the fullest extent allowed by law, the authors are not liable for any damage or loss from using it, including to your device or data.</p>
-        <p>Not affiliated with or endorsed by Daybreak Game Company or Honu. PlanetSide 2 is a trademark of its respective owners.</p>
+        <p data-i18n="disc.p1">All numbers, ratings, charts and flags on this site are automated estimates from public data (the Daybreak Census API and Honu). They can be wrong, incomplete or out of date, and they are not facts, proof or accusations about any player. Don't take them seriously, and don't use them to harass anyone.</p>
+        <p data-i18n="disc.p2">This site is free and provided "as is", with no warranty of any kind. To the fullest extent allowed by law, the authors are not liable for any damage or loss from using it, including to your device or data.</p>
+        <p data-i18n="disc.p3">Not affiliated with or endorsed by Daybreak Game Company or Honu. PlanetSide 2 is a trademark of its respective owners.</p>
         <p>Open source under the MIT License. See <a href="https://github.com/Dayset/ps2-elite-kd/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">LICENSE</a>.</p>
       </details>
         <span class="foot-legal" data-i18n="foot.legal">MIT licensed · not affiliated with Daybreak or Honu</span>

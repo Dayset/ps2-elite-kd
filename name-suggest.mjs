@@ -1,3 +1,4 @@
+import { t as tr } from "./i18n.mjs";
 /**
  * Name suggestions for the names box (like Honu's partial search, but from 4
  * characters). Two sources, merged:
@@ -132,7 +133,7 @@ export function mountNameSuggest({ input, anchor, censusBase, ranksUrl = "data/r
   list.id = "nameSuggest";
   list.className = "name-suggest";
   list.setAttribute("role", "listbox");
-  list.setAttribute("aria-label", "Matching player names");
+  list.setAttribute("aria-label", tr("names.matching", "Matching player names"));
   list.hidden = true;
   anchor.appendChild(list);
   input.setAttribute("role", "combobox");

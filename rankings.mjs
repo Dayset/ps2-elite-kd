@@ -4,6 +4,9 @@
 // Everything Rankings had stays: fresh-fetch ↻ rows, band dividers, marks,
 // hidden players left out (ranks.json), 📊 distribution with jumps.
 
+import { t as tr } from "./i18n.mjs";
+// Column tip in the current language (tip.<id> in i18n/*.json, English otherwise).
+const tipOf = (c) => (c.id ? tr("tip." + c.id, c.tip || "") : c.tip || "");
 import { compareByCharName } from "./analyze-run.mjs?v=20261010-sav1";
 import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits, binJumpTarget } from "./dist.mjs?v=20261010-sav1";
 import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261010-sav1";
@@ -312,14 +315,14 @@ export function initRankings(host) {
     for (const c of cols) colEls.push(`<col style="width:${COL_W[c.id] || 10}ch">`);
     $("ranksCols").innerHTML = colEls.join("");
     const cells = [
-      `<th class="rk-pick" scope="col" title="Pick up to ${MAX_NAMES} to Compare"></th>`,
-      `<th class="rk-num" scope="col" title="Rank under the current sort">#</th>`,
-      `<th class="rk-name sortable${sortKey === "name" ? " sorted" : ""}" data-key="name" scope="col">Player<span class="sort-ind${sortKey === "name" ? " active" : ""}">${sortKey === "name" ? (sortDir === "asc" ? "▲" : "▼") : "▾"}</span></th>`,
+      `<th class="rk-pick" scope="col" title="${tr("rk.pickMax", "Pick up to {n} to Compare", { n: MAX_NAMES })}"></th>`,
+      `<th class="rk-num" scope="col" title="${tr("rk.rankTitle", "Rank under the current sort")}">#</th>`,
+      `<th class="rk-name sortable${sortKey === "name" ? " sorted" : ""}" data-key="name" scope="col">${tr("rk.player", "Player")}<span class="sort-ind${sortKey === "name" ? " active" : ""}">${sortKey === "name" ? (sortDir === "asc" ? "▲" : "▼") : "▾"}</span></th>`,
     ];
     for (const c of cols) {
       const on = sortKey === c.id;
       cells.push(
-        `<th class="sortable${on ? " sorted" : ""}" data-key="${c.id}" scope="col" title="${esc(c.tip || c.label)}">${esc(c.label)}<span class="sort-ind${on ? " active" : ""}">${on ? (sortDir === "asc" ? "▲" : "▼") : "▾"}</span></th>`,
+        `<th class="sortable${on ? " sorted" : ""}" data-key="${c.id}" scope="col" title="${esc(tipOf(c) || c.label)}">${esc(c.label)}<span class="sort-ind${on ? " active" : ""}">${on ? (sortDir === "asc" ? "▲" : "▼") : "▾"}</span></th>`,
       );
     }
     $("ranksHead").innerHTML = `<tr>${cells.join("")}</tr>`;
@@ -327,8 +330,8 @@ export function initRankings(host) {
 
   /** 🤝 Assists per kill (t382u): raw value, percentile (among players with ≥100 session kills. */
   function apkCell(v, p) {
-    if (!fin(v)) return `<td title="Not enough recent sessions (needs 100 kills in Honu sessions)">—</td>`;
-    const rel = p == null ? "" : p >= 50 ? ` — top ${Math.max(1, 100 - p)}%` : ` — bottom ${Math.max(1, p)}%`;
+    if (!fin(v)) return `<td title="${tr("stats.notEnough", "Not enough recent sessions (needs 100 kills in Honu sessions)")}">—</td>`;
+    const rel = p == null ? "" : p >= 50 ? tr("rk.apkTop", " — top {n}%", { n: Math.max(1, 100 - p) }) : tr("rk.apkBottom", " — bottom {n}%", { n: Math.max(1, p) });
     const tip = `Assists per kill: ${fmt(v, 2)}${rel}. Helps damage enemies that teammates finish.`;
     return `<td title="${esc(tip)}">${fmt(v, 2)}</td>`;
   }
@@ -349,7 +352,7 @@ export function initRankings(host) {
     if (!fin(v) && c.thinTip && row.thin) return `<td class="thin-sample" title="${esc(MIN_FIGHTS_TIP)}">—</td>`;
     if (!fin(v)) return `<td>—</td>`;
     const p = row.pcts[c.id];
-    const pct = p == null ? "" : `<span class="pct" title="Population percentile: higher than ${p}% of cached players">p${p}</span>`;
+    const pct = p == null ? "" : `<span class="pct" title="${tr("stats.pctile", "Population percentile: higher than {n}% of cached players", { n: p })}">p${p}</span>`;
     return `<td${vc ? ` title="${esc(vc)}"` : ""}>${fmt(v, c.digits)}${pct}</td>`;
   }
 
@@ -377,9 +380,9 @@ export function initRankings(host) {
     const href = `?names=${encodeURIComponent(r.query)}`;
     return (
       `<tr data-q="${esc(r.query)}">` +
-      `<td class="rk-pick"><input type="checkbox" aria-label="Pick ${esc(r.name)}"${checked}${disabled} /></td>` +
+      `<td class="rk-pick"><input type="checkbox" aria-label="${tr("rk.pick", "Pick {name}", { name: esc(r.name) })}"${checked}${disabled} /></td>` +
       rankCellHtml(r) +
-      `<td class="rk-name"><a href="${href}" class="rk-open" title="Add to the comparison (graph above)"><span class="nm" data-full="${esc(r.name)}" title="${esc(r.name + (r.farm ? " — " + r.farm : "") + (r.freshAt ? " — " + freshTip(r.freshAt, r.localOnly) : ""))}">${esc(r.name)}</span></a>` +
+      `<td class="rk-name"><a href="${href}" class="rk-open" title="${tr("rk.addCompare", "Add to the comparison (graph above)")}"><span class="nm" data-full="${esc(r.name)}" title="${esc(r.name + (r.farm ? " — " + r.farm : "") + (r.freshAt ? " — " + freshTip(r.freshAt, r.localOnly) : ""))}">${esc(r.name)}</span></a>` +
       (r.mark ? `<span class="pad-mark mark-${["padding","adjusted"].includes(r.markKind) ? r.markKind : ""}" title="${esc(r.markTip + ". " + r.farm)}">${r.mark}</span>` : "") +
       poopHtml(r) +
       (r.legacy ? `<span class="sample-legacy" title="${esc(LEGACY_SAMPLE_TIP)}">${LEGACY_SAMPLE_MARK}</span>` : "") +
@@ -448,18 +451,18 @@ export function initRankings(host) {
     const open = st.open.has(g.id);
     const fmt0 = (v) => (+v).toLocaleString(undefined, { maximumFractionDigits: 0 });
     const range = Number.isFinite(g.lo) && g.id !== "below"
-      ? ` · iVi ${fmt0(sortDir === "asc" ? g.lo : g.hi)}–${fmt0(sortDir === "asc" ? g.hi : g.lo)}`
+      ? tr("rk.iviRange", " · iVi {a}–{b}", { a: fmt0(sortDir === "asc" ? g.lo : g.hi), b: fmt0(sortDir === "asc" ? g.hi : g.lo) })
       : "";
-    const what = st.filtering ? (g.count === 1 ? "match" : "matches") : (g.count === 1 ? "player" : "players");
+    const what = st.filtering ? (g.count === 1 ? tr("rk.match", "match") : tr("rk.matches", "matches")) : (g.count === 1 ? tr("rk.playerOne", "player") : tr("rk.players", "players"));
     const picks = pickedInGroup(g, st.list, picked);
     const pickTxt = picks.length
-      ? `<span class="rk-tier-picks" title="Selected in this tier">✅ ${picks.slice(0, 3).map((r) => esc(r.name)).join(", ")}${picks.length > 3 ? ` +${picks.length - 3}` : ""}</span>`
+      ? `<span class="rk-tier-picks" title="${tr("rk.tierPicks", "Selected in this tier")}">✅ ${picks.slice(0, 3).map((r) => esc(r.name)).join(", ")}${picks.length > 3 ? ` +${picks.length - 3}` : ""}</span>`
       : "";
     return `<tr class="rk-tier${open ? " open" : ""}" data-tier="${esc(g.id)}"><td colspan="${3 + st.cols.length}">` +
-      `<button type="button" class="rk-tier-btn" aria-expanded="${open}" title="${open ? "Collapse" : "Open"} this tier">` +
+      `<button type="button" class="rk-tier-btn" aria-expanded="${open}" title="${open ? tr("rk.collapse", "Collapse this tier") : tr("rk.open", "Open this tier")}">` +
       `<span class="rk-tier-caret" aria-hidden="true">${open ? "▾" : "▸"}</span>` +
-      `<span class="rk-tier-label">${esc(g.label)}</span>` +
-      `<span class="rk-tier-meta">${g.count.toLocaleString()} ${what}${range}</span>` +
+      `<span class="rk-tier-label">${esc(tr("tier." + g.id, g.label))}</span>` +
+      `<span class="rk-tier-meta">${tr("rk.tierCount", "{n} {what}", { n: g.count.toLocaleString(), what })}${range}</span>` +
       pickTxt + `</button></td></tr>`;
   }
 
@@ -543,8 +546,8 @@ export function initRankings(host) {
     const b = h.bins[bi];
     const col = colById(sortKey);
     const share = sortDir === "asc"
-      ? `bottom ${fmtPct(b.cumPct)}`
-      : `top ${fmtPct(b.kind === "under" ? 100 : shareAtOrAbove(h.sorted, b.x0))}`;
+      ? tr("dist.bottom", "bottom {p}", { p: fmtPct(b.cumPct) })
+      : tr("dist.top", "top {p}", { p: fmtPct(b.kind === "under" ? 100 : shareAtOrAbove(h.sorted, b.x0)) });
     const label = `${col.label} ${binRangeText(b, h, col)} · ${share}`;
     return `<tr class="rk-sep" data-bin="${bi}" aria-hidden="true"><td colspan="${3 + st.cols.length}"><span>${esc(label)}</span></td></tr>`;
   }
@@ -574,9 +577,9 @@ export function initRankings(host) {
       // bottom x% = players at or below the highest value in this segment
       let k = 0, m = h.sorted.length;
       while (k < m) { const c = (k + m) >> 1; if (h.sorted[c] <= hi) k = c + 1; else m = c; }
-      share = `bottom ${fmtPct((k / n) * 100)}`;
+      share = tr("dist.bottom", "bottom {p}", { p: fmtPct((k / n) * 100) });
     } else {
-      share = `top ${fmtPct(shareAtOrAbove(h.sorted, lo))}`;
+      share = tr("dist.top", "top {p}", { p: fmtPct(shareAtOrAbove(h.sorted, lo)) });
     }
     const range = lo === hi ? f(lo) : `${f(lo)}–${f(hi)}`;
     const label = `${col.label} ${range} · ${share}`;
@@ -604,9 +607,9 @@ export function initRankings(host) {
     const nLocal = data.rows.reduce((n, r) => n + (r.localOnly ? 1 : 0), 0);
     const nFresh = data.rows.reduce((n, r) => n + (r.freshAt && !r.localOnly ? 1 : 0), 0);
     if ($("ranksTableCount")) $("ranksTableCount").textContent = `(${data.count.toLocaleString()})`;
-    $("ranksMeta").textContent = `${list.length.toLocaleString()} of ${data.count.toLocaleString()} players · updated ${fmtUpdated(data.updatedAt)}` +
-      (nFresh ? ` · ${FRESH_MARK} ${nFresh} from your fresh fetch` : "") +
-      (nLocal ? ` · ${FRESH_MARK} ${nLocal} only in this browser (not shared yet)` : "");
+    $("ranksMeta").textContent = tr("rk.meta", "{shown} of {total} players · updated {date}", { shown: list.length.toLocaleString(), total: data.count.toLocaleString(), date: fmtUpdated(data.updatedAt) }) +
+      (nFresh ? ` · ${FRESH_MARK} ${tr("rk.metaFresh", "{n} from your fresh fetch", { n: nFresh })}` : "") +
+      (nLocal ? ` · ${FRESH_MARK} ${tr("rk.metaLocal", "{n} only in this browser (not shared yet)", { n: nLocal })}` : "");
     $("ranksMeta").title = nFresh || nLocal ? `${FRESH_MARK} = stats from your own fetch on Analyze (this browser only); everyone else uses the shared copy.` : "";
     syncPickedUi();
   }
@@ -689,7 +692,7 @@ export function initRankings(host) {
       return;
     }
     const light = document.documentElement.getAttribute("data-theme") === "light";
-    const head = `<tr><th scope="col" class="rk-pos-name">Player</th>` + VISIBLE.map((c) => `<th scope="col" title="${esc(c.tip || c.label)}">${esc(c.label)}</th>`).join("") + `</tr>`;
+    const head = `<tr><th scope="col" class="rk-pos-name">Player</th>` + VISIBLE.map((c) => `<th scope="col" title="${esc(tipOf(c) || c.label)}">${esc(c.label)}</th>`).join("") + `</tr>`;
     const body = rows.map((r) => {
       const i = colorOf.get(r.query);
       const cells = VISIBLE.map((c) => {
@@ -699,14 +702,14 @@ export function initRankings(host) {
         const pool = data.pools[c.id] || [];
         const k = rankIn(pool, v, !!c.ascFirst);
         const p = r.pcts[c.id];
-        return `<td title="${esc(c.label)} ${fmt(v, c.digits)}: rank ${k.toLocaleString()} of ${pool.length.toLocaleString()}${c.apk ? " players with 100+ session kills" : c.inf ? " measured players (100+ kills)" : " cached players"}${c.id === "adjs" && vcutTip(r) ? ". " + esc(vcutTip(r)) : ""}">` +
+        return `<td title="${esc(c.label)} ${fmt(v, c.digits)}: ${tr("rk.rank", "rank {k} of {n} {basis}", { k: k.toLocaleString(), n: pool.length.toLocaleString(), basis: c.apk ? tr("rk.basisApk", "players with 100+ session kills") : c.inf ? tr("rk.basisInf", "measured players (100+ kills)") : tr("rk.basisCached", "cached players") })}${c.id === "adjs" && vcutTip(r) ? ". " + esc(vcutTip(r)) : ""}">` +
           `<b>#${k.toLocaleString()}</b>${p != null ? `<span class="pct">p${p}</span>` : ""}</td>`;
       }).join("");
       // Same "1." series number as the ✨ Stats table (graph colour order), so both modes read alike.
-      return `<tr><th scope="row" class="rk-pos-name"><span class="player-num" style="color:${paletteColor(i, light)}">${i + 1}.</span><a href="#" class="rk-pos-jump" data-q="${esc(r.query)}" style="color:${paletteColor(i, light)}" title="Show ${esc(r.name)} in the table"><span class="nm" data-full="${esc(r.name)}">${esc(r.name)}</span></a>${r.freshAt ? `<span class="sample-fresh" title="${esc(freshTip(r.freshAt, r.localOnly))}">${FRESH_MARK}</span>` : ""}${r.mark ? `<span class="pad-mark mark-${["padding","adjusted"].includes(r.markKind) ? r.markKind : ""}" title="${esc(r.markTip)}">${r.mark}</span>` : ""}${poopHtml(r)}</th>${cells}</tr>`;
+      return `<tr><th scope="row" class="rk-pos-name"><span class="player-num" style="color:${paletteColor(i, light)}">${i + 1}.</span><a href="#" class="rk-pos-jump" data-q="${esc(r.query)}" style="color:${paletteColor(i, light)}" title="${tr("rk.showTable", "Show {name} in the table", { name: esc(r.name) })}"><span class="nm" data-full="${esc(r.name)}">${esc(r.name)}</span></a>${r.freshAt ? `<span class="sample-fresh" title="${esc(freshTip(r.freshAt, r.localOnly))}">${FRESH_MARK}</span>` : ""}${r.mark ? `<span class="pad-mark mark-${["padding","adjusted"].includes(r.markKind) ? r.markKind : ""}" title="${esc(r.markTip)}">${r.mark}</span>` : ""}${poopHtml(r)}</th>${cells}</tr>`;
     }).join("");
-    const miss = missing.length ? `<p class="rk-pos-hint">Not in the Rankings (new, hidden or not cached yet): ${missing.map((n) => `<strong>${esc(n)}</strong>`).join(", ")}</p>` : "";
-    box.innerHTML = (rows.length ? `<div class="rk-pos-wrap"><table class="rk-pos-table" aria-label="Rank of the selected players among ${data.count.toLocaleString()} cached players"><thead>${head}</thead><tbody>${body}</tbody></table></div>` : "") + miss;
+    const miss = missing.length ? `<p class="rk-pos-hint">${tr("rk.posHint", "Not in the Rankings (new, hidden or not cached yet):")} ${missing.map((n) => `<strong>${esc(n)}</strong>`).join(", ")}</p>` : "";
+    box.innerHTML = (rows.length ? `<div class="rk-pos-wrap"><table class="rk-pos-table" aria-label="${tr("rk.posAria", "Rank of the selected players among {n} cached players", { n: data.count.toLocaleString() })}"><thead>${head}</thead><tbody>${body}</tbody></table></div>` : "") + miss;
   }
 
   /* ---------- 📊 Distribution chart ---------- */
@@ -1133,14 +1136,14 @@ export function initRankings(host) {
         x: L.cx, y: ly, fill: color, "font-size": lfs, "font-weight": 700, "text-anchor": "middle",
         stroke: halo, "stroke-width": 3 * ui, "stroke-linejoin": "round", "paint-order": "stroke",
         class: "dist-name", "data-q": r.query, tabindex: "0", role: "button",
-        "aria-label": `Show ${r.name} in the list`,
+        "aria-label": tr("rk.showList", "Show {name} in the list", { name: r.name }),
       }, it.text);
       // t350u: click / tap a picked player's name → scroll the list to their row.
       t.addEventListener("pointerdown", (ev) => { lastPointer = ev.pointerType || "mouse"; });
       t.addEventListener("click", () => { const touch = lastPointer === "touch" || lastPointer === "pen"; lastPointer = "mouse"; jumpToPlayer(r.query, { touch }); });
       t.addEventListener("keydown", (ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); jumpToPlayer(r.query); } });
       gm.appendChild(t);
-      const shown = col.floorZero && fin(v) && v < 0 ? "0 (below scale)" : fin(v) ? (+v).toFixed(col.digits) : "—";
+      const shown = col.floorZero && fin(v) && v < 0 ? tr("dist.zeroBelow", "0 (below scale)") : fin(v) ? (+v).toFixed(col.digits) : "—";
       const p = r.pcts[distMetric];
       gm.appendChild(svgEl("title", {}, `${r.label}${r.mark ? ` (${r.markTip})` : ""}${r.poop ? ` (${POOP_TIP})` : ""}: ${col.label} ${shown}${p != null ? ` · p${p}` : ""} · rank #${r.rank} (current sort)${r.freshAt ? ` · ${FRESH_MARK} your fresh fetch` : ""}`));
       marks.appendChild(gm);
@@ -1154,7 +1157,7 @@ export function initRankings(host) {
       const rect = svgEl("rect", {
         x: slotX(i), y: M.t, width: slotW, height: PH, fill: "transparent", class: "dist-hit",
         tabindex: "0", role: "button", "data-bin": String(i),
-        "aria-label": `${col.label} ${binRangeText(b, h, col)}: ${b.count} players. Jump to players in this range`,
+        "aria-label": tr("dist.binAria", "{label} {range}: {n} players. Jump to players in this range", { label: col.label, range: binRangeText(b, h, col), n: b.count }),
       });
       const show = (ev) => showTip(ev, b, h, col, i);
       rect.addEventListener("pointerenter", (ev) => { if (ev.pointerType === "mouse") show(ev); });
@@ -1182,7 +1185,7 @@ export function initRankings(host) {
    * hint, as in KD/iVi, and remove the text with stats from under the graph").
    * Same bubble as 💀 / 🎯 (head-tip.mjs): phones get it for ~5 s under the
    * current pill after a tap / swipe; PC has the same text as the pill's hover title. */
-  function distHintText(c) { return c ? `${c.label} across all cached players: ${c.tip || ""}`.trim() : ""; }
+  function distHintText(c) { return c ? tr("dist.hint", "{label} across all cached players: {tip}", { label: c.label, tip: tipOf(c) }).trim() : ""; }
   function showDistHint() {
     if (!isTouchUi()) return;
     const c = colById(distMetric);
@@ -1191,8 +1194,8 @@ export function initRankings(host) {
   }
 
   function binRangeText(b, h, col) {
-    if (b.kind === "under") return col.floorZero ? `below 0 (below scale)` : `below ${fmtEdge(h.lo, h)}`;
-    if (b.kind === "over") return `above ${fmtEdge(h.hi, h)}`;
+    if (b.kind === "under") return col.floorZero ? tr("dist.below0", "below 0 (below scale)") : tr("dist.below", "below {x}", { x: fmtEdge(h.lo, h) });
+    if (b.kind === "over") return tr("dist.above", "above {x}", { x: fmtEdge(h.hi, h) });
     return `${fmtEdge(b.x0, h)}–${fmtEdge(b.x1, h)}`;
   }
 

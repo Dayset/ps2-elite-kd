@@ -763,12 +763,12 @@ import {
     if (els.themeToggle) {
       if (mode === "light") {
         els.themeToggle.textContent = "🌙";
-        els.themeToggle.title = "Switch to dark theme";
-        els.themeToggle.setAttribute("aria-label", "Switch to dark theme");
+        els.themeToggle.title = tr("theme.toDark", "Switch to dark theme");
+        els.themeToggle.setAttribute("aria-label", tr("theme.toDark", "Switch to dark theme"));
       } else {
         els.themeToggle.textContent = "☀️";
-        els.themeToggle.title = "Switch to light theme";
-        els.themeToggle.setAttribute("aria-label", "Switch to light theme");
+        els.themeToggle.title = tr("theme.toLight", "Switch to light theme");
+        els.themeToggle.setAttribute("aria-label", tr("theme.toLight", "Switch to light theme"));
       }
     }
     if (redraw && players.length) drawChart(players);
@@ -797,7 +797,7 @@ import {
     }
     if (els.bgToggleBtn) {
       els.bgToggleBtn.classList.toggle("off", !on);
-      const label = on ? "Background image on — click to hide" : "Background image off — click to show";
+      const label = on ? tr("bg.on", "Background image on — click to hide") : tr("bg.off", "Background image off — click to show");
       els.bgToggleBtn.title = label;
       els.bgToggleBtn.setAttribute("aria-label", label);
     }
@@ -1669,8 +1669,8 @@ import {
       btn.className = "name-token " + (isNameFetched(name) ? "fetched" : "unfetched");
       btn.appendChild(nameSpan(name, { title: false }));
       if (isPenalizedPadder(name)) btn.insertAdjacentHTML("beforeend", poopHtml());
-      btn.setAttribute("aria-label", `Remove ${name}`);
-      btn.title = `Remove ${name}`;
+      btn.setAttribute("aria-label", tr("names.remove", "Remove {name}", { name }));
+      btn.title = tr("names.remove", "Remove {name}", { name });
       btn.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -1799,8 +1799,8 @@ import {
     x.type = "button";
     x.className = "name-token-x";
     x.textContent = "×";
-    x.title = `Remove ${name}`;
-    x.setAttribute("aria-label", `Remove ${name}`);
+    x.title = tr("names.remove", "Remove {name}", { name });
+    x.setAttribute("aria-label", tr("names.remove", "Remove {name}", { name }));
     x.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -1925,9 +1925,9 @@ import {
         state: cacheJumpState,
         jump: cacheJumpTo,
         ids: { top: "cacheJumpTop", bottom: "cacheJumpBottom" },
-        topLabel: "Top of the shared cache list",
-        bottomLabel: "End of the shared cache list",
-        groupLabel: "Shared cache quick jump",
+        topLabel: tr("cache.top", "Top of the shared cache list"),
+        bottomLabel: tr("cache.end", "End of the shared cache list"),
+        groupLabel: tr("cache.quickJump", "Shared cache quick jump"),
       });
     }
     cacheJump.sync();
@@ -1976,8 +1976,8 @@ import {
   }
   function chipTitle(item, selected) {
     const when = item.savedAt ? new Date(item.savedAt).toLocaleDateString() : "";
-    const src = item.source === "shared" ? "Shared cache" : "Browser cache";
-    return `${src}${when ? ` · ${when}` : ""} — ${selected ? "remove" : "add"} ${item.name}`;
+    const src = item.source === "shared" ? tr("cache.shared", "Shared cache") : tr("cache.browser", "Browser cache");
+    return tr("chip.title", "{src}{when} — {verb} {name}", { src, when: when ? ` · ${when}` : "", verb: selected ? tr("chip.remove", "remove") : tr("chip.add", "add"), name: item.name });
   }
   function setChipSelected(btn, item, selected) {
     if (btn.classList.contains("selected") === selected) return; // unchanged: no DOM write
@@ -2080,7 +2080,7 @@ import {
         syncCacheJump(); // hide ⬆/⬇ when collapsed
       });
       const summary = document.createElement("summary");
-      summary.textContent = `📦 Shared cache (${shared.length})`;
+      summary.textContent = tr("cache.sharedSummary", "📦 Shared cache ({n})", { n: shared.length });
       details.appendChild(summary);
       // t376u: the section is hidden by CSS (code kept): don't build its
       // letter blocks / chips (hundreds of nodes on every name change).
@@ -2091,7 +2091,7 @@ import {
       const details = els.cacheChips.querySelector("details.cache-shared");
       const inner = document.createElement("div");
       inner.className = "cache-shared-chips";
-      inner.setAttribute("aria-label", "Shared cached character names");
+      inner.setAttribute("aria-label", tr("cache.sharedAria", "Shared cached character names"));
       // Letter separators: [#] (digits/symbols) first, then [A], [B], …
       const groups = sharedGroups(shared).groups;
       // t305u: each letter is a collapsible block, closed by default, summary
@@ -2945,7 +2945,7 @@ import {
     setPlaceholderVisible(false);
     svg.setAttribute("viewBox", `0 0 ${VB.w} ${VB.h}`);
     svg.setAttribute("role", "img");
-    svg.setAttribute("aria-label", "Elite K/D vs Enemy KPM");
+    svg.setAttribute("aria-label", tr("chart.elite", "Elite K/D vs Enemy KPM"));
     chartFs = currentChartFontScale();
     const fz = (n) => String(Math.round(n * chartFs * 10) / 10);
 
@@ -3072,7 +3072,7 @@ import {
     ylab.setAttribute("text-anchor", "middle");
     ylab.setAttribute("transform", `rotate(90 ${PLOT.x + PLOT.w + 44} ${PLOT.y + PLOT.h / 2})`);
     // t378u/t381u: 🎯 aim mode rescales each curve to its player's iVi; say so on the axis.
-    ylab.textContent = banded ? "K/D vs enemies near this KPM" : yScaleMode === "ivi" ? "Aim score (public IvI)" : "Kills per death";
+    ylab.textContent = banded ? tr("chart.ylabBanded", "K/D vs enemies near this KPM") : yScaleMode === "ivi" ? tr("chart.ylabAim", "Aim score (public IvI)") : tr("chart.ylabKpd", "Kills per death");
     svg.appendChild(ylab);
 
     for (const x of xTicks) {
@@ -3095,7 +3095,7 @@ import {
       easyT.setAttribute("fill", th.muted);
       easyT.setAttribute("font-size", fz(11));
       easyT.setAttribute("text-anchor", "start");
-      easyT.textContent = "🐣Easy";
+      easyT.textContent = tr("chart.easy", "🐣Easy");
       svg.appendChild(easyT);
       const hardT = ns("text");
       hardT.setAttribute("x", xToPx(xTicks[xTicks.length - 1]) - 14);
@@ -3103,7 +3103,7 @@ import {
       hardT.setAttribute("fill", th.muted);
       hardT.setAttribute("font-size", fz(11));
       hardT.setAttribute("text-anchor", "end");
-      hardT.textContent = "🥵 Hard";
+      hardT.textContent = tr("chart.hard", "🥵 Hard");
       svg.appendChild(hardT);
     }
     svg.appendChild(gYText);
@@ -3479,24 +3479,24 @@ import {
     const metrics = list.map((p) => playerMetrics(p));
 
     const publicCols = [
-      { id: "kd", label: "KD", hint: "Overall kill/death ratio from Census / Honu.", fn: (r) => r.kd, digits: 2 },
-      { id: "kpm", label: "KPM", hint: "Overall kills per minute.", fn: (r) => r.kpm, digits: 2 },
-      { id: "ownKpm", label: "own KPM", hint: "Your own weapon pace (kills per minute with your weapons).", fn: (r) => r.ownKpm, digits: 2 },
-      { id: "acc", label: "Acc %", hint: "Hit accuracy percentage.", fn: (r) => r.acc, digits: 1 },
-      { id: "hsr", label: "HSR %", hint: "Headshot rate percentage.", fn: (r) => r.hsr, digits: 1 },
-      { id: "ivi", label: "IvI", hint: "Infantry vs Infantry score from Census / Honu.", fn: (r) => r.ivi, digits: 0 },
+      { id: "kd", label: "KD", hint: tr("tip.kd", "Overall kill/death ratio from Census / Honu."), fn: (r) => r.kd, digits: 2 },
+      { id: "kpm", label: "KPM", hint: tr("tip.kpm", "Overall kills per minute."), fn: (r) => r.kpm, digits: 2 },
+      { id: "ownKpm", label: "own KPM", hint: tr("tip.ownKpm", "Your own weapon pace (kills per minute with your weapons)."), fn: (r) => r.ownKpm, digits: 2 },
+      { id: "acc", label: "Acc %", hint: tr("tip.acc", "Hit accuracy percentage."), fn: (r) => r.acc, digits: 1 },
+      { id: "hsr", label: "HSR %", hint: tr("tip.hsr", "Headshot rate percentage."), fn: (r) => r.hsr, digits: 1 },
+      { id: "ivi", label: "IvI", hint: tr("tip.ivi", "Infantry vs Infantry score from Census / Honu."), fn: (r) => r.ivi, digits: 0 },
     ];
 
     // Column order is fixed (sort only reorders rows). Visible by default:
     const adjVisibleCols = [
-      { id: "adjs", label: "⚔️ iVi", hint: "Overall rating from how you do against the ~200 players you fight most, worth more the stronger they are, with a bonus for fast killing and a cut for slow, safe play.", fn: (r) => r.adjs, digits: 0, floorZero: true },
-      { id: "act", label: "🏃 Activity", hint: "How much winning combat you put out: your K/D against the players you fight most, multiplied by how fast you kill.", fn: (r) => r.act, digits: 2 },
-      { id: "pvs", label: "🦁 Brave", hint: "Activity that keeps up as enemies get stronger: high when you stay productive even against the fastest-killing players you meet.", fn: (r) => r.pvs, digits: 2 },
-      { id: "rf", label: "🛡️ Resist", hint: "How well you stand up to strong players: your K/D against the players you fight most, scaled up by how fast those players kill.", fn: (r) => r.rf, digits: 2 },
-      { id: "cons", label: "⚡ Const", hint: "How much of your K/D you keep against the strongest third of your opponents compared with the weakest third, as a percentile of all tracked players.", fn: (r) => r.cons, digits: 2, pctileCell: true },
-      { id: "apk", label: "🤝 Assists", hint: "Assists per kill in recent Honu sessions: how often you help damage enemies that teammates finish, for each kill of your own.", fn: (r) => (apkBySlug && r.p ? apkBySlug.get(slugKey(r.p.display)) : undefined), digits: 2, apkCell: true, pctDir: "low", pctLowPhrase: "more assists" },
-      { id: "rkd", label: "☠️ K/D", hint: "Kills ÷ deaths against the ~200 players you fight most, so it reflects real matchups rather than your whole lifetime.", fn: (r) => r.rkd, digits: 3 },
-      { id: "inf", label: "🪖 Infantry", hint: INF_HINT, fn: (r) => { const e = infBySlug && r.p ? infBySlug.get(slugKey(r.p.display)) : undefined; return e ? e.inf : undefined; }, digits: 1, infCell: true },
+      { id: "adjs", label: "⚔️ iVi", hint: tr("tip.adjs", "Overall rating from how you do against the ~200 players you fight most, worth more the stronger they are, with a bonus for fast killing and a cut for slow, safe play."), fn: (r) => r.adjs, digits: 0, floorZero: true },
+      { id: "act", label: "🏃 Activity", hint: tr("tip.act", "How much winning combat you put out: your K/D against the players you fight most, multiplied by how fast you kill."), fn: (r) => r.act, digits: 2 },
+      { id: "pvs", label: "🦁 Brave", hint: tr("tip.pvs", "Activity that keeps up as enemies get stronger: high when you stay productive even against the fastest-killing players you meet."), fn: (r) => r.pvs, digits: 2 },
+      { id: "rf", label: "🛡️ Resist", hint: tr("tip.rf", "How well you stand up to strong players: your K/D against the players you fight most, scaled up by how fast those players kill."), fn: (r) => r.rf, digits: 2 },
+      { id: "cons", label: "⚡ Const", hint: tr("tip.cons", "How much of your K/D you keep against the strongest third of your opponents compared with the weakest third, as a percentile of all tracked players."), fn: (r) => r.cons, digits: 2, pctileCell: true },
+      { id: "apk", label: "🤝 Assists", hint: tr("tip.apk", "Assists per kill in recent Honu sessions: how often you help damage enemies that teammates finish, for each kill of your own."), fn: (r) => (apkBySlug && r.p ? apkBySlug.get(slugKey(r.p.display)) : undefined), digits: 2, apkCell: true, pctDir: "low", pctLowPhrase: "more assists" },
+      { id: "rkd", label: "☠️ K/D", hint: tr("tip.rkd", "Kills ÷ deaths against the ~200 players you fight most, so it reflects real matchups rather than your whole lifetime."), fn: (r) => r.rkd, digits: 3 },
+      { id: "inf", label: "🪖 Infantry", hint: tr("tip.inf", INF_HINT), fn: (r) => { const e = infBySlug && r.p ? infBySlug.get(slugKey(r.p.display)) : undefined; return e ? e.inf : undefined; }, digits: 1, infCell: true },
     ];
     // Older debug columns: appended only when "show older debug stats" (footer) is ticked.
     const adjDebugCols = [
@@ -3558,7 +3558,7 @@ import {
 
     function metricHead(cols, tableId, state) {
       const nameActive = state.key === "name";
-      const nameHint = "Player name — number matches the graph series color. Click to sort A–Z.";
+      const nameHint = tr("stats.nameHint", "Player name — number matches the graph series color. Click to sort A–Z.");
       const nameTh =
         `<th class="stats-name sortable${nameActive ? " sorted" : ""}" ` +
         `data-table="${tableId}" data-sort="name" scope="col" role="columnheader" ` +
@@ -3643,7 +3643,7 @@ import {
               // 🧱 Const: main value is the population percentile ("19%"); the dimmed gap to the highest value still applies.
               // 🤝 Assists: plain number, percentile + meaning on hover, plus the dimmed % gap above the lowest — lower is better, counted from the lowest (Dayset 2026-10-19).
               if (c.apkCell) {
-                if (!isFiniteNum(v)) return `<td title="Not enough recent sessions (needs 100 kills in Honu sessions)">—</td>`;
+                if (!isFiniteNum(v)) return `<td title="${tr("stats.notEnough", "Not enough recent sessions (needs 100 kills in Honu sessions)")}">—</td>`;
                 const pl = apkPool ? percentileOf(apkPool, v) : null;
                 const rel = pl == null ? "" : pl >= 50 ? ` — top ${Math.max(1, 100 - pl)}%` : ` — bottom ${Math.max(1, pl)}%`;
                 return `<td title="${escapeHtml(`Assists per kill: ${fmtNum(v, 2)}${rel}. Helps damage enemies that teammates finish.`)}">${fmtNum(v, 2)}${pct}</td>`;
@@ -3658,7 +3658,7 @@ import {
               if (c.pctileCell) {
                 const pctl = isFiniteNum(v) && consPool ? percentileOf(consPool, v) : null;
                 const txt = pctl == null ? "—" : `${pctl}%`;
-                return `<td title="Population percentile: higher than ${pctl ?? "—"}% of cached players">${txt}${pct}</td>`;
+                return `<td title="${tr("stats.pctile", "Population percentile: higher than {n}% of cached players", { n: pctl ?? "—" })}">${txt}${pct}</td>`;
               }
               return `<td${tdTitle}>${fmtNum(v, c.digits)}${pct}</td>`;
             })
@@ -3667,7 +3667,7 @@ import {
           return (
             `<tr><th scope="row" class="stats-name" style="color:${col}">` +
             dotSlot(row.p.cid) +
-            `<span class="player-num" aria-label="Series ${num}">${num}.</span>` +
+            `<span class="player-num" aria-label="${tr("stats.series", "Series {n}", { n: num })}">${num}.</span>` +
             `${nameSpanHtml(row.p.display, farmTitle(row.p) + (withDesc ? descTitle(row.p) : ""), withDesc ? descText(row.p) : "", honuProfileUrl(row.p.cid))}${padMarkHtml(row.p)}${legacySampleHtml(row.p)}</th>${vals}</tr>`
           );
         })
@@ -4690,7 +4690,7 @@ import {
     if (!el) return;
     const show = (n) => {
       if (n > 0) {
-        el.textContent = `(${n} commits since Oct 7, 2026)`;
+        el.textContent = tr("foot.commits", "({n} commits since Oct 7, 2026)", { n });
         el.hidden = false;
       }
     };
