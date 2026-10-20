@@ -6,7 +6,7 @@
  * with the tabs, a finger / trackpad side-swipe, or ←/→ on the tabs. A table
  * that can still scroll sideways keeps the swipe (the browser hands it on to
  * the slides at the table's edge). Columns of both tables are kept the same
- * width and their sideways scroll is shared, so numbers stay in place; both
+ * width; the table switched to always starts at its first column (t460u); both
  * modes are always the same height (CSS align-items: stretch).
  */
 
@@ -155,37 +155,37 @@ export function mountStatsCarousel({ root, onChange }) {
   if (typeof ResizeObserver === "function") new ResizeObserver(keepPlace).observe(viewport);
   window.addEventListener("resize", keepPlace, { passive: true });
 
-  /* ----- sideways scroll is shared: both tables show the same columns -----
-   * Copied once the finger stops (not every frame): writing the hidden table's
-   * scrollLeft on each scroll event repainted and re-committed it every frame,
-   * and the visible table's scroll stuttered on phones. Flushed before a mode
-   * change too, so the other table is already in place when it slides in. */
-  let mirrorSrc = null, mirrorTimer = 0, mirroring = false;
-  function flushMirror() {
-    clearTimeout(mirrorTimer);
-    const src = mirrorSrc;
-    mirrorSrc = null;
-    if (!src) return;
-    mirroring = true;
-    slides.forEach((s) => { const o = s.querySelector(SCROLLERS); if (o && o !== src && Math.abs(o.scrollLeft - src.scrollLeft) >= 1) o.scrollLeft = src.scrollLeft; });
-    setTimeout(() => { mirroring = false; }, 50);
+  /* ----- t460u: the table you switch to always starts at its first column -----
+   * (owner: "when we switch, the table on the right should be instantly
+   * scrolled to the beginning (iVi)", was: side scroll copied from the table we
+   * came from). Every table that is not the one in view is kept at scrollLeft 0:
+   * reset when a switch starts (the one coming in, before it shows) and once the
+   * slide lands (the one that left, now out of view), so it never jumps on screen.
+   * The table in view keeps whatever side scroll the user gives it. */
+  function resetHidden() {
+    const cur = clampMode(Math.round(viewport.scrollLeft / width()), slides.length);
+    slides.forEach((s, k) => {
+      if (k === cur) return;
+      const o = s.querySelector(SCROLLERS);
+      if (o && o.scrollLeft !== 0) o.scrollLeft = 0;
+    });
   }
+  viewport.addEventListener("scrollend", (e) => { if (e.target === viewport) resetHidden(); }, { passive: true });
+  for (const ev of ["touchstart", "pointerdown"]) viewport.addEventListener(ev, resetHidden, { passive: true });
+  let landTimer = 0; // no scrollend (older Safari): reset once the slides stop moving
   viewport.addEventListener("scroll", (e) => {
-    const src = e.target;
-    if (src === viewport) { flushMirror(); return; }
-    if (mirroring || !src.matches || !src.matches(SCROLLERS)) return;
-    mirrorSrc = src;
-    clearTimeout(mirrorTimer);
-    mirrorTimer = setTimeout(flushMirror, 180);
-  }, { capture: true, passive: true });
-  viewport.addEventListener("scrollend", (e) => { if (e.target !== viewport && e.target === mirrorSrc) flushMirror(); }, { capture: true, passive: true });
+    if (e.target !== viewport) return;
+    clearTimeout(landTimer);
+    landTimer = setTimeout(resetHidden, 200);
+  }, { passive: true });
 
   /* ----- tabs + keys ----- */
   tabs.forEach((t) => {
-    t.addEventListener("click", () => { flushMirror(); go(+t.dataset.sc); });
+    t.addEventListener("click", () => { resetHidden(); go(+t.dataset.sc); });
     t.addEventListener("keydown", (e) => {
       if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
       e.preventDefault();
+      resetHidden();
       go(i + (e.key === "ArrowRight" ? 1 : -1));
       const on = tabs.find((x) => +x.dataset.sc === i);
       if (on) on.focus();
