@@ -32,12 +32,12 @@ test("both tables share one look (right-aligned numbers, same weights) inside th
 
 // t470u: 4 quick flips on a phone poof the tab / dots line away.
 import { flipBurst, FLIPS_TO_POOF, FLIP_WINDOW_MS } from "../stats-carousel.mjs";
-test("flipBurst (t470u): fires on exactly the 4th switch inside the window", () => {
-    assert.equal(FLIPS_TO_POOF, 4);
-    assert.equal(flipBurst([0, 1000, 2000]), false);
-    assert.equal(flipBurst([0, 1000, 2000, 3000]), true);
+test("flipBurst (t470u): fires on exactly the 3rd switch inside the window", () => {
+    assert.equal(FLIPS_TO_POOF, 3);
+    assert.equal(flipBurst([0, 1000]), false);
+    assert.equal(flipBurst([0, 1000, 2000]), true);
 });
-test("flipBurst (t470u): not when the 4 switches are spread over more than the window", () => {
-    assert.equal(flipBurst([0, 4000, 8000, FLIP_WINDOW_MS + 1]), false);
-    assert.equal(flipBurst([0, 4000, 8000, FLIP_WINDOW_MS]), true);
+test("flipBurst (t470u): not when the 3 switches are spread over more than the window", () => {
+    assert.equal(flipBurst([0, 4000, FLIP_WINDOW_MS + 1]), false);
+    assert.equal(flipBurst([0, 4000, FLIP_WINDOW_MS]), true);
 });
