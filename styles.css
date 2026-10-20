@@ -1677,6 +1677,12 @@ html[data-theme="light"] .chart-placeholder-overlay {
   font-variant-numeric: tabular-nums;
 }
 
+/* Dark theme (Dayset 2026-10-19): stats tables sit on the darker panel tone
+ * (≈ --panel #14161a) instead of the body's rgb(32,32,32). */
+html:not([data-theme="light"]) .stats-table {
+  background-color: rgb(20, 20, 20);
+}
+
 .stats-table th,
 .stats-table td {
   padding: 0.28rem 0.35rem;
