@@ -310,16 +310,6 @@ import {
     };
     placeOpts();
     if (phoneMq.addEventListener) phoneMq.addEventListener("change", placeOpts);
-    // Dayset 2026-10-20: the reserved strip under the field (.opts-gap CSS)
-    // exists only while ≤2 names are in the field; from the 3rd name on it
-    // goes away and the options overlay the bottom-right corner instead.
-    const tokensEl = document.getElementById("nameTokens");
-    const boxEl = document.getElementById("namesBox");
-    if (tokensEl && boxEl) {
-      const syncGap = () => boxEl.classList.toggle("opts-gap", tokensEl.querySelectorAll(".name-token").length <= 2);
-      syncGap();
-      new MutationObserver(syncGap).observe(tokensEl, { childList: true });
-    }
   }
 
   let players = [];

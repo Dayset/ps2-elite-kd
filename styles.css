@@ -720,14 +720,12 @@ header .sub {
 
 /* Dayset 2026-10-20: phones — the options group (language / wipe / sounds /
  * theme) sits inside the names field at its bottom-right (app.js moves the
- * node here at this breakpoint). With ≤2 names the field keeps a reserved
- * bottom strip for it (.opts-gap, toggled by app.js as chips change); from
- * the 3rd name on the strip goes away to save the space and the group
- * overlays the field's bottom-right corner. The × stays pinned top-right.
- * The fresh row then holds only 🆕 (absolute, left) and the ❓📖❓ link,
- * which stays centered on the row. */
+ * node here at this breakpoint), overlaying the corner: the field keeps NO
+ * reserved bottom strip for it in any state (the ~40px strip was tried and
+ * cut the same day — "not needed ever"). The × stays pinned top-right. The
+ * fresh row then holds only 🆕 (absolute, left) and the ❓📖❓ link, which
+ * stays centered on the row. */
 @media (max-width: 600px) and (orientation: portrait) {
-  .controls .names-box.opts-gap { padding-bottom: 2.5rem; }
   .controls .names-box .fresh-row-end {
     position: absolute; right: 0.35rem; bottom: 0.35rem;
     flex: none; z-index: 3;
@@ -1914,9 +1912,12 @@ footer .disclaimer p {
   overflow-wrap: anywhere;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 1024px) {
   /* Dayset 2026-10-20: 0 top padding on phones — no background spacer above
-   * the input; the page starts flush with the top of the screen. */
+   * the input; the page starts flush with the top of the screen. (Scope
+   * widened 640 -> 1024 the same day: wider phone viewports — landscape,
+   * large display-size settings — were falling back to the padded stack
+   * and showing a ~35px gap above the field.) */
   body { padding: 0 0.75rem 0.75rem; }
   /* Dayset 2026-10-20: the input field itself flush with the screen top —
    * no panel padding above it, and the (usually empty) cache row above it
