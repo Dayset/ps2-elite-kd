@@ -1010,7 +1010,7 @@ export function initRankings(host) {
           tail: th.dim, tailOp: 0.45, cum: th.warn, cumW: 2, cumOp: 0.9, stat: th.text, statW: 1, statOp: 0.55, statTextOp: 0.8, markW: 2 };
 
     if (!h.bins.length) {
-      svg.appendChild(svgEl("text", { x: W / 2, y: H / 2, fill: th.dim, "text-anchor": "middle", "font-size": 12 }, "No data"));
+      svg.appendChild(svgEl("text", { x: W / 2, y: H / 2, fill: th.dim, "text-anchor": "middle", "font-size": 12 }, tr("rank.noData", "No data")));
       return;
     }
 
@@ -1584,7 +1584,7 @@ export function initRankings(host) {
 
   async function load() {
     // --- load ---
-    $("ranksStatus").textContent = "Loading ranks…";
+    $("ranksStatus").textContent = tr("rank.loading", "Loading ranks…");
     try {
       const hiddenP = fetch("data/hidden.json", { cache: "no-cache" }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
       const reviewedP = fetch("data/reviewed.json", { cache: "no-cache" }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
@@ -1609,7 +1609,7 @@ export function initRankings(host) {
       render();
       drawDist();
     } catch (err) {
-      $("ranksStatus").innerHTML = `<span class="err">Could not load ranks.json (${esc(err && err.message)}).</span>`;
+      $("ranksStatus").innerHTML = `<span class="err">${tr("rank.loadFail", "Could not load ranks.json ({msg}).", { msg: esc(err && err.message) })}</span>`;
       $("ranksMeta").textContent = "—";
     }
   }

@@ -1721,7 +1721,7 @@ import {
   }
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261020-i18n2")
+    rankingsLoading = import("./rankings.mjs?v=20261020-i18n5")
       .then((m) => {
         rankingsApi = m.initRankings(rankingsHost);
         return rankingsApi.ready;
@@ -4773,7 +4773,7 @@ import {
     const names = currentNamesInField();
     if (isReloadNavigation() && names.length && names.every((n) => !getNameFailure(n) && (findSharedEntry(n) || cacheGet(n)))) {
       const cta = els.chartPlaceholder ? els.chartPlaceholder.querySelector(".chart-placeholder-cta") : null;
-      if (cta) cta.textContent = "⏳ Loading…";
+      if (cta) cta.textContent = tr("msg.loadingCta", "⏳ Loading…");
       try {
         await analyzeNames(names, { quiet: true });
       } finally {
