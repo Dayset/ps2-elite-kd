@@ -488,7 +488,7 @@ import {
       const y = window.scrollY || window.pageYOffset || 0;
       const top = Math.max(
         0,
-        Math.round(target.getBoundingClientRect().top + y - 5)
+        Math.round(target.getBoundingClientRect().top + y - 3)
       );
       if (y >= top - 8) return; // already there or scrolled past — leave it
       const reduce =
