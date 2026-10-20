@@ -249,7 +249,7 @@
     <div class="sc-bar" role="tablist" aria-label="Table mode">
       <button type="button" role="tab" class="sc-tab on" id="scTabStats" data-sc="0" aria-selected="true" aria-controls="scSlideStats" title="Adjusted stats of your players">✨ Stats</button>
       <span class="sc-dots" aria-hidden="true" title="Swipe sideways to switch"><span class="sc-dot on"></span><span class="sc-dot"></span></span>
-      <button type="button" role="tab" class="sc-tab" id="scTabPos" data-sc="1" aria-selected="false" aria-controls="scSlidePos" title="Where your players rank among every cached player">🏅 Positions <span id="rkPosCount" class="rk-table-count"></span></button>
+      <button type="button" role="tab" class="sc-tab" id="scTabPos" data-sc="1" aria-selected="false" aria-controls="scSlidePos" title="Where your players rank among every cached player">🏅 Positions</button>
     </div>
     <div class="sc-viewport">
       <div class="sc-track">
@@ -391,7 +391,7 @@
     </section>
   </footer>
 
-  <script type="module" src="app.js?v=20261019-scroll7"></script>
+  <script type="module" src="app.js?v=20261019-noposcount"></script>
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").catch(function () {});

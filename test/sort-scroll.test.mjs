@@ -406,9 +406,8 @@ describe("🏅 positions table sorted by ⚔️ iVi, #1 on top (t358u)", () => {
       await nav(`index.html?names=${picks.map(encodeURIComponent).join(",")}#rankings`);
       await openBigTable(ev);
       await ev(`new Promise(async (res) => { for (let t = 0; t < 400 && document.querySelectorAll("#rkPositions .rk-pos-jump").length < 3; t++) await new Promise((r) => setTimeout(r, 50)); res(1); })`);
-      const st = await ev(`({ order: [...document.querySelectorAll("#rkPositions .rk-pos-jump")].map((a) => a.dataset.q.toLowerCase()), count: document.getElementById("rkPosCount").textContent, mode: document.getElementById("statsCarousel").dataset.mode })`);
+      const st = await ev(`({ order: [...document.querySelectorAll("#rkPositions .rk-pos-jump")].map((a) => a.dataset.q.toLowerCase()), mode: document.getElementById("statsCarousel").dataset.mode })`);
       assert.deepEqual(st.order, picks.slice().reverse().map((q) => q.toLowerCase()), "highest iVi first");
-      assert.equal(st.count, "(3)");
       assert.equal(st.mode, "0", "✨ Stats shown first");
     });
   });

@@ -662,7 +662,6 @@ export function initRankings(host) {
     const colorOf = new Map(picks.map((r, i) => [r.query, i]));
     const ivi = (r) => (fin(r.adjs) ? r.adjs : -Infinity);
     const rows = picks.slice().sort((a, b) => ivi(b) - ivi(a) || compareByCharName(a.name, b.name));
-    if ($("rkPosCount")) $("rkPosCount").textContent = picks.length ? `(${picks.length})` : "";
     const missing = names.filter((n) => !matchPicks([n], rows, 1).length);
     if (!rows.length && !missing.length) {
       box.innerHTML = `<p class="rk-pos-hint">Add players in the names box (or tick ✅ in the table below) to see where they rank.</p>`;
