@@ -2706,14 +2706,16 @@ col.lv-c-statR { width: calc(7.143% - 3.3214ch); }
 .stats-carousel { margin: 0.35rem 0 0.85rem; }
 .stats-carousel:has(#statsPanel:empty) { display: none; }
 .stats-carousel.sc-reserve { display: block !important; } /* room kept while the startup graph loads (app.js reserveStatsSpace) */
+/* Split bar (Dayset 2026-10-19): ✨ Stats left, dots centered, 🏅 Positions right. */
 .sc-bar { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.3rem; }
-.sc-tabs { display: inline-flex; gap: 2px; padding: 2px; border: 1px solid var(--border); border-radius: 999px; background: var(--panel); }
-.sc-tab { font: inherit; font-size: 0.8rem; font-weight: 600; color: var(--dim); background: none; border: 0; border-radius: 999px; padding: 0.18rem 0.7rem; cursor: pointer; white-space: nowrap; }
+.sc-tab { font: inherit; font-size: 0.8rem; font-weight: 600; color: var(--dim); background: var(--panel); border: 1px solid var(--border); border-radius: 999px; padding: 0.18rem 0.7rem; cursor: pointer; white-space: nowrap; }
+.sc-tab:first-child { margin-right: auto; }
+.sc-tab:last-child { margin-left: auto; }
 .sc-tab:hover { color: var(--text); }
-.sc-tab.on { color: var(--text); background: color-mix(in srgb, var(--accent) 24%, transparent); }
+.sc-tab.on { color: var(--text); background: color-mix(in srgb, var(--accent) 24%, var(--panel)); }
 .sc-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .sc-tab .rk-table-count { color: var(--dim); font-weight: 400; }
-.sc-dots { display: inline-flex; gap: 5px; margin-left: auto; padding-right: 0.2rem; }
+.sc-dots { display: inline-flex; gap: 5px; }
 .sc-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); transition: background 0.2s, transform 0.2s; }
 .sc-dot.on { background: var(--accent); transform: scale(1.25); }
 /* Native scroll-snap (2026-10-19): the browser moves the slides on the compositor at the
