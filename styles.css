@@ -2803,3 +2803,15 @@ col.lv-c-statR { width: calc(7.143% - 3.3214ch); }
 @media (prefers-reduced-motion: reduce) {
   .splash-logo { animation: none; opacity: 1; }
 }
+
+/* Main-page box gaps at 40% of their original height (Dayset 2026-10-19:
+ * "all the gaps between the main page boxes 60% less"). Scoped overrides —
+ * the base rules stay untouched. */
+body.main-page header { margin-bottom: 0.3rem; }
+body.main-page .controls { margin-bottom: 0.4rem; }
+body.main-page #status { margin-bottom: 0.2rem; }
+body.main-page .stats-carousel { margin: 0.14rem 0 0.34rem; }
+body.main-page .rankings { margin: 0.5rem 0 0.2rem; }
+body.main-page .dist-section { margin-bottom: 0.34rem; }
+body.main-page footer .footer-data { margin: 0.4rem 0 0.3rem; }
+body.main-page footer .footer-block { margin-top: 0.3rem; }
