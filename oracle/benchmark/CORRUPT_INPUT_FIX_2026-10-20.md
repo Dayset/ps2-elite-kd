@@ -114,6 +114,22 @@ file for the record, but must be excluded from headline benchmark means
 (the same treatment as the `corrected` notes already in this file, which
 flag rows whose winners came from PS2Alerts corrections).
 
+## Backup and restore source
+
+Per Dayset's standing rule (2026-10-20): work on corrupted data never
+throws the original away — the fixed version carries a backup of what it
+was restored from. The pre-fix file is preserved next to the fixed one:
+
+- **`oracle/benchmark/benchmark_predictions.pre-fix-2026-10-20.jsonl`** —
+  byte-identical to the file as it stood immediately before this fix
+  (41,751 bytes, 247 lines, no `corrupt_input` fields). Restoring is a
+  copy back over `benchmark_predictions.jsonl`.
+- The same pre-fix content also exists in git history (blob at commit
+  `296503b5`, the tip immediately before fix commit `c18cfed3`), and the
+  frozen VM copy at `~/workspace/ps2polymarket/benchmark_predictions.jsonl`
+  holds the same rows plus the final VM-era settled row that this
+  repository copy predates.
+
 ## Table A — the 16 rows from the 2026-10-16 audit
 
 | Alert key | Server | Continent | Event | Start (UTC) | Duration | Neutral (median) | Winner | Brier t0 | Brier t30 |
