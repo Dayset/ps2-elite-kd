@@ -2626,7 +2626,8 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
 /* Language menu (i18n.mjs, #langSelect): same height as the icon buttons beside it. */
 .controls .fresh-row-end select.lang-select {
   box-sizing: border-box; height: 1.9rem; max-width: 7.4rem; padding: 0 0.3rem;
-  font: inherit; font-size: 0.78rem; border-radius: 6px; cursor: pointer;
+  /* Flag-only options (owner 2026-10-20): a touch larger so the flag reads. */
+  font: inherit; font-size: 1rem; border-radius: 6px; cursor: pointer;
   border: 1px solid var(--border); background: var(--input-bg); color: var(--text);
 }
 .controls .fresh-row-end select.lang-select:focus-visible { outline: 1px solid var(--accent); }

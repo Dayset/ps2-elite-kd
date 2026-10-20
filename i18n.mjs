@@ -8,14 +8,16 @@
 // Keep the import URL plain (no ?v= tag): index.html and app.js both import this file,
 // and two URLs would make two module instances (see claude/working-setup.md).
 
+/* The #langSelect options show the flag only (owner 2026-10-20: keeps the
+ * field short); `name` stays for the detected-language banner. */
 export const LANGS = [
-  { code: "en", name: "English" },
-  { code: "ja", name: "日本語" },
-  { code: "ru", name: "Русский" },
-  { code: "de", name: "Deutsch" },
-  { code: "fr", name: "Français" },
-  { code: "zh", name: "中文" },
-  { code: "es", name: "Español" },
+  { code: "en", name: "English", flag: "🇬🇧" },
+  { code: "ja", name: "日本語", flag: "🇯🇵" },
+  { code: "ru", name: "Русский", flag: "🇷🇺" },
+  { code: "de", name: "Deutsch", flag: "🇩🇪" },
+  { code: "fr", name: "Français", flag: "🇫🇷" },
+  { code: "zh", name: "中文", flag: "🇨🇳" },
+  { code: "es", name: "Español", flag: "🇪🇸" },
 ];
 
 const STORE = "ps2-elite-kd-lang";
