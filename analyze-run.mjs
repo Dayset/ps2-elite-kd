@@ -387,7 +387,8 @@ export function expectedNameMs(live, { liveAvgMs = 0, cachedAvgMs = 0, livePrior
 /**
  * t306u: pre-Analyze hint next to "Fetch fresh data" — every name is a live
  * fetch then, so n × learned live time (default 7 s):
- * "(it will take approximately 1 min 10 s)" (t307u). "" when no names.
+ * "(~1 min 10 s)" (t307u; the "approximately" wording became a bare ~
+ * on 2026-10-20 — symbol-only, so no locale translates fresh.eta). "" when no names.
  * @param {number} count names in the input
  * @param {number} [livePriorMs] remembered per-name live time (0 = default)
  */
@@ -400,7 +401,7 @@ export function freshEtaText(count, livePriorMs = 0) {
   const m = Math.floor(sec / 60);
   const r = sec % 60;
   const t = m ? (r ? tr("eta.minSec", "{m} min {s} s", { m, s: r }) : tr("eta.min", "{m} min", { m })) : tr("eta.sec", "{s} s", { s: sec });
-  return tr("fresh.eta", "(it will take approximately {t})", { t });
+  return tr("fresh.eta", "(~{t})", { t });
 }
 
 /**

@@ -76,7 +76,7 @@ import {
   etaLearnLiveMs,
   freshEtaText,
   expectedNameMs,
-} from "./analyze-run.mjs?v=20261020-i18n3";
+} from "./analyze-run.mjs?v=20261020-eta1";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
@@ -1721,7 +1721,7 @@ import {
   }
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261020-i18nfix1")
+    rankingsLoading = import("./rankings.mjs?v=20261020-eta1")
       .then((m) => {
         rankingsApi = m.initRankings(rankingsHost);
         return rankingsApi.ready;

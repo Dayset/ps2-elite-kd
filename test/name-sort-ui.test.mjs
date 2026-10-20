@@ -49,11 +49,11 @@ import { freshEtaText } from "../analyze-run.mjs";
 import { rankingsSource } from "./rankings-src.mjs";
 test("freshEtaText: n × learned live time, default 7 s", () => {
   assert.equal(freshEtaText(0), "");
-  assert.equal(freshEtaText(1), "(it will take approximately 7 s)");
-  assert.equal(freshEtaText(3), "(it will take approximately 21 s)");
-  assert.equal(freshEtaText(3, 4000), "(it will take approximately 12 s)");
-  assert.equal(freshEtaText(10, 7000), "(it will take approximately 1 min 10 s)");
-  assert.equal(freshEtaText(20, 6000), "(it will take approximately 2 min)");
+  assert.equal(freshEtaText(1), "(~7 s)");
+  assert.equal(freshEtaText(3), "(~21 s)");
+  assert.equal(freshEtaText(3, 4000), "(~12 s)");
+  assert.equal(freshEtaText(10, 7000), "(~1 min 10 s)");
+  assert.equal(freshEtaText(20, 6000), "(~2 min)");
   assert.match(index, /id="freshEta"/);
   assert.match(app, /fetchFresh\.addEventListener\("change", updateFreshEta\)/);
 });
