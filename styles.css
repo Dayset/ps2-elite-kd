@@ -843,6 +843,12 @@ header .sub {
 .fresh-cols-link:hover {
   text-decoration: underline;
 }
+/* Mobile portrait only (Dayset 2026-10-20): while the 🆕 fetch-fresh button is
+ * armed (checkbox checked), the 📖 columns link and its text hide completely;
+ * unchecked puts it back. Pure CSS — the :has() reacts to the checkbox. */
+@media (max-width: 600px) and (orientation: portrait) {
+  .fresh-row:has(#fetchFresh:checked) .fresh-cols-link { display: none; }
+}
 
 .fresh-hint {
   font-size: 0.75rem;
