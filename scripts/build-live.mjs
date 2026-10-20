@@ -11,7 +11,7 @@ export const LIVE_JS = "live.mjs?v=20261019-vcut4";
 
 export function buildLive(index) {
   const swaps = [
-    [/<title>[^<]*<\/title>/, "<title>🎥 Live feed — PS2 Elite K/D</title>"],
+    [/<title>[^<]*<\/title>/, "<title>🎥 Live feed — PS2 Elite</title>"],
     [/<link rel="canonical"[^>]*\/>/, '<meta name="robots" content="noindex" />'],
     ['<body class="main-page">', '<body class="main-page live-mode">'],
     ['id="liveBtn" type="button" class="live-btn" aria-pressed="false" title="🎥 Live: follow the first name\'s kills and deaths as they happen"',

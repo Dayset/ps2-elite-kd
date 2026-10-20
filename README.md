@@ -1,4 +1,4 @@
-# PS2 Elite K/D
+# PS2 Elite
 
 **Player statistics for PlanetSide 2: K/D plotted against the weapon KPM of the enemies each player faced, with opposition-weighted and pace-adjusted metrics.**
 
@@ -12,7 +12,7 @@ Free and open source. It's plain HTML, CSS and JavaScript on GitHub Pages, with 
 
 Raw K/D counts every kill and death equally. The enemies in those fights vary, so one K/D figure mixes different opposition levels together.
 
-PS2 Elite K/D groups each player's fights by the **weapon KPM (kills per minute) of the enemies involved**, and plots K/D across that range. Each player's curve shows how their K/D changes as enemy KPM increases.
+PS2 Elite groups each player's fights by the **weapon KPM (kills per minute) of the enemies involved**, and plots K/D across that range. Each player's curve shows how their K/D changes as enemy KPM increases.
 
 ## ✨ What you can do
 
