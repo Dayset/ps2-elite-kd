@@ -1677,10 +1677,12 @@ html[data-theme="light"] .chart-placeholder-overlay {
   font-variant-numeric: tabular-nums;
 }
 
-/* Dark theme (Dayset 2026-10-19): stats tables sit on the darker panel tone
- * (≈ --panel #14161a) instead of the body's rgb(32,32,32). */
-html:not([data-theme="light"]) .stats-table {
-  background-color: rgb(20, 20, 20);
+/* Dark theme (Dayset 2026-10-19): stats + positions tables sit on the darker
+ * panel tone (var(--panel) = #14161a ≈ rgb(20,22,26) in dark) instead of the
+ * body's rgb(32,32,32). */
+html:not([data-theme="light"]) .stats-table,
+html:not([data-theme="light"]) .rk-pos-table {
+  background-color: var(--panel);
 }
 
 .stats-table th,
