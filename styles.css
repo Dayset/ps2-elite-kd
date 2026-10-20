@@ -835,7 +835,10 @@ header .sub {
 }
 .fresh-cols-link {
   flex: 0 0 auto;
-  font-size: 0.85rem;
+  /* Emoji-only since 2026-10-20 (owner: ❓📖❓ instead of the text) — a bit
+   * larger so the triple emoji reads as a button; the phrase survives as the
+   * link's title / aria-label via the columnsLink key. */
+  font-size: 1.1rem;
   color: var(--text);
   text-decoration: none;
   white-space: nowrap;
