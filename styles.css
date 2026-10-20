@@ -2972,5 +2972,10 @@ body.main-page #status { margin-bottom: 0.2rem; }
 body.main-page .stats-carousel { margin: 0.14rem 0 0.34rem; }
 body.main-page .rankings { margin: 0.25rem 0 0.2rem; }
 body.main-page .dist-section { margin-bottom: 0.34rem; }
+/* The footer itself was missed in the 40% pass above: it kept its global
+ * 1.5rem top margin, so the gap above the Public (Census / Honu) block —
+ * the footer's first child — rendered ~24px against ~6px everywhere else
+ * (Dayset 2026-10-20). Same 0.4rem as the other main-page box gaps. */
+body.main-page footer { margin-top: 0.4rem; }
 body.main-page footer .footer-data { margin: 0.4rem 0 0.3rem; }
 body.main-page footer .footer-block { margin-top: 0.3rem; }
