@@ -1,0 +1,332 @@
+{
+ "_readme": "One entry per SETTLED benchmark alert in oracle/benchmark/benchmark_predictions.jsonl. status: clean | corrupt | unclassified. Read this before quoting any benchmark mean. Benchmark rows are NOT edited by this file.",
+ "_rule": "corrupt = median share of neutral facilities over the alert window >= 20% (measured gap: clean <= 8%, corrupt 45-64%). Source of the measurement: see CORRUPT_INPUT_FIX_2026-10-20.md.",
+ "_caveat": "The map-snapshot archive used for the measurement is NOT in this repo (only oracle/backend/data/map_snapshots/1/4/2026-10-18.jsonl). 'clean' rows are therefore taken on trust from the fix doc. Open question: the 22 corrupt rows are all Meltdown/Oshur event ids; a Meltdown lock looks the same in the data. See the fix doc, section 'Open question'.",
+ "counts": {
+  "clean": 39,
+  "corrupt": 22,
+  "unclassified": 3
+ },
+ "rows": {
+  "1-2-148-1791771870": {
+   "status": "clean",
+   "source": "fix doc 2026-10-20 (audit-era rule: median neutral <=8%); not re-measurable from this repo",
+   "exclude_from_headline": false
+  },
+  "1-2-179-1792183418": {
+   "status": "corrupt",
+   "source": "fix doc 2026-10-20, tables A/B",
+   "exclude_from_headline": true
+  },
+  "1-2-189-1791879285": {
+   "status": "corrupt",
+   "source": "fix doc 2026-10-20, tables A/B",
+   "exclude_from_headline": true
+  },
+  "1-2-189-1792009010": {
+   "status": "corrupt",
+   "source": "fix doc 2026-10-20, tables A/B",
+   "exclude_from_headline": true
+  },
+  "1-2-193-1792235327": {
+   "status": "corrupt",
+   "source": "fix doc 2026-10-20, tables A/B",
+   "exclude_from_headline": true
+  },
+  "1-344-248-1792262962": {
+   "status": "corrupt",
+   "source": "fix doc 2026-10-20, tables A/B",
+   "exclude_from_headline": true
+  },
+  "1-344-249-1791926376": {
+   "status": "corrupt",
+   "source": "fix doc 2026-10-20, tables A/B",
+   "exclude_from_headline": true
+  },
+  "1-4-153-1791759770": {
+   "status": "clean",
+   "source": "fix doc 2026-10-20 (audit-era rule: median neutral <=8%); not re-measurable from this repo",
+   "exclude_from_headline": false
+  },
+  "1-4-153-1792285909": {
+   "status": "clean",
+   "source": "fix doc 2026-10-20 (audit-era rule: median neutral <=8%); not re-measurable from this repo",
+   "exclude_from_headline": false
+  },
+  "1-4-154-1792128512": {
+   "status": "clean",
+   "source": "fix doc 2026-10-20 (audit-era rule: median neutral <=8%); not re-measurable from this repo",
+   "exclude_from_headline": false
+  },
+  "1-4-155-1792211802": {
+   "status": "clean",
+   "source": "fix doc 2026-10-20 (audit-era rule: median neutral <=8%); not re-measurable from this repo",
+   "exclude_from_headline": false
+  },
+  "1-4-177-1791821154": {
+   "status": "clean",
+   "source": "fix doc 2026-10-20 (audit-era rule: median neutral <=8%); not re-measurable from this repo",
+   "exclude_from_headline": false
+  },
+  "1-4-177-1791901602": {
+   "status": "corrupt",
+   "source": "fix doc 2026-10-20, tables A/B",
+   "exclude_from_headline": true
+  },
+  "1-4-177-1791965908": {
+   "status": "corrupt",
+   "source": "fix doc 2026-10-20, tables A/B",
+   "exclude_from_headline": true
+  },
+  "1-4-187-1792057809": {
+   "status": "corrupt",
+   "source": "fix doc 2026-10-20, tables A/B",
+   "exclude_from_headline": true
+  },
+  "1-6-156-1791940785": {
+   "status": "clean",
+   "source": "fix doc 2026-10-20 (audit-era rule: median neutral <=8%); not re-measurable from this repo",
+   "exclude_from_headline": false
+  },
+  "1-6-156-1792196499": {
+   "status": "clean",
+   "source": "fix doc 2026-10-20 (audit-era rule: median neutral <=8%); not re-measurable from this repo",
+   "exclude_from_headline": false
+  },
+  "1-6-157-1791845557": {
+   "status": "clean",
+   "source": "fix doc 2026-10-20 (audit-era rule: median neutral <=8%); not re-measurable from this repo",
+   "exclude_from_headline": false
+  },
+  "1-6-157-1792118131": {
+   "status": "clean",
+   "source": "fix doc 2026-10-20 (audit-era rule: median neutral <=8%); not re-measurable from this repo",
+   "exclude_from_headline": false
+  },
+  "1-6-158-1792030192": {
+   "status": "clean",
+   "source": "fix doc 2026-10-20 (audit-era rule: median neutral <=8%); not re-measurable from this repo",
+   "exclude_from_headline": false
+  },
+  "1-6-178-1792258726": {
+   "status": "corrupt",
+   "source": "fix doc 2026-10-20, tables A/B",
+   "exclude_from_headline": true
+  },
+  "1-8-151-1791855760": {
+   "status": "clean",
+   "source": "fix doc 2026-10-20 (audit-era rule: median neutral <=8%); not re-measurable from this repo",
+   "exclude_from_headline": false
+  },
+  "1-8-152-1792203240": {
+   "status": "clean",
+   "source": "fix doc 2026-10-20 (audit-era rule: median neutral <=8%); not re-measurable from this repo",
+   "exclude_from_headline": false
+  },
+  "1-8-176-1791797973": {
+   "status": "clean",
+   "source": "fix doc 2026-10-20 (audit-era rule: median neutral <=8%); not re-measurable from this repo",
+   "exclude_from_headline": false
+  },
+  "1-8-176-1791987229": {
+   "status": "corrupt",
+   "source": "fix doc 2026-10-20, tables A/B",
+   "exclude_from_headline": true
+  },
+  "1-8-186-1791923044": {
+   "status": "corrupt",
+   "source": "fix doc 2026-10-20, tables A/B",
+   "exclude_from_headline": true
+  },
+  "1-8-186-1792096022": {
+   "status": "corrupt",
+   "source": "fix doc 2026-10-20, tables A/B",
+   "exclude_from_headline": true
+  },
+  "10-2-147-1791924036": {
+   "status": "clean",
+   "source": "fix doc 2026-10-20 (audit-era rule: median neutral <=8%); not re-measurable from this repo",
+   "exclude_from_headline": false
+  },
+  "10-2-147-1792001520": {
+   "status": "clean",
+   "source": "fix doc 2026-10-20 (audit-era rule: median neutral <=8%); not re-measurable from this repo",
+   "exclude_from_headline": false
+  },
+  "10-2-148-1791824448": {
+   "status": "clean",
+   "source": "fix doc 2026-10-20 (audit-era rule: median neutral <=8%); not re-measurable from this repo",
+   "exclude_from_headline": false
+  },
+  "10-2-148-1792167759": {
+   "status": "clean",
+   "source": "fix doc 2026-10-20 (audit-era rule: median neutral <=8%); not re-measurable from this repo",
+   "exclude_from_headline": false
+  },
+  "10-2-149": {
+   "status": "unclassified",
+   "source": "key has no start timestamp (fix doc: 10-6-244, 10-2-149, 10-6-157 are unclassifiable)",
+   "exclude_from_headline": false
+  },
+  "10-2-179-1791881992": {
+   "status": "corrupt",
+   "source": "fix doc 2026-10-20, tables A/B",
+   "exclude_from_headline": true
+  },
+  "10-2-179-1792057024": {
+   "status": "corrupt",
+   "source": "fix doc 2026-10-20, tables A/B",
+   "exclude_from_headline": true
+  },
+  "10-2-214-1792262807": {
+   "status": "clean",
+   "source": "fix doc 2026-10-20 (audit-era rule: median neutral <=8%); not re-measurable from this repo",
+   "exclude_from_headline": false
+  },
+  "10-344-222-1792246609": {
+   "status": "clean",
+   "source": "fix doc 2026-10-20 (audit-era rule: median neutral <=8%); not re-measurable from this repo",
+   "exclude_from_headline": false
+  },
+  "10-344-250-1791885324": {
+   "status": "corrupt",
+   "source": "fix doc 2026-10-20, tables A/B",
+   "exclude_from_headline": true
+  },
+  "10-4-153-1791906054": {
+   "status": "clean",
+   "source": "fix doc 2026-10-20 (audit-era rule: median neutral <=8%); not re-measurable from this repo",
+   "exclude_from_headline": false
+  },
+  "10-4-154-1791970618": {
+   "status": "clean",
+   "source": "fix doc 2026-10-20 (audit-era rule: median neutral <=8%); not re-measurable from this repo",
+   "exclude_from_headline": false
+  },
+  "10-4-154-1792254692": {
+   "status": "clean",
+   "source": "fix doc 2026-10-20 (audit-era rule: median neutral <=8%); not re-measurable from this repo",
+   "exclude_from_headline": false
+  },
+  "10-4-155-1791796606": {
+   "status": "clean",
+   "source": "fix doc 2026-10-20 (audit-era rule: median neutral <=8%); not re-measurable from this repo",
+   "exclude_from_headline": false
+  },
+  "10-4-177-1792210482": {
+   "status": "corrupt",
+   "source": "fix doc 2026-10-20, tables A/B",
+   "exclude_from_headline": true
+  },
+  "10-4-177-1792294792": {
+   "status": "corrupt",
+   "source": "fix doc 2026-10-20, tables A/B",
+   "exclude_from_headline": true
+  },
+  "10-4-191-1791859791": {
+   "status": "corrupt",
+   "source": "fix doc 2026-10-20, tables A/B",
+   "exclude_from_headline": true
+  },
+  "10-4-191-1792126655": {
+   "status": "corrupt",
+   "source": "fix doc 2026-10-20, tables A/B",
+   "exclude_from_headline": true
+  },
+  "10-6-156-1791896748": {
+   "status": "clean",
+   "source": "fix doc 2026-10-20 (audit-era rule: median neutral <=8%); not re-measurable from this repo",
+   "exclude_from_headline": false
+  },
+  "10-6-156-1792240577": {
+   "status": "clean",
+   "source": "fix doc 2026-10-20 (audit-era rule: median neutral <=8%); not re-measurable from this repo",
+   "exclude_from_headline": false
+  },
+  "10-6-157": {
+   "status": "unclassified",
+   "source": "key has no start timestamp (fix doc: 10-6-244, 10-2-149, 10-6-157 are unclassifiable)",
+   "exclude_from_headline": false
+  },
+  "10-6-157-1791746503": {
+   "status": "clean",
+   "source": "fix doc 2026-10-20 (audit-era rule: median neutral <=8%); not re-measurable from this repo",
+   "exclude_from_headline": false
+  },
+  "10-6-157-1792011541": {
+   "status": "clean",
+   "source": "fix doc 2026-10-20 (audit-era rule: median neutral <=8%); not re-measurable from this repo",
+   "exclude_from_headline": false
+  },
+  "10-6-157-1792099294": {
+   "status": "clean",
+   "source": "fix doc 2026-10-20 (audit-era rule: median neutral <=8%); not re-measurable from this repo",
+   "exclude_from_headline": false
+  },
+  "10-6-158-1791811067": {
+   "status": "clean",
+   "source": "fix doc 2026-10-20 (audit-era rule: median neutral <=8%); not re-measurable from this repo",
+   "exclude_from_headline": false
+  },
+  "10-6-158-1792184140": {
+   "status": "clean",
+   "source": "fix doc 2026-10-20 (audit-era rule: median neutral <=8%); not re-measurable from this repo",
+   "exclude_from_headline": false
+  },
+  "10-6-192-1791947560": {
+   "status": "corrupt",
+   "source": "fix doc 2026-10-20, tables A/B",
+   "exclude_from_headline": true
+  },
+  "10-6-244": {
+   "status": "unclassified",
+   "source": "key has no start timestamp (fix doc: 10-6-244, 10-2-149, 10-6-157 are unclassifiable)",
+   "exclude_from_headline": false
+  },
+  "10-8-150-1791832789": {
+   "status": "clean",
+   "source": "fix doc 2026-10-20 (audit-era rule: median neutral <=8%); not re-measurable from this repo",
+   "exclude_from_headline": false
+  },
+  "10-8-150-1791983699": {
+   "status": "clean",
+   "source": "fix doc 2026-10-20 (audit-era rule: median neutral <=8%); not re-measurable from this repo",
+   "exclude_from_headline": false
+  },
+  "10-8-150-1792174570": {
+   "status": "clean",
+   "source": "fix doc 2026-10-20 (audit-era rule: median neutral <=8%); not re-measurable from this repo",
+   "exclude_from_headline": false
+  },
+  "10-8-151-1792269196": {
+   "status": "clean",
+   "source": "fix doc 2026-10-20 (audit-era rule: median neutral <=8%); not re-measurable from this repo",
+   "exclude_from_headline": false
+  },
+  "10-8-152-1791914215": {
+   "status": "clean",
+   "source": "fix doc 2026-10-20 (audit-era rule: median neutral <=8%); not re-measurable from this repo",
+   "exclude_from_headline": false
+  },
+  "10-8-152-1792090533": {
+   "status": "clean",
+   "source": "fix doc 2026-10-20 (audit-era rule: median neutral <=8%); not re-measurable from this repo",
+   "exclude_from_headline": false
+  },
+  "10-8-152-1792232143": {
+   "status": "clean",
+   "source": "fix doc 2026-10-20 (audit-era rule: median neutral <=8%); not re-measurable from this repo",
+   "exclude_from_headline": false
+  },
+  "10-8-176-1792035065": {
+   "status": "corrupt",
+   "source": "fix doc 2026-10-20, tables A/B",
+   "exclude_from_headline": true
+  },
+  "10-8-186-1791772425": {
+   "status": "clean",
+   "source": "fix doc 2026-10-20 (audit-era rule: median neutral <=8%); not re-measurable from this repo",
+   "exclude_from_headline": false
+  }
+ }
+}

@@ -1,4 +1,61 @@
-# Benchmark fix 2026-10-20 — tagging the corrupt-input rows
+# Benchmark input status: quick guide for agents
+
+Read this first. The long record below is for history; this section is what to do.
+
+## 1. Which rows are clean?
+
+Use `oracle/benchmark/input_status.json` (one entry per settled alert):
+
+| status | meaning | include in headline means? |
+|---|---|---|
+| `clean` | measured healthy (or audit-era clean) | yes |
+| `corrupt` | input ran with a neutral block (see open question) | **no** |
+| `unclassified` | no start time in the key, cannot measure | no, until checked |
+
+Counts today: 39 clean, 22 corrupt, 3 unclassified (64 settled rows).
+
+## 2. Examples to follow
+
+Mean t30 Brier over clean rows only (Python). The Brier numbers sit on the settled row (`type == "settled"`) under `brier`, keyed by slice:
+
+```python
+import json
+rows = [json.loads(l) for l in open("oracle/benchmark/benchmark_predictions.jsonl") if l.strip()]
+status = json.load(open("oracle/benchmark/input_status.json"))["rows"]
+settled = [r for r in rows if r.get("type") == "settled"]
+clean = [r["brier"]["t30"] for r in settled
+         if status.get(r["alert"], {}).get("status") == "clean" and r["brier"].get("t30") is not None]
+print(round(sum(clean) / len(clean), 4), len(clean))  # 0.1981 over 39 rows with input_status.json. The fix doc's 0.1987 (40 rows) also counts 3 unclassified rows as clean, which is why it differs.
+```
+
+Same with `jq`:
+
+```sh
+jq -r '.rows | to_entries[] | select(.value.status == "clean") | .key' oracle/benchmark/input_status.json | head
+```
+
+When you add a new settled row, add its status too. Do not edit the benchmark rows to do it.
+
+## 3. Rules
+
+- Never delete or edit a benchmark row to change its status. The `corrupt_input` field is the only in-row marker, and it is kept as is.
+- Keep `benchmark_predictions.pre-fix-2026-10-20.jsonl` as the restore source.
+- If you can't measure a row, mark it `unclassified`. Don't guess `clean`.
+- Say which status set you used whenever you quote a benchmark number.
+
+## 4. Open question (read before changing a label)
+
+The 22 corrupt rows are all event ids 176–179, 186–193 and 248–250. Those are the Unstable Meltdown ids and the Oshur ids. A Meltdown locks most of the continent and shows it as neutral on the Census map by design (see `claude/working-setup.md`, Census facts). So the rows may be a **Meltdown lock read as a normal alert** by the retired pipeline, not a broken feed.
+
+Either way, the rows should stay out of the headline numbers. But the words "corrupt Census feed" may be wrong, so check before reusing them.
+
+## 5. Data gap
+
+The measurement behind `input_status.json` used a map-snapshot archive that is **not in this repo**. Only `oracle/backend/data/map_snapshots/1/4/2026-10-18.jsonl` is present. The `clean` labels come from the fix doc, not from a re-run. To re-check, the archive has to be restored first.
+
+---
+
+# Benchmark fix 2026-10-20 — tagging the corrupt-input rows (full record)
 
 **What this is:** the full description of the 2026-10-20 fix to
 `oracle/benchmark/benchmark_predictions.jsonl`. Twenty-two settled benchmark
