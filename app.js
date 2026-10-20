@@ -73,7 +73,7 @@ import {
   etaLearnLiveMs,
   freshEtaText,
   expectedNameMs,
-} from "./analyze-run.mjs?v=20261010-sav1";
+} from "./analyze-run.mjs?v=20261019-apklow";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
@@ -3487,7 +3487,7 @@ import {
       { id: "pvs", label: "🦁 Brave", hint: "Activity that keeps up as enemies get stronger: high when you stay productive even against the fastest-killing players you meet.", fn: (r) => r.pvs, digits: 2 },
       { id: "rf", label: "🛡️ Resist", hint: "How well you stand up to strong players: your K/D against the players you fight most, scaled up by how fast those players kill.", fn: (r) => r.rf, digits: 2 },
       { id: "cons", label: "⚡ Const", hint: "How much of your K/D you keep against the strongest third of your opponents compared with the weakest third, as a percentile of all tracked players.", fn: (r) => r.cons, digits: 2, pctileCell: true },
-      { id: "apk", label: "🤝 Assists", hint: "Assists per kill in recent Honu sessions: how often you help damage enemies that teammates finish, for each kill of your own. Shown from 100 session kills.", fn: (r) => (apkBySlug && r.p ? apkBySlug.get(slugKey(r.p.display)) : undefined), digits: 2, apkCell: true },
+      { id: "apk", label: "🤝 Assists", hint: "Assists per kill in recent Honu sessions: how often you help damage enemies that teammates finish, for each kill of your own. Shown from 100 session kills.", fn: (r) => (apkBySlug && r.p ? apkBySlug.get(slugKey(r.p.display)) : undefined), digits: 2, apkCell: true, pctDir: "low", pctLowPhrase: "more assists" },
       { id: "rkd", label: "☠️ K/D", hint: "Kills ÷ deaths against the ~200 players you fight most, so it reflects real matchups rather than your whole lifetime.", fn: (r) => r.rkd, digits: 3 },
       { id: "inf", label: "🪖 Infantry", hint: INF_HINT, fn: (r) => { const e = infBySlug && r.p ? infBySlug.get(slugKey(r.p.display)) : undefined; return e ? e.inf : undefined; }, digits: 1, infCell: true },
     ];
@@ -3623,7 +3623,7 @@ import {
               const pct =
                 p == null
                   ? ""
-                  : `<span class="pct" title="${escapeHtml(pctTitle(p, fmtNum(ref, c.digits), dir))}">` +
+                  : `<span class="pct" title="${escapeHtml(pctTitle(p, fmtNum(ref, c.digits), dir, c.pctLowPhrase))}">` +
                     `${fmtPctFromRef(p, dir)}</span>`;
               // Below the floor (🎈 Inflation < 1.0): no %, just say why on hover.
               const floor = c.pctRefFloor;
@@ -3634,7 +3634,7 @@ import {
                     ? ` title="${escapeHtml(vc)}"`
                     : "";
               // 🧱 Const: main value is the population percentile ("19%"); the dimmed gap to the highest value still applies.
-              // 🤝 Assists: plain number, percentile + meaning on hover, plus the dimmed % gap to the highest (t398u).
+              // 🤝 Assists: plain number, percentile + meaning on hover, plus the dimmed % gap above the lowest — lower is better, counted from the lowest (Dayset 2026-10-19).
               if (c.apkCell) {
                 if (!isFiniteNum(v)) return `<td title="Not enough recent sessions (needs 100 kills in Honu sessions)">—</td>`;
                 const pl = apkPool ? percentileOf(apkPool, v) : null;

@@ -325,11 +325,12 @@ export function fmtPctFromRef(p, dir = "high") {
   return p === 0 ? `${sign}<1%` : `${sign}${Math.abs(p)}%`;
 }
 
-/** Tooltip for a % cell. */
-export function pctTitle(p, refLabel, dir = "high") {
+/** Tooltip for a % cell. `lowPhrase` names what "more" means for a "low"
+ * column (🎈 Inflation default); 🤝 Assists passes "more assists". */
+export function pctTitle(p, refLabel, dir = "high", lowPhrase = "more inflated") {
   const n = p === 0 ? "<1" : String(Math.abs(p));
   return dir === "low"
-    ? `${n}% more inflated than the reference (${refLabel})`
+    ? `${n}% ${lowPhrase} than the reference (${refLabel})`
     : `${n}% below the column top (${refLabel})`;
 }
 
