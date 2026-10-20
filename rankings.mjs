@@ -607,9 +607,19 @@ export function initRankings(host) {
     const nLocal = data.rows.reduce((n, r) => n + (r.localOnly ? 1 : 0), 0);
     const nFresh = data.rows.reduce((n, r) => n + (r.freshAt && !r.localOnly ? 1 : 0), 0);
     if ($("ranksTableCount")) $("ranksTableCount").textContent = `(${data.count.toLocaleString()})`;
-    $("ranksMeta").textContent = tr("rk.meta", "{shown} of {total} players · updated {date}", { shown: list.length.toLocaleString(), total: data.count.toLocaleString(), date: fmtUpdated(data.updatedAt) }) +
-      (nFresh ? ` · ${FRESH_MARK} ${tr("rk.metaFresh", "{n} from your fresh fetch", { n: nFresh })}` : "") +
-      (nLocal ? ` · ${FRESH_MARK} ${tr("rk.metaLocal", "{n} only in this browser (not shared yet)", { n: nLocal })}` : "");
+    // Dayset 2026-10-20: the footer stats block shows one fact per line
+    // (players / Updated / fresh-fetch), not one "·"-joined sentence.
+    const metaLines = [
+      tr("rk.metaPlayers", "{shown} of {total} players", { shown: list.length.toLocaleString(), total: data.count.toLocaleString() }),
+      tr("rk.metaUpdated", "Updated {date}", { date: fmtUpdated(data.updatedAt) }),
+    ];
+    if (nFresh) metaLines.push(`${FRESH_MARK} ${tr("rk.metaFresh", "{n} From your fresh fetch.", { n: nFresh })}`);
+    if (nLocal) metaLines.push(`${FRESH_MARK} ${tr("rk.metaLocal", "{n} Only in this browser (not shared yet).", { n: nLocal })}`);
+    $("ranksMeta").replaceChildren(...metaLines.map((t) => {
+      const d = document.createElement("div");
+      d.textContent = t;
+      return d;
+    }));
     $("ranksMeta").title = nFresh || nLocal ? `${FRESH_MARK} = stats from your own fetch on Analyze (this browser only); everyone else uses the shared copy.` : "";
     syncPickedUi();
   }

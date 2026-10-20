@@ -1721,7 +1721,7 @@ import {
   }
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261020-i18n5")
+    rankingsLoading = import("./rankings.mjs?v=20261020-footstats1")
       .then((m) => {
         rankingsApi = m.initRankings(rankingsHost);
         return rankingsApi.ready;
@@ -4734,7 +4734,7 @@ import {
       if (r && r.total > 0) {
         // Display is the rate only (Dayset 2026-10-20): the cached total
         // itself already shows in the recent players added line.
-        el.textContent = tr("foot.namesPerDay", "(≈{perDay} new names a day)", {
+        el.textContent = tr("foot.namesPerDay", "≈{perDay} New names a day.", {
           perDay: r.perDay.toLocaleString(),
         });
         el.hidden = false;

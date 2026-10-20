@@ -199,7 +199,7 @@ describe("Rankings: fresh browser copy + readable chart names (t338u)", () => {
         await ev(`(async () => { const i = document.getElementById("ranksSearch"); i.value = "shlodog"; i.dispatchEvent(new Event("input", { bubbles: true })); await new Promise((r) => setTimeout(r, 400)); })()`);
         const fresh = await ev(`(() => { const tr = [...document.querySelectorAll("#ranksBody tr[data-q]")].find((t) => t.dataset.q.toLowerCase() === "shlodog"); return tr ? !!tr.querySelector(".sample-fresh") : null; })()`);
         assert.equal(fresh, true, "ShloDog row marked ↻ fresh");
-        assert.match(await ev(`document.getElementById("ranksMeta").textContent`), /1 from your fresh fetch/);
+        assert.match(await ev(`document.getElementById("ranksMeta").textContent`), /1 From your fresh fetch\./);
         const boxes = await ev(`[...document.querySelectorAll("#distSvg text[font-weight='700']")].map((t) => { const b = t.getBBox(); return [b.x, b.y, b.width, b.height, t.textContent]; })`);
         assert.ok(boxes.length >= 6, "names drawn: " + boxes.length);
         for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
