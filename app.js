@@ -2698,7 +2698,9 @@ import {
   function setYZoom(z, { redraw = true } = {}) {
     yZoom = clampYZoom(z);
     syncYZoomUi();
-    if (redraw && players.length) drawChart(players);
+    // Zoom stays inside the skill graph: the stats table above is zoom-independent,
+    // so a zoom change must not rebuild it (flicker / lost table state).
+    if (redraw && players.length) drawChart(players, { skipTable: true });
   }
 
   function resetYZoom({ redraw = true } = {}) {
@@ -2849,7 +2851,7 @@ import {
     return true;
   }
 
-  function drawChart(list, { waveFrame = false } = {}) {
+  function drawChart(list, { waveFrame = false, skipTable = false } = {}) {
     updateWaveRangeWarn(list);
     if (waveFrame && updateWaveFrame(list)) return;
     waveRig = null;
@@ -3112,7 +3114,7 @@ import {
 
     waveRig = { list, sig: waveRigSig(), zoomedLeft, banded, th, fz, gYGrid, gYText, gLabels, series: rigSeries };
 
-    renderStatsTable(list);
+    if (!skipTable) renderStatsTable(list);
     setGhostCaption(ghostsOn, drewGhost);
   }
 
