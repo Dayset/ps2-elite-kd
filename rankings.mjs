@@ -805,7 +805,7 @@ export function initRankings(host) {
     if (!box) return;
     box.innerHTML = cols.map((c) => {
       const { icon, text } = splitLabel(c.label);
-      return `<button type="button" class="dist-pill" role="radio" data-id="${esc(c.id)}" aria-checked="false" tabindex="-1" title="${esc(c.label)}" aria-label="${esc(c.label)}">` +
+      return `<button type="button" class="dist-pill" role="radio" data-id="${esc(c.id)}" aria-checked="false" tabindex="-1" title="${esc(distHintText(c))}" aria-label="${esc(c.label)}">` +
         `<span class="dist-pill-icon" aria-hidden="true">${esc(icon)}</span><span class="dist-pill-text" aria-hidden="true">${esc(text)}</span></button>`;
     }).join("");
     syncDistPills();
@@ -970,10 +970,7 @@ export function initRankings(host) {
     syncDistPills();
     if (!data || !svg || !$("distSection").open) return;
     const col = colById(distMetric);
-    // Metric explanation underneath the chart: the same text as the
-    // table column's tooltip (col.tip), updated on every metric switch.
-    const hintEl = $("distHint");
-    if (hintEl) hintEl.textContent = col?.tip || "";
+    // t464u: the metric explanation is the popup hint now (showDistHint), no text under the chart.
     const h = getHist(distMetric);
     const box = $("distChart");
     const W = Math.max(320, Math.round(box.clientWidth || 640));
@@ -1011,7 +1008,6 @@ export function initRankings(host) {
 
     if (!h.bins.length) {
       svg.appendChild(svgEl("text", { x: W / 2, y: H / 2, fill: th.dim, "text-anchor": "middle", "font-size": 12 }, "No data"));
-      $("distSummary").textContent = "";
       return;
     }
 
@@ -1180,48 +1176,18 @@ export function initRankings(host) {
     });
     svg.appendChild(hits);
 
-    $("distSummary").textContent =
-      `${h.n.toLocaleString()} players · median ${(+h.median).toFixed(col.digits)} · p90 ${(+h.p90).toFixed(col.digits)} · p99 ${(+h.p99).toFixed(col.digits)}`;
-    holdSummaryHeight(W);
-    holdHintHeight(W);
   }
 
-  /* t374u: the stats line can wrap to 2 lines for one metric and 1 for the
-   * next (phones), which made the block jump while auto-cycling. Keep it at
-   * the tallest height it needed at this chart width. */
-  let sumMax = { w: 0, h: 0 };
-  function holdSummaryHeight(w) {
-    const el = $("distSummary");
-    if (!el) return;
-    if (sumMax.w !== w) sumMax = { w, h: 0 };
-    el.style.minHeight = "";
-    const hNow = el.getBoundingClientRect().height;
-    if (hNow > sumMax.h) sumMax.h = hNow;
-    if (sumMax.h > 0) el.style.minHeight = `${Math.ceil(sumMax.h)}px`;
-  }
-
-  /* Same idea for the metric tip above the chart: tips run 1-3 lines, so
-   * hold the hint at the tallest height it needed at this chart width.
-   * Dayset 2026-10-19: measure every tip on first pass, so the block never
-   * grows when switching to a longer description (🪖 Infantry). */
-  let hintMax = { w: 0, h: 0 };
-  function holdHintHeight(w) {
-    const el = $("distHint");
-    if (!el) return;
-    if (hintMax.w !== w) {
-      hintMax = { w, h: 0 };
-      const cur = el.textContent;
-      for (const c of VISIBLE) {
-        el.textContent = c.tip || "";
-        const h = el.getBoundingClientRect().height;
-        if (h > hintMax.h) hintMax.h = h;
-      }
-      el.textContent = cur;
-    }
-    el.style.minHeight = "";
-    const hNow = el.getBoundingClientRect().height;
-    if (hNow > hintMax.h) hintMax.h = hNow;
-    if (hintMax.h > 0) el.style.minHeight = `${Math.ceil(hintMax.h)}px`;
+  /* t464u (owner: "put a description of the distribution graph on the popup
+   * hint, as in KD/iVi, and remove the text with stats from under the graph").
+   * Same bubble as 💀 / 🎯 (head-tip.mjs): phones get it for ~5 s under the
+   * current pill after a tap / swipe; PC has the same text as the pill's hover title. */
+  function distHintText(c) { return c ? `${c.label} across all cached players: ${c.tip || ""}`.trim() : ""; }
+  function showDistHint() {
+    if (!isTouchUi()) return;
+    const c = colById(distMetric);
+    const pill = $("distPills") && $("distPills").querySelector(".dist-pill.on");
+    if (c && pill) showHeadTip(distHintText(c), pill);
   }
 
   function binRangeText(b, h, col) {
@@ -1370,6 +1336,7 @@ export function initRankings(host) {
       const sec = $("distSection");
       if (sec && !sec.open) sec.open = true; // collapsed: open the graph on this metric right away
       setDistMetric(b.getAttribute("data-id"));
+      showDistHint();
     }
   });
   $("distPills").addEventListener("keydown", (e) => {
@@ -1431,14 +1398,10 @@ export function initRankings(host) {
     }
     draw();
     if (!ghost) return;
-    // The text under the chart (metric hint, stats line) fades in with it.
-    const texts = ["distHint", "distSummary"].map((id) => $(id)).filter(Boolean);
-    for (const t of texts) { t.style.transition = "none"; t.style.opacity = "0"; }
     void ghost.getBoundingClientRect(); // commit opacity 1 before fading out
     requestAnimationFrame(() => {
       ghost.style.transition = `opacity ${DIST_FADE_MS}ms ease-in-out`;
       ghost.style.opacity = "0";
-      for (const t of texts) { t.style.transition = `opacity ${DIST_FADE_MS}ms ease-in-out`; t.style.opacity = "1"; }
     });
     setTimeout(() => ghost.remove(), DIST_FADE_MS + 150);
   }
@@ -1481,6 +1444,7 @@ export function initRankings(host) {
         drawDist();
       },
     });
+    showDistHint();
   }
   /* t386u: 👆 finger-following carousel on the chart (drag left = next from
    * the right, drag right = previous from the left; both charts visible
@@ -1513,7 +1477,7 @@ export function initRankings(host) {
         setMetric(list[(i + dir + list.length) % list.length]);
       },
       restore: () => { if (orig) setMetric(orig); },
-      onCommit: () => { if (distCycler) distCycler.interact(); },
+      onCommit: () => { if (distCycler) distCycler.interact(); showDistHint(); },
     });
   }
   {

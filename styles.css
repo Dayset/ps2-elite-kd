@@ -2396,7 +2396,6 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
   font: inherit; font-size: 0.9rem; padding: 0.3rem 0.5rem; border-radius: 6px;
   border: 1px solid var(--border); background: var(--input-bg); color: var(--text);
 }
-.dist-summary { color: var(--dim); }
 .dist-chart { position: relative; width: 100%; }
 .dist-chart svg { display: block; width: 100%; height: auto; touch-action: manipulation; }
 .dist-chart .dist-hit { cursor: pointer; outline: none; }
@@ -2432,7 +2431,6 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
 .dist-tip b { color: var(--accent); }
 /* Metric explanation under the distribution chart: same text as the
  * table column tooltip for the current metric. */
-.dist-hint { color: var(--dim); font-size: 0.8rem; margin-top: 0.25rem; }
 @media (max-width: 600px) {
   .ranks-table td .pct { display: block; margin-left: 0; line-height: 1.1; }
   .ranks-table-wrap { max-height: calc(100vh - 13rem); }
@@ -2645,7 +2643,6 @@ html[data-theme="light"] .dist-pill:hover { opacity: 1; }
 .dist-pill .dist-pill-text { display: none; font-weight: 600; white-space: nowrap; }
 .dist-pill.on { opacity: 1; background: var(--grid); padding: 0 0.55rem 0 0.4rem; }
 .dist-pill.on .dist-pill-text { display: inline; }
-.dist-summary { margin-top: 0.25rem; font-size: 0.75rem; }
 /* Narrow phones: emojis only (the chart's x-axis label names the metric). */
 @media (max-width: 420px) {
   .dist-pill.on .dist-pill-text { display: none; }
@@ -2734,7 +2731,6 @@ html[data-theme="light"] .dist-pill:hover { opacity: 1; }
 .live-mode #rkPosSection,
 .live-mode #ranksTableSection,
 .live-mode #distPills,
-.live-mode #distHint,
 .live-mode #statsPublic,
 .live-mode #vehiclesNote,
 .live-mode #ranksMeta,
