@@ -6,7 +6,10 @@
   <title>PS2 Elite K/D — PlanetSide 2 player stats &amp; K/D comparison</title>
   <meta name="description" content="Compare PlanetSide 2 players: K/D vs enemy KPM chart (Raw / Smooth), iVi skill rating, Resist, Brave and Inflation stats, and Rankings. Free, data from Daybreak Census and Honu." />
   <link rel="canonical" href="https://dayset.github.io/ps2-elite-kd/" />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%94%EF%B8%8F%3C/text%3E%3C/svg%3E" />
+  <link rel="icon" href="favicon.ico" />
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="PS2 Elite K/D" />
   <meta property="og:title" content="PS2 Elite K/D — PlanetSide 2 player stats &amp; K/D comparison" />
@@ -57,7 +60,7 @@
       });
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261019-speed5" />
+  <link rel="stylesheet" href="styles.css?v=20261019-speed3" />
 </head>
 <body class="main-page">
   <div class="controls">
@@ -152,14 +155,12 @@
       </div>
       <span class="sc-dots" aria-hidden="true" title="Swipe sideways to switch"><span class="sc-dot on"></span><span class="sc-dot"></span></span>
     </div>
-    <!-- The rounded box is .sc-frame, not the scroller: a rounded clip on any box around the
-         tables makes the phone ask the busy main thread where every swipe starts (laggy). -->
-    <div class="sc-frame"><div class="sc-viewport">
+    <div class="sc-viewport">
       <div class="sc-track">
         <div class="sc-slide" id="scSlideStats" role="tabpanel" aria-labelledby="scTabStats"><div id="statsPanel" class="stats-panel" aria-label="Player stats comparison"></div></div>
         <div class="sc-slide" id="scSlidePos" role="tabpanel" aria-labelledby="scTabPos"><div id="rkPositions" class="rk-positions" aria-live="polite"><p class="rk-pos-hint">Loading positions…</p></div></div>
       </div>
-    </div></div>
+    </div>
   </section>
   <script>
     // Same first-paint idea for the table spot: keep room for the startup chips' stats
@@ -294,6 +295,6 @@
     </section>
   </footer>
 
-  <script type="module" src="app.js?v=20261019-speed5"></script>
+  <script type="module" src="app.js?v=20261019-speed3"></script>
 </body>
 </html>
