@@ -1529,6 +1529,13 @@ import {
     note.hidden = false;
     note.classList.remove("is-fading");
     void note.offsetWidth; // restart the CSS transition if it was mid-fade
+    // With reduced motion (e.g. Android "Remove animations") the CSS fade
+    // can't run — hide outright after 5 s instead of fading.
+    const reducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reducedMotion) {
+      limitNoteFadeTimer = setTimeout(() => { note.hidden = true; limitNoteFaded = true; }, 5000);
+      return;
+    }
     limitNoteFadeTimer = setTimeout(() => {
       note.classList.add("is-fading");
       limitNoteFadeTimer = setTimeout(() => { note.hidden = true; limitNoteFaded = true; }, 700);
