@@ -1518,17 +1518,47 @@ import {
   let limitWasFull = false;
   let limitLockReady = false; // false during startup (?names= / restore)
   const isListFull = () => nameTokens.length >= MAX_NAMES;
+  // The lock note fades out 5 s after it appears, then compacts away
+  // (hidden). Re-armed every time the note is (re)shown.
+  let limitNoteFadeTimer = 0;
+  let limitNoteFaded = false; // true once the note faded for the current full list
+  function showLimitNote() {
+    const note = els.namesLimitNote;
+    if (!note) return;
+    clearTimeout(limitNoteFadeTimer);
+    note.hidden = false;
+    note.classList.remove("is-fading");
+    void note.offsetWidth; // restart the CSS transition if it was mid-fade
+    limitNoteFadeTimer = setTimeout(() => {
+      note.classList.add("is-fading");
+      limitNoteFadeTimer = setTimeout(() => { note.hidden = true; limitNoteFaded = true; }, 700);
+    }, 5000);
+  }
+  function hideLimitNote() {
+    clearTimeout(limitNoteFadeTimer);
+    limitNoteFaded = false;
+    const note = els.namesLimitNote;
+    if (!note) return;
+    note.hidden = true;
+    note.classList.remove("is-fading");
+  }
   function syncLimitLock() {
     const full = isListFull();
     const empty = nameTokens.length === 0;
+    if (!full) limitNoteFaded = false; // a new full episode may show the note again
     if (els.namesInput) {
       els.namesInput.disabled = full || LIVE_MODE; // 🎥 live: field locked until Live is turned off
       if (full) els.namesInput.setAttribute("title", `List is full (${MAX_NAMES} names) — remove a name to add more`);
       else els.namesInput.removeAttribute("title");
     }
     // Visible why: a disabled field alone says nothing (and a title only
-    // shows on mouse hover), so the box itself explains the lock.
-    if (els.namesLimitNote) els.namesLimitNote.hidden = !full || LIVE_MODE;
+    // shows on mouse hover), so the box itself explains the lock — briefly:
+    // the note fades after 5 s and compacts away.
+    if (els.namesLimitNote) {
+      const showNote = full && !LIVE_MODE;
+      if (showNote && els.namesLimitNote.hidden && !limitNoteFaded) showLimitNote();
+      else if (!showNote && !els.namesLimitNote.hidden) hideLimitNote();
+    }
     for (const b of [els.diceBtn, els.diceLowBtn, els.diceHighBtn]) {
       if (!b) continue;
       const lock = full || (empty && b !== els.diceBtn);
