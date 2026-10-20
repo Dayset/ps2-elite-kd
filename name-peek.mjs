@@ -9,10 +9,14 @@
  *     add / remove name); the click after a long-press is swallowed.
  * The popup shows the player's legend (data-desc) with a 📖 icon, and the
  * name itself links to the player's profile when the tapped name sits inside
- * a profile link. The link target is NOT chosen here: the popup reuses the
+ * a profile link. Which profile URL is NOT chosen here: the popup reuses the
  * page's own profile link (built by honuProfileUrl), so when a settings
  * switch later points names at Fisu or another site, the popup follows
- * automatically. That switch is not implemented.
+ * automatically. That switch is not implemented. The link always opens in a
+ * NEW window: the anchor carries target="_blank", and its click handler also
+ * calls window.open explicitly — an installed-app (standalone) shell can
+ * ignore an anchor's target and navigate the app window itself, which used
+ * to throw the user out of the app onto the other site (owner, 2026-10-20).
  * One reusable popup, auto-hides after 10 s, on tap, scroll or resize. Import once per page.
  */
 
@@ -97,6 +101,14 @@ export function showNamePeek(anchor, text, desc = "", url = "") {
     link.target = "_blank";
     link.rel = "noopener noreferrer";
     link.textContent = text;
+    // Force a new window on the tap itself: target="_blank" alone is not
+    // enough in an installed-app shell, which can navigate its own window
+    // to the other site instead (owner report, 2026-10-20).
+    link.addEventListener("click", (e) => {
+      e.preventDefault();
+      window.open(url, "_blank", "noopener,noreferrer");
+      hideNamePeek();
+    });
     nameLine.appendChild(link);
   } else {
     nameLine.textContent = text;

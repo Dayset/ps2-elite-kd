@@ -106,7 +106,7 @@ import { markNote, statMark, confirmedPadderSlugs, isPenalizedPadder, POOP_MARK,
 // Account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times: chart name list only.
 import { accountTimes, flairsHtml, flairsFor } from "./flairs.mjs?v=20261010-sav1";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261018-onl2";
+import "./name-peek.mjs?v=20261020-peekwin1";
 import { sfx, recentGesture, mountSfxToggle } from "./sfx.mjs?v=20261017-sfxpreload";
 import { mountNameSuggest } from "./name-suggest.mjs?v=20261016-sug1";
 import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261010-sav1";

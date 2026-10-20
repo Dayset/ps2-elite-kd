@@ -62,3 +62,15 @@ describe("name-peek legend", () => {
     assert.equal(peekParts(bad).url, "");
   });
 });
+
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+describe("name-peek popup link opens a new window (owner, 2026-10-20)", () => {
+  const src = fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "name-peek.mjs"), "utf8");
+  it("popup profile link forces window.open(_blank) on click, not just target=_blank", () => {
+    assert.match(src, /link\.target = "_blank"/);
+    assert.match(src, /window\.open\(url, "_blank", "noopener,noreferrer"\)/);
+    assert.match(src, /e\.preventDefault\(\)/);
+  });
+});
