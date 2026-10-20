@@ -57,7 +57,7 @@
       });
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261019-speed3" />
+  <link rel="stylesheet" href="styles.css?v=20261019-speed5" />
 </head>
 <body class="main-page">
   <div class="controls">
@@ -152,12 +152,14 @@
       </div>
       <span class="sc-dots" aria-hidden="true" title="Swipe sideways to switch"><span class="sc-dot on"></span><span class="sc-dot"></span></span>
     </div>
-    <div class="sc-viewport">
+    <!-- The rounded box is .sc-frame, not the scroller: a rounded clip on any box around the
+         tables makes the phone ask the busy main thread where every swipe starts (laggy). -->
+    <div class="sc-frame"><div class="sc-viewport">
       <div class="sc-track">
         <div class="sc-slide" id="scSlideStats" role="tabpanel" aria-labelledby="scTabStats"><div id="statsPanel" class="stats-panel" aria-label="Player stats comparison"></div></div>
         <div class="sc-slide" id="scSlidePos" role="tabpanel" aria-labelledby="scTabPos"><div id="rkPositions" class="rk-positions" aria-live="polite"><p class="rk-pos-hint">Loading positions…</p></div></div>
       </div>
-    </div>
+    </div></div>
   </section>
   <script>
     // Same first-paint idea for the table spot: keep room for the startup chips' stats
@@ -292,6 +294,6 @@
     </section>
   </footer>
 
-  <script type="module" src="app.js?v=20261019-speed3"></script>
+  <script type="module" src="app.js?v=20261019-speed5"></script>
 </body>
 </html>

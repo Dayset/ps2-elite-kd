@@ -2708,7 +2708,13 @@ col.lv-c-statR { width: calc(7.143% - 3.3214ch); }
  * screen's own rate (the old JS drag ran on the main thread and stuttered on phones).
  * A table that can still scroll sideways keeps the swipe; at its edge the swipe passes
  * on to the slides. align-items: stretch = both modes always the same height. */
-.sc-viewport { overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; -webkit-overflow-scrolling: touch; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); }
+/* No rounded clip around the tables (2026-10-19): with one, Chrome can't tell on its own
+ * thread which box a finger scrolls and asks the main thread first, so a swipe in a table
+ * waits whenever the page is busy loading. The frame draws the rounded border and fill
+ * without clipping; table cells are see-through except the sticky name column, whose
+ * corner cells are rounded to match. */
+.sc-frame { border: 1px solid var(--border); border-radius: 8px; background: var(--panel); }
+.sc-viewport { overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
 .sc-viewport::-webkit-scrollbar { display: none; }
 .sc-track { display: flex; align-items: stretch; }
 .sc-slide { flex: 0 0 100%; min-width: 0; scroll-snap-align: start; scroll-snap-stop: always; }
@@ -2728,12 +2734,16 @@ col.lv-c-statR { width: calc(7.143% - 3.3214ch); }
 .stats-carousel .stats-table th,
 .stats-carousel .stats-table td,
 .stats-carousel .rk-pos-table th,
-.stats-carousel .rk-pos-table td { padding: 0.34rem 0.42rem; border-bottom: 1px solid var(--row-border); white-space: nowrap; text-align: right; background: var(--panel); }
+.stats-carousel .rk-pos-table td { padding: 0.34rem 0.42rem; border-bottom: 1px solid var(--row-border); white-space: nowrap; text-align: right; background: transparent; }
 .stats-carousel .stats-table[data-stats-table="adjusted"] td:not(.stats-name) { text-indent: 0; }
 .stats-carousel .stats-table thead th,
 .stats-carousel .rk-pos-table thead th { color: var(--text); font-weight: 600; border-bottom-color: var(--border); }
 .stats-carousel .stats-table .stats-name,
-.stats-carousel .rk-pos-table .rk-pos-name { text-align: left; font-weight: 600; position: sticky; left: 0; z-index: 1; box-shadow: 4px 0 8px -4px var(--shadow); }
+.stats-carousel .rk-pos-table .rk-pos-name { text-align: left; font-weight: 600; position: sticky; left: 0; z-index: 1; box-shadow: 4px 0 8px -4px var(--shadow); background: var(--panel); }
+.stats-carousel .stats-table thead tr:first-child > .stats-name:first-child,
+.stats-carousel .rk-pos-table thead tr:first-child > .rk-pos-name:first-child { border-top-left-radius: 7px; }
+.stats-carousel .stats-table tbody tr:last-child > .stats-name:first-child,
+.stats-carousel .rk-pos-table tbody tr:last-child > .rk-pos-name:first-child { border-bottom-left-radius: 7px; }
 .stats-carousel .stats-table thead th.stats-name,
 .stats-carousel .rk-pos-table thead th.rk-pos-name { color: var(--dim); font-weight: 500; z-index: 2; }
 .stats-carousel .stats-table td,

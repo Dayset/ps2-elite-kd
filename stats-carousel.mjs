@@ -115,19 +115,34 @@ export function mountStatsCarousel({ root, onChange }) {
   if (typeof ResizeObserver === "function") new ResizeObserver(keepPlace).observe(viewport);
   window.addEventListener("resize", keepPlace, { passive: true });
 
-  /* ----- sideways scroll is shared: both tables show the same columns ----- */
-  let mirroring = false;
+  /* ----- sideways scroll is shared: both tables show the same columns -----
+   * Copied once the finger stops (not every frame): writing the hidden table's
+   * scrollLeft on each scroll event repainted and re-committed it every frame,
+   * and the visible table's scroll stuttered on phones. Flushed before a mode
+   * change too, so the other table is already in place when it slides in. */
+  let mirrorSrc = null, mirrorTimer = 0, mirroring = false;
+  function flushMirror() {
+    clearTimeout(mirrorTimer);
+    const src = mirrorSrc;
+    mirrorSrc = null;
+    if (!src) return;
+    mirroring = true;
+    slides.forEach((s) => { const o = s.querySelector(SCROLLERS); if (o && o !== src && Math.abs(o.scrollLeft - src.scrollLeft) >= 1) o.scrollLeft = src.scrollLeft; });
+    setTimeout(() => { mirroring = false; }, 50);
+  }
   viewport.addEventListener("scroll", (e) => {
     const src = e.target;
-    if (mirroring || src === viewport || !src.matches || !src.matches(SCROLLERS)) return;
-    mirroring = true;
-    slides.forEach((s) => { const o = s.querySelector(SCROLLERS); if (o && o !== src) o.scrollLeft = src.scrollLeft; });
-    requestAnimationFrame(() => { mirroring = false; });
+    if (src === viewport) { flushMirror(); return; }
+    if (mirroring || !src.matches || !src.matches(SCROLLERS)) return;
+    mirrorSrc = src;
+    clearTimeout(mirrorTimer);
+    mirrorTimer = setTimeout(flushMirror, 180);
   }, { capture: true, passive: true });
+  viewport.addEventListener("scrollend", (e) => { if (e.target !== viewport && e.target === mirrorSrc) flushMirror(); }, { capture: true, passive: true });
 
   /* ----- tabs + keys ----- */
   tabs.forEach((t) => {
-    t.addEventListener("click", () => go(+t.dataset.sc));
+    t.addEventListener("click", () => { flushMirror(); go(+t.dataset.sc); });
     t.addEventListener("keydown", (e) => {
       if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
       e.preventDefault();
