@@ -25,6 +25,17 @@ the visitor picks (or the browser's language, if it is supported).
 
 An empty file `{}` is valid: it simply shows English until someone fills it in.
 
+## Japanese is the worked example
+
+`ja.json` is complete (every key of `en.json`). Open it next to `en.json` and copy its approach:
+
+- Same key names and order, one translation per line.
+- Sentences built in code are split into one key with `{placeholders}`, so the word order can change for each language. Example: `pct.more` is `"{n}% {phrase} than the reference ({ref})"`, and the Japanese reads `"基準（{ref}）より {n}% {phrase}"`.
+- Links stay in the page: the text around a link is its own key (`vehicles.p2`, `foot.licenseBefore`), and the link itself is written in `index.html`.
+- Plurals are separate keys (`fights.kill` / `fights.kills`). Japanese uses one form for both.
+- Stat names stay in English (see the list above). Column headings that are not stat names are translated (`col.assists`, `col.infantry`, `col.ownKpm`, `col.acc`).
+- Hover texts (`tip.*`, `inf.*`, `veh.*`, `pad.*`, `apk.tip`, `dist.*`) are full sentences: translate the whole sentence, not word by word.
+
 ## Adding a new key
 
 A new piece of text starts in English:
@@ -36,11 +47,17 @@ A new piece of text starts in English:
 3. Add the translation to each language file (or leave it out; English shows until it is filled in).
 
 The tests (`test/i18n.test.mjs`) fail if a language file has a key that English does not have, if a
-translation loses a `{placeholder}`, or if the page or `app.js` uses a key that is not in `en.json`.
+translation loses a `{placeholder}`, or if the page or a UI module uses a key that is not in `en.json`.
 They never fail on a missing translation, since that is only a gap in coverage.
 
-## Not translated yet
+## Not translated (by design)
 
-Only the main page's controls, status text and footer are in the menu. The stats table, rankings
-columns, graph labels, the other pages (`columns.html`, `updates.html`, `build-log.html`) and the oracle
-dashboard are still English.
+- Player legends (the long pilot stories about top players). They are hidden on the site.
+- The language names in the menu (English, Deutsch, Français, Español): each is shown in its own language.
+- Stat names listed above.
+- Player names and clan tags.
+
+## Still in English (gaps to fill)
+
+- `columns.html`, `updates.html`, `build-log.html` and the oracle dashboard: not in the language menu yet.
+- The live page's notes and feed heading (its button is translated).
