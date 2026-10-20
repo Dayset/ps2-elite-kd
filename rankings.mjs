@@ -7,7 +7,7 @@
 import { t as tr, currentLang } from "./i18n.mjs";
 // Column tip in the current language (tip.<id> in i18n/*.json, English otherwise).
 const tipOf = (c) => (c.id ? tr("tip." + c.id, c.tip || "") : c.tip || "");
-import { compareByCharName } from "./analyze-run.mjs?v=20261020-i18n2";
+import { compareByCharName } from "./analyze-run.mjs?v=20261020-i18n3";
 import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits, binJumpTarget } from "./dist.mjs?v=20261010-sav1";
 import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261020-i18n2";
 import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP, isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261020-i18n2";

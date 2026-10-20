@@ -55,7 +55,8 @@ export function classifyLoadError(e) {
 }
 
 export function failureReason(kind) {
-  return FAIL_REASONS[kind] || FAIL_REASONS.error;
+  const k = FAIL_REASONS[kind] ? kind : "error";
+  return tr("fail.reason." + k, FAIL_REASONS[k]);
 }
 
 /** Census looks names up by first name only — drop a leading "[TAG] ". */
@@ -142,22 +143,22 @@ export function summarizeFailures(failed, okCount) {
   const allTransient = transient === failed.length;
 
   let lead;
-  if (allFailed) lead = many ? "Couldn't fetch any of these names:" : "Couldn't fetch";
-  else lead = "Couldn't fetch:";
+  if (allFailed) lead = many ? tr("fail.leadAllMany", "Couldn't fetch any of these names:") : tr("fail.leadAllOne", "Couldn't fetch");
+  else lead = tr("fail.lead", "Couldn't fetch:");
 
   let why;
   const censusBusy = failed.filter((f) => f.kind === "census-busy").length;
   if (allTransient && censusBusy) {
-    why = "Daybreak Census is busy or down right now — try again later.";
+    why = tr("fail.whyBusy", "Daybreak Census is busy or down right now — try again later.");
   } else if (allTransient) {
-    why = "Looks like a network hiccup — try again in a moment.";
+    why = tr("fail.whyNet", "Looks like a network hiccup — try again in a moment.");
   } else {
     why = many
-      ? "Probably misspelled or not real characters."
-      : "Probably misspelled or not a real character.";
-    if (transient) why += " Network errors may be temporary — try again.";
+      ? tr("fail.whyTypoMany", "Probably misspelled or not real characters.")
+      : tr("fail.whyTypoOne", "Probably misspelled or not a real character.");
+    if (transient) why += " " + tr("fail.whyTemp", "Network errors may be temporary — try again.");
   }
-  const tail = allFailed ? why : `${why} Showing the rest.`;
+  const tail = allFailed ? why : `${why} ${tr("fail.rest", "Showing the rest.")}`;
   const list = items.map((i) => `${i.name} (${i.reason})`).join(", ");
   return { allFailed, lead, items, tail, retryable: transient > 0, text: `${lead} ${list}. ${tail}` };
 }
@@ -398,8 +399,8 @@ export function freshEtaText(count, livePriorMs = 0) {
   if (sec >= 60) sec = Math.round(sec / 5) * 5; // "1 min 10 s", not "1 min 13 s"
   const m = Math.floor(sec / 60);
   const r = sec % 60;
-  const t = m ? `${m} min${r ? ` ${r} s` : ""}` : `${sec} s`;
-  return `(it will take approximately ${t})`;
+  const t = m ? (r ? tr("eta.minSec", "{m} min {s} s", { m, s: r }) : tr("eta.min", "{m} min", { m })) : tr("eta.sec", "{s} s", { s: sec });
+  return tr("fresh.eta", "(it will take approximately {t})", { t });
 }
 
 /**
@@ -437,13 +438,13 @@ export function nextEtaDeadline(prevDeadline, nowMs, estimateMs) {
 export function formatEtaLeft(ms) {
   if (!Number.isFinite(ms) || ms <= 0) return "";
   const sec = Math.max(1, Math.ceil(ms / 1000));
-  if (sec < 60) return `~${sec}s left`;
+  if (sec < 60) return tr("eta.leftS", "~{s}s left", { s: sec });
   const m = Math.floor(sec / 60);
   const s = sec % 60;
-  if (m < 60) return s ? `~${m}m ${s}s left` : `~${m}m left`;
+  if (m < 60) return s ? tr("eta.leftMS", "~{m}m {s}s left", { m, s }) : tr("eta.leftM", "~{m}m left", { m });
   const h = Math.floor(m / 60);
   const rm = m % 60;
-  return rm ? `~${h}h ${rm}m left` : `~${h}h left`;
+  return rm ? tr("eta.leftHM", "~{h}h {m}m left", { h, m: rm }) : tr("eta.leftH", "~{h}h left", { h });
 }
 
 /** Case / whitespace-insensitive key of a names list (order matters: it is the chart order). */

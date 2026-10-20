@@ -76,7 +76,7 @@ import {
   etaLearnLiveMs,
   freshEtaText,
   expectedNameMs,
-} from "./analyze-run.mjs?v=20261020-i18n2";
+} from "./analyze-run.mjs?v=20261020-i18n3";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
