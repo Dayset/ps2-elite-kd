@@ -11,6 +11,11 @@
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <link rel="manifest" href="site.webmanifest" />
+  <meta name="theme-color" content="#202020" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  <meta name="apple-mobile-web-app-title" content="PS2EliteKD" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="PS2 Elite K/D" />
   <meta property="og:title" content="PS2 Elite K/D — PlanetSide 2 player stats &amp; K/D comparison" />
@@ -61,22 +66,73 @@
       });
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261019-gaps40" />
+  <link rel="stylesheet" href="styles.css?v=20261019-gaps40pwa" />
+  <!-- Installed-app launch (t450u): static splash, no animation. The logo box is a
+       fixed 192×192 px (the 512×512 file's own shape), so it never pops or rescales.
+       Only in the installed app; a normal browser tab never sees or downloads it. -->
+  <style>
+    /* Fixed px only (no vw/vh/%/flex centring): if the viewport height changes at
+       launch (address/loading bar), the logo keeps its exact size and spot.
+       100lvh = the large viewport, which does not change with bar show/hide. */
+    .splash { display: none; }
+    html.pwa-launch, html.pwa-launch body { background: #202020 !important; }
+    html.pwa-launch .splash {
+      display: block; position: fixed; top: 0; left: 0; right: 0;
+      height: 100vh; height: 100lvh; z-index: 9999; background: #202020;
+      animation: none !important; transition: none !important;
+    }
+    .splash-logo {
+      display: block; position: absolute; left: 50%; top: 50vh; top: 50lvh;
+      width: 192px; height: 192px; margin: -96px 0 0 -96px;
+      animation: none !important; transition: none !important; opacity: 1;
+    }
+  </style>
+  <script>
+    (function () {
+      try {
+        var app = (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true;
+        if (!app) return;
+        // Launch only: not again on in-app page changes (sessionStorage lives for one app run).
+        try { if (sessionStorage.getItem("ps2-launched")) return; sessionStorage.setItem("ps2-launched", "1"); } catch (e) {}
+        document.documentElement.classList.add("pwa-launch");
+        var l = document.createElement("link");
+        l.rel = "preload"; l.as = "image"; l.href = "favicon-512x512.png";
+        document.head.appendChild(l);
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body class="main-page">
-  <div id="splash" class="splash" aria-hidden="true" hidden>
-    <img class="splash-logo" src="favicon-512x512.png" alt="" />
+  <div id="splash" class="splash" aria-hidden="true">
+    <img class="splash-logo" data-src="favicon-512x512.png" width="512" height="512" alt="" decoding="sync" />
   </div>
   <script>
-    // Installed-app launch splash: the logo fades in, holds 2.5 s, then cuts
-    // to the app. Only when launched as an installed app (standalone), never
-    // in a regular browser tab.
+    // Splash closes the moment the first screen is ready (page parsed + the
+    // name list and ranks the first screen draws), then cuts straight to the
+    // app — no fade, no fixed hold. Never longer than 4 s.
     (function () {
-      var app = (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone;
-      if (!app) return;
-      var sp = document.getElementById("splash");
-      sp.hidden = false;
-      setTimeout(function () { sp.hidden = true; }, 2500);
+      var root = document.documentElement;
+      if (!root.classList.contains("pwa-launch")) return;
+      // Image only in the installed app (already preloaded in <head>), so a browser tab never downloads it.
+      var img = document.querySelector("#splash .splash-logo");
+      if (img) {
+        img.src = img.getAttribute("data-src");
+        // Freeze the spot in px once: a later viewport-height change (bars
+        // showing/hiding at launch) can't move or rescale the logo.
+        if (window.innerHeight > 0 && window.innerWidth > 0) {
+          img.style.top = Math.round(window.innerHeight / 2) + "px";
+          img.style.left = Math.round(window.innerWidth / 2) + "px";
+        }
+      }
+      var done = false;
+      function close() {
+        if (done) return; done = true;
+        requestAnimationFrame(function () { requestAnimationFrame(function () { root.classList.remove("pwa-launch"); }); });
+      }
+      setTimeout(close, 4000);
+      var early = window.__ps2Early || {};
+      var parsed = new Promise(function (r) { document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", r, { once: true }) : r(); });
+      Promise.all([parsed, early.names, early.ranksLite]).then(close, close);
     })();
   </script>
   <div class="controls">
