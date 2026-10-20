@@ -66,7 +66,7 @@
       });
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261019-gaps40pwa" />
+  <link rel="stylesheet" href="styles.css?v=20261019-graph564" />
   <!-- Installed-app launch (t450u): static splash, no animation. The logo box is a
        fixed 192×192 px (the 512×512 file's own shape), so it never pops or rescales.
        Only in the installed app; a normal browser tab never sees or downloads it. -->
@@ -107,65 +107,32 @@
     <img class="splash-logo" data-src="favicon-512x512.png" width="512" height="512" alt="" decoding="sync" />
   </div>
   <script>
-    // Installed-app splash (t450u, t452u): the logo is shown still, held at
-    // least 1 s and until the first screen is ready (page parsed +
-    // the name list and ranks it draws), then the
-    // whole overlay fades out over 1 s and is removed. The fade is driven from
-    // JS (Web Animations) and deliberately ignores prefers-reduced-motion /
-    // battery saver, at the owner's request; it is the only motion. No fade-in,
-    // no movement, no resize. If the first screen is never ready, the fade
-    // starts after 4 s anyway.
+    // Splash closes the moment the first screen is ready (page parsed + the
+    // name list and ranks the first screen draws), then cuts straight to the
+    // app — no fade, no fixed hold. Never longer than 4 s.
     (function () {
       var root = document.documentElement;
       if (!root.classList.contains("pwa-launch")) return;
-      var sp = document.getElementById("splash");
       // Image only in the installed app (already preloaded in <head>), so a browser tab never downloads it.
-      var img = sp && sp.querySelector(".splash-logo");
-      if (!sp || !img) { root.classList.remove("pwa-launch"); return; }
-      img.src = img.getAttribute("data-src");
-      // Spot, frozen in px once (a later viewport change can't move it). Android
-      // Chrome hands its own splash over centred on the WHOLE screen, i.e. above
-      // the page's centre by half of (status bar − navigation bar) (Chromium
-      // bug fixed in c2312525). Sit there too, so there's no second jump.
-      // Split of the bars: gesture navigation bar ≈ NAV px, the rest is the
-      // status bar. Android only; clamped to 0–40 px so a wrong guess stays small.
-      var NAV = 24;
-      var w = window.innerWidth, h = window.innerHeight;
-      if (w > 0 && h > 0) {
-        var up = 0;
-        if (/Android/i.test(navigator.userAgent) && window.screen && screen.height > h) {
-          var bars = screen.height - h;            // status bar + navigation bar
-          up = Math.max(0, Math.min(40, (bars - 2 * NAV) / 2));
-        }
-        img.style.top = Math.round(h / 2 - up) + "px";
-        img.style.left = Math.round(w / 2) + "px";
-      }
-      // The 1 s hold counts from the first frame the logo is actually on screen.
-      var shownAt = Date.now(), fading = false;
-      requestAnimationFrame(function () { shownAt = Date.now(); });
-      function finish() { root.classList.remove("pwa-launch"); sp.style.opacity = ""; sp.style.pointerEvents = ""; }
-      function fade() {
-        if (fading) return; fading = true;
-        sp.style.pointerEvents = "none"; // page is usable while it fades
-        if (sp.animate) {
-          var a = sp.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 1000, easing: "linear", fill: "forwards" });
-          a.onfinish = finish;
-          setTimeout(finish, 1500); // in case onfinish never fires
-        } else {
-          var t0 = 0;
-          (function step(t) {
-            if (!t0) t0 = t;
-            var k = Math.min(1, (t - t0) / 1000);
-            sp.style.opacity = String(1 - k);
-            if (k < 1) requestAnimationFrame(step); else finish();
-          })(0);
+      var img = document.querySelector("#splash .splash-logo");
+      if (img) {
+        img.src = img.getAttribute("data-src");
+        // Freeze the spot in px once: a later viewport-height change (bars
+        // showing/hiding at launch) can't move or rescale the logo.
+        if (window.innerHeight > 0 && window.innerWidth > 0) {
+          img.style.top = Math.round(window.innerHeight / 2) + "px";
+          img.style.left = Math.round(window.innerWidth / 2) + "px";
         }
       }
-      function ready() { setTimeout(fade, Math.max(0, 1000 - (Date.now() - shownAt))); }
-      setTimeout(fade, 4000);
-      var parsed = new Promise(function (r) { document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", r, { once: true }) : r(); });
+      var done = false;
+      function close() {
+        if (done) return; done = true;
+        requestAnimationFrame(function () { requestAnimationFrame(function () { root.classList.remove("pwa-launch"); }); });
+      }
+      setTimeout(close, 4000);
       var early = window.__ps2Early || {};
-      Promise.all([parsed, early.names, early.ranksLite]).then(ready, ready);
+      var parsed = new Promise(function (r) { document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", r, { once: true }) : r(); });
+      Promise.all([parsed, early.names, early.ranksLite]).then(close, close);
     })();
   </script>
   <div class="controls">
@@ -315,7 +282,7 @@
         <button type="button" id="phAnalyzeBtn" class="chart-placeholder-cta" aria-label="Analyze" title="Analyze (same as the 🔍 Analyze button)">▶️ Press Analyze</button>
       </div>
     </div>
-    <svg id="chart" viewBox="0 0 1000 580" preserveAspectRatio="xMidYMid meet" hidden></svg>
+    <svg id="chart" viewBox="0 0 1000 564" preserveAspectRatio="xMidYMid meet" hidden></svg>
     <div class="chart-mode-row">
     <div id="ghostCaption" class="ghost-caption" hidden
          title="Dashed lines are a prediction from play style (overall K/D, KPM, accuracy, HSR, RF, slope, 🦁 Brave, 🎈 Inflation) fitted on the shared cache and anchored to the player's own fights. Not real fights. Shade ≈ ±1σ.">
@@ -405,7 +372,7 @@
     </section>
   </footer>
 
-  <script type="module" src="app.js?v=20261019-ready2s"></script>
+  <script type="module" src="app.js?v=20261019-graph564"></script>
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").catch(function () {});

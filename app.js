@@ -232,10 +232,10 @@ import {
   /** Slugs confirmed as stat padders on review (data/reviewed.json "padding") → always "*". */
   let confirmedPadders = new Set();
 
-  const VB = { w: 1000, h: 580 };
+  const VB = { w: 1000, h: 564 };
   /** SVG text multiplier for big desktop screens (desk-scale.mjs); 1 on mobile. */
   let chartFs = 1;
-  const M = { t: 20, r: 56, b: 44, l: 56 };
+  const M = { t: 20, r: 56, b: 28, l: 56 };
   const PLOT = {
     x: M.l,
     y: M.t,

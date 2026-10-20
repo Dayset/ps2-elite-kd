@@ -1,4 +1,4 @@
-@import url("site-layout.css?v=20261018-pagew");
+@import url("site-layout.css?v=20261019-graph564");
 :root {
   --bg: #0b0c0e;
   --panel: #14161a;
@@ -2147,19 +2147,19 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
  * grow the root font with the viewport (16px → ~17.5px @1920 → ~21px @2560,
  * so every rem-sized table / control grows with it), keep content to a
  * readable width, and cap the graph at ~62% of the screen height (its width
- * follows the 1000:580 aspect). Mobile / narrow layouts are untouched. */
+ * follows the 1000:564 aspect). Mobile / narrow layouts are untouched. */
 @media (min-width: 1400px) {
   html { font-size: clamp(16px, calc(0.6vw + 6px), 22px); }
   body { max-width: 100rem; margin-inline: auto; }
   .chart-wrap {
-    /* svg height = width × 0.58 ≤ 62vh; + horizontal padding/border */
-    max-width: calc(62vh * 1000 / 580 + 0.5rem + 2px);
+    /* svg height = width × 0.564 ≤ 62vh; + horizontal padding/border */
+    max-width: calc(62vh * 1000 / 564 + 0.5rem + 2px);
     margin-inline: auto;
   }
 }
 /* t313u: main page — one shared desktop content width for header / controls,
  * stats table, graph and footer, all aligned. The graph fills it, so
- * the width is set by the graph's height cap: svg height = width × 0.58 ≤ 68vh
+ * the width is set by the graph's height cap: svg height = width × 0.564 ≤ 68vh
  * (2560×1440 → ~1700px wide graph, 1920×1080 → ~1280px), in between the old
  * graph (62vh) and the old 100rem header. Other pages keep the 100rem rule. */
 @media (min-width: 1400px) {
@@ -2786,7 +2786,7 @@ body.main-page header { margin-bottom: 0.3rem; }
 body.main-page .controls { margin-bottom: 0.4rem; }
 body.main-page #status { margin-bottom: 0.2rem; }
 body.main-page .stats-carousel { margin: 0.14rem 0 0.34rem; }
-body.main-page .rankings { margin: 0.5rem 0 0.2rem; }
+body.main-page .rankings { margin: 0.25rem 0 0.2rem; }
 body.main-page .dist-section { margin-bottom: 0.34rem; }
 body.main-page footer .footer-data { margin: 0.4rem 0 0.3rem; }
 body.main-page footer .footer-block { margin-top: 0.3rem; }

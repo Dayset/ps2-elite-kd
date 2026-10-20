@@ -19,7 +19,7 @@ describe("main page desktop width (t313u)", () => {
     assert.match(read("index.html"), /<body class="main-page">/);
     // #29: the width is the shared --page-w token (site-layout.css), same math as before.
     assert.match(css, /^@import url\("site-layout\.css/);
-    assert.match(read("site-layout.css"), /--page-w: calc\(68vh \* 1000 \/ 580 \+ 0\.5 \* var\(--site-root\) \+ 2px \+ 2 \* var\(--page-gutter\)\);/);
+    assert.match(read("site-layout.css"), /--page-w: calc\(68vh \* 1000 \/ 564 \+ 0\.5 \* var\(--site-root\) \+ 2px \+ 2 \* var\(--page-gutter\)\);/);
     assert.match(css, /body\.main-page, body\.site-page \{\s*--desk-w: calc\(var\(--page-w\) - 2 \* var\(--page-gutter\)\);\s*max-width: var\(--page-w\);/);
     assert.match(css, /body\.main-page \.chart-wrap \{ max-width: none; \}/);
     const i = css.indexOf("body.main-page, body.site-page {");

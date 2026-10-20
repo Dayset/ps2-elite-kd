@@ -1,5 +1,5 @@
 /* Shared page width for every page (#29). The main page's width (t313u) as one token:
- * the graph's height cap gives the content width: svg height = width × 0.58 ≤ 68vh.
+ * the graph's height cap gives the content width: svg height = width × 0.564 ≤ 68vh.
  * Written without rem (the oracle has its own root font size), using the same root-font
  * clamp styles.css applies from 1400px, so the main page computes exactly what it did. */
 :root {
@@ -13,6 +13,6 @@
     --site-root: clamp(16px, calc(0.6vw + 6px), 22px);
     --page-gutter: calc(1.25 * var(--site-root));
     /* content (graph) width + both gutters, border-box */
-    --page-w: calc(68vh * 1000 / 580 + 0.5 * var(--site-root) + 2px + 2 * var(--page-gutter));
+    --page-w: calc(68vh * 1000 / 564 + 0.5 * var(--site-root) + 2px + 2 * var(--page-gutter));
   }
 }
