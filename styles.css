@@ -2318,6 +2318,14 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
    * count, the inner width changes and fixed-layout columns still shift. */
   scrollbar-gutter: stable;
 }
+/* Dayset 2026-10-20: on touch devices the Rankings wrap's scrollbars are
+ * never drawn (same complaint as the stats/Positions tables — the bar sits
+ * there at rest). Scoped to coarse pointers: desktop keeps its vertical
+ * scrollbar and the stable gutter above; touch scrolling is unaffected. */
+@media (pointer: coarse) {
+  .ranks-table-wrap { scrollbar-width: none; }
+  .ranks-table-wrap::-webkit-scrollbar { display: none; }
+}
 .ranks-table {
   width: 100%;
   border-collapse: separate; border-spacing: 0;
