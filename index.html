@@ -66,7 +66,7 @@
       });
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261020-disthint" />
+  <link rel="stylesheet" href="styles.css?v=20261020-i18n1" />
   <style>
     /* Installed-app launch splash (t450u–t456u). The whole transparent logo
        (favicon-512x512.png, 512×512 file) drawn at a fixed 188×188 px, medal ≈ 181 px
@@ -165,7 +165,7 @@
     <div class="cache-row">
       <div id="cacheChips" class="cache-chips" aria-label="Cached character names"></div>
     </div>
-    <div id="namesBox" class="names-box" role="group" aria-label="Player names">
+    <div id="namesBox" class="names-box" role="group" data-i18n-aria-label="names.label" aria-label="Player names">
       <div class="names-box-main">
         <div id="nameTokens" class="name-tokens"></div>
         <script>
@@ -193,31 +193,40 @@
             } catch (e) {}
           })();
         </script>
-        <input id="namesInput" type="text" placeholder="ShloDog" aria-label="Player names" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="go" />
+        <input id="namesInput" data-i18n-aria-label="names.label" type="text" placeholder="ShloDog" aria-label="Player names" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="go" />
       </div>
-      <button id="clearNamesBtn" type="button" class="clear-names" title="Clear names from input" aria-label="Clear names from input">×</button>
+      <button id="clearNamesBtn" type="button" data-i18n-title="names.clear" data-i18n-aria-label="names.clear" class="clear-names" title="Clear names from input" aria-label="Clear names from input">×</button>
     </div>
-    <button id="analyzeBtn" type="button">🔍 Analyze</button>
-    <button id="copyLinkBtn" type="button" title="Copy link" aria-label="Copy link">🔗</button>
-    <div class="dice-group" role="group" aria-label="Random players">
-      <button id="diceLowBtn" type="button" title="Random player with less ⚔️ iVi (−25% of the list)" aria-label="Random player with less iVi">&lt;</button>
-      <button id="diceBtn" type="button" title="Random player in range of the list" aria-label="Random player in range">🎲</button>
-      <button id="diceHighBtn" type="button" title="Random player with more ⚔️ iVi (+25% of the list)" aria-label="Random player with more iVi">&gt;</button>
+    <button id="analyzeBtn" type="button" data-i18n="analyze">🔍 Analyze</button>
+    <button id="copyLinkBtn" type="button" data-i18n-title="copyLink" data-i18n-aria-label="copyLink" title="Copy link" aria-label="Copy link">🔗</button>
+    <div class="dice-group" role="group" data-i18n-aria-label="dice.group" aria-label="Random players">
+      <button id="diceLowBtn" type="button" data-i18n-title="dice.low.title" data-i18n-aria-label="dice.low.label" title="Random player with less ⚔️ iVi (−25% of the list)" aria-label="Random player with less iVi">&lt;</button>
+      <button id="diceBtn" type="button" data-i18n-title="dice.any.title" data-i18n-aria-label="dice.any.label" title="Random player in range of the list" aria-label="Random player in range">🎲</button>
+      <button id="diceHighBtn" type="button" data-i18n-title="dice.high.title" data-i18n-aria-label="dice.high.label" title="Random player with more ⚔️ iVi (+25% of the list)" aria-label="Random player with more iVi">&gt;</button>
     </div>
     <button id="liveBtn" type="button" class="live-btn" aria-pressed="false" title="🎥 Live: follow the first name's kills and deaths as they happen" aria-label="Live kill and death feed">🎥</button>
-    <div id="namesLimitNote" class="names-limit-note" hidden aria-live="polite">Name field locked: the comparison shows up to 6 players at once. Remove a name to add another.</div>
+    <div id="namesLimitNote" class="names-limit-note" data-i18n="names.limit" hidden aria-live="polite">Name field locked: the comparison shows up to 6 players at once. Remove a name to add another.</div>
 
     <div class="fresh-row">
       <span class="fresh-left">
-        <label class="fresh-label fresh-btn" for="fetchFresh" title="Fetch fresh data — ignore the cache when you Analyze">
+        <label class="fresh-label fresh-btn" for="fetchFresh" data-i18n-title="fresh.title" title="Fetch fresh data — ignore the cache when you Analyze">
           <input id="fetchFresh" type="checkbox" autocomplete="off" />
           <span class="fresh-btn-ico" aria-hidden="true">🆕</span>
         </label>
         <span id="freshEta" class="fresh-eta" aria-live="polite" hidden></span>
       </span>
-      <a href="columns.html" class="fresh-cols-link">📖 What the columns mean</a>
+      <a href="columns.html" class="fresh-cols-link" data-i18n="columnsLink">📖 What the columns mean</a>
       <!-- t375u: 🗑️ / theme moved here from the top row, small icon buttons on the right. -->
       <span class="fresh-row-end">
+        <select id="langSelect" class="lang-select" title="Language" aria-label="Language" data-i18n-title="lang.label" data-i18n-aria-label="lang.label">
+          <option value="en" selected>English</option>
+          <option value="ja">日本語</option>
+          <option value="ru">Русский</option>
+          <option value="de">Deutsch</option>
+          <option value="fr">Français</option>
+          <option value="zh">中文</option>
+          <option value="es">Español</option>
+        </select>
         <button id="wipeLocalBtn" type="button" class="mini-btn wipe-local" title="Clear all local app data (cache, theme, flags)" aria-label="Clear all local app data">🗑️</button>
         <button id="bgToggleBtn" type="button" class="mini-btn bg-toggle" title="Background image on — click to hide" aria-label="Background image on — click to hide">🖼️</button>
         <button id="sfxToggle" type="button" class="mini-btn sfx-toggle" title="Sounds on — click to mute" aria-label="Sounds on — click to mute">🔊</button>
@@ -231,11 +240,11 @@
   <div id="progress" class="progress-modal" hidden aria-hidden="true">
     <div class="progress-modal-backdrop" aria-hidden="true"></div>
     <div class="progress-modal-card" role="dialog" aria-modal="true" aria-labelledby="progressTitle" aria-describedby="progressText">
-      <button id="progressCancel" type="button" class="progress-cancel" aria-label="Cancel fetch" title="Cancel fetch (Esc)">✕</button>
+      <button id="progressCancel" type="button" data-i18n-title="progress.cancelTitle" data-i18n-aria-label="progress.cancel" class="progress-cancel" aria-label="Cancel fetch" title="Cancel fetch (Esc)">✕</button>
       <div class="progress-modal-spinner" aria-hidden="true">
         <span class="spinner spinner-lg"></span>
       </div>
-      <h2 id="progressTitle" class="progress-title">Analyzing…</h2>
+      <h2 id="progressTitle" class="progress-title" data-i18n="progress.title">Analyzing…</h2>
       <p id="progressText" class="progress-text"></p>
       <div class="progress-bar-track" aria-hidden="true">
         <div id="progressBar" class="progress-bar-fill" style="width: 0%"></div>
@@ -248,16 +257,16 @@
   </div>
 
   <!-- One spot, two modes (2026-10-19): ✨ Stats ⇄ 🏅 Positions, swipe / tabs (stats-carousel.mjs). -->
-  <section id="statsCarousel" class="stats-carousel" aria-label="Your players: stats and positions">
-    <div class="sc-bar" role="tablist" aria-label="Table mode">
-      <button type="button" role="tab" class="sc-tab on" id="scTabStats" data-sc="0" aria-selected="true" aria-controls="scSlideStats" title="Adjusted stats of your players">✨ Stats</button>
-      <span class="sc-dots" aria-hidden="true" title="Swipe sideways to switch"><span class="sc-dot on"></span><span class="sc-dot"></span></span>
-      <button type="button" role="tab" class="sc-tab" id="scTabPos" data-sc="1" aria-selected="false" aria-controls="scSlidePos" title="Where your players rank among every cached player">🏅 Positions</button>
+  <section id="statsCarousel" class="stats-carousel" data-i18n-aria-label="sc.label" aria-label="Your players: stats and positions">
+    <div class="sc-bar" role="tablist" data-i18n-aria-label="sc.tabs" aria-label="Table mode">
+      <button type="button" role="tab" class="sc-tab on" id="scTabStats" data-i18n="sc.stats" data-i18n-title="sc.statsTitle" data-sc="0" aria-selected="true" aria-controls="scSlideStats" title="Adjusted stats of your players">✨ Stats</button>
+      <span class="sc-dots" aria-hidden="true" data-i18n-title="sc.swipe" title="Swipe sideways to switch"><span class="sc-dot on"></span><span class="sc-dot"></span></span>
+      <button type="button" role="tab" class="sc-tab" id="scTabPos" data-i18n="sc.positions" data-i18n-title="sc.positionsTitle" data-sc="1" aria-selected="false" aria-controls="scSlidePos" title="Where your players rank among every cached player">🏅 Positions</button>
     </div>
     <div class="sc-viewport">
       <div class="sc-track">
         <div class="sc-slide" id="scSlideStats" role="tabpanel" aria-labelledby="scTabStats"><div id="statsPanel" class="stats-panel" aria-label="Player stats comparison"></div></div>
-        <div class="sc-slide" id="scSlidePos" role="tabpanel" aria-labelledby="scTabPos"><div id="rkPositions" class="rk-positions" aria-live="polite"><p class="rk-pos-hint">Loading positions…</p></div></div>
+        <div class="sc-slide" id="scSlidePos" role="tabpanel" aria-labelledby="scTabPos"><div id="rkPositions" class="rk-positions" aria-live="polite"><p class="rk-pos-hint" data-i18n="sc.loadingPositions">Loading positions…</p></div></div>
       </div>
     </div>
   </section>
@@ -287,21 +296,21 @@
         <button type="button" class="chart-mode-btn" data-mode="banded" aria-pressed="false"
                 title="Smooth: banded K/D.">🎚️</button>
       </div>
-      <div id="chartYZoom" class="chart-y-zoom" hidden title="Zoom into the start of the graph (enemy KPM near 0): X shrinks from the right, Y re-fits to the left side. Bottom = Auto (full graph).">
+      <div id="chartYZoom" class="chart-y-zoom" hidden data-i18n-title="chart.zoomTitle" title="Zoom into the start of the graph (enemy KPM near 0): X shrinks from the right, Y re-fits to the left side. Bottom = Auto (full graph).">
         <input id="yZoomSlider" type="range" min="0" max="2" step="0.05" value="0"
                orient="vertical"
                aria-label="Zoom (bottom = auto fit, up = zoom into enemy KPM near 0)"
                aria-orientation="vertical" />
-        <button type="button" id="yZoomReset" class="chart-y-zoom-reset" title="Reset zoom to auto-fit (full graph)">Auto</button>
+        <button type="button" id="yZoomReset" class="chart-y-zoom-reset" data-i18n="chart.zoomAuto" data-i18n-title="chart.zoomAutoTitle" title="Reset zoom to auto-fit (full graph)">Auto</button>
       </div>
     </div>
-    <div id="chartPlaceholder" class="chart-placeholder" aria-hidden="false" title="Click to analyze">
+    <div id="chartPlaceholder" class="chart-placeholder" data-i18n-title="chart.clickToAnalyze" aria-hidden="false" title="Click to analyze">
       <img class="ph-img ph-dark" src="assets/placeholder-graph.webp" alt=""
            onerror="this.onerror=null;this.src='assets/placeholder-graph.png'" />
       <img class="ph-img ph-light" src="assets/placeholder-graph-light.webp" alt=""
            onerror="this.onerror=null;this.src='assets/placeholder-graph-light.png'" />
       <div class="chart-placeholder-overlay">
-        <button type="button" id="phAnalyzeBtn" class="chart-placeholder-cta" aria-label="Analyze" title="Analyze (same as the 🔍 Analyze button)">▶️ Press Analyze</button>
+        <button type="button" id="phAnalyzeBtn" class="chart-placeholder-cta" data-i18n="cta.press" data-i18n-aria-label="cta.label" data-i18n-title="cta.title" aria-label="Analyze" title="Analyze (same as the 🔍 Analyze button)">▶️ Press Analyze</button>
       </div>
     </div>
     <svg id="chart" viewBox="0 0 1000 564" preserveAspectRatio="xMidYMid meet" hidden></svg>
@@ -323,10 +332,10 @@
          clicking a pill opens the graph on that metric right away.
          The <select> stays (hidden) as the value holder the code reads. -->
     <div class="dist-wrap">
-      <div id="distPills" class="dist-pills" role="radiogroup" aria-label="Distribution metric"></div>
+      <div id="distPills" class="dist-pills" role="radiogroup" data-i18n-aria-label="ranks.distributionMetric" aria-label="Distribution metric"></div>
     <details id="distSection" class="dist-section" open>
-      <summary title="Distribution">📊</summary>
-      <select id="distMetric" aria-label="Distribution metric" hidden></select>
+      <summary title="Distribution" data-i18n-title="ranks.distribution">📊</summary>
+      <select id="distMetric" aria-label="Distribution metric" data-i18n-aria-label="ranks.distributionMetric" hidden></select>
       <div class="dist-chart" id="distChart">
         <svg id="distSvg" role="img" aria-label="Distribution of the selected metric across cached players"></svg>
         <div id="distTip" class="dist-tip" hidden></div>
@@ -335,9 +344,9 @@
     </div>
     <!-- t357u/t358u: the big table folds away like the chart, folded by default (state remembered). -->
     <details id="ranksTableSection" class="dist-section rk-table-section">
-      <summary>📋 All players <span id="ranksTableCount" class="rk-table-count"></span></summary>
+      <summary><span data-i18n="ranks.allPlayers">📋 All players</span> <span id="ranksTableCount" class="rk-table-count"></span></summary>
     <div class="rk-filter-row">
-      <input id="ranksSearch" type="search" placeholder="Filter the table by name…" aria-label="Filter the Rankings table by player name" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="search" />
+      <input id="ranksSearch" type="search" data-i18n-placeholder="ranks.filter" data-i18n-aria-label="ranks.filterLabel" placeholder="Filter the table by name…" aria-label="Filter the Rankings table by player name" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="search" />
     </div>
     <div class="ranks-table-wrap" id="ranksScroll" style="content-visibility: auto; contain-intrinsic-size: auto 800px;">
       <table class="ranks-table" id="ranksTable" aria-label="Rankings">
@@ -365,37 +374,38 @@
           <p class="footer-thanks">Data from the Daybreak Census API · thanks to <a href="https://wt.honu.pw/" target="_blank" rel="noopener noreferrer">HONU</a> / Varunda</p>
         </div>
         <nav class="foot-col foot-links" aria-label="More pages">
-          <div class="foot-h">Learn more</div>
+          <div class="foot-h" data-i18n="foot.learn">Learn more</div>
           <div class="foot-update-row">
-            <a href="updates.html">📝 Update log</a>
+            <a href="updates.html" data-i18n="foot.updateLog">📝 Update log</a>
             <span id="pageCommitCount" class="commit-count" hidden></span>
           </div>
           <a href="https://github.com/Dayset/ps2-elite-kd" target="_blank" rel="noopener noreferrer">💻 Dayset</a>
         </nav>
         <div class="foot-col foot-opts footer-row">
-          <div class="foot-h">Options</div>
-          <label class="debug-cols-toggle foot-switch" title="Append the older debug columns (🎯🎈 ivi, eKPM, own KPM, 📊 COI, 📉 Slope, 🎈 Inflation) to the ✨ Adjusted and Rankings tables">
-            <input type="checkbox" id="debugColsToggle" /> <span>show older debug stats</span>
+          <div class="foot-h" data-i18n="foot.options">Options</div>
+          <label class="debug-cols-toggle foot-switch" data-i18n-title="foot.debugColsTitle" title="Append the older debug columns (🎯🎈 ivi, eKPM, own KPM, 📊 COI, 📉 Slope, 🎈 Inflation) to the ✨ Adjusted and Rankings tables">
+            <input type="checkbox" id="debugColsToggle" /> <span data-i18n="foot.debugCols">show older debug stats</span>
           </label>
-          <label class="hide-zero-ivi-toggle foot-switch" title="Hide players with adjusted iVi ≤ 0 from the Rankings table browse; a name search still finds them">
-            <input type="checkbox" id="hideZeroIviToggle" /> <span>hide players with adjusted iVi ≤ 0</span>
+          <label class="hide-zero-ivi-toggle foot-switch" data-i18n-title="foot.hideZeroTitle" title="Hide players with adjusted iVi ≤ 0 from the Rankings table browse; a name search still finds them">
+            <input type="checkbox" id="hideZeroIviToggle" /> <span data-i18n="foot.hideZero">hide players with adjusted iVi ≤ 0</span>
           </label>
         </div>
       </div>
       <div class="foot-bottom">
         <details class="disclaimer">
-        <summary>Disclaimer</summary>
+        <summary data-i18n="foot.disclaimer">Disclaimer</summary>
         <p>All numbers, ratings, charts and flags on this site are automated estimates from public data (the Daybreak Census API and Honu). They can be wrong, incomplete or out of date, and they are not facts, proof or accusations about any player. Don't take them seriously, and don't use them to harass anyone.</p>
         <p>This site is free and provided "as is", with no warranty of any kind. To the fullest extent allowed by law, the authors are not liable for any damage or loss from using it, including to your device or data.</p>
         <p>Not affiliated with or endorsed by Daybreak Game Company or Honu. PlanetSide 2 is a trademark of its respective owners.</p>
         <p>Open source under the MIT License. See <a href="https://github.com/Dayset/ps2-elite-kd/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">LICENSE</a>.</p>
       </details>
-        <span class="foot-legal">MIT licensed · not affiliated with Daybreak or Honu</span>
+        <span class="foot-legal" data-i18n="foot.legal">MIT licensed · not affiliated with Daybreak or Honu</span>
       </div>
     </section>
   </footer>
 
-  <script type="module" src="app.js?v=20261020-wide1"></script>
+  <script type="module" src="i18n.mjs"></script>
+  <script type="module" src="app.js?v=20261020-i18n1"></script>
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").catch(function () {});

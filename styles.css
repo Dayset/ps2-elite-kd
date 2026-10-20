@@ -2590,6 +2590,14 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
 .controls .fresh-row-end button.mini-btn:hover,
 .controls .fresh-row-end button.mini-btn:focus-visible { opacity: 1; }
 
+/* Language menu (i18n.mjs, #langSelect): same height as the icon buttons beside it. */
+.controls .fresh-row-end select.lang-select {
+  box-sizing: border-box; height: 1.9rem; max-width: 7.4rem; padding: 0 0.3rem;
+  font: inherit; font-size: 0.78rem; border-radius: 6px; cursor: pointer;
+  border: 1px solid var(--border); background: var(--input-bg); color: var(--text);
+}
+.controls .fresh-row-end select.lang-select:focus-visible { outline: 1px solid var(--accent); }
+
 /* t375u: 📊 Public table under the skill graph. */
 .stats-panel-public:empty { display: none; }
 .stats-panel-public { margin-top: 0.5rem; }

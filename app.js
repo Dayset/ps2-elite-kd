@@ -36,6 +36,9 @@ import {
 } from "./math.mjs?v=20261010-sav1";
 import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261010-sav1";
 import GHOST_MODEL from "./data/ghost-model.mjs?v=20261010-sav1";
+import { t as tr, ready as i18nReady } from "./i18n.mjs";
+// Wait for the chosen language file (English loads nothing), so the first render is translated.
+await i18nReady;
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261020-wide1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
 import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261020-hintcut";
@@ -655,7 +658,7 @@ import {
       progressEtaDeadline = 0;
       progressDisplayPct = 0;
       if (els.progressText) els.progressText.textContent = "";
-      if (els.progressTitle) els.progressTitle.textContent = "Analyzing…";
+      if (els.progressTitle) els.progressTitle.textContent = tr("progress.title", "Analyzing…");
       applyProgressBar(0);
       if (els.progressTiming) els.progressTiming.textContent = "";
       return;
@@ -720,8 +723,8 @@ import {
 
     let title = opts.title;
     if (!title) {
-      if (total > 0 && done >= total) title = "Finishing…";
-      else title = "Analyzing…";
+      if (total > 0 && done >= total) title = tr("progress.finishing", "Finishing…");
+      else title = tr("progress.title", "Analyzing…");
     }
 
     els.progress.hidden = false;
@@ -3955,7 +3958,7 @@ import {
     setProgress(false);
     if (!players.length) {
       // No prior graph → back to idle placeholder.
-      showIdleChart("▶️ Press Analyze");
+      showIdleChart(tr("cta.press", "▶️ Press Analyze"));
     }
     setStatus('<span class="warn">Fetch cancelled.</span>', "warn cancelled");
   }
@@ -3979,7 +3982,7 @@ import {
       ? els.chartPlaceholder.querySelector(".chart-placeholder-cta")
       : null;
     if (cta && show) {
-      cta.textContent = "▶️ Press Analyze";
+      cta.textContent = tr("cta.press", "▶️ Press Analyze");
     }
   }
 
@@ -3996,11 +3999,11 @@ import {
     const cta = els.chartPlaceholder
       ? els.chartPlaceholder.querySelector(".chart-placeholder-cta")
       : null;
-    if (cta) cta.textContent = message || "▶️ Press Analyze";
+    if (cta) cta.textContent = message || tr("cta.press", "▶️ Press Analyze");
   }
 
   function clearChartUi() {
-    showIdleChart("▶️ Press Analyze");
+    showIdleChart(tr("cta.press", "▶️ Press Analyze"));
     // Drop any bottom padding scrollToResults() added for short result pages.
     if (typeof document !== "undefined" && document.body) document.body.style.paddingBottom = "";
   }
@@ -4069,7 +4072,7 @@ import {
     setFetching(true);
     if (!quiet) {
       setProgress(true, {
-        title: "Analyzing…",
+        title: tr("progress.title", "Analyzing…"),
         done: 0,
         total: clean.length,
       });
@@ -4116,13 +4119,13 @@ import {
           isCancelled: cancelled,
           onStart: (name, idx, total) => {
             if (quiet) return;
-            setProgress(true, { title: "Analyzing…", done: idx, total, name, plan: etaPlan });
+            setProgress(true, { title: tr("progress.title", "Analyzing…"), done: idx, total, name, plan: etaPlan });
           },
           // Success or failure, the name counts as done so the bar/ETA advance.
           onDone: (name, idx, total) => {
             if (cancelled() || quiet) return;
             setProgress(true, {
-              title: idx + 1 >= total ? "Finishing…" : "Analyzing…",
+              title: idx + 1 >= total ? tr("progress.finishing", "Finishing…") : tr("progress.title", "Analyzing…"),
               done: idx + 1,
               total,
               name,
@@ -4776,7 +4779,7 @@ import {
       try {
         await analyzeNames(names, { quiet: true });
       } finally {
-        if (cta && !players.length) cta.textContent = "▶️ Press Analyze";
+        if (cta && !players.length) cta.textContent = tr("cta.press", "▶️ Press Analyze");
       }
       restoreScrollAfterReload();
       return;
@@ -5346,7 +5349,7 @@ import {
     if (!typedEarly && startup.reason !== "url" && nameTokens.length && namesSetKey(nameTokens) !== namesSetKey(startup.names)) startup.names = nameTokens.slice();
     renderNameTokens();
     renderCacheChips();
-    if (!players.length) showIdleChart("▶️ Press Analyze");
+    if (!players.length) showIdleChart(tr("cta.press", "▶️ Press Analyze"));
     reserveStatsSpace();
     scheduleRankingsLoad(); // t356u: Rankings below load lazily
     // No idle "Ready — press Analyze" line; the status area only shows progress / errors
