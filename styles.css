@@ -1732,7 +1732,13 @@ html[data-theme="light"] .chart-placeholder-overlay {
 .stats-table-wrap {
   overflow-x: auto;
   margin-top: 0.45rem;
+  /* Dayset 2026-10-20: no visible horizontal scrollbar — Android paints the
+   * wrap's bar at rest and only fades it after a nudge. Sideways touch
+   * scrolling still works; the bar is simply never drawn (same treatment
+   * as .sc-viewport). */
+  scrollbar-width: none;
 }
+.stats-table-wrap::-webkit-scrollbar { display: none; }
 
 .stats-table {
   width: max-content;
@@ -2276,7 +2282,8 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
 /* 🏅 where the selected players rank (rank # + percentile per metric) */
 .rk-positions { margin: 0 0 0.85rem; }
 .rk-pos-hint { color: var(--dim); font-size: 0.85rem; margin: 0.2rem 0 0.4rem; }
-.rk-pos-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); -webkit-overflow-scrolling: touch; }
+.rk-pos-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.rk-pos-wrap::-webkit-scrollbar { display: none; }
 .rk-pos-table { border-collapse: separate; border-spacing: 0; width: max-content; min-width: 100%; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
 .rk-pos-table th, .rk-pos-table td { padding: 0.35rem 0.4rem; border-bottom: 1px solid var(--row-border); white-space: nowrap; text-align: right; background: var(--panel); }
 .rk-pos-table tbody tr:last-child th, .rk-pos-table tbody tr:last-child td { border-bottom: none; }
