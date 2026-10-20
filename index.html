@@ -67,13 +67,15 @@
     } catch (e) {}
   </script>
   <link rel="stylesheet" href="styles.css?v=20261019-graph564" />
-  <!-- Installed-app launch (t450u): static splash, no animation. The logo box is a
-       fixed 192×192 px (the 512×512 file's own shape), so it never pops or rescales.
-       Only in the installed app; a normal browser tab never sees or downloads it. -->
   <style>
-    /* Fixed px only (no vw/vh/%/flex centring): if the viewport height changes at
-       launch (address/loading bar), the logo keeps its exact size and spot.
-       100lvh = the large viewport, which does not change with bar show/hide. */
+    /* Installed-app launch splash (t450u–t453u). Draws the same picture Android
+       12+ draws for this app's launch: the maskable icon (the WebAPK's adaptive
+       launcher icon) as a 288×288 canvas seen through a 192 px circle
+       (AOSP SplashscreenContentDrawer: starting_surface_icon_size 160dp ×
+       splash_icon_no_background_scale_factor 1.2; adaptive canvas = 1.5× the
+       visible mask). Fixed px only, frozen once by the script below, so a
+       viewport change can't move or rescale it. Tunable per phone from
+       the hidden debug page (localStorage "ps2-splash-tune"). */
     .splash { display: none; }
     html.pwa-launch, html.pwa-launch body { background: #202020 !important; }
     html.pwa-launch .splash {
@@ -81,10 +83,16 @@
       height: 100vh; height: 100lvh; z-index: 9999; background: #202020;
       animation: none !important; transition: none !important;
     }
-    .splash-logo {
-      display: block; position: absolute; left: 50%; top: 50vh; top: 50lvh;
+    .splash-mask {
+      position: absolute; left: 50%; top: 50vh; top: 50lvh;
       width: 192px; height: 192px; margin: -96px 0 0 -96px;
-      animation: none !important; transition: none !important; opacity: 1;
+      border-radius: 50%; overflow: hidden;
+      animation: none !important; transition: none !important;
+    }
+    .splash-logo {
+      display: block; position: absolute; left: -48px; top: -48px;
+      width: 288px; height: 288px; max-width: none; opacity: 1;
+      animation: none !important; transition: none !important;
     }
   </style>
   <script>
@@ -96,7 +104,7 @@
         try { if (sessionStorage.getItem("ps2-launched")) return; sessionStorage.setItem("ps2-launched", "1"); } catch (e) {}
         document.documentElement.classList.add("pwa-launch");
         var l = document.createElement("link");
-        l.rel = "preload"; l.as = "image"; l.href = "favicon-512x512.png";
+        l.rel = "preload"; l.as = "image"; l.href = "icon-maskable-512.png";
         document.head.appendChild(l);
       } catch (e) {}
     })();
@@ -104,41 +112,46 @@
 </head>
 <body class="main-page">
   <div id="splash" class="splash" aria-hidden="true">
-    <img class="splash-logo" data-src="favicon-512x512.png" width="512" height="512" alt="" decoding="sync" />
+    <div class="splash-mask"><img class="splash-logo" data-src="icon-maskable-512.png" width="512" height="512" alt="" decoding="sync" /></div>
   </div>
   <script>
-    // Installed-app splash (t450u, t452u): the logo is shown still, held at
-    // least 1 s and until the first screen is ready (page parsed +
-    // the name list and ranks it draws), then the
-    // whole overlay fades out over 1 s and is removed. The fade is driven from
-    // JS (Web Animations) and deliberately ignores prefers-reduced-motion /
-    // battery saver, at the owner's request; it is the only motion. No fade-in,
-    // no movement, no resize. If the first screen is never ready, the fade
-    // starts after 4 s anyway.
+    // Installed-app splash (t450u–t453u): shown still, held at least 1 s and
+    // until the first screen is ready (page parsed + the
+    // name list and ranks it draws), then the whole overlay
+    // fades out over 1 s and is removed. The fade is driven from JS (Web
+    // Animations) and deliberately ignores prefers-reduced-motion / battery
+    // saver, at the owner's request; it is the only motion. No fade-in, no
+    // movement, no resize. Fallback: the fade starts after 4 s anyway.
     (function () {
       var root = document.documentElement;
       if (!root.classList.contains("pwa-launch")) return;
       var sp = document.getElementById("splash");
-      // Image only in the installed app (already preloaded in <head>), so a browser tab never downloads it.
+      var mask = sp && sp.querySelector(".splash-mask");
       var img = sp && sp.querySelector(".splash-logo");
-      if (!sp || !img) { root.classList.remove("pwa-launch"); return; }
+      if (!sp || !mask || !img) { root.classList.remove("pwa-launch"); return; }
+      // Image only in the installed app (already preloaded in <head>).
       img.src = img.getAttribute("data-src");
-      // Spot, frozen in px once (a later viewport change can't move it). Android
-      // Chrome hands its own splash over centred on the WHOLE screen, i.e. above
-      // the page's centre by half of (status bar − navigation bar) (Chromium
-      // bug fixed in c2312525). Sit there too, so there's no second jump.
-      // Split of the bars: gesture navigation bar ≈ NAV px, the rest is the
-      // status bar. Android only; clamped to 0–40 px so a wrong guess stays small.
-      var NAV = 24;
+      // Geometry: canvas 288 px seen through a 192 px circle, centred in the
+      // page; per-phone tweak from the hidden debug page. Frozen in px once.
+      var T = { canvas: 288, mask: 192, dy: 0, circle: 1 };
+      try {
+        var o = JSON.parse(localStorage.getItem("ps2-splash-tune") || "null");
+        if (o) {
+          if (o.canvas >= 96 && o.canvas <= 480) T.canvas = +o.canvas;
+          if (o.mask >= 64 && o.mask <= 480) T.mask = +o.mask;
+          if (o.dy >= -120 && o.dy <= 120) T.dy = +o.dy;
+          if (o.circle === 0 || o.circle === 1) T.circle = o.circle;
+        }
+      } catch (e) {}
       var w = window.innerWidth, h = window.innerHeight;
       if (w > 0 && h > 0) {
-        var up = 0;
-        if (/Android/i.test(navigator.userAgent) && window.screen && screen.height > h) {
-          var bars = screen.height - h;            // status bar + navigation bar
-          up = Math.max(0, Math.min(40, (bars - 2 * NAV) / 2));
-        }
-        img.style.top = Math.round(h / 2 - up) + "px";
-        img.style.left = Math.round(w / 2) + "px";
+        mask.style.width = mask.style.height = T.mask + "px";
+        mask.style.margin = "0";
+        mask.style.left = Math.round(w / 2 - T.mask / 2) + "px";
+        mask.style.top = Math.round(h / 2 + T.dy - T.mask / 2) + "px";
+        mask.style.borderRadius = T.circle ? "50%" : "0";
+        img.style.width = img.style.height = T.canvas + "px";
+        img.style.left = img.style.top = Math.round((T.mask - T.canvas) / 2) + "px";
       }
       // The 1 s hold counts from the first frame the logo is actually on screen.
       var shownAt = Date.now(), fading = false;

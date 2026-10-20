@@ -26,13 +26,15 @@
 </script>
 <link rel="stylesheet" href="../site-layout.css?v=20261019-graph564" />
 <link rel="stylesheet" href="oracle.css?v=20261018-focus1" />
-<!-- Installed-app launch (t450u): static splash, no animation. The logo box is a
-     fixed 192×192 px (the 512×512 file's own shape), so it never pops or rescales.
-     Only in the installed app; a normal browser tab never sees or downloads it. -->
 <style>
-  /* Fixed px only (no vw/vh/%/flex centring): if the viewport height changes at
-     launch (address/loading bar), the logo keeps its exact size and spot.
-     100lvh = the large viewport, which does not change with bar show/hide. */
+  /* Installed-app launch splash (t450u–t453u). Draws the same picture Android
+     12+ draws for this app's launch: the maskable icon (the WebAPK's adaptive
+     launcher icon) as a 288×288 canvas seen through a 192 px circle
+     (AOSP SplashscreenContentDrawer: starting_surface_icon_size 160dp ×
+     splash_icon_no_background_scale_factor 1.2; adaptive canvas = 1.5× the
+     visible mask). Fixed px only, frozen once by the script below, so a
+     viewport change can't move or rescale it. Tunable per phone from
+     the hidden debug page (localStorage "ps2-splash-tune"). */
   .splash { display: none; }
   html.pwa-launch, html.pwa-launch body { background: #202020 !important; }
   html.pwa-launch .splash {
@@ -40,10 +42,16 @@
     height: 100vh; height: 100lvh; z-index: 9999; background: #202020;
     animation: none !important; transition: none !important;
   }
-  .splash-logo {
-    display: block; position: absolute; left: 50%; top: 50vh; top: 50lvh;
+  .splash-mask {
+    position: absolute; left: 50%; top: 50vh; top: 50lvh;
     width: 192px; height: 192px; margin: -96px 0 0 -96px;
-    animation: none !important; transition: none !important; opacity: 1;
+    border-radius: 50%; overflow: hidden;
+    animation: none !important; transition: none !important;
+  }
+  .splash-logo {
+    display: block; position: absolute; left: -48px; top: -48px;
+    width: 288px; height: 288px; max-width: none; opacity: 1;
+    animation: none !important; transition: none !important;
   }
 </style>
 <script>
@@ -55,7 +63,7 @@
       try { if (sessionStorage.getItem("ps2-launched")) return; sessionStorage.setItem("ps2-launched", "1"); } catch (e) {}
       document.documentElement.classList.add("pwa-launch");
       var l = document.createElement("link");
-      l.rel = "preload"; l.as = "image"; l.href = "../favicon-512x512.png";
+      l.rel = "preload"; l.as = "image"; l.href = "../icon-maskable-512.png";
       document.head.appendChild(l);
     } catch (e) {}
   })();
@@ -63,32 +71,72 @@
 </head>
 <body>
   <div id="splash" class="splash" aria-hidden="true">
-    <img class="splash-logo" data-src="../favicon-512x512.png" width="512" height="512" alt="" decoding="sync" />
+    <div class="splash-mask"><img class="splash-logo" data-src="../icon-maskable-512.png" width="512" height="512" alt="" decoding="sync" /></div>
   </div>
   <script>
-    // Splash closes as soon as the page is parsed (the loading skeleton is the
-    // first screen), straight cut, never longer than 3 s.
+    // Installed-app splash (t450u–t453u): shown still, held at least 1 s and
+    // until the page is parsed (its loading skeleton is
+    // the first screen), then the whole overlay
+    // fades out over 1 s and is removed. The fade is driven from JS (Web
+    // Animations) and deliberately ignores prefers-reduced-motion / battery
+    // saver, at the owner's request; it is the only motion. No fade-in, no
+    // movement, no resize. Fallback: the fade starts after 3 s anyway.
     (function () {
       var root = document.documentElement;
       if (!root.classList.contains("pwa-launch")) return;
-      // Image only in the installed app (already preloaded in <head>), so a browser tab never downloads it.
-      var img = document.querySelector("#splash .splash-logo");
-      if (img) {
-        img.src = img.getAttribute("data-src");
-        // Freeze the spot in px once: a later viewport-height change (bars
-        // showing/hiding at launch) can't move or rescale the logo.
-        if (window.innerHeight > 0 && window.innerWidth > 0) {
-          img.style.top = Math.round(window.innerHeight / 2) + "px";
-          img.style.left = Math.round(window.innerWidth / 2) + "px";
+      var sp = document.getElementById("splash");
+      var mask = sp && sp.querySelector(".splash-mask");
+      var img = sp && sp.querySelector(".splash-logo");
+      if (!sp || !mask || !img) { root.classList.remove("pwa-launch"); return; }
+      // Image only in the installed app (already preloaded in <head>).
+      img.src = img.getAttribute("data-src");
+      // Geometry: canvas 288 px seen through a 192 px circle, centred in the
+      // page; per-phone tweak from the hidden debug page. Frozen in px once.
+      var T = { canvas: 288, mask: 192, dy: 0, circle: 1 };
+      try {
+        var o = JSON.parse(localStorage.getItem("ps2-splash-tune") || "null");
+        if (o) {
+          if (o.canvas >= 96 && o.canvas <= 480) T.canvas = +o.canvas;
+          if (o.mask >= 64 && o.mask <= 480) T.mask = +o.mask;
+          if (o.dy >= -120 && o.dy <= 120) T.dy = +o.dy;
+          if (o.circle === 0 || o.circle === 1) T.circle = o.circle;
+        }
+      } catch (e) {}
+      var w = window.innerWidth, h = window.innerHeight;
+      if (w > 0 && h > 0) {
+        mask.style.width = mask.style.height = T.mask + "px";
+        mask.style.margin = "0";
+        mask.style.left = Math.round(w / 2 - T.mask / 2) + "px";
+        mask.style.top = Math.round(h / 2 + T.dy - T.mask / 2) + "px";
+        mask.style.borderRadius = T.circle ? "50%" : "0";
+        img.style.width = img.style.height = T.canvas + "px";
+        img.style.left = img.style.top = Math.round((T.mask - T.canvas) / 2) + "px";
+      }
+      // The 1 s hold counts from the first frame the logo is actually on screen.
+      var shownAt = Date.now(), fading = false;
+      requestAnimationFrame(function () { shownAt = Date.now(); });
+      function finish() { root.classList.remove("pwa-launch"); sp.style.opacity = ""; sp.style.pointerEvents = ""; }
+      function fade() {
+        if (fading) return; fading = true;
+        sp.style.pointerEvents = "none"; // page is usable while it fades
+        if (sp.animate) {
+          var a = sp.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 1000, easing: "linear", fill: "forwards" });
+          a.onfinish = finish;
+          setTimeout(finish, 1500); // in case onfinish never fires
+        } else {
+          var t0 = 0;
+          (function step(t) {
+            if (!t0) t0 = t;
+            var k = Math.min(1, (t - t0) / 1000);
+            sp.style.opacity = String(1 - k);
+            if (k < 1) requestAnimationFrame(step); else finish();
+          })(0);
         }
       }
-      var done = false;
-      function close() {
-        if (done) return; done = true;
-        requestAnimationFrame(function () { requestAnimationFrame(function () { root.classList.remove("pwa-launch"); }); });
-      }
-      setTimeout(close, 3000);
-      if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", close, { once: true }); else close();
+      function ready() { setTimeout(fade, Math.max(0, 1000 - (Date.now() - shownAt))); }
+      setTimeout(fade, 3000);
+      var parsed = new Promise(function (r) { document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", r, { once: true }) : r(); });
+      parsed.then(ready, ready);
     })();
   </script>
 <div class="wrap">
