@@ -2,17 +2,17 @@
 
 Read this first. The long record below is for history; this section is what to do.
 
-## 1. Which rows are clean?
+## 1. Which rows count in headline numbers?
 
 Use `oracle/benchmark/input_status.json` (one entry per settled alert):
 
 | status | meaning | include in headline means? |
 |---|---|---|
-| `clean` | measured healthy (or audit-era clean) | yes |
-| `corrupt` | input ran with a neutral block (see open question) | **no** |
+| `clean` | standard alert, healthy map | yes |
+| `meltdown` | Unstable Meltdown / Oshur alert: locked share scored as diluted shares (issue #47) | **no** (separate pool) |
 | `unclassified` | no start time in the key, cannot measure | no, until checked |
 
-Counts today: 39 clean, 22 corrupt, 3 unclassified (64 settled rows).
+Counts today: 36 clean, 25 meltdown, 3 unclassified (64 settled rows).
 
 ## 2. Examples to follow
 
@@ -25,7 +25,7 @@ status = json.load(open("oracle/benchmark/input_status.json"))["rows"]
 settled = [r for r in rows if r.get("type") == "settled"]
 clean = [r["brier"]["t30"] for r in settled
          if status.get(r["alert"], {}).get("status") == "clean" and r["brier"].get("t30") is not None]
-print(round(sum(clean) / len(clean), 4), len(clean))  # 0.1981 over 39 rows with input_status.json. The fix doc's 0.1987 (40 rows) also counts 3 unclassified rows as clean, which is why it differs.
+print(round(sum(clean) / len(clean), 4), len(clean))  # 0.2073 over 36 standard alerts (issue #47). Meltdowns are a separate pool: 0.2194 over 23.
 ```
 
 Same with `jq`:
@@ -38,24 +38,27 @@ When you add a new settled row, add its status too. Do not edit the benchmark ro
 
 ## 3. Rules
 
-- Never delete or edit a benchmark row to change its status. The `corrupt_input` field is the only in-row marker, and it is kept as is.
+- Never delete or edit a benchmark row to change its status. The `corrupt_input` field is the only in-row marker, and it is kept as is (its name is historical; the rows are Meltdowns).
 - Keep `benchmark_predictions.pre-fix-2026-10-20.jsonl` as the restore source.
 - If you can't measure a row, mark it `unclassified`. Don't guess `clean`.
 - Say which status set you used whenever you quote a benchmark number.
 
-## 4. Open question (read before changing a label)
+## 4. Answered: these are Meltdowns (issue #47)
 
-The 22 corrupt rows are all event ids 176–179, 186–193 and 248–250. Those are the Unstable Meltdown ids and the Oshur ids. A Meltdown locks most of the continent and shows it as neutral on the Census map by design (see `claude/working-setup.md`, Census facts). So the rows may be a **Meltdown lock read as a normal alert** by the retired pipeline, not a broken feed.
+The 22 tagged rows, and three late-settled rows that were first read as clean, are **Unstable Meltdowns** (event ids 176–193, Oshur 248–250). In a Meltdown most of the continent locks to neutral by design, so the retired VM engine divided shares by a diluted total. The feed was not corrupt. Status is `meltdown` in `input_status.json`; `exclude_from_headline` is true. Detail: `oracle/benchmark/README.md`, mismatches 1–4.
 
-Either way, the rows should stay out of the headline numbers. But the words "corrupt Census feed" may be wrong, so check before reusing them.
+Corrected headline pools (t30 Brier): standard alerts 0.2073 (n=36), Meltdowns 0.2194 (n=23). The 0.1981 and 0.1987 figures above mix the pools; do not quote them.
 
 ## 5. Data gap
 
-The measurement behind `input_status.json` used a map-snapshot archive that is **not in this repo**. Only `oracle/backend/data/map_snapshots/1/4/2026-10-18.jsonl` is present. The `clean` labels come from the fix doc, not from a re-run. To re-check, the archive has to be restored first.
+The snapshot archive behind these measurements is **not in this repo** (only `oracle/backend/data/map_snapshots/1/4/2026-10-18.jsonl`). It lives on the VM at `~/workspace/ps2polymarket/data/map_snapshots/`. The `clean` labels for standard alerts come from the fix doc and cannot be re-run here.
 
 ---
 
 # Benchmark fix 2026-10-20 — tagging the corrupt-input rows (full record)
+
+> **Superseded label (issue #47):** the rows below are Unstable Meltdowns, not corrupt data. Read "corrupt" in this record as "Meltdown, excluded from headline means". The tables' continent names were corrected to match the zone table in `oracle/benchmark/README.md`.
+
 
 **What this is:** the full description of the 2026-10-20 fix to
 `oracle/benchmark/benchmark_predictions.jsonl`. Twenty-two settled benchmark
@@ -96,7 +99,7 @@ facilities neutral, territory summing far below 100%). An audit on
 systematic, not one-off: **16 of the 42 classifiable rows had run corrupt —
 all of them short alerts, and no long alert was corrupt** — and the neutral
 set was identical per zone across servers and days
-(the same 54 Hossin region ids on Miller Oct 16 and Connery Oct 14;
+(the same 54 Amerish region ids on Miller Oct 16 and Connery Oct 14;
 31 regions on Esamir). Three of the 45 rows (the oldest: `10-6-244`,
 `10-2-149`, `10-6-157`) carry no start timestamp in their key and could not
 be classified; they are long-alert era rows and are not tagged.
@@ -138,8 +141,8 @@ audit's notes:
    the same 16 rows**, with the same neutral band (45–64%) and the same
    duration band (this measurement: 45.6–51.2 min windows; Oshur rows
    34–35 min). Per-zone neutral counts reproduce the audit's fixed sets
-   exactly: Hossin 54/88, Esamir 31/51, Oshur 34/75, Indar 47/89,
-   Amerish 52/81.
+   exactly: Amerish 54/88, Esamir 31/51, Oshur 34/75, Hossin 47/89,
+   Indar 52/81.
 5. The full file was then classified the same way. Six further rows with
    the identical signature were settled **after** the audit (Oct 16–18,
    including the known 2026-10-17 Oshur corruption, `1-344-248-1792262962`)
@@ -191,33 +194,33 @@ was restored from. The pre-fix file is preserved next to the fixed one:
 
 | Alert key | Server | Continent | Event | Start (UTC) | Duration | Neutral (median) | Winner | Brier t0 | Brier t30 |
 |---|---|---|---|---|---|---|---|---|---|
-| `10-4-191-1791859791` | Miller | Hossin | 191 | Oct 13 | 50 min | 54/88 (61.4%) | NC | 0.1681 | 0.0216 |
-| `1-2-189-1791879285` | Connery | Indar | 189 | Oct 13 | 51 min | 47/89 (52.8%) | TR | 0.3093 | 0.5129 |
-| `10-2-179-1791881992` | Miller | Indar | 179 | Oct 13 | 50 min | 47/89 (52.8%) | TR | 0.3148 | 0.3401 |
+| `10-4-191-1791859791` | Miller | Amerish | 191 | Oct 13 | 50 min | 54/88 (61.4%) | NC | 0.1681 | 0.0216 |
+| `1-2-189-1791879285` | Connery | Hossin | 189 | Oct 13 | 51 min | 47/89 (52.8%) | TR | 0.3093 | 0.5129 |
+| `10-2-179-1791881992` | Miller | Hossin | 179 | Oct 13 | 50 min | 47/89 (52.8%) | TR | 0.3148 | 0.3401 |
 | `10-344-250-1791885324` | Miller | Oshur | 250 | Oct 13 | 34 min | 34/75 (45.3%) | TR | 0.3393 | — |
-| `1-4-177-1791901602` | Connery | Hossin | 177 | Oct 13 | 48 min | 54/88 (61.4%) | NC | 0.1316 | 0.0000 |
+| `1-4-177-1791901602` | Connery | Amerish | 177 | Oct 13 | 48 min | 54/88 (61.4%) | NC | 0.1316 | 0.0000 |
 | `1-8-186-1791923044` | Connery | Esamir | 186 | Oct 13 | 46 min | 31/51 (60.8%) | TR | 0.2981 | 0.1285 |
 | `1-344-249-1791926376` | Connery | Oshur | 249 | Oct 13 | 35 min | 34/75 (45.3%) | VS | 0.0795 | — |
-| `10-6-192-1791947560` | Miller | Amerish | 192 | Oct 14 | 47 min | 52/81 (64.2%) | TR | 0.1956 | 0.3323 |
-| `1-4-177-1791965908` | Connery | Hossin | 177 | Oct 14 | 46 min | 54/88 (61.4%) | TR | 0.2418 | 0.6667 |
+| `10-6-192-1791947560` | Miller | Indar | 192 | Oct 14 | 47 min | 52/81 (64.2%) | TR | 0.1956 | 0.3323 |
+| `1-4-177-1791965908` | Connery | Amerish | 177 | Oct 14 | 46 min | 54/88 (61.4%) | TR | 0.2418 | 0.6667 |
 | `1-8-176-1791987229` | Connery | Esamir | 176 | Oct 14 | 46 min | 31/51 (60.8%) | NC | 0.1720 | 0.0000 |
-| `1-2-189-1792009010` | Connery | Indar | 189 | Oct 14 | 48 min | 47/89 (52.8%) | TR | 0.2996 | 0.4258 |
+| `1-2-189-1792009010` | Connery | Hossin | 189 | Oct 14 | 48 min | 47/89 (52.8%) | TR | 0.2996 | 0.4258 |
 | `10-8-176-1792035065` | Miller | Esamir | 176 | Oct 15 | 48 min | 31/51 (60.8%) | VS | 0.1353 | 0.2663 |
-| `10-2-179-1792057024` | Miller | Indar | 179 | Oct 15 | 47 min | 47/89 (52.8%) | TR | 0.3425 | 0.3285 |
-| `1-4-187-1792057809` | Connery | Hossin | 187 | Oct 15 | 49 min | 54/88 (61.4%) | TR | 0.2228 | 0.0000 |
+| `10-2-179-1792057024` | Miller | Hossin | 179 | Oct 15 | 47 min | 47/89 (52.8%) | TR | 0.3425 | 0.3285 |
+| `1-4-187-1792057809` | Connery | Amerish | 187 | Oct 15 | 49 min | 54/88 (61.4%) | TR | 0.2228 | 0.0000 |
 | `1-8-186-1792096022` | Connery | Esamir | 186 | Oct 15 | 48 min | 31/51 (60.8%) | VS | 0.1793 | 0.3748 |
-| `10-4-191-1792126655` | Miller | Hossin | 191 | Oct 16 | 47 min | 54/88 (61.4%) | VS | 0.2472 | 0.5042 |
+| `10-4-191-1792126655` | Miller | Amerish | 191 | Oct 16 | 47 min | 54/88 (61.4%) | VS | 0.2472 | 0.5042 |
 
 ## Table B — 6 further rows, same signature, settled after the audit
 
 | Alert key | Server | Continent | Event | Start (UTC) | Duration | Neutral (median) | Winner | Brier t0 | Brier t30 |
 |---|---|---|---|---|---|---|---|---|---|
-| `1-2-179-1792183418` | Connery | Indar | 179 | Oct 16 | 46 min | 47/89 (52.8%) | TR | 0.2920 | 0.2039 |
-| `10-4-177-1792210482` | Miller | Hossin | 177 | Oct 17 | 50 min | 54/88 (61.4%) | NC | 0.1316 | 0.0056 |
-| `1-2-193-1792235327` | Connery | Indar | 193 | Oct 17 | 51 min | 47/89 (52.8%) | TR | 0.2122 | 0.2563 |
-| `1-6-178-1792258726` | Connery | Amerish | 178 | Oct 17 | 51 min | 52/81 (64.2%) | VS | 0.2046 | 0.0850 |
+| `1-2-179-1792183418` | Connery | Hossin | 179 | Oct 16 | 46 min | 47/89 (52.8%) | TR | 0.2920 | 0.2039 |
+| `10-4-177-1792210482` | Miller | Amerish | 177 | Oct 17 | 50 min | 54/88 (61.4%) | NC | 0.1316 | 0.0056 |
+| `1-2-193-1792235327` | Connery | Hossin | 193 | Oct 17 | 51 min | 47/89 (52.8%) | TR | 0.2122 | 0.2563 |
+| `1-6-178-1792258726` | Connery | Indar | 178 | Oct 17 | 51 min | 52/81 (64.2%) | VS | 0.2046 | 0.0850 |
 | `1-344-248-1792262962` | Connery | Oshur | 248 | Oct 17 | 35 min | 34/75 (45.3%) | NC | 0.4103 | 0.0000 |
-| `10-4-177-1792294792` | Miller | Hossin | 177 | Oct 18 | 50 min | 54/88 (61.4%) | VS | 0.1291 | 0.3295 |
+| `10-4-177-1792294792` | Miller | Amerish | 177 | Oct 18 | 50 min | 54/88 (61.4%) | VS | 0.1291 | 0.3295 |
 
 
 ## Effect on the headline numbers (this file, 64 settled rows)
@@ -257,7 +260,7 @@ to destroy.
 - Classification rerun from the snapshot archive on 2026-10-20 reproduces
   the audit's 16/16 with matching neutral percentages and durations, and
   the per-zone neutral counts match the fixed sets recorded in October
-  where those were recorded (Hossin 54, Esamir 31, Oshur 34).
+  where those were recorded (Amerish 54, Esamir 31, Oshur 34).
 - After tagging: the file still has 247 lines; the diff touches exactly
   the 22 settled lines, each gaining only the `corrupt_input` field; all
   22 edited lines parse as JSON and every untouched line is byte-identical

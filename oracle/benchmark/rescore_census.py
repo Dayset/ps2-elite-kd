@@ -7,9 +7,16 @@ settled alert's winner from Census final scores (or the Sudden Death kill counts
 when a Sudden Death 236-240 on the same world+zone started within 10 min of the
 end), recomputes Brier per slice and writes rescored.json.
 
-Usage: python3 rescore_census.py
+Headline means skip every alert whose input_status.json entry has
+exclude_from_headline: true (Unstable Meltdowns: their Briers are a separate pool,
+oracle/benchmark/README.md mismatch 1). Winners are still corrected for all rows.
+The flag is read, not the status string, so relabelling does not break this.
+
+Usage: python3 rescore_census.py                 (fetches Census, writes rescored.json)
+       python3 rescore_census.py --reaggregate   (no network: recompute the summary
+                                                  from the rescored.json already here)
 """
-import json, os, time, urllib.request
+import json, os, sys, time, urllib.request
 from collections import defaultdict
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -71,6 +78,53 @@ def argmax(scores):
     best = max(scores.values())
     top = [f for f in F if scores[f] == best]
     return top[0] if len(top) == 1 else None
+
+
+STATUS = os.path.join(HERE, "input_status.json")
+
+
+def excluded_alerts():
+    """Alerts with exclude_from_headline true in input_status.json (empty if the file is missing)."""
+    try:
+        rows = json.load(open(STATUS))["rows"]
+    except (OSError, KeyError, ValueError):
+        return set()
+    return {a for a, v in rows.items() if v.get("exclude_from_headline")}
+
+
+def aggregate(results, excluded):
+    """Headline summary: per (kind, duration, slice) means over non-excluded alerts only."""
+    groups = defaultdict(list)
+    for r in results:
+        if r["alert"] in excluded:
+            continue
+        for sl, b in r["brier_by_slice"].items():
+            groups[(r["kind"], r["duration"], sl)].append(b)
+    return [{"kind": k, "duration": d, "slice": sl, "n": len(v), "mean_brier": round(sum(v) / len(v), 4)}
+            for (k, d, sl), v in sorted(groups.items(), key=lambda x: (x[0][0], x[0][1] or 0, x[0][2]))]
+
+
+def print_summary(out):
+    print(f"rescored {out['rescored']}/{out['settled_alerts']}; winners changed: {out['winners_changed']}; "
+          f"unresolved: {len(out['unresolved'])}; excluded from headline: {out['excluded_from_headline']}")
+    print("kind       dur slice        n  mean_brier")
+    for g in out["summary"]:
+        print(f"{g['kind']:<10} {str(g['duration']):>3} {g['slice']:<11} {g['n']:>3}  {g['mean_brier']:.4f}")
+
+
+def reaggregate():
+    """Recompute the headline fields from the saved rescored.json. No network."""
+    out = json.load(open(OUT))
+    excluded = excluded_alerts()
+    out["excluded_from_headline"] = sum(1 for r in out["alerts"] if r["alert"] in excluded)
+    out["excluded_alerts"] = sorted(r["alert"] for r in out["alerts"] if r["alert"] in excluded)
+    for r in out["alerts"]:
+        r["excluded_from_headline"] = r["alert"] in excluded
+    out["summary"] = aggregate(out["alerts"], excluded)
+    out["summary_basis"] = "headline: excludes exclude_from_headline alerts (input_status.json)"
+    with open(OUT, "w") as fh:
+        json.dump(out, fh, indent=1)
+    print_summary(out)
 
 
 def main():
@@ -145,24 +199,23 @@ def main():
             "old_brier_by_slice": s.get("brier"),
         })
 
-    groups = defaultdict(list)
+    excluded = excluded_alerts()
     for r in results:
-        for sl, b in r["brier_by_slice"].items():
-            groups[(r["kind"], r["duration"], sl)].append(b)
-    summary = [{"kind": k, "duration": d, "slice": sl, "n": len(v), "mean_brier": round(sum(v) / len(v), 4)}
-               for (k, d, sl), v in sorted(groups.items(), key=lambda x: (x[0][0], x[0][1] or 0, x[0][2]))]
+        r["excluded_from_headline"] = r["alert"] in excluded
+    summary = aggregate(results, excluded)
     changed = [r["alert"] for r in results if r["old_winner"] != r["census_winner"]]
     out = {"generated_at": int(time.time()), "coin_flip_brier": 0.2222,
            "settled_alerts": len(settled), "rescored": len(results),
            "winners_changed": len(changed), "changed_alerts": changed,
-           "unresolved": unresolved, "summary": summary, "alerts": results}
+           "unresolved": unresolved,
+           "excluded_from_headline": sum(1 for r in results if r["excluded_from_headline"]),
+           "excluded_alerts": sorted(r["alert"] for r in results if r["excluded_from_headline"]),
+           "summary_basis": "headline: excludes exclude_from_headline alerts (input_status.json)",
+           "summary": summary, "alerts": results}
     with open(OUT, "w") as fh:
         json.dump(out, fh, indent=1)
-    print(f"rescored {len(results)}/{len(settled)}; winners changed: {len(changed)}; unresolved: {len(unresolved)}")
-    print("kind       dur slice        n  mean_brier")
-    for g in summary:
-        print(f"{g['kind']:<10} {str(g['duration']):>3} {g['slice']:<11} {g['n']:>3}  {g['mean_brier']:.4f}")
+    print_summary(out)
 
 
 if __name__ == "__main__":
-    main()
+    reaggregate() if "--reaggregate" in sys.argv else main()

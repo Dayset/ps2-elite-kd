@@ -1,10 +1,10 @@
 {
- "_readme": "One entry per SETTLED benchmark alert in oracle/benchmark/benchmark_predictions.jsonl. status: clean | corrupt | unclassified. Read this before quoting any benchmark mean. Benchmark rows are NOT edited by this file.",
- "_rule": "corrupt = median share of neutral facilities over the alert window >= 20% (measured gap: clean <= 8%, corrupt 45-64%). Source of the measurement: see CORRUPT_INPUT_FIX_2026-10-20.md.",
- "_caveat": "The map-snapshot archive used for the measurement is NOT in this repo (only oracle/backend/data/map_snapshots/1/4/2026-10-18.jsonl). 'clean' rows are therefore taken on trust from the fix doc. Open question: the 22 corrupt rows are all Meltdown/Oshur event ids; a Meltdown lock looks the same in the data. See the fix doc, section 'Open question'.",
+ "_readme": "One entry per SETTLED benchmark alert. status: clean | meltdown | unclassified. Use exclude_from_headline, not the status string, to decide what counts in headline means. Benchmark rows are NOT edited by this file.",
+ "_rule": "meltdown = Unstable Meltdown / Oshur alert (event ids 176-193, 248-250): the retired VM engine scored diluted shares, so its Briers form a separate pool (issue #47, oracle/benchmark/README.md mismatches 1-2). clean = standard alert with a healthy map. unclassified = cannot be checked. exclude_from_headline is true for meltdown rows.",
+ "_caveat": "Clean labels for standard alerts come from the fix doc (not re-measurable from this repo: the snapshot archive lives on the VM). See oracle/benchmark/README.md, mismatch 6.",
  "counts": {
-  "clean": 39,
-  "corrupt": 22,
+  "clean": 36,
+  "meltdown": 25,
   "unclassified": 3
  },
  "rows": {
@@ -14,33 +14,33 @@
    "exclude_from_headline": false
   },
   "1-2-179-1792183418": {
-   "status": "corrupt",
-   "source": "fix doc 2026-10-20, tables A/B",
+   "status": "meltdown",
+   "source": "fix doc 2026-10-20 tagged corrupt; relabelled meltdown per issue #47 (median-neutral measure mostly measures settlement lag)",
    "exclude_from_headline": true
   },
   "1-2-189-1791879285": {
-   "status": "corrupt",
-   "source": "fix doc 2026-10-20, tables A/B",
+   "status": "meltdown",
+   "source": "fix doc 2026-10-20 tagged corrupt; relabelled meltdown per issue #47 (median-neutral measure mostly measures settlement lag)",
    "exclude_from_headline": true
   },
   "1-2-189-1792009010": {
-   "status": "corrupt",
-   "source": "fix doc 2026-10-20, tables A/B",
+   "status": "meltdown",
+   "source": "fix doc 2026-10-20 tagged corrupt; relabelled meltdown per issue #47 (median-neutral measure mostly measures settlement lag)",
    "exclude_from_headline": true
   },
   "1-2-193-1792235327": {
-   "status": "corrupt",
-   "source": "fix doc 2026-10-20, tables A/B",
+   "status": "meltdown",
+   "source": "fix doc 2026-10-20 tagged corrupt; relabelled meltdown per issue #47 (median-neutral measure mostly measures settlement lag)",
    "exclude_from_headline": true
   },
   "1-344-248-1792262962": {
-   "status": "corrupt",
-   "source": "fix doc 2026-10-20, tables A/B",
+   "status": "meltdown",
+   "source": "fix doc 2026-10-20 tagged corrupt; relabelled meltdown per issue #47 (median-neutral measure mostly measures settlement lag)",
    "exclude_from_headline": true
   },
   "1-344-249-1791926376": {
-   "status": "corrupt",
-   "source": "fix doc 2026-10-20, tables A/B",
+   "status": "meltdown",
+   "source": "fix doc 2026-10-20 tagged corrupt; relabelled meltdown per issue #47 (median-neutral measure mostly measures settlement lag)",
    "exclude_from_headline": true
   },
   "1-4-153-1791759770": {
@@ -64,23 +64,23 @@
    "exclude_from_headline": false
   },
   "1-4-177-1791821154": {
-   "status": "clean",
-   "source": "fix doc 2026-10-20 (audit-era rule: median neutral <=8%); not re-measurable from this repo",
-   "exclude_from_headline": false
+   "status": "meltdown",
+   "source": "relabelled meltdown per issue #47: late-settled Meltdown, diluted by post-alert snapshots",
+   "exclude_from_headline": true
   },
   "1-4-177-1791901602": {
-   "status": "corrupt",
-   "source": "fix doc 2026-10-20, tables A/B",
+   "status": "meltdown",
+   "source": "fix doc 2026-10-20 tagged corrupt; relabelled meltdown per issue #47 (median-neutral measure mostly measures settlement lag)",
    "exclude_from_headline": true
   },
   "1-4-177-1791965908": {
-   "status": "corrupt",
-   "source": "fix doc 2026-10-20, tables A/B",
+   "status": "meltdown",
+   "source": "fix doc 2026-10-20 tagged corrupt; relabelled meltdown per issue #47 (median-neutral measure mostly measures settlement lag)",
    "exclude_from_headline": true
   },
   "1-4-187-1792057809": {
-   "status": "corrupt",
-   "source": "fix doc 2026-10-20, tables A/B",
+   "status": "meltdown",
+   "source": "fix doc 2026-10-20 tagged corrupt; relabelled meltdown per issue #47 (median-neutral measure mostly measures settlement lag)",
    "exclude_from_headline": true
   },
   "1-6-156-1791940785": {
@@ -109,8 +109,8 @@
    "exclude_from_headline": false
   },
   "1-6-178-1792258726": {
-   "status": "corrupt",
-   "source": "fix doc 2026-10-20, tables A/B",
+   "status": "meltdown",
+   "source": "fix doc 2026-10-20 tagged corrupt; relabelled meltdown per issue #47 (median-neutral measure mostly measures settlement lag)",
    "exclude_from_headline": true
   },
   "1-8-151-1791855760": {
@@ -124,23 +124,23 @@
    "exclude_from_headline": false
   },
   "1-8-176-1791797973": {
-   "status": "clean",
-   "source": "fix doc 2026-10-20 (audit-era rule: median neutral <=8%); not re-measurable from this repo",
-   "exclude_from_headline": false
+   "status": "meltdown",
+   "source": "relabelled meltdown per issue #47: late-settled Meltdown, diluted by post-alert snapshots",
+   "exclude_from_headline": true
   },
   "1-8-176-1791987229": {
-   "status": "corrupt",
-   "source": "fix doc 2026-10-20, tables A/B",
+   "status": "meltdown",
+   "source": "fix doc 2026-10-20 tagged corrupt; relabelled meltdown per issue #47 (median-neutral measure mostly measures settlement lag)",
    "exclude_from_headline": true
   },
   "1-8-186-1791923044": {
-   "status": "corrupt",
-   "source": "fix doc 2026-10-20, tables A/B",
+   "status": "meltdown",
+   "source": "fix doc 2026-10-20 tagged corrupt; relabelled meltdown per issue #47 (median-neutral measure mostly measures settlement lag)",
    "exclude_from_headline": true
   },
   "1-8-186-1792096022": {
-   "status": "corrupt",
-   "source": "fix doc 2026-10-20, tables A/B",
+   "status": "meltdown",
+   "source": "fix doc 2026-10-20 tagged corrupt; relabelled meltdown per issue #47 (median-neutral measure mostly measures settlement lag)",
    "exclude_from_headline": true
   },
   "10-2-147-1791924036": {
@@ -169,13 +169,13 @@
    "exclude_from_headline": false
   },
   "10-2-179-1791881992": {
-   "status": "corrupt",
-   "source": "fix doc 2026-10-20, tables A/B",
+   "status": "meltdown",
+   "source": "fix doc 2026-10-20 tagged corrupt; relabelled meltdown per issue #47 (median-neutral measure mostly measures settlement lag)",
    "exclude_from_headline": true
   },
   "10-2-179-1792057024": {
-   "status": "corrupt",
-   "source": "fix doc 2026-10-20, tables A/B",
+   "status": "meltdown",
+   "source": "fix doc 2026-10-20 tagged corrupt; relabelled meltdown per issue #47 (median-neutral measure mostly measures settlement lag)",
    "exclude_from_headline": true
   },
   "10-2-214-1792262807": {
@@ -189,8 +189,8 @@
    "exclude_from_headline": false
   },
   "10-344-250-1791885324": {
-   "status": "corrupt",
-   "source": "fix doc 2026-10-20, tables A/B",
+   "status": "meltdown",
+   "source": "fix doc 2026-10-20 tagged corrupt; relabelled meltdown per issue #47 (median-neutral measure mostly measures settlement lag)",
    "exclude_from_headline": true
   },
   "10-4-153-1791906054": {
@@ -214,23 +214,23 @@
    "exclude_from_headline": false
   },
   "10-4-177-1792210482": {
-   "status": "corrupt",
-   "source": "fix doc 2026-10-20, tables A/B",
+   "status": "meltdown",
+   "source": "fix doc 2026-10-20 tagged corrupt; relabelled meltdown per issue #47 (median-neutral measure mostly measures settlement lag)",
    "exclude_from_headline": true
   },
   "10-4-177-1792294792": {
-   "status": "corrupt",
-   "source": "fix doc 2026-10-20, tables A/B",
+   "status": "meltdown",
+   "source": "fix doc 2026-10-20 tagged corrupt; relabelled meltdown per issue #47 (median-neutral measure mostly measures settlement lag)",
    "exclude_from_headline": true
   },
   "10-4-191-1791859791": {
-   "status": "corrupt",
-   "source": "fix doc 2026-10-20, tables A/B",
+   "status": "meltdown",
+   "source": "fix doc 2026-10-20 tagged corrupt; relabelled meltdown per issue #47 (median-neutral measure mostly measures settlement lag)",
    "exclude_from_headline": true
   },
   "10-4-191-1792126655": {
-   "status": "corrupt",
-   "source": "fix doc 2026-10-20, tables A/B",
+   "status": "meltdown",
+   "source": "fix doc 2026-10-20 tagged corrupt; relabelled meltdown per issue #47 (median-neutral measure mostly measures settlement lag)",
    "exclude_from_headline": true
   },
   "10-6-156-1791896748": {
@@ -274,8 +274,8 @@
    "exclude_from_headline": false
   },
   "10-6-192-1791947560": {
-   "status": "corrupt",
-   "source": "fix doc 2026-10-20, tables A/B",
+   "status": "meltdown",
+   "source": "fix doc 2026-10-20 tagged corrupt; relabelled meltdown per issue #47 (median-neutral measure mostly measures settlement lag)",
    "exclude_from_headline": true
   },
   "10-6-244": {
@@ -319,14 +319,14 @@
    "exclude_from_headline": false
   },
   "10-8-176-1792035065": {
-   "status": "corrupt",
-   "source": "fix doc 2026-10-20, tables A/B",
+   "status": "meltdown",
+   "source": "fix doc 2026-10-20 tagged corrupt; relabelled meltdown per issue #47 (median-neutral measure mostly measures settlement lag)",
    "exclude_from_headline": true
   },
   "10-8-186-1791772425": {
-   "status": "clean",
-   "source": "fix doc 2026-10-20 (audit-era rule: median neutral <=8%); not re-measurable from this repo",
-   "exclude_from_headline": false
+   "status": "meltdown",
+   "source": "relabelled meltdown per issue #47: late-settled Meltdown, diluted by post-alert snapshots",
+   "exclude_from_headline": true
   }
  }
 }
