@@ -66,29 +66,64 @@
     <img class="splash-logo" data-src="../favicon-512x512.png" width="512" height="512" alt="" decoding="sync" />
   </div>
   <script>
-    // Splash closes as soon as the page is parsed (the loading skeleton is the
-    // first screen), straight cut, never longer than 3 s.
+    // Installed-app splash (t450u, t452u): the logo is shown still, held at
+    // least 1 s and until the page is parsed (its loading skeleton
+    // is the first screen), then the
+    // whole overlay fades out over 1 s and is removed. The fade is driven from
+    // JS (Web Animations) and deliberately ignores prefers-reduced-motion /
+    // battery saver, at the owner's request; it is the only motion. No fade-in,
+    // no movement, no resize. If the first screen is never ready, the fade
+    // starts after 3 s anyway.
     (function () {
       var root = document.documentElement;
       if (!root.classList.contains("pwa-launch")) return;
+      var sp = document.getElementById("splash");
       // Image only in the installed app (already preloaded in <head>), so a browser tab never downloads it.
-      var img = document.querySelector("#splash .splash-logo");
-      if (img) {
-        img.src = img.getAttribute("data-src");
-        // Freeze the spot in px once: a later viewport-height change (bars
-        // showing/hiding at launch) can't move or rescale the logo.
-        if (window.innerHeight > 0 && window.innerWidth > 0) {
-          img.style.top = Math.round(window.innerHeight / 2) + "px";
-          img.style.left = Math.round(window.innerWidth / 2) + "px";
+      var img = sp && sp.querySelector(".splash-logo");
+      if (!sp || !img) { root.classList.remove("pwa-launch"); return; }
+      img.src = img.getAttribute("data-src");
+      // Spot, frozen in px once (a later viewport change can't move it). Android
+      // Chrome hands its own splash over centred on the WHOLE screen, i.e. above
+      // the page's centre by half of (status bar − navigation bar) (Chromium
+      // bug fixed in c2312525). Sit there too, so there's no second jump.
+      // Split of the bars: gesture navigation bar ≈ NAV px, the rest is the
+      // status bar. Android only; clamped to 0–40 px so a wrong guess stays small.
+      var NAV = 24;
+      var w = window.innerWidth, h = window.innerHeight;
+      if (w > 0 && h > 0) {
+        var up = 0;
+        if (/Android/i.test(navigator.userAgent) && window.screen && screen.height > h) {
+          var bars = screen.height - h;            // status bar + navigation bar
+          up = Math.max(0, Math.min(40, (bars - 2 * NAV) / 2));
+        }
+        img.style.top = Math.round(h / 2 - up) + "px";
+        img.style.left = Math.round(w / 2) + "px";
+      }
+      // The 1 s hold counts from the first frame the logo is actually on screen.
+      var shownAt = Date.now(), fading = false;
+      requestAnimationFrame(function () { shownAt = Date.now(); });
+      function finish() { root.classList.remove("pwa-launch"); sp.style.opacity = ""; sp.style.pointerEvents = ""; }
+      function fade() {
+        if (fading) return; fading = true;
+        sp.style.pointerEvents = "none"; // page is usable while it fades
+        if (sp.animate) {
+          var a = sp.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 1000, easing: "linear", fill: "forwards" });
+          a.onfinish = finish;
+          setTimeout(finish, 1500); // in case onfinish never fires
+        } else {
+          var t0 = 0;
+          (function step(t) {
+            if (!t0) t0 = t;
+            var k = Math.min(1, (t - t0) / 1000);
+            sp.style.opacity = String(1 - k);
+            if (k < 1) requestAnimationFrame(step); else finish();
+          })(0);
         }
       }
-      var done = false;
-      function close() {
-        if (done) return; done = true;
-        requestAnimationFrame(function () { requestAnimationFrame(function () { root.classList.remove("pwa-launch"); }); });
-      }
-      setTimeout(close, 3000);
-      if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", close, { once: true }); else close();
+      function ready() { setTimeout(fade, Math.max(0, 1000 - (Date.now() - shownAt))); }
+      setTimeout(fade, 3000);
+      var parsed = new Promise(function (r) { document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", r, { once: true }) : r(); });
+      parsed.then(ready, ready);
     })();
   </script>
 <div class="wrap">
