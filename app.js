@@ -467,8 +467,46 @@ import {
       graphReadyHintTimer = setTimeout(() => {
         graphReadyHintTimer = 0;
         if (els.status && els.status.classList.contains("graph-ready")) setStatus("");
+        // Dayset 2026-10-19: once the hint is gone, nudge the page so the
+        // ✨ Stats / 🏅 Positions tab bar slides off the top and the stats
+        // table is the first thing on screen. Only ever scrolls down — never
+        // yanks the page back up if the user already scrolled past.
+        scrollStatsPanelToTop();
       }, 450);
     }, 2000);
+  }
+
+  /** Scroll the stats table to the top of the screen (Dayset 2026-10-19). */
+  function scrollStatsPanelToTop() {
+    if (typeof window === "undefined" || !window.scrollTo) return;
+    const target = els.stats;
+    if (!target || !target.getBoundingClientRect) return;
+    const raf = window.requestAnimationFrame
+      ? (fn) => window.requestAnimationFrame(fn)
+      : (fn) => setTimeout(fn, 16);
+    raf(() => {
+      const y = window.scrollY || window.pageYOffset || 0;
+      const top = Math.max(
+        0,
+        Math.round(target.getBoundingClientRect().top + y - 10)
+      );
+      if (y >= top - 8) return; // already there or scrolled past — leave it
+      const reduce =
+        !!window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      // Short pages (few names on a phone) can't scroll the panel to the top:
+      // pad the bottom just enough so the tab bar can slide fully out of view.
+      const body = document.body;
+      if (body) {
+        body.style.paddingBottom = "";
+        const docH = document.documentElement.scrollHeight;
+        const short = top + window.innerHeight - docH;
+        if (short > 0) {
+          const base = parseFloat(getComputedStyle(body).paddingBottom) || 0;
+          body.style.paddingBottom = Math.ceil(base + short) + "px";
+        }
+      }
+      window.scrollTo({ top, behavior: reduce ? "auto" : "smooth" });
+    });
   }
 
   function formatClock(ms) {
