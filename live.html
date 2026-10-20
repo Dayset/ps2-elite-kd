@@ -68,13 +68,11 @@
   </script>
   <link rel="stylesheet" href="styles.css?v=20261019-graph564" />
   <style>
-    /* Installed-app launch splash (t450u–t455u). Draws the same picture Android
-       12+ draws for this app's launch: the maskable icon (the WebAPK's adaptive
-       launcher icon) as a 288×288 canvas seen through a 192 px circle
-       (AOSP SplashscreenContentDrawer: starting_surface_icon_size 160dp ×
-       splash_icon_no_background_scale_factor 1.2; adaptive canvas = 1.5× the
-       visible mask). Fixed px only, frozen once by the script below, so a
-       viewport change can't move or rescale it. */
+    /* Installed-app launch splash (t450u–t456u). The whole transparent logo
+       (favicon-512x512.png, 512×512 file) drawn at a fixed 188×188 px, medal ≈ 181 px
+       wide, about the size of Android's own launch icon. Never cropped: no
+       overflow / radius / clip on it or its container. Fixed px only, frozen once
+       by the script below, so a viewport change can't move or rescale it. */
     .splash { display: none; }
     html.pwa-launch, html.pwa-launch body { background: #202020 !important; }
     html.pwa-launch .splash {
@@ -82,15 +80,10 @@
       height: 100vh; height: 100lvh; z-index: 9999; background: #202020;
       animation: none !important; transition: none !important;
     }
-    .splash-mask {
-      position: absolute; left: 50%; top: 50vh; top: 50lvh;
-      width: 192px; height: 192px; margin: -96px 0 0 -96px;
-      border-radius: 50%; overflow: hidden;
-      animation: none !important; transition: none !important;
-    }
     .splash-logo {
-      display: block; position: absolute; left: -48px; top: -48px;
-      width: 288px; height: 288px; max-width: none; opacity: 1;
+      display: block; position: absolute; left: 50%; top: 50vh; top: 50lvh;
+      width: 188px; height: 188px; margin: -94px 0 0 -94px; max-width: none;
+      opacity: 1; overflow: visible; border-radius: 0; clip-path: none;
       animation: none !important; transition: none !important;
     }
   </style>
@@ -106,7 +99,7 @@
         try { if (sessionStorage.getItem("ps2-launched")) return; sessionStorage.setItem("ps2-launched", "1"); } catch (e) {}
         document.documentElement.classList.add("pwa-launch");
         var l = document.createElement("link");
-        l.rel = "preload"; l.as = "image"; l.href = "icon-maskable-512.png";
+        l.rel = "preload"; l.as = "image"; l.href = "favicon-512x512.png";
         document.head.appendChild(l);
       } catch (e) {}
     })();
@@ -114,10 +107,10 @@
 </head>
 <body class="main-page live-mode">
   <div id="splash" class="splash" aria-hidden="true">
-    <div class="splash-mask"><img class="splash-logo" data-src="icon-maskable-512.png" width="512" height="512" alt="" decoding="sync" /></div>
+    <img class="splash-logo" data-src="favicon-512x512.png" width="512" height="512" alt="" decoding="sync" />
   </div>
   <script>
-    // Installed-app splash (t450u–t455u): shown still, held at least 1 s and
+    // Installed-app splash (t450u–t456u): shown still, held at least 1 s and
     // until the first screen is ready (page parsed + the
     // name list and ranks it draws), then the whole overlay
     // fades out over 1 s and is removed. The fade is driven from JS (Web
@@ -128,20 +121,17 @@
       var root = document.documentElement;
       if (!root.classList.contains("pwa-launch")) return;
       var sp = document.getElementById("splash");
-      var mask = sp && sp.querySelector(".splash-mask");
       var img = sp && sp.querySelector(".splash-logo");
-      if (!sp || !mask || !img) { root.classList.remove("pwa-launch"); return; }
+      if (!sp || !img) { root.classList.remove("pwa-launch"); return; }
       // Image only in the installed app (already preloaded in <head>).
       img.src = img.getAttribute("data-src");
-      // Canvas 288 px seen through a 192 px circle, centred in the page,
-      // frozen in px once.
-      var CANVAS = 288, MASK = 192;
+      // Whole logo, 188 px, centred in the page, frozen in px once.
+      var SIZE = 188;
       var w = window.innerWidth, h = window.innerHeight;
       if (w > 0 && h > 0) {
-        mask.style.margin = "0";
-        mask.style.left = Math.round(w / 2 - MASK / 2) + "px";
-        mask.style.top = Math.round(h / 2 - MASK / 2) + "px";
-        img.style.left = img.style.top = Math.round((MASK - CANVAS) / 2) + "px";
+        img.style.margin = "0";
+        img.style.left = Math.round(w / 2 - SIZE / 2) + "px";
+        img.style.top = Math.round(h / 2 - SIZE / 2) + "px";
       }
       // The 1 s hold counts from the first frame the logo is actually on screen.
       var shownAt = Date.now(), fading = false;
