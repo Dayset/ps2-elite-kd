@@ -720,14 +720,15 @@ header .sub {
 
 /* Dayset 2026-10-20: phones — the options group (language / wipe / sounds /
  * theme) sits inside the names field at its bottom-right (app.js moves the
- * node here at this breakpoint). While ≤2 names are in the field it keeps a
- * bottom margin (.opts-gap, toggled by app.js as chips change) and the group
- * sits in it; from the 3rd name on the margin goes away (flush) to save the
- * space and the group overlays the field's bottom-right corner. The × stays
- * pinned top-right. The fresh row then holds only 🆕 (absolute, left) and
- * the ❓📖❓ link, which stays centered on the row. */
+ * node here at this breakpoint), overlaying the corner; the field keeps NO
+ * reserved bottom strip for it. The conditional margin is on TOP: while
+ * ≤2 names are in the field the field keeps a top margin (.top-gap,
+ * toggled by app.js as chips change); from the 3rd name on the margin goes
+ * away and the field sits flush with the panel top to save the space. The
+ * × stays pinned top-right. The fresh row then holds only 🆕 (absolute,
+ * left) and the ❓📖❓ link, which stays centered on the row. */
 @media (max-width: 600px) and (orientation: portrait) {
-  .controls .names-box.opts-gap { padding-bottom: 2.5rem; }
+  .controls .names-box.top-gap { margin-top: 1.5rem; }
   .controls .names-box .fresh-row-end {
     position: absolute; right: 0.35rem; bottom: 0.35rem;
     flex: none; z-index: 3;

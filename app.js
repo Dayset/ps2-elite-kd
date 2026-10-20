@@ -46,8 +46,8 @@ import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261020-i18n2";
 import { infantryKillsUrl, summarizeInfantryKills } from "./infantry.mjs?v=20261020-i18n2";
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261015-tip1";
 import { createWheelSwiper } from "./dist-cycle.mjs?v=20261017-cycle15";
-import { slideSwap, attachDragCarousel } from "./chart-slide.mjs?v=20261020-flick1";
-import { mountStatsCarousel } from "./stats-carousel.mjs?v=20261020-poofsess1";
+import { slideSwap, attachDragCarousel } from "./chart-slide.mjs?v=20261020-swipefix";
+import { mountStatsCarousel } from "./stats-carousel.mjs?v=20261020-poofearly1";
 import { pickGraphForKeys } from "./graph-keys.mjs?v=20261017-graphkeys1";
 import { entryFetchedAt, pickNewest, writeWithEviction } from "./cache-pick.mjs?v=20261010-sav1";
 import {
@@ -310,13 +310,13 @@ import {
     };
     placeOpts();
     if (phoneMq.addEventListener) phoneMq.addEventListener("change", placeOpts);
-    // Dayset 2026-10-20: the field's bottom margin (.opts-gap CSS) stays
-    // while ≤2 names are in the field; from the 3rd name on it goes away
-    // (flush) and the options overlay the bottom-right corner instead.
+    // Dayset 2026-10-20: the field's TOP margin (.top-gap CSS) stays while
+    // ≤2 names are in the field; from the 3rd name on it goes away and the
+    // field sits flush with the panel top, saving the space.
     const tokensEl = document.getElementById("nameTokens");
     const boxEl = document.getElementById("namesBox");
     if (tokensEl && boxEl) {
-      const syncGap = () => boxEl.classList.toggle("opts-gap", tokensEl.querySelectorAll(".name-token").length <= 2);
+      const syncGap = () => boxEl.classList.toggle("top-gap", tokensEl.querySelectorAll(".name-token").length <= 2);
       syncGap();
       new MutationObserver(syncGap).observe(tokensEl, { childList: true });
     }
