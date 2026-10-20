@@ -622,15 +622,15 @@ import {
     if (!els.progressTiming) return;
     const now = Date.now();
     const elapsed = now - progressStartedAt;
-    const elapsedStr = `Elapsed ${formatClock(elapsed)}`;
+    const elapsedStr = tr("progress.elapsed", "Elapsed {t}", { t: formatClock(elapsed) });
     let remainStr = "";
     const left = progressTotalCount - progressDoneCount;
     if (progressTotalCount > 0 && left <= 0) {
-      remainStr = "Almost done…";
+      remainStr = tr("progress.almost", "Almost done…");
     } else if (progressTotalCount > 0) {
       updateEtaDeadline(now);
       // Last name running past its estimate → "Almost done…" rather than a stuck "0s".
-      remainStr = formatEtaLeft(progressEtaDeadline - now) || "Almost done…";
+      remainStr = formatEtaLeft(progressEtaDeadline - now) || tr("progress.almost", "Almost done…");
     }
     els.progressTiming.textContent = remainStr ? `${elapsedStr} · ${remainStr}` : elapsedStr;
   }
@@ -721,7 +721,7 @@ import {
           ? `${done}/${total} — ${name}`
           : `${done}/${total}`;
       } else {
-        text = "Starting…";
+        text = tr("progress.starting", "Starting…");
       }
     }
 
