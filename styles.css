@@ -2758,15 +2758,19 @@ col.lv-c-statR { width: calc(7.143% - 3.3214ch); }
   .stats-carousel .stats-table td .pct,
   .stats-carousel .rk-pos-table td .pct { display: block; margin-left: 0; line-height: 1.1; }
 }
-/* PC alignment (2026-10-19): on wide screens the small % / pN sits beside the number,
- * and its varying width ("−5%" vs "−78%" vs none) pushed the big numbers out of line.
- * Give it a fixed slot (cells without one get an empty slot of the same width) so every
- * big number in a column ends at the same edge. Phones (≤600px) stack it underneath
- * instead and are untouched. */
+/* PC alignment (2026-10-19, t448u): on wide screens each big number sits centered
+ * under its column name. The small grey % / pN beside it is taken out of the flow
+ * (absolute, at its natural spot right after the number), so its width never moves
+ * the number; the cell's side padding leaves room for it. Smaller there: secondary.
+ * Phones (<=600px) stack it underneath instead and are untouched. */
 @media (min-width: 601px) {
+  .stats-carousel .stats-table th:not(.stats-name),
+  .stats-carousel .stats-table td:not(.stats-name),
+  .stats-carousel .rk-pos-table th:not(.rk-pos-name),
+  .stats-carousel .rk-pos-table td:not(.rk-pos-name) { text-align: center; }
+  .stats-carousel .stats-table td:not(.stats-name),
+  .stats-carousel .rk-pos-table td:not(.rk-pos-name) { position: relative; padding-left: 1.9em; padding-right: 1.9em; }
   .stats-carousel .stats-table td .pct,
-  .stats-carousel .rk-pos-table td .pct { display: inline-block; min-width: 3.2em; text-align: left; }
-  .stats-carousel .stats-table td:not(.stats-name):not(:has(.pct))::after,
-  .stats-carousel .rk-pos-table td:not(:has(.pct))::after { content: ""; display: inline-block; min-width: 3.2em; margin-left: 0.32em; font-size: 0.72em; }
+  .stats-carousel .rk-pos-table td .pct { position: absolute; margin-left: 0.3em; margin-top: 0.3em; font-size: 0.64em; line-height: 1.2; }
 }
 .live-mode #statsCarousel { display: none !important; }

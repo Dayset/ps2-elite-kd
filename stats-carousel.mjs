@@ -60,11 +60,22 @@ export function mountStatsCarousel({ root, onChange }) {
     try { localStorage.setItem(KEY, String(i)); } catch {}
     if (!quiet && onChange) onChange(i);
   }
+  // t448u: a tab / key switch already played its sound in go(); while that
+  // smooth scroll runs, the scroll-follow below briefly read the old mode
+  // (first frames) and then crossed the middle again, which played the switch
+  // sound 3 times per click (and flipped the tabs back and forth). The tab's
+  // mode now stands until the scroll lands (or the user takes over).
+  // Finger / trackpad swipes are unchanged.
+  let programmatic = false, progTimer = 0;
+  const endProgrammatic = () => { programmatic = false; clearTimeout(progTimer); };
   function go(n, { anim = true, quiet = false } = {}) {
     n = clampMode(n, slides.length);
     setMode(n, quiet);
     const left = n * width();
     if (Math.abs(viewport.scrollLeft - left) < 1) return;
+    programmatic = true;
+    clearTimeout(progTimer);
+    progTimer = setTimeout(endProgrammatic, 1200); // no scrollend (older Safari)
     viewport.scrollTo({ left, behavior: anim && !reduced() ? "smooth" : "auto" });
   }
 
@@ -76,9 +87,12 @@ export function mountStatsCarousel({ root, onChange }) {
     readQueued = true;
     requestAnimationFrame(() => {
       readQueued = false;
-      setMode(Math.round(viewport.scrollLeft / width()));
+      if (!programmatic) setMode(Math.round(viewport.scrollLeft / width()));
     });
   }, { passive: true });
+  viewport.addEventListener("scrollend", (e) => { if (e.target === viewport) endProgrammatic(); }, { passive: true });
+  for (const ev of ["touchstart", "pointerdown"]) viewport.addEventListener(ev, endProgrammatic, { passive: true });
+  viewport.addEventListener("wheel", (e) => { if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) endProgrammatic(); }, { passive: true });
 
   /* ----- column widths: the same column is equally wide in both tables ----- */
   let syncQueued = false;
