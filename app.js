@@ -185,6 +185,9 @@ import {
   /** Catalog from data/index.json (shared Pages cache). */
   let sharedIndex = { updatedAt: null, players: [] };
   let sharedIndexLoaded = false;
+  // Player legends are switched off (owner, 2026-10-20: not needed). The shards stay in data/
+  // and the loader below is kept; set LEGENDS_ON = true to bring them back.
+  const LEGENDS_ON = false;
   // Story-style player legends (data/descriptions/<first-char>.json, keyed by slug).
   // Shown on the name hover in ✨ Adjusted. Shards load lazily for the players
   // currently shown; index.json supplies the version param, so a new deploy
@@ -207,6 +210,7 @@ import {
     return legendIndexLoad;
   }
   function loadLegendShards(slugs) {
+    if (!LEGENDS_ON) return;
     const needed = new Set();
     for (const s of slugs || []) {
       const key = String(s || "").charAt(0).toLowerCase();
@@ -3889,6 +3893,7 @@ import {
   /** Name cell title: adds the farm note when farm accounts were excluded. */
   /** Legend text for a player. Shards store { text, basis, at }; older entries are plain strings. */
   function descText(p) {
+    if (!LEGENDS_ON) return "";
     const v = playerDescs[slugKey(p && p.display)];
     if (typeof v === "string") return v;
     return (v && typeof v.text === "string" && v.text) || "";

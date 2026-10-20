@@ -24,6 +24,7 @@ const ATTRS = [
   ["i18nTitle", "title"],
   ["i18nAriaLabel", "aria-label"],
   ["i18nPlaceholder", "placeholder"],
+  ["i18nTip", "data-tip"],
 ];
 const SELECTOR = ATTRS.map(([ds]) => `[data-${ds.replace(/[A-Z]/g, (m) => "-" + m.toLowerCase())}]`).join(",");
 
@@ -120,9 +121,10 @@ export const ready = typeof document === "undefined" ? Promise.resolve("en") : (
   const first = pickLang(savedLang(), typeof navigator !== "undefined" ? navigator.languages : []);
   const sel = document.getElementById("langSelect");
   if (sel) {
+    // Reload on change: text that other scripts already rendered (tables, rankings) can't be re-translated in place.
     sel.addEventListener("change", () => {
       saveLang(sel.value);
-      setLang(sel.value);
+      location.reload();
     });
   }
   return setLang(first);
