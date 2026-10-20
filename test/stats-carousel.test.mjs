@@ -41,3 +41,28 @@ test("flipBurst (t470u): not when the 3 switches are spread over more than the w
     assert.equal(flipBurst([0, 4000, FLIP_WINDOW_MS + 1]), false);
     assert.equal(flipBurst([0, 4000, FLIP_WINDOW_MS]), true);
 });
+
+// t471u: the fold is per page session; a second mount never doubles listeners.
+import { collapseScBar } from "../stats-carousel.mjs";
+test("collapseScBar (t471u): folds without animation, once, and blurs a focused tab", () => {
+  const cls = new Set(), attrs = {};
+  let blurred = 0;
+  const tab = { blur: () => { blurred++; } };
+  const bar = { setAttribute: (k, v) => { attrs[k] = v; }, contains: (n) => n === tab };
+  const root = { classList: { add: (c) => cls.add(c), remove: (c) => cls.delete(c), contains: (c) => cls.has(c) }, querySelector: () => bar, isConnected: true };
+  globalThis.document = { activeElement: tab };
+  try {
+    collapseScBar(root, { animate: false });
+    assert.ok(cls.has("sc-bar-gone"));
+    assert.equal(attrs.inert, "");
+    assert.equal(blurred, 1);
+    collapseScBar(root, { animate: false });
+    assert.equal(blurred, 1, "second call is a no-op");
+  } finally { delete globalThis.document; }
+});
+test("mountStatsCarousel (t471u): one mount per element; a folded session stays folded", () => {
+  const src = readFileSync(new URL("../stats-carousel.mjs", import.meta.url), "utf8");
+  assert.match(src, /if \(root\.__sc\) return root\.__sc;/);
+  assert.match(src, /if \(sessionPoofed\) collapseScBar\(root, \{ animate: false \}\);/);
+  assert.match(src, /const poof = !sessionPoofed && phoneUi\(\) && flipBurst\(flips\);/);
+});

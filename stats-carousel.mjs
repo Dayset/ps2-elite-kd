@@ -35,6 +35,9 @@ const COLLAPSE_MS = 280;
 export function flipBurst(times, n = FLIPS_TO_POOF, windowMs = FLIP_WINDOW_MS) {
   return times.length >= n && times[times.length - 1] - times[times.length - n] <= windowMs;
 }
+/* t471u: the poof is per page session, not per mount — a re-mount (or a
+ * re-render of the tables) keeps the line folded and never poofs again. */
+let sessionPoofed = false;
 const phoneUi = () => { try { return matchMedia("(max-width: 600px) and (pointer: coarse)").matches; } catch { return false; } };
 
 /** Fold the tab / dots line away. animate: 👍 for THUMB_MS, then the line
@@ -44,7 +47,10 @@ const phoneUi = () => { try { return matchMedia("(max-width: 600px) and (pointer
 export function collapseScBar(root, { animate = true, onThumbGone = null, onThumbPoof = null } = {}) {
   const bar = root && root.querySelector(".sc-bar");
   if (!bar || root.classList.contains("sc-bar-gone") || root.classList.contains("sc-bar-poofed")) return;
+  sessionPoofed = true;
   const fold = () => {
+    // t471u: never leave focus on a tab that is about to be inert / display:none.
+    if (bar.contains(document.activeElement)) { try { document.activeElement.blur(); } catch {} }
     root.classList.add("sc-bar-gone"); // final state (CSS, phones only): no line, no gap
     bar.setAttribute("inert", "");
     bar.setAttribute("aria-hidden", "true");
@@ -64,6 +70,7 @@ export function collapseScBar(root, { animate = true, onThumbGone = null, onThum
   if (onThumbPoof) setTimeout(() => { try { onThumbPoof(); } catch {} }, Math.max(0, THUMB_MS - 500));
   setTimeout(() => {
     thumb.remove();
+    if (!root.isConnected) { fold(); root.classList.remove("sc-bar-poofed"); return; } // t471u: replaced meanwhile
     if (onThumbGone) { try { onThumbGone(); } catch {} }
     const h = bar.getBoundingClientRect().height;
     const mb = parseFloat(getComputedStyle(bar).marginBottom) || 0;
@@ -72,9 +79,14 @@ export function collapseScBar(root, { animate = true, onThumbGone = null, onThum
       anim = bar.animate([{ height: `${h}px`, marginBottom: `${mb}px` }, { height: "0px", marginBottom: "0px" }],
         { duration: COLLAPSE_MS, easing: "ease-in-out", fill: "forwards" });
     } catch {}
-    const done = () => { fold(); root.classList.remove("sc-bar-poofed"); if (anim) anim.cancel(); };
+    let fallback = 0, folded = false;
+    const done = () => {
+      if (folded) return; // t471u: once (onfinish and the fallback both call it)
+      folded = true; clearTimeout(fallback);
+      fold(); root.classList.remove("sc-bar-poofed"); if (anim) { anim.onfinish = null; anim.cancel(); }
+    };
     if (anim) anim.onfinish = done; else done();
-    setTimeout(done, COLLAPSE_MS + 200); // fallback if onfinish never comes
+    if (!folded) fallback = setTimeout(done, COLLAPSE_MS + 200); // fallback if onfinish never comes
   }, THUMB_MS);
 }
 
@@ -87,6 +99,7 @@ export const clampMode = (i, n) => Math.max(0, Math.min(n - 1, i | 0));
  */
 export function mountStatsCarousel({ root, onChange, onThumbGone = null, onThumbPoof = null }) {
   if (!root) return null;
+  if (root.__sc) return root.__sc; // t471u: one mount per element — no doubled listeners / observers
   const viewport = root.querySelector(".sc-viewport");
   const track = root.querySelector(".sc-track");
   const slides = [...root.querySelectorAll(".sc-slide")];
@@ -119,12 +132,11 @@ export function mountStatsCarousel({ root, onChange, onThumbGone = null, onThumb
     // t470u: count switches (tap or swipe); the 3rd quick one on a phone poofs the line away.
     flips.push(performance.now());
     if (flips.length > FLIPS_TO_POOF) flips.shift();
-    const poof = !poofed && phoneUi() && flipBurst(flips);
-    if (poof) { poofed = true; collapseScBar(root, { onThumbGone, onThumbPoof }); }
+    const poof = !sessionPoofed && phoneUi() && flipBurst(flips);
+    if (poof) { collapseScBar(root, { onThumbGone, onThumbPoof }); }
     if (onChange) onChange(i, { poof }); // poof: no switch sound now — the 💨 sfx plays 0.5 s before the 👍 disappears
   }
   const flips = [];
-  let poofed = false;
   // t448u: a tab / key switch already played its sound in go(); while that
   // smooth scroll runs, the scroll-follow below briefly read the old mode
   // (first frames) and then crossed the middle again, which played the switch
@@ -225,7 +237,8 @@ export function mountStatsCarousel({ root, onChange, onThumbGone = null, onThumb
   let lastW = 0;
   const keepPlace = () => {
     const w = viewport.clientWidth;
-    if (!w || w === lastW) return;
+    if (!w) { lastW = 0; return; } // t471u: hidden (no names): re-place the slides when it shows again
+    if (w === lastW) return;
     lastW = w;
     viewport.scrollTo({ left: i * w, behavior: "auto" });
     queueSync();
@@ -274,5 +287,7 @@ export function mountStatsCarousel({ root, onChange, onThumbGone = null, onThumb
   fillTagSlots();
   keepPlace();
   queueSync();
-  return { go, mode: () => i, sync: queueSync };
+  if (sessionPoofed) collapseScBar(root, { animate: false }); // t471u: folded for the rest of the session
+  root.__sc = { go, mode: () => i, sync: queueSync };
+  return root.__sc;
 }
