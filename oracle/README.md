@@ -34,6 +34,7 @@ Since 2026-10-18 the live pipeline runs on Cloudflare: the `ps2-oracle` Worker p
 - `commander_live.py` — the tree model: per-base win contributions, elimination math, kingmaker detection, war-shape classification (1v1 LOCKED / TWO-FRONT WAR / FREE AGENT)
 - Star ratings (★–★★★★★) replace raw probabilities in the UI; the tree is the hidden engine
 - Backtest verdict: raw tree is at/near the achievable ceiling (Brier 0.1501); calibration overlays are noise
+- Benchmark data: see [`benchmark/README.md`](benchmark/README.md) — alert structure (standard vs Meltdown) and the known data mismatches. **Read it before quoting any benchmark mean.**
 - Separate 45-min and 90-min Brier pools; duration-normalized timestamps (`t_eff = t × 90 / duration`)
 
 ### AI Commander
