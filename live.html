@@ -68,23 +68,32 @@
   </script>
   <link rel="stylesheet" href="styles.css?v=20261020-i18n1" />
   <style>
-    /* Installed-app launch splash (t450u–t456u). The whole transparent logo
-       (favicon-512x512.png, 512×512 file) drawn at a fixed 188×188 px, medal ≈ 181 px
-       wide, about the size of Android's own launch icon. Never cropped: no
-       overflow / radius / clip on it or its container. Fixed px only, frozen once
-       by the script below, so a viewport change can't move or rescale it. */
+    /* Installed-app launch splash (t465u). Android draws its own launch splash first:
+       the maskable icon (big medal on black) seen through a 192 px circle, on the
+       manifest background (#000, same black as the icon). Our overlay takes over on
+       the same black with the same picture in the same circle, then opens the circle
+       and grows the whole medal (no second logo popping in = no jump), holds until
+       the first screen is ready (at least 1 s), and fades into the page over 1 s.
+       iPhone / desktop apps have no system splash: the medal starts full size. */
     .splash { display: none; }
-    html.pwa-launch, html.pwa-launch body { background: #202020 !important; }
+    html.pwa-launch, html.pwa-launch body { background: #000 !important; }
     html.pwa-launch .splash {
       display: block; position: fixed; top: 0; left: 0; right: 0;
-      height: 100vh; height: 100lvh; z-index: 9999; background: #202020;
+      height: 100vh; height: 100lvh; z-index: 9999; background: #000;
       animation: none !important; transition: none !important;
     }
-    .splash-logo {
-      display: block; position: absolute; left: 50%; top: 50vh; top: 50lvh;
-      width: 188px; height: 188px; margin: -94px 0 0 -94px; max-width: none;
-      opacity: 1; overflow: visible; border-radius: 0; clip-path: none;
+    .splash-art {
+      position: absolute; left: 50%; top: 50vh; top: 50lvh; width: 288px; height: 288px;
+      margin: -144px 0 0 -144px; transform-origin: 50% 50%; will-change: transform;
       animation: none !important; transition: none !important;
+    }
+    .splash-logo { display: block; width: 100%; height: 100%; max-width: none; }
+    /* Black outside a circle of 1/3 the square = what Android shows; fading it out
+       opens the circle. Only transform / opacity move: both run off the main thread,
+       so app.js loading meanwhile can't make it stutter. */
+    .splash-ring {
+      position: absolute; inset: -1px; will-change: opacity;
+      background: radial-gradient(circle closest-side at 50% 50%, transparent 66.5%, #000 67%);
     }
   </style>
   <script>
@@ -99,7 +108,7 @@
         try { if (sessionStorage.getItem("ps2-launched")) return; sessionStorage.setItem("ps2-launched", "1"); } catch (e) {}
         document.documentElement.classList.add("pwa-launch");
         var l = document.createElement("link");
-        l.rel = "preload"; l.as = "image"; l.href = "favicon-512x512.png";
+        l.rel = "preload"; l.as = "image"; l.href = "icon-maskable-512.png";
         document.head.appendChild(l);
       } catch (e) {}
     })();
@@ -107,35 +116,46 @@
 </head>
 <body class="main-page live-mode">
   <div id="splash" class="splash" aria-hidden="true">
-    <img class="splash-logo" data-src="favicon-512x512.png" width="512" height="512" alt="" decoding="sync" />
+    <div class="splash-art"><img class="splash-logo" data-src="icon-maskable-512.png" width="512" height="512" alt="" decoding="sync" /><div class="splash-ring"></div></div>
   </div>
   <script>
-    // Installed-app splash (t450u–t456u): shown still, held at least 1 s and
-    // until the first screen is ready (page parsed + the
-    // name list and ranks it draws), then the whole overlay
-    // fades out over 1 s and is removed. The fade is driven from JS (Web
-    // Animations) and deliberately ignores prefers-reduced-motion / battery
-    // saver, at the owner's request; it is the only motion. No fade-in, no
-    // movement, no resize. Fallback: the fade starts after 4 s anyway.
+    // Installed-app splash (t465u), see the <style> note in <head>. Fixed px, frozen
+    // once, so a viewport change can't move it. The motion runs even with reduced
+    // motion / battery saver (owner's request for the launch fade, t452u).
     (function () {
       var root = document.documentElement;
       if (!root.classList.contains("pwa-launch")) return;
       var sp = document.getElementById("splash");
       var img = sp && sp.querySelector(".splash-logo");
-      if (!sp || !img) { root.classList.remove("pwa-launch"); return; }
-      // Image only in the installed app (already preloaded in <head>).
+      if (!sp || !img || !sp.querySelector(".splash-art")) { root.classList.remove("pwa-launch"); return; }
       img.src = img.getAttribute("data-src");
-      // Whole logo, 188 px, centred in the page, frozen in px once.
-      var SIZE = 188;
-      var w = window.innerWidth, h = window.innerHeight;
-      if (w > 0 && h > 0) {
-        img.style.margin = "0";
-        img.style.left = Math.round(w / 2 - SIZE / 2) + "px";
-        img.style.top = Math.round(h / 2 - SIZE / 2) + "px";
+      var art = sp.querySelector(".splash-art"), ring = sp.querySelector(".splash-ring");
+      var w = window.innerWidth || 360, h = window.innerHeight || 640;
+      // End size: the 512 px art as big as fits the screen (the medal fills ~86% of the square).
+      var END = Math.round(Math.min(w * 0.92, h * 0.62, 420));
+      var START = 288; // Android 12+ splash: 288 px canvas behind a 192 px circle
+      var android = /Android/i.test(navigator.userAgent || "");
+      art.style.margin = "0";
+      art.style.width = art.style.height = END + "px";
+      art.style.left = Math.round(w / 2 - END / 2) + "px";
+      art.style.top = Math.round(h / 2 - END / 2) + "px";
+      var GROW = 700, shownAt = Date.now(), fading = false;
+      if (android && art.animate) {
+        // First frame = Android's own splash picture (same circle, size, black); then grow.
+        art.style.transform = "scale(" + (START / END) + ")";
+        requestAnimationFrame(function () {
+          shownAt = Date.now();
+          setTimeout(function () {
+            var ease = "cubic-bezier(0.22, 0.9, 0.24, 1)";
+            art.animate([{ transform: "scale(" + (START / END) + ")" }, { transform: "scale(1)" }], { duration: GROW, easing: ease, fill: "forwards" });
+            ring.animate([{ opacity: 1 }, { opacity: 0 }], { duration: GROW * 0.8, easing: "ease-out", fill: "forwards" });
+          }, 90);
+        });
+      } else {
+        ring.style.opacity = "0";
+        GROW = 0;
+        requestAnimationFrame(function () { shownAt = Date.now(); });
       }
-      // The 1 s hold counts from the first frame the logo is actually on screen.
-      var shownAt = Date.now(), fading = false;
-      requestAnimationFrame(function () { shownAt = Date.now(); });
       function finish() { root.classList.remove("pwa-launch"); sp.style.opacity = ""; sp.style.pointerEvents = ""; }
       function fade() {
         if (fading) return; fading = true;
@@ -154,8 +174,9 @@
           })(0);
         }
       }
-      function ready() { setTimeout(fade, Math.max(0, 1000 - (Date.now() - shownAt))); }
-      setTimeout(fade, 4000);
+      // Hold: the grow plus a short look at the whole medal, at least 1.2 s in all.
+      function ready() { setTimeout(fade, Math.max(0, Math.max(1200, GROW + 500) - (Date.now() - shownAt))); }
+      setTimeout(fade, 4500);
       var parsed = new Promise(function (r) { document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", r, { once: true }) : r(); });
       var early = window.__ps2Early || {};
       Promise.all([parsed, early.names, early.ranksLite]).then(ready, ready);

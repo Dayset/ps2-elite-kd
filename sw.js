@@ -12,7 +12,7 @@
 //    offline. Stats are never stale for more than one refresh.
 //  • Everything else (player cache files, ranks.json, Census/Honu calls) is
 //    not touched: it goes straight to the network as before.
-const VERSION = "20261019-pwa6";
+const VERSION = "20261020-pwa7";
 const SHELL = "ps2-shell-" + VERSION;
 const DATA = "ps2-data-v1";
 const SCOPE = new URL("./", self.location).href;
