@@ -1893,6 +1893,16 @@ footer .disclaimer p {
   /* Dayset 2026-10-20: 0 top padding on phones — no background spacer above
    * the input; the page starts flush with the top of the screen. */
   body { padding: 0 0.75rem 0.75rem; }
+  /* Dayset 2026-10-20: the input field itself flush with the screen top —
+   * no panel padding above it, and the (usually empty) cache row above it
+   * must not eat a flex gap either. It reappears when it actually holds
+   * cache chips. Only the panel's 1px border stays above the field. */
+  .controls { padding-top: 0; }
+  /* The cache row's contents are display:none by design (the shared and
+   * browser cache sections are CSS-hidden but rendered), so on phones the
+   * row itself goes too — otherwise its empty flex slot still eats the
+   * 0.6rem gap above the field. */
+  .controls > .cache-row { display: none; }
 }
 
 
