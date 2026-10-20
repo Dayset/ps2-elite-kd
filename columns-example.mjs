@@ -8,7 +8,8 @@
  * (💩 padder penalty + 🚜 vehicle / MAX cut included). Text pieces are pure
  * (exampleFacts / exampleCard), so Node tests cover them.
  */
-import { normalizePlayer, playerMetrics, consistencyParts, MIN_FIGHTS_TIP } from "./player-metrics.mjs?v=20261020-i18n2";
+import { t as tr } from "./i18n.mjs";
+import { normalizePlayer, playerMetrics, consistencyParts, MIN_FIGHTS_RULE } from "./player-metrics.mjs?v=20261020-i18n2";
 import { RF_SOFT, SPEED_BAND_LOW, SPEED_BAND_HIGH, speedSlowFactor, speedAdjustment, SLOPE_FLOOR, SLOPE_EPS } from "./math.mjs?v=20261010-sav1";
 import { percentileOf, quantile } from "./dist.mjs?v=20261010-sav1";
 import { slugKey, bareName } from "./rank-row.mjs?v=20261010-sav1";
@@ -74,17 +75,17 @@ export function exampleFacts(raw, pools = {}) {
 const fmtSigned = (v) => minus(r0(v));
 
 function trackerLook(pct) {
-  if (pct == null || pct < 45) return "below average";
-  if (pct <= 55) return "average";
-  return "above average";
+  if (pct == null || pct < 45) return tr("cx.lookLow", "below average");
+  if (pct <= 55) return tr("cx.lookMid", "average");
+  return tr("cx.lookHigh", "above average");
 }
 function oppWords(ekpm) {
   if (!fin(ekpm)) return "";
-  if (ekpm >= 0.9) return " Very hard opposition.";
-  if (ekpm >= 0.6) return " Hard opposition.";
-  if (ekpm >= 0.42) return " Harder than average opposition.";
-  if (ekpm >= 0.3) return " About average opposition.";
-  return " Soft opposition.";
+  if (ekpm >= 0.9) return tr("cx.oppVhard", " Very hard opposition.");
+  if (ekpm >= 0.6) return tr("cx.oppHard", " Hard opposition.");
+  if (ekpm >= 0.42) return tr("cx.oppHarder", " Harder than average opposition.");
+  if (ekpm >= 0.3) return tr("cx.oppAvg", " About average opposition.");
+  return tr("cx.oppSoft", " Soft opposition.");
 }
 
 /** Inner HTML of the example card (same layout as the static page), DOM-free. */
@@ -92,38 +93,39 @@ export function exampleCard(x) {
   const shown = fin(x.adjs) ? Math.max(0, x.adjs) : NaN;
   const own = f(x.own);
   let pace;
-  if (x.own < SPEED_BAND_LOW && x.adj > 0) pace = `Slow pace (own KPM ${own}, under ${SPEED_BAND_LOW}): × ${f(x.slowFactor)} → ⚔️ iVi <b>${fmtSigned(x.speed)}</b>`;
-  else if (x.own < SPEED_BAND_LOW) pace = `Slow pace (own KPM ${own}, under ${SPEED_BAND_LOW}), but a rating at or below 0 gets no extra cut → ⚔️ iVi <b>${fmtSigned(x.speed)}</b>`;
-  else if (x.own <= SPEED_BAND_HIGH) pace = `Normal pace (own KPM ${own}, ${SPEED_BAND_LOW}–${SPEED_BAND_HIGH}): no change → ⚔️ iVi <b>${fmtSigned(x.speed)}</b>`;
-  else pace = `Fast pace (own KPM ${own}, over ${SPEED_BAND_HIGH}): + ${r0(x.speedDelta)} → ⚔️ iVi <b>${fmtSigned(x.speed)}</b>`;
+  if (x.own < SPEED_BAND_LOW && x.adj > 0) pace = tr("cx.paceSlow", "Slow pace (own KPM {own}, under {low}): × {factor} → ⚔️ iVi <b>{v}</b>", { own, low: SPEED_BAND_LOW, factor: f(x.slowFactor), v: fmtSigned(x.speed) });
+  else if (x.own < SPEED_BAND_LOW) pace = tr("cx.paceSlowZero", "Slow pace (own KPM {own}, under {low}), but a rating at or below 0 gets no extra cut → ⚔️ iVi <b>{v}</b>", { own, low: SPEED_BAND_LOW, v: fmtSigned(x.speed) });
+  else if (x.own <= SPEED_BAND_HIGH) pace = tr("cx.paceNormal", "Normal pace (own KPM {own}, {low}–{high}): no change → ⚔️ iVi <b>{v}</b>", { own, low: SPEED_BAND_LOW, high: SPEED_BAND_HIGH, v: fmtSigned(x.speed) });
+  else pace = tr("cx.paceFast", "Fast pace (own KPM {own}, over {high}): + {delta} → ⚔️ iVi <b>{v}</b>", { own, high: SPEED_BAND_HIGH, delta: r0(x.speedDelta), v: fmtSigned(x.speed) });
   const items = [
-    `Their ${x.top} most-fought opponents kill at ${f(x.ekpm)} per minute (a typical player’s opponents: ~0.35).${oppWords(x.ekpm)}`,
-    `☠️ K/D against them: ${x.kills} ÷ ${x.deaths} = <b>${f(x.rkd)}</b>`,
-    `🛡️ Resist: ${f(x.rkd)} × ${f(x.ekpm)} = <b>${f(x.rf, 3)}</b>`,
-    `Rating: 600 × (1 + log₂(${f(x.rf, 3)} ÷ 0.6)) = <b>${fmtSigned(x.adj)}</b>`,
+    tr("cx.opp", "Their {top} most-fought opponents kill at {ekpm} per minute (a typical player’s opponents: ~0.35).{opp}", { top: x.top, ekpm: f(x.ekpm), opp: oppWords(x.ekpm) }),
+    tr("cx.kd", "☠️ K/D against them: {k} ÷ {d} = <b>{v}</b>", { k: x.kills, d: x.deaths, v: f(x.rkd) }),
+    tr("cx.resist", "🛡️ Resist: {a} × {b} = <b>{v}</b>", { a: f(x.rkd), b: f(x.ekpm), v: f(x.rf, 3) }),
+    tr("cx.rating", "Rating: 600 × (1 + log₂({rf} ÷ 0.6)) = <b>{v}</b>", { rf: f(x.rf, 3), v: fmtSigned(x.adj) }),
     pace,
   ];
-  if (x.poop) items.push(`💩 Confirmed padder: ${x.speed > 0 ? "−10%" : `−${Math.round(0.1 * PADDER_PENALTY_REF)}`} → ⚔️ iVi <b>${fmtSigned(x.afterPoop)}</b>`);
+  if (x.poop) items.push(tr("cx.poop", "💩 Confirmed padder: {cut} → ⚔️ iVi <b>{v}</b>", { cut: x.speed > 0 ? "−10%" : `−${Math.round(0.1 * PADDER_PENALTY_REF)}`, v: fmtSigned(x.afterPoop) }));
   if (x.vehCut > 0) {
     const parts = [];
-    if (x.vehCutVeh > 0) parts.push(`vehicle kills ${Math.round(x.vehOnly * 100)}%: −${Math.round(x.vehCutVeh * 100)}%`);
-    if (x.vehCutMax > 0) parts.push(`MAX kills ${Math.round(x.maxShare * 100)}%: −${Math.round(x.vehCutMax * 100)}%`);
-    items.push(`<a href="#vehicle-cut">🚜</a> ${parts.join(" · ")} → ⚔️ iVi <b>${fmtSigned(x.adjs)}</b>`);
+    if (x.vehCutVeh > 0) parts.push(tr("veh.partVehicle", "vehicle kills {p}%: −{c}%", { p: Math.round(x.vehOnly * 100), c: Math.round(x.vehCutVeh * 100) }));
+    if (x.vehCutMax > 0) parts.push(tr("veh.partMax", "MAX kills {p}%: −{c}%", { p: Math.round(x.maxShare * 100), c: Math.round(x.vehCutMax * 100) }));
+    items.push(tr("cx.veh", '<a href="#vehicle-cut">🚜</a> {parts} → ⚔️ iVi <b>{v}</b>', { parts: parts.join(tr("veh.join", " · ")), v: fmtSigned(x.adjs) }));
   }
-  return `<p><b>What trackers show:</b> <span class="st-num">KD ${f(x.kd)} · IvI ${r0(x.ivi)}</span>, which looks ${trackerLook(x.iviPct)}.</p>
-      <p><b>What the site sees:</b></p>
-      <ol class="st-list st-num">
-${items.map((t) => `        <li>${t}</li>`).join("\n")}
-      </ol>
-      <p><b>Result:</b> ${r0(shown)}, better than ${x.pct == null ? "—" : x.pct}% of tracked players (median ${r0(x.median)}). The public IvI said ${r0(x.ivi)}. Same sample: 🏃 Activity ${f(x.act)} · 🦁 Brave ${f(x.pvs)} · ⚡ Const ${f(x.cons)}.</p>`;
+  const list = items.map((t) => `        <li>${t}</li>`).join("\n");
+  return (
+    tr("cx.trackers", '<p><b>What trackers show:</b> <span class="st-num">KD {kd} · IvI {ivi}</span>, which looks {look}.</p>', { kd: f(x.kd), ivi: r0(x.ivi), look: trackerLook(x.iviPct) }) +
+    "\n      " + tr("cx.sees", "<p><b>What the site sees:</b></p>") +
+    `\n      <ol class="st-list st-num">\n${list}\n      </ol>\n      ` +
+    tr("cx.result", "<p><b>Result:</b> {v}, better than {pct}% of tracked players (median {median}). The public IvI said {ivi}. Same sample: 🏃 Activity {act} · 🦁 Brave {brave} · ⚡ Const {cons}.</p>", { v: r0(shown), pct: x.pct == null ? "—" : x.pct, median: r0(x.median), ivi: r0(x.ivi), act: f(x.act), brave: f(x.pvs), cons: f(x.cons) })
+  );
 }
 
 /** Friendly note for a name that isn't in the shared cache. */
 export function notCachedHtml(name) {
   const b = bareName(name) || String(name).trim();
-  return `“${esc(b)}” isn’t in the shared cache yet. Get their stats on the <a href="index.html?names=${encodeURIComponent(b)}">main page</a> (Analyze), then come back here.`;
+  return tr("cx.notCached", "“{name}” isn’t in the shared cache yet. Get their stats on the <a href=\"index.html?names={enc}\">main page</a> (Analyze), then come back here.", { name: esc(b), enc: encodeURIComponent(b) });
 }
-export const THIN_HTML = (name) => `${esc(bareName(name) || name)} has too few fights to measure yet (${MIN_FIGHTS_TIP.replace(/^Too few fights to measure \(|\)$/g, "")}), so the example keeps the previous player.`;
+export const THIN_HTML = (name) => tr("cx.thin", "{name} has too few fights to measure yet (needs {rule}), so the example keeps the previous player.", { name: esc(bareName(name) || name), rule: MIN_FIGHTS_RULE });
 
 // ---- page wiring (browser only) ----
 if (typeof document !== "undefined") {
@@ -151,7 +153,7 @@ if (typeof document !== "undefined") {
       const typed = String(name || "").trim();
       if (!slugKey(typed)) { say(""); return; }
       let payload;
-      try { payload = await loadRanks(); } catch { if (my === seq) say("Could not load the shared cache right now. Please try again later."); return; }
+      try { payload = await loadRanks(); } catch { if (my === seq) say(tr("cx.loadFail", "Could not load the shared cache right now. Please try again later.")); return; }
       if (my !== seq) return;
       pools ||= { adjs: ranksPool(payload, "adjs"), ivi: ranksPool(payload, "ivi") };
       const row = findRanksRow(payload, typed);

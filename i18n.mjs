@@ -21,6 +21,7 @@ export const LANGS = [
 const STORE = "ps2-elite-kd-lang";
 const ATTRS = [
   ["i18n", "textContent"],
+  ["i18nHtml", "innerHTML"], // trusted HTML from i18n/*.json (links and bold inside a sentence); tests keep the tags identical
   ["i18nTitle", "title"],
   ["i18nAriaLabel", "aria-label"],
   ["i18nPlaceholder", "placeholder"],
@@ -59,10 +60,11 @@ export function t(key, fallback, vars) {
 function put(el, prop, key) {
   let saved = originals.get(el);
   if (!saved) originals.set(el, (saved = {}));
-  if (!(prop in saved)) saved[prop] = prop === "textContent" ? el.textContent : el.getAttribute(prop);
+  if (!(prop in saved)) saved[prop] = prop === "textContent" ? el.textContent : prop === "innerHTML" ? el.innerHTML : el.getAttribute(prop);
   const s = lang !== "en" ? table[key] : undefined;
   const value = typeof s === "string" && s ? s : saved[prop];
   if (prop === "textContent") el.textContent = value;
+  else if (prop === "innerHTML") el.innerHTML = value;
   else if (value == null) el.removeAttribute(prop);
   else el.setAttribute(prop, value);
 }

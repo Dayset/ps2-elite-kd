@@ -375,7 +375,7 @@ import {
 
   /* ---------- 10-name cap ---------- */
   const MAX_NAMES = 6;
-  const LIMIT_HINT_HTML = `<span class="warn">${MAX_NAMES} players limit reached</span>`;
+  const LIMIT_HINT_HTML = `<span class="warn">${tr("msg.limitReached", "{n} players limit reached", { n: MAX_NAMES })}</span>`;
 
   /** Warn (status line) that the field is full; replaces any "graph is ready" hint. */
   function showLimitHint() {
@@ -1319,7 +1319,7 @@ import {
     applyTheme("dark", { redraw: false });
     // Background image back on after wipe (its stored "0" is cleared too)
     applyBgImage(true);
-    setStatus('<span class="ok">Local app data cleared.</span>', "ok");
+    setStatus(`<span class="ok">${tr("msg.wiped", "Local app data cleared.")}</span>`, "ok");
   }
 
   /* ---------- tokenized name input / chips / last link ---------- */
@@ -1474,13 +1474,13 @@ import {
       clearTimeout(busyTimer);
       if (btn) { btn.classList.remove("is-loading"); btn.removeAttribute("aria-busy"); }
     }
-    if (nameTokens.length >= MAX_NAMES) { say(`The list is full (${MAX_NAMES} names)`); return; }
+    if (nameTokens.length >= MAX_NAMES) { say(tr("msg.listFull", "The list is full ({n} names)", { n: MAX_NAMES })); return; }
     const used = new Set(nameTokens.map((n) => slugKey(n)));
     const listVals = nameTokens.map((n) => vals.get(slugKey(n))).filter(Boolean).map((v) => v.adjs);
     if (mode === "range" && !listVals.length) {
       // 🎲 on an empty box: any cached player with ⚔️ iVi above 0.
       const pool = [...vals.entries()].filter(([slug]) => !used.has(slug));
-      if (!pool.length) { say("No cached players with iVi above 0"); return; }
+      if (!pool.length) { say(tr("msg.noCached", "No cached players with iVi above 0")); return; }
       const [, pick] = pool[Math.floor(Math.random() * pool.length)];
       sfx("sparkle"); sfxChipQuietUntil = Date.now() + 400;
       addNameToField(pick.name);
@@ -1488,10 +1488,10 @@ import {
       // and draw the first graph from cache instead of waiting for Analyze.
       setPlaceholderVisible(false);
       scheduleGraphSync({ start: true });
-      say(`Added ${pick.name} (${Math.round(pick.adjs)} iVi) — loading graph…`);
+      say(tr("msg.addedLoading", "Added {name} ({ivi} iVi) — loading graph…", { name: pick.name, ivi: Math.round(pick.adjs) }));
       return;
     }
-    if (!listVals.length) { say("Add a name with an iVi first"); return; }
+    if (!listVals.length) { say(tr("msg.addNameIvi", "Add a name with an iVi first")); return; }
     const sorted = [...listVals].sort((a, b) => a - b);
     const median = sorted.length % 2
       ? sorted[(sorted.length - 1) / 2]
@@ -1502,10 +1502,10 @@ import {
     else if (mode === "high") { lo = median; hi = median * 1.25; }
     else { lo = sorted[0] * 0.75; hi = sorted[sorted.length - 1] * 1.25; }
     const pool = [...vals.entries()].filter(([slug, v]) => !used.has(slug) && v.adjs >= lo && v.adjs <= hi);
-    if (!pool.length) { say(`Nobody in ${Math.round(lo)}–${Math.round(hi)}`); return; }
+    if (!pool.length) { say(tr("msg.nobodyIn", "Nobody in {lo}–{hi}", { lo: Math.round(lo), hi: Math.round(hi) })); return; }
     const [, pick] = pool[Math.floor(Math.random() * pool.length)];
     addNameToField(pick.name);
-    say(`Added ${pick.name} (${Math.round(pick.adjs)} in ${Math.round(lo)}–${Math.round(hi)})${isSavedName(pick.name) ? " — loading graph…" : ". Press Analyze to load."}`);
+    say(tr(isSavedName(pick.name) ? "msg.addedRangeLoading" : "msg.addedRangePress", isSavedName(pick.name) ? "Added {name} ({ivi} in {lo}–{hi}) — loading graph…" : "Added {name} ({ivi} in {lo}–{hi}). Press Analyze to load.", { name: pick.name, ivi: Math.round(pick.adjs), lo: Math.round(lo), hi: Math.round(hi) }));
   }
 
   function toggleNameInField(name, anchor) {
@@ -1623,7 +1623,7 @@ import {
   function lockedClick(btn) {
     if (isListFull()) { showLimitToast(btn); return true; }
     if (nameTokens.length === 0 && (btn === els.diceLowBtn || btn === els.diceHighBtn)) {
-      showLimitToast(btn, `<strong>Add a name first</strong><span class="limit-toast-sub">🎲 roll or type one, then use &lt; / &gt;</span>`);
+      showLimitToast(btn, `<strong>${tr("msg.addNameFirst", "Add a name first")}</strong><span class="limit-toast-sub">${tr("msg.addNameFirstSub", "🎲 roll or type one, then use &lt; / &gt;")}</span>`);
       return true;
     }
     return false;
@@ -3962,7 +3962,7 @@ import {
       // No prior graph → back to idle placeholder.
       showIdleChart(tr("cta.press", "▶️ Press Analyze"));
     }
-    setStatus('<span class="warn">Fetch cancelled.</span>', "warn cancelled");
+    setStatus(`<span class="warn">${tr("msg.cancelled", "Fetch cancelled.")}</span>`, "warn cancelled");
   }
 
   function chartWrap() {
@@ -4021,7 +4021,7 @@ import {
     const clean = names.map((n) => String(n).trim()).filter(Boolean);
     if (!clean.length) {
       clearChartUi();
-      setStatus('<span class="err">Enter at least one character name (spaces or commas).</span>', "err");
+      setStatus(`<span class="err">${tr("msg.needName", "Enter at least one character name (spaces or commas).")}</span>`, "err");
       return;
     }
 
@@ -4080,7 +4080,7 @@ import {
       });
       // Only when something has to come from Census: saved copies are instant, and the
       // line flashing in and out pushed the table and graph down and up (2026-10-19).
-      if (fresh || !clean.every(isSavedName)) setStatus(`Analyzing ${clean.length} player${clean.length > 1 ? "s" : ""}…`);
+      if (fresh || !clean.every(isSavedName)) setStatus(clean.length > 1 ? tr("msg.analyzingN", "Analyzing {n} players…", { n: clean.length }) : tr("msg.analyzing1", "Analyzing 1 player…"));
     }
 
     // ETA plan: which names will need a live Census fetch (vs cached / in memory).
@@ -4566,12 +4566,12 @@ import {
     if (!names.length) {
       if (inField.length) {
         setStatus(
-          '<span class="warn">Nothing to copy — none of these names could be fetched.</span>',
+          `<span class="warn">${tr("msg.copyNone", "Nothing to copy — none of these names could be fetched.")}</span>`,
           "warn"
         );
         return;
       }
-      setStatus('<span class="err">Nothing to copy — enter at least one name.</span>', "err");
+      setStatus(`<span class="err">${tr("msg.copyEmpty", "Nothing to copy — enter at least one name.")}</span>`, "err");
       return;
     }
     const link = buildShareUrl(names);
@@ -4593,7 +4593,7 @@ import {
       flashCopied();
     } catch (e) {
       setStatus(
-        `<span class="warn">Could not copy automatically.</span> ` +
+        `<span class="warn">${tr("msg.copyFail", "Could not copy automatically.")}</span> ` +
         `<span class="src">${escapeHtml(link)}</span>`,
         "warn"
       );
@@ -4608,14 +4608,14 @@ import {
     if (copiedFlashTimer) clearTimeout(copiedFlashTimer);
     btn.textContent = "✓";
     btn.classList.add("copied");
-    btn.title = "Link copied";
-    btn.setAttribute("aria-label", "Link copied");
+    btn.title = tr("msg.linkCopied", "Link copied");
+    btn.setAttribute("aria-label", tr("msg.linkCopied", "Link copied"));
     copiedFlashTimer = setTimeout(() => {
       copiedFlashTimer = 0;
       btn.textContent = "🔗";
       btn.classList.remove("copied");
-      btn.title = "Copy link";
-      btn.setAttribute("aria-label", "Copy link");
+      btn.title = tr("msg.copyLink", "Copy link");
+      btn.setAttribute("aria-label", tr("msg.copyLink", "Copy link"));
     }, 1200);
   }
 
@@ -5260,7 +5260,7 @@ import {
       commitFragment({ clearInput: true });
       const first = currentNamesInField()[0];
       if (!first) {
-        setStatus('<span class="err">🎥 Live needs a name: add one first.</span>', "err");
+        setStatus(`<span class="err">${tr("msg.liveNeedsName", "🎥 Live needs a name: add one first.")}</span>`, "err");
         return;
       }
       window.location.href = `live.html?names=${encodeURIComponent(first)}`;

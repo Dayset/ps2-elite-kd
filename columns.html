@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="robots" content="noindex, nofollow" />
   <link rel="icon" href="data:," />
-  <title>PS2 Elite: what every column means</title>
+  <title data-i18n="cp.title">PS2 Elite: what every column means</title>
   <script>
     // Same theme key as the main page (set before paint).
     try {
@@ -22,7 +22,9 @@
     body { overflow: auto; }
     .st-wrap { max-width: none; margin: 0 auto; padding: 0; } /* Dayset 2026-10-19: same width as the main page — body.site-page already carries max-width: var(--page-w) (#29, site-layout.css); the wrapper no longer narrows it */
     .st-head { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
-    .st-head h1 { font-size: 1.25rem; margin: 0 0 4px; }
+    .st-head { position: relative; }
+    .st-head .lang-select { position: absolute; top: 10px; right: 12px; }
+    .st-head h1 { font-size: 1.25rem; margin: 0 0 4px; padding-right: 8.5rem; }
     .st-head .st-sub { margin-bottom: 0; }
     .st-sub { color: var(--dim); font-size: 0.85rem; margin-bottom: 16px; }
     .st-card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
@@ -76,139 +78,148 @@
 <body class="site-page">
   <main class="st-wrap">
     <div class="st-head">
-    <h1>What every column means</h1>
-    <div class="st-sub">Short answers, one column at a time. Hover any number on the main page for details. <a href="index.html">Back to the stats</a> · <a href="updates.html">Update log</a> · Formulas: <a href="https://github.com/Dayset/ps2-elite-kd/blob/main/docs/metrics.md">docs/metrics.md</a></div>
+    <select id="langSelect" class="lang-select" title="Language" aria-label="Language" data-i18n-title="lang.label" data-i18n-aria-label="lang.label">
+      <option value="en" selected>English</option>
+      <option value="ja">日本語</option>
+      <option value="ru">Русский</option>
+      <option value="de">Deutsch</option>
+      <option value="fr">Français</option>
+      <option value="zh">中文</option>
+      <option value="es">Español</option>
+    </select>
+    <h1 data-i18n="cp.h1">What every column means</h1>
+    <div class="st-sub" data-i18n-html="cp.sub">Short answers, one column at a time. Hover any number on the main page for details. <a href="index.html">Back to the stats</a> · <a href="updates.html">Update log</a> · Formulas: <a href="https://github.com/Dayset/ps2-elite-kd/blob/main/docs/metrics.md">docs/metrics.md</a></div>
     </div>
 
-    <nav class="st-toc" aria-label="On this page">
-      <div class="st-toc-group"><a href="#picture">The idea</a> <span class="sep">·</span> <a href="#why-trackers">Why trackers don’t have it</a> <span class="sep">·</span> <a href="#worked-example">Example</a> <span class="sep">·</span> <a href="#debug">Debug columns</a></div>
-      <div class="st-toc-group"><a class="st-toc-sec" href="#adjusted">✨ Adjusted</a> <span class="sep">·</span> <a href="#ivi">⚔️ iVi</a> <span class="sep">·</span> <a href="#activity">🏃 Activity</a> <span class="sep">·</span> <a href="#brave">🦁 Brave</a> <span class="sep">·</span> <a href="#resist">🛡️ Resist</a> <span class="sep">·</span> <a href="#const">⚡ Const</a> <span class="sep">·</span> <a href="#matchup-kd">☠️ K/D</a> <span class="sep">·</span> <a href="#infantry">🪖 Infantry</a> <span class="sep">·</span> <a href="#vehicle-cut">🚜 Vehicle cut</a> <span class="sep">·</span> <a href="#padder">💩 Padders</a></div>
-      <div class="st-toc-group"><a class="st-toc-sec" href="#public">📊 Public</a> <span class="sep">·</span> <a href="#pub-kd">KD</a> <span class="sep">·</span> <a href="#pub-kpm">KPM</a> <span class="sep">·</span> <a href="#pub-own-kpm">own KPM</a> <span class="sep">·</span> <a href="#pub-acc">Acc %</a> <span class="sep">·</span> <a href="#pub-hsr">HSR %</a> <span class="sep">·</span> <a href="#pub-ivi">IvI</a></div>
+    <nav class="st-toc" aria-label="On this page" data-i18n-aria-label="cp.tocAria">
+      <div class="st-toc-group"><a href="#picture" data-i18n="cp.tocIdea">The idea</a> <span class="sep">·</span> <a href="#why-trackers" data-i18n="cp.tocWhy">Why trackers don’t have it</a> <span class="sep">·</span> <a href="#worked-example" data-i18n="cp.tocExample">Example</a> <span class="sep">·</span> <a href="#debug" data-i18n="cp.tocDebug">Debug columns</a></div>
+      <div class="st-toc-group"><a class="st-toc-sec" href="#adjusted">✨ Adjusted</a> <span class="sep">·</span> <a href="#ivi">⚔️ iVi</a> <span class="sep">·</span> <a href="#activity">🏃 Activity</a> <span class="sep">·</span> <a href="#brave">🦁 Brave</a> <span class="sep">·</span> <a href="#resist">🛡️ Resist</a> <span class="sep">·</span> <a href="#const">⚡ Const</a> <span class="sep">·</span> <a href="#matchup-kd">☠️ K/D</a> <span class="sep">·</span> <a href="#infantry" data-i18n="cp.tocInfantry">🪖 Infantry</a> <span class="sep">·</span> <a href="#vehicle-cut" data-i18n="cp.tocVehicle">🚜 Vehicle cut</a> <span class="sep">·</span> <a href="#padder" data-i18n="cp.tocPadder">💩 Padders</a></div>
+      <div class="st-toc-group"><a class="st-toc-sec" href="#public" data-i18n="cp.tocPublic">📊 Public</a> <span class="sep">·</span> <a href="#pub-kd">KD</a> <span class="sep">·</span> <a href="#pub-kpm">KPM</a> <span class="sep">·</span> <a href="#pub-own-kpm">own KPM</a> <span class="sep">·</span> <a href="#pub-acc">Acc %</a> <span class="sep">·</span> <a href="#pub-hsr">HSR %</a> <span class="sep">·</span> <a href="#pub-ivi">IvI</a></div>
     </nav>
 
     <div class="st-card">
-      <h2 id="picture">The idea in one picture</h2>
-      <svg class="st-curve" viewBox="0 0 440 170" role="img" aria-label="Your K/D drawn against opponent strength: high against easy opponents on the left, lower against hard opponents on the right.">
+      <h2 id="picture" data-i18n="cp.picture">The idea in one picture</h2>
+      <svg class="st-curve" viewBox="0 0 440 170" role="img" aria-label="Your K/D drawn against opponent strength: high against easy opponents on the left, lower against hard opponents on the right." data-i18n-aria-label="cp.curveAria">
         <rect class="band" x="50" y="10" width="120" height="122" />
         <rect class="band" x="290" y="10" width="120" height="122" />
         <path class="ax" d="M50 10 V132 H420" />
         <path class="ln" d="M60 40 C 150 52, 230 78, 405 104" />
-        <text x="110" y="26" text-anchor="middle">easy third</text>
-        <text x="350" y="26" text-anchor="middle">hard third</text>
+        <text x="110" y="26" text-anchor="middle" data-i18n="cp.easyThird">easy third</text>
+        <text x="350" y="26" text-anchor="middle" data-i18n="cp.hardThird">hard third</text>
         <text class="k" x="44" y="22" text-anchor="end">K/D</text>
-        <text x="60" y="150">easy opponents</text>
-        <text x="410" y="150" text-anchor="end">hard opponents →</text>
-        <text x="235" y="166" text-anchor="middle">(how fast they kill)</text>
+        <text x="60" y="150" data-i18n="cp.easyOpp">easy opponents</text>
+        <text x="410" y="150" text-anchor="end" data-i18n="cp.hardOpp">hard opponents →</text>
+        <text x="235" y="166" text-anchor="middle" data-i18n="cp.howFast">(how fast they kill)</text>
       </svg>
-      <p>Most ✨ columns read this line: your K/D against opponents from easy (left) to hard (right). It uses the ~200 players you fight most, not your whole career.</p>
-      <p>Why it matters: a player can show 3.96 lifetime K/D and only 1.15 against the people he really fights.</p>
+      <p data-i18n="cp.idea1">Most ✨ columns read this line: your K/D against opponents from easy (left) to hard (right). It uses the ~200 players you fight most, not your whole career.</p>
+      <p data-i18n="cp.idea2">Why it matters: a player can show 3.96 lifetime K/D and only 1.15 against the people he really fights.</p>
     </div>
 
     <div class="st-card">
-      <h2 id="why-trackers">Why Honu and Fisu don’t show these</h2>
-      <p>They look up one player. These columns also need the stats of your ~200 opponents, so this site keeps them all cached and refreshed. The 📊 Public columns are the same numbers the trackers show.</p>
+      <h2 id="why-trackers" data-i18n="cp.whyH">Why Honu and Fisu don’t show these</h2>
+      <p data-i18n="cp.whyP">They look up one player. These columns also need the stats of your ~200 opponents, so this site keeps them all cached and refreshed. The 📊 Public columns are the same numbers the trackers show.</p>
     </div>
 
-    <h2 class="st-section" id="adjusted">✨ Adjusted (the default columns)</h2>
+    <h2 class="st-section" id="adjusted" data-i18n="cp.secAdjusted">✨ Adjusted (the default columns)</h2>
 
     <div class="st-card">
-      <h3 id="ivi">⚔️ iVi — your overall rating</h3>
-      <p>How good you are, once your opponents’ strength is counted.</p>
+      <h3 id="ivi" data-i18n="cp.iviH">⚔️ iVi — your overall rating</h3>
+      <p data-i18n="cp.iviP">How good you are, once your opponents’ strength is counted.</p>
       <ul class="st-list">
-        <li>Beating strong players counts more than beating weak ones.</li>
-        <li>Fast killing adds a bonus; slow, safe play costs a little.</li>
-        <li>Infantry only: vehicle and MAX kills above 10% lower it (<a href="#vehicle-cut">🚜</a>). Confirmed padders lose 10% (<a href="#padder">💩</a>).</li>
+        <li data-i18n="cp.iviL1">Beating strong players counts more than beating weak ones.</li>
+        <li data-i18n="cp.iviL2">Fast killing adds a bonus; slow, safe play costs a little.</li>
+        <li data-i18n-html="cp.iviL3">Infantry only: vehicle and MAX kills above 10% lower it (<a href="#vehicle-cut">🚜</a>). Confirmed padders lose 10% (<a href="#padder">💩</a>).</li>
       </ul>
       <ul class="st-hl">
-        <li><span class="up">High:</span> you beat strong players at a good pace.</li>
-        <li><span class="down">Low:</span> your wins come from weak players, or you play slowly. Below zero shows as 0.</li>
+        <li data-i18n-html="cp.iviHigh"><span class="up">High:</span> you beat strong players at a good pace.</li>
+        <li data-i18n-html="cp.iviLow"><span class="down">Low:</span> your wins come from weak players, or you play slowly. Below zero shows as 0.</li>
       </ul>
     </div>
 
     <div class="st-card">
-      <h3 id="activity">🏃 Activity — winning fights, fast</h3>
-      <p>Your <a href="#matchup-kd">☠️ K/D</a> × how fast you kill.</p>
+      <h3 id="activity" data-i18n="cp.actH">🏃 Activity — winning fights, fast</h3>
+      <p data-i18n-html="cp.actP">Your <a href="#matchup-kd">☠️ K/D</a> × how fast you kill.</p>
       <ul class="st-hl">
-        <li><span class="up">High:</span> lots of fights won, quickly.</li>
-        <li><span class="down">Low:</span> you lose more than you win, or you kill slowly.</li>
+        <li data-i18n-html="cp.actHigh"><span class="up">High:</span> lots of fights won, quickly.</li>
+        <li data-i18n-html="cp.actLow"><span class="down">Low:</span> you lose more than you win, or you kill slowly.</li>
       </ul>
     </div>
 
     <div class="st-card">
-      <h3 id="brave">🦁 Brave — does it hold against strong players?</h3>
-      <p>Your 🏃 Activity, checked against the fastest-killing enemies you meet.</p>
+      <h3 id="brave" data-i18n="cp.braveH">🦁 Brave — does it hold against strong players?</h3>
+      <p data-i18n="cp.braveP">Your 🏃 Activity, checked against the fastest-killing enemies you meet.</p>
       <ul class="st-hl">
-        <li><span class="up">High:</span> you stay strong when the enemy gets strong.</li>
-        <li><span class="down">Low with a high iVi:</span> you pick easy fights and avoid even ones.</li>
+        <li data-i18n-html="cp.braveHigh"><span class="up">High:</span> you stay strong when the enemy gets strong.</li>
+        <li data-i18n-html="cp.braveLow"><span class="down">Low with a high iVi:</span> you pick easy fights and avoid even ones.</li>
       </ul>
     </div>
 
     <div class="st-card">
-      <h3 id="resist">🛡️ Resist — K/D, weighted by enemy danger</h3>
-      <p>Your <a href="#matchup-kd">☠️ K/D</a> × how fast your enemies kill. 1.0 K/D against killers is worth more than 1.0 against beginners. ⚔️ iVi is built from it.</p>
+      <h3 id="resist" data-i18n="cp.resH">🛡️ Resist — K/D, weighted by enemy danger</h3>
+      <p data-i18n-html="cp.resP">Your <a href="#matchup-kd">☠️ K/D</a> × how fast your enemies kill. 1.0 K/D against killers is worth more than 1.0 against beginners. ⚔️ iVi is built from it.</p>
       <ul class="st-hl">
-        <li><span class="up">High:</span> you hold your own against fast killers.</li>
-        <li><span class="down">Low:</span> your K/D comes from slower enemies.</li>
+        <li data-i18n-html="cp.resHigh"><span class="up">High:</span> you hold your own against fast killers.</li>
+        <li data-i18n-html="cp.resLow"><span class="down">Low:</span> your K/D comes from slower enemies.</li>
       </ul>
     </div>
 
     <div class="st-card">
-      <h3 id="const">⚡ Const — do you hold up at the hard end?</h3>
-      <p>Your K/D in the hard third ÷ your K/D in the easy third of the picture above (max 1). Shown as a percentile.</p>
+      <h3 id="const" data-i18n="cp.constH">⚡ Const — do you hold up at the hard end?</h3>
+      <p data-i18n="cp.constP">Your K/D in the hard third ÷ your K/D in the easy third of the picture above (max 1). Shown as a percentile.</p>
       <ul class="st-hl">
-        <li><span class="up">High (line stays flat):</span> you do as well against hard opponents as easy ones.</li>
-        <li><span class="down">Low (line drops):</span> you farm easy opponents and struggle against hard ones.</li>
+        <li data-i18n-html="cp.constHigh"><span class="up">High (line stays flat):</span> you do as well against hard opponents as easy ones.</li>
+        <li data-i18n-html="cp.constLow"><span class="down">Low (line drops):</span> you farm easy opponents and struggle against hard ones.</li>
       </ul>
-      <p class="st-dim">Catch: someone equally weak everywhere also scores high, so Const is only a colour hint, never a rating.</p>
+      <p class="st-dim" data-i18n="cp.constNote">Catch: someone equally weak everywhere also scores high, so Const is only a colour hint, never a rating.</p>
     </div>
 
     <div class="st-card">
-      <h3 id="matchup-kd">☠️ K/D — against people you actually fight</h3>
-      <p>Kills ÷ deaths against your ~200 most-fought players. Not your lifetime K/D. Every ✨ column starts from this.</p>
+      <h3 id="matchup-kd" data-i18n="cp.kdH">☠️ K/D — against people you actually fight</h3>
+      <p data-i18n="cp.kdP">Kills ÷ deaths against your ~200 most-fought players. Not your lifetime K/D. Every ✨ column starts from this.</p>
       <ul class="st-hl">
-        <li><span class="up">High:</span> you win most of those fights.</li>
-        <li><span class="down">Low:</span> you die more than you kill.</li>
+        <li data-i18n-html="cp.kdHigh"><span class="up">High:</span> you win most of those fights.</li>
+        <li data-i18n-html="cp.kdLow"><span class="down">Low:</span> you die more than you kill.</li>
       </ul>
     </div>
 
     <div class="st-card">
-      <h3 id="infantry">🪖 Infantry — kills made on foot</h3>
-      <p>% of your lifetime kills made with infantry weapons. MAX counts as infantry here; vehicles, turrets and roadkills don’t. Shown from 100 kills (“—” until measured). Hover for your MAX and vehicle shares.</p>
+      <h3 id="infantry" data-i18n="cp.infH">🪖 Infantry — kills made on foot</h3>
+      <p data-i18n="cp.infP">% of your lifetime kills made with infantry weapons. MAX counts as infantry here; vehicles, turrets and roadkills don’t. Shown from 100 kills (“—” until measured). Hover for your MAX and vehicle shares.</p>
     </div>
 
     <div class="st-card">
-      <h3 id="vehicle-cut">🚜 Vehicle + MAX cut on ⚔️ iVi</h3>
-      <p>The first 10% of vehicle kills are free; every % above costs 1% of iVi. MAX kills work the same way, separately. The two add up.</p>
+      <h3 id="vehicle-cut" data-i18n="cp.vcH">🚜 Vehicle + MAX cut on ⚔️ iVi</h3>
+      <p data-i18n="cp.vcP">The first 10% of vehicle kills are free; every % above costs 1% of iVi. MAX kills work the same way, separately. The two add up.</p>
       <ul class="st-list">
-        <li>45% vehicle + 40% MAX → −35% −30% = <b>−65%</b></li>
-        <li>96% vehicle → <b>−86%</b></li>
-        <li>Pure infantry → no cut</li>
+        <li data-i18n-html="cp.vcL1">45% vehicle + 40% MAX → −35% −30% = <b>−65%</b></li>
+        <li data-i18n-html="cp.vcL2">96% vehicle → <b>−86%</b></li>
+        <li data-i18n="cp.vcL3">Pure infantry → no cut</li>
       </ul>
-      <p class="st-dim">Why: farming infantry from a tank, aircraft or MAX is easier than on foot. Hover the iVi value to see the cut. The site owner can exempt a player.</p>
+      <p class="st-dim" data-i18n="cp.vcNote">Why: farming infantry from a tank, aircraft or MAX is easier than on foot. Hover the iVi value to see the cut. The site owner can exempt a player.</p>
     </div>
 
     <div class="st-card">
-      <h3 id="padder">💩 Confirmed padders: −10% on ⚔️ iVi</h3>
-      <p>Players confirmed farming kills on their own or friendly alt accounts get 💩 and lose 10% of iVi (kills on farm accounts are already left out). Hover 💩 for the reason. Think it’s wrong? Contact the site owner.</p>
+      <h3 id="padder" data-i18n="cp.pdH">💩 Confirmed padders: −10% on ⚔️ iVi</h3>
+      <p data-i18n="cp.pdP">Players confirmed farming kills on their own or friendly alt accounts get 💩 and lose 10% of iVi (kills on farm accounts are already left out). Hover 💩 for the reason. Think it’s wrong? Contact the site owner.</p>
     </div>
 
     <div class="st-sec-head">
-    <h2 class="st-section" id="public">📊 Public (the tracker numbers)</h2>
-    <p class="st-dim">Lifetime numbers from Census, no adjustment. The same ones Honu and Fisu show.</p>
+    <h2 class="st-section" id="public" data-i18n="cp.pubH">📊 Public (the tracker numbers)</h2>
+    <p class="st-dim" data-i18n="cp.pubSub">Lifetime numbers from Census, no adjustment. The same ones Honu and Fisu show.</p>
     </div>
 
     <div class="st-card">
       <dl class="st-defs">
-        <dt id="pub-kd">KD</dt><dd>Kills ÷ deaths over your whole career, against everyone. Flatters players who farm weak opponents.</dd>
-        <dt id="pub-kpm">KPM</dt><dd>Kills per minute over your whole career.</dd>
-        <dt id="pub-own-kpm">own KPM</dt><dd>Kills per minute with your own weapons. Drives the iVi pace bonus or cut.</dd>
-        <dt id="pub-acc">Acc %</dt><dd>Share of your shots that hit.</dd>
-        <dt id="pub-hsr">HSR %</dt><dd>Share of your kills that were headshots.</dd>
-        <dt id="pub-ivi">IvI</dt><dd>Census’s lifetime infantry score, with no opponent weighting. Compare it with ⚔️ iVi (see the example).</dd>
+        <dt id="pub-kd">KD</dt><dd data-i18n="cp.pubKd">Kills ÷ deaths over your whole career, against everyone. Flatters players who farm weak opponents.</dd>
+        <dt id="pub-kpm">KPM</dt><dd data-i18n="cp.pubKpm">Kills per minute over your whole career.</dd>
+        <dt id="pub-own-kpm">own KPM</dt><dd data-i18n="cp.pubOwn">Kills per minute with your own weapons. Drives the iVi pace bonus or cut.</dd>
+        <dt id="pub-acc">Acc %</dt><dd data-i18n="cp.pubAcc">Share of your shots that hit.</dd>
+        <dt id="pub-hsr">HSR %</dt><dd data-i18n="cp.pubHsr">Share of your kills that were headshots.</dd>
+        <dt id="pub-ivi">IvI</dt><dd data-i18n="cp.pubIvi">Census’s lifetime infantry score, with no opponent weighting. Compare it with ⚔️ iVi (see the example).</dd>
       </dl>
     </div>
 
-    <h2 class="st-section" id="worked-example">Example: <input id="exName" class="st-name-in" type="text" value="YuigahamaYui" aria-label="Character name for the example (type any cached name)" autocomplete="off" spellcheck="false" enterkeyhint="go" /></h2>
+    <h2 class="st-section" id="worked-example"><span data-i18n="cp.exTitle">Example:</span> <input id="exName" class="st-name-in" type="text" value="YuigahamaYui" aria-label="Character name for the example (type any cached name)" data-i18n-aria-label="cp.exNameAria" autocomplete="off" spellcheck="false" enterkeyhint="go" /></h2>
     <p class="st-dim" id="exMsg" role="status" hidden></p>
 
     <div class="st-card" id="exCard">
@@ -228,23 +239,24 @@
     <hr class="st-debug-sep" />
 
     <details class="st-debug-box" id="debug">
-      <summary><h2>Debug-only columns</h2></summary>
-      <p class="st-dim">Older or in-between numbers. Tick “show older debug stats” in the main page footer to see them. Not used to judge anyone.</p>
+      <summary><h2 data-i18n="cp.dbgH">Debug-only columns</h2></summary>
+      <p class="st-dim" data-i18n="cp.dbgP">Older or in-between numbers. Tick “show older debug stats” in the main page footer to see them. Not used to judge anyone.</p>
       <div class="st-card">
         <dl class="st-defs">
-          <dt>⚙️ Mech%</dt><dd>A guess of your vehicle / mech share, projected from 🛡️ Resist. Not measured.</dd>
-          <dt>🎯🎈 ivi</dt><dd>⚔️ iVi before the pace bonus or cut, so slow play still looks good.</dd>
-          <dt>eKPM</dt><dd>How fast your opponents kill, on average. Higher = harder opposition.</dd>
-          <dt>own KPM</dt><dd>Same as the 📊 Public column.</dd>
-          <dt>📊 COI</dt><dd>🛡️ Resist ÷ 0.6. 1.0 = soft opposition; higher = harder.</dd>
-          <dt>📉 Slope</dt><dd>The angle of your line. Negative = your K/D drops against harder enemies. Feeds 🦁 Brave.</dd>
-          <dt>🎈 Inflation</dt><dd>Lifetime KD ÷ KD against enemies killing at 0.5+ per minute. Above 1 = easy fights inflate your KD. Lower is better.</dd>
+          <dt>⚙️ Mech%</dt><dd data-i18n="cp.dbgMech">A guess of your vehicle / mech share, projected from 🛡️ Resist. Not measured.</dd>
+          <dt>🎯🎈 ivi</dt><dd data-i18n="cp.dbgIvi">⚔️ iVi before the pace bonus or cut, so slow play still looks good.</dd>
+          <dt>eKPM</dt><dd data-i18n="cp.dbgEkpm">How fast your opponents kill, on average. Higher = harder opposition.</dd>
+          <dt>own KPM</dt><dd data-i18n="cp.dbgOwn">Same as the 📊 Public column.</dd>
+          <dt>📊 COI</dt><dd data-i18n="cp.dbgCoi">🛡️ Resist ÷ 0.6. 1.0 = soft opposition; higher = harder.</dd>
+          <dt>📉 Slope</dt><dd data-i18n="cp.dbgSlope">The angle of your line. Negative = your K/D drops against harder enemies. Feeds 🦁 Brave.</dd>
+          <dt>🎈 Inflation</dt><dd data-i18n="cp.dbgInfl">Lifetime KD ÷ KD against enemies killing at 0.5+ per minute. Above 1 = easy fights inflate your KD. Lower is better.</dd>
         </dl>
       </div>
     </details>
   </main>
-  <button id="toTop" class="st-totop" aria-label="Back to top" title="Back to top">↑</button>
-  <script type="module" src="columns-example.mjs?v=20261019-ex1"></script>
+  <button id="toTop" class="st-totop" aria-label="Back to top" title="Back to top" data-i18n-aria-label="cp.top" data-i18n-title="cp.top">↑</button>
+  <script type="module" src="i18n.mjs"></script>
+  <script type="module" src="columns-example.mjs?v=20261020-i18n2"></script>
   <script>
     // TOC jump into the collapsed debug section opens it first.
     document.querySelectorAll('.st-toc a[href^="#"]').forEach(function (a) {

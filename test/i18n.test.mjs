@@ -75,7 +75,7 @@ test("translations keep the same {placeholders} as English", () => {
 });
 
 test("every data-i18n key used by index.html exists in en.json", () => {
-  const html = read("index.html");
+  const html = read("index.html") + read("columns.html");
   const used = new Set([...html.matchAll(/data-i18n(?:-[a-z-]+)?="([^"]+)"/g)].map((m) => m[1]));
   assert.ok(used.size > 20, "the page marks its UI text");
   const missing = [...used].filter((k) => !(k in en));
@@ -84,7 +84,7 @@ test("every data-i18n key used by index.html exists in en.json", () => {
 
 test("every tr(\"key\", …) call in the UI modules exists in en.json", () => {
   const used = new Set();
-  for (const file of ["app.js", "rankings.mjs", "name-suggest.mjs", "infantry.mjs", "vehicle-cut.mjs", "analyze-run.mjs", "padding.mjs", "player-metrics.mjs", "jump-btns.mjs", "live.mjs"]) {
+  for (const file of ["app.js", "rankings.mjs", "name-suggest.mjs", "infantry.mjs", "vehicle-cut.mjs", "analyze-run.mjs", "padding.mjs", "player-metrics.mjs", "jump-btns.mjs", "live.mjs", "columns-example.mjs"]) {
     for (const m of read(file).matchAll(/\btr\("([^"]+)"/g)) used.add(m[1]);
   }
   assert.ok(used.size > 30, "the UI modules use the translator");
