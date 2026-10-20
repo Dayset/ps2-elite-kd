@@ -8,8 +8,10 @@
 // Keep the import URL plain (no ?v= tag): index.html and app.js both import this file,
 // and two URLs would make two module instances (see claude/working-setup.md).
 
-/* The #langSelect options show the flag only (owner 2026-10-20: keeps the
- * field short); `name` stays for the detected-language banner. */
+/* Closed, the #langSelect shows the flag only (owner 2026-10-20: keeps the
+ * field short); while the menu is open the options carry their names too —
+ * the opened menu is huge, so there is room (see the ready block below).
+ * `name` also serves the detected-language banner. */
 export const LANGS = [
   { code: "en", name: "English", flag: "🇬🇧" },
   { code: "ja", name: "日本語", flag: "🇯🇵" },
@@ -163,6 +165,18 @@ export const ready = typeof document === "undefined" ? Promise.resolve("en") : (
       saveLang(sel.value);
       location.reload();
     });
+    // Owner 2026-10-20: while the menu is open its options read "🇩🇪 Deutsch"
+    // (the menu has the room); closed, they collapse back to the flag alone.
+    const paintOpts = (named) => {
+      for (const opt of sel.options) {
+        const l = LANGS.find((x) => x.code === opt.value);
+        if (l) opt.textContent = named ? `${l.flag} ${l.name}` : l.flag;
+      }
+    };
+    sel.addEventListener("pointerdown", () => paintOpts(true));
+    sel.addEventListener("focus", () => paintOpts(true));
+    sel.addEventListener("change", () => paintOpts(false));
+    sel.addEventListener("blur", () => paintOpts(false));
   }
   const shown = await setLang(first);
   if (document.body) showDetectedBanner(); else document.addEventListener("DOMContentLoaded", showDetectedBanner, { once: true });
