@@ -167,6 +167,8 @@ describe("Rankings: fresh browser copy + readable chart names (t338u)", () => {
         await nav("index.html");
         await ev(`localStorage.setItem("ps2-elite-kd-cache-v2", ${JSON.stringify(JSON.stringify(store))}); 1`);
         await nav(`index.html?names=${picks.map(encodeURIComponent).join(",")},shlodog#rankings`);
+      await ev(`new Promise(async (r) => { for (let t = 0; t < 200; t++) { const d = document.getElementById("ranksTableSection"); if (d) { d.open = true; return r(1); } await new Promise((q) => setTimeout(q, 50)); } r(0); })`);
+            await ev(`new Promise(async (r) => { for (let t = 0; t < 200; t++) { const btns = [...document.querySelectorAll("#ranksBody tr.rk-tier:not(.open) .rk-tier-btn")]; if (btns.length) { btns.forEach(b => b.click()); return r(1); } await new Promise((q) => setTimeout(q, 50)); } r(0); })`);
         await ev(`new Promise(async (r) => { for (let t = 0; t < 400 && !document.querySelector("#ranksBody tr[data-q]"); t++) await new Promise((q) => setTimeout(q, 50)); r(1); })`);
         await new Promise((r) => setTimeout(r, 500));
         await ev(`(async () => { const i = document.getElementById("ranksSearch"); i.value = "shlodog"; i.dispatchEvent(new Event("input", { bubbles: true })); await new Promise((r) => setTimeout(r, 400)); })()`);
@@ -225,10 +227,10 @@ describe("One page: names typed in the names box tick the Rankings table (t348u 
     await withPage(async ({ ev, nav }) => {
       await nav("index.html#rankings");
       await ev(`new Promise(async (r) => { for (let t = 0; t < 200; t++) { const d = document.getElementById("ranksTableSection"); if (d) { d.open = true; return r(1); } await new Promise((q) => setTimeout(q, 50)); } r(0); })`);
-            await ev(`new Promise(async (r) => { for (let t = 0; t < 200; t++) { const b = document.querySelector("#ranksBody tr.rk-tier .rk-tier-btn"); if (b) { b.click(); return r(1); } await new Promise((q) => setTimeout(q, 50)); } r(0); })`);
+            await ev(`new Promise(async (r) => { for (let t = 0; t < 200; t++) { const btns = [...document.querySelectorAll("#ranksBody tr.rk-tier:not(.open) .rk-tier-btn")]; if (btns.length) { btns.forEach(b => b.click()); return r(1); } await new Promise((q) => setTimeout(q, 50)); } r(0); })`);
       await ev(`new Promise(async (r) => { for (let t = 0; t < 400 && !document.querySelector("#ranksBody tr[data-q]"); t++) await new Promise((q) => setTimeout(q, 50)); r(1); })`);
       await ev(`(() => { document.getElementById("clearNamesBtn").click(); return 1; })()`);
-      const type = (txt) => ev(`(async () => { const i = document.getElementById("namesInput"); i.focus(); for (const ch of ${JSON.stringify(txt)}) { i.value += ch; i.dispatchEvent(new InputEvent("input", { bubbles: true, data: ch, inputType: "insertText" })); } await new Promise((r) => setTimeout(r, 400)); return { value: i.value, chips: [...document.querySelectorAll("#nameTokens .name-token")].map((b) => b.textContent.trim().toLowerCase()), ticked: [...document.querySelectorAll('#ranksBody input[type="checkbox"]:checked')].map((c) => c.closest("tr").dataset.q.toLowerCase()).sort(), focused: document.activeElement === i }; })()`);
+      const type = (txt) => ev(`(async () => { const i = document.getElementById("namesInput"); i.focus(); for (const ch of ${JSON.stringify(txt)}) { i.value += ch; i.dispatchEvent(new InputEvent("input", { bubbles: true, data: ch, inputType: "insertText" })); } await new Promise((r) => setTimeout(r, 400)); return { value: i.value, chips: [...document.querySelectorAll("#nameTokens .name-token")].map((b) => { const c = b.cloneNode(true); const n = c.querySelector(".name-token-num"); if (n) n.remove(); return c.textContent.trim().toLowerCase(); }), ticked: [...document.querySelectorAll('#ranksBody input[type="checkbox"]:checked')].map((c) => c.closest("tr").dataset.q.toLowerCase()).sort(), focused: document.activeElement === i }; })()`);
       let s = await type("SHLODOG ");
       assert.deepEqual(s.chips, ["shlodog"]);
       assert.equal(s.value, "");
@@ -254,6 +256,8 @@ describe("Rankings chart clicks scroll the list with picks + search text (t349u/
     if (picks.length < 3) return;
     await withPage(async ({ ev, nav, send, sessionId }) => {
       await nav(`index.html?names=${picks.join(",")}#rankings`);
+      await ev(`new Promise(async (r) => { for (let t = 0; t < 200; t++) { const d = document.getElementById("ranksTableSection"); if (d) { d.open = true; return r(1); } await new Promise((q) => setTimeout(q, 50)); } r(0); })`);
+            await ev(`new Promise(async (r) => { for (let t = 0; t < 200; t++) { const btns = [...document.querySelectorAll("#ranksBody tr.rk-tier:not(.open) .rk-tier-btn")]; if (btns.length) { btns.forEach(b => b.click()); return r(1); } await new Promise((q) => setTimeout(q, 50)); } r(0); })`);
       await ev(`new Promise(async (res) => { for (let t = 0; t < 400 && !document.querySelector("#distSvg .dist-hit"); t++) await new Promise((r) => setTimeout(r, 50)); res(1); })`);
       // Left-over search text (the old cause: table filtered to 1 row → nothing to scroll to).
       await ev(`(async () => { const i = document.getElementById("ranksSearch"); i.value = "yeez"; i.dispatchEvent(new Event("input", { bubbles: true })); await new Promise((r) => setTimeout(r, 500)); })()`);
@@ -291,7 +295,7 @@ describe("Analyze: removing a chip updates graph + tables right away; Analyze ne
     await withPage(async ({ ev, nav }) => {
       await nav("index.html?names=" + encodeURIComponent(NAMES.join(",")));
       const statsNames = () => ev(`[...document.querySelectorAll("#statsPanel .stats-name .nm")].map((e) => e.getAttribute("data-full") || e.textContent)`);
-      const idle = () => ev(`new Promise(async (res) => { for (let t = 0; t < 300; t++) { if (!document.getElementById("analyzeBtn").disabled && document.querySelectorAll("#statsPanel .stats-name").length) break; await new Promise((r) => setTimeout(r, 50)); } await new Promise((r) => setTimeout(r, 400)); res(1); })`);
+      const idle = () => ev(`new Promise(async (res) => { for (let t = 0; t < 300; t++) { if (!document.getElementById("analyzeBtn").disabled && document.querySelectorAll('#statsPanel th[scope="row"].stats-name').length) break; await new Promise((r) => setTimeout(r, 50)); } await new Promise((r) => setTimeout(r, 400)); res(1); })`);
       await idle();
       assert.equal((await statsNames()).length, 6);
       const statsHas = (n) => ev(`[...document.querySelectorAll("#statsPanel tbody")].some((tb) => tb.innerHTML.includes(${JSON.stringify(n)}))`);
@@ -332,11 +336,13 @@ describe("Rankings: removing a names-box chip unticks, unmarks and updates ?name
     if (picks.length < 3) return;
     await withPage(async ({ ev, nav }) => {
       await nav(`index.html?names=${picks.join(",")}#rankings`);
-      await ev(`new Promise(async (res) => { for (let t = 0; t < 400 && !(document.querySelectorAll("#distSvg text.dist-name").length >= 3 && document.querySelectorAll("#statsPanel .stats-name").length >= 3); t++) await new Promise((r) => setTimeout(r, 50)); res(1); })`);
+      await ev(`new Promise(async (r) => { for (let t = 0; t < 200; t++) { const d = document.getElementById("ranksTableSection"); if (d) { d.open = true; return r(1); } await new Promise((q) => setTimeout(q, 50)); } r(0); })`);
+            await ev(`new Promise(async (r) => { for (let t = 0; t < 200; t++) { const btns = [...document.querySelectorAll("#ranksBody tr.rk-tier:not(.open) .rk-tier-btn")]; if (btns.length) { btns.forEach(b => b.click()); return r(1); } await new Promise((q) => setTimeout(q, 50)); } r(0); })`);
+      await ev(`new Promise(async (res) => { for (let t = 0; t < 400 && !(document.querySelectorAll("#distSvg text.dist-name").length >= 3 && document.querySelectorAll('#statsPanel th[scope="row"].stats-name').length >= 3); t++) await new Promise((r) => setTimeout(r, 50)); res(1); })`);
       const q = await ev(`document.querySelector("#distSvg text.dist-name").getAttribute("data-q")`);
       await ev(`[...document.querySelectorAll("#nameTokens .name-token")].find((b) => b.textContent.trim().toLowerCase() === ${JSON.stringify(q)}.toLowerCase()).click(), 1`);
       await new Promise((r) => setTimeout(r, 500));
-      const st = await ev(`({ chips: document.querySelectorAll("#nameTokens .name-token").length, stats: document.querySelectorAll("#statsPanel .stats-name").length, label: !!document.querySelector('#distSvg text.dist-name[data-q="${q}"]'), cb: (() => { const c = document.querySelector('#ranksBody tr[data-q="${q}"] input[type=checkbox]'); return c ? c.checked : false; })(), names: new URL(location.href).searchParams.get("names") || "", pos: document.getElementById("rkPositions").textContent })`);
+      const st = await ev(`({ chips: document.querySelectorAll("#nameTokens .name-token").length, stats: document.querySelectorAll('#statsPanel th[scope="row"].stats-name').length, label: !!document.querySelector('#distSvg text.dist-name[data-q="${q}"]'), cb: (() => { const c = document.querySelector('#ranksBody tr[data-q="${q}"] input[type=checkbox]'); return c ? c.checked : false; })(), names: new URL(location.href).searchParams.get("names") || "", pos: document.getElementById("rkPositions").textContent })`);
       assert.equal(st.chips, 2);
       assert.equal(st.stats, 2, "graph follows");
       assert.equal(st.label, false);
@@ -379,6 +385,8 @@ describe("🏅 positions table sorted by ⚔️ iVi, #1 on top (t358u)", () => {
     const picks = [srt[srt.length - 1], srt[Math.floor(srt.length / 2)], srt[0]].map((r) => String(r[qi]));
     await withPage(async ({ ev, nav }) => {
       await nav(`index.html?names=${picks.map(encodeURIComponent).join(",")}#rankings`);
+      await ev(`new Promise(async (r) => { for (let t = 0; t < 200; t++) { const d = document.getElementById("ranksTableSection"); if (d) { d.open = true; return r(1); } await new Promise((q) => setTimeout(q, 50)); } r(0); })`);
+            await ev(`new Promise(async (r) => { for (let t = 0; t < 200; t++) { const btns = [...document.querySelectorAll("#ranksBody tr.rk-tier:not(.open) .rk-tier-btn")]; if (btns.length) { btns.forEach(b => b.click()); return r(1); } await new Promise((q) => setTimeout(q, 50)); } r(0); })`);
       await ev(`new Promise(async (res) => { for (let t = 0; t < 400 && document.querySelectorAll("#rkPositions .rk-pos-jump").length < 3; t++) await new Promise((r) => setTimeout(r, 50)); res(1); })`);
       const st = await ev(`({ order: [...document.querySelectorAll("#rkPositions .rk-pos-jump")].map((a) => a.dataset.q.toLowerCase()), count: document.getElementById("rkPosCount").textContent, mode: document.getElementById("statsCarousel").dataset.mode })`);
       assert.deepEqual(st.order, picks.slice().reverse().map((q) => q.toLowerCase()), "highest iVi first");
@@ -400,8 +408,10 @@ describe("A graphed player not in the shared Rankings still shows on 📊 / 🏅
       await ev(`new Promise((r) => setTimeout(r, 500))`);
       await ev(`(localStorage.setItem("ps2-elite-kd-cache-v2", ${JSON.stringify(JSON.stringify(store))}), localStorage.setItem("ps2-elite-kd-stats-mode", "1"), 1)`);
       await nav("index.html?names=Zzlocalonly,ShloDog#rankings");
+      await ev(`new Promise(async (r) => { for (let t = 0; t < 200; t++) { const d = document.getElementById("ranksTableSection"); if (d) { d.open = true; return r(1); } await new Promise((q) => setTimeout(q, 50)); } r(0); })`);
+            await ev(`new Promise(async (r) => { for (let t = 0; t < 200; t++) { const btns = [...document.querySelectorAll("#ranksBody tr.rk-tier:not(.open) .rk-tier-btn")]; if (btns.length) { btns.forEach(b => b.click()); return r(1); } await new Promise((q) => setTimeout(q, 50)); } r(0); })`);
       await ev(`new Promise(async (res) => { for (let t = 0; t < 400 && !document.querySelector('#distSvg text.dist-name[data-q="Zzlocalonly"]'); t++) await new Promise((r) => setTimeout(r, 50)); res(1); })`);
-      const st = await ev(`({ stats: document.querySelectorAll("#statsPanel .stats-name").length, label: !!document.querySelector('#distSvg text.dist-name[data-q="Zzlocalonly"]'), pos: [...document.querySelectorAll("#rkPositions .rk-pos-jump")].map((a) => a.dataset.q), fresh: !!document.querySelector("#rkPositions .sample-fresh"), missing: /Not in the Rankings/.test(document.getElementById("rkPositions").textContent), meta: document.getElementById("ranksMeta").textContent, row: !!document.querySelector('#ranksBody tr[data-q="Zzlocalonly"]') || null })`);
+      const st = await ev(`({ stats: document.querySelectorAll('#statsPanel th[scope="row"].stats-name').length, label: !!document.querySelector('#distSvg text.dist-name[data-q="Zzlocalonly"]'), pos: [...document.querySelectorAll("#rkPositions .rk-pos-jump")].map((a) => a.dataset.q), fresh: !!document.querySelector("#rkPositions .sample-fresh"), missing: /Not in the Rankings/.test(document.getElementById("rkPositions").textContent), meta: document.getElementById("ranksMeta").textContent, row: !!document.querySelector('#ranksBody tr[data-q="Zzlocalonly"]') || null })`);
       assert.equal(st.stats, 2, "both on the skill graph");
       assert.ok(st.label, "on the 📊 chart");
       assert.ok(st.pos.includes("Zzlocalonly"), JSON.stringify(st));
@@ -418,10 +428,12 @@ describe("A graphed player not in the shared Rankings still shows on 📊 / 🏅
       // The bug's order: Rankings already loaded, then the new name is fetched + added.
       await ev(`(localStorage.removeItem("ps2-elite-kd-cache-v2"), 1)`);
       await nav("index.html?names=ShloDog#rankings");
+      await ev(`new Promise(async (r) => { for (let t = 0; t < 200; t++) { const d = document.getElementById("ranksTableSection"); if (d) { d.open = true; return r(1); } await new Promise((q) => setTimeout(q, 50)); } r(0); })`);
+            await ev(`new Promise(async (r) => { for (let t = 0; t < 200; t++) { const btns = [...document.querySelectorAll("#ranksBody tr.rk-tier:not(.open) .rk-tier-btn")]; if (btns.length) { btns.forEach(b => b.click()); return r(1); } await new Promise((q) => setTimeout(q, 50)); } r(0); })`);
       await ev(`new Promise(async (res) => { for (let t = 0; t < 400 && !document.querySelector('#distSvg text.dist-name[data-q="ShloDog"]'); t++) await new Promise((r) => setTimeout(r, 50)); res(1); })`);
       await ev(`(() => { localStorage.setItem("ps2-elite-kd-cache-v2", ${JSON.stringify(JSON.stringify(store))}); const i = document.getElementById("namesInput"); i.value = "Zzlocalonly "; i.dispatchEvent(new Event("input", { bubbles: true })); return 1; })()`);
       await ev(`new Promise(async (res) => { for (let t = 0; t < 200 && !document.querySelector('#distSvg text.dist-name[data-q="Zzlocalonly"]'); t++) await new Promise((r) => setTimeout(r, 50)); res(1); })`);
-      const st3 = await ev(`({ stats: document.querySelectorAll("#statsPanel .stats-name").length, label: !!document.querySelector('#distSvg text.dist-name[data-q="Zzlocalonly"]'), pos: [...document.querySelectorAll("#rkPositions .rk-pos-jump")].map((a) => a.dataset.q) })`);
+      const st3 = await ev(`({ stats: document.querySelectorAll('#statsPanel th[scope="row"].stats-name').length, label: !!document.querySelector('#distSvg text.dist-name[data-q="Zzlocalonly"]'), pos: [...document.querySelectorAll("#rkPositions .rk-pos-jump")].map((a) => a.dataset.q) })`);
       assert.ok(st3.label, "added after Rankings loaded → on the 📊 chart");
       assert.ok(st3.pos.includes("Zzlocalonly"));
     });

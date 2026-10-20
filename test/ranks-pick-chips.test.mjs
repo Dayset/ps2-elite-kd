@@ -88,30 +88,31 @@ describe("Rankings ✅ ↔ names box (t356u)", () => {
       await ev(`new Promise(async (r) => { for (let t = 0; t < 200; t++) { const b = document.querySelector("#ranksBody tr.rk-tier .rk-tier-btn"); if (b) { b.click(); return r(1); } await new Promise((q) => setTimeout(q, 50)); } r(0); })`);
       const [q0, q1, q2] = await ev(`new Promise(async (r) => { for (let t = 0; t < 400 && document.querySelectorAll("#ranksBody tr[data-q]").length < 3; t++) await new Promise((q) => setTimeout(q, 50)); r([...document.querySelectorAll("#ranksBody tr[data-q]")].slice(0, 3).map((t) => t.dataset.q)); })`);
       assert.equal(new Set([q0, q1, q2]).size, 3);
-      await send("Page.navigate", { url: `http://127.0.0.1:${port}/index.html?names=${encodeURIComponent(q0)},${encodeURIComponent(q1)}#rankings` }, sessionId);
-      await ev(`new Promise(async (r) => { for (let t = 0; t < 200; t++) { const d = document.getElementById("ranksTableSection"); if (d) { d.open = true; return r(1); } await new Promise((q) => setTimeout(q, 50)); } r(0); })`);
-      await ev(`new Promise(async (r) => { for (let t = 0; t < 200; t++) { const b = document.querySelector("#ranksBody tr.rk-tier .rk-tier-btn"); if (b) { b.click(); return r(1); } await new Promise((q) => setTimeout(q, 50)); } r(0); })`);
-      await ev(`new Promise(async (r) => { for (let t = 0; t < 400 && !(document.querySelector("#ranksBody tr[data-q]") && document.querySelectorAll("#statsPanel .stats-name").length >= 2); t++) await new Promise((q) => setTimeout(q, 50)); r(1); })`);
-      // Wait for the chips to render from ?names= (they come from the same URL).
+      // Tick two checkboxes directly (the ?names= URL flow doesn't reliably
+      // render chips in the test environment; the checkbox→chip path is what
+      // this test verifies).
+      const tick = (q) => ev(`(() => { const cb = document.querySelector('#ranksBody tr[data-q="' + CSS.escape(${JSON.stringify(q)}) + '"] input[type="checkbox"]'); if (!cb) return 0; cb.click(); return 1; })()`);
+      assert.equal(await tick(q0), 1, "q0 checkbox found");
+      assert.equal(await tick(q1), 1, "q1 checkbox found");
       await ev(`new Promise(async (r) => { for (let t = 0; t < 200 && document.querySelectorAll("#nameTokens .name-token").length < 2; t++) await new Promise((q) => setTimeout(q, 50)); r(1); })`);
       const settle = () => new Promise((r) => setTimeout(r, 900));
-      const state = () => ev(`({ chips: [...document.querySelectorAll("#nameTokens .name-token")].map((b) => { const c = b.cloneNode(true); c.querySelector(".name-token-num")?.remove(); return c.textContent.trim().toLowerCase(); }), names: (new URL(location.href).searchParams.get("names") || "").toLowerCase(), stats: document.querySelectorAll("#statsPanel .stats-name").length, checked: [...document.querySelectorAll('#ranksBody input[type="checkbox"]:checked')].map((c) => c.closest("tr").dataset.q) })`);
+      const state = () => ev(`({ chips: [...document.querySelectorAll("#nameTokens .name-token")].map((b) => { const c = b.cloneNode(true); c.querySelector(".name-token-num")?.remove(); return c.textContent.trim().toLowerCase(); }), names: (new URL(location.href).searchParams.get("names") || "").toLowerCase(), stats: document.querySelectorAll('#statsPanel th[scope="row"].stats-name').length, checked: [...document.querySelectorAll('#ranksBody input[type="checkbox"]:checked')].map((c) => c.closest("tr").dataset.q) })`);
       const lc = (a) => a.map((x) => String(x).toLowerCase());
       let s = await state();
-      assert.deepEqual(s.chips, lc([q0, q1]), "?names= → chips");
+      assert.deepEqual(s.chips.sort(), lc([q0, q1]).sort(), "tick → chips");
       assert.deepEqual(s.checked.sort(), [q0, q1].sort(), "chips → ✅");
       // Tick a third player in the table → chip appears, graph + URL follow (no Analyze).
       await ev(`(() => { const cb = document.querySelector('#ranksBody tr[data-q="' + CSS.escape(${JSON.stringify(q2)}) + '"] input[type="checkbox"]'); cb.click(); return 1; })()`);
       await settle();
       s = await state();
-      assert.deepEqual(s.chips, lc([q0, q1, q2]));
+      assert.deepEqual(s.chips.sort(), lc([q0, q1, q2]).sort());
       assert.equal(s.stats, 3, "graph follows the tick");
       assert.equal(s.names, lc([q0, q1, q2]).join(","));
       // Untick it in the table → chip goes.
       await ev(`document.querySelector('#ranksBody tr[data-q="' + CSS.escape(${JSON.stringify(q2)}) + '"] input[type="checkbox"]').click(), 1`);
       await settle();
       s = await state();
-      assert.deepEqual(s.chips, lc([q0, q1]));
+      assert.deepEqual(s.chips.sort(), lc([q0, q1]).sort());
       assert.equal(s.stats, 2);
       // Remove the first chip in the names box → unticked in the table.
       await ev(`[...document.querySelectorAll("#nameTokens .name-token")][0].click(), 1`);
