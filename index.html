@@ -225,7 +225,7 @@
       <button id="diceBtn" type="button" data-i18n-title="dice.any.title" data-i18n-aria-label="dice.any.label" title="Random player in range of the list" aria-label="Random player in range">🎲</button>
       <button id="diceHighBtn" type="button" data-i18n-title="dice.high.title" data-i18n-aria-label="dice.high.label" title="Random player with more ⚔️ iVi (+25% of the list)" aria-label="Random player with more iVi">&gt;</button>
     </div>
-    <button id="liveBtn" type="button" class="live-btn" aria-pressed="false" title="🎥 Live: follow the first name's kills and deaths as they happen" aria-label="Live kill and death feed">🎥</button>
+    <button id="liveBtn" type="button" class="live-btn" aria-pressed="false" title="🎥 Live: follow the first name's kills and deaths as they happen" data-i18n-title="live.title" aria-label="Live kill and death feed" data-i18n-aria-label="live.aria">🎥</button>
     <div id="namesLimitNote" class="names-limit-note" data-i18n="names.limit" hidden aria-live="polite">Name field locked: the comparison shows up to 6 players at once. Remove a name to add another.</div>
 
     <div class="fresh-row">
@@ -345,7 +345,7 @@
   </div>
 
   <!-- t356u: Rankings (was ranks.html) — rankings.mjs fills this lazily after the graph. -->
-  <section id="rankings" class="rankings" aria-label="Rankings">
+  <section id="rankings" class="rankings" aria-label="Rankings" data-i18n-aria-label="rk.section">
     <div id="ranksStatus" class="ranks-status" role="status"></div>
     <!-- t377u: metric picker = a row of emojis on the summary line (current one
          highlighted with its name); doubles as the auto-cycle's "you are here".
@@ -370,7 +370,7 @@
       <input id="ranksSearch" type="search" data-i18n-placeholder="ranks.filter" data-i18n-aria-label="ranks.filterLabel" placeholder="Filter the table by name…" aria-label="Filter the Rankings table by player name" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="search" />
     </div>
     <div class="ranks-table-wrap" id="ranksScroll" style="content-visibility: auto; contain-intrinsic-size: auto 800px;">
-      <table class="ranks-table" id="ranksTable" aria-label="Rankings">
+      <table class="ranks-table" id="ranksTable" aria-label="Rankings" data-i18n-aria-label="rk.section">
         <colgroup id="ranksCols"></colgroup>
         <thead id="ranksHead"></thead>
         <tbody id="ranksBody"></tbody>
@@ -382,19 +382,19 @@
   <footer>
     <!-- 2026-10-19: footer redesign. Data first (📊 Public, vehicles note), then one card:
          about + data line, links, options; disclaimer and legal line at the bottom. -->
-    <section class="footer-data" aria-label="Public stats">
-      <div id="statsPublic" class="stats-panel stats-panel-public" aria-label="Public stats (Census / Honu)"></div>
+    <section class="footer-data" aria-label="Public stats" data-i18n-aria-label="stats.publicAria">
+      <div id="statsPublic" class="stats-panel stats-panel-public" aria-label="Public stats (Census / Honu)" data-i18n-aria-label="stats.publicPanelAria"></div>
       <!-- "What about vehicles?" stays hidden until a comparison is loaded (renderStatsTable). -->
-      <details id="vehiclesNote" class="pooled-note fold-note" hidden><summary data-i18n="vehicles.summary">♿ What about vehicles?</summary><p>⚔️ iVi measures infantry skill only. If more than 10% of your lifetime kills come from vehicles (seats, turrets), the share above 10% is subtracted from adjusted iVi; MAX kills above 10% are subtracted the same way, separately. The two add up, with no cap: e.g. 96% vehicle kills → −86%; 45% vehicle + 40% MAX → −65%. Pure infantry is untouched. Hover a player’s iVi value to see the cut, and the <a href="columns.html#infantry">🪖 Infantry</a> column for the shares (<a href="columns.html#vehicle-cut">details</a>).</p></details>
+      <details id="vehiclesNote" class="pooled-note fold-note" hidden><summary data-i18n="vehicles.summary">♿ What about vehicles?</summary><p><span data-i18n="vehicles.p1">⚔️ iVi measures infantry skill only. If more than 10% of your lifetime kills come from vehicles (seats, turrets), the share above 10% is subtracted from adjusted iVi; MAX kills above 10% are subtracted the same way, separately. The two add up, with no cap: e.g. 96% vehicle kills → −86%; 45% vehicle + 40% MAX → −65%. Pure infantry is untouched.</span> <span data-i18n="vehicles.p2">Hover a player’s iVi value to see the cut, and the</span> <a href="columns.html#infantry"><span data-i18n="vehicles.infLink">🪖 Infantry</span></a> <span data-i18n="vehicles.p3">column for the shares (</span><a href="columns.html#vehicle-cut"><span data-i18n="vehicles.detailsLink">details</span></a><span data-i18n="vehicles.p4">).</span></p></details>
     </section>
-    <section class="footer-block" aria-label="About, links and options">
+    <section class="footer-block" aria-label="About, links and options" data-i18n-aria-label="foot.aboutAria">
       <div class="foot-grid">
         <div class="foot-col foot-about">
           <div class="foot-brand">⚔️ PS2 Elite</div>
           <p id="ranksMeta" class="ranks-meta"></p>
-          <p class="footer-thanks">Data from the Daybreak Census API · thanks to <a href="https://wt.honu.pw/" target="_blank" rel="noopener noreferrer">HONU</a> / Varunda</p>
+          <p class="footer-thanks"><span data-i18n="foot.thanks">Data from the Daybreak Census API · thanks to</span> <a href="https://wt.honu.pw/" target="_blank" rel="noopener noreferrer">HONU</a> / Varunda</p>
         </div>
-        <nav class="foot-col foot-links" aria-label="More pages">
+        <nav class="foot-col foot-links" aria-label="More pages" data-i18n-aria-label="foot.moreAria">
           <div class="foot-h" data-i18n="foot.learn">Learn more</div>
           <div class="foot-update-row">
             <a href="updates.html" data-i18n="foot.updateLog">📝 Update log</a>
@@ -418,7 +418,7 @@
         <p data-i18n="disc.p1">All numbers, ratings, charts and flags on this site are automated estimates from public data (the Daybreak Census API and Honu). They can be wrong, incomplete or out of date, and they are not facts, proof or accusations about any player. Don't take them seriously, and don't use them to harass anyone.</p>
         <p data-i18n="disc.p2">This site is free and provided "as is", with no warranty of any kind. To the fullest extent allowed by law, the authors are not liable for any damage or loss from using it, including to your device or data.</p>
         <p data-i18n="disc.p3">Not affiliated with or endorsed by Daybreak Game Company or Honu. PlanetSide 2 is a trademark of its respective owners.</p>
-        <p>Open source under the MIT License. See <a href="https://github.com/Dayset/ps2-elite-kd/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">LICENSE</a>.</p>
+        <p><span data-i18n="foot.licenseBefore">Open source under the MIT License. See</span> <a href="https://github.com/Dayset/ps2-elite-kd/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">LICENSE</a><span data-i18n="foot.licenseAfter">.</span></p>
       </details>
         <span class="foot-legal" data-i18n="foot.legal">MIT licensed · not affiliated with Daybreak or Honu</span>
       </div>
@@ -426,7 +426,7 @@
   </footer>
 
   <script type="module" src="i18n.mjs"></script>
-  <script type="module" src="app.js?v=20261020-i18n1"></script>
+  <script type="module" src="app.js?v=20261020-i18n2"></script>
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").catch(function () {});

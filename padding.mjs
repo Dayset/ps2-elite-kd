@@ -1,3 +1,5 @@
+import { t as tr, ready as i18nReady } from "./i18n.mjs";
+await i18nReady;
 /**
  * Farm-victim filter (user-approved 2026-10-09: "Flag them and remove farm
  * victims from their stats").
@@ -170,11 +172,10 @@ export function farmNote(farm) {
   if (!farm || !farm.victims || !farm.victims.length) return "";
   const n = farm.victims.length;
   const list = farm.victims.map((v) => `${v.name} ${v.kills}/${v.deaths}`).join(", ");
-  return (
-    `${farm.kills} kills on ${n} farm account${n === 1 ? "" : "s"} excluded ` +
-    `(${Math.round(farm.share * 100)}% of the sample; kills/deaths: ${list}). ` +
-    `Farm account = ${PADDING_RULE.MIN_KILLS}+ kills on it, it killed back ≤ ${PADDING_RULE.MAX_BACK * 100}%, its KPM < ${PADDING_RULE.MAX_KPM}.`
-  );
+  const accounts = n === 1 ? tr("pad.acc1", "1 farm account") : tr("pad.accN", "{n} farm accounts", { n });
+  return tr("pad.farmNote", "{kills} kills on {accounts} excluded ({pct}% of the sample; kills/deaths: {list}). Farm account = {min}+ kills on it, it killed back ≤ {back}%, its KPM < {kpm}.", {
+    kills: farm.kills, accounts, pct: Math.round(farm.share * 100), list, min: PADDING_RULE.MIN_KILLS, back: PADDING_RULE.MAX_BACK * 100, kpm: PADDING_RULE.MAX_KPM,
+  });
 }
 
 /* ---------- marks for altered stats (user rule 2026-10-09) ----------
@@ -185,15 +186,15 @@ export function farmNote(farm) {
  *   †  stats adjusted: some farm-account kills excluded (under review)
  */
 export const PADDING_MARK = "*";
-export const PADDING_MARK_TIP = "* stat padding: kills on farm accounts excluded";
+export const PADDING_MARK_TIP = tr("pad.markTip", "* stat padding: kills on farm accounts excluded");
 export const ADJUSTED_MARK = "†";
-export const ADJUSTED_MARK_TIP = "† stats adjusted: some kills on farm accounts excluded (under review)";
+export const ADJUSTED_MARK_TIP = tr("pad.adjustedTip", "† stats adjusted: some kills on farm accounts excluded (under review)");
 
 /** Tooltip for a confirmed padder (reviewed.json "padding"): farm accounts by name, no share or counts. */
-export const CONFIRMED_PADDING_TIP = "* stat padding (confirmed on review): kills on farm accounts excluded";
+export const CONFIRMED_PADDING_TIP = tr("pad.confirmedTip", "* stat padding (confirmed on review): kills on farm accounts excluded");
 export function confirmedFarmNote(farm) {
   const names = ((farm && farm.victims) || []).map((v) => String(v.name || v.cid || "").trim()).filter(Boolean);
-  return names.length ? `Farm accounts: ${names.join(", ")}.` : "";
+  return names.length ? tr("pad.farmList", "Farm accounts: {list}.", { list: names.join(", ") }) : "";
 }
 
 /**
@@ -207,16 +208,15 @@ export function confirmedFarmNote(farm) {
 export function statMark(farm, rule = PADDING_RULE, { confirmed = false } = {}) {
   if (confirmed) {
     const note = confirmedFarmNote(farm);
-    return { kind: "padding", mark: PADDING_MARK, legend: PADDING_MARK_TIP, tip: CONFIRMED_PADDING_TIP + "." + (note ? " " + note : "") };
+    return { kind: "padding", mark: PADDING_MARK, legend: PADDING_MARK_TIP, tip: note ? tr("pad.confirmedNote", "{tip}. {note}", { tip: CONFIRMED_PADDING_TIP, note }) : tr("pad.confirmedOnly", "{tip}.", { tip: CONFIRMED_PADDING_TIP }) };
   }
   const has = !!(farm && farm.victims && farm.victims.length);
   if (!has) return { kind: "", mark: "", legend: "", tip: "" };
   const padding = (farm.share || 0) >= rule.FLAG_SHARE;
   if (padding) {
-    return { kind: "padding", mark: PADDING_MARK, legend: PADDING_MARK_TIP, tip: `${PADDING_MARK_TIP}. ${farmNote(farm)}` };
+    return { kind: "padding", mark: PADDING_MARK, legend: PADDING_MARK_TIP, tip: tr("pad.paddingNote", "{tip}. {note}", { tip: PADDING_MARK_TIP, note: farmNote(farm) }) };
   }
-  const tip =
-    `${ADJUSTED_MARK} stats adjusted: ${farm.kills} kills on farm accounts excluded (under review). ` + farmNote(farm);
+  const tip = tr("pad.adjustedNote", "† stats adjusted: {kills} kills on farm accounts excluded (under review). {note}", { kills: farm.kills, note: farmNote(farm) });
   return { kind: "adjusted", mark: ADJUSTED_MARK, legend: ADJUSTED_MARK_TIP, tip };
 }
 
@@ -288,7 +288,7 @@ export function confirmedPadderSlugs(reviewed) {
 export const PADDER_PENALTY = 0.1;
 export const PADDER_PENALTY_REF = 610.6;
 export const POOP_MARK = "💩";
-export const POOP_TIP = "💩 Confirmed stat padding: −10% on adjusted iVi (on top of the kills on farm accounts already excluded). Think this is wrong? Contact the site owner to clarify.";
+export const POOP_TIP = tr("pad.poop", "💩 Confirmed stat padding: −10% on adjusted iVi (on top of the kills on farm accounts already excluded). Think this is wrong? Contact the site owner to clarify.");
 
 const reviewedState = { players: {} };
 /** Replace the review decisions used for the 💩 penalty (reviewed.json content; null clears). */

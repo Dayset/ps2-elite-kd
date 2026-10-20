@@ -1,3 +1,4 @@
+import { t as tr } from "./i18n.mjs";
 /**
  * Shared ⬆ / ⬇ floating quick-jump buttons (fixed bottom-right).
  * Used by ranks.html (whole rankings list) and index.html (shared-cache A–Z
@@ -85,7 +86,7 @@ export function mountJumpButtons({
   bottomLabel = "Bottom",
   topHint = "Top",
   bottomHint = "Bottom",
-  groupLabel = "Quick jump",
+  groupLabel = tr("jump.group", "Quick jump"),
 } = {}) {
   const root = document.createElement("div");
   root.className = "jump-btns";

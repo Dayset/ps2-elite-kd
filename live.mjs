@@ -1,3 +1,5 @@
+import { ready as i18nReady } from "./i18n.mjs";
+await i18nReady;
 /**
  * 🎥 Live feed (live.html). Follows the first name's kills and deaths from the
  * Census event stream (Death events, one character) and:
@@ -9,9 +11,9 @@
  * Pure helpers are exported for tests; the DOM part runs only in a browser.
  */
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
-import { normalizePlayer, playerMetrics, shownValue } from "./player-metrics.mjs?v=20261010-sav1";
-import { isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261010-sav1";
-import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261019-vcut4";
+import { normalizePlayer, playerMetrics, shownValue } from "./player-metrics.mjs?v=20261020-i18n2";
+import { isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261020-i18n2";
+import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261020-i18n2";
 
 export const FEED_MAX = 6;
 export const GRAPH_OPPONENTS = 5; // + the target = MAX_NAMES (6)

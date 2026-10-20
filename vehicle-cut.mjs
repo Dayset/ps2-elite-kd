@@ -1,3 +1,4 @@
+import { t as tr } from "./i18n.mjs";
 /**
  * 🚜 Vehicle + MAX cuts (owner-approved 2026-10-19, curve set the same day):
  * ⚔️ adjusted iVi ranks infantry skill only, so two cuts that ADD UP, no cap:
@@ -15,7 +16,7 @@
  * the iVi cell's own hover lists each part and the total; build-log lists every cut player.
  * Owner override (exempts both): data/reviewed.json "vehicleCutCleared": { "<slug>": { "note", "at" } }.
  */
-import { infantryShares } from "./infantry.mjs?v=20261019-inf1";
+import { infantryShares } from "./infantry.mjs?v=20261020-i18n2";
 
 export const VEH_CUT = Object.freeze({ START: 0.1, REF: 610.6 });
 const state = { cleared: {} };
@@ -59,10 +60,13 @@ const r0 = (x) => (typeof x === "number" && Number.isFinite(x) ? Math.round(x) :
  */
 export function vehicleCutTip(vehPct, maxPct, cutPct) {
   const parts = [];
-  if (vehPct > 10) parts.push(`vehicle kills ${r0(vehPct)}%: −${r0(vehPct - 10)}%`);
-  if (maxPct > 10) parts.push(`MAX kills ${r0(maxPct)}%: −${r0(maxPct - 10)}%`);
+  if (vehPct > 10) parts.push(tr("veh.partVehicle", "vehicle kills {p}%: −{c}%", { p: r0(vehPct), c: r0(vehPct - 10) }));
+  if (maxPct > 10) parts.push(tr("veh.partMax", "MAX kills {p}%: −{c}%", { p: r0(maxPct), c: r0(maxPct - 10) }));
   const total = Number.isFinite(cutPct) ? cutPct : Math.max(0, (vehPct || 0) - 10) + Math.max(0, (maxPct || 0) - 10);
-  return `${parts.join(" · ")}${parts.length > 1 ? ` → −${r0(total)}%` : ""} iVi, infantry skill only`;
+  const body = parts.join(tr("veh.join", " · "));
+  return parts.length > 1
+    ? tr("veh.totalTip", "{parts} → −{t}% iVi, infantry skill only", { parts: body, t: r0(total) })
+    : tr("veh.oneTip", "{parts} iVi, infantry skill only", { parts: body });
 }
 
 try {

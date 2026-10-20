@@ -1,3 +1,4 @@
+import { t as tr } from "./i18n.mjs";
 /**
  * Per-name isolation for an Analyze run (DOM-free; shared with Node tests and
  * scripts/refresh-cache.mjs). One bad / misspelled name must never sink the run.
@@ -327,11 +328,12 @@ export function fmtPctFromRef(p, dir = "high") {
 
 /** Tooltip for a % cell. `lowPhrase` names what "more" means for a "low"
  * column (🎈 Inflation default); 🤝 Assists passes "more assists". */
+const PHRASE_KEY = { "more inflated": "pct.phraseInflated", "more assists": "pct.phraseAssists" };
 export function pctTitle(p, refLabel, dir = "high", lowPhrase = "more inflated") {
   const n = p === 0 ? "<1" : String(Math.abs(p));
-  return dir === "low"
-    ? `${n}% ${lowPhrase} than the reference (${refLabel})`
-    : `${n}% below the column top (${refLabel})`;
+  if (dir !== "low") return tr("pct.below", "{n}% below the column top ({ref})", { n, ref: refLabel });
+  const phrase = PHRASE_KEY[lowPhrase] ? tr(PHRASE_KEY[lowPhrase], lowPhrase) : lowPhrase;
+  return tr("pct.more", "{n}% {phrase} than the reference ({ref})", { n, phrase, ref: refLabel });
 }
 
 /* Back-compat names ("high" direction). */

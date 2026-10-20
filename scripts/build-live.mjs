@@ -7,15 +7,15 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-export const LIVE_JS = "live.mjs?v=20261019-vcut4";
+export const LIVE_JS = "live.mjs?v=20261020-i18n2";
 
 export function buildLive(index) {
   const swaps = [
     [/<title>[^<]*<\/title>/, "<title>🎥 Live feed — PS2 Elite</title>"],
     [/<link rel="canonical"[^>]*\/>/, '<meta name="robots" content="noindex" />'],
     ['<body class="main-page">', '<body class="main-page live-mode">'],
-    ['id="liveBtn" type="button" class="live-btn" aria-pressed="false" title="🎥 Live: follow the first name\'s kills and deaths as they happen"',
-      'id="liveBtn" type="button" class="live-btn" aria-pressed="true" title="🎥 Live is on: click to turn it off and edit names"'],
+    ['id="liveBtn" type="button" class="live-btn" aria-pressed="false" title="🎥 Live: follow the first name\'s kills and deaths as they happen" data-i18n-title="live.title"',
+      'id="liveBtn" type="button" class="live-btn" aria-pressed="true" title="🎥 Live is on: click to turn it off and edit names" data-i18n-title="live.titleOn"'],
     ['<div id="status"></div>', '<div id="status"></div>\n\n  <section id="liveFeed" class="live-feed" aria-label="Live kills and deaths" aria-live="polite">\n    <div id="liveState" class="live-state">Connecting…</div>\n    <table id="liveList" class="live-table"></table>\n  </section>'],
   ];
   let out = index;

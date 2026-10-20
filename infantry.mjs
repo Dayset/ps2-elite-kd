@@ -1,3 +1,5 @@
+import { t as tr, ready as i18nReady } from "./i18n.mjs";
+await i18nReady;
 /**
  * Infantry vs vehicle split per player (collected silently; build-log counts only).
  *
@@ -190,13 +192,12 @@ export function infantryTagCounts(players) {
 
 /* ---------- 🪖 Infantry column texts (app.js stats table + rankings.mjs) ---------- */
 
-export const INF_HINT =
-  "Share of lifetime kills made with infantry weapons (Census weapon stats). Vehicle seats and turrets don't count; MAX suit weapons count as infantry (the MAX share is on hover).";
-export const INF_PENDING_TIP = "Not measured yet (fills in with the background refresh), or fewer than 100 kills";
+export const INF_HINT = tr("tip.inf", "Share of lifetime kills made with infantry weapons (Census weapon stats). Vehicle seats and turrets don't count; MAX suit weapons count as infantry (the MAX share is on hover).");
+export const INF_PENDING_TIP = tr("inf.pending", "Not measured yet (fills in with the background refresh), or fewer than 100 kills");
 
 /** Hover text: value, percentile, MAX and vehicle share. */
 export function infTip(v, max, veh, pctl) {
   const f = (x) => (typeof x === "number" && Number.isFinite(x) ? `${x.toFixed(1)}%` : "?");
-  const rel = pctl == null ? "" : pctl >= 50 ? ` — top ${Math.max(1, 100 - pctl)}%` : ` — bottom ${Math.max(1, pctl)}%`;
-  return `Infantry: ${f(v)} of lifetime kills${rel}. Of all kills: MAX ${f(max)} (counted as infantry), vehicles/turrets ${f(veh)}.`;
+  const rel = pctl == null ? "" : pctl >= 50 ? tr("pct.top", " — top {n}%", { n: Math.max(1, 100 - pctl) }) : tr("pct.bottom", " — bottom {n}%", { n: Math.max(1, pctl) });
+  return tr("inf.title", "Infantry: {v} of lifetime kills{rel}. Of all kills: MAX {max} (counted as infantry), vehicles/turrets {veh}.", { v: f(v), rel, max: f(max), veh: f(veh) });
 }

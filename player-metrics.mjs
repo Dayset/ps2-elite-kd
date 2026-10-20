@@ -1,3 +1,5 @@
+import { t as tr, ready as i18nReady } from "./i18n.mjs";
+await i18nReady;
 /**
  * Player normalization + per-player table metrics, shared by the main page
  * (app.js stats tables) and build-log.html (red-flag review) so numbers match.
@@ -16,8 +18,8 @@ import {
   resolveIvi,
   deathMixLite,
 } from "./math.mjs?v=20261010-sav1";
-import { splitFarm, isPenalizedPadder, padderPenalty } from "./padding.mjs?v=20261010-sav1";
-import { vehicleCutFor, applyVehicleCut, isVehicleCutCleared } from "./vehicle-cut.mjs?v=20261019-vcut4";
+import { splitFarm, isPenalizedPadder, padderPenalty } from "./padding.mjs?v=20261020-i18n2";
+import { vehicleCutFor, applyVehicleCut, isVehicleCutCleared } from "./vehicle-cut.mjs?v=20261020-i18n2";
 import { OPPONENT_TOP_N, LEGACY_TOP_N, sampleTopN } from "./census-fetch.mjs?v=20261010-sav1";
 import { cleanTimes } from "./flairs.mjs?v=20261010-sav1";
 
@@ -27,8 +29,7 @@ import { cleanTimes } from "./flairs.mjs?v=20261010-sav1";
  * subtle "◦" after the name says so (ranks.html + stats table).
  */
 export const LEGACY_SAMPLE_MARK = "◦";
-export const LEGACY_SAMPLE_TIP =
-  `Based on the top ${LEGACY_TOP_N} opponents (older sample); upgrading to ${OPPONENT_TOP_N} on its next refresh`;
+export const LEGACY_SAMPLE_TIP = tr("sample.legacyTip", "Based on the top {top} opponents (older sample); upgrading to {next} on its next refresh", { top: LEGACY_TOP_N, next: OPPONENT_TOP_N });
 
 /** True when a normalized player (or raw file) uses fewer opponents than OPPONENT_TOP_N. */
 export function isLegacySample(p) {
@@ -54,11 +55,10 @@ export function isLegacySample(p) {
 export const MIN_FIGHTS = Object.freeze({ FIGHTS: 100, KILLS: 5, DEATHS: 5 });
 
 /** The rule in words (column hints, notes). */
-export const MIN_FIGHTS_RULE =
-  `at least ${MIN_FIGHTS.FIGHTS} kills + deaths combined, with ${MIN_FIGHTS.KILLS}+ kills and ${MIN_FIGHTS.DEATHS}+ deaths`;
+export const MIN_FIGHTS_RULE = tr("fights.rule", "at least {fights} kills + deaths combined, with {kills}+ kills and {deaths}+ deaths", { fights: MIN_FIGHTS.FIGHTS, kills: MIN_FIGHTS.KILLS, deaths: MIN_FIGHTS.DEATHS });
 
 /** Hover text for a blanked cell. */
-export const MIN_FIGHTS_TIP = `Too few fights to measure (needs ${MIN_FIGHTS_RULE})`;
+export const MIN_FIGHTS_TIP = tr("fights.tip", "Too few fights to measure (needs {rule})", { rule: MIN_FIGHTS_RULE });
 
 /** Summary of the collapsed note under ✨ Adjusted (icon only, t283u). */
 export const THIN_MARK = "⚠️";

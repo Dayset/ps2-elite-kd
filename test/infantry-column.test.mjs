@@ -7,8 +7,8 @@ import { infTip, infantryShares } from "../infantry.mjs";
 const read = (f) => fs.readFileSync(new URL("../" + f, import.meta.url), "utf8");
 
 test("column order and ranks.json columns", () => {
-  assert.match(read("rankings.mjs"), /id: "rkd", label: "☠️ K\/D"[^\n]*\n\s*\{ id: "inf", label: "🪖 Infantry"/);
-  assert.match(read("app.js"), /id: "rkd", label: "☠️ K\/D"[^\n]*\n\s*\{ id: "inf", label: "🪖 Infantry"/);
+  assert.match(read("rankings.mjs"), /id: "rkd", label: "☠️ K\/D"[^\n]*\n\s*\{ id: "inf", label: (?:"🪖 Infantry"|tr\("col\.infantry", "🪖 Infantry"\))/);
+  assert.match(read("app.js"), /id: "rkd", label: "☠️ K\/D"[^\n]*\n\s*\{ id: "inf", label: (?:"🪖 Infantry"|tr\("col\.infantry", "🪖 Infantry"\))/);
   assert.match(read("scripts/build-ranks.mjs"), /ranks\.cols\.push\("inf", "infMax", "infVeh"\)/);
 });
 

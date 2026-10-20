@@ -41,9 +41,9 @@ import { t as tr, ready as i18nReady } from "./i18n.mjs";
 await i18nReady;
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261020-wide1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
-import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261020-hintcut";
-import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261019-vcut4";
-import { infantryKillsUrl, summarizeInfantryKills } from "./infantry.mjs?v=20261020-hintcut";
+import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261020-i18n2";
+import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261020-i18n2";
+import { infantryKillsUrl, summarizeInfantryKills } from "./infantry.mjs?v=20261020-i18n2";
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261015-tip1";
 import { createWheelSwiper } from "./dist-cycle.mjs?v=20261017-cycle15";
 import { slideSwap, attachDragCarousel } from "./chart-slide.mjs?v=20261020-swipefix";
@@ -76,7 +76,7 @@ import {
   etaLearnLiveMs,
   freshEtaText,
   expectedNameMs,
-} from "./analyze-run.mjs?v=20261019-apklow";
+} from "./analyze-run.mjs?v=20261020-i18n2";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
@@ -90,19 +90,19 @@ import {
   THIN_MARK,
   THIN_NOTE_HEAD,
   thinPlayerLine,
-} from "./player-metrics.mjs?v=20261010-sav1";
+} from "./player-metrics.mjs?v=20261020-i18n2";
 /** "22 kills / 60 deaths" in the opponent sample (MIN_FIGHTS counts). */
 function fightsText(r) {
   const k = r.sampleKills || 0;
   const d = r.sampleDeaths || 0;
-  if (!k && !d) return "(no fights on record)";
-  return `(${k} kill${k === 1 ? "" : "s"} / ${d} death${d === 1 ? "" : "s"})`;
+  if (!k && !d) return tr("fights.none", "(no fights on record)");
+  return tr("fights.counts", "({k} {kills} / {d} {deaths})", { k, d, kills: k === 1 ? tr("fights.kill", "kill") : tr("fights.kills", "kills"), deaths: d === 1 ? tr("fights.death", "death") : tr("fights.deaths", "deaths") });
 }
 /** Hover on a blanked cell: the reason plus this player's own counts. */
 function thinCellTip(r) {
-  return `${MIN_FIGHTS_TIP}. This sample: ${fightsText(r).replace(/[()]/g, "")}`;
+  return tr("fights.sample", "{tip}. This sample: {sample}", { tip: MIN_FIGHTS_TIP, sample: fightsText(r).replace(/[()]/g, "") });
 }
-import { markNote, statMark, confirmedPadderSlugs, isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261010-sav1";
+import { markNote, statMark, confirmedPadderSlugs, isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261020-i18n2";
 // Account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times: chart name list only.
 import { accountTimes, flairsHtml, flairsFor } from "./flairs.mjs?v=20261010-sav1";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
@@ -111,7 +111,7 @@ import { sfx, recentGesture, mountSfxToggle } from "./sfx.mjs?v=20261017-sfxprel
 import { mountNameSuggest } from "./name-suggest.mjs?v=20261016-sug1";
 import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261010-sav1";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
-import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-sav1";
+import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261020-i18n2";
 // Live data: Daybreak Census only (batched, paced); Honu just for a rare history fallback.
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { dotSlot, refreshOnline } from "./online-status.mjs?v=20261018-onl1";
@@ -1288,10 +1288,7 @@ import {
 
   /** Confirm, wipe all local app data, reset chips / results / theme. */
   function wipeAllLocalAppData() {
-    const ok = window.confirm(
-      "Clear all local data for this app?\n\n" +
-        "This removes browser cache, theme preference, fetch flags, and last comparison on this device. Shared server cache (data/) is not affected."
-    );
+    const ok = window.confirm(tr("wipe.confirm", "Clear all local data for this app?\n\nThis removes browser cache, theme preference, fetch flags, and last comparison on this device. Shared server cache (data/) is not affected."));
     if (!ok) return;
 
     wipeAppStorageKeys();
@@ -1724,7 +1721,7 @@ import {
   }
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261020-wide1")
+    rankingsLoading = import("./rankings.mjs?v=20261020-i18n2")
       .then((m) => {
         rankingsApi = m.initRankings(rankingsHost);
         return rankingsApi.ready;
@@ -3481,8 +3478,8 @@ import {
     const publicCols = [
       { id: "kd", label: "KD", hint: tr("tip.kd", "Overall kill/death ratio from Census / Honu."), fn: (r) => r.kd, digits: 2 },
       { id: "kpm", label: "KPM", hint: tr("tip.kpm", "Overall kills per minute."), fn: (r) => r.kpm, digits: 2 },
-      { id: "ownKpm", label: "own KPM", hint: tr("tip.ownKpm", "Your own weapon pace (kills per minute with your weapons)."), fn: (r) => r.ownKpm, digits: 2 },
-      { id: "acc", label: "Acc %", hint: tr("tip.acc", "Hit accuracy percentage."), fn: (r) => r.acc, digits: 1 },
+      { id: "ownKpm", label: tr("col.ownKpm", "own KPM"), hint: tr("tip.ownKpm", "Your own weapon pace (kills per minute with your weapons)."), fn: (r) => r.ownKpm, digits: 2 },
+      { id: "acc", label: tr("col.acc", "Acc %"), hint: tr("tip.acc", "Hit accuracy percentage."), fn: (r) => r.acc, digits: 1 },
       { id: "hsr", label: "HSR %", hint: tr("tip.hsr", "Headshot rate percentage."), fn: (r) => r.hsr, digits: 1 },
       { id: "ivi", label: "IvI", hint: tr("tip.ivi", "Infantry vs Infantry score from Census / Honu."), fn: (r) => r.ivi, digits: 0 },
     ];
@@ -3494,9 +3491,9 @@ import {
       { id: "pvs", label: "🦁 Brave", hint: tr("tip.pvs", "Activity that keeps up as enemies get stronger: high when you stay productive even against the fastest-killing players you meet."), fn: (r) => r.pvs, digits: 2 },
       { id: "rf", label: "🛡️ Resist", hint: tr("tip.rf", "How well you stand up to strong players: your K/D against the players you fight most, scaled up by how fast those players kill."), fn: (r) => r.rf, digits: 2 },
       { id: "cons", label: "⚡ Const", hint: tr("tip.cons", "How much of your K/D you keep against the strongest third of your opponents compared with the weakest third, as a percentile of all tracked players."), fn: (r) => r.cons, digits: 2, pctileCell: true },
-      { id: "apk", label: "🤝 Assists", hint: tr("tip.apk", "Assists per kill in recent Honu sessions: how often you help damage enemies that teammates finish, for each kill of your own."), fn: (r) => (apkBySlug && r.p ? apkBySlug.get(slugKey(r.p.display)) : undefined), digits: 2, apkCell: true, pctDir: "low", pctLowPhrase: "more assists" },
+      { id: "apk", label: tr("col.assists", "🤝 Assists"), hint: tr("tip.apk", "Assists per kill in recent Honu sessions: how often you help damage enemies that teammates finish, for each kill of your own."), fn: (r) => (apkBySlug && r.p ? apkBySlug.get(slugKey(r.p.display)) : undefined), digits: 2, apkCell: true, pctDir: "low", pctLowPhrase: "more assists" },
       { id: "rkd", label: "☠️ K/D", hint: tr("tip.rkd", "Kills ÷ deaths against the ~200 players you fight most, so it reflects real matchups rather than your whole lifetime."), fn: (r) => r.rkd, digits: 3 },
-      { id: "inf", label: "🪖 Infantry", hint: tr("tip.inf", INF_HINT), fn: (r) => { const e = infBySlug && r.p ? infBySlug.get(slugKey(r.p.display)) : undefined; return e ? e.inf : undefined; }, digits: 1, infCell: true },
+      { id: "inf", label: tr("col.infantry", "🪖 Infantry"), hint: tr("tip.inf", INF_HINT), fn: (r) => { const e = infBySlug && r.p ? infBySlug.get(slugKey(r.p.display)) : undefined; return e ? e.inf : undefined; }, digits: 1, infCell: true },
     ];
     // Older debug columns: appended only when "show older debug stats" (footer) is ticked.
     const adjDebugCols = [
@@ -3563,7 +3560,7 @@ import {
         `<th class="stats-name sortable${nameActive ? " sorted" : ""}" ` +
         `data-table="${tableId}" data-sort="name" scope="col" role="columnheader" ` +
         `aria-sort="${nameActive ? (state.dir === "asc" ? "ascending" : "descending") : "none"}" ` +
-        `title="${escapeHtml(nameHint)}">Player${sortIndicator(nameActive, state.dir)}</th>`;
+        `title="${escapeHtml(nameHint)}">${tr("rk.player", "Player")}${sortIndicator(nameActive, state.dir)}</th>`;
       const rest = cols
         .map((c) => {
           const active = state.key === c.id;
@@ -3645,8 +3642,8 @@ import {
               if (c.apkCell) {
                 if (!isFiniteNum(v)) return `<td title="${tr("stats.notEnough", "Not enough recent sessions (needs 100 kills in Honu sessions)")}">—</td>`;
                 const pl = apkPool ? percentileOf(apkPool, v) : null;
-                const rel = pl == null ? "" : pl >= 50 ? ` — top ${Math.max(1, 100 - pl)}%` : ` — bottom ${Math.max(1, pl)}%`;
-                return `<td title="${escapeHtml(`Assists per kill: ${fmtNum(v, 2)}${rel}. Helps damage enemies that teammates finish.`)}">${fmtNum(v, 2)}${pct}</td>`;
+                const rel = pl == null ? "" : pl >= 50 ? tr("rk.apkTop", " — top {n}%", { n: Math.max(1, 100 - pl) }) : tr("rk.apkBottom", " — bottom {n}%", { n: Math.max(1, pl) });
+                return `<td title="${escapeHtml(tr("apk.tip", "Assists per kill: {v}{rel}. Helps damage enemies that teammates finish.", { v: fmtNum(v, 2), rel }))}">${fmtNum(v, 2)}${pct}</td>`;
               }
               // 🪖 Infantry: plain "%" value, one colour; percentile + MAX / vehicle share on hover, dimmed % gap like 🤝.
               if (c.infCell) {
@@ -3703,7 +3700,7 @@ import {
     // ✨ Adjusted stays above it without a title line.
     const publicHtml = `
       <details class="stats-section stats-public"${publicStatsOpen ? " open" : ""}>
-        <summary>📊 Public (Census / Honu)</summary>
+        <summary>${tr("stats.publicHead", "📊 Public (Census / Honu)")}</summary>
         <div class="stats-table-wrap">
           <table class="stats-table stats-table-transposed" data-stats-table="public">
             <thead><tr>${metricHead(publicCols, "public", statsSortState.public)}</tr></thead>

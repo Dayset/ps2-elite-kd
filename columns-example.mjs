@@ -8,11 +8,11 @@
  * (💩 padder penalty + 🚜 vehicle / MAX cut included). Text pieces are pure
  * (exampleFacts / exampleCard), so Node tests cover them.
  */
-import { normalizePlayer, playerMetrics, consistencyParts, MIN_FIGHTS_TIP } from "./player-metrics.mjs?v=20261010-sav1";
+import { normalizePlayer, playerMetrics, consistencyParts, MIN_FIGHTS_TIP } from "./player-metrics.mjs?v=20261020-i18n2";
 import { RF_SOFT, SPEED_BAND_LOW, SPEED_BAND_HIGH, speedSlowFactor, speedAdjustment, SLOPE_FLOOR, SLOPE_EPS } from "./math.mjs?v=20261010-sav1";
 import { percentileOf, quantile } from "./dist.mjs?v=20261010-sav1";
 import { slugKey, bareName } from "./rank-row.mjs?v=20261010-sav1";
-import { PADDER_PENALTY_REF } from "./padding.mjs?v=20261010-sav1";
+import { PADDER_PENALTY_REF } from "./padding.mjs?v=20261020-i18n2";
 
 export const DEMO_NAME = "YuigahamaYui";
 

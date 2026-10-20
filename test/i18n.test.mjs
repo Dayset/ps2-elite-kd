@@ -84,7 +84,7 @@ test("every data-i18n key used by index.html exists in en.json", () => {
 
 test("every tr(\"key\", …) call in the UI modules exists in en.json", () => {
   const used = new Set();
-  for (const file of ["app.js", "rankings.mjs", "name-suggest.mjs"]) {
+  for (const file of ["app.js", "rankings.mjs", "name-suggest.mjs", "infantry.mjs", "vehicle-cut.mjs", "analyze-run.mjs", "padding.mjs", "player-metrics.mjs", "jump-btns.mjs", "live.mjs"]) {
     for (const m of read(file).matchAll(/\btr\("([^"]+)"/g)) used.add(m[1]);
   }
   assert.ok(used.size > 30, "the UI modules use the translator");

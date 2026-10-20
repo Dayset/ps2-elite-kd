@@ -4,30 +4,30 @@
 // Everything Rankings had stays: fresh-fetch ↻ rows, band dividers, marks,
 // hidden players left out (ranks.json), 📊 distribution with jumps.
 
-import { t as tr } from "./i18n.mjs";
+import { t as tr, currentLang } from "./i18n.mjs";
 // Column tip in the current language (tip.<id> in i18n/*.json, English otherwise).
 const tipOf = (c) => (c.id ? tr("tip." + c.id, c.tip || "") : c.tip || "");
-import { compareByCharName } from "./analyze-run.mjs?v=20261010-sav1";
+import { compareByCharName } from "./analyze-run.mjs?v=20261020-i18n2";
 import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits, binJumpTarget } from "./dist.mjs?v=20261010-sav1";
-import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261010-sav1";
-import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP, isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261010-sav1";
+import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261020-i18n2";
+import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP, isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261020-i18n2";
 import { paletteColor } from "./palette.mjs?v=20261010-sav1";
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261020-wide1";
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261015-tip1";
 import { deskUiScale } from "./desk-scale.mjs?v=20261010-sav1";
 import { matchPicks } from "./pick-sync.mjs?v=20261019-speed1";
-import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261010-sav1";
+import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261020-i18n2";
 import { groupByTier, openTierIds, pickedInGroup, groupIndexAt, tierOf } from "./tiers.mjs?v=20261017-tier1";
 import { createDistCycler, createWheelSwiper } from "./dist-cycle.mjs?v=20261017-cycle15";
 import { sfx } from "./sfx.mjs?v=20261017-sfxpreload";
 import { slideSwap, attachDragCarousel } from "./chart-slide.mjs?v=20261020-swipefix";
 import { mergeFreshRows } from "./rank-row.mjs?v=20261010-sav1";
 import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-sav1";
-import { confirmedPadderSlugs } from "./padding.mjs?v=20261010-sav1";
+import { confirmedPadderSlugs } from "./padding.mjs?v=20261020-i18n2";
 import { slugKey } from "./rank-row.mjs?v=20261010-sav1";
 import { hiddenList } from "./hidden.mjs?v=20261010-sav1";
-import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261020-hintcut";
-import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261019-vcut4";
+import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261020-i18n2";
+import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261020-i18n2";
 
 /**
  * @param {{ getNames: () => string[], toggleName: (name: string, anchor: Element, add: boolean) => void, maxNames?: number }} host
@@ -48,9 +48,9 @@ export function initRankings(host) {
     { id: "pvs", label: "🦁 Brave", digits: 2, tip: "Activity that keeps up as enemies get stronger: high when you stay productive even against the fastest-killing players you meet." },
     { id: "rf", label: "🛡️ Resist", digits: 2, tip: "How well you stand up to strong players: your K/D against the players you fight most, scaled up by how fast those players kill." },
     { id: "cons", label: "⚡ Const", digits: 2, tip: "How much of your K/D you keep against the strongest third of your opponents compared with the weakest third: 1.00 means it holds completely, 0.50 means it halves." },
-    { id: "apk", label: "🤝 Assists", digits: 2, apk: true, tip: "Assists per kill in recent Honu sessions: how often you help damage enemies that teammates finish, for each kill of your own." },
+    { id: "apk", label: tr("col.assists", "🤝 Assists"), digits: 2, apk: true, tip: "Assists per kill in recent Honu sessions: how often you help damage enemies that teammates finish, for each kill of your own." },
     { id: "rkd", label: "☠️ K/D", digits: 3, tip: "Kills ÷ deaths against the ~200 players you fight most, so it reflects real matchups rather than your whole lifetime." },
-    { id: "inf", label: "🪖 Infantry", digits: 1, inf: true, tip: INF_HINT },
+    { id: "inf", label: tr("col.infantry", "🪖 Infantry"), digits: 1, inf: true, tip: INF_HINT },
   ];
   const DEBUG = [
     { id: "mech", label: "⚙️ Mech%", digits: 1, tip: "Estimated share of your fights that are vehicle or mech play, projected from 🛡️ Resist rather than measured from shooting." },
@@ -100,11 +100,11 @@ export function initRankings(host) {
     if (!iso) return "—";
     try {
       const d = new Date(iso);
-      const s = new Intl.DateTimeFormat("en-CA", {
+      const s = new Intl.DateTimeFormat(currentLang() === "en" ? "en-CA" : currentLang(), {
         timeZone: "America/Winnipeg", year: "numeric", month: "short", day: "numeric",
         hour: "numeric", minute: "2-digit", hour12: true,
       }).format(d);
-      return s + " CT";
+      return s + tr("date.zone", " CT");
     } catch { return String(iso); }
   }
 
@@ -191,10 +191,10 @@ export function initRankings(host) {
     try { const o = JSON.parse(localStorage.getItem(LS_CACHE) || "null"); return o && typeof o === "object" && !Array.isArray(o) ? o : null; } catch { return null; }
   }
   const FRESH_MARK = "↻";
-  const LOCAL_ONLY_TIP = "Not in the shared Rankings yet: stats from the copy this browser fetched (this browser only). It's queued for the shared cache; everyone else sees it after the background refresh.";
+  const LOCAL_ONLY_TIP = tr("fresh.localOnly", "Not in the shared Rankings yet: stats from the copy this browser fetched (this browser only). It's queued for the shared cache; everyone else sees it after the background refresh.");
   function freshTip(at, localOnly = false) {
-    if (localOnly) return `${LOCAL_ONLY_TIP} Fetched ${fmtUpdated(at)}.`;
-    return `Fresh: your own "Fetch fresh" copy from ${fmtUpdated(at)} (this browser only). Others still see the shared copy until the background refresh catches up.`;
+    if (localOnly) return tr("fresh.localOnlyFetched", "{tip} Fetched {date}.", { tip: LOCAL_ONLY_TIP, date: fmtUpdated(at) });
+    return tr("fresh.tip", "Fresh: your own \"Fetch fresh\" copy from {date} (this browser only). Others still see the shared copy until the background refresh catches up.", { date: fmtUpdated(at) });
   }
 
   function rebuildIndex(payload, freshMap = new Map(), localOnly = new Set()) {
@@ -332,7 +332,7 @@ export function initRankings(host) {
   function apkCell(v, p) {
     if (!fin(v)) return `<td title="${tr("stats.notEnough", "Not enough recent sessions (needs 100 kills in Honu sessions)")}">—</td>`;
     const rel = p == null ? "" : p >= 50 ? tr("rk.apkTop", " — top {n}%", { n: Math.max(1, 100 - p) }) : tr("rk.apkBottom", " — bottom {n}%", { n: Math.max(1, p) });
-    const tip = `Assists per kill: ${fmt(v, 2)}${rel}. Helps damage enemies that teammates finish.`;
+    const tip = tr("apk.tip", "Assists per kill: {v}{rel}. Helps damage enemies that teammates finish.", { v: fmt(v, 2), rel });
     return `<td title="${esc(tip)}">${fmt(v, 2)}</td>`;
   }
 
@@ -363,7 +363,7 @@ export function initRankings(host) {
    */
   function rankCellHtml(r) {
     if (sortKey !== "name" && !fin(r[sortKey])) {
-      const why = r.thin && colById(sortKey)?.thinTip ? `Not ranked: ${MIN_FIGHTS_TIP.charAt(0).toLowerCase()}${MIN_FIGHTS_TIP.slice(1)}` : "Not ranked: no value for this column";
+      const why = r.thin && colById(sortKey)?.thinTip ? tr("rank.notFights", "Not ranked: too few fights to measure (needs {rule})", { rule: MIN_FIGHTS_RULE }) : tr("rank.notValue", "Not ranked: no value for this column");
       return `<td class="rk-num thin-sample" title="${esc(why)}">—</td>`;
     }
     return `<td class="rk-num">${r.rank}</td>`;
@@ -692,7 +692,7 @@ export function initRankings(host) {
       return;
     }
     const light = document.documentElement.getAttribute("data-theme") === "light";
-    const head = `<tr><th scope="col" class="rk-pos-name">Player</th>` + VISIBLE.map((c) => `<th scope="col" title="${esc(tipOf(c) || c.label)}">${esc(c.label)}</th>`).join("") + `</tr>`;
+    const head = `<tr><th scope="col" class="rk-pos-name">${tr("rk.player", "Player")}</th>` + VISIBLE.map((c) => `<th scope="col" title="${esc(tipOf(c) || c.label)}">${esc(c.label)}</th>`).join("") + `</tr>`;
     const body = rows.map((r) => {
       const i = colorOf.get(r.query);
       const cells = VISIBLE.map((c) => {
@@ -1103,7 +1103,7 @@ export function initRankings(host) {
     svg.appendChild(svgEl("path", { d, fill: "none", stroke: st.cum, "stroke-width": st.cumW, "stroke-linejoin": "round", opacity: st.cumOp }));
 
     // median / p90 / p99
-    const stats = [["median", h.median], ["p90", h.p90], ["p99", h.p99]];
+    const stats = [[tr("dist.median", "median"), h.median], ["p90", h.p90], ["p99", h.p99]];
     stats.forEach(([lab, v], k) => {
       const x = xOf(v);
       if (x == null) return;
@@ -1145,7 +1145,7 @@ export function initRankings(host) {
       gm.appendChild(t);
       const shown = col.floorZero && fin(v) && v < 0 ? tr("dist.zeroBelow", "0 (below scale)") : fin(v) ? (+v).toFixed(col.digits) : "—";
       const p = r.pcts[distMetric];
-      gm.appendChild(svgEl("title", {}, `${r.label}${r.mark ? ` (${r.markTip})` : ""}${r.poop ? ` (${POOP_TIP})` : ""}: ${col.label} ${shown}${p != null ? ` · p${p}` : ""} · rank #${r.rank} (current sort)${r.freshAt ? ` · ${FRESH_MARK} your fresh fetch` : ""}`));
+      gm.appendChild(svgEl("title", {}, tr("dist.dotTip", "{label}{mark}{poop}: {col} {shown}{p} · rank #{rank} (current sort){fresh}", { label: r.label, mark: r.mark ? ` (${r.markTip})` : "", poop: r.poop ? ` (${POOP_TIP})` : "", col: col.label, shown, p: p != null ? ` · p${p}` : "", rank: r.rank, fresh: r.freshAt ? tr("dist.freshTag", " · {mark} your fresh fetch", { mark: FRESH_MARK }) : "" })));
       marks.appendChild(gm);
     });
     svg.appendChild(leaders);
@@ -1542,7 +1542,7 @@ export function initRankings(host) {
     const secTop = sec ? sec.getBoundingClientRect().top + (window.scrollY || 0) - 8 : 0;
     window.scrollTo({ top: end ? document.documentElement.scrollHeight : Math.max(0, secTop), behavior });
   }
-  mountJumpButtons({ state: jumpState, jump: jumpTo, scrollers: [tableScroll], ids: { top: "jumpTop", bottom: "jumpBottom" }, topLabel: "Top of the Rankings", bottomLabel: "End of the Rankings" });
+  mountJumpButtons({ state: jumpState, jump: jumpTo, scrollers: [tableScroll], ids: { top: "jumpTop", bottom: "jumpBottom" }, topLabel: tr("jump.top", "Top of the Rankings"), bottomLabel: tr("jump.bottom", "End of the Rankings") });
 
   /* ---------- this browser's own copies (t338u fresh rows, t359u local-only rows) ---------- */
   let base = null; // ranks.json as fetched (never mutated)
