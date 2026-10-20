@@ -4732,9 +4732,10 @@ import {
     };
     const show = (r) => {
       if (r && r.total > 0) {
-        el.textContent = tr("foot.namesPerDay", "(≈{perDay} new names a day · {total} cached since Oct 7, 2026)", {
+        // Display is the rate only (Dayset 2026-10-20): the cached total
+        // itself already shows in the recent players added line.
+        el.textContent = tr("foot.namesPerDay", "(≈{perDay} new names a day)", {
           perDay: r.perDay.toLocaleString(),
-          total: r.total.toLocaleString(),
         });
         el.hidden = false;
       }
