@@ -1768,7 +1768,7 @@ import {
   }
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261021-dbgcap1")
+    rankingsLoading = import("./rankings.mjs?v=20261021-colorder1")
       .then((m) => {
         rankingsApi = m.initRankings(rankingsHost);
         return rankingsApi.ready;
@@ -3579,15 +3579,15 @@ import {
       { id: "act", label: "🏃 Activity", hint: tr("tip.act", "How much winning combat you put out: your K/D against the players you fight most, multiplied by how fast you kill."), fn: (r) => r.act, digits: 2 },
       { id: "pvs", label: "🦁 Brave", hint: tr("tip.pvs", "Activity that keeps up as enemies get stronger: high when you stay productive even against the fastest-killing players you meet."), fn: (r) => r.pvs, digits: 2 },
       { id: "rf", label: "🛡️ Resist", hint: tr("tip.rf", "How well you stand up to strong players: your K/D against the players you fight most, scaled up by how fast those players kill."), fn: (r) => r.rf, digits: 2 },
+      { id: "rkd", label: "☠️ K/D", hint: tr("tip.rkd", "Kills ÷ deaths against the ~200 players you fight most, so it reflects real matchups rather than your whole lifetime."), fn: (r) => r.rkd, digits: 3 },
       { id: "cons", label: "⚡ Const", hint: tr("tip.cons", "How much of your K/D you keep against the strongest third of your opponents compared with the weakest third, as a percentile of all tracked players."), fn: (r) => r.cons, digits: 2, pctileCell: true },
       { id: "apk", label: tr("col.assists", "🤝 Assists"), hint: tr("tip.apk", "Assists per kill in recent Honu sessions: how often you help damage enemies that teammates finish, for each kill of your own."), fn: (r) => (apkBySlug && r.p ? apkBySlug.get(slugKey(r.p.display)) : undefined), digits: 2, apkCell: true, pctDir: "low", pctLowPhrase: "more assists" },
-      // 🪳 Zerg (owner t480u): lower of the 🎈 Inflation and 🤝 Assists percentiles; lower is better (like 🤝: reversed grey %).
-      { id: "zerg", label: tr("col.zerg", "🪳 Zerg"), hint: tr("tip.zerg", ZERG_HINT), digits: 0, zergCell: true, pctDir: "low",
-        fn: (r) => { const z = traitP && r.p ? zergScore(traitP, shownValue(r, "inflation"), apkBySlug && apkBySlug.get(slugKey(r.p.display))) : null; return z ? z.score : NaN; } },
       // 🤥😤 Impostor–DieHard (owner t484u): ⚔️ iVi percentile − IvI percentile, −99…+99; neither side is better.
       { id: "diff", label: tr("col.diff", "🔀 Diff"), hint: tr("tip.diff", AIMGAP_HINT), digits: 0, aimGapCell: true,
         fn: (r) => { const g = traitP ? aimGap(traitP, shownValue(r, "adjs"), r.ivi) : null; return g ? g.score : NaN; } },
-      { id: "rkd", label: "☠️ K/D", hint: tr("tip.rkd", "Kills ÷ deaths against the ~200 players you fight most, so it reflects real matchups rather than your whole lifetime."), fn: (r) => r.rkd, digits: 3 },
+      // 🪳 Zerg (owner t480u): lower of the 🎈 Inflation and 🤝 Assists percentiles; lower is better (like 🤝: reversed grey %).
+      { id: "zerg", label: tr("col.zerg", "🪳 Zerg"), hint: tr("tip.zerg", ZERG_HINT), digits: 0, zergCell: true, pctDir: "low",
+        fn: (r) => { const z = traitP && r.p ? zergScore(traitP, shownValue(r, "inflation"), apkBySlug && apkBySlug.get(slugKey(r.p.display))) : null; return z ? z.score : NaN; } },
       { id: "inf", label: tr("col.infantry", "🪖 Infantry"), hint: tr("tip.inf", INF_HINT), fn: (r) => { const e = infBySlug && r.p ? infBySlug.get(slugKey(r.p.display)) : undefined; return e ? e.inf : undefined; }, digits: 1, infCell: true },
     ];
     // Older debug columns: appended only when "show older debug stats" (footer) is ticked.

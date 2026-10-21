@@ -50,12 +50,12 @@ export function initRankings(host) {
     { id: "act", label: "🏃 Activity", digits: 2, tip: "How much winning combat you put out: your K/D against the players you fight most, multiplied by how fast you kill." },
     { id: "pvs", label: "🦁 Brave", digits: 2, tip: "Activity that keeps up as enemies get stronger: high when you stay productive even against the fastest-killing players you meet." },
     { id: "rf", label: "🛡️ Resist", digits: 2, tip: "How well you stand up to strong players: your K/D against the players you fight most, scaled up by how fast those players kill." },
+    { id: "rkd", label: "☠️ K/D", digits: 3, tip: "Kills ÷ deaths against the ~200 players you fight most, so it reflects real matchups rather than your whole lifetime." },
     { id: "cons", label: "⚡ Const", digits: 2, tip: "How much of your K/D you keep against the strongest third of your opponents compared with the weakest third: 1.00 means it holds completely, 0.50 means it halves." },
     { id: "apk", label: tr("col.assists", "🤝 Assists"), digits: 2, apk: true, tip: "Assists per kill in recent Honu sessions: how often you help damage enemies that teammates finish, for each kill of your own." },
     // 🪳 Zerg / 🤥😤 Impostor–DieHard (owner t480u–t485u): computed here from the ranks.json pools (trait-scores.mjs), same numbers as ✨ Stats.
-    { id: "zerg", label: tr("col.zerg", "🪳 Zerg"), digits: 0, zerg: true, tip: ZERG_HINT },
     { id: "diff", label: tr("col.diff", "🔀 Diff"), digits: 0, aimgap: true, tip: AIMGAP_HINT },
-    { id: "rkd", label: "☠️ K/D", digits: 3, tip: "Kills ÷ deaths against the ~200 players you fight most, so it reflects real matchups rather than your whole lifetime." },
+    { id: "zerg", label: tr("col.zerg", "🪳 Zerg"), digits: 0, zerg: true, tip: ZERG_HINT },
     { id: "inf", label: tr("col.infantry", "🪖 Infantry"), digits: 1, inf: true, tip: INF_HINT },
   ];
   const DEBUG = [

@@ -1,4 +1,6 @@
-// 🪖 Infantry column: right after ☠️ K/D on the main stats table and the Rankings; ranks.json carries inf / infMax / infVeh.
+// 🪖 Infantry column + table column order on the main stats table and the Rankings;
+// ranks.json carries inf / infMax / infVeh. Column order (Dayset 2026-10-21):
+// ☠️ K/D sits right after 🛡️ Resist, and 🔀 Diff before 🪳 Zerg (swapped), 🪖 last.
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
@@ -7,8 +9,13 @@ import { infTip, infantryShares } from "../infantry.mjs";
 const read = (f) => fs.readFileSync(new URL("../" + f, import.meta.url), "utf8");
 
 test("column order and ranks.json columns", () => {
-  assert.match(read("rankings.mjs"), /id: "rkd", label: "☠️ K\/D"[^\n]*\n\s*\{ id: "inf", label: (?:"🪖 Infantry"|tr\("col\.infantry", "🪖 Infantry"\))/);
-  assert.match(read("app.js"), /id: "rkd", label: "☠️ K\/D"[^\n]*\n\s*\{ id: "inf", label: (?:"🪖 Infantry"|tr\("col\.infantry", "🪖 Infantry"\))/);
+  for (const f of ["rankings.mjs", "app.js"]) {
+    const src = read(f);
+    const at = (id) => src.indexOf(`id: "${id}"`);
+    assert.ok(at("rf") >= 0 && at("rf") < at("rkd"), `${f}: ☠️ K/D right after 🛡️ Resist`);
+    assert.ok(at("rkd") < at("cons"), `${f}: ☠️ K/D before ⚡ Const`);
+    assert.ok(at("apk") < at("diff") && at("diff") < at("zerg") && at("zerg") < at("inf"), `${f}: 🔀 Diff before 🪳 Zerg (swapped), 🪖 Infantry last`);
+  }
   assert.match(read("scripts/build-ranks.mjs"), /ranks\.cols\.push\("inf", "infMax", "infVeh"\)/);
 });
 
