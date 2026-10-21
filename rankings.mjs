@@ -40,8 +40,9 @@ export function initRankings(host) {
   const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";
   const LS_HIDE_ZERO_IVI = "ps2-elite-kd-hide-zero-ivi";
   // Same limit as the names box (app.js MAX_NAMES, 6 since t400u; this said 10, so the
-  // table let you tick a 7th name the box then refused — issue #35).
-  const MAX_NAMES = host.maxNames || 6;
+  // table let you tick a 7th name the box then refused — issue #35). Read live via
+  // the host getter: the debug option lifts the cap to Infinity (Dayset 2026-10-21).
+  const maxNames = () => host.maxNames || 6;
 
   // Column definitions: same ids / labels / digits / floorZero as app.js.
   const VISIBLE = [
@@ -130,7 +131,7 @@ export function initRankings(host) {
   // t356u: the ONE selection is the names box (host.getNames()); these are
   // the ranked rows it matches, in its order (names not ranked are skipped).
   const picked = new Map(); // query → display
-  const fieldFull = () => host.getNames().length >= MAX_NAMES;
+  const fieldFull = () => host.getNames().length >= maxNames();
   let pickSig = "";
   // 2026-10-19: the big table re-renders (13k rows, ~0.2 s desktop / ~1 s phone) only
   // when it's open; a name change while it's folded just marks it stale.
@@ -141,7 +142,7 @@ export function initRankings(host) {
     // t359u: a graphed name that's new to this browser's cache (quick fetch /
     // Fetch fresh after Rankings loaded) → re-merge so it joins 📊 / 🏅 / the table.
     if (base && localSig() !== mergedSig) { remerge(); render(); drawDist(); force = true; }
-    const hits = matchPicks(host.getNames(), data.rows, MAX_NAMES);
+    const hits = matchPicks(host.getNames(), data.rows, maxNames());
     const sig = hits.map((h) => h.query).join("\n") + "|" + host.getNames().join("\n");
     if (!force && sig === pickSig) return;
     pickSig = sig;
@@ -341,7 +342,7 @@ export function initRankings(host) {
     const fixedCh = cols.reduce((s, c) => s + (COL_W[c.id] || 10), 0);
     $("ranksTable").style.setProperty("--rk-fixed", `calc(4.2rem + ${fixedCh}ch + 1px)`);
     const cells = [
-      `<th class="rk-pick" scope="col" title="${tr("rk.pickMax", "Pick up to {n} to Compare", { n: MAX_NAMES })}"></th>`,
+      `<th class="rk-pick" scope="col" title="${tr("rk.pickMax", "Pick up to {n} to Compare", { n: maxNames() })}"></th>`,
       `<th class="rk-num" scope="col" title="${tr("rk.rankTitle", "Rank under the current sort")}">#</th>`,
       `<th class="rk-name sortable${sortKey === "name" ? " sorted" : ""}" data-key="name" scope="col">${tr("rk.player", "Player")}<span class="sort-ind${sortKey === "name" ? " active" : ""}">${sortKey === "name" ? (sortDir === "asc" ? "▲" : "▼") : "▾"}</span></th>`,
     ];

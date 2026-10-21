@@ -407,8 +407,14 @@ import {
     }
   }
 
-  /* ---------- 10-name cap ---------- */
+  /* ---------- names cap ---------- */
   const MAX_NAMES = 6;
+  /* Debug lifts the cap (Dayset 2026-10-21): with the footer's "show
+   * older debug stats" box ticked there is no names limit at all — no cap
+   * on adding, no limit warnings, no input/button lock, no truncation.
+   * readShowDebugCols (hoisted declaration below) is the same source of
+   * truth the debug columns render from; every call site runs live. */
+  const nameLimit = () => (readShowDebugCols() ? Number.POSITIVE_INFINITY : MAX_NAMES);
   const LIMIT_HINT_HTML = `<span class="warn">${tr("msg.limitReached", "{n} players limit reached", { n: MAX_NAMES })}</span>`;
 
   /** Warn (status line) that the field is full; replaces any "graph is ready" hint. */
@@ -1237,7 +1243,7 @@ import {
   let persistNamesOn = false;
   function persistPendingNames() {
     if (!persistNamesOn || LIVE_MODE) return;
-    writeJsonLS(LS_PENDING, { names: nameTokens.slice(0, MAX_NAMES), base: namesListKey(namesFromQuery() || []) });
+    writeJsonLS(LS_PENDING, { names: nameTokens.slice(0, nameLimit()), base: namesListKey(namesFromQuery() || []) });
   }
   function getPendingNames() {
     const v = readJsonLS(LS_PENDING, null);
@@ -1400,7 +1406,7 @@ import {
       const key = clean.toLowerCase();
       if (seen.has(key)) continue;
       seen.add(key);
-      if (nameTokens.length >= MAX_NAMES) {
+      if (nameTokens.length >= nameLimit()) {
         overflow++;
         continue;
       }
@@ -1432,7 +1438,7 @@ import {
       renderCacheChips();
       return true;
     }
-    if (nameTokens.length >= MAX_NAMES) {
+    if (nameTokens.length >= nameLimit()) {
       showLimitHint();
       return false;
     }
@@ -1515,7 +1521,7 @@ import {
       clearTimeout(busyTimer);
       if (btn) { btn.classList.remove("is-loading"); btn.removeAttribute("aria-busy"); }
     }
-    if (nameTokens.length >= MAX_NAMES) { say(tr("msg.listFull", "The list is full ({n} names)", { n: MAX_NAMES })); return; }
+    if (nameTokens.length >= nameLimit()) { say(tr("msg.listFull", "The list is full ({n} names)", { n: MAX_NAMES })); return; }
     const used = new Set(nameTokens.map((n) => slugKey(n)));
     const listVals = nameTokens.map((n) => vals.get(slugKey(n))).filter(Boolean).map((v) => v.adjs);
     if (mode === "range" && !listVals.length) {
@@ -1600,7 +1606,7 @@ import {
   // is removed (every chip change re-runs this via renderNameTokens).
   let limitWasFull = false;
   let limitLockReady = false; // false during startup (?names= / restore)
-  const isListFull = () => nameTokens.length >= MAX_NAMES;
+  const isListFull = () => nameTokens.length >= nameLimit();
   // The lock note fades out 5 s after it appears, then compacts away
   // (hidden). Re-armed every time the note is (re)shown.
   let limitNoteFadeTimer = 0;
@@ -1681,7 +1687,7 @@ import {
     sfxChipCount = nameTokens.length;
     queueMicrotask(syncLimitLock);
     clearGraphReadyHint();
-    if (nameTokens.length < MAX_NAMES) clearLimitHint();
+    if (nameTokens.length < nameLimit()) clearLimitHint();
     persistPendingNames(); // every chip change goes through here
     // Debug battle panel reads the same names (no retyping).
     if (typeof document !== "undefined") document.dispatchEvent(new CustomEvent("ps2-names", { detail: nameTokens.slice() }));
@@ -1740,7 +1746,7 @@ import {
   }
   let rankingsLoading = null;
   const rankingsHost = {
-    maxNames: MAX_NAMES,
+    get maxNames() { return nameLimit(); },
     loadRanks: () => loadRanksPayload(), // t376u: one shared ranks.json parse
     getNames: () => nameTokens.slice(),
     toggleName(name, anchor, add) {
@@ -1762,7 +1768,7 @@ import {
   }
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261021-longname1")
+    rankingsLoading = import("./rankings.mjs?v=20261021-dbgcap1")
       .then((m) => {
         rankingsApi = m.initRankings(rankingsHost);
         return rankingsApi.ready;
@@ -1886,7 +1892,7 @@ import {
         if (!out.some((n) => namesEqualIgnoreCase(n, t))) out.push(t);
       }
     }
-    return out.slice(0, MAX_NAMES);
+    return out.slice(0, nameLimit());
   }
 
   /** Shared-cache "# A B … Z" jump bar; letters without names are disabled. */
@@ -3432,6 +3438,11 @@ import {
       } catch (_) {
         /* private mode: keep the in-memory choice */
       }
+      // The names cap follows this same box (Dayset 2026-10-21): re-sync
+      // the lock so a full list unlocks the moment debug goes on, and
+      // clear any limit warnings still on screen.
+      syncLimitLock();
+      if (showDebugCols) { hideLimitNote(); clearLimitHint(); hideLimitToast(); }
       if (lastStatsList) renderStatsTable(lastStatsList);
       syncSmoothBtn();
       syncLiveBtn();
@@ -4919,7 +4930,7 @@ import {
     if (!startup || startup.reason !== "url" || !startup.names.length) return;
     if (fetching || activeRun || players.length) return;
     if (els.fetchFresh) { els.fetchFresh.checked = false; updateFreshEta(); }
-    const overLimit = startup.names.length > MAX_NAMES;
+    const overLimit = startup.names.length > nameLimit();
     // t379u: a refresh just puts the same graph back — quietly (no "Analyzing…"
     // pop-up, no jump to the results; the browser keeps your scroll position).
     // Only when every name is saved (shared file / this browser); a name that
@@ -4999,7 +5010,7 @@ import {
       const val = els.namesInput.value;
       // A complete saved name typed without a space/Enter: lock it in after a short pause.
       clearTimeout(autoCommitTimer);
-      if (val.trim() && !/[\s,;]/.test(val.trim()) && nameTokens.length < MAX_NAMES) {
+      if (val.trim() && !/[\s,;]/.test(val.trim()) && nameTokens.length < nameLimit()) {
         autoCommitTimer = setTimeout(() => {
           const now = String(els.namesInput.value || "");
           if (now === val && document.activeElement === els.namesInput && uniqueSavedName(now.trim())) commitFragment({ clearInput: true });
@@ -5010,7 +5021,7 @@ import {
       const tagPending = /(^|[\s,;])\[[^\]]*\]\s+$/.test(val);
       if (/[\s,;]$/.test(val) && !tagPending) {
         commitFragment({ clearInput: true });
-      } else if (val.trim() && nameTokens.length >= MAX_NAMES) {
+      } else if (val.trim() && nameTokens.length >= nameLimit()) {
         // Typing an 11th name: say so right away (text is kept).
         showLimitHint();
       } else if (!val.trim()) {

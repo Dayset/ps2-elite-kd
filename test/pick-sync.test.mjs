@@ -50,7 +50,7 @@ describe("pick-sync", () => {
     // t356u: one page — the names box is the selection; Rankings match it with matchPicks.
     assert.match(app, /getNames: \(\) => nameTokens\.slice\(\)/);
     const ranks = rankingsSource();
-    assert.match(ranks, /matchPicks\(host\.getNames\(\), data\.rows, MAX_NAMES\)/);
+    assert.match(ranks, /matchPicks\(host\.getNames\(\), data\.rows, maxNames\(\)\)/);
     // Old links: ranks.html → index.html keeping ?names= / ?pick=.
     const redirect = fs.readFileSync(new URL("../ranks.html", import.meta.url), "utf8");
     assert.match(redirect, /p\.get\("names"\) \|\| p\.get\("pick"\)/);
