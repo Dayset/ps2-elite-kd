@@ -31,8 +31,10 @@ export const SWEEP_EVERY_MS = 20 * 3600 * 1000;
 export const SWEEP_OVERLAP_S = 2 * 3600;
 export const QUEUE_KEEP_MS = 14 * DAY_MS;
 export const QUEUE_MAX = 10000;
-/** Cap steps: stay at a step until caught up, then move to the next. */
-export const CAP_STEPS = [3000, 6000, 9000, 12000, 15000, 18000, 21000, 24000];
+/** Cap steps: stay at a step until caught up, then move to the next.
+ * Owner 2026-10-20: the ceiling is 100k (the old 24000 top step now steps
+ * straight to 100000 once the index reaches it). */
+export const CAP_STEPS = [3000, 6000, 9000, 12000, 15000, 18000, 21000, 24000, 100000];
 
 /* ------------------------------------------------------------ refresh tiers */
 
