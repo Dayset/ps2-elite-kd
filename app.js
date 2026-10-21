@@ -1768,7 +1768,7 @@ import {
   }
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261021-pxx1")
+    rankingsLoading = import("./rankings.mjs?v=20261021-colorder1")
       .then((m) => {
         rankingsApi = m.initRankings(rankingsHost);
         return rankingsApi.ready;
@@ -2854,9 +2854,13 @@ import {
   }
 
   function setYZoomVisible(show) {
+    // Dayset 2026-10-21: the zoom slider + Auto button are retired from
+    // the UI — "barely usable". The controls stay hidden whatever the
+    // caller asks; all the zoom code itself is left in place, untouched
+    // (same treatment as the 🎚️ Smooth button in syncSmoothBtn). yZoom
+    // always starts at Y_ZOOM_DEFAULT, so no one is stuck zoomed.
     if (!els.chartYZoom) return;
-    if (show) els.chartYZoom.removeAttribute("hidden");
-    else els.chartYZoom.setAttribute("hidden", "");
+    els.chartYZoom.setAttribute("hidden", "");
   }
 
   function clearSvg(svg) {
