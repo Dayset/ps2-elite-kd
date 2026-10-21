@@ -2406,6 +2406,12 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
   .ranks-table-wrap { scrollbar-width: none; }
   .ranks-table-wrap::-webkit-scrollbar { display: none; }
 }
+/* Dayset 2026-10-21: on PC the all-players table gets 25% more height
+ * when open — scrolling down through the names, the box used to slide
+ * up too much. Same base size as above, × 1.25; phones keep theirs. */
+@media (hover: hover) and (pointer: fine) {
+  .ranks-table-wrap { max-height: calc((100vh - 11rem) * 1.25); }
+}
 .ranks-table {
   width: 100%;
   border-collapse: separate; border-spacing: 0;
