@@ -165,18 +165,12 @@ export const ready = typeof document === "undefined" ? Promise.resolve("en") : (
       saveLang(sel.value);
       location.reload();
     });
-    // Owner 2026-10-20: while the menu is open its options read "🇩🇪 Deutsch"
-    // (the menu has the room); closed, they collapse back to the flag alone.
-    const paintOpts = (named) => {
-      for (const opt of sel.options) {
-        const l = LANGS.find((x) => x.code === opt.value);
-        if (l) opt.textContent = named ? `${l.flag} ${l.name}` : l.flag;
-      }
-    };
-    sel.addEventListener("pointerdown", () => paintOpts(true));
-    sel.addEventListener("focus", () => paintOpts(true));
-    sel.addEventListener("change", () => paintOpts(false));
-    sel.addEventListener("blur", () => paintOpts(false));
+    // Owner 2026-10-20 evening: the options always read "🇩🇪 Deutsch" —
+    // full language name in the selection, open or closed.
+    for (const opt of sel.options) {
+      const l = LANGS.find((x) => x.code === opt.value);
+      if (l) opt.textContent = `${l.flag} ${l.name}`;
+    }
   }
   const shown = await setLang(first);
   if (document.body) showDetectedBanner(); else document.addEventListener("DOMContentLoaded", showDetectedBanner, { once: true });

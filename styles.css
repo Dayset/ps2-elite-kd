@@ -865,16 +865,16 @@ header .sub {
 }
 .fresh-cols-link {
   flex: 0 0 auto;
-  /* Two faces in the markup: .cols-emoji (❓📖❓, the default) and .cols-txt
-   * (the 📖 text). On phones the row's right side freed up when the options
-   * moved into the field, so portrait shows the text, right-aligned (see
-   * the portrait block below); everywhere else the emoji stays. */
+  /* Two faces in the markup: .cols-txt (the 📖 text) and .cols-emoji
+   * (❓📖❓). Owner 2026-10-20 evening: PC is back to the text; the emoji
+   * face is retired (kept in the markup, never shown). Portrait shows the
+   * text too, right-aligned (see the portrait block below). */
   font-size: 1.1rem;
   color: var(--text);
   text-decoration: none;
   white-space: nowrap;
 }
-.fresh-cols-link .cols-txt { display: none; }
+.fresh-cols-link .cols-emoji { display: none; }
 .fresh-cols-link:hover {
   text-decoration: underline;
 }
@@ -2665,8 +2665,9 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
 
 /* Language menu (i18n.mjs, #langSelect): same height as the icon buttons beside it. */
 .controls .fresh-row-end select.lang-select {
-  box-sizing: border-box; height: 1.9rem; max-width: 7.4rem; padding: 0 0.3rem;
-  /* Flag-only options (owner 2026-10-20): a touch larger so the flag reads. */
+  box-sizing: border-box; height: 1.9rem; padding: 0 0.3rem;
+  /* Full language names in the selection (owner 2026-10-20 evening): no
+   * width cap, the select sizes to "🇫🇷 Français" and friends. */
   font: inherit; font-size: 1rem; border-radius: 6px; cursor: pointer;
   border: 1px solid var(--border); background: var(--input-bg); color: var(--text);
 }
