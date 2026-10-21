@@ -64,6 +64,7 @@ const DISCOVERY_PATH = path.join(DATA_DIR, "discovery.json");
 const HONU_USAGE_PATH = path.join(DATA_DIR, "honu-usage.json");
 const SCHEDULE_PATH = path.join(DATA_DIR, "schedule.json");
 const REQUESTED_PATH = path.join(DATA_DIR, "requested.json");
+const FETCH_COUNTS_PATH = path.join(DATA_DIR, "fetch-counts.json");
 const EXP_TYPES_PATH = path.join(DATA_DIR, "exp-types.json");
 const FORENSICS_PATH = path.join(DATA_DIR, "forensics.json");
 const XP_DIR = path.join(DATA_DIR, "xp");
@@ -643,11 +644,35 @@ async function fetchWorkerRequestedRaw() {
     return {
       players: Array.isArray(d && d.players) ? d.players : [],
       fresh: Array.isArray(d && d.fresh) ? d.fresh : [],
+      counts: d && d.counts && typeof d.counts === "object" ? d.counts : null,
+      countsSince: d && +d.countsSince > 0 ? +d.countsSince : null,
     };
   } catch (e) {
     console.warn(`  Worker /requested unavailable: ${String(e && e.message).slice(0, 80)}`);
     return { players: [], fresh: [] };
   }
+}
+
+/**
+ * Publish the Worker's fetch-popularity tally as data/fetch-counts.json
+ * ({ updatedAt, since, counts: {slug: n} }, keys sorted). The Worker counts
+ * /seen + /add fetches (coalesced, approximate — a fun stat; build-log
+ * shows the top line). Rewritten only when the tally actually changed, so
+ * idle runs don't churn the file.
+ */
+export function publishFetchCounts(raw, now = Date.now()) {
+  const src = raw && raw.counts && typeof raw.counts === "object" ? raw.counts : null;
+  if (!src) return false;
+  const counts = {};
+  for (const k of Object.keys(src).sort()) {
+    const n = Math.floor(+src[k]);
+    if (k && n > 0) counts[k] = n;
+  }
+  const prev = readJsonSafe(FETCH_COUNTS_PATH, null);
+  if (prev && JSON.stringify(prev.counts || {}) === JSON.stringify(counts)) return false;
+  const since = (raw && +raw.countsSince) || (prev && +prev.since) || now;
+  fs.writeFileSync(FETCH_COUNTS_PATH, JSON.stringify({ updatedAt: new Date(now).toISOString(), since, counts }, null, 1) + "\n");
+  return true;
 }
 
 function readJsonSafe(file, fallback) {
@@ -1324,6 +1349,11 @@ async function main() {
     await requestedXpPhase(index, explicit ? names : [], Math.min(deadline - reserveMs, Date.now() + XP_TIME_CAP_MS));
   } catch (e) {
     console.warn(`Requested XP phase skipped: ${String(e && e.message).slice(0, 120)}`);
+  }
+  try {
+    if (publishFetchCounts(await fetchWorkerRequestedAll())) console.log("  fetch counts: published data/fetch-counts.json");
+  } catch (e) {
+    console.warn(`Fetch counts publish skipped: ${String(e && e.message).slice(0, 120)}`);
   }
 
   // 🔎 Session forensics: a few suspicious players' top sessions, from the forensics reserve.

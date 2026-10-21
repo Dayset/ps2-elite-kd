@@ -23,6 +23,7 @@
     .st-wrap { max-width: none; margin: 0; padding: 18px 16px 40px; padding-inline: 0; } /* width: body.site-page (#29) */
     .st-wrap h1 { font-size: 1.25rem; margin: 0 0 4px; }
     .st-sub { color: var(--dim); font-size: 0.85rem; margin-bottom: 16px; }
+    .st-pop { font-size: 0.95rem; margin: 0 0 14px; }
     .st-card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
     .st-card h2 { font-size: 0.95rem; margin: 0 0 8px; color: var(--accent); font-weight: 600; }
     .st-big { font-size: 1.05rem; font-weight: 600; }
@@ -136,6 +137,8 @@
       <h1>📦 Cache status</h1>
       <div class="st-sub"><span id="stUpdated">Auto-updates every 30 s.</span> · <a href="./">Back to the chart</a> · <a href="misc.html" title="Confirmed stat padders (hidden page)">🌾 Wall of shame</a> · <span id="radarLine" title="PS2 Radar (ps2radar.com, an independent community cheat radar) is looked up once a day for players on the review lists, at most 50 a day, each at most every 3 days. Its badge is a second opinion only: a Confirmed / Banned mark moves a player up in review order but never hides or flags anyone, and nothing else on the site reads it.">🛰️ PS2 Radar</span><span class="st-tools"><button type="button" id="openAll" title="Open every section">Open all</button><button type="button" id="closeAll" title="Collapse every section">Collapse all</button></span></div>
     </div>
+
+    <p id="popLine" class="st-pop" hidden></p>
 
     <section class="st-glance" id="statusBar" aria-label="At a glance">
       <div class="st-tile st-state"><div class="st-tv" id="sbState">Loading…</div><div class="st-tl" id="sbLast"></div></div>
@@ -580,7 +583,30 @@
           }).join("") + "</table>" : "");
       }
 
+      // Popularity one-liner: all-time fetch counts from the cache Worker
+      // (data/fetch-counts.json, published by the refresh pipeline). One
+      // count per account per browser per day. ShloDog (the default name)
+      // is counted but hidden here by default. Silent when no data yet.
+      function renderPop(fc, index) {
+        var el = $("popLine");
+        if (!el || !fc || !fc.counts) return;
+        var bySlug = {};
+        ((index && index.players) || []).forEach(function (p) { if (p && p.slug) bySlug[p.slug] = p.name || p.slug; });
+        var top = Object.keys(fc.counts)
+          .filter(function (s) { return s !== "shlodog" && fc.counts[s] > 0; })
+          .sort(function (a, b) { return fc.counts[b] - fc.counts[a]; })
+          .slice(0, 10);
+        if (!top.length) return;
+        el.textContent = "🏆 Most fetched: " + top.map(function (s) { return (bySlug[s] || s) + " ×" + fc.counts[s]; }).join(" · ");
+        el.title = "How many times each account has been fetched (one per browser per day, all time). ShloDog is counted but not shown.";
+        el.hidden = false;
+      }
+
       function tick() {
+        Promise.all([
+          getJson("data/fetch-counts.json").catch(function () { return null; }),
+          getJson("data/index.json").catch(function () { return null; }),
+        ]).then(function (r) { renderPop(r[0], r[1]); });
         getJson("data/status.json").catch(function () { return null; }).then(function (st) {
           renderNow(st);
           renderLast(st);

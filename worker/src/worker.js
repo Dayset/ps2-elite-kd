@@ -10,7 +10,7 @@
 //   GET  /pending   names queued but not cached yet
 //   GET  /runs      recent refresh-cache.yml runs (build-log page)
 //   GET  /health    cron backup-timer state
-//   GET  /requested (X-Proxy-Key) seen + fresh lists for the refresh Action
+//   GET  /requested (X-Proxy-Key) seen + fresh lists + fetch counts for the refresh Action
 //   GET  /census/…  (X-Proxy-Key) read-only Census proxy for the refresh Action
 // Cron (*/5): dispatch refresh-cache.yml when data/schedule.json says a run is
 // due, or when /add names have been stuck pending.
@@ -445,7 +445,12 @@ async function handleAdd(request, env, c, cors, now) {
     }
     return true;
   });
-  if (!remaining.length) return json(out, 200, cors);
+  // Popularity tally: the accounts this request fetched that were already
+  // settled (cached / queued), plus the verified ones below. Rate-limited
+  // exits skip the bump, so rejected batches can't inflate the counts.
+  const slugByName = new Map(candidates.map((x) => [x.name, x.slug]));
+  const settledSlugs = () => [...out.alreadyCached, ...out.alreadyQueued].map((n) => slugByName.get(n)).filter(Boolean);
+  if (!remaining.length) { await bumpCounts(env, settledSlugs(), now); return json(out, 200, cors); }
   const ip = request.headers.get("CF-Connecting-IP") || "unknown";
   const ipKey = `rl:ip:${ip}:${hourBucket(now)}`;
   const used = await kvGetInt(env.QUEUE, ipKey);
@@ -470,7 +475,8 @@ async function handleAdd(request, env, c, cors, now) {
     else if (r.status === "notFound") out.notFound.push(x.name);
     else out.unverified.push(x.name);
   });
-  if (!verified.length) return json(out, 200, cors);
+  if (!verified.length) { await bumpCounts(env, settledSlugs(), now); return json(out, 200, cors); }
+  await bumpCounts(env, [...settledSlugs(), ...verified.map((v) => v.slug)], now);
   const names = verified.map((v) => v.name);
   const d = await dispatchWorkflow(names, env, c);
   if (!d.ok) {
@@ -614,6 +620,39 @@ async function markFresh(env, slugs, now) {
   return slugs.filter((s) => out.some((e) => e.slug === s && e.at === now)).length;
 }
 
+/* Fetch popularity counts (owner 2026-10-20, "just a fun stat"): /seen and
+ * /add batches bump an all-time per-slug tally kept in ONE KV key, surfaced
+ * via /requested so the refresh pipeline can publish data/fetch-counts.json
+ * (build-log shows the top line). KV writes are the scarce resource (free
+ * plan: 1,000/day), so the map is persisted at most once per
+ * COUNTS_FLUSH_MS — a batch inside the window reads the map but skips the
+ * write and its bumps are dropped. The ranking only needs to be right
+ * within a few percent. Counting must never break the request it rides
+ * on: every failure is swallowed. */
+const COUNTS_KEY = "counts:map";
+const COUNTS_FLUSH_MS = 10 * 60 * 1e3;
+
+async function readCounts(env) {
+  try {
+    const raw = await env.QUEUE.get(COUNTS_KEY);
+    const d = raw ? JSON.parse(raw) : null;
+    if (d && d.counts && typeof d.counts === "object") return d;
+  } catch {}
+  return null;
+}
+
+async function bumpCounts(env, slugs, now) {
+  if (!env.QUEUE || !slugs || !slugs.length) return;
+  try {
+    let d = await readCounts(env);
+    if (!d) d = { since: now, flushedAt: 0, counts: {} };
+    for (const s of slugs) d.counts[s] = (d.counts[s] || 0) + 1;
+    if (now - (d.flushedAt || 0) < COUNTS_FLUSH_MS) return; // coalesced: these bumps are dropped
+    d.flushedAt = now;
+    await env.QUEUE.put(COUNTS_KEY, JSON.stringify(d));
+  } catch {}
+}
+
 async function handleSeen(request, env, c, cors, now) {
   if (!env.QUEUE) return json({ error: "not_configured" }, 503, cors);
   let body;
@@ -641,6 +680,7 @@ async function handleSeen(request, env, c, cors, now) {
   }
   const take = slugs.slice(0, SEEN_IP_NAMES_PER_MIN - used);
   seenIpMemo.set(ip, { minute, n: used + take.length });
+  await bumpCounts(env, take, now); // popularity tally (coalesced, never throws)
   let marked = 0;
   await Promise.all(
     take.map(async (slug) => {
@@ -677,7 +717,8 @@ async function handleRequested(request, env) {
     cursor = r.cursor;
   }
   const fresh = await readFresh(env, Date.now());
-  return new Response(JSON.stringify({ players, fresh }), { status: 200, headers: hdr });
+  const cd = await readCounts(env);
+  return new Response(JSON.stringify({ players, fresh, counts: cd ? cd.counts || {} : {}, countsSince: cd ? cd.since || null : null }), { status: 200, headers: hdr });
 }
 
 const CENSUS_ORIGIN = "https://census.daybreakgames.com";
