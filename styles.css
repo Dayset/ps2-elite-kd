@@ -2451,8 +2451,14 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
 /* Name column width under table-layout: fixed (Dayset 2026-10-19) — mirrors
  * the .nm caps below plus padding, so the column never jumps with content. */
 .ranks-table col.rk-name-col { width: 21ch; }
-@media (min-width: 601px) { .ranks-table col.rk-name-col { width: 31ch; } }
-@media (min-width: 1100px) { .ranks-table col.rk-name-col { width: 45ch; } }
+/* t483u: on PC the name column gives way instead of the table overflowing.
+ * It keeps its old width (31ch / 45ch) whenever that fits, and shrinks down to
+ * 18ch (the phone name width) only when the number columns (sum in --rk-fixed, set by rankings.mjs
+ * renderHead) would otherwise push a sideways scrollbar. Depends only on the
+ * box width, never on rows, so the table still doesn't jump on sort. */
+.ranks-table-wrap { container-type: inline-size; }
+@media (min-width: 601px) { .ranks-table col.rk-name-col { width: clamp(18ch, calc(100cqw - var(--rk-fixed, 0px)), 31ch); } }
+@media (min-width: 1100px) { .ranks-table col.rk-name-col { width: clamp(18ch, calc(100cqw - var(--rk-fixed, 0px)), 45ch); } }
 .ranks-table thead th.rk-pick,
 .ranks-table thead th.rk-num,
 .ranks-table thead th.rk-name { z-index: 4; }
@@ -2465,8 +2471,9 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
    and only truly huge ones still get the ellipsis + title / name-peek. */
 /* 💩 (padding.mjs) costs no extra name-column width on phones: the name gives up the room. */
 @media (max-width: 600px) { .ranks-table td.rk-name:has(.poop-mark) .nm { max-width: calc(18ch - 1.6em); } }
-@media (min-width: 601px) { .ranks-table td.rk-name .nm { max-width: 28ch; } }
-@media (min-width: 1100px) { .ranks-table td.rk-name .nm { max-width: 42ch; } }
+/* t483u: when the name column shrinks, the name ellipsizes (full name in the title) and leaves room for one mark. */
+@media (min-width: 601px) { .ranks-table td.rk-name .nm { max-width: min(28ch, calc(100% - 1.6em)); } }
+@media (min-width: 1100px) { .ranks-table td.rk-name .nm { max-width: min(42ch, calc(100% - 1.6em)); } }
 .ranks-table tbody tr:hover td { background: var(--input-hover); }
 .ranks-table td .pct {
   margin-left: 0.3em; font-size: 0.72em; color: var(--dim);
@@ -2987,6 +2994,9 @@ col.lv-c-statR { width: calc(7.143% - 3.3214ch); }
 /* t459u: invisible tag in cells without one (stats-carousel.mjs fillTagSlots), so every
  * cell has the same structure and numbers line up with tagged neighbours. */
 .stats-carousel td .pct.pct-ph { visibility: hidden; user-select: none; pointer-events: none; }
+/* 🔀 Diff thirds (owner t487u): 🤥 / 😤 before the number; balanced cells keep an invisible copy so numbers line up. */
+.diff-emo { display: inline-block; margin-right: 0.2em; font-style: normal; }
+.diff-emo.diff-emo-ph { visibility: hidden; user-select: none; pointer-events: none; }
 .live-mode #statsCarousel { display: none !important; }
 
 /* Main-page box gaps at 40% of their original height (Dayset 2026-10-19:

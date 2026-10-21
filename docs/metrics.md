@@ -41,6 +41,14 @@ How much of your K/D you keep against the strongest third of your opponents, com
 
 Resistance-weighted K/D. Each death counts for more or less depending on how hard the opponent was.
 
+### 🪳 Zerg
+
+Lower of two percentiles (dist.mjs percentileOf, floored share below, 0–99): 🎈 Inflation and 🤝 Assists per kill. Only players with 🤝 Assists (≥ 100 kills in recent Honu sessions) and an Inflation value; others "—". The lower of the two (not an average) keeps solo farmers of soft fights (high Inflation, few assists) and team players in hard fights (many assists, no inflation) low: only both together read as riding a zerg. Lower is better (like 🤝: sorts high→low first, reversed grey tag, in points). Computed in the browser from the ranks.json / ranks-lite.json pools (trait-scores.mjs; ranks-lite carries `inflation` for this). Seed case: Bhorn 95.
+
+### 🔀 Diff (public since 2026-10-21, was a debug column)
+
+Practice minus theory: percentile(⚔️ iVi) − percentile(public IvI), −99…+99, same pools/rounding as 🪳. Cells carry the third of the fixed scale: ≤ −33 🤥 Impostor (aim beats results), ≥ +33 😤 DieHard (results beat aim), between = balanced (no emoji; an invisible copy keeps numbers aligned). Neither side is better; not a cheat flag. The 📊 chart marks the ±33 boundaries. Measured behaviour, named outliers and open questions: [docs/theory-practice-diff.md](theory-practice-diff.md).
+
 ## Debug columns
 
 These are hidden by default. Tick **show older debug stats** in the footer to see them.
@@ -51,7 +59,6 @@ These are hidden by default. Tick **show older debug stats** in the footer to se
 - **eKPM / own KPM**: the average enemy weapon pace, and your own pace. They're kept separate.
 - **📊 COI**: the combat output index, derived from Resist.
 - **📉 Slope**: the whole-curve, death-weighted angle of K/D against enemy KPM. A negative value means K/D falls as the opposition gets harder.
-- **🔀 Diff**: practice minus theory, in percentile points — your ⚔️ iVi percentile minus your public IvI (aim) percentile across all tracked players. Positive means your results outrun your aim; negative means your aim promises more than your fights deliver. The two graph views are the same split drawn instead of numbered: 💀 K/D is the practical side, 🎯 (lifted to IvI) is the theoretical side. Measured behaviour, named outliers and open questions: [docs/theory-practice-diff.md](theory-practice-diff.md).
 
 ## Public columns
 

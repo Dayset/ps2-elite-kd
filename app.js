@@ -41,6 +41,8 @@ import { t as tr, ready as i18nReady } from "./i18n.mjs";
 await i18nReady;
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261020-wide1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
+import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261021-traits1";
+import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, diffEmojiSlot, aimGapCellTip, zergCellTip } from "./trait-tips.mjs?v=20261021-traits1";
 import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261020-i18n2";
 import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261020-i18n2";
 import { infantryKillsUrl, summarizeInfantryKills } from "./infantry.mjs?v=20261020-i18n2";
@@ -345,6 +347,10 @@ import {
   // Slider 100%→0.1%: Y = iVi × K/D(x)/K/D_p(slider). Representation only.
   // Default is K/D first, iVi second (Dayset 2026-10-17).
   let yScaleMode = "kd";
+  // t488u (owner): the 🎯 iVi ("IN THEORY") graph view is switched off — the graph
+  // only shows 💀 K/D. Its code stays in place: set true to bring the view back
+  // (the 💀 / 🎯 buttons, swipe / wheel / ←→ flips all follow this flag).
+  const AIM_VIEW = false;
   let yScalePct = 50;
   let ghostsOn = readGhostsOn();
   let fetching = false;
@@ -1756,7 +1762,7 @@ import {
   }
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261021-theory1")
+    rankingsLoading = import("./rankings.mjs?v=20261021-traits1")
       .then((m) => {
         rankingsApi = m.initRankings(rankingsHost);
         return rankingsApi.ready;
@@ -2607,6 +2613,11 @@ import {
     // it). The banded / wave code itself is left in place, untouched.
     const b = document.querySelector('[data-mode="banded"]');
     if (b) b.hidden = true;
+    // t488u: no 🎯 view → no 💀 / 🎯 switch either (the whole corner bar goes when nothing is left in it).
+    if (!AIM_VIEW && els.chartModeBar) {
+      for (const x of els.chartModeBar.querySelectorAll('[data-mode="cumulative"], [data-yscale="kd-btn"]')) x.hidden = true;
+      els.chartModeBar.hidden = ![...els.chartModeBar.children].some((x) => !x.hidden);
+    }
   }
   /** The 🎥 Live button hides behind the same "show older debug stats" box. */
   function syncLiveBtn() {
@@ -3456,10 +3467,14 @@ import {
   // 🪖 Infantry (% of lifetime kills with infantry weapons): value + MAX / vehicle % by slug, pool for the percentile.
   let infBySlug = null;
   let infPool = null;
-  // 🔀 Diff (debug, owner 2026-10-21): population pools for ⚔️ iVi and IvI from
-  // the same lite payload — practice percentile minus theory percentile.
-  let adjsPool = null;
-  let iviPool = null;
+  // 🤥😤 Impostor–DieHard + 🪳 Zerg (owner 2026-10-21, trait-scores.mjs): rounded
+  // ⚔️ iVi / IvI / 🎈 Inflation / 🤝 Assists pools from the same lite payload
+  // (Rankings builds the same pools from ranks.json, so both show the same score).
+  let traitP = null;
+  let aimGapScores = null; // sorted population scores (hover "top / bottom X%")
+  let zergScores = null;
+  const aimGapPool = () => aimGapScores;
+  const zergPool = () => zergScores;
   function loadConsPool() {
     if (consPoolLoad) return consPoolLoad;
     consPoolLoad = loadRanksLite()
@@ -3482,10 +3497,18 @@ import {
           for (const row of payload.rows) if (isFiniteNum(row[ii])) infBySlug.set(row[si], { inf: row[ii], max: mi >= 0 ? row[mi] : null, veh: vi >= 0 ? row[vi] : null });
           infPool = [...infBySlug.values()].map((e) => e.inf).sort((a, b) => a - b);
         }
-        const aj = payload.cols.indexOf("adjs");
-        if (aj >= 0) adjsPool = payload.rows.map((row) => row[aj]).filter(isFiniteNum).sort((a, b) => a - b);
-        const iv = payload.cols.indexOf("ivi");
-        if (iv >= 0) iviPool = payload.rows.map((row) => row[iv]).filter(isFiniteNum).sort((a, b) => a - b);
+        const colOf = (id) => { const k = payload.cols.indexOf(id); return k >= 0 ? payload.rows.map((row) => row[k]) : []; };
+        traitP = traitPools({ adjs: colOf("adjs"), ivi: colOf("ivi"), inflation: colOf("inflation"), apk: apkBySlug ? [...apkBySlug.values()] : [] });
+        {
+          const A = colOf("adjs"), I = colOf("ivi"), F = colOf("inflation"), K = colOf("apk");
+          const g = [], z = [];
+          for (let k = 0; k < payload.rows.length; k++) {
+            const a = aimGap(traitP, A[k], I[k]); if (a) g.push(a.score);
+            const q = zergScore(traitP, F[k], K[k]); if (q) z.push(q.score);
+          }
+          aimGapScores = g.sort((x, y) => x - y);
+          zergScores = z.sort((x, y) => x - y);
+        }
         if (lastStatsList) renderStatsTable(lastStatsList);
       })
       .catch(() => {});
@@ -3547,6 +3570,12 @@ import {
       { id: "rf", label: "🛡️ Resist", hint: tr("tip.rf", "How well you stand up to strong players: your K/D against the players you fight most, scaled up by how fast those players kill."), fn: (r) => r.rf, digits: 2 },
       { id: "cons", label: "⚡ Const", hint: tr("tip.cons", "How much of your K/D you keep against the strongest third of your opponents compared with the weakest third, as a percentile of all tracked players."), fn: (r) => r.cons, digits: 2, pctileCell: true },
       { id: "apk", label: tr("col.assists", "🤝 Assists"), hint: tr("tip.apk", "Assists per kill in recent Honu sessions: how often you help damage enemies that teammates finish, for each kill of your own."), fn: (r) => (apkBySlug && r.p ? apkBySlug.get(slugKey(r.p.display)) : undefined), digits: 2, apkCell: true, pctDir: "low", pctLowPhrase: "more assists" },
+      // 🪳 Zerg (owner t480u): lower of the 🎈 Inflation and 🤝 Assists percentiles; lower is better (like 🤝: reversed grey %).
+      { id: "zerg", label: tr("col.zerg", "🪳 Zerg"), hint: tr("tip.zerg", ZERG_HINT), digits: 0, zergCell: true, pctDir: "low",
+        fn: (r) => { const z = traitP && r.p ? zergScore(traitP, shownValue(r, "inflation"), apkBySlug && apkBySlug.get(slugKey(r.p.display))) : null; return z ? z.score : NaN; } },
+      // 🤥😤 Impostor–DieHard (owner t484u): ⚔️ iVi percentile − IvI percentile, −99…+99; neither side is better.
+      { id: "diff", label: tr("col.diff", "🔀 Diff"), hint: tr("tip.diff", AIMGAP_HINT), digits: 0, aimGapCell: true,
+        fn: (r) => { const g = traitP ? aimGap(traitP, shownValue(r, "adjs"), r.ivi) : null; return g ? g.score : NaN; } },
       { id: "rkd", label: "☠️ K/D", hint: tr("tip.rkd", "Kills ÷ deaths against the ~200 players you fight most, so it reflects real matchups rather than your whole lifetime."), fn: (r) => r.rkd, digits: 3 },
       { id: "inf", label: tr("col.infantry", "🪖 Infantry"), hint: tr("tip.inf", INF_HINT), fn: (r) => { const e = infBySlug && r.p ? infBySlug.get(slugKey(r.p.display)) : undefined; return e ? e.inf : undefined; }, digits: 1, infCell: true },
     ];
@@ -3560,10 +3589,7 @@ import {
       { id: "slope", label: "📉 Slope", hint: "Overall graph angle: death-weighted K/D vs enemy KPM across the full curve — negative means K/D falls as opposition hardens (feeds 🦁 Brave).", fn: (r) => r.slope, digits: 2 },
       // t345u: 🎈 Inflation rarely shows anything meaningful → older stats only.
       { id: "inflation", label: "🎈 Inflation", hint: "Global KD ÷ KD at ≥0.5 enemy KPM — how much soft opposition inflates your KD (avg planetman ~0.35).", fn: (r) => r.inflation, digits: 2, pctDir: "low", pctRefFloor: 1.0 },
-      // 🔀 Diff (owner 2026-10-21): the theoretical difference as one number
-      // next to the practical stats — practice percentile minus theory percentile.
-      { id: "diff", label: tr("col.diff", "🔀 Diff"), hint: tr("tip.diff", "Practice minus theory: your ⚔️ iVi percentile minus your IvI (aim) percentile. Positive — you win more than your aim predicts; negative — your aim promises more than your fights deliver."), diffCell: true, digits: 0,
-        fn: (r) => (adjsPool && iviPool && isFiniteNum(r.adjs) && isFiniteNum(r.ivi) ? percentileOf(adjsPool, r.adjs) - percentileOf(iviPool, r.ivi) : NaN) },
+      // (🔀 Diff debug column retired 2026-10-21: the public 🤥😤 Impostor–DieHard column is the same number.)
     ];
     // Opponent-sample metrics: "—" below MIN_FIGHTS (player-metrics.mjs), so they
     // also drop out of sorting and the % column references.
@@ -3711,13 +3737,24 @@ import {
                 const pl = infPool ? percentileOf(infPool, v) : null;
                 return `<td title="${escapeHtml(infTip(v, e && e.max, e && e.veh, pl))}">${fmtNum(v, 1)}%${pct}</td>`;
               }
-              // 🔀 Diff: signed percentile gap (no relative-% suffix); hover shows both percentiles.
-              if (c.diffCell) {
-                if (!isFiniteNum(v)) return `<td>—</td>`;
-                const pa = adjsPool && isFiniteNum(row.adjs) ? percentileOf(adjsPool, row.adjs) : null;
-                const pi = iviPool && isFiniteNum(row.ivi) ? percentileOf(iviPool, row.ivi) : null;
-                const t = pa != null && pi != null ? tr("diff.cell", "Practice ⚔️ percentile {a} − theory IvI percentile {i}", { a: pa, i: pi }) : "";
-                return `<td${t ? ` title="${escapeHtml(t)}"` : ""}>${v > 0 ? "+" : ""}${v}</td>`;
+              // 🪳 Zerg: plain 0–99 score, one colour; percentile + both parts on hover, reversed grey % like 🤝 (lower is better).
+              if (c.zergCell) {
+                if (!isFiniteNum(v)) return `<td title="${escapeHtml(tr("zerg.missing", ZERG_MISSING))}">—</td>`;
+                const z = zergScore(traitP, shownValue(row, "inflation"), apkBySlug && apkBySlug.get(slugKey(row.p.display)));
+                // Grey tag in points (a % of a 0–99 score explodes near 0): "+25" above the column's lowest, like 🤝's "+35%".
+                const low = Math.min(...metrics.map((m) => c.fn(m)).filter(isFiniteNum));
+                const up = isFiniteNum(low) && v > low ? v - low : null;
+                const zTag = up == null ? "" : `<span class="pct" title="${escapeHtml(tr("pct.morePts", "{n} points more {phrase} than the column's lowest ({ref})", { n: up, phrase: tr("pct.phraseZerg", "zerg"), ref: low }))}">+${up}</span>`;
+                return `<td title="${escapeHtml(zergCellTip(v, z, zergPool()))}">${v}${zTag}</td>`;
+              }
+              // 🤥😤 Impostor–DieHard: signed score; neutral grey gap in points to the column top; side + both percentiles on hover.
+              if (c.aimGapCell) {
+                if (!isFiniteNum(v)) return `<td title="${escapeHtml(tr("diff.missing", AIMGAP_MISSING))}">—</td>`;
+                const g = aimGap(traitP, shownValue(row, "adjs"), row.ivi);
+                const top = Math.max(...metrics.map((m) => c.fn(m)).filter(isFiniteNum));
+                const gap = isFiniteNum(top) && v < top ? top - v : null;
+                const gTag = gap == null ? "" : `<span class="pct" title="${escapeHtml(tr("pct.belowPts", "{n} points below the column top ({ref})", { n: gap, ref: fmtSigned(top) }))}">−${gap}</span>`;
+                return `<td title="${escapeHtml(aimGapCellTip(v, g, aimGapPool()))}">${diffEmojiSlot(v)}${fmtSigned(v)}${gTag}</td>`;
               }
               if (c.pctileCell) {
                 const pctl = isFiniteNum(v) && consPool ? percentileOf(consPool, v) : null;
@@ -5100,7 +5137,7 @@ import {
 
   // Y-scale display switch: K/D / A (iVi-median) / B (iVi-start)
   function setYScaleMode(mode, pct) {
-    yScaleMode = mode;
+    yScaleMode = AIM_VIEW ? mode : "kd"; // t488u: always 💀 K/D while the 🎯 view is off
     if (pct !== undefined) yScalePct = pct;
     syncYScaleUi();
     syncChartModeUi();
@@ -5112,6 +5149,7 @@ import {
    * "who wins fights / who aims best" tip for the view they landed on. */
   if (els.chart) {
     const flipView = (dir = 1) => {
+      if (!AIM_VIEW) return; // t488u: one view only, nothing to flip to
       // t384u: the other view slides in, carousel-style (restored after d758c9e dropped it).
       const wrap = els.chart.closest(".chart-wrap");
       const panel = wrap ? getComputedStyle(wrap).backgroundColor : "";
@@ -5138,7 +5176,7 @@ import {
         container: chartWrap,
         svg: () => els.chart,
         background: () => getComputedStyle(chartWrap).backgroundColor,
-        canStart: () => players.length > 0 && !els.chart.hasAttribute("hidden"),
+        canStart: () => AIM_VIEW && players.length > 0 && !els.chart.hasAttribute("hidden"),
         onStart: () => { viewAtDragStart = yScaleMode; },
         show: () => { const want = viewAtDragStart === "kd" ? "ivi" : "kd"; if (yScaleMode !== want) setYScaleMode(want); },
         restore: () => { if (yScaleMode !== viewAtDragStart) setYScaleMode(viewAtDragStart); },
@@ -5147,6 +5185,7 @@ import {
     }
     const wheelSw = createWheelSwiper();
     els.chart.addEventListener("wheel", (e) => {
+      if (!AIM_VIEW) return; // t488u: sideways wheel scrolls like anywhere else
       const dir = wheelSw.push(e.deltaX, e.deltaY);
       if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) e.preventDefault(); // not browser back / forward
       if (dir && players.length) flipView(dir);
@@ -5173,7 +5212,7 @@ import {
         e.preventDefault();
         rankingsApi.stepDist(dir);
         sfx("sparkle");
-      } else if (pick === "skill") {
+      } else if (pick === "skill" && AIM_VIEW) {
         e.preventDefault();
         flipView(dir);
       }
@@ -5287,7 +5326,7 @@ import {
     if (Math.abs(yScalePct - waveLastDrawn) >= 0.02) {
       waveLastDrawn = yScalePct;
       if (ySliderVal) ySliderVal.textContent = yScalePct >= 10 ? yScalePct.toFixed(0) + "%" : yScalePct.toFixed(1) + "%";
-      if (yScaleMode !== "ivi") {
+      if (AIM_VIEW && yScaleMode !== "ivi") {
         yScaleMode = "ivi";
         syncYScaleUi();
       }

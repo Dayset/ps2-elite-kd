@@ -28,6 +28,8 @@ import { slugKey, bareName } from "./rank-row.mjs?v=20261021-bare1";
 import { hiddenList } from "./hidden.mjs?v=20261010-sav1";
 import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261020-i18n2";
 import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261020-i18n2";
+import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261021-traits1";
+import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, diffEmojiSlot, DIFF_THIRD, aimGapCellTip, zergCellTip } from "./trait-tips.mjs?v=20261021-traits1";
 
 /**
  * @param {{ getNames: () => string[], toggleName: (name: string, anchor: Element, add: boolean) => void, maxNames?: number }} host
@@ -49,6 +51,9 @@ export function initRankings(host) {
     { id: "rf", label: "🛡️ Resist", digits: 2, tip: "How well you stand up to strong players: your K/D against the players you fight most, scaled up by how fast those players kill." },
     { id: "cons", label: "⚡ Const", digits: 2, tip: "How much of your K/D you keep against the strongest third of your opponents compared with the weakest third: 1.00 means it holds completely, 0.50 means it halves." },
     { id: "apk", label: tr("col.assists", "🤝 Assists"), digits: 2, apk: true, tip: "Assists per kill in recent Honu sessions: how often you help damage enemies that teammates finish, for each kill of your own." },
+    // 🪳 Zerg / 🤥😤 Impostor–DieHard (owner t480u–t485u): computed here from the ranks.json pools (trait-scores.mjs), same numbers as ✨ Stats.
+    { id: "zerg", label: tr("col.zerg", "🪳 Zerg"), digits: 0, zerg: true, tip: ZERG_HINT },
+    { id: "diff", label: tr("col.diff", "🔀 Diff"), digits: 0, aimgap: true, tip: AIMGAP_HINT },
     { id: "rkd", label: "☠️ K/D", digits: 3, tip: "Kills ÷ deaths against the ~200 players you fight most, so it reflects real matchups rather than your whole lifetime." },
     { id: "inf", label: tr("col.infantry", "🪖 Infantry"), digits: 1, inf: true, tip: INF_HINT },
   ];
@@ -245,6 +250,20 @@ export function initRankings(host) {
       }
       return o;
     });
+    // 🤥😤 / 🪳 trait scores (trait-scores.mjs): pools of rounded ⚔️ iVi, IvI, 🎈 Inflation and 🤝 Assists.
+    {
+      const colOf = (id) => (idx[id] != null ? payload.rows.map((r) => r[idx[id]]) : []);
+      const tp = traitPools({ adjs: colOf("adjs"), ivi: colOf("ivi"), inflation: colOf("inflation"), apk: colOf("apk") });
+      for (const o of rows) {
+        const g = aimGap(tp, o.adjs, o.ivi), z = zergScore(tp, o.inflation, o.apk);
+        o.diff = g ? g.score : null; o._gap = g;
+        o.zerg = z ? z.score : null; o._zerg = z;
+      }
+      for (const id of ["diff", "zerg"]) {
+        pools[id] = rows.map((o) => o[id]).filter(fin).sort((a, b) => a - b);
+        for (const o of rows) o.pcts[id] = pctOf(pools[id], o[id]);
+      }
+    }
     // t360u: new row objects carry no .rank yet → force assignRanks() to run again
     // (it skipped on an unchanged sort and left "undefined" ranks / a broken order).
     rankedFor = "";
@@ -298,7 +317,7 @@ export function initRankings(host) {
   // on which data rows happen to be rendered — no jumping on sort / tier toggle.
   // Sized to fit the header label + sort indicator, the widest thing in the column.
   const COL_W = {
-    adjs: 9, act: 13, pvs: 10, rf: 11, cons: 10, apk: 12, rkd: 8, inf: 13,
+    adjs: 9, act: 13, pvs: 10, rf: 11, cons: 10, apk: 12, zerg: 10, diff: 8, rkd: 8, inf: 13,
     mech: 11, adj: 10, ekpm: 8, own: 10, coi: 9, slope: 10, inflation: 13,
     kd: 8, kpm: 8, ownKpm: 12, acc: 8, hsr: 8, ivi: 8,
   };
@@ -316,6 +335,11 @@ export function initRankings(host) {
     ];
     for (const c of cols) colEls.push(`<col style="width:${COL_W[c.id] || 10}ch">`);
     $("ranksCols").innerHTML = colEls.join("");
+    // t483u: width the number columns take (pick + # + each col; fixed-layout
+    // col widths already include cell padding) — styles.css lets the name
+    // column use the rest of the box.
+    const fixedCh = cols.reduce((s, c) => s + (COL_W[c.id] || 10), 0);
+    $("ranksTable").style.setProperty("--rk-fixed", `calc(4.2rem + ${fixedCh}ch + 1px)`);
     const cells = [
       `<th class="rk-pick" scope="col" title="${tr("rk.pickMax", "Pick up to {n} to Compare", { n: MAX_NAMES })}"></th>`,
       `<th class="rk-num" scope="col" title="${tr("rk.rankTitle", "Rank under the current sort")}">#</th>`,
@@ -350,6 +374,9 @@ export function initRankings(host) {
       return `<td class="below-scale" title="${esc("Below the rating scale" + (vc ? ". " + vc : ""))}">0</td>`;
     }
     if (c.apk) return apkCell(v, row.pcts[c.id]);
+    // 🪳 / 🤥😤: plain score like 🤝 (no p-tag), percentile + parts on hover.
+    if (c.zerg) return fin(v) ? `<td title="${esc(zergCellTip(v, row._zerg, data.pools.zerg))}">${v}</td>` : `<td title="${esc(tr("zerg.missing", ZERG_MISSING))}">—</td>`;
+    if (c.aimgap) return fin(v) ? `<td title="${esc(aimGapCellTip(v, row._gap, data.pools.diff))}">${diffEmojiSlot(v)}${fmtSigned(v)}</td>` : `<td title="${esc(tr("diff.missing", AIMGAP_MISSING))}">—</td>`;
     if (c.inf) return fin(v) ? `<td title="${esc(infTip(v, row.infMax, row.infVeh, row.pcts[c.id]))}">${fmt(v, 1)}%</td>` : `<td title="${esc(INF_PENDING_TIP)}">—</td>`;
     if (!fin(v) && c.thinTip && row.thin) return `<td class="thin-sample" title="${esc(MIN_FIGHTS_TIP)}">—</td>`;
     if (!fin(v)) return `<td>—</td>`;
@@ -709,13 +736,13 @@ export function initRankings(host) {
       const i = colorOf.get(r.query);
       const cells = VISIBLE.map((c) => {
         const v = r[c.id];
-        if ((c.apk || c.inf) && !fin(v)) return `<td>—</td>`; // t396u: APK ranks like the other columns
+        if ((c.apk || c.inf || c.zerg || c.aimgap) && !fin(v)) return `<td>—</td>`; // t396u: APK ranks like the other columns
         if (!fin(v)) return r.thin && c.thinTip ? `<td class="thin-sample" title="${esc(MIN_FIGHTS_TIP)}">—</td>` : `<td>—</td>`;
         const pool = data.pools[c.id] || [];
         const k = rankIn(pool, v, !!c.ascFirst);
         const p = r.pcts[c.id];
-        return `<td title="${esc(c.label)} ${fmt(v, c.digits)}: ${tr("rk.rank", "rank {k} of {n} {basis}", { k: k.toLocaleString(), n: pool.length.toLocaleString(), basis: c.apk ? tr("rk.basisApk", "players with 100+ session kills") : c.inf ? tr("rk.basisInf", "measured players (100+ kills)") : tr("rk.basisCached", "cached players") })}${c.id === "adjs" && vcutTip(r) ? ". " + esc(vcutTip(r)) : ""}">` +
-          `<b>#${k.toLocaleString()}</b>${p != null ? `<span class="pct">p${p}</span>` : ""}</td>`;
+        return `<td title="${esc(c.label)} ${fmt(v, c.digits)}: ${tr("rk.rank", "rank {k} of {n} {basis}", { k: k.toLocaleString(), n: pool.length.toLocaleString(), basis: c.apk || c.zerg ? tr("rk.basisApk", "players with 100+ session kills") : c.inf ? tr("rk.basisInf", "measured players (100+ kills)") : tr("rk.basisCached", "cached players") })}${c.id === "adjs" && vcutTip(r) ? ". " + esc(vcutTip(r)) : ""}">` +
+          `${c.aimgap ? diffEmojiSlot(v) : ""}<b>#${k.toLocaleString()}</b>${p != null ? `<span class="pct">p${p}</span>` : ""}</td>`;
       }).join("");
       // Same "1." series number as the ✨ Stats table (graph colour order), so both modes read alike.
       return `<tr><th scope="row" class="rk-pos-name"><span class="player-num" style="color:${paletteColor(i, light)}">${i + 1}.</span><a href="#" class="rk-pos-jump" data-q="${esc(r.query)}" style="color:${paletteColor(i, light)}" title="${tr("rk.showTable", "Show {name} in the table", { name: esc(r.name) })}"><span class="nm" data-full="${esc(r.name)}">${esc(r.name)}</span></a>${r.freshAt ? `<span class="sample-fresh" title="${esc(freshTip(r.freshAt, r.localOnly))}">${FRESH_MARK}</span>` : ""}${r.mark ? `<span class="pad-mark mark-${["padding","adjusted"].includes(r.markKind) ? r.markKind : ""}" title="${esc(r.markTip)}">${r.mark}</span>` : ""}${poopHtml(r)}</th>${cells}</tr>`;
@@ -1091,6 +1118,20 @@ export function initRankings(host) {
       }));
     });
     svg.appendChild(bars);
+
+    // 🔀 Diff thirds (owner t487u): faint boundaries at ±33 and 🤥 / 😤 over the outer thirds.
+    if (distMetric === "diff") {
+      const tg = svgEl("g", { "pointer-events": "none" });
+      for (const edge of [-DIFF_THIRD, DIFF_THIRD]) {
+        const x = xOf(edge);
+        if (x != null) tg.appendChild(svgEl("line", { x1: x, x2: x, y1: M.t, y2: M.t + PH, stroke: st.axis, "stroke-width": 1, "stroke-dasharray": "1 3", opacity: 0.7 }));
+      }
+      for (const [v, e] of [[-66, "🤥"], [66, "😤"]]) {
+        const x = xOf(v);
+        if (x != null) tg.appendChild(svgEl("text", { x, y: M.t + PH * 0.45, "font-size": Math.round(fs * 1.6), "text-anchor": "middle", opacity: 0.55 }, e));
+      }
+      svg.appendChild(tg);
+    }
 
     // x labels: tail bins "≤lo" / "≥hi" + every k-th core edge
     const maxLabels = narrow ? 5 : 9;

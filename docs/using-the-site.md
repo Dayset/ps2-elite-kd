@@ -35,17 +35,16 @@ A walkthrough of the main page. For a short version, see the [README](../README.
 
 ## The chart
 
-Two views, switched in the graph's top-right corner:
+One view since 2026-10-21 (owner t488u): **💀 Who wins fights** — kills per death against easy → hard enemies. Higher line = wins more fights. The aim-vs-results gap now lives in the public 🔀 Diff column instead.
 
-- **💀 Who wins fights** (default): kills per death against easy → hard enemies. Higher line = wins more fights.
-- **🎯 Who aims best**: each line keeps its shape but is lifted to the player's aim score (public IvI = accuracy × headshot %). Higher line = better aim, not more wins. Players can swap places between the two views: sharp aim doesn't always win fights, and vehicle / explosive players win without headshots.
+- *(Switched off, code kept for later)* **🎯 Who aims best**: each line keeps its shape but is lifted to the player's aim score (public IvI = accuracy × headshot %). Higher line = better aim, not more wins. Players can swap places between the two views: sharp aim doesn't always win fights, and vehicle / explosive players win without headshots.
 
 Both are cumulative: K/D against everyone at or above each enemy KPM. The axis fits the names on the graph.
 
 - **🎚️ Smooth**: K/D against enemies near each KPM. Faded where there are few fights.
 - **👻 Ghost** (optional): a dashed prediction based on play style, fitted on the shared cache. It fills sparse ranges and is clearly marked as not real fights.
 - Bands mark **Easy** and **Hard** at 0.75 and 1.50 enemy KPM.
-- The **zoom** slider (top-right, under 💀 / 🎯):
+- The **zoom** slider (top-right corner):
   - **Bottom / Auto** shows the full graph, auto-fitted.
   - **Up** zooms into the start of the graph. The X maximum shrinks quickly (about 0.71 halfway, 0.25 at the top), and Y refits to the visible left side. Lines leaving the right edge are clipped.
 

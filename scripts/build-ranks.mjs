@@ -627,11 +627,13 @@ export function buildNames(index) {
  * Rankings section loads (2026-10-19): 🎲 (name, slug, ⚔️ iVi) and the ✨ Stats
  * percentiles (⚡ Const, 🤝 Assists, 🪖 Infantry). ≈400 KB gzipped instead of
  * ≈1.7 MB; the full ranks.json is only fetched by the Rankings section.
- * "ivi" rides along for the 🔀 Diff debug column's theory percentile pool
- * (owner 2026-10-21); consumers look columns up by name, so appending is safe.
+ * "ivi" rides along for the 🔀 Diff column's theory percentile pool
+ * (owner 2026-10-21; public since t487u); consumers look columns up by name, so appending is safe.
+ * "inflation" rides along for 🪳 Zerg (owner 2026-10-21, trait-scores.mjs): the
+ * lower of the 🎈 Inflation and 🤝 Assists percentiles needs the Inflation pool.
  */
-export const LITE_COLS = ["name", "slug", "adjs", "cons", "apk", "inf", "infMax", "infVeh", "ivi"];
-const LITE_DIGITS = { adjs: 1, cons: 4, apk: 3, inf: 1, infMax: 1, infVeh: 1, ivi: 1 };
+export const LITE_COLS = ["name", "slug", "adjs", "cons", "apk", "inf", "infMax", "infVeh", "ivi", "inflation"];
+const LITE_DIGITS = { adjs: 1, cons: 4, apk: 3, inf: 1, infMax: 1, infVeh: 1, ivi: 1, inflation: 2 };
 export function buildRanksLite(ranks) {
   const ix = LITE_COLS.map((k) => (ranks && Array.isArray(ranks.cols) ? ranks.cols.indexOf(k) : -1));
   if (ix.some((i) => i < 0) || !Array.isArray(ranks.rows)) return null;

@@ -157,7 +157,8 @@ describe("Rankings chart bar click", () => {
 describe("Rankings Player column width (t311u)", () => {
   it("desktop widths lift the 18ch name cap; mobile keeps it", () => {
     const s = rankingsSource();
-    assert.match(s, /@media \(min-width: 1100px\) \{ \.ranks-table td\.rk-name \.nm \{ max-width: 42ch; \} \}/);
-    assert.match(s, /@media \(min-width: 601px\) \{ \.ranks-table td\.rk-name \.nm \{ max-width: 28ch; \} \}/);
+    // t483u: caps stay 42ch / 28ch but also give way when the name column shrinks to fit the box.
+    assert.match(s, /@media \(min-width: 1100px\) \{ \.ranks-table td\.rk-name \.nm \{ max-width: min\(42ch, calc\(100% - 1\.6em\)\); \} \}/);
+    assert.match(s, /@media \(min-width: 601px\) \{ \.ranks-table td\.rk-name \.nm \{ max-width: min\(28ch, calc\(100% - 1\.6em\)\); \} \}/);
   });
 });

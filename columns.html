@@ -17,7 +17,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261021-bg1400-1" />
+  <link rel="stylesheet" href="styles.css?v=20261021-traits1" />
   <style>
     body { overflow: auto; }
     .st-wrap { max-width: none; margin: 0 auto; padding: 0; } /* Dayset 2026-10-19: same width as the main page — body.site-page already carries max-width: var(--page-w) (#29, site-layout.css); the wrapper no longer narrows it */
@@ -99,7 +99,7 @@
 
     <nav class="st-toc" aria-label="On this page" data-i18n-aria-label="cp.tocAria">
       <div class="st-toc-group"><a href="#picture" data-i18n="cp.tocIdea">The idea</a> <span class="sep">·</span> <a href="#why-trackers" data-i18n="cp.tocWhy">Why trackers don’t have it</a> <span class="sep">·</span> <a href="#worked-example" data-i18n="cp.tocExample">Example</a> <span class="sep">·</span> <a href="#debug" data-i18n="cp.tocDebug">Debug columns</a></div>
-      <div class="st-toc-group"><a class="st-toc-sec" href="#adjusted">✨ Adjusted</a> <span class="sep">·</span> <a href="#ivi">⚔️ iVi</a> <span class="sep">·</span> <a href="#activity">🏃 Activity</a> <span class="sep">·</span> <a href="#brave">🦁 Brave</a> <span class="sep">·</span> <a href="#resist">🛡️ Resist</a> <span class="sep">·</span> <a href="#const">⚡ Const</a> <span class="sep">·</span> <a href="#matchup-kd">☠️ K/D</a> <span class="sep">·</span> <a href="#infantry" data-i18n="cp.tocInfantry">🪖 Infantry</a> <span class="sep">·</span> <a href="#vehicle-cut" data-i18n="cp.tocVehicle">🚜 Vehicle cut</a> <span class="sep">·</span> <a href="#padder" data-i18n="cp.tocPadder">💩 Padders</a></div>
+      <div class="st-toc-group"><a class="st-toc-sec" href="#adjusted">✨ Adjusted</a> <span class="sep">·</span> <a href="#ivi">⚔️ iVi</a> <span class="sep">·</span> <a href="#activity">🏃 Activity</a> <span class="sep">·</span> <a href="#brave">🦁 Brave</a> <span class="sep">·</span> <a href="#resist">🛡️ Resist</a> <span class="sep">·</span> <a href="#const">⚡ Const</a> <span class="sep">·</span> <a href="#matchup-kd">☠️ K/D</a> <span class="sep">·</span> <a href="#infantry" data-i18n="cp.tocInfantry">🪖 Infantry</a> <span class="sep">·</span> <a href="#zerg" data-i18n="cp.tocZerg">🪳 Zerg</a> <span class="sep">·</span> <a href="#diff" data-i18n="cp.tocDiff">🔀 Diff</a> <span class="sep">·</span> <a href="#vehicle-cut" data-i18n="cp.tocVehicle">🚜 Vehicle cut</a> <span class="sep">·</span> <a href="#padder" data-i18n="cp.tocPadder">💩 Padders</a></div>
       <div class="st-toc-group"><a class="st-toc-sec" href="#public" data-i18n="cp.tocPublic">📊 Public</a> <span class="sep">·</span> <a href="#pub-kd">KD</a> <span class="sep">·</span> <a href="#pub-kpm">KPM</a> <span class="sep">·</span> <a href="#pub-own-kpm">own KPM</a> <span class="sep">·</span> <a href="#pub-acc">Acc %</a> <span class="sep">·</span> <a href="#pub-hsr">HSR %</a> <span class="sep">·</span> <a href="#pub-ivi">IvI</a></div>
     </nav>
 
@@ -191,6 +191,27 @@
     <div class="st-card">
       <h3 id="infantry" data-i18n="cp.infH">🪖 Infantry — kills made on foot</h3>
       <p data-i18n="cp.infP">% of your lifetime kills made with infantry weapons. MAX counts as infantry here; vehicles, turrets and roadkills don’t. Shown from 100 kills (“—” until measured). Hover for your MAX and vehicle shares.</p>
+    </div>
+
+    <div class="st-card">
+      <h3 id="zerg" data-i18n="cp.zergH">🪳 Zerg — riding a big group</h3>
+      <p data-i18n="cp.zergP">The lower of two percentiles: 🎈 Inflation (your K/D lifted by easy fights) and 🤝 Assists (kills shared with teammates). 0–99. Shown from 100 kills in recent Honu sessions (“—” until then).</p>
+      <ul class="st-hl">
+        <li data-i18n-html="cp.zergHigh"><span class="down">High:</span> easy fights and lots of shared kills, at the same time. Lower is better.</li>
+        <li data-i18n-html="cp.zergLow"><span class="up">Low:</span> you earn your K/D in even fights, or you fight on your own.</li>
+      </ul>
+      <p class="st-dim" data-i18n="cp.zergNote">Why the lower of the two: a solo farmer of easy fights has high Inflation but few assists, and a team player in hard fights has many assists but no inflation. Neither is a zerg, so both stay low.</p>
+    </div>
+
+    <div class="st-card">
+      <h3 id="diff" data-i18n="cp.diffH">🔀 Diff — aim on paper vs real results</h3>
+      <p data-i18n="cp.diffP">Your ⚔️ iVi percentile minus your public IvI (aim) percentile, from −99 to +99. Practice minus theory.</p>
+      <ul class="st-hl">
+        <li data-i18n-html="cp.diffImp"><span class="down">🤥 Impostor (−33 or lower):</span> great aim on paper, but real fights don’t convert it.</li>
+        <li data-i18n-html="cp.diffDh"><span class="up">😤 DieHard (+33 or higher):</span> you win more than your aim predicts — positioning, fight choice, grit. Vehicle play can push it up too.</li>
+        <li data-i18n="cp.diffMid">No emoji (−32…+32): balanced, aim and results roughly agree.</li>
+      </ul>
+      <p class="st-dim" data-i18n="cp.diffNote">Neither side is better or worse. It shows a play style, not cheating.</p>
     </div>
 
     <div class="st-card">
