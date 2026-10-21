@@ -373,9 +373,10 @@
           return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
         });
       }
-      /** Player name capped at ~18ch in tables (.nm + ellipsis); full name in title / tap popup (name-peek.mjs). */
+      /** Player name capped at ~18ch in tables (.nm + ellipsis); full name in title / tap popup (name-peek.mjs).
+       * Outfit tags are never shown (owner 2026-10-21): strip "[TAG] " here. */
       function nm(n) {
-        var e = esc(n);
+        var e = esc(String(n == null ? "" : n).replace(/^\s*\[[^\]]*\]\s*/, ""));
         return '<span class="nm" data-full="' + e + '" title="' + e + '">' + e + "</span>";
       }
       function runLink(id) {
@@ -591,7 +592,7 @@
         var el = $("popLine");
         if (!el || !fc || !fc.counts) return;
         var bySlug = {};
-        ((index && index.players) || []).forEach(function (p) { if (p && p.slug) bySlug[p.slug] = p.name || p.slug; });
+        ((index && index.players) || []).forEach(function (p) { if (p && p.slug) bySlug[p.slug] = String(p.name || p.slug).replace(/^\s*\[[^\]]*\]\s*/, ""); });
         var top = Object.keys(fc.counts)
           .filter(function (s) { return s !== "shlodog" && fc.counts[s] > 0; })
           .sort(function (a, b) { return fc.counts[b] - fc.counts[a]; })

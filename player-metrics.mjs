@@ -102,10 +102,17 @@ export function enoughFights(kills, deaths, min = MIN_FIGHTS) {
 }
 
 /** Raw cache / live / shared player JSON → the shape the charts & tables use. */
+/** "[TAG] Name" → "Name": outfit tags are never shown (owner 2026-10-21 —
+ * charts, tables and inputs all display the bare name). Same rule as
+ * rank-row.mjs bareName; defined locally because rank-row imports this
+ * module. Stored files keep the tagged name; only the in-memory display
+ * copy is stripped, and identity everywhere is the tag-blind slugKey. */
+const bareDisplay = (s) => String(s || "").replace(/^\s*\[[^\]]*\]\s*/, "").trim();
+
 export function normalizePlayer(raw) {
   const p = raw.player || raw;
   const rows = (p.rows || []).map((r) => ({
-    name: r.name || "",
+    name: bareDisplay(r.name || ""),
     kills: +r.kills || 0,
     deaths: +r.deaths || 0,
     kpm: +r.kpm || 0,
@@ -129,7 +136,7 @@ export function normalizePlayer(raw) {
   const keptRows = hasFarm ? farm.kept : rows;
   const curve = hasFarm ? normCurve(kpmCurve(keptRows)) : rawCurve;
   return {
-    display: p.display || p.name || "?",
+    display: bareDisplay(p.display || p.name) || "?",
     cid: p.cid || "",
     global_kd: +p.global_kd || 0,
     global_kpm: +p.global_kpm || 0,

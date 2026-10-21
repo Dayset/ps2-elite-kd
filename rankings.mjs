@@ -9,7 +9,7 @@ import { t as tr, currentLang } from "./i18n.mjs";
 const tipOf = (c) => (c.id ? tr("tip." + c.id, c.tip || "") : c.tip || "");
 import { compareByCharName } from "./analyze-run.mjs?v=20261020-eta1";
 import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits, binJumpTarget } from "./dist.mjs?v=20261010-sav1";
-import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261020-i18n2";
+import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261021-bare1";
 import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP, isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261020-i18n2";
 import { paletteColor } from "./palette.mjs?v=20261010-sav1";
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261020-wide1";
@@ -21,10 +21,10 @@ import { groupByTier, openTierIds, pickedInGroup, groupIndexAt, tierOf } from ".
 import { createDistCycler, createWheelSwiper } from "./dist-cycle.mjs?v=20261017-cycle15";
 import { sfx } from "./sfx.mjs?v=20261020-poof";
 import { slideSwap, attachDragCarousel } from "./chart-slide.mjs?v=20261020-flick1";
-import { mergeFreshRows } from "./rank-row.mjs?v=20261010-sav1";
+import { mergeFreshRows } from "./rank-row.mjs?v=20261021-bare1";
 import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-sav1";
 import { confirmedPadderSlugs } from "./padding.mjs?v=20261020-i18n2";
-import { slugKey } from "./rank-row.mjs?v=20261010-sav1";
+import { slugKey, bareName } from "./rank-row.mjs?v=20261021-bare1";
 import { hiddenList } from "./hidden.mjs?v=20261010-sav1";
 import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261020-i18n2";
 import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261020-i18n2";
@@ -208,7 +208,9 @@ export function initRankings(host) {
     }
     const rows = payload.rows.map((r) => {
       const o = {
-        name: r[idx.name],
+        // Display name is always bare (owner 2026-10-21: no outfit tags) —
+        // strips here too so an older ranks.json shows clean immediately.
+        name: bareName(r[idx.name]),
         query: r[idx.query],
         slug: r[idx.slug],
         savedAt: r[idx.savedAt],

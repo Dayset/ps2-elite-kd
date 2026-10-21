@@ -44,7 +44,7 @@
     <div class="st-card"><div id="list" class="st-dim">Loading…</div></div>
   </main>
   <script type="module">
-    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261020-i18n2";
+    import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261021-bare1";
     import { confirmedPadders, farmAccountLabels } from "./padding.mjs?v=20261020-i18n2";
 
     const $ = (id) => document.getElementById(id);
@@ -74,8 +74,8 @@
       $("list").innerHTML = '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th class="st-num">Kills on farm accounts</th><th>Farm accounts</th></tr>' +
         rows.map((r) => {
           const name = r.cid
-            ? '<a href="https://wt.honu.pw/c/' + esc(r.cid) + '/killboard" target="_blank" rel="noopener noreferrer">' + esc(r.name) + "</a>"
-            : esc(r.name);
+            ? '<a href="https://wt.honu.pw/c/' + esc(r.cid) + '/killboard" target="_blank" rel="noopener noreferrer">' + esc(String(r.name).replace(/^\s*\[[^\]]*\]\s*/, "")) + "</a>"
+            : esc(String(r.name).replace(/^\s*\[[^\]]*\]\s*/, ""));
           const share = r.share == null ? '<span class="st-dim">' + esc(r.note || "—") + "</span>" : Math.round(r.share * 100) + "%";
           const farms = r.farms.length ? r.farms.map(esc).join(", ") : '<span class="st-dim">none in the current sample</span>';
           return "<tr><td>" + name + '</td><td class="st-num">' + share + "</td><td>" + farms + "</td></tr>";

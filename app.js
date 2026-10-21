@@ -90,7 +90,7 @@ import {
   THIN_MARK,
   THIN_NOTE_HEAD,
   thinPlayerLine,
-} from "./player-metrics.mjs?v=20261020-i18n2";
+} from "./player-metrics.mjs?v=20261021-bare1";
 /** "22 kills / 60 deaths" in the opponent sample (MIN_FIGHTS counts). */
 function fightsText(r) {
   const k = r.sampleKills || 0;
@@ -912,6 +912,13 @@ import {
       .replace(/[^a-z0-9]+/g, "");
   }
 
+  /** "[TAG] Name" → "Name" (owner 2026-10-21: outfit tags are never shown —
+   * chips, suggestions and index-driven displays use the bare name; matching
+   * stays slug-based, so a typed "[TAG] Name" still finds the same player). */
+  function bareName(name) {
+    return String(name || "").replace(/^\s*\[[^\]]*\]\s*/, "").trim();
+  }
+
   /** Spaces or commas (also ; / newlines). Preserves optional [TAG] prefix. */
   function parseNames(text) {
     const s = String(text || "").trim();
@@ -959,7 +966,7 @@ import {
       const name = row && row[0];
       const slug = slugKey(name);
       if (!slug) continue;
-      players.push({ name, slug, file: `players/${slug}.json`, savedAt: +row[1] || 0, aliases: [slug, String(name).toLowerCase()] });
+      players.push({ name: bareName(name), slug, file: `players/${slug}.json`, savedAt: +row[1] || 0, aliases: [slug, String(name).toLowerCase()] });
     }
     return players.length ? { updatedAt: d.updatedAt || null, players } : null;
   }
@@ -988,7 +995,7 @@ import {
       }
       sharedIndex = {
         updatedAt: data.updatedAt || null,
-        players: players.filter((p) => p && p.name),
+        players: players.filter((p) => p && p.name).map((p) => ({ ...p, name: bareName(p.name) })),
       };
     } catch {
       sharedIndex = { updatedAt: null, players: [] };
@@ -1382,7 +1389,7 @@ import {
     nameTokens = [];
     let overflow = 0;
     for (const raw of names || []) {
-      const clean = String(raw).trim();
+      const clean = bareName(String(raw).trim());
       if (!clean) continue;
       const key = clean.toLowerCase();
       if (seen.has(key)) continue;
@@ -1410,7 +1417,7 @@ import {
    * when the field is already full, so callers can keep the text instead of eating it.
    */
   function addNameToField(name) {
-    const clean = String(name).trim();
+    const clean = bareName(String(name).trim());
     if (!clean) return true;
     if (nameTokens.some((n) => namesEqualIgnoreCase(n, clean))) {
       // Re-adding / re-typing a name always resets its failed state (retryable).
@@ -1749,7 +1756,7 @@ import {
   }
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261020-eta1")
+    rankingsLoading = import("./rankings.mjs?v=20261021-bare1")
       .then((m) => {
         rankingsApi = m.initRankings(rankingsHost);
         return rankingsApi.ready;
