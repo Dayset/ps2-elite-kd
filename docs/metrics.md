@@ -51,6 +51,7 @@ These are hidden by default. Tick **show older debug stats** in the footer to se
 - **eKPM / own KPM**: the average enemy weapon pace, and your own pace. They're kept separate.
 - **📊 COI**: the combat output index, derived from Resist.
 - **📉 Slope**: the whole-curve, death-weighted angle of K/D against enemy KPM. A negative value means K/D falls as the opposition gets harder.
+- **🔀 Diff**: practice minus theory, in percentile points — your ⚔️ iVi percentile minus your public IvI (aim) percentile across all tracked players. Positive means your results outrun your aim; negative means your aim promises more than your fights deliver. The two graph views are the same split drawn instead of numbered: 💀 K/D is the practical side, 🎯 (lifted to IvI) is the theoretical side. Measured behaviour, named outliers and open questions: [docs/theory-practice-diff.md](theory-practice-diff.md).
 
 ## Public columns
 
