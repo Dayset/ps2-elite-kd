@@ -29,7 +29,7 @@ import { hiddenList } from "./hidden.mjs?v=20261010-sav1";
 import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261020-i18n2";
 import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261020-i18n2";
 import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261021-traits1";
-import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, diffEmojiSlot, DIFF_THIRD, aimGapCellTip, zergCellTip } from "./trait-tips.mjs?v=20261021-traits1";
+import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, DIFF_THIRD, aimGapCellTip, zergCellTip } from "./trait-tips.mjs?v=20261021-longname1";
 
 /**
  * @param {{ getNames: () => string[], toggleName: (name: string, anchor: Element, add: boolean) => void, maxNames?: number }} host
@@ -376,7 +376,7 @@ export function initRankings(host) {
     if (c.apk) return apkCell(v, row.pcts[c.id]);
     // 🪳 / 🤥😤: plain score like 🤝 (no p-tag), percentile + parts on hover.
     if (c.zerg) return fin(v) ? `<td title="${esc(zergCellTip(v, row._zerg, data.pools.zerg))}">${v}</td>` : `<td title="${esc(tr("zerg.missing", ZERG_MISSING))}">—</td>`;
-    if (c.aimgap) return fin(v) ? `<td title="${esc(aimGapCellTip(v, row._gap, data.pools.diff))}">${diffEmojiSlot(v)}${fmtSigned(v)}</td>` : `<td title="${esc(tr("diff.missing", AIMGAP_MISSING))}">—</td>`;
+    if (c.aimgap) return fin(v) ? `<td title="${esc(aimGapCellTip(v, row._gap, data.pools.diff))}">${fmtSigned(v)}</td>` : `<td title="${esc(tr("diff.missing", AIMGAP_MISSING))}">—</td>`;
     if (c.inf) return fin(v) ? `<td title="${esc(infTip(v, row.infMax, row.infVeh, row.pcts[c.id]))}">${fmt(v, 1)}%</td>` : `<td title="${esc(INF_PENDING_TIP)}">—</td>`;
     if (!fin(v) && c.thinTip && row.thin) return `<td class="thin-sample" title="${esc(MIN_FIGHTS_TIP)}">—</td>`;
     if (!fin(v)) return `<td>—</td>`;
@@ -731,7 +731,7 @@ export function initRankings(host) {
       return;
     }
     const light = document.documentElement.getAttribute("data-theme") === "light";
-    const head = `<tr><th scope="col" class="rk-pos-name">${tr("rk.player", "Player")}</th>` + VISIBLE.map((c) => `<th scope="col" title="${esc(tipOf(c) || c.label)}">${esc(c.label)}</th>`).join("") + `</tr>`;
+    const head = `<tr><th scope="col" class="rk-pos-name">${tr("rk.player", "Player")}</th>` + VISIBLE.map((c) => `<th scope="col" data-col="${c.id}" title="${esc(tipOf(c) || c.label)}">${esc(c.label)}</th>`).join("") + `</tr>`;
     const body = rows.map((r) => {
       const i = colorOf.get(r.query);
       const cells = VISIBLE.map((c) => {
@@ -742,7 +742,7 @@ export function initRankings(host) {
         const k = rankIn(pool, v, !!c.ascFirst);
         const p = r.pcts[c.id];
         return `<td title="${esc(c.label)} ${fmt(v, c.digits)}: ${tr("rk.rank", "rank {k} of {n} {basis}", { k: k.toLocaleString(), n: pool.length.toLocaleString(), basis: c.apk || c.zerg ? tr("rk.basisApk", "players with 100+ session kills") : c.inf ? tr("rk.basisInf", "measured players (100+ kills)") : tr("rk.basisCached", "cached players") })}${c.id === "adjs" && vcutTip(r) ? ". " + esc(vcutTip(r)) : ""}">` +
-          `${c.aimgap ? diffEmojiSlot(v) : ""}<b>#${k.toLocaleString()}</b>${p != null ? `<span class="pct">p${p}</span>` : ""}</td>`;
+          `<b>#${k.toLocaleString()}</b>${p != null ? `<span class="pct">p${p}</span>` : ""}</td>`;
       }).join("");
       // Same "1." series number as the ✨ Stats table (graph colour order), so both modes read alike.
       return `<tr><th scope="row" class="rk-pos-name"><span class="player-num" style="color:${paletteColor(i, light)}">${i + 1}.</span><a href="#" class="rk-pos-jump" data-q="${esc(r.query)}" style="color:${paletteColor(i, light)}" title="${tr("rk.showTable", "Show {name} in the table", { name: esc(r.name) })}"><span class="nm" data-full="${esc(r.name)}">${esc(r.name)}</span></a>${r.freshAt ? `<span class="sample-fresh" title="${esc(freshTip(r.freshAt, r.localOnly))}">${FRESH_MARK}</span>` : ""}${r.mark ? `<span class="pad-mark mark-${["padding","adjusted"].includes(r.markKind) ? r.markKind : ""}" title="${esc(r.markTip)}">${r.mark}</span>` : ""}${poopHtml(r)}</th>${cells}</tr>`;

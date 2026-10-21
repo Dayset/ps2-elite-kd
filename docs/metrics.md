@@ -47,7 +47,7 @@ Lower of two percentiles (dist.mjs percentileOf, floored share below, 0–99): �
 
 ### 🔀 Diff (public since 2026-10-21, was a debug column)
 
-Practice minus theory: percentile(⚔️ iVi) − percentile(public IvI), −99…+99, same pools/rounding as 🪳. Cells carry the third of the fixed scale: ≤ −33 🤥 Impostor (aim beats results), ≥ +33 😤 DieHard (results beat aim), between = balanced (no emoji; an invisible copy keeps numbers aligned). Neither side is better; not a cheat flag. The 📊 chart marks the ±33 boundaries. Measured behaviour, named outliers and open questions: [docs/theory-practice-diff.md](theory-practice-diff.md).
+Practice minus theory: percentile(⚔️ iVi) − percentile(public IvI), −99…+99, same pools/rounding as 🪳. Thirds of the fixed scale: ≤ −33 🤥 Impostor (aim beats results), ≥ +33 😤 DieHard (results beat aim), between = balanced. Since t494u the cells show only the signed number (no emoji); the sides are in the hover and the hint. Neither side is better; not a cheat flag. The 📊 chart marks the ±33 boundaries. Measured behaviour, named outliers and open questions: [docs/theory-practice-diff.md](theory-practice-diff.md).
 
 ## Debug columns
 

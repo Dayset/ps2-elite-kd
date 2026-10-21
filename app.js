@@ -42,14 +42,14 @@ await i18nReady;
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261020-wide1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
 import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261021-traits1";
-import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, diffEmojiSlot, aimGapCellTip, zergCellTip } from "./trait-tips.mjs?v=20261021-traits1";
+import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, diffValueHtml, aimGapCellTip, zergCellTip } from "./trait-tips.mjs?v=20261021-longname1";
 import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261020-i18n2";
 import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261020-i18n2";
 import { infantryKillsUrl, summarizeInfantryKills } from "./infantry.mjs?v=20261020-i18n2";
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261021-theory1";
 import { createWheelSwiper } from "./dist-cycle.mjs?v=20261017-cycle15";
 import { slideSwap, attachDragCarousel } from "./chart-slide.mjs?v=20261020-flick1";
-import { mountStatsCarousel } from "./stats-carousel.mjs?v=20261020-poofsess1";
+import { mountStatsCarousel } from "./stats-carousel.mjs?v=20261021-longname1";
 import { pickGraphForKeys } from "./graph-keys.mjs?v=20261017-graphkeys1";
 import { entryFetchedAt, pickNewest, writeWithEviction } from "./cache-pick.mjs?v=20261010-sav1";
 import {
@@ -1762,7 +1762,7 @@ import {
   }
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261021-traits1")
+    rankingsLoading = import("./rankings.mjs?v=20261021-longname1")
       .then((m) => {
         rankingsApi = m.initRankings(rankingsHost);
         return rankingsApi.ready;
@@ -3754,7 +3754,7 @@ import {
                 const top = Math.max(...metrics.map((m) => c.fn(m)).filter(isFiniteNum));
                 const gap = isFiniteNum(top) && v < top ? top - v : null;
                 const gTag = gap == null ? "" : `<span class="pct" title="${escapeHtml(tr("pct.belowPts", "{n} points below the column top ({ref})", { n: gap, ref: fmtSigned(top) }))}">−${gap}</span>`;
-                return `<td title="${escapeHtml(aimGapCellTip(v, g, aimGapPool()))}">${diffEmojiSlot(v)}${fmtSigned(v)}${gTag}</td>`;
+                return `<td title="${escapeHtml(aimGapCellTip(v, g, aimGapPool()))}">${diffValueHtml(v)}${gTag}</td>`;
               }
               if (c.pctileCell) {
                 const pctl = isFiniteNum(v) && consPool ? percentileOf(consPool, v) : null;

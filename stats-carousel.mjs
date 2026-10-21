@@ -194,10 +194,25 @@ export function mountStatsCarousel({ root, onChange, onThumbGone = null, onThumb
     // both tables then stretch the same way to fill the box.
     const tables = heads.map((h) => h[0].closest("table"));
     heads.flat().forEach((th) => { th.style.minWidth = ""; });
-    tables.forEach((t) => { t.style.minWidth = "0"; });
+    tables.forEach((t) => { t.style.minWidth = "0"; t.style.removeProperty("--sc-nm-max"); });
     const n = Math.min(...heads.map((h) => h.length));
     const w = [];
     for (let c = 0; c < n; c++) w[c] = Math.max(...heads.map((h) => h[c].getBoundingClientRect().width));
+    // t490u: on PC a very long name (e.g. 31 × "HA…") could push the table past the
+    // box. Then only the names give way: they ellipsize (full name in the title /
+    // name-peek) by exactly the overflow, never below ~14ch. Phones keep side-scroll.
+    const box = tables[0].parentElement ? tables[0].parentElement.clientWidth : 0;
+    const total = w.reduce((a, b) => a + Math.ceil(b), 0); // minWidths below are ceil()ed
+    if (box > 0 && total > box + 1 && !matchMedia("(max-width: 600px)").matches) {
+      const nms = tables.flatMap((t) => [...t.querySelectorAll("tbody .nm")]);
+      const widest = Math.max(0, ...nms.map((el) => el.getBoundingClientRect().width));
+      const ch = parseFloat(getComputedStyle(tables[0]).fontSize) * 0.6 || 7;
+      const cap = Math.max(14 * ch, widest - (total - box) - 2);
+      if (widest > cap) {
+        tables.forEach((t) => t.style.setProperty("--sc-nm-max", Math.floor(cap) + "px"));
+        w[0] = Math.max(...heads.map((h) => h[0].getBoundingClientRect().width));
+      }
+    }
     tables.forEach((t) => { t.style.minWidth = ""; });
     heads.forEach((h) => { for (let c = 0; c < n; c++) h[c].style.minWidth = Math.ceil(w[c]) + "px"; });
   }

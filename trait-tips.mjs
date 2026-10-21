@@ -6,7 +6,7 @@
 import { t as tr } from "./i18n.mjs";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
 
-export const AIMGAP_HINT = "Aim on paper vs real results: your ⚔️ iVi percentile minus your IvI (aim) percentile, from −99 to +99. 🤥 Impostor (−33 or lower): your aim promises more than your fights deliver. 😤 DieHard (+33 or higher): you win more than your aim predicts. No emoji (−32…+32): balanced, aim and results roughly agree. Neither side is better or worse: it shows a play style, not cheating.";
+export const AIMGAP_HINT = "Aim on paper vs real results: your ⚔️ iVi percentile minus your IvI (aim) percentile, from −99 to +99. 🤥 Impostor (−33 or lower): your aim promises more than your fights deliver. 😤 DieHard (+33 or higher): you win more than your aim predicts. In between (−32…+32): balanced, aim and results roughly agree. Neither side is better or worse: it shows a play style, not cheating.";
 export const ZERG_HINT = "How much your results lean on a big group, 0–99: the lower of your 🎈 Inflation percentile (K/D lifted by easy fights) and your 🤝 Assists percentile (kills shared with teammates). High only when both are high, so solo farmers of easy fights stay low. Lower is better. Needs 100 kills in recent Honu sessions.";
 export const AIMGAP_MISSING = "Needs ⚔️ iVi (enough fights) and a public IvI";
 export const ZERG_MISSING = "Needs 🤝 Assists (100 kills in recent Honu sessions) and 🎈 Inflation (enough fights)";
@@ -23,15 +23,22 @@ function rel(pool, v) {
   return p == null ? "" : p >= 50 ? tr("rk.apkTop", " — top {n}%", { n: Math.max(1, 100 - p) }) : tr("rk.apkBottom", " — bottom {n}%", { n: Math.max(1, p) });
 }
 
-/** 🔀 Diff thirds of the −99…+99 scale: ≤ −33 🤥 Impostor, ≥ +33 😤 DieHard, between = balanced (no emoji). */
+/** 🔀 Diff thirds of the −99…+99 scale: ≤ −33 🤥 Impostor, ≥ +33 😤 DieHard, between = balanced (cells show only the signed number since t494u). */
 export const DIFF_THIRD = 33;
 export function diffEmoji(v) {
   return !fin(v) ? "" : v <= -DIFF_THIRD ? "🤥" : v >= DIFF_THIRD ? "😤" : "";
 }
-/** Emoji slot before the number: balanced cells carry an invisible copy so every number lines up. */
-export function diffEmojiSlot(v) {
-  const e = diffEmoji(v);
-  return e ? `<span class="diff-emo">${e}</span>` : `<span class="diff-emo diff-emo-ph" aria-hidden="true">😤</span>`;
+/**
+ * t492u/t494u: 🔀 value markup — plain signed number (no 🤥/😤 in cells since
+ * t494u; the sides live in the hover / popup hint and the chart's ±33 lines).
+ * The +/− sign sits in .sgn-pre: on PC (stats-carousel, styles.css) it hangs
+ * left of the digits, out of the flow, so "+5" and "5" center their digits
+ * identically under the header; elsewhere it renders inline as before.
+ */
+export function diffValueHtml(v) {
+  if (!fin(v)) return "—";
+  const sign = v > 0 ? "+" : v < 0 ? "−" : "";
+  return `<span class="sgn-num">${sign ? `<span class="sgn-pre">${sign}</span>` : ""}${Math.abs(v)}</span>`;
 }
 
 /** 🔀 cell hover: score, side, percentile among all players, both parts. */

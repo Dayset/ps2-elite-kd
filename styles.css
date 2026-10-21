@@ -1991,6 +1991,11 @@ footer .disclaimer p {
 .stats-table .sort-ind.active {
   opacity: 1;
 }
+/* t492u: on PC the ▼/▲ is wider than the 0.85em empty slot, so sorting a column
+ * widened it by ~2px and nudged the whole table. Fixed slot = the arrow's width. */
+@media (min-width: 601px) {
+  .stats-table .sort-ind { width: 1.1em; min-width: 0; text-align: center; }
+}
 
 
 .stats-table .online-slot {
@@ -2987,16 +2992,31 @@ col.lv-c-statR { width: calc(7.143% - 3.3214ch); }
   .stats-carousel .rk-pos-table th:not(.rk-pos-name),
   .stats-carousel .rk-pos-table td:not(.rk-pos-name) { text-align: center; }
   .stats-carousel .stats-table td:not(.stats-name),
-  .stats-carousel .rk-pos-table td:not(.rk-pos-name) { position: relative; padding-left: 1.9em; padding-right: 1.9em; }
+  .stats-carousel .rk-pos-table td:not(.rk-pos-name) { position: relative; padding-left: 1.15em; padding-right: 1.15em; }
+  /* t490u: side padding 1.9em → 1.15em so long names + all columns fit on PC. The grey
+   * tag may spill into the next cell's left padding (the next number is centered,
+   * so that padding is always empty); the last column keeps the old 1.9em on both sides (room for its tag, number still centered). */
+  .stats-carousel .stats-table td:not(.stats-name):last-child,
+  .stats-carousel .rk-pos-table td:not(.rk-pos-name):last-child { padding-left: 1.9em; padding-right: 1.9em; }
   .stats-carousel .stats-table td .pct,
   .stats-carousel .rk-pos-table td .pct { position: absolute; margin-left: 0.3em; margin-top: 0.3em; font-size: 0.64em; line-height: 1.2; }
 }
 /* t459u: invisible tag in cells without one (stats-carousel.mjs fillTagSlots), so every
  * cell has the same structure and numbers line up with tagged neighbours. */
+/* t492u/t494u: 🔀 Diff on PC — the +/− sign hangs left of the digits (out of the
+ * flow), so digits center under the header like every other column and "+5" / "5"
+ * sit identically; it fits in the normal 1.15em side padding. Phones and the
+ * Rankings table render the sign inline as before. No emoji in cells (t494u). */
+@media (min-width: 601px) {
+  .stats-carousel .sgn-num { position: relative; display: inline-block; }
+  .stats-carousel .sgn-pre { position: absolute; right: 100%; top: 0; white-space: nowrap; }
+}
+/* t490u: stats-carousel.mjs sets --sc-nm-max only when a long name would push the table off the box (PC). */
+@media (min-width: 601px) {
+  .stats-carousel .stats-table .nm,
+  .stats-carousel .rk-pos-table .nm { max-width: min(42ch, var(--sc-nm-max, 42ch)); }
+}
 .stats-carousel td .pct.pct-ph { visibility: hidden; user-select: none; pointer-events: none; }
-/* 🔀 Diff thirds (owner t487u): 🤥 / 😤 before the number; balanced cells keep an invisible copy so numbers line up. */
-.diff-emo { display: inline-block; margin-right: 0.2em; font-style: normal; }
-.diff-emo.diff-emo-ph { visibility: hidden; user-select: none; pointer-events: none; }
 .live-mode #statsCarousel { display: none !important; }
 
 /* Main-page box gaps at 40% of their original height (Dayset 2026-10-19:
