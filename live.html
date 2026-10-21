@@ -88,6 +88,12 @@
       animation: none !important; transition: none !important;
     }
     .splash-logo { display: block; width: 100%; height: 100%; max-width: none; }
+    /* Full-res medal (splash-medal.webp, cut from gigaraxium.png with a violet halo): crossfades
+       over the icon while the medal grows, then one light sweep across it (masked to the art). */
+    .splash-hi { position: absolute; left: 0; top: 0; width: 100%; height: 100%; max-width: none; opacity: 0; will-change: opacity; }
+    .splash-shine { position: absolute; inset: 0; overflow: hidden; opacity: 0; -webkit-mask-size: 100% 100%; mask-size: 100% 100%; }
+    .splash-shine i { position: absolute; top: -20%; bottom: -20%; left: 0; width: 34%; will-change: transform;
+      background: radial-gradient(closest-side, rgba(255,255,255,0.55), rgba(255,255,255,0.18) 55%, transparent); transform: translateX(-110%) skewX(-14deg); }
     /* Black outside a circle of 1/3 the square = what Android shows; fading it out
        opens the circle. Only transform / opacity move: both run off the main thread,
        so app.js loading meanwhile can't make it stutter. */
@@ -110,13 +116,16 @@
         var l = document.createElement("link");
         l.rel = "preload"; l.as = "image"; l.href = "icon-maskable-512.png";
         document.head.appendChild(l);
+        var l2 = document.createElement("link");
+        l2.rel = "preload"; l2.as = "image"; l2.href = "splash-medal.webp"; l2.fetchPriority = "high";
+        document.head.appendChild(l2);
       } catch (e) {}
     })();
   </script>
 </head>
 <body class="main-page live-mode">
   <div id="splash" class="splash" aria-hidden="true">
-    <div class="splash-art"><img class="splash-logo" data-src="icon-maskable-512.png" width="512" height="512" alt="" decoding="sync" /><div class="splash-ring"></div></div>
+    <div class="splash-art"><img class="splash-logo" data-src="icon-maskable-512.png" width="512" height="512" alt="" decoding="sync" /><img class="splash-hi" data-src="splash-medal.webp" width="1129" height="1129" alt="" decoding="async" /><div class="splash-shine"><i></i></div><div class="splash-ring"></div></div>
   </div>
   <script>
     // Installed-app splash (t465u), see the <style> note in <head>. Fixed px, frozen
@@ -130,9 +139,30 @@
       if (!sp || !img || !sp.querySelector(".splash-art")) { root.classList.remove("pwa-launch"); return; }
       img.src = img.getAttribute("data-src");
       var art = sp.querySelector(".splash-art"), ring = sp.querySelector(".splash-ring");
+      var hi = sp.querySelector(".splash-hi"), shine = sp.querySelector(".splash-shine");
+      hi.src = hi.getAttribute("data-src");
+      shine.style.webkitMaskImage = shine.style.maskImage = "url(\"" + hi.src + "\")";
+      var hiShown = false;
+      // The full-res medal replaces the icon once it has loaded (never an empty frame), then one sweep.
+      function showHi(delay, dur) {
+        function go() {
+          if (hiShown || fading) return; hiShown = true;
+          if (!hi.animate || !dur) { hi.style.opacity = "1"; img.style.opacity = "0"; }
+          else {
+            hi.animate([{ opacity: 0 }, { opacity: 1 }], { duration: dur, delay: delay, easing: "ease-in-out", fill: "forwards" });
+            img.animate([{ opacity: 1 }, { opacity: 0 }], { duration: dur, delay: delay, easing: "ease-in-out", fill: "forwards" });
+          }
+          var bar = shine.firstChild;
+          if (bar && bar.animate) {
+            shine.style.opacity = "1";
+            bar.animate([{ transform: "translateX(-110%) skewX(-14deg)" }, { transform: "translateX(310%) skewX(-14deg)" }], { duration: 800, delay: delay + dur, easing: "cubic-bezier(0.4, 0, 0.2, 1)", fill: "forwards" });
+          }
+        }
+        if (hi.complete && hi.naturalWidth) go(); else { delay = 0; dur = 300; hi.onload = go; }
+      }
       var w = window.innerWidth || 360, h = window.innerHeight || 640;
       // End size: the 512 px art as big as fits the screen (the medal fills ~86% of the square).
-      var END = Math.round(Math.min(w * 0.92, h * 0.62, 420));
+      var END = Math.round(Math.min(w * 0.98, h * 0.62, 640)); // full-res art: bigger cap, still sharp
       var START = 288; // Android 12+ splash: 288 px canvas behind a 192 px circle
       var android = /Android/i.test(navigator.userAgent || "");
       art.style.margin = "0";
@@ -149,11 +179,13 @@
             var ease = "cubic-bezier(0.22, 0.9, 0.24, 1)";
             art.animate([{ transform: "scale(" + (START / END) + ")" }, { transform: "scale(1)" }], { duration: GROW, easing: ease, fill: "forwards" });
             ring.animate([{ opacity: 1 }, { opacity: 0 }], { duration: GROW * 0.8, easing: "ease-out", fill: "forwards" });
+            showHi(GROW * 0.15, GROW * 0.6);
           }, 90);
         });
       } else {
         ring.style.opacity = "0";
         GROW = 0;
+        showHi(0, 0);
         requestAnimationFrame(function () { shownAt = Date.now(); });
       }
       function finish() { root.classList.remove("pwa-launch"); sp.style.opacity = ""; sp.style.pointerEvents = ""; }
@@ -174,8 +206,8 @@
           })(0);
         }
       }
-      // Hold: the grow plus a short look at the whole medal, at least 1.2 s in all.
-      function ready() { setTimeout(fade, Math.max(0, Math.max(1200, GROW + 500) - (Date.now() - shownAt))); }
+      // Hold: the grow plus the light sweep over the whole medal, at least 1.2 s in all.
+      function ready() { setTimeout(fade, Math.max(0, Math.max(1200, GROW + (hiShown ? 900 : 500)) - (Date.now() - shownAt))); }
       setTimeout(fade, 4500);
       var parsed = new Promise(function (r) { document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", r, { once: true }) : r(); });
       var early = window.__ps2Early || {};

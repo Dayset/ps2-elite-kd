@@ -12,7 +12,7 @@
 //    offline. Stats are never stale for more than one refresh.
 //  • Everything else (player cache files, ranks.json, Census/Honu calls) is
 //    not touched: it goes straight to the network as before.
-const VERSION = "20261020-pwa7";
+const VERSION = "20261021-pwa8";
 const SHELL = "ps2-shell-" + VERSION;
 const DATA = "ps2-data-v1";
 const SCOPE = new URL("./", self.location).href;
@@ -21,7 +21,7 @@ const SCOPE = new URL("./", self.location).href;
 const PAGES = ["./", "oracle/"];
 const STATIC = [
   "favicon-512x512.png", "favicon-192x192.png", "icon-maskable-512.png",
-  "apple-touch-icon.png", "favicon.ico",
+  "apple-touch-icon.png", "favicon.ico", "splash-medal.webp",
 ];
 const DATA_FILES = [
   "data/reviewed.json", "data/not-farm.json", "data/farm.json",
