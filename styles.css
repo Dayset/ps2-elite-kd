@@ -730,7 +730,8 @@ header .sub {
 @media (max-width: 600px) and (orientation: portrait) {
   .controls .names-box.top-gap { margin-top: 1.5rem; }
   .controls .names-box .fresh-row-end {
-    position: absolute; right: 0.35rem; bottom: 0.35rem;
+    /* t476u: bottom 0.6rem (was 0.35rem) — measured 4 px low; now centred on the typing line. */
+    position: absolute; right: 0.35rem; bottom: 0.6rem;
     flex: none; z-index: 3;
   }
   .fresh-row { position: relative; justify-content: flex-end; align-items: center; min-height: 1.9rem; }
@@ -745,6 +746,15 @@ header .sub {
   /* Phone portrait: fetch-fresh stays the 1.9rem icon-only 🆕 box. */
   .fresh-btn-txt { display: none; }
   .fresh-label.fresh-btn { width: 1.9rem; padding: 0; }
+}
+
+/* t476u (owner): phones — no clear ✕ inside the names field (tap a chip to
+ * remove that name; 🗑️ wipes everything). The freed strip goes to the chips:
+ * the 2-column grid now spans the whole field, both columns equally wide, and
+ * the field's right padding matches its left so the grid sits evenly. */
+@media (max-width: 600px) {
+  .controls .names-box .clear-names { display: none; }
+  .names-box { padding-right: 0.45rem; }
 }
 
 /* t355u: roomy typing — the typing spot always gets its own full-width line
