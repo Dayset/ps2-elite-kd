@@ -87,10 +87,11 @@ describe("no NaN in the Rankings", () => {
           if (still > (${full} ? 60 : 6)) break;
           await new Promise((r) => setTimeout(r, 50));
         }
+        // \bNaN\b: a real player is named "VANaNoob" (2026-10-21) — only a standalone NaN is a bug.
         const bad = [];
-        for (const tr of body.rows) if (tr.dataset.q) for (const td of tr.cells) if (/NaN/.test(td.innerHTML)) bad.push((tr.dataset.q || "?") + " col" + td.cellIndex + ": " + td.textContent);
+        for (const tr of body.rows) if (tr.dataset.q) for (const td of tr.cells) if (/\bNaN\b/.test(td.innerHTML)) bad.push((tr.dataset.q || "?") + " col" + td.cellIndex + ": " + td.textContent);
         const head = document.getElementById("ranksHead").innerHTML;
-        return { rows: body.querySelectorAll("tr[data-q]").length, bad: bad.slice(0, 10), nBad: bad.length, headNaN: /NaN/.test(head), pageNaN: /NaN/.test(document.body.innerText) };
+        return { rows: body.querySelectorAll("tr[data-q]").length, bad: bad.slice(0, 10), nBad: bad.length, headNaN: /\bNaN\b/.test(head), pageNaN: /\bNaN\b/.test(document.body.innerText) };
       })()`;
       await send("Page.enable", {}, sessionId);
       await send("Page.navigate", { url: `http://127.0.0.1:${port}/index.html#rankings` }, sessionId);

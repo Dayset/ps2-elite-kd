@@ -2453,12 +2453,12 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
 .ranks-table col.rk-name-col { width: 21ch; }
 /* t483u: on PC the name column gives way instead of the table overflowing.
  * It keeps its old width (31ch / 45ch) whenever that fits, and shrinks down to
- * 18ch (the phone name width) only when the number columns (sum in --rk-fixed, set by rankings.mjs
+ * 17ch (about the phone name width) only when the number columns (sum in --rk-fixed, set by rankings.mjs
  * renderHead) would otherwise push a sideways scrollbar. Depends only on the
  * box width, never on rows, so the table still doesn't jump on sort. */
 .ranks-table-wrap { container-type: inline-size; }
-@media (min-width: 601px) { .ranks-table col.rk-name-col { width: clamp(18ch, calc(100cqw - var(--rk-fixed, 0px)), 31ch); } }
-@media (min-width: 1100px) { .ranks-table col.rk-name-col { width: clamp(18ch, calc(100cqw - var(--rk-fixed, 0px)), 45ch); } }
+@media (min-width: 601px) { .ranks-table col.rk-name-col { width: clamp(17ch, calc(100cqw - var(--rk-fixed, 0px)), 31ch); } }
+@media (min-width: 1100px) { .ranks-table col.rk-name-col { width: clamp(17ch, calc(100cqw - var(--rk-fixed, 0px)), 45ch); } }
 .ranks-table thead th.rk-pick,
 .ranks-table thead th.rk-num,
 .ranks-table thead th.rk-name { z-index: 4; }
