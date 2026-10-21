@@ -98,10 +98,10 @@ describe("🖼️ background-image toggle (PC, next to 🗑️)", () => {
       assert.equal(st.off, false, "second click restores the image");
       assert.ok(st.img.includes("imgur"), "image back after second click");
       assert.equal(st.stored, "1", "on persisted");
-    });
+    }, { width: 1500, height: 900 });
   });
 
-  it("narrow PC window (<900px): image auto-hidden, button hidden — nothing shows beyond the tables (Dayset 2026-10-21)", { skip: !chrome && "no Chrome", timeout: 120000 }, async () => {
+  it("narrow PC window (<1400px): image auto-hidden, button hidden — nothing shows beyond the tables (Dayset 2026-10-21)", { skip: !chrome && "no Chrome", timeout: 120000 }, async () => {
     await withPage(async ({ ev, nav }) => {
       await nav("index.html");
       assert.equal(await ev(ready), 1, "app module loaded");
@@ -109,7 +109,7 @@ describe("🖼️ background-image toggle (PC, next to 🗑️)", () => {
       assert.equal(st.pc, true, "still a PC (hover + fine pointer)");
       assert.equal(st.img, "none", "no background image in a narrow window");
       assert.equal(st.btnDisplay, "none", "🖼️ button hidden — nothing to toggle");
-    }, { width: 800, height: 900 });
+    }, { width: 1280, height: 900 });
   });
 
   it("mobile: button hidden, no image", { skip: !chrome && "no Chrome", timeout: 120000 }, async () => {

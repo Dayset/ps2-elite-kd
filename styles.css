@@ -124,11 +124,13 @@ html:not([data-theme="light"]) body.main-page {
  * transparent inside the same query, or its opaque background would
  * cover the html image. The theme color still shows through: html
  * keeps background: var(--bg) underneath the image.
- * Narrow windows (Dayset 2026-10-21): below 900px the tables fill the
- * window edge to edge and nothing of the picture is visible beyond
- * them, so it auto-hides — the min-width gate drops the page back to
- * the plain theme backgrounds, exactly like the 🖼️ toggle-off state. */
-@media (hover: hover) and (pointer: fine) and (min-width: 900px) {
+ * Narrow windows (Dayset 2026-10-21): below 1400px the layout is
+ * full-width — the tables fill the window and nothing of the picture
+ * shows beyond them — so it auto-hides: the min-width gate drops the
+ * page back to the plain theme backgrounds, exactly like the 🖼️
+ * toggle-off state. (900px was tried first the same day; 1400px is
+ * the comparison build Dayset asked to judge.) */
+@media (hover: hover) and (pointer: fine) and (min-width: 1400px) {
   html {
     background-image: url(https://i.imgur.com/N1GhI1O.jpeg);
     background-size: 100%;
@@ -146,10 +148,10 @@ html:not([data-theme="light"]) body.main-page {
 
 /* 🖼️ background-image toggle: PC only (the image itself is PC-only),
  * hidden on phones/tablets where there is nothing to toggle — and below
- * 900px, where the image auto-hides and there is nothing to toggle. */
+ * 1400px, where the image auto-hides and there is nothing to toggle. */
 #bgToggleBtn { display: none; }
 #bgToggleBtn.off { opacity: 0.4; }
-@media (hover: hover) and (pointer: fine) and (min-width: 900px) {
+@media (hover: hover) and (pointer: fine) and (min-width: 1400px) {
   #bgToggleBtn { display: inline-flex; }
 }
 
