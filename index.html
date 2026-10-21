@@ -346,7 +346,7 @@
         <button type="button" class="chart-mode-btn" data-yscale="kd-btn" aria-pressed="true" data-i18n-title="chart.modeKd" data-i18n-tip="chart.modeKdTip"
                 title="💀 Who wins fights: kills per death against easy → hard enemies. Higher line = wins more fights." data-tip="💀 Who wins fights: kills per death vs easy → hard enemies. Higher = wins more.">💀</button>
         <button type="button" class="chart-mode-btn" data-mode="cumulative" aria-pressed="false" data-i18n-title="chart.modeAim" data-i18n-tip="chart.modeAimTip"
-                title="🎯 Who aims best: each line keeps its shape but is lifted to the player's aim score (public IvI = accuracy × headshot %). Higher line = better aim, not more wins. Players can swap places between the two views: sharp aim doesn't always win fights, and vehicle / explosive players win without headshots." data-tip="🎯 Who aims best: lines lifted to each player's aim score (accuracy × headshot %). Higher = better aim, not more wins, so players can swap places.">🎯</button>
+                title="🎯 Who aims best IN THEORY: each line keeps its shape but is lifted to the player's aim score (public IvI = accuracy × headshot %). Higher line = better aim, not more wins. Players can swap places between the two views: sharp aim doesn't always win fights, and vehicle / explosive players win without headshots." data-tip="🎯 Who aims best **IN THEORY**: lines lifted to each player's aim score (accuracy × headshot %). Higher = better aim, not more wins, so players can swap places.">🎯</button>
         <button type="button" class="chart-mode-btn" data-mode="banded" aria-pressed="false" data-i18n-title="chart.modeBanded"
                 title="Smooth: banded K/D.">🎚️</button>
       </div>
@@ -464,7 +464,7 @@
   </footer>
 
   <script type="module" src="i18n.mjs"></script>
-  <script type="module" src="app.js?v=20261021-bare1"></script>
+  <script type="module" src="app.js?v=20261021-theory1"></script>
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").catch(function () {});

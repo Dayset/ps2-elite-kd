@@ -18,6 +18,27 @@ export function isTouchUi() {
   return typeof window !== "undefined" && !!window.matchMedia && window.matchMedia("(hover: none)").matches;
 }
 
+/**
+ * Split a tip string into plain / bold parts: "**...**" renders bold
+ * (owner 2026-10-21: the 🎯 graph-mode tip stresses IN THEORY). Everything
+ * else stays a text node, so tip strings remain markup-safe; an unmatched
+ * "**" is left as literal text.
+ */
+export function richParts(text) {
+  const s = String(text || "");
+  const parts = [];
+  const re = /\*\*([^*]+)\*\*/g;
+  let last = 0;
+  let m;
+  while ((m = re.exec(s)) !== null) {
+    if (m.index > last) parts.push({ b: false, s: s.slice(last, m.index) });
+    parts.push({ b: true, s: m[1] });
+    last = m.index + m[0].length;
+  }
+  if (last < s.length) parts.push({ b: false, s: s.slice(last) });
+  return parts;
+}
+
 /** Show `text` under `anchor` for HEAD_TIP_MS. Re-showing restarts the timer. */
 export function showHeadTip(text, anchor) {
   if (typeof document === "undefined" || !text || !anchor || !anchor.getBoundingClientRect) return;
@@ -27,7 +48,16 @@ export function showHeadTip(text, anchor) {
     el.setAttribute("role", "tooltip");
     document.body.appendChild(el);
   }
-  el.textContent = text;
+  el.textContent = "";
+  for (const p of richParts(text)) {
+    if (!p.b) {
+      el.appendChild(document.createTextNode(p.s));
+    } else {
+      const b = document.createElement("b");
+      b.textContent = p.s;
+      el.appendChild(b);
+    }
+  }
   el.hidden = false;
   const r = anchor.getBoundingClientRect();
   const w = el.offsetWidth;
