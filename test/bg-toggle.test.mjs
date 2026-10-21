@@ -101,6 +101,17 @@ describe("🖼️ background-image toggle (PC, next to 🗑️)", () => {
     });
   });
 
+  it("narrow PC window (<900px): image auto-hidden, button hidden — nothing shows beyond the tables (Dayset 2026-10-21)", { skip: !chrome && "no Chrome", timeout: 120000 }, async () => {
+    await withPage(async ({ ev, nav }) => {
+      await nav("index.html");
+      assert.equal(await ev(ready), 1, "app module loaded");
+      const st = await ev(state());
+      assert.equal(st.pc, true, "still a PC (hover + fine pointer)");
+      assert.equal(st.img, "none", "no background image in a narrow window");
+      assert.equal(st.btnDisplay, "none", "🖼️ button hidden — nothing to toggle");
+    }, { width: 800, height: 900 });
+  });
+
   it("mobile: button hidden, no image", { skip: !chrome && "no Chrome", timeout: 120000 }, async () => {
     await withPage(async ({ ev, nav }) => {
       await nav("index.html");
