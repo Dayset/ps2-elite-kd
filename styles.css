@@ -742,6 +742,9 @@ header .sub {
   .fresh-cols-link { font-size: 1rem; }
   .fresh-row .fresh-cols-link .cols-txt { display: inline; }
   .fresh-cols-link .cols-emoji { display: none; }
+  /* Phone portrait: fetch-fresh stays the 1.9rem icon-only 🆕 box. */
+  .fresh-btn-txt { display: none; }
+  .fresh-label.fresh-btn { width: 1.9rem; padding: 0; }
 }
 
 /* t355u: roomy typing — the typing spot always gets its own full-width line
@@ -815,14 +818,17 @@ header .sub {
   accent-color: var(--accent);
 }
 
-/* Fetch-fresh as a 🆕 icon button (Dayset 2026-10-19): the checkbox stays
+/* Fetch-fresh as a 🆕 button (Dayset 2026-10-19): the checkbox stays
  * (all the .checked/.disabled logic in app.js is untouched) but is visually
- * hidden; the label is the button and shows the on/off state. */
+ * hidden; the label is the button and shows the on/off state.
+ * Owner 2026-10-20 evening: the "Fetch fresh data" text (fresh.label) is
+ * restored beside the 🆕 on PC, so the button sizes to its content; phone
+ * portrait keeps the 1.9rem icon-only box (see the portrait block). */
 .fresh-label.fresh-btn {
   box-sizing: border-box;
-  width: 1.9rem;
+  width: auto;
   height: 1.9rem;
-  padding: 0;
+  padding: 0 0.55rem;
   border: 1px solid transparent;
   border-radius: 6px;
   display: inline-flex;
