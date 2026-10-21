@@ -28,6 +28,7 @@ import {
   viaCensusProxy,
   needsSync,
   syncBacklog,
+  BACKLOG_FIRST_MAX,
   CACHE_FORMAT,
   SYNC_RETRY_MS,
   REFRESH_AFTER_MS,
@@ -181,6 +182,11 @@ describe("weekly refresh + format sync backlog + schedule.json", () => {
     assert.equal(needsSync({ fmt: F }), false);
     assert.equal(needsSync({}), true);
     assert.equal(syncBacklog(idx), 5);
+    // With state: the dead name (notfound, fails >= 3) leaves the backlog —
+    // it can never sync, and counting it starved discovery growth (2026-10-21).
+    assert.equal(syncBacklog(idx, NOW, st), 4);
+    // The backlog-first split only engages above the threshold.
+    assert.equal(BACKLOG_FIRST_MAX, 25);
   });
   it("after the backlog clears it is purely weekly", () => {
     const done = { players: idx.players.map((p) => ({ ...p, fmt: F })) };

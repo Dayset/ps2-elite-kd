@@ -1387,7 +1387,7 @@ async function main() {
     const known = new Set(index.players.map((p) => p.slug || slugKey(p.name)));
     const st = state.players;
     const skip = (slug) => !retryable(st[slug]);
-    const backlog0 = syncBacklog(index);
+    const backlog0 = syncBacklog(index, Date.now(), state);
 
     // 1) Census login sweep + fight filter (resumable, <= SWEEP_SLICE_SEC per run).
     if (sweepDue(disc)) {
@@ -1472,10 +1472,12 @@ async function main() {
       if (d) refreshed++;
     }
 
-    // 3) Budget split. Format-sync backlog first: new names only get leftover
-    // time until it is done. Afterwards due refreshes get the first half of the
-    // run when both are waiting, new names the rest, then refresh again.
-    if (backlog0 > 0) {
+    // 3) Budget split. A real format-sync backlog (more than
+    // BACKLOG_FIRST_MAX) goes first: new names only get leftover time until
+    // it is done. A small residue doesn't engage that mode — due refreshes
+    // get the first half of the run when both are waiting, new names the
+    // rest, then refresh again.
+    if (backlog0 > BACKLOG_FIRST_MAX) {
       await runRefresh(deadline);
       await runGrowth(deadline);
     } else if (dueNow.length && growQueue.length && room) {
@@ -1491,7 +1493,7 @@ async function main() {
     }
     growthLeft = index.players.length < cap && disc.queue.length > 0;
     more = growthLeft;
-    disc.cap = nextCap({ cap: disc.cap, indexSize: index.players.length, backlogLeft: syncBacklog(index), dueLeft: staleCandidates(index, state, Date.now()).length });
+    disc.cap = nextCap({ cap: disc.cap, indexSize: index.players.length, backlogLeft: syncBacklog(index, Date.now(), state), dueLeft: staleCandidates(index, state, Date.now()).length });
     disc.updatedAt = new Date().toISOString();
     writeFileAtomic(DISCOVERY_PATH, JSON.stringify(disc) + "\n");
   }
@@ -1557,7 +1559,7 @@ async function main() {
       growthLeft,
       sweepAt: disc ? sweepDueAt(disc) : null,
       staleLeft: after.length,
-      backlogLeft: syncBacklog(index),
+      backlogLeft: syncBacklog(index, Date.now(), state),
       nextStaleAt: nextStaleAt(index, state),
       outageStop: !!c.outageStop, // only a real outage stop, not a time-budget stop with one flaky player
       now: Date.now(),
@@ -1665,10 +1667,26 @@ export function needsUpgrade(p) {
   return (Number.isFinite(t) && t > 0 ? t : LEGACY_TOP_N) < OPPONENT_TOP_N;
 }
 
+/**
+ * The backlog-first budget split in main() only engages above this many
+ * format-sync players: a small residue must not starve discovery growth —
+ * growth and refreshes split the run instead (owner 2026-10-21).
+ */
+export const BACKLOG_FIRST_MAX = 25;
+
 /** Number of index players still in the one-time format sync backlog. */
-export function syncBacklog(index, now = Date.now()) {
+export function syncBacklog(index, now = Date.now(), state = null) {
   // 🪦 players (inactive > 1 year) are never refreshed automatically, not even for the sync.
-  return ((index && index.players) || []).filter((p) => p && p.name && isPlausibleName(p.name) && needsSync(p) && !isDormant(p, now)).length;
+  // Dead names don't count either (owner 2026-10-21): a character Census has
+  // given up on (notfound, >= 3 fails — the same "gone" test dueAt uses) can
+  // never reach the current format. Counting them kept the backlog above
+  // zero forever, so every run took the backlog-first split and discovery
+  // growth got no time at all (index frozen at 13,198, Oct 20-21).
+  const gone = (p) => {
+    const e = state && state.players && state.players[p.slug || slugKey(p.name)];
+    return !!e && e.kind === "notfound" && (e.fails || 0) >= 3;
+  };
+  return ((index && index.players) || []).filter((p) => p && p.name && isPlausibleName(p.name) && needsSync(p) && !isDormant(p, now) && !gone(p)).length;
 }
 
 /**
