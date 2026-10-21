@@ -21,7 +21,7 @@ test("one page (t356u): no 🏆 / › buttons; order controls → stats → grap
   assert.match(index, /<div class="fresh-row">[\s\S]*?id="fetchFresh"[\s\S]*?<span class="fresh-row-end">[\s\S]*?id="wipeLocalBtn"[\s\S]*?id="themeToggle"[\s\S]*?<\/span>\s*<\/div>/);
   const at = (re) => { const m = index.search(re); assert.ok(m >= 0, String(re)); return m; };
   // 2026-10-19: ✨ Stats and 🏅 Positions share one spot under the names box (stats-carousel.mjs).
-  const order = [/id="namesBox"/, /id="analyzeBtn"/, /id="statsCarousel"/, /id="statsPanel"/, /id="rkPositions"/, /<svg id="chart"/, /<section id="rankings"/, /id="distSection"/, /id="ranksTableSection"/, /id="ranksSearch"/, /id="ranksTable"/, /<footer>/, /id="statsPublic"/, /What about vehicles\?/, /id="ranksMeta"/].map(at);
+  const order = [/id="namesBox"/, /id="analyzeBtn"/, /id="statsCarousel"/, /id="statsPanel"/, /id="rkPositions"/, /<svg id="chart"/, /<section id="rankings"/, /id="distSection"/, /id="ranksTableSection"/, /id="ranksSearch"/, /id="ranksTable"/, /<footer>/, /id="statsPublic"/, /id="ranksMeta"/, /What about vehicles\?/].map(at); // t474u: vehicles note after the HONU thanks, under the footer stats
   assert.deepEqual(order, order.slice().sort((a, b) => a - b));
   assert.match(app, /import\("\.\/rankings\.mjs\?v=/, "Rankings load lazily");
   // t358u: no "🏆 Rankings" title; big table folded by default.

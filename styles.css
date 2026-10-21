@@ -1859,7 +1859,6 @@ footer a { color: var(--accent); }
 /* Footer (2026-10-19): data first, then one card with three columns —
  * about + data line, links, options (switches) — and a quiet bottom row. */
 footer .footer-data { margin: 1rem 0 0.75rem; }
-footer .footer-data #vehiclesNote { margin: 0.45rem 0 0; padding-left: 0.75rem; }
 footer #statsPublic { color: var(--text); }
 footer .footer-block {
   background: var(--panel);
@@ -1882,6 +1881,9 @@ footer .foot-opts .ranks-meta { margin: 0; font-size: 0.78rem; }
 footer .foot-opts .footer-thanks { font-size: 0.78rem; }
 footer .foot-opts .thanks-gap { margin-top: 0.45rem; }
 footer .footer-thanks { margin: 0; color: var(--dim); }
+/* t474u: ♿ What about vehicles? — its own line under "Thanks to HONU / Varunda", same size/colour as that line. */
+footer .foot-stats-block #vehiclesNote { margin: 0; font-size: 0.78rem; }
+footer .foot-stats-block #vehiclesNote > summary { font-size: inherit; padding: 0; }
 footer .foot-links a { text-decoration: none; font-size: 0.82rem; width: fit-content; }
 footer .foot-links a:hover { text-decoration: underline; }
 /* "(N commits since Oct 7, 2026)" counter beside 📝 Update log (Dayset 2026-10-20):

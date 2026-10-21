@@ -66,7 +66,7 @@
       });
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261020-gapfix1" />
+  <link rel="stylesheet" href="styles.css?v=20261020-vehfoot1" />
   <style>
     /* Installed-app launch splash (t465u). Android draws its own launch splash first:
        the maskable icon (big medal on black) seen through a 192 px circle, on the
@@ -389,8 +389,6 @@
          about + data line, links, options; disclaimer and legal line at the bottom. -->
     <section class="footer-data" aria-label="Public stats" data-i18n-aria-label="stats.publicAria">
       <div id="statsPublic" class="stats-panel stats-panel-public" aria-label="Public stats (Census / Honu)" data-i18n-aria-label="stats.publicPanelAria"></div>
-      <!-- "What about vehicles?" stays hidden until a comparison is loaded (renderStatsTable). -->
-      <details id="vehiclesNote" class="pooled-note fold-note" hidden><summary data-i18n="vehicles.summary">♿ What about vehicles?</summary><p><span data-i18n="vehicles.p1">⚔️ iVi measures infantry skill only. If more than 10% of your lifetime kills come from vehicles (seats, turrets), the share above 10% is subtracted from adjusted iVi; MAX kills above 10% are subtracted the same way, separately. The two add up, with no cap: e.g. 96% vehicle kills → −86%; 45% vehicle + 40% MAX → −65%. Pure infantry is untouched.</span> <span data-i18n="vehicles.p2">Hover a player’s iVi value to see the cut, and the</span> <a href="columns.html#infantry"><span data-i18n="vehicles.infLink">🪖 Infantry</span></a> <span data-i18n="vehicles.p3">column for the shares (</span><a href="columns.html#vehicle-cut"><span data-i18n="vehicles.detailsLink">details</span></a><span data-i18n="vehicles.p4">).</span></p></details>
     </section>
     <section class="footer-block" aria-label="About, links and options" data-i18n-aria-label="foot.aboutAria">
       <div class="foot-grid">
@@ -419,6 +417,8 @@
             <p id="pageNameRate" class="ranks-meta" hidden></p>
             <p class="footer-thanks thanks-gap"><span data-i18n="foot.thanks">Data from the Daybreak Census API</span></p>
             <p class="footer-thanks"><span data-i18n="foot.thanksTo">Thanks to</span> <a href="https://wt.honu.pw/" target="_blank" rel="noopener noreferrer">HONU</a> / Varunda</p>
+            <!-- t474u: "What about vehicles?" lives here, on its own line after the thanks; hidden until a comparison is loaded (renderStatsTable). -->
+            <details id="vehiclesNote" class="pooled-note fold-note" hidden><summary data-i18n="vehicles.summary">♿ What about vehicles?</summary><p><span data-i18n="vehicles.p1">⚔️ iVi measures infantry skill only. If more than 10% of your lifetime kills come from vehicles (seats, turrets), the share above 10% is subtracted from adjusted iVi; MAX kills above 10% are subtracted the same way, separately. The two add up, with no cap: e.g. 96% vehicle kills → −86%; 45% vehicle + 40% MAX → −65%. Pure infantry is untouched.</span> <span data-i18n="vehicles.p2">Hover a player’s iVi value to see the cut, and the</span> <a href="columns.html#infantry"><span data-i18n="vehicles.infLink">🪖 Infantry</span></a> <span data-i18n="vehicles.p3">column for the shares (</span><a href="columns.html#vehicle-cut"><span data-i18n="vehicles.detailsLink">details</span></a><span data-i18n="vehicles.p4">).</span></p></details>
           </div>
         </div>
       </div>
