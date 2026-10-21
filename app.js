@@ -3456,6 +3456,10 @@ import {
   // 🪖 Infantry (% of lifetime kills with infantry weapons): value + MAX / vehicle % by slug, pool for the percentile.
   let infBySlug = null;
   let infPool = null;
+  // 🔀 Diff (debug, owner 2026-10-21): population pools for ⚔️ iVi and IvI from
+  // the same lite payload — practice percentile minus theory percentile.
+  let adjsPool = null;
+  let iviPool = null;
   function loadConsPool() {
     if (consPoolLoad) return consPoolLoad;
     consPoolLoad = loadRanksLite()
@@ -3478,6 +3482,10 @@ import {
           for (const row of payload.rows) if (isFiniteNum(row[ii])) infBySlug.set(row[si], { inf: row[ii], max: mi >= 0 ? row[mi] : null, veh: vi >= 0 ? row[vi] : null });
           infPool = [...infBySlug.values()].map((e) => e.inf).sort((a, b) => a - b);
         }
+        const aj = payload.cols.indexOf("adjs");
+        if (aj >= 0) adjsPool = payload.rows.map((row) => row[aj]).filter(isFiniteNum).sort((a, b) => a - b);
+        const iv = payload.cols.indexOf("ivi");
+        if (iv >= 0) iviPool = payload.rows.map((row) => row[iv]).filter(isFiniteNum).sort((a, b) => a - b);
         if (lastStatsList) renderStatsTable(lastStatsList);
       })
       .catch(() => {});
@@ -3552,6 +3560,10 @@ import {
       { id: "slope", label: "📉 Slope", hint: "Overall graph angle: death-weighted K/D vs enemy KPM across the full curve — negative means K/D falls as opposition hardens (feeds 🦁 Brave).", fn: (r) => r.slope, digits: 2 },
       // t345u: 🎈 Inflation rarely shows anything meaningful → older stats only.
       { id: "inflation", label: "🎈 Inflation", hint: "Global KD ÷ KD at ≥0.5 enemy KPM — how much soft opposition inflates your KD (avg planetman ~0.35).", fn: (r) => r.inflation, digits: 2, pctDir: "low", pctRefFloor: 1.0 },
+      // 🔀 Diff (owner 2026-10-21): the theoretical difference as one number
+      // next to the practical stats — practice percentile minus theory percentile.
+      { id: "diff", label: tr("col.diff", "🔀 Diff"), hint: tr("tip.diff", "Practice minus theory: your ⚔️ iVi percentile minus your IvI (aim) percentile. Positive — you win more than your aim predicts; negative — your aim promises more than your fights deliver."), diffCell: true, digits: 0,
+        fn: (r) => (adjsPool && iviPool && isFiniteNum(r.adjs) && isFiniteNum(r.ivi) ? percentileOf(adjsPool, r.adjs) - percentileOf(iviPool, r.ivi) : NaN) },
     ];
     // Opponent-sample metrics: "—" below MIN_FIGHTS (player-metrics.mjs), so they
     // also drop out of sorting and the % column references.
@@ -3698,6 +3710,14 @@ import {
                 const e = infBySlug && row.p ? infBySlug.get(slugKey(row.p.display)) : null;
                 const pl = infPool ? percentileOf(infPool, v) : null;
                 return `<td title="${escapeHtml(infTip(v, e && e.max, e && e.veh, pl))}">${fmtNum(v, 1)}%${pct}</td>`;
+              }
+              // 🔀 Diff: signed percentile gap (no relative-% suffix); hover shows both percentiles.
+              if (c.diffCell) {
+                if (!isFiniteNum(v)) return `<td>—</td>`;
+                const pa = adjsPool && isFiniteNum(row.adjs) ? percentileOf(adjsPool, row.adjs) : null;
+                const pi = iviPool && isFiniteNum(row.ivi) ? percentileOf(iviPool, row.ivi) : null;
+                const t = pa != null && pi != null ? tr("diff.cell", "Practice ⚔️ percentile {a} − theory IvI percentile {i}", { a: pa, i: pi }) : "";
+                return `<td${t ? ` title="${escapeHtml(t)}"` : ""}>${v > 0 ? "+" : ""}${v}</td>`;
               }
               if (c.pctileCell) {
                 const pctl = isFiniteNum(v) && consPool ? percentileOf(consPool, v) : null;
