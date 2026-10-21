@@ -360,7 +360,18 @@ export function initRankings(host) {
     if (!fin(v)) return `<td title="${tr("stats.notEnough", "Not enough recent sessions (needs 100 kills in Honu sessions)")}">—</td>`;
     const rel = p == null ? "" : p >= 50 ? tr("rk.apkTop", " — top {n}%", { n: Math.max(1, 100 - p) }) : tr("rk.apkBottom", " — bottom {n}%", { n: Math.max(1, p) });
     const tip = tr("apk.tip", "Assists per kill: {v}{rel}. Helps damage enemies that teammates finish.", { v: fmt(v, 2), rel });
-    return `<td title="${esc(tip)}">${fmt(v, 2)}</td>`;
+    return `<td title="${esc(tip)}">${fmt(v, 2)}${apkPctTag(p)}</td>`;
+  }
+
+  /**
+   * t495u: the same small "pXX" as the other columns, for 🤝 Assists and 🪳 Zerg.
+   * Same convention as everywhere on the site (and 🏅 Positions): pXX = higher
+   * than XX% of the pool — for these two that pool is players with 100+ session
+   * kills. Same numbers as the 🏅 Positions pN and the hover's "top / bottom X%";
+   * for these lower-is-better columns a low pXX is the good end.
+   */
+  function apkPctTag(p) {
+    return p == null ? "" : `<span class="pct" title="${esc(tr("rk.pctileApk", "Percentile: higher than {n}% of players with 100+ session kills", { n: p }))}">p${p}</span>`;
   }
 
   /** 🚜 vehicle / MAX cut hover for the ⚔️ iVi cell (vehicle-cut.mjs, no visible mark): parts + total; "" without a cut. */
@@ -375,9 +386,10 @@ export function initRankings(host) {
       return `<td class="below-scale" title="${esc("Below the rating scale" + (vc ? ". " + vc : ""))}">0</td>`;
     }
     if (c.apk) return apkCell(v, row.pcts[c.id]);
-    // 🪳 / 🤥😤: plain score like 🤝 (no p-tag), percentile + parts on hover.
-    if (c.zerg) return fin(v) ? `<td title="${esc(zergCellTip(v, row._zerg, data.pools.zerg))}">${v}</td>` : `<td title="${esc(tr("zerg.missing", ZERG_MISSING))}">—</td>`;
-    if (c.aimgap) return fin(v) ? `<td title="${esc(aimGapCellTip(v, row._gap, data.pools.diff))}">${fmtSigned(v)}</td>` : `<td title="${esc(tr("diff.missing", AIMGAP_MISSING))}">—</td>`;
+    // 🪳 Zerg: score + pXX like 🤝 (t495u); 🔀 Diff: signed score + plain pXX (t497u); parts on hover.
+    if (c.zerg) return fin(v) ? `<td title="${esc(zergCellTip(v, row._zerg, data.pools.zerg))}">${v}${apkPctTag(row.pcts.zerg)}</td>` : `<td title="${esc(tr("zerg.missing", ZERG_MISSING))}">—</td>`;
+    // t497u: 🔀 pXX = plain percentile of the signed score (share of players below); no better side.
+    if (c.aimgap) return fin(v) ? `<td title="${esc(aimGapCellTip(v, row._gap, data.pools.diff))}">${fmtSigned(v)}${row.pcts.diff == null ? "" : `<span class="pct" title="${esc(tr("stats.pctile", "Population percentile: higher than {n}% of cached players", { n: row.pcts.diff }))}">p${row.pcts.diff}</span>`}</td>` : `<td title="${esc(tr("diff.missing", AIMGAP_MISSING))}">—</td>`;
     if (c.inf) return fin(v) ? `<td title="${esc(infTip(v, row.infMax, row.infVeh, row.pcts[c.id]))}">${fmt(v, 1)}%</td>` : `<td title="${esc(INF_PENDING_TIP)}">—</td>`;
     if (!fin(v) && c.thinTip && row.thin) return `<td class="thin-sample" title="${esc(MIN_FIGHTS_TIP)}">—</td>`;
     if (!fin(v)) return `<td>—</td>`;
@@ -691,6 +703,34 @@ export function initRankings(host) {
     if (st && st.list.length - st.at <= RENDER_ALL_MAX) renderRowsTo(st.list.length);
   }
   if ($("ranksScroll")) $("ranksScroll").addEventListener("scroll", scheduleFill, { passive: true });
+
+  // t496u: PC — the header row already sticks to the top of the table's own
+  // scroll box; when the PAGE is scrolled past the box top (rows still on
+  // screen), push the sticky offset down so the column names stay at the top
+  // of the window. Phones keep the plain in-box sticky header (a scroll-driven
+  // offset lags behind the compositor's touch scrolling there).
+  {
+    const pcMq = typeof matchMedia === "function" ? matchMedia("(min-width: 601px) and (hover: hover)") : null;
+    let pinQueued = false, lastOff = -1;
+    const pinHead = () => {
+      pinQueued = false;
+      const wrap = $("ranksScroll"), table = $("ranksTable");
+      if (!wrap || !table) return;
+      let off = 0;
+      if (pcMq && pcMq.matches) {
+        const r = wrap.getBoundingClientRect();
+        const headH = $("ranksHead") ? $("ranksHead").getBoundingClientRect().height : 0;
+        if (r.top < 0 && r.bottom > headH) off = Math.min(-r.top, Math.max(0, wrap.clientHeight - headH));
+      }
+      off = Math.round(off);
+      if (off !== lastOff) { lastOff = off; table.style.setProperty("--rk-head-top", off + "px"); }
+    };
+    const queuePin = () => { if (!pinQueued) { pinQueued = true; requestAnimationFrame(pinHead); } };
+    window.addEventListener("scroll", queuePin, { passive: true });
+    window.addEventListener("resize", queuePin, { passive: true });
+    if (pcMq && pcMq.addEventListener) pcMq.addEventListener("change", queuePin);
+    queuePin();
+  }
   window.addEventListener("resize", scheduleFill, { passive: true });
 
   function render() {

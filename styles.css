@@ -2425,7 +2425,9 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
 .ranks-table th.rk-name, .ranks-table td.rk-name,
 .ranks-table th.rk-pick, .ranks-table td.rk-pick { text-align: left; }
 .ranks-table thead th {
-  position: sticky; top: 0; z-index: 3;
+  /* t496u: --rk-head-top (rankings.mjs, PC only) keeps the names at the window top
+   * while the page is scrolled past the box top; 0 = plain in-box sticky header. */
+  position: sticky; top: var(--rk-head-top, 0px); z-index: 3;
   color: var(--text); font-weight: 600;
   border-bottom: 1px solid var(--border);
   box-shadow: 0 1px 0 var(--border);
