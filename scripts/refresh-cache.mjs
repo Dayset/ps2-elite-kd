@@ -1473,13 +1473,18 @@ async function main() {
     }
 
     // 3) Budget split. A real format-sync backlog (more than
-    // BACKLOG_FIRST_MAX) goes first: new names only get leftover time until
-    // it is done. A small residue doesn't engage that mode — due refreshes
+    // BACKLOG_FIRST_MAX) goes first — but growth always keeps a guaranteed
+    // slice: refreshes get at most the first two thirds, then new names,
+    // then refreshes again with whatever is left. No backlog, however
+    // broken its members are, can starve growth to zero again (the
+    // 2026-10-21 freeze: 3 dead names held the old all-or-nothing split).
+    // A small residue doesn't engage backlog mode at all — due refreshes
     // get the first half of the run when both are waiting, new names the
     // rest, then refresh again.
     if (backlog0 > BACKLOG_FIRST_MAX) {
-      await runRefresh(deadline);
+      await runRefresh(Date.now() + ((deadline - Date.now()) * 2) / 3);
       await runGrowth(deadline);
+      await runRefresh(deadline);
     } else if (dueNow.length && growQueue.length && room) {
       await runRefresh(Date.now() + (deadline - Date.now()) / 2);
       await runGrowth(deadline);
