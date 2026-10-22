@@ -344,6 +344,19 @@
 
   <div id="status"></div>
 
+  <!-- 🏆 Auraxium weapons (weapons.mjs): one player only, collapsed by default,
+       loads from Census on first open. Same pins as the Rankings table. -->
+  <details id="weaponsSection" class="dist-section wp-section" hidden>
+    <summary><span data-i18n="wp.title">🏆 Auraxium weapons</span> <span class="wp-count rk-table-count"></span></summary>
+    <p class="wp-status ranks-status" role="status" hidden></p>
+    <div class="ranks-table-wrap wp-scroll" hidden>
+      <table class="ranks-table wp-table" aria-label="Auraxium weapons" data-i18n-aria-label="wp.title">
+        <thead></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </details>
+
   <div id="progress" class="progress-modal" hidden aria-hidden="true">
     <div class="progress-modal-backdrop" aria-hidden="true"></div>
     <div class="progress-modal-card" role="dialog" aria-modal="true" aria-labelledby="progressTitle" aria-describedby="progressText">

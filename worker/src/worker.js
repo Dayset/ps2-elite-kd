@@ -741,6 +741,17 @@ export function censusTarget(url, serviceId) {
   return `${CENSUS_ORIGIN}/s:${serviceId}/get/${m[2]}:v2/${m[3]}${u.search}`;
 }
 
+/**
+ * Weapon images for the 🏆 Auraxium weapons block (assets/weapons/, built by
+ * scripts/build-weapon-catalog.mjs in Actions, which can't reach Census):
+ * /census/files/ps2/images/static/<image_id>.png → the same Census file.
+ */
+export function censusImageTarget(url) {
+  const u = url instanceof URL ? url : new URL(url);
+  const m = /^\/census\/files\/ps2\/images\/static\/(\d{1,9})\.png$/.exec(u.pathname);
+  return m && !u.search ? `${CENSUS_ORIGIN}/files/ps2/images/static/${m[1]}.png` : null;
+}
+
 function safeEqual(a, b) {
   const x = new TextEncoder().encode(String(a));
   const y = new TextEncoder().encode(String(b));
@@ -767,6 +778,18 @@ async function handleCensusProxy(request, env, c) {
   const key = env && typeof env.CENSUS_PROXY_KEY === "string" ? env.CENSUS_PROXY_KEY : "";
   if (!key) return reply({ error: "proxy_disabled" }, 503);
   if (!safeEqual(request.headers.get("X-Proxy-Key") || "", key)) return reply({ error: "unauthorized" }, 401);
+  const img = censusImageTarget(new URL(request.url));
+  if (img) {
+    let r;
+    try {
+      r = await fetch(img, { headers: { "User-Agent": USER_AGENT }, signal: AbortSignal.timeout(c.censusProxyTimeoutMs) });
+    } catch (e) {
+      return reply({ error: "census_unreachable" }, 502);
+    }
+    const ct = r.headers.get("Content-Type") || "";
+    if (!r.ok || !ct.startsWith("image/")) return reply({ error: "image_unavailable", status: r.status }, r.status === 404 ? 404 : 502);
+    return new Response(await r.arrayBuffer(), { status: 200, headers: { "Content-Type": ct, "Cache-Control": "no-store", "X-Census-Proxy": "image" } });
+  }
   const target = censusTarget(new URL(request.url), c.censusServiceId);
   if (!target) return reply({ error: "census_path_not_allowed" }, 400);
   const cache = typeof caches !== "undefined" && caches.default ? caches.default : null;

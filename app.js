@@ -46,6 +46,7 @@ import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, diffVa
 import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261020-i18n2";
 import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261022-scrim1";
 import { infantryKillsUrl, summarizeInfantryKills } from "./infantry.mjs?v=20261020-i18n2";
+import { mountWeapons } from "./weapons.mjs?v=20261022-wp1";
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261021-theory1";
 import { createWheelSwiper } from "./dist-cycle.mjs?v=20261017-cycle15";
 import { slideSwap, attachDragCarousel } from "./chart-slide.mjs?v=20261020-flick1";
@@ -3659,8 +3660,26 @@ import {
     sc.style.minHeight = "";
   }
 
+  /* 🏆 Auraxium weapons (weapons.mjs): shown for exactly one player on the page. */
+  let weaponsPanel = null;
+  function syncWeapons(list) {
+    if (!weaponsPanel) {
+      weaponsPanel = mountWeapons(document.getElementById("weaponsSection"), {
+        getJson: (u) => censusJson(u),
+        baseOf: (p) => {
+          if (!IS_PS) return CENSUS;
+          const s = Object.values(PS_SERVERS).find((x) => x.name === p.server);
+          return s ? censusNsBase(s.ns, CENSUS_SERVICE_ID) : CENSUS_BASES[0];
+        },
+        sortScroll: keepSortedColumnVisible,
+      });
+    }
+    weaponsPanel.setPlayers(currentNamesInField().length > 1 ? [] : list || []);
+  }
+
   function renderStatsTable(list) {
     loadConsPool();
+    syncWeapons(list);
     if (!els.stats) return;
     if (list.length) requestAnimationFrame(releaseStatsSpace);
     lastStatsList = list;

@@ -4,7 +4,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { roomTick, PS_WORKFLOW } from "../worker/src/room-tick.js";
-import { censusTarget, CENSUS_NAMESPACES } from "../worker/src/worker.js";
+import { censusTarget, censusImageTarget, CENSUS_NAMESPACES } from "../worker/src/worker.js";
 
 const c = { repo: "Dayset/ps2-elite-kd", ref: "main", timeoutMs: 1000 };
 const T = Date.UTC(2026, 9, 22, 1, 0);
@@ -79,4 +79,13 @@ test("Census proxy: ps2, ps2ps4us and ps2ps4eu pass; other namespaces and servic
   assert.equal(t(`/s:${sid}/get/ps2:v1/character?x=1`), null);
   assert.equal(t(`/s:other/get/ps2:v2/character?x=1`), null);
   assert.deepEqual(CENSUS_NAMESPACES, ["ps2", "ps2ps4us", "ps2ps4eu"]);
+});
+
+test("Census proxy: only static weapon image files pass the image route", () => {
+  const t = (p) => censusImageTarget(new URL(`https://w.example${p}`));
+  assert.equal(t("/census/files/ps2/images/static/2400.png"), "https://census.daybreakgames.com/files/ps2/images/static/2400.png");
+  assert.equal(t("/census/files/ps2/images/static/2400.png?x=1"), null);
+  assert.equal(t("/census/files/ps2/images/static/../x.png"), null);
+  assert.equal(t("/census/files/ps2/images/item/2400.png"), null);
+  assert.equal(t("/census/s:x/get/ps2:v2/item"), null);
 });

@@ -1,0 +1,53 @@
+name: Weapon catalog
+
+# 🏆 Auraxium weapons block (weapons.mjs): weapon names, categories and images
+# kept in assets/weapons/ (scripts/build-weapon-catalog.mjs). Weekly; only new
+# images are downloaded. Commits assets/weapons/ only.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 6 * * 1"
+
+permissions:
+  contents: write # commit assets/weapons/
+
+concurrency:
+  group: weapon-catalog
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install cwebp
+        run: sudo apt-get install -y -q webp >/dev/null
+
+      - name: Git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Build catalog + images
+        env:
+          CENSUS_SERVICE_ID: ${{ secrets.CENSUS_SERVICE_ID || vars.CENSUS_SERVICE_ID || 'daysetps2legends' }}
+          # Runners can't reach Census directly: the cache Worker proxies JSON and images.
+          CENSUS_PROXY: ${{ vars.CENSUS_PROXY || 'https://ps2-elite-kd-cache.dayset.workers.dev' }}
+          CENSUS_PROXY_KEY: ${{ secrets.CENSUS_PROXY_KEY }}
+        run: node scripts/build-weapon-catalog.mjs
+
+      - name: Commit (assets/weapons/ only)
+        env:
+          COMMIT_DIR: assets/weapons/
+        run: |
+          echo "::notice::assets/weapons size $(du -sh assets/weapons | cut -f1), $(ls assets/weapons | wc -l) files"
+          scripts/ci-commit-push.sh "chore(weapons): weapon catalog + images [bot]"
