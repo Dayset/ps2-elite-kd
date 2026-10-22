@@ -1,0 +1,106 @@
+name: Refresh PlayStation room
+
+# PlayStation room (#55): PS4/PS5 players on Genudine (ps2ps4us) and Ceres
+# (ps2ps4eu), in data-ps/ only. Completely separate from the PC cache:
+# its own workflow, its own concurrency group, its own data tree, its own
+# commits (COMMIT_DIR=data-ps/). The PC workflow (refresh-cache.yml) and data/
+# are never touched.
+#
+# Driver: each background run writes data-ps/schedule.json; the cache Worker's
+# cron (worker/src/room-tick.js) dispatches this workflow when it is due.
+# GitHub's schedule below is only a fallback. Cadence is modest on purpose
+# (at least 30 min between runs, 40 Census calls/min): PC and PS share the
+# Census service id.
+
+on:
+  schedule:
+    - cron: "41 */3 * * *"
+  workflow_dispatch:
+    inputs:
+      names:
+        description: "PS names or keys (us-<cid> / eu-<cid>) to refresh now; empty = background discovery run."
+        required: false
+        default: ""
+
+permissions:
+  contents: write # commit data-ps/
+
+concurrency:
+  group: refresh-ps-room
+  cancel-in-progress: false
+
+env:
+  TIME_BUDGET_MIN: "20"
+  ON_DEMAND_BUDGET_MIN: "10"
+  GROW_MAX: "100"
+  SWEEP_SLICE_SEC: "240"
+  CENSUS_RPM: "40"
+  CENSUS_SERVICE_ID: ${{ secrets.CENSUS_SERVICE_ID || vars.CENSUS_SERVICE_ID || 'daysetps2legends' }}
+  ROOM: "ps"
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Fetch PlayStation players (data-ps/ only)
+        id: refresh
+        continue-on-error: true
+        env:
+          NAMES: ${{ github.event.inputs.names || '' }}
+          # Runners can't reach Census directly: same cache Worker proxy as PC
+          # (it allows ps2, ps2ps4us and ps2ps4eu only).
+          CENSUS_PROXY: ${{ vars.CENSUS_PROXY || 'https://ps2-elite-kd-cache.dayset.workers.dev' }}
+          CENSUS_PROXY_KEY: ${{ secrets.CENSUS_PROXY_KEY }}
+        run: node scripts/refresh-ps.mjs
+
+      - name: Commit (data-ps/ only, one commit per run)
+        if: always()
+        env:
+          COMMIT_DIR: data-ps/
+          NEW: ${{ steps.refresh.outputs.new || '0' }}
+          OK: ${{ steps.refresh.outputs.ok || '0' }}
+        run: |
+          # Guard: this workflow must never leave a change outside data-ps/.
+          stray=$(git status --porcelain | grep -v ' data-ps/' || true)
+          if [ -n "$stray" ]; then
+            echo "::error::PS run changed files outside data-ps/: $stray"
+            git checkout -- . ':!data-ps' 2>/dev/null || true
+            git clean -fdq -- . ':!data-ps' 2>/dev/null || true
+          fi
+          changed=$(git status --porcelain -- data-ps/players | wc -l)
+          if [ "$changed" = "0" ]; then
+            # Nothing fetched: keep only the bookkeeping the next run needs.
+            keep="schedule.json discovery.json refresh-state.json"
+            for f in $keep; do cp "data-ps/$f" "/tmp/ps-$f" 2>/dev/null || true; done
+            git checkout -- data-ps/ 2>/dev/null || true
+            git clean -fdq data-ps/
+            changed_meta=0
+            for f in $keep; do
+              if [ -f "/tmp/ps-$f" ] && ! cmp -s "/tmp/ps-$f" "data-ps/$f"; then cp "/tmp/ps-$f" "data-ps/$f"; changed_meta=1; fi
+            done
+            if [ "$changed_meta" = "1" ]; then
+              scripts/ci-commit-push.sh "chore(ps-room): bookkeeping [bot]"
+            else
+              echo "No PS players refreshed; no commit."
+            fi
+            exit 0
+          fi
+          node scripts/build-ranks.mjs --room ps || echo "::warning::PS build-ranks failed; data-ps/ranks.json not updated this run"
+          export REBUILD_DERIVED='node scripts/build-ranks.mjs --room ps'
+          scripts/ci-commit-push.sh "chore(ps-room): refresh, ${changed} player file(s), ${NEW} new [bot]"

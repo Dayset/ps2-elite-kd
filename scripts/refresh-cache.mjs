@@ -286,7 +286,7 @@ async function fetchJson(url, { retries = 4 } = {}) {
   throw lastErr || new Error(`fetch failed: ${url}`);
 }
 
-function hist(c, stat) {
+export function hist(c, stat) {
   for (const row of ((c.stats || {}).stat_history) || []) {
     if (row.stat_name === stat) return +row.all_time || 0;
   }
@@ -306,7 +306,7 @@ function pooled(sl) {
   return { kills: tk, deaths: td, kd };
 }
 
-function kpmCurve(rows, start = 2.5, end = 0.0, step = 0.05) {
+export function kpmCurve(rows, start = 2.5, end = 0.0, step = 0.05) {
   const pts = [];
   for (let t = start; t >= end - 1e-9; t -= step) {
     const cut = Math.round(t * 100) / 100;

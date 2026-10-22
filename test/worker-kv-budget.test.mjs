@@ -27,6 +27,7 @@ function stubFetch(world) {
   return async (input, init = {}) => {
     const url = String(input && input.url ? input.url : input);
     const ok = (body, status = 200) => new Response(body == null ? null : JSON.stringify(body), { status });
+    if (url.includes("data-ps/schedule.json")) return ok(world.psSchedule || { nextDueAt: null, reason: "idle" }); // PS room tick (#55)
     if (url.includes("schedule.json")) return ok(world.schedule);
     if (url.includes("index.json")) { world.indexFetches++; return ok({ players: world.cached.map((s) => ({ slug: s, name: s })) }); }
     if (url.includes("/runs?")) return ok({ workflow_runs: world.runs });

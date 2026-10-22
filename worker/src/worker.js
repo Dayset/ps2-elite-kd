@@ -11,9 +11,11 @@
 //   GET  /runs      recent refresh-cache.yml runs (build-log page)
 //   GET  /health    cron backup-timer state
 //   GET  /requested (X-Proxy-Key) seen + fresh lists + fetch counts for the refresh Action
-//   GET  /census/…  (X-Proxy-Key) read-only Census proxy for the refresh Action
+//   GET  /census/…  (X-Proxy-Key) read-only Census proxy for the refresh Actions
+//                   (namespaces ps2, ps2ps4us, ps2ps4eu only)
 // Cron (*/5): dispatch refresh-cache.yml when data/schedule.json says a run is
-// due, or when /add names have been stuck pending.
+// due, or when /add names have been stuck pending; refresh-ps.yml when
+// data-ps/schedule.json says the PlayStation room is due (src/room-tick.js).
 //
 // Bindings: KV QUEUE; secrets GH_TOKEN, CENSUS_PROXY_KEY; optional vars below.
 
@@ -725,14 +727,18 @@ const CENSUS_ORIGIN = "https://census.daybreakgames.com";
 const CENSUS_PROXY_PREFIX = "/census";
 const CENSUS_PROXY_MAX_CACHE_BYTES = 2 * 1024 * 1024;
 
-function censusTarget(url, serviceId) {
+// PC (ps2) plus the two PlayStation rooms' servers (#55: Genudine, Ceres).
+// Same list as rooms.mjs ALL_NAMESPACES (test/worker-census-ns.test.mjs).
+export const CENSUS_NAMESPACES = ["ps2", "ps2ps4us", "ps2ps4eu"];
+
+export function censusTarget(url, serviceId) {
   const u = url instanceof URL ? url : new URL(url);
   if (!u.pathname.startsWith(CENSUS_PROXY_PREFIX + "/")) return null;
   const rest = u.pathname.slice(CENSUS_PROXY_PREFIX.length);
-  const m = /^\/s:([A-Za-z0-9_-]+)\/get\/ps2:v2\/([a-z_]+)\/?$/.exec(rest);
-  if (!m || m[1] !== serviceId) return null;
+  const m = /^\/s:([A-Za-z0-9_-]+)\/get\/([a-z0-9]+):v2\/([a-z_]+)\/?$/.exec(rest);
+  if (!m || m[1] !== serviceId || !CENSUS_NAMESPACES.includes(m[2])) return null;
   if (u.search.length > 4e3) return null;
-  return `${CENSUS_ORIGIN}/s:${serviceId}/get/ps2:v2/${m[2]}${u.search}`;
+  return `${CENSUS_ORIGIN}/s:${serviceId}/get/${m[2]}:v2/${m[3]}${u.search}`;
 }
 
 function safeEqual(a, b) {
@@ -804,11 +810,14 @@ async function handleCensusProxy(request, env, c) {
 
 import { KillMonitor, monitorRoute, monitorTick } from "./monitor.js";
 import { oracleTick } from "./oracle-tick.js";
+import { roomTick } from "./room-tick.js";
 export { KillMonitor };
 
 export default {
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(Promise.all([backupCheck(env, event && event.scheduledTime ? event.scheduledTime : Date.now()), monitorTick(env), oracleTick(env, cfg(env))]));
+    const t = event && event.scheduledTime ? event.scheduledTime : Date.now();
+    // PlayStation room (#55): its own workflow + data-ps/schedule.json; never throws, no KV.
+    ctx.waitUntil(Promise.all([backupCheck(env, t), monitorTick(env), oracleTick(env, cfg(env)), roomTick(env, cfg(env), t)]));
   },
   async fetch(request, env, ctx) {
     const c = cfg(env);

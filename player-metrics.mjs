@@ -151,12 +151,15 @@ export function normalizePlayer(raw) {
     farm: { victims: farm.victims, kills: farm.kills, deaths: farm.deaths, share: farm.share },
     // Opponents in the sample (missing in older files → 50).
     top: sampleTopN(raw),
-    honu: p.honu || (p.cid ? `https://wt.honu.pw/c/${p.cid}/killboard` : ""),
+    // Honu's site is PC: PlayStation-room players (#55) get no Honu link.
+    honu: p.honu || (p.cid && p.room !== "ps" ? `https://wt.honu.pw/c/${p.cid}/killboard` : ""),
     // Census account times (flairs.mjs): { created, last } in seconds, or null.
     times: cleanTimes(p.times),
     // 🪖 / 🚜 lifetime infantry split (infantry.mjs v2), or null.
     infantry: p.infantry && typeof p.infantry === "object" ? p.infantry : null,
     source: raw._source || "local",
+    // PlayStation room (#55): server name ("Genudine" / "Ceres"); PC players have none.
+    ...(p.room === "ps" ? { room: "ps", server: String(p.server || "") } : {}),
   };
 }
 

@@ -1,14 +1,16 @@
 #!/usr/bin/env bash
 # Commit data/ changes (if any) and push to the default branch, rebasing on
-# top of concurrent pushes (Pages / user commits). Used by refresh-cache.yml.
+# top of concurrent pushes (Pages / user commits). Used by refresh-cache.yml
+# (data/) and refresh-ps.yml (COMMIT_DIR=data-ps/, the PlayStation room #55).
 #   scripts/ci-commit-push.sh "commit message"
 set -uo pipefail
 msg="${1:?commit message required}"
 branch="${GITHUB_REF_NAME:-main}"
+dir="${COMMIT_DIR:-data/}"
 
-git add -A data/
+git add -A "$dir"
 if git diff --staged --quiet; then
-  echo "No data/ changes to commit."
+  echo "No $dir changes to commit."
   exit 0
 fi
 git commit -q -m "$msg"
@@ -21,7 +23,7 @@ for attempt in 1 2 3 4 5; do
   echo "Push rejected (attempt $attempt); rebasing on origin/${branch}…"
   sleep $((attempt * 5))
   # During a rebase "theirs" = our bot commit, so fresh cache data wins any
-  # conflict inside data/. Non-data files are never touched by the bot.
+  # conflict inside $dir. Non-data files are never touched by the bot.
   if ! git pull -q --rebase -X theirs origin "$branch"; then
     git rebase --abort 2>/dev/null || true
     git fetch -q origin "$branch" && git rebase -X theirs "origin/${branch}" || git rebase --abort 2>/dev/null || true
@@ -31,7 +33,7 @@ for attempt in 1 2 3 4 5; do
   # (e.g. a new column pushed mid-run). Rebuild them with the rebased scripts.
   if [ -n "${REBUILD_DERIVED:-}" ]; then
     bash -c "$REBUILD_DERIVED" || echo "::warning::derived rebuild after rebase failed"
-    git add -A data/
+    git add -A "$dir"
     git diff --staged --quiet || git commit -q --amend --no-edit
   fi
 done

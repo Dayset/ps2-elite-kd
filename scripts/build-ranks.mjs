@@ -20,7 +20,9 @@ import { fileURLToPath } from "node:url";
 import { normalizePlayer, playerMetrics } from "../player-metrics.mjs";
 import { reviewFlags } from "../red-flags.mjs";
 import { classifyBins } from "../bins.mjs";
-import { markNote, statMark, confirmedPadderSlugs, isFarmListed, isNotFarm, farmListEntry, isPenalizedPadder, PADDER_PENALTY, PADDER_PENALTY_REF } from "../padding.mjs";
+import { markNote, statMark, confirmedPadderSlugs, isFarmListed, isNotFarm, farmListEntry, isPenalizedPadder, PADDER_PENALTY, PADDER_PENALTY_REF, setNotFarm, setFarmList, setReviewed } from "../padding.mjs";
+import { setVehicleCutReviewed } from "../vehicle-cut.mjs";
+import { roomById } from "../rooms.mjs";
 import { sprout, sampleEvents, farmAccount } from "../sprouts.mjs";
 import { findOutliers, guardStatus, KNOWN_EXTREMES } from "../outlier-guard.mjs";
 import { infantryTagCounts, INFANTRY_TAG, infantryShares } from "../infantry.mjs";
@@ -240,7 +242,7 @@ export function buildRanks(dataDir, { onPlayer = null, onHidden = null, onFarm =
 }
 
 /** Ranks + 🧪 outlier guard over the same shown values (one pass over the cache) + 🙈 hidden summary. */
-export function buildRanksWithGuard(dataDir) {
+export function buildRanksWithGuard(dataDir, { known = KNOWN_EXTREMES } = {}) {
   const players = [];
   const hidden = readHidden(dataDir);
   const confirmed = readConfirmedPadders(dataDir);
@@ -283,7 +285,7 @@ export function buildRanksWithGuard(dataDir) {
   ranks.cols.push("apk"); // 🤝 trailing column (see onPlayer); not part of RANK_COLS / rankRow
   ranks.cols.push("inf", "infMax", "infVeh"); // 🪖 trailing columns (see onPlayer), % of lifetime kills
   ranks.cols.push("vcut"); // 🚜 vehicle cut % on adjs (adjs is already cut)
-  const found = findOutliers(players, [...METRIC_COLS, ...SESSION_METRIC_IDS]);
+  const found = findOutliers(players, [...METRIC_COLS, ...SESSION_METRIC_IDS], { known });
   found.items.push(...forensicsGuardItems(players));
   const guard = guardStatus(found);
   return {
@@ -609,11 +611,20 @@ export function infantryStatus(dataDir) {
  * file follow from it: players/<slugKey(name)>.json) and savedAt. ≈150 KB gzipped.
  * The page falls back to index.json when this file is missing or older.
  */
-export function buildNames(index) {
+export function buildNames(index, { withFile = false } = {}) {
   const players = [];
   const seen = new Set();
   for (const e of (index && index.players) || []) {
     if (!e || !e.name || !e.file) continue;
+    if (withFile) {
+      // PlayStation room (#55): files are keyed by server + character id, so each
+      // row carries its file and slug: [name, savedAt, file, slug].
+      const slug = e.slug || slugKey(e.name);
+      if (!slug || seen.has(slug) || !/^players\/(us|eu)-\d{5,25}\.json$/.test(e.file)) continue;
+      seen.add(slug);
+      players.push([e.name, +e.savedAt || 0, e.file, slug]);
+      continue;
+    }
     const slug = slugKey(e.name);
     if (!slug || seen.has(slug) || e.file !== `players/${slug}.json`) continue; // anything unusual stays in index.json only
     seen.add(slug);
@@ -645,18 +656,53 @@ export function buildRanksLite(ranks) {
   return { v: 1, updatedAt: ranks.updatedAt || null, count: rows.length, cols: LITE_COLS, rows };
 }
 
+/**
+ * PlayStation room (#55): the review lists padding.mjs / vehicle-cut.mjs load at
+ * import are PC's (data/). A PS build replaces them with the PS room's own files
+ * (data-ps/*.json; missing = empty), so no PC decision ever touches a PS player
+ * that happens to share a name or a character id.
+ */
+export function usePsReviewLists(dataDir) {
+  const read = (f) => { try { return JSON.parse(fs.readFileSync(path.join(dataDir, f), "utf8")); } catch { return null; } };
+  setNotFarm(read("not-farm.json"));
+  setFarmList(read("farm.json"));
+  setReviewed(read("reviewed.json"));
+  setVehicleCutReviewed(read("reviewed.json"));
+}
+
+/** PS ranks get a trailing "srv" column ("us" Genudine / "eu" Ceres), looked up by slug in the PS index. */
+export function addServerColumn(ranks, index) {
+  const bySlug = new Map(((index && index.players) || []).filter((p) => p && p.slug && p.key).map((p) => [p.slug, String(p.key).split("-")[0]]));
+  ranks.cols.push("srv");
+  for (const r of ranks.rows) r.push(bySlug.get(r[2]) || null);
+  return ranks;
+}
+
+/** "--room ps" → "ps"; anything else → "pc" (default: data/, unchanged). */
+export function roomArg(argv) {
+  const i = argv.indexOf("--room");
+  return i >= 0 && argv[i + 1] === "ps" ? "ps" : "pc";
+}
+
 const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (isMain) {
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-  const dataDir = path.join(root, "data");
+  const room = roomArg(process.argv);
+  const dataDir = path.join(root, roomById(room).dataDir);
+  if (room === "ps") {
+    usePsReviewLists(dataDir);
+    console.log(`PlayStation room: building ${roomById(room).dataDir}/ only (PS review lists, no fresh-account auto-hide yet).`);
+  }
   // Fresh-account auto-hide runs first so this build already excludes the
-  // newly hidden players via the normal hidden path.
-  const autoHidden = autoHideFreshExceptional(dataDir);
+  // newly hidden players via the normal hidden path. PC only: its thresholds
+  // were measured on the PC population (PS pools are never mixed with PC).
+  const autoHidden = room === "pc" ? autoHideFreshExceptional(dataDir) : [];
   if (autoHidden.length) console.log(`auto-hide: ${autoHidden.length} fresh exceptional account(s) added to hidden.json: ${autoHidden.map((a) => a.name).join(", ")}`);
-  const { ranks: out, guard, hidden: hiddenInfo, bins, session, forensics: forensicsInfo, review, assistGroups: assistInfo, padderPenalty: padderInfo, vehicleCut: vehCutInfo } = buildRanksWithGuard(dataDir);
+  const { ranks: out, guard, hidden: hiddenInfo, bins, session, forensics: forensicsInfo, review, assistGroups: assistInfo, padderPenalty: padderInfo, vehicleCut: vehCutInfo } = buildRanksWithGuard(dataDir, room === "ps" ? { known: {} } : undefined);
+  if (room === "ps") addServerColumn(out, JSON.parse(fs.readFileSync(path.join(dataDir, "index.json"), "utf8")));
   fs.writeFileSync(path.join(dataDir, "ranks.json"), JSON.stringify(out) + "\n");
   try {
-    const names = buildNames(JSON.parse(fs.readFileSync(path.join(dataDir, "index.json"), "utf8")));
+    const names = buildNames(JSON.parse(fs.readFileSync(path.join(dataDir, "index.json"), "utf8")), { withFile: room === "ps" });
     fs.writeFileSync(path.join(dataDir, "names.json"), JSON.stringify(names) + "\n");
     console.log(`names.json: ${names.count} names`);
   } catch (e) { console.log(`names.json not written: ${e.message}`); }
