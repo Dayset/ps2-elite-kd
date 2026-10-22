@@ -106,7 +106,7 @@ function thinCellTip(r) {
   return tr("fights.sample", "{tip}. This sample: {sample}", { tip: MIN_FIGHTS_TIP, sample: fightsText(r).replace(/[()]/g, "") });
 }
 import { markNote, statMark, confirmedPadderSlugs, isPenalizedPadder, POOP_MARK, POOP_TIP, setRoomRule } from "./padding.mjs?v=20261022-scrim1";
-import { HUT_MARK, HUT_TIP, HUT_DIFF_NOTE } from "./hut.mjs?v=20261022-hut1";
+import { HUT_MARK, HUT_TIP, HUT_DIFF_NOTE } from "./hut.mjs?v=20261022-hut2";
 // Account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times: chart name list only.
 import { accountTimes, flairsHtml, flairsFor } from "./flairs.mjs?v=20261010-sav1";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
@@ -1841,7 +1841,7 @@ import {
   }
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261022-hut1")
+    rankingsLoading = import("./rankings.mjs?v=20261022-hut2")
       .then((m) => {
         rankingsApi = m.initRankings(rankingsHost);
         return rankingsApi.ready;

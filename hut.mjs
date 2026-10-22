@@ -8,7 +8,13 @@
  *
  * Gradual, no yes/no cliff (owner t504u + t505u). Every cut comes from the
  * live ranks.json population at build time, so it tracks the data:
- *   a = (🏃 Activity ÷ cut)², cut = median(Activity) × 1.333; Activity ≥ cut → no change
+ *   a = (🏃 Activity ÷ cut)², Activity ≥ cut → no change. The cut scales with the
+ *   player's ⚔️ iVi percentile p (owner t507u): cut = median(Activity) ×
+ *   (1.333 + (8 − 1.333) × p / 100 × e), straight line, so weak players get a low cut
+ *   (×1.333) and the top of the board up to ×8. e = experience ramp (owner t508u):
+ *   estimated play time (lifetime kills ÷ lifetime KPM, minutes) 0 at/below p5 →
+ *   1 at/above p25 (p10→p50 let a 22 h camper slip out), so new accounts stay near ×1.333 and veterans get the full
+ *   iVi-scaled cut. Missing play time → e = 0 (the gentle end).
  *   w = w_dpm × w_inf × w_acc, each a 0…1 linear ramp:
  *     deaths/min (KPM ÷ K/D): 1 at/below p10 → 0 at/above p20
  *     🪖 Infantry %:          0 at/below 75 → 1 at/above 85
@@ -24,7 +30,19 @@
 import { t as tr } from "./i18n.mjs";
 
 export const HUT_MARK = "🛖";
-export const HUT_ACT_MULT = 1.333;
+export const HUT_ACT_MULT = 1.333; // Activity cut multiplier at ⚔️ iVi percentile 0
+export const HUT_ACT_MULT_TOP = 8; // … rising in a straight line to this at percentile 100 (owner t507u)
+export const HUT_EXP_BAND = [0.05, 0.25]; // experience ramp on estimated play time: 0 at/below p10 → 1 at/above p50 (owner t508u)
+/** Activity-cut multiplier for a ⚔️ iVi percentile (0–100) and experience e (0–1); missing → the low end. */
+export function hutActMult(iviPct, exp = 1) {
+  const p = typeof iviPct === "number" && Number.isFinite(iviPct) ? Math.min(100, Math.max(0, iviPct)) : 0;
+  const e = typeof exp === "number" && Number.isFinite(exp) ? Math.min(1, Math.max(0, exp)) : 0;
+  return HUT_ACT_MULT + (HUT_ACT_MULT_TOP - HUT_ACT_MULT) * p / 100 * e;
+}
+/** Estimated lifetime play minutes from lifetime kills and lifetime KPM (NaN when unknown). */
+export function playMinutes(kills, kpm) {
+  return fin(kills) && fin(kpm) && kpm > 0 && kills > 0 ? kills / kpm : NaN;
+}
 // Soft gates (owner t505u): each fades 1 → 0 across a data-derived band.
 export const HUT_DPM_BAND = [0.1, 0.2]; // deaths/min: full weight at/below p10, none at/above p20
 export const HUT_INF_BAND = [75, 85]; // 🪖 infantry %: none at/below 75, full at/above 85
@@ -51,14 +69,15 @@ const at = (sorted, q) => (sorted.length ? sorted[Math.min(sorted.length - 1, Ma
  * → { actMedian, actCut, dpmLo, dpmHi, accLo, accHi, infLo, infHi, n }.
  */
 export function hutCuts(rows) {
-  const act = [], dpm = [], acc = [];
+  const act = [], dpm = [], acc = [], play = [];
   for (const r of rows || []) {
+    if (fin(r.playMin)) play.push(r.playMin);
     if (fin(r.act)) act.push(r.act);
     const d = deathsPerMin(r.kpm, r.kd);
     if (fin(d)) dpm.push(d);
     if (fin(r.acc)) acc.push(r.acc);
   }
-  act.sort((a, b) => a - b); dpm.sort((a, b) => a - b); acc.sort((a, b) => a - b);
+  act.sort((a, b) => a - b); dpm.sort((a, b) => a - b); acc.sort((a, b) => a - b); play.sort((a, b) => a - b);
   const actMedian = median(act);
   return {
     actMedian,
@@ -66,7 +85,8 @@ export function hutCuts(rows) {
     dpmLo: at(dpm, HUT_DPM_BAND[0]), dpmHi: at(dpm, HUT_DPM_BAND[1]),
     accLo: median(acc), accHi: at(acc, HUT_ACC_BAND[1]),
     infLo: HUT_INF_BAND[0], infHi: HUT_INF_BAND[1],
-    n: { act: act.length, dpm: dpm.length, acc: acc.length },
+    expLo: at(play, HUT_EXP_BAND[0]), expHi: at(play, HUT_EXP_BAND[1]),
+    n: { act: act.length, dpm: dpm.length, acc: acc.length, play: play.length },
   };
 }
 
@@ -78,19 +98,22 @@ function down(v, lo, hi) {
 }
 
 /**
- * Parts for one player { act, kpm, kd, acc, inf }: { a, wDpm, wInf, wAcc, w, m }
+ * Parts for one player { act, kpm, kd, acc, inf, iviPct, playMin }: { exp, cut, a, wDpm, wInf, wAcc, w, m }.
+ * playMin undefined (no experience data passed at all) → e = 1; null / NaN → e = 0.
  * or null when a stat is missing or the cuts aren't usable. m = 1 means no change.
  */
 export function hutParts(r, cuts) {
   if (!r || !cuts || ![cuts.actCut, cuts.dpmLo, cuts.dpmHi, cuts.accLo, cuts.accHi].every(fin) || cuts.actCut <= 0) return null;
   const d = deathsPerMin(r.kpm, r.kd);
   if (!fin(r.act) || !fin(d) || !fin(r.acc) || !fin(r.inf)) return null;
-  const a = r.act >= cuts.actCut ? 1 : (Math.max(0, r.act) / cuts.actCut) ** 2;
+  const exp = r.playMin === undefined ? 1 : fin(r.playMin) && fin(cuts.expLo) && fin(cuts.expHi) ? 1 - down(r.playMin, cuts.expLo, cuts.expHi) : 0;
+  const cut = fin(cuts.actMedian) && cuts.actMedian > 0 ? cuts.actMedian * hutActMult(r.iviPct, exp) : cuts.actCut;
+  const a = r.act >= cut ? 1 : (Math.max(0, r.act) / cut) ** 2;
   const wDpm = down(d, cuts.dpmLo, cuts.dpmHi);
   const wInf = 1 - down(r.inf, cuts.infLo, cuts.infHi);
   const wAcc = down(r.acc, cuts.accLo, cuts.accHi);
   const w = wDpm * wInf * wAcc;
-  return { a, wDpm, wInf, wAcc, w, m: 1 - w * (1 - a) };
+  return { exp, cut, a, wDpm, wInf, wAcc, w, m: 1 - w * (1 - a) };
 }
 
 /** Damping factor m (0…1) for positive Diff, or null when there is no reduction. */

@@ -27,7 +27,7 @@ import { sprout, sampleEvents, farmAccount } from "../sprouts.mjs";
 import { findOutliers, guardStatus, KNOWN_EXTREMES } from "../outlier-guard.mjs";
 import { infantryTagCounts, INFANTRY_TAG, infantryShares } from "../infantry.mjs";
 import { VEH_CUT } from "../vehicle-cut.mjs";
-import { hutCuts, hutParts, hutCleared, deathsPerMin, HUT_ACT_MULT, HUT_DPM_BAND, HUT_INF_BAND, HUT_ACC_BAND, HUT_MARK_MIN } from "../hut.mjs";
+import { hutCuts, hutParts, hutCleared, deathsPerMin, HUT_ACT_MULT, HUT_ACT_MULT_TOP, HUT_EXP_BAND, playMinutes, HUT_DPM_BAND, HUT_INF_BAND, HUT_ACC_BAND, HUT_MARK_MIN } from "../hut.mjs";
 import { traitPools, aimGap } from "../trait-scores.mjs";
 import { forensicsSummary, honuSessionUrl } from "../session-forensics.mjs";
 import { hiddenList, isConfirmedCheater } from "../hidden.mjs";
@@ -282,6 +282,7 @@ export function buildRanksWithGuard(dataDir, { known = KNOWN_EXTREMES } = {}) {
   const hidden = readHidden(dataDir);
   const confirmed = readConfirmedPadders(dataDir);
   const hiddenFound = [];
+  const playMin = new Map(); // 🛖 experience: estimated lifetime play minutes by slug (owner t508u)
   const forensics = readForensics(dataDir);
   const farmFound = [];
   const ranks = buildRanks(dataDir, {
@@ -297,6 +298,7 @@ export function buildRanksWithGuard(dataDir, { known = KNOWN_EXTREMES } = {}) {
       METRIC_COLS.forEach((k, i) => { values[k] = row[4 + i]; });
       // 🧪 Honu session metrics (assists pass + data/xp detail); only measured players count.
       const pl = raw.player || raw;
+      playMin.set(row[2], playMinutes(pl.infantry && pl.infantry.kills, pl.global_kpm));
       const sm = sessionMetrics({ assists: pl.assists, xp: readXp(dataDir, row[2]) });
       const sf = sessionFlag(sm, { hsr: pl.hsr, kd: pl.global_kd });
       for (const id of SESSION_METRIC_IDS) values[id] = sm && sm.measured ? sm.values[id] : null;
@@ -320,7 +322,7 @@ export function buildRanksWithGuard(dataDir, { known = KNOWN_EXTREMES } = {}) {
   ranks.cols.push("apk"); // 🤝 trailing column (see onPlayer); not part of RANK_COLS / rankRow
   ranks.cols.push("inf", "infMax", "infVeh"); // 🪖 trailing columns (see onPlayer), % of lifetime kills
   ranks.cols.push("vcut"); // 🚜 vehicle cut % on adjs (adjs is already cut)
-  const hut = applyHutColumn(ranks, readReviewed(dataDir)); // 🛖 trailing "hut" column (damping factor on positive 🔀 Diff)
+  const hut = applyHutColumn(ranks, readReviewed(dataDir), { playMin }); // 🛖 trailing "hut" column (damping factor on positive 🔀 Diff)
   const found = findOutliers(players, [...METRIC_COLS, ...SESSION_METRIC_IDS], { known });
   found.items.push(...forensicsGuardItems(players));
   const guard = guardStatus(found);
@@ -347,10 +349,11 @@ function readReviewed(dataDir) {
  * Returns the status.json "hut" block for build-log: cuts, counts, every reduced
  * player with Diff before / after and the gate weights, and the owner-cleared ones.
  */
-export function applyHutColumn(ranks, reviewed) {
+export function applyHutColumn(ranks, reviewed, { playMin = null } = {}) {
   const ix = Object.fromEntries(ranks.cols.map((c, i) => [c, i]));
   const get = (r, k) => (ix[k] != null ? r[ix[k]] : null);
-  const feat = (r) => ({ act: get(r, "act"), kpm: get(r, "kpm"), kd: get(r, "kd"), acc: get(r, "acc"), inf: get(r, "inf") });
+  // playMin: Map slug → estimated play minutes; without the map (tests / old callers) the experience ramp is off (e = 1).
+  const feat = (r) => ({ act: get(r, "act"), kpm: get(r, "kpm"), kd: get(r, "kd"), acc: get(r, "acc"), inf: get(r, "inf"), playMin: playMin ? (playMin.get(get(r, "slug")) ?? null) : undefined });
   const cuts = hutCuts(ranks.rows.map(feat));
   const colOf = (k) => ranks.rows.map((r) => get(r, k));
   const tp = traitPools({ adjs: colOf("adjs"), ivi: colOf("ivi") });
@@ -359,14 +362,14 @@ export function applyHutColumn(ranks, reviewed) {
   const r3 = (v) => Math.round(v * 1000) / 1000;
   ranks.cols.push("hut", "hutMk");
   for (const r of ranks.rows) {
-    const f = feat(r);
+    const g = aimGap(tp, get(r, "adjs"), get(r, "ivi"));
+    const f = { ...feat(r), iviPct: g ? g.practice : null };
     const parts = hutParts(f, cuts);
     let h = parts && parts.m < 1 ? r3(parts.m) : null;
     if (h === 1) h = null;
-    const g = aimGap(tp, get(r, "adjs"), get(r, "ivi"));
     const slug = get(r, "slug"), name = get(r, "name");
     const after0 = g ? aimGap(tp, get(r, "adjs"), get(r, "ivi"), h).score : null;
-    const info = () => ({ name, slug, act: f.act, dpm: r3(deathsPerMin(f.kpm, f.kd)), acc: f.acc, inf: f.inf, diffRaw: g ? g.raw : null, factor: h, w: r3(parts.w), wDpm: r3(parts.wDpm), wInf: r3(parts.wInf), wAcc: r3(parts.wAcc) });
+    const info = () => ({ name, slug, act: f.act, dpm: r3(deathsPerMin(f.kpm, f.kd)), acc: f.acc, inf: f.inf, diffRaw: g ? g.raw : null, iviPct: f.iviPct, playH: Number.isFinite(f.playMin) ? Math.round(f.playMin / 60) : null, exp: r3(parts.exp), cut: r3(parts.cut), factor: h, w: r3(parts.w), wDpm: r3(parts.wDpm), wInf: r3(parts.wInf), wAcc: r3(parts.wAcc) });
     if (h != null && hutCleared(reviewed, slug)) {
       if (g && after0 !== g.raw) cleared.push({ ...info(), diffWould: after0 });
       h = null;
@@ -384,7 +387,8 @@ export function applyHutColumn(ranks, reviewed) {
   return {
     builtAt: new Date().toISOString(),
     cuts: {
-      actMedian: r4(cuts.actMedian), actMult: HUT_ACT_MULT, actCut: r4(cuts.actCut),
+      actMedian: r4(cuts.actMedian), actMult: HUT_ACT_MULT, actMultTop: HUT_ACT_MULT_TOP, actCut: r4(cuts.actCut), actCutTop: r4(cuts.actMedian * HUT_ACT_MULT_TOP),
+      expLoH: Number.isFinite(cuts.expLo) ? Math.round(cuts.expLo / 60) : null, expHiH: Number.isFinite(cuts.expHi) ? Math.round(cuts.expHi / 60) : null, expBand: HUT_EXP_BAND.map(pc),
       dpmLo: r4(cuts.dpmLo), dpmHi: r4(cuts.dpmHi), dpmBand: HUT_DPM_BAND.map(pc),
       accLo: r4(cuts.accLo), accHi: r4(cuts.accHi), accBand: HUT_ACC_BAND.map(pc),
       infLo: cuts.infLo, infHi: cuts.infHi, markMin: HUT_MARK_MIN, n: cuts.n,
@@ -392,7 +396,7 @@ export function applyHutColumn(ranks, reviewed) {
     reduced: players.length,
     marked: players.filter((p) => p.marked).length,
     dieHardBefore, dieHardAfter,
-    rule: `🛖 safe-spot damping, gradual, all cuts from this build's players. a = (🏃 Activity ÷ cut)², cut = median × ${HUT_ACT_MULT} (Activity at or above the cut → no change). w = product of three 0–1 ramps: deaths/min (KPM ÷ K/D) 1 at ${pc(HUT_DPM_BAND[0])} → 0 at ${pc(HUT_DPM_BAND[1])}; 🪖 infantry 0 at ${HUT_INF_BAND[0]}% → 1 at ${HUT_INF_BAND[1]}%; accuracy 1 at the median → 0 at ${pc(HUT_ACC_BAND[1])}. A positive 🔀 Diff × (1 − w × (1 − a)), rounded; a negative Diff is untouched. 🛖 next to the name only when Diff drops by ${HUT_MARK_MIN}+ points. Owner override: "hut": "cleared" on the data/reviewed.json entry (no 🛖, no damping).`,
+    rule: `🛖 safe-spot damping, gradual, all cuts from this build's players. a = (🏃 Activity ÷ cut)², cut = median × (${HUT_ACT_MULT} + (${HUT_ACT_MULT_TOP} − ${HUT_ACT_MULT}) × ⚔️ iVi percentile ÷ 100 × e), a straight line, where e = experience 0 → 1 on estimated play time (lifetime kills ÷ lifetime KPM) from ${pc(HUT_EXP_BAND[0])} to ${pc(HUT_EXP_BAND[1])} of this build's players (new accounts stay near ×${HUT_ACT_MULT}), so weaker players get a lower cut and the top of the board up to ×${HUT_ACT_MULT_TOP} (Activity at or above the cut → no change). w = product of three 0–1 ramps: deaths/min (KPM ÷ K/D) 1 at ${pc(HUT_DPM_BAND[0])} → 0 at ${pc(HUT_DPM_BAND[1])}; 🪖 infantry 0 at ${HUT_INF_BAND[0]}% → 1 at ${HUT_INF_BAND[1]}%; accuracy 1 at the median → 0 at ${pc(HUT_ACC_BAND[1])}. A positive 🔀 Diff × (1 − w × (1 − a)), rounded; a negative Diff is untouched. 🛖 next to the name only when Diff drops by ${HUT_MARK_MIN}+ points. Owner override: "hut": "cleared" on the data/reviewed.json entry (no 🛖, no damping).`,
     players,
     cleared,
   };
@@ -861,7 +865,7 @@ if (isMain) {
   st.padderPenalty = padderInfo; // 💩 build-log list (ranks.json already has the penalized numbers)
   st.vehicleCut = vehCutInfo; // 🚜 build-log list (ranks.json already has the cut numbers)
   st.hut = hutInfo; // 🛖 build-log list (ranks.json "hut" column has the factors)
-  console.log(`🛖 safe-spot: Activity median ${hutInfo.cuts.actMedian} → cut ${hutInfo.cuts.actCut}, deaths/min ${hutInfo.cuts.dpmLo}→${hutInfo.cuts.dpmHi}, accuracy ${hutInfo.cuts.accLo}→${hutInfo.cuts.accHi}; ${hutInfo.reduced} Diff reduced, ${hutInfo.marked} marked 🛖, DieHards ${hutInfo.dieHardBefore} → ${hutInfo.dieHardAfter}, ${hutInfo.cleared.length} cleared by the owner`);
+  console.log(`🛖 safe-spot: Activity median ${hutInfo.cuts.actMedian} → cut ${hutInfo.cuts.actCut}…${hutInfo.cuts.actCutTop} (by ⚔️ iVi percentile), deaths/min ${hutInfo.cuts.dpmLo}→${hutInfo.cuts.dpmHi}, accuracy ${hutInfo.cuts.accLo}→${hutInfo.cuts.accHi}; ${hutInfo.reduced} Diff reduced, ${hutInfo.marked} marked 🛖, DieHards ${hutInfo.dieHardBefore} → ${hutInfo.dieHardAfter}, ${hutInfo.cleared.length} cleared by the owner`);
   console.log(`vehicle cut: ${vehCutInfo.cut} of ${vehCutInfo.withData} players with infantry data cut, ${vehCutInfo.cleared.length} exempted by the owner`);
   console.log(`padder penalty: ${padderInfo.penalized} penalized, ${padderInfo.cleared} cleared by the owner`);
   st.infantry = infantryStatus(dataDir);

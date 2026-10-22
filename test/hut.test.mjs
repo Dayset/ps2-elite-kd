@@ -1,7 +1,7 @@
 // 🛖 safe-spot Diff damping (owner t504u / t505u): data-derived cuts, soft gates, damping, owner override.
 import test from "node:test";
 import assert from "node:assert/strict";
-import { hutCuts, hutParts, hutFactor, hutDamp, hutCleared, deathsPerMin, HUT_ACT_MULT, HUT_MARK_MIN } from "../hut.mjs";
+import { hutCuts, hutParts, hutFactor, hutDamp, hutCleared, deathsPerMin, hutActMult, playMinutes, HUT_ACT_MULT, HUT_ACT_MULT_TOP, HUT_MARK_MIN } from "../hut.mjs";
 import { traitPools, aimGap } from "../trait-scores.mjs";
 import { applyHutColumn, LITE_COLS } from "../scripts/build-ranks.mjs";
 
@@ -76,7 +76,7 @@ test("build: trailing hut / hutMk columns, status list, cleared player gets noth
   assert.ok(ih > 0 && im === ih + 1);
   assert.ok(ranks.rows.every((r) => r.length === ranks.cols.length));
   const camper = ranks.rows.find((r) => r[1] === "camper"), cleared = ranks.rows.find((r) => r[1] === "cleared");
-  assert.ok(camper[ih] > 0 && camper[ih] < 0.05);
+  assert.ok(camper[ih] >= 0 && camper[ih] < 0.05);
   assert.equal(camper[im], 1);
   assert.equal(cleared[ih], null);
   assert.equal(cleared[im], null);
@@ -87,4 +87,37 @@ test("build: trailing hut / hutMk columns, status list, cleared player gets noth
   assert.ok(st.players.every((p) => p.slug !== "cleared"));
   assert.ok(st.marked <= st.reduced);
   assert.ok(LITE_COLS.includes("hut") && LITE_COLS.includes("hutMk"));
+});
+
+test("Activity cut scales with ⚔️ iVi percentile (owner t507u): ×1.333 at 0 → ×8 at 100", () => {
+  assert.equal(hutActMult(0), HUT_ACT_MULT);
+  assert.ok(Math.abs(hutActMult(100) - HUT_ACT_MULT_TOP) < 1e-12);
+  assert.ok(Math.abs(hutActMult(50) - (HUT_ACT_MULT + HUT_ACT_MULT_TOP) / 2) < 1e-12);
+  assert.equal(hutActMult(null), HUT_ACT_MULT);
+  assert.ok(Math.abs(hutActMult(150) - HUT_ACT_MULT_TOP) < 1e-12);
+  const p = { act: cuts.actMedian * 2, kpm: 0.05, kd: 1, acc: 10, inf: 95 };
+  assert.equal(hutFactor({ ...p, iviPct: 10 }, cuts), null); // weak player: low cut, Activity ×2 is above it
+  const top = hutParts({ ...p, iviPct: 100 }, cuts);
+  assert.ok(Math.abs(top.cut - cuts.actMedian * HUT_ACT_MULT_TOP) < 1e-12);
+  assert.ok(Math.abs(top.m - (2 / HUT_ACT_MULT_TOP) ** 2) < 1e-9);
+  // Someone who dies often is never touched, whatever the iVi.
+  assert.equal(hutFactor({ ...p, kpm: 1, iviPct: 100 }, cuts), null);
+});
+
+test("experience ramp (owner t508u): new accounts keep the low cut, veterans get the full iVi-scaled cut", () => {
+  const rows = Array.from({ length: 100 }, (_, i) => ({ act: (i + 1) / 100, kpm: (i + 1) / 100, kd: 1, acc: i + 1, inf: 90, playMin: (i + 1) * 100 }));
+  const c = hutCuts(rows);
+  assert.equal(c.expLo, 600); // p5
+  assert.equal(c.expHi, 2600); // p25
+  assert.ok(Math.abs(hutActMult(100, 0) - HUT_ACT_MULT) < 1e-12);
+  assert.ok(Math.abs(hutActMult(100, 0.5) - (HUT_ACT_MULT + HUT_ACT_MULT_TOP) / 2) < 1e-12);
+  const p = { act: c.actMedian * 2, kpm: 0.05, kd: 1, acc: 10, inf: 95, iviPct: 100 };
+  assert.equal(hutFactor({ ...p, playMin: 100 }, c), null); // brand-new: cut ×1.333, Activity ×2 is above it
+  assert.equal(hutParts({ ...p, playMin: null }, c).exp, 0); // unknown play time → gentle end
+  const vet = hutParts({ ...p, playMin: 99999 }, c);
+  assert.equal(vet.exp, 1);
+  assert.ok(Math.abs(vet.cut - c.actMedian * HUT_ACT_MULT_TOP) < 1e-12);
+  assert.ok(Math.abs(hutParts({ ...p, playMin: 1600 }, c).exp - 0.5) < 1e-9);
+  assert.equal(playMinutes(600, 0.5), 1200);
+  assert.ok(Number.isNaN(playMinutes(0, 0.5)));
 });
