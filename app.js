@@ -106,7 +106,7 @@ function thinCellTip(r) {
   return tr("fights.sample", "{tip}. This sample: {sample}", { tip: MIN_FIGHTS_TIP, sample: fightsText(r).replace(/[()]/g, "") });
 }
 import { markNote, statMark, confirmedPadderSlugs, isPenalizedPadder, POOP_MARK, POOP_TIP, setRoomRule } from "./padding.mjs?v=20261022-scrim1";
-import { HUT_MARK, HUT_TIP, HUT_DIFF_NOTE } from "./hut.mjs?v=20261022-hut2";
+import { HUT_MARK, HUT_TIP, HUT_EXPLAIN, HUT_DIFF_NOTE } from "./hut.mjs?v=20261022-spawnroom1";
 // Account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times: chart name list only.
 import { accountTimes, flairsHtml, flairsFor } from "./flairs.mjs?v=20261010-sav1";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
@@ -1841,7 +1841,7 @@ import {
   }
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261022-hut2")
+    rankingsLoading = import("./rankings.mjs?v=20261022-spawnroom1")
       .then((m) => {
         rankingsApi = m.initRankings(rankingsHost);
         return rankingsApi.ready;
@@ -4040,7 +4040,7 @@ import {
     // line explaining the * / † marks used in the table.
     const markLegends = [...new Set(metrics.map((r) => playerMark(r.p).legend).filter(Boolean))];
     if (metrics.some((r) => r.p && isPenalizedPadder(r.p.display))) markLegends.push(POOP_TIP); // 💩 "What * 💩 mean"
-    if (metrics.some((r) => r.p && hutMarked(r.p.display))) markLegends.push(HUT_TIP); // 🛖 safe-spot damping
+    if (metrics.some((r) => r.p && hutMarked(r.p.display))) markLegends.push(HUT_EXPLAIN); // 🛖 "What 🛖 means": full explanation (the mark hover is just the short name)
     const markNotesBlock = markLegends.length
       ? `<details class="fold-note mark-notes"${markNotesOpen ? " open" : ""}>` +
         `<summary>♿ What ${[...new Set(markLegends.map((t) => t.trim().split(/\s+/)[0]))].join(" ")} ${markLegends.length > 1 ? "mean" : "means"}</summary>` +
