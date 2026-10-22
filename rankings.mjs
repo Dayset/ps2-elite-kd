@@ -717,31 +717,28 @@ export function initRankings(host) {
   }
   if ($("ranksScroll")) $("ranksScroll").addEventListener("scroll", scheduleFill, { passive: true });
 
-  // t496u: PC — the header row already sticks to the top of the table's own
+  // t496u: the header row already sticks to the top of the table's own
   // scroll box; when the PAGE is scrolled past the box top (rows still on
   // screen), push the sticky offset down so the column names stay at the top
-  // of the window. Phones keep the plain in-box sticky header (a scroll-driven
-  // offset lags behind the compositor's touch scrolling there).
+  // of the window. Was PC-only (a scroll-driven offset can lag a frame behind
+  // touch scrolling); Dayset 2026-10-22 asked for the same pin on phones —
+  // both pins, top and left, in the full player list on every device.
   {
-    const pcMq = typeof matchMedia === "function" ? matchMedia("(min-width: 601px) and (hover: hover)") : null;
     let pinQueued = false, lastOff = -1;
     const pinHead = () => {
       pinQueued = false;
       const wrap = $("ranksScroll"), table = $("ranksTable");
       if (!wrap || !table) return;
       let off = 0;
-      if (pcMq && pcMq.matches) {
-        const r = wrap.getBoundingClientRect();
-        const headH = $("ranksHead") ? $("ranksHead").getBoundingClientRect().height : 0;
-        if (r.top < 0 && r.bottom > headH) off = Math.min(-r.top, Math.max(0, wrap.clientHeight - headH));
-      }
+      const r = wrap.getBoundingClientRect();
+      const headH = $("ranksHead") ? $("ranksHead").getBoundingClientRect().height : 0;
+      if (r.top < 0 && r.bottom > headH) off = Math.min(-r.top, Math.max(0, wrap.clientHeight - headH));
       off = Math.round(off);
       if (off !== lastOff) { lastOff = off; table.style.setProperty("--rk-head-top", off + "px"); }
     };
     const queuePin = () => { if (!pinQueued) { pinQueued = true; requestAnimationFrame(pinHead); } };
     window.addEventListener("scroll", queuePin, { passive: true });
     window.addEventListener("resize", queuePin, { passive: true });
-    if (pcMq && pcMq.addEventListener) pcMq.addEventListener("change", queuePin);
     queuePin();
   }
   window.addEventListener("resize", scheduleFill, { passive: true });

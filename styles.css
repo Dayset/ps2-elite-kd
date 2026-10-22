@@ -2461,6 +2461,17 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
   position: sticky; left: 4.2rem; z-index: 1; font-weight: 600;
   box-shadow: 4px 0 8px -4px var(--shadow);
 }
+/* Phones (Dayset 2026-10-22): only the rank # stays pinned — the checkbox and
+ * the name scroll with the table, so the stats get the screen (the pinned
+ * block was 222 of 340px, leaving 1 stat column visible). left: auto, not
+ * position: static, so the header cells keep their vertical top pin. */
+@media (max-width: 600px) {
+  .ranks-table th.rk-pick, .ranks-table td.rk-pick,
+  .ranks-table th.rk-name, .ranks-table td.rk-name { left: auto; box-shadow: none; }
+  .ranks-table th.rk-num, .ranks-table td.rk-num {
+    left: 0; box-shadow: 4px 0 8px -4px var(--shadow);
+  }
+}
 /* Name column width under table-layout: fixed (Dayset 2026-10-19) — mirrors
  * the .nm caps below plus padding, so the column never jumps with content. */
 .ranks-table col.rk-name-col { width: 21ch; }
