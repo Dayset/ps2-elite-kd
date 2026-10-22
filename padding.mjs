@@ -14,7 +14,7 @@ await i18nReady;
  * battletank112 and hammer111 (0 deaths back, KPM 0.00); sample K/D 7.52 → 1.03.
  * DOM-free (browser + Node).
  */
-export const PADDING_RULE = Object.freeze({
+export const PADDING_RULE = {
   /** Kills on one opponent at/above this… */
   MIN_KILLS: 100,
   /** …with deaths back at/below this share of those kills… */
@@ -23,7 +23,19 @@ export const PADDING_RULE = Object.freeze({
   MAX_KPM: 0.1,
   /** Farm-victim kills at/above this share of the sample's kills = 🚩 padding. */
   FLAG_SHARE: 0.2,
-});
+};
+/** PC default farm threshold (kills on one opponent). */
+export const PC_FARM_MIN_KILLS = 100;
+/**
+ * PlayStation room (#55, owner 2026-10-22): console players fight a lot of
+ * 1v1 scrims against the same accounts, so a "farm account" there needs
+ * 10,000+ kills on it (to be revisited). Set once at load by the PS room
+ * (app.js / build-ranks --room ps); PC never calls it.
+ */
+export const PS_FARM_MIN_KILLS = 10000;
+function setFarmMinKillsOne(n) {
+  PADDING_RULE.MIN_KILLS = Number.isFinite(+n) && +n > 0 ? +n : PC_FARM_MIN_KILLS;
+}
 
 /* ---------- not-farm allowlist (user t297u, 2026-10-09) ----------
  * data/not-farm.json: accounts a human confirmed are real players ("Dziey looks
@@ -41,7 +53,7 @@ export function bareFarmKey(name) {
 }
 
 /** Replace the allowlist from not-farm.json content ({ players: { name: { cid } } }); null clears it. */
-export function setNotFarm(json) {
+function setNotFarmOne(json) {
   notFarm.names = new Set();
   notFarm.cids = new Set();
   const players = (json && json.players) || {};
@@ -74,10 +86,10 @@ const P_REVIEWED = jsonEarly("reviewed", "./data/reviewed.json");
 try {
   if (P_NOT_FARM) {
     const d = await P_NOT_FARM;
-    if (d) setNotFarm(d);
+    if (d) setNotFarmOne(d);
   } else {
     const fs = await import("node:fs");
-    setNotFarm(JSON.parse(fs.readFileSync(new URL("./data/not-farm.json", import.meta.url), "utf8")));
+    setNotFarmOne(JSON.parse(fs.readFileSync(new URL("./data/not-farm.json", import.meta.url), "utf8")));
   }
 } catch {
   /* no allowlist → nobody exempt */
@@ -93,7 +105,7 @@ try {
 const farmList = { names: new Set(), cids: new Set(), entries: [] };
 
 /** Replace the confirmed farm list from farm.json content; null clears it. */
-export function setFarmList(json) {
+function setFarmListOne(json) {
   farmList.names = new Set();
   farmList.cids = new Set();
   farmList.entries = [];
@@ -124,10 +136,10 @@ export function isFarmListed(r) {
 try {
   if (P_FARM) {
     const d = await P_FARM;
-    if (d) setFarmList(d);
+    if (d) setFarmListOne(d);
   } else {
     const fs = await import("node:fs");
-    setFarmList(JSON.parse(fs.readFileSync(new URL("./data/farm.json", import.meta.url), "utf8")));
+    setFarmListOne(JSON.parse(fs.readFileSync(new URL("./data/farm.json", import.meta.url), "utf8")));
   }
 } catch {
   /* no farm list → automatic rule only */
@@ -292,7 +304,7 @@ export const POOP_TIP = tr("pad.poop", "💩 Confirmed stat padding: −10% on a
 
 const reviewedState = { players: {} };
 /** Replace the review decisions used for the 💩 penalty (reviewed.json content; null clears). */
-export function setReviewed(json) {
+function setReviewedOne(json) {
   reviewedState.players = (json && json.players) || {};
 }
 const penKey = (s) => String(s || "").trim().toLowerCase().replace(/^\[.*?\]\s*/, "").replace(/[^a-z0-9]+/g, "");
@@ -310,11 +322,24 @@ export function padderPenalty(v) {
 try {
   if (P_REVIEWED) {
     const d = await P_REVIEWED;
-    if (d) setReviewed(d);
+    if (d) setReviewedOne(d);
   } else {
     const fs = await import("node:fs");
-    setReviewed(JSON.parse(fs.readFileSync(new URL("./data/reviewed.json", import.meta.url), "utf8")));
+    setReviewedOne(JSON.parse(fs.readFileSync(new URL("./data/reviewed.json", import.meta.url), "utf8")));
   }
 } catch {
   /* no reviewed.json → nobody penalized */
 }
+
+/*
+ * One module file can load as several instances (Node treats "?v=" import
+ * specifiers as distinct modules), so the setters reach every loaded copy:
+ * a room override (#55, PS review lists / farm threshold) must hold for all
+ * of them, not just the copy the caller imported.
+ */
+const ps2PaddingCopies = (globalThis.__ps2PaddingCopies ||= []);
+ps2PaddingCopies.push({ setFarmMinKills: setFarmMinKillsOne, setNotFarm: setNotFarmOne, setFarmList: setFarmListOne, setReviewed: setReviewedOne });
+export function setFarmMinKills(v) { for (const i of ps2PaddingCopies) i.setFarmMinKills(v); }
+export function setNotFarm(v) { for (const i of ps2PaddingCopies) i.setNotFarm(v); }
+export function setFarmList(v) { for (const i of ps2PaddingCopies) i.setFarmList(v); }
+export function setReviewed(v) { for (const i of ps2PaddingCopies) i.setReviewed(v); }

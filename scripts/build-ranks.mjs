@@ -20,7 +20,7 @@ import { fileURLToPath } from "node:url";
 import { normalizePlayer, playerMetrics } from "../player-metrics.mjs";
 import { reviewFlags } from "../red-flags.mjs";
 import { classifyBins } from "../bins.mjs";
-import { markNote, statMark, confirmedPadderSlugs, isFarmListed, isNotFarm, farmListEntry, isPenalizedPadder, PADDER_PENALTY, PADDER_PENALTY_REF, setNotFarm, setFarmList, setReviewed } from "../padding.mjs";
+import { markNote, statMark, confirmedPadderSlugs, isFarmListed, isNotFarm, farmListEntry, isPenalizedPadder, PADDER_PENALTY, PADDER_PENALTY_REF, setNotFarm, setFarmList, setReviewed, setFarmMinKills, PS_FARM_MIN_KILLS } from "../padding.mjs";
 import { setVehicleCutReviewed } from "../vehicle-cut.mjs";
 import { roomById } from "../rooms.mjs";
 import { sprout, sampleEvents, farmAccount } from "../sprouts.mjs";
@@ -668,6 +668,7 @@ export function usePsReviewLists(dataDir) {
   setFarmList(read("farm.json"));
   setReviewed(read("reviewed.json"));
   setVehicleCutReviewed(read("reviewed.json"));
+  setFarmMinKills(PS_FARM_MIN_KILLS); // PS: scrim duels, farm = 10,000+ kills on one account
 }
 
 /** PS ranks get a trailing "srv" column ("us" Genudine / "eu" Ceres), looked up by slug in the PS index. */
@@ -681,11 +682,11 @@ export function addServerColumn(ranks, index) {
 /**
  * PlayStation room auto-hide (owner 2026-10-22: "crazy outliers are not welcome").
  * An account is hidden (PS hide list, by character id) when its lifetime K/D is
- * >= 50 AND >= 90% of its opponent-sample kills are on farm accounts (100+
+ * >= 50 AND >= 90% of its opponent-sample kills are on farm accounts (10,000+
  * kills on one opponent who killed back <= 2%, whatever that opponent's KPM, so
  * alt rings that farm each other are caught). Writes hidden.json; returns adds.
  */
-export const PS_FARM_HIDE = Object.freeze({ MIN_KD: 50, MIN_FARM_SHARE: 0.9, MIN_KILLS: 100, MAX_BACK: 0.02 });
+export const PS_FARM_HIDE = Object.freeze({ MIN_KD: 50, MIN_FARM_SHARE: 0.9, MIN_KILLS: 10000, MAX_BACK: 0.02 });
 export function psFarmRingHit(pl, rule = PS_FARM_HIDE) {
   if (!pl || !(+pl.global_kd >= rule.MIN_KD)) return null;
   const rows = Array.isArray(pl.rows) ? pl.rows : [];

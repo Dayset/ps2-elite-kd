@@ -23,7 +23,7 @@ const state = { cleared: {} };
 const key = (s) => String(s || "").trim().toLowerCase().replace(/^\[.*?\]\s*/, "").replace(/[^a-z0-9]+/g, "");
 
 /** Replace the owner overrides (reviewed.json content; null clears). */
-export function setVehicleCutReviewed(json) {
+function setVehicleCutReviewedOne(json) {
   state.cleared = (json && json.vehicleCutCleared) || {};
 }
 /** True when the owner exempted this player (slug or display name). */
@@ -74,11 +74,21 @@ try {
     // Shares the request index.html started with the page (window.__ps2Early), if any.
     const early = window.__ps2Early && window.__ps2Early.reviewed;
     const d = early ? await early : await fetch(new URL("./data/reviewed.json", import.meta.url).href, { cache: "no-cache" }).then((r) => (r.ok ? r.json() : null));
-    if (d) setVehicleCutReviewed(d);
+    if (d) setVehicleCutReviewedOne(d);
   } else {
     const fs = await import("node:fs");
-    setVehicleCutReviewed(JSON.parse(fs.readFileSync(new URL("./data/reviewed.json", import.meta.url), "utf8")));
+    setVehicleCutReviewedOne(JSON.parse(fs.readFileSync(new URL("./data/reviewed.json", import.meta.url), "utf8")));
   }
 } catch {
   /* no reviewed.json → nobody exempted */
 }
+
+/*
+ * One module file can load as several instances (Node treats "?v=" import
+ * specifiers as distinct modules), so the setters reach every loaded copy:
+ * a room override (#55, PS review lists / farm threshold) must hold for all
+ * of them, not just the copy the caller imported.
+ */
+const ps2VehCutCopies = (globalThis.__ps2VehCutCopies ||= []);
+ps2VehCutCopies.push({ setVehicleCutReviewed: setVehicleCutReviewedOne });
+export function setVehicleCutReviewed(v) { for (const i of ps2VehCutCopies) i.setVehicleCutReviewed(v); }

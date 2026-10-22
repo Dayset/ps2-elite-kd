@@ -9,8 +9,8 @@ import { t as tr, currentLang } from "./i18n.mjs";
 const tipOf = (c) => (c.id ? tr("tip." + c.id, c.tip || "") : c.tip || "");
 import { compareByCharName } from "./analyze-run.mjs?v=20261020-eta1";
 import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits, binJumpTarget } from "./dist.mjs?v=20261010-sav1";
-import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261022-ps1";
-import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP, isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261020-i18n2";
+import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261022-psf1";
+import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP, isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261022-psf1";
 import { paletteColor } from "./palette.mjs?v=20261010-sav1";
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261020-wide1";
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261021-theory1";
@@ -21,15 +21,15 @@ import { groupByTier, openTierIds, pickedInGroup, groupIndexAt, tierOf } from ".
 import { createDistCycler, createWheelSwiper } from "./dist-cycle.mjs?v=20261017-cycle15";
 import { sfx } from "./sfx.mjs?v=20261020-poof";
 import { slideSwap, attachDragCarousel } from "./chart-slide.mjs?v=20261020-flick1";
-import { mergeFreshRows } from "./rank-row.mjs?v=20261022-ps1";
+import { mergeFreshRows } from "./rank-row.mjs?v=20261022-psf1";
 import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-sav1";
-import { confirmedPadderSlugs } from "./padding.mjs?v=20261020-i18n2";
-import { slugKey, bareName } from "./rank-row.mjs?v=20261022-ps1";
+import { confirmedPadderSlugs } from "./padding.mjs?v=20261022-psf1";
+import { slugKey, bareName } from "./rank-row.mjs?v=20261022-psf1";
 import { hiddenList } from "./hidden.mjs?v=20261010-sav1";
 // PC | PlayStation rooms (#55): each room ranks its own players only (data/ or data-ps/).
 import { pageRoom, dataPrefix, roomLsKey, psServer } from "./rooms.mjs?v=20261022-ps1";
 import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261020-i18n2";
-import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261020-i18n2";
+import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261022-psf1";
 import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261021-traits1";
 import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, DIFF_THIRD, aimGapCellTip, zergCellTip } from "./trait-tips.mjs?v=20261021-longname1";
 

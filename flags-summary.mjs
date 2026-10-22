@@ -3,10 +3,10 @@
  * Shared by scripts/build-flags.mjs (precomputes data/flags.json in the refresh
  * workflow) and build-log.html, so both use the exact same rules.
  */
-import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261022-ps1";
-import { reviewFlags } from "./red-flags.mjs?v=20261010-sav1";
+import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261022-psf1";
+import { reviewFlags } from "./red-flags.mjs?v=20261022-psf1";
 import { sprout, sampleEvents, farmAccount } from "./sprouts.mjs?v=20261010-sav1";
-import { isNotFarm, farmListEntry } from "./padding.mjs?v=20261020-i18n2";
+import { isNotFarm, farmListEntry } from "./padding.mjs?v=20261022-psf1";
 
 /** Small, JSON-safe summary of one player (what the tables + rules need). */
 export function summarize(entry, raw) {
