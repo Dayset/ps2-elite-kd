@@ -193,8 +193,12 @@ import {
   const LS_ETA_LIVE = "ps2-elite-kd-eta-live-ms";
   const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
   const DEFAULT_NAMES = [];
-  /** Empty-field Analyze default + names input placeholder. */
-  const DEFAULT_PLACEHOLDER_NAME = "ShloDog";
+  /**
+   * Empty-field Analyze default + names input placeholder. PC: ShloDog. The
+   * PlayStation room (#55) uses its own top ⚔️ iVi player once its ranks load
+   * (a PC name there would be some other person, or nobody).
+   */
+  let DEFAULT_PLACEHOLDER_NAME = IS_PS ? "" : "ShloDog";
   const SHARED_INDEX_URL = `${DATA}index.json`;
   const SHARED_NAMES_URL = `${DATA}names.json`; // slim startup list (scripts/build-ranks.mjs buildNames)
   /** Cloudflare Worker that queues names into the shared data/ cache. "" disables. */
@@ -1618,6 +1622,20 @@ import {
     renderNameTokens();
     renderCacheChips();
     scheduleGraphSync(); // t351u: graph + tables follow right away
+  }
+
+  // PS room: the default name is the room's top ⚔️ iVi player (ranks-lite "name" / "adjs").
+  if (IS_PS && typeof window !== "undefined") {
+    if (els.namesInput) els.namesInput.placeholder = "";
+    loadRanksLite().then((d) => {
+      if (!d || !Array.isArray(d.cols) || !Array.isArray(d.rows)) return;
+      const iN = d.cols.indexOf("name"), iA = d.cols.indexOf("adjs");
+      let best = null;
+      for (const r of d.rows) if (Number.isFinite(r[iA]) && (!best || r[iA] > best[iA])) best = r;
+      if (!best) return;
+      DEFAULT_PLACEHOLDER_NAME = bareName(best[iN]);
+      syncNamesPlaceholder();
+    }).catch(() => {});
   }
 
   /** Hide ShloDog placeholder whenever chips or typed text occupy the field. */
@@ -4857,6 +4875,7 @@ import {
     }
     let names = currentNamesInField();
     if (!names.length) {
+      if (!DEFAULT_PLACEHOLDER_NAME) return Promise.resolve(); // PS room before its ranks loaded
       // Empty field → default to ShloDog and show it as a chip
       setNameTokens([DEFAULT_PLACEHOLDER_NAME]);
       names = [DEFAULT_PLACEHOLDER_NAME];
