@@ -13,7 +13,7 @@
  *   🦁 LionHeart median ≈ 3.1; elite players usually 4–18 → low ≤ 2.0 (≈ bottom 40%)
  *   🎈 Inflation median ≈ 2.03 → low ≤ 1.5 (≈ bottom 10%)
  */
-import { PADDING_RULE, statMark, PADDING_MARK, PADDING_MARK_TIP } from "./padding.mjs?v=20261022-psf1";
+import { PADDING_RULE, statMark, PADDING_MARK, PADDING_MARK_TIP, isScrimRoom } from "./padding.mjs?v=20261022-scrim1";
 import { classifyBins, RED_PATTERNS, CHART_PATTERNS } from "./bins.mjs?v=20261010-sav1";
 import { sessionRuleText } from "./session-stats.mjs?v=20261010-sav1";
 
@@ -178,7 +178,8 @@ export function rampageFlag(m, rule = RAMPAGE_RULE) {
 export function paddingFlag(m, rule = PADDING_RULE, { confirmed = false } = {}) {
   const farm = (m && m.farm) || { victims: [], kills: 0, share: 0 };
   // Confirmed on review (reviewed.json "padding") → padding whatever the current share.
-  const flagged = confirmed || (!!(farm.victims && farm.victims.length) && farm.share >= rule.FLAG_SHARE);
+  // PS room (scrim rule): no automatic padding flag, only the neutral "adjusted".
+  const flagged = confirmed || (!isScrimRoom() && !!(farm.victims && farm.victims.length) && farm.share >= rule.FLAG_SHARE);
   return { flagged, share: farm.share || 0, kills: farm.kills || 0, victims: farm.victims || [] };
 }
 

@@ -44,7 +44,7 @@ import { percentileOf } from "./dist.mjs?v=20261010-sav1";
 import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261021-traits1";
 import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, diffValueHtml, aimGapCellTip, zergCellTip } from "./trait-tips.mjs?v=20261021-longname1";
 import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261020-i18n2";
-import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261022-psf1";
+import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261022-scrim1";
 import { infantryKillsUrl, summarizeInfantryKills } from "./infantry.mjs?v=20261020-i18n2";
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261021-theory1";
 import { createWheelSwiper } from "./dist-cycle.mjs?v=20261017-cycle15";
@@ -92,7 +92,7 @@ import {
   THIN_MARK,
   THIN_NOTE_HEAD,
   thinPlayerLine,
-} from "./player-metrics.mjs?v=20261022-psf1";
+} from "./player-metrics.mjs?v=20261022-scrim1";
 /** "22 kills / 60 deaths" in the opponent sample (MIN_FIGHTS counts). */
 function fightsText(r) {
   const k = r.sampleKills || 0;
@@ -104,7 +104,7 @@ function fightsText(r) {
 function thinCellTip(r) {
   return tr("fights.sample", "{tip}. This sample: {sample}", { tip: MIN_FIGHTS_TIP, sample: fightsText(r).replace(/[()]/g, "") });
 }
-import { markNote, statMark, confirmedPadderSlugs, isPenalizedPadder, POOP_MARK, POOP_TIP, setFarmMinKills, PS_FARM_MIN_KILLS } from "./padding.mjs?v=20261022-psf1";
+import { markNote, statMark, confirmedPadderSlugs, isPenalizedPadder, POOP_MARK, POOP_TIP, setRoomRule } from "./padding.mjs?v=20261022-scrim1";
 // Account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times: chart name list only.
 import { accountTimes, flairsHtml, flairsFor } from "./flairs.mjs?v=20261010-sav1";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
@@ -151,8 +151,8 @@ import {
   const ROOM = pageRoom();
   const IS_PS = ROOM === "ps";
   const DATA = dataPrefix(ROOM);
-  // PS room: scrim duels are common on console, so a farm account needs 10,000+ kills on it (owner 2026-10-22).
-  if (IS_PS) setFarmMinKills(PS_FARM_MIN_KILLS);
+  // PS room: scrim rule (padding.mjs PS_SCRIM, owner 2026-10-22): one-sided scrims out, long scrims capped.
+  if (IS_PS) setRoomRule("ps");
   /** Census bases for live loads, in search order (PC: ps2; PS: Genudine, then Ceres). */
   const CENSUS_BASES = IS_PS ? ROOMS.ps.namespaces.map((ns) => censusNsBase(ns, CENSUS_SERVICE_ID)) : [CENSUS];
   async function refreshOnlineRoom(roots) {

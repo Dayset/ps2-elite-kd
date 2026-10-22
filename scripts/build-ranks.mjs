@@ -20,7 +20,7 @@ import { fileURLToPath } from "node:url";
 import { normalizePlayer, playerMetrics } from "../player-metrics.mjs";
 import { reviewFlags } from "../red-flags.mjs";
 import { classifyBins } from "../bins.mjs";
-import { markNote, statMark, confirmedPadderSlugs, isFarmListed, isNotFarm, farmListEntry, isPenalizedPadder, PADDER_PENALTY, PADDER_PENALTY_REF, setNotFarm, setFarmList, setReviewed, setFarmMinKills, PS_FARM_MIN_KILLS } from "../padding.mjs";
+import { markNote, statMark, confirmedPadderSlugs, isFarmListed, isNotFarm, farmListEntry, isPenalizedPadder, PADDER_PENALTY, PADDER_PENALTY_REF, setNotFarm, setFarmList, setReviewed, setRoomRule } from "../padding.mjs";
 import { setVehicleCutReviewed } from "../vehicle-cut.mjs";
 import { roomById } from "../rooms.mjs";
 import { sprout, sampleEvents, farmAccount } from "../sprouts.mjs";
@@ -668,7 +668,7 @@ export function usePsReviewLists(dataDir) {
   setFarmList(read("farm.json"));
   setReviewed(read("reviewed.json"));
   setVehicleCutReviewed(read("reviewed.json"));
-  setFarmMinKills(PS_FARM_MIN_KILLS); // PS: scrim duels, farm = 10,000+ kills on one account
+  setRoomRule("ps"); // PS scrim rule (padding.mjs PS_SCRIM): one-sided scrims out, long scrims capped
 }
 
 /** PS ranks get a trailing "srv" column ("us" Genudine / "eu" Ceres), looked up by slug in the PS index. */

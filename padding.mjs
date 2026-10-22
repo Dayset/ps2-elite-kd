@@ -37,6 +37,65 @@ function setFarmMinKillsOne(n) {
   PADDING_RULE.MIN_KILLS = Number.isFinite(+n) && +n > 0 ? +n : PC_FARM_MIN_KILLS;
 }
 
+/* ---------- PlayStation scrim rule (owner 2026-10-22) ----------
+ * Console players fight long 1v1 scrims on their MAIN accounts, so the PC
+ * "farm account" test (opponent KPM < 0.1) misses them and one partner can
+ * carry thousands of kills: Hkn1 7,735:0 on one opponent, sample K/D 27 vs
+ * ~2.3 in live play. Measured on 1,175 PS and 13,805 PC players:
+ *  - PC live play: 99% of single-opponent rows are ≤ 80 kills, and a big
+ *    rivalry (40–160 kills) has K/D ≤ 8 at the 95th percentile.
+ *  - PS rows of 80+ kills: below 2% deaths back they jump to a median of
+ *    340–690 kills (419 rows); from 2% up they are PC-sized (~110–140).
+ * Rule, PS only (PC unchanged):
+ *  1. 80+ kills on one opponent with ≤ 2% deaths back, whatever its KPM =
+ *     one-sided (owner: "if it's 0 deaths in return it's probably padding"):
+ *     those kills leave the sample (isFarmVictim).
+ *  2. Any other opponent with more than CAP kills = a real scrim: it counts
+ *     as CAP kills, deaths scaled the same way, its K/D capped at KD_MAX
+ *     (chopScrims). Normal rows (≤ CAP kills) are untouched.
+ * Graceful for the community: no automatic "*" padding mark or 🚩 on PS,
+ * only the neutral "†" with a scrim note. A human "padding" decision in
+ * data-ps/reviewed.json still marks; data-ps/not-farm.json turns a
+ * one-sided partner back into a counted (capped) scrim.
+ */
+export const PS_SCRIM = Object.freeze({ MIN_KILLS: 80, MAX_BACK: 0.02, CAP: 80, KD_MAX: 8 });
+const PC_RULE = Object.freeze({ ...PADDING_RULE });
+const roomRule = { scrim: false };
+function setRoomRuleOne(room) {
+  const ps = room === "ps";
+  roomRule.scrim = ps;
+  PADDING_RULE.MIN_KILLS = ps ? PS_SCRIM.MIN_KILLS : PC_RULE.MIN_KILLS;
+  PADDING_RULE.MAX_BACK = ps ? PS_SCRIM.MAX_BACK : PC_RULE.MAX_BACK;
+  PADDING_RULE.MAX_KPM = ps ? Infinity : PC_RULE.MAX_KPM;
+}
+/** True when the PlayStation scrim rule is on (setRoomRule("ps")). */
+export function isScrimRoom() {
+  return roomRule.scrim;
+}
+
+/**
+ * Cap long scrims (PS rule 2). → { rows, scrims: [{ name, kills, deaths, countedKills, countedDeaths }] }
+ * Rows at or under CAP kills are returned as the same objects.
+ */
+export function chopScrims(rows, rule = PS_SCRIM) {
+  const out = [];
+  const scrims = [];
+  for (const r of rows || []) {
+    const k = +r.kills || 0;
+    if (k <= rule.CAP) {
+      out.push(r);
+      continue;
+    }
+    const d = +r.deaths || 0;
+    const ck = rule.CAP;
+    const cd = Math.max(d * (ck / k), ck / rule.KD_MAX);
+    out.push({ ...r, kills: ck, deaths: cd });
+    scrims.push({ name: r.name, kills: k, deaths: d, countedKills: ck, countedDeaths: Math.round(cd * 10) / 10 });
+  }
+  scrims.sort((a, b) => b.kills - a.kills);
+  return { rows: out, scrims };
+}
+
 /* ---------- not-farm allowlist (user t297u, 2026-10-09) ----------
  * data/not-farm.json: accounts a human confirmed are real players ("Dziey looks
  * like a real player, with an attempt to be alive and at least shoot someone").
@@ -181,6 +240,7 @@ export function splitFarm(rows, rule = PADDING_RULE) {
 
 /** Short human text for a tooltip ("" when nothing was excluded). */
 export function farmNote(farm) {
+  if (roomRule.scrim) return scrimNote(farm);
   if (!farm || !farm.victims || !farm.victims.length) return "";
   const n = farm.victims.length;
   const list = farm.victims.map((v) => `${v.name} ${v.kills}/${v.deaths}`).join(", ");
@@ -188,6 +248,30 @@ export function farmNote(farm) {
   return tr("pad.farmNote", "{kills} kills on {accounts} excluded ({pct}% of the sample; kills/deaths: {list}). Farm account = {min}+ kills on it, it killed back ≤ {back}%, its KPM < {kpm}.", {
     kills: farm.kills, accounts, pct: Math.round(farm.share * 100), list, min: PADDING_RULE.MIN_KILLS, back: PADDING_RULE.MAX_BACK * 100, kpm: PADDING_RULE.MAX_KPM,
   });
+}
+
+/** PS room note: one-sided partners not counted, long scrims capped ("" when neither). */
+export function scrimNote(farm) {
+  const v = (farm && farm.victims) || [];
+  // Only scrims whose K/D was actually cut are named; a big rivalry that just
+  // lost weight (K/D kept) is not an adjustment worth a mark.
+  const sc = ((farm && farm.scrims) || []).filter((x) => x.kills > PS_SCRIM.KD_MAX * Math.max(x.deaths, 1) * 1.0001 || x.deaths === 0);
+  const parts = [];
+  if (v.length) {
+    parts.push(tr("pad.psOneSided", "One-sided scrims not counted: {list} ({pct}% of the sample's kills).", {
+      list: v.map((x) => `${x.name} ${x.kills}/${x.deaths}`).join(", "), pct: Math.round((farm.share || 0) * 100),
+    }));
+  }
+  if (sc.length) {
+    parts.push(tr("pad.psCapped", "Long scrims counted as {cap} kills each: {list}.", {
+      cap: PS_SCRIM.CAP, list: sc.map((x) => `${x.name} ${x.kills}/${x.deaths}`).join(", "),
+    }));
+  }
+  if (!parts.length) return "";
+  parts.push(tr("pad.psRule", "So scrims don't outweigh live play: {min}+ kills on one player with ≤ {back}% back are left out, other long scrims count as up to {cap} kills at K/D ≤ {kd}.", {
+    min: PS_SCRIM.MIN_KILLS, back: PS_SCRIM.MAX_BACK * 100, cap: PS_SCRIM.CAP, kd: PS_SCRIM.KD_MAX,
+  }));
+  return parts.join(" ");
 }
 
 /* ---------- marks for altered stats (user rule 2026-10-09) ----------
@@ -221,6 +305,13 @@ export function statMark(farm, rule = PADDING_RULE, { confirmed = false } = {}) 
   if (confirmed) {
     const note = confirmedFarmNote(farm);
     return { kind: "padding", mark: PADDING_MARK, legend: PADDING_MARK_TIP, tip: note ? tr("pad.confirmedNote", "{tip}. {note}", { tip: CONFIRMED_PADDING_TIP, note }) : tr("pad.confirmedOnly", "{tip}.", { tip: CONFIRMED_PADDING_TIP }) };
+  }
+  if (roomRule.scrim) {
+    // PS room: never an automatic "*" padding mark, only the neutral "†".
+    const note = scrimNote(farm);
+    if (!note) return { kind: "", mark: "", legend: "", tip: "" };
+    const legend = tr("pad.psLegend", "† scrim-adjusted: one-sided scrims left out, long scrims capped");
+    return { kind: "adjusted", mark: ADJUSTED_MARK, legend, tip: `${legend}. ${note}` };
   }
   const has = !!(farm && farm.victims && farm.victims.length);
   if (!has) return { kind: "", mark: "", legend: "", tip: "" };
@@ -338,7 +429,9 @@ try {
  * of them, not just the copy the caller imported.
  */
 const ps2PaddingCopies = (globalThis.__ps2PaddingCopies ||= []);
-ps2PaddingCopies.push({ setFarmMinKills: setFarmMinKillsOne, setNotFarm: setNotFarmOne, setFarmList: setFarmListOne, setReviewed: setReviewedOne });
+ps2PaddingCopies.push({ setRoomRule: setRoomRuleOne, setFarmMinKills: setFarmMinKillsOne, setNotFarm: setNotFarmOne, setFarmList: setFarmListOne, setReviewed: setReviewedOne });
+/** Room padding rule: "ps" = scrim rule (see PS_SCRIM), anything else = PC. Reaches every loaded copy. */
+export function setRoomRule(v) { for (const i of ps2PaddingCopies) i.setRoomRule && i.setRoomRule(v); }
 export function setFarmMinKills(v) { for (const i of ps2PaddingCopies) i.setFarmMinKills(v); }
 export function setNotFarm(v) { for (const i of ps2PaddingCopies) i.setNotFarm(v); }
 export function setFarmList(v) { for (const i of ps2PaddingCopies) i.setFarmList(v); }

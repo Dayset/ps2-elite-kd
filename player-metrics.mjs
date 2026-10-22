@@ -18,8 +18,8 @@ import {
   resolveIvi,
   deathMixLite,
 } from "./math.mjs?v=20261010-sav1";
-import { splitFarm, isPenalizedPadder, padderPenalty } from "./padding.mjs?v=20261022-psf1";
-import { vehicleCutFor, applyVehicleCut, isVehicleCutCleared } from "./vehicle-cut.mjs?v=20261022-psf1";
+import { splitFarm, chopScrims, isScrimRoom, isPenalizedPadder, padderPenalty } from "./padding.mjs?v=20261022-scrim1";
+import { vehicleCutFor, applyVehicleCut, isVehicleCutCleared } from "./vehicle-cut.mjs?v=20261022-scrim1";
 import { OPPONENT_TOP_N, LEGACY_TOP_N, sampleTopN } from "./census-fetch.mjs?v=20261010-sav1";
 import { cleanTimes } from "./flairs.mjs?v=20261010-sav1";
 
@@ -133,8 +133,11 @@ export function normalizePlayer(raw) {
   // rawCurve keep the original sample (red-flag rules, browser cache).
   const farm = splitFarm(rows);
   const hasFarm = farm.victims.length > 0;
-  const keptRows = hasFarm ? farm.kept : rows;
-  const curve = hasFarm ? normCurve(kpmCurve(keptRows)) : rawCurve;
+  // PS room (padding.mjs PS_SCRIM): long scrims with real deaths back count as at most CAP kills.
+  const chop = isScrimRoom() ? chopScrims(hasFarm ? farm.kept : rows) : null;
+  const scrims = chop ? chop.scrims : [];
+  const keptRows = scrims.length ? chop.rows : hasFarm ? farm.kept : rows;
+  const curve = hasFarm || scrims.length ? normCurve(kpmCurve(keptRows)) : rawCurve;
   return {
     display: bareDisplay(p.display || p.name) || "?",
     cid: p.cid || "",
@@ -148,7 +151,7 @@ export function normalizePlayer(raw) {
     curve,
     rawRows: rows,
     rawCurve,
-    farm: { victims: farm.victims, kills: farm.kills, deaths: farm.deaths, share: farm.share },
+    farm: { victims: farm.victims, kills: farm.kills, deaths: farm.deaths, share: farm.share, scrims },
     // Opponents in the sample (missing in older files → 50).
     top: sampleTopN(raw),
     // Honu's site is PC: PlayStation-room players (#55) get no Honu link.
@@ -165,8 +168,8 @@ export function normalizePlayer(raw) {
 
 /** The same player with the ORIGINAL opponent sample (farm victims kept). */
 export function rawSampleView(p) {
-  if (!p || !p.farm || !p.farm.victims || !p.farm.victims.length) return p;
-  return { ...p, rows: p.rawRows, curve: p.rawCurve, farm: { victims: [], kills: 0, deaths: 0, share: 0 } };
+  if (!p || !p.farm || !((p.farm.victims && p.farm.victims.length) || (p.farm.scrims && p.farm.scrims.length))) return p;
+  return { ...p, rows: p.rawRows, curve: p.rawCurve, farm: { victims: [], kills: 0, deaths: 0, share: 0, scrims: [] } };
 }
 
 /**
