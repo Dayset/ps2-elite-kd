@@ -80,8 +80,9 @@ test("PS payload: PC file shape + room / server, no Honu link (Honu is PC)", () 
 test("PS ranks read data-ps only: PC hide / farm / review lists never touch a PS player", () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ps-room-"));
   try {
+    // Empty PS review lists (the live data-ps/ ones hold real decisions).
     for (const f of ["hidden.json", "reviewed.json", "farm.json", "not-farm.json"]) {
-      fs.copyFileSync(path.join("data-ps", f), path.join(dir, f));
+      fs.writeFileSync(path.join(dir, f), JSON.stringify({ players: {} }));
     }
     fs.mkdirSync(path.join(dir, "players"));
     const index = { players: [] };
@@ -155,4 +156,15 @@ test("the PS refresh script never writes outside data-ps/ and refuses ROOM=pc", 
   assert.match(src, /export const ROOM = ROOMS\.ps;/);
   assert.doesNotMatch(src, /["'`]data\//); // no literal data/ path anywhere
   assert.match(src, /only refreshes the PlayStation room/);
+});
+
+test("the PS hide list keeps the Ceres farm-ring accounts out of PS Rankings (by character id, PS only)", async () => {
+  const { hiddenList } = await import("../hidden.mjs");
+  const h = hiddenList(JSON.parse(fs.readFileSync("data-ps/hidden.json", "utf8")));
+  for (const cid of ["5429807370268020465", "5429807370267977649", "5429807370268025905", "5429807370268020081", "5429807370268025937", "5429807370268060497"]) {
+    assert.ok(h.match({ cid }), `hidden ${cid}`);
+  }
+  // PC's hide list is a different file and holds none of them.
+  const pc = hiddenList(JSON.parse(fs.readFileSync("data/hidden.json", "utf8")));
+  assert.equal(pc.match({ cid: "5429807370268020465" }), null);
 });

@@ -24,7 +24,7 @@ const PS_SHLODOG = "us-5428452358028858337";
 function buildPsTree() {
   psDir = fs.mkdtempSync(path.join(os.tmpdir(), "ps-room-page-"));
   fs.mkdirSync(path.join(psDir, "players"));
-  for (const f of ["hidden.json", "reviewed.json", "farm.json", "not-farm.json"]) fs.copyFileSync(path.join(root, "data-ps", f), path.join(psDir, f));
+  for (const f of ["hidden.json", "reviewed.json", "farm.json", "not-farm.json"]) fs.writeFileSync(path.join(psDir, f), JSON.stringify({ players: {} }));
   const now = Date.now();
   const index = { players: [] };
   const people = [
