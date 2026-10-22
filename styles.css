@@ -1893,6 +1893,14 @@ footer .footer-block {
   margin: 0.75rem 0 1.25rem;
 }
 footer .foot-grid { display: grid; grid-template-columns: 1.4fr 1fr 1.2fr; gap: 1rem 1.5rem; }
+/* Footer medal (Dayset 2026-10-22): the GAurax medal (background removed)
+ * fills the about column on PC only — same gate as the page background
+ * image (fine pointer + hover), and hidden once the footer grid stacks
+ * on smaller windows. */
+.foot-medal { display: none; }
+@media (hover: hover) and (pointer: fine) and (min-width: 761px) {
+  .foot-medal { display: block; height: 11rem; width: auto; margin: 0.6rem auto 0; }
+}
 @media (max-width: 760px) { footer .foot-grid { grid-template-columns: 1fr 1fr; } footer .foot-about { grid-column: 1 / -1; } }
 @media (max-width: 460px) { footer .foot-grid { grid-template-columns: 1fr; } }
 footer .foot-col { min-width: 0; display: flex; flex-direction: column; gap: 0.35rem; }
