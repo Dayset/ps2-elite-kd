@@ -19,7 +19,7 @@
  * Shown only when exactly one player is on the page; collapsed by default and
  * loaded on first open (no Census calls for people who never open it).
  */
-import { t as tr } from "./i18n.mjs";
+import { t as tr, currentLang } from "./i18n.mjs";
 
 export const AURAXIUM_KILLS = 1160;
 export const CATALOG_URL = "assets/weapons/catalog.json";
@@ -104,10 +104,11 @@ const FACTION_TAG = { 1: "VS", 2: "NC", 3: "TR", 4: "NSO" };
 /* ------------------------------------------------------------- UI */
 
 const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const n0 = (v) => (v == null ? "–" : Math.round(v).toLocaleString());
+const lang = () => { try { return currentLang() || undefined; } catch { return undefined; } };
+const n0 = (v) => (v == null ? "–" : Math.round(v).toLocaleString(lang()));
 const n2 = (v) => (v == null ? "–" : v.toFixed(2));
 const pc = (v) => (v == null ? "–" : `${(v * 100).toFixed(1)}%`);
-const hrs = (s) => (!(s > 0) ? "–" : s >= 36000 ? `${Math.round(s / 3600)}h` : `${(s / 3600).toFixed(1)}h`);
+const hrs = (s) => (!(s > 0) ? "–" : tr("wp.hours", "{n}h", { n: (s >= 36000 ? Math.round(s / 3600) : +(s / 3600).toFixed(1)).toLocaleString(lang()) }));
 
 function columns() {
   return [
