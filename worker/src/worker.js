@@ -827,6 +827,11 @@ export default {
       if (request.method !== "GET") return new Response(null, { status: 405 });
       return await monitorRoute(request, env, url);
     }
+    // PlayStation 🤝 assists collector (#60): public status, key-protected export (POST).
+    if (url.pathname === "/ps-assists/status" || url.pathname === "/ps-assists/export") {
+      if (request.method !== (url.pathname.endsWith("/export") ? "POST" : "GET")) return new Response(null, { status: 405 });
+      return await monitorRoute(request, env, url);
+    }
     if (url.pathname === "/requested") {
       if (request.method !== "GET") return new Response(null, { status: 405 });
       return await handleRequested(request, env);

@@ -86,7 +86,7 @@ jobs:
           changed=$(git status --porcelain -- data-ps/players | wc -l)
           if [ "$changed" = "0" ]; then
             # Nothing fetched: keep only the bookkeeping the next run needs.
-            keep="schedule.json discovery.json refresh-state.json"
+            keep="schedule.json discovery.json refresh-state.json assists-state.json"
             for f in $keep; do cp "data-ps/$f" "/tmp/ps-$f" 2>/dev/null || true; done
             git checkout -- data-ps/ 2>/dev/null || true
             git clean -fdq data-ps/

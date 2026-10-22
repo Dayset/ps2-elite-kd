@@ -9,8 +9,14 @@
  * requests + incoming messages at 1/20 of a request; row writes capped at
  * DAILY_ROW_CAP (free 100,000/day). Census etiquette: one connection, service id,
  * reconnect with backoff, no polling.
+ *
+ * Since #60 the same object also runs the PlayStation 🤝 assists collector
+ * (ps-assists.js: two more sockets, ps2ps4us + ps2ps4eu). It shares this one
+ * instance on purpose — a second always-on object would not fit the free plan —
+ * and keeps the object (and its 60 s alarm) alive after the pilot finishes.
  */
 import { MONITOR_IDS, MONITOR_DAYS } from "./monitor-ids.js";
+import { PsAssists } from "./ps-assists.js";
 
 const STREAM = (sid) => `https://push.planetside2.com/streaming?environment=ps2&service-id=s:${sid}`;
 const DAILY_ROW_CAP = 60000;
@@ -26,6 +32,7 @@ export class KillMonitor {
     sql.exec(`CREATE TABLE IF NOT EXISTS ev (
       t INTEGER, k TEXT, a TEXT, v TEXT, w INTEGER, av INTEGER, vv INTEGER, al INTEGER, vl INTEGER, hs INTEGER, z INTEGER, wd INTEGER)`);
     sql.exec(`CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT)`);
+    this.ps = new PsAssists(ctx, env);
   }
   meta(k, v) {
     const sql = this.ctx.storage.sql;
@@ -38,8 +45,11 @@ export class KillMonitor {
     return now - s > MONITOR_DAYS * 86400e3;
   }
   async ensure() {
-    if (this.expired()) { try { this.ws && this.ws.close(); } catch {} this.ws = null; this.meta("state", "finished"); return; }
-    if (!(await this.ctx.storage.getAlarm())) await this.ctx.storage.setAlarm(Date.now() + ALARM_MS);
+    let psOn = false;
+    try { psOn = await this.ps.ensure(); } catch (e) { this.meta("psError", String(e && e.message).slice(0, 160)); }
+    const done = this.expired();
+    if ((psOn || !done) && !(await this.ctx.storage.getAlarm())) await this.ctx.storage.setAlarm(Date.now() + ALARM_MS);
+    if (done) { try { this.ws && this.ws.close(); } catch {} this.ws = null; this.meta("state", "finished"); return; }
     if (this.ws && Date.now() - this.lastMsg < 120e3) return;
     try { this.ws && this.ws.close(); } catch {}
     this.ws = null;
@@ -79,6 +89,12 @@ export class KillMonitor {
     const url = new URL(request.url);
     await this.ensure();
     const sql = this.ctx.storage.sql;
+    if (url.pathname === "/ps-assists/status") return Response.json(this.ps.status());
+    if (url.pathname === "/ps-assists/export") {
+      let body = {};
+      try { body = await request.json(); } catch {}
+      return Response.json(this.ps.exportRows(body || {}));
+    }
     if (url.pathname.endsWith("/export")) {
       const since = +url.searchParams.get("since") || 0;
       const rows = sql.exec("SELECT * FROM ev WHERE t > ? ORDER BY t LIMIT 20000", since).toArray();
@@ -97,11 +113,14 @@ export class KillMonitor {
 /** Router hook from the main Worker. */
 export async function monitorRoute(request, env, url) {
   if (!env.KILL_MONITOR) return Response.json({ error: "monitor_not_bound" }, { status: 503 });
-  if (url.pathname === "/monitor/export") {
+  if (url.pathname === "/monitor/export" || url.pathname === "/ps-assists/export") {
     const key = typeof env.CENSUS_PROXY_KEY === "string" ? env.CENSUS_PROXY_KEY : "";
     if (!key || request.headers.get("X-Proxy-Key") !== key) return Response.json({ error: "forbidden" }, { status: 403 });
   }
   const stub = env.KILL_MONITOR.get(env.KILL_MONITOR.idFromName("pilot"));
+  if (url.pathname === "/ps-assists/export") {
+    return stub.fetch(new Request(url.toString(), { method: "POST", body: await request.text(), headers: { "Content-Type": "application/json" } }));
+  }
   return stub.fetch(new Request(url.toString(), { method: "GET" }));
 }
 

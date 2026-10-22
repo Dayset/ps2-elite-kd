@@ -12,8 +12,9 @@
  *  - per player: the same ~8 batched Census calls as PC (census-fetch.mjs:
  *    killboard, own + opponent stats, names) + the 🪖 infantry split;
  *  - refresh tiers by last activity (weekly / 2 weeks / monthly / never 🪦).
- * No Honu: whether Honu covers the PS servers is unverified, so PS players
- * have no 🤝 assists / 🪳 zerg yet (the site already shows "—" for that).
+ * No Honu: Honu never recorded PS XP (checked 2026-10-22, #60). 🤝 assists
+ * come from the cache Worker's PS event-stream collector instead
+ * (worker/src/ps-assists.js → scripts/ps-assists-pull.mjs), forward-only.
  *
  * Identity = server + Census character id. Player files are
  * data-ps/players/<us|eu>-<cid>.json; names are labels. Every Census call
@@ -62,6 +63,7 @@ import {
   retryable,
   viaCensusProxy,
 } from "./refresh-cache.mjs";
+import { pullPsAssists } from "./ps-assists-pull.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -386,9 +388,11 @@ async function main() {
       const entry = upsertPsEntry(index, { key, ns: id.ns, cid: id.cid, display: payload.player.display, savedAt: payload.savedAt, top: payload.top, last: payload.player.times && payload.player.times.last });
       // Same name already taken by someone else in the room: this one is opened by its key, never by the name.
       if (entry.slug !== slugKey(payload.query)) payload.query = key;
+      // 🤝 assists come from the stream collector, not Census: keep them across refreshes.
+      if (prevFile && prevFile.player && prevFile.player.assists) payload.player.assists = prevFile.player.assists;
       writeFileAtomic(path.join(DATA_DIR, psPlayerFile(id.ns, id.cid)), JSON.stringify(payload) + "\n");
       writeFileAtomic(P.index, JSON.stringify(index, null, 1) + "\n");
-      state.players[key] = { lastAttemptAt: now, lastOkAt: payload.savedAt, fails: 0, ns: id.ns, nameLower: String(payload.player.display).replace(/^\[[^\]]*\]\s*/, "").toLowerCase() };
+      state.players[key] = { lastAttemptAt: now, lastOkAt: payload.savedAt, fails: 0, ns: id.ns, ...(prev.asst ? { asst: prev.asst } : {}), nameLower: String(payload.player.display).replace(/^\[[^\]]*\]\s*/, "").toLowerCase() };
       c.ok++;
       c.consecutiveOutage = 0;
       (wasCached ? updated : added).push(payload.player.display);
@@ -404,6 +408,7 @@ async function main() {
         kind: partial ? "partial" : isOutageError(e) ? "transient" : "notfound",
         lastError: msg.slice(0, 200),
         ns: id.ns,
+        ...(prev.asst ? { asst: prev.asst } : {}),
         ...(prev.nameLower || nameHint ? { nameLower: prev.nameLower || nameHint.toLowerCase() } : {}),
       };
       failed.push({ name: nameHint || key, key, reason: msg.slice(0, 120), outage: isOutageError(e) && !partial });
@@ -501,6 +506,11 @@ async function main() {
     writeFileAtomic(P.discovery, JSON.stringify(disc) + "\n");
   }
 
+  // 🤝 assists from the Worker's PS stream collector (#60); never throws.
+  const assists = await pullPsAssists({ dataDir: DATA_DIR, index, state, proxy: CENSUS_PROXY, key: CENSUS_PROXY_KEY, writeFile: writeFileAtomic })
+    .catch((e) => ({ error: String((e && e.message) || e).slice(0, 160) }));
+  saveState();
+
   const secs = Math.round((Date.now() - t0) / 1000);
   const summary = `Done in ${secs}s. ok=${c.ok} new=${added.length} refreshed=${refreshed} notFound=${c.notFound} outage=${c.outage} index=${index.players.length}${c.stoppedEarly ? ` (stopped early: ${c.stoppedEarly})` : ""}`;
   console.log(summary);
@@ -518,6 +528,7 @@ async function main() {
     failed,
     stoppedEarly: c.stoppedEarly || null,
     indexSize: index.players.length,
+    assists,
     servers: Object.fromEntries(ROOM.namespaces.map((ns) => [PS_SERVERS[ns].name, index.players.filter((p) => p.ns === ns).length])),
     ...(disc ? { discovery: { cap: disc.cap, queues: Object.fromEntries(ROOM.namespaces.map((ns) => [PS_SERVERS[ns].name, disc.servers[ns].queue.length])), slices } } : {}),
   };
