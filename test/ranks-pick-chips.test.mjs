@@ -146,6 +146,45 @@ describe("Hide adjusted-iVi ≤ 0 players (footer checkbox)", () => {
   });
 });
 
+describe("Skill graph section: no placeholder, collapsible, pops on analyze (owner 2026-10-22)", () => {
+  it("placeholder gone; graph lives in a folded-by-default details section", () => {
+    const index = read("index.html");
+    assert.doesNotMatch(index, /id="chartPlaceholder"/);
+    assert.doesNotMatch(index, /id="phAnalyzeBtn"/);
+    assert.doesNotMatch(index, /chart-placeholder/);
+    assert.match(index, /<details id="chartSection" class="dist-section chart-section">/);
+    assert.doesNotMatch(index, /<details id="chartSection"[^>]*\sopen[\s>]/);
+    assert.match(index, /data-i18n="chart\.title"/);
+    assert.match(index, /id="chartSectionNames"/);
+    assert.match(read("i18n/en.json"), /"chart\.title": "📈 Skill graph"/);
+  });
+
+  it("draw pops the section open on a new analysis; idle folds it; app.js has no placeholder code left", () => {
+    const app = read("app.js");
+    assert.doesNotMatch(app, /chartPlaceholder|setPlaceholderVisible|phAnalyzeBtn|analyzeFromPlaceholder/);
+    assert.match(app, /function popChartSection\(list\)/);
+    assert.match(app, /sec\.open = true/);
+    assert.match(app, /popChartSection\(list\)/);
+    assert.match(app, /function foldChartSection\(\)/);
+    assert.match(app, /foldChartSection\(\)/);
+    // A fresh Analyze re-pops even the same names (analyze sequence guard).
+    assert.match(app, /analyzeSeq \+= 1/);
+    assert.match(app, /analyzeSeq !== chartPoppedSeq/);
+  });
+
+  it("default name + empty-box dice draw from the top five tiers only (both rooms)", () => {
+    const app = read("app.js");
+    assert.match(app, /function topTierFloorAdjs\(\)/);
+    assert.match(app, /let DEFAULT_PLACEHOLDER_NAME = "";/);
+    assert.doesNotMatch(app, /DEFAULT_PLACEHOLDER_NAME = IS_PS/);
+    // Default picker: random pick from rows at/above the floor.
+    assert.match(app, /r\[iA\] >= floor/);
+    assert.match(app, /pool\[Math\.floor\(Math\.random\(\) \* pool\.length\)\]/);
+    // Dice on an empty box: same floor on the cached-values pool.
+    assert.match(app, /v\.adjs >= floor/);
+  });
+});
+
 describe("Max account age cut (Settings stepper, owner 2026-10-22)", () => {
   it("one-line settings row: − / + steppers around a whole-months input", () => {
     const index = read("index.html");

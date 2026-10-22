@@ -169,7 +169,7 @@ describe("PC: 💀 / 📈 switch in the graph's top-right corner (t378u)", () =>
   it("switch sits top-right at 1280px (zoom slider + Auto retired by the owner 2026-10-21: hidden, code kept)", { skip: (!chrome && "no Chrome") || (!haveData && "player files missing"), timeout: 120000 }, async () => {
     await withPage(async ({ ev, nav }) => {
       await nav(`index.html?names=${need.join(",")}`);
-      assert.equal(await ev(`new Promise(async (r) => { for (let t = 0; t < 600; t++) { const a = window.__ps2EliteKd; if (a && !a.isAnalyzing() && document.querySelector(".chart-wrap:not(.empty) .chart-mode-bar")) return r(1); await new Promise((q) => setTimeout(q, 50)); } r(0); })`), 1);
+      assert.equal(await ev(`new Promise(async (r) => { for (let t = 0; t < 600; t++) { const a = window.__ps2EliteKd; if (a && !a.isAnalyzing() && document.querySelector("#chartSection[open] .chart-mode-bar")) return r(1); await new Promise((q) => setTimeout(q, 50)); } r(0); })`), 1);
       const g = await ev(`(() => { const b = document.querySelector(".chart-mode-bar").getBoundingClientRect(); const w = document.querySelector(".chart-wrap").getBoundingClientRect(); return { right: w.right - b.right, top: b.top - w.top, mid: (b.left + b.right) / 2 - (w.left + w.right) / 2, zoomHidden: document.getElementById("chartYZoom").hidden }; })()`);
       assert.ok(g.mid > 0 && g.top < 40 && g.zoomHidden, JSON.stringify(g));
     }, { width: 1280, height: 900, mobile: false });

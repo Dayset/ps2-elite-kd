@@ -74,7 +74,7 @@
       });
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261022-footmedal" />
+  <link rel="stylesheet" href="styles.css?v=20261022-graph1" />
   <style>
     /* Installed-app launch splash (t465u). Android draws its own launch splash first:
        the maskable icon (big medal on black) seen through a 192 px circle, on the
@@ -415,7 +415,9 @@
     })();
   </script>
 
-  <div class="chart-wrap empty" style="contain: layout paint style;">
+  <details id="chartSection" class="dist-section chart-section">
+    <summary><span data-i18n="chart.title">📈 Skill graph</span> <span id="chartSectionNames" class="chart-section-names"></span></summary>
+  <div class="chart-wrap" style="contain: layout paint style;">
     <!-- t378u: top-right corner of the graph: 💀 / 📈 switch above the zoom (upper half + Auto only). -->
     <div class="chart-corner">
       <div id="chartModeBar" class="chart-mode-bar" role="group" data-i18n-aria-label="chart.modeLabel" aria-label="Graph view">
@@ -434,15 +436,6 @@
         <button type="button" id="yZoomReset" class="chart-y-zoom-reset" data-i18n="chart.zoomAuto" data-i18n-title="chart.zoomAutoTitle" title="Reset zoom to auto-fit (full graph)">Auto</button>
       </div>
     </div>
-    <div id="chartPlaceholder" class="chart-placeholder" data-i18n-title="chart.clickToAnalyze" aria-hidden="false" title="Click to analyze">
-      <img class="ph-img ph-dark" src="assets/placeholder-graph.webp" alt=""
-           onerror="this.onerror=null;this.src='assets/placeholder-graph.png'" />
-      <img class="ph-img ph-light" src="assets/placeholder-graph-light.webp" alt=""
-           onerror="this.onerror=null;this.src='assets/placeholder-graph-light.png'" />
-      <div class="chart-placeholder-overlay">
-        <button type="button" id="phAnalyzeBtn" class="chart-placeholder-cta" data-i18n="cta.press" data-i18n-aria-label="cta.label" data-i18n-title="cta.title" aria-label="Analyze" title="Analyze (same as the 🔍 Analyze button)">▶️ Press Analyze</button>
-      </div>
-    </div>
     <svg id="chart" viewBox="0 0 1000 564" preserveAspectRatio="xMidYMid meet" hidden></svg>
     <div class="chart-mode-row">
     <div id="ghostCaption" class="ghost-caption" hidden data-i18n-title="ghost.title"
@@ -452,6 +445,7 @@
     <span id="waveRangeWarn" hidden style="font-size:0.72rem; color:#c90; margin-left:8px;"></span>
     </div>
   </div>
+  </details>
 
   <!-- t356u: Rankings (was ranks.html) — rankings.mjs fills this lazily after the graph. -->
   <section id="rankings" class="rankings" aria-label="Rankings" data-i18n-aria-label="rk.section">
@@ -541,7 +535,7 @@
   </footer>
 
   <script type="module" src="i18n.mjs"></script>
-  <script type="module" src="app.js?v=20261022-spawnroom1"></script>
+  <script type="module" src="app.js?v=20261022-graph1"></script>
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").catch(function () {});

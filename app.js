@@ -201,11 +201,12 @@ import {
   const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
   const DEFAULT_NAMES = [];
   /**
-   * Empty-field Analyze default + names input placeholder. PC: ShloDog. The
-   * PlayStation room (#55) uses its own top ⚔️ iVi player once its ranks load
-   * (a PC name there would be some other person, or nobody).
+   * Empty-field Analyze default + names input placeholder: a random player
+   * from the top five ⚔️ iVi tiers (🏆💎🥇🥈🥉), picked per room once its
+   * ranks-lite lands (see the picker below). Empty until then — an
+   * empty-field Analyze in that window does nothing.
    */
-  let DEFAULT_PLACEHOLDER_NAME = IS_PS ? "" : "ShloDog";
+  let DEFAULT_PLACEHOLDER_NAME = "";
   const SHARED_INDEX_URL = `${DATA}index.json`;
   const SHARED_NAMES_URL = `${DATA}names.json`; // slim startup list (scripts/build-ranks.mjs buildNames)
   /** Cloudflare Worker that queues names into the shared data/ cache. "" disables. */
@@ -310,8 +311,7 @@ import {
     progressTiming: document.getElementById("progressTiming"),
     progressCancel: document.getElementById("progressCancel"),
     chart: document.getElementById("chart"),
-    chartPlaceholder: document.getElementById("chartPlaceholder"),
-    phAnalyzeBtn: document.getElementById("phAnalyzeBtn"),
+    chartSection: document.getElementById("chartSection"),
     chartYZoom: document.getElementById("chartYZoom"),
     yZoomSlider: document.getElementById("yZoomSlider"),
     yZoomReset: document.getElementById("yZoomReset"),
@@ -1546,6 +1546,23 @@ import {
     }
     return ranksLiteLoad;
   }
+  let topTierFloorP = null;
+  /** ⚔️ iVi floor of the top five tiers (🏆 Top 1% … 🥉 Top 25–50%): the
+   * cached population's median adjusted iVi (ranks-lite, this room). */
+  function topTierFloorAdjs() {
+    if (!topTierFloorP) {
+      topTierFloorP = loadRanksLite()
+        .then((d) => {
+          if (!d || !Array.isArray(d.cols) || !Array.isArray(d.rows)) return Infinity;
+          const ci = d.cols.indexOf("adjs");
+          const vs = d.rows.map((r) => r[ci]).filter((v) => typeof v === "number" && Number.isFinite(v)).sort((a, b) => a - b);
+          return vs.length ? vs[Math.floor(vs.length / 2)] : Infinity;
+        })
+        .catch(() => Infinity);
+    }
+    return topTierFloorP;
+  }
+
   let rankVals = null;
   async function loadRankVals() {
     if (rankVals) return rankVals;
@@ -1583,15 +1600,18 @@ import {
     const used = new Set(nameTokens.map((n) => slugKey(n)));
     const listVals = nameTokens.map((n) => vals.get(slugKey(n))).filter(Boolean).map((v) => v.adjs);
     if (mode === "range" && !listVals.length) {
-      // 🎲 on an empty box: any cached player with ⚔️ iVi above 0.
-      const pool = [...vals.entries()].filter(([slug]) => !used.has(slug));
+      // 🎲 on an empty box: a random player from the top five ⚔️ iVi tiers
+      // (🏆💎🥇🥈🥉 — adjusted iVi at/above the cached median), never the
+      // lower half (Dayset 2026-10-22).
+      const floor = await topTierFloorAdjs();
+      const pool = [...vals.entries()].filter(([slug, v]) => !used.has(slug) && v.adjs >= floor);
       if (!pool.length) { say(tr("msg.noCached", "No cached players with iVi above 0")); return; }
       const [, pick] = pool[Math.floor(Math.random() * pool.length)];
       sfx("sparkle"); sfxChipQuietUntil = Date.now() + 400;
       addNameToField(pick.name);
-      // First name in an empty field: drop the placeholder image right away
-      // and draw the first graph from cache instead of waiting for Analyze.
-      setPlaceholderVisible(false);
+      // First name in an empty field: unhide the chart right away and draw
+      // the first graph from cache instead of waiting for Analyze.
+      setChartIdle(false);
       scheduleGraphSync({ start: true });
       say(tr("msg.addedLoading", "Added {name} ({ivi} iVi) — loading graph…", { name: pick.name, ivi: Math.round(pick.adjs) }));
       return;
@@ -1647,21 +1667,25 @@ import {
     scheduleGraphSync(); // t351u: graph + tables follow right away
   }
 
-  // PS room: the default name is the room's top ⚔️ iVi player (ranks-lite "name" / "adjs").
-  if (IS_PS && typeof window !== "undefined") {
+  // Default name (both rooms): a random player from the top five ⚔️ iVi
+  // tiers (🏆💎🥇🥈🥉 — adjusted iVi at/above the cached median), never the
+  // lower half (Dayset 2026-10-22; was PC ShloDog / PS top player).
+  if (typeof window !== "undefined") {
     if (els.namesInput) els.namesInput.placeholder = "";
-    loadRanksLite().then((d) => {
+    loadRanksLite().then(async (d) => {
       if (!d || !Array.isArray(d.cols) || !Array.isArray(d.rows)) return;
       const iN = d.cols.indexOf("name"), iA = d.cols.indexOf("adjs");
-      let best = null;
-      for (const r of d.rows) if (Number.isFinite(r[iA]) && (!best || r[iA] > best[iA])) best = r;
-      if (!best) return;
-      DEFAULT_PLACEHOLDER_NAME = bareName(best[iN]);
+      if (iN < 0 || iA < 0) return;
+      const floor = await topTierFloorAdjs();
+      const pool = d.rows.filter((r) => Number.isFinite(r[iA]) && r[iA] >= floor);
+      if (!pool.length) return;
+      const pick = pool[Math.floor(Math.random() * pool.length)];
+      DEFAULT_PLACEHOLDER_NAME = bareName(pick[iN]);
       syncNamesPlaceholder();
     }).catch(() => {});
   }
 
-  /** Hide ShloDog placeholder whenever chips or typed text occupy the field. */
+  /** Hide the placeholder name whenever chips or typed text occupy the field. */
   function syncNamesPlaceholder() {
     if (!els.namesInput) return;
     const hasChips = nameTokens.length > 0;
@@ -3136,7 +3160,8 @@ import {
     waveRig = null;
     const svg = els.chart;
     clearSvg(svg);
-    setPlaceholderVisible(false);
+    setChartIdle(false);
+    popChartSection(list);
     svg.setAttribute("viewBox", `0 0 ${VB.w} ${VB.h}`);
     svg.setAttribute("role", "img");
     svg.setAttribute("aria-label", tr("chart.elite", "Elite K/D vs Enemy KPM"));
@@ -4318,36 +4343,53 @@ import {
     setFetching(false);
     setProgress(false);
     if (!players.length) {
-      // No prior graph → back to idle placeholder.
-      showIdleChart(tr("cta.press", "▶️ Press Analyze"));
+      // No prior graph → back to idle (the section folds away).
+      showIdleChart();
     }
     setStatus(`<span class="warn">${tr("msg.cancelled", "Fetch cancelled.")}</span>`, "warn cancelled");
   }
 
-  function chartWrap() {
-    return els.chart ? els.chart.closest(".chart-wrap") : null;
-  }
-
-  function setPlaceholderVisible(show) {
-    const wrap = chartWrap();
-    if (wrap) wrap.classList.toggle("empty", !!show);
-    if (els.chartPlaceholder) {
-      els.chartPlaceholder.setAttribute("aria-hidden", show ? "false" : "true");
-    }
+  /* Idle = no graph: the svg hides and the whole section folds away (there
+   * is no placeholder image any more — Dayset 2026-10-22). */
+  function setChartIdle(idle) {
     if (els.chart) {
-      if (show) els.chart.setAttribute("hidden", "");
+      if (idle) els.chart.setAttribute("hidden", "");
       else els.chart.removeAttribute("hidden");
     }
-    setYZoomVisible(!show);
-    const cta = els.chartPlaceholder
-      ? els.chartPlaceholder.querySelector(".chart-placeholder-cta")
-      : null;
-    if (cta && show) {
-      cta.textContent = tr("cta.press", "▶️ Press Analyze");
+    setYZoomVisible(!idle);
+  }
+
+  /* The collapsible skill-graph section: analyzing pops it open — when the
+   * drawn names change, or when a fresh Analyze runs (even for the same
+   * names after a manual fold). Redraws for other reasons (language, theme,
+   * resize) leave the fold exactly as the user left it. */
+  let analyzeSeq = 0;
+  let chartPoppedFor = "";
+  let chartPoppedSeq = -1;
+  function popChartSection(list) {
+    const sec = els.chartSection;
+    if (!sec || !list || !list.length) return;
+    const names = list.map((p) => p && (p.display || p.name)).filter(Boolean);
+    if (!names.length) return;
+    const namesEl = document.getElementById("chartSectionNames");
+    if (namesEl) namesEl.textContent = names.join(", ");
+    const sig = names.map((n) => slugKey(n)).sort().join("|");
+    if (sig !== chartPoppedFor || analyzeSeq !== chartPoppedSeq) {
+      chartPoppedFor = sig;
+      chartPoppedSeq = analyzeSeq;
+      sec.open = true;
     }
   }
 
-  function showIdleChart(message) {
+  function foldChartSection() {
+    if (els.chartSection) els.chartSection.open = false;
+    chartPoppedFor = "";
+    chartPoppedSeq = -1;
+    const namesEl = document.getElementById("chartSectionNames");
+    if (namesEl) namesEl.textContent = "";
+  }
+
+  function showIdleChart() {
     clearSvg(els.chart);
     if (els.stats) els.stats.innerHTML = "";
     if (els.statsPublic) els.statsPublic.innerHTML = "";
@@ -4356,15 +4398,12 @@ import {
     lastAnalyzedNames = [];
     lastLoadedNames = [];
     resetYZoom({ redraw: false });
-    setPlaceholderVisible(true);
-    const cta = els.chartPlaceholder
-      ? els.chartPlaceholder.querySelector(".chart-placeholder-cta")
-      : null;
-    if (cta) cta.textContent = message || tr("cta.press", "▶️ Press Analyze");
+    setChartIdle(true);
+    foldChartSection();
   }
 
   function clearChartUi() {
-    showIdleChart(tr("cta.press", "▶️ Press Analyze"));
+    showIdleChart();
     // Drop any bottom padding scrollToResults() added for short result pages.
     if (typeof document !== "undefined" && document.body) document.body.style.paddingBottom = "";
   }
@@ -4376,6 +4415,7 @@ import {
 
   async function analyzeNames(names, { forceFresh = false, quiet = false } = {}) {
     if (fetching) return;
+    analyzeSeq += 1; // a fresh analysis pops the graph section open on draw
     const userRun = !quiet && recentGesture(); // t402u: no sounds for auto-restores
     const clean = names.map((n) => String(n).trim()).filter(Boolean);
     if (!clean.length) {
@@ -4408,6 +4448,7 @@ import {
       // Re-render chips so force-collapsed state sticks if a render follows
       renderCacheChips();
       showGraphReadyHint();
+      popChartSection(players); // "ready" must be visible: un-fold if folded
       scrollToResults();
       return;
     }
@@ -4652,7 +4693,7 @@ import {
     }
     const missing = names.filter((n, i) => !have[i]);
     if (missing.every(isSavedName)) {
-      if (!players.length) setPlaceholderVisible(false);
+      if (!players.length) setChartIdle(false);
       analyzeNames(names, { quiet: true });
     }
   }
@@ -4998,7 +5039,7 @@ import {
 
   /* ---------- events ---------- */
 
-  /** The 🔍 Analyze action (button, placeholder image, shared-link auto-run). */
+  /** The 🔍 Analyze action (button, shared-link auto-run). */
   function runAnalyzeFromUi() {
     collapseSharedCache();
     const { rejected } = commitFragment({ clearInput: true });
@@ -5010,8 +5051,8 @@ import {
     }
     let names = currentNamesInField();
     if (!names.length) {
-      if (!DEFAULT_PLACEHOLDER_NAME) return Promise.resolve(); // PS room before its ranks loaded
-      // Empty field → default to ShloDog and show it as a chip
+      if (!DEFAULT_PLACEHOLDER_NAME) return Promise.resolve(); // ranks-lite not loaded yet
+      // Empty field → the default name (a random top-tier player) as a chip
       setNameTokens([DEFAULT_PLACEHOLDER_NAME]);
       names = [DEFAULT_PLACEHOLDER_NAME];
     }
@@ -5182,31 +5223,12 @@ import {
     // needs a live Census fetch still gets the normal run with its progress.
     const names = currentNamesInField();
     if (isReloadNavigation() && names.length && names.every((n) => !getNameFailure(n) && (findSharedEntry(n) || cacheGet(n)))) {
-      const cta = els.chartPlaceholder ? els.chartPlaceholder.querySelector(".chart-placeholder-cta") : null;
-      if (cta) cta.textContent = tr("msg.loadingCta", "⏳ Loading…");
-      try {
-        await analyzeNames(names, { quiet: true });
-      } finally {
-        if (cta && !players.length) cta.textContent = tr("cta.press", "▶️ Press Analyze");
-      }
+      await analyzeNames(names, { quiet: true });
       restoreScrollAfterReload();
       return;
     }
     await runAnalyzeFromUi();
     if (overLimit && els.status && !String(els.status.textContent || "").trim()) showLimitHint();
-  }
-
-  // Placeholder image (before any analysis): its centre button — and a click
-  // anywhere on the image — acts as a second 🔍 Analyze (same handler, so the
-  // empty → ShloDog default, limit hint, scroll etc. all apply). People kept
-  // clicking the image expecting it to work.
-  function analyzeFromPlaceholder(e) {
-    if (e) e.preventDefault();
-    if (fetching || !els.analyzeBtn || els.analyzeBtn.disabled) return;
-    els.analyzeBtn.click();
-  }
-  if (els.chartPlaceholder) {
-    els.chartPlaceholder.addEventListener("click", analyzeFromPlaceholder);
   }
 
   if (els.namesInput) {
