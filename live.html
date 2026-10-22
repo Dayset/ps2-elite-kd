@@ -74,7 +74,7 @@
       });
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261022-set4" />
+  <link rel="stylesheet" href="styles.css?v=20261022-set5" />
   <style>
     /* Installed-app launch splash (t465u). Android draws its own launch splash first:
        the maskable icon (big medal on black) seen through a 192 px circle, on the
@@ -333,6 +333,14 @@
               <button id="themeToggle" type="button" class="mini-btn theme-toggle" title="Switch to light theme" aria-label="Switch to light theme">☀️</button>
             </div>
             <div class="settings-row">
+              <label class="settings-label" for="maxAgeInput" data-i18n="age.label">Max account age</label>
+              <span class="age-cut-ctl">
+                <button id="maxAgeMinus" type="button" class="mini-btn age-step" title="−0.1" aria-label="Decrease">−</button>
+                <input id="maxAgeInput" type="number" class="age-input" min="0.1" step="0.1" inputmode="decimal" title="Hide accounts older than this, in years (Rankings table)" aria-label="Max account age" data-i18n-title="age.title" data-i18n-aria-label="age.label">
+                <button id="maxAgePlus" type="button" class="mini-btn age-step" title="+0.1" aria-label="Increase">+</button>
+              </span>
+            </div>
+            <div class="settings-row">
               <span class="settings-label" data-i18n="wipe.label">Clear local data</span>
               <button id="wipeLocalBtn" type="button" class="mini-btn wipe-local" title="Clear all local app data (cache, theme, flags)" aria-label="Clear all local app data" data-i18n-title="wipe.title" data-i18n-aria-label="wipe.title">🗑️</button>
             </div>
@@ -532,7 +540,7 @@
   </footer>
 
   <script type="module" src="i18n.mjs"></script>
-  <script type="module" src="app.js?v=20261022-pick1"></script>
+  <script type="module" src="app.js?v=20261022-set5"></script>
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").catch(function () {});

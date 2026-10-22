@@ -44,6 +44,7 @@ export function initRankings(host) {
 
   const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";
   const LS_HIDE_ZERO_IVI = "ps2-elite-kd-hide-zero-ivi";
+  const YEAR_S = 365.25 * 86400;
   // Same limit as the names box (app.js MAX_NAMES, 6 since t400u; this said 10, so the
   // table let you tick a 7th name the box then refused — issue #35). Read live via
   // the host getter: the debug option lifts the cap to Infinity (Dayset 2026-10-21).
@@ -106,6 +107,14 @@ export function initRankings(host) {
     try { return localStorage.getItem(LS_HIDE_ZERO_IVI) === "1"; } catch { return false; }
   }
 
+  const LS_MAX_AGE_YEARS = "ps2-elite-kd-max-age-years";
+  function readMaxAgeYears() {
+    try {
+      const v = parseFloat(localStorage.getItem(LS_MAX_AGE_YEARS));
+      return Number.isFinite(v) && v > 0 ? v : null;
+    } catch { return null; }
+  }
+
   /** America/Winnipeg label for an ISO / ms timestamp. */
   function fmtUpdated(iso) {
     if (!iso) return "—";
@@ -130,6 +139,7 @@ export function initRankings(host) {
   let data = null; // { cols, idx, rows:[{name,query,slug,savedAt, metrics…, rank, pcts}] }
   let showDebug = readDebug();
   let hideZeroIvi = readHideZeroIvi();
+  let maxAgeYears = readMaxAgeYears();
   let sortKey = "adjs";
   let sortDir = "desc"; // Inflation starts asc on first click
   let filter = "";
@@ -245,6 +255,9 @@ export function initRankings(host) {
         vcut: idx.vcut != null ? r[idx.vcut] : null,
         // PlayStation room (#55): "us" Genudine / "eu" Ceres (null on PC).
         srv: idx.srv != null ? r[idx.srv] || null : null,
+        // 📅 Registration epoch — not a stat column, but the Settings
+        // max-account-age cut (sortedFiltered) and its ceiling need it per row.
+        created: idx.created != null ? r[idx.created] : null,
       };
       o.mark = o.markKind === "padding" ? PADDING_MARK : o.markKind === "adjusted" ? ADJUSTED_MARK : "";
       o.markTip = o.markKind === "padding" ? PADDING_MARK_TIP : o.markKind === "adjusted" ? ADJUSTED_MARK_TIP : "";
@@ -277,6 +290,24 @@ export function initRankings(host) {
     rankedFor = "";
     data = { updatedAt: payload.updatedAt, count: (+payload.count || payload.rows.length - localOnly.size) + localOnly.size, rows, pools };
     histCache.clear();
+    syncAgeCeiling();
+  }
+
+  /* Max-age Settings input: once the data is in, the stepper ceiling is the
+   * oldest account's age (rounded up to 0.1). A never-touched control (no
+   * saved value) also displays that ceiling, so its resting value always
+   * means "cut nobody"; a saved value is never lowered, only the ceiling
+   * grows to fit it. */
+  function syncAgeCeiling() {
+    const input = $("maxAgeInput");
+    if (!input || !data) return;
+    let oldest = Infinity;
+    for (const r of data.rows) if (fin(r.created) && r.created > 0 && r.created < oldest) oldest = r.created;
+    if (!Number.isFinite(oldest)) return;
+    const ceil = Math.ceil(((Date.now() / 1000 - oldest) / YEAR_S) * 10) / 10;
+    const saved = readMaxAgeYears();
+    input.max = Math.max(ceil, saved || 0).toFixed(1);
+    if (saved == null) input.value = ceil.toFixed(1);
   }
 
   function sortedFiltered() {
@@ -286,11 +317,21 @@ export function initRankings(host) {
     if (q) {
       // Name only — the outfit tag is ignored ("rite" doesn't list every [RITE] member).
       list = list.filter((r) => r._bare.includes(q));
-    } else if (hideZeroIvi) {
-      // Browse only: hide adjusted-iVi ≤ 0 rows. A name search above still
-      // finds them, and the names box / chart never filter. Thin rows (no
-      // adjs) stay — only players with a real adjusted iVi ≤ 0 are hidden.
-      list = list.filter((r) => !(fin(r.adjs) && r.adjs <= 0));
+    } else {
+      // Browse only: the two view cuts below. A name search above still finds
+      // everyone, and the names box / chart never filter.
+      if (hideZeroIvi) {
+        // Hide adjusted-iVi ≤ 0 rows. Thin rows (no adjs) stay — only players
+        // with a real adjusted iVi ≤ 0 are hidden.
+        list = list.filter((r) => !(fin(r.adjs) && r.adjs <= 0));
+      }
+      if (maxAgeYears) {
+        // Hide accounts registered more than maxAgeYears ago (Settings
+        // stepper). Rows without a registration date stay. A value at/above
+        // the oldest account's age cuts nobody, so the default is a no-op.
+        const cutoff = Date.now() / 1000 - maxAgeYears * YEAR_S;
+        list = list.filter((r) => !(fin(r.created) && r.created > 0 && r.created < cutoff));
+      }
     }
     // assignRanks() already ordered the whole population for the current
     // sort; the filtered view keeps that order and the true rank numbers.
@@ -1344,6 +1385,13 @@ export function initRankings(host) {
   const hideZero = $("hideZeroIviToggle");
   hideZero.addEventListener("change", () => {
     hideZeroIvi = !!hideZero.checked;
+    render();
+  });
+
+  const ageInput = $("maxAgeInput");
+  if (ageInput) ageInput.addEventListener("change", () => {
+    const v = parseFloat(ageInput.value);
+    maxAgeYears = Number.isFinite(v) && v > 0 ? v : null;
     render();
   });
 
