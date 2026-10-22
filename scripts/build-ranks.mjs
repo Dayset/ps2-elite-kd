@@ -207,6 +207,7 @@ export function buildRanks(dataDir, { onPlayer = null, onHidden = null, onFarm =
   const index = JSON.parse(fs.readFileSync(path.join(dataDir, "index.json"), "utf8"));
   const rows = [];
   const seen = new Set();
+  const keyOf = new Map(); // row → PS room key (us-<cid> / eu-<cid>)
   for (const e of index.players || []) {
     const file = e && e.file;
     if (!file || seen.has(file)) continue;
@@ -234,11 +235,43 @@ export function buildRanks(dataDir, { onPlayer = null, onHidden = null, onFarm =
       continue;
     }
     if (row) {
+      if (e.key) keyOf.set(row, String(e.key));
       rows.push(row);
       if (onPlayer) onPlayer(raw, row, { hidden: false });
     }
   }
+  uniqueQueries(rows, keyOf);
   return { updatedAt: new Date().toISOString(), count: rows.length, cols: RANK_COLS.slice(), rows };
+}
+
+/**
+ * PlayStation room (#55): the same name can be two characters, one per server
+ * (e.g. Furkancimen3NS0 on Genudine and on Ceres). The table picks rows by
+ * query, so a shared bare-name query ticked both. Namesakes get their server
+ * key (us-<cid> / eu-<cid>) as query, which the page opens by key. PC rows have
+ * no key and never change.
+ */
+export function uniqueQueries(rows, keyOf = new Map()) {
+  const lc = (r) => String(r[1]).toLowerCase();
+  const n = new Map();
+  for (const r of rows) n.set(lc(r), (n.get(lc(r)) || 0) + 1);
+  for (const r of rows) {
+    if (n.get(lc(r)) > 1 && keyOf.get(r)) r[1] = keyOf.get(r);
+  }
+  // Anything still shared (PC has no server keys; owner 2026-10-22: "never again"):
+  // keep the newest save, drop the rest, and say so. One tick = one player, always.
+  const best = new Map();
+  for (const r of rows) {
+    const k = lc(r), b = best.get(k);
+    if (!b || (+r[3] || 0) > (+b[3] || 0)) best.set(k, r);
+  }
+  const dropped = rows.filter((r) => best.get(lc(r)) !== r);
+  for (const r of dropped) console.log(`::warning::ranks: ${r[0]} (${r[2]}) shares its pick name with ${best.get(lc(r))[2]}; kept the newest save only`);
+  if (dropped.length) {
+    const keep = new Set(best.values());
+    for (let i = rows.length - 1; i >= 0; i--) if (!keep.has(rows[i])) rows.splice(i, 1);
+  }
+  return rows;
 }
 
 /** Ranks + 🧪 outlier guard over the same shown values (one pass over the cache) + 🙈 hidden summary. */

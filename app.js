@@ -1101,6 +1101,19 @@ import {
     return true;
   }
 
+  /**
+   * PS room (#55): a namesake is picked by its server key ("eu-<cid>"); its chip
+   * shows "Name · Server" instead of the raw key so you can tell which one is on screen.
+   */
+  function tokenLabel(name) {
+    const id = IS_PS ? parsePsKey(String(name || "").toLowerCase()) : null;
+    if (!id) return name;
+    const key = String(name).toLowerCase();
+    const e = (sharedIndex.players || []).find((p) => p && String(p.key || "").toLowerCase() === key);
+    const bare = e && e.name ? String(e.name).replace(/^\[[^\]]*\]\s*/, "") : `#${id.cid}`;
+    return `${bare} · ${id.server}`;
+  }
+
   function findSharedEntry(name) {
     const key = slugKey(name);
     const lower = String(name || "").trim().toLowerCase();
@@ -1763,10 +1776,11 @@ import {
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "name-token " + (isNameFetched(name) ? "fetched" : "unfetched");
-      btn.appendChild(nameSpan(name, { title: false }));
+      const shown = tokenLabel(name);
+      btn.appendChild(nameSpan(shown, { title: false }));
       if (isPenalizedPadder(name)) btn.insertAdjacentHTML("beforeend", poopHtml());
-      btn.setAttribute("aria-label", tr("names.remove", "Remove {name}", { name }));
-      btn.title = tr("names.remove", "Remove {name}", { name });
+      btn.setAttribute("aria-label", tr("names.remove", "Remove {name}", { name: shown }));
+      btn.title = tr("names.remove", "Remove {name}", { name: shown });
       btn.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -1882,8 +1896,8 @@ import {
     icon.textContent = "↻";
     const label = document.createElement("span");
     label.className = "name-token-text nm";
-    label.setAttribute("data-full", name);
-    label.textContent = name;
+    label.setAttribute("data-full", tokenLabel(name));
+    label.textContent = tokenLabel(name);
     retry.append(icon, label);
     retry.addEventListener("click", (e) => {
       e.preventDefault();
