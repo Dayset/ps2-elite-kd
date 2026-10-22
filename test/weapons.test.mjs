@@ -51,3 +51,15 @@ test("catalog entries and live item rows share one shape", () => {
   assert.deepEqual(itemsFromCensus([{ item_id: "7", faction_id: "2", image_id: "1234", name: { en: "Gauss SAW" }, category: { name: { en: "Heavy Weapon" } } }]),
     { 7: { name: "Gauss SAW", category: "Heavy Weapon", faction: 2, image: "1234" } });
 });
+
+test("IvI, SPK, DPH, SPM and killed-by come from the same two calls", () => {
+  const [w] = summarizeWeapons(
+    [fac(9, "weapon_kills", 2000), fac(9, "weapon_headshots", 600), fac(9, "weapon_killed_by", 0, 70, 30), fac(9, "weapon_damage_given", 1000000)],
+    [plain(9, "weapon_fire_count", 50000), plain(9, "weapon_hit_count", 12500), plain(9, "weapon_play_time", 60000), plain(9, "weapon_score", 2000000)],
+  );
+  assert.equal(w.killedBy, 100);
+  assert.equal(Math.round(w.ivi), 750); // 25 % × 30 %
+  assert.equal(w.spk, 25);
+  assert.equal(w.dph, 80);
+  assert.equal(w.spm, 2000);
+});

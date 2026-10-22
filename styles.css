@@ -12,6 +12,7 @@
   --hard: #8a6a6a;
   --border: #2a2e36;
   --row-border: #1e222a;
+  --row-alt: #1a1d23;      /* zebra: even table rows, a touch lighter than --panel (opaque for pinned cells) */
   --shadow: rgba(0, 0, 0, 0.45);
   --cta-bg: rgba(20, 22, 26, 0.72);
   --cta-border: rgba(159, 212, 238, 0.35);
@@ -59,6 +60,7 @@ html[data-theme="light"] {
   --hard: #7a5555;
   --border: #c9bfb0;
   --row-border: #d8d0c4;
+  --row-alt: #dfd7c8;      /* zebra: even table rows, a touch darker than --panel */
   --shadow: rgba(60, 45, 20, 0.18);
   --cta-bg: rgba(240, 235, 227, 0.82);
   --cta-border: rgba(47, 111, 143, 0.35);
@@ -3114,3 +3116,12 @@ body.live-mode .room-select { display: none; }
   .wp-table th.wp-name, .wp-table td.wp-name { left: auto; box-shadow: none; max-width: 22ch; }
   .wp-table .wp-img { width: 40px; height: 20px; }
 }
+
+/* Zebra rows on every table (owner 2026-10-22): even rows a little lighter
+ * (dark theme) / darker (light theme), pinned cells included, so a row is easy
+ * to follow while scrolling sideways. New tables get it by using one of these
+ * classes. Hover keeps winning (declared after). */
+:is(.ranks-table, .stats-table, .rk-pos-table, .live-table, .st-table) tbody tr:nth-child(even) > :is(td, th) {
+  background-color: var(--row-alt);
+}
+.ranks-table tbody tr:hover td { background: var(--input-hover); }

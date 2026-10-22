@@ -26,7 +26,7 @@ export const CATALOG_URL = "assets/weapons/catalog.json";
 export const IMG_DIR = "assets/weapons/";
 export const CENSUS_IMG = "https://census.daybreakgames.com/files/ps2/images/static/";
 
-const FAC_STATS = ["weapon_kills", "weapon_headshots", "weapon_vehicle_kills"];
+const FAC_STATS = ["weapon_kills", "weapon_headshots", "weapon_vehicle_kills", "weapon_killed_by", "weapon_damage_given"];
 const PLAIN_STATS = ["weapon_deaths", "weapon_fire_count", "weapon_hit_count", "weapon_play_time", "weapon_score"];
 
 export function weaponStatUrls(base, cid) {
@@ -42,7 +42,7 @@ export function itemInfoUrl(base, ids) {
 }
 
 const KEY = {
-  weapon_kills: "kills", weapon_headshots: "hs", weapon_vehicle_kills: "vk",
+  weapon_kills: "kills", weapon_headshots: "hs", weapon_vehicle_kills: "vk", weapon_killed_by: "killedBy", weapon_damage_given: "dmg",
   weapon_deaths: "deaths", weapon_fire_count: "shots", weapon_hit_count: "hits",
   weapon_play_time: "secs", weapon_score: "score",
 };
@@ -58,7 +58,7 @@ export function summarizeWeapons(facRows, plainRows, minKills = AURAXIUM_KILLS) 
     const id = String((r && r.item_id) || "0");
     if (!k || id === "0" || !Number.isFinite(v)) return;
     let o = by.get(id);
-    if (!o) by.set(id, (o = { id, kills: 0, hs: 0, vk: 0, deaths: 0, shots: 0, hits: 0, secs: 0, score: 0 }));
+    if (!o) by.set(id, (o = { id, kills: 0, hs: 0, vk: 0, killedBy: 0, dmg: 0, deaths: 0, shots: 0, hits: 0, secs: 0, score: 0 }));
     o[k] += v;
   };
   for (const r of facRows || []) add(r, (+r.value_vs || 0) + (+r.value_nc || 0) + (+r.value_tr || 0));
@@ -72,6 +72,11 @@ export function summarizeWeapons(facRows, plainRows, minKills = AURAXIUM_KILLS) 
     o.acc = o.shots > 0 ? Math.min(1, o.hits / o.shots) : null;
     o.hsr = o.kills > 0 && o.shots > 0 ? Math.min(1, o.hs / o.kills) : null;
     o.vkpm = mins > 0 && o.vk > 0 ? o.vk / mins : null;
+    // IvI = accuracy % × headshot % (same aim score as the site's public IvI).
+    o.ivi = o.acc != null && o.hsr != null ? o.acc * 100 * o.hsr * 100 : null;
+    o.spk = o.shots > 0 ? o.shots / o.kills : null;
+    o.dph = o.hits > 0 && o.dmg > 0 ? o.dmg / o.hits : null;
+    o.spm = mins > 0 && o.score > 0 ? o.score / mins : null;
     out.push(o);
   }
   out.sort((a, b) => b.kills - a.kills || (+a.id) - (+b.id));
@@ -117,9 +122,15 @@ function columns() {
     { id: "kd", label: "K/D", hint: tr("wp.kdTip", "Kills per death while holding this weapon."), fn: (w) => w.kd, fmt: n2 },
     { id: "acc", label: tr("wp.acc", "Acc"), hint: tr("wp.accTip", "Accuracy: hits / shots fired."), fn: (w) => w.acc, fmt: pc },
     { id: "hsr", label: "HSR", hint: tr("wp.hsrTip", "Headshot kills / kills."), fn: (w) => w.hsr, fmt: pc },
+    { id: "ivi", label: "IvI", hint: tr("wp.iviTip", "Aim score: accuracy % × headshot %."), fn: (w) => w.ivi, fmt: (v) => (v == null ? "–" : Math.round(v).toLocaleString(lang())) },
+    { id: "hs", label: tr("wp.hs", "HS"), hint: tr("wp.hsTip", "Headshot kills."), fn: (w) => w.hs || null, fmt: n0 },
+    { id: "spk", label: "SPK", hint: tr("wp.spkTip", "Shots per kill (lower = fewer shots needed)."), fn: (w) => w.spk, fmt: (v) => (v == null ? "–" : v.toFixed(1)), asc: true },
+    { id: "dph", label: "DPH", hint: tr("wp.dphTip", "Damage per hit."), fn: (w) => w.dph, fmt: (v) => (v == null ? "–" : v.toFixed(1)) },
     { id: "vk", label: tr("wp.vk", "🚜 Veh kills"), hint: tr("wp.vkTip", "Vehicles destroyed with this weapon."), fn: (w) => w.vk || null, fmt: n0 },
+    { id: "killedBy", label: tr("wp.killedBy", "☠️ Killed by"), hint: tr("wp.killedByTip", "Times enemies killed you with this weapon."), fn: (w) => w.killedBy || null, fmt: n0 },
     { id: "secs", label: tr("wp.time", "Time"), hint: tr("wp.timeTip", "Time spent holding this weapon."), fn: (w) => w.secs, fmt: hrs },
     { id: "score", label: tr("wp.score", "Score"), hint: tr("wp.scoreTip", "Score earned with this weapon."), fn: (w) => w.score || null, fmt: n0 },
+    { id: "spm", label: "SPM", hint: tr("wp.spmTip", "Score per minute with this weapon."), fn: (w) => w.spm, fmt: (v) => (v == null ? "–" : Math.round(v).toLocaleString(lang())) },
   ];
 }
 
@@ -250,7 +261,7 @@ export function mountWeapons(section, { getJson, baseOf, sortScroll } = {}) {
     if (!th || !shown) return;
     const k = th.dataset.sort;
     if (sortKey === k) sortDir = sortDir === "asc" ? "desc" : "asc";
-    else { sortKey = k; sortDir = k === "name" ? "asc" : "desc"; }
+    else { const col = columns().find((c) => c.id === k); sortKey = k; sortDir = k === "name" || (col && col.asc) ? "asc" : "desc"; }
     const prevLeft = wrap.scrollLeft;
     render();
     if (sortScroll) sortScroll(wrap, table.querySelector(`th[data-sort="${k}"]`), prevLeft);

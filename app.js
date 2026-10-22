@@ -46,7 +46,7 @@ import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, diffVa
 import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261020-i18n2";
 import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261022-scrim1";
 import { infantryKillsUrl, summarizeInfantryKills } from "./infantry.mjs?v=20261020-i18n2";
-import { mountWeapons } from "./weapons.mjs?v=20261022-wp2";
+import { mountWeapons } from "./weapons.mjs?v=20261022-wp3";
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261021-theory1";
 import { createWheelSwiper } from "./dist-cycle.mjs?v=20261017-cycle15";
 import { slideSwap, attachDragCarousel } from "./chart-slide.mjs?v=20261020-flick1";
