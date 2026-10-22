@@ -5535,6 +5535,14 @@ import {
   }
   // PC | PlayStation room switch (#55): a new room starts empty — names never travel between rooms.
   {
+    // Room indicator (Dayset 2026-10-22): a single emoji outside Settings,
+    // visible at a glance; display only — the switch itself stays in the menu.
+    const roomBadge = document.getElementById("roomBadge");
+    if (roomBadge) {
+      const isPs = ROOM === "ps";
+      roomBadge.textContent = isPs ? "🎮" : "🖥️";
+      roomBadge.setAttribute("aria-label", isPs ? "PlayStation" : "PC");
+    }
     const roomSelect = document.getElementById("roomSelect");
     if (roomSelect) {
       roomSelect.value = ROOM;

@@ -2700,6 +2700,10 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
   justify-content: flex-end;
   gap: 0.3rem;
 }
+/* Room indicator (Dayset 2026-10-22): one emoji, always visible outside the
+ * Settings menu — 🖥️ PC / 🎮 PlayStation. Display only; switching stays in
+ * the menu. app.js sets it from the active room at init. */
+.room-badge { font-size: 1.05rem; line-height: 1; user-select: none; }
 .controls .fresh-row-end button.mini-btn {
   box-sizing: border-box;
   width: 1.9rem;
