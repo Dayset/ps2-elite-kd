@@ -2762,7 +2762,7 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
 .settings-row[hidden] { display: none; }
 .settings-label { font-size: 0.88rem; color: var(--text); white-space: nowrap; }
 .age-cut-ctl { display: inline-flex; align-items: center; gap: 0.3rem; }
-.age-step { min-width: 1.7rem; padding: 0.1rem 0.3rem; }
+.age-step { min-width: 1.7rem; padding: 0.1rem 0.3rem; touch-action: none; -webkit-touch-callout: none; user-select: none; }
 .age-input { font: inherit; font-size: 0.88rem; width: 3.6em; text-align: center; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 0.4rem; padding: 0.12rem 0.2rem; -moz-appearance: textfield; appearance: textfield; }
 .age-input::-webkit-outer-spin-button, .age-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .settings-row.bg-row { display: none; }

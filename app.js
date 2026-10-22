@@ -183,7 +183,8 @@ import {
   const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";
   /** "1" = hide adjusted-iVi ≤ 0 players from the Rankings table browse (footer checkbox). */
   const LS_HIDE_ZERO_IVI = "ps2-elite-kd-hide-zero-ivi";
-  /** Max account age in years (Settings stepper/input): Rankings browse hides accounts registered longer ago than this. At/above the oldest account in the data it cuts nobody. */
+  /** Max account age in whole months (Settings stepper/input): Rankings browse hides accounts registered longer ago than this. At/above the oldest account in the data it cuts nobody. The years key is the 2026-10-22 first-ship unit; saved years values migrate ×12 on first read. */
+  const LS_MAX_AGE_MONTHS = "ps2-elite-kd-max-age-months";
   const LS_MAX_AGE_YEARS = "ps2-elite-kd-max-age-years";
   /** Chart view: "banded" (🎚️ Smooth, opt-in) or anything else = cumulative (default; 💀 K/D / 🎯 aim views). Stored values unchanged. */
   // v2: Smooth shipped 2026-10-08 and test taps left "banded" saved for some
@@ -1839,7 +1840,7 @@ import {
   }
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261022-age1")
+    rankingsLoading = import("./rankings.mjs?v=20261022-age2")
       .then((m) => {
         rankingsApi = m.initRankings(rankingsHost);
         return rankingsApi.ready;
@@ -3594,33 +3595,72 @@ import {
     });
   }
 
-  /* Max account age (Settings): − / + steppers and a directly editable years
-   * value, 0.1 steps. app.js owns the control and the saved value; Rankings
-   * reads the same key and hears the input's "change" (fired by the steppers,
-   * and by typed edits — this clamp runs first, so Rankings sees the final
-   * value). With nothing saved the input shows a stand-in ceiling above any
-   * real account age (cuts nobody); Rankings refines the ceiling to the
-   * oldest account in the loaded data once it arrives. */
+  /* Max account age (Settings): − / + steppers and a directly editable value
+   * in whole months, 1-month steps (Dayset 2026-10-22: months read better
+   * than decimal years). app.js owns the control and the saved value;
+   * Rankings reads the same key and hears the input's "change" (fired by the
+   * steppers, and by typed edits — this clamp runs first, so Rankings sees
+   * the final value). With nothing saved the input shows a stand-in ceiling
+   * above any real account age (cuts nobody); Rankings refines the ceiling
+   * to the oldest account in the loaded data once it arrives. */
   if (els.maxAgeInput) {
-    const AGE_CEIL_FALLBACK = 15;
+    const AGE_CEIL_FALLBACK = 200;
     const ageCeil = () => parseFloat(els.maxAgeInput.max) || AGE_CEIL_FALLBACK;
-    const clampAge = (v) => Math.min(ageCeil(), Math.max(0.1, Math.round(v * 10) / 10));
+    const clampAge = (v) => Math.min(ageCeil(), Math.max(1, Math.round(v)));
     const ageShown = () => {
       const v = parseFloat(els.maxAgeInput.value);
       return Number.isFinite(v) ? v : ageCeil();
     };
     const applyAge = (v, fire) => {
       const cl = clampAge(v);
-      els.maxAgeInput.value = cl.toFixed(1);
-      try { localStorage.setItem(LS_MAX_AGE_YEARS, cl.toFixed(1)); } catch (_) { /* private mode */ }
+      els.maxAgeInput.value = String(cl);
+      try {
+        localStorage.setItem(LS_MAX_AGE_MONTHS, String(cl));
+        localStorage.removeItem(LS_MAX_AGE_YEARS);
+      } catch (_) { /* private mode */ }
       if (fire) els.maxAgeInput.dispatchEvent(new Event("change", { bubbles: true }));
     };
     els.maxAgeInput.max = AGE_CEIL_FALLBACK;
     let savedAge = NaN;
-    try { savedAge = parseFloat(localStorage.getItem(LS_MAX_AGE_YEARS)); } catch (_) { /* private mode */ }
-    els.maxAgeInput.value = (Number.isFinite(savedAge) ? clampAge(savedAge) : AGE_CEIL_FALLBACK).toFixed(1);
-    els.maxAgeMinus?.addEventListener("click", () => applyAge(ageShown() - 0.1, true));
-    els.maxAgePlus?.addEventListener("click", () => applyAge(ageShown() + 0.1, true));
+    try {
+      savedAge = parseFloat(localStorage.getItem(LS_MAX_AGE_MONTHS));
+      if (!Number.isFinite(savedAge)) {
+        // First-ship values were decimal years: migrate ×12, once.
+        const yrs = parseFloat(localStorage.getItem(LS_MAX_AGE_YEARS));
+        if (Number.isFinite(yrs)) {
+          savedAge = Math.round(yrs * 12);
+          localStorage.setItem(LS_MAX_AGE_MONTHS, String(savedAge));
+          localStorage.removeItem(LS_MAX_AGE_YEARS);
+        }
+      }
+    } catch (_) { /* private mode */ }
+    els.maxAgeInput.value = String(Number.isFinite(savedAge) ? clampAge(savedAge) : AGE_CEIL_FALLBACK);
+    /* Press-and-hold repeats, faster the longer the hold (Dayset 2026-10-22):
+     * one step on press, repeats start after 0.4 s at ~12/s, then ~33/s.
+     * The click that follows a pointer press is swallowed (the press already
+     * stepped); a click without a press (keyboard / assistive) steps once. */
+    const holdStep = (btn, dir) => {
+      if (!btn) return;
+      let timer = 0, pressed = false;
+      const stop = () => { clearTimeout(timer); timer = 0; };
+      btn.addEventListener("pointerdown", (e) => {
+        e.preventDefault();
+        pressed = true;
+        applyAge(ageShown() + dir, true);
+        let n = 0;
+        const tick = () => { applyAge(ageShown() + dir, true); n += 1; timer = setTimeout(tick, n < 10 ? 80 : 30); };
+        stop();
+        timer = setTimeout(tick, 400);
+      });
+      for (const evName of ["pointerup", "pointerleave", "pointercancel"]) btn.addEventListener(evName, stop);
+      btn.addEventListener("contextmenu", (e) => e.preventDefault());
+      btn.addEventListener("click", () => {
+        if (pressed) { pressed = false; return; }
+        applyAge(ageShown() + dir, true);
+      });
+    };
+    holdStep(els.maxAgeMinus, -1);
+    holdStep(els.maxAgePlus, 1);
     els.maxAgeInput.addEventListener("change", () => applyAge(ageShown(), false));
   }
 

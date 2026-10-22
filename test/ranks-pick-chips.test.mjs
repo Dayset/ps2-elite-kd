@@ -147,7 +147,7 @@ describe("Hide adjusted-iVi ≤ 0 players (footer checkbox)", () => {
 });
 
 describe("Max account age cut (Settings stepper, owner 2026-10-22)", () => {
-  it("one-line settings row: − / + steppers around a 0.1-step years input", () => {
+  it("one-line settings row: − / + steppers around a whole-months input", () => {
     const index = read("index.html");
     const themeAt = index.indexOf('id="themeToggle"');
     const ageAt = index.indexOf('id="maxAgeInput"');
@@ -155,23 +155,25 @@ describe("Max account age cut (Settings stepper, owner 2026-10-22)", () => {
     assert.ok(themeAt >= 0 && ageAt > themeAt && wipeAt > ageAt, "age row sits between Theme and Clear local data");
     assert.match(index, /id="maxAgeMinus"/);
     assert.match(index, /id="maxAgePlus"/);
-    assert.match(index, /id="maxAgeInput" type="number" class="age-input" min="0\.1" step="0\.1"/);
+    assert.match(index, /id="maxAgeInput" type="number" class="age-input" min="1" step="1"/);
     assert.match(index, /data-i18n="age\.label"/);
     assert.match(read("i18n/en.json"), /"age\.label": "Max account age"/);
   });
 
   it("shared saved key; browse drops accounts older than the value, search keeps them", () => {
     const s = rankingsSource();
-    assert.match(s, /LS_MAX_AGE_YEARS = "ps2-elite-kd-max-age-years"/);
-    assert.match(s, /let maxAgeYears = readMaxAgeYears\(\)/);
-    assert.match(s, /if \(maxAgeYears\) \{/);
+    assert.match(s, /LS_MAX_AGE_MONTHS = "ps2-elite-kd-max-age-months"/);
+    assert.match(s, /let maxAgeMonths = readMaxAgeMonths\(\)/);
+    assert.match(s, /if \(maxAgeMonths\) \{/);
     assert.match(s, /!\(fin\(r\.created\) && r\.created > 0 && r\.created < cutoff\)/);
+    // First-ship decimal-years values convert ×12 in the reader too.
+    assert.match(s, /Math\.round\(yrs \* 12\)/);
     const app = read("app.js");
-    assert.match(app, /LS_MAX_AGE_YEARS = "ps2-elite-kd-max-age-years"/);
-    assert.match(app, /maxAgeMinus\?\.addEventListener\("click"/);
-    assert.match(app, /maxAgePlus\?\.addEventListener\("click"/);
-    // Steppers step by exactly 0.1 years.
-    assert.match(app, /applyAge\(ageShown\(\) - 0\.1, true\)/);
-    assert.match(app, /applyAge\(ageShown\(\) \+ 0\.1, true\)/);
+    assert.match(app, /LS_MAX_AGE_MONTHS = "ps2-elite-kd-max-age-months"/);
+    // Steppers: 1 month per step, press-and-hold repeats (accelerating).
+    assert.match(app, /holdStep\(els\.maxAgeMinus, -1\)/);
+    assert.match(app, /holdStep\(els\.maxAgePlus, 1\)/);
+    assert.match(app, /addEventListener\("pointerdown"/);
+    assert.match(app, /setTimeout\(tick, 400\)/);
   });
 });
