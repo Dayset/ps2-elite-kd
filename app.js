@@ -5210,6 +5210,12 @@ import {
     // 💀 ⇄ 🎯 (same as swiping). The pills' own focused-key handler owns
     // arrows while a pill has focus; typing in any field is untouched, and
     // when neither graph is centred the keys keep scrolling the page.
+    // t489u: CAPTURE phase + stopPropagation on a claim. A control that kept
+    // focus from an earlier click (the ✨ stats-carousel tabs) otherwise grabs
+    // the arrow first — its handler switches slide and focus()es the new tab,
+    // dragging the page up to it while the user is looking at the 📊 chart.
+    // Claiming here, by screen geometry, keeps the keys with the graph the
+    // user is actually looking at; unclaimed keys flow on untouched.
     window.addEventListener("keydown", (e) => {
       if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
@@ -5225,13 +5231,15 @@ import {
       );
       if (pick === "dist" && rankingsApi) {
         e.preventDefault();
+        e.stopPropagation();
         rankingsApi.stepDist(dir);
         sfx("sparkle");
       } else if (pick === "skill" && AIM_VIEW) {
         e.preventDefault();
+        e.stopPropagation();
         flipView(dir);
       }
-    });
+    }, { capture: true });
   }
   // t380u: phones have no hover — tapping 💀 / 📈 also shows what that view means.
   if (els.chartModeBar) {
