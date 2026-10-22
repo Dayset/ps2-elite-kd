@@ -30,6 +30,9 @@ const KEY = process.env.CENSUS_PROXY_KEY || "";
 const UA = "ps2-elite-kd weapon-catalog (+https://dayset.github.io/ps2-elite-kd/)";
 const MAX_IMAGES = +process.env.MAX_IMAGES || 3000;
 const PAGE = 1000;
+// Stop downloading before the job limit so the commit step still runs; the next run continues.
+const BUDGET_MS = (+process.env.TIME_BUDGET_SEC || 18 * 60) * 1000;
+const T0 = Date.now();
 
 const via = (u) => (PROXY && u.startsWith(HOST + "/") ? `${PROXY}/census${u.slice(HOST.length)}` : u);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -86,8 +89,10 @@ if (!hasCwebp) {
 
 const imgs = [...new Set(Object.values(items).map((e) => e[3]).filter(Boolean))].filter((id) => !existsSync(join(OUT, `${id}.webp`)));
 const tmp = join(tmpdir(), "wp-img.png");
-let ok = 0, miss = 0;
+let ok = 0, miss = 0, done = 0;
 for (const id of imgs.slice(0, MAX_IMAGES)) {
+  if (Date.now() - T0 > BUDGET_MS) break;
+  done++;
   let buf = null;
   try { buf = await get(`${HOST}/files/ps2/images/static/${id}.png`, { binary: true }); } catch {}
   if (!buf || buf.length < 100) { miss++; continue; }
@@ -99,4 +104,4 @@ for (const id of imgs.slice(0, MAX_IMAGES)) {
   await sleep(120);
 }
 try { rmSync(tmp); } catch {}
-console.log(`::notice::weapon catalog: ${n} weapons; images ${ok} new, ${miss} unavailable, ${Math.max(0, imgs.length - MAX_IMAGES)} left for next run`);
+console.log(`::notice::weapon catalog: ${n} weapons; images ${ok} new, ${miss} unavailable, ${imgs.length - done} left for next run`);
