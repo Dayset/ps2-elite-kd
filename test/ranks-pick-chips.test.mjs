@@ -155,7 +155,7 @@ describe("Max account age cut (Settings stepper, owner 2026-10-22)", () => {
     assert.ok(themeAt >= 0 && ageAt > themeAt && wipeAt > ageAt, "age row sits between Theme and Clear local data");
     assert.match(index, /id="maxAgeMinus"/);
     assert.match(index, /id="maxAgePlus"/);
-    assert.match(index, /id="maxAgeInput" type="number" class="age-input" min="1" step="1"/);
+    assert.match(index, /id="maxAgeInput" type="number" class="age-input" min="0" step="1"/);
     assert.match(index, /data-i18n="age\.label"/);
     assert.match(read("i18n/en.json"), /"age\.label": "Max account age"/);
   });
@@ -175,5 +175,7 @@ describe("Max account age cut (Settings stepper, owner 2026-10-22)", () => {
     assert.match(app, /holdStep\(els\.maxAgePlus, 1\)/);
     assert.match(app, /addEventListener\("pointerdown"/);
     assert.match(app, /setTimeout\(tick, 400\)/);
+    // 0 = max age (Dayset 2026-10-22): clamps to the ceiling, never to 1.
+    assert.match(app, /return r <= 0 \? ageCeil\(\) : Math\.min\(ageCeil\(\), r\);/);
   });
 });

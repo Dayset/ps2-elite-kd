@@ -3606,7 +3606,12 @@ import {
   if (els.maxAgeInput) {
     const AGE_CEIL_FALLBACK = 200;
     const ageCeil = () => parseFloat(els.maxAgeInput.max) || AGE_CEIL_FALLBACK;
-    const clampAge = (v) => Math.min(ageCeil(), Math.max(1, Math.round(v)));
+    // 0 = max age (Dayset 2026-10-22): entering 0 means the ceiling value
+    // (the oldest account's age — cuts nobody), not 1 month.
+    const clampAge = (v) => {
+      const r = Math.round(v);
+      return r <= 0 ? ageCeil() : Math.min(ageCeil(), r);
+    };
     const ageShown = () => {
       const v = parseFloat(els.maxAgeInput.value);
       return Number.isFinite(v) ? v : ageCeil();
