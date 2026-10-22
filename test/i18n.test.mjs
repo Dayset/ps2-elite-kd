@@ -40,7 +40,7 @@ test("language menu lists exactly the languages the code knows, in order", () =>
   assert.ok(sel, "index.html has the language menu");
   const menu = [...sel[0].matchAll(/<option value="([a-z]{2})"/g)].map((m) => m[1]);
   assert.deepEqual(menu, codes);
-  assert.deepEqual(codes, ["en", "ja", "ru", "de", "fr", "zh", "es"], "Japanese first, then Russian, German, French, Chinese, Spanish");
+  assert.deepEqual(codes, ["en", "ja", "ru", "de", "fr", "zh", "es", "uk"], "Japanese first, then Russian, German, French, Chinese, Spanish, Ukrainian");
 });
 
 test("every language has a file, and every file is valid JSON of strings", () => {

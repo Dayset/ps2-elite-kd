@@ -12,6 +12,7 @@ the visitor picks (or the browser's language, if it is supported).
 | `fr.json` | Français | 5 |
 | `zh.json` | 中文 | 6 |
 | `es.json` | Español | 7 |
+| `uk.json` | Українська | 8 |
 
 ## How to translate a file
 

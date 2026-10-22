@@ -20,6 +20,7 @@ export const LANGS = [
   { code: "fr", name: "Français", flag: "🇫🇷" },
   { code: "zh", name: "中文", flag: "🇨🇳" },
   { code: "es", name: "Español", flag: "🇪🇸" },
+  { code: "uk", name: "Українська", flag: "🇺🇦" },
 ];
 
 const STORE = "ps2-elite-kd-lang";
