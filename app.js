@@ -92,7 +92,7 @@ import {
   THIN_MARK,
   THIN_NOTE_HEAD,
   thinPlayerLine,
-} from "./player-metrics.mjs?v=20261021-bare1";
+} from "./player-metrics.mjs?v=20261022-ps1";
 /** "22 kills / 60 deaths" in the opponent sample (MIN_FIGHTS counts). */
 function fightsText(r) {
   const k = r.sampleKills || 0;
@@ -110,13 +110,15 @@ import { accountTimes, flairsHtml, flairsFor } from "./flairs.mjs?v=20261010-sav
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
 import "./name-peek.mjs?v=20261020-peekwin1";
 import { sfx, recentGesture, mountSfxToggle } from "./sfx.mjs?v=20261020-poof";
-import { mountNameSuggest } from "./name-suggest.mjs?v=20261016-sug1";
+import { mountNameSuggest } from "./name-suggest.mjs?v=20261022-ps1";
 import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261010-sav1";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
 import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261020-i18n2";
 // Live data: Daybreak Census only (batched, paced); Honu just for a rare history fallback.
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { dotSlot, refreshOnline } from "./online-status.mjs?v=20261018-onl1";
+// PC | PlayStation rooms (#55): ?room=ps reads data-ps/ and the PS Census namespaces only.
+import { pageRoom, dataPrefix, ROOMS, PS_SERVERS, censusNsBase, nsOfBase, parsePsKey, roomLsKey, withRoom } from "./rooms.mjs?v=20261022-ps1";
 import {
   censusBase,
   censusRequest,
@@ -140,21 +142,37 @@ import {
   }
   const HONU = "https://wt.honu.pw/api/character/";
   const CENSUS = censusBase(CENSUS_SERVICE_ID);
+  /*
+   * Room (#55). PC (default) is exactly as before. The PlayStation room
+   * (?room=ps) reads data-ps/ only, looks players up on Genudine / Ceres only,
+   * keeps its own browser storage and never talks to the PC cache Worker, so
+   * a PS player and a PC player can never meet in one search, graph or pool.
+   */
+  const ROOM = pageRoom();
+  const IS_PS = ROOM === "ps";
+  const DATA = dataPrefix(ROOM);
+  /** Census bases for live loads, in search order (PC: ps2; PS: Genudine, then Ceres). */
+  const CENSUS_BASES = IS_PS ? ROOMS.ps.namespaces.map((ns) => censusNsBase(ns, CENSUS_SERVICE_ID)) : [CENSUS];
+  async function refreshOnlineRoom(roots) {
+    for (const b of CENSUS_BASES) await refreshOnline(b, roots);
+  }
+  if (typeof document !== "undefined") document.documentElement.dataset.room = ROOM;
   /** Client-side Census pacing (s:example allows 10 req/min per IP). Shared by every live fetch in this tab. */
   setInterval(() => {
-    if (typeof document !== "undefined" && document.visibilityState === "visible") refreshOnline(CENSUS, [els.stats, els.statsPublic]);
+    if (typeof document !== "undefined" && document.visibilityState === "visible") refreshOnlineRoom([els.stats, els.statsPublic]);
   }, 60_000);
   const censusBucket = tokenBucket(defaultCensusRate(CENSUS_SERVICE_ID));
   /** At most 2 Census requests in flight per tab (big killboards + batched stats). */
   const censusLimit = limitConcurrency(2);
   const DOT_R = 3;
 
-  const LS_CACHE = "ps2-elite-kd-cache-v2";
-  const LS_CACHE_OLD = "ps2-elite-kd-cache-v1";
-  const LS_RECENT = "ps2-elite-kd-recent";
-  const LS_LAST = "ps2-elite-kd-last";
+  // Player storage is per room (#55: PS keys end in ":ps"; PC keys unchanged).
+  const LS_CACHE = roomLsKey("ps2-elite-kd-cache-v2", ROOM);
+  const LS_CACHE_OLD = roomLsKey("ps2-elite-kd-cache-v1", ROOM);
+  const LS_RECENT = roomLsKey("ps2-elite-kd-recent", ROOM);
+  const LS_LAST = roomLsKey("ps2-elite-kd-last", ROOM);
   // Current name chips (analyzed or not) so a refresh keeps the selection.
-  const LS_PENDING = "ps2-elite-kd-pending-names";
+  const LS_PENDING = roomLsKey("ps2-elite-kd-pending-names", ROOM);
   const LS_THEME = "ps2-elite-kd-theme";
   /** 🖼️ PC page background image: "0" = off (hidden); anything else = on (default). */
   const LS_BG_IMAGE = "ps2-elite-kd-bg-image";
@@ -177,8 +195,8 @@ import {
   const DEFAULT_NAMES = [];
   /** Empty-field Analyze default + names input placeholder. */
   const DEFAULT_PLACEHOLDER_NAME = "ShloDog";
-  const SHARED_INDEX_URL = "data/index.json";
-  const SHARED_NAMES_URL = "data/names.json"; // slim startup list (scripts/build-ranks.mjs buildNames)
+  const SHARED_INDEX_URL = `${DATA}index.json`;
+  const SHARED_NAMES_URL = `${DATA}names.json`; // slim startup list (scripts/build-ranks.mjs buildNames)
   /** Cloudflare Worker that queues names into the shared data/ cache. "" disables. */
   const WORKER_URL = "https://ps2-elite-kd-cache.dayset.workers.dev";
   /** Slugs already sent this page session (avoid re-posting on every Analyze). */
@@ -189,7 +207,7 @@ import {
   let sharedIndexLoaded = false;
   // Player legends are switched off (owner, 2026-10-20: not needed). The shards stay in data/
   // and the loader below is kept; set LEGENDS_ON = true to bring them back.
-  const LEGENDS_ON = false;
+  const LEGENDS_ON = false && !IS_PS; // legends are PC players' (#55): never in the PS room
   // Story-style player legends (data/descriptions/<first-char>.json, keyed by slug).
   // Shown on the name hover in ✨ Adjusted. Shards load lazily for the players
   // currently shown; index.json supplies the version param, so a new deploy
@@ -352,7 +370,7 @@ import {
   // (the 💀 / 🎯 buttons, swipe / wheel / ←→ flips all follow this flag).
   const AIM_VIEW = false;
   let yScalePct = 50;
-  let ghostsOn = readGhostsOn();
+  let ghostsOn = !IS_PS && readGhostsOn(); // 👻 model is fit on PC players (#55)
   let fetching = false;
   /** Active analyze run: { controller, signal } or null. */
   let activeRun = null;
@@ -970,12 +988,25 @@ import {
     return p;
   }
 
-  /** data/names.json ([name, savedAt] pairs, built with ranks.json) → index entries. */
+  /**
+   * data/names.json ([name, savedAt] pairs, built with ranks.json) → index entries.
+   * PS room (#55): rows are [name, savedAt, file, slug] (files keyed by server +
+   * character id); the key ("us-<cid>") is an alias, so a player is always
+   * reachable by key even if another character in the room has the same name.
+   */
   function namesToIndex(d) {
     if (!d || d.v !== 1 || !Array.isArray(d.players) || !d.players.length) return null;
     const players = [];
     for (const row of d.players) {
       const name = row && row[0];
+      if (IS_PS) {
+        const file = row && typeof row[2] === "string" ? row[2] : "";
+        const key = (/^players\/((?:us|eu)-\d{5,25})\.json$/.exec(file) || [])[1];
+        const slug = row && typeof row[3] === "string" ? row[3] : "";
+        if (!key || !slug) continue; // PS entries without their own file are never guessed from the name
+        players.push({ name: bareName(name), slug, file, key, savedAt: +row[1] || 0, aliases: slug.includes("-") ? [key] : [slug, String(bareName(name)).toLowerCase(), key] });
+        continue;
+      }
       const slug = slugKey(name);
       if (!slug) continue;
       players.push({ name: bareName(name), slug, file: `players/${slug}.json`, savedAt: +row[1] || 0, aliases: [slug, String(name).toLowerCase()] });
@@ -1014,7 +1045,7 @@ import {
     }
     try {
       const early = typeof window !== "undefined" && window.__ps2Early && window.__ps2Early.reviewed;
-      confirmedPadders = confirmedPadderSlugs((early && (await early)) || (await fetchJson("data/reviewed.json")));
+      confirmedPadders = confirmedPadderSlugs((early && (await early)) || (await fetchJson(`${DATA}reviewed.json`)));
     } catch {
       /* keep the last set (missing file = nobody confirmed) */
     }
@@ -1466,7 +1497,7 @@ import {
   function loadRanksPayload() {
     if (!ranksPayloadLoad) {
       const early = takeEarly("ranks"); // only if a page started it (index.html leaves the full table to Rankings)
-      ranksPayloadLoad = (early || fetch("data/ranks.json", { cache: "no-cache" }).then((r) => (r.ok ? r.json() : null)))
+      ranksPayloadLoad = (early || fetch(`${DATA}ranks.json`, { cache: "no-cache" }).then((r) => (r.ok ? r.json() : null)))
         .catch(() => null)
         .then((d) => {
           if (!d || !Array.isArray(d.cols) || !Array.isArray(d.rows)) ranksPayloadLoad = null; // allow a retry
@@ -1482,7 +1513,7 @@ import {
   function loadRanksLite() {
     if (!ranksLiteLoad) {
       const early = takeEarly("ranksLite");
-      ranksLiteLoad = (early || fetch("data/ranks-lite.json", { cache: "no-cache" }).then((r) => (r.ok ? r.json() : null)))
+      ranksLiteLoad = (early || fetch(`${DATA}ranks-lite.json`, { cache: "no-cache" }).then((r) => (r.ok ? r.json() : null)))
         .catch(() => null)
         .then((d) => (d && Array.isArray(d.cols) && Array.isArray(d.rows) ? d : loadRanksPayload()));
     }
@@ -1768,7 +1799,7 @@ import {
   }
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261021-pxx2")
+    rankingsLoading = import("./rankings.mjs?v=20261022-ps1")
       .then((m) => {
         rankingsApi = m.initRankings(rankingsHost);
         return rankingsApi.ready;
@@ -2304,12 +2335,13 @@ import {
     const shared = findSharedEntry(name);
     const candidates = [];
     if (shared && shared.file) {
-      const rel = String(shared.file).replace(/^\.?\/?data\//, "");
-      candidates.push(`data/${rel}`);
+      const rel = String(shared.file).replace(/^\.?\/?data(?:-ps)?\//, "");
+      candidates.push(`${DATA}${rel}`);
     }
     // (The old data/<key>.json and data/<key>_top50.json layouts are gone: probing them
-    // just added two 404s to every unknown name.)
-    candidates.push(`data/players/${key}.json`);
+    // just added two 404s to every unknown name.) PS files are keyed by server + id:
+    // never guessed from a name.
+    if (!IS_PS) candidates.push(`data/players/${key}.json`);
     const seen = new Set();
     const unique = [];
     for (const p of candidates) {
@@ -2348,6 +2380,7 @@ import {
   async function resolveCensus(name, signal) {
     const raw = censusQueryName(name); // "[TAG] Name" → "Name"
     if (!raw) throw new NameLoadError(`Census: empty name ${JSON.stringify(name)}`, "not-found");
+    if (IS_PS) return resolveCensusPs(raw, name, signal);
     let url;
     if (/^\d{16,}$/.test(raw)) {
       url = `${CENSUS}character?character_id=${encodeURIComponent(raw)}&c:resolve=outfit,stat_history`;
@@ -2372,6 +2405,57 @@ import {
       throw new NameLoadError(`Census: no character ${raw}`, "not-found");
     }
     return chars[0];
+  }
+
+  /**
+   * PlayStation room (#55): a saved player is looked up by its own server +
+   * character id (never by name, so a namesake can't stand in); a key typed as
+   * "us-<cid>" / "eu-<cid>" the same way; anything else by name on Genudine,
+   * then Ceres. Only PS namespaces are ever asked. The answer carries _base
+   * (its namespace), which every later call for this player uses.
+   */
+  async function resolveCensusPs(raw, name, signal) {
+    const shared = findSharedEntry(name);
+    const id = parsePsKey((shared && shared.key) || raw.toLowerCase());
+    const show = "&c:resolve=outfit,stat_history";
+    const tries = id
+      ? [{ base: censusNsBase(id.ns, CENSUS_SERVICE_ID), q: `character_id=${encodeURIComponent(id.cid)}` }]
+      : CENSUS_BASES.map((base) => ({
+          base,
+          q: /^\d{16,}$/.test(raw) ? `character_id=${encodeURIComponent(raw)}` : `name.first_lower=${encodeURIComponent(raw.toLowerCase())}`,
+        }));
+    for (const t of tries) {
+      let data;
+      try {
+        data = await censusJson(`${t.base}character?${t.q}${show}`, signal);
+      } catch (e) {
+        if (isAbortError(e)) throw e;
+        throw new NameLoadError(e.message, e && e.kind === "census-busy" ? "census-busy" : "network");
+      }
+      if (!data || typeof data !== "object") throw new NameLoadError(`Census: bad response for ${raw}`, "bad-response");
+      if (!Array.isArray(data.character_list) && (data.error || data.errorCode)) {
+        throw new NameLoadError(`Census unavailable: ${data.error || data.errorCode}`, "network");
+      }
+      const c = (data.character_list || [])[0];
+      if (c && c.character_id && (!id || String(c.character_id) === id.cid)) {
+        c._base = t.base;
+        return c;
+      }
+    }
+    throw new NameLoadError(`Census: no character ${raw} on Genudine or Ceres`, "not-found");
+  }
+
+  /** PS server name ("Genudine" / "Ceres") of a Census base, or "". */
+  function serverOfBase(base) {
+    const s = PS_SERVERS[nsOfBase(base)];
+    return s ? s.name : "";
+  }
+
+  /** PS room: small server tag after a player's name ("Genudine" / "Ceres"); nothing on PC. */
+  function serverTagHtml(p) {
+    if (!IS_PS || !p || !p.server) return "";
+    const s = escapeHtml(p.server);
+    return `<span class="srv-tag" title="${escapeHtml(tr("room.serverTip", "PlayStation server: {s}", { s: p.server }))}">${s}</span>`;
   }
 
   /**
@@ -2435,8 +2519,10 @@ import {
   async function loadLiveInner(name, signal) {
     const c = await resolveCensus(name, signal);
     const cid = c.character_id;
-    if (!["kills", "deaths", "time"].every((t) => (((c.stats || {}).stat_history) || []).some((x) => x && x.stat_name === t))) {
-      await honuHistoryFallback(c, signal);
+    // PC: ps2. PS room: the namespace the character was found in (#55).
+    const base = c._base || CENSUS;
+    if (!IS_PS && !["kills", "deaths", "time"].every((t) => (((c.stats || {}).stat_history) || []).some((x) => x && x.stat_name === t))) {
+      await honuHistoryFallback(c, signal); // Honu is PC only
     }
     const outfit = c.outfit || {};
     const gk = hist(c, "kills"), gd = hist(c, "deaths"), gt = hist(c, "time");
@@ -2448,7 +2534,7 @@ import {
     let r;
     try {
       r = await fetchPlayerCensus(cid, {
-        base: CENSUS,
+        base,
         topN: OPPONENT_TOP_N,
         getJson: (u) => censusJson(u, signal),
       });
@@ -2468,7 +2554,7 @@ import {
     // Infantry value and the vehicle / MAX cut; falls back to the shared copy's split.
     let infantry = null;
     try {
-      const j = await censusJson(infantryKillsUrl(CENSUS, [cid]), signal);
+      const j = await censusJson(infantryKillsUrl(base, [cid]), signal);
       infantry = summarizeInfantryKills((j && j.characters_weapon_stat_by_faction_list) || []);
     } catch (e) {
       if (isAbortError(e)) throw e;
@@ -2491,7 +2577,8 @@ import {
         rows,
         curve: kpmCurve(rows),
         top: OPPONENT_TOP_N,
-        honu: `https://wt.honu.pw/c/${cid}/killboard`,
+        honu: IS_PS ? "" : `https://wt.honu.pw/c/${cid}/killboard`,
+        ...(IS_PS ? { room: "ps", server: serverOfBase(base) } : {}),
         // Already in the character answer (no extra call): flairs.mjs.
         times: accountTimes(c),
         ...(infantry ? { infantry } : {}),
@@ -2627,7 +2714,7 @@ import {
   }
   /** The 🎥 Live button hides behind the same "show older debug stats" box. */
   function syncLiveBtn() {
-    if (els.liveBtn) els.liveBtn.hidden = !showDebugCols;
+    if (els.liveBtn) els.liveBtn.hidden = IS_PS || !showDebugCols; // Live is PC only (#55)
   }
   function syncChartModeUi() {
     if (!els.chartModeBar) return;
@@ -2646,7 +2733,7 @@ import {
   }
 
   function setGhostsOn(on, { redraw = true } = {}) {
-    ghostsOn = !!on;
+    ghostsOn = !IS_PS && !!on;
     try {
       localStorage.setItem(LS_GHOSTS, ghostsOn ? "1" : "0");
     } catch {
@@ -3784,7 +3871,7 @@ import {
             `<tr><th scope="row" class="stats-name" style="color:${col}">` +
             dotSlot(row.p.cid) +
             `<span class="player-num" aria-label="${tr("stats.series", "Series {n}", { n: num })}">${num}.</span>` +
-            `${nameSpanHtml(row.p.display, farmTitle(row.p) + (withDesc ? descTitle(row.p) : ""), withDesc ? descText(row.p) : "", honuProfileUrl(row.p.cid))}${padMarkHtml(row.p)}${legacySampleHtml(row.p)}</th>${vals}</tr>`
+            `${nameSpanHtml(row.p.display, farmTitle(row.p) + (withDesc ? descTitle(row.p) : ""), withDesc ? descText(row.p) : "", IS_PS ? "" : honuProfileUrl(row.p.cid))}${serverTagHtml(row.p)}${padMarkHtml(row.p)}${legacySampleHtml(row.p)}</th>${vals}</tr>`
           );
         })
         .join("");
@@ -3842,7 +3929,7 @@ import {
     `;
 
     // 🟢/🔴 online dots: paint from cache now, fetch stale ids from Census.
-    refreshOnline(CENSUS, [els.stats, els.statsPublic]);
+    refreshOnlineRoom([els.stats, els.statsPublic]);
     // Keep the ⚠️ note open/closed across re-sorts (starts collapsed each page load).
     const thinDet = els.stats.querySelector("details.stats-thin-note");
     if (thinDet) thinDet.addEventListener("toggle", () => { thinNoteOpen = thinDet.open; });
@@ -4473,7 +4560,7 @@ import {
   }
 
   function suggestSharedCache(loaded, { quiet = isLiveMode() } = {}) {
-    if (!WORKER_URL || typeof fetch === "undefined") return;
+    if (!WORKER_URL || IS_PS || typeof fetch === "undefined") return; // PC cache Worker: never PS names (#55)
     const names = [];
     for (const { name, player } of loaded || []) {
       const src = String((player && player.source) || "");
@@ -4527,7 +4614,7 @@ import {
   const SEEN_TTL_MS = 24 * 3600 * 1000;
   const seenSent = new Set();
   function markRequested(loaded) {
-    if (!WORKER_URL || typeof fetch === "undefined") return;
+    if (!WORKER_URL || IS_PS || typeof fetch === "undefined") return; // PC cache Worker: never PS names (#55)
     const now = Date.now();
     const names = [];
     for (const { name, player } of loaded || []) {
@@ -4565,7 +4652,7 @@ import {
    */
   const FRESH_PING_GAP_MS = 3600 * 1000;
   function markFresh(loaded) {
-    if (!WORKER_URL || typeof fetch === "undefined") return;
+    if (!WORKER_URL || IS_PS || typeof fetch === "undefined") return; // PC cache Worker: never PS names (#55)
     const now = Date.now();
     const names = [];
     for (const { name, player } of loaded || []) {
@@ -4671,7 +4758,7 @@ import {
     const url = new URL(window.location.href);
     if (param) url.searchParams.set("names", param);
     else url.searchParams.delete("names");
-    return url.toString();
+    return IS_PS ? withRoom(url.toString(), "ps") : url.toString();
   }
 
   async function copyShareLink() {
@@ -4837,7 +4924,7 @@ import {
    */
   (function pageNameRate() {
     const el = document.getElementById("pageNameRate");
-    if (!el) return;
+    if (!el || IS_PS) return; // PC cache growth: not shown in the PlayStation room (#55)
     const LAUNCH_UTC = Date.UTC(2026, 9, 7);
     const compute = (total) => {
       const now = new Date();
@@ -4987,7 +5074,8 @@ import {
     mountNameSuggest({
       input: els.namesInput,
       anchor: document.getElementById("namesBox") || els.namesInput.parentElement,
-      censusBase: CENSUS,
+      censusBase: IS_PS ? CENSUS_BASES : CENSUS,
+      ranksUrl: `${DATA}ranks.json`,
       currentNames: () => nameTokens.slice(),
     });
     els.namesInput.addEventListener("keydown", (e) => {
@@ -5424,9 +5512,26 @@ import {
   if (els.bgToggleBtn) {
     els.bgToggleBtn.addEventListener("click", () => toggleBgImage());
   }
+  // PC | PlayStation room switch (#55): a new room starts empty — names never travel between rooms.
+  {
+    const roomSelect = document.getElementById("roomSelect");
+    if (roomSelect) {
+      roomSelect.value = ROOM;
+      roomSelect.hidden = LIVE_MODE; // Live is PC only
+      roomSelect.addEventListener("change", () => {
+        const next = roomSelect.value === "ps" ? "ps" : "pc";
+        if (next === ROOM) return;
+        const u = new URL(window.location.href);
+        u.search = "";
+        u.hash = "";
+        window.location.href = withRoom(u.toString(), next);
+      });
+    }
+  }
   // 🎥 Live: main page → live.html with the first name; live.html → back.
   if (els.liveBtn) {
     els.liveBtn.addEventListener("click", () => {
+      if (IS_PS) return; // Live is PC only (#55)
       if (LIVE_MODE) {
         const t = currentNamesInField()[0];
         window.location.href = "./" + (t ? `?names=${encodeURIComponent(t)}` : "");

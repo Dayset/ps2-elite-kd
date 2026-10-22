@@ -9,7 +9,7 @@ import { t as tr, currentLang } from "./i18n.mjs";
 const tipOf = (c) => (c.id ? tr("tip." + c.id, c.tip || "") : c.tip || "");
 import { compareByCharName } from "./analyze-run.mjs?v=20261020-eta1";
 import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits, binJumpTarget } from "./dist.mjs?v=20261010-sav1";
-import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261021-bare1";
+import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261022-ps1";
 import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP, isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261020-i18n2";
 import { paletteColor } from "./palette.mjs?v=20261010-sav1";
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261020-wide1";
@@ -21,11 +21,13 @@ import { groupByTier, openTierIds, pickedInGroup, groupIndexAt, tierOf } from ".
 import { createDistCycler, createWheelSwiper } from "./dist-cycle.mjs?v=20261017-cycle15";
 import { sfx } from "./sfx.mjs?v=20261020-poof";
 import { slideSwap, attachDragCarousel } from "./chart-slide.mjs?v=20261020-flick1";
-import { mergeFreshRows } from "./rank-row.mjs?v=20261021-bare1";
+import { mergeFreshRows } from "./rank-row.mjs?v=20261022-ps1";
 import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-sav1";
 import { confirmedPadderSlugs } from "./padding.mjs?v=20261020-i18n2";
-import { slugKey, bareName } from "./rank-row.mjs?v=20261021-bare1";
+import { slugKey, bareName } from "./rank-row.mjs?v=20261022-ps1";
 import { hiddenList } from "./hidden.mjs?v=20261010-sav1";
+// PC | PlayStation rooms (#55): each room ranks its own players only (data/ or data-ps/).
+import { pageRoom, dataPrefix, roomLsKey, psServer } from "./rooms.mjs?v=20261022-ps1";
 import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261020-i18n2";
 import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261020-i18n2";
 import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261021-traits1";
@@ -35,6 +37,9 @@ import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, DIFF_T
  * @param {{ getNames: () => string[], toggleName: (name: string, anchor: Element, add: boolean) => void, maxNames?: number }} host
  * @returns {{ syncPicks: Function, ready: Promise<void> }}
  */
+const ROOM = pageRoom();
+const DATA = dataPrefix(ROOM);
+
 export function initRankings(host) {
 
   const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";
@@ -191,8 +196,8 @@ export function initRankings(host) {
     return extra ? base.concat(extra) : base;
   }
 
-  /** Browser cache written by Analyze (app.js LS_CACHE). */
-  const LS_CACHE = "ps2-elite-kd-cache-v2";
+  /** Browser cache written by Analyze (app.js LS_CACHE; per room, #55). */
+  const LS_CACHE = roomLsKey("ps2-elite-kd-cache-v2", ROOM);
   function readLocalStore() {
     try { const o = JSON.parse(localStorage.getItem(LS_CACHE) || "null"); return o && typeof o === "object" && !Array.isArray(o) ? o : null; } catch { return null; }
   }
@@ -238,6 +243,8 @@ export function initRankings(host) {
         infVeh: idx.infVeh != null ? r[idx.infVeh] : null,
         // 🚜 vehicle / MAX cut % already applied to adjs (null = none).
         vcut: idx.vcut != null ? r[idx.vcut] : null,
+        // PlayStation room (#55): "us" Genudine / "eu" Ceres (null on PC).
+        srv: idx.srv != null ? r[idx.srv] || null : null,
       };
       o.mark = o.markKind === "padding" ? PADDING_MARK : o.markKind === "adjusted" ? ADJUSTED_MARK : "";
       o.markTip = o.markKind === "padding" ? PADDING_MARK_TIP : o.markKind === "adjusted" ? ADJUSTED_MARK_TIP : "";
@@ -416,10 +423,15 @@ export function initRankings(host) {
   function poopHtml(r) {
     return r && r.poop ? `<span class="poop-mark" title="${esc(POOP_TIP)}" aria-label="${esc(POOP_TIP)}">${POOP_MARK}</span>` : "";
   }
+  /** PlayStation room: the player's server after the name ("Genudine" / "Ceres"). */
+  function srvTagHtml(r) {
+    const sv = r && r.srv ? psServer(r.srv) : null;
+    return sv ? `<span class="srv-tag" title="${esc(tr("room.serverTip", "PlayStation server: {s}", { s: sv.name }))}">${esc(sv.name)}</span>` : "";
+  }
   function rowHtml(r, cols) {
     const checked = picked.has(r.query) ? " checked" : "";
     const disabled = !picked.has(r.query) && fieldFull() ? " disabled" : "";
-    const href = `?names=${encodeURIComponent(r.query)}`;
+    const href = `?names=${encodeURIComponent(r.query)}${ROOM === "ps" ? "&room=ps" : ""}`;
     return (
       `<tr data-q="${esc(r.query)}">` +
       `<td class="rk-pick"><input type="checkbox" aria-label="${tr("rk.pick", "Pick {name}", { name: esc(r.name) })}"${checked}${disabled} /></td>` +
@@ -428,7 +440,8 @@ export function initRankings(host) {
       (r.mark ? `<span class="pad-mark mark-${["padding","adjusted"].includes(r.markKind) ? r.markKind : ""}" title="${esc(r.markTip + ". " + r.farm)}">${r.mark}</span>` : "") +
       poopHtml(r) +
       (r.legacy ? `<span class="sample-legacy" title="${esc(LEGACY_SAMPLE_TIP)}">${LEGACY_SAMPLE_MARK}</span>` : "") +
-      (r.freshAt ? `<span class="sample-fresh" title="${esc(freshTip(r.freshAt, r.localOnly))}">${FRESH_MARK}</span>` : "") + `</td>` +
+      (r.freshAt ? `<span class="sample-fresh" title="${esc(freshTip(r.freshAt, r.localOnly))}">${FRESH_MARK}</span>` : "") +
+      srvTagHtml(r) + `</td>` +
       cols.map((c) => cellHtml(c, r)).join("") +
       `</tr>`
     );
@@ -1680,12 +1693,12 @@ export function initRankings(host) {
     // --- load ---
     $("ranksStatus").textContent = tr("rank.loading", "Loading ranks…");
     try {
-      const hiddenP = fetch("data/hidden.json", { cache: "no-cache" }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
-      const reviewedP = fetch("data/reviewed.json", { cache: "no-cache" }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+      const hiddenP = fetch(`${DATA}hidden.json`, { cache: "no-cache" }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+      const reviewedP = fetch(`${DATA}reviewed.json`, { cache: "no-cache" }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
       // t376u: the page already loads ranks.json once (🎲, 🧱 / 🤝 pools); reuse it.
       let payload = host.loadRanks ? await host.loadRanks() : null;
       if (!payload) {
-        const res = await fetch("data/ranks.json", { cache: "no-cache" });
+        const res = await fetch(`${DATA}ranks.json`, { cache: "no-cache" });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         payload = await res.json();
       }

@@ -1,9 +1,10 @@
 // Rooms (#55): PC and PlayStation never share a data tree, a namespace or an identity.
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
 import {
   ROOMS, ALL_NAMESPACES, PS_SERVERS, parseRoom, pageRoom, dataPrefix, censusNsBase, nsOfBase,
-  psKey, parsePsKey, psPlayerFile, psServer, withRoom, roomById,
+  psKey, parsePsKey, psPlayerFile, psServer, withRoom, roomById, roomLsKey,
 } from "../rooms.mjs";
 import { CENSUS_NAMESPACES } from "../worker/src/worker.js";
 
@@ -59,4 +60,31 @@ test("PS identity is server + character id; the same id on two servers is two pe
 test("withRoom writes or removes the room param and keeps the rest", () => {
   assert.equal(withRoom("https://dayset.github.io/ps2-elite-kd/?names=A,B", "ps"), "https://dayset.github.io/ps2-elite-kd/?names=A%2CB&room=ps");
   assert.equal(withRoom("https://dayset.github.io/ps2-elite-kd/?room=ps&names=A", "pc"), "https://dayset.github.io/ps2-elite-kd/?names=A");
+});
+
+test("page code reads player data through the room's prefix (no hard-coded data/ for players, ranks or review lists)", () => {
+  const read = (f) => fs.readFileSync(new URL(`../${f}`, import.meta.url), "utf8");
+  const app = read("app.js");
+  const rk = read("rankings.mjs");
+  const hard = /fetch(?:Json)?\(\s*["'`]data\/(?:players|ranks|ranks-lite|index|names|hidden|reviewed|farm|not-farm)\b/;
+  assert.doesNotMatch(rk, hard);
+  // app.js: the only literal data/ fetch left is the footer's PC growth line, which returns early in the PS room.
+  const hits = app.split("\n").filter((l) => hard.test(l));
+  assert.equal(hits.length, 1, hits.join("\n"));
+  assert.match(hits[0], /data\/names\.json/);
+  assert.match(app, /if \(!el \|\| IS_PS\) return; \/\/ PC cache growth/);
+  // The name-guessed PC file path is never tried in the PS room.
+  assert.match(app, /if \(!IS_PS\) candidates\.push\(`data\/players\/\$\{key\}\.json`\);/);
+  // The PC cache Worker never hears about PS names.
+  assert.equal((app.match(/if \(!WORKER_URL \|\| IS_PS \|\| typeof fetch === "undefined"\) return;/g) || []).length, 3);
+  // index.html starts the room's own early files and reads the room's own saved names.
+  const html = read("index.html");
+  assert.match(html, /var D = window\.__ps2Room === "ps" \? "data-ps\/" : "data\/";/);
+  assert.doesNotMatch(html, /\["reviewed", "data\/reviewed\.json"\]/);
+  assert.match(html, /localStorage\.getItem\(k \+ rs\)/);
+});
+
+test("browser storage: PC keys unchanged, PS keys suffixed", () => {
+  assert.equal(roomLsKey("ps2-elite-kd-cache-v2", "pc"), "ps2-elite-kd-cache-v2");
+  assert.equal(roomLsKey("ps2-elite-kd-cache-v2", "ps"), "ps2-elite-kd-cache-v2:ps");
 });

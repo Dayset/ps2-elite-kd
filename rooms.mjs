@@ -104,6 +104,15 @@ export function psPlayerFile(ns, cid) {
   return `players/${psKey(ns, cid)}.json`;
 }
 
+/**
+ * Browser storage key for a room: PC keeps its keys exactly as before; the PS
+ * room appends ":ps", so a browser's saved PC players, last comparison and
+ * saved field never show up in the PS room (or the other way round).
+ */
+export function roomLsKey(key, roomId) {
+  return roomId === "ps" ? `${key}:ps` : key;
+}
+
 /** Absolute URL with room=ps set (PS room) or removed (PC). */
 export function withRoom(href, roomId) {
   const u = new URL(String(href));

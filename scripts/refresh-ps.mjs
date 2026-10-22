@@ -383,10 +383,12 @@ async function main() {
       const acceptPartial = prev.kind === "partial" && (prev.fails || 0) >= PARTIAL_SHIP_AFTER;
       const payload = await loadPs(id.ns, id.cid, { acceptPartial, prevInfantry: prevFile && prevFile.player && prevFile.player.infantry });
       const wasCached = index.players.some((p) => p.key === key);
+      const entry = upsertPsEntry(index, { key, ns: id.ns, cid: id.cid, display: payload.player.display, savedAt: payload.savedAt, top: payload.top, last: payload.player.times && payload.player.times.last });
+      // Same name already taken by someone else in the room: this one is opened by its key, never by the name.
+      if (entry.slug !== slugKey(payload.query)) payload.query = key;
       writeFileAtomic(path.join(DATA_DIR, psPlayerFile(id.ns, id.cid)), JSON.stringify(payload) + "\n");
-      upsertPsEntry(index, { key, ns: id.ns, cid: id.cid, display: payload.player.display, savedAt: payload.savedAt, top: payload.top, last: payload.player.times && payload.player.times.last });
       writeFileAtomic(P.index, JSON.stringify(index, null, 1) + "\n");
-      state.players[key] = { lastAttemptAt: now, lastOkAt: payload.savedAt, fails: 0, ns: id.ns, nameLower: String(payload.query).toLowerCase() };
+      state.players[key] = { lastAttemptAt: now, lastOkAt: payload.savedAt, fails: 0, ns: id.ns, nameLower: String(payload.player.display).replace(/^\[[^\]]*\]\s*/, "").toLowerCase() };
       c.ok++;
       c.consecutiveOutage = 0;
       (wasCached ? updated : added).push(payload.player.display);

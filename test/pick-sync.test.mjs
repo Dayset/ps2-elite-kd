@@ -46,7 +46,8 @@ describe("pick-sync", () => {
   });
   it("pending key matches app.js LS_PENDING; pages wire the helpers", () => {
     const app = fs.readFileSync(new URL("../app.js", import.meta.url), "utf8");
-    assert.ok(app.includes(`LS_PENDING = "${MAIN_PENDING_KEY}"`));
+    // PC keeps the key as is; the PlayStation room suffixes it (rooms.mjs roomLsKey, #55).
+    assert.ok(app.includes(`LS_PENDING = roomLsKey("${MAIN_PENDING_KEY}", ROOM)`));
     // t356u: one page — the names box is the selection; Rankings match it with matchPicks.
     assert.match(app, /getNames: \(\) => nameTokens\.slice\(\)/);
     const ranks = rankingsSource();

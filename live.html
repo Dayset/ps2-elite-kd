@@ -55,18 +55,26 @@
     // names / ranksLite promises once (takeEarly); the review files are shared.
     // The browser cache still revalidates every one of them.
     window.__ps2Early = {};
+    // Room (#55): ?room=ps opens the PlayStation room, which reads data-ps/ only
+    // (same rule as rooms.mjs pageRoom; live.html is always PC).
+    window.__ps2Room = "pc";
     try {
+      if (!/(^|\/)live\.html$/.test(location.pathname) && new URLSearchParams(location.search).get("room") === "ps") window.__ps2Room = "ps";
+      document.documentElement.setAttribute("data-room", window.__ps2Room);
+    } catch (e) {}
+    try {
+      var D = window.__ps2Room === "ps" ? "data-ps/" : "data/";
       // Small review files first (padding.mjs / vehicle-cut.mjs wait for them before app.js runs),
       // then the startup name list and the few ranks columns 🎲 / ✨ Stats need. The full
       // ranks.json (1.7 MB) is left to the Rankings section, which loads lazily.
-      [["reviewed", "data/reviewed.json"], ["notFarm", "data/not-farm.json"], ["farm", "data/farm.json"], ["names", "data/names.json"], ["ranksLite", "data/ranks-lite.json"]].forEach(function (e) {
+      [["reviewed", D + "reviewed.json"], ["notFarm", D + "not-farm.json"], ["farm", D + "farm.json"], ["names", D + "names.json"], ["ranksLite", D + "ranks-lite.json"]].forEach(function (e) {
         var opt = { cache: "no-cache" };
         if (e[2]) opt.priority = e[2];
         window.__ps2Early[e[0]] = fetch(e[1], opt).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
       });
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261021-ranksh1" />
+  <link rel="stylesheet" href="styles.css?v=20261022-ps1" />
   <style>
     /* Installed-app launch splash (t465u). Android draws its own launch splash first:
        the maskable icon (big medal on black) seen through a 192 px circle, on the
@@ -228,7 +236,8 @@
             try {
               var q = new URLSearchParams(location.search).get("names");
               var list = q ? q.split(",") : null;
-              var rd = function (k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } };
+              var rs = window.__ps2Room === "ps" ? ":ps" : ""; // per-room storage (#55, rooms.mjs roomLsKey)
+              var rd = function (k) { try { return JSON.parse(localStorage.getItem(k + rs) || "null"); } catch (e) { return null; } };
               if (!list) { var p = rd("ps2-elite-kd-pending-names"); list = p && Array.isArray(p.names) ? p.names : null; }
               if (!list || !list.length) list = rd("ps2-elite-kd-last");
               if (!Array.isArray(list)) return;
@@ -272,6 +281,10 @@
       <a href="columns.html" class="fresh-cols-link" aria-label="What the columns mean" title="What the columns mean" data-i18n-aria-label="columnsLink" data-i18n-title="columnsLink"><span class="cols-txt" data-i18n="columnsLink">📖 What the columns mean</span><span class="cols-emoji" aria-hidden="true">❓📖❓</span></a>
       <!-- t375u: 🗑️ / theme moved here from the top row, small icon buttons on the right. -->
       <span class="fresh-row-end">
+        <select id="roomSelect" class="lang-select room-select" title="Room: PC or PlayStation players, never mixed" aria-label="Room" data-i18n-title="room.title" data-i18n-aria-label="room.label">
+          <option value="pc" selected data-i18n="room.pc">🖥️ PC</option>
+          <option value="ps" data-i18n="room.ps">🎮 PlayStation</option>
+        </select>
         <select id="langSelect" class="lang-select" title="Language" aria-label="Language" data-i18n-title="lang.label" data-i18n-aria-label="lang.label">
           <option value="en" selected>🇬🇧 English</option>
           <option value="ja">🇯🇵 日本語</option>
@@ -469,12 +482,12 @@
   </footer>
 
   <script type="module" src="i18n.mjs"></script>
-  <script type="module" src="app.js?v=20261021-keys1"></script>
+  <script type="module" src="app.js?v=20261022-ps2"></script>
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").catch(function () {});
     }
   </script>
-  <script type="module" src="live.mjs?v=20261021-bare1"></script>
+  <script type="module" src="live.mjs?v=20261022-ps1"></script>
 </body>
 </html>

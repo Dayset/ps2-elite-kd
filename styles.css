@@ -3043,3 +3043,14 @@ body.main-page .dist-section { margin-bottom: 0.34rem; }
 body.main-page footer { margin-top: 0.4rem; }
 body.main-page footer .footer-data { margin: 0.4rem 0 0.3rem; }
 body.main-page footer .footer-block { margin-top: 0.3rem; }
+
+/* PC | PlayStation rooms (#55). The PS room is marked on <html data-room="ps">
+ * so a visitor always sees which room they are in; Live (PC only) never shows. */
+html[data-room="ps"] #liveBtn { display: none !important; }
+html[data-room="ps"] .controls .fresh-row-end select.room-select { border-color: var(--accent); }
+body.live-mode .room-select { display: none; }
+.srv-tag {
+  display: inline-block; margin-left: 0.35em; padding: 0 0.3em;
+  font-size: 0.7em; font-weight: 400; line-height: 1.35; vertical-align: 0.1em;
+  border: 1px solid var(--border); border-radius: 4px; opacity: 0.75; white-space: nowrap;
+}

@@ -123,7 +123,7 @@ export function replaceFragment(value, name) {
 
 /**
  * Attach the suggestion list to the names input.
- * @param {{ input: HTMLInputElement, anchor: HTMLElement, censusBase: string,
+ * @param {{ input: HTMLInputElement, anchor: HTMLElement, censusBase: string|string[],
  *           ranksUrl?: string, currentNames?: () => string[] }} opts
  */
 export function mountNameSuggest({ input, anchor, censusBase, ranksUrl = "data/ranks.json", currentNames = () => [] }) {
@@ -259,8 +259,13 @@ export function mountNameSuggest({ input, anchor, censusBase, ranksUrl = "data/r
     ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
     let remote = [];
     try {
-      const res = await fetch(censusSuggestUrl(censusBase, fragment), ctrl ? { signal: ctrl.signal } : undefined);
-      remote = parseCensusSuggestions(res.ok ? await res.json() : null);
+      // One base (PC) or the room's bases (PlayStation room #55: Genudine + Ceres; never PC).
+      const bases = Array.isArray(censusBase) ? censusBase : [censusBase];
+      const parts = await Promise.all(bases.map(async (b) => {
+        const res = await fetch(censusSuggestUrl(b, fragment), ctrl ? { signal: ctrl.signal } : undefined);
+        return parseCensusSuggestions(res.ok ? await res.json() : null);
+      }));
+      remote = parts.flat().sort((a, b) => (b.lastLogin || 0) - (a.lastLogin || 0));
       cache.set(key, remote);
     } catch (err) {
       if (err && err.name === "AbortError") return;
