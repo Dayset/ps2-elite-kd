@@ -46,7 +46,10 @@ export function aimGapCellTip(v, g, pool) {
   const e = diffEmoji(v);
   const side = e === "🤥" ? tr("diff.imp", "🤥 Impostor: aim beats results") : e === "😤" ? tr("diff.dh", "😤 DieHard: results beat aim") : tr("diff.even", "balanced: aim and results roughly agree");
   const parts = g ? tr("diff.parts", "Practice ⚔️ percentile {a} − theory IvI percentile {i}", { a: g.practice, i: g.theory }) : "";
-  return tr("diff.tip", "{v}: {side}{rel}. {parts}", { v: fmtSigned(v), side, rel: rel(pool, v), parts }).trim();
+  const base = tr("diff.tip", "{v}: {side}{rel}. {parts}", { v: fmtSigned(v), side, rel: rel(pool, v), parts }).trim();
+  // 🛖 safe-spot damping (hut.mjs): say where the shown score came from.
+  const hut = g && g.hut != null && g.raw !== g.score ? " " + tr("diff.hutFrom", "🛖 Reduced from {raw} (rarely dies, slow pace, low accuracy).", { raw: fmtSigned(g.raw) }) : "";
+  return base + hut;
 }
 
 /** 🪳 cell hover: score, percentile among measured players, both parts. */

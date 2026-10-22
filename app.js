@@ -41,8 +41,8 @@ import { t as tr, ready as i18nReady } from "./i18n.mjs";
 await i18nReady;
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261020-wide1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
-import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261021-traits1";
-import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, diffValueHtml, aimGapCellTip, zergCellTip } from "./trait-tips.mjs?v=20261021-longname1";
+import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261022-hut1";
+import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, diffValueHtml, aimGapCellTip, zergCellTip } from "./trait-tips.mjs?v=20261022-hut1";
 import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261020-i18n2";
 import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261022-scrim1";
 import { infantryKillsUrl, summarizeInfantryKills } from "./infantry.mjs?v=20261020-i18n2";
@@ -106,6 +106,7 @@ function thinCellTip(r) {
   return tr("fights.sample", "{tip}. This sample: {sample}", { tip: MIN_FIGHTS_TIP, sample: fightsText(r).replace(/[()]/g, "") });
 }
 import { markNote, statMark, confirmedPadderSlugs, isPenalizedPadder, POOP_MARK, POOP_TIP, setRoomRule } from "./padding.mjs?v=20261022-scrim1";
+import { HUT_MARK, HUT_TIP, HUT_DIFF_NOTE } from "./hut.mjs?v=20261022-hut1";
 // Account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times: chart name list only.
 import { accountTimes, flairsHtml, flairsFor } from "./flairs.mjs?v=20261010-sav1";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
@@ -1840,7 +1841,7 @@ import {
   }
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261022-age2")
+    rankingsLoading = import("./rankings.mjs?v=20261022-hut1")
       .then((m) => {
         rankingsApi = m.initRankings(rankingsHost);
         return rankingsApi.ready;
@@ -3055,10 +3056,10 @@ import {
       num.setAttribute("font-size", fz(14));
       num.setAttribute("font-weight", "800");
       num.setAttribute("text-anchor", "end");
-      num.textContent = String(lab.i + 1) + lab.mark.mark + (lab.poop ? POOP_MARK : "");
-      if (lab.mark.mark || lab.poop) {
+      num.textContent = String(lab.i + 1) + lab.mark.mark + (lab.poop ? POOP_MARK : "") + (lab.hut ? HUT_MARK : "");
+      if (lab.mark.mark || lab.poop || lab.hut) {
         const t = ns("title");
-        t.textContent = [lab.mark.mark ? `${lab.display}${lab.mark.mark}: ${lab.mark.tip}` : "", lab.poop ? `${lab.display} ${POOP_TIP}` : ""].filter(Boolean).join("\n");
+        t.textContent = [lab.mark.mark ? `${lab.display}${lab.mark.mark}: ${lab.mark.tip}` : "", lab.poop ? `${lab.display} ${POOP_TIP}` : "", lab.hut ? `${lab.display} ${HUT_TIP}` : ""].filter(Boolean).join("\n");
         num.appendChild(t);
       }
       g.appendChild(num);
@@ -3381,7 +3382,7 @@ import {
         if (!best || (easy && !bestEasy) || (easy === bestEasy && pt.kpm < best.kpm)) ak = k;
       }
       if (ak >= 0) {
-        rs.anchor = { i, col, k: ak, display: p.display, mark: playerMark(p), poop: isPenalizedPadder(p.display) };
+        rs.anchor = { i, col, k: ak, display: p.display, mark: playerMark(p), poop: isPenalizedPadder(p.display), hut: hutMarked(p.display) };
         labelAnchors.push({ ...rs.anchor, x: pts[ak].kpm, y: pts[ak].kd });
       }
     });
@@ -3684,6 +3685,14 @@ import {
   // 🪖 Infantry (% of lifetime kills with infantry weapons): value + MAX / vehicle % by slug, pool for the percentile.
   let infBySlug = null;
   let infPool = null;
+  // 🛖 safe-spot damping factor on positive 🔀 Diff by slug (hut.mjs, ranks-lite "hut"); reviewed.json "hut": "cleared" is applied at build time.
+  let hutBySlug = null; // slug → { f: factor, mk: 🛖 shown (drop ≥ HUT_MARK_MIN points) }
+  const hutOf = (display) => {
+    if (!hutBySlug || !display) return null;
+    const e = hutBySlug.get(slugKey(display));
+    return e ? e.f : null;
+  };
+  const hutMarked = (display) => hutOf(display) != null && hutBySlug.get(slugKey(display)).mk;
   // 🤥😤 Impostor–DieHard + 🪳 Zerg (owner 2026-10-21, trait-scores.mjs): rounded
   // ⚔️ iVi / IvI / 🎈 Inflation / 🤝 Assists pools from the same lite payload
   // (Rankings builds the same pools from ranks.json, so both show the same score).
@@ -3714,13 +3723,19 @@ import {
           for (const row of payload.rows) if (isFiniteNum(row[ii])) infBySlug.set(row[si], { inf: row[ii], max: mi >= 0 ? row[mi] : null, veh: vi >= 0 ? row[vi] : null });
           infPool = [...infBySlug.values()].map((e) => e.inf).sort((a, b) => a - b);
         }
+        const hi = payload.cols.indexOf("hut");
+        if (hi >= 0 && si >= 0) {
+          hutBySlug = new Map();
+          const mi = payload.cols.indexOf("hutMk");
+          for (const row of payload.rows) if (isFiniteNum(row[hi])) hutBySlug.set(row[si], { f: row[hi], mk: mi >= 0 && row[mi] === 1 });
+        }
         const colOf = (id) => { const k = payload.cols.indexOf(id); return k >= 0 ? payload.rows.map((row) => row[k]) : []; };
         traitP = traitPools({ adjs: colOf("adjs"), ivi: colOf("ivi"), inflation: colOf("inflation"), apk: apkBySlug ? [...apkBySlug.values()] : [] });
         {
-          const A = colOf("adjs"), I = colOf("ivi"), F = colOf("inflation"), K = colOf("apk");
+          const A = colOf("adjs"), I = colOf("ivi"), F = colOf("inflation"), K = colOf("apk"), H = colOf("hut");
           const g = [], z = [];
           for (let k = 0; k < payload.rows.length; k++) {
-            const a = aimGap(traitP, A[k], I[k]); if (a) g.push(a.score);
+            const a = aimGap(traitP, A[k], I[k], H[k]); if (a) g.push(a.score);
             const q = zergScore(traitP, F[k], K[k]); if (q) z.push(q.score);
           }
           aimGapScores = g.sort((x, y) => x - y);
@@ -3807,8 +3822,8 @@ import {
       { id: "cons", label: "⚡ Const", hint: tr("tip.cons", "How much of your K/D you keep against the strongest third of your opponents compared with the weakest third, as a percentile of all tracked players."), fn: (r) => r.cons, digits: 2, pctileCell: true },
       { id: "apk", label: tr("col.assists", "🤝 Assists"), hint: tr("tip.apk", "Assists per kill in recent Honu sessions: how often you help damage enemies that teammates finish, for each kill of your own."), fn: (r) => (apkBySlug && r.p ? apkBySlug.get(slugKey(r.p.display)) : undefined), digits: 2, apkCell: true, pctDir: "low", pctLowPhrase: "more assists" },
       // 🤥😤 Impostor–DieHard (owner t484u): ⚔️ iVi percentile − IvI percentile, −99…+99; neither side is better.
-      { id: "diff", label: tr("col.diff", "🔀 Diff"), hint: tr("tip.diff", AIMGAP_HINT), digits: 0, aimGapCell: true,
-        fn: (r) => { const g = traitP ? aimGap(traitP, shownValue(r, "adjs"), r.ivi) : null; return g ? g.score : NaN; } },
+      { id: "diff", label: tr("col.diff", "🔀 Diff"), hint: tr("tip.diff", AIMGAP_HINT) + " " + HUT_DIFF_NOTE, digits: 0, aimGapCell: true,
+        fn: (r) => { const g = traitP ? aimGap(traitP, shownValue(r, "adjs"), r.ivi, r.p ? hutOf(r.p.display) : null) : null; return g ? g.score : NaN; } },
       // 🪳 Zerg (owner t480u): lower of the 🎈 Inflation and 🤝 Assists percentiles; lower is better (like 🤝: reversed grey %).
       { id: "zerg", label: tr("col.zerg", "🪳 Zerg"), hint: tr("tip.zerg", ZERG_HINT), digits: 0, zergCell: true, pctDir: "low",
         fn: (r) => { const z = traitP && r.p ? zergScore(traitP, shownValue(r, "inflation"), apkBySlug && apkBySlug.get(slugKey(r.p.display))) : null; return z ? z.score : NaN; } },
@@ -3985,7 +4000,7 @@ import {
               // 🤥😤 Impostor–DieHard: signed score; neutral grey gap in points to the column top; side + both percentiles on hover.
               if (c.aimGapCell) {
                 if (!isFiniteNum(v)) return `<td title="${escapeHtml(tr("diff.missing", AIMGAP_MISSING))}">—</td>`;
-                const g = aimGap(traitP, shownValue(row, "adjs"), row.ivi);
+                const g = aimGap(traitP, shownValue(row, "adjs"), row.ivi, row.p ? hutOf(row.p.display) : null);
                 const top = Math.max(...metrics.map((m) => c.fn(m)).filter(isFiniteNum));
                 const gap = isFiniteNum(top) && v < top ? top - v : null;
                 const gTag = gap == null ? "" : `<span class="pct" title="${escapeHtml(tr("pct.belowPts", "{n} points below the column top ({ref})", { n: gap, ref: fmtSigned(top) }))}">−${gap}</span>`;
@@ -4025,6 +4040,7 @@ import {
     // line explaining the * / † marks used in the table.
     const markLegends = [...new Set(metrics.map((r) => playerMark(r.p).legend).filter(Boolean))];
     if (metrics.some((r) => r.p && isPenalizedPadder(r.p.display))) markLegends.push(POOP_TIP); // 💩 "What * 💩 mean"
+    if (metrics.some((r) => r.p && hutMarked(r.p.display))) markLegends.push(HUT_TIP); // 🛖 safe-spot damping
     const markNotesBlock = markLegends.length
       ? `<details class="fold-note mark-notes"${markNotesOpen ? " open" : ""}>` +
         `<summary>♿ What ${[...new Set(markLegends.map((t) => t.trim().split(/\s+/)[0]))].join(" ")} ${markLegends.length > 1 ? "mean" : "means"}</summary>` +
@@ -4211,9 +4227,13 @@ import {
   /** Mark after the name (tooltip explains); "" when the stats weren't altered. */
   function padMarkHtml(p) {
     const mk = playerMark(p);
-    const poop = p && isPenalizedPadder(p.display) ? poopHtml() : "";
+    const poop = (p && isPenalizedPadder(p.display) ? poopHtml() : "") + (p && hutMarked(p.display) ? hutHtml() : "");
     if (!mk.mark) return poop;
     return `<span class="pad-mark mark-${mk.kind}" title="${escapeHtml(mk.tip)}">${mk.mark}</span>${poop}`;
+  }
+  /** 🛖 safe-spot player (hut.mjs HUT_TIP): positive 🔀 Diff damped; next to the name, never in the Diff cell (owner t504u). */
+  function hutHtml() {
+    return `<span class="poop-mark hut-mark" title="${escapeHtml(HUT_TIP)}" aria-label="${escapeHtml(HUT_TIP)}">${HUT_MARK}</span>`;
   }
   /** 💩 confirmed padder (padding.mjs POOP_TIP): −10% adjusted iVi; owner override in data/reviewed.json. */
   function poopHtml() {

@@ -27,6 +27,8 @@ import { sprout, sampleEvents, farmAccount } from "../sprouts.mjs";
 import { findOutliers, guardStatus, KNOWN_EXTREMES } from "../outlier-guard.mjs";
 import { infantryTagCounts, INFANTRY_TAG, infantryShares } from "../infantry.mjs";
 import { VEH_CUT } from "../vehicle-cut.mjs";
+import { hutCuts, hutParts, hutCleared, deathsPerMin, HUT_ACT_MULT, HUT_DPM_BAND, HUT_INF_BAND, HUT_ACC_BAND, HUT_MARK_MIN } from "../hut.mjs";
+import { traitPools, aimGap } from "../trait-scores.mjs";
 import { forensicsSummary, honuSessionUrl } from "../session-forensics.mjs";
 import { hiddenList, isConfirmedCheater } from "../hidden.mjs";
 import { cleanTimes } from "../flairs.mjs";
@@ -318,6 +320,7 @@ export function buildRanksWithGuard(dataDir, { known = KNOWN_EXTREMES } = {}) {
   ranks.cols.push("apk"); // 🤝 trailing column (see onPlayer); not part of RANK_COLS / rankRow
   ranks.cols.push("inf", "infMax", "infVeh"); // 🪖 trailing columns (see onPlayer), % of lifetime kills
   ranks.cols.push("vcut"); // 🚜 vehicle cut % on adjs (adjs is already cut)
+  const hut = applyHutColumn(ranks, readReviewed(dataDir)); // 🛖 trailing "hut" column (damping factor on positive 🔀 Diff)
   const found = findOutliers(players, [...METRIC_COLS, ...SESSION_METRIC_IDS], { known });
   found.items.push(...forensicsGuardItems(players));
   const guard = guardStatus(found);
@@ -327,7 +330,71 @@ export function buildRanksWithGuard(dataDir, { known = KNOWN_EXTREMES } = {}) {
     review: reviewStatus(players, guard, forensics, farmFound),
     padderPenalty: padderPenaltyStatus(players, ranks),
     vehicleCut: vehicleCutStatus(players, ranks),
+    hut,
     assistGroups: assistGroups(players), // 🤝 groups stay build-log only (the 🤝 apk column itself is public since t382u)
+  };
+}
+
+function readReviewed(dataDir) {
+  try { return JSON.parse(fs.readFileSync(path.join(dataDir, "reviewed.json"), "utf8")); } catch { return null; }
+}
+
+/**
+ * 🛖 Safe-spot damping (hut.mjs, owner t504u / t505u): cuts from this population,
+ * then trailing columns "hut" = damping factor m on positive 🔀 Diff (3 decimals;
+ * null = no reduction or cleared by the owner in reviewed.json "hut": "cleared")
+ * and "hutMk" = 1 where 🛖 shows (Diff reduced by ≥ HUT_MARK_MIN points).
+ * Returns the status.json "hut" block for build-log: cuts, counts, every reduced
+ * player with Diff before / after and the gate weights, and the owner-cleared ones.
+ */
+export function applyHutColumn(ranks, reviewed) {
+  const ix = Object.fromEntries(ranks.cols.map((c, i) => [c, i]));
+  const get = (r, k) => (ix[k] != null ? r[ix[k]] : null);
+  const feat = (r) => ({ act: get(r, "act"), kpm: get(r, "kpm"), kd: get(r, "kd"), acc: get(r, "acc"), inf: get(r, "inf") });
+  const cuts = hutCuts(ranks.rows.map(feat));
+  const colOf = (k) => ranks.rows.map((r) => get(r, k));
+  const tp = traitPools({ adjs: colOf("adjs"), ivi: colOf("ivi") });
+  const players = [], cleared = [];
+  let dieHardBefore = 0, dieHardAfter = 0;
+  const r3 = (v) => Math.round(v * 1000) / 1000;
+  ranks.cols.push("hut", "hutMk");
+  for (const r of ranks.rows) {
+    const f = feat(r);
+    const parts = hutParts(f, cuts);
+    let h = parts && parts.m < 1 ? r3(parts.m) : null;
+    if (h === 1) h = null;
+    const g = aimGap(tp, get(r, "adjs"), get(r, "ivi"));
+    const slug = get(r, "slug"), name = get(r, "name");
+    const after0 = g ? aimGap(tp, get(r, "adjs"), get(r, "ivi"), h).score : null;
+    const info = () => ({ name, slug, act: f.act, dpm: r3(deathsPerMin(f.kpm, f.kd)), acc: f.acc, inf: f.inf, diffRaw: g ? g.raw : null, factor: h, w: r3(parts.w), wDpm: r3(parts.wDpm), wInf: r3(parts.wInf), wAcc: r3(parts.wAcc) });
+    if (h != null && hutCleared(reviewed, slug)) {
+      if (g && after0 !== g.raw) cleared.push({ ...info(), diffWould: after0 });
+      h = null;
+    }
+    const after = g ? aimGap(tp, get(r, "adjs"), get(r, "ivi"), h).score : null;
+    const mk = g && h != null && g.raw - after >= HUT_MARK_MIN ? 1 : null;
+    r.push(h, mk);
+    if (g && g.raw >= 33) dieHardBefore++;
+    if (after != null && after >= 33) dieHardAfter++;
+    if (g && h != null && after !== g.raw) players.push({ ...info(), diff: after, marked: !!mk });
+  }
+  players.sort((a, b) => (b.diffRaw ?? -999) - (a.diffRaw ?? -999));
+  const r4 = (v) => (Number.isFinite(v) ? Math.round(v * 10000) / 10000 : null);
+  const pc = (q) => "p" + Math.round(q * 100);
+  return {
+    builtAt: new Date().toISOString(),
+    cuts: {
+      actMedian: r4(cuts.actMedian), actMult: HUT_ACT_MULT, actCut: r4(cuts.actCut),
+      dpmLo: r4(cuts.dpmLo), dpmHi: r4(cuts.dpmHi), dpmBand: HUT_DPM_BAND.map(pc),
+      accLo: r4(cuts.accLo), accHi: r4(cuts.accHi), accBand: HUT_ACC_BAND.map(pc),
+      infLo: cuts.infLo, infHi: cuts.infHi, markMin: HUT_MARK_MIN, n: cuts.n,
+    },
+    reduced: players.length,
+    marked: players.filter((p) => p.marked).length,
+    dieHardBefore, dieHardAfter,
+    rule: `🛖 safe-spot damping, gradual, all cuts from this build's players. a = (🏃 Activity ÷ cut)², cut = median × ${HUT_ACT_MULT} (Activity at or above the cut → no change). w = product of three 0–1 ramps: deaths/min (KPM ÷ K/D) 1 at ${pc(HUT_DPM_BAND[0])} → 0 at ${pc(HUT_DPM_BAND[1])}; 🪖 infantry 0 at ${HUT_INF_BAND[0]}% → 1 at ${HUT_INF_BAND[1]}%; accuracy 1 at the median → 0 at ${pc(HUT_ACC_BAND[1])}. A positive 🔀 Diff × (1 − w × (1 − a)), rounded; a negative Diff is untouched. 🛖 next to the name only when Diff drops by ${HUT_MARK_MIN}+ points. Owner override: "hut": "cleared" on the data/reviewed.json entry (no 🛖, no damping).`,
+    players,
+    cleared,
   };
 }
 
@@ -676,8 +743,8 @@ export function buildNames(index, { withFile = false } = {}) {
  * "inflation" rides along for 🪳 Zerg (owner 2026-10-21, trait-scores.mjs): the
  * lower of the 🎈 Inflation and 🤝 Assists percentiles needs the Inflation pool.
  */
-export const LITE_COLS = ["name", "slug", "adjs", "cons", "apk", "inf", "infMax", "infVeh", "ivi", "inflation"];
-const LITE_DIGITS = { adjs: 1, cons: 4, apk: 3, inf: 1, infMax: 1, infVeh: 1, ivi: 1, inflation: 2 };
+export const LITE_COLS = ["name", "slug", "adjs", "cons", "apk", "inf", "infMax", "infVeh", "ivi", "inflation", "hut", "hutMk"];
+const LITE_DIGITS = { adjs: 1, cons: 4, apk: 3, inf: 1, infMax: 1, infVeh: 1, ivi: 1, inflation: 2, hut: 3, hutMk: 0 };
 export function buildRanksLite(ranks) {
   const ix = LITE_COLS.map((k) => (ranks && Array.isArray(ranks.cols) ? ranks.cols.indexOf(k) : -1));
   if (ix.some((i) => i < 0) || !Array.isArray(ranks.rows)) return null;
@@ -769,7 +836,7 @@ if (isMain) {
   // were measured on the PC population (PS pools are never mixed with PC).
   const autoHidden = room === "pc" ? autoHideFreshExceptional(dataDir) : autoHidePsFarmRing(dataDir);
   if (autoHidden.length) console.log(`auto-hide: ${autoHidden.length} fresh exceptional account(s) added to hidden.json: ${autoHidden.map((a) => a.name).join(", ")}`);
-  const { ranks: out, guard, hidden: hiddenInfo, bins, session, forensics: forensicsInfo, review, assistGroups: assistInfo, padderPenalty: padderInfo, vehicleCut: vehCutInfo } = buildRanksWithGuard(dataDir, room === "ps" ? { known: {} } : undefined);
+  const { ranks: out, guard, hidden: hiddenInfo, bins, session, forensics: forensicsInfo, review, assistGroups: assistInfo, padderPenalty: padderInfo, vehicleCut: vehCutInfo, hut: hutInfo } = buildRanksWithGuard(dataDir, room === "ps" ? { known: {} } : undefined);
   if (room === "ps") addServerColumn(out, JSON.parse(fs.readFileSync(path.join(dataDir, "index.json"), "utf8")));
   fs.writeFileSync(path.join(dataDir, "ranks.json"), JSON.stringify(out) + "\n");
   try {
@@ -793,6 +860,8 @@ if (isMain) {
   st.assistGroups = assistInfo;
   st.padderPenalty = padderInfo; // 💩 build-log list (ranks.json already has the penalized numbers)
   st.vehicleCut = vehCutInfo; // 🚜 build-log list (ranks.json already has the cut numbers)
+  st.hut = hutInfo; // 🛖 build-log list (ranks.json "hut" column has the factors)
+  console.log(`🛖 safe-spot: Activity median ${hutInfo.cuts.actMedian} → cut ${hutInfo.cuts.actCut}, deaths/min ${hutInfo.cuts.dpmLo}→${hutInfo.cuts.dpmHi}, accuracy ${hutInfo.cuts.accLo}→${hutInfo.cuts.accHi}; ${hutInfo.reduced} Diff reduced, ${hutInfo.marked} marked 🛖, DieHards ${hutInfo.dieHardBefore} → ${hutInfo.dieHardAfter}, ${hutInfo.cleared.length} cleared by the owner`);
   console.log(`vehicle cut: ${vehCutInfo.cut} of ${vehCutInfo.withData} players with infantry data cut, ${vehCutInfo.cleared.length} exempted by the owner`);
   console.log(`padder penalty: ${padderInfo.penalized} penalized, ${padderInfo.cleared} cleared by the owner`);
   st.infantry = infantryStatus(dataDir);

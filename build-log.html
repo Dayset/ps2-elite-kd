@@ -199,6 +199,11 @@
           <details class="st-info"><summary>ⓘ How it works</summary><div id="vcutRule" class="st-rule">⚔️ adjusted iVi ranks infantry only. Vehicle cut = vehicle / turret share of lifetime kills − 10%; MAX cut = MAX share − 10%. They add up, no cap (45% + 40% → −65%); the shares can’t pass 100%, so the total stays under 100%. No infantry data or under 100 kills = no cut. Stacks with the 💩 penalty (applied after it). A score at or below 0 gets a fixed drop (cut × 610.6). No public mark; the iVi hover lists each part. Owner exemption (both parts): data/reviewed.json “vehicleCutCleared”: {{ "slug": {{ "note": "…", "at": "YYYY-MM-DD" }} }}.</div></details>
           <div id="vcut" class="st-dim">Loading…</div>
         </details>
+        <details class="st-sub-sec" id="secHut">
+          <summary><h3>🛖 Safe-spot Diff damping <span id="hutCount" class="st-count">…</span></h3></summary>
+          <details class="st-info"><summary>ⓘ How it works</summary><div id="hutRule" class="st-rule"></div></details>
+          <div id="hut" class="st-dim">Loading…</div>
+        </details>
         <details class="st-sub-sec" id="secAdjusted">
           <summary><h3>† Adjusted <span id="adjCount" class="st-count">…</span></h3></summary>
           <details class="st-info"><summary>ⓘ How it works</summary><div id="adjRule" class="st-rule"></div></details>
@@ -1017,6 +1022,7 @@
       renderRampage(st);
       try { renderPoop(st); } catch (e) { console.warn(e); }
       try { renderVehCut(st); } catch (e) { console.warn(e); }
+      try { renderHut(st); } catch (e) { console.warn(e); }
     }
 
     /** 🚜 Vehicle cut (status.json "vehicleCut", scripts/build-ranks.mjs): top cut players with vehicle %, cut %, iVi and rank before / after. */
@@ -1040,6 +1046,41 @@
           return "<tr><td>" + nameCell(i) + "</td><td>" + pc(i.veh) + "</td><td>" + cut(i.cutVeh) + "</td><td>" + pc(i.max) + "</td><td>" + cut(i.cutMax) + "</td><td><strong>−" + i.cut + "%</strong></td><td>" + n(i.before) + "</td><td>" + n(i.after) + "</td><td>" + rk(i.rankBefore) + "</td><td>" + rk(i.rankAfter) + "</td></tr>";
         }).join("") +
         "</table></div>" + cl;
+    }
+
+    /** 🛖 Safe-spot damping (status.json "hut", scripts/build-ranks.mjs + hut.mjs): every player whose 🔀 Diff was reduced; click a header to sort (default: original Diff). */
+    let hutSort = { key: "diffRaw", dir: -1 };
+    function renderHut(st) {
+      const b = st && st.hut;
+      $("hutCount").textContent = b ? String(b.reduced) : "?";
+      $("hutRule").textContent = b ? b.rule : "";
+      if (!b) { $("hut").innerHTML = "Not built yet (next refresh)."; return; }
+      const c = b.cuts || {};
+      const num = (v, d) => (typeof v === "number" && Number.isFinite(v) ? v.toFixed(d) : "—");
+      const sg = (v) => (typeof v === "number" ? (v > 0 ? "+" : "") + v : "—");
+      const cols = [
+        ["name", "Player"], ["diffRaw", "Diff before"], ["diff", "Diff after"], ["drop", "Drop"], ["act", "🏃 Activity"],
+        ["dpm", "Deaths/min"], ["acc", "Accuracy %"], ["inf", "🪖 Infantry %"], ["w", "Weight w"], ["factor", "Factor"],
+      ];
+      const items = ((b.players) || []).map((i) => ({ ...i, drop: i.diffRaw != null && i.diff != null ? i.diffRaw - i.diff : null }));
+      const k = hutSort.key, dir = hutSort.dir;
+      items.sort((x, y) => (k === "name" ? dir * String(x.name).localeCompare(String(y.name)) : dir * ((x[k] ?? -1e9) - (y[k] ?? -1e9))));
+      const cl = (b.cleared || []).length
+        ? '<div style="margin-top:6px;">✅ Cleared by the owner (no 🛖, no damping): ' + b.cleared.map((i) => nameCell(i) + " (Diff " + sg(i.diffRaw) + ", would be " + sg(i.diffWould) + ")").join(", ") + "</div>"
+        : '<div class="st-dim" style="margin-top:6px;">No owner clearances.</div>';
+      $("hut").innerHTML =
+        '<div class="st-dim" style="margin-bottom:6px;">' + b.reduced + " players with a reduced Diff · " + b.marked + " shown with 🛖 (drop ≥ " + c.markMin + ") · 😤 DieHards " + b.dieHardBefore + " → " + b.dieHardAfter +
+        " · cuts: Activity median " + num(c.actMedian, 3) + " × " + c.actMult + " = " + num(c.actCut, 3) + ", deaths/min " + num(c.dpmLo, 3) + " → " + num(c.dpmHi, 3) + ", accuracy " + num(c.accLo, 2) + " → " + num(c.accHi, 2) + "%, infantry " + c.infLo + " → " + c.infHi + "%</div>" +
+        '<div class="st-scroll"><table class="st-table" id="hutTable"><tr>' +
+        cols.map(([key, label]) => '<th data-k="' + key + '" style="cursor:pointer;" title="Sort">' + esc(label) + (key === k ? (dir < 0 ? " ▼" : " ▲") : "") + "</th>").join("") + "</tr>" +
+        items.map((i) => "<tr><td>" + nameCell(i) + (i.marked ? " 🛖" : "") + "</td><td>" + sg(i.diffRaw) + "</td><td><strong>" + sg(i.diff) + "</strong></td><td>" + (i.drop != null ? "−" + i.drop : "—") + "</td><td>" + num(i.act, 3) + "</td><td>" + num(i.dpm, 3) +
+          "</td><td>" + num(i.acc, 1) + "</td><td>" + num(i.inf, 1) + '</td><td title="deaths/min ' + num(i.wDpm, 2) + " × infantry " + num(i.wInf, 2) + " × accuracy " + num(i.wAcc, 2) + '">' + num(i.w, 2) + "</td><td>×" + num(i.factor, 3) + "</td></tr>").join("") +
+        "</table></div>" + cl;
+      for (const th of $("hut").querySelectorAll("th[data-k]")) th.addEventListener("click", () => {
+        const nk = th.dataset.k;
+        hutSort = { key: nk, dir: hutSort.key === nk ? -hutSort.dir : nk === "name" ? 1 : -1 };
+        renderHut(st);
+      });
     }
 
     /** 💩 Padder penalty (status.json "padderPenalty", scripts/build-ranks.mjs): before / after iVi and rank per confirmed padder. */

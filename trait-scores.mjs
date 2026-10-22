@@ -48,11 +48,17 @@ function pct(pools, id, v) {
   return percentileOf(pool, traitRound(id, v));
 }
 
-/** 🤥😤 → { score, practice, theory } or null when ⚔️ iVi or IvI is missing. */
-export function aimGap(pools, adjs, ivi) {
+/**
+ * 🤥😤 → { score, raw, hut, practice, theory } or null when ⚔️ iVi or IvI is missing.
+ * hut = 🛖 damping factor (hut.mjs, ranks.json "hut" column; null = none): a
+ * positive score is multiplied by it and rounded (raw keeps the undamped score).
+ */
+export function aimGap(pools, adjs, ivi, hut = null) {
   const a = pct(pools, "adjs", adjs), i = pct(pools, "ivi", ivi);
   if (a == null || i == null) return null;
-  return { score: a - i, practice: a, theory: i };
+  const raw = a - i;
+  const h = fin(hut) && raw > 0 ? hut : null;
+  return { score: h == null ? raw : Math.round(raw * h), raw, hut: h, practice: a, theory: i };
 }
 
 /** 🪳 → { score, infl, apk } or null when Inflation or 🤝 Assists is missing. */

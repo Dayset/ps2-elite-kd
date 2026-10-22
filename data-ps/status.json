@@ -33,7 +33,7 @@
     }
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-22T22:16:17.998Z",
+    "checkedAt": "2026-10-22T22:52:37.242Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 0,
     "explained": 2,
@@ -168,7 +168,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-22T22:16:18.059Z",
+    "checkedAt": "2026-10-22T22:52:37.286Z",
     "red": 6,
     "padding": 0,
     "adjusted": 208,
@@ -179,7 +179,7 @@
     "forensics": 0
   },
   "sessionStats": {
-    "checkedAt": "2026-10-22T22:16:18.001Z",
+    "checkedAt": "2026-10-22T22:52:37.245Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -548,7 +548,7 @@
     "outliersUnexplained": 0
   },
   "forensics": {
-    "checkedAt": "2026-10-22T22:16:18.007Z",
+    "checkedAt": "2026-10-22T22:52:37.249Z",
     "candidates": [
       "hkn1",
       "scooterrr",
@@ -609,7 +609,7 @@
     "players": []
   },
   "review": {
-    "checkedAt": "2026-10-22T22:16:18.018Z",
+    "checkedAt": "2026-10-22T22:52:37.257Z",
     "count": 211,
     "players": [
       {
@@ -2342,7 +2342,7 @@
     },
     "predict": {},
     "tagMin": 20,
-    "checkedAt": "2026-10-22T22:16:18.032Z",
+    "checkedAt": "2026-10-22T22:52:37.266Z",
     "coverage": {
       "players": 1582,
       "withSessions": 212,
@@ -2420,7 +2420,7 @@
     }
   },
   "padderPenalty": {
-    "checkedAt": "2026-10-22T22:16:18.023Z",
+    "checkedAt": "2026-10-22T22:52:37.260Z",
     "ranked": 1577,
     "penalty": 0.1,
     "ref": 610.6,
@@ -2430,7 +2430,7 @@
     "players": []
   },
   "vehicleCut": {
-    "checkedAt": "2026-10-22T22:16:18.031Z",
+    "checkedAt": "2026-10-22T22:52:37.265Z",
     "ranked": 1577,
     "cut": 930,
     "buckets": {
@@ -4706,7 +4706,7 @@
     "watch": []
   },
   "infantry": {
-    "checkedAt": "2026-10-22T22:16:18.268Z",
+    "checkedAt": "2026-10-22T22:52:37.443Z",
     "players": 1589,
     "counts": {
       "infantry": 1027,
@@ -4725,7 +4725,7 @@
   },
   "burst": {
     "rule": "KPM ≥ 5 and ≥ 15 kills in ≥ 2 min (one stored session, no 10-minute floor)",
-    "checkedAt": "2026-10-22T22:16:18.514Z",
+    "checkedAt": "2026-10-22T22:52:37.628Z",
     "sessions": 0,
     "flaggedPlayers": 0,
     "clearedPlayers": 0,
@@ -4745,5 +4745,361 @@
     "pending": 0,
     "players": 0,
     "caught": []
+  },
+  "hut": {
+    "builtAt": "2026-10-22T22:52:37.224Z",
+    "cuts": {
+      "actMedian": 0.2422,
+      "actMult": 1.333,
+      "actCut": 0.3229,
+      "dpmLo": 0.1585,
+      "dpmHi": 0.2011,
+      "dpmBand": [
+        "p10",
+        "p20"
+      ],
+      "accLo": 19.7714,
+      "accHi": 21.093,
+      "accBand": [
+        "p50",
+        "p60"
+      ],
+      "infLo": 75,
+      "infHi": 85,
+      "markMin": 10,
+      "n": {
+        "act": 1577,
+        "dpm": 1577,
+        "acc": 1582
+      }
+    },
+    "reduced": 20,
+    "marked": 4,
+    "dieHardBefore": 194,
+    "dieHardAfter": 191,
+    "rule": "🛖 safe-spot damping, gradual, all cuts from this build's players. a = (🏃 Activity ÷ cut)², cut = median × 1.333 (Activity at or above the cut → no change). w = product of three 0–1 ramps: deaths/min (KPM ÷ K/D) 1 at p10 → 0 at p20; 🪖 infantry 0 at 75% → 1 at 85%; accuracy 1 at the median → 0 at p60. A positive 🔀 Diff × (1 − w × (1 − a)), rounded; a negative Diff is untouched. 🛖 next to the name only when Diff drops by 10+ points. Owner override: \"hut\": \"cleared\" on the data/reviewed.json entry (no 🛖, no damping).",
+    "players": [
+      {
+        "name": "Thatguyben",
+        "slug": "thatguyben",
+        "act": 0.144923,
+        "dpm": 0.15,
+        "acc": 20.05454,
+        "inf": 80.6,
+        "diffRaw": 40,
+        "factor": 0.649,
+        "w": 0.44,
+        "wDpm": 1,
+        "wInf": 0.56,
+        "wAcc": 0.786,
+        "diff": 26,
+        "marked": true
+      },
+      {
+        "name": "NomadTR",
+        "slug": "nomadtr",
+        "act": 0.234925,
+        "dpm": 0.151,
+        "acc": 17.227395,
+        "inf": 83.3,
+        "diffRaw": 38,
+        "factor": 0.609,
+        "w": 0.83,
+        "wDpm": 1,
+        "wInf": 0.83,
+        "wAcc": 1,
+        "diff": 23,
+        "marked": true
+      },
+      {
+        "name": "7Berlin7",
+        "slug": "7berlin7",
+        "act": 0.173301,
+        "dpm": 0.159,
+        "acc": 19.529334,
+        "inf": 88.9,
+        "diffRaw": 34,
+        "factor": 0.288,
+        "w": 1,
+        "wDpm": 1,
+        "wInf": 1,
+        "wAcc": 1,
+        "diff": 10,
+        "marked": true
+      },
+      {
+        "name": "SmokenWhiskey",
+        "slug": "smokenwhiskey",
+        "act": 0.186036,
+        "dpm": 0.197,
+        "acc": 16.625117,
+        "inf": 95.3,
+        "diffRaw": 28,
+        "factor": 0.941,
+        "w": 0.088,
+        "wDpm": 0.088,
+        "wInf": 1,
+        "wAcc": 1,
+        "diff": 26,
+        "marked": false
+      },
+      {
+        "name": "kidikein",
+        "slug": "kidikein",
+        "act": 0.069772,
+        "dpm": 0.187,
+        "acc": 10.918938,
+        "inf": 83.8,
+        "diffRaw": 21,
+        "factor": 0.728,
+        "w": 0.286,
+        "wDpm": 0.325,
+        "wInf": 0.88,
+        "wAcc": 1,
+        "diff": 15,
+        "marked": false
+      },
+      {
+        "name": "Jefdaddy13TR",
+        "slug": "jefdaddy13tr",
+        "act": 0.138519,
+        "dpm": 0.12,
+        "acc": 16.224659,
+        "inf": 91.1,
+        "diffRaw": 20,
+        "factor": 0.184,
+        "w": 1,
+        "wDpm": 1,
+        "wInf": 1,
+        "wAcc": 1,
+        "diff": 4,
+        "marked": true
+      },
+      {
+        "name": "StarkzNC",
+        "slug": "starkznc",
+        "act": 0.149902,
+        "dpm": 0.189,
+        "acc": 19.156987,
+        "inf": 92.6,
+        "diffRaw": 16,
+        "factor": 0.781,
+        "w": 0.279,
+        "wDpm": 0.279,
+        "wInf": 1,
+        "wAcc": 1,
+        "diff": 12,
+        "marked": false
+      },
+      {
+        "name": "GENRALRitchman",
+        "slug": "genralritchman",
+        "act": 0.129038,
+        "dpm": 0.143,
+        "acc": 17.543465,
+        "inf": 81.5,
+        "diffRaw": 16,
+        "factor": 0.454,
+        "w": 0.65,
+        "wDpm": 1,
+        "wInf": 0.65,
+        "wAcc": 1,
+        "diff": 7,
+        "marked": false
+      },
+      {
+        "name": "MarlonNc",
+        "slug": "marlonnc",
+        "act": 0.294105,
+        "dpm": 0.106,
+        "acc": 16.908293,
+        "inf": 91.1,
+        "diffRaw": 15,
+        "factor": 0.83,
+        "w": 1,
+        "wDpm": 1,
+        "wInf": 1,
+        "wAcc": 1,
+        "diff": 12,
+        "marked": false
+      },
+      {
+        "name": "Wuzupyou",
+        "slug": "wuzupyou",
+        "act": 0.12825,
+        "dpm": 0.195,
+        "acc": 14.356694,
+        "inf": 93.1,
+        "diffRaw": 14,
+        "factor": 0.883,
+        "w": 0.138,
+        "wDpm": 0.138,
+        "wInf": 1,
+        "wAcc": 1,
+        "diff": 12,
+        "marked": false
+      },
+      {
+        "name": "Crazemaze",
+        "slug": "crazemaze",
+        "act": 0.162943,
+        "dpm": 0.196,
+        "acc": 15.327787,
+        "inf": 93.6,
+        "diffRaw": 13,
+        "factor": 0.917,
+        "w": 0.112,
+        "wDpm": 0.112,
+        "wInf": 1,
+        "wAcc": 1,
+        "diff": 12,
+        "marked": false
+      },
+      {
+        "name": "Spider15",
+        "slug": "spider15",
+        "act": 0.043368,
+        "dpm": 0.195,
+        "acc": 15.086225,
+        "inf": 78.2,
+        "diffRaw": 13,
+        "factor": 0.954,
+        "w": 0.047,
+        "wDpm": 0.146,
+        "wInf": 0.32,
+        "wAcc": 1,
+        "diff": 12,
+        "marked": false
+      },
+      {
+        "name": "DeeAgain",
+        "slug": "deeagain",
+        "act": 0.077644,
+        "dpm": 0.167,
+        "acc": 14.944409,
+        "inf": 79.7,
+        "diffRaw": 13,
+        "factor": 0.645,
+        "w": 0.376,
+        "wDpm": 0.801,
+        "wInf": 0.47,
+        "wAcc": 1,
+        "diff": 8,
+        "marked": false
+      },
+      {
+        "name": "Hadesrealm56",
+        "slug": "hadesrealm56",
+        "act": 0.140708,
+        "dpm": 0.189,
+        "acc": 14.477037,
+        "inf": 83.8,
+        "diffRaw": 10,
+        "factor": 0.795,
+        "w": 0.254,
+        "wDpm": 0.288,
+        "wInf": 0.88,
+        "wAcc": 1,
+        "diff": 8,
+        "marked": false
+      },
+      {
+        "name": "Fatsquatch1",
+        "slug": "fatsquatch1",
+        "act": 0.017613,
+        "dpm": 0.123,
+        "acc": 8.173342,
+        "inf": 76.7,
+        "diffRaw": 8,
+        "factor": 0.831,
+        "w": 0.17,
+        "wDpm": 1,
+        "wInf": 0.17,
+        "wAcc": 1,
+        "diff": 7,
+        "marked": false
+      },
+      {
+        "name": "Yobro809",
+        "slug": "yobro809",
+        "act": 0.030496,
+        "dpm": 0.175,
+        "acc": 11.974525,
+        "inf": 77.3,
+        "diffRaw": 7,
+        "factor": 0.858,
+        "w": 0.144,
+        "wDpm": 0.625,
+        "wInf": 0.23,
+        "wAcc": 1,
+        "diff": 6,
+        "marked": false
+      },
+      {
+        "name": "Sigady",
+        "slug": "sigady",
+        "act": 0.042162,
+        "dpm": 0.179,
+        "acc": 14.223959,
+        "inf": 77.8,
+        "diffRaw": 7,
+        "factor": 0.855,
+        "w": 0.147,
+        "wDpm": 0.526,
+        "wInf": 0.28,
+        "wAcc": 1,
+        "diff": 6,
+        "marked": false
+      },
+      {
+        "name": "NcCadet",
+        "slug": "nccadet",
+        "act": 0.204012,
+        "dpm": 0.18,
+        "acc": 16.506485,
+        "inf": 91.2,
+        "diffRaw": 7,
+        "factor": 0.706,
+        "w": 0.489,
+        "wDpm": 0.489,
+        "wInf": 1,
+        "wAcc": 1,
+        "diff": 5,
+        "marked": false
+      },
+      {
+        "name": "DocDeviousJR",
+        "slug": "docdeviousjr",
+        "act": 0.04476,
+        "dpm": 0.178,
+        "acc": 9.469446,
+        "inf": 77,
+        "diffRaw": 7,
+        "factor": 0.892,
+        "w": 0.11,
+        "wDpm": 0.552,
+        "wInf": 0.2,
+        "wAcc": 1,
+        "diff": 6,
+        "marked": false
+      },
+      {
+        "name": "GOOBER21",
+        "slug": "goober21",
+        "act": 0.227598,
+        "dpm": 0.182,
+        "acc": 20.198499,
+        "inf": 81.2,
+        "diffRaw": 6,
+        "factor": 0.907,
+        "w": 0.186,
+        "wDpm": 0.443,
+        "wInf": 0.62,
+        "wAcc": 0.677,
+        "diff": 5,
+        "marked": false
+      }
+    ],
+    "cleared": []
   }
 }

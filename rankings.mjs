@@ -6,11 +6,12 @@
 
 import { t as tr, currentLang } from "./i18n.mjs";
 // Column tip in the current language (tip.<id> in i18n/*.json, English otherwise).
-const tipOf = (c) => (c.id ? tr("tip." + c.id, c.tip || "") : c.tip || "");
+const tipOf = (c) => (c.id ? tr("tip." + c.id, c.tip || "") : c.tip || "") + (c.tipExtra ? " " + c.tipExtra : "");
 import { compareByCharName } from "./analyze-run.mjs?v=20261020-eta1";
 import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits, binJumpTarget } from "./dist.mjs?v=20261010-sav1";
 import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261022-scrim1";
 import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP, isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261022-scrim1";
+import { HUT_MARK, HUT_TIP, HUT_DIFF_NOTE } from "./hut.mjs?v=20261022-hut1";
 import { paletteColor } from "./palette.mjs?v=20261010-sav1";
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261020-wide1";
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261021-theory1";
@@ -30,8 +31,8 @@ import { hiddenList } from "./hidden.mjs?v=20261010-sav1";
 import { pageRoom, dataPrefix, roomLsKey, psServer } from "./rooms.mjs?v=20261022-ps1";
 import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261020-i18n2";
 import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261022-scrim1";
-import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261021-traits1";
-import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, DIFF_THIRD, aimGapCellTip, zergCellTip } from "./trait-tips.mjs?v=20261021-longname1";
+import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261022-hut1";
+import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, DIFF_THIRD, aimGapCellTip, zergCellTip } from "./trait-tips.mjs?v=20261022-hut1";
 
 /**
  * @param {{ getNames: () => string[], toggleName: (name: string, anchor: Element, add: boolean) => void, maxNames?: number }} host
@@ -60,7 +61,7 @@ export function initRankings(host) {
     { id: "cons", label: "⚡ Const", digits: 2, tip: "How much of your K/D you keep against the strongest third of your opponents compared with the weakest third: 1.00 means it holds completely, 0.50 means it halves." },
     { id: "apk", label: tr("col.assists", "🤝 Assists"), digits: 2, apk: true, tip: "Assists per kill in recent Honu sessions: how often you help damage enemies that teammates finish, for each kill of your own." },
     // 🪳 Zerg / 🤥😤 Impostor–DieHard (owner t480u–t485u): computed here from the ranks.json pools (trait-scores.mjs), same numbers as ✨ Stats.
-    { id: "diff", label: tr("col.diff", "🔀 Diff"), digits: 0, aimgap: true, tip: AIMGAP_HINT },
+    { id: "diff", label: tr("col.diff", "🔀 Diff"), digits: 0, aimgap: true, tip: AIMGAP_HINT, tipExtra: HUT_DIFF_NOTE },
     { id: "zerg", label: tr("col.zerg", "🪳 Zerg"), digits: 0, zerg: true, tip: ZERG_HINT },
     { id: "inf", label: tr("col.infantry", "🪖 Infantry"), digits: 1, inf: true, tip: INF_HINT },
   ];
@@ -258,6 +259,10 @@ export function initRankings(host) {
         infVeh: idx.infVeh != null ? r[idx.infVeh] : null,
         // 🚜 vehicle / MAX cut % already applied to adjs (null = none).
         vcut: idx.vcut != null ? r[idx.vcut] : null,
+        // 🛖 safe-spot damping factor on positive 🔀 Diff (hut.mjs; null = none).
+        hut: idx.hut != null && Number.isFinite(r[idx.hut]) ? r[idx.hut] : null,
+        // 🛖 shown only where the drop is meaningful (build-ranks: ≥ HUT_MARK_MIN points).
+        hutMk: idx.hutMk != null && r[idx.hutMk] === 1,
         // PlayStation room (#55): "us" Genudine / "eu" Ceres (null on PC).
         srv: idx.srv != null ? r[idx.srv] || null : null,
         // 📅 Registration epoch — not a stat column, but the Settings
@@ -268,7 +273,10 @@ export function initRankings(host) {
       o.markTip = o.markKind === "padding" ? PADDING_MARK_TIP : o.markKind === "adjusted" ? ADJUSTED_MARK_TIP : "";
       // 💩 confirmed padder: −10% adjusted iVi already in the numbers (padding.mjs); owner override in reviewed.json.
       o.poop = isPenalizedPadder(o.slug || o.query);
-      o.label = o.name + o.mark + (o.poop ? POOP_MARK : "");
+      // 🛖 safe-spot player (hut.mjs): positive 🔀 Diff damped; reviewed.json "hut": "cleared" wins.
+      // reviewed.json "hut": "cleared" is applied at build time (scripts/build-ranks.mjs → null factor, no mark).
+      if (o.hut == null) o.hutMk = false;
+      o.label = o.name + o.mark + (o.poop ? POOP_MARK : "") + (o.hutMk ? HUT_MARK : "");
       for (const id of Object.keys(pools)) {
         const v = r[idx[id]];
         o[id] = v;
@@ -281,7 +289,7 @@ export function initRankings(host) {
       const colOf = (id) => (idx[id] != null ? payload.rows.map((r) => r[idx[id]]) : []);
       const tp = traitPools({ adjs: colOf("adjs"), ivi: colOf("ivi"), inflation: colOf("inflation"), apk: colOf("apk") });
       for (const o of rows) {
-        const g = aimGap(tp, o.adjs, o.ivi), z = zergScore(tp, o.inflation, o.apk);
+        const g = aimGap(tp, o.adjs, o.ivi, o.hut), z = zergScore(tp, o.inflation, o.apk);
         o.diff = g ? g.score : null; o._gap = g;
         o.zerg = z ? z.score : null; o._zerg = z;
       }
@@ -467,7 +475,11 @@ export function initRankings(host) {
   /** Row HTML for one player (plain strings: cheap for ~1000 rows). */
   /** 💩 after a confirmed padder's name (hover explains the −10% iVi penalty). */
   function poopHtml(r) {
-    return r && r.poop ? `<span class="poop-mark" title="${esc(POOP_TIP)}" aria-label="${esc(POOP_TIP)}">${POOP_MARK}</span>` : "";
+    return (r && r.poop ? `<span class="poop-mark" title="${esc(POOP_TIP)}" aria-label="${esc(POOP_TIP)}">${POOP_MARK}</span>` : "") + hutHtml(r);
+  }
+  /** 🛖 next to the name (owner t504u: auto changes are marked by the name, never inside numeric cells). */
+  function hutHtml(r) {
+    return r && r.hutMk ? `<span class="poop-mark hut-mark" title="${esc(HUT_TIP)}" aria-label="${esc(HUT_TIP)}">${HUT_MARK}</span>` : "";
   }
   /** PlayStation room: the player's server after the name ("Genudine" / "Ceres"). */
   function srvTagHtml(r) {
@@ -1176,7 +1188,7 @@ export function initRankings(host) {
     const hlItems = [];
     hl.forEach((r, i) => {
       const x = xOf(r[distMetric]);
-      if (x != null) hlItems.push({ r, i, x, text: shortName(r.name) + r.mark + (r.poop ? POOP_MARK : "") });
+      if (x != null) hlItems.push({ r, i, x, text: shortName(r.name) + r.mark + (r.poop ? POOP_MARK : "") + (r.hutMk ? HUT_MARK : "") });
     });
     const famly = getComputedStyle(svg).fontFamily || "sans-serif";
     const widthAt = (k, scale) => textWidth(hlItems[k].text, fs * scale, famly);
@@ -1295,7 +1307,7 @@ export function initRankings(host) {
       gm.appendChild(t);
       const shown = col.floorZero && fin(v) && v < 0 ? tr("dist.zeroBelow", "0 (below scale)") : fin(v) ? (+v).toFixed(col.digits) : "—";
       const p = r.pcts[distMetric];
-      gm.appendChild(svgEl("title", {}, tr("dist.dotTip", "{label}{mark}{poop}: {col} {shown}{p} · rank #{rank} (current sort){fresh}", { label: r.label, mark: r.mark ? ` (${r.markTip})` : "", poop: r.poop ? ` (${POOP_TIP})` : "", col: col.label, shown, p: p != null ? ` · p${p}` : "", rank: r.rank, fresh: r.freshAt ? tr("dist.freshTag", " · {mark} your fresh fetch", { mark: FRESH_MARK }) : "" })));
+      gm.appendChild(svgEl("title", {}, tr("dist.dotTip", "{label}{mark}{poop}: {col} {shown}{p} · rank #{rank} (current sort){fresh}", { label: r.label, mark: r.mark ? ` (${r.markTip})` : "", poop: (r.poop ? ` (${POOP_TIP})` : "") + (r.hutMk ? ` (${HUT_TIP})` : ""), col: col.label, shown, p: p != null ? ` · p${p}` : "", rank: r.rank, fresh: r.freshAt ? tr("dist.freshTag", " · {mark} your fresh fetch", { mark: FRESH_MARK }) : "" })));
       marks.appendChild(gm);
     });
     svg.appendChild(leaders);
