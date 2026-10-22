@@ -678,6 +678,43 @@ export function addServerColumn(ranks, index) {
   return ranks;
 }
 
+/**
+ * PlayStation room auto-hide (owner 2026-10-22: "crazy outliers are not welcome").
+ * An account is hidden (PS hide list, by character id) when its lifetime K/D is
+ * >= 50 AND >= 90% of its opponent-sample kills are on farm accounts (100+
+ * kills on one opponent who killed back <= 2%, whatever that opponent's KPM, so
+ * alt rings that farm each other are caught). Writes hidden.json; returns adds.
+ */
+export const PS_FARM_HIDE = Object.freeze({ MIN_KD: 50, MIN_FARM_SHARE: 0.9, MIN_KILLS: 100, MAX_BACK: 0.02 });
+export function psFarmRingHit(pl, rule = PS_FARM_HIDE) {
+  if (!pl || !(+pl.global_kd >= rule.MIN_KD)) return null;
+  const rows = Array.isArray(pl.rows) ? pl.rows : [];
+  const total = rows.reduce((a, r) => a + (+r.kills || 0), 0);
+  const farm = rows.filter((r) => +r.kills >= rule.MIN_KILLS && +r.deaths <= rule.MAX_BACK * +r.kills);
+  const fk = farm.reduce((a, r) => a + (+r.kills || 0), 0);
+  if (!total || fk / total < rule.MIN_FARM_SHARE) return null;
+  return { share: fk / total, kd: +pl.global_kd, on: farm.map((r) => `${r.name} ${r.kills}/${r.deaths}`) };
+}
+export function autoHidePsFarmRing(dataDir, { today = new Date().toISOString().slice(0, 10) } = {}) {
+  const hiddenPath = path.join(dataDir, "hidden.json");
+  let hj; try { hj = JSON.parse(fs.readFileSync(hiddenPath, "utf8")); } catch { hj = { players: {} }; }
+  if (!hj.players) hj.players = {};
+  const index = JSON.parse(fs.readFileSync(path.join(dataDir, "index.json"), "utf8"));
+  const added = [];
+  for (const e of index.players || []) {
+    let raw; try { raw = JSON.parse(fs.readFileSync(path.join(dataDir, e.file), "utf8")); } catch { continue; }
+    const pl = raw && raw.player;
+    const cid = pl && String(pl.cid || "");
+    if (!/^\d{5,25}$/.test(cid) || hj.players[cid]) continue;
+    const hit = psFarmRingHit(pl);
+    if (!hit) continue;
+    hj.players[cid] = { reason: `auto-hidden: farm ring — lifetime K/D ${Math.round(hit.kd)}, ${Math.round(hit.share * 100)}% of sample kills on farm accounts (${hit.on.slice(0, 3).join(", ")}). ${pl.display || e.name}`, at: today };
+    added.push({ name: pl.display || e.name, cid });
+  }
+  if (added.length) fs.writeFileSync(hiddenPath, JSON.stringify(hj, null, 2) + "\n");
+  return added;
+}
+
 /** "--room ps" → "ps"; anything else → "pc" (default: data/, unchanged). */
 export function roomArg(argv) {
   const i = argv.indexOf("--room");
@@ -691,12 +728,12 @@ if (isMain) {
   const dataDir = path.join(root, roomById(room).dataDir);
   if (room === "ps") {
     usePsReviewLists(dataDir);
-    console.log(`PlayStation room: building ${roomById(room).dataDir}/ only (PS review lists, no fresh-account auto-hide yet).`);
+    console.log(`PlayStation room: building ${roomById(room).dataDir}/ only (PS review lists, farm-ring auto-hide).`);
   }
   // Fresh-account auto-hide runs first so this build already excludes the
   // newly hidden players via the normal hidden path. PC only: its thresholds
   // were measured on the PC population (PS pools are never mixed with PC).
-  const autoHidden = room === "pc" ? autoHideFreshExceptional(dataDir) : [];
+  const autoHidden = room === "pc" ? autoHideFreshExceptional(dataDir) : autoHidePsFarmRing(dataDir);
   if (autoHidden.length) console.log(`auto-hide: ${autoHidden.length} fresh exceptional account(s) added to hidden.json: ${autoHidden.map((a) => a.name).join(", ")}`);
   const { ranks: out, guard, hidden: hiddenInfo, bins, session, forensics: forensicsInfo, review, assistGroups: assistInfo, padderPenalty: padderInfo, vehicleCut: vehCutInfo } = buildRanksWithGuard(dataDir, room === "ps" ? { known: {} } : undefined);
   if (room === "ps") addServerColumn(out, JSON.parse(fs.readFileSync(path.join(dataDir, "index.json"), "utf8")));

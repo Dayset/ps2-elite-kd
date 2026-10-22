@@ -168,3 +168,11 @@ test("the PS hide list keeps the Ceres farm-ring accounts out of PS Rankings (by
   const pc = hiddenList(JSON.parse(fs.readFileSync("data/hidden.json", "utf8")));
   assert.equal(pc.match({ cid: "5429807370268020465" }), null);
 });
+
+test("PS auto-hide: lifetime K/D >= 50 with >= 90% of kills on farm accounts (alt rings too); normal players untouched", async () => {
+  const { psFarmRingHit } = await import("../scripts/build-ranks.mjs");
+  const ring = { global_kd: 2558, rows: [{ name: "DEADINSNOW", kills: 17410, deaths: 0, kpm: 1.73 }, { name: "DEADINRAIN", kills: 10733, deaths: 0, kpm: 0 }, { name: "x", kills: 2, deaths: 10, kpm: 1 }] };
+  assert.ok(psFarmRingHit(ring));
+  assert.equal(psFarmRingHit({ ...ring, global_kd: 12 }), null); // padder with normal K/D: mark only
+  assert.equal(psFarmRingHit({ global_kd: 80, rows: [{ name: "a", kills: 300, deaths: 200, kpm: 1 }] }), null);
+});
