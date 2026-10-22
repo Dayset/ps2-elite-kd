@@ -69,33 +69,9 @@ const SOUNDS = {
   fresh: [{ f: 1047, d: 0.3, g: 0.04 }, { f: 1568, t: 0.09, d: 0.4, g: 0.03 }],
 };
 
-/** t470u 💨 poof: a short noise burst through a band-pass sweeping down (soft
- * "pff"), fast attack, ~300 ms decay, plus a faint low thump. No audio file. */
-function poof(c, out) {
-  const t0 = c.currentTime + 0.01, len = 0.34;
-  const buf = c.createBuffer(1, Math.ceil(c.sampleRate * len), c.sampleRate);
-  const d = buf.getChannelData(0);
-  for (let k = 0; k < d.length; k++) d[k] = Math.random() * 2 - 1;
-  const src = c.createBufferSource();
-  src.buffer = buf;
-  const bp = c.createBiquadFilter();
-  bp.type = "bandpass";
-  bp.Q.value = 1.1;
-  bp.frequency.setValueAtTime(2200, t0);
-  bp.frequency.exponentialRampToValueAtTime(320, t0 + 0.28);
-  const g = c.createGain();
-  g.gain.setValueAtTime(0.0001, t0);
-  g.gain.linearRampToValueAtTime(0.16, t0 + 0.006); // attack
-  g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.31); // decay
-  src.connect(bp).connect(g).connect(out);
-  src.start(t0);
-  src.stop(t0 + len);
-  tone(c, out, { f: [170, 70], d: 0.12, g: 0.035 }); // soft thump under the air
-}
-
 /** Play a named sound. Silent when muted or with no recent user gesture (unless force). */
 export function sfx(name, { force = false } = {}) {
-  if (!sfxEnabled() || !(SOUNDS[name] || name === "poof")) return;
+  if (!sfxEnabled() || !SOUNDS[name]) return;
   if (!force && !recentGesture()) return;
   const c = ensureCtx();
   if (!c) return;
@@ -109,8 +85,7 @@ export function sfx(name, { force = false } = {}) {
   const out = c.createGain();
   out.gain.value = 0.8;
   out.connect(c.destination);
-  if (name === "poof") poof(c, out);
-  else for (const n of SOUNDS[name]) tone(c, out, n);
+  for (const n of SOUNDS[name]) tone(c, out, n);
   setTimeout(() => { try { out.disconnect(); } catch { /* ignore */ } }, 900);
 }
 

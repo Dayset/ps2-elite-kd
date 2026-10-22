@@ -74,7 +74,7 @@
       });
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261022-set3" />
+  <link rel="stylesheet" href="styles.css?v=20261022-set4" />
   <style>
     /* Installed-app launch splash (t465u). Android draws its own launch splash first:
        the maskable icon (big medal on black) seen through a 192 px circle, on the
@@ -363,17 +363,14 @@
     </div>
   </div>
 
-  <!-- One spot, two modes (2026-10-19): ✨ Stats ⇄ 🏅 Positions, swipe / tabs (stats-carousel.mjs). -->
+  <!-- One spot, two modes (2026-10-19): ✨ Stats ⇄ 🏅 Positions, side-swipe only
+       (stats-carousel.mjs). No tab bar / dots (owner 2026-10-22): users find the
+       left / right swipe on their own. -->
   <section id="statsCarousel" class="stats-carousel" data-i18n-aria-label="sc.label" aria-label="Your players: stats and positions">
-    <div class="sc-bar" role="tablist" data-i18n-aria-label="sc.tabs" aria-label="Table mode">
-      <button type="button" role="tab" class="sc-tab on" id="scTabStats" data-i18n="sc.stats" data-i18n-title="sc.statsTitle" data-sc="0" aria-selected="true" aria-controls="scSlideStats" title="Adjusted stats of your players">✨ Stats</button>
-      <span class="sc-dots" aria-hidden="true" data-i18n-title="sc.swipe" title="Swipe sideways to switch"><span class="sc-dot on"></span><span class="sc-dot"></span></span>
-      <button type="button" role="tab" class="sc-tab" id="scTabPos" data-i18n="sc.positions" data-i18n-title="sc.positionsTitle" data-sc="1" aria-selected="false" aria-controls="scSlidePos" title="Where your players rank among every cached player">🏅 Positions</button>
-    </div>
     <div class="sc-viewport">
       <div class="sc-track">
-        <div class="sc-slide" id="scSlideStats" role="tabpanel" aria-labelledby="scTabStats"><div id="statsPanel" class="stats-panel" aria-label="Player stats comparison" data-i18n-aria-label="stats.panelAria"></div></div>
-        <div class="sc-slide" id="scSlidePos" role="tabpanel" aria-labelledby="scTabPos"><div id="rkPositions" class="rk-positions" aria-live="polite"><p class="rk-pos-hint" data-i18n="sc.loadingPositions">Loading positions…</p></div></div>
+        <div class="sc-slide" id="scSlideStats" role="tabpanel" data-i18n-aria-label="sc.stats" aria-label="✨ Stats"><div id="statsPanel" class="stats-panel" aria-label="Player stats comparison" data-i18n-aria-label="stats.panelAria"></div></div>
+        <div class="sc-slide" id="scSlidePos" role="tabpanel" data-i18n-aria-label="sc.positions" aria-label="🏅 Positions"><div id="rkPositions" class="rk-positions" aria-live="polite"><p class="rk-pos-hint" data-i18n="sc.loadingPositions">Loading positions…</p></div></div>
       </div>
     </div>
   </section>
@@ -387,7 +384,7 @@
         var sc = document.getElementById("statsCarousel");
         var ph = window.matchMedia && matchMedia("(max-width: 600px)").matches;
         sc.classList.add("sc-reserve");
-        sc.style.minHeight = (31 + 30 + n * (ph ? 41 : 27) + 2) + "px";
+        sc.style.minHeight = (30 + n * (ph ? 41 : 27) + 2) + "px";
       } catch (e) {}
     })();
   </script>
@@ -517,7 +514,7 @@
   </footer>
 
   <script type="module" src="i18n.mjs"></script>
-  <script type="module" src="app.js?v=20261022-set3"></script>
+  <script type="module" src="app.js?v=20261022-set4"></script>
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").catch(function () {});

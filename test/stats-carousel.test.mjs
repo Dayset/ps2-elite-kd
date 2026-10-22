@@ -30,39 +30,22 @@ test("both tables share one look (right-aligned numbers, same weights) inside th
   assert.match(ranks, /class="player-num"[^`]*\$\{i \+ 1\}\./, "positions rows carry the same series number as the stats rows");
 });
 
-// t470u: 4 quick flips on a phone poof the tab / dots line away.
-import { flipBurst, FLIPS_TO_POOF, FLIP_WINDOW_MS } from "../stats-carousel.mjs";
-test("flipBurst (t470u): fires on exactly the 3rd switch inside the window", () => {
-    assert.equal(FLIPS_TO_POOF, 3);
-    assert.equal(flipBurst([0, 1000]), false);
-    assert.equal(flipBurst([0, 1000, 2000]), true);
-});
-test("flipBurst (t470u): not when the 3 switches are spread over more than the window", () => {
-    assert.equal(flipBurst([0, 4000, FLIP_WINDOW_MS + 1]), false);
-    assert.equal(flipBurst([0, 4000, FLIP_WINDOW_MS]), true);
-});
-
-// t471u: the fold is per page session; a second mount never doubles listeners.
-import { collapseScBar } from "../stats-carousel.mjs";
-test("collapseScBar (t471u): folds without animation, once, and blurs a focused tab", () => {
-  const cls = new Set(), attrs = {};
-  let blurred = 0;
-  const tab = { blur: () => { blurred++; } };
-  const bar = { setAttribute: (k, v) => { attrs[k] = v; }, contains: (n) => n === tab };
-  const root = { classList: { add: (c) => cls.add(c), remove: (c) => cls.delete(c), contains: (c) => cls.has(c) }, querySelector: () => bar, isConnected: true };
-  globalThis.document = { activeElement: tab };
-  try {
-    collapseScBar(root, { animate: false });
-    assert.ok(cls.has("sc-bar-gone"));
-    assert.equal(attrs.inert, "");
-    assert.equal(blurred, 1);
-    collapseScBar(root, { animate: false });
-    assert.equal(blurred, 1, "second call is a no-op");
-  } finally { delete globalThis.document; }
-});
-test("mountStatsCarousel (t471u): one mount per element; a folded session stays folded", () => {
+test("mountStatsCarousel (t471u): one mount per element", () => {
   const src = readFileSync(new URL("../stats-carousel.mjs", import.meta.url), "utf8");
   assert.match(src, /if \(root\.__sc\) return root\.__sc;/);
-  assert.match(src, /if \(sessionPoofed\) collapseScBar\(root, \{ animate: false \}\);/);
-  assert.match(src, /const poof = !sessionPoofed && phoneUi\(\) && flipBurst\(flips\);/);
+});
+
+// Owner 2026-10-22: no Stats/Positions tab bar, no dots, no poof — the two
+// modes switch by left / right swipe only, and users find it on their own.
+test("no tab bar, no dots, no poof anywhere (owner 2026-10-22)", () => {
+  const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  assert.ok(!/sc-bar|sc-tab|sc-dot/.test(html), "index.html carries no bar markup");
+  assert.match(html, /class="sc-viewport"/, "the swipe viewport stays");
+  const sc = readFileSync(new URL("../stats-carousel.mjs", import.meta.url), "utf8");
+  assert.ok(!/poof|collapseScBar|flipBurst/.test(sc), "carousel has no poof machinery");
+  assert.match(sc, /addEventListener\("scroll"/, "mode still follows the swipe scroll");
+  const sfx = readFileSync(new URL("../sfx.mjs", import.meta.url), "utf8");
+  assert.ok(!/poof/.test(sfx), "the 💨 poof sound is gone from sfx");
+  const app = readFileSync(new URL("../app.js", import.meta.url), "utf8");
+  assert.ok(!/poof|onThumb/.test(app), "app.js wires no poof callback");
 });

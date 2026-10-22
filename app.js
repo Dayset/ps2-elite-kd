@@ -49,7 +49,7 @@ import { infantryKillsUrl, summarizeInfantryKills } from "./infantry.mjs?v=20261
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261021-theory1";
 import { createWheelSwiper } from "./dist-cycle.mjs?v=20261017-cycle15";
 import { slideSwap, attachDragCarousel } from "./chart-slide.mjs?v=20261020-flick1";
-import { mountStatsCarousel } from "./stats-carousel.mjs?v=20261021-longname1";
+import { mountStatsCarousel } from "./stats-carousel.mjs?v=20261022-nobar";
 import { pickGraphForKeys } from "./graph-keys.mjs?v=20261017-graphkeys1";
 import { entryFetchedAt, pickNewest, writeWithEviction } from "./cache-pick.mjs?v=20261010-sav1";
 import {
@@ -109,7 +109,7 @@ import { markNote, statMark, confirmedPadderSlugs, isPenalizedPadder, POOP_MARK,
 import { accountTimes, flairsHtml, flairsFor } from "./flairs.mjs?v=20261010-sav1";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
 import "./name-peek.mjs?v=20261020-peekwin1";
-import { sfx, recentGesture, mountSfxToggle } from "./sfx.mjs?v=20261020-poof";
+import { sfx, recentGesture, mountSfxToggle } from "./sfx.mjs?v=20261022-nosfx";
 import { mountNameSuggest } from "./name-suggest.mjs?v=20261022-ps1";
 import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261010-sav1";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
@@ -318,7 +318,7 @@ import {
     hideZeroIviToggle: document.getElementById("hideZeroIviToggle"),
   };
   // ✨ Stats ⇄ 🏅 Positions share one spot (stats-carousel.mjs); same switch sound as the graph modes.
-  if (!LIVE_MODE) mountStatsCarousel({ root: document.getElementById("statsCarousel"), onChange: (_i, o) => { if (!(o && o.poof)) sfx("sparkle"); }, onThumbPoof: () => sfx("poof", { force: true }) });
+  if (!LIVE_MODE) mountStatsCarousel({ root: document.getElementById("statsCarousel"), onChange: () => sfx("sparkle") });
 
   // Dayset 2026-10-20: on phones (portrait) the options group (language /
   // wipe / sounds / theme) lives inside the names field, bottom-right — the
@@ -3649,7 +3649,7 @@ import {
     if (!nameTokens.length || !nameTokens.every(isSavedName)) { releaseStatsSpace(); return; }
     const phone = typeof matchMedia === "function" && matchMedia("(max-width: 600px)").matches;
     sc.classList.add("sc-reserve");
-    sc.style.minHeight = Math.round(31 + 30 + nameTokens.length * (phone ? 41 : 27) + 2) + "px";
+    sc.style.minHeight = Math.round(30 + nameTokens.length * (phone ? 41 : 27) + 2) + "px";
     setTimeout(releaseStatsSpace, 8000);
   }
   function releaseStatsSpace() {

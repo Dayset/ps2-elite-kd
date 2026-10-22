@@ -2965,26 +2965,7 @@ col.lv-c-statR { width: calc(7.143% - 3.3214ch); }
 .stats-carousel { margin: 0.35rem 0 0.85rem; }
 .stats-carousel:has(#statsPanel:empty) { display: none; }
 .stats-carousel.sc-reserve { display: block !important; } /* room kept while the startup graph loads (app.js reserveStatsSpace) */
-/* Split bar (Dayset 2026-10-19): ✨ Stats left, dots centered, 🏅 Positions right. */
-.sc-bar { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.3rem; }
-.sc-tab { font: inherit; font-size: 0.8rem; font-weight: 600; color: var(--dim); background: var(--panel); border: 1px solid var(--border); border-radius: 999px; padding: 0.18rem 0.7rem; cursor: pointer; white-space: nowrap; }
-.sc-tab:first-child { margin-right: auto; }
-.sc-tab:last-child { margin-left: auto; }
-.sc-tab:hover { color: var(--text); }
-.sc-tab.on { color: var(--text); background: color-mix(in srgb, var(--accent) 24%, var(--panel)); }
-.sc-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-.sc-tab .rk-table-count { color: var(--dim); font-weight: 400; }
-.sc-dots { display: inline-flex; gap: 5px; }
-/* t470u 💨 (stats-carousel.mjs collapseScBar): phones only. Tabs + dots vanish, a rocking 👍
- * sits where the dots were for 2 s, then the line folds to nothing (refresh restores it). */
-@media (max-width: 600px) {
-  .stats-carousel.sc-bar-poofed .sc-bar { position: relative; overflow: hidden; }
-  .stats-carousel.sc-bar-poofed .sc-bar > :not(.sc-thumb) { visibility: hidden; }
-  .stats-carousel .sc-thumb { position: absolute; left: 50%; top: 50%; margin: -0.6em 0 0 -0.6em; width: 1.2em; height: 1.2em; line-height: 1.2em; text-align: center; font-size: 1.1rem; pointer-events: none; }
-  .stats-carousel.sc-bar-gone .sc-bar { display: none; }
-}
-.sc-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); transition: background 0.2s, transform 0.2s; }
-.sc-dot.on { background: var(--accent); transform: scale(1.25); }
+/* No tab bar / dots (owner 2026-10-22): the two modes switch by side-swipe only. */
 /* Native scroll-snap (2026-10-19): the browser moves the slides on the compositor at the
  * screen's own rate (the old JS drag ran on the main thread and stuttered on phones).
  * A table that can still scroll sideways keeps the swipe; at its edge the swipe passes

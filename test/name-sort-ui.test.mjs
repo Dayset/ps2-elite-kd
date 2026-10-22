@@ -29,10 +29,10 @@ test("one page (t356u): no 🏆 / › buttons; order controls → stats → grap
   // t358u: no "🏆 Rankings" title; big table folded by default.
   assert.doesNotMatch(index, /🏆 Rankings|class="rk-title"/);
   assert.doesNotMatch(index, /id="rkPosSection"/, "positions are a carousel mode now, not a fold");
-  // Tabs in order; the swipe dots sit with them (between the two tabs since 2026-10-20).
+  // No tab bar / dots (owner 2026-10-22): the two slides sit in order, swipe-only.
   const sc = index.slice(index.indexOf('<section id="statsCarousel" class="stats-carousel"'), index.indexOf("</section>", index.indexOf('id="statsCarousel"')));
-  assert.match(sc, /data-sc="0"[\s\S]*?data-sc="1"/);
-  assert.match(sc, /class="sc-dots"/);
+  assert.match(sc, /id="scSlideStats"[\s\S]*?id="scSlidePos"/);
+  assert.doesNotMatch(sc, /sc-bar|sc-tab|sc-dot/);
   assert.match(app, /mountStatsCarousel\(\{ root: document\.getElementById\("statsCarousel"\)/);
   assert.match(index, /<details id="ranksTableSection" class="dist-section rk-table-section">/);
 });
