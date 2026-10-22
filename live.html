@@ -74,7 +74,7 @@
       });
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261022-ps1" />
+  <link rel="stylesheet" href="styles.css?v=20261022-set1" />
   <style>
     /* Installed-app launch splash (t465u). Android draws its own launch splash first:
        the maskable icon (big medal on black) seen through a 192 px circle, on the
@@ -279,25 +279,50 @@
         <span id="freshEta" class="fresh-eta" aria-live="polite" hidden></span>
       </span>
       <a href="columns.html" class="fresh-cols-link" aria-label="What the columns mean" title="What the columns mean" data-i18n-aria-label="columnsLink" data-i18n-title="columnsLink"><span class="cols-txt" data-i18n="columnsLink">📖 What the columns mean</span><span class="cols-emoji" aria-hidden="true">❓📖❓</span></a>
-      <!-- t375u: 🗑️ / theme moved here from the top row, small icon buttons on the right. -->
+      <!-- t490u (owner): ⚙️ Settings — one unfolding menu at the right of the
+           fresh row holds room / language / background / sounds / theme / 🗑️,
+           each with a text label (space is no longer the limit inside). -->
       <span class="fresh-row-end">
-        <select id="roomSelect" class="lang-select room-select" title="Room: PC or PlayStation players, never mixed" aria-label="Room" data-i18n-title="room.title" data-i18n-aria-label="room.label">
-          <option value="pc" selected data-i18n="room.pc">🖥️ PC</option>
-          <option value="ps" data-i18n="room.ps">🎮 PlayStation</option>
-        </select>
-        <select id="langSelect" class="lang-select" title="Language" aria-label="Language" data-i18n-title="lang.label" data-i18n-aria-label="lang.label">
-          <option value="en" selected>🇬🇧 English</option>
-          <option value="ja">🇯🇵 日本語</option>
-          <option value="ru">🇷🇺 Русский</option>
-          <option value="de">🇩🇪 Deutsch</option>
-          <option value="fr">🇫🇷 Français</option>
-          <option value="zh">🇨🇳 中文</option>
-          <option value="es">🇪🇸 Español</option>
-        </select>
-        <button id="wipeLocalBtn" type="button" class="mini-btn wipe-local" title="Clear all local app data (cache, theme, flags)" aria-label="Clear all local app data" data-i18n-title="wipe.title" data-i18n-aria-label="wipe.title">🗑️</button>
-        <button id="bgToggleBtn" type="button" class="mini-btn bg-toggle" title="Background image on — click to hide" aria-label="Background image on — click to hide">🖼️</button>
-        <button id="sfxToggle" type="button" class="mini-btn sfx-toggle" title="Sounds on — click to mute" aria-label="Sounds on — click to mute">🔊</button>
-        <button id="themeToggle" type="button" class="mini-btn theme-toggle" title="Switch to light theme" aria-label="Switch to light theme">☀️</button>
+        <details id="settingsMenu" class="settings-menu">
+          <summary id="settingsBtn" class="settings-btn" title="Settings" aria-label="Settings" data-i18n-title="settings.title" data-i18n-aria-label="settings.title">⚙️ <span data-i18n="settings.title">Settings</span></summary>
+          <div class="settings-panel">
+            <div class="settings-row">
+              <label class="settings-label" for="roomSelect" data-i18n="room.label">Room</label>
+              <select id="roomSelect" class="lang-select room-select" title="Room: PC or PlayStation players, never mixed" aria-label="Room" data-i18n-title="room.title" data-i18n-aria-label="room.label">
+                <option value="pc" selected data-i18n="room.pc">🖥️ PC</option>
+                <option value="ps" data-i18n="room.ps">🎮 PlayStation</option>
+              </select>
+            </div>
+            <div class="settings-row">
+              <label class="settings-label" for="langSelect" data-i18n="lang.label">Language</label>
+              <select id="langSelect" class="lang-select" title="Language" aria-label="Language" data-i18n-title="lang.label" data-i18n-aria-label="lang.label">
+                <option value="en" selected>🇬🇧 English</option>
+                <option value="ja">🇯🇵 日本語</option>
+                <option value="ru">🇷🇺 Русский</option>
+                <option value="de">🇩🇪 Deutsch</option>
+                <option value="fr">🇫🇷 Français</option>
+                <option value="zh">🇨🇳 中文</option>
+                <option value="es">🇪🇸 Español</option>
+              </select>
+            </div>
+            <div class="settings-row bg-row">
+              <span class="settings-label" data-i18n="bg.label">Background</span>
+              <button id="bgToggleBtn" type="button" class="mini-btn bg-toggle" title="Background image on — click to hide" aria-label="Background image on — click to hide">🖼️</button>
+            </div>
+            <div class="settings-row">
+              <span class="settings-label" data-i18n="sfx.label">Sounds</span>
+              <button id="sfxToggle" type="button" class="mini-btn sfx-toggle" title="Sounds on — click to mute" aria-label="Sounds on — click to mute">🔊</button>
+            </div>
+            <div class="settings-row">
+              <span class="settings-label" data-i18n="theme.label">Theme</span>
+              <button id="themeToggle" type="button" class="mini-btn theme-toggle" title="Switch to light theme" aria-label="Switch to light theme">☀️</button>
+            </div>
+            <div class="settings-row">
+              <span class="settings-label" data-i18n="wipe.label">Clear local data</span>
+              <button id="wipeLocalBtn" type="button" class="mini-btn wipe-local" title="Clear all local app data (cache, theme, flags)" aria-label="Clear all local app data" data-i18n-title="wipe.title" data-i18n-aria-label="wipe.title">🗑️</button>
+            </div>
+          </div>
+        </details>
       </span>
     </div>
   </div>
@@ -482,7 +507,7 @@
   </footer>
 
   <script type="module" src="i18n.mjs"></script>
-  <script type="module" src="app.js?v=20261022-psf1"></script>
+  <script type="module" src="app.js?v=20261022-set1"></script>
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").catch(function () {});

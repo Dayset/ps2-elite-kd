@@ -76,9 +76,10 @@ describe("🖼️ background-image toggle (PC, next to 🗑️)", () => {
     await withPage(async ({ ev, nav }) => {
       await nav("index.html");
       assert.equal(await ev(ready), 1, "app module loaded");
+      await ev(`document.getElementById("settingsMenu").open = true`); // t490u: the toggle lives in the ⚙️ Settings menu now
       let st = await ev(state());
       assert.equal(st.pc, true, "desktop matches the PC media query");
-      assert.notEqual(st.btnDisplay, "none", "🖼️ button visible on PC");
+      assert.notEqual(st.btnDisplay, "none", "🖼️ button visible on PC (Settings menu open)");
       assert.equal(st.off, false, "image on by default");
       assert.ok(st.img.includes("imgur"), `html carries the background image: ${st.img}`);
       await ev(`document.getElementById("bgToggleBtn").click()`);

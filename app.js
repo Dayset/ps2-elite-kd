@@ -5539,6 +5539,8 @@ import {
     if (roomSelect) {
       roomSelect.value = ROOM;
       roomSelect.hidden = LIVE_MODE; // Live is PC only
+      const roomRow = roomSelect.closest(".settings-row");
+      if (roomRow) roomRow.hidden = LIVE_MODE; // t490u: hide the whole Settings row, not just the select
       roomSelect.addEventListener("change", () => {
         const next = roomSelect.value === "ps" ? "ps" : "pc";
         if (next === ROOM) return;
@@ -5569,6 +5571,18 @@ import {
   }
   if (els.wipeLocalBtn) {
     els.wipeLocalBtn.addEventListener("click", () => wipeAllLocalAppData());
+  }
+  // t490u: ⚙️ Settings menu — an outside click or Esc folds it back up.
+  {
+    const settingsMenu = document.getElementById("settingsMenu");
+    if (settingsMenu) {
+      document.addEventListener("pointerdown", (e) => {
+        if (settingsMenu.open && !settingsMenu.contains(e.target)) settingsMenu.open = false;
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && settingsMenu.open) settingsMenu.open = false;
+      });
+    }
   }
 
   // Expose tiny helpers for sanity checks in console / node --check stays syntax-only
