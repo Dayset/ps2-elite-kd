@@ -24,35 +24,35 @@ test("removedKey / serverKey", () => {
 });
 
 test("match: PC id, name, and a later namesake with another id", () => {
-  const L = removedList({ players: { [CID_A]: { name: "[ABC] Foo" }, OnlyName: {} } });
+  const L = removedList({ players: { [CID_A]: { name: "[ABC] Foo", proof: "test" }, OnlyName: { proof: "test" } } });
   assert.equal(L.size, 2);
   assert.ok(L.match({ cid: CID_A }));
   assert.ok(L.match({ slug: "foo" }));
-  assert.ok(L.match({ name: "[XYZ] Foo" }), "outfit tag does not matter");
+  assert.ok(L.match({ name: "[XYZ] Foo", proof: "test" }), "outfit tag does not matter");
   assert.equal(L.match({ cid: "5428000000000000009", name: "Foo" }), null, "an id decides: new namesake is not removed");
-  assert.ok(L.match({ name: "onlyname" }), "a name-only entry matches by name");
-  assert.equal(L.match({ name: "Bar" }), null);
-  assert.equal(removedList(null).match({ name: "Foo" }), null);
+  assert.ok(L.match({ name: "onlyname", proof: "test" }), "a name-only entry matches by name");
+  assert.equal(L.match({ name: "Bar", proof: "test" }), null);
+  assert.equal(removedList(null).match({ name: "Foo", proof: "test" }), null);
 });
 
 test("match: PS entries need the right server", () => {
-  const L = removedList({ players: { [`us-${CID_B}`]: { name: "Bar" } } });
+  const L = removedList({ players: { [`us-${CID_B}`]: { name: "Bar", proof: "test" } } });
   assert.ok(L.match({ cid: CID_B, server: "ps2ps4us" }));
   assert.ok(L.match({ cid: CID_B, server: "Genudine" }));
   assert.equal(L.match({ cid: CID_B, server: "Ceres" }), null);
-  assert.equal(L.match({ name: "Bar" }), null, "no server known: a PS entry never matches by name");
+  assert.equal(L.match({ name: "Bar", proof: "test" }), null, "no server known: a PS entry never matches by name");
   assert.ok(L.match({ name: "Bar", server: "us" }));
 });
 
 test("blankOpponents: only matching names, same server on PS", () => {
-  const L = removedList({ players: { [CID_A]: { name: "Foo" }, [`eu-${CID_B}`]: { name: "Bar" } } });
+  const L = removedList({ players: { [CID_A]: { name: "Foo", proof: "test" }, [`eu-${CID_B}`]: { name: "Bar", proof: "test" } } });
   const rows = [{ name: "[T] Foo", kills: 3 }, { name: "Bar", kills: 1 }, { name: "Baz", kills: 2 }];
   assert.equal(L.blankOpponents(rows), 1);
   assert.deepEqual(rows.map((r) => r.name), [REMOVED_NAME, "Bar", "Baz"]);
   assert.equal(rows[0].kills, 3, "numbers stay");
-  const us = [{ name: "Bar" }];
+  const us = [{ name: "Bar", proof: "test" }];
   assert.equal(L.blankOpponents(us, "us"), 0, "the Genudine namesake is somebody else");
-  const eu = [{ name: "Bar" }];
+  const eu = [{ name: "Bar", proof: "test" }];
   assert.equal(L.blankOpponents(eu, "Ceres"), 1);
 });
 
@@ -86,7 +86,7 @@ test("purge (PC): file, records and opponent names go; owner files only reported
   w(dir, "xp/foo.json", { slug: "foo" });
   w(dir, "watchlist.txt", "# names\n[ABC] Foo\nBar\n");
   w(dir, "hidden.json", { players: { foo: { reason: "owner note" } } });
-  w(dir, "opt-out.json", { players: { [CID_A]: { name: "[ABC] Foo", at: "2026-10-23" } } });
+  w(dir, "opt-out.json", { players: { [CID_A]: { name: "[ABC] Foo", at: "2026-10-23", proof: "test" } } });
   const logs = [];
   const rep = purgeRemoved({ dataDir: dir, log: (m) => logs.push(m) });
 
@@ -127,7 +127,7 @@ test("purge (PS): removes the right server's file and keeps the other server's n
   w(dir, "index.json", { players: [{ name: "Bar", key: us, file: `players/${us}.json` }, { name: "Bar", key: eu, file: `players/${eu}.json` }, { name: "Qux", key: usOther, file: `players/${usOther}.json` }] });
   w(dir, "names.json", { v: 1, count: 3, players: [["Bar", 1, `players/${us}.json`, "bar-us"], ["Bar", 1, `players/${eu}.json`, "bar-eu"], ["Qux", 1, `players/${usOther}.json`, "qux"]] });
   w(dir, "refresh-state.json", { players: { [us]: {}, [eu]: {}, [usOther]: {} } });
-  w(dir, "opt-out.json", { players: { [us]: { name: "Bar" } } });
+  w(dir, "opt-out.json", { players: { [us]: { name: "Bar", proof: "test" } } });
   purgeRemoved({ dataDir: dir, room: "ps", log: () => {} });
 
   assert.equal(fs.existsSync(path.join(dir, `players/${us}.json`)), false);
@@ -148,6 +148,7 @@ test("the real removal lists parse and use valid ids", () => {
       assert.ok(ok, `${d}/opt-out.json: ${k} is not a valid id for this room`);
       assert.ok(v && typeof v.name === "string" && v.name, `${d}/opt-out.json: ${k} needs a name`);
       assert.match(String(v.at || ""), /^\d{4}-\d{2}-\d{2}$/, `${d}/opt-out.json: ${k} needs an "at" date`);
+      assert.ok(String(v.proof || "").trim(), `${d}/opt-out.json: ${k} needs "proof" (how ownership was proven); no proof, no removal`);
     }
   }
 });
@@ -170,4 +171,12 @@ test("a removed name is not called a typo in the skipped-names line", async () =
   assert.doesNotMatch(all.text, /misspelled/);
   const mixed = summarizeFailures([{ name: "Foo", kind: "removed" }, { name: "Typo", kind: "not-found" }], 1);
   assert.match(mixed.text, /not a real character\. Showing the rest\.$/, "one typo: singular");
+});
+
+test("no proof, no removal: entries without a recorded proof are ignored", () => {
+  const L = removedList({ players: { [CID_A]: { name: "Foo", at: "2026-10-23" }, Bar: { name: "Bar", proof: "  " } } });
+  assert.equal(L.size, 0);
+  assert.equal(L.match({ cid: CID_A }), null);
+  const rows = [{ name: "Foo" }];
+  assert.equal(L.blankOpponents(rows), 0);
 });

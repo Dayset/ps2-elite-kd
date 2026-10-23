@@ -109,7 +109,7 @@ function thinCellTip(r) {
   return tr("fights.sample", "{tip}. This sample: {sample}", { tip: MIN_FIGHTS_TIP, sample: fightsText(r).replace(/[()]/g, "") });
 }
 import { markNote, statMark, confirmedPadderSlugs, isPenalizedPadder, POOP_MARK, POOP_TIP, setRoomRule } from "./padding.mjs?v=20261023-short1";
-import { removedList } from "./opt-out.mjs?v=20261023-optout1";
+import { removedList } from "./opt-out.mjs?v=20261023-proof1";
 import { HUT_MARK, HUT_TIP, HUT_EXPLAIN, HUT_DIFF_NOTE, playMinutes } from "./hut.mjs?v=20261023-short1";
 import { autoMarksHtml } from "./auto-marks.mjs?v=20261023-nbh1";
 // Account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times: chart name list only.

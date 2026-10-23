@@ -3,7 +3,11 @@
  * (privacy.html, issue form .github/ISSUE_TEMPLATE/remove-character.yml, #61).
  * Owner-edited. One file per room: data/opt-out.json (PC), data-ps/opt-out.json (PS).
  *
- *   { "players": { "<id>": { "name": "[TAG] Name", "at": "YYYY-MM-DD" } } }
+ *   { "players": { "<id>": { "name": "[TAG] Name", "at": "YYYY-MM-DD", "proof": "oracle sign-in 2026-10-23" } } }
+ *
+ * "proof" is required: how the requester proved the character is theirs (PC:
+ * oracle sign-in; PS: logout at a given time, checked on Census). Entries
+ * without it are ignored everywhere and fail test/opt-out.test.mjs.
  *
  * <id> is the Census character id (PC), "us-<cid>" / "eu-<cid>" (PS: ids are
  * per server), or a plain name when the id is not known yet.
@@ -50,6 +54,8 @@ export function removedList(json) {
   for (const [k, v] of Object.entries(players)) {
     const id = String(k).trim();
     if (!id || id.startsWith("_")) continue;
+    // Foolproof (owner 2026-10-23): no recorded ownership proof, no removal.
+    if (!v || !String(v.proof || "").trim()) continue;
     const ps = PS_ID.exec(id);
     const server = ps ? ps[1].toLowerCase() : null;
     const cid = ps ? ps[2] : CID.test(id) ? id : "";

@@ -45,7 +45,7 @@ How PS2 Elite (https://dayset.github.io/ps2-elite-kd) and the PS2Map Oracle hand
 
 ## 4. Your choices and rights
 
-- **Remove your character:** use the [removal form](https://github.com/Dayset/ps2-elite-kd/issues/new?template=remove-character.yml). The cached stats are deleted, the bots stop fetching the character, it leaves Rankings and is blanked in other players' opponent lists, and the site shows "removed at the player's request" instead of stats. The character's id and name stay on the removal list so it stays removed. We may ask you to show the character is yours (on PC: sign in once on the oracle page). The stats themselves remain on Daybreak's servers and other sites; we can only remove our copy.
+- **Remove your character:** use the [removal form](https://github.com/Dayset/ps2-elite-kd/issues/new?template=remove-character.yml). The cached stats are deleted, the bots stop fetching the character, it leaves Rankings and is blanked in other players' opponent lists, and the site shows "removed at the player's request" instead of stats. The character's id and name stay on the removal list so it stays removed. We remove a character only after you prove it is yours, so nobody can remove someone else (PC: sign in once on the oracle page; PlayStation: log out at a time we give you, checked on Census). Requests without proof are closed. The stats themselves remain on Daybreak's servers and other sites; we can only remove our copy.
 - **Other rights** (access, correction, objection, deletion, restriction, portability where it applies): open an issue. We answer within one month.
 - **Complaints:** you can complain to your data protection authority.
 

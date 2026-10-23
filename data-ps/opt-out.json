@@ -1,4 +1,4 @@
 {
- "_about": "Removal list (#61): characters whose players asked not to be shown on PS2 Elite. Owner-edited after a request (issue form 'Remove my character'). Key = Census character id (PC) or us-<cid> / eu-<cid> (PS), or a name when the id is unknown. The bots delete the cached file and blank the name in opponent lists on their next run (scripts/purge-removed.mjs); the page shows 'removed at the player's request'. Format: \"<id>\": { \"name\": \"[TAG] Name\", \"at\": \"YYYY-MM-DD\" }.",
+ "_about": "Removal list (#61): characters whose players asked not to be shown on PS2 Elite. Owner-edited after a request (issue form 'Remove my character'). Key = Census character id (PC) or us-<cid> / eu-<cid> (PS), or a name when the id is unknown. The bots delete the cached file and blank the name in opponent lists on their next run (scripts/purge-removed.mjs); the page shows 'removed at the player's request'. Format: \"<id>\": { \"name\": \"[TAG] Name\", \"at\": \"YYYY-MM-DD\", \"proof\": \"how ownership was proven\" }. Only add after proof (PC: oracle sign-in; PS: logout at a given time checked on Census); entries without proof are ignored.",
  "players": {}
 }
