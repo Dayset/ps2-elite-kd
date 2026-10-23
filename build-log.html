@@ -248,6 +248,11 @@
           <summary><h3>🚩 Session pattern <span id="sessFlagCount" class="st-count">…</span></h3></summary>
           <div id="sessFlags" class="st-dim">Loading…</div>
         </details>
+        <details class="st-sub-sec" id="secAssistGap">
+          <summary><h3>🐞 Assist bug weeks skipped <span id="gapCount" class="st-count">…</span></h3></summary>
+          <p class="st-note">A game bug recorded almost no assists from the Apr 1 2026 patch until the May 6 hotfix. Those sessions are left out of 🤝 Assists, 🪳 Zerg and the 🚩 low-assists check (automatic).</p>
+          <div id="assistGap" class="st-dim">Loading…</div>
+        </details>
         <details class="st-sub-sec" id="secAssistGroups">
           <summary><h3>🤝 Assist groups (experiment) <span id="agCount" class="st-count">…</span></h3></summary>
           <p class="st-note">Who carries fights, who finishes, who quietly supports. Vehicle players aren’t separated yet.</p>
@@ -657,8 +662,8 @@
        🌾 padding + † "adjusted" + the 🧪 outlier guard (grouped by player) go to 📉 Chart anomalies. Uses the
        same metrics as the main tables (player-metrics.mjs). Leads for review, not proof. -->
   <script type="module">
-    import { stalkerRuleText, reviewRuleText, anomalyRuleText, paddingRuleText } from "./red-flags.mjs?v=20261022-wpc1";
-    import { groupOutliers } from "./outlier-guard.mjs?v=20261010-sav1";
+    import { stalkerRuleText, reviewRuleText, anomalyRuleText, paddingRuleText } from "./red-flags.mjs?v=20261023-agap1";
+    import { groupOutliers } from "./outlier-guard.mjs?v=20261023-agap1";
     import { classifyBins, CHART_LABELS } from "./bins.mjs?v=20261010-sav1";
     import { forensicsRuleText } from "./session-forensics.mjs?v=20261010-sav1";
     import { reviewDecision, CLEARING_DECISIONS, PADDING_BORDERLINE_SHARE, ADJUSTED_BORDERLINE_SHARE } from "./padding.mjs?v=20261023-short1";
@@ -965,6 +970,17 @@
       $("assistGroups").innerHTML = '<div title="Cut-offs: K/D ≥ ' + n3(k.kd) + ", damage share ≥ " + Math.round((k.shareHi || 0) * 100) + "% / ≤ " + Math.round((k.shareLo || 0) * 100) + "%, assists / kill ≥ " + n3(k.apk) + " (median " + n3(k.medApk) + "), iVi " + Math.round(k.iviLo || 0) + "–" + Math.round(k.iviHi || 0) + '">' + (c.measured || 0) + " of " + (c.players || 0) + " players measured (" + (c.measuredPct || 0) + "%) · checked " + esc(a.checkedAt ? ago(Date.parse(a.checkedAt)) : "—") + "</div>" +
         tbl("💪 Carries fights", G.carries) + tbl("🎯 Finishers", G.finishers) + tbl("🤝 Hidden support", G.support) + tagTbl(a);
     }
+    function renderAssistGap(status) {
+      const g = status && status.assistGap;
+      if (!g) { $("gapCount").textContent = "–"; $("assistGap").innerHTML = '<span class="st-dim">No check yet (written by the next refresh run).</span>'; return; }
+      const n3 = (v) => (v == null ? "—" : (+v).toFixed(2));
+      const day = (ms) => new Date(ms).toISOString().slice(0, 10);
+      const rows = g.players || [];
+      $("gapCount").textContent = String(g.count || rows.length);
+      $("assistGap").innerHTML = '<div>Skipped ' + day(g.start) + " → " + day(g.end) + ' (<a href="' + esc(g.url) + '" target="_blank" rel="noopener noreferrer">hotfix notes</a>). ' + (g.count || 0) + " players affected · " + (g.lost || 0) + " lost their 🤝 score (under " + (g.minKills || 100) + " kills left) · checked " + esc(g.checkedAt ? ago(Date.parse(g.checkedAt)) : "—") + "</div>" +
+        (rows.length ? '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th class="st-num">Bug sessions</th><th class="st-num">Kills skipped</th><th class="st-num">Kills kept</th><th class="st-num">Assists / kill before</th><th class="st-num">After</th></tr>' +
+          rows.map((r) => "<tr><td>" + esc(r.name) + '</td><td class="st-num">' + r.gapSessions + '</td><td class="st-num">' + r.gapKills + '</td><td class="st-num">' + r.kept + '</td><td class="st-num">' + n3(r.apkBefore) + '</td><td class="st-num">' + (r.apk == null ? "— (too few kills)" : n3(r.apk)) + "</td></tr>").join("") + "</table></div>" : '<div class="st-dim">None.</div>');
+    }
     function renderSession(status) {
       const s = status && status.sessionStats;
       if (!s) {
@@ -1062,6 +1078,7 @@
       if (window.renderStatusBar) window.renderStatusBar(st);
       renderHidden(st);
       renderSession(st);
+      try { renderAssistGap(st); } catch (e) { console.warn(e); }
       try { renderAssistGroups(st); } catch (e) { console.warn(e); }
       renderForensics(st);
       renderBurst(st);

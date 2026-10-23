@@ -36,7 +36,7 @@ import { percentileOf } from "../dist.mjs";
 import { forensicsSummary, honuSessionUrl } from "../session-forensics.mjs";
 import { hiddenList, isConfirmedCheater } from "../hidden.mjs";
 import { cleanTimes, flairsFor } from "../flairs.mjs";
-import { sessionMetrics, sessionFlag, sessionRuleText, distribution, SESSION_METRICS, SESSION_METRIC_IDS, SESSION_MIN, SESSION_RULE } from "../session-stats.mjs";
+import { sessionMetrics, sessionFlag, sessionRuleText, distribution, SESSION_METRICS, SESSION_METRIC_IDS, SESSION_MIN, SESSION_RULE, ASSIST_GAP } from "../session-stats.mjs";
 
 /** Full Honu XP detail for a slug (data/xp/<slug>.json; requested players only), or null. */
 /** 💥 Burst sessions over the stored sessions of every cached player (no network). */
@@ -430,6 +430,29 @@ export function buildRanksWithGuard(dataDir, { known = KNOWN_EXTREMES } = {}) {
     zergRevive,
     newbieDiff,
     assistGroups: assistGroups(players), // 🤝 groups stay build-log only (the 🤝 apk column itself is public since t382u)
+    assistGap: assistGapStatus(players),
+  };
+}
+
+/**
+ * 🤝 Assist bug weeks (session-stats.mjs ASSIST_GAP, owner t542u): build-log
+ * list of every visible player whose counted sessions touch the window, with
+ * assists per kill before (all sessions) and after (window skipped; null =
+ * fewer than SESSION_MIN.MIN_KILLS kills left → no 🤝 / 🪳 / 🚩 low-assists).
+ */
+export function assistGapStatus(players) {
+  const r3 = (v) => (Number.isFinite(v) ? Math.round(v * 1000) / 1000 : null);
+  const list = players
+    .filter((p) => !p.hidden && p.session && p.session.gap && p.session.gap.sessions > 0 && p.session.kills >= SESSION_MIN.MIN_KILLS)
+    .map((p) => ({ slug: p.slug, name: p.name, gapSessions: p.session.gap.sessions, gapKills: p.session.gap.kills, kept: p.session.gap.kept,
+      apkBefore: r3(p.session.gap.apkAll), apk: r3(p.session.values.s_apk) }))
+    .sort((a, b) => b.gapKills / (b.gapKills + b.kept) - a.gapKills / (a.gapKills + a.kept) || a.name.localeCompare(b.name));
+  return {
+    checkedAt: new Date().toISOString(),
+    start: new Date(ASSIST_GAP.start).toISOString(), end: new Date(ASSIST_GAP.end).toISOString(), url: ASSIST_GAP.url,
+    minKills: SESSION_MIN.MIN_KILLS,
+    count: list.length, lost: list.filter((x) => x.apk == null).length,
+    players: list,
   };
 }
 
@@ -1111,7 +1134,7 @@ if (isMain) {
     const marathonHidden = autoHideMarathonRampage(dataDir);
     if (marathonHidden.length) console.log(`auto-hide: ${marathonHidden.length} marathon rampage account(s) added to hidden.json: ${marathonHidden.map((a) => a.name).join(", ")}`);
   }
-  const { ranks: out, guard, hidden: hiddenInfo, bins, session, forensics: forensicsInfo, review, assistGroups: assistInfo, padderPenalty: padderInfo, vehicleCut: vehCutInfo, hut: hutInfo, vehDiff: vehDiffInfo, zergRevive: zrevInfo, newbieDiff: nbdInfo } = buildRanksWithGuard(dataDir, room === "ps" ? { known: {} } : undefined);
+  const { ranks: out, guard, hidden: hiddenInfo, bins, session, forensics: forensicsInfo, review, assistGroups: assistInfo, padderPenalty: padderInfo, vehicleCut: vehCutInfo, hut: hutInfo, vehDiff: vehDiffInfo, zergRevive: zrevInfo, newbieDiff: nbdInfo, assistGap: gapInfo } = buildRanksWithGuard(dataDir, room === "ps" ? { known: {} } : undefined);
   if (room === "ps") addServerColumn(out, JSON.parse(fs.readFileSync(path.join(dataDir, "index.json"), "utf8")));
   fs.writeFileSync(path.join(dataDir, "ranks.json"), JSON.stringify(out) + "\n");
   try {
@@ -1133,6 +1156,8 @@ if (isMain) {
   st.forensics = forensicsInfo;
   st.review = review;
   st.assistGroups = assistInfo;
+  st.assistGap = gapInfo; // 🤝 assist bug weeks skipped (build-log list)
+  console.log(`🤝 assist bug weeks skipped: ${gapInfo.count} players touched, ${gapInfo.lost} left without 🤝 (under ${gapInfo.minKills} kills)`);
   st.padderPenalty = padderInfo; // 💩 build-log list (ranks.json already has the penalized numbers)
   st.vehicleCut = vehCutInfo; // 🚜 build-log list (ranks.json already has the cut numbers)
   st.hut = hutInfo; // 🛖 build-log list (ranks.json "hut" column has the factors)

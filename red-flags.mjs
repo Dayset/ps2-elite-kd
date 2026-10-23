@@ -15,7 +15,7 @@
  */
 import { PADDING_RULE, statMark, PADDING_MARK, PADDING_MARK_TIP, isScrimRoom } from "./padding.mjs?v=20261023-short1";
 import { classifyBins, RED_PATTERNS, CHART_PATTERNS } from "./bins.mjs?v=20261010-sav1";
-import { sessionRuleText } from "./session-stats.mjs?v=20261010-sav1";
+import { sessionRuleText } from "./session-stats.mjs?v=20261023-agap1";
 
 export { PADDING_MARK, PADDING_MARK_TIP, RED_PATTERNS, CHART_PATTERNS, classifyBins };
 

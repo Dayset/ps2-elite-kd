@@ -18,7 +18,7 @@
  * DOM-free.
  */
 import { classifyBins } from "./bins.mjs?v=20261010-sav1";
-import { SESSION_LABELS } from "./session-stats.mjs?v=20261010-sav1";
+import { SESSION_LABELS } from "./session-stats.mjs?v=20261023-agap1";
 
 export const GUARD_RULE = Object.freeze({ Z: 6, SPAN_K: 3, MIN_N: 50 });
 

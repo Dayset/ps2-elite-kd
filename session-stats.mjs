@@ -73,6 +73,30 @@ export const SESSION_RULE = Object.freeze({
   KD_MIN: 7,
 });
 
+/**
+ * 🤝 Assist bug weeks (owner t542u, approved 2026-10-23): the Apr 1, 2026 game
+ * patch stopped kill assists from being recorded (no XP, no Honu/Census event)
+ * until the May 6, 2026 hotfix
+ * (https://www.planetside2.com/patch-notes/may-6-hotfix-2026). Our own sessions
+ * show assists per kill ≈ 0.02 in that window vs ≈ 0.4 before and after.
+ * Sessions overlapping [start, end) are skipped when totalling assists
+ * (🤝 Assists, its damage share, 🪳 Zerg and the 🚩 low-assists check); every
+ * other session metric still uses them. Fewer than MIN_KILLS kills left → no
+ * assists value. start = Apr 1 2026 08:00 UTC−5 (patch maintenance),
+ * end = May 7 2026 00:00 UTC−5 (after the hotfix maintenance).
+ */
+export const ASSIST_GAP = Object.freeze({
+  start: Date.UTC(2026, 3, 1, 13, 0, 0),
+  end: Date.UTC(2026, 4, 7, 5, 0, 0),
+  url: "https://www.planetside2.com/patch-notes/may-6-hotfix-2026",
+});
+/** True when a session [startMs, startMs + sec) overlaps the assist bug weeks. */
+export function inAssistGap(startMs, sec = 0, gap = ASSIST_GAP) {
+  if (!Number.isFinite(startMs) || startMs <= 0) return false;
+  const end = startMs + Math.max(0, +sec || 0) * 1000;
+  return startMs < gap.end && end > gap.start;
+}
+
 const fin = (v) => typeof v === "number" && Number.isFinite(v);
 const sumIds = (o, ids) => ids.reduce((n, id) => n + ((o && o[String(id)] && +o[String(id)][0]) || 0), 0);
 const div = (a, b) => (b > 0 ? a / b : null);
@@ -89,14 +113,14 @@ function cv(xs) {
 function assistSessions(a) {
   return Object.values((a && a.sessions) || {})
     .filter((s) => Array.isArray(s) && s.length >= 4)
-    .map((s) => ({ a: +s[0] || 0, k: +s[1] || 0, sec: +s[2] || 0, share: +s[4] || 0, shareN: +s[5] || 0, d: fin(s[7]) ? s[7] : null }));
+    .map((s) => ({ a: +s[0] || 0, k: +s[1] || 0, sec: +s[2] || 0, st: +s[3] || 0, share: +s[4] || 0, shareN: +s[5] || 0, d: fin(s[7]) ? s[7] : null }));
 }
 
 /** Full XP record → [{ a, k, sec, d, g, r }] */
 function xpSessions(x) {
   return Object.values((x && x.sessions) || {})
     .filter((s) => s && fin(+s.sec))
-    .map((s) => ({ a: sumIds(s.g, XP.ASSIST), k: +s.k || 0, sec: +s.sec || 0, d: fin(s.d) ? s.d : sumIds(s.r, XP.KILL), g: s.g || {}, r: s.r || {} }));
+    .map((s) => ({ a: sumIds(s.g, XP.ASSIST), k: +s.k || 0, sec: +s.sec || 0, st: +s.s || 0, d: fin(s.d) ? s.d : sumIds(s.r, XP.KILL), g: s.g || {}, r: s.r || {} }));
 }
 
 /**
@@ -115,10 +139,16 @@ export function sessionMetrics({ assists = null, xp = null } = {}, min = SESSION
   const kills = base.reduce((n, s) => n + s.k, 0);
   const secs = base.reduce((n, s) => n + s.sec, 0);
   const asst = base.reduce((n, s) => n + s.a, 0);
+  // 🤝 Assist bug weeks skipped (ASSIST_GAP); too few kills left → no assists value.
+  const ok = (s) => !inAssistGap(s.st, s.sec);
+  const aBase = base.filter(ok);
+  const apkKills = aBase.reduce((n, s) => n + s.k, 0);
+  const gapKills = kills - apkKills;
   const v = {};
-  v.s_apk = div(asst, kills);
-  const shareN = as.reduce((n, s) => n + s.shareN, 0);
-  v.s_share = base === as && shareN ? as.reduce((n, s) => n + s.share, 0) / shareN : null;
+  v.s_apk = apkKills >= min.MIN_KILLS ? div(aBase.reduce((n, s) => n + s.a, 0), apkKills) : null;
+  const asOk = as.filter(ok);
+  const shareN = asOk.reduce((n, s) => n + s.shareN, 0);
+  v.s_share = base === as && v.s_apk != null && shareN ? asOk.reduce((n, s) => n + s.share, 0) / shareN : null;
   if (v.s_share == null && xs.length) v.s_share = null; // XP detail keeps counts, not per-assist shares
   v.s_kpm = div(kills, secs / 60);
   const big = base.filter((s) => s.sec >= min.SESSION_SEC && s.k >= min.SESSION_KILLS);
@@ -161,6 +191,8 @@ export function sessionMetrics({ assists = null, xp = null } = {}, min = SESSION
     sessions: base.length, kills, minutes: Math.round(secs / 60),
     source: xs.length ? (base === xs ? "xp" : "assists+xp") : "assists",
     xpKills: xK, xpSessions: xs.length, kdKills,
+    // 🤝 assist bug weeks: kills skipped / kept for assists, and the unskipped value (build-log list).
+    gap: { sessions: base.length - aBase.length, kills: gapKills, kept: apkKills, apkAll: div(asst, kills) },
     measured: kills >= min.MIN_KILLS,
     values: v,
   };

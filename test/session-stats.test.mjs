@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
-import { sessionMetrics, sessionFlag, distribution, SESSION_RULE, SESSION_MIN, SESSION_METRIC_IDS, SESSION_LABELS } from "../session-stats.mjs";
+import { sessionMetrics, sessionFlag, distribution, SESSION_RULE, SESSION_MIN, SESSION_METRIC_IDS, SESSION_LABELS, ASSIST_GAP, inAssistGap } from "../session-stats.mjs";
 import { classifyBins, RED_PATTERNS } from "../bins.mjs";
 import { METRIC_LABELS } from "../outlier-guard.mjs";
 import { buildRanksWithGuard } from "../scripts/build-ranks.mjs";
@@ -111,5 +111,50 @@ describe("🧪 session deaths are stored (no extra Honu calls)", () => {
     assert.equal(a.sessions["5"][7], 8);
     const old = mergeAssists(null, [{ id: 6, assists: 3, kills: 40, seconds: 1200, startMs: 1e12 }]);
     assert.equal(old.sessions["6"][7], null);
+  });
+});
+
+describe("🤝 assist bug weeks (Apr 1 → May 6 2026 hotfix) are skipped for assists", () => {
+  const D = (y, m, d) => Date.UTC(y, m - 1, d, 18);
+  it("window: Apr 1 2026 13:00 UTC → May 7 2026 05:00 UTC, overlap counts", () => {
+    assert.equal(new Date(ASSIST_GAP.start).toISOString(), "2026-04-01T13:00:00.000Z");
+    assert.equal(new Date(ASSIST_GAP.end).toISOString(), "2026-05-07T05:00:00.000Z");
+    assert.equal(inAssistGap(D(2026, 3, 31), 600), false);
+    assert.equal(inAssistGap(D(2026, 4, 15), 600), true);
+    assert.equal(inAssistGap(ASSIST_GAP.start - 3600e3, 7200), true); // starts before, runs into the window
+    assert.equal(inAssistGap(D(2026, 5, 8), 600), false);
+    assert.equal(inAssistGap(0, 600), false); // unknown start → kept
+  });
+  it("gap sessions don't count toward assists per kill; other metrics keep them", () => {
+    const sm = sessionMetrics({ assists: assists([
+      [40, 100, 3600, D(2026, 3, 20), 20, 40, 1], // before: 0.4
+      [1, 200, 3600, D(2026, 4, 20), 0.5, 1, 1], // bug weeks: ~0
+      [40, 100, 3600, D(2026, 6, 1), 20, 40, 1], // after: 0.4
+    ]) });
+    assert.equal(sm.kills, 400);
+    assert.equal(sm.measured, true);
+    assert.equal(sm.values.s_apk, 0.4);
+    assert.equal(sm.values.s_share, 0.5);
+    assert.deepEqual(sm.gap, { sessions: 1, kills: 200, kept: 200, apkAll: 81 / 400 });
+    assert.ok(Math.abs(sm.values.s_kpm - 400 / 180) < 1e-9);
+  });
+  it("fewer than MIN_KILLS kills left → no assists value, so no 🚩 low-assists hit", () => {
+    const sm = sessionMetrics({ assists: assists([
+      [0, 300, 3600, D(2026, 4, 10), 0, 0, 1, 10],
+      [5, SESSION_MIN.MIN_KILLS - 1, 3600, D(2026, 6, 1), 2, 5, 1, 5],
+    ]) });
+    assert.equal(sm.measured, true);
+    assert.equal(sm.values.s_apk, null);
+    assert.equal(sm.values.s_share, null);
+    assert.equal(sessionFlag(sm, { hsr: 90, kd: 20 }).lowAssists, false);
+  });
+  it("XP-detail sessions are skipped the same way (start = s)", () => {
+    const x = { source: "honu-exp-all", sessions: {
+      a: { s: D(2026, 4, 12), sec: 3600, k: 300, g: { 1: [300, 0], 2: [3, 0] }, r: { 1: [10, 0] } },
+      b: { s: D(2026, 7, 1), sec: 3600, k: 150, g: { 1: [150, 0], 2: [60, 0] }, r: { 1: [10, 0] } },
+    } };
+    const sm = sessionMetrics({ xp: x });
+    assert.equal(sm.values.s_apk, 0.4);
+    assert.equal(sm.gap.kills, 300);
   });
 });
