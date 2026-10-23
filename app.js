@@ -43,9 +43,9 @@ import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261020-wide1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
 import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261022-nbd1";
 import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, diffValueHtml, aimGapCellTip, zergCellTip } from "./trait-tips.mjs?v=20261023-nbh1";
-import { ZREV_NOTE, ZREV_EXPLAIN } from "./zerg-revive.mjs?v=20261023-short1";
-import { VDIFF_NOTE, VDIFF_EXPLAIN } from "./diff-vehicle.mjs?v=20261023-short1";
-import { NBD_NOTE, NBD_EXPLAIN, newbieFactor, newPlayerHours } from "./newbie-diff.mjs?v=20261023-nbh1";
+import { ZREV_NOTE } from "./zerg-revive.mjs?v=20261023-short1";
+import { VDIFF_NOTE } from "./diff-vehicle.mjs?v=20261023-short1";
+import { NBD_NOTE, newbieFactor, newPlayerHours } from "./newbie-diff.mjs?v=20261023-nbh1";
 import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261023-short1";
 import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261022-wpc1";
 import { infantryKillsUrl, summarizeInfantryKills } from "./infantry.mjs?v=20261023-short1";
@@ -110,7 +110,7 @@ function thinCellTip(r) {
 }
 import { markNote, statMark, confirmedPadderSlugs, isPenalizedPadder, POOP_MARK, POOP_TIP, setRoomRule } from "./padding.mjs?v=20261023-short1";
 import { removedList } from "./opt-out.mjs?v=20261023-proof1";
-import { HUT_MARK, HUT_TIP, HUT_EXPLAIN, HUT_DIFF_NOTE, playMinutes } from "./hut.mjs?v=20261023-short1";
+import { HUT_MARK, HUT_TIP, HUT_DIFF_NOTE, playMinutes } from "./hut.mjs?v=20261023-short1";
 import { autoMarksHtml } from "./auto-marks.mjs?v=20261023-grave1";
 // Account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times: chart name list only.
 import { accountTimes, flairsHtml, flairsFor } from "./flairs.mjs?v=20261010-sav1";
@@ -3767,8 +3767,6 @@ import {
 
   /** "Why some cells show —" note: collapsed by default; remembered only while the page is open. */
   let thinNoteOpen = false;
-  /** "What * † mean" note: same treatment as the thin note. */
-  let markNotesOpen = false;
   /** 📊 Public section open/closed, kept across re-sorts / re-renders (t339u: sorting collapsed it). */
   let publicStatsOpen = false;
   // 🧱 Const percentile: population pool from the shared ranks.json (one fetch, cached).
@@ -3952,10 +3950,10 @@ import {
       { id: "cons", label: "⚡ Const", hint: tr("tip.cons", "K/D kept vs your strongest third of foes, compared with the weakest: 1.00 = holds, 0.50 = halves."), fn: (r) => r.cons, digits: 2, pctileCell: true },
       { id: "apk", label: tr("col.assists", "🤝 Assists"), hint: tr("tip.apk", "Assists per kill in recent Honu sessions: how often you help teammates get kills."), fn: (r) => (apkBySlug && r.p ? apkBySlug.get(slugKey(r.p.display)) : undefined), digits: 2, apkCell: true, pctDir: "low", pctLowPhrase: "more assists" },
       // 🤥😤 Impostor–DieHard (owner t484u): ⚔️ iVi percentile − IvI percentile, −99…+99; neither side is better.
-      { id: "diff", label: tr("col.diff", "🔀 Diff"), hint: tr("tip.diff", AIMGAP_HINT), // short hover (owner t9: 2–3 lines); 🛖 / 🚜 / 🐣 details live in "What … means" and columns.html#diff digits: 0, aimGapCell: true,
+      { id: "diff", label: tr("col.diff", "🔀 Diff"), hint: tr("tip.diff", AIMGAP_HINT), // short hover (owner t9: 2–3 lines); 🛖 / 🚜 / 🐣 details live in columns.html#diff digits: 0, aimGapCell: true,
         fn: (r) => { const g = traitP ? aimGap(traitP, shownValue(r, "adjs"), r.ivi, r.p ? hutOf(r.p.display) : null, r.p ? vdfOf(r.p.display) : null, r.p ? nbdOf(r.p.display, r.p) : null) : null; return g ? g.score : NaN; } },
       // 🪳 Zerg (owner t480u): lower of the 🎈 Inflation and 🤝 Assists percentiles; lower is better (like 🤝: reversed grey %).
-      { id: "zerg", label: tr("col.zerg", "🪳 Zerg"), hint: tr("tip.zerg", ZERG_HINT), // short hover (owner t9); 🪳 revive details in "What 🪳 means" and columns.html#zerg digits: 0, zergCell: true, pctDir: "low",
+      { id: "zerg", label: tr("col.zerg", "🪳 Zerg"), hint: tr("tip.zerg", ZERG_HINT), // short hover (owner t9); 🪳 revive details in columns.html#zerg digits: 0, zergCell: true, pctDir: "low",
         fn: (r) => { const z = traitP && r.p ? zergScore(traitP, shownValue(r, "inflation"), apkBySlug && apkBySlug.get(slugKey(r.p.display)), rvpOf(r.p.display)) : null; return z ? z.score : NaN; } },
       { id: "inf", label: tr("col.infantry", "🪖 Infantry"), hint: tr("tip.inf", INF_HINT), fn: (r) => { const e = infBySlug && r.p ? infBySlug.get(slugKey(r.p.display)) : undefined; return e ? e.inf : undefined; }, digits: 1, infCell: true },
     ];
@@ -4167,25 +4165,9 @@ import {
         `</p></details>`
       : "";
 
-    // Mark notes (used to live in the chart legend, now removed): one collapsed
-    // line explaining the * / † marks used in the table.
-    // Short notes (owner t9): each links to its full explanation on columns.html.
-    const MARK_NOTE_MORE = { "🛖": "hut", "🪳": "zerg", "🔀": "diff", "🐣": "diff", "💩": "padder", "*": "padder", "†": "padder" };
-    const markLegends = [...new Set(metrics.map((r) => playerMark(r.p).legend).filter(Boolean))];
-    if (metrics.some((r) => r.p && isPenalizedPadder(r.p.display))) markLegends.push(POOP_TIP); // 💩 "What * 💩 mean"
-    if (metrics.some((r) => r.p && hutMarked(r.p.display))) markLegends.push(HUT_EXPLAIN); // 🛖 "What 🛖 means": full explanation (the mark hover is just the short name)
-    // 🪳 revive check (zerg-revive.mjs): "What 🪳 means" when a shown player has a revive result.
-    if (traitP && metrics.some((r) => r.p && rvpOf(r.p.display) != null && zergScore(traitP, shownValue(r, "inflation"), apkBySlug && apkBySlug.get(slugKey(r.p.display)), rvpOf(r.p.display)))) markLegends.push(ZREV_EXPLAIN);
-    // 🔀 vehicle damp (diff-vehicle.mjs): "What 🔀 means" when a shown player's Diff is reduced by it.
-    if (traitP && metrics.some((r) => { const g = r.p ? aimGap(traitP, shownValue(r, "adjs"), r.ivi, hutOf(r.p.display), vdfOf(r.p.display)) : null; return g && g.by === "veh" && g.score !== g.raw; })) markLegends.push(VDIFF_EXPLAIN);
-    // 🐣 newbie softening (newbie-diff.mjs): explained when a shown player's negative Diff is softened.
-    if (traitP && metrics.some((r) => { const g = r.p ? aimGap(traitP, shownValue(r, "adjs"), r.ivi, hutOf(r.p.display), vdfOf(r.p.display), nbdOf(r.p.display, r.p)) : null; return g && g.by === "nbd" && g.score !== g.raw; })) markLegends.push(NBD_EXPLAIN);
-    const markNotesBlock = markLegends.length
-      ? `<details class="fold-note mark-notes"${markNotesOpen ? " open" : ""}>` +
-        `<summary>♿ What ${[...new Set(markLegends.map((t) => t.trim().split(/\s+/)[0]))].join(" ")} ${markLegends.length > 1 ? "mean" : "means"}</summary>` +
-        markLegends.map((t) => { const more = MARK_NOTE_MORE[t.trim().split(/\s+/)[0]]; return `<div class="mark-note">${escapeHtml(t)}${more ? ` <a class="more-link" href="columns.html#${more}">${escapeHtml(tr("fold.more", "more"))}</a>` : ""}</div>`; }).join("") +
-        `</details>`
-      : "";
+    // The ♿ "What … means" explanation fold that used to sit here is gone
+    // (owner 2026-10-23: too many of them). Marks keep their short hovers;
+    // the full explanations live on columns.html.
 
     const pubSorted = sortRows(metrics, publicCols, statsSortState.public);
     const adjSorted = sortRows(metrics, adjCols, statsSortState.adjusted);
@@ -4212,7 +4194,6 @@ import {
           </table>
         </div>
         ${thinBlock}
-        ${markNotesBlock}
       </div>
     `;
 
@@ -4221,8 +4202,6 @@ import {
     // Keep the ⚠️ note open/closed across re-sorts (starts collapsed each page load).
     const thinDet = els.stats.querySelector("details.stats-thin-note");
     if (thinDet) thinDet.addEventListener("toggle", () => { thinNoteOpen = thinDet.open; });
-    const markDet = els.stats.querySelector("details.mark-notes");
-    if (markDet) markDet.addEventListener("toggle", () => { markNotesOpen = markDet.open; });
     const statsRoots = [els.stats, els.statsPublic].filter(Boolean);
     const inStats = (sel) => statsRoots.map((r) => r.querySelector(sel)).find(Boolean) || null;
     const pubDet = inStats("details.stats-public");
