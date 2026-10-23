@@ -13,6 +13,7 @@
  *      the data cut (newbie-diff.mjs NBD_NEW_Q), whatever the Diff. Hover =
  *      "New player (about N h played)" (+ "Diff softened from …" when both).
  * Players cleared in data/reviewed.json carry no rvp / nbd / nbh, so no mark.
+ * 🪦 inactive (> 1 year) hides 🐣 (autoMarksHtml; owner 2026-10-23: 🪦 wins).
  *
  * g = trait-scores aimGap() result, z = zergScore() result (either may be null),
  * nbh = new-player hours (newbie-diff.mjs newPlayerHours; null = not new).
@@ -72,10 +73,15 @@ export function inactiveMark(times, now = Date.now()) {
 const esc = (s) =>
   String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
-/** Order after the name: (* / 💩 / 🛖 drawn by the caller) 🪳 🐣 🪦. Same look as 🛖 (poop-mark class: name width rules already reserve room). */
+/**
+ * Order after the name: (* / 💩 / 🛖 drawn by the caller) 🪳 🐣 🪦. Same look as 🛖 (poop-mark class: name width rules already reserve room).
+ * 🪦 wins over 🐣 (owner 2026-10-23): an inactive player shows no 🐣 mark (new-player or softened);
+ * only the mark is dropped, the softened Diff itself is unchanged.
+ */
 export function autoMarksHtml(g, z, times = null, now = Date.now(), nbh = null) {
   const ina = times ? inactiveMark(times, now) : null;
-  return [...autoMarks(g, z, nbh), ...(ina ? [ina] : [])]
+  const marks = autoMarks(g, z, nbh).filter((m) => !(ina && m.id === "nbd"));
+  return [...marks, ...(ina ? [ina] : [])]
     .map((m) => `<span class="poop-mark auto-mark auto-mark-${m.id}" title="${esc(m.tip)}" aria-label="${esc(m.tip)}">${m.mark}</span>`)
     .join("");
 }

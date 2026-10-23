@@ -36,7 +36,7 @@ import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, DIFF_T
 import { ZREV_NOTE } from "./zerg-revive.mjs?v=20261023-short1";
 import { VDIFF_NOTE } from "./diff-vehicle.mjs?v=20261023-short1";
 import { NBD_NOTE } from "./newbie-diff.mjs?v=20261023-nbh1";
-import { autoMarksHtml } from "./auto-marks.mjs?v=20261023-nbh1";
+import { autoMarksHtml } from "./auto-marks.mjs?v=20261023-grave1";
 
 /**
  * @param {{ getNames: () => string[], toggleName: (name: string, anchor: Element, add: boolean) => void, maxNames?: number }} host

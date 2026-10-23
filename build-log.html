@@ -1183,7 +1183,12 @@
         ? '<details style="margin-top:8px;"><summary>🐣 New players by play time (under ' + b.newH + " h = p" + Math.round((b.newQ || 0) * 100) + ", any Diff): " + nw.length + " · 🐣 shown in total: " + (b.marked != null ? b.marked : "?") + "</summary>" +
           '<div class="st-dim">' + nw.map((i) => nameCell(i) + " " + i.h + " h" + (i.diffRaw != null ? " (Diff " + sgn(i.diffRaw) + (i.diff !== i.diffRaw ? " → " + sgn(i.diff) : "") + ")" : "")).join(" · ") + "</div></details>"
         : "";
-      $("nbd").innerHTML = '<div class="st-dim" style="margin-bottom:6px;">' + b.softened + " negative Diffs softened · ramp " + b.loH + " h (p5) → " + b.hiH + " h (median) · 🤥 Impostors " + b.impBefore + " → " + b.impAfter + "</div>" + t.html + cl + nwHtml;
+      const gh = b.graveHidden || [];
+      const ghHtml = gh.length
+        ? '<details style="margin-top:8px;"><summary>🪦 wins over 🐣 (inactive over a year: no 🐣 mark, Diff still softened): ' + gh.length + "</summary>" +
+          '<div class="st-dim">' + gh.map((i) => nameCell(i) + " " + (i.h != null ? i.h + " h" : "") + " (" + (i.kind === "new" ? "new player" : "softened") + (i.diffRaw != null ? ", Diff " + sgn(i.diffRaw) + (i.diff !== i.diffRaw ? " → " + sgn(i.diff) : "") : "") + ")").join(" · ") + "</div></details>"
+        : "";
+      $("nbd").innerHTML = '<div class="st-dim" style="margin-bottom:6px;">' + b.softened + " negative Diffs softened · ramp " + b.loH + " h (p5) → " + b.hiH + " h (median) · 🤥 Impostors " + b.impBefore + " → " + b.impAfter + "</div>" + t.html + cl + nwHtml + ghHtml;
       t.bind();
     }
 

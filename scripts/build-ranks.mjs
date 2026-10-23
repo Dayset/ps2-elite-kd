@@ -35,7 +35,7 @@ import { vehDiffStart, vehDiffFactor, vehDiffCleared } from "../diff-vehicle.mjs
 import { percentileOf } from "../dist.mjs";
 import { forensicsSummary, honuSessionUrl } from "../session-forensics.mjs";
 import { hiddenList, isConfirmedCheater } from "../hidden.mjs";
-import { cleanTimes } from "../flairs.mjs";
+import { cleanTimes, flairsFor } from "../flairs.mjs";
 import { sessionMetrics, sessionFlag, sessionRuleText, distribution, SESSION_METRICS, SESSION_METRIC_IDS, SESSION_MIN, SESSION_RULE } from "../session-stats.mjs";
 
 /** Full Honu XP detail for a slug (data/xp/<slug>.json; requested players only), or null. */
@@ -566,6 +566,9 @@ export function applyNewbieDiffColumn(ranks, reviewed, playMin) {
   const hrs = (m) => (Number.isFinite(m) ? Math.round(m / 6) / 10 : null);
   const players = [], cleared = [], newPlayers = [];
   let impBefore = 0, impAfter = 0, softened = 0, newCount = 0, marked = 0;
+  const graveHidden = []; // 🪦 wins over 🐣 (owner 2026-10-23): mark hidden, softening kept
+  const nowMs = Date.now();
+  const isGrave = (r) => flairsFor({ created: get(r, "created"), last: get(r, "last") }, nowMs).some((x) => x.id === "inactive");
   ranks.cols.push("nbd", "nbh");
   ranks.nbdCuts = { lo: Math.round(cuts.lo), hi: Math.round(cuts.hi), nw: Math.round(cuts.nw) };
   for (const r of ranks.rows) {
@@ -581,10 +584,16 @@ export function applyNewbieDiffColumn(ranks, reviewed, playMin) {
       f = null;
     }
     if (clr) nh = null; // reviewed.json clearance: no auto 🐣 either
-    r.push(f, nh);
     const g = g0 ? aimGap(...args, f) : null;
-    if (nh != null) { newCount++; newPlayers.push({ name: get(r, "name"), slug, h: nh, diffRaw: g0 ? g0.raw : null, diff: g ? g.score : null }); }
-    if (nh != null || (g && g0 && g.score - g0.raw >= 10)) marked++;
+    const softMark = !!(g && g0 && g.score - g0.raw >= 10);
+    if ((nh != null || softMark) && isGrave(r)) {
+      graveHidden.push({ name: get(r, "name"), slug, h: hrs(m), kind: nh != null ? "new" : "softened", diffRaw: g0 ? g0.raw : null, diff: g ? g.score : null });
+      nh = null; // 🪦 wins: no 🐣 (the nbd factor stays, so the Diff is still softened)
+    } else {
+      if (nh != null) { newCount++; newPlayers.push({ name: get(r, "name"), slug, h: nh, diffRaw: g0 ? g0.raw : null, diff: g ? g.score : null }); }
+      if (nh != null || softMark) marked++;
+    }
+    r.push(f, nh);
     if (g0 && g0.score <= -33) impBefore++;
     if (g && g.score <= -33) impAfter++;
     if (g && g.score !== g0.score) {
@@ -598,10 +607,11 @@ export function applyNewbieDiffColumn(ranks, reviewed, playMin) {
   return {
     builtAt: new Date().toISOString(),
     loH, hiH, n: cuts.n, softened, impBefore, impAfter,
-    newH: hrs(cuts.nw), newQ: NBD_NEW_Q, newCount, marked,
-    rule: `🐣 Newbie softening of a negative 🔀 Diff, gradual, ends from this build's ${cuts.n} players with a play time (lifetime kills ÷ lifetime KPM, the 🛖 estimate): lo = p${NBD_BAND[0] * 100} (${loH} h), hi = p${NBD_BAND[1] * 100} = the median (${hiH} h). factor = 0 at/below lo, ln(h ÷ lo) ÷ ln(hi ÷ lo) between (log scale: the Impostor share drops by about the same step per doubling of play time), 1 at/above hi. Negative Diff × factor, rounded; positive Diff untouched; no play time → no change. 🐣 next to the name when the softening raised the Diff by 10+ points (hover “Softened from …”), and for every new player: play time below p${NBD_NEW_Q * 100} (${hrs(cuts.nw)} h, the end of the flat ~29% Impostor share at the start), whatever the Diff (hover “New player (about N h played)”). Owner override: "newbieDiff": "cleared" on the data/reviewed.json player entry (full negative Diff).`,
+    newH: hrs(cuts.nw), newQ: NBD_NEW_Q, newCount, marked, graveHiddenCount: graveHidden.length,
+    rule: `🐣 Newbie softening of a negative 🔀 Diff, gradual, ends from this build's ${cuts.n} players with a play time (lifetime kills ÷ lifetime KPM, the 🛖 estimate): lo = p${NBD_BAND[0] * 100} (${loH} h), hi = p${NBD_BAND[1] * 100} = the median (${hiH} h). factor = 0 at/below lo, ln(h ÷ lo) ÷ ln(hi ÷ lo) between (log scale: the Impostor share drops by about the same step per doubling of play time), 1 at/above hi. Negative Diff × factor, rounded; positive Diff untouched; no play time → no change. 🐣 next to the name when the softening raised the Diff by 10+ points (hover “Softened from …”), and for every new player: play time below p${NBD_NEW_Q * 100} (${hrs(cuts.nw)} h, the end of the flat ~29% Impostor share at the start), whatever the Diff (hover “New player (about N h played)”). 🪦 inactive (no activity for over a year) wins: no 🐣 mark, the softened Diff stays. Owner override: "newbieDiff": "cleared" on the data/reviewed.json player entry (full negative Diff).`,
     players,
     newPlayers,
+    graveHidden,
     cleared,
   };
 }
@@ -1127,7 +1137,7 @@ if (isMain) {
   st.vehicleCut = vehCutInfo; // 🚜 build-log list (ranks.json already has the cut numbers)
   st.hut = hutInfo; // 🛖 build-log list (ranks.json "hut" column has the factors)
   st.newbieDiff = nbdInfo; // 🐣 build-log list (ranks.json "nbd")
-  console.log(`🐣 newbie softening: ${nbdInfo.loH} h → ${nbdInfo.hiH} h; ${nbdInfo.softened} negative Diffs softened, Impostors ${nbdInfo.impBefore} → ${nbdInfo.impAfter}, ${nbdInfo.cleared.length} cleared; new players < ${nbdInfo.newH} h: ${nbdInfo.newCount}; 🐣 shown: ${nbdInfo.marked}`);
+  console.log(`🐣 newbie softening: ${nbdInfo.loH} h → ${nbdInfo.hiH} h; ${nbdInfo.softened} negative Diffs softened, Impostors ${nbdInfo.impBefore} → ${nbdInfo.impAfter}, ${nbdInfo.cleared.length} cleared; new players < ${nbdInfo.newH} h: ${nbdInfo.newCount}; 🐣 shown: ${nbdInfo.marked}; 🐣 hidden by 🪦: ${nbdInfo.graveHiddenCount}`);
   st.vehDiff = vehDiffInfo; // 🔀🚜 build-log list (ranks.json "vdf")
   st.zergRevive = zrevInfo; // 🪳 revive check build-log list (ranks.json "rvp")
   console.log(`🔀🚜 Diff vehicle damp: start ${vehDiffInfo.start}% vehicle share; ${vehDiffInfo.damped} players' Diff lowered, DieHards ${vehDiffInfo.dieHardHut} (after 🛖) → ${vehDiffInfo.dieHardAfter}, ${vehDiffInfo.cleared.length} cleared`);
