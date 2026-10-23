@@ -7,7 +7,7 @@
  * Splitting keeps each Worker run to parsing ~20 KB instead of ~1.4 MB, which
  * matters under the free plan's 10 ms CPU limit. Run before deploy and tests.
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -56,8 +56,12 @@ export function buildModels() {
       names: Object.fromEntries(load(`${slug}_regions.json`).map((r) => [String(r.facility_id), r.facility_name])),
     };
   }
-  // Capture model: Hossin only (commander_live.load_capture_model).
-  const capture = { 4: load("hossin_capture_model.json").per_facility || {} };
+  // Capture model per continent (commander_live.load_capture_model reads the same
+  // <slug>_capture_model.json files). Hossin's came from hossin_models.py; the others
+  // from oracle-worker/history/capture-model.mjs (PS2Alerts history, #63).
+  const capture = Object.fromEntries(Object.entries(ZONE_SLUG)
+    .filter(([, slug]) => existsSync(join(MODELS, `${slug}_capture_model.json`)))
+    .map(([z, slug]) => [z, load(`${slug}_capture_model.json`).per_facility || {}]));
   // Resistance (hold-factor) model for all five continents (#24), same files as
   // commander_live.RESISTANCE_FILE: Hossin keeps base_resistance.json, the others
   // base_resistance_<slug>.json.
