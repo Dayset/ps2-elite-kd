@@ -172,6 +172,14 @@ describe("Skill graph section: no placeholder, collapsible, pops on analyze (own
     assert.match(app, /analyzeSeq !== prevSeq/);
   });
 
+  it("Distribution block carries a title on PC, bare 📊 on phones (owner 2026-10-22)", () => {
+    const index = read("index.html");
+    const css = read("styles.css");
+    assert.match(index, /<span class="dist-title" data-i18n="ranks\.distribution">Distribution<\/span>/);
+    assert.match(css, /\.dist-title \{ display: none; \}/);
+    assert.match(css, /@media \(hover: hover\) and \(pointer: fine\) and \(min-width: 761px\) \{\s*\.dist-title \{ display: inline; \}/);
+  });
+
   it("both player boxes are unavailable while nothing is graphed (owner 2026-10-22)", () => {
     const app = read("app.js");
     const index = read("index.html");

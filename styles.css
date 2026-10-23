@@ -2400,6 +2400,12 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
 .dist-wrap { position: relative; }
 .dist-wrap > .dist-pills { z-index: 2; }
 .chart-section-names { color: var(--dim); font-weight: 400; font-size: 0.85rem; }
+/* Distribution block title: PC only (owner 2026-10-22) — phones keep the
+ * bare 📊 summary, the metric pills already name the current stat there. */
+.dist-title { display: none; }
+@media (hover: hover) and (pointer: fine) and (min-width: 761px) {
+  .dist-title { display: inline; }
+}
 .dist-section > summary { cursor: pointer; list-style: none; user-select: none; font-weight: 600; font-size: 0.95rem; }
 .dist-section > summary::-webkit-details-marker { display: none; }
 .dist-section > summary::before { content: "▸ "; color: var(--dim); }
