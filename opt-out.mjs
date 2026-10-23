@@ -1,6 +1,6 @@
 /**
  * 🚫 Removal list: characters whose players asked not to be shown here
- * (privacy.html, issue form .github/ISSUE_TEMPLATE/remove-character.yml, #61).
+ * (privacy.html self-service, or deleted in the game: scripts/gone-check.mjs, #61).
  * Owner-edited. One file per room: data/opt-out.json (PC), data-ps/opt-out.json (PS).
  *
  *   { "players": { "<id>": { "name": "[TAG] Name", "at": "YYYY-MM-DD", "proof": "oracle sign-in 2026-10-23" } } }

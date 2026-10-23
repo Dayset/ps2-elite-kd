@@ -31,6 +31,7 @@ import { startYieldWatch } from "./yield-check.mjs";
 import { removedList } from "../opt-out.mjs";
 import { purgeRemoved } from "./purge-removed.mjs";
 import { syncRemovals } from "./sync-removals.mjs";
+import { goneCheck, goneEntry } from "./gone-check.mjs";
 import {
   CAP_STEPS,
   isDormant,
@@ -1211,6 +1212,49 @@ function runPlan(argv) {
   return { kind: explicit ? "on-demand" : "rotation", names };
 }
 
+/**
+ * 🪦→🚫 Mirror rule (#61): players the refresh marked "notfound" are checked by
+ * character id (scripts/gone-check.mjs). Deleted in the game (twice, ≥ 20 h
+ * apart) → opt-out.json "deleted-in-game", purged right after. Renamed → the
+ * old copy is dropped and the new name goes on the watchlist.
+ */
+async function goneMirror() {
+  const index = readIndex();
+  const state = readState();
+  const now = Date.now();
+  const cands = [];
+  for (const p of index.players || []) {
+    const st = p && state.players[p.slug];
+    if (!st || st.kind !== "notfound" || now - (+st.lastGoneCheck || 0) < 6 * 3600e3) continue;
+    const f = readJsonSafe(path.join(DATA_DIR, p.file || `players/${p.slug}.json`), null);
+    const cid = f && f.player && f.player.cid;
+    if (cid) cands.push({ key: p.slug, cid: String(cid), name: p.name, file: p.file, state: st });
+  }
+  if (!cands.length) return;
+  cands.sort((a, b) => (+a.state.lastGoneCheck || 0) - (+b.state.lastGoneCheck || 0));
+  const r = await goneCheck(cands, { base: CENSUS, getJson: (u) => fetchJson(u, { retries: 2 }), now, log: (m) => console.log(m) });
+  cands.slice(0, r.checked).forEach((c) => { c.state.lastGoneCheck = now; });
+  if (r.gone.length) {
+    const opt = readJsonSafe(OPT_OUT_PATH, { players: {} });
+    opt.players = opt.players || {};
+    for (const g of r.gone) opt.players[g.cid] = goneEntry(g);
+    writeFileAtomic(OPT_OUT_PATH, JSON.stringify(opt, null, 1) + "\n");
+  }
+  if (r.renamed.length) {
+    const drop = new Set(r.renamed.map((x) => x.key));
+    for (const x of r.renamed) {
+      const c = cands.find((y) => y.key === x.key);
+      try { fs.unlinkSync(path.join(DATA_DIR, (c && c.file) || `players/${x.key}.json`)); } catch {}
+      delete state.players[x.key];
+    }
+    index.players = index.players.filter((p) => !drop.has(p.slug));
+    writeIndex(index);
+    appendToWatchlist(r.renamed.map((x) => x.to));
+  }
+  writeState(state);
+  console.log(`🪦 Deleted-in-game check: ${r.checked} checked, ${r.gone.length} confirmed gone, ${r.renamed.length} renamed (${r.renamed.map((x) => `${x.name} → ${x.to}`).join(", ") || "none"}).`);
+}
+
 async function main() {
   if (process.argv.includes("--plan")) {
     // Used by the workflow at flag-raise time; no network.
@@ -1227,6 +1271,11 @@ async function main() {
   fs.mkdirSync(PLAYERS_DIR, { recursive: true });
   // 🚫 Removal list (#61): pull self-service removals, apply new entries, then never fetch or store those characters.
   await syncRemovals({ dataDir: DATA_DIR, room: "pc" });
+  try {
+    await goneMirror();
+  } catch (e) {
+    console.warn(`Deleted-in-game check skipped: ${String((e && e.message) || e).slice(0, 160)}`);
+  }
   try {
     purgeRemoved({ dataDir: DATA_DIR, room: "pc" });
   } catch (e) {

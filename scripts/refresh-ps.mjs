@@ -68,6 +68,7 @@ import { pullPsAssists } from "./ps-assists-pull.mjs";
 import { removedList } from "../opt-out.mjs";
 import { purgeRemoved } from "./purge-removed.mjs";
 import { syncRemovals } from "./sync-removals.mjs";
+import { goneCheck, goneEntry } from "./gone-check.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -365,6 +366,35 @@ async function main() {
   fs.mkdirSync(P.players, { recursive: true });
   // 🚫 Removal list (#61): pull self-service removals, apply new entries, then never fetch or store those characters.
   await syncRemovals({ dataDir: DATA_DIR, room: "ps" });
+  // 🪦→🚫 Mirror rule (#61): a PS character Census no longer has (by id, twice ≥ 20 h apart) goes too.
+  try {
+    const idx = readJson(P.index, null) || { players: [] };
+    const st = readJson(P.state, null) || { players: {} };
+    const now = Date.now();
+    const cands = (idx.players || [])
+      .filter((p) => p && p.key && st.players && st.players[p.key] && st.players[p.key].kind === "notfound" && now - (+st.players[p.key].lastGoneCheck || 0) >= 6 * 3600e3)
+      .map((p) => ({ key: p.key, cid: parsePsKey(p.key) && parsePsKey(p.key).cid, ns: parsePsKey(p.key) && parsePsKey(p.key).ns, name: p.name, state: st.players[p.key] }))
+      .filter((c) => c.cid);
+    const gone = [];
+    for (const ns of ROOM.namespaces) {
+      const list = cands.filter((c) => c.ns === ns);
+      if (!list.length) continue;
+      const r = await goneCheck(list, { base: censusNsBase(ns, CENSUS_SERVICE_ID), getJson: (u) => getCensus(u, { retries: 2 }), now, log: (m) => console.log(m) });
+      list.slice(0, r.checked).forEach((c) => { c.state.lastGoneCheck = now; });
+      gone.push(...r.gone);
+    }
+    if (cands.length) writeFileAtomic(P.state, JSON.stringify(st, null, 1) + "\n");
+    if (gone.length) {
+      const optPath = path.join(DATA_DIR, "opt-out.json");
+      const opt = readJson(optPath, null) || { players: {} };
+      opt.players = opt.players || {};
+      for (const g of gone) opt.players[g.key] = goneEntry(g);
+      writeFileAtomic(optPath, JSON.stringify(opt, null, 1) + "\n");
+    }
+    if (cands.length) console.log(`🪦 Deleted-in-game check (PS): ${cands.length} candidate(s), ${gone.length} confirmed gone.`);
+  } catch (e) {
+    console.warn(`Deleted-in-game check skipped: ${String((e && e.message) || e).slice(0, 160)}`);
+  }
   try {
     purgeRemoved({ dataDir: DATA_DIR, room: "ps" });
   } catch (e) {

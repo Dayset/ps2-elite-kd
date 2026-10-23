@@ -22,7 +22,7 @@ const SITE_JS = [
 
 test("legal files exist and the README points to them", () => {
   assert.match(read("LICENSE"), /^MIT License/);
-  for (const f of ["NOTICE", "PRIVACY.md", "SECURITY.md", "DATA_SOURCES.md", ".github/ISSUE_TEMPLATE/remove-character.yml"]) assert.ok(exists(f), `${f} exists`);
+  for (const f of ["NOTICE", "PRIVACY.md", "SECURITY.md", "DATA_SOURCES.md", ".github/ISSUE_TEMPLATE/config.yml", ".github/workflows/removal-autoreply.yml"]) assert.ok(exists(f), `${f} exists`);
   const readme = read("README.md");
   for (const f of ["LICENSE", "NOTICE", "PRIVACY.md", "SECURITY.md", "DATA_SOURCES.md"]) assert.ok(readme.includes(`(${f}`), `README links ${f}`);
   assert.match(read("NOTICE"), /NOT cover/, "NOTICE carves third-party content out of MIT");
@@ -77,7 +77,7 @@ test("privacy notice is linked from the main page, the live page and the oracle"
   assert.match(read("oracle/index.html"), /href="\.\.\/privacy\.html"/);
   assert.match(read("oracle/js/vote.js"), /privacy\.html/, "sign-in text links the notice");
   const p = read("privacy.html");
-  assert.match(p, /template=remove-character\.yml/, "removal form linked");
+  assert.match(p, /id="rmBox"/, "self-service removal box");
   assert.match(p, /PRIVACY\.md/);
   assert.match(read("sitemap.xml"), /privacy\.html/);
   assert.match(read("index.html"), /registered trademarks of Daybreak Game Company LLC/);

@@ -1,0 +1,43 @@
+name: Removal auto-reply
+
+# #61: removal is self-service (privacy.html, proven by an in-game logout) or
+# automatic (a character deleted in the game leaves our cache, scripts/gone-check.mjs).
+# Nobody checks removal requests by hand, so an issue asking for one gets the
+# link and is closed. Owner and bot issues are never touched.
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  issues: write
+
+jobs:
+  reply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: github.event.issue.user.login != github.repository_owner && github.event.issue.user.type != 'Bot'
+    steps:
+      - name: Answer removal requests
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TITLE: ${{ github.event.issue.title }}
+          BODY: ${{ github.event.issue.body }}
+          NUMBER: ${{ github.event.issue.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          text="$(printf '%s\n%s' "$TITLE" "$BODY" | tr '[:upper:]' '[:lower:]')"
+          if ! printf '%s' "$text" | grep -Eq '(remove|delete|erase|opt.?out|gdpr|hide).{0,60}(character|my (name|stats|data|account)|player)'; then
+            echo "Not a removal request."; exit 0
+          fi
+          cat > reply.md <<'MD'
+          Thanks! Removal doesn't need a request here, and nobody checks these by hand:
+
+          - **Remove it yourself:** on the [privacy page](https://dayset.github.io/ps2-elite-kd/privacy.html#remove), pick your platform (PC, PlayStation Genudine or Ceres), log out of the game once with that character to prove it's yours, and press **Remove it from PS2 Elite**. The next bot run (usually within an hour) deletes our copy.
+          - **Or delete it at the source:** if you delete the character in the game, or ask Daybreak support to delete your account, our copy is removed automatically (we re-check about once a day; it takes up to two days).
+
+          We only keep public game data that Daybreak publishes through its Census API; we have no email, real name or location. For safety, please don't post more personal details in this issue.
+          MD
+          sed -i 's/^          //' reply.md
+          gh issue comment "$NUMBER" --repo "$REPO" --body-file reply.md
+          gh issue close "$NUMBER" --repo "$REPO" --reason "not planned"
