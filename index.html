@@ -74,7 +74,7 @@
       });
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261022-noranks1" />
+  <link rel="stylesheet" href="styles.css?v=20261022-skel1" />
   <style>
     /* Installed-app launch splash (t465u). Android draws its own launch splash first:
        the maskable icon (big medal on black) seen through a 192 px circle, on the
@@ -477,6 +477,11 @@
       </label>
     </div>
     <div class="ranks-table-wrap" id="ranksScroll" style="content-visibility: auto; contain-intrinsic-size: auto 800px;">
+      <!-- Preloaded shape (Dayset 2026-10-22): a table-sized skeleton stands
+           here until the real ranks render — no "Loading ranks…" text, no
+           empty void. rankings.mjs removes it on load (app.js on failure);
+           its heights mirror the wrap's own max-height rules. -->
+      <div id="ranksSkeleton" class="rk-skeleton" aria-hidden="true"></div>
       <table class="ranks-table" id="ranksTable" aria-label="Rankings" data-i18n-aria-label="rk.section">
         <colgroup id="ranksCols"></colgroup>
         <thead id="ranksHead"></thead>
@@ -539,7 +544,7 @@
   </footer>
 
   <script type="module" src="i18n.mjs"></script>
-  <script type="module" src="app.js?v=20261022-noranks1"></script>
+  <script type="module" src="app.js?v=20261022-skel1"></script>
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").catch(function () {});

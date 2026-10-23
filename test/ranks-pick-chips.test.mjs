@@ -172,6 +172,22 @@ describe("Skill graph section: no placeholder, collapsible, pops on analyze (own
     assert.match(app, /analyzeSeq !== prevSeq/);
   });
 
+  it("rankings preload is a table-sized skeleton, not a Loading text (owner 2026-10-22)", () => {
+    const index = read("index.html");
+    const rk = read("rankings.mjs");
+    const app = read("app.js");
+    const css = read("styles.css");
+    assert.match(index, /id="ranksSkeleton" class="rk-skeleton"/);
+    assert.ok(index.indexOf('id="ranksSkeleton"') < index.indexOf('id="ranksTable"'), "skeleton stands inside the table wrap, before the table");
+    assert.doesNotMatch(rk, /\$\("ranksStatus"\)\.textContent = tr\("rank\.loading"/);
+    assert.match(rk, /\$\("ranksSkeleton"\)/);
+    assert.match(app, /getElementById\("ranksSkeleton"\)/);
+    // Heights mirror the wrap's max-height rules (base / PC ×1.25 / ≤600px).
+    assert.match(css, /\.rk-skeleton \{\s*height: calc\(100vh - 11rem\);/);
+    assert.match(css, /\.rk-skeleton \{ height: calc\(\(100vh - 11rem\) \* 1\.25\); \}/);
+    assert.match(css, /\.rk-skeleton \{ height: calc\(100vh - 13rem\); \}/);
+  });
+
   it("Remove ranks: one switch by the filter + one in Settings, tiers gated off (owner 2026-10-22)", () => {
     const index = read("index.html");
     const app = read("app.js");

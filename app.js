@@ -1869,7 +1869,7 @@ import {
   }
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261022-noranks1")
+    rankingsLoading = import("./rankings.mjs?v=20261022-skel1")
       .then((m) => {
         rankingsApi = m.initRankings(rankingsHost);
         return rankingsApi.ready;
@@ -1885,6 +1885,8 @@ import {
         console.warn("[ps2-elite-kd] rankings failed to load", e);
         const st = document.getElementById("ranksStatus");
         if (st) st.innerHTML = '<span class="err">Could not load the Rankings.</span>';
+        const sk = document.getElementById("ranksSkeleton");
+        if (sk) sk.remove();
       });
     return rankingsLoading;
   }

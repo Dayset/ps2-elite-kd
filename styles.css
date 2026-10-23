@@ -2284,6 +2284,24 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
    * count, the inner width changes and fixed-layout columns still shift. */
   scrollbar-gutter: stable;
 }
+/* Preloaded skeleton (Dayset 2026-10-22): a table-shaped stand-in while the
+ * ranks load — header band, row lines, one name-column edge; no data, no
+ * animation. Its height mirrors the wrap's max-height rules exactly (base,
+ * PC ×1.25, ≤600px tighter offset), so the real table lands in a box of the
+ * same size and nothing jumps. */
+.rk-skeleton {
+  height: calc(100vh - 11rem);
+  background:
+    linear-gradient(color-mix(in srgb, var(--text) 6%, transparent), color-mix(in srgb, var(--text) 6%, transparent)) top left / 100% 2.3rem no-repeat,
+    linear-gradient(to right, transparent 0, transparent calc(30% - 1px), var(--row-border) calc(30% - 1px), var(--row-border) 30%, transparent 30%) top left / 100% 100% no-repeat,
+    repeating-linear-gradient(to bottom, transparent 0, transparent calc(2.3rem - 1px), var(--row-border) calc(2.3rem - 1px), var(--row-border) 2.3rem);
+}
+@media (hover: hover) and (pointer: fine) {
+  .rk-skeleton { height: calc((100vh - 11rem) * 1.25); }
+}
+@media (max-width: 600px) {
+  .rk-skeleton { height: calc(100vh - 13rem); }
+}
 /* Dayset 2026-10-20: on touch devices the Rankings wrap's scrollbars are
  * never drawn (same complaint as the stats/Positions tables — the bar sits
  * there at rest). Scoped to coarse pointers: desktop keeps its vertical

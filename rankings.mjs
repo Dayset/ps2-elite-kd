@@ -1768,8 +1768,8 @@ export function initRankings(host) {
   }
 
   async function load() {
-    // --- load ---
-    $("ranksStatus").textContent = tr("rank.loading", "Loading ranks…");
+    // --- load --- (no "Loading ranks…" text: the preloaded skeleton inside
+    // #ranksScroll is the loading state — Dayset 2026-10-22)
     try {
       const hiddenP = fetch(`${DATA}hidden.json`, { cache: "no-cache" }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
       const reviewedP = fetch(`${DATA}reviewed.json`, { cache: "no-cache" }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
@@ -1789,11 +1789,15 @@ export function initRankings(host) {
       remerge();
       syncPicks({ force: true });
       // No mark legend on Rankings (t290u): * / † / ◦ explain themselves via their hover tooltips.
+      const sk = $("ranksSkeleton");
+      if (sk) sk.remove();
       $("ranksStatus").innerHTML = "";
       fillMetricSelect();
       render();
       drawDist();
     } catch (err) {
+      const sk = $("ranksSkeleton");
+      if (sk) sk.remove();
       $("ranksStatus").innerHTML = `<span class="err">${tr("rank.loadFail", "Could not load ranks.json ({msg}).", { msg: esc(err && err.message) })}</span>`;
       $("ranksMeta").textContent = "—";
     }
