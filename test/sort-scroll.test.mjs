@@ -155,7 +155,7 @@ describe("sort keeps horizontal scroll at 390px (t329u)", () => {
       await nav("index.html#rankings");
       await ev(`new Promise(async (r) => { for (let t = 0; t < 400 && !document.querySelector("#ranksBody tr[data-q]"); t++) await new Promise((q) => setTimeout(q, 50)); r(1); })`);
       await ev(`new Promise((r) => { document.getElementById("ranksTableSection").open = true; setTimeout(() => r(1), 200); })`); // folded by default (t358u)
-      const s = await ev(clickFar(".ranks-table-wrap", "#ranksHead th.sortable"));
+      const s = await ev(clickFar("#ranksScroll", "#ranksHead th.sortable"));
       assert.ok(s.scrollable && s.before > 0, JSON.stringify(s));
       assert.ok(s.after > 0 && s.visible, JSON.stringify(s));
       assert.equal(s.dy, 0);

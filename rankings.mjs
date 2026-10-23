@@ -110,7 +110,9 @@ export function initRankings(host) {
   }
 
   function readRemoveRanks() {
-    try { return localStorage.getItem(LS_REMOVE_RANKS) === "1"; } catch { return false; }
+    // Default ON (Dayset 2026-10-22): only a saved "0" — the visitor turned
+    // it off — brings the tier separators back.
+    try { return localStorage.getItem(LS_REMOVE_RANKS) !== "0"; } catch { return true; }
   }
 
   const LS_MAX_AGE_MONTHS = "ps2-elite-kd-max-age-months";

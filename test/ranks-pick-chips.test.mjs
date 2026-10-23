@@ -199,6 +199,10 @@ describe("Skill graph section: no placeholder, collapsible, pops on analyze (own
     // app.js owns the saved value and keeps the pair in sync.
     assert.match(app, /LS_REMOVE_RANKS = "ps2-elite-kd-remove-ranks"/);
     assert.match(app, /removeRanksToggleSettings/);
+    // Default ON (owner 2026-10-22): only a saved "0" turns it off.
+    assert.match(rk, /localStorage\.getItem\(LS_REMOVE_RANKS\) !== "0"/);
+    assert.match(app, /localStorage\.getItem\(LS_REMOVE_RANKS\) !== "0"/);
+    assert.match(app, /setItem\(LS_REMOVE_RANKS, v \? "1" : "0"\)/);
     // Rankings reads the same key and drops tiers + bin dividers when on.
     assert.match(rk, /function readRemoveRanks\(\)/);
     assert.match(rk, /const tieredView = \(\) => sortKey === "adjs" && !removeRanks;/);
