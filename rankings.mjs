@@ -45,6 +45,7 @@ export function initRankings(host) {
 
   const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";
   const LS_HIDE_ZERO_IVI = "ps2-elite-kd-hide-zero-ivi";
+  const LS_REMOVE_RANKS = "ps2-elite-kd-remove-ranks";
   const MONTH_S = 365.25 * 86400 / 12;
   // Same limit as the names box (app.js MAX_NAMES, 6 since t400u; this said 10, so the
   // table let you tick a 7th name the box then refused — issue #35). Read live via
@@ -108,6 +109,10 @@ export function initRankings(host) {
     try { return localStorage.getItem(LS_HIDE_ZERO_IVI) === "1"; } catch { return false; }
   }
 
+  function readRemoveRanks() {
+    try { return localStorage.getItem(LS_REMOVE_RANKS) === "1"; } catch { return false; }
+  }
+
   const LS_MAX_AGE_MONTHS = "ps2-elite-kd-max-age-months";
   const LS_MAX_AGE_YEARS = "ps2-elite-kd-max-age-years";
   function readMaxAgeMonths() {
@@ -145,6 +150,7 @@ export function initRankings(host) {
   let data = null; // { cols, idx, rows:[{name,query,slug,savedAt, metrics…, rank, pcts}] }
   let showDebug = readDebug();
   let hideZeroIvi = readHideZeroIvi();
+  let removeRanks = readRemoveRanks();
   let maxAgeMonths = readMaxAgeMonths();
   let sortKey = "adjs";
   let sortDir = "desc"; // Inflation starts asc on first click
@@ -558,7 +564,7 @@ export function initRankings(host) {
    * filter, or when a newly added name lands in that tier). Other sorts stay
    * one flat list with the thin chart-bin dividers. */
   const tierManual = new Map(); // tier id → open (true) / closed (false)
-  const tieredView = () => sortKey === "adjs";
+  const tieredView = () => sortKey === "adjs" && !removeRanks;
 
   function tierRowHtml(g, st) {
     const open = st.open.has(g.id);
@@ -706,8 +712,9 @@ export function initRankings(host) {
     const list = sortedFiltered();
     const body = $("ranksBody");
     body.innerHTML = "";
-    // Separators only for a metric sort (not by name).
-    const st = { list, cols, at: 0, prevBin: -1, hist: sortKey !== "name" && colById(sortKey) ? getHist(sortKey) : null };
+    // Separators only for a metric sort (not by name). Remove ranks flattens
+    // the ⚔️ iVi view completely: no tier rows and no chart-bin dividers.
+    const st = { list, cols, at: 0, prevBin: -1, hist: sortKey !== "name" && colById(sortKey) && !(removeRanks && sortKey === "adjs") ? getHist(sortKey) : null };
     if (tieredView()) {
       st.filtering = !!bare(filter);
       st.groups = groupByTier(list, data.pools.adjs || []);
@@ -1404,6 +1411,15 @@ export function initRankings(host) {
     hideZeroIvi = !!hideZero.checked;
     render();
   });
+
+  // Remove ranks: both switches (filter row + ⚙️ Settings) re-render flat.
+  for (const id of ["removeRanksToggle", "removeRanksToggleSettings"]) {
+    const el = $(id);
+    if (el) el.addEventListener("change", () => {
+      removeRanks = !!el.checked;
+      render();
+    });
+  }
 
   const ageInput = $("maxAgeInput");
   if (ageInput) ageInput.addEventListener("change", () => {

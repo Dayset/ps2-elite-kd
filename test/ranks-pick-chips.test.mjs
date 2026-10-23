@@ -172,6 +172,24 @@ describe("Skill graph section: no placeholder, collapsible, pops on analyze (own
     assert.match(app, /analyzeSeq !== prevSeq/);
   });
 
+  it("Remove ranks: one switch by the filter + one in Settings, tiers gated off (owner 2026-10-22)", () => {
+    const index = read("index.html");
+    const app = read("app.js");
+    const rk = read("rankings.mjs");
+    assert.match(index, /id="removeRanksToggle"/);
+    assert.match(index, /id="removeRanksToggleSettings"/);
+    assert.match(index, /data-i18n="ranks\.removeRanks"/);
+    assert.match(read("i18n/en.json"), /"ranks\.removeRanks": "Remove ranks"/);
+    // app.js owns the saved value and keeps the pair in sync.
+    assert.match(app, /LS_REMOVE_RANKS = "ps2-elite-kd-remove-ranks"/);
+    assert.match(app, /removeRanksToggleSettings/);
+    // Rankings reads the same key and drops tiers + bin dividers when on.
+    assert.match(rk, /function readRemoveRanks\(\)/);
+    assert.match(rk, /const tieredView = \(\) => sortKey === "adjs" && !removeRanks;/);
+    assert.match(rk, /!\(removeRanks && sortKey === "adjs"\) \? getHist\(sortKey\) : null/);
+    assert.match(rk, /"removeRanksToggle", "removeRanksToggleSettings"/);
+  });
+
   it("Distribution block carries a title on PC, bare 📊 on phones (owner 2026-10-22)", () => {
     const index = read("index.html");
     const css = read("styles.css");

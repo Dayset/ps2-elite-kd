@@ -184,6 +184,8 @@ import {
   const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";
   /** "1" = hide adjusted-iVi ≤ 0 players from the Rankings table browse (footer checkbox). */
   const LS_HIDE_ZERO_IVI = "ps2-elite-kd-hide-zero-ivi";
+  /** "1" = Rankings table without any tier separators (Remove ranks switches: filter row + Settings). */
+  const LS_REMOVE_RANKS = "ps2-elite-kd-remove-ranks";
   /** Max account age in whole months (Settings stepper/input): Rankings browse hides accounts registered longer ago than this. At/above the oldest account in the data it cuts nobody. The years key is the 2026-10-22 first-ship unit; saved years values migrate ×12 on first read. */
   const LS_MAX_AGE_MONTHS = "ps2-elite-kd-max-age-months";
   const LS_MAX_AGE_YEARS = "ps2-elite-kd-max-age-years";
@@ -321,6 +323,8 @@ import {
     vehiclesNote: document.getElementById("vehiclesNote"),
     debugColsToggle: document.getElementById("debugColsToggle"),
     hideZeroIviToggle: document.getElementById("hideZeroIviToggle"),
+    removeRanksToggle: document.getElementById("removeRanksToggle"),
+    removeRanksToggleSettings: document.getElementById("removeRanksToggleSettings"),
     maxAgeInput: document.getElementById("maxAgeInput"),
     maxAgeMinus: document.getElementById("maxAgeMinus"),
     maxAgePlus: document.getElementById("maxAgePlus"),
@@ -1865,7 +1869,7 @@ import {
   }
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261022-spawnroom1")
+    rankingsLoading = import("./rankings.mjs?v=20261022-noranks1")
       .then((m) => {
         rankingsApi = m.initRankings(rankingsHost);
         return rankingsApi.ready;
@@ -3628,6 +3632,28 @@ import {
         /* private mode: Rankings keeps its own in-memory choice */
       }
     });
+  }
+
+  /* Remove ranks (Dayset 2026-10-22): one switch by the Rankings filter and
+   * the same switch inside ⚙️ Settings — the pair stays in sync, the choice
+   * is saved, and Rankings hears the same "change" and re-renders flat. */
+  {
+    const pair = [els.removeRanksToggle, els.removeRanksToggleSettings].filter(Boolean);
+    if (pair.length) {
+      let on = false;
+      try { on = localStorage.getItem(LS_REMOVE_RANKS) === "1"; } catch (_) { /* private mode */ }
+      pair.forEach((el) => { el.checked = on; });
+      pair.forEach((el) => el.addEventListener("change", () => {
+        const v = !!el.checked;
+        pair.forEach((o) => { o.checked = v; });
+        try {
+          if (v) localStorage.setItem(LS_REMOVE_RANKS, "1");
+          else localStorage.removeItem(LS_REMOVE_RANKS);
+        } catch (_) {
+          /* private mode: Rankings keeps its own in-memory choice */
+        }
+      }));
+    }
   }
 
   /* Max account age (Settings): − / + steppers and a directly editable value

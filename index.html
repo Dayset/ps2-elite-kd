@@ -74,7 +74,7 @@
       });
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261022-disttitle1" />
+  <link rel="stylesheet" href="styles.css?v=20261022-noranks1" />
   <style>
     /* Installed-app launch splash (t465u). Android draws its own launch splash first:
        the maskable icon (big medal on black) seen through a 192 px circle, on the
@@ -341,6 +341,12 @@
               </span>
             </div>
             <div class="settings-row">
+              <span class="settings-label" data-i18n="ranks.removeRanks">Remove ranks</span>
+              <label class="tgl-switch" title="Remove the tier separators from the Rankings table" data-i18n-title="ranks.removeRanksTitle">
+                <input type="checkbox" id="removeRanksToggleSettings" />
+              </label>
+            </div>
+            <div class="settings-row">
               <span class="settings-label" data-i18n="wipe.label">Clear local data</span>
               <button id="wipeLocalBtn" type="button" class="mini-btn wipe-local" title="Clear all local app data (cache, theme, flags)" aria-label="Clear all local app data" data-i18n-title="wipe.title" data-i18n-aria-label="wipe.title">🗑️</button>
             </div>
@@ -466,6 +472,9 @@
       <summary><span data-i18n="ranks.allPlayers">📋 All players</span> <span id="ranksTableCount" class="rk-table-count"></span></summary>
     <div class="rk-filter-row">
       <input id="ranksSearch" type="search" data-i18n-placeholder="ranks.filter" data-i18n-aria-label="ranks.filterLabel" placeholder="Filter the table by name…" aria-label="Filter the Rankings table by player name" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="search" />
+      <label class="tgl-switch rk-remove-ranks" title="Remove the tier separators from the Rankings table" data-i18n-title="ranks.removeRanksTitle">
+        <input type="checkbox" id="removeRanksToggle" /> <span data-i18n="ranks.removeRanks">Remove ranks</span>
+      </label>
     </div>
     <div class="ranks-table-wrap" id="ranksScroll" style="content-visibility: auto; contain-intrinsic-size: auto 800px;">
       <table class="ranks-table" id="ranksTable" aria-label="Rankings" data-i18n-aria-label="rk.section">
@@ -530,7 +539,7 @@
   </footer>
 
   <script type="module" src="i18n.mjs"></script>
-  <script type="module" src="app.js?v=20261022-graph3"></script>
+  <script type="module" src="app.js?v=20261022-noranks1"></script>
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").catch(function () {});
