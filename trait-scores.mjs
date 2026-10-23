@@ -20,8 +20,13 @@
  *   fights (high Inflation, few assists) stays low, and so does a team player
  *   in hard fights (many assists, no inflation). Only players with 🤝 Assists
  *   (≥ 100 kills in recent Honu sessions) and an Inflation value get a score.
+ *   Revive check (zerg-revive.mjs, ranks.json "rvp"): a low revived-share
+ *   percentile softens a high Zerg; no XP detail = unchanged.
+ * 🔀 vehicle damp (diff-vehicle.mjs, ranks.json "vdf") and 🛖 (hut.mjs, "hut")
+ *   both scale a positive Diff; the stronger (lower) factor applies, never both.
  */
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
+import { reviveZerg } from "./zerg-revive.mjs?v=20261022-zrev1";
 
 const fin = (v) => typeof v === "number" && Number.isFinite(v);
 /** Rounding = ranks-lite.json LITE_DIGITS (scripts/build-ranks.mjs). */
@@ -49,21 +54,31 @@ function pct(pools, id, v) {
 }
 
 /**
- * 🤥😤 → { score, raw, hut, practice, theory } or null when ⚔️ iVi or IvI is missing.
- * hut = 🛖 damping factor (hut.mjs, ranks.json "hut" column; null = none): a
- * positive score is multiplied by it and rounded (raw keeps the undamped score).
+ * 🤥😤 → { score, raw, hut, veh, by, practice, theory } or null when ⚔️ iVi or IvI is missing.
+ * hut = 🛖 damping factor (hut.mjs, ranks.json "hut"), veh = 🔀 vehicle damp
+ * factor (diff-vehicle.mjs, ranks.json "vdf"); null = none. A positive score is
+ * multiplied by the LOWER of the two and rounded (raw keeps the undamped score);
+ * by = "hut" | "veh" | null says which one counted.
  */
-export function aimGap(pools, adjs, ivi, hut = null) {
+export function aimGap(pools, adjs, ivi, hut = null, veh = null) {
   const a = pct(pools, "adjs", adjs), i = pct(pools, "ivi", ivi);
   if (a == null || i == null) return null;
   const raw = a - i;
   const h = fin(hut) && raw > 0 ? hut : null;
-  return { score: h == null ? raw : Math.round(raw * h), raw, hut: h, practice: a, theory: i };
+  const v = fin(veh) && raw > 0 ? veh : null;
+  const m = h == null && v == null ? null : Math.min(h ?? 1, v ?? 1);
+  const by = m == null ? null : v != null && v < (h ?? 1) ? "veh" : "hut";
+  return { score: m == null ? raw : Math.round(raw * m), raw, hut: h, veh: v, by, practice: a, theory: i };
 }
 
-/** 🪳 → { score, infl, apk } or null when Inflation or 🤝 Assists is missing. */
-export function zergScore(pools, inflation, apk) {
+/**
+ * 🪳 → { score, raw, infl, apk, rvp, confirmed, softened } or null when Inflation
+ * or 🤝 Assists is missing. rvp = revive percentile (zerg-revive.mjs; null = no data).
+ */
+export function zergScore(pools, inflation, apk, rvp = null) {
   const f = pct(pools, "inflation", inflation), a = pct(pools, "apk", apk);
   if (f == null || a == null) return null;
-  return { score: Math.min(f, a), infl: f, apk: a };
+  const raw = Math.min(f, a);
+  const r = reviveZerg(raw, fin(rvp) ? rvp : null);
+  return { score: r.score, raw, infl: f, apk: a, rvp: fin(rvp) ? rvp : null, confirmed: r.confirmed, softened: r.softened };
 }

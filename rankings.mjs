@@ -31,8 +31,10 @@ import { hiddenList } from "./hidden.mjs?v=20261010-sav1";
 import { pageRoom, dataPrefix, roomLsKey, psServer } from "./rooms.mjs?v=20261022-ps1";
 import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261020-i18n2";
 import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261022-wpc1";
-import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261022-hut1";
-import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, DIFF_THIRD, aimGapCellTip, zergCellTip } from "./trait-tips.mjs?v=20261022-hut1";
+import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261022-zrev1";
+import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, DIFF_THIRD, aimGapCellTip, zergCellTip } from "./trait-tips.mjs?v=20261022-zrev1";
+import { ZREV_NOTE } from "./zerg-revive.mjs?v=20261022-zrev1";
+import { VDIFF_NOTE } from "./diff-vehicle.mjs?v=20261022-vdiff1";
 
 /**
  * @param {{ getNames: () => string[], toggleName: (name: string, anchor: Element, add: boolean) => void, maxNames?: number }} host
@@ -62,8 +64,8 @@ export function initRankings(host) {
     { id: "cons", label: "⚡ Const", digits: 2, tip: "How much of your K/D you keep against the strongest third of your opponents compared with the weakest third: 1.00 means it holds completely, 0.50 means it halves." },
     { id: "apk", label: tr("col.assists", "🤝 Assists"), digits: 2, apk: true, tip: "Assists per kill in recent Honu sessions: how often you help damage enemies that teammates finish, for each kill of your own." },
     // 🪳 Zerg / 🤥😤 Impostor–DieHard (owner t480u–t485u): computed here from the ranks.json pools (trait-scores.mjs), same numbers as ✨ Stats.
-    { id: "diff", label: tr("col.diff", "🔀 Diff"), digits: 0, aimgap: true, tip: AIMGAP_HINT, tipExtra: HUT_DIFF_NOTE },
-    { id: "zerg", label: tr("col.zerg", "🪳 Zerg"), digits: 0, zerg: true, tip: ZERG_HINT },
+    { id: "diff", label: tr("col.diff", "🔀 Diff"), digits: 0, aimgap: true, tip: AIMGAP_HINT, tipExtra: HUT_DIFF_NOTE + " " + VDIFF_NOTE },
+    { id: "zerg", label: tr("col.zerg", "🪳 Zerg"), digits: 0, zerg: true, tip: ZERG_HINT, tipExtra: ZREV_NOTE },
     { id: "inf", label: tr("col.infantry", "🪖 Infantry"), digits: 1, inf: true, tip: INF_HINT },
   ];
   const DEBUG = [
@@ -271,6 +273,9 @@ export function initRankings(host) {
         hut: idx.hut != null && Number.isFinite(r[idx.hut]) ? r[idx.hut] : null,
         // 🛖 shown only where the drop is meaningful (build-ranks: ≥ HUT_MARK_MIN points).
         hutMk: idx.hutMk != null && r[idx.hutMk] === 1,
+        // 🔀 vehicle damp factor on positive Diff (diff-vehicle.mjs; null = none) and 🪳 revive percentile (zerg-revive.mjs; null = no XP detail).
+        vdf: idx.vdf != null && Number.isFinite(r[idx.vdf]) ? r[idx.vdf] : null,
+        rvp: idx.rvp != null && Number.isFinite(r[idx.rvp]) ? r[idx.rvp] : null,
         // PlayStation room (#55): "us" Genudine / "eu" Ceres (null on PC).
         srv: idx.srv != null ? r[idx.srv] || null : null,
         // 📅 Registration epoch — not a stat column, but the Settings
@@ -297,7 +302,7 @@ export function initRankings(host) {
       const colOf = (id) => (idx[id] != null ? payload.rows.map((r) => r[idx[id]]) : []);
       const tp = traitPools({ adjs: colOf("adjs"), ivi: colOf("ivi"), inflation: colOf("inflation"), apk: colOf("apk") });
       for (const o of rows) {
-        const g = aimGap(tp, o.adjs, o.ivi, o.hut), z = zergScore(tp, o.inflation, o.apk);
+        const g = aimGap(tp, o.adjs, o.ivi, o.hut, o.vdf), z = zergScore(tp, o.inflation, o.apk, o.rvp);
         o.diff = g ? g.score : null; o._gap = g;
         o.zerg = z ? z.score : null; o._zerg = z;
       }
@@ -458,7 +463,7 @@ export function initRankings(host) {
     // 🪳 Zerg: score + pXX like 🤝 (t495u); 🔀 Diff: signed score + plain pXX (t497u); parts on hover.
     if (c.zerg) return fin(v) ? `<td title="${esc(zergCellTip(v, row._zerg, data.pools.zerg))}">${v}${apkPctTag(row.pcts.zerg)}</td>` : `<td title="${esc(tr("zerg.missing", ZERG_MISSING))}">—</td>`;
     // t497u: 🔀 pXX = plain percentile of the signed score (share of players below); no better side.
-    if (c.aimgap) return fin(v) ? `<td title="${esc(aimGapCellTip(v, row._gap, data.pools.diff))}">${fmtSigned(v)}${row.pcts.diff == null ? "" : `<span class="pct" title="${esc(tr("stats.pctile", "Population percentile: higher than {n}% of cached players", { n: row.pcts.diff }))}">p${row.pcts.diff}</span>`}</td>` : `<td title="${esc(tr("diff.missing", AIMGAP_MISSING))}">—</td>`;
+    if (c.aimgap) return fin(v) ? `<td title="${esc(aimGapCellTip(v, row._gap, data.pools.diff, row.infVeh))}">${fmtSigned(v)}${row.pcts.diff == null ? "" : `<span class="pct" title="${esc(tr("stats.pctile", "Population percentile: higher than {n}% of cached players", { n: row.pcts.diff }))}">p${row.pcts.diff}</span>`}</td>` : `<td title="${esc(tr("diff.missing", AIMGAP_MISSING))}">—</td>`;
     if (c.inf) return fin(v) ? `<td title="${esc(infTip(v, row.infMax, row.infVeh, row.pcts[c.id]))}">${fmt(v, 1)}%</td>` : `<td title="${esc(INF_PENDING_TIP)}">—</td>`;
     if (!fin(v) && c.thinTip && row.thin) return `<td class="thin-sample" title="${esc(MIN_FIGHTS_TIP)}">—</td>`;
     if (!fin(v)) return `<td>—</td>`;

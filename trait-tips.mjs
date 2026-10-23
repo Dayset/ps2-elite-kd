@@ -5,6 +5,8 @@
  */
 import { t as tr } from "./i18n.mjs";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
+import { zrevConfirmedTip, zrevSoftTip, zrevPlainTip } from "./zerg-revive.mjs?v=20261022-zrev1";
+import { vdiffFromTip } from "./diff-vehicle.mjs?v=20261022-vdiff1";
 
 export const AIMGAP_HINT = "Aim on paper vs real results: your ⚔️ iVi percentile minus your IvI (aim) percentile, from −99 to +99. 🤥 Impostor (−33 or lower): your aim promises more than your fights deliver. 😤 DieHard (+33 or higher): you win more than your aim predicts. In between (−32…+32): balanced, aim and results roughly agree. Neither side is better or worse: it shows a play style, not cheating.";
 export const ZERG_HINT = "How much your results lean on a big group, 0–99: the lower of your 🎈 Inflation percentile (K/D lifted by easy fights) and your 🤝 Assists percentile (kills shared with teammates). High only when both are high, so solo farmers of easy fights stay low. Lower is better. Needs 100 kills in recent Honu sessions.";
@@ -41,19 +43,24 @@ export function diffValueHtml(v) {
   return `<span class="sgn-num">${sign ? `<span class="sgn-pre">${sign}</span>` : ""}${Math.abs(v)}</span>`;
 }
 
-/** 🔀 cell hover: score, side, percentile among all players, both parts. */
-export function aimGapCellTip(v, g, pool) {
+/** 🔀 cell hover: score, side, percentile among all players, both parts; veh = 🪖 vehicle share % (for the 🚜 damp line). */
+export function aimGapCellTip(v, g, pool, veh = null) {
   const e = diffEmoji(v);
   const side = e === "🤥" ? tr("diff.imp", "🤥 Impostor: aim beats results") : e === "😤" ? tr("diff.dh", "😤 DieHard: results beat aim") : tr("diff.even", "balanced: aim and results roughly agree");
   const parts = g ? tr("diff.parts", "Practice ⚔️ percentile {a} − theory IvI percentile {i}", { a: g.practice, i: g.theory }) : "";
   const base = tr("diff.tip", "{v}: {side}{rel}. {parts}", { v: fmtSigned(v), side, rel: rel(pool, v), parts }).trim();
   // 🛖 safe-spot damping (hut.mjs): say where the shown score came from.
-  const hut = g && g.hut != null && g.raw !== g.score ? " " + tr("diff.hutFrom", "🛖 Reduced from {raw} (rarely dies, slow pace, low accuracy).", { raw: fmtSigned(g.raw) }) : "";
-  return base + hut;
+  // 🔀 vehicle damp (diff-vehicle.mjs) or 🛖 — whichever factor counted (the lower one).
+  const reduced = g && g.raw !== g.score;
+  const hut = reduced && g.by === "hut" ? " " + tr("diff.hutFrom", "🛖 Reduced from {raw} (rarely dies, slow pace, low accuracy).", { raw: fmtSigned(g.raw) }) : "";
+  const vd = reduced && g.by === "veh" ? " " + vdiffFromTip(fmtSigned(g.raw), fin(veh) ? Math.round(veh) : "?") : "";
+  return base + hut + vd;
 }
 
 /** 🪳 cell hover: score, percentile among measured players, both parts. */
 export function zergCellTip(v, z, pool) {
   const parts = z ? tr("zerg.parts", "🎈 Inflation percentile {f} · 🤝 Assists percentile {a} (the lower one counts)", { f: z.infl, a: z.apk }) : "";
-  return tr("zerg.tip", "Zerg {v}{rel}. Lower is better. {parts}", { v, rel: rel(pool, v), parts }).trim();
+  // 🪳 revive check (zerg-revive.mjs): only where Honu XP detail exists.
+  const rv = z && fin(z.rvp) ? " " + (z.softened ? zrevSoftTip(z.raw, z.rvp) : z.confirmed ? zrevConfirmedTip(z.rvp) : zrevPlainTip(z.rvp)) : "";
+  return tr("zerg.tip", "Zerg {v}{rel}. Lower is better. {parts}", { v, rel: rel(pool, v), parts }).trim() + rv;
 }

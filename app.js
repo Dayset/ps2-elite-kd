@@ -41,8 +41,10 @@ import { t as tr, ready as i18nReady } from "./i18n.mjs";
 await i18nReady;
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261020-wide1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
-import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261022-hut1";
-import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, diffValueHtml, aimGapCellTip, zergCellTip } from "./trait-tips.mjs?v=20261022-hut1";
+import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261022-zrev1";
+import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, diffValueHtml, aimGapCellTip, zergCellTip } from "./trait-tips.mjs?v=20261022-zrev1";
+import { ZREV_NOTE, ZREV_EXPLAIN } from "./zerg-revive.mjs?v=20261022-zrev1";
+import { VDIFF_NOTE, VDIFF_EXPLAIN } from "./diff-vehicle.mjs?v=20261022-vdiff1";
 import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261020-i18n2";
 import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261022-wpc1";
 import { infantryKillsUrl, summarizeInfantryKills } from "./infantry.mjs?v=20261020-i18n2";
@@ -1870,7 +1872,7 @@ import {
   }
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261022-flatdefault1")
+    rankingsLoading = import("./rankings.mjs?v=20261022-zrev1")
       .then((m) => {
         rankingsApi = m.initRankings(rankingsHost);
         return rankingsApi.ready;
@@ -3756,6 +3758,10 @@ import {
     return e ? e.f : null;
   };
   const hutMarked = (display) => hutOf(display) != null && hutBySlug.get(slugKey(display)).mk;
+  // 🔀 vehicle damp factor (diff-vehicle.mjs, ranks-lite "vdf") and 🪳 revive percentile (zerg-revive.mjs, "rvp") by slug; reviewed.json clearances applied at build time.
+  let vdfBySlug = null, rvpBySlug = null;
+  const vdfOf = (display) => (vdfBySlug && display ? vdfBySlug.get(slugKey(display)) ?? null : null);
+  const rvpOf = (display) => (rvpBySlug && display ? rvpBySlug.get(slugKey(display)) ?? null : null);
   // 🤥😤 Impostor–DieHard + 🪳 Zerg (owner 2026-10-21, trait-scores.mjs): rounded
   // ⚔️ iVi / IvI / 🎈 Inflation / 🤝 Assists pools from the same lite payload
   // (Rankings builds the same pools from ranks.json, so both show the same score).
@@ -3792,14 +3798,21 @@ import {
           const mi = payload.cols.indexOf("hutMk");
           for (const row of payload.rows) if (isFiniteNum(row[hi])) hutBySlug.set(row[si], { f: row[hi], mk: mi >= 0 && row[mi] === 1 });
         }
+        for (const [id, set] of [["vdf", (m) => { vdfBySlug = m; }], ["rvp", (m) => { rvpBySlug = m; }]]) {
+          const k = payload.cols.indexOf(id);
+          if (k < 0 || si < 0) continue;
+          const m = new Map();
+          for (const row of payload.rows) if (isFiniteNum(row[k])) m.set(row[si], row[k]);
+          set(m);
+        }
         const colOf = (id) => { const k = payload.cols.indexOf(id); return k >= 0 ? payload.rows.map((row) => row[k]) : []; };
         traitP = traitPools({ adjs: colOf("adjs"), ivi: colOf("ivi"), inflation: colOf("inflation"), apk: apkBySlug ? [...apkBySlug.values()] : [] });
         {
-          const A = colOf("adjs"), I = colOf("ivi"), F = colOf("inflation"), K = colOf("apk"), H = colOf("hut");
+          const A = colOf("adjs"), I = colOf("ivi"), F = colOf("inflation"), K = colOf("apk"), H = colOf("hut"), V = colOf("vdf"), P = colOf("rvp");
           const g = [], z = [];
           for (let k = 0; k < payload.rows.length; k++) {
-            const a = aimGap(traitP, A[k], I[k], H[k]); if (a) g.push(a.score);
-            const q = zergScore(traitP, F[k], K[k]); if (q) z.push(q.score);
+            const a = aimGap(traitP, A[k], I[k], H[k], V[k]); if (a) g.push(a.score);
+            const q = zergScore(traitP, F[k], K[k], P[k]); if (q) z.push(q.score);
           }
           aimGapScores = g.sort((x, y) => x - y);
           zergScores = z.sort((x, y) => x - y);
@@ -3888,11 +3901,11 @@ import {
       { id: "cons", label: "⚡ Const", hint: tr("tip.cons", "How much of your K/D you keep against the strongest third of your opponents compared with the weakest third, as a percentile of all tracked players."), fn: (r) => r.cons, digits: 2, pctileCell: true },
       { id: "apk", label: tr("col.assists", "🤝 Assists"), hint: tr("tip.apk", "Assists per kill in recent Honu sessions: how often you help damage enemies that teammates finish, for each kill of your own."), fn: (r) => (apkBySlug && r.p ? apkBySlug.get(slugKey(r.p.display)) : undefined), digits: 2, apkCell: true, pctDir: "low", pctLowPhrase: "more assists" },
       // 🤥😤 Impostor–DieHard (owner t484u): ⚔️ iVi percentile − IvI percentile, −99…+99; neither side is better.
-      { id: "diff", label: tr("col.diff", "🔀 Diff"), hint: tr("tip.diff", AIMGAP_HINT) + " " + HUT_DIFF_NOTE, digits: 0, aimGapCell: true,
-        fn: (r) => { const g = traitP ? aimGap(traitP, shownValue(r, "adjs"), r.ivi, r.p ? hutOf(r.p.display) : null) : null; return g ? g.score : NaN; } },
+      { id: "diff", label: tr("col.diff", "🔀 Diff"), hint: tr("tip.diff", AIMGAP_HINT) + " " + HUT_DIFF_NOTE + " " + VDIFF_NOTE, digits: 0, aimGapCell: true,
+        fn: (r) => { const g = traitP ? aimGap(traitP, shownValue(r, "adjs"), r.ivi, r.p ? hutOf(r.p.display) : null, r.p ? vdfOf(r.p.display) : null) : null; return g ? g.score : NaN; } },
       // 🪳 Zerg (owner t480u): lower of the 🎈 Inflation and 🤝 Assists percentiles; lower is better (like 🤝: reversed grey %).
-      { id: "zerg", label: tr("col.zerg", "🪳 Zerg"), hint: tr("tip.zerg", ZERG_HINT), digits: 0, zergCell: true, pctDir: "low",
-        fn: (r) => { const z = traitP && r.p ? zergScore(traitP, shownValue(r, "inflation"), apkBySlug && apkBySlug.get(slugKey(r.p.display))) : null; return z ? z.score : NaN; } },
+      { id: "zerg", label: tr("col.zerg", "🪳 Zerg"), hint: tr("tip.zerg", ZERG_HINT) + " " + ZREV_NOTE, digits: 0, zergCell: true, pctDir: "low",
+        fn: (r) => { const z = traitP && r.p ? zergScore(traitP, shownValue(r, "inflation"), apkBySlug && apkBySlug.get(slugKey(r.p.display)), rvpOf(r.p.display)) : null; return z ? z.score : NaN; } },
       { id: "inf", label: tr("col.infantry", "🪖 Infantry"), hint: tr("tip.inf", INF_HINT), fn: (r) => { const e = infBySlug && r.p ? infBySlug.get(slugKey(r.p.display)) : undefined; return e ? e.inf : undefined; }, digits: 1, infCell: true },
     ];
     // Older debug columns: appended only when "show older debug stats" (footer) is ticked.
@@ -4056,7 +4069,7 @@ import {
               // 🪳 Zerg: plain 0–99 score, one colour; percentile + both parts on hover, reversed grey % like 🤝 (lower is better).
               if (c.zergCell) {
                 if (!isFiniteNum(v)) return `<td title="${escapeHtml(tr("zerg.missing", ZERG_MISSING))}">—</td>`;
-                const z = zergScore(traitP, shownValue(row, "inflation"), apkBySlug && apkBySlug.get(slugKey(row.p.display)));
+                const z = zergScore(traitP, shownValue(row, "inflation"), apkBySlug && apkBySlug.get(slugKey(row.p.display)), rvpOf(row.p.display));
                 // Grey tag in points (a % of a 0–99 score explodes near 0): "+25" above the column's lowest, like 🤝's "+35%".
                 const low = Math.min(...metrics.map((m) => c.fn(m)).filter(isFiniteNum));
                 const up = isFiniteNum(low) && v > low ? v - low : null;
@@ -4066,11 +4079,12 @@ import {
               // 🤥😤 Impostor–DieHard: signed score; neutral grey gap in points to the column top; side + both percentiles on hover.
               if (c.aimGapCell) {
                 if (!isFiniteNum(v)) return `<td title="${escapeHtml(tr("diff.missing", AIMGAP_MISSING))}">—</td>`;
-                const g = aimGap(traitP, shownValue(row, "adjs"), row.ivi, row.p ? hutOf(row.p.display) : null);
+                const g = aimGap(traitP, shownValue(row, "adjs"), row.ivi, row.p ? hutOf(row.p.display) : null, row.p ? vdfOf(row.p.display) : null);
                 const top = Math.max(...metrics.map((m) => c.fn(m)).filter(isFiniteNum));
                 const gap = isFiniteNum(top) && v < top ? top - v : null;
                 const gTag = gap == null ? "" : `<span class="pct" title="${escapeHtml(tr("pct.belowPts", "{n} points below the column top ({ref})", { n: gap, ref: fmtSigned(top) }))}">−${gap}</span>`;
-                return `<td title="${escapeHtml(aimGapCellTip(v, g, aimGapPool()))}">${diffValueHtml(v)}${gTag}</td>`;
+                const ve = infBySlug && row.p ? infBySlug.get(slugKey(row.p.display)) : null;
+                return `<td title="${escapeHtml(aimGapCellTip(v, g, aimGapPool(), ve ? ve.veh : null))}">${diffValueHtml(v)}${gTag}</td>`;
               }
               if (c.pctileCell) {
                 const pctl = isFiniteNum(v) && consPool ? percentileOf(consPool, v) : null;
@@ -4107,6 +4121,10 @@ import {
     const markLegends = [...new Set(metrics.map((r) => playerMark(r.p).legend).filter(Boolean))];
     if (metrics.some((r) => r.p && isPenalizedPadder(r.p.display))) markLegends.push(POOP_TIP); // 💩 "What * 💩 mean"
     if (metrics.some((r) => r.p && hutMarked(r.p.display))) markLegends.push(HUT_EXPLAIN); // 🛖 "What 🛖 means": full explanation (the mark hover is just the short name)
+    // 🪳 revive check (zerg-revive.mjs): "What 🪳 means" when a shown player has a revive result.
+    if (traitP && metrics.some((r) => r.p && rvpOf(r.p.display) != null && zergScore(traitP, shownValue(r, "inflation"), apkBySlug && apkBySlug.get(slugKey(r.p.display)), rvpOf(r.p.display)))) markLegends.push(ZREV_EXPLAIN);
+    // 🔀 vehicle damp (diff-vehicle.mjs): "What 🔀 means" when a shown player's Diff is reduced by it.
+    if (traitP && metrics.some((r) => { const g = r.p ? aimGap(traitP, shownValue(r, "adjs"), r.ivi, hutOf(r.p.display), vdfOf(r.p.display)) : null; return g && g.by === "veh" && g.score !== g.raw; })) markLegends.push(VDIFF_EXPLAIN);
     const markNotesBlock = markLegends.length
       ? `<details class="fold-note mark-notes"${markNotesOpen ? " open" : ""}>` +
         `<summary>♿ What ${[...new Set(markLegends.map((t) => t.trim().split(/\s+/)[0]))].join(" ")} ${markLegends.length > 1 ? "mean" : "means"}</summary>` +
