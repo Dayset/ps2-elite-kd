@@ -14,10 +14,10 @@
  * g = trait-scores aimGap() result, z = zergScore() result (either may be null).
  * Returns [{ id, mark, tip }] in display order.
  */
-import { REV_CONFIRM, zrevConfirmedTip } from "./zerg-revive.mjs?v=20261022-zrev1";
-import { nbdFromTip } from "./newbie-diff.mjs?v=20261022-nbd1";
-import { HUT_MARK_MIN } from "./hut.mjs?v=20261022-spawnroom1";
-import { fmtSigned } from "./trait-tips.mjs?v=20261022-nbd1";
+import { REV_CONFIRM, zrevConfirmedTip } from "./zerg-revive.mjs?v=20261023-short1";
+import { nbdFromTip } from "./newbie-diff.mjs?v=20261023-short1";
+import { HUT_MARK_MIN } from "./hut.mjs?v=20261023-short1";
+import { fmtSigned } from "./trait-tips.mjs?v=20261023-short1";
 import { flairsFor } from "./flairs.mjs?v=20261010-sav1";
 import { t as tr, currentLang } from "./i18n.mjs";
 

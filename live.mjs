@@ -12,7 +12,7 @@ await i18nReady;
  */
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { normalizePlayer, playerMetrics, shownValue } from "./player-metrics.mjs?v=20261022-wpc1";
-import { isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261022-wpc1";
+import { isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261023-short1";
 import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261022-wpc1";
 
 export const FEED_MAX = 6;

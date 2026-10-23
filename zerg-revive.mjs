@@ -67,8 +67,8 @@ export function zergCleared(reviewed, slug) {
 }
 
 // Texts (English defaults; translations under the same keys in i18n/*.json).
-export const ZREV_NOTE = tr("zrev.note", "Revive check (players with Honu XP detail): many deaths revived by medics confirms a high Zerg; few revives softens it.");
-export const ZREV_EXPLAIN = tr("zrev.explain", "🪳 Revive check: zergs die in a crowd, so medics pick them up. Where Honu XP detail exists, the share of deaths that got a revive is compared with everyone measured. Top quarter = Zerg confirmed. Bottom half = a high Zerg is softened gradually toward the revive level (bottom quarter = fully). It never raises Zerg. No XP detail = no change.");
-export const zrevConfirmedTip = (rvp) => tr("zrev.confirmed", "Revive check: confirmed, a larger share of deaths revived than {n}% of measured players.", { n: rvp });
-export const zrevSoftTip = (raw, rvp) => tr("zrev.soft", "Revive check: reduced from {raw}, few deaths revived (a larger share than only {n}% of measured players).", { raw, n: rvp });
-export const zrevPlainTip = (rvp) => tr("zrev.plain", "Revive check: a larger share of deaths revived than {n}% of measured players, no change.", { n: rvp });
+export const ZREV_NOTE = tr("zrev.note", "🪳 Revives can confirm or lower it.");
+export const ZREV_EXPLAIN = tr("zrev.explain", "🪳 Revive check: zergs die in crowds, so they get revived a lot. Often revived = Zerg confirmed; rarely revived = Zerg lowered.");
+export const zrevConfirmedTip = (rvp) => tr("zrev.confirmed", "Revives: confirmed (more than {n}% of players).", { n: rvp });
+export const zrevSoftTip = (raw, rvp) => tr("zrev.soft", "Revives: rare (more than only {n}% of players), lowered from {raw}.", { raw, n: rvp });
+export const zrevPlainTip = (rvp) => tr("zrev.plain", "Revives: more than {n}% of players, no change.", { n: rvp });

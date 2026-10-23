@@ -6,7 +6,7 @@
 import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261022-wpc1";
 import { reviewFlags } from "./red-flags.mjs?v=20261022-wpc1";
 import { sprout, sampleEvents, farmAccount } from "./sprouts.mjs?v=20261010-sav1";
-import { isNotFarm, farmListEntry } from "./padding.mjs?v=20261022-wpc1";
+import { isNotFarm, farmListEntry } from "./padding.mjs?v=20261023-short1";
 
 /** Small, JSON-safe summary of one player (what the tables + rules need). */
 export function summarize(entry, raw) {

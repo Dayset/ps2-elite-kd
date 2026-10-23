@@ -16,7 +16,7 @@ import { t as tr } from "./i18n.mjs";
  * the iVi cell's own hover lists each part and the total; build-log lists every cut player.
  * Owner override (exempts both): data/reviewed.json "vehicleCutCleared": { "<slug>": { "note", "at" } }.
  */
-import { infantryShares } from "./infantry.mjs?v=20261020-i18n2";
+import { infantryShares } from "./infantry.mjs?v=20261023-short1";
 
 export const VEH_CUT = Object.freeze({ START: 0.1, REF: 610.6 });
 const state = { cleared: {} };

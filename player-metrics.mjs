@@ -18,7 +18,7 @@ import {
   resolveIvi,
   deathMixLite,
 } from "./math.mjs?v=20261010-sav1";
-import { splitFarm, chopScrims, isScrimRoom, isPenalizedPadder, padderPenalty } from "./padding.mjs?v=20261022-wpc1";
+import { splitFarm, chopScrims, isScrimRoom, isPenalizedPadder, padderPenalty } from "./padding.mjs?v=20261023-short1";
 import { vehicleCutFor, applyVehicleCut, isVehicleCutCleared } from "./vehicle-cut.mjs?v=20261022-wpc1";
 import { OPPONENT_TOP_N, LEGACY_TOP_N, sampleTopN } from "./census-fetch.mjs?v=20261010-sav1";
 import { cleanTimes } from "./flairs.mjs?v=20261010-sav1";

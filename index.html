@@ -425,11 +425,11 @@
         <button type="button" class="chart-mode-btn" data-yscale="kd-btn" aria-pressed="true" data-i18n-title="chart.modeKd" data-i18n-tip="chart.modeKdTip"
                 title="💀 Who wins fights: kills per death against easy → hard enemies. Higher line = wins more fights." data-tip="💀 Who wins fights: kills per death vs easy → hard enemies. Higher = wins more.">💀</button>
         <button type="button" class="chart-mode-btn" data-mode="cumulative" aria-pressed="false" data-i18n-title="chart.modeAim" data-i18n-tip="chart.modeAimTip"
-                title="🎯 Who aims best IN THEORY: each line keeps its shape but is lifted to the player's aim score (public IvI = accuracy × headshot %). Higher line = better aim, not more wins. Players can swap places between the two views: sharp aim doesn't always win fights, and vehicle / explosive players win without headshots." data-tip="🎯 Who aims best **IN THEORY**: lines lifted to each player's aim score (accuracy × headshot %). Higher = better aim, not more wins, so players can swap places.">🎯</button>
+                title="🎯 Who aims best in theory: lines lifted to each player's aim (accuracy × headshots). Higher = better aim, not more wins." data-tip="🎯 Who aims best **in theory**: higher = better aim (accuracy × headshots), not more wins.">🎯</button>
         <button type="button" class="chart-mode-btn" data-mode="banded" aria-pressed="false" data-i18n-title="chart.modeBanded"
                 title="Smooth: banded K/D.">🎚️</button>
       </div>
-      <div id="chartYZoom" class="chart-y-zoom" hidden data-i18n-title="chart.zoomTitle" title="Zoom into the start of the graph (enemy KPM near 0): X shrinks from the right, Y re-fits to the left side. Bottom = Auto (full graph).">
+      <div id="chartYZoom" class="chart-y-zoom" hidden data-i18n-title="chart.zoomTitle" title="Zoom into the start of the graph (enemy KPM near 0). Bottom = Auto (full graph).">
         <input id="yZoomSlider" data-i18n-aria-label="chart.yZoomAria" type="range" min="0" max="2" step="0.05" value="0"
                orient="vertical"
                aria-label="Zoom (bottom = auto fit, up = zoom into enemy KPM near 0)"
@@ -458,7 +458,7 @@
     <svg id="chart" viewBox="0 0 1000 564" preserveAspectRatio="xMidYMid meet" hidden></svg>
     <div class="chart-mode-row">
     <div id="ghostCaption" class="ghost-caption" hidden data-i18n-title="ghost.title"
-         title="Dashed lines are a prediction from play style (overall K/D, KPM, accuracy, HSR, RF, slope, 🦁 Brave, 🎈 Inflation) fitted on the shared cache and anchored to the player's own fights. Not real fights. Shade ≈ ±1σ.">
+         title="Dashed lines: a guess from play style, not real fights. Shade ≈ ±1σ.">
       <span class="ghost-caption-swatch" aria-hidden="true"></span><span class="ghost-caption-text" data-i18n="ghost.text">dashed = predicted from play style,<br />not real fights</span>
     </div>
     <span id="waveRangeWarn" hidden style="font-size:0.72rem; color:#c90; margin-left:8px;"></span>
@@ -532,10 +532,10 @@
         </nav>
         <div class="foot-col foot-opts footer-row">
           <div class="foot-h" data-i18n="foot.options">Options</div>
-          <label class="debug-cols-toggle foot-switch" data-i18n-title="foot.debugColsTitle" title="Append the older debug columns (🎯🎈 ivi, eKPM, own KPM, 📊 COI, 📉 Slope, 🎈 Inflation) to the ✨ Adjusted and Rankings tables">
+          <label class="debug-cols-toggle foot-switch" data-i18n-title="foot.debugColsTitle" title="Add the older debug columns (ivi, eKPM, own KPM, COI, Slope, Inflation) to the tables">
             <input type="checkbox" id="debugColsToggle" /> <span data-i18n="foot.debugCols">show older debug stats</span>
           </label>
-          <label class="hide-zero-ivi-toggle foot-switch" data-i18n-title="foot.hideZeroTitle" title="Hide players with adjusted iVi ≤ 0 from the Rankings table browse; a name search still finds them">
+          <label class="hide-zero-ivi-toggle foot-switch" data-i18n-title="foot.hideZeroTitle" title="Hide players with adjusted iVi ≤ 0 in Rankings; a name search still finds them">
             <input type="checkbox" id="hideZeroIviToggle" /> <span data-i18n="foot.hideZero">hide players with adjusted iVi ≤ 0</span>
           </label>
           <div class="foot-stats-block">
@@ -544,7 +544,7 @@
             <p class="footer-thanks thanks-gap"><span data-i18n="foot.thanks">Data from the Daybreak Census API</span></p>
             <p class="footer-thanks"><span data-i18n="foot.thanksTo">Thanks to</span> <a href="https://wt.honu.pw/" target="_blank" rel="noopener noreferrer">HONU</a> / Varunda</p>
             <!-- t474u: "What about vehicles?" lives here, on its own line after the thanks; hidden until a comparison is loaded (renderStatsTable). -->
-            <details id="vehiclesNote" class="pooled-note fold-note" hidden><summary data-i18n="vehicles.summary">♿ What about vehicles?</summary><p><span data-i18n="vehicles.p1">⚔️ iVi measures infantry skill only. If more than 10% of your lifetime kills come from vehicles (seats, turrets), the share above 10% is subtracted from adjusted iVi; MAX kills above 10% are subtracted the same way, separately. The two add up, with no cap: e.g. 96% vehicle kills → −86%; 45% vehicle + 40% MAX → −65%. Pure infantry is untouched.</span> <span data-i18n="vehicles.p2">Hover a player’s iVi value to see the cut, and the</span> <a href="columns.html#infantry"><span data-i18n="vehicles.infLink">🪖 Infantry</span></a> <span data-i18n="vehicles.p3">column for the shares (</span><a href="columns.html#vehicle-cut"><span data-i18n="vehicles.detailsLink">details</span></a><span data-i18n="vehicles.p4">).</span></p></details>
+            <details id="vehiclesNote" class="pooled-note fold-note" hidden><summary data-i18n="vehicles.summary">♿ What about vehicles?</summary><p><span data-i18n="vehicles.p1">⚔️ iVi is infantry only: vehicle kills above 10% of your kills, and MAX kills above 10%, are cut from adjusted iVi.</span> <span data-i18n="vehicles.p2">Hover a player’s iVi value to see the cut, and the</span> <a href="columns.html#infantry"><span data-i18n="vehicles.infLink">🪖 Infantry</span></a> <span data-i18n="vehicles.p3">column for the shares (</span><a href="columns.html#vehicle-cut"><span data-i18n="vehicles.detailsLink">details</span></a><span data-i18n="vehicles.p4">).</span></p></details>
           </div>
         </div>
       </div>
@@ -562,7 +562,7 @@
   </footer>
 
   <script type="module" src="i18n.mjs"></script>
-  <script type="module" src="app.js?v=20261023-rip1"></script>
+  <script type="module" src="app.js?v=20261023-short1"></script>
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").catch(function () {});

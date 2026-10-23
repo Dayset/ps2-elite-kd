@@ -4,7 +4,7 @@
  * fresher browser copy after "Fetch fresh", t338u) use the SAME code.
  */
 import { normalizePlayer, playerMetrics, shownValue } from "./player-metrics.mjs?v=20261022-wpc1";
-import { markNote, statMark } from "./padding.mjs?v=20261022-wpc1";
+import { markNote, statMark } from "./padding.mjs?v=20261023-short1";
 import { pickNewest, entryFetchedAt } from "./cache-pick.mjs?v=20261010-sav1";
 
 /** Metric ids (same ids as the app.js stats columns). */

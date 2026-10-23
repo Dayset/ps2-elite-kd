@@ -26,7 +26,7 @@
  *   both scale a positive Diff; the stronger (lower) factor applies, never both.
  */
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
-import { reviveZerg } from "./zerg-revive.mjs?v=20261022-zrev1";
+import { reviveZerg } from "./zerg-revive.mjs?v=20261023-short1";
 
 const fin = (v) => typeof v === "number" && Number.isFinite(v);
 /** Rounding = ranks-lite.json LITE_DIGITS (scripts/build-ranks.mjs). */

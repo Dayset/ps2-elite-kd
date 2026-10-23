@@ -44,5 +44,5 @@ export function newbieCleared(reviewed, slug) {
 }
 
 export const NBD_NOTE = tr("nbd.note", "Short play time: a negative Diff is softened (new players are still learning).");
-export const NBD_EXPLAIN = tr("nbd.explain", "🐣 Newbie softening: new players often aim well but do not yet get the results, so a negative 🔀 Diff would call them 🤥 Impostors too early. A negative Diff is scaled by play time: about 6 h or less → 0, rising smoothly to the full value at about 385 h (the typical player). Positive Diff is untouched.");
+export const NBD_EXPLAIN = tr("nbd.explain", "🐣 New player: a negative 🔀 Diff counts less for players with few hours.");
 export const nbdFromTip = (raw) => tr("diff.nbdFrom", "🐣 Softened from {raw} (short play time: still learning).", { raw });

@@ -42,13 +42,13 @@ await i18nReady;
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261020-wide1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
 import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261022-nbd1";
-import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, diffValueHtml, aimGapCellTip, zergCellTip } from "./trait-tips.mjs?v=20261022-nbd1";
-import { ZREV_NOTE, ZREV_EXPLAIN } from "./zerg-revive.mjs?v=20261022-zrev1";
-import { VDIFF_NOTE, VDIFF_EXPLAIN } from "./diff-vehicle.mjs?v=20261022-vdiff1";
-import { NBD_NOTE, NBD_EXPLAIN } from "./newbie-diff.mjs?v=20261022-nbd1";
-import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261020-i18n2";
+import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, diffValueHtml, aimGapCellTip, zergCellTip } from "./trait-tips.mjs?v=20261023-short1";
+import { ZREV_NOTE, ZREV_EXPLAIN } from "./zerg-revive.mjs?v=20261023-short1";
+import { VDIFF_NOTE, VDIFF_EXPLAIN } from "./diff-vehicle.mjs?v=20261023-short1";
+import { NBD_NOTE, NBD_EXPLAIN } from "./newbie-diff.mjs?v=20261023-short1";
+import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261023-short1";
 import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261022-wpc1";
-import { infantryKillsUrl, summarizeInfantryKills } from "./infantry.mjs?v=20261020-i18n2";
+import { infantryKillsUrl, summarizeInfantryKills } from "./infantry.mjs?v=20261023-short1";
 import { mountWeapons } from "./weapons.mjs?v=20261022-wp4";
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261021-theory1";
 import { createWheelSwiper } from "./dist-cycle.mjs?v=20261017-cycle15";
@@ -108,8 +108,8 @@ function fightsText(r) {
 function thinCellTip(r) {
   return tr("fights.sample", "{tip}. This sample: {sample}", { tip: MIN_FIGHTS_TIP, sample: fightsText(r).replace(/[()]/g, "") });
 }
-import { markNote, statMark, confirmedPadderSlugs, isPenalizedPadder, POOP_MARK, POOP_TIP, setRoomRule } from "./padding.mjs?v=20261022-wpc1";
-import { HUT_MARK, HUT_TIP, HUT_EXPLAIN, HUT_DIFF_NOTE } from "./hut.mjs?v=20261022-spawnroom1";
+import { markNote, statMark, confirmedPadderSlugs, isPenalizedPadder, POOP_MARK, POOP_TIP, setRoomRule } from "./padding.mjs?v=20261023-short1";
+import { HUT_MARK, HUT_TIP, HUT_EXPLAIN, HUT_DIFF_NOTE } from "./hut.mjs?v=20261023-short1";
 import { autoMarksHtml } from "./auto-marks.mjs?v=20261023-rip1";
 // Account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times: chart name list only.
 import { accountTimes, flairsHtml, flairsFor } from "./flairs.mjs?v=20261010-sav1";
@@ -1874,7 +1874,7 @@ import {
   }
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261023-rip1")
+    rankingsLoading = import("./rankings.mjs?v=20261023-short1")
       .then((m) => {
         rankingsApi = m.initRankings(rankingsHost);
         return rankingsApi.ready;
@@ -3897,18 +3897,18 @@ import {
 
     // Column order is fixed (sort only reorders rows). Visible by default:
     const adjVisibleCols = [
-      { id: "adjs", label: "⚔️ iVi", hint: tr("tip.adjs", "Overall rating from how you do against the ~200 players you fight most, worth more the stronger they are, with a bonus for fast killing and a cut for slow, safe play."), fn: (r) => r.adjs, digits: 0, floorZero: true },
-      { id: "act", label: "🏃 Activity", hint: tr("tip.act", "How much winning combat you put out: your K/D against the players you fight most, multiplied by how fast you kill."), fn: (r) => r.act, digits: 2 },
-      { id: "pvs", label: "🦁 Brave", hint: tr("tip.pvs", "Activity that keeps up as enemies get stronger: high when you stay productive even against the fastest-killing players you meet."), fn: (r) => r.pvs, digits: 2 },
-      { id: "rf", label: "🛡️ Resist", hint: tr("tip.rf", "How well you stand up to strong players: your K/D against the players you fight most, scaled up by how fast those players kill."), fn: (r) => r.rf, digits: 2 },
-      { id: "rkd", label: "☠️ K/D", hint: tr("tip.rkd", "Kills ÷ deaths against the ~200 players you fight most, so it reflects real matchups rather than your whole lifetime."), fn: (r) => r.rkd, digits: 3 },
-      { id: "cons", label: "⚡ Const", hint: tr("tip.cons", "How much of your K/D you keep against the strongest third of your opponents compared with the weakest third, as a percentile of all tracked players."), fn: (r) => r.cons, digits: 2, pctileCell: true },
-      { id: "apk", label: tr("col.assists", "🤝 Assists"), hint: tr("tip.apk", "Assists per kill in recent Honu sessions: how often you help damage enemies that teammates finish, for each kill of your own."), fn: (r) => (apkBySlug && r.p ? apkBySlug.get(slugKey(r.p.display)) : undefined), digits: 2, apkCell: true, pctDir: "low", pctLowPhrase: "more assists" },
+      { id: "adjs", label: "⚔️ iVi", hint: tr("tip.adjs", "Rating vs the ~200 players you fight most. Stronger foes count more; fast kills add, slow safe play costs."), fn: (r) => r.adjs, digits: 0, floorZero: true },
+      { id: "act", label: "🏃 Activity", hint: tr("tip.act", "How much winning combat you put out: K/D vs your usual foes × how fast you kill."), fn: (r) => r.act, digits: 2 },
+      { id: "pvs", label: "🦁 Brave", hint: tr("tip.pvs", "Stays high if you keep fighting well against the fastest-killing enemies you meet."), fn: (r) => r.pvs, digits: 2 },
+      { id: "rf", label: "🛡️ Resist", hint: tr("tip.rf", "How well you hold up vs strong players: K/D vs your usual foes, scaled by how fast they kill."), fn: (r) => r.rf, digits: 2 },
+      { id: "rkd", label: "☠️ K/D", hint: tr("tip.rkd", "K/D against the ~200 players you fight most, not your whole lifetime."), fn: (r) => r.rkd, digits: 3 },
+      { id: "cons", label: "⚡ Const", hint: tr("tip.cons", "K/D kept vs your strongest third of foes, compared with the weakest: 1.00 = holds, 0.50 = halves."), fn: (r) => r.cons, digits: 2, pctileCell: true },
+      { id: "apk", label: tr("col.assists", "🤝 Assists"), hint: tr("tip.apk", "Assists per kill in recent Honu sessions: how often you help teammates get kills."), fn: (r) => (apkBySlug && r.p ? apkBySlug.get(slugKey(r.p.display)) : undefined), digits: 2, apkCell: true, pctDir: "low", pctLowPhrase: "more assists" },
       // 🤥😤 Impostor–DieHard (owner t484u): ⚔️ iVi percentile − IvI percentile, −99…+99; neither side is better.
-      { id: "diff", label: tr("col.diff", "🔀 Diff"), hint: tr("tip.diff", AIMGAP_HINT) + " " + HUT_DIFF_NOTE + " " + VDIFF_NOTE + " " + NBD_NOTE, digits: 0, aimGapCell: true,
+      { id: "diff", label: tr("col.diff", "🔀 Diff"), hint: tr("tip.diff", AIMGAP_HINT), // short hover (owner t9: 2–3 lines); 🛖 / 🚜 / 🐣 details live in "What … means" and columns.html#diff digits: 0, aimGapCell: true,
         fn: (r) => { const g = traitP ? aimGap(traitP, shownValue(r, "adjs"), r.ivi, r.p ? hutOf(r.p.display) : null, r.p ? vdfOf(r.p.display) : null, r.p ? nbdOf(r.p.display) : null) : null; return g ? g.score : NaN; } },
       // 🪳 Zerg (owner t480u): lower of the 🎈 Inflation and 🤝 Assists percentiles; lower is better (like 🤝: reversed grey %).
-      { id: "zerg", label: tr("col.zerg", "🪳 Zerg"), hint: tr("tip.zerg", ZERG_HINT) + " " + ZREV_NOTE, digits: 0, zergCell: true, pctDir: "low",
+      { id: "zerg", label: tr("col.zerg", "🪳 Zerg"), hint: tr("tip.zerg", ZERG_HINT), // short hover (owner t9); 🪳 revive details in "What 🪳 means" and columns.html#zerg digits: 0, zergCell: true, pctDir: "low",
         fn: (r) => { const z = traitP && r.p ? zergScore(traitP, shownValue(r, "inflation"), apkBySlug && apkBySlug.get(slugKey(r.p.display)), rvpOf(r.p.display)) : null; return z ? z.score : NaN; } },
       { id: "inf", label: tr("col.infantry", "🪖 Infantry"), hint: tr("tip.inf", INF_HINT), fn: (r) => { const e = infBySlug && r.p ? infBySlug.get(slugKey(r.p.display)) : undefined; return e ? e.inf : undefined; }, digits: 1, infCell: true },
     ];
@@ -4122,6 +4122,8 @@ import {
 
     // Mark notes (used to live in the chart legend, now removed): one collapsed
     // line explaining the * / † marks used in the table.
+    // Short notes (owner t9): each links to its full explanation on columns.html.
+    const MARK_NOTE_MORE = { "🛖": "hut", "🪳": "zerg", "🔀": "diff", "🐣": "diff", "💩": "padder", "*": "padder", "†": "padder" };
     const markLegends = [...new Set(metrics.map((r) => playerMark(r.p).legend).filter(Boolean))];
     if (metrics.some((r) => r.p && isPenalizedPadder(r.p.display))) markLegends.push(POOP_TIP); // 💩 "What * 💩 mean"
     if (metrics.some((r) => r.p && hutMarked(r.p.display))) markLegends.push(HUT_EXPLAIN); // 🛖 "What 🛖 means": full explanation (the mark hover is just the short name)
@@ -4134,7 +4136,7 @@ import {
     const markNotesBlock = markLegends.length
       ? `<details class="fold-note mark-notes"${markNotesOpen ? " open" : ""}>` +
         `<summary>♿ What ${[...new Set(markLegends.map((t) => t.trim().split(/\s+/)[0]))].join(" ")} ${markLegends.length > 1 ? "mean" : "means"}</summary>` +
-        markLegends.map((t) => `<div class="mark-note">${escapeHtml(t)}</div>`).join("") +
+        markLegends.map((t) => { const more = MARK_NOTE_MORE[t.trim().split(/\s+/)[0]]; return `<div class="mark-note">${escapeHtml(t)}${more ? ` <a class="more-link" href="columns.html#${more}">${escapeHtml(tr("fold.more", "more"))}</a>` : ""}</div>`; }).join("") +
         `</details>`
       : "";
 

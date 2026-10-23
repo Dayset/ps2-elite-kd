@@ -10,8 +10,8 @@ const tipOf = (c) => (c.id ? tr("tip." + c.id, c.tip || "") : c.tip || "") + (c.
 import { compareByCharName } from "./analyze-run.mjs?v=20261020-eta1";
 import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits, binJumpTarget } from "./dist.mjs?v=20261010-sav1";
 import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261022-wpc1";
-import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP, isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261022-wpc1";
-import { HUT_MARK, HUT_TIP, HUT_DIFF_NOTE } from "./hut.mjs?v=20261022-spawnroom1";
+import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP, isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261023-short1";
+import { HUT_MARK, HUT_TIP, HUT_DIFF_NOTE } from "./hut.mjs?v=20261023-short1";
 import { paletteColor } from "./palette.mjs?v=20261010-sav1";
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261020-wide1";
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261021-theory1";
@@ -24,18 +24,18 @@ import { sfx } from "./sfx.mjs?v=20261022-nosfx";
 import { slideSwap, attachDragCarousel } from "./chart-slide.mjs?v=20261020-flick1";
 import { mergeFreshRows } from "./rank-row.mjs?v=20261022-wpc1";
 import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-sav1";
-import { confirmedPadderSlugs } from "./padding.mjs?v=20261022-wpc1";
+import { confirmedPadderSlugs } from "./padding.mjs?v=20261023-short1";
 import { slugKey, bareName } from "./rank-row.mjs?v=20261022-wpc1";
 import { hiddenList } from "./hidden.mjs?v=20261010-sav1";
 // PC | PlayStation rooms (#55): each room ranks its own players only (data/ or data-ps/).
 import { pageRoom, dataPrefix, roomLsKey, psServer } from "./rooms.mjs?v=20261022-ps1";
-import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261020-i18n2";
+import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261023-short1";
 import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261022-wpc1";
 import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261022-nbd1";
-import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, DIFF_THIRD, aimGapCellTip, zergCellTip } from "./trait-tips.mjs?v=20261022-nbd1";
-import { ZREV_NOTE } from "./zerg-revive.mjs?v=20261022-zrev1";
-import { VDIFF_NOTE } from "./diff-vehicle.mjs?v=20261022-vdiff1";
-import { NBD_NOTE } from "./newbie-diff.mjs?v=20261022-nbd1";
+import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, DIFF_THIRD, aimGapCellTip, zergCellTip } from "./trait-tips.mjs?v=20261023-short1";
+import { ZREV_NOTE } from "./zerg-revive.mjs?v=20261023-short1";
+import { VDIFF_NOTE } from "./diff-vehicle.mjs?v=20261023-short1";
+import { NBD_NOTE } from "./newbie-diff.mjs?v=20261023-short1";
 import { autoMarksHtml } from "./auto-marks.mjs?v=20261023-rip1";
 
 /**
@@ -58,16 +58,16 @@ export function initRankings(host) {
 
   // Column definitions: same ids / labels / digits / floorZero as app.js.
   const VISIBLE = [
-    { id: "adjs", label: "⚔️ iVi", digits: 0, floorZero: true, tip: "Overall rating from how you do against the ~200 players you fight most, worth more the stronger they are, with a bonus for fast killing and a cut for slow, safe play." },
-    { id: "act", label: "🏃 Activity", digits: 2, tip: "How much winning combat you put out: your K/D against the players you fight most, multiplied by how fast you kill." },
-    { id: "pvs", label: "🦁 Brave", digits: 2, tip: "Activity that keeps up as enemies get stronger: high when you stay productive even against the fastest-killing players you meet." },
-    { id: "rf", label: "🛡️ Resist", digits: 2, tip: "How well you stand up to strong players: your K/D against the players you fight most, scaled up by how fast those players kill." },
-    { id: "rkd", label: "☠️ K/D", digits: 3, tip: "Kills ÷ deaths against the ~200 players you fight most, so it reflects real matchups rather than your whole lifetime." },
-    { id: "cons", label: "⚡ Const", digits: 2, tip: "How much of your K/D you keep against the strongest third of your opponents compared with the weakest third: 1.00 means it holds completely, 0.50 means it halves." },
-    { id: "apk", label: tr("col.assists", "🤝 Assists"), digits: 2, apk: true, tip: "Assists per kill in recent Honu sessions: how often you help damage enemies that teammates finish, for each kill of your own." },
+    { id: "adjs", label: "⚔️ iVi", digits: 0, floorZero: true, tip: "Rating vs the ~200 players you fight most. Stronger foes count more; fast kills add, slow safe play costs." },
+    { id: "act", label: "🏃 Activity", digits: 2, tip: "How much winning combat you put out: K/D vs your usual foes × how fast you kill." },
+    { id: "pvs", label: "🦁 Brave", digits: 2, tip: "Stays high if you keep fighting well against the fastest-killing enemies you meet." },
+    { id: "rf", label: "🛡️ Resist", digits: 2, tip: "How well you hold up vs strong players: K/D vs your usual foes, scaled by how fast they kill." },
+    { id: "rkd", label: "☠️ K/D", digits: 3, tip: "K/D against the ~200 players you fight most, not your whole lifetime." },
+    { id: "cons", label: "⚡ Const", digits: 2, tip: "K/D kept vs your strongest third of foes, compared with the weakest: 1.00 = holds, 0.50 = halves." },
+    { id: "apk", label: tr("col.assists", "🤝 Assists"), digits: 2, apk: true, tip: "Assists per kill in recent Honu sessions: how often you help teammates get kills." },
     // 🪳 Zerg / 🤥😤 Impostor–DieHard (owner t480u–t485u): computed here from the ranks.json pools (trait-scores.mjs), same numbers as ✨ Stats.
-    { id: "diff", label: tr("col.diff", "🔀 Diff"), digits: 0, aimgap: true, tip: AIMGAP_HINT, tipExtra: HUT_DIFF_NOTE + " " + VDIFF_NOTE + " " + NBD_NOTE },
-    { id: "zerg", label: tr("col.zerg", "🪳 Zerg"), digits: 0, zerg: true, tip: ZERG_HINT, tipExtra: ZREV_NOTE },
+    { id: "diff", label: tr("col.diff", "🔀 Diff"), digits: 0, aimgap: true, tip: AIMGAP_HINT }, // short hover (owner t9); details on columns.html#diff
+    { id: "zerg", label: tr("col.zerg", "🪳 Zerg"), digits: 0, zerg: true, tip: ZERG_HINT }, // short hover (owner t9); details on columns.html#zerg
     { id: "inf", label: tr("col.infantry", "🪖 Infantry"), digits: 1, inf: true, tip: INF_HINT },
   ];
   const DEBUG = [
@@ -230,10 +230,10 @@ export function initRankings(host) {
     try { const o = JSON.parse(localStorage.getItem(LS_CACHE) || "null"); return o && typeof o === "object" && !Array.isArray(o) ? o : null; } catch { return null; }
   }
   const FRESH_MARK = "↻";
-  const LOCAL_ONLY_TIP = tr("fresh.localOnly", "Not in the shared Rankings yet: stats from the copy this browser fetched (this browser only). It's queued for the shared cache; everyone else sees it after the background refresh.");
+  const LOCAL_ONLY_TIP = tr("fresh.localOnly", "Not in the shared Rankings yet: only this browser sees these stats. Everyone else will after the next refresh.");
   function freshTip(at, localOnly = false) {
     if (localOnly) return tr("fresh.localOnlyFetched", "{tip} Fetched {date}.", { tip: LOCAL_ONLY_TIP, date: fmtUpdated(at) });
-    return tr("fresh.tip", "Fresh: your own \"Fetch fresh\" copy from {date} (this browser only). Others still see the shared copy until the background refresh catches up.", { date: fmtUpdated(at) });
+    return tr("fresh.tip", "Fresh copy from {date}, this browser only. Others see it after the next refresh.", { date: fmtUpdated(at) });
   }
 
   function rebuildIndex(payload, freshMap = new Map(), localOnly = new Set()) {
@@ -1367,7 +1367,7 @@ export function initRankings(host) {
    * hint, as in KD/iVi, and remove the text with stats from under the graph").
    * Same bubble as 💀 / 🎯 (head-tip.mjs): phones get it for ~5 s under the
    * current pill after a tap / swipe; PC has the same text as the pill's hover title. */
-  function distHintText(c) { return c ? tr("dist.hint", "{label} across all cached players: {tip}", { label: c.label, tip: tipOf(c) }).trim() : ""; }
+  function distHintText(c) { return c ? tr("dist.hint", "{label}, all players: {tip}", { label: c.label, tip: tipOf(c) }).trim() : ""; }
   function showDistHint() {
     if (!isTouchUi()) return;
     const c = colById(distMetric);

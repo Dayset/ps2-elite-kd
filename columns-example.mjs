@@ -13,7 +13,7 @@ import { normalizePlayer, playerMetrics, consistencyParts, MIN_FIGHTS_RULE } fro
 import { RF_SOFT, SPEED_BAND_LOW, SPEED_BAND_HIGH, speedSlowFactor, speedAdjustment, SLOPE_FLOOR, SLOPE_EPS } from "./math.mjs?v=20261010-sav1";
 import { percentileOf, quantile } from "./dist.mjs?v=20261010-sav1";
 import { slugKey, bareName } from "./rank-row.mjs?v=20261022-wpc1";
-import { PADDER_PENALTY_REF } from "./padding.mjs?v=20261022-wpc1";
+import { PADDER_PENALTY_REF } from "./padding.mjs?v=20261023-short1";
 
 export const DEMO_NAME = "YuigahamaYui";
 

@@ -50,7 +50,7 @@ export const HUT_ACC_BAND = [0.5, 0.6]; // accuracy: full at/below the median, n
 export const HUT_MARK_MIN = 10; // 🛖 shown only when Diff drops by at least this many points
 // Short hover on the 🛖 mark (owner t511u); the full meaning lives in HUT_EXPLAIN ("♿ What … means" under ✨ Stats, columns.html#hut).
 export const HUT_TIP = tr("hut.tip", "🛖 Spawn Room Warrior");
-export const HUT_EXPLAIN = tr("hut.explain", "🛖 Spawn Room Warrior: rarely dies, plays at a slow pace and aims poorly, yet ⚔️ iVi beats IvI by a lot. That positive 🔀 Diff likely comes from safe positions, so it is reduced. The check gets stricter the higher the ⚔️ iVi and the longer the play time: newer and weaker players are judged gently, and players who die often are never touched.");
+export const HUT_EXPLAIN = tr("hut.explain", "🛖 Spawn Room Warrior: rarely dies, slow pace and weak aim, yet a high ⚔️ iVi. Likely plays from safe spots, so the 🔀 Diff is lowered.");
 export const HUT_DIFF_NOTE = tr("hut.diffNote", "🛖 players (rarely die, slow pace, low accuracy): a positive Diff is reduced.");
 
 const fin = (v) => typeof v === "number" && Number.isFinite(v);

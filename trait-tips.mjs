@@ -5,12 +5,12 @@
  */
 import { t as tr } from "./i18n.mjs";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
-import { zrevConfirmedTip, zrevSoftTip, zrevPlainTip } from "./zerg-revive.mjs?v=20261022-zrev1";
-import { vdiffFromTip } from "./diff-vehicle.mjs?v=20261022-vdiff1";
-import { nbdFromTip } from "./newbie-diff.mjs?v=20261022-nbd1";
+import { zrevConfirmedTip, zrevSoftTip, zrevPlainTip } from "./zerg-revive.mjs?v=20261023-short1";
+import { vdiffFromTip } from "./diff-vehicle.mjs?v=20261023-short1";
+import { nbdFromTip } from "./newbie-diff.mjs?v=20261023-short1";
 
-export const AIMGAP_HINT = "Aim on paper vs real results: your ⚔️ iVi percentile minus your IvI (aim) percentile, from −99 to +99. 🤥 Impostor (−33 or lower): your aim promises more than your fights deliver. 😤 DieHard (+33 or higher): you win more than your aim predicts. In between (−32…+32): balanced, aim and results roughly agree. Neither side is better or worse: it shows a play style, not cheating.";
-export const ZERG_HINT = "How much your results lean on a big group, 0–99: the lower of your 🎈 Inflation percentile (K/D lifted by easy fights) and your 🤝 Assists percentile (kills shared with teammates). High only when both are high, so solo farmers of easy fights stay low. Lower is better. Needs 100 kills in recent Honu sessions.";
+export const AIMGAP_HINT = "🔀 Results vs aim (−99…+99). 🤥 −33 or less: aim beats results. 😤 +33 or more: the reverse. A style, not cheating.";
+export const ZERG_HINT = "🪳 How much your results lean on a big group (🎈 Inflation and 🤝 Assists), 0–99. Lower is better.";
 export const AIMGAP_MISSING = "Needs ⚔️ iVi (enough fights) and a public IvI";
 export const ZERG_MISSING = "Needs 🤝 Assists (100 kills in recent Honu sessions) and 🎈 Inflation (enough fights)";
 
@@ -62,8 +62,8 @@ export function aimGapCellTip(v, g, pool, veh = null) {
 
 /** 🪳 cell hover: score, percentile among measured players, both parts. */
 export function zergCellTip(v, z, pool) {
-  const parts = z ? tr("zerg.parts", "🎈 Inflation percentile {f} · 🤝 Assists percentile {a} (the lower one counts)", { f: z.infl, a: z.apk }) : "";
+  const parts = z ? tr("zerg.parts", "🎈 Inflation {f} · 🤝 Assists {a}", { f: z.infl, a: z.apk }) : "";
   // 🪳 revive check (zerg-revive.mjs): only where Honu XP detail exists.
   const rv = z && fin(z.rvp) ? " " + (z.softened ? zrevSoftTip(z.raw, z.rvp) : z.confirmed ? zrevConfirmedTip(z.rvp) : zrevPlainTip(z.rvp)) : "";
-  return tr("zerg.tip", "Zerg {v}{rel}. Lower is better. {parts}", { v, rel: rel(pool, v), parts }).trim() + rv;
+  return tr("zerg.tip", "Zerg {v}{rel}. {parts}", { v, rel: rel(pool, v), parts }).trim() + rv;
 }

@@ -268,7 +268,7 @@ export function scrimNote(farm) {
     }));
   }
   if (!parts.length) return "";
-  parts.push(tr("pad.psRule", "So scrims don't outweigh live play: {min}+ kills on one player with ≤ {back}% back are left out, other long scrims count as up to {cap} kills at K/D ≤ {kd}.", {
+  parts.push(tr("pad.psRule", "Scrims capped: {min}+ kills on one player with ≤ {back}% back are left out; other long scrims count as up to {cap} kills at K/D ≤ {kd}.", {
     min: PS_SCRIM.MIN_KILLS, back: PS_SCRIM.MAX_BACK * 100, cap: PS_SCRIM.CAP, kd: PS_SCRIM.KD_MAX,
   }));
   return parts.join(" ");
@@ -391,7 +391,7 @@ export function confirmedPadderSlugs(reviewed) {
 export const PADDER_PENALTY = 0.1;
 export const PADDER_PENALTY_REF = 610.6;
 export const POOP_MARK = "💩";
-export const POOP_TIP = tr("pad.poop", "💩 Confirmed stat padding: −10% on adjusted iVi (on top of the kills on farm accounts already excluded). Think this is wrong? Contact the site owner to clarify.");
+export const POOP_TIP = tr("pad.poop", "💩 Confirmed stat padding: −10% on adjusted iVi. Think it's wrong? Contact the site owner.");
 
 const reviewedState = { players: {} };
 /** Replace the review decisions used for the 💩 penalty (reviewed.json content; null clears). */

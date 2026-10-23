@@ -44,5 +44,5 @@ export function vehDiffCleared(reviewed, slug) {
 }
 
 export const VDIFF_NOTE = tr("vdiff.note", "Many vehicle kills: a positive Diff counts only in proportion to the kills made on foot.");
-export const VDIFF_EXPLAIN = tr("vdiff.explain", "🔀 Vehicle damp: Diff compares infantry aim with results, but vehicle kills lift results without aim. Above the typical vehicle share (about 15% of kills), a positive Diff is scaled by the share of kills made on foot: 46% vehicle → ×0.63, 76% → ×0.28. Negative Diff is untouched. If 🛖 also applies, only the stronger reduction counts.");
+export const VDIFF_EXPLAIN = tr("vdiff.explain", "🔀 Vehicle damp: vehicle kills lift results without aim, so a positive Diff only counts the on-foot part.");
 export const vdiffFromTip = (raw, veh) => tr("diff.vehFrom", "🚜 Reduced from {raw} ({veh}% of kills from vehicles: only the on-foot part counts).", { raw, veh });
