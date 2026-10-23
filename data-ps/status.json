@@ -33,7 +33,7 @@
     }
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-23T18:26:18.492Z",
+    "checkedAt": "2026-10-23T19:43:56.016Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 1,
     "explained": 2,
@@ -198,7 +198,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-23T18:26:18.534Z",
+    "checkedAt": "2026-10-23T19:43:56.063Z",
     "red": 6,
     "padding": 0,
     "adjusted": 213,
@@ -209,7 +209,7 @@
     "forensics": 0
   },
   "sessionStats": {
-    "checkedAt": "2026-10-23T18:26:18.494Z",
+    "checkedAt": "2026-10-23T19:43:56.018Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -447,8 +447,8 @@
         "flagged": false,
         "otherRed": [],
         "values": {
-          "s_apk": 0.178,
-          "s_share": 0.626,
+          "s_apk": null,
+          "s_share": null,
           "s_kpm": 0.463,
           "s_maxKpm": 0.487,
           "s_kpmCv": null,
@@ -595,7 +595,7 @@
     "outliersUnexplained": 0
   },
   "forensics": {
-    "checkedAt": "2026-10-23T18:26:18.498Z",
+    "checkedAt": "2026-10-23T19:43:56.022Z",
     "candidates": [
       "hkn1",
       "scooterrr",
@@ -661,7 +661,7 @@
     "players": []
   },
   "review": {
-    "checkedAt": "2026-10-23T18:26:18.505Z",
+    "checkedAt": "2026-10-23T19:43:56.030Z",
     "count": 217,
     "players": [
       {
@@ -2442,7 +2442,7 @@
     },
     "predict": {},
     "tagMin": 20,
-    "checkedAt": "2026-10-23T18:26:18.514Z",
+    "checkedAt": "2026-10-23T19:43:56.038Z",
     "coverage": {
       "players": 1628,
       "withSessions": 503,
@@ -2620,7 +2620,7 @@
     }
   },
   "padderPenalty": {
-    "checkedAt": "2026-10-23T18:26:18.508Z",
+    "checkedAt": "2026-10-23T19:43:56.032Z",
     "ranked": 1621,
     "penalty": 0.1,
     "ref": 610.6,
@@ -2630,7 +2630,7 @@
     "players": []
   },
   "vehicleCut": {
-    "checkedAt": "2026-10-23T18:26:18.513Z",
+    "checkedAt": "2026-10-23T19:43:56.037Z",
     "ranked": 1621,
     "cut": 960,
     "buckets": {
@@ -4906,7 +4906,7 @@
     "watch": []
   },
   "infantry": {
-    "checkedAt": "2026-10-23T18:26:18.690Z",
+    "checkedAt": "2026-10-23T19:43:56.214Z",
     "players": 1635,
     "counts": {
       "infantry": 1054,
@@ -4925,7 +4925,7 @@
   },
   "burst": {
     "rule": "KPM ≥ 5 and ≥ 15 kills in ≥ 2 min (one stored session, no 10-minute floor)",
-    "checkedAt": "2026-10-23T18:26:18.866Z",
+    "checkedAt": "2026-10-23T19:43:56.400Z",
     "sessions": 3,
     "flaggedPlayers": 3,
     "clearedPlayers": 0,
@@ -4990,7 +4990,7 @@
     "caught": []
   },
   "hut": {
-    "builtAt": "2026-10-23T18:26:18.445Z",
+    "builtAt": "2026-10-23T19:43:55.977Z",
     "cuts": {
       "actMedian": 0.2382,
       "actMult": 1.333,
@@ -5474,7 +5474,7 @@
     "cleared": []
   },
   "newbieDiff": {
-    "builtAt": "2026-10-23T18:26:18.466Z",
+    "builtAt": "2026-10-23T19:43:55.994Z",
     "loH": 6.8,
     "hiH": 319.3,
     "n": 1616,
@@ -10781,7 +10781,7 @@
     "cleared": []
   },
   "vehDiff": {
-    "builtAt": "2026-10-23T18:26:18.455Z",
+    "builtAt": "2026-10-23T19:43:55.985Z",
     "start": 14.7,
     "damped": 388,
     "dieHardHut": 185,
@@ -15060,7 +15060,7 @@
     "cleared": []
   },
   "zergRevive": {
-    "builtAt": "2026-10-23T18:26:18.469Z",
+    "builtAt": "2026-10-23T19:43:55.997Z",
     "zergScored": 43,
     "measured": 0,
     "confirmed": 0,
@@ -15077,5 +15077,15 @@
     "rule": "🪳 Zerg revive check, from Honu XP detail (data/xp, players looked up or discovered; 100+ kills and 50+ deaths there). Revived share = (Revive + Squad Revive received) ÷ deaths by enemy players. rvp = its percentile among the 0 measured players of this build (p25 null%, median null%, p75 null%). rvp ≥ 75 → Zerg confirmed (unchanged, said on hover). Low rvp softens a high Zerg: w = 1 at/below p25 → 0 at/above p50, Zerg = raw − round(w × max(0, raw − rvp)), so at full weight Zerg falls to the revive percentile; never raised. No XP detail → unchanged. Listed: every softened player, and confirmed ones with raw Zerg ≥ 67. Owner override: \"zerg\": \"cleared\" on the data/reviewed.json player entry (no revive result at all).",
     "players": [],
     "cleared": []
+  },
+  "assistGap": {
+    "checkedAt": "2026-10-23T19:43:56.038Z",
+    "start": "2026-04-01T13:00:00.000Z",
+    "end": "2026-05-07T05:00:00.000Z",
+    "url": "https://www.planetside2.com/patch-notes/may-6-hotfix-2026",
+    "minKills": 100,
+    "count": 0,
+    "lost": 0,
+    "players": []
   }
 }

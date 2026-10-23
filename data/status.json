@@ -325,7 +325,7 @@
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-23T19:41:19.041Z",
+    "checkedAt": "2026-10-23T19:43:42.896Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 21,
     "explained": 26,
@@ -1770,7 +1770,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-23T19:41:21.317Z",
+    "checkedAt": "2026-10-23T19:43:47.672Z",
     "red": 50,
     "padding": 42,
     "adjusted": 18,
@@ -1781,7 +1781,7 @@
     "forensics": 28
   },
   "sessionStats": {
-    "checkedAt": "2026-10-23T19:41:19.071Z",
+    "checkedAt": "2026-10-23T19:43:42.939Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -1903,23 +1903,23 @@
     ],
     "distributions": {
       "s_apk": {
-        "n": 5665,
+        "n": 5640,
         "min": 0,
-        "p01": 0.088,
-        "p05": 0.185,
-        "median": 0.419,
-        "p95": 0.732,
+        "p01": 0.106,
+        "p05": 0.19,
+        "median": 0.421,
+        "p95": 0.734,
         "p99": 0.907,
         "max": 1.5
       },
       "s_share": {
-        "n": 5103,
+        "n": 5085,
         "min": 0.369,
         "p01": 0.458,
         "p05": 0.488,
         "median": 0.555,
         "p95": 0.626,
-        "p99": 0.666,
+        "p99": 0.665,
         "max": 0.808
       },
       "s_kpm": {
@@ -2911,7 +2911,7 @@
           "rampage"
         ],
         "values": {
-          "s_apk": 0,
+          "s_apk": null,
           "s_share": null,
           "s_kpm": 4.523,
           "s_maxKpm": 4.523,
@@ -2988,8 +2988,8 @@
           "session-forensics"
         ],
         "values": {
-          "s_apk": 0.04,
-          "s_share": 0.907,
+          "s_apk": null,
+          "s_share": null,
           "s_kpm": 4.536,
           "s_maxKpm": null,
           "s_kpmCv": null,
@@ -3765,7 +3765,7 @@
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-23T19:41:19.094Z",
+    "checkedAt": "2026-10-23T19:43:42.975Z",
     "candidates": [
       "nebelhexe",
       "oshurpogchamp",
@@ -30409,7 +30409,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-23T19:41:19.100Z",
+    "checkedAt": "2026-10-23T19:43:42.984Z",
     "count": 355,
     "players": [
       {
@@ -33352,7 +33352,7 @@
     ]
   },
   "infantry": {
-    "checkedAt": "2026-10-23T19:41:22.262Z",
+    "checkedAt": "2026-10-23T19:43:49.160Z",
     "players": 13983,
     "counts": {
       "infantry": 9143,
@@ -33372,13 +33372,13 @@
   "assistGroups": {
     "byTag": {
       "infantry": {
-        "count": 3951,
-        "medApk": 0.427,
+        "count": 3935,
+        "medApk": 0.429,
         "medShare": 0.557
       },
       "mixed": {
-        "count": 922,
-        "medApk": 0.43,
+        "count": 920,
+        "medApk": 0.431,
         "medShare": 0.544
       },
       "vehicle": {
@@ -33394,11 +33394,11 @@
     },
     "predict": {
       "apk": {
-        "threshold": 0.337,
+        "threshold": 0.331,
         "dir": "<=",
-        "vehicleCaught": 0.682,
-        "infantryCleared": 0.734,
-        "balanced": 0.708
+        "vehicleCaught": 0.672,
+        "infantryCleared": 0.749,
+        "balanced": 0.711
       },
       "share": {
         "threshold": 0.515,
@@ -33409,21 +33409,21 @@
       }
     },
     "tagMin": 20,
-    "checkedAt": "2026-10-23T19:41:21.203Z",
+    "checkedAt": "2026-10-23T19:43:47.501Z",
     "coverage": {
       "players": 13958,
       "withSessions": 12329,
-      "measured": 5087,
-      "measuredPct": 36.4
+      "measured": 5069,
+      "measuredPct": 36.3
     },
     "cuts": {
-      "kd": 2.315,
-      "shareHi": 0.582,
+      "kd": 2.312,
+      "shareHi": 0.581,
       "shareLo": 0.528,
       "apk": 0.659,
-      "iviLo": 302.105,
-      "iviHi": 665.34,
-      "medApk": 0.423,
+      "iviLo": 301.649,
+      "iviHi": 666.167,
+      "medApk": 0.425,
       "medShare": 0.555
     },
     "rule": {
@@ -33531,7 +33531,7 @@
         ]
       },
       "finishers": {
-        "count": 249,
+        "count": 248,
         "top": [
           {
             "slug": "anniversay",
@@ -33624,7 +33624,7 @@
         ]
       },
       "support": {
-        "count": 218,
+        "count": 217,
         "top": [
           {
             "slug": "axteon",
@@ -33720,7 +33720,7 @@
   },
   "burst": {
     "rule": "KPM ≥ 5 and ≥ 15 kills in ≥ 2 min (one stored session, no 10-minute floor)",
-    "checkedAt": "2026-10-23T19:41:23.557Z",
+    "checkedAt": "2026-10-23T19:43:51.017Z",
     "sessions": 12,
     "flaggedPlayers": 0,
     "clearedPlayers": 2,
@@ -33904,7 +33904,7 @@
     ]
   },
   "padderPenalty": {
-    "checkedAt": "2026-10-23T19:41:19.116Z",
+    "checkedAt": "2026-10-23T19:43:43.011Z",
     "ranked": 13916,
     "penalty": 0.1,
     "ref": 610.6,
@@ -34125,7 +34125,7 @@
     ]
   },
   "vehicleCut": {
-    "checkedAt": "2026-10-23T19:41:19.142Z",
+    "checkedAt": "2026-10-23T19:43:43.088Z",
     "ranked": 13916,
     "cut": 8375,
     "buckets": {
@@ -36664,7 +36664,7 @@
     ]
   },
   "hut": {
-    "builtAt": "2026-10-23T19:41:18.780Z",
+    "builtAt": "2026-10-23T19:43:42.517Z",
     "cuts": {
       "actMedian": 0.2716,
       "actMult": 1.333,
@@ -41048,7 +41048,7 @@
     "cleared": []
   },
   "vehDiff": {
-    "builtAt": "2026-10-23T19:41:18.824Z",
+    "builtAt": "2026-10-23T19:43:42.577Z",
     "start": 14.9,
     "damped": 3113,
     "dieHardHut": 1055,
@@ -75302,10 +75302,10 @@
     "cleared": []
   },
   "zergRevive": {
-    "builtAt": "2026-10-23T19:41:18.900Z",
-    "zergScored": 5642,
+    "builtAt": "2026-10-23T19:43:42.681Z",
+    "zergScored": 5617,
     "measured": 802,
-    "confirmed": 200,
+    "confirmed": 199,
     "confirmedHigh": 53,
     "softened": 175,
     "cuts": {
@@ -75374,6 +75374,17 @@
         "status": "confirmed"
       },
       {
+        "name": "MJUSHIM",
+        "slug": "mjushim",
+        "share": 48.8,
+        "revived": 80,
+        "deaths": 164,
+        "rvp": 81,
+        "zergRaw": 93,
+        "zerg": 93,
+        "status": "confirmed"
+      },
+      {
         "name": "RegisteredFlexOffendor",
         "slug": "registeredflexoffendor",
         "share": 81.1,
@@ -75383,6 +75394,17 @@
         "zergRaw": 92,
         "zerg": 92,
         "status": "confirmed"
+      },
+      {
+        "name": "EvilGeniusftw",
+        "slug": "evilgeniusftw",
+        "share": 28.8,
+        "revived": 149,
+        "deaths": 518,
+        "rvp": 48,
+        "zergRaw": 91,
+        "zerg": 88,
+        "status": "softened"
       },
       {
         "name": "BenceHUN0902",
@@ -75404,17 +75426,6 @@
         "rvp": 78,
         "zergRaw": 87,
         "zerg": 87,
-        "status": "confirmed"
-      },
-      {
-        "name": "Faithenuff",
-        "slug": "faithenuff",
-        "share": 55.6,
-        "revived": 144,
-        "deaths": 259,
-        "rvp": 87,
-        "zergRaw": 86,
-        "zerg": 86,
         "status": "confirmed"
       },
       {
@@ -75457,6 +75468,17 @@
         "revived": 195,
         "deaths": 379,
         "rvp": 84,
+        "zergRaw": 85,
+        "zerg": 85,
+        "status": "confirmed"
+      },
+      {
+        "name": "Faithenuff",
+        "slug": "faithenuff",
+        "share": 55.6,
+        "revived": 144,
+        "deaths": 259,
+        "rvp": 87,
         "zergRaw": 85,
         "zerg": 85,
         "status": "confirmed"
@@ -75572,17 +75594,6 @@
         "status": "confirmed"
       },
       {
-        "name": "ffango",
-        "slug": "ffango",
-        "share": 48.4,
-        "revived": 125,
-        "deaths": 258,
-        "rvp": 80,
-        "zergRaw": 81,
-        "zerg": 81,
-        "status": "confirmed"
-      },
-      {
         "name": "1iiiii",
         "slug": "1iiiii",
         "share": 67,
@@ -75605,15 +75616,15 @@
         "status": "confirmed"
       },
       {
-        "name": "EvilGeniusftw",
-        "slug": "evilgeniusftw",
-        "share": 28.8,
-        "revived": 149,
-        "deaths": 518,
-        "rvp": 48,
-        "zergRaw": 79,
-        "zerg": 77,
-        "status": "softened"
+        "name": "ffango",
+        "slug": "ffango",
+        "share": 48.4,
+        "revived": 125,
+        "deaths": 258,
+        "rvp": 80,
+        "zergRaw": 80,
+        "zerg": 80,
+        "status": "confirmed"
       },
       {
         "name": "WhooserDaddy",
@@ -75635,17 +75646,6 @@
         "rvp": 36,
         "zergRaw": 78,
         "zerg": 54,
-        "status": "softened"
-      },
-      {
-        "name": "Wrel",
-        "slug": "wrel",
-        "share": 26.3,
-        "revived": 15,
-        "deaths": 57,
-        "rvp": 44,
-        "zergRaw": 78,
-        "zerg": 70,
         "status": "softened"
       },
       {
@@ -75693,6 +75693,17 @@
         "status": "confirmed"
       },
       {
+        "name": "Wrel",
+        "slug": "wrel",
+        "share": 26.3,
+        "revived": 15,
+        "deaths": 57,
+        "rvp": 44,
+        "zergRaw": 77,
+        "zerg": 69,
+        "status": "softened"
+      },
+      {
         "name": "COunclee",
         "slug": "counclee",
         "share": 14.5,
@@ -75715,17 +75726,6 @@
         "status": "confirmed"
       },
       {
-        "name": "Pmswtf",
-        "slug": "pmswtf",
-        "share": 56.4,
-        "revived": 66,
-        "deaths": 117,
-        "rvp": 87,
-        "zergRaw": 75,
-        "zerg": 75,
-        "status": "confirmed"
-      },
-      {
         "name": "KingMotu",
         "slug": "kingmotu",
         "share": 83,
@@ -75743,6 +75743,17 @@
         "revived": 94,
         "deaths": 127,
         "rvp": 96,
+        "zergRaw": 74,
+        "zerg": 74,
+        "status": "confirmed"
+      },
+      {
+        "name": "Pmswtf",
+        "slug": "pmswtf",
+        "share": 56.4,
+        "revived": 66,
+        "deaths": 117,
+        "rvp": 87,
         "zergRaw": 74,
         "zerg": 74,
         "status": "confirmed"
@@ -75779,17 +75790,6 @@
         "zergRaw": 73,
         "zerg": 73,
         "status": "confirmed"
-      },
-      {
-        "name": "Negator",
-        "slug": "negator",
-        "share": 26.6,
-        "revived": 42,
-        "deaths": 158,
-        "rvp": 44,
-        "zergRaw": 73,
-        "zerg": 66,
-        "status": "softened"
       },
       {
         "name": "Guruwarzzzz",
@@ -75880,6 +75880,17 @@
         "status": "confirmed"
       },
       {
+        "name": "Negator",
+        "slug": "negator",
+        "share": 26.6,
+        "revived": 42,
+        "deaths": 158,
+        "rvp": 44,
+        "zergRaw": 72,
+        "zerg": 65,
+        "status": "softened"
+      },
+      {
         "name": "TearinScout",
         "slug": "tearinscout",
         "share": 51.2,
@@ -75968,17 +75979,6 @@
         "status": "confirmed"
       },
       {
-        "name": "Epizentrum",
-        "slug": "epizentrum",
-        "share": 26.8,
-        "revived": 26,
-        "deaths": 97,
-        "rvp": 45,
-        "zergRaw": 68,
-        "zerg": 63,
-        "status": "softened"
-      },
-      {
         "name": "VWRJunior",
         "slug": "vwrjunior",
         "share": 66.7,
@@ -76023,6 +76023,17 @@
         "status": "confirmed"
       },
       {
+        "name": "Epizentrum",
+        "slug": "epizentrum",
+        "share": 26.8,
+        "revived": 26,
+        "deaths": 97,
+        "rvp": 45,
+        "zergRaw": 67,
+        "zerg": 63,
+        "status": "softened"
+      },
+      {
         "name": "neolithy",
         "slug": "neolithy",
         "share": 53,
@@ -76043,17 +76054,6 @@
         "zergRaw": 67,
         "zerg": 48,
         "status": "softened"
-      },
-      {
-        "name": "MicrometerPeterTR",
-        "slug": "micrometerpetertr",
-        "share": 56.3,
-        "revived": 81,
-        "deaths": 144,
-        "rvp": 87,
-        "zergRaw": 67,
-        "zerg": 67,
-        "status": "confirmed"
       },
       {
         "name": "Speedbot",
@@ -76150,8 +76150,8 @@
         "revived": 93,
         "deaths": 443,
         "rvp": 31,
-        "zergRaw": 63,
-        "zerg": 39,
+        "zergRaw": 62,
+        "zerg": 38,
         "status": "softened"
       },
       {
@@ -76282,8 +76282,8 @@
         "revived": 36,
         "deaths": 165,
         "rvp": 33,
-        "zergRaw": 57,
-        "zerg": 41,
+        "zergRaw": 56,
+        "zerg": 40,
         "status": "softened"
       },
       {
@@ -76293,8 +76293,8 @@
         "revived": 14,
         "deaths": 57,
         "rvp": 39,
-        "zergRaw": 56,
-        "zerg": 49,
+        "zergRaw": 55,
+        "zerg": 48,
         "status": "softened"
       },
       {
@@ -76331,17 +76331,6 @@
         "status": "softened"
       },
       {
-        "name": "Megatake",
-        "slug": "megatake",
-        "share": 24.9,
-        "revived": 44,
-        "deaths": 177,
-        "rvp": 40,
-        "zergRaw": 52,
-        "zerg": 47,
-        "status": "softened"
-      },
-      {
         "name": "tweezus",
         "slug": "tweezus",
         "share": 19.3,
@@ -76353,14 +76342,14 @@
         "status": "softened"
       },
       {
-        "name": "Coward77",
-        "slug": "coward77",
-        "share": 27.8,
-        "revived": 161,
-        "deaths": 579,
-        "rvp": 47,
-        "zergRaw": 52,
-        "zerg": 51,
+        "name": "Megatake",
+        "slug": "megatake",
+        "share": 24.9,
+        "revived": 44,
+        "deaths": 177,
+        "rvp": 40,
+        "zergRaw": 51,
+        "zerg": 47,
         "status": "softened"
       },
       {
@@ -76447,19 +76436,8 @@
         "revived": 32,
         "deaths": 124,
         "rvp": 42,
-        "zergRaw": 45,
-        "zerg": 44,
-        "status": "softened"
-      },
-      {
-        "name": "ZouIette",
-        "slug": "zouiette",
-        "share": 20,
-        "revived": 24,
-        "deaths": 120,
-        "rvp": 27,
         "zergRaw": 44,
-        "zerg": 28,
+        "zerg": 43,
         "status": "softened"
       },
       {
@@ -76507,14 +76485,14 @@
         "status": "softened"
       },
       {
-        "name": "DirtySunSchiss",
-        "slug": "dirtysunschiss",
-        "share": 20.9,
-        "revived": 27,
-        "deaths": 129,
-        "rvp": 31,
+        "name": "ZouIette",
+        "slug": "zouiette",
+        "share": 20,
+        "revived": 24,
+        "deaths": 120,
+        "rvp": 27,
         "zergRaw": 43,
-        "zerg": 34,
+        "zerg": 28,
         "status": "softened"
       },
       {
@@ -76529,28 +76507,6 @@
         "status": "softened"
       },
       {
-        "name": "736432",
-        "slug": "736432",
-        "share": 24,
-        "revived": 68,
-        "deaths": 283,
-        "rvp": 37,
-        "zergRaw": 43,
-        "zerg": 40,
-        "status": "softened"
-      },
-      {
-        "name": "Black8Russian",
-        "slug": "black8russian",
-        "share": 14.3,
-        "revived": 54,
-        "deaths": 377,
-        "rvp": 15,
-        "zergRaw": 43,
-        "zerg": 15,
-        "status": "softened"
-      },
-      {
         "name": "Token999",
         "slug": "token999",
         "share": 14.1,
@@ -76562,14 +76518,36 @@
         "status": "softened"
       },
       {
-        "name": "Trojan22",
-        "slug": "trojan22",
-        "share": 11,
-        "revived": 23,
-        "deaths": 210,
-        "rvp": 8,
-        "zergRaw": 40,
-        "zerg": 8,
+        "name": "DirtySunSchiss",
+        "slug": "dirtysunschiss",
+        "share": 20.9,
+        "revived": 27,
+        "deaths": 129,
+        "rvp": 31,
+        "zergRaw": 42,
+        "zerg": 34,
+        "status": "softened"
+      },
+      {
+        "name": "736432",
+        "slug": "736432",
+        "share": 24,
+        "revived": 68,
+        "deaths": 283,
+        "rvp": 37,
+        "zergRaw": 42,
+        "zerg": 39,
+        "status": "softened"
+      },
+      {
+        "name": "Black8Russian",
+        "slug": "black8russian",
+        "share": 14.3,
+        "revived": 54,
+        "deaths": 377,
+        "rvp": 15,
+        "zergRaw": 42,
+        "zerg": 15,
         "status": "softened"
       },
       {
@@ -76595,17 +76573,6 @@
         "status": "softened"
       },
       {
-        "name": "Tagguritt",
-        "slug": "tagguritt",
-        "share": 12.7,
-        "revived": 30,
-        "deaths": 237,
-        "rvp": 10,
-        "zergRaw": 40,
-        "zerg": 10,
-        "status": "softened"
-      },
-      {
         "name": "VlaineTR2",
         "slug": "vlainetr2",
         "share": 5.1,
@@ -76617,6 +76584,28 @@
         "status": "softened"
       },
       {
+        "name": "Trojan22",
+        "slug": "trojan22",
+        "share": 11,
+        "revived": 23,
+        "deaths": 210,
+        "rvp": 8,
+        "zergRaw": 39,
+        "zerg": 8,
+        "status": "softened"
+      },
+      {
+        "name": "Tagguritt",
+        "slug": "tagguritt",
+        "share": 12.7,
+        "revived": 30,
+        "deaths": 237,
+        "rvp": 10,
+        "zergRaw": 39,
+        "zerg": 10,
+        "status": "softened"
+      },
+      {
         "name": "MauziGenau",
         "slug": "mauzigenau",
         "share": 15.2,
@@ -76625,28 +76614,6 @@
         "rvp": 18,
         "zergRaw": 39,
         "zerg": 18,
-        "status": "softened"
-      },
-      {
-        "name": "ThrobbingLoins",
-        "slug": "throbbingloins",
-        "share": 23.2,
-        "revived": 23,
-        "deaths": 99,
-        "rvp": 36,
-        "zergRaw": 39,
-        "zerg": 37,
-        "status": "softened"
-      },
-      {
-        "name": "ChuiVanu",
-        "slug": "chuivanu",
-        "share": 23.6,
-        "revived": 170,
-        "deaths": 721,
-        "rvp": 36,
-        "zergRaw": 39,
-        "zerg": 37,
         "status": "softened"
       },
       {
@@ -76680,6 +76647,28 @@
         "rvp": 13,
         "zergRaw": 38,
         "zerg": 13,
+        "status": "softened"
+      },
+      {
+        "name": "ThrobbingLoins",
+        "slug": "throbbingloins",
+        "share": 23.2,
+        "revived": 23,
+        "deaths": 99,
+        "rvp": 36,
+        "zergRaw": 38,
+        "zerg": 37,
+        "status": "softened"
+      },
+      {
+        "name": "ChuiVanu",
+        "slug": "chuivanu",
+        "share": 23.6,
+        "revived": 170,
+        "deaths": 721,
+        "rvp": 36,
+        "zergRaw": 38,
+        "zerg": 37,
         "status": "softened"
       },
       {
@@ -76738,17 +76727,6 @@
         "status": "softened"
       },
       {
-        "name": "TeraeVS",
-        "slug": "teraevs",
-        "share": 3.2,
-        "revived": 2,
-        "deaths": 62,
-        "rvp": 1,
-        "zergRaw": 36,
-        "zerg": 1,
-        "status": "softened"
-      },
-      {
         "name": "Kagebi",
         "slug": "kagebi",
         "share": 14.2,
@@ -76757,17 +76735,6 @@
         "rvp": 15,
         "zergRaw": 35,
         "zerg": 15,
-        "status": "softened"
-      },
-      {
-        "name": "Omegadude4321",
-        "slug": "omegadude4321",
-        "share": 20.4,
-        "revived": 57,
-        "deaths": 280,
-        "rvp": 29,
-        "zergRaw": 35,
-        "zerg": 30,
         "status": "softened"
       },
       {
@@ -76793,14 +76760,14 @@
         "status": "softened"
       },
       {
-        "name": "SosnicevAnton",
-        "slug": "sosnicevanton",
-        "share": 16.1,
-        "revived": 9,
-        "deaths": 56,
-        "rvp": 19,
-        "zergRaw": 34,
-        "zerg": 19,
+        "name": "TeraeVS",
+        "slug": "teraevs",
+        "share": 3.2,
+        "revived": 2,
+        "deaths": 62,
+        "rvp": 1,
+        "zergRaw": 35,
+        "zerg": 1,
         "status": "softened"
       },
       {
@@ -76812,6 +76779,17 @@
         "rvp": 26,
         "zergRaw": 34,
         "zerg": 26,
+        "status": "softened"
+      },
+      {
+        "name": "Omegadude4321",
+        "slug": "omegadude4321",
+        "share": 20.4,
+        "revived": 57,
+        "deaths": 280,
+        "rvp": 29,
+        "zergRaw": 34,
+        "zerg": 30,
         "status": "softened"
       },
       {
@@ -76837,14 +76815,25 @@
         "status": "softened"
       },
       {
+        "name": "SosnicevAnton",
+        "slug": "sosnicevanton",
+        "share": 16.1,
+        "revived": 9,
+        "deaths": 56,
+        "rvp": 19,
+        "zergRaw": 33,
+        "zerg": 19,
+        "status": "softened"
+      },
+      {
         "name": "idgaffff",
         "slug": "idgaffff",
         "share": 21.6,
         "revived": 27,
         "deaths": 125,
         "rvp": 32,
-        "zergRaw": 34,
-        "zerg": 33,
+        "zergRaw": 33,
+        "zerg": 32,
         "status": "softened"
       },
       {
@@ -76903,6 +76892,17 @@
         "status": "softened"
       },
       {
+        "name": "SoilVS",
+        "slug": "soilvs",
+        "share": 15.3,
+        "revived": 24,
+        "deaths": 157,
+        "rvp": 18,
+        "zergRaw": 31,
+        "zerg": 18,
+        "status": "softened"
+      },
+      {
         "name": "Jimmbot",
         "slug": "jimmbot",
         "share": 12,
@@ -76936,17 +76936,6 @@
         "status": "softened"
       },
       {
-        "name": "ProbicalTR",
-        "slug": "probicaltr",
-        "share": 18.2,
-        "revived": 10,
-        "deaths": 55,
-        "rvp": 24,
-        "zergRaw": 30,
-        "zerg": 24,
-        "status": "softened"
-      },
-      {
         "name": "Werkitten",
         "slug": "werkitten",
         "share": 7.6,
@@ -76969,6 +76958,17 @@
         "status": "softened"
       },
       {
+        "name": "GranNolaa",
+        "slug": "grannolaa",
+        "share": 13.9,
+        "revived": 27,
+        "deaths": 194,
+        "rvp": 14,
+        "zergRaw": 30,
+        "zerg": 14,
+        "status": "softened"
+      },
+      {
         "name": "GhostMK6",
         "slug": "ghostmk6",
         "share": 15.4,
@@ -76977,6 +76977,17 @@
         "rvp": 18,
         "zergRaw": 29,
         "zerg": 18,
+        "status": "softened"
+      },
+      {
+        "name": "ProbicalTR",
+        "slug": "probicaltr",
+        "share": 18.2,
+        "revived": 10,
+        "deaths": 55,
+        "rvp": 24,
+        "zergRaw": 29,
+        "zerg": 24,
         "status": "softened"
       },
       {
@@ -77024,28 +77035,6 @@
         "status": "softened"
       },
       {
-        "name": "senioryear",
-        "slug": "senioryear",
-        "share": 11.8,
-        "revived": 9,
-        "deaths": 76,
-        "rvp": 9,
-        "zergRaw": 28,
-        "zerg": 9,
-        "status": "softened"
-      },
-      {
-        "name": "MashaBulkina",
-        "slug": "mashabulkina",
-        "share": 18.6,
-        "revived": 11,
-        "deaths": 59,
-        "rvp": 25,
-        "zergRaw": 28,
-        "zerg": 25,
-        "status": "softened"
-      },
-      {
         "name": "BLimPoo",
         "slug": "blimpoo",
         "share": 16.3,
@@ -77068,14 +77057,25 @@
         "status": "softened"
       },
       {
-        "name": "softcoreNC",
-        "slug": "softcorenc",
-        "share": 17,
-        "revived": 30,
-        "deaths": 176,
-        "rvp": 21,
+        "name": "senioryear",
+        "slug": "senioryear",
+        "share": 11.8,
+        "revived": 9,
+        "deaths": 76,
+        "rvp": 9,
         "zergRaw": 27,
-        "zerg": 21,
+        "zerg": 9,
+        "status": "softened"
+      },
+      {
+        "name": "MashaBulkina",
+        "slug": "mashabulkina",
+        "share": 18.6,
+        "revived": 11,
+        "deaths": 59,
+        "rvp": 25,
+        "zergRaw": 27,
+        "zerg": 25,
         "status": "softened"
       },
       {
@@ -77090,25 +77090,25 @@
         "status": "softened"
       },
       {
+        "name": "softcoreNC",
+        "slug": "softcorenc",
+        "share": 17,
+        "revived": 30,
+        "deaths": 176,
+        "rvp": 21,
+        "zergRaw": 26,
+        "zerg": 21,
+        "status": "softened"
+      },
+      {
         "name": "MrJTVenom",
         "slug": "mrjtvenom",
         "share": 12.7,
         "revived": 19,
         "deaths": 150,
         "rvp": 10,
-        "zergRaw": 27,
-        "zerg": 10,
-        "status": "softened"
-      },
-      {
-        "name": "AkiSkyCat",
-        "slug": "akiskycat",
-        "share": 14.8,
-        "revived": 19,
-        "deaths": 128,
-        "rvp": 17,
         "zergRaw": 26,
-        "zerg": 17,
+        "zerg": 10,
         "status": "softened"
       },
       {
@@ -77120,6 +77120,17 @@
         "rvp": 1,
         "zergRaw": 25,
         "zerg": 1,
+        "status": "softened"
+      },
+      {
+        "name": "AkiSkyCat",
+        "slug": "akiskycat",
+        "share": 14.8,
+        "revived": 19,
+        "deaths": 128,
+        "rvp": 17,
+        "zergRaw": 25,
+        "zerg": 17,
         "status": "softened"
       },
       {
@@ -77145,39 +77156,6 @@
         "status": "softened"
       },
       {
-        "name": "Comtron88",
-        "slug": "comtron88",
-        "share": 4.9,
-        "revived": 4,
-        "deaths": 82,
-        "rvp": 2,
-        "zergRaw": 23,
-        "zerg": 2,
-        "status": "softened"
-      },
-      {
-        "name": "IIMIIEPCxHK",
-        "slug": "iimiiepcxhk",
-        "share": 0,
-        "revived": 0,
-        "deaths": 60,
-        "rvp": 0,
-        "zergRaw": 23,
-        "zerg": 0,
-        "status": "softened"
-      },
-      {
-        "name": "Sunez",
-        "slug": "sunez",
-        "share": 8,
-        "revived": 6,
-        "deaths": 75,
-        "rvp": 4,
-        "zergRaw": 23,
-        "zerg": 4,
-        "status": "softened"
-      },
-      {
         "name": "botWaz",
         "slug": "botwaz",
         "share": 16.5,
@@ -77194,6 +77172,39 @@
         "share": 8.7,
         "revived": 22,
         "deaths": 253,
+        "rvp": 4,
+        "zergRaw": 22,
+        "zerg": 4,
+        "status": "softened"
+      },
+      {
+        "name": "Comtron88",
+        "slug": "comtron88",
+        "share": 4.9,
+        "revived": 4,
+        "deaths": 82,
+        "rvp": 2,
+        "zergRaw": 22,
+        "zerg": 2,
+        "status": "softened"
+      },
+      {
+        "name": "IIMIIEPCxHK",
+        "slug": "iimiiepcxhk",
+        "share": 0,
+        "revived": 0,
+        "deaths": 60,
+        "rvp": 0,
+        "zergRaw": 22,
+        "zerg": 0,
+        "status": "softened"
+      },
+      {
+        "name": "Sunez",
+        "slug": "sunez",
+        "share": 8,
+        "revived": 6,
+        "deaths": 75,
         "rvp": 4,
         "zergRaw": 22,
         "zerg": 4,
@@ -77316,7 +77327,7 @@
         "revived": 54,
         "deaths": 358,
         "rvp": 17,
-        "zergRaw": 20,
+        "zergRaw": 19,
         "zerg": 17,
         "status": "softened"
       },
@@ -77327,7 +77338,7 @@
         "revived": 6,
         "deaths": 53,
         "rvp": 8,
-        "zergRaw": 20,
+        "zergRaw": 19,
         "zerg": 8,
         "status": "softened"
       },
@@ -77354,17 +77365,6 @@
         "status": "softened"
       },
       {
-        "name": "GranNolaa",
-        "slug": "grannolaa",
-        "share": 13.9,
-        "revived": 27,
-        "deaths": 194,
-        "rvp": 14,
-        "zergRaw": 18,
-        "zerg": 14,
-        "status": "softened"
-      },
-      {
         "name": "Kamasi",
         "slug": "kamasi",
         "share": 11,
@@ -77376,17 +77376,6 @@
         "status": "softened"
       },
       {
-        "name": "SoloGhosty",
-        "slug": "sologhosty",
-        "share": 13.3,
-        "revived": 12,
-        "deaths": 90,
-        "rvp": 12,
-        "zergRaw": 18,
-        "zerg": 12,
-        "status": "softened"
-      },
-      {
         "name": "BinarySloth",
         "slug": "binarysloth",
         "share": 11.3,
@@ -77395,6 +77384,17 @@
         "rvp": 8,
         "zergRaw": 17,
         "zerg": 8,
+        "status": "softened"
+      },
+      {
+        "name": "softcoreVS",
+        "slug": "softcorevs",
+        "share": 13.4,
+        "revived": 24,
+        "deaths": 179,
+        "rvp": 13,
+        "zergRaw": 17,
+        "zerg": 13,
         "status": "softened"
       },
       {
@@ -77420,36 +77420,14 @@
         "status": "softened"
       },
       {
-        "name": "LivingSaint",
-        "slug": "livingsaint",
-        "share": 3.7,
-        "revived": 2,
-        "deaths": 54,
-        "rvp": 1,
-        "zergRaw": 16,
-        "zerg": 1,
-        "status": "softened"
-      },
-      {
-        "name": "softcoreVS",
-        "slug": "softcorevs",
-        "share": 13.4,
-        "revived": 24,
-        "deaths": 179,
-        "rvp": 13,
-        "zergRaw": 16,
-        "zerg": 13,
-        "status": "softened"
-      },
-      {
-        "name": "UnTalWolf",
-        "slug": "untalwolf",
-        "share": 5.6,
-        "revived": 4,
-        "deaths": 72,
-        "rvp": 2,
-        "zergRaw": 16,
-        "zerg": 2,
+        "name": "SoloGhosty",
+        "slug": "sologhosty",
+        "share": 13.3,
+        "revived": 12,
+        "deaths": 90,
+        "rvp": 12,
+        "zergRaw": 17,
+        "zerg": 12,
         "status": "softened"
       },
       {
@@ -77486,6 +77464,28 @@
         "status": "softened"
       },
       {
+        "name": "LivingSaint",
+        "slug": "livingsaint",
+        "share": 3.7,
+        "revived": 2,
+        "deaths": 54,
+        "rvp": 1,
+        "zergRaw": 15,
+        "zerg": 1,
+        "status": "softened"
+      },
+      {
+        "name": "UnTalWolf",
+        "slug": "untalwolf",
+        "share": 5.6,
+        "revived": 4,
+        "deaths": 72,
+        "rvp": 2,
+        "zergRaw": 15,
+        "zerg": 2,
+        "status": "softened"
+      },
+      {
         "name": "rakkair",
         "slug": "rakkair",
         "share": 11.2,
@@ -77505,6 +77505,17 @@
         "rvp": 5,
         "zergRaw": 14,
         "zerg": 5,
+        "status": "softened"
+      },
+      {
+        "name": "Faelswoop",
+        "slug": "faelswoop",
+        "share": 13.3,
+        "revived": 12,
+        "deaths": 90,
+        "rvp": 12,
+        "zergRaw": 14,
+        "zerg": 12,
         "status": "softened"
       },
       {
@@ -77585,17 +77596,6 @@
         "status": "softened"
       },
       {
-        "name": "DanGeRousRon",
-        "slug": "dangerousron",
-        "share": 9.4,
-        "revived": 23,
-        "deaths": 244,
-        "rvp": 5,
-        "zergRaw": 10,
-        "zerg": 5,
-        "status": "softened"
-      },
-      {
         "name": "FoxyHahnDerAlkoholiker",
         "slug": "foxyhahnderalkoholiker",
         "share": 9.4,
@@ -77618,13 +77618,24 @@
         "status": "softened"
       },
       {
+        "name": "DanGeRousRon",
+        "slug": "dangerousron",
+        "share": 9.4,
+        "revived": 23,
+        "deaths": 244,
+        "rvp": 5,
+        "zergRaw": 9,
+        "zerg": 5,
+        "status": "softened"
+      },
+      {
         "name": "Squiqqles",
         "slug": "squiqqles",
         "share": 3.3,
         "revived": 2,
         "deaths": 61,
         "rvp": 1,
-        "zergRaw": 8,
+        "zergRaw": 7,
         "zerg": 1,
         "status": "softened"
       },
@@ -77637,17 +77648,6 @@
         "rvp": 3,
         "zergRaw": 7,
         "zerg": 3,
-        "status": "softened"
-      },
-      {
-        "name": "JimboInLimboTR",
-        "slug": "jimboinlimbotr",
-        "share": 3,
-        "revived": 2,
-        "deaths": 66,
-        "rvp": 1,
-        "zergRaw": 7,
-        "zerg": 1,
         "status": "softened"
       },
       {
@@ -77673,17 +77673,6 @@
         "status": "softened"
       },
       {
-        "name": "Fantom64",
-        "slug": "fantom64",
-        "share": 9.6,
-        "revived": 11,
-        "deaths": 115,
-        "rvp": 6,
-        "zergRaw": 7,
-        "zerg": 6,
-        "status": "softened"
-      },
-      {
         "name": "Xyru",
         "slug": "xyru",
         "share": 7.8,
@@ -77706,14 +77695,14 @@
         "status": "softened"
       },
       {
-        "name": "JimboInLimbo",
-        "slug": "jimboinlimbo",
-        "share": 8.8,
-        "revived": 5,
-        "deaths": 57,
-        "rvp": 5,
+        "name": "JimboInLimboTR",
+        "slug": "jimboinlimbotr",
+        "share": 3,
+        "revived": 2,
+        "deaths": 66,
+        "rvp": 1,
         "zergRaw": 6,
-        "zerg": 5,
+        "zerg": 1,
         "status": "softened"
       },
       {
@@ -77750,17 +77739,6 @@
         "status": "softened"
       },
       {
-        "name": "RedzyBedzy",
-        "slug": "redzybedzy",
-        "share": 8.6,
-        "revived": 6,
-        "deaths": 70,
-        "rvp": 4,
-        "zergRaw": 6,
-        "zerg": 4,
-        "status": "softened"
-      },
-      {
         "name": "Madia",
         "slug": "madia",
         "share": 1.9,
@@ -77772,13 +77750,24 @@
         "status": "softened"
       },
       {
+        "name": "RedzyBedzy",
+        "slug": "redzybedzy",
+        "share": 8.6,
+        "revived": 6,
+        "deaths": 70,
+        "rvp": 4,
+        "zergRaw": 5,
+        "zerg": 4,
+        "status": "softened"
+      },
+      {
         "name": "DeltaJVS",
         "slug": "deltajvs",
         "share": 5.3,
         "revived": 5,
         "deaths": 94,
         "rvp": 2,
-        "zergRaw": 4,
+        "zergRaw": 3,
         "zerg": 2,
         "status": "softened"
       },
@@ -77791,6 +77780,17 @@
         "rvp": 0,
         "zergRaw": 3,
         "zerg": 0,
+        "status": "softened"
+      },
+      {
+        "name": "IFireRax",
+        "slug": "ifirerax",
+        "share": 6.1,
+        "revived": 6,
+        "deaths": 99,
+        "rvp": 2,
+        "zergRaw": 3,
+        "zerg": 2,
         "status": "softened"
       },
       {
@@ -77830,7 +77830,7 @@
     "cleared": []
   },
   "newbieDiff": {
-    "builtAt": "2026-10-23T19:41:18.877Z",
+    "builtAt": "2026-10-23T19:43:42.649Z",
     "loH": 6.3,
     "hiH": 385.4,
     "n": 13901,
@@ -124184,5 +124184,853 @@
       }
     ],
     "cleared": []
+  },
+  "assistGap": {
+    "checkedAt": "2026-10-23T19:43:47.505Z",
+    "start": "2026-04-01T13:00:00.000Z",
+    "end": "2026-05-07T05:00:00.000Z",
+    "url": "https://www.planetside2.com/patch-notes/may-6-hotfix-2026",
+    "minKills": 100,
+    "count": 93,
+    "lost": 25,
+    "players": [
+      {
+        "slug": "devosnd",
+        "name": "Devosnd",
+        "gapSessions": 3,
+        "gapKills": 304,
+        "kept": 0,
+        "apkBefore": 0.016,
+        "apk": null
+      },
+      {
+        "slug": "revoltgiveshugs",
+        "name": "Revoltgiveshugs",
+        "gapSessions": 6,
+        "gapKills": 1395,
+        "kept": 0,
+        "apkBefore": 0.019,
+        "apk": null
+      },
+      {
+        "slug": "skyspyman",
+        "name": "skyspyman",
+        "gapSessions": 3,
+        "gapKills": 485,
+        "kept": 0,
+        "apkBefore": 0.016,
+        "apk": null
+      },
+      {
+        "slug": "therebelstory",
+        "name": "TheRebelStory",
+        "gapSessions": 6,
+        "gapKills": 636,
+        "kept": 0,
+        "apkBefore": 0.011,
+        "apk": null
+      },
+      {
+        "slug": "yubl",
+        "name": "YUBl",
+        "gapSessions": 6,
+        "gapKills": 835,
+        "kept": 0,
+        "apkBefore": 0.014,
+        "apk": null
+      },
+      {
+        "slug": "saitama",
+        "name": "Saitama",
+        "gapSessions": 20,
+        "gapKills": 3344,
+        "kept": 5,
+        "apkBefore": 0.019,
+        "apk": null
+      },
+      {
+        "slug": "bodyshotmeta",
+        "name": "bodyshotmeta",
+        "gapSessions": 10,
+        "gapKills": 950,
+        "kept": 57,
+        "apkBefore": 0.049,
+        "apk": null
+      },
+      {
+        "slug": "lassines",
+        "name": "Lassines",
+        "gapSessions": 2,
+        "gapKills": 131,
+        "kept": 11,
+        "apkBefore": 0.12,
+        "apk": null
+      },
+      {
+        "slug": "tillntheland72",
+        "name": "TillnTheLand72",
+        "gapSessions": 8,
+        "gapKills": 556,
+        "kept": 120,
+        "apkBefore": 0.074,
+        "apk": 0.325
+      },
+      {
+        "slug": "cannianggg",
+        "name": "Cannianggg",
+        "gapSessions": 2,
+        "gapKills": 87,
+        "kept": 20,
+        "apkBefore": 0.047,
+        "apk": null
+      },
+      {
+        "slug": "ser3h",
+        "name": "ser3h",
+        "gapSessions": 8,
+        "gapKills": 864,
+        "kept": 233,
+        "apkBefore": 0.089,
+        "apk": 0.356
+      },
+      {
+        "slug": "nsanarchtsjenx",
+        "name": "NSAnarchTsJenX",
+        "gapSessions": 2,
+        "gapKills": 177,
+        "kept": 67,
+        "apkBefore": 0.16,
+        "apk": null
+      },
+      {
+        "slug": "apollops2",
+        "name": "ApolloPS2",
+        "gapSessions": 1,
+        "gapKills": 100,
+        "kept": 42,
+        "apkBefore": 0.113,
+        "apk": null
+      },
+      {
+        "slug": "anubricet",
+        "name": "Anubricet",
+        "gapSessions": 5,
+        "gapKills": 168,
+        "kept": 73,
+        "apkBefore": 0.224,
+        "apk": null
+      },
+      {
+        "slug": "choosing4u",
+        "name": "Choosing4U",
+        "gapSessions": 1,
+        "gapKills": 145,
+        "kept": 72,
+        "apkBefore": 0.124,
+        "apk": null
+      },
+      {
+        "slug": "markshot",
+        "name": "MARKSHOT",
+        "gapSessions": 2,
+        "gapKills": 73,
+        "kept": 41,
+        "apkBefore": 0.237,
+        "apk": null
+      },
+      {
+        "slug": "ikazoochi",
+        "name": "ikazoochi",
+        "gapSessions": 2,
+        "gapKills": 221,
+        "kept": 131,
+        "apkBefore": 0.156,
+        "apk": 0.374
+      },
+      {
+        "slug": "bulltyphoonbot",
+        "name": "BullTyphoonBot",
+        "gapSessions": 7,
+        "gapKills": 183,
+        "kept": 126,
+        "apkBefore": 0.097,
+        "apk": 0.183
+      },
+      {
+        "slug": "sendragetellsnoballz",
+        "name": "SendRageTellsNoBallz",
+        "gapSessions": 2,
+        "gapKills": 286,
+        "kept": 217,
+        "apkBefore": 0.083,
+        "apk": 0.171
+      },
+      {
+        "slug": "fretec",
+        "name": "Fretec",
+        "gapSessions": 4,
+        "gapKills": 89,
+        "kept": 77,
+        "apkBefore": 0.139,
+        "apk": null
+      },
+      {
+        "slug": "shreksuperslam",
+        "name": "ShrekSuperSlam",
+        "gapSessions": 2,
+        "gapKills": 138,
+        "kept": 125,
+        "apkBefore": 0.171,
+        "apk": 0.328
+      },
+      {
+        "slug": "rebornlegendceresvs",
+        "name": "rebornlegendCeresVS",
+        "gapSessions": 1,
+        "gapKills": 67,
+        "kept": 64,
+        "apkBefore": 0.046,
+        "apk": null
+      },
+      {
+        "slug": "mjushim",
+        "name": "MJUSHIM",
+        "gapSessions": 3,
+        "gapKills": 159,
+        "kept": 157,
+        "apkBefore": 0.421,
+        "apk": 0.809
+      },
+      {
+        "slug": "wldxwz6",
+        "name": "wldxwz6",
+        "gapSessions": 1,
+        "gapKills": 83,
+        "kept": 82,
+        "apkBefore": 0.164,
+        "apk": null
+      },
+      {
+        "slug": "sesamestreetbert",
+        "name": "SesameStreetBert",
+        "gapSessions": 2,
+        "gapKills": 69,
+        "kept": 72,
+        "apkBefore": 0.319,
+        "apk": null
+      },
+      {
+        "slug": "soilvs",
+        "name": "SoilVS",
+        "gapSessions": 4,
+        "gapKills": 244,
+        "kept": 269,
+        "apkBefore": 0.183,
+        "apk": 0.349
+      },
+      {
+        "slug": "shrimpehxxvs",
+        "name": "ShrimpeHxxVS",
+        "gapSessions": 3,
+        "gapKills": 130,
+        "kept": 148,
+        "apkBefore": 0.126,
+        "apk": 0.216
+      },
+      {
+        "slug": "johnnybbbad",
+        "name": "johnnybbbad",
+        "gapSessions": 2,
+        "gapKills": 66,
+        "kept": 76,
+        "apkBefore": 0.204,
+        "apk": null
+      },
+      {
+        "slug": "ifirerax",
+        "name": "IFireRax",
+        "gapSessions": 3,
+        "gapKills": 217,
+        "kept": 250,
+        "apkBefore": 0.105,
+        "apk": 0.176
+      },
+      {
+        "slug": "wirosknc",
+        "name": "WiroskNC",
+        "gapSessions": 2,
+        "gapKills": 59,
+        "kept": 71,
+        "apkBefore": 0.346,
+        "apk": null
+      },
+      {
+        "slug": "lijunchen",
+        "name": "LiJunChen",
+        "gapSessions": 2,
+        "gapKills": 52,
+        "kept": 71,
+        "apkBefore": 0.26,
+        "apk": null
+      },
+      {
+        "slug": "kelaibo",
+        "name": "kelaibo",
+        "gapSessions": 1,
+        "gapKills": 210,
+        "kept": 293,
+        "apkBefore": 0.298,
+        "apk": 0.488
+      },
+      {
+        "slug": "xaul771",
+        "name": "xaul771",
+        "gapSessions": 3,
+        "gapKills": 175,
+        "kept": 253,
+        "apkBefore": 0.381,
+        "apk": 0.632
+      },
+      {
+        "slug": "lchanpanskoel",
+        "name": "lchanpanskoel",
+        "gapSessions": 1,
+        "gapKills": 38,
+        "kept": 65,
+        "apkBefore": 0.282,
+        "apk": null
+      },
+      {
+        "slug": "captainkangz",
+        "name": "CaptainKangz",
+        "gapSessions": 8,
+        "gapKills": 139,
+        "kept": 247,
+        "apkBefore": 0.337,
+        "apk": 0.51
+      },
+      {
+        "slug": "chance001",
+        "name": "Chance001",
+        "gapSessions": 1,
+        "gapKills": 44,
+        "kept": 79,
+        "apkBefore": 0.488,
+        "apk": null
+      },
+      {
+        "slug": "asqwpsa",
+        "name": "ASqwpSA",
+        "gapSessions": 3,
+        "gapKills": 143,
+        "kept": 263,
+        "apkBefore": 0.3,
+        "apk": 0.464
+      },
+      {
+        "slug": "dakuchabo",
+        "name": "dakuchabo",
+        "gapSessions": 1,
+        "gapKills": 57,
+        "kept": 114,
+        "apkBefore": 0.38,
+        "apk": 0.535
+      },
+      {
+        "slug": "dansedisappointment",
+        "name": "DanseDisappointment",
+        "gapSessions": 2,
+        "gapKills": 155,
+        "kept": 328,
+        "apkBefore": 0.34,
+        "apk": 0.491
+      },
+      {
+        "slug": "lightassaultbestassault",
+        "name": "LightAssaultBestAssault",
+        "gapSessions": 2,
+        "gapKills": 375,
+        "kept": 801,
+        "apkBefore": 0.176,
+        "apk": 0.252
+      },
+      {
+        "slug": "tissaia",
+        "name": "Tissaia",
+        "gapSessions": 2,
+        "gapKills": 274,
+        "kept": 592,
+        "apkBefore": 0.275,
+        "apk": 0.4
+      },
+      {
+        "slug": "7wuenzsx",
+        "name": "7wuenZsx",
+        "gapSessions": 2,
+        "gapKills": 39,
+        "kept": 87,
+        "apkBefore": 0.341,
+        "apk": null
+      },
+      {
+        "slug": "c17a32",
+        "name": "C17A32",
+        "gapSessions": 1,
+        "gapKills": 57,
+        "kept": 128,
+        "apkBefore": 0.335,
+        "apk": 0.461
+      },
+      {
+        "slug": "otrlcala",
+        "name": "OTRlCALA",
+        "gapSessions": 1,
+        "gapKills": 61,
+        "kept": 139,
+        "apkBefore": 0.19,
+        "apk": 0.266
+      },
+      {
+        "slug": "cannian18",
+        "name": "cannian18",
+        "gapSessions": 2,
+        "gapKills": 62,
+        "kept": 145,
+        "apkBefore": 0.309,
+        "apk": 0.428
+      },
+      {
+        "slug": "ldvinci",
+        "name": "LDVinci",
+        "gapSessions": 2,
+        "gapKills": 227,
+        "kept": 569,
+        "apkBefore": 0.324,
+        "apk": 0.448
+      },
+      {
+        "slug": "bobbib1llibob",
+        "name": "BobbiB1lliBob",
+        "gapSessions": 2,
+        "gapKills": 105,
+        "kept": 281,
+        "apkBefore": 0.409,
+        "apk": 0.552
+      },
+      {
+        "slug": "mindifijoin",
+        "name": "MindIfIJoin",
+        "gapSessions": 1,
+        "gapKills": 68,
+        "kept": 188,
+        "apkBefore": 0.289,
+        "apk": 0.394
+      },
+      {
+        "slug": "howyoufelinetoday",
+        "name": "HowYouFelineToday",
+        "gapSessions": 2,
+        "gapKills": 81,
+        "kept": 233,
+        "apkBefore": 0.232,
+        "apk": 0.236
+      },
+      {
+        "slug": "trspy007",
+        "name": "TRspy007",
+        "gapSessions": 1,
+        "gapKills": 119,
+        "kept": 347,
+        "apkBefore": 0.163,
+        "apk": 0.207
+      },
+      {
+        "slug": "bobanisback",
+        "name": "Bobanisback",
+        "gapSessions": 1,
+        "gapKills": 48,
+        "kept": 146,
+        "apkBefore": 0.392,
+        "apk": 0.514
+      },
+      {
+        "slug": "awdawdasda",
+        "name": "awdawdasda",
+        "gapSessions": 1,
+        "gapKills": 58,
+        "kept": 177,
+        "apkBefore": 0.362,
+        "apk": 0.469
+      },
+      {
+        "slug": "brrrrrrrrrrrrrrrrrrrrrrrrrrt",
+        "name": "BRRRRRRRRRRRRRRRRRRRRRRRRRRT",
+        "gapSessions": 1,
+        "gapKills": 59,
+        "kept": 190,
+        "apkBefore": 0.221,
+        "apk": 0.274
+      },
+      {
+        "slug": "mastermuffel02",
+        "name": "Mastermuffel02",
+        "gapSessions": 1,
+        "gapKills": 71,
+        "kept": 232,
+        "apkBefore": 0.683,
+        "apk": 0.892
+      },
+      {
+        "slug": "grizzygrizz1",
+        "name": "GrizzyGrizz1",
+        "gapSessions": 1,
+        "gapKills": 45,
+        "kept": 160,
+        "apkBefore": 0.595,
+        "apk": 0.75
+      },
+      {
+        "slug": "elephantofsurprise",
+        "name": "ElephantOfSurprise",
+        "gapSessions": 1,
+        "gapKills": 35,
+        "kept": 126,
+        "apkBefore": 0.317,
+        "apk": 0.405
+      },
+      {
+        "slug": "sanmiguelnc",
+        "name": "SanMiguelNC",
+        "gapSessions": 1,
+        "gapKills": 28,
+        "kept": 102,
+        "apkBefore": 0.377,
+        "apk": 0.48
+      },
+      {
+        "slug": "ursuak",
+        "name": "ursuak",
+        "gapSessions": 1,
+        "gapKills": 48,
+        "kept": 183,
+        "apkBefore": 0.268,
+        "apk": 0.328
+      },
+      {
+        "slug": "xclonekano",
+        "name": "xCloneKano",
+        "gapSessions": 1,
+        "gapKills": 501,
+        "kept": 2047,
+        "apkBefore": 0.21,
+        "apk": 0.259
+      },
+      {
+        "slug": "warchuck",
+        "name": "Warchuck",
+        "gapSessions": 2,
+        "gapKills": 23,
+        "kept": 97,
+        "apkBefore": 0.45,
+        "apk": null
+      },
+      {
+        "slug": "bellanso",
+        "name": "BellaNSO",
+        "gapSessions": 1,
+        "gapKills": 40,
+        "kept": 169,
+        "apkBefore": 0.172,
+        "apk": 0.207
+      },
+      {
+        "slug": "grannolaa",
+        "name": "GranNolaa",
+        "gapSessions": 1,
+        "gapKills": 86,
+        "kept": 378,
+        "apkBefore": 0.289,
+        "apk": 0.347
+      },
+      {
+        "slug": "warmundmartel",
+        "name": "WarmundMartel",
+        "gapSessions": 1,
+        "gapKills": 33,
+        "kept": 148,
+        "apkBefore": 0.448,
+        "apk": 0.547
+      },
+      {
+        "slug": "evilgeniusftw",
+        "name": "EvilGeniusftw",
+        "gapSessions": 2,
+        "gapKills": 87,
+        "kept": 416,
+        "apkBefore": 0.567,
+        "apk": 0.678
+      },
+      {
+        "slug": "kuponyan",
+        "name": "KupoNyan",
+        "gapSessions": 2,
+        "gapKills": 22,
+        "kept": 106,
+        "apkBefore": 0.352,
+        "apk": 0.406
+      },
+      {
+        "slug": "jettzero",
+        "name": "JettZero",
+        "gapSessions": 1,
+        "gapKills": 47,
+        "kept": 230,
+        "apkBefore": 0.231,
+        "apk": 0.265
+      },
+      {
+        "slug": "dredremaisenviolet",
+        "name": "DredreMaisEnViolet",
+        "gapSessions": 1,
+        "gapKills": 185,
+        "kept": 994,
+        "apkBefore": 0.232,
+        "apk": 0.273
+      },
+      {
+        "slug": "knight0fcha0s",
+        "name": "KNIGHT0FCHA0S",
+        "gapSessions": 1,
+        "gapKills": 44,
+        "kept": 242,
+        "apkBefore": 0.329,
+        "apk": 0.38
+      },
+      {
+        "slug": "printempss",
+        "name": "Printempss",
+        "gapSessions": 3,
+        "gapKills": 41,
+        "kept": 240,
+        "apkBefore": 0.192,
+        "apk": 0.225
+      },
+      {
+        "slug": "5tuntmancamna",
+        "name": "5tuntmancamNA",
+        "gapSessions": 1,
+        "gapKills": 30,
+        "kept": 187,
+        "apkBefore": 0.207,
+        "apk": 0.241
+      },
+      {
+        "slug": "daemon4",
+        "name": "Daemon4",
+        "gapSessions": 1,
+        "gapKills": 15,
+        "kept": 107,
+        "apkBefore": 1.025,
+        "apk": 1.159
+      },
+      {
+        "slug": "mahbka",
+        "name": "MaHbka",
+        "gapSessions": 1,
+        "gapKills": 14,
+        "kept": 103,
+        "apkBefore": 0.282,
+        "apk": 0.301
+      },
+      {
+        "slug": "faelswoop",
+        "name": "Faelswoop",
+        "gapSessions": 1,
+        "gapKills": 68,
+        "kept": 541,
+        "apkBefore": 0.24,
+        "apk": 0.27
+      },
+      {
+        "slug": "lelmaooo",
+        "name": "Lelmaooo",
+        "gapSessions": 1,
+        "gapKills": 13,
+        "kept": 106,
+        "apkBefore": 0.328,
+        "apk": 0.368
+      },
+      {
+        "slug": "zialvs",
+        "name": "ZialVS",
+        "gapSessions": 1,
+        "gapKills": 62,
+        "kept": 519,
+        "apkBefore": 0.325,
+        "apk": 0.364
+      },
+      {
+        "slug": "secretprototype",
+        "name": "SecretPrototype",
+        "gapSessions": 1,
+        "gapKills": 12,
+        "kept": 101,
+        "apkBefore": 0.354,
+        "apk": 0.396
+      },
+      {
+        "slug": "vanuman054",
+        "name": "Vanuman054",
+        "gapSessions": 2,
+        "gapKills": 369,
+        "kept": 3207,
+        "apkBefore": 0.169,
+        "apk": 0.188
+      },
+      {
+        "slug": "99pba1",
+        "name": "99pba1",
+        "gapSessions": 1,
+        "gapKills": 18,
+        "kept": 169,
+        "apkBefore": 0.337,
+        "apk": 0.373
+      },
+      {
+        "slug": "danisantini",
+        "name": "danisantini",
+        "gapSessions": 1,
+        "gapKills": 286,
+        "kept": 2791,
+        "apkBefore": 0.319,
+        "apk": 0.352
+      },
+      {
+        "slug": "eliie",
+        "name": "ElIie",
+        "gapSessions": 1,
+        "gapKills": 85,
+        "kept": 855,
+        "apkBefore": 0.387,
+        "apk": 0.426
+      },
+      {
+        "slug": "starscream58",
+        "name": "Starscream58",
+        "gapSessions": 2,
+        "gapKills": 10,
+        "kept": 110,
+        "apkBefore": 0.458,
+        "apk": 0.5
+      },
+      {
+        "slug": "meodp1",
+        "name": "MEODP1",
+        "gapSessions": 1,
+        "gapKills": 13,
+        "kept": 155,
+        "apkBefore": 0.488,
+        "apk": 0.529
+      },
+      {
+        "slug": "juicedmilitant",
+        "name": "juicedmilitant",
+        "gapSessions": 1,
+        "gapKills": 18,
+        "kept": 226,
+        "apkBefore": 0.205,
+        "apk": 0.221
+      },
+      {
+        "slug": "datalexnc",
+        "name": "DatAlexNC",
+        "gapSessions": 1,
+        "gapKills": 34,
+        "kept": 472,
+        "apkBefore": 0.304,
+        "apk": 0.324
+      },
+      {
+        "slug": "shrimpehxxnc",
+        "name": "ShrimpeHxxNC",
+        "gapSessions": 1,
+        "gapKills": 31,
+        "kept": 517,
+        "apkBefore": 0.343,
+        "apk": 0.358
+      },
+      {
+        "slug": "evilsextoys",
+        "name": "eViLsExToYs",
+        "gapSessions": 1,
+        "gapKills": 24,
+        "kept": 428,
+        "apkBefore": 0.564,
+        "apk": 0.596
+      },
+      {
+        "slug": "softcorevs",
+        "name": "softcoreVS",
+        "gapSessions": 1,
+        "gapKills": 26,
+        "kept": 572,
+        "apkBefore": 0.276,
+        "apk": 0.285
+      },
+      {
+        "slug": "r00ckienc",
+        "name": "r00ckieNC",
+        "gapSessions": 1,
+        "gapKills": 24,
+        "kept": 534,
+        "apkBefore": 0.5,
+        "apk": 0.521
+      },
+      {
+        "slug": "meruby",
+        "name": "Meruby",
+        "gapSessions": 2,
+        "gapKills": 27,
+        "kept": 930,
+        "apkBefore": 0.232,
+        "apk": 0.238
+      },
+      {
+        "slug": "0158354718",
+        "name": "0158354718",
+        "gapSessions": 1,
+        "gapKills": 2,
+        "kept": 112,
+        "apkBefore": 0.43,
+        "apk": 0.438
+      },
+      {
+        "slug": "loontiq",
+        "name": "Loontiq",
+        "gapSessions": 1,
+        "gapKills": 11,
+        "kept": 748,
+        "apkBefore": 0.237,
+        "apk": 0.239
+      },
+      {
+        "slug": "analphabetacpu",
+        "name": "AnAlphaBetaCPU",
+        "gapSessions": 1,
+        "gapKills": 5,
+        "kept": 710,
+        "apkBefore": 0.358,
+        "apk": 0.361
+      },
+      {
+        "slug": "ttttmaster",
+        "name": "TTTTmaster",
+        "gapSessions": 1,
+        "gapKills": 1,
+        "kept": 864,
+        "apkBefore": 0.418,
+        "apk": 0.419
+      }
+    ]
   }
 }
