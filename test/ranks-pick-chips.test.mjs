@@ -152,7 +152,7 @@ describe("Skill graph section: no placeholder, collapsible, pops on analyze (own
     assert.doesNotMatch(index, /id="chartPlaceholder"/);
     assert.doesNotMatch(index, /id="phAnalyzeBtn"/);
     assert.doesNotMatch(index, /chart-placeholder/);
-    assert.match(index, /<details id="chartSection" class="dist-section chart-section">/);
+    assert.match(index, /<details id="chartSection" class="dist-section chart-section" hidden>/);
     assert.doesNotMatch(index, /<details id="chartSection"[^>]*\sopen[\s>]/);
     assert.match(index, /data-i18n="chart\.title"/);
     assert.match(index, /id="chartSectionNames"/);
@@ -170,6 +170,19 @@ describe("Skill graph section: no placeholder, collapsible, pops on analyze (own
     // A fresh Analyze re-pops even the same names (analyze sequence guard).
     assert.match(app, /analyzeSeq \+= 1/);
     assert.match(app, /analyzeSeq !== prevSeq/);
+  });
+
+  it("both player boxes are unavailable while nothing is graphed (owner 2026-10-22)", () => {
+    const app = read("app.js");
+    const index = read("index.html");
+    // The graph box starts hidden in the markup (no empty frame to open)…
+    assert.match(index, /<details id="chartSection"[^>]*\shidden>/);
+    // …and the idle state keeps it hidden; drawing a graph reveals it.
+    assert.match(app, /els\.chartSection\.setAttribute\("hidden", ""\)/);
+    assert.match(app, /els\.chartSection\.removeAttribute\("hidden"\)/);
+    // Going idle also empties the 🏆 weapons box (one-player box).
+    assert.match(app, /syncWeapons\(\[\]\); \/\/ 🏆 one-player box: unavailable while nothing is graphed/);
+    assert.match(index, /<details id="weaponsSection"[^>]*\shidden>/);
   });
 
   it("deleting names never springs the section open; adding one still pops (owner 2026-10-22)", () => {

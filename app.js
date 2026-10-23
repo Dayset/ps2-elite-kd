@@ -4368,6 +4368,13 @@ import {
       if (idle) els.chart.setAttribute("hidden", "");
       else els.chart.removeAttribute("hidden");
     }
+    // Idle = no graph: the whole box is unavailable (hidden, like the 🏆
+    // weapons box) instead of a folded bar that opens onto an empty frame
+    // (owner 2026-10-22).
+    if (els.chartSection) {
+      if (idle) els.chartSection.setAttribute("hidden", "");
+      else els.chartSection.removeAttribute("hidden");
+    }
     setYZoomVisible(!idle);
   }
 
@@ -4415,6 +4422,7 @@ import {
     if (els.stats) els.stats.innerHTML = "";
     if (els.statsPublic) els.statsPublic.innerHTML = "";
     syncVehiclesNote([]);
+    syncWeapons([]); // 🏆 one-player box: unavailable while nothing is graphed
     players = [];
     lastAnalyzedNames = [];
     lastLoadedNames = [];
