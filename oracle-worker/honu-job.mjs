@@ -42,6 +42,23 @@ async function getJson(fetchImpl, url, headers) {
   return { status: r.status, body, isJson: body !== null };
 }
 
+/**
+ * Honu's alert id for one of our alerts: alerts/time/block around its start, matched on
+ * instance, continent (zoneID & 0xFFFF) and start time (±15 min). null when the lookup
+ * itself fails (the caller falls back to the {world}/{instance} route); {err} when Honu
+ * answered but has no matching alert (pending, retried later).
+ */
+export async function honuAlertId(honu, a) {
+  if (!a.start_ts) return null;
+  const iso = (t) => new Date(t * 1000).toISOString();
+  const r = await honu(`alerts/time/block?start=${encodeURIComponent(iso(a.start_ts - 3600))}&end=${encodeURIComponent(iso(a.start_ts + 3600))}&worldID=${a.world}`);
+  if (r.status !== 200 || !r.isJson) return null;
+  const list = Array.isArray(r.body) ? r.body : (r.body && r.body.alerts) || [];
+  const hit = list.find((x) => +x.instanceID === +a.instance_id && ((+x.zoneID) & 0xFFFF) === +a.zone
+    && Math.abs(Date.parse(/[zZ]|[+-]\d\d:?\d\d$/.test(String(x.timestamp)) ? x.timestamp : `${x.timestamp}Z`) / 1000 - a.start_ts) <= 900);
+  return hit ? hit.id : { err: `honu has no alert ${a.world}-${a.zone}-${a.instance_id}` };
+}
+
 export async function runHonuJob({ api, key, fetchImpl = fetch, log = console.log, gapMs = { honu: HONU_GAP_MS, radar: RADAR_GAP_MS } } = {}) {
   const auth = { "X-Oracle-Key": key, "User-Agent": UA };
   const q = await getJson(fetchImpl, `${api}/honu/queue`, auth);
@@ -69,7 +86,12 @@ export async function runHonuJob({ api, key, fetchImpl = fetch, log = console.lo
   // 2) Outlier reports for settled alerts.
   const flagged = [];
   for (const a of reports) {
-    const r = await honu(`alerts/${a.world}/${a.instance_id}/participants?excludeOutfits=true`);
+    // Census instance ids repeat across continents on one world (Wainwright 46374 was both
+    // an Indar and an Amerish alert on 2026-10-23), and Honu's {world}/{instance} route returns
+    // the first match. So find Honu's own alert id by world + instance + continent + start time.
+    const id = await honuAlertId(honu, a);
+    if (id && id.err) { out.reports.push({ key: a.key, status: "pending", err: id.err }); continue; }
+    const r = await honu(id ? `alerts/${id}/participants?excludeOutfits=true` : `alerts/${a.world}/${a.instance_id}/participants?excludeOutfits=true`);
     if (r.status === 400 || r.status === 404) { out.reports.push({ key: a.key, status: "pending", err: `honu ${r.status}` }); continue; }
     if (r.status !== 200 || !r.isJson) { out.reports.push({ key: a.key, status: "pending", err: `honu ${r.status}${r.isJson ? "" : " non-JSON"}` }); continue; }
     const rep = outlierReport(r.body);

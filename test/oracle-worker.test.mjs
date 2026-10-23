@@ -286,7 +286,11 @@ test("Honu bridge: queue -> oracle-honu job -> ingest (population, outlier repor
       if (u.startsWith("https://oracle/")) return worker.fetch(new Request(u, init), env);
       if (u.includes("wt.honu.pw/api/population/1/zones")) { calls.honu.push("pop");
         return new Response(JSON.stringify([{ worldID: 1, zoneID: (3 << 16) | 4, vs: 150, nc: 90, tr: 50, ns: 10 }, { worldID: 1, zoneID: 2, vs: 1, nc: 1, tr: 1 }])); }
-      if (u.includes("/participants")) { calls.honu.push("participants");
+      if (u.includes("/alerts/time/block")) { calls.honu.push("block");
+        // Same instance id on another continent first (Wainwright 46374, 2026-10-23): must be skipped.
+        const t = new Date(T0 * 1000).toISOString();
+        return new Response(JSON.stringify({ alerts: [{ id: 7, worldID: 1, zoneID: 6, instanceID: 950, timestamp: t }, { id: 8, worldID: 1, zoneID: (3 << 16) | 4, instanceID: 950, timestamp: t }] })); }
+      if (u.includes("/participants")) { calls.honu.push("participants"); assert.match(u, /\/alerts\/8\/participants/);
         return participants ? new Response(JSON.stringify(participants)) : new Response("not finished", { status: 400 }); }
       if (u.includes("ps2radar.com")) { calls.radar++;
         if (u.endsWith("/5428010618035300002")) return new Response("{}", { status: 404 });

@@ -537,7 +537,7 @@ const REPORT_RETRY_S = 240, REPORT_MAX_ATTEMPTS = 12, REPORT_WINDOW_S = 6 * 3600
 export async function honuQueue(db, now) {
   const live = ((await db.prepare("SELECT key, world, zone FROM alert WHERE status='live'").all()).results) || [];
   const reports = ((await db.prepare(
-    `SELECT a.key, a.world, a.zone, a.instance_id FROM alert a LEFT JOIN report r ON r.key = a.key
+    `SELECT a.key, a.world, a.zone, a.instance_id, a.start_ts FROM alert a LEFT JOIN report r ON r.key = a.key
      WHERE a.status = 'settled' AND a.end_ts > ? AND (r.key IS NULL OR (r.status != 'ok' AND r.attempts < ? AND r.ts < ?))
      ORDER BY a.end_ts DESC LIMIT 5`).bind(now - REPORT_WINDOW_S, REPORT_MAX_ATTEMPTS, now - REPORT_RETRY_S).all()).results) || [];
   return { pop: live, reports };
