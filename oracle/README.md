@@ -19,7 +19,7 @@ PS2MapOracle turns PlanetSide 2 continent alerts into a forecasting game that ge
 
 **Votes use BonusCheques, a meme currency.** They have no cash value, can't be bought, sold, traded or cashed out, and nothing is ever paid out in any form. Everyone starts with 1,000 and gets +25 a day. Odds come from an LMSR seeded from the oracle's win probabilities; a late-vote fee of 5%/15%/30% applies after 50%/80%/90% of the alert, +10% when the pick is above 75%, and fees simply disappear.
 
-**Fair play only.** Voting exists to engage people in playing the game: back your faction, then go help it win. Signing in needs an in-game logout of your character (no password or email), you can vote only for your own faction so nobody gains from throwing a fight, and riggers or cheaters aren't welcome.
+**Fair play only.** Voting exists to engage people in playing the game: back your faction, then go help it win. Signing in needs an in-game logout of your character (no password or email), you can vote for any faction, and riggers or cheaters aren't welcome.
 
 The product pairs an **optimal AI Commander** with voting: the commander computes the mathematically best moves (attacks, defends, kingmaker plays), and the odds are the expert-read shortcut for new players. Design principle: *dummy-proof*: a new player with no map-reading skill can follow the percentages.
 

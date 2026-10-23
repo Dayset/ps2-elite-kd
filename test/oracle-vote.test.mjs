@@ -81,7 +81,11 @@ test("place, guard, settle and pay out exactly once", { skip }, async () => {
   assert.equal(qt.body.open, true);
   assert.equal(qt.body.quotes.VS["100"].fee, 0);
 
-  assert.equal((await call("POST", "/vote/place", now, { key: "1-4-1", outcome: "NC", amount: 100 }, "VS")).status, 403, "own faction only");
+  assert.equal(VOTE.OWN_FACTION_ONLY, false, "owner 2026-10-23: any faction");
+  assert.equal(qt.body.own_faction_only, false);
+  const other = await call("POST", "/vote/place", now, { key: "1-4-1", outcome: "NC", amount: 100, seen_pct: 1 }, "VS");
+  assert.notEqual(other.body.error, "own_faction_only", "a VS character may vote NC");
+  assert.equal(other.body.error, "odds_changed", "reaches the odds check (nothing placed)");
   assert.equal((await call("POST", "/vote/place", now, { key: "1-4-1", outcome: "VS", amount: 30 }, "VS")).status, 400, "fixed amounts");
   assert.equal((await call("POST", "/vote/place", now, { key: "1-4-1", outcome: "VS", amount: 100, seen_pct: 40 }, "VS")).body.error, "odds_changed");
   const ok = await call("POST", "/vote/place", now, { key: "1-4-1", outcome: "VS", amount: 100, seen_pct: 50 }, "VS");

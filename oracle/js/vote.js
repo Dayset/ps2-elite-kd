@@ -26,7 +26,7 @@ export const DISCLAIMER = `<details class="fair"><summary>BonusCheques are a mem
   <ul>
     <li>BonusCheques can't be bought, sold, traded or cashed out, and you can't win anything of value. Everyone starts with 1,000; you get +25 a day, and a little more if you run dry.</li>
     <li>Voting is here to get you into the game: back your faction, then log in and help it win.</li>
-    <li>You can vote only for your own faction, so nobody gains from throwing a fight.</li>
+    <li>You can vote for any faction.</li>
     <li>Signing in needs an in-game logout of your character. That proves the character is yours; we never ask for a password or email. We keep your character, a sign-in token, your BonusCheques and votes (<a href="../privacy.html">privacy</a>).</li>
     <li>Fair play only. Riggers, alert throwers and cheaters aren't welcome, and their votes and leaderboard spots can be removed.</li>
   </ul></details>`;

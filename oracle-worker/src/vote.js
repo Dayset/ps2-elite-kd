@@ -4,9 +4,9 @@
  * BonusCheques have no cash value: they can't be bought, sold, traded or cashed
  * out, and nothing is ever paid out in any form. Voting exists to pull players
  * into the fight: back your faction, then go help it win. Fair play only, which is
- * why voting needs a character verified by an in-game logout, and why a VS/NC/TR
- * character may vote only for its own faction (NSO: any), so nobody gains from
- * throwing a fight.
+ * why voting needs a character verified by an in-game logout. Any character may
+ * vote for any faction (owner decision 2026-10-23); OWN_FACTION_ONLY: true switches
+ * back to own-faction-only for VS/NC/TR (NSO: any).
  *
  * Odds: a logarithmic market scoring rule (LMSR) seeded from the oracle's current
  * win probabilities, re-seeded at every vote. A small vote returns about what the
@@ -28,7 +28,7 @@ export const VOTE = Object.freeze({
   LIQUIDITY: 2000, AMOUNTS: [25, 50, 100, 200], START_BALANCE: 1000,
   CLOSE_AT: 0.95, MIN_PCT: 1, MAX_PCT: 99, MAX_DRIFT_PCT: 3,
   AUTO_PER_HOUR: 5, AUTO_CAP: 20, DAILY_BONUS: 25,
-  OWN_FACTION_ONLY: true,
+  OWN_FACTION_ONLY: false, // owner 2026-10-23: vote for any faction; true = own faction only (VS/NC/TR)
 });
 
 export function feeRate(progress, pct) {

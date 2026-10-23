@@ -299,3 +299,12 @@ approved it, "shipped" means it is live in the running pipeline.
 - **Shipped (Worker):** from 80 % of a territory alert on, the header odds read the
   map cut-aware (`engine.CUT_AWARE_FROM`); state gets `cut_aware`. The Win chance
   card lists cut-off bases ("✂️ Cut off, not scoring: TR 1 (Johari Cove)").
+
+## 2026-10-23: vote for any faction
+
+- **Owner decision: you can vote for any faction**, not only your own.
+  `VOTE.OWN_FACTION_ONLY` is now `false` (the check stays in the Worker; `true`
+  switches it back), and `/vote/quote` returns `own_faction_only: false`. The
+  fair-play rules (voting card, sign-in note, README) say so; "back your faction,
+  then go help it win" and "riggers and cheaters aren't welcome" stay. The
+  2026-10-18 entry above keeps the rule of its time.

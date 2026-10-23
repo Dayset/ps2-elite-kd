@@ -43,7 +43,7 @@ test("My votes: empty state and signed-out", () => {
 });
 
 test("disclaimer: meme currency, no cash value, nothing paid out, fair play, game login", () => {
-  for (const re of [/meme currency/, /no cash value/, /nothing is ever paid out/, /can't be bought, sold, traded or cashed out/, /own faction/, /in-game logout/, /cheaters aren't welcome/])
+  for (const re of [/meme currency/, /no cash value/, /nothing is ever paid out/, /can't be bought, sold, traded or cashed out/, /any faction/, /in-game logout/, /cheaters aren't welcome/])
     assert.match(DISCLAIMER, re);
   assert.doesNotMatch(DISCLAIMER, /\bbet|payout|wager|gambl/i);
 });
