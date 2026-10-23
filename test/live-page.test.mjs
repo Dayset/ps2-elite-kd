@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { buildLive } from "../scripts/build-live.mjs";
-import { classifyDeath, feedPush, graphNames, censusStats, cellText, fmtGap, LIVE_COLS, FEED_MAX } from "../live.mjs";
+import { classifyDeath, feedPush, censusStats, cellText, fmtGap, LIVE_COLS, FEED_MAX, emojiScale, goodPct, EMOJI_MIN, EMOJI_MAX, CYCLE, CYCLE_MS, cyclePhase, colUnits } from "../live.mjs";
 
 const root = new URL("../", import.meta.url);
 
@@ -43,8 +43,45 @@ test("fmtGap", () => {
   assert.equal(fmtGap(3720000), "1h 02m");
 });
 
-test("graphNames: target first, 5 newest cached, no repeats", () => {
-  assert.deepEqual(graphNames("Me", ["a", "b", "a", "me", "c", "d", "e", "f"]), ["Me", "a", "b", "c", "d", "e"]);
+test("LIVE has no skill graph: the chart section is hidden and live.mjs no longer drives it", () => {
+  const css = readFileSync(new URL("styles.css", root), "utf8");
+  assert.match(css, /\.live-mode #chartSection \{ display: none !important; \}/);
+  const js = readFileSync(new URL("live.mjs", root), "utf8");
+  assert.doesNotMatch(js, /analyzeNames|setNameTokens/);
+});
+
+test("emoji size: median 1x, best 1.8x, worst 0.55x, smooth, lower-is-better reversed", () => {
+  const kd = LIVE_COLS.find((c) => c.id === "rkd");
+  const apk = LIVE_COLS.find((c) => c.id === "apk");
+  assert.equal(apk.lowerBetter, true);
+  assert.equal(emojiScale(kd, 50), 1);
+  assert.equal(emojiScale(kd, 99), EMOJI_MAX);
+  assert.equal(emojiScale(kd, 0), EMOJI_MIN);
+  assert.equal(EMOJI_MAX, 1.8);
+  assert.equal(EMOJI_MIN, 0.55);
+  assert.equal(emojiScale(apk, 0), EMOJI_MAX);
+  assert.equal(emojiScale(apk, 99), EMOJI_MIN);
+  assert.equal(goodPct(apk, 10), 89);
+  for (let p = 1; p <= 99; p++) assert.ok(emojiScale(kd, p) >= emojiScale(kd, p - 1), "monotonic at " + p);
+  for (let p = 1; p <= 99; p++) assert.ok(Math.abs(emojiScale(kd, p) - emojiScale(kd, p - 1)) < 0.03, "no jumps at " + p);
+  assert.equal(emojiScale(kd, null), null);
+  assert.equal(emojiScale(kd, NaN), null);
+});
+
+test("LIVE columns: one config list, iVi is the only double-width cell", () => {
+  assert.deepEqual(LIVE_COLS.map((c) => c.mode), ["ivi-wide", "flip", "emoji", "emoji", "emoji"]);
+  assert.equal(LIVE_COLS[0].id, "adjs");
+  for (const c of LIVE_COLS) assert.ok(["ivi-wide", "flip", "emoji"].includes(c.mode), c.id);
+  assert.deepEqual(LIVE_COLS.map(colUnits), [2, 1, 1, 1, 1]);
+});
+
+test("flip loop: number 2s, fade 0.4s, emoji 3s, one shared clock", () => {
+  assert.deepEqual(CYCLE, { num: 2000, fade: 400, emoji: 3000 });
+  assert.equal(CYCLE_MS, 5800);
+  assert.equal(cyclePhase(5800 * 3 + 1234), "-1234ms");
+  const css = readFileSync(new URL("styles.css", root), "utf8");
+  assert.match(css, /animation: lvNum 5\.8s/);
+  assert.match(css, /prefers-reduced-motion/);
 });
 
 test("censusStats: K/D and KPM from stat_history", () => {

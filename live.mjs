@@ -5,7 +5,8 @@ await i18nReady;
  * Census event stream (Death events, one character) and:
  *   - lists the last 6 opponents (one row per person, repeats bump the count);
  *     on a kill our name sits on top, on a death the killer's name does;
- *   - pops cached opponents onto the skill graph (target + last 5 cached);
+ *   - shows each stat cell as a number that crossfades into the column's emoji,
+ *     sized by the player's percentile (owner t546u: no skill graph in Live);
  *   - uncached opponents first show Census K/D · KPM, then get a full 200-opponent Census
  *     fetch in the background (one at a time, newest first, #32) and upgrade in place.
  * Pure helpers are exported for tests; the DOM part runs only in a browser.
@@ -13,10 +14,9 @@ await i18nReady;
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { normalizePlayer, playerMetrics, shownValue } from "./player-metrics.mjs?v=20261022-wpc1";
 import { isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261023-short1";
-import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261022-wpc1";
+import { percentileOf } from "./dist.mjs?v=20261010-sav1";
 
 export const FEED_MAX = 6;
-export const GRAPH_OPPONENTS = 5; // + the target = MAX_NAMES (6)
 const CENSUS = `https://census.daybreakgames.com/s:${CENSUS_SERVICE_ID}/get/ps2:v2/`;
 const STREAM = `wss://push.planetside2.com/streaming?environment=ps2&service-id=s:${CENSUS_SERVICE_ID}`;
 const FACTION = { 1: "vs", 2: "nc", 3: "tr", 4: "nso" };
@@ -58,20 +58,6 @@ export function fmtGap(ms) {
   return `${Math.floor(t / 3600)}h ${String(Math.floor((t % 3600) / 60)).padStart(2, "0")}m`;
 }
 
-/** Graph list: target + the most recent cached opponents, newest first, no repeats. */
-export function graphNames(target, cachedNewestFirst) {
-  const seen = new Set([String(target).toLowerCase()]);
-  const out = [target];
-  for (const n of cachedNewestFirst) {
-    const k = String(n).toLowerCase();
-    if (seen.has(k)) continue;
-    seen.add(k);
-    out.push(n);
-    if (out.length > GRAPH_OPPONENTS) break;
-  }
-  return out;
-}
-
 /** Lifetime K/D and KPM from a Census character with c:resolve=stat_history ("time" is seconds played). */
 export function censusStats(ch) {
   const list = (ch && ch.stats && ch.stats.stat_history) || [];
@@ -80,16 +66,60 @@ export function censusStats(ch) {
   return { kd: d > 0 ? k / d : null, kpm: t > 0 ? k / (t / 60) : null };
 }
 
-/** ✨ Adjusted columns as on the main page (no debug columns); same ids / labels / digits as rankings.mjs VISIBLE. */
+/**
+ * LIVE columns (owner t546u): a short set, one config list — change a mode or the order here.
+ * Same ids / labels / digits as rankings.mjs VISIBLE. mode:
+ *   "ivi-wide" = double-width cell, number + emoji together, no flipping (emoji still sized by rank);
+ *   "flip"     = number ⇄ sized emoji loop (CSS, see CYCLE);
+ *   "emoji"    = sized emoji only, no number.
+ * Left out of LIVE (still in Rankings): 🏃 Activity (≈ K/D × speed, close to ⚔️ iVi / ☠️ K/D)
+ * and ⚡ Const (a niche ratio that reads poorly at a glance).
+ */
 export const LIVE_COLS = Object.freeze([
-  { id: "adjs", label: "⚔️ iVi", digits: 0, floorZero: true, tip: "Overall rating from how you do against the ~200 players you fight most, worth more the stronger they are." },
-  { id: "act", label: "🏃 Activity", digits: 2, tip: "Your K/D against the players you fight most, multiplied by how fast you kill." },
-  { id: "pvs", label: "🦁 Brave", digits: 2, tip: "Activity that keeps up as enemies get stronger." },
-  { id: "rf", label: "🛡️ Resist", digits: 2, tip: "How well you stand up to strong players." },
-  { id: "cons", label: "⚡ Const", digits: 2, tip: "K/D kept against the strongest third of opponents vs the weakest third (1.00 = holds completely)." },
-  { id: "apk", label: "🤝 Assists", digits: 2, tip: "Assists per kill in recent Honu sessions." },
-  { id: "rkd", label: "☠️ K/D", digits: 3, tip: "Kills ÷ deaths against the ~200 players you fight most." },
+  { id: "adjs", label: "⚔️ iVi", digits: 0, floorZero: true, mode: "ivi-wide", tip: "Overall rating from how you do against the ~200 players you fight most, worth more the stronger they are." },
+  { id: "rkd", label: "☠️ K/D", digits: 2, mode: "flip", tip: "Kills ÷ deaths against the ~200 players you fight most." },
+  { id: "rf", label: "🛡️ Resist", digits: 2, mode: "emoji", tip: "How well you stand up to strong players." },
+  { id: "pvs", label: "🦁 Brave", digits: 2, mode: "emoji", tip: "Activity that keeps up as enemies get stronger." },
+  { id: "apk", label: "🤝 Assists", digits: 2, lowerBetter: true, mode: "emoji", tip: "Assists per kill in recent Honu sessions." },
 ]);
+/** Width of a column in layout units (the wide iVi cell = 2). */
+export const colUnits = (c) => (c.mode === "ivi-wide" ? 2 : 1);
+
+/**
+ * Emoji size from rank (owner t546u): the cell's emoji is scaled by the player's
+ * percentile in that stat (pXX = higher than XX% of ranks.json, same pools as the
+ * Rankings table). p50 = 1× (median, not scaled); straight line up to EMOJI_MAX at
+ * the best (p99) and down to EMOJI_MIN at the worst (p0). Lower-is-better columns
+ * (🤝 Assists) are flipped first, so a low pXX gives a big emoji there.
+ */
+export const EMOJI_MIN = 0.55;
+export const EMOJI_MAX = 1.8;
+/** "How good" percentile 0..99 (99 = best) from the plain pXX. */
+export function goodPct(col, p) {
+  if (typeof p !== "number" || !Number.isFinite(p)) return null;
+  const q = Math.min(99, Math.max(0, p));
+  return col && col.lowerBetter ? 99 - q : q;
+}
+/** Emoji scale for one cell (null = no value → no emoji). */
+export function emojiScale(col, p) {
+  const g = goodPct(col, p);
+  if (g == null) return null;
+  const s = g >= 50 ? 1 + ((g - 50) / 49) * (EMOJI_MAX - 1) : 1 - ((50 - g) / 50) * (1 - EMOJI_MIN);
+  return Math.round(s * 100) / 100;
+}
+/**
+ * Number ⇄ emoji loop (owner t546u, no hover hints): number NUM ms, crossfade FADE ms,
+ * emoji EMOJI ms, crossfade back. One CSS animation (styles.css lvNum / lvEm); the
+ * table carries a phase offset from the clock, so re-renders never restart the loop.
+ */
+export const CYCLE = Object.freeze({ num: 2000, fade: 400, emoji: 3000 });
+export const CYCLE_MS = CYCLE.num + CYCLE.emoji + 2 * CYCLE.fade;
+/** Column stagger (ms per column) so the loop rolls across the row instead of flashing. */
+export const STAGGER_MS = 150;
+/** CSS phase offset for "now": a negative delay keeps every render on the same loop. */
+export function cyclePhase(now = Date.now()) {
+  return `-${Math.floor(now) % CYCLE_MS}ms`;
+}
 
 /**
  * Background-fetch queue step (#32): next opponent cid to fetch = newest-first queue entry
@@ -149,9 +179,9 @@ function start() {
 
   const people = new Map(); // cid -> { name, faction, kd, cached: {adjs, kd} | null }
   let rows = [];
-  let cachedOrder = []; // cached opponent names, newest first
   let me = null; // { cid, name, faction }
   let ranks = null; // slug -> { adjs, kd }
+  const pools = {}; // col id -> sorted finite values (percentiles, same as the Rankings table)
 
   const app = () => window.__ps2EliteKd || null;
 
@@ -173,6 +203,10 @@ function start() {
         for (const [id, i] of idx) o[id] = i >= 0 ? r[i] : null;
         return [r[iS], o];
       }));
+      for (const c of LIVE_COLS) {
+        const i = ci(c.id);
+        pools[c.id] = i >= 0 ? j.rows.map((r) => r[i]).filter((v) => typeof v === "number" && Number.isFinite(v)).sort((a, b) => a - b) : [];
+      }
     } catch { ranks = new Map(); }
   }
   async function person(cid) {
@@ -195,21 +229,30 @@ function start() {
   }
 
   const fmt = (v, d) => (typeof v === "number" && Number.isFinite(v) ? v.toFixed(d) : "—");
-  const N = LIVE_COLS.length;
+  const N = LIVE_COLS.reduce((n, c) => n + colUnits(c), 0); // grid units a side (wide ⚔️ iVi = 2)
   const shortLab = (c) => c.label.split(" ")[0];
   /** 💩 after a confirmed padder's name (padding.mjs): hover explains the −10% iVi penalty. */
   const poopFor = (name) => (isPenalizedPadder(name) ? `<span class="poop-mark" title="${esc(POOP_TIP)}" aria-label="${esc(POOP_TIP)}">${POOP_MARK}</span>` : "");
+  /** One stat cell by its LIVE_COLS mode; r = row index (staggers the flip loop down the list). */
+  function statCell(c, v, r) {
+    const s = emojiScale(c, percentileOf(pools[c.id] || [], v));
+    const span = colUnits(c) > 1 ? ` colspan="${colUnits(c)}"` : "";
+    if (s == null) return `<td class="lv-num"${span}>—</td>`;
+    const em = `<b class="lv-e" aria-hidden="true">${shortLab(c)}</b>`;
+    if (c.mode === "ivi-wide") return `<td class="lv-num lv-wide" colspan="2" style="--s:${s}"><span class="lv-v">${cellText(c, v)}</span>${em}</td>`;
+    if (c.mode === "emoji") return `<td class="lv-num lv-emo" style="--s:${s}" aria-label="${esc(c.label)}">${em}</td>`;
+    return `<td class="lv-num lv-cyc" style="--s:${s};--i:${r}"><span class="lv-v">${cellText(c, v)}</span><span class="lv-em">${em}</span></td>`;
+  }
   /** One player = name cell + stats cells on one row (columns aligned across events). */
-  function side(p, isMe) {
+  function side(p, isMe, r = 0) {
     // 💩 confirmed padder (padding.mjs): hover explains the −10% iVi penalty.
     const poop = poopFor(p.name);
     const name = `<td class="lv-name-cell"><span class="lv-name fac-${p.faction || ""}" title="${esc(p.name)}">${esc(p.name)}</span>${poop}</td>`;
     let stats;
-    // 🚜 vehicle / MAX cut: no visible mark (owner), reason in the iVi cell's hover.
-    const vcut = (o, c) => (c.id === "adjs" && o.vcut > 0 ? ". " + vehicleCutTip(o.infVeh, o.infMax, o.vcut) : "");
-    if (p.cached) stats = LIVE_COLS.map((c) => `<td class="lv-num" title="${esc(c.label + ": " + c.tip + vcut(p.cached, c))}">${cellText(c, p.cached[c.id])}</td>`).join("");
+    // Number ⇄ scaled emoji loop, no hover hint (owner t546u); "—" stays still.
+    if (p.cached) stats = LIVE_COLS.map((c) => statCell(c, p.cached[c.id], r)).join("");
     else if (isMe) stats = `<td class="lv-num lv-uncached" colspan="${N}"></td>`;
-    else stats = `<td class="lv-num lv-uncached" colspan="${N}" title="Not in our cache: Census lifetime numbers">K/D ${fmt(p.kd, 2)} · KPM ${fmt(p.kpm, 2)} · not in cache</td>`;
+    else stats = `<td class="lv-num lv-uncached" colspan="${N}">K/D ${fmt(p.kd, 2)} · KPM ${fmt(p.kpm, 2)} · not in cache</td>`;
     return { name, stats };
   }
   function eventHtml(r, i) {
@@ -217,23 +260,26 @@ function start() {
     const meP = { name: me.name, faction: me.faction, cached: me.cached };
     const kill = r.last === "kill";
     // Winner on the left: on a kill that's us, on a death the killer.
-    const left = kill ? side(meP, true) : side(p, false);
-    const right = kill ? side(p, false) : side(meP, true);
+    const ri = Math.max(0, i);
+    const left = kill ? side(meP, true, ri) : side(p, false, ri);
+    const right = kill ? side(p, false, ri) : side(meP, true, ri);
     const t = r.gap == null ? `<span class="lv-timer" data-at="${r.at}">${fmtGap(Date.now() - r.at)}</span>` : `${fmtGap(r.gap)}`;
     return `<tbody class="lv-ev lv-${r.last}${i === 0 ? " lv-new" : ""}"><tr><td class="lv-time">${t}</td>${left.name}${left.stats}<td class="lv-arrow">❯</td>${right.name}${right.stats}</tr></tbody>`;
   }
   function render(dropped) {
     if (!listEl) return;
-    // Fixed layout: the ❯ arrow sits at the exact page middle. The timer column
-    // (10ch, left only) is balanced by making each right-side stat column
-    // 10ch/7 wider than the left-side ones — no dead space anywhere.
-    const cols = `<colgroup><col class="lv-c-time"><col class="lv-c-name">${'<col class="lv-c-statL">'.repeat(N)}<col class="lv-c-arrow"><col class="lv-c-name">${'<col class="lv-c-statR">'.repeat(N)}</colgroup>`;
-    const head = `<thead><tr><th></th><th></th>${LIVE_COLS.map((c) => `<th title="${esc(c.label + ": " + c.tip)}">${shortLab(c)}</th>`).join("")}<th></th><th></th>${LIVE_COLS.map((c) => `<th title="${esc(c.label + ": " + c.tip)}">${shortLab(c)}</th>`).join("")}</tr></thead>`;
+    // Fixed layout, N equal stat units a side (the wide ⚔️ iVi cell spans 2). The ❯ arrow
+    // sits at the page middle: the right name column also takes the timer column's width.
+    const colTags = (sd) => `<col class="lv-c-stat${sd}">`.repeat(N);
+    const cols = `<colgroup><col class="lv-c-time"><col class="lv-c-name">${colTags("L")}<col class="lv-c-arrow"><col class="lv-c-name lv-c-nameR">${colTags("R")}</colgroup>`;
+    const ths = LIVE_COLS.map((c) => `<th${colUnits(c) > 1 ? ` colspan="${colUnits(c)}"` : ""}>${shortLab(c)}</th>`).join("");
+    const head = `<thead><tr><th></th><th></th>${ths}<th></th><th></th>${ths}</tr></thead>`;
     // No events yet: skeleton first row — em dashes stand in for the numbers
     // until real data arrives and fills the rows.
-    const dashCells = `<td class="lv-num">—</td>`.repeat(N);
+    const dashCells = LIVE_COLS.map((c) => `<td class="lv-num"${colUnits(c) > 1 ? ` colspan="${colUnits(c)}"` : ""}>—</td>`).join("");
     const body = rows.length ? rows.map(eventHtml).join("")
       : `<tbody class="lv-ev lv-wait"><tr><td class="lv-time">—</td><td class="lv-name-cell"><span class="lv-name fac-${me.faction || ""}">${esc(me.name)}</span>${poopFor(me.name)}</td>${dashCells}<td class="lv-arrow">❯</td><td class="lv-name-cell">—</td>${dashCells}</tr></tbody>`;
+    listEl.style.setProperty("--lv-t0", cyclePhase());
     listEl.innerHTML = cols + head + body + (dropped ? eventHtml(dropped, -1).replace('class="lv-ev', 'class="lv-ev lv-fade') : "");
     if (dropped) setTimeout(() => { const f = listEl.querySelector(".lv-fade"); if (f) f.remove(); }, 600);
   }
@@ -242,27 +288,7 @@ function start() {
     for (const el of listEl.querySelectorAll(".lv-timer[data-at]")) el.textContent = `${fmtGap(Date.now() - +el.dataset.at)}`;
   }, 1000);
 
-  // Graph: re-run quietly when the cached set changes; one run at a time.
-  let graphWant = null, graphBusy = false;
-  async function syncGraph() {
-    const a = app();
-    if (!a || graphBusy || !graphWant) return;
-    if (a.isAnalyzing && a.isAnalyzing()) { setTimeout(syncGraph, 1000); return; }
-    const want = graphWant; graphWant = null; graphBusy = true;
-    try {
-      a.setNameTokens(want);
-      await a.analyzeNames(want, { quiet: true });
-    } catch { /* keep the old graph */ }
-    graphBusy = false;
-    if (graphWant) syncGraph();
-  }
-
-  function toGraph(p) {
-    cachedOrder = [p.cached.name, ...cachedOrder.filter((n) => n !== p.cached.name)];
-    const want = graphNames(target, cachedOrder);
-    const now = (app() && app().getNameTokens()) || [];
-    if (want.join("\n") !== now.join("\n")) { graphWant = want; syncGraph(); }
-  }
+  // Owner t546u: no skill graph in Live any more (it stays on the main page).
 
   // #32: uncached opponents → full Census fetch in the background, one at a time.
   let bgQueue = []; // cids, newest first
@@ -284,7 +310,6 @@ function start() {
       if (player) {
         p.cached = liveRowFromPlayer(player, p.name);
         render();
-        if (rows.some((r) => r.opp === cid)) toGraph(p);
         if (typeof onBgFetched === "function") onBgFetched(p.name, player);
       }
     } catch { /* keep the K/D · KPM row; never retried this page load */ }
@@ -319,8 +344,7 @@ function start() {
     const res = feedPush(rows, ev);
     rows = res.rows;
     render(res.dropped);
-    if (p.cached) toGraph(p);
-    else if (!bgTried.has(ev.opp)) { bgQueue = [ev.opp, ...bgQueue.filter((c) => c !== ev.opp)]; bgPump(); }
+    if (!p.cached && !bgTried.has(ev.opp)) { bgQueue = [ev.opp, ...bgQueue.filter((c) => c !== ev.opp)]; bgPump(); }
   }
 
   let ws = null, backoff = 2000;
