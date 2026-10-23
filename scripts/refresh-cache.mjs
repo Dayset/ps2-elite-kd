@@ -28,6 +28,8 @@ import { censusQueryName } from "../analyze-run.mjs";
 import { accountTimes } from "../flairs.mjs";
 import { analyzeSessionKills, knownSessions, pickForensicSessions } from "../session-forensics.mjs";
 import { startYieldWatch } from "./yield-check.mjs";
+import { removedList } from "../opt-out.mjs";
+import { purgeRemoved } from "./purge-removed.mjs";
 import {
   CAP_STEPS,
   isDormant,
@@ -69,6 +71,9 @@ const FETCH_COUNTS_PATH = path.join(DATA_DIR, "fetch-counts.json");
 const EXP_TYPES_PATH = path.join(DATA_DIR, "exp-types.json");
 const FORENSICS_PATH = path.join(DATA_DIR, "forensics.json");
 const XP_DIR = path.join(DATA_DIR, "xp");
+const OPT_OUT_PATH = path.join(DATA_DIR, "opt-out.json");
+/** 🚫 Removal list (opt-out.mjs, #61), loaded in main() after the purge. */
+let REMOVED = removedList(null);
 
 const HONU = "https://wt.honu.pw/api/character/";
 /** Census service ID: env CENSUS_SERVICE_ID (workflow), else the site's registered ID. */
@@ -705,6 +710,8 @@ async function requestedXpPhase(index, explicitNames, until) {
     (explicitNames || []).map((n) => slugKey(String(n).replace(/^\[[^\]]*\]\s*/, ""))),
     indexSlugs,
   );
+  // 🚫 Removed at the player's request: no XP detail, no record of the request.
+  for (const k of Object.keys(requested)) if (REMOVED.match({ slug: k })) delete requested[k];
   const save = () => {
     const sortObj = (o) => Object.fromEntries(Object.entries(o).filter(([k]) => k in requested).sort(([a], [b]) => a.localeCompare(b)));
     writeFileAtomic(REQUESTED_PATH, JSON.stringify({ requested: sortObj(requested), checked: sortObj(checked) }, null, 1) + "\n");
@@ -1217,6 +1224,13 @@ async function main() {
     return;
   }
   fs.mkdirSync(PLAYERS_DIR, { recursive: true });
+  // 🚫 Removal list (#61): apply new entries first, then never fetch or store those characters.
+  try {
+    purgeRemoved({ dataDir: DATA_DIR, room: "pc" });
+  } catch (e) {
+    console.warn(`Removal list purge skipped: ${String((e && e.message) || e).slice(0, 160)}`);
+  }
+  REMOVED = removedList(readJsonSafe(OPT_OUT_PATH, null));
   // Max new players per run (the time budget usually binds first).
   const growMax = Number.isFinite(parseInt(process.env.GROW_MAX, 10)) ? Math.max(0, parseInt(process.env.GROW_MAX, 10)) : 50;
   const t0 = Date.now();
@@ -1268,6 +1282,11 @@ async function main() {
       c.notFound++;
       return null;
     }
+    if (REMOVED.match({ slug, name })) {
+      console.log(`${label} ${name}: removed at the player's request (opt-out.json), skipped.`);
+      c.removed = (c.removed || 0) + 1;
+      return null;
+    }
     console.log(`${label} ${name} (${slug})…`);
     const prev = state.players[slug] || {};
     const now = Date.now();
@@ -1277,6 +1296,13 @@ async function main() {
       // Enough failed tries on partial data: ship what we have instead of retrying forever.
       const acceptPartial = prev.kind === "partial" && (prev.fails || 0) >= PARTIAL_SHIP_AFTER;
       const payload = await loadLive(name, { prevAssists: readPrevAssists(slug), prevInfantry: readPrevInfantry(slug), prevWeapons: readPrevWeapons(slug), acceptPartial });
+      if (REMOVED.match({ cid: payload.player.cid, slug, name: payload.player.display })) {
+        console.log(`  removed at the player's request (opt-out.json): not stored.`);
+        c.removed = (c.removed || 0) + 1;
+        delete state.players[slug];
+        return null;
+      }
+      REMOVED.blankOpponents(payload.player.rows);
       const fileRel = `players/${slug}.json`;
       writeFileAtomic(path.join(DATA_DIR, fileRel), JSON.stringify(payload) + "\n");
       upsertIndexEntry(index, { name, display: payload.player.display, slug, file: fileRel, savedAt: payload.savedAt, fmt: CACHE_FORMAT, top: payload.top, last: payload.player.times && payload.player.times.last });

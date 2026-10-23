@@ -17,7 +17,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261022-footmedal" />
+  <link rel="stylesheet" href="styles.css?v=20261023-priv1" />
   <style>
     body { overflow: auto; }
     .st-wrap { max-width: none; margin: 0; padding: 18px 16px 40px; padding-inline: 0; } /* width: body.site-page (#29) */
@@ -168,8 +168,8 @@
 
       <details class="st-card st-sec" id="cardRampage">
         <summary><h2>🚨 Rampage gate <span id="rampageCount" class="st-count">…</span></h2></summary>
-        <p class="st-note">Burst sessions that are blatant hipfire headshot spraying. A match is a confirmed cheater and is hidden automatically.</p>
-        <details class="st-info"><summary>ⓘ How it works</summary><div class="st-rule" id="rampageRule">A 💥 burst session with ≥ 50 infantry kills, hipfire ≥ 90% and headshots ≥ 55% of them (Honu kill list, checked once per session on the regular refresh) = confirmed cheater, put on the 🙈 hide list with the reason “auto: rampage gate” and the evidence. Owner override: data/reviewed.json "burst": "cleared" un-hides the player and removes them from this list.</div></details>
+        <p class="st-note">Burst sessions that are blatant hipfire headshot spraying. A match is hidden from Rankings automatically: a pattern match, not proof.</p>
+        <details class="st-info"><summary>ⓘ How it works</summary><div class="st-rule" id="rampageRule">A 💥 burst session with ≥ 50 infantry kills, hipfire ≥ 90% and headshots ≥ 55% of them (Honu kill list, checked once per session on the regular refresh) = hidden from Rankings (🙈 hide list) with the reason “auto: rampage gate” and the evidence. Owner override: data/reviewed.json "burst": "cleared" un-hides the player and removes them from this list.</div></details>
         <div id="rampage" class="st-dim">Loading…</div>
       </details>
 
@@ -255,7 +255,7 @@
           <div id="assistGroups" class="st-dim">Loading…</div>
         </details>
         <details class="st-sub-sec" id="secSessRef">
-          <summary><h3>Reference: confirmed cheaters</h3></summary>
+          <summary><h3>Reference: players hidden after review</h3></summary>
           <div id="sessRef" class="st-dim">Loading…</div>
         </details>
         <details class="st-sub-sec" id="secSessDist">
@@ -662,7 +662,7 @@
     import { classifyBins, CHART_LABELS } from "./bins.mjs?v=20261010-sav1";
     import { forensicsRuleText } from "./session-forensics.mjs?v=20261010-sav1";
     import { reviewDecision, CLEARING_DECISIONS, PADDING_BORDERLINE_SHARE, ADJUSTED_BORDERLINE_SHARE } from "./padding.mjs?v=20261023-short1";
-    import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261020-i18n2";
+    import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261023-priv1";
     import "./name-peek.mjs?v=20261020-peekwin1"; // full-name popup for truncated .nm names
     import { radarProfileUrl, radarBadge, radarPriority } from "./radar.mjs?v=20261010-sav1";
 
@@ -926,7 +926,7 @@
       const rows = players.slice().sort((a, b) => radarUp(b.slug) - radarUp(a.slug)).map((p) => {
         const w = p.worst;
         const tag = p.flagged ? '<span class="st-tag hot">🚩</span> ' : p.odd ? '<span class="st-tag">📉 review</span> ' : "";
-        const who = esc(p.name) + (p.confirmedCheater ? ' <span class="st-dim" title="On the 🙈 hide list as a confirmed cheater">(confirmed)</span>' : "") + radarCell(p.slug);
+        const who = esc(p.name) + (p.confirmedCheater ? ' <span class="st-dim" title="On the 🙈 hide list after review">(hidden)</span>' : "") + radarCell(p.slug);
         if (!w) return "<tr><td>" + who + '</td><td colspan="5" class="st-dim">No Honu sessions with 30+ kills · checked ' + esc(p.checkedAt ? ago(Date.parse(p.checkedAt)) : "—") + "</td></tr>";
         const weap = (w.weapons || []).map((x) => esc(x.name) + ' <span class="st-dim">' + x.kills + " (" + pct(x.share) + ", max " + x.max1s + "/s)</span>").join("<br>");
         const v = w.victims || {};
@@ -996,7 +996,7 @@
       // The reference IS the solved pile (confirmed cheaters): it lives with
       // the 🙈 hide list now (renderHidden), not in the browsing sections.
       $("sessRef").innerHTML = ref.length
-        ? '<div class="st-dim">Kept with the 🙈 hide list below (' + ref.length + ' confirmed cheaters) — solved names show only there.</div>'
+        ? '<div class="st-dim">Kept with the 🙈 hide list below (' + ref.length + ' hidden players) — solved names show only there.</div>'
         : '<div class="st-dim">No reference players cached.</div>';
       const dist = s.distributions || {};
       const ids = (s.metrics || []).map((m) => m.id);
@@ -1041,7 +1041,7 @@
       if (ref.length) {
         const label = Object.fromEntries(((sStats && sStats.metrics) || []).map((m) => [m.id, m]));
         const th = (id) => '<th class="st-num" title="' + esc((label[id] && label[id].tip) || "") + '">' + esc((label[id] && label[id].label) || id) + "</th>";
-        html += '<h3 class="st-h3" style="margin-top:12px;">🧪 Session reference — confirmed cheaters (kept for the models)</h3>' +
+        html += '<h3 class="st-h3" style="margin-top:12px;">🧪 Session reference — players hidden after review (kept for the models)</h3>' +
           '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th>Group</th><th class="st-num">Kills</th>' + SESS_REF_COLS.map(th).join("") + "<th>🚩</th></tr>" +
           ref.map((r) => "<tr><td>" + esc(r.name) + "</td><td>" + esc(r.group) + '</td><td class="st-num">' + (r.kills || 0) + (r.measured ? "" : ' <span class="st-dim" title="Below the minimum, or no recent sessions">⚠️</span>') + "</td>" +
             SESS_REF_COLS.map((id) => '<td class="st-num">' + nfmt(r.values && r.values[id]) + "</td>").join("") + "<td>" + (r.flagged ? '<span class="st-hit">session</span>' : "") + "</td></tr>").join("") +
@@ -1244,8 +1244,8 @@
       // cheater, already hidden) leave this list — only "needs a look" stays.
       const items = ((b && b.items) || []).filter((i) => !(i.rampage || i.hidden || i.cleared || i.status === "cleared" || i.status === "cheater"));
       const when = (ms) => (ms ? new Date(ms).toLocaleString([], { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "—");
-      const badge = (i) => i.rampage ? '<span class="st-dim" title="Rampage gate: auto confirmed cheater">🚨 rampage gate</span>' : i.status === "cleared" ? '<span title="' + esc(i.reason || "") + '">✅ cleared</span>'
-        : i.status === "cheater" ? '<span class="st-dim" title="' + esc(i.reason || "") + '">confirmed cheater</span>'
+      const badge = (i) => i.rampage ? '<span class="st-dim" title="Rampage gate: matched automatically, hidden from Rankings">🚨 rampage gate</span>' : i.status === "cleared" ? '<span title="' + esc(i.reason || "") + '">✅ cleared</span>'
+        : i.status === "cheater" ? '<span class="st-dim" title="' + esc(i.reason || "") + '">hidden after review</span>'
         : i.hidden ? '<span class="st-dim">🙈 already hidden</span>' : '<span class="st-err">needs a look</span>';
       $("burstCount").textContent = b ? String(b.flaggedPlayers) : "?";
       $("burstCount").classList.toggle("hot", !!(b && b.flaggedPlayers));

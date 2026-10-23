@@ -82,7 +82,7 @@ import {
   etaLearnLiveMs,
   freshEtaText,
   expectedNameMs,
-} from "./analyze-run.mjs?v=20261020-eta1";
+} from "./analyze-run.mjs?v=20261023-priv1";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
@@ -109,6 +109,7 @@ function thinCellTip(r) {
   return tr("fights.sample", "{tip}. This sample: {sample}", { tip: MIN_FIGHTS_TIP, sample: fightsText(r).replace(/[()]/g, "") });
 }
 import { markNote, statMark, confirmedPadderSlugs, isPenalizedPadder, POOP_MARK, POOP_TIP, setRoomRule } from "./padding.mjs?v=20261023-short1";
+import { removedList } from "./opt-out.mjs?v=20261023-optout1";
 import { HUT_MARK, HUT_TIP, HUT_EXPLAIN, HUT_DIFF_NOTE } from "./hut.mjs?v=20261023-short1";
 import { autoMarksHtml } from "./auto-marks.mjs?v=20261023-rip1";
 // Account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times: chart name list only.
@@ -157,6 +158,9 @@ import {
   const ROOM = pageRoom();
   const IS_PS = ROOM === "ps";
   const DATA = dataPrefix(ROOM);
+  /** 🚫 Removal list (#61): parsed opt-out.json of this room; empty until removedReady() loads it. */
+  let removedNow = removedList(null);
+  let removedP = null;
   // PS room: scrim rule (padding.mjs PS_SCRIM, owner 2026-10-22): one-sided scrims out, long scrims capped.
   if (IS_PS) setRoomRule("ps");
   /** Census bases for live loads, in search order (PC: ps2; PS: Genudine, then Ceres). */
@@ -925,6 +929,9 @@ import {
 
   /** Shared with build-log.html (player-metrics.mjs) so numbers always match. */
   function normalizePlayer(raw) {
+    // 🚫 Players removed at their request never show up as someone's opponent (#61).
+    const rp = raw && raw.player;
+    if (rp && removedNow.size) removedNow.blankOpponents(rp.rows, raw.server || rp.server || "");
     return normalizePlayerShared(raw);
   }
 
@@ -1874,7 +1881,7 @@ import {
   }
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261023-short1")
+    rankingsLoading = import("./rankings.mjs?v=20261023-legal1")
       .then((m) => {
         rankingsApi = m.initRankings(rankingsHost);
         return rankingsApi.ready;
@@ -2675,6 +2682,19 @@ import {
     return np;
   }
 
+  /* 🚫 Removal list (opt-out.mjs, #61): characters whose players asked not to be shown here. */
+  function removedReady() {
+    if (!removedP) {
+      removedP = fetchJson(`${DATA}opt-out.json?h=${Math.floor(Date.now() / 36e5)}`, undefined, { timeoutMs: 8000 })
+        .then((j) => (removedNow = removedList(j)))
+        .catch(() => removedNow);
+    }
+    return removedP;
+  }
+  function removedError(name) {
+    return new NameLoadError(`${name}: removed at the player's request`, "removed");
+  }
+
   /** Newest stored copy (shared file vs browser cache), or null. */
   async function loadStoredNewest(name, signal, errors) {
     let sharedP = null;
@@ -2704,7 +2724,15 @@ import {
    * overrides it; cache-pick.mjs) → live when neither has the player.
    * Fresh: live only (cached copy only when Census is busy/down).
    */
-  async function loadOne(name, { fresh = false, run = null } = {}) {
+  async function loadOne(name, opts = {}) {
+    const removed = await removedReady();
+    if (removed.match({ slug: slugKey(name), name })) throw removedError(name);
+    const p = await loadOneInner(name, opts);
+    if (p && removed.match({ cid: p.cid, server: p.server || "", name: p.display })) throw removedError(p.display || name);
+    return p;
+  }
+
+  async function loadOneInner(name, { fresh = false, run = null } = {}) {
     const signal = run ? run.signal : undefined;
     checkAborted(signal);
     if (fresh) {
@@ -4621,7 +4649,7 @@ import {
             p = await loadOne(name, { fresh, run });
           } catch (e) {
             // Never lose a player that is already graphed: keep that copy.
-            if (existing && !isAbortError(e) && !cancelled()) return { ...existing, cacheFallback: "kept" };
+            if (existing && !isAbortError(e) && !cancelled() && !(e && e.kind === "removed")) return { ...existing, cacheFallback: "kept" };
             throw e;
           }
           if (cancelled()) throw makeAbortError();

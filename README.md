@@ -4,7 +4,7 @@
 
 🎮 **[Open the live site](https://dayset.github.io/ps2-elite-kd/)** · 📘 [Using the site](docs/using-the-site.md) · 📐 [How the numbers are calculated](docs/metrics.md) · ⚙️ [How the shared cache works](docs/pipeline.md) · 🔀 [Theory vs practice: the Diff research](docs/theory-practice-diff.md)
 
-Free and open source. It's plain HTML, CSS and JavaScript on GitHub Pages, with no backend.
+Free and open source. It's plain HTML, CSS and JavaScript on GitHub Pages. Two small Cloudflare Workers queue cache refreshes and run the alert oracle. No cookies, no analytics, no ads.
 
 ---
 
@@ -95,11 +95,32 @@ npm run build:ranks  # rebuild data/ranks.json locally
 
 Pure math lives in `math.mjs`, which the browser's `app.js` imports. The file tree and the refresh pipeline are described in [docs/pipeline.md](docs/pipeline.md).
 
-## 🙏 Credits
+## 🔒 Data handling and privacy
 
-- Data from the [Daybreak Census API](https://census.daybreakgames.com/) and [HONU](https://wt.honu.pw/) (Varunda).
+What the project stores, in short (full details: [PRIVACY.md](PRIVACY.md), on the site: [privacy page](https://dayset.github.io/ps2-elite-kd/privacy.html)):
+
+- **Player data:** public PlanetSide 2 game data from the Census API and Honu (character name and id, outfit, stats, weapons, top 200 opponents, login times), cached in `data/` and `data-ps/`. It is tied to in-game names, not to real people, but under the GDPR it still counts as personal data.
+- **Visitors:** no cookies, analytics or trackers. Browser storage holds only your own settings and cached stats; "Clear local data" deletes it. The Workers see IP addresses and store them only as keyed hashes for short rate limits.
+- **Oracle sign-in:** character id, name, token, BonusCheque balance (no cash value) and votes.
+- **Retention:** PS sessions 45 days, oracle map snapshots 30 days, flips 90 days, sign-in attempts 1 day, rate-limit keys about 1 hour. Player files are refreshed while the character exists and deleted on request. Table in [PRIVACY.md](PRIVACY.md#1-players-people-whose-characters-appear-on-the-site).
+- **Removal:** players can have their character removed with the [removal form](https://github.com/Dayset/ps2-elite-kd/issues/new?template=remove-character.yml). The owner adds it to `data/opt-out.json` (PS: `data-ps/opt-out.json`); the next bot run deletes the cached file and every record of it (`scripts/purge-removed.mjs`), blanks the name in opponent lists, and the page refuses to show it.
+
+**GDPR note.** The site processes public game data of players worldwide, including EU servers, for community statistics, rankings and fair-play checks. Lawful basis: legitimate interests (Art. 6(1)(f)). Players are informed through the public privacy notice (Art. 14(5)(b)) and can object or ask for removal at any time (Art. 21). If you self-host a copy, you are responsible for your own compliance and privacy notice.
+
+## ⚠️ Disclaimer
+
+All numbers, ratings, charts and marks are automated estimates from third-party public data (Daybreak Census API, Honu). They can be wrong, incomplete or out of date, and they are not facts, proof or accusations about any player. The site and its data are provided "as is", with no warranty; the authors are not liable for any loss from using them. If an API changes or goes down, numbers can be wrong until the bots catch up. Not affiliated with or endorsed by Daybreak Game Company or Honu. PlanetSide and PlanetSide 2 are registered trademarks of Daybreak Game Company LLC.
+
+## 🙏 Credits and data sources
+
+- Data from the [Daybreak Census API](https://census.daybreakgames.com/) and [HONU](https://wt.honu.pw/) (Varunda); oracle history from [PS2Alerts](https://ps2alerts.com/); second opinions from [PS2 Radar](https://ps2radar.com/).
+- What each source asks of us and where we stand: [DATA_SOURCES.md](DATA_SOURCES.md).
 - The chart logic started as an earlier Python elite K/D tool, since ported to JavaScript.
+
+## 🛡️ Security
+
+Report vulnerabilities privately: [SECURITY.md](SECURITY.md).
 
 ## 📄 License
 
-[MIT](LICENSE) © 2026 Dayset. Provided "as is," with no warranty. All numbers are automated estimates.
+Code: [MIT](LICENSE) © 2026 Dayset. Game images, game data and other third-party content in this repository are **not** covered by the MIT license; see [NOTICE](NOTICE). The project has no runtime dependencies.

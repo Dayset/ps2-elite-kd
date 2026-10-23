@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="PS2 Elite privacy: what player and visitor data the site keeps, for how long, and how to remove your character." />
+  <link rel="icon" href="favicon.ico" />
+  <title data-i18n="priv.title">PS2 Elite: privacy</title>
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="styles.css?v=20261023-priv1" />
+  <style>
+    /* #61: short privacy notice; the full one is PRIVACY.md. Same shell as columns.html. */
+    body { overflow: auto; }
+    .st-wrap { max-width: none; margin: 0 auto; padding: 0; }
+    .st-head { position: relative; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px 12px 4.75rem; margin-bottom: 12px; }
+    .st-head .lang-select { position: absolute; top: 10px; right: 12px; }
+    .st-back { position: absolute; top: 10px; left: 12px; width: 3rem; height: 3rem; display: inline-flex; align-items: center; justify-content: center; font-size: 1.7rem; line-height: 1; text-decoration: none; background: var(--ctrl-btn-bg); border: 1px solid var(--border); border-radius: 10px; }
+    .st-back:hover { border-color: var(--accent); }
+    .st-head h1 { font-size: 1.25rem; margin: 0 0 4px; padding-right: 8.5rem; }
+    .st-sub { color: var(--dim); font-size: 0.85rem; margin: 0; }
+    .st-card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; line-height: 1.5; }
+    .st-card h2 { font-size: 1rem; margin: 0 0 6px; }
+    .st-card p { margin: 0 0 6px; }
+    .st-card p:last-child { margin-bottom: 0; }
+    .st-list { margin: 0; padding-left: 1.2rem; }
+    .st-list li { margin: 3px 0; }
+    .st-dim { color: var(--dim); font-size: 0.85rem; }
+    .st-wrap a { color: var(--accent); }
+    @media (max-width: 600px) {
+      .st-head h1 { padding-right: 0; margin-top: 3.4rem; }
+    }
+  </style>
+</head>
+<body class="site-page">
+  <main class="st-wrap">
+    <div class="st-head">
+      <a class="st-back" href="index.html" aria-label="Back to the stats" data-i18n-aria-label="cp.back">🔙</a>
+      <select id="langSelect" class="lang-select" title="Language" aria-label="Language" data-i18n-title="lang.label" data-i18n-aria-label="lang.label">
+        <option value="en" selected>🇬🇧 English</option>
+        <option value="ja">🇯🇵 日本語</option>
+        <option value="ru">🇷🇺 Русский</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="zh">🇨🇳 中文</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="uk">🇺🇦 Українська</option>
+        <option value="it">🇮🇹 Italiano</option>
+      </select>
+      <h1 data-i18n="priv.h1">🔒 Privacy</h1>
+      <p class="st-sub" data-i18n-html="priv.sub">The short version. Full details: <a href="https://github.com/Dayset/ps2-elite-kd/blob/main/PRIVACY.md">PRIVACY.md</a> · data sources: <a href="https://github.com/Dayset/ps2-elite-kd/blob/main/DATA_SOURCES.md">DATA_SOURCES.md</a></p>
+    </div>
+
+    <section class="st-card" aria-labelledby="privPlayers">
+      <h2 id="privPlayers" data-i18n="priv.playersH">👤 Players</h2>
+      <p data-i18n="priv.players1">Characters shown here come from public game data (Daybreak Census API and Honu): name and id, outfit, stats, weapons, opponents and login times. Nothing else: no real names, emails or locations. We don't know who plays a character.</p>
+      <p data-i18n="priv.players2">Why: community stats, rankings and fair-play checks. Legal basis: legitimate interests (GDPR Art. 6(1)(f)).</p>
+      <p data-i18n-html="priv.players3">Ratings and marks are automated estimates, not facts or accusations. Think a mark on your character is wrong? <a href="https://github.com/Dayset/ps2-elite-kd/issues/new">Open an issue</a> for a human review.</p>
+    </section>
+
+    <section class="st-card" id="remove" aria-labelledby="privRemove">
+      <h2 id="privRemove" data-i18n="priv.removeH">🚫 Remove your character</h2>
+      <p data-i18n-html="priv.remove1">Don't want your character here? Use the <a href="https://github.com/Dayset/ps2-elite-kd/issues/new?template=remove-character.yml">removal form</a>. We delete our copy, stop fetching it, take it out of Rankings and other players' opponent lists, and show “removed at the player's request” instead.</p>
+      <p class="st-dim" data-i18n="priv.remove2">The form is public: write only the character name. The stats stay on Daybreak's servers and other sites; we can only remove our copy.</p>
+    </section>
+
+    <section class="st-card" aria-labelledby="privVisitors">
+      <h2 id="privVisitors" data-i18n="priv.visitorsH">🖥️ Visitors</h2>
+      <ul class="st-list">
+        <li data-i18n="priv.v1">No cookies, no analytics, no ads, no trackers.</li>
+        <li data-i18n="priv.v2">Your browser keeps your settings and cached stats on your device only. “Clear local data” in the footer deletes them.</li>
+        <li data-i18n="priv.v3">Live stats come straight from Daybreak's servers to your browser, so Daybreak sees your IP address.</li>
+        <li data-i18n="priv.v4">GitHub (hosting) and Cloudflare (our two small servers) see IP addresses. We store them only as a scrambled code for rate limits, for about an hour.</li>
+      </ul>
+    </section>
+
+    <section class="st-card" aria-labelledby="privOracle">
+      <h2 id="privOracle" data-i18n="priv.oracleH">🗳️ Oracle sign-in</h2>
+      <p data-i18n="priv.oracle1">Signing in stores your character, a sign-in token, your BonusCheques (no cash value) and your votes. Sign-in attempts are deleted after a day. Ask in an issue to delete your account.</p>
+    </section>
+
+    <section class="st-card" aria-labelledby="privKeep">
+      <h2 id="privKeep" data-i18n="priv.keepH">⏳ How long we keep it</h2>
+      <ul class="st-list">
+        <li data-i18n="priv.k1">Player stats: while the character exists, or until you ask for removal.</li>
+        <li data-i18n="priv.k2">PlayStation sessions: 45 days.</li>
+        <li data-i18n="priv.k3">Oracle map history: 30 to 90 days.</li>
+        <li data-i18n="priv.k4">Older copies stay in the public Git history of the project.</li>
+      </ul>
+    </section>
+
+    <section class="st-card" aria-labelledby="privRights">
+      <h2 id="privRights" data-i18n="priv.rightsH">✉️ Your rights and contact</h2>
+      <p data-i18n-html="priv.rights1">Access, correction, objection, deletion: <a href="https://github.com/Dayset/ps2-elite-kd/issues/new">open an issue</a>; we answer within a month. You can also complain to your data protection authority. Security problems: <a href="https://github.com/Dayset/ps2-elite-kd/blob/main/SECURITY.md">SECURITY.md</a>.</p>
+      <p class="st-dim" data-i18n="priv.about">Run by Dayset as a free hobby project. Not affiliated with Daybreak Game Company. Updated 2026-10-23.</p>
+    </section>
+  </main>
+  <script type="module" src="i18n.mjs"></script>
+</body>
+</html>

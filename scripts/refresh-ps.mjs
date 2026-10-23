@@ -65,6 +65,8 @@ import {
   viaCensusProxy,
 } from "./refresh-cache.mjs";
 import { pullPsAssists } from "./ps-assists-pull.mjs";
+import { removedList } from "../opt-out.mjs";
+import { purgeRemoved } from "./purge-removed.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -360,6 +362,13 @@ async function main() {
     process.exit(2);
   }
   fs.mkdirSync(P.players, { recursive: true });
+  // 🚫 Removal list (#61): apply new entries first, then never fetch or store those characters.
+  try {
+    purgeRemoved({ dataDir: DATA_DIR, room: "ps" });
+  } catch (e) {
+    console.warn(`Removal list purge skipped: ${String((e && e.message) || e).slice(0, 160)}`);
+  }
+  const removed = removedList(readJson(path.join(DATA_DIR, "opt-out.json"), null));
   const t0 = Date.now();
   const explicit = parseExplicit(process.env.NAMES || process.argv.slice(2).join(" "));
   const budgetMs = envInt(explicit.length ? "ON_DEMAND_BUDGET_MIN" : "TIME_BUDGET_MIN", explicit.length ? 10 : 20) * 60_000;
@@ -385,6 +394,11 @@ async function main() {
   async function refreshKey(key, label, nameHint = "") {
     const id = parsePsKey(key);
     if (!id) return null;
+    if (removed.match({ cid: id.cid, server: id.ns })) {
+      console.log(`${label} ${key}: removed at the player's request (opt-out.json), skipped.`);
+      delete state.players[key];
+      return null;
+    }
     const prev = state.players[key] || {};
     const now = Date.now();
     console.log(`${label} ${nameHint || key} (${key})…`);
@@ -392,6 +406,7 @@ async function main() {
       const prevFile = readJson(path.join(DATA_DIR, psPlayerFile(id.ns, id.cid)), null);
       const acceptPartial = prev.kind === "partial" && (prev.fails || 0) >= PARTIAL_SHIP_AFTER;
       const payload = await loadPs(id.ns, id.cid, { acceptPartial, prevInfantry: prevFile && prevFile.player && prevFile.player.infantry, prevWeapons: prevFile && prevFile.player && prevFile.player.weapons });
+      removed.blankOpponents(payload.player.rows, id.ns);
       const wasCached = index.players.some((p) => p.key === key);
       const entry = upsertPsEntry(index, { key, ns: id.ns, cid: id.cid, display: payload.player.display, savedAt: payload.savedAt, top: payload.top, last: payload.player.times && payload.player.times.last });
       // Same name already taken by someone else in the room: this one is opened by its key, never by the name.

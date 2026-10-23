@@ -382,6 +382,18 @@ async function kvGetInt(kv, key) {
   return Number.isFinite(n) ? n : 0;
 }
 
+/**
+ * Visitor IP → short keyed hash for the /add rate-limit key (#61), so the raw
+ * address is never stored in KV. HMAC with a Worker secret: a list of keys
+ * cannot be reversed by hashing every IPv4 address. 16 hex characters.
+ */
+export async function ipTag(ip, secret) {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey("raw", enc.encode(String(secret || "ps2-elite-kd ip tag")), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const sig = new Uint8Array(await crypto.subtle.sign("HMAC", key, enc.encode(String(ip || "unknown"))));
+  return Array.from(sig.slice(0, 8), (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 function hourBucket(now) {
   return Math.floor(now / 36e5);
 }
@@ -453,8 +465,8 @@ async function handleAdd(request, env, c, cors, now) {
   const slugByName = new Map(candidates.map((x) => [x.name, x.slug]));
   const settledSlugs = () => [...out.alreadyCached, ...out.alreadyQueued].map((n) => slugByName.get(n)).filter(Boolean);
   if (!remaining.length) { await bumpCounts(env, settledSlugs(), now); return json(out, 200, cors); }
-  const ip = request.headers.get("CF-Connecting-IP") || "unknown";
-  const ipKey = `rl:ip:${ip}:${hourBucket(now)}`;
+  // Keyed hash, never the raw address (#61); the key expires after ~1 h.
+  const ipKey = `rl:ip:${await ipTag(request.headers.get("CF-Connecting-IP") || "unknown", env.CENSUS_PROXY_KEY)}:${hourBucket(now)}`;
   const used = await kvGetInt(env.QUEUE, ipKey);
   const allowance = Math.max(0, c.ipNamesPerHour - used);
   if (allowance < remaining.length) {

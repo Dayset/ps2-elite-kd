@@ -12,6 +12,7 @@ export const FAIL_REASONS = {
   timeout: "timed out",
   "bad-response": "bad response",
   "census-busy": "Census busy/down",
+  removed: "removed at the player's request",
   error: "error",
 };
 
@@ -153,14 +154,22 @@ export function summarizeFailures(failed, okCount) {
   } else if (allTransient) {
     why = tr("fail.whyNet", "Looks like a network hiccup — try again in a moment.");
   } else {
-    why = many
-      ? tr("fail.whyTypoMany", "Probably misspelled or not real characters.")
-      : tr("fail.whyTypoOne", "Probably misspelled or not a real character.");
-    if (transient) why += " " + tr("fail.whyTemp", "Network errors may be temporary — try again.");
+    // 🚫 Removed at the player's request (#61) is its own reason, never a typo.
+    const removed = failed.filter((f) => f.kind === "removed").length;
+    const typos = failed.length - transient - removed;
+    const parts = [];
+    if (typos) {
+      parts.push((removed ? typos > 1 : many)
+        ? tr("fail.whyTypoMany", "Probably misspelled or not real characters.")
+        : tr("fail.whyTypoOne", "Probably misspelled or not a real character."));
+    }
+    if (transient) parts.push(tr("fail.whyTemp", "Network errors may be temporary — try again."));
+    why = parts.join(" ");
   }
-  const tail = allFailed ? why : `${why} ${tr("fail.rest", "Showing the rest.")}`;
+  const rest = tr("fail.rest", "Showing the rest.");
+  const tail = allFailed ? why : why ? `${why} ${rest}` : rest;
   const list = items.map((i) => `${i.name} (${i.reason})`).join(", ");
-  return { allFailed, lead, items, tail, retryable: transient > 0, text: `${lead} ${list}. ${tail}` };
+  return { allFailed, lead, items, tail, retryable: transient > 0, text: `${lead} ${list}.${tail ? ` ${tail}` : ""}` };
 }
 
 /* ---------- shared-cache chip ordering ---------- */

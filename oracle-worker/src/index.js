@@ -20,7 +20,7 @@ import {
 } from "./engine.js";
 import { binGetter, hasTree, regionMap, latticeFor, captureModel, resistanceModel } from "./models.js";
 import { runCommander, ownership, applyElimination } from "./commander.js";
-import { handleAuth } from "./auth.js";
+import { handleAuth, CHALLENGE_KEEP_S } from "./auth.js";
 import { handleVote, settleStatements } from "./vote.js";
 import { cutAwareSnap } from "./cut.js";
 import { focusPlan } from "./focus.js";
@@ -162,6 +162,17 @@ export function findSuddenDeath(rows, a, endTs) {
   if (!start) return null;
   const end = sd.find((r) => r.instance_id === start.instance_id && (r.state === "ended" || r.state === "canceled"));
   return { start, end: end || null };
+}
+
+/** Daily retention (PRIVACY.md, #61). Exported for tests. */
+export function pruneStatements(db, now) {
+  return [
+    db.prepare("DELETE FROM snap WHERE ts < ?").bind(now - 30 * 86400),
+    db.prepare("DELETE FROM flip WHERE ts < ?").bind(now - 90 * 86400),
+    db.prepare("DELETE FROM tick WHERE ts < ?").bind(now - 90 * 86400),
+    db.prepare("DELETE FROM pop WHERE ts < ?").bind(now - 30 * 86400),
+    db.prepare("DELETE FROM challenge WHERE created < ?").bind(now - CHALLENGE_KEEP_S),
+  ];
 }
 
 export async function runCycle(env, nowMs = Date.now()) {
@@ -414,15 +425,11 @@ export async function runCycle(env, nowMs = Date.now()) {
     WHERE v.status = 'open' AND a.status IN ('settled','canceled','unresolved')`).all()).results) || [];
   if (toSettle.length) { await db.batch(settleStatements(db, toSettle, now)); report.votes_settled = toSettle.length; }
 
-  // 5) Daily pruning at 04:07 UTC: raw snapshots 30 days, flips 90 days.
+  // 5) Daily pruning at 04:07 UTC: raw snapshots 30 days, flips 90 days,
+  //    sign-in challenges (character + keyed IP hash) 1 day (#61, PRIVACY.md).
   const d = new Date(nowMs);
   if (d.getUTCHours() === 4 && d.getUTCMinutes() === 7) {
-    await db.batch([
-      db.prepare("DELETE FROM snap WHERE ts < ?").bind(now - 30 * 86400),
-      db.prepare("DELETE FROM flip WHERE ts < ?").bind(now - 90 * 86400),
-      db.prepare("DELETE FROM tick WHERE ts < ?").bind(now - 90 * 86400),
-      db.prepare("DELETE FROM pop WHERE ts < ?").bind(now - 30 * 86400),
-    ]);
+    await db.batch(pruneStatements(db, now));
   }
 
   report.metagame = mgRows.length;

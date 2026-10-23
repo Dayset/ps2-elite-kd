@@ -55,10 +55,19 @@ export async function readToken(secret, token) {
   } catch { return null; }
 }
 
-async function sha256Hex(s) {
-  const d = new Uint8Array(await crypto.subtle.digest("SHA-256", enc.encode(s)));
-  return [...d].map((b) => b.toString(16).padStart(2, "0")).join("");
+/**
+ * Sign-in rate-limit key for a visitor IP (#61): HMAC with the server secret,
+ * never the raw address and not reversible by hashing every IPv4 address.
+ * Challenge rows (and with them this hash) are pruned after a day.
+ */
+export async function ipHash(db, ip) {
+  const key = await hmacKey(await authSecret(db));
+  const sig = new Uint8Array(await crypto.subtle.sign("HMAC", key, enc.encode("ip|" + String(ip || "unknown"))));
+  return b64u(sig.slice(0, 12));
 }
+
+/** Sign-in challenges are only needed for minutes; kept a day for the rate limit, then deleted. */
+export const CHALLENGE_KEEP_S = 86400;
 
 /** Census: character by exact name -> {cid, name, faction, world, online} or null. */
 export async function lookupCharacter(sid, name, fetchImpl = fetch) {
@@ -90,8 +99,8 @@ export async function handleAuth(request, env, url, json, now = Math.floor(Date.
   if (p === "/auth/start" && request.method === "POST") {
     const name = String(body.name || "").trim().replace(/^\[[^\]]*\]\s*/, "");
     if (!NAME_RE.test(name)) return json({ error: "invalid_name" }, 400);
-    const ipHash = await sha256Hex("ip|" + (request.headers.get("CF-Connecting-IP") || "unknown"));
-    const recent = await db.prepare("SELECT COUNT(*) AS n FROM challenge WHERE ip_hash=? AND created > ?").bind(ipHash, now - 600).first();
+    const ipKey = await ipHash(db, request.headers.get("CF-Connecting-IP"));
+    const recent = await db.prepare("SELECT COUNT(*) AS n FROM challenge WHERE ip_hash=? AND created > ?").bind(ipKey, now - 600).first();
     if (recent && recent.n >= STARTS_PER_IP_10MIN) return json({ error: "too_many_attempts", retry_after_s: 600 }, 429);
     let ch;
     try { ch = await lookupCharacter((env.CENSUS_SERVICE_ID || "daysetps2legends").replace(/^s:/, ""), name, fetchImpl); }
@@ -99,7 +108,7 @@ export async function handleAuth(request, env, url, json, now = Math.floor(Date.
     if (!ch) return json({ error: "character_not_found" }, 404);
     const id = randomId(12);
     await db.prepare("INSERT INTO challenge (id, cid, name, world, faction, created, status, ip_hash) VALUES (?,?,?,?,?,?,'created',?)")
-      .bind(id, ch.cid, ch.name, ch.world, ch.faction, now, ipHash).run();
+      .bind(id, ch.cid, ch.name, ch.world, ch.faction, now, ipKey).run();
     return json({ id, character: { name: ch.name, faction: ch.faction, world: ch.world, online: ch.online },
       accept_after_s: ACCEPT_WAIT_S, window_s: WINDOW_S }, 200, { "Cache-Control": "no-store" });
   }

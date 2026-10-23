@@ -75,7 +75,7 @@ test("translations keep the same {placeholders} as English", () => {
 });
 
 test("every data-i18n key used by index.html exists in en.json", () => {
-  const html = read("index.html") + read("columns.html");
+  const html = read("index.html") + read("columns.html") + read("privacy.html");
   const used = new Set([...html.matchAll(/data-i18n(?:-[a-z-]+)?="([^"]+)"/g)].map((m) => m[1]));
   assert.ok(used.size > 20, "the page marks its UI text");
   const missing = [...used].filter((k) => !(k in en));

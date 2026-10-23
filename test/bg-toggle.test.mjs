@@ -81,7 +81,7 @@ describe("🖼️ background-image toggle (PC, next to 🗑️)", () => {
       assert.equal(st.pc, true, "desktop matches the PC media query");
       assert.notEqual(st.btnDisplay, "none", "🖼️ button visible on PC (Settings menu open)");
       assert.equal(st.off, false, "image on by default");
-      assert.ok(st.img.includes("imgur"), `html carries the background image: ${st.img}`);
+      assert.ok(st.img.includes("site-bg.webp"), `html carries the background image: ${st.img}`);
       await ev(`document.getElementById("bgToggleBtn").click()`);
       st = await ev(state());
       assert.equal(st.off, true, "click hides the image");
@@ -97,7 +97,7 @@ describe("🖼️ background-image toggle (PC, next to 🗑️)", () => {
       await ev(`document.getElementById("bgToggleBtn").click()`);
       st = await ev(state());
       assert.equal(st.off, false, "second click restores the image");
-      assert.ok(st.img.includes("imgur"), "image back after second click");
+      assert.ok(st.img.includes("site-bg.webp"), "image back after second click");
       assert.equal(st.stored, "1", "on persisted");
     }, { width: 1500, height: 900 });
   });

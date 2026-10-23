@@ -1,0 +1,41 @@
+PS2 Elite (ps2-elite-kd)
+Copyright (c) 2026 Dayset
+
+The MIT License in LICENSE covers the code and the original text of this
+repository. It does NOT cover the third-party content listed below, which
+keeps its owners' rights and terms. Reusing the code does not give you any
+right to that content.
+
+1. PlanetSide 2 game content: Daybreak Game Company LLC
+   - assets/weapons/*.webp (weapon images, converted from the Daybreak Census
+     API image files) and assets/weapons/catalog.json (item names and ids)
+   - Daybreak game data in data/ and data-ps/ (character names and ids, stats,
+     weapon, map, base and alert data from the Census API and streaming API)
+   - assets/site-bg.webp: PlanetSide 2 key art used as the page background
+     (copied here so visitors' browsers don't load it from imgur.com)
+   - Medal and ribbon artwork used for icons (AuraxHD.png, GAurax.png,
+     PlatAurax.jpg, gigaraxium.png, splash-medal.webp, assets/gaurax-footer.webp,
+     favicon*.png, apple-touch-icon.png, icon-maskable-512.png) where based on
+     in-game art
+   PlanetSide and PlanetSide 2 are registered trademarks of Daybreak Game
+   Company LLC. This project is not affiliated with, sponsored or endorsed by
+   Daybreak Game Company. Use of the Census API follows Daybreak's API policy:
+   https://census.daybreakgames.com/
+
+2. Honu (wt.honu.pw) by Varunda: session, kill and experience details used for
+   lifetime history, assists and session checks, and the per-alert participant
+   lists behind the oracle's outlier reports.
+
+3. PS2Alerts (ps2alerts.com): alert history used to grow and test the oracle's
+   prediction trees (oracle-worker/history). The PS2Alerts source code is
+   GPL-3.0; no PS2Alerts code is included here.
+
+4. PS2 Radar (ps2radar.com): second-opinion results for flagged players
+   (data/radar.json, oracle radar cache).
+
+Runtime dependencies: none. The site loads no third-party scripts, styles or
+fonts. Build and test tools (wrangler, cwebp, Playwright) are used only in
+GitHub Actions or on a developer machine and are not distributed.
+
+Data sources, their terms and how we comply: DATA_SOURCES.md
+Personal data, retention and removal: PRIVACY.md
