@@ -46,7 +46,12 @@ jobs:
         run: node oracle-worker/build-trees.mjs
 
       - name: Oracle tests
-        run: node --test test/oracle-engine.test.mjs test/oracle-worker.test.mjs test/oracle-commander.test.mjs test/oracle-outliers.test.mjs test/oracle-auth.test.mjs test/oracle-privacy.test.mjs
+        # Failing test names go to annotations (job logs are not always readable where this is debugged).
+        run: |
+          node --test test/oracle-engine.test.mjs test/oracle-worker.test.mjs test/oracle-commander.test.mjs test/oracle-outliers.test.mjs test/oracle-auth.test.mjs test/oracle-privacy.test.mjs > oracle-tests.log 2>&1 && exit 0
+          grep -E "^ *not ok|^ *error:|^ *(expected|actual):" oracle-tests.log | head -9 | sed 's/^ */::error::/'
+          tail -3 oracle-tests.log
+          exit 1
 
       # Plain wrangler (not wrangler-action) so a failure's message reaches the
       # run's annotations: job logs are not always readable where this is debugged.
