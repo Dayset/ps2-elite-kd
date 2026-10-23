@@ -74,7 +74,7 @@
       });
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261022-skel1" />
+  <link rel="stylesheet" href="styles.css?v=20261022-graphskel1" />
   <style>
     /* Installed-app launch splash (t465u). Android draws its own launch splash first:
        the maskable icon (big medal on black) seen through a 192 px circle, on the
@@ -442,6 +442,24 @@
         <button type="button" id="yZoomReset" class="chart-y-zoom-reset" data-i18n="chart.zoomAuto" data-i18n-title="chart.zoomAutoTitle" title="Reset zoom to auto-fit (full graph)">Auto</button>
       </div>
     </div>
+    <!-- Graph skeleton (Dayset 2026-10-22): while an analysis fetches from
+         Census, a graph-shaped stand-in (axes + generic curves, no data)
+         fills the chart box; the real graph replaces it in the same box. -->
+    <div id="chartSkeleton" class="chart-skeleton" hidden aria-hidden="true">
+      <svg viewBox="0 0 1000 564" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+        <g class="sk-grid">
+          <path d="M70 130H980M70 250H980M70 370H980M300 20V510M530 20V510M760 20V510" />
+        </g>
+        <g class="sk-line">
+          <path d="M70 70C320 95 430 245 680 390S930 480 980 488" />
+          <path d="M70 130C300 150 450 305 700 425S940 492 980 497" />
+          <path d="M70 215C285 225 480 365 720 452S940 502 980 506" />
+        </g>
+        <g class="sk-axis">
+          <path d="M70 20V510H980" />
+        </g>
+      </svg>
+    </div>
     <svg id="chart" viewBox="0 0 1000 564" preserveAspectRatio="xMidYMid meet" hidden></svg>
     <div class="chart-mode-row">
     <div id="ghostCaption" class="ghost-caption" hidden data-i18n-title="ghost.title"
@@ -549,7 +567,7 @@
   </footer>
 
   <script type="module" src="i18n.mjs"></script>
-  <script type="module" src="app.js?v=20261022-flatdefault1"></script>
+  <script type="module" src="app.js?v=20261022-graphskel1"></script>
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").catch(function () {});

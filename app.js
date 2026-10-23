@@ -313,6 +313,7 @@ import {
     progressTiming: document.getElementById("progressTiming"),
     progressCancel: document.getElementById("progressCancel"),
     chart: document.getElementById("chart"),
+    chartSkeleton: document.getElementById("chartSkeleton"),
     chartSection: document.getElementById("chartSection"),
     chartYZoom: document.getElementById("chartYZoom"),
     yZoomSlider: document.getElementById("yZoomSlider"),
@@ -3175,6 +3176,7 @@ import {
     const svg = els.chart;
     clearSvg(svg);
     setChartIdle(false);
+    setChartSkeleton(false); // a drawn graph replaces any loading stand-in
     if (pop) popChartSection(list);
     else syncChartSectionNames(list);
     svg.setAttribute("viewBox", `0 0 ${VB.w} ${VB.h}`);
@@ -4388,6 +4390,24 @@ import {
     setStatus(`<span class="warn">${tr("msg.cancelled", "Fetch cancelled.")}</span>`, "warn cancelled");
   }
 
+  /* Graph skeleton (Dayset 2026-10-22): while an analysis fetches from
+   * Census, the chart box shows a graph-shaped stand-in instead of staying
+   * hidden or holding the previous graph. Off restores the drawn graph's
+   * svg when there is one; the draw / idle paths set final visibility. */
+  function setChartSkeleton(on) {
+    const sk = els.chartSkeleton;
+    if (!sk) return;
+    if (on) {
+      setChartIdle(false); // the box exists: section un-hidden
+      if (els.chart) els.chart.setAttribute("hidden", "");
+      sk.removeAttribute("hidden");
+      if (els.chartSection) els.chartSection.open = true;
+    } else {
+      sk.setAttribute("hidden", "");
+      if (players.length && els.chart) els.chart.removeAttribute("hidden");
+    }
+  }
+
   /* Idle = no graph: the svg hides and the whole section folds away (there
    * is no placeholder image any more — Dayset 2026-10-22). */
   function setChartIdle(idle) {
@@ -4445,6 +4465,7 @@ import {
   }
 
   function showIdleChart() {
+    setChartSkeleton(false);
     clearSvg(els.chart);
     if (els.stats) els.stats.innerHTML = "";
     if (els.statsPublic) els.statsPublic.innerHTML = "";
@@ -4536,7 +4557,10 @@ import {
       });
       // Only when something has to come from Census: saved copies are instant, and the
       // line flashing in and out pushed the table and graph down and up (2026-10-19).
-      if (fresh || !clean.every(isSavedName)) setStatus(clean.length > 1 ? tr("msg.analyzingN", "Analyzing {n} players…", { n: clean.length }) : tr("msg.analyzing1", "Analyzing 1 player…"));
+      if (fresh || !clean.every(isSavedName)) {
+        setStatus(clean.length > 1 ? tr("msg.analyzingN", "Analyzing {n} players…", { n: clean.length }) : tr("msg.analyzing1", "Analyzing 1 player…"));
+        setChartSkeleton(true); // graph-shaped stand-in while Census answers
+      }
     }
 
     // ETA plan: which names will need a live Census fetch (vs cached / in memory).
@@ -4604,7 +4628,7 @@ import {
     }
 
     // Cancelled: keep previous graph as-is; lastAnalyzedNames unchanged.
-    if (result.cancelled || signal.aborted) return;
+    if (result.cancelled || signal.aborted) { setChartSkeleton(false); return; }
 
     // t351u: chips removed while this run was loading must not come back.
     const nowKeys = new Set(currentNamesInField().map(slugKey));
@@ -4634,6 +4658,7 @@ import {
         return;
       }
       // Nothing usable: keep the previous graph if there is one, else idle.
+      setChartSkeleton(false);
       const hadGraph = players.length > 0;
       if (!hadGraph) clearChartUi();
       renderNameTokens();

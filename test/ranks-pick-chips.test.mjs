@@ -172,6 +172,17 @@ describe("Skill graph section: no placeholder, collapsible, pops on analyze (own
     assert.match(app, /analyzeSeq !== prevSeq/);
   });
 
+  it("skill graph has a graph-shaped skeleton for Census waits (owner 2026-10-22)", () => {
+    const index = read("index.html");
+    const app = read("app.js");
+    const css = read("styles.css");
+    assert.match(index, /id="chartSkeleton" class="chart-skeleton"/);
+    assert.match(css, /\.chart-skeleton svg \{ width: 100%; height: auto;/);
+    assert.match(app, /function setChartSkeleton\(on\)/);
+    assert.match(app, /setChartSkeleton\(true\); \/\/ graph-shaped stand-in/);
+    assert.match(app, /setChartSkeleton\(false\); \/\/ a drawn graph replaces/);
+  });
+
   it("rankings preload is a table-sized skeleton, not a Loading text (owner 2026-10-22)", () => {
     const index = read("index.html");
     const rk = read("rankings.mjs");

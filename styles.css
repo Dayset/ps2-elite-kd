@@ -1394,6 +1394,12 @@ html[data-theme="light"] .progress-modal-backdrop {
   display: block;
   touch-action: manipulation;
 }
+/* Graph skeleton (Dayset 2026-10-22): same box as #chart (same viewBox), a
+ * quiet axes + curves shape while an analysis loads — no data, no motion. */
+.chart-skeleton svg { width: 100%; height: auto; display: block; }
+.chart-skeleton .sk-axis { stroke: var(--border); stroke-width: 2; fill: none; }
+.chart-skeleton .sk-grid { stroke: var(--row-border); stroke-width: 1; fill: none; }
+.chart-skeleton .sk-line { stroke: color-mix(in srgb, var(--text) 20%, transparent); stroke-width: 6; fill: none; stroke-linecap: round; }
 
 #chart[hidden] {
   display: none;
