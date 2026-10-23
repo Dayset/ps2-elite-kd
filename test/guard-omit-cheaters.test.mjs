@@ -16,6 +16,11 @@ describe("📉 outlier guard omits confirmed cheaters", () => {
     assert.ok(isConfirmedCheater({ reason: "confirmed cheater (rampage) — kept for comparison only" }));
     assert.ok(!isConfirmedCheater({ reason: "streamer asked to be left out" }));
     assert.ok(!isConfirmedCheater(null));
+    assert.ok(isConfirmedCheater({ reason: "anything", kind: "excluded" }), "kind excluded (#61)");
+    assert.ok(isConfirmedCheater({ reason: "anything", kind: "flagged" }), "kind flagged (#61)");
+    assert.ok(isConfirmedCheater({ reason: "excluded after review — kept for comparison only" }));
+    assert.ok(!isConfirmedCheater({ reason: "auto-hidden: fresh account (≤7d)" }));
+    assert.equal(hiddenList({ players: { Foo: { reason: "x", kind: "flagged" } } }).match({ name: "Foo" }).kind, "flagged");
   });
 
   it("a confirmed cheater shapes the bounds but is not an item", () => {

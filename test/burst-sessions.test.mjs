@@ -15,7 +15,7 @@ test("stored sessions merge assists tuples and XP detail", () => {
 });
 
 test("reviewed.json burst decisions: cleared / cheater, other entries ignored", () => {
-  const m = burstReviewed({ players: { a: { burst: "cleared", note: "lucky orbital", at: "2026-10-19" }, b: { burst: "cheater", note: "rampage", at: "2026-10-19" }, c: { decision: "padding" } } });
+  const m = burstReviewed({ players: { a: { burst: "cleared", note: "lucky orbital", at: "2026-10-19" }, b: { burst: "excluded", note: "rampage", at: "2026-10-19" }, c: { decision: "padding" } } });
   assert.deepEqual(Object.keys(m), ["a", "b"]);
   const p = (slug) => ({ slug, name: slug, cid: "1", assists: { sessions: { [slug]: [0, 30, 240, 1] } } });
   const r = burstSessions([p("a"), p("b")], { reviewed: m });

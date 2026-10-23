@@ -31,7 +31,7 @@ export function hiddenList(json) {
     const raw = String(k).trim();
     const key = /^\d{5,25}$/.test(raw) ? raw : hiddenKey(raw);
     if (!key) continue;
-    byKey.set(key, { key: raw, reason: String((v && v.reason) || ""), at: String((v && v.at) || "") });
+    byKey.set(key, { key: raw, reason: String((v && v.reason) || ""), at: String((v && v.at) || ""), kind: String((v && v.kind) || "") });
   }
   return {
     size: byKey.size,
@@ -45,7 +45,17 @@ export function hiddenList(json) {
   };
 }
 
-/** True when a hide-list entry is a confirmed cheater (reason starts "confirmed cheater"; t323u). */
+/**
+ * Hide-list kinds (#61, owner 2026-10-23: no "cheater" verdicts in public text):
+ *   "excluded": the owner reviewed the stats and excluded the player from Rankings;
+ *   "flagged":  an automatic rule matched impossible stats (rampage gate).
+ * Entries without a kind (e.g. "auto-hidden: fresh account …") are plain hides.
+ */
+export const HIDE_KINDS = Object.freeze({ excluded: "excluded after review", flagged: "flagged: impossible stats" });
+
+/** True when a hide-list entry is a reviewed or rule-matched exclusion (was "confirmed cheater"; t323u). */
 export function isConfirmedCheater(hit) {
-  return !!hit && /^\s*confirmed cheater/i.test(String(hit.reason || ""));
+  if (!hit) return false;
+  if (hit.kind === "excluded" || hit.kind === "flagged") return true;
+  return /^\s*(confirmed cheater|excluded after review|flagged: impossible stats)/i.test(String(hit.reason || ""));
 }

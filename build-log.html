@@ -168,8 +168,8 @@
 
       <details class="st-card st-sec" id="cardRampage">
         <summary><h2>🚨 Rampage gate <span id="rampageCount" class="st-count">…</span></h2></summary>
-        <p class="st-note">Burst sessions that are blatant hipfire headshot spraying. A match is hidden from Rankings automatically: a pattern match, not proof.</p>
-        <details class="st-info"><summary>ⓘ How it works</summary><div class="st-rule" id="rampageRule">A 💥 burst session with ≥ 50 infantry kills, hipfire ≥ 90% and headshots ≥ 55% of them (Honu kill list, checked once per session on the regular refresh) = hidden from Rankings (🙈 hide list) with the reason “auto: rampage gate” and the evidence. Owner override: data/reviewed.json "burst": "cleared" un-hides the player and removes them from this list.</div></details>
+        <p class="st-note">Burst sessions that are blatant hipfire headshot spraying. A match is flagged (impossible stats) and hidden from Rankings automatically: a pattern match, not proof.</p>
+        <details class="st-info"><summary>ⓘ How it works</summary><div class="st-rule" id="rampageRule">A 💥 burst session with ≥ 50 infantry kills, hipfire ≥ 90% and headshots ≥ 55% of them (Honu kill list, checked once per session on the regular refresh) = flagged and hidden from Rankings (🙈 hide list) with the reason “flagged: impossible stats — auto: rampage gate” and the evidence. Owner override: data/reviewed.json "burst": "cleared" un-hides the player and removes them from this list.</div></details>
         <div id="rampage" class="st-dim">Loading…</div>
       </details>
 
@@ -255,7 +255,7 @@
           <div id="assistGroups" class="st-dim">Loading…</div>
         </details>
         <details class="st-sub-sec" id="secSessRef">
-          <summary><h3>Reference: players hidden after review</h3></summary>
+          <summary><h3>Reference: players excluded after review</h3></summary>
           <div id="sessRef" class="st-dim">Loading…</div>
         </details>
         <details class="st-sub-sec" id="secSessDist">
@@ -285,7 +285,7 @@
         <div class="st-hide-title">🙈 Hide a player</div>
         <div class="st-hide-row">
           <input type="text" id="hideName" placeholder="Player name" class="st-in" style="min-width:160px;" />
-          <input type="text" id="hideReason" placeholder="Reason (e.g. confirmed cheater)" value="confirmed cheater — kept for comparison only, not promoted in rankings" class="st-in" style="flex:1;min-width:200px;" />
+          <input type="text" id="hideReason" placeholder="Reason (e.g. excluded after review)" value="excluded after review — kept for comparison only, not promoted in rankings" class="st-in" style="flex:1;min-width:200px;" />
           <button type="button" id="hideBtn" class="st-btn">Hide</button>
         </div>
         <div id="hideResult" style="margin-top:8px;display:none;">
@@ -358,10 +358,10 @@
         btn.addEventListener("click", function () {
           var name = (nameEl.value || "").trim();
           if (!name) { nameEl.focus(); return; }
-          var reason = (reasonEl.value || "").trim() || "confirmed cheater";
+          var reason = (reasonEl.value || "").trim() || "excluded after review";
           var today = new Date().toISOString().slice(0, 10);
           var entry = {};
-          entry[name] = { reason: reason, at: today };
+          entry[name] = { reason: reason, kind: "excluded", at: today };
           var snippet = JSON.stringify(entry, null, 4).slice(1, -1).trim().replace(/\n$/, "");
           // Indent to match the file (4 spaces inside "players").
           snippet = snippet.split("\n").map(function (l) { return "    " + l; }).join("\n");
@@ -926,7 +926,7 @@
       const rows = players.slice().sort((a, b) => radarUp(b.slug) - radarUp(a.slug)).map((p) => {
         const w = p.worst;
         const tag = p.flagged ? '<span class="st-tag hot">🚩</span> ' : p.odd ? '<span class="st-tag">📉 review</span> ' : "";
-        const who = esc(p.name) + (p.confirmedCheater ? ' <span class="st-dim" title="On the 🙈 hide list after review">(hidden)</span>' : "") + radarCell(p.slug);
+        const who = esc(p.name) + (p.confirmedCheater ? ' <span class="st-dim" title="On the 🙈 hide list: excluded after review">(excluded)</span>' : "") + radarCell(p.slug);
         if (!w) return "<tr><td>" + who + '</td><td colspan="5" class="st-dim">No Honu sessions with 30+ kills · checked ' + esc(p.checkedAt ? ago(Date.parse(p.checkedAt)) : "—") + "</td></tr>";
         const weap = (w.weapons || []).map((x) => esc(x.name) + ' <span class="st-dim">' + x.kills + " (" + pct(x.share) + ", max " + x.max1s + "/s)</span>").join("<br>");
         const v = w.victims || {};
@@ -1041,7 +1041,7 @@
       if (ref.length) {
         const label = Object.fromEntries(((sStats && sStats.metrics) || []).map((m) => [m.id, m]));
         const th = (id) => '<th class="st-num" title="' + esc((label[id] && label[id].tip) || "") + '">' + esc((label[id] && label[id].label) || id) + "</th>";
-        html += '<h3 class="st-h3" style="margin-top:12px;">🧪 Session reference — players hidden after review (kept for the models)</h3>' +
+        html += '<h3 class="st-h3" style="margin-top:12px;">🧪 Session reference — players excluded after review (kept for the models)</h3>' +
           '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th>Group</th><th class="st-num">Kills</th>' + SESS_REF_COLS.map(th).join("") + "<th>🚩</th></tr>" +
           ref.map((r) => "<tr><td>" + esc(r.name) + "</td><td>" + esc(r.group) + '</td><td class="st-num">' + (r.kills || 0) + (r.measured ? "" : ' <span class="st-dim" title="Below the minimum, or no recent sessions">⚠️</span>') + "</td>" +
             SESS_REF_COLS.map((id) => '<td class="st-num">' + nfmt(r.values && r.values[id]) + "</td>").join("") + "<td>" + (r.flagged ? '<span class="st-hit">session</span>' : "") + "</td></tr>").join("") +
@@ -1244,8 +1244,8 @@
       // cheater, already hidden) leave this list — only "needs a look" stays.
       const items = ((b && b.items) || []).filter((i) => !(i.rampage || i.hidden || i.cleared || i.status === "cleared" || i.status === "cheater"));
       const when = (ms) => (ms ? new Date(ms).toLocaleString([], { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "—");
-      const badge = (i) => i.rampage ? '<span class="st-dim" title="Rampage gate: matched automatically, hidden from Rankings">🚨 rampage gate</span>' : i.status === "cleared" ? '<span title="' + esc(i.reason || "") + '">✅ cleared</span>'
-        : i.status === "cheater" ? '<span class="st-dim" title="' + esc(i.reason || "") + '">hidden after review</span>'
+      const badge = (i) => i.rampage ? '<span class="st-dim" title="Flagged: impossible stats (rampage gate), hidden from Rankings">🚨 rampage gate</span>' : i.status === "cleared" ? '<span title="' + esc(i.reason || "") + '">✅ cleared</span>'
+        : i.status === "cheater" ? '<span class="st-dim" title="' + esc(i.reason || "") + '">excluded after review</span>'
         : i.hidden ? '<span class="st-dim">🙈 already hidden</span>' : '<span class="st-err">needs a look</span>';
       $("burstCount").textContent = b ? String(b.flaggedPlayers) : "?";
       $("burstCount").classList.toggle("hot", !!(b && b.flaggedPlayers));

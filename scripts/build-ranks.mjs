@@ -779,7 +779,7 @@ export function sessionStatus(players, guard, dataDir) {
   const hiddenSlugs = players.filter((p) => p.hidden).map((p) => p.slug);
   const refSlugs = hiddenSlugs;
   const reference = refSlugs.map((s) => players.find((p) => p.slug === s)).filter(Boolean)
-    .map((p) => ({ ...evidence(p), group: "confirmed cheater" }));
+    .map((p) => ({ ...evidence(p), group: "excluded after review" }));
   const outIds = new Set(SESSION_METRIC_IDS);
   const outliers = (guard.players || [])
     .map((g) => ({ ...g, metrics: g.metrics.filter((m) => outIds.has(m.id)) }))

@@ -135,3 +135,16 @@ test("oracle: sign-in attempts store a keyed IP hash and are pruned after a day"
   await DB.batch(pruneStatements(DB, now));
   assert.deepEqual(DB.raw.prepare("SELECT id FROM challenge").all().map((r) => r.id), ["new"]);
 });
+
+test("public hide lists and review notes never call a player a cheater (#61)", () => {
+  for (const f of ["data/hidden.json", "data-ps/hidden.json", "data/reviewed.json", "data-ps/reviewed.json"]) {
+    if (!exists(f)) continue;
+    const j = JSON.parse(read(f));
+    const players = j.players || {};
+    for (const [k, v] of Object.entries(players)) {
+      const text = [v && v.reason, v && v.note].filter(Boolean).join(" ");
+      assert.doesNotMatch(text, /cheat/i, `${f}: ${k} — use "excluded after review" / "flagged: impossible stats"`);
+      if (f.endsWith("hidden.json") && /^(excluded after review|flagged: impossible stats)/.test(String(v.reason || ""))) assert.ok(["excluded", "flagged"].includes(v.kind), `${f}: ${k} needs kind`);
+    }
+  }
+});

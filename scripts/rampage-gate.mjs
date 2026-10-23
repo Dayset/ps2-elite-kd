@@ -2,7 +2,7 @@
  * 🚨 Rampage gate runner (rampage-gate.mjs): checks every stored 💥 burst session with
  * ≥ RAMPAGE_RULE.MIN_KILLS kills once against Honu's kill list (GET /api/kills/session/{id}),
  * keeps the summaries in data/rampage.json, and keeps data/hidden.json in sync:
- *   - a match (not cleared by the owner) is added as "confirmed cheater — auto: rampage gate (…evidence…)";
+ *   - a match (not cleared by the owner) is added as "flagged: impossible stats — auto: rampage gate (…evidence…)", kind "flagged";
  *   - an auto entry whose player the owner cleared (reviewed.json "burst": "cleared") is removed (un-hide).
  * Manual hidden.json entries are never touched. Run by the refresh workflow before build-ranks.
  * Honu politeness: one request every 6.5 s, ≤ RAMPAGE_MAX_CALLS (default 20) per run, counted in
@@ -15,7 +15,7 @@ import { fileURLToPath } from "node:url";
 import { storedSessions, isBurst } from "../burst-sessions.mjs";
 import { hiddenList } from "../hidden.mjs";
 import { bareName } from "../rank-row.mjs";
-import { RAMPAGE_RULE, RAMPAGE_REASON_PREFIX, summarizeSessionKills, isRampage, rampageEvidence, rampageCleared, rampageRuleText } from "../rampage-gate.mjs";
+import { RAMPAGE_RULE, RAMPAGE_REASON_PREFIX, RAMPAGE_REASON_LEGACY, summarizeSessionKills, isRampage, rampageEvidence, rampageCleared, rampageRuleText } from "../rampage-gate.mjs";
 
 const USER_AGENT = "ps2-elite-kd-cache-bot/2.0 (+https://github.com/Dayset/ps2-elite-kd; contact: github.com/Dayset)";
 const readJson = (p, d = null) => { try { return JSON.parse(fs.readFileSync(p, "utf8")); } catch { return d; } };
@@ -54,7 +54,7 @@ export function applyRampage(hiddenJson, sessions, reviewed, today) {
   for (const s of Object.values(sessions || {})) if (s && s.match && !bySlug.has(s.slug)) bySlug.set(s.slug, s);
   // Un-hide: auto entries of players the owner cleared.
   for (const [k, v] of Object.entries(players)) {
-    if (!v || !String(v.reason || "").startsWith(RAMPAGE_REASON_PREFIX)) continue;
+    if (!v || !(String(v.reason || "").startsWith(RAMPAGE_REASON_PREFIX) || String(v.reason || "").startsWith(RAMPAGE_REASON_LEGACY))) continue;
     const slug = String(v.slug || k).toLowerCase().replace(/[^a-z0-9]+/g, "");
     if (rampageCleared(reviewed, slug) || rampageCleared(reviewed, k)) { delete players[k]; removed.push(k); }
   }
@@ -64,7 +64,7 @@ export function applyRampage(hiddenJson, sessions, reviewed, today) {
     if (hidden.match({ slug, name: s.name, cid: s.cid })) continue; // already hidden (owner or earlier run)
     const key = bareName(s.name) || slug;
     if (players[key]) continue;
-    players[key] = { reason: `${RAMPAGE_REASON_PREFIX} (${rampageEvidence(s)})`, at: today };
+    players[key] = { reason: `${RAMPAGE_REASON_PREFIX} (${rampageEvidence(s)})`, kind: "flagged", at: today };
     added.push(key);
   }
   return { players, added, removed };

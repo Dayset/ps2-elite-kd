@@ -1,5 +1,5 @@
 {
-  "_about": "Human review decisions for players whose stats were automatically adjusted (marked * or † on the site, flagged on build-log.html). Add entries by hand: \"slug\": { \"decision\": \"fluke\" | \"bad-luck\" | \"padding\", \"note\": \"why\", \"at\": \"YYYY-MM-DD\" }. The mark stays; the decision is shown next to the flag. 💩 penalty (2026-10-19): every \"padding\" player gets 💩 and −10% adjusted iVi. Owner override: add \"penalty\": \"cleared\" to the entry (keeps *, removes 💩 and the penalty) or set the decision to \"cleared\" (removes both). 💥 Burst sessions (build-log): add \"burst\": \"cleared\" | \"cheater\" with a note (no \"decision\" needed; it never touches */†/💩). A burst cheater also goes on data/hidden.json as \"confirmed cheater\". 🛖 Safe-spot damping (2026-10-22, automatic, listed on build-log): add \"hut\": \"cleared\" to clear a player (no 🛖 anywhere, no 🔀 Diff damping; no \"decision\" needed).",
+  "_about": "Human review decisions for players whose stats were automatically adjusted (marked * or † on the site, flagged on build-log.html). Add entries by hand: \"slug\": { \"decision\": \"fluke\" | \"bad-luck\" | \"padding\", \"note\": \"why\", \"at\": \"YYYY-MM-DD\" }. The mark stays; the decision is shown next to the flag. 💩 penalty (2026-10-19): every \"padding\" player gets 💩 and −10% adjusted iVi. Owner override: add \"penalty\": \"cleared\" to the entry (keeps *, removes 💩 and the penalty) or set the decision to \"cleared\" (removes both). 💥 Burst sessions (build-log): add \"burst\": \"cleared\" | \"excluded\" with a note (no \"decision\" needed; it never touches */†/💩). A burst exclusion also goes on data/hidden.json as \"excluded after review\" (kind \"excluded\"). 🛖 Safe-spot damping (2026-10-22, automatic, listed on build-log): add \"hut\": \"cleared\" to clear a player (no 🛖 anywhere, no 🔀 Diff damping; no \"decision\" needed).",
   "players": {
     "megatake": {
       "decision": "padding",
@@ -123,12 +123,12 @@
     },
     "enablescaleformfonts1": {
       "burst": "cleared",
-      "note": "Owner: cleared as a very capable player (102 kills in 18.5 min, KPM 5.5). The owner only cares about blatant rampage cheaters.",
+      "note": "Owner: cleared as a very capable player (102 kills in 18.5 min, KPM 5.5). The owner only excludes blatant impossible-stat rampages.",
       "at": "2026-10-19"
     },
     "vanubestfaction2": {
-      "burst": "cheater",
-      "note": "Owner: CONFIRMED CHEATER (rampage). 175 LMG kills in about 15 min, 122 headshots (69.7%), 100% hipfire, 0 aim-down-sights.",
+      "burst": "excluded",
+      "note": "Owner: excluded after review (rampage). 175 LMG kills in about 15 min, 122 headshots (69.7%), 100% hipfire, 0 aim-down-sights.",
       "at": "2026-10-19"
     }
   }

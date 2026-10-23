@@ -1,6 +1,6 @@
 /**
  * 🚨 Rampage gate (owner rule 2026-10-19): a 💥 burst session (KPM ≥ 5, ≥ 15 kills, ≥ 2 min)
- * that is ALSO sustained hipfire headshot spraying = confirmed cheater, automatically.
+ * that is ALSO sustained hipfire headshot spraying = flagged (impossible stats) and hidden, automatically.
  *
  *   ≥ 50 infantry kills in the session (on foot, not vehicle weapons)
  *   hipfire ≥ 90% of those kills   (Honu kill event fireGroupToFireMode.fireModeIndex 0 = hip, 1 = ADS)
@@ -16,7 +16,9 @@
  * Human override wins: data/reviewed.json "burst": "cleared" (or decision "cleared") un-hides.
  */
 export const RAMPAGE_RULE = Object.freeze({ MIN_KILLS: 50, HIP: 0.9, HSR: 0.55 });
-export const RAMPAGE_REASON_PREFIX = "confirmed cheater — auto: rampage gate";
+export const RAMPAGE_REASON_PREFIX = "flagged: impossible stats — auto: rampage gate";
+/** Earlier wording of the same auto entries (before #61). */
+export const RAMPAGE_REASON_LEGACY = "confirmed cheater — auto: rampage gate";
 export const rampageRuleText = (r = RAMPAGE_RULE) =>
   `💥 burst session (KPM ≥ 5, ≥ 15 kills, ≥ 2 min) with ≥ ${r.MIN_KILLS} infantry kills, hipfire ≥ ${Math.round(r.HIP * 100)}% and headshots ≥ ${Math.round(r.HSR * 100)}% of them`;
 
