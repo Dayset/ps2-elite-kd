@@ -49,3 +49,21 @@ test("no tab bar, no dots, no poof anywhere (owner 2026-10-22)", () => {
   const app = readFileSync(new URL("../app.js", import.meta.url), "utf8");
   assert.ok(!/poof|onThumb/.test(app), "app.js wires no poof callback");
 });
+
+// t540u (owner 2026-10-23): swiping with a hint open left an empty gap on the other side.
+test("closeSlideHints closes open fold notes in the slides once a switch starts", async () => {
+  const { closeSlideHints } = await import("../stats-carousel.mjs");
+  const folds = [{ open: true }, { open: true }];
+  const root = { querySelectorAll: (sel) => (sel === ".sc-slide details.fold-note[open]" ? folds.filter((d) => d.open) : []) };
+  assert.equal(closeSlideHints(root), 2);
+  assert.ok(folds.every((d) => !d.open));
+  assert.equal(closeSlideHints(root), 0);
+  assert.equal(closeSlideHints(null), 0);
+  const src = readFileSync(new URL("../stats-carousel.mjs", import.meta.url), "utf8");
+  assert.match(src, /!hintsClosed && Math\.abs\(viewport\.scrollLeft - i \* width\(\)\) > 2/);
+  const app = readFileSync(new URL("../app.js", import.meta.url), "utf8");
+  for (const m of ["head-tip", "name-peek"]) {
+    const a = app.match(new RegExp(m + "\\.mjs\\?v=[^\"']+"))[0];
+    assert.ok(src.includes(a), `${m} imported with the same ?v= as app.js (one shared module instance)`);
+  }
+});

@@ -11,6 +11,9 @@
  * modes are always the same height (CSS align-items: stretch).
  */
 
+import { hideHeadTip } from "./head-tip.mjs?v=20261021-theory1";
+import { hideNamePeek } from "./name-peek.mjs?v=20261020-peekwin1";
+
 const KEY = "ps2-elite-kd-stats-mode";
 const SCROLLERS = ".stats-table-wrap, .rk-pos-wrap";
 
@@ -20,6 +23,21 @@ export function canScrollToward(el, dx) {
   const max = el.scrollWidth - el.clientWidth;
   if (max <= 1) return false;
   return dx < 0 ? el.scrollLeft < max - 1 : el.scrollLeft > 1;
+}
+
+/**
+ * t540u: close every hint that is open in / over the slides once a switch
+ * starts (owner 2026-10-23). An open fold note (e.g. "♿ What 🪳 🔀 mean" under
+ * the stats table) made both slides taller (same height by design), so the
+ * other side showed an empty gap; a tap bubble stayed floating over a table
+ * that had left. Returns how many folds were closed.
+ */
+export function closeSlideHints(root) {
+  let n = 0;
+  if (root && root.querySelectorAll) for (const d of root.querySelectorAll(".sc-slide details.fold-note[open]")) { d.open = false; n++; }
+  hideHeadTip();
+  hideNamePeek();
+  return n;
 }
 
 /** Clamp a mode index to the slides that exist. */
@@ -81,9 +99,12 @@ export function mountStatsCarousel({ root, onChange }) {
   // The scroll position is the truth: the mode follows it as soon as the
   // middle is crossed (while the finger is still down).
   let readQueued = false;
+  // t540u: once the slides start to move away from the shown one, close open hints (once per switch).
+  let hintsClosed = false;
   viewport.addEventListener("scroll", (e) => {
     if (e.target !== viewport) return;
     lastViewportScroll = performance.now();
+    if (!hintsClosed && Math.abs(viewport.scrollLeft - i * width()) > 2) { hintsClosed = true; closeSlideHints(root); }
     if (readQueued) return;
     readQueued = true;
     requestAnimationFrame(() => {
@@ -192,13 +213,14 @@ export function mountStatsCarousel({ root, onChange }) {
       if (o && o.scrollLeft !== 0) o.scrollLeft = 0;
     });
   }
-  viewport.addEventListener("scrollend", (e) => { if (e.target === viewport) resetHidden(); }, { passive: true });
+  const landed = () => { resetHidden(); if (Math.abs(viewport.scrollLeft - i * width()) <= 2) hintsClosed = false; };
+  viewport.addEventListener("scrollend", (e) => { if (e.target === viewport) landed(); }, { passive: true });
   for (const ev of ["touchstart", "pointerdown"]) viewport.addEventListener(ev, resetHidden, { passive: true });
   let landTimer = 0; // no scrollend (older Safari): reset once the slides stop moving
   viewport.addEventListener("scroll", (e) => {
     if (e.target !== viewport) return;
     clearTimeout(landTimer);
-    landTimer = setTimeout(resetHidden, 200);
+    landTimer = setTimeout(landed, 200);
   }, { passive: true });
 
   paint();
