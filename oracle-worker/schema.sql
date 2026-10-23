@@ -168,3 +168,12 @@ CREATE TABLE IF NOT EXISTS vote (
 CREATE INDEX IF NOT EXISTS vote_cid ON vote (cid, placed_ts);
 CREATE INDEX IF NOT EXISTS vote_open ON vote (status, key);
 DROP TABLE IF EXISTS bet;            -- renamed to vote on 2026-10-18 (was empty)
+
+-- Self-service removal from PS2 Elite (#61, oracle-worker/src/privacy.js; also created lazily by the Worker).
+CREATE TABLE IF NOT EXISTS removal (
+  ident TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  status TEXT NOT NULL,
+  at INTEGER NOT NULL,
+  proof TEXT NOT NULL
+);

@@ -67,6 +67,7 @@ import {
 import { pullPsAssists } from "./ps-assists-pull.mjs";
 import { removedList } from "../opt-out.mjs";
 import { purgeRemoved } from "./purge-removed.mjs";
+import { syncRemovals } from "./sync-removals.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -362,7 +363,8 @@ async function main() {
     process.exit(2);
   }
   fs.mkdirSync(P.players, { recursive: true });
-  // 🚫 Removal list (#61): apply new entries first, then never fetch or store those characters.
+  // 🚫 Removal list (#61): pull self-service removals, apply new entries, then never fetch or store those characters.
+  await syncRemovals({ dataDir: DATA_DIR, room: "ps" });
   try {
     purgeRemoved({ dataDir: DATA_DIR, room: "ps" });
   } catch (e) {

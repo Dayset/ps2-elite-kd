@@ -30,6 +30,7 @@ import { analyzeSessionKills, knownSessions, pickForensicSessions } from "../ses
 import { startYieldWatch } from "./yield-check.mjs";
 import { removedList } from "../opt-out.mjs";
 import { purgeRemoved } from "./purge-removed.mjs";
+import { syncRemovals } from "./sync-removals.mjs";
 import {
   CAP_STEPS,
   isDormant,
@@ -1224,7 +1225,8 @@ async function main() {
     return;
   }
   fs.mkdirSync(PLAYERS_DIR, { recursive: true });
-  // 🚫 Removal list (#61): apply new entries first, then never fetch or store those characters.
+  // 🚫 Removal list (#61): pull self-service removals, apply new entries, then never fetch or store those characters.
+  await syncRemovals({ dataDir: DATA_DIR, room: "pc" });
   try {
     purgeRemoved({ dataDir: DATA_DIR, room: "pc" });
   } catch (e) {

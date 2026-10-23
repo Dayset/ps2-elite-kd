@@ -136,6 +136,8 @@ export async function handleVote(request, env, url, json, now = Math.floor(Date.
 
   const acct = await accountFromRequest(request, db);
   if (!acct) return json({ error: "not_signed_in" }, 401, ns);
+  // The oracle predicts PC alerts: PlayStation sign-ins (us-/eu-<cid>, #61) can't vote.
+  if (!/^\d{5,25}$/.test(String(acct.cid))) return json({ error: "pc_only" }, 403, ns);
 
   if (p === "/vote/me") {
     const w = await wallet(db, acct.cid, now);

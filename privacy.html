@@ -36,6 +36,18 @@
     .st-list li { margin: 3px 0; }
     .st-dim { color: var(--dim); font-size: 0.85rem; }
     .st-wrap a { color: var(--accent); }
+    .rm-box { margin: 8px 0 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; }
+    .rm-box p { margin: 0 0 8px; }
+    .rm-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .rm-row select, .rm-row input { font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; min-width: 0; }
+    .rm-row input { flex: 1 1 160px; }
+    .rm-btn { font: inherit; font-weight: 600; color: var(--text); background: var(--ctrl-btn-bg); border: 1px solid var(--accent); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+    .rm-btn:disabled { opacity: 0.55; cursor: default; }
+    .rm-danger { border-color: var(--err); }
+    .rm-link { font: inherit; background: none; border: none; color: var(--accent); text-decoration: underline; cursor: pointer; padding: 0; }
+    .rm-err { color: var(--err); }
+    .rm-ok { color: var(--accent); }
+    .rm-dim { color: var(--dim); font-size: 0.85rem; }
     @media (max-width: 600px) {
       .st-head h1 { padding-right: 0; margin-top: 3.4rem; }
     }
@@ -69,8 +81,9 @@
 
     <section class="st-card" id="remove" aria-labelledby="privRemove">
       <h2 id="privRemove" data-i18n="priv.removeH">🚫 Remove your character</h2>
-      <p data-i18n-html="priv.remove1">Don't want your character here? Use the <a href="https://github.com/Dayset/ps2-elite-kd/issues/new?template=remove-character.yml">removal form</a>. We delete our copy, stop fetching it, take it out of Rankings and other players' opponent lists, and show “removed at the player's request” instead.</p>
-      <p class="st-dim" data-i18n="priv.remove2">To stop anyone removing someone else, we remove a character only after you prove it's yours: on PC, sign in once on the Oracle page; on PlayStation, log out at a time we give you. The form is public: write only the character name. The stats stay on Daybreak's servers and other sites; we can only remove our copy.</p>
+      <p data-i18n="priv.remove1">Don't want your character here? Remove it yourself below. We delete our copy, stop fetching it, take it out of Rankings and other players' opponent lists, and show “removed at the player's request” instead.</p>
+      <div id="rmBox" class="rm-box" aria-live="polite"></div>
+      <p class="st-dim" data-i18n-html="priv.remove2">Only the player can do this: you prove the character is yours by logging out once in the game. The stats stay on Daybreak's servers and other sites; we can only remove our copy. Can't sign in? Use the <a href="https://github.com/Dayset/ps2-elite-kd/issues/new?template=remove-character.yml">request form</a>.</p>
     </section>
 
     <section class="st-card" aria-labelledby="privVisitors">
@@ -105,5 +118,6 @@
     </section>
   </main>
   <script type="module" src="i18n.mjs"></script>
+  <script type="module" src="privacy-remove.mjs?v=20261023-self2"></script>
 </body>
 </html>

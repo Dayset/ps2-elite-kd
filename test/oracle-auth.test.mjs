@@ -36,8 +36,10 @@ async function setup() {
     if (u.pathname === "/watch") { watched.push(await req.json()); return Response.json({ ok: true }); }
     return Response.json({ stream: "idle (connects on demand)", watching: watched.length });
   } }) } };
+  const urls = [];
   const census = async (url) => {
     const u = String(url);
+    urls.push(u);
     if (u.includes("first_lower=nosuchguy")) return json({ character_list: [], returned: 0 });
     return json({ character_list: [{ character_id: CID, name: { first: "Maelstrome26" }, faction_id: "1", w: { world_id: "10" }, o: { online_status: "10" } }] });
   };
@@ -48,7 +50,7 @@ async function setup() {
     const r = await handleAuth(req, env, url, json, now, census);
     return { status: r.status, body: await r.json() };
   };
-  return { DB, env, watched, call, AuthWatcher, matchLogout };
+  return { DB, env, watched, call, AuthWatcher, matchLogout, urls };
 }
 
 test("logout-only login: 5 s wait, 60 s window, token survives reload", { skip }, async () => {
@@ -58,7 +60,7 @@ test("logout-only login: 5 s wait, 60 s window, token survives reload", { skip }
   assert.equal((await call("POST", "/auth/start", T, { name: "nosuchguy" })).status, 404);
   const st = await call("POST", "/auth/start", T, { name: "[DIG] Maelstrome26" });
   assert.equal(st.status, 200);
-  assert.deepEqual(st.body.character, { name: "Maelstrome26", faction: "VS", world: 10, online: true });
+  assert.deepEqual(st.body.character, { name: "Maelstrome26", faction: "VS", world: 10, online: true, platform: "pc" });
   const id = st.body.id;
 
   // ACCEPT is refused for the first 5 seconds.
@@ -156,4 +158,33 @@ test("CORS preflight for sign-in requests is a bodyless 204", async () => {
   assert.equal(r.status, 204);
   assert.match(r.headers.get("Access-Control-Allow-Headers"), /Authorization/);
   assert.match(r.headers.get("Access-Control-Allow-Methods"), /POST/);
+});
+
+test("PlayStation sign-in (#61): Genudine / Ceres lookup, us-/eu- identity, token and logout match per server", { skip }, async () => {
+  const { DB, watched, call, matchLogout, urls } = await setup();
+  const T = 1_792_360_000;
+  const st = await call("POST", "/auth/start", T, { name: "Maelstrome26", platform: "us" });
+  assert.equal(st.status, 200);
+  assert.equal(st.body.character.platform, "us");
+  assert.match(urls.at(-1), /\/get\/ps2ps4us:v2\//, "looked up on Genudine");
+  await call("POST", "/auth/accept", T + 6, { id: st.body.id });
+  assert.equal(watched.at(-1).cid, `us-${CID}`, "watcher gets the server-scoped identity");
+  const w = { [`us-${CID}`]: { id: st.body.id, from: T + 6, until: T + 66 } };
+  const msg = { type: "serviceMessage", payload: { event_name: "PlayerLogout", character_id: CID, timestamp: String(T + 20) } };
+  assert.ok(matchLogout(w, msg, "ps2ps4us"), "Genudine logout passes");
+  assert.equal(matchLogout(w, msg, "ps2ps4eu"), null, "same id on Ceres is somebody else");
+  assert.equal(matchLogout(w, msg, "ps2"), null, "same id on PC is somebody else");
+  DB.raw.prepare("UPDATE challenge SET status='passed' WHERE id=?").run(st.body.id);
+  const done = await call("POST", "/auth/complete", T + 30, { id: st.body.id });
+  assert.equal(done.status, 200);
+  assert.equal(done.body.character.cid, `us-${CID}`);
+  const me = await call("GET", "/auth/me", T + 31, null, { Authorization: `Bearer ${done.body.token}` });
+  assert.equal(me.status, 200);
+  assert.equal(me.body.character.platform, "us");
+  const eu = await call("POST", "/auth/start", T + 40, { name: "Maelstrome26", platform: "eu" });
+  assert.match(urls.at(-1), /\/get\/ps2ps4eu:v2\//, "looked up on Ceres");
+  const bad = await call("POST", "/auth/start", T + 41, { name: "Maelstrome26", platform: "xbox" });
+  assert.match(urls.at(-1), /\/get\/ps2:v2\//, "unknown platform falls back to PC");
+  assert.equal(eu.status, 200);
+  assert.equal(bad.status, 200);
 });

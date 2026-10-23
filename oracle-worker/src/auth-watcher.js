@@ -1,6 +1,7 @@
 /**
  * AuthWatcher: one SQLite-backed Durable Object that listens to the Census event
- * stream for PlayerLogout ONLY while at least one login challenge is open.
+ * stream for PlayerLogout ONLY while at least one login challenge is open. One
+ * socket per environment in use: ps2 (PC), ps2ps4us (Genudine), ps2ps4eu (Ceres), #61.
  *
  * /watch {id, cid, from, until}  add a character; connect + subscribe if needed
  * /status                         stream state (auth health)
@@ -12,15 +13,22 @@
  * outside the window and ignored. Free-plan friendly: no traffic and no memory
  * when nobody is verifying.
  */
-const STREAM = (sid) => `https://push.planetside2.com/streaming?environment=ps2&service-id=s:${sid}`;
+const STREAM = (sid, env = "ps2") => `https://push.planetside2.com/streaming?environment=${env}&service-id=s:${sid}`;
+/** Watch key -> stream environment + bare cid (PC "5428…", PlayStation "us-5428…" / "eu-5428…", #61). */
+export function watchEnv(key) {
+  const m = /^(?:(us|eu)-)?(\d{5,25})$/.exec(String(key || ""));
+  if (!m) return null;
+  return { env: m[1] === "us" ? "ps2ps4us" : m[1] === "eu" ? "ps2ps4eu" : "ps2", cid: m[2] };
+}
+const PREFIX = { ps2: "", ps2ps4us: "us-", ps2ps4eu: "eu-" };
 const ALARM_MS = 10_000;
 const SKEW_BEFORE_S = 2, SKEW_AFTER_S = 5;
 
-/** Pure: which watch (if any) a stream message passes. */
-export function matchLogout(watches, msg) {
+/** Pure: which watch (if any) a stream message from stream `env` passes. */
+export function matchLogout(watches, msg, env = "ps2") {
   const p = msg && msg.type === "serviceMessage" && msg.payload;
   if (!p || p.event_name !== "PlayerLogout") return null;
-  const cid = String(p.character_id || "");
+  const cid = (PREFIX[env] || "") + String(p.character_id || "");
   const ts = +p.timestamp;
   const w = watches[cid];
   if (!w || !Number.isFinite(ts)) return null;
@@ -31,60 +39,68 @@ export class AuthWatcher {
   constructor(ctx, env) {
     this.ctx = ctx;
     this.env = env;
-    this.ws = null;
-    this.lastMsg = 0;
+    this.socks = {}; // stream environment -> { ws, lastMsg, subscribed:Set }
     this.connects = 0;
     this.lastError = null;
-    this.subscribed = new Set();
   }
+
+  get ws() { return Object.values(this.socks).some((x) => x && x.ws) || null; }
+  get lastMsg() { return Math.max(0, ...Object.values(this.socks).map((x) => (x && x.lastMsg) || 0)); }
 
   async watches() { return (await this.ctx.storage.get("watches")) || {}; }
   async save(w) { await this.ctx.storage.put("watches", w); }
 
   async ensure() {
     const w = await this.watches();
-    const cids = Object.keys(w);
-    if (!cids.length) { this.close(); return; }
+    const byEnv = {};
+    for (const key of Object.keys(w)) {
+      const e = watchEnv(key);
+      if (e) (byEnv[e.env] = byEnv[e.env] || []).push(e.cid);
+    }
+    for (const env of Object.keys(this.socks)) if (!byEnv[env]) this.close(env);
+    if (!Object.keys(byEnv).length) return;
     if (!(await this.ctx.storage.getAlarm())) await this.ctx.storage.setAlarm(Date.now() + ALARM_MS);
-    if (!this.ws || Date.now() - this.lastMsg > 90_000) {
-      this.close();
-      const sid = ((this.env && this.env.CENSUS_SERVICE_ID) || "daysetps2legends").replace(/^s:/, "");
-      const res = await fetch(STREAM(sid), { headers: { Upgrade: "websocket" } });
-      const ws = res.webSocket;
-      if (!ws) { this.lastError = `upgrade ${res.status} @${new Date().toISOString()}`; return; }
-      ws.accept();
-      this.ws = ws;
-      this.lastMsg = Date.now();
-      this.connects++;
-      this.subscribed = new Set();
-      ws.addEventListener("message", (m) => this.onMessage(m.data));
-      ws.addEventListener("close", () => { if (this.ws === ws) this.ws = null; });
-      ws.addEventListener("error", () => { if (this.ws === ws) this.ws = null; });
-    }
-    const add = cids.filter((c) => !this.subscribed.has(c));
-    if (add.length) {
-      this.ws.send(JSON.stringify({ service: "event", action: "subscribe", characters: add, eventNames: ["PlayerLogout"] }));
-      add.forEach((c) => this.subscribed.add(c));
+    const sid = ((this.env && this.env.CENSUS_SERVICE_ID) || "daysetps2legends").replace(/^s:/, "");
+    for (const [env, cids] of Object.entries(byEnv)) {
+      let sk = this.socks[env];
+      if (!sk || !sk.ws || Date.now() - sk.lastMsg > 90_000) {
+        this.close(env);
+        const res = await fetch(STREAM(sid, env), { headers: { Upgrade: "websocket" } });
+        const ws = res.webSocket;
+        if (!ws) { this.lastError = `${env} upgrade ${res.status} @${new Date().toISOString()}`; continue; }
+        ws.accept();
+        sk = this.socks[env] = { ws, lastMsg: Date.now(), subscribed: new Set() };
+        this.connects++;
+        ws.addEventListener("message", (m) => this.onMessage(m.data, env));
+        ws.addEventListener("close", () => { if (this.socks[env] && this.socks[env].ws === ws) this.socks[env].ws = null; });
+        ws.addEventListener("error", () => { if (this.socks[env] && this.socks[env].ws === ws) this.socks[env].ws = null; });
+      }
+      const add = cids.filter((c) => !sk.subscribed.has(c));
+      if (add.length) {
+        sk.ws.send(JSON.stringify({ service: "event", action: "subscribe", characters: add, eventNames: ["PlayerLogout"] }));
+        add.forEach((c) => sk.subscribed.add(c));
+      }
     }
   }
 
-  close() {
-    try { this.ws && this.ws.close(); } catch {}
-    this.ws = null;
-    this.subscribed = new Set();
+  close(env) {
+    for (const e of env ? [env] : Object.keys(this.socks)) {
+      try { this.socks[e] && this.socks[e].ws && this.socks[e].ws.close(); } catch {}
+      delete this.socks[e];
+    }
   }
 
-  async onMessage(data) {
-    this.lastMsg = Date.now();
+  async onMessage(data, env = "ps2") {
+    if (this.socks[env]) this.socks[env].lastMsg = Date.now();
     let msg;
     try { msg = JSON.parse(typeof data === "string" ? data : new TextDecoder().decode(data)); } catch { return; }
     const w = await this.watches();
-    const hit = matchLogout(w, msg);
+    const hit = matchLogout(w, msg, env);
     if (!hit) return;
     await this.env.DB.prepare("UPDATE challenge SET status='passed', passed_at=? WHERE id=? AND status='accepted'").bind(hit.ts, hit.id).run();
     delete w[hit.cid];
     await this.save(w);
-    if (!Object.keys(w).length) this.close();
+    await this.ensure();
   }
 
   async alarm() {
@@ -97,8 +113,8 @@ export class AuthWatcher {
       }
     }
     await this.save(w);
-    if (Object.keys(w).length) { await this.ensure(); await this.ctx.storage.setAlarm(Date.now() + ALARM_MS); }
-    else this.close();
+    await this.ensure();
+    if (Object.keys(w).length) await this.ctx.storage.setAlarm(Date.now() + ALARM_MS);
   }
 
   async fetch(request) {
@@ -114,6 +130,7 @@ export class AuthWatcher {
     const w = await this.watches();
     return Response.json({
       stream: this.ws ? "connected" : Object.keys(w).length ? "reconnecting" : "idle (connects on demand)",
+      streams: Object.fromEntries(Object.entries(this.socks).map(([e, x]) => [e, x && x.ws ? "connected" : "reconnecting"])),
       watching: Object.keys(w).length,
       last_msg_ago_s: this.lastMsg ? Math.round((Date.now() - this.lastMsg) / 1000) : null,
       connects: this.connects, last_error: this.lastError,

@@ -12,7 +12,8 @@
  *
  * No LLM, no paste step: the state the UI reads is the state the engine wrote.
  * Read API (CORS *): /health /live /alert?key= /history
- * Key API (X-Oracle-Key): /export, POST /commander
+ * Key API (X-Oracle-Key): /export, POST /commander, GET /privacy/list
+ * Self-service removal (Bearer, #61): GET /privacy/me, POST /privacy/remove, POST /privacy/restore
  */
 import {
   WORLDS, ZONES, WORLD_NAMES, ZONE_NAMES, TERRITORY_ALERTS, SUDDEN_DEATH, FACS, alertKind,
@@ -22,6 +23,7 @@ import { binGetter, hasTree, regionMap, latticeFor, captureModel, resistanceMode
 import { runCommander, ownership, applyElimination } from "./commander.js";
 import { handleAuth, CHALLENGE_KEEP_S } from "./auth.js";
 import { handleVote, settleStatements } from "./vote.js";
+import { handlePrivacy } from "./privacy.js";
 import { cutAwareSnap } from "./cut.js";
 import { focusPlan } from "./focus.js";
 import { alertFrames, archiveAlert, nextToArchive, putBundle, validBundle } from "./archive.js";
@@ -605,6 +607,7 @@ async function handle(request, env) {
   }
   if (url.pathname.startsWith("/auth/")) return handleAuth(request, env, url, json, now);
   if (url.pathname.startsWith("/vote/")) return handleVote(request, env, url, json, now);
+  if (url.pathname.startsWith("/privacy/")) return handlePrivacy(request, env, url, json, now, authed);
 
   if (url.pathname === "/" || url.pathname === "/health") {
     const last = await getMeta(db, "last_cycle");

@@ -21,6 +21,25 @@ const STARTS_PER_IP_10MIN = 6;
 const NAME_RE = /^[A-Za-z0-9]{3,32}$/;
 const FAC = { 1: "VS", 2: "NC", 3: "TR", 4: "NSO" };
 
+/**
+ * Platforms (#61): PC = Census "ps2"; PlayStation Genudine / Ceres = "ps2ps4us" /
+ * "ps2ps4eu". PS character ids are per server, so a PS identity is "us-<cid>" /
+ * "eu-<cid>"; a PC identity is the bare cid (unchanged).
+ */
+export const PLATFORMS = Object.freeze({
+  pc: { ns: "ps2", prefix: "" },
+  us: { ns: "ps2ps4us", prefix: "us-" },
+  eu: { ns: "ps2ps4eu", prefix: "eu-" },
+});
+export const IDENT_RE = /^(?:(us|eu)-)?(\d{5,25})$/;
+/** "us-5428…" -> { platform: "us", ns: "ps2ps4us", cid: "5428…" }; "5428…" -> PC. */
+export function parseIdent(ident) {
+  const m = IDENT_RE.exec(String(ident || ""));
+  if (!m) return null;
+  const platform = m[1] || "pc";
+  return { platform, ns: PLATFORMS[platform].ns, cid: m[2] };
+}
+
 const enc = new TextEncoder();
 const b64u = (bytes) => btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 const fromB64u = (s) => Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((s.length + 3) % 4)), (c) => c.charCodeAt(0));
@@ -49,7 +68,7 @@ export async function signToken(secret, cid, tokenId) {
 export async function readToken(secret, token) {
   try {
     const [cid, tokenId, sig] = new TextDecoder().decode(fromB64u(String(token))).split(".");
-    if (!/^\d{5,25}$/.test(cid) || !tokenId || !sig) return null;
+    if (!IDENT_RE.test(cid) || !tokenId || !sig) return null;
     const ok = await crypto.subtle.verify("HMAC", await hmacKey(secret), fromB64u(sig), enc.encode(`${cid}.${tokenId}`));
     return ok ? { cid, tokenId } : null;
   } catch { return null; }
@@ -70,8 +89,8 @@ export async function ipHash(db, ip) {
 export const CHALLENGE_KEEP_S = 86400;
 
 /** Census: character by exact name -> {cid, name, faction, world, online} or null. */
-export async function lookupCharacter(sid, name, fetchImpl = fetch) {
-  const base = `https://census.daybreakgames.com/s:${sid}/get/ps2:v2`;
+export async function lookupCharacter(sid, name, fetchImpl = fetch, ns = "ps2") {
+  const base = `https://census.daybreakgames.com/s:${sid}/get/${ns}:v2`;
   const r = await fetchImpl(`${base}/character/?name.first_lower=${encodeURIComponent(name.toLowerCase())}&c:show=character_id,name,faction_id&c:join=characters_world^inject_at:w^show:world_id&c:join=characters_online_status^inject_at:o^show:online_status`,
     { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(15000) });
   if (!r.ok) throw new Error(`census ${r.status}`);
@@ -102,14 +121,16 @@ export async function handleAuth(request, env, url, json, now = Math.floor(Date.
     const ipKey = await ipHash(db, request.headers.get("CF-Connecting-IP"));
     const recent = await db.prepare("SELECT COUNT(*) AS n FROM challenge WHERE ip_hash=? AND created > ?").bind(ipKey, now - 600).first();
     if (recent && recent.n >= STARTS_PER_IP_10MIN) return json({ error: "too_many_attempts", retry_after_s: 600 }, 429);
+    const platform = Object.prototype.hasOwnProperty.call(PLATFORMS, body.platform) ? body.platform : "pc";
     let ch;
-    try { ch = await lookupCharacter((env.CENSUS_SERVICE_ID || "daysetps2legends").replace(/^s:/, ""), name, fetchImpl); }
+    try { ch = await lookupCharacter((env.CENSUS_SERVICE_ID || "daysetps2legends").replace(/^s:/, ""), name, fetchImpl, PLATFORMS[platform].ns); }
     catch { return json({ error: "census_unavailable" }, 503); }
     if (!ch) return json({ error: "character_not_found" }, 404);
+    ch.cid = PLATFORMS[platform].prefix + ch.cid; // identity: bare cid on PC, us-/eu-<cid> on PlayStation
     const id = randomId(12);
     await db.prepare("INSERT INTO challenge (id, cid, name, world, faction, created, status, ip_hash) VALUES (?,?,?,?,?,?,'created',?)")
       .bind(id, ch.cid, ch.name, ch.world, ch.faction, now, ipKey).run();
-    return json({ id, character: { name: ch.name, faction: ch.faction, world: ch.world, online: ch.online },
+    return json({ id, character: { name: ch.name, faction: ch.faction, world: ch.world, online: ch.online, platform },
       accept_after_s: ACCEPT_WAIT_S, window_s: WINDOW_S }, 200, { "Cache-Control": "no-store" });
   }
 
@@ -149,7 +170,7 @@ export async function handleAuth(request, env, url, json, now = Math.floor(Date.
         .bind(c.cid, c.name, c.world, c.faction, tokenId, now, now),
       db.prepare("UPDATE challenge SET status='completed' WHERE id=? AND status='passed'").bind(c.id),
     ]);
-    return json({ token, character: { cid: c.cid, name: c.name, faction: c.faction, world: c.world } }, 200, { "Cache-Control": "no-store" });
+    return json({ token, character: { cid: c.cid, name: c.name, faction: c.faction, world: c.world, platform: (parseIdent(c.cid) || {}).platform || "pc" } }, 200, { "Cache-Control": "no-store" });
   }
 
   if (p === "/auth/me" || (p === "/auth/logout" && request.method === "POST")) {
@@ -161,7 +182,7 @@ export async function handleAuth(request, env, url, json, now = Math.floor(Date.
       await db.prepare("UPDATE account SET token_id=NULL, updated=? WHERE cid=? AND token_id=?").bind(now, a.cid, t.tokenId).run();
       return json({ ok: true }, 200, { "Cache-Control": "no-store" });
     }
-    return json({ character: { cid: a.cid, name: a.name, faction: a.faction, world: a.world, since: a.created } }, 200, { "Cache-Control": "no-store" });
+    return json({ character: { cid: a.cid, name: a.name, faction: a.faction, world: a.world, since: a.created, platform: (parseIdent(a.cid) || {}).platform || "pc" } }, 200, { "Cache-Control": "no-store" });
   }
 
   if (p === "/auth/health") {
