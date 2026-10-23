@@ -3154,14 +3154,15 @@ import {
     return true;
   }
 
-  function drawChart(list, { waveFrame = false, skipTable = false } = {}) {
+  function drawChart(list, { waveFrame = false, skipTable = false, pop = true } = {}) {
     updateWaveRangeWarn(list);
     if (waveFrame && updateWaveFrame(list)) return;
     waveRig = null;
     const svg = els.chart;
     clearSvg(svg);
     setChartIdle(false);
-    popChartSection(list);
+    if (pop) popChartSection(list);
+    else syncChartSectionNames(list);
     svg.setAttribute("viewBox", `0 0 ${VB.w} ${VB.h}`);
     svg.setAttribute("role", "img");
     svg.setAttribute("aria-label", tr("chart.elite", "Elite K/D vs Enemy KPM"));
@@ -4369,16 +4370,25 @@ import {
   function popChartSection(list) {
     const sec = els.chartSection;
     if (!sec || !list || !list.length) return;
+    const prevSig = chartPoppedFor;
+    const prevSeq = chartPoppedSeq;
+    const sig = syncChartSectionNames(list);
+    if (sig && (sig !== prevSig || analyzeSeq !== prevSeq)) sec.open = true;
+  }
+
+  /* Keep the section header + pop bookkeeping in step with the drawn set
+   * WITHOUT opening the section (a chip removal redraws the graph, but
+   * deleting names must never spring the section open — owner 2026-10-22). */
+  function syncChartSectionNames(list) {
+    if (!list || !list.length) return "";
     const names = list.map((p) => p && (p.display || p.name)).filter(Boolean);
-    if (!names.length) return;
+    if (!names.length) return "";
     const namesEl = document.getElementById("chartSectionNames");
     if (namesEl) namesEl.textContent = names.join(", ");
     const sig = names.map((n) => slugKey(n)).sort().join("|");
-    if (sig !== chartPoppedFor || analyzeSeq !== chartPoppedSeq) {
-      chartPoppedFor = sig;
-      chartPoppedSeq = analyzeSeq;
-      sec.open = true;
-    }
+    chartPoppedFor = sig;
+    chartPoppedSeq = analyzeSeq;
+    return sig;
   }
 
   function foldChartSection() {
@@ -4678,12 +4688,17 @@ import {
     const have = names.map((n) => graphedPlayerFor(n));
     if (have.every(Boolean)) {
       const keys = names.map(slugKey);
+      // A redraw that only REMOVES names never opens the section (owner
+      // 2026-10-22: deleting names from the field must not spring it open);
+      // one that adds a name still pops it like an analysis does.
+      const prevKeys = new Set(lastLoadedNames.map(slugKey));
+      const hasNew = names.some((n) => !prevKeys.has(slugKey(n)));
       if (namesSetKey(names) !== namesSetKey(lastLoadedNames)) resetYZoom({ redraw: false });
       players = have;
       lastAnalyzedNames = names.slice();
       lastLoadedNames = names.slice();
       lastPlayerByKey = new Map(keys.map((k, i) => [k, have[i]]));
-      drawChart(players);
+      drawChart(players, { pop: hasNew });
       saveLastComparison(names);
       syncUrlNames(names);
       renderNameTokens();

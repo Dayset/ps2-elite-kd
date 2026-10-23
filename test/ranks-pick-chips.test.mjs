@@ -169,7 +169,17 @@ describe("Skill graph section: no placeholder, collapsible, pops on analyze (own
     assert.match(app, /foldChartSection\(\)/);
     // A fresh Analyze re-pops even the same names (analyze sequence guard).
     assert.match(app, /analyzeSeq \+= 1/);
-    assert.match(app, /analyzeSeq !== chartPoppedSeq/);
+    assert.match(app, /analyzeSeq !== prevSeq/);
+  });
+
+  it("deleting names never springs the section open; adding one still pops (owner 2026-10-22)", () => {
+    const app = read("app.js");
+    // Header/bookkeeping sync without opening, used on removal redraws.
+    assert.match(app, /function syncChartSectionNames\(list\)/);
+    assert.match(app, /else syncChartSectionNames\(list\);/);
+    // The chip-follow redraw pops only when the set gained a name.
+    assert.match(app, /const hasNew = names\.some\(\(n\) => !prevKeys\.has\(slugKey\(n\)\)\);/);
+    assert.match(app, /drawChart\(players, \{ pop: hasNew \}\);/);
   });
 
   it("default name + empty-box dice draw from the top five tiers only (both rooms)", () => {
