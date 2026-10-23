@@ -9,15 +9,19 @@
  *   🐣 Newbie softening: a negative 🔀 Diff was raised by the play-time
  *      factor (newbie-diff.mjs) by at least AUTO_MARK_MIN points (same rule as
  *      🛖, hut.mjs HUT_MARK_MIN). Hover = "Softened from …".
- * Players cleared in data/reviewed.json carry no rvp / nbd, so no mark.
+ *   🐣 New player (owner 2026-10-23, "A and B"): also when play time is under
+ *      the data cut (newbie-diff.mjs NBD_NEW_Q), whatever the Diff. Hover =
+ *      "New player (about N h played)" (+ "Diff softened from …" when both).
+ * Players cleared in data/reviewed.json carry no rvp / nbd / nbh, so no mark.
  *
- * g = trait-scores aimGap() result, z = zergScore() result (either may be null).
+ * g = trait-scores aimGap() result, z = zergScore() result (either may be null),
+ * nbh = new-player hours (newbie-diff.mjs newPlayerHours; null = not new).
  * Returns [{ id, mark, tip }] in display order.
  */
 import { REV_CONFIRM, zrevConfirmedTip } from "./zerg-revive.mjs?v=20261023-short1";
-import { nbdFromTip } from "./newbie-diff.mjs?v=20261023-short1";
+import { nbdFromTip, nbdNewTip } from "./newbie-diff.mjs?v=20261023-nbh1";
 import { HUT_MARK_MIN } from "./hut.mjs?v=20261023-short1";
-import { fmtSigned } from "./trait-tips.mjs?v=20261023-short1";
+import { fmtSigned } from "./trait-tips.mjs?v=20261023-nbh1";
 import { flairsFor } from "./flairs.mjs?v=20261010-sav1";
 import { t as tr, currentLang } from "./i18n.mjs";
 
@@ -27,12 +31,18 @@ export const AUTO_MARK_MIN = HUT_MARK_MIN;
 
 const fin = (v) => typeof v === "number" && Number.isFinite(v);
 
-export function autoMarks(g, z) {
+export function autoMarks(g, z, nbh = null) {
   const out = [];
   if (z && z.confirmed && fin(z.rvp) && fin(z.score) && z.score >= REV_CONFIRM) {
     out.push({ id: "zerg", mark: ZERG_MARK, tip: ZERG_MARK + " " + zrevConfirmedTip(z.rvp) });
   }
-  if (g && g.by === "nbd" && fin(g.score) && fin(g.raw) && g.score - g.raw >= AUTO_MARK_MIN) {
+  const soft = !!(g && g.by === "nbd" && fin(g.score) && fin(g.raw) && g.score - g.raw >= AUTO_MARK_MIN);
+  const isNew = fin(nbh) && nbh >= 0;
+  if (isNew && soft) {
+    out.push({ id: "nbd", mark: NBD_MARK, tip: nbdNewTip(nbh) + " " + tr("diff.nbdFromShort", "Diff softened from {raw}.", { raw: fmtSigned(g.raw) }) });
+  } else if (isNew) {
+    out.push({ id: "nbd", mark: NBD_MARK, tip: nbdNewTip(nbh) });
+  } else if (soft) {
     out.push({ id: "nbd", mark: NBD_MARK, tip: nbdFromTip(fmtSigned(g.raw)) });
   }
   return out;
@@ -63,9 +73,9 @@ const esc = (s) =>
   String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
 /** Order after the name: (* / 💩 / 🛖 drawn by the caller) 🪳 🐣 🪦. Same look as 🛖 (poop-mark class: name width rules already reserve room). */
-export function autoMarksHtml(g, z, times = null, now = Date.now()) {
+export function autoMarksHtml(g, z, times = null, now = Date.now(), nbh = null) {
   const ina = times ? inactiveMark(times, now) : null;
-  return [...autoMarks(g, z), ...(ina ? [ina] : [])]
+  return [...autoMarks(g, z, nbh), ...(ina ? [ina] : [])]
     .map((m) => `<span class="poop-mark auto-mark auto-mark-${m.id}" title="${esc(m.tip)}" aria-label="${esc(m.tip)}">${m.mark}</span>`)
     .join("");
 }

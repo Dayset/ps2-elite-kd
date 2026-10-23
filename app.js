@@ -42,10 +42,10 @@ await i18nReady;
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261020-wide1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
 import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261022-nbd1";
-import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, diffValueHtml, aimGapCellTip, zergCellTip } from "./trait-tips.mjs?v=20261023-short1";
+import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, diffValueHtml, aimGapCellTip, zergCellTip } from "./trait-tips.mjs?v=20261023-nbh1";
 import { ZREV_NOTE, ZREV_EXPLAIN } from "./zerg-revive.mjs?v=20261023-short1";
 import { VDIFF_NOTE, VDIFF_EXPLAIN } from "./diff-vehicle.mjs?v=20261023-short1";
-import { NBD_NOTE, NBD_EXPLAIN } from "./newbie-diff.mjs?v=20261023-short1";
+import { NBD_NOTE, NBD_EXPLAIN, newbieFactor, newPlayerHours } from "./newbie-diff.mjs?v=20261023-nbh1";
 import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261023-short1";
 import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261022-wpc1";
 import { infantryKillsUrl, summarizeInfantryKills } from "./infantry.mjs?v=20261023-short1";
@@ -110,8 +110,8 @@ function thinCellTip(r) {
 }
 import { markNote, statMark, confirmedPadderSlugs, isPenalizedPadder, POOP_MARK, POOP_TIP, setRoomRule } from "./padding.mjs?v=20261023-short1";
 import { removedList } from "./opt-out.mjs?v=20261023-optout1";
-import { HUT_MARK, HUT_TIP, HUT_EXPLAIN, HUT_DIFF_NOTE } from "./hut.mjs?v=20261023-short1";
-import { autoMarksHtml } from "./auto-marks.mjs?v=20261023-rip1";
+import { HUT_MARK, HUT_TIP, HUT_EXPLAIN, HUT_DIFF_NOTE, playMinutes } from "./hut.mjs?v=20261023-short1";
+import { autoMarksHtml } from "./auto-marks.mjs?v=20261023-nbh1";
 // Account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times: chart name list only.
 import { accountTimes, flairsHtml, flairsFor } from "./flairs.mjs?v=20261010-sav1";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
@@ -1881,7 +1881,7 @@ import {
   }
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261023-legal1")
+    rankingsLoading = import("./rankings.mjs?v=20261023-nbh1")
       .then((m) => {
         rankingsApi = m.initRankings(rankingsHost);
         return rankingsApi.ready;
@@ -3790,8 +3790,24 @@ import {
   const hutMarked = (display) => hutOf(display) != null && hutBySlug.get(slugKey(display)).mk;
   // 🔀 vehicle damp factor (diff-vehicle.mjs, ranks-lite "vdf") and 🪳 revive percentile (zerg-revive.mjs, "rvp") by slug; reviewed.json clearances applied at build time.
   // 🐣 newbie factor on a negative 🔀 Diff (newbie-diff.mjs, ranks-lite "nbd").
-  let vdfBySlug = null, rvpBySlug = null, nbdBySlug = null;
-  const nbdOf = (display) => (nbdBySlug && display ? nbdBySlug.get(slugKey(display)) ?? null : null);
+  // 🐣 "nbh" = new-player hours; liteSlugs = players in this build. A player fetched after
+  // the build (not in liteSlugs) is rated here from lifetime kills ÷ KPM with the build's
+  // nbdCuts (same rule as build-ranks.mjs; reviewed.json clearances are build-side only).
+  let vdfBySlug = null, rvpBySlug = null, nbdBySlug = null, nbhBySlug = null, liteSlugs = null, nbdCutsLite = null;
+  const playMinOf = (p) => (p ? playMinutes(p.infantry && p.infantry.kills, p.global_kpm) : NaN);
+  const inBuild = (display) => !!(liteSlugs && display && liteSlugs.has(slugKey(display)));
+  const nbdOf = (display, p = null) => {
+    if (!display) return null;
+    if (nbdBySlug && inBuild(display)) return nbdBySlug.get(slugKey(display)) ?? null;
+    if (p && nbdCutsLite && liteSlugs) { const f = newbieFactor(playMinOf(p), nbdCutsLite); return f != null ? Math.round(f * 1000) / 1000 : null; }
+    return null;
+  };
+  const nbhOf = (display, p = null) => {
+    if (!display) return null;
+    if (nbhBySlug && inBuild(display)) return nbhBySlug.get(slugKey(display)) ?? null;
+    if (p && nbdCutsLite && liteSlugs) return newPlayerHours(playMinOf(p), nbdCutsLite);
+    return null;
+  };
   const vdfOf = (display) => (vdfBySlug && display ? vdfBySlug.get(slugKey(display)) ?? null : null);
   const rvpOf = (display) => (rvpBySlug && display ? rvpBySlug.get(slugKey(display)) ?? null : null);
   // 🤥😤 Impostor–DieHard + 🪳 Zerg (owner 2026-10-21, trait-scores.mjs): rounded
@@ -3830,7 +3846,10 @@ import {
           const mi = payload.cols.indexOf("hutMk");
           for (const row of payload.rows) if (isFiniteNum(row[hi])) hutBySlug.set(row[si], { f: row[hi], mk: mi >= 0 && row[mi] === 1 });
         }
-        for (const [id, set] of [["vdf", (m) => { vdfBySlug = m; }], ["rvp", (m) => { rvpBySlug = m; }], ["nbd", (m) => { nbdBySlug = m; }]]) {
+        if (si >= 0) liteSlugs = new Set(payload.rows.map((row) => row[si]));
+        const nc = payload.nbdCuts;
+        nbdCutsLite = nc && isFiniteNum(nc.lo) && isFiniteNum(nc.hi) && isFiniteNum(nc.nw) ? nc : null;
+        for (const [id, set] of [["vdf", (m) => { vdfBySlug = m; }], ["rvp", (m) => { rvpBySlug = m; }], ["nbd", (m) => { nbdBySlug = m; }], ["nbh", (m) => { nbhBySlug = m; }]]) {
           const k = payload.cols.indexOf(id);
           if (k < 0 || si < 0) continue;
           const m = new Map();
@@ -3934,7 +3953,7 @@ import {
       { id: "apk", label: tr("col.assists", "🤝 Assists"), hint: tr("tip.apk", "Assists per kill in recent Honu sessions: how often you help teammates get kills."), fn: (r) => (apkBySlug && r.p ? apkBySlug.get(slugKey(r.p.display)) : undefined), digits: 2, apkCell: true, pctDir: "low", pctLowPhrase: "more assists" },
       // 🤥😤 Impostor–DieHard (owner t484u): ⚔️ iVi percentile − IvI percentile, −99…+99; neither side is better.
       { id: "diff", label: tr("col.diff", "🔀 Diff"), hint: tr("tip.diff", AIMGAP_HINT), // short hover (owner t9: 2–3 lines); 🛖 / 🚜 / 🐣 details live in "What … means" and columns.html#diff digits: 0, aimGapCell: true,
-        fn: (r) => { const g = traitP ? aimGap(traitP, shownValue(r, "adjs"), r.ivi, r.p ? hutOf(r.p.display) : null, r.p ? vdfOf(r.p.display) : null, r.p ? nbdOf(r.p.display) : null) : null; return g ? g.score : NaN; } },
+        fn: (r) => { const g = traitP ? aimGap(traitP, shownValue(r, "adjs"), r.ivi, r.p ? hutOf(r.p.display) : null, r.p ? vdfOf(r.p.display) : null, r.p ? nbdOf(r.p.display, r.p) : null) : null; return g ? g.score : NaN; } },
       // 🪳 Zerg (owner t480u): lower of the 🎈 Inflation and 🤝 Assists percentiles; lower is better (like 🤝: reversed grey %).
       { id: "zerg", label: tr("col.zerg", "🪳 Zerg"), hint: tr("tip.zerg", ZERG_HINT), // short hover (owner t9); 🪳 revive details in "What 🪳 means" and columns.html#zerg digits: 0, zergCell: true, pctDir: "low",
         fn: (r) => { const z = traitP && r.p ? zergScore(traitP, shownValue(r, "inflation"), apkBySlug && apkBySlug.get(slugKey(r.p.display)), rvpOf(r.p.display)) : null; return z ? z.score : NaN; } },
@@ -4111,7 +4130,7 @@ import {
               // 🤥😤 Impostor–DieHard: signed score; neutral grey gap in points to the column top; side + both percentiles on hover.
               if (c.aimGapCell) {
                 if (!isFiniteNum(v)) return `<td title="${escapeHtml(tr("diff.missing", AIMGAP_MISSING))}">—</td>`;
-                const g = aimGap(traitP, shownValue(row, "adjs"), row.ivi, row.p ? hutOf(row.p.display) : null, row.p ? vdfOf(row.p.display) : null, row.p ? nbdOf(row.p.display) : null);
+                const g = aimGap(traitP, shownValue(row, "adjs"), row.ivi, row.p ? hutOf(row.p.display) : null, row.p ? vdfOf(row.p.display) : null, row.p ? nbdOf(row.p.display, row.p) : null);
                 const top = Math.max(...metrics.map((m) => c.fn(m)).filter(isFiniteNum));
                 const gap = isFiniteNum(top) && v < top ? top - v : null;
                 const gTag = gap == null ? "" : `<span class="pct" title="${escapeHtml(tr("pct.belowPts", "{n} points below the column top ({ref})", { n: gap, ref: fmtSigned(top) }))}">−${gap}</span>`;
@@ -4160,7 +4179,7 @@ import {
     // 🔀 vehicle damp (diff-vehicle.mjs): "What 🔀 means" when a shown player's Diff is reduced by it.
     if (traitP && metrics.some((r) => { const g = r.p ? aimGap(traitP, shownValue(r, "adjs"), r.ivi, hutOf(r.p.display), vdfOf(r.p.display)) : null; return g && g.by === "veh" && g.score !== g.raw; })) markLegends.push(VDIFF_EXPLAIN);
     // 🐣 newbie softening (newbie-diff.mjs): explained when a shown player's negative Diff is softened.
-    if (traitP && metrics.some((r) => { const g = r.p ? aimGap(traitP, shownValue(r, "adjs"), r.ivi, hutOf(r.p.display), vdfOf(r.p.display), nbdOf(r.p.display)) : null; return g && g.by === "nbd" && g.score !== g.raw; })) markLegends.push(NBD_EXPLAIN);
+    if (traitP && metrics.some((r) => { const g = r.p ? aimGap(traitP, shownValue(r, "adjs"), r.ivi, hutOf(r.p.display), vdfOf(r.p.display), nbdOf(r.p.display, r.p)) : null; return g && g.by === "nbd" && g.score !== g.raw; })) markLegends.push(NBD_EXPLAIN);
     const markNotesBlock = markLegends.length
       ? `<details class="fold-note mark-notes"${markNotesOpen ? " open" : ""}>` +
         `<summary>♿ What ${[...new Set(markLegends.map((t) => t.trim().split(/\s+/)[0]))].join(" ")} ${markLegends.length > 1 ? "mean" : "means"}</summary>` +
@@ -4355,9 +4374,9 @@ import {
   function autoMarkHtml(row) {
     if (!traitP || !row || !row.p) return "";
     const d = row.p.display;
-    const g = aimGap(traitP, shownValue(row, "adjs"), row.ivi, hutOf(d), vdfOf(d), nbdOf(d));
+    const g = aimGap(traitP, shownValue(row, "adjs"), row.ivi, hutOf(d), vdfOf(d), nbdOf(d, row.p));
     const z = zergScore(traitP, shownValue(row, "inflation"), apkBySlug && apkBySlug.get(slugKey(d)), rvpOf(d));
-    return autoMarksHtml(g, z, row.p.times || null);
+    return autoMarksHtml(g, z, row.p.times || null, Date.now(), nbhOf(d, row.p));
   }
   /** 🛖 safe-spot player (hut.mjs HUT_TIP): positive 🔀 Diff damped; next to the name, never in the Diff cell (owner t504u). */
   function hutHtml() {

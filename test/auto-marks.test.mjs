@@ -46,3 +46,15 @@ test("🪦 inactive mark: flairs.mjs rule (last activity > 365 days), 👶 / �
     assert.match(j["flair.inactive"], /^🪦 .*\{date\}/, l);
   }
 });
+
+test("🐣 also for a new player by play time, whatever the Diff (owner 2026-10-23: A and B)", () => {
+  const m = autoMarks({ by: "aim", raw: 20, score: 20 }, null, 12.4);
+  assert.deepEqual(m.map((x) => x.id), ["nbd"]);
+  assert.match(m[0].tip, /New player \(about 12 h played\)/);
+  const both = autoMarks({ by: "nbd", raw: -40, score: 0 }, null, 3);
+  assert.equal(both.length, 1);
+  assert.match(both[0].tip, /about 3 h.*softened from −40/i);
+  assert.match(autoMarks({ by: "nbd", raw: -40, score: 0 }, null, null)[0].tip, /Softened from −40/);
+  assert.equal(autoMarks(null, null, null).length, 0);
+  assert.match(autoMarksHtml(null, null, null, Date.now(), 0.4), /auto-mark-nbd.*about &lt;1 h/);
+});

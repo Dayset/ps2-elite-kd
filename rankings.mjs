@@ -32,11 +32,11 @@ import { pageRoom, dataPrefix, roomLsKey, psServer } from "./rooms.mjs?v=2026102
 import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261023-short1";
 import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261022-wpc1";
 import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261022-nbd1";
-import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, DIFF_THIRD, aimGapCellTip, zergCellTip } from "./trait-tips.mjs?v=20261023-short1";
+import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, DIFF_THIRD, aimGapCellTip, zergCellTip } from "./trait-tips.mjs?v=20261023-nbh1";
 import { ZREV_NOTE } from "./zerg-revive.mjs?v=20261023-short1";
 import { VDIFF_NOTE } from "./diff-vehicle.mjs?v=20261023-short1";
-import { NBD_NOTE } from "./newbie-diff.mjs?v=20261023-short1";
-import { autoMarksHtml } from "./auto-marks.mjs?v=20261023-rip1";
+import { NBD_NOTE } from "./newbie-diff.mjs?v=20261023-nbh1";
+import { autoMarksHtml } from "./auto-marks.mjs?v=20261023-nbh1";
 
 /**
  * @param {{ getNames: () => string[], toggleName: (name: string, anchor: Element, add: boolean) => void, maxNames?: number }} host
@@ -280,6 +280,8 @@ export function initRankings(host) {
         rvp: idx.rvp != null && Number.isFinite(r[idx.rvp]) ? r[idx.rvp] : null,
         // 🐣 newbie factor on a negative 🔀 Diff (newbie-diff.mjs; null = none).
         nbd: idx.nbd != null && Number.isFinite(r[idx.nbd]) ? r[idx.nbd] : null,
+        // 🐣 new-player hours (newbie-diff.mjs newPlayerHours; null = not new / cleared).
+        nbh: idx.nbh != null && Number.isFinite(r[idx.nbh]) ? r[idx.nbh] : null,
         // PlayStation room (#55): "us" Genudine / "eu" Ceres (null on PC).
         srv: idx.srv != null ? r[idx.srv] || null : null,
         // 📅 Registration epoch — not a stat column, but the Settings
@@ -494,7 +496,7 @@ export function initRankings(host) {
   /** Row HTML for one player (plain strings: cheap for ~1000 rows). */
   /** 💩 after a confirmed padder's name (hover explains the −10% iVi penalty). */
   function poopHtml(r) {
-    return (r && r.poop ? `<span class="poop-mark" title="${esc(POOP_TIP)}" aria-label="${esc(POOP_TIP)}">${POOP_MARK}</span>` : "") + hutHtml(r) + autoMarksHtml(r._gap, r._zerg, r.last ? { created: r.created, last: r.last } : null);
+    return (r && r.poop ? `<span class="poop-mark" title="${esc(POOP_TIP)}" aria-label="${esc(POOP_TIP)}">${POOP_MARK}</span>` : "") + hutHtml(r) + autoMarksHtml(r._gap, r._zerg, r.last ? { created: r.created, last: r.last } : null, Date.now(), r.nbh);
   }
   /** 🛖 next to the name (owner t504u: auto changes are marked by the name, never inside numeric cells). */
   function hutHtml(r) {
@@ -1367,7 +1369,14 @@ export function initRankings(host) {
    * hint, as in KD/iVi, and remove the text with stats from under the graph").
    * Same bubble as 💀 / 🎯 (head-tip.mjs): phones get it for ~5 s under the
    * current pill after a tap / swipe; PC has the same text as the pill's hover title. */
-  function distHintText(c) { return c ? tr("dist.hint", "{label}, all players: {tip}", { label: c.label, tip: tipOf(c) }).trim() : ""; }
+  // The tip often starts with the label's own emoji ("🔀 Diff, all players: 🔀 Results…"): drop the repeat so phones keep it to 3 lines.
+  function distHintText(c) {
+    if (!c) return "";
+    const lead = String(c.label || "").split(" ")[0];
+    let tip = String(tipOf(c) || "");
+    if (lead && /\p{Extended_Pictographic}/u.test(lead) && tip.startsWith(lead + " ")) tip = tip.slice(lead.length + 1);
+    return tr("dist.hint", "{label}, all players: {tip}", { label: c.label, tip }).trim();
+  }
   function showDistHint() {
     if (!isTouchUi()) return;
     const c = colById(distMetric);

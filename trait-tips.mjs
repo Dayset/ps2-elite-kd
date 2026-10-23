@@ -7,9 +7,9 @@ import { t as tr } from "./i18n.mjs";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
 import { zrevConfirmedTip, zrevSoftTip, zrevPlainTip } from "./zerg-revive.mjs?v=20261023-short1";
 import { vdiffFromTip } from "./diff-vehicle.mjs?v=20261023-short1";
-import { nbdFromTip } from "./newbie-diff.mjs?v=20261023-short1";
+import { nbdFromTip } from "./newbie-diff.mjs?v=20261023-nbh1";
 
-export const AIMGAP_HINT = "🔀 Results vs aim (−99…+99). 🤥 −33 or less: aim beats results. 😤 +33 or more: the reverse. A style, not cheating.";
+export const AIMGAP_HINT = "🔀 Results vs aim (−99…+99). 🤥 ≤ −33: aim beats results. 😤 ≥ +33: the reverse. A style, not cheating.";
 export const ZERG_HINT = "🪳 How much your results lean on a big group (🎈 Inflation and 🤝 Assists), 0–99. Lower is better.";
 export const AIMGAP_MISSING = "Needs ⚔️ iVi (enough fights) and a public IvI";
 export const ZERG_MISSING = "Needs 🤝 Assists (100 kills in recent Honu sessions) and 🎈 Inflation (enough fights)";

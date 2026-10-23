@@ -27,7 +27,7 @@ import { sprout, sampleEvents, farmAccount } from "../sprouts.mjs";
 import { findOutliers, guardStatus, KNOWN_EXTREMES } from "../outlier-guard.mjs";
 import { infantryTagCounts, INFANTRY_TAG, infantryShares } from "../infantry.mjs";
 import { VEH_CUT } from "../vehicle-cut.mjs";
-import { nbdCuts, newbieFactor, newbieCleared, NBD_BAND } from "../newbie-diff.mjs";
+import { nbdCuts, newbieFactor, newbieCleared, newPlayerHours, NBD_BAND, NBD_NEW_Q } from "../newbie-diff.mjs";
 import { hutCuts, hutParts, hutCleared, deathsPerMin, HUT_ACT_MULT, HUT_ACT_MULT_TOP, HUT_EXP_BAND, playMinutes, HUT_DPM_BAND, HUT_INF_BAND, HUT_ACC_BAND, HUT_MARK_MIN } from "../hut.mjs";
 import { traitPools, aimGap, zergScore } from "../trait-scores.mjs";
 import { revivedShare, zergCleared, REV_MIN_KILLS, REV_MIN_DEATHS, REV_SOFT_BAND, REV_CONFIRM } from "../zerg-revive.mjs";
@@ -548,7 +548,10 @@ export function applyVehDiffColumn(ranks, reviewed) {
  * 🐣 Newbie softening (newbie-diff.mjs, owner 2026-10-22): ramp ends from this
  * build's estimated play times (lifetime kills ÷ lifetime KPM, like 🛖), trailing
  * column "nbd" = factor on a NEGATIVE 🔀 Diff (3 decimals; null = none, no play
- * time, or cleared in reviewed.json "newbieDiff": "cleared"). Returns the
+ * time, or cleared in reviewed.json "newbieDiff": "cleared"), plus column "nbh"
+ * = play hours (1 decimal) for a 🐣 new player (under NBD_NEW_Q of play times;
+ * null = not new or cleared) and ranks.nbdCuts { lo, hi, nw } (minutes) so the
+ * page can rate a player fetched after the build the same way. Returns the
  * status.json "newbieDiff" block: every player whose shown Diff changes and the
  * 🤥 Impostor counts.
  */
@@ -561,21 +564,27 @@ export function applyNewbieDiffColumn(ranks, reviewed, playMin) {
   const tp = traitPools({ adjs: colOf("adjs"), ivi: colOf("ivi") });
   const r3 = (v) => Math.round(v * 1000) / 1000;
   const hrs = (m) => (Number.isFinite(m) ? Math.round(m / 6) / 10 : null);
-  const players = [], cleared = [];
-  let impBefore = 0, impAfter = 0, softened = 0;
-  ranks.cols.push("nbd");
+  const players = [], cleared = [], newPlayers = [];
+  let impBefore = 0, impAfter = 0, softened = 0, newCount = 0, marked = 0;
+  ranks.cols.push("nbd", "nbh");
+  ranks.nbdCuts = { lo: Math.round(cuts.lo), hi: Math.round(cuts.hi), nw: Math.round(cuts.nw) };
   for (const r of ranks.rows) {
     const slug = get(r, "slug"), m = pm(r);
     let f = newbieFactor(m, cuts);
     if (f != null) f = r3(f);
     const args = [tp, get(r, "adjs"), get(r, "ivi"), get(r, "hut"), get(r, "vdf")];
     const g0 = aimGap(...args);
-    if (f != null && g0 && g0.raw < 0 && newbieCleared(reviewed, slug)) {
+    let nh = newPlayerHours(m, cuts);
+    const clr = newbieCleared(reviewed, slug);
+    if (f != null && g0 && g0.raw < 0 && clr) {
       cleared.push({ name: get(r, "name"), slug, h: hrs(m), diffRaw: g0.raw, diffWould: aimGap(...args, f).score });
       f = null;
     }
-    r.push(f);
+    if (clr) nh = null; // reviewed.json clearance: no auto 🐣 either
+    r.push(f, nh);
     const g = g0 ? aimGap(...args, f) : null;
+    if (nh != null) { newCount++; newPlayers.push({ name: get(r, "name"), slug, h: nh, diffRaw: g0 ? g0.raw : null, diff: g ? g.score : null }); }
+    if (nh != null || (g && g0 && g.score - g0.raw >= 10)) marked++;
     if (g0 && g0.score <= -33) impBefore++;
     if (g && g.score <= -33) impAfter++;
     if (g && g.score !== g0.score) {
@@ -584,12 +593,15 @@ export function applyNewbieDiffColumn(ranks, reviewed, playMin) {
     }
   }
   players.sort((a, b) => a.diffRaw - b.diffRaw);
+  newPlayers.sort((a, b) => a.h - b.h);
   const loH = hrs(cuts.lo), hiH = hrs(cuts.hi);
   return {
     builtAt: new Date().toISOString(),
     loH, hiH, n: cuts.n, softened, impBefore, impAfter,
-    rule: `🐣 Newbie softening of a negative 🔀 Diff, gradual, ends from this build's ${cuts.n} players with a play time (lifetime kills ÷ lifetime KPM, the 🛖 estimate): lo = p${NBD_BAND[0] * 100} (${loH} h), hi = p${NBD_BAND[1] * 100} = the median (${hiH} h). factor = 0 at/below lo, ln(h ÷ lo) ÷ ln(hi ÷ lo) between (log scale: the Impostor share drops by about the same step per doubling of play time), 1 at/above hi. Negative Diff × factor, rounded; positive Diff untouched; no play time → no change. No mark next to the name; the Diff hover says “🐣 Softened from …”. Owner override: "newbieDiff": "cleared" on the data/reviewed.json player entry (full negative Diff).`,
+    newH: hrs(cuts.nw), newQ: NBD_NEW_Q, newCount, marked,
+    rule: `🐣 Newbie softening of a negative 🔀 Diff, gradual, ends from this build's ${cuts.n} players with a play time (lifetime kills ÷ lifetime KPM, the 🛖 estimate): lo = p${NBD_BAND[0] * 100} (${loH} h), hi = p${NBD_BAND[1] * 100} = the median (${hiH} h). factor = 0 at/below lo, ln(h ÷ lo) ÷ ln(hi ÷ lo) between (log scale: the Impostor share drops by about the same step per doubling of play time), 1 at/above hi. Negative Diff × factor, rounded; positive Diff untouched; no play time → no change. 🐣 next to the name when the softening raised the Diff by 10+ points (hover “Softened from …”), and for every new player: play time below p${NBD_NEW_Q * 100} (${hrs(cuts.nw)} h, the end of the flat ~29% Impostor share at the start), whatever the Diff (hover “New player (about N h played)”). Owner override: "newbieDiff": "cleared" on the data/reviewed.json player entry (full negative Diff).`,
     players,
+    newPlayers,
     cleared,
   };
 }
@@ -989,8 +1001,8 @@ export function buildNames(index, { withFile = false } = {}) {
  * "inflation" rides along for 🪳 Zerg (owner 2026-10-21, trait-scores.mjs): the
  * lower of the 🎈 Inflation and 🤝 Assists percentiles needs the Inflation pool.
  */
-export const LITE_COLS = ["name", "slug", "adjs", "cons", "apk", "inf", "infMax", "infVeh", "ivi", "inflation", "hut", "hutMk", "vdf", "rvp", "nbd"];
-const LITE_DIGITS = { adjs: 1, cons: 4, apk: 3, inf: 1, infMax: 1, infVeh: 1, ivi: 1, inflation: 2, hut: 3, hutMk: 0, vdf: 3, rvp: 0, nbd: 3 };
+export const LITE_COLS = ["name", "slug", "adjs", "cons", "apk", "inf", "infMax", "infVeh", "ivi", "inflation", "hut", "hutMk", "vdf", "rvp", "nbd", "nbh"];
+const LITE_DIGITS = { adjs: 1, cons: 4, apk: 3, inf: 1, infMax: 1, infVeh: 1, ivi: 1, inflation: 2, hut: 3, hutMk: 0, vdf: 3, rvp: 0, nbd: 3, nbh: 1 };
 export function buildRanksLite(ranks) {
   const ix = LITE_COLS.map((k) => (ranks && Array.isArray(ranks.cols) ? ranks.cols.indexOf(k) : -1));
   if (ix.some((i) => i < 0) || !Array.isArray(ranks.rows)) return null;
@@ -999,7 +1011,9 @@ export function buildRanksLite(ranks) {
     const d = LITE_DIGITS[LITE_COLS[j]];
     return d != null && typeof v === "number" && Number.isFinite(v) ? +v.toFixed(d) : v;
   }));
-  return { v: 1, updatedAt: ranks.updatedAt || null, count: rows.length, cols: LITE_COLS, rows };
+  const out = { v: 1, updatedAt: ranks.updatedAt || null, count: rows.length, cols: LITE_COLS, rows };
+  if (ranks.nbdCuts) out.nbdCuts = ranks.nbdCuts; // 🐣 cuts for players fetched after the build
+  return out;
 }
 
 /**
@@ -1113,7 +1127,7 @@ if (isMain) {
   st.vehicleCut = vehCutInfo; // 🚜 build-log list (ranks.json already has the cut numbers)
   st.hut = hutInfo; // 🛖 build-log list (ranks.json "hut" column has the factors)
   st.newbieDiff = nbdInfo; // 🐣 build-log list (ranks.json "nbd")
-  console.log(`🐣 newbie softening: ${nbdInfo.loH} h → ${nbdInfo.hiH} h; ${nbdInfo.softened} negative Diffs softened, Impostors ${nbdInfo.impBefore} → ${nbdInfo.impAfter}, ${nbdInfo.cleared.length} cleared`);
+  console.log(`🐣 newbie softening: ${nbdInfo.loH} h → ${nbdInfo.hiH} h; ${nbdInfo.softened} negative Diffs softened, Impostors ${nbdInfo.impBefore} → ${nbdInfo.impAfter}, ${nbdInfo.cleared.length} cleared; new players < ${nbdInfo.newH} h: ${nbdInfo.newCount}; 🐣 shown: ${nbdInfo.marked}`);
   st.vehDiff = vehDiffInfo; // 🔀🚜 build-log list (ranks.json "vdf")
   st.zergRevive = zrevInfo; // 🪳 revive check build-log list (ranks.json "rvp")
   console.log(`🔀🚜 Diff vehicle damp: start ${vehDiffInfo.start}% vehicle share; ${vehDiffInfo.damped} players' Diff lowered, DieHards ${vehDiffInfo.dieHardHut} (after 🛖) → ${vehDiffInfo.dieHardAfter}, ${vehDiffInfo.cleared.length} cleared`);

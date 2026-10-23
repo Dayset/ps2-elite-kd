@@ -1178,7 +1178,12 @@
       const cl = (b.cleared || []).length
         ? '<div style="margin-top:6px;">✅ Cleared by the owner (full negative Diff): ' + b.cleared.map((i) => nameCell(i) + " (Diff " + sgn(i.diffRaw) + ", would be " + sgn(i.diffWould) + ")").join(", ") + "</div>"
         : '<div class="st-dim" style="margin-top:6px;">No owner clearances.</div>';
-      $("nbd").innerHTML = '<div class="st-dim" style="margin-bottom:6px;">' + b.softened + " negative Diffs softened · ramp " + b.loH + " h (p5) → " + b.hiH + " h (median) · 🤥 Impostors " + b.impBefore + " → " + b.impAfter + "</div>" + t.html + cl;
+      const nw = b.newPlayers || [];
+      const nwHtml = b.newH != null
+        ? '<details style="margin-top:8px;"><summary>🐣 New players by play time (under ' + b.newH + " h = p" + Math.round((b.newQ || 0) * 100) + ", any Diff): " + nw.length + " · 🐣 shown in total: " + (b.marked != null ? b.marked : "?") + "</summary>" +
+          '<div class="st-dim">' + nw.map((i) => nameCell(i) + " " + i.h + " h" + (i.diffRaw != null ? " (Diff " + sgn(i.diffRaw) + (i.diff !== i.diffRaw ? " → " + sgn(i.diff) : "") + ")" : "")).join(" · ") + "</div></details>"
+        : "";
+      $("nbd").innerHTML = '<div class="st-dim" style="margin-bottom:6px;">' + b.softened + " negative Diffs softened · ramp " + b.loH + " h (p5) → " + b.hiH + " h (median) · 🤥 Impostors " + b.impBefore + " → " + b.impAfter + "</div>" + t.html + cl + nwHtml;
       t.bind();
     }
 

@@ -36,3 +36,32 @@ test("aimGap: nbd scales only a negative Diff", () => {
   assert.equal(pos.nbd, null);
   assert.equal(pos.by, null);
 });
+
+test("🐣 new-player cut: p14 of play minutes; hours only below it", async () => {
+  const { newPlayerHours, NBD_NEW_Q } = await import("../newbie-diff.mjs");
+  assert.equal(NBD_NEW_Q, 0.14);
+  const c = nbdCuts(Array.from({ length: 100 }, (_, i) => (i + 1) * 60));
+  assert.equal(c.nw, 15 * 60);
+  assert.equal(newPlayerHours(14 * 60 + 30, c), 14.5);
+  assert.equal(newPlayerHours(15 * 60, c), null);
+  assert.equal(newPlayerHours(NaN, c), null);
+  assert.equal(newPlayerHours(0, c), null);
+});
+
+test("build-ranks: nbh column + nbdCuts, cleared players get no 🐣", async () => {
+  const { applyNewbieDiffColumn, buildRanksLite, LITE_COLS } = await import("../scripts/build-ranks.mjs");
+  assert.ok(LITE_COLS.includes("nbh"));
+  const cols = ["name", "slug", "adjs", "ivi", "hut", "vdf"];
+  const rows = Array.from({ length: 50 }, (_, i) => ["P" + i, "p" + i, (i % 10) + 1, 10 - (i % 10), null, null]);
+  const playMin = new Map(rows.map((r, i) => [r[1], (i + 1) * 60]));
+  const ranks = { cols: [...cols], rows };
+  const st = applyNewbieDiffColumn(ranks, { players: { p0: { newbieDiff: "cleared" } } }, playMin);
+  const h = ranks.cols.indexOf("nbh");
+  assert.ok(h > 0);
+  assert.equal(ranks.nbdCuts.nw, 8 * 60); // p14 of 50 → index 7
+  assert.equal(ranks.rows[0][h], null); // cleared
+  assert.equal(ranks.rows[1][h], 2);
+  assert.equal(ranks.rows[7][h], null);
+  assert.equal(st.newCount, 6);
+  assert.equal(st.newPlayers.length, 6);
+});
