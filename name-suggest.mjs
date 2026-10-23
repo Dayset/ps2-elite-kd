@@ -1,4 +1,5 @@
 import { t as tr } from "./i18n.mjs";
+import { PS_SERVERS } from "./rooms.mjs";
 /**
  * Name suggestions for the names box (like Honu's partial search, but from 4
  * characters). Two sources, merged:
@@ -73,20 +74,34 @@ export function byStrength(a, b) {
   return bv - av;
 }
 
-/** Bare character names + adjusted iVi from ranks.json, for local matching. */
+/** Strip an outfit tag: "[00] Foo" → "Foo" (same rule as pick-sync). */
+const bareName = (s) => String(s || "").replace(/^\s*\[[^\]]*\]\s*/, "").trim();
+
+/**
+ * Bare character names + adjusted iVi from ranks.json, for local matching.
+ * `query` is the row's pick key: on PC (and for unique PS names) it IS the
+ * name; a PlayStation namesake — the same name on Genudine and Ceres — gets
+ * a server key (us-<cid> / eu-<cid>) instead, so a suggestion can pick the
+ * exact character, like the Rankings table does. Matching/display use the
+ * bare display name; the key only becomes the committed token on a pick.
+ */
 export function namesFromRanks(payload) {
   if (!payload || !Array.isArray(payload.cols) || !Array.isArray(payload.rows)) return [];
   const iq = payload.cols.indexOf("query");
   const iname = payload.cols.indexOf("name");
   const ia = payload.cols.indexOf("adjs");
+  const isrv = payload.cols.indexOf("srv");
   if (iq < 0) return [];
   const out = [];
   for (const r of payload.rows) {
-    const name = String(r[iq] || "").trim();
+    const query = String(r[iq] || "").trim();
+    if (!query) continue;
+    const name = bareName(iname >= 0 ? String(r[iname] || query) : query);
     if (!/^[A-Za-z0-9]+$/.test(name)) continue;
     const raw = ia >= 0 ? r[ia] : null;
     const adjs = raw === null || raw === undefined || raw === "" ? null : (Number.isFinite(+raw) ? +raw : null);
-    out.push({ name, display: iname >= 0 ? String(r[iname] || name) : name, adjs });
+    const srv = isrv >= 0 ? String(r[isrv] || "").trim() : "";
+    out.push({ name, query, display: iname >= 0 ? String(r[iname] || name) : name, adjs, ...(srv ? { srv } : {}) });
   }
   return out;
 }
@@ -103,7 +118,7 @@ export function localMatches(names, fragment, limit = MAX_SUGGESTIONS) {
     .filter((n) => n.name.toLowerCase().startsWith(f))
     .sort((a, b) => byStrength(a, b) || a.name.length - b.name.length || a.name.localeCompare(b.name))
     .slice(0, limit)
-    .map((n) => ({ name: n.name, display: n.display, adjs: Number.isFinite(n.adjs) ? n.adjs : null, source: "cached" }));
+    .map((n) => ({ name: n.name, query: n.query || n.name, display: n.display, adjs: Number.isFinite(n.adjs) ? n.adjs : null, ...(n.srv ? { srv: n.srv } : {}), source: "cached" }));
 }
 
 /**
@@ -116,21 +131,29 @@ export function localMatches(names, fragment, limit = MAX_SUGGESTIONS) {
  */
 export function mergeSuggestions(local, remote, exclude = [], limit = MAX_SUGGESTIONS) {
   const skip = new Set((exclude || []).map((n) => String(n).toLowerCase()));
+  const keyed = (it) => !!it.query && String(it.query).toLowerCase() !== String(it.name).toLowerCase();
   const byKey = new Map();
   for (const r of remote || []) byKey.set(r.name.toLowerCase(), r);
+  const localNames = new Set((local || []).map((l) => l.name.toLowerCase()));
   const out = [];
   const seen = new Set();
   const push = (item) => {
-    const k = item.name.toLowerCase();
-    if (seen.has(k) || skip.has(k)) return;
+    const k = keyed(item) ? `q:${String(item.query).toLowerCase()}` : `n:${item.name.toLowerCase()}`;
+    if (seen.has(k) || skip.has(item.name.toLowerCase()) || (item.query && skip.has(String(item.query).toLowerCase()))) return;
     seen.add(k);
     out.push(item);
   };
   for (const l of local || []) {
     const r = byKey.get(l.name.toLowerCase());
-    push(r ? { ...r, display: l.display, adjs: Number.isFinite(l.adjs) ? l.adjs : null, source: "cached" } : l);
+    // A keyed namesake (PS twin) never pairs with a Census row of the same
+    // name — that row may be the OTHER server's character. It stands alone
+    // with its exact key; the Census namesake is covered and dropped below.
+    push(r && !keyed(l) ? { ...r, display: l.display, adjs: Number.isFinite(l.adjs) ? l.adjs : null, query: l.query || l.name, ...(l.srv ? { srv: l.srv } : {}), source: "cached" } : l);
   }
-  for (const r of remote || []) push(r);
+  for (const r of remote || []) {
+    if (localNames.has(r.name.toLowerCase())) continue; // paired above, or a namesake the cached twins cover exactly
+    push(r);
+  }
   return out.sort(byStrength).slice(0, limit);
 }
 
@@ -206,7 +229,9 @@ export function mountNameSuggest({ input, anchor, censusBase, ranksUrl = "data/r
   function pick(i) {
     const it = items[i];
     if (!it) return;
-    input.value = replaceFragment(input.value, it.name);
+    // A namesake's key (us-<cid> / eu-<cid>) picks that exact character;
+    // everywhere else the key is the name itself.
+    input.value = replaceFragment(input.value, it.query || it.name);
     close();
     // app.js commits a token when the text ends with a separator.
     input.dispatchEvent(new Event("input", { bubbles: true }));
@@ -238,6 +263,8 @@ export function mountNameSuggest({ input, anchor, censusBase, ranksUrl = "data/r
       meta.className = "ns-meta";
       const bits = [];
       if (s.faction) bits.push(s.faction);
+      const srvName = s.srv ? (Object.values(PS_SERVERS).find((x) => x.key === s.srv)?.name || "") : "";
+      if (srvName) bits.push(srvName);
       if (Number.isFinite(s.adjs)) bits.push(`⚔️ ${Math.round(s.adjs)}`);
       if (s.br) bits.push(`BR ${s.br}`);
       if (s.source === "cached") bits.push("cached");

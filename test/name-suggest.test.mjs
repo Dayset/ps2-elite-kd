@@ -147,6 +147,53 @@ describe("local matches and merging", () => {
   });
 });
 
+describe("PlayStation namesakes (owner 2026-10-23: suggestions pick the exact character)", () => {
+  const psRanks = {
+    cols: ["name", "query", "adjs", "srv"],
+    rows: [
+      ["Furkancimen3NS0", "us-5429699760501712033", 1774, "us"],
+      ["Furkancimen3NS0", "eu-5429699762425851601", 1575, "eu"],
+      ["KingOfNSO", "KingOfNSO", 1805, "us"],
+    ],
+  };
+
+  it("keeps keyed rows and carries the exact pick key + server", () => {
+    const names = namesFromRanks(psRanks);
+    assert.equal(names.length, 3);
+    assert.deepEqual(names.map((n) => n.query), ["us-5429699760501712033", "eu-5429699762425851601", "KingOfNSO"]);
+    assert.equal(names[0].name, "Furkancimen3NS0");
+    assert.equal(names[1].srv, "eu");
+  });
+
+  it("local matches list both twins, strongest first, each with its own key", () => {
+    const m = localMatches(namesFromRanks(psRanks), "furk");
+    assert.deepEqual(m.map((x) => x.query), ["us-5429699760501712033", "eu-5429699762425851601"]);
+  });
+
+  it("a Census namesake never merges into a twin or displaces one", () => {
+    const local = localMatches(namesFromRanks(psRanks), "furk");
+    const remote = [{ name: "Furkancimen3NS0", faction: "TR", br: 100, source: "census" }];
+    const out = mergeSuggestions(local, remote);
+    assert.deepEqual(out.map((x) => x.query), ["us-5429699760501712033", "eu-5429699762425851601"]);
+  });
+
+  it("excluding one twin's key leaves the other twin offered", () => {
+    const local = localMatches(namesFromRanks(psRanks), "furk");
+    const out = mergeSuggestions(local, [], ["eu-5429699762425851601"]);
+    assert.deepEqual(out.map((x) => x.query), ["us-5429699760501712033"]);
+  });
+
+  it("an unkeyed PS name still pairs with its Census row and keeps its key", () => {
+    const local = localMatches(namesFromRanks(psRanks), "king");
+    const remote = [{ name: "KingOfNSO", faction: "NSO", br: 112, source: "census" }];
+    const out = mergeSuggestions(local, remote);
+    assert.equal(out.length, 1);
+    assert.equal(out[0].query, "KingOfNSO");
+    assert.equal(out[0].br, 112);
+    assert.equal(out[0].adjs, 1805);
+  });
+});
+
 describe("replaceFragment", () => {
   it("swaps the typed fragment for the picked name and adds a space", () => {
     assert.equal(replaceFragment("simp", "Simplenubb"), "Simplenubb ");
