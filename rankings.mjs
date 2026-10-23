@@ -36,7 +36,7 @@ import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, DIFF_T
 import { ZREV_NOTE } from "./zerg-revive.mjs?v=20261022-zrev1";
 import { VDIFF_NOTE } from "./diff-vehicle.mjs?v=20261022-vdiff1";
 import { NBD_NOTE } from "./newbie-diff.mjs?v=20261022-nbd1";
-import { autoMarksHtml } from "./auto-marks.mjs?v=20261023-badge1";
+import { autoMarksHtml } from "./auto-marks.mjs?v=20261023-rip1";
 
 /**
  * @param {{ getNames: () => string[], toggleName: (name: string, anchor: Element, add: boolean) => void, maxNames?: number }} host
@@ -285,6 +285,8 @@ export function initRankings(host) {
         // 📅 Registration epoch — not a stat column, but the Settings
         // max-account-age cut (sortedFiltered) and its ceiling need it per row.
         created: idx.created != null ? r[idx.created] : null,
+        // 🪦 inactive mark (auto-marks.mjs): last activity, UNIX seconds.
+        last: idx.last != null ? r[idx.last] : null,
       };
       o.mark = o.markKind === "padding" ? PADDING_MARK : o.markKind === "adjusted" ? ADJUSTED_MARK : "";
       o.markTip = o.markKind === "padding" ? PADDING_MARK_TIP : o.markKind === "adjusted" ? ADJUSTED_MARK_TIP : "";
@@ -492,7 +494,7 @@ export function initRankings(host) {
   /** Row HTML for one player (plain strings: cheap for ~1000 rows). */
   /** 💩 after a confirmed padder's name (hover explains the −10% iVi penalty). */
   function poopHtml(r) {
-    return (r && r.poop ? `<span class="poop-mark" title="${esc(POOP_TIP)}" aria-label="${esc(POOP_TIP)}">${POOP_MARK}</span>` : "") + hutHtml(r) + autoMarksHtml(r._gap, r._zerg);
+    return (r && r.poop ? `<span class="poop-mark" title="${esc(POOP_TIP)}" aria-label="${esc(POOP_TIP)}">${POOP_MARK}</span>` : "") + hutHtml(r) + autoMarksHtml(r._gap, r._zerg, r.last ? { created: r.created, last: r.last } : null);
   }
   /** 🛖 next to the name (owner t504u: auto changes are marked by the name, never inside numeric cells). */
   function hutHtml(r) {

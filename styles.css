@@ -2405,6 +2405,8 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
    and only truly huge ones still get the ellipsis + title / name-peek. */
 /* 💩 (padding.mjs) costs no extra name-column width on phones: the name gives up the room. */
 @media (max-width: 600px) { .ranks-table td.rk-name:has(.poop-mark) .nm { max-width: calc(18ch - 1.6em); } }
+/* Two or three marks (e.g. 🪳 + 🪦): the name gives up one more mark width each. */
+@media (max-width: 600px) { .ranks-table td.rk-name:has(.poop-mark + .poop-mark) .nm { max-width: calc(18ch - 3em); } .ranks-table td.rk-name:has(.poop-mark + .poop-mark + .poop-mark) .nm { max-width: calc(18ch - 4.4em); } }
 /* t483u: when the name column shrinks, the name ellipsizes (full name in the title) and leaves room for one mark. */
 @media (min-width: 601px) { .ranks-table td.rk-name .nm { max-width: min(28ch, calc(100% - 1.6em)); } }
 @media (min-width: 1100px) { .ranks-table td.rk-name .nm { max-width: min(42ch, calc(100% - 1.6em)); } }

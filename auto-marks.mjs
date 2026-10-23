@@ -18,6 +18,8 @@ import { REV_CONFIRM, zrevConfirmedTip } from "./zerg-revive.mjs?v=20261022-zrev
 import { nbdFromTip } from "./newbie-diff.mjs?v=20261022-nbd1";
 import { HUT_MARK_MIN } from "./hut.mjs?v=20261022-spawnroom1";
 import { fmtSigned } from "./trait-tips.mjs?v=20261022-nbd1";
+import { flairsFor } from "./flairs.mjs?v=20261010-sav1";
+import { t as tr, currentLang } from "./i18n.mjs";
 
 export const ZERG_MARK = "🪳";
 export const NBD_MARK = "🐣";
@@ -36,12 +38,34 @@ export function autoMarks(g, z) {
   return out;
 }
 
+/**
+ * 🪦 Inactive (owner 2026-10-23: brought back from the old graph name list,
+ * flairs.mjs rule unchanged): last activity (Census last_save / last_login)
+ * more than 365 days ago. 👶 new / 👴🏽 veteran stay hidden.
+ * times = { created, last } in UNIX seconds (flairs.mjs cleanTimes shape).
+ */
+export const INACTIVE_MARK = "🪦";
+function lastPlayed(sec) {
+  const d = new Date(sec * 1000);
+  try {
+    return new Intl.DateTimeFormat(currentLang() || "en", { month: "short", year: "numeric", timeZone: "UTC" }).format(d);
+  } catch {
+    return `${d.getUTCMonth() + 1}/${d.getUTCFullYear()}`;
+  }
+}
+export function inactiveMark(times, now = Date.now()) {
+  const f = flairsFor(times, now).find((x) => x.id === "inactive");
+  if (!f) return null;
+  return { id: "inactive", mark: INACTIVE_MARK, tip: tr("flair.inactive", "🪦 Inactive: no activity for over a year (last played {date})", { date: lastPlayed(+times.last) }) };
+}
+
 const esc = (s) =>
   String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
-/** Same look as 🛖 (poop-mark class: name width rules already reserve room). */
-export function autoMarksHtml(g, z) {
-  return autoMarks(g, z)
+/** Order after the name: (* / 💩 / 🛖 drawn by the caller) 🪳 🐣 🪦. Same look as 🛖 (poop-mark class: name width rules already reserve room). */
+export function autoMarksHtml(g, z, times = null, now = Date.now()) {
+  const ina = times ? inactiveMark(times, now) : null;
+  return [...autoMarks(g, z), ...(ina ? [ina] : [])]
     .map((m) => `<span class="poop-mark auto-mark auto-mark-${m.id}" title="${esc(m.tip)}" aria-label="${esc(m.tip)}">${m.mark}</span>`)
     .join("");
 }

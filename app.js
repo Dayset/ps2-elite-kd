@@ -110,7 +110,7 @@ function thinCellTip(r) {
 }
 import { markNote, statMark, confirmedPadderSlugs, isPenalizedPadder, POOP_MARK, POOP_TIP, setRoomRule } from "./padding.mjs?v=20261022-wpc1";
 import { HUT_MARK, HUT_TIP, HUT_EXPLAIN, HUT_DIFF_NOTE } from "./hut.mjs?v=20261022-spawnroom1";
-import { autoMarksHtml } from "./auto-marks.mjs?v=20261023-badge1";
+import { autoMarksHtml } from "./auto-marks.mjs?v=20261023-rip1";
 // Account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times: chart name list only.
 import { accountTimes, flairsHtml, flairsFor } from "./flairs.mjs?v=20261010-sav1";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
@@ -1874,7 +1874,7 @@ import {
   }
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261023-badge1")
+    rankingsLoading = import("./rankings.mjs?v=20261023-rip1")
       .then((m) => {
         rankingsApi = m.initRankings(rankingsHost);
         return rankingsApi.ready;
@@ -4327,7 +4327,7 @@ import {
     const d = row.p.display;
     const g = aimGap(traitP, shownValue(row, "adjs"), row.ivi, hutOf(d), vdfOf(d), nbdOf(d));
     const z = zergScore(traitP, shownValue(row, "inflation"), apkBySlug && apkBySlug.get(slugKey(d)), rvpOf(d));
-    return autoMarksHtml(g, z);
+    return autoMarksHtml(g, z, row.p.times || null);
   }
   /** 🛖 safe-spot player (hut.mjs HUT_TIP): positive 🔀 Diff damped; next to the name, never in the Diff cell (owner t504u). */
   function hutHtml() {
