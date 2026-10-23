@@ -669,6 +669,19 @@
     let busy = false;
     let reviewed = null; // data/reviewed.json
 
+    /* Solved (owner 2026-10-22): a name on the 🙈 hide list shows ONLY in the
+     * 🙈 section — never in the review lists, once and for all. Auto-solved
+     * counts too (fresh-account rule, rampage gate: both land on the hide
+     * list). Display-only: the data files keep every session — future models
+     * train on them, the browsing surface just stays clean. */
+    let solvedSlugs = new Set(); // status.json hidden.players slugs (rebuilt by setReview)
+    const hideKey = (s) => String(s || "").trim().toLowerCase().replace(/^\[.*?\]\s*/, "").replace(/[^a-z0-9]+/g, "");
+    let solvedKeys = new Set(); // data/hidden.json keys (covers the window before the next status rebuild)
+    fetch("data/hidden.json?t=" + Date.now(), { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then((h) => {
+      for (const k of Object.keys((h && h.players) || {})) solvedKeys.add(hideKey(k));
+    }).catch(() => {});
+    const isSolved = (p) => !!p && (p.hidden === true || (p.slug && solvedSlugs.has(p.slug)) || (p.slug && solvedKeys.has(hideKey(p.slug))) || (p.name && solvedKeys.has(hideKey(p.name))));
+
     const ruleText = reviewRuleText();
     $("flagsSummary").title = ruleText;
     $("flagsRule").textContent = ruleText;
@@ -689,6 +702,7 @@
     function setReview(st) {
       for (const p of (st && st.review && st.review.players) || []) if (p.slug && p.cid) cidBySlug.set(p.slug, p.cid);
       for (const p of (st && st.hidden && st.hidden.players) || []) if (p.slug && p.cid) cidBySlug.set(p.slug, p.cid);
+      solvedSlugs = new Set(((st && st.hidden && st.hidden.players) || []).map((p) => p && p.slug).filter(Boolean));
     }
     async function loadRadar() {
       try {
@@ -848,7 +862,7 @@
         return;
       }
       // Newer status.json carries players[]; older ones only items[] (one per metric hit).
-      const players = (Array.isArray(g.players) ? g.players : groupOutliers(g.items || [])).slice().sort((a, b) => radarUp(b.slug) - radarUp(a.slug));
+      const players = (Array.isArray(g.players) ? g.players : groupOutliers(g.items || [])).slice().filter((p) => !isSolved(p)).sort((a, b) => radarUp(b.slug) - radarUp(a.slug));
       guardBySlug = new Map(players.filter((p) => p.slug).map((p) => [p.slug, p]));
       applyXrefs();
       const bad = players.filter((p) => !p.explained).length;
@@ -888,10 +902,13 @@
       const f = status && status.forensics;
       $("fxRule").textContent = forensicsRuleText();
       if (!f) { $("fxCount").textContent = "–"; $("fx").innerHTML = '<span class="st-dim">No check yet (written by the next refresh run).</span>'; return; }
-      $("fxCount").textContent = String(f.flagged || 0);
-      $("fxCount").classList.toggle("hot", (f.flagged || 0) > 0);
+      const players = (f.players || []).filter((p) => !isSolved(p));
+      const swept = (f.players || []).length - players.length;
+      const flaggedN = players.filter((p) => p.flagged).length;
+      $("fxCount").textContent = String(flaggedN);
+      $("fxCount").classList.toggle("hot", flaggedN > 0);
       const pct = (v) => (typeof v === "number" ? Math.round(v * 100) + "%" : "—");
-      const rows = (f.players || []).slice().sort((a, b) => radarUp(b.slug) - radarUp(a.slug)).map((p) => {
+      const rows = players.slice().sort((a, b) => radarUp(b.slug) - radarUp(a.slug)).map((p) => {
         const w = p.worst;
         const tag = p.flagged ? '<span class="st-tag hot">🚩</span> ' : p.odd ? '<span class="st-tag">📉 review</span> ' : "";
         const who = esc(p.name) + (p.confirmedCheater ? ' <span class="st-dim" title="On the 🙈 hide list as a confirmed cheater">(confirmed)</span>' : "") + radarCell(p.slug);
@@ -908,7 +925,8 @@
           '<br><span class="st-dim">0 s gaps ' + pct(w.zeroGapShare) + ", median gap " + (w.medianGap ?? "—") + " s, headshots " + pct(w.hs) + "</span></td>" +
           "<td>" + weap + "</td><td>" + vic + '<br><span class="st-dim">' + esc(acct) + "</span></td><td>" + notes + "</td></tr>";
       }).join("");
-      $("fx").innerHTML = '<div class="st-dim">' + (f.analyzed || 0) + " analyzed · " + (f.flagged || 0) + " 🚩 · " + (f.review || 0) + " 📉 · " +
+      $("fx").innerHTML = '<div class="st-dim">' + (f.analyzed || 0) + " analyzed · " + flaggedN + " 🚩 · " + players.filter((p) => p.odd).length + " 📉 · " +
+        (swept ? swept + " 🙈 hidden away · " : "") +
         ((f.candidates || []).length) + " waiting · checked " + esc(f.checkedAt ? ago(Date.parse(f.checkedAt)) : "—") + "</div>" +
         (rows ? '<div class="st-scroll"><table class="st-table"><tr><th>Player / session</th><th class="st-num">Kills / deaths</th><th>Kill rate</th><th>Top weapons</th><th>Victims / account</th><th>Findings</th></tr>' + rows + "</table></div>" : "");
     }
@@ -942,7 +960,7 @@
       const label = Object.fromEntries((s.metrics || []).map((m) => [m.id, m]));
       const th = (id) => '<th class="st-num" title="' + esc((label[id] && label[id].tip) || "") + '">' + esc((label[id] && label[id].label) || id) + "</th>";
       const c = s.coverage || {};
-      const flagged = s.flagged || [];
+      const flagged = (s.flagged || []).filter((r) => !isSolved(r));
       $("sessCount").textContent = String(flagged.length);
       $("sessCount").classList.toggle("hot", flagged.length > 0);
       $("sessFlagCount").textContent = String(flagged.length);
@@ -960,11 +978,10 @@
           "</table></div>"
         : '<div class="st-dim">Nobody matches right now.</div>';
       const ref = s.reference || [];
+      // The reference IS the solved pile (confirmed cheaters): it lives with
+      // the 🙈 hide list now (renderHidden), not in the browsing sections.
       $("sessRef").innerHTML = ref.length
-        ? '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th>Group</th><th class="st-num">Kills</th>' + SESS_REF_COLS.map(th).join("") + "<th>🚩</th></tr>" +
-          ref.map((r) => "<tr><td>" + esc(r.name) + "</td><td>" + esc(r.group) + '</td><td class="st-num">' + (r.kills || 0) + (r.measured ? "" : ' <span class="st-dim" title="Below the minimum, or no recent sessions">⚠️</span>') + "</td>" +
-            SESS_REF_COLS.map((id) => '<td class="st-num">' + nfmt(r.values && r.values[id]) + "</td>").join("") + "<td>" + (r.flagged ? '<span class="st-hit">session</span>' : "") + "</td></tr>").join("") +
-          "</table></div>"
+        ? '<div class="st-dim">Kept with the 🙈 hide list below (' + ref.length + ' confirmed cheaters) — solved names show only there.</div>'
         : '<div class="st-dim">No reference players cached.</div>';
       const dist = s.distributions || {};
       const ids = (s.metrics || []).map((m) => m.id);
@@ -972,7 +989,7 @@
       $("sessDist").innerHTML = '<div class="st-scroll"><table class="st-table"><tr><th>Metric</th><th>Source</th><th class="st-num">n</th><th class="st-num">p01</th><th class="st-num">median</th><th class="st-num">p95</th><th class="st-num">p99</th><th class="st-num">max</th></tr>' +
         ids.map((id) => { const d = dist[id] || {}; return '<tr><td title="' + esc(label[id].tip) + '">' + esc(label[id].label) + "</td><td>" + (label[id].tier === "x" ? "XP detail" : "assists") + '</td><td class="st-num">' + (d.n || 0) + "</td>" +
           ["p01", "median", "p95", "p99", "max"].map((k) => '<td class="st-num">' + nfmt(d[k]) + "</td>").join("") + "</tr>"; }).join("") + "</table></div>";
-      const outs = s.outliers || [];
+      const outs = (s.outliers || []).filter((g) => !isSolved(g));
       $("sessOutCount").textContent = String(outs.length);
       $("sessOutCount").classList.toggle("hot", (s.outliersUnexplained || 0) > 0);
       $("sessOut").innerHTML = outs.length
@@ -996,12 +1013,26 @@
         return { name: (m && m.name) || k, slug: (m && m.slug) || "", cid: (m && m.cid) || (/^\d{5,25}$/.test(k) ? k : ""), reason: (v && v.reason) || "", at: (v && v.at) || "", cached: !!m };
       });
       $("hiddenCount").textContent = String(rows.length);
-      $("hidden").innerHTML = rows.length
+      let html = rows.length
         ? '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th>Reason</th><th>Since</th><th></th></tr>' +
           rows.map((r) => "<tr><td>" + nameCell(r) + radarCell(r.slug, r.cid) + "</td><td>" + esc(r.reason) + "</td><td>" + esc(r.at) + "</td><td>" +
             (r.cached ? "" : '<span class="st-dim" title="Not matched in ranks.json build yet (not cached, or the next refresh will pick it up)">not matched yet</span>') + "</td></tr>").join("") +
           "</table></div>"
         : '<div class="st-dim">Nobody hidden.</div>';
+      // The kept cheater-session reference (was 🧪 Session stats): solved
+      // names live here, with the hide list — nowhere else (owner 2026-10-22).
+      const sStats = status && status.sessionStats;
+      const ref = (sStats && sStats.reference) || [];
+      if (ref.length) {
+        const label = Object.fromEntries(((sStats && sStats.metrics) || []).map((m) => [m.id, m]));
+        const th = (id) => '<th class="st-num" title="' + esc((label[id] && label[id].tip) || "") + '">' + esc((label[id] && label[id].label) || id) + "</th>";
+        html += '<h3 class="st-h3" style="margin-top:12px;">🧪 Session reference — confirmed cheaters (kept for the models)</h3>' +
+          '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th>Group</th><th class="st-num">Kills</th>' + SESS_REF_COLS.map(th).join("") + "<th>🚩</th></tr>" +
+          ref.map((r) => "<tr><td>" + esc(r.name) + "</td><td>" + esc(r.group) + '</td><td class="st-num">' + (r.kills || 0) + (r.measured ? "" : ' <span class="st-dim" title="Below the minimum, or no recent sessions">⚠️</span>') + "</td>" +
+            SESS_REF_COLS.map((id) => '<td class="st-num">' + nfmt(r.values && r.values[id]) + "</td>").join("") + "<td>" + (r.flagged ? '<span class="st-hit">session</span>' : "") + "</td></tr>").join("") +
+          "</table></div>";
+      }
+      $("hidden").innerHTML = html;
     }
 
     async function refreshGuard() {
@@ -1103,8 +1134,10 @@
     /** 🚨 Rampage gate (status.json "rampage", scripts/build-ranks.mjs): uncleared auto-catches only. */
     function renderRampage(st) {
       const g = st && st.rampage;
-      const items = (g && g.caught) || [];
-      $("rampageCount").textContent = g ? String(g.players) : "?";
+      // Caught = solved (auto-hidden by the gate or already hidden by the
+      // owner): only the not-yet-hidden stay listed here (owner 2026-10-22).
+      const items = ((g && g.caught) || []).filter((i) => i.hiddenBy !== "gate" && i.hiddenBy !== "owner");
+      $("rampageCount").textContent = g ? String(items.length) : "?";
       if (!g) { $("rampage").innerHTML = "Not built yet (next refresh)."; return; }
       const when = (ms) => (ms ? new Date(ms).toLocaleString([], { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "—");
       $("rampage").innerHTML =
@@ -1114,13 +1147,15 @@
             items.map((i) => "<tr><td>" + nameCell(i) + "</td><td>" + i.inf + "</td><td>" + i.minutes + "</td><td>" + i.kpm + "</td><td>" + i.hsPct + "%</td><td>" + i.hipPct + "%</td><td>" + i.ads + "</td><td>" + esc(when(i.startMs)) + "</td><td>" +
               (i.hiddenBy === "gate" ? "🚨 by the gate" : i.hiddenBy === "owner" ? "🙈 already (owner)" : '<span class="st-err">not yet (next refresh)</span>') +
               '</td><td><a href="https://wt.honu.pw/s/' + encodeURIComponent(i.session) + '" target="_blank" rel="noopener noreferrer">Honu session</a></td></tr>').join("") + "</table></div>"
-          : "No rampage sessions.");
+          : "No rampage sessions waiting — caught players live in 🙈 Hidden below.");
     }
 
     /** 💥 Burst sessions (status.json "burst", built by scripts/build-ranks.mjs) + the oracle's burst-tier players. */
     function renderBurst(st) {
       const b = st && st.burst;
-      const items = (b && b.items) || [];
+      // Solved burst cases (rampage-confirmed, owner-cleared, confirmed
+      // cheater, already hidden) leave this list — only "needs a look" stays.
+      const items = ((b && b.items) || []).filter((i) => !(i.rampage || i.hidden || i.cleared || i.status === "cleared" || i.status === "cheater"));
       const when = (ms) => (ms ? new Date(ms).toLocaleString([], { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "—");
       const badge = (i) => i.rampage ? '<span class="st-dim" title="Rampage gate: auto confirmed cheater">🚨 rampage gate</span>' : i.status === "cleared" ? '<span title="' + esc(i.reason || "") + '">✅ cleared</span>'
         : i.status === "cheater" ? '<span class="st-dim" title="' + esc(i.reason || "") + '">confirmed cheater</span>'
@@ -1132,7 +1167,7 @@
           '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th>Kills</th><th>Min</th><th>KPM</th><th>Session start</th><th>Status</th><th></th></tr>' +
           items.map((i) => "<tr><td>" + nameCell(i) + "</td><td>" + i.kills + "</td><td>" + i.minutes + "</td><td>" + i.kpm + "</td><td>" + esc(when(i.startMs)) + "</td><td>" + badge(i) +
             '</td><td><a href="https://wt.honu.pw/s/' + encodeURIComponent(i.session) + '" target="_blank" rel="noopener noreferrer">Honu session</a></td></tr>').join("") + "</table></div>"
-        : "No burst sessions in the stored data.";
+        : "Nothing to check — solved players live in 🙈 Hidden below.";
       renderBurstOracle();
     }
     let burstOracleAt = 0;
@@ -1196,6 +1231,7 @@
     }
 
     function render(rows, total, errors) {
+      rows = rows.filter((r) => r && !isSolved(r));
       rows = rows.map(withSession).map(withForensics).map(withConfirmed).map(withNotStalker);
       renderStalkers(rows.filter((r) => r && classifyBins({ patterns: r.patterns }).bin === "stalker"));
 
