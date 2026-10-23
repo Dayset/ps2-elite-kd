@@ -346,7 +346,7 @@ function readReviewed(dataDir) {
  * then trailing columns "hut" = damping factor m on positive 🔀 Diff (3 decimals;
  * null = no reduction or cleared by the owner in reviewed.json "hut": "cleared")
  * and "hutMk" = 1 where 🛖 shows (Diff reduced by ≥ HUT_MARK_MIN points).
- * Returns the status.json "hut" block for build-log: cuts, counts, every reduced
+ * Returns the status.json "hut" block for build-log: cuts, counts, the 🛖-marked (t512u)
  * player with Diff before / after and the gate weights, and the owner-cleared ones.
  */
 export function applyHutColumn(ranks, reviewed, { playMin = null } = {}) {
@@ -379,7 +379,7 @@ export function applyHutColumn(ranks, reviewed, { playMin = null } = {}) {
     r.push(h, mk);
     if (g && g.raw >= 33) dieHardBefore++;
     if (after != null && after >= 33) dieHardAfter++;
-    if (g && h != null && after !== g.raw) players.push({ ...info(), diff: after, marked: !!mk });
+    if (mk) players.push({ ...info(), diff: after, marked: true }); // build-log lists only 🛖-marked players (owner t512u); smaller reductions still apply in ranks.json
   }
   players.sort((a, b) => (b.diffRaw ?? -999) - (a.diffRaw ?? -999));
   const r4 = (v) => (Number.isFinite(v) ? Math.round(v * 10000) / 10000 : null);
@@ -393,8 +393,7 @@ export function applyHutColumn(ranks, reviewed, { playMin = null } = {}) {
       accLo: r4(cuts.accLo), accHi: r4(cuts.accHi), accBand: HUT_ACC_BAND.map(pc),
       infLo: cuts.infLo, infHi: cuts.infHi, markMin: HUT_MARK_MIN, n: cuts.n,
     },
-    reduced: players.length,
-    marked: players.filter((p) => p.marked).length,
+    marked: players.length,
     dieHardBefore, dieHardAfter,
     rule: `🛖 safe-spot damping, gradual, all cuts from this build's players. a = (🏃 Activity ÷ cut)², cut = median × (${HUT_ACT_MULT} + (${HUT_ACT_MULT_TOP} − ${HUT_ACT_MULT}) × ⚔️ iVi percentile ÷ 100 × e), a straight line, where e = experience 0 → 1 on estimated play time (lifetime kills ÷ lifetime KPM) from ${pc(HUT_EXP_BAND[0])} to ${pc(HUT_EXP_BAND[1])} of this build's players (new accounts stay near ×${HUT_ACT_MULT}), so weaker players get a lower cut and the top of the board up to ×${HUT_ACT_MULT_TOP} (Activity at or above the cut → no change). w = product of three 0–1 ramps: deaths/min (KPM ÷ K/D) 1 at ${pc(HUT_DPM_BAND[0])} → 0 at ${pc(HUT_DPM_BAND[1])}; 🪖 infantry 0 at ${HUT_INF_BAND[0]}% → 1 at ${HUT_INF_BAND[1]}%; accuracy 1 at the median → 0 at ${pc(HUT_ACC_BAND[1])}. A positive 🔀 Diff × (1 − w × (1 − a)), rounded; a negative Diff is untouched. 🛖 next to the name only when Diff drops by ${HUT_MARK_MIN}+ points. Owner override: "hut": "cleared" on the data/reviewed.json entry (no 🛖, no damping).`,
     players,
@@ -865,7 +864,7 @@ if (isMain) {
   st.padderPenalty = padderInfo; // 💩 build-log list (ranks.json already has the penalized numbers)
   st.vehicleCut = vehCutInfo; // 🚜 build-log list (ranks.json already has the cut numbers)
   st.hut = hutInfo; // 🛖 build-log list (ranks.json "hut" column has the factors)
-  console.log(`🛖 safe-spot: Activity median ${hutInfo.cuts.actMedian} → cut ${hutInfo.cuts.actCut}…${hutInfo.cuts.actCutTop} (by ⚔️ iVi percentile), deaths/min ${hutInfo.cuts.dpmLo}→${hutInfo.cuts.dpmHi}, accuracy ${hutInfo.cuts.accLo}→${hutInfo.cuts.accHi}; ${hutInfo.reduced} Diff reduced, ${hutInfo.marked} marked 🛖, DieHards ${hutInfo.dieHardBefore} → ${hutInfo.dieHardAfter}, ${hutInfo.cleared.length} cleared by the owner`);
+  console.log(`🛖 safe-spot: Activity median ${hutInfo.cuts.actMedian} → cut ${hutInfo.cuts.actCut}…${hutInfo.cuts.actCutTop} (by ⚔️ iVi percentile), deaths/min ${hutInfo.cuts.dpmLo}→${hutInfo.cuts.dpmHi}, accuracy ${hutInfo.cuts.accLo}→${hutInfo.cuts.accHi}; ${hutInfo.marked} shown with 🛖, DieHards ${hutInfo.dieHardBefore} → ${hutInfo.dieHardAfter}, ${hutInfo.cleared.length} cleared by the owner`);
   console.log(`vehicle cut: ${vehCutInfo.cut} of ${vehCutInfo.withData} players with infantry data cut, ${vehCutInfo.cleared.length} exempted by the owner`);
   console.log(`padder penalty: ${padderInfo.penalized} penalized, ${padderInfo.cleared} cleared by the owner`);
   st.infantry = infantryStatus(dataDir);

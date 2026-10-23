@@ -1048,11 +1048,12 @@
         "</table></div>" + cl;
     }
 
-    /** 🛖 Safe-spot damping (status.json "hut", scripts/build-ranks.mjs + hut.mjs): every player whose 🔀 Diff was reduced; click a header to sort (default: original Diff). */
+    /** 🛖 Safe-spot damping (status.json "hut", scripts/build-ranks.mjs + hut.mjs): only players shown with 🛖 (Diff drop ≥ markMin, owner t512u; smaller reductions still apply but are not listed); click a header to sort (default: original Diff). */
     let hutSort = { key: "diffRaw", dir: -1 };
     function renderHut(st) {
       const b = st && st.hut;
-      $("hutCount").textContent = b ? String(b.reduced) : "?";
+      const shown = b ? ((b.players) || []).filter((i) => i.marked) : [];
+      $("hutCount").textContent = b ? String(shown.length) : "?";
       $("hutRule").textContent = b ? b.rule : "";
       if (!b) { $("hut").innerHTML = "Not built yet (next refresh)."; return; }
       const c = b.cuts || {};
@@ -1062,14 +1063,14 @@
         ["name", "Player"], ["diffRaw", "Diff before"], ["diff", "Diff after"], ["drop", "Drop"], ["iviPct", "⚔️ iVi pct"], ["playH", "Play h (est.)"], ["exp", "Experience e"], ["act", "🏃 Activity"], ["cut", "Activity cut"],
         ["dpm", "Deaths/min"], ["acc", "Accuracy %"], ["inf", "🪖 Infantry %"], ["w", "Weight w"], ["factor", "Factor"],
       ];
-      const items = ((b.players) || []).map((i) => ({ ...i, drop: i.diffRaw != null && i.diff != null ? i.diffRaw - i.diff : null }));
+      const items = shown.map((i) => ({ ...i, drop: i.diffRaw != null && i.diff != null ? i.diffRaw - i.diff : null }));
       const k = hutSort.key, dir = hutSort.dir;
       items.sort((x, y) => (k === "name" ? dir * String(x.name).localeCompare(String(y.name)) : dir * ((x[k] ?? -1e9) - (y[k] ?? -1e9))));
       const cl = (b.cleared || []).length
         ? '<div style="margin-top:6px;">✅ Cleared by the owner (no 🛖, no damping): ' + b.cleared.map((i) => nameCell(i) + " (Diff " + sg(i.diffRaw) + ", would be " + sg(i.diffWould) + ")").join(", ") + "</div>"
         : '<div class="st-dim" style="margin-top:6px;">No owner clearances.</div>';
       $("hut").innerHTML =
-        '<div class="st-dim" style="margin-bottom:6px;">' + b.reduced + " players with a reduced Diff · " + b.marked + " shown with 🛖 (drop ≥ " + c.markMin + ") · 😤 DieHards " + b.dieHardBefore + " → " + b.dieHardAfter +
+        '<div class="st-dim" style="margin-bottom:6px;">' + shown.length + " shown with 🛖 (Diff drop ≥ " + c.markMin + ") · 😤 DieHards " + b.dieHardBefore + " → " + b.dieHardAfter +
         " · cuts: Activity median " + num(c.actMedian, 3) + " × " + c.actMult + "…" + (c.actMultTop ?? c.actMult) + " by ⚔️ iVi percentile = " + num(c.actCut, 3) + "…" + num(c.actCutTop ?? c.actCut, 3) + (c.expLoH != null ? " (full only after " + c.expHiH + " h est. play time; ≤ " + c.expLoH + " h stays at the low cut)" : "") + ", deaths/min " + num(c.dpmLo, 3) + " → " + num(c.dpmHi, 3) + ", accuracy " + num(c.accLo, 2) + " → " + num(c.accHi, 2) + "%, infantry " + c.infLo + " → " + c.infHi + "%</div>" +
         '<div class="st-scroll"><table class="st-table" id="hutTable"><tr>' +
         cols.map(([key, label]) => '<th data-k="' + key + '" style="cursor:pointer;" title="Sort">' + esc(label) + (key === k ? (dir < 0 ? " ▼" : " ▲") : "") + "</th>").join("") + "</tr>" +

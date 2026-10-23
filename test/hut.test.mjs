@@ -85,7 +85,7 @@ test("build: trailing hut / hutMk columns, status list, cleared player gets noth
   assert.equal(st.cleared.length, 1);
   assert.equal(st.cleared[0].slug, "cleared");
   assert.ok(st.players.every((p) => p.slug !== "cleared"));
-  assert.ok(st.marked <= st.reduced);
+  assert.ok(st.reduced === undefined && st.marked === st.players.length && st.players.every((p) => p.marked)); // only 🛖 listed (t512u)
   assert.ok(LITE_COLS.includes("hut") && LITE_COLS.includes("hutMk"));
 });
 
