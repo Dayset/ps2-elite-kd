@@ -20,6 +20,7 @@
  */
 import { updateHonuXp, compactExpTypes, EXP_TYPES_MAX_AGE_MS } from "./honu-xp.mjs";
 import { fetchInfantry } from "../infantry.mjs";
+import { fetchWeapons } from "../weapons-data.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -538,6 +539,15 @@ export async function updateHonuAssists(cid, prev, {
 
 /** Previously stored assists for a cached player (file may not exist yet). */
 /** Previous infantry/vehicle summary (kept when this run's weapon-stat calls fail). */
+/** Previous 🏆 weapons copy (kept when this run's weapon calls fail). */
+function readPrevWeapons(slug) {
+  try {
+    const p = JSON.parse(fs.readFileSync(path.join(DATA_DIR, "players", `${slug}.json`), "utf8"));
+    return (p && p.player && p.player.weapons) || null;
+  } catch {
+    return null;
+  }
+}
 function readPrevInfantry(slug) {
   try {
     const p = JSON.parse(fs.readFileSync(path.join(DATA_DIR, "players", `${slug}.json`), "utf8"));
@@ -886,7 +896,7 @@ export function opponentRow(pair, meta, pace) {
   };
 }
 
-async function loadLive(name, { prevAssists = null, prevInfantry = null, acceptPartial = false } = {}) {
+async function loadLive(name, { prevAssists = null, prevInfantry = null, prevWeapons = null, acceptPartial = false } = {}) {
   const c = await resolveCensus(name);
   const cid = c.character_id;
   const outfit = c.outfit || {};
@@ -929,6 +939,13 @@ async function loadLive(name, { prevAssists = null, prevInfantry = null, acceptP
     infantryStats.failed++;
     console.warn(`  infantry split skipped: ${String(e && e.message).slice(0, 80)}`);
   }
+  // 🏆 Auraxium weapons for the page (weapons-data.mjs): 2 more calls; the old copy stays on failure.
+  let weapons = prevWeapons;
+  try {
+    weapons = await fetchWeapons(cid, { base: CENSUS, getJson: (u) => fetchJson(u, { retries: 2 }) });
+  } catch (e) {
+    console.warn(`  weapons skipped: ${String(e && e.message).slice(0, 80)}`);
+  }
   return {
     query: String(name).trim(),
     top: TOP_N,
@@ -947,6 +964,7 @@ async function loadLive(name, { prevAssists = null, prevInfantry = null, acceptP
       source: "census",
       ...(assists ? { assists } : {}),
       ...(infantry ? { infantry } : {}),
+      ...(weapons ? { weapons } : {}),
       // Census character.times from the same lookup (flairs.mjs 🪦 / 👴🏽).
       ...(accountTimes(c) ? { times: accountTimes(c) } : {}),
       rows,
@@ -1258,7 +1276,7 @@ async function main() {
       if (!isPlausibleName(name)) throw new NotFoundError(`not a valid character name ${JSON.stringify(name)}`);
       // Enough failed tries on partial data: ship what we have instead of retrying forever.
       const acceptPartial = prev.kind === "partial" && (prev.fails || 0) >= PARTIAL_SHIP_AFTER;
-      const payload = await loadLive(name, { prevAssists: readPrevAssists(slug), prevInfantry: readPrevInfantry(slug), acceptPartial });
+      const payload = await loadLive(name, { prevAssists: readPrevAssists(slug), prevInfantry: readPrevInfantry(slug), prevWeapons: readPrevWeapons(slug), acceptPartial });
       const fileRel = `players/${slug}.json`;
       writeFileAtomic(path.join(DATA_DIR, fileRel), JSON.stringify(payload) + "\n");
       upsertIndexEntry(index, { name, display: payload.player.display, slug, file: fileRel, savedAt: payload.savedAt, fmt: CACHE_FORMAT, top: payload.top, last: payload.player.times && payload.player.times.last });

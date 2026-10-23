@@ -44,9 +44,9 @@ import { percentileOf } from "./dist.mjs?v=20261010-sav1";
 import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261022-hut1";
 import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, diffValueHtml, aimGapCellTip, zergCellTip } from "./trait-tips.mjs?v=20261022-hut1";
 import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261020-i18n2";
-import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261022-scrim1";
+import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261022-wpc1";
 import { infantryKillsUrl, summarizeInfantryKills } from "./infantry.mjs?v=20261020-i18n2";
-import { mountWeapons } from "./weapons.mjs?v=20261022-wp3";
+import { mountWeapons } from "./weapons.mjs?v=20261022-wp4";
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261021-theory1";
 import { createWheelSwiper } from "./dist-cycle.mjs?v=20261017-cycle15";
 import { slideSwap, attachDragCarousel } from "./chart-slide.mjs?v=20261020-flick1";
@@ -93,7 +93,7 @@ import {
   THIN_MARK,
   THIN_NOTE_HEAD,
   thinPlayerLine,
-} from "./player-metrics.mjs?v=20261022-scrim1";
+} from "./player-metrics.mjs?v=20261022-wpc1";
 /** "22 kills / 60 deaths" in the opponent sample (MIN_FIGHTS counts). */
 function fightsText(r) {
   const k = r.sampleKills || 0;
@@ -105,7 +105,7 @@ function fightsText(r) {
 function thinCellTip(r) {
   return tr("fights.sample", "{tip}. This sample: {sample}", { tip: MIN_FIGHTS_TIP, sample: fightsText(r).replace(/[()]/g, "") });
 }
-import { markNote, statMark, confirmedPadderSlugs, isPenalizedPadder, POOP_MARK, POOP_TIP, setRoomRule } from "./padding.mjs?v=20261022-scrim1";
+import { markNote, statMark, confirmedPadderSlugs, isPenalizedPadder, POOP_MARK, POOP_TIP, setRoomRule } from "./padding.mjs?v=20261022-wpc1";
 import { HUT_MARK, HUT_TIP, HUT_EXPLAIN, HUT_DIFF_NOTE } from "./hut.mjs?v=20261022-spawnroom1";
 // Account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times: chart name list only.
 import { accountTimes, flairsHtml, flairsFor } from "./flairs.mjs?v=20261010-sav1";
@@ -2533,6 +2533,13 @@ import {
    */
   function censusJson(url, signal) {
     const big = url.includes("characters_event_grouped");
+    // The retry line is cleared again when the retrying request ends (owner
+    // 2026-10-22: "(2/4)" stayed up after the weapons had loaded), unless
+    // something else has written to the status line since.
+    let mine = null;
+    const clearMine = () => {
+      if (mine && els.status.innerHTML === mine) setStatus("");
+    };
     return censusLimit(() =>
       censusRequest(url, {
         signal,
@@ -2548,9 +2555,10 @@ import {
             `<span class="warn">${tr("msg.censusRetry", "⏳ Daybreak Census is busy, retrying… ({a}/{r})", { a: attempt, r: retries })}</span>`,
             "warn census-retry"
           );
+          mine = els.status.innerHTML;
         },
       })
-    );
+    ).finally(clearMine);
   }
 
   /** Honu fallback ONLY for lifetime history Census lacks (no stat_history). */
@@ -3807,6 +3815,9 @@ import {
           return s ? censusNsBase(s.ns, CENSUS_SERVICE_ID) : CENSUS_BASES[0];
         },
         sortScroll: keepSortedColumnVisible,
+        // "Fetch fresh data" loaded this player live → weapons are fetched live once too.
+        isFresh: (p) => String(p.source || "").startsWith("live"),
+        lsKey: (cid) => roomLsKey(`ps2-elite-kd-weapons:${cid}`, ROOM),
       });
     }
     weaponsPanel.setPlayers(currentNamesInField().length > 1 ? [] : list || []);

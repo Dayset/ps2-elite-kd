@@ -21,88 +21,11 @@
  */
 import { t as tr, currentLang } from "./i18n.mjs";
 
-export const AURAXIUM_KILLS = 1160;
+export { AURAXIUM_KILLS, summarizeWeapons, weaponStatUrls, itemInfoUrl, catalogEntry, itemsFromCensus, packWeapons, unpackWeapons, fetchWeapons } from "./weapons-data.mjs?v=20261022-wpc1";
+import { AURAXIUM_KILLS, summarizeWeapons, weaponStatUrls, itemInfoUrl, catalogEntry, itemsFromCensus, unpackWeapons, packWeapons } from "./weapons-data.mjs?v=20261022-wpc1";
 export const CATALOG_URL = "assets/weapons/catalog.json";
 export const IMG_DIR = "assets/weapons/";
 export const CENSUS_IMG = "https://census.daybreakgames.com/files/ps2/images/static/";
-
-const FAC_STATS = ["weapon_kills", "weapon_headshots", "weapon_vehicle_kills", "weapon_killed_by", "weapon_damage_given"];
-const PLAIN_STATS = ["weapon_deaths", "weapon_fire_count", "weapon_hit_count", "weapon_play_time", "weapon_score"];
-
-export function weaponStatUrls(base, cid) {
-  const id = encodeURIComponent(String(cid));
-  return {
-    byFaction: `${base}characters_weapon_stat_by_faction?character_id=${id}&stat_name=${FAC_STATS.join(",")}&c:show=stat_name,item_id,value_vs,value_nc,value_tr&c:limit=5000`,
-    plain: `${base}characters_weapon_stat?character_id=${id}&stat_name=${PLAIN_STATS.join(",")}&c:show=stat_name,item_id,value&c:limit=5000`,
-  };
-}
-
-export function itemInfoUrl(base, ids) {
-  return `${base}item?item_id=${ids.join(",")}&c:show=item_id,item_category_id,faction_id,name.en,image_id&c:join=item_category^show:name.en^inject_at:category&c:limit=500`;
-}
-
-const KEY = {
-  weapon_kills: "kills", weapon_headshots: "hs", weapon_vehicle_kills: "vk", weapon_killed_by: "killedBy", weapon_damage_given: "dmg",
-  weapon_deaths: "deaths", weapon_fire_count: "shots", weapon_hit_count: "hits",
-  weapon_play_time: "secs", weapon_score: "score",
-};
-
-/**
- * Per-item totals → auraxium rows only, most kills first.
- * Derived: kpm, kd (kills per death while holding it), acc, hsr, vkpm.
- */
-export function summarizeWeapons(facRows, plainRows, minKills = AURAXIUM_KILLS) {
-  const by = new Map();
-  const add = (r, v) => {
-    const k = KEY[r && r.stat_name];
-    const id = String((r && r.item_id) || "0");
-    if (!k || id === "0" || !Number.isFinite(v)) return;
-    let o = by.get(id);
-    if (!o) by.set(id, (o = { id, kills: 0, hs: 0, vk: 0, killedBy: 0, dmg: 0, deaths: 0, shots: 0, hits: 0, secs: 0, score: 0 }));
-    o[k] += v;
-  };
-  for (const r of facRows || []) add(r, (+r.value_vs || 0) + (+r.value_nc || 0) + (+r.value_tr || 0));
-  for (const r of plainRows || []) add(r, +r.value || 0);
-  const out = [];
-  for (const o of by.values()) {
-    if (o.kills < minKills) continue;
-    const mins = o.secs / 60;
-    o.kpm = mins > 0 ? o.kills / mins : null;
-    o.kd = o.deaths > 0 ? o.kills / o.deaths : null;
-    o.acc = o.shots > 0 ? Math.min(1, o.hits / o.shots) : null;
-    o.hsr = o.kills > 0 && o.shots > 0 ? Math.min(1, o.hs / o.kills) : null;
-    o.vkpm = mins > 0 && o.vk > 0 ? o.vk / mins : null;
-    // IvI = accuracy % × headshot % (same aim score as the site's public IvI).
-    o.ivi = o.acc != null && o.hsr != null ? o.acc * 100 * o.hsr * 100 : null;
-    o.spk = o.shots > 0 ? o.shots / o.kills : null;
-    o.dph = o.hits > 0 && o.dmg > 0 ? o.dmg / o.hits : null;
-    o.spm = mins > 0 && o.score > 0 ? o.score / mins : null;
-    out.push(o);
-  }
-  out.sort((a, b) => b.kills - a.kills || (+a.id) - (+b.id));
-  return out;
-}
-
-/** Catalog entry: [name, category, faction_id, image_id]. */
-export function catalogEntry(cat, id) {
-  const e = cat && cat.items && cat.items[id];
-  return Array.isArray(e) ? { name: e[0] || "", category: e[1] || "", faction: +e[2] || 0, image: e[3] ? String(e[3]) : "" } : null;
-}
-
-/** Live Census item rows → the same shape. */
-export function itemsFromCensus(list) {
-  const out = {};
-  for (const it of list || []) {
-    if (!it || !it.item_id) continue;
-    out[it.item_id] = {
-      name: (it.name && it.name.en) || "",
-      category: (it.category && it.category.name && it.category.name.en) || "",
-      faction: +it.faction_id || 0,
-      image: it.image_id ? String(it.image_id) : "",
-    };
-  }
-  return out;
-}
 
 const FACTION_TAG = { 1: "VS", 2: "NC", 3: "TR", 4: "NSO" };
 
@@ -148,7 +71,7 @@ function imgHtml(info) {
  *  - baseOf(player) → Census base URL for that player's namespace
  *  - sortScroll(wrap, th, prevLeft) (optional, keeps the sorted column visible)
  */
-export function mountWeapons(section, { getJson, baseOf, sortScroll } = {}) {
+export function mountWeapons(section, { getJson, baseOf, sortScroll, isFresh = () => false, lsKey = (cid) => `ps2-elite-kd-weapons:${cid}` } = {}) {
   if (!section) return { setPlayers() {} };
   const count = section.querySelector(".wp-count");
   const wrap = section.querySelector(".wp-scroll");
@@ -163,14 +86,15 @@ export function mountWeapons(section, { getJson, baseOf, sortScroll } = {}) {
   const loadCatalog = () =>
     catalog || (catalog = fetch(CATALOG_URL, { cache: "force-cache" }).then((r) => (r.ok ? r.json() : null)).catch(() => null));
 
-  async function load(p) {
-    const base = baseOf(p);
-    const u = weaponStatUrls(base, p.cid);
-    const [fac, plain, cat] = await Promise.all([getJson(u.byFaction), getJson(u.plain), loadCatalog()]);
-    const rows = summarizeWeapons(
-      (fac && fac.characters_weapon_stat_by_faction_list) || [],
-      (plain && plain.characters_weapon_stat_list) || [],
-    );
+  // Browser copy per character (owner 2026-10-22: Census is slow / busy, so the
+  // page reads the bot's copy in the player file and asks Census only when
+  // there is none, or once after "Fetch fresh data").
+  const lsGet = (cid) => { try { return JSON.parse(localStorage.getItem(lsKey(cid)) || "null"); } catch { return null; } };
+  const lsSet = (cid, v) => { try { localStorage.setItem(lsKey(cid), JSON.stringify(v)); } catch {} };
+  const liveDone = new Set();
+
+  async function names(p, rows) {
+    const cat = await loadCatalog();
     const info = {};
     const missing = [];
     for (const w of rows) {
@@ -180,11 +104,34 @@ export function mountWeapons(section, { getJson, baseOf, sortScroll } = {}) {
     }
     if (missing.length) {
       try {
-        const j = await getJson(itemInfoUrl(base, missing));
+        const j = await getJson(itemInfoUrl(baseOf(p), missing));
         Object.assign(info, itemsFromCensus(j && j.item_list));
       } catch (e) { /* names stay as ids */ }
     }
-    return { rows, info };
+    return info;
+  }
+
+  async function load(p) {
+    const saved = [p.weapons, lsGet(p.cid)].filter((x) => x && x.v === 1).sort((a, b) => (b.at || 0) - (a.at || 0))[0] || null;
+    const wantLive = !saved || (isFresh(p) && !liveDone.has(p.cid));
+    let packed = saved, note = "";
+    if (wantLive) {
+      try {
+        const u = weaponStatUrls(baseOf(p), p.cid);
+        const [fac, plain] = await Promise.all([getJson(u.byFaction), getJson(u.plain)]);
+        packed = packWeapons(summarizeWeapons(
+          (fac && fac.characters_weapon_stat_by_faction_list) || [],
+          (plain && plain.characters_weapon_stat_list) || [],
+        ));
+        liveDone.add(p.cid);
+        lsSet(p.cid, packed);
+      } catch (e) {
+        if (!saved) throw e;
+        note = tr("wp.staleNote", "Census is busy: showing the saved copy.");
+      }
+    }
+    const rows = unpackWeapons(packed) || [];
+    return { rows, info: await names(p, rows), at: packed.at, note };
   }
 
   function sorted(rows) {
@@ -233,20 +180,23 @@ export function mountWeapons(section, { getJson, baseOf, sortScroll } = {}) {
   async function show() {
     const p = player;
     if (!p || !p.cid || !section.open) return;
-    if (shown && shown.cid === p.cid) return;
-    let job = cache.get(p.cid);
+    const ck = `${p.cid}:${isFresh(p) ? 1 : 0}`;
+    if (shown && shown.ck === ck) return;
+    let job = cache.get(ck);
     if (!job) {
       job = load(p);
-      cache.set(p.cid, job);
-      job.catch(() => cache.delete(p.cid));
+      cache.set(ck, job);
+      job.catch(() => cache.delete(ck));
     }
-    setStatus(tr("wp.loading", "Loading weapons from Census…"));
+    setStatus(tr("wp.loading", "Loading weapons…"));
     try {
       const r = await job;
       if (player !== p) return;
-      shown = { cid: p.cid, ...r };
+      shown = { cid: p.cid, ck, ...r };
       count.textContent = `(${r.rows.length})`;
-      setStatus(r.rows.length ? "" : tr("wp.none", "No auraxium weapons yet (1,160 kills with one weapon)."));
+      const when = r.at ? new Date(r.at).toLocaleDateString(lang(), { day: "numeric", month: "short", year: "numeric" }) : "";
+      const savedLine = when ? tr("wp.saved", "Saved {date}. Tick “{btn}” and Analyze to update.", { date: when, btn: tr("fresh.label", "Fetch fresh data") }) : "";
+      setStatus([r.note, r.rows.length ? savedLine : tr("wp.none", "No auraxium weapons yet (1,160 kills with one weapon).")].filter(Boolean).join(" "));
       wrap.hidden = !r.rows.length;
       render();
     } catch (e) {

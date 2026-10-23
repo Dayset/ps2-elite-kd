@@ -11,9 +11,9 @@ await i18nReady;
  * Pure helpers are exported for tests; the DOM part runs only in a browser.
  */
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
-import { normalizePlayer, playerMetrics, shownValue } from "./player-metrics.mjs?v=20261022-scrim1";
-import { isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261022-scrim1";
-import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261022-scrim1";
+import { normalizePlayer, playerMetrics, shownValue } from "./player-metrics.mjs?v=20261022-wpc1";
+import { isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261022-wpc1";
+import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261022-wpc1";
 
 export const FEED_MAX = 6;
 export const GRAPH_OPPONENTS = 5; // + the target = MAX_NAMES (6)

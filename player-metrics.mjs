@@ -18,8 +18,8 @@ import {
   resolveIvi,
   deathMixLite,
 } from "./math.mjs?v=20261010-sav1";
-import { splitFarm, chopScrims, isScrimRoom, isPenalizedPadder, padderPenalty } from "./padding.mjs?v=20261022-scrim1";
-import { vehicleCutFor, applyVehicleCut, isVehicleCutCleared } from "./vehicle-cut.mjs?v=20261022-scrim1";
+import { splitFarm, chopScrims, isScrimRoom, isPenalizedPadder, padderPenalty } from "./padding.mjs?v=20261022-wpc1";
+import { vehicleCutFor, applyVehicleCut, isVehicleCutCleared } from "./vehicle-cut.mjs?v=20261022-wpc1";
 import { OPPONENT_TOP_N, LEGACY_TOP_N, sampleTopN } from "./census-fetch.mjs?v=20261010-sav1";
 import { cleanTimes } from "./flairs.mjs?v=20261010-sav1";
 
@@ -160,6 +160,8 @@ export function normalizePlayer(raw) {
     times: cleanTimes(p.times),
     // 🪖 / 🚜 lifetime infantry split (infantry.mjs v2), or null.
     infantry: p.infantry && typeof p.infantry === "object" ? p.infantry : null,
+    // 🏆 auraxium weapons saved by the refresh bots (weapons-data.mjs packWeapons), or null.
+    weapons: p.weapons && typeof p.weapons === "object" ? p.weapons : null,
     source: raw._source || "local",
     // PlayStation room (#55): server name ("Genudine" / "Ceres"); PC players have none.
     ...(p.room === "ps" ? { room: "ps", server: String(p.server || "") } : {}),

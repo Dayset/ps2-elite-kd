@@ -36,6 +36,7 @@ import {
   tokenBucket,
 } from "../census-fetch.mjs";
 import { fetchInfantry } from "../infantry.mjs";
+import { fetchWeapons } from "../weapons-data.mjs";
 import { accountTimes } from "../flairs.mjs";
 import { ROOMS, PS_SERVERS, censusNsBase, psKey, parsePsKey, psPlayerFile } from "../rooms.mjs";
 import {
@@ -240,7 +241,7 @@ export function skipNames(state, ns, now = Date.now()) {
  * The player file (same shape as a PC file, plus room / ns / server / key), from
  * the Census character row, fetchPlayerCensus's result and the infantry summary.
  */
-export function buildPsPayload({ c, ns, r, infantry = null, topN = OPPONENT_TOP_N, now = Date.now() }) {
+export function buildPsPayload({ c, ns, r, infantry = null, weapons = null, topN = OPPONENT_TOP_N, now = Date.now() }) {
   const server = PS_SERVERS[ns];
   const cid = String(c.character_id);
   const outfit = c.outfit || {};
@@ -273,6 +274,7 @@ export function buildPsPayload({ c, ns, r, infantry = null, topN = OPPONENT_TOP_
       ns,
       server: server.name,
       ...(infantry ? { infantry } : {}),
+      ...(weapons ? { weapons } : {}),
       ...(times ? { times } : {}),
       rows: r.rows,
       curve: kpmCurve(r.rows),
@@ -313,7 +315,7 @@ async function findByName(name) {
   return out;
 }
 
-async function loadPs(ns, cid, { acceptPartial = false, prevInfantry = null } = {}) {
+async function loadPs(ns, cid, { acceptPartial = false, prevInfantry = null, prevWeapons = null } = {}) {
   const base = censusNsBase(ns, CENSUS_SERVICE_ID);
   const c = await characterRow(ns, cid);
   const r = await fetchPlayerCensus(cid, { base, getJson: (u) => getCensus(u), topN: OPPONENT_TOP_N, memo: memoFor(ns) });
@@ -329,7 +331,13 @@ async function loadPs(ns, cid, { acceptPartial = false, prevInfantry = null } = 
   } catch (e) {
     console.warn(`  infantry split skipped: ${String(e && e.message).slice(0, 80)}`);
   }
-  return buildPsPayload({ c, ns, r, infantry });
+  let weapons = prevWeapons;
+  try {
+    weapons = await fetchWeapons(cid, { base, getJson: (u) => getCensus(u, { retries: 2 }) });
+  } catch (e) {
+    console.warn(`  weapons skipped: ${String(e && e.message).slice(0, 80)}`);
+  }
+  return buildPsPayload({ c, ns, r, infantry, weapons });
 }
 
 /* ------------------------------------------------------------------ main */
@@ -383,7 +391,7 @@ async function main() {
     try {
       const prevFile = readJson(path.join(DATA_DIR, psPlayerFile(id.ns, id.cid)), null);
       const acceptPartial = prev.kind === "partial" && (prev.fails || 0) >= PARTIAL_SHIP_AFTER;
-      const payload = await loadPs(id.ns, id.cid, { acceptPartial, prevInfantry: prevFile && prevFile.player && prevFile.player.infantry });
+      const payload = await loadPs(id.ns, id.cid, { acceptPartial, prevInfantry: prevFile && prevFile.player && prevFile.player.infantry, prevWeapons: prevFile && prevFile.player && prevFile.player.weapons });
       const wasCached = index.players.some((p) => p.key === key);
       const entry = upsertPsEntry(index, { key, ns: id.ns, cid: id.cid, display: payload.player.display, savedAt: payload.savedAt, top: payload.top, last: payload.player.times && payload.player.times.last });
       // Same name already taken by someone else in the room: this one is opened by its key, never by the name.

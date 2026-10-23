@@ -63,3 +63,12 @@ test("IvI, SPK, DPH, SPM and killed-by come from the same two calls", () => {
   assert.equal(w.dph, 80);
   assert.equal(w.spm, 2000);
 });
+
+test("saved copy (player file / browser) round-trips to the same rows", async () => {
+  const { packWeapons, unpackWeapons, fetchWeapons } = await import("../weapons-data.mjs");
+  const rows = summarizeWeapons([fac(9, "weapon_kills", 2000), fac(9, "weapon_headshots", 600)], [plain(9, "weapon_fire_count", 50000), plain(9, "weapon_hit_count", 12500)]);
+  const back = unpackWeapons(JSON.parse(JSON.stringify(packWeapons(rows, 123))));
+  assert.deepEqual(back, rows);
+  assert.equal(unpackWeapons({ v: 2, rows: [] }), null);
+  await assert.rejects(fetchWeapons("1", { base: "B/", getJson: async () => ({ error: "busy" }) }));
+});
