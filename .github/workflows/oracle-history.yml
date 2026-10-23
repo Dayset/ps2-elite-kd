@@ -8,13 +8,13 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "probe | fetch | grow | all"
+        description: "probe | fetch | grow | all | capture"
         default: "all"
       minutes:
         description: "Fetch time budget (minutes)"
         default: "300"
       commit:
-        description: "Commit regrown trees if the cut-aware ones win (true/false)"
+        description: "Commit regrown trees if the cut-aware ones win, or the capture models (true/false)"
         default: "false"
 
 permissions:
@@ -62,4 +62,15 @@ jobs:
           git config user.name "oracle-history[bot]"; git config user.email "oracle-history@users.noreply.github.com"
           git add oracle/backend/winbins_*.json oracle/backend/history_eval.json
           git commit -m "oracle: regrow win trees from PS2Alerts history [bot]"
+          for i in 1 2 3; do git pull --rebase origin main && git push origin HEAD:main && break; sleep 5; done
+      - name: Capture models (per-base capture chance, all continents, #63)
+        if: inputs.mode == 'capture'
+        run: node oracle-worker/history/capture-model.mjs --in history/alerts.jsonl --out oracle/backend
+      - name: Commit capture models
+        if: inputs.mode == 'capture' && inputs.commit == 'true'
+        run: |
+          if [ -z "$(git status --porcelain oracle/backend)" ]; then echo "::notice::no capture model changes"; exit 0; fi
+          git config user.name "oracle-history[bot]"; git config user.email "oracle-history@users.noreply.github.com"
+          git add oracle/backend/*_capture_model.json oracle/backend/capture_model_eval.json
+          git commit -m "oracle: capture models for every continent from PS2Alerts history [bot]"
           for i in 1 2 3; do git pull --rebase origin main && git push origin HEAD:main && break; sleep 5; done
