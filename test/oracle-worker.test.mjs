@@ -434,6 +434,17 @@ test("corrupt map that disagrees with Census: Census winner recorded, votes give
   assert.equal(DB.raw.prepare("SELECT balance FROM wallet").get().balance, 600);
 });
 
+/** The Worker's HTTP handlers read the wall clock; pin it to the simulated cycle time (fixtures are dated). */
+async function atTime(ms, fn) {
+  const real = Date.now;
+  Date.now = () => ms;
+  try {
+    return await fn();
+  } finally {
+    Date.now = real;
+  }
+}
+
 test("live guard: neutral-heavy map marks the state suspect, pauses voting, holds the commander", { skip }, async () => {
   const { runCycle, commanderFor, default: worker } = await import("../oracle-worker/src/index.js");
   const DB = fakeD1();
@@ -444,7 +455,7 @@ test("live guard: neutral-heavy map marks the state suspect, pauses voting, hold
   await runCycle({ DB }, now * 1000);
   const st = JSON.parse(DB.raw.prepare("SELECT state FROM alert").get().state);
   assert.deepEqual(st.suspect, ["neutral_heavy:68.2"]);
-  const q = await (await worker.fetch(new Request("https://x/vote/quote?key=1-4-730"), { DB })).json();
+  const q = await atTime(now * 1000, async () => (await worker.fetch(new Request("https://x/vote/quote?key=1-4-730"), { DB })).json());
   assert.equal(q.open, false);
   assert.equal(q.reason, "data_suspect", JSON.stringify(q));
   assert.equal((await commanderFor({ DB }, "1-4-730", now * 1000)).skipped, "data suspect");
@@ -483,7 +494,7 @@ test("Meltdown: live zone odds, no false broken-map flag, voting open, settles a
   assert.equal(st.zone.active, 35);
   assert.ok(Math.abs(st.territory.VS + st.territory.NC + st.territory.TR - 100) < 0.5, JSON.stringify(st.territory));
   assert.ok(st.win_raw && st.win_v0);
-  const q = await (await worker.fetch(new Request("https://x/vote/quote?key=1-4-900"), { DB })).json();
+  const q = await atTime((T0 + 60) * 1000, async () => (await worker.fetch(new Request("https://x/vote/quote?key=1-4-900"), { DB })).json());
   assert.equal(q.open, true, JSON.stringify(q));
   for (const m of [15, 30]) await runCycle({ DB }, (T0 + m * 60) * 1000);
   const slices = JSON.parse(DB.raw.prepare("SELECT slices FROM bench").get().slices);
