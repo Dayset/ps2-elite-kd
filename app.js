@@ -4414,13 +4414,17 @@ import {
   }
 
   /* Graph skeleton (Dayset 2026-10-22): while an analysis fetches from
-   * Census, the chart box shows a graph-shaped stand-in instead of staying
-   * hidden or holding the previous graph. Off restores the drawn graph's
-   * svg when there is one; the draw / idle paths set final visibility. */
+   * Census and there is NO graph yet, the chart box shows a graph-shaped
+   * stand-in instead of staying hidden. If a previous graph exists it
+   * stays on screen for the whole load — the skeleton is only for the
+   * nothing-before case (Dayset, later the same day). Off restores the
+   * drawn graph's svg when there is one; the draw / idle paths set final
+   * visibility. */
   function setChartSkeleton(on) {
     const sk = els.chartSkeleton;
     if (!sk) return;
     if (on) {
+      if (players.length) return; // an old graph exists: keep it during the load
       setChartIdle(false); // the box exists: section un-hidden
       if (els.chart) els.chart.setAttribute("hidden", "");
       sk.removeAttribute("hidden");
