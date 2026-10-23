@@ -53,7 +53,7 @@ import { mountWeapons } from "./weapons.mjs?v=20261022-wp4";
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261021-theory1";
 import { createWheelSwiper } from "./dist-cycle.mjs?v=20261017-cycle15";
 import { slideSwap, attachDragCarousel } from "./chart-slide.mjs?v=20261020-flick1";
-import { mountStatsCarousel } from "./stats-carousel.mjs?v=20261022-nobar";
+import { mountStatsCarousel } from "./stats-carousel.mjs?v=20261023-swipehint1";
 import { pickGraphForKeys } from "./graph-keys.mjs?v=20261017-graphkeys1";
 import { entryFetchedAt, pickNewest, writeWithEviction } from "./cache-pick.mjs?v=20261010-sav1";
 import {
@@ -110,6 +110,7 @@ function thinCellTip(r) {
 }
 import { markNote, statMark, confirmedPadderSlugs, isPenalizedPadder, POOP_MARK, POOP_TIP, setRoomRule } from "./padding.mjs?v=20261022-wpc1";
 import { HUT_MARK, HUT_TIP, HUT_EXPLAIN, HUT_DIFF_NOTE } from "./hut.mjs?v=20261022-spawnroom1";
+import { autoMarksHtml } from "./auto-marks.mjs?v=20261023-badge1";
 // Account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times: chart name list only.
 import { accountTimes, flairsHtml, flairsFor } from "./flairs.mjs?v=20261010-sav1";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
@@ -1873,7 +1874,7 @@ import {
   }
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261022-nbd1")
+    rankingsLoading = import("./rankings.mjs?v=20261023-badge1")
       .then((m) => {
         rankingsApi = m.initRankings(rankingsHost);
         return rankingsApi.ready;
@@ -4102,7 +4103,7 @@ import {
             `<tr><th scope="row" class="stats-name" style="color:${col}">` +
             dotSlot(row.p.cid) +
             `<span class="player-num" aria-label="${tr("stats.series", "Series {n}", { n: num })}">${num}.</span>` +
-            `${nameSpanHtml(row.p.display, farmTitle(row.p) + (withDesc ? descTitle(row.p) : ""), withDesc ? descText(row.p) : "", IS_PS ? "" : honuProfileUrl(row.p.cid))}${serverTagHtml(row.p)}${padMarkHtml(row.p)}${legacySampleHtml(row.p)}</th>${vals}</tr>`
+            `${nameSpanHtml(row.p.display, farmTitle(row.p) + (withDesc ? descTitle(row.p) : ""), withDesc ? descText(row.p) : "", IS_PS ? "" : honuProfileUrl(row.p.cid))}${serverTagHtml(row.p)}${padMarkHtml(row.p)}${autoMarkHtml(row)}${legacySampleHtml(row.p)}</th>${vals}</tr>`
           );
         })
         .join("");
@@ -4319,6 +4320,14 @@ import {
     const poop = (p && isPenalizedPadder(p.display) ? poopHtml() : "") + (p && hutMarked(p.display) ? hutHtml() : "");
     if (!mk.mark) return poop;
     return `<span class="pad-mark mark-${mk.kind}" title="${escapeHtml(mk.tip)}">${mk.mark}</span>${poop}`;
+  }
+  /** 🪳 Zerg confirmed / 🐣 newbie-softened Diff next to the name (auto-marks.mjs; owner t504u: auto changes marked by the name). */
+  function autoMarkHtml(row) {
+    if (!traitP || !row || !row.p) return "";
+    const d = row.p.display;
+    const g = aimGap(traitP, shownValue(row, "adjs"), row.ivi, hutOf(d), vdfOf(d), nbdOf(d));
+    const z = zergScore(traitP, shownValue(row, "inflation"), apkBySlug && apkBySlug.get(slugKey(d)), rvpOf(d));
+    return autoMarksHtml(g, z);
   }
   /** 🛖 safe-spot player (hut.mjs HUT_TIP): positive 🔀 Diff damped; next to the name, never in the Diff cell (owner t504u). */
   function hutHtml() {
