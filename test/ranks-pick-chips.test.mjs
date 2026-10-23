@@ -31,7 +31,7 @@ describe("Rankings ✅ ↔ names box (t356u)", () => {
   it("static wiring", () => {
     const s = rankingsSource();
     assert.doesNotMatch(s, /id="ranksPickBox"|id="ranksChips"|id="ranksCompare"|id="backLink"/);
-    assert.match(s, /host\.toggleName\(q, inp, want\)/);
+    assert.match(s, /host\.toggleName\((?:want \? q : pickedSrc\.get\(q\) \|\| q|q), inp, want\)/);
     // t376u: still syncs the Rankings, but on the next frame so the chip paints first.
     assert.match(read("app.js"), /function rankingsSync\(\) \{(?=[\s\S]{0,500}?rankingsApi\.syncPicks\(\))(?=[\s\S]{0,500}?requestAnimationFrame)/);
   });

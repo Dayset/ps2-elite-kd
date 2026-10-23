@@ -37,9 +37,9 @@ describe("pick-sync", () => {
     assert.deepEqual(
       matchPicks(["megatake", "nobody", "yeezy", "[00] DANISANTINI", "YEEZY"], rows),
       [
-        { query: "Megatake", name: "[LHEU] Megatake" },
-        { query: "YEEZY", name: "YEEZY" },
-        { query: "danisantini", name: "[00] danisantini" },
+        { query: "Megatake", name: "[LHEU] Megatake", src: "megatake" },
+        { query: "YEEZY", name: "YEEZY", src: "yeezy" },
+        { query: "danisantini", name: "[00] danisantini", src: "[00] DANISANTINI" },
       ]
     );
     assert.equal(matchPicks(["YEEZY", "Megatake"], rows, 1).length, 1);
@@ -51,7 +51,7 @@ describe("pick-sync", () => {
     // t356u: one page — the names box is the selection; Rankings match it with matchPicks.
     assert.match(app, /getNames: \(\) => nameTokens\.slice\(\)/);
     const ranks = rankingsSource();
-    assert.match(ranks, /matchPicks\(host\.getNames\(\), data\.rows, maxNames\(\)\)/);
+    assert.match(ranks, /matchPicks\(host\.getNames\(\), data\.rows, maxNames\(\)(?:, \{ cidOf \})?\)/);
     // Old links: ranks.html → index.html keeping ?names= / ?pick=.
     const redirect = fs.readFileSync(new URL("../ranks.html", import.meta.url), "utf8");
     assert.match(redirect, /p\.get\("names"\) \|\| p\.get\("pick"\)/);

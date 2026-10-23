@@ -88,9 +88,15 @@ export function mergeFreshRows(payload, store, { confirmed = new Set(), maxAgeMs
     if (!local.has(k)) local.set(k, e);
   }
   if (!local.size) return { rows, fresh, localOnly };
+  // PS namesakes (owner 2026-10-23, Furkancimen3NS0): a row keyed "us-<cid>" /
+  // "eu-<cid>" takes only a browser copy of THAT character (same cid), never
+  // the other server's copy that happens to share its slug or name.
+  const byCid = new Map();
+  for (const e of local.values()) if (e.player && e.player.cid != null) byCid.set(String(e.player.cid), e);
   const out = rows.map((r) => {
     const slug = r[ix.slug];
-    const e = local.get(slugKey(r[ix.query])) || local.get(String(slug || ""));
+    const km = /^(?:us|eu)-(\d{5,25})$/i.exec(String(r[ix.query] || ""));
+    const e = km ? byCid.get(km[1]) : local.get(slugKey(r[ix.query])) || local.get(String(slug || ""));
     if (!e) return r;
     const pick = pickNewest([
       { player: r, fetchedAt: +r[ix.savedAt] || 0, top: ix.top != null ? +r[ix.top] || 50 : 0, kind: "shared" },
@@ -100,7 +106,8 @@ export function mergeFreshRows(payload, store, { confirmed = new Set(), maxAgeMs
     const nr = rankRow({ player: e.player }, { slug, savedAt: pick.fetchedAt, confirmed: confirmed.has(slug) });
     if (!nr) return r;
     // Same column order as the payload (older payloads may lack trailing columns).
-    const row = cols.map((c) => { const i = RANK_COLS.indexOf(c); return i >= 0 ? nr[i] : r[ix[c]]; });
+    // The pick key (query) stays the built one: unique per room (one tick = one player).
+    const row = cols.map((c) => { if (c === "query") return r[ix.query]; const i = RANK_COLS.indexOf(c); return i >= 0 ? nr[i] : r[ix[c]]; });
     fresh.set(slug, pick.fetchedAt);
     return row;
   });

@@ -16,16 +16,16 @@ import { paletteColor } from "./palette.mjs?v=20261010-sav1";
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261020-wide1";
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261021-theory1";
 import { deskUiScale } from "./desk-scale.mjs?v=20261010-sav1";
-import { matchPicks } from "./pick-sync.mjs?v=20261019-speed1";
+import { matchPicks } from "./pick-sync.mjs?v=20261023-twin1";
 import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261020-i18n2";
 import { groupByTier, openTierIds, pickedInGroup, groupIndexAt, tierOf } from "./tiers.mjs?v=20261017-tier1";
 import { createDistCycler, createWheelSwiper } from "./dist-cycle.mjs?v=20261017-cycle15";
 import { sfx } from "./sfx.mjs?v=20261022-nosfx";
 import { slideSwap, attachDragCarousel } from "./chart-slide.mjs?v=20261020-flick1";
-import { mergeFreshRows } from "./rank-row.mjs?v=20261022-wpc1";
+import { mergeFreshRows } from "./rank-row.mjs?v=20261023-twin1";
 import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-sav1";
 import { confirmedPadderSlugs } from "./padding.mjs?v=20261023-short1";
-import { slugKey, bareName } from "./rank-row.mjs?v=20261022-wpc1";
+import { slugKey, bareName } from "./rank-row.mjs?v=20261023-twin1";
 import { hiddenList } from "./hidden.mjs?v=20261010-sav1";
 // PC | PlayStation rooms (#55): each room ranks its own players only (data/ or data-ps/).
 import { pageRoom, dataPrefix, roomLsKey, psServer } from "./rooms.mjs?v=20261022-ps1";
@@ -164,6 +164,11 @@ export function initRankings(host) {
   // t356u: the ONE selection is the names box (host.getNames()); these are
   // the ranked rows it matches, in its order (names not ranked are skipped).
   const picked = new Map(); // query → display
+  const pickedSrc = new Map(); // query → the names-box entry that picked it (untick removes exactly that one)
+  /** Character id this browser resolved a names-box entry to (PS namesakes pick the exact row). */
+  // (One read of the browser cache per sync; only PS namesake rows ask.)
+  let cidStore = null;
+  const cidOf = (n) => { const st = cidStore || (cidStore = readLocalStore() || {}); const e = st && (st[slugKey(n)] || st[String(n).toLowerCase()]); return e && e.player && e.player.cid != null ? String(e.player.cid) : null; };
   const fieldFull = () => host.getNames().length >= maxNames();
   let pickSig = "";
   // 2026-10-19: the big table re-renders (13k rows, ~0.2 s desktop / ~1 s phone) only
@@ -175,13 +180,15 @@ export function initRankings(host) {
     // t359u: a graphed name that's new to this browser's cache (quick fetch /
     // Fetch fresh after Rankings loaded) → re-merge so it joins 📊 / 🏅 / the table.
     if (base && localSig() !== mergedSig) { remerge(); render(); drawDist(); force = true; }
-    const hits = matchPicks(host.getNames(), data.rows, maxNames());
+    cidStore = null;
+    const hits = matchPicks(host.getNames(), data.rows, maxNames(), { cidOf });
     const sig = hits.map((h) => h.query).join("\n") + "|" + host.getNames().join("\n");
     if (!force && sig === pickSig) return;
     pickSig = sig;
     const before = new Set(picked.keys());
     picked.clear();
-    for (const h of hits) picked.set(h.query, h.name);
+    pickedSrc.clear();
+    for (const h of hits) { picked.set(h.query, h.name); pickedSrc.set(h.query, h.src || h.query); }
     // ⚔️ tiers: a newly added name opens its tier, even one closed by hand.
     for (const h of hits) {
       if (before.has(h.query)) continue;
@@ -1512,7 +1519,9 @@ export function initRankings(host) {
     // t356u: a tick adds / removes the name in the ONE names box (10 limit,
     // graph + tables + URL follow there); the box then syncs back here.
     const want = inp.checked;
-    if (want !== picked.has(q)) host.toggleName(q, inp, want);
+    // Untick removes the names-box entry that picked this row (a bare PS
+    // namesake name, not this row's server key; owner 2026-10-23).
+    if (want !== picked.has(q)) host.toggleName(want ? q : pickedSrc.get(q) || q, inp, want);
     syncPicks({ force: true });
   });
   // Player name in the table: add to the comparison (Ctrl / middle-click still opens a link).

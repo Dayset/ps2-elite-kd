@@ -67,28 +67,47 @@ function pickIndex(rows) {
   let idx = rows && pickIdx.get(rows);
   if (idx && idx.n === rows.length) return idx.map;
   const map = new Map();
-  for (const r of rows || []) {
-    if (!r || !r.query) continue;
-    for (const k of [r.query, r.slug, r.name, bareName(r.name)]) {
-      const key = String(k || "").trim().toLowerCase();
-      if (key && !map.has(key)) map.set(key, r);
-    }
-  }
+  // Exact query first, then slug, then name (PS namesakes, owner 2026-10-23
+  // Furkancimen3NS0: a bare name must not land on the other server's row just
+  // because that row came first; query and slug are unique, names are not).
+  const add = (k, r) => { const key = String(k || "").trim().toLowerCase(); if (key && !map.has(key)) map.set(key, r); };
+  const ok = (rows || []).filter((r) => r && r.query);
+  for (const r of ok) add(r.query, r);
+  const byQuery = new Map(map);
+  for (const r of ok) add(r.slug, r);
+  for (const r of ok) { add(r.name, r); add(bareName(r.name), r); }
+  const cid = new Map();
+  for (const r of ok) { const m = /^(?:us|eu)-(\d{5,25})$/i.exec(String(r.query)); if (m) cid.set(m[1], r); }
+  map.cid = cid;
+  map.query = byQuery;
   if (rows && typeof rows === "object") pickIdx.set(rows, { map, n: rows.length });
   return map;
 }
 
-export function matchPicks(names, rows, max = 10) {
+/**
+ * cidOf(name) (optional): character id the page already resolved that name to
+ * (browser cache). A PS namesake row is keyed "us-<cid>" / "eu-<cid>", so the
+ * resolved cid picks the exact character instead of the first same-name row.
+ * Each hit carries src = the names-box entry it came from, so unticking the
+ * row removes exactly that entry (owner 2026-10-23: ticked namesake stuck).
+ */
+export function matchPicks(names, rows, max = 10, { cidOf = null } = {}) {
   const idx = pickIndex(rows);
   const out = [];
   const seen = new Set();
   for (const n of clean(names)) {
     if (out.length >= max) break;
     const key = n.toLowerCase();
-    const r = idx.get(key) || idx.get(bareName(n));
+    // Exact pick key → the character the page resolved this name to → slug / name.
+    let r = idx.query.get(key) || null;
+    if (!r && cidOf && idx.cid.size) {
+      const c = cidOf(n);
+      if (c != null) r = idx.cid.get(String(c)) || null;
+    }
+    if (!r) r = idx.get(key) || idx.get(bareName(n));
     if (!r || seen.has(r.query)) continue;
     seen.add(r.query);
-    out.push({ query: r.query, name: r.name });
+    out.push({ query: r.query, name: r.name, src: n });
   }
   return out;
 }
