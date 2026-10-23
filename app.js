@@ -112,7 +112,7 @@ import { accountTimes, flairsHtml, flairsFor } from "./flairs.mjs?v=20261010-sav
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
 import "./name-peek.mjs?v=20261020-peekwin1";
 import { sfx, recentGesture, mountSfxToggle } from "./sfx.mjs?v=20261022-nosfx";
-import { mountNameSuggest } from "./name-suggest.mjs?v=20261022-ps1";
+import { mountNameSuggest } from "./name-suggest.mjs?v=20261022-adjsort1";
 import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261010-sav1";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
 import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261020-i18n2";

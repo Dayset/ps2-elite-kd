@@ -108,6 +108,43 @@ describe("local matches and merging", () => {
     assert.deepEqual(mergeSuggestions([], remote, ["simplenubbnc"]).map((x) => x.name), ["SimplenubbNS"]);
     assert.equal(mergeSuggestions([], remote, [], 1).length, 1);
   });
+
+  describe("adjusted iVi (⚔️) in suggestions (owner 2026-10-22)", () => {
+    const ranks2 = {
+      cols: ["name", "query", "adjs"],
+      rows: [
+        ["GingerBaby", "GingerBaby", 812],
+        ["GingerBabyNC", "GingerBabyNC", 1905],
+        ["GingerBabyTR", "GingerBabyTR", null],
+        ["GingerBabyX", "GingerBabyX", 1905],
+      ],
+    };
+
+    it("reads adjs from ranks.json (null when absent)", () => {
+      const names = namesFromRanks(ranks2);
+      assert.equal(names[0].adjs, 812);
+      assert.equal(names[2].adjs, null);
+    });
+
+    it("local matches lead with the strongest, unrated last", () => {
+      const m = localMatches(namesFromRanks(ranks2), "ginger");
+      assert.deepEqual(m.map((x) => x.name), ["GingerBabyX", "GingerBabyNC", "GingerBaby", "GingerBabyTR"]);
+    });
+
+    it("merged list sorts by ⚔️; a merged row keeps Census BR + cached ⚔️; Census-only goes last", () => {
+      const local = localMatches(namesFromRanks(ranks2), "ginger");
+      const remote = [
+        { name: "GingerBaby", faction: "NC", br: 120, source: "census" },
+        { name: "GingerBabyNew", faction: "VS", br: 5, source: "census" },
+      ];
+      const out = mergeSuggestions(local, remote);
+      assert.deepEqual(out.map((x) => x.name), ["GingerBabyX", "GingerBabyNC", "GingerBaby", "GingerBabyTR", "GingerBabyNew"]);
+      const g = out.find((x) => x.name === "GingerBaby");
+      assert.equal(g.adjs, 812);
+      assert.equal(g.br, 120);
+      assert.equal(g.source, "cached");
+    });
+  });
 });
 
 describe("replaceFragment", () => {

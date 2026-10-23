@@ -60,36 +60,59 @@ export function parseCensusSuggestions(json) {
   return out;
 }
 
-/** Bare character names from ranks.json ("query" column), for local matching. */
+/**
+ * Strongest first (owner 2026-10-22): a finite adjusted iVi (⚔️ adjs) always
+ * beats unrated; two unrated entries keep their incoming order (stable sort).
+ */
+export function byStrength(a, b) {
+  const av = Number.isFinite(a && a.adjs) ? a.adjs : null;
+  const bv = Number.isFinite(b && b.adjs) ? b.adjs : null;
+  if (av === null && bv === null) return 0;
+  if (av === null) return 1;
+  if (bv === null) return -1;
+  return bv - av;
+}
+
+/** Bare character names + adjusted iVi from ranks.json, for local matching. */
 export function namesFromRanks(payload) {
   if (!payload || !Array.isArray(payload.cols) || !Array.isArray(payload.rows)) return [];
   const iq = payload.cols.indexOf("query");
   const iname = payload.cols.indexOf("name");
+  const ia = payload.cols.indexOf("adjs");
   if (iq < 0) return [];
   const out = [];
   for (const r of payload.rows) {
     const name = String(r[iq] || "").trim();
     if (!/^[A-Za-z0-9]+$/.test(name)) continue;
-    out.push({ name, display: iname >= 0 ? String(r[iname] || name) : name });
+    const raw = ia >= 0 ? r[ia] : null;
+    const adjs = raw === null || raw === undefined || raw === "" ? null : (Number.isFinite(+raw) ? +raw : null);
+    out.push({ name, display: iname >= 0 ? String(r[iname] || name) : name, adjs });
   }
   return out;
 }
 
-/** Cached names that start with the fragment (case-insensitive), shortest first. */
+/**
+ * Cached names that start with the fragment (case-insensitive): strongest
+ * (⚔️ iVi) first so the variant worth grabbing leads, unrated last, then
+ * shortest first.
+ */
 export function localMatches(names, fragment, limit = MAX_SUGGESTIONS) {
   const f = String(fragment || "").toLowerCase();
   if (!f) return [];
   return (names || [])
     .filter((n) => n.name.toLowerCase().startsWith(f))
-    .sort((a, b) => a.name.length - b.name.length || a.name.localeCompare(b.name))
+    .sort((a, b) => byStrength(a, b) || a.name.length - b.name.length || a.name.localeCompare(b.name))
     .slice(0, limit)
-    .map((n) => ({ name: n.name, display: n.display, source: "cached" }));
+    .map((n) => ({ name: n.name, display: n.display, adjs: Number.isFinite(n.adjs) ? n.adjs : null, source: "cached" }));
 }
 
 /**
- * Merge cached and Census suggestions: cached first, then Census in its order,
- * no case-insensitive duplicates (a cached name also found on Census keeps its
- * Census faction / BR), names already in the box left out.
+ * Merge cached and Census suggestions, then sort the merged list by adjusted
+ * iVi, strongest first (owner 2026-10-22): rated variants lead, Census-only
+ * names (no rating anywhere) keep their most-recently-active order at the
+ * bottom. No case-insensitive duplicates (a cached name also found on Census
+ * keeps its Census faction / BR and its cached ⚔️), names already in the box
+ * left out.
  */
 export function mergeSuggestions(local, remote, exclude = [], limit = MAX_SUGGESTIONS) {
   const skip = new Set((exclude || []).map((n) => String(n).toLowerCase()));
@@ -105,10 +128,10 @@ export function mergeSuggestions(local, remote, exclude = [], limit = MAX_SUGGES
   };
   for (const l of local || []) {
     const r = byKey.get(l.name.toLowerCase());
-    push(r ? { ...r, display: l.display, source: "cached" } : l);
+    push(r ? { ...r, display: l.display, adjs: Number.isFinite(l.adjs) ? l.adjs : null, source: "cached" } : l);
   }
   for (const r of remote || []) push(r);
-  return out.slice(0, limit);
+  return out.sort(byStrength).slice(0, limit);
 }
 
 /** Input value with the fragment being typed replaced by `name` and a trailing space. */
@@ -215,6 +238,7 @@ export function mountNameSuggest({ input, anchor, censusBase, ranksUrl = "data/r
       meta.className = "ns-meta";
       const bits = [];
       if (s.faction) bits.push(s.faction);
+      if (Number.isFinite(s.adjs)) bits.push(`⚔️ ${Math.round(s.adjs)}`);
       if (s.br) bits.push(`BR ${s.br}`);
       if (s.source === "cached") bits.push("cached");
       meta.textContent = bits.join(" · ");
