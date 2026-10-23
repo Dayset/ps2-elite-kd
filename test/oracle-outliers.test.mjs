@@ -57,3 +57,17 @@ test("burst tier (#21): short blatant sessions are ☠️, a short spawn camp is
   assert.equal(rep.burst, 2);
   assert.equal(rep.outliers.find((o) => o.name === "Storm").minutes, 7.8);
 });
+
+test("vouched players (owner: legit top-level) are never flagged, on any faction", async () => {
+  const { isVouched } = await import("../oracle-worker/src/outliers.js");
+  const e = (id) => ({ characterID: id, kills: 398, deaths: 1, secondsOnline: 88 * 60 });
+  const rep = outlierReport({
+    entries: [e("1"), e("2"), e("3"), e("4")],
+    characters: [{ id: "1", name: "Fantom220TR", factionID: 3 }, { id: "2", name: "Fantom220NC", factionID: 2 },
+      { id: "3", name: "PurityNC", factionID: 2 }, { id: "4", name: "Bauminator45", factionID: 3 }],
+  });
+  assert.deepEqual(rep.outliers.map((o) => o.name), ["Bauminator45"]);
+  assert.equal(rep.flagged, 1);
+  assert.equal(rep.players, 4, "still counted as players");
+  assert.ok(isVouched("fantom220vs") && !isVouched("Fantom2201") && !isVouched(null));
+});

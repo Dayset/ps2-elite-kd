@@ -13,10 +13,18 @@
  *   KPM >= BURST_KPM and kills >= BURST_KILLS and minutes >= BURST_MIN_MINUTES -> "burst" ☠️
  *   (counted in `confirmed` like the ☠️ tier; a session that meets the normal tiers keeps them).
  * A flag is a statistical outlier, never an accusation; PS2 Radar is shown as a
- * second opinion only.
+ * second opinion only. Players on the VOUCHED list are never flagged.
  */
 export const OUTLIER_RULE = Object.freeze({ KD: 6, KPM_EARLY: 3, KPM_CONFIRMED: 4, MIN_MINUTES: 10, MIN_KILLS: 25, MAX_LISTED: 10,
   BURST_KPM: 5, BURST_KILLS: 15, BURST_MIN_MINUTES: 2 });
+
+/**
+ * Players the owner knows as legit top-level players: never flagged. Names are matched
+ * case-insensitively; a pattern covers a player's characters on every faction
+ * (Fantom220TR / Fantom220NC / Fantom220VS). Owner, 2026-10-23.
+ */
+export const VOUCHED = Object.freeze([/^puritync$/i, /^fantom220(vs|nc|tr)?$/i]);
+export const isVouched = (name) => !!name && VOUCHED.some((re) => re.test(String(name)));
 
 const FAC = { 1: "VS", 2: "NC", 3: "TR", 4: "NSO" };
 const r2 = (x) => Math.round(x * 100) / 100;
@@ -43,7 +51,7 @@ export function outlierReport(body, rule = OUTLIER_RULE) {
     let severity = null;
     if (minutes >= rule.MIN_MINUTES && kills >= rule.MIN_KILLS && kd >= rule.KD && kpm >= rule.KPM_EARLY) severity = kpm >= rule.KPM_CONFIRMED ? "confirmed" : "early";
     else if (minutes >= rule.BURST_MIN_MINUTES && kills >= rule.BURST_KILLS && kpm >= rule.BURST_KPM) severity = "burst";
-    if (!severity) continue;
+    if (!severity || isVouched(c.name)) continue;
     flagged.push({
       cid, name: c.name || null, outfit: c.outfitTag || null, faction: fac,
       kills, deaths, minutes: minutes < rule.MIN_MINUTES ? Math.round(minutes * 10) / 10 : Math.round(minutes), kd: r2(kd), kpm: r2(kpm),
