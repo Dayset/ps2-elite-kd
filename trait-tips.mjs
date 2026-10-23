@@ -7,6 +7,7 @@ import { t as tr } from "./i18n.mjs";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
 import { zrevConfirmedTip, zrevSoftTip, zrevPlainTip } from "./zerg-revive.mjs?v=20261022-zrev1";
 import { vdiffFromTip } from "./diff-vehicle.mjs?v=20261022-vdiff1";
+import { nbdFromTip } from "./newbie-diff.mjs?v=20261022-nbd1";
 
 export const AIMGAP_HINT = "Aim on paper vs real results: your ⚔️ iVi percentile minus your IvI (aim) percentile, from −99 to +99. 🤥 Impostor (−33 or lower): your aim promises more than your fights deliver. 😤 DieHard (+33 or higher): you win more than your aim predicts. In between (−32…+32): balanced, aim and results roughly agree. Neither side is better or worse: it shows a play style, not cheating.";
 export const ZERG_HINT = "How much your results lean on a big group, 0–99: the lower of your 🎈 Inflation percentile (K/D lifted by easy fights) and your 🤝 Assists percentile (kills shared with teammates). High only when both are high, so solo farmers of easy fights stay low. Lower is better. Needs 100 kills in recent Honu sessions.";
@@ -54,7 +55,9 @@ export function aimGapCellTip(v, g, pool, veh = null) {
   const reduced = g && g.raw !== g.score;
   const hut = reduced && g.by === "hut" ? " " + tr("diff.hutFrom", "🛖 Reduced from {raw} (rarely dies, slow pace, low accuracy).", { raw: fmtSigned(g.raw) }) : "";
   const vd = reduced && g.by === "veh" ? " " + vdiffFromTip(fmtSigned(g.raw), fin(veh) ? Math.round(veh) : "?") : "";
-  return base + hut + vd;
+  // 🐣 newbie softening (newbie-diff.mjs) on a negative Diff.
+  const nb = reduced && g.by === "nbd" ? " " + nbdFromTip(fmtSigned(g.raw)) : "";
+  return base + hut + vd + nb;
 }
 
 /** 🪳 cell hover: score, percentile among measured players, both parts. */

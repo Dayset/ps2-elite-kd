@@ -12,8 +12,8 @@ const pools = traitPools({
 });
 
 test("Diff = ⚔️ iVi percentile − IvI percentile (floored share below), signed", () => {
-  assert.deepEqual(aimGap(pools, 1000, 10), { score: 90, raw: 90, hut: null, veh: null, by: null, practice: 90, theory: 0 }); // raw/hut/veh/by: 🛖 + 🔀🚜 damping fields (t504u)
-  assert.deepEqual(aimGap(pools, 100, 100), { score: -90, raw: -90, hut: null, veh: null, by: null, practice: 0, theory: 90 });
+  assert.deepEqual(aimGap(pools, 1000, 10), { score: 90, raw: 90, hut: null, veh: null, nbd: null, by: null, practice: 90, theory: 0 }); // raw/hut/veh/by: 🛖 + 🔀🚜 damping fields (t504u)
+  assert.deepEqual(aimGap(pools, 100, 100), { score: -90, raw: -90, hut: null, veh: null, nbd: null, by: null, practice: 0, theory: 90 });
   assert.equal(aimGap(pools, 550, 55).score, 0);
   assert.equal(aimGap(pools, NaN, 50), null);
   assert.equal(aimGap(pools, 500, null), null);

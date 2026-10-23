@@ -209,6 +209,11 @@
           <details class="st-info"><summary>ⓘ How it works</summary><div id="vdiffRule" class="st-rule"></div></details>
           <div id="vdiff" class="st-dim">Loading…</div>
         </details>
+        <details class="st-sub-sec" id="secNewbieDiff">
+          <summary><h3>🔀🐣 Diff newbie softening <span id="nbdCount" class="st-count">…</span></h3></summary>
+          <details class="st-info"><summary>ⓘ How it works</summary><div id="nbdRule" class="st-rule"></div></details>
+          <div id="nbd" class="st-dim">Loading…</div>
+        </details>
         <details class="st-sub-sec" id="secZergRevive">
           <summary><h3>🪳 Zerg revive check <span id="zrevCount" class="st-count">…</span></h3></summary>
           <details class="st-info"><summary>ⓘ How it works</summary><div id="zrevRule" class="st-rule"></div></details>
@@ -1066,6 +1071,7 @@
       try { renderHut(st); } catch (e) { console.warn(e); }
       try { renderVehDiff(st); } catch (e) { console.warn(e); }
       try { renderZergRevive(st); } catch (e) { console.warn(e); }
+      try { renderNewbieDiff(st); } catch (e) { console.warn(e); }
     }
 
     /** 🚜 Vehicle cut (status.json "vehicleCut", scripts/build-ranks.mjs): top cut players with vehicle %, cut %, iVi and rank before / after. */
@@ -1155,6 +1161,24 @@
         ? '<div style="margin-top:6px;">✅ Cleared by the owner (no damp): ' + b.cleared.map((i) => nameCell(i) + " (Diff " + sgn(i.diffHut) + ", would be " + sgn(i.diffWould) + ")").join(", ") + "</div>"
         : '<div class="st-dim" style="margin-top:6px;">No owner clearances.</div>';
       $("vdiff").innerHTML = '<div class="st-dim" style="margin-bottom:6px;">' + b.damped + " players' Diff lowered · start " + b.start + "% vehicle share (median) · 😤 DieHards " + b.dieHardHut + " (after 🛖) → " + b.dieHardAfter + "</div>" + t.html + cl;
+      t.bind();
+    }
+
+    /** 🔀🐣 Diff newbie softening (status.json "newbieDiff", scripts/build-ranks.mjs + newbie-diff.mjs): every player whose negative Diff it softens. */
+    const nbdSort = { key: "diffRaw", dir: 1 };
+    function renderNewbieDiff(st) {
+      const b = st && st.newbieDiff;
+      $("nbdCount").textContent = b ? String(b.softened) : "?";
+      $("nbdRule").textContent = b ? b.rule : "";
+      if (!b) { $("nbd").innerHTML = "Not built yet (next refresh)."; return; }
+      const items = (b.players || []).map((i) => ({ ...i, lift: i.diff - i.diffRaw, left: i.diffRaw <= -33 && i.diff > -33 ? 1 : 0 }));
+      const t = sortTable($("nbd"), items, [
+        ["name", "Player"], ["h", "Play time (h)"], ["factor", "🐣 factor", (v) => (v != null ? "×" + v.toFixed(3) : "—")], ["diffRaw", "Diff before", sgn], ["diff", "Diff after", (v) => "<strong>" + sgn(v) + "</strong>"], ["lift", "Softened by", (v) => "+" + v], ["left", "Leaves 🤥", (v) => (v ? "yes" : "")],
+      ], nbdSort, () => renderNewbieDiff(st));
+      const cl = (b.cleared || []).length
+        ? '<div style="margin-top:6px;">✅ Cleared by the owner (full negative Diff): ' + b.cleared.map((i) => nameCell(i) + " (Diff " + sgn(i.diffRaw) + ", would be " + sgn(i.diffWould) + ")").join(", ") + "</div>"
+        : '<div class="st-dim" style="margin-top:6px;">No owner clearances.</div>';
+      $("nbd").innerHTML = '<div class="st-dim" style="margin-bottom:6px;">' + b.softened + " negative Diffs softened · ramp " + b.loH + " h (p5) → " + b.hiH + " h (median) · 🤥 Impostors " + b.impBefore + " → " + b.impAfter + "</div>" + t.html + cl;
       t.bind();
     }
 

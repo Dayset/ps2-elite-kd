@@ -31,10 +31,11 @@ import { hiddenList } from "./hidden.mjs?v=20261010-sav1";
 import { pageRoom, dataPrefix, roomLsKey, psServer } from "./rooms.mjs?v=20261022-ps1";
 import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261020-i18n2";
 import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261022-wpc1";
-import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261022-zrev1";
-import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, DIFF_THIRD, aimGapCellTip, zergCellTip } from "./trait-tips.mjs?v=20261022-zrev1";
+import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261022-nbd1";
+import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, DIFF_THIRD, aimGapCellTip, zergCellTip } from "./trait-tips.mjs?v=20261022-nbd1";
 import { ZREV_NOTE } from "./zerg-revive.mjs?v=20261022-zrev1";
 import { VDIFF_NOTE } from "./diff-vehicle.mjs?v=20261022-vdiff1";
+import { NBD_NOTE } from "./newbie-diff.mjs?v=20261022-nbd1";
 
 /**
  * @param {{ getNames: () => string[], toggleName: (name: string, anchor: Element, add: boolean) => void, maxNames?: number }} host
@@ -64,7 +65,7 @@ export function initRankings(host) {
     { id: "cons", label: "⚡ Const", digits: 2, tip: "How much of your K/D you keep against the strongest third of your opponents compared with the weakest third: 1.00 means it holds completely, 0.50 means it halves." },
     { id: "apk", label: tr("col.assists", "🤝 Assists"), digits: 2, apk: true, tip: "Assists per kill in recent Honu sessions: how often you help damage enemies that teammates finish, for each kill of your own." },
     // 🪳 Zerg / 🤥😤 Impostor–DieHard (owner t480u–t485u): computed here from the ranks.json pools (trait-scores.mjs), same numbers as ✨ Stats.
-    { id: "diff", label: tr("col.diff", "🔀 Diff"), digits: 0, aimgap: true, tip: AIMGAP_HINT, tipExtra: HUT_DIFF_NOTE + " " + VDIFF_NOTE },
+    { id: "diff", label: tr("col.diff", "🔀 Diff"), digits: 0, aimgap: true, tip: AIMGAP_HINT, tipExtra: HUT_DIFF_NOTE + " " + VDIFF_NOTE + " " + NBD_NOTE },
     { id: "zerg", label: tr("col.zerg", "🪳 Zerg"), digits: 0, zerg: true, tip: ZERG_HINT, tipExtra: ZREV_NOTE },
     { id: "inf", label: tr("col.infantry", "🪖 Infantry"), digits: 1, inf: true, tip: INF_HINT },
   ];
@@ -276,6 +277,8 @@ export function initRankings(host) {
         // 🔀 vehicle damp factor on positive Diff (diff-vehicle.mjs; null = none) and 🪳 revive percentile (zerg-revive.mjs; null = no XP detail).
         vdf: idx.vdf != null && Number.isFinite(r[idx.vdf]) ? r[idx.vdf] : null,
         rvp: idx.rvp != null && Number.isFinite(r[idx.rvp]) ? r[idx.rvp] : null,
+        // 🐣 newbie factor on a negative 🔀 Diff (newbie-diff.mjs; null = none).
+        nbd: idx.nbd != null && Number.isFinite(r[idx.nbd]) ? r[idx.nbd] : null,
         // PlayStation room (#55): "us" Genudine / "eu" Ceres (null on PC).
         srv: idx.srv != null ? r[idx.srv] || null : null,
         // 📅 Registration epoch — not a stat column, but the Settings
@@ -302,7 +305,7 @@ export function initRankings(host) {
       const colOf = (id) => (idx[id] != null ? payload.rows.map((r) => r[idx[id]]) : []);
       const tp = traitPools({ adjs: colOf("adjs"), ivi: colOf("ivi"), inflation: colOf("inflation"), apk: colOf("apk") });
       for (const o of rows) {
-        const g = aimGap(tp, o.adjs, o.ivi, o.hut, o.vdf), z = zergScore(tp, o.inflation, o.apk, o.rvp);
+        const g = aimGap(tp, o.adjs, o.ivi, o.hut, o.vdf, o.nbd), z = zergScore(tp, o.inflation, o.apk, o.rvp);
         o.diff = g ? g.score : null; o._gap = g;
         o.zerg = z ? z.score : null; o._zerg = z;
       }

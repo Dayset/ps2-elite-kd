@@ -54,21 +54,24 @@ function pct(pools, id, v) {
 }
 
 /**
- * 🤥😤 → { score, raw, hut, veh, by, practice, theory } or null when ⚔️ iVi or IvI is missing.
+ * 🤥😤 → { score, raw, hut, veh, nbd, by, practice, theory } or null when ⚔️ iVi or IvI is missing.
  * hut = 🛖 damping factor (hut.mjs, ranks.json "hut"), veh = 🔀 vehicle damp
  * factor (diff-vehicle.mjs, ranks.json "vdf"); null = none. A positive score is
  * multiplied by the LOWER of the two and rounded (raw keeps the undamped score);
- * by = "hut" | "veh" | null says which one counted.
+ * by = "hut" | "veh" | "nbd" | null says which one counted.
+ * nbd = 🐣 newbie factor (newbie-diff.mjs, ranks.json "nbd"): a NEGATIVE score × nbd.
  */
-export function aimGap(pools, adjs, ivi, hut = null, veh = null) {
+export function aimGap(pools, adjs, ivi, hut = null, veh = null, nbd = null) {
   const a = pct(pools, "adjs", adjs), i = pct(pools, "ivi", ivi);
   if (a == null || i == null) return null;
   const raw = a - i;
   const h = fin(hut) && raw > 0 ? hut : null;
   const v = fin(veh) && raw > 0 ? veh : null;
-  const m = h == null && v == null ? null : Math.min(h ?? 1, v ?? 1);
-  const by = m == null ? null : v != null && v < (h ?? 1) ? "veh" : "hut";
-  return { score: m == null ? raw : Math.round(raw * m), raw, hut: h, veh: v, by, practice: a, theory: i };
+  const n = fin(nbd) && raw < 0 ? nbd : null;
+  const m = h == null && v == null ? n : Math.min(h ?? 1, v ?? 1);
+  const by = n != null ? "nbd" : m == null ? null : v != null && v < (h ?? 1) ? "veh" : "hut";
+  // + 0 turns a rounded −0 into 0
+  return { score: m == null ? raw : Math.round(raw * m) + 0, raw, hut: h, veh: v, nbd: n, by, practice: a, theory: i };
 }
 
 /**
