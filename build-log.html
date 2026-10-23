@@ -176,7 +176,7 @@
       <details class="st-card st-sec st-flags st-sess" id="cardForensics">
         <summary id="fxSummary"><h2>🔎 Session forensics <span id="fxCount" class="st-count">…</span></h2></summary>
         <p class="st-note">The top session of a few suspicious players, read kill by kill: speed, weapons, victims. ⚡ / 🔥 hits go to 🚩.</p>
-        <details class="st-info"><summary>ⓘ How it works</summary><div class="st-rule">Each run opens the top session(s) (most kills, highest KPM) of a few players: 🚩, 📉 outliers, 👶 new accounts with a high KPM, high session KPM, top iVi. Each session is analyzed once. Other oddities go to 📉. Count = 🚩 hits.</div><div id="fxRule" class="st-rule"></div></details>
+        <details class="st-info"><summary>ⓘ How it works</summary><div class="st-rule">Each run opens the top session(s) (most kills, highest KPM) of a few players: 🚩, 📉 outliers, 👶 new accounts with a high KPM, high session KPM, top iVi. Each session is analyzed once. Other oddities go to 📉. Count = 🚩 hits. A session with 100+ kills at K/D ≥ 25 and ≥ 50% headshots is a marathon rampage: the player is auto-hidden with no review, whatever the account's age (owner 2026-10-22).</div><div id="fxRule" class="st-rule"></div></details>
         <div id="fx" class="st-dim">Loading…</div>
       </details>
 
@@ -203,16 +203,6 @@
           <summary><h3>🛖 Safe-spot Diff damping <span id="hutCount" class="st-count">…</span></h3></summary>
           <details class="st-info"><summary>ⓘ How it works</summary><div id="hutRule" class="st-rule"></div></details>
           <div id="hut" class="st-dim">Loading…</div>
-        </details>
-        <details class="st-sub-sec" id="secVehDiff">
-          <summary><h3>🔀🚜 Diff vehicle damp <span id="vdiffCount" class="st-count">…</span></h3></summary>
-          <details class="st-info"><summary>ⓘ How it works</summary><div id="vdiffRule" class="st-rule"></div></details>
-          <div id="vdiff" class="st-dim">Loading…</div>
-        </details>
-        <details class="st-sub-sec" id="secZergRevive">
-          <summary><h3>🪳 Zerg revive check <span id="zrevCount" class="st-count">…</span></h3></summary>
-          <details class="st-info"><summary>ⓘ How it works</summary><div id="zrevRule" class="st-rule"></div></details>
-          <div id="zrev" class="st-dim">Loading…</div>
         </details>
         <details class="st-sub-sec" id="secAdjusted">
           <summary><h3>† Adjusted <span id="adjCount" class="st-count">…</span></h3></summary>
@@ -1064,8 +1054,6 @@
       try { renderPoop(st); } catch (e) { console.warn(e); }
       try { renderVehCut(st); } catch (e) { console.warn(e); }
       try { renderHut(st); } catch (e) { console.warn(e); }
-      try { renderVehDiff(st); } catch (e) { console.warn(e); }
-      try { renderZergRevive(st); } catch (e) { console.warn(e); }
     }
 
     /** 🚜 Vehicle cut (status.json "vehicleCut", scripts/build-ranks.mjs): top cut players with vehicle %, cut %, iVi and rank before / after. */
@@ -1125,57 +1113,6 @@
         hutSort = { key: nk, dir: hutSort.key === nk ? -hutSort.dir : nk === "name" ? 1 : -1 };
         renderHut(st);
       });
-    }
-
-    /** Small sortable table for the 🔀🚜 / 🪳 lists: cols = [[key, label, fmt]], state = { key, dir }. */
-    function sortTable(el, items, cols, state, rerender) {
-      const k = state.key, dir = state.dir;
-      items.sort((x, y) => (k === "name" ? dir * String(x.name).localeCompare(String(y.name)) : dir * ((x[k] ?? -1e9) - (y[k] ?? -1e9))));
-      const html = '<div class="st-scroll"><table class="st-table"><tr>' +
-        cols.map(([key, label]) => '<th data-k="' + key + '" style="cursor:pointer;" title="Sort">' + esc(label) + (key === k ? (dir < 0 ? " ▼" : " ▲") : "") + "</th>").join("") + "</tr>" +
-        items.map((i) => "<tr>" + cols.map(([key, , f]) => "<td>" + (key === "name" ? nameCell(i) : f ? f(i[key], i) : (i[key] ?? "—")) + "</td>").join("") + "</tr>").join("") +
-        "</table></div>";
-      return { html, bind() { for (const th of el.querySelectorAll("th[data-k]")) th.addEventListener("click", () => { const nk = th.dataset.k; state.dir = state.key === nk ? -state.dir : nk === "name" ? 1 : -1; state.key = nk; rerender(); }); } };
-    }
-    const sgn = (v) => (typeof v === "number" ? (v > 0 ? "+" : "") + v : "—");
-
-    /** 🔀🚜 Diff vehicle damp (status.json "vehDiff", scripts/build-ranks.mjs + diff-vehicle.mjs): every player whose shown Diff it lowers. */
-    const vdiffSort = { key: "diffRaw", dir: -1 };
-    function renderVehDiff(st) {
-      const b = st && st.vehDiff;
-      $("vdiffCount").textContent = b ? String(b.damped) : "?";
-      $("vdiffRule").textContent = b ? b.rule : "";
-      if (!b) { $("vdiff").innerHTML = "Not built yet (next refresh)."; return; }
-      const items = (b.players || []).map((i) => ({ ...i, drop: i.diffHut - i.diff }));
-      const t = sortTable($("vdiff"), items, [
-        ["name", "Player"], ["veh", "🪖 Vehicle %"], ["diffRaw", "Diff raw"], ["diffHut", "With 🛖 only"], ["diff", "Diff after", (v) => "<strong>" + sgn(v) + "</strong>"], ["drop", "Drop", (v) => "−" + v],
-        ["factor", "🚜 factor", (v) => (v != null ? "×" + v.toFixed(3) : "—")], ["hut", "🛖 factor", (v) => (v != null ? "×" + v.toFixed(3) : "—")], ["by", "Counted", (v) => (v === "veh" ? "🚜" : "🛖")],
-      ], vdiffSort, () => renderVehDiff(st));
-      const cl = (b.cleared || []).length
-        ? '<div style="margin-top:6px;">✅ Cleared by the owner (no damp): ' + b.cleared.map((i) => nameCell(i) + " (Diff " + sgn(i.diffHut) + ", would be " + sgn(i.diffWould) + ")").join(", ") + "</div>"
-        : '<div class="st-dim" style="margin-top:6px;">No owner clearances.</div>';
-      $("vdiff").innerHTML = '<div class="st-dim" style="margin-bottom:6px;">' + b.damped + " players' Diff lowered · start " + b.start + "% vehicle share (median) · 😤 DieHards " + b.dieHardHut + " (after 🛖) → " + b.dieHardAfter + "</div>" + t.html + cl;
-      t.bind();
-    }
-
-    /** 🪳 Zerg revive check (status.json "zergRevive", scripts/build-ranks.mjs + zerg-revive.mjs): softened players + confirmed high Zergs. */
-    const zrevSort = { key: "zergRaw", dir: -1 };
-    function renderZergRevive(st) {
-      const b = st && st.zergRevive;
-      $("zrevCount").textContent = b ? String(b.softened) : "?";
-      $("zrevRule").textContent = b ? b.rule : "";
-      if (!b) { $("zrev").innerHTML = "Not built yet (next refresh)."; return; }
-      const c = b.cuts || {};
-      const items = (b.players || []).map((i) => ({ ...i, drop: i.zergRaw - i.zerg }));
-      const t = sortTable($("zrev"), items, [
-        ["name", "Player"], ["status", "Result", (v) => (v === "softened" ? "softened" : "✅ confirmed")], ["zergRaw", "Zerg before"], ["zerg", "Zerg after", (v) => "<strong>" + v + "</strong>"], ["drop", "Drop", (v) => (v ? "−" + v : "—")],
-        ["share", "Revived %", (v) => (v != null ? v + "%" : "—")], ["rvp", "Revive pct"], ["revived", "Revives"], ["deaths", "Deaths"],
-      ], zrevSort, () => renderZergRevive(st));
-      const cl = (b.cleared || []).length
-        ? '<div style="margin-top:6px;">✅ Cleared by the owner (no revive result): ' + b.cleared.map((i) => nameCell(i) + " (Zerg " + i.zergRaw + ", would be " + i.zergWould + ")").join(", ") + "</div>"
-        : '<div class="st-dim" style="margin-top:6px;">No owner clearances.</div>';
-      $("zrev").innerHTML = '<div class="st-dim" style="margin-bottom:6px;">Coverage: ' + b.measured + " of " + b.zergScored + " 🪳-scored players have revive data (" + (b.zergScored ? Math.round(b.measured / b.zergScored * 100) : 0) + "%) · " + b.softened + " softened · " + b.confirmed + " confirmed (" + b.confirmedHigh + " with Zerg ≥ 67) · revived share p25 " + c.p25 + "%, median " + c.p50 + "%, p75 " + c.p75 + "% (" + c.minKills + "+ kills, " + c.minDeaths + "+ deaths)</div>" + t.html + cl;
-      t.bind();
     }
 
     /** 💩 Padder penalty (status.json "padderPenalty", scripts/build-ranks.mjs): before / after iVi and rank per confirmed padder. */

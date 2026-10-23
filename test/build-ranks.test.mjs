@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { normalizePlayer, playerMetrics } from "../player-metrics.mjs";
-import { bareName, rankRow, buildRanks, autoHideFreshExceptional, isFreshHeld, FRESH_HOLD, METRIC_COLS, RANK_COLS } from "../scripts/build-ranks.mjs";
+import { bareName, rankRow, buildRanks, autoHideFreshExceptional, isFreshHeld, FRESH_HOLD, autoHideMarathonRampage, marathonSession, MARATHON_HOLD, METRIC_COLS, RANK_COLS } from "../scripts/build-ranks.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const dataDir = path.join(root, "data");
@@ -107,6 +107,47 @@ describe("build-ranks", () => {
       const slugs = new Set(out.rows.map((r) => r[2]));
       assert.ok(!slugs.has("freshcopy"), "fresh copy excluded from ranks");
       assert.ok(slugs.has("oldcopy"), "old copy still ranked");
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it("marathonSession: boundary legs (kills, K/D, headshots all required)", () => {
+    const s = (kills, deaths, kd, hs) => ({ kills, deaths, kd, hs });
+    assert.equal(marathonSession({ a: s(341, 3, 113.7, 0.67) }).id, "a");
+    assert.equal(marathonSession({ a: s(MARATHON_HOLD.MIN_KILLS, 4, MARATHON_HOLD.MIN_KD, MARATHON_HOLD.MIN_HS) }).id, "a", "boundary inclusive");
+    assert.equal(marathonSession({ a: s(99, 1, 99, 0.9) }), null, "too few kills");
+    assert.equal(marathonSession({ a: s(529, 38, 14, 0.59) }), null, "legit control shape (Simplenubb best) stays");
+    assert.equal(marathonSession({ a: s(179, 1, 179, 0) }), null, "A2G farmer: no headshots, no catch");
+    assert.equal(marathonSession({ a: s(200, 2, 100, null) }), null, "unknown headshots never catch");
+    const worst = marathonSession({ a: s(150, 5, 30, 0.6), b: s(341, 3, 113.7, 0.67) });
+    assert.equal(worst.id, "b", "worst = highest K/D");
+  });
+
+  it("autoHideMarathonRampage appends only the rampage shape; cleared + hidden + others stay", () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "marathon-hide-"));
+    try {
+      const dd = path.join(tmp, "data");
+      fs.mkdirSync(dd, { recursive: true });
+      fs.writeFileSync(path.join(dd, "hidden.json"), JSON.stringify({ _note: "kept", players: { AlreadyHidden: { reason: "confirmed cheater", at: "2026-10-01" } } }, null, 2));
+      fs.writeFileSync(path.join(dd, "reviewed.json"), JSON.stringify({ players: { clearedguy: { decision: "cleared", note: "owner", at: "2026-10-20" } } }));
+      fs.writeFileSync(path.join(dd, "forensics.json"), JSON.stringify({ players: {
+        rampageguy: { name: "RampageGuy", cid: "111", sessions: { "77386971": { kills: 341, deaths: 3, kd: 113.7, hs: 0.67 }, "1": { kills: 50, deaths: 10, kd: 5, hs: 0.4 } } },
+        a2gguy: { name: "A2GGuy", cid: "222", sessions: { "2": { kills: 179, deaths: 1, kd: 179, hs: 0 } } },
+        legitguy: { name: "LegitGuy", cid: "333", sessions: { "3": { kills: 529, deaths: 38, kd: 14, hs: 0.59 } } },
+        clearedguy: { name: "ClearedGuy", cid: "444", sessions: { "4": { kills: 300, deaths: 2, kd: 150, hs: 0.9 } } },
+        alreadyhidden: { name: "AlreadyHidden", cid: "555", sessions: { "5": { kills: 300, deaths: 2, kd: 150, hs: 0.9 } } },
+      } }));
+      const added = autoHideMarathonRampage(dd, { today: "2026-10-22" });
+      assert.equal(added.length, 1);
+      assert.equal(added[0].name, "RampageGuy");
+      assert.equal(added[0].session, "77386971", "cites the worst session");
+      const hiddenAfter = JSON.parse(fs.readFileSync(path.join(dd, "hidden.json"), "utf8"));
+      assert.equal(hiddenAfter._note, "kept", "existing fields preserved");
+      assert.match(hiddenAfter.players.RampageGuy.reason, /auto-hidden: marathon rampage session 77386971 \(341 kills \/ 3 deaths, K\/D 113\.7, 67% headshots\)/);
+      assert.ok(!/^confirmed cheater/i.test(hiddenAfter.players.RampageGuy.reason), "auto-hide is not a confirmed-cheater claim");
+      assert.ok(!hiddenAfter.players.A2GGuy && !hiddenAfter.players.LegitGuy && !hiddenAfter.players.ClearedGuy, "aim leg / K/D leg / owner clearance all respected");
+      assert.equal(autoHideMarathonRampage(dd, { today: "2026-10-22" }).length, 0, "idempotent");
     } finally {
       fs.rmSync(tmp, { recursive: true, force: true });
     }
