@@ -13,7 +13,7 @@ export function commander(c, ts, now, lead) {
   const mine = S.me && live.includes(S.me.faction) ? S.me.faction : null;
   const on = live.includes(S.cmdFac) ? S.cmdFac : mine || (live.includes(lead) ? lead : live[0]);
   const seg = `<div class="seg" role="tablist" aria-label="Faction">${live.map((f) => `<button type="button" role="tab" class="${f}${f === on ? " on" : ""}" aria-selected="${f === on}" data-cf="${f}">${f}</button>`).join("")}</div>`;
-  const marks = (e) => `${e.heat >= 40 ? ` <span title="hot fight (heat ${e.heat})">🔥</span>` : ""}${e.freezing ? ` <span title="${e.cut_off ? "cut off: no lattice link back to the warpgate" : "almost cut: its only link to the warpgate runs through a chokepoint under attack"}">🥶</span>` : ""}${e.cut_severs ? ` <span title="capturing this cuts off ${e.cut_severs} enemy bases">✂️${e.cut_severs}</span>` : ""}`;
+  const marks = (e) => `${e.heat >= 40 ? ` <span title="hot fight (heat ${e.heat})">🔥</span>` : ""}${e.freezing ? ` <span title="${e.cut_off ? "cut off: no lattice link back to the warpgate" : "almost cut: its only link to the warpgate runs through a chokepoint under attack"}">🥶</span>` : ""}${e.cut_severs ? ` <span title="capturing this cuts off ${e.cut_severs} enemy bases">✂️${e.cut_severs}</span>` : ""}${e.cuts ? ` <span title="losing it cuts off ${e.cuts} of ours${(e.cut_names || []).length ? `: ${esc(e.cut_names.join(", "))}${e.cuts > e.cut_names.length ? ` +${e.cuts - e.cut_names.length}` : ""}` : ""}">✂️${e.cuts}</span>` : ""}`;
   const prio = (e) => `<span class="note">${e.priority ? `P${e.priority}` : "dead"}</span>`;
   // 🎯 Focus (Worker focus.js): one move per faction, judged when it lands, cuts included.
   const P = c.focus || {};

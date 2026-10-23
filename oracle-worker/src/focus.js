@@ -99,8 +99,11 @@ const decided = (w) => FACS.some((f) => w[f] >= 99.95);
  * Focus per faction. own: Map fid -> 0..3; lattice {adj, names}; mom: territory
  * change per faction over 15 min; header: {VS:{pct}} odds the dashboard shows;
  * pf(fid) -> capture chance. Returns {VS: {focus, backups, quiet}, ...}.
+ * holds (optional {}): filled with every threatened base per faction,
+ * holds[f] = Map fid -> {fid, base, vs, p, loss, cuts} (the worst enemy for that
+ * base), for the "All moves" defend list (src/defend.js).
  */
-export function focusPlan({ own, lattice, getBin, t, dur, mom, header, pf = () => P_DEFAULT, nFac, noCuts = false }) {
+export function focusPlan({ own, lattice, getBin, t, dur, mom, header, pf = () => P_DEFAULT, nFac, noCuts = false, holds = null }) {
   const { adj, names } = lattice;
   const wg = Object.keys(names).filter((f) => /warpgate/i.test(names[f]));
   const left = dur - t;
@@ -185,8 +188,13 @@ export function focusPlan({ own, lattice, getBin, t, dur, mom, header, pf = () =
           const e = evalPos(o2, at(1));
           const loss = quo[1][f] - e.win[f];
           const p = pf(fid);
+          const cuts = lostBy(base.cut, e.cut, f).map(nm);
           cands.push({ kind: "hold", bases: [nm(fid)], target: g, p: +p.toFixed(2), gain: loss, ev: p * loss, win: e.win,
-            cuts: lostBy(base.cut, e.cut, f).map(nm), reconnects: [] });
+            cuts, reconnects: [] });
+          if (holds) {
+            const h = holds[f] || (holds[f] = new Map()), prev = h.get(fid);
+            if (!prev || loss > prev.loss) h.set(fid, { fid, base: nm(fid), vs: g, p, loss, cuts });
+          }
         }
       }
     }

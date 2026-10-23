@@ -47,7 +47,7 @@ export async function drawMap(a) {
   if (cmd && cmd.factions) for (const f of FACS) {
     const x = cmd.factions[f]; if (!x) continue;
     for (const e of x.attack || []) if (e && e.name) add(e.name, e, `<span class="${f}">${f}</span> attack → <span class="${esc(e.target || "")}">${esc(e.target || "")}</span> +${esc(e.win_gain ?? "")}%${e.priority ? ` P${e.priority}` : ""}`);
-    for (const e of x.defend || []) if (e && e.name) add(e.name, e, `<span class="${f}">${f}</span> defend vs <span class="${esc(e.vs || "")}">${esc(e.vs || "")}</span> −${esc(e.win_drop ?? "")}%${e.priority ? ` P${e.priority}` : ""}`);
+    for (const e of x.defend || []) if (e && e.name) add(e.name, e, `<span class="${f}">${f}</span> defend vs <span class="${esc(e.vs || "")}">${esc(e.vs || "")}</span> −${esc(e.win_drop ?? "")}%${e.priority ? ` P${e.priority}` : ""}${e.cuts ? ` · losing it cuts off ${e.cuts} of ours ✂️` : ""}`);
   }
   const fidsByName = {};
   for (const f of Object.keys(geo)) { const n = nm[f]; if (n) (fidsByName[n.name] = fidsByName[n.name] || []).push(f); }

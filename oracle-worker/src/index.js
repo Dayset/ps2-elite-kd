@@ -26,6 +26,7 @@ import { handleVote, settleStatements } from "./vote.js";
 import { handlePrivacy } from "./privacy.js";
 import { cutAwareSnap } from "./cut.js";
 import { focusPlan } from "./focus.js";
+import { cutAwareDefends } from "./defend.js";
 import { alertFrames, archiveAlert, nextToArchive, putBundle, validBundle } from "./archive.js";
 export { AuthWatcher } from "./auth-watcher.js";
 
@@ -493,13 +494,17 @@ export async function commanderFor(env, key, nowMs = Date.now()) {
   try {
     const terrNow = territory(zNow), terr15 = z15 ? territory(z15) : terrNow;
     const pf = captureModel(a.zone);
+    const own = ownership(zNow, r2f), holds = {};
     cmd.focus = focusPlan({
-      own: ownership(zNow, r2f), lattice, getBin: binGetter(a.zone), t: Math.max(0, (now - a.start_ts) / 60), dur: a.dur,
+      own, lattice, getBin: binGetter(a.zone), t: Math.max(0, (now - a.start_ts) / 60), dur: a.dur,
       mom: Object.fromEntries(FACS.map((f) => [f, terrNow[f] - terr15[f]])),
       header: a.win ? JSON.parse(a.win) : null,
       pf: (fid) => (pf[`${fid}|P1:pressured`] || {}).p ?? 0.33,
-      nFac: meltdown ? Object.keys(zNow).length : undefined, noCuts: meltdown,
+      nFac: meltdown ? Object.keys(zNow).length : undefined, noCuts: meltdown, holds,
     });
+    // "All moves" defend list on the same cut-aware win drop as the focus (#63).
+    const def = cutAwareDefends({ holds, own, lattice, flips, nowTs: Math.trunc(now), res: resistanceModel(a.zone) });
+    for (const f of FACS) if (cmd.factions[f] && def[f]) cmd.factions[f].defend = def[f];
   } catch (e) { cmd.focus_error = String(e && e.message || e).slice(0, 200); }
   cmd.source = "worker";
   await db.prepare("UPDATE alert SET commander=?, commander_ts=? WHERE key=? AND status='live'").bind(JSON.stringify(cmd), now, key).run();

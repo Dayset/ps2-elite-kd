@@ -116,7 +116,7 @@ function warShapeStr(ws, f) {
   return `vs ${parts[0][0]} (${desc})`;
 }
 
-function heatScore(fid, flips, nowTs, adj, windowMin = 4) {
+export function heatScore(fid, flips, nowTs, adj, windowMin = 4) {
   if (!flips.length) return 0;
   const cutoff = nowTs - windowMin * 60;
   const neighbors = new Set(nbrs(adj, fid).map(String));
@@ -194,7 +194,7 @@ function warpgatesByOwner(own, names) {
   return wg;
 }
 
-function findCutPoints(own, adj, names) {
+export function findCutPoints(own, adj, names) {
   const cuts = new Map();
   for (const [fo, wgFids] of warpgatesByOwner(own, names)) {
     const factionFids = new Set([...own].filter(([, o]) => o === fo).map(([fid]) => fid));
@@ -265,25 +265,22 @@ function median(xs) {
   return n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2;
 }
 
-function holdFactor(res, fid, ref) {
+export function holdFactor(res, fid, ref) {
   if (!res || ref == null) return 1.0;
   const e = res[String(fid)];
   if (!e || !e.median_hold_min) return 1.0;
   return ref / e.median_hold_min;
 }
 
-function rankedLive(sh, w0, own, adj, names, pf, winfn, flips, nowTs, res) {
-  const locked = FACS.filter((f) => (w0[f] || 0) >= 100);
-  const lockedWinner = locked.length ? locked[0] : null;
-  let refMedian = null;
-  if (res && Object.keys(res).length) {
-    const holds = Object.values(res).map((v) => v.median_hold_min).filter((x) => x);
-    if (holds.length) refMedian = median(holds);
-  }
-  const conn = warpgateConnected(own, adj, names);
-  const cuts = findCutPoints(own, adj, names);
-  const cutByFid = new Map();
-  for (const list of cuts.values()) for (const [fid, n] of list) cutByFid.set(fid, n);
+/** Reference hold time for holdFactor: median of the continent's base hold times (null without a model). */
+export function refHold(res) {
+  if (!res || !Object.keys(res).length) return null;
+  const holds = Object.values(res).map((v) => v.median_hold_min).filter((x) => x);
+  return holds.length ? median(holds) : null;
+}
+
+/** pred_heat: bases next to a hot fight (heat >= 40) warm up, more for well-linked neighbours. */
+export function predHeatMap(own, adj, flips, nowTs) {
   const predHeat = new Map();
   if (flips.length && nowTs) {
     const hot = new Set();
@@ -295,6 +292,35 @@ function rankedLive(sh, w0, own, adj, names, pf, winfn, flips, nowTs, res) {
       if (warming) predHeat.set(fid, warming);
     }
   }
+  return predHeat;
+}
+
+/**
+ * 🥶 "almost cut": faction f's bases whose warpgate link runs through a chokepoint
+ * that is actually being fought over: heat >= 30, or an enemy capture at the
+ * chokepoint or next to it in the last 10 min. (Until 2026-10-18 merely touching
+ * an enemy base counted, which flagged most of the front line.) cuts = findCutPoints().
+ */
+export function freezingSet(f, cuts, adj, flips, nowTs) {
+  const freezing = new Set();
+  for (const [apFid, , severed] of cuts.get(INV[f]) || []) {
+    const apNbrs = new Set(nbrs(adj, apFid).map(String));
+    const threatened = heatScore(apFid, flips, nowTs, adj) >= 30 || flips.some(([ts, nw, , fac]) =>
+      ts >= nowTs - FREEZE_WINDOW_S && ts <= nowTs && nw !== f && (String(fac) === String(apFid) || apNbrs.has(String(fac))));
+    if (threatened) severed.forEach((s) => freezing.add(s));
+  }
+  return freezing;
+}
+
+function rankedLive(sh, w0, own, adj, names, pf, winfn, flips, nowTs, res) {
+  const locked = FACS.filter((f) => (w0[f] || 0) >= 100);
+  const lockedWinner = locked.length ? locked[0] : null;
+  const refMedian = refHold(res);
+  const conn = warpgateConnected(own, adj, names);
+  const cuts = findCutPoints(own, adj, names);
+  const cutByFid = new Map();
+  for (const list of cuts.values()) for (const [fid, n] of list) cutByFid.set(fid, n);
+  const predHeat = predHeatMap(own, adj, flips, nowTs);
   const out = {};
   for (const f of FACS) {
     const fo = INV[f];
@@ -316,17 +342,7 @@ function rankedLive(sh, w0, own, adj, names, pf, winfn, flips, nowTs, res) {
         margin_gain: pyRound(mGain, 2), ev: pyRound(ev, 3), heat: heatScore(fid, flips, nowTs, adj), pred_heat: predHeat.get(fid) || 0,
         cut_off: cut, reconnect: isBridge, owner_cut: ownerCut, cut_severs: cutByFid.get(fid) || 0 });
     }
-    // 🥶 "almost cut": our bases whose warpgate link runs through a chokepoint
-    // that is actually being fought over: heat >= 30, or an enemy capture at the
-    // chokepoint or next to it in the last 10 min. (Until 2026-10-18 merely touching
-    // an enemy base counted, which flagged most of the front line.)
-    const freezing = new Set();
-    for (const [apFid, , severed] of cuts.get(fo) || []) {
-      const apNbrs = new Set(nbrs(adj, apFid).map(String));
-      const threatened = heatScore(apFid, flips, nowTs, adj) >= 30 || flips.some(([ts, nw, , fac]) =>
-        ts >= nowTs - FREEZE_WINDOW_S && ts <= nowTs && nw !== f && (String(fac) === String(apFid) || apNbrs.has(String(fac))));
-      if (threatened) severed.forEach((s) => freezing.add(s));
-    }
+    const freezing = freezingSet(f, cuts, adj, flips, nowTs);
     for (const fid of frontierOf(own, adj, f)) {
       let taker = null;
       for (const nb of nbrs(adj, fid)) { const v = get(own, nb, fo); if (v !== fo && v !== 0) { taker = own.get(nb); break; } }
