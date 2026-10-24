@@ -7,7 +7,7 @@ import { lockCard, lockTick } from "./lock.js?v=20261018-scrub2";
 import { commander, commanderIdle } from "./commander.js?v=20261024-vc1";
 import { voiceToggle, voiceTick, setVoice } from "./voice.js?v=20261024-vc1";
 import { reportPanel } from "./players.js?v=20261018-scrub2";
-import { benchPanel, initResults, refreshHistory, renderHist } from "./results.js?v=20261018-scrub2";
+import { benchPanel, initResults, refreshHistory, renderHist } from "./results.js?v=20261024-hist1";
 import { initAuth } from "./auth.js?v=20261023-anyfac1";
 import { enhance, onSectionExpand, refreshSummary } from "./collapse.js?v=20261018-focus1";
 

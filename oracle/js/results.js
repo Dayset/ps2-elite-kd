@@ -42,7 +42,7 @@ export function renderHist() {
   more.textContent = `Show more (${S.histRows.length - HIST_MAX})`;
 }
 export function initResults() {
-  $("histMore").onclick = () => { histAll = true; renderHist(); };
+  $("histMore").onclick = () => { S.histAll = true; renderHist(); };
   const histBody = $("hist").querySelector("tbody");
   histBody.addEventListener("click", (e) => { const tr = e.target.closest("tr[data-k]"); if (tr && !e.target.closest("a")) S.hooks.openAlert(tr.dataset.k); });
   histBody.addEventListener("keydown", (e) => { const tr = e.target.closest("tr[data-k]"); if (tr && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); S.hooks.openAlert(tr.dataset.k); } });
