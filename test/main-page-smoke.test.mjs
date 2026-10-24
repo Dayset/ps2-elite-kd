@@ -102,7 +102,9 @@ describe("main page smoke (#66)", () => {
       assert.equal(await ev(until(`document.querySelectorAll("#nameTokens .name-token").length !== ${before}`)), true, "🎲 changes the name chips");
       // saved-players chips render (shared cache + this browser)
       assert.equal(await ev(until(`document.querySelector("#cacheChips details.cache-shared")`)), true, "shared-cache fold (cache-chips.mjs ran)");
-      // Analyze with "Fetch fresh data" (Census is faked empty here): the progress bar opens, the run ends, the page survives
+      // Analyze with "Fetch fresh data" (Census is faked empty here): the progress bar opens, the run ends, the page survives.
+      // Wait for the 🎲 player's load first: while a fetch runs, Analyze and the fresh box are disabled and a click does nothing.
+      assert.equal(await ev(until(`!document.getElementById("analyzeBtn").disabled`, 60000)), true, "the 🎲 load finishes");
       await ev(`(() => { const m = document.getElementById("progress"); window.__seenProgress = false; new MutationObserver(() => { if (!m.hidden) window.__seenProgress = true; }).observe(m, { attributes: true }); const f = document.getElementById("fetchFresh"); if (!f.checked) f.click(); document.getElementById("analyzeBtn").click(); })()`);
       assert.equal(await ev(until(`document.getElementById("progress").hidden && window.__seenProgress`, 120000)), true, "Analyze opens the progress bar and finishes");
       // Rankings big table

@@ -29,7 +29,9 @@ jobs:
           node --test --test-reporter=tap $files | tee tap.txt
       - name: Name the failures
         if: failure()
-        run: grep -E "^\s*not ok" tap.txt | sed -E 's/^\s*not ok [0-9]+ - /::error::/' | head -10
+        # the test name plus the assertion message under it (GitHub keeps 10 annotations per step)
+        run: |
+          awk '/^ *not ok/ { sub(/^ *not ok [0-9]+ - /, ""); print "::error::" $0 } m { sub(/^ */, ""); print "::error::  " $0; m = 0 } /error: \|-$/ { m = 1 }' tap.txt | head -10
   browser:
     name: Browser tests (headless Chromium)
     runs-on: ubuntu-latest
@@ -54,4 +56,6 @@ jobs:
           ! grep -q "^# skipped [1-9]" tap.txt || { echo "::error::browser tests skipped (no Chromium?)"; exit 1; }
       - name: Name the failures
         if: failure()
-        run: grep -E "^\s*not ok" tap.txt | sed -E 's/^\s*not ok [0-9]+ - /::error::/' | head -10
+        # the test name plus the assertion message under it (GitHub keeps 10 annotations per step)
+        run: |
+          awk '/^ *not ok/ { sub(/^ *not ok [0-9]+ - /, ""); print "::error::" $0 } m { sub(/^ */, ""); print "::error::  " $0; m = 0 } /error: \|-$/ { m = 1 }' tap.txt | head -10
