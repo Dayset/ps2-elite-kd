@@ -10,6 +10,8 @@ import { appSource } from "./app-source.mjs";
 
 const root = new URL("../", import.meta.url);
 // #66: live.mjs = the browser part + live-model.mjs (the pure part, moved out unchanged); source checks read both
+// live CSS = styles.css + live.css (the live page's own rules, moved out unchanged, #66)
+const cssSrc = () => readFileSync(new URL("styles.css", root), "utf8") + "\n" + readFileSync(new URL("live.css", root), "utf8");
 const liveSrc = () => readFileSync(new URL("live.mjs", root), "utf8") + "\n" + readFileSync(new URL("live-model.mjs", root), "utf8");
 
 test("live.html is built from index.html (run node scripts/build-live.mjs)", () => {
@@ -58,7 +60,7 @@ test("fmtGap", () => {
 });
 
 test("LIVE has no skill graph: the chart section is hidden and live.mjs no longer drives it", () => {
-  const css = readFileSync(new URL("styles.css", root), "utf8");
+  const css = cssSrc();
   assert.match(css, /\.live-mode #chartSection \{ display: none !important; \}/);
   const js = liveSrc();
   assert.doesNotMatch(js, /analyzeNames|setNameTokens/);
@@ -95,7 +97,7 @@ test("emoji fill meter (owner t564u): one size, p50 and below empty / p70.5 half
   assert.equal(emojiFill(act, null, 50), null);
   assert.equal(emojiFill(act, NaN, 50), null);
   assert.equal(FILL_DIM, 0.18); // t589u: dark greyscale interior
-  const css = readFileSync(new URL("styles.css", root), "utf8");
+  const css = cssSrc();
   // the solid picture shows the bottom --f % of the ink: its window sits on the ink (--it/--ih) and moves down by (100 − f)%
   assert.match(css, /\.lv-sw \{ left: 0; right: 0; top: var\(--it, 0px\); height: var\(--ih, 100%\); overflow: hidden; transform: translateY\(calc\(var\(--ih, 0px\) \* \(100 - var\(--f, 0\)\) \/ 100\)\); \}/);
   assert.match(css, /\.lv-s \{[^}]*transform: translateY\(calc\(var\(--ih, 0px\) \* \(var\(--f, 0\) - 100\) \/ 100\)\); \}/); // the picture itself stays put
@@ -134,14 +136,14 @@ test("hover values (owner t584u): short label + the real value, 'unknown' when m
   assert.equal(tipText(col("rkd"), NaN), "K/D unknown");
   for (const c of LIVE_COLS) assert.ok(c.tip && !/\p{Extended_Pictographic}/u.test(c.tip), c.id);
   const js = liveSrc();
-  const css = readFileSync(new URL("styles.css", root), "utf8");
+  const css = cssSrc();
   assert.equal((js.match(/data-tip="\$\{esc\(tipText\(c, (v|null)\)\)\}"/g) || []).length, 5); // every emoji + the iVi number + (t590u) the 🪖/🚜 unit — real infantry % on hover
   assert.doesNotMatch(js, /class="lv-(u|iv)[^"]*"[^>]*title=/);
   assert.match(css, /\.lv-tip \{ position: fixed; z-index: 50; pointer-events: none;/); // floats above, never takes space
 });
 
 test("LIVE: no distribution chart, no title once kills arrive, a themed background", () => {
-  const css = readFileSync(new URL("styles.css", root), "utf8");
+  const css = cssSrc();
   assert.match(css, /\.live-mode #distSection,\n\.live-mode #weaponsSection \{ display: none !important; \}/);
   assert.match(css, /\.live-state:empty \{ display: none; \}/);
   assert.match(css, /background: var\(--panel\)/);
@@ -178,7 +180,7 @@ test("overlay (owner t575u): one killer line above (each new killer replaces it)
 
 test("overlay layout (owner t575u): no flip, ONE column order on every line, fixed 1 + 1 + 6 lines, a marked centre line", () => {
   const js = liveSrc();
-  const css = readFileSync(new URL("styles.css", root), "utf8");
+  const css = cssSrc();
   // no flip / phase / mirroring code left
   assert.doesNotMatch(js, /phaseAt|PHASE_A_MS|PHASE_B_MS|lv-phB|setPhase|lv-pa|lv-pb|lv-bL|lv-bR|reverse\(\)|letter\(/);
   assert.doesNotMatch(css, /lv-phB|lv-pa\b|lv-pb\b|lv-bL|lv-bR|lv-li\b|lv-blk|rotateX/);
@@ -226,11 +228,11 @@ test("cellText: digits, floor at zero, missing", () => {
 });
 
 test("LIVE juice (owner t562u): pop-in row, flip switch, top-rank glow, upset shake — never resizes, honours reduced motion", () => {
-  const css = readFileSync(new URL("styles.css", root), "utf8");
+  const css = cssSrc();
   for (const k of ["lvPop", "lvFlash", "lvShake"]) assert.match(css, new RegExp(`@keyframes ${k} `));
   // owner 2026-10-24: no endless CSS pulses (they were most of the CPU); the tiers move on live.mjs's 30 fps beat instead
   for (const k of ["lvGlow", "lvGlow1", "lvGlow2", "lvSpark", "lvFlashK", "lvFlashD", "lvFlashU"]) assert.doesNotMatch(css, new RegExp(`@keyframes ${k} `));
-  const liveCss = css.slice(css.indexOf("/* ---------- 🎥 Live"), css.indexOf(".fac-vs"));
+  const liveCss = readFileSync(new URL("live.css", root), "utf8"); // the live page's own rules (#66)
   assert.deepEqual([...liveCss.matchAll(/animation:[^;]*infinite/g)].map((m) => m[0]), ["animation: liveBlink 1.2s ease-in-out infinite"]); // only the "waiting…" dot
   assert.doesNotMatch(liveCss, /animation[^;]*box-shadow|@keyframes [^{]*\{[^}]*box-shadow/); // flashes fade by opacity, no repaint per frame
   assert.doesNotMatch(css, /rotateX/); // owner t575u: no flip any more
@@ -257,7 +259,7 @@ test("LIVE juice (owner t562u): pop-in row, flip switch, top-rank glow, upset sh
 
 test("no value = empty 0% emoji, never a dash (owner t567u): stats, iVi, uncached players, skeleton row", () => {
   const js = liveSrc();
-  const css = readFileSync(new URL("styles.css", root), "utf8");
+  const css = cssSrc();
   assert.match(js, /const u = unknownFill\(c\);\n\s*const ug = unitGlow\(c, null\);\n\s*return `<span class="lv-u lv-fl lv-nil[^\n]*style="--f:\$\{u\}"[^\n]*\$\{meter\(shortLab\(c\)\)\}/); // empty emoji (no "—"); t577u: unknown 🪳 = full + gold
   // owner t569u: unknown 🪳 Zerg = full roach (display only); every other missing stat stays empty
   for (const c of LIVE_COLS) assert.equal(unknownFill(c), c.id === "zerg" ? 100 : 0, c.id);
@@ -288,7 +290,7 @@ test("killer line clears on a kill (owner t576u): kill after death empties the t
   assert.equal(st.killer.opp, "k2");
   assert.deepEqual(st.victims.map((r) => r.opp), ["v2", "v1"]);
   const js = liveSrc();
-  const css = readFileSync(new URL("styles.css", root), "utf8");
+  const css = cssSrc();
   assert.match(js, /const atk = st\.killer \? oppLine\(st\.killer, "atk"\) : fade \? oppLine\(st\.gone, "atk", " lv-out"\) : emptyLine\("atk"\);/);
   assert.match(css, /\.lv-ev\.lv-out > tr > td \{ animation: lvOut 0\.35s ease-in forwards; \}/);
   assert.match(css, /prefers-reduced-motion: reduce\) \{ \.lv-ev\.lv-out > tr > td \{ animation: none; opacity: 0; \} \}/);
@@ -337,7 +339,7 @@ test("🪳 Zerg gold (owner t577u): raw Zerg above 35 = top gold glow whatever i
 
 test("emoji fill grows 0 → level over 10 s when a line appears (owner t578u/t588u); glow fades in late; reduced motion = final fill", () => {
   const js = liveSrc();
-  const css = readFileSync(new URL("styles.css", root), "utf8");
+  const css = cssSrc();
   assert.match(css, /@property --f \{ syntax: "<number>"; inherits: true; initial-value: 0; \}/);
   assert.doesNotMatch(css, /--gw|lv-fillin \.lv-u \{ animation/); // 2026-10-24: no per-frame custom-property animation
   assert.match(js, /const FILL_MS = 10000;/);
@@ -396,7 +398,7 @@ test("30 fps (owner 2026-10-24: bare minimum 30, 60 next step) and the rank tier
   // the ticker sleeps between beats: how long until the next one
   assert.equal(beatSleep(10, 300), 0);
   assert.equal(beatSleep(BEAT.ms + 300 + 41, 300), BEAT.every - (BEAT.ms + 341));
-  const css = readFileSync(new URL("styles.css", root), "utf8");
+  const css = cssSrc();
   const js = liveSrc();
   assert.match(js, /const FPS = liveFps\(new URLSearchParams\(location\.search\)\.get\("fps"\)\);/);
   assert.match(js, /let wait = Math\.max\(0, lastTick \+ FRAME_MS - now - 2\);/); // never more often than FPS
@@ -416,7 +418,7 @@ test("✨ halo switch (owner 2026-10-24: with and without halos, for lower PCs):
   assert.equal(haloOn("0", "1"), false);
   assert.equal(haloOn("x", "1"), true);
   const js = liveSrc();
-  const css = readFileSync(new URL("styles.css", root), "utf8");
+  const css = cssSrc();
   assert.match(js, /if \(!halo\) \{ halos = halos\.filter\(\(h\) => h\.tier < 2\); shines = \[\]; \}/); // off: no beat, no shine = no frames
   assert.match(js, /tr\("live\.haloOn", /);
   assert.match(js, /tr\("live\.haloOff", /);
@@ -546,7 +548,7 @@ test("weapon + headshot (owner 2026-10-24): kill-feed icons in front of the name
     assert.ok(w && readFileSync(new URL(`assets/weapons/${w.image}.webp`, root)).length > 100, id);
   }
   const js = liveSrc();
-  const css = readFileSync(new URL("styles.css", root), "utf8");
+  const css = cssSrc();
   assert.match(js, /const HS_TIP = tr\("live\.hs", "Headshot"\);/);
   assert.match(js, /style="--wi:url\('assets\/weapons\/\$\{esc\(w\.image\)\}\.webp'\)" data-tip="\$\{esc\(w\.name\)\}"/); // hover = the weapon's name
   assert.match(js, /`<span class="lv-hs lv-hs-0"><\/span>`/); // no headshot: the slot stays, so the guns line up

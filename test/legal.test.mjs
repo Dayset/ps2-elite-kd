@@ -49,7 +49,7 @@ test("pages load no third-party scripts, styles, fonts, frames or images", () =>
     }
     assert.doesNotMatch(html, /@import\s+url\(\s*["']?https?:/i, `${page}: no external @import`);
   }
-  for (const css of ["styles.css", "site-layout.css", "oracle/oracle.css"]) {
+  for (const css of ["styles.css", "live.css", "site-layout.css", "oracle/oracle.css"]) {
     if (exists(css)) assert.doesNotMatch(read(css), /url\(\s*["']?https?:|@import\s+["']https?:/i, `${css}: no external CSS resources`);
   }
 });

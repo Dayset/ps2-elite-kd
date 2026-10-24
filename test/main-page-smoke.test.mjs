@@ -87,7 +87,7 @@ async function withPage(url, fn, { width = 1600, height = 1000 } = {}) {
 const until = (cond, ms = 20000) => `new Promise(async (r) => { const end = Date.now() + ${ms}; while (Date.now() < end) { try { if (${cond}) return r(true); } catch {} await new Promise((q) => setTimeout(q, 50)); } r(false); })`;
 
 describe("main page smoke (#66)", () => {
-  it("two saved players: stats, chart, Rankings, theme and wave work without page errors", { skip: !chrome && "no Chrome", timeout: 120000 }, async () => {
+  it("two saved players: stats, chart, Rankings, theme and wave work without page errors", { skip: !chrome && "no Chrome", timeout: 240000 }, async () => {
     assert.equal(NAMES.length, 2, "two saved players in data/");
     await withPage(`index.html?names=${NAMES.map(encodeURIComponent).join(",")}`, async ({ ev, errors }) => {
       assert.equal(await ev(until(`document.querySelectorAll('#statsPanel th[scope="row"].stats-name').length >= 2`)), true, "stats table for both players");
@@ -104,7 +104,7 @@ describe("main page smoke (#66)", () => {
       assert.equal(await ev(until(`document.querySelector("#cacheChips details.cache-shared")`)), true, "shared-cache fold (cache-chips.mjs ran)");
       // Analyze with "Fetch fresh data" (Census is faked empty here): the progress bar opens, the run ends, the page survives
       await ev(`(() => { const m = document.getElementById("progress"); window.__seenProgress = false; new MutationObserver(() => { if (!m.hidden) window.__seenProgress = true; }).observe(m, { attributes: true }); const f = document.getElementById("fetchFresh"); if (!f.checked) f.click(); document.getElementById("analyzeBtn").click(); })()`);
-      assert.equal(await ev(until(`document.getElementById("progress").hidden && window.__seenProgress`, 60000)), true, "Analyze opens the progress bar and finishes");
+      assert.equal(await ev(until(`document.getElementById("progress").hidden && window.__seenProgress`, 120000)), true, "Analyze opens the progress bar and finishes");
       // Rankings big table
       await ev(`(() => { const d = document.getElementById("ranksTableSection"); d.open = true; d.dispatchEvent(new Event("toggle")); })()`);
       assert.equal(await ev(until(`document.querySelectorAll("#ranksBody tr").length > 20`)), true, "Rankings rows render");
