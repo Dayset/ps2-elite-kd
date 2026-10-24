@@ -74,7 +74,8 @@ export function censusStats(ch) {
  *   "ivi-wide" = double-width cell, number + emoji together, no flipping (emoji still sized by rank);
  *   "flip"     = number ⇄ sized emoji loop (CSS, see CYCLE);
  *   "emoji"    = sized emoji only, no number.
- * lowerBetter = smaller value is better (reversed percentile → big emoji for a low value).
+ * lowerBetter = smaller value is better (reversed percentile → big emoji for a low value); no LIVE
+ * column uses it now (owner t555u: 🪳 Zerg follows the raw number).
  * 🪳 Zerg is computed like the Rankings table (trait-scores.mjs zergScore from the ranks.json pools).
  * 🪖 Infantry is the ranks.json "inf" value; players without it show "—" and no emoji.
  */
@@ -83,7 +84,7 @@ export const LIVE_COLS = Object.freeze([
   { id: "act", label: "🏃 Activity", digits: 2, mode: "flip" },
   { id: "pvs", label: "🦁 Brave", digits: 2, mode: "flip" },
   { id: "rf", label: "🛡️ Resist", digits: 2, mode: "flip" },
-  { id: "zerg", label: "🪳 Zerg", digits: 0, lowerBetter: true, mode: "flip" },
+  { id: "zerg", label: "🪳 Zerg", digits: 0, mode: "flip" }, // t555u: bigger Zerg = bigger 🪳 (not reversed)
   { id: "inf", label: "🪖 Infantry", digits: 1, mode: "flip" },
 ]);
 /** Width of a column in layout units (the wide iVi cell = 2). */
@@ -112,12 +113,12 @@ export function emojiScale(col, p) {
   return Math.round(s * 100) / 100;
 }
 /**
- * Number ⇄ emoji loop (owner t546u; t554u: 10 s each, top 2 rows only): number NUM ms,
+ * Number ⇄ emoji loop (owner t546u; t554u: top 2 rows only; t555u: 20 s each): number NUM ms,
  * crossfade FADE ms, emoji EMOJI ms, crossfade back. One CSS animation (styles.css lvNum /
- * lvEm, 20.266s). Each row's clock starts when it arrives (row.at), so a new top row always
+ * lvEm, 40.266s). Each row's clock starts when it arrives (row.at), so a new top row always
  * starts on a fresh number phase and re-renders never restart or jump the loop.
  */
-export const CYCLE = Object.freeze({ num: 10000, fade: 133, emoji: 10000 });
+export const CYCLE = Object.freeze({ num: 20000, fade: 133, emoji: 20000 });
 export const CYCLE_MS = CYCLE.num + CYCLE.emoji + 2 * CYCLE.fade;
 /** Owner t554u: only the newest FLIP_ROWS rows flip; older rows show the sized emoji only. */
 export const FLIP_ROWS = 2;

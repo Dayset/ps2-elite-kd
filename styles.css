@@ -2887,7 +2887,7 @@ col.lv-c-statL, col.lv-c-statR { width: var(--lv-u); }
 /* Owner t546u: LIVE stat cells (live.mjs LIVE_COLS mode). Every cell is a fixed box sized for its
    widest state (widest number, largest 1.8× emoji); number and emoji sit stacked in it (absolute),
    the emoji size is a transform, table-layout is fixed: flipping never moves a row or a column.
-   flip  = number 10 s → 0.133 s crossfade → emoji 10 s → back (t554u), top 2 rows only (live.mjs
+   flip  = number 20 s → 0.133 s crossfade → emoji 20 s → back (t554u, t555u), top 2 rows only (live.mjs
            FLIP_ROWS; older rows render as emoji), one CSS loop (opacity only, cheap); the row's
            --lv-t0 (live.mjs cyclePhase from row.at) keeps its phase across re-renders.
    emoji = sized emoji only.  wide (⚔️ iVi) = number + sized emoji side by side, no loop. */
@@ -2897,13 +2897,13 @@ col.lv-c-statL, col.lv-c-statR { width: var(--lv-u); }
 .lv-e { display: inline-block; font-weight: 400; font-size: var(--lv-fe); line-height: 1; transform: scale(var(--s, 1)); }
 .lv-cyc > span, .lv-emo > .lv-e { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
 .lv-emo > .lv-e { margin: auto; width: 1.2em; height: 1.2em; }
-.lv-cyc > span { animation: lvNum 20.266s linear infinite both; animation-delay: var(--lv-t0, 0ms); }
+.lv-cyc > span { animation: lvNum 40.266s linear infinite both; animation-delay: var(--lv-t0, 0ms); }
 .lv-cyc > .lv-em { animation-name: lvEm; }
 .lv-wide > .lv-v { position: absolute; left: 0; right: calc(var(--lv-eb) + 0.1rem); top: 0; bottom: 0; display: flex; align-items: center; justify-content: flex-end; }
 .lv-wide > .lv-e { position: absolute; right: 0.05rem; top: 50%; width: var(--lv-eb); margin-top: -0.5em; text-align: center; }
-/* 10000 / 20266 = 49.34%, 10133 / 20266 = 50%, 20133 / 20266 = 99.34%. */
-@keyframes lvNum { 0%, 49.34% { opacity: 1; } 50%, 99.34% { opacity: 0; } 100% { opacity: 1; } }
-@keyframes lvEm { 0%, 49.34% { opacity: 0; } 50%, 99.34% { opacity: 1; } 100% { opacity: 0; } }
+/* t555u 20 s each: 20000 / 40266 = 49.67%, 20133 / 40266 = 50%, 40133 / 40266 = 99.67%. */
+@keyframes lvNum { 0%, 49.67% { opacity: 1; } 50%, 99.67% { opacity: 0; } 100% { opacity: 1; } }
+@keyframes lvEm { 0%, 49.67% { opacity: 0; } 50%, 99.67% { opacity: 1; } 100% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) {
   .lv-cyc > span { animation: none; }
   .lv-cyc > .lv-v { opacity: 0; }

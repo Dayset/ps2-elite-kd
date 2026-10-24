@@ -52,9 +52,12 @@ test("LIVE has no skill graph: the chart section is hidden and live.mjs no longe
 
 test("emoji size: median 1x, best 1.8x, worst 0.55x, smooth, lower-is-better reversed", () => {
   const kd = LIVE_COLS.find((c) => c.id === "act");
-  const apk = LIVE_COLS.find((c) => c.id === "zerg"); // 🪳 Zerg: lower is better
-  assert.equal(apk.lowerBetter, true);
-  for (const c of LIVE_COLS) if (c.id !== "zerg") assert.ok(!c.lowerBetter, c.id);
+  const zerg = LIVE_COLS.find((c) => c.id === "zerg"); // owner t555u: bigger Zerg = bigger 🪳
+  for (const c of LIVE_COLS) assert.ok(!c.lowerBetter, c.id);
+  assert.equal(emojiScale(zerg, 99), EMOJI_MAX);
+  assert.equal(emojiScale(zerg, 0), EMOJI_MIN);
+  assert.equal(emojiScale(zerg, 50), 1);
+  const apk = { id: "x", lowerBetter: true }; // the generic reversed mapping still works
   assert.equal(emojiScale(kd, 50), 1);
   assert.equal(emojiScale(kd, 99), EMOJI_MAX);
   assert.equal(emojiScale(kd, 0), EMOJI_MIN);
@@ -86,10 +89,10 @@ test("LIVE: no distribution chart, no title once kills arrive, a themed backgrou
   assert.doesNotMatch(js, /Live: <strong/);
 });
 
-test("flip loop (owner t554u): number 10s, fade 0.133s, emoji 10s, top 2 rows only, clock per row", () => {
-  assert.deepEqual(CYCLE, { num: 10000, fade: 133, emoji: 10000 });
-  assert.equal(CYCLE_MS, 20266);
-  assert.equal(cyclePhase(5000 + 20266 * 3 + 1234, 5000), "-1234ms");
+test("flip loop (owner t554u, t555u): number 20s, fade 0.133s, emoji 20s, top 2 rows only, clock per row", () => {
+  assert.deepEqual(CYCLE, { num: 20000, fade: 133, emoji: 20000 });
+  assert.equal(CYCLE_MS, 40266);
+  assert.equal(cyclePhase(5000 + 40266 * 3 + 1234, 5000), "-1234ms");
   assert.equal(cyclePhase(5000, 5000), "-0ms"); // a new row starts on a fresh number phase
   assert.equal(cyclePhase(4000, 5000), "-0ms");
   assert.equal(FLIP_ROWS, 2);
@@ -97,8 +100,8 @@ test("flip loop (owner t554u): number 10s, fade 0.133s, emoji 10s, top 2 rows on
   assert.deepEqual([0, 1, 2, 9, -1].map((r) => rowMode(flip, r)), ["flip", "flip", "emoji", "emoji", "emoji"]);
   assert.deepEqual([0, 2].map((r) => rowMode(ivi, r)), ["ivi-wide", "ivi-wide"]);
   const css = readFileSync(new URL("styles.css", root), "utf8");
-  assert.match(css, /animation: lvNum 20\.266s/);
-  assert.match(css, /0%, 49\.34% \{ opacity: 1; \} 50%, 99\.34% \{ opacity: 0; \}/);
+  assert.match(css, /animation: lvNum 40\.266s/);
+  assert.match(css, /0%, 49\.67% \{ opacity: 1; \} 50%, 99\.67% \{ opacity: 0; \}/);
   assert.match(css, /prefers-reduced-motion/);
 });
 
