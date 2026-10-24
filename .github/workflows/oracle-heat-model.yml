@@ -1,0 +1,31 @@
+name: Oracle heat model
+
+# Predicted heat: which front-line bases change hands in the next 10 minutes
+# (oracle-worker/history/heat-model.mjs, alert archive). Commits oracle/backend/heat_model.json.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  heat:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build
+        env:
+          ORACLE_API: ${{ vars.ORACLE_API || 'https://ps2-oracle.dayset.workers.dev' }}
+        run: node oracle-worker/history/heat-model.mjs
+      - name: Commit
+        run: |
+          git config user.name "oracle-history[bot]"; git config user.email "oracle-history@users.noreply.github.com"
+          git add oracle/backend/heat_model.json
+          git diff --staged --quiet && exit 0
+          git commit -m "oracle: heat model from the alert archive [bot]"
+          for i in 1 2 3; do git pull --rebase origin main && git push origin HEAD:main && break; sleep 5; done
