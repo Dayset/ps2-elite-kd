@@ -105,10 +105,30 @@ export async function drawMap(a) {
   // Numbered Commander orders of the selected faction (owner 2026-10-24): "1 🛡️ −5.0%" on the
   // base, full text under the same number in the Commander card.
   const liveOrders = a.status === "live" && S.cmdOnLive;
-  const orderLbl = (liveOrders ? S.cmdOrders || [] : []).map((o) => {
-    const c = baseCen(o.base); if (!c) return "";
-    return `<text x="${c[0].toFixed(0)}" y="${(c[1] - r * 1.2).toFixed(0)}"><tspan class="on">${o.n}</tspan> ${o.emoji}${esc(o.short)}</text>`;
-  }).join("");
+  // Labels: a yellow number badge, then a thin "−5%" (whole percent; nothing when it rounds to 0).
+  // Laid out at a fixed size on screen (re-done on zoom): right of the base's point, else left,
+  // below, above; if every spot hits an earlier label or base name, the badge alone.
+  const ordData = (liveOrders ? S.cmdOrders || [] : []).map((o) => {
+    const c = baseCen(o.base); if (!c) return null;
+    const v = Math.round(parseFloat(String(o.short).replace("−", "-")) || 0);
+    return { n: o.n, c, txt: v ? `${v > 0 ? "+" : "−"}${Math.abs(v)}%` : "" };
+  }).filter(Boolean);
+  const layoutOrds = (unit, names) => {   // unit = map units per screen px
+    const fs = 13 * unit, br = 8.5 * unit, gap = 7 * unit, placed = [];
+    if (names) for (const nm2 of Object.keys(fidsByName)) { const c = baseCen(nm2); if (c) { const w = nm2.length * 12 * 0.55 * unit; placed.push([c[0] - w / 2, c[1] - r * 0.9 - 9 * unit, c[0] + w / 2, c[1] - r * 0.9 + 3 * unit]); } }
+    const hit = (b) => placed.some((p) => b[0] < p[2] && b[2] > p[0] && b[1] < p[3] && b[3] > p[1]);
+    return ordData.map((o) => {
+      const w = br * 2 + (o.txt ? 4 * unit + o.txt.length * fs * 0.56 : 0), h = br * 2, [cx, cy] = o.c;
+      const spots = [[cx + gap, cy - h / 2], [cx - gap - w, cy - h / 2], [cx - w / 2, cy + gap], [cx - w / 2, cy - gap - h]];
+      let b = null;
+      for (const [x, y] of spots) { const t = [x, y, x + w, y + h]; if (!hit(t)) { b = t; break; } }
+      const solo = !b;
+      if (solo) b = [cx + gap, cy - br, cx + gap + br * 2, cy + br];
+      placed.push(b);
+      const bx = b[0] + br, by = b[1] + br;
+      return `<circle cx="${bx.toFixed(0)}" cy="${by.toFixed(0)}" r="${br.toFixed(0)}" class="ob" stroke-width="${(1.5 * unit).toFixed(1)}"/><text x="${bx.toFixed(0)}" y="${by.toFixed(0)}" class="on" font-size="${(fs * 0.85).toFixed(0)}" text-anchor="middle" dominant-baseline="central">${o.n}</text>${solo || !o.txt ? "" : `<text x="${(bx + br + 4 * unit).toFixed(0)}" y="${by.toFixed(0)}" class="ot" font-size="${fs.toFixed(0)}" stroke-width="${(2.5 * unit).toFixed(1)}" dominant-baseline="central">${o.txt}</text>`}`;
+    }).join("");
+  };
   const labels = Object.keys(fidsByName).map((name) => { const c = baseCen(name); return c ? `<text x="${c[0].toFixed(0)}" y="${(c[1] - r * 0.9).toFixed(0)}">${esc(name)}</text>` : ""; }).join("");
   const wgOutline = Object.values(geo).filter((g) => g.wg).flatMap((g) => g.pts).map((ps) => `<polygon points="${ps}"/>`).join("");
   const pad = r;
@@ -118,12 +138,12 @@ export async function drawMap(a) {
     <g class="vp">
       <g stroke="#0b0c0e" stroke-width="${(r * 0.12).toFixed(1)}" stroke-linejoin="round">${polys.join("")}</g>
       <g class="wgo" fill="none" stroke="#e8e6df" stroke-width="${(r * 0.18).toFixed(1)}" stroke-dasharray="${(r * 0.5).toFixed(1)} ${(r * 0.3).toFixed(1)}" pointer-events="none">${wgOutline}</g>
-      <path class="borders" d="${edges.join("")}" fill="none" stroke="#0b0c0e" stroke-width="${(r * 0.38).toFixed(1)}" stroke-linecap="round" pointer-events="none"/>
+      <path class="borders" d="${edges.join("")}" fill="none" stroke="#0b0c0e" stroke-width="3" vector-effect="non-scaling-stroke" stroke-linecap="round" pointer-events="none"/>
       <g class="links" stroke="rgba(255,255,255,.28)" stroke-width="${(r * 0.12).toFixed(1)}" stroke-linecap="round" pointer-events="none">${linkLines}</g>
       <g class="pois" fill="#fff" stroke="#0b0c0e" stroke-width="${(r * 0.14).toFixed(1)}" pointer-events="none">${poiDots}</g>
       <g class="hlg" pointer-events="none"></g>
       <g class="marks" font-size="${(r * 1.6).toFixed(1)}" text-anchor="middle" pointer-events="none">${markers}</g>
-      <g class="ords" font-size="${(r * 1.5).toFixed(1)}" text-anchor="middle" fill="#fff" stroke="#0b0c0e" stroke-width="${(r * 0.45).toFixed(1)}" paint-order="stroke" font-weight="700" pointer-events="none">${orderLbl}</g>
+      <g class="ords" pointer-events="none"></g>
       <g class="lbls" text-anchor="middle" fill="#fff" stroke="#0b0c0e" paint-order="stroke" font-weight="600" pointer-events="none">${labels}</g>
     </g></svg>
     ${liveOrders ? `<div class="ordseg" role="group" aria-label="Orders on the map for">Orders for ${FACS.map((f) => `<button type="button" class="${f}${f === S.cmdOn ? " on" : ""}" aria-pressed="${f === S.cmdOn}" data-mapfac="${f}">${f}</button>`).join("")}</div>` : ""}
@@ -134,7 +154,7 @@ export async function drawMap(a) {
   cur = { svg, geo, nm, r, owners };
   // ---------------------------------------------------------------- zoom / pan (#19)
   // One transform on <g class="vp">; hexes are never re-rendered while panning.
-  const vp = svg.querySelector(".vp"), lbls = svg.querySelector(".lbls");
+  const vp = svg.querySelector(".vp"), lbls = svg.querySelector(".lbls"), ords = svg.querySelector(".ords");
   const key = a.zone;
   if (!view || view.key !== key) view = { key, k: 1, tx: 0, ty: 0 };
   const apply = () => {
@@ -147,6 +167,7 @@ export async function drawMap(a) {
     const show = k >= 2.2;   // labels only once they are readable
     lbls.style.display = show ? "" : "none";
     if (show) { const w = svg.getBoundingClientRect().width || 600, fs = 12 * vb[2] / w / k; lbls.setAttribute("font-size", fs.toFixed(1)); lbls.setAttribute("stroke-width", (fs * 0.3).toFixed(1)); }   // ~12 px on screen
+    if (ordData.length) { const w = svg.getBoundingClientRect().width || 600, key2 = `${k.toFixed(2)}|${w}`; if (ords.dataset.k !== key2) { ords.dataset.k = key2; ords.innerHTML = layoutOrds(vb[2] / w / k, show); } }
     svg.classList.toggle("zoomed", k > 1.01);
   };
   const toSvg = (cx, cy) => { const rc = svg.getBoundingClientRect(); return [vb[0] + (cx - rc.left) / rc.width * vb[2], vb[1] + (cy - rc.top) / rc.height * vb[3]]; };

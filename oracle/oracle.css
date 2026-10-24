@@ -311,7 +311,9 @@ footer { color: var(--dim); font-size: var(--fs-12); margin-top: var(--s-5); }
 
 /* Commander orders on the map + base names as links (owner 2026-10-24) */
 #map svg.replay .ords { display: none; }
-#map .ords tspan.on { fill: #ffd54a; }
+#map .ords .ob { fill: #ffd54a; stroke: #0b0c0e; }
+#map .ords .on { fill: #111; font-weight: 700; }
+#map .ords .ot { fill: #fff; font-weight: 500; letter-spacing: .02em; stroke: rgba(11, 12, 14, .85); paint-order: stroke; }
 .cmd .blink { color: var(--link, #7cc4ff); text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 2px; cursor: pointer; }
 .cmd .blink:hover, .cmd .blink:focus-visible, .cmd .blink.hl { text-decoration-style: solid; outline: none; }
 .cmd .onum { display: inline-block; min-width: 1.35em; padding: 0 .3em; border-radius: 999px; background: #ffd54a; color: #111; font-weight: 800; font-size: .85em; text-align: center; line-height: 1.35em; }

@@ -96,8 +96,8 @@ describe("oracle page smoke test (#28)", { skip }, () => {
         // Base names are links with order numbers; the map carries the same number (owner 2026-10-24).
         assert.ok(await page.$(".cf h3.VS ~ .focus .blink[data-base='Cairn Station']"), "focus base name is a link");
         assert.equal(await page.$eval(".cf h3.VS ~ .focus .onum", (e) => e.textContent), "1");
-        await page.waitForSelector("#map .ords text", { timeout: 10000 });
-        assert.match(await page.$eval("#map .ords text", (t) => t.textContent), /^1 🛡️−10\.0%$/);
+        await page.waitForSelector("#map .ords circle", { timeout: 10000 });
+        assert.equal(await page.$eval("#map .ords", (g) => [...g.querySelectorAll("text")].map((t) => t.textContent).join(" ")), "1 −10%");
                 // Map: base borders, a dot per base, and a faction switch for the orders.
         assert.ok(await page.$eval("#map path.borders", (p) => p.getAttribute("d").length > 1000));
         assert.ok(await page.$$eval("#map .pois circle", (c) => c.length) > 50);
