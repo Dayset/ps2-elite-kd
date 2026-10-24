@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { buildLive } from "../scripts/build-live.mjs";
-import { classifyDeath, feedPush, censusStats, cellText, fmtGap, LIVE_COLS, FEED_MAX, emojiFill, goodPct, FILL_DIM, PHASE_A_MS, PHASE_B_MS, phaseAt } from "../live.mjs";
+import { classifyDeath, feedPush, censusStats, cellText, fmtGap, LIVE_COLS, FEED_MAX, emojiFill, fillDriver, glowTier, FULL_AT, goodPct, FILL_DIM, PHASE_A_MS, PHASE_B_MS, phaseAt } from "../live.mjs";
 
 const root = new URL("../", import.meta.url);
 
@@ -56,15 +56,24 @@ test("emoji fill meter (owner t564u): one size, p0 empty / p50 half / top full; 
   const zerg = LIVE_COLS.find((c) => c.id === "zerg");
   const inf = LIVE_COLS.find((c) => c.id === "inf");
   for (const c of LIVE_COLS) assert.ok(!c.lowerBetter, c.id);
+  // owner t568u: fill = min(1, driver / 91) — p91+ (and 91%+ infantry) completely solid
+  assert.equal(FULL_AT, 91);
   assert.equal(emojiFill(act, 1.2, 0), 0);
-  assert.equal(emojiFill(act, 1.2, 50), 50);
-  assert.equal(emojiFill(act, 1.2, 99), 99);
-  assert.equal(emojiFill(zerg, 40, 80), 80); // higher raw Zerg → higher percentile → more fill
-  assert.equal(emojiFill(inf, 50, 3), 50); // "player is 50% infantry" → half filled
-  assert.equal(emojiFill(inf, 100, 99), 100);
+  assert.equal(emojiFill(act, 1.2, 50), 54.9); // p50 ≈ 55% full
+  assert.equal(emojiFill(act, 1.2, 90), 98.9);
+  assert.equal(emojiFill(act, 1.2, 91), 100);
+  assert.equal(emojiFill(act, 1.2, 99), 100);
+  assert.equal(emojiFill(zerg, 40, 80), 87.9); // higher raw Zerg → higher percentile → more fill
+  assert.equal(fillDriver(zerg, 40, 80), 80);
+  assert.equal(emojiFill(inf, 50, 3), 54.9); // 🪖 by the infantry % itself, same /91 rule
+  assert.equal(emojiFill(inf, 91, 3), 100);
   assert.equal(emojiFill(inf, 120, 99), 100);
+  assert.equal(fillDriver(inf, 120, 99), 100);
   const apk = { id: "x", lowerBetter: true }; // the generic reversed mapping still works
-  assert.equal(emojiFill(apk, 1, 10), 89);
+  assert.equal(fillDriver(apk, 1, 10), 89);
+  assert.equal(emojiFill(apk, 1, 10), 97.8);
+  // owner t568u glow tiers: TOP 91+, HIGH 71–90, AVERAGE 51–70, none ≤ 50 / missing
+  assert.deepEqual([null, NaN, 0, 50, 51, 70, 70.9, 71, 90, 90.9, 91, 99, 100].map(glowTier), [0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3]);
   assert.equal(goodPct(apk, 10), 89);
   assert.equal(emojiFill(act, null, 50), null);
   assert.equal(emojiFill(act, NaN, 50), null);
@@ -102,13 +111,17 @@ test("A 10 s / B 5 s switch (owner t557u, t559u, t560u, t563u, t566u): one fixed
   assert.doesNotMatch(css, /lvNum|lvEm|lv-arrow|lv-cyc/);
   assert.match(css, /transition: opacity 0\.133s/);
   assert.match(css, /\.lv-phB \.lv-blk > \.lv-pb \{ opacity: 1;/);
-  assert.match(css, /col\.lv-c-blk \{ width: var\(--lv-b\); \}/);
   assert.match(css, /\.lv-bL > \.lv-pa, \.lv-bL > \.lv-pb \{ justify-content: flex-end; \}/); // left block hugs the centre
   assert.match(css, /\.lv-bR > \.lv-pa, \.lv-bR > \.lv-pb \{ justify-content: flex-start; \}/);
   const js = readFileSync(new URL("live.mjs", root), "utf8");
   assert.doesNotMatch(js, /❯|lv-arrow/);
-  assert.match(js, /<td class="lv-time">\$\{t\}<\/td>\$\{ini\(kill \? meP : p, "L"\)\}\$\{left\}\$\{right\}\$\{ini\(kill \? p : meP, "R"\)\}/); // t563u: first letters outside the blocks
-  assert.match(css, /col\.lv-c-ini \{ width: var\(--lv-ini\); \}/);
+  // t567u: the first letter moved inside the block next to 🏃 (phase B only); no separate letter cells.
+  assert.match(js, /<td class="lv-time">\$\{t\}<\/td>\$\{left\}\$\{right\}<\/tr>/);
+  assert.doesNotMatch(js, /lv-c-ini|class="lv-ini/);
+  assert.match(js, /const pb = sd === "L" \? letter\(p, sd, tip\) \+ em : em \+ letter\(p, sd, tip\)/); // letter · 🏃🦁🛡️🪳🪖 | 🪖🪳🛡️🦁🏃 · letter
+  assert.doesNotMatch(js, /lv-pa">[^<]*letter\(/); // never in phase A (the name is there)
+  assert.match(css, /col\.lv-c-blk \{ width: calc\(var\(--lv-b\) \+ var\(--lv-ini\)\); \}/);
+  assert.match(css, /\.lv-li \{ flex: none; width: var\(--lv-ini\);/);
   assert.match(js, /const pa = sd === "L" \? nameHtml\(p, sd\) \+ iv : iv \+ nameHtml\(p, sd\)/);
   assert.doesNotMatch(js, /lv-ie|lv-slot|lv-name-cell/); // no ⚔️ in phase A, no separate name columns
   assert.match(js, /sd === "R" \? \[\.\.\.REST\]\.reverse\(\) : REST/); // right player: 🪖 🪳 🛡️ 🦁 🏃
@@ -126,7 +139,7 @@ test("cellText: digits, floor at zero, missing", () => {
   const adjs = LIVE_COLS.find((c) => c.id === "adjs");
   assert.equal(cellText(adjs, 1357.3), "1357"); // t564u: no comma
   assert.equal(cellText(adjs, -20), "0");
-  assert.equal(cellText(LIVE_COLS.find((c) => c.id === "inf"), null), "—"); // 🪖 missing → "—" (and no emoji)
+  assert.equal(cellText(LIVE_COLS.find((c) => c.id === "inf"), null), "—"); // 🪖 missing → "—" in the hover title only; the cell is an empty 0% 🪖 (t567u)
   const pvs = LIVE_COLS.find((c) => c.id === "pvs");
   assert.equal(cellText(pvs, 0.634), "0.63");
   assert.equal(cellText(pvs, 329.633), "330"); // t557u: small numbers fit 4 characters
@@ -138,12 +151,28 @@ test("cellText: digits, floor at zero, missing", () => {
 
 test("LIVE juice (owner t562u): pop-in row, flip switch, top-rank glow, upset shake — never resizes, honours reduced motion", () => {
   const css = readFileSync(new URL("styles.css", root), "utf8");
-  for (const k of ["lvPop", "lvFlashK", "lvFlashD", "lvFlashU", "lvShake", "lvGlow"]) assert.match(css, new RegExp(`@keyframes ${k} `));
+  for (const k of ["lvPop", "lvFlashK", "lvFlashD", "lvFlashU", "lvShake", "lvGlow", "lvGlow1", "lvGlow2", "lvSpark"]) assert.match(css, new RegExp(`@keyframes ${k} `));
   assert.match(css, /rotateX\(-85deg\)/);
   assert.match(css, /prefers-reduced-motion: reduce\) \{ \.lv-ev\.lv-new > tr > td/);
-  assert.match(css, /prefers-reduced-motion: reduce\) \{ \.lv-top > \.lv-em \{ animation: none; \}/);
+  assert.match(css, /prefers-reduced-motion: reduce\) \{ \.lv-g1 > \.lv-em, \.lv-g2 > \.lv-em, \.lv-g3 > \.lv-em \{ animation: none; \} \.lv-g3::after \{ animation: none; opacity: 0\.85; \} \}/); // static glow, no pulse
+  assert.match(css, /\.lv-g3::after \{ content: "✦"; position: absolute;/); // sparkle never takes layout room
+  assert.doesNotMatch(css, /lv-top/);
   const js = readFileSync(new URL("live.mjs", root), "utf8");
-  assert.match(js, /const TOP_PCT = 95;/);
+  assert.match(js, /const g = glowTier\(driverOf\(c, v\)\);/); // tiers use the fill's own driver
+  assert.doesNotMatch(js, /TOP_PCT|lv-top/);
   assert.match(js, /const UPSET_GAP = 50;/);
   assert.match(js, /freshTop = !!rows\[0\] && rows\[0\] !== shownTop;/); // a re-render never replays the entrance
+});
+
+test("no value = empty 0% emoji, never a dash (owner t567u): stats, iVi, uncached players, skeleton row", () => {
+  const js = readFileSync(new URL("live.mjs", root), "utf8");
+  const css = readFileSync(new URL("styles.css", root), "utf8");
+  assert.match(js, /if \(f == null\) return `<span class="lv-u lv-fl lv-nil" style="--f:0"[^`]*\$\{meter\(shortLab\(c\), 0\)\}/); // empty emoji, no "—"
+  assert.match(js, /if \(fillOf\(c, v\) == null\) return `<span class="lv-iv lv-nil" style="--f:0"[^`]*\$\{meter\(shortLab\(c\), 0\)\}/); // empty ⚔️ in the iVi box
+  assert.match(js, /\$\{f > 0 \? `<b class="lv-e lv-e1">/); // 0% = only the 25% copy
+  assert.match(js, /const iv = IVI\.map\(\(c\) => iviText\(c, vals\[c\.id\]\)\)/); // uncached too
+  assert.match(js, /const em = restFor\(sd\)\.map\(\(c\) => unit\(c, vals\[c\.id\]\)\)/);
+  assert.doesNotMatch(js, /lv-none|lv-unc|>—<\/span>/); // no K/D-over-KPM text, no dash cells
+  assert.doesNotMatch(css, /lv-none|lv-unc|\.lv-ini\b/);
+  assert.match(css, /\.lv-iv\.lv-nil \{ display: inline-flex;/);
 });
