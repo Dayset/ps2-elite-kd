@@ -157,6 +157,9 @@ describe("🎥 live.html in a browser", () => {
       // owner 2026-10-24: animations are drawn at 30 fps — never at the screen's own rate
       const fps = await ev(framesPerSecond);
       assert.ok(fps >= 15 && fps <= 34, `about 30 frames a second while lines fill: ${fps}`);
+      // ✨ halo switch: left of 🖥️ ⚙️ Settings, off hides halos + shine and is remembered
+      const sw = await ev(`(() => { const b = document.getElementById("lvHaloBtn"); const before = b.getAttribute("aria-pressed"); b.click(); const gl = document.querySelector("#liveList .lv-g3 .lv-gl, #liveList .lv-g2 .lv-gl"); return { next: b.nextElementSibling && b.nextElementSibling.id, before, after: b.getAttribute("aria-pressed"), hidden: gl ? getComputedStyle(gl).display : "none", stored: localStorage.getItem("ps2-elite-kd-live-halo") }; })()`);
+      assert.deepEqual(sw, { next: "roomBadge", before: "true", after: "false", hidden: "none", stored: "0" });
       assert.deepEqual(errors, [], "no page errors");
     });
   });

@@ -2809,6 +2809,11 @@ html[data-theme="light"] .dist-pill:hover { opacity: 1; }
   background: var(--ctrl-btn-muted, transparent);
   cursor: pointer;
 }
+/* ✨ halo switch (live page only, live.mjs, left of 🖥️ ⚙️ Settings): on = gold, off = muted. Off hides the halos and the gold shine. */
+.controls .lv-halo-btn { margin-right: 0.35rem; border: 1px solid var(--border); border-radius: 8px; padding: 0.15rem 0.45rem; background: transparent; cursor: pointer; }
+.controls .lv-halo-btn[aria-pressed="false"] { opacity: 0.5; filter: grayscale(1); }
+.controls .lv-halo-btn[aria-pressed="true"] { background: color-mix(in srgb, #ffc107 22%, transparent); color: inherit; box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.35); }
+.lv-nohalo .lv-gl, .lv-nohalo .lv-shn { display: none; }
 .controls .live-btn[aria-pressed="true"] {
   background: #c62828;
   color: #fff;

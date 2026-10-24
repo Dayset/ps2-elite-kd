@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { buildLive } from "../scripts/build-live.mjs";
 import { infMedian, infDial, isTractor, tractorHint } from "../tractor.mjs";
 import { autoMarksHtml, tractorMark } from "../auto-marks.mjs";
-import { infUnit, classifyDeath, feedPush, censusStats, cellText, fmtGap, LIVE_COLS, tipText, ME_REFRESH_MS, mergeFresh, FEED_MAX, emojiFill, fillDriver, glowTier, unknownFill, FULL_AT, EMPTY_AT, goodPct, FILL_DIM, HOLLOW_PX, overlayPush, overlayRows, VICTIM_LINES, eventAt, EVENT_SKEW_MS, unitGlow, ZERG_GOLD_OVER, OUTLINE_PX, LIVE_GLOWS, weaponIcon, CARD_CATEGORIES, LIVE_FPS, liveFps, bezier, easeFill, glowIn, BEAT, TIER_MOTION, beatAt, haloAt, SHINE, shineFrame, beatSleep } from "../live.mjs";
+import { infUnit, classifyDeath, feedPush, censusStats, cellText, fmtGap, LIVE_COLS, tipText, ME_REFRESH_MS, mergeFresh, FEED_MAX, emojiFill, fillDriver, glowTier, unknownFill, FULL_AT, EMPTY_AT, goodPct, FILL_DIM, HOLLOW_PX, overlayPush, overlayRows, VICTIM_LINES, eventAt, EVENT_SKEW_MS, unitGlow, ZERG_GOLD_OVER, OUTLINE_PX, LIVE_GLOWS, weaponIcon, CARD_CATEGORIES, LIVE_FPS, liveFps, HALO_KEY, haloOn, bezier, easeFill, glowIn, BEAT, TIER_MOTION, beatAt, haloAt, SHINE, shineFrame, beatSleep } from "../live.mjs";
 import { disk, dilate, erode, blurAlpha, inkBox, outlineMasks, hollowRim, spriteCss, shineAt } from "../live-sprites.mjs";
 
 const root = new URL("../", import.meta.url);
@@ -403,6 +403,21 @@ test("30 fps (owner 2026-10-24: bare minimum 30, 60 next step) and the rank tier
   assert.match(css, /\.lv-g2 > \.lv-em > \.lv-gl, \.lv-g3 > \.lv-em > \.lv-gl \{ will-change: opacity, transform; \}/);
   const sheet = spriteCss([{ w: 30, h: 28, it: 4, ih: 20, gp: 6, base: "blob:b", solid: "blob:s", glow: ["", "", ""], shine: "blob:sh", frames: 16 }]);
   assert.match(sheet, /\.lv-g3>\.lv-x0>\.lv-sw>\.lv-s>\.lv-shn\{background-image:url\("blob:sh"\);background-size:1600% 100%;background-position:calc\(var\(--sf, 0\) \* 6\.6667%\) 0\}/);
+});
+
+test("✨ halo switch (owner 2026-10-24: with and without halos, for lower PCs): URL first, then this browser, else on", () => {
+  assert.equal(HALO_KEY, "ps2-elite-kd-live-halo");
+  assert.equal(haloOn(null, null), true);
+  assert.equal(haloOn(null, "0"), false);
+  assert.equal(haloOn("1", "0"), true); // ?halo=1 wins (OBS links)
+  assert.equal(haloOn("0", "1"), false);
+  assert.equal(haloOn("x", "1"), true);
+  const js = readFileSync(new URL("live.mjs", root), "utf8");
+  const css = readFileSync(new URL("styles.css", root), "utf8");
+  assert.match(js, /if \(!halo\) \{ halos = halos\.filter\(\(h\) => h\.tier < 2\); shines = \[\]; \}/); // off: no beat, no shine = no frames
+  assert.match(js, /tr\("live\.haloOn", /);
+  assert.match(js, /tr\("live\.haloOff", /);
+  assert.match(css, /\.lv-nohalo \.lv-gl, \.lv-nohalo \.lv-shn \{ display: none; \}/);
 });
 
 test("emoji outline (owner t579u/t581u): a dark ring that hugs the whole silhouette, round and even; the emoji itself untouched", () => {

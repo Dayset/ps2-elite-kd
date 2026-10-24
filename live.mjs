@@ -185,6 +185,16 @@ export function liveFps(param) {
   const n = parseInt(param, 10);
   return n === 60 || n === 30 ? n : LIVE_FPS;
 }
+/**
+ * Owner 2026-10-24: halo switch for lower PCs (✨ next to ⚙️ Settings on the live page). Off = no halos, no gold shine and no
+ * beat (only the 10 s fills move). ?halo=0 / ?halo=1 in the URL wins (OBS links), then this browser's choice, else on.
+ */
+export const HALO_KEY = "ps2-elite-kd-live-halo";
+export function haloOn(param, stored) {
+  if (param === "0" || param === "1") return param === "1";
+  if (stored === "0" || stored === "1") return stored === "1";
+  return true;
+}
 /** CSS cubic-bezier(x1, y1, x2, y2) timing as a function of progress 0..1. */
 export function bezier(x1, y1, x2, y2) {
   const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx;
@@ -630,6 +640,30 @@ function start() {
   let shines = []; // gold units on screen: { el, off, last }
   let tickTimer = 0, tickAt = 0, frameDue = false, lastTick = 0;
   let maxOff = 0; // the last column's beat delay
+  // ✨ halo switch (HALO_KEY / haloOn): a small button left of 🖥️ ⚙️ Settings; off hides halos + shine and stops the beat
+  let halo = haloOn(new URLSearchParams(location.search).get("halo"), (() => { try { return localStorage.getItem(HALO_KEY); } catch { return null; } })());
+  const haloBtn = document.createElement("button");
+  haloBtn.type = "button";
+  haloBtn.id = "lvHaloBtn";
+  haloBtn.className = "lv-halo-btn";
+  haloBtn.textContent = "✨";
+  const syncHalo = () => {
+    listEl.classList.toggle("lv-nohalo", !halo);
+    haloBtn.setAttribute("aria-pressed", String(halo));
+    const t = halo ? tr("live.haloOn", "✨ Halos on: rank glows and the gold shine. Click for no halos (lighter on slower PCs)") : tr("live.haloOff", "✨ Halos off (lighter on slower PCs). Click to show rank glows and the gold shine");
+    haloBtn.title = t;
+    haloBtn.setAttribute("aria-label", t);
+  };
+  haloBtn.addEventListener("click", () => {
+    halo = !halo;
+    try { localStorage.setItem(HALO_KEY, halo ? "1" : "0"); } catch { /* private mode: this page only */ }
+    syncHalo();
+    collectMotion();
+    wake();
+  });
+  const roomBadgeEl = $("roomBadge"); // in the row with ⚙️ Settings, so the switch never adds a row
+  if (roomBadgeEl && listEl) roomBadgeEl.insertAdjacentElement("beforebegin", haloBtn);
+  if (listEl) syncHalo();
   function wake() {
     if (frameDue || !listEl || reduced()) return; // a frame is already on its way
     const now = performance.now();
@@ -659,6 +693,7 @@ function start() {
         if (tier === 3) shines.push({ el: u.querySelector(".lv-shn"), off, last: -1 });
       });
     }
+    if (!halo) { halos = halos.filter((h) => h.tier < 2); shines = []; } // ✨ off: nothing to flare or shine
     if (reduced()) return;
     const now = performance.now();
     for (const h of halos) {
