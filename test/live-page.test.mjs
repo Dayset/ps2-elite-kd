@@ -90,17 +90,21 @@ test("LIVE: no distribution chart, no title once kills arrive, a themed backgrou
   assert.doesNotMatch(js, /Live: <strong/);
 });
 
-test("20 s switch (owner t557u, t559u): one fixed slot a side, phase A iVi, phase B mirrored emojis, quick fade", () => {
+test("20 s switch (owner t557u, t559u, t560u): one fixed block a side, phase A name + iVi (no ⚔️), phase B mirrored emojis, quick flip", () => {
   assert.equal(PHASE_MS, 20000);
   assert.deepEqual([0, 19999, 20000, 39999, 40000, -5].map(phaseAt), ["A", "A", "B", "B", "A", "A"]);
   const css = readFileSync(new URL("styles.css", root), "utf8");
   assert.doesNotMatch(css, /lvNum|lvEm|lv-arrow|lv-cyc/);
   assert.match(css, /transition: opacity 0\.133s/);
-  assert.match(css, /\.lv-phB \.lv-slot > \.lv-pb \{ opacity: 1;/);
-  assert.match(css, /col\.lv-c-slot \{ width: calc\(5 \* var\(--lv-u\)\); \}/);
+  assert.match(css, /\.lv-phB \.lv-blk > \.lv-pb \{ opacity: 1;/);
+  assert.match(css, /col\.lv-c-blk \{ width: var\(--lv-b\); \}/);
+  assert.match(css, /\.lv-bL > \.lv-pa, \.lv-bL > \.lv-pb \{ justify-content: flex-end; \}/); // left block hugs the centre
+  assert.match(css, /\.lv-bR > \.lv-pa, \.lv-bR > \.lv-pb \{ justify-content: flex-start; \}/);
   const js = readFileSync(new URL("live.mjs", root), "utf8");
   assert.doesNotMatch(js, /❯|lv-arrow/);
-  assert.match(js, /\$\{left\.name\}\$\{left\.stats\}\$\{right\.stats\}\$\{right\.name\}/);
+  assert.match(js, /<td class="lv-time">\$\{t\}<\/td>\$\{left\}\$\{right\}/);
+  assert.match(js, /const pa = sd === "L" \? nameHtml\(p, sd\) \+ iv : iv \+ nameHtml\(p, sd\)/);
+  assert.doesNotMatch(js, /lv-ie|lv-slot|lv-name-cell/); // no ⚔️ in phase A, no separate name columns
   assert.match(js, /sd === "R" \? \[\.\.\.REST\]\.reverse\(\) : REST/); // right player: 🪖 🪳 🛡️ 🦁 🏃
   assert.match(js, /class="lv-v"/);
 });
@@ -124,4 +128,16 @@ test("cellText: digits, floor at zero, missing", () => {
   assert.equal(cellText(LIVE_COLS.find((c) => c.id === "inf"), 95.43), "95.4");
   assert.equal(cellText(LIVE_COLS.find((c) => c.id === "inf"), 100), "100");
   assert.equal(cellText(adjs, 1883.2), "1,883"); // phase A keeps the thousands separator
+});
+
+test("LIVE juice (owner t562u): pop-in row, flip switch, top-rank glow, upset shake — never resizes, honours reduced motion", () => {
+  const css = readFileSync(new URL("styles.css", root), "utf8");
+  for (const k of ["lvPop", "lvFlashK", "lvFlashD", "lvFlashU", "lvShake", "lvGlow"]) assert.match(css, new RegExp(`@keyframes ${k} `));
+  assert.match(css, /rotateX\(-85deg\)/);
+  assert.match(css, /prefers-reduced-motion: reduce\) \{ \.lv-ev\.lv-new > tr > td/);
+  assert.match(css, /prefers-reduced-motion: reduce\) \{ \.lv-top > \.lv-e \{ animation: none; \}/);
+  const js = readFileSync(new URL("live.mjs", root), "utf8");
+  assert.match(js, /const TOP_PCT = 95;/);
+  assert.match(js, /const UPSET_GAP = 50;/);
+  assert.match(js, /freshTop = !!rows\[0\] && rows\[0\] !== shownTop;/); // a re-render never replays the entrance
 });

@@ -2841,30 +2841,26 @@ html[data-theme="light"] .dist-pill:hover { opacity: 1; }
 .live-state .live-dot { color: #e53935; animation: liveBlink 1.2s ease-in-out infinite; }
 @keyframes liveBlink { 50% { opacity: 0.25; } }
 .live-table {
-  /* Owner t550u: ~85% type; t556u: [time][name ▸][stats][stats][◂ name], no ❯ column; t557u: each side's
-     stats are ONE fixed slot that switches every 20 s (phase A ⚔️ iVi "1,883⚔️", phase B 🏃🦁🛡️🪳🪖
-     emojis with a small number under each) — about half the stats width of the six-column table.
-     --lv-u  = one phase-B unit: the largest 2.2× emoji (lv-fe × 2.2; t558u); a slot is 5 units.
-     --lv-ez = emoji zone height (largest emoji), --lv-fn / --lv-nh = small number font / line,
-     --lv-fi = phase-A ⚔️ base size, --lv-fa = phase-A number. t558u: every number font +10%.
-     Width adds up exactly (fixed layout): 7.5 + 2 × 22 ch + 10 units. */
-  --lv-fe: 0.54rem; --lv-fn: 0.46rem; --lv-u: 1.3rem; --lv-ez: 1.4rem; --lv-nh: 0.55rem; --lv-fi: 0.72rem; --lv-fa: 0.935rem;
-  border-collapse: collapse; width: calc(51.5ch + 10 * var(--lv-u)); max-width: none; table-layout: fixed;
+  /* Owner t550u..t559u: no ❯ / K/D / titles, themed background, 20 s switch, rank-sized emojis.
+     t560u: each player is ONE fixed block [time][left block][right block] that switches every 20 s:
+     phase A = name + iVi number (no ⚔️), phase B = 🏃🦁🛡️🪳🪖 with a small number under each
+     (right player mirrored); the left block hugs the centre (right-aligned), the right block too
+     (left-aligned). t560u: numbers and emojis 2× the t558u sizes ("200% zoom").
+     --lv-u  = one phase-B unit: the largest 2.2× emoji (lv-fe × 2.2); 5 units = the minimum block.
+     --lv-ez = emoji zone height, --lv-fn / --lv-nh = small number font / line,
+     --lv-fa = phase-A iVi number, --lv-fm = phase-A name, --lv-b = block width. */
+  --lv-fe: 1.08rem; --lv-fn: 0.92rem; --lv-u: 2.6rem; --lv-ez: 2.8rem; --lv-nh: 1.1rem; --lv-fa: 1.87rem; --lv-fm: 1.3rem;
+  --lv-b: 22rem;
+  border-collapse: collapse; width: calc(7.5ch + 2 * var(--lv-b)); max-width: none; table-layout: fixed;
   font-size: 0.85rem; font-variant-numeric: tabular-nums;
   background: var(--panel); /* owner t550u: the feed had no background (theme variable: light + dark) */
 }
 /* Zebra like the other tables: each event is its own <tbody>, so stripe by tbody. */
 .live-table tbody.lv-ev:nth-of-type(even) > tr > td { background-color: var(--row-alt); }
 col.lv-c-time { width: 7.5ch; }
-col.lv-c-name { width: 22ch; } /* p80 of ranked names (12,955 players): 80% fit, longest 20% truncate */
-col.lv-c-slot { width: calc(5 * var(--lv-u)); }
+col.lv-c-blk { width: var(--lv-b); }
 /* Skeleton row while waiting for the first kill/death. */
 .lv-wait td { color: var(--dim); }
-.live-table .lv-name { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
-.live-table .poop-mark + .lv-name { max-width: calc(100% - 1.4em); }
-.live-table .lv-nL { text-align: right; padding-right: 0.25rem; }
-.live-table .lv-nL .lv-name { direction: rtl; } /* the cut + … land on the left (outer) side */
-.live-table .lv-nR { text-align: left; padding-left: 0.25rem; }
 .live-table th { font-size: 0.64rem; font-weight: 400; color: var(--dim); padding: 0; text-align: center; cursor: default; }
 .live-table th, .live-table td { border: 1px solid var(--border); }
 .live-table td { padding: 0 0.3rem; line-height: 1.25; }
@@ -2872,60 +2868,84 @@ col.lv-c-slot { width: calc(5 * var(--lv-u)); }
 .lv-ev.lv-kill { border-left-color: #43a047; }
 .lv-ev.lv-death { border-left-color: #e53935; }
 .lv-ev + .lv-ev tr:first-child td { border-top: 1px solid rgba(255, 255, 255, 0.07); }
-.lv-ev.lv-new { animation: lvIn 0.35s ease-out; }
+/* Owner t562u "juice" (stream overlay): all short, transforms/shadows only, so the table never changes size.
+   New row: drops in with a small scale pop + a brief flash (green kill / red death).
+   Upset (winner's iVi percentile ≥ 50 points below the loser's, live.mjs UPSET_GAP): gold flash + a short shake of the winner. */
+.lv-ev.lv-new > tr > td { animation: lvPop 0.42s cubic-bezier(0.34, 1.56, 0.64, 1), lvFlashK 0.8s ease-out; }
+.lv-ev.lv-new.lv-death > tr > td { animation-name: lvPop, lvFlashD; }
+.lv-ev.lv-new.lv-upset > tr > td { animation-name: lvPop, lvFlashU; animation-duration: 0.42s, 1.1s; }
+.lv-ev.lv-new.lv-upset > tr > td.lv-bL { animation: lvPop 0.42s cubic-bezier(0.34, 1.56, 0.64, 1), lvFlashU 1.1s ease-out, lvShake 0.4s ease-in-out 0.42s; }
 .lv-ev.lv-fade { animation: lvOut 0.6s ease-in forwards; }
-@keyframes lvIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes lvPop { from { opacity: 0; transform: translateY(-0.6rem) scale(0.96); } 70% { opacity: 1; } to { opacity: 1; transform: none; } }
+@keyframes lvFlashK { from { box-shadow: inset 0 0 0 100rem rgba(67, 160, 71, 0.32); } to { box-shadow: inset 0 0 0 100rem rgba(67, 160, 71, 0); } }
+@keyframes lvFlashD { from { box-shadow: inset 0 0 0 100rem rgba(229, 57, 53, 0.28); } to { box-shadow: inset 0 0 0 100rem rgba(229, 57, 53, 0); } }
+@keyframes lvFlashU { from { box-shadow: inset 0 0 0 100rem rgba(255, 193, 7, 0.4); } to { box-shadow: inset 0 0 0 100rem rgba(255, 193, 7, 0); } }
+@keyframes lvShake { 20% { transform: translateX(-3px); } 40% { transform: translateX(3px); } 60% { transform: translateX(-2px); } 80% { transform: translateX(2px); } }
 @keyframes lvOut { to { opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .lv-ev.lv-new, .lv-ev.lv-fade, .live-state .live-dot { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .lv-ev.lv-new > tr > td, .lv-ev.lv-fade, .live-state .live-dot { animation: none !important; } }
 .lv-time { white-space: nowrap; font-size: 0.79rem; color: var(--dim); vertical-align: middle; text-align: right; min-width: 7.5ch; /* stopwatch ("9s"→"10s"→"59m 59s") reserves the widest reading so data columns never shift */ }
-.lv-name-cell { white-space: nowrap; vertical-align: middle; overflow: hidden; }
-.lv-uncached { text-align: left; opacity: 0.6; font-style: italic; }
 /* Owner t546u: no skill graph in Live (the main page keeps it). */
 .live-mode #chartSection { display: none !important; }
 /* Owner t550u: no 📊 distribution chart in Live either (the main page keeps it). */
 .live-mode #distSection,
 .live-mode #weaponsSection { display: none !important; } /* owner t550u: no 📊 chart and no 🏆 Auraxium weapons in LIVE */
-/* LIVE stats slot (owner t557u). One fixed box per side holding both phases on top of each other;
-   the table's lv-phB class (live.mjs, every 20 s, all rows together) crossfades them in 0.133 s
+/* LIVE player block (owner t557u, t560u). One fixed box per player holding both phases on top of each
+   other; the table's lv-phB class (live.mjs, every 20 s, all rows together) crossfades them in 0.133 s
    (the t550u 3× faster fade). Emoji sizes are transforms, so nothing ever moves the layout. */
-.live-table .lv-slot { position: relative; height: calc(var(--lv-ez) + var(--lv-nh)); padding: 0 !important; overflow: hidden; white-space: nowrap; cursor: help; }
-.live-table th.lv-slot { height: 0.95rem; }
-.lv-slot > .lv-pa, .lv-slot > .lv-pb { position: absolute; inset: 0; display: flex; align-items: center; transition: opacity 0.133s linear; }
-.lv-slot > .lv-pb { opacity: 0; pointer-events: none; }
-.lv-phB .lv-slot > .lv-pa { opacity: 0; pointer-events: none; }
-.lv-phB .lv-slot > .lv-pb { opacity: 1; pointer-events: auto; }
-@media (prefers-reduced-motion: reduce) { .lv-slot > .lv-pa, .lv-slot > .lv-pb { transition: none; } }
-/* Phase A: "1,883⚔️" next to the left name | "209⚔️" next to the right name. */
-.lv-sL > .lv-pa { justify-content: flex-start; padding-left: 0.25rem; }
-.lv-sR > .lv-pa { justify-content: flex-end; padding-right: 0.25rem; }
-th.lv-slot > .lv-pa { justify-content: center; padding: 0; }
-.lv-iv { display: inline-flex; align-items: center; line-height: 1; font-size: var(--lv-fa); }
-.lv-ie { font-weight: 400; font-size: calc(var(--lv-fi) * var(--s, 1)); line-height: 1; margin-left: 0.08em; }
+.live-table .lv-blk { position: relative; height: calc(var(--lv-ez) + var(--lv-nh)); padding: 0 !important; overflow: hidden; white-space: nowrap; cursor: help; }
+.live-table th.lv-blk { height: 1.1rem; }
+/* t562u juice: the 20 s switch is a quick flip with a little bounce (the outgoing side tips away and fades,
+   the incoming side flips in and settles), still all rows together. */
+.lv-blk > .lv-pa, .lv-blk > .lv-pb { position: absolute; inset: 0; display: flex; align-items: center; transition: opacity 0.133s linear, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.lv-blk > .lv-pb, .lv-phB .lv-blk > .lv-pa { opacity: 0; pointer-events: none; transform: perspective(30rem) rotateX(-85deg); }
+.lv-phB .lv-blk > .lv-pb { opacity: 1; pointer-events: auto; transform: none; }
+@media (prefers-reduced-motion: reduce) { .lv-blk > .lv-pa, .lv-blk > .lv-pb { transition: none; transform: none !important; } }
+/* Left block → right-aligned (toward the centre); right block → left-aligned. */
+.lv-bL > .lv-pa, .lv-bL > .lv-pb { justify-content: flex-end; }
+.lv-bR > .lv-pa, .lv-bR > .lv-pb { justify-content: flex-start; }
+.lv-bL > .lv-pa { padding: 0 0.35rem 0 0.25rem; }
+.lv-bR > .lv-pa { padding: 0 0.25rem 0 0.35rem; }
+/* Phase A: name + iVi number, normal spacing, no separator; a long name loses its outer end (…). */
+.lv-pa { gap: 0.35em; }
+.lv-pn { display: inline-flex; align-items: center; min-width: 0; flex: 0 1 auto; font-size: var(--lv-fm); line-height: 1.1; }
+.live-table .lv-name { display: inline-block; min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.live-table .lv-bL .lv-name { direction: rtl; } /* the cut + … land on the left (outer) side */
+.live-table .lv-pn .poop-mark { flex: none; }
+.lv-iv { flex: none; line-height: 1; font-size: var(--lv-fa); }
+.lv-iv.lv-none { color: var(--dim); }
+th .lv-hiv { font-size: 0.64rem; }
 /* Phase B: five equal units, sized emoji on top, small number under it. */
 .lv-u { position: relative; flex: none; width: var(--lv-u); height: 100%; text-align: center; font-size: var(--lv-fn); }
-th .lv-u { font-size: 0.6rem; line-height: 0.95rem; }
-th .lv-iv { font-size: 0.64rem; }
+th .lv-u { font-size: 0.7rem; line-height: 1.1rem; }
 .lv-u.lv-none { color: var(--dim); line-height: calc(var(--lv-ez) + var(--lv-nh)); }
-.lv-iv.lv-none { color: var(--dim); }
 .lv-e { display: inline-block; font-weight: 400; font-size: var(--lv-fe); line-height: 1; transform: scale(var(--s, 1)); }
-.lv-st > .lv-e { position: absolute; left: 0; right: 0; top: -0.05rem; height: var(--lv-ez); display: flex; align-items: center; justify-content: center; }
+.lv-st > .lv-e { position: absolute; left: 0; right: 0; top: -0.1rem; height: var(--lv-ez); display: flex; align-items: center; justify-content: center; }
 .lv-st > .lv-v { position: absolute; left: 0; right: 0; bottom: 0; height: var(--lv-nh); line-height: var(--lv-nh); font-size: var(--lv-fn); text-align: center; letter-spacing: -0.02em; }
+/* t562u juice: a top-rank value (≥ p95, live.mjs TOP_PCT) gets a soft gold glow that breathes gently (glow only, no size change). */
+.lv-top > .lv-e { filter: drop-shadow(0 0 0.2rem rgba(255, 196, 64, 0.55)); animation: lvGlow 2.6s ease-in-out infinite; }
+@keyframes lvGlow { 50% { filter: drop-shadow(0 0 0.45rem rgba(255, 196, 64, 0.95)); } }
+@media (prefers-reduced-motion: reduce) { .lv-top > .lv-e { animation: none; } }
 .lv-emo > .lv-e { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
-/* Not cached yet: Census K/D over KPM in the slot (both phases). */
-.live-table td.lv-uncached { padding: 0 0.25rem !important; font-size: 0.66rem; line-height: 1.15; opacity: 0.6; font-style: italic; vertical-align: middle; }
-.live-table td.lv-uncached > span { display: block; overflow: hidden; text-overflow: ellipsis; }
-.live-table td.lv-sL.lv-uncached { text-align: left; }
-.live-table td.lv-sR.lv-uncached { text-align: right; }
-/* Phones (owner t557u): the table fills the screen width — time and slots are fixed, the two names
-   share what is left, so nothing scrolls sideways. */
+/* Not cached yet: Census K/D over KPM in phase B. */
+.lv-unc { display: flex; flex-direction: column; padding: 0 0.35rem; font-size: 0.85rem; line-height: 1.2; opacity: 0.6; font-style: italic; }
+.lv-bL .lv-unc { text-align: right; }
+/* Owner t561u: LIVE is a PC stream overlay. Big screens (1920) get everything 1.3× bigger for readability. */
+@media (min-width: 1600px) {
+  .live-table { --lv-fe: 1.4rem; --lv-fn: 1.2rem; --lv-u: 3.4rem; --lv-ez: 3.65rem; --lv-nh: 1.43rem; --lv-fa: 2.43rem; --lv-fm: 1.7rem; --lv-b: 28.6rem; font-size: 1.1rem; }
+  .live-table .lv-time { font-size: 1.03rem; }
+  .live-table th, th .lv-hiv { font-size: 0.83rem; }
+  th .lv-u { font-size: 0.9rem; }
+  .live-table th.lv-blk { height: 1.43rem; }
+}
+/* Phones (t561u: not a target; it only must not break — sideways scroll is fine): block = exactly 5 units (the smallest that holds phase B at 2×); names are cut to fit. */
 @media (max-width: 600px) {
-  .live-table { --lv-fe: 0.45rem; --lv-fn: 0.42rem; --lv-u: 1.1rem; --lv-ez: 1.2rem; --lv-nh: 0.5rem; --lv-fi: 0.6rem; --lv-fa: 0.79rem; width: 100%; font-size: 0.72rem; }
-  col.lv-c-time { width: 2.6rem; }
-  col.lv-c-name { width: auto; }
+  .live-table { --lv-fe: 0.9rem; --lv-fn: 0.84rem; --lv-u: 2.2rem; --lv-ez: 2.4rem; --lv-nh: 1rem; --lv-fa: 1.58rem; --lv-fm: 1rem; --lv-b: 11rem; width: calc(2.4rem + 2 * var(--lv-b)); font-size: 0.72rem; }
+  col.lv-c-time { width: 2.4rem; }
   .live-table .lv-time { min-width: 0; font-size: 0.64rem; padding: 0 0.15rem; }
-  .live-table td.lv-uncached { font-size: 0.6rem; }
-  .live-table .lv-nL { padding-right: 0.15rem; padding-left: 0.1rem; }
-  .live-table .lv-nR { padding-left: 0.15rem; padding-right: 0.1rem; }
+  .lv-bL > .lv-pa { padding: 0 0.2rem 0 0.1rem; }
+  .lv-bR > .lv-pa { padding: 0 0.1rem 0 0.2rem; }
+  .lv-pa { gap: 0.25em; }
+  .lv-unc { font-size: 0.72rem; padding: 0 0.2rem; }
 }
 .live-feed { overflow-x: auto; }
 .fac-vs { color: #b061ff; }

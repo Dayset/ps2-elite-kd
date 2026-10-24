@@ -5,8 +5,8 @@ await i18nReady;
  * Census event stream (Death events, one character) and:
  *   - lists the last 6 opponents (one row per person, repeats bump the count);
  *     on a kill our name sits on top, on a death the killer's name does;
- *   - shows each player's stats in one fixed slot that switches every 20 s (owner t557u):
- *     phase A = ⚔️ iVi number with its emoji inline, phase B = the other columns as emojis
+ *   - shows each player (name + stats) in one fixed block that switches every 20 s (owner t557u):
+ *     phase A = name + ⚔️ iVi number (t560u), phase B = the other columns as emojis
  *     sized by the player's percentile with a small number under each (no skill graph in Live);
  *   - uncached opponents first show Census K/D · KPM, then get a full 200-opponent Census
  *     fetch in the background (one at a time, newest first, #32) and upgrade in place.
@@ -72,7 +72,7 @@ export function censusStats(ch) {
 /**
  * LIVE columns (owner t546u, t550u): one config list, in this order — change a mode or the order here.
  * Same ids / labels / digits as rankings.mjs VISIBLE. mode:
- *   "ivi"   = phase A: the number with the sized emoji inline after it ("1,883⚔️", owner t557u);
+ *   "ivi"   = phase A: the plain number next to the name ("CloneKanoVS 1,883", owner t560u: no ⚔️);
  *   "stack" = phase B: sized emoji with the small number under it;
  *   "emoji" = phase B: sized emoji only, no number.
  * lowerBetter = smaller value is better (reversed percentile → big emoji for a low value); no LIVE
@@ -247,36 +247,49 @@ function start() {
   const poopFor = (name) => (isPenalizedPadder(name) ? `<span class="poop-mark" title="${esc(POOP_TIP)}" aria-label="${esc(POOP_TIP)}">${POOP_MARK}</span>` : "");
   const scaleOf = (c, v) => emojiScale(c, percentileOf(pools[c.id] || [], v));
   /** Phase B unit: sized emoji, small number under it ("—" when there is no value). */
+  /** Owner t562u juice: a top-rank value (≥ 95th percentile of the cached players, better direction) glows softly. */
+  const TOP_PCT = 95;
+  const goodOf = (c, v) => { const pc = percentileOf(pools[c.id] || [], v); return pc == null ? null : goodPct(c, pc); };
   function unit(c, v) {
     const s = scaleOf(c, v);
+    const top = s != null && goodOf(c, v) >= TOP_PCT ? " lv-top" : "";
     if (s == null) return `<span class="lv-u lv-none" title="${esc(c.label)}">—</span>`;
     const em = `<b class="lv-e" aria-hidden="true">${shortLab(c)}</b>`;
-    if (c.mode === "emoji") return `<span class="lv-u lv-emo" style="--s:${s}" title="${esc(c.label)}">${em}</span>`;
-    return `<span class="lv-u lv-st" style="--s:${s}" title="${esc(c.label)} ${cellText(c, v)}">${em}<span class="lv-v">${cellText(c, v)}</span></span>`;
+    if (c.mode === "emoji") return `<span class="lv-u lv-emo${top}" style="--s:${s}" title="${esc(c.label)}">${em}</span>`;
+    return `<span class="lv-u lv-st${top}" style="--s:${s}" title="${esc(c.label)} ${cellText(c, v)}">${em}<span class="lv-v">${cellText(c, v)}</span></span>`;
   }
-  /** Phase A: "1,883⚔️" (number, then the rank-sized emoji). */
+  /** Phase A iVi number, no ⚔️ (owner t560u: the number reads clearly on its own). */
   function iviText(c, v) {
-    const s = scaleOf(c, v);
-    if (s == null) return `<span class="lv-iv lv-none" title="${esc(c.label)}">—</span>`;
-    return `<span class="lv-iv" title="${esc(c.label)} ${cellText(c, v)}">${cellText(c, v)}<b class="lv-ie" style="--s:${s}" aria-hidden="true">${shortLab(c)}</b></span>`;
+    if (scaleOf(c, v) == null) return `<span class="lv-iv lv-none" title="${esc(c.label)}">—</span>`;
+    return `<span class="lv-iv" title="${esc(c.label)} ${cellText(c, v)}">${cellText(c, v)}</span>`;
   }
-  /** One side's stats slot: both phases stacked in one fixed box, the table crossfades them (owner t557u). */
-  function slot(vals, sd) {
-    return `<td class="lv-slot lv-s${sd}"><span class="lv-pa">${IVI.map((c) => iviText(c, vals[c.id])).join("")}</span><span class="lv-pb">${restFor(sd).map((c) => unit(c, vals[c.id])).join("")}</span></td>`;
-  }
-  /** One player = name cell + stats slot. sd "L" / "R" (owner t556u: [name][stats][stats][name];
-   *  names hug their stats, a long name ellipsizes on the outer side). */
-  function side(p, isMe, sd) {
-    // 💩 confirmed padder (padding.mjs): hover explains the −10% iVi penalty.
+  /** Name (+ 💩 on the outer side); a long name is cut with … on the outer side. */
+  function nameHtml(p, sd) {
     const poop = poopFor(p.name);
     const nm = `<span class="lv-name fac-${p.faction || ""}" title="${esc(p.name)}"><bdi>${esc(p.name)}</bdi></span>`;
-    const name = `<td class="lv-name-cell lv-n${sd}">${sd === "L" ? poop + nm : nm + poop}</td>`;
-    let stats;
-    if (p.cached) stats = slot(p.cached, sd);
-    else if (isMe) stats = `<td class="lv-slot lv-uncached lv-s${sd}"></td>`;
-    else stats = `<td class="lv-slot lv-uncached lv-s${sd}" title="not in cache"><span>K/D ${fmt(p.kd, 2)}</span><span>KPM ${fmt(p.kpm, 2)}</span></td>`;
-    return { name, stats };
+    return `<span class="lv-pn">${sd === "L" ? poop + nm : nm + poop}</span>`;
   }
+  /**
+   * One player = ONE fixed block that switches every 20 s (owner t560u), both phases stacked:
+   *   phase A = name + iVi number ("CloneKanoVS 1,883" | "209 Vepr12NC"), no separator;
+   *   phase B = the emojis with small numbers (right player mirrored, t559u).
+   * The left block hugs the centre (right-aligned), the right block too (left-aligned).
+   */
+  function side(p, isMe, sd) {
+    const vals = p.cached || {};
+    const iv = IVI.map((c) => (p.cached ? iviText(c, vals[c.id]) : `<span class="lv-iv lv-none">—</span>`)).join("");
+    const pa = sd === "L" ? nameHtml(p, sd) + iv : iv + nameHtml(p, sd);
+    let pb;
+    if (p.cached) pb = restFor(sd).map((c) => unit(c, vals[c.id])).join("");
+    else if (isMe) pb = "";
+    else pb = `<span class="lv-unc" title="not in cache"><span>K/D ${fmt(p.kd, 2)}</span><span>KPM ${fmt(p.kpm, 2)}</span></span>`;
+    return `<td class="lv-blk lv-b${sd}"><span class="lv-pa">${pa}</span><span class="lv-pb">${pb}</span></td>`;
+  }
+  /** Owner t562u juice: an upset = the winner's iVi percentile is ≥ UPSET_GAP points below the loser's → a short shake. */
+  const UPSET_GAP = 50;
+  const iviPct = (p) => { const c = IVI[0]; return p && p.cached ? goodOf(c, p.cached[c.id]) : null; };
+  let shownTop = null; // the newest row that already played its entrance (a re-render must not replay it)
+  let freshTop = false;
   function eventHtml(r, i) {
     const p = people.get(r.opp) || { name: r.opp };
     const meP = { name: me.name, faction: me.faction, cached: me.cached };
@@ -285,19 +298,22 @@ function start() {
     const left = kill ? side(meP, true, "L") : side(p, false, "L");
     const right = kill ? side(p, false, "R") : side(meP, true, "R");
     const t = r.gap == null ? `<span class="lv-timer" data-at="${r.at}">${fmtGap(Date.now() - r.at)}</span>` : `${fmtGap(r.gap)}`;
-    return `<tbody class="lv-ev lv-${r.last}${i === 0 ? " lv-new" : ""}"><tr><td class="lv-time">${t}</td>${left.name}${left.stats}${right.stats}${right.name}</tr></tbody>`;
+    const wP = iviPct(kill ? meP : p), lP = iviPct(kill ? p : meP);
+    const upset = i === 0 && freshTop && wP != null && lP != null && lP - wP >= UPSET_GAP ? " lv-upset" : "";
+    return `<tbody class="lv-ev lv-${r.last}${i === 0 && freshTop ? " lv-new" : ""}${upset}"><tr><td class="lv-time">${t}</td>${left}${right}</tr></tbody>`;
   }
   function render(dropped) {
     if (!listEl) return;
-    // Fixed layout (owner t556u, t557u): [time][name ▸][slot][slot][◂ name]; the slots never change size.
-    const cols = `<colgroup><col class="lv-c-time"><col class="lv-c-name"><col class="lv-c-slot"><col class="lv-c-slot"><col class="lv-c-name"></colgroup>`;
-    const th = (sd) => `<th class="lv-slot"><span class="lv-pa">${IVI.map((c) => `<span class="lv-iv" title="${esc(c.label)}">${esc(c.label)}</span>`).join("")}</span><span class="lv-pb">${restFor(sd).map((c) => `<span class="lv-u" title="${esc(c.label)}">${shortLab(c)}</span>`).join("")}</span></th>`;
-    const head = `<thead><tr><th></th><th></th>${th("L")}${th("R")}<th></th></tr></thead>`;
-    // No events yet: skeleton first row — em dashes stand in for the numbers
-    // until real data arrives and fills the rows.
-    const dashCells = slot({}, "L"), dashR = slot({}, "R");
+    // Fixed layout (owner t560u): [time][left block][right block]; the blocks never change size.
+    const cols = `<colgroup><col class="lv-c-time"><col class="lv-c-blk"><col class="lv-c-blk"></colgroup>`;
+    const th = (sd) => `<th class="lv-blk lv-b${sd}"><span class="lv-pa">${IVI.map((c) => `<span class="lv-hiv" title="${esc(c.label)}">${esc(c.label.split(" ").slice(1).join(" "))}</span>`).join("")}</span><span class="lv-pb">${restFor(sd).map((c) => `<span class="lv-u" title="${esc(c.label)}">${shortLab(c)}</span>`).join("")}</span></th>`;
+    const head = `<thead><tr><th></th>${th("L")}${th("R")}</tr></thead>`;
+    // No events yet: skeleton first row — em dashes stand in for the numbers until real data arrives.
+    const dash = (sd) => `<td class="lv-blk lv-b${sd}"><span class="lv-pa">${sd === "L" ? nameHtml(me, "L") + `<span class="lv-iv lv-none">—</span>` : `<span class="lv-iv lv-none">—</span>`}</span><span class="lv-pb">${restFor(sd).map((c) => unit(c, null)).join("")}</span></td>`;
+    freshTop = !!rows[0] && rows[0] !== shownTop;
+    shownTop = rows[0] || null;
     const body = rows.length ? rows.map(eventHtml).join("")
-      : `<tbody class="lv-ev lv-wait"><tr><td class="lv-time">—</td><td class="lv-name-cell lv-nL">${poopFor(me.name)}<span class="lv-name fac-${me.faction || ""}"><bdi>${esc(me.name)}</bdi></span></td>${dashCells}${dashR}<td class="lv-name-cell lv-nR">—</td></tr></tbody>`;
+      : `<tbody class="lv-ev lv-wait"><tr><td class="lv-time">—</td>${dash("L")}${dash("R")}</tr></tbody>`;
     listEl.innerHTML = cols + head + body + (dropped ? eventHtml(dropped, -1).replace('class="lv-ev', 'class="lv-ev lv-fade') : "");
     if (dropped) setTimeout(() => { const f = listEl.querySelector(".lv-fade"); if (f) f.remove(); }, 600);
   }
