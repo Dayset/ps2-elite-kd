@@ -1,0 +1,31 @@
+name: Oracle freeze check
+
+# Does 🥶 warn in time? (oracle-worker/history/freeze-check.mjs). Commits oracle/backend/freeze_check.json.
+# (oracle-worker/history/freeze-check.mjs, alert archive). Commits oracle/backend/freeze_check.json.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  freeze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build
+        env:
+          ORACLE_API: ${{ vars.ORACLE_API || 'https://ps2-oracle.dayset.workers.dev' }}
+        run: node oracle-worker/history/freeze-check.mjs
+      - name: Commit
+        run: |
+          git config user.name "oracle-history[bot]"; git config user.email "oracle-history@users.noreply.github.com"
+          git add oracle/backend/freeze_check.json
+          git diff --staged --quiet && exit 0
+          git commit -m "oracle: 🥶 freeze check from the alert archive [bot]"
+          for i in 1 2 3; do git pull --rebase origin main && git push origin HEAD:main && break; sleep 5; done
