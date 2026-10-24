@@ -3950,7 +3950,8 @@ import {
       { id: "cons", label: "⚡ Const", hint: tr("tip.cons", "K/D kept vs your strongest third of foes, compared with the weakest: 1.00 = holds, 0.50 = halves."), fn: (r) => r.cons, digits: 2, pctileCell: true },
       { id: "apk", label: tr("col.assists", "🤝 Assists"), hint: tr("tip.apk", "Assists per kill in recent Honu sessions: how often you help teammates get kills."), fn: (r) => (apkBySlug && r.p ? apkBySlug.get(slugKey(r.p.display)) : undefined), digits: 2, apkCell: true, pctDir: "low", pctLowPhrase: "more assists" },
       // 🤥😤 Impostor–DieHard (owner t484u): ⚔️ iVi percentile − IvI percentile, −99…+99; neither side is better.
-      { id: "diff", label: tr("col.diff", "🔀 Diff"), hint: tr("tip.diff", AIMGAP_HINT), // short hover (owner t9: 2–3 lines); 🛖 / 🚜 / 🐣 details live in columns.html#diff digits: 0, aimGapCell: true,
+      // Short hover (owner t9: 2–3 lines); 🛖 / 🚜 / 🐣 details live in columns.html#diff.
+      { id: "diff", label: tr("col.diff", "🔀 Diff"), hint: tr("tip.diff", AIMGAP_HINT), digits: 0, aimGapCell: true,
         fn: (r) => { const g = traitP ? aimGap(traitP, shownValue(r, "adjs"), r.ivi, r.p ? hutOf(r.p.display) : null, r.p ? vdfOf(r.p.display) : null, r.p ? nbdOf(r.p.display, r.p) : null) : null; return g ? g.score : NaN; } },
       // 🪳 Zerg (owner t480u): lower of the 🎈 Inflation and 🤝 Assists percentiles; lower is better (like 🤝: reversed grey %).
       { id: "zerg", label: tr("col.zerg", "🪳 Zerg"), hint: tr("tip.zerg", ZERG_HINT), // short hover (owner t9); 🪳 revive details in columns.html#zerg digits: 0, zergCell: true, pctDir: "low",
