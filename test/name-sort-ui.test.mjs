@@ -15,7 +15,7 @@ test("Rankings Player sort uses the shared comparator", () => {
   assert.match(ranks, /import \{ compareByCharName \} from "\.\/analyze-run\.mjs/);
   assert.match(ranks, /byName = \(a, b\) => compareByCharName\(a\.name, b\.name\)/);
 });
-test("one page (t356u): no 🏆 / › buttons; order controls → stats → graph → Rankings → footer (vehicles note + 📊 Public in the footer)", () => {
+test("one page (t356u): no 🏆 / › buttons; order controls → stats → graph → Rankings → footer (📊 Public in the footer; vehicles note removed)", () => {
   assert.doesNotMatch(index, /id="ranksLink"|id="ranksGoBtn"|ranks-row|href="ranks\.html"/);
   // t375u: 📦 cache line is the first row (chips only). t490u: the right of
   // "Fetch fresh data" is one ⚙️ Settings menu holding room / language /
@@ -24,7 +24,9 @@ test("one page (t356u): no 🏆 / › buttons; order controls → stats → grap
   assert.match(index, /<div class="fresh-row">[\s\S]*?id="fetchFresh"[\s\S]*?<span class="fresh-row-end">[\s\S]*?id="settingsMenu"[\s\S]*?id="roomSelect"[\s\S]*?id="langSelect"[\s\S]*?id="bgToggleBtn"[\s\S]*?id="sfxToggle"[\s\S]*?id="themeToggle"[\s\S]*?id="wipeLocalBtn"[\s\S]*?<\/details>\s*<\/span>\s*<\/div>/);
   const at = (re) => { const m = index.search(re); assert.ok(m >= 0, String(re)); return m; };
   // 2026-10-19: ✨ Stats and 🏅 Positions share one spot under the names box (stats-carousel.mjs).
-  const order = [/id="namesBox"/, /id="analyzeBtn"/, /id="statsCarousel"/, /id="statsPanel"/, /id="rkPositions"/, /<svg id="chart"/, /<section id="rankings"/, /id="distSection"/, /id="ranksTableSection"/, /id="ranksSearch"/, /id="ranksTable"/, /<footer>/, /id="statsPublic"/, /id="ranksMeta"/, /What about vehicles\?/].map(at); // t474u: vehicles note after the HONU thanks, under the footer stats
+  const order = [/id="namesBox"/, /id="analyzeBtn"/, /id="statsCarousel"/, /id="statsPanel"/, /id="rkPositions"/, /<svg id="chart"/, /<section id="rankings"/, /id="distSection"/, /id="ranksTableSection"/, /id="ranksSearch"/, /id="ranksTable"/, /<footer>/, /id="statsPublic"/, /id="ranksMeta"/].map(at);
+  // t615u: the "What about vehicles?" note is gone (the Infantry column answers it).
+  assert.doesNotMatch(index, /What about vehicles\?/);
   assert.deepEqual(order, order.slice().sort((a, b) => a - b));
   assert.match(app, /import\("\.\/rankings\.mjs\?v=/, "Rankings load lazily");
   // t358u: no "🏆 Rankings" title; big table folded by default.
