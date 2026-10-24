@@ -84,17 +84,23 @@ describe("Rankings filter typing (t324u)", () => {
         await ev(`new Promise(async (r) => { for (let t = 0; t < 400 && !document.querySelector("#ranksBody tr[data-q]"); t++) await new Promise((q) => setTimeout(q, 50)); r(1); })`);
         await ev(`(document.getElementById("ranksTableSection").open = true, 1)`); // folded by default (t358u)
         // Let the initial progressive render finish (row count stable).
-        await ev(`new Promise(async (r) => { let n = -1; for (let t = 0; t < 100; t++) { await new Promise((q) => setTimeout(q, 300)); const m = document.querySelectorAll("#ranksBody tr").length; if (m === n) break; n = m; } r(1); })`);
-        await ev(`(() => { const el = document.getElementById("ranksSearch"); window.__el = el; el.focus(); window.__mut = 0; new MutationObserver(() => { __mut++; }).observe(document.getElementById("ranksBody"), { childList: true }); return 1; })()`);
+        // #62: wait for 1 s with no #ranksBody change at all (a row-count check
+        // could pass between two fill chunks and count a late chunk as typing).
+        await ev(`new Promise((r) => { let t; const mo = new MutationObserver(() => { clearTimeout(t); t = setTimeout(done, 1000); }); const done = () => { mo.disconnect(); r(1); }; mo.observe(document.getElementById("ranksBody"), { childList: true, subtree: true }); t = setTimeout(done, 1000); setTimeout(done, 30000); })`);
+        await ev(`(() => { const el = document.getElementById("ranksSearch"); window.__el = el; el.focus(); window.__mut = []; window.__keys = []; el.addEventListener("input", () => __keys.push(performance.now())); new MutationObserver(() => { __mut.push(performance.now()); }).observe(document.getElementById("ranksBody"), { childList: true }); return 1; })()`);
         for (const ch of word) {
           const code = /[a-z]/.test(ch) ? "Key" + ch.toUpperCase() : "";
           await send("Input.dispatchKeyEvent", { type: "keyDown", key: ch, text: ch, code, windowsVirtualKeyCode: ch.toUpperCase().charCodeAt(0) }, sessionId);
           await send("Input.dispatchKeyEvent", { type: "keyUp", key: ch, code, windowsVirtualKeyCode: ch.toUpperCase().charCodeAt(0) }, sessionId);
           await new Promise((r) => setTimeout(r, 30));
         }
-        const mid = await ev(`({ v: __el.value, mut: __mut })`);
+        const mid = await ev(`({ v: __el.value, mut: __mut, keys: __keys })`);
         assert.equal(mid.v, word, "every keystroke landed");
-        assert.equal(mid.mut, 0, "table untouched while typing fast (debounced)");
+        // Debounced (150 ms): the table may only change after a pause of at least
+        // that long since the last keystroke. A slow CI runner can leave such a
+        // pause between two CDP key events; that's the debounce working (#62).
+        const early = mid.mut.filter((t) => { const k = mid.keys.filter((x) => x <= t).pop(); return k !== undefined && t - k < 140; });
+        assert.deepEqual(early, [], "table untouched while typing fast (debounced)");
         await new Promise((r) => setTimeout(r, 700));
         const s = await ev(`({ v: __el.value, same: document.getElementById("ranksSearch") === __el, focused: document.activeElement === __el, caret: __el.selectionStart, rows: [...document.querySelectorAll("#ranksBody tr[data-q]")].map((t) => t.dataset.q.toLowerCase()), chips: document.querySelectorAll("#nameTokens .name-token").length })`);
         assert.equal(s.v, word);

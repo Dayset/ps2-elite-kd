@@ -104,6 +104,9 @@ describe("Rankings chart bar click", () => {
       };
       const sleep = (ms) => ev(`new Promise((r) => setTimeout(() => r(1), ${ms}))`);
       await send("Page.enable", {}, sessionId);
+      // Band separators only exist with "Remove ranks" off; it defaults ON since
+      // ce4a936bf (flat ⚔️ table), so turn it off the way a visitor would (#62).
+      await send("Page.addScriptToEvaluateOnNewDocument", { source: `try { localStorage.setItem("ps2-elite-kd-remove-ranks", "0"); } catch {}` }, sessionId);
       await send("Page.navigate", { url: `http://127.0.0.1:${port}/index.html#rankings` }, sessionId);
       await ev(`new Promise(async (res) => { for (let t = 0; t < 400 && !document.querySelector("#distSvg .dist-hit"); t++) await new Promise((r) => setTimeout(r, 50)); res(1); })`);
       // Mouse click on a high bar (last non-empty core bar) while sorted by name.

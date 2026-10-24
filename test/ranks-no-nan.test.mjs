@@ -32,7 +32,7 @@ describe("no NaN in the Rankings", () => {
     try { execFileSync("which", [b], { stdio: "ignore" }); return true; } catch { return false; }
   });
 
-  it("full ranks.json renders without NaN under every sort (debug columns on/off)", { skip: !chrome && "no Chrome installed", timeout: 420000 }, async () => {
+  it("full ranks.json renders without NaN under every sort (debug columns on/off)", { skip: !chrome && "no Chrome installed", timeout: 240000 }, async () => {
     const types = { ".html": "text/html", ".js": "text/javascript", ".mjs": "text/javascript", ".json": "application/json", ".css": "text/css", ".svg": "image/svg+xml", ".png": "image/png" };
     const server = http.createServer((req, res) => {
       const p = path.join(root, decodeURIComponent(new URL(req.url, "http://x").pathname));
@@ -90,6 +90,9 @@ describe("no NaN in the Rankings", () => {
         // \bNaN\b: a real player is named "VANaNoob" (2026-10-21) — only a standalone NaN is a bug.
         const bad = [];
         for (const tr of body.rows) if (tr.dataset.q) for (const td of tr.cells) if (/\bNaN\b/.test(td.innerHTML)) bad.push((tr.dataset.q || "?") + " col" + td.cellIndex + ": " + td.textContent);
+        // Back to the top (#62): left at the bottom, every later sort refilled all
+        // rows through the scroll loader (~20 s each, the CI timeout).
+        if (${full}) box.scrollTop = 0;
         const head = document.getElementById("ranksHead").innerHTML;
         return { rows: body.querySelectorAll("tr[data-q]").length, bad: bad.slice(0, 10), nBad: bad.length, headNaN: /\bNaN\b/.test(head), pageNaN: /\bNaN\b/.test(document.body.innerText) };
       })()`;

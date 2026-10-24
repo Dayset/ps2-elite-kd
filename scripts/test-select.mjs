@@ -33,7 +33,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 export const GUARDS = ["test/i18n.test.mjs", "test/legal.test.mjs"];
 /** Read the real player store (13k files): 61 of the 73 serial seconds on 2026-10-24. */
 export const DATA = ["test/bins.test.mjs", "test/guard-omit-cheaters.test.mjs", "test/session-forensics.test.mjs", "test/wall-of-shame.test.mjs", "test/build-ranks.test.mjs", "test/farm-list.test.mjs", "test/padding.test.mjs", "test/outlier-guard.test.mjs"];
-/** Browser tests over a minute each (ranks-no-nan times out at 420 s, #62; sort-scroll 160 s). */
+/** Browser tests over a minute each (ranks-no-nan ~90 s; sort-scroll 160 s). */
 export const HEAVY = ["test/ranks-no-nan.test.mjs", "test/sort-scroll.test.mjs"];
 export const LIVE_ROOTS = ["live.mjs", "live.html", "live-sprites.mjs", "scripts/build-live.mjs"];
 export const CORE_IMPORTERS = 5;

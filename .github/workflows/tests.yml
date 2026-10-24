@@ -48,10 +48,9 @@ jobs:
           ln -sf "$(find "$HOME/.cache/ms-playwright" -path '*chrome-linux*/chrome' -type f | head -1)" "$HOME/bin/chromium"
           echo "$HOME/bin" >> "$GITHUB_PATH"
       - name: Browser tests
-        # Left out until #62 is fixed: ranks-no-nan (times out at 420 s) and dist-bin-jump (bar-click separator).
         run: |
           set -o pipefail
-          files=$(grep -lE "chromium|playwright" test/*.test.mjs | grep -vE "ranks-no-nan|dist-bin-jump")
+          files=$(grep -lE "chromium|playwright" test/*.test.mjs)
           PLAYWRIGHT_MODULE="$PWD/node_modules/playwright/index.mjs" node --test --test-concurrency=1 --test-reporter=tap $files | tee tap.txt
           ! grep -q "^# skipped [1-9]" tap.txt || { echo "::error::browser tests skipped (no Chromium?)"; exit 1; }
       - name: Name the failures
