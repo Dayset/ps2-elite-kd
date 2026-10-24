@@ -10,8 +10,9 @@ await i18nReady;
  *   - every line shows everything at once, in one shared column order: [⏱️][name][iVi][🏃][🦁][🛡️][🪖|🚜][☠️][🪳] (t580u: 🪳 last; t590u: 🤝🔀⚡ removed, 🚜 below the median infantry %),
  *     the emojis as fill meters (t564u, t573u) with glow tiers (t568u) — no flip, no skill graph;
  *   - owner 2026-10-24: the weapon of the kill (white silhouette from assets/weapons) and a headshot mark sit in front of
- *     the name; the emoji meters are pre-drawn images (live-sprites.mjs) with steady glows — the old per-frame SVG
- *     filters and endless pulses used ~25 % of a 9850X3D;
+ *     the name; the emoji meters are pre-drawn images (live-sprites.mjs) — the old per-frame SVG filters and endless
+ *     pulses used ~25 % of a 9850X3D; everything that moves is drawn by one 30 fps ticker (LIVE_FPS, ?fps=60) and the
+ *     rank tiers move on a shared beat (BEAT: green still, blue flares, gold flares + a shine instead of the ✦ star);
  *   - a missing stat is an empty (hollow, t589u) emoji, never "—" (t567u); uncached opponents show all-empty emojis
  *     (Census K/D · KPM only in the name's hover title), then get a full 200-opponent Census
  *     fetch in the background (one at a time, newest first, #32) and upgrade in place.
@@ -24,7 +25,7 @@ import { percentileOf } from "./dist.mjs?v=20261010-sav1";
 import { traitPools, zergScore } from "./trait-scores.mjs?v=20261022-nbd1";
 import { infMedian, infDial, TRACTOR_EMOJI } from "./tractor.mjs?v=20261024-trac1";
 import { infantryShares } from "./infantry.mjs?v=20261023-short1";
-import { drawEmojiSprite, spriteCss } from "./live-sprites.mjs?v=20261024-lite1";
+import { drawEmojiSprite, spriteCss } from "./live-sprites.mjs?v=20261024-beat1";
 
 export const FEED_MAX = 6; // victim lines below the centre (owner t575u: "back to 6 lines"; t563u had 3)
 export const VICTIM_LINES = FEED_MAX;
@@ -146,7 +147,7 @@ export function emojiFill(col, v, p) {
 /** Fill shown when a cell has no value: 0 (empty 25% emoji, t567u), or 100 for a column marked unknown: "full" —
  *  owner t569u: an unknown 🪳 Zerg (most often unknown) is drawn as a full roach. Display only, nothing is stored. */
 export function unknownFill(col) { return col && col.unknown === "full" ? 100 : 0; }
-/** Owner t577u: a raw 🪳 Zerg score above ZERG_GOLD_OVER always gets the top (gold ✦) glow, whatever its percentile tier;
+/** Owner t577u: a raw 🪳 Zerg score above ZERG_GOLD_OVER always gets the top (gold) glow, whatever its percentile tier;
  *  an unknown 🪳 (drawn full, t569u) gets that full top glow too. Every other column keeps its percentile tier. */
 export const ZERG_GOLD_OVER = 35;
 /** Owner t590u: 🪖 / 🚜 unit for one infantry % and the data's median M (tractor.mjs infDial): emoji, fill 0..100 and a glow
@@ -165,15 +166,86 @@ export function unitGlow(col, v, driver) {
   return v == null ? 0 : glowTier(driver);
 }
 /**
- * Glow halos per tier (t568u colours: green / blue / gold), drawn once into images (live-sprites.mjs). Owner
- * 2026-10-24 "lagless or flat → flat": steady, no pulse; strength = the old pulse's rest value 60 % of the way to
- * its peak, so they still read as glowing. blur in rem (like the old drop-shadows), alpha 0–1.
+ * Glow halos per tier (t568u colours: green / blue / gold), drawn once into images (live-sprites.mjs); blur in rem
+ * (like the old drop-shadows), alpha 0–1. Owner 2026-10-24 "clear differentiations between ranks": each tier is
+ * bigger and brighter than the one below — green a thin rim, blue a wide halo, gold a double halo.
  */
 export const LIVE_GLOWS = Object.freeze([
-  [{ blur: 0.24, color: [120, 230, 140], alpha: 0.54 }],
-  [{ blur: 0.35, color: [80, 170, 255], alpha: 0.85 }],
-  [{ blur: 0.28, color: [255, 226, 120], alpha: 0.98 }, { blur: 0.76, color: [255, 170, 30], alpha: 0.85 }],
+  [{ blur: 0.2, color: [120, 230, 140], alpha: 0.75 }],
+  [{ blur: 0.34, color: [80, 170, 255], alpha: 0.95 }, { blur: 0.62, color: [80, 170, 255], alpha: 0.4 }],
+  [{ blur: 0.3, color: [255, 226, 120], alpha: 1 }, { blur: 0.86, color: [255, 170, 30], alpha: 0.95 }],
 ]);
+/**
+ * Owner 2026-10-24: "we can draw animations 30 fps (bare minimum, 60 next step)". Every moving part of the overlay
+ * (fills, the halos flaring on the beat, the gold shine) is drawn by ONE ticker at LIVE_FPS frames a second, never at the screen's
+ * own rate (144/240 Hz monitors made the old CSS animations draw 5–8× more often). live.html?fps=60 = the next step.
+ */
+export const LIVE_FPS = 30;
+export function liveFps(param) {
+  const n = parseInt(param, 10);
+  return n === 60 || n === 30 ? n : LIVE_FPS;
+}
+/** CSS cubic-bezier(x1, y1, x2, y2) timing as a function of progress 0..1. */
+export function bezier(x1, y1, x2, y2) {
+  const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx;
+  const cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by;
+  const X = (t) => ((ax * t + bx) * t + cx) * t, Y = (t) => ((ay * t + by) * t + cy) * t, dX = (t) => (3 * ax * t + 2 * bx) * t + cx;
+  return (k) => {
+    if (k <= 0) return 0;
+    if (k >= 1) return 1;
+    let t = k;
+    for (let i = 0; i < 8; i++) { const e = X(t) - k, d = dX(t); if (Math.abs(e) < 1e-6) return Y(t); if (Math.abs(d) < 1e-6) break; t -= e / d; }
+    let lo = 0, hi = 1; t = k;
+    for (let i = 0; i < 30; i++) { const x = X(t); if (Math.abs(x - k) < 1e-6) break; if (x < k) lo = t; else hi = t; t = (lo + hi) / 2; }
+    return Y(t);
+  };
+}
+/** The 10 s fill-in's easing (t578u/t588u: same curve as before, cubic-bezier(0.22, 1, 0.36, 1)). */
+export const easeFill = bezier(0.22, 1, 0.36, 1);
+const easeOut = bezier(0, 0, 0.58, 1);
+/** Halo strength during the fill-in (t578u/t588u): off for the first 80 %, then eases in. */
+export function glowIn(k) {
+  return k <= 0.8 ? 0 : easeOut(Math.min(1, (k - 0.8) / 0.2));
+}
+const mod = (x, m) => ((x % m) + m) % m;
+/**
+ * Owner 2026-10-24 "clear differentiations between ranks" (replaces the ✦ star), on a shared beat so the overlay
+ * stands still most of the time (no frames to draw = no CPU): every BEAT.every ms a wave runs along each line
+ * (column by column, BEAT.step ms apart) for BEAT.ms —
+ *   tier 1 (green): a thin steady rim, never moves;
+ *   tier 2 (blue): a wide halo that flares once per beat;
+ *   tier 3 (gold): a double halo that flares harder and swells, while a light band sweeps across the emoji.
+ * rest = halo opacity between beats, grow = extra halo size at the top of the flare.
+ * Measured headless (1920 px, 8 lines, software drawing, % of one core): halos breathing all the time at 30 fps ≈ 21 %
+ * (the frames themselves are the cost, not how many halos move); this beat draws frames ~35 % of the time ≈ 9 % idle.
+ */
+export const BEAT = Object.freeze({ every: 3200, ms: 900, step: 60 });
+export const TIER_MOTION = Object.freeze({ 1: null, 2: { rest: 0.75, grow: 0 }, 3: { rest: 0.7, grow: 0.1 } });
+/** Progress 0..1 through this emoji's flare, or null between beats. */
+export function beatAt(t, offset = 0) {
+  const p = mod(t - offset, BEAT.every);
+  return p < BEAT.ms ? p / BEAT.ms : null;
+}
+/** Halo { opacity, scale } for a tier at time t; gw = the fill-in's glow strength (1 once a line has filled). */
+export function haloAt(tier, t, gw = 1, offset = 0) {
+  const m = TIER_MOTION[tier];
+  if (!m) return { opacity: gw, scale: 1 };
+  const k = beatAt(t, offset);
+  const fl = k == null ? 0 : Math.sin(Math.PI * k);
+  return { opacity: gw * (m.rest + (1 - m.rest) * fl), scale: 1 + m.grow * fl };
+}
+/** Gold shine: frames 1..frames-1 of the pre-drawn strip while the band crosses (the first SHINE.ms of the beat), 0 = no band. */
+export const SHINE = Object.freeze({ frames: 16, ms: 700 });
+export function shineFrame(t, offset = 0) {
+  const p = mod(t - offset, BEAT.every);
+  return p < SHINE.ms ? 1 + Math.min(SHINE.frames - 2, Math.floor((p / SHINE.ms) * (SHINE.frames - 1))) : 0;
+}
+/** ms to sleep before the next beat starts (0 = a beat is running now, for emojis delayed up to maxOffset ms). */
+export function beatSleep(t, maxOffset = 0) {
+  const p = mod(t, BEAT.every);
+  return p < BEAT.ms + maxOffset + 40 ? 0 : BEAT.every - p;
+}
+
 /**
  * Weapon of a kill (owner 2026-10-24: "weapon like an icon"), from assets/weapons/catalog.json
  * ({ items: { id: [name, category, faction, image_id] } }). Guns are shown as a flat silhouette in the text
@@ -421,10 +493,10 @@ function start() {
       if (key === spriteKey) return;
       spriteKey = key;
       const glows = LIVE_GLOWS.map((ls) => ls.map((l) => ({ ...l, blur: l.blur * rem })));
-      const opts = { fontPx: fe, dpr, family: cs.fontFamily || "sans-serif", outlinePx: OUTLINE_PX, hollowPx: HOLLOW_PX, dim: FILL_DIM, hollowInk: HOLLOW_INK, glows };
+      const opts = { fontPx: fe, dpr, family: cs.fontFamily || "sans-serif", outlinePx: OUTLINE_PX, hollowPx: HOLLOW_PX, dim: FILL_DIM, hollowInk: HOLLOW_INK, glows, shineFrames: SHINE.frames };
       const list = [];
       for (const e of EMOJIS) list.push(await drawEmojiSprite(e, opts));
-      const urls = list.flatMap((x) => (x ? [x.base, x.solid, ...x.glow] : [])).filter((u) => u.startsWith("blob:"));
+      const urls = list.flatMap((x) => (x ? [x.base, x.solid, x.shine, ...x.glow] : [])).filter((u) => u && u.startsWith("blob:"));
       if (key !== spriteKey) { urls.forEach((u) => URL.revokeObjectURL(u)); return; } // a newer size won meanwhile
       spriteSheet.textContent = spriteCss(list);
       spriteUrls.forEach((u) => URL.revokeObjectURL(u));
@@ -432,6 +504,7 @@ function start() {
       spriteInfo = new Map(EMOJIS.map((e, i) => [e, list[i]]));
       listEl.classList.toggle("lv-nosprite", !list.some(Boolean));
       startFills(); // lines drawn before the pictures were ready start filling now
+      wake();
     } catch {
       listEl.classList.add("lv-nosprite"); // no canvas: plain emojis (flat), the overlay still works
     }
@@ -439,7 +512,7 @@ function start() {
   let spriteTimer = 0;
   window.addEventListener("resize", () => { clearTimeout(spriteTimer); spriteTimer = setTimeout(drawSprites, 150); }); // size tiers, zoom
   drawSprites();
-  const meter = (e) => `<span class="lv-em lv-x${emojiIdx.get(e)}" aria-hidden="true" data-e="${e}"><i class="lv-gl"></i><i class="lv-b"></i><i class="lv-sw"><i class="lv-s"></i></i></span>`;
+  const meter = (e) => `<span class="lv-em lv-x${emojiIdx.get(e)}" aria-hidden="true" data-e="${e}"><i class="lv-gl"></i><i class="lv-b"></i><i class="lv-sw"><i class="lv-s"><i class="lv-shn"></i></i></i></span>`;
   function unit(c, v) {
     const f = fillOf(c, v);
     if (f == null) { // no value: empty emoji, or (t569u) a full 🪳 — owner t577u: that full 🪳 gets the full top glow
@@ -539,25 +612,118 @@ function start() {
     const mid = `<tbody class="lv-ev lv-me${fm.cls}"${fm.sty}><tr><td class="lv-time"></td>${wpHtml(null)}${cells(me, true)}</tr></tbody>`;
     const low = Array.from({ length: VICTIM_LINES }, (_, i) => (st.victims[i] ? oppLine(st.victims[i], "vic") : emptyLine("vic"))).join("");
     listEl.innerHTML = cols + atk + mid + low;
+    collectMotion();
     startFills();
+    wake();
   }
   const reduced = () => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
-  /** Move one unit's fill from level `from` to its own --f over `ms` (`played` ms already gone), by moving the solid
-   *  picture's window down and the picture back up (transforms only: the browser animates them without repainting).
+  /**
+   * Owner 2026-10-24: ONE ticker draws every moving part at FPS frames a second (LIVE_FPS 30; live.html?fps=60), and
+   * sleeps when nothing moves. Per frame it only touches what changes: the solid picture's window while a line fills
+   * (t578u/t588u, 10 s), the tier 2/3 halos' opacity/size (TIER_MOTION), and the gold shine's frame (SHINE).
+   * Reduced motion: no ticker — final fills, steady halos, no shine.
+   */
+  const FPS = liveFps(new URLSearchParams(location.search).get("fps"));
+  const FRAME_MS = 1000 / FPS;
+  const fills = new Set(); // running fills: { u, sw, s, ih, from, to, t0, ms, glowLate }
+  let halos = []; // tier ≥ 1 units on screen: { u, gl, tier, gw, op, sc }
+  let shines = []; // gold units on screen: { el, off, last }
+  let tickTimer = 0, tickAt = 0, frameDue = false, lastTick = 0;
+  let maxOff = 0; // the last column's beat delay
+  function wake() {
+    if (frameDue || !listEl || reduced()) return; // a frame is already on its way
+    const now = performance.now();
+    let wait = Math.max(0, lastTick + FRAME_MS - now - 2);
+    if (!fills.size) {
+      if (!halos.some((h) => h.tier >= 2)) return; // nothing moves: no frames at all
+      wait = Math.max(wait, beatSleep(now, maxOff)); // between beats the overlay stands still
+    }
+    if (tickTimer) {
+      if (now + wait >= tickAt - 1) return; // the sleep already ends soon enough
+      clearTimeout(tickTimer); // a fill started while sleeping between beats: wake up sooner
+    }
+    tickAt = now + wait;
+    tickTimer = setTimeout(() => { tickTimer = 0; frameDue = true; requestAnimationFrame(tick); }, wait);
+  }
+  /** After a render: which halos flare and which emojis shine (a wave along the line: each column a bit later).
+   *  New halos get their current look at once, so a line drawn between beats already rests like the others. */
+  function collectMotion() {
+    halos = []; shines = []; maxOff = 0;
+    for (const tb of listEl.querySelectorAll("tbody.lv-ev")) {
+      [...tb.querySelectorAll(".lv-u")].forEach((u, ci) => {
+        const tier = +((/ lv-g([123])\b/.exec(` ${u.className}`) || [])[1] || 0);
+        if (!tier) return;
+        const off = ci * BEAT.step; // the beat runs along the line, column by column
+        maxOff = Math.max(maxOff, off);
+        halos.push({ u, gl: u.querySelector(".lv-gl"), tier, off, gw: 1, op: "", sc: "" });
+        if (tier === 3) shines.push({ el: u.querySelector(".lv-shn"), off, last: -1 });
+      });
+    }
+    if (reduced()) return;
+    const now = performance.now();
+    for (const h of halos) {
+      if (!h.gl || h.tier < 2) continue;
+      const { opacity, scale } = haloAt(h.tier, now, 1, h.off);
+      h.op = opacity.toFixed(2); h.gl.style.opacity = h.op;
+      h.sc = scale === 1 ? "" : `scale(${scale.toFixed(3)})`; h.gl.style.transform = h.sc;
+    }
+  }
+  function tick() {
+    const now = performance.now(); // not the frame's timestamp: some hosts hand out a stale one
+    frameDue = false;
+    lastTick = now;
+    if (!listEl || reduced()) return;
+    // 1) fills: the window moves down by (100 − f)% of the ink, the picture back up (no repaint)
+    for (const a of fills) {
+      if (!a.u.isConnected) { fills.delete(a); continue; }
+      const k = Math.min(1, Math.max(0, (now - a.t0) / a.ms));
+      const h = a.glowLate ? halos.find((x) => x.u === a.u) : null;
+      if (k >= 1) {
+        a.sw.style.transform = ""; a.s.style.transform = ""; // the static CSS position = the final fill
+        if (h) h.gw = 1;
+        fills.delete(a);
+        continue;
+      }
+      // quarter-pixel steps: the slow end of the ease moves less than that per frame, so no new frame is drawn for it
+      const y = Math.round((a.ih * (100 - (a.from + (a.to - a.from) * easeFill(k)))) / 25) / 4;
+      if (y !== a.y) { a.y = y; a.sw.style.transform = `translateY(${y}px)`; a.s.style.transform = `translateY(${-y}px)`; }
+      if (h) h.gw = glowIn(k);
+    }
+    // 2) halos: tier 1 steady, tier 2 flares on the beat, tier 3 flares harder + swells (writes only what changed)
+    for (const h of halos) {
+      if (!h.gl || !h.u.isConnected) continue;
+      const { opacity, scale } = haloAt(h.tier, now, h.gw, h.off);
+      const op = opacity.toFixed(2), sc = scale === 1 ? "" : `scale(${scale.toFixed(3)})`;
+      if (op !== h.op) { h.op = op; h.gl.style.opacity = op === "1.00" ? "" : op; }
+      if (sc !== h.sc) { h.sc = sc; h.gl.style.transform = sc; }
+    }
+    // 3) gold shine: a light band sweeps across the emoji on the beat, a wave along the line
+    for (const sh of shines) {
+      if (!sh.el) continue;
+      const fr = shineFrame(now, sh.off);
+      if (fr !== sh.last) { sh.last = fr; sh.el.style.setProperty("--sf", String(fr)); }
+    }
+    wake();
+  }
+  /** Move one unit's fill from level `from` to its own --f over `ms` (`played` ms already gone).
    *  glowLate (t578u/t588u): the tier halo stays off for the first 80% and fades in at the end. */
   function animateFill(u, from, ms, played = 0, glowLate = false) {
     const em = u.querySelector(".lv-em");
     const s = em && spriteInfo.get(em.dataset.e);
-    if (!s || typeof em.animate !== "function") return;
+    if (!s) return;
     const to = +u.style.getPropertyValue("--f") || 0;
-    const y = (f) => Math.round(((s.ih * (100 - f)) / 100) * 100) / 100;
-    const opt = { duration: ms, delay: -played, easing: EASE };
-    if (from !== to) {
-      em.querySelector(".lv-sw").animate([{ transform: `translateY(${y(from)}px)` }, { transform: `translateY(${y(to)}px)` }], opt);
-      em.querySelector(".lv-s").animate([{ transform: `translateY(${-y(from)}px)` }, { transform: `translateY(${-y(to)}px)` }], opt);
-    }
-    if (glowLate && / lv-g[123]\b/.test(` ${u.className}`)) em.querySelector(".lv-gl").animate([{ opacity: 0 }, { opacity: 0, offset: 0.8, easing: "ease-out" }, { opacity: 1 }], { duration: ms, delay: -played });
+    const sw = em.querySelector(".lv-sw"), so = em.querySelector(".lv-s");
+    for (const a of fills) if (a.u === u) fills.delete(a); // a newer fill replaces an older one
+    const a = { u, sw, s: so, ih: s.ih, from, to, t0: performance.now() - played, ms, glowLate };
+    fills.add(a);
+    // first frame right away, so a new line never shows its final fill for a moment
+    const k = Math.min(1, played / ms);
+    const y = Math.round((s.ih * (100 - (from + (to - from) * easeFill(k)))) / 25) / 4;
+    a.y = y;
+    sw.style.transform = `translateY(${y}px)`;
+    so.style.transform = `translateY(${-y}px)`;
+    const h = glowLate ? halos.find((x) => x.u === u) : null;
+    if (h) { h.gw = glowIn(k); h.gl.style.opacity = h.gw.toFixed(2); h.op = h.gw.toFixed(2); }
   }
   /** Owner t578u: lines that just appeared (tbody.lv-fillin, data-fk = their fill key) fill 0 → level over FILL_MS,
    *  continuing where they were (the time already played). Runs after every render and once the pictures are drawn. */
@@ -567,10 +733,7 @@ function start() {
     for (const tb of listEl.querySelectorAll("tbody.lv-fillin")) {
       const played = now - (fillStart.get(tb.dataset.fk) || now);
       if (played >= FILL_MS) continue;
-      for (const u of tb.querySelectorAll(".lv-u")) {
-        const sw = u.querySelector(".lv-sw");
-        if (sw && !sw.getAnimations().length) animateFill(u, 0, FILL_MS, played, true);
-      }
+      for (const u of tb.querySelectorAll(".lv-u")) if (![...fills].some((a) => a.u === u)) animateFill(u, 0, FILL_MS, played, true);
     }
   }
   setInterval(() => {
@@ -643,6 +806,7 @@ function start() {
     if (!before || !t || reduced()) return;
     // the new fill eases in from the old one (owner t586u), 1.2 s, transforms only
     [...t.querySelectorAll(".lv-u")].forEach((u, i) => { if (before.f[i] !== "" && before.f[i] != null) animateFill(u, +before.f[i], 1200); });
+    wake();
     const iv = t.querySelector(".lv-iv:not(.lv-nil)");
     const end = iv ? +iv.textContent : NaN;
     if (!iv || !Number.isFinite(end) || !Number.isFinite(before.ivi) || before.ivi === end) return;

@@ -4,8 +4,8 @@ import { readFileSync } from "node:fs";
 import { buildLive } from "../scripts/build-live.mjs";
 import { infMedian, infDial, isTractor, tractorHint } from "../tractor.mjs";
 import { autoMarksHtml, tractorMark } from "../auto-marks.mjs";
-import { infUnit, classifyDeath, feedPush, censusStats, cellText, fmtGap, LIVE_COLS, tipText, ME_REFRESH_MS, mergeFresh, FEED_MAX, emojiFill, fillDriver, glowTier, unknownFill, FULL_AT, EMPTY_AT, goodPct, FILL_DIM, HOLLOW_PX, overlayPush, overlayRows, VICTIM_LINES, eventAt, EVENT_SKEW_MS, unitGlow, ZERG_GOLD_OVER, OUTLINE_PX, LIVE_GLOWS, weaponIcon, CARD_CATEGORIES } from "../live.mjs";
-import { disk, dilate, erode, blurAlpha, inkBox, outlineMasks, hollowRim, spriteCss } from "../live-sprites.mjs";
+import { infUnit, classifyDeath, feedPush, censusStats, cellText, fmtGap, LIVE_COLS, tipText, ME_REFRESH_MS, mergeFresh, FEED_MAX, emojiFill, fillDriver, glowTier, unknownFill, FULL_AT, EMPTY_AT, goodPct, FILL_DIM, HOLLOW_PX, overlayPush, overlayRows, VICTIM_LINES, eventAt, EVENT_SKEW_MS, unitGlow, ZERG_GOLD_OVER, OUTLINE_PX, LIVE_GLOWS, weaponIcon, CARD_CATEGORIES, LIVE_FPS, liveFps, bezier, easeFill, glowIn, BEAT, TIER_MOTION, beatAt, haloAt, SHINE, shineFrame, beatSleep } from "../live.mjs";
+import { disk, dilate, erode, blurAlpha, inkBox, outlineMasks, hollowRim, spriteCss, shineAt } from "../live-sprites.mjs";
 
 const root = new URL("../", import.meta.url);
 
@@ -225,19 +225,21 @@ test("cellText: digits, floor at zero, missing", () => {
 test("LIVE juice (owner t562u): pop-in row, flip switch, top-rank glow, upset shake — never resizes, honours reduced motion", () => {
   const css = readFileSync(new URL("styles.css", root), "utf8");
   for (const k of ["lvPop", "lvFlash", "lvShake"]) assert.match(css, new RegExp(`@keyframes ${k} `));
-  // owner 2026-10-24 "lagless or flat → flat": steady glows and sparkle — the endless pulses were most of the CPU
+  // owner 2026-10-24: no endless CSS pulses (they were most of the CPU); the tiers move on live.mjs's 30 fps beat instead
   for (const k of ["lvGlow", "lvGlow1", "lvGlow2", "lvSpark", "lvFlashK", "lvFlashD", "lvFlashU"]) assert.doesNotMatch(css, new RegExp(`@keyframes ${k} `));
   const liveCss = css.slice(css.indexOf("/* ---------- 🎥 Live"), css.indexOf(".fac-vs"));
   assert.deepEqual([...liveCss.matchAll(/animation:[^;]*infinite/g)].map((m) => m[0]), ["animation: liveBlink 1.2s ease-in-out infinite"]); // only the "waiting…" dot
   assert.doesNotMatch(liveCss, /animation[^;]*box-shadow|@keyframes [^{]*\{[^}]*box-shadow/); // flashes fade by opacity, no repaint per frame
   assert.doesNotMatch(css, /rotateX/); // owner t575u: no flip any more
   assert.match(css, /prefers-reduced-motion: reduce\) \{ \.lv-ev\.lv-new > tr > td, \.lv-ev\.lv-new > tr > td::after/);
-  assert.match(css, /\.lv-g3::after \{ content: "✦"; position: absolute;[^}]*opacity: 0\.85; \}/); // sparkle never takes layout room, never moves
-  // the t568u tier colours, steady: green / blue / gold (+ an orange outer halo on gold)
+  assert.doesNotMatch(css, /\.lv-g3::after|✦";/); // owner 2026-10-24: the ✦ star is replaced by the gold shine
+  // the t568u tier colours: green / blue / gold (+ an orange outer halo on gold); each tier's halo reaches further
   assert.equal(LIVE_GLOWS.length, 3);
   assert.deepEqual(LIVE_GLOWS.map((t) => t[0].color), [[120, 230, 140], [80, 170, 255], [255, 226, 120]]);
   assert.deepEqual(LIVE_GLOWS[2][1].color, [255, 170, 30]);
-  for (const t of LIVE_GLOWS) for (const l of t) assert.ok(l.blur > 0 && l.blur < 1 && l.alpha > 0.5 && l.alpha <= 1);
+  for (const t of LIVE_GLOWS) { assert.ok(t[0].alpha > 0.5 && t[0].alpha <= 1); for (const l of t) assert.ok(l.blur > 0 && l.blur < 1 && l.alpha > 0 && l.alpha <= 1); }
+  const reach = LIVE_GLOWS.map((t) => Math.max(...t.map((l) => l.blur)));
+  assert.ok(reach[0] < reach[1] && reach[1] < reach[2], `green < blue < gold: ${reach}`);
   assert.doesNotMatch(css, /lv-top\b/);
   const js = readFileSync(new URL("live.mjs", root), "utf8");
   assert.match(js, /const g = unitGlow\(c, v, driverOf\(c, v\)\);/); // tiers use the fill's own driver (t577u: 🪳 > 35 gold)
@@ -259,7 +261,7 @@ test("no value = empty 0% emoji, never a dash (owner t567u): stats, iVi, uncache
   assert.equal(emojiFill(LIVE_COLS.find((c) => c.id === "zerg"), null, 50), null); // the value itself stays unknown
   assert.match(js, /if \(fillOf\(c, v\) == null\) return `<span class="lv-iv lv-nil" style="--f:0"[^`]*\$\{meter\(shortLab\(c\)\)\}/); // empty ⚔️ in the iVi box
   // one meter = halo, hollow+outline picture, solid picture in its window (0% fill = the window sits below the ink)
-  assert.match(js, /const meter = \(e\) => `<span class="lv-em lv-x\$\{emojiIdx\.get\(e\)\}" aria-hidden="true" data-e="\$\{e\}"><i class="lv-gl"><\/i><i class="lv-b"><\/i><i class="lv-sw"><i class="lv-s"><\/i><\/i><\/span>`;/);
+  assert.match(js, /const meter = \(e\) => `<span class="lv-em lv-x\$\{emojiIdx\.get\(e\)\}" aria-hidden="true" data-e="\$\{e\}"><i class="lv-gl"><\/i><i class="lv-b"><\/i><i class="lv-sw"><i class="lv-s"><i class="lv-shn"><\/i><\/i><\/i><\/span>`;/);
   assert.match(js, /const vals = p\.cached \|\| \{\};/); // uncached too
   assert.match(js, /IVI\.map\(\(c\) => `<td class="lv-ivc">\$\{iviText\(c, vals\[c\.id\]\)\}<\/td>`\)/);
   assert.match(js, /REST\.map\(\(c\) => unit\(c, vals\[c\.id\]\)\)/);
@@ -340,13 +342,67 @@ test("emoji fill grows 0 → level over 10 s when a line appears (owner t578u/t5
   assert.match(js, /const played = now - \(fillStart\.get\(tb\.dataset\.fk\) \|\| now\);/);
   assert.match(js, /fillIn\(`\$\{r\.opp\}@\$\{r\.at\}:\$\{\(people\.get\(r\.opp\) \|\| \{\}\)\.cached \? "c" : "u"\}`\)/); // stats arriving later = a new fill
   assert.match(js, /fillIn\(`me:\$\{me\.cached \? "c" : "u"\}`\)/);
-  // transforms on the window and the picture (the browser moves them without repainting), the time already played as a negative delay
-  assert.match(js, /const opt = \{ duration: ms, delay: -played, easing: EASE \};/);
-  assert.match(js, /em\.querySelector\("\.lv-sw"\)\.animate\(\[\{ transform: `translateY\(\$\{y\(from\)\}px\)` \}, \{ transform: `translateY\(\$\{y\(to\)\}px\)` \}\], opt\);/);
-  assert.match(js, /em\.querySelector\("\.lv-gl"\)\.animate\(\[\{ opacity: 0 \}, \{ opacity: 0, offset: 0\.8, easing: "ease-out" \}, \{ opacity: 1 \}\]/); // halo off for 80%, then in
+  // the 30 fps ticker moves the window and the picture (transforms), continuing with the time already played
+  assert.match(js, /const a = \{ u, sw, s: so, ih: s\.ih, from, to, t0: performance\.now\(\) - played, ms, glowLate \};/);
+  assert.match(js, /if \(y !== a\.y\) \{ a\.y = y; a\.sw\.style\.transform = `translateY\(\$\{y\}px\)`; a\.s\.style\.transform = `translateY\(\$\{-y\}px\)`; \}/);
+  assert.match(js, /if \(h\) h\.gw = glowIn\(k\);/); // halo off for 80%, then in
   assert.match(js, /function startFills\(\) \{\n\s*if \(!listEl \|\| reduced\(\)\) return;/); // reduced motion = the final fill at once
   assert.match(js, /startFills\(\); \/\/ lines drawn before the pictures were ready start filling now/);
-  assert.match(js, /listEl\.innerHTML = cols \+ atk \+ mid \+ low;\n\s*startFills\(\);/);
+  assert.match(js, /listEl\.innerHTML = cols \+ atk \+ mid \+ low;\n\s*collectMotion\(\);\n\s*startFills\(\);\n\s*wake\(\);/);
+  assert.doesNotMatch(js, /\.animate\(\[/); // nothing runs at the screen's own rate
+  // same curve as the old CSS fill: cubic-bezier(0.22, 1, 0.36, 1)
+  assert.equal(easeFill(0), 0);
+  assert.equal(easeFill(1), 1);
+  assert.ok(Math.abs(easeFill(0.5) - 0.9614) < 0.005, String(easeFill(0.5))); // ≈ 96 % of the way at half time
+  assert.ok(Math.abs(bezier(0.25, 0.1, 0.25, 1)(0.25) - 0.4085) < 0.005); // CSS "ease" at 25 %
+  assert.equal(glowIn(0.5), 0);
+  assert.equal(glowIn(0.8), 0);
+  assert.equal(glowIn(1), 1);
+  assert.ok(glowIn(0.9) > 0.3 && glowIn(0.9) < 1);
+});
+
+test("30 fps (owner 2026-10-24: bare minimum 30, 60 next step) and the rank tiers: green still, blue flares, gold flares + shine", () => {
+  assert.equal(LIVE_FPS, 30);
+  assert.deepEqual(["", null, "30", "60", "120", "x", "59"].map(liveFps), [30, 30, 30, 60, 30, 30, 30]);
+  // tier 1 never moves; between beats the halos rest (and the ticker sleeps)
+  assert.equal(TIER_MOTION[1], null);
+  assert.deepEqual(haloAt(1, 123456), { opacity: 1, scale: 1 });
+  assert.deepEqual(haloAt(1, 0, 0.4), { opacity: 0.4, scale: 1 });
+  const rest2 = haloAt(2, BEAT.ms + 10), rest3 = haloAt(3, BEAT.ms + 10);
+  assert.equal(rest2.opacity, TIER_MOTION[2].rest);
+  assert.equal(rest3.opacity, TIER_MOTION[3].rest);
+  assert.equal(beatAt(BEAT.ms + 10), null);
+  // the top of a flare: full halo, gold swells, blue doesn't
+  const top2 = haloAt(2, BEAT.ms / 2), top3 = haloAt(3, BEAT.ms / 2);
+  assert.ok(Math.abs(top2.opacity - 1) < 1e-9 && top2.scale === 1);
+  assert.ok(Math.abs(top3.opacity - 1) < 1e-9 && top3.scale > 1.05);
+  assert.ok(TIER_MOTION[3].rest < TIER_MOTION[2].rest); // gold flares harder
+  // the wave: a later column flares later
+  assert.equal(beatAt(30, 60), null);
+  assert.ok(beatAt(90, 60) > 0);
+  // gold shine: a band crosses the emoji at the start of each beat (frames 1..15), nothing in between
+  assert.equal(shineFrame(0), 1);
+  assert.equal(shineFrame(SHINE.ms - 1), SHINE.frames - 1);
+  assert.equal(shineFrame(SHINE.ms + 1), 0);
+  assert.equal(shineFrame(BEAT.every + 5), 1);
+  assert.equal(shineFrame(100, 200), 0); // not its turn yet
+  assert.ok(SHINE.ms <= BEAT.ms);
+  assert.equal(shineAt(0, 16), null); // frame 0 = no band
+  assert.equal(shineAt(1, 16), 0);
+  assert.equal(shineAt(15, 16), 1);
+  // the ticker sleeps between beats: how long until the next one
+  assert.equal(beatSleep(10, 300), 0);
+  assert.equal(beatSleep(BEAT.ms + 300 + 41, 300), BEAT.every - (BEAT.ms + 341));
+  const css = readFileSync(new URL("styles.css", root), "utf8");
+  const js = readFileSync(new URL("live.mjs", root), "utf8");
+  assert.match(js, /const FPS = liveFps\(new URLSearchParams\(location\.search\)\.get\("fps"\)\);/);
+  assert.match(js, /let wait = Math\.max\(0, lastTick \+ FRAME_MS - now - 2\);/); // never more often than FPS
+  assert.match(js, /wait = Math\.max\(wait, beatSleep\(now, maxOff\)\); \/\/ between beats the overlay stands still/);
+  assert.match(js, /if \(!halos\.some\(\(h\) => h\.tier >= 2\)\) return; \/\/ nothing moves: no frames at all/);
+  assert.match(js, /<i class="lv-sw"><i class="lv-s"><i class="lv-shn"><\/i><\/i><\/i>/); // the shine rides with the solid picture (cut to the fill)
+  assert.match(css, /\.lv-g2 > \.lv-em > \.lv-gl, \.lv-g3 > \.lv-em > \.lv-gl \{ will-change: opacity, transform; \}/);
+  const sheet = spriteCss([{ w: 30, h: 28, it: 4, ih: 20, gp: 6, base: "blob:b", solid: "blob:s", glow: ["", "", ""], shine: "blob:sh", frames: 16 }]);
+  assert.match(sheet, /\.lv-g3>\.lv-x0>\.lv-sw>\.lv-s>\.lv-shn\{background-image:url\("blob:sh"\);background-size:1600% 100%;background-position:calc\(var\(--sf, 0\) \* 6\.6667%\) 0\}/);
 });
 
 test("emoji outline (owner t579u/t581u): a dark ring that hugs the whole silhouette, round and even; the emoji itself untouched", () => {

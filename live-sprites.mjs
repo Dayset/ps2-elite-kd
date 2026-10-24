@@ -8,7 +8,8 @@
  *   base  = the black outline ring (t579u/t581u, OUTLINE_PX) + the hollow empty part (t589u: dark greyscale
  *           FILL_DIM interior inside a HOLLOW_PX light inner ring),
  *   solid = the full-colour emoji (the fill, shown from the bottom up to the level),
- *   glow1..3 = the t568u tier halos (green / blue / gold), now steady instead of pulsing,
+ *   glow1..3 = the t568u tier halos (green / blue / gold); live.mjs makes blue and gold flare on a 30 fps beat,
+ *   shine = a strip of frames with a light band crossing the emoji (the gold tier's mark, replaces the ✦ star),
  * and the overlay only shows these images; the fill moves them with transforms (no repaint per frame).
  * The pure alpha helpers are exported for the tests; the canvas part runs only in a browser.
  */
@@ -133,13 +134,19 @@ const toUrl = (cv) => new Promise((res) => {
   try { cv.toBlob((b) => res(b ? URL.createObjectURL(b) : cv.toDataURL("image/png")), "image/png"); } catch { res(""); }
 });
 
+/** Where the shine band's middle sits in frame k of n (frame 0 = no band): from just before the left edge to just
+ *  past the right one, as a share of the band's travel (0..1). */
+export function shineAt(k, n) {
+  return k <= 0 || n < 3 ? null : (k - 1) / (n - 2);
+}
+
 /**
- * Draw one emoji's images. opts: { fontPx, dpr, family, outlinePx, hollowPx, dim, hollowInk, glows }
- *   glows = [[{ blur (css px), color: [r, g, b], alpha }, …] per tier 1..3]
- * Returns { w, h, it, ih, gp (css px), base, solid, glow: [url1, url2, url3] } or null (nothing drawn).
+ * Draw one emoji's images. opts: { fontPx, dpr, family, outlinePx, hollowPx, dim, hollowInk, glows, shineFrames }
+ *   glows = [[{ blur (css px), color: [r, g, b], alpha }, …] per tier 1..3]; shineFrames = frames in the shine strip (0 = none)
+ * Returns { w, h, it, ih, gp (css px), base, solid, glow: [url1, url2, url3], shine } or null (nothing drawn).
  */
 export async function drawEmojiSprite(e, opts) {
-  const { fontPx, dpr = 1, family = "sans-serif", outlinePx = 2.25, hollowPx = 1.75, dim = 0.18, hollowInk = "#e6e6e6", glows = [] } = opts;
+  const { fontPx, dpr = 1, family = "sans-serif", outlinePx = 2.25, hollowPx = 1.75, dim = 0.18, hollowInk = "#e6e6e6", glows = [], shineFrames = 0 } = opts;
   const F = Math.max(8, Math.round(fontPx * dpr));
   // 1) the emoji on a roomy canvas, then its ink box
   const W0 = F * 3, H0 = F * 2;
@@ -200,8 +207,30 @@ export async function drawEmojiSprite(e, opts) {
     x.drawImage(shapeCv, off, off);
     return c;
   });
-  const [baseUrl, solidUrl, ...glowUrls] = await Promise.all([toUrl(baseCv), toUrl(solidCv), ...glowCvs.map(toUrl)]);
-  return { w: w / dpr, h: h / dpr, it: pad / dpr, ih: box.h / dpr, gp: off / dpr, base: baseUrl, solid: solidUrl, glow: glowUrls };
+  // 4) shine strip: frame k (1..n-1) = a light diagonal band at step k crossing the emoji, cut to the emoji's own shape
+  let shineCv = null;
+  if (shineFrames >= 3) {
+    shineCv = document.createElement("canvas"); shineCv.width = w * shineFrames; shineCv.height = h;
+    const x = shineCv.getContext("2d");
+    const D = (w + h) * 0.62, bw = Math.max(2, (w + h) * 0.13);
+    for (let k = 1; k < shineFrames; k++) {
+      const c = -D + 2 * D * shineAt(k, shineFrames);
+      x.save();
+      x.beginPath(); x.rect(k * w, 0, w, h); x.clip();
+      x.translate(k * w + w / 2, h / 2); x.rotate(0.42);
+      const g = x.createLinearGradient(c - bw, 0, c + bw, 0);
+      g.addColorStop(0, "rgba(255,255,255,0)"); g.addColorStop(0.5, "rgba(255,255,255,0.9)"); g.addColorStop(1, "rgba(255,255,255,0)");
+      x.fillStyle = g; x.fillRect(-2 * D, -2 * D, 4 * D, 4 * D);
+      x.restore();
+    }
+    const mask = document.createElement("canvas"); mask.width = w * shineFrames; mask.height = h;
+    const mx = mask.getContext("2d");
+    for (let k = 0; k < shineFrames; k++) mx.drawImage(solidCv, k * w, 0);
+    x.globalCompositeOperation = "destination-in";
+    x.drawImage(mask, 0, 0);
+  }
+  const [baseUrl, solidUrl, shineUrl, ...glowUrls] = await Promise.all([toUrl(baseCv), toUrl(solidCv), shineCv ? toUrl(shineCv) : "", ...glowCvs.map(toUrl)]);
+  return { w: w / dpr, h: h / dpr, it: pad / dpr, ih: box.h / dpr, gp: off / dpr, base: baseUrl, solid: solidUrl, glow: glowUrls, shine: shineUrl, frames: shineCv ? shineFrames : 0 };
 }
 
 /** CSS for a set of drawn emojis: class lv-x<i> per emoji (sizes + images), glows per tier class on the unit. */
@@ -214,6 +243,7 @@ export function spriteCss(list) {
     out.push(`.lv-x${i}>.lv-b{background-image:url("${s.base}")}`);
     out.push(`.lv-x${i}>.lv-sw>.lv-s{background-image:url("${s.solid}")}`);
     s.glow.forEach((u, t) => { if (u) out.push(`.lv-g${t + 1}>.lv-x${i}>.lv-gl{background-image:url("${u}")}`); });
+    if (s.shine && s.frames >= 3) out.push(`.lv-g3>.lv-x${i}>.lv-sw>.lv-s>.lv-shn{background-image:url("${s.shine}");background-size:${s.frames * 100}% 100%;background-position:calc(var(--sf, 0) * ${Math.round((100 / (s.frames - 1)) * 1e4) / 1e4}%) 0}`);
   });
   return out.join("\n");
 }

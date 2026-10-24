@@ -49,7 +49,7 @@ const FAKES = `(() => {
   window.WebSocket = FakeWs;
 })();`;
 
-async function withLive(fn, { width = 1920, height = 1080 } = {}) {
+async function withLive(fn, { width = 1920, height = 1080, query = "" } = {}) {
   const types = { ".html": "text/html", ".js": "text/javascript", ".mjs": "text/javascript", ".json": "application/json", ".css": "text/css", ".svg": "image/svg+xml", ".webp": "image/webp", ".png": "image/png" };
   const server = http.createServer((req, res) => {
     const p = path.join(root, decodeURIComponent(new URL(req.url, "http://x").pathname));
@@ -59,7 +59,8 @@ async function withLive(fn, { width = 1920, height = 1080 } = {}) {
   });
   await new Promise((r) => server.listen(0, "127.0.0.1", r));
   const port = server.address().port;
-  const proc = spawn(chrome, ["--headless=new", "--no-sandbox", "--disable-gpu", "--remote-debugging-pipe", "--user-data-dir=" + fs.mkdtempSync("/tmp/live-browser-"), "about:blank"], { stdio: ["ignore", "ignore", "ignore", "pipe", "pipe"] });
+  // no background throttling: a page opened over the debugging pipe counts as hidden, and its timers would slow to a crawl
+  const proc = spawn(chrome, ["--headless=new", "--no-sandbox", "--disable-gpu", "--disable-background-timer-throttling", "--disable-renderer-backgrounding", "--disable-backgrounding-occluded-windows", "--remote-debugging-pipe", "--user-data-dir=" + fs.mkdtempSync("/tmp/live-browser-"), "about:blank"], { stdio: ["ignore", "ignore", "ignore", "pipe", "pipe"] });
   let id = 0, buf = "";
   const pending = new Map();
   const errors = [];
@@ -91,7 +92,7 @@ async function withLive(fn, { width = 1920, height = 1080 } = {}) {
       if (r.exceptionDetails) throw new Error(r.exceptionDetails.text + " " + (r.exceptionDetails.exception?.description || ""));
       return r.result.value;
     };
-    await send("Page.navigate", { url: `http://127.0.0.1:${port}/live.html?names=${encodeURIComponent(ME.name)}` }, sessionId);
+    await send("Page.navigate", { url: `http://127.0.0.1:${port}/live.html?names=${encodeURIComponent(ME.name)}${query}` }, sessionId);
     await fn({ ev, errors });
   } finally {
     proc.kill("SIGKILL");
@@ -100,6 +101,8 @@ async function withLive(fn, { width = 1920, height = 1080 } = {}) {
 }
 
 const until = (cond, ms = 15000) => `new Promise(async (r) => { const end = Date.now() + ${ms}; while (Date.now() < end) { try { if (${cond}) return r(true); } catch {} await new Promise((q) => setTimeout(q, 50)); } r(false); })`;
+/** Frames the ticker drew in one second: style changes inside the overlay arrive in one batch per frame. */
+const framesPerSecond = `new Promise((r) => { let n = 0; const mo = new MutationObserver(() => { n++; }); mo.observe(document.getElementById("liveList"), { subtree: true, attributes: true, attributeFilter: ["style"] }); setTimeout(() => { mo.disconnect(); r(n); }, 1000); })`;
 const death = (att, vic, weapon, hs) => JSON.stringify({ event_name: "Death", attacker_character_id: att, character_id: vic, attacker_weapon_id: weapon, is_headshot: hs ? "1" : "0", timestamp: "0" });
 
 describe("🎥 live.html in a browser", () => {
@@ -132,7 +135,8 @@ describe("🎥 live.html in a browser", () => {
           emojiBoxes: [...L.querySelectorAll(".lv-em")].map((e) => Math.round(e.getBoundingClientRect().width)),
           svgFilters: document.querySelectorAll("filter").length,
           endless: document.getAnimations().filter((a) => !Number.isFinite(a.effect.getComputedTiming().endTime)).map((a) => a.animationName || (a.effect.target && a.effect.target.className)),
-          fillMoving: document.getAnimations().some((a) => a.effect.target && a.effect.target.classList && a.effect.target.classList.contains("lv-sw")),
+          fillMoving: [...L.querySelectorAll(".lv-sw")].some((e) => e.style.transform),
+          noStar: !L.querySelector(".lv-g3") || getComputedStyle(L.querySelector(".lv-g3"), "::after").content === "none",
           hsTip: (atk.querySelector(".lv-hs") || {}).dataset.tip,
         };
       })()`);
@@ -148,8 +152,23 @@ describe("🎥 live.html in a browser", () => {
       assert.ok(s.emojiBoxes.length >= 40 && s.emojiBoxes.every((w) => w > 10), `every emoji has its picture size: ${s.emojiBoxes.slice(0, 5)}`);
       assert.equal(s.svgFilters, 0, "no SVG filters on the page");
       assert.deepEqual(s.endless, [], "nothing animates forever (CPU)");
-      assert.equal(s.fillMoving, true, "the new lines fill up (transform animation)");
+      assert.equal(s.fillMoving, true, "the new lines fill up (moved by the ticker)");
+      assert.equal(s.noStar, true, "no ✦ star (the gold shine replaced it)");
+      // owner 2026-10-24: animations are drawn at 30 fps — never at the screen's own rate
+      const fps = await ev(framesPerSecond);
+      assert.ok(fps >= 15 && fps <= 34, `about 30 frames a second while lines fill: ${fps}`);
       assert.deepEqual(errors, [], "no page errors");
     });
+  });
+
+  it("?fps=60 draws at 60, never more", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      for (let i = 0; i < 6; i++) await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[i].cid, "80", false)})`);
+      assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)").length === 6 && (document.getElementById("lvSprites") || {}).textContent.includes("background-image")`)), true, "lines and pictures");
+      const fps = await ev(framesPerSecond);
+      assert.ok(fps > 34 && fps <= 64, `about 60 frames a second: ${fps}`);
+      assert.deepEqual(errors, [], "no page errors");
+    }, { query: "&fps=60" });
   });
 });

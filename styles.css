@@ -2914,10 +2914,12 @@ col.lv-c-em { width: calc(var(--lv-n) * var(--lv-u)); }
    class lv-x<i> per emoji) instead of three text copies run through SVG filters on every frame:
    lv-b = the black outline ring (t579u/t581u) + the hollow empty part (t589u: dark greyscale 18% inside a light inner ring),
    lv-s = the solid, full-colour emoji inside the lv-sw window, which shows the bottom --f % of the ink (t564u),
-   lv-gl = the tier halo (t568u), steady. --sw/--sh = picture size, --it/--ih = ink top/height, --gp = halo margin.
-   The fill moves the window down and the picture back up (transforms only), so nothing repaints while it fills. */
+   lv-gl = the tier halo (t568u), lv-shn = the gold tier's shine (a strip of frames, inside the solid picture).
+   --sw/--sh = picture size, --it/--ih = ink top/height, --gp = halo margin.
+   The fill moves the window down and the picture back up (transforms, set by live.mjs's 30 fps ticker). */
 .lv-em { position: relative; display: block; flex: none; width: var(--sw, 1.2em); height: var(--sh, 1.2em); font-size: var(--lv-fe); line-height: 1; }
-.lv-em > i, .lv-sw > i { position: absolute; display: block; background: no-repeat 0 0 / 100% 100%; }
+.lv-em > i, .lv-sw > i, .lv-s > i { position: absolute; display: block; background: no-repeat 0 0 / 100% 100%; }
+.lv-shn { inset: 0; }
 .lv-b { inset: 0; }
 .lv-gl { inset: calc(-1 * var(--gp, 0px)); }
 .lv-sw { left: 0; right: 0; top: var(--it, 0px); height: var(--ih, 100%); overflow: hidden; transform: translateY(calc(var(--ih, 0px) * (100 - var(--f, 0)) / 100)); }
@@ -2929,12 +2931,15 @@ col.lv-c-em { width: calc(var(--lv-n) * var(--lv-u)); }
 .lv-tip { position: fixed; z-index: 50; pointer-events: none; padding: 0.15rem 0.45rem; border-radius: 4px; background: rgba(0, 0, 0, 0.88); color: #fff; font-size: 0.85rem; white-space: nowrap; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5); }
 .lv-tip[hidden] { display: none; }
 [data-tip] { cursor: help; }
-/* Owner t568u glow tiers (live.mjs glowTier, same value as the fill): TOP (91+) gold + a sparkle, HIGH (71–90) blue,
-   AVERAGE (51–70) green, 50 and below / no value none. Owner 2026-10-24 "lagless or flat → flat": the halos are steady
-   pictures (live.mjs LIVE_GLOWS) and the sparkle is still — the endless pulses were most of the CPU. Nothing here moves
-   or resizes the table. When a line appears (t578u/t588u) the emojis fill 0 → level over 10 s and the halo fades in over
-   the last 20% (live.mjs animateFill: transforms and opacity only). */
-.lv-g3::after { content: "✦"; position: absolute; top: 12%; right: 8%; font-size: calc(var(--lv-fe) * 0.42); line-height: 1; color: rgb(255, 226, 122); text-shadow: 0 0 0.25rem rgba(255, 200, 60, 0.95); pointer-events: none; opacity: 0.85; }
+/* Owner t568u glow tiers (live.mjs glowTier, same value as the fill): TOP (91+) gold, HIGH (71–90) blue, AVERAGE (51–70)
+   green, 50 and below / no value none. Owner 2026-10-24 "clear differentiations between ranks", drawn at 30 fps
+   (live.mjs LIVE_FPS / BEAT / TIER_MOTION / SHINE; ?fps=60): green = a thin steady rim, blue = a wide halo that flares
+   on the beat, gold = a double halo that flares harder and swells + a light band sweeping across the emoji (replaced
+   the ✦ star). Between beats nothing moves, so no frames are drawn.
+   The halos and the shine are pictures (live-sprites.mjs); the ticker only changes their opacity, size and frame.
+   Nothing here moves or resizes the table. When a line appears (t578u/t588u) the emojis fill 0 → level over 10 s and
+   the halo fades in over the last 20%. */
+.lv-g2 > .lv-em > .lv-gl, .lv-g3 > .lv-em > .lv-gl { will-change: opacity, transform; }
 @property --f { syntax: "<number>"; inherits: true; initial-value: 0; }
 /* Owner 2026-10-24: the weapon of the kill (a silhouette in the text colour, kill-feed style; grenades / mines / abilities
    keep their card pictures) and a headshot mark ("Headshot" by Lorc, game-icons.net, CC BY 3.0 — see NOTICE). */
