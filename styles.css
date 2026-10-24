@@ -2893,7 +2893,7 @@ col.lv-c-blk { width: calc(var(--lv-b) + var(--lv-ini)); }
 .live-mode #distSection,
 .live-mode #weaponsSection { display: none !important; } /* owner t550u: no 📊 chart and no 🏆 Auraxium weapons in LIVE */
 /* LIVE player block (owner t557u, t560u). One fixed box per player holding both phases on top of each
-   other; the table's lv-phB class (live.mjs, A 4 s / B 2 s (t571u), all rows together) crossfades them in 0.133 s, 0.25 s flip
+   other; the table's lv-phB class (live.mjs, A 4 s / B 4 s (t571u, t572u), all rows together) crossfades them in 0.133 s, 0.25 s flip
    (the t550u 3× faster fade). Emoji sizes are transforms, so nothing ever moves the layout. */
 .live-table .lv-blk { position: relative; height: calc(var(--lv-ez) + var(--lv-nh)); padding: 0 !important; overflow: hidden; white-space: nowrap; cursor: help; }
 .live-table th.lv-blk { height: 1.1rem; }

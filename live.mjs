@@ -5,7 +5,7 @@ await i18nReady;
  * Census event stream (Death events, one character) and:
  *   - lists the last 3 opponents (owner t563u) (one row per person, repeats bump the count);
  *     on a kill our name sits on top, on a death the killer's name does;
- *   - shows each player (name + stats) in one fixed block that switches A 4 s / B 2 s (owner t557u, t563u, t566u, t571u):
+ *   - shows each player (name + stats) in one fixed block that switches A 4 s / B 4 s (owner t557u, t563u, t566u, t571u, t572u):
  *     phase A = name + ⚔️ iVi number (t560u), phase B = the other columns as emojis
  *     as fill meters, with the player's first letter next to 🏃 (t567u; no skill graph in Live);
  *   - a missing stat is an empty (25%) emoji, never "—" (t567u); uncached opponents show all-empty emojis
@@ -96,7 +96,7 @@ export const LIVE_COLS = Object.freeze([
  *   🏃 🦁 🛡️ 🪳 → the player's percentile in that column (pXX = higher than XX% of ranks.json, the
  *   Rankings pools; 🪳 Zerg = percentile of the raw Zerg score, so a higher Zerg number fills more).
  * Lower-is-better columns are flipped first (none in LIVE now).
- * Owner t568u: the solid part = min(1, value / 91), so p91+ (91%+ infantry) is completely full; p50 ≈ 55%.
+ * Owner t568u: the solid part was min(1, value / 91); t573u: clamp((value - 50) / 41, 0, 1), so p50 and below (50%- infantry) is empty and p91+ (91%+ infantry) completely full.
  */
 export const FILL_DIM = 0.25; // the empty part of the emoji stays 25% visible
 /** "How good" percentile 0..99 (99 = best) from the plain pXX. */
@@ -111,12 +111,14 @@ export function fillDriver(col, v, p) {
   if (col && col.fill === "value") return Math.round(Math.min(100, Math.max(0, v)) * 10) / 10;
   return goodPct(col, p);
 }
-/** Owner t568u: p91 (or 91% infantry) and up = completely solid; below that the fill scales: fill = min(1, driver / 91). */
+/** Owner t568u: p91 (or 91% infantry) and up = completely solid. Owner t573u: p50 (or 50% infantry) and below — the
+ *  no-glow tier — is empty (faint 25%), linear in between: fill = clamp((driver - 50) / (91 - 50), 0, 1). */
 export const FULL_AT = 91;
+export const EMPTY_AT = 50;
 /** Fill 0..100 (% of the emoji drawn solid, from the bottom) for one cell; null = no value → an empty 0% emoji (t567u). */
 export function emojiFill(col, v, p) {
   const d = fillDriver(col, v, p);
-  return d == null ? null : Math.round(Math.min(100, (d / FULL_AT) * 100) * 10) / 10;
+  return d == null ? null : Math.round(Math.min(100, Math.max(0, ((d - EMPTY_AT) / (FULL_AT - EMPTY_AT)) * 100)) * 10) / 10;
 }
 /** Fill shown when a cell has no value: 0 (empty 25% emoji, t567u), or 100 for a column marked unknown: "full" —
  *  owner t569u: an unknown 🪳 Zerg (most often unknown) is drawn as a full roach. Display only, nothing is stored. */
@@ -128,10 +130,10 @@ export function glowTier(d) {
 }
 
 /** Owner t557u: the block switches between phase A (name + iVi) and phase B (the emojis), all rows in sync.
- *  t566u: uneven — A shows 10 s, B 5 s (t563u had 10 s / 10 s); t571u: A 4 s, B 2 s, then it repeats. */
+ *  t566u: uneven — A shows 10 s, B 5 s (t563u had 10 s / 10 s); t571u: A 4 s, B 2 s; t572u: A 4 s, B 4 s, then it repeats. */
 export const PHASE_A_MS = 4000;
-export const PHASE_B_MS = 2000;
-/** Phase at a time since the page started: "A" for the first 4 s, then "B" for 2 s, and so on. */
+export const PHASE_B_MS = 4000;
+/** Phase at a time since the page started: "A" for the first 4 s, then "B" for 4 s, and so on. */
 export function phaseAt(ms) { return Math.max(0, ms) % (PHASE_A_MS + PHASE_B_MS) < PHASE_A_MS ? "A" : "B"; }
 /**
  * Background-fetch queue step (#32): next opponent cid to fetch = newest-first queue entry
@@ -325,7 +327,7 @@ function start() {
     return `<span class="lv-pn">${sd === "L" ? poop + nm : nm + poop}</span>`;
   }
   /**
-   * One player = ONE fixed block that switches (A 4 s / B 2 s, owner t560u, t563u, t566u, t571u), both phases stacked:
+   * One player = ONE fixed block that switches (A 4 s / B 4 s, owner t560u, t563u, t566u, t571u, t572u), both phases stacked:
    *   phase A = name + iVi number ("CloneKanoVS 1,883" | "209 Vepr12NC"), no separator;
    *   phase B = first letter + fill-meter emojis ("K 🏃🦁🛡️🪳🪖" | "🪖🪳🛡️🦁🏃 S", right player mirrored, t559u, t567u).
    * The left block hugs the centre (right-aligned), the right block too (left-aligned).

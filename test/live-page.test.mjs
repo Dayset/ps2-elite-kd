@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { buildLive } from "../scripts/build-live.mjs";
-import { classifyDeath, feedPush, censusStats, cellText, fmtGap, LIVE_COLS, FEED_MAX, emojiFill, fillDriver, glowTier, unknownFill, FULL_AT, goodPct, FILL_DIM, PHASE_A_MS, PHASE_B_MS, phaseAt } from "../live.mjs";
+import { classifyDeath, feedPush, censusStats, cellText, fmtGap, LIVE_COLS, FEED_MAX, emojiFill, fillDriver, glowTier, unknownFill, FULL_AT, EMPTY_AT, goodPct, FILL_DIM, PHASE_A_MS, PHASE_B_MS, phaseAt } from "../live.mjs";
 
 const root = new URL("../", import.meta.url);
 
@@ -51,27 +51,31 @@ test("LIVE has no skill graph: the chart section is hidden and live.mjs no longe
   assert.doesNotMatch(js, /analyzeNames|setNameTokens/);
 });
 
-test("emoji fill meter (owner t564u): one size, p0 empty / p50 half / top full; 🪖 by infantry %, 🪳 by raw-Zerg percentile", () => {
+test("emoji fill meter (owner t564u): one size, p50 and below empty / p70.5 half / p91+ full (t573u); 🪖 by infantry %, 🪳 by raw-Zerg percentile", () => {
   const act = LIVE_COLS.find((c) => c.id === "act");
   const zerg = LIVE_COLS.find((c) => c.id === "zerg");
   const inf = LIVE_COLS.find((c) => c.id === "inf");
   for (const c of LIVE_COLS) assert.ok(!c.lowerBetter, c.id);
-  // owner t568u: fill = min(1, driver / 91) — p91+ (and 91%+ infantry) completely solid
+  // owner t573u: fill = clamp((driver - 50) / (91 - 50), 0, 1) — p50 and below empty, p91+ (and 91%+ infantry) solid
   assert.equal(FULL_AT, 91);
+  assert.equal(EMPTY_AT, 50);
   assert.equal(emojiFill(act, 1.2, 0), 0);
-  assert.equal(emojiFill(act, 1.2, 50), 54.9); // p50 ≈ 55% full
-  assert.equal(emojiFill(act, 1.2, 90), 98.9);
+  assert.equal(emojiFill(act, 1.2, 50), 0); // p50 = empty (the no-glow tier)
+  assert.equal(emojiFill(act, 1.2, 51), 2.4);
+  assert.equal(emojiFill(act, 1.2, 70.5), 50); // halfway
+  assert.equal(emojiFill(act, 1.2, 90), 97.6);
   assert.equal(emojiFill(act, 1.2, 91), 100);
   assert.equal(emojiFill(act, 1.2, 99), 100);
-  assert.equal(emojiFill(zerg, 40, 80), 87.9); // higher raw Zerg → higher percentile → more fill
+  assert.equal(emojiFill(zerg, 40, 80), 73.2); // higher raw Zerg → higher percentile → more fill
   assert.equal(fillDriver(zerg, 40, 80), 80);
-  assert.equal(emojiFill(inf, 50, 3), 54.9); // 🪖 by the infantry % itself, same /91 rule
+  assert.equal(emojiFill(inf, 50, 99), 0); // 🪖 by the infantry % itself, same 50..91 rule
+  assert.equal(emojiFill(inf, 70.5, 3), 50);
   assert.equal(emojiFill(inf, 91, 3), 100);
   assert.equal(emojiFill(inf, 120, 99), 100);
   assert.equal(fillDriver(inf, 120, 99), 100);
   const apk = { id: "x", lowerBetter: true }; // the generic reversed mapping still works
   assert.equal(fillDriver(apk, 1, 10), 89);
-  assert.equal(emojiFill(apk, 1, 10), 97.8);
+  assert.equal(emojiFill(apk, 1, 10), 95.1);
   // owner t568u glow tiers: TOP 91+, HIGH 71–90, AVERAGE 51–70, none ≤ 50 / missing
   assert.deepEqual([null, NaN, 0, 50, 51, 70, 70.9, 71, 90, 90.9, 91, 99, 100].map(glowTier), [0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3]);
   assert.equal(goodPct(apk, 10), 89);
@@ -103,11 +107,11 @@ test("LIVE: no distribution chart, no title once kills arrive, a themed backgrou
   assert.doesNotMatch(js, /Live: <strong/);
 });
 
-test("A 4 s / B 2 s switch (owner t557u, t559u, t560u, t563u, t566u, t571u): one fixed block a side, phase A name + iVi (no ⚔️), phase B mirrored emojis, quick flip", () => {
-  assert.equal(PHASE_A_MS, 4000); // owner t571u: name + iVi 4 s, emojis 2 s
-  assert.equal(PHASE_B_MS, 2000);
-  assert.deepEqual([0, 3999, 4000, 5999, 6000, 9999, 10000, 11999, 12000, -5].map(phaseAt), ["A", "A", "B", "B", "A", "A", "B", "B", "A", "A"]);
-  // the flip must finish well inside the 2 s phase (t571u)
+test("A 4 s / B 4 s switch (owner t557u, t559u, t560u, t563u, t566u, t571u, t572u): one fixed block a side, phase A name + iVi (no ⚔️), phase B mirrored emojis, quick flip", () => {
+  assert.equal(PHASE_A_MS, 4000); // owner t571u/t572u: name + iVi 4 s, emojis 4 s
+  assert.equal(PHASE_B_MS, 4000);
+  assert.deepEqual([0, 3999, 4000, 7999, 8000, 11999, 12000, 15999, 16000, -5].map(phaseAt), ["A", "A", "B", "B", "A", "A", "B", "B", "A", "A"]);
+  // the flip must finish well inside a phase (t571u)
   const tr = readFileSync(new URL("styles.css", root), "utf8").match(/\.lv-blk > \.lv-pa, \.lv-blk > \.lv-pb \{[^}]*transition: opacity ([\d.]+)s linear, transform ([\d.]+)s/);
   assert.ok(tr && +tr[1] <= 0.3 && +tr[2] <= 0.3, "flip <= 0.3 s");
   const css = readFileSync(new URL("styles.css", root), "utf8");
