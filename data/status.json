@@ -4,34 +4,124 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "40077666296",
+    "runId": "40078322246",
     "event": "workflow_dispatch",
-    "kind": "on-demand",
-    "startedAt": "2026-10-24T08:21:15.240Z",
-    "endedAt": "2026-10-24T08:25:01.799Z",
-    "seconds": 227,
-    "updated": [],
-    "added": [
-      "o0v0o"
+    "kind": "discovery",
+    "startedAt": "2026-10-24T08:31:21.114Z",
+    "endedAt": "2026-10-24T08:40:41.066Z",
+    "seconds": 560,
+    "updated": [
+      "Sinthrex",
+      "[C4CC] LilcCcC",
+      "[PL07] moppsiak2",
+      "ThePocht",
+      "Katsunya",
+      "[LHEU] 0VSO",
+      "DanCro",
+      "[CTIA] HelbosPrimus",
+      "DaliziR",
+      "Kustik86",
+      "Parsifaa1",
+      "QingjiuNB",
+      "tfyb",
+      "RyzanPrinceps",
+      "ARHANGELlON"
     ],
+    "added": [],
     "failed": [],
-    "stoppedEarly": null,
+    "stoppedEarly": "another run is waiting (site request or fallback cron)",
     "indexSize": 14268,
+    "discovery": {
+      "cap": 15000,
+      "queue": 0,
+      "slice": null,
+      "sweepInProgress": false
+    },
     "honu": {
       "day": "2026-10-24",
-      "calls": 2631,
+      "calls": 2725,
       "cap": 10000
     },
     "batch": [
       {
-        "name": "o0v0o",
-        "src": "on-demand",
+        "name": "Sinthrex",
+        "src": "refresh",
+        "status": "done"
+      },
+      {
+        "name": "[C4CC] LilcCcC",
+        "src": "refresh",
+        "status": "done"
+      },
+      {
+        "name": "[PL07] moppsiak2",
+        "src": "refresh",
+        "status": "done"
+      },
+      {
+        "name": "ThePocht",
+        "src": "refresh",
+        "status": "done"
+      },
+      {
+        "name": "Katsunya",
+        "src": "refresh",
+        "status": "done"
+      },
+      {
+        "name": "[LHEU] 0VSO",
+        "src": "refresh",
+        "status": "done"
+      },
+      {
+        "name": "DanCro",
+        "src": "refresh",
+        "status": "done"
+      },
+      {
+        "name": "[CTIA] HelbosPrimus",
+        "src": "refresh",
+        "status": "done"
+      },
+      {
+        "name": "DaliziR",
+        "src": "refresh",
+        "status": "done"
+      },
+      {
+        "name": "Kustik86",
+        "src": "refresh",
+        "status": "done"
+      },
+      {
+        "name": "Parsifaa1",
+        "src": "refresh",
+        "status": "done"
+      },
+      {
+        "name": "QingjiuNB",
+        "src": "refresh",
+        "status": "done"
+      },
+      {
+        "name": "tfyb",
+        "src": "refresh",
+        "status": "done"
+      },
+      {
+        "name": "RyzanPrinceps",
+        "src": "refresh",
+        "status": "done"
+      },
+      {
+        "name": "ARHANGELlON",
+        "src": "refresh",
         "status": "done"
       }
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-24T08:26:00.939Z",
+    "checkedAt": "2026-10-24T08:40:53.852Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 23,
     "explained": 26,
@@ -66,7 +156,7 @@
         "id": "slope",
         "value": -7.805,
         "bound": -5.217,
-        "z": -49.34,
+        "z": -49.334,
         "side": "low",
         "explained": false,
         "reason": "",
@@ -78,7 +168,7 @@
         "id": "inflation",
         "value": 21.201,
         "bound": 12.183,
-        "z": 48.073,
+        "z": 48.074,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -101,8 +191,8 @@
         "name": "Endless",
         "id": "s_revDom",
         "value": 27,
-        "bound": 21.333,
-        "z": 41.712,
+        "bound": 19.333,
+        "z": 42.052,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -222,7 +312,7 @@
         "id": "slope",
         "value": 2.155,
         "bound": 0.604,
-        "z": 15.353,
+        "z": 15.352,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -234,7 +324,7 @@
         "id": "slope",
         "value": 1.217,
         "bound": 0.604,
-        "z": 9.259,
+        "z": 9.258,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -301,7 +391,7 @@
         "id": "s_maxKd",
         "value": 131,
         "bound": 105,
-        "z": 85.46,
+        "z": 85.489,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (aim, session-forensics), listed there",
@@ -372,7 +462,7 @@
         "id": "slope",
         "value": 7.198,
         "bound": 0.604,
-        "z": 48.104,
+        "z": 48.098,
         "side": "high",
         "explained": true,
         "reason": "Owner reviewed 2026-10-18 (#10): vehicle main try-harding K/D (lifetime KD 33, 658 kills / 25 deaths vs 200 opponents); explained, not a cheater",
@@ -410,7 +500,7 @@
         "id": "inflation",
         "value": 18.641,
         "bound": 12.183,
-        "z": 41.629,
+        "z": 41.63,
         "side": "high",
         "explained": true,
         "reason": "Reviewed 2026-10-18 (#10): 🎈 inflation 19.2 = lifetime KD 1.82 vs 121 kills / 992 deaths against 200 opponents; real data, big sample, the public board flatters",
@@ -698,7 +788,7 @@
             "label": "📉 Slope",
             "value": -7.805,
             "bound": -5.217,
-            "z": -49.34,
+            "z": -49.334,
             "side": "low"
           },
           {
@@ -807,7 +897,7 @@
             "label": "📉 Slope",
             "value": 2.155,
             "bound": 0.604,
-            "z": 15.353,
+            "z": 15.352,
             "side": "high"
           }
         ]
@@ -818,14 +908,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 48.073,
+        "maxZ": 48.074,
         "metrics": [
           {
             "id": "inflation",
             "label": "🎈 Inflation",
             "value": 21.201,
             "bound": 12.183,
-            "z": 48.073,
+            "z": 48.074,
             "side": "high"
           }
         ]
@@ -836,14 +926,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 41.712,
+        "maxZ": 42.052,
         "metrics": [
           {
             "id": "s_revDom",
             "label": "🧪 Revenge ÷ domination",
             "value": 27,
-            "bound": 21.333,
-            "z": 41.712,
+            "bound": 19.333,
+            "z": 42.052,
             "side": "high"
           }
         ]
@@ -890,14 +980,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 9.259,
+        "maxZ": 9.258,
         "metrics": [
           {
             "id": "slope",
             "label": "📉 Slope",
             "value": 1.217,
             "bound": 0.604,
-            "z": 9.259,
+            "z": 9.258,
             "side": "high"
           }
         ]
@@ -1026,7 +1116,7 @@
             "label": "📉 Slope",
             "value": 7.198,
             "bound": 0.604,
-            "z": 48.104,
+            "z": 48.098,
             "side": "high"
           },
           {
@@ -1198,14 +1288,14 @@
           "aim",
           "session-forensics"
         ],
-        "maxZ": 85.46,
+        "maxZ": 85.489,
         "metrics": [
           {
             "id": "s_maxKd",
             "label": "🧪 Best-session K/D",
             "value": 131,
             "bound": 105,
-            "z": 85.46,
+            "z": 85.489,
             "side": "high"
           },
           {
@@ -1244,14 +1334,14 @@
         "explained": true,
         "reason": "Reviewed 2026-10-18 (#10): 🎈 inflation 19.2 = lifetime KD 1.82 vs 121 kills / 992 deaths against 200 opponents; real data, big sample, the public board flatters",
         "red": [],
-        "maxZ": 41.629,
+        "maxZ": 41.63,
         "metrics": [
           {
             "id": "inflation",
             "label": "🎈 Inflation",
             "value": 18.641,
             "bound": 12.183,
-            "z": 41.629,
+            "z": 41.63,
             "side": "high"
           }
         ]
@@ -1538,7 +1628,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-24T08:26:05.995Z",
+    "checkedAt": "2026-10-24T08:40:58.087Z",
     "red": 52,
     "padding": 42,
     "adjusted": 18,
@@ -1549,7 +1639,7 @@
     "forensics": 29
   },
   "sessionStats": {
-    "checkedAt": "2026-10-24T08:26:00.993Z",
+    "checkedAt": "2026-10-24T08:40:53.900Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -1563,13 +1653,13 @@
     "ruleText": "[session pattern] in recent Honu sessions (≥ 100 kills counted): assists per kill ≤ 0.1, headshot share ≥ 50% (headshot XP per kill; Census lifetime HSR when no XP detail) and K/D ≥ 7 (session deaths; Census lifetime KD when none). A very one-sided record; a lead for manual review, not proof.",
     "coverage": {
       "players": 14267,
-      "withSessions": 12756,
-      "measured": 5893,
-      "sessions": 49690,
-      "kills": 2082757,
-      "xpPlayers": 1416,
-      "xpMeasured": 1026,
-      "xpSessions": 7641
+      "withSessions": 12770,
+      "measured": 5900,
+      "sessions": 49741,
+      "kills": 2084131,
+      "xpPlayers": 1417,
+      "xpMeasured": 1031,
+      "xpSessions": 7657
     },
     "metrics": [
       {
@@ -1671,7 +1761,7 @@
     ],
     "distributions": {
       "s_apk": {
-        "n": 5866,
+        "n": 5873,
         "min": 0,
         "p01": 0.103,
         "p05": 0.191,
@@ -1681,7 +1771,7 @@
         "max": 1.5
       },
       "s_share": {
-        "n": 5234,
+        "n": 5236,
         "min": 0.345,
         "p01": 0.458,
         "p05": 0.488,
@@ -1691,27 +1781,27 @@
         "max": 0.808
       },
       "s_kpm": {
-        "n": 5893,
+        "n": 5900,
         "min": 0.052,
         "p01": 0.132,
         "p05": 0.197,
         "median": 0.559,
-        "p95": 1.947,
+        "p95": 1.948,
         "p99": 2.773,
         "max": 16.526
       },
       "s_maxKpm": {
-        "n": 5893,
+        "n": 5900,
         "min": 0.103,
         "p01": 0.177,
         "p05": 0.27,
         "median": 0.756,
-        "p95": 2.421,
+        "p95": 2.428,
         "p99": 3.488,
         "max": 16.526
       },
       "s_kpmCv": {
-        "n": 5621,
+        "n": 5627,
         "min": 0,
         "p01": 0.013,
         "p05": 0.051,
@@ -1721,7 +1811,7 @@
         "max": 1.107
       },
       "s_kd": {
-        "n": 5865,
+        "n": 5872,
         "min": 0.195,
         "p01": 0.437,
         "p05": 0.633,
@@ -1731,7 +1821,7 @@
         "max": 162.667
       },
       "s_maxKd": {
-        "n": 5865,
+        "n": 5872,
         "min": 0.271,
         "p01": 0.54,
         "p05": 0.794,
@@ -1741,7 +1831,7 @@
         "max": 355
       },
       "s_hsk": {
-        "n": 1109,
+        "n": 1114,
         "min": 0,
         "p01": 0.009,
         "p05": 0.067,
@@ -1751,7 +1841,7 @@
         "max": 0.972
       },
       "s_ksk": {
-        "n": 1109,
+        "n": 1114,
         "min": 0,
         "p01": 0.054,
         "p05": 0.112,
@@ -1761,7 +1851,7 @@
         "max": 0.983
       },
       "s_domk": {
-        "n": 1109,
+        "n": 1114,
         "min": 0,
         "p01": 0,
         "p05": 0.021,
@@ -1771,7 +1861,7 @@
         "max": 0.243
       },
       "s_revk": {
-        "n": 1109,
+        "n": 1114,
         "min": 0,
         "p01": 0,
         "p05": 0.016,
@@ -1781,17 +1871,17 @@
         "max": 0.357
       },
       "s_revDom": {
-        "n": 1097,
+        "n": 1102,
         "min": 0,
         "p01": 0,
         "p05": 0.167,
         "median": 0.889,
-        "p95": 3.1,
-        "p99": 6,
+        "p95": 3,
+        "p99": 5.5,
         "max": 27
       },
       "s_savk": {
-        "n": 1109,
+        "n": 1114,
         "min": 0,
         "p01": 0.006,
         "p05": 0.024,
@@ -1801,17 +1891,17 @@
         "max": 0.2
       },
       "s_spotk": {
-        "n": 1109,
+        "n": 1114,
         "min": 0,
         "p01": 0,
         "p05": 0,
         "median": 0.031,
-        "p95": 0.197,
+        "p95": 0.198,
         "p99": 0.254,
         "max": 0.354
       },
       "s_prik": {
-        "n": 1109,
+        "n": 1114,
         "min": 0,
         "p01": 0.06,
         "p05": 0.116,
@@ -1821,7 +1911,7 @@
         "max": 0.495
       },
       "s_stopk": {
-        "n": 1109,
+        "n": 1114,
         "min": 0,
         "p01": 0.014,
         "p05": 0.039,
@@ -3458,14 +3548,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 41.712,
+        "maxZ": 42.052,
         "metrics": [
           {
             "id": "s_revDom",
             "label": "🧪 Revenge ÷ domination",
             "value": 27,
-            "bound": 21.333,
-            "z": 41.712,
+            "bound": 19.333,
+            "z": 42.052,
             "side": "high"
           }
         ]
@@ -3517,14 +3607,14 @@
           "aim",
           "session-forensics"
         ],
-        "maxZ": 85.46,
+        "maxZ": 85.489,
         "metrics": [
           {
             "id": "s_maxKd",
             "label": "🧪 Best-session K/D",
             "value": 131,
             "bound": 105,
-            "z": 85.46,
+            "z": 85.489,
             "side": "high"
           },
           {
@@ -3541,17 +3631,17 @@
     "outliersUnexplained": 3
   },
   "size": {
-    "at": "2026-10-24T08:25:02.270Z",
+    "at": "2026-10-24T08:40:41.493Z",
     "repoBytes": 234248192,
-    "dataBytes": 293124842,
-    "playersBytes": 266419200,
+    "dataBytes": 293147932,
+    "playersBytes": 266425894,
     "playerFiles": 14268,
     "warnAtBytes": 734003200,
     "warning": false
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-24T08:26:01.030Z",
+    "checkedAt": "2026-10-24T08:40:53.939Z",
     "candidates": [
       "chocoiatevs",
       "nebelhexe",
@@ -30938,7 +31028,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-24T08:26:01.045Z",
+    "checkedAt": "2026-10-24T08:40:53.947Z",
     "count": 364,
     "players": [
       {
@@ -33957,7 +34047,7 @@
     ]
   },
   "infantry": {
-    "checkedAt": "2026-10-24T08:26:07.840Z",
+    "checkedAt": "2026-10-24T08:40:59.491Z",
     "players": 14268,
     "counts": {
       "infantry": 9294,
@@ -33977,7 +34067,7 @@
   "assistGroups": {
     "byTag": {
       "infantry": {
-        "count": 4065,
+        "count": 4067,
         "medApk": 0.431,
         "medShare": 0.557
       },
@@ -34014,11 +34104,11 @@
       }
     },
     "tagMin": 20,
-    "checkedAt": "2026-10-24T08:26:05.819Z",
+    "checkedAt": "2026-10-24T08:40:57.847Z",
     "coverage": {
       "players": 14243,
-      "withSessions": 12732,
-      "measured": 5218,
+      "withSessions": 12746,
+      "measured": 5220,
       "measuredPct": 36.6
     },
     "cuts": {
@@ -34026,8 +34116,8 @@
       "shareHi": 0.581,
       "shareLo": 0.528,
       "apk": 0.662,
-      "iviLo": 301.543,
-      "iviHi": 665.968,
+      "iviLo": 301.586,
+      "iviHi": 665.694,
       "medApk": 0.426,
       "medShare": 0.554
     },
@@ -34043,7 +34133,7 @@
     },
     "groups": {
       "carries": {
-        "count": 476,
+        "count": 475,
         "top": [
           {
             "slug": "pikaqiuill",
@@ -34325,7 +34415,7 @@
   },
   "burst": {
     "rule": "KPM ≥ 5 and ≥ 15 kills in ≥ 2 min (one stored session, no 10-minute floor)",
-    "checkedAt": "2026-10-24T08:26:10.272Z",
+    "checkedAt": "2026-10-24T08:41:01.326Z",
     "sessions": 12,
     "flaggedPlayers": 0,
     "clearedPlayers": 2,
@@ -34509,7 +34599,7 @@
     ]
   },
   "padderPenalty": {
-    "checkedAt": "2026-10-24T08:26:01.075Z",
+    "checkedAt": "2026-10-24T08:40:53.973Z",
     "ranked": 14194,
     "penalty": 0.1,
     "ref": 610.6,
@@ -34730,7 +34820,7 @@
     ]
   },
   "vehicleCut": {
-    "checkedAt": "2026-10-24T08:26:01.123Z",
+    "checkedAt": "2026-10-24T08:40:54.010Z",
     "ranked": 14194,
     "cut": 8522,
     "buckets": {
@@ -37148,7 +37238,7 @@
       "HIP": 0.9,
       "HSR": 0.55
     },
-    "checkedAt": "2026-10-24T08:25:47.665Z",
+    "checkedAt": "2026-10-24T08:40:43.618Z",
     "checked": 11,
     "errors": 0,
     "pending": 0,
@@ -37269,7 +37359,7 @@
     ]
   },
   "hut": {
-    "builtAt": "2026-10-24T08:26:00.482Z",
+    "builtAt": "2026-10-24T08:40:53.460Z",
     "cuts": {
       "actMedian": 0.2707,
       "actMult": 1.333,
@@ -41653,7 +41743,7 @@
     "cleared": []
   },
   "vehDiff": {
-    "builtAt": "2026-10-24T08:26:00.558Z",
+    "builtAt": "2026-10-24T08:40:53.524Z",
     "start": 14.9,
     "damped": 3182,
     "dieHardHut": 1067,
@@ -62440,17 +62530,6 @@
         "diff": 16
       },
       {
-        "name": "RedTankHAEMOSOO",
-        "slug": "redtankhaemosoo",
-        "veh": 22.1,
-        "factor": 0.915,
-        "hut": null,
-        "by": "veh",
-        "diffRaw": 19,
-        "diffHut": 19,
-        "diff": 17
-      },
-      {
         "name": "dragonkas",
         "slug": "dragonkas",
         "veh": 39.7,
@@ -63274,6 +63353,17 @@
         "diffRaw": 18,
         "diffHut": 18,
         "diff": 17
+      },
+      {
+        "name": "RedTankHAEMOSOO",
+        "slug": "redtankhaemosoo",
+        "veh": 22.1,
+        "factor": 0.915,
+        "hut": null,
+        "by": "veh",
+        "diffRaw": 18,
+        "diffHut": 18,
+        "diff": 16
       },
       {
         "name": "Damius",
@@ -76666,21 +76756,21 @@
     "cleared": []
   },
   "zergRevive": {
-    "builtAt": "2026-10-24T08:26:00.695Z",
-    "zergScored": 5843,
-    "measured": 884,
-    "confirmed": 220,
-    "confirmedHigh": 60,
-    "softened": 192,
+    "builtAt": "2026-10-24T08:40:53.640Z",
+    "zergScored": 5850,
+    "measured": 888,
+    "confirmed": 221,
+    "confirmedHigh": 61,
+    "softened": 193,
     "cuts": {
       "minKills": 100,
       "minDeaths": 50,
       "p25": 18.9,
       "p50": 29.6,
       "p75": 44.6,
-      "n": 884
+      "n": 888
     },
-    "rule": "🪳 Zerg revive check, from Honu XP detail (data/xp, players looked up or discovered; 100+ kills and 50+ deaths there). Revived share = (Revive + Squad Revive received) ÷ deaths by enemy players. rvp = its percentile among the 884 measured players of this build (p25 18.9%, median 29.6%, p75 44.6%). rvp ≥ 75 → Zerg confirmed (unchanged, said on hover). Low rvp softens a high Zerg: w = 1 at/below p25 → 0 at/above p50, Zerg = raw − round(w × max(0, raw − rvp)), so at full weight Zerg falls to the revive percentile; never raised. No XP detail → unchanged. Listed: every softened player, and confirmed ones with raw Zerg ≥ 67. Owner override: \"zerg\": \"cleared\" on the data/reviewed.json player entry (no revive result at all).",
+    "rule": "🪳 Zerg revive check, from Honu XP detail (data/xp, players looked up or discovered; 100+ kills and 50+ deaths there). Revived share = (Revive + Squad Revive received) ÷ deaths by enemy players. rvp = its percentile among the 888 measured players of this build (p25 18.9%, median 29.6%, p75 44.6%). rvp ≥ 75 → Zerg confirmed (unchanged, said on hover). Low rvp softens a high Zerg: w = 1 at/below p25 → 0 at/above p50, Zerg = raw − round(w × max(0, raw − rvp)), so at full weight Zerg falls to the revive percentile; never raised. No XP detail → unchanged. Listed: every softened player, and confirmed ones with raw Zerg ≥ 67. Owner override: \"zerg\": \"cleared\" on the data/reviewed.json player entry (no revive result at all).",
     "players": [
       {
         "name": "MordreadTR",
@@ -76842,7 +76932,7 @@
         "share": 58.1,
         "revived": 111,
         "deaths": 191,
-        "rvp": 90,
+        "rvp": 89,
         "zergRaw": 86,
         "zerg": 86,
         "status": "confirmed"
@@ -76952,7 +77042,7 @@
         "share": 50.9,
         "revived": 54,
         "deaths": 106,
-        "rvp": 83,
+        "rvp": 82,
         "zergRaw": 82,
         "zerg": 82,
         "status": "confirmed"
@@ -76997,6 +77087,17 @@
         "revived": 51,
         "deaths": 60,
         "rvp": 97,
+        "zergRaw": 81,
+        "zerg": 81,
+        "status": "confirmed"
+      },
+      {
+        "name": "RandomNCPlayer1",
+        "slug": "randomncplayer1",
+        "share": 70.3,
+        "revived": 64,
+        "deaths": 91,
+        "rvp": 95,
         "zergRaw": 81,
         "zerg": 81,
         "status": "confirmed"
@@ -77403,7 +77504,18 @@
         "share": 50.9,
         "revived": 82,
         "deaths": 161,
-        "rvp": 83,
+        "rvp": 82,
+        "zergRaw": 69,
+        "zerg": 69,
+        "status": "confirmed"
+      },
+      {
+        "name": "DrSolarus",
+        "slug": "drsolarus",
+        "share": 52.8,
+        "revived": 201,
+        "deaths": 381,
+        "rvp": 84,
         "zergRaw": 69,
         "zerg": 69,
         "status": "confirmed"
@@ -77425,18 +77537,7 @@
         "share": 66.7,
         "revived": 76,
         "deaths": 114,
-        "rvp": 94,
-        "zergRaw": 68,
-        "zerg": 68,
-        "status": "confirmed"
-      },
-      {
-        "name": "DrSolarus",
-        "slug": "drsolarus",
-        "share": 52.8,
-        "revived": 201,
-        "deaths": 381,
-        "rvp": 84,
+        "rvp": 93,
         "zergRaw": 68,
         "zerg": 68,
         "status": "confirmed"
@@ -77810,9 +77911,9 @@
         "share": 21.3,
         "revived": 47,
         "deaths": 221,
-        "rvp": 32,
+        "rvp": 31,
         "zergRaw": 51,
-        "zerg": 37,
+        "zerg": 36,
         "status": "softened"
       },
       {
@@ -77915,6 +78016,28 @@
         "status": "softened"
       },
       {
+        "name": "CaesR0",
+        "slug": "caesr0",
+        "share": 19.8,
+        "revived": 47,
+        "deaths": 237,
+        "rvp": 26,
+        "zergRaw": 46,
+        "zerg": 27,
+        "status": "softened"
+      },
+      {
+        "name": "MassivelyTiny",
+        "slug": "massivelytiny",
+        "share": 19.7,
+        "revived": 37,
+        "deaths": 188,
+        "rvp": 26,
+        "zergRaw": 46,
+        "zerg": 27,
+        "status": "softened"
+      },
+      {
         "name": "BringerOfPeace",
         "slug": "bringerofpeace",
         "share": 15.8,
@@ -77926,17 +78049,6 @@
         "status": "softened"
       },
       {
-        "name": "CaesR0",
-        "slug": "caesr0",
-        "share": 19.8,
-        "revived": 47,
-        "deaths": 237,
-        "rvp": 26,
-        "zergRaw": 45,
-        "zerg": 27,
-        "status": "softened"
-      },
-      {
         "name": "o0vOo",
         "slug": "o0voo",
         "share": 24.1,
@@ -77945,17 +78057,6 @@
         "rvp": 37,
         "zergRaw": 45,
         "zerg": 41,
-        "status": "softened"
-      },
-      {
-        "name": "MassivelyTiny",
-        "slug": "massivelytiny",
-        "share": 19.7,
-        "revived": 37,
-        "deaths": 188,
-        "rvp": 26,
-        "zergRaw": 45,
-        "zerg": 27,
         "status": "softened"
       },
       {
@@ -78110,6 +78211,17 @@
         "rvp": 29,
         "zergRaw": 40,
         "zerg": 31,
+        "status": "softened"
+      },
+      {
+        "name": "OrganizationXIII",
+        "slug": "organizationxiii",
+        "share": 4.3,
+        "revived": 3,
+        "deaths": 70,
+        "rvp": 1,
+        "zergRaw": 40,
+        "zerg": 1,
         "status": "softened"
       },
       {
@@ -78283,9 +78395,9 @@
         "share": 21.3,
         "revived": 23,
         "deaths": 108,
-        "rvp": 32,
+        "rvp": 31,
         "zergRaw": 35,
-        "zerg": 33,
+        "zerg": 32,
         "status": "softened"
       },
       {
@@ -78624,9 +78736,9 @@
         "share": 12.5,
         "revived": 12,
         "deaths": 96,
-        "rvp": 9,
+        "rvp": 10,
         "zergRaw": 28,
-        "zerg": 9,
+        "zerg": 10,
         "status": "softened"
       },
       {
@@ -78668,9 +78780,9 @@
         "share": 11.8,
         "revived": 9,
         "deaths": 76,
-        "rvp": 8,
+        "rvp": 9,
         "zergRaw": 27,
-        "zerg": 8,
+        "zerg": 9,
         "status": "softened"
       },
       {
@@ -78734,9 +78846,9 @@
         "share": 4.7,
         "revived": 21,
         "deaths": 445,
-        "rvp": 1,
+        "rvp": 2,
         "zergRaw": 25,
-        "zerg": 1,
+        "zerg": 2,
         "status": "softened"
       },
       {
@@ -78910,9 +79022,9 @@
         "share": 13.2,
         "revived": 22,
         "deaths": 167,
-        "rvp": 11,
+        "rvp": 12,
         "zergRaw": 20,
-        "zerg": 11,
+        "zerg": 12,
         "status": "softened"
       },
       {
@@ -79339,9 +79451,9 @@
         "share": 5.8,
         "revived": 12,
         "deaths": 208,
-        "rvp": 2,
+        "rvp": 3,
         "zergRaw": 6,
-        "zerg": 2,
+        "zerg": 3,
         "status": "softened"
       },
       {
@@ -79372,9 +79484,9 @@
         "share": 4.7,
         "revived": 12,
         "deaths": 257,
-        "rvp": 1,
+        "rvp": 2,
         "zergRaw": 6,
-        "zerg": 1,
+        "zerg": 2,
         "status": "softened"
       },
       {
@@ -79458,7 +79570,7 @@
     "cleared": []
   },
   "newbieDiff": {
-    "builtAt": "2026-10-24T08:26:00.654Z",
+    "builtAt": "2026-10-24T08:40:53.604Z",
     "loH": 6.2,
     "hiH": 380.2,
     "n": 14180,
@@ -81793,14 +81905,6 @@
         "diff": -12
       },
       {
-        "name": "Parsifaa1",
-        "slug": "parsifaa1",
-        "h": 4.9,
-        "factor": 0,
-        "diffRaw": -56,
-        "diff": 0
-      },
-      {
         "name": "Skywar13",
         "slug": "skywar13",
         "h": 15.8,
@@ -81935,6 +82039,14 @@
         "factor": 0.067,
         "diffRaw": -55,
         "diff": -4
+      },
+      {
+        "name": "Parsifaa1",
+        "slug": "parsifaa1",
+        "h": 4.9,
+        "factor": 0,
+        "diffRaw": -55,
+        "diff": 0
       },
       {
         "name": "RED360Z",
@@ -116249,7 +116361,7 @@
         "name": "Parsifaa1",
         "slug": "parsifaa1",
         "h": 4.9,
-        "diffRaw": -56,
+        "diffRaw": -55,
         "diff": 0
       },
       {
@@ -123830,8 +123942,8 @@
         "name": "LilcCcC",
         "slug": "lilcccc",
         "h": 13.3,
-        "diffRaw": 9,
-        "diff": 9
+        "diffRaw": 10,
+        "diff": 10
       },
       {
         "name": "DSGNC",
@@ -124565,8 +124677,8 @@
         "name": "QingjiuNB",
         "slug": "qingjiunb",
         "h": 14.5,
-        "diffRaw": 2,
-        "diff": 2
+        "diffRaw": 1,
+        "diff": 1
       },
       {
         "name": "xschattenx",
@@ -126713,12 +126825,12 @@
     "cleared": []
   },
   "assistGap": {
-    "checkedAt": "2026-10-24T08:26:05.822Z",
+    "checkedAt": "2026-10-24T08:40:57.850Z",
     "start": "2026-04-01T13:00:00.000Z",
     "end": "2026-05-07T05:00:00.000Z",
     "url": "https://www.planetside2.com/patch-notes/may-6-hotfix-2026",
     "minKills": 100,
-    "count": 103,
+    "count": 104,
     "lost": 27,
     "players": [
       {
@@ -127485,6 +127597,15 @@
         "kept": 200,
         "apkBefore": 0.327,
         "apk": 0.365
+      },
+      {
+        "slug": "feng1107",
+        "name": "Feng1107",
+        "gapSessions": 1,
+        "gapKills": 15,
+        "kept": 134,
+        "apkBefore": 0.376,
+        "apk": 0.403
       },
       {
         "slug": "danisantini",
