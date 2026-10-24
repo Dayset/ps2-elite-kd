@@ -112,17 +112,22 @@ export function emojiScale(col, p) {
   return Math.round(s * 100) / 100;
 }
 /**
- * Number ⇄ emoji loop (owner t546u; 3× faster per t550u): number NUM ms, crossfade FADE ms,
- * emoji EMOJI ms, crossfade back. One CSS animation (styles.css lvNum / lvEm, 1.933s); the
- * table carries a phase offset from the clock, so re-renders never restart the loop.
+ * Number ⇄ emoji loop (owner t546u; t554u: 10 s each, top 2 rows only): number NUM ms,
+ * crossfade FADE ms, emoji EMOJI ms, crossfade back. One CSS animation (styles.css lvNum /
+ * lvEm, 20.266s). Each row's clock starts when it arrives (row.at), so a new top row always
+ * starts on a fresh number phase and re-renders never restart or jump the loop.
  */
-export const CYCLE = Object.freeze({ num: 667, fade: 133, emoji: 1000 });
+export const CYCLE = Object.freeze({ num: 10000, fade: 133, emoji: 10000 });
 export const CYCLE_MS = CYCLE.num + CYCLE.emoji + 2 * CYCLE.fade;
-/** Row stagger (ms per feed row, styles.css --i × 67ms) so the loop rolls down the list. */
-export const STAGGER_MS = 67;
-/** CSS phase offset for "now": a negative delay keeps every render on the same loop. */
-export function cyclePhase(now = Date.now()) {
-  return `-${Math.floor(now) % CYCLE_MS}ms`;
+/** Owner t554u: only the newest FLIP_ROWS rows flip; older rows show the sized emoji only. */
+export const FLIP_ROWS = 2;
+/** CSS phase offset for a row that arrived at `at`: a negative delay = time already spent in the loop. */
+export function cyclePhase(now = Date.now(), at = 0) {
+  return `-${Math.max(0, Math.floor(now - at)) % CYCLE_MS}ms`;
+}
+/** Cell mode for feed row r (0 = newest; -1 = the row fading out): "flip" only in the top FLIP_ROWS. */
+export function rowMode(c, r) {
+  return c.mode === "flip" && !(r >= 0 && r < FLIP_ROWS) ? "emoji" : c.mode;
 }
 
 /**
@@ -250,15 +255,16 @@ function start() {
   const shortLab = (c) => c.label.split(" ")[0];
   /** 💩 after a confirmed padder's name (padding.mjs): hover explains the −10% iVi penalty. */
   const poopFor = (name) => (isPenalizedPadder(name) ? `<span class="poop-mark" title="${esc(POOP_TIP)}" aria-label="${esc(POOP_TIP)}">${POOP_MARK}</span>` : "");
-  /** One stat cell by its LIVE_COLS mode; r = row index (staggers the flip loop down the list). */
+  /** One stat cell by its LIVE_COLS mode; r = feed row (only the top FLIP_ROWS flip, rowMode). */
   function statCell(c, v, r) {
+    const mode = rowMode(c, r);
     const s = emojiScale(c, percentileOf(pools[c.id] || [], v));
     const span = colUnits(c) > 1 ? ` colspan="${colUnits(c)}"` : "";
     if (s == null) return `<td class="lv-num"${span}>—</td>`;
     const em = `<b class="lv-e" aria-hidden="true">${shortLab(c)}</b>`;
-    if (c.mode === "ivi-wide") return `<td class="lv-num lv-wide" colspan="2" style="--s:${s}"><span class="lv-v">${cellText(c, v)}</span>${em}</td>`;
-    if (c.mode === "emoji") return `<td class="lv-num lv-emo" style="--s:${s}" aria-label="${esc(c.label)}">${em}</td>`;
-    return `<td class="lv-num lv-cyc" style="--s:${s};--i:${r}"><span class="lv-v">${cellText(c, v)}</span><span class="lv-em">${em}</span></td>`;
+    if (mode === "ivi-wide") return `<td class="lv-num lv-wide" colspan="2" style="--s:${s}"><span class="lv-v">${cellText(c, v)}</span>${em}</td>`;
+    if (mode === "emoji") return `<td class="lv-num lv-emo" style="--s:${s}" aria-label="${esc(c.label)}">${em}</td>`;
+    return `<td class="lv-num lv-cyc" style="--s:${s}"><span class="lv-v">${cellText(c, v)}</span><span class="lv-em">${em}</span></td>`;
   }
   /** One player = name cell + stats cells on one row (columns aligned across events). */
   function side(p, isMe, r = 0) {
@@ -277,11 +283,12 @@ function start() {
     const meP = { name: me.name, faction: me.faction, cached: me.cached };
     const kill = r.last === "kill";
     // Winner on the left: on a kill that's us, on a death the killer.
-    const ri = Math.max(0, i);
+    const ri = i; // -1 = the dropped row fading out (emoji only)
     const left = kill ? side(meP, true, ri) : side(p, false, ri);
     const right = kill ? side(p, false, ri) : side(meP, true, ri);
     const t = r.gap == null ? `<span class="lv-timer" data-at="${r.at}">${fmtGap(Date.now() - r.at)}</span>` : `${fmtGap(r.gap)}`;
-    return `<tbody class="lv-ev lv-${r.last}${i === 0 ? " lv-new" : ""}"><tr><td class="lv-time">${t}</td>${left.name}${left.stats}<td class="lv-arrow">❯</td>${right.name}${right.stats}</tr></tbody>`;
+    const clock = i >= 0 && i < FLIP_ROWS ? ` style="--lv-t0:${cyclePhase(Date.now(), r.at)}"` : "";
+    return `<tbody class="lv-ev lv-${r.last}${i === 0 ? " lv-new" : ""}"${clock}><tr><td class="lv-time">${t}</td>${left.name}${left.stats}<td class="lv-arrow">❯</td>${right.name}${right.stats}</tr></tbody>`;
   }
   function render(dropped) {
     if (!listEl) return;
@@ -296,7 +303,6 @@ function start() {
     const dashCells = LIVE_COLS.map((c) => `<td class="lv-num"${colUnits(c) > 1 ? ` colspan="${colUnits(c)}"` : ""}>—</td>`).join("");
     const body = rows.length ? rows.map(eventHtml).join("")
       : `<tbody class="lv-ev lv-wait"><tr><td class="lv-time">—</td><td class="lv-name-cell"><span class="lv-name fac-${me.faction || ""}">${esc(me.name)}</span>${poopFor(me.name)}</td>${dashCells}<td class="lv-arrow">❯</td><td class="lv-name-cell">—</td>${dashCells}</tr></tbody>`;
-    listEl.style.setProperty("--lv-t0", cyclePhase());
     listEl.innerHTML = cols + head + body + (dropped ? eventHtml(dropped, -1).replace('class="lv-ev', 'class="lv-ev lv-fade') : "");
     if (dropped) setTimeout(() => { const f = listEl.querySelector(".lv-fade"); if (f) f.remove(); }, 600);
   }

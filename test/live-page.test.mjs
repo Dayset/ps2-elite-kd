@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { buildLive } from "../scripts/build-live.mjs";
-import { classifyDeath, feedPush, censusStats, cellText, fmtGap, LIVE_COLS, FEED_MAX, emojiScale, goodPct, EMOJI_MIN, EMOJI_MAX, CYCLE, CYCLE_MS, cyclePhase, colUnits } from "../live.mjs";
+import { classifyDeath, feedPush, censusStats, cellText, fmtGap, LIVE_COLS, FEED_MAX, emojiScale, goodPct, EMOJI_MIN, EMOJI_MAX, CYCLE, CYCLE_MS, cyclePhase, colUnits, FLIP_ROWS, rowMode } from "../live.mjs";
 
 const root = new URL("../", import.meta.url);
 
@@ -86,13 +86,19 @@ test("LIVE: no distribution chart, no title once kills arrive, a themed backgrou
   assert.doesNotMatch(js, /Live: <strong/);
 });
 
-test("flip loop: number 0.667s, fade 0.133s, emoji 1s, one shared clock", () => {
-  assert.deepEqual(CYCLE, { num: 667, fade: 133, emoji: 1000 }); // owner t550u: 3× faster
-  assert.equal(CYCLE_MS, 1933);
-  assert.equal(cyclePhase(1933 * 3 + 1234), "-1234ms");
+test("flip loop (owner t554u): number 10s, fade 0.133s, emoji 10s, top 2 rows only, clock per row", () => {
+  assert.deepEqual(CYCLE, { num: 10000, fade: 133, emoji: 10000 });
+  assert.equal(CYCLE_MS, 20266);
+  assert.equal(cyclePhase(5000 + 20266 * 3 + 1234, 5000), "-1234ms");
+  assert.equal(cyclePhase(5000, 5000), "-0ms"); // a new row starts on a fresh number phase
+  assert.equal(cyclePhase(4000, 5000), "-0ms");
+  assert.equal(FLIP_ROWS, 2);
+  const flip = LIVE_COLS.find((c) => c.id === "act"), ivi = LIVE_COLS[0];
+  assert.deepEqual([0, 1, 2, 9, -1].map((r) => rowMode(flip, r)), ["flip", "flip", "emoji", "emoji", "emoji"]);
+  assert.deepEqual([0, 2].map((r) => rowMode(ivi, r)), ["ivi-wide", "ivi-wide"]);
   const css = readFileSync(new URL("styles.css", root), "utf8");
-  assert.match(css, /animation: lvNum 1\.933s/);
-  assert.match(css, /var\(--i, 0\) \* 67ms/);
+  assert.match(css, /animation: lvNum 20\.266s/);
+  assert.match(css, /0%, 49\.34% \{ opacity: 1; \} 50%, 99\.34% \{ opacity: 0; \}/);
   assert.match(css, /prefers-reduced-motion/);
 });
 
