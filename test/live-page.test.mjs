@@ -33,7 +33,8 @@ test("feedPush: no repeats, 7th opponent drops the oldest, stopwatch freezes the
   let dropped = null;
   for (const [i, o] of ["c", "d", "e", "f", "g"].entries()) ({ rows, dropped } = feedPush(rows, { kind: "kill", opp: o }, 6000 + i));
   assert.equal(rows.length, FEED_MAX);
-  assert.equal(dropped.opp, "b");
+  assert.equal(FEED_MAX, 3); // owner t563u: 3 rows
+  assert.equal(dropped.opp, "d");
   assert.equal(rows[0].opp, "g");
 });
 
@@ -90,9 +91,9 @@ test("LIVE: no distribution chart, no title once kills arrive, a themed backgrou
   assert.doesNotMatch(js, /Live: <strong/);
 });
 
-test("20 s switch (owner t557u, t559u, t560u): one fixed block a side, phase A name + iVi (no ⚔️), phase B mirrored emojis, quick flip", () => {
-  assert.equal(PHASE_MS, 20000);
-  assert.deepEqual([0, 19999, 20000, 39999, 40000, -5].map(phaseAt), ["A", "A", "B", "B", "A", "A"]);
+test("10 s switch (owner t557u, t559u, t560u, t563u): one fixed block a side, phase A name + iVi (no ⚔️), phase B mirrored emojis, quick flip", () => {
+  assert.equal(PHASE_MS, 10000);
+  assert.deepEqual([0, 9999, 10000, 19999, 20000, -5].map(phaseAt), ["A", "A", "B", "B", "A", "A"]);
   const css = readFileSync(new URL("styles.css", root), "utf8");
   assert.doesNotMatch(css, /lvNum|lvEm|lv-arrow|lv-cyc/);
   assert.match(css, /transition: opacity 0\.133s/);
@@ -102,7 +103,8 @@ test("20 s switch (owner t557u, t559u, t560u): one fixed block a side, phase A n
   assert.match(css, /\.lv-bR > \.lv-pa, \.lv-bR > \.lv-pb \{ justify-content: flex-start; \}/);
   const js = readFileSync(new URL("live.mjs", root), "utf8");
   assert.doesNotMatch(js, /❯|lv-arrow/);
-  assert.match(js, /<td class="lv-time">\$\{t\}<\/td>\$\{left\}\$\{right\}/);
+  assert.match(js, /<td class="lv-time">\$\{t\}<\/td>\$\{ini\(kill \? meP : p, "L"\)\}\$\{left\}\$\{right\}\$\{ini\(kill \? p : meP, "R"\)\}/); // t563u: first letters outside the blocks
+  assert.match(css, /col\.lv-c-ini \{ width: var\(--lv-ini\); \}/);
   assert.match(js, /const pa = sd === "L" \? nameHtml\(p, sd\) \+ iv : iv \+ nameHtml\(p, sd\)/);
   assert.doesNotMatch(js, /lv-ie|lv-slot|lv-name-cell/); // no ⚔️ in phase A, no separate name columns
   assert.match(js, /sd === "R" \? \[\.\.\.REST\]\.reverse\(\) : REST/); // right player: 🪖 🪳 🛡️ 🦁 🏃

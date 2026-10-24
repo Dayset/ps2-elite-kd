@@ -3,9 +3,9 @@ await i18nReady;
 /**
  * 🎥 Live feed (live.html). Follows the first name's kills and deaths from the
  * Census event stream (Death events, one character) and:
- *   - lists the last 6 opponents (one row per person, repeats bump the count);
+ *   - lists the last 3 opponents (owner t563u) (one row per person, repeats bump the count);
  *     on a kill our name sits on top, on a death the killer's name does;
- *   - shows each player (name + stats) in one fixed block that switches every 20 s (owner t557u):
+ *   - shows each player (name + stats) in one fixed block that switches every 10 s (owner t557u, t563u):
  *     phase A = name + ⚔️ iVi number (t560u), phase B = the other columns as emojis
  *     sized by the player's percentile with a small number under each (no skill graph in Live);
  *   - uncached opponents first show Census K/D · KPM, then get a full 200-opponent Census
@@ -19,7 +19,7 @@ import { percentileOf } from "./dist.mjs?v=20261010-sav1";
 import { traitPools, zergScore } from "./trait-scores.mjs?v=20261022-nbd1";
 import { infantryShares } from "./infantry.mjs?v=20261023-short1";
 
-export const FEED_MAX = 6;
+export const FEED_MAX = 3; // owner t563u: 3 rows (was 6)
 const CENSUS = `https://census.daybreakgames.com/s:${CENSUS_SERVICE_ID}/get/ps2:v2/`;
 const STREAM = `wss://push.planetside2.com/streaming?environment=ps2&service-id=s:${CENSUS_SERVICE_ID}`;
 const FACTION = { 1: "vs", 2: "nc", 3: "tr", 4: "nso" };
@@ -113,9 +113,9 @@ export function emojiScale(col, p) {
   return Math.round(s * 100) / 100;
 }
 
-/** Owner t557u: the slot switches between phase A (⚔️ iVi) and phase B (the rest) every 20 s, all rows in sync. */
-export const PHASE_MS = 20000;
-/** Phase at a time since the page started: "A" for the first 20 s, then "B", and so on. */
+/** Owner t557u: the block switches between phase A (name + iVi) and phase B (the rest), all rows in sync; t563u: every 10 s (was 20 s). */
+export const PHASE_MS = 10000;
+/** Phase at a time since the page started: "A" for the first 10 s, then "B", and so on. */
 export function phaseAt(ms) { return Math.floor(Math.max(0, ms) / PHASE_MS) % 2 === 0 ? "A" : "B"; }
 /**
  * Background-fetch queue step (#32): next opponent cid to fetch = newest-first queue entry
@@ -270,7 +270,7 @@ function start() {
     return `<span class="lv-pn">${sd === "L" ? poop + nm : nm + poop}</span>`;
   }
   /**
-   * One player = ONE fixed block that switches every 20 s (owner t560u), both phases stacked:
+   * One player = ONE fixed block that switches every 10 s (owner t560u, t563u), both phases stacked:
    *   phase A = name + iVi number ("CloneKanoVS 1,883" | "209 Vepr12NC"), no separator;
    *   phase B = the emojis with small numbers (right player mirrored, t559u).
    * The left block hugs the centre (right-aligned), the right block too (left-aligned).
@@ -290,6 +290,8 @@ function start() {
   const iviPct = (p) => { const c = IVI[0]; return p && p.cached ? goodOf(c, p.cached[c.id]) : null; };
   let shownTop = null; // the newest row that already played its entrance (a re-render must not replay it)
   let freshTop = false;
+  /** Owner t563u: the player's first letter, always shown in a small fixed cell on the outer edge (never flips). */
+  const ini = (p, sd) => { const ch = Array.from(String((p && p.name) || "").replace(/^#/, ""))[0] || "—"; return `<td class="lv-ini lv-i${sd} fac-${(p && p.faction) || ""}" title="${esc((p && p.name) || "")}">${esc(ch)}</td>`; };
   function eventHtml(r, i) {
     const p = people.get(r.opp) || { name: r.opp };
     const meP = { name: me.name, faction: me.faction, cached: me.cached };
@@ -300,22 +302,24 @@ function start() {
     const t = r.gap == null ? `<span class="lv-timer" data-at="${r.at}">${fmtGap(Date.now() - r.at)}</span>` : `${fmtGap(r.gap)}`;
     const wP = iviPct(kill ? meP : p), lP = iviPct(kill ? p : meP);
     const upset = i === 0 && freshTop && wP != null && lP != null && lP - wP >= UPSET_GAP ? " lv-upset" : "";
-    return `<tbody class="lv-ev lv-${r.last}${i === 0 && freshTop ? " lv-new" : ""}${upset}"><tr><td class="lv-time">${t}</td>${left}${right}</tr></tbody>`;
+    return `<tbody class="lv-ev lv-${r.last}${i === 0 && freshTop ? " lv-new" : ""}${upset}"><tr><td class="lv-time">${t}</td>${ini(kill ? meP : p, "L")}${left}${right}${ini(kill ? p : meP, "R")}</tr></tbody>`;
   }
   function render(dropped) {
     if (!listEl) return;
     // Fixed layout (owner t560u): [time][left block][right block]; the blocks never change size.
-    const cols = `<colgroup><col class="lv-c-time"><col class="lv-c-blk"><col class="lv-c-blk"></colgroup>`;
+    const cols = `<colgroup><col class="lv-c-time"><col class="lv-c-ini"><col class="lv-c-blk"><col class="lv-c-blk"><col class="lv-c-ini"></colgroup>`;
     const th = (sd) => `<th class="lv-blk lv-b${sd}"><span class="lv-pa">${IVI.map((c) => `<span class="lv-hiv" title="${esc(c.label)}">${esc(c.label.split(" ").slice(1).join(" "))}</span>`).join("")}</span><span class="lv-pb">${restFor(sd).map((c) => `<span class="lv-u" title="${esc(c.label)}">${shortLab(c)}</span>`).join("")}</span></th>`;
-    const head = `<thead><tr><th></th>${th("L")}${th("R")}</tr></thead>`;
+    const head = `<thead><tr><th></th><th class="lv-ini"></th>${th("L")}${th("R")}<th class="lv-ini"></th></tr></thead>`;
     // No events yet: skeleton first row — em dashes stand in for the numbers until real data arrives.
     const dash = (sd) => `<td class="lv-blk lv-b${sd}"><span class="lv-pa">${sd === "L" ? nameHtml(me, "L") + `<span class="lv-iv lv-none">—</span>` : `<span class="lv-iv lv-none">—</span>`}</span><span class="lv-pb">${restFor(sd).map((c) => unit(c, null)).join("")}</span></td>`;
     freshTop = !!rows[0] && rows[0] !== shownTop;
     shownTop = rows[0] || null;
     const body = rows.length ? rows.map(eventHtml).join("")
-      : `<tbody class="lv-ev lv-wait"><tr><td class="lv-time">—</td>${dash("L")}${dash("R")}</tr></tbody>`;
-    listEl.innerHTML = cols + head + body + (dropped ? eventHtml(dropped, -1).replace('class="lv-ev', 'class="lv-ev lv-fade') : "");
-    if (dropped) setTimeout(() => { const f = listEl.querySelector(".lv-fade"); if (f) f.remove(); }, 600);
+      : `<tbody class="lv-ev lv-wait"><tr><td class="lv-time">—</td>${ini(me, "L")}${dash("L")}${dash("R")}<td class="lv-ini lv-iR">—</td></tr></tbody>`;
+    // Owner t563u: only 3 rows — the pushed-out row leaves at once (a fading 4th row would grow the table
+    // for 0.6 s on every new kill); the new row's pop-in carries the motion.
+    void dropped;
+    listEl.innerHTML = cols + head + body;
   }
   // Owner t557u: every row switches together — one class on the table, a quick crossfade in CSS.
   const t0 = Date.now();
