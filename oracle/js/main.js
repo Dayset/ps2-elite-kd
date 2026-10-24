@@ -1,10 +1,10 @@
 // PS2MapOracle dashboard — split from index.html (#15). No behaviour change.
 import { S, FACS, COLOR, esc, $, stars, mins, bar, pct1, det, info, wide, syncDetails, PHONE_MQ } from "./state.js?v=20261018-scrub2";
 import { get } from "./api.js?v=20261018-scrub2";
-import { drawMap, highlightBase, recolorMap } from "./map.js?v=20261024-p1";
+import { drawMap, highlightBase, recolorMap } from "./map.js?v=20261024-map1";
 import { chart, chartHover } from "./chart.js?v=20261018-scrub2";
 import { lockCard, lockTick } from "./lock.js?v=20261018-scrub2";
-import { commander, commanderIdle } from "./commander.js?v=20261024-v2";
+import { commander, commanderIdle } from "./commander.js?v=20261024-map1";
 import { voiceToggle, voiceTick } from "./voice.js?v=20261024-v2";
 import { reportPanel } from "./players.js?v=20261018-scrub2";
 import { benchPanel, initResults, refreshHistory, renderHist } from "./results.js?v=20261018-scrub2";
@@ -180,6 +180,14 @@ function render2(now) {
     ${benchPanel(a)}`;
   if ($("backLive")) $("backLive").onclick = backToLive;
   $("main").querySelectorAll("li[data-base]").forEach((li) => { li.onmouseenter = () => highlightBase(li.dataset.base); li.onmouseleave = () => highlightBase(null); });
+  // Base names in the Commander are links: hover highlights, tap / Enter highlights and brings the map into view.
+  $("main").querySelectorAll(".blink[data-base]").forEach((el) => {
+    const li = el.closest("li[data-base]");
+    el.onmouseenter = () => highlightBase(el.dataset.base);
+    el.onmouseleave = () => highlightBase(li ? li.dataset.base : null);
+    const go = (e) => { e.preventDefault(); e.stopPropagation(); highlightBase(el.dataset.base); const m = $("map"); if (m) { const rc = m.getBoundingClientRect(); if (rc.bottom < 0 || rc.top > innerHeight) m.scrollIntoView({ behavior: "smooth", block: "center" }); } };
+    el.onclick = go; el.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") go(e); };
+  });
   $("main").querySelectorAll("[data-cf]").forEach((b) => b.onclick = () => { S.cmdFac = b.dataset.cf; render(Math.floor(Date.now() / 1000)); });
   // 🔊 Commander voice (#65): speaks the followed faction's top order when it changes.
   const cmdNow = a.status === "live" ? (a.commander || (s && s.commander)) : null;

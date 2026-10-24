@@ -1,5 +1,5 @@
 // PS2MapOracle dashboard map (split in #15; zoom/pan, lattice, heat markers, base sheet in #19).
-import { COLOR, HEXFILE, SLUG, FACS, esc, $ } from "./state.js?v=20261018-scrub2";
+import { S, COLOR, HEXFILE, SLUG, FACS, esc, $ } from "./state.js?v=20261018-scrub2";
 import { asset, names } from "./api.js?v=20261018-scrub2";
 
 export async function drawMap(a) {
@@ -65,6 +65,12 @@ export async function drawMap(a) {
     const m = o.heat >= 40 ? "🔥" : o.freezing ? "🥶" : ""; if (!m) return "";
     return `<text x="${c[0].toFixed(0)}" y="${(c[1] + r * 0.6).toFixed(0)}">${m}</text>`;
   }).join("");
+  // Numbered Commander orders of the selected faction (owner 2026-10-24): "1 🛡️ −5.0%" on the
+  // base, full text under the same number in the Commander card.
+  const orderLbl = (S.cmdOrders || []).map((o) => {
+    const c = baseCen(o.base); if (!c) return "";
+    return `<text x="${c[0].toFixed(0)}" y="${(c[1] - r * 1.2).toFixed(0)}"><tspan class="on">${o.n}</tspan> ${o.emoji}${esc(o.short)}</text>`;
+  }).join("");
   const labels = Object.keys(fidsByName).map((name) => { const c = baseCen(name); return c ? `<text x="${c[0].toFixed(0)}" y="${(c[1] - r * 0.9).toFixed(0)}">${esc(name)}</text>` : ""; }).join("");
   const wgOutline = Object.values(geo).filter((g) => g.wg).flatMap((g) => g.pts).map((ps) => `<polygon points="${ps}"/>`).join("");
   const pad = r;
@@ -77,9 +83,10 @@ export async function drawMap(a) {
       <g class="links" stroke="rgba(255,255,255,.28)" stroke-width="${(r * 0.12).toFixed(1)}" stroke-linecap="round" pointer-events="none">${linkLines}</g>
       <g class="hlg" pointer-events="none"></g>
       <g class="marks" font-size="${(r * 1.6).toFixed(1)}" text-anchor="middle" pointer-events="none">${markers}</g>
+      <g class="ords" font-size="${(r * 1.5).toFixed(1)}" text-anchor="middle" fill="#fff" stroke="#0b0c0e" stroke-width="${(r * 0.45).toFixed(1)}" paint-order="stroke" font-weight="700" pointer-events="none">${orderLbl}</g>
       <g class="lbls" text-anchor="middle" fill="#fff" stroke="#0b0c0e" paint-order="stroke" font-weight="600" pointer-events="none">${labels}</g>
     </g></svg>
-    <div class="legend"><span><i class="sw" style="background:var(--vs)"></i>VS</span><span><i class="sw" style="background:var(--nc)"></i>NC</span><span><i class="sw" style="background:var(--tr)"></i>TR</span><span><i class="sw hatch"></i>neutral / unknown</span><span><i class="sw wgs"></i>warpgate</span><span class="hint">🔥 hot · 🥶 cut off or almost cut · scroll/pinch to zoom, double-click to reset</span></div>
+    <div class="legend"><span><i class="sw" style="background:var(--vs)"></i>VS</span><span><i class="sw" style="background:var(--nc)"></i>NC</span><span><i class="sw" style="background:var(--tr)"></i>TR</span><span><i class="sw hatch"></i>neutral / unknown</span><span><i class="sw wgs"></i>warpgate</span><span class="hint">1 2 3: Commander orders, full text in the AI Commander card · 🔥 hot · 🥶 cut off or almost cut · scroll/pinch to zoom, double-click to reset</span></div>
     <div class="tip" hidden></div><div class="sheet" hidden role="dialog" aria-label="Base details"></div>`;
   const svg = host.querySelector("svg"), tip = host.querySelector(".tip"), sheet = host.querySelector(".sheet");
   cur = { svg, geo, nm, r, owners };

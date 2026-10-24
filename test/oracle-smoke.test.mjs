@@ -93,7 +93,12 @@ describe("oracle page smoke test (#28)", { skip }, () => {
         assert.match(outside, /KM big swing/);
         assert.doesNotMatch(outside, /KM small swing/);
         assert.match(vsCard, /KM small swing/, "small one still listed, inside All moves");
-        // 🔊 voice (#65): click VS's speaker, the top order is spoken (speech stubbed).
+        // Base names are links with order numbers; the map carries the same number (owner 2026-10-24).
+        assert.ok(await page.$(".cf h3.VS ~ .focus .blink[data-base='Cairn Station']"), "focus base name is a link");
+        assert.equal(await page.$eval(".cf h3.VS ~ .focus .onum", (e) => e.textContent), "1");
+        await page.waitForSelector("#map .ords text", { timeout: 10000 });
+        assert.match(await page.$eval("#map .ords text", (t) => t.textContent), /^1 🛡️−10\.0%$/);
+                // 🔊 voice (#65): click VS's speaker, the top order is spoken (speech stubbed).
         await page.evaluate(() => { window.__said = []; window.speechSynthesis.speak = (u) => window.__said.push(u.text); window.speechSynthesis.cancel = () => {}; });
         await page.click(".cf h3.VS [data-voice]");
         const said = await page.evaluate(() => window.__said);

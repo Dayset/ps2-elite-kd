@@ -9,6 +9,7 @@ export const S = {
   histRows: [], histAll: false, lastAlertEvt: "",
   me: null, authTimer: null,
   open: {},   // phone: which collapsible sections the user opened (by data-d)
+  cmdOrders: [], // numbered Commander orders of the selected faction, drawn on the map
   cmdFac: null, // phone: AI Commander faction picked in the segmented control
   hooks: {},   // cross-module callbacks set by main.js: openAlert
 };
