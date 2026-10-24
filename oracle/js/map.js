@@ -10,6 +10,7 @@ export async function drawMap(a) {
   if (!hm || !hm.hexes || !hm.hexes.length) { host.innerHTML = '<div class="note">No map geometry for this continent.</div>'; return; }
   const nm = await names(a.zone);
   const links = (await asset(SLUG[a.zone] + "_links.json")) || [];
+  const regs = (await asset(SLUG[a.zone] + "_regions.json")) || [];
   const owners = (a.state && a.state.owners) || {};
   const hx = hm.hexes;
   // Hex spacing and orientation from the data itself: nearest-neighbour
@@ -37,9 +38,36 @@ export async function drawMap(a) {
     const fill = own ? COLOR[own] : flag === 2 ? "var(--wg)" : "url(#hatch)";
     const ps = pts.map(([px, py]) => (x + px).toFixed(1) + "," + (y + py).toFixed(1)).join(" ");
     const g = geo[fid] || (geo[fid] = { pts: [], sx: 0, sy: 0, wg: false }); g.pts.push(ps); g.sx += x; g.sy += y; if (flag === 2) g.wg = true;
-    return `<polygon points="${ps}" fill="${fill}" data-f="${fid}"${flag === 2 ? ' data-w="1"' : ""}/>`;
+    // Hexes of one base blend together (stroke = fill); the base borders below separate bases.
+    return `<polygon points="${ps}" fill="${fill}" stroke="${fill.startsWith("url") ? "var(--neutral)" : fill}" data-f="${fid}"${flag === 2 ? ' data-w="1"' : ""}/>`;
   });
-  const cen = (f) => { const g = geo[f]; return g && [g.sx / g.pts.length, g.sy / g.pts.length]; };
+  const ctr = (f) => { const g = geo[f]; return g && [g.sx / g.pts.length, g.sy / g.pts.length]; };
+  // Base outlines (owner 2026-10-24): a thick edge wherever two neighbouring hexes belong to
+  // different bases, so each base reads as one region. Neighbour = the hex one spacing away
+  // through that edge (centres looked up on a coarse grid).
+  const q = d / 2, cell = new Map();
+  for (const [x, y, fid] of hx) cell.set(`${Math.round(x / q)},${Math.round(y / q)}`, String(fid));
+  const at = (x, y) => { const i = Math.round(x / q), j = Math.round(y / q); for (let di = -1; di <= 1; di++) for (let dj = -1; dj <= 1; dj++) { const k = `${i + di},${j + dj}`; if (cell.has(k)) { const [a2, b2] = k.split(",").map(Number); if (Math.hypot(a2 * q - x, b2 * q - y) < q * 0.9) return cell.get(k); } } return null; };
+  const edges = [];
+  for (const [x, y, fid] of hx) for (let k = 0; k < 6; k++) {
+    const ang = off + (k + 0.5) * Math.PI / 3, nb = at(x + d * Math.cos(ang), y + d * Math.sin(ang));
+    if (nb === String(fid)) continue;
+    if (nb !== null && nb < String(fid)) continue;   // each shared edge once
+    const [p1, p2] = [pts[k], pts[(k + 1) % 6]];
+    edges.push(`M${(x + p1[0]).toFixed(0)} ${(y + p1[1]).toFixed(0)}L${(x + p2[0]).toFixed(0)} ${(y + p2[1]).toFixed(0)}`);
+  }
+  // Point of interest per base: the facility's own location (Census) when it lies on the
+  // base, else the middle of its hexes. Bigger dot for the large facilities.
+  const loc = {}, typ = {};
+  for (const rg of regs) { const x = +rg.location_x, y = +rg.location_y; typ[rg.facility_id] = +rg.facility_type_id; if (Number.isFinite(x) && Number.isFinite(y)) loc[rg.facility_id] = [x, y]; }
+  const poi = {};
+  for (const f of Object.keys(geo)) {
+    const c = ctr(f), L = loc[f];
+    poi[f] = L && at(L[0], L[1]) === String(f) ? L : c;
+  }
+  const cen = (f) => poi[f] || ctr(f);
+  const BIG = new Set([2, 3, 4, 11, 12]);
+  const poiDots = Object.keys(geo).filter((f) => !geo[f].wg).map((f) => { const [x, y] = poi[f]; return `<circle cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" r="${(r * (BIG.has(typ[f]) ? 0.55 : 0.32)).toFixed(1)}"/>`; }).join("");
   // Commander payload: heat / freezing / lines per base name.
   const info = {};
   const cmd = a.commander || (a.state && a.state.commander);
@@ -51,7 +79,7 @@ export async function drawMap(a) {
   }
   const fidsByName = {};
   for (const f of Object.keys(geo)) { const n = nm[f]; if (n) (fidsByName[n.name] = fidsByName[n.name] || []).push(f); }
-  const baseCen = (name) => { let sx = 0, sy = 0, k = 0; for (const f of fidsByName[name] || []) { const g = geo[f]; sx += g.sx; sy += g.sy; k += g.pts.length; } return k ? [sx / k, sy / k] : null; };
+  const baseCen = (name) => { const fs = fidsByName[name] || []; if (fs.length === 1) return cen(fs[0]); let sx = 0, sy = 0, k = 0; for (const f of fs) { const g = geo[f]; sx += g.sx; sy += g.sy; k += g.pts.length; } return k ? [sx / k, sy / k] : null; };
   // Lattice links: thin lines between base centres (drawn over the tiles, faint, so they stay visible).
   const seen = new Set();
   const linkLines = links.map((l) => {
@@ -67,7 +95,8 @@ export async function drawMap(a) {
   }).join("");
   // Numbered Commander orders of the selected faction (owner 2026-10-24): "1 🛡️ −5.0%" on the
   // base, full text under the same number in the Commander card.
-  const orderLbl = (S.cmdOrders || []).map((o) => {
+  const liveOrders = a.status === "live" && S.cmdOnLive;
+  const orderLbl = (liveOrders ? S.cmdOrders || [] : []).map((o) => {
     const c = baseCen(o.base); if (!c) return "";
     return `<text x="${c[0].toFixed(0)}" y="${(c[1] - r * 1.2).toFixed(0)}"><tspan class="on">${o.n}</tspan> ${o.emoji}${esc(o.short)}</text>`;
   }).join("");
@@ -80,14 +109,18 @@ export async function drawMap(a) {
     <g class="vp">
       <g stroke="#0b0c0e" stroke-width="${(r * 0.12).toFixed(1)}" stroke-linejoin="round">${polys.join("")}</g>
       <g class="wgo" fill="none" stroke="#e8e6df" stroke-width="${(r * 0.18).toFixed(1)}" stroke-dasharray="${(r * 0.5).toFixed(1)} ${(r * 0.3).toFixed(1)}" pointer-events="none">${wgOutline}</g>
+      <path class="borders" d="${edges.join("")}" fill="none" stroke="#0b0c0e" stroke-width="${(r * 0.38).toFixed(1)}" stroke-linecap="round" pointer-events="none"/>
       <g class="links" stroke="rgba(255,255,255,.28)" stroke-width="${(r * 0.12).toFixed(1)}" stroke-linecap="round" pointer-events="none">${linkLines}</g>
+      <g class="pois" fill="#fff" stroke="#0b0c0e" stroke-width="${(r * 0.14).toFixed(1)}" pointer-events="none">${poiDots}</g>
       <g class="hlg" pointer-events="none"></g>
       <g class="marks" font-size="${(r * 1.6).toFixed(1)}" text-anchor="middle" pointer-events="none">${markers}</g>
       <g class="ords" font-size="${(r * 1.5).toFixed(1)}" text-anchor="middle" fill="#fff" stroke="#0b0c0e" stroke-width="${(r * 0.45).toFixed(1)}" paint-order="stroke" font-weight="700" pointer-events="none">${orderLbl}</g>
       <g class="lbls" text-anchor="middle" fill="#fff" stroke="#0b0c0e" paint-order="stroke" font-weight="600" pointer-events="none">${labels}</g>
     </g></svg>
-    <div class="legend"><span><i class="sw" style="background:var(--vs)"></i>VS</span><span><i class="sw" style="background:var(--nc)"></i>NC</span><span><i class="sw" style="background:var(--tr)"></i>TR</span><span><i class="sw hatch"></i>neutral / unknown</span><span><i class="sw wgs"></i>warpgate</span><span class="hint">1 2 3: Commander orders, full text in the AI Commander card · 🔥 hot · 🥶 cut off or almost cut · scroll/pinch to zoom, double-click to reset</span></div>
+    ${liveOrders ? `<div class="ordseg" role="group" aria-label="Orders on the map for">Orders for ${FACS.map((f) => `<button type="button" class="${f}${f === S.cmdOn ? " on" : ""}" aria-pressed="${f === S.cmdOn}" data-mapfac="${f}">${f}</button>`).join("")}</div>` : ""}
+    <div class="legend"><span><i class="sw" style="background:var(--vs)"></i>VS</span><span><i class="sw" style="background:var(--nc)"></i>NC</span><span><i class="sw" style="background:var(--tr)"></i>TR</span><span><i class="sw hatch"></i>neutral / unknown</span><span><i class="sw wgs"></i>warpgate</span><span><i class="sw poi"></i>base</span><span class="hint">1 2 3: Commander orders, full text in the AI Commander card · 🔥 hot · 🥶 cut off or almost cut · scroll/pinch to zoom, double-click to reset</span></div>
     <div class="tip" hidden></div><div class="sheet" hidden role="dialog" aria-label="Base details"></div>`;
+  host.querySelectorAll("[data-mapfac]").forEach((b) => b.onclick = () => { S.cmdFac = b.dataset.mapfac; if (S.hooks.rerender) S.hooks.rerender(); });
   const svg = host.querySelector("svg"), tip = host.querySelector(".tip"), sheet = host.querySelector(".sheet");
   cur = { svg, geo, nm, r, owners };
   // ---------------------------------------------------------------- zoom / pan (#19)
@@ -183,7 +216,8 @@ export function recolorMap(owners) {
   const src = scrubOwners || cur.owners || {};
   for (const p of cur.svg.querySelectorAll("polygon[data-f]")) {
     const o = src[p.dataset.f];
-    p.setAttribute("fill", o ? COLOR[o] : p.dataset.w ? "var(--wg)" : "url(#hatch)");
+    const fill = o ? COLOR[o] : p.dataset.w ? "var(--wg)" : "url(#hatch)";
+    p.setAttribute("fill", fill); p.setAttribute("stroke", fill.startsWith("url") ? "var(--neutral)" : fill);
   }
   cur.svg.classList.toggle("replay", !!scrubOwners);
 }

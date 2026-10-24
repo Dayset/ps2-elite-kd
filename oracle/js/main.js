@@ -1,10 +1,10 @@
 // PS2MapOracle dashboard — split from index.html (#15). No behaviour change.
 import { S, FACS, COLOR, esc, $, stars, mins, bar, pct1, det, info, wide, syncDetails, PHONE_MQ } from "./state.js?v=20261018-scrub2";
 import { get } from "./api.js?v=20261018-scrub2";
-import { drawMap, highlightBase, recolorMap } from "./map.js?v=20261024-map1";
+import { drawMap, highlightBase, recolorMap } from "./map.js?v=20261024-map2";
 import { chart, chartHover } from "./chart.js?v=20261018-scrub2";
 import { lockCard, lockTick } from "./lock.js?v=20261018-scrub2";
-import { commander, commanderIdle } from "./commander.js?v=20261024-map1";
+import { commander, commanderIdle } from "./commander.js?v=20261024-map2";
 import { voiceToggle, voiceTick } from "./voice.js?v=20261024-v2";
 import { reportPanel } from "./players.js?v=20261018-scrub2";
 import { benchPanel, initResults, refreshHistory, renderHist } from "./results.js?v=20261018-scrub2";
@@ -257,6 +257,7 @@ onSectionExpand((id) => { if (id === "map" || id === "win-chance-over-time") ren
 enhance(document);
 
 S.hooks.openAlert = openAlert;
+S.hooks.rerender = () => render(Math.floor(Date.now() / 1000));   // map faction switch
 initResults();
 initAuth();
 

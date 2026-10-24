@@ -98,6 +98,13 @@ describe("oracle page smoke test (#28)", { skip }, () => {
         assert.equal(await page.$eval(".cf h3.VS ~ .focus .onum", (e) => e.textContent), "1");
         await page.waitForSelector("#map .ords text", { timeout: 10000 });
         assert.match(await page.$eval("#map .ords text", (t) => t.textContent), /^1 🛡️−10\.0%$/);
+                // Map: base borders, a dot per base, and a faction switch for the orders.
+        assert.ok(await page.$eval("#map path.borders", (p) => p.getAttribute("d").length > 1000));
+        assert.ok(await page.$$eval("#map .pois circle", (c) => c.length) > 50);
+        await page.click("#map [data-mapfac='NC']");
+        await page.waitForFunction(() => document.querySelector("#map [data-mapfac='NC'].on"), null, { timeout: 5000 });
+        await page.click("#map [data-mapfac='VS']");
+        await page.waitForFunction(() => document.querySelector("#map [data-mapfac='VS'].on"), null, { timeout: 5000 });
                 // 🔊 voice (#65): click VS's speaker, the top order is spoken (speech stubbed).
         await page.evaluate(() => { window.__said = []; window.speechSynthesis.speak = (u) => window.__said.push(u.text); window.speechSynthesis.cancel = () => {}; });
         await page.click(".cf h3.VS [data-voice]");
