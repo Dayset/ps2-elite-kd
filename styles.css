@@ -2893,13 +2893,13 @@ col.lv-c-blk { width: calc(var(--lv-b) + var(--lv-ini)); }
 .live-mode #distSection,
 .live-mode #weaponsSection { display: none !important; } /* owner t550u: no 📊 chart and no 🏆 Auraxium weapons in LIVE */
 /* LIVE player block (owner t557u, t560u). One fixed box per player holding both phases on top of each
-   other; the table's lv-phB class (live.mjs, every 20 s, all rows together) crossfades them in 0.133 s
+   other; the table's lv-phB class (live.mjs, A 4 s / B 2 s (t571u), all rows together) crossfades them in 0.133 s, 0.25 s flip
    (the t550u 3× faster fade). Emoji sizes are transforms, so nothing ever moves the layout. */
 .live-table .lv-blk { position: relative; height: calc(var(--lv-ez) + var(--lv-nh)); padding: 0 !important; overflow: hidden; white-space: nowrap; cursor: help; }
 .live-table th.lv-blk { height: 1.1rem; }
 /* t562u juice: the phase switch (t566u: A 10 s / B 5 s) is a quick flip with a little bounce (the outgoing side tips away and fades,
    the incoming side flips in and settles), still all rows together. */
-.lv-blk > .lv-pa, .lv-blk > .lv-pb { position: absolute; inset: 0; display: flex; align-items: center; transition: opacity 0.133s linear, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.lv-blk > .lv-pa, .lv-blk > .lv-pb { position: absolute; inset: 0; display: flex; align-items: center; transition: opacity 0.133s linear, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); }
 .lv-blk > .lv-pb, .lv-phB .lv-blk > .lv-pa { opacity: 0; pointer-events: none; transform: perspective(30rem) rotateX(-85deg); }
 .lv-phB .lv-blk > .lv-pb { opacity: 1; pointer-events: auto; transform: none; }
 @media (prefers-reduced-motion: reduce) { .lv-blk > .lv-pa, .lv-blk > .lv-pb { transition: none; transform: none !important; } }

@@ -5,7 +5,7 @@ await i18nReady;
  * Census event stream (Death events, one character) and:
  *   - lists the last 3 opponents (owner t563u) (one row per person, repeats bump the count);
  *     on a kill our name sits on top, on a death the killer's name does;
- *   - shows each player (name + stats) in one fixed block that switches A 10 s / B 5 s (owner t557u, t563u, t566u):
+ *   - shows each player (name + stats) in one fixed block that switches A 4 s / B 2 s (owner t557u, t563u, t566u, t571u):
  *     phase A = name + ⚔️ iVi number (t560u), phase B = the other columns as emojis
  *     as fill meters, with the player's first letter next to 🏃 (t567u; no skill graph in Live);
  *   - a missing stat is an empty (25%) emoji, never "—" (t567u); uncached opponents show all-empty emojis
@@ -85,7 +85,7 @@ export const LIVE_COLS = Object.freeze([
   { id: "act", label: "🏃 Activity", digits: 2, mode: "stack" },
   { id: "pvs", label: "🦁 Brave", digits: 2, mode: "stack" },
   { id: "rf", label: "🛡️ Resist", digits: 2, mode: "stack" },
-  { id: "zerg", label: "🪳 Zerg", digits: 0, mode: "stack" }, // t555u: bigger Zerg = bigger 🪳 (not reversed)
+  { id: "zerg", label: "🪳 Zerg", digits: 0, mode: "stack", unknown: "full" }, // t555u: bigger Zerg = bigger 🪳 (not reversed); t569u: unknown = full roach
   { id: "inf", label: "🪖 Infantry", digits: 1, mode: "stack", fill: "value" }, // t564u: fill = infantry % itself
 ]);
 
@@ -118,6 +118,9 @@ export function emojiFill(col, v, p) {
   const d = fillDriver(col, v, p);
   return d == null ? null : Math.round(Math.min(100, (d / FULL_AT) * 100) * 10) / 10;
 }
+/** Fill shown when a cell has no value: 0 (empty 25% emoji, t567u), or 100 for a column marked unknown: "full" —
+ *  owner t569u: an unknown 🪳 Zerg (most often unknown) is drawn as a full roach. Display only, nothing is stored. */
+export function unknownFill(col) { return col && col.unknown === "full" ? 100 : 0; }
 /** Owner t568u glow tiers from the same driver: 3 = TOP (91+), 2 = HIGH (71–90), 1 = AVERAGE (51–70), 0 = none (50 and below or no value). */
 export function glowTier(d) {
   if (typeof d !== "number" || !Number.isFinite(d)) return 0;
@@ -125,10 +128,10 @@ export function glowTier(d) {
 }
 
 /** Owner t557u: the block switches between phase A (name + iVi) and phase B (the emojis), all rows in sync.
- *  t566u: uneven — A shows 10 s, B 5 s, then it repeats (t563u had 10 s / 10 s). */
-export const PHASE_A_MS = 10000;
-export const PHASE_B_MS = 5000;
-/** Phase at a time since the page started: "A" for the first 10 s, then "B" for 5 s, and so on. */
+ *  t566u: uneven — A shows 10 s, B 5 s (t563u had 10 s / 10 s); t571u: A 4 s, B 2 s, then it repeats. */
+export const PHASE_A_MS = 4000;
+export const PHASE_B_MS = 2000;
+/** Phase at a time since the page started: "A" for the first 4 s, then "B" for 2 s, and so on. */
 export function phaseAt(ms) { return Math.max(0, ms) % (PHASE_A_MS + PHASE_B_MS) < PHASE_A_MS ? "A" : "B"; }
 /**
  * Background-fetch queue step (#32): next opponent cid to fetch = newest-first queue entry
@@ -296,7 +299,10 @@ function start() {
   const meter = (e, f) => `<span class="lv-em" aria-hidden="true"${inkOf(e)}><b class="lv-e lv-e0">${e}</b>${f > 0 ? `<b class="lv-e lv-e1">${e}</b>` : ""}</span>`;
   function unit(c, v) {
     const f = fillOf(c, v);
-    if (f == null) return `<span class="lv-u lv-fl lv-nil" style="--f:0" title="${esc(c.label)} —">${meter(shortLab(c), 0)}</span>`;
+    if (f == null) { // no value: empty emoji, or (t569u) a full 🪳 — never a tier glow, so it can't pass for a real top value
+      const u = unknownFill(c);
+      return `<span class="lv-u lv-fl lv-nil" style="--f:${u}" title="${esc(c.label)} —${u ? " (unknown, shown full)" : ""}">${meter(shortLab(c), u)}</span>`;
+    }
     const g = glowTier(driverOf(c, v));
     const top = g ? ` lv-g${g}` : "";
     return `<span class="lv-u lv-fl${top}" style="--f:${f}" title="${esc(c.label)} ${cellText(c, v)}">${meter(shortLab(c), f)}</span>`;
@@ -319,7 +325,7 @@ function start() {
     return `<span class="lv-pn">${sd === "L" ? poop + nm : nm + poop}</span>`;
   }
   /**
-   * One player = ONE fixed block that switches (A 10 s / B 5 s, owner t560u, t563u, t566u), both phases stacked:
+   * One player = ONE fixed block that switches (A 4 s / B 2 s, owner t560u, t563u, t566u, t571u), both phases stacked:
    *   phase A = name + iVi number ("CloneKanoVS 1,883" | "209 Vepr12NC"), no separator;
    *   phase B = first letter + fill-meter emojis ("K 🏃🦁🛡️🪳🪖" | "🪖🪳🛡️🦁🏃 S", right player mirrored, t559u, t567u).
    * The left block hugs the centre (right-aligned), the right block too (left-aligned).

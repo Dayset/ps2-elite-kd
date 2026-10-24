@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { buildLive } from "../scripts/build-live.mjs";
-import { classifyDeath, feedPush, censusStats, cellText, fmtGap, LIVE_COLS, FEED_MAX, emojiFill, fillDriver, glowTier, FULL_AT, goodPct, FILL_DIM, PHASE_A_MS, PHASE_B_MS, phaseAt } from "../live.mjs";
+import { classifyDeath, feedPush, censusStats, cellText, fmtGap, LIVE_COLS, FEED_MAX, emojiFill, fillDriver, glowTier, unknownFill, FULL_AT, goodPct, FILL_DIM, PHASE_A_MS, PHASE_B_MS, phaseAt } from "../live.mjs";
 
 const root = new URL("../", import.meta.url);
 
@@ -103,10 +103,13 @@ test("LIVE: no distribution chart, no title once kills arrive, a themed backgrou
   assert.doesNotMatch(js, /Live: <strong/);
 });
 
-test("A 10 s / B 5 s switch (owner t557u, t559u, t560u, t563u, t566u): one fixed block a side, phase A name + iVi (no ⚔️), phase B mirrored emojis, quick flip", () => {
-  assert.equal(PHASE_A_MS, 10000);
-  assert.equal(PHASE_B_MS, 5000);
-  assert.deepEqual([0, 9999, 10000, 14999, 15000, 24999, 25000, 29999, 30000, -5].map(phaseAt), ["A", "A", "B", "B", "A", "A", "B", "B", "A", "A"]);
+test("A 4 s / B 2 s switch (owner t557u, t559u, t560u, t563u, t566u, t571u): one fixed block a side, phase A name + iVi (no ⚔️), phase B mirrored emojis, quick flip", () => {
+  assert.equal(PHASE_A_MS, 4000); // owner t571u: name + iVi 4 s, emojis 2 s
+  assert.equal(PHASE_B_MS, 2000);
+  assert.deepEqual([0, 3999, 4000, 5999, 6000, 9999, 10000, 11999, 12000, -5].map(phaseAt), ["A", "A", "B", "B", "A", "A", "B", "B", "A", "A"]);
+  // the flip must finish well inside the 2 s phase (t571u)
+  const tr = readFileSync(new URL("styles.css", root), "utf8").match(/\.lv-blk > \.lv-pa, \.lv-blk > \.lv-pb \{[^}]*transition: opacity ([\d.]+)s linear, transform ([\d.]+)s/);
+  assert.ok(tr && +tr[1] <= 0.3 && +tr[2] <= 0.3, "flip <= 0.3 s");
   const css = readFileSync(new URL("styles.css", root), "utf8");
   assert.doesNotMatch(css, /lvNum|lvEm|lv-arrow|lv-cyc/);
   assert.match(css, /transition: opacity 0\.133s/);
@@ -167,7 +170,10 @@ test("LIVE juice (owner t562u): pop-in row, flip switch, top-rank glow, upset sh
 test("no value = empty 0% emoji, never a dash (owner t567u): stats, iVi, uncached players, skeleton row", () => {
   const js = readFileSync(new URL("live.mjs", root), "utf8");
   const css = readFileSync(new URL("styles.css", root), "utf8");
-  assert.match(js, /if \(f == null\) return `<span class="lv-u lv-fl lv-nil" style="--f:0"[^`]*\$\{meter\(shortLab\(c\), 0\)\}/); // empty emoji, no "—"
+  assert.match(js, /const u = unknownFill\(c\);\n\s*return `<span class="lv-u lv-fl lv-nil" style="--f:\$\{u\}"[^`]*\$\{meter\(shortLab\(c\), u\)\}/); // empty emoji (no "—"), no glow class
+  // owner t569u: unknown 🪳 Zerg = full roach (display only); every other missing stat stays empty
+  for (const c of LIVE_COLS) assert.equal(unknownFill(c), c.id === "zerg" ? 100 : 0, c.id);
+  assert.equal(emojiFill(LIVE_COLS.find((c) => c.id === "zerg"), null, 50), null); // the value itself stays unknown
   assert.match(js, /if \(fillOf\(c, v\) == null\) return `<span class="lv-iv lv-nil" style="--f:0"[^`]*\$\{meter\(shortLab\(c\), 0\)\}/); // empty ⚔️ in the iVi box
   assert.match(js, /\$\{f > 0 \? `<b class="lv-e lv-e1">/); // 0% = only the 25% copy
   assert.match(js, /const iv = IVI\.map\(\(c\) => iviText\(c, vals\[c\.id\]\)\)/); // uncached too
