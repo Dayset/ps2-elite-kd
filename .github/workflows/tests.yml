@@ -22,8 +22,11 @@ jobs:
         with: { node-version: 22 }
       - name: npm test
         run: |
+          # the runner image ships google-chrome, which the browser tests would find and run here in parallel:
+          # leave them to the browser job (one at a time)
           set -o pipefail
-          node --test --test-reporter=tap test/*.test.mjs | tee tap.txt
+          files=$(grep -LE "chromium|playwright" test/*.test.mjs)
+          node --test --test-reporter=tap $files | tee tap.txt
       - name: Name the failures
         if: failure()
         run: grep -E "^\s*not ok" tap.txt | sed -E 's/^\s*not ok [0-9]+ - /::error::/' | head -10
