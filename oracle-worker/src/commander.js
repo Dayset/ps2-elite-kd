@@ -301,14 +301,21 @@ export function predHeatMap(own, adj, flips, nowTs) {
  * chokepoint or next to it in the last 10 min. (Until 2026-10-18 merely touching
  * an enemy base counted, which flagged most of the front line.) cuts = findCutPoints().
  */
-export function freezingSet(f, cuts, adj, flips, nowTs) {
-  const freezing = new Set();
+/** Faction f's chokepoints under attack (the 🥶 rule): [[apFid, severed fids]]. */
+export function threatenedChokepoints(f, cuts, adj, flips, nowTs) {
+  const out = [];
   for (const [apFid, , severed] of cuts.get(INV[f]) || []) {
     const apNbrs = new Set(nbrs(adj, apFid).map(String));
     const threatened = heatScore(apFid, flips, nowTs, adj) >= 30 || flips.some(([ts, nw, , fac]) =>
       ts >= nowTs - FREEZE_WINDOW_S && ts <= nowTs && nw !== f && (String(fac) === String(apFid) || apNbrs.has(String(fac))));
-    if (threatened) severed.forEach((s) => freezing.add(s));
+    if (threatened) out.push([apFid, severed]);
   }
+  return out;
+}
+
+export function freezingSet(f, cuts, adj, flips, nowTs) {
+  const freezing = new Set();
+  for (const [, severed] of threatenedChokepoints(f, cuts, adj, flips, nowTs)) severed.forEach((s) => freezing.add(s));
   return freezing;
 }
 

@@ -335,3 +335,11 @@ footer { color: var(--dim); font-size: var(--fs-12); margin-top: var(--s-5); }
 .vote .vlist { margin-top: 6px; font-size: 13px; }
 .vote .vrow { padding: 5px 0; border-bottom: 1px solid var(--border); }
 .vote .vrow .mvst.won { color: #5ac878; } .vote .vrow .mvst.lost { color: #ff7a7a; } .vote .vrow .mvst.open { color: #ffd54a; }
+
+/* 🥶 pockets (owner 2026-10-24) */
+#map .pockets line { vector-effect: non-scaling-stroke; }
+#map .pockets .cpring { stroke-dasharray: none; stroke-width: 3; vector-effect: non-scaling-stroke; }
+#map svg.replay .pockets { display: none; }
+.legend .sw.pkring { background: transparent; border: 2px solid #9fe3ff; border-radius: 50%; width: 10px; height: 10px; }
+.cmd .pockets { margin: 6px 0; }
+.cmd .pocket { padding: 4px 8px; margin: 3px 0; border: 1px dashed rgba(159, 227, 255, .55); border-radius: 6px; background: rgba(159, 227, 255, .06); }

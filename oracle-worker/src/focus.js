@@ -32,6 +32,7 @@ const PLAN_MIN_LEFT = 8;        // minutes needed for a two-capture plan
 const TAKE_MIN_LEFT = 1;        // a capture can still land (fights already under way)
 const STEP_MIN = 3;             // minutes for one capture to land (engine MIN_PER_BASE)
 const P_DEFAULT = 0.33;
+const POCKET_KEEP = 0.82;       // 🥶 pocket: 10-min survival 70 % vs 86 % front line (history/freeze-check.mjs)
 
 /** Bases cut off from their owner's warpgate (owner has a warpgate on the map). */
 export function cutOff(own, adj, wg) {
@@ -103,7 +104,7 @@ const decided = (w) => FACS.some((f) => w[f] >= 99.95);
  * holds[f] = Map fid -> {fid, base, vs, p, loss, cuts} (the worst enemy for that
  * base), for the "All moves" defend list (src/defend.js).
  */
-export function focusPlan({ own, lattice, getBin, t, dur, mom, header, pf = () => P_DEFAULT, nFac, noCuts = false, holds = null, heat = null }) {
+export function focusPlan({ own, lattice, getBin, t, dur, mom, header, pf = () => P_DEFAULT, nFac, noCuts = false, holds = null, heat = null, frozen = null }) {
   const hot = (fid) => (heat && fid != null ? heat(fid) || 0 : 0);
   const { adj, names } = lattice;
   const wg = Object.keys(names).filter((f) => /warpgate/i.test(names[f]));
@@ -199,6 +200,16 @@ export function focusPlan({ own, lattice, getBin, t, dur, mom, header, pf = () =
         }
       }
     }
+    // Fighting inside a 🥶 pocket (owner 2026-10-24): a hold of a pocket base, or a take that can
+    // only be launched from the pocket, keeps its value only if the pocket isn't cut. The freeze
+    // check puts 10-minute survival at 70 % in a pocket vs 86 % on the front line: × 0.82.
+    const fz = frozen && frozen[f];
+    if (fz && fz.size) for (const c of cands) {
+      const fid = c._fid; if (fid == null) continue;
+      const inPocket = c.kind === "hold" ? fz.has(fid)
+        : (adj.get(fid) || []).filter((nb) => own.get(nb) === fo).every((nb) => fz.has(nb)) && (adj.get(fid) || []).some((nb) => own.get(nb) === fo);
+      if (inPocket) { c.ev *= POCKET_KEEP; c.pocket = true; }
+    }
     // Moves worth about the same (expected value within 0.25): the one likelier to see a
     // fight in the next 10 minutes first (predicted heat, src/heat.js).
     const byValue = (a, b) => (Math.abs(b.ev - a.ev) > 0.25 ? b.ev - a.ev : hot(b._fid) - hot(a._fid) || b.ev - a.ev || b.gain - a.gain);
@@ -213,7 +224,7 @@ export function focusPlan({ own, lattice, getBin, t, dur, mom, header, pf = () =
     const fmt = (c) => {
       const now = Math.round(shown(f) * 10) / 10;
       const after = then(f, c.win, c.kind === "hold" ? -c.gain : c.gain);
-      return { kind: c.kind, bases: c.bases, target: c.target, p: c.p, cuts: c.cuts, reconnects: c.reconnects,
+      return { kind: c.kind, bases: c.bases, target: c.target, p: c.p, cuts: c.cuts, reconnects: c.reconnects, ...(c.pocket ? { pocket: true } : {}),
         now, then: Math.round(after * 10) / 10, text: describe(f, c) };
     };
     const top = picks[0];

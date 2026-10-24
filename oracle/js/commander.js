@@ -1,6 +1,6 @@
 // PS2MapOracle dashboard — split from index.html (#15). No behaviour change.
 import { S, FACS, esc, det } from "./state.js?v=20261018-scrub2";
-import { voiceButton } from "./voice.js?v=20261024-v3";
+import { voiceButton } from "./voice.js?v=20261024-pk1";
 
 /** Grayed placeholder shown between alerts so users see the panel exists. */
 export function commanderIdle() {
@@ -29,14 +29,14 @@ export function mapOrders(c, f) {
 }
 
 export function commander(c, ts, now, lead) {
-  S.cmdOrders = []; S.cmdOn = null; S.cmdOnLive = false;
+  S.cmdOrders = []; S.cmdOn = null; S.cmdOnLive = false; S.cmdPockets = [];
   if (!c || !c.factions) return "";
   // Phone: one faction at a time. Default: the signed-in player's faction, else the leader.
   const live = FACS.filter((f) => c.factions[f]);
   const mine = S.me && live.includes(S.me.faction) ? S.me.faction : null;
   const on = live.includes(S.cmdFac) ? S.cmdFac : mine || (live.includes(lead) ? lead : live[0]);
   const orders = mapOrders(c, on), numOf = new Map(orders.map((o) => [o.base, o.n]));
-  S.cmdOrders = orders; S.cmdOn = on; S.cmdOnLive = true;
+  S.cmdOrders = orders; S.cmdOn = on; S.cmdOnLive = true; S.cmdPockets = (c.pockets && c.pockets[on]) || [];
   const seg = `<div class="seg" role="tablist" aria-label="Faction">${live.map((f) => `<button type="button" role="tab" class="${f}${f === on ? " on" : ""}" aria-selected="${f === on}" data-cf="${f}">${f}</button>`).join("")}</div>`;
   const marks = (e) => `${e.heat >= 40 ? ` <span title="hot fight (heat ${e.heat})">🔥</span>` : ""}${e.freezing ? ` <span title="${e.cut_off ? "cut off: no lattice link back to the warpgate" : "almost cut: its only link to the warpgate runs through a chokepoint under attack"}">🥶</span>` : ""}${e.pheat >= 30 ? ` <span class="note" title="predicted: ${e.pheat}% chance it changes hands in the next 10 minutes">⏳${e.pheat}%</span>` : ""}${e.cut_severs ? ` <span title="capturing this cuts off ${e.cut_severs} enemy bases">✂️${e.cut_severs}</span>` : ""}${e.cuts ? ` <span title="losing it cuts off ${e.cuts} of ours${(e.cut_names || []).length ? `: ${esc(e.cut_names.join(", "))}${e.cuts > e.cut_names.length ? ` +${e.cuts - e.cut_names.length}` : ""}` : ""}">✂️${e.cuts}</span>` : ""}`;
   // "dead" = taking / holding it can't change the result (cut off, or the winner is locked).
@@ -59,7 +59,7 @@ export function commander(c, ts, now, lead) {
     const tail = front ? `<span class="note">${x.heat}% chance it changes hands in the next 10 min · nothing here changes the result</span>` : `${x.kind === "hold" ? "if lost: " : ""}${odds(who, x)}${diff(x)}`;
     const icon = x.kind === "hold" || x.kind === "guard" ? "🛡️" : x.kind === "spoil" ? "🃏" : x.kind === "push" ? "🔥" : "🎯";
     return main
-      ? `<div class="focus ${esc(x.kind)}" data-base="${esc(x.bases[0])}"><div class="fhead">${num(k)}${icon} <b>${front ? "Busiest front:" : "All forces:"}</b> ${linked(x.text, xNames(x))}${cut}</div><div class="fodds">${tail}</div></div>`
+      ? `<div class="focus ${esc(x.kind)}" data-base="${esc(x.bases[0])}"><div class="fhead">${num(k)}${icon} <b>${front ? "Busiest front:" : "All forces:"}</b> ${linked(x.text, xNames(x))}${cut}${x.pocket ? ` <span class="note" title="inside a pocket whose chokepoint is under attack: worth less if it gets cut">🥶 in a pocket</span>` : ""}</div><div class="fodds">${tail}</div></div>`
       : `<li data-base="${esc(x.bases[0])}">${num(k)}${linked(x.text, xNames(x))}${cut} ${front ? ` <span class="note">⏳${x.heat}%</span>` : `<span class="note">${x.kind === "hold" ? "if lost " : ""}${x.then}%</span>${diff(x)}`}</li>`;
   };
   const focusHtml = (f) => {
@@ -82,9 +82,12 @@ export function commander(c, ts, now, lead) {
     const fx = P[f] && P[f].focus, focusSwing = fx ? Math.abs(fx.then - fx.now) : 0;
     const kms = x.kingmaker || [], kmLi = (ks) => ks.map((k) => `<li>${esc(k.text || "")}</li>`).join("");
     const kmBig = kms.filter((k) => Math.abs(+k.my_swing || 0) > focusSwing), kmSmall = kms.filter((k) => !kmBig.includes(k));
+    // 🥶 Pockets: our bases behind a chokepoint under attack; the order is to hold the chokepoint.
+    const pks = (c.pockets && c.pockets[f]) || [];
+    const pkBlock = pks.length ? `<div class="pockets">${pks.map((p) => `<div class="pocket">🥶 <b>Pocket</b> ${p.bases.slice(0, 3).map(bl).join(", ")}${p.n > 3 ? ` +${p.n - 3}` : ""}: hold ${bl(p.chokepoint)}${p.hold_drop ? ` <span class="note">or −${p.hold_drop}%</span>` : ""}</div>`).join("")}</div>` : "";
     const kmBlock = kmBig.length ? `<div class="note">👑 Kingmaker</div><ul>${kmLi(kmBig)}</ul>` : "";
     const lists = `${atk ? `<div class="note">⚔️ Attack</div><ul class="olist">${atk}</ul>` : ""}${def ? `<div class="note">🛡️ Defend</div><ul class="olist">${def}</ul>` : ""}${kmSmall.length ? `<div class="note">👑 Kingmaker</div><ul>${kmLi(kmSmall)}</ul>` : ""}`;
     const hasFocus = !!P[f];
-    return `<div class="cf${f === on ? " on" : ""}"><h3 class="${f}">${f} · ${esc(x.war_shape || "")}${voiceButton(f)}</h3>${focusHtml(f)}${kmBlock}${hasFocus ? (lists ? det(`cmdall-${f}`, "All moves", lists, "allmoves keep") : "") : lists}</div>`;
+    return `<div class="cf${f === on ? " on" : ""}"><h3 class="${f}">${f} · ${esc(x.war_shape || "")}${voiceButton(f)}</h3>${focusHtml(f)}${pkBlock}${kmBlock}${hasFocus ? (lists ? det(`cmdall-${f}`, "All moves", lists, "allmoves keep") : "") : lists}</div>`;
   }).join("")}</div>${(c.second_place_kingmaker || []).length ? `<div class="note" style="margin-top:8px">🥈 Second place: ${c.second_place_kingmaker.map((k) => esc(k.text)).join(" · ")}</div>` : ""}${c.fight_up && c.fight_up.text ? det("why", "Why", `<pre class="note" style="margin-top:8px;white-space:pre-wrap;font-family:inherit">${esc(c.fight_up.text)}</pre>`, "why") : ""}</section>`;
 }

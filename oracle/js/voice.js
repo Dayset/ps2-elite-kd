@@ -28,13 +28,15 @@ function standing(f, win) {
  * no faction name (you follow your own), base, what it's worth, then our standing.
  *   "Hold Heyoka or 5% lost. 32% 1st place."   "Hold your lanes. 32% 1st place."
  */
-export function sayText(f, p, win = null) {
+export function sayText(f, p, win = null, pockets = null) {
   if (!p) return null;
-  const st = standing(f, win);
+  // 🥶 our worst pocket, unless the order is already to hold its chokepoint.
+  const pk = (pockets || [])[0], fb = p.focus && p.focus.bases && p.focus.bases[0];
+  const st = standing(f, win) + (pk && !(p.focus && p.focus.kind === "hold" && fb === pk.chokepoint) ? ` Pocket: hold ${pk.chokepoint}.` : "");
   if (p.quiet || !p.focus) return `Hold your lanes.${st}`;
   const x = p.focus, d = Math.round(Math.abs((x.then ?? 0) - (x.now ?? 0)));
   const n = (x.cuts || []).length, cut = n ? `, cuts ${n}` : "";
-  if (x.kind === "hold") return `Hold ${x.bases[0]} or ${d}% lost${cut}.${st}`;
+  if (x.kind === "hold") return pk && fb === pk.chokepoint ? `Hold ${x.bases[0]}, pocket of ${pk.n} behind it, or ${d}% lost.${st}` : `Hold ${x.bases[0]} or ${d}% lost${cut}.${st}`;
   if (x.kind === "plan") return `Take ${x.bases[0]}, then ${x.bases[1]}${cut}, plus ${d}%.${st}`;
   if (x.kind === "push") return `Push ${x.bases[0]}, the fight is there.${st}`;
   if (x.kind === "guard") return `Guard ${x.bases[0]}, likely hit next.${st}`;
@@ -43,7 +45,7 @@ export function sayText(f, p, win = null) {
 }
 
 /** Same order = same kind and bases (odds wobbling doesn't re-announce). */
-export const orderKey = (f, p) => (!p ? null : p.quiet || !p.focus ? `${f}|quiet` : `${f}|${p.focus.kind}|${p.focus.bases.join("+")}|${p.focus.target}`);
+export const orderKey = (f, p, pockets = null) => (!p ? null : (p.quiet || !p.focus ? `${f}|quiet` : `${f}|${p.focus.kind}|${p.focus.bases.join("+")}|${p.focus.target}`) + `|${((pockets || [])[0] || {}).chokepoint || ""}`);
 
 function speak(text) {
   if (!voiceSupported() || !text) return;
@@ -66,21 +68,22 @@ export function voiceButton(f) {
 }
 
 /** Click on a faction's speaker (a click, so the browser allows speech): follow it, or stop. */
-export function voiceToggle(f, focus, win = null) {
+export function voiceToggle(f, focus, win = null, pocketsAll = null) {
   if (V.on && V.fac === f) { V.on = false; if (voiceSupported()) window.speechSynthesis.cancel(); }
   else { V.on = true; V.fac = f; V.lastKey = null; }
   save();
-  if (V.on) voiceTick(focus, f, true, undefined, win);
+  if (V.on) voiceTick(focus, f, true, undefined, win, pocketsAll);
 }
 
 /** Called after every render with the alert's focus map ({VS:{focus,...}}). */
-export function voiceTick(focus, fac = V.fac, force = false, nowS = Date.now() / 1000, win = null) {
+export function voiceTick(focus, fac = V.fac, force = false, nowS = Date.now() / 1000, win = null, pocketsAll = null) {
   if (!V.on || !fac || !focus) return null;
   const p = focus[fac];
-  const k = orderKey(fac, p);
+  const pockets = pocketsAll && pocketsAll[fac];
+  const k = orderKey(fac, p, pockets);
   if (!k) return null;
   if (!force && k === V.lastKey && nowS - V.lastTs < REMIND_S) return null;
-  const text = sayText(fac, p, win);
+  const text = sayText(fac, p, win, pockets);
   V.lastKey = k; V.lastTs = nowS;
   speak(text);
   return text;

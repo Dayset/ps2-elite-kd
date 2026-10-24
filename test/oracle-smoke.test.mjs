@@ -37,6 +37,7 @@ function stub() {
   alert.commander = { t: 30, leader: "VS", factions: { VS: vs, NC: fac("NC"), TR: fac("TR") }, fight_up: { deviation: false, text: "" },
     focus: { VS: { focus: { kind: "hold", bases: ["Cairn Station"], target: "NC", p: 0.11, cuts: ["Hurakan"], reconnects: [], now: 50, then: 40, text: "Hold Cairn Station against NC — losing it cuts off 1 of ours (Hurakan)" }, backups: [], quiet: false } } };
   alert.commander.focus.TR = { focus: { kind: "push", bases: ["Bitol"], target: "NC", p: 0.3, cuts: [], reconnects: [], now: 20, then: 20, heat: 46, text: "Push Bitol (NC): the fight is there" }, backups: [], quiet: false, minor: true };
+  alert.commander.pockets = { VS: [{ chokepoint: "Cairn Station", cp_fid: "266000", bases: ["Hurakan", "Hurakan Secure Storage", "Hurakan Western Pass", "Johari Cove"], fids: ["263000", "264000"], n: 4, hold_drop: 10 }] };
   alert.commander_ts = now - 10;
   return {
     "/live": { alerts: [alert] },
@@ -107,11 +108,12 @@ describe("oracle page smoke test (#28)", { skip }, () => {
         await page.click("#map [data-mapfac='VS']");
         await page.waitForFunction(() => document.querySelector("#map [data-mapfac='VS'].on"), null, { timeout: 5000 });
                 assert.match(await page.$eval(".cf h3.TR", (h) => h.parentElement.textContent), /Busiest front:.*Push Bitol.*46% chance it changes hands/s);
+                assert.match(await page.$eval(".cf h3.VS", (h) => h.parentElement.querySelector(".pocket").textContent), /Pocket Hurakan, Hurakan Secure Storage, Hurakan Western Pass \+1: hold Cairn Station or −10%/);
                 // 🔊 voice (#65): click VS's speaker, the top order is spoken (speech stubbed).
         await page.evaluate(() => { window.__said = []; window.speechSynthesis.speak = (u) => window.__said.push(u.text); window.speechSynthesis.cancel = () => {}; });
         await page.click(".cf h3.VS [data-voice]");
         const said = await page.evaluate(() => window.__said);
-        assert.deepEqual(said, ["Hold Cairn Station or 10% lost, cuts 1. 50% 1st place."]);
+        assert.deepEqual(said, ["Hold Cairn Station, pocket of 4 behind it, or 10% lost. 50% 1st place."]);
         assert.equal(await page.$eval(".cf h3.VS [data-voice]", (b) => b.getAttribute("aria-pressed")), "true");
         const over = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
         assert.ok(over <= 0, `horizontal scroll of ${over}px`);

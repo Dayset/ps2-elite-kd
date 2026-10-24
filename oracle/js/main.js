@@ -1,11 +1,11 @@
 // PS2MapOracle dashboard — split from index.html (#15). No behaviour change.
 import { S, FACS, COLOR, esc, $, stars, mins, bar, pct1, det, info, wide, syncDetails, PHONE_MQ } from "./state.js?v=20261018-scrub2";
 import { get } from "./api.js?v=20261018-scrub2";
-import { drawMap, highlightBase, recolorMap } from "./map.js?v=20261024-map5";
+import { drawMap, highlightBase, recolorMap } from "./map.js?v=20261024-pk1";
 import { chart, chartHover } from "./chart.js?v=20261018-scrub2";
 import { lockCard, lockTick } from "./lock.js?v=20261018-scrub2";
-import { commander, commanderIdle } from "./commander.js?v=20261024-heat1";
-import { voiceToggle, voiceTick } from "./voice.js?v=20261024-v3";
+import { commander, commanderIdle } from "./commander.js?v=20261024-pk1";
+import { voiceToggle, voiceTick } from "./voice.js?v=20261024-pk1";
 import { reportPanel } from "./players.js?v=20261018-scrub2";
 import { benchPanel, initResults, refreshHistory, renderHist } from "./results.js?v=20261018-scrub2";
 import { initAuth } from "./auth.js?v=20261023-anyfac1";
@@ -191,8 +191,8 @@ function render2(now) {
   $("main").querySelectorAll("[data-cf]").forEach((b) => b.onclick = () => { S.cmdFac = b.dataset.cf; render(Math.floor(Date.now() / 1000)); });
   // 🔊 Commander voice (#65): speaks the followed faction's top order when it changes.
   const cmdNow = a.status === "live" ? (a.commander || (s && s.commander)) : null;
-  $("main").querySelectorAll("[data-voice]").forEach((b) => b.onclick = () => { voiceToggle(b.dataset.voice, cmdNow && cmdNow.focus, win); render(Math.floor(Date.now() / 1000)); });
-  if (cmdNow) voiceTick(cmdNow.focus, undefined, false, undefined, win);
+  $("main").querySelectorAll("[data-voice]").forEach((b) => b.onclick = () => { voiceToggle(b.dataset.voice, cmdNow && cmdNow.focus, win, cmdNow && cmdNow.pockets); render(Math.floor(Date.now() / 1000)); });
+  if (cmdNow) voiceTick(cmdNow.focus, undefined, false, undefined, win, cmdNow.pockets);
   $("mini").innerHTML = `<b>${esc(a.world_name)} · ${esc(a.zone_name)}</b>${win ? `<span>${FACS.map((f) => `<span class="${f}">${f} ${pct1(win[f].pct)}%</span>`).join(" ")}</span>` : ""}`;
   miniSync();
   if (S.ticksFor === a.key) { const c = $("chart"); c.innerHTML = chart(S.ticks, a.dur, c.clientWidth); chartHover(c, S.ticks, a.dur, (k, how) => scrub(a, k, how)); }

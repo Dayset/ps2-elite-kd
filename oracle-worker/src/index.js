@@ -28,6 +28,7 @@ import { cutAwareSnap } from "./cut.js";
 import { focusPlan } from "./focus.js";
 import { cutAwareDefends } from "./defend.js";
 import { liveHeat } from "./heat.js";
+import { computePockets } from "./pockets.js";
 import { alertFrames, archiveAlert, nextToArchive, putBundle, validBundle } from "./archive.js";
 export { AuthWatcher } from "./auth-watcher.js";
 
@@ -499,14 +500,18 @@ export async function commanderFor(env, key, nowMs = Date.now()) {
     // Predicted heat: chance each front-line base changes hands in the next 10 min (src/heat.js).
     const heatMap = liveHeat({ model: heatModel(), own, lattice, flips, nowTs: Math.trunc(now), pf });
     const heat = (fid) => heatMap.get(String(fid)) || 0;
+    // 🥶 pockets: our bases behind a chokepoint under attack (src/pockets.js). Not on Meltdowns (no cut rule there).
+    const pk = meltdown ? { pockets: {}, frozen: null } : computePockets({ own, lattice, flips, nowTs: Math.trunc(now) });
     cmd.focus = focusPlan({
       own, lattice, getBin: binGetter(a.zone), t: Math.max(0, (now - a.start_ts) / 60), dur: a.dur,
       mom: Object.fromEntries(FACS.map((f) => [f, terrNow[f] - terr15[f]])),
       header: a.win ? JSON.parse(a.win) : null,
       pf: (fid) => (pf[`${fid}|P1:pressured`] || {}).p ?? 0.33,
-      nFac: meltdown ? Object.keys(zNow).length : undefined, noCuts: meltdown, holds, heat,
+      nFac: meltdown ? Object.keys(zNow).length : undefined, noCuts: meltdown, holds, heat, frozen: pk.frozen,
     });
     // "All moves" defend list on the same cut-aware win drop as the focus (#63).
+    for (const f of FACS) for (const p of pk.pockets[f] || []) { const h = holds[f] && holds[f].get(p.cp_fid); p.hold_drop = h ? Math.round(Math.max(0, h.loss) * 10) / 10 : null; }
+    cmd.pockets = pk.pockets;
     const def = cutAwareDefends({ holds, own, lattice, flips, nowTs: Math.trunc(now), res: resistanceModel(a.zone), heat });
     for (const f of FACS) if (cmd.factions[f] && def[f]) cmd.factions[f].defend = def[f];
     // Attack list: same order rule (value first, predicted heat between equal ones); rows carry pheat (%).

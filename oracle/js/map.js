@@ -105,6 +105,15 @@ export async function drawMap(a) {
   // Numbered Commander orders of the selected faction (owner 2026-10-24): "1 🛡️ −5.0%" on the
   // base, full text under the same number in the Commander card.
   const liveOrders = a.status === "live" && S.cmdOnLive;
+  // 🥶 pockets of the picked faction: icy dashed lines from each pocket base to its
+  // chokepoint, and a ring on the chokepoint: hold it or the pocket is cut off.
+  const pk = liveOrders ? S.cmdPockets || [] : [];
+  const pocketSvg = pk.map((p) => {
+    const cp = poi[String(p.cp_fid)]; if (!cp) return "";
+    const lines = (p.fids || []).map((f) => poi[String(f)]).filter(Boolean)
+      .map((q) => `<line x1="${q[0].toFixed(0)}" y1="${q[1].toFixed(0)}" x2="${cp[0].toFixed(0)}" y2="${cp[1].toFixed(0)}"/>`).join("");
+    return `<g class="pk">${lines}<circle class="cpring" cx="${cp[0].toFixed(0)}" cy="${cp[1].toFixed(0)}" r="${(r * 1.1).toFixed(1)}"/></g>`;
+  }).join("");
   // Labels: a yellow number badge, then a thin "−5%" (whole percent; nothing when it rounds to 0).
   // Laid out at a fixed size on screen (re-done on zoom): right of the base's point, else left,
   // below, above; if every spot hits an earlier label or base name, the badge alone.
@@ -140,6 +149,7 @@ export async function drawMap(a) {
       <g class="wgo" fill="none" stroke="#e8e6df" stroke-width="${(r * 0.18).toFixed(1)}" stroke-dasharray="${(r * 0.5).toFixed(1)} ${(r * 0.3).toFixed(1)}" pointer-events="none">${wgOutline}</g>
       <path class="borders" d="${edges.join("")}" fill="none" stroke="#0b0c0e" stroke-width="3" vector-effect="non-scaling-stroke" stroke-linecap="round" pointer-events="none"/>
       <g class="links" stroke="rgba(255,255,255,.28)" stroke-width="${(r * 0.12).toFixed(1)}" stroke-linecap="round" pointer-events="none">${linkLines}</g>
+      <g class="pockets" fill="none" stroke="#9fe3ff" stroke-width="2" stroke-dasharray="5 4" vector-effect="non-scaling-stroke" pointer-events="none">${pocketSvg}</g>
       <g class="pois" fill="#fff" stroke="#0b0c0e" stroke-width="${(r * 0.14).toFixed(1)}" pointer-events="none">${poiDots}</g>
       <g class="hlg" pointer-events="none"></g>
       <g class="marks" font-size="${(r * 1.6).toFixed(1)}" text-anchor="middle" pointer-events="none">${markers}</g>
@@ -147,7 +157,7 @@ export async function drawMap(a) {
       <g class="lbls" text-anchor="middle" fill="#fff" stroke="#0b0c0e" paint-order="stroke" font-weight="600" pointer-events="none">${labels}</g>
     </g></svg>
     ${liveOrders ? `<div class="ordseg" role="group" aria-label="Orders on the map for">Orders for ${FACS.map((f) => `<button type="button" class="${f}${f === S.cmdOn ? " on" : ""}" aria-pressed="${f === S.cmdOn}" data-mapfac="${f}">${f}</button>`).join("")}</div>` : ""}
-    <div class="legend"><span><i class="sw" style="background:var(--vs)"></i>VS</span><span><i class="sw" style="background:var(--nc)"></i>NC</span><span><i class="sw" style="background:var(--tr)"></i>TR</span><span><i class="sw hatch"></i>neutral / unknown</span><span><i class="sw wgs"></i>warpgate</span><span><i class="sw poi"></i>outpost</span><span><i class="sw poi big"></i>big base</span><span>⚑ capture the flag</span><span><i class="sw poi cons"></i>construction</span><span class="hint">1 2 3: Commander orders, full text in the AI Commander card · 🔥 hot · 🥶 cut off or almost cut · scroll/pinch to zoom, double-click to reset</span></div>
+    <div class="legend"><span><i class="sw" style="background:var(--vs)"></i>VS</span><span><i class="sw" style="background:var(--nc)"></i>NC</span><span><i class="sw" style="background:var(--tr)"></i>TR</span><span><i class="sw hatch"></i>neutral / unknown</span><span><i class="sw wgs"></i>warpgate</span><span><i class="sw poi"></i>outpost</span><span><i class="sw poi big"></i>big base</span><span>⚑ capture the flag</span>${pk.length ? `<span><i class="sw pkring"></i>🥶 pocket chokepoint: hold it</span>` : ""}<span><i class="sw poi cons"></i>construction</span><span class="hint">1 2 3: Commander orders, full text in the AI Commander card · 🔥 hot · 🥶 cut off or almost cut · scroll/pinch to zoom, double-click to reset</span></div>
     <div class="tip" hidden></div><div class="sheet" hidden role="dialog" aria-label="Base details"></div>`;
   host.querySelectorAll("[data-mapfac]").forEach((b) => b.onclick = () => { S.cmdFac = b.dataset.mapfac; if (S.hooks.rerender) S.hooks.rerender(); });
   const svg = host.querySelector("svg"), tip = host.querySelector(".tip"), sheet = host.querySelector(".sheet");
