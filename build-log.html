@@ -239,6 +239,13 @@
         <div id="stalker" class="st-dim">Loading…</div>
       </details>
 
+      <details class="st-card st-sec st-flags" id="cardAlts">
+        <summary><h2>👥 Likely alts <span id="altsCount" class="st-count">…</span></h2></summary>
+        <p class="st-note">Characters that are probably played by one person. “Likely”, never proof: read the reasons. Nothing changes on the site.</p>
+        <details class="st-info"><summary>ⓘ How it works</summary><div id="altsRule" class="st-rule"></div></details>
+        <div id="alts" class="st-dim">Loading…</div>
+      </details>
+
       <details class="st-card st-sec st-flags st-sess" id="cardSession">
         <summary id="sessSummary"><h2>🧪 Session stats <span id="sessCount" class="st-count">…</span></h2></summary>
         <p class="st-note">Rates from recent Honu sessions (assists, headshots, K/D). Count = 🚩 session-pattern hits.</p>
@@ -1089,8 +1096,62 @@
       try { renderVehDiff(st); } catch (e) { console.warn(e); }
       try { renderZergRevive(st); } catch (e) { console.warn(e); }
       try { renderNewbieDiff(st); } catch (e) { console.warn(e); }
+      try { await renderAlts(); } catch (e) { console.warn(e); }
     }
 
+    /** 👥 Likely alts (data/alts.json, scripts/build-alts.mjs, owner t600): pair % + per-clue reasons. */
+    const ALT_CLUE = {
+      together: "⏱️ online together", handoff: "🔁 hand-offs", hours: "🕘 same hours", profile: "📊 stat profile",
+      weapons: "🔫 weapons", name: "🔤 name", outfit: "🏳️ outfit",
+    };
+    function altReasons(r) {
+      const f = r.facts || {}, w = r.why || {};
+      const x = (k) => (w[k] ? ' <span class="' + (w[k].lr > 1.05 ? "st-ok" : w[k].lr < 0.95 ? "st-hit" : "st-dim") + '">×' + (w[k].lr >= 10 ? Math.round(w[k].lr) : w[k].lr.toFixed(w[k].lr < 0.1 ? 2 : 1)) + "</span>" : "");
+      const out = [];
+      if (!f.sessions) out.push('<span class="st-dim">no Honu sessions yet</span>');
+      else if (!f.shared) out.push('<span class="st-dim">never active in the same weeks</span>');
+      else {
+        out.push("⏱️ " + (f.together ? Math.round(f.together) + " min together (" + f.togetherN + "×)" : "never together") + " vs ~" + f.expTogether + " min expected in " + f.weeks + " wk" + x("together"));
+        out.push("🔁 " + f.hand + " hand-off" + (f.hand === 1 ? "" : "s") + " vs ~" + (+f.expHand).toFixed(1) + " expected" + x("handoff"));
+        if (f.hours != null) out.push("🕘 hours match " + Math.round(f.hours * 100) + "%" + x("hours"));
+      }
+      if (f.profile != null) out.push("📊 stat gap " + f.profile.toFixed(2) + x("profile"));
+      if (f.weapons != null) out.push("🔫 " + Math.round(f.weapons * 100) + "% same weapons" + x("weapons"));
+      if (f.namePart) out.push("🔤 “" + esc(f.namePart) + "”" + x("name"));
+      if (f.outfit != null) out.push("🏳️ " + (f.outfit ? "same outfit" : "other outfits") + x("outfit"));
+      return out.join(" · ");
+    }
+    function altTable(rows) {
+      return '<div class="st-scroll"><table class="st-table"><tr><th>Pair</th><th class="st-num">Same person</th><th>Why</th></tr>' +
+        rows.map((r) => "<tr><td>" + esc(r.na) + " + " + esc(r.nb) + '</td><td class="st-num"><strong>' + (r.p >= 99.95 ? "≥99.9" : r.p < 0.1 ? "<0.1" : r.p) + "%</strong></td><td>" + altReasons(r) + "</td></tr>").join("") +
+        "</table></div>";
+    }
+    async function renderAlts() {
+      let a = null;
+      try { const r = await fetch("data/alts.json?t=" + Date.now(), { cache: "no-store" }); a = r.ok ? await r.json() : null; } catch { a = null; }
+      if (!a) { $("altsCount").textContent = "–"; $("alts").innerHTML = '<span class="st-dim">No check yet (scripts/build-alts.mjs).</span>'; return; }
+      const found = a.found || [];
+      $("altsCount").textContent = String(found.length);
+      const c = a.calib || {}, m = a.model || {};
+      const bins = (k) => { const b = m[k]; return b ? ALT_CLUE[k] + ": cut at " + b.edges.join(" / ") + " → ×" + b.lr.map((v) => (v >= 10 ? Math.round(v) : v.toFixed(2))).join(" / ") : ""; };
+      $("altsRule").innerHTML =
+        "Each pair starts at the odds that two random active characters are one person (1 in " + Math.round(1 / a.prior).toLocaleString() + ": about one alt per character). Every clue then multiplies the odds by how much more often it shows up for known alts than for different people. " +
+        "Known alts = the Ahorn family (" + c.pos + " pairs); different people = pairs from a fixed random sample of active players (" + c.neg + " pairs). Cut points and multipliers below are learned from those, not set by hand; a multiplier is never bigger than the sample can back up (a clue no stranger showed counts as if 3 had), and each clue only pushes in its natural direction. " +
+        "⏱️ is the strongest: real alts are almost never online at the same time, so the minutes two characters played together are compared with what two independent players with the same hours would have shared (overlaps under 5 min are logout lag); the value is log((together + 30) / (expected + 30)), 0 = like strangers, very negative = should have met for hours but never did. " +
+        "🔁 counts one logging off and the other logging on within " + (a.handoffMin || 10) + " min, as standard deviations above chance (no hand-off when none was even expected is ignored). Clues overlap a little and the calibration family is one heavy player, so read this as “likely”, never as proof. " +
+        "Honu is asked only for the " + (a.worth || 0) + " most promising pairs that could reach 50 % (shared rare name part, or close stats in the same outfit), 1 call per character, cached 14 days." +
+        '<div class="st-dim" style="margin-top:6px;">' + Object.keys(ALT_CLUE).map(bins).filter(Boolean).map(esc).join("<br>") + "</div>";
+      const sets = a.tests || {};
+      let html = "<div>" + (a.candidates || 0).toLocaleString() + " candidate pairs (no Honu) · " + (a.worth || 0).toLocaleString() + " worth a sessions check (" + (a.worthChars || 0) + " characters) · " + (a.cached || 0) + " characters with sessions · " +
+        (a.honuRequests || a.honuCalls || 0) + " Honu requests last run" + (a.queueLeft ? " · " + a.queueLeft + " still queued" : "") + " · checked " + esc(ago(a.at)) + "</div>" +
+        '<div class="st-dim">Check on known families: ' + Math.round((c.posHit || 0) * 100) + "% of Ahorn pairs with sessions score ≥ 50 %; " + ((c.negHit || 0) * 100).toFixed(2) + "% of different-people pairs do (" + (c.posSess || 0) + " / " + (c.negSess || 0) + " pairs with sessions).</div>";
+      html += "<h3 class=\"st-h3\" style=\"margin-top:12px;\">Found (≥ 50 %)</h3>" + (found.length ? altTable(found) : '<div class="st-dim">None yet.</div>');
+      for (const [k, rows] of Object.entries(sets)) {
+        const hi = rows.filter((r) => r.p >= 50).length;
+        html += '<details class="st-sub-sec"><summary><h3>Test set: ' + esc(k) + ' <span class="st-count">' + hi + " / " + rows.length + "</span></h3></summary>" + altTable(rows) + "</details>";
+      }
+      $("alts").innerHTML = html;
+    }
     /** 🚜 Vehicle cut (status.json "vehicleCut", scripts/build-ranks.mjs): top cut players with vehicle %, cut %, iVi and rank before / after. */
     function renderVehCut(st) {
       const b = st && st.vehicleCut;

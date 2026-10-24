@@ -1,0 +1,56 @@
+name: Likely alts
+
+# 👥 "Likely alts" card of the hidden build-log page (scripts/build-alts.mjs).
+# Weekly. Honu sessions are cached in data/alt-sessions.json (refetched after
+# 14 days) and only fetched for pre-filtered candidate pairs; ≤ 150 Honu
+# calls per run, always inside the shared daily cap (data/honu-usage.json).
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "41 7 * * 1"
+
+permissions:
+  contents: write # commit data/alts.json, data/alt-sessions.json, data/honu-usage.json
+
+concurrency:
+  group: likely-alts
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Build likely alts
+        env:
+          HONU_DAILY_CAP: "10000"
+        run: node scripts/build-alts.mjs --max-honu 150
+
+      - name: Commit (alts files + Honu day counter)
+        run: |
+          # The refresh job may have counted Honu calls meanwhile: add this run's
+          # requests on top of the newest counter instead of overwriting it.
+          git fetch -q origin "${GITHUB_REF_NAME:-main}"
+          git show "origin/${GITHUB_REF_NAME:-main}:data/honu-usage.json" > /tmp/up-usage.json || echo '{}' > /tmp/up-usage.json
+          node -e '
+            const fs = require("fs");
+            const up = JSON.parse(fs.readFileSync("/tmp/up-usage.json", "utf8") || "{}");
+            const me = JSON.parse(fs.readFileSync("data/honu-usage.json", "utf8"));
+            const ran = JSON.parse(fs.readFileSync("data/alts.json", "utf8")).honuRequests || 0;
+            if (up.day === me.day) fs.writeFileSync("data/honu-usage.json", JSON.stringify({ ...up, calls: (up.calls || 0) + ran }) + "\n");
+          '
+          scripts/ci-commit-push.sh "chore(alts): likely alts [bot]"
