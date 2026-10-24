@@ -20,7 +20,7 @@ test("mode index stays within the slides", () => {
   assert.equal(clampMode(1, 2), 1);
 });
 
-test("both tables share one look (right-aligned numbers, same weights) inside the carousel", () => {
+test("carousel block still sets right-aligned numbers (positions keep them; stats table overrides to left in the 2026-10-24 alignment test)", () => {
   const css = readFileSync(new URL("../styles.css", import.meta.url), "utf8");
   const block = css.slice(css.indexOf("✨ Stats ⇄ 🏅 Positions (2026-10-19)"));
   assert.match(block, /\.stats-carousel \.stats-table td,\s*\n\.stats-carousel \.rk-pos-table th,/);
