@@ -51,9 +51,10 @@ test("LIVE has no skill graph: the chart section is hidden and live.mjs no longe
 });
 
 test("emoji size: median 1x, best 1.8x, worst 0.55x, smooth, lower-is-better reversed", () => {
-  const kd = LIVE_COLS.find((c) => c.id === "rkd");
-  const apk = LIVE_COLS.find((c) => c.id === "apk");
+  const kd = LIVE_COLS.find((c) => c.id === "act");
+  const apk = LIVE_COLS.find((c) => c.id === "zerg"); // 🪳 Zerg: lower is better
   assert.equal(apk.lowerBetter, true);
+  for (const c of LIVE_COLS) if (c.id !== "zerg") assert.ok(!c.lowerBetter, c.id);
   assert.equal(emojiScale(kd, 50), 1);
   assert.equal(emojiScale(kd, 99), EMOJI_MAX);
   assert.equal(emojiScale(kd, 0), EMOJI_MIN);
@@ -68,19 +69,30 @@ test("emoji size: median 1x, best 1.8x, worst 0.55x, smooth, lower-is-better rev
   assert.equal(emojiScale(kd, NaN), null);
 });
 
-test("LIVE columns: one config list, iVi is the only double-width cell", () => {
-  assert.deepEqual(LIVE_COLS.map((c) => c.mode), ["ivi-wide", "flip", "emoji", "emoji", "emoji"]);
-  assert.equal(LIVE_COLS[0].id, "adjs");
+test("LIVE columns (owner t550u): iVi, Activity, Brave, Resist, Zerg, Infantry in that order", () => {
+  assert.deepEqual(LIVE_COLS.map((c) => c.id), ["adjs", "act", "pvs", "rf", "zerg", "inf"]);
+  assert.deepEqual(LIVE_COLS.map((c) => c.label.split(" ")[0]), ["⚔️", "🏃", "🦁", "🛡️", "🪳", "🪖"]);
+  assert.deepEqual(LIVE_COLS.map((c) => c.mode), ["ivi-wide", "flip", "flip", "flip", "flip", "flip"]);
   for (const c of LIVE_COLS) assert.ok(["ivi-wide", "flip", "emoji"].includes(c.mode), c.id);
-  assert.deepEqual(LIVE_COLS.map(colUnits), [2, 1, 1, 1, 1]);
+  assert.deepEqual(LIVE_COLS.map(colUnits), [2, 1, 1, 1, 1, 1]);
 });
 
-test("flip loop: number 2s, fade 0.4s, emoji 3s, one shared clock", () => {
-  assert.deepEqual(CYCLE, { num: 2000, fade: 400, emoji: 3000 });
-  assert.equal(CYCLE_MS, 5800);
-  assert.equal(cyclePhase(5800 * 3 + 1234), "-1234ms");
+test("LIVE: no distribution chart, no title once kills arrive, a themed background", () => {
   const css = readFileSync(new URL("styles.css", root), "utf8");
-  assert.match(css, /animation: lvNum 5\.8s/);
+  assert.match(css, /\.live-mode #distSection,\n\.live-mode #weaponsSection \{ display: none !important; \}/);
+  assert.match(css, /\.live-state:empty \{ display: none; \}/);
+  assert.match(css, /background: var\(--panel\)/);
+  const js = readFileSync(new URL("live.mjs", root), "utf8");
+  assert.doesNotMatch(js, /Live: <strong/);
+});
+
+test("flip loop: number 0.667s, fade 0.133s, emoji 1s, one shared clock", () => {
+  assert.deepEqual(CYCLE, { num: 667, fade: 133, emoji: 1000 }); // owner t550u: 3× faster
+  assert.equal(CYCLE_MS, 1933);
+  assert.equal(cyclePhase(1933 * 3 + 1234), "-1234ms");
+  const css = readFileSync(new URL("styles.css", root), "utf8");
+  assert.match(css, /animation: lvNum 1\.933s/);
+  assert.match(css, /var\(--i, 0\) \* 67ms/);
   assert.match(css, /prefers-reduced-motion/);
 });
 
@@ -95,5 +107,9 @@ test("cellText: digits, floor at zero, missing", () => {
   const adjs = LIVE_COLS.find((c) => c.id === "adjs");
   assert.equal(cellText(adjs, 1357.3), "1,357");
   assert.equal(cellText(adjs, -20), "0");
-  assert.equal(cellText(LIVE_COLS.find((c) => c.id === "rkd"), null), "—");
+  assert.equal(cellText(LIVE_COLS.find((c) => c.id === "inf"), null), "—"); // 🪖 missing → "—" (and no emoji)
+  const pvs = LIVE_COLS.find((c) => c.id === "pvs");
+  assert.equal(cellText(pvs, 0.634), "0.63");
+  assert.equal(cellText(pvs, 329.633), "329.6"); // flip cells fit 5 characters
+  assert.equal(cellText(LIVE_COLS.find((c) => c.id === "inf"), 100), "100.0");
 });

@@ -2835,22 +2835,34 @@ html[data-theme="light"] .dist-pill:hover { opacity: 1; }
 .live-mode #namesInput { opacity: 0.4; }
 
 .live-feed { margin: 0.5rem 0 0.75rem; }
+.live-state:empty { display: none; } /* owner t550u: no title above the table once kills arrive */
 .live-state { font-size: 0.9rem; color: var(--dim); margin-bottom: 0.35rem; }
 .live-state.err { color: #e0453a; }
 .live-state .live-dot { color: #e53935; animation: liveBlink 1.2s ease-in-out infinite; }
 @keyframes liveBlink { 50% { opacity: 0.25; } }
-.live-table { border-collapse: collapse; width: 100%; table-layout: fixed; font-variant-numeric: tabular-nums; }
+.live-table {
+  /* Owner t550u: ~85% type, tight stat columns. --lv-u = one stat column, just the widest
+     number ("12.34" / "100.0") or the largest 1.8× emoji; the wide ⚔️ iVi cell spans 2.
+     Width adds up exactly (fixed layout): 7.5 + 22 + 2.5 + 29.5 ch + 14 units. */
+  --lv-fv: 0.75rem; --lv-fe: 0.85rem; --lv-u: 2.1rem; --lv-h: 1.75rem; --lv-eb: 1.6rem;
+  border-collapse: collapse; width: calc(61.5ch + 14 * var(--lv-u)); max-width: none; table-layout: fixed;
+  font-size: 0.85rem; font-variant-numeric: tabular-nums;
+  background: var(--panel); /* owner t550u: the feed had no background (theme variable: light + dark) */
+}
+/* Zebra like the other tables: each event is its own <tbody>, so stripe by tbody. */
+.live-table tbody.lv-ev:nth-of-type(even) > tr > td { background-color: var(--row-alt); }
 col.lv-c-time { width: 7.5ch; }
 col.lv-c-name { width: 22ch; } /* p80 of ranked names (12,955 players): 80% fit, longest 20% truncate */
 col.lv-c-arrow { width: 2.5ch; }
-/* Stat columns: equal auto units (wide ⚔️ iVi spans 2). The right name column also takes
+/* Stat columns: one tight unit each (wide ⚔️ iVi spans 2). The right name column also takes
    the timer column's 7.5ch so ❯ stays centered. */
 col.lv-c-name.lv-c-nameR { width: 29.5ch; }
+col.lv-c-statL, col.lv-c-statR { width: var(--lv-u); }
 /* Skeleton row while waiting for the first kill/death. */
 .lv-wait td { color: var(--dim); }
 /* Long names truncate with … instead of stretching the table (icon stays visible). */
 .live-table .lv-name { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
-.live-table th { font-size: 0.75rem; font-weight: 400; color: var(--dim); padding: 0 0.3rem; text-align: right; cursor: help; }
+.live-table th { font-size: 0.64rem; font-weight: 400; color: var(--dim); padding: 0 0.3rem; text-align: right; cursor: help; }
 .live-table th, .live-table td { border: 1px solid var(--border); }
 .live-table td { padding: 0 0.3rem; line-height: 1.25; }
 .lv-ev { border-left: 3px solid transparent; }
@@ -2862,50 +2874,46 @@ col.lv-c-name.lv-c-nameR { width: 29.5ch; }
 @keyframes lvIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes lvOut { to { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .lv-ev.lv-new, .lv-ev.lv-fade, .live-state .live-dot { animation: none; } }
-.lv-time { white-space: nowrap; font-size: 0.85rem; color: var(--dim); vertical-align: middle; text-align: right; min-width: 7.5ch; /* stopwatch ("9s"→"10s"→"59m 59s") reserves the widest reading so data columns never shift */ }
+.lv-time { white-space: nowrap; font-size: 0.72rem; color: var(--dim); vertical-align: middle; text-align: right; min-width: 7.5ch; /* stopwatch ("9s"→"10s"→"59m 59s") reserves the widest reading so data columns never shift */ }
 .lv-arrow { color: var(--dim); text-align: center; vertical-align: middle; }
 .lv-name-cell { white-space: nowrap; padding-top: 0.2rem !important; }
-.lv-num { text-align: right; font-size: 0.88rem; cursor: help; }
+.lv-num { text-align: right; font-size: var(--lv-fv); cursor: help; }
 .lv-uncached { text-align: left; opacity: 0.6; font-style: italic; }
 /* Owner t546u: no skill graph in Live (the main page keeps it). */
 .live-mode #chartSection { display: none !important; }
+/* Owner t550u: no 📊 distribution chart in Live either (the main page keeps it). */
+.live-mode #distSection,
+.live-mode #weaponsSection { display: none !important; } /* owner t550u: no 📊 chart and no 🏆 Auraxium weapons in LIVE */
 /* Owner t546u: LIVE stat cells (live.mjs LIVE_COLS mode). Every cell is a fixed box sized for its
    widest state (widest number, largest 1.8× emoji); number and emoji sit stacked in it (absolute),
    the emoji size is a transform, table-layout is fixed: flipping never moves a row or a column.
-   flip  = number 2 s → 0.4 s crossfade → emoji 3 s → back, one CSS loop (opacity only, cheap);
-           --lv-t0 (live.mjs cyclePhase) keeps the phase across re-renders, --i rolls it down the rows.
+   flip  = number 0.667 s → 0.133 s crossfade → emoji 1 s → back (t550u: 3× faster), one CSS loop
+           (opacity only, cheap); --lv-t0 (live.mjs cyclePhase) keeps the phase across re-renders,
+           --i rolls it down the rows (67 ms a row).
    emoji = sized emoji only.  wide (⚔️ iVi) = number + sized emoji side by side, no loop. */
-.live-table td.lv-num { position: relative; height: 2.1rem; padding: 0 !important; overflow: hidden; text-align: center; vertical-align: middle; white-space: nowrap; cursor: default; }
+.live-table td.lv-num { position: relative; height: var(--lv-h); padding: 0 !important; overflow: hidden; text-align: center; vertical-align: middle; white-space: nowrap; cursor: default; }
 .live-table td.lv-uncached { padding: 0 0.3rem !important; text-align: left; overflow: hidden; text-overflow: ellipsis; }
 .live-table th { text-align: center; cursor: default; }
-.lv-e { display: inline-block; font-weight: 400; font-size: 1rem; line-height: 1; transform: scale(var(--s, 1)); }
+.lv-e { display: inline-block; font-weight: 400; font-size: var(--lv-fe); line-height: 1; transform: scale(var(--s, 1)); }
 .lv-cyc > span, .lv-emo > .lv-e { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
 .lv-emo > .lv-e { margin: auto; width: 1.2em; height: 1.2em; }
-.lv-cyc > span { animation: lvNum 5.8s linear infinite both; animation-delay: calc(var(--lv-t0, 0ms) + var(--i, 0) * 200ms); }
+.lv-cyc > span { animation: lvNum 1.933s linear infinite both; animation-delay: calc(var(--lv-t0, 0ms) + var(--i, 0) * 67ms); }
 .lv-cyc > .lv-em { animation-name: lvEm; }
-.lv-wide > .lv-v { position: absolute; left: 0; right: 2.1rem; top: 0; bottom: 0; display: flex; align-items: center; justify-content: flex-end; }
-.lv-wide > .lv-e { position: absolute; right: 0.25rem; top: 50%; width: 1.6rem; margin-top: -0.5em; text-align: center; }
+.lv-wide > .lv-v { position: absolute; left: 0; right: calc(var(--lv-eb) + 0.1rem); top: 0; bottom: 0; display: flex; align-items: center; justify-content: flex-end; }
+.lv-wide > .lv-e { position: absolute; right: 0.05rem; top: 50%; width: var(--lv-eb); margin-top: -0.5em; text-align: center; }
 @keyframes lvNum { 0%, 34.48% { opacity: 1; } 41.38%, 93.1% { opacity: 0; } 100% { opacity: 1; } }
 @keyframes lvEm { 0%, 34.48% { opacity: 0; } 41.38%, 93.1% { opacity: 1; } 100% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) {
   .lv-cyc > span { animation: none; }
   .lv-cyc > .lv-v { opacity: 0; }
 }
-/* Phones: real boxes for every stat column (they went to zero width at 390 px and the numbers
-   ran over the names); the feed scrolls sideways like before. */
+/* Phones: same boxes, smaller; the feed scrolls sideways. 3.1 + 2×5.6 + 1.3 + 14×1.8 = 40.8rem. */
 @media (max-width: 600px) {
-  /* rem boxes that add up exactly: 3.6 + 2×6.2 + 1.5 + 2×6×2.2 = 43.9rem (wide iVi = 2 units). */
-  .live-table { width: 43.9rem; }
-  col.lv-c-time { width: 3.6rem; }
-  col.lv-c-name, col.lv-c-name.lv-c-nameR { width: 6.2rem; }
-  col.lv-c-arrow { width: 1.5rem; }
-  .live-table .lv-time { min-width: 0; font-size: 0.72rem; }
-  col.lv-c-statL, col.lv-c-statR { width: 2.2rem; }
-  .live-table .lv-v { font-size: 0.74rem; }
-  .lv-e { font-size: 0.8rem; }
-  .lv-wide > .lv-v { right: 1.65rem; }
-  .lv-wide > .lv-e { width: 1.5rem; right: 0.1rem; }
-  .live-table td.lv-num { height: 1.8rem; }
+  .live-table { --lv-fv: 0.66rem; --lv-fe: 0.68rem; --lv-u: 1.8rem; --lv-h: 1.45rem; --lv-eb: 1.28rem; width: 40.8rem; font-size: 0.8rem; }
+  col.lv-c-time { width: 3.1rem; }
+  col.lv-c-name, col.lv-c-name.lv-c-nameR { width: 5.6rem; }
+  col.lv-c-arrow { width: 1.3rem; }
+  .live-table .lv-time { min-width: 0; font-size: 0.64rem; }
 }
 .live-feed { overflow-x: auto; }
 .fac-vs { color: #b061ff; }

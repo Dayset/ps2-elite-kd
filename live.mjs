@@ -15,6 +15,8 @@ import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { normalizePlayer, playerMetrics, shownValue } from "./player-metrics.mjs?v=20261022-wpc1";
 import { isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261023-short1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
+import { traitPools, zergScore } from "./trait-scores.mjs?v=20261022-nbd1";
+import { infantryShares } from "./infantry.mjs?v=20261023-short1";
 
 export const FEED_MAX = 6;
 const CENSUS = `https://census.daybreakgames.com/s:${CENSUS_SERVICE_ID}/get/ps2:v2/`;
@@ -67,20 +69,22 @@ export function censusStats(ch) {
 }
 
 /**
- * LIVE columns (owner t546u): a short set, one config list — change a mode or the order here.
+ * LIVE columns (owner t546u, t550u): one config list, in this order — change a mode or the order here.
  * Same ids / labels / digits as rankings.mjs VISIBLE. mode:
  *   "ivi-wide" = double-width cell, number + emoji together, no flipping (emoji still sized by rank);
  *   "flip"     = number ⇄ sized emoji loop (CSS, see CYCLE);
  *   "emoji"    = sized emoji only, no number.
- * Left out of LIVE (still in Rankings): 🏃 Activity (≈ K/D × speed, close to ⚔️ iVi / ☠️ K/D)
- * and ⚡ Const (a niche ratio that reads poorly at a glance).
+ * lowerBetter = smaller value is better (reversed percentile → big emoji for a low value).
+ * 🪳 Zerg is computed like the Rankings table (trait-scores.mjs zergScore from the ranks.json pools).
+ * 🪖 Infantry is the ranks.json "inf" value; players without it show "—" and no emoji.
  */
 export const LIVE_COLS = Object.freeze([
-  { id: "adjs", label: "⚔️ iVi", digits: 0, floorZero: true, mode: "ivi-wide", tip: "Overall rating from how you do against the ~200 players you fight most, worth more the stronger they are." },
-  { id: "rkd", label: "☠️ K/D", digits: 2, mode: "flip", tip: "Kills ÷ deaths against the ~200 players you fight most." },
-  { id: "rf", label: "🛡️ Resist", digits: 2, mode: "emoji", tip: "How well you stand up to strong players." },
-  { id: "pvs", label: "🦁 Brave", digits: 2, mode: "emoji", tip: "Activity that keeps up as enemies get stronger." },
-  { id: "apk", label: "🤝 Assists", digits: 2, lowerBetter: true, mode: "emoji", tip: "Assists per kill in recent Honu sessions." },
+  { id: "adjs", label: "⚔️ iVi", digits: 0, floorZero: true, mode: "ivi-wide" },
+  { id: "act", label: "🏃 Activity", digits: 2, mode: "flip" },
+  { id: "pvs", label: "🦁 Brave", digits: 2, mode: "flip" },
+  { id: "rf", label: "🛡️ Resist", digits: 2, mode: "flip" },
+  { id: "zerg", label: "🪳 Zerg", digits: 0, lowerBetter: true, mode: "flip" },
+  { id: "inf", label: "🪖 Infantry", digits: 1, mode: "flip" },
 ]);
 /** Width of a column in layout units (the wide iVi cell = 2). */
 export const colUnits = (c) => (c.mode === "ivi-wide" ? 2 : 1);
@@ -108,14 +112,14 @@ export function emojiScale(col, p) {
   return Math.round(s * 100) / 100;
 }
 /**
- * Number ⇄ emoji loop (owner t546u, no hover hints): number NUM ms, crossfade FADE ms,
- * emoji EMOJI ms, crossfade back. One CSS animation (styles.css lvNum / lvEm); the
+ * Number ⇄ emoji loop (owner t546u; 3× faster per t550u): number NUM ms, crossfade FADE ms,
+ * emoji EMOJI ms, crossfade back. One CSS animation (styles.css lvNum / lvEm, 1.933s); the
  * table carries a phase offset from the clock, so re-renders never restart the loop.
  */
-export const CYCLE = Object.freeze({ num: 2000, fade: 400, emoji: 3000 });
+export const CYCLE = Object.freeze({ num: 667, fade: 133, emoji: 1000 });
 export const CYCLE_MS = CYCLE.num + CYCLE.emoji + 2 * CYCLE.fade;
-/** Column stagger (ms per column) so the loop rolls across the row instead of flashing. */
-export const STAGGER_MS = 150;
+/** Row stagger (ms per feed row, styles.css --i × 67ms) so the loop rolls down the list. */
+export const STAGGER_MS = 67;
 /** CSS phase offset for "now": a negative delay keeps every render on the same loop. */
 export function cyclePhase(now = Date.now()) {
   return `-${Math.floor(now) % CYCLE_MS}ms`;
@@ -130,12 +134,14 @@ export function nextBgFetch(queue, rows, tried) {
   return (queue || []).find((cid) => inFeed.has(cid) && !(tried && tried.has(cid))) || null;
 }
 
-/** A fetched player (app.js loadOne) → the LIVE_COLS row the cache would give; Assists is Honu-only (null). */
+/** A fetched player (app.js loadOne) → the LIVE_COLS row the cache would give; 🪳 Zerg needs Honu (null). */
 export function liveRowFromPlayer(player, name) {
   const m = playerMetrics(normalizePlayer(player));
   const o = { name: name || (player && player.display) || "" };
   for (const c of LIVE_COLS) {
-    const v = c.id === "apk" ? null : shownValue(m, c.id);
+    // 🪳 Zerg needs Honu assists (not in a Census fetch); 🪖 Infantry = the same share build-ranks.mjs stores.
+    const sh = c.id === "inf" ? infantryShares(player && player.infantry) : null;
+    const v = c.id === "zerg" ? null : c.id === "inf" ? (sh ? sh.inf : null) : shownValue(m, c.id);
     o[c.id] = typeof v === "number" && Number.isFinite(v) ? v : null;
   }
   // 🚜 cut on ⚔️ iVi (same fields as ranks.json vcut / infVeh / infMax).
@@ -160,7 +166,10 @@ export function shareDelay(now, lastSent, firstPendingAt, pending) {
 export function cellText(col, v) {
   if (typeof v !== "number" || !Number.isFinite(v)) return "—";
   if (col.floorZero && v < 0) v = 0;
-  return v.toLocaleString("en-US", { minimumFractionDigits: col.digits, maximumFractionDigits: col.digits });
+  // Flip cells are sized for 5 characters ("12.34", "100.0"): rare big values drop decimals (329.63 → "329.6").
+  let d = col.digits;
+  if (col.mode === "flip") while (d > 0 && Math.abs(v).toFixed(d).length > 5) d--;
+  return v.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
 }
 
 const slugKey = (name) => String(name || "").trim().toLowerCase().replace(/^\[.*?\]\s*/, "").replace(/[^a-z0-9]+/g, "");
@@ -203,9 +212,17 @@ function start() {
         for (const [id, i] of idx) o[id] = i >= 0 ? r[i] : null;
         return [r[iS], o];
       }));
+      // 🪳 Zerg: same score as the Rankings table (rankings.mjs: traitPools over ranks.json, zergScore per row).
+      const colOf = (id) => (ci(id) >= 0 ? j.rows.map((r) => r[ci(id)]) : []);
+      const tp = traitPools({ adjs: colOf("adjs"), ivi: colOf("ivi"), inflation: colOf("inflation"), apk: colOf("apk") });
+      const iF = ci("inflation"), iA = ci("apk"), iR = ci("rvp");
+      const zergOf = (r) => { const z = zergScore(tp, iF >= 0 ? r[iF] : null, iA >= 0 ? r[iA] : null, iR >= 0 ? r[iR] : null); return z ? z.score : null; };
+      const fin = (v) => typeof v === "number" && Number.isFinite(v);
+      const zergCol = j.rows.map(zergOf);
+      j.rows.forEach((r, k) => { const o = ranks.get(r[iS]); if (o) o.zerg = zergCol[k]; });
       for (const c of LIVE_COLS) {
-        const i = ci(c.id);
-        pools[c.id] = i >= 0 ? j.rows.map((r) => r[i]).filter((v) => typeof v === "number" && Number.isFinite(v)).sort((a, b) => a - b) : [];
+        const vals = c.id === "zerg" ? zergCol : colOf(c.id);
+        pools[c.id] = vals.filter(fin).sort((a, b) => a - b);
       }
     } catch { ranks = new Map(); }
   }
@@ -354,7 +371,7 @@ function start() {
     ws.onopen = () => {
       backoff = 2000;
       ws.send(JSON.stringify({ service: "event", action: "subscribe", characters: [me.cid], eventNames: ["Death"] }));
-      setState(`<span class="live-dot">●</span> Live: <strong class="fac-${me.faction}">${esc(me.name)}</strong> — waiting for kills and deaths…`, "on");
+      setState(`<span class="live-dot">●</span> waiting for kills and deaths…`, "on");
       render();
     };
     ws.onmessage = (m) => {
@@ -362,7 +379,7 @@ function start() {
       if (j.type !== "serviceMessage") return;
       const ev = classifyDeath(j.payload, me.cid);
       if (ev) {
-        if (!rows.length) setState(`<span class="live-dot">●</span> Live: <strong class="fac-${me.faction}">${esc(me.name)}</strong>`, "on");
+        if (!rows.length) setState("", "on"); // owner t550u: no title above the table
         onEvent(ev);
       }
     };

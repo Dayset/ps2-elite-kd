@@ -11,13 +11,15 @@ test("nextBgFetch: newest first, still in the feed, never twice (#32)", () => {
   assert.equal(nextBgFetch([], rows, new Set()), null);
 });
 
-test("liveRowFromPlayer: same LIVE_COLS numbers as the cache, Assists null (#32)", () => {
+test("liveRowFromPlayer: same LIVE_COLS numbers as the cache, Zerg null (#32)", () => {
   const raw = JSON.parse(fs.readFileSync(new URL("../data/players/000047.json", import.meta.url), "utf8"));
   const row = liveRowFromPlayer(raw.player || raw, "x");
   assert.equal(row.name, "x");
   for (const c of LIVE_COLS) assert.ok(c.id in row, c.id);
-  assert.equal(row.apk, null);
-  assert.equal(typeof row.rkd, "number");
+  assert.equal(row.zerg, null); // needs Honu assists
+  assert.equal(typeof row.act, "number");
+  const pl = raw.player || raw;
+  if (pl.infantry && pl.infantry.v >= 2 && pl.infantry.kills >= 100) assert.equal(typeof row.inf, "number");
 });
 
 import { shareDelay, SHARE_EVERY_MS } from "../live.mjs";
