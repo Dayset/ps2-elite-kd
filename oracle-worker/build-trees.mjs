@@ -68,7 +68,10 @@ export function buildModels() {
   const RES_FILE = { 2: "base_resistance_indar.json", 4: "base_resistance.json", 6: "base_resistance_amerish.json", 8: "base_resistance_esamir.json", 344: "base_resistance_oshur.json" };
   const resistance = Object.fromEntries(Object.entries(RES_FILE).map(([zone, file]) => [zone,
     Object.fromEntries(Object.entries(load(file)).map(([k, v]) => [k, { median_hold_min: v.median_hold_min ?? null, class: v.class ?? null }]))]));
-  return { trees, xtrunk, regions, lattice, capture, resistance };
+  // Predicted heat (history/heat-model.mjs): chance a front-line base changes hands in 10 min.
+  const hm = existsSync(join(MODELS, "heat_model.json")) ? load("heat_model.json") : null;
+  const heat = hm ? { cells: hm.cells, mid: hm.mid, pb: hm.pb } : null;
+  return { trees, xtrunk, regions, lattice, capture, resistance, heat };
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
@@ -79,7 +82,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     `export const REGION_TO_FACILITY = ${JSON.stringify(m.regions)};\n` +
     `export const LATTICE = ${JSON.stringify(m.lattice)};\n` +
     `export const CAPTURE = ${JSON.stringify(m.capture)};\n` +
-    `export const RESISTANCE = ${JSON.stringify(m.resistance)};\n`;
+    `export const RESISTANCE = ${JSON.stringify(m.resistance)};\n` +
+    `export const HEAT = ${JSON.stringify(m.heat)};\n`;
   writeFileSync(OUT, src);
   console.log(`wrote ${OUT} (${(src.length / 1024).toFixed(0)} KB)`);
 }

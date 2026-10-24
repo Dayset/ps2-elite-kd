@@ -1,6 +1,6 @@
 // PS2MapOracle dashboard — split from index.html (#15). No behaviour change.
 import { S, FACS, esc, det } from "./state.js?v=20261018-scrub2";
-import { voiceButton } from "./voice.js?v=20261024-v2";
+import { voiceButton } from "./voice.js?v=20261024-v3";
 
 /** Grayed placeholder shown between alerts so users see the panel exists. */
 export function commanderIdle() {
@@ -18,7 +18,7 @@ export function mapOrders(c, f) {
   const out = [], seen = new Set();
   const add = (base, emoji, short) => { if (!base || seen.has(base) || out.length >= 9) return; seen.add(base); out.push({ n: out.length + 1, base, emoji, short }); };
   const p = c && c.focus && c.focus[f];
-  const fx = (x) => add(x.bases[0], x.kind === "hold" ? "🛡️" : x.kind === "spoil" ? "🃏" : "🎯", sgnPct(Math.round(((x.then ?? 0) - (x.now ?? 0)) * 10) / 10));
+  const fx = (x) => add(x.bases[0], x.kind === "hold" || x.kind === "guard" ? "🛡️" : x.kind === "spoil" ? "🃏" : x.kind === "push" ? "🔥" : "🎯", sgnPct(Math.round(((x.then ?? 0) - (x.now ?? 0)) * 10) / 10));
   if (p && p.focus && !p.quiet) { fx(p.focus); (p.backups || []).forEach(fx); }
   const x = c && c.factions && c.factions[f];
   if (x && !x.eliminated) {
@@ -38,7 +38,7 @@ export function commander(c, ts, now, lead) {
   const orders = mapOrders(c, on), numOf = new Map(orders.map((o) => [o.base, o.n]));
   S.cmdOrders = orders; S.cmdOn = on; S.cmdOnLive = true;
   const seg = `<div class="seg" role="tablist" aria-label="Faction">${live.map((f) => `<button type="button" role="tab" class="${f}${f === on ? " on" : ""}" aria-selected="${f === on}" data-cf="${f}">${f}</button>`).join("")}</div>`;
-  const marks = (e) => `${e.heat >= 40 ? ` <span title="hot fight (heat ${e.heat})">🔥</span>` : ""}${e.freezing ? ` <span title="${e.cut_off ? "cut off: no lattice link back to the warpgate" : "almost cut: its only link to the warpgate runs through a chokepoint under attack"}">🥶</span>` : ""}${e.cut_severs ? ` <span title="capturing this cuts off ${e.cut_severs} enemy bases">✂️${e.cut_severs}</span>` : ""}${e.cuts ? ` <span title="losing it cuts off ${e.cuts} of ours${(e.cut_names || []).length ? `: ${esc(e.cut_names.join(", "))}${e.cuts > e.cut_names.length ? ` +${e.cuts - e.cut_names.length}` : ""}` : ""}">✂️${e.cuts}</span>` : ""}`;
+  const marks = (e) => `${e.heat >= 40 ? ` <span title="hot fight (heat ${e.heat})">🔥</span>` : ""}${e.freezing ? ` <span title="${e.cut_off ? "cut off: no lattice link back to the warpgate" : "almost cut: its only link to the warpgate runs through a chokepoint under attack"}">🥶</span>` : ""}${e.pheat >= 30 ? ` <span class="note" title="predicted: ${e.pheat}% chance it changes hands in the next 10 minutes">⏳${e.pheat}%</span>` : ""}${e.cut_severs ? ` <span title="capturing this cuts off ${e.cut_severs} enemy bases">✂️${e.cut_severs}</span>` : ""}${e.cuts ? ` <span title="losing it cuts off ${e.cuts} of ours${(e.cut_names || []).length ? `: ${esc(e.cut_names.join(", "))}${e.cuts > e.cut_names.length ? ` +${e.cuts - e.cut_names.length}` : ""}` : ""}">✂️${e.cuts}</span>` : ""}`;
   // "dead" = taking / holding it can't change the result (cut off, or the winner is locked).
   // (The P-number was just the win change × 10: dropped, owner 2026-10-24.)
   // Base names look and act like links: hover / tap highlights the base on the map.
@@ -55,10 +55,12 @@ export function commander(c, ts, now, lead) {
   const focusLine = (f, x, main, k = 0) => {
     const cut = "";   // the text already names the cut bases
     const who = x.kind === "spoil" ? x.leader : f;
-    const tail = `${x.kind === "hold" ? "if lost: " : ""}${odds(who, x)}${diff(x)}`;
+    const front = x.kind === "push" || x.kind === "guard";   // no move changes the result: the busiest front
+    const tail = front ? `<span class="note">${x.heat}% chance it changes hands in the next 10 min · nothing here changes the result</span>` : `${x.kind === "hold" ? "if lost: " : ""}${odds(who, x)}${diff(x)}`;
+    const icon = x.kind === "hold" || x.kind === "guard" ? "🛡️" : x.kind === "spoil" ? "🃏" : x.kind === "push" ? "🔥" : "🎯";
     return main
-      ? `<div class="focus ${esc(x.kind)}" data-base="${esc(x.bases[0])}"><div class="fhead">${num(k)}${x.kind === "hold" ? "🛡️" : x.kind === "spoil" ? "🃏" : "🎯"} <b>All forces:</b> ${linked(x.text, xNames(x))}${cut}</div><div class="fodds">${tail}</div></div>`
-      : `<li data-base="${esc(x.bases[0])}">${num(k)}${linked(x.text, xNames(x))}${cut} <span class="note">${x.kind === "hold" ? "if lost " : ""}${x.then}%</span>${diff(x)}</li>`;
+      ? `<div class="focus ${esc(x.kind)}" data-base="${esc(x.bases[0])}"><div class="fhead">${num(k)}${icon} <b>${front ? "Busiest front:" : "All forces:"}</b> ${linked(x.text, xNames(x))}${cut}</div><div class="fodds">${tail}</div></div>`
+      : `<li data-base="${esc(x.bases[0])}">${num(k)}${linked(x.text, xNames(x))}${cut} ${front ? ` <span class="note">⏳${x.heat}%</span>` : `<span class="note">${x.kind === "hold" ? "if lost " : ""}${x.then}%</span>${diff(x)}`}</li>`;
   };
   const focusHtml = (f) => {
     const p = P[f];

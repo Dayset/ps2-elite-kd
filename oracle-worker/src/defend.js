@@ -28,7 +28,7 @@ const MIN_SWING = 2;   // focus.js: win-chance change below which a move is nois
  * own: Map fid -> 0..3, lattice {adj, names}, flips [[ts, new, old, fid]], nowTs (s), res: resistance model.
  * Returns {VS: rows, ...} for factions with threatened bases; others are left out.
  */
-export function cutAwareDefends({ holds, own, lattice, flips = [], nowTs, res = {} }) {
+export function cutAwareDefends({ holds, own, lattice, flips = [], nowTs, res = {}, heat = null }) {
   if (!holds) return {};
   const { adj, names } = lattice;
   const recent = flips.filter((x) => x[0] >= nowTs - 600);
@@ -54,7 +54,7 @@ export function cutAwareDefends({ holds, own, lattice, flips = [], nowTs, res = 
         heat: isolated ? 0 : heatScore(x.fid, recent, nowTs, adj), pred_heat: predHeat.get(x.fid) || 0,
         freezing: freezing.has(x.fid) || isolated, cut_off: isolated,
         hold_factor: pyRound(rf, 2), resistance: re.class ?? null, median_hold_min: re.median_hold_min ?? null,
-        cuts: x.cuts.length, cut_names: x.cuts.slice(0, 3), _ev: x.p * drop * rf,
+        cuts: x.cuts.length, cut_names: x.cuts.slice(0, 3), _ev: x.p * drop * rf, _fid: x.fid,
       });
     }
     // Bases whose loss cuts ours off come first, like the attack list, when the cut
@@ -62,8 +62,10 @@ export function cutAwareDefends({ holds, own, lattice, flips = [], nowTs, res = 
     // cut size: on the Osprey Hossin fixture TR's Cairn Station cuts 4 but rarely
     // falls, while Roothouse Distillery cuts 1 and decided the alert.)
     const cutKey = (r) => (r.cuts > 0 && r.win_drop >= MIN_SWING ? 1 : 0);
-    rows.sort((a, b) => cutKey(b) - cutKey(a) || b._ev - a._ev || b.win_drop - a.win_drop || (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
-    out[f] = rows.slice(0, SHOW).map(({ _ev, ...r }) => r);
+    // Equal expected loss (within 0.25): the base likelier to be hit in the next 10 min first.
+    const hot = (r) => (heat ? heat(r._fid) || 0 : 0);
+    rows.sort((a, b) => cutKey(b) - cutKey(a) || (Math.abs(b._ev - a._ev) > 0.25 ? b._ev - a._ev : hot(b) - hot(a)) || b.win_drop - a.win_drop || (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+    out[f] = rows.slice(0, SHOW).map(({ _ev, _fid, ...r }) => r);
   }
   return out;
 }

@@ -36,6 +36,8 @@ export function sayText(f, p, win = null) {
   const n = (x.cuts || []).length, cut = n ? `, cuts ${n}` : "";
   if (x.kind === "hold") return `Hold ${x.bases[0]} or ${d}% lost${cut}.${st}`;
   if (x.kind === "plan") return `Take ${x.bases[0]}, then ${x.bases[1]}${cut}, plus ${d}%.${st}`;
+  if (x.kind === "push") return `Push ${x.bases[0]}, the fight is there.${st}`;
+  if (x.kind === "guard") return `Guard ${x.bases[0]}, likely hit next.${st}`;
   if (x.kind === "spoil") return `Spoil ${x.target}: take ${x.bases[0]}${cut}.${st}`;
   return `Take ${x.bases[0]}${cut}, plus ${d}%.${st}`;
 }

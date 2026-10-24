@@ -19,7 +19,7 @@ import {
   WORLDS, ZONES, WORLD_NAMES, ZONE_NAMES, TERRITORY_ALERTS, SUDDEN_DEATH, FACS, alertKind,
   buildState, forecast, liveZone, territory, sliceMinutes, brier, scoreWinner, popAdjusted,
 } from "./engine.js";
-import { binGetter, hasTree, regionMap, latticeFor, captureModel, resistanceModel } from "./models.js";
+import { binGetter, hasTree, regionMap, latticeFor, captureModel, resistanceModel, heatModel } from "./models.js";
 import { runCommander, ownership, applyElimination } from "./commander.js";
 import { handleAuth, CHALLENGE_KEEP_S } from "./auth.js";
 import { handleVote, settleStatements } from "./vote.js";
@@ -27,6 +27,7 @@ import { handlePrivacy } from "./privacy.js";
 import { cutAwareSnap } from "./cut.js";
 import { focusPlan } from "./focus.js";
 import { cutAwareDefends } from "./defend.js";
+import { liveHeat } from "./heat.js";
 import { alertFrames, archiveAlert, nextToArchive, putBundle, validBundle } from "./archive.js";
 export { AuthWatcher } from "./auth-watcher.js";
 
@@ -495,16 +496,26 @@ export async function commanderFor(env, key, nowMs = Date.now()) {
     const terrNow = territory(zNow), terr15 = z15 ? territory(z15) : terrNow;
     const pf = captureModel(a.zone);
     const own = ownership(zNow, r2f), holds = {};
+    // Predicted heat: chance each front-line base changes hands in the next 10 min (src/heat.js).
+    const heatMap = liveHeat({ model: heatModel(), own, lattice, flips, nowTs: Math.trunc(now), pf });
+    const heat = (fid) => heatMap.get(String(fid)) || 0;
     cmd.focus = focusPlan({
       own, lattice, getBin: binGetter(a.zone), t: Math.max(0, (now - a.start_ts) / 60), dur: a.dur,
       mom: Object.fromEntries(FACS.map((f) => [f, terrNow[f] - terr15[f]])),
       header: a.win ? JSON.parse(a.win) : null,
       pf: (fid) => (pf[`${fid}|P1:pressured`] || {}).p ?? 0.33,
-      nFac: meltdown ? Object.keys(zNow).length : undefined, noCuts: meltdown, holds,
+      nFac: meltdown ? Object.keys(zNow).length : undefined, noCuts: meltdown, holds, heat,
     });
     // "All moves" defend list on the same cut-aware win drop as the focus (#63).
-    const def = cutAwareDefends({ holds, own, lattice, flips, nowTs: Math.trunc(now), res: resistanceModel(a.zone) });
+    const def = cutAwareDefends({ holds, own, lattice, flips, nowTs: Math.trunc(now), res: resistanceModel(a.zone), heat });
     for (const f of FACS) if (cmd.factions[f] && def[f]) cmd.factions[f].defend = def[f];
+    // Attack list: same order rule (value first, predicted heat between equal ones); rows carry pheat (%).
+    const fidOf = new Map(Object.entries(lattice.names).map(([fid, n]) => [n, fid]));
+    for (const f of FACS) {
+      const x = cmd.factions[f]; if (!x) continue;
+      for (const r of [...(x.attack || []), ...(x.defend || [])]) r.pheat = Math.round(heat(fidOf.get(r.name)) * 100);
+      (x.attack || []).sort((u, v) => (Math.abs((v.win_gain || 0) - (u.win_gain || 0)) >= 0.5 ? (v.win_gain || 0) - (u.win_gain || 0) : 0) || ((v.cut_severs || 0) - (u.cut_severs || 0)) || v.pheat - u.pheat);
+    }
   } catch (e) { cmd.focus_error = String(e && e.message || e).slice(0, 200); }
   cmd.source = "worker";
   await db.prepare("UPDATE alert SET commander=?, commander_ts=? WHERE key=? AND status='live'").bind(JSON.stringify(cmd), now, key).run();

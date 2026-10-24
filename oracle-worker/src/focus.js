@@ -103,7 +103,8 @@ const decided = (w) => FACS.some((f) => w[f] >= 99.95);
  * holds[f] = Map fid -> {fid, base, vs, p, loss, cuts} (the worst enemy for that
  * base), for the "All moves" defend list (src/defend.js).
  */
-export function focusPlan({ own, lattice, getBin, t, dur, mom, header, pf = () => P_DEFAULT, nFac, noCuts = false, holds = null }) {
+export function focusPlan({ own, lattice, getBin, t, dur, mom, header, pf = () => P_DEFAULT, nFac, noCuts = false, holds = null, heat = null }) {
+  const hot = (fid) => (heat && fid != null ? heat(fid) || 0 : 0);
   const { adj, names } = lattice;
   const wg = Object.keys(names).filter((f) => /warpgate/i.test(names[f]));
   const left = dur - t;
@@ -172,7 +173,7 @@ export function focusPlan({ own, lattice, getBin, t, dur, mom, header, pf = () =
             if (at(2) <= at(1) || gain < c1.gain + MIN_SWING || gain < 1.5 * Math.max(c1.gain, 0)) continue;
             const severs = [...new Set([...c1.cuts, ...lostBy(c1._e.cut, e.cut, from).map(nm)])];
             cands.push({ kind: "plan", bases: [c1.bases[0], nm(fid)], target: from === c1.target ? from : `${c1.target}/${from}`, p: +p.toFixed(2), gain, ev: p * gain,
-              win: e.win, cuts: severs, reconnects: c1.reconnects });
+              win: e.win, cuts: severs, reconnects: c1.reconnects, _fid: c1._fid });
           }
         }
       }
@@ -190,7 +191,7 @@ export function focusPlan({ own, lattice, getBin, t, dur, mom, header, pf = () =
           const p = pf(fid);
           const cuts = lostBy(base.cut, e.cut, f).map(nm);
           cands.push({ kind: "hold", bases: [nm(fid)], target: g, p: +p.toFixed(2), gain: loss, ev: p * loss, win: e.win,
-            cuts, reconnects: [] });
+            cuts, reconnects: [], _fid: fid });
           if (holds) {
             const h = holds[f] || (holds[f] = new Map()), prev = h.get(fid);
             if (!prev || loss > prev.loss) h.set(fid, { fid, base: nm(fid), vs: g, p, loss, cuts });
@@ -198,7 +199,10 @@ export function focusPlan({ own, lattice, getBin, t, dur, mom, header, pf = () =
         }
       }
     }
-    const useful = cands.filter((c) => c.gain >= MIN_SWING).sort((a, b) => b.ev - a.ev || b.gain - a.gain);
+    // Moves worth about the same (expected value within 0.25): the one likelier to see a
+    // fight in the next 10 minutes first (predicted heat, src/heat.js).
+    const byValue = (a, b) => (Math.abs(b.ev - a.ev) > 0.25 ? b.ev - a.ev : hot(b._fid) - hot(a._fid) || b.ev - a.ev || b.gain - a.gain);
+    const useful = cands.filter((c) => c.gain >= MIN_SWING).sort(byValue);
     // One entry per first base (a plan and a take on the same base: keep the better).
     const seen = new Set(), picks = [];
     for (const c of useful) {
@@ -215,6 +219,22 @@ export function focusPlan({ own, lattice, getBin, t, dur, mom, header, pf = () =
     const top = picks[0];
     if (top) { out[f] = { focus: fmt(top), backups: picks.slice(1).filter((c) => c.ev >= top.ev / 2).slice(0, 2).map(fmt), quiet: false }; continue; }
     // Nothing moves our own odds: spoiler play (who wins is still ours to decide).
+    // No move changes the result (decided, or a quiet front): still show newcomers where
+    // the fight is, from predicted heat: push the enemy base, or guard ours, likeliest to
+    // change hands in the next 10 minutes (owner 2026-10-24: "logical steps in any situation").
+    const busiest = (f2) => {
+      const seen2 = new Set();
+      const pool = cands.filter((c) => (c.kind === "take" || c.kind === "hold") && hot(c._fid) > 0)
+        .sort((a, b) => hot(b._fid) - hot(a._fid)).filter((c) => (seen2.has(c.bases[0]) ? false : seen2.add(c.bases[0])));
+      if (!pool.length) return { focus: null, backups: [], quiet: true };
+      const now = Math.round(shown(f2) * 10) / 10;
+      const mk = (c) => {
+        const kind = c.kind === "take" ? "push" : "guard", h = Math.round(hot(c._fid) * 100);
+        return { kind, bases: c.bases, target: c.target, p: c.p, cuts: [], reconnects: [], now, then: now, heat: h,
+          text: kind === "push" ? `Push ${c.bases[0]} (${c.target}): the fight is there` : `Guard ${c.bases[0]} against ${c.target}: likely hit next` };
+      };
+      return { focus: mk(pool[0]), backups: pool.slice(1, 3).map(mk), quiet: false, minor: true };
+    };
     const leader = FACS.filter((g) => g !== f).reduce((a, g) => (quo[1][g] > quo[1][a] ? g : a), FACS.find((g) => g !== f));
     const spoil = cands.filter((c) => c.kind === "take" && c.target === leader)
       .map((c) => ({ ...c, drop: quo[1][leader] - c.win[leader] }))
@@ -223,7 +243,7 @@ export function focusPlan({ own, lattice, getBin, t, dur, mom, header, pf = () =
       ? { focus: { kind: "spoil", bases: spoil.bases, target: leader, p: spoil.p, cuts: spoil.cuts, reconnects: [], leader,
           now: Math.round(shown(leader) * 10) / 10, then: Math.round(then(leader, spoil.win, -spoil.drop) * 10) / 10,
           text: `Spoiler: take ${spoil.bases[0]} from ${leader}${spoil.cuts.length ? ` — cuts off ${spoil.cuts.length} of theirs` : ""}` }, backups: [], quiet: false }
-      : { focus: null, backups: [], quiet: true };
+      : busiest(f);
   }
   return out;
 }

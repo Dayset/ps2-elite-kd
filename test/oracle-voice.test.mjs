@@ -11,6 +11,7 @@ test("spoken order: battlefield short, no faction name, worth + standing", () =>
   assert.equal(sayText("NC", { quiet: true, focus: null }, win), "Hold your lanes. 38% 1st place.");
   assert.equal(sayText("NC", { focus: { kind: "take", bases: ["Roothouse Distillery"], target: "TR", cuts: ["Johari Cove"], now: 7.8, then: 100 } }),
     "Take Roothouse Distillery, cuts 1, plus 92%.");
+  assert.equal(sayText("NC", { focus: { kind: "push", bases: ["Edgewater Overlook"], target: "VS", cuts: [], now: 100, then: 100, heat: 46 } }, win), "Push Edgewater Overlook, the fight is there. 38% 1st place.");
   assert.equal(sayText("VS", { focus: { kind: "spoil", bases: ["The Crown"], target: "TR", cuts: [] } }, win), "Spoil TR: take The Crown. 30% 3rd place.");
 });
 

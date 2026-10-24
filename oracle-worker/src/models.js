@@ -1,5 +1,5 @@
 /** Lazy per-bin model access. Parsed bins stay cached for the isolate's life. */
-import { TREE_BINS, XTRUNK_BINS, REGION_TO_FACILITY, LATTICE, CAPTURE, RESISTANCE } from "./models.gen.js";
+import { TREE_BINS, XTRUNK_BINS, REGION_TO_FACILITY, LATTICE, CAPTURE, RESISTANCE, HEAT } from "./models.gen.js";
 import { buildAdjacency } from "./commander.js";
 
 const cache = new Map();
@@ -32,3 +32,4 @@ export function latticeFor(zone) {
 }
 export const captureModel = (zone) => CAPTURE[String(zone)] || {};
 export const resistanceModel = (zone) => RESISTANCE[String(zone)] || {};
+export const heatModel = () => HEAT || null;

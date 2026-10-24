@@ -22,10 +22,8 @@ import { alertKind } from "../src/engine.js";
 
 const FAC = { VS: 1, NC: 2, TR: 3 };
 const HORIZON = 10, STEP = 2, MIN_N = 200;
-export const pBucket = (p) => (p < 0.2 ? 0 : p < 0.3 ? 1 : p < 0.4 ? 2 : p < 0.5 ? 3 : 4);
-export const nbBucket = (n) => Math.min(3, n);
-export const cellKey = (x) => `${pBucket(x.p)}|${nbBucket(x.nb)}|${x.self ? 1 : 0}|${x.fronts > 1 ? 2 : 1}`;
-export const midKey = (x) => `${pBucket(x.p)}|${nbBucket(x.nb)}`;
+import { pBucket, cellKey, midKey } from "../src/heat.js";
+export { pBucket, cellKey, midKey };
 
 /** One archived alert -> samples [{p, nb, self, fronts, y}]. */
 export function samples(b) {
