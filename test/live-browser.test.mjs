@@ -1,3 +1,4 @@
+// test-select-reaches: live.html live.mjs live-sprites.mjs styles.css
 // 🎥 live.html in a real (headless) Chromium: Census and the event stream are faked in the page, events are pushed in,
 // and the overlay is checked as a viewer would see it — 8 lines, weapon + headshot icons, the pre-drawn emoji pictures,
 // and (owner 2026-10-24: the overlay used ~25 % of a 9850X3D) no endless animation and no SVG filter left running.
