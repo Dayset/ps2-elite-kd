@@ -513,6 +513,9 @@ export async function commanderFor(env, key, nowMs = Date.now()) {
     const fidOf = new Map(Object.entries(lattice.names).map(([fid, n]) => [n, fid]));
     for (const f of FACS) {
       const x = cmd.factions[f]; if (!x) continue;
+      // Warpgates can't be captured: never an order.
+      if (x.attack) x.attack = x.attack.filter((r) => !/warpgate/i.test(r.name || ""));
+      if (x.defend) x.defend = x.defend.filter((r) => !/warpgate/i.test(r.name || ""));
       for (const r of [...(x.attack || []), ...(x.defend || [])]) r.pheat = Math.round(heat(fidOf.get(r.name)) * 100);
       (x.attack || []).sort((u, v) => (Math.abs((v.win_gain || 0) - (u.win_gain || 0)) >= 0.5 ? (v.win_gain || 0) - (u.win_gain || 0) : 0) || ((v.cut_severs || 0) - (u.cut_severs || 0)) || v.pheat - u.pheat);
     }
