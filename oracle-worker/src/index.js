@@ -36,6 +36,9 @@ const CENSUS = "https://census.daybreakgames.com";
 const UA = "ps2-elite-kd-oracle/1.0 (+https://github.com/Dayset/ps2-elite-kd; contact: github.com/Dayset)";
 const FINAL = ["settled", "canceled", "unresolved"];
 const WINDOW_S = 8 * 3600; // how far back alerts are rebuilt from METAGAME rows
+/** A territory alert's ended row must add up to at least this much (% of regions). Healthy rows sum to 90.6–100
+ *  (45 of 45 territory alerts, 180 days); a corrupt feed sums to 57 (#67). Meltdowns sum low by design: exempt. */
+export const FINAL_MIN_SUM = 85;
 
 const json = (data, status = 200, extra = {}) =>
   new Response(JSON.stringify(data), {
@@ -146,6 +149,9 @@ export function dataSuspect(zNow, nowTs, s10, zone, flipsIn10, now, kind = "terr
 }
 
 const sliceOf = (w, t) => ({ VS: w.VS.pct / 100, NC: w.NC.pct / 100, TR: w.TR.pct / 100, t: Math.round(t * 10) / 10 });
+
+/** Sum of an ended row's own region scores (VS + NC + TR, % of regions). */
+export function finalSum(final) { return FACS.reduce((s, f) => s + (+final[f] || 0), 0); }
 
 export function groupAlerts(rows) {
   const by = new Map();
@@ -334,8 +340,12 @@ export async function runCycle(env, nowMs = Date.now()) {
     if (a.end.state === "canceled") { out.push({ ...base, status: "canceled", end_ts: endTs }); continue; }
     const final = { VS: a.end.vs, NC: a.end.nc, TR: a.end.tr };
     const finalOk = FACS.every((f) => final[f] !== null && final[f] !== undefined && Number.isFinite(+final[f]));
+    // #67: finite scores are not enough. An ended row that sums far below 100 % is corrupt (frozen neutral regions):
+    // hold the alert (no winner, votes given back), never settle on it and never fall back to a snapshot.
+    const finalCorrupt = finalOk && base.kind !== "meltdown" && finalSum(final) < FINAL_MIN_SUM;
     const checks = Math.min(3, 1 + Math.floor(Math.max(0, now - endTs) / 300));
     const flags = prev && prev.flags ? JSON.parse(prev.flags) : [];
+    if (finalCorrupt && !flags.some((f) => f.startsWith("final_corrupt"))) flags.push(`final_corrupt:${finalSum(final).toFixed(1)}`);
     // Cross-check: our own last pre-end snapshot (never a post-end one).
     if (!flags.includes("checked")) {
       const pre = await latestSnap(db, a.world, endTs);
@@ -358,6 +368,7 @@ export async function runCycle(env, nowMs = Date.now()) {
     // Census ended row without scores: fall back to our last pre-end snapshot when
     // it is clean (fresh, not neutral-heavy); otherwise unresolved (votes given back).
     const finalWinner = async () => {
+      if (finalCorrupt) return null;
       if (finalOk) return { winner: scoreWinner(final), basis: "census_final" };
       if (!flags.includes("final_missing")) flags.push("final_missing");
       const pre = await latestSnap(db, a.world, endTs);
@@ -371,7 +382,15 @@ export async function runCycle(env, nowMs = Date.now()) {
     const sd = findSuddenDeath(all, a, endTs);
     let winner = null, basis = null;
     if (sd) {
-      if (sd.end && sd.end.state === "ended") { winner = scoreWinner({ VS: sd.end.vs, NC: sd.end.nc, TR: sd.end.tr }); basis = "sudden_death"; }
+      if (sd.end && sd.end.state === "ended") {
+        const sdFinal = { VS: sd.end.vs, NC: sd.end.nc, TR: sd.end.tr };
+        // the same corrupt-row hold for the sudden-death row (#67)
+        if (base.kind !== "meltdown" && finalSum(sdFinal) < FINAL_MIN_SUM) {
+          flags.push(`final_corrupt_sd:${finalSum(sdFinal).toFixed(1)}`);
+          out.push({ ...rec, status: "unresolved" }); continue;
+        }
+        winner = scoreWinner(sdFinal); basis = "sudden_death";
+      }
       else if (sd.end) {
         flags.push("sudden_death_canceled");
         const fw = await finalWinner();
@@ -382,7 +401,7 @@ export async function runCycle(env, nowMs = Date.now()) {
       else { out.push({ ...rec, status: "sudden_death" }); continue; }
     } else {
       const fw = await finalWinner();
-      if (!fw) { out.push({ ...rec, status: finalOk ? "settling" : "unresolved" }); continue; }
+      if (!fw) { out.push({ ...rec, status: finalOk && !finalCorrupt ? "settling" : "unresolved" }); continue; }
       ({ winner, basis } = fw);
       if (winner === "draw" && now < endTs + 1200) { out.push({ ...rec, status: "settling" }); continue; }
     }

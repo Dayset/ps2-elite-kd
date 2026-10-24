@@ -419,6 +419,42 @@ test("no scores and a neutral-heavy snapshot: unresolved, votes given back in fu
   assert.equal(DB.raw.prepare("SELECT balance FROM wallet").get().balance, 600);
 });
 
+test("#67: an ended row whose scores sum far below 100 % is held: no winner, votes given back, no snapshot fallback", { skip }, async () => {
+  const { runCycle } = await import("../oracle-worker/src/index.js");
+  const DB = fakeD1();
+  const T0 = 1_792_530_000, END = T0 + 90 * 60;
+  // our clean pre-end map says VS (95 % owned), Census's broken ended row says TR and sums to 57 %
+  const census = { map: { 1: 50, 2: 30, 3: 15 }, metagame: [mg(730, 153, "started", T0)], flips: [] };
+  installCensus(census);
+  await runCycle({ DB }, (END - 60) * 1000);
+  voteRow(DB, "c1", "1-4-730", "VS", 100, 5, END - 1800);
+  census.metagame.push(mg(730, 153, "ended", END, 12, 20, 25));
+  await runCycle({ DB }, (END + 660) * 1000);
+  await runCycle({ DB }, (END + 900) * 1000);
+  const row = DB.raw.prepare("SELECT status, winner, basis, flags FROM alert").get();
+  assert.equal(row.status, "unresolved");
+  assert.equal(row.winner, null);
+  assert.equal(row.basis, null);
+  assert.ok(JSON.parse(row.flags).some((f) => f.startsWith("final_corrupt:57")), row.flags);
+  assert.deepEqual({ ...DB.raw.prepare("SELECT status, reward, credited FROM vote").get() }, { status: "void", reward: 100, credited: 1 });
+});
+
+test("#67: a Meltdown whose ended row sums low (locked map by design) still settles on Census's scores", { skip }, async () => {
+  const { runCycle } = await import("../oracle-worker/src/index.js");
+  const DB = fakeD1();
+  const T0 = 1_792_540_000, END = T0 + 45 * 60;
+  const census = { map: { 1: 10, 2: 10, 3: 10 }, metagame: [mg(740, 176, "started", T0)], flips: [] };
+  installCensus(census);
+  await runCycle({ DB }, (END - 60) * 1000);
+  census.metagame.push(mg(740, 176, "ended", END, 12, 12, 16));   // sums to 40 %
+  await runCycle({ DB }, (END + 660) * 1000);
+  const row = DB.raw.prepare("SELECT status, winner, basis, flags FROM alert").get();
+  assert.equal(row.status, "settled", row.flags);
+  assert.equal(row.basis, "census_final");
+  assert.equal(row.winner, "TR");
+  assert.ok(!JSON.parse(row.flags).some((f) => f.startsWith("final_corrupt")));
+});
+
 test("corrupt map that disagrees with Census: Census winner recorded, votes given back", { skip }, async () => {
   const { runCycle } = await import("../oracle-worker/src/index.js");
   const DB = fakeD1();

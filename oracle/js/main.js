@@ -19,7 +19,11 @@ function setUrlAlert(key) {
   history.replaceState(null, "", location.pathname + (qs ? "?" + qs : "") + location.hash);
 }
 
+/** #67: an alert held because Census's ended scores were broken (they add up far below 100 %). */
+function heldBroken(a) { return a.status === "unresolved" && (a.flags || []).some((f) => f.startsWith("final_corrupt")); }
+
 function statusLabel(a, now) {
+  if (heldBroken(a)) return "held: Census data broken";
   if (a.status === "live") return `${mins(now - a.start_ts)} / ${a.dur} min`;
   if (a.status === "settling") return "settling…";
   if (a.status === "sudden_death") return "sudden death";
@@ -161,7 +165,8 @@ function render2(now) {
   const calls = s && s.calls && s.calls.length ? `<ul class="calls">${s.calls.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>` : "";
   const second = s && s.second ? `<div class="second">🥈 Second place: ${Object.entries(s.second.odds).map(([f, p]) => `<span class="${f}">${f} ${pct1(p)}%</span>`).join(" · ")} ${s.second.locked ? "(locked)" : ""}</div>` : "";
   const voided = (a.flags || []).includes("votes_void");
-  const result = a.status === "settled" ? `<div class="second">${a.final ? `Census final: ${FACS.map((f) => `<span class="${f}">${f} ${(+a.final[f]).toFixed(1)}</span>`).join(" · ")}` : "Census sent no final scores; decided from our last map snapshot"} — <b class="${a.winner}">${a.winner}</b> wins${a.basis === "sudden_death" ? " (sudden death)" : ""}</div>${voided ? `<div class="note" style="color:var(--warn)">Census map data was broken at the end and disagreed with the result, so every vote on this alert was given back.</div>` : ""}` : "";
+  const brokenSum = heldBroken(a) ? ((a.flags || []).find((f) => f.startsWith("final_corrupt")) || "").split(":")[1] : null;
+  const result = heldBroken(a) ? `<div class="note" style="color:var(--warn)">Census sent broken end scores (they add up to ${esc(brokenSum)}%), so there is no result for this alert and every vote on it was given back.</div>` : a.status === "settled" ? `<div class="second">${a.final ? `Census final: ${FACS.map((f) => `<span class="${f}">${f} ${(+a.final[f]).toFixed(1)}</span>`).join(" · ")}` : "Census sent no final scores; decided from our last map snapshot"} — <b class="${a.winner}">${a.winner}</b> wins${a.basis === "sudden_death" ? " (sudden death)" : ""}</div>${voided ? `<div class="note" style="color:var(--warn)">Census map data was broken at the end and disagreed with the result, so every vote on this alert was given back.</div>` : ""}` : "";
   // Cut-off bases don't score in the game; from 80 % of the alert the odds count them for nobody.
   const cutList = s && Array.isArray(s.cut) ? s.cut : [];
   const cutNote = cutList.length && a.status === "live" ? `<div class="note">✂️ Cut off, not scoring: ${FACS.map((f) => { const n = cutList.filter((c) => c.fac === f); return n.length ? `<span class="${f}">${f} ${n.length}</span> (${esc(n.slice(0, 3).map((c) => c.name).join(", "))}${n.length > 3 ? ` +${n.length - 3}` : ""})` : ""; }).filter(Boolean).join(" · ")}${s.cut_aware ? " · counted in the odds" : ""}</div>` : "";
