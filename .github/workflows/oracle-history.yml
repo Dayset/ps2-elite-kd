@@ -29,8 +29,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 350
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
       - name: Probe PS2Alerts
@@ -38,7 +38,7 @@ jobs:
         run: node oracle-worker/history/fetch.mjs --probe
       - name: Restore history cache
         if: inputs.mode != 'probe'
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: history
           key: ps2a-history-${{ github.run_id }}
@@ -48,7 +48,7 @@ jobs:
         run: node oracle-worker/history/fetch.mjs --out history/alerts.jsonl --minutes "${{ inputs.minutes }}"
       - name: Save history cache
         if: always() && (inputs.mode == 'fetch' || inputs.mode == 'all')
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: history
           key: ps2a-history-${{ github.run_id }}

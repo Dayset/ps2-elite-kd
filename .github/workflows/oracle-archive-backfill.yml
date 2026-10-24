@@ -36,18 +36,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
       - name: Restore history cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: history
           key: ps2a-history-${{ github.run_id }}
           restore-keys: ps2a-history-
       - name: Restore ingest state
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: history-state
           key: ps2a-ingest-${{ github.run_id }}
@@ -62,7 +62,7 @@ jobs:
             --max "${{ inputs.max || '300' }}" --since "${{ inputs.since || '2024-10-01' }}" $DRY
       - name: Save ingest state
         if: always() && inputs.dry_run != 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: history-state
           key: ps2a-ingest-${{ github.run_id }}
