@@ -2843,21 +2843,22 @@ html[data-theme="light"] .dist-pill:hover { opacity: 1; }
 .live-table {
   /* Owner t575u overlay (replaces the t557u–t572u two-player rows that flipped A/B; t550u: no ❯ / K/D / titles,
      themed background): one player per line, fixed grid of 8 lines — the latest killer above, the tracked player
-     on the centre line, the last 6 victims below. Every line = [⏱️][name][iVi][🏃🦁🛡️🪳🪖], one shared order,
+     on the centre line, the last 6 victims below. Every line = [⏱️][name][iVi][🏃🦁🛡️🪖🪳] (t580u: 🪳 last), one shared order,
      so the emojis line up down the whole overlay.
      --lv-u = one emoji unit, --lv-ez = line height, --lv-fe = emoji (t564u "300%" size), --lv-fa = iVi number,
      --lv-fm = name, --lv-nm = name column, --lv-tm = time column. */
-  --lv-fe: 1.62rem; --lv-u: 2.3rem; --lv-ez: 2.8rem; --lv-fa: 1.87rem; --lv-fm: 1.3rem; --lv-nm: 11rem; --lv-tm: 3.4rem;
+  --lv-fe: 1.5rem; --lv-u: 2.1rem; --lv-ez: 2.8rem; --lv-fa: 1.87rem; --lv-fm: 1.3rem; --lv-nm: 10rem; --lv-tm: 3.2rem;
+  --lv-n: 9; /* emoji units per line (live.mjs sets it from LIVE_COLS; owner t581u: 🏃🦁🛡️🪖🔀🤝⚡☠️🪳) */
   --lv-iw: calc(var(--lv-fa) * 2.4 + 0.5rem); /* t564u: 4 tabular digits of room */
   border-collapse: collapse; table-layout: fixed; max-width: none;
-  width: calc(var(--lv-tm) + var(--lv-nm) + var(--lv-iw) + 5 * var(--lv-u));
+  width: calc(var(--lv-tm) + var(--lv-nm) + var(--lv-iw) + var(--lv-n) * var(--lv-u));
   font-size: 0.85rem; font-variant-numeric: tabular-nums;
   background: var(--panel); /* owner t550u: the feed had no background (theme variable: light + dark) */
 }
 col.lv-c-time { width: var(--lv-tm); }
 col.lv-c-nm { width: var(--lv-nm); }
 col.lv-c-iv { width: var(--lv-iw); }
-col.lv-c-em { width: calc(5 * var(--lv-u)); }
+col.lv-c-em { width: calc(var(--lv-n) * var(--lv-u)); }
 /* Zebra on the victim lines only (each line is its own <tbody>). */
 .live-table tbody.lv-vic:nth-of-type(even) > tr > td { background-color: var(--row-alt); }
 .live-table td { border: 1px solid var(--border); padding: 0 0.3rem; line-height: 1.25; height: var(--lv-ez); white-space: nowrap; overflow: hidden; }
@@ -2878,6 +2879,10 @@ col.lv-c-em { width: calc(5 * var(--lv-u)); }
 @keyframes lvFlashD { from { box-shadow: inset 0 0 0 100rem rgba(229, 57, 53, 0.28); } to { box-shadow: inset 0 0 0 100rem rgba(229, 57, 53, 0); } }
 @keyframes lvFlashU { from { box-shadow: inset 0 0 0 100rem rgba(255, 193, 7, 0.4); } to { box-shadow: inset 0 0 0 100rem rgba(255, 193, 7, 0); } }
 @keyframes lvShake { 20% { transform: translateX(-3px); } 40% { transform: translateX(3px); } 60% { transform: translateX(-2px); } 80% { transform: translateX(2px); } }
+/* Owner t576u: a kill clears the killer line — a quick fade, the line keeps its place (the overlay never resizes). */
+.lv-ev.lv-out > tr > td { animation: lvOut 0.35s ease-in forwards; }
+@keyframes lvOut { to { opacity: 0; visibility: hidden; } }
+@media (prefers-reduced-motion: reduce) { .lv-ev.lv-out > tr > td { animation: none; opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .lv-ev.lv-new > tr > td, .live-state .live-dot { animation: none !important; } }
 .lv-time { font-size: 0.72rem; color: var(--dim); vertical-align: middle; text-align: right; padding: 0 0.25rem !important; /* fixed column: "59m 59s" fits, nothing shifts */ }
 /* Owner t546u: no skill graph in Live (the main page keeps it). */
@@ -2905,29 +2910,51 @@ col.lv-c-em { width: calc(5 * var(--lv-u)); }
 .lv-em { display: inline-grid; font-size: var(--lv-fe); line-height: 1; }
 .lv-e { grid-area: 1 / 1; display: block; font-weight: 400; line-height: 1; }
 .lv-e0 { opacity: 0.25; }
+/* Owner t579u: a bold dark outline that hugs the whole emoji silhouette (the faint unfilled part too), so the shape
+   reads on any stream background even at 0% fill. A third copy of the emoji under the other two runs through the SVG
+   filter #lvOutline (live.mjs): its shape is grown by 2.25 px on all sides (feMorphology dilate, then smoothed: t581u), painted black,
+   and the emoji itself is cut out of it — only the ring is left, so the 25% copy keeps its own look. Filter only:
+   no layout change; the glow tiers' drop-shadow sits on the wrapper around all three copies, so they stack. */
+.lv-eo { filter: url(#lvOutline); }
+/* Owner t586u: the centre player's refreshed numbers ease to the new fill (live.mjs easeMe). */
+.lv-u.lv-ease { transition: --f 1.2s cubic-bezier(0.22, 1, 0.36, 1); }
+/* Owner t584u: hover value box (live.mjs), fixed and click-through, so it never moves the overlay. */
+.lv-tip { position: fixed; z-index: 50; pointer-events: none; padding: 0.15rem 0.45rem; border-radius: 4px; background: rgba(0, 0, 0, 0.88); color: #fff; font-size: 0.85rem; white-space: nowrap; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5); }
+.lv-tip[hidden] { display: none; }
+[data-tip] { cursor: help; }
 /* --it / --ih = the glyph's ink top / height in % of the box (live.mjs inkOf); sides and bottom get slack so the ink is never cut. */
 .lv-e1 { clip-path: inset(calc(var(--it, 0%) + var(--ih, 100%) * (100 - var(--f, 0)) / 100) -25% -25% -25%); }
 /* Owner t568u glow tiers (live.mjs glowTier, same value as the fill; replaces the t562u p95 glow). Shadows/filters
    and an absolutely placed sparkle only, so nothing ever moves or resizes the table.
    TOP (91+): bright gold, big radius, lively pulse + a twinkling sparkle. HIGH (71–90): cool blue, medium, gentler pulse.
    AVERAGE (51–70): soft green, faint, slow. 50 and below / no value: no glow. */
-.lv-g1 > .lv-em { filter: drop-shadow(0 0 0.18rem rgba(120, 230, 140, 0.45)); animation: lvGlow1 4.5s ease-in-out infinite; }
-.lv-g2 > .lv-em { filter: drop-shadow(0 0 0.25rem rgba(80, 170, 255, 0.7)); animation: lvGlow2 2.6s ease-in-out infinite; }
-.lv-g3 > .lv-em { filter: drop-shadow(0 0 0.22rem rgba(255, 214, 90, 0.95)) drop-shadow(0 0 0.55rem rgba(255, 170, 30, 0.7)); animation: lvGlow 1.3s ease-in-out infinite; }
-@keyframes lvGlow1 { 50% { filter: drop-shadow(0 0 0.28rem rgba(120, 230, 140, 0.6)); } }
-@keyframes lvGlow2 { 50% { filter: drop-shadow(0 0 0.42rem rgba(80, 170, 255, 0.95)); } }
-@keyframes lvGlow { 50% { filter: drop-shadow(0 0 0.32rem rgba(255, 236, 140, 1)) drop-shadow(0 0 0.9rem rgba(255, 170, 30, 0.95)); } }
-.lv-g3::after { content: "✦"; position: absolute; top: 12%; right: 8%; font-size: calc(var(--lv-fe) * 0.42); line-height: 1; color: #ffe27a; text-shadow: 0 0 0.25rem rgba(255, 200, 60, 0.95); pointer-events: none; animation: lvSpark 1.9s ease-in-out infinite; }
+/* --gw = glow strength 0–1 (owner t578u: the glow fades in toward the end of the 5 s fill; 1 = full, the default). */
+.lv-g1 > .lv-em { filter: drop-shadow(0 0 0.18rem rgba(120, 230, 140, calc(0.45 * var(--gw, 1)))); animation: lvGlow1 4.5s ease-in-out infinite; }
+.lv-g2 > .lv-em { filter: drop-shadow(0 0 0.25rem rgba(80, 170, 255, calc(0.7 * var(--gw, 1)))); animation: lvGlow2 2.6s ease-in-out infinite; }
+.lv-g3 > .lv-em { filter: drop-shadow(0 0 0.22rem rgba(255, 214, 90, calc(0.95 * var(--gw, 1)))) drop-shadow(0 0 0.55rem rgba(255, 170, 30, calc(0.7 * var(--gw, 1)))); animation: lvGlow 1.3s ease-in-out infinite; }
+@keyframes lvGlow1 { 50% { filter: drop-shadow(0 0 0.28rem rgba(120, 230, 140, calc(0.6 * var(--gw, 1)))); } }
+@keyframes lvGlow2 { 50% { filter: drop-shadow(0 0 0.42rem rgba(80, 170, 255, calc(0.95 * var(--gw, 1)))); } }
+@keyframes lvGlow { 50% { filter: drop-shadow(0 0 0.32rem rgba(255, 236, 140, calc(1 * var(--gw, 1)))) drop-shadow(0 0 0.9rem rgba(255, 170, 30, calc(0.95 * var(--gw, 1)))); } }
+.lv-g3::after { content: "✦"; position: absolute; top: 12%; right: 8%; font-size: calc(var(--lv-fe) * 0.42); line-height: 1; color: rgba(255, 226, 122, var(--gw, 1)); text-shadow: 0 0 0.25rem rgba(255, 200, 60, calc(0.95 * var(--gw, 1))); pointer-events: none; animation: lvSpark 1.9s ease-in-out infinite; }
 @keyframes lvSpark { 0%, 100% { opacity: 0.15; transform: scale(0.6) rotate(0deg); } 45% { opacity: 1; transform: scale(1.1) rotate(25deg); } 70% { opacity: 0.4; transform: scale(0.8) rotate(40deg); } }
+/* Owner t578u: when a line appears (new victim, new killer, the centre player, or stats arriving later) every emoji
+   fills from 0 to its level over 5 s (ease-out) and its glow fades in over the last 40%. Lines already on screen keep
+   going where they were (live.mjs passes the time already played as a negative delay, --fd), never restart.
+   Registered properties, so --f / --gw animate as numbers; clip-path and shadows only — the size never changes. */
+@property --f { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --gw { syntax: "<number>"; inherits: true; initial-value: 1; }
+.lv-fillin .lv-u { animation: lvFill 5s cubic-bezier(0.22, 1, 0.36, 1) var(--fd, 0ms) both; }
+@keyframes lvFill { 0% { --f: 0; --gw: 0; } 60% { --gw: 0; animation-timing-function: ease-out; } }
+@media (prefers-reduced-motion: reduce) { .lv-fillin .lv-u { animation: none; } }
 @media (prefers-reduced-motion: reduce) { .lv-g1 > .lv-em, .lv-g2 > .lv-em, .lv-g3 > .lv-em { animation: none; } .lv-g3::after { animation: none; opacity: 0.85; } }
 /* Owner t561u: LIVE is a PC stream overlay. Big screens (1920) get everything 1.3× bigger for readability. */
 @media (min-width: 1600px) {
-  .live-table { --lv-fe: 2.1rem; --lv-u: 3rem; --lv-ez: 3.65rem; --lv-fa: 2.43rem; --lv-fm: 1.7rem; --lv-nm: 14rem; --lv-tm: 4.2rem; font-size: 1.1rem; }
+  .live-table { --lv-fe: 1.95rem; --lv-u: 2.75rem; --lv-ez: 3.65rem; --lv-fa: 2.43rem; --lv-fm: 1.7rem; --lv-nm: 13rem; --lv-tm: 4rem; font-size: 1.1rem; }
   .lv-time { font-size: 0.95rem; }
 }
 /* Phones (t561u: not a target; it only must not break — sideways scroll is fine). */
 @media (max-width: 600px) {
-  .live-table { --lv-fe: 1.35rem; --lv-u: 1.95rem; --lv-ez: 2.4rem; --lv-fa: 1.58rem; --lv-fm: 1rem; --lv-nm: 6.5rem; --lv-tm: 2.6rem; font-size: 0.72rem; }
+  .live-table { --lv-fe: 1.15rem; --lv-u: 1.6rem; --lv-ez: 2.4rem; --lv-fa: 1.58rem; --lv-fm: 1rem; --lv-nm: 5.5rem; --lv-tm: 2.4rem; font-size: 0.72rem; }
   .lv-time { font-size: 0.6rem; padding: 0 0.1rem !important; }
 }
 .live-feed { overflow-x: auto; }

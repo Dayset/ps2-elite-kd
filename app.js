@@ -5953,6 +5953,11 @@ import {
         if (p && String(p.source || "").startsWith("live:")) cachePut(name, p);
         return p;
       },
+      // 🎥 Live (owner t586u): fresh Census numbers for the tracked player — no browser copy, no shared cache, no modal.
+      fetchPlayerFresh: async (name) => {
+        while (activeRun) await new Promise((r) => setTimeout(r, 1000));
+        return loadLive(name);
+      },
       getLastAnalyzedNames: () => lastAnalyzedNames.slice(),
       getFailedNames: () => [...failedNames.values()].map((f) => ({ ...f })),
       getPlayerNames: () => players.map((p) => p.display),
