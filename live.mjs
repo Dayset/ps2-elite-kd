@@ -5,7 +5,7 @@ await i18nReady;
  * Census event stream (Death events, one character) and:
  *   - lists the last 3 opponents (owner t563u) (one row per person, repeats bump the count);
  *     on a kill our name sits on top, on a death the killer's name does;
- *   - shows each player (name + stats) in one fixed block that switches every 10 s (owner t557u, t563u):
+ *   - shows each player (name + stats) in one fixed block that switches A 10 s / B 5 s (owner t557u, t563u, t566u):
  *     phase A = name + ⚔️ iVi number (t560u), phase B = the other columns as emojis
  *     sized by the player's percentile with a small number under each (no skill graph in Live);
  *   - uncached opponents first show Census K/D · KPM, then get a full 200-opponent Census
@@ -72,10 +72,9 @@ export function censusStats(ch) {
 /**
  * LIVE columns (owner t546u, t550u): one config list, in this order — change a mode or the order here.
  * Same ids / labels / digits as rankings.mjs VISIBLE. mode:
- *   "ivi"   = phase A: the plain number next to the name ("CloneKanoVS 1,883", owner t560u: no ⚔️);
- *   "stack" = phase B: sized emoji with the small number under it;
- *   "emoji" = phase B: sized emoji only, no number.
- * lowerBetter = smaller value is better (reversed percentile → big emoji for a low value); no LIVE
+ *   "ivi"   = phase A: the plain number next to the name ("CloneKanoVS 1883", owner t560u: no ⚔️; t564u: no comma);
+ *   "stack" / "emoji" = phase B: a fill-meter emoji (owner t564u: one size for all, no number under it).
+ * lowerBetter = smaller value is better (reversed percentile → more fill for a low value); no LIVE
  * column uses it now (owner t555u: 🪳 Zerg follows the raw number).
  * 🪳 Zerg is computed like the Rankings table (trait-scores.mjs zergScore from the ranks.json pools).
  * 🪖 Infantry is the ranks.json "inf" value; players without it show "—" and no emoji.
@@ -86,37 +85,37 @@ export const LIVE_COLS = Object.freeze([
   { id: "pvs", label: "🦁 Brave", digits: 2, mode: "stack" },
   { id: "rf", label: "🛡️ Resist", digits: 2, mode: "stack" },
   { id: "zerg", label: "🪳 Zerg", digits: 0, mode: "stack" }, // t555u: bigger Zerg = bigger 🪳 (not reversed)
-  { id: "inf", label: "🪖 Infantry", digits: 1, mode: "stack" },
+  { id: "inf", label: "🪖 Infantry", digits: 1, mode: "stack", fill: "value" }, // t564u: fill = infantry % itself
 ]);
 
 /**
- * Emoji size from rank (owner t546u, t558u): the cell's emoji is scaled by the player's
- * percentile in that stat (pXX = higher than XX% of ranks.json, same pools as the
- * Rankings table). p50 = 1× (median, not scaled). t558u: much bigger steps so ranks are
- * easy to tell apart — geometric on each side, up to EMOJI_MAX at the best (p99) and down
- * to EMOJI_MIN at the worst (p0); the steps grow toward the top (p75 ≈ 1.5×, p95 ≈ 2.1×).
- * Lower-is-better columns are flipped first, so a low pXX gives a big emoji there.
+ * Emoji fill meter (owner t564u, replaces the t546u/t558u rank-based sizes): every emoji has one size;
+ * a 25%-visible copy shows the whole emoji and a solid copy on top fills it from the bottom up to:
+ *   🪖 Infantry → the player's infantry % itself (50% infantry = half filled);
+ *   🏃 🦁 🛡️ 🪳 → the player's percentile in that column (pXX = higher than XX% of ranks.json, the
+ *   Rankings pools; 🪳 Zerg = percentile of the raw Zerg score, so a higher Zerg number fills more).
+ * Lower-is-better columns are flipped first (none in LIVE now).
  */
-export const EMOJI_MIN = 0.35;
-export const EMOJI_MAX = 2.2;
+export const FILL_DIM = 0.25; // the empty part of the emoji stays 25% visible
 /** "How good" percentile 0..99 (99 = best) from the plain pXX. */
 export function goodPct(col, p) {
   if (typeof p !== "number" || !Number.isFinite(p)) return null;
   const q = Math.min(99, Math.max(0, p));
   return col && col.lowerBetter ? 99 - q : q;
 }
-/** Emoji scale for one cell (null = no value → no emoji). */
-export function emojiScale(col, p) {
-  const g = goodPct(col, p);
-  if (g == null) return null;
-  const s = g >= 50 ? EMOJI_MAX ** ((g - 50) / 49) : EMOJI_MIN ** ((50 - g) / 50);
-  return Math.round(s * 100) / 100;
+/** Fill 0..100 (% of the emoji drawn solid, from the bottom) for one cell; null = no value → "—". */
+export function emojiFill(col, v, p) {
+  if (typeof v !== "number" || !Number.isFinite(v)) return null;
+  if (col && col.fill === "value") return Math.round(Math.min(100, Math.max(0, v)) * 10) / 10;
+  return goodPct(col, p);
 }
 
-/** Owner t557u: the block switches between phase A (name + iVi) and phase B (the rest), all rows in sync; t563u: every 10 s (was 20 s). */
-export const PHASE_MS = 10000;
-/** Phase at a time since the page started: "A" for the first 10 s, then "B", and so on. */
-export function phaseAt(ms) { return Math.floor(Math.max(0, ms) / PHASE_MS) % 2 === 0 ? "A" : "B"; }
+/** Owner t557u: the block switches between phase A (name + iVi) and phase B (the emojis), all rows in sync.
+ *  t566u: uneven — A shows 10 s, B 5 s, then it repeats (t563u had 10 s / 10 s). */
+export const PHASE_A_MS = 10000;
+export const PHASE_B_MS = 5000;
+/** Phase at a time since the page started: "A" for the first 10 s, then "B" for 5 s, and so on. */
+export function phaseAt(ms) { return Math.max(0, ms) % (PHASE_A_MS + PHASE_B_MS) < PHASE_A_MS ? "A" : "B"; }
 /**
  * Background-fetch queue step (#32): next opponent cid to fetch = newest-first queue entry
  * that is still in the feed and was never tried this page load; or null.
@@ -161,7 +160,8 @@ export function cellText(col, v) {
   // Owner t557u: the small numbers under the emojis fit 4 characters ("0.63", "95.4"): bigger values drop decimals (100.0 → "100").
   let d = col.digits;
   if (col.mode === "stack") while (d > 0 && Math.abs(v).toFixed(d).length > 4) d--;
-  return v.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+  // Owner t564u: the iVi number has no thousands separator ("1600", not "1,600").
+  return v.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d, useGrouping: col.mode !== "ivi" });
 }
 
 const slugKey = (name) => String(name || "").trim().toLowerCase().replace(/^\[.*?\]\s*/, "").replace(/[^a-z0-9]+/g, "");
@@ -245,22 +245,49 @@ function start() {
   const shortLab = (c) => c.label.split(" ")[0];
   /** 💩 after a confirmed padder's name (padding.mjs): hover explains the −10% iVi penalty. */
   const poopFor = (name) => (isPenalizedPadder(name) ? `<span class="poop-mark" title="${esc(POOP_TIP)}" aria-label="${esc(POOP_TIP)}">${POOP_MARK}</span>` : "");
-  const scaleOf = (c, v) => emojiScale(c, percentileOf(pools[c.id] || [], v));
-  /** Phase B unit: sized emoji, small number under it ("—" when there is no value). */
+  const fillOf = (c, v) => emojiFill(c, v, percentileOf(pools[c.id] || [], v));
+  /** Phase B unit (owner t564u): one-size emoji as a fill meter — a 25% copy under a solid copy clipped
+   *  from the bottom up to the fill ("—" when there is no value). The number is in the hover title only. */
   /** Owner t562u juice: a top-rank value (≥ 95th percentile of the cached players, better direction) glows softly. */
   const TOP_PCT = 95;
   const goodOf = (c, v) => { const pc = percentileOf(pools[c.id] || [], v); return pc == null ? null : goodPct(c, pc); };
+  /** Owner t564u fill: where the emoji's ink sits inside its 1em box (line-height 1), measured once per emoji
+   *  in the viewer's own emoji font, so "p90" = the bottom 90% of the visible glyph, not of the box. */
+  const inkCache = new Map();
+  function inkOf(e) {
+    if (inkCache.has(e)) return inkCache.get(e);
+    let r = "";
+    try {
+      const fam = (listEl && getComputedStyle(listEl).fontFamily) || "sans-serif";
+      // 1) where the baseline sits in a 100px, line-height 1 box (same CSS as .lv-e)
+      const box = document.createElement("b");
+      box.style.cssText = `position:absolute;left:-999px;top:0;visibility:hidden;display:block;font:400 100px/1 ${fam};white-space:nowrap`;
+      box.innerHTML = `${esc(e)}<i style="display:inline-block;width:0;height:0;vertical-align:baseline"></i>`;
+      document.body.appendChild(box);
+      const base = box.lastChild.getBoundingClientRect().top - box.getBoundingClientRect().top;
+      box.remove();
+      // 2) the glyph's real ink rows, drawn on a canvas on that baseline
+      const cv = document.createElement("canvas"); cv.width = 240; cv.height = 300;
+      const cx = cv.getContext("2d", { willReadFrequently: true });
+      cx.font = `400 100px ${fam}`; cx.textBaseline = "alphabetic"; cx.fillStyle = "#000"; cx.fillText(e, 40, 200);
+      const px = cx.getImageData(0, 0, 240, 300).data;
+      let top = -1, bot = -1;
+      for (let y = 0; y < 300; y++) { for (let x = 0; x < 240; x++) if (px[(y * 240 + x) * 4 + 3] > 24) { if (top < 0) top = y; bot = y; break; } }
+      if (top >= 0 && base > 0) r = ` style="--it:${(base - (200 - top)).toFixed(1)}%;--ih:${(bot + 1 - top).toFixed(1)}%"`;
+    } catch { /* default: the whole box */ }
+    inkCache.set(e, r);
+    return r;
+  }
   function unit(c, v) {
-    const s = scaleOf(c, v);
-    const top = s != null && goodOf(c, v) >= TOP_PCT ? " lv-top" : "";
-    if (s == null) return `<span class="lv-u lv-none" title="${esc(c.label)}">—</span>`;
-    const em = `<b class="lv-e" aria-hidden="true">${shortLab(c)}</b>`;
-    if (c.mode === "emoji") return `<span class="lv-u lv-emo${top}" style="--s:${s}" title="${esc(c.label)}">${em}</span>`;
-    return `<span class="lv-u lv-st${top}" style="--s:${s}" title="${esc(c.label)} ${cellText(c, v)}">${em}<span class="lv-v">${cellText(c, v)}</span></span>`;
+    const f = fillOf(c, v);
+    if (f == null) return `<span class="lv-u lv-none" title="${esc(c.label)}">—</span>`;
+    const top = goodOf(c, v) >= TOP_PCT ? " lv-top" : "";
+    const e = shortLab(c);
+    return `<span class="lv-u lv-fl${top}" style="--f:${f}" title="${esc(c.label)} ${cellText(c, v)}"><span class="lv-em" aria-hidden="true"${inkOf(e)}><b class="lv-e lv-e0">${e}</b><b class="lv-e lv-e1">${e}</b></span></span>`;
   }
   /** Phase A iVi number, no ⚔️ (owner t560u: the number reads clearly on its own). */
   function iviText(c, v) {
-    if (scaleOf(c, v) == null) return `<span class="lv-iv lv-none" title="${esc(c.label)}">—</span>`;
+    if (fillOf(c, v) == null) return `<span class="lv-iv lv-none" title="${esc(c.label)}">—</span>`;
     return `<span class="lv-iv" title="${esc(c.label)} ${cellText(c, v)}">${cellText(c, v)}</span>`;
   }
   /** Name (+ 💩 on the outer side); a long name is cut with … on the outer side. */
@@ -270,7 +297,7 @@ function start() {
     return `<span class="lv-pn">${sd === "L" ? poop + nm : nm + poop}</span>`;
   }
   /**
-   * One player = ONE fixed block that switches every 10 s (owner t560u, t563u), both phases stacked:
+   * One player = ONE fixed block that switches (A 10 s / B 5 s, owner t560u, t563u, t566u), both phases stacked:
    *   phase A = name + iVi number ("CloneKanoVS 1,883" | "209 Vepr12NC"), no separator;
    *   phase B = the emojis with small numbers (right player mirrored, t559u).
    * The left block hugs the centre (right-aligned), the right block too (left-aligned).

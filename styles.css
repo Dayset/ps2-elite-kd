@@ -2849,7 +2849,8 @@ html[data-theme="light"] .dist-pill:hover { opacity: 1; }
      --lv-u  = one phase-B unit: the largest 2.2× emoji (lv-fe × 2.2); 5 units = the minimum block.
      --lv-ez = emoji zone height, --lv-fn / --lv-nh = small number font / line,
      --lv-fa = phase-A iVi number, --lv-fm = phase-A name, --lv-b = block width. */
-  --lv-fe: 1.08rem; --lv-fn: 0.92rem; --lv-u: 2.6rem; --lv-ez: 2.8rem; --lv-nh: 1.1rem; --lv-fa: 1.87rem; --lv-fm: 1.3rem;
+  /* t564u: emojis 1.5× (the "200%" becomes "300%"), one size for all, no number under them (--lv-nh 0). */
+  --lv-fe: 1.62rem; --lv-fn: 0.92rem; --lv-u: 2.3rem; --lv-ez: 2.8rem; --lv-nh: 0rem; --lv-fa: 1.87rem; --lv-fm: 1.3rem;
   --lv-b: 22rem; --lv-ini: calc(var(--lv-fm) * 1.5); /* t563u: first-letter cell */
   border-collapse: collapse; width: calc(7.5ch + 2 * var(--lv-b) + 2 * var(--lv-ini)); max-width: none; table-layout: fixed;
   font-size: 0.85rem; font-variant-numeric: tabular-nums;
@@ -2897,7 +2898,7 @@ col.lv-c-ini { width: var(--lv-ini); }
    (the t550u 3× faster fade). Emoji sizes are transforms, so nothing ever moves the layout. */
 .live-table .lv-blk { position: relative; height: calc(var(--lv-ez) + var(--lv-nh)); padding: 0 !important; overflow: hidden; white-space: nowrap; cursor: help; }
 .live-table th.lv-blk { height: 1.1rem; }
-/* t562u juice: the 20 s switch is a quick flip with a little bounce (the outgoing side tips away and fades,
+/* t562u juice: the phase switch (t566u: A 10 s / B 5 s) is a quick flip with a little bounce (the outgoing side tips away and fades,
    the incoming side flips in and settles), still all rows together. */
 .lv-blk > .lv-pa, .lv-blk > .lv-pb { position: absolute; inset: 0; display: flex; align-items: center; transition: opacity 0.133s linear, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
 .lv-blk > .lv-pb, .lv-phB .lv-blk > .lv-pa { opacity: 0; pointer-events: none; transform: perspective(30rem) rotateX(-85deg); }
@@ -2915,26 +2916,34 @@ col.lv-c-ini { width: var(--lv-ini); }
 .live-table .lv-bL .lv-name { direction: rtl; } /* the cut + … land on the left (outer) side */
 .live-table .lv-pn .poop-mark { flex: none; }
 .lv-iv { flex: none; line-height: 1; font-size: var(--lv-fa); }
+/* Owner t564u: the iVi number always takes 4 digits of room (tabular digits), hugging the centre, so 209 and 1883 never shift the name. */
+.lv-pa > .lv-iv { width: 4ch; font-variant-numeric: tabular-nums; }
+.lv-bL > .lv-pa > .lv-iv { text-align: right; }
+.lv-bR > .lv-pa > .lv-iv { text-align: left; }
 .lv-iv.lv-none { color: var(--dim); }
 th .lv-hiv { font-size: 0.64rem; }
-/* Phase B: five equal units, sized emoji on top, small number under it. */
+/* Phase B: five equal units, one-size emoji fill meters (owner t564u). */
 .lv-u { position: relative; flex: none; width: var(--lv-u); height: 100%; text-align: center; font-size: var(--lv-fn); }
 th .lv-u { font-size: 0.7rem; line-height: 1.1rem; }
 .lv-u.lv-none { color: var(--dim); line-height: calc(var(--lv-ez) + var(--lv-nh)); }
-.lv-e { display: inline-block; font-weight: 400; font-size: var(--lv-fe); line-height: 1; transform: scale(var(--s, 1)); }
-.lv-st > .lv-e { position: absolute; left: 0; right: 0; top: -0.1rem; height: var(--lv-ez); display: flex; align-items: center; justify-content: center; }
-.lv-st > .lv-v { position: absolute; left: 0; right: 0; bottom: 0; height: var(--lv-nh); line-height: var(--lv-nh); font-size: var(--lv-fn); text-align: center; letter-spacing: -0.02em; }
+/* Fill meter: the emoji twice in one spot — a 25%-visible copy (live.mjs FILL_DIM) and a solid copy on top
+   clipped from the top, so it fills from the bottom up to --f (p0 = empty, p50 = bottom half, p100 = full). */
+.lv-fl { display: flex; align-items: center; justify-content: center; }
+.lv-em { display: inline-grid; font-size: var(--lv-fe); line-height: 1; }
+.lv-e { grid-area: 1 / 1; display: block; font-weight: 400; line-height: 1; }
+.lv-e0 { opacity: 0.25; }
+/* --it / --ih = the glyph's ink top / height in % of the box (live.mjs inkOf); sides and bottom get slack so the ink is never cut. */
+.lv-e1 { clip-path: inset(calc(var(--it, 0%) + var(--ih, 100%) * (100 - var(--f, 0)) / 100) -25% -25% -25%); }
 /* t562u juice: a top-rank value (≥ p95, live.mjs TOP_PCT) gets a soft gold glow that breathes gently (glow only, no size change). */
-.lv-top > .lv-e { filter: drop-shadow(0 0 0.2rem rgba(255, 196, 64, 0.55)); animation: lvGlow 2.6s ease-in-out infinite; }
+.lv-top > .lv-em { filter: drop-shadow(0 0 0.2rem rgba(255, 196, 64, 0.55)); animation: lvGlow 2.6s ease-in-out infinite; }
 @keyframes lvGlow { 50% { filter: drop-shadow(0 0 0.45rem rgba(255, 196, 64, 0.95)); } }
-@media (prefers-reduced-motion: reduce) { .lv-top > .lv-e { animation: none; } }
-.lv-emo > .lv-e { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+@media (prefers-reduced-motion: reduce) { .lv-top > .lv-em { animation: none; } }
 /* Not cached yet: Census K/D over KPM in phase B. */
 .lv-unc { display: flex; flex-direction: column; padding: 0 0.35rem; font-size: 0.85rem; line-height: 1.2; opacity: 0.6; font-style: italic; }
 .lv-bL .lv-unc { text-align: right; }
 /* Owner t561u: LIVE is a PC stream overlay. Big screens (1920) get everything 1.3× bigger for readability. */
 @media (min-width: 1600px) {
-  .live-table { --lv-fe: 1.4rem; --lv-fn: 1.2rem; --lv-u: 3.4rem; --lv-ez: 3.65rem; --lv-nh: 1.43rem; --lv-fa: 2.43rem; --lv-fm: 1.7rem; --lv-b: 26rem; /* t563u: 26 (not 28.6) so the two letter cells fit the 1,096 px feed */ font-size: 1.1rem; }
+  .live-table { --lv-fe: 2.1rem; --lv-fn: 1.2rem; --lv-u: 3rem; --lv-ez: 3.65rem; --lv-nh: 0rem; --lv-fa: 2.43rem; --lv-fm: 1.7rem; --lv-b: 26rem; /* t563u: 26 (not 28.6) so the two letter cells fit the 1,096 px feed */ font-size: 1.1rem; }
   .live-table .lv-time { font-size: 1.03rem; }
   .live-table th, th .lv-hiv { font-size: 0.83rem; }
   th .lv-u { font-size: 0.9rem; }
@@ -2942,7 +2951,7 @@ th .lv-u { font-size: 0.7rem; line-height: 1.1rem; }
 }
 /* Phones (t561u: not a target; it only must not break — sideways scroll is fine): block = exactly 5 units (the smallest that holds phase B at 2×); names are cut to fit. */
 @media (max-width: 600px) {
-  .live-table { --lv-fe: 0.9rem; --lv-fn: 0.84rem; --lv-u: 2.2rem; --lv-ez: 2.4rem; --lv-nh: 1rem; --lv-fa: 1.58rem; --lv-fm: 1rem; --lv-b: 11rem; width: calc(2.4rem + 2 * var(--lv-b) + 2 * var(--lv-ini)); font-size: 0.72rem; }
+  .live-table { --lv-fe: 1.35rem; --lv-fn: 0.84rem; --lv-u: 1.95rem; --lv-ez: 2.4rem; --lv-nh: 0rem; --lv-fa: 1.58rem; --lv-fm: 1rem; --lv-b: 11rem; width: calc(2.4rem + 2 * var(--lv-b) + 2 * var(--lv-ini)); font-size: 0.72rem; }
   col.lv-c-time { width: 2.4rem; }
   .live-table .lv-time { min-width: 0; font-size: 0.64rem; padding: 0 0.15rem; }
   .lv-bL > .lv-pa { padding: 0 0.2rem 0 0.1rem; }
