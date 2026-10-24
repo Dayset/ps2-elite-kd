@@ -65,7 +65,7 @@ export function compactPop(list, startTs) {
 export function popChange(pop, dur) {
   const avg = (rows) => (rows.length ? [1, 2, 3].map((i) => rows.reduce((s, r) => s + r[i], 0) / rows.length) : null);
   const a = avg(pop.filter((r) => r[0] >= 0 && r[0] < 20)), b = avg(pop.filter((r) => r[0] > dur - 20 && r[0] <= dur));
-  if (!a || !b || a.some((x) => x < 15)) return null;
+  if (!a || !b || a.some((x) => x < 15) || b.some((x) => x < 5)) return null;   // empty end window = Honu stopped counting
   const ratio = a.map((x, i) => b[i] / x), mean = ratio.reduce((s, x) => s + x, 0) / 3;
   return Object.fromEntries(FACS.map((f, i) => [f, { ratio: ratio[i], rel: ratio[i] / mean }]));
 }
@@ -106,6 +106,15 @@ function bootCI(groups, stat, n = 300) {
   return [r3(out[Math.floor(out.length * 0.025)]), r3(out[Math.floor(out.length * 0.975)])];
 }
 
+/** Per alert: worst loser's population change (raw end/start) and the winner's. */
+function popAlerts(as) {
+  const xs = as.filter((a) => a.pop && FACS.includes(a.winner)).map((a) => ({
+    loser: Math.min(...FACS.filter((f) => f !== a.winner).map((f) => a.pop[f].ratio)), winner: a.pop[a.winner].ratio }));
+  const med = (v) => { const s = [...v].sort((x, y) => x - y); return r3(s[Math.floor(s.length / 2)]); };
+  return { n: xs.length, worst_loser_ratio_median: med(xs.map((x) => x.loser)), winner_ratio_median: med(xs.map((x) => x.winner)),
+    share_loser_below_060: r3(xs.filter((x) => x.loser < 0.6).length / (xs.length || 1)) };
+}
+
 /** alerts: [{key, winner, dur, strong:[fac], odds:[...], pop}] -> summary. */
 export function analyze(alerts) {
   const scored = alerts.filter((a) => a.odds && a.odds.length && FACS.includes(a.winner));
@@ -134,7 +143,7 @@ export function analyze(alerts) {
     const xs = [];
     for (const a of alerts) {
       if (!a.pop || !FACS.includes(a.winner)) continue;
-      for (const f of FACS) if (f !== a.winner && sel(a, f)) xs.push(a.pop[f].rel);
+      for (const f of FACS) if (f !== a.winner && sel(a, f) && Number.isFinite(a.pop[f].rel)) xs.push(a.pop[f].rel);
     }
     const s = [...xs].sort((x, y) => x - y);
     return { n: xs.length, mean_rel: r3(mean(xs)), median_rel: r3(s[Math.floor(s.length / 2)]), share_below_075: r3(xs.filter((x) => x < 0.75).length / (xs.length || 1)) };
@@ -143,6 +152,10 @@ export function analyze(alerts) {
     alerts_scored: scored.length, with_extreme: withX.length, extreme_on_winner: winnerX.length,
     brier: { all: B(scored), without_extreme: B(without), with_extreme: B(withX), extreme_on_winner: B(winnerX), extreme_only_on_losers: B(withX.filter((a) => !a.strong.includes(a.winner))) },
     calibration: calib,
+    population_alerts: {
+      winner_has_extreme: popAlerts(alerts.filter((a) => a.strong.includes(a.winner) && a.strong.length === 1)),
+      no_extreme: popAlerts(alerts.filter((a) => !a.strong.length)),
+    },
     population_losers: {
       facing_winner_extreme: loserRel((a, f) => a.strong.includes(a.winner) && !a.strong.includes(f)),
       no_extreme_anywhere: loserRel((a) => !a.strong.length),
@@ -241,6 +254,7 @@ async function main() {
     notice("outlier-effect brier", j(s.brier));
     notice("outlier-effect calibration (won - p)", j(Object.fromEntries(Object.entries(s.calibration).map(([k, v]) => [k, Object.fromEntries(Object.entries(v).map(([p, x]) => [p, [x.won_minus_p, x.ci, x.alerts]]))]))));
     notice("outlier-effect population (losers)", j(s.population_losers));
+    notice("outlier-effect population (per alert, end/start)", j(s.population_alerts));
   }
 }
 
