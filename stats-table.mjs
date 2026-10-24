@@ -8,7 +8,7 @@ import { newbieFactor, newPlayerHours } from "./newbie-diff.mjs?v=20261023-nbh1"
 import { isFiniteNum } from "./math.mjs?v=20261010-sav1";
 import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261024-crowd1";
 import { zergEstimate } from "./zerg-revive.mjs?v=20261024-crowd1";
-import { infMedian } from "./tractor.mjs?v=20261024-trac1";
+import { infMedian } from "./tractor.mjs?v=20261024-veh1";
 import { mountWeapons } from "./weapons.mjs?v=20261022-wp4";
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261020-wide1";
 import { PS_SERVERS, censusNsBase, roomLsKey } from "./rooms.mjs?v=20261022-ps1";
@@ -23,7 +23,7 @@ import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261022-wpc1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261021-theory1";
 import { statMark, isPenalizedPadder, POOP_TIP, POOP_MARK, markNote } from "./padding.mjs?v=20261023-short1";
-import { autoMarksHtml } from "./auto-marks.mjs?v=20261024-crowd1";
+import { autoMarksHtml } from "./auto-marks.mjs?v=20261024-veh1";
 
 /**
  * $ = app.js state and functions this part uses, as live getters (and setters for state it changes), so app.js

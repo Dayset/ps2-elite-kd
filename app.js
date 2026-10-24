@@ -36,9 +36,9 @@ import {
 } from "./math.mjs?v=20261010-sav1";
 import { formatClock, fmtNum, slugKey, bareName, parseNames, namesEqualIgnoreCase, namesSetKey, niceLinTicks, niceNum, niceLogTicks, formatTick, escapeHtml, makeAbortError, isAbortError, checkAborted, readJsonLS, writeJsonLS } from "./app-util.mjs?v=20261024-split1";
 import { createShareAdd } from "./share-add.mjs?v=20261024-split12";
-import { createSharedIndex } from "./shared-index.mjs?v=20261024-split11";
+import { createSharedIndex } from "./shared-index.mjs?v=20261024-veh1";
 import { createNamesField } from "./names-field.mjs?v=20261024-split10";
-import { createStatsTable } from "./stats-table.mjs?v=20261024-crowd1";
+import { createStatsTable } from "./stats-table.mjs?v=20261024-veh1";
 import { createChartWave } from "./chart-wave.mjs?v=20261024-split8";
 import { createChart } from "./chart.mjs?v=20261024-split7";
 import { createLoader } from "./loader.mjs?v=20261024-split6";
@@ -61,7 +61,7 @@ import { NBD_NOTE, newbieFactor, newPlayerHours } from "./newbie-diff.mjs?v=2026
 import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261023-short1";
 import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261022-wpc1";
 import { infantryKillsUrl, summarizeInfantryKills } from "./infantry.mjs?v=20261023-short1";
-import { infMedian } from "./tractor.mjs?v=20261024-trac1";
+import { infMedian } from "./tractor.mjs?v=20261024-veh1";
 import { mountWeapons } from "./weapons.mjs?v=20261022-wp4";
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261021-theory1";
 import { createWheelSwiper } from "./dist-cycle.mjs?v=20261017-cycle15";
@@ -124,7 +124,7 @@ function thinCellTip(r) {
 import { markNote, statMark, confirmedPadderSlugs, isPenalizedPadder, POOP_MARK, POOP_TIP, setRoomRule } from "./padding.mjs?v=20261023-short1";
 import { removedList } from "./opt-out.mjs?v=20261023-proof1";
 import { HUT_MARK, HUT_TIP, HUT_DIFF_NOTE, playMinutes } from "./hut.mjs?v=20261023-short1";
-import { autoMarksHtml } from "./auto-marks.mjs?v=20261024-crowd1";
+import { autoMarksHtml } from "./auto-marks.mjs?v=20261024-veh1";
 // Account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times: chart name list only.
 import { accountTimes, flairsHtml, flairsFor } from "./flairs.mjs?v=20261010-sav1";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.

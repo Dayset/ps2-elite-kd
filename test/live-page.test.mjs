@@ -486,7 +486,7 @@ test("🪖 / 🚜 infantry dial (owner t590u): median from the data, 🪖 fills 
   assert.equal(tractorMark({ inf: 90, med: m }), null);
   assert.equal(tractorMark(null), null);
   assert.deepEqual(tractorMark({ inf: 60, med: m }), { id: "tractor", mark: "🚜", tip: tractorHint(m) });
-  assert.match(tractorHint(m), /^🚜 Tractor mark[^\n]+\n[^\n]+\(85\.0%\)\.(\n[^\n]+)?$/); // t597u: 2-3 lines, not the iVi cut / Diff damp 🚜
+  assert.match(tractorHint(m), /^🚜 Vehicle mark[^\n]+\n[^\n]+\(85\.0%\)\.(\n[^\n]+)?$/); // t597u: 2-3 lines, not the iVi cut / Diff damp 🚜
   const now = Date.UTC(2026, 9, 24), s = now / 1000, day = 86400;
   const h = autoMarksHtml(null, { score: 90, rvp: 99, confirmed: true }, { created: s - 3000 * day, last: s - 400 * day }, now, null, { inf: 50, med: m });
   assert.match(h, /auto-mark-zerg.*🪳.*<span class="poop-mark auto-mark auto-mark-tractor" title="🚜 [^"]+" aria-label="🚜 [^"]+">🚜<\/span><span class="poop-mark auto-mark auto-mark-inactive"[^>]*>🪦/s); // order 🪳 🐣 🚜 🪦

@@ -4,7 +4,7 @@
  * weapon lookup. No DOM; the browser part (stream, data, drawing) is live.mjs, which re-exports all of this.
  */
 import { normalizePlayer, playerMetrics, shownValue } from "./player-metrics.mjs?v=20261022-wpc1";
-import { infDial } from "./tractor.mjs?v=20261024-trac1";
+import { infDial } from "./tractor.mjs?v=20261024-veh1";
 import { infantryShares } from "./infantry.mjs?v=20261023-short1";
 
 export const FEED_MAX = 6; // victim lines below the centre (owner t575u: "back to 6 lines"; t563u had 3)

@@ -36,7 +36,7 @@ export function infDial(inf, M) {
 }
 
 /* ---------- main site (owner t591u–t593u): a static 🚜 name mark (auto-marks.mjs, next to 🪦), no fill / glow / animation ---------- */
-export const TRACTOR_HINT = "🚜 Tractor mark: plays mostly in vehicles.\nInfantry share below the median ({m}%).\nJust a label: no score is changed.";
+export const TRACTOR_HINT = "🚜 Vehicle mark: plays mostly in vehicles.\nInfantry share below the median ({m}%).\nJust a label: no score is changed.";
 /** 2-line hover for the 🚜 (all 9 languages: i18n "inf.tractor"); M = the data's median infantry %. */
 export function tractorHint(M) {
   return tr("inf.tractor", TRACTOR_HINT, { m: typeof M === "number" && Number.isFinite(M) ? M.toFixed(1) : "?" });

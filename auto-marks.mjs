@@ -26,7 +26,7 @@ import { HUT_MARK_MIN } from "./hut.mjs?v=20261023-short1";
 import { fmtSigned } from "./trait-tips.mjs?v=20261024-crowd1";
 import { flairsFor } from "./flairs.mjs?v=20261010-sav1";
 import { t as tr, currentLang } from "./i18n.mjs";
-import { isTractor, tractorHint, TRACTOR_EMOJI } from "./tractor.mjs?v=20261024-trac1";
+import { isTractor, tractorHint, TRACTOR_EMOJI } from "./tractor.mjs?v=20261024-veh1";
 
 export const ZERG_MARK = "🪳";
 export const NBD_MARK = "🐣";
