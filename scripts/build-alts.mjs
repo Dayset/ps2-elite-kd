@@ -157,14 +157,20 @@ function sharedWeapons(a, b) {
   return jaccard(wa.filter(keep), wb.filter(keep));
 }
 const nameOf = (s) => { const r = rowBySlug.get(s); return r ? r[I.name] : (pf(s)?.player?.display || s); };
-// Owner t601/t602: known alts that sometimes ran on a second PC at the same time.
-// Their overlapping stretches are left out of CALIBRATION only (scores shown use all data).
+// Owner t601/t602/t604: known alts that sometimes ran on a second PC at the same time.
+// fam.secondPc keys: a character slug (its overlaps with anyone in its family) or a family
+// name (every overlap between two members of that family). Those overlapping sessions are
+// left out of CALIBRATION and family linking only; the pair rows shown use all data.
+const famOf = new Map();
+for (const [k, set] of Object.entries(fam.families || {})) for (const s of set) famOf.set(s, k);
 const SECOND_PC = new Set(Object.keys(fam.secondPc || {}));
-/** Sessions of a vs b for calibration: a second-PC character loses the sessions that overlap the partner(s). */
-const calibSess = (a, partners) => {
-  const sa = sessOf(a);
-  if (!sa || !SECOND_PC.has(a)) return sa;
-  return dropOverlapping(sa, partners.flatMap((p) => sessOf(p) || []));
+const secondPcPair = (a, b) => famOf.has(a) && famOf.get(a) === famOf.get(b) &&
+  (SECOND_PC.has(famOf.get(a)) || SECOND_PC.has(a) || SECOND_PC.has(b));
+/** Sessions of a pair for calibration: for a known second-PC pair, b loses the sessions that overlap a. */
+const calibPair = (a, b) => {
+  const sa = sessOf(a), sb = sessOf(b);
+  if (!sa || !sb || !secondPcPair(a, b)) return [sa, sb];
+  return [sa, dropOverlapping(sb, sa)];
 };
 /** withFiles=false: no player-file reads (cheap pre-score over thousands of pairs). calib: second-PC stretches dropped. */
 function clues(a, b, withFiles = true, calib = false) {
@@ -173,7 +179,7 @@ function clues(a, b, withFiles = true, calib = false) {
   const outfit = ca && cb && (ca.outfits.length || cb.outfits.length) ? ca.outfits.some((o) => cb.outfits.includes(o))
     : ta && tb ? ta === tb : null;
   return {
-    sess: ca && cb ? sessionClues(calib ? calibSess(a, [b]) : sessOf(a), calib ? calibSess(b, [a]) : sessOf(b)) : null,
+    sess: ca && cb ? sessionClues(...(calib ? calibPair(a, b) : [sessOf(a), sessOf(b)])) : null,
     profile: vecs.has(a) && vecs.has(b) ? profileDistance(vecs.get(a), vecs.get(b), scale) : null,
     weapons: withFiles ? sharedWeapons(a, b) : null,
     name: nameClue(nameOf(a), nameOf(b)),
@@ -298,7 +304,7 @@ const pfMemo = new Map();
 const pairFacts = (a, b, calib = true) => {
   const k = (calib ? "c:" : "") + pairKey(a, b);
   if (!pfMemo.has(k)) {
-    const A = calib ? calibSess(a, [b]) : sessOf(a), B = calib ? calibSess(b, [a]) : sessOf(b);
+    const [A, B] = calib ? calibPair(a, b) : [sessOf(a), sessOf(b)];
     pfMemo.set(k, A && B && A.length && B.length ? sessionClues(A, B, { expand: true }) : null);
   }
   return pfMemo.get(k);
