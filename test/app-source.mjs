@@ -19,6 +19,11 @@ export function appParts() {
   return parts;
 }
 
+/** The one-line wrappers app.js keeps for moved functions ("function x(...a) { return xPart().x(...a); }") are left
+ *  out, so a search for "function x(" finds the real one. */
 export function appSource() {
-  return appParts().map((f) => fs.readFileSync(path.join(root, f), "utf8").replace(/\$\.(?=[A-Za-z_])/g, "")).join("\n");
+  return appParts()
+    .map((f) => fs.readFileSync(path.join(root, f), "utf8").replace(/\$\.(?=[A-Za-z_])/g, ""))
+    .map((t) => t.replace(/^[ \t]*function [A-Za-z0-9_$]+\(\.\.\.a\) \{ return [A-Za-z0-9_$]+\(\)\.[A-Za-z0-9_$]+\(\.\.\.a\); \}\n/gm, ""))
+    .join("\n");
 }
