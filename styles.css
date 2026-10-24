@@ -1689,11 +1689,14 @@ html[data-theme="light"] .progress-modal-backdrop {
   font-variant-numeric: tabular-nums;
 }
 
-/* Dark theme (Dayset 2026-10-19): stats + positions tables sit on the darker
- * panel tone (var(--panel) = #14161a ≈ rgb(20,22,26) in dark) instead of the
- * body's rgb(32,32,32). */
-html:not([data-theme="light"]) .stats-table,
-html:not([data-theme="light"]) .rk-pos-table {
+/* Stats + positions tables sit on the panel tone (var(--panel) = #14161a ≈
+ * rgb(20,22,26) in dark, #e8e1d4 in light) instead of the body's background.
+ * Dark theme (Dayset 2026-10-19) needed it against the body's rgb(32,32,32);
+ * light theme needs it just as much once the page background image shows
+ * (body goes transparent): without it, odd rows are transparent and the
+ * picture shows through them while even rows keep the zebra fill. */
+.stats-table,
+.rk-pos-table {
   background-color: var(--panel);
 }
 
