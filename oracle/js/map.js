@@ -66,8 +66,17 @@ export async function drawMap(a) {
     poi[f] = L && at(L[0], L[1]) === String(f) ? L : c;
   }
   const cen = (f) => poi[f] || ctr(f);
-  const BIG = new Set([2, 3, 4, 11, 12]);
-  const poiDots = Object.keys(geo).filter((f) => !geo[f].wg).map((f) => { const [x, y] = poi[f]; return `<circle cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" r="${(r * (BIG.has(typ[f]) ? 0.55 : 0.32)).toFixed(1)}"/>`; }).join("");
+  // Census facility types: 2 amp station, 3 bio lab, 4 tech plant, 5 large outpost, 11 containment
+  // site, 12 trident (big bases with several points: big dot); 7 warpgate (ring); 9 construction
+  // outpost (square); 14 / 15 / 16 capture the flag (flag); the rest small outposts (small dot).
+  const BIG = new Set([2, 3, 4, 5, 11, 12]), CTF = new Set([14, 15, 16]);
+  const poiDots = Object.keys(geo).map((f) => {
+    const [x, y] = poi[f], t = typ[f], X = x.toFixed(0), Y = y.toFixed(0);
+    if (geo[f].wg || t === 7) return `<circle cx="${X}" cy="${Y}" r="${(r * 0.9).toFixed(1)}" fill="none" stroke="#fff" stroke-width="${(r * 0.3).toFixed(1)}"/><circle cx="${X}" cy="${Y}" r="${(r * 0.35).toFixed(1)}"/>`;
+    if (CTF.has(t)) { const h = r * 1.9, w = r * 1.2; return `<path d="M${(x - w / 2).toFixed(0)} ${(y + h / 2).toFixed(0)}V${(y - h / 2).toFixed(0)}l${w.toFixed(0)} ${(h * 0.22).toFixed(0)}l${(-w).toFixed(0)} ${(h * 0.22).toFixed(0)}"/>`; }
+    if (t === 9) { const a = r * 0.75; return `<rect x="${(x - a / 2).toFixed(0)}" y="${(y - a / 2).toFixed(0)}" width="${a.toFixed(0)}" height="${a.toFixed(0)}" transform="rotate(45 ${X} ${Y})"/>`; }
+    return `<circle cx="${X}" cy="${Y}" r="${(r * (BIG.has(t) ? 0.62 : 0.3)).toFixed(1)}"/>`;
+  }).join("");
   // Commander payload: heat / freezing / lines per base name.
   const info = {};
   const cmd = a.commander || (a.state && a.state.commander);
@@ -118,7 +127,7 @@ export async function drawMap(a) {
       <g class="lbls" text-anchor="middle" fill="#fff" stroke="#0b0c0e" paint-order="stroke" font-weight="600" pointer-events="none">${labels}</g>
     </g></svg>
     ${liveOrders ? `<div class="ordseg" role="group" aria-label="Orders on the map for">Orders for ${FACS.map((f) => `<button type="button" class="${f}${f === S.cmdOn ? " on" : ""}" aria-pressed="${f === S.cmdOn}" data-mapfac="${f}">${f}</button>`).join("")}</div>` : ""}
-    <div class="legend"><span><i class="sw" style="background:var(--vs)"></i>VS</span><span><i class="sw" style="background:var(--nc)"></i>NC</span><span><i class="sw" style="background:var(--tr)"></i>TR</span><span><i class="sw hatch"></i>neutral / unknown</span><span><i class="sw wgs"></i>warpgate</span><span><i class="sw poi"></i>base</span><span class="hint">1 2 3: Commander orders, full text in the AI Commander card · 🔥 hot · 🥶 cut off or almost cut · scroll/pinch to zoom, double-click to reset</span></div>
+    <div class="legend"><span><i class="sw" style="background:var(--vs)"></i>VS</span><span><i class="sw" style="background:var(--nc)"></i>NC</span><span><i class="sw" style="background:var(--tr)"></i>TR</span><span><i class="sw hatch"></i>neutral / unknown</span><span><i class="sw wgs"></i>warpgate</span><span><i class="sw poi"></i>outpost</span><span><i class="sw poi big"></i>big base</span><span>⚑ capture the flag</span><span><i class="sw poi cons"></i>construction</span><span class="hint">1 2 3: Commander orders, full text in the AI Commander card · 🔥 hot · 🥶 cut off or almost cut · scroll/pinch to zoom, double-click to reset</span></div>
     <div class="tip" hidden></div><div class="sheet" hidden role="dialog" aria-label="Base details"></div>`;
   host.querySelectorAll("[data-mapfac]").forEach((b) => b.onclick = () => { S.cmdFac = b.dataset.mapfac; if (S.hooks.rerender) S.hooks.rerender(); });
   const svg = host.querySelector("svg"), tip = host.querySelector(".tip"), sheet = host.querySelector(".sheet");
