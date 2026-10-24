@@ -66,12 +66,10 @@ export function voteListHtml(votes) {
     : v.status === "won" ? `<span class="mvst won">right · +${pts((v.reward || 0) - v.amount)}</span>`
     : v.status === "lost" ? `<span class="mvst lost">wrong · −${pts(v.amount)}</span>`
     : `<span class="mvst void">given back</span>`);
-  return `<table class="vlist"><thead><tr><th>When</th><th>Alert</th><th>Vote</th><th>Odds then</th><th>Result</th></tr></thead><tbody>${vs.map((v) => `<tr class="${esc(v.status)}">
-    <td>${esc(when(v.placed_ts))}<div class="note">${Math.round((v.progress || 0) * 100)}% into the alert</div></td>
-    <td>${esc(alertName(v.key))}</td>
-    <td><span class="${esc(v.outcome)}">${esc(v.outcome)}</span> ${pts(v.amount)}</td>
-    <td>${esc(v.pct)}%</td>
-    <td>${res(v)}</td></tr>`).join("")}</tbody></table>`;
+  // Two short lines per vote, no table (phones).
+  return `<div class="vlist">${vs.map((v) => `<div class="vrow ${esc(v.status)}">
+    <div><b>${esc(when(v.placed_ts))}</b> · ${esc(alertName(v.key))} <span class="note">${Math.round((v.progress || 0) * 100)}% into the alert</span></div>
+    <div><span class="${esc(v.outcome)}">${esc(v.outcome)}</span> ${pts(v.amount)} <span class="note">at ${esc(v.pct)}%</span> · ${res(v)}</div></div>`).join("")}</div>`;
 }
 
 /** Compact card: balance, net gain, last 10 settled votes (one line each). */

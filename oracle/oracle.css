@@ -332,7 +332,6 @@ footer { color: var(--dim); font-size: var(--fs-12); margin-top: var(--s-5); }
 /* 🗳️ All my votes (owner 2026-10-24) */
 .vote details.mylist { margin-top: 8px; }
 .vote details.mylist > summary { cursor: pointer; }
-.vote table.vlist { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 6px; display: block; overflow-x: auto; }
-.vote table.vlist th, .vote table.vlist td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--border); white-space: nowrap; vertical-align: top; }
-.vote table.vlist th { color: var(--muted, #9aa3ad); font-weight: 600; }
-.vote table.vlist .mvst.won { color: #5ac878; } .vote table.vlist .mvst.lost { color: #ff7a7a; } .vote table.vlist .mvst.open { color: #ffd54a; }
+.vote .vlist { margin-top: 6px; font-size: 13px; }
+.vote .vrow { padding: 5px 0; border-bottom: 1px solid var(--border); }
+.vote .vrow .mvst.won { color: #5ac878; } .vote .vrow .mvst.lost { color: #ff7a7a; } .vote .vrow .mvst.open { color: #ffd54a; }

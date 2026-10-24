@@ -9,7 +9,8 @@ test("every vote is listed with its moment, odds and result", () => {
     { key: "10-6-46374", outcome: "VS", amount: 25, potential: 80, pct: 30, progress: 0.5, placed_ts: 1792780000, status: "lost", reward: 0 },
     { key: "1-2-49351", outcome: "VS", amount: 100, potential: 210, pct: 48, progress: 0.1, placed_ts: 1792700000, status: "won", reward: 210 },
   ]);
-  assert.equal((h.match(/<tr class=/g) || []).length, 3);
+  assert.equal((h.match(/class="vrow /g) || []).length, 3);
+  assert.doesNotMatch(h, /<table/, "no table (phones)");
   assert.match(h, /Wainwright · Hossin/);
   assert.match(h, /26% into the alert/);
   assert.match(h, /45\.4%/);
