@@ -32,7 +32,9 @@ function stub() {
   const row = { name: "Cairn Station", vs: "NC", win_drop: 22.3, p_loss: 0.11, ev: 1.5, priority: 100, heat: 0, pred_heat: 0, freezing: false, cut_off: false,
     hold_factor: 1, resistance: null, median_hold_min: null, cuts: 4, cut_names: ["Hurakan", "Hurakan Secure Storage", "Hurakan Western Pass"] };
   const fac = (f) => ({ win_pct: st.win[f].pct, terr_pct: 33, war_shape: "two-front", eliminated: false, defend: [row], attack: [], kingmaker: [] });
-  alert.commander = { t: 30, leader: "VS", factions: { VS: fac("VS"), NC: fac("NC"), TR: fac("TR") }, fight_up: { deviation: false, text: "" },
+  const vs = fac("VS");
+  vs.kingmaker = [{ text: "KM big swing", my_swing: 12 }, { text: "KM small swing", my_swing: -3 }];
+  alert.commander = { t: 30, leader: "VS", factions: { VS: vs, NC: fac("NC"), TR: fac("TR") }, fight_up: { deviation: false, text: "" },
     focus: { VS: { focus: { kind: "hold", bases: ["Cairn Station"], target: "NC", p: 0.11, cuts: ["Hurakan"], reconnects: [], now: 50, then: 40, text: "Hold Cairn Station against NC — losing it cuts off 1 of ours (Hurakan)" }, backups: [], quiet: false } } };
   alert.commander_ts = now - 10;
   return {
@@ -83,6 +85,14 @@ describe("oracle page smoke test (#28)", { skip }, () => {
         const cutMark = await page.$$eval(".cmd span[title^='losing it cuts off']", (xs) => xs.map((x) => [x.textContent, x.title]));
         assert.ok(cutMark.length >= 1, "✂️ on a defend row");
         assert.deepEqual(cutMark[0], ["✂️4", "losing it cuts off 4 of ours: Hurakan, Hurakan Secure Storage, Hurakan Western Pass +1"]);
+        // Focus shows the change (owner 2026-10-24), no P-numbers, kingmaker split by size vs the focus (10 %).
+        const vsCard = await page.$eval(".cf h3.VS", (h) => h.parentElement.innerHTML);
+        assert.match(vsCard, /\(−10\.0%\)/);
+        assert.doesNotMatch(vsCard, /P100/);
+        const outside = await page.$eval(".cf h3.VS", (h) => [...h.parentElement.children].filter((e) => e.tagName === "UL").map((e) => e.textContent).join("|"));
+        assert.match(outside, /KM big swing/);
+        assert.doesNotMatch(outside, /KM small swing/);
+        assert.match(vsCard, /KM small swing/, "small one still listed, inside All moves");
         const over = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
         assert.ok(over <= 0, `horizontal scroll of ${over}px`);
       } finally {
