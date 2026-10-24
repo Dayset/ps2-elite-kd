@@ -35,6 +35,7 @@ import {
   bandReliability,
 } from "./math.mjs?v=20261010-sav1";
 import { formatClock, fmtNum, slugKey, bareName, parseNames, namesEqualIgnoreCase, namesSetKey, niceLinTicks, niceNum, niceLogTicks, formatTick, escapeHtml, makeAbortError, isAbortError, checkAborted, readJsonLS, writeJsonLS } from "./app-util.mjs?v=20261024-split1";
+import { createTheme } from "./theme.mjs?v=20261024-split2";
 import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261010-sav1";
 import GHOST_MODEL from "./data/ghost-model.mjs?v=20261010-sav1";
 import { t as tr, ready as i18nReady } from "./i18n.mjs";
@@ -188,8 +189,24 @@ import {
   // Current name chips (analyzed or not) so a refresh keeps the selection.
   const LS_PENDING = roomLsKey("ps2-elite-kd-pending-names", ROOM);
   const LS_THEME = "ps2-elite-kd-theme";
-  /** 🖼️ PC page background image: "0" = off (hidden); anything else = on (default). */
-  const LS_BG_IMAGE = "ps2-elite-kd-bg-image";
+  // #66: the theme and background-image switches moved to theme.mjs unchanged. These wrappers keep the old names; the part is created on
+  // first use and reads this file's state through live getters (and setters where it changes it).
+  var _createTheme;
+  function themePart() {
+    return _createTheme || (_createTheme = createTheme({
+      get drawChart() { return drawChart; },
+      get els() { return els; },
+      get LS_THEME() { return LS_THEME; },
+      get players() { return players; },
+    }));
+  }
+  function getStoredTheme(...a) { return themePart().getStoredTheme(...a); }
+  function applyTheme(...a) { return themePart().applyTheme(...a); }
+  function toggleTheme(...a) { return themePart().toggleTheme(...a); }
+  function getStoredBgImage(...a) { return themePart().getStoredBgImage(...a); }
+  function applyBgImage(...a) { return themePart().applyBgImage(...a); }
+  function toggleBgImage(...a) { return themePart().toggleBgImage(...a); }
+  function chartTheme(...a) { return themePart().chartTheme(...a); }
   /** "1" = show older debug columns in the Adjusted table (footer checkbox). */
   const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";
   /** "1" = hide adjusted-iVi ≤ 0 players from the Rankings table browse (footer checkbox). */
@@ -768,98 +785,13 @@ import {
     startProgressTick();
   }
 
-  /* ---------- theme (dark / creamy light) ---------- */
+  /* ---------- theme (dark / creamy light): theme.mjs ---------- */
 
-  function getStoredTheme() {
-    try {
-      const t = localStorage.getItem(LS_THEME);
-      return t === "light" || t === "dark" ? t : "dark";
-    } catch {
-      return "dark";
-    }
-  }
 
-  function applyTheme(theme, { redraw = true } = {}) {
-    const mode = theme === "light" ? "light" : "dark";
-    document.documentElement.setAttribute("data-theme", mode);
-    try {
-      localStorage.setItem(LS_THEME, mode);
-    } catch {
-      /* private mode */
-    }
-    if (els.themeToggle) {
-      if (mode === "light") {
-        els.themeToggle.textContent = "🌙";
-        els.themeToggle.title = tr("theme.toDark", "Switch to dark theme");
-        els.themeToggle.setAttribute("aria-label", tr("theme.toDark", "Switch to dark theme"));
-      } else {
-        els.themeToggle.textContent = "☀️";
-        els.themeToggle.title = tr("theme.toLight", "Switch to light theme");
-        els.themeToggle.setAttribute("aria-label", tr("theme.toLight", "Switch to light theme"));
-      }
-    }
-    if (redraw && players.length) drawChart(players);
-  }
 
-  function toggleTheme() {
-    const next = getStoredTheme() === "light" ? "dark" : "light";
-    applyTheme(next);
-  }
 
-  /** 🖼️ PC page background image: on by default, toggleable, remembered. */
-  function getStoredBgImage() {
-    try {
-      return localStorage.getItem(LS_BG_IMAGE) !== "0";
-    } catch {
-      return true;
-    }
-  }
 
-  function applyBgImage(on) {
-    document.documentElement.classList.toggle("no-bg-image", !on);
-    try {
-      localStorage.setItem(LS_BG_IMAGE, on ? "1" : "0");
-    } catch {
-      /* private mode */
-    }
-    if (els.bgToggleBtn) {
-      els.bgToggleBtn.classList.toggle("off", !on);
-      const label = on ? tr("bg.on", "Background image on — click to hide") : tr("bg.off", "Background image off — click to show");
-      els.bgToggleBtn.title = label;
-      els.bgToggleBtn.setAttribute("aria-label", label);
-    }
-  }
 
-  function toggleBgImage() {
-    applyBgImage(!getStoredBgImage());
-  }
-
-  /** Chart chrome colors for current theme (series colours: seriesColor()). */
-  function chartTheme() {
-    const light = document.documentElement.getAttribute("data-theme") === "light";
-    if (light) {
-      return {
-        bg: "#e8e1d4",
-        grid: "#d0c8ba",
-        text: "#1c1914",
-        muted: "#6e675c",
-        border: "#c9bfb0",
-        dash: "#6e675c",
-        markerStroke: "#e8e1d4",
-        bandOpacity: 0.12,
-      };
-    }
-    return {
-      bg: "#14161a",
-      grid: "#2a2e36",
-      text: "#f2f0ea",
-      muted: "#8a8882",
-      border: "#2a2e36",
-      dash: "#e0ddd6",
-      markerStroke: "#0b0c0e",
-      bandOpacity: 0.06,
-    };
-  }
 
 
 
