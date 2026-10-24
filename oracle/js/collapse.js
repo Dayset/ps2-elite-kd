@@ -2,12 +2,14 @@
 // chevron; open/closed is remembered per section in localStorage. Default: open.
 // Cards are re-rendered often (and vote.js renders its own), so enhance() is
 // idempotent and re-run after every render and on #voteSlot mutations.
+import { t as tr } from "../../i18n.mjs";
 const KEY = "ps2oracle_collapsed";
 let closed;
 try { closed = new Set(JSON.parse(localStorage.getItem(KEY) || "[]")); } catch { closed = new Set(); }
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify([...closed])); } catch { /* private mode */ } };
 // Section id from the heading's first text ("AI Commander", "Players", …), ignoring live counters.
 const idOf = (h2) => {
+  if (h2.dataset.sec) return h2.dataset.sec;   // #73: headings are translated, ids stay English
   const t = [...h2.childNodes].find((n) => n.nodeType === 3 && n.textContent.trim());
   return (t ? t.textContent : h2.textContent).split("·")[0].trim().toLowerCase().replace(/[^a-z]+/g, "-").replace(/^-|-$/g, "");
 };
@@ -33,14 +35,14 @@ const SUMMARIZERS = {
     const scope = card.querySelector(".cf.on") || card;
     // Focus first: the one move the commander wants (focus.js).
     const fo = scope.querySelector(".focus:not(.quiet)");
-    if (fo) return `${(fo.querySelector(".fhead") || fo).textContent.replace(/All forces:\s*/, "").replace(/\s+/g, " ").trim()} · ${(fo.querySelector(".fodds") || {}).textContent || ""}`.trim();
+    if (fo) return `${(fo.querySelector(".fhead") || fo).textContent.replace(tr("or.c.allForces", "All forces:"), "").replace(/\s+/g, " ").trim()} · ${(fo.querySelector(".fodds") || {}).textContent || ""}`.trim();
     let atk = "", def = "";
     scope.querySelectorAll(".note").forEach((n) => {
       const ol = n.nextElementSibling;
       if (!ol || ol.tagName !== "OL" || !ol.firstElementChild) return;
       const line = ol.firstElementChild.textContent.replace(/\s+/g, " ").trim();
-      if (/Attack/.test(n.textContent)) atk = line;
-      else if (/Defend/.test(n.textContent)) def = line;
+      if (/⚔️/.test(n.textContent)) atk = line;
+      else if (/🛡️/.test(n.textContent)) def = line;
     });
     return [def && `🛡️ ${def}`, atk && `⚔️ ${atk}`].filter(Boolean).join(" · ");
   },
@@ -51,7 +53,7 @@ function fillSummary(card, h2) {
   if (!fn) { sum?.remove(); return; }
   if (!sum) {
     sum = document.createElement("button");
-    sum.type = "button"; sum.className = "ch-sum"; sum.title = "Click to copy";
+    sum.type = "button"; sum.className = "ch-sum"; sum.title = tr("or.copy", "Click to copy");
     sum.addEventListener("click", (e) => { e.stopPropagation(); copySummary(sum); });
     h2.append(sum);
   }
@@ -66,7 +68,7 @@ function copySummary(sum) {
   if (!line) return;
   const done = () => {
     sum.dataset.flash = "1";
-    sum.textContent = "Copied ✓";
+    sum.textContent = tr("or.copied", "Copied ✓");
     setTimeout(() => { sum.dataset.flash = ""; sum.textContent = sum.dataset.full || ""; }, 900);
   };
   const fallback = () => {
@@ -115,6 +117,6 @@ export function enhance(root = document) {
 function set(card, btn, isClosed, animate) {
   card.classList.toggle("collapsed", isClosed);
   btn.setAttribute("aria-expanded", String(!isClosed));
-  btn.title = isClosed ? "Show this section" : "Hide this section";
+  btn.title = isClosed ? tr("or.show", "Show this section") : tr("or.hide", "Hide this section");
   if (animate && !isClosed) { card.classList.remove("opening"); void card.offsetWidth; card.classList.add("opening"); }
 }

@@ -11,6 +11,8 @@
  *               "oracle:auth"  {detail: character|null} (signed in / out)
  * Renders into <section id="voteSlot">. Uses localStorage "ps2oracle_token".
  */
+import { t as tr, ready } from "../../i18n.mjs";
+await ready;   // #73: DISCLAIMER below is built once, in the page language
 const API = new URLSearchParams(typeof location !== "undefined" ? location.search : "").get("api") || "https://ps2-oracle.dayset.workers.dev";
 const FACS = ["VS", "NC", "TR"];
 const AMOUNTS = [25, 50, 100, 200];
@@ -19,16 +21,16 @@ const token = () => { try { return localStorage.getItem("ps2oracle_token"); } ca
 const pts = (x) => (Math.round(x * 100) / 100).toLocaleString(undefined, { maximumFractionDigits: 2 });
 
 /** Grayed placeholder between alerts so users see voting exists. */
-const voteIdleHtml = () => `<div class="card vote idle"><h2>🎲 Vote for the winner</h2><div class="note">No live alert — voting opens when the next one starts.</div>${DISCLAIMER}</div>`;
+const voteIdleHtml = () => `<div class="card vote idle"><h2 data-sec="vote-for-the-winner">${tr("or.h.vote", "🎲 Vote for the winner")}</h2><div class="note">${tr("or.voteIdle", "No live alert — voting opens when the next one starts.")}</div>${DISCLAIMER}</div>`;
 
 /** Shown on every voting card: short line + expandable fair-play rules. */
-export const DISCLAIMER = `<details class="fair"><summary>BonusCheques are a meme currency: no cash value, nothing is ever paid out. <b>Fair play rules</b></summary>
+export const DISCLAIMER = `<details class="fair"><summary>${tr("or.fair.sum", "BonusCheques are a meme currency: no cash value, nothing is ever paid out.")} <b>${tr("or.fair.rules", "Fair play rules")}</b></summary>
   <ul>
-    <li>BonusCheques can't be bought, sold, traded or cashed out, and you can't win anything of value. Everyone starts with 1,000; you get +25 a day, and a little more if you run dry.</li>
-    <li>Voting is here to get you into the game: back your faction, then log in and help it win.</li>
-    <li>You can vote for any faction.</li>
-    <li>Signing in needs an in-game logout of your character. That proves the character is yours; we never ask for a password or email. We keep your character, a sign-in token, your BonusCheques and votes (<a href="../privacy.html">privacy</a>).</li>
-    <li>Fair play only. Riggers, alert throwers and cheaters aren't welcome, and their votes and leaderboard spots can be removed.</li>
+    <li>${tr("or.fair.1", "BonusCheques can't be bought, sold, traded or cashed out, and you can't win anything of value. Everyone starts with 1,000; you get +25 a day, and a little more if you run dry.")}</li>
+    <li>${tr("or.fair.2", "Voting is here to get you into the game: back your faction, then log in and help it win.")}</li>
+    <li>${tr("or.fair.3", "You can vote for any faction.")}</li>
+    <li>${tr("or.fair.4", "Signing in needs an in-game logout of your character. That proves the character is yours; we never ask for a password or email. We keep your character, a sign-in token, your BonusCheques and votes ({privacy}).", { privacy: `<a href="../privacy.html">${tr("or.fair.privacy", "privacy")}</a>` })}</li>
+    <li>${tr("or.fair.5", "Fair play only. Riggers, alert throwers and cheaters aren't welcome, and their votes and leaderboard spots can be removed.")}</li>
   </ul></details>`;
 
 let alert = null, me = null, wallet = null, quotes = null, pick = null, amount = 50, busy = false, msg = "";
@@ -51,7 +53,7 @@ export function alertName(key) {
   return `${WORLD_NAMES[w] || "World " + w} · ${ZONE_NAMES[z & 0xffff] || "Zone " + z}`;
 }
 const signed = (x) => `${x > 0 ? "+" : x < 0 ? "−" : ""}${pts(Math.abs(x))}`;
-const STATUS = { won: "right", lost: "wrong", void: "given back" };
+const STATUS = { won: tr("or.v.right", "right"), lost: tr("or.v.wrong", "wrong"), void: tr("or.v.back", "given back") };
 
 /**
  * Every vote of the signed-in player (newest first, up to 50 from /vote/me): when it was
@@ -60,16 +62,16 @@ const STATUS = { won: "right", lost: "wrong", void: "given back" };
  */
 export function voteListHtml(votes) {
   const vs = votes || [];
-  if (!vs.length) return `<div class="note">No votes yet.</div>`;
+  if (!vs.length) return `<div class="note">${tr("or.v.none", "No votes yet.")}</div>`;
   const when = (ts) => new Date(ts * 1000).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
-  const res = (v) => (v.status === "open" ? `<span class="mvst open">open · ${pts(v.potential)} if right</span>`
-    : v.status === "won" ? `<span class="mvst won">right · +${pts((v.reward || 0) - v.amount)}</span>`
-    : v.status === "lost" ? `<span class="mvst lost">wrong · −${pts(v.amount)}</span>`
-    : `<span class="mvst void">given back</span>`);
+  const res = (v) => (v.status === "open" ? `<span class="mvst open">${tr("or.v.open", "open · {n} if right", { n: pts(v.potential) })}</span>`
+    : v.status === "won" ? `<span class="mvst won">${STATUS.won} · +${pts((v.reward || 0) - v.amount)}</span>`
+    : v.status === "lost" ? `<span class="mvst lost">${STATUS.lost} · −${pts(v.amount)}</span>`
+    : `<span class="mvst void">${STATUS.void}</span>`);
   // Two short lines per vote, no table (phones).
   return `<div class="vlist">${vs.map((v) => `<div class="vrow ${esc(v.status)}">
-    <div><b>${esc(when(v.placed_ts))}</b> · ${esc(alertName(v.key))} <span class="note">${Math.round((v.progress || 0) * 100)}% into the alert</span></div>
-    <div><span class="${esc(v.outcome)}">${esc(v.outcome)}</span> ${pts(v.amount)} <span class="note">at ${esc(v.pct)}%</span> · ${res(v)}</div></div>`).join("")}</div>`;
+    <div><b>${esc(when(v.placed_ts))}</b> · ${esc(alertName(v.key))} <span class="note">${tr("or.v.into", "{p}% into the alert", { p: Math.round((v.progress || 0) * 100) })}</span></div>
+    <div><span class="${esc(v.outcome)}">${esc(v.outcome)}</span> ${pts(v.amount)} <span class="note">${tr("or.v.at", "at {p}%", { p: esc(v.pct) })}</span> · ${res(v)}</div></div>`).join("")}</div>`;
 }
 
 /** Compact card: balance, net gain, last 10 settled votes (one line each). */
@@ -79,10 +81,10 @@ export function myVotesHtml(w) {
   const rows = settled.map((v) => `<div class="mvrow ${esc(v.status)}"><span class="mvname">${esc(alertName(v.key))}</span>
       <span class="${esc(v.outcome)}">${esc(v.outcome)}</span> <span class="mvnum">${pts(v.amount)} → ${pts(v.reward || 0)}</span>
       <span class="mvst">${esc(STATUS[v.status] || v.status)}</span></div>`).join("");
-  return `<div class="card vote myvotescard"><h2>🗳️ My votes</h2>
-    <div class="votebar"><span>BonusCheques <b>${pts(w.balance)}</b></span><span>Net <b class="${w.gain > 0 ? "won" : w.gain < 0 ? "lost" : ""}">${signed(w.gain || 0)}</b></span></div>
-    ${rows ? `<div class="mvrows">${rows}</div>` : `<div class="note">No finished votes yet. Votes are counted when their alert ends.</div>`}
-    ${(w.votes || []).length ? `<details class="mylist"><summary>🗳️ All my votes (${w.votes.length})</summary>${voteListHtml(w.votes)}</details>` : ""}
+  return `<div class="card vote myvotescard"><h2 data-sec="my-votes">${tr("or.h.myVotes", "🗳️ My votes")}</h2>
+    <div class="votebar"><span>BonusCheques <b>${pts(w.balance)}</b></span><span>${tr("or.v.net", "Net")} <b class="${w.gain > 0 ? "won" : w.gain < 0 ? "lost" : ""}">${signed(w.gain || 0)}</b></span></div>
+    ${rows ? `<div class="mvrows">${rows}</div>` : `<div class="note">${tr("or.v.noneDone", "No finished votes yet. Votes are counted when their alert ends.")}</div>`}
+    ${(w.votes || []).length ? `<details class="mylist"><summary>${tr("or.v.all", "🗳️ All my votes ({n})", { n: w.votes.length })}</summary>${voteListHtml(w.votes)}</details>` : ""}
     ${DISCLAIMER}
   </div>`;
 }
@@ -121,9 +123,9 @@ function render() {
   const ownOnly = q && q.own_faction_only && FACS.includes(own);
   if (pick && ownOnly && pick !== own) pick = null;
   if (!pick && ownOnly) pick = own;
-  const head = `<h2>🎲 Vote for the winner</h2>`;
+  const head = `<h2 data-sec="vote-for-the-winner">${tr("or.h.vote", "🎲 Vote for the winner")}</h2>`;
   if (!q || !q.open) {
-    el.innerHTML = `<div class="card vote idle">${head}<div class="note">${q && q.reason === "closed" ? "Voting closed for this alert (last 5%)." : q && q.reason === "data_suspect" ? "Voting paused: Census map data looks broken right now. It reopens when the map is healthy again." : "Voting opens when fresh odds are available."}</div>${DISCLAIMER}</div>`;
+    el.innerHTML = `<div class="card vote idle">${head}<div class="note">${q && q.reason === "closed" ? tr("or.v.closedLast", "Voting closed for this alert (last 5%).") : q && q.reason === "data_suspect" ? tr("or.v.paused", "Voting paused: Census map data looks broken right now. It reopens when the map is healthy again.") : tr("or.v.opensFresh", "Voting opens when fresh odds are available.")}</div>${DISCLAIMER}</div>`;
     return;
   }
   const facBtn = (f) => {
@@ -132,24 +134,24 @@ function render() {
       <b>${f}</b><span>${q.pcts[f]}%</span></button>`;
   };
   const sel = pick && q.quotes[pick] && q.quotes[pick][amount];
-  const feeNote = (f) => (q.fee_rate[f] ? ` · late fee ${Math.round(q.fee_rate[f] * 100)}%` : "");
+  const feeNote = (f) => (q.fee_rate[f] ? tr("or.v.fee", " · late fee {p}%", { p: Math.round(q.fee_rate[f] * 100) }) : "");
   let action;
-  if (!me) action = `<button class="btn" id="voteSignIn">Sign in with your character to vote</button>`;
-  else if (!wallet) action = `<div class="note">Loading your BonusCheques…</div>`;
+  if (!me) action = `<button class="btn" id="voteSignIn">${tr("or.v.signIn", "Sign in with your character to vote")}</button>`;
+  else if (!wallet) action = `<div class="note">${tr("or.v.loadingBC", "Loading your BonusCheques…")}</div>`;
   else action = `<button class="btn big" id="votePlace" ${!sel || busy || wallet.balance < amount ? "disabled" : ""}>
-      ${sel ? `Vote ${pick} with ${amount}` : "Pick a faction"}</button>`;
+      ${sel ? tr("or.v.voteBtn", "Vote {f} with {n}", { f: pick, n: amount }) : tr("or.v.pick", "Pick a faction")}</button>`;
   const mine = wallet ? wallet.votes.filter((v) => v.key === alert.key) : [];
   el.innerHTML = `<div class="card vote">${head}
-    ${wallet ? `<div class="votebar"><span>BonusCheques <b>${pts(wallet.balance)}</b></span>${wallet.bonus_available ? `<button class="link" id="voteBonus">🧻 Claim today's BonusCheque (+25)</button>` : ""}</div>` : ""}
+    ${wallet ? `<div class="votebar"><span>BonusCheques <b>${pts(wallet.balance)}</b></span>${wallet.bonus_available ? `<button class="link" id="voteBonus">${tr("or.v.claim", "🧻 Claim today's BonusCheque (+25)")}</button>` : ""}</div>` : ""}
     <div class="facrow">${FACS.map(facBtn).join("")}</div>
-    ${ownOnly ? `<div class="note">You fly ${esc(own)}: vote for your faction, then go help it win.</div>` : ""}
+    ${ownOnly ? `<div class="note">${tr("or.v.ownOnly", "You fly {f}: vote for your faction, then go help it win.", { f: esc(own) })}</div>` : ""}
     <div class="amounts">${AMOUNTS.map((s) => `<button class="amount ${s === amount ? "on" : ""}" data-s="${s}" aria-pressed="${s === amount}">${s}</button>`).join("")}</div>
-    ${sel ? `<div class="note"><b>${pts(sel.reward)}</b> back if ${pick} wins · your odds ${(sel.odds * 100).toFixed(1)}% (oracle ${sel.pct}%)${feeNote(pick)}</div>` : ""}
+    ${sel ? `<div class="note">${tr("or.v.quote", "{n} back if {f} wins · your odds {p}% (oracle {o}%)", { n: `<b>${pts(sel.reward)}</b>`, f: pick, p: (sel.odds * 100).toFixed(1), o: sel.pct })}${feeNote(pick)}</div>` : ""}
     <div class="row2">${action}</div>
     ${msg ? `<div class="note votemsg">${esc(msg)}</div>` : ""}
-    ${mine.length ? `<div class="myvotes"><div class="note">🎫 Your votes on this alert</div>${mine.map((v) => `<div class="myvote"><span class="${v.outcome}">${v.outcome}</span> ${pts(v.amount)} → ${pts(v.potential)} <span class="note">at ${v.pct}%</span></div>`).join("")}</div>` : ""}
-    ${wallet && wallet.votes.length ? `<details class="mylist"><summary>🗳️ All my votes (${wallet.votes.length})</summary>${voteListHtml(wallet.votes)}</details>` : ""}
-    <details class="lb"><summary>🏆 Top forecasters</summary><div id="voteLb" class="note">Loading…</div></details>
+    ${mine.length ? `<div class="myvotes"><div class="note">${tr("or.v.mine", "🎫 Your votes on this alert")}</div>${mine.map((v) => `<div class="myvote"><span class="${v.outcome}">${v.outcome}</span> ${pts(v.amount)} → ${pts(v.potential)} <span class="note">${tr("or.v.at", "at {p}%", { p: v.pct })}</span></div>`).join("")}</div>` : ""}
+    ${wallet && wallet.votes.length ? `<details class="mylist"><summary>${tr("or.v.all", "🗳️ All my votes ({n})", { n: wallet.votes.length })}</summary>${voteListHtml(wallet.votes)}</details>` : ""}
+    <details class="lb"><summary>${tr("or.v.top", "🏆 Top forecasters")}</summary><div id="voteLb" class="note">${tr("or.loadingDots", "Loading…")}</div></details>
     ${DISCLAIMER}
   </div>`;
   el.querySelectorAll(".facpick").forEach((b) => (b.onclick = () => { pick = b.dataset.f; msg = ""; render(); }));
@@ -157,16 +159,16 @@ function render() {
   const si = el.querySelector("#voteSignIn");
   if (si) si.onclick = () => document.getElementById("signIn") && document.getElementById("signIn").click();
   const bonus = el.querySelector("#voteBonus");
-  if (bonus) bonus.onclick = async () => { const r = await call("/vote/bonus", "POST", {}); msg = r.status === 200 ? "+25 BonusCheques added." : "Already claimed today."; refresh(); };
+  if (bonus) bonus.onclick = async () => { const r = await call("/vote/bonus", "POST", {}); msg = r.status === 200 ? tr("or.v.added", "+25 BonusCheques added.") : tr("or.v.already", "Already claimed today."); refresh(); };
   const place = el.querySelector("#votePlace");
   if (place) place.onclick = async () => {
     busy = true; render();
     const r = await call("/vote/place", "POST", { key: alert.key, outcome: pick, amount, seen_pct: q.pcts[pick] });
     busy = false;
-    msg = r.status === 200 ? `Voted ${pick} with ${amount}: ${pts(r.body.vote.reward)} back if ${pick} wins. Now go help them!`
-      : ({ odds_changed: "The odds moved; check the new odds and try again.", insufficient_balance: "Not enough BonusCheques.", closed: "Voting just closed.",
-        own_faction_only: "You can vote only for your own faction.", odds_stale: "Odds are refreshing; try again in a minute.", decided: "That outcome is already decided.",
-        data_suspect: "Voting is paused while Census map data looks broken." })[r.body.error] || "Couldn't record the vote.";
+    msg = r.status === 200 ? tr("or.v.done", "Voted {f} with {n}: {r} back if {f} wins. Now go help them!", { f: pick, n: amount, r: pts(r.body.vote.reward) })
+      : ({ odds_changed: tr("or.e.moved", "The odds moved; check the new odds and try again."), insufficient_balance: tr("or.e.funds", "Not enough BonusCheques."), closed: tr("or.e.closed", "Voting just closed."),
+        own_faction_only: tr("or.e.own", "You can vote only for your own faction."), odds_stale: tr("or.e.stale", "Odds are refreshing; try again in a minute."), decided: tr("or.e.decided", "That outcome is already decided."),
+        data_suspect: tr("or.e.suspect", "Voting is paused while Census map data looks broken.") })[r.body.error] || tr("or.e.other", "Couldn't record the vote.");
     refresh();
   };
   const lb = el.querySelector("details.lb");
@@ -174,7 +176,7 @@ function render() {
     if (!lb.open) return;
     const r = await call("/vote/leaderboard");
     const rows = (r.body.leaders || []).slice(0, 10);
-    lb.querySelector("#voteLb").innerHTML = rows.length ? rows.map((x, i) => `<div class="myvote">${i + 1}. <span class="${esc(x.faction || "")}">${esc(x.name)}</span> ${signed(x.gain)} <span class="note">(${x.votes} votes)</span></div>`).join("") : "No finished votes yet.";
+    lb.querySelector("#voteLb").innerHTML = rows.length ? rows.map((x, i) => `<div class="myvote">${i + 1}. <span class="${esc(x.faction || "")}">${esc(x.name)}</span> ${signed(x.gain)} <span class="note">${tr("or.v.nVotes", "({n} votes)", { n: x.votes })}</span></div>`).join("") : tr("or.v.noneDone1", "No finished votes yet.");
   };
 }
 

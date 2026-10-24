@@ -1,15 +1,18 @@
 // PS2MapOracle dashboard — split from index.html (#15). No behaviour change.
 import { S, FACS, COLOR, esc, $, stars, mins, bar, pct1, det, info, wide, syncDetails, PHONE_MQ } from "./state.js?v=20261018-scrub2";
 import { get } from "./api.js?v=20261018-scrub2";
-import { drawMap, highlightBase, recolorMap } from "./map.js?v=20261024-pk1";
-import { chart, chartHover } from "./chart.js?v=20261018-scrub2";
-import { lockCard, lockTick } from "./lock.js?v=20261018-scrub2";
-import { commander, commanderIdle } from "./commander.js?v=20261024-vc1";
-import { voiceToggle, voiceTick, setVoice } from "./voice.js?v=20261024-vc1";
-import { reportPanel } from "./players.js?v=20261018-scrub2";
-import { benchPanel, initResults, refreshHistory, renderHist } from "./results.js?v=20261024-hist1";
-import { initAuth } from "./auth.js?v=20261023-anyfac1";
-import { enhance, onSectionExpand, refreshSummary } from "./collapse.js?v=20261018-focus1";
+import { drawMap, highlightBase, recolorMap } from "./map.js?v=20261024-i18n1";
+import { chart, chartHover } from "./chart.js?v=20261024-i18n1";
+import { lockCard, lockTick } from "./lock.js?v=20261024-i18n1";
+import { commander, commanderIdle } from "./commander.js?v=20261024-i18n1";
+import { voiceToggle, voiceTick, setVoice } from "./voice.js?v=20261024-i18n1";
+import { reportPanel } from "./players.js?v=20261024-i18n1";
+import { benchPanel, initResults, refreshHistory, renderHist } from "./results.js?v=20261024-i18n1";
+import { initAuth } from "./auth.js?v=20261024-i18n1";
+import { enhance, onSectionExpand, refreshSummary } from "./collapse.js?v=20261024-i18n1";
+import { t as tr, ready } from "../../i18n.mjs";
+await ready;   // #73: the language file is in before anything renders
+document.title = tr("or.title", "PS2MapOracle — live PlanetSide 2 alert odds");
 
 // Shareable links: keep ?alert=<key> in the address bar (other params such as ?api= stay).
 function setUrlAlert(key) {
@@ -23,20 +26,26 @@ function setUrlAlert(key) {
 function heldBroken(a) { return a.status === "unresolved" && (a.flags || []).some((f) => f.startsWith("final_corrupt")); }
 
 function statusLabel(a, now) {
-  if (heldBroken(a)) return "held: Census data broken";
-  if (a.status === "live") return `${mins(now - a.start_ts)} / ${a.dur} min`;
-  if (a.status === "settling") return "settling…";
-  if (a.status === "sudden_death") return "sudden death";
-  if (a.status === "settled") return `🏆 won by ${a.winner}`;
+  if (heldBroken(a)) return tr("or.st.held", "held: Census data broken");
+  if (a.status === "live") return tr("or.st.live", "{m} / {d} min", { m: mins(now - a.start_ts), d: a.dur });
+  if (a.status === "settling") return tr("or.st.settling", "settling…");
+  if (a.status === "sudden_death") return tr("or.st.sd", "sudden death");
+  if (a.status === "settled") return tr("or.st.won", "🏆 won by {f}", { f: a.winner });
   return a.status;
 }
+/** Status badge text (#73). */
+function badgeLabel(st) {
+  return ({ live: tr("or.badge.live", "live"), settling: tr("or.badge.settling", "settling"), sudden_death: tr("or.st.sd", "sudden death"),
+    settled: tr("or.badge.settled", "settled"), unresolved: tr("or.badge.unresolved", "unresolved") })[st] || st.replace("_", " ");
+}
+const minLeft = (n) => tr("or.minLeft", "{n} min left", { n });
 
 function renderTabs(now) {
   if (!S.alerts.length) { $("tabs").innerHTML = ""; return; }
   $("tabs").innerHTML = S.alerts.map((a) => {
     const terr = (a.state && a.state.territory) || {};
     return `<button class="tab ${a.key === S.selected ? "on" : ""}" data-k="${esc(a.key)}">
-      <b>${esc(a.world_name)} · ${esc(a.zone_name)}</b><small class="tl0">${esc(statusLabel(a, now))}</small><small class="tl">${esc(a.status === "live" ? `${mins(a.start_ts + a.dur * 60 - now)} min left` : statusLabel(a, now))}</small>
+      <b>${esc(a.world_name)} · ${esc(a.zone_name)}</b><small class="tl0">${esc(statusLabel(a, now))}</small><small class="tl">${esc(a.status === "live" ? minLeft(mins(a.start_ts + a.dur * 60 - now)) : statusLabel(a, now))}</small>
       <div class="bar">${bar(terr)}</div></button>`;
   }).join("");
   const on = $("tabs").querySelector(".tab.on");
@@ -79,8 +88,8 @@ async function scrub(a, k, how) {
   for (const f of frames) { if (f.t <= k.t + 0.5) fr = f; else break; }
   if (tag) {
     tag.hidden = false;
-    tag.innerHTML = fr ? `⏪ Replay · minute ${Math.round(k.t)}${how !== "mouse" ? ' <button type="button" class="more" id="replayBack">Back to now</button>' : ""}`
-      : "No map history for this moment (maps are kept 30 days).";
+    tag.innerHTML = fr ? `${tr("or.replay", "⏪ Replay · minute {n}", { n: Math.round(k.t) })}${how !== "mouse" ? ` <button type="button" class="more" id="replayBack">${tr("or.backNow", "Back to now")}</button>` : ""}`
+      : tr("or.noFrames", "No map history for this moment (maps are kept 30 days).");
     const back = $("replayBack"); if (back) back.onclick = () => scrub(a, null);
   }
   recolorMap(fr ? fr.owners : null);
@@ -138,49 +147,49 @@ function render(now) {
 function render2(now) {
   const liveA = S.alerts.find((x) => x.key === S.selected);
   const a = liveA || (S.pinned && S.extra && S.extra.key === S.selected ? S.extra : null);
-  if (!a && S.pinned && S.selected) { $("main").innerHTML = `<div class="empty">Loading alert…</div>`; return; }
+  if (!a && S.pinned && S.selected) { $("main").innerHTML = `<div class="empty">${tr("or.loadingAlert", "Loading alert…")}</div>`; return; }
   if (!a) {
     $("mini").innerHTML = ""; miniSync();
-    $("main").innerHTML = `<div class="empty">No territory alerts running on Osprey, Wainwright or SolTech right now. Live odds appear here the minute one starts.</div>`;
+    $("main").innerHTML = `<div class="empty">${tr("or.noAlerts", "No territory alerts running on Osprey, Wainwright or SolTech right now. Live odds appear here the minute one starts.")}</div>`;
     return;
   }
   const s = a.state;
   const win = s ? s.win : null;
   const lead = s && s.leader;
-  const left = a.status === "live" ? `${mins(a.start_ts + a.dur * 60 - now)} min left` : statusLabel(a, now);
-  const oddsHtml = win ? FACS.map((f) => `<div class="fac ${f} ${f === lead ? "lead" : ""}"><div class="l">${f}</div><div class="n">${pct1(win[f].pct)}%</div><div class="stars">${stars(win[f].pct)}</div></div>`).join("") : `<div class="note">${a.status === "live" ? "Waiting for the first map snapshot…" : "No live odds were recorded for this alert."}</div>`;
-  const rows = s ? FACS.map((f) => `<div class="row" data-terr="${f}"><span class="lbl ${f}">${f} territory</span><div class="track"><span style="width:${s.territory[f]}%;background:${COLOR[f]}"></span></div><span class="v">${Math.round(s.territory[f])}%</span></div>`).join("") +
+  const left = a.status === "live" ? minLeft(mins(a.start_ts + a.dur * 60 - now)) : statusLabel(a, now);
+  const oddsHtml = win ? FACS.map((f) => `<div class="fac ${f} ${f === lead ? "lead" : ""}"><div class="l">${f}</div><div class="n">${pct1(win[f].pct)}%</div><div class="stars">${stars(win[f].pct)}</div></div>`).join("") : `<div class="note">${a.status === "live" ? tr("or.waitSnap", "Waiting for the first map snapshot…") : tr("or.noOdds", "No live odds were recorded for this alert.")}</div>`;
+  const rows = s ? FACS.map((f) => `<div class="row" data-terr="${f}"><span class="lbl ${f}">${tr("or.terr", "{f} territory", { f })}</span><div class="track"><span style="width:${s.territory[f]}%;background:${COLOR[f]}"></span></div><span class="v">${Math.round(s.territory[f])}%</span></div>`).join("") +
     FACS.map((f) => {
       const base = s.territory[f] || 0, m = s.momentum[f];
       const rel = base >= 1 ? (100 * m / base) : m;
-      return `<div class="row"><span class="lbl ${f}">${f} 15-min</span><span class="note">${rel > 0.05 ? "▲" : rel < -0.05 ? "▼" : "·"}</span><span class="v">${rel >= 0 ? "+" : ""}${rel.toFixed(1)}%</span></div>`;
+      return `<div class="row"><span class="lbl ${f}">${tr("or.mom", "{f} 15-min", { f })}</span><span class="note">${rel > 0.05 ? "▲" : rel < -0.05 ? "▼" : "·"}</span><span class="v">${rel >= 0 ? "+" : ""}${rel.toFixed(1)}%</span></div>`;
     }).join("") : "";
   const popTot = s && s.pop ? FACS.reduce((t, f) => t + (s.pop[f] || 0), 0) : 0;
-  const popRows = popTot ? FACS.map((f) => `<div class="row"><span class="lbl ${f}">${f} players</span><div class="track"><span style="width:${(100 * s.pop[f] / popTot).toFixed(1)}%;background:${COLOR[f]}"></span></div><span class="v">${s.pop[f]}</span></div>`).join("") : "";
+  const popRows = popTot ? FACS.map((f) => `<div class="row"><span class="lbl ${f}">${tr("or.facPlayers", "{f} players", { f })}</span><div class="track"><span style="width:${(100 * s.pop[f] / popTot).toFixed(1)}%;background:${COLOR[f]}"></span></div><span class="v">${s.pop[f]}</span></div>`).join("") : "";
   // Phone: stars + 15-min momentum as one secondary line under the three tiles.
   const oddLine = win && s ? `<div class="oddline">${FACS.map((f) => { const base = s.territory[f] || 0, m = s.momentum[f]; const rel = base >= 1 ? (100 * m / base) : m;
     return `<span class="${f}">${f}</span> <span class="stars">${stars(win[f].pct) || "·"}</span> <span class="note">${rel > 0.05 ? "▲" : rel < -0.05 ? "▼" : "·"}${rel >= 0 ? "+" : ""}${rel.toFixed(1)}%</span>`; }).join(" · ")}</div>` : "";
-  const popAdj = s && s.win_popadj ? `<div class="second">With population weighting: ${FACS.map((f) => `<span class="${f}">${f} ${pct1(s.win_popadj[f].pct)}%</span>`).join(" · ")} <span class="note">(experimental, fades out by minute 60)</span></div>` : "";
-  const kindNote = a.kind === "meltdown" ? `<div class="note">Unstable Meltdown: only the live part of the continent counts${s && s.zone ? ` (${s.zone.active} bases, ${s.zone.share}% of the map)` : ""}. Territory shares are of that zone; odds are kept cautious until more Meltdowns are scored.</div>` : "";
+  const popAdj = s && s.win_popadj ? `<div class="second">${tr("or.popW", "With population weighting:")} ${FACS.map((f) => `<span class="${f}">${f} ${pct1(s.win_popadj[f].pct)}%</span>`).join(" · ")} <span class="note">${tr("or.popWnote", "(experimental, fades out by minute 60)")}</span></div>` : "";
+  const kindNote = a.kind === "meltdown" ? `<div class="note">${tr("or.melt", "Unstable Meltdown: only the live part of the continent counts{zone}. Territory shares are of that zone; odds are kept cautious until more Meltdowns are scored.", { zone: s && s.zone ? tr("or.meltZone", " ({n} bases, {p}% of the map)", { n: s.zone.active, p: s.zone.share }) : "" })}</div>` : "";
   const calls = s && s.calls && s.calls.length ? `<ul class="calls">${s.calls.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>` : "";
-  const second = s && s.second ? `<div class="second">🥈 Second place: ${Object.entries(s.second.odds).map(([f, p]) => `<span class="${f}">${f} ${pct1(p)}%</span>`).join(" · ")} ${s.second.locked ? "(locked)" : ""}</div>` : "";
+  const second = s && s.second ? `<div class="second">${tr("or.second", "🥈 Second place:")} ${Object.entries(s.second.odds).map(([f, p]) => `<span class="${f}">${f} ${pct1(p)}%</span>`).join(" · ")} ${s.second.locked ? tr("or.locked", "(locked)") : ""}</div>` : "";
   const voided = (a.flags || []).includes("votes_void");
   const brokenSum = heldBroken(a) ? ((a.flags || []).find((f) => f.startsWith("final_corrupt")) || "").split(":")[1] : null;
-  const result = heldBroken(a) ? `<div class="note" style="color:var(--warn)">Census sent broken end scores (they add up to ${esc(brokenSum)}%), so there is no result for this alert and every vote on it was given back.</div>` : a.status === "settled" ? `<div class="second">${a.final ? `Census final: ${FACS.map((f) => `<span class="${f}">${f} ${(+a.final[f]).toFixed(1)}</span>`).join(" · ")}` : "Census sent no final scores; decided from our last map snapshot"} — <b class="${a.winner}">${a.winner}</b> wins${a.basis === "sudden_death" ? " (sudden death)" : ""}</div>${voided ? `<div class="note" style="color:var(--warn)">Census map data was broken at the end and disagreed with the result, so every vote on this alert was given back.</div>` : ""}` : "";
+  const result = heldBroken(a) ? `<div class="note" style="color:var(--warn)">${tr("or.brokenEnd", "Census sent broken end scores (they add up to {p}%), so there is no result for this alert and every vote on it was given back.", { p: esc(brokenSum) })}</div>` : a.status === "settled" ? `<div class="second">${a.final ? `${tr("or.final", "Census final:")} ${FACS.map((f) => `<span class="${f}">${f} ${(+a.final[f]).toFixed(1)}</span>`).join(" · ")}` : tr("or.noFinal", "Census sent no final scores; decided from our last map snapshot")} — ${tr("or.wins", "{f} wins", { f: `<b class="${a.winner}">${a.winner}</b>` })}${a.basis === "sudden_death" ? tr("or.sdParen", " (sudden death)") : ""}</div>${voided ? `<div class="note" style="color:var(--warn)">${tr("or.voided", "Census map data was broken at the end and disagreed with the result, so every vote on this alert was given back.")}</div>` : ""}` : "";
   // Cut-off bases don't score in the game; from 80 % of the alert the odds count them for nobody.
   const cutList = s && Array.isArray(s.cut) ? s.cut : [];
-  const cutNote = cutList.length && a.status === "live" ? `<div class="note">✂️ Cut off, not scoring: ${FACS.map((f) => { const n = cutList.filter((c) => c.fac === f); return n.length ? `<span class="${f}">${f} ${n.length}</span> (${esc(n.slice(0, 3).map((c) => c.name).join(", "))}${n.length > 3 ? ` +${n.length - 3}` : ""})` : ""; }).filter(Boolean).join(" · ")}${s.cut_aware ? " · counted in the odds" : ""}</div>` : "";
-  const suspectNote = s && s.suspect && s.suspect.length ? `<div class="note" style="color:var(--warn)">Census map data looks broken right now (${esc(s.suspect.map((x) => x.startsWith("neutral_heavy") ? `only ${x.split(":")[1]}% of bases owned` : x === "map_frozen" ? "map frozen while captures continue" : "no fresh map").join(", "))}). Odds may be wrong and voting is paused.</div>` : "";
+  const cutNote = cutList.length && a.status === "live" ? `<div class="note">${tr("or.cut", "✂️ Cut off, not scoring:")} ${FACS.map((f) => { const n = cutList.filter((c) => c.fac === f); return n.length ? `<span class="${f}">${f} ${n.length}</span> (${esc(n.slice(0, 3).map((c) => c.name).join(", "))}${n.length > 3 ? ` +${n.length - 3}` : ""})` : ""; }).filter(Boolean).join(" · ")}${s.cut_aware ? tr("or.cutAware", " · counted in the odds") : ""}</div>` : "";
+  const suspectNote = s && s.suspect && s.suspect.length ? `<div class="note" style="color:var(--warn)">${tr("or.suspect", "Census map data looks broken right now ({why}). Odds may be wrong and voting is paused.", { why: esc(s.suspect.map((x) => x.startsWith("neutral_heavy") ? tr("or.susNeutral", "only {p}% of bases owned", { p: x.split(":")[1] }) : x === "map_frozen" ? tr("or.susFrozen", "map frozen while captures continue") : tr("or.susStale", "no fresh map")).join(", ")) })}</div>` : "";
   $("main").innerHTML = `
-    <div class="title"><b>${esc(a.world_name)} · ${esc(a.zone_name)}${a.kind === "meltdown" ? " Meltdown" : ""}</b><span class="badge ${a.status}">${esc(a.status.replace("_", " "))}</span><span class="note">${esc(left)} · ${a.dur}-min alert</span>${liveA ? "" : `<button type="button" class="more backlive" id="backLive">← Back to live</button>`}</div>
+    <div class="title"><b>${esc(a.world_name)} · ${esc(a.zone_name)}${a.kind === "meltdown" ? " Meltdown" : ""}</b><span class="badge ${a.status}">${esc(badgeLabel(a.status))}</span><span class="note">${esc(left)} · ${tr("or.durAlert", "{n}-min alert", { n: a.dur })}</span>${liveA ? "" : `<button type="button" class="more backlive" id="backLive">${tr("or.backLive", "← Back to live")}</button>`}</div>
     <div class="grid">
-      <section class="card map"><h2>Map</h2><div id="replayTag" class="replaytag" hidden></div><div id="map"></div></section>
+      <section class="card map"><h2 data-sec="map">${tr("or.h.map", "Map")}</h2><div id="replayTag" class="replaytag" hidden></div><div id="map"></div></section>
       <div class="side">
-      <section class="card win"><h2>Win chance</h2>${kindNote}${suspectNote}${cutNote}<div class="odds" aria-live="polite" aria-atomic="true">${oddsHtml}</div>${oddLine}${result}${second}${rows || popRows ? det("wdet", "Details", `${popAdj}<div class="rows">${rows}${popRows}</div>${popTot ? `<div class="note">Population: Honu (wt.honu.pw), ${popTot} on continent${s.pop_ns ? ` + ${s.pop_ns} NSO` : ""}.</div>` : ""}`, "wdet keep") : ""}${calls}</section>
+      <section class="card win"><h2 data-sec="win-chance">${tr("or.h.win", "Win chance")}</h2>${kindNote}${suspectNote}${cutNote}<div class="odds" aria-live="polite" aria-atomic="true">${oddsHtml}</div>${oddLine}${result}${second}${rows || popRows ? det("wdet", tr("or.details", "Details"), `${popAdj}<div class="rows">${rows}${popRows}</div>${popTot ? `<div class="note">${tr("or.pop", "Population: Honu (wt.honu.pw), {n} on continent{nso}.", { n: popTot, nso: s.pop_ns ? tr("or.popNso", " + {n} NSO", { n: s.pop_ns }) : "" })}</div>` : ""}`, "wdet keep") : ""}${calls}</section>
       <div id="voteHere"></div><div id="lockHere"></div>
       </div>
     </div>
-    <section class="card chart" style="margin-top:14px"><h2>Win chance over time</h2><div id="chart"><div class="sk sk-chart" aria-label="Loading"></div></div></section>
+    <section class="card chart" style="margin-top:14px"><h2 data-sec="win-chance-over-time">${tr("or.h.chart", "Win chance over time")}</h2><div id="chart"><div class="sk sk-chart" aria-label="${tr("or.loading", "Loading")}"></div></div></section>
     ${a.status === "live" ? commander(a.commander || (s && s.commander), a.commander_ts, now, lead) : `${commanderIdle()}${reportPanel(a)}`}
     ${benchPanel(a)}`;
   if ($("backLive")) $("backLive").onclick = backToLive;
@@ -206,7 +215,7 @@ function render2(now) {
   const lh = $("lockHere");
   if (lh) lh.innerHTML = a.status === "live"
     ? `<section class="card lock">${lockCard(a, now)}</section>`
-    : `<section class="card lock idle"><h2>⏱ Live timer</h2><div class="locktimer">--:--</div><div class="note">No live alert — the countdown starts when the next one begins.</div></section>`;
+    : `<section class="card lock idle"><h2 data-sec="live-timer">${tr("or.h.timer", "⏱ Live timer")}</h2><div class="locktimer">--:--</div><div class="note">${tr("or.timerIdle", "No live alert — the countdown starts when the next one begins.")}</div></section>`;
   drawMap(a);
 }
 
@@ -232,16 +241,16 @@ async function refreshLive() {
     if (!S.alerts.find((x) => x.key === S.selected) && !S.pinned) { S.selected = S.alerts.length ? S.alerts[0].key : null; if (S.selected) setUrlAlert(S.selected); }
     const ok = health && health.ok && health.last_ok_age_s !== null && health.last_ok_age_s < 300;
     $("dot").className = "dot " + (ok ? "ok" : "bad");
-    $("statusText").textContent = ok ? `live · updated ${health.last_cycle_age_s}s ago` : "data delayed";
-    banner(ok ? "" : `Live data is ${health && health.last_ok_age_s != null ? Math.round(health.last_ok_age_s / 60) + " min" : "a while"} old — retrying…`, "warn");
+    $("statusText").textContent = ok ? tr("or.updated", "live · updated {n}s ago", { n: health.last_cycle_age_s }) : tr("or.delayed", "data delayed");
+    banner(ok ? "" : health && health.last_ok_age_s != null ? tr("or.staleMin", "Live data is {n} min old — retrying…", { n: Math.round(health.last_ok_age_s / 60) }) : tr("or.stale", "Live data is a while old — retrying…"), "warn");
     pageTitle();
     render(now);
     if (S.selected && S.ticksFor !== S.selected) loadTicks();
   } catch (e) {
     $("dot").className = "dot bad";
-    $("statusText").textContent = "oracle unreachable";
-    banner("The oracle backend is not reachable — retrying…");
-    if (!S.alerts.length) $("main").innerHTML = '<div class="empty">The oracle backend is not reachable right now.</div>';
+    $("statusText").textContent = tr("or.unreach", "oracle unreachable");
+    banner(tr("or.unreachBanner", "The oracle backend is not reachable — retrying…"));
+    if (!S.alerts.length) $("main").innerHTML = `<div class="empty">${tr("or.unreachMain", "The oracle backend is not reachable right now.")}</div>`;
   }
 }
 

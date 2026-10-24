@@ -1,13 +1,14 @@
 // PS2MapOracle dashboard map (split in #15; zoom/pan, lattice, heat markers, base sheet in #19).
 import { S, COLOR, HEXFILE, SLUG, FACS, esc, $ } from "./state.js?v=20261018-scrub2";
 import { asset, names } from "./api.js?v=20261018-scrub2";
+import { t as tr } from "../../i18n.mjs";
 
 export async function drawMap(a) {
   const host = $("map");
   if (!host) return;
-  if (!host.firstChild) host.innerHTML = '<div class="sk sk-map" aria-label="Loading map"></div>';
+  if (!host.firstChild) host.innerHTML = `<div class="sk sk-map" aria-label="${tr("or.m.loading", "Loading map")}"></div>`;
   const hm = await asset(HEXFILE[a.zone]);
-  if (!hm || !hm.hexes || !hm.hexes.length) { host.innerHTML = '<div class="note">No map geometry for this continent.</div>'; return; }
+  if (!hm || !hm.hexes || !hm.hexes.length) { host.innerHTML = `<div class="note">${tr("or.m.noGeo", "No map geometry for this continent.")}</div>`; return; }
   const nm = await names(a.zone);
   const links = (await asset(SLUG[a.zone] + "_links.json")) || [];
   const regs = (await asset(SLUG[a.zone] + "_regions.json")) || [];
@@ -142,7 +143,7 @@ export async function drawMap(a) {
   const wgOutline = Object.values(geo).filter((g) => g.wg).flatMap((g) => g.pts).map((ps) => `<polygon points="${ps}"/>`).join("");
   const pad = r;
   const vb = [x0 - pad, y0 - pad, x1 - x0 + 2 * pad, y1 - y0 + 2 * pad];
-  host.innerHTML = `<svg viewBox="${vb.join(" ")}" role="img" aria-label="${esc(a.zone_name)} territory map">
+  host.innerHTML = `<svg viewBox="${vb.join(" ")}" role="img" aria-label="${tr("or.m.aria", "{z} territory map", { z: esc(a.zone_name) })}">
     <defs><pattern id="hatch" width="${(r * 0.7).toFixed(1)}" height="${(r * 0.7).toFixed(1)}" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="100%" height="100%" fill="var(--neutral)"/><line x1="0" y1="0" x2="0" y2="${(r * 0.7).toFixed(1)}" stroke="#5a5f69" stroke-width="${(r * 0.25).toFixed(1)}"/></pattern></defs>
     <g class="vp">
       <g stroke="#0b0c0e" stroke-width="${(r * 0.12).toFixed(1)}" stroke-linejoin="round">${polys.join("")}</g>
@@ -156,9 +157,9 @@ export async function drawMap(a) {
       <g class="ords" pointer-events="none"></g>
       <g class="lbls" text-anchor="middle" fill="#fff" stroke="#0b0c0e" paint-order="stroke" font-weight="600" pointer-events="none">${labels}</g>
     </g></svg>
-    ${liveOrders ? `<div class="ordseg" role="group" aria-label="Orders on the map for">Orders for ${FACS.map((f) => `<button type="button" class="${f}${f === S.cmdOn ? " on" : ""}" aria-pressed="${f === S.cmdOn}" data-mapfac="${f}">${f}</button>`).join("")}</div>` : ""}
-    <div class="legend"><span><i class="sw" style="background:var(--vs)"></i>VS</span><span><i class="sw" style="background:var(--nc)"></i>NC</span><span><i class="sw" style="background:var(--tr)"></i>TR</span><span><i class="sw hatch"></i>neutral / unknown</span><span><i class="sw wgs"></i>warpgate</span><span><i class="sw poi"></i>outpost</span><span><i class="sw poi big"></i>big base</span><span>⚑ capture the flag</span>${pk.length ? `<span><i class="sw pkring"></i>🥶 pocket chokepoint: hold it</span>` : ""}<span><i class="sw poi cons"></i>construction</span><span class="hint">1 2 3: Commander orders, full text in the AI Commander card · 🔥 hot · 🥶 cut off or almost cut · scroll/pinch to zoom, double-click to reset</span></div>
-    <div class="tip" hidden></div><div class="sheet" hidden role="dialog" aria-label="Base details"></div>`;
+    ${liveOrders ? `<div class="ordseg" role="group" aria-label="${tr("or.m.ordersFor", "Orders for")}">${tr("or.m.ordersFor", "Orders for")} ${FACS.map((f) => `<button type="button" class="${f}${f === S.cmdOn ? " on" : ""}" aria-pressed="${f === S.cmdOn}" data-mapfac="${f}">${f}</button>`).join("")}</div>` : ""}
+    <div class="legend"><span><i class="sw" style="background:var(--vs)"></i>VS</span><span><i class="sw" style="background:var(--nc)"></i>NC</span><span><i class="sw" style="background:var(--tr)"></i>TR</span><span><i class="sw hatch"></i>${tr("or.m.neutral", "neutral / unknown")}</span><span><i class="sw wgs"></i>${tr("or.m.wg", "warpgate")}</span><span><i class="sw poi"></i>${tr("or.m.outpost", "outpost")}</span><span><i class="sw poi big"></i>${tr("or.m.big", "big base")}</span><span>${tr("or.m.ctf", "⚑ capture the flag")}</span>${pk.length ? `<span><i class="sw pkring"></i>${tr("or.m.pocket", "🥶 pocket chokepoint: hold it")}</span>` : ""}<span><i class="sw poi cons"></i>${tr("or.m.cons", "construction")}</span><span class="hint">${tr("or.m.hint", "1 2 3: Commander orders, full text in the AI Commander card · 🔥 hot · 🥶 cut off or almost cut · scroll/pinch to zoom, double-click to reset")}</span></div>
+    <div class="tip" hidden></div><div class="sheet" hidden role="dialog" aria-label="${tr("or.m.details", "Base details")}"></div>`;
   host.querySelectorAll("[data-mapfac]").forEach((b) => b.onclick = () => { S.cmdFac = b.dataset.mapfac; if (S.hooks.rerender) S.hooks.rerender(); });
   const svg = host.querySelector("svg"), tip = host.querySelector(".tip"), sheet = host.querySelector(".sheet");
   cur = { svg, geo, nm, r, owners };
@@ -217,7 +218,7 @@ export async function drawMap(a) {
     const b = baseOf(e);
     if (!b) { tip.hidden = true; return; }
     const o = owners[b.f], h = info[b.n.name] && info[b.n.name].heat;
-    tip.innerHTML = `<b>${esc(b.n.name)}</b>${o ? ` · <span class="${o}">${o}</span>` : " · neutral"}${h ? ` · heat ${h}${h >= 40 ? " 🔥" : ""}` : ""}`;
+    tip.innerHTML = `<b>${esc(b.n.name)}</b>${o ? ` · <span class="${o}">${o}</span>` : ` · ${tr("or.m.neutral1", "neutral")}`}${h ? ` · ${tr("or.m.heat", "heat {n}", { n: h })}${h >= 40 ? " 🔥" : ""}` : ""}`;
     tip.hidden = false;
     const hr = host.getBoundingClientRect();
     tip.style.left = Math.max(4, Math.min(e.clientX - hr.left + 12, hr.width - tip.offsetWidth - 4)) + "px";
@@ -232,9 +233,9 @@ export async function drawMap(a) {
     const o = owners[b.f], x = info[b.n.name];
     const km = cmd && cmd.factions ? FACS.flatMap((f) => ((cmd.factions[f] && cmd.factions[f].kingmaker) || []).filter((k) => k && k.text && k.text.includes(b.n.name)).map((k) => `<span class="${f}">${f}</span> ${esc(k.text)}`)) : [];
     const lines = [...(x ? x.lines : []), ...km];
-    sheet.innerHTML = `<button type="button" class="x" aria-label="Close">✕</button><b>${esc(b.n.name)}</b>
-      <div>${o ? `Owner <span class="${o}">${o}</span>` : "Neutral / unknown"}${x && x.heat ? ` · heat ${x.heat}${x.heat >= 40 ? " 🔥" : ""}` : ""}${x && x.freezing ? (x.cut ? " · 🥶 cut off from the warpgate" : " · 🥶 almost cut (supply chokepoint under attack)") : ""}</div>
-      ${lines.length ? `<ul>${lines.map((l) => `<li>${l}</li>`).join("")}</ul>` : `<div class="note">No AI Commander line mentions this base.</div>`}`;
+    sheet.innerHTML = `<button type="button" class="x" aria-label="${tr("or.close", "Close")}">✕</button><b>${esc(b.n.name)}</b>
+      <div>${o ? tr("or.m.owner", "Owner {f}", { f: `<span class="${o}">${o}</span>` }) : tr("or.m.neutralU", "Neutral / unknown")}${x && x.heat ? ` · ${tr("or.m.heat", "heat {n}", { n: x.heat })}${x.heat >= 40 ? " 🔥" : ""}` : ""}${x && x.freezing ? (x.cut ? ` · ${tr("or.m.cut", "🥶 cut off from the warpgate")}` : ` · ${tr("or.m.almost", "🥶 almost cut (supply chokepoint under attack)")}`) : ""}</div>
+      ${lines.length ? `<ul>${lines.map((l) => `<li>${l}</li>`).join("")}</ul>` : `<div class="note">${tr("or.m.noLine", "No AI Commander line mentions this base.")}</div>`}`;
     sheet.hidden = false; tip.hidden = true;
     sheet.querySelector(".x").onclick = () => { sheet.hidden = true; };
   });

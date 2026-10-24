@@ -175,37 +175,37 @@
 <div class="wrap">
   <header>
     <h1>PS2<span>Map</span>Oracle</h1>
-    <div class="status"><span id="dot" class="dot"></span><span id="statusText">connecting…</span></div>
+    <div class="status"><span id="dot" class="dot"></span><span id="statusText" data-i18n="or.connecting">connecting…</span></div>
     <div class="spacer"></div>
     <div id="who" class="who"></div>
-    <a class="back" href="../">⚔️ Player comparison</a>
+    <a class="back" href="../" data-i18n="or.back">⚔️ Player comparison</a>
   </header>
 
   <dialog id="auth" class="auth">
-    <form method="dialog" class="x"><button aria-label="Close">✕</button></form>
+    <form method="dialog" class="x"><button aria-label="Close" data-i18n-aria-label="or.close">✕</button></form>
     <div id="authBody"></div>
   </dialog>
 
   <div id="banner" class="banner" role="status" aria-live="polite" hidden></div>
   <div id="mini" class="mini" aria-hidden="true"></div>
   <div id="tabs" class="tabs"></div>
-  <div id="main"><div class="grid" aria-busy="true" aria-label="Loading"><section class="card map"><h2>Map</h2><div class="sk sk-map"></div></section><div class="side"><section class="card win"><h2>Win chance</h2><div class="sk sk-odds"></div><div class="sk sk-line"></div><div class="sk sk-line" style="width:70%"></div></section></div></div><section class="card chart" style="margin-top:14px"><h2>Win chance over time</h2><div class="sk sk-chart"></div></section></div>
+  <div id="main"><div class="grid" aria-busy="true" aria-label="Loading" data-i18n-aria-label="or.loading"><section class="card map"><h2 data-sec="map"><span data-i18n="or.h.map">Map</span></h2><div class="sk sk-map"></div></section><div class="side"><section class="card win"><h2 data-sec="win-chance"><span data-i18n="or.h.win">Win chance</span></h2><div class="sk sk-odds"></div><div class="sk sk-line"></div><div class="sk sk-line" style="width:70%"></div></section></div></div><section class="card chart" style="margin-top:14px"><h2 data-sec="win-chance-over-time"><span data-i18n="or.h.chart">Win chance over time</span></h2><div class="sk sk-chart"></div></section></div>
   <!-- Voting panel: filled by js/vote.js (listens for oracle:alert / oracle:auth). render() moves this node into #voteHere. -->
   <section id="voteSlot"></section>
 
   <section class="card" style="margin-top:14px">
-    <h2>Recent results</h2>
+    <h2 data-sec="recent-results"><span data-i18n="or.h.recent">Recent results</span></h2>
     <div id="bench" class="bench"></div>
-    <div class="scroll"><table id="hist" class="cards"><thead><tr><th>Ended</th><th>Server</th><th>Continent</th><th>Length</th><th>Winner</th><th>Final VS / NC / TR</th><th>Basis</th><th>Notes</th></tr></thead><tbody></tbody></table></div>
-    <button id="histMore" class="more" type="button" hidden>Show more</button>
+    <div class="scroll"><table id="hist" class="cards"><thead><tr><th data-i18n="or.t.ended">Ended</th><th data-i18n="or.t.server">Server</th><th data-i18n="or.t.cont">Continent</th><th data-i18n="or.t.len">Length</th><th data-i18n="or.t.winner">Winner</th><th data-i18n="or.t.final">Final VS / NC / TR</th><th data-i18n="or.t.basis">Basis</th><th data-i18n="or.t.notes">Notes</th></tr></thead><tbody></tbody></table></div>
+    <button id="histMore" class="more" type="button" hidden data-i18n="or.showMore0">Show more</button>
   </section>
 
-  <footer><details class="det info" data-d="foot"><summary>ⓘ About these numbers</summary><div>Odds update every minute from Census map data. Results settle 10 minutes after an alert ends, from Census's own final scores (sudden death decides draws). Percentages are model estimates, not guarantees.</div></details>
-    <p class="note foot-credits">Data from the Daybreak Census API · alert history from <a href="https://ps2alerts.com/" target="_blank" rel="noopener noreferrer">PS2Alerts</a> · player details from <a href="https://wt.honu.pw/" target="_blank" rel="noopener noreferrer">Honu</a> · second opinions from <a href="https://ps2radar.com/" target="_blank" rel="noopener noreferrer">PS2 Radar</a>. Not affiliated with or endorsed by Daybreak Game Company. PlanetSide 2 is a registered trademark of Daybreak Game Company LLC. · <a href="../privacy.html">🔒 Privacy</a></p></footer>
+  <footer><details class="det info" data-d="foot"><summary data-i18n="or.about">ⓘ About these numbers</summary><div data-i18n="or.aboutText">Odds update every minute from Census map data. Results settle 10 minutes after an alert ends, from Census's own final scores (sudden death decides draws). Percentages are model estimates, not guarantees.</div></details>
+    <p class="note foot-credits" data-i18n-html="or.credits">Data from the Daybreak Census API · alert history from <a href="https://ps2alerts.com/" target="_blank" rel="noopener noreferrer">PS2Alerts</a> · player details from <a href="https://wt.honu.pw/" target="_blank" rel="noopener noreferrer">Honu</a> · second opinions from <a href="https://ps2radar.com/" target="_blank" rel="noopener noreferrer">PS2 Radar</a>. Not affiliated with or endorsed by Daybreak Game Company. PlanetSide 2 is a registered trademark of Daybreak Game Company LLC. · <a href="../privacy.html">🔒 Privacy</a></p></footer>
 </div>
 
-<script type="module" src="js/vote.js?v=20261024-list2"></script>
-<script type="module" src="js/main.js?v=20261024-vc1"></script>
+<script type="module" src="js/vote.js?v=20261024-i18n1"></script>
+<script type="module" src="js/main.js?v=20261024-i18n1"></script>
 <script>
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("../sw.js").catch(function () {});

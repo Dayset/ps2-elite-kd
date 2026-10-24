@@ -11,6 +11,8 @@
 // browser preserves the aspect ratio at any width — it can never squish.
 
 // 5-minute bins, t = 0..90 min. Sum = 38,104.
+import { t as tr } from "../../i18n.mjs";
+
 const LOCK_BINS = [0, 0, 0, 0, 0, 0, 0, 0, 0, 385, 0, 64, 225, 385, 1798, 5073, 6742, 23432];
 const LOCK_TOTAL = LOCK_BINS.reduce((t, n) => t + n, 0);
 const LOCK_MEDIAN_T = 85;
@@ -46,20 +48,20 @@ function lockSvg(tNow) {
     const h = Math.max(1.5, T + ph - y(v)); // near-zero bins stay visible
     const yy = T + ph - h;
     const bx = L + i * bw + 1, w = bw - 2;
-    return `<rect x="${bx.toFixed(1)}" y="${yy.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" fill="${i === LOCK_BINS.length - 1 ? YELLOW : BLUE}"><title>${i * 5}-${i * 5 + 5} min: ${v.toLocaleString()} alerts</title></rect>`;
+    return `<rect x="${bx.toFixed(1)}" y="${yy.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" fill="${i === LOCK_BINS.length - 1 ? YELLOW : BLUE}"><title>${tr("or.lockBin", "{a}-{b} min: {n} alerts", { a: i * 5, b: i * 5 + 5, n: v.toLocaleString() })}</title></rect>`;
   }).join("");
   const xt = [0, 30, 60, 90].map((m) =>
     `<text x="${x(m)}" y="${H - 4}" fill="#9a988f" font-size="9" text-anchor="middle">${m}m</text>`).join("");
   const mx = x(LOCK_MEDIAN_T);
-  const median = `<line x1="${mx}" x2="${mx}" y1="${T}" y2="${T + ph}" stroke="${YELLOW}" stroke-width="1" stroke-dasharray="3 2"/><text x="${mx - 3}" y="${T - 1}" fill="${YELLOW}" font-size="9" text-anchor="end">median t=${LOCK_MEDIAN_T}</text>`;
+  const median = `<line x1="${mx}" x2="${mx}" y1="${T}" y2="${T + ph}" stroke="${YELLOW}" stroke-width="1" stroke-dasharray="3 2"/><text x="${mx - 3}" y="${T - 1}" fill="${YELLOW}" font-size="9" text-anchor="end">${tr("or.median", "median t={n}", { n: LOCK_MEDIAN_T })}</text>`;
   const t = Math.max(0, Math.min(90, tNow));
   const nx = x(t);
   // Late in the alert the "now" label would collide with the median label -
   // the caption below already states the minute, so the line alone suffices.
   const clash = Math.abs(nx - mx) < 44;
   const nowMark = `<line x1="${nx}" x2="${nx}" y1="${T}" y2="${T + ph}" stroke="${NOW}" stroke-width="1.5"/>` +
-    (clash ? "" : `<text x="${Math.min(nx + 3, W - R - 30)}" y="${T - 1}" fill="${NOW}" font-size="9">now t=${Math.round(tNow)}</text>`);
-  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="When the 100% win lock landed in ${LOCK_TOTAL.toLocaleString()} past alerts">${grid}${bars}${xt}${median}${nowMark}</svg>`;
+    (clash ? "" : `<text x="${Math.min(nx + 3, W - R - 30)}" y="${T - 1}" fill="${NOW}" font-size="9">${tr("or.nowT", "now t={n}", { n: Math.round(tNow) })}</text>`);
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="${tr("or.lockAria", "When the 100% win lock landed in {n} past alerts", { n: LOCK_TOTAL.toLocaleString() })}">${grid}${bars}${xt}${median}${nowMark}</svg>`;
 }
 
 const fmtLeft = (s) => {
@@ -75,10 +77,10 @@ export function lockCard(a, now) {
   endsAt = a.start_ts + a.dur * 60;
   const tMin = (now - a.start_ts) / 60;
   const p = lockCdf(tMin);
-  return `<h2>⏱ Live timer</h2>
-    <div class="locktimer"><span id="lockTimer">${fmtLeft(endsAt - now)}</span> <span class="note">left</span></div>
+  return `<h2 data-sec="live-timer">${tr("or.h.timer", "⏱ Live timer")}</h2>
+    <div class="locktimer"><span id="lockTimer">${fmtLeft(endsAt - now)}</span> <span class="note">${tr("or.left", "left")}</span></div>
     ${lockSvg(tMin)}
-    <div class="note">By minute ${Math.floor(tMin)}, the 100% lock had landed in <b>${(p * 100).toFixed(1)}%</b> of ${LOCK_TOTAL.toLocaleString()} past alerts (median t=${LOCK_MEDIAN_T}).</div>`;
+    <div class="note">${tr("or.lockNote", "By minute {m}, the 100% lock had landed in {p} of {n} past alerts (median t={med}).", { m: Math.floor(tMin), p: `<b>${(p * 100).toFixed(1)}%</b>`, n: LOCK_TOTAL.toLocaleString(), med: LOCK_MEDIAN_T })}</div>`;
 }
 
 /** Per-second tick: updates the countdown in place, no re-render. */

@@ -3,7 +3,7 @@
 // the English reference (i18n/en.json) and with the code that uses the keys.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { LANGS, pickLang, fill, t } from "../i18n.mjs";
 import { appParts } from "./app-source.mjs";
 
@@ -76,7 +76,7 @@ test("translations keep the same {placeholders} as English", () => {
 });
 
 test("every data-i18n key used by index.html exists in en.json", () => {
-  const html = read("index.html") + read("columns.html") + read("privacy.html");
+  const html = read("index.html") + read("columns.html") + read("privacy.html") + read("oracle/index.html"); // #73: the Oracle page too
   const used = new Set([...html.matchAll(/data-i18n(?:-[a-z-]+)?="([^"]+)"/g)].map((m) => m[1]));
   assert.ok(used.size > 20, "the page marks its UI text");
   const missing = [...used].filter((k) => !(k in en));
@@ -85,7 +85,7 @@ test("every data-i18n key used by index.html exists in en.json", () => {
 
 test("every tr(\"key\", …) call in the UI modules exists in en.json", () => {
   const used = new Set();
-  for (const file of [...new Set([...["app.js", "rankings.mjs", "name-suggest.mjs", "infantry.mjs", "vehicle-cut.mjs", "analyze-run.mjs", "padding.mjs", "player-metrics.mjs", "jump-btns.mjs", "live.mjs", "columns-example.mjs", "weapons.mjs", "privacy-remove.mjs"], ...appParts()])]) { // #66: app.js parts too
+  for (const file of [...new Set([...["app.js", "rankings.mjs", "name-suggest.mjs", "infantry.mjs", "vehicle-cut.mjs", "analyze-run.mjs", "padding.mjs", "player-metrics.mjs", "jump-btns.mjs", "live.mjs", "columns-example.mjs", "weapons.mjs", "privacy-remove.mjs"], ...appParts(), ...readdirSync(new URL("oracle/js/", root)).filter((f) => f.endsWith(".js")).map((f) => "oracle/js/" + f)])]) { // #73: Oracle modules // #66: app.js parts too
     for (const m of read(file).matchAll(/\btr\("([^"]+)"/g)) used.add(m[1]);
   }
   assert.ok(used.size > 30, "the UI modules use the translator");

@@ -3,6 +3,8 @@
 // voices in Edge / Chrome, nothing to install, nothing leaves the browser).
 // Spoken when the order changes, plus a reminder after REMIND_S of the same order.
 // Display only: nothing here touches the odds or the Commander.
+// #73: the button and menu are translated; the spoken order stays English (the Commander text is English).
+import { t as tr } from "../../i18n.mjs";
 
 const KEY = "ps2oracle_voice";
 const REMIND_S = 300;
@@ -30,7 +32,7 @@ export function voicePicker() {
   const vs = rankVoices(window.speechSynthesis.getVoices());
   if (!vs.length) return "";
   const cur = pickVoice();
-  return ` <select class="voicesel" data-voicesel="1" aria-label="Voice">${vs.map((v) => `<option value="${v.name.replace(/"/g, "&quot;")}"${cur && v.name === cur.name ? " selected" : ""}>${v.name.replace(/</g, "&lt;")}</option>`).join("")}</select>`;
+  return ` <select class="voicesel" data-voicesel="1" aria-label="${tr("or.vc.voice", "Voice")}">${vs.map((v) => `<option value="${v.name.replace(/"/g, "&quot;")}"${cur && v.name === cur.name ? " selected" : ""}>${v.name.replace(/</g, "&lt;")}</option>`).join("")}</select>`;
 }
 export function setVoice(name) { V.voice = name; save(); speak("Voice set."); }
 
@@ -85,7 +87,7 @@ function speak(text) {
 export function voiceButton(f) {
   if (!voiceSupported()) return "";
   const on = V.on && V.fac === f;
-  const tip = on ? `Speaking ${f}'s top order. Click to stop.` : `Read ${f}'s top order aloud (your system voice)`;
+  const tip = on ? tr("or.vc.on", "Speaking {f}'s top order. Click to stop.", { f }) : tr("or.vc.off", "Read {f}'s top order aloud (your system voice)", { f });
   return ` <button type="button" class="voicebtn${on ? " on" : ""}" data-voice="${f}" aria-pressed="${on}" title="${tip}" aria-label="${tip}">${on ? "🔊" : "🔇"}</button>${on ? voicePicker() : ""}`;
 }
 
