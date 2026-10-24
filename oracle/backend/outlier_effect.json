@@ -1,0 +1,162 @@
+{
+ "alerts_scored": 6068,
+ "with_extreme": 1016,
+ "extreme_on_winner": 426,
+ "brier": {
+  "all": {
+   "n": 6068,
+   "brier": 0.165
+  },
+  "without_extreme": {
+   "n": 5052,
+   "brier": 0.165
+  },
+  "with_extreme": {
+   "n": 1016,
+   "brier": 0.165
+  },
+  "extreme_on_winner": {
+   "n": 426,
+   "brier": 0.161
+  },
+  "extreme_only_on_losers": {
+   "n": 590,
+   "brier": 0.168
+  }
+ },
+ "calibration": {
+  "has": {
+   "early": {
+    "alerts": 892,
+    "rows": 4460,
+    "won_minus_p": 0.041,
+    "ci": [
+     0.007,
+     0.071
+    ]
+   },
+   "mid": {
+    "alerts": 892,
+    "rows": 5352,
+    "won_minus_p": 0.031,
+    "ci": [
+     0.004,
+     0.067
+    ]
+   },
+   "late": {
+    "alerts": 892,
+    "rows": 5352,
+    "won_minus_p": 0.009,
+    "ci": [
+     -0.011,
+     0.038
+    ]
+   },
+   "all": {
+    "alerts": 892,
+    "rows": 15164,
+    "won_minus_p": 0.026,
+    "ci": [
+     0.002,
+     0.058
+    ]
+   }
+  },
+  "faces": {
+   "early": {
+    "alerts": 1011,
+    "rows": 9515,
+    "won_minus_p": -0.019,
+    "ci": [
+     -0.046,
+     -0.012
+    ]
+   },
+   "mid": {
+    "alerts": 1011,
+    "rows": 11418,
+    "won_minus_p": -0.014,
+    "ci": [
+     -0.041,
+     -0.003
+    ]
+   },
+   "late": {
+    "alerts": 1011,
+    "rows": 11418,
+    "won_minus_p": -0.004,
+    "ci": [
+     -0.019,
+     0.003
+    ]
+   },
+   "all": {
+    "alerts": 1011,
+    "rows": 32351,
+    "won_minus_p": -0.012,
+    "ci": [
+     -0.034,
+     -0.004
+    ]
+   }
+  },
+  "none": {
+   "early": {
+    "alerts": 5052,
+    "rows": 75768,
+    "won_minus_p": 0,
+    "ci": [
+     0,
+     0
+    ]
+   },
+   "mid": {
+    "alerts": 5052,
+    "rows": 90927,
+    "won_minus_p": 0,
+    "ci": [
+     0,
+     0
+    ]
+   },
+   "late": {
+    "alerts": 5052,
+    "rows": 90927,
+    "won_minus_p": 0,
+    "ci": [
+     0,
+     0
+    ]
+   },
+   "all": {
+    "alerts": 5052,
+    "rows": 257622,
+    "won_minus_p": 0,
+    "ci": [
+     0,
+     0
+    ]
+   }
+  }
+ },
+ "population_losers": {
+  "facing_winner_extreme": {
+   "n": 758,
+   "mean_rel": 0.97,
+   "median_rel": 0.975,
+   "share_below_075": 0.011
+  },
+  "no_extreme_anywhere": {
+   "n": 10094,
+   "mean_rel": null,
+   "median_rel": 0.698,
+   "share_below_075": 0.012
+  }
+ },
+ "built": "2026-10-24T05:29:16.049Z",
+ "cache": {
+  "alerts": 6554,
+  "ok": 6401
+ }
+}
