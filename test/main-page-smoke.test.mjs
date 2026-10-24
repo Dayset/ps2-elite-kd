@@ -93,6 +93,8 @@ describe("main page smoke (#66)", () => {
       assert.equal(await ev(until(`document.querySelectorAll('#statsPanel th[scope="row"].stats-name').length >= 2`)), true, "stats table for both players");
       const chartInfo = await ev(`new Promise((r) => setTimeout(() => { const c = document.getElementById("chart"); r({ shown: !c.hasAttribute("hidden"), paths: c.querySelectorAll("path").length, dots: c.querySelectorAll("circle").length }); }, 3000))`);
       assert.ok(chartInfo.shown && chartInfo.paths >= 1 && chartInfo.dots > 10, `chart drawn: ${JSON.stringify(chartInfo)}`);
+      // sort the stats table by a column and back
+      assert.equal(await ev(`(() => { const th = [...document.querySelectorAll("#statsPanel th")].find((t) => t.querySelector(".sort-ind") || t.dataset.sort || t.getAttribute("aria-sort")); if (!th) return false; th.click(); th.click(); return document.querySelectorAll('#statsPanel th[scope="row"].stats-name').length >= 2; })()`), true, "stats table sorts");
       // saved-players chips render (shared cache + this browser)
       assert.equal(await ev(until(`document.querySelector("#cacheChips details.cache-shared")`)), true, "shared-cache fold (cache-chips.mjs ran)");
       // Analyze with "Fetch fresh data" (Census is faked empty here): the progress bar opens, the run ends, the page survives

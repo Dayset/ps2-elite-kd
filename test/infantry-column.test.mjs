@@ -9,7 +9,7 @@ import { infTip, infantryShares } from "../infantry.mjs";
 const read = (f) => fs.readFileSync(new URL("../" + f, import.meta.url), "utf8");
 
 test("column order and ranks.json columns", () => {
-  for (const f of ["rankings.mjs", "app.js"]) {
+  for (const f of ["rankings.mjs", "stats-table.mjs"]) { // the main stats table moved out of app.js (#66)
     const src = read(f);
     const at = (id) => src.indexOf(`id: "${id}"`);
     assert.ok(at("rf") >= 0 && at("rf") < at("rkd"), `${f}: ☠️ K/D right after 🛡️ Resist`);
