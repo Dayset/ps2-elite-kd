@@ -3,6 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { canScrollToward, clampMode } from "../stats-carousel.mjs";
+import { appSource } from "./app-source.mjs";
 
 test("a swipe changes mode only once the table can't scroll that way", () => {
   const el = (scrollLeft, scrollWidth = 900, clientWidth = 360) => ({ scrollLeft, scrollWidth, clientWidth });
@@ -46,7 +47,7 @@ test("no tab bar, no dots, no poof anywhere (owner 2026-10-22)", () => {
   assert.match(sc, /addEventListener\("scroll"/, "mode still follows the swipe scroll");
   const sfx = readFileSync(new URL("../sfx.mjs", import.meta.url), "utf8");
   assert.ok(!/poof/.test(sfx), "the 💨 poof sound is gone from sfx");
-  const app = readFileSync(new URL("../app.js", import.meta.url), "utf8");
+  const app = appSource();
   assert.ok(!/poof|onThumb/.test(app), "app.js wires no poof callback");
 });
 
@@ -61,7 +62,7 @@ test("closeSlideHints closes open fold notes in the slides once a switch starts"
   assert.equal(closeSlideHints(null), 0);
   const src = readFileSync(new URL("../stats-carousel.mjs", import.meta.url), "utf8");
   assert.match(src, /!hintsClosed && Math\.abs\(viewport\.scrollLeft - i \* width\(\)\) > 2/);
-  const app = readFileSync(new URL("../app.js", import.meta.url), "utf8");
+  const app = appSource();
   for (const m of ["head-tip", "name-peek"]) {
     const a = app.match(new RegExp(m + "\\.mjs\\?v=[^\"']+"))[0];
     assert.ok(src.includes(a), `${m} imported with the same ?v= as app.js (one shared module instance)`);

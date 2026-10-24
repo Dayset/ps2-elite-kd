@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import { autoMarks, autoMarksHtml, AUTO_MARK_MIN } from "../auto-marks.mjs";
 import { HUT_MARK_MIN } from "../hut.mjs";
+import { appSource } from "./app-source.mjs";
 
 test("🪳 next to the name only when the revive check confirms a top-quarter Zerg", () => {
   assert.deepEqual(autoMarks(null, { score: 90, rvp: 99, confirmed: true }).map((m) => m.id), ["zerg"]);
@@ -21,7 +22,7 @@ test("🐣 next to the name when a negative Diff is softened by ≥ the 🛖 mar
 });
 
 test("stats table + Rankings name cells render the marks; one auto-marks.mjs version", () => {
-  const app = fs.readFileSync(new URL("../app.js", import.meta.url), "utf8");
+  const app = appSource();
   const rk = fs.readFileSync(new URL("../rankings.mjs", import.meta.url), "utf8");
   assert.match(app, /\$\{padMarkHtml\(row\.p\)\}\$\{autoMarkHtml\(row\)\}/);
   assert.match(rk, /hutHtml\(r\) \+ autoMarksHtml\(r\._gap, r\._zerg, r\.last/);

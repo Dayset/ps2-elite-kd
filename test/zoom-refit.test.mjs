@@ -8,13 +8,14 @@ import http from "node:http";
 import path from "node:path";
 import { spawn, execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { appSource } from "./app-source.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (f) => fs.readFileSync(path.join(root, f), "utf8");
 
 describe("Auto zoom when the analyzed set changes (t328u)", () => {
   it("static wiring", () => {
-    assert.match(read("app.js"), /if \(namesSetKey\(successNames\) !== namesSetKey\(lastLoadedNames\)\) resetYZoom\(\{ redraw: false \}\);\s*lastAnalyzedNames = clean(?:Now)?\.slice\(\);/);
+    assert.match(appSource(), /if \(namesSetKey\(successNames\) !== namesSetKey\(lastLoadedNames\)\) resetYZoom\(\{ redraw: false \}\);\s*lastAnalyzedNames = clean(?:Now)?\.slice\(\);/);
   });
 
   const chrome = ["google-chrome", "chromium", "chromium-browser", "google-chrome-stable"].find((b) => {

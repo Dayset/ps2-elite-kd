@@ -64,9 +64,10 @@ test("the site never writes a cookie (only clears old ones)", () => {
     const src = read(f);
     const writes = [...src.matchAll(/document\.cookie\s*=(?!=)/g)];
     if (!writes.length) continue;
-    assert.equal(f, "app.js", `${f} writes document.cookie`);
+    assert.ok(/function wipeAppCookies/.test(src), `${f} writes document.cookie`); // only the 🗑️ wipe (app.js part local-cache.mjs, #66)
     const start = src.indexOf("function wipeAppCookies");
-    const end = src.indexOf("\n  }\n", start);
+    const indent = src.slice(src.lastIndexOf("\n", start) + 1, start);
+    const end = src.indexOf(`\n${indent}}\n`, start);
     for (const w of writes) assert.ok(w.index > start && w.index < end, "cookie writes only inside wipeAppCookies (expiring them)");
     assert.match(src.slice(start, end), /01 Jan 1970/);
   }

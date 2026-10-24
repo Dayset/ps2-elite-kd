@@ -4,6 +4,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { entryFetchedAt, pickNewest, writeWithEviction } from "../cache-pick.mjs";
+import { appSource } from "./app-source.mjs";
 
 const shared = (fetchedAt, top = 50) => ({ player: { id: "s" }, fetchedAt, top, kind: "shared" });
 const local = (fetchedAt, top = 200) => ({ player: { id: "l" }, fetchedAt, top, kind: "local" });
@@ -36,7 +37,7 @@ describe("newest stored copy wins (t300u)", () => {
     assert.deepEqual(Object.keys(store).sort(), ["b", "n"]);
   });
   it("app.js: normal loads pick the newest copy; live + cache copies carry fetchedAt", () => {
-    const src = fs.readFileSync(new URL("../app.js", import.meta.url), "utf8");
+    const src = appSource();
     assert.match(src, /async function loadStoredNewest\(/);
     assert.match(src, /const stored = await loadStoredNewest\(name, signal, errors\)/);
     assert.match(src, /np\.fetchedAt = Date\.now\(\);/);

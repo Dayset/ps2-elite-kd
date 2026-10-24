@@ -5,6 +5,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, existsSync } from "node:fs";
 import { LANGS, pickLang, fill, t } from "../i18n.mjs";
+import { appParts } from "./app-source.mjs";
 
 const root = new URL("../", import.meta.url);
 const read = (p) => readFileSync(new URL(p, root), "utf8");
@@ -84,7 +85,7 @@ test("every data-i18n key used by index.html exists in en.json", () => {
 
 test("every tr(\"key\", …) call in the UI modules exists in en.json", () => {
   const used = new Set();
-  for (const file of ["app.js", "rankings.mjs", "name-suggest.mjs", "infantry.mjs", "vehicle-cut.mjs", "analyze-run.mjs", "padding.mjs", "player-metrics.mjs", "jump-btns.mjs", "live.mjs", "columns-example.mjs", "weapons.mjs", "privacy-remove.mjs"]) {
+  for (const file of [...new Set([...["app.js", "rankings.mjs", "name-suggest.mjs", "infantry.mjs", "vehicle-cut.mjs", "analyze-run.mjs", "padding.mjs", "player-metrics.mjs", "jump-btns.mjs", "live.mjs", "columns-example.mjs", "weapons.mjs", "privacy-remove.mjs"], ...appParts()])]) { // #66: app.js parts too
     for (const m of read(file).matchAll(/\btr\("([^"]+)"/g)) used.add(m[1]);
   }
   assert.ok(used.size > 30, "the UI modules use the translator");

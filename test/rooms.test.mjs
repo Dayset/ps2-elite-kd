@@ -7,6 +7,7 @@ import {
   psKey, parsePsKey, psPlayerFile, psServer, withRoom, roomById, roomLsKey,
 } from "../rooms.mjs";
 import { CENSUS_NAMESPACES } from "../worker/src/worker.js";
+import { appSource } from "./app-source.mjs";
 
 test("two rooms, disjoint namespaces and data trees", () => {
   assert.deepEqual(Object.keys(ROOMS), ["pc", "ps"]);
@@ -64,7 +65,7 @@ test("withRoom writes or removes the room param and keeps the rest", () => {
 
 test("page code reads player data through the room's prefix (no hard-coded data/ for players, ranks or review lists)", () => {
   const read = (f) => fs.readFileSync(new URL(`../${f}`, import.meta.url), "utf8");
-  const app = read("app.js");
+  const app = appSource();
   const rk = read("rankings.mjs");
   const hard = /fetch(?:Json)?\(\s*["'`]data\/(?:players|ranks|ranks-lite|index|names|hidden|reviewed|farm|not-farm)\b/;
   assert.doesNotMatch(rk, hard);

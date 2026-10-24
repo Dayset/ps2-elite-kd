@@ -9,6 +9,7 @@ import path from "node:path";
 import { spawn, execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { rankingsSource } from "./rankings-src.mjs";
+import { appSource } from "./app-source.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (f) => fs.readFileSync(path.join(root, f), "utf8");
@@ -33,7 +34,7 @@ describe("Rankings ✅ ↔ names box (t356u)", () => {
     assert.doesNotMatch(s, /id="ranksPickBox"|id="ranksChips"|id="ranksCompare"|id="backLink"/);
     assert.match(s, /host\.toggleName\((?:want \? q : pickedSrc\.get\(q\) \|\| q|q), inp, want\)/);
     // t376u: still syncs the Rankings, but on the next frame so the chip paints first.
-    assert.match(read("app.js"), /function rankingsSync\(\) \{(?=[\s\S]{0,500}?rankingsApi\.syncPicks\(\))(?=[\s\S]{0,500}?requestAnimationFrame)/);
+    assert.match(appSource(), /function rankingsSync\(\) \{(?=[\s\S]{0,500}?rankingsApi\.syncPicks\(\))(?=[\s\S]{0,500}?requestAnimationFrame)/);
   });
 
   const chrome = ["google-chrome", "chromium", "chromium-browser", "google-chrome-stable"].find((b) => {
@@ -141,8 +142,8 @@ describe("Hide adjusted-iVi ≤ 0 players (footer checkbox)", () => {
     // rows with a real adjusted iVi ≤ 0 are left out of the table list.
     assert.match(s, /if \(hideZeroIvi\) \{/);
     assert.match(s, /!\(fin\(r\.adjs\) && r\.adjs <= 0\)/);
-    assert.match(read("app.js"), /hideZeroIviToggle/);
-    assert.match(read("app.js"), /LS_HIDE_ZERO_IVI/);
+    assert.match(appSource(), /hideZeroIviToggle/);
+    assert.match(appSource(), /LS_HIDE_ZERO_IVI/);
   });
 });
 
@@ -160,7 +161,7 @@ describe("Skill graph section: no placeholder, collapsible, pops on analyze (own
   });
 
   it("draw pops the section open on a new analysis; idle folds it; app.js has no placeholder code left", () => {
-    const app = read("app.js");
+    const app = appSource();
     assert.doesNotMatch(app, /chartPlaceholder|setPlaceholderVisible|phAnalyzeBtn|analyzeFromPlaceholder/);
     assert.match(app, /function popChartSection\(list\)/);
     assert.match(app, /sec\.open = true/);
@@ -174,7 +175,7 @@ describe("Skill graph section: no placeholder, collapsible, pops on analyze (own
 
   it("skill graph has a graph-shaped skeleton for Census waits (owner 2026-10-22)", () => {
     const index = read("index.html");
-    const app = read("app.js");
+    const app = appSource();
     const css = read("styles.css");
     assert.match(index, /id="chartSkeleton" class="chart-skeleton"/);
     assert.match(css, /\.chart-skeleton svg \{ width: 100%; height: auto;/);
@@ -186,7 +187,7 @@ describe("Skill graph section: no placeholder, collapsible, pops on analyze (own
   it("rankings preload is a table-sized skeleton, not a Loading text (owner 2026-10-22)", () => {
     const index = read("index.html");
     const rk = read("rankings.mjs");
-    const app = read("app.js");
+    const app = appSource();
     const css = read("styles.css");
     assert.match(index, /id="ranksSkeleton" class="rk-skeleton"/);
     assert.ok(index.indexOf('id="ranksSkeleton"') < index.indexOf('id="ranksTable"'), "skeleton stands inside the table wrap, before the table");
@@ -201,7 +202,7 @@ describe("Skill graph section: no placeholder, collapsible, pops on analyze (own
 
   it("Remove ranks: one switch by the filter + one in Settings, tiers gated off (owner 2026-10-22)", () => {
     const index = read("index.html");
-    const app = read("app.js");
+    const app = appSource();
     const rk = read("rankings.mjs");
     assert.match(index, /id="removeRanksToggle"/);
     assert.match(index, /id="removeRanksToggleSettings"/);
@@ -230,7 +231,7 @@ describe("Skill graph section: no placeholder, collapsible, pops on analyze (own
   });
 
   it("both player boxes are unavailable while nothing is graphed (owner 2026-10-22)", () => {
-    const app = read("app.js");
+    const app = appSource();
     const index = read("index.html");
     // The graph box starts hidden in the markup (no empty frame to open)…
     assert.match(index, /<details id="chartSection"[^>]*\shidden>/);
@@ -243,7 +244,7 @@ describe("Skill graph section: no placeholder, collapsible, pops on analyze (own
   });
 
   it("deleting names never springs the section open; adding one still pops (owner 2026-10-22)", () => {
-    const app = read("app.js");
+    const app = appSource();
     // Header/bookkeeping sync without opening, used on removal redraws.
     assert.match(app, /function syncChartSectionNames\(list\)/);
     assert.match(app, /else syncChartSectionNames\(list\);/);
@@ -253,7 +254,7 @@ describe("Skill graph section: no placeholder, collapsible, pops on analyze (own
   });
 
   it("default name + empty-box dice draw from the top five tiers only (both rooms)", () => {
-    const app = read("app.js");
+    const app = appSource();
     assert.match(app, /function topTierFloorAdjs\(\)/);
     assert.match(app, /let DEFAULT_PLACEHOLDER_NAME = "";/);
     assert.doesNotMatch(app, /DEFAULT_PLACEHOLDER_NAME = IS_PS/);
@@ -287,7 +288,7 @@ describe("Max account age cut (Settings stepper, owner 2026-10-22)", () => {
     assert.match(s, /!\(fin\(r\.created\) && r\.created > 0 && r\.created < cutoff\)/);
     // First-ship decimal-years values convert ×12 in the reader too.
     assert.match(s, /Math\.round\(yrs \* 12\)/);
-    const app = read("app.js");
+    const app = appSource();
     assert.match(app, /LS_MAX_AGE_MONTHS = "ps2-elite-kd-max-age-months"/);
     // Steppers: 1 month per step, press-and-hold repeats (accelerating).
     assert.match(app, /holdStep\(els\.maxAgeMinus, -1\)/);

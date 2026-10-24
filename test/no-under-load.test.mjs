@@ -3,12 +3,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, existsSync } from "node:fs";
+import { appSource } from "./app-source.mjs";
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), "utf8");
 
 test("no under-load banner, styles or load-flag polling", () => {
   const html = read("index.html");
-  const app = read("app.js");
+  const app = appSource();
   const css = read("styles.css");
   const log = read("build-log.html");
   assert.doesNotMatch(html, /underLoad|under load/i);
@@ -19,7 +20,7 @@ test("no under-load banner, styles or load-flag polling", () => {
 });
 
 test("real Census busy messages are kept", () => {
-  const app = read("app.js");
+  const app = appSource();
   assert.match(app, /Daybreak Census is busy, retrying…/);
   assert.match(app, /showing cached data for/);
   assert.match(app, /↻ Try again/);

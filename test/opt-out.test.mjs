@@ -11,6 +11,7 @@ import { fileURLToPath } from "node:url";
 import { removedList, removedKey, serverKey, REMOVED_NAME } from "../opt-out.mjs";
 import { purgeRemoved, scrubDeep } from "../scripts/purge-removed.mjs";
 import { FAIL_REASONS } from "../analyze-run.mjs";
+import { appSource } from "./app-source.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const CID_A = "5428000000000000001";
@@ -154,7 +155,7 @@ test("the real removal lists parse and use valid ids", () => {
 });
 
 test("the page checks the removal list and says why", () => {
-  const app = fs.readFileSync(path.join(ROOT, "app.js"), "utf8");
+  const app = appSource();
   assert.match(app, /from "\.\/opt-out\.mjs\?v=/);
   assert.match(app, /removed\.match\(\{ cid: p\.cid/, "post-load check by character id");
   assert.ok(FAIL_REASONS.removed);

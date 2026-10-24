@@ -4,6 +4,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { freshPriority, FRESH_PRIORITY_MAX } from "../scripts/refresh-cache.mjs";
+import { appSource } from "./app-source.mjs";
 
 const H = 3600 * 1000;
 const now = 1000 * H;
@@ -34,7 +35,7 @@ describe("fresh-fetch priority (refresh-cache.mjs)", () => {
     assert.deepEqual(freshPriority([null, { slug: 5 }], index, now), []);
   });
   it("site sends names only, fresh runs only, live + cached players only", () => {
-    const src = fs.readFileSync(new URL("../app.js", import.meta.url), "utf8");
+    const src = appSource();
     assert.match(src, /if \(fresh\) markFresh\(result\.loaded\)/);
     const fn = src.slice(src.indexOf("function markFresh("), src.indexOf("/** Small, self-dismissing note"));
     assert.match(fn, /JSON\.stringify\(\{ names, fresh: true \}\)/);

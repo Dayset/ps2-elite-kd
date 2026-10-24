@@ -6,6 +6,7 @@ import { infMedian, infDial, isTractor, tractorHint } from "../tractor.mjs";
 import { autoMarksHtml, tractorMark } from "../auto-marks.mjs";
 import { infUnit, classifyDeath, feedPush, censusStats, cellText, fmtGap, LIVE_COLS, tipText, ME_REFRESH_MS, mergeFresh, FEED_MAX, emojiFill, fillDriver, glowTier, unknownFill, FULL_AT, EMPTY_AT, goodPct, FILL_DIM, HOLLOW_PX, overlayPush, overlayRows, VICTIM_LINES, eventAt, EVENT_SKEW_MS, unitGlow, ZERG_GOLD_OVER, OUTLINE_PX, LIVE_GLOWS, weaponIcon, CARD_CATEGORIES, LIVE_FPS, liveFps, HALO_KEY, haloOn, bezier, easeFill, glowIn, BEAT, TIER_MOTION, beatAt, haloAt, SHINE, shineFrame, beatSleep } from "../live.mjs";
 import { disk, dilate, erode, blurAlpha, inkBox, outlineMasks, hollowRim, spriteCss, shineAt } from "../live-sprites.mjs";
+import { appSource } from "./app-source.mjs";
 
 const root = new URL("../", import.meta.url);
 
@@ -486,7 +487,7 @@ test("🪖 / 🚜 infantry dial (owner t590u): median from the data, 🪖 fills 
   const h = autoMarksHtml(null, { score: 90, rvp: 99, confirmed: true }, { created: s - 3000 * day, last: s - 400 * day }, now, null, { inf: 50, med: m });
   assert.match(h, /auto-mark-zerg.*🪳.*<span class="poop-mark auto-mark auto-mark-tractor" title="🚜 [^"]+" aria-label="🚜 [^"]+">🚜<\/span><span class="poop-mark auto-mark auto-mark-inactive"[^>]*>🪦/s); // order 🪳 🐣 🚜 🪦
   assert.doesNotMatch(autoMarksHtml(null, null, null, now, null, { inf: 90, med: m }), /🚜/);
-  const app = readFileSync(new URL("app.js", root), "utf8");
+  const app = appSource();
   const rk = readFileSync(new URL("rankings.mjs", root), "utf8");
   assert.match(app, /nbhOf\(d, row\.p\), ie \? \{ inf: ie\.inf, med: infMed \} : null\)/);
   assert.match(rk, /r\.nbh, fin\(r\.inf\) \? \{ inf: r\.inf, med: infMed\(\) \} : null\)/);
@@ -564,7 +565,7 @@ test("centre refresh (owner t586u): fresh Census numbers every 5 min, paused whi
   assert.deepEqual(mergeFresh({ adjs: 400, zerg: 41, apk: 0.3 }, { adjs: 455, zerg: null, apk: null, rf: NaN }), { adjs: 455, zerg: 41, apk: 0.3 });
   assert.deepEqual(mergeFresh(null, { adjs: 455 }), { adjs: 455 });
   const js = readFileSync(new URL("live.mjs", root), "utf8");
-  const app = readFileSync(new URL("app.js", root), "utf8");
+  const app = appSource();
   const fn = js.slice(js.indexOf("async function refreshMe()"), js.indexOf("function meRefreshLoop()"));
   assert.match(fn, /document\.hidden\) return;/);
   assert.match(fn, /a\.fetchPlayerFresh\(me\.name\)/);

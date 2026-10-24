@@ -2,7 +2,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-const app = readFileSync(new URL("../app.js", import.meta.url), "utf8");
+import { appSource } from "./app-source.mjs";
+const app = appSource();
 const ranks = rankingsSource();
 const index = readFileSync(new URL("../index.html", import.meta.url), "utf8");
 

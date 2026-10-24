@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import { namesToCarry, ranksHref, picksFromSearch, matchPicks, analyzeHref, MAIN_PENDING_KEY } from "../pick-sync.mjs";
 import { rankingsSource } from "./rankings-src.mjs";
+import { appSource } from "./app-source.mjs";
 
 const rows = [
   { name: "[00] danisantini", query: "danisantini", slug: "danisantini" },
@@ -45,7 +46,7 @@ describe("pick-sync", () => {
     assert.equal(matchPicks(["YEEZY", "Megatake"], rows, 1).length, 1);
   });
   it("pending key matches app.js LS_PENDING; pages wire the helpers", () => {
-    const app = fs.readFileSync(new URL("../app.js", import.meta.url), "utf8");
+    const app = appSource();
     // PC keeps the key as is; the PlayStation room suffixes it (rooms.mjs roomLsKey, #55).
     assert.ok(app.includes(`LS_PENDING = roomLsKey("${MAIN_PENDING_KEY}", ROOM)`));
     // t356u: one page — the names box is the selection; Rankings match it with matchPicks.
