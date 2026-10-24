@@ -24,3 +24,11 @@ test("same order (odds wobbling) is one key; a new base is a new key", () => {
   assert.notEqual(orderKey("TR", { ...hold, focus: { ...hold.focus, bases: ["The Bastion"] } }), k);
   assert.equal(voiceTick({ TR: hold }, "TR"), null, "off by default: says nothing");
 });
+
+test("voices: natural (Edge) first, then Google (Chrome), then online, then the old local Windows voices", async () => {
+  const { rankVoices } = await import("../oracle/js/voice.js");
+  const v = (name, lang, localService) => ({ name, lang, localService });
+  const out = rankVoices([v("Microsoft David - English (United States)", "en-US", true), v("Google US English", "en-US", false),
+    v("Microsoft Aria Online (Natural) - English (United States)", "en-US", false), v("Google Deutsch", "de-DE", false), v("Google UK English Female", "en-GB", false)]);
+  assert.deepEqual(out.map((x) => x.name), ["Microsoft Aria Online (Natural) - English (United States)", "Google US English", "Google UK English Female", "Microsoft David - English (United States)"]);
+});

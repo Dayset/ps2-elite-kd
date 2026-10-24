@@ -7,9 +7,32 @@
 const KEY = "ps2oracle_voice";
 const REMIND_S = 300;
 
-const V = { on: false, fac: null, lastKey: null, lastTs: 0 };
-try { const s = JSON.parse(localStorage.getItem(KEY) || "null"); if (s) { V.on = !!s.on; V.fac = s.fac || null; } } catch { /* private mode */ }
-const save = () => { try { localStorage.setItem(KEY, JSON.stringify({ on: V.on, fac: V.fac })); } catch { /* ignore */ } };
+const V = { on: false, fac: null, lastKey: null, lastTs: 0, voice: null };
+try { const s = JSON.parse(localStorage.getItem(KEY) || "null"); if (s) { V.on = !!s.on; V.fac = s.fac || null; V.voice = s.voice || null; } } catch { /* private mode */ }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify({ on: V.on, fac: V.fac, voice: V.voice })); } catch { /* ignore */ } };
+
+/**
+ * English voices, most natural first (owner 2026-10-24: the old Windows voices sound robotic):
+ * Edge "Microsoft … Online (Natural)", then Chrome "Google …", then other online voices,
+ * then local ones (Microsoft David / Zira).
+ */
+export function rankVoices(voices) {
+  const score = (v) => (/natural/i.test(v.name) ? 0 : /google/i.test(v.name) ? 1 : !v.localService ? 2 : 3) + (/^en[-_]US/i.test(v.lang) ? 0 : 0.5);
+  return (voices || []).filter((v) => /^en/i.test(v.lang)).sort((a, b) => score(a) - score(b) || a.name.localeCompare(b.name));
+}
+const pickVoice = () => {
+  const vs = rankVoices(window.speechSynthesis.getVoices());
+  return vs.find((v) => v.name === V.voice) || vs[0] || null;
+};
+/** Voice dropdown (shown while the voice is on). */
+export function voicePicker() {
+  if (!voiceSupported() || !V.on) return "";
+  const vs = rankVoices(window.speechSynthesis.getVoices());
+  if (!vs.length) return "";
+  const cur = pickVoice();
+  return ` <select class="voicesel" data-voicesel="1" aria-label="Voice">${vs.map((v) => `<option value="${v.name.replace(/"/g, "&quot;")}"${cur && v.name === cur.name ? " selected" : ""}>${v.name.replace(/</g, "&lt;")}</option>`).join("")}</select>`;
+}
+export function setVoice(name) { V.voice = name; save(); speak("Voice set."); }
 
 export const voiceSupported = () => typeof window !== "undefined" && "speechSynthesis" in window && typeof SpeechSynthesisUtterance !== "undefined";
 export const voiceState = () => ({ on: V.on, fac: V.fac });
@@ -52,10 +75,9 @@ function speak(text) {
   const s = window.speechSynthesis;
   s.cancel();
   const u = new SpeechSynthesisUtterance(text);
-  const voices = s.getVoices();
-  const en = voices.find((v) => /^en(-|_|$)/i.test(v.lang) && v.localService) || voices.find((v) => /^en/i.test(v.lang));
-  if (en) u.voice = en;
-  u.rate = 1.05;
+  const v = pickVoice();
+  if (v) { u.voice = v; u.lang = v.lang; }
+  u.rate = v && !v.localService ? 1.0 : 1.05;
   s.speak(u);
 }
 
@@ -64,7 +86,7 @@ export function voiceButton(f) {
   if (!voiceSupported()) return "";
   const on = V.on && V.fac === f;
   const tip = on ? `Speaking ${f}'s top order. Click to stop.` : `Read ${f}'s top order aloud (your system voice)`;
-  return ` <button type="button" class="voicebtn${on ? " on" : ""}" data-voice="${f}" aria-pressed="${on}" title="${tip}" aria-label="${tip}">${on ? "🔊" : "🔇"}</button>`;
+  return ` <button type="button" class="voicebtn${on ? " on" : ""}" data-voice="${f}" aria-pressed="${on}" title="${tip}" aria-label="${tip}">${on ? "🔊" : "🔇"}</button>${on ? voicePicker() : ""}`;
 }
 
 /** Click on a faction's speaker (a click, so the browser allows speech): follow it, or stop. */
@@ -88,3 +110,6 @@ export function voiceTick(focus, fac = V.fac, force = false, nowS = Date.now() /
   speak(text);
   return text;
 }
+
+// Voices load late in Chrome: redraw the picker when they arrive.
+if (voiceSupported()) window.speechSynthesis.onvoiceschanged = () => { if (V.on && typeof document !== "undefined") document.dispatchEvent(new Event("oracle-voices")); };
