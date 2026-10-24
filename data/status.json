@@ -4,34 +4,40 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "40045361784",
+    "runId": "40045542087",
     "event": "workflow_dispatch",
     "kind": "on-demand",
-    "startedAt": "2026-10-24T00:42:51.624Z",
-    "endedAt": "2026-10-24T00:45:49.928Z",
-    "seconds": 178,
+    "startedAt": "2026-10-24T00:47:03.059Z",
+    "endedAt": "2026-10-24T00:50:24.734Z",
+    "seconds": 202,
     "updated": [],
     "added": [
-      "[1822] CyTrUzVS"
+      "[2RAF] Adalbrecht",
+      "[2RAF] darkknightsrevenge"
     ],
     "failed": [],
     "stoppedEarly": null,
-    "indexSize": 14184,
+    "indexSize": 14186,
     "honu": {
       "day": "2026-10-24",
-      "calls": 272,
+      "calls": 308,
       "cap": 10000
     },
     "batch": [
       {
-        "name": "[1822] CyTrUzVS",
+        "name": "[2RAF] Adalbrecht",
+        "src": "on-demand",
+        "status": "done"
+      },
+      {
+        "name": "[2RAF] darkknightsrevenge",
         "src": "on-demand",
         "status": "done"
       }
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-24T00:46:06.399Z",
+    "checkedAt": "2026-10-24T00:50:42.034Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 22,
     "explained": 26,
@@ -42,7 +48,7 @@
         "id": "pvs",
         "value": 45.763,
         "bound": 34.098,
-        "z": 63.925,
+        "z": 63.922,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -54,7 +60,7 @@
         "id": "kd",
         "value": 44.833,
         "bound": 19.571,
-        "z": 57.188,
+        "z": 57.195,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -66,7 +72,7 @@
         "id": "slope",
         "value": -7.805,
         "bound": -5.256,
-        "z": -49.362,
+        "z": -49.387,
         "side": "low",
         "explained": false,
         "reason": "",
@@ -126,7 +132,7 @@
         "id": "kd",
         "value": 28.524,
         "bound": 19.571,
-        "z": 35.885,
+        "z": 35.889,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -159,10 +165,10 @@
       {
         "slug": "anniversay",
         "name": "Anniversay",
-        "id": "rf",
-        "value": 10.435,
-        "bound": 8.86,
-        "z": 25.068,
+        "id": "coi",
+        "value": 17.392,
+        "bound": 14.767,
+        "z": 25.083,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -171,22 +177,10 @@
       {
         "slug": "anniversay",
         "name": "Anniversay",
-        "id": "coi",
-        "value": 17.392,
-        "bound": 14.767,
-        "z": 25.067,
-        "side": "high",
-        "explained": false,
-        "reason": "",
-        "red": []
-      },
-      {
-        "slug": "ggfoxnc",
-        "name": "ggFoxNC",
         "id": "rf",
-        "value": 9.626,
+        "value": 10.435,
         "bound": 8.86,
-        "z": 23.021,
+        "z": 25.083,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -198,7 +192,19 @@
         "id": "coi",
         "value": 16.044,
         "bound": 14.767,
-        "z": 23.021,
+        "z": 23.036,
+        "side": "high",
+        "explained": false,
+        "reason": "",
+        "red": []
+      },
+      {
+        "slug": "ggfoxnc",
+        "name": "ggFoxNC",
+        "id": "rf",
+        "value": 9.626,
+        "bound": 8.86,
+        "z": 23.036,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -210,7 +216,7 @@
         "id": "slope",
         "value": 2.155,
         "bound": 0.604,
-        "z": 15.363,
+        "z": 15.369,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -222,7 +228,7 @@
         "id": "slope",
         "value": 1.217,
         "bound": 0.604,
-        "z": 9.266,
+        "z": 9.269,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -234,7 +240,7 @@
         "id": "pvs",
         "value": 329.633,
         "bound": 34.098,
-        "z": 466.149,
+        "z": 466.131,
         "side": "high",
         "explained": true,
         "reason": "Owner reviewed 2026-10-18 (#10): vehicle main try-harding K/D (lifetime KD 33, 658 kills / 25 deaths vs 200 opponents); explained, not a cheater",
@@ -246,7 +252,7 @@
         "id": "act",
         "value": 72.568,
         "bound": 24.742,
-        "z": 230.192,
+        "z": 230.161,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (aim, session), listed there",
@@ -261,7 +267,7 @@
         "id": "kd",
         "value": 156.375,
         "bound": 19.571,
-        "z": 202.882,
+        "z": 202.907,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (aim), listed there",
@@ -304,7 +310,7 @@
         "id": "act",
         "value": 25.317,
         "bound": 24.742,
-        "z": 79.743,
+        "z": 79.732,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (aim), listed there",
@@ -360,7 +366,7 @@
         "id": "slope",
         "value": 7.198,
         "bound": 0.604,
-        "z": 48.129,
+        "z": 48.152,
         "side": "high",
         "explained": true,
         "reason": "Owner reviewed 2026-10-18 (#10): vehicle main try-harding K/D (lifetime KD 33, 658 kills / 25 deaths vs 200 opponents); explained, not a cheater",
@@ -386,7 +392,7 @@
         "id": "kd",
         "value": 32.951,
         "bound": 19.571,
-        "z": 41.667,
+        "z": 41.672,
         "side": "high",
         "explained": true,
         "reason": "Owner reviewed 2026-10-18 (#10): vehicle main try-harding K/D (lifetime KD 33, 658 kills / 25 deaths vs 200 opponents); explained, not a cheater",
@@ -407,10 +413,10 @@
       {
         "slug": "renamedsoldier12345",
         "name": "RenamedSoldier12345",
-        "id": "rf",
-        "value": 15.078,
-        "bound": 8.86,
-        "z": 36.812,
+        "id": "coi",
+        "value": 25.13,
+        "bound": 14.767,
+        "z": 36.835,
         "side": "high",
         "explained": true,
         "reason": "Owner reviewed 2026-10-18 (#10): vehicle main try-harding K/D (lifetime KD 33, 658 kills / 25 deaths vs 200 opponents); explained, not a cheater",
@@ -419,10 +425,10 @@
       {
         "slug": "renamedsoldier12345",
         "name": "RenamedSoldier12345",
-        "id": "coi",
-        "value": 25.13,
-        "bound": 14.767,
-        "z": 36.811,
+        "id": "rf",
+        "value": 15.078,
+        "bound": 8.86,
+        "z": 36.835,
         "side": "high",
         "explained": true,
         "reason": "Owner reviewed 2026-10-18 (#10): vehicle main try-harding K/D (lifetime KD 33, 658 kills / 25 deaths vs 200 opponents); explained, not a cheater",
@@ -431,10 +437,10 @@
       {
         "slug": "acecombatevolved",
         "name": "AceCombatEvolved",
-        "id": "rf",
-        "value": 14.972,
-        "bound": 8.86,
-        "z": 36.544,
+        "id": "coi",
+        "value": 24.954,
+        "bound": 14.767,
+        "z": 36.567,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (aim, session), listed there",
@@ -446,10 +452,10 @@
       {
         "slug": "acecombatevolved",
         "name": "AceCombatEvolved",
-        "id": "coi",
-        "value": 24.954,
-        "bound": 14.767,
-        "z": 36.544,
+        "id": "rf",
+        "value": 14.972,
+        "bound": 8.86,
+        "z": 36.567,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (aim, session), listed there",
@@ -461,10 +467,10 @@
       {
         "slug": "igorrrrrr",
         "name": "igOrRrRrR",
-        "id": "rf",
-        "value": 12.372,
-        "bound": 8.86,
-        "z": 29.966,
+        "id": "coi",
+        "value": 20.62,
+        "bound": 14.767,
+        "z": 29.984,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (session-forensics), listed there",
@@ -475,10 +481,10 @@
       {
         "slug": "igorrrrrr",
         "name": "igOrRrRrR",
-        "id": "coi",
-        "value": 20.62,
-        "bound": 14.767,
-        "z": 29.966,
+        "id": "rf",
+        "value": 12.372,
+        "bound": 8.86,
+        "z": 29.984,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (session-forensics), listed there",
@@ -492,7 +498,7 @@
         "id": "kd",
         "value": 21.286,
         "bound": 19.571,
-        "z": 26.43,
+        "z": 26.433,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (aim, session), listed there",
@@ -507,7 +513,7 @@
         "id": "kd",
         "value": 19.723,
         "bound": 19.571,
-        "z": 24.388,
+        "z": 24.391,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (session-forensics), listed there",
@@ -671,14 +677,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 57.188,
+        "maxZ": 57.195,
         "metrics": [
           {
             "id": "kd",
             "label": "KD",
             "value": 44.833,
             "bound": 19.571,
-            "z": 57.188,
+            "z": 57.195,
             "side": "high"
           },
           {
@@ -686,7 +692,7 @@
             "label": "📉 Slope",
             "value": -7.805,
             "bound": -5.256,
-            "z": -49.362,
+            "z": -49.387,
             "side": "low"
           },
           {
@@ -706,19 +712,19 @@
             "side": "high"
           },
           {
-            "id": "rf",
-            "label": "🛡️ Resist",
-            "value": 10.435,
-            "bound": 8.86,
-            "z": 25.068,
-            "side": "high"
-          },
-          {
             "id": "coi",
             "label": "📊 COI",
             "value": 17.392,
             "bound": 14.767,
-            "z": 25.067,
+            "z": 25.083,
+            "side": "high"
+          },
+          {
+            "id": "rf",
+            "label": "🛡️ Resist",
+            "value": 10.435,
+            "bound": 8.86,
+            "z": 25.083,
             "side": "high"
           }
         ]
@@ -740,19 +746,19 @@
             "side": "high"
           },
           {
-            "id": "rf",
-            "label": "🛡️ Resist",
-            "value": 9.626,
-            "bound": 8.86,
-            "z": 23.021,
-            "side": "high"
-          },
-          {
             "id": "coi",
             "label": "📊 COI",
             "value": 16.044,
             "bound": 14.767,
-            "z": 23.021,
+            "z": 23.036,
+            "side": "high"
+          },
+          {
+            "id": "rf",
+            "label": "🛡️ Resist",
+            "value": 9.626,
+            "bound": 8.86,
+            "z": 23.036,
             "side": "high"
           },
           {
@@ -772,14 +778,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 63.925,
+        "maxZ": 63.922,
         "metrics": [
           {
             "id": "pvs",
             "label": "🦁 Brave",
             "value": 45.763,
             "bound": 34.098,
-            "z": 63.925,
+            "z": 63.922,
             "side": "high"
           },
           {
@@ -795,7 +801,7 @@
             "label": "📉 Slope",
             "value": 2.155,
             "bound": 0.604,
-            "z": 15.363,
+            "z": 15.369,
             "side": "high"
           }
         ]
@@ -842,14 +848,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 35.885,
+        "maxZ": 35.889,
         "metrics": [
           {
             "id": "kd",
             "label": "KD",
             "value": 28.524,
             "bound": 19.571,
-            "z": 35.885,
+            "z": 35.889,
             "side": "high"
           }
         ]
@@ -860,14 +866,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 9.266,
+        "maxZ": 9.269,
         "metrics": [
           {
             "id": "slope",
             "label": "📉 Slope",
             "value": 1.217,
             "bound": 0.604,
-            "z": 9.266,
+            "z": 9.269,
             "side": "high"
           }
         ]
@@ -973,14 +979,14 @@
         "explained": true,
         "reason": "Owner reviewed 2026-10-18 (#10): vehicle main try-harding K/D (lifetime KD 33, 658 kills / 25 deaths vs 200 opponents); explained, not a cheater",
         "red": [],
-        "maxZ": 466.149,
+        "maxZ": 466.131,
         "metrics": [
           {
             "id": "pvs",
             "label": "🦁 Brave",
             "value": 329.633,
             "bound": 34.098,
-            "z": 466.149,
+            "z": 466.131,
             "side": "high"
           },
           {
@@ -996,7 +1002,7 @@
             "label": "📉 Slope",
             "value": 7.198,
             "bound": 0.604,
-            "z": 48.129,
+            "z": 48.152,
             "side": "high"
           },
           {
@@ -1004,15 +1010,7 @@
             "label": "KD",
             "value": 32.951,
             "bound": 19.571,
-            "z": 41.667,
-            "side": "high"
-          },
-          {
-            "id": "rf",
-            "label": "🛡️ Resist",
-            "value": 15.078,
-            "bound": 8.86,
-            "z": 36.812,
+            "z": 41.672,
             "side": "high"
           },
           {
@@ -1020,7 +1018,15 @@
             "label": "📊 COI",
             "value": 25.13,
             "bound": 14.767,
-            "z": 36.811,
+            "z": 36.835,
+            "side": "high"
+          },
+          {
+            "id": "rf",
+            "label": "🛡️ Resist",
+            "value": 15.078,
+            "bound": 8.86,
+            "z": 36.835,
             "side": "high"
           }
         ]
@@ -1034,14 +1040,14 @@
           "aim",
           "session"
         ],
-        "maxZ": 230.192,
+        "maxZ": 230.161,
         "metrics": [
           {
             "id": "act",
             "label": "🏃 Activity",
             "value": 72.568,
             "bound": 24.742,
-            "z": 230.192,
+            "z": 230.161,
             "side": "high"
           },
           {
@@ -1053,19 +1059,19 @@
             "side": "high"
           },
           {
-            "id": "rf",
-            "label": "🛡️ Resist",
-            "value": 14.972,
-            "bound": 8.86,
-            "z": 36.544,
-            "side": "high"
-          },
-          {
             "id": "coi",
             "label": "📊 COI",
             "value": 24.954,
             "bound": 14.767,
-            "z": 36.544,
+            "z": 36.567,
+            "side": "high"
+          },
+          {
+            "id": "rf",
+            "label": "🛡️ Resist",
+            "value": 14.972,
+            "bound": 8.86,
+            "z": 36.567,
             "side": "high"
           },
           {
@@ -1073,7 +1079,7 @@
             "label": "KD",
             "value": 21.286,
             "bound": 19.571,
-            "z": 26.43,
+            "z": 26.433,
             "side": "high"
           },
           {
@@ -1106,19 +1112,19 @@
             "side": "high"
           },
           {
-            "id": "rf",
-            "label": "🛡️ Resist",
-            "value": 12.372,
-            "bound": 8.86,
-            "z": 29.966,
-            "side": "high"
-          },
-          {
             "id": "coi",
             "label": "📊 COI",
             "value": 20.62,
             "bound": 14.767,
-            "z": 29.966,
+            "z": 29.984,
+            "side": "high"
+          },
+          {
+            "id": "rf",
+            "label": "🛡️ Resist",
+            "value": 12.372,
+            "bound": 8.86,
+            "z": 29.984,
             "side": "high"
           },
           {
@@ -1126,7 +1132,7 @@
             "label": "KD",
             "value": 19.723,
             "bound": 19.571,
-            "z": 24.388,
+            "z": 24.391,
             "side": "high"
           }
         ]
@@ -1139,14 +1145,14 @@
         "red": [
           "aim"
         ],
-        "maxZ": 202.882,
+        "maxZ": 202.907,
         "metrics": [
           {
             "id": "kd",
             "label": "KD",
             "value": 156.375,
             "bound": 19.571,
-            "z": 202.882,
+            "z": 202.907,
             "side": "high"
           },
           {
@@ -1196,14 +1202,14 @@
         "red": [
           "aim"
         ],
-        "maxZ": 79.743,
+        "maxZ": 79.732,
         "metrics": [
           {
             "id": "act",
             "label": "🏃 Activity",
             "value": 25.317,
             "bound": 24.742,
-            "z": 79.743,
+            "z": 79.732,
             "side": "high"
           }
         ]
@@ -1508,7 +1514,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-24T00:46:11.411Z",
+    "checkedAt": "2026-10-24T00:50:47.237Z",
     "red": 52,
     "padding": 42,
     "adjusted": 18,
@@ -1519,7 +1525,7 @@
     "forensics": 29
   },
   "sessionStats": {
-    "checkedAt": "2026-10-24T00:46:06.450Z",
+    "checkedAt": "2026-10-24T00:50:42.097Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -1532,14 +1538,14 @@
     },
     "ruleText": "[session pattern] in recent Honu sessions (≥ 100 kills counted): assists per kill ≤ 0.1, headshot share ≥ 50% (headshot XP per kill; Census lifetime HSR when no XP detail) and K/D ≥ 7 (session deaths; Census lifetime KD when none). A very one-sided record; a lead for manual review, not proof.",
     "coverage": {
-      "players": 14183,
-      "withSessions": 12655,
-      "measured": 5797,
-      "sessions": 48735,
-      "kills": 2045811,
-      "xpPlayers": 1330,
-      "xpMeasured": 957,
-      "xpSessions": 7032
+      "players": 14185,
+      "withSessions": 12657,
+      "measured": 5799,
+      "sessions": 48747,
+      "kills": 2046661,
+      "xpPlayers": 1332,
+      "xpMeasured": 959,
+      "xpSessions": 7044
     },
     "metrics": [
       {
@@ -1641,7 +1647,7 @@
     ],
     "distributions": {
       "s_apk": {
-        "n": 5772,
+        "n": 5774,
         "min": 0,
         "p01": 0.104,
         "p05": 0.19,
@@ -1661,7 +1667,7 @@
         "max": 0.808
       },
       "s_kpm": {
-        "n": 5797,
+        "n": 5799,
         "min": 0.07,
         "p01": 0.133,
         "p05": 0.199,
@@ -1671,7 +1677,7 @@
         "max": 16.526
       },
       "s_maxKpm": {
-        "n": 5797,
+        "n": 5799,
         "min": 0.103,
         "p01": 0.179,
         "p05": 0.271,
@@ -1681,7 +1687,7 @@
         "max": 16.526
       },
       "s_kpmCv": {
-        "n": 5528,
+        "n": 5529,
         "min": 0,
         "p01": 0.013,
         "p05": 0.051,
@@ -1691,7 +1697,7 @@
         "max": 1.107
       },
       "s_kd": {
-        "n": 5769,
+        "n": 5771,
         "min": 0.226,
         "p01": 0.441,
         "p05": 0.639,
@@ -1701,7 +1707,7 @@
         "max": 162.667
       },
       "s_maxKd": {
-        "n": 5769,
+        "n": 5771,
         "min": 0.271,
         "p01": 0.542,
         "p05": 0.804,
@@ -1711,7 +1717,7 @@
         "max": 355
       },
       "s_hsk": {
-        "n": 1043,
+        "n": 1045,
         "min": 0,
         "p01": 0.009,
         "p05": 0.071,
@@ -1721,7 +1727,7 @@
         "max": 0.972
       },
       "s_ksk": {
-        "n": 1043,
+        "n": 1045,
         "min": 0,
         "p01": 0.054,
         "p05": 0.115,
@@ -1731,7 +1737,7 @@
         "max": 0.983
       },
       "s_domk": {
-        "n": 1043,
+        "n": 1045,
         "min": 0,
         "p01": 0,
         "p05": 0.022,
@@ -1741,17 +1747,17 @@
         "max": 0.243
       },
       "s_revk": {
-        "n": 1043,
+        "n": 1045,
         "min": 0,
         "p01": 0,
         "p05": 0.016,
         "median": 0.056,
-        "p95": 0.124,
+        "p95": 0.125,
         "p99": 0.164,
         "max": 0.357
       },
       "s_revDom": {
-        "n": 1031,
+        "n": 1033,
         "min": 0,
         "p01": 0,
         "p05": 0.167,
@@ -1761,7 +1767,7 @@
         "max": 27
       },
       "s_savk": {
-        "n": 1043,
+        "n": 1045,
         "min": 0,
         "p01": 0.005,
         "p05": 0.024,
@@ -1771,7 +1777,7 @@
         "max": 0.2
       },
       "s_spotk": {
-        "n": 1043,
+        "n": 1045,
         "min": 0,
         "p01": 0,
         "p05": 0,
@@ -1781,7 +1787,7 @@
         "max": 0.354
       },
       "s_prik": {
-        "n": 1043,
+        "n": 1045,
         "min": 0,
         "p01": 0.06,
         "p05": 0.115,
@@ -1791,7 +1797,7 @@
         "max": 0.495
       },
       "s_stopk": {
-        "n": 1043,
+        "n": 1045,
         "min": 0,
         "p01": 0.013,
         "p05": 0.038,
@@ -3410,7 +3416,7 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 57.188,
+        "maxZ": 57.195,
         "metrics": [
           {
             "id": "s_kd",
@@ -3448,7 +3454,7 @@
         "red": [
           "aim"
         ],
-        "maxZ": 202.882,
+        "maxZ": 202.907,
         "metrics": [
           {
             "id": "s_kd",
@@ -3493,17 +3499,17 @@
     "outliersUnexplained": 2
   },
   "size": {
-    "at": "2026-10-24T00:45:50.379Z",
+    "at": "2026-10-24T00:50:25.176Z",
     "repoBytes": 220661760,
-    "dataBytes": 290758626,
-    "playersBytes": 264845808,
-    "playerFiles": 14184,
+    "dataBytes": 290818824,
+    "playersBytes": 264886689,
+    "playerFiles": 14186,
     "warnAtBytes": 734003200,
     "warning": false
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-24T00:46:06.490Z",
+    "checkedAt": "2026-10-24T00:50:42.149Z",
     "candidates": [
       "chocoiatevs",
       "nebelhexe",
@@ -30879,7 +30885,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-24T00:46:06.501Z",
+    "checkedAt": "2026-10-24T00:50:42.162Z",
     "count": 363,
     "players": [
       {
@@ -33889,16 +33895,16 @@
     ]
   },
   "infantry": {
-    "checkedAt": "2026-10-24T00:46:13.236Z",
-    "players": 14184,
+    "checkedAt": "2026-10-24T00:50:49.110Z",
+    "players": 14186,
     "counts": {
-      "infantry": 9247,
+      "infantry": 9249,
       "mixed": 3137,
       "vehicle": 694,
       "low": 1104,
       "none": 0
     },
-    "v2": 14182,
+    "v2": 14184,
     "pending": 2,
     "rule": {
       "INFANTRY_MAX": 0.25,
@@ -33946,10 +33952,10 @@
       }
     },
     "tagMin": 20,
-    "checkedAt": "2026-10-24T00:46:11.237Z",
+    "checkedAt": "2026-10-24T00:50:47.058Z",
     "coverage": {
-      "players": 14159,
-      "withSessions": 12631,
+      "players": 14161,
+      "withSessions": 12633,
       "measured": 5192,
       "measuredPct": 36.7
     },
@@ -33959,7 +33965,7 @@
       "shareLo": 0.528,
       "apk": 0.661,
       "iviLo": 302.111,
-      "iviHi": 668.83,
+      "iviHi": 668.711,
       "medApk": 0.425,
       "medShare": 0.555
     },
@@ -33975,7 +33981,7 @@
     },
     "groups": {
       "carries": {
-        "count": 466,
+        "count": 467,
         "top": [
           {
             "slug": "pikaqiuill",
@@ -34257,7 +34263,7 @@
   },
   "burst": {
     "rule": "KPM ≥ 5 and ≥ 15 kills in ≥ 2 min (one stored session, no 10-minute floor)",
-    "checkedAt": "2026-10-24T00:46:15.664Z",
+    "checkedAt": "2026-10-24T00:50:51.571Z",
     "sessions": 12,
     "flaggedPlayers": 0,
     "clearedPlayers": 2,
@@ -34441,8 +34447,8 @@
     ]
   },
   "padderPenalty": {
-    "checkedAt": "2026-10-24T00:46:06.528Z",
-    "ranked": 14116,
+    "checkedAt": "2026-10-24T00:50:42.198Z",
+    "ranked": 14118,
     "penalty": 0.1,
     "ref": 610.6,
     "rule": "Confirmed stat padders (data/reviewed.json \"padding\") get 💩 and −10% adjusted iVi, on top of the farm-kill removal and the * mark. A score at or below 0 gets a fixed −61 instead (10% of 610.6, the median positive iVi on 2026-10-19), so it always drops. Owner override: \"penalty\": \"cleared\" on the reviewed.json entry (or decision \"cleared\").",
@@ -34586,7 +34592,7 @@
         "before": 1013.6,
         "after": 739.9,
         "rankBefore": 2239,
-        "rankAfter": 3657,
+        "rankAfter": 3658,
         "fixedDrop": false
       },
       {
@@ -34615,8 +34621,8 @@
         "status": "penalized",
         "before": 797.8,
         "after": 436.5,
-        "rankBefore": 3319,
-        "rankAfter": 5803,
+        "rankBefore": 3320,
+        "rankAfter": 5804,
         "fixedDrop": false
       },
       {
@@ -34625,8 +34631,8 @@
         "status": "penalized",
         "before": 779.2,
         "after": 385,
-        "rankBefore": 3430,
-        "rankAfter": 6260,
+        "rankBefore": 3431,
+        "rankAfter": 6261,
         "fixedDrop": false
       },
       {
@@ -34635,8 +34641,8 @@
         "status": "penalized",
         "before": 747.7,
         "after": 672.9,
-        "rankBefore": 3617,
-        "rankAfter": 4085,
+        "rankBefore": 3618,
+        "rankAfter": 4086,
         "fixedDrop": false
       },
       {
@@ -34645,8 +34651,8 @@
         "status": "penalized",
         "before": 450.1,
         "after": 384,
-        "rankBefore": 5674,
-        "rankAfter": 6266,
+        "rankBefore": 5675,
+        "rankAfter": 6267,
         "fixedDrop": false
       },
       {
@@ -34655,15 +34661,15 @@
         "status": "penalized",
         "before": -12,
         "after": -106.6,
-        "rankBefore": 10581,
-        "rankAfter": 10904,
+        "rankBefore": 10583,
+        "rankAfter": 10906,
         "fixedDrop": true
       }
     ]
   },
   "vehicleCut": {
-    "checkedAt": "2026-10-24T00:46:06.572Z",
-    "ranked": 14116,
+    "checkedAt": "2026-10-24T00:50:42.251Z",
+    "ranked": 14118,
     "cut": 8475,
     "buckets": {
       "≤5%": 1801,
@@ -34681,7 +34687,7 @@
       "START": 0.1,
       "REF": 610.6
     },
-    "withData": 13056,
+    "withData": 13058,
     "players": [
       {
         "slug": "igorrrrrr",
@@ -34696,7 +34702,7 @@
         "before": 2914.9,
         "after": 413.9,
         "rankBefore": 1,
-        "rankAfter": 5984
+        "rankAfter": 5985
       },
       {
         "slug": "renamedsoldier12345",
@@ -34711,7 +34717,7 @@
         "before": 2689.2,
         "after": 502.9,
         "rankBefore": 3,
-        "rankAfter": 5257
+        "rankAfter": 5258
       },
       {
         "slug": "mentis2k6",
@@ -34756,7 +34762,7 @@
         "before": 2502.9,
         "after": 415.5,
         "rankBefore": 10,
-        "rankAfter": 5971
+        "rankAfter": 5972
       },
       {
         "slug": "lilkanc",
@@ -34771,7 +34777,7 @@
         "before": 2457.4,
         "after": 783.9,
         "rankBefore": 13,
-        "rankAfter": 3400
+        "rankAfter": 3401
       },
       {
         "slug": "lilkavs",
@@ -34831,7 +34837,7 @@
         "before": 2219.7,
         "after": 235.3,
         "rankBefore": 42,
-        "rankAfter": 7750
+        "rankAfter": 7751
       },
       {
         "slug": "1otus",
@@ -34906,7 +34912,7 @@
         "before": 2179.4,
         "after": 721.4,
         "rankBefore": 54,
-        "rankAfter": 3763
+        "rankAfter": 3764
       },
       {
         "slug": "klngping",
@@ -34936,7 +34942,7 @@
         "before": 2150.8,
         "after": 275.3,
         "rankBefore": 64,
-        "rankAfter": 7289
+        "rankAfter": 7290
       },
       {
         "slug": "niceps2022",
@@ -34966,7 +34972,7 @@
         "before": 2134.7,
         "after": 273.2,
         "rankBefore": 68,
-        "rankAfter": 7313
+        "rankAfter": 7314
       },
       {
         "slug": "pinkoctapus",
@@ -35026,7 +35032,7 @@
         "before": 2100.6,
         "after": 588.2,
         "rankBefore": 78,
-        "rankAfter": 4623
+        "rankAfter": 4624
       },
       {
         "slug": "oloyxbjtr",
@@ -35101,7 +35107,7 @@
         "before": 2078.2,
         "after": 744,
         "rankBefore": 91,
-        "rankAfter": 3638
+        "rankAfter": 3639
       },
       {
         "slug": "coopztr",
@@ -35176,7 +35182,7 @@
         "before": 2042.6,
         "after": 606.7,
         "rankBefore": 103,
-        "rankAfter": 4512
+        "rankAfter": 4513
       },
       {
         "slug": "fretec",
@@ -35191,7 +35197,7 @@
         "before": 2039.5,
         "after": 575.1,
         "rankBefore": 104,
-        "rankAfter": 4725
+        "rankAfter": 4726
       },
       {
         "slug": "uwuuwuuwu",
@@ -35221,7 +35227,7 @@
         "before": 2008,
         "after": 333.3,
         "rankBefore": 112,
-        "rankAfter": 6731
+        "rankAfter": 6732
       },
       {
         "slug": "violetsexy",
@@ -35281,7 +35287,7 @@
         "before": 1997.7,
         "after": 553.4,
         "rankBefore": 121,
-        "rankAfter": 4865
+        "rankAfter": 4866
       },
       {
         "slug": "gx20",
@@ -35341,7 +35347,7 @@
         "before": 1987.3,
         "after": 699.5,
         "rankBefore": 129,
-        "rankAfter": 3921
+        "rankAfter": 3922
       },
       {
         "slug": "sw1zzvs",
@@ -35356,7 +35362,7 @@
         "before": 1983.2,
         "after": 321.3,
         "rankBefore": 132,
-        "rankAfter": 6847
+        "rankAfter": 6848
       },
       {
         "slug": "bobeqh",
@@ -35371,7 +35377,7 @@
         "before": 1981.2,
         "after": 271.4,
         "rankBefore": 133,
-        "rankAfter": 7333
+        "rankAfter": 7334
       },
       {
         "slug": "klngplng",
@@ -35431,7 +35437,7 @@
         "before": 1960.2,
         "after": 266.6,
         "rankBefore": 149,
-        "rankAfter": 7391
+        "rankAfter": 7392
       },
       {
         "slug": "oldmustachetr",
@@ -35566,7 +35572,7 @@
         "before": 1894.2,
         "after": 710.3,
         "rankBefore": 198,
-        "rankAfter": 3849
+        "rankAfter": 3850
       },
       {
         "slug": "tomthei3astardbutbetter",
@@ -35596,7 +35602,7 @@
         "before": 1890,
         "after": 396.9,
         "rankBefore": 204,
-        "rankAfter": 6130
+        "rankAfter": 6131
       },
       {
         "slug": "neoncreeper2",
@@ -35611,7 +35617,7 @@
         "before": 1888.6,
         "after": 787.6,
         "rankBefore": 205,
-        "rankAfter": 3385
+        "rankAfter": 3386
       },
       {
         "slug": "daber222",
@@ -35626,7 +35632,7 @@
         "before": 1883.9,
         "after": 653.7,
         "rankBefore": 207,
-        "rankAfter": 4207
+        "rankAfter": 4208
       },
       {
         "slug": "weebsiayer",
@@ -35656,7 +35662,7 @@
         "before": 1869.5,
         "after": 519.7,
         "rankBefore": 222,
-        "rankAfter": 5124
+        "rankAfter": 5125
       },
       {
         "slug": "l4zonesw",
@@ -35776,7 +35782,7 @@
         "before": 1836.5,
         "after": 378.3,
         "rankBefore": 260,
-        "rankAfter": 6327
+        "rankAfter": 6328
       },
       {
         "slug": "daemon17",
@@ -35836,7 +35842,7 @@
         "before": 1830.3,
         "after": 574.7,
         "rankBefore": 269,
-        "rankAfter": 4727
+        "rankAfter": 4728
       },
       {
         "slug": "makabakacn",
@@ -35956,7 +35962,7 @@
         "before": 1811.8,
         "after": 532.7,
         "rankBefore": 294,
-        "rankAfter": 5033
+        "rankAfter": 5034
       },
       {
         "slug": "bass91",
@@ -36076,7 +36082,7 @@
         "before": 1781.1,
         "after": 445.3,
         "rankBefore": 331,
-        "rankAfter": 5719
+        "rankAfter": 5720
       },
       {
         "slug": "daemon15",
@@ -36256,7 +36262,7 @@
         "before": 1760.1,
         "after": 258.7,
         "rankBefore": 360,
-        "rankAfter": 7493
+        "rankAfter": 7494
       },
       {
         "slug": "arraino",
@@ -36331,7 +36337,7 @@
         "before": 1752.9,
         "after": 683.6,
         "rankBefore": 367,
-        "rankAfter": 4018
+        "rankAfter": 4019
       },
       {
         "slug": "mrhorns",
@@ -36391,7 +36397,7 @@
         "before": 1747.9,
         "after": 624,
         "rankBefore": 376,
-        "rankAfter": 4390
+        "rankAfter": 4391
       },
       {
         "slug": "inimicusvs",
@@ -36541,7 +36547,7 @@
         "before": 1734.2,
         "after": 339.9,
         "rankBefore": 404,
-        "rankAfter": 6678
+        "rankAfter": 6679
       },
       {
         "slug": "tolyano",
@@ -36571,7 +36577,7 @@
         "before": 1727.4,
         "after": 487.1,
         "rankBefore": 415,
-        "rankAfter": 5350
+        "rankAfter": 5351
       },
       {
         "slug": "mahdrider",
@@ -36586,7 +36592,7 @@
         "before": 1727.1,
         "after": 276.3,
         "rankBefore": 418,
-        "rankAfter": 7278
+        "rankAfter": 7279
       },
       {
         "slug": "robanivisc",
@@ -36691,7 +36697,7 @@
         "before": 1713.6,
         "after": 277.6,
         "rankBefore": 443,
-        "rankAfter": 7265
+        "rankAfter": 7266
       },
       {
         "slug": "nouturns",
@@ -36706,7 +36712,7 @@
         "before": 1712.3,
         "after": 253.4,
         "rankBefore": 446,
-        "rankAfter": 7554
+        "rankAfter": 7555
       },
       {
         "slug": "iviagicns",
@@ -36949,7 +36955,7 @@
         "before": 2914.9,
         "after": 413.9,
         "rankBefore": 1,
-        "rankAfter": 5984
+        "rankAfter": 5985
       },
       {
         "slug": "renamedsoldier12345",
@@ -36964,7 +36970,7 @@
         "before": 2689.2,
         "after": 502.9,
         "rankBefore": 3,
-        "rankAfter": 5257
+        "rankAfter": 5258
       },
       {
         "slug": "pikaqiuill",
@@ -36979,7 +36985,7 @@
         "before": 2502.9,
         "after": 415.5,
         "rankBefore": 10,
-        "rankAfter": 5971
+        "rankAfter": 5972
       },
       {
         "slug": "lilkavs",
@@ -37053,8 +37059,8 @@
         "cut": 48.5,
         "before": 590,
         "after": 303.8,
-        "rankBefore": 5383,
-        "rankAfter": 7014
+        "rankBefore": 5384,
+        "rankAfter": 7015
       },
       {
         "slug": "shlodog",
@@ -37068,8 +37074,8 @@
         "cut": 0.6,
         "before": 457.8,
         "after": 455.1,
-        "rankBefore": 6366,
-        "rankAfter": 5634
+        "rankBefore": 6367,
+        "rankAfter": 5635
       }
     ]
   },
@@ -37080,7 +37086,7 @@
       "HIP": 0.9,
       "HSR": 0.55
     },
-    "checkedAt": "2026-10-24T00:45:53.191Z",
+    "checkedAt": "2026-10-24T00:50:28.277Z",
     "checked": 11,
     "errors": 0,
     "pending": 0,
@@ -37201,7 +37207,7 @@
     ]
   },
   "hut": {
-    "builtAt": "2026-10-24T00:46:05.947Z",
+    "builtAt": "2026-10-24T00:50:41.457Z",
     "cuts": {
       "actMedian": 0.2712,
       "actMult": 1.333,
@@ -37230,15 +37236,15 @@
       "infHi": 85,
       "markMin": 10,
       "n": {
-        "act": 14116,
-        "dpm": 14140,
-        "acc": 14159,
-        "play": 14101
+        "act": 14118,
+        "dpm": 14142,
+        "acc": 14161,
+        "play": 14103
       }
     },
     "marked": 218,
-    "dieHardBefore": 1190,
-    "dieHardAfter": 1066,
+    "dieHardBefore": 1191,
+    "dieHardAfter": 1067,
     "rule": "🛖 safe-spot damping, gradual, all cuts from this build's players. a = (🏃 Activity ÷ cut)², cut = median × (1.333 + (8 − 1.333) × ⚔️ iVi percentile ÷ 100 × e), a straight line, where e = experience 0 → 1 on estimated play time (lifetime kills ÷ lifetime KPM) from p5 to p25 of this build's players (new accounts stay near ×1.333), so weaker players get a lower cut and the top of the board up to ×8 (Activity at or above the cut → no change). w = product of three 0–1 ramps: deaths/min (KPM ÷ K/D) 1 at p10 → 0 at p20; 🪖 infantry 0 at 75% → 1 at 85%; accuracy 1 at the median → 0 at p60. A positive 🔀 Diff × (1 − w × (1 − a)), rounded; a negative Diff is untouched. 🛖 next to the name only when Diff drops by 10+ points. Owner override: \"hut\": \"cleared\" on the data/reviewed.json entry (no 🛖, no damping).",
     "players": [
       {
@@ -39962,6 +39968,26 @@
         "marked": true
       },
       {
+        "name": "Chillatex",
+        "slug": "chillatex",
+        "act": 0.723482,
+        "dpm": 0.181,
+        "acc": 16.016415,
+        "inf": 95.4,
+        "diffRaw": 30,
+        "iviPct": 83,
+        "playH": 4722,
+        "exp": 1,
+        "cut": 1.862,
+        "factor": 0.44,
+        "w": 0.66,
+        "wDpm": 0.66,
+        "wInf": 1,
+        "wAcc": 1,
+        "diff": 13,
+        "marked": true
+      },
+      {
         "name": "Riesz",
         "slug": "riesz",
         "act": 0.379383,
@@ -40059,26 +40085,6 @@
         "wInf": 1,
         "wAcc": 1,
         "diff": 0,
-        "marked": true
-      },
-      {
-        "name": "Chillatex",
-        "slug": "chillatex",
-        "act": 0.723482,
-        "dpm": 0.181,
-        "acc": 16.016415,
-        "inf": 95.4,
-        "diffRaw": 29,
-        "iviPct": 82,
-        "playH": 4722,
-        "exp": 1,
-        "cut": 1.844,
-        "factor": 0.442,
-        "w": 0.66,
-        "wDpm": 0.66,
-        "wInf": 1,
-        "wAcc": 1,
-        "diff": 13,
         "marked": true
       },
       {
@@ -41605,10 +41611,10 @@
     "cleared": []
   },
   "vehDiff": {
-    "builtAt": "2026-10-24T00:46:06.033Z",
+    "builtAt": "2026-10-24T00:50:41.539Z",
     "start": 14.9,
     "damped": 3161,
-    "dieHardHut": 1066,
+    "dieHardHut": 1067,
     "dieHardAfter": 396,
     "rule": "🔀 Diff vehicle damp, gradual, start from this build's players: start = median 🪖 vehicle share (14.9%). Vehicle share at or below the start → no change; above → factor = (100 − vehicle %) ÷ (100 − start), so only the on-foot part of a positive Diff counts (all-vehicle → 0). Negative Diff untouched. ⚔️ iVi already carries the 🚜 cut; this one keeps the Diff comparison about infantry. With 🛖 the lower factor applies (never both multiplied). Diff before = with 🛖 only. No mark next to the name; the Diff hover says “🚜 Reduced from …”. Owner override: \"vehDiff\": \"cleared\" on the data/reviewed.json player entry, or the 🚜 \"vehicleCutCleared\" exemption.",
     "players": [
@@ -51249,6 +51255,17 @@
         "diff": 15
       },
       {
+        "name": "VITOXMAXIMUS2",
+        "slug": "vitoxmaximus2",
+        "veh": 37.1,
+        "factor": 0.739,
+        "hut": null,
+        "by": "veh",
+        "diffRaw": 33,
+        "diffHut": 33,
+        "diff": 24
+      },
+      {
         "name": "Pleiades45",
         "slug": "pleiades45",
         "veh": 90.4,
@@ -51808,17 +51825,6 @@
         "diffRaw": 32,
         "diffHut": 32,
         "diff": 26
-      },
-      {
-        "name": "VITOXMAXIMUS2",
-        "slug": "vitoxmaximus2",
-        "veh": 37.1,
-        "factor": 0.739,
-        "hut": null,
-        "by": "veh",
-        "diffRaw": 32,
-        "diffHut": 32,
-        "diff": 24
       },
       {
         "name": "10700F",
@@ -52822,17 +52828,6 @@
         "diff": 27
       },
       {
-        "name": "EonFr",
-        "slug": "eonfr",
-        "veh": 38.6,
-        "factor": 0.722,
-        "hut": null,
-        "by": "veh",
-        "diffRaw": 30,
-        "diffHut": 30,
-        "diff": 22
-      },
-      {
         "name": "DeployOnMe",
         "slug": "deployonme",
         "veh": 26.5,
@@ -53438,6 +53433,17 @@
         "diff": 26
       },
       {
+        "name": "EonFr",
+        "slug": "eonfr",
+        "veh": 38.6,
+        "factor": 0.722,
+        "hut": null,
+        "by": "veh",
+        "diffRaw": 29,
+        "diffHut": 29,
+        "diff": 21
+      },
+      {
         "name": "Nemesorus",
         "slug": "nemesorus",
         "veh": 24.1,
@@ -53546,17 +53552,6 @@
         "diffRaw": 29,
         "diffHut": 29,
         "diff": 21
-      },
-      {
-        "name": "GrenadierZ",
-        "slug": "grenadierz",
-        "veh": 40.6,
-        "factor": 0.698,
-        "hut": null,
-        "by": "veh",
-        "diffRaw": 29,
-        "diffHut": 29,
-        "diff": 20
       },
       {
         "name": "Devil2U",
@@ -54472,6 +54467,17 @@
         "diff": 25
       },
       {
+        "name": "GrenadierZ",
+        "slug": "grenadierz",
+        "veh": 40.6,
+        "factor": 0.698,
+        "hut": null,
+        "by": "veh",
+        "diffRaw": 28,
+        "diffHut": 28,
+        "diff": 20
+      },
+      {
         "name": "AdmiralMessina",
         "slug": "admiralmessina",
         "veh": 35.7,
@@ -54987,17 +54993,6 @@
         "diffRaw": 28,
         "diffHut": 28,
         "diff": 26
-      },
-      {
-        "name": "88mmFlak41",
-        "slug": "88mmflak41",
-        "veh": 31.8,
-        "factor": 0.801,
-        "hut": null,
-        "by": "veh",
-        "diffRaw": 28,
-        "diffHut": 28,
-        "diff": 22
       },
       {
         "name": "aversi0n",
@@ -55913,6 +55908,17 @@
         "diff": 5
       },
       {
+        "name": "88mmFlak41",
+        "slug": "88mmflak41",
+        "veh": 31.8,
+        "factor": 0.801,
+        "hut": null,
+        "by": "veh",
+        "diffRaw": 27,
+        "diffHut": 27,
+        "diff": 22
+      },
+      {
         "name": "AhvassaVS",
         "slug": "ahvassavs",
         "veh": 47.2,
@@ -56318,17 +56324,6 @@
         "diffRaw": 26,
         "diffHut": 26,
         "diff": 20
-      },
-      {
-        "name": "Jero7734",
-        "slug": "jero7734",
-        "veh": 26.8,
-        "factor": 0.86,
-        "hut": null,
-        "by": "veh",
-        "diffRaw": 26,
-        "diffHut": 26,
-        "diff": 22
       },
       {
         "name": "chamks",
@@ -57156,6 +57151,17 @@
         "diff": 23
       },
       {
+        "name": "Jero7734",
+        "slug": "jero7734",
+        "veh": 26.8,
+        "factor": 0.86,
+        "hut": null,
+        "by": "veh",
+        "diffRaw": 25,
+        "diffHut": 25,
+        "diff": 22
+      },
+      {
         "name": "IAnalystI",
         "slug": "ianalysti",
         "veh": 19.3,
@@ -57314,17 +57320,6 @@
         "slug": "roshan",
         "veh": 22.5,
         "factor": 0.911,
-        "hut": null,
-        "by": "veh",
-        "diffRaw": 25,
-        "diffHut": 25,
-        "diff": 23
-      },
-      {
-        "name": "cl0515",
-        "slug": "cl0515",
-        "veh": 21.2,
-        "factor": 0.926,
         "hut": null,
         "by": "veh",
         "diffRaw": 25,
@@ -58278,6 +58273,17 @@
         "diff": 23
       },
       {
+        "name": "cl0515",
+        "slug": "cl0515",
+        "veh": 21.2,
+        "factor": 0.926,
+        "hut": null,
+        "by": "veh",
+        "diffRaw": 24,
+        "diffHut": 24,
+        "diff": 22
+      },
+      {
         "name": "Lingsheng",
         "slug": "lingsheng",
         "veh": 26.4,
@@ -58971,17 +58977,6 @@
         "diff": 10
       },
       {
-        "name": "wangbatian",
-        "slug": "wangbatian",
-        "veh": 50.5,
-        "factor": 0.582,
-        "hut": null,
-        "by": "veh",
-        "diffRaw": 23,
-        "diffHut": 23,
-        "diff": 13
-      },
-      {
         "name": "CenutrienTR",
         "slug": "cenutrientr",
         "veh": 61.3,
@@ -59345,6 +59340,17 @@
         "diff": 18
       },
       {
+        "name": "deng52deng",
+        "slug": "deng52deng",
+        "veh": 49.6,
+        "factor": 0.592,
+        "hut": null,
+        "by": "veh",
+        "diffRaw": 23,
+        "diffHut": 23,
+        "diff": 14
+      },
+      {
         "name": "DiscipleoftheMotherTree",
         "slug": "discipleofthemothertree",
         "veh": 35.3,
@@ -59532,17 +59538,6 @@
         "diff": 9
       },
       {
-        "name": "xxxoTR",
-        "slug": "xxxotr",
-        "veh": 40.9,
-        "factor": 0.694,
-        "hut": null,
-        "by": "veh",
-        "diffRaw": 22,
-        "diffHut": 22,
-        "diff": 15
-      },
-      {
         "name": "Atriarc",
         "slug": "atriarc",
         "veh": 59.9,
@@ -59607,17 +59602,6 @@
         "diffRaw": 22,
         "diffHut": 22,
         "diff": 19
-      },
-      {
-        "name": "alz975",
-        "slug": "alz975",
-        "veh": 59.7,
-        "factor": 0.474,
-        "hut": null,
-        "by": "veh",
-        "diffRaw": 22,
-        "diffHut": 22,
-        "diff": 10
       },
       {
         "name": "DDYTT",
@@ -59827,6 +59811,17 @@
         "diffRaw": 22,
         "diffHut": 22,
         "diff": 15
+      },
+      {
+        "name": "wangbatian",
+        "slug": "wangbatian",
+        "veh": 50.5,
+        "factor": 0.582,
+        "hut": null,
+        "by": "veh",
+        "diffRaw": 22,
+        "diffHut": 22,
+        "diff": 13
       },
       {
         "name": "HeartRhythm",
@@ -60247,17 +60242,6 @@
         "diff": 18
       },
       {
-        "name": "deng52deng",
-        "slug": "deng52deng",
-        "veh": 49.6,
-        "factor": 0.592,
-        "hut": null,
-        "by": "veh",
-        "diffRaw": 22,
-        "diffHut": 22,
-        "diff": 13
-      },
-      {
         "name": "ELJudio1",
         "slug": "eljudio1",
         "veh": 58.7,
@@ -60401,6 +60385,17 @@
         "diff": 19
       },
       {
+        "name": "xxxoTR",
+        "slug": "xxxotr",
+        "veh": 40.9,
+        "factor": 0.694,
+        "hut": null,
+        "by": "veh",
+        "diffRaw": 21,
+        "diffHut": 21,
+        "diff": 15
+      },
+      {
         "name": "EternalOneNC",
         "slug": "eternalonenc",
         "veh": 30.9,
@@ -60509,6 +60504,17 @@
         "diffRaw": 21,
         "diffHut": 21,
         "diff": 15
+      },
+      {
+        "name": "alz975",
+        "slug": "alz975",
+        "veh": 59.7,
+        "factor": 0.474,
+        "hut": null,
+        "by": "veh",
+        "diffRaw": 21,
+        "diffHut": 21,
+        "diff": 10
       },
       {
         "name": "GHGIxiaosong",
@@ -60982,17 +60988,6 @@
         "diffRaw": 21,
         "diffHut": 21,
         "diff": 17
-      },
-      {
-        "name": "Bablo",
-        "slug": "bablo",
-        "veh": 43.2,
-        "factor": 0.667,
-        "hut": null,
-        "by": "veh",
-        "diffRaw": 21,
-        "diffHut": 21,
-        "diff": 14
       },
       {
         "name": "ClosedPhantoms",
@@ -61864,6 +61859,17 @@
         "diff": 5
       },
       {
+        "name": "Bablo",
+        "slug": "bablo",
+        "veh": 43.2,
+        "factor": 0.667,
+        "hut": null,
+        "by": "veh",
+        "diffRaw": 20,
+        "diffHut": 20,
+        "diff": 13
+      },
+      {
         "name": "AvatarHK",
         "slug": "avatarhk",
         "veh": 71,
@@ -62539,6 +62545,17 @@
         "slug": "wambay",
         "veh": 21.7,
         "factor": 0.92,
+        "hut": null,
+        "by": "veh",
+        "diffRaw": 19,
+        "diffHut": 19,
+        "diff": 17
+      },
+      {
+        "name": "AMONQ2",
+        "slug": "amonq2",
+        "veh": 24.3,
+        "factor": 0.89,
         "hut": null,
         "by": "veh",
         "diffRaw": 19,
@@ -63292,17 +63309,6 @@
         "diffRaw": 18,
         "diffHut": 18,
         "diff": 12
-      },
-      {
-        "name": "AMONQ2",
-        "slug": "amonq2",
-        "veh": 24.3,
-        "factor": 0.89,
-        "hut": null,
-        "by": "veh",
-        "diffRaw": 18,
-        "diffHut": 18,
-        "diff": 16
       },
       {
         "name": "NSLippiN",
@@ -64471,17 +64477,6 @@
         "diff": 15
       },
       {
-        "name": "TpizzaT",
-        "slug": "tpizzat",
-        "veh": 45.4,
-        "factor": 0.642,
-        "hut": null,
-        "by": "veh",
-        "diffRaw": 16,
-        "diffHut": 16,
-        "diff": 10
-      },
-      {
         "name": "Thundertracker",
         "slug": "thundertracker",
         "veh": 34.6,
@@ -65373,6 +65368,17 @@
         "diff": 13
       },
       {
+        "name": "TpizzaT",
+        "slug": "tpizzat",
+        "veh": 45.4,
+        "factor": 0.642,
+        "hut": null,
+        "by": "veh",
+        "diffRaw": 15,
+        "diffHut": 15,
+        "diff": 10
+      },
+      {
         "name": "tutushaoma",
         "slug": "tutushaoma",
         "veh": 31,
@@ -65630,17 +65636,6 @@
         "slug": "vanududebro",
         "veh": 20.1,
         "factor": 0.939,
-        "hut": null,
-        "by": "veh",
-        "diffRaw": 15,
-        "diffHut": 15,
-        "diff": 14
-      },
-      {
-        "name": "Partouzoskilo",
-        "slug": "partouzoskilo",
-        "veh": 19.3,
-        "factor": 0.948,
         "hut": null,
         "by": "veh",
         "diffRaw": 15,
@@ -66451,17 +66446,6 @@
         "diff": 13
       },
       {
-        "name": "AHoChiMinh",
-        "slug": "ahochiminh",
-        "veh": 19,
-        "factor": 0.952,
-        "hut": null,
-        "by": "veh",
-        "diffRaw": 14,
-        "diffHut": 14,
-        "diff": 13
-      },
-      {
         "name": "C4Pixie",
         "slug": "c4pixie",
         "veh": 19.5,
@@ -66669,6 +66653,17 @@
         "diffRaw": 14,
         "diffHut": 14,
         "diff": 10
+      },
+      {
+        "name": "Partouzoskilo",
+        "slug": "partouzoskilo",
+        "veh": 19.3,
+        "factor": 0.948,
+        "hut": null,
+        "by": "veh",
+        "diffRaw": 14,
+        "diffHut": 14,
+        "diff": 13
       },
       {
         "name": "BUIKANKAN",
@@ -67307,6 +67302,17 @@
         "diffRaw": 13,
         "diffHut": 13,
         "diff": 11
+      },
+      {
+        "name": "AHoChiMinh",
+        "slug": "ahochiminh",
+        "veh": 19,
+        "factor": 0.952,
+        "hut": null,
+        "by": "veh",
+        "diffRaw": 13,
+        "diffHut": 13,
+        "diff": 12
       },
       {
         "name": "ExtremistRU",
@@ -73062,17 +73068,6 @@
         "diff": 5
       },
       {
-        "name": "Jrum",
-        "slug": "jrum",
-        "veh": 27.7,
-        "factor": 0.85,
-        "hut": null,
-        "by": "veh",
-        "diffRaw": 7,
-        "diffHut": 7,
-        "diff": 6
-      },
-      {
         "name": "Ahorns",
         "slug": "ahorns",
         "veh": 22.4,
@@ -73896,6 +73891,17 @@
         "diffRaw": 6,
         "diffHut": 6,
         "diff": 4
+      },
+      {
+        "name": "Jrum",
+        "slug": "jrum",
+        "veh": 27.7,
+        "factor": 0.85,
+        "hut": null,
+        "by": "veh",
+        "diffRaw": 6,
+        "diffHut": 6,
+        "diff": 5
       },
       {
         "name": "Khammithimmis",
@@ -74800,17 +74806,6 @@
         "diff": 3
       },
       {
-        "name": "8845ts",
-        "slug": "8845ts",
-        "veh": 31.5,
-        "factor": 0.805,
-        "hut": null,
-        "by": "veh",
-        "diffRaw": 4,
-        "diffHut": 4,
-        "diff": 3
-      },
-      {
         "name": "SiMaGua",
         "slug": "simagua",
         "veh": 34,
@@ -75519,6 +75514,17 @@
         "slug": "daimonfirehd",
         "veh": 32.7,
         "factor": 0.791,
+        "hut": null,
+        "by": "veh",
+        "diffRaw": 3,
+        "diffHut": 3,
+        "diff": 2
+      },
+      {
+        "name": "8845ts",
+        "slug": "8845ts",
+        "veh": 31.5,
+        "factor": 0.805,
         "hut": null,
         "by": "veh",
         "diffRaw": 3,
@@ -76387,21 +76393,21 @@
     "cleared": []
   },
   "zergRevive": {
-    "builtAt": "2026-10-24T00:46:06.170Z",
-    "zergScored": 5749,
-    "measured": 830,
-    "confirmed": 206,
+    "builtAt": "2026-10-24T00:50:41.693Z",
+    "zergScored": 5751,
+    "measured": 832,
+    "confirmed": 207,
     "confirmedHigh": 56,
-    "softened": 180,
+    "softened": 177,
     "cuts": {
       "minKills": 100,
       "minDeaths": 50,
-      "p25": 18.4,
+      "p25": 18.5,
       "p50": 29.3,
       "p75": 44.6,
-      "n": 830
+      "n": 832
     },
-    "rule": "🪳 Zerg revive check, from Honu XP detail (data/xp, players looked up or discovered; 100+ kills and 50+ deaths there). Revived share = (Revive + Squad Revive received) ÷ deaths by enemy players. rvp = its percentile among the 830 measured players of this build (p25 18.4%, median 29.3%, p75 44.6%). rvp ≥ 75 → Zerg confirmed (unchanged, said on hover). Low rvp softens a high Zerg: w = 1 at/below p25 → 0 at/above p50, Zerg = raw − round(w × max(0, raw − rvp)), so at full weight Zerg falls to the revive percentile; never raised. No XP detail → unchanged. Listed: every softened player, and confirmed ones with raw Zerg ≥ 67. Owner override: \"zerg\": \"cleared\" on the data/reviewed.json player entry (no revive result at all).",
+    "rule": "🪳 Zerg revive check, from Honu XP detail (data/xp, players looked up or discovered; 100+ kills and 50+ deaths there). Revived share = (Revive + Squad Revive received) ÷ deaths by enemy players. rvp = its percentile among the 832 measured players of this build (p25 18.5%, median 29.3%, p75 44.6%). rvp ≥ 75 → Zerg confirmed (unchanged, said on hover). Low rvp softens a high Zerg: w = 1 at/below p25 → 0 at/above p50, Zerg = raw − round(w × max(0, raw − rvp)), so at full weight Zerg falls to the revive percentile; never raised. No XP detail → unchanged. Listed: every softened player, and confirmed ones with raw Zerg ≥ 67. Owner override: \"zerg\": \"cleared\" on the data/reviewed.json player entry (no revive result at all).",
     "players": [
       {
         "name": "MordreadTR",
@@ -76574,7 +76580,7 @@
         "share": 51.5,
         "revived": 195,
         "deaths": 379,
-        "rvp": 83,
+        "rvp": 84,
         "zergRaw": 85,
         "zerg": 85,
         "status": "confirmed"
@@ -77300,9 +77306,9 @@
         "share": 8.9,
         "revived": 11,
         "deaths": 124,
-        "rvp": 5,
+        "rvp": 6,
         "zergRaw": 59,
-        "zerg": 5,
+        "zerg": 6,
         "status": "softened"
       },
       {
@@ -77355,9 +77361,9 @@
         "share": 10.5,
         "revived": 12,
         "deaths": 114,
-        "rvp": 7,
+        "rvp": 8,
         "zergRaw": 58,
-        "zerg": 7,
+        "zerg": 8,
         "status": "softened"
       },
       {
@@ -77597,9 +77603,9 @@
         "share": 13,
         "revived": 31,
         "deaths": 238,
-        "rvp": 11,
+        "rvp": 12,
         "zergRaw": 44,
-        "zerg": 11,
+        "zerg": 12,
         "status": "softened"
       },
       {
@@ -77795,9 +77801,9 @@
         "share": 13.8,
         "revived": 35,
         "deaths": 254,
-        "rvp": 13,
+        "rvp": 14,
         "zergRaw": 38,
-        "zerg": 13,
+        "zerg": 14,
         "status": "softened"
       },
       {
@@ -77993,9 +77999,9 @@
         "share": 16.1,
         "revived": 9,
         "deaths": 56,
-        "rvp": 20,
+        "rvp": 19,
         "zergRaw": 33,
-        "zerg": 20,
+        "zerg": 19,
         "status": "softened"
       },
       {
@@ -78158,9 +78164,9 @@
         "share": 16.1,
         "revived": 30,
         "deaths": 186,
-        "rvp": 20,
+        "rvp": 19,
         "zergRaw": 29,
-        "zerg": 20,
+        "zerg": 19,
         "status": "softened"
       },
       {
@@ -78169,9 +78175,9 @@
         "share": 13,
         "revived": 45,
         "deaths": 345,
-        "rvp": 11,
+        "rvp": 12,
         "zergRaw": 29,
-        "zerg": 11,
+        "zerg": 12,
         "status": "softened"
       },
       {
@@ -78257,9 +78263,9 @@
         "share": 17,
         "revived": 30,
         "deaths": 176,
-        "rvp": 22,
+        "rvp": 21,
         "zergRaw": 26,
-        "zerg": 22,
+        "zerg": 21,
         "status": "softened"
       },
       {
@@ -78400,9 +78406,9 @@
         "share": 13,
         "revived": 75,
         "deaths": 575,
-        "rvp": 11,
+        "rvp": 12,
         "zergRaw": 21,
-        "zerg": 11,
+        "zerg": 12,
         "status": "softened"
       },
       {
@@ -78447,17 +78453,6 @@
         "rvp": 14,
         "zergRaw": 20,
         "zerg": 14,
-        "status": "softened"
-      },
-      {
-        "name": "DoorCorp",
-        "slug": "doorcorp",
-        "share": 15.3,
-        "revived": 79,
-        "deaths": 515,
-        "rvp": 18,
-        "zergRaw": 20,
-        "zerg": 18,
         "status": "softened"
       },
       {
@@ -78664,9 +78659,9 @@
         "share": 5.6,
         "revived": 4,
         "deaths": 72,
-        "rvp": 2,
+        "rvp": 3,
         "zergRaw": 15,
-        "zerg": 2,
+        "zerg": 3,
         "status": "softened"
       },
       {
@@ -78719,9 +78714,9 @@
         "share": 8.6,
         "revived": 15,
         "deaths": 174,
-        "rvp": 4,
+        "rvp": 5,
         "zergRaw": 13,
-        "zerg": 4,
+        "zerg": 5,
         "status": "softened"
       },
       {
@@ -78763,9 +78758,9 @@
         "share": 10.5,
         "revived": 27,
         "deaths": 256,
-        "rvp": 7,
+        "rvp": 8,
         "zergRaw": 11,
-        "zerg": 7,
+        "zerg": 8,
         "status": "softened"
       },
       {
@@ -78774,9 +78769,9 @@
         "share": 8.6,
         "revived": 8,
         "deaths": 93,
-        "rvp": 4,
+        "rvp": 5,
         "zergRaw": 11,
-        "zerg": 4,
+        "zerg": 5,
         "status": "softened"
       },
       {
@@ -78928,9 +78923,9 @@
         "share": 4.4,
         "revived": 6,
         "deaths": 136,
-        "rvp": 1,
+        "rvp": 2,
         "zergRaw": 6,
-        "zerg": 1,
+        "zerg": 2,
         "status": "softened"
       },
       {
@@ -78942,17 +78937,6 @@
         "rvp": 0,
         "zergRaw": 5,
         "zerg": 0,
-        "status": "softened"
-      },
-      {
-        "name": "RedzyBedzy",
-        "slug": "redzybedzy",
-        "share": 8.6,
-        "revived": 6,
-        "deaths": 70,
-        "rvp": 4,
-        "zergRaw": 5,
-        "zerg": 4,
         "status": "softened"
       },
       {
@@ -78978,17 +78962,6 @@
         "status": "softened"
       },
       {
-        "name": "1Iov",
-        "slug": "1iov",
-        "share": 5.6,
-        "revived": 9,
-        "deaths": 161,
-        "rvp": 2,
-        "zergRaw": 3,
-        "zerg": 2,
-        "status": "softened"
-      },
-      {
         "name": "PrizmoTR",
         "slug": "prizmotr",
         "share": 0,
@@ -79003,10 +78976,10 @@
     "cleared": []
   },
   "newbieDiff": {
-    "builtAt": "2026-10-24T00:46:06.133Z",
+    "builtAt": "2026-10-24T00:50:41.646Z",
     "loH": 6.2,
-    "hiH": 379.7,
-    "n": 14101,
+    "hiH": 380.2,
+    "n": 14103,
     "softened": 4143,
     "impBefore": 1325,
     "impAfter": 331,
@@ -79015,7 +78988,7 @@
     "newCount": 1966,
     "marked": 2818,
     "graveHiddenCount": 9,
-    "rule": "🐣 Newbie softening of a negative 🔀 Diff, gradual, ends from this build's 14101 players with a play time (lifetime kills ÷ lifetime KPM, the 🛖 estimate): lo = p5 (6.2 h), hi = p50 = the median (379.7 h). factor = 0 at/below lo, ln(h ÷ lo) ÷ ln(hi ÷ lo) between (log scale: the Impostor share drops by about the same step per doubling of play time), 1 at/above hi. Negative Diff × factor, rounded; positive Diff untouched; no play time → no change. 🐣 next to the name when the softening raised the Diff by 10+ points (hover “Softened from …”), and for every new player: play time below p14.000000000000002 (18.9 h, the end of the flat ~29% Impostor share at the start), whatever the Diff (hover “New player (about N h played)”). 🪦 inactive (no activity for over a year) wins: no 🐣 mark, the softened Diff stays. Owner override: \"newbieDiff\": \"cleared\" on the data/reviewed.json player entry (full negative Diff).",
+    "rule": "🐣 Newbie softening of a negative 🔀 Diff, gradual, ends from this build's 14103 players with a play time (lifetime kills ÷ lifetime KPM, the 🛖 estimate): lo = p5 (6.2 h), hi = p50 = the median (380.2 h). factor = 0 at/below lo, ln(h ÷ lo) ÷ ln(hi ÷ lo) between (log scale: the Impostor share drops by about the same step per doubling of play time), 1 at/above hi. Negative Diff × factor, rounded; positive Diff untouched; no play time → no change. 🐣 next to the name when the softening raised the Diff by 10+ points (hover “Softened from …”), and for every new player: play time below p14.000000000000002 (18.9 h, the end of the flat ~29% Impostor share at the start), whatever the Diff (hover “New player (about N h played)”). 🪦 inactive (no activity for over a year) wins: no 🐣 mark, the softened Diff stays. Owner override: \"newbieDiff\": \"cleared\" on the data/reviewed.json player entry (full negative Diff).",
     "players": [
       {
         "name": "Gleerp",
@@ -79045,7 +79018,7 @@
         "name": "Andarethh",
         "slug": "andarethh",
         "h": 84.1,
-        "factor": 0.634,
+        "factor": 0.633,
         "diffRaw": -90,
         "diff": -57
       },
@@ -79277,7 +79250,7 @@
         "name": "LCplMiller",
         "slug": "lcplmiller",
         "h": 46.9,
-        "factor": 0.492,
+        "factor": 0.491,
         "diffRaw": -77,
         "diff": -38
       },
@@ -79293,7 +79266,7 @@
         "name": "derSchlachterVonRamersdorf",
         "slug": "derschlachtervonramersdorf",
         "h": 240.1,
-        "factor": 0.889,
+        "factor": 0.888,
         "diffRaw": -77,
         "diff": -68
       },
@@ -79373,7 +79346,7 @@
         "name": "TikTokDethklok",
         "slug": "tiktokdethklok",
         "h": 28.4,
-        "factor": 0.37,
+        "factor": 0.369,
         "diffRaw": -76,
         "diff": -28
       },
@@ -79525,7 +79498,7 @@
         "name": "InferiorNoodler",
         "slug": "inferiornoodler",
         "h": 171.3,
-        "factor": 0.807,
+        "factor": 0.806,
         "diffRaw": -73,
         "diff": -59
       },
@@ -79557,7 +79530,7 @@
         "name": "KayZerVS",
         "slug": "kayzervs",
         "h": 34.4,
-        "factor": 0.417,
+        "factor": 0.416,
         "diffRaw": -72,
         "diff": -30
       },
@@ -79645,9 +79618,9 @@
         "name": "Aysles",
         "slug": "aysles",
         "h": 207.2,
-        "factor": 0.853,
+        "factor": 0.852,
         "diffRaw": -71,
-        "diff": -61
+        "diff": -60
       },
       {
         "name": "Simonioi",
@@ -79693,7 +79666,7 @@
         "name": "kimchi1warrior",
         "slug": "kimchi1warrior",
         "h": 66.5,
-        "factor": 0.577,
+        "factor": 0.576,
         "diffRaw": -71,
         "diff": -41
       },
@@ -80093,7 +80066,7 @@
         "name": "KORBAN55",
         "slug": "korban55",
         "h": 49.3,
-        "factor": 0.504,
+        "factor": 0.503,
         "diffRaw": -65,
         "diff": -33
       },
@@ -80189,7 +80162,7 @@
         "name": "nik57691",
         "slug": "nik57691",
         "h": 23,
-        "factor": 0.319,
+        "factor": 0.318,
         "diffRaw": -65,
         "diff": -21
       },
@@ -80261,7 +80234,7 @@
         "name": "jaht",
         "slug": "jaht",
         "h": 180,
-        "factor": 0.819,
+        "factor": 0.818,
         "diffRaw": -64,
         "diff": -52
       },
@@ -80365,7 +80338,7 @@
         "name": "VKTZxApolloNC",
         "slug": "vktzxapollonc",
         "h": 145.4,
-        "factor": 0.767,
+        "factor": 0.766,
         "diffRaw": -63,
         "diff": -48
       },
@@ -80517,9 +80490,9 @@
         "name": "rapt121",
         "slug": "rapt121",
         "h": 10.2,
-        "factor": 0.121,
+        "factor": 0.12,
         "diffRaw": -62,
-        "diff": -8
+        "diff": -7
       },
       {
         "name": "shytttson",
@@ -80725,7 +80698,7 @@
         "name": "MysticStudy",
         "slug": "mysticstudy",
         "h": 89.1,
-        "factor": 0.648,
+        "factor": 0.647,
         "diffRaw": -60,
         "diff": -39
       },
@@ -81037,7 +81010,7 @@
         "name": "FsGaChVS",
         "slug": "fsgachvs",
         "h": 124.8,
-        "factor": 0.73,
+        "factor": 0.729,
         "diffRaw": -57,
         "diff": -42
       },
@@ -81421,7 +81394,7 @@
         "name": "Creampie66",
         "slug": "creampie66",
         "h": 212.2,
-        "factor": 0.859,
+        "factor": 0.858,
         "diffRaw": -55,
         "diff": -47
       },
@@ -81512,6 +81485,14 @@
         "factor": 0.655,
         "diffRaw": -54,
         "diff": -35
+      },
+      {
+        "name": "Olav87",
+        "slug": "olav87",
+        "h": 166.2,
+        "factor": 0.799,
+        "diffRaw": -54,
+        "diff": -43
       },
       {
         "name": "Yehiki",
@@ -81690,14 +81671,6 @@
         "diff": -18
       },
       {
-        "name": "Olav87",
-        "slug": "olav87",
-        "h": 166.2,
-        "factor": 0.799,
-        "diffRaw": -53,
-        "diff": -42
-      },
-      {
         "name": "PoPiKasumi",
         "slug": "popikasumi",
         "h": 9.1,
@@ -81712,6 +81685,14 @@
         "factor": 0,
         "diffRaw": -53,
         "diff": 0
+      },
+      {
+        "name": "CaptainPeelz",
+        "slug": "captainpeelz",
+        "h": 96.9,
+        "factor": 0.668,
+        "diffRaw": -53,
+        "diff": -35
       },
       {
         "name": "cvyg",
@@ -81789,7 +81770,7 @@
         "name": "SONIC97",
         "slug": "sonic97",
         "h": 12.5,
-        "factor": 0.17,
+        "factor": 0.169,
         "diffRaw": -53,
         "diff": -9
       },
@@ -81824,6 +81805,14 @@
         "factor": 0.029,
         "diffRaw": -53,
         "diff": -2
+      },
+      {
+        "name": "yaebyludei",
+        "slug": "yaebyludei",
+        "h": 18.7,
+        "factor": 0.268,
+        "diffRaw": -53,
+        "diff": -14
       },
       {
         "name": "ZayVoxNC",
@@ -81978,14 +81967,6 @@
         "diff": 0
       },
       {
-        "name": "CaptainPeelz",
-        "slug": "captainpeelz",
-        "h": 96.9,
-        "factor": 0.668,
-        "diffRaw": -52,
-        "diff": -35
-      },
-      {
         "name": "Hoidas",
         "slug": "hoidas",
         "h": 3.1,
@@ -82064,14 +82045,6 @@
         "factor": 0.437,
         "diffRaw": -52,
         "diff": -23
-      },
-      {
-        "name": "yaebyludei",
-        "slug": "yaebyludei",
-        "h": 18.7,
-        "factor": 0.268,
-        "diffRaw": -52,
-        "diff": -14
       },
       {
         "name": "YuChenGs",
@@ -82181,9 +82154,9 @@
         "name": "AshleyEpt",
         "slug": "ashleyept",
         "h": 32.4,
-        "factor": 0.402,
+        "factor": 0.401,
         "diffRaw": -51,
-        "diff": -21
+        "diff": -20
       },
       {
         "name": "BDGR67",
@@ -82253,7 +82226,7 @@
         "name": "Nayuri",
         "slug": "nayuri",
         "h": 22.5,
-        "factor": 0.313,
+        "factor": 0.312,
         "diffRaw": -51,
         "diff": -16
       },
@@ -82325,7 +82298,7 @@
         "name": "Kniazev777",
         "slug": "kniazev777",
         "h": 252.3,
-        "factor": 0.901,
+        "factor": 0.9,
         "diffRaw": -50,
         "diff": -45
       },
@@ -82485,7 +82458,7 @@
         "name": "HomemadeMolotov",
         "slug": "homemademolotov",
         "h": 69.9,
-        "factor": 0.589,
+        "factor": 0.588,
         "diffRaw": -49,
         "diff": -29
       },
@@ -82514,10 +82487,18 @@
         "diff": -15
       },
       {
+        "name": "undergrounddayn",
+        "slug": "undergrounddayn",
+        "h": 26.9,
+        "factor": 0.357,
+        "diffRaw": -49,
+        "diff": -17
+      },
+      {
         "name": "mooNShine556",
         "slug": "moonshine556",
         "h": 145.4,
-        "factor": 0.767,
+        "factor": 0.766,
         "diffRaw": -49,
         "diff": -38
       },
@@ -82549,9 +82530,9 @@
         "name": "iShootPewPewPew",
         "slug": "ishootpewpewpew",
         "h": 22.8,
-        "factor": 0.317,
+        "factor": 0.316,
         "diffRaw": -49,
-        "diff": -16
+        "diff": -15
       },
       {
         "name": "Krasty91",
@@ -82565,7 +82546,7 @@
         "name": "tk733",
         "slug": "tk733",
         "h": 257.7,
-        "factor": 0.906,
+        "factor": 0.905,
         "diffRaw": -49,
         "diff": -44
       },
@@ -82640,6 +82621,14 @@
         "factor": 0,
         "diffRaw": -49,
         "diff": 0
+      },
+      {
+        "name": "ChuckNorris",
+        "slug": "chucknorris",
+        "h": 109.4,
+        "factor": 0.697,
+        "diffRaw": -49,
+        "diff": -34
       },
       {
         "name": "DeKaster",
@@ -82754,18 +82743,10 @@
         "diff": -3
       },
       {
-        "name": "undergrounddayn",
-        "slug": "undergrounddayn",
-        "h": 26.9,
-        "factor": 0.357,
-        "diffRaw": -48,
-        "diff": -17
-      },
-      {
         "name": "ChaoticStrikeVS",
         "slug": "chaoticstrikevs",
         "h": 24.8,
-        "factor": 0.337,
+        "factor": 0.336,
         "diffRaw": -48,
         "diff": -16
       },
@@ -82805,7 +82786,7 @@
         "name": "DovhakhingNC",
         "slug": "dovhakhingnc",
         "h": 204.6,
-        "factor": 0.85,
+        "factor": 0.849,
         "diffRaw": -48,
         "diff": -41
       },
@@ -82845,7 +82826,7 @@
         "name": "Aperitos",
         "slug": "aperitos",
         "h": 47.7,
-        "factor": 0.496,
+        "factor": 0.495,
         "diffRaw": -48,
         "diff": -24
       },
@@ -82861,9 +82842,9 @@
         "name": "not1to1be",
         "slug": "not1to1be",
         "h": 36,
-        "factor": 0.428,
+        "factor": 0.427,
         "diffRaw": -48,
-        "diff": -21
+        "diff": -20
       },
       {
         "name": "garbagefaction2",
@@ -83026,14 +83007,6 @@
         "diff": -7
       },
       {
-        "name": "ChuckNorris",
-        "slug": "chucknorris",
-        "h": 109.4,
-        "factor": 0.697,
-        "diffRaw": -48,
-        "diff": -33
-      },
-      {
         "name": "ComradeViktorReznov",
         "slug": "comradeviktorreznov",
         "h": 4.9,
@@ -83069,7 +83042,7 @@
         "name": "Kyuss13",
         "slug": "kyuss13",
         "h": 301.1,
-        "factor": 0.944,
+        "factor": 0.943,
         "diffRaw": -48,
         "diff": -45
       },
@@ -83093,9 +83066,9 @@
         "name": "M3rcEXE",
         "slug": "m3rcexe",
         "h": 11.8,
-        "factor": 0.157,
+        "factor": 0.156,
         "diffRaw": -48,
-        "diff": -8
+        "diff": -7
       },
       {
         "name": "Martonly",
@@ -83141,7 +83114,7 @@
         "name": "Tyormix",
         "slug": "tyormix",
         "h": 8.6,
-        "factor": 0.079,
+        "factor": 0.078,
         "diffRaw": -48,
         "diff": -4
       },
@@ -83229,7 +83202,7 @@
         "name": "DammItsHolySht",
         "slug": "dammitsholysht",
         "h": 308.5,
-        "factor": 0.95,
+        "factor": 0.949,
         "diffRaw": -47,
         "diff": -45
       },
@@ -83237,7 +83210,7 @@
         "name": "Acaitou",
         "slug": "acaitou",
         "h": 16.5,
-        "factor": 0.238,
+        "factor": 0.237,
         "diffRaw": -47,
         "diff": -11
       },
@@ -83269,7 +83242,7 @@
         "name": "Cape1",
         "slug": "cape1",
         "h": 25.2,
-        "factor": 0.341,
+        "factor": 0.34,
         "diffRaw": -47,
         "diff": -16
       },
@@ -83349,9 +83322,9 @@
         "name": "RadioSeven",
         "slug": "radioseven",
         "h": 13,
-        "factor": 0.181,
+        "factor": 0.18,
         "diffRaw": -47,
-        "diff": -9
+        "diff": -8
       },
       {
         "name": "Robot5Lion",
@@ -83517,7 +83490,7 @@
         "name": "TaiShangLaoJunJiJiRulingling",
         "slug": "taishanglaojunjijirulingling",
         "h": 18.8,
-        "factor": 0.27,
+        "factor": 0.269,
         "diffRaw": -46,
         "diff": -12
       },
@@ -83653,7 +83626,7 @@
         "name": "Vanu123jin",
         "slug": "vanu123jin",
         "h": 312.6,
-        "factor": 0.953,
+        "factor": 0.952,
         "diffRaw": -46,
         "diff": -44
       },
@@ -83677,7 +83650,7 @@
         "name": "DUHASTIS",
         "slug": "duhastis",
         "h": 8.3,
-        "factor": 0.071,
+        "factor": 0.07,
         "diffRaw": -45,
         "diff": -3
       },
@@ -83813,7 +83786,7 @@
         "name": "ChechenChaBorz",
         "slug": "chechenchaborz",
         "h": 60,
-        "factor": 0.552,
+        "factor": 0.551,
         "diffRaw": -45,
         "diff": -25
       },
@@ -84101,7 +84074,7 @@
         "name": "Fryid",
         "slug": "fryid",
         "h": 211.3,
-        "factor": 0.858,
+        "factor": 0.857,
         "diffRaw": -44,
         "diff": -38
       },
@@ -84245,7 +84218,7 @@
         "name": "cvkg",
         "slug": "cvkg",
         "h": 62,
-        "factor": 0.56,
+        "factor": 0.559,
         "diffRaw": -43,
         "diff": -24
       },
@@ -84445,7 +84418,7 @@
         "name": "SnEaKy0",
         "slug": "sneaky0",
         "h": 46.3,
-        "factor": 0.489,
+        "factor": 0.488,
         "diffRaw": -43,
         "diff": -21
       },
@@ -84453,7 +84426,7 @@
         "name": "SugarCanePirate",
         "slug": "sugarcanepirate",
         "h": 11.4,
-        "factor": 0.149,
+        "factor": 0.148,
         "diffRaw": -43,
         "diff": -6
       },
@@ -84501,7 +84474,7 @@
         "name": "GhidorahxKong",
         "slug": "ghidorahxkong",
         "h": 200.5,
-        "factor": 0.845,
+        "factor": 0.844,
         "diffRaw": -42,
         "diff": -35
       },
@@ -84549,7 +84522,7 @@
         "name": "neoOniXGaming",
         "slug": "neoonixgaming",
         "h": 46.7,
-        "factor": 0.491,
+        "factor": 0.49,
         "diffRaw": -42,
         "diff": -21
       },
@@ -84597,7 +84570,7 @@
         "name": "Pwcca666666",
         "slug": "pwcca666666",
         "h": 13.7,
-        "factor": 0.193,
+        "factor": 0.192,
         "diffRaw": -42,
         "diff": -8
       },
@@ -84717,7 +84690,7 @@
         "name": "RegreSSHion",
         "slug": "regresshion",
         "h": 13.3,
-        "factor": 0.186,
+        "factor": 0.185,
         "diffRaw": -42,
         "diff": -8
       },
@@ -84773,7 +84746,7 @@
         "name": "Funnynumbers69",
         "slug": "funnynumbers69",
         "h": 49.5,
-        "factor": 0.505,
+        "factor": 0.504,
         "diffRaw": -41,
         "diff": -21
       },
@@ -84813,7 +84786,7 @@
         "name": "hahahahahakj",
         "slug": "hahahahahakj",
         "h": 31.9,
-        "factor": 0.398,
+        "factor": 0.397,
         "diffRaw": -41,
         "diff": -16
       },
@@ -84877,7 +84850,7 @@
         "name": "dragonguy854",
         "slug": "dragonguy854",
         "h": 116.5,
-        "factor": 0.713,
+        "factor": 0.712,
         "diffRaw": -41,
         "diff": -29
       },
@@ -84941,7 +84914,7 @@
         "name": "LinoLMD",
         "slug": "linolmd",
         "h": 116.4,
-        "factor": 0.713,
+        "factor": 0.712,
         "diffRaw": -41,
         "diff": -29
       },
@@ -84957,7 +84930,7 @@
         "name": "NotABotRUS",
         "slug": "notabotrus",
         "h": 82.1,
-        "factor": 0.628,
+        "factor": 0.627,
         "diffRaw": -41,
         "diff": -26
       },
@@ -84989,7 +84962,7 @@
         "name": "Puduuu",
         "slug": "puduuu",
         "h": 144.9,
-        "factor": 0.766,
+        "factor": 0.765,
         "diffRaw": -41,
         "diff": -31
       },
@@ -85029,7 +85002,7 @@
         "name": "Taskhand",
         "slug": "taskhand",
         "h": 71,
-        "factor": 0.593,
+        "factor": 0.592,
         "diffRaw": -41,
         "diff": -24
       },
@@ -85101,7 +85074,7 @@
         "name": "FlorjussDz",
         "slug": "florjussdz",
         "h": 57.6,
-        "factor": 0.542,
+        "factor": 0.541,
         "diffRaw": -40,
         "diff": -22
       },
@@ -85149,7 +85122,7 @@
         "name": "GnorrRed",
         "slug": "gnorrred",
         "h": 63.3,
-        "factor": 0.565,
+        "factor": 0.564,
         "diffRaw": -40,
         "diff": -23
       },
@@ -85221,7 +85194,7 @@
         "name": "SibirskyCommunist",
         "slug": "sibirskycommunist",
         "h": 40.8,
-        "factor": 0.458,
+        "factor": 0.457,
         "diffRaw": -40,
         "diff": -18
       },
@@ -85245,7 +85218,7 @@
         "name": "arshea",
         "slug": "arshea",
         "h": 172.8,
-        "factor": 0.809,
+        "factor": 0.808,
         "diffRaw": -40,
         "diff": -32
       },
@@ -85269,9 +85242,9 @@
         "name": "Unknown4121",
         "slug": "unknown4121",
         "h": 46.1,
-        "factor": 0.488,
+        "factor": 0.487,
         "diffRaw": -40,
-        "diff": -20
+        "diff": -19
       },
       {
         "name": "DBrand",
@@ -85605,7 +85578,7 @@
         "name": "QuestyTrupp",
         "slug": "questytrupp",
         "h": 123.3,
-        "factor": 0.727,
+        "factor": 0.726,
         "diffRaw": -39,
         "diff": -28
       },
@@ -85645,7 +85618,7 @@
         "name": "Diseum",
         "slug": "diseum",
         "h": 33.6,
-        "factor": 0.411,
+        "factor": 0.41,
         "diffRaw": -39,
         "diff": -16
       },
@@ -85709,7 +85682,7 @@
         "name": "jhon23kill",
         "slug": "jhon23kill",
         "h": 46.9,
-        "factor": 0.492,
+        "factor": 0.491,
         "diffRaw": -39,
         "diff": -19
       },
@@ -85725,7 +85698,7 @@
         "name": "Moroyn",
         "slug": "moroyn",
         "h": 36.5,
-        "factor": 0.431,
+        "factor": 0.43,
         "diffRaw": -39,
         "diff": -17
       },
@@ -85845,7 +85818,7 @@
         "name": "Maitre0Gizmo",
         "slug": "maitre0gizmo",
         "h": 264,
-        "factor": 0.912,
+        "factor": 0.911,
         "diffRaw": -38,
         "diff": -35
       },
@@ -85861,7 +85834,7 @@
         "name": "CAPTAINxYUNUS",
         "slug": "captainxyunus",
         "h": 85.5,
-        "factor": 0.638,
+        "factor": 0.637,
         "diffRaw": -38,
         "diff": -24
       },
@@ -85901,7 +85874,7 @@
         "name": "Kepame",
         "slug": "kepame",
         "h": 186.8,
-        "factor": 0.828,
+        "factor": 0.827,
         "diffRaw": -38,
         "diff": -31
       },
@@ -85933,7 +85906,7 @@
         "name": "AztrHanoz",
         "slug": "aztrhanoz",
         "h": 65.7,
-        "factor": 0.574,
+        "factor": 0.573,
         "diffRaw": -38,
         "diff": -22
       },
@@ -85949,7 +85922,7 @@
         "name": "Faradp",
         "slug": "faradp",
         "h": 121.4,
-        "factor": 0.723,
+        "factor": 0.722,
         "diffRaw": -38,
         "diff": -27
       },
@@ -85981,7 +85954,7 @@
         "name": "DaBoMei001",
         "slug": "dabomei001",
         "h": 29,
-        "factor": 0.375,
+        "factor": 0.374,
         "diffRaw": -38,
         "diff": -14
       },
@@ -85989,7 +85962,7 @@
         "name": "Epht",
         "slug": "epht",
         "h": 56.4,
-        "factor": 0.537,
+        "factor": 0.536,
         "diffRaw": -38,
         "diff": -20
       },
@@ -86029,9 +86002,9 @@
         "name": "nahuel31v12",
         "slug": "nahuel31v12",
         "h": 24,
-        "factor": 0.329,
+        "factor": 0.328,
         "diffRaw": -38,
-        "diff": -13
+        "diff": -12
       },
       {
         "name": "newcomopr",
@@ -86061,7 +86034,7 @@
         "name": "ShadowsFall0",
         "slug": "shadowsfall0",
         "h": 200.4,
-        "factor": 0.845,
+        "factor": 0.844,
         "diffRaw": -38,
         "diff": -32
       },
@@ -86069,7 +86042,7 @@
         "name": "Shuddarun",
         "slug": "shuddarun",
         "h": 65.2,
-        "factor": 0.572,
+        "factor": 0.571,
         "diffRaw": -38,
         "diff": -22
       },
@@ -86117,7 +86090,7 @@
         "name": "lowlandrogue",
         "slug": "lowlandrogue",
         "h": 327,
-        "factor": 0.964,
+        "factor": 0.963,
         "diffRaw": -37,
         "diff": -36
       },
@@ -86189,7 +86162,7 @@
         "name": "Massacatala",
         "slug": "massacatala",
         "h": 94.4,
-        "factor": 0.662,
+        "factor": 0.661,
         "diffRaw": -37,
         "diff": -24
       },
@@ -86445,7 +86418,7 @@
         "name": "tlikz",
         "slug": "tlikz",
         "h": 58.1,
-        "factor": 0.544,
+        "factor": 0.543,
         "diffRaw": -37,
         "diff": -20
       },
@@ -86453,7 +86426,7 @@
         "name": "whateverthefu0k",
         "slug": "whateverthefu0k",
         "h": 27.7,
-        "factor": 0.364,
+        "factor": 0.363,
         "diffRaw": -37,
         "diff": -13
       },
@@ -86469,7 +86442,7 @@
         "name": "xxtw3kky",
         "slug": "xxtw3kky",
         "h": 23.4,
-        "factor": 0.323,
+        "factor": 0.322,
         "diffRaw": -37,
         "diff": -12
       },
@@ -86477,7 +86450,7 @@
         "name": "danjioner",
         "slug": "danjioner",
         "h": 36.6,
-        "factor": 0.432,
+        "factor": 0.431,
         "diffRaw": -36,
         "diff": -16
       },
@@ -86501,7 +86474,7 @@
         "name": "MKISkurlius",
         "slug": "mkiskurlius",
         "h": 24.5,
-        "factor": 0.334,
+        "factor": 0.333,
         "diffRaw": -36,
         "diff": -12
       },
@@ -86597,7 +86570,7 @@
         "name": "Flagee",
         "slug": "flagee",
         "h": 92.5,
-        "factor": 0.657,
+        "factor": 0.656,
         "diffRaw": -36,
         "diff": -24
       },
@@ -86669,9 +86642,17 @@
         "name": "0sephir0",
         "slug": "0sephir0",
         "h": 14.4,
-        "factor": 0.205,
+        "factor": 0.204,
         "diffRaw": -36,
         "diff": -7
+      },
+      {
+        "name": "666Anenerbe666",
+        "slug": "666anenerbe666",
+        "h": 17.9,
+        "factor": 0.257,
+        "diffRaw": -36,
+        "diff": -9
       },
       {
         "name": "Anachor",
@@ -86789,7 +86770,7 @@
         "name": "PeteBootehjudge",
         "slug": "petebootehjudge",
         "h": 233.3,
-        "factor": 0.882,
+        "factor": 0.881,
         "diffRaw": -36,
         "diff": -32
       },
@@ -86901,7 +86882,7 @@
         "name": "Phurnace",
         "slug": "phurnace",
         "h": 152.7,
-        "factor": 0.779,
+        "factor": 0.778,
         "diffRaw": -35,
         "diff": -27
       },
@@ -87013,7 +86994,7 @@
         "name": "russiaLuntika228",
         "slug": "russialuntika228",
         "h": 336.7,
-        "factor": 0.971,
+        "factor": 0.97,
         "diffRaw": -35,
         "diff": -34
       },
@@ -87066,18 +87047,10 @@
         "diff": -10
       },
       {
-        "name": "666Anenerbe666",
-        "slug": "666anenerbe666",
-        "h": 17.9,
-        "factor": 0.257,
-        "diffRaw": -35,
-        "diff": -9
-      },
-      {
         "name": "Ashirot",
         "slug": "ashirot",
         "h": 178.5,
-        "factor": 0.817,
+        "factor": 0.816,
         "diffRaw": -35,
         "diff": -29
       },
@@ -87429,7 +87402,7 @@
         "name": "VIAOI",
         "slug": "viaoi",
         "h": 311.1,
-        "factor": 0.952,
+        "factor": 0.951,
         "diffRaw": -34,
         "diff": -32
       },
@@ -87445,7 +87418,7 @@
         "name": "xroros",
         "slug": "xroros",
         "h": 30.2,
-        "factor": 0.385,
+        "factor": 0.384,
         "diffRaw": -34,
         "diff": -13
       },
@@ -87469,7 +87442,7 @@
         "name": "AlexWarmSG",
         "slug": "alexwarmsg",
         "h": 29.9,
-        "factor": 0.383,
+        "factor": 0.382,
         "diffRaw": -34,
         "diff": -13
       },
@@ -87565,7 +87538,7 @@
         "name": "Dallforz",
         "slug": "dallforz",
         "h": 207.9,
-        "factor": 0.854,
+        "factor": 0.853,
         "diffRaw": -34,
         "diff": -29
       },
@@ -87749,7 +87722,7 @@
         "name": "StupidRandomName22",
         "slug": "stupidrandomname22",
         "h": 100.8,
-        "factor": 0.678,
+        "factor": 0.677,
         "diffRaw": -33,
         "diff": -22
       },
@@ -87805,7 +87778,7 @@
         "name": "Triplass",
         "slug": "triplass",
         "h": 146,
-        "factor": 0.768,
+        "factor": 0.767,
         "diffRaw": -33,
         "diff": -25
       },
@@ -87861,7 +87834,7 @@
         "name": "Beastyk",
         "slug": "beastyk",
         "h": 88.4,
-        "factor": 0.646,
+        "factor": 0.645,
         "diffRaw": -33,
         "diff": -21
       },
@@ -87885,7 +87858,7 @@
         "name": "LaiklikEldenGidiyah61",
         "slug": "laiklikeldengidiyah61",
         "h": 75.6,
-        "factor": 0.608,
+        "factor": 0.607,
         "diffRaw": -33,
         "diff": -20
       },
@@ -87933,7 +87906,7 @@
         "name": "Swyndle",
         "slug": "swyndle",
         "h": 154.6,
-        "factor": 0.782,
+        "factor": 0.781,
         "diffRaw": -33,
         "diff": -26
       },
@@ -87957,7 +87930,7 @@
         "name": "CerebralGortex",
         "slug": "cerebralgortex",
         "h": 107.2,
-        "factor": 0.693,
+        "factor": 0.692,
         "diffRaw": -33,
         "diff": -23
       },
@@ -88173,7 +88146,7 @@
         "name": "Pigeon3PO",
         "slug": "pigeon3po",
         "h": 25.6,
-        "factor": 0.345,
+        "factor": 0.344,
         "diffRaw": -32,
         "diff": -11
       },
@@ -88197,7 +88170,7 @@
         "name": "Tuscan2513",
         "slug": "tuscan2513",
         "h": 43.2,
-        "factor": 0.472,
+        "factor": 0.471,
         "diffRaw": -32,
         "diff": -15
       },
@@ -88261,7 +88234,7 @@
         "name": "wdasdw",
         "slug": "wdasdw",
         "h": 88.7,
-        "factor": 0.647,
+        "factor": 0.646,
         "diffRaw": -32,
         "diff": -21
       },
@@ -88309,7 +88282,7 @@
         "name": "KEIFORS",
         "slug": "keifors",
         "h": 230.5,
-        "factor": 0.879,
+        "factor": 0.878,
         "diffRaw": -32,
         "diff": -28
       },
@@ -88365,7 +88338,7 @@
         "name": "IngofWar",
         "slug": "ingofwar",
         "h": 72,
-        "factor": 0.596,
+        "factor": 0.595,
         "diffRaw": -32,
         "diff": -19
       },
@@ -88389,7 +88362,7 @@
         "name": "AreSipexp",
         "slug": "aresipexp",
         "h": 202.9,
-        "factor": 0.848,
+        "factor": 0.847,
         "diffRaw": -32,
         "diff": -27
       },
@@ -88485,7 +88458,7 @@
         "name": "NationalSupport",
         "slug": "nationalsupport",
         "h": 120.8,
-        "factor": 0.722,
+        "factor": 0.721,
         "diffRaw": -32,
         "diff": -23
       },
@@ -88557,7 +88530,7 @@
         "name": "waroftheking",
         "slug": "waroftheking",
         "h": 286.6,
-        "factor": 0.932,
+        "factor": 0.931,
         "diffRaw": -32,
         "diff": -30
       },
@@ -88589,7 +88562,7 @@
         "name": "Firemeister1",
         "slug": "firemeister1",
         "h": 90.6,
-        "factor": 0.652,
+        "factor": 0.651,
         "diffRaw": -31,
         "diff": -20
       },
@@ -88693,7 +88666,7 @@
         "name": "GaypingHole",
         "slug": "gaypinghole",
         "h": 59.8,
-        "factor": 0.551,
+        "factor": 0.55,
         "diffRaw": -31,
         "diff": -17
       },
@@ -88717,7 +88690,7 @@
         "name": "SteamRat",
         "slug": "steamrat",
         "h": 57.1,
-        "factor": 0.54,
+        "factor": 0.539,
         "diffRaw": -31,
         "diff": -17
       },
@@ -88773,7 +88746,7 @@
         "name": "PlayerDoc",
         "slug": "playerdoc",
         "h": 51.1,
-        "factor": 0.513,
+        "factor": 0.512,
         "diffRaw": -31,
         "diff": -16
       },
@@ -89181,7 +89154,7 @@
         "name": "PleaseRun",
         "slug": "pleaserun",
         "h": 324.4,
-        "factor": 0.962,
+        "factor": 0.961,
         "diffRaw": -30,
         "diff": -29
       },
@@ -89245,7 +89218,7 @@
         "name": "CheesyChoclate",
         "slug": "cheesychoclate",
         "h": 314,
-        "factor": 0.954,
+        "factor": 0.953,
         "diffRaw": -30,
         "diff": -29
       },
@@ -89293,7 +89266,7 @@
         "name": "LigmaLandlord",
         "slug": "ligmalandlord",
         "h": 16.1,
-        "factor": 0.232,
+        "factor": 0.231,
         "diffRaw": -30,
         "diff": -7
       },
@@ -89317,7 +89290,7 @@
         "name": "MightyPigeon",
         "slug": "mightypigeon",
         "h": 325.6,
-        "factor": 0.963,
+        "factor": 0.962,
         "diffRaw": -30,
         "diff": -29
       },
@@ -89349,7 +89322,7 @@
         "name": "pyre3O7",
         "slug": "pyre3o7",
         "h": 32.1,
-        "factor": 0.4,
+        "factor": 0.399,
         "diffRaw": -30,
         "diff": -12
       },
@@ -89533,7 +89506,7 @@
         "name": "DeelonnDragonn",
         "slug": "deelonndragonn",
         "h": 97.1,
-        "factor": 0.669,
+        "factor": 0.668,
         "diffRaw": -29,
         "diff": -19
       },
@@ -89549,7 +89522,7 @@
         "name": "TentacleGun",
         "slug": "tentaclegun",
         "h": 116.5,
-        "factor": 0.713,
+        "factor": 0.712,
         "diffRaw": -29,
         "diff": -21
       },
@@ -89565,7 +89538,7 @@
         "name": "Rockerstar",
         "slug": "rockerstar",
         "h": 152.1,
-        "factor": 0.778,
+        "factor": 0.777,
         "diffRaw": -29,
         "diff": -23
       },
@@ -89597,7 +89570,7 @@
         "name": "HUNTERycz",
         "slug": "hunterycz",
         "h": 258.6,
-        "factor": 0.907,
+        "factor": 0.906,
         "diffRaw": -29,
         "diff": -26
       },
@@ -89645,7 +89618,7 @@
         "name": "HELLWILL",
         "slug": "hellwill",
         "h": 222.1,
-        "factor": 0.87,
+        "factor": 0.869,
         "diffRaw": -29,
         "diff": -25
       },
@@ -89717,7 +89690,7 @@
         "name": "NekronMLM",
         "slug": "nekronmlm",
         "h": 76.8,
-        "factor": 0.612,
+        "factor": 0.611,
         "diffRaw": -29,
         "diff": -18
       },
@@ -89733,7 +89706,7 @@
         "name": "Slagpin",
         "slug": "slagpin",
         "h": 234.2,
-        "factor": 0.883,
+        "factor": 0.882,
         "diffRaw": -29,
         "diff": -26
       },
@@ -89773,7 +89746,7 @@
         "name": "adricraft17",
         "slug": "adricraft17",
         "h": 327.1,
-        "factor": 0.964,
+        "factor": 0.963,
         "diffRaw": -29,
         "diff": -28
       },
@@ -89909,7 +89882,7 @@
         "name": "TheBill36",
         "slug": "thebill36",
         "h": 207.9,
-        "factor": 0.854,
+        "factor": 0.853,
         "diffRaw": -29,
         "diff": -25
       },
@@ -89949,7 +89922,7 @@
         "name": "O563JiG",
         "slug": "o563jig",
         "h": 112.7,
-        "factor": 0.705,
+        "factor": 0.704,
         "diffRaw": -28,
         "diff": -20
       },
@@ -89973,7 +89946,7 @@
         "name": "RazWrath",
         "slug": "razwrath",
         "h": 188.4,
-        "factor": 0.83,
+        "factor": 0.829,
         "diffRaw": -28,
         "diff": -23
       },
@@ -90045,7 +90018,7 @@
         "name": "BloodyWinter2",
         "slug": "bloodywinter2",
         "h": 62.8,
-        "factor": 0.563,
+        "factor": 0.562,
         "diffRaw": -28,
         "diff": -16
       },
@@ -90077,7 +90050,7 @@
         "name": "Iffily",
         "slug": "iffily",
         "h": 65.7,
-        "factor": 0.574,
+        "factor": 0.573,
         "diffRaw": -28,
         "diff": -16
       },
@@ -90093,7 +90066,7 @@
         "name": "HexMeow",
         "slug": "hexmeow",
         "h": 295,
-        "factor": 0.939,
+        "factor": 0.938,
         "diffRaw": -28,
         "diff": -26
       },
@@ -90117,7 +90090,7 @@
         "name": "zurweria",
         "slug": "zurweria",
         "h": 306.1,
-        "factor": 0.948,
+        "factor": 0.947,
         "diffRaw": -28,
         "diff": -27
       },
@@ -90197,7 +90170,7 @@
         "name": "Aurudok138",
         "slug": "aurudok138",
         "h": 57.6,
-        "factor": 0.542,
+        "factor": 0.541,
         "diffRaw": -28,
         "diff": -15
       },
@@ -90285,7 +90258,7 @@
         "name": "BringerOfPeace",
         "slug": "bringerofpeace",
         "h": 25.8,
-        "factor": 0.347,
+        "factor": 0.346,
         "diffRaw": -28,
         "diff": -10
       },
@@ -90405,7 +90378,7 @@
         "name": "Trigalos",
         "slug": "trigalos",
         "h": 144.2,
-        "factor": 0.765,
+        "factor": 0.764,
         "diffRaw": -28,
         "diff": -21
       },
@@ -90429,7 +90402,7 @@
         "name": "xschattenx",
         "slug": "xschattenx",
         "h": 14.5,
-        "factor": 0.207,
+        "factor": 0.206,
         "diffRaw": -28,
         "diff": -6
       },
@@ -90437,7 +90410,7 @@
         "name": "Kitegro",
         "slug": "kitegro",
         "h": 170.8,
-        "factor": 0.806,
+        "factor": 0.805,
         "diffRaw": -27,
         "diff": -22
       },
@@ -90445,7 +90418,7 @@
         "name": "Mothlet",
         "slug": "mothlet",
         "h": 190,
-        "factor": 0.832,
+        "factor": 0.831,
         "diffRaw": -27,
         "diff": -22
       },
@@ -90453,7 +90426,7 @@
         "name": "IamGrig",
         "slug": "iamgrig",
         "h": 211.4,
-        "factor": 0.858,
+        "factor": 0.857,
         "diffRaw": -27,
         "diff": -23
       },
@@ -90480,14 +90453,6 @@
         "factor": 0.885,
         "diffRaw": -27,
         "diff": -24
-      },
-      {
-        "name": "erwRomell",
-        "slug": "erwromell",
-        "h": 63.2,
-        "factor": 0.564,
-        "diffRaw": -27,
-        "diff": -15
       },
       {
         "name": "Shadowjacker99",
@@ -90645,7 +90610,7 @@
         "name": "iTzTheEnd",
         "slug": "itztheend",
         "h": 212.4,
-        "factor": 0.859,
+        "factor": 0.858,
         "diffRaw": -27,
         "diff": -23
       },
@@ -90693,7 +90658,7 @@
         "name": "NomadMedic",
         "slug": "nomadmedic",
         "h": 24.2,
-        "factor": 0.331,
+        "factor": 0.33,
         "diffRaw": -27,
         "diff": -9
       },
@@ -90765,7 +90730,7 @@
         "name": "erc88erc88",
         "slug": "erc88erc88",
         "h": 117.4,
-        "factor": 0.715,
+        "factor": 0.714,
         "diffRaw": -27,
         "diff": -19
       },
@@ -90845,7 +90810,7 @@
         "name": "Gavalicious",
         "slug": "gavalicious",
         "h": 8.3,
-        "factor": 0.07,
+        "factor": 0.069,
         "diffRaw": -27,
         "diff": -2
       },
@@ -90861,7 +90826,7 @@
         "name": "GooserMcJones",
         "slug": "goosermcjones",
         "h": 196.3,
-        "factor": 0.84,
+        "factor": 0.839,
         "diffRaw": -27,
         "diff": -23
       },
@@ -90909,7 +90874,7 @@
         "name": "marco11914",
         "slug": "marco11914",
         "h": 137.8,
-        "factor": 0.754,
+        "factor": 0.753,
         "diffRaw": -27,
         "diff": -20
       },
@@ -90981,7 +90946,7 @@
         "name": "Ragnarsson76",
         "slug": "ragnarsson76",
         "h": 43,
-        "factor": 0.471,
+        "factor": 0.47,
         "diffRaw": -27,
         "diff": -13
       },
@@ -90989,7 +90954,7 @@
         "name": "RC01501",
         "slug": "rc01501",
         "h": 230.4,
-        "factor": 0.879,
+        "factor": 0.878,
         "diffRaw": -27,
         "diff": -24
       },
@@ -91146,6 +91111,14 @@
         "diff": -24
       },
       {
+        "name": "erwRomell",
+        "slug": "erwromell",
+        "h": 63.2,
+        "factor": 0.564,
+        "diffRaw": -26,
+        "diff": -15
+      },
+      {
         "name": "Enotik38Rus",
         "slug": "enotik38rus",
         "h": 32.4,
@@ -91165,7 +91138,7 @@
         "name": "ZanHoo",
         "slug": "zanhoo",
         "h": 81.1,
-        "factor": 0.625,
+        "factor": 0.624,
         "diffRaw": -26,
         "diff": -16
       },
@@ -91301,7 +91274,7 @@
         "name": "BronzeLoki",
         "slug": "bronzeloki",
         "h": 35.7,
-        "factor": 0.426,
+        "factor": 0.425,
         "diffRaw": -26,
         "diff": -11
       },
@@ -91349,7 +91322,7 @@
         "name": "attacke5",
         "slug": "attacke5",
         "h": 282.1,
-        "factor": 0.928,
+        "factor": 0.927,
         "diffRaw": -26,
         "diff": -24
       },
@@ -91373,7 +91346,7 @@
         "name": "BK201C",
         "slug": "bk201c",
         "h": 100.4,
-        "factor": 0.677,
+        "factor": 0.676,
         "diffRaw": -26,
         "diff": -18
       },
@@ -91429,7 +91402,7 @@
         "name": "JIAO99906",
         "slug": "jiao99906",
         "h": 113.6,
-        "factor": 0.707,
+        "factor": 0.706,
         "diffRaw": -26,
         "diff": -18
       },
@@ -91573,7 +91546,7 @@
         "name": "Red808",
         "slug": "red808",
         "h": 32.1,
-        "factor": 0.4,
+        "factor": 0.399,
         "diffRaw": -25,
         "diff": -10
       },
@@ -91645,7 +91618,7 @@
         "name": "AoGQU",
         "slug": "aogqu",
         "h": 29.2,
-        "factor": 0.377,
+        "factor": 0.376,
         "diffRaw": -25,
         "diff": -9
       },
@@ -91893,7 +91866,7 @@
         "name": "ACTION678",
         "slug": "action678",
         "h": 248.3,
-        "factor": 0.897,
+        "factor": 0.896,
         "diffRaw": -25,
         "diff": -22
       },
@@ -91933,7 +91906,7 @@
         "name": "Vermil4ik",
         "slug": "vermil4ik",
         "h": 148.4,
-        "factor": 0.772,
+        "factor": 0.771,
         "diffRaw": -25,
         "diff": -19
       },
@@ -92061,7 +92034,7 @@
         "name": "IchSees",
         "slug": "ichsees",
         "h": 36.6,
-        "factor": 0.432,
+        "factor": 0.431,
         "diffRaw": -25,
         "diff": -11
       },
@@ -92085,7 +92058,7 @@
         "name": "LLIYPIK",
         "slug": "lliypik",
         "h": 308.6,
-        "factor": 0.95,
+        "factor": 0.949,
         "diffRaw": -25,
         "diff": -24
       },
@@ -92101,7 +92074,7 @@
         "name": "Namaly",
         "slug": "namaly",
         "h": 100,
-        "factor": 0.676,
+        "factor": 0.675,
         "diffRaw": -25,
         "diff": -17
       },
@@ -92133,7 +92106,7 @@
         "name": "Rowarskai",
         "slug": "rowarskai",
         "h": 111.7,
-        "factor": 0.703,
+        "factor": 0.702,
         "diffRaw": -25,
         "diff": -18
       },
@@ -92205,7 +92178,7 @@
         "name": "Hug0o0",
         "slug": "hug0o0",
         "h": 40.6,
-        "factor": 0.457,
+        "factor": 0.456,
         "diffRaw": -24,
         "diff": -11
       },
@@ -92317,7 +92290,7 @@
         "name": "ELMARIOcheRUS",
         "slug": "elmariocherus",
         "h": 143,
-        "factor": 0.763,
+        "factor": 0.762,
         "diffRaw": -24,
         "diff": -18
       },
@@ -92325,7 +92298,7 @@
         "name": "Catedil",
         "slug": "catedil",
         "h": 73.7,
-        "factor": 0.602,
+        "factor": 0.601,
         "diffRaw": -24,
         "diff": -14
       },
@@ -92389,7 +92362,7 @@
         "name": "qq0x0pp",
         "slug": "qq0x0pp",
         "h": 68.2,
-        "factor": 0.583,
+        "factor": 0.582,
         "diffRaw": -24,
         "diff": -14
       },
@@ -92557,7 +92530,7 @@
         "name": "Karlison4ik",
         "slug": "karlison4ik",
         "h": 107.2,
-        "factor": 0.693,
+        "factor": 0.692,
         "diffRaw": -24,
         "diff": -17
       },
@@ -92653,7 +92626,7 @@
         "name": "VlaineNS2",
         "slug": "vlainens2",
         "h": 288.9,
-        "factor": 0.934,
+        "factor": 0.933,
         "diffRaw": -24,
         "diff": -22
       },
@@ -92709,7 +92682,7 @@
         "name": "Daber222",
         "slug": "daber222",
         "h": 44.4,
-        "factor": 0.479,
+        "factor": 0.478,
         "diffRaw": -23,
         "diff": -11
       },
@@ -92757,7 +92730,7 @@
         "name": "MightyPawar",
         "slug": "mightypawar",
         "h": 128.5,
-        "factor": 0.737,
+        "factor": 0.736,
         "diffRaw": -23,
         "diff": -17
       },
@@ -92781,7 +92754,7 @@
         "name": "RawryWATR",
         "slug": "rawrywatr",
         "h": 88.8,
-        "factor": 0.647,
+        "factor": 0.646,
         "diffRaw": -23,
         "diff": -15
       },
@@ -92789,7 +92762,7 @@
         "name": "Ssarumann",
         "slug": "ssarumann",
         "h": 88.4,
-        "factor": 0.646,
+        "factor": 0.645,
         "diffRaw": -23,
         "diff": -15
       },
@@ -92901,7 +92874,7 @@
         "name": "Bertuliana",
         "slug": "bertuliana",
         "h": 45,
-        "factor": 0.482,
+        "factor": 0.481,
         "diffRaw": -23,
         "diff": -11
       },
@@ -92973,7 +92946,7 @@
         "name": "ITSYABOOOIIIIII",
         "slug": "itsyaboooiiiiii",
         "h": 178.7,
-        "factor": 0.817,
+        "factor": 0.816,
         "diffRaw": -23,
         "diff": -19
       },
@@ -93069,7 +93042,7 @@
         "name": "SengertEmployeee",
         "slug": "sengertemployeee",
         "h": 44.6,
-        "factor": 0.48,
+        "factor": 0.479,
         "diffRaw": -23,
         "diff": -11
       },
@@ -93117,7 +93090,7 @@
         "name": "hatelka",
         "slug": "hatelka",
         "h": 192.3,
-        "factor": 0.835,
+        "factor": 0.834,
         "diffRaw": -23,
         "diff": -19
       },
@@ -93141,7 +93114,7 @@
         "name": "KorporaalYessin",
         "slug": "korporaalyessin",
         "h": 56.9,
-        "factor": 0.539,
+        "factor": 0.538,
         "diffRaw": -23,
         "diff": -12
       },
@@ -93245,7 +93218,7 @@
         "name": "UlisesGYR",
         "slug": "ulisesgyr",
         "h": 26.7,
-        "factor": 0.355,
+        "factor": 0.354,
         "diffRaw": -23,
         "diff": -8
       },
@@ -93285,7 +93258,7 @@
         "name": "Caixba2",
         "slug": "caixba2",
         "h": 161.8,
-        "factor": 0.793,
+        "factor": 0.792,
         "diffRaw": -22,
         "diff": -17
       },
@@ -93365,7 +93338,7 @@
         "name": "solocc1",
         "slug": "solocc1",
         "h": 192.3,
-        "factor": 0.835,
+        "factor": 0.834,
         "diffRaw": -22,
         "diff": -18
       },
@@ -93381,7 +93354,7 @@
         "name": "ElatedCanary",
         "slug": "elatedcanary",
         "h": 190.7,
-        "factor": 0.833,
+        "factor": 0.832,
         "diffRaw": -22,
         "diff": -18
       },
@@ -93389,7 +93362,7 @@
         "name": "ClosedBishop",
         "slug": "closedbishop",
         "h": 215,
-        "factor": 0.862,
+        "factor": 0.861,
         "diffRaw": -22,
         "diff": -19
       },
@@ -93437,7 +93410,7 @@
         "name": "UnavailableNC",
         "slug": "unavailablenc",
         "h": 291.6,
-        "factor": 0.936,
+        "factor": 0.935,
         "diffRaw": -22,
         "diff": -21
       },
@@ -93461,7 +93434,7 @@
         "name": "alexisNC",
         "slug": "alexisnc",
         "h": 159.8,
-        "factor": 0.79,
+        "factor": 0.789,
         "diffRaw": -22,
         "diff": -17
       },
@@ -93509,7 +93482,7 @@
         "name": "BlitzGD10",
         "slug": "blitzgd10",
         "h": 265.2,
-        "factor": 0.913,
+        "factor": 0.912,
         "diffRaw": -22,
         "diff": -20
       },
@@ -93517,7 +93490,7 @@
         "name": "Shnookms",
         "slug": "shnookms",
         "h": 27.6,
-        "factor": 0.363,
+        "factor": 0.362,
         "diffRaw": -22,
         "diff": -8
       },
@@ -93573,7 +93546,7 @@
         "name": "CienciaPirataNC",
         "slug": "cienciapiratanc",
         "h": 136.6,
-        "factor": 0.752,
+        "factor": 0.751,
         "diffRaw": -22,
         "diff": -17
       },
@@ -93597,7 +93570,7 @@
         "name": "beiyue1",
         "slug": "beiyue1",
         "h": 69.6,
-        "factor": 0.588,
+        "factor": 0.587,
         "diffRaw": -22,
         "diff": -13
       },
@@ -93629,7 +93602,7 @@
         "name": "analogkidd",
         "slug": "analogkidd",
         "h": 80.1,
-        "factor": 0.622,
+        "factor": 0.621,
         "diffRaw": -22,
         "diff": -14
       },
@@ -93645,7 +93618,7 @@
         "name": "PraedriosPhoricus",
         "slug": "praedriosphoricus",
         "h": 122.8,
-        "factor": 0.726,
+        "factor": 0.725,
         "diffRaw": -22,
         "diff": -16
       },
@@ -93669,7 +93642,7 @@
         "name": "FourFootFour",
         "slug": "fourfootfour",
         "h": 63.6,
-        "factor": 0.566,
+        "factor": 0.565,
         "diffRaw": -22,
         "diff": -12
       },
@@ -93797,7 +93770,7 @@
         "name": "Dezerker63",
         "slug": "dezerker63",
         "h": 155.9,
-        "factor": 0.784,
+        "factor": 0.783,
         "diffRaw": -22,
         "diff": -17
       },
@@ -93941,7 +93914,7 @@
         "name": "MUSAMAN01",
         "slug": "musaman01",
         "h": 36.2,
-        "factor": 0.429,
+        "factor": 0.428,
         "diffRaw": -22,
         "diff": -9
       },
@@ -94053,7 +94026,7 @@
         "name": "xDVWx",
         "slug": "xdvwx",
         "h": 11.6,
-        "factor": 0.153,
+        "factor": 0.152,
         "diffRaw": -22,
         "diff": -3
       },
@@ -94101,7 +94074,7 @@
         "name": "CharlyTan",
         "slug": "charlytan",
         "h": 79.4,
-        "factor": 0.62,
+        "factor": 0.619,
         "diffRaw": -21,
         "diff": -13
       },
@@ -94141,7 +94114,7 @@
         "name": "Acheronxxx",
         "slug": "acheronxxx",
         "h": 188.4,
-        "factor": 0.83,
+        "factor": 0.829,
         "diffRaw": -21,
         "diff": -17
       },
@@ -94181,7 +94154,7 @@
         "name": "Vnnnnnnnnn",
         "slug": "vnnnnnnnnn",
         "h": 165.8,
-        "factor": 0.799,
+        "factor": 0.798,
         "diffRaw": -21,
         "diff": -17
       },
@@ -94245,7 +94218,7 @@
         "name": "wuyuhong",
         "slug": "wuyuhong",
         "h": 288.9,
-        "factor": 0.934,
+        "factor": 0.933,
         "diffRaw": -21,
         "diff": -20
       },
@@ -94253,7 +94226,7 @@
         "name": "Vaxeliar",
         "slug": "vaxeliar",
         "h": 84.8,
-        "factor": 0.636,
+        "factor": 0.635,
         "diffRaw": -21,
         "diff": -13
       },
@@ -94277,7 +94250,7 @@
         "name": "QuionxTR",
         "slug": "quionxtr",
         "h": 67.1,
-        "factor": 0.579,
+        "factor": 0.578,
         "diffRaw": -21,
         "diff": -12
       },
@@ -94285,7 +94258,7 @@
         "name": "Zarrar234",
         "slug": "zarrar234",
         "h": 122.3,
-        "factor": 0.725,
+        "factor": 0.724,
         "diffRaw": -21,
         "diff": -15
       },
@@ -94325,7 +94298,7 @@
         "name": "InStyleGames",
         "slug": "instylegames",
         "h": 239.1,
-        "factor": 0.888,
+        "factor": 0.887,
         "diffRaw": -21,
         "diff": -19
       },
@@ -94373,7 +94346,7 @@
         "name": "Puccidon",
         "slug": "puccidon",
         "h": 20.9,
-        "factor": 0.296,
+        "factor": 0.295,
         "diffRaw": -21,
         "diff": -6
       },
@@ -94469,7 +94442,7 @@
         "name": "ZombieeHD",
         "slug": "zombieehd",
         "h": 82.4,
-        "factor": 0.629,
+        "factor": 0.628,
         "diffRaw": -21,
         "diff": -13
       },
@@ -94485,7 +94458,7 @@
         "name": "ShrimpeHxxNC",
         "slug": "shrimpehxxnc",
         "h": 29.6,
-        "factor": 0.38,
+        "factor": 0.379,
         "diffRaw": -21,
         "diff": -8
       },
@@ -94541,7 +94514,7 @@
         "name": "Battron",
         "slug": "battron",
         "h": 8.4,
-        "factor": 0.074,
+        "factor": 0.073,
         "diffRaw": -21,
         "diff": -2
       },
@@ -94573,7 +94546,7 @@
         "name": "EddytheMurph",
         "slug": "eddythemurph",
         "h": 33.2,
-        "factor": 0.408,
+        "factor": 0.407,
         "diffRaw": -21,
         "diff": -9
       },
@@ -94637,7 +94610,7 @@
         "name": "KKMMSS",
         "slug": "kkmmss",
         "h": 19.4,
-        "factor": 0.278,
+        "factor": 0.277,
         "diffRaw": -21,
         "diff": -6
       },
@@ -94733,7 +94706,7 @@
         "name": "Tiefengrab",
         "slug": "tiefengrab",
         "h": 116.9,
-        "factor": 0.714,
+        "factor": 0.713,
         "diffRaw": -21,
         "diff": -15
       },
@@ -94765,7 +94738,7 @@
         "name": "XOsama815",
         "slug": "xosama815",
         "h": 75.9,
-        "factor": 0.609,
+        "factor": 0.608,
         "diffRaw": -21,
         "diff": -13
       },
@@ -94853,7 +94826,7 @@
         "name": "GunHeavenVS",
         "slug": "gunheavenvs",
         "h": 33.3,
-        "factor": 0.409,
+        "factor": 0.408,
         "diffRaw": -20,
         "diff": -8
       },
@@ -94877,7 +94850,7 @@
         "name": "Millghost02",
         "slug": "millghost02",
         "h": 130.1,
-        "factor": 0.74,
+        "factor": 0.739,
         "diffRaw": -20,
         "diff": -15
       },
@@ -94997,7 +94970,7 @@
         "name": "Tilde130",
         "slug": "tilde130",
         "h": 75.6,
-        "factor": 0.608,
+        "factor": 0.607,
         "diffRaw": -20,
         "diff": -12
       },
@@ -95037,7 +95010,7 @@
         "name": "PLAlaoGE",
         "slug": "plalaoge",
         "h": 121.3,
-        "factor": 0.723,
+        "factor": 0.722,
         "diffRaw": -20,
         "diff": -14
       },
@@ -95061,7 +95034,7 @@
         "name": "JayceShikari1",
         "slug": "jayceshikari1",
         "h": 82,
-        "factor": 0.628,
+        "factor": 0.627,
         "diffRaw": -20,
         "diff": -13
       },
@@ -95125,9 +95098,9 @@
         "name": "calev44",
         "slug": "calev44",
         "h": 81.4,
-        "factor": 0.626,
+        "factor": 0.625,
         "diffRaw": -20,
-        "diff": -13
+        "diff": -12
       },
       {
         "name": "ARI5U",
@@ -95165,7 +95138,7 @@
         "name": "NCVelk",
         "slug": "ncvelk",
         "h": 276.3,
-        "factor": 0.923,
+        "factor": 0.922,
         "diffRaw": -20,
         "diff": -18
       },
@@ -95173,7 +95146,7 @@
         "name": "Zaldarisu",
         "slug": "zaldarisu",
         "h": 254.5,
-        "factor": 0.903,
+        "factor": 0.902,
         "diffRaw": -20,
         "diff": -18
       },
@@ -95181,7 +95154,7 @@
         "name": "josurako135",
         "slug": "josurako135",
         "h": 304.8,
-        "factor": 0.947,
+        "factor": 0.946,
         "diffRaw": -20,
         "diff": -19
       },
@@ -95261,7 +95234,7 @@
         "name": "Dfscorpin",
         "slug": "dfscorpin",
         "h": 186.8,
-        "factor": 0.828,
+        "factor": 0.827,
         "diffRaw": -20,
         "diff": -17
       },
@@ -95501,7 +95474,7 @@
         "name": "ApenasBase",
         "slug": "apenasbase",
         "h": 80.4,
-        "factor": 0.623,
+        "factor": 0.622,
         "diffRaw": -19,
         "diff": -12
       },
@@ -95509,7 +95482,7 @@
         "name": "0X0THNK",
         "slug": "0x0thnk",
         "h": 179.3,
-        "factor": 0.818,
+        "factor": 0.817,
         "diffRaw": -19,
         "diff": -16
       },
@@ -95541,7 +95514,7 @@
         "name": "Zekherr",
         "slug": "zekherr",
         "h": 176.4,
-        "factor": 0.814,
+        "factor": 0.813,
         "diffRaw": -19,
         "diff": -15
       },
@@ -95693,7 +95666,7 @@
         "name": "PowderDV",
         "slug": "powderdv",
         "h": 335.3,
-        "factor": 0.97,
+        "factor": 0.969,
         "diffRaw": -19,
         "diff": -18
       },
@@ -95773,7 +95746,7 @@
         "name": "xiaoxuAKA",
         "slug": "xiaoxuaka",
         "h": 59,
-        "factor": 0.548,
+        "factor": 0.547,
         "diffRaw": -19,
         "diff": -10
       },
@@ -95845,7 +95818,7 @@
         "name": "MADExPsychosisTR",
         "slug": "madexpsychosistr",
         "h": 85.2,
-        "factor": 0.637,
+        "factor": 0.636,
         "diffRaw": -19,
         "diff": -12
       },
@@ -95869,7 +95842,7 @@
         "name": "Cegao",
         "slug": "cegao",
         "h": 255.5,
-        "factor": 0.904,
+        "factor": 0.903,
         "diffRaw": -19,
         "diff": -17
       },
@@ -95885,7 +95858,7 @@
         "name": "SiNHebegebes",
         "slug": "sinhebegebes",
         "h": 52.2,
-        "factor": 0.518,
+        "factor": 0.517,
         "diffRaw": -19,
         "diff": -10
       },
@@ -95917,7 +95890,7 @@
         "name": "CausBot",
         "slug": "causbot",
         "h": 13.1,
-        "factor": 0.182,
+        "factor": 0.181,
         "diffRaw": -19,
         "diff": -3
       },
@@ -96133,7 +96106,7 @@
         "name": "UsefullDrone1421",
         "slug": "usefulldrone1421",
         "h": 89.1,
-        "factor": 0.648,
+        "factor": 0.647,
         "diffRaw": -19,
         "diff": -12
       },
@@ -96253,7 +96226,7 @@
         "name": "xXiaoXuCNx",
         "slug": "xxiaoxucnx",
         "h": 212.3,
-        "factor": 0.859,
+        "factor": 0.858,
         "diffRaw": -18,
         "diff": -15
       },
@@ -96325,7 +96298,7 @@
         "name": "JUICERandy",
         "slug": "juicerandy",
         "h": 149.6,
-        "factor": 0.774,
+        "factor": 0.773,
         "diffRaw": -18,
         "diff": -14
       },
@@ -96349,7 +96322,7 @@
         "name": "ChaoticStrike",
         "slug": "chaoticstrike",
         "h": 111.7,
-        "factor": 0.703,
+        "factor": 0.702,
         "diffRaw": -18,
         "diff": -13
       },
@@ -96429,7 +96402,7 @@
         "name": "WULIAONIU",
         "slug": "wuliaoniu",
         "h": 152.8,
-        "factor": 0.779,
+        "factor": 0.778,
         "diffRaw": -18,
         "diff": -14
       },
@@ -96469,7 +96442,7 @@
         "name": "BapesKneepads",
         "slug": "bapeskneepads",
         "h": 24.4,
-        "factor": 0.333,
+        "factor": 0.332,
         "diffRaw": -18,
         "diff": -6
       },
@@ -96557,7 +96530,7 @@
         "name": "OxygenO2",
         "slug": "oxygeno2",
         "h": 331.1,
-        "factor": 0.967,
+        "factor": 0.966,
         "diffRaw": -18,
         "diff": -17
       },
@@ -96597,7 +96570,7 @@
         "name": "illustrate",
         "slug": "illustrate",
         "h": 62.3,
-        "factor": 0.561,
+        "factor": 0.56,
         "diffRaw": -18,
         "diff": -10
       },
@@ -96725,7 +96698,7 @@
         "name": "DukeJace",
         "slug": "dukejace",
         "h": 117.9,
-        "factor": 0.716,
+        "factor": 0.715,
         "diffRaw": -18,
         "diff": -13
       },
@@ -96733,7 +96706,7 @@
         "name": "Ex2009",
         "slug": "ex2009",
         "h": 40.1,
-        "factor": 0.454,
+        "factor": 0.453,
         "diffRaw": -18,
         "diff": -8
       },
@@ -96997,7 +96970,7 @@
         "name": "CATEXERI10",
         "slug": "catexeri10",
         "h": 51.6,
-        "factor": 0.515,
+        "factor": 0.514,
         "diffRaw": -17,
         "diff": -9
       },
@@ -97005,7 +96978,7 @@
         "name": "EUbackwang",
         "slug": "eubackwang",
         "h": 35.5,
-        "factor": 0.424,
+        "factor": 0.423,
         "diffRaw": -17,
         "diff": -7
       },
@@ -97061,7 +97034,7 @@
         "name": "PlatinumUA",
         "slug": "platinumua",
         "h": 241.1,
-        "factor": 0.89,
+        "factor": 0.889,
         "diffRaw": -17,
         "diff": -15
       },
@@ -97085,7 +97058,7 @@
         "name": "Smallppjones",
         "slug": "smallppjones",
         "h": 17.8,
-        "factor": 0.256,
+        "factor": 0.255,
         "diffRaw": -17,
         "diff": -4
       },
@@ -97165,7 +97138,7 @@
         "name": "mmilkyy",
         "slug": "mmilkyy",
         "h": 117.8,
-        "factor": 0.716,
+        "factor": 0.715,
         "diffRaw": -17,
         "diff": -12
       },
@@ -97205,7 +97178,7 @@
         "name": "Sournenn",
         "slug": "sournenn",
         "h": 304.9,
-        "factor": 0.947,
+        "factor": 0.946,
         "diffRaw": -17,
         "diff": -16
       },
@@ -97285,7 +97258,7 @@
         "name": "fengfeiyun",
         "slug": "fengfeiyun",
         "h": 64.4,
-        "factor": 0.569,
+        "factor": 0.568,
         "diffRaw": -17,
         "diff": -10
       },
@@ -97405,7 +97378,7 @@
         "name": "Adrasosh",
         "slug": "adrasosh",
         "h": 88.4,
-        "factor": 0.646,
+        "factor": 0.645,
         "diffRaw": -17,
         "diff": -11
       },
@@ -97421,7 +97394,7 @@
         "name": "Apex05",
         "slug": "apex05",
         "h": 204.6,
-        "factor": 0.85,
+        "factor": 0.849,
         "diffRaw": -17,
         "diff": -14
       },
@@ -97469,7 +97442,7 @@
         "name": "ContentMake",
         "slug": "contentmake",
         "h": 84.8,
-        "factor": 0.636,
+        "factor": 0.635,
         "diffRaw": -17,
         "diff": -11
       },
@@ -97677,7 +97650,7 @@
         "name": "TheCapitalistCommunist",
         "slug": "thecapitalistcommunist",
         "h": 299.8,
-        "factor": 0.943,
+        "factor": 0.942,
         "diffRaw": -17,
         "diff": -16
       },
@@ -97685,7 +97658,7 @@
         "name": "Ugnius36",
         "slug": "ugnius36",
         "h": 131.2,
-        "factor": 0.742,
+        "factor": 0.741,
         "diffRaw": -17,
         "diff": -13
       },
@@ -97813,7 +97786,7 @@
         "name": "KINDERRRR",
         "slug": "kinderrrr",
         "h": 8.5,
-        "factor": 0.077,
+        "factor": 0.076,
         "diffRaw": -16,
         "diff": -1
       },
@@ -97845,7 +97818,7 @@
         "name": "CN2729693194",
         "slug": "cn2729693194",
         "h": 14.2,
-        "factor": 0.201,
+        "factor": 0.2,
         "diffRaw": -16,
         "diff": -3
       },
@@ -97853,7 +97826,7 @@
         "name": "DGDGASF",
         "slug": "dgdgasf",
         "h": 311.1,
-        "factor": 0.952,
+        "factor": 0.951,
         "diffRaw": -16,
         "diff": -15
       },
@@ -97877,7 +97850,7 @@
         "name": "mc80b",
         "slug": "mc80b",
         "h": 310,
-        "factor": 0.951,
+        "factor": 0.95,
         "diffRaw": -16,
         "diff": -15
       },
@@ -97901,7 +97874,7 @@
         "name": "ShrimpeHxxTR",
         "slug": "shrimpehxxtr",
         "h": 61.8,
-        "factor": 0.559,
+        "factor": 0.558,
         "diffRaw": -16,
         "diff": -9
       },
@@ -97909,7 +97882,7 @@
         "name": "SirAnusoglaz",
         "slug": "siranusoglaz",
         "h": 223,
-        "factor": 0.871,
+        "factor": 0.87,
         "diffRaw": -16,
         "diff": -14
       },
@@ -97933,7 +97906,7 @@
         "name": "ggggggg52225VS",
         "slug": "ggggggg52225vs",
         "h": 55.5,
-        "factor": 0.533,
+        "factor": 0.532,
         "diffRaw": -16,
         "diff": -9
       },
@@ -98045,7 +98018,7 @@
         "name": "KpeHgeJlb",
         "slug": "kpehgejlb",
         "h": 9.9,
-        "factor": 0.114,
+        "factor": 0.113,
         "diffRaw": -16,
         "diff": -2
       },
@@ -98133,7 +98106,7 @@
         "name": "Lynnyyy",
         "slug": "lynnyyy",
         "h": 180.7,
-        "factor": 0.82,
+        "factor": 0.819,
         "diffRaw": -16,
         "diff": -13
       },
@@ -98549,7 +98522,7 @@
         "name": "idmiku",
         "slug": "idmiku",
         "h": 245.2,
-        "factor": 0.894,
+        "factor": 0.893,
         "diffRaw": -15,
         "diff": -13
       },
@@ -98581,7 +98554,7 @@
         "name": "sadrazamAK",
         "slug": "sadrazamak",
         "h": 37.1,
-        "factor": 0.435,
+        "factor": 0.434,
         "diffRaw": -15,
         "diff": -7
       },
@@ -98597,7 +98570,7 @@
         "name": "AxidTR",
         "slug": "axidtr",
         "h": 178.5,
-        "factor": 0.817,
+        "factor": 0.816,
         "diffRaw": -15,
         "diff": -12
       },
@@ -98637,7 +98610,7 @@
         "name": "Raketozad",
         "slug": "raketozad",
         "h": 158.5,
-        "factor": 0.788,
+        "factor": 0.787,
         "diffRaw": -15,
         "diff": -12
       },
@@ -98661,7 +98634,7 @@
         "name": "Vasijapura",
         "slug": "vasijapura",
         "h": 88,
-        "factor": 0.645,
+        "factor": 0.644,
         "diffRaw": -15,
         "diff": -10
       },
@@ -98669,7 +98642,7 @@
         "name": "PNxHeftyBanditTR",
         "slug": "pnxheftybandittr",
         "h": 71.1,
-        "factor": 0.593,
+        "factor": 0.592,
         "diffRaw": -15,
         "diff": -9
       },
@@ -98685,7 +98658,7 @@
         "name": "GrapeCrush",
         "slug": "grapecrush",
         "h": 303.5,
-        "factor": 0.946,
+        "factor": 0.945,
         "diffRaw": -15,
         "diff": -14
       },
@@ -98709,7 +98682,7 @@
         "name": "Valerius102",
         "slug": "valerius102",
         "h": 120.3,
-        "factor": 0.721,
+        "factor": 0.72,
         "diffRaw": -15,
         "diff": -11
       },
@@ -98749,7 +98722,7 @@
         "name": "KEVReturn",
         "slug": "kevreturn",
         "h": 10.1,
-        "factor": 0.119,
+        "factor": 0.118,
         "diffRaw": -15,
         "diff": -2
       },
@@ -98805,7 +98778,7 @@
         "name": "BOWBOW1",
         "slug": "bowbow1",
         "h": 296.2,
-        "factor": 0.94,
+        "factor": 0.939,
         "diffRaw": -15,
         "diff": -14
       },
@@ -98829,7 +98802,7 @@
         "name": "TheHeatStorm",
         "slug": "theheatstorm",
         "h": 313.9,
-        "factor": 0.954,
+        "factor": 0.953,
         "diffRaw": -15,
         "diff": -14
       },
@@ -98909,7 +98882,7 @@
         "name": "BladeXtra",
         "slug": "bladextra",
         "h": 149.6,
-        "factor": 0.774,
+        "factor": 0.773,
         "diffRaw": -15,
         "diff": -12
       },
@@ -98917,7 +98890,7 @@
         "name": "BloodLongcat",
         "slug": "bloodlongcat",
         "h": 223,
-        "factor": 0.871,
+        "factor": 0.87,
         "diffRaw": -15,
         "diff": -13
       },
@@ -98949,7 +98922,7 @@
         "name": "cptfacepalm9",
         "slug": "cptfacepalm9",
         "h": 212.3,
-        "factor": 0.859,
+        "factor": 0.858,
         "diffRaw": -15,
         "diff": -13
       },
@@ -98957,7 +98930,7 @@
         "name": "DanteCrossRu",
         "slug": "dantecrossru",
         "h": 16.9,
-        "factor": 0.244,
+        "factor": 0.243,
         "diffRaw": -15,
         "diff": -4
       },
@@ -98989,7 +98962,7 @@
         "name": "GrosYoshiNePayePasSesImpots",
         "slug": "grosyoshinepayepassesimpots",
         "h": 230.5,
-        "factor": 0.879,
+        "factor": 0.878,
         "diffRaw": -15,
         "diff": -13
       },
@@ -99165,7 +99138,7 @@
         "name": "zhoumy",
         "slug": "zhoumy",
         "h": 77.2,
-        "factor": 0.613,
+        "factor": 0.612,
         "diffRaw": -15,
         "diff": -9
       },
@@ -99189,7 +99162,7 @@
         "name": "lIon09",
         "slug": "lion09",
         "h": 74.4,
-        "factor": 0.604,
+        "factor": 0.603,
         "diffRaw": -14,
         "diff": -8
       },
@@ -99213,7 +99186,7 @@
         "name": "SoupEaterNC",
         "slug": "soupeaternc",
         "h": 319.1,
-        "factor": 0.958,
+        "factor": 0.957,
         "diffRaw": -14,
         "diff": -13
       },
@@ -99245,7 +99218,7 @@
         "name": "chaychinneyVS",
         "slug": "chaychinneyvs",
         "h": 192.2,
-        "factor": 0.835,
+        "factor": 0.834,
         "diffRaw": -14,
         "diff": -12
       },
@@ -99285,7 +99258,7 @@
         "name": "bloodywolf03",
         "slug": "bloodywolf03",
         "h": 236.4,
-        "factor": 0.885,
+        "factor": 0.884,
         "diffRaw": -14,
         "diff": -12
       },
@@ -99320,14 +99293,6 @@
         "factor": 0.406,
         "diffRaw": -14,
         "diff": -6
-      },
-      {
-        "name": "Coldlfgvs",
-        "slug": "coldlfgvs",
-        "h": 8.3,
-        "factor": 0.071,
-        "diffRaw": -14,
-        "diff": -1
       },
       {
         "name": "CuriousOne",
@@ -99373,7 +99338,7 @@
         "name": "TEXHOKPAT",
         "slug": "texhokpat",
         "h": 72.8,
-        "factor": 0.599,
+        "factor": 0.598,
         "diffRaw": -14,
         "diff": -8
       },
@@ -99389,9 +99354,17 @@
         "name": "LordDagoth",
         "slug": "lorddagoth",
         "h": 130.1,
-        "factor": 0.74,
+        "factor": 0.739,
         "diffRaw": -14,
         "diff": -10
+      },
+      {
+        "name": "osulo",
+        "slug": "osulo",
+        "h": 182.5,
+        "factor": 0.822,
+        "diffRaw": -14,
+        "diff": -12
       },
       {
         "name": "Schwarzlose",
@@ -99421,7 +99394,7 @@
         "name": "LukNik04",
         "slug": "luknik04",
         "h": 15.4,
-        "factor": 0.222,
+        "factor": 0.221,
         "diffRaw": -14,
         "diff": -3
       },
@@ -99485,7 +99458,7 @@
         "name": "captainGH0S1",
         "slug": "captaingh0s1",
         "h": 247.3,
-        "factor": 0.896,
+        "factor": 0.895,
         "diffRaw": -14,
         "diff": -13
       },
@@ -99533,7 +99506,7 @@
         "name": "XORtr",
         "slug": "xortr",
         "h": 189.2,
-        "factor": 0.831,
+        "factor": 0.83,
         "diffRaw": -14,
         "diff": -12
       },
@@ -99589,7 +99562,7 @@
         "name": "SkrattandeVarg",
         "slug": "skrattandevarg",
         "h": 85.9,
-        "factor": 0.639,
+        "factor": 0.638,
         "diffRaw": -14,
         "diff": -9
       },
@@ -99600,6 +99573,14 @@
         "factor": 0.532,
         "diffRaw": -14,
         "diff": -7
+      },
+      {
+        "name": "CCCBB",
+        "slug": "cccbb",
+        "h": 35.5,
+        "factor": 0.424,
+        "diffRaw": -14,
+        "diff": -6
       },
       {
         "name": "JBYBHY",
@@ -99629,7 +99610,7 @@
         "name": "ManNuke",
         "slug": "mannuke",
         "h": 258.6,
-        "factor": 0.907,
+        "factor": 0.906,
         "diffRaw": -14,
         "diff": -13
       },
@@ -99677,7 +99658,7 @@
         "name": "5014215",
         "slug": "5014215",
         "h": 71.9,
-        "factor": 0.596,
+        "factor": 0.595,
         "diffRaw": -14,
         "diff": -8
       },
@@ -99701,7 +99682,7 @@
         "name": "akadai",
         "slug": "akadai",
         "h": 20.7,
-        "factor": 0.293,
+        "factor": 0.292,
         "diffRaw": -14,
         "diff": -4
       },
@@ -99709,7 +99690,7 @@
         "name": "AlbernerAlbert",
         "slug": "alberneralbert",
         "h": 74.7,
-        "factor": 0.605,
+        "factor": 0.604,
         "diffRaw": -14,
         "diff": -8
       },
@@ -99717,7 +99698,7 @@
         "name": "alsdmakdms",
         "slug": "alsdmakdms",
         "h": 230.5,
-        "factor": 0.879,
+        "factor": 0.878,
         "diffRaw": -14,
         "diff": -12
       },
@@ -99749,7 +99730,7 @@
         "name": "BlackBotT4",
         "slug": "blackbott4",
         "h": 94.4,
-        "factor": 0.662,
+        "factor": 0.661,
         "diffRaw": -14,
         "diff": -9
       },
@@ -99789,7 +99770,7 @@
         "name": "Dfirefox4",
         "slug": "dfirefox4",
         "h": 161.1,
-        "factor": 0.792,
+        "factor": 0.791,
         "diffRaw": -14,
         "diff": -11
       },
@@ -99797,7 +99778,7 @@
         "name": "Djinfiniti2013",
         "slug": "djinfiniti2013",
         "h": 36.3,
-        "factor": 0.43,
+        "factor": 0.429,
         "diffRaw": -14,
         "diff": -6
       },
@@ -100005,7 +99986,7 @@
         "name": "dollaa",
         "slug": "dollaa",
         "h": 158.5,
-        "factor": 0.788,
+        "factor": 0.787,
         "diffRaw": -13,
         "diff": -10
       },
@@ -100058,6 +100039,14 @@
         "diff": -4
       },
       {
+        "name": "Coldlfgvs",
+        "slug": "coldlfgvs",
+        "h": 8.3,
+        "factor": 0.071,
+        "diffRaw": -13,
+        "diff": -1
+      },
+      {
         "name": "ifkyourdad",
         "slug": "ifkyourdad",
         "h": 123.5,
@@ -100101,17 +100090,9 @@
         "name": "ohggBBU",
         "slug": "ohggbbu",
         "h": 29.5,
-        "factor": 0.379,
+        "factor": 0.378,
         "diffRaw": -13,
         "diff": -5
-      },
-      {
-        "name": "osulo",
-        "slug": "osulo",
-        "h": 182.5,
-        "factor": 0.822,
-        "diffRaw": -13,
-        "diff": -11
       },
       {
         "name": "POCKOMHAD3OP",
@@ -100125,7 +100106,7 @@
         "name": "TacticalPanic",
         "slug": "tacticalpanic",
         "h": 80.4,
-        "factor": 0.623,
+        "factor": 0.622,
         "diffRaw": -13,
         "diff": -8
       },
@@ -100165,7 +100146,7 @@
         "name": "Unique1234",
         "slug": "unique1234",
         "h": 20.9,
-        "factor": 0.295,
+        "factor": 0.294,
         "diffRaw": -13,
         "diff": -4
       },
@@ -100189,7 +100170,7 @@
         "name": "Pidorovik",
         "slug": "pidorovik",
         "h": 49.3,
-        "factor": 0.504,
+        "factor": 0.503,
         "diffRaw": -13,
         "diff": -7
       },
@@ -100245,7 +100226,7 @@
         "name": "zfaifaifai",
         "slug": "zfaifaifai",
         "h": 289,
-        "factor": 0.934,
+        "factor": 0.933,
         "diffRaw": -13,
         "diff": -12
       },
@@ -100269,7 +100250,7 @@
         "name": "EstelleNIL",
         "slug": "estellenil",
         "h": 306.3,
-        "factor": 0.948,
+        "factor": 0.947,
         "diffRaw": -13,
         "diff": -12
       },
@@ -100285,7 +100266,7 @@
         "name": "PIunder",
         "slug": "piunder",
         "h": 264.1,
-        "factor": 0.912,
+        "factor": 0.911,
         "diffRaw": -13,
         "diff": -12
       },
@@ -100301,7 +100282,7 @@
         "name": "Skront",
         "slug": "skront",
         "h": 73.1,
-        "factor": 0.6,
+        "factor": 0.599,
         "diffRaw": -13,
         "diff": -8
       },
@@ -100360,14 +100341,6 @@
         "factor": 0.248,
         "diffRaw": -13,
         "diff": -3
-      },
-      {
-        "name": "CCCBB",
-        "slug": "cccbb",
-        "h": 35.5,
-        "factor": 0.424,
-        "diffRaw": -13,
-        "diff": -6
       },
       {
         "name": "TYLMOSEYUH",
@@ -100557,7 +100530,7 @@
         "name": "Gupigugupi",
         "slug": "gupigugupi",
         "h": 128.5,
-        "factor": 0.737,
+        "factor": 0.736,
         "diffRaw": -13,
         "diff": -10
       },
@@ -100653,7 +100626,7 @@
         "name": "NSTorqueWrench",
         "slug": "nstorquewrench",
         "h": 108.5,
-        "factor": 0.696,
+        "factor": 0.695,
         "diffRaw": -13,
         "diff": -9
       },
@@ -100661,7 +100634,7 @@
         "name": "ParagonOfVegetables",
         "slug": "paragonofvegetables",
         "h": 77.4,
-        "factor": 0.614,
+        "factor": 0.613,
         "diffRaw": -13,
         "diff": -8
       },
@@ -100813,7 +100786,7 @@
         "name": "obf",
         "slug": "obf",
         "h": 39.6,
-        "factor": 0.451,
+        "factor": 0.45,
         "diffRaw": -12,
         "diff": -5
       },
@@ -100837,7 +100810,7 @@
         "name": "busterdog011",
         "slug": "busterdog011",
         "h": 54.6,
-        "factor": 0.529,
+        "factor": 0.528,
         "diffRaw": -12,
         "diff": -6
       },
@@ -100877,7 +100850,7 @@
         "name": "ZhenyaYev",
         "slug": "zhenyayev",
         "h": 180.9,
-        "factor": 0.82,
+        "factor": 0.819,
         "diffRaw": -12,
         "diff": -10
       },
@@ -100933,7 +100906,7 @@
         "name": "GurkenFinken",
         "slug": "gurkenfinken",
         "h": 119.8,
-        "factor": 0.72,
+        "factor": 0.719,
         "diffRaw": -12,
         "diff": -9
       },
@@ -100973,7 +100946,7 @@
         "name": "filipe06br",
         "slug": "filipe06br",
         "h": 39.8,
-        "factor": 0.452,
+        "factor": 0.451,
         "diffRaw": -12,
         "diff": -5
       },
@@ -101037,7 +101010,7 @@
         "name": "Cobratta",
         "slug": "cobratta",
         "h": 207.1,
-        "factor": 0.853,
+        "factor": 0.852,
         "diffRaw": -12,
         "diff": -10
       },
@@ -101053,7 +101026,7 @@
         "name": "serhafiye1",
         "slug": "serhafiye1",
         "h": 136.1,
-        "factor": 0.751,
+        "factor": 0.75,
         "diffRaw": -12,
         "diff": -9
       },
@@ -101117,7 +101090,7 @@
         "name": "ScavengerzVS",
         "slug": "scavengerzvs",
         "h": 267.1,
-        "factor": 0.915,
+        "factor": 0.914,
         "diffRaw": -12,
         "diff": -11
       },
@@ -101133,9 +101106,9 @@
         "name": "quwaparoto",
         "slug": "quwaparoto",
         "h": 40.9,
-        "factor": 0.459,
+        "factor": 0.458,
         "diffRaw": -12,
-        "diff": -6
+        "diff": -5
       },
       {
         "name": "FLJonny",
@@ -101149,7 +101122,7 @@
         "name": "sdfasdas33",
         "slug": "sdfasdas33",
         "h": 57.1,
-        "factor": 0.54,
+        "factor": 0.539,
         "diffRaw": -12,
         "diff": -6
       },
@@ -101229,7 +101202,7 @@
         "name": "jimmy994",
         "slug": "jimmy994",
         "h": 144.8,
-        "factor": 0.766,
+        "factor": 0.765,
         "diffRaw": -12,
         "diff": -9
       },
@@ -101325,7 +101298,7 @@
         "name": "ComaVirgil",
         "slug": "comavirgil",
         "h": 215.7,
-        "factor": 0.863,
+        "factor": 0.862,
         "diffRaw": -12,
         "diff": -10
       },
@@ -101477,7 +101450,7 @@
         "name": "Phatbroom",
         "slug": "phatbroom",
         "h": 66,
-        "factor": 0.575,
+        "factor": 0.574,
         "diffRaw": -12,
         "diff": -7
       },
@@ -101709,7 +101682,7 @@
         "name": "JudNi",
         "slug": "judni",
         "h": 265.2,
-        "factor": 0.913,
+        "factor": 0.912,
         "diffRaw": -11,
         "diff": -10
       },
@@ -101725,7 +101698,7 @@
         "name": "PuttzGrila",
         "slug": "puttzgrila",
         "h": 310,
-        "factor": 0.951,
+        "factor": 0.95,
         "diffRaw": -11,
         "diff": -10
       },
@@ -101733,7 +101706,7 @@
         "name": "Deffor96",
         "slug": "deffor96",
         "h": 46.1,
-        "factor": 0.488,
+        "factor": 0.487,
         "diffRaw": -11,
         "diff": -5
       },
@@ -101845,7 +101818,7 @@
         "name": "Heterochromatin",
         "slug": "heterochromatin",
         "h": 255.3,
-        "factor": 0.904,
+        "factor": 0.903,
         "diffRaw": -11,
         "diff": -10
       },
@@ -101917,7 +101890,7 @@
         "name": "Fozeion",
         "slug": "fozeion",
         "h": 55.3,
-        "factor": 0.532,
+        "factor": 0.531,
         "diffRaw": -11,
         "diff": -6
       },
@@ -101949,7 +101922,7 @@
         "name": "MarcoBroloTR",
         "slug": "marcobrolotr",
         "h": 137.8,
-        "factor": 0.754,
+        "factor": 0.753,
         "diffRaw": -11,
         "diff": -8
       },
@@ -102037,7 +102010,7 @@
         "name": "kiffyyNC",
         "slug": "kiffyync",
         "h": 30.6,
-        "factor": 0.388,
+        "factor": 0.387,
         "diffRaw": -11,
         "diff": -4
       },
@@ -102117,7 +102090,7 @@
         "name": "EvansV",
         "slug": "evansv",
         "h": 281.8,
-        "factor": 0.928,
+        "factor": 0.927,
         "diffRaw": -11,
         "diff": -10
       },
@@ -102173,7 +102146,7 @@
         "name": "GroogDoobadoon",
         "slug": "groogdoobadoon",
         "h": 19.5,
-        "factor": 0.279,
+        "factor": 0.278,
         "diffRaw": -11,
         "diff": -3
       },
@@ -102213,7 +102186,7 @@
         "name": "Dooux",
         "slug": "dooux",
         "h": 227.7,
-        "factor": 0.876,
+        "factor": 0.875,
         "diffRaw": -11,
         "diff": -10
       },
@@ -102237,7 +102210,7 @@
         "name": "LaRumeur",
         "slug": "larumeur",
         "h": 122.3,
-        "factor": 0.725,
+        "factor": 0.724,
         "diffRaw": -11,
         "diff": -8
       },
@@ -102245,7 +102218,7 @@
         "name": "DaShuaiBiC",
         "slug": "dashuaibic",
         "h": 135,
-        "factor": 0.749,
+        "factor": 0.748,
         "diffRaw": -11,
         "diff": -8
       },
@@ -102261,7 +102234,7 @@
         "name": "zrqvalter",
         "slug": "zrqvalter",
         "h": 45.6,
-        "factor": 0.485,
+        "factor": 0.484,
         "diffRaw": -11,
         "diff": -5
       },
@@ -102269,7 +102242,7 @@
         "name": "IBeBanned",
         "slug": "ibebanned",
         "h": 63.6,
-        "factor": 0.566,
+        "factor": 0.565,
         "diffRaw": -11,
         "diff": -6
       },
@@ -102293,7 +102266,7 @@
         "name": "Icefirekitsune",
         "slug": "icefirekitsune",
         "h": 100.4,
-        "factor": 0.677,
+        "factor": 0.676,
         "diffRaw": -11,
         "diff": -7
       },
@@ -102309,7 +102282,7 @@
         "name": "Fatthead",
         "slug": "fatthead",
         "h": 32.4,
-        "factor": 0.402,
+        "factor": 0.401,
         "diffRaw": -11,
         "diff": -4
       },
@@ -102349,7 +102322,7 @@
         "name": "HellYeahhhh",
         "slug": "hellyeahhhh",
         "h": 116,
-        "factor": 0.712,
+        "factor": 0.711,
         "diffRaw": -11,
         "diff": -8
       },
@@ -102490,6 +102463,14 @@
         "diff": -5
       },
       {
+        "name": "ironwillru",
+        "slug": "ironwillru",
+        "h": 92,
+        "factor": 0.655,
+        "diffRaw": -11,
+        "diff": -7
+      },
+      {
         "name": "IzubrTR",
         "slug": "izubrtr",
         "h": 3.3,
@@ -102517,7 +102498,7 @@
         "name": "Kasper010",
         "slug": "kasper010",
         "h": 105.5,
-        "factor": 0.689,
+        "factor": 0.688,
         "diffRaw": -11,
         "diff": -8
       },
@@ -102621,9 +102602,17 @@
         "name": "RyZeUp0",
         "slug": "ryzeup0",
         "h": 45.2,
-        "factor": 0.483,
+        "factor": 0.482,
         "diffRaw": -11,
         "diff": -5
+      },
+      {
+        "name": "shadowsmile77",
+        "slug": "shadowsmile77",
+        "h": 61.2,
+        "factor": 0.556,
+        "diffRaw": -11,
+        "diff": -6
       },
       {
         "name": "SimplyNS",
@@ -102637,7 +102626,7 @@
         "name": "sorryforthis",
         "slug": "sorryforthis",
         "h": 189.3,
-        "factor": 0.831,
+        "factor": 0.83,
         "diffRaw": -11,
         "diff": -9
       },
@@ -102685,7 +102674,7 @@
         "name": "ThePieMustDie",
         "slug": "thepiemustdie",
         "h": 41.5,
-        "factor": 0.462,
+        "factor": 0.461,
         "diffRaw": -11,
         "diff": -5
       },
@@ -102693,7 +102682,7 @@
         "name": "Trikster008",
         "slug": "trikster008",
         "h": 23.1,
-        "factor": 0.32,
+        "factor": 0.319,
         "diffRaw": -11,
         "diff": -4
       },
@@ -102749,7 +102738,7 @@
         "name": "Myles7111",
         "slug": "myles7111",
         "h": 31.1,
-        "factor": 0.392,
+        "factor": 0.391,
         "diffRaw": -10,
         "diff": -4
       },
@@ -102757,7 +102746,7 @@
         "name": "NellyOOHRAH",
         "slug": "nellyoohrah",
         "h": 52.8,
-        "factor": 0.521,
+        "factor": 0.52,
         "diffRaw": -10,
         "diff": -5
       },
@@ -102869,7 +102858,7 @@
         "name": "GGLOU",
         "slug": "gglou",
         "h": 16.6,
-        "factor": 0.239,
+        "factor": 0.238,
         "diffRaw": -10,
         "diff": -2
       },
@@ -102885,7 +102874,7 @@
         "name": "AGhostRiderA",
         "slug": "aghostridera",
         "h": 130.6,
-        "factor": 0.741,
+        "factor": 0.74,
         "diffRaw": -10,
         "diff": -7
       },
@@ -102893,7 +102882,7 @@
         "name": "Orchgasmzz",
         "slug": "orchgasmzz",
         "h": 55.5,
-        "factor": 0.533,
+        "factor": 0.532,
         "diffRaw": -10,
         "diff": -5
       },
@@ -103077,7 +103066,7 @@
         "name": "DAD2DAS",
         "slug": "dad2das",
         "h": 103.7,
-        "factor": 0.685,
+        "factor": 0.684,
         "diffRaw": -10,
         "diff": -7
       },
@@ -103101,7 +103090,7 @@
         "name": "SuperCoolPerson",
         "slug": "supercoolperson",
         "h": 199.6,
-        "factor": 0.844,
+        "factor": 0.843,
         "diffRaw": -10,
         "diff": -8
       },
@@ -103117,7 +103106,7 @@
         "name": "KubrikaChenkovka",
         "slug": "kubrikachenkovka",
         "h": 175.7,
-        "factor": 0.813,
+        "factor": 0.812,
         "diffRaw": -10,
         "diff": -8
       },
@@ -103197,7 +103186,7 @@
         "name": "xukunkun",
         "slug": "xukunkun",
         "h": 144.8,
-        "factor": 0.766,
+        "factor": 0.765,
         "diffRaw": -10,
         "diff": -8
       },
@@ -103229,7 +103218,7 @@
         "name": "Raizore",
         "slug": "raizore",
         "h": 61.8,
-        "factor": 0.559,
+        "factor": 0.558,
         "diffRaw": -10,
         "diff": -6
       },
@@ -103309,7 +103298,7 @@
         "name": "CorpsecrafterX",
         "slug": "corpsecrafterx",
         "h": 141.9,
-        "factor": 0.761,
+        "factor": 0.76,
         "diffRaw": -10,
         "diff": -8
       },
@@ -103317,7 +103306,7 @@
         "name": "D1vvY",
         "slug": "d1vvy",
         "h": 24,
-        "factor": 0.329,
+        "factor": 0.328,
         "diffRaw": -10,
         "diff": -3
       },
@@ -103360,14 +103349,6 @@
         "factor": 0.041,
         "diffRaw": -10,
         "diff": 0
-      },
-      {
-        "name": "ironwillru",
-        "slug": "ironwillru",
-        "h": 92,
-        "factor": 0.655,
-        "diffRaw": -10,
-        "diff": -7
       },
       {
         "name": "Kkotv",
@@ -103437,7 +103418,7 @@
         "name": "nefoc002",
         "slug": "nefoc002",
         "h": 222,
-        "factor": 0.87,
+        "factor": 0.869,
         "diffRaw": -10,
         "diff": -9
       },
@@ -103506,14 +103487,6 @@
         "diff": -2
       },
       {
-        "name": "shadowsmile77",
-        "slug": "shadowsmile77",
-        "h": 61.2,
-        "factor": 0.556,
-        "diffRaw": -10,
-        "diff": -6
-      },
-      {
         "name": "SierGay",
         "slug": "siergay",
         "h": 7.8,
@@ -103573,7 +103546,7 @@
         "name": "VIPOPPO",
         "slug": "vipoppo",
         "h": 109.9,
-        "factor": 0.699,
+        "factor": 0.698,
         "diffRaw": -10,
         "diff": -7
       },
@@ -103613,7 +103586,7 @@
         "name": "Tyramisu",
         "slug": "tyramisu",
         "h": 114.5,
-        "factor": 0.709,
+        "factor": 0.708,
         "diffRaw": -9,
         "diff": -6
       },
@@ -103677,7 +103650,7 @@
         "name": "TiantExE",
         "slug": "tiantexe",
         "h": 25.5,
-        "factor": 0.344,
+        "factor": 0.343,
         "diffRaw": -9,
         "diff": -3
       },
@@ -103781,7 +103754,7 @@
         "name": "TwinskillerLambda",
         "slug": "twinskillerlambda",
         "h": 66.2,
-        "factor": 0.576,
+        "factor": 0.575,
         "diffRaw": -9,
         "diff": -5
       },
@@ -103805,7 +103778,7 @@
         "name": "3KDCmomo",
         "slug": "3kdcmomo",
         "h": 99.6,
-        "factor": 0.675,
+        "factor": 0.674,
         "diffRaw": -9,
         "diff": -6
       },
@@ -103845,7 +103818,7 @@
         "name": "cnmec",
         "slug": "cnmec",
         "h": 140.1,
-        "factor": 0.758,
+        "factor": 0.757,
         "diffRaw": -9,
         "diff": -7
       },
@@ -103877,7 +103850,7 @@
         "name": "MajorisMaskus",
         "slug": "majorismaskus",
         "h": 96.4,
-        "factor": 0.667,
+        "factor": 0.666,
         "diffRaw": -9,
         "diff": -6
       },
@@ -103893,7 +103866,7 @@
         "name": "g0lg0",
         "slug": "g0lg0",
         "h": 217.6,
-        "factor": 0.865,
+        "factor": 0.864,
         "diffRaw": -9,
         "diff": -8
       },
@@ -104365,7 +104338,7 @@
         "name": "Svanar",
         "slug": "svanar",
         "h": 249.2,
-        "factor": 0.898,
+        "factor": 0.897,
         "diffRaw": -9,
         "diff": -8
       },
@@ -104429,7 +104402,7 @@
         "name": "nikplavnik01",
         "slug": "nikplavnik01",
         "h": 78.1,
-        "factor": 0.616,
+        "factor": 0.615,
         "diffRaw": -8,
         "diff": -5
       },
@@ -104493,7 +104466,7 @@
         "name": "ninjagroth",
         "slug": "ninjagroth",
         "h": 141.3,
-        "factor": 0.76,
+        "factor": 0.759,
         "diffRaw": -8,
         "diff": -6
       },
@@ -104509,7 +104482,7 @@
         "name": "W5234",
         "slug": "w5234",
         "h": 41.3,
-        "factor": 0.461,
+        "factor": 0.46,
         "diffRaw": -8,
         "diff": -4
       },
@@ -104581,9 +104554,17 @@
         "name": "3mCocktus",
         "slug": "3mcocktus",
         "h": 179.4,
-        "factor": 0.818,
+        "factor": 0.817,
         "diffRaw": -8,
         "diff": -7
+      },
+      {
+        "name": "DamonVS",
+        "slug": "damonvs",
+        "h": 74.8,
+        "factor": 0.605,
+        "diffRaw": -8,
+        "diff": -5
       },
       {
         "name": "MsOpafamaAndr",
@@ -104597,7 +104578,7 @@
         "name": "b52spirit2",
         "slug": "b52spirit2",
         "h": 244.3,
-        "factor": 0.893,
+        "factor": 0.892,
         "diffRaw": -8,
         "diff": -7
       },
@@ -104605,7 +104586,7 @@
         "name": "JakksNoktua",
         "slug": "jakksnoktua",
         "h": 237.3,
-        "factor": 0.886,
+        "factor": 0.885,
         "diffRaw": -8,
         "diff": -7
       },
@@ -104653,7 +104634,7 @@
         "name": "NeedMoreFOV",
         "slug": "needmorefov",
         "h": 33.9,
-        "factor": 0.413,
+        "factor": 0.412,
         "diffRaw": -8,
         "diff": -3
       },
@@ -104669,7 +104650,7 @@
         "name": "TovarischLemming",
         "slug": "tovarischlemming",
         "h": 31.7,
-        "factor": 0.397,
+        "factor": 0.396,
         "diffRaw": -8,
         "diff": -3
       },
@@ -104693,7 +104674,7 @@
         "name": "Tissaia",
         "slug": "tissaia",
         "h": 91.4,
-        "factor": 0.654,
+        "factor": 0.653,
         "diffRaw": -8,
         "diff": -5
       },
@@ -104701,7 +104682,7 @@
         "name": "MRBOB25",
         "slug": "mrbob25",
         "h": 115.4,
-        "factor": 0.711,
+        "factor": 0.71,
         "diffRaw": -8,
         "diff": -6
       },
@@ -104741,7 +104722,7 @@
         "name": "nagazobo",
         "slug": "nagazobo",
         "h": 125.9,
-        "factor": 0.732,
+        "factor": 0.731,
         "diffRaw": -8,
         "diff": -6
       },
@@ -104789,7 +104770,7 @@
         "name": "LQZP",
         "slug": "lqzp",
         "h": 149.6,
-        "factor": 0.774,
+        "factor": 0.773,
         "diffRaw": -8,
         "diff": -6
       },
@@ -104853,7 +104834,7 @@
         "name": "NoOne42",
         "slug": "noone42",
         "h": 257.5,
-        "factor": 0.906,
+        "factor": 0.905,
         "diffRaw": -8,
         "diff": -7
       },
@@ -104885,7 +104866,7 @@
         "name": "ZH669",
         "slug": "zh669",
         "h": 110.8,
-        "factor": 0.701,
+        "factor": 0.7,
         "diffRaw": -8,
         "diff": -6
       },
@@ -104917,7 +104898,7 @@
         "name": "AIexanderHamilton",
         "slug": "aiexanderhamilton",
         "h": 29.6,
-        "factor": 0.38,
+        "factor": 0.379,
         "diffRaw": -8,
         "diff": -3
       },
@@ -104965,7 +104946,7 @@
         "name": "CCC9957",
         "slug": "ccc9957",
         "h": 20,
-        "factor": 0.285,
+        "factor": 0.284,
         "diffRaw": -8,
         "diff": -2
       },
@@ -105213,7 +105194,7 @@
         "name": "TPanda101",
         "slug": "tpanda101",
         "h": 47.5,
-        "factor": 0.495,
+        "factor": 0.494,
         "diffRaw": -8,
         "diff": -4
       },
@@ -105237,7 +105218,7 @@
         "name": "xiaoxiong2",
         "slug": "xiaoxiong2",
         "h": 25.9,
-        "factor": 0.348,
+        "factor": 0.347,
         "diffRaw": -8,
         "diff": -3
       },
@@ -105245,7 +105226,7 @@
         "name": "YYYZZZMMM",
         "slug": "yyyzzzmmm",
         "h": 28.7,
-        "factor": 0.373,
+        "factor": 0.372,
         "diffRaw": -8,
         "diff": -3
       },
@@ -105285,7 +105266,7 @@
         "name": "StijndederperTR",
         "slug": "stijndederpertr",
         "h": 267.4,
-        "factor": 0.915,
+        "factor": 0.914,
         "diffRaw": -7,
         "diff": -6
       },
@@ -105293,7 +105274,7 @@
         "name": "Romaha1220",
         "slug": "romaha1220",
         "h": 98.3,
-        "factor": 0.672,
+        "factor": 0.671,
         "diffRaw": -7,
         "diff": -5
       },
@@ -105373,7 +105354,7 @@
         "name": "NathanLP",
         "slug": "nathanlp",
         "h": 133.3,
-        "factor": 0.746,
+        "factor": 0.745,
         "diffRaw": -7,
         "diff": -5
       },
@@ -105405,7 +105386,7 @@
         "name": "jiaogege82",
         "slug": "jiaogege82",
         "h": 271.8,
-        "factor": 0.919,
+        "factor": 0.918,
         "diffRaw": -7,
         "diff": -6
       },
@@ -105482,14 +105463,6 @@
         "diff": -2
       },
       {
-        "name": "DamonVS",
-        "slug": "damonvs",
-        "h": 74.8,
-        "factor": 0.605,
-        "diffRaw": -7,
-        "diff": -4
-      },
-      {
         "name": "coookiessss12",
         "slug": "coookiessss12",
         "h": 162.9,
@@ -105509,7 +105482,7 @@
         "name": "BaryonNumber",
         "slug": "baryonnumber",
         "h": 216.7,
-        "factor": 0.864,
+        "factor": 0.863,
         "diffRaw": -7,
         "diff": -6
       },
@@ -105629,7 +105602,7 @@
         "name": "Nasidankerabu",
         "slug": "nasidankerabu",
         "h": 105,
-        "factor": 0.688,
+        "factor": 0.687,
         "diffRaw": -7,
         "diff": -5
       },
@@ -105669,7 +105642,7 @@
         "name": "KingKanne",
         "slug": "kingkanne",
         "h": 105.1,
-        "factor": 0.688,
+        "factor": 0.687,
         "diffRaw": -7,
         "diff": -5
       },
@@ -105693,7 +105666,7 @@
         "name": "FreshMilfnCookies",
         "slug": "freshmilfncookies",
         "h": 106.3,
-        "factor": 0.691,
+        "factor": 0.69,
         "diffRaw": -7,
         "diff": -5
       },
@@ -105778,14 +105751,6 @@
         "diff": -3
       },
       {
-        "name": "HHdashabi",
-        "slug": "hhdashabi",
-        "h": 262,
-        "factor": 0.91,
-        "diffRaw": -7,
-        "diff": -6
-      },
-      {
         "name": "rcrlkp",
         "slug": "rcrlkp",
         "h": 49.4,
@@ -105797,7 +105762,7 @@
         "name": "Titussyy",
         "slug": "titussyy",
         "h": 124.3,
-        "factor": 0.729,
+        "factor": 0.728,
         "diffRaw": -7,
         "diff": -5
       },
@@ -105917,7 +105882,7 @@
         "name": "averageNCgrunt",
         "slug": "averagencgrunt",
         "h": 76.9,
-        "factor": 0.612,
+        "factor": 0.611,
         "diffRaw": -7,
         "diff": -4
       },
@@ -106053,7 +106018,7 @@
         "name": "Jimbot",
         "slug": "jimbot",
         "h": 133.9,
-        "factor": 0.747,
+        "factor": 0.746,
         "diffRaw": -7,
         "diff": -5
       },
@@ -106061,7 +106026,7 @@
         "name": "JohnClank",
         "slug": "johnclank",
         "h": 33.1,
-        "factor": 0.407,
+        "factor": 0.406,
         "diffRaw": -7,
         "diff": -3
       },
@@ -106133,7 +106098,7 @@
         "name": "RainOnYourParade",
         "slug": "rainonyourparade",
         "h": 171.4,
-        "factor": 0.807,
+        "factor": 0.806,
         "diffRaw": -7,
         "diff": -6
       },
@@ -106197,7 +106162,7 @@
         "name": "TheDarkAssault",
         "slug": "thedarkassault",
         "h": 23.2,
-        "factor": 0.321,
+        "factor": 0.32,
         "diffRaw": -7,
         "diff": -2
       },
@@ -106221,7 +106186,7 @@
         "name": "VagueTailor",
         "slug": "vaguetailor",
         "h": 59.5,
-        "factor": 0.55,
+        "factor": 0.549,
         "diffRaw": -7,
         "diff": -4
       },
@@ -106245,7 +106210,7 @@
         "name": "Dwachkarr",
         "slug": "dwachkarr",
         "h": 65.7,
-        "factor": 0.574,
+        "factor": 0.573,
         "diffRaw": -6,
         "diff": -3
       },
@@ -106253,7 +106218,7 @@
         "name": "RASzuyis",
         "slug": "raszuyis",
         "h": 72.5,
-        "factor": 0.598,
+        "factor": 0.597,
         "diffRaw": -6,
         "diff": -4
       },
@@ -106261,7 +106226,7 @@
         "name": "ehrverpfendet",
         "slug": "ehrverpfendet",
         "h": 223,
-        "factor": 0.871,
+        "factor": 0.87,
         "diffRaw": -6,
         "diff": -5
       },
@@ -106277,7 +106242,7 @@
         "name": "ogin252",
         "slug": "ogin252",
         "h": 190.7,
-        "factor": 0.833,
+        "factor": 0.832,
         "diffRaw": -6,
         "diff": -5
       },
@@ -106317,7 +106282,7 @@
         "name": "Ma4oDa4aXaTaXAYC",
         "slug": "ma4oda4axataxayc",
         "h": 241.1,
-        "factor": 0.89,
+        "factor": 0.889,
         "diffRaw": -6,
         "diff": -5
       },
@@ -106349,7 +106314,7 @@
         "name": "Tian4EXE",
         "slug": "tian4exe",
         "h": 133.4,
-        "factor": 0.746,
+        "factor": 0.745,
         "diffRaw": -6,
         "diff": -4
       },
@@ -106373,7 +106338,7 @@
         "name": "Diamyx5",
         "slug": "diamyx5",
         "h": 147.2,
-        "factor": 0.77,
+        "factor": 0.769,
         "diffRaw": -6,
         "diff": -5
       },
@@ -106405,7 +106370,7 @@
         "name": "EVENMOREBLESSEDPATRICK",
         "slug": "evenmoreblessedpatrick",
         "h": 161.8,
-        "factor": 0.793,
+        "factor": 0.792,
         "diffRaw": -6,
         "diff": -5
       },
@@ -106477,7 +106442,7 @@
         "name": "toyoyo01",
         "slug": "toyoyo01",
         "h": 86.2,
-        "factor": 0.64,
+        "factor": 0.639,
         "diffRaw": -6,
         "diff": -4
       },
@@ -106493,7 +106458,7 @@
         "name": "SteveFromGhana",
         "slug": "stevefromghana",
         "h": 41.6,
-        "factor": 0.463,
+        "factor": 0.462,
         "diffRaw": -6,
         "diff": -3
       },
@@ -106589,7 +106554,7 @@
         "name": "YiCitty",
         "slug": "yicitty",
         "h": 261.7,
-        "factor": 0.91,
+        "factor": 0.909,
         "diffRaw": -6,
         "diff": -5
       },
@@ -106613,7 +106578,7 @@
         "name": "SMDwithSTDs",
         "slug": "smdwithstds",
         "h": 197,
-        "factor": 0.841,
+        "factor": 0.84,
         "diffRaw": -6,
         "diff": -5
       },
@@ -106629,7 +106594,7 @@
         "name": "ikazoochi",
         "slug": "ikazoochi",
         "h": 206.2,
-        "factor": 0.852,
+        "factor": 0.851,
         "diffRaw": -6,
         "diff": -5
       },
@@ -106677,7 +106642,7 @@
         "name": "katyusha101",
         "slug": "katyusha101",
         "h": 60.3,
-        "factor": 0.553,
+        "factor": 0.552,
         "diffRaw": -6,
         "diff": -3
       },
@@ -106741,7 +106706,7 @@
         "name": "HaNiuMo2",
         "slug": "haniumo2",
         "h": 67.9,
-        "factor": 0.582,
+        "factor": 0.581,
         "diffRaw": -6,
         "diff": -3
       },
@@ -106749,7 +106714,7 @@
         "name": "NCOONC",
         "slug": "ncoonc",
         "h": 22.6,
-        "factor": 0.315,
+        "factor": 0.314,
         "diffRaw": -6,
         "diff": -2
       },
@@ -106762,12 +106727,28 @@
         "diff": -5
       },
       {
+        "name": "Gemmsa",
+        "slug": "gemmsa",
+        "h": 48.2,
+        "factor": 0.498,
+        "diffRaw": -6,
+        "diff": -3
+      },
+      {
         "name": "Jucar",
         "slug": "jucar",
         "h": 32.9,
         "factor": 0.405,
         "diffRaw": -6,
         "diff": -2
+      },
+      {
+        "name": "HHdashabi",
+        "slug": "hhdashabi",
+        "h": 262,
+        "factor": 0.909,
+        "diffRaw": -6,
+        "diff": -5
       },
       {
         "name": "miYUANZUnc",
@@ -106869,7 +106850,7 @@
         "name": "adiosa25",
         "slug": "adiosa25",
         "h": 50.7,
-        "factor": 0.511,
+        "factor": 0.51,
         "diffRaw": -6,
         "diff": -3
       },
@@ -106877,7 +106858,7 @@
         "name": "Aladig",
         "slug": "aladig",
         "h": 143,
-        "factor": 0.763,
+        "factor": 0.762,
         "diffRaw": -6,
         "diff": -5
       },
@@ -106989,7 +106970,7 @@
         "name": "Fumaporros69",
         "slug": "fumaporros69",
         "h": 85.1,
-        "factor": 0.637,
+        "factor": 0.636,
         "diffRaw": -6,
         "diff": -4
       },
@@ -107005,7 +106986,7 @@
         "name": "ikenichi",
         "slug": "ikenichi",
         "h": 181.6,
-        "factor": 0.821,
+        "factor": 0.82,
         "diffRaw": -6,
         "diff": -5
       },
@@ -107037,7 +107018,7 @@
         "name": "Kanouroux",
         "slug": "kanouroux",
         "h": 157.8,
-        "factor": 0.787,
+        "factor": 0.786,
         "diffRaw": -6,
         "diff": -5
       },
@@ -107045,7 +107026,7 @@
         "name": "Kresa018",
         "slug": "kresa018",
         "h": 12.6,
-        "factor": 0.173,
+        "factor": 0.172,
         "diffRaw": -6,
         "diff": -1
       },
@@ -107093,7 +107074,7 @@
         "name": "LP33",
         "slug": "lp33",
         "h": 159.2,
-        "factor": 0.789,
+        "factor": 0.788,
         "diffRaw": -6,
         "diff": -5
       },
@@ -107117,7 +107098,7 @@
         "name": "MIF23",
         "slug": "mif23",
         "h": 127.4,
-        "factor": 0.735,
+        "factor": 0.734,
         "diffRaw": -6,
         "diff": -4
       },
@@ -107133,7 +107114,7 @@
         "name": "no0160",
         "slug": "no0160",
         "h": 18.8,
-        "factor": 0.27,
+        "factor": 0.269,
         "diffRaw": -6,
         "diff": -2
       },
@@ -107165,7 +107146,7 @@
         "name": "raguhag",
         "slug": "raguhag",
         "h": 210.6,
-        "factor": 0.857,
+        "factor": 0.856,
         "diffRaw": -6,
         "diff": -5
       },
@@ -107389,7 +107370,7 @@
         "name": "nsEspy",
         "slug": "nsespy",
         "h": 125.9,
-        "factor": 0.732,
+        "factor": 0.731,
         "diffRaw": -5,
         "diff": -4
       },
@@ -107405,7 +107386,7 @@
         "name": "IjierI",
         "slug": "ijieri",
         "h": 109.4,
-        "factor": 0.698,
+        "factor": 0.697,
         "diffRaw": -5,
         "diff": -3
       },
@@ -107525,7 +107506,7 @@
         "name": "RedJohn2150",
         "slug": "redjohn2150",
         "h": 61.3,
-        "factor": 0.557,
+        "factor": 0.556,
         "diffRaw": -5,
         "diff": -3
       },
@@ -107533,7 +107514,7 @@
         "name": "ClydeTR",
         "slug": "clydetr",
         "h": 82.4,
-        "factor": 0.629,
+        "factor": 0.628,
         "diffRaw": -5,
         "diff": -3
       },
@@ -107549,7 +107530,7 @@
         "name": "ZemniHra",
         "slug": "zemnihra",
         "h": 30.2,
-        "factor": 0.385,
+        "factor": 0.384,
         "diffRaw": -5,
         "diff": -2
       },
@@ -107565,7 +107546,7 @@
         "name": "KoTeH0kM9Iy",
         "slug": "koteh0km9iy",
         "h": 202,
-        "factor": 0.847,
+        "factor": 0.846,
         "diffRaw": -5,
         "diff": -4
       },
@@ -107629,7 +107610,7 @@
         "name": "Wiremu001",
         "slug": "wiremu001",
         "h": 191.6,
-        "factor": 0.834,
+        "factor": 0.833,
         "diffRaw": -5,
         "diff": -4
       },
@@ -107653,7 +107634,7 @@
         "name": "HElLuuu",
         "slug": "helluuu",
         "h": 165.8,
-        "factor": 0.799,
+        "factor": 0.798,
         "diffRaw": -5,
         "diff": -4
       },
@@ -107717,7 +107698,7 @@
         "name": "SynVS",
         "slug": "synvs",
         "h": 231.3,
-        "factor": 0.88,
+        "factor": 0.879,
         "diffRaw": -5,
         "diff": -4
       },
@@ -107765,7 +107746,7 @@
         "name": "moppsiak2",
         "slug": "moppsiak2",
         "h": 104.1,
-        "factor": 0.686,
+        "factor": 0.685,
         "diffRaw": -5,
         "diff": -3
       },
@@ -107832,14 +107813,6 @@
         "factor": 0,
         "diffRaw": -5,
         "diff": 0
-      },
-      {
-        "name": "Gemmsa",
-        "slug": "gemmsa",
-        "h": 48.2,
-        "factor": 0.498,
-        "diffRaw": -5,
-        "diff": -2
       },
       {
         "name": "iSAWyourToesUnderTheDoor",
@@ -107917,7 +107890,7 @@
         "name": "yuerbaba",
         "slug": "yuerbaba",
         "h": 192.4,
-        "factor": 0.835,
+        "factor": 0.834,
         "diffRaw": -5,
         "diff": -4
       },
@@ -107965,7 +107938,7 @@
         "name": "LOLdaGrandpa",
         "slug": "loldagrandpa",
         "h": 152.2,
-        "factor": 0.778,
+        "factor": 0.777,
         "diffRaw": -5,
         "diff": -4
       },
@@ -108085,7 +108058,7 @@
         "name": "Dodogamah",
         "slug": "dodogamah",
         "h": 91.3,
-        "factor": 0.654,
+        "factor": 0.653,
         "diffRaw": -5,
         "diff": -3
       },
@@ -108093,7 +108066,7 @@
         "name": "DogTagsMakeMeHappy",
         "slug": "dogtagsmakemehappy",
         "h": 208.8,
-        "factor": 0.855,
+        "factor": 0.854,
         "diffRaw": -5,
         "diff": -4
       },
@@ -108173,7 +108146,7 @@
         "name": "Gavein",
         "slug": "gavein",
         "h": 32.4,
-        "factor": 0.402,
+        "factor": 0.401,
         "diffRaw": -5,
         "diff": -2
       },
@@ -108213,7 +108186,7 @@
         "name": "IG10",
         "slug": "ig10",
         "h": 97.9,
-        "factor": 0.671,
+        "factor": 0.67,
         "diffRaw": -5,
         "diff": -3
       },
@@ -108405,7 +108378,7 @@
         "name": "Treepine",
         "slug": "treepine",
         "h": 135,
-        "factor": 0.749,
+        "factor": 0.748,
         "diffRaw": -5,
         "diff": -4
       },
@@ -108437,7 +108410,7 @@
         "name": "WHGUIAOCN",
         "slug": "whguiaocn",
         "h": 115.5,
-        "factor": 0.711,
+        "factor": 0.71,
         "diffRaw": -5,
         "diff": -4
       },
@@ -108541,7 +108514,7 @@
         "name": "Routaru",
         "slug": "routaru",
         "h": 92.9,
-        "factor": 0.658,
+        "factor": 0.657,
         "diffRaw": -4,
         "diff": -3
       },
@@ -108565,7 +108538,7 @@
         "name": "Caexx",
         "slug": "caexx",
         "h": 214,
-        "factor": 0.861,
+        "factor": 0.86,
         "diffRaw": -4,
         "diff": -3
       },
@@ -108661,7 +108634,7 @@
         "name": "3344567",
         "slug": "3344567",
         "h": 30.8,
-        "factor": 0.39,
+        "factor": 0.389,
         "diffRaw": -4,
         "diff": -2
       },
@@ -108677,7 +108650,7 @@
         "name": "yoVanu",
         "slug": "yovanu",
         "h": 196.4,
-        "factor": 0.84,
+        "factor": 0.839,
         "diffRaw": -4,
         "diff": -3
       },
@@ -108733,7 +108706,7 @@
         "name": "Getskilledalot",
         "slug": "getskilledalot",
         "h": 39.8,
-        "factor": 0.452,
+        "factor": 0.451,
         "diffRaw": -4,
         "diff": -2
       },
@@ -108797,7 +108770,7 @@
         "name": "HHCN033",
         "slug": "hhcn033",
         "h": 105.5,
-        "factor": 0.689,
+        "factor": 0.688,
         "diffRaw": -4,
         "diff": -3
       },
@@ -108845,7 +108818,7 @@
         "name": "dghh3",
         "slug": "dghh3",
         "h": 97.1,
-        "factor": 0.669,
+        "factor": 0.668,
         "diffRaw": -4,
         "diff": -3
       },
@@ -108861,7 +108834,7 @@
         "name": "WadaWadaLada",
         "slug": "wadawadalada",
         "h": 60.5,
-        "factor": 0.554,
+        "factor": 0.553,
         "diffRaw": -4,
         "diff": -2
       },
@@ -108909,7 +108882,7 @@
         "name": "34268975",
         "slug": "34268975",
         "h": 72.2,
-        "factor": 0.597,
+        "factor": 0.596,
         "diffRaw": -4,
         "diff": -2
       },
@@ -108997,7 +108970,7 @@
         "name": "tabsisl",
         "slug": "tabsisl",
         "h": 180.8,
-        "factor": 0.82,
+        "factor": 0.819,
         "diffRaw": -4,
         "diff": -3
       },
@@ -109077,7 +109050,7 @@
         "name": "BillyHerringtonV2",
         "slug": "billyherringtonv2",
         "h": 9.9,
-        "factor": 0.114,
+        "factor": 0.113,
         "diffRaw": -4,
         "diff": 0
       },
@@ -109205,7 +109178,7 @@
         "name": "IzanagiIzuma",
         "slug": "izanagiizuma",
         "h": 33.3,
-        "factor": 0.409,
+        "factor": 0.408,
         "diffRaw": -4,
         "diff": -2
       },
@@ -109525,7 +109498,7 @@
         "name": "sidfriegh",
         "slug": "sidfriegh",
         "h": 170.8,
-        "factor": 0.806,
+        "factor": 0.805,
         "diffRaw": -3,
         "diff": -2
       },
@@ -109613,7 +109586,7 @@
         "name": "tangtangta",
         "slug": "tangtangta",
         "h": 94.8,
-        "factor": 0.663,
+        "factor": 0.662,
         "diffRaw": -3,
         "diff": -2
       },
@@ -109637,7 +109610,7 @@
         "name": "Techman03",
         "slug": "techman03",
         "h": 92.5,
-        "factor": 0.657,
+        "factor": 0.656,
         "diffRaw": -3,
         "diff": -2
       },
@@ -109645,7 +109618,7 @@
         "name": "Coreoux",
         "slug": "coreoux",
         "h": 110.3,
-        "factor": 0.7,
+        "factor": 0.699,
         "diffRaw": -3,
         "diff": -2
       },
@@ -109677,7 +109650,7 @@
         "name": "pokemyholez",
         "slug": "pokemyholez",
         "h": 186,
-        "factor": 0.827,
+        "factor": 0.826,
         "diffRaw": -3,
         "diff": -2
       },
@@ -109685,7 +109658,7 @@
         "name": "TytoTR",
         "slug": "tytotr",
         "h": 8.9,
-        "factor": 0.089,
+        "factor": 0.088,
         "diffRaw": -3,
         "diff": 0
       },
@@ -109701,7 +109674,7 @@
         "name": "Vanities",
         "slug": "vanities",
         "h": 147.2,
-        "factor": 0.77,
+        "factor": 0.769,
         "diffRaw": -3,
         "diff": -2
       },
@@ -109757,7 +109730,7 @@
         "name": "COD137",
         "slug": "cod137",
         "h": 86.6,
-        "factor": 0.641,
+        "factor": 0.64,
         "diffRaw": -3,
         "diff": -2
       },
@@ -109789,7 +109762,7 @@
         "name": "NPxiaoyang",
         "slug": "npxiaoyang",
         "h": 119.8,
-        "factor": 0.72,
+        "factor": 0.719,
         "diffRaw": -3,
         "diff": -2
       },
@@ -109837,7 +109810,7 @@
         "name": "LucasCaminacielos",
         "slug": "lucascaminacielos",
         "h": 143.6,
-        "factor": 0.764,
+        "factor": 0.763,
         "diffRaw": -3,
         "diff": -2
       },
@@ -109845,7 +109818,7 @@
         "name": "SCLOCH",
         "slug": "scloch",
         "h": 50.3,
-        "factor": 0.509,
+        "factor": 0.508,
         "diffRaw": -3,
         "diff": -2
       },
@@ -109861,7 +109834,7 @@
         "name": "BalleDeNeige",
         "slug": "balledeneige",
         "h": 69,
-        "factor": 0.586,
+        "factor": 0.585,
         "diffRaw": -3,
         "diff": -2
       },
@@ -109893,7 +109866,7 @@
         "name": "52ChainX",
         "slug": "52chainx",
         "h": 47.9,
-        "factor": 0.497,
+        "factor": 0.496,
         "diffRaw": -3,
         "diff": -1
       },
@@ -109909,7 +109882,7 @@
         "name": "KoOoT",
         "slug": "kooot",
         "h": 60,
-        "factor": 0.552,
+        "factor": 0.551,
         "diffRaw": -3,
         "diff": -2
       },
@@ -110037,7 +110010,7 @@
         "name": "OoSweetNoO",
         "slug": "oosweetnoo",
         "h": 48.3,
-        "factor": 0.499,
+        "factor": 0.498,
         "diffRaw": -3,
         "diff": -1
       },
@@ -110045,7 +110018,7 @@
         "name": "SnowlllWhite",
         "slug": "snowlllwhite",
         "h": 46,
-        "factor": 0.487,
+        "factor": 0.486,
         "diffRaw": -3,
         "diff": -1
       },
@@ -110101,7 +110074,7 @@
         "name": "TheBigDuke",
         "slug": "thebigduke",
         "h": 145.4,
-        "factor": 0.767,
+        "factor": 0.766,
         "diffRaw": -3,
         "diff": -2
       },
@@ -110109,7 +110082,7 @@
         "name": "Mazzach",
         "slug": "mazzach",
         "h": 170.8,
-        "factor": 0.806,
+        "factor": 0.805,
         "diffRaw": -3,
         "diff": -2
       },
@@ -110149,7 +110122,7 @@
         "name": "BullTyphoonBot",
         "slug": "bulltyphoonbot",
         "h": 187.6,
-        "factor": 0.829,
+        "factor": 0.828,
         "diffRaw": -3,
         "diff": -2
       },
@@ -110277,7 +110250,7 @@
         "name": "DipVS",
         "slug": "dipvs",
         "h": 15.2,
-        "factor": 0.218,
+        "factor": 0.217,
         "diffRaw": -3,
         "diff": -1
       },
@@ -110288,14 +110261,6 @@
         "factor": 0.321,
         "diffRaw": -3,
         "diff": -1
-      },
-      {
-        "name": "Dragonwolf23",
-        "slug": "dragonwolf23",
-        "h": 69,
-        "factor": 0.586,
-        "diffRaw": -3,
-        "diff": -2
       },
       {
         "name": "drilleurerkilleurer",
@@ -110341,7 +110306,7 @@
         "name": "EsmeyNS",
         "slug": "esmeyns",
         "h": 19.3,
-        "factor": 0.276,
+        "factor": 0.275,
         "diffRaw": -3,
         "diff": -1
       },
@@ -110469,7 +110434,7 @@
         "name": "nox987",
         "slug": "nox987",
         "h": 60,
-        "factor": 0.552,
+        "factor": 0.551,
         "diffRaw": -3,
         "diff": -2
       },
@@ -110565,7 +110530,7 @@
         "name": "Sensei262",
         "slug": "sensei262",
         "h": 67.9,
-        "factor": 0.582,
+        "factor": 0.581,
         "diffRaw": -3,
         "diff": -2
       },
@@ -110741,7 +110706,7 @@
         "name": "ULTRAMARINE2K25",
         "slug": "ultramarine2k25",
         "h": 105,
-        "factor": 0.688,
+        "factor": 0.687,
         "diffRaw": -2,
         "diff": -1
       },
@@ -110821,7 +110786,7 @@
         "name": "Frostvald",
         "slug": "frostvald",
         "h": 101.2,
-        "factor": 0.679,
+        "factor": 0.678,
         "diffRaw": -2,
         "diff": -1
       },
@@ -110845,7 +110810,7 @@
         "name": "Unit3of9",
         "slug": "unit3of9",
         "h": 13.5,
-        "factor": 0.189,
+        "factor": 0.188,
         "diffRaw": -2,
         "diff": 0
       },
@@ -110981,7 +110946,7 @@
         "name": "Jordxnnn",
         "slug": "jordxnnn",
         "h": 60.8,
-        "factor": 0.555,
+        "factor": 0.554,
         "diffRaw": -2,
         "diff": -1
       },
@@ -111005,7 +110970,7 @@
         "name": "Mihalytch",
         "slug": "mihalytch",
         "h": 80.7,
-        "factor": 0.624,
+        "factor": 0.623,
         "diffRaw": -2,
         "diff": -1
       },
@@ -111037,7 +111002,7 @@
         "name": "DaNiuZi520",
         "slug": "daniuzi520",
         "h": 54.4,
-        "factor": 0.528,
+        "factor": 0.527,
         "diffRaw": -2,
         "diff": -1
       },
@@ -111077,7 +111042,7 @@
         "name": "Flowowo",
         "slug": "flowowo",
         "h": 32.9,
-        "factor": 0.406,
+        "factor": 0.405,
         "diffRaw": -2,
         "diff": -1
       },
@@ -111266,6 +111231,14 @@
         "diff": -1
       },
       {
+        "name": "Dragonwolf23",
+        "slug": "dragonwolf23",
+        "h": 69,
+        "factor": 0.585,
+        "diffRaw": -2,
+        "diff": -1
+      },
+      {
         "name": "EEST1",
         "slug": "eest1",
         "h": 3.4,
@@ -111349,7 +111322,7 @@
         "name": "Khindness",
         "slug": "khindness",
         "h": 126.4,
-        "factor": 0.733,
+        "factor": 0.732,
         "diffRaw": -2,
         "diff": -1
       },
@@ -111381,7 +111354,7 @@
         "name": "Motodoro",
         "slug": "motodoro",
         "h": 47.7,
-        "factor": 0.496,
+        "factor": 0.495,
         "diffRaw": -2,
         "diff": -1
       },
@@ -111461,7 +111434,7 @@
         "name": "tamutamu0427",
         "slug": "tamutamu0427",
         "h": 23.1,
-        "factor": 0.32,
+        "factor": 0.319,
         "diffRaw": -2,
         "diff": -1
       },
@@ -111509,7 +111482,7 @@
         "name": "Veyric",
         "slug": "veyric",
         "h": 90.6,
-        "factor": 0.652,
+        "factor": 0.651,
         "diffRaw": -2,
         "diff": -1
       },
@@ -111517,7 +111490,7 @@
         "name": "WANG0769",
         "slug": "wang0769",
         "h": 111.2,
-        "factor": 0.702,
+        "factor": 0.701,
         "diffRaw": -2,
         "diff": -1
       },
@@ -111549,7 +111522,7 @@
         "name": "Bossahhbih",
         "slug": "bossahhbih",
         "h": 22.8,
-        "factor": 0.317,
+        "factor": 0.316,
         "diffRaw": -1,
         "diff": 0
       },
@@ -111557,7 +111530,7 @@
         "name": "MillyTheDevil",
         "slug": "millythedevil",
         "h": 40.1,
-        "factor": 0.454,
+        "factor": 0.453,
         "diffRaw": -1,
         "diff": 0
       },
@@ -111629,7 +111602,7 @@
         "name": "NOHCHO11",
         "slug": "nohcho11",
         "h": 47.7,
-        "factor": 0.496,
+        "factor": 0.495,
         "diffRaw": -1,
         "diff": 0
       },
@@ -111677,7 +111650,7 @@
         "name": "FleshtradiolNCW",
         "slug": "fleshtradiolncw",
         "h": 24.5,
-        "factor": 0.334,
+        "factor": 0.333,
         "diffRaw": -1,
         "diff": 0
       },
@@ -111957,7 +111930,7 @@
         "name": "GreasyCat0",
         "slug": "greasycat0",
         "h": 29.3,
-        "factor": 0.378,
+        "factor": 0.377,
         "diffRaw": -1,
         "diff": 0
       },
@@ -112021,7 +111994,7 @@
         "name": "MacintoshTR",
         "slug": "macintoshtr",
         "h": 7.8,
-        "factor": 0.056,
+        "factor": 0.055,
         "diffRaw": -1,
         "diff": 0
       },
@@ -112077,7 +112050,7 @@
         "name": "Sky8822",
         "slug": "sky8822",
         "h": 32.9,
-        "factor": 0.406,
+        "factor": 0.405,
         "diffRaw": -1,
         "diff": 0
       },
@@ -113476,8 +113449,8 @@
         "name": "JeffereyGoystein",
         "slug": "jeffereygoystein",
         "h": 3.2,
-        "diffRaw": 19,
-        "diff": 19
+        "diffRaw": 20,
+        "diff": 20
       },
       {
         "name": "kingie2",
@@ -113903,8 +113876,8 @@
         "name": "CBuHOTA3000",
         "slug": "cbuhota3000",
         "h": 3.6,
-        "diffRaw": 19,
-        "diff": 19
+        "diffRaw": 20,
+        "diff": 20
       },
       {
         "name": "Dualizm",
@@ -115919,8 +115892,8 @@
         "name": "WahahaHA0",
         "slug": "wahahaha0",
         "h": 5.2,
-        "diffRaw": 4,
-        "diff": 4
+        "diffRaw": 3,
+        "diff": 3
       },
       {
         "name": "DFGF6666",
@@ -119279,7 +119252,7 @@
         "name": "Coldlfgvs",
         "slug": "coldlfgvs",
         "h": 8.3,
-        "diffRaw": -14,
+        "diffRaw": -13,
         "diff": -1
       },
       {
@@ -121100,7 +121073,7 @@
         "slug": "rapt121",
         "h": 10.2,
         "diffRaw": -62,
-        "diff": -8
+        "diff": -7
       },
       {
         "name": "snapples6",
@@ -122122,7 +122095,7 @@
         "slug": "m3rcexe",
         "h": 11.8,
         "diffRaw": -48,
-        "diff": -8
+        "diff": -7
       },
       {
         "name": "MerguezKipik",
@@ -122863,8 +122836,8 @@
         "name": "Yoryck",
         "slug": "yoryck",
         "h": 12.9,
-        "diffRaw": 3,
-        "diff": 3
+        "diffRaw": 2,
+        "diff": 2
       },
       {
         "name": "9915",
@@ -122912,7 +122885,7 @@
         "name": "xxxoTR",
         "slug": "xxxotr",
         "h": 13,
-        "diffRaw": 22,
+        "diffRaw": 21,
         "diff": 15
       },
       {
@@ -122983,7 +122956,7 @@
         "slug": "radioseven",
         "h": 13,
         "diffRaw": -47,
-        "diff": -9
+        "diff": -8
       },
       {
         "name": "ZaheerPI",
@@ -125481,7 +125454,7 @@
         "name": "666Anenerbe666",
         "slug": "666anenerbe666",
         "h": 17.9,
-        "diffRaw": -35,
+        "diffRaw": -36,
         "diff": -9
       },
       {
@@ -125845,7 +125818,7 @@
         "name": "yaebyludei",
         "slug": "yaebyludei",
         "h": 18.7,
-        "diffRaw": -52,
+        "diffRaw": -53,
         "diff": -14
       },
       {
@@ -125956,8 +125929,8 @@
         "slug": "chucknorris",
         "h": 109.4,
         "kind": "softened",
-        "diffRaw": -48,
-        "diff": -33
+        "diffRaw": -49,
+        "diff": -34
       },
       {
         "name": "DizzyNight",
@@ -126003,7 +125976,7 @@
     "cleared": []
   },
   "assistGap": {
-    "checkedAt": "2026-10-24T00:46:11.241Z",
+    "checkedAt": "2026-10-24T00:50:47.061Z",
     "start": "2026-04-01T13:00:00.000Z",
     "end": "2026-05-07T05:00:00.000Z",
     "url": "https://www.planetside2.com/patch-notes/may-6-hotfix-2026",
