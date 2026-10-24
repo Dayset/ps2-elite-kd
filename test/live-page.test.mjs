@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { buildLive } from "../scripts/build-live.mjs";
-import { classifyDeath, feedPush, censusStats, cellText, fmtGap, LIVE_COLS, FEED_MAX, emojiScale, goodPct, EMOJI_MIN, EMOJI_MAX } from "../live.mjs";
+import { classifyDeath, feedPush, censusStats, cellText, fmtGap, LIVE_COLS, FEED_MAX, emojiScale, goodPct, EMOJI_MIN, EMOJI_MAX, PHASE_MS, phaseAt } from "../live.mjs";
 
 const root = new URL("../", import.meta.url);
 
@@ -50,7 +50,7 @@ test("LIVE has no skill graph: the chart section is hidden and live.mjs no longe
   assert.doesNotMatch(js, /analyzeNames|setNameTokens/);
 });
 
-test("emoji size: median 1x, best 1.8x, worst 0.55x, smooth, lower-is-better reversed", () => {
+test("emoji size (owner t558u): median 1x, best 2.2x, worst 0.35x, big steps, smooth, lower-is-better reversed", () => {
   const kd = LIVE_COLS.find((c) => c.id === "act");
   const zerg = LIVE_COLS.find((c) => c.id === "zerg"); // owner t555u: bigger Zerg = bigger 🪳
   for (const c of LIVE_COLS) assert.ok(!c.lowerBetter, c.id);
@@ -61,13 +61,15 @@ test("emoji size: median 1x, best 1.8x, worst 0.55x, smooth, lower-is-better rev
   assert.equal(emojiScale(kd, 50), 1);
   assert.equal(emojiScale(kd, 99), EMOJI_MAX);
   assert.equal(emojiScale(kd, 0), EMOJI_MIN);
-  assert.equal(EMOJI_MAX, 1.8);
-  assert.equal(EMOJI_MIN, 0.55);
+  assert.equal(EMOJI_MAX, 2.2);
+  assert.equal(EMOJI_MIN, 0.35);
+  assert.ok(emojiScale(kd, 95) - emojiScale(kd, 75) >= 0.5, "p75 vs p95 clearly apart");
+  assert.ok(emojiScale(kd, 25) <= 0.6, "poor ranks much smaller");
   assert.equal(emojiScale(apk, 0), EMOJI_MAX);
   assert.equal(emojiScale(apk, 99), EMOJI_MIN);
   assert.equal(goodPct(apk, 10), 89);
   for (let p = 1; p <= 99; p++) assert.ok(emojiScale(kd, p) >= emojiScale(kd, p - 1), "monotonic at " + p);
-  for (let p = 1; p <= 99; p++) assert.ok(Math.abs(emojiScale(kd, p) - emojiScale(kd, p - 1)) < 0.03, "no jumps at " + p);
+  for (let p = 1; p <= 99; p++) assert.ok(Math.abs(emojiScale(kd, p) - emojiScale(kd, p - 1)) < 0.05, "no jumps at " + p);
   assert.equal(emojiScale(kd, null), null);
   assert.equal(emojiScale(kd, NaN), null);
 });
@@ -75,7 +77,8 @@ test("emoji size: median 1x, best 1.8x, worst 0.55x, smooth, lower-is-better rev
 test("LIVE columns (owner t550u): iVi, Activity, Brave, Resist, Zerg, Infantry in that order", () => {
   assert.deepEqual(LIVE_COLS.map((c) => c.id), ["adjs", "act", "pvs", "rf", "zerg", "inf"]);
   assert.deepEqual(LIVE_COLS.map((c) => c.label.split(" ")[0]), ["⚔️", "🏃", "🦁", "🛡️", "🪳", "🪖"]);
-  for (const c of LIVE_COLS) assert.equal(c.mode, "stack", c.id); // owner t556u: emoji with the number under it, no flipping
+  // owner t557u: ⚔️ iVi = phase A (number + emoji inline), the rest = phase B (emoji with the number under it)
+  assert.deepEqual(LIVE_COLS.map((c) => c.mode), ["ivi", "stack", "stack", "stack", "stack", "stack"]);
 });
 
 test("LIVE: no distribution chart, no title once kills arrive, a themed background", () => {
@@ -87,13 +90,18 @@ test("LIVE: no distribution chart, no title once kills arrive, a themed backgrou
   assert.doesNotMatch(js, /Live: <strong/);
 });
 
-test("no flipping (owner t556u): emoji over a small number, no ❯ column, [name][emojis][emojis][name]", () => {
+test("20 s switch (owner t557u, t559u): one fixed slot a side, phase A iVi, phase B mirrored emojis, quick fade", () => {
+  assert.equal(PHASE_MS, 20000);
+  assert.deepEqual([0, 19999, 20000, 39999, 40000, -5].map(phaseAt), ["A", "A", "B", "B", "A", "A"]);
   const css = readFileSync(new URL("styles.css", root), "utf8");
   assert.doesNotMatch(css, /lvNum|lvEm|lv-arrow|lv-cyc/);
-  assert.match(css, /\.lv-st > \.lv-v/);
+  assert.match(css, /transition: opacity 0\.133s/);
+  assert.match(css, /\.lv-phB \.lv-slot > \.lv-pb \{ opacity: 1;/);
+  assert.match(css, /col\.lv-c-slot \{ width: calc\(5 \* var\(--lv-u\)\); \}/);
   const js = readFileSync(new URL("live.mjs", root), "utf8");
-  assert.doesNotMatch(js, /❯|CYCLE|FLIP_ROWS|lv-arrow/);
+  assert.doesNotMatch(js, /❯|lv-arrow/);
   assert.match(js, /\$\{left\.name\}\$\{left\.stats\}\$\{right\.stats\}\$\{right\.name\}/);
+  assert.match(js, /sd === "R" \? \[\.\.\.REST\]\.reverse\(\) : REST/); // right player: 🪖 🪳 🛡️ 🦁 🏃
   assert.match(js, /class="lv-v"/);
 });
 
@@ -111,6 +119,9 @@ test("cellText: digits, floor at zero, missing", () => {
   assert.equal(cellText(LIVE_COLS.find((c) => c.id === "inf"), null), "—"); // 🪖 missing → "—" (and no emoji)
   const pvs = LIVE_COLS.find((c) => c.id === "pvs");
   assert.equal(cellText(pvs, 0.634), "0.63");
-  assert.equal(cellText(pvs, 329.633), "329.6"); // stacked numbers fit 5 characters
-  assert.equal(cellText(LIVE_COLS.find((c) => c.id === "inf"), 100), "100.0");
+  assert.equal(cellText(pvs, 329.633), "330"); // t557u: small numbers fit 4 characters
+  assert.equal(cellText(pvs, 12.345), "12.3");
+  assert.equal(cellText(LIVE_COLS.find((c) => c.id === "inf"), 95.43), "95.4");
+  assert.equal(cellText(LIVE_COLS.find((c) => c.id === "inf"), 100), "100");
+  assert.equal(cellText(adjs, 1883.2), "1,883"); // phase A keeps the thousands separator
 });

@@ -7,7 +7,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-export const LIVE_JS = "live.mjs?v=20261023-live6";
+export const LIVE_JS = "live.mjs?v=20261023-live7";
 
 export function buildLive(index) {
   const swaps = [

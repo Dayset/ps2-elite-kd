@@ -5,8 +5,9 @@ await i18nReady;
  * Census event stream (Death events, one character) and:
  *   - lists the last 6 opponents (one row per person, repeats bump the count);
  *     on a kill our name sits on top, on a death the killer's name does;
- *   - shows each stat cell as a number that crossfades into the column's emoji,
- *     sized by the player's percentile (owner t546u: no skill graph in Live);
+ *   - shows each player's stats in one fixed slot that switches every 20 s (owner t557u):
+ *     phase A = ⚔️ iVi number with its emoji inline, phase B = the other columns as emojis
+ *     sized by the player's percentile with a small number under each (no skill graph in Live);
  *   - uncached opponents first show Census K/D · KPM, then get a full 200-opponent Census
  *     fetch in the background (one at a time, newest first, #32) and upgrade in place.
  * Pure helpers are exported for tests; the DOM part runs only in a browser.
@@ -71,15 +72,16 @@ export function censusStats(ch) {
 /**
  * LIVE columns (owner t546u, t550u): one config list, in this order — change a mode or the order here.
  * Same ids / labels / digits as rankings.mjs VISIBLE. mode:
- *   "stack" = sized emoji with the small number under it (owner t556u: no flipping any more);
- *   "emoji" = sized emoji only, no number.
+ *   "ivi"   = phase A: the number with the sized emoji inline after it ("1,883⚔️", owner t557u);
+ *   "stack" = phase B: sized emoji with the small number under it;
+ *   "emoji" = phase B: sized emoji only, no number.
  * lowerBetter = smaller value is better (reversed percentile → big emoji for a low value); no LIVE
  * column uses it now (owner t555u: 🪳 Zerg follows the raw number).
  * 🪳 Zerg is computed like the Rankings table (trait-scores.mjs zergScore from the ranks.json pools).
  * 🪖 Infantry is the ranks.json "inf" value; players without it show "—" and no emoji.
  */
 export const LIVE_COLS = Object.freeze([
-  { id: "adjs", label: "⚔️ iVi", digits: 0, floorZero: true, mode: "stack" },
+  { id: "adjs", label: "⚔️ iVi", digits: 0, floorZero: true, mode: "ivi" },
   { id: "act", label: "🏃 Activity", digits: 2, mode: "stack" },
   { id: "pvs", label: "🦁 Brave", digits: 2, mode: "stack" },
   { id: "rf", label: "🛡️ Resist", digits: 2, mode: "stack" },
@@ -88,14 +90,15 @@ export const LIVE_COLS = Object.freeze([
 ]);
 
 /**
- * Emoji size from rank (owner t546u): the cell's emoji is scaled by the player's
+ * Emoji size from rank (owner t546u, t558u): the cell's emoji is scaled by the player's
  * percentile in that stat (pXX = higher than XX% of ranks.json, same pools as the
- * Rankings table). p50 = 1× (median, not scaled); straight line up to EMOJI_MAX at
- * the best (p99) and down to EMOJI_MIN at the worst (p0). Lower-is-better columns
- * (🤝 Assists) are flipped first, so a low pXX gives a big emoji there.
+ * Rankings table). p50 = 1× (median, not scaled). t558u: much bigger steps so ranks are
+ * easy to tell apart — geometric on each side, up to EMOJI_MAX at the best (p99) and down
+ * to EMOJI_MIN at the worst (p0); the steps grow toward the top (p75 ≈ 1.5×, p95 ≈ 2.1×).
+ * Lower-is-better columns are flipped first, so a low pXX gives a big emoji there.
  */
-export const EMOJI_MIN = 0.55;
-export const EMOJI_MAX = 1.8;
+export const EMOJI_MIN = 0.35;
+export const EMOJI_MAX = 2.2;
 /** "How good" percentile 0..99 (99 = best) from the plain pXX. */
 export function goodPct(col, p) {
   if (typeof p !== "number" || !Number.isFinite(p)) return null;
@@ -106,10 +109,14 @@ export function goodPct(col, p) {
 export function emojiScale(col, p) {
   const g = goodPct(col, p);
   if (g == null) return null;
-  const s = g >= 50 ? 1 + ((g - 50) / 49) * (EMOJI_MAX - 1) : 1 - ((50 - g) / 50) * (1 - EMOJI_MIN);
+  const s = g >= 50 ? EMOJI_MAX ** ((g - 50) / 49) : EMOJI_MIN ** ((50 - g) / 50);
   return Math.round(s * 100) / 100;
 }
 
+/** Owner t557u: the slot switches between phase A (⚔️ iVi) and phase B (the rest) every 20 s, all rows in sync. */
+export const PHASE_MS = 20000;
+/** Phase at a time since the page started: "A" for the first 20 s, then "B", and so on. */
+export function phaseAt(ms) { return Math.floor(Math.max(0, ms) / PHASE_MS) % 2 === 0 ? "A" : "B"; }
 /**
  * Background-fetch queue step (#32): next opponent cid to fetch = newest-first queue entry
  * that is still in the feed and was never tried this page load; or null.
@@ -151,9 +158,9 @@ export function shareDelay(now, lastSent, firstPendingAt, pending) {
 export function cellText(col, v) {
   if (typeof v !== "number" || !Number.isFinite(v)) return "—";
   if (col.floorZero && v < 0) v = 0;
-  // Stat cells are sized for 5 characters ("12.34", "100.0", "1,357"): rare big values drop decimals (329.63 → "329.6").
+  // Owner t557u: the small numbers under the emojis fit 4 characters ("0.63", "95.4"): bigger values drop decimals (100.0 → "100").
   let d = col.digits;
-  if (col.mode === "stack") while (d > 0 && Math.abs(v).toFixed(d).length > 5) d--;
+  if (col.mode === "stack") while (d > 0 && Math.abs(v).toFixed(d).length > 4) d--;
   return v.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
 }
 
@@ -231,29 +238,43 @@ function start() {
   }
 
   const fmt = (v, d) => (typeof v === "number" && Number.isFinite(v) ? v.toFixed(d) : "—");
-  const N = LIVE_COLS.length; // stat columns a side
+  const IVI = LIVE_COLS.filter((c) => c.mode === "ivi"); // phase A
+  const REST = LIVE_COLS.filter((c) => c.mode !== "ivi"); // phase B
+  // Owner t559u: the row mirrors itself — the right player's emojis run 🪖 🪳 🛡️ 🦁 🏃, ending at the right name.
+  const restFor = (sd) => (sd === "R" ? [...REST].reverse() : REST);
   const shortLab = (c) => c.label.split(" ")[0];
   /** 💩 after a confirmed padder's name (padding.mjs): hover explains the −10% iVi penalty. */
   const poopFor = (name) => (isPenalizedPadder(name) ? `<span class="poop-mark" title="${esc(POOP_TIP)}" aria-label="${esc(POOP_TIP)}">${POOP_MARK}</span>` : "");
-  /** One stat cell by its LIVE_COLS mode (owner t556u: sized emoji, small number under it, no flipping). */
-  function statCell(c, v) {
-    const s = emojiScale(c, percentileOf(pools[c.id] || [], v));
-    if (s == null) return `<td class="lv-num lv-none">—</td>`;
+  const scaleOf = (c, v) => emojiScale(c, percentileOf(pools[c.id] || [], v));
+  /** Phase B unit: sized emoji, small number under it ("—" when there is no value). */
+  function unit(c, v) {
+    const s = scaleOf(c, v);
+    if (s == null) return `<span class="lv-u lv-none" title="${esc(c.label)}">—</span>`;
     const em = `<b class="lv-e" aria-hidden="true">${shortLab(c)}</b>`;
-    if (c.mode === "emoji") return `<td class="lv-num lv-emo" style="--s:${s}" aria-label="${esc(c.label)}">${em}</td>`;
-    return `<td class="lv-num lv-st" style="--s:${s}" aria-label="${esc(c.label)} ${cellText(c, v)}">${em}<span class="lv-v">${cellText(c, v)}</span></td>`;
+    if (c.mode === "emoji") return `<span class="lv-u lv-emo" style="--s:${s}" title="${esc(c.label)}">${em}</span>`;
+    return `<span class="lv-u lv-st" style="--s:${s}" title="${esc(c.label)} ${cellText(c, v)}">${em}<span class="lv-v">${cellText(c, v)}</span></span>`;
   }
-  /** One player = name cell + stats cells (columns aligned across events). sd "L" / "R" (owner t556u:
-   *  [name][stats][stats][name]; names hug their stats, a long name ellipsizes on the outer side). */
+  /** Phase A: "1,883⚔️" (number, then the rank-sized emoji). */
+  function iviText(c, v) {
+    const s = scaleOf(c, v);
+    if (s == null) return `<span class="lv-iv lv-none" title="${esc(c.label)}">—</span>`;
+    return `<span class="lv-iv" title="${esc(c.label)} ${cellText(c, v)}">${cellText(c, v)}<b class="lv-ie" style="--s:${s}" aria-hidden="true">${shortLab(c)}</b></span>`;
+  }
+  /** One side's stats slot: both phases stacked in one fixed box, the table crossfades them (owner t557u). */
+  function slot(vals, sd) {
+    return `<td class="lv-slot lv-s${sd}"><span class="lv-pa">${IVI.map((c) => iviText(c, vals[c.id])).join("")}</span><span class="lv-pb">${restFor(sd).map((c) => unit(c, vals[c.id])).join("")}</span></td>`;
+  }
+  /** One player = name cell + stats slot. sd "L" / "R" (owner t556u: [name][stats][stats][name];
+   *  names hug their stats, a long name ellipsizes on the outer side). */
   function side(p, isMe, sd) {
     // 💩 confirmed padder (padding.mjs): hover explains the −10% iVi penalty.
     const poop = poopFor(p.name);
     const nm = `<span class="lv-name fac-${p.faction || ""}" title="${esc(p.name)}"><bdi>${esc(p.name)}</bdi></span>`;
     const name = `<td class="lv-name-cell lv-n${sd}">${sd === "L" ? poop + nm : nm + poop}</td>`;
     let stats;
-    if (p.cached) stats = LIVE_COLS.map((c) => statCell(c, p.cached[c.id])).join("");
-    else if (isMe) stats = `<td class="lv-num lv-uncached lv-u${sd}" colspan="${N}"></td>`;
-    else stats = `<td class="lv-num lv-uncached lv-u${sd}" colspan="${N}">K/D ${fmt(p.kd, 2)} · KPM ${fmt(p.kpm, 2)} · not in cache</td>`;
+    if (p.cached) stats = slot(p.cached, sd);
+    else if (isMe) stats = `<td class="lv-slot lv-uncached lv-s${sd}"></td>`;
+    else stats = `<td class="lv-slot lv-uncached lv-s${sd}" title="not in cache"><span>K/D ${fmt(p.kd, 2)}</span><span>KPM ${fmt(p.kpm, 2)}</span></td>`;
     return { name, stats };
   }
   function eventHtml(r, i) {
@@ -268,19 +289,23 @@ function start() {
   }
   function render(dropped) {
     if (!listEl) return;
-    // Fixed layout (owner t556u): [time][name ▸][N stats][N stats][◂ name], equal stat units.
-    const colTags = (sd) => `<col class="lv-c-stat${sd}">`.repeat(N);
-    const cols = `<colgroup><col class="lv-c-time"><col class="lv-c-name">${colTags("L")}${colTags("R")}<col class="lv-c-name"></colgroup>`;
-    const ths = LIVE_COLS.map((c) => `<th title="${esc(c.label)}">${shortLab(c)}</th>`).join("");
-    const head = `<thead><tr><th></th><th></th>${ths}${ths}<th></th></tr></thead>`;
+    // Fixed layout (owner t556u, t557u): [time][name ▸][slot][slot][◂ name]; the slots never change size.
+    const cols = `<colgroup><col class="lv-c-time"><col class="lv-c-name"><col class="lv-c-slot"><col class="lv-c-slot"><col class="lv-c-name"></colgroup>`;
+    const th = (sd) => `<th class="lv-slot"><span class="lv-pa">${IVI.map((c) => `<span class="lv-iv" title="${esc(c.label)}">${esc(c.label)}</span>`).join("")}</span><span class="lv-pb">${restFor(sd).map((c) => `<span class="lv-u" title="${esc(c.label)}">${shortLab(c)}</span>`).join("")}</span></th>`;
+    const head = `<thead><tr><th></th><th></th>${th("L")}${th("R")}<th></th></tr></thead>`;
     // No events yet: skeleton first row — em dashes stand in for the numbers
     // until real data arrives and fills the rows.
-    const dashCells = LIVE_COLS.map(() => `<td class="lv-num lv-none">—</td>`).join("");
+    const dashCells = slot({}, "L"), dashR = slot({}, "R");
     const body = rows.length ? rows.map(eventHtml).join("")
-      : `<tbody class="lv-ev lv-wait"><tr><td class="lv-time">—</td><td class="lv-name-cell lv-nL">${poopFor(me.name)}<span class="lv-name fac-${me.faction || ""}"><bdi>${esc(me.name)}</bdi></span></td>${dashCells}${dashCells}<td class="lv-name-cell lv-nR">—</td></tr></tbody>`;
+      : `<tbody class="lv-ev lv-wait"><tr><td class="lv-time">—</td><td class="lv-name-cell lv-nL">${poopFor(me.name)}<span class="lv-name fac-${me.faction || ""}"><bdi>${esc(me.name)}</bdi></span></td>${dashCells}${dashR}<td class="lv-name-cell lv-nR">—</td></tr></tbody>`;
     listEl.innerHTML = cols + head + body + (dropped ? eventHtml(dropped, -1).replace('class="lv-ev', 'class="lv-ev lv-fade') : "");
     if (dropped) setTimeout(() => { const f = listEl.querySelector(".lv-fade"); if (f) f.remove(); }, 600);
   }
+  // Owner t557u: every row switches together — one class on the table, a quick crossfade in CSS.
+  const t0 = Date.now();
+  const setPhase = () => { if (listEl) listEl.classList.toggle("lv-phB", phaseAt(Date.now() - t0) === "B"); };
+  setPhase();
+  setInterval(setPhase, 250);
   setInterval(() => {
     if (!listEl) return;
     for (const el of listEl.querySelectorAll(".lv-timer[data-at]")) el.textContent = `${fmtGap(Date.now() - +el.dataset.at)}`;
