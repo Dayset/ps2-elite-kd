@@ -14,7 +14,7 @@ import { chartFontScale } from "./desk-scale.mjs?v=20261010-sav1";
 
 /**
  * $ = app.js state and functions this part uses, as live getters (and setters for state it changes), so app.js
- * stays the one owner: AIM_VIEW, IS_PS, LS_CHART_MODE, LS_GHOSTS, PLOT, VB, analyzeSeq, chartFs, chartMode, chartTheme, els, ghostsOn, hutMarked, isLightTheme, lastAnalyzedNames, lastChartScale, lastLoadedNames, ns, playerMark, players, renderStatsTable, seriesColor, startWave, stopWave, syncVehiclesNote, syncWeapons, updateWaveRangeWarn, viewXMax, yScaleMode, yScalePct, yZoom.
+ * stays the one owner: AIM_VIEW, IS_PS, LS_CHART_MODE, LS_GHOSTS, PLOT, VB, analyzeSeq, chartFs, chartMode, chartTheme, els, ghostsOn, hutMarked, isLightTheme, lastAnalyzedNames, lastChartScale, lastLoadedNames, ns, playerMark, players, renderStatsTable, seriesColor, startWave, stopWave, syncWeapons, updateWaveRangeWarn, viewXMax, yScaleMode, yScalePct, yZoom.
  */
 export function createChart($) {
   const DOT_R = 3;
@@ -892,7 +892,6 @@ export function createChart($) {
     clearSvg($.els.chart);
     if ($.els.stats) $.els.stats.innerHTML = "";
     if ($.els.statsPublic) $.els.statsPublic.innerHTML = "";
-    $.syncVehiclesNote([]);
     $.syncWeapons([]); // 🏆 one-player box: unavailable while nothing is graphed
     $.players = [];
     $.lastAnalyzedNames = [];

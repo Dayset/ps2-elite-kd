@@ -242,7 +242,6 @@ import {
       get seriesColor() { return seriesColor; },
       get startWave() { return startWave; },
       get stopWave() { return stopWave; },
-      get syncVehiclesNote() { return syncVehiclesNote; },
       get syncWeapons() { return syncWeapons; },
       get updateWaveRangeWarn() { return updateWaveRangeWarn; },
       get VB() { return VB; },
@@ -451,7 +450,6 @@ import {
     chartModeBar: document.getElementById("chartModeBar"),
     stats: document.getElementById("statsPanel"),
     statsPublic: document.getElementById("statsPublic"),
-    vehiclesNote: document.getElementById("vehiclesNote"),
     debugColsToggle: document.getElementById("debugColsToggle"),
     hideZeroIviToggle: document.getElementById("hideZeroIviToggle"),
     removeRanksToggle: document.getElementById("removeRanksToggle"),
@@ -1085,7 +1083,6 @@ import {
   function reserveStatsSpace(...a) { return statsPart().reserveStatsSpace(...a); }
   function syncWeapons(...a) { return statsPart().syncWeapons(...a); }
   function renderStatsTable(...a) { return statsPart().renderStatsTable(...a); }
-  function syncVehiclesNote(...a) { return statsPart().syncVehiclesNote(...a); }
   function nameSpan(...a) { return statsPart().nameSpan(...a); }
   function playerMark(...a) { return statsPart().playerMark(...a); }
   function poopHtml(...a) { return statsPart().poopHtml(...a); }

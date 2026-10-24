@@ -209,7 +209,6 @@ export function createStatsTable($) {
     if (!$.els.stats) return;
     if (list.length) requestAnimationFrame(releaseStatsSpace);
     $.lastStatsList = list;
-    syncVehiclesNote(list);
     if (!list.length) {
       $.els.stats.innerHTML = "";
       if ($.els.statsPublic) $.els.statsPublic.innerHTML = "";
@@ -526,12 +525,6 @@ export function createStatsTable($) {
     });
   }
 
-  /** Vehicles note lives in the footer now: it shows only while a comparison
-   * is loaded (this used to be the `.legend:empty + .pooled-note` CSS rule). */
-  function syncVehiclesNote(list) {
-    if ($.els.vehiclesNote) $.els.vehiclesNote.hidden = !list || list.length === 0;
-  }
-
   /** Truncatable player name (.nm, ~18ch cap) with the full name in title / data-full. */
   function nameSpan(name, { title = true } = {}) {
     const span = document.createElement("span");
@@ -608,5 +601,5 @@ export function createStatsTable($) {
     if (src.startsWith("live:")) return tr("src.live", "live Honu/Census");
     return src;
   }
-  return { readShowDebugCols, loadConsPool, reserveStatsSpace, releaseStatsSpace, syncWeapons, renderStatsTable, syncVehiclesNote, nameSpan, isConfirmedPadder, playerMark, padMarkHtml, autoMarkHtml, hutHtml, poopHtml, legacySampleHtml, farmTitle, nameSpanHtml, sourceLabel };
+  return { readShowDebugCols, loadConsPool, reserveStatsSpace, releaseStatsSpace, syncWeapons, renderStatsTable, nameSpan, isConfirmedPadder, playerMark, padMarkHtml, autoMarkHtml, hutHtml, poopHtml, legacySampleHtml, farmTitle, nameSpanHtml, sourceLabel };
 }
