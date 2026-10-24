@@ -54,7 +54,6 @@ They never fail on a missing translation, since that is only a gap in coverage.
 
 ## Not translated (by design)
 
-- Player legends (the long pilot stories about top players). They are hidden on the site.
 - The language names in the menu (English, Deutsch, Français, Español): each is shown in its own language.
 - Stat names listed above.
 - Player names and clan tags.

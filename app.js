@@ -227,57 +227,6 @@ import {
   /** Catalog from data/index.json (shared Pages cache). */
   let sharedIndex = { updatedAt: null, players: [] };
   let sharedIndexLoaded = false;
-  // Player legends are switched off (owner, 2026-10-20: not needed). The shards stay in data/
-  // and the loader below is kept; set LEGENDS_ON = true to bring them back.
-  const LEGENDS_ON = false && !IS_PS; // legends are PC players' (#55): never in the PS room
-  // Story-style player legends (data/descriptions/<first-char>.json, keyed by slug).
-  // Shown on the name hover in ✨ Adjusted. Shards load lazily for the players
-  // currently shown; index.json supplies the version param, so a new deploy
-  // still picks up new text without a no-store full download.
-  let playerDescs = {};
-  let legendIndexLoad = null;
-  let legendIndexVersion = null;
-  const legendShardsLoaded = new Set();
-  const legendShardsPending = new Map();
-  function loadLegendIndex() {
-    if (!legendIndexLoad) {
-      legendIndexLoad = fetch("data/descriptions/index.json", { cache: "no-cache" })
-        .then((r) => (r.ok ? r.json() : null))
-        .then((d) => {
-          if (d && typeof d.updatedAt === "string") legendIndexVersion = d.updatedAt;
-          return d;
-        })
-        .catch(() => null);
-    }
-    return legendIndexLoad;
-  }
-  function loadLegendShards(slugs) {
-    if (!LEGENDS_ON) return;
-    const needed = new Set();
-    for (const s of slugs || []) {
-      const key = String(s || "").charAt(0).toLowerCase();
-      if (key && !legendShardsLoaded.has(key) && !legendShardsPending.has(key)) needed.add(key);
-    }
-    if (!needed.size) return;
-    const list = lastStatsList; // re-render only if this list is still current
-    loadLegendIndex().then(() => {
-      for (const key of needed) {
-        const url = `data/descriptions/${key}.json` + (legendIndexVersion ? `?v=${encodeURIComponent(legendIndexVersion)}` : "");
-        const p = fetch(url)
-          .then((r) => (r.ok ? r.json() : null))
-          .then((d) => {
-            if (d && d.players) Object.assign(playerDescs, d.players);
-            legendShardsLoaded.add(key);
-            legendShardsPending.delete(key);
-            if (lastStatsList === list && lastStatsList) renderStatsTable(lastStatsList);
-          })
-          .catch(() => {
-            legendShardsPending.delete(key);
-          });
-        legendShardsPending.set(key, p);
-      }
-    });
-  }
   /** Slugs confirmed as stat padders on review (data/reviewed.json "padding") → always "*". */
   let confirmedPadders = new Set();
 
@@ -3921,7 +3870,6 @@ import {
     if (list.length) requestAnimationFrame(releaseStatsSpace);
     lastStatsList = list;
     syncVehiclesNote(list);
-    loadLegendShards(list.map((e) => slugKey(e && e.display)).filter(Boolean));
     if (!list.length) {
       els.stats.innerHTML = "";
       if (els.statsPublic) els.statsPublic.innerHTML = "";
@@ -4047,7 +3995,7 @@ import {
       return nameTh + rest;
     }
 
-    function playerRows(cols, ordered, { withDesc = false } = {}) {
+    function playerRows(cols, ordered) {
       // Column references over every analysed player (not just the visible order).
       const colRefs = new Map(
         cols.map((c) => [
@@ -4150,7 +4098,7 @@ import {
             `<tr><th scope="row" class="stats-name" style="color:${col}">` +
             dotSlot(row.p.cid) +
             `<span class="player-num" aria-label="${tr("stats.series", "Series {n}", { n: num })}">${num}.</span>` +
-            `${nameSpanHtml(row.p.display, farmTitle(row.p) + (withDesc ? descTitle(row.p) : ""), withDesc ? descText(row.p) : "", IS_PS ? "" : honuProfileUrl(row.p.cid))}${serverTagHtml(row.p)}${padMarkHtml(row.p)}${autoMarkHtml(row)}${legacySampleHtml(row.p)}</th>${vals}</tr>`
+            `${nameSpanHtml(row.p.display, farmTitle(row.p), "", IS_PS ? "" : honuProfileUrl(row.p.cid))}${serverTagHtml(row.p)}${padMarkHtml(row.p)}${autoMarkHtml(row)}${legacySampleHtml(row.p)}</th>${vals}</tr>`
           );
         })
         .join("");
@@ -4192,7 +4140,7 @@ import {
         <div class="stats-table-wrap">
           <table class="stats-table stats-table-transposed" data-stats-table="adjusted">
             <thead><tr>${metricHead(adjCols, "adjusted", statsSortState.adjusted)}</tr></thead>
-            <tbody>${playerRows(adjCols, adjSorted, { withDesc: true })}</tbody>
+            <tbody>${playerRows(adjCols, adjSorted)}</tbody>
           </table>
         </div>
         ${thinBlock}
@@ -4375,18 +4323,6 @@ import {
   }
 
   /** Name cell title: adds the farm note when farm accounts were excluded. */
-  /** Legend text for a player. Shards store { text, basis, at }; older entries are plain strings. */
-  function descText(p) {
-    if (!LEGENDS_ON) return "";
-    const v = playerDescs[slugKey(p && p.display)];
-    if (typeof v === "string") return v;
-    return (v && typeof v.text === "string" && v.text) || "";
-  }
-  function descTitle(p) {
-    const text = descText(p);
-    return text ? `\n\n${text}` : "";
-  }
-
   function farmTitle(p) {
     const note = p && markNote(p.farm, { confirmed: isConfirmedPadder(p) });
     return note ? ` — ${note}` : "";
