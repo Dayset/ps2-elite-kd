@@ -1,5 +1,6 @@
 // PS2MapOracle dashboard — split from index.html (#15). No behaviour change.
 import { S, FACS, esc, det } from "./state.js?v=20261018-scrub2";
+import { voiceButton } from "./voice.js?v=20261024-v1";
 
 /** Grayed placeholder shown between alerts so users see the panel exists. */
 export function commanderIdle() {
@@ -51,6 +52,6 @@ export function commander(c, ts, now, lead) {
     const kmBlock = kmBig.length ? `<div class="note">👑 Kingmaker</div><ul>${kmLi(kmBig)}</ul>` : "";
     const lists = `${atk ? `<div class="note">⚔️ Attack</div><ol>${atk}</ol>` : ""}${def ? `<div class="note">🛡️ Defend</div><ol>${def}</ol>` : ""}${kmSmall.length ? `<div class="note">👑 Kingmaker</div><ul>${kmLi(kmSmall)}</ul>` : ""}`;
     const hasFocus = !!P[f];
-    return `<div class="cf${f === on ? " on" : ""}"><h3 class="${f}">${f} · ${esc(x.war_shape || "")}</h3>${focusHtml(f)}${kmBlock}${hasFocus ? (lists ? det(`cmdall-${f}`, "All moves", lists, "allmoves keep") : "") : lists}</div>`;
+    return `<div class="cf${f === on ? " on" : ""}"><h3 class="${f}">${f} · ${esc(x.war_shape || "")}${voiceButton(f)}</h3>${focusHtml(f)}${kmBlock}${hasFocus ? (lists ? det(`cmdall-${f}`, "All moves", lists, "allmoves keep") : "") : lists}</div>`;
   }).join("")}</div>${(c.second_place_kingmaker || []).length ? `<div class="note" style="margin-top:8px">🥈 Second place: ${c.second_place_kingmaker.map((k) => esc(k.text)).join(" · ")}</div>` : ""}${c.fight_up && c.fight_up.text ? det("why", "Why", `<pre class="note" style="margin-top:8px;white-space:pre-wrap;font-family:inherit">${esc(c.fight_up.text)}</pre>`, "why") : ""}</section>`;
 }

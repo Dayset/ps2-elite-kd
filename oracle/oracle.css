@@ -304,3 +304,7 @@ footer { color: var(--dim); font-size: var(--fs-12); margin-top: var(--s-5); }
 .replaytag[hidden] { display: none; }
 #map svg.replay .marks { display: none; }
 #chart svg { cursor: crosshair; }
+
+/* 🔊 Commander voice (#65) */
+.voicebtn { margin-left: var(--s-2, 8px); padding: 2px 8px; min-height: 32px; background: var(--panel2); border: 1px solid var(--border); border-radius: var(--r-md, 8px); font: inherit; cursor: pointer; vertical-align: middle; }
+.voicebtn.on { border-color: currentColor; }

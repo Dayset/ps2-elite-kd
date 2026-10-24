@@ -93,6 +93,12 @@ describe("oracle page smoke test (#28)", { skip }, () => {
         assert.match(outside, /KM big swing/);
         assert.doesNotMatch(outside, /KM small swing/);
         assert.match(vsCard, /KM small swing/, "small one still listed, inside All moves");
+        // 🔊 voice (#65): click VS's speaker, the top order is spoken (speech stubbed).
+        await page.evaluate(() => { window.__said = []; window.speechSynthesis.speak = (u) => window.__said.push(u.text); window.speechSynthesis.cancel = () => {}; });
+        await page.click(".cf h3.VS [data-voice]");
+        const said = await page.evaluate(() => window.__said);
+        assert.deepEqual(said, ["VS. Hold Cairn Station against NC. Losing it cuts off 1 base of ours. 10 percent at stake."]);
+        assert.equal(await page.$eval(".cf h3.VS [data-voice]", (b) => b.getAttribute("aria-pressed")), "true");
         const over = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
         assert.ok(over <= 0, `horizontal scroll of ${over}px`);
       } finally {
