@@ -23,7 +23,8 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import {
   compactSessions, sessionClues, nameClue, bareName, profileVector, robustScale,
-  profileDistance, jaccard, calibrate, scorePair,
+  profileDistance, jaccard, calibrate, scorePair, dropOverlapping,
+  linked, handZ, groupFacts, GROUP_CLUES, GROUP_DIRECTION, LINK,
 } from "./alts-lib.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -112,14 +113,22 @@ for (const [, list] of byTag) {
 }
 
 // negatives: a fixed random sample of active players (different people, almost surely)
-const negPool = active.filter((s) => !famSlugs.includes(s) && !testSlugs.includes(s));
-const negBig = [];
-while (negBig.length < NEG_PROFILE && negPool.length) negBig.push(negPool.splice(Math.floor(rnd() * negPool.length), 1)[0]);
-const negSample = negBig.slice(0, NEG_SAMPLE); // these also get Honu sessions
-
-// ---------- 2. clues ----------
 const cachePath = path.join(DATA, "alt-sessions.json");
 const cache = readJson(cachePath, { v: 1, chars: {} });
+const negPool = active.filter((s) => !famSlugs.includes(s) && !testSlugs.includes(s));
+// Keep last run's sample (its sessions are cached) while those players stay active; top up at random.
+// Saves Honu calls: a fresh random draw after every ranks update would need ~150 new calls.
+const poolSet = new Set(negPool);
+const prevSample = (cache.negSample || Object.keys(cache.chars).filter((s) => !famSlugs.includes(s) && !testSlugs.includes(s)))
+  .filter((s) => poolSet.has(s)).slice(0, NEG_SAMPLE);
+const negSample = [...prevSample];
+for (const s of prevSample) negPool.splice(negPool.indexOf(s), 1);
+while (negSample.length < NEG_SAMPLE && negPool.length) negSample.push(negPool.splice(Math.floor(rnd() * negPool.length), 1)[0]); // these also get Honu sessions
+const negBig = [...negSample];
+while (negBig.length < NEG_PROFILE && negPool.length) negBig.push(negPool.splice(Math.floor(rnd() * negPool.length), 1)[0]);
+cache.negSample = negSample;
+
+// ---------- 2. clues ----------
 const sessOf = (s) => {
   const c = cache.chars[s];
   if (!c) return null;
@@ -148,14 +157,23 @@ function sharedWeapons(a, b) {
   return jaccard(wa.filter(keep), wb.filter(keep));
 }
 const nameOf = (s) => { const r = rowBySlug.get(s); return r ? r[I.name] : (pf(s)?.player?.display || s); };
-/** withFiles=false: no player-file reads (cheap pre-score over thousands of pairs). */
-function clues(a, b, withFiles = true) {
+// Owner t601/t602: known alts that sometimes ran on a second PC at the same time.
+// Their overlapping stretches are left out of CALIBRATION only (scores shown use all data).
+const SECOND_PC = new Set(Object.keys(fam.secondPc || {}));
+/** Sessions of a vs b for calibration: a second-PC character loses the sessions that overlap the partner(s). */
+const calibSess = (a, partners) => {
+  const sa = sessOf(a);
+  if (!sa || !SECOND_PC.has(a)) return sa;
+  return dropOverlapping(sa, partners.flatMap((p) => sessOf(p) || []));
+};
+/** withFiles=false: no player-file reads (cheap pre-score over thousands of pairs). calib: second-PC stretches dropped. */
+function clues(a, b, withFiles = true, calib = false) {
   const ca = cache.chars[a], cb = cache.chars[b];
   const ta = tagOf.get(a), tb = tagOf.get(b);
   const outfit = ca && cb && (ca.outfits.length || cb.outfits.length) ? ca.outfits.some((o) => cb.outfits.includes(o))
     : ta && tb ? ta === tb : null;
   return {
-    sess: ca && cb ? sessionClues(sessOf(a), sessOf(b)) : null,
+    sess: ca && cb ? sessionClues(calib ? calibSess(a, [b]) : sessOf(a), calib ? calibSess(b, [a]) : sessOf(b)) : null,
     profile: vecs.has(a) && vecs.has(b) ? profileDistance(vecs.get(a), vecs.get(b), scale) : null,
     weapons: withFiles ? sharedWeapons(a, b) : null,
     name: nameClue(nameOf(a), nameOf(b)),
@@ -169,7 +187,7 @@ for (let i = 0; i < negBig.length; i++) for (let j = i + 1; j < negBig.length; j
 for (const set of Object.values(fam.families || {})) for (const a of set) for (const b of negSample) negPairs.push([a, b]); // other people vs the family
 
 // ---------- 3. pre-score (no Honu) → who is worth a sessions call ----------
-const preModel = calibrate(famPairs.map(([a, b]) => clues(a, b, false)), negPairs.map(([a, b]) => clues(a, b, false)));
+const preModel = calibrate(famPairs.map(([a, b]) => clues(a, b, false, true)), negPairs.map(([a, b]) => clues(a, b, false)));
 for (const c of cand.values()) c.pre = c.why.includes("set") ? 1 : scorePair(clues(c.a, c.b, false), preModel, PRIOR_ODDS).p;
 const usagePath = path.join(DATA, "honu-usage.json");
 const today = new Date().toISOString().slice(0, 10);
@@ -223,7 +241,7 @@ queueLeft += await fetchSessions(negSample.filter((s) => !famSlugs.includes(s) &
 // B) … then a candidate pair is worth Honu calls only if the session clues COULD lift it past
 // 50 %: no-Honu odds × the strongest session evidence the calibration has seen ≥ 1.
 const SESS_CLUES = ["together", "handoff", "hours"];
-const sessModel = calibrate(famPairs.map(([a, b]) => clues(a, b)), negPairs.map(([a, b]) => clues(a, b)));
+const sessModel = calibrate(famPairs.map(([a, b]) => clues(a, b, true, true)), negPairs.map(([a, b]) => clues(a, b)));
 const maxSessLR = SESS_CLUES.reduce((m, k) => m * (sessModel[k] ? Math.max(...sessModel[k].lr) : 1), 1);
 const preOdds = (p) => p / (1 - p);
 const worth = [...cand.values()].filter((c) => !c.why.includes("set") && preOdds(c.pre) * maxSessLR >= 1).sort((x, y) => y.pre - x.pre)
@@ -237,7 +255,7 @@ if (!DRY) {
 }
 
 // ---------- 4. full calibration (with sessions) + scores ----------
-const pos = famPairs.map(([a, b]) => clues(a, b));
+const pos = famPairs.map(([a, b]) => clues(a, b, true, true));
 const neg = negPairs.map(([a, b]) => clues(a, b));
 const model = calibrate(pos, neg);
 const fmtPair = (a, b, c) => {
@@ -269,6 +287,95 @@ for (const c of worth) {
   if (r.p >= 50) found.push(r);
 }
 found.sort((x, y) => y.p - x.p);
+// ---------- 5. 👪 groups: chains of hand-offs ----------
+// Link two characters when one repeatedly logs on within 10 min of the other logging off
+// (≥ 2 times, ≥ 3 SD above chance) AND they are (almost) never online together. Linked
+// characters form a family; a character is also added when its hand-offs with the whole
+// family pass the same test. The family then gets one "likely" % from two group clues
+// (time together vs expected, hand-offs vs expected, summed over all member pairs),
+// calibrated the same way: Ahorn sub-groups vs random groups of other players.
+const pfMemo = new Map();
+const pairFacts = (a, b, calib = true) => {
+  const k = (calib ? "c:" : "") + pairKey(a, b);
+  if (!pfMemo.has(k)) {
+    const A = calib ? calibSess(a, [b]) : sessOf(a), B = calib ? calibSess(b, [a]) : sessOf(b);
+    pfMemo.set(k, A && B && A.length && B.length ? sessionClues(A, B, { expand: true }) : null);
+  }
+  return pfMemo.get(k);
+};
+const withSess = Object.keys(cache.chars).filter((s) => cache.chars[s].sess.length >= 2);
+const parent = new Map(withSess.map((s) => [s, s]));
+const root = (x) => { while (parent.get(x) !== x) { parent.set(x, parent.get(parent.get(x))); x = parent.get(x); } return x; };
+let links = 0;
+const linkList = [];
+for (let i = 0; i < withSess.length; i++) for (let j = i + 1; j < withSess.length; j++) {
+  const c = pairFacts(withSess[i], withSess[j]);
+  if (c && c.shared && linked(c)) { links++; linkList.push([withSess[i], withSess[j]]); parent.set(root(withSess[i]), root(withSess[j])); }
+}
+let comps = new Map();
+for (const s of withSess) { const r = root(s); if (!comps.has(r)) comps.set(r, []); comps.get(r).push(s); }
+// grow: a character joins a family when its hand-offs with ALL members together pass the link test
+let groups = [...comps.values()].filter((g) => g.length >= 2);
+for (let pass = 0; pass < 3; pass++) {
+  let grew = false;
+  for (const g of groups) {
+    for (const s of withSess) {
+      if (g.includes(s) || groups.some((h) => h !== g && h.includes(s) && h.length >= g.length)) continue;
+      const f = groupFacts([s, ...g], (a, b) => (a === s || b === s ? pairFacts(a, b) : null));
+      if (f.pairs && linked(f, cache.chars[s].sess.length / 2)) { for (const h of groups) { const i = h.indexOf(s); if (i >= 0) h.splice(i, 1); } g.push(s); grew = true; }
+    }
+  }
+  groups = groups.filter((g) => g.length >= 2);
+  if (!grew) break;
+}
+// prune: hand-offs also happen between friends (one goes off, the squad-mate comes on). A member
+// who is online together with the rest of the family more than a few brief minutes beyond
+// 20 % of what chance predicts is a friend, not an alt: drop the worst one until all pass.
+const dropped = [];
+for (const g of groups) {
+  for (;;) {
+    let worst = null, worstR = 0;
+    for (const s of g) {
+      const f = groupFacts([s, ...g.filter((x) => x !== s)], (a, b) => (a === s || b === s ? pairFacts(a, b) : null));
+      const lim = LINK.overlapFloor + LINK.overlapShare * f.expOverlap;
+      const r = f.overlap / lim;
+      if (r > 1 && r > worstR) { worst = s; worstR = r; }
+    }
+    if (!worst) break;
+    g.splice(g.indexOf(worst), 1);
+    dropped.push(worst);
+  }
+}
+groups = groups.filter((g) => g.length >= 2);
+// (pairFacts drops declared second-PC stretches by default: the owner told us those are one person on two PCs)
+// calibration: random Ahorn sub-groups (second-PC stretches dropped) vs random groups of the stranger sample
+const sub = (pool, k) => { const p = [...pool], o = []; while (o.length < k && p.length) o.push(p.splice(Math.floor(rnd() * p.length), 1)[0]); return o; };
+const famSess = Object.values(fam.families || {}).map((set) => set.filter((s) => cache.chars[s]));
+const negSess = negSample.filter((s) => cache.chars[s]);
+const gPos = [], gNeg = [];
+for (let k = 3; k <= 9; k++) {
+  for (const set of famSess) if (set.length >= k) for (let t = 0; t < 40; t++) gPos.push(groupFacts(sub(set, k), (a, b) => pairFacts(a, b, true)));
+  for (let t = 0; t < 400; t++) gNeg.push(groupFacts(sub(negSess, k), (a, b) => pairFacts(a, b)));
+}
+const gModel = calibrate(gPos, gNeg, GROUP_CLUES, GROUP_DIRECTION);
+const nameList = (g) => g.map(nameOf);
+const fmtGroup = (g) => {
+  const f = groupFacts(g, (a, b) => pairFacts(a, b));
+  const { p, why } = scorePair(f, gModel, PRIOR_ODDS, GROUP_CLUES);
+  const memberLinks = linkList.filter(([a, b]) => g.includes(a) && g.includes(b)).length;
+  return { members: g, names: nameList(g), p: +(100 * p).toFixed(1), why, facts: { ...f, links: memberLinks } };
+};
+const groupOut = groups.map(fmtGroup).sort((x, y) => y.p - x.p || y.members.length - x.members.length);
+// the known / test sets as one group each (all members, linked or not)
+const groupTests = {};
+for (const [k, set] of [...Object.entries(fam.families || {}), ...Object.entries(fam.test || {})]) {
+  const have = set.filter((s) => cache.chars[s]);
+  const whole = fmtGroup(have);
+  const found = groupOut.filter((g) => g.members.some((m) => set.includes(m))).map((g) => ({ ...g, inSet: g.members.filter((m) => set.includes(m)).length }));
+  groupTests[k] = { whole, found };
+}
+const gHit = (xs) => +(xs.filter((g) => scorePair(g, gModel, PRIOR_ODDS, GROUP_CLUES).p >= 0.5).length / (xs.length || 1)).toFixed(3);
+
 const posS = pos.filter((c) => c.sess && c.sess.shared), negS = neg.filter((c) => c.sess && c.sess.shared);
 const hit = (xs) => +(xs.filter((c) => scorePair(c, model, PRIOR_ODDS).p >= 0.5).length / (xs.length || 1)).toFixed(3);
 const out = {
@@ -278,8 +385,14 @@ const out = {
   candidates: cand.size, worth: worth.length, worthChars: new Set(worth.flatMap((c) => [c.a, c.b])).size,
   cached: Object.keys(cache.chars).length, honuCalls: honuUsed, honuRequests, queueLeft, maxSessLR: Math.round(maxSessLR),
   tests, found: found.slice(0, 60),
+  secondPc: fam.secondPc || {},
+  groups: {
+    link: LINK, links, dropped: dropped.length, gModel, calib: { pos: gPos.length, neg: gNeg.length, posHit: gHit(gPos), negHit: gHit(gNeg) },
+    found: groupOut.filter((g) => g.members.length >= 3).slice(0, 40), tests: groupTests,
+  },
 };
 if (!DRY) writeJson(path.join(DATA, "alts.json"), out);
 console.log(`alts: ${cand.size} candidate pairs, ${worth.length} worth sessions (${out.worthChars} chars), ${out.cached} cached, ${honuUsed} Honu call(s), ${found.length} pair(s) ≥ 50 %, queue left ${queueLeft}`);
 console.log(`calibration: ${pos.length} alt / ${neg.length} different pairs (with sessions ${posS.length} / ${negS.length}); ≥ 50 %: alts ${out.calib.posHit}, different ${out.calib.negHit}`);
+console.log(`groups: ${links} link(s), ${groups.length} famil(ies); calibration ${gPos.length} Ahorn sub-groups / ${gNeg.length} random groups, ≥ 50 %: ${out.groups.calib.posHit} / ${out.groups.calib.negHit}`);
 if (process.argv.includes("--verbose")) console.log(JSON.stringify(preModel), "\n", JSON.stringify(model));

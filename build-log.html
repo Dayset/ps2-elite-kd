@@ -1126,12 +1126,26 @@
         rows.map((r) => "<tr><td>" + esc(r.na) + " + " + esc(r.nb) + '</td><td class="st-num"><strong>' + (r.p >= 99.95 ? "≥99.9" : r.p < 0.1 ? "<0.1" : r.p) + "%</strong></td><td>" + altReasons(r) + "</td></tr>").join("") +
         "</table></div>";
     }
+    /** 👪 Families: chains of hand-offs (owner t601), one % per group. */
+    function groupReasons(g) {
+      const f = g.facts || {}, w = g.why || {};
+      const x = (k) => (w[k] ? ' <span class="' + (w[k].lr > 1.05 ? "st-ok" : w[k].lr < 0.95 ? "st-hit" : "st-dim") + '">×' + (w[k].lr >= 10 ? Math.round(w[k].lr) : w[k].lr.toFixed(w[k].lr < 0.1 ? 2 : 1)) + "</span>" : "");
+      return ["⏱️ " + (f.overlap ? Math.round(f.overlap) + " min together (" + f.overlapN + "×)" : "never together") + " vs ~" + Math.round(f.expOverlap) + " min expected, all " + f.pairs + " pairs" + x("together"),
+        "🔁 " + f.hand + " hand-offs vs ~" + (+f.expHand).toFixed(1) + " expected" + x("handoff"),
+        "🔗 " + (f.links || 0) + " strong pair link" + (f.links === 1 ? "" : "s")].join(" · ");
+    }
+    function groupTable(rows, label = "Family") {
+      return '<div class="st-scroll"><table class="st-table"><tr><th>' + label + '</th><th class="st-num">Same person</th><th>Why</th></tr>' +
+        rows.map((g) => "<tr><td>" + g.names.map(esc).join(", ") + ' <span class="st-dim">(' + g.members.length + ')</span></td><td class="st-num"><strong>' + (g.p >= 99.95 ? "≥99.9" : g.p < 0.1 ? "<0.1" : g.p) + "%</strong></td><td>" + groupReasons(g) + "</td></tr>").join("") +
+        "</table></div>";
+    }
     async function renderAlts() {
       let a = null;
       try { const r = await fetch("data/alts.json?t=" + Date.now(), { cache: "no-store" }); a = r.ok ? await r.json() : null; } catch { a = null; }
       if (!a) { $("altsCount").textContent = "–"; $("alts").innerHTML = '<span class="st-dim">No check yet (scripts/build-alts.mjs).</span>'; return; }
       const found = a.found || [];
-      $("altsCount").textContent = String(found.length);
+      const gr = a.groups || null, gFound = gr ? (gr.found || []).filter((g) => g.p >= 50) : [];
+      $("altsCount").textContent = String(found.length + gFound.length);
       const c = a.calib || {}, m = a.model || {};
       const bins = (k) => { const b = m[k]; return b ? ALT_CLUE[k] + ": cut at " + b.edges.join(" / ") + " → ×" + b.lr.map((v) => (v >= 10 ? Math.round(v) : v.toFixed(2))).join(" / ") : ""; };
       $("altsRule").innerHTML =
@@ -1139,6 +1153,8 @@
         "Known alts = the Ahorn family (" + c.pos + " pairs); different people = pairs from a fixed random sample of active players (" + c.neg + " pairs). Cut points and multipliers below are learned from those, not set by hand; a multiplier is never bigger than the sample can back up (a clue no stranger showed counts as if 3 had), and each clue only pushes in its natural direction. " +
         "⏱️ is the strongest: real alts are almost never online at the same time, so the minutes two characters played together are compared with what two independent players with the same hours would have shared (overlaps under 5 min are logout lag); the value is log((together + 30) / (expected + 30)), 0 = like strangers, very negative = should have met for hours but never did. " +
         "🔁 counts one logging off and the other logging on within " + (a.handoffMin || 10) + " min, as standard deviations above chance (no hand-off when none was even expected is ignored). Clues overlap a little and the calibration family is one heavy player, so read this as “likely”, never as proof. " +
+        (Object.keys(a.secondPc || {}).length ? "Known exception (owner): " + Object.keys(a.secondPc).map(esc).join(", ") + " sometimes ran on a second PC at the same time as the main; those overlapping sessions are left out when learning the multipliers. " : "") +
+        (gr ? "👪 Families: two characters are linked when one logs on within " + (a.handoffMin || 10) + " min of the other logging off at least " + gr.link.minHand + " times, " + gr.link.minZ + "+ SD above chance, and they are online together no more than " + gr.link.overlapFloor + " min + " + Math.round(gr.link.overlapShare * 100) + " % of what chance predicts. Linked characters form a family; a character with very few sessions also joins when at least half its sessions start or end in a hand-off with the family. Friends hand off too, so any member who is online with the rest more than that is dropped (" + (gr.dropped || 0) + " dropped this run). The family % adds up time together and hand-offs over all member pairs and uses the same kind of learned multipliers (Ahorn sub-groups vs random groups of other players: " + Math.round((gr.calib.posHit || 0) * 100) + " % vs " + ((gr.calib.negHit || 0) * 100).toFixed(1) + " % reach 50 %). A few short overlaps barely move it; hours together where hours were expected push it down hard. " : "") +
         "Honu is asked only for the " + (a.worth || 0) + " most promising pairs that could reach 50 % (shared rare name part, or close stats in the same outfit), 1 call per character, cached 14 days." +
         '<div class="st-dim" style="margin-top:6px;">' + Object.keys(ALT_CLUE).map(bins).filter(Boolean).map(esc).join("<br>") + "</div>";
       const sets = a.tests || {};
@@ -1146,9 +1162,15 @@
         (a.honuRequests || a.honuCalls || 0) + " Honu requests last run" + (a.queueLeft ? " · " + a.queueLeft + " still queued" : "") + " · checked " + esc(ago(a.at)) + "</div>" +
         '<div class="st-dim">Check on known families: ' + Math.round((c.posHit || 0) * 100) + "% of Ahorn pairs with sessions score ≥ 50 %; " + ((c.negHit || 0) * 100).toFixed(2) + "% of different-people pairs do (" + (c.posSess || 0) + " / " + (c.negSess || 0) + " pairs with sessions).</div>";
       html += "<h3 class=\"st-h3\" style=\"margin-top:12px;\">Found (≥ 50 %)</h3>" + (found.length ? altTable(found) : '<div class="st-dim">None yet.</div>');
+      if (gr) {
+        html += "<h3 class=\"st-h3\" style=\"margin-top:12px;\">👪 Families (chains of hand-offs, 3+ characters)</h3>" + ((gr.found || []).length ? groupTable(gr.found) : '<div class="st-dim">None yet.</div>');
+        if (gr.calib) html += '<div class="st-dim">' + gr.links + " strong pair links · " + gr.calib.pos + " Ahorn sub-groups / " + gr.calib.neg + " random groups checked.</div>";
+      }
       for (const [k, rows] of Object.entries(sets)) {
         const hi = rows.filter((r) => r.p >= 50).length;
-        html += '<details class="st-sub-sec"><summary><h3>Test set: ' + esc(k) + ' <span class="st-count">' + hi + " / " + rows.length + "</span></h3></summary>" + altTable(rows) + "</details>";
+        const gt = gr && gr.tests && gr.tests[k];
+        const gHtml = gt ? '<div style="margin:6px 0;">' + groupTable([gt.whole], "Whole set as one family") + (gt.found || []).map((g) => '<div class="st-dim">Found by linking: ' + g.inSet + " of " + gt.whole.members.length + " (" + g.names.map(esc).join(", ") + ") at " + g.p + " %</div>").join("") + "</div>" : "";
+        html += '<details class="st-sub-sec"><summary><h3>Test set: ' + esc(k) + ' <span class="st-count">' + hi + " / " + rows.length + (gt ? " · family " + gt.whole.p + " %" : "") + "</span></h3></summary>" + gHtml + altTable(rows) + "</details>";
       }
       $("alts").innerHTML = html;
     }

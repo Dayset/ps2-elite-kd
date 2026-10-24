@@ -75,11 +75,17 @@ export function cosine(a, b) {
  * Expected values assume two independent players with these exact hour-of-week
  * habits: E[overlap] = Σ_h minA_h·minB_h / (60·weeks), same idea for hand-offs.
  */
-export function sessionClues(A, B) {
+export function sessionClues(A, B, { expand = false } = {}) {
   if (!A || !B || !A.length || !B.length) return null;
-  const lo = Math.max(A[0][0], B[0][0]);
-  const hi = Math.min(A[A.length - 1][0] + A[A.length - 1][1], B[B.length - 1][0] + B[B.length - 1][1]);
-  if (hi - lo < 7 * 1440) return { shared: false };
+  let lo = Math.max(A[0][0], B[0][0]);
+  let hi = Math.min(A[A.length - 1][0] + A[A.length - 1][1], B[B.length - 1][0] + B[B.length - 1][1]);
+  if (hi - lo < 7 * 1440) {
+    // pair view: under a week side by side says nothing. Group view (expand): look at the
+    // week around where they meet, so a character played on one day can still be linked by hand-offs.
+    if (!expand) return { shared: false };
+    const mid = (lo + hi) / 2;
+    lo = mid - 3.5 * 1440; hi = mid + 3.5 * 1440;
+  }
   const a = clipTo(A, lo, hi), b = clipTo(B, lo, hi);
   const weeks = (hi - lo) / WEEK_MIN;
   const days = (x) => new Set(x.map(([s]) => Math.floor(s / 1440)));
@@ -247,15 +253,15 @@ const q = (xs, p) => {
  * negatives' median and their 5 % / 1 % / 0.1 % tail, deduped; LR per bin = P(bin | alt) / P(bin | different),
  * bounded by the rule of three and made monotone in the clue's known direction.
  */
-export function calibrate(pos, neg) {
+export function calibrate(pos, neg, clueMap = CLUES, dirMap = DIRECTION) {
   const model = {};
-  for (const [k, f] of Object.entries(CLUES)) {
+  for (const [k, f] of Object.entries(clueMap)) {
     const P = pos.map(f).filter((v) => v != null && Number.isFinite(v));
     const N = neg.map(f).filter((v) => v != null && Number.isFinite(v));
     if (P.length < 5 || N.length < 5) continue;
     // + the strangers. 5 % / 1 % / 0.1 % tail on the "same person" side, so a clue far beyond what
     //   strangers ever show gets its own (stronger) bin instead of sharing one with the crowd
-    const d = DIRECTION[k] || 1;
+    const d = dirMap[k] || 1;
     const tail = d > 0 ? [q(N, 0.95), q(N, 0.99), q(N, 0.999)] : [q(N, 0.05), q(N, 0.01), q(N, 0.001)];
     let edges = [...new Set([q(P, 0.25), q(P, 0.5), q(P, 0.75), q(N, 0.5), ...tail].map((x) => +x.toFixed(4)))].sort((a, b) => a - b);
     if (k === "outfit") edges = [0.5];
@@ -275,7 +281,7 @@ export function calibrate(pos, neg) {
     });
     // Every clue has a known direction (more hand-offs → more likely the same person, more
     // time online together → less likely): pool neighbouring bins that break it (isotonic fit).
-    const lr = isotonic(raw.map(Math.log), cp.map((c, i) => c + cn[i] + 1e-9), DIRECTION[k] || 1)
+    const lr = isotonic(raw.map(Math.log), cp.map((c, i) => c + cn[i] + 1e-9), d)
       .map((l) => +Math.min(LR_CAP, Math.max(1 / LR_CAP, Math.exp(l))).toFixed(4));
     model[k] = { edges, lr, nPos: P.length, nNeg: N.length, cp, cn };
   }
@@ -285,11 +291,11 @@ export function calibrate(pos, neg) {
 export function binOf(edges, v) { let i = 0; while (i < edges.length && v >= edges[i]) i++; return i; }
 
 /** Posterior "same person likely" (0..1) + per-clue LRs. priorOdds from the caller. */
-export function scorePair(clues, model, priorOdds) {
+export function scorePair(clues, model, priorOdds, clueMap = CLUES) {
   let logOdds = Math.log(priorOdds);
   const why = {};
   for (const [k, m] of Object.entries(model)) {
-    const v = CLUES[k](clues);
+    const v = clueMap[k](clues);
     if (v == null || !Number.isFinite(v)) continue;
     const lr = m.lr[binOf(m.edges, v)];
     why[k] = { v: +(+v).toFixed(3), lr };
@@ -298,3 +304,46 @@ export function scorePair(clues, model, priorOdds) {
   const p = 1 / (1 + Math.exp(-logOdds));
   return { p, why };
 }
+
+/**
+ * Owner t601/t602: a known alt who sometimes ran a SECOND PC at the same time as the
+ * main one. For calibration only, drop that character's sessions that overlap the
+ * partner(s) (> slop), so a rare second-PC evening doesn't teach the model that
+ * "online together" is normal for one person.
+ */
+export function dropOverlapping(sess, others) {
+  const o = [...others].sort((x, y) => x[0] - y[0]);
+  return sess.filter(([s, d]) => !o.some(([t, e]) => Math.min(s + d, t + e) - Math.max(s, t) > OVERLAP_SLOP_MIN));
+}
+
+// ---------- 👪 groups (chains of hand-offs) ----------
+/** z of hand-offs above chance + "they don't share time" test, for linking. */
+export const handZ = (hand, expHand) => (hand - expHand) / Math.sqrt(expHand + 0.5);
+export const LINK = { minHand: 2, minZ: 3, overlapShare: 0.2, overlapFloor: 10, sparseShare: 0.5 };
+/**
+ * Two characters (or a character and a group) are linked: repeated hand-offs well above
+ * chance AND (almost) never online together (a few brief minutes are allowed).
+ * nSess (joining a group): a character with very few sessions can't reach 3 SD, so it also
+ * joins when at least half its sessions start or end in a hand-off with the family.
+ */
+export function linked({ hand, expHand, overlap, expOverlap }, nSess = 0) {
+  if (hand < LINK.minHand || overlap > LINK.overlapFloor + LINK.overlapShare * expOverlap) return false;
+  return handZ(hand, expHand) >= LINK.minZ || (nSess > 0 && hand >= LINK.sparseShare * nSess);
+}
+/** Sum pairwise session facts over all member pairs. pairFacts(a, b) → expanded sessionClues or null. */
+export function groupFacts(members, pairFacts) {
+  let overlap = 0, expOverlap = 0, hand = 0, expHand = 0, pairs = 0, overlapN = 0;
+  for (let i = 0; i < members.length; i++) for (let j = i + 1; j < members.length; j++) {
+    const c = pairFacts(members[i], members[j]);
+    if (!c || !c.shared) continue;
+    pairs++; overlap += c.overlap; overlapN += c.overlapN; expOverlap += c.expOverlap; hand += c.hand; expHand += c.expHand;
+  }
+  return { n: members.length, pairs, overlap, overlapN, expOverlap: +expOverlap.toFixed(1), hand, expHand: +expHand.toFixed(2) };
+}
+/** Group clues: same scales as the pair clues, on the sums over all member pairs. */
+export const GROUP_CLUES = {
+  // a few short second-PC minutes barely move this; hours together where hours were expected do
+  together: (g) => (g.expOverlap >= 30 ? Math.log((g.overlap + 30) / (g.expOverlap + 30)) : null),
+  handoff: (g) => (g.hand > 0 || g.expHand >= 1 ? handZ(g.hand, g.expHand) : null),
+};
+export const GROUP_DIRECTION = { together: -1, handoff: 1 };
