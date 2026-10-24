@@ -14,17 +14,30 @@ const save = () => { try { localStorage.setItem(KEY, JSON.stringify({ on: V.on, 
 export const voiceSupported = () => typeof window !== "undefined" && "speechSynthesis" in window && typeof SpeechSynthesisUtterance !== "undefined";
 export const voiceState = () => ({ on: V.on, fac: V.fac });
 
-/** Focus entry (Worker focus.js) -> spoken sentence. Base names and percentages only. */
-export function sayText(f, p) {
+const ORD = ["1st", "2nd", "3rd"];
+/** "32% 1st place": our win chance and rank among the three (header odds). */
+function standing(f, win) {
+  const pct = (g) => (win && win[g] ? +(win[g].pct ?? win[g]) : NaN);
+  if (!Number.isFinite(pct(f))) return "";
+  const rank = ["VS", "NC", "TR"].filter((g) => g !== f && pct(g) > pct(f)).length;
+  return ` ${Math.round(pct(f))}% ${ORD[rank]} place.`;
+}
+
+/**
+ * Focus entry (Worker focus.js) -> spoken order, battlefield short (owner 2026-10-24):
+ * no faction name (you follow your own), base, what it's worth, then our standing.
+ *   "Hold Heyoka or 5% lost. 32% 1st place."   "Hold your lanes. 32% 1st place."
+ */
+export function sayText(f, p, win = null) {
   if (!p) return null;
-  if (p.quiet || !p.focus) return `${f}. No decisive move. Hold your lanes.`;
-  const x = p.focus, stake = Math.round(Math.abs((x.then ?? 0) - (x.now ?? 0)));
-  const pct = stake >= 1 ? ` ${stake} percent at stake.` : "";
-  const n = (x.cuts || []).length, bases = (k) => `${k} ${k === 1 ? "base" : "bases"}`;
-  if (x.kind === "hold") return `${f}. Hold ${x.bases[0]} against ${x.target}.${n ? ` Losing it cuts off ${bases(n)} of ours.` : ""}${pct}`;
-  if (x.kind === "plan") return `${f}. Take ${x.bases[0]}, then ${x.bases[1]}.${n ? ` Cuts off ${n} enemy ${n === 1 ? "base" : "bases"}.` : ""}${pct}`;
-  if (x.kind === "spoil") return `${f}. Spoiler: take ${x.bases[0]} from ${x.target}.`;
-  return `${f}. Take ${x.bases[0]} from ${x.target}.${n ? ` Cuts off ${n} enemy ${n === 1 ? "base" : "bases"}.` : ""}${pct}`;
+  const st = standing(f, win);
+  if (p.quiet || !p.focus) return `Hold your lanes.${st}`;
+  const x = p.focus, d = Math.round(Math.abs((x.then ?? 0) - (x.now ?? 0)));
+  const n = (x.cuts || []).length, cut = n ? `, cuts ${n}` : "";
+  if (x.kind === "hold") return `Hold ${x.bases[0]} or ${d}% lost${cut}.${st}`;
+  if (x.kind === "plan") return `Take ${x.bases[0]}, then ${x.bases[1]}${cut}, plus ${d}%.${st}`;
+  if (x.kind === "spoil") return `Spoil ${x.target}: take ${x.bases[0]}${cut}.${st}`;
+  return `Take ${x.bases[0]}${cut}, plus ${d}%.${st}`;
 }
 
 /** Same order = same kind and bases (odds wobbling doesn't re-announce). */
@@ -51,21 +64,21 @@ export function voiceButton(f) {
 }
 
 /** Click on a faction's speaker (a click, so the browser allows speech): follow it, or stop. */
-export function voiceToggle(f, focus) {
+export function voiceToggle(f, focus, win = null) {
   if (V.on && V.fac === f) { V.on = false; if (voiceSupported()) window.speechSynthesis.cancel(); }
   else { V.on = true; V.fac = f; V.lastKey = null; }
   save();
-  if (V.on) voiceTick(focus, f, true);
+  if (V.on) voiceTick(focus, f, true, undefined, win);
 }
 
 /** Called after every render with the alert's focus map ({VS:{focus,...}}). */
-export function voiceTick(focus, fac = V.fac, force = false, nowS = Date.now() / 1000) {
+export function voiceTick(focus, fac = V.fac, force = false, nowS = Date.now() / 1000, win = null) {
   if (!V.on || !fac || !focus) return null;
   const p = focus[fac];
   const k = orderKey(fac, p);
   if (!k) return null;
   if (!force && k === V.lastKey && nowS - V.lastTs < REMIND_S) return null;
-  const text = sayText(fac, p);
+  const text = sayText(fac, p, win);
   V.lastKey = k; V.lastTs = nowS;
   speak(text);
   return text;
