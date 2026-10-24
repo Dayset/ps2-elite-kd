@@ -2915,8 +2915,12 @@ html[data-theme="light"] .dist-pill:hover { opacity: 1; }
 .stats-carousel .stats-table[data-stats-table="adjusted"] td:not(.stats-name) { text-indent: 1.3em; }
 /* text-indent is inherited: the 🔀 Diff digits live in an inline-block
  * (.sgn-num, PC) inside the indented cell, so without this they would be
- * indented a second time and sit a full 1.3em right of every other number. */
-.stats-carousel .stats-table .sgn-num { text-indent: 0; }
+ * indented a second time and sit a full 1.3em right of every other number.
+ * Same for the grey .pct tag: absolute positioning blockifies it, so it
+ * inherits the cell's indent and its text lands ~1.3em right of its box —
+ * detached from the number, and poking past the last column's edge. */
+.stats-carousel .stats-table .sgn-num,
+.stats-carousel .stats-table td .pct { text-indent: 0; }
 @media (min-width: 601px) {
   .stats-carousel .stats-table th:not(.stats-name) { padding-left: 1.15em; }
   .stats-carousel .stats-table th:not(.stats-name):last-child { padding-left: 1.9em; }
