@@ -30,13 +30,14 @@ import { hiddenList } from "./hidden.mjs?v=20261010-sav1";
 // PC | PlayStation rooms (#55): each room ranks its own players only (data/ or data-ps/).
 import { pageRoom, dataPrefix, roomLsKey, psServer } from "./rooms.mjs?v=20261022-ps1";
 import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261023-short1";
+import { infMedian } from "./tractor.mjs?v=20261024-trac1";
 import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261022-wpc1";
 import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261022-nbd1";
 import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, DIFF_THIRD, aimGapCellTip, zergCellTip } from "./trait-tips.mjs?v=20261023-nbh1";
 import { ZREV_NOTE } from "./zerg-revive.mjs?v=20261023-short1";
 import { VDIFF_NOTE } from "./diff-vehicle.mjs?v=20261023-short1";
 import { NBD_NOTE } from "./newbie-diff.mjs?v=20261023-nbh1";
-import { autoMarksHtml } from "./auto-marks.mjs?v=20261023-grave1";
+import { autoMarksHtml } from "./auto-marks.mjs?v=20261024-trac1";
 
 /**
  * @param {{ getNames: () => string[], toggleName: (name: string, anchor: Element, add: boolean) => void, maxNames?: number }} host
@@ -154,6 +155,7 @@ export function initRankings(host) {
   const pctOf = percentileOf;
 
   let data = null; // { cols, idx, rows:[{name,query,slug,savedAt, metrics…, rank, pcts}] }
+  const infMed = () => (data ? data.infMed : null); // owner t590u: median infantry % (🚜 below it)
   let showDebug = readDebug();
   let hideZeroIvi = readHideZeroIvi();
   let removeRanks = readRemoveRanks();
@@ -329,7 +331,7 @@ export function initRankings(host) {
     // t360u: new row objects carry no .rank yet → force assignRanks() to run again
     // (it skipped on an unchanged sort and left "undefined" ranks / a broken order).
     rankedFor = "";
-    data = { updatedAt: payload.updatedAt, count: (+payload.count || payload.rows.length - localOnly.size) + localOnly.size, rows, pools };
+    data = { updatedAt: payload.updatedAt, count: (+payload.count || payload.rows.length - localOnly.size) + localOnly.size, rows, pools, infMed: infMedian(pools.inf) };
     histCache.clear();
     syncAgeCeiling();
   }
@@ -503,7 +505,7 @@ export function initRankings(host) {
   /** Row HTML for one player (plain strings: cheap for ~1000 rows). */
   /** 💩 after a confirmed padder's name (hover explains the −10% iVi penalty). */
   function poopHtml(r) {
-    return (r && r.poop ? `<span class="poop-mark" title="${esc(POOP_TIP)}" aria-label="${esc(POOP_TIP)}">${POOP_MARK}</span>` : "") + hutHtml(r) + autoMarksHtml(r._gap, r._zerg, r.last ? { created: r.created, last: r.last } : null, Date.now(), r.nbh);
+    return (r && r.poop ? `<span class="poop-mark" title="${esc(POOP_TIP)}" aria-label="${esc(POOP_TIP)}">${POOP_MARK}</span>` : "") + hutHtml(r) + autoMarksHtml(r._gap, r._zerg, r.last ? { created: r.created, last: r.last } : null, Date.now(), r.nbh, fin(r.inf) ? { inf: r.inf, med: infMed() } : null);
   }
   /** 🛖 next to the name (owner t504u: auto changes are marked by the name, never inside numeric cells). */
   function hutHtml(r) {

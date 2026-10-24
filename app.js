@@ -49,6 +49,7 @@ import { NBD_NOTE, newbieFactor, newPlayerHours } from "./newbie-diff.mjs?v=2026
 import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261023-short1";
 import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261022-wpc1";
 import { infantryKillsUrl, summarizeInfantryKills } from "./infantry.mjs?v=20261023-short1";
+import { infMedian } from "./tractor.mjs?v=20261024-trac1";
 import { mountWeapons } from "./weapons.mjs?v=20261022-wp4";
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261021-theory1";
 import { createWheelSwiper } from "./dist-cycle.mjs?v=20261017-cycle15";
@@ -111,7 +112,7 @@ function thinCellTip(r) {
 import { markNote, statMark, confirmedPadderSlugs, isPenalizedPadder, POOP_MARK, POOP_TIP, setRoomRule } from "./padding.mjs?v=20261023-short1";
 import { removedList } from "./opt-out.mjs?v=20261023-proof1";
 import { HUT_MARK, HUT_TIP, HUT_DIFF_NOTE, playMinutes } from "./hut.mjs?v=20261023-short1";
-import { autoMarksHtml } from "./auto-marks.mjs?v=20261023-grave1";
+import { autoMarksHtml } from "./auto-marks.mjs?v=20261024-trac1";
 // Account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times: chart name list only.
 import { accountTimes, flairsHtml, flairsFor } from "./flairs.mjs?v=20261010-sav1";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
@@ -1830,7 +1831,7 @@ import {
   }
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261023-twin1")
+    rankingsLoading = import("./rankings.mjs?v=20261024-trac1")
       .then((m) => {
         rankingsApi = m.initRankings(rankingsHost);
         return rankingsApi.ready;
@@ -3727,6 +3728,7 @@ import {
   // 🪖 Infantry (% of lifetime kills with infantry weapons): value + MAX / vehicle % by slug, pool for the percentile.
   let infBySlug = null;
   let infPool = null;
+  let infMed = null; // median infantry % (owner t590u 🚜 switch point)
   // 🛖 safe-spot damping factor on positive 🔀 Diff by slug (hut.mjs, ranks-lite "hut"); reviewed.json "hut": "cleared" is applied at build time.
   let hutBySlug = null; // slug → { f: factor, mk: 🛖 shown (drop ≥ HUT_MARK_MIN points) }
   const hutOf = (display) => {
@@ -3786,6 +3788,7 @@ import {
           infBySlug = new Map();
           for (const row of payload.rows) if (isFiniteNum(row[ii])) infBySlug.set(row[si], { inf: row[ii], max: mi >= 0 ? row[mi] : null, veh: vi >= 0 ? row[vi] : null });
           infPool = [...infBySlug.values()].map((e) => e.inf).sort((a, b) => a - b);
+          infMed = infMedian(infPool); // owner t590u: 🚜 below this (median infantry %, from the data)
         }
         const hi = payload.cols.indexOf("hut");
         if (hi >= 0 && si >= 0) {
@@ -4305,7 +4308,8 @@ import {
     const d = row.p.display;
     const g = aimGap(traitP, shownValue(row, "adjs"), row.ivi, hutOf(d), vdfOf(d), nbdOf(d, row.p));
     const z = zergScore(traitP, shownValue(row, "inflation"), apkBySlug && apkBySlug.get(slugKey(d)), rvpOf(d));
-    return autoMarksHtml(g, z, row.p.times || null, Date.now(), nbhOf(d, row.p));
+    const ie = infBySlug && infBySlug.get(slugKey(d)); // owner t592u: 🚜 by the name below the median infantry %
+    return autoMarksHtml(g, z, row.p.times || null, Date.now(), nbhOf(d, row.p), ie ? { inf: ie.inf, med: infMed } : null);
   }
   /** 🛖 safe-spot player (hut.mjs HUT_TIP): positive 🔀 Diff damped; next to the name, never in the Diff cell (owner t504u). */
   function hutHtml() {

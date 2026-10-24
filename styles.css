@@ -2843,12 +2843,12 @@ html[data-theme="light"] .dist-pill:hover { opacity: 1; }
 .live-table {
   /* Owner t575u overlay (replaces the t557u–t572u two-player rows that flipped A/B; t550u: no ❯ / K/D / titles,
      themed background): one player per line, fixed grid of 8 lines — the latest killer above, the tracked player
-     on the centre line, the last 6 victims below. Every line = [⏱️][name][iVi][🏃🦁🛡️🪖☠️🤝🔀⚡🪳] (t580u: 🪳 last; t588u order), one shared order,
+     on the centre line, the last 6 victims below. Every line = [⏱️][name][iVi][🏃🦁🛡️🪖☠️🪳] (t580u: 🪳 last; t590u order, 🚜 for 🪖 below the median), one shared order,
      so the emojis line up down the whole overlay.
      --lv-u = one emoji unit, --lv-ez = line height, --lv-fe = emoji (t564u "300%" size), --lv-fa = iVi number,
      --lv-fm = name, --lv-nm = name column, --lv-tm = time column. */
   --lv-fe: 1.5rem; --lv-u: 2.1rem; --lv-ez: 2.8rem; --lv-fa: 1.87rem; --lv-fm: 1.3rem; --lv-nm: 10rem; --lv-tm: 3.2rem;
-  --lv-n: 9; /* emoji units per line (live.mjs sets it from LIVE_COLS; owner t581u/t588u: 🏃🦁🛡️🪖☠️🤝🔀⚡🪳) */
+  --lv-n: 6; /* emoji units per line (live.mjs sets it from LIVE_COLS; owner t590u: 🏃🦁🛡️🪖☠️🪳) */
   --lv-iw: calc(var(--lv-fa) * 2.4 + 0.5rem); /* t564u: 4 tabular digits of room */
   border-collapse: collapse; table-layout: fixed; max-width: none;
   width: calc(var(--lv-tm) + var(--lv-nm) + var(--lv-iw) + var(--lv-n) * var(--lv-u));

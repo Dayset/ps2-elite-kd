@@ -7,7 +7,7 @@ await i18nReady;
  *     centred on the tracked player — ONE line above for the latest player who killed them (each new killer
  *     replaces it), the tracked player on the centre line, and the last 6 players they killed below
  *     (newest on top; t587u: every kill is its own line, the same victim twice = two lines);
- *   - every line shows everything at once, in one shared column order: [⏱️][name][iVi][🏃][🦁][🛡️][🪖][☠️][🤝][🔀][⚡][🪳] (t580u: 🪳 last; t588u order),
+ *   - every line shows everything at once, in one shared column order: [⏱️][name][iVi][🏃][🦁][🛡️][🪖|🚜][☠️][🪳] (t580u: 🪳 last; t590u: 🤝🔀⚡ removed, 🚜 below the median infantry %),
  *     the emojis as fill meters (t564u, t573u) with glow tiers (t568u) — no flip, no skill graph;
  *   - a missing stat is an empty (hollow, t589u) emoji, never "—" (t567u); uncached opponents show all-empty emojis
  *     (Census K/D · KPM only in the name's hover title), then get a full 200-opponent Census
@@ -18,7 +18,8 @@ import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { normalizePlayer, playerMetrics, shownValue } from "./player-metrics.mjs?v=20261022-wpc1";
 import { isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261023-short1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
-import { traitPools, zergScore, aimGap } from "./trait-scores.mjs?v=20261022-nbd1";
+import { traitPools, zergScore } from "./trait-scores.mjs?v=20261022-nbd1";
+import { infMedian, infDial } from "./tractor.mjs?v=20261024-trac1";
 import { infantryShares } from "./infantry.mjs?v=20261023-short1";
 
 export const FEED_MAX = 6; // victim lines below the centre (owner t575u: "back to 6 lines"; t563u had 3)
@@ -87,15 +88,11 @@ export const LIVE_COLS = Object.freeze([
   { id: "act", label: "🏃 Activity", tip: "Activity", digits: 2, mode: "stack" },
   { id: "pvs", label: "🦁 Brave", tip: "Brave", digits: 2, mode: "stack" },
   { id: "rf", label: "🛡️ Resist", tip: "Resist", digits: 2, mode: "stack" },
-  { id: "inf", label: "🪖 Infantry", tip: "Infantry", digits: 1, unit: "%", mode: "stack", fill: "value" }, // t564u: fill = infantry % itself
-  // Owner t581u: after 🪖 — t588u order ☠️ K/D · 🤝 Assists · 🔀 Diff · ⚡ Const, the main table's emojis; fill = their percentile
-  // (same p50 → p91 mapping and glow tiers). 🔀 Diff (−99…+99, computed like the Rankings: trait-scores.mjs aimGap)
-  // is filled by its percentile among players and never shown as a number on the overlay (hover only, t584u).
-  // 🤝 Assists: ranks.json already has no value for the assist-bug cases (session-stats.mjs ASSIST_GAP) → empty emoji.
+  // Owner t590u: 🪖 / 🚜 dial around the data's median infantry % (tractor.mjs infDial; infUnit below) — the hover keeps the real %.
+  { id: "inf", label: "🪖 Infantry", tip: "Infantry", digits: 1, unit: "%", mode: "stack", fill: "value" }, // t564u: fill = infantry % itself (fallback when no median)
+  // Owner t581u: ☠️ K/D after 🪖, fill = its percentile (same p50 → p91 mapping and glow tiers).
+  // Owner t590u: 🤝 Assists, 🔀 Diff and ⚡ Const removed from LIVE (t581u–t588u had them here).
   { id: "rkd", label: "☠️ K/D", tip: "K/D", digits: 2, mode: "stack" }, // owner t581u: K/D back on purpose (the main table's ☠️ K/D vs usual foes)
-  { id: "apk", label: "🤝 Assists", tip: "Assists", digits: 2, mode: "stack" },
-  { id: "diff", label: "🔀 Diff", tip: "Diff", digits: 0, mode: "stack" },
-  { id: "cons", label: "⚡ Const", tip: "Consistency", digits: 2, mode: "stack" },
   { id: "zerg", label: "🪳 Zerg", tip: "Zerg", digits: 0, mode: "stack", unknown: "full" }, // t555u: bigger Zerg = bigger 🪳 (not reversed); t569u: unknown = full roach — t580u/t581u: last column
 ]);
 /** Owner t584u hover text for one emoji / the iVi number: short label + the real value ("K/D 2.40", "Zerg 41", "Infantry 95.4%"), or "unknown". */
@@ -145,6 +142,15 @@ export function unknownFill(col) { return col && col.unknown === "full" ? 100 : 
 /** Owner t577u: a raw 🪳 Zerg score above ZERG_GOLD_OVER always gets the top (gold ✦) glow, whatever its percentile tier;
  *  an unknown 🪳 (drawn full, t569u) gets that full top glow too. Every other column keeps its percentile tier. */
 export const ZERG_GOLD_OVER = 35;
+/** Owner t590u: 🪖 / 🚜 unit for one infantry % and the data's median M (tractor.mjs infDial): emoji, fill 0..100 and a glow
+ *  tier that follows the fill — the fill is mapped back onto the driver scale the other emojis use (fill 0 = EMPTY_AT,
+ *  100 = FULL_AT), so the same thresholds apply: a full 🪖 (100% infantry) or a full 🚜 (≤ M/2) = TOP gold.
+ *  null = no value or no median (the caller falls back to the plain 🪖). */
+export function infUnit(v, M) {
+  const d = infDial(v, M);
+  if (!d) return null;
+  return { emoji: d.emoji, tractor: d.tractor, fill: d.fill, glow: glowTier(EMPTY_AT + (d.fill / 100) * (FULL_AT - EMPTY_AT)) };
+}
 /** Owner t579u: emoji outline thickness in CSS px (all sides). */
 export const OUTLINE_PX = 2.25; // t581u: bolder (was 1.75)
 export function unitGlow(col, v, driver) {
@@ -208,7 +214,7 @@ export function liveRowFromPlayer(player, name) {
     // 🪳 Zerg and 🤝 Assists need Honu (not in a Census fetch); 🔀 Diff needs the build's 🛖/🚜/🐣 factors → unknown
     // (empty emoji) until the player is in the cache. 🪖 Infantry = the same share build-ranks.mjs stores.
     const sh = c.id === "inf" ? infantryShares(player && player.infantry) : null;
-    const v = c.id === "zerg" || c.id === "apk" || c.id === "diff" ? null : c.id === "inf" ? (sh ? sh.inf : null) : shownValue(m, c.id);
+    const v = c.id === "zerg" ? null : c.id === "inf" ? (sh ? sh.inf : null) : shownValue(m, c.id);
     o[c.id] = typeof v === "number" && Number.isFinite(v) ? v : null;
   }
   // 🚜 cut on ⚔️ iVi (same fields as ranks.json vcut / infVeh / infMax).
@@ -274,7 +280,7 @@ function start() {
     listEl.insertAdjacentHTML("beforebegin", `<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><filter id="lvOutline" x="-25%" y="-25%" width="150%" height="150%" color-interpolation-filters="sRGB"><feMorphology in="SourceAlpha" operator="dilate" radius="${OUTLINE_PX}" result="grown"/><feGaussianBlur in="grown" stdDeviation="0.7" result="soft"/><feComponentTransfer in="soft" result="even"><feFuncA type="linear" slope="4" intercept="-1"/></feComponentTransfer><feFlood flood-color="#000" flood-opacity="1"/><feComposite in2="even" operator="in" result="ring"/><feComposite in="ring" in2="SourceAlpha" operator="out"/></filter>${HOLLOW_FILTER}</svg>`);
   }
   if (listEl) {
-    listEl.style.setProperty("--lv-n", String(LIVE_COLS.length - 1)); // emoji units per line (owner t581u: 9)
+    listEl.style.setProperty("--lv-n", String(LIVE_COLS.length - 1)); // emoji units per line (owner t590u: 6)
     // Owner t584u: hover any emoji (or the iVi number) → its real value ("K/D 2.40", "Zerg 41", "Diff unknown").
     // One floating box, fixed position, no pointer events — the overlay layout never changes.
     const tipEl = document.createElement("div");
@@ -300,6 +306,7 @@ function start() {
   let me = null; // { cid, name, faction }
   let ranks = null; // slug -> { adjs, kd }
   const pools = {}; // col id -> sorted finite values (percentiles, same as the Rankings table)
+  let infM = null; // median infantry % over ranks.json (owner t590u 🚜 switch point)
 
   const app = () => window.__ps2EliteKd || null;
 
@@ -328,16 +335,12 @@ function start() {
       const zergOf = (r) => { const z = zergScore(tp, iF >= 0 ? r[iF] : null, iA >= 0 ? r[iA] : null, iR >= 0 ? r[iR] : null); return z ? z.score : null; };
       const fin = (v) => typeof v === "number" && Number.isFinite(v);
       const zergCol = j.rows.map(zergOf);
-      // 🔀 Diff (owner t581u): same score as the Rankings table (rankings.mjs: aimGap with the ranks.json 🛖 hut / 🚜 vdf / 🐣 nbd factors,
-      // reviewed.json clearances already applied at build time).
-      const iAd = ci("adjs"), iIv = ci("ivi"), iH = ci("hut"), iV = ci("vdf"), iNb = ci("nbd");
-      const at = (r, i) => (i >= 0 ? r[i] : null);
-      const diffCol = j.rows.map((r) => { const g = aimGap(tp, at(r, iAd), at(r, iIv), at(r, iH), at(r, iV), at(r, iNb)); return g ? g.score : null; });
-      j.rows.forEach((r, k) => { const o = ranks.get(r[iS]); if (o) { o.zerg = zergCol[k]; o.diff = diffCol[k]; } });
+      j.rows.forEach((r, k) => { const o = ranks.get(r[iS]); if (o) o.zerg = zergCol[k]; });
       for (const c of LIVE_COLS) {
-        const vals = c.id === "zerg" ? zergCol : c.id === "diff" ? diffCol : colOf(c.id);
+        const vals = c.id === "zerg" ? zergCol : colOf(c.id);
         pools[c.id] = vals.filter(fin).sort((a, b) => a - b);
       }
+      infM = infMedian(pools.inf); // owner t590u: 🪖 / 🚜 switch point, from the data (85.1 on 2026-10-24)
     } catch { ranks = new Map(); }
   }
   async function person(cid) {
@@ -407,6 +410,8 @@ function start() {
       const ug = unitGlow(c, null);
       return `<span class="lv-u lv-fl lv-nil${ug ? ` lv-g${ug}` : ""}" style="--f:${u}" data-tip="${esc(tipText(c, null))}">${meter(shortLab(c), u)}</span>`;
     }
+    const iu = c.id === "inf" ? infUnit(v, infM) : null; // owner t590u: 🪖 above / 🚜 below the median, own fill + glow
+    if (iu) return `<span class="lv-u lv-fl${iu.glow ? ` lv-g${iu.glow}` : ""}${iu.tractor ? " lv-trac" : ""}" style="--f:${iu.fill}" data-tip="${esc(tipText(c, v))}">${meter(iu.emoji, iu.fill)}</span>`;
     const g = unitGlow(c, v, driverOf(c, v)); // t568u tiers from the fill's own driver; t577u: 🪳 > 35 = gold
     const top = g ? ` lv-g${g}` : "";
     return `<span class="lv-u lv-fl${top}" style="--f:${f}" data-tip="${esc(tipText(c, v))}">${meter(shortLab(c), f)}</span>`;
@@ -422,7 +427,7 @@ function start() {
   }
   /**
    * Owner t575u: one line = one player, everything at once (no flip), ONE shared column order for every line:
-   *   [⏱️ time][name][iVi][🏃][🦁][🛡️][🪖][☠️][🤝][🔀][⚡][🪳] (t580u: 🪳 last; t588u order) — so the emojis line up down the whole overlay.
+   *   [⏱️ time][name][iVi][🏃][🦁][🛡️][🪖|🚜][☠️][🪳] (t580u: 🪳 last; t590u order) — so the emojis line up down the whole overlay.
    * Owner t567u: not cached = all-empty emojis; the Census numbers stay in the name's hover.
    */
   function cells(p, isMe) {

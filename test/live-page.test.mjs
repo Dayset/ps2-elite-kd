@@ -2,7 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { buildLive } from "../scripts/build-live.mjs";
-import { classifyDeath, feedPush, censusStats, cellText, fmtGap, LIVE_COLS, tipText, ME_REFRESH_MS, mergeFresh, FEED_MAX, emojiFill, fillDriver, glowTier, unknownFill, FULL_AT, EMPTY_AT, goodPct, FILL_DIM, HOLLOW_PX, overlayPush, overlayRows, VICTIM_LINES, eventAt, EVENT_SKEW_MS, unitGlow, ZERG_GOLD_OVER, OUTLINE_PX } from "../live.mjs";
+import { infMedian, infDial, isTractor, tractorHint } from "../tractor.mjs";
+import { autoMarksHtml, tractorMark } from "../auto-marks.mjs";
+import { infUnit, classifyDeath, feedPush, censusStats, cellText, fmtGap, LIVE_COLS, tipText, ME_REFRESH_MS, mergeFresh, FEED_MAX, emojiFill, fillDriver, glowTier, unknownFill, FULL_AT, EMPTY_AT, goodPct, FILL_DIM, HOLLOW_PX, overlayPush, overlayRows, VICTIM_LINES, eventAt, EVENT_SKEW_MS, unitGlow, ZERG_GOLD_OVER, OUTLINE_PX } from "../live.mjs";
 
 const root = new URL("../", import.meta.url);
 
@@ -95,23 +97,21 @@ test("emoji fill meter (owner t564u): one size, p50 and below empty / p70.5 half
   assert.doesNotMatch(js, /emojiScale|class="lv-v"/); // no size scaling, no number under the emoji
 });
 
-test("LIVE columns (owner t550u/t581u/t588u): iVi · 🏃 · 🦁 · 🛡️ · 🪖 · ☠️ K/D · 🤝 Assists · 🔀 Diff · ⚡ Const · 🪳 last", () => {
-  assert.deepEqual(LIVE_COLS.map((c) => c.id), ["adjs", "act", "pvs", "rf", "inf", "rkd", "apk", "diff", "cons", "zerg"]);
-  assert.deepEqual(LIVE_COLS.map((c) => c.label.split(" ")[0]), ["⚔️", "🏃", "🦁", "🛡️", "🪖", "☠️", "🤝", "🔀", "⚡", "🪳"]);
+test("LIVE columns (owner t550u/t581u/t590u): iVi · 🏃 · 🦁 · 🛡️ · 🪖/🚜 · ☠️ K/D · 🪳 last — no 🤝 🔀 ⚡", () => {
+  assert.deepEqual(LIVE_COLS.map((c) => c.id), ["adjs", "act", "pvs", "rf", "inf", "rkd", "zerg"]);
+  assert.deepEqual(LIVE_COLS.map((c) => c.label.split(" ")[0]), ["⚔️", "🏃", "🦁", "🛡️", "🪖", "☠️", "🪳"]);
   // ⚔️ iVi = the number next to the name, the rest = emoji fill meters
-  assert.deepEqual(LIVE_COLS.map((c) => c.mode), ["ivi", ...Array(9).fill("stack")]);
-  // Diff / Assists / K/D: percentile fill (same p50 → p91 mapping as the others), not the value itself
-  for (const id of ["diff", "apk", "cons", "rkd"]) {
+  assert.deepEqual(LIVE_COLS.map((c) => c.mode), ["ivi", ...Array(6).fill("stack")]);
+  // K/D: percentile fill (same p50 → p91 mapping as the others), not the value itself
+  for (const id of ["rkd"]) {
     const c = LIVE_COLS.find((x) => x.id === id);
     assert.equal(c.fill, undefined, id);
     assert.equal(fillDriver(c, 5, 73), goodPct(c, 73), id); // driver = the player's percentile
   }
   const js = readFileSync(new URL("live.mjs", root), "utf8");
-  // 🔀 Diff = the Rankings score (aimGap with the 🛖/🚜/🐣 factors) and its own percentile pool
-  assert.match(js, /aimGap\(tp, at\(r, iAd\), at\(r, iIv\), at\(r, iH\), at\(r, iV\), at\(r, iNb\)\)/);
-  assert.match(js, /c\.id === "diff" \? diffCol/);
-  // not cached → Zerg / Assists / Diff unknown (empty emoji, Zerg full roach)
-  assert.match(js, /c\.id === "zerg" \|\| c\.id === "apk" \|\| c\.id === "diff" \? null/);
+  // t590u: 🔀 Diff no longer computed on LIVE; not cached → Zerg unknown (full roach)
+  assert.doesNotMatch(js, /aimGap|diffCol/);
+  assert.match(js, /const v = c\.id === "zerg" \? null :/);
   assert.match(js, /listEl\.style\.setProperty\("--lv-n", String\(LIVE_COLS\.length - 1\)\)/);
 });
 
@@ -119,17 +119,14 @@ test("hover values (owner t584u): short label + the real value, 'unknown' when m
   const col = (id) => LIVE_COLS.find((c) => c.id === id);
   assert.equal(tipText(col("rkd"), 2.4), "K/D 2.40");
   assert.equal(tipText(col("zerg"), 41.2), "Zerg 41");
-  assert.equal(tipText(col("diff"), -12), "Diff -12");
   assert.equal(tipText(col("inf"), 95.43), "Infantry 95.4%");
-  assert.equal(tipText(col("apk"), 0.314), "Assists 0.31");
-  assert.equal(tipText(col("cons"), 1.5), "Consistency 1.50");
   assert.equal(tipText(col("adjs"), 1357.4), "iVi 1357");
   assert.equal(tipText(col("zerg"), null), "Zerg unknown");
-  assert.equal(tipText(col("diff"), NaN), "Diff unknown");
+  assert.equal(tipText(col("rkd"), NaN), "K/D unknown");
   for (const c of LIVE_COLS) assert.ok(c.tip && !/\p{Extended_Pictographic}/u.test(c.tip), c.id);
   const js = readFileSync(new URL("live.mjs", root), "utf8");
   const css = readFileSync(new URL("styles.css", root), "utf8");
-  assert.equal((js.match(/data-tip="\$\{esc\(tipText\(c, (v|null)\)\)\}"/g) || []).length, 4); // every emoji + the iVi number
+  assert.equal((js.match(/data-tip="\$\{esc\(tipText\(c, (v|null)\)\)\}"/g) || []).length, 5); // every emoji + the iVi number + (t590u) the 🪖/🚜 unit — real infantry % on hover
   assert.doesNotMatch(js, /class="lv-(u|iv)[^"]*"[^>]*title=/);
   assert.match(css, /\.lv-tip \{ position: fixed; z-index: 50; pointer-events: none;/); // floats above, never takes space
 });
@@ -190,7 +187,7 @@ test("overlay layout (owner t575u): no flip, ONE column order on every line, fix
   assert.match(css, /\.live-table td \{[^}]*height: var\(--lv-ez\);[^}]*overflow: hidden;/);
   assert.match(css, /\.lv-row \{ display: flex; height: var\(--lv-ez\); \}/);
   assert.match(css, /col\.lv-c-em \{ width: calc\(var\(--lv-n\) \* var\(--lv-u\)\); \}/);
-  assert.match(css, /--lv-n: 9;/); // t581u: 9 emoji units
+  assert.match(css, /--lv-n: 6;/); // t590u: 6 emoji units
   // the centre line is set apart (accent rules above and below, a tint)
   assert.match(css, /tbody\.lv-me > tr > td \{ background-color: color-mix\(in srgb, var\(--accent\) 13%, var\(--panel\)\); border-top: 2px solid var\(--accent\); border-bottom: 2px solid var\(--accent\); \}/);
   assert.match(css, /\.live-table \.lv-name \{[^}]*text-overflow: ellipsis;/);
@@ -339,6 +336,60 @@ test("emoji outline (owner t579u): a dark ring that hugs the whole silhouette, t
   assert.match(js, /<feMorphology in="SourceAlpha" operator="dilate" radius="\$\{OUTLINE_PX\}"/);
   assert.match(js, /<feComposite in="ring" in2="SourceAlpha" operator="out"\/>/); // ring only, the emoji itself stays untouched
   assert.match(css, /\.lv-eo \{ filter: url\(#lvOutline\); \}/);
+});
+
+test("🪖 / 🚜 infantry dial (owner t590u): median from the data, 🪖 fills M → 100, 🚜 fills M → M/2, glow follows the fill", () => {
+  const j = JSON.parse(readFileSync(new URL("data/ranks.json", root), "utf8"));
+  const ii = j.cols.indexOf("inf");
+  const M = infMedian(j.rows.map((r) => r[ii]).filter((x) => typeof x === "number" && Number.isFinite(x)).sort((a, b) => a - b));
+  assert.ok(M > 70 && M < 95, String(M)); // real data: 85.1 on 2026-10-24
+  assert.equal(infMedian([3, 1, 2].sort()), 2);
+  assert.equal(infMedian([1, 2, 3, 4]), 2.5);
+  assert.equal(infMedian([]), null);
+  const m = 85;
+  assert.deepEqual(infDial(100, m), { emoji: "🪖", tractor: false, fill: 100 });
+  assert.deepEqual(infDial(85, m), { emoji: "🪖", tractor: false, fill: 0 }); // at the median: 🪖, empty
+  assert.equal(infDial(92.5, m).fill, 50);
+  assert.deepEqual(infDial(84.9, m), { emoji: "🚜", tractor: true, fill: 0.2 }); // just under: least-filled tractor
+  assert.equal(infDial(63.75, m).fill, 50);
+  assert.deepEqual(infDial(42.5, m), { emoji: "🚜", tractor: true, fill: 100 }); // half the median: full
+  assert.equal(infDial(5, m).fill, 100); // clamped
+  assert.equal(infDial(null, m), null);
+  assert.equal(infDial(90, null), null);
+  // glow tiers follow the fill on the same thresholds (fill 0 = EMPTY_AT … 100 = FULL_AT)
+  assert.equal(infUnit(100, m).glow, 3);
+  assert.equal(infUnit(42.5, m).glow, 3); // full 🚜 = shiny
+  assert.equal(infUnit(84.9, m).glow, 0);
+  assert.equal(infUnit(85, m).glow, 0);
+  assert.equal(infUnit(63.75, m).glow, glowTier(EMPTY_AT + 0.5 * (FULL_AT - EMPTY_AT)));
+  assert.equal(infUnit(null, m), null);
+  const js = readFileSync(new URL("live.mjs", root), "utf8");
+  assert.match(js, /infM = infMedian\(pools\.inf\);/);
+  assert.match(js, /meter\(iu\.emoji, iu\.fill\)/);
+  // main site (t591u–t593u): a static 🚜 NAME mark next to 🪦 (auto-marks.mjs), Infantry cell unchanged, 2-line hint
+  assert.equal(isTractor(84.9, m), true);
+  assert.equal(isTractor(85, m), false);
+  assert.equal(tractorMark({ inf: 90, med: m }), null);
+  assert.equal(tractorMark(null), null);
+  assert.deepEqual(tractorMark({ inf: 60, med: m }), { id: "tractor", mark: "🚜", tip: tractorHint(m) });
+  assert.match(tractorHint(m), /^🚜 Tractor mark[^\n]+\n[^\n]+\(85\.0%\)\.(\n[^\n]+)?$/); // t597u: 2-3 lines, not the iVi cut / Diff damp 🚜
+  const now = Date.UTC(2026, 9, 24), s = now / 1000, day = 86400;
+  const h = autoMarksHtml(null, { score: 90, rvp: 99, confirmed: true }, { created: s - 3000 * day, last: s - 400 * day }, now, null, { inf: 50, med: m });
+  assert.match(h, /auto-mark-zerg.*🪳.*<span class="poop-mark auto-mark auto-mark-tractor" title="🚜 [^"]+" aria-label="🚜 [^"]+">🚜<\/span><span class="poop-mark auto-mark auto-mark-inactive"[^>]*>🪦/s); // order 🪳 🐣 🚜 🪦
+  assert.doesNotMatch(autoMarksHtml(null, null, null, now, null, { inf: 90, med: m }), /🚜/);
+  const app = readFileSync(new URL("app.js", root), "utf8");
+  const rk = readFileSync(new URL("rankings.mjs", root), "utf8");
+  assert.match(app, /nbhOf\(d, row\.p\), ie \? \{ inf: ie\.inf, med: infMed \} : null\)/);
+  assert.match(rk, /r\.nbh, fin\(r\.inf\) \? \{ inf: r\.inf, med: infMed\(\) \} : null\)/);
+  assert.doesNotMatch(app + rk, /inf-trac/); // nothing in the Infantry cell
+  for (const l of ["en", "ja", "ru", "de", "fr", "zh", "es", "uk", "it"]) {
+    const d = JSON.parse(readFileSync(new URL(`i18n/${l}.json`, root), "utf8"));
+    const lines = d["inf.tractor"].split("\n");
+    assert.ok(lines.length >= 2 && lines.length <= 3 && lines.every((x) => x.length <= 60), l);
+    assert.ok(d["inf.tractor"].startsWith("🚜") && d["inf.tractor"].includes("{m}"), l);
+    assert.ok(d["cp.infTractor"].includes("🚜"), l);
+  }
+  assert.match(readFileSync(new URL("columns.html", root), "utf8"), /data-i18n="cp\.infTractor"/);
 });
 
 test("hollow empty part (owner t589u): light inner ring inside the black outline, dark greyscale interior, filled part untouched", () => {
