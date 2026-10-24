@@ -2841,91 +2841,64 @@ html[data-theme="light"] .dist-pill:hover { opacity: 1; }
 .live-state .live-dot { color: #e53935; animation: liveBlink 1.2s ease-in-out infinite; }
 @keyframes liveBlink { 50% { opacity: 0.25; } }
 .live-table {
-  /* Owner t550u..t559u: no ❯ / K/D / titles, themed background, 20 s switch, rank-sized emojis.
-     t560u: each player is ONE fixed block [time][left block][right block] that switches every 20 s:
-     phase A = name + iVi number (no ⚔️), phase B = 🏃🦁🛡️🪳🪖 with a small number under each
-     (right player mirrored); the left block hugs the centre (right-aligned), the right block too
-     (left-aligned). t560u: numbers and emojis 2× the t558u sizes ("200% zoom").
-     --lv-u  = one phase-B unit: the largest 2.2× emoji (lv-fe × 2.2); 5 units = the minimum block.
-     --lv-ez = emoji zone height, --lv-fn / --lv-nh = small number font / line,
-     --lv-fa = phase-A iVi number, --lv-fm = phase-A name, --lv-b = block width. */
-  /* t564u: emojis 1.5× (the "200%" becomes "300%"), one size for all, no number under them (--lv-nh 0). */
-  --lv-fe: 1.62rem; --lv-fn: 0.92rem; --lv-u: 2.3rem; --lv-ez: 2.8rem; --lv-nh: 0rem; --lv-fa: 1.87rem; --lv-fm: 1.3rem;
-  --lv-b: 22rem; --lv-ini: calc(var(--lv-fm) * 1.5); /* t563u first letter; t567u: it moved inside the block (next to 🏃), the block grew by its width */
-  border-collapse: collapse; width: calc(7.5ch + 2 * var(--lv-b) + 2 * var(--lv-ini)); max-width: none; table-layout: fixed;
+  /* Owner t575u overlay (replaces the t557u–t572u two-player rows that flipped A/B; t550u: no ❯ / K/D / titles,
+     themed background): one player per line, fixed grid of 8 lines — the latest killer above, the tracked player
+     on the centre line, the last 6 victims below. Every line = [⏱️][name][iVi][🏃🦁🛡️🪳🪖], one shared order,
+     so the emojis line up down the whole overlay.
+     --lv-u = one emoji unit, --lv-ez = line height, --lv-fe = emoji (t564u "300%" size), --lv-fa = iVi number,
+     --lv-fm = name, --lv-nm = name column, --lv-tm = time column. */
+  --lv-fe: 1.62rem; --lv-u: 2.3rem; --lv-ez: 2.8rem; --lv-fa: 1.87rem; --lv-fm: 1.3rem; --lv-nm: 11rem; --lv-tm: 3.4rem;
+  --lv-iw: calc(var(--lv-fa) * 2.4 + 0.5rem); /* t564u: 4 tabular digits of room */
+  border-collapse: collapse; table-layout: fixed; max-width: none;
+  width: calc(var(--lv-tm) + var(--lv-nm) + var(--lv-iw) + 5 * var(--lv-u));
   font-size: 0.85rem; font-variant-numeric: tabular-nums;
   background: var(--panel); /* owner t550u: the feed had no background (theme variable: light + dark) */
 }
-/* Zebra like the other tables: each event is its own <tbody>, so stripe by tbody. */
-.live-table tbody.lv-ev:nth-of-type(even) > tr > td { background-color: var(--row-alt); }
-col.lv-c-time { width: 7.5ch; }
-col.lv-c-blk { width: calc(var(--lv-b) + var(--lv-ini)); }
-/* Owner t567u: the first letter sits right next to 🏃 on the outer side (phase B only — phase A shows the name). */
-.lv-li { flex: none; width: var(--lv-ini); text-align: center; font-size: var(--lv-fm); font-weight: 700; line-height: 1; overflow: hidden; }
-/* Skeleton row while waiting for the first kill/death. */
-.lv-wait td { color: var(--dim); }
-.live-table th { font-size: 0.64rem; font-weight: 400; color: var(--dim); padding: 0; text-align: center; cursor: default; }
-.live-table th, .live-table td { border: 1px solid var(--border); }
-.live-table td { padding: 0 0.3rem; line-height: 1.25; }
+col.lv-c-time { width: var(--lv-tm); }
+col.lv-c-nm { width: var(--lv-nm); }
+col.lv-c-iv { width: var(--lv-iw); }
+col.lv-c-em { width: calc(5 * var(--lv-u)); }
+/* Zebra on the victim lines only (each line is its own <tbody>). */
+.live-table tbody.lv-vic:nth-of-type(even) > tr > td { background-color: var(--row-alt); }
+.live-table td { border: 1px solid var(--border); padding: 0 0.3rem; line-height: 1.25; height: var(--lv-ez); white-space: nowrap; overflow: hidden; }
 .lv-ev { border-left: 3px solid transparent; }
 .lv-ev.lv-kill { border-left-color: #43a047; }
 .lv-ev.lv-death { border-left-color: #e53935; }
-.lv-ev + .lv-ev tr:first-child td { border-top: 1px solid rgba(255, 255, 255, 0.07); }
-/* Owner t562u "juice" (stream overlay): all short, transforms/shadows only, so the table never changes size.
-   New row: drops in with a small scale pop + a brief flash (green kill / red death).
-   Upset (winner's iVi percentile ≥ 50 points below the loser's, live.mjs UPSET_GAP): gold flash + a short shake of the winner. */
+/* The centre line (the tracked player): an accent tint and accent rules above and below, so it reads apart from killer and victims. */
+.live-table tbody.lv-me > tr > td { background-color: color-mix(in srgb, var(--accent) 13%, var(--panel)); border-top: 2px solid var(--accent); border-bottom: 2px solid var(--accent); }
+.lv-ev.lv-me { border-left-color: var(--accent); }
+/* Owner t562u "juice" (stream overlay): all short, transforms/shadows only, so the overlay never changes size.
+   New victim line: drops in with a small scale pop + a green flash; new killer line: swaps in with a red flash.
+   Upset (winner's iVi percentile ≥ 50 points below the loser's, live.mjs UPSET_GAP): gold flash + a short shake. */
 .lv-ev.lv-new > tr > td { animation: lvPop 0.42s cubic-bezier(0.34, 1.56, 0.64, 1), lvFlashK 0.8s ease-out; }
 .lv-ev.lv-new.lv-death > tr > td { animation-name: lvPop, lvFlashD; }
-.lv-ev.lv-new.lv-upset > tr > td { animation-name: lvPop, lvFlashU; animation-duration: 0.42s, 1.1s; }
-.lv-ev.lv-new.lv-upset > tr > td.lv-bL { animation: lvPop 0.42s cubic-bezier(0.34, 1.56, 0.64, 1), lvFlashU 1.1s ease-out, lvShake 0.4s ease-in-out 0.42s; }
-.lv-ev.lv-fade { animation: lvOut 0.6s ease-in forwards; }
+.lv-ev.lv-new.lv-upset > tr > td { animation: lvPop 0.42s cubic-bezier(0.34, 1.56, 0.64, 1), lvFlashU 1.1s ease-out, lvShake 0.4s ease-in-out 0.42s; }
 @keyframes lvPop { from { opacity: 0; transform: translateY(-0.6rem) scale(0.96); } 70% { opacity: 1; } to { opacity: 1; transform: none; } }
 @keyframes lvFlashK { from { box-shadow: inset 0 0 0 100rem rgba(67, 160, 71, 0.32); } to { box-shadow: inset 0 0 0 100rem rgba(67, 160, 71, 0); } }
 @keyframes lvFlashD { from { box-shadow: inset 0 0 0 100rem rgba(229, 57, 53, 0.28); } to { box-shadow: inset 0 0 0 100rem rgba(229, 57, 53, 0); } }
 @keyframes lvFlashU { from { box-shadow: inset 0 0 0 100rem rgba(255, 193, 7, 0.4); } to { box-shadow: inset 0 0 0 100rem rgba(255, 193, 7, 0); } }
 @keyframes lvShake { 20% { transform: translateX(-3px); } 40% { transform: translateX(3px); } 60% { transform: translateX(-2px); } 80% { transform: translateX(2px); } }
-@keyframes lvOut { to { opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .lv-ev.lv-new > tr > td, .lv-ev.lv-fade, .live-state .live-dot { animation: none !important; } }
-.lv-time { white-space: nowrap; font-size: 0.79rem; color: var(--dim); vertical-align: middle; text-align: right; min-width: 7.5ch; /* stopwatch ("9s"→"10s"→"59m 59s") reserves the widest reading so data columns never shift */ }
+@media (prefers-reduced-motion: reduce) { .lv-ev.lv-new > tr > td, .live-state .live-dot { animation: none !important; } }
+.lv-time { font-size: 0.72rem; color: var(--dim); vertical-align: middle; text-align: right; padding: 0 0.25rem !important; /* fixed column: "59m 59s" fits, nothing shifts */ }
 /* Owner t546u: no skill graph in Live (the main page keeps it). */
 .live-mode #chartSection { display: none !important; }
 /* Owner t550u: no 📊 distribution chart in Live either (the main page keeps it). */
 .live-mode #distSection,
 .live-mode #weaponsSection { display: none !important; } /* owner t550u: no 📊 chart and no 🏆 Auraxium weapons in LIVE */
-/* LIVE player block (owner t557u, t560u). One fixed box per player holding both phases on top of each
-   other; the table's lv-phB class (live.mjs, A 4 s / B 4 s (t571u, t572u), all rows together) crossfades them in 0.133 s, 0.25 s flip
-   (the t550u 3× faster fade). Emoji sizes are transforms, so nothing ever moves the layout. */
-.live-table .lv-blk { position: relative; height: calc(var(--lv-ez) + var(--lv-nh)); padding: 0 !important; overflow: hidden; white-space: nowrap; cursor: help; }
-.live-table th.lv-blk { height: 1.1rem; }
-/* t562u juice: the phase switch (t566u: A 10 s / B 5 s) is a quick flip with a little bounce (the outgoing side tips away and fades,
-   the incoming side flips in and settles), still all rows together. */
-.lv-blk > .lv-pa, .lv-blk > .lv-pb { position: absolute; inset: 0; display: flex; align-items: center; transition: opacity 0.133s linear, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); }
-.lv-blk > .lv-pb, .lv-phB .lv-blk > .lv-pa { opacity: 0; pointer-events: none; transform: perspective(30rem) rotateX(-85deg); }
-.lv-phB .lv-blk > .lv-pb { opacity: 1; pointer-events: auto; transform: none; }
-@media (prefers-reduced-motion: reduce) { .lv-blk > .lv-pa, .lv-blk > .lv-pb { transition: none; transform: none !important; } }
-/* Left block → right-aligned (toward the centre); right block → left-aligned. */
-.lv-bL > .lv-pa, .lv-bL > .lv-pb { justify-content: flex-end; }
-.lv-bR > .lv-pa, .lv-bR > .lv-pb { justify-content: flex-start; }
-.lv-bL > .lv-pa { padding: 0 0.35rem 0 0.25rem; }
-.lv-bR > .lv-pa { padding: 0 0.25rem 0 0.35rem; }
-/* Phase A: name + iVi number, normal spacing, no separator; a long name loses its outer end (…). */
-.lv-pa { gap: 0.35em; }
-.lv-pn { display: inline-flex; align-items: center; min-width: 0; flex: 0 1 auto; font-size: var(--lv-fm); line-height: 1.1; }
+/* Name (faction colour, cut with … at the end), iVi number, then the five emoji units — every line the same. */
+.lv-nm { cursor: help; }
+.lv-pn { display: flex; align-items: center; min-width: 0; font-size: var(--lv-fm); line-height: 1.1; }
 .live-table .lv-name { display: inline-block; min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.live-table .lv-bL .lv-name { direction: rtl; } /* the cut + … land on the left (outer) side */
 .live-table .lv-pn .poop-mark { flex: none; }
-.lv-iv { flex: none; line-height: 1; font-size: var(--lv-fa); }
-/* Owner t564u: the iVi number always takes 4 digits of room (tabular digits), hugging the centre, so 209 and 1883 never shift the name. */
-.lv-pa > .lv-iv { width: 4ch; font-variant-numeric: tabular-nums; }
-.lv-bL > .lv-pa > .lv-iv { text-align: right; }
-.lv-bR > .lv-pa > .lv-iv { text-align: left; }
-/* Owner t567u: no iVi = an empty 25% ⚔️ in the same 4-digit box, on the centre side. */
-.lv-iv.lv-nil { display: inline-flex; align-items: center; justify-content: flex-end; }
-.lv-bR > .lv-pa > .lv-iv.lv-nil { justify-content: flex-start; }
-th .lv-hiv { font-size: 0.64rem; }
-/* Phase B: five equal units, one-size emoji fill meters (owner t564u). */
-.lv-u { position: relative; flex: none; width: var(--lv-u); height: 100%; text-align: center; font-size: var(--lv-fn); }
-th .lv-u { font-size: 0.7rem; line-height: 1.1rem; }
+.lv-ivc { text-align: right; padding: 0 0.3rem 0 0 !important; }
+.lv-iv { line-height: 1; font-size: var(--lv-fa); font-variant-numeric: tabular-nums; }
+.lv-ivc > .lv-iv { display: inline-block; width: 4ch; font-variant-numeric: tabular-nums; text-align: right; }
+/* Owner t567u: no iVi = an empty 25% ⚔️ in the same box. */
+.lv-iv.lv-nil { display: inline-flex; align-items: center; }
+.lv-ems { padding: 0 !important; }
+.lv-row { display: flex; height: var(--lv-ez); }
+/* Five equal units, one-size emoji fill meters (owner t564u). */
+.lv-u { position: relative; flex: none; width: var(--lv-u); height: 100%; text-align: center; }
 /* Fill meter: the emoji twice in one spot — a 25%-visible copy (live.mjs FILL_DIM) and a solid copy on top
    clipped from the top, so it fills from the bottom up to --f (p0 = empty, p50 = bottom half, p100 = full). */
 .lv-fl { display: flex; align-items: center; justify-content: center; }
@@ -2949,20 +2922,13 @@ th .lv-u { font-size: 0.7rem; line-height: 1.1rem; }
 @media (prefers-reduced-motion: reduce) { .lv-g1 > .lv-em, .lv-g2 > .lv-em, .lv-g3 > .lv-em { animation: none; } .lv-g3::after { animation: none; opacity: 0.85; } }
 /* Owner t561u: LIVE is a PC stream overlay. Big screens (1920) get everything 1.3× bigger for readability. */
 @media (min-width: 1600px) {
-  .live-table { --lv-fe: 2.1rem; --lv-fn: 1.2rem; --lv-u: 3rem; --lv-ez: 3.65rem; --lv-nh: 0rem; --lv-fa: 2.43rem; --lv-fm: 1.7rem; --lv-b: 26rem; /* t563u: 26 (not 28.6) so the two letters fit the 1,096 px feed */ font-size: 1.1rem; }
-  .live-table .lv-time { font-size: 1.03rem; }
-  .live-table th, th .lv-hiv { font-size: 0.83rem; }
-  th .lv-u { font-size: 0.9rem; }
-  .live-table th.lv-blk { height: 1.43rem; }
+  .live-table { --lv-fe: 2.1rem; --lv-u: 3rem; --lv-ez: 3.65rem; --lv-fa: 2.43rem; --lv-fm: 1.7rem; --lv-nm: 14rem; --lv-tm: 4.2rem; font-size: 1.1rem; }
+  .lv-time { font-size: 0.95rem; }
 }
-/* Phones (t561u: not a target; it only must not break — sideways scroll is fine): block = exactly 5 units (the smallest that holds phase B at 2×); names are cut to fit. */
+/* Phones (t561u: not a target; it only must not break — sideways scroll is fine). */
 @media (max-width: 600px) {
-  .live-table { --lv-fe: 1.35rem; --lv-fn: 0.84rem; --lv-u: 1.95rem; --lv-ez: 2.4rem; --lv-nh: 0rem; --lv-fa: 1.58rem; --lv-fm: 1rem; --lv-b: 11rem; width: calc(2.4rem + 2 * var(--lv-b) + 2 * var(--lv-ini)); font-size: 0.72rem; }
-  col.lv-c-time { width: 2.4rem; }
-  .live-table .lv-time { min-width: 0; font-size: 0.64rem; padding: 0 0.15rem; }
-  .lv-bL > .lv-pa { padding: 0 0.2rem 0 0.1rem; }
-  .lv-bR > .lv-pa { padding: 0 0.1rem 0 0.2rem; }
-  .lv-pa { gap: 0.25em; }
+  .live-table { --lv-fe: 1.35rem; --lv-u: 1.95rem; --lv-ez: 2.4rem; --lv-fa: 1.58rem; --lv-fm: 1rem; --lv-nm: 6.5rem; --lv-tm: 2.6rem; font-size: 0.72rem; }
+  .lv-time { font-size: 0.6rem; padding: 0 0.1rem !important; }
 }
 .live-feed { overflow-x: auto; }
 .fac-vs { color: #b061ff; }

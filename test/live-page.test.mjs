@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { buildLive } from "../scripts/build-live.mjs";
-import { classifyDeath, feedPush, censusStats, cellText, fmtGap, LIVE_COLS, FEED_MAX, emojiFill, fillDriver, glowTier, unknownFill, FULL_AT, EMPTY_AT, goodPct, FILL_DIM, PHASE_A_MS, PHASE_B_MS, phaseAt } from "../live.mjs";
+import { classifyDeath, feedPush, censusStats, cellText, fmtGap, LIVE_COLS, FEED_MAX, emojiFill, fillDriver, glowTier, unknownFill, FULL_AT, EMPTY_AT, goodPct, FILL_DIM, overlayPush, overlayRows, VICTIM_LINES } from "../live.mjs";
 
 const root = new URL("../", import.meta.url);
 
@@ -20,7 +20,7 @@ test("classifyDeath: kill, death, suicide, unrelated", () => {
   assert.equal(classifyDeath(d("3", "4"), "1"), null);
 });
 
-test("feedPush: no repeats, 7th opponent drops the oldest, stopwatch freezes the old top", () => {
+test("feedPush: no repeats, 7th victim drops the oldest, stopwatch freezes the old top", () => {
   let rows = [];
   rows = feedPush(rows, { kind: "kill", opp: "a" }, 1000).rows;
   assert.equal(rows[0].gap, null);
@@ -31,11 +31,12 @@ test("feedPush: no repeats, 7th opponent drops the oldest, stopwatch freezes the
   assert.deepEqual(rows.map((r) => r.opp), ["a", "b"]);
   assert.equal(rows[1].gap, 1000); // b froze when a came back
   let dropped = null;
-  for (const [i, o] of ["c", "d", "e", "f", "g"].entries()) ({ rows, dropped } = feedPush(rows, { kind: "kill", opp: o }, 6000 + i));
+  for (const [i, o] of ["c", "d", "e", "f", "g", "h"].entries()) ({ rows, dropped } = feedPush(rows, { kind: "kill", opp: o }, 6000 + i));
   assert.equal(rows.length, FEED_MAX);
-  assert.equal(FEED_MAX, 3); // owner t563u: 3 rows
-  assert.equal(dropped.opp, "d");
-  assert.equal(rows[0].opp, "g");
+  assert.equal(FEED_MAX, 6); // owner t575u: back to 6 lines (victims)
+  assert.equal(dropped.opp, "a"); // b went first, then a
+  assert.equal(rows[0].opp, "h");
+  assert.deepEqual(rows.map((r) => r.opp), ["h", "g", "f", "e", "d", "c"]);
 });
 
 test("fmtGap", () => {
@@ -85,7 +86,7 @@ test("emoji fill meter (owner t564u): one size, p50 and below empty / p70.5 half
   const css = readFileSync(new URL("styles.css", root), "utf8");
   assert.match(css, /\.lv-e0 \{ opacity: 0\.25; \}/);
   assert.match(css, /\.lv-e1 \{ clip-path: inset\(calc\(var\(--it, 0%\) \+ var\(--ih, 100%\) \* \(100 - var\(--f, 0\)\) \/ 100\) -25% -25% -25%\); \}/); // fills from the bottom of the ink
-  assert.match(css, /\.lv-pa > \.lv-iv \{ width: 4ch; font-variant-numeric: tabular-nums; \}/); // t564u: 4-digit room
+  assert.match(css, /\.lv-ivc > \.lv-iv \{ display: inline-block; width: 4ch; font-variant-numeric: tabular-nums;/); // t564u: 4-digit room
   assert.doesNotMatch(css, /scale\(var\(--s/); // no rank-based sizes any more
   const js = readFileSync(new URL("live.mjs", root), "utf8");
   assert.doesNotMatch(js, /emojiScale|class="lv-v"/); // no size scaling, no number under the emoji
@@ -94,7 +95,7 @@ test("emoji fill meter (owner t564u): one size, p50 and below empty / p70.5 half
 test("LIVE columns (owner t550u): iVi, Activity, Brave, Resist, Zerg, Infantry in that order", () => {
   assert.deepEqual(LIVE_COLS.map((c) => c.id), ["adjs", "act", "pvs", "rf", "zerg", "inf"]);
   assert.deepEqual(LIVE_COLS.map((c) => c.label.split(" ")[0]), ["⚔️", "🏃", "🦁", "🛡️", "🪳", "🪖"]);
-  // owner t557u: ⚔️ iVi = phase A (number + emoji inline), the rest = phase B (emoji with the number under it)
+  // ⚔️ iVi = the number next to the name, the rest = emoji fill meters
   assert.deepEqual(LIVE_COLS.map((c) => c.mode), ["ivi", "stack", "stack", "stack", "stack", "stack"]);
 });
 
@@ -107,32 +108,54 @@ test("LIVE: no distribution chart, no title once kills arrive, a themed backgrou
   assert.doesNotMatch(js, /Live: <strong/);
 });
 
-test("A 4 s / B 4 s switch (owner t557u, t559u, t560u, t563u, t566u, t571u, t572u): one fixed block a side, phase A name + iVi (no ⚔️), phase B mirrored emojis, quick flip", () => {
-  assert.equal(PHASE_A_MS, 4000); // owner t571u/t572u: name + iVi 4 s, emojis 4 s
-  assert.equal(PHASE_B_MS, 4000);
-  assert.deepEqual([0, 3999, 4000, 7999, 8000, 11999, 12000, 15999, 16000, -5].map(phaseAt), ["A", "A", "B", "B", "A", "A", "B", "B", "A", "A"]);
-  // the flip must finish well inside a phase (t571u)
-  const tr = readFileSync(new URL("styles.css", root), "utf8").match(/\.lv-blk > \.lv-pa, \.lv-blk > \.lv-pb \{[^}]*transition: opacity ([\d.]+)s linear, transform ([\d.]+)s/);
-  assert.ok(tr && +tr[1] <= 0.3 && +tr[2] <= 0.3, "flip <= 0.3 s");
-  const css = readFileSync(new URL("styles.css", root), "utf8");
-  assert.doesNotMatch(css, /lvNum|lvEm|lv-arrow|lv-cyc/);
-  assert.match(css, /transition: opacity 0\.133s/);
-  assert.match(css, /\.lv-phB \.lv-blk > \.lv-pb \{ opacity: 1;/);
-  assert.match(css, /\.lv-bL > \.lv-pa, \.lv-bL > \.lv-pb \{ justify-content: flex-end; \}/); // left block hugs the centre
-  assert.match(css, /\.lv-bR > \.lv-pa, \.lv-bR > \.lv-pb \{ justify-content: flex-start; \}/);
+test("overlay (owner t575u): one killer line above (each new killer replaces it), the player in the centre, 6 victims below", () => {
+  assert.equal(VICTIM_LINES, 6);
+  let st = overlayPush(null, { kind: "kill", opp: "a" }, 1000);
+  assert.equal(st.killer, null);
+  assert.deepEqual(st.victims.map((r) => r.opp), ["a"]);
+  assert.equal(st.lastEv, st.victims[0]);
+  st = overlayPush(st, { kind: "death", opp: "k1", headshot: true }, 2000);
+  assert.equal(st.killer.opp, "k1");
+  assert.equal(st.killer.headshot, true);
+  assert.equal(st.lastEv, st.killer);
+  assert.deepEqual(st.victims.map((r) => r.opp), ["a"]); // a death never touches the victims
+  st = overlayPush(st, { kind: "death", opp: "k2" }, 3000);
+  assert.equal(st.killer.opp, "k2"); // only one line above
+  for (const [i, o] of ["b", "c", "a", "d", "e", "f", "g"].entries()) st = overlayPush(st, { kind: "kill", opp: o }, 4000 + i);
+  assert.deepEqual(st.victims.map((r) => r.opp), ["g", "f", "e", "d", "a", "c"]); // newest on top, no repeats, max 6
+  assert.equal(st.lastEv.opp, "g");
+  assert.equal(st.killer.opp, "k2");
+  assert.deepEqual(overlayRows(st).map((r) => r.opp), ["k2", "g", "f", "e", "d", "a", "c"]);
+  assert.deepEqual(overlayRows(null), []);
+  assert.deepEqual(overlayRows(overlayPush(null, { kind: "kill", opp: "x" }, 0)).map((r) => r.opp), ["x"]);
+});
+
+test("overlay layout (owner t575u): no flip, ONE column order on every line, fixed 1 + 1 + 6 lines, a marked centre line", () => {
   const js = readFileSync(new URL("live.mjs", root), "utf8");
-  assert.doesNotMatch(js, /❯|lv-arrow/);
-  // t567u: the first letter moved inside the block next to 🏃 (phase B only); no separate letter cells.
-  assert.match(js, /<td class="lv-time">\$\{t\}<\/td>\$\{left\}\$\{right\}<\/tr>/);
-  assert.doesNotMatch(js, /lv-c-ini|class="lv-ini/);
-  assert.match(js, /const pb = sd === "L" \? letter\(p, sd, tip\) \+ em : em \+ letter\(p, sd, tip\)/); // letter · 🏃🦁🛡️🪳🪖 | 🪖🪳🛡️🦁🏃 · letter
-  assert.doesNotMatch(js, /lv-pa">[^<]*letter\(/); // never in phase A (the name is there)
-  assert.match(css, /col\.lv-c-blk \{ width: calc\(var\(--lv-b\) \+ var\(--lv-ini\)\); \}/);
-  assert.match(css, /\.lv-li \{ flex: none; width: var\(--lv-ini\);/);
-  assert.match(js, /const pa = sd === "L" \? nameHtml\(p, sd\) \+ iv : iv \+ nameHtml\(p, sd\)/);
-  assert.doesNotMatch(js, /lv-ie|lv-slot|lv-name-cell/); // no ⚔️ in phase A, no separate name columns
-  assert.match(js, /sd === "R" \? \[\.\.\.REST\]\.reverse\(\) : REST/); // right player: 🪖 🪳 🛡️ 🦁 🏃
-  assert.match(js, /lv-e lv-e0/);
+  const css = readFileSync(new URL("styles.css", root), "utf8");
+  // no flip / phase / mirroring code left
+  assert.doesNotMatch(js, /phaseAt|PHASE_A_MS|PHASE_B_MS|lv-phB|setPhase|lv-pa|lv-pb|lv-bL|lv-bR|reverse\(\)|letter\(/);
+  assert.doesNotMatch(css, /lv-phB|lv-pa\b|lv-pb\b|lv-bL|lv-bR|lv-li\b|lv-blk|rotateX/);
+  assert.doesNotMatch(js, /❯|lv-arrow|<thead/);
+  // one shared order: [time][name][iVi][🏃🦁🛡️🪳🪖] — the same cells() for killer, player and victims
+  assert.match(js, /return `<td class="lv-nm">\$\{nameHtml\(p, tip\)\}<\/td>\$\{IVI\.map[^\n]*<td class="lv-ems"><span class="lv-row">\$\{REST\.map/);
+  assert.match(js, /<tr><td class="lv-time">\$\{ageHtml\(r\)\}<\/td>\$\{cells\(p, false\)\}<\/tr>/);
+  assert.match(js, /<tbody class="lv-ev lv-me"><tr><td class="lv-time"><\/td>\$\{cells\(me, true\)\}<\/tr><\/tbody>/);
+  assert.match(js, /oppLine\(st\.killer, "atk"\) : emptyLine\("atk"\)/);
+  assert.match(js, /Array\.from\(\{ length: VICTIM_LINES \}, \(_, i\) => \(st\.victims\[i\] \? oppLine\(st\.victims\[i\], "vic"\) : emptyLine\("vic"\)\)\)/);
+  assert.match(js, /listEl\.innerHTML = cols \+ atk \+ mid \+ low;/);
+  assert.match(js, /const blank = `<td class="lv-nm"><\/td><td class="lv-ivc"><\/td><td class="lv-ems"><span class="lv-row"><\/span><\/td>`;/); // empty = same box
+  assert.deepEqual([...js.matchAll(/<col class="(lv-c-[a-z]+)">/g)].map((m) => m[1]), ["lv-c-time", "lv-c-nm", "lv-c-iv", "lv-c-em"]);
+  // fixed size: fixed layout, fixed line height, fixed column widths
+  assert.match(css, /\.live-table \{[^}]*table-layout: fixed;/);
+  assert.match(css, /\.live-table td \{[^}]*height: var\(--lv-ez\);[^}]*overflow: hidden;/);
+  assert.match(css, /\.lv-row \{ display: flex; height: var\(--lv-ez\); \}/);
+  assert.match(css, /col\.lv-c-em \{ width: calc\(5 \* var\(--lv-u\)\); \}/);
+  // the centre line is set apart (accent rules above and below, a tint)
+  assert.match(css, /tbody\.lv-me > tr > td \{ background-color: color-mix\(in srgb, var\(--accent\) 13%, var\(--panel\)\); border-top: 2px solid var\(--accent\); border-bottom: 2px solid var\(--accent\); \}/);
+  assert.match(css, /\.live-table \.lv-name \{[^}]*text-overflow: ellipsis;/);
+  // a 1 s ticking age on the opponent lines
+  assert.match(js, /\.lv-timer\[data-at\]/);
 });
 
 test("censusStats: K/D and KPM from stat_history", () => {
@@ -159,16 +182,18 @@ test("cellText: digits, floor at zero, missing", () => {
 test("LIVE juice (owner t562u): pop-in row, flip switch, top-rank glow, upset shake — never resizes, honours reduced motion", () => {
   const css = readFileSync(new URL("styles.css", root), "utf8");
   for (const k of ["lvPop", "lvFlashK", "lvFlashD", "lvFlashU", "lvShake", "lvGlow", "lvGlow1", "lvGlow2", "lvSpark"]) assert.match(css, new RegExp(`@keyframes ${k} `));
-  assert.match(css, /rotateX\(-85deg\)/);
+  assert.doesNotMatch(css, /rotateX/); // owner t575u: no flip any more
   assert.match(css, /prefers-reduced-motion: reduce\) \{ \.lv-ev\.lv-new > tr > td/);
   assert.match(css, /prefers-reduced-motion: reduce\) \{ \.lv-g1 > \.lv-em, \.lv-g2 > \.lv-em, \.lv-g3 > \.lv-em \{ animation: none; \} \.lv-g3::after \{ animation: none; opacity: 0\.85; \} \}/); // static glow, no pulse
   assert.match(css, /\.lv-g3::after \{ content: "✦"; position: absolute;/); // sparkle never takes layout room
-  assert.doesNotMatch(css, /lv-top/);
+  assert.doesNotMatch(css, /lv-top\b/);
   const js = readFileSync(new URL("live.mjs", root), "utf8");
   assert.match(js, /const g = glowTier\(driverOf\(c, v\)\);/); // tiers use the fill's own driver
-  assert.doesNotMatch(js, /TOP_PCT|lv-top/);
+  assert.doesNotMatch(js, /TOP_PCT|lv-top\b/);
   assert.match(js, /const UPSET_GAP = 50;/);
-  assert.match(js, /freshTop = !!rows\[0\] && rows\[0\] !== shownTop;/); // a re-render never replays the entrance
+  assert.match(js, /fresh = newest && newest !== shown \? newest : null;/); // a re-render never replays the entrance
+  assert.match(css, /\.lv-ev\.lv-new\.lv-death > tr > td \{ animation-name: lvPop, lvFlashD; \}/); // new killer: red flash
+  assert.match(css, /\.lv-ev\.lv-new > tr > td \{ animation: lvPop [^;]*lvFlashK/); // new victim: pop + green flash
 });
 
 test("no value = empty 0% emoji, never a dash (owner t567u): stats, iVi, uncached players, skeleton row", () => {
@@ -180,8 +205,9 @@ test("no value = empty 0% emoji, never a dash (owner t567u): stats, iVi, uncache
   assert.equal(emojiFill(LIVE_COLS.find((c) => c.id === "zerg"), null, 50), null); // the value itself stays unknown
   assert.match(js, /if \(fillOf\(c, v\) == null\) return `<span class="lv-iv lv-nil" style="--f:0"[^`]*\$\{meter\(shortLab\(c\), 0\)\}/); // empty ⚔️ in the iVi box
   assert.match(js, /\$\{f > 0 \? `<b class="lv-e lv-e1">/); // 0% = only the 25% copy
-  assert.match(js, /const iv = IVI\.map\(\(c\) => iviText\(c, vals\[c\.id\]\)\)/); // uncached too
-  assert.match(js, /const em = restFor\(sd\)\.map\(\(c\) => unit\(c, vals\[c\.id\]\)\)/);
+  assert.match(js, /const vals = p\.cached \|\| \{\};/); // uncached too
+  assert.match(js, /IVI\.map\(\(c\) => `<td class="lv-ivc">\$\{iviText\(c, vals\[c\.id\]\)\}<\/td>`\)/);
+  assert.match(js, /REST\.map\(\(c\) => unit\(c, vals\[c\.id\]\)\)/);
   assert.doesNotMatch(js, /lv-none|lv-unc|>—<\/span>/); // no K/D-over-KPM text, no dash cells
   assert.doesNotMatch(css, /lv-none|lv-unc|\.lv-ini\b/);
   assert.match(css, /\.lv-iv\.lv-nil \{ display: inline-flex;/);

@@ -3,13 +3,14 @@ await i18nReady;
 /**
  * 🎥 Live feed (live.html). Follows the first name's kills and deaths from the
  * Census event stream (Death events, one character) and:
- *   - lists the last 3 opponents (owner t563u) (one row per person, repeats bump the count);
- *     on a kill our name sits on top, on a death the killer's name does;
- *   - shows each player (name + stats) in one fixed block that switches A 4 s / B 4 s (owner t557u, t563u, t566u, t571u, t572u):
- *     phase A = name + ⚔️ iVi number (t560u), phase B = the other columns as emojis
- *     as fill meters, with the player's first letter next to 🏃 (t567u; no skill graph in Live);
+ *   - owner t575u layout (replaces the t557u–t572u two-player rows that flipped A/B): a narrow, fixed overlay
+ *     centred on the tracked player — ONE line above for the latest player who killed them (each new killer
+ *     replaces it), the tracked player on the centre line, and the last 6 players they killed below
+ *     (newest on top, no repeats);
+ *   - every line shows everything at once, in one shared column order: [⏱️][name][iVi][🏃][🦁][🛡️][🪳][🪖],
+ *     the emojis as fill meters (t564u, t573u) with glow tiers (t568u) — no flip, no skill graph;
  *   - a missing stat is an empty (25%) emoji, never "—" (t567u); uncached opponents show all-empty emojis
- *     (Census K/D · KPM only in the letter's hover title), then get a full 200-opponent Census
+ *     (Census K/D · KPM only in the name's hover title), then get a full 200-opponent Census
  *     fetch in the background (one at a time, newest first, #32) and upgrade in place.
  * Pure helpers are exported for tests; the DOM part runs only in a browser.
  */
@@ -20,7 +21,8 @@ import { percentileOf } from "./dist.mjs?v=20261010-sav1";
 import { traitPools, zergScore } from "./trait-scores.mjs?v=20261022-nbd1";
 import { infantryShares } from "./infantry.mjs?v=20261023-short1";
 
-export const FEED_MAX = 3; // owner t563u: 3 rows (was 6)
+export const FEED_MAX = 6; // victim lines below the centre (owner t575u: "back to 6 lines"; t563u had 3)
+export const VICTIM_LINES = FEED_MAX;
 const CENSUS = `https://census.daybreakgames.com/s:${CENSUS_SERVICE_ID}/get/ps2:v2/`;
 const STREAM = `wss://push.planetside2.com/streaming?environment=ps2&service-id=s:${CENSUS_SERVICE_ID}`;
 const FACTION = { 1: "vs", 2: "nc", 3: "tr", 4: "nso" };
@@ -73,8 +75,8 @@ export function censusStats(ch) {
 /**
  * LIVE columns (owner t546u, t550u): one config list, in this order — change a mode or the order here.
  * Same ids / labels / digits as rankings.mjs VISIBLE. mode:
- *   "ivi"   = phase A: the plain number next to the name ("CloneKanoVS 1883", owner t560u: no ⚔️; t564u: no comma);
- *   "stack" / "emoji" = phase B: a fill-meter emoji (owner t564u: one size for all, no number under it).
+ *   "ivi"   = the plain number right after the name ("CloneKanoVS 1883", owner t560u: no ⚔️; t564u: no comma);
+ *   "stack" / "emoji" = a fill-meter emoji column (owner t564u: one size for all, no number under it).
  * lowerBetter = smaller value is better (reversed percentile → more fill for a low value); no LIVE
  * column uses it now (owner t555u: 🪳 Zerg follows the raw number).
  * 🪳 Zerg is computed like the Rankings table (trait-scores.mjs zergScore from the ranks.json pools).
@@ -129,12 +131,22 @@ export function glowTier(d) {
   return d >= 91 ? 3 : d >= 71 ? 2 : d >= 51 ? 1 : 0;
 }
 
-/** Owner t557u: the block switches between phase A (name + iVi) and phase B (the emojis), all rows in sync.
- *  t566u: uneven — A shows 10 s, B 5 s (t563u had 10 s / 10 s); t571u: A 4 s, B 2 s; t572u: A 4 s, B 4 s, then it repeats. */
-export const PHASE_A_MS = 4000;
-export const PHASE_B_MS = 4000;
-/** Phase at a time since the page started: "A" for the first 4 s, then "B" for 4 s, and so on. */
-export function phaseAt(ms) { return Math.max(0, ms) % (PHASE_A_MS + PHASE_B_MS) < PHASE_A_MS ? "A" : "B"; }
+/**
+ * Overlay state step (owner t575u): a kill puts the victim on top of the lines below the centre (feedPush:
+ * no repeats, at most VICTIM_LINES); a death makes that attacker THE killer line above (replacing the last one).
+ * State = { killer: row | null, victims: rows, lastEv: the row that just arrived }.
+ */
+export function overlayPush(state, ev, now = Date.now()) {
+  const s = state || { killer: null, victims: [], lastEv: null };
+  if (ev.kind === "death") {
+    const killer = { opp: ev.opp, last: "death", headshot: !!ev.headshot, at: now, gap: null };
+    return { killer, victims: s.victims, lastEv: killer };
+  }
+  const { rows } = feedPush(s.victims, ev, now);
+  return { killer: s.killer, victims: rows, lastEv: rows[0] };
+}
+/** Every opponent on screen (killer first), for the background-fetch queue. */
+export function overlayRows(state) { return state ? [state.killer, ...state.victims].filter(Boolean) : []; }
 /**
  * Background-fetch queue step (#32): next opponent cid to fetch = newest-first queue entry
  * that is still in the feed and was never tried this page load; or null.
@@ -198,7 +210,7 @@ function start() {
   if (!target) { setState("Add a name on the main page, then press 🎥.", "err"); return; }
 
   const people = new Map(); // cid -> { name, faction, kd, cached: {adjs, kd} | null }
-  let rows = [];
+  let st = { killer: null, victims: [], lastEv: null }; // owner t575u overlay state (overlayPush)
   let me = null; // { cid, name, faction }
   let ranks = null; // slug -> { adjs, kd }
   const pools = {}; // col id -> sorted finite values (percentiles, same as the Rankings table)
@@ -257,15 +269,13 @@ function start() {
   }
 
   const fmt = (v, d) => (typeof v === "number" && Number.isFinite(v) ? v.toFixed(d) : "—");
-  const IVI = LIVE_COLS.filter((c) => c.mode === "ivi"); // phase A
-  const REST = LIVE_COLS.filter((c) => c.mode !== "ivi"); // phase B
-  // Owner t559u: the row mirrors itself — the right player's emojis run 🪖 🪳 🛡️ 🦁 🏃, ending at the right name.
-  const restFor = (sd) => (sd === "R" ? [...REST].reverse() : REST);
+  const IVI = LIVE_COLS.filter((c) => c.mode === "ivi"); // the iVi number column
+  const REST = LIVE_COLS.filter((c) => c.mode !== "ivi"); // the emoji columns, same order on every line (owner t575u)
   const shortLab = (c) => c.label.split(" ")[0];
   /** 💩 after a confirmed padder's name (padding.mjs): hover explains the −10% iVi penalty. */
   const poopFor = (name) => (isPenalizedPadder(name) ? `<span class="poop-mark" title="${esc(POOP_TIP)}" aria-label="${esc(POOP_TIP)}">${POOP_MARK}</span>` : "");
   const fillOf = (c, v) => emojiFill(c, v, percentileOf(pools[c.id] || [], v));
-  /** Phase B unit (owner t564u): one-size emoji as a fill meter — a 25% copy under a solid copy clipped
+  /** Emoji unit (owner t564u): one-size emoji as a fill meter — a 25% copy under a solid copy clipped
    *  from the bottom up to the fill. The number is in the hover title only.
    *  Owner t567u: no value (not cached, assist bug, no 🪖 data) = the same emoji at 0% (only the faint copy), never "—". */
   /** Owner t568u (replaces the t562u single p95 glow): three glow tiers by the fill driver (glowTier) — lv-g3 gold, lv-g2 blue, lv-g1 green. */
@@ -309,79 +319,55 @@ function start() {
     const top = g ? ` lv-g${g}` : "";
     return `<span class="lv-u lv-fl${top}" style="--f:${f}" title="${esc(c.label)} ${cellText(c, v)}">${meter(shortLab(c), f)}</span>`;
   }
-  /** Phase A iVi number, no ⚔️ (owner t560u: the number reads clearly on its own); no iVi (t567u) = an empty 25% ⚔️ in the same 4-digit box. */
+  /** iVi number, no ⚔️ (owner t560u), no comma, 4 digits of room (t564u); no iVi (t567u) = an empty 25% ⚔️ in the same box. */
   function iviText(c, v) {
     if (fillOf(c, v) == null) return `<span class="lv-iv lv-nil" style="--f:0" title="${esc(c.label)} —">${meter(shortLab(c), 0)}</span>`;
     return `<span class="lv-iv" title="${esc(c.label)} ${cellText(c, v)}">${cellText(c, v)}</span>`;
   }
-  /** Owner t567u: the player's first letter sits right next to their 🏃 (outer side), in phase B only —
-   *  phase A shows the full name, so the letter goes away with the flip. Faction colour kept. */
-  function letter(p, sd, tip) {
-    const ch = Array.from(String((p && p.name) || "").replace(/^#/, ""))[0] || "";
-    return `<span class="lv-li lv-l${sd} fac-${(p && p.faction) || ""}" title="${esc(((p && p.name) || "") + (tip || ""))}">${esc(ch)}</span>`;
-  }
-  /** Name (+ 💩 on the outer side); a long name is cut with … on the outer side. */
-  function nameHtml(p, sd) {
-    const poop = poopFor(p.name);
-    const nm = `<span class="lv-name fac-${p.faction || ""}" title="${esc(p.name)}"><bdi>${esc(p.name)}</bdi></span>`;
-    return `<span class="lv-pn">${sd === "L" ? poop + nm : nm + poop}</span>`;
+  /** Name (faction colour) + 💩; a long name is cut with … at the end. Uncached: Census K/D · KPM in the hover. */
+  function nameHtml(p, tip) {
+    return `<span class="lv-pn"><span class="lv-name fac-${p.faction || ""}" title="${esc(p.name + (tip || ""))}"><bdi>${esc(p.name)}</bdi></span>${poopFor(p.name)}</span>`;
   }
   /**
-   * One player = ONE fixed block that switches (A 4 s / B 4 s, owner t560u, t563u, t566u, t571u, t572u), both phases stacked:
-   *   phase A = name + iVi number ("CloneKanoVS 1,883" | "209 Vepr12NC"), no separator;
-   *   phase B = first letter + fill-meter emojis ("K 🏃🦁🛡️🪳🪖" | "🪖🪳🛡️🦁🏃 S", right player mirrored, t559u, t567u).
-   * The left block hugs the centre (right-aligned), the right block too (left-aligned).
+   * Owner t575u: one line = one player, everything at once (no flip), ONE shared column order for every line:
+   *   [⏱️ time][name][iVi][🏃][🦁][🛡️][🪳][🪖] — so the emojis line up down the whole overlay.
+   * Owner t567u: not cached = all-empty emojis; the Census numbers stay in the name's hover.
    */
-  function side(p, isMe, sd) {
+  function cells(p, isMe) {
     const vals = p.cached || {};
-    const iv = IVI.map((c) => iviText(c, vals[c.id])).join("");
-    const pa = sd === "L" ? nameHtml(p, sd) + iv : iv + nameHtml(p, sd);
-    // Owner t567u: not cached = all-empty emojis (replaces the K/D over KPM text); the Census numbers stay in the letter's hover.
     const tip = p.cached || isMe ? "" : ` · not in cache · K/D ${fmt(p.kd, 2)} · KPM ${fmt(p.kpm, 2)}`;
-    const em = restFor(sd).map((c) => unit(c, vals[c.id])).join("");
-    const pb = sd === "L" ? letter(p, sd, tip) + em : em + letter(p, sd, tip);
-    return `<td class="lv-blk lv-b${sd}"><span class="lv-pa">${pa}</span><span class="lv-pb">${pb}</span></td>`;
+    return `<td class="lv-nm">${nameHtml(p, tip)}</td>${IVI.map((c) => `<td class="lv-ivc">${iviText(c, vals[c.id])}</td>`).join("")}<td class="lv-ems"><span class="lv-row">${REST.map((c) => unit(c, vals[c.id])).join("")}</span></td>`;
   }
+  const blank = `<td class="lv-nm"></td><td class="lv-ivc"></td><td class="lv-ems"><span class="lv-row"></span></td>`; // same box as a filled line, so the overlay never grows
   /** Owner t562u juice: an upset = the winner's iVi percentile is ≥ UPSET_GAP points below the loser's → a short shake. */
   const UPSET_GAP = 50;
   const iviPct = (p) => { const c = IVI[0]; return p && p.cached ? goodOf(c, p.cached[c.id]) : null; };
-  let shownTop = null; // the newest row that already played its entrance (a re-render must not replay it)
-  let freshTop = false;
-  function eventHtml(r, i) {
+  let shown = null; // the newest event that already played its entrance (a re-render must not replay it)
+  let fresh = null;
+  const ageHtml = (r) => `<span class="lv-timer" data-at="${r.at}">${fmtGap(Date.now() - r.at)}</span>`;
+  /** One opponent line: the killer above (lv-death) or a victim below (lv-kill). */
+  function oppLine(r, where) {
     const p = people.get(r.opp) || { name: r.opp };
-    const meP = { name: me.name, faction: me.faction, cached: me.cached };
     const kill = r.last === "kill";
-    // Winner on the left: on a kill that's us, on a death the killer.
-    const left = kill ? side(meP, true, "L") : side(p, false, "L");
-    const right = kill ? side(p, false, "R") : side(meP, true, "R");
-    const t = r.gap == null ? `<span class="lv-timer" data-at="${r.at}">${fmtGap(Date.now() - r.at)}</span>` : `${fmtGap(r.gap)}`;
-    const wP = iviPct(kill ? meP : p), lP = iviPct(kill ? p : meP);
-    const upset = i === 0 && freshTop && wP != null && lP != null && lP - wP >= UPSET_GAP ? " lv-upset" : "";
-    return `<tbody class="lv-ev lv-${r.last}${i === 0 && freshTop ? " lv-new" : ""}${upset}"><tr><td class="lv-time">${t}</td>${left}${right}</tr></tbody>`;
+    const isNew = r === fresh;
+    const wP = iviPct(kill ? me : p), lP = iviPct(kill ? p : me);
+    const upset = isNew && wP != null && lP != null && lP - wP >= UPSET_GAP ? " lv-upset" : "";
+    return `<tbody class="lv-ev lv-${where} lv-${r.last}${isNew ? " lv-new" : ""}${upset}"><tr><td class="lv-time">${ageHtml(r)}</td>${cells(p, false)}</tr></tbody>`;
   }
-  function render(dropped) {
+  const emptyLine = (where) => `<tbody class="lv-ev lv-${where} lv-empty"><tr><td class="lv-time"></td>${blank}</tr></tbody>`;
+  function render() {
     if (!listEl) return;
-    // Fixed layout (owner t560u): [time][left block][right block]; the blocks never change size (t567u: the letter lives inside them).
-    const cols = `<colgroup><col class="lv-c-time"><col class="lv-c-blk"><col class="lv-c-blk"></colgroup>`;
-    const th = (sd) => `<th class="lv-blk lv-b${sd}"><span class="lv-pa">${IVI.map((c) => `<span class="lv-hiv" title="${esc(c.label)}">${esc(c.label.split(" ").slice(1).join(" "))}</span>`).join("")}</span><span class="lv-pb">${sd === "L" ? `<span class="lv-li"></span>` : ""}${restFor(sd).map((c) => `<span class="lv-u" title="${esc(c.label)}">${shortLab(c)}</span>`).join("")}${sd === "R" ? `<span class="lv-li"></span>` : ""}</span></th>`;
-    const head = `<thead><tr><th></th>${th("L")}${th("R")}</tr></thead>`;
-    // No events yet: skeleton first row — empty (25%) emojis stand in for the numbers until real data arrives (t567u: no "—").
-    const nil = iviText(IVI[0], null);
-    const dash = (sd) => `<td class="lv-blk lv-b${sd}"><span class="lv-pa">${sd === "L" ? nameHtml(me, "L") + nil : nil}</span><span class="lv-pb">${sd === "L" ? letter(me, "L") : ""}${restFor(sd).map((c) => unit(c, null)).join("")}</span></td>`;
-    freshTop = !!rows[0] && rows[0] !== shownTop;
-    shownTop = rows[0] || null;
-    const body = rows.length ? rows.map(eventHtml).join("")
-      : `<tbody class="lv-ev lv-wait"><tr><td class="lv-time">—</td>${dash("L")}${dash("R")}</tr></tbody>`;
-    // Owner t563u: only 3 rows — the pushed-out row leaves at once (a fading 4th row would grow the table
-    // for 0.6 s on every new kill); the new row's pop-in carries the motion.
-    void dropped;
-    listEl.innerHTML = cols + head + body;
+    // Owner t575u: a fixed grid of 1 + 1 + VICTIM_LINES lines — killer above, the tracked player in the centre,
+    // the players they killed below (newest on top). Empty slots keep their height, so the overlay never changes size.
+    const cols = `<colgroup><col class="lv-c-time"><col class="lv-c-nm"><col class="lv-c-iv"><col class="lv-c-em"></colgroup>`;
+    const newest = st.lastEv || null;
+    fresh = newest && newest !== shown ? newest : null;
+    shown = newest;
+    const atk = st.killer ? oppLine(st.killer, "atk") : emptyLine("atk");
+    const mid = `<tbody class="lv-ev lv-me"><tr><td class="lv-time"></td>${cells(me, true)}</tr></tbody>`;
+    const low = Array.from({ length: VICTIM_LINES }, (_, i) => (st.victims[i] ? oppLine(st.victims[i], "vic") : emptyLine("vic"))).join("");
+    listEl.innerHTML = cols + atk + mid + low;
   }
-  // Owner t557u: every row switches together — one class on the table, a quick crossfade in CSS.
-  const t0 = Date.now();
-  const setPhase = () => { if (listEl) listEl.classList.toggle("lv-phB", phaseAt(Date.now() - t0) === "B"); };
-  setPhase();
-  setInterval(setPhase, 250);
   setInterval(() => {
     if (!listEl) return;
     for (const el of listEl.querySelectorAll(".lv-timer[data-at]")) el.textContent = `${fmtGap(Date.now() - +el.dataset.at)}`;
@@ -396,8 +382,9 @@ function start() {
   async function bgPump() {
     const a = app();
     if (bgBusy || !a || !a.fetchPlayerBg) return;
-    const cid = nextBgFetch(bgQueue, rows, bgTried);
-    bgQueue = bgQueue.filter((c) => rows.some((r) => r.opp === c) && !bgTried.has(c));
+    const shownRows = overlayRows(st);
+    const cid = nextBgFetch(bgQueue, shownRows, bgTried);
+    bgQueue = bgQueue.filter((c) => shownRows.some((r) => r.opp === c) && !bgTried.has(c));
     if (!cid) return;
     bgTried.add(cid);
     bgQueue = bgQueue.filter((c) => c !== cid);
@@ -440,9 +427,8 @@ function start() {
 
   async function onEvent(ev) {
     const p = await person(ev.opp);
-    const res = feedPush(rows, ev);
-    rows = res.rows;
-    render(res.dropped);
+    st = overlayPush(st, ev);
+    render();
     if (!p.cached && !bgTried.has(ev.opp)) { bgQueue = [ev.opp, ...bgQueue.filter((c) => c !== ev.opp)]; bgPump(); }
   }
 
@@ -461,7 +447,7 @@ function start() {
       if (j.type !== "serviceMessage") return;
       const ev = classifyDeath(j.payload, me.cid);
       if (ev) {
-        if (!rows.length) setState("", "on"); // owner t550u: no title above the table
+        if (!st.lastEv) setState("", "on"); // owner t550u: no title above the table
         onEvent(ev);
       }
     };
