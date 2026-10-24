@@ -91,14 +91,14 @@ describe("local matches and merging", () => {
     assert.equal(m[0].source, "cached");
   });
 
-  it("puts cached names first, adds Census faction/BR, removes duplicates", () => {
+  it("adds Census faction/BR, removes duplicates; unrated list sorts by BR (2026-10-24)", () => {
     const local = localMatches(namesFromRanks(ranks), "simp");
     const remote = [
       { name: "simplenubb", faction: "VS", br: 89, source: "census" },
       { name: "SimplenubbNC", faction: "NC", br: 22, source: "census" },
     ];
     const out = mergeSuggestions(local, remote);
-    assert.deepEqual(out.map((x) => x.name), ["simplenubb", "SimplenubbTR", "SimplenubbNC"]);
+    assert.deepEqual(out.map((x) => x.name), ["simplenubb", "SimplenubbNC", "SimplenubbTR"]);
     assert.equal(out[0].source, "cached");
     assert.equal(out[0].faction, "VS");
   });
@@ -144,6 +144,48 @@ describe("local matches and merging", () => {
       assert.equal(g.br, 120);
       assert.equal(g.source, "cached");
     });
+  });
+});
+
+describe("battle-rank fallback (owner 2026-10-24)", () => {
+  it("sorts by battle rank, highest first, when nobody has an adjusted iVi", () => {
+    const remote = [
+      { name: "WinterWolf", faction: "VS", br: 45, source: "census" },
+      { name: "WinterSoldier", faction: "NC", br: 120, source: "census" },
+      { name: "Wintermute", faction: "TR", br: 12, source: "census" },
+    ];
+    assert.deepEqual(mergeSuggestions([], remote).map((x) => x.name), ["WinterSoldier", "WinterWolf", "Wintermute"]);
+  });
+
+  it("entries with no known rank stay at the bottom in their relative order", () => {
+    const remote = [
+      { name: "WinterA", source: "census" },
+      { name: "WinterB", faction: "VS", br: 30, source: "census" },
+      { name: "WinterC", source: "census" },
+    ];
+    assert.deepEqual(mergeSuggestions([], remote).map((x) => x.name), ["WinterB", "WinterA", "WinterC"]);
+  });
+
+  it("one rated entry keeps the strength order even when BRs disagree", () => {
+    const local = [{ name: "WinterLow", query: "WinterLow", display: "WinterLow", adjs: 500, source: "cached" }];
+    const remote = [{ name: "WinterHigh", faction: "NC", br: 120, source: "census" }];
+    assert.deepEqual(mergeSuggestions(local, remote).map((x) => x.name), ["WinterLow", "WinterHigh"]);
+  });
+
+  it("a cached row paired with Census sorts by its Census BR when unrated", () => {
+    const ranks3 = {
+      cols: ["name", "query", "adjs"],
+      rows: [
+        ["WinterOne", "WinterOne", null],
+        ["WinterTwo", "WinterTwo", null],
+      ],
+    };
+    const local = localMatches(namesFromRanks(ranks3), "winter");
+    const remote = [
+      { name: "WinterOne", faction: "VS", br: 20, source: "census" },
+      { name: "WinterTwo", faction: "NC", br: 100, source: "census" },
+    ];
+    assert.deepEqual(mergeSuggestions(local, remote).map((x) => x.name), ["WinterTwo", "WinterOne"]);
   });
 });
 

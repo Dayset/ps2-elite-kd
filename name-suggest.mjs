@@ -74,6 +74,22 @@ export function byStrength(a, b) {
   return bv - av;
 }
 
+/**
+ * Battle rank, highest first; entries with no known rank keep their
+ * relative order at the bottom. Only used when no suggestion carries a
+ * finite adjusted iVi (owner 2026-10-24): Census rows carry br, cached-only
+ * rows don't (ranks.json has no battle-rank column), so a cached-only list
+ * keeps its current order.
+ */
+export function byBattleRank(a, b) {
+  const av = Number.isFinite(a && a.br) ? a.br : null;
+  const bv = Number.isFinite(b && b.br) ? b.br : null;
+  if (av === null && bv === null) return 0;
+  if (av === null) return 1;
+  if (bv === null) return -1;
+  return bv - av;
+}
+
 /** Strip an outfit tag: "[00] Foo" → "Foo" (same rule as pick-sync). */
 const bareName = (s) => String(s || "").replace(/^\s*\[[^\]]*\]\s*/, "").trim();
 
@@ -125,9 +141,11 @@ export function localMatches(names, fragment, limit = MAX_SUGGESTIONS) {
  * Merge cached and Census suggestions, then sort the merged list by adjusted
  * iVi, strongest first (owner 2026-10-22): rated variants lead, Census-only
  * names (no rating anywhere) keep their most-recently-active order at the
- * bottom. No case-insensitive duplicates (a cached name also found on Census
- * keeps its Census faction / BR and its cached ⚔️), names already in the box
- * left out.
+ * bottom. When NO suggestion carries a finite adjusted iVi, the list sorts
+ * by battle rank instead, highest first (owner 2026-10-24) — entries with
+ * no known rank stay at the bottom in their relative order. No
+ * case-insensitive duplicates (a cached name also found on Census keeps its
+ * Census faction / BR and its cached ⚔️), names already in the box left out.
  */
 export function mergeSuggestions(local, remote, exclude = [], limit = MAX_SUGGESTIONS) {
   const skip = new Set((exclude || []).map((n) => String(n).toLowerCase()));
@@ -154,7 +172,8 @@ export function mergeSuggestions(local, remote, exclude = [], limit = MAX_SUGGES
     if (localNames.has(r.name.toLowerCase())) continue; // paired above, or a namesake the cached twins cover exactly
     push(r);
   }
-  return out.sort(byStrength).slice(0, limit);
+  const anyRated = out.some((it) => Number.isFinite(it.adjs));
+  return out.sort(anyRated ? byStrength : byBattleRank).slice(0, limit);
 }
 
 /** Input value with the fragment being typed replaced by `name` and a trailing space. */
