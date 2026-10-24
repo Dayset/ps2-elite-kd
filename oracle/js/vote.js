@@ -53,6 +53,27 @@ export function alertName(key) {
 const signed = (x) => `${x > 0 ? "+" : x < 0 ? "−" : ""}${pts(Math.abs(x))}`;
 const STATUS = { won: "right", lost: "wrong", void: "given back" };
 
+/**
+ * Every vote of the signed-in player (newest first, up to 50 from /vote/me): when it was
+ * placed (local time) and how far into the alert, the alert, the faction, what was put in,
+ * the oracle odds at that moment, what comes back if right, and the result (owner 2026-10-24).
+ */
+export function voteListHtml(votes) {
+  const vs = votes || [];
+  if (!vs.length) return `<div class="note">No votes yet.</div>`;
+  const when = (ts) => new Date(ts * 1000).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+  const res = (v) => (v.status === "open" ? `<span class="mvst open">open · ${pts(v.potential)} if right</span>`
+    : v.status === "won" ? `<span class="mvst won">right · +${pts((v.reward || 0) - v.amount)}</span>`
+    : v.status === "lost" ? `<span class="mvst lost">wrong · −${pts(v.amount)}</span>`
+    : `<span class="mvst void">given back</span>`);
+  return `<table class="vlist"><thead><tr><th>When</th><th>Alert</th><th>Vote</th><th>Odds then</th><th>Result</th></tr></thead><tbody>${vs.map((v) => `<tr class="${esc(v.status)}">
+    <td>${esc(when(v.placed_ts))}<div class="note">${Math.round((v.progress || 0) * 100)}% into the alert</div></td>
+    <td>${esc(alertName(v.key))}</td>
+    <td><span class="${esc(v.outcome)}">${esc(v.outcome)}</span> ${pts(v.amount)}</td>
+    <td>${esc(v.pct)}%</td>
+    <td>${res(v)}</td></tr>`).join("")}</tbody></table>`;
+}
+
 /** Compact card: balance, net gain, last 10 settled votes (one line each). */
 export function myVotesHtml(w) {
   if (!w) return "";
@@ -63,6 +84,7 @@ export function myVotesHtml(w) {
   return `<div class="card vote myvotescard"><h2>🗳️ My votes</h2>
     <div class="votebar"><span>BonusCheques <b>${pts(w.balance)}</b></span><span>Net <b class="${w.gain > 0 ? "won" : w.gain < 0 ? "lost" : ""}">${signed(w.gain || 0)}</b></span></div>
     ${rows ? `<div class="mvrows">${rows}</div>` : `<div class="note">No finished votes yet. Votes are counted when their alert ends.</div>`}
+    ${(w.votes || []).length ? `<details class="mylist"><summary>🗳️ All my votes (${w.votes.length})</summary>${voteListHtml(w.votes)}</details>` : ""}
     ${DISCLAIMER}
   </div>`;
 }
@@ -128,6 +150,7 @@ function render() {
     <div class="row2">${action}</div>
     ${msg ? `<div class="note votemsg">${esc(msg)}</div>` : ""}
     ${mine.length ? `<div class="myvotes"><div class="note">🎫 Your votes on this alert</div>${mine.map((v) => `<div class="myvote"><span class="${v.outcome}">${v.outcome}</span> ${pts(v.amount)} → ${pts(v.potential)} <span class="note">at ${v.pct}%</span></div>`).join("")}</div>` : ""}
+    ${wallet && wallet.votes.length ? `<details class="mylist"><summary>🗳️ All my votes (${wallet.votes.length})</summary>${voteListHtml(wallet.votes)}</details>` : ""}
     <details class="lb"><summary>🏆 Top forecasters</summary><div id="voteLb" class="note">Loading…</div></details>
     ${DISCLAIMER}
   </div>`;
