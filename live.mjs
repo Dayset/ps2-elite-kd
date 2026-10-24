@@ -1,4 +1,4 @@
-import { ready as i18nReady } from "./i18n.mjs";
+import { t as tr, ready as i18nReady } from "./i18n.mjs";
 await i18nReady;
 /**
  * 🎥 Live feed (live.html). Follows the first name's kills and deaths from the
@@ -9,6 +9,9 @@ await i18nReady;
  *     (newest on top; t587u: every kill is its own line, the same victim twice = two lines);
  *   - every line shows everything at once, in one shared column order: [⏱️][name][iVi][🏃][🦁][🛡️][🪖|🚜][☠️][🪳] (t580u: 🪳 last; t590u: 🤝🔀⚡ removed, 🚜 below the median infantry %),
  *     the emojis as fill meters (t564u, t573u) with glow tiers (t568u) — no flip, no skill graph;
+ *   - owner 2026-10-24: the weapon of the kill (white silhouette from assets/weapons) and a headshot mark sit in front of
+ *     the name; the emoji meters are pre-drawn images (live-sprites.mjs) with steady glows — the old per-frame SVG
+ *     filters and endless pulses used ~25 % of a 9850X3D;
  *   - a missing stat is an empty (hollow, t589u) emoji, never "—" (t567u); uncached opponents show all-empty emojis
  *     (Census K/D · KPM only in the name's hover title), then get a full 200-opponent Census
  *     fetch in the background (one at a time, newest first, #32) and upgrade in place.
@@ -19,8 +22,9 @@ import { normalizePlayer, playerMetrics, shownValue } from "./player-metrics.mjs
 import { isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261023-short1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
 import { traitPools, zergScore } from "./trait-scores.mjs?v=20261022-nbd1";
-import { infMedian, infDial } from "./tractor.mjs?v=20261024-trac1";
+import { infMedian, infDial, TRACTOR_EMOJI } from "./tractor.mjs?v=20261024-trac1";
 import { infantryShares } from "./infantry.mjs?v=20261023-short1";
+import { drawEmojiSprite, spriteCss } from "./live-sprites.mjs?v=20261024-lite1";
 
 export const FEED_MAX = 6; // victim lines below the centre (owner t575u: "back to 6 lines"; t563u had 3)
 export const VICTIM_LINES = FEED_MAX;
@@ -28,7 +32,8 @@ const CENSUS = `https://census.daybreakgames.com/s:${CENSUS_SERVICE_ID}/get/ps2:
 const STREAM = `wss://push.planetside2.com/streaming?environment=ps2&service-id=s:${CENSUS_SERVICE_ID}`;
 const FACTION = { 1: "vs", 2: "nc", 3: "tr", 4: "nso" };
 
-/** Death payload → { kind: "kill" | "death", opp, headshot } for target cid, or null (suicide / unrelated / no attacker). */
+/** Death payload → { kind: "kill" | "death", opp, headshot, weapon } for target cid, or null (suicide / unrelated / no attacker).
+ *  weapon = the killer's attacker_weapon_id (Census item id), null when Census sends none or "0". */
 export function classifyDeath(payload, cid) {
   if (!payload || payload.event_name !== "Death") return null;
   const att = String(payload.attacker_character_id || "0");
@@ -36,8 +41,10 @@ export function classifyDeath(payload, cid) {
   const me = String(cid);
   if (att === "0" || att === vic) return null;
   const headshot = String(payload.is_headshot) === "1";
-  if (att === me) return { kind: "kill", opp: vic, headshot };
-  if (vic === me) return { kind: "death", opp: att, headshot };
+  const w = String(payload.attacker_weapon_id || "0");
+  const weapon = /^[1-9]\d*$/.test(w) ? w : null;
+  if (att === me) return { kind: "kill", opp: vic, headshot, weapon };
+  if (vic === me) return { kind: "death", opp: att, headshot, weapon };
   return null;
 }
 
@@ -50,7 +57,7 @@ export function classifyDeath(payload, cid) {
  */
 export function feedPush(rows, ev, now = Date.now()) {
   const prev = rows.map((r, i) => (i === 0 && r.gap == null ? { ...r, gap: Math.max(0, now - r.at) } : r));
-  const row = { opp: ev.opp, last: ev.kind, headshot: !!ev.headshot, at: now, gap: null };
+  const row = { opp: ev.opp, last: ev.kind, headshot: !!ev.headshot, weapon: ev.weapon || null, at: now, gap: null };
   // Owner t587u: no dedupe — every kill is its own new line on top (the same victim twice = two lines, two times).
   const next = [row, ...prev];
   const dropped = next.length > FEED_MAX ? next[next.length - 1] : null;
@@ -157,6 +164,28 @@ export function unitGlow(col, v, driver) {
   if (col && col.id === "zerg" && (v == null || !Number.isFinite(v) || v > ZERG_GOLD_OVER)) return 3;
   return v == null ? 0 : glowTier(driver);
 }
+/**
+ * Glow halos per tier (t568u colours: green / blue / gold), drawn once into images (live-sprites.mjs). Owner
+ * 2026-10-24 "lagless or flat → flat": steady, no pulse; strength = the old pulse's rest value 60 % of the way to
+ * its peak, so they still read as glowing. blur in rem (like the old drop-shadows), alpha 0–1.
+ */
+export const LIVE_GLOWS = Object.freeze([
+  [{ blur: 0.24, color: [120, 230, 140], alpha: 0.54 }],
+  [{ blur: 0.35, color: [80, 170, 255], alpha: 0.85 }],
+  [{ blur: 0.28, color: [255, 226, 120], alpha: 0.98 }, { blur: 0.76, color: [255, 170, 30], alpha: 0.85 }],
+]);
+/**
+ * Weapon of a kill (owner 2026-10-24: "weapon like an icon"), from assets/weapons/catalog.json
+ * ({ items: { id: [name, category, faction, image_id] } }). Guns are shown as a flat silhouette in the text
+ * colour (kill-feed style); grenades, mines and abilities have card-like pictures, so they keep their colours.
+ * Returns { name, image, card } or null (no id, not in the catalog, or no picture).
+ */
+export const CARD_CATEGORIES = /grenade|explosive|abilit|gear|scanner|tool/i;
+export function weaponIcon(cat, id) {
+  const e = id && cat && cat.items && cat.items[id];
+  if (!Array.isArray(e) || !e[3]) return null;
+  return { name: String(e[0] || "").trim(), image: String(e[3]), card: CARD_CATEGORIES.test(String(e[1] || "")) };
+}
 /** Owner t568u glow tiers from the same driver: 3 = TOP (91+), 2 = HIGH (71–90), 1 = AVERAGE (51–70), 0 = none (50 and below or no value). */
 export function glowTier(d) {
   if (typeof d !== "number" || !Number.isFinite(d)) return 0;
@@ -189,7 +218,7 @@ export function overlayPush(state, ev, now = Date.now()) {
   const killer = stop(s.killer);
   const victims = s.victims.map((r, i) => (i === 0 ? stop(r) : r));
   if (ev.kind === "death") {
-    const k = { opp: ev.opp, last: "death", headshot: !!ev.headshot, at, gap: null };
+    const k = { opp: ev.opp, last: "death", headshot: !!ev.headshot, weapon: ev.weapon || null, at, gap: null };
     return { killer: k, victims, lastEv: k, gone: null };
   }
   const { rows } = feedPush(victims, ev, at);
@@ -268,17 +297,12 @@ function start() {
   const target = (new URLSearchParams(location.search).get("names") || "").split(",")[0].trim();
   const stateEl = $("liveState");
   const listEl = $("liveList");
-  // Owner t579u: the emoji outline filter (styles.css .lv-eo): grow the glyph's shape by OUTLINE_PX (2.25 px), paint it black,
-  // cut the glyph itself out → a ring that hugs the whole silhouette. Hidden, zero-size, added once.
-  // Owner t589u "hollow but standing-out shape": the unfilled copy (.lv-e0) runs through #lvHollow — its interior turns
-  // greyscale, darkened and FILL_DIM (18%) visible, and a HOLLOW_PX light-grey ring is drawn just inside the silhouette
-  // (the glyph's shape minus itself shrunk by HOLLOW_PX). The black outer outline (#lvOutline) and the solid filled copy are unchanged.
-  const HOLLOW_FILTER = `<filter id="lvHollow" x="-10%" y="-10%" width="120%" height="120%" color-interpolation-filters="sRGB"><feColorMatrix in="SourceGraphic" type="matrix" values="0.13 0.43 0.04 0 0 0.13 0.43 0.04 0 0 0.13 0.43 0.04 0 0 0 0 0 ${FILL_DIM} 0" result="dim"/><feMorphology in="SourceAlpha" operator="erode" radius="${HOLLOW_PX}" result="inner"/><feComposite in="SourceAlpha" in2="inner" operator="out" result="edge"/><feFlood flood-color="${HOLLOW_INK}" flood-opacity="1"/><feComposite in2="edge" operator="in" result="rim"/><feMerge><feMergeNode in="dim"/><feMergeNode in="rim"/></feMerge></filter>`;
-  if (listEl && !document.getElementById("lvOutline")) {
-    // t581u "more work on outlines": thicker, and smoothed — the dilated shape is softened a little and then cut
-    // back to a hard edge (blur + a steep alpha ramp), so the ring is even and round instead of blocky.
-    listEl.insertAdjacentHTML("beforebegin", `<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><filter id="lvOutline" x="-25%" y="-25%" width="150%" height="150%" color-interpolation-filters="sRGB"><feMorphology in="SourceAlpha" operator="dilate" radius="${OUTLINE_PX}" result="grown"/><feGaussianBlur in="grown" stdDeviation="0.7" result="soft"/><feComponentTransfer in="soft" result="even"><feFuncA type="linear" slope="4" intercept="-1"/></feComponentTransfer><feFlood flood-color="#000" flood-opacity="1"/><feComposite in2="even" operator="in" result="ring"/><feComposite in="ring" in2="SourceAlpha" operator="out"/></filter>${HOLLOW_FILTER}</svg>`);
-  }
+  // Owner 2026-10-24 (CPU): the t579u outline, the t589u hollow and the t568u glows are drawn once per size into
+  // images (live-sprites.mjs) instead of SVG filters re-run on every frame. One <style> holds them (class lv-x<i>
+  // per emoji); a resize that changes the emoji size or the screen density redraws them.
+  const spriteSheet = document.createElement("style");
+  spriteSheet.id = "lvSprites";
+  document.head.appendChild(spriteSheet);
   if (listEl) {
     listEl.style.setProperty("--lv-n", String(LIVE_COLS.length - 1)); // emoji units per line (owner t590u: 6)
     // Owner t584u: hover any emoji (or the iVi number) → its real value ("K/D 2.40", "Zerg 41", "Diff unknown").
@@ -369,56 +393,69 @@ function start() {
   /** 💩 after a confirmed padder's name (padding.mjs): hover explains the −10% iVi penalty. */
   const poopFor = (name) => (isPenalizedPadder(name) ? `<span class="poop-mark" title="${esc(POOP_TIP)}" aria-label="${esc(POOP_TIP)}">${POOP_MARK}</span>` : "");
   const fillOf = (c, v) => emojiFill(c, v, percentileOf(pools[c.id] || [], v));
-  /** Emoji unit (owner t564u): one-size emoji as a fill meter — a 25% copy under a solid copy clipped
-   *  from the bottom up to the fill. The number is in the hover title only.
-   *  Owner t567u: no value (not cached, assist bug, no 🪖 data) = the same emoji at 0% (only the faint copy), never "—". */
+  /** Emoji unit (owner t564u): one-size emoji as a fill meter — the empty (hollow, outlined) picture with the solid
+   *  picture on top, shown from the bottom up to the fill. The number is in the hover only.
+   *  Owner t567u: no value (not cached, assist bug, no 🪖 data) = the same emoji at 0% (only the hollow part), never "—". */
   /** Owner t568u (replaces the t562u single p95 glow): three glow tiers by the fill driver (glowTier) — lv-g3 gold, lv-g2 blue, lv-g1 green. */
   const driverOf = (c, v) => fillDriver(c, v, percentileOf(pools[c.id] || [], v));
   const goodOf = (c, v) => { const pc = percentileOf(pools[c.id] || [], v); return pc == null ? null : goodPct(c, pc); };
-  /** Owner t564u fill: where the emoji's ink sits inside its 1em box (line-height 1), measured once per emoji
-   *  in the viewer's own emoji font, so "p90" = the bottom 90% of the visible glyph, not of the box. */
-  const inkCache = new Map();
-  function inkOf(e) {
-    if (inkCache.has(e)) return inkCache.get(e);
-    let r = "";
+  /**
+   * Owner 2026-10-24 (CPU): each emoji is drawn once per size into images (live-sprites.mjs): lv-b = outline + hollow,
+   * lv-s = the solid emoji inside the lv-sw window (moved by --f, so the fill shows the bottom f% of the ink — t564u),
+   * lv-gl = the tier halo. Fills move these with transforms; nothing is re-filtered per frame.
+   */
+  const EMOJIS = [...new Set([...LIVE_COLS.map(shortLab), TRACTOR_EMOJI])]; // ⚔️ (an empty iVi), the meters and 🚜 (t590u)
+  const emojiIdx = new Map(EMOJIS.map((e, i) => [e, i]));
+  let spriteInfo = new Map(); // emoji → { w, h, it, ih, gp } in CSS px (ih drives the fill animation)
+  let spriteKey = "";
+  let spriteUrls = [];
+  const lenPx = (v, rem, em) => { const m = /^\s*([\d.]+)(rem|px|em)\s*$/.exec(String(v || "")); return m ? +m[1] * (m[2] === "rem" ? rem : m[2] === "em" ? em : 1) : null; };
+  async function drawSprites() {
+    if (!listEl) return;
     try {
-      const fam = (listEl && getComputedStyle(listEl).fontFamily) || "sans-serif";
-      // 1) where the baseline sits in a 100px, line-height 1 box (same CSS as .lv-e)
-      const box = document.createElement("b");
-      box.style.cssText = `position:absolute;left:-999px;top:0;visibility:hidden;display:block;font:400 100px/1 ${fam};white-space:nowrap`;
-      box.innerHTML = `${esc(e)}<i style="display:inline-block;width:0;height:0;vertical-align:baseline"></i>`;
-      document.body.appendChild(box);
-      const base = box.lastChild.getBoundingClientRect().top - box.getBoundingClientRect().top;
-      box.remove();
-      // 2) the glyph's real ink rows, drawn on a canvas on that baseline
-      const cv = document.createElement("canvas"); cv.width = 240; cv.height = 300;
-      const cx = cv.getContext("2d", { willReadFrequently: true });
-      cx.font = `400 100px ${fam}`; cx.textBaseline = "alphabetic"; cx.fillStyle = "#000"; cx.fillText(e, 40, 200);
-      const px = cx.getImageData(0, 0, 240, 300).data;
-      let top = -1, bot = -1;
-      for (let y = 0; y < 300; y++) { for (let x = 0; x < 240; x++) if (px[(y * 240 + x) * 4 + 3] > 24) { if (top < 0) top = y; bot = y; break; } }
-      if (top >= 0 && base > 0) r = ` style="--it:${(base - (200 - top)).toFixed(1)}%;--ih:${(bot + 1 - top).toFixed(1)}%"`;
-    } catch { /* default: the whole box */ }
-    inkCache.set(e, r);
-    return r;
+      const cs = getComputedStyle(listEl);
+      const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+      const fe = lenPx(cs.getPropertyValue("--lv-fe"), rem, parseFloat(cs.fontSize) || rem) || 24;
+      const dpr = Math.min(3, window.devicePixelRatio || 1);
+      const key = `${fe}|${dpr}`;
+      if (key === spriteKey) return;
+      spriteKey = key;
+      const glows = LIVE_GLOWS.map((ls) => ls.map((l) => ({ ...l, blur: l.blur * rem })));
+      const opts = { fontPx: fe, dpr, family: cs.fontFamily || "sans-serif", outlinePx: OUTLINE_PX, hollowPx: HOLLOW_PX, dim: FILL_DIM, hollowInk: HOLLOW_INK, glows };
+      const list = [];
+      for (const e of EMOJIS) list.push(await drawEmojiSprite(e, opts));
+      const urls = list.flatMap((x) => (x ? [x.base, x.solid, ...x.glow] : [])).filter((u) => u.startsWith("blob:"));
+      if (key !== spriteKey) { urls.forEach((u) => URL.revokeObjectURL(u)); return; } // a newer size won meanwhile
+      spriteSheet.textContent = spriteCss(list);
+      spriteUrls.forEach((u) => URL.revokeObjectURL(u));
+      spriteUrls = urls;
+      spriteInfo = new Map(EMOJIS.map((e, i) => [e, list[i]]));
+      listEl.classList.toggle("lv-nosprite", !list.some(Boolean));
+      startFills(); // lines drawn before the pictures were ready start filling now
+    } catch {
+      listEl.classList.add("lv-nosprite"); // no canvas: plain emojis (flat), the overlay still works
+    }
   }
-  const meter = (e, f) => `<span class="lv-em" aria-hidden="true"${inkOf(e)}><b class="lv-e lv-eo">${e}</b><b class="lv-e lv-e0">${e}</b>${f > 0 ? `<b class="lv-e lv-e1">${e}</b>` : ""}</span>`;
+  let spriteTimer = 0;
+  window.addEventListener("resize", () => { clearTimeout(spriteTimer); spriteTimer = setTimeout(drawSprites, 150); }); // size tiers, zoom
+  drawSprites();
+  const meter = (e) => `<span class="lv-em lv-x${emojiIdx.get(e)}" aria-hidden="true" data-e="${e}"><i class="lv-gl"></i><i class="lv-b"></i><i class="lv-sw"><i class="lv-s"></i></i></span>`;
   function unit(c, v) {
     const f = fillOf(c, v);
     if (f == null) { // no value: empty emoji, or (t569u) a full 🪳 — owner t577u: that full 🪳 gets the full top glow
       const u = unknownFill(c);
       const ug = unitGlow(c, null);
-      return `<span class="lv-u lv-fl lv-nil${ug ? ` lv-g${ug}` : ""}" style="--f:${u}" data-tip="${esc(tipText(c, null))}">${meter(shortLab(c), u)}</span>`;
+      return `<span class="lv-u lv-fl lv-nil${ug ? ` lv-g${ug}` : ""}" style="--f:${u}" data-tip="${esc(tipText(c, null))}">${meter(shortLab(c))}</span>`;
     }
     const iu = c.id === "inf" ? infUnit(v, infM) : null; // owner t590u: 🪖 above / 🚜 below the median, own fill + glow
-    if (iu) return `<span class="lv-u lv-fl${iu.glow ? ` lv-g${iu.glow}` : ""}${iu.tractor ? " lv-trac" : ""}" style="--f:${iu.fill}" data-tip="${esc(tipText(c, v))}">${meter(iu.emoji, iu.fill)}</span>`;
+    if (iu) return `<span class="lv-u lv-fl${iu.glow ? ` lv-g${iu.glow}` : ""}${iu.tractor ? " lv-trac" : ""}" style="--f:${iu.fill}" data-tip="${esc(tipText(c, v))}">${meter(iu.emoji)}</span>`;
     const g = unitGlow(c, v, driverOf(c, v)); // t568u tiers from the fill's own driver; t577u: 🪳 > 35 = gold
     const top = g ? ` lv-g${g}` : "";
-    return `<span class="lv-u lv-fl${top}" style="--f:${f}" data-tip="${esc(tipText(c, v))}">${meter(shortLab(c), f)}</span>`;
+    return `<span class="lv-u lv-fl${top}" style="--f:${f}" data-tip="${esc(tipText(c, v))}">${meter(shortLab(c))}</span>`;
   }
   /** iVi number, no ⚔️ (owner t560u), no comma, 4 digits of room (t564u); no iVi (t567u) = an empty 25% ⚔️ in the same box. */
   function iviText(c, v) {
-    if (fillOf(c, v) == null) return `<span class="lv-iv lv-nil" style="--f:0" data-tip="${esc(tipText(c, null))}">${meter(shortLab(c), 0)}</span>`;
+    if (fillOf(c, v) == null) return `<span class="lv-iv lv-nil" style="--f:0" data-tip="${esc(tipText(c, null))}">${meter(shortLab(c))}</span>`;
     return `<span class="lv-iv" data-tip="${esc(tipText(c, v))}">${cellText(c, v)}</span>`;
   }
   /** Name (faction colour) + 💩; a long name is cut with … at the end. Uncached: Census K/D · KPM in the hover. */
@@ -436,6 +473,23 @@ function start() {
     return `<td class="lv-nm">${nameHtml(p, tip)}</td>${IVI.map((c) => `<td class="lv-ivc">${iviText(c, vals[c.id])}</td>`).join("")}<td class="lv-ems"><span class="lv-row">${REST.map((c) => unit(c, vals[c.id])).join("")}</span></td>`;
   }
   const blank = `<td class="lv-nm"></td><td class="lv-ivc"></td><td class="lv-ems"><span class="lv-row"></span></td>`; // same box as a filled line, so the overlay never grows
+  /**
+   * Owner 2026-10-24: the weapon of the kill + a headshot mark, in front of the name (kill-feed style): on a victim
+   * line the weapon the tracked player used, on the killer line the weapon that killed them. Unknown weapon = empty slot.
+   * Hover: the weapon's name / "Headshot".
+   */
+  let catalog = null;
+  fetch("assets/weapons/catalog.json", { cache: "force-cache" })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((j) => { catalog = j; if (j && me && (st.killer || st.victims.length)) render(); })
+    .catch(() => {});
+  const HS_TIP = tr("live.hs", "Headshot");
+  function wpHtml(r) {
+    const w = r ? weaponIcon(catalog, r.weapon) : null;
+    const gun = w ? `<span class="lv-wi${w.card ? " lv-wi-c" : ""}" style="--wi:url('assets/weapons/${esc(w.image)}.webp')" data-tip="${esc(w.name)}"></span>` : `<span class="lv-wi"></span>`;
+    const hs = r && r.headshot ? `<span class="lv-hs" role="img" aria-label="${esc(HS_TIP)}" data-tip="${esc(HS_TIP)}"></span>` : `<span class="lv-hs lv-hs-0"></span>`; // empty slot keeps the guns lined up
+    return `<td class="lv-wp"><span class="lv-wpb">${gun}${hs}</span></td>`;
+  }
   /** Owner t562u juice: an upset = the winner's iVi percentile is ≥ UPSET_GAP points below the loser's → a short shake. */
   const UPSET_GAP = 50;
   const iviPct = (p) => { const c = IVI[0]; return p && p.cached ? goodOf(c, p.cached[c.id]) : null; };
@@ -454,7 +508,7 @@ function start() {
       if (fillStart.size > 300) fillStart.delete(fillStart.keys().next().value); // oldest first
     }
     const played = now - fillStart.get(key);
-    return played >= FILL_MS ? NO_FILL : { cls: " lv-fillin", sty: ` style="--fd:-${played}ms"` };
+    return played >= FILL_MS ? NO_FILL : { cls: " lv-fillin", sty: ` data-fk="${esc(key)}"` };
   }
   /** ⏱️ the newest event runs (ticks every second), every older line shows its frozen gap (owner t576u). */
   const ageHtml = (r) => (r.gap == null ? `<span class="lv-timer" data-at="${r.at}">${fmtGap(Date.now() - r.at)}</span>` : fmtGap(r.gap));
@@ -466,14 +520,14 @@ function start() {
     const isNew = r === fresh;
     const wP = iviPct(kill ? me : p), lP = iviPct(kill ? p : me);
     const upset = isNew && wP != null && lP != null && lP - wP >= UPSET_GAP ? " lv-upset" : "";
-    return `<tbody class="lv-ev lv-${where} lv-${r.last}${isNew ? " lv-new" : ""}${upset}${extra}${fi.cls}"${fi.sty}><tr><td class="lv-time">${ageHtml(r)}</td>${cells(p, false)}</tr></tbody>`;
+    return `<tbody class="lv-ev lv-${where} lv-${r.last}${isNew ? " lv-new" : ""}${upset}${extra}${fi.cls}"${fi.sty}><tr><td class="lv-time">${ageHtml(r)}</td>${wpHtml(r)}${cells(p, false)}</tr></tbody>`;
   }
-  const emptyLine = (where) => `<tbody class="lv-ev lv-${where} lv-empty"><tr><td class="lv-time"></td>${blank}</tr></tbody>`;
+  const emptyLine = (where) => `<tbody class="lv-ev lv-${where} lv-empty"><tr><td class="lv-time"></td>${wpHtml(null)}${blank}</tr></tbody>`;
   function render() {
     if (!listEl) return;
     // Owner t575u: a fixed grid of 1 + 1 + VICTIM_LINES lines — killer above, the tracked player in the centre,
     // the players they killed below (newest on top). Empty slots keep their height, so the overlay never changes size.
-    const cols = `<colgroup><col class="lv-c-time"><col class="lv-c-nm"><col class="lv-c-iv"><col class="lv-c-em"></colgroup>`;
+    const cols = `<colgroup><col class="lv-c-time"><col class="lv-c-wp"><col class="lv-c-nm"><col class="lv-c-iv"><col class="lv-c-em"></colgroup>`;
     const newest = st.lastEv || null;
     fresh = newest && newest !== shown ? newest : null;
     shown = newest;
@@ -482,9 +536,42 @@ function start() {
     goneShown = st.gone;
     const atk = st.killer ? oppLine(st.killer, "atk") : fade ? oppLine(st.gone, "atk", " lv-out") : emptyLine("atk");
     const fm = fillIn(`me:${me.cached ? "c" : "u"}`);
-    const mid = `<tbody class="lv-ev lv-me${fm.cls}"${fm.sty}><tr><td class="lv-time"></td>${cells(me, true)}</tr></tbody>`;
+    const mid = `<tbody class="lv-ev lv-me${fm.cls}"${fm.sty}><tr><td class="lv-time"></td>${wpHtml(null)}${cells(me, true)}</tr></tbody>`;
     const low = Array.from({ length: VICTIM_LINES }, (_, i) => (st.victims[i] ? oppLine(st.victims[i], "vic") : emptyLine("vic"))).join("");
     listEl.innerHTML = cols + atk + mid + low;
+    startFills();
+  }
+  const reduced = () => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
+  /** Move one unit's fill from level `from` to its own --f over `ms` (`played` ms already gone), by moving the solid
+   *  picture's window down and the picture back up (transforms only: the browser animates them without repainting).
+   *  glowLate (t578u/t588u): the tier halo stays off for the first 80% and fades in at the end. */
+  function animateFill(u, from, ms, played = 0, glowLate = false) {
+    const em = u.querySelector(".lv-em");
+    const s = em && spriteInfo.get(em.dataset.e);
+    if (!s || typeof em.animate !== "function") return;
+    const to = +u.style.getPropertyValue("--f") || 0;
+    const y = (f) => Math.round(((s.ih * (100 - f)) / 100) * 100) / 100;
+    const opt = { duration: ms, delay: -played, easing: EASE };
+    if (from !== to) {
+      em.querySelector(".lv-sw").animate([{ transform: `translateY(${y(from)}px)` }, { transform: `translateY(${y(to)}px)` }], opt);
+      em.querySelector(".lv-s").animate([{ transform: `translateY(${-y(from)}px)` }, { transform: `translateY(${-y(to)}px)` }], opt);
+    }
+    if (glowLate && / lv-g[123]\b/.test(` ${u.className}`)) em.querySelector(".lv-gl").animate([{ opacity: 0 }, { opacity: 0, offset: 0.8, easing: "ease-out" }, { opacity: 1 }], { duration: ms, delay: -played });
+  }
+  /** Owner t578u: lines that just appeared (tbody.lv-fillin, data-fk = their fill key) fill 0 → level over FILL_MS,
+   *  continuing where they were (the time already played). Runs after every render and once the pictures are drawn. */
+  function startFills() {
+    if (!listEl || reduced()) return;
+    const now = Date.now();
+    for (const tb of listEl.querySelectorAll("tbody.lv-fillin")) {
+      const played = now - (fillStart.get(tb.dataset.fk) || now);
+      if (played >= FILL_MS) continue;
+      for (const u of tb.querySelectorAll(".lv-u")) {
+        const sw = u.querySelector(".lv-sw");
+        if (sw && !sw.getAnimations().length) animateFill(u, 0, FILL_MS, played, true);
+      }
+    }
   }
   setInterval(() => {
     if (!listEl) return;
@@ -553,12 +640,9 @@ function start() {
   };
   function easeMe(before) {
     const t = listEl && listEl.querySelector("tbody.lv-me");
-    if (!before || !t || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const us = [...t.querySelectorAll(".lv-u")];
-    const to = us.map((u) => u.style.getPropertyValue("--f"));
-    us.forEach((u, i) => { if (before.f[i] !== "" && before.f[i] != null) u.style.setProperty("--f", before.f[i]); });
-    void t.offsetWidth; // start from the old fill
-    us.forEach((u, i) => { u.classList.add("lv-ease"); u.style.setProperty("--f", to[i]); });
+    if (!before || !t || reduced()) return;
+    // the new fill eases in from the old one (owner t586u), 1.2 s, transforms only
+    [...t.querySelectorAll(".lv-u")].forEach((u, i) => { if (before.f[i] !== "" && before.f[i] != null) animateFill(u, +before.f[i], 1200); });
     const iv = t.querySelector(".lv-iv:not(.lv-nil)");
     const end = iv ? +iv.textContent : NaN;
     if (!iv || !Number.isFinite(end) || !Number.isFinite(before.ivi) || before.ivi === end) return;

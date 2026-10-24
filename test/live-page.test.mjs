@@ -4,7 +4,8 @@ import { readFileSync } from "node:fs";
 import { buildLive } from "../scripts/build-live.mjs";
 import { infMedian, infDial, isTractor, tractorHint } from "../tractor.mjs";
 import { autoMarksHtml, tractorMark } from "../auto-marks.mjs";
-import { infUnit, classifyDeath, feedPush, censusStats, cellText, fmtGap, LIVE_COLS, tipText, ME_REFRESH_MS, mergeFresh, FEED_MAX, emojiFill, fillDriver, glowTier, unknownFill, FULL_AT, EMPTY_AT, goodPct, FILL_DIM, HOLLOW_PX, overlayPush, overlayRows, VICTIM_LINES, eventAt, EVENT_SKEW_MS, unitGlow, ZERG_GOLD_OVER, OUTLINE_PX } from "../live.mjs";
+import { infUnit, classifyDeath, feedPush, censusStats, cellText, fmtGap, LIVE_COLS, tipText, ME_REFRESH_MS, mergeFresh, FEED_MAX, emojiFill, fillDriver, glowTier, unknownFill, FULL_AT, EMPTY_AT, goodPct, FILL_DIM, HOLLOW_PX, overlayPush, overlayRows, VICTIM_LINES, eventAt, EVENT_SKEW_MS, unitGlow, ZERG_GOLD_OVER, OUTLINE_PX, LIVE_GLOWS, weaponIcon, CARD_CATEGORIES } from "../live.mjs";
+import { disk, dilate, erode, blurAlpha, inkBox, outlineMasks, hollowRim, spriteCss } from "../live-sprites.mjs";
 
 const root = new URL("../", import.meta.url);
 
@@ -15,8 +16,12 @@ test("live.html is built from index.html (run node scripts/build-live.mjs)", () 
 
 test("classifyDeath: kill, death, suicide, unrelated", () => {
   const d = (att, vic, hs = "0") => ({ event_name: "Death", attacker_character_id: att, character_id: vic, is_headshot: hs });
-  assert.deepEqual(classifyDeath(d("1", "2", "1"), "1"), { kind: "kill", opp: "2", headshot: true });
-  assert.deepEqual(classifyDeath(d("2", "1"), "1"), { kind: "death", opp: "2", headshot: false });
+  assert.deepEqual(classifyDeath(d("1", "2", "1"), "1"), { kind: "kill", opp: "2", headshot: true, weapon: null });
+  assert.deepEqual(classifyDeath(d("2", "1"), "1"), { kind: "death", opp: "2", headshot: false, weapon: null });
+  // 2026-10-24: the killer's weapon (Census item id) rides along; "0" / missing / junk = no weapon
+  assert.equal(classifyDeath({ ...d("1", "2"), attacker_weapon_id: "80" }, "1").weapon, "80");
+  assert.equal(classifyDeath({ ...d("2", "1"), attacker_weapon_id: "0" }, "1").weapon, null);
+  assert.equal(classifyDeath({ ...d("2", "1"), attacker_weapon_id: "x7" }, "1").weapon, null);
   assert.equal(classifyDeath(d("1", "1"), "1"), null);
   assert.equal(classifyDeath(d("0", "1"), "1"), null);
   assert.equal(classifyDeath(d("3", "4"), "1"), null);
@@ -88,9 +93,10 @@ test("emoji fill meter (owner t564u): one size, p50 and below empty / p70.5 half
   assert.equal(emojiFill(act, NaN, 50), null);
   assert.equal(FILL_DIM, 0.18); // t589u: dark greyscale interior
   const css = readFileSync(new URL("styles.css", root), "utf8");
-  assert.match(css, /\.lv-e0 \{ filter: url\(#lvHollow\); \}/); // t589u: hollow silhouette, not a 25% copy
-  assert.doesNotMatch(css, /\.lv-e0 \{ opacity/);
-  assert.match(css, /\.lv-e1 \{ clip-path: inset\(calc\(var\(--it, 0%\) \+ var\(--ih, 100%\) \* \(100 - var\(--f, 0\)\) \/ 100\) -25% -25% -25%\); \}/); // fills from the bottom of the ink
+  // the solid picture shows the bottom --f % of the ink: its window sits on the ink (--it/--ih) and moves down by (100 − f)%
+  assert.match(css, /\.lv-sw \{ left: 0; right: 0; top: var\(--it, 0px\); height: var\(--ih, 100%\); overflow: hidden; transform: translateY\(calc\(var\(--ih, 0px\) \* \(100 - var\(--f, 0\)\) \/ 100\)\); \}/);
+  assert.match(css, /\.lv-s \{[^}]*transform: translateY\(calc\(var\(--ih, 0px\) \* \(var\(--f, 0\) - 100\) \/ 100\)\); \}/); // the picture itself stays put
+  assert.doesNotMatch(css, /filter: url\(#lv/); // 2026-10-24: no SVG filters re-run per frame
   assert.match(css, /\.lv-ivc > \.lv-iv \{ display: inline-block; width: 4ch; font-variant-numeric: tabular-nums;/); // t564u: 4-digit room
   assert.doesNotMatch(css, /scale\(var\(--s/); // no rank-based sizes any more
   const js = readFileSync(new URL("live.mjs", root), "utf8");
@@ -176,12 +182,12 @@ test("overlay layout (owner t575u): no flip, ONE column order on every line, fix
   assert.doesNotMatch(js, /❯|lv-arrow|<thead/);
   // one shared order: [time][name][iVi][🏃🦁🛡️🪖🪳] — the same cells() for killer, player and victims
   assert.match(js, /return `<td class="lv-nm">\$\{nameHtml\(p, tip\)\}<\/td>\$\{IVI\.map[^\n]*<td class="lv-ems"><span class="lv-row">\$\{REST\.map/);
-  assert.match(js, /<tr><td class="lv-time">\$\{ageHtml\(r\)\}<\/td>\$\{cells\(p, false\)\}<\/tr>/);
-  assert.match(js, /<tbody class="lv-ev lv-me\$\{fm\.cls\}"\$\{fm\.sty\}><tr><td class="lv-time"><\/td>\$\{cells\(me, true\)\}<\/tr><\/tbody>/);
+  assert.match(js, /<tr><td class="lv-time">\$\{ageHtml\(r\)\}<\/td>\$\{wpHtml\(r\)\}\$\{cells\(p, false\)\}<\/tr>/);
+  assert.match(js, /<tbody class="lv-ev lv-me\$\{fm\.cls\}"\$\{fm\.sty\}><tr><td class="lv-time"><\/td>\$\{wpHtml\(null\)\}\$\{cells\(me, true\)\}<\/tr><\/tbody>/);
   assert.match(js, /Array\.from\(\{ length: VICTIM_LINES \}, \(_, i\) => \(st\.victims\[i\] \? oppLine\(st\.victims\[i\], "vic"\) : emptyLine\("vic"\)\)\)/);
   assert.match(js, /listEl\.innerHTML = cols \+ atk \+ mid \+ low;/);
   assert.match(js, /const blank = `<td class="lv-nm"><\/td><td class="lv-ivc"><\/td><td class="lv-ems"><span class="lv-row"><\/span><\/td>`;/); // empty = same box
-  assert.deepEqual([...js.matchAll(/<col class="(lv-c-[a-z]+)">/g)].map((m) => m[1]), ["lv-c-time", "lv-c-nm", "lv-c-iv", "lv-c-em"]);
+  assert.deepEqual([...js.matchAll(/<col class="(lv-c-[a-z]+)">/g)].map((m) => m[1]), ["lv-c-time", "lv-c-wp", "lv-c-nm", "lv-c-iv", "lv-c-em"]);
   // fixed size: fixed layout, fixed line height, fixed column widths
   assert.match(css, /\.live-table \{[^}]*table-layout: fixed;/);
   assert.match(css, /\.live-table td \{[^}]*height: var\(--lv-ez\);[^}]*overflow: hidden;/);
@@ -218,30 +224,42 @@ test("cellText: digits, floor at zero, missing", () => {
 
 test("LIVE juice (owner t562u): pop-in row, flip switch, top-rank glow, upset shake — never resizes, honours reduced motion", () => {
   const css = readFileSync(new URL("styles.css", root), "utf8");
-  for (const k of ["lvPop", "lvFlashK", "lvFlashD", "lvFlashU", "lvShake", "lvGlow", "lvGlow1", "lvGlow2", "lvSpark"]) assert.match(css, new RegExp(`@keyframes ${k} `));
+  for (const k of ["lvPop", "lvFlash", "lvShake"]) assert.match(css, new RegExp(`@keyframes ${k} `));
+  // owner 2026-10-24 "lagless or flat → flat": steady glows and sparkle — the endless pulses were most of the CPU
+  for (const k of ["lvGlow", "lvGlow1", "lvGlow2", "lvSpark", "lvFlashK", "lvFlashD", "lvFlashU"]) assert.doesNotMatch(css, new RegExp(`@keyframes ${k} `));
+  const liveCss = css.slice(css.indexOf("/* ---------- 🎥 Live"), css.indexOf(".fac-vs"));
+  assert.deepEqual([...liveCss.matchAll(/animation:[^;]*infinite/g)].map((m) => m[0]), ["animation: liveBlink 1.2s ease-in-out infinite"]); // only the "waiting…" dot
+  assert.doesNotMatch(liveCss, /animation[^;]*box-shadow|@keyframes [^{]*\{[^}]*box-shadow/); // flashes fade by opacity, no repaint per frame
   assert.doesNotMatch(css, /rotateX/); // owner t575u: no flip any more
-  assert.match(css, /prefers-reduced-motion: reduce\) \{ \.lv-ev\.lv-new > tr > td/);
-  assert.match(css, /prefers-reduced-motion: reduce\) \{ \.lv-g1 > \.lv-em, \.lv-g2 > \.lv-em, \.lv-g3 > \.lv-em \{ animation: none; \} \.lv-g3::after \{ animation: none; opacity: 0\.85; \} \}/); // static glow, no pulse
-  assert.match(css, /\.lv-g3::after \{ content: "✦"; position: absolute;/); // sparkle never takes layout room
+  assert.match(css, /prefers-reduced-motion: reduce\) \{ \.lv-ev\.lv-new > tr > td, \.lv-ev\.lv-new > tr > td::after/);
+  assert.match(css, /\.lv-g3::after \{ content: "✦"; position: absolute;[^}]*opacity: 0\.85; \}/); // sparkle never takes layout room, never moves
+  // the t568u tier colours, steady: green / blue / gold (+ an orange outer halo on gold)
+  assert.equal(LIVE_GLOWS.length, 3);
+  assert.deepEqual(LIVE_GLOWS.map((t) => t[0].color), [[120, 230, 140], [80, 170, 255], [255, 226, 120]]);
+  assert.deepEqual(LIVE_GLOWS[2][1].color, [255, 170, 30]);
+  for (const t of LIVE_GLOWS) for (const l of t) assert.ok(l.blur > 0 && l.blur < 1 && l.alpha > 0.5 && l.alpha <= 1);
   assert.doesNotMatch(css, /lv-top\b/);
   const js = readFileSync(new URL("live.mjs", root), "utf8");
   assert.match(js, /const g = unitGlow\(c, v, driverOf\(c, v\)\);/); // tiers use the fill's own driver (t577u: 🪳 > 35 gold)
   assert.doesNotMatch(js, /TOP_PCT|lv-top\b/);
   assert.match(js, /const UPSET_GAP = 50;/);
   assert.match(js, /fresh = newest && newest !== shown \? newest : null;/); // a re-render never replays the entrance
-  assert.match(css, /\.lv-ev\.lv-new\.lv-death > tr > td \{ animation-name: lvPop, lvFlashD; \}/); // new killer: red flash
-  assert.match(css, /\.lv-ev\.lv-new > tr > td \{ animation: lvPop [^;]*lvFlashK/); // new victim: pop + green flash
+  assert.match(css, /\.lv-ev\.lv-new\.lv-death > tr > td::after \{ background: rgba\(229, 57, 53, 0\.28\); \}/); // new killer: red flash
+  assert.match(css, /\.lv-ev\.lv-new > tr > td \{ animation: lvPop /); // new line: pop …
+  assert.match(css, /\.lv-ev\.lv-new > tr > td::after \{[^}]*background: rgba\(67, 160, 71, 0\.32\); animation: lvFlash 0\.8s ease-out; \}/); // … + green flash
+  assert.match(css, /\.lv-ev\.lv-new\.lv-upset > tr > td::after \{ background: rgba\(255, 193, 7, 0\.4\); animation-duration: 1\.1s; \}/); // upset: gold
 });
 
 test("no value = empty 0% emoji, never a dash (owner t567u): stats, iVi, uncached players, skeleton row", () => {
   const js = readFileSync(new URL("live.mjs", root), "utf8");
   const css = readFileSync(new URL("styles.css", root), "utf8");
-  assert.match(js, /const u = unknownFill\(c\);\n\s*const ug = unitGlow\(c, null\);\n\s*return `<span class="lv-u lv-fl lv-nil[^\n]*style="--f:\$\{u\}"[^\n]*\$\{meter\(shortLab\(c\), u\)\}/); // empty emoji (no "—"); t577u: unknown 🪳 = full + gold
+  assert.match(js, /const u = unknownFill\(c\);\n\s*const ug = unitGlow\(c, null\);\n\s*return `<span class="lv-u lv-fl lv-nil[^\n]*style="--f:\$\{u\}"[^\n]*\$\{meter\(shortLab\(c\)\)\}/); // empty emoji (no "—"); t577u: unknown 🪳 = full + gold
   // owner t569u: unknown 🪳 Zerg = full roach (display only); every other missing stat stays empty
   for (const c of LIVE_COLS) assert.equal(unknownFill(c), c.id === "zerg" ? 100 : 0, c.id);
   assert.equal(emojiFill(LIVE_COLS.find((c) => c.id === "zerg"), null, 50), null); // the value itself stays unknown
-  assert.match(js, /if \(fillOf\(c, v\) == null\) return `<span class="lv-iv lv-nil" style="--f:0"[^`]*\$\{meter\(shortLab\(c\), 0\)\}/); // empty ⚔️ in the iVi box
-  assert.match(js, /\$\{f > 0 \? `<b class="lv-e lv-e1">/); // 0% = only the 25% copy
+  assert.match(js, /if \(fillOf\(c, v\) == null\) return `<span class="lv-iv lv-nil" style="--f:0"[^`]*\$\{meter\(shortLab\(c\)\)\}/); // empty ⚔️ in the iVi box
+  // one meter = halo, hollow+outline picture, solid picture in its window (0% fill = the window sits below the ink)
+  assert.match(js, /const meter = \(e\) => `<span class="lv-em lv-x\$\{emojiIdx\.get\(e\)\}" aria-hidden="true" data-e="\$\{e\}"><i class="lv-gl"><\/i><i class="lv-b"><\/i><i class="lv-sw"><i class="lv-s"><\/i><\/i><\/span>`;/);
   assert.match(js, /const vals = p\.cached \|\| \{\};/); // uncached too
   assert.match(js, /IVI\.map\(\(c\) => `<td class="lv-ivc">\$\{iviText\(c, vals\[c\.id\]\)\}<\/td>`\)/);
   assert.match(js, /REST\.map\(\(c\) => unit\(c, vals\[c\.id\]\)\)/);
@@ -312,30 +330,49 @@ test("🪳 Zerg gold (owner t577u): raw Zerg above 35 = top gold glow whatever i
   assert.match(js, /const ug = unitGlow\(c, null\);\n\s*return `<span class="lv-u lv-fl lv-nil\$\{ug \? ` lv-g\$\{ug\}` : ""\}"/);
 });
 
-test("emoji fill grows 0 → level over 5 s when a line appears (owner t578u); glow fades in late; reduced motion = final fill", () => {
+test("emoji fill grows 0 → level over 10 s when a line appears (owner t578u/t588u); glow fades in late; reduced motion = final fill", () => {
   const js = readFileSync(new URL("live.mjs", root), "utf8");
   const css = readFileSync(new URL("styles.css", root), "utf8");
   assert.match(css, /@property --f \{ syntax: "<number>"; inherits: true; initial-value: 0; \}/);
-  assert.match(css, /@property --gw \{ syntax: "<number>"; inherits: true; initial-value: 1; \}/);
-  assert.match(css, /\.lv-fillin \.lv-u \{ animation: lvFill 10s cubic-bezier\([^)]*\) var\(--fd, 0ms\) both; \}/);
-  assert.match(css, /@keyframes lvFill \{ 0% \{ --f: 0; --gw: 0; \} 80% \{ --gw: 0;/);
-  assert.match(css, /prefers-reduced-motion: reduce\) \{ \.lv-fillin \.lv-u \{ animation: none; \} \}/);
-  assert.match(css, /rgba\(255, 214, 90, calc\(0\.95 \* var\(--gw, 1\)\)\)/); // glow scaled by --gw
+  assert.doesNotMatch(css, /--gw|lv-fillin \.lv-u \{ animation/); // 2026-10-24: no per-frame custom-property animation
   assert.match(js, /const FILL_MS = 10000;/);
-  assert.match(js, /return played >= FILL_MS \? NO_FILL : \{ cls: " lv-fillin", sty: ` style="--fd:-\$\{played\}ms"` \};/); // re-renders continue, never restart
+  assert.match(js, /return played >= FILL_MS \? NO_FILL : \{ cls: " lv-fillin", sty: ` data-fk="\$\{esc\(key\)\}"` \};/); // re-renders continue, never restart
+  assert.match(js, /const played = now - \(fillStart\.get\(tb\.dataset\.fk\) \|\| now\);/);
   assert.match(js, /fillIn\(`\$\{r\.opp\}@\$\{r\.at\}:\$\{\(people\.get\(r\.opp\) \|\| \{\}\)\.cached \? "c" : "u"\}`\)/); // stats arriving later = a new fill
   assert.match(js, /fillIn\(`me:\$\{me\.cached \? "c" : "u"\}`\)/);
+  // transforms on the window and the picture (the browser moves them without repainting), the time already played as a negative delay
+  assert.match(js, /const opt = \{ duration: ms, delay: -played, easing: EASE \};/);
+  assert.match(js, /em\.querySelector\("\.lv-sw"\)\.animate\(\[\{ transform: `translateY\(\$\{y\(from\)\}px\)` \}, \{ transform: `translateY\(\$\{y\(to\)\}px\)` \}\], opt\);/);
+  assert.match(js, /em\.querySelector\("\.lv-gl"\)\.animate\(\[\{ opacity: 0 \}, \{ opacity: 0, offset: 0\.8, easing: "ease-out" \}, \{ opacity: 1 \}\]/); // halo off for 80%, then in
+  assert.match(js, /function startFills\(\) \{\n\s*if \(!listEl \|\| reduced\(\)\) return;/); // reduced motion = the final fill at once
+  assert.match(js, /startFills\(\); \/\/ lines drawn before the pictures were ready start filling now/);
+  assert.match(js, /listEl\.innerHTML = cols \+ atk \+ mid \+ low;\n\s*startFills\(\);/);
 });
 
-test("emoji outline (owner t579u): a dark ring that hugs the whole silhouette, the faint part too; no layout change", () => {
-  const js = readFileSync(new URL("live.mjs", root), "utf8");
-  const css = readFileSync(new URL("styles.css", root), "utf8");
+test("emoji outline (owner t579u/t581u): a dark ring that hugs the whole silhouette, round and even; the emoji itself untouched", () => {
   assert.ok(OUTLINE_PX >= 2 && OUTLINE_PX <= 2.5); // t581u: bolder
-  assert.match(js, /<feGaussianBlur in="grown" stdDeviation="0\.7" result="soft"\/><feComponentTransfer in="soft" result="even"><feFuncA type="linear" slope="4" intercept="-1"\/>/); // even, round edge
-  assert.match(js, /<b class="lv-e lv-eo">\$\{e\}<\/b><b class="lv-e lv-e0">/); // outline copy under the faint + filled copies
-  assert.match(js, /<feMorphology in="SourceAlpha" operator="dilate" radius="\$\{OUTLINE_PX\}"/);
-  assert.match(js, /<feComposite in="ring" in2="SourceAlpha" operator="out"\/>/); // ring only, the emoji itself stays untouched
-  assert.match(css, /\.lv-eo \{ filter: url\(#lvOutline\); \}/);
+  // a 10 × 10 square in a 30 × 30 image
+  const w = 30, h = 30, a = new Uint8ClampedArray(w * h);
+  for (let y = 10; y < 20; y++) for (let x = 10; x < 20; x++) a[y * w + x] = 255;
+  assert.deepEqual(disk(1).length / 2, 5); // centre + 4 neighbours
+  const g = dilate(a, w, h, 2);
+  assert.equal(g[8 * w + 15], 255); // 2 px above the top edge
+  assert.equal(g[7 * w + 15], 0); // 3 px: outside
+  assert.equal(g[8 * w + 8], 0); // the corner is round, not square
+  const { ring, shape } = outlineMasks(a, w, h, OUTLINE_PX, 0.7);
+  assert.equal(ring[15 * w + 15], 0); // the emoji itself is cut out of the ring
+  assert.ok(ring[8 * w + 15] > 200); // the ring sits just outside the edge
+  assert.equal(ring[2 * w + 15], 0); // and hugs it
+  assert.ok(shape[15 * w + 15] === 255 && shape[8 * w + 15] > 200); // silhouette (for the halo) = emoji + ring
+  assert.deepEqual(inkBox(a, w, h), { x: 10, y: 10, w: 10, h: 10 });
+  assert.equal(inkBox(new Uint8ClampedArray(9), 3, 3), null);
+  const b = blurAlpha(a, w, h, 1);
+  assert.ok(b[15 * w + 15] > 250 && b[9 * w + 15] > 0 && b[9 * w + 15] < 128); // soft edge, solid middle
+  const js = readFileSync(new URL("live.mjs", root), "utf8");
+  assert.match(js, /outlinePx: OUTLINE_PX, hollowPx: HOLLOW_PX, dim: FILL_DIM, hollowInk: HOLLOW_INK/);
+  const sp = readFileSync(new URL("live-sprites.mjs", root), "utf8");
+  assert.match(sp, /outlineMasks\(a, w, h, outlinePx \* dpr, 0\.7 \* dpr\)/); // t581u: softened by 0.7 px, then a hard edge
+  assert.match(sp, /grown\[i\] \* 4 - 255/); // feFuncA slope 4, intercept −1
 });
 
 test("🪖 / 🚜 infantry dial (owner t590u): median from the data, 🪖 fills M → 100, 🚜 fills M → M/2, glow follows the fill", () => {
@@ -365,7 +402,8 @@ test("🪖 / 🚜 infantry dial (owner t590u): median from the data, 🪖 fills 
   assert.equal(infUnit(null, m), null);
   const js = readFileSync(new URL("live.mjs", root), "utf8");
   assert.match(js, /infM = infMedian\(pools\.inf\);/);
-  assert.match(js, /meter\(iu\.emoji, iu\.fill\)/);
+  assert.match(js, /style="--f:\$\{iu\.fill\}"[^\n]*\$\{meter\(iu\.emoji\)\}/); // own emoji, own fill
+  assert.match(js, /const EMOJIS = \[\.\.\.new Set\(\[\.\.\.LIVE_COLS\.map\(shortLab\), TRACTOR_EMOJI\]\)\];/); // 🚜 gets its pictures too
   // main site (t591u–t593u): a static 🚜 NAME mark next to 🪦 (auto-marks.mjs), Infantry cell unchanged, 2-line hint
   assert.equal(isTractor(84.9, m), true);
   assert.equal(isTractor(85, m), false);
@@ -393,14 +431,61 @@ test("🪖 / 🚜 infantry dial (owner t590u): median from the data, 🪖 fills 
 });
 
 test("hollow empty part (owner t589u): light inner ring inside the black outline, dark greyscale interior, filled part untouched", () => {
-  const js = readFileSync(new URL("live.mjs", root), "utf8");
   assert.ok(HOLLOW_PX >= 1.5 && HOLLOW_PX <= 2);
   assert.ok(FILL_DIM >= 0.15 && FILL_DIM <= 0.2);
-  assert.match(js, /<filter id="lvHollow"[^`]*type="matrix" values="0\.13 0\.43 0\.04 0 0 0\.13 0\.43 0\.04 0 0 0\.13 0\.43 0\.04 0 0 0 0 0 \$\{FILL_DIM\} 0"/); // greyscale, darkened
-  assert.match(js, /<feMorphology in="SourceAlpha" operator="erode" radius="\$\{HOLLOW_PX\}" result="inner"\/><feComposite in="SourceAlpha" in2="inner" operator="out" result="edge"\/>/); // ring just inside
-  assert.match(js, /<feMergeNode in="dim"\/><feMergeNode in="rim"\/>/);
-  assert.match(js, /\$\{HOLLOW_FILTER\}<\/svg>/); // in the same hidden svg as #lvOutline
-  assert.match(js, /<b class="lv-e lv-e1">\$\{e\}<\/b>/); // the filled copy has no filter: full colour, solid
+  const w = 30, h = 30, a = new Uint8ClampedArray(w * h);
+  for (let y = 10; y < 20; y++) for (let x = 10; x < 20; x++) a[y * w + x] = 255;
+  assert.equal(erode(a, w, h, 2)[11 * w + 15], 0); // 1 px in: eroded away
+  assert.equal(erode(a, w, h, 2)[12 * w + 15], 255); // 2 px in: kept
+  const rim = hollowRim(a, w, h, HOLLOW_PX);
+  assert.equal(rim[10 * w + 15], 255); // a 1.75 px ring just inside the edge: the first pixel fully …
+  assert.equal(rim[11 * w + 15], 191); // … the second at 75 % …
+  assert.equal(rim[15 * w + 15], 0); // … not the middle
+  assert.equal(rim[9 * w + 15], 0); // … and nothing outside
+  const sp = readFileSync(new URL("live-sprites.mjs", root), "utf8");
+  assert.match(sp, /const g = 0\.13 \* rgba\[i\] \+ 0\.43 \* rgba\[i \+ 1\] \+ 0\.04 \* rgba\[i \+ 2\]; \/\/ #lvHollow colour matrix/); // greyscale, darkened
+  assert.match(sp, /over\(base, i, g, g, g, \(dim \* a\[p\]\) \/ 255\)/); // FILL_DIM visible
+  assert.match(sp, /const solidCv = put\(rgba, w, h\);/); // the filled part: the emoji as it is, full colour
+  // one stylesheet: sizes + pictures per emoji, halos per tier
+  const css = spriteCss([{ w: 30, h: 28, it: 4, ih: 20, gp: 6, base: "blob:b", solid: "blob:s", glow: ["blob:g1", "blob:g2", "blob:g3"] }, null]);
+  assert.match(css, /\.lv-x0\{--sw:30px;--sh:28px;--it:4px;--ih:20px;--gp:6px\}/);
+  assert.match(css, /\.lv-x0>\.lv-b\{background-image:url\("blob:b"\)\}/);
+  assert.match(css, /\.lv-x0>\.lv-sw>\.lv-s\{background-image:url\("blob:s"\)\}/);
+  assert.match(css, /\.lv-g3>\.lv-x0>\.lv-gl\{background-image:url\("blob:g3"\)\}/);
+  assert.doesNotMatch(css, /lv-x1/);
+});
+
+test("weapon + headshot (owner 2026-10-24): kill-feed icons in front of the name, from our own weapon pictures", () => {
+  const cat = { items: { 80: ["Orion VS54", "LMG", 1, 6030], 44505: ["Frag Grenade", "Grenade", 0, 87006], 432: ["C-4", "Explosive", 0, 89142], 7: ["No picture", "LMG", 1, 0] } };
+  assert.deepEqual(weaponIcon(cat, "80"), { name: "Orion VS54", image: "6030", card: false }); // a gun → silhouette
+  assert.equal(weaponIcon(cat, "44505").card, true); // grenade / explosive pictures keep their colours
+  assert.equal(weaponIcon(cat, "432").card, true);
+  assert.equal(weaponIcon(cat, "7"), null); // no picture
+  assert.equal(weaponIcon(cat, "999"), null);
+  assert.equal(weaponIcon(null, "80"), null);
+  assert.equal(weaponIcon(cat, null), null);
+  assert.ok(CARD_CATEGORIES.test("Infantry Abilities") && !CARD_CATEGORIES.test("Assault Rifle"));
+  // the real catalog: the common kill weapons have pictures in assets/weapons/
+  const real = JSON.parse(readFileSync(new URL("assets/weapons/catalog.json", root), "utf8"));
+  for (const id of ["80", "43", "70998", "1"]) {
+    const w = weaponIcon(real, id);
+    assert.ok(w && readFileSync(new URL(`assets/weapons/${w.image}.webp`, root)).length > 100, id);
+  }
+  const js = readFileSync(new URL("live.mjs", root), "utf8");
+  const css = readFileSync(new URL("styles.css", root), "utf8");
+  assert.match(js, /const HS_TIP = tr\("live\.hs", "Headshot"\);/);
+  assert.match(js, /style="--wi:url\('assets\/weapons\/\$\{esc\(w\.image\)\}\.webp'\)" data-tip="\$\{esc\(w\.name\)\}"/); // hover = the weapon's name
+  assert.match(js, /`<span class="lv-hs lv-hs-0"><\/span>`/); // no headshot: the slot stays, so the guns line up
+  assert.match(css, /\.lv-wi\[style\] \{ background: var\(--text\); -webkit-mask: var\(--wi\)/); // silhouette in the theme's text colour
+  assert.match(css, /\.lv-hs \{[^}]*background: var\(--err\); -webkit-mask: url\("assets\/icons\/headshot\.svg"\)/);
+  assert.match(readFileSync(new URL("assets/icons/headshot.svg", root), "utf8"), /Lorc, https:\/\/game-icons\.net \(CC BY 3\.0\)/);
+  assert.match(readFileSync(new URL("NOTICE", root), "utf8"), /assets\/icons\/headshot\.svg: "Headshot" icon by Lorc/);
+  // the event keeps its weapon on the line it lands on
+  let st = overlayPush(null, { kind: "kill", opp: "a", weapon: "80", headshot: true }, 1000);
+  assert.equal(st.victims[0].weapon, "80");
+  st = overlayPush(st, { kind: "death", opp: "k", weapon: "432" }, 2000);
+  assert.equal(st.killer.weapon, "432");
+  assert.equal(st.victims[0].weapon, "80");
 });
 
 test("centre refresh (owner t586u): fresh Census numbers every 5 min, paused while hidden, never shared or saved", () => {
@@ -417,6 +502,5 @@ test("centre refresh (owner t586u): fresh Census numbers every 5 min, paused whi
   const api = app.slice(app.indexOf("fetchPlayerFresh: async"), app.indexOf("getLastAnalyzedNames:"));
   assert.match(api, /return loadLive\(name\);/);
   assert.doesNotMatch(api, /cachePut|suggestSharedCache/);
-  const css = readFileSync(new URL("styles.css", root), "utf8");
-  assert.match(css, /\.lv-u\.lv-ease \{ transition: --f 1\.2s/);
+  assert.match(js, /animateFill\(u, \+before\.f\[i\], 1200\)/); // the new fill eases in from the old one
 });
