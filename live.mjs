@@ -7,9 +7,9 @@ await i18nReady;
  *     centred on the tracked player — ONE line above for the latest player who killed them (each new killer
  *     replaces it), the tracked player on the centre line, and the last 6 players they killed below
  *     (newest on top; t587u: every kill is its own line, the same victim twice = two lines);
- *   - every line shows everything at once, in one shared column order: [⏱️][name][iVi][🏃][🦁][🛡️][🪖][🪳] (t580u: 🪳 last),
+ *   - every line shows everything at once, in one shared column order: [⏱️][name][iVi][🏃][🦁][🛡️][🪖][☠️][🤝][🔀][⚡][🪳] (t580u: 🪳 last; t588u order),
  *     the emojis as fill meters (t564u, t573u) with glow tiers (t568u) — no flip, no skill graph;
- *   - a missing stat is an empty (25%) emoji, never "—" (t567u); uncached opponents show all-empty emojis
+ *   - a missing stat is an empty (hollow, t589u) emoji, never "—" (t567u); uncached opponents show all-empty emojis
  *     (Census K/D · KPM only in the name's hover title), then get a full 200-opponent Census
  *     fetch in the background (one at a time, newest first, #32) and upgrade in place.
  * Pure helpers are exported for tests; the DOM part runs only in a browser.
@@ -88,14 +88,14 @@ export const LIVE_COLS = Object.freeze([
   { id: "pvs", label: "🦁 Brave", tip: "Brave", digits: 2, mode: "stack" },
   { id: "rf", label: "🛡️ Resist", tip: "Resist", digits: 2, mode: "stack" },
   { id: "inf", label: "🪖 Infantry", tip: "Infantry", digits: 1, unit: "%", mode: "stack", fill: "value" }, // t564u: fill = infantry % itself
-  // Owner t581u: after 🪖 — 🔀 Diff · 🤝 Assists · ⚡ Const · ☠️ K/D, the main table's emojis; fill = their percentile
+  // Owner t581u: after 🪖 — t588u order ☠️ K/D · 🤝 Assists · 🔀 Diff · ⚡ Const, the main table's emojis; fill = their percentile
   // (same p50 → p91 mapping and glow tiers). 🔀 Diff (−99…+99, computed like the Rankings: trait-scores.mjs aimGap)
   // is filled by its percentile among players and never shown as a number on the overlay (hover only, t584u).
   // 🤝 Assists: ranks.json already has no value for the assist-bug cases (session-stats.mjs ASSIST_GAP) → empty emoji.
-  { id: "diff", label: "🔀 Diff", tip: "Diff", digits: 0, mode: "stack" },
-  { id: "apk", label: "🤝 Assists", tip: "Assists", digits: 2, mode: "stack" },
-  { id: "cons", label: "⚡ Const", tip: "Consistency", digits: 2, mode: "stack" },
   { id: "rkd", label: "☠️ K/D", tip: "K/D", digits: 2, mode: "stack" }, // owner t581u: K/D back on purpose (the main table's ☠️ K/D vs usual foes)
+  { id: "apk", label: "🤝 Assists", tip: "Assists", digits: 2, mode: "stack" },
+  { id: "diff", label: "🔀 Diff", tip: "Diff", digits: 0, mode: "stack" },
+  { id: "cons", label: "⚡ Const", tip: "Consistency", digits: 2, mode: "stack" },
   { id: "zerg", label: "🪳 Zerg", tip: "Zerg", digits: 0, mode: "stack", unknown: "full" }, // t555u: bigger Zerg = bigger 🪳 (not reversed); t569u: unknown = full roach — t580u/t581u: last column
 ]);
 /** Owner t584u hover text for one emoji / the iVi number: short label + the real value ("K/D 2.40", "Zerg 41", "Infantry 95.4%"), or "unknown". */
@@ -108,14 +108,16 @@ export function tipText(col, v) {
 
 /**
  * Emoji fill meter (owner t564u, replaces the t546u/t558u rank-based sizes): every emoji has one size;
- * a 25%-visible copy shows the whole emoji and a solid copy on top fills it from the bottom up to:
+ * a hollow copy (t589u: light inner ring, dark 18% greyscale inside; was 25%-visible) shows the whole emoji and a solid copy on top fills it from the bottom up to:
  *   🪖 Infantry → the player's infantry % itself (50% infantry = half filled);
  *   🏃 🦁 🛡️ 🪳 → the player's percentile in that column (pXX = higher than XX% of ranks.json, the
  *   Rankings pools; 🪳 Zerg = percentile of the raw Zerg score, so a higher Zerg number fills more).
  * Lower-is-better columns are flipped first (none in LIVE now).
  * Owner t568u: the solid part was min(1, value / 91); t573u: clamp((value - 50) / 41, 0, 1), so p50 and below (50%- infantry) is empty and p91+ (91%+ infantry) completely full.
  */
-export const FILL_DIM = 0.25; // the empty part of the emoji stays 25% visible
+export const FILL_DIM = 0.18; // owner t589u: the empty part = a dark greyscale interior at 18% (was a 25% colour copy) …
+export const HOLLOW_PX = 1.75; // … inside a light-grey inner ring this wide, just inside the black outline: a hollow, readable shape at 0%
+export const HOLLOW_INK = "#e6e6e6"; // the inner ring colour (light grey, stands out on any stream background)
 /** "How good" percentile 0..99 (99 = best) from the plain pXX. */
 export function goodPct(col, p) {
   if (typeof p !== "number" || !Number.isFinite(p)) return null;
@@ -262,10 +264,14 @@ function start() {
   const listEl = $("liveList");
   // Owner t579u: the emoji outline filter (styles.css .lv-eo): grow the glyph's shape by OUTLINE_PX (2.25 px), paint it black,
   // cut the glyph itself out → a ring that hugs the whole silhouette. Hidden, zero-size, added once.
+  // Owner t589u "hollow but standing-out shape": the unfilled copy (.lv-e0) runs through #lvHollow — its interior turns
+  // greyscale, darkened and FILL_DIM (18%) visible, and a HOLLOW_PX light-grey ring is drawn just inside the silhouette
+  // (the glyph's shape minus itself shrunk by HOLLOW_PX). The black outer outline (#lvOutline) and the solid filled copy are unchanged.
+  const HOLLOW_FILTER = `<filter id="lvHollow" x="-10%" y="-10%" width="120%" height="120%" color-interpolation-filters="sRGB"><feColorMatrix in="SourceGraphic" type="matrix" values="0.13 0.43 0.04 0 0 0.13 0.43 0.04 0 0 0.13 0.43 0.04 0 0 0 0 0 ${FILL_DIM} 0" result="dim"/><feMorphology in="SourceAlpha" operator="erode" radius="${HOLLOW_PX}" result="inner"/><feComposite in="SourceAlpha" in2="inner" operator="out" result="edge"/><feFlood flood-color="${HOLLOW_INK}" flood-opacity="1"/><feComposite in2="edge" operator="in" result="rim"/><feMerge><feMergeNode in="dim"/><feMergeNode in="rim"/></feMerge></filter>`;
   if (listEl && !document.getElementById("lvOutline")) {
     // t581u "more work on outlines": thicker, and smoothed — the dilated shape is softened a little and then cut
     // back to a hard edge (blur + a steep alpha ramp), so the ring is even and round instead of blocky.
-    listEl.insertAdjacentHTML("beforebegin", `<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><filter id="lvOutline" x="-25%" y="-25%" width="150%" height="150%" color-interpolation-filters="sRGB"><feMorphology in="SourceAlpha" operator="dilate" radius="${OUTLINE_PX}" result="grown"/><feGaussianBlur in="grown" stdDeviation="0.7" result="soft"/><feComponentTransfer in="soft" result="even"><feFuncA type="linear" slope="4" intercept="-1"/></feComponentTransfer><feFlood flood-color="#000" flood-opacity="1"/><feComposite in2="even" operator="in" result="ring"/><feComposite in="ring" in2="SourceAlpha" operator="out"/></filter></svg>`);
+    listEl.insertAdjacentHTML("beforebegin", `<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><filter id="lvOutline" x="-25%" y="-25%" width="150%" height="150%" color-interpolation-filters="sRGB"><feMorphology in="SourceAlpha" operator="dilate" radius="${OUTLINE_PX}" result="grown"/><feGaussianBlur in="grown" stdDeviation="0.7" result="soft"/><feComponentTransfer in="soft" result="even"><feFuncA type="linear" slope="4" intercept="-1"/></feComponentTransfer><feFlood flood-color="#000" flood-opacity="1"/><feComposite in2="even" operator="in" result="ring"/><feComposite in="ring" in2="SourceAlpha" operator="out"/></filter>${HOLLOW_FILTER}</svg>`);
   }
   if (listEl) {
     listEl.style.setProperty("--lv-n", String(LIVE_COLS.length - 1)); // emoji units per line (owner t581u: 9)
@@ -416,7 +422,7 @@ function start() {
   }
   /**
    * Owner t575u: one line = one player, everything at once (no flip), ONE shared column order for every line:
-   *   [⏱️ time][name][iVi][🏃][🦁][🛡️][🪖][🪳] (t580u: 🪳 last) — so the emojis line up down the whole overlay.
+   *   [⏱️ time][name][iVi][🏃][🦁][🛡️][🪖][☠️][🤝][🔀][⚡][🪳] (t580u: 🪳 last; t588u order) — so the emojis line up down the whole overlay.
    * Owner t567u: not cached = all-empty emojis; the Census numbers stay in the name's hover.
    */
   function cells(p, isMe) {
@@ -433,7 +439,7 @@ function start() {
   let goneShown = null; // the cleared killer whose fade-out already played
   /** Owner t578u: emoji fill grows 0 → level over FILL_MS when a line first shows (or its stats arrive later: the key
    *  changes from "u" to "c"). Re-renders pass the time already played as a negative delay, so nothing restarts. */
-  const FILL_MS = 5000;
+  const FILL_MS = 10000; // owner t588u: 10 s (was 5 s)
   const fillStart = new Map(); // line key → when its fill started
   const NO_FILL = { cls: "", sty: "" };
   function fillIn(key) {

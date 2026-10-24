@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { buildLive } from "../scripts/build-live.mjs";
-import { classifyDeath, feedPush, censusStats, cellText, fmtGap, LIVE_COLS, tipText, ME_REFRESH_MS, mergeFresh, FEED_MAX, emojiFill, fillDriver, glowTier, unknownFill, FULL_AT, EMPTY_AT, goodPct, FILL_DIM, overlayPush, overlayRows, VICTIM_LINES, eventAt, EVENT_SKEW_MS, unitGlow, ZERG_GOLD_OVER, OUTLINE_PX } from "../live.mjs";
+import { classifyDeath, feedPush, censusStats, cellText, fmtGap, LIVE_COLS, tipText, ME_REFRESH_MS, mergeFresh, FEED_MAX, emojiFill, fillDriver, glowTier, unknownFill, FULL_AT, EMPTY_AT, goodPct, FILL_DIM, HOLLOW_PX, overlayPush, overlayRows, VICTIM_LINES, eventAt, EVENT_SKEW_MS, unitGlow, ZERG_GOLD_OVER, OUTLINE_PX } from "../live.mjs";
 
 const root = new URL("../", import.meta.url);
 
@@ -84,9 +84,10 @@ test("emoji fill meter (owner t564u): one size, p50 and below empty / p70.5 half
   assert.equal(goodPct(apk, 10), 89);
   assert.equal(emojiFill(act, null, 50), null);
   assert.equal(emojiFill(act, NaN, 50), null);
-  assert.equal(FILL_DIM, 0.25);
+  assert.equal(FILL_DIM, 0.18); // t589u: dark greyscale interior
   const css = readFileSync(new URL("styles.css", root), "utf8");
-  assert.match(css, /\.lv-e0 \{ opacity: 0\.25; \}/);
+  assert.match(css, /\.lv-e0 \{ filter: url\(#lvHollow\); \}/); // t589u: hollow silhouette, not a 25% copy
+  assert.doesNotMatch(css, /\.lv-e0 \{ opacity/);
   assert.match(css, /\.lv-e1 \{ clip-path: inset\(calc\(var\(--it, 0%\) \+ var\(--ih, 100%\) \* \(100 - var\(--f, 0\)\) \/ 100\) -25% -25% -25%\); \}/); // fills from the bottom of the ink
   assert.match(css, /\.lv-ivc > \.lv-iv \{ display: inline-block; width: 4ch; font-variant-numeric: tabular-nums;/); // t564u: 4-digit room
   assert.doesNotMatch(css, /scale\(var\(--s/); // no rank-based sizes any more
@@ -94,9 +95,9 @@ test("emoji fill meter (owner t564u): one size, p50 and below empty / p70.5 half
   assert.doesNotMatch(js, /emojiScale|class="lv-v"/); // no size scaling, no number under the emoji
 });
 
-test("LIVE columns (owner t550u/t581u): iVi · 🏃 · 🦁 · 🛡️ · 🪖 · 🔀 Diff · 🤝 Assists · ⚡ Const · ☠️ K/D · 🪳 last", () => {
-  assert.deepEqual(LIVE_COLS.map((c) => c.id), ["adjs", "act", "pvs", "rf", "inf", "diff", "apk", "cons", "rkd", "zerg"]);
-  assert.deepEqual(LIVE_COLS.map((c) => c.label.split(" ")[0]), ["⚔️", "🏃", "🦁", "🛡️", "🪖", "🔀", "🤝", "⚡", "☠️", "🪳"]);
+test("LIVE columns (owner t550u/t581u/t588u): iVi · 🏃 · 🦁 · 🛡️ · 🪖 · ☠️ K/D · 🤝 Assists · 🔀 Diff · ⚡ Const · 🪳 last", () => {
+  assert.deepEqual(LIVE_COLS.map((c) => c.id), ["adjs", "act", "pvs", "rf", "inf", "rkd", "apk", "diff", "cons", "zerg"]);
+  assert.deepEqual(LIVE_COLS.map((c) => c.label.split(" ")[0]), ["⚔️", "🏃", "🦁", "🛡️", "🪖", "☠️", "🤝", "🔀", "⚡", "🪳"]);
   // ⚔️ iVi = the number next to the name, the rest = emoji fill meters
   assert.deepEqual(LIVE_COLS.map((c) => c.mode), ["ivi", ...Array(9).fill("stack")]);
   // Diff / Assists / K/D: percentile fill (same p50 → p91 mapping as the others), not the value itself
@@ -319,11 +320,11 @@ test("emoji fill grows 0 → level over 5 s when a line appears (owner t578u); g
   const css = readFileSync(new URL("styles.css", root), "utf8");
   assert.match(css, /@property --f \{ syntax: "<number>"; inherits: true; initial-value: 0; \}/);
   assert.match(css, /@property --gw \{ syntax: "<number>"; inherits: true; initial-value: 1; \}/);
-  assert.match(css, /\.lv-fillin \.lv-u \{ animation: lvFill 5s cubic-bezier\([^)]*\) var\(--fd, 0ms\) both; \}/);
-  assert.match(css, /@keyframes lvFill \{ 0% \{ --f: 0; --gw: 0; \} 60% \{ --gw: 0;/);
+  assert.match(css, /\.lv-fillin \.lv-u \{ animation: lvFill 10s cubic-bezier\([^)]*\) var\(--fd, 0ms\) both; \}/);
+  assert.match(css, /@keyframes lvFill \{ 0% \{ --f: 0; --gw: 0; \} 80% \{ --gw: 0;/);
   assert.match(css, /prefers-reduced-motion: reduce\) \{ \.lv-fillin \.lv-u \{ animation: none; \} \}/);
   assert.match(css, /rgba\(255, 214, 90, calc\(0\.95 \* var\(--gw, 1\)\)\)/); // glow scaled by --gw
-  assert.match(js, /const FILL_MS = 5000;/);
+  assert.match(js, /const FILL_MS = 10000;/);
   assert.match(js, /return played >= FILL_MS \? NO_FILL : \{ cls: " lv-fillin", sty: ` style="--fd:-\$\{played\}ms"` \};/); // re-renders continue, never restart
   assert.match(js, /fillIn\(`\$\{r\.opp\}@\$\{r\.at\}:\$\{\(people\.get\(r\.opp\) \|\| \{\}\)\.cached \? "c" : "u"\}`\)/); // stats arriving later = a new fill
   assert.match(js, /fillIn\(`me:\$\{me\.cached \? "c" : "u"\}`\)/);
@@ -338,6 +339,17 @@ test("emoji outline (owner t579u): a dark ring that hugs the whole silhouette, t
   assert.match(js, /<feMorphology in="SourceAlpha" operator="dilate" radius="\$\{OUTLINE_PX\}"/);
   assert.match(js, /<feComposite in="ring" in2="SourceAlpha" operator="out"\/>/); // ring only, the emoji itself stays untouched
   assert.match(css, /\.lv-eo \{ filter: url\(#lvOutline\); \}/);
+});
+
+test("hollow empty part (owner t589u): light inner ring inside the black outline, dark greyscale interior, filled part untouched", () => {
+  const js = readFileSync(new URL("live.mjs", root), "utf8");
+  assert.ok(HOLLOW_PX >= 1.5 && HOLLOW_PX <= 2);
+  assert.ok(FILL_DIM >= 0.15 && FILL_DIM <= 0.2);
+  assert.match(js, /<filter id="lvHollow"[^`]*type="matrix" values="0\.13 0\.43 0\.04 0 0 0\.13 0\.43 0\.04 0 0 0\.13 0\.43 0\.04 0 0 0 0 0 \$\{FILL_DIM\} 0"/); // greyscale, darkened
+  assert.match(js, /<feMorphology in="SourceAlpha" operator="erode" radius="\$\{HOLLOW_PX\}" result="inner"\/><feComposite in="SourceAlpha" in2="inner" operator="out" result="edge"\/>/); // ring just inside
+  assert.match(js, /<feMergeNode in="dim"\/><feMergeNode in="rim"\/>/);
+  assert.match(js, /\$\{HOLLOW_FILTER\}<\/svg>/); // in the same hidden svg as #lvOutline
+  assert.match(js, /<b class="lv-e lv-e1">\$\{e\}<\/b>/); // the filled copy has no filter: full colour, solid
 });
 
 test("centre refresh (owner t586u): fresh Census numbers every 5 min, paused while hidden, never shared or saved", () => {
