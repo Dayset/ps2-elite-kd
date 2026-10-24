@@ -23,7 +23,8 @@ import { VICTIM_LINES, classifyDeath, fmtGap, censusStats, LIVE_COLS, tipText, F
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261023-short1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
-import { traitPools, zergScore } from "./trait-scores.mjs?v=20261022-nbd1";
+import { traitPools, zergScore } from "./trait-scores.mjs?v=20261024-crowd1";
+import { zergEstimate } from "./zerg-revive.mjs?v=20261024-crowd1";
 import { infMedian, TRACTOR_EMOJI } from "./tractor.mjs?v=20261024-trac1";
 import { drawEmojiSprite, spriteCss } from "./live-sprites.mjs?v=20261024-beat1";
 
@@ -98,11 +99,13 @@ function start() {
       // 🪳 Zerg: same score as the Rankings table (rankings.mjs: traitPools over ranks.json, zergScore per row).
       const colOf = (id) => (ci(id) >= 0 ? j.rows.map((r) => r[ci(id)]) : []);
       const tp = traitPools({ adjs: colOf("adjs"), ivi: colOf("ivi"), inflation: colOf("inflation"), apk: colOf("apk") });
-      const iF = ci("inflation"), iA = ci("apk"), iR = ci("rvp");
-      const zergOf = (r) => { const z = zergScore(tp, iF >= 0 ? r[iF] : null, iA >= 0 ? r[iA] : null, iR >= 0 ? r[iR] : null); return z ? z.score : null; };
+      const iF = ci("inflation"), iA = ci("apk"), iR = ci("rvp"), iC = ci("crp");
+      const zergOf = (r) => { const z = zergScore(tp, iF >= 0 ? r[iF] : null, iA >= 0 ? r[iA] : null, iR >= 0 ? r[iR] : null, iC >= 0 ? r[iC] : null); return z ? z.score : null; };
       const fin = (v) => typeof v === "number" && Number.isFinite(v);
       const zergCol = j.rows.map(zergOf);
       j.rows.forEach((r, k) => { const o = ranks.get(r[iS]); if (o) o.zerg = zergCol[k]; });
+      // 🪳 "~N" estimate (zerg-revive.mjs zergEstimate) where there is no Zerg: fill + hover only, never in the pool.
+      j.rows.forEach((r, k) => { const o = ranks.get(r[iS]); if (o && zergCol[k] == null) o.zest = zergEstimate(iR >= 0 ? r[iR] : null, iC >= 0 ? r[iC] : null); });
       for (const c of LIVE_COLS) {
         const vals = c.id === "zerg" ? zergCol : colOf(c.id);
         pools[c.id] = vals.filter(fin).sort((a, b) => a - b);
@@ -184,8 +187,12 @@ function start() {
   window.addEventListener("resize", () => { clearTimeout(spriteTimer); spriteTimer = setTimeout(drawSprites, 150); }); // size tiers, zoom
   drawSprites();
   const meter = (e) => `<span class="lv-em lv-x${emojiIdx.get(e)}" aria-hidden="true" data-e="${e}"><i class="lv-gl"></i><i class="lv-b"></i><i class="lv-sw"><i class="lv-s"><i class="lv-shn"></i></i></i></span>`;
-  function unit(c, v) {
+  function unit(c, v, est = null) {
     const f = fillOf(c, v);
+    // 🪳 estimate (owner t614u): no Zerg score, but a "~N" crowd estimate → the same fill a Zerg of N gets, gold, "~N" in the hover.
+    if (f == null && c.id === "zerg" && typeof est === "number" && Number.isFinite(est)) {
+      return `<span class="lv-u lv-fl lv-g${unitGlow(c, est)}" style="--f:${fillOf(c, est)}" data-tip="${esc(`${c.tip} ~${est} (estimate)`)}">${meter(shortLab(c))}</span>`;
+    }
     if (f == null) { // no value: empty emoji, or (t569u) a full 🪳 — owner t577u: that full 🪳 gets the full top glow
       const u = unknownFill(c);
       const ug = unitGlow(c, null);
@@ -214,7 +221,7 @@ function start() {
   function cells(p, isMe) {
     const vals = p.cached || {};
     const tip = p.cached || isMe ? "" : ` · not in cache · K/D ${fmt(p.kd, 2)} · KPM ${fmt(p.kpm, 2)}`;
-    return `<td class="lv-nm">${nameHtml(p, tip)}</td>${IVI.map((c) => `<td class="lv-ivc">${iviText(c, vals[c.id])}</td>`).join("")}<td class="lv-ems"><span class="lv-row">${REST.map((c) => unit(c, vals[c.id])).join("")}</span></td>`;
+    return `<td class="lv-nm">${nameHtml(p, tip)}</td>${IVI.map((c) => `<td class="lv-ivc">${iviText(c, vals[c.id])}</td>`).join("")}<td class="lv-ems"><span class="lv-row">${REST.map((c) => unit(c, vals[c.id], c.id === "zerg" ? vals.zest : null)).join("")}</span></td>`;
   }
   const blank = `<td class="lv-nm"></td><td class="lv-ivc"></td><td class="lv-ems"><span class="lv-row"></span></td>`; // same box as a filled line, so the overlay never grows
   /**

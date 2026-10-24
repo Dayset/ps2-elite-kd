@@ -20,13 +20,14 @@
  *   fights (high Inflation, few assists) stays low, and so does a team player
  *   in hard fights (many assists, no inflation). Only players with 🤝 Assists
  *   (≥ 100 kills in recent Honu sessions) and an Inflation value get a score.
- *   Revive check (zerg-revive.mjs, ranks.json "rvp"): a low revived-share
- *   percentile softens a high Zerg; no XP detail = unchanged.
+ *   Crowd check (zerg-revive.mjs, ranks.json "rvp" revives + "crp" crowd
+ *   score): rvp or crp ≥ 75 confirms; when both are low the higher of the two
+ *   softens a high Zerg (never raises); no XP detail = unchanged.
  * 🔀 vehicle damp (diff-vehicle.mjs, ranks.json "vdf") and 🛖 (hut.mjs, "hut")
  *   both scale a positive Diff; the stronger (lower) factor applies, never both.
  */
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
-import { reviveZerg } from "./zerg-revive.mjs?v=20261023-short1";
+import { reviveZerg } from "./zerg-revive.mjs?v=20261024-crowd1";
 
 const fin = (v) => typeof v === "number" && Number.isFinite(v);
 /** Rounding = ranks-lite.json LITE_DIGITS (scripts/build-ranks.mjs). */
@@ -75,13 +76,15 @@ export function aimGap(pools, adjs, ivi, hut = null, veh = null, nbd = null) {
 }
 
 /**
- * 🪳 → { score, raw, infl, apk, rvp, confirmed, softened } or null when Inflation
- * or 🤝 Assists is missing. rvp = revive percentile (zerg-revive.mjs; null = no data).
+ * 🪳 → { score, raw, infl, apk, rvp, crp, chk, confirmed, softened } or null when
+ * Inflation or 🤝 Assists is missing. rvp = revive percentile, crp = crowd-score
+ * percentile (zerg-revive.mjs; null = no data); chk = the higher of the two.
  */
-export function zergScore(pools, inflation, apk, rvp = null) {
+export function zergScore(pools, inflation, apk, rvp = null, crp = null) {
   const f = pct(pools, "inflation", inflation), a = pct(pools, "apk", apk);
   if (f == null || a == null) return null;
   const raw = Math.min(f, a);
-  const r = reviveZerg(raw, fin(rvp) ? rvp : null);
-  return { score: r.score, raw, infl: f, apk: a, rvp: fin(rvp) ? rvp : null, confirmed: r.confirmed, softened: r.softened };
+  const rv = fin(rvp) ? rvp : null, cr = fin(crp) ? crp : null;
+  const r = reviveZerg(raw, rv, cr);
+  return { score: r.score, raw, infl: f, apk: a, rvp: rv, crp: cr, chk: r.chk, confirmed: r.confirmed, softened: r.softened };
 }

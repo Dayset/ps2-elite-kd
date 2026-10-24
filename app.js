@@ -38,7 +38,7 @@ import { formatClock, fmtNum, slugKey, bareName, parseNames, namesEqualIgnoreCas
 import { createShareAdd } from "./share-add.mjs?v=20261024-split12";
 import { createSharedIndex } from "./shared-index.mjs?v=20261024-split11";
 import { createNamesField } from "./names-field.mjs?v=20261024-split10";
-import { createStatsTable } from "./stats-table.mjs?v=20261024-split9";
+import { createStatsTable } from "./stats-table.mjs?v=20261024-crowd1";
 import { createChartWave } from "./chart-wave.mjs?v=20261024-split8";
 import { createChart } from "./chart.mjs?v=20261024-split7";
 import { createLoader } from "./loader.mjs?v=20261024-split6";
@@ -53,9 +53,9 @@ import { t as tr, ready as i18nReady } from "./i18n.mjs";
 await i18nReady;
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261020-wide1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
-import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261022-nbd1";
-import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, diffValueHtml, aimGapCellTip, zergCellTip } from "./trait-tips.mjs?v=20261023-nbh1";
-import { ZREV_NOTE } from "./zerg-revive.mjs?v=20261023-short1";
+import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261024-crowd1";
+import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, diffValueHtml, aimGapCellTip, zergCellTip } from "./trait-tips.mjs?v=20261024-crowd1";
+import { ZREV_NOTE } from "./zerg-revive.mjs?v=20261024-crowd1";
 import { VDIFF_NOTE } from "./diff-vehicle.mjs?v=20261023-short1";
 import { NBD_NOTE, newbieFactor, newPlayerHours } from "./newbie-diff.mjs?v=20261023-nbh1";
 import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261023-short1";
@@ -124,7 +124,7 @@ function thinCellTip(r) {
 import { markNote, statMark, confirmedPadderSlugs, isPenalizedPadder, POOP_MARK, POOP_TIP, setRoomRule } from "./padding.mjs?v=20261023-short1";
 import { removedList } from "./opt-out.mjs?v=20261023-proof1";
 import { HUT_MARK, HUT_TIP, HUT_DIFF_NOTE, playMinutes } from "./hut.mjs?v=20261023-short1";
-import { autoMarksHtml } from "./auto-marks.mjs?v=20261024-trac1";
+import { autoMarksHtml } from "./auto-marks.mjs?v=20261024-crowd1";
 // Account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times: chart name list only.
 import { accountTimes, flairsHtml, flairsFor } from "./flairs.mjs?v=20261010-sav1";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
@@ -1072,6 +1072,7 @@ import {
       get refreshOnlineRoom() { return refreshOnlineRoom; },
       get ROOM() { return ROOM; },
       get rvpBySlug() { return rvpBySlug; }, set rvpBySlug(v) { rvpBySlug = v; },
+      get crpBySlug() { return crpBySlug; }, set crpBySlug(v) { crpBySlug = v; },
       get seriesColor() { return seriesColor; },
       get serverTagHtml() { return serverTagHtml; },
       get showDebugCols() { return showDebugCols; },
@@ -1230,12 +1231,12 @@ import {
     return e ? e.f : null;
   };
   const hutMarked = (display) => hutOf(display) != null && hutBySlug.get(slugKey(display)).mk;
-  // 🔀 vehicle damp factor (diff-vehicle.mjs, ranks-lite "vdf") and 🪳 revive percentile (zerg-revive.mjs, "rvp") by slug; reviewed.json clearances applied at build time.
+  // 🔀 vehicle damp factor (diff-vehicle.mjs, ranks-lite "vdf") and 🪳 revive / crowd percentiles (zerg-revive.mjs, "rvp" / "crp") by slug; reviewed.json clearances applied at build time.
   // 🐣 newbie factor on a negative 🔀 Diff (newbie-diff.mjs, ranks-lite "nbd").
   // 🐣 "nbh" = new-player hours; liteSlugs = players in this build. A player fetched after
   // the build (not in liteSlugs) is rated here from lifetime kills ÷ KPM with the build's
   // nbdCuts (same rule as build-ranks.mjs; reviewed.json clearances are build-side only).
-  let vdfBySlug = null, rvpBySlug = null, nbdBySlug = null, nbhBySlug = null, liteSlugs = null, nbdCutsLite = null;
+  let vdfBySlug = null, rvpBySlug = null, crpBySlug = null, nbdBySlug = null, nbhBySlug = null, liteSlugs = null, nbdCutsLite = null;
  // sorted population scores (hover "top / bottom X%")
 
 

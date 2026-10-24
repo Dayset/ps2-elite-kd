@@ -5,7 +5,7 @@
  */
 import { t as tr } from "./i18n.mjs";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
-import { zrevConfirmedTip, zrevSoftTip, zrevPlainTip } from "./zerg-revive.mjs?v=20261023-short1";
+import { zrevConfirmedTip, zrevSoftTip, zrevPlainTip, zrevEstTip } from "./zerg-revive.mjs?v=20261024-crowd1";
 import { vdiffFromTip } from "./diff-vehicle.mjs?v=20261023-short1";
 import { nbdFromTip } from "./newbie-diff.mjs?v=20261023-nbh1";
 
@@ -60,10 +60,15 @@ export function aimGapCellTip(v, g, pool, veh = null) {
   return base + hut + vd + nb;
 }
 
+/** 🪳 estimate cell ("~N", zerg-revive.mjs zergEstimate): no Zerg score, display only (never sorted / pooled / marked). */
+export function zergEstHtml(est, esc) {
+  return `<td class="zest" title="${esc(zrevEstTip(est))}"><span style="opacity:.6">~${est}</span></td>`;
+}
+
 /** 🪳 cell hover: score, percentile among measured players, both parts. */
 export function zergCellTip(v, z, pool) {
   const parts = z ? tr("zerg.parts", "🎈 Inflation {f} · 🤝 Assists {a}", { f: z.infl, a: z.apk }) : "";
-  // 🪳 revive check (zerg-revive.mjs): only where Honu XP detail exists.
-  const rv = z && fin(z.rvp) ? " " + (z.softened ? zrevSoftTip(z.raw, z.rvp) : z.confirmed ? zrevConfirmedTip(z.rvp) : zrevPlainTip(z.rvp)) : "";
+  // 🪳 crowd check (zerg-revive.mjs): only where Honu XP detail exists; chk = the higher of revives / crowd score.
+  const rv = z && fin(z.chk) ? " " + (z.softened ? zrevSoftTip(z.raw, z.chk) : z.confirmed ? zrevConfirmedTip(z.chk) : zrevPlainTip(z.chk)) : "";
   return tr("zerg.tip", "Zerg {v}{rel}. {parts}", { v, rel: rel(pool, v), parts }).trim() + rv;
 }

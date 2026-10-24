@@ -6,14 +6,15 @@ import { playMinutes, HUT_TIP, HUT_MARK } from "./hut.mjs?v=20261023-short1";
 import { slugKey, escapeHtml, fmtNum } from "./app-util.mjs?v=20261024-split1";
 import { newbieFactor, newPlayerHours } from "./newbie-diff.mjs?v=20261023-nbh1";
 import { isFiniteNum } from "./math.mjs?v=20261010-sav1";
-import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261022-nbd1";
+import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261024-crowd1";
+import { zergEstimate } from "./zerg-revive.mjs?v=20261024-crowd1";
 import { infMedian } from "./tractor.mjs?v=20261024-trac1";
 import { mountWeapons } from "./weapons.mjs?v=20261022-wp4";
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261020-wide1";
 import { PS_SERVERS, censusNsBase, roomLsKey } from "./rooms.mjs?v=20261022-ps1";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { t as tr } from "./i18n.mjs";
-import { AIMGAP_HINT, ZERG_HINT, ZERG_MISSING, zergCellTip, AIMGAP_MISSING, fmtSigned, aimGapCellTip, diffValueHtml } from "./trait-tips.mjs?v=20261023-nbh1";
+import { AIMGAP_HINT, ZERG_HINT, ZERG_MISSING, zergCellTip, zergEstHtml, AIMGAP_MISSING, fmtSigned, aimGapCellTip, diffValueHtml } from "./trait-tips.mjs?v=20261024-crowd1";
 import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261023-short1";
 import { THIN_MARK, THIN_NOTE_HEAD, playerMetrics, shownValue, THIN_METRICS, thinPlayerLine, isLegacySample, LEGACY_SAMPLE_TIP, LEGACY_SAMPLE_MARK } from "./player-metrics.mjs?v=20261022-wpc1";
 import { compareByCharName, columnRef, honuProfileUrl, pctFromRef, pctTitle, fmtPctFromRef } from "./analyze-run.mjs?v=20261023-priv1";
@@ -22,7 +23,7 @@ import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261022-wpc1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261021-theory1";
 import { statMark, isPenalizedPadder, POOP_TIP, POOP_MARK, markNote } from "./padding.mjs?v=20261023-short1";
-import { autoMarksHtml } from "./auto-marks.mjs?v=20261024-trac1";
+import { autoMarksHtml } from "./auto-marks.mjs?v=20261024-crowd1";
 
 /**
  * $ = app.js state and functions this part uses, as live getters (and setters for state it changes), so app.js
@@ -88,6 +89,7 @@ export function createStatsTable($) {
   const vdfOf = (display) => ($.vdfBySlug && display ? $.vdfBySlug.get(slugKey(display)) ?? null : null);
 
   const rvpOf = (display) => ($.rvpBySlug && display ? $.rvpBySlug.get(slugKey(display)) ?? null : null);
+  const crpOf = (display) => ($.crpBySlug && display ? $.crpBySlug.get(slugKey(display)) ?? null : null); // 🪳 crowd-score percentile
 
   // 🤥😤 Impostor–DieHard + 🪳 Zerg (owner 2026-10-21, trait-scores.mjs): rounded
   // ⚔️ iVi / IvI / 🎈 Inflation / 🤝 Assists pools from the same lite payload
@@ -134,7 +136,7 @@ export function createStatsTable($) {
         if (si >= 0) $.liteSlugs = new Set(payload.rows.map((row) => row[si]));
         const nc = payload.nbdCuts;
         $.nbdCutsLite = nc && isFiniteNum(nc.lo) && isFiniteNum(nc.hi) && isFiniteNum(nc.nw) ? nc : null;
-        for (const [id, set] of [["vdf", (m) => { $.vdfBySlug = m; }], ["rvp", (m) => { $.rvpBySlug = m; }], ["nbd", (m) => { $.nbdBySlug = m; }], ["nbh", (m) => { $.nbhBySlug = m; }]]) {
+        for (const [id, set] of [["vdf", (m) => { $.vdfBySlug = m; }], ["rvp", (m) => { $.rvpBySlug = m; }], ["crp", (m) => { $.crpBySlug = m; }], ["nbd", (m) => { $.nbdBySlug = m; }], ["nbh", (m) => { $.nbhBySlug = m; }]]) {
           const k = payload.cols.indexOf(id);
           if (k < 0 || si < 0) continue;
           const m = new Map();
@@ -144,11 +146,11 @@ export function createStatsTable($) {
         const colOf = (id) => { const k = payload.cols.indexOf(id); return k >= 0 ? payload.rows.map((row) => row[k]) : []; };
         traitP = traitPools({ adjs: colOf("adjs"), ivi: colOf("ivi"), inflation: colOf("inflation"), apk: apkBySlug ? [...apkBySlug.values()] : [] });
         {
-          const A = colOf("adjs"), I = colOf("ivi"), F = colOf("inflation"), K = colOf("apk"), H = colOf("hut"), V = colOf("vdf"), P = colOf("rvp"), N = colOf("nbd");
+          const A = colOf("adjs"), I = colOf("ivi"), F = colOf("inflation"), K = colOf("apk"), H = colOf("hut"), V = colOf("vdf"), P = colOf("rvp"), C = colOf("crp"), N = colOf("nbd");
           const g = [], z = [];
           for (let k = 0; k < payload.rows.length; k++) {
             const a = aimGap(traitP, A[k], I[k], H[k], V[k], N[k]); if (a) g.push(a.score);
-            const q = zergScore(traitP, F[k], K[k], P[k]); if (q) z.push(q.score);
+            const q = zergScore(traitP, F[k], K[k], P[k], C[k]); if (q) z.push(q.score);
           }
           aimGapScores = g.sort((x, y) => x - y);
           zergScores = z.sort((x, y) => x - y);
@@ -243,7 +245,7 @@ export function createStatsTable($) {
       // 🪳 Zerg (owner t480u): lower of the 🎈 Inflation and 🤝 Assists percentiles; lower is better (like 🤝: reversed grey %).
       // Short hover (owner t9); 🪳 revive details in columns.html#zerg.
       { id: "zerg", label: tr("col.zerg", "🪳 Zerg"), hint: tr("tip.zerg", ZERG_HINT), digits: 0, zergCell: true, pctDir: "low",
-        fn: (r) => { const z = traitP && r.p ? zergScore(traitP, shownValue(r, "inflation"), apkBySlug && apkBySlug.get(slugKey(r.p.display)), rvpOf(r.p.display)) : null; return z ? z.score : NaN; } },
+        fn: (r) => { const z = traitP && r.p ? zergScore(traitP, shownValue(r, "inflation"), apkBySlug && apkBySlug.get(slugKey(r.p.display)), rvpOf(r.p.display), crpOf(r.p.display)) : null; return z ? z.score : NaN; } },
       { id: "inf", label: tr("col.infantry", "🪖 Infantry"), hint: tr("tip.inf", INF_HINT), fn: (r) => { const e = infBySlug && r.p ? infBySlug.get(slugKey(r.p.display)) : undefined; return e ? e.inf : undefined; }, digits: 1, infCell: true },
     ];
     // Older debug columns: appended only when "show older debug stats" (footer) is ticked.
@@ -406,8 +408,12 @@ export function createStatsTable($) {
               }
               // 🪳 Zerg: plain 0–99 score, one colour; percentile + both parts on hover, reversed grey % like 🤝 (lower is better).
               if (c.zergCell) {
-                if (!isFiniteNum(v)) return `<td title="${escapeHtml(tr("zerg.missing", ZERG_MISSING))}">—</td>`;
-                const z = zergScore(traitP, shownValue(row, "inflation"), apkBySlug && apkBySlug.get(slugKey(row.p.display)), rvpOf(row.p.display));
+                if (!isFiniteNum(v)) {
+                  // "~N" estimate (zerg-revive.mjs zergEstimate): no Zerg score, display only — never sorted, pooled or marked.
+                  const est = row.p ? zergEstimate(rvpOf(row.p.display), crpOf(row.p.display)) : null;
+                  return isFiniteNum(est) ? zergEstHtml(est, escapeHtml) : `<td title="${escapeHtml(tr("zerg.missing", ZERG_MISSING))}">—</td>`;
+                }
+                const z = zergScore(traitP, shownValue(row, "inflation"), apkBySlug && apkBySlug.get(slugKey(row.p.display)), rvpOf(row.p.display), crpOf(row.p.display));
                 // Grey tag in points (a % of a 0–99 score explodes near 0): "+25" above the column's lowest, like 🤝's "+35%".
                 const low = Math.min(...metrics.map((m) => c.fn(m)).filter(isFiniteNum));
                 const up = isFiniteNum(low) && v > low ? v - low : null;
@@ -558,7 +564,7 @@ export function createStatsTable($) {
     if (!traitP || !row || !row.p) return "";
     const d = row.p.display;
     const g = aimGap(traitP, shownValue(row, "adjs"), row.ivi, $.hutOf(d), vdfOf(d), nbdOf(d, row.p));
-    const z = zergScore(traitP, shownValue(row, "inflation"), apkBySlug && apkBySlug.get(slugKey(d)), rvpOf(d));
+    const z = zergScore(traitP, shownValue(row, "inflation"), apkBySlug && apkBySlug.get(slugKey(d)), rvpOf(d), crpOf(d));
     const ie = infBySlug && infBySlug.get(slugKey(d)); // owner t592u: 🚜 by the name below the median infantry %
     return autoMarksHtml(g, z, row.p.times || null, Date.now(), nbhOf(d, row.p), ie ? { inf: ie.inf, med: infMed } : null);
   }

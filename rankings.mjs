@@ -32,12 +32,12 @@ import { pageRoom, dataPrefix, roomLsKey, psServer } from "./rooms.mjs?v=2026102
 import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261023-short1";
 import { infMedian } from "./tractor.mjs?v=20261024-trac1";
 import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261022-wpc1";
-import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261022-nbd1";
-import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, DIFF_THIRD, aimGapCellTip, zergCellTip } from "./trait-tips.mjs?v=20261023-nbh1";
-import { ZREV_NOTE } from "./zerg-revive.mjs?v=20261023-short1";
+import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261024-crowd1";
+import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, DIFF_THIRD, aimGapCellTip, zergCellTip, zergEstHtml } from "./trait-tips.mjs?v=20261024-crowd1";
+import { ZREV_NOTE, zergEstimate } from "./zerg-revive.mjs?v=20261024-crowd1";
 import { VDIFF_NOTE } from "./diff-vehicle.mjs?v=20261023-short1";
 import { NBD_NOTE } from "./newbie-diff.mjs?v=20261023-nbh1";
-import { autoMarksHtml } from "./auto-marks.mjs?v=20261024-trac1";
+import { autoMarksHtml } from "./auto-marks.mjs?v=20261024-crowd1";
 
 /**
  * @param {{ getNames: () => string[], toggleName: (name: string, anchor: Element, add: boolean) => void, maxNames?: number }} host
@@ -287,6 +287,8 @@ export function initRankings(host) {
         // 🔀 vehicle damp factor on positive Diff (diff-vehicle.mjs; null = none) and 🪳 revive percentile (zerg-revive.mjs; null = no XP detail).
         vdf: idx.vdf != null && Number.isFinite(r[idx.vdf]) ? r[idx.vdf] : null,
         rvp: idx.rvp != null && Number.isFinite(r[idx.rvp]) ? r[idx.rvp] : null,
+        // 🪳 crowd-score percentile (zerg-revive.mjs crowdPercentiles; null = no XP detail).
+        crp: idx.crp != null && Number.isFinite(r[idx.crp]) ? r[idx.crp] : null,
         // 🐣 newbie factor on a negative 🔀 Diff (newbie-diff.mjs; null = none).
         nbd: idx.nbd != null && Number.isFinite(r[idx.nbd]) ? r[idx.nbd] : null,
         // 🐣 new-player hours (newbie-diff.mjs newPlayerHours; null = not new / cleared).
@@ -319,9 +321,10 @@ export function initRankings(host) {
       const colOf = (id) => (idx[id] != null ? payload.rows.map((r) => r[idx[id]]) : []);
       const tp = traitPools({ adjs: colOf("adjs"), ivi: colOf("ivi"), inflation: colOf("inflation"), apk: colOf("apk") });
       for (const o of rows) {
-        const g = aimGap(tp, o.adjs, o.ivi, o.hut, o.vdf, o.nbd), z = zergScore(tp, o.inflation, o.apk, o.rvp);
+        const g = aimGap(tp, o.adjs, o.ivi, o.hut, o.vdf, o.nbd), z = zergScore(tp, o.inflation, o.apk, o.rvp, o.crp);
         o.diff = g ? g.score : null; o._gap = g;
         o.zerg = z ? z.score : null; o._zerg = z;
+        o.zest = z ? null : zergEstimate(o.rvp, o.crp); // "~N" estimate: display only, never in o.zerg / pools / sorting / marks
       }
       for (const id of ["diff", "zerg"]) {
         pools[id] = rows.map((o) => o[id]).filter(fin).sort((a, b) => a - b);
@@ -478,7 +481,7 @@ export function initRankings(host) {
     }
     if (c.apk) return apkCell(v, row.pcts[c.id]);
     // 🪳 Zerg: score + pXX like 🤝 (t495u); 🔀 Diff: signed score + plain pXX (t497u); parts on hover.
-    if (c.zerg) return fin(v) ? `<td title="${esc(zergCellTip(v, row._zerg, data.pools.zerg))}">${v}${apkPctTag(row.pcts.zerg)}</td>` : `<td title="${esc(tr("zerg.missing", ZERG_MISSING))}">—</td>`;
+    if (c.zerg) return fin(v) ? `<td title="${esc(zergCellTip(v, row._zerg, data.pools.zerg))}">${v}${apkPctTag(row.pcts.zerg)}</td>` : fin(row.zest) ? zergEstHtml(row.zest, esc) : `<td title="${esc(tr("zerg.missing", ZERG_MISSING))}">—</td>`;
     // t497u: 🔀 pXX = plain percentile of the signed score (share of players below); no better side.
     if (c.aimgap) return fin(v) ? `<td title="${esc(aimGapCellTip(v, row._gap, data.pools.diff, row.infVeh))}">${fmtSigned(v)}${row.pcts.diff == null ? "" : `<span class="pct" title="${esc(tr("stats.pctile", "Population percentile: higher than {n}% of cached players", { n: row.pcts.diff }))}">p${row.pcts.diff}</span>`}</td>` : `<td title="${esc(tr("diff.missing", AIMGAP_MISSING))}">—</td>`;
     if (c.inf) return fin(v) ? `<td title="${esc(infTip(v, row.infMax, row.infVeh, row.pcts[c.id]))}">${fmt(v, 1)}%</td>` : `<td title="${esc(INF_PENDING_TIP)}">—</td>`;

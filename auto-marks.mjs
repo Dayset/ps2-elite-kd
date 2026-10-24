@@ -3,26 +3,27 @@
  * changes are marked by the name, never inside numeric cells; owner 2026-10-23:
  * "I can't see badges now, neither zerg or new accounts"). DOM-free.
  *
- *   🪳 Zerg confirmed: the revive check says "confirmed" (revive percentile in
- *      the top quarter, zerg-revive.mjs REV_CONFIRM) AND the 🪳 Zerg score
- *      itself is in the top quarter (same 75 line). Hover = the confirmed tip.
+ *   🪳 Zerg confirmed: the crowd check says "confirmed" (revive OR crowd-score
+ *      percentile in the top quarter, zerg-revive.mjs REV_CONFIRM) AND the 🪳
+ *      Zerg score itself is in the top quarter (same 75 line). Hover = the
+ *      confirmed tip. An estimated "~N" 🪳 (no Zerg score) never gets a mark.
  *   🐣 Newbie softening: a negative 🔀 Diff was raised by the play-time
  *      factor (newbie-diff.mjs) by at least AUTO_MARK_MIN points (same rule as
  *      🛖, hut.mjs HUT_MARK_MIN). Hover = "Softened from …".
  *   🐣 New player (owner 2026-10-23, "A and B"): also when play time is under
  *      the data cut (newbie-diff.mjs NBD_NEW_Q), whatever the Diff. Hover =
  *      "New player (about N h played)" (+ "Diff softened from …" when both).
- * Players cleared in data/reviewed.json carry no rvp / nbd / nbh, so no mark.
+ * Players cleared in data/reviewed.json carry no rvp / crp / nbd / nbh, so no mark.
  * 🪦 inactive (> 1 year) hides 🐣 (autoMarksHtml; owner 2026-10-23: 🪦 wins).
  *
  * g = trait-scores aimGap() result, z = zergScore() result (either may be null),
  * nbh = new-player hours (newbie-diff.mjs newPlayerHours; null = not new).
  * Returns [{ id, mark, tip }] in display order.
  */
-import { REV_CONFIRM, zrevConfirmedTip } from "./zerg-revive.mjs?v=20261023-short1";
+import { REV_CONFIRM, zrevConfirmedTip } from "./zerg-revive.mjs?v=20261024-crowd1";
 import { nbdFromTip, nbdNewTip } from "./newbie-diff.mjs?v=20261023-nbh1";
 import { HUT_MARK_MIN } from "./hut.mjs?v=20261023-short1";
-import { fmtSigned } from "./trait-tips.mjs?v=20261023-nbh1";
+import { fmtSigned } from "./trait-tips.mjs?v=20261024-crowd1";
 import { flairsFor } from "./flairs.mjs?v=20261010-sav1";
 import { t as tr, currentLang } from "./i18n.mjs";
 import { isTractor, tractorHint, TRACTOR_EMOJI } from "./tractor.mjs?v=20261024-trac1";
@@ -35,8 +36,9 @@ const fin = (v) => typeof v === "number" && Number.isFinite(v);
 
 export function autoMarks(g, z, nbh = null) {
   const out = [];
-  if (z && z.confirmed && fin(z.rvp) && fin(z.score) && z.score >= REV_CONFIRM) {
-    out.push({ id: "zerg", mark: ZERG_MARK, tip: ZERG_MARK + " " + zrevConfirmedTip(z.rvp) });
+  const chk = z ? (fin(z.chk) ? z.chk : z.rvp) : null; // the higher of revive / crowd percentiles (trait-scores zergScore)
+  if (z && z.confirmed && fin(chk) && fin(z.score) && z.score >= REV_CONFIRM) {
+    out.push({ id: "zerg", mark: ZERG_MARK, tip: ZERG_MARK + " " + zrevConfirmedTip(chk) });
   }
   const soft = !!(g && g.by === "nbd" && fin(g.score) && fin(g.raw) && g.score - g.raw >= AUTO_MARK_MIN);
   const isNew = fin(nbh) && nbh >= 0;

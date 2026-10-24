@@ -30,7 +30,7 @@ import { VEH_CUT } from "../vehicle-cut.mjs";
 import { nbdCuts, newbieFactor, newbieCleared, newPlayerHours, NBD_BAND, NBD_NEW_Q } from "../newbie-diff.mjs";
 import { hutCuts, hutParts, hutCleared, deathsPerMin, HUT_ACT_MULT, HUT_ACT_MULT_TOP, HUT_EXP_BAND, playMinutes, HUT_DPM_BAND, HUT_INF_BAND, HUT_ACC_BAND, HUT_MARK_MIN } from "../hut.mjs";
 import { traitPools, aimGap, zergScore } from "../trait-scores.mjs";
-import { revivedShare, zergCleared, REV_MIN_KILLS, REV_MIN_DEATHS, REV_SOFT_BAND, REV_CONFIRM } from "../zerg-revive.mjs";
+import { crowdSample, crowdPercentiles, zergEstimate, zergCleared, CROWD_MIN_DEATHS, CROWD_MIN_MIN, REV_SOFT_BAND, REV_CONFIRM, ZEST_MIN, HL_MIN, HL_W } from "../zerg-revive.mjs";
 import { vehDiffStart, vehDiffFactor, vehDiffCleared } from "../diff-vehicle.mjs";
 import { percentileOf } from "../dist.mjs";
 import { forensicsSummary, honuSessionUrl } from "../session-forensics.mjs";
@@ -387,7 +387,7 @@ export function buildRanksWithGuard(dataDir, { known = KNOWN_EXTREMES } = {}) {
       playMin.set(row[2], playMinutes(pl.infantry && pl.infantry.kills, pl.global_kpm));
       const xpd = readXp(dataDir, row[2]);
       const sm = sessionMetrics({ assists: pl.assists, xp: xpd });
-      const rs = revivedShare(xpd); // 🪳 revive check (zerg-revive.mjs): null below the sample minimum
+      const rs = crowdSample(xpd); // 🪳 crowd check (zerg-revive.mjs): null below the sample minimum
       if (rs) revShare.set(row[2], rs);
       const sf = sessionFlag(sm, { hsr: pl.hsr, kd: pl.global_kd });
       for (const id of SESSION_METRIC_IDS) values[id] = sm && sm.measured ? sm.values[id] : null;
@@ -415,7 +415,7 @@ export function buildRanksWithGuard(dataDir, { known = KNOWN_EXTREMES } = {}) {
   const hut = applyHutColumn(ranks, reviewedJson, { playMin }); // 🛖 trailing "hut" column (damping factor on positive 🔀 Diff)
   const vehDiff = applyVehDiffColumn(ranks, reviewedJson); // 🔀🚜 trailing "vdf" column (vehicle damp on positive 🔀 Diff)
   const newbieDiff = applyNewbieDiffColumn(ranks, reviewedJson, playMin); // 🐣 trailing "nbd" column (play-time factor on negative 🔀 Diff)
-  const zergRevive = applyReviveColumn(ranks, reviewedJson, revShare); // 🪳 trailing "rvp" column (revive percentile)
+  const zergRevive = applyReviveColumn(ranks, reviewedJson, revShare); // 🪳 trailing "rvp" / "crp" columns (revive / crowd percentiles)
   const found = findOutliers(players, [...METRIC_COLS, ...SESSION_METRIC_IDS], { known });
   found.items.push(...forensicsGuardItems(players));
   const guard = guardStatus(found);
@@ -640,51 +640,63 @@ export function applyNewbieDiffColumn(ranks, reviewed, playMin) {
 }
 
 /**
- * 🪳 Zerg revive check (zerg-revive.mjs, owner-approved 2026-10-22): revived
- * share per measured player (data/xp), percentile among them = trailing column
- * "rvp" (0–99; null = no XP detail or cleared). trait-scores.mjs zergScore()
- * softens a high Zerg where rvp is low and marks rvp ≥ REV_CONFIRM "confirmed".
+ * 🪳 Zerg crowd check (zerg-revive.mjs; revive check owner-approved 2026-10-22,
+ * crowd score / Hardlight / estimate t614, 2026-10-24): per measured player
+ * (data/xp, not cleared in reviewed.json) the revive percentile = trailing column
+ * "rvp" and the crowd-score percentile = "crp" (0–99; null = no XP detail or
+ * cleared). trait-scores.mjs zergScore() softens a high Zerg where both are low
+ * and marks rvp or crp ≥ REV_CONFIRM "confirmed"; no Zerg + max ≥ ZEST_MIN = "~N" estimate.
  * Returns the status.json "zergRevive" block for build-log.
  */
 export function applyReviveColumn(ranks, reviewed, revShare) {
   const ix = Object.fromEntries(ranks.cols.map((c, i) => [c, i]));
   const get = (r, k) => (ix[k] != null ? r[ix[k]] : null);
   const colOf = (k) => ranks.rows.map((r) => get(r, k));
-  const inRanks = ranks.rows.filter((r) => revShare && revShare.has(get(r, "slug")));
-  const pool = inRanks.map((r) => Math.round(revShare.get(get(r, "slug")).share * 1000) / 1000).sort((a, b) => a - b);
-  const q = (p) => (pool.length ? pool[Math.min(pool.length - 1, Math.floor(p / 100 * pool.length))] : null);
-  const tp = traitPools({ inflation: colOf("inflation"), apk: colOf("apk") });
-  const players = [], cleared = [];
-  let zergScored = 0, measured = 0, confirmed = 0, softened = 0, confirmedHigh = 0;
-  ranks.cols.push("rvp");
+  const samples = new Map(), clearedSamples = new Map();
   for (const r of ranks.rows) {
     const slug = get(r, "slug"), rs = revShare && revShare.get(slug);
-    let rvp = rs ? percentileOf(pool, Math.round(rs.share * 1000) / 1000) : null;
+    if (!rs) continue;
+    (zergCleared(reviewed, slug) ? clearedSamples : samples).set(slug, rs);
+  }
+  const pc = crowdPercentiles(samples);
+  const pool = [...samples.values()].map((s) => Math.round(s.rev * 1000) / 1000).sort((a, b) => a - b);
+  const q = (p) => (pool.length ? pool[Math.min(pool.length - 1, Math.floor(p / 100 * pool.length))] : null);
+  const tp = traitPools({ inflation: colOf("inflation"), apk: colOf("apk") });
+  const players = [], cleared = [], estimates = [];
+  let zergScored = 0, measured = 0, measuredZerg = 0, confirmed = 0, softened = 0, confirmedHigh = 0, byCrowdOnly = 0, hardlight = 0;
+  ranks.cols.push("rvp", "crp");
+  for (const r of ranks.rows) {
+    const slug = get(r, "slug"), rs = samples.get(slug) || clearedSamples.get(slug), v = pc.get(slug);
+    const rvp = v ? v.rvp : null, crp = v ? v.crp : null;
     const z0 = zergScore(tp, get(r, "inflation"), get(r, "apk"));
     if (z0) zergScored++;
-    const info = (z) => ({ name: get(r, "name"), slug, share: rs ? Math.round(rs.share * 1000) / 10 : null, revived: rs ? rs.revived : null, deaths: rs ? rs.deaths : null, rvp, zergRaw: z0 ? z0.raw : null, zerg: z ? z.score : null });
-    if (rvp != null && zergCleared(reviewed, slug)) {
-      const zw = zergScore(tp, get(r, "inflation"), get(r, "apk"), rvp);
-      cleared.push({ ...info(zw), zergWould: zw ? zw.score : null });
-      rvp = null;
-    }
-    r.push(rvp);
-    if (rvp == null) continue;
+    const info = (z) => ({ name: get(r, "name"), slug, share: rs ? Math.round(rs.rev * 1000) / 10 : null, revived: rs ? rs.revived : null, deaths: rs ? rs.deaths : null, minutes: rs ? rs.minutes : null, rvp, crp, hl: v && v.hlp != null ? Math.round(rs.hl * 1000) / 1000 : null, zergRaw: z0 ? z0.raw : null, zerg: z ? z.score : null });
+    if (clearedSamples.has(slug)) cleared.push({ ...info(null), zergWould: null });
+    r.push(rvp, crp);
+    if (!v) continue;
     measured++;
-    const z = zergScore(tp, get(r, "inflation"), get(r, "apk"), rvp);
-    if (!z) continue;
-    if (z.confirmed) { confirmed++; if (z.raw >= 67) confirmedHigh++; }
+    if (v.hlp != null) hardlight++;
+    const z = zergScore(tp, get(r, "inflation"), get(r, "apk"), rvp, crp);
+    if (!z) {
+      const est = zergEstimate(rvp, crp);
+      if (est != null) estimates.push({ ...info(null), est });
+      continue;
+    }
+    measuredZerg++;
+    if (z.confirmed) { confirmed++; if (!(rvp >= REV_CONFIRM)) byCrowdOnly++; if (z.raw >= 67) confirmedHigh++; }
     if (z.softened) softened++;
     if (z.softened || (z.confirmed && z.raw >= 67)) players.push({ ...info(z), status: z.softened ? "softened" : "confirmed" });
   }
   players.sort((a, b) => (b.zergRaw ?? -1) - (a.zergRaw ?? -1));
+  estimates.sort((a, b) => b.est - a.est);
   const p1 = (v) => (v == null ? null : Math.round(v * 1000) / 10);
   return {
     builtAt: new Date().toISOString(),
-    zergScored, measured, confirmed, confirmedHigh, softened,
-    cuts: { minKills: REV_MIN_KILLS, minDeaths: REV_MIN_DEATHS, p25: p1(q(REV_SOFT_BAND[0])), p50: p1(q(REV_SOFT_BAND[1])), p75: p1(q(REV_CONFIRM)), n: pool.length },
-    rule: `🪳 Zerg revive check, from Honu XP detail (data/xp, players looked up or discovered; ${REV_MIN_KILLS}+ kills and ${REV_MIN_DEATHS}+ deaths there). Revived share = (Revive + Squad Revive received) ÷ deaths by enemy players. rvp = its percentile among the ${pool.length} measured players of this build (p25 ${p1(q(REV_SOFT_BAND[0]))}%, median ${p1(q(REV_SOFT_BAND[1]))}%, p75 ${p1(q(REV_CONFIRM))}%). rvp ≥ ${REV_CONFIRM} → Zerg confirmed (unchanged, said on hover). Low rvp softens a high Zerg: w = 1 at/below p${REV_SOFT_BAND[0]} → 0 at/above p${REV_SOFT_BAND[1]}, Zerg = raw − round(w × max(0, raw − rvp)), so at full weight Zerg falls to the revive percentile; never raised. No XP detail → unchanged. Listed: every softened player, and confirmed ones with raw Zerg ≥ 67. Owner override: "zerg": "cleared" on the data/reviewed.json player entry (no revive result at all).`,
+    zergScored, measured, measuredZerg, confirmed, confirmedHigh, softened, byCrowdOnly, hardlight, estimated: estimates.length,
+    cuts: { minDeaths: CROWD_MIN_DEATHS, minMinutes: CROWD_MIN_MIN, p25: p1(q(REV_SOFT_BAND[0])), p50: p1(q(REV_SOFT_BAND[1])), p75: p1(q(REV_CONFIRM)), n: pool.length },
+    rule: `🪳 Zerg crowd check, from Honu XP detail (data/xp, players looked up or discovered; ${CROWD_MIN_DEATHS}+ deaths by enemy players and ${CROWD_MIN_MIN / 60}+ h of play there, no kill minimum). Per death we count what the player RECEIVED: revives (Revive + Squad Revive), heals, shield repairs and resupplies (each + its squad version). rvp = the revived share's percentile among the ${pool.length} measured players of this build (revived share p25 ${p1(q(REV_SOFT_BAND[0]))}%, median ${p1(q(REV_SOFT_BAND[1]))}%, p75 ${p1(q(REV_CONFIRM))}%). Crowd score = mean of the four percentiles; engineers with Hardlight barrier blocking XP (id 1393, only ticks inside a big crowd) at ${HL_MIN}+ events/min get max(crowd, ${1 - HL_W} × crowd + ${HL_W} × their Hardlight percentile) — it can only add (${hardlight} players). crp = the crowd score's percentile again among the same players. rvp ≥ ${REV_CONFIRM} OR crp ≥ ${REV_CONFIRM} → Zerg confirmed (unchanged, said on hover; ${byCrowdOnly} confirmed by the crowd score alone). Softening uses the HIGHER of rvp and crp (check): w = 1 at/below p${REV_SOFT_BAND[0]} → 0 at/above p${REV_SOFT_BAND[1]}, Zerg = raw − round(w × max(0, raw − check)); never raised. No XP detail → unchanged. Estimated 🪳 (no Zerg score, e.g. few kills or assists): max(rvp, crp) when ≥ ${ZEST_MIN}, shown as "~N" — display only, never sorted, pooled or marked (${estimates.length} players). Listed: every softened player, confirmed ones with raw Zerg ≥ 67, and the estimates. Owner override: "zerg": "cleared" on the data/reviewed.json player entry (no crowd result at all; also left out of the pools).`,
     players,
+    estimates,
     cleared,
   };
 }
@@ -1034,8 +1046,8 @@ export function buildNames(index, { withFile = false } = {}) {
  * "inflation" rides along for 🪳 Zerg (owner 2026-10-21, trait-scores.mjs): the
  * lower of the 🎈 Inflation and 🤝 Assists percentiles needs the Inflation pool.
  */
-export const LITE_COLS = ["name", "slug", "adjs", "cons", "apk", "inf", "infMax", "infVeh", "ivi", "inflation", "hut", "hutMk", "vdf", "rvp", "nbd", "nbh"];
-const LITE_DIGITS = { adjs: 1, cons: 4, apk: 3, inf: 1, infMax: 1, infVeh: 1, ivi: 1, inflation: 2, hut: 3, hutMk: 0, vdf: 3, rvp: 0, nbd: 3, nbh: 1 };
+export const LITE_COLS = ["name", "slug", "adjs", "cons", "apk", "inf", "infMax", "infVeh", "ivi", "inflation", "hut", "hutMk", "vdf", "rvp", "crp", "nbd", "nbh"];
+const LITE_DIGITS = { adjs: 1, cons: 4, apk: 3, inf: 1, infMax: 1, infVeh: 1, ivi: 1, inflation: 2, hut: 3, hutMk: 0, vdf: 3, rvp: 0, crp: 0, nbd: 3, nbh: 1 };
 export function buildRanksLite(ranks) {
   const ix = LITE_COLS.map((k) => (ranks && Array.isArray(ranks.cols) ? ranks.cols.indexOf(k) : -1));
   if (ix.some((i) => i < 0) || !Array.isArray(ranks.rows)) return null;
@@ -1164,9 +1176,9 @@ if (isMain) {
   st.newbieDiff = nbdInfo; // 🐣 build-log list (ranks.json "nbd")
   console.log(`🐣 newbie softening: ${nbdInfo.loH} h → ${nbdInfo.hiH} h; ${nbdInfo.softened} negative Diffs softened, Impostors ${nbdInfo.impBefore} → ${nbdInfo.impAfter}, ${nbdInfo.cleared.length} cleared; new players < ${nbdInfo.newH} h: ${nbdInfo.newCount}; 🐣 shown: ${nbdInfo.marked}; 🐣 hidden by 🪦: ${nbdInfo.graveHiddenCount}`);
   st.vehDiff = vehDiffInfo; // 🔀🚜 build-log list (ranks.json "vdf")
-  st.zergRevive = zrevInfo; // 🪳 revive check build-log list (ranks.json "rvp")
+  st.zergRevive = zrevInfo; // 🪳 crowd check build-log list (ranks.json "rvp" / "crp")
   console.log(`🔀🚜 Diff vehicle damp: start ${vehDiffInfo.start}% vehicle share; ${vehDiffInfo.damped} players' Diff lowered, DieHards ${vehDiffInfo.dieHardHut} (after 🛖) → ${vehDiffInfo.dieHardAfter}, ${vehDiffInfo.cleared.length} cleared`);
-  console.log(`🪳 revive check: ${zrevInfo.measured} of ${zrevInfo.zergScored} Zerg-scored players measured, ${zrevInfo.confirmed} confirmed (${zrevInfo.confirmedHigh} with Zerg ≥ 67), ${zrevInfo.softened} softened, ${zrevInfo.cleared.length} cleared`);
+  console.log(`🪳 crowd check: ${zrevInfo.measured} measured (${zrevInfo.measuredZerg} of ${zrevInfo.zergScored} Zerg-scored), ${zrevInfo.confirmed} confirmed (${zrevInfo.confirmedHigh} with Zerg ≥ 67, ${zrevInfo.byCrowdOnly} by crowd score only), ${zrevInfo.softened} softened, ${zrevInfo.estimated} estimated, ${zrevInfo.cleared.length} cleared`);
   console.log(`🛖 safe-spot: Activity median ${hutInfo.cuts.actMedian} → cut ${hutInfo.cuts.actCut}…${hutInfo.cuts.actCutTop} (by ⚔️ iVi percentile), deaths/min ${hutInfo.cuts.dpmLo}→${hutInfo.cuts.dpmHi}, accuracy ${hutInfo.cuts.accLo}→${hutInfo.cuts.accHi}; ${hutInfo.marked} shown with 🛖, DieHards ${hutInfo.dieHardBefore} → ${hutInfo.dieHardAfter}, ${hutInfo.cleared.length} cleared by the owner`);
   console.log(`vehicle cut: ${vehCutInfo.cut} of ${vehCutInfo.withData} players with infantry data cut, ${vehCutInfo.cleared.length} exempted by the owner`);
   console.log(`padder penalty: ${padderInfo.penalized} penalized, ${padderInfo.cleared} cleared by the owner`);

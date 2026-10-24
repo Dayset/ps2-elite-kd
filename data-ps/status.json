@@ -33,7 +33,7 @@
     }
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-24T21:10:23.803Z",
+    "checkedAt": "2026-10-24T22:26:15.620Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 1,
     "explained": 3,
@@ -228,7 +228,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-24T21:10:23.850Z",
+    "checkedAt": "2026-10-24T22:26:15.667Z",
     "red": 7,
     "padding": 0,
     "adjusted": 219,
@@ -239,7 +239,7 @@
     "forensics": 0
   },
   "sessionStats": {
-    "checkedAt": "2026-10-24T21:10:23.806Z",
+    "checkedAt": "2026-10-24T22:26:15.623Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -644,7 +644,7 @@
     "outliersUnexplained": 0
   },
   "forensics": {
-    "checkedAt": "2026-10-24T21:10:23.811Z",
+    "checkedAt": "2026-10-24T22:26:15.627Z",
     "candidates": [
       "thingzzvs",
       "hkn1",
@@ -712,7 +712,7 @@
     "players": []
   },
   "review": {
-    "checkedAt": "2026-10-24T21:10:23.820Z",
+    "checkedAt": "2026-10-24T22:26:15.635Z",
     "count": 223,
     "players": [
       {
@@ -2543,7 +2543,7 @@
     },
     "predict": {},
     "tagMin": 20,
-    "checkedAt": "2026-10-24T21:10:23.829Z",
+    "checkedAt": "2026-10-24T22:26:15.644Z",
     "coverage": {
       "players": 1682,
       "withSessions": 763,
@@ -2831,7 +2831,7 @@
     }
   },
   "padderPenalty": {
-    "checkedAt": "2026-10-24T21:10:23.823Z",
+    "checkedAt": "2026-10-24T22:26:15.637Z",
     "ranked": 1675,
     "penalty": 0.1,
     "ref": 610.6,
@@ -2841,7 +2841,7 @@
     "players": []
   },
   "vehicleCut": {
-    "checkedAt": "2026-10-24T21:10:23.828Z",
+    "checkedAt": "2026-10-24T22:26:15.643Z",
     "ranked": 1675,
     "cut": 987,
     "buckets": {
@@ -5117,7 +5117,7 @@
     "watch": []
   },
   "infantry": {
-    "checkedAt": "2026-10-24T21:10:24.014Z",
+    "checkedAt": "2026-10-24T22:26:15.819Z",
     "players": 1689,
     "counts": {
       "infantry": 1090,
@@ -5136,7 +5136,7 @@
   },
   "burst": {
     "rule": "KPM ≥ 5 and ≥ 15 kills in ≥ 2 min (one stored session, no 10-minute floor)",
-    "checkedAt": "2026-10-24T21:10:24.201Z",
+    "checkedAt": "2026-10-24T22:26:15.994Z",
     "sessions": 3,
     "flaggedPlayers": 3,
     "clearedPlayers": 0,
@@ -5201,7 +5201,7 @@
     "caught": []
   },
   "hut": {
-    "builtAt": "2026-10-24T21:10:23.761Z",
+    "builtAt": "2026-10-24T22:26:15.581Z",
     "cuts": {
       "actMedian": 0.2388,
       "actMult": 1.333,
@@ -5705,7 +5705,7 @@
     "cleared": []
   },
   "newbieDiff": {
-    "builtAt": "2026-10-24T21:10:23.778Z",
+    "builtAt": "2026-10-24T22:26:15.598Z",
     "loH": 6.8,
     "hiH": 318.6,
     "n": 1670,
@@ -11189,7 +11189,7 @@
     "cleared": []
   },
   "vehDiff": {
-    "builtAt": "2026-10-24T21:10:23.769Z",
+    "builtAt": "2026-10-24T22:26:15.589Z",
     "start": 14.6,
     "damped": 396,
     "dieHardHut": 188,
@@ -15556,26 +15556,31 @@
     "cleared": []
   },
   "zergRevive": {
-    "builtAt": "2026-10-24T21:10:23.781Z",
+    "builtAt": "2026-10-24T22:26:15.601Z",
     "zergScored": 125,
     "measured": 0,
+    "measuredZerg": 0,
     "confirmed": 0,
     "confirmedHigh": 0,
     "softened": 0,
+    "byCrowdOnly": 0,
+    "hardlight": 0,
+    "estimated": 0,
     "cuts": {
-      "minKills": 100,
       "minDeaths": 50,
+      "minMinutes": 120,
       "p25": null,
       "p50": null,
       "p75": null,
       "n": 0
     },
-    "rule": "🪳 Zerg revive check, from Honu XP detail (data/xp, players looked up or discovered; 100+ kills and 50+ deaths there). Revived share = (Revive + Squad Revive received) ÷ deaths by enemy players. rvp = its percentile among the 0 measured players of this build (p25 null%, median null%, p75 null%). rvp ≥ 75 → Zerg confirmed (unchanged, said on hover). Low rvp softens a high Zerg: w = 1 at/below p25 → 0 at/above p50, Zerg = raw − round(w × max(0, raw − rvp)), so at full weight Zerg falls to the revive percentile; never raised. No XP detail → unchanged. Listed: every softened player, and confirmed ones with raw Zerg ≥ 67. Owner override: \"zerg\": \"cleared\" on the data/reviewed.json player entry (no revive result at all).",
+    "rule": "🪳 Zerg crowd check, from Honu XP detail (data/xp, players looked up or discovered; 50+ deaths by enemy players and 2+ h of play there, no kill minimum). Per death we count what the player RECEIVED: revives (Revive + Squad Revive), heals, shield repairs and resupplies (each + its squad version). rvp = the revived share's percentile among the 0 measured players of this build (revived share p25 null%, median null%, p75 null%). Crowd score = mean of the four percentiles; engineers with Hardlight barrier blocking XP (id 1393, only ticks inside a big crowd) at 0.02+ events/min get max(crowd, 0.8 × crowd + 0.2 × their Hardlight percentile) — it can only add (0 players). crp = the crowd score's percentile again among the same players. rvp ≥ 75 OR crp ≥ 75 → Zerg confirmed (unchanged, said on hover; 0 confirmed by the crowd score alone). Softening uses the HIGHER of rvp and crp (check): w = 1 at/below p25 → 0 at/above p50, Zerg = raw − round(w × max(0, raw − check)); never raised. No XP detail → unchanged. Estimated 🪳 (no Zerg score, e.g. few kills or assists): max(rvp, crp) when ≥ 75, shown as \"~N\" — display only, never sorted, pooled or marked (0 players). Listed: every softened player, confirmed ones with raw Zerg ≥ 67, and the estimates. Owner override: \"zerg\": \"cleared\" on the data/reviewed.json player entry (no crowd result at all; also left out of the pools).",
     "players": [],
+    "estimates": [],
     "cleared": []
   },
   "assistGap": {
-    "checkedAt": "2026-10-24T21:10:23.830Z",
+    "checkedAt": "2026-10-24T22:26:15.645Z",
     "start": "2026-04-01T13:00:00.000Z",
     "end": "2026-05-07T05:00:00.000Z",
     "url": "https://www.planetside2.com/patch-notes/may-6-hotfix-2026",

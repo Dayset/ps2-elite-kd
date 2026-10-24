@@ -269,7 +269,7 @@ test("no value = empty 0% emoji, never a dash (owner t567u): stats, iVi, uncache
   assert.match(js, /const meter = \(e\) => `<span class="lv-em lv-x\$\{emojiIdx\.get\(e\)\}" aria-hidden="true" data-e="\$\{e\}"><i class="lv-gl"><\/i><i class="lv-b"><\/i><i class="lv-sw"><i class="lv-s"><i class="lv-shn"><\/i><\/i><\/i><\/span>`;/);
   assert.match(js, /const vals = p\.cached \|\| \{\};/); // uncached too
   assert.match(js, /IVI\.map\(\(c\) => `<td class="lv-ivc">\$\{iviText\(c, vals\[c\.id\]\)\}<\/td>`\)/);
-  assert.match(js, /REST\.map\(\(c\) => unit\(c, vals\[c\.id\]\)\)/);
+  assert.match(js, /REST\.map\(\(c\) => unit\(c, vals\[c\.id\], c\.id === "zerg" \? vals\.zest : null\)\)/); // t614: "~N" 🪳 estimate as the roach fill
   assert.doesNotMatch(js, /lv-none|lv-unc|>—<\/span>/); // no K/D-over-KPM text, no dash cells
   assert.doesNotMatch(css, /lv-none|lv-unc|\.lv-ini\b/);
   assert.match(css, /\.lv-iv\.lv-nil \{ display: inline-flex;/);

@@ -215,7 +215,7 @@
           <div id="nbd" class="st-dim">Loading…</div>
         </details>
         <details class="st-sub-sec" id="secZergRevive">
-          <summary><h3>🪳 Zerg revive check <span id="zrevCount" class="st-count">…</span></h3></summary>
+          <summary><h3>🪳 Zerg crowd check <span id="zrevCount" class="st-count">…</span></h3></summary>
           <details class="st-info"><summary>ⓘ How it works</summary><div id="zrevRule" class="st-rule"></div></details>
           <div id="zrev" class="st-dim">Loading…</div>
         </details>
@@ -1292,7 +1292,7 @@
       t.bind();
     }
 
-    /** 🪳 Zerg revive check (status.json "zergRevive", scripts/build-ranks.mjs + zerg-revive.mjs): softened players + confirmed high Zergs. */
+    /** 🪳 Zerg crowd check (status.json "zergRevive", scripts/build-ranks.mjs + zerg-revive.mjs): softened players, confirmed high Zergs, "~N" estimates. */
     const zrevSort = { key: "zergRaw", dir: -1 };
     function renderZergRevive(st) {
       const b = st && st.zergRevive;
@@ -1303,12 +1303,17 @@
       const items = (b.players || []).map((i) => ({ ...i, drop: i.zergRaw - i.zerg }));
       const t = sortTable($("zrev"), items, [
         ["name", "Player"], ["status", "Result", (v) => (v === "softened" ? "softened" : "✅ confirmed")], ["zergRaw", "Zerg before"], ["zerg", "Zerg after", (v) => "<strong>" + v + "</strong>"], ["drop", "Drop", (v) => (v ? "−" + v : "—")],
-        ["share", "Revived %", (v) => (v != null ? v + "%" : "—")], ["rvp", "Revive pct"], ["revived", "Revives"], ["deaths", "Deaths"],
+        ["share", "Revived %", (v) => (v != null ? v + "%" : "—")], ["rvp", "Revive pct"], ["crp", "Crowd pct", (v) => (v != null ? v : "—")], ["revived", "Revives"], ["deaths", "Deaths"],
       ], zrevSort, () => renderZergRevive(st));
+      const es = b.estimates || [];
+      const est = es.length
+        ? '<div style="margin-top:6px;">~🪳 Estimates (no Zerg score; display only, never sorted or marked): ' + es.map((i) => nameCell(i) + " ~" + i.est + " (revive " + i.rvp + ", crowd " + i.crp + ", " + i.deaths + " deaths, " + Math.round(i.minutes / 60) + " h)").join(", ") + "</div>"
+        : '<div class="st-dim" style="margin-top:6px;">No estimates.</div>';
       const cl = (b.cleared || []).length
-        ? '<div style="margin-top:6px;">✅ Cleared by the owner (no revive result): ' + b.cleared.map((i) => nameCell(i) + " (Zerg " + i.zergRaw + ", would be " + i.zergWould + ")").join(", ") + "</div>"
+        ? '<div style="margin-top:6px;">✅ Cleared by the owner (no crowd result): ' + b.cleared.map((i) => nameCell(i) + " (Zerg " + (i.zergRaw ?? "—") + ")").join(", ") + "</div>"
         : '<div class="st-dim" style="margin-top:6px;">No owner clearances.</div>';
-      $("zrev").innerHTML = '<div class="st-dim" style="margin-bottom:6px;">Coverage: ' + b.measured + " of " + b.zergScored + " 🪳-scored players have revive data (" + (b.zergScored ? Math.round(b.measured / b.zergScored * 100) : 0) + "%) · " + b.softened + " softened · " + b.confirmed + " confirmed (" + b.confirmedHigh + " with Zerg ≥ 67) · revived share p25 " + c.p25 + "%, median " + c.p50 + "%, p75 " + c.p75 + "% (" + c.minKills + "+ kills, " + c.minDeaths + "+ deaths)</div>" + t.html + cl;
+      const mz = b.measuredZerg != null ? b.measuredZerg : b.measured;
+      $("zrev").innerHTML = '<div class="st-dim" style="margin-bottom:6px;">Coverage: ' + mz + " of " + b.zergScored + " 🪳-scored players have crowd data (" + (b.zergScored ? Math.round(mz / b.zergScored * 100) : 0) + "%; " + b.measured + " measured in all) · " + b.softened + " softened · " + b.confirmed + " confirmed (" + b.confirmedHigh + " with Zerg ≥ 67, " + (b.byCrowdOnly ?? 0) + " by crowd score only) · " + (b.estimated ?? 0) + " estimates · revived share p25 " + c.p25 + "%, median " + c.p50 + "%, p75 " + c.p75 + "% (" + c.minDeaths + "+ deaths, " + Math.round((c.minMinutes || 0) / 60) + "+ h)</div>" + t.html + est + cl;
       t.bind();
     }
 

@@ -10,6 +10,8 @@ test("🪳 next to the name only when the revive check confirms a top-quarter Ze
   assert.equal(autoMarks(null, { score: 60, rvp: 99, confirmed: true }).length, 0); // low Zerg: confirmed but not a zerg
   assert.equal(autoMarks(null, { score: 90, rvp: 60, confirmed: false }).length, 0);
   assert.equal(autoMarks(null, { score: 90, rvp: null, confirmed: false }).length, 0); // no XP detail / cleared in reviewed.json
+  assert.deepEqual(autoMarks(null, { score: 90, rvp: 30, crp: 80, chk: 80, confirmed: true }).map((m) => m.id), ["zerg"]); // t614: crowd score alone confirms
+  assert.equal(autoMarks(null, null).length, 0); // "~N" estimate = no Zerg score = no mark
 });
 
 test("🐣 next to the name when a negative Diff is softened by ≥ the 🛖 mark minimum", () => {
