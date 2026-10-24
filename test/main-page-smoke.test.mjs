@@ -93,6 +93,9 @@ describe("main page smoke (#66)", () => {
       assert.equal(await ev(until(`document.querySelectorAll('#statsPanel th[scope="row"].stats-name').length >= 2`)), true, "stats table for both players");
       const chartInfo = await ev(`new Promise((r) => setTimeout(() => { const c = document.getElementById("chart"); r({ shown: !c.hasAttribute("hidden"), paths: c.querySelectorAll("path").length, dots: c.querySelectorAll("circle").length }); }, 3000))`);
       assert.ok(chartInfo.shown && chartInfo.paths >= 1 && chartInfo.dots > 10, `chart drawn: ${JSON.stringify(chartInfo)}`);
+      // Analyze with "Fetch fresh data" (Census is faked empty here): the progress bar opens, the run ends, the page survives
+      await ev(`(() => { const m = document.getElementById("progress"); window.__seenProgress = false; new MutationObserver(() => { if (!m.hidden) window.__seenProgress = true; }).observe(m, { attributes: true }); const f = document.getElementById("fetchFresh"); if (!f.checked) f.click(); document.getElementById("analyzeBtn").click(); })()`);
+      assert.equal(await ev(until(`document.getElementById("progress").hidden && window.__seenProgress`, 60000)), true, "Analyze opens the progress bar and finishes");
       // Rankings big table
       await ev(`(() => { const d = document.getElementById("ranksTableSection"); d.open = true; d.dispatchEvent(new Event("toggle")); })()`);
       assert.equal(await ev(until(`document.querySelectorAll("#ranksBody tr").length > 20`)), true, "Rankings rows render");
