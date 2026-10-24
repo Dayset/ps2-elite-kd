@@ -1,110 +1,110 @@
 {
- "alerts_scored": 6068,
- "with_extreme": 1016,
- "extreme_on_winner": 426,
+ "alerts_scored": 6206,
+ "with_extreme": 1063,
+ "extreme_on_winner": 444,
  "brier": {
   "all": {
-   "n": 6068,
+   "n": 6206,
    "brier": 0.165
   },
   "without_extreme": {
-   "n": 5052,
+   "n": 5143,
    "brier": 0.165
   },
   "with_extreme": {
-   "n": 1016,
-   "brier": 0.165
+   "n": 1063,
+   "brier": 0.164
   },
   "extreme_on_winner": {
-   "n": 426,
-   "brier": 0.161
+   "n": 444,
+   "brier": 0.162
   },
   "extreme_only_on_losers": {
-   "n": 590,
-   "brier": 0.168
+   "n": 619,
+   "brier": 0.166
   }
  },
  "calibration": {
   "has": {
    "early": {
-    "alerts": 892,
-    "rows": 4460,
-    "won_minus_p": 0.041,
+    "alerts": 930,
+    "rows": 4650,
+    "won_minus_p": 0.039,
     "ci": [
-     0.007,
-     0.071
+     -0.007,
+     0.077
     ]
    },
    "mid": {
-    "alerts": 892,
-    "rows": 5352,
-    "won_minus_p": 0.031,
+    "alerts": 930,
+    "rows": 5580,
+    "won_minus_p": 0.03,
     "ci": [
-     0.004,
-     0.067
+     -0.013,
+     0.069
     ]
    },
    "late": {
-    "alerts": 892,
-    "rows": 5352,
+    "alerts": 930,
+    "rows": 5580,
     "won_minus_p": 0.009,
     "ci": [
-     -0.011,
-     0.038
+     -0.023,
+     0.032
     ]
    },
    "all": {
-    "alerts": 892,
-    "rows": 15164,
-    "won_minus_p": 0.026,
+    "alerts": 930,
+    "rows": 15810,
+    "won_minus_p": 0.025,
     "ci": [
-     0.002,
+     -0.015,
      0.058
     ]
    }
   },
   "faces": {
    "early": {
-    "alerts": 1011,
-    "rows": 9515,
-    "won_minus_p": -0.019,
+    "alerts": 1058,
+    "rows": 9940,
+    "won_minus_p": -0.018,
     "ci": [
-     -0.046,
-     -0.012
+     -0.038,
+     -0.007
     ]
    },
    "mid": {
-    "alerts": 1011,
-    "rows": 11418,
-    "won_minus_p": -0.014,
+    "alerts": 1058,
+    "rows": 11928,
+    "won_minus_p": -0.013,
     "ci": [
-     -0.041,
-     -0.003
+     -0.031,
+     -0.002
     ]
    },
    "late": {
-    "alerts": 1011,
-    "rows": 11418,
+    "alerts": 1058,
+    "rows": 11928,
     "won_minus_p": -0.004,
     "ci": [
-     -0.019,
-     0.003
+     -0.016,
+     0.01
     ]
    },
    "all": {
-    "alerts": 1011,
-    "rows": 32351,
+    "alerts": 1058,
+    "rows": 33796,
     "won_minus_p": -0.012,
     "ci": [
-     -0.034,
-     -0.004
+     -0.027,
+     0.001
     ]
    }
   },
   "none": {
    "early": {
-    "alerts": 5052,
-    "rows": 75768,
+    "alerts": 5143,
+    "rows": 77133,
     "won_minus_p": 0,
     "ci": [
      0,
@@ -112,8 +112,8 @@
     ]
    },
    "mid": {
-    "alerts": 5052,
-    "rows": 90927,
+    "alerts": 5143,
+    "rows": 92565,
     "won_minus_p": 0,
     "ci": [
      0,
@@ -121,8 +121,8 @@
     ]
    },
    "late": {
-    "alerts": 5052,
-    "rows": 90927,
+    "alerts": 5143,
+    "rows": 92565,
     "won_minus_p": 0,
     "ci": [
      0,
@@ -130,8 +130,8 @@
     ]
    },
    "all": {
-    "alerts": 5052,
-    "rows": 257622,
+    "alerts": 5143,
+    "rows": 262263,
     "won_minus_p": 0,
     "ci": [
      0,
@@ -140,23 +140,37 @@
    }
   }
  },
- "population_losers": {
-  "facing_winner_extreme": {
-   "n": 758,
-   "mean_rel": 0.97,
-   "median_rel": 0.975,
-   "share_below_075": 0.011
+ "population_alerts": {
+  "winner_has_extreme": {
+   "n": 351,
+   "worst_loser_ratio_median": 1.078,
+   "winner_ratio_median": 1.177,
+   "share_loser_below_060": 0.051
   },
-  "no_extreme_anywhere": {
-   "n": 10094,
-   "mean_rel": null,
-   "median_rel": 0.698,
-   "share_below_075": 0.012
+  "no_extreme": {
+   "n": 5131,
+   "worst_loser_ratio_median": 1.077,
+   "winner_ratio_median": 1.18,
+   "share_loser_below_060": 0.054
   }
  },
- "built": "2026-10-24T05:29:16.049Z",
+ "population_losers": {
+  "facing_winner_extreme": {
+   "n": 788,
+   "mean_rel": 0.971,
+   "median_rel": 0.975,
+   "share_below_075": 0.01
+  },
+  "no_extreme_anywhere": {
+   "n": 10262,
+   "mean_rel": 0.978,
+   "median_rel": 0.982,
+   "share_below_075": 0.013
+  }
+ },
+ "built": "2026-10-24T06:21:14.408Z",
  "cache": {
-  "alerts": 6554,
-  "ok": 6401
+  "alerts": 6556,
+  "ok": 6542
  }
 }
