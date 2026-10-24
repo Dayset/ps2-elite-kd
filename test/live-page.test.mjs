@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { buildLive } from "../scripts/build-live.mjs";
-import { classifyDeath, feedPush, censusStats, cellText, fmtGap, LIVE_COLS, FEED_MAX, emojiScale, goodPct, EMOJI_MIN, EMOJI_MAX, CYCLE, CYCLE_MS, cyclePhase, colUnits, FLIP_ROWS, rowMode } from "../live.mjs";
+import { classifyDeath, feedPush, censusStats, cellText, fmtGap, LIVE_COLS, FEED_MAX, emojiScale, goodPct, EMOJI_MIN, EMOJI_MAX } from "../live.mjs";
 
 const root = new URL("../", import.meta.url);
 
@@ -75,9 +75,7 @@ test("emoji size: median 1x, best 1.8x, worst 0.55x, smooth, lower-is-better rev
 test("LIVE columns (owner t550u): iVi, Activity, Brave, Resist, Zerg, Infantry in that order", () => {
   assert.deepEqual(LIVE_COLS.map((c) => c.id), ["adjs", "act", "pvs", "rf", "zerg", "inf"]);
   assert.deepEqual(LIVE_COLS.map((c) => c.label.split(" ")[0]), ["⚔️", "🏃", "🦁", "🛡️", "🪳", "🪖"]);
-  assert.deepEqual(LIVE_COLS.map((c) => c.mode), ["ivi-wide", "flip", "flip", "flip", "flip", "flip"]);
-  for (const c of LIVE_COLS) assert.ok(["ivi-wide", "flip", "emoji"].includes(c.mode), c.id);
-  assert.deepEqual(LIVE_COLS.map(colUnits), [2, 1, 1, 1, 1, 1]);
+  for (const c of LIVE_COLS) assert.equal(c.mode, "stack", c.id); // owner t556u: emoji with the number under it, no flipping
 });
 
 test("LIVE: no distribution chart, no title once kills arrive, a themed background", () => {
@@ -89,20 +87,14 @@ test("LIVE: no distribution chart, no title once kills arrive, a themed backgrou
   assert.doesNotMatch(js, /Live: <strong/);
 });
 
-test("flip loop (owner t554u, t555u): number 20s, fade 0.133s, emoji 20s, top 2 rows only, clock per row", () => {
-  assert.deepEqual(CYCLE, { num: 20000, fade: 133, emoji: 20000 });
-  assert.equal(CYCLE_MS, 40266);
-  assert.equal(cyclePhase(5000 + 40266 * 3 + 1234, 5000), "-1234ms");
-  assert.equal(cyclePhase(5000, 5000), "-0ms"); // a new row starts on a fresh number phase
-  assert.equal(cyclePhase(4000, 5000), "-0ms");
-  assert.equal(FLIP_ROWS, 2);
-  const flip = LIVE_COLS.find((c) => c.id === "act"), ivi = LIVE_COLS[0];
-  assert.deepEqual([0, 1, 2, 9, -1].map((r) => rowMode(flip, r)), ["flip", "flip", "emoji", "emoji", "emoji"]);
-  assert.deepEqual([0, 2].map((r) => rowMode(ivi, r)), ["ivi-wide", "ivi-wide"]);
+test("no flipping (owner t556u): emoji over a small number, no ❯ column, [name][emojis][emojis][name]", () => {
   const css = readFileSync(new URL("styles.css", root), "utf8");
-  assert.match(css, /animation: lvNum 40\.266s/);
-  assert.match(css, /0%, 49\.67% \{ opacity: 1; \} 50%, 99\.67% \{ opacity: 0; \}/);
-  assert.match(css, /prefers-reduced-motion/);
+  assert.doesNotMatch(css, /lvNum|lvEm|lv-arrow|lv-cyc/);
+  assert.match(css, /\.lv-st > \.lv-v/);
+  const js = readFileSync(new URL("live.mjs", root), "utf8");
+  assert.doesNotMatch(js, /❯|CYCLE|FLIP_ROWS|lv-arrow/);
+  assert.match(js, /\$\{left\.name\}\$\{left\.stats\}\$\{right\.stats\}\$\{right\.name\}/);
+  assert.match(js, /class="lv-v"/);
 });
 
 test("censusStats: K/D and KPM from stat_history", () => {
@@ -119,6 +111,6 @@ test("cellText: digits, floor at zero, missing", () => {
   assert.equal(cellText(LIVE_COLS.find((c) => c.id === "inf"), null), "—"); // 🪖 missing → "—" (and no emoji)
   const pvs = LIVE_COLS.find((c) => c.id === "pvs");
   assert.equal(cellText(pvs, 0.634), "0.63");
-  assert.equal(cellText(pvs, 329.633), "329.6"); // flip cells fit 5 characters
+  assert.equal(cellText(pvs, 329.633), "329.6"); // stacked numbers fit 5 characters
   assert.equal(cellText(LIVE_COLS.find((c) => c.id === "inf"), 100), "100.0");
 });

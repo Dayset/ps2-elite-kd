@@ -71,24 +71,21 @@ export function censusStats(ch) {
 /**
  * LIVE columns (owner t546u, t550u): one config list, in this order — change a mode or the order here.
  * Same ids / labels / digits as rankings.mjs VISIBLE. mode:
- *   "ivi-wide" = double-width cell, number + emoji together, no flipping (emoji still sized by rank);
- *   "flip"     = number ⇄ sized emoji loop (CSS, see CYCLE);
- *   "emoji"    = sized emoji only, no number.
+ *   "stack" = sized emoji with the small number under it (owner t556u: no flipping any more);
+ *   "emoji" = sized emoji only, no number.
  * lowerBetter = smaller value is better (reversed percentile → big emoji for a low value); no LIVE
  * column uses it now (owner t555u: 🪳 Zerg follows the raw number).
  * 🪳 Zerg is computed like the Rankings table (trait-scores.mjs zergScore from the ranks.json pools).
  * 🪖 Infantry is the ranks.json "inf" value; players without it show "—" and no emoji.
  */
 export const LIVE_COLS = Object.freeze([
-  { id: "adjs", label: "⚔️ iVi", digits: 0, floorZero: true, mode: "ivi-wide" },
-  { id: "act", label: "🏃 Activity", digits: 2, mode: "flip" },
-  { id: "pvs", label: "🦁 Brave", digits: 2, mode: "flip" },
-  { id: "rf", label: "🛡️ Resist", digits: 2, mode: "flip" },
-  { id: "zerg", label: "🪳 Zerg", digits: 0, mode: "flip" }, // t555u: bigger Zerg = bigger 🪳 (not reversed)
-  { id: "inf", label: "🪖 Infantry", digits: 1, mode: "flip" },
+  { id: "adjs", label: "⚔️ iVi", digits: 0, floorZero: true, mode: "stack" },
+  { id: "act", label: "🏃 Activity", digits: 2, mode: "stack" },
+  { id: "pvs", label: "🦁 Brave", digits: 2, mode: "stack" },
+  { id: "rf", label: "🛡️ Resist", digits: 2, mode: "stack" },
+  { id: "zerg", label: "🪳 Zerg", digits: 0, mode: "stack" }, // t555u: bigger Zerg = bigger 🪳 (not reversed)
+  { id: "inf", label: "🪖 Infantry", digits: 1, mode: "stack" },
 ]);
-/** Width of a column in layout units (the wide iVi cell = 2). */
-export const colUnits = (c) => (c.mode === "ivi-wide" ? 2 : 1);
 
 /**
  * Emoji size from rank (owner t546u): the cell's emoji is scaled by the player's
@@ -111,24 +108,6 @@ export function emojiScale(col, p) {
   if (g == null) return null;
   const s = g >= 50 ? 1 + ((g - 50) / 49) * (EMOJI_MAX - 1) : 1 - ((50 - g) / 50) * (1 - EMOJI_MIN);
   return Math.round(s * 100) / 100;
-}
-/**
- * Number ⇄ emoji loop (owner t546u; t554u: top 2 rows only; t555u: 20 s each): number NUM ms,
- * crossfade FADE ms, emoji EMOJI ms, crossfade back. One CSS animation (styles.css lvNum /
- * lvEm, 40.266s). Each row's clock starts when it arrives (row.at), so a new top row always
- * starts on a fresh number phase and re-renders never restart or jump the loop.
- */
-export const CYCLE = Object.freeze({ num: 20000, fade: 133, emoji: 20000 });
-export const CYCLE_MS = CYCLE.num + CYCLE.emoji + 2 * CYCLE.fade;
-/** Owner t554u: only the newest FLIP_ROWS rows flip; older rows show the sized emoji only. */
-export const FLIP_ROWS = 2;
-/** CSS phase offset for a row that arrived at `at`: a negative delay = time already spent in the loop. */
-export function cyclePhase(now = Date.now(), at = 0) {
-  return `-${Math.max(0, Math.floor(now - at)) % CYCLE_MS}ms`;
-}
-/** Cell mode for feed row r (0 = newest; -1 = the row fading out): "flip" only in the top FLIP_ROWS. */
-export function rowMode(c, r) {
-  return c.mode === "flip" && !(r >= 0 && r < FLIP_ROWS) ? "emoji" : c.mode;
 }
 
 /**
@@ -172,9 +151,9 @@ export function shareDelay(now, lastSent, firstPendingAt, pending) {
 export function cellText(col, v) {
   if (typeof v !== "number" || !Number.isFinite(v)) return "—";
   if (col.floorZero && v < 0) v = 0;
-  // Flip cells are sized for 5 characters ("12.34", "100.0"): rare big values drop decimals (329.63 → "329.6").
+  // Stat cells are sized for 5 characters ("12.34", "100.0", "1,357"): rare big values drop decimals (329.63 → "329.6").
   let d = col.digits;
-  if (col.mode === "flip") while (d > 0 && Math.abs(v).toFixed(d).length > 5) d--;
+  if (col.mode === "stack") while (d > 0 && Math.abs(v).toFixed(d).length > 5) d--;
   return v.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
 }
 
@@ -252,31 +231,29 @@ function start() {
   }
 
   const fmt = (v, d) => (typeof v === "number" && Number.isFinite(v) ? v.toFixed(d) : "—");
-  const N = LIVE_COLS.reduce((n, c) => n + colUnits(c), 0); // grid units a side (wide ⚔️ iVi = 2)
+  const N = LIVE_COLS.length; // stat columns a side
   const shortLab = (c) => c.label.split(" ")[0];
   /** 💩 after a confirmed padder's name (padding.mjs): hover explains the −10% iVi penalty. */
   const poopFor = (name) => (isPenalizedPadder(name) ? `<span class="poop-mark" title="${esc(POOP_TIP)}" aria-label="${esc(POOP_TIP)}">${POOP_MARK}</span>` : "");
-  /** One stat cell by its LIVE_COLS mode; r = feed row (only the top FLIP_ROWS flip, rowMode). */
-  function statCell(c, v, r) {
-    const mode = rowMode(c, r);
+  /** One stat cell by its LIVE_COLS mode (owner t556u: sized emoji, small number under it, no flipping). */
+  function statCell(c, v) {
     const s = emojiScale(c, percentileOf(pools[c.id] || [], v));
-    const span = colUnits(c) > 1 ? ` colspan="${colUnits(c)}"` : "";
-    if (s == null) return `<td class="lv-num"${span}>—</td>`;
+    if (s == null) return `<td class="lv-num lv-none">—</td>`;
     const em = `<b class="lv-e" aria-hidden="true">${shortLab(c)}</b>`;
-    if (mode === "ivi-wide") return `<td class="lv-num lv-wide" colspan="2" style="--s:${s}"><span class="lv-v">${cellText(c, v)}</span>${em}</td>`;
-    if (mode === "emoji") return `<td class="lv-num lv-emo" style="--s:${s}" aria-label="${esc(c.label)}">${em}</td>`;
-    return `<td class="lv-num lv-cyc" style="--s:${s}"><span class="lv-v">${cellText(c, v)}</span><span class="lv-em">${em}</span></td>`;
+    if (c.mode === "emoji") return `<td class="lv-num lv-emo" style="--s:${s}" aria-label="${esc(c.label)}">${em}</td>`;
+    return `<td class="lv-num lv-st" style="--s:${s}" aria-label="${esc(c.label)} ${cellText(c, v)}">${em}<span class="lv-v">${cellText(c, v)}</span></td>`;
   }
-  /** One player = name cell + stats cells on one row (columns aligned across events). */
-  function side(p, isMe, r = 0) {
+  /** One player = name cell + stats cells (columns aligned across events). sd "L" / "R" (owner t556u:
+   *  [name][stats][stats][name]; names hug their stats, a long name ellipsizes on the outer side). */
+  function side(p, isMe, sd) {
     // 💩 confirmed padder (padding.mjs): hover explains the −10% iVi penalty.
     const poop = poopFor(p.name);
-    const name = `<td class="lv-name-cell"><span class="lv-name fac-${p.faction || ""}" title="${esc(p.name)}">${esc(p.name)}</span>${poop}</td>`;
+    const nm = `<span class="lv-name fac-${p.faction || ""}" title="${esc(p.name)}"><bdi>${esc(p.name)}</bdi></span>`;
+    const name = `<td class="lv-name-cell lv-n${sd}">${sd === "L" ? poop + nm : nm + poop}</td>`;
     let stats;
-    // Number ⇄ scaled emoji loop, no hover hint (owner t546u); "—" stays still.
-    if (p.cached) stats = LIVE_COLS.map((c) => statCell(c, p.cached[c.id], r)).join("");
-    else if (isMe) stats = `<td class="lv-num lv-uncached" colspan="${N}"></td>`;
-    else stats = `<td class="lv-num lv-uncached" colspan="${N}">K/D ${fmt(p.kd, 2)} · KPM ${fmt(p.kpm, 2)} · not in cache</td>`;
+    if (p.cached) stats = LIVE_COLS.map((c) => statCell(c, p.cached[c.id])).join("");
+    else if (isMe) stats = `<td class="lv-num lv-uncached lv-u${sd}" colspan="${N}"></td>`;
+    else stats = `<td class="lv-num lv-uncached lv-u${sd}" colspan="${N}">K/D ${fmt(p.kd, 2)} · KPM ${fmt(p.kpm, 2)} · not in cache</td>`;
     return { name, stats };
   }
   function eventHtml(r, i) {
@@ -284,26 +261,23 @@ function start() {
     const meP = { name: me.name, faction: me.faction, cached: me.cached };
     const kill = r.last === "kill";
     // Winner on the left: on a kill that's us, on a death the killer.
-    const ri = i; // -1 = the dropped row fading out (emoji only)
-    const left = kill ? side(meP, true, ri) : side(p, false, ri);
-    const right = kill ? side(p, false, ri) : side(meP, true, ri);
+    const left = kill ? side(meP, true, "L") : side(p, false, "L");
+    const right = kill ? side(p, false, "R") : side(meP, true, "R");
     const t = r.gap == null ? `<span class="lv-timer" data-at="${r.at}">${fmtGap(Date.now() - r.at)}</span>` : `${fmtGap(r.gap)}`;
-    const clock = i >= 0 && i < FLIP_ROWS ? ` style="--lv-t0:${cyclePhase(Date.now(), r.at)}"` : "";
-    return `<tbody class="lv-ev lv-${r.last}${i === 0 ? " lv-new" : ""}"${clock}><tr><td class="lv-time">${t}</td>${left.name}${left.stats}<td class="lv-arrow">❯</td>${right.name}${right.stats}</tr></tbody>`;
+    return `<tbody class="lv-ev lv-${r.last}${i === 0 ? " lv-new" : ""}"><tr><td class="lv-time">${t}</td>${left.name}${left.stats}${right.stats}${right.name}</tr></tbody>`;
   }
   function render(dropped) {
     if (!listEl) return;
-    // Fixed layout, N equal stat units a side (the wide ⚔️ iVi cell spans 2). The ❯ arrow
-    // sits at the page middle: the right name column also takes the timer column's width.
+    // Fixed layout (owner t556u): [time][name ▸][N stats][N stats][◂ name], equal stat units.
     const colTags = (sd) => `<col class="lv-c-stat${sd}">`.repeat(N);
-    const cols = `<colgroup><col class="lv-c-time"><col class="lv-c-name">${colTags("L")}<col class="lv-c-arrow"><col class="lv-c-name lv-c-nameR">${colTags("R")}</colgroup>`;
-    const ths = LIVE_COLS.map((c) => `<th${colUnits(c) > 1 ? ` colspan="${colUnits(c)}"` : ""}>${shortLab(c)}</th>`).join("");
-    const head = `<thead><tr><th></th><th></th>${ths}<th></th><th></th>${ths}</tr></thead>`;
+    const cols = `<colgroup><col class="lv-c-time"><col class="lv-c-name">${colTags("L")}${colTags("R")}<col class="lv-c-name"></colgroup>`;
+    const ths = LIVE_COLS.map((c) => `<th title="${esc(c.label)}">${shortLab(c)}</th>`).join("");
+    const head = `<thead><tr><th></th><th></th>${ths}${ths}<th></th></tr></thead>`;
     // No events yet: skeleton first row — em dashes stand in for the numbers
     // until real data arrives and fills the rows.
-    const dashCells = LIVE_COLS.map((c) => `<td class="lv-num"${colUnits(c) > 1 ? ` colspan="${colUnits(c)}"` : ""}>—</td>`).join("");
+    const dashCells = LIVE_COLS.map(() => `<td class="lv-num lv-none">—</td>`).join("");
     const body = rows.length ? rows.map(eventHtml).join("")
-      : `<tbody class="lv-ev lv-wait"><tr><td class="lv-time">—</td><td class="lv-name-cell"><span class="lv-name fac-${me.faction || ""}">${esc(me.name)}</span>${poopFor(me.name)}</td>${dashCells}<td class="lv-arrow">❯</td><td class="lv-name-cell">—</td>${dashCells}</tr></tbody>`;
+      : `<tbody class="lv-ev lv-wait"><tr><td class="lv-time">—</td><td class="lv-name-cell lv-nL">${poopFor(me.name)}<span class="lv-name fac-${me.faction || ""}"><bdi>${esc(me.name)}</bdi></span></td>${dashCells}${dashCells}<td class="lv-name-cell lv-nR">—</td></tr></tbody>`;
     listEl.innerHTML = cols + head + body + (dropped ? eventHtml(dropped, -1).replace('class="lv-ev', 'class="lv-ev lv-fade') : "");
     if (dropped) setTimeout(() => { const f = listEl.querySelector(".lv-fade"); if (f) f.remove(); }, 600);
   }

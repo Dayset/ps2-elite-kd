@@ -2841,11 +2841,13 @@ html[data-theme="light"] .dist-pill:hover { opacity: 1; }
 .live-state .live-dot { color: #e53935; animation: liveBlink 1.2s ease-in-out infinite; }
 @keyframes liveBlink { 50% { opacity: 0.25; } }
 .live-table {
-  /* Owner t550u: ~85% type, tight stat columns. --lv-u = one stat column, just the widest
-     number ("12.34" / "100.0") or the largest 1.8× emoji; the wide ⚔️ iVi cell spans 2.
-     Width adds up exactly (fixed layout): 7.5 + 22 + 2.5 + 29.5 ch + 14 units. */
-  --lv-fv: 0.75rem; --lv-fe: 0.85rem; --lv-u: 2.1rem; --lv-h: 1.75rem; --lv-eb: 1.6rem;
-  border-collapse: collapse; width: calc(61.5ch + 14 * var(--lv-u)); max-width: none; table-layout: fixed;
+  /* Owner t550u: ~85% type, tight stat columns; t556u: every stat cell = sized emoji with the small
+     number under it (no flipping), layout [time][name ▸][6 stats][6 stats][◂ name], no ❯ column.
+     --lv-u  = one stat column: the largest 1.8× emoji (numbers under it are narrower: "1,357").
+     --lv-ez = emoji zone height (largest 1.8× emoji), --lv-fn / --lv-nh = small number font / line.
+     Width adds up exactly (fixed layout): 7.5 + 2 × 22 ch + 12 units. */
+  --lv-fe: 0.85rem; --lv-fn: 0.5rem; --lv-u: 1.85rem; --lv-ez: 1.9rem; --lv-nh: 0.6rem;
+  border-collapse: collapse; width: calc(51.5ch + 12 * var(--lv-u)); max-width: none; table-layout: fixed;
   font-size: 0.85rem; font-variant-numeric: tabular-nums;
   background: var(--panel); /* owner t550u: the feed had no background (theme variable: light + dark) */
 }
@@ -2853,16 +2855,16 @@ html[data-theme="light"] .dist-pill:hover { opacity: 1; }
 .live-table tbody.lv-ev:nth-of-type(even) > tr > td { background-color: var(--row-alt); }
 col.lv-c-time { width: 7.5ch; }
 col.lv-c-name { width: 22ch; } /* p80 of ranked names (12,955 players): 80% fit, longest 20% truncate */
-col.lv-c-arrow { width: 2.5ch; }
-/* Stat columns: one tight unit each (wide ⚔️ iVi spans 2). The right name column also takes
-   the timer column's 7.5ch so ❯ stays centered. */
-col.lv-c-name.lv-c-nameR { width: 29.5ch; }
 col.lv-c-statL, col.lv-c-statR { width: var(--lv-u); }
 /* Skeleton row while waiting for the first kill/death. */
 .lv-wait td { color: var(--dim); }
-/* Long names truncate with … instead of stretching the table (icon stays visible). */
-.live-table .lv-name { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
-.live-table th { font-size: 0.64rem; font-weight: 400; color: var(--dim); padding: 0 0.3rem; text-align: right; cursor: help; }
+/* Long names truncate with … on the outer side (the side away from the stats); 💩 stays visible. */
+.live-table .lv-name { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
+.live-table .poop-mark + .lv-name { max-width: calc(100% - 1.4em); }
+.live-table .lv-nL { text-align: right; padding-right: 0.25rem; }
+.live-table .lv-nL .lv-name { direction: rtl; } /* the cut + … land on the left (outer) side */
+.live-table .lv-nR { text-align: left; padding-left: 0.25rem; }
+.live-table th { font-size: 0.64rem; font-weight: 400; color: var(--dim); padding: 0; text-align: center; cursor: default; }
 .live-table th, .live-table td { border: 1px solid var(--border); }
 .live-table td { padding: 0 0.3rem; line-height: 1.25; }
 .lv-ev { border-left: 3px solid transparent; }
@@ -2875,45 +2877,31 @@ col.lv-c-statL, col.lv-c-statR { width: var(--lv-u); }
 @keyframes lvOut { to { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .lv-ev.lv-new, .lv-ev.lv-fade, .live-state .live-dot { animation: none; } }
 .lv-time { white-space: nowrap; font-size: 0.72rem; color: var(--dim); vertical-align: middle; text-align: right; min-width: 7.5ch; /* stopwatch ("9s"→"10s"→"59m 59s") reserves the widest reading so data columns never shift */ }
-.lv-arrow { color: var(--dim); text-align: center; vertical-align: middle; }
-.lv-name-cell { white-space: nowrap; padding-top: 0.2rem !important; }
-.lv-num { text-align: right; font-size: var(--lv-fv); cursor: help; }
+.lv-name-cell { white-space: nowrap; vertical-align: middle; overflow: hidden; }
+.lv-num { text-align: right; cursor: help; }
 .lv-uncached { text-align: left; opacity: 0.6; font-style: italic; }
 /* Owner t546u: no skill graph in Live (the main page keeps it). */
 .live-mode #chartSection { display: none !important; }
 /* Owner t550u: no 📊 distribution chart in Live either (the main page keeps it). */
 .live-mode #distSection,
 .live-mode #weaponsSection { display: none !important; } /* owner t550u: no 📊 chart and no 🏆 Auraxium weapons in LIVE */
-/* Owner t546u: LIVE stat cells (live.mjs LIVE_COLS mode). Every cell is a fixed box sized for its
-   widest state (widest number, largest 1.8× emoji); number and emoji sit stacked in it (absolute),
-   the emoji size is a transform, table-layout is fixed: flipping never moves a row or a column.
-   flip  = number 20 s → 0.133 s crossfade → emoji 20 s → back (t554u, t555u), top 2 rows only (live.mjs
-           FLIP_ROWS; older rows render as emoji), one CSS loop (opacity only, cheap); the row's
-           --lv-t0 (live.mjs cyclePhase from row.at) keeps its phase across re-renders.
-   emoji = sized emoji only.  wide (⚔️ iVi) = number + sized emoji side by side, no loop. */
-.live-table td.lv-num { position: relative; height: var(--lv-h); padding: 0 !important; overflow: hidden; text-align: center; vertical-align: middle; white-space: nowrap; cursor: default; }
-.live-table td.lv-uncached { padding: 0 0.3rem !important; text-align: left; overflow: hidden; text-overflow: ellipsis; }
-.live-table th { text-align: center; cursor: default; }
+/* LIVE stat cells (live.mjs LIVE_COLS mode). Every cell is a fixed box: emoji zone on top (sized for
+   the largest 1.8× emoji; the size is a transform, so it never moves the layout), small number under
+   it. Nothing animates, nothing changes size: rows and columns never move.
+   stack = sized emoji + small number under it (owner t556u).  emoji = sized emoji only. */
+.live-table td.lv-num { position: relative; height: calc(var(--lv-ez) + var(--lv-nh)); padding: 0 !important; overflow: hidden; text-align: center; vertical-align: middle; white-space: nowrap; font-size: var(--lv-fn); }
+.live-table td.lv-uncached { padding: 0 0.3rem !important; font-size: 0.7rem; overflow: hidden; text-overflow: ellipsis; }
+.live-table td.lv-uL { text-align: right; }
+.live-table td.lv-none { color: var(--dim); }
 .lv-e { display: inline-block; font-weight: 400; font-size: var(--lv-fe); line-height: 1; transform: scale(var(--s, 1)); }
-.lv-cyc > span, .lv-emo > .lv-e { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
-.lv-emo > .lv-e { margin: auto; width: 1.2em; height: 1.2em; }
-.lv-cyc > span { animation: lvNum 40.266s linear infinite both; animation-delay: var(--lv-t0, 0ms); }
-.lv-cyc > .lv-em { animation-name: lvEm; }
-.lv-wide > .lv-v { position: absolute; left: 0; right: calc(var(--lv-eb) + 0.1rem); top: 0; bottom: 0; display: flex; align-items: center; justify-content: flex-end; }
-.lv-wide > .lv-e { position: absolute; right: 0.05rem; top: 50%; width: var(--lv-eb); margin-top: -0.5em; text-align: center; }
-/* t555u 20 s each: 20000 / 40266 = 49.67%, 20133 / 40266 = 50%, 40133 / 40266 = 99.67%. */
-@keyframes lvNum { 0%, 49.67% { opacity: 1; } 50%, 99.67% { opacity: 0; } 100% { opacity: 1; } }
-@keyframes lvEm { 0%, 49.67% { opacity: 0; } 50%, 99.67% { opacity: 1; } 100% { opacity: 0; } }
-@media (prefers-reduced-motion: reduce) {
-  .lv-cyc > span { animation: none; }
-  .lv-cyc > .lv-v { opacity: 0; }
-}
-/* Phones: same boxes, smaller; the feed scrolls sideways. 3.1 + 2×5.6 + 1.3 + 14×1.8 = 40.8rem. */
+.lv-st > .lv-e { position: absolute; left: 0; right: 0; top: 0; height: var(--lv-ez); display: flex; align-items: center; justify-content: center; }
+.lv-st > .lv-v { position: absolute; left: 0; right: 0; bottom: 0; height: var(--lv-nh); line-height: var(--lv-nh); font-size: var(--lv-fn); text-align: center; }
+.lv-emo > .lv-e { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+/* Phones: same boxes, smaller; the feed scrolls sideways. 3.1 + 2×5.6 + 12×1.5 = 32.3rem. */
 @media (max-width: 600px) {
-  .live-table { --lv-fv: 0.66rem; --lv-fe: 0.68rem; --lv-u: 1.8rem; --lv-h: 1.45rem; --lv-eb: 1.28rem; width: 40.8rem; font-size: 0.8rem; }
+  .live-table { --lv-fe: 0.68rem; --lv-fn: 0.45rem; --lv-u: 1.5rem; --lv-ez: 1.55rem; --lv-nh: 0.55rem; width: 32.3rem; font-size: 0.8rem; }
   col.lv-c-time { width: 3.1rem; }
-  col.lv-c-name, col.lv-c-name.lv-c-nameR { width: 5.6rem; }
-  col.lv-c-arrow { width: 1.3rem; }
+  col.lv-c-name { width: 5.6rem; }
   .live-table .lv-time { min-width: 0; font-size: 0.64rem; }
 }
 .live-feed { overflow-x: auto; }
