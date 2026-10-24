@@ -4,40 +4,133 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "40046424963",
-    "event": "workflow_dispatch",
-    "kind": "on-demand",
-    "startedAt": "2026-10-24T00:56:46.490Z",
-    "endedAt": "2026-10-24T01:00:08.643Z",
-    "seconds": 202,
+    "runId": "40046499876",
+    "event": "schedule",
+    "kind": "discovery",
+    "startedAt": "2026-10-24T01:01:07.065Z",
+    "endedAt": "2026-10-24T01:04:08.203Z",
+    "seconds": 181,
     "updated": [],
-    "added": [
-      "[Pozz] PhotonNC",
-      "[1TR] ChefTR"
-    ],
+    "added": [],
     "failed": [],
-    "stoppedEarly": null,
+    "stoppedEarly": "another run is waiting (site request or fallback cron)",
     "indexSize": 14189,
+    "discovery": {
+      "cap": 15000,
+      "queue": 29,
+      "slice": null,
+      "sweepInProgress": false
+    },
     "honu": {
       "day": "2026-10-24",
-      "calls": 378,
+      "calls": 411,
       "cap": 10000
     },
     "batch": [
       {
-        "name": "[Pozz] PhotonNC",
-        "src": "on-demand",
-        "status": "done"
+        "name": "praexpablonc",
+        "src": "retry",
+        "status": "pending"
       },
       {
-        "name": "[1TR] ChefTR",
-        "src": "on-demand",
-        "status": "done"
+        "name": "GreenD",
+        "src": "discovery",
+        "status": "pending"
+      },
+      {
+        "name": "Smajdic02",
+        "src": "discovery",
+        "status": "pending"
+      },
+      {
+        "name": "Tarantulas",
+        "src": "discovery",
+        "status": "pending"
+      },
+      {
+        "name": "ARTAZAR",
+        "src": "discovery",
+        "status": "pending"
+      },
+      {
+        "name": "Velociraptorus",
+        "src": "discovery",
+        "status": "pending"
+      },
+      {
+        "name": "vio1poet",
+        "src": "discovery",
+        "status": "pending"
+      },
+      {
+        "name": "GrimTorkild",
+        "src": "discovery",
+        "status": "pending"
+      },
+      {
+        "name": "Riichkk",
+        "src": "discovery",
+        "status": "pending"
+      },
+      {
+        "name": "Steffen7",
+        "src": "discovery",
+        "status": "pending"
+      },
+      {
+        "name": "ZoraPozora",
+        "src": "discovery",
+        "status": "pending"
+      },
+      {
+        "name": "0000000000000000O000000000000000",
+        "src": "discovery",
+        "status": "pending"
+      },
+      {
+        "name": "GYLIVER",
+        "src": "discovery",
+        "status": "pending"
+      },
+      {
+        "name": "Hakase0083",
+        "src": "discovery",
+        "status": "pending"
+      },
+      {
+        "name": "Scorpion85112",
+        "src": "discovery",
+        "status": "pending"
+      },
+      {
+        "name": "TheLostMiner",
+        "src": "discovery",
+        "status": "pending"
+      },
+      {
+        "name": "VolatileGaming",
+        "src": "discovery",
+        "status": "pending"
+      },
+      {
+        "name": "boomshakalaaaa",
+        "src": "discovery",
+        "status": "pending"
+      },
+      {
+        "name": "Smegzar",
+        "src": "discovery",
+        "status": "pending"
+      },
+      {
+        "name": "Solvayn",
+        "src": "discovery",
+        "status": "pending"
       }
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-24T01:00:18.348Z",
+    "checkedAt": "2026-10-24T01:04:25.148Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 22,
     "explained": 26,
@@ -1514,7 +1607,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-24T01:00:20.878Z",
+    "checkedAt": "2026-10-24T01:04:30.171Z",
     "red": 52,
     "padding": 42,
     "adjusted": 18,
@@ -1525,7 +1618,7 @@
     "forensics": 29
   },
   "sessionStats": {
-    "checkedAt": "2026-10-24T01:00:18.384Z",
+    "checkedAt": "2026-10-24T01:04:25.202Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -1541,11 +1634,11 @@
       "players": 14188,
       "withSessions": 12660,
       "measured": 5800,
-      "sessions": 48771,
-      "kills": 2047542,
+      "sessions": 48780,
+      "kills": 2048902,
       "xpPlayers": 1335,
       "xpMeasured": 960,
-      "xpSessions": 7068
+      "xpSessions": 7080
     },
     "metrics": [
       {
@@ -1683,7 +1776,7 @@
         "p05": 0.271,
         "median": 0.76,
         "p95": 2.421,
-        "p99": 3.458,
+        "p99": 3.461,
         "max": 16.526
       },
       "s_kpmCv": {
@@ -3499,9 +3592,9 @@
     "outliersUnexplained": 2
   },
   "size": {
-    "at": "2026-10-24T01:00:09.176Z",
+    "at": "2026-10-24T01:04:08.703Z",
     "repoBytes": 220661760,
-    "dataBytes": 290907482,
+    "dataBytes": 290922981,
     "playersBytes": 264950132,
     "playerFiles": 14189,
     "warnAtBytes": 734003200,
@@ -3509,7 +3602,7 @@
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-24T01:00:18.414Z",
+    "checkedAt": "2026-10-24T01:04:25.241Z",
     "candidates": [
       "chocoiatevs",
       "nebelhexe",
@@ -30885,7 +30978,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-24T01:00:18.423Z",
+    "checkedAt": "2026-10-24T01:04:25.251Z",
     "count": 363,
     "players": [
       {
@@ -33895,7 +33988,7 @@
     ]
   },
   "infantry": {
-    "checkedAt": "2026-10-24T01:00:21.895Z",
+    "checkedAt": "2026-10-24T01:04:32.003Z",
     "players": 14189,
     "counts": {
       "infantry": 9251,
@@ -33952,7 +34045,7 @@
       }
     },
     "tagMin": 20,
-    "checkedAt": "2026-10-24T01:00:20.752Z",
+    "checkedAt": "2026-10-24T01:04:29.996Z",
     "coverage": {
       "players": 14164,
       "withSessions": 12636,
@@ -34263,7 +34356,7 @@
   },
   "burst": {
     "rule": "KPM ≥ 5 and ≥ 15 kills in ≥ 2 min (one stored session, no 10-minute floor)",
-    "checkedAt": "2026-10-24T01:00:23.316Z",
+    "checkedAt": "2026-10-24T01:04:34.414Z",
     "sessions": 12,
     "flaggedPlayers": 0,
     "clearedPlayers": 2,
@@ -34447,7 +34540,7 @@
     ]
   },
   "padderPenalty": {
-    "checkedAt": "2026-10-24T01:00:18.442Z",
+    "checkedAt": "2026-10-24T01:04:25.280Z",
     "ranked": 14121,
     "penalty": 0.1,
     "ref": 610.6,
@@ -34668,7 +34761,7 @@
     ]
   },
   "vehicleCut": {
-    "checkedAt": "2026-10-24T01:00:18.472Z",
+    "checkedAt": "2026-10-24T01:04:25.326Z",
     "ranked": 14121,
     "cut": 8477,
     "buckets": {
@@ -37086,7 +37179,7 @@
       "HIP": 0.9,
       "HSR": 0.55
     },
-    "checkedAt": "2026-10-24T01:00:10.760Z",
+    "checkedAt": "2026-10-24T01:04:11.875Z",
     "checked": 11,
     "errors": 0,
     "pending": 0,
@@ -37207,7 +37300,7 @@
     ]
   },
   "hut": {
-    "builtAt": "2026-10-24T01:00:18.031Z",
+    "builtAt": "2026-10-24T01:04:24.677Z",
     "cuts": {
       "actMedian": 0.2712,
       "actMult": 1.333,
@@ -41611,7 +41704,7 @@
     "cleared": []
   },
   "vehDiff": {
-    "builtAt": "2026-10-24T01:00:18.085Z",
+    "builtAt": "2026-10-24T01:04:24.752Z",
     "start": 14.9,
     "damped": 3162,
     "dieHardHut": 1068,
@@ -76404,7 +76497,7 @@
     "cleared": []
   },
   "zergRevive": {
-    "builtAt": "2026-10-24T01:00:18.183Z",
+    "builtAt": "2026-10-24T01:04:24.899Z",
     "zergScored": 5752,
     "measured": 833,
     "confirmed": 207,
@@ -76745,7 +76838,7 @@
         "share": 48.4,
         "revived": 125,
         "deaths": 258,
-        "rvp": 80,
+        "rvp": 79,
         "zergRaw": 80,
         "zerg": 80,
         "status": "confirmed"
@@ -79020,7 +79113,7 @@
     "cleared": []
   },
   "newbieDiff": {
-    "builtAt": "2026-10-24T01:00:18.154Z",
+    "builtAt": "2026-10-24T01:04:24.856Z",
     "loH": 6.2,
     "hiH": 380.2,
     "n": 14106,
@@ -126028,7 +126121,7 @@
     "cleared": []
   },
   "assistGap": {
-    "checkedAt": "2026-10-24T01:00:20.755Z",
+    "checkedAt": "2026-10-24T01:04:29.999Z",
     "start": "2026-04-01T13:00:00.000Z",
     "end": "2026-05-07T05:00:00.000Z",
     "url": "https://www.planetside2.com/patch-notes/may-6-hotfix-2026",
