@@ -2140,7 +2140,6 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
   vertical-align: baseline;
   cursor: help;
 }
-.live-table .lv-name:has(+ .poop-mark) { max-width: calc(100% - 1.4em); }
 /* † stats adjusted (under review): lighter than the padding "*" */
 .pad-mark.mark-adjusted {
   font-weight: 600;
@@ -2944,7 +2943,6 @@ html[data-theme="light"] .dist-pill:hover { opacity: 1; }
   .stats-carousel .rk-pos-table .nm { max-width: min(42ch, var(--sc-nm-max, 42ch)); }
 }
 .stats-carousel td .pct.pct-ph { visibility: hidden; user-select: none; pointer-events: none; }
-.live-mode #statsCarousel { display: none !important; }
 
 /* Main-page box gaps at 40% of their original height (Dayset 2026-10-19:
  * "all the gaps between the main page boxes 60% less"). Scoped overrides —
@@ -2967,7 +2965,6 @@ body.main-page footer .footer-block { margin-top: 0.3rem; }
  * so a visitor always sees which room they are in; Live (PC only) never shows. */
 html[data-room="ps"] #liveBtn { display: none !important; }
 html[data-room="ps"] .controls .fresh-row-end select.room-select { border-color: var(--accent); }
-body.live-mode .room-select { display: none; }
 .srv-tag {
   display: inline-block; margin-left: 0.35em; padding: 0 0.3em;
   font-size: 0.7em; font-weight: 400; line-height: 1.35; vertical-align: 0.1em;
@@ -3002,8 +2999,8 @@ body.live-mode .room-select { display: none; }
 /* Zebra rows on every table (owner 2026-10-22): even rows a little lighter
  * (dark theme) / darker (light theme), pinned cells included, so a row is easy
  * to follow while scrolling sideways. New tables get it by using one of these
- * classes. Hover keeps winning (declared after). */
-:is(.ranks-table, .stats-table, .rk-pos-table, .live-table, .st-table) tbody tr:nth-child(even) > :is(td, th) {
+ * classes. Hover keeps winning (declared after). The live table's zebra is in live.css (#72). */
+:is(.ranks-table, .stats-table, .rk-pos-table, .st-table) tbody tr:nth-child(even) > :is(td, th) {
   background-color: var(--row-alt);
 }
 .ranks-table tbody tr:hover td { background: var(--input-hover); }

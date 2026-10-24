@@ -1,5 +1,10 @@
 /* 🎥 Live page only (live.html = index.html + body.live-mode; scripts/build-live.mjs adds this file after styles.css).
    Moved out of styles.css unchanged (#66), so the main page doesn't load it and the live overlay's rules sit in one file. */
+/* #72: the last live-only rules from styles.css, kept first here so the cascade order is unchanged. */
+.live-table .lv-name:has(+ .poop-mark) { max-width: calc(100% - 1.4em); }
+.live-mode #statsCarousel { display: none !important; }
+body.live-mode .room-select { display: none; }
+.live-table tbody tr:nth-child(even) > :is(td, th) { background-color: var(--row-alt); }
 /* ✨ halo switch (live page only, live.mjs, left of 🖥️ ⚙️ Settings): on = gold, off = muted. Off hides the halos and the gold shine. */
 .controls .lv-halo-btn { margin-right: 0.35rem; border: 1px solid var(--border); border-radius: 8px; padding: 0.15rem 0.45rem; background: transparent; cursor: pointer; }
 .controls .lv-halo-btn[aria-pressed="false"] { opacity: 0.5; filter: grayscale(1); }
