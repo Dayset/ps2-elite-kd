@@ -1415,15 +1415,21 @@
         const h = await (await fetch(API + "/history?days=7", { cache: "no-store" })).json();
         const keys = (h.alerts || []).filter((a) => a.report && (a.report.flagged > 0 || a.report.confirmed > 0)).slice(0, 15);
         const rows = [];
+        // Human review wins: players cleared in data/reviewed.json ("burst": "cleared") are solved, not listed here.
+        let rv = reviewed;
+        if (!rv) try { rv = await (await fetch("data/reviewed.json?t=" + Date.now(), { cache: "no-store" })).json(); } catch { rv = null; }
+        const cleared = (n) => { const e = rv && rv.players && rv.players[String(n || "").toLowerCase()]; return !!e && e.burst === "cleared"; };
+        let solved = 0;
         for (const a of keys) {
           const j = await (await fetch(API + "/alert?key=" + encodeURIComponent(a.key), { cache: "no-store" })).json();
-          for (const o of j.outliers || []) if (o.severity === "burst") rows.push({ a, o });
+          for (const o of j.outliers || []) if (o.severity === "burst") { if (cleared(o.name)) solved++; else rows.push({ a, o }); }
         }
         $("burstOracle").innerHTML = rows.length
           ? '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th>Kills</th><th>Min</th><th>KPM</th><th>Alert</th><th></th></tr>' +
             rows.map(({ a, o }) => "<tr><td>" + esc(o.name || o.cid) + (o.outfit ? ' <span class="st-dim">[' + esc(o.outfit) + "]</span>" : "") + "</td><td>" + o.kills + "</td><td>" + o.minutes + "</td><td>" + o.kpm +
               "</td><td>" + esc(a.world_name + " · " + a.zone_name) + '</td><td><a href="https://wt.honu.pw/c/' + encodeURIComponent(o.cid) + '" target="_blank" rel="noopener noreferrer">Honu</a></td></tr>').join("") + "</table></div>"
           : "No burst-tier players in the oracle's alert reports this week.";
+        if (solved) $("burstOracle").insertAdjacentHTML("beforeend", '<p class="st-dim">' + solved + " owner-cleared (data/reviewed.json) not shown.</p>");
       } catch { $("burstOracle").textContent = "Oracle not reachable right now."; burstOracleAt = 0; }
     }
 
