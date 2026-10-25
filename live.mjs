@@ -240,12 +240,13 @@ function start() {
   }
   // Owner 2026-10-25: the tracked player's bounty, on their own (centre) line's
   // second row — all 7 heart slots visible at once: each kill fills one, the
-  // rest sit dim; at 7 the slots flip to the bounty mark 💰, held for 3
-  // deaths (bountyNext). The centre line never carries a weapon, so its
+  // rest sit dim; at 7 the slots flip to THREE bounty marks 💰💰💰 (the
+  // game's rule, not one), and each death removes one (bountyNext lives
+  // 3 → 2 → 1 → hearts). The centre line never carries a weapon, so its
   // second line is free for this.
   let bountyStreak = 0, bountyLives = 0;
   function bountyHtml() {
-    if (bountyLives > 0) return `<span class="lv-wn">💰</span>`;
+    if (bountyLives > 0) return `<span class="lv-wn">${"💰".repeat(bountyLives)}</span>`;
     const slots = Array.from({ length: 7 }, (_, i) => `<span class="lv-bh${i < bountyStreak ? "" : " lv-bh-empty"}">❤️‍🔥</span>`).join("");
     return `<span class="lv-wn">${slots}</span>`;
   }

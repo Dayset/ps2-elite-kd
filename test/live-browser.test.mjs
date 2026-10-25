@@ -188,7 +188,7 @@ describe("🎥 live.html in a browser", () => {
   });
 });
 
-  it("bounty (owner 2026-10-25): hearts per kill on the centre line, 💰 at 7 held for 3 deaths", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+  it("bounty (owner 2026-10-25): hearts per kill on the centre line, 💰💰💰 at 7, one removed per death", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
       const slots = () => ev(`(() => { const w = document.querySelector("#liveList tbody.lv-me .lv-wn"); if (!w) return null; const all = w.querySelectorAll(".lv-bh"); return { text: w.textContent, total: all.length, filled: [...all].filter((b) => !b.classList.contains("lv-bh-empty")).length }; })()`);
@@ -200,13 +200,13 @@ describe("🎥 live.html in a browser", () => {
       await ev(`window.__fakeWs.emit(${death(OPP[0].cid, ME.cid, "432", false)})`);
       await slotsAre(7, 0, "a death below 7 empties the slots");
       for (let i = 0; i < 7; i++) await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[i].cid, "80", false)})`);
-      await bountyIs("💰", "the 7th kill flips the slots to the bounty mark");
+      await bountyIs("💰💰💰", "the 7th kill flips the slots to three bounty marks");
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
-      await bountyIs("💰", "a kill while bountied changes nothing");
+      await bountyIs("💰💰💰", "a kill while bountied changes nothing");
       await ev(`window.__fakeWs.emit(${death(OPP[0].cid, ME.cid, "432", false)})`);
-      await bountyIs("💰", "bounty held after the 1st death");
+      await bountyIs("💰💰", "the 1st death removes one bounty mark");
       await ev(`window.__fakeWs.emit(${death(OPP[1].cid, ME.cid, "432", false)})`);
-      await bountyIs("💰", "bounty held after the 2nd death");
+      await bountyIs("💰", "the 2nd death removes another, one left");
       await ev(`window.__fakeWs.emit(${death(OPP[2].cid, ME.cid, "432", false)})`);
       await slotsAre(7, 0, "the 3rd death clears the bounty back to empty slots");
       assert.deepEqual(errors, [], "no page errors");

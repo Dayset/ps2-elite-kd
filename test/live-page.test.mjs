@@ -644,12 +644,12 @@ test("iz cell (owner 2026-10-25): infantry/zerg aligned left", () => {
   assert.match(css, /\.lv-iz \{[^}]*text-align: left;/);
 });
 
-test("bounty (owner 2026-10-25): hearts on the centre line's second row, 💰 at 7 held for 3 deaths", () => {
+test("bounty (owner 2026-10-25): hearts on the centre line's second row, 💰💰💰 at 7, one removed per death", () => {
   const js = liveSrc();
   const css = cssSrc();
   assert.match(js, /bountyNext[^}]*\} from "\.\/live-model\.mjs\?v=20261025-csh1"/);
   assert.match(js, /const b = bountyNext\(\{ streak: bountyStreak, lives: bountyLives \}, ev\.kind === "kill"\);/);
-  assert.match(js, /if \(bountyLives > 0\) return `<span class="lv-wn">💰<\/span>`;/);
+  assert.match(js, /if \(bountyLives > 0\) return `<span class="lv-wn">\$\{"💰"\.repeat\(bountyLives\)\}<\/span>`;/); // one mark per life left, not one mark for all three
   assert.match(js, /Array\.from\(\{ length: 7 \}, \(_, i\) => `<span class="lv-bh\$\{i < bountyStreak \? "" : " lv-bh-empty"\}">❤️‍🔥<\/span>`\)\.join\(""\)/); // 7 slots, filled + dim
   assert.match(css, /\.live-table tbody\.lv-me \.lv-wn \.lv-bh-empty \{ opacity: 0\.25; \}/);
   assert.match(js, /const wn = isMe \? bountyHtml\(\) : `<span class="lv-wn">/);
