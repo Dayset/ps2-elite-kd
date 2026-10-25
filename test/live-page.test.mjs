@@ -191,13 +191,13 @@ test("overlay layout (owner t575u): no flip, ONE column order on every line, fix
   assert.match(js, /<tbody class="lv-ev lv-me\$\{fm\.cls\}"\$\{fm\.sty\}><tr><td class="lv-time"><\/td>\$\{cells\(me, true\)\}<\/tr><\/tbody>/);
   assert.match(js, /Array\.from\(\{ length: VICTIM_LINES \}, \(_, i\) => \(st\.victims\[i\] \? oppLine\(st\.victims\[i\], "vic"\) : emptyLine\("vic"\)\)\)/);
   assert.match(js, /listEl\.innerHTML = cols \+ atk \+ mid \+ low;/);
-  assert.match(js, /const blank = `<td class="lv-nm"><\/td><td class="lv-ivc"><\/td><td class="lv-ems"><span class="lv-row"><\/span><\/td>`;/); // empty = same box
-  assert.deepEqual([...js.matchAll(/<col class="(lv-c-[a-z]+)">/g)].map((m) => m[1]), ["lv-c-time", "lv-c-nm", "lv-c-iv", "lv-c-em"]);
+  assert.match(js, /const blank = `<td class="lv-nm"><\/td><td class="lv-ivc"><\/td><td class="lv-iz"><\/td>`;/); // empty = same box
+  assert.deepEqual([...js.matchAll(/<col class="(lv-c-[a-z]+)">/g)].map((m) => m[1]), ["lv-c-time", "lv-c-nm", "lv-c-iv", "lv-c-iz"]);
   // fixed size: fixed layout, fixed line height, fixed column widths
   assert.match(css, /\.live-table \{[^}]*table-layout: fixed;/);
   assert.match(css, /\.live-table td \{[^}]*height: var\(--lv-ez\);[^}]*overflow: hidden;/);
   assert.match(css, /\.lv-row \{ display: flex; height: var\(--lv-ez\); \}/);
-  assert.match(css, /col\.lv-c-em \{ width: calc\(var\(--lv-n\) \* var\(--lv-u\)\); \}/);
+  assert.match(css, /col\.lv-c-iz \{ width: var\(--lv-iz\); \}/);
   assert.match(css, /--lv-n: 6;/); // t590u: 6 emoji units
   // the centre line is set apart (accent rules above and below, a tint)
   assert.match(css, /tbody\.lv-me > tr > td \{ background-color: color-mix\(in srgb, var\(--accent\) 13%, var\(--panel\)\); border-top: 2px solid var\(--accent\); border-bottom: 2px solid var\(--accent\); \}/);
@@ -269,7 +269,10 @@ test("no value = empty 0% emoji, never a dash (owner t567u): stats, iVi, uncache
   assert.match(js, /const meter = \(e\) => `<span class="lv-em lv-x\$\{emojiIdx\.get\(e\)\}" aria-hidden="true" data-e="\$\{e\}"><i class="lv-gl"><\/i><i class="lv-b"><\/i><i class="lv-sw"><i class="lv-s"><i class="lv-shn"><\/i><\/i><\/i><\/span>`;/);
   assert.match(js, /const vals = p\.cached \|\| \{\};/); // uncached too
   assert.match(js, /IVI\.map\(\(c\) => `<td class="lv-ivc">\$\{iviText\(c, vals\[c\.id\]\)\}<\/td>`\)/);
-  assert.match(js, /REST\.map\(\(c\) => unit\(c, vals\[c\.id\], c\.id === "zerg" \? vals\.zest : null\)\)/); // t614: "~N" 🪳 estimate as the roach fill
+  assert.match(js, /return `<td class="lv-iz" data-tip="Infantry \$\{infS\}% · Zerg \$\{zgS\}">\$\{infS\}\/\$\{zgS\}%<\/td>`;/); // owner 2026-10-25: one plain inf/zerg cell, one % at the end
+  assert.match(js, /if \(!Number\.isFinite\(inf\) && !Number\.isFinite\(zg\)\) return `<td class="lv-iz"><\/td>`;/); // both unknown = empty cell
+  assert.match(js, /const zgS = Number\.isFinite\(zg\) \? \(est != null \? `~\$\{Math\.round\(zg\)\}` : String\(Math\.round\(zg\)\)\) : "–";/); // t614: "~N" estimate survives as text
+  assert.doesNotMatch(js, /<td class="lv-ems">/); // no emoji cells on the lines any more
   assert.doesNotMatch(js, /lv-none|lv-unc|>—<\/span>/); // no K/D-over-KPM text, no dash cells
   assert.doesNotMatch(css, /lv-none|lv-unc|\.lv-ini\b/);
   assert.match(css, /\.lv-iv\.lv-nil \{ display: inline-flex;/);

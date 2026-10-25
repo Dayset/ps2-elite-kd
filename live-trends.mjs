@@ -97,6 +97,35 @@ const niceCeil = (v) => {
 };
 const fmtClock = (s) => `${Math.floor(s / 3600)}:${String(Math.floor((s % 3600) / 60)).padStart(2, "0")}`;
 
+/** Skeleton frame for a session too young to draw (< 2 events): the same plot
+ *  area, axes and titles as the real chart, no lines, one dim hint in the
+ *  middle — so the chart's place above the feed is visible from page load
+ *  instead of a gap, and nothing shifts when the first lines appear. */
+export function drawTrendsSkeleton(canvas, colors, hint) {
+  const ctx = canvas.getContext("2d");
+  const w = canvas.clientWidth || 300, h = canvas.clientHeight || 240;
+  const dpr = Math.min(3, (typeof window !== "undefined" && window.devicePixelRatio) || 1);
+  if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) { canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr); }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+  const L = 36, R = 36, T = 16, B = 20, pw = w - L - R, ph = h - T - B;
+  if (pw <= 0 || ph <= 0) return;
+  ctx.strokeStyle = colors.grid; ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = T + (ph * i) / 4;
+    ctx.beginPath(); ctx.moveTo(L, y); ctx.lineTo(L + pw, y); ctx.stroke();
+  }
+  ctx.font = "11px sans-serif";
+  ctx.fillStyle = colors.kpm; ctx.textAlign = "left"; ctx.fillText("KPM", L, 11);
+  ctx.fillStyle = colors.kd; ctx.textAlign = "right"; ctx.fillText("K/D", L + pw, 11);
+  if (hint) {
+    ctx.globalAlpha = 0.6;
+    ctx.fillStyle = colors.text; ctx.font = "13px sans-serif"; ctx.textAlign = "center";
+    ctx.fillText(hint, L + pw / 2, T + ph / 2);
+    ctx.globalAlpha = 1;
+  }
+}
+
 /** Draw the four series on a canvas (CSS-sized by the caller). Axes: KPM left, K/D right; trend dashed. */
 export function drawTrends(canvas, series, colors) {
   const ctx = canvas.getContext("2d");

@@ -7,12 +7,13 @@ await i18nReady;
  *     centred on the tracked player — ONE line above for the latest player who killed them (each new killer
  *     replaces it), the tracked player on the centre line, and the last 6 players they killed below
  *     (newest on top; t587u: every kill is its own line, the same victim twice = two lines);
- *   - every line shows everything at once, in one shared column order: [⏱️][name][iVi][🏃][🦁][🛡️][🪖|🚜][☠️][🪳] (t580u: 🪳 last; t590u: 🤝🔀⚡ removed, 🚜 below the 🚜 infantry cut, t622u),
- *     the emojis as fill meters (t564u, t573u) with glow tiers (t568u) — no flip, no skill graph;
+ *   - every line shows everything at once, in one shared column order: [⏱️][name][iVi][inf/zerg%] (owner 2026-10-25:
+ *     the emoji meters are parked — the six 🏃🦁🛡️🪖☠️🪳 columns became one plain "infantry % over zerg score" cell;
+ *     their machinery — pre-drawn sprite pictures (live-sprites.mjs), fills, glow tiers, halo button, 30 fps ticker —
+ *     stays in place, dormant, for the owner's later emoji revisit) — no flip, no skill graph;
  *   - owner 2026-10-25: no weapon icon — the weapon's name sits under the player name (small, dim) and a headshot
- *     is a small custom mark after the name (a head with a bullet in and out); the emoji meters are pre-drawn images (live-sprites.mjs) — the old per-frame SVG filters and endless
- *     pulses used ~25 % of a 9850X3D; everything that moves is drawn by one 30 fps ticker (LIVE_FPS, ?fps=60) and the
- *     rank tiers move on a shared beat (BEAT: green still, blue flares, gold flares + a shine instead of the ✦ star);
+ *     is a small custom mark after the name (a head with a bullet in and out); the upset shake on a line is kept
+ *     (it is a signal, not decoration);
  *   - a missing stat is an empty (hollow, t589u) emoji, never "—" (t567u); uncached opponents show all-empty emojis
  *     (Census K/D · KPM only in the name's hover title), then get a full 200-opponent Census
  *     fetch in the background (one at a time, newest first, #32) and upgrade in place.
@@ -27,7 +28,7 @@ import { traitPools, zergScore } from "./trait-scores.mjs?v=20261024-crowd1";
 import { zergEstimate } from "./zerg-revive.mjs?v=20261024-crowd1";
 import { infMedian, tractorCuts, TRACTOR_EMOJI } from "./tractor.mjs?v=20261024-trac1";
 import { drawEmojiSprite, spriteCss } from "./live-sprites.mjs?v=20261024-beat1";
-import { trendSeries, trendColors, drawTrends as paintTrends } from "./live-trends.mjs?v=20261025-trend1";
+import { trendSeries, trendColors, drawTrends as paintTrends, drawTrendsSkeleton as paintSkeleton } from "./live-trends.mjs?v=20261025-col1";
 
 const CENSUS = `https://census.daybreakgames.com/s:${CENSUS_SERVICE_ID}/get/ps2:v2/`;
 const STREAM = `wss://push.planetside2.com/streaming?environment=ps2&service-id=s:${CENSUS_SERVICE_ID}`;
@@ -221,14 +222,30 @@ function start() {
    *   [⏱️ time][name][iVi][🏃][🦁][🛡️][🪖|🚜][☠️][🪳] (t580u: 🪳 last; t590u order) — so the emojis line up down the whole overlay.
    * Owner t567u: not cached = all-empty emojis; the Census numbers stay in the name's hover.
    */
+  /**
+   * Owner 2026-10-25 (columns-only swap, per the owner's "for now"): the emoji
+   * meters are parked — one plain cell, infantry % over zerg score, one % at
+   * the end ("95/41%"). An unknown side is –, both unknown is an empty cell
+   * (never a lone "—", t567u). Zerg falls back to the ~N estimate (t614) when
+   * unscored. The emoji machinery (live-sprites, fills, glows, halo, ticker)
+   * stays in place, dormant, for the owner's later emoji revisit.
+   */
+  function izHtml(vals) {
+    const inf = vals.inf, scored = vals.zerg, est = scored == null ? vals.zest : null;
+    const zg = scored ?? est;
+    if (!Number.isFinite(inf) && !Number.isFinite(zg)) return `<td class="lv-iz"></td>`;
+    const infS = Number.isFinite(inf) ? String(Math.round(inf)) : "–";
+    const zgS = Number.isFinite(zg) ? (est != null ? `~${Math.round(zg)}` : String(Math.round(zg))) : "–";
+    return `<td class="lv-iz" data-tip="Infantry ${infS}% · Zerg ${zgS}">${infS}/${zgS}%</td>`;
+  }
   function cells(p, isMe, r) {
     const vals = p.cached || {};
     const tip = p.cached || isMe ? "" : ` · not in cache · K/D ${fmt(p.kd, 2)} · KPM ${fmt(p.kpm, 2)}`;
     const w = r ? weaponIcon(catalog, r.weapon) : null; // owner 2026-10-25: the weapon's NAME under the player name (small, dim), not an icon
     const wn = `<span class="lv-wn">${w ? esc(w.name) : ""}</span>`; // always rendered (empty when unknown), so the names stay lined up
-    return `<td class="lv-nm"><span class="lv-nm2">${nameHtml(p, tip, hsHtml(r))}${wn}</span></td>${IVI.map((c) => `<td class="lv-ivc">${iviText(c, vals[c.id])}</td>`).join("")}<td class="lv-ems"><span class="lv-row">${REST.map((c) => unit(c, vals[c.id], c.id === "zerg" ? vals.zest : null)).join("")}</span></td>`;
+    return `<td class="lv-nm"><span class="lv-nm2">${nameHtml(p, tip, hsHtml(r))}${wn}</span></td>${IVI.map((c) => `<td class="lv-ivc">${iviText(c, vals[c.id])}</td>`).join("")}${izHtml(vals)}`;
   }
-  const blank = `<td class="lv-nm"></td><td class="lv-ivc"></td><td class="lv-ems"><span class="lv-row"></span></td>`; // same box as a filled line, so the overlay never grows
+  const blank = `<td class="lv-nm"></td><td class="lv-ivc"></td><td class="lv-iz"></td>`; // same box as a filled line, so the overlay never grows
   /**
    * Owner 2026-10-25: no weapon icon any more (its column is gone, the width went to the name column) — the weapon's
    * NAME sits under the player name (cells), and a headshot is a small custom mark after the name: a head with a
@@ -283,7 +300,7 @@ function start() {
     if (!listEl) return;
     // Owner t575u: a fixed grid of 1 + 1 + VICTIM_LINES lines — killer above, the tracked player in the centre,
     // the players they killed below (newest on top). Empty slots keep their height, so the overlay never changes size.
-    const cols = `<colgroup><col class="lv-c-time"><col class="lv-c-nm"><col class="lv-c-iv"><col class="lv-c-em"></colgroup>`;
+    const cols = `<colgroup><col class="lv-c-time"><col class="lv-c-nm"><col class="lv-c-iv"><col class="lv-c-iz"></colgroup>`;
     const newest = st.lastEv || null;
     fresh = newest && newest !== shown ? newest : null;
     shown = newest;
@@ -451,12 +468,15 @@ function start() {
 
   // Owner t546u: no skill graph in Live any more (it stays on the main page).
 
-  // Owner 2026-10-25: Honu-style session trends below the feed — one combined
+  // Owner 2026-10-25: Honu-style session trends ABOVE the feed — one combined
   // chart (KPM + K/D, one colour per metric, trend dashed). The overlay keeps
   // only 6 victim lines, so the chart keeps its own history: every kill/death
   // timestamp since tracking started (the stream subscribe, kept across
   // reconnects). Redrawn on every event and every 30 s, so an idle stretch
   // falls to 0 on the interval line instead of freezing the chart.
+  // Owner 2026-10-25: a session too young to draw (< 2 events) shows a
+  // skeleton frame in the chart's place, not a gap — same size, so nothing
+  // shifts when the first lines appear.
   const trendEl = $("liveTrends"), trendCanvas = $("liveTrendCanvas"), trendLegend = $("liveTrendLegend");
   let trendStart = 0;
   const trendKills = [], trendDeaths = [];
@@ -469,16 +489,17 @@ function start() {
   }
   function drawTrends() {
     if (!trendEl || !trendCanvas) return;
-    if (!trendStart) { trendEl.hidden = true; return; }
-    const s = trendSeries(trendKills, trendDeaths, trendStart, Date.now());
-    const any = s.kpmInt.length || s.kpmTrend.length || s.kdInt.length || s.kdTrend.length;
-    trendEl.hidden = !any;
-    if (!any) return;
+    trendEl.hidden = false;
     const colors = trendColors(document.documentElement.getAttribute("data-theme") === "light");
     for (const el of trendLegend.querySelectorAll(".lv-tl-kpm")) el.style.color = colors.kpm;
     for (const el of trendLegend.querySelectorAll(".lv-tl-kd")) el.style.color = colors.kd;
+    const s = trendStart ? trendSeries(trendKills, trendDeaths, trendStart, Date.now()) : null;
+    const any = s && (s.kpmInt.length || s.kpmTrend.length || s.kdInt.length || s.kdTrend.length);
+    trendEl.classList.toggle("live-trends-skel", !any);
+    if (!any) { paintSkeleton(trendCanvas, colors, tr("live.trendsWait", "Waiting for kills…")); return; }
     paintTrends(trendCanvas, s, colors);
   }
+  drawTrends(); // the skeleton shows from page load, before the stream connects
   setInterval(drawTrends, 30000);
 
   // #32: uncached opponents → full Census fetch in the background, one at a time.

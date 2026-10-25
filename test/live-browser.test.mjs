@@ -1,6 +1,6 @@
 // test-select-reaches: live.html live.mjs live-sprites.mjs styles.css
 // 🎥 live.html in a real (headless) Chromium: Census and the event stream are faked in the page, events are pushed in,
-// and the overlay is checked as a viewer would see it — 8 lines, weapon names + headshot marks, the pre-drawn emoji pictures,
+// and the overlay is checked as a viewer would see it — 8 lines, weapon names + headshot marks, plain inf/zerg numbers,
 // and (owner 2026-10-24: the overlay used ~25 % of a 9850X3D) no endless animation and no SVG filter left running.
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
@@ -107,7 +107,7 @@ const framesPerSecond = `new Promise((r) => { let n = 0; const mo = new Mutation
 const death = (att, vic, weapon, hs) => JSON.stringify({ event_name: "Death", attacker_character_id: att, character_id: vic, attacker_weapon_id: weapon, is_headshot: hs ? "1" : "0", timestamp: "0" });
 
 describe("🎥 live.html in a browser", () => {
-  it("8 lines with weapon names + headshot marks, pre-drawn emojis, nothing that animates forever", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+  it("8 lines with weapon names + headshot marks, plain inf/zerg numbers, nothing that animates forever", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
       // 6 kills (weapons: Orion, TRAC-5, NS-11A, Frag Grenade, knife, unknown), then a death by a headshot with C-4's id
@@ -115,8 +115,6 @@ describe("🎥 live.html in a browser", () => {
       for (const [i, [w, hs]] of kills.entries()) await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[i].cid, w, hs)})`);
       await ev(`window.__fakeWs.emit(${death(OPP[6].cid, ME.cid, "432", true)})`);
       assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)").length === 6 && document.querySelector("#liveList tbody.lv-atk:not(.lv-empty)")`)), true, "6 victims + the killer on screen");
-      const drawn = `(() => { const css = (document.getElementById("lvSprites") || {}).textContent || ""; const used = new Set([...document.querySelectorAll("#liveList .lv-em")].map((e) => [...e.classList].find((c) => /^lv-x\\d+$/.test(c)))); return used.size > 0 && [...used].every((c) => css.includes("." + c + "{")) && css.includes("background-image"); })()`;
-      assert.equal(await ev(until(drawn)), true, "a picture for every emoji on screen");
       assert.equal(await ev(until(`[...document.querySelectorAll("#liveList tbody.lv-vic .lv-wn")].map((w) => w.textContent).join("|").includes("Orion VS54")`)), true, "weapon names shown (catalog loaded)");
       const s = await ev(`(() => {
         const L = document.getElementById("liveList");
@@ -125,21 +123,24 @@ describe("🎥 live.html in a browser", () => {
         const atk = L.querySelector("tbody.lv-atk");
         const me = L.querySelector("tbody.lv-me");
         const wnOf = (tb) => { const w = tb.querySelector(".lv-wn"); return w ? w.textContent : null; };
+        const izOf = (tb) => { const w = tb.querySelector(".lv-iz"); return w ? w.textContent : null; };
         return {
           lines: lines.length,
           names: vic.map((t) => t.querySelector(".lv-name").textContent),
           victimWn: vic.map(wnOf),
           victimHs: vic.map((t) => !!t.querySelector(".lv-hs2")),
+          victimIz: vic.map(izOf),
           killerWn: wnOf(atk),
           killerHs: !!atk.querySelector(".lv-hs2"),
+          killerIz: izOf(atk),
           meWn: wnOf(me),
           meHs: !!me.querySelector(".lv-hs2"),
+          meIz: izOf(me),
           noIcons: L.querySelectorAll(".lv-wi, .lv-wp, .lv-c-wp").length,
+          noEmojis: L.querySelectorAll(".lv-em, .lv-sw, .lv-gl, .lv-c-em").length,
           nmW: Math.round(L.querySelector("tbody.lv-vic .lv-nm").getBoundingClientRect().width),
-          emojiBoxes: [...L.querySelectorAll(".lv-em")].map((e) => Math.round(e.getBoundingClientRect().width)),
           svgFilters: document.querySelectorAll("filter").length,
           endless: document.getAnimations().filter((a) => !Number.isFinite(a.effect.getComputedTiming().endTime)).map((a) => a.animationName || (a.effect.target && a.effect.target.className)),
-          fillMoving: [...L.querySelectorAll(".lv-sw")].some((e) => e.style.transform),
           noStar: !L.querySelector(".lv-g3") || getComputedStyle(L.querySelector(".lv-g3"), "::after").content === "none",
           hsTip: (atk.querySelector(".lv-hs2") || {}).dataset.tip,
         };
@@ -154,15 +155,17 @@ describe("🎥 live.html in a browser", () => {
       assert.equal(s.meWn, "", "no weapon on the centre line");
       assert.equal(s.meHs, false, "no headshot mark on the centre line");
       assert.equal(s.noIcons, 0, "no weapon icon column left");
+      assert.equal(s.noEmojis, 0, "no emoji meters on the lines (parked)");
       assert.ok(s.nmW >= 280, `the name column absorbed the weapon column: ${s.nmW}px`);
-      assert.ok(s.emojiBoxes.length >= 40 && s.emojiBoxes.every((w) => w > 10), `every emoji has its picture size: ${s.emojiBoxes.slice(0, 5)}`);
+      const izFmt = /^(?:\d+\/(?:~\d+|\d+|–)%|–\/(?:~\d+|\d+)%|)$/;
+      for (const t of [...s.victimIz, s.killerIz, s.meIz]) assert.match(t, izFmt, `inf/zerg cell: ${t}`);
+      assert.ok([...s.victimIz, s.killerIz, s.meIz].some((t) => t !== ""), "at least one inf/zerg value on screen");
       assert.equal(s.svgFilters, 0, "no SVG filters on the page");
       assert.deepEqual(s.endless, [], "nothing animates forever (CPU)");
-      assert.equal(s.fillMoving, true, "the new lines fill up (moved by the ticker)");
       assert.equal(s.noStar, true, "no ✦ star (the gold shine replaced it)");
-      // owner 2026-10-24: animations are drawn at 30 fps — never at the screen's own rate
+      // owner 2026-10-25: the meters are parked, so the ticker has nothing to move — no per-frame style mutations
       const fps = await ev(framesPerSecond);
-      assert.ok(fps >= 15 && fps <= 34, `about 30 frames a second while lines fill: ${fps}`);
+      assert.ok(fps < 5, `the parked ticker stays idle: ${fps}`);
       // ✨ halo switch: left of 🖥️ ⚙️ Settings, off hides halos + shine and is remembered
       const sw = await ev(`(() => { const b = document.getElementById("lvHaloBtn"); const before = b.getAttribute("aria-pressed"); b.click(); const gl = document.querySelector("#liveList .lv-g3 .lv-gl, #liveList .lv-g2 .lv-gl"); return { next: b.nextElementSibling && b.nextElementSibling.id, before, after: b.getAttribute("aria-pressed"), hidden: gl ? getComputedStyle(gl).display : "none", stored: localStorage.getItem("ps2-elite-kd-live-halo") }; })()`);
       assert.deepEqual(sw, { next: "roomBadge", before: "true", after: "false", hidden: "none", stored: "0" });
@@ -170,13 +173,13 @@ describe("🎥 live.html in a browser", () => {
     });
   });
 
-  it("?fps=60 draws at 60, never more", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+  it("?fps=60: the parked ticker stays idle", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
       for (let i = 0; i < 6; i++) await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[i].cid, "80", false)})`);
-      assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)").length === 6 && (document.getElementById("lvSprites") || {}).textContent.includes("background-image")`)), true, "lines and pictures");
+      assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)").length === 6`)), true, "lines on screen");
       const fps = await ev(framesPerSecond);
-      assert.ok(fps > 34 && fps <= 64, `about 60 frames a second: ${fps}`);
+      assert.ok(fps < 5, `no per-frame style mutations with the meters parked: ${fps}`);
       assert.deepEqual(errors, [], "no page errors");
     }, { query: "&fps=60" });
   });
