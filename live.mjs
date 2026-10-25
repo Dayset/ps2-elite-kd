@@ -19,8 +19,8 @@ await i18nReady;
  *     fetch in the background (one at a time, newest first, #32) and upgrade in place.
  * Pure helpers are exported for tests; the DOM part runs only in a browser.
  */
-export * from "./live-model.mjs?v=20261025-csh1"; // #66: the pure part (tests import it from here)
-import { VICTIM_LINES, classifyDeath, fmtGap, censusStats, LIVE_COLS, tipText, FILL_DIM, HOLLOW_PX, HOLLOW_INK, goodPct, fillDriver, emojiFill, unknownFill, infUnit, OUTLINE_PX, unitGlow, LIVE_GLOWS, LIVE_FPS, liveFps, HALO_KEY, haloOn, easeFill, glowIn, BEAT, TIER_MOTION, haloAt, SHINE, shineFrame, beatSleep, weaponIcon, glowTier, eventAt, overlayPush, overlayRows, nextBgFetch, liveRowFromPlayer, ME_REFRESH_MS, mergeFresh, SHARE_MAX, shareDelay, cellText, slugKey, bountyNext, dpsNow, DPS_HP, DPS_ASSIST, DPS_ASSIST_XP, cashTotals } from "./live-model.mjs?v=20261025-csh1";
+export * from "./live-model.mjs?v=20261025-cf1"; // #66: the pure part (tests import it from here)
+import { VICTIM_LINES, classifyDeath, fmtGap, censusStats, LIVE_COLS, tipText, FILL_DIM, HOLLOW_PX, HOLLOW_INK, goodPct, fillDriver, emojiFill, unknownFill, infUnit, OUTLINE_PX, unitGlow, LIVE_GLOWS, LIVE_FPS, liveFps, HALO_KEY, haloOn, easeFill, glowIn, BEAT, TIER_MOTION, haloAt, SHINE, shineFrame, beatSleep, weaponIcon, glowTier, eventAt, overlayPush, overlayRows, nextBgFetch, liveRowFromPlayer, ME_REFRESH_MS, mergeFresh, SHARE_MAX, shareDelay, cellText, slugKey, bountyNext, dpsNow, DPS_HP, DPS_ASSIST, DPS_ASSIST_XP, cashTotals, cashFormula } from "./live-model.mjs?v=20261025-cf1";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261023-short1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
@@ -539,9 +539,10 @@ function start() {
     }
     if (cashSumEl && cashAvgEl) {
       const t = cashTotals(cashKills.map((e) => e.iv));
-      const key = `${t.sum}|${t.avg}`;
+      const f = cashFormula(cashKills.map((e) => e.iv));
+      const key = `${f}|${t.avg}`; // the formula itself is the key — two part-sets can share a sum and average
       if (key !== lastCash) {
-        cashSumEl.textContent = t.sum;
+        cashSumEl.textContent = f;
         cashAvgEl.textContent = t.avg == null ? "–" : t.avg.toFixed(1);
         lastCash = key;
       }
@@ -559,7 +560,7 @@ function start() {
   function renderCashHist() {
     if (!cashHistEl) return;
     cashHistEl.innerHTML = cashHist.length
-      ? `<div>${esc(tr("live.cashHist", "Past runs"))}</div>` + cashHist.map((h) => `<div>Σ ${h.sum} · ${tr("live.cashAvg", "avg")} ${h.avg == null ? "–" : h.avg.toFixed(1)}</div>`).join("")
+      ? `<div>${esc(tr("live.cashHist", "Past runs"))}</div>` + cashHist.map((h) => `<div>Σ ${h.formula} · ${tr("live.cashAvg", "avg")} ${h.avg == null ? "–" : h.avg.toFixed(1)}</div>`).join("")
       : "";
   }
 
@@ -693,7 +694,7 @@ function start() {
       // Deaths under a held bounty (lives left, streak kept) do not end
       // the run, so they bank nothing.
       const t = cashTotals(cashKills.map((e) => e.iv));
-      if (cashKills.length) cashHist.unshift({ sum: t.sum, avg: t.avg });
+      if (cashKills.length) cashHist.unshift({ sum: t.sum, avg: t.avg, formula: cashFormula(cashKills.map((e) => e.iv)) });
       if (cashHist.length > 5) cashHist.length = 5;
       cashKills.length = 0;
       renderCashHist();

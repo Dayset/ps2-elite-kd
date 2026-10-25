@@ -86,6 +86,22 @@ export function cashTotals(ivs) {
 }
 
 /**
+ * Owner 2026-10-25: the cash-out as a readable formula — the total plus the
+ * counted victim values that built it, so a boost (when one is ever switched
+ * on) can't hide inside the number: "1234 (300 + 500 + 434)". Unknown
+ * victims (null) are not counted and never shown; a known 0 IS shown (it
+ * counts in the average). Empty → "0"; a single value needs no breakdown
+ * → just the total.
+ */
+export function cashFormula(ivs) {
+  const parts = [];
+  for (const v of ivs || []) if (typeof v === "number" && Number.isFinite(v)) parts.push(v);
+  if (!parts.length) return "0";
+  const sum = parts.reduce((a, b) => a + b, 0);
+  return parts.length > 1 ? `${sum} (${parts.join(" + ")})` : String(sum);
+}
+
+/**
  * Feed state step: newest event on top, every event its own row (owner t587u: no dedupe — a repeat
  * opponent gets a new row too); the oldest row drops out past FEED_MAX.
  * ⏱️ stopwatch: the top row runs (gap null); when a new event lands, the old

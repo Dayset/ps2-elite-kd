@@ -278,15 +278,15 @@ describe("🎥 live.html in a browser", () => {
       assert.equal(await ev(`getComputedStyle(document.querySelector("#liveList tbody.lv-vic .lv-iz")).textAlign`), "left", "the inf/zerg cell aligns left");
       const ivs = await ev(`[...document.querySelectorAll("#liveList tbody.lv-vic .lv-iv")].map((e) => Number(e.textContent))`);
       assert.ok(ivs.length === 2 && ivs.every(Number.isFinite) && ivs.every((v) => v > 0), `both victims show an iVi: ${ivs}`);
-      const sum = ivs[0] + ivs[1], avg = (sum / 2).toFixed(1);
-      assert.equal(await ev(until(`document.getElementById("liveCashSumVal").textContent === "${sum}"`)), true, `cash sum is the victims' iVi: ${sum}`);
+      const sum = ivs[0] + ivs[1], avg = (sum / 2).toFixed(1), formula = `${sum} (${ivs[1]} + ${ivs[0]})`; // rows are newest-first, the formula is kill order
+      assert.equal(await ev(until(`document.getElementById("liveCashSumVal").textContent === "${formula}"`)), true, `cash sum shows the formula: ${formula}`);
       assert.equal(await ev(until(`document.getElementById("liveCashAvgVal").textContent === "${avg}"`)), true, `cash avg is per victim: ${avg}`);
       // the killer does not pay: ME dies, the run is banked and the pot resets for the new run
       await ev(`window.__fakeWs.emit(${death(OPP[2].cid, ME.cid, "432", false)})`);
       assert.equal(await ev(until(`document.getElementById("liveCashSumVal").textContent === "0"`)), true, "the pot resets for the new run");
       assert.equal(await ev(until(`document.getElementById("liveCashAvgVal").textContent === "–"`)), true, "the avg empties with the pot");
       assert.equal(await ev(until(`document.querySelectorAll("#liveCashHist > div").length === 2`)), true, "one banked run in the history");
-      assert.equal(await ev(`document.querySelectorAll("#liveCashHist > div")[1].textContent`), `Σ ${sum} · avg ${avg}`, "the banked run keeps its total");
+      assert.equal(await ev(`document.querySelectorAll("#liveCashHist > div")[1].textContent`), `Σ ${formula} · avg ${avg}`, "the banked run keeps its formula");
       assert.deepEqual(errors, [], "no page errors");
     });
   });
@@ -370,7 +370,7 @@ describe("🎥 live.html in a browser", () => {
       assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)").length === 2`)), true, "two victims on screen");
       const ivs = await ev(`[...document.querySelectorAll("#liveList tbody.lv-vic .lv-iv")].map((e) => Number(e.textContent))`);
       assert.ok(ivs[0] > 0 && ivs[1] === 0, `newest victim positive, sub-0 victim shown floored: ${ivs}`);
-      assert.equal(await ev(until(`document.getElementById("liveCashSumVal").textContent === "${ivs[0]}"`)), true, "the pot holds only the positive payout");
+      assert.equal(await ev(until(`document.getElementById("liveCashSumVal").textContent === "${ivs[0]} (0 + ${ivs[0]})"`)), true, "the pot shows the formula: floored 0 plus the positive payout");
       assert.equal(await ev(until(`document.getElementById("liveCashAvgVal").textContent === "${(ivs[0] / 2).toFixed(1)}"`)), true, "the average counts the floored 0");
       assert.deepEqual(errors, [], "no page errors");
     });

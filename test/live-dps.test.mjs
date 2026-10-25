@@ -2,7 +2,7 @@
 // drain with a 10 s time constant, so the value jumps and drains down.
 import test from "node:test";
 import assert from "node:assert/strict";
-import { dpsNow, DPS_HP, DPS_ASSIST, DPS_TAU_MS, DPS_ASSIST_XP, cashTotals } from "../live-model.mjs";
+import { dpsNow, DPS_HP, DPS_ASSIST, DPS_TAU_MS, DPS_ASSIST_XP, cashTotals, cashFormula } from "../live-model.mjs";
 
 const close = (a, b, eps = 0.01) => assert.ok(Math.abs(a - b) <= eps, `${a} != ${b}`);
 
@@ -26,6 +26,15 @@ test("kills and assists add up; old and future events do not count", () => {
   assert.equal(dpsNow([{ t: 0, dmg: 1000 }], 60000), 0); // drained past the window
   assert.equal(dpsNow([{ t: 10000, dmg: 1000 }], 0), 0); // future damage is not damage yet
   assert.equal(dpsNow([], 0), 0);
+});
+
+test("cashFormula (owner 2026-10-25): the pot shows its own arithmetic", () => {
+  assert.equal(cashFormula([]), "0");
+  assert.equal(cashFormula([null, undefined]), "0");
+  assert.equal(cashFormula([300]), "300");
+  assert.equal(cashFormula([300, 500, 434]), "1234 (300 + 500 + 434)");
+  assert.equal(cashFormula([0, 500]), "500 (0 + 500)"); // a known 0 counts and shows
+  assert.equal(cashFormula([null, 200, null]), "200"); // unknowns never shown
 });
 
 test("cashTotals: one entry per kill, unknown iVi skipped from sum and count", () => {
