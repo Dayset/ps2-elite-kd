@@ -42,6 +42,8 @@ export const KNOWN_EXTREMES = Object.freeze({
   zugietr: "Owner reviewed 2026-10-18: high-skill solo player (Zugie variant)",
   zyr0sncx: "Owner reviewed 2026-10-18 (#10): legit pro player (plays Valorant for prize money); 🔎 farm-like-victim oddity was JOHNK56 ×20 in a 449-kill session",
   renamedsoldier12345: "Owner reviewed 2026-10-18 (#10): vehicle main try-harding K/D (lifetime KD 33, 658 kills / 25 deaths vs 200 opponents); explained, not a cheater",
+  pikaqiuill: "Owner reviewed 2026-10-25 (#10, t640): vehicle main protecting his K/D; explained",
+  searchosirisonepvp: "Owner reviewed 2026-10-25 (#10, t640): regular player; fell through the terrain, survived and kept killing, which tripped the checks",
   fright1vs: "Reviewed 2026-10-18 (#10): 🎈 inflation 19.2 = lifetime KD 1.82 vs 121 kills / 992 deaths against 200 opponents; real data, big sample, the public board flatters",
 });
 

@@ -164,6 +164,9 @@ export function autoHideFreshExceptional(dataDir, { nowSec = Date.now() / 1000 }
   const hidden = hiddenList(hiddenJson);
   const players = (hiddenJson.players && typeof hiddenJson.players === "object") ? hiddenJson.players : {};
   const index = JSON.parse(fs.readFileSync(path.join(dataDir, "index.json"), "utf8"));
+  let reviewed = null; // owner "cleared" decision in reviewed.json skips the player (t640, same as the marathon rule)
+  try { reviewed = JSON.parse(fs.readFileSync(path.join(dataDir, "reviewed.json"), "utf8")); } catch {}
+  const clearedSlugs = new Set(Object.entries((reviewed && reviewed.players) || {}).filter(([, v]) => v && v.decision === "cleared").map(([k]) => k));
   const added = [];
   const seen = new Set();
   for (const e of index.players || []) {
@@ -179,7 +182,7 @@ export function autoHideFreshExceptional(dataDir, { nowSec = Date.now() / 1000 }
     const slug = e.slug || path.basename(file, ".json");
     const pl = raw && (raw.player || raw);
     const name = (pl && pl.display) || e.name || slug;
-    if (hidden.match({ slug, name, cid: pl && pl.cid })) continue;
+    if (clearedSlugs.has(slug) || hidden.match({ slug, name, cid: pl && pl.cid })) continue;
     const row = rankRow(raw, { slug, savedAt: e.savedAt ?? raw.savedAt });
     if (!row || !isFreshHeld(row, nowSec)) continue;
     const key = bareName(name);
