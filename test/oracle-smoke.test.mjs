@@ -110,11 +110,38 @@ describe("oracle page smoke test (#28)", { skip }, () => {
                 assert.match(await page.$eval(".cf h3.TR", (h) => h.parentElement.textContent), /Busiest front:.*Push Bitol.*46% chance it changes hands/s);
                 assert.match(await page.$eval(".cf h3.VS", (h) => h.parentElement.querySelector(".pocket").textContent), /Pocket Hurakan, Hurakan Secure Storage, Hurakan Western Pass \+1: hold Cairn Station or −10%/);
                 // 🔊 voice (#65): click VS's speaker, the top order is spoken (speech stubbed).
-        await page.evaluate(() => { window.__said = []; window.speechSynthesis.speak = (u) => window.__said.push(u.text); window.speechSynthesis.cancel = () => {}; });
+        await page.evaluate(() => {
+          window.__said = []; window.speechSynthesis.speak = (u) => window.__said.push(u.text); window.speechSynthesis.cancel = () => {};
+          // Edge-like list (owner t650u): dozens of voices with long names.
+          const vs = Array.from({ length: 40 }, (_, i) => ({ name: `Microsoft Voice${i} Online (Natural) - English (United States of America, long name ${i})`, lang: "en-US", localService: false }));
+          window.speechSynthesis.getVoices = () => vs;
+          window.SpeechSynthesisUtterance = class { constructor(text) { this.text = text; } }; // fake voices are plain objects; the real Utterance rejects them
+        });
         await page.click(".cf h3.VS [data-voice]");
         const said = await page.evaluate(() => window.__said);
         assert.deepEqual(said, ["Hold Cairn Station, pocket of 4 behind it, or 10% lost. 50% 1st place."]);
         assert.equal(await page.$eval(".cf h3.VS [data-voice]", (b) => b.getAttribute("aria-pressed")), "true");
+        // ⚙️ voice list (owner t650u): no always-visible dropdown; ⚙️ next to the speaker opens a compact list.
+        assert.equal(await page.$(".voicesel, #main select[data-voicesel]"), null, "no voice dropdown");
+        const gear = ".cf h3.VS [data-voice] + [data-voicegear]";
+        assert.ok(await page.$(gear), "⚙️ right after the speaker");
+        await page.click(gear);
+        const box = await page.$eval(".voicemenu", (m) => { const r = m.getBoundingClientRect(), o = m.querySelector(".vopt"); return { shown: !m.hidden, l: r.left, r: r.right, h: r.height, vw: innerWidth, vh: innerHeight, n: m.querySelectorAll(".vopt").length, scrolls: m.scrollHeight > m.clientHeight, cut: o.scrollWidth > o.clientWidth, ell: getComputedStyle(o).textOverflow, title: o.title }; });
+        assert.ok(box.shown && box.n === 40, "list open with every voice");
+        assert.ok(box.l >= 0 && box.r <= box.vw && box.r - box.l <= 321, `list fits the screen (${box.l}–${box.r} of ${box.vw})`);
+        assert.ok(box.h <= box.vh * 0.5 + 1 && box.scrolls, "list height capped, scrolls");
+        assert.ok(box.cut && box.ell === "ellipsis" && /long name 0\)$/.test(box.title), "long names cut with …, full name on hover");
+        await page.click(".voicemenu .vopt:nth-child(3)");
+        assert.equal(await page.$eval(".voicemenu", (m) => m.hidden), true, "closes on a pick");
+        assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem("ps2oracle_voice")).voice), "Microsoft Voice10 Online (Natural) - English (United States of America, long name 10)");
+        assert.equal((await page.evaluate(() => window.__said)).at(-1), "Voice set.");
+        await page.click(gear);
+        assert.match(await page.$eval(".voicemenu .vopt.on", (o) => o.textContent), /^✓ Microsoft Voice10 /, "saved voice ticked");
+        await page.keyboard.press("Escape");
+        assert.equal(await page.$eval(".voicemenu", (m) => m.hidden), true, "closes on Escape");
+        await page.click(gear);
+        await page.mouse.click(5, 5);
+        assert.equal(await page.$eval(".voicemenu", (m) => m.hidden), true, "closes on a tap elsewhere");
         const over = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
         assert.ok(over <= 0, `horizontal scroll of ${over}px`);
       } finally {

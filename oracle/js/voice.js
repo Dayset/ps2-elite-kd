@@ -26,13 +26,77 @@ const pickVoice = () => {
   const vs = rankVoices(window.speechSynthesis.getVoices());
   return vs.find((v) => v.name === V.voice) || vs[0] || null;
 };
-/** Voice dropdown (shown while the voice is on). */
+/**
+ * Voice choice (owner t650u): a small ⚙️ next to the speaker (while the voice is on) opens a
+ * compact list instead of an always-visible dropdown (Edge lists dozens of voices and the
+ * native dropdown rendered huge). The list is sized to the screen, long names are cut with
+ * "…" (full name on hover), it scrolls when long, and closes on a pick, a tap elsewhere,
+ * Escape, a page scroll or a resize. The saved choice is the same as before (KEY.voice).
+ */
 export function voicePicker() {
   if (!voiceSupported() || !V.on) return "";
+  if (!rankVoices(window.speechSynthesis.getVoices()).length) return "";
+  const t = tr("or.vc.pick", "⚙️ Choose the voice");
+  return ` <button type="button" class="voicegear" data-voicegear="1" aria-haspopup="listbox" aria-expanded="false" title="${t}" aria-label="${t}">⚙️</button>`;
+}
+const escA = (s) => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+let menu = null, menuGear = null;
+/** The voice list, positioned under the ⚙️ (fixed, kept inside the screen). */
+function placeMenu() {
+  if (!menu || !menuGear) return;
+  const r = menuGear.getBoundingClientRect(), vw = window.innerWidth, vh = window.innerHeight;
+  const w = menu.offsetWidth, h = menu.offsetHeight;
+  menu.style.left = `${Math.max(8, Math.min(r.left, vw - w - 8))}px`;
+  const below = r.bottom + 4;
+  menu.style.top = `${below + h <= vh - 8 || r.top - h - 4 < 8 ? below : r.top - h - 4}px`;
+}
+export function closeVoiceMenu(refocus = false) {
+  if (!menu) return;
+  menu.hidden = true;
+  if (menuGear) { menuGear.setAttribute("aria-expanded", "false"); if (refocus) menuGear.focus(); }
+  menuGear = null;
+}
+function openVoiceMenu(gear) {
+  if (typeof document === "undefined") return;
+  if (!menu) {
+    menu = document.createElement("div");
+    menu.className = "voicemenu";
+    menu.setAttribute("role", "listbox");
+    menu.hidden = true;
+    document.body.appendChild(menu);
+    menu.addEventListener("click", (e) => {
+      const o = e.target.closest && e.target.closest("[data-voicename]");
+      if (!o) return;
+      setVoice(o.getAttribute("data-voicename"));
+      closeVoiceMenu(true);
+    });
+    document.addEventListener("pointerdown", (e) => { if (!menu.hidden && !menu.contains(e.target) && !(menuGear && menuGear.contains(e.target))) closeVoiceMenu(); }, true);
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !menu.hidden) { e.preventDefault(); closeVoiceMenu(true); } });
+    window.addEventListener("scroll", (e) => { if (!menu.hidden && !(e.target instanceof Node && menu.contains(e.target))) closeVoiceMenu(); }, { passive: true, capture: true });
+    window.addEventListener("resize", () => closeVoiceMenu());
+  }
   const vs = rankVoices(window.speechSynthesis.getVoices());
-  if (!vs.length) return "";
   const cur = pickVoice();
-  return ` <select class="voicesel" data-voicesel="1" aria-label="${tr("or.vc.voice", "Voice")}">${vs.map((v) => `<option value="${v.name.replace(/"/g, "&quot;")}"${cur && v.name === cur.name ? " selected" : ""}>${v.name.replace(/</g, "&lt;")}</option>`).join("")}</select>`;
+  menu.setAttribute("aria-label", tr("or.vc.voice", "Voice"));
+  menu.innerHTML = vs.map((v) => {
+    const on = !!(cur && v.name === cur.name);
+    return `<button type="button" role="option" class="vopt${on ? " on" : ""}" aria-selected="${on}" data-voicename="${escA(v.name)}" title="${escA(v.name)}">${on ? "✓ " : ""}${escA(v.name)}</button>`;
+  }).join("");
+  menuGear = gear;
+  gear.setAttribute("aria-expanded", "true");
+  menu.hidden = false;
+  placeMenu();
+  const sel = menu.querySelector(".vopt.on") || menu.querySelector(".vopt");
+  if (sel) { sel.scrollIntoView({ block: "nearest" }); sel.focus({ preventScroll: true }); }
+}
+/** After each render: wire the ⚙️ buttons; an open list follows its re-drawn ⚙️ (or closes). */
+export function bindVoiceMenu(root) {
+  if (!root) return;
+  const gears = root.querySelectorAll("[data-voicegear]");
+  gears.forEach((g) => g.onclick = () => { if (menu && !menu.hidden && menuGear === g) closeVoiceMenu(); else openVoiceMenu(g); });
+  if (menu && !menu.hidden && menuGear && !menuGear.isConnected) {
+    if (gears.length) { menuGear = gears[0]; menuGear.setAttribute("aria-expanded", "true"); placeMenu(); } else closeVoiceMenu();
+  }
 }
 export function setVoice(name) { V.voice = name; save(); speak("Voice set."); }
 
