@@ -36,3 +36,22 @@ test("Locate player logic: one name only, after every sort, no focus, quiet when
   assert.match(css, /\.rk-filter-row \.rk-locate\[hidden\] \{ display: none; \}/);
   assert.match(css, /@media \(max-width: 600px\) \{\s*\.rk-filter-row \.rk-remove-ranks, \.rk-filter-row \.rk-locate \{ flex: 1 1 100%; flex-direction: row-reverse; justify-content: space-between; \}/);
 });
+
+// owner t655u: saved ON (or a duplicated tab) + a new name lookup showed ON but didn't locate
+// until OFF → ON. Root cause: locatePlayer() only ran on the switch's change event and after a
+// header sort, never when the single name changed or the table rows were (re)built.
+test("Locate player re-applies on a new name / load / re-render (as if OFF → ON)", () => {
+  const rk = read("rankings.mjs");
+  const fn = rk.slice(rk.indexOf("function relocateSoon()"), rk.indexOf("function locateOn()"));
+  assert.match(fn, /const q = locateOn\(\) && picked\.size === 1 \? \[\.\.\.picked\.keys\(\)\]\[0\] : "";/); // the CURRENT name
+  assert.match(fn, /if \(q === locatedFor\) return;/);
+  assert.match(fn, /requestAnimationFrame\(\(\) => \{ relocRaf = 0; locatePlayer\(\); \}\)/); // after the render, not before
+  const sync = rk.slice(rk.indexOf("function syncPicks("), rk.indexOf("function updateTicks()"));
+  assert.match(sync, /drawDist\(\);\s*relocateSoon\(\);\s*\}\s*\/\*\*/); // after picks + re-render
+  const body = rk.slice(rk.indexOf("function renderBody()"), rk.indexOf("function render()"));
+  assert.match(body, /renderState = st;\s*renderRowsTo\(FIRST_CHUNK\);\s*scheduleFill\(\);\s*relocateSoon\(\);/);
+  assert.match(rk, /scheduleFill\(\);\s*relocateSoon\(\); \/\/ t655u: folded/); // table opened later
+  assert.match(rk, /locatedFor = "";\s*if \(locateEl\.checked\) locatePlayer\(\);/); // manual toggle still forces
+  assert.match(rk, /locatedFor = q;\s*window\.__lastLocate/); // only a real locate counts
+  assert.ok(rk.indexOf('let locatedFor = ""') < rk.indexOf("function syncPicks("), "declared before first use");
+});

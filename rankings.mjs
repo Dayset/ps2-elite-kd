@@ -175,6 +175,10 @@ export function initRankings(host) {
   const cidOf = (n) => { const st = cidStore || (cidStore = readLocalStore() || {}); const e = st && (st[slugKey(n)] || st[String(n).toLowerCase()]); return e && e.player && e.player.cid != null ? String(e.player.cid) : null; };
   const fieldFull = () => host.getNames().length >= maxNames();
   let pickSig = "";
+  // t655u: Locate player follows the CURRENT single name. locatedFor = the row last located;
+  // a new name / saved ON at page load / a re-render with the row not yet located → locate
+  // again once the rows exist (same as turning the switch off and on).
+  let locatedFor = "", relocRaf = 0;
   // 2026-10-19: the big table re-renders (13k rows, ~0.2 s desktop / ~1 s phone) only
   // when it's open; a name change while it's folded just marks it stale.
   let tableStale = false;
@@ -216,6 +220,7 @@ export function initRankings(host) {
     updateTicks();
     syncPickedUi();
     drawDist();
+    relocateSoon();
   }
   /** ✅ boxes of the rows already in the table follow the selection (no re-render). */
   function updateTicks() {
@@ -757,6 +762,7 @@ export function initRankings(host) {
     renderState = st;
     renderRowsTo(FIRST_CHUNK);
     scheduleFill();
+    relocateSoon(); // t655u: rows for a not-yet-located name exist now
     const nLocal = data.rows.reduce((n, r) => n + (r.localOnly ? 1 : 0), 0);
     const nFresh = data.rows.reduce((n, r) => n + (r.freshAt && !r.localOnly ? 1 : 0), 0);
     if ($("ranksTableCount")) $("ranksTableCount").textContent = `(${data.count.toLocaleString()})`;
@@ -1059,6 +1065,7 @@ export function initRankings(host) {
     if (!tableSection.open) return;
     if (tableStale) rerenderKeepingView();
     scheduleFill();
+    relocateSoon(); // t655u: folded while the name changed → locate on opening
   });
   /** Desktop jump: list scroll only (no page scroll). Matches the 600px mobile breakpoint. */
   function listOnlyJump(touch) {
@@ -1523,8 +1530,17 @@ export function initRankings(host) {
     try { locateEl.checked = localStorage.getItem(LS_LOCATE) === "1"; } catch {}
     locateEl.addEventListener("change", () => {
       try { localStorage.setItem(LS_LOCATE, locateEl.checked ? "1" : "0"); } catch {}
+      locatedFor = "";
       if (locateEl.checked) locatePlayer();
     });
+  }
+  /** t655u: the single name changed / rows (re)built → locate it (next frame, after the render). */
+  function relocateSoon() {
+    const q = locateOn() && picked.size === 1 ? [...picked.keys()][0] : "";
+    if (!q) { locatedFor = ""; return; }
+    if (q === locatedFor) return;
+    cancelAnimationFrame(relocRaf);
+    relocRaf = requestAnimationFrame(() => { relocRaf = 0; locatePlayer(); });
   }
   function syncLocate() {
     const w = $("locateWrap");
@@ -1555,6 +1571,7 @@ export function initRankings(host) {
     void $("ranksBody").offsetWidth;
     row.classList.add("rk-flash");
     flashTimer = setTimeout(() => $("ranksBody").querySelectorAll("tr.rk-flash").forEach((t) => t.classList.remove("rk-flash")), 2600);
+    locatedFor = q;
     window.__lastLocate = { q, index: k };
   }
   if ($("ranksFindMe")) $("ranksFindMe").addEventListener("click", (e) => {
