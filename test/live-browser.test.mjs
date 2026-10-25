@@ -214,7 +214,7 @@ describe("🎥 live.html in a browser", () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
       const dps = () => ev(`Number(document.getElementById("liveDpsVal").textContent)`);
-      assert.equal(await ev(until(`document.getElementById("liveDpsVal").textContent === "0.000"`)), true, "DPM starts at 0.000");
+      assert.equal(await ev(until(`document.getElementById("liveDpsVal").textContent === "0.0"`)), true, "DPM starts at 0.0");
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
       const afterKill = await ev(until(`Number(document.getElementById("liveDpsVal").textContent) >= 5000`)) && await dps();
       assert.ok(afterKill >= 5000 && afterKill <= 6000, `a kill jumps DPM to ~6000: ${afterKill}`);
@@ -290,6 +290,27 @@ describe("🎥 live.html in a browser", () => {
       await ev(`window.__fakeWs.emit(${death(OPP[2].cid, ME.cid, "432", false)})`);
       await new Promise((r) => setTimeout(r, 300));
       assert.equal(await ev(`document.getElementById("liveCashSumVal").textContent`), String(sum), "a death changes nothing");
+      assert.deepEqual(errors, [], "no page errors");
+    });
+  });
+
+  it("online pill (owner 2026-10-25): green online, red offline, over the graph", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      const pill = () => ev(`(() => { const p = document.getElementById("liveOnline"); return { state: p.dataset.state, text: document.getElementById("liveOnlineText").textContent, above: p.getBoundingClientRect().bottom <= document.getElementById("liveTrendCanvas").getBoundingClientRect().top }; })()`);
+      assert.equal((await pill()).state, "unknown", "grey until the first signal");
+      const login = JSON.stringify({ event_name: "PlayerLogin", character_id: ME.cid, timestamp: "0" });
+      const logout = JSON.stringify({ event_name: "PlayerLogout", character_id: ME.cid, timestamp: "0" });
+      await ev(`window.__fakeWs.emit(${login})`);
+      let st = await ev(until(`document.getElementById("liveOnline").dataset.state === "online"`)) && await pill();
+      assert.equal(st.text, "Online", "login turns the pill green");
+      assert.equal(st.above, true, "the pill sits over the graph");
+      await ev(`window.__fakeWs.emit(${logout})`);
+      st = await ev(until(`document.getElementById("liveOnline").dataset.state === "offline"`)) && await pill();
+      assert.equal(st.text, "Offline", "logout turns the pill red");
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
+      st = await ev(until(`document.getElementById("liveOnline").dataset.state === "online"`)) && await pill();
+      assert.equal(st.text, "Online", "any Death involving them means online again");
       assert.deepEqual(errors, [], "no page errors");
     });
   });

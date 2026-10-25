@@ -493,7 +493,8 @@ function start() {
   const trendEl = $("liveTrends"), trendCanvas = $("liveTrendCanvas"), trendLegend = $("liveTrendLegend");
   let trendStart = 0;
   const trendKills = [], trendDeaths = [];
-  if ($("liveTrendTitle")) $("liveTrendTitle").textContent = tr("live.trends", "Trends");
+  const trendTitleText = $("liveTrendTitleText") || $("liveTrendTitle");
+  if (trendTitleText) trendTitleText.textContent = tr("live.trends", "Trends");
   if (trendLegend) {
     const item = (cls, key, fallback) => `<span class="lv-tl ${cls}"><i></i>${esc(tr(key, fallback))}</span>`;
     trendLegend.innerHTML =
@@ -517,11 +518,38 @@ function start() {
   drawTrends(); // the skeleton shows from page load, before the stream connects
   setInterval(drawTrends, 30000);
 
+  // Owner 2026-10-25: online pill over the graph — green while the tracked
+  // player is online, red while offline, grey until the first signal. Two
+  // sources: the stream itself (any Death/GainExperience for them, or a
+  // PlayerLogin/PlayerLogout event) and a 60 s poll of Census
+  // characters_online_status — the stream alone only reports transitions,
+  // so a player already online at page load would otherwise never turn
+  // green. A failed poll leaves the state alone: red means offline, not
+  // "fetch failed".
+  const onlineEl = $("liveOnline"), onlineTextEl = $("liveOnlineText");
+  let onlineState = "unknown";
+  function setOnline(s) {
+    if (s === onlineState || !onlineEl) return;
+    onlineState = s;
+    onlineEl.dataset.state = s;
+    if (onlineTextEl) onlineTextEl.textContent = s === "online" ? tr("live.online", "Online") : s === "offline" ? tr("live.offline", "Offline") : "…";
+  }
+  async function pollOnline() {
+    if (!me) return;
+    try {
+      const j = await getJson(`${CENSUS}characters_online_status/?character_id=${me.cid}`);
+      const list = j && j.characters_online_status_list;
+      const st = list && list[0] && list[0].online_status;
+      if (st === "1") setOnline("online"); else if (st === "0") setOnline("offline");
+    } catch { /* keep the last state */ }
+  }
+  setInterval(pollOnline, 60000);
+
   // Owner 2026-10-25: imaginary DPM under the feed — kills (+1000) and
   // assists (+500, via GainExperience) jump the value, exponential drain
   // pulls it back down. The engine is damage per second (dpsNow); the counter
-  // shows damage per minute (× 60, three decimals), so a steady 1-kill-per-
-  // minute pace averages 1000.000. The cash-out rides the same tick: the
+  // shows damage per minute (× 60, one decimal), so a steady 1-kill-per-
+  // minute pace averages 1000.0. The cash-out rides the same tick: the
   // ⚔️ iVi of every victim, summed, with the average per victim — the killer
   // (the top line) is not counted, for now. Every value is written only when
   // its text changed; the tick runs every 100 ms so the drain reads as a
@@ -537,7 +565,7 @@ function start() {
   let lastDps = "", lastCash = "";
   function dpsTick() {
     if (dpsEl) {
-      const v = (dpsNow(dpsEvents, Date.now()) * 60).toFixed(3);
+      const v = (dpsNow(dpsEvents, Date.now()) * 60).toFixed(1);
       if (v !== lastDps) { dpsEl.textContent = v; lastDps = v; }
     }
     if (cashSumEl && cashAvgEl) {
@@ -657,6 +685,7 @@ function start() {
   let evChain = Promise.resolve();
   const onEvent = (ev) => { evChain = evChain.then(() => onEventNow(ev), () => onEventNow(ev)); };
   async function onEventNow(ev) {
+    setOnline("online"); // any Death involving them means they are playing right now
     const p = await person(ev.opp);
     if (!trendStart) trendStart = ev.at || Date.now();
     if (ev.kind === "kill") trendKills.push(ev.at || Date.now()); else trendDeaths.push(ev.at || Date.now());
@@ -675,7 +704,8 @@ function start() {
     try { ws = new WebSocket(STREAM); } catch { retry(); return; }
     ws.onopen = () => {
       backoff = 2000;
-      ws.send(JSON.stringify({ service: "event", action: "subscribe", characters: [me.cid], eventNames: ["Death", "GainExperience_experience_id_2", "GainExperience_experience_id_3", "GainExperience_experience_id_371", "GainExperience_experience_id_372"] })); // filtered server-side (the worker's pattern) — never the whole XP firehose
+      ws.send(JSON.stringify({ service: "event", action: "subscribe", characters: [me.cid], eventNames: ["Death", "GainExperience_experience_id_2", "GainExperience_experience_id_3", "GainExperience_experience_id_371", "GainExperience_experience_id_372", "PlayerLogin", "PlayerLogout"] })); // filtered server-side (the worker's pattern) — never the whole XP firehose
+      pollOnline(); // the stream reports transitions only; the poll says what is true right now
       if (!trendStart) trendStart = Date.now(); // the trends session starts when tracking starts, not on reconnect
       setState(`<span class="live-dot">●</span> waiting for kills and deaths…`, "on");
       render();
@@ -688,7 +718,12 @@ function start() {
       // assist XP tick for the tracked player adds +500 to the DPM counter.
       if (j.payload?.event_name === "GainExperience") {
         const p = j.payload;
-        if (String(p.character_id) === me.cid && DPS_ASSIST_XP.has(Number(p.experience_id))) { dpsEvents.push({ t: Date.now(), dmg: DPS_ASSIST }); dpsTick(); }
+        if (String(p.character_id) === me.cid && DPS_ASSIST_XP.has(Number(p.experience_id))) { setOnline("online"); dpsEvents.push({ t: Date.now(), dmg: DPS_ASSIST }); dpsTick(); }
+        return;
+      }
+      // Owner 2026-10-25: login/logout for the tracked player drives the online pill.
+      if (j.payload?.event_name === "PlayerLogin" || j.payload?.event_name === "PlayerLogout") {
+        if (String(j.payload.character_id) === me.cid) setOnline(j.payload.event_name === "PlayerLogin" ? "online" : "offline");
         return;
       }
       const ev = classifyDeath(j.payload, me.cid);

@@ -665,13 +665,21 @@ test("mobile names + legend + DPS (owner 2026-10-25): table 100% with a flexible
   assert.match(css, /@media \(max-width: 600px\)[\s\S]*?col\.lv-c-nm \{ width: auto; \}/);
   assert.ok(live.indexOf("liveTrendTitle") < live.indexOf("liveTrendLegend") && live.indexOf("liveTrendLegend") < live.indexOf("liveTrendCanvas"), "legend sits between title and graph");
   assert.match(css, /\.live-trend-legend \{[^}]*font-size: 0\.7rem;/);
-  assert.match(swap, /<div id="liveDps" class="live-dps"><span id="liveDpsLabel"><\/span> <span id="liveDpsVal">0\.000<\/span> <span aria-hidden="true">·<\/span> <span id="liveCashSumLabel"><\/span> <span id="liveCashSumVal">0<\/span> <span aria-hidden="true">·<\/span> <span id="liveCashAvgLabel"><\/span> <span id="liveCashAvgVal">–<\/span><\/div>/);
-  assert.match(js, /eventNames: \["Death", "GainExperience_experience_id_2", "GainExperience_experience_id_3", "GainExperience_experience_id_371", "GainExperience_experience_id_372"\]/);
+  assert.match(swap, /<div id="liveDps" class="live-dps"><span id="liveDpsLabel"><\/span> <span id="liveDpsVal">0\.0<\/span> <span aria-hidden="true">·<\/span> <span id="liveCashSumLabel"><\/span> <span id="liveCashSumVal">0<\/span> <span aria-hidden="true">·<\/span> <span id="liveCashAvgLabel"><\/span> <span id="liveCashAvgVal">–<\/span><\/div>/);
+  assert.match(js, /eventNames: \["Death", "GainExperience_experience_id_2", "GainExperience_experience_id_3", "GainExperience_experience_id_371", "GainExperience_experience_id_372", "PlayerLogin", "PlayerLogout"\]/);
   assert.match(js, /DPS_ASSIST_XP\.has\(Number\(p\.experience_id\)\)/);
   assert.match(js, /setInterval\(dpsTick, 100\)/);
-  assert.match(js, /\(dpsNow\(dpsEvents, Date\.now\(\)\) \* 60\)\.toFixed\(3\)/); // DPM, three decimals
+  assert.match(js, /\(dpsNow\(dpsEvents, Date\.now\(\)\) \* 60\)\.toFixed\(1\)/); // DPM, three decimals
   assert.match(js, /cashKills\.push\(\{ cid: ev\.opp, iv: cashIv\(p\) \}\)/); // one ledger entry per kill
   assert.match(js, /for \(const e of cashKills\) if \(e\.cid === cid && !Number\.isFinite\(e\.iv\)\) e\.iv = cashIv\(p\);/); // late iVi finalizes in the list
   assert.match(js, /tr\("live\.cashSum", "Σ iVi"\)/);
+  assert.match(swap, /<span id="liveOnline" class="live-online" data-state="unknown"><i><\/i><span id="liveOnlineText">…<\/span><\/span>/); // pill over the graph
+  assert.match(swap, /<span id="liveTrendTitleText"><\/span>/);
+  assert.match(js, /characters_online_status\/\?character_id=\$\{me\.cid\}/); // Census is the source of truth for "right now"
+  assert.match(js, /setInterval\(pollOnline, 60000\)/);
+  assert.match(js, /event_name === "PlayerLogin" \? "online" : "offline"/);
+  assert.match(js, /setOnline\("online"\); \/\/ any Death involving them means they are playing right now/);
+  assert.match(css, /\.live-online\[data-state="online"\] i \{ background: #4caf50; \}/);
+  assert.match(css, /\.live-online\[data-state="offline"\] i \{ background: var\(--err\); \}/);
   assert.match(js, /tr\("live\.cashAvg", "avg"\)/);
 });
