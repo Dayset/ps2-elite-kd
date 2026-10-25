@@ -74,7 +74,7 @@
       });
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261025-tipx1" />
+  <link rel="stylesheet" href="styles.css?v=20261025-loc1" />
   <link rel="stylesheet" href="live.css?v=20261025-dim1" />
   <style>
     /* Installed-app launch splash (t465u). Android draws its own launch splash first:
@@ -343,8 +343,8 @@
               </span>
             </div>
             <div class="settings-row">
-              <span class="settings-label" data-i18n="ranks.removeRanks">Remove ranks</span>
-              <label class="tgl-switch" title="Remove the tier separators from the Rankings table" data-i18n-title="ranks.removeRanksTitle">
+              <span class="settings-label" data-i18n="ranks.removeRanks">Hide ranks</span>
+              <label class="tgl-switch" title="Hide the tier separators in the Rankings table" data-i18n-title="ranks.removeRanksTitle">
                 <input type="checkbox" id="removeRanksToggleSettings" />
               </label>
             </div>
@@ -503,8 +503,12 @@
         <input id="ranksSearch" type="search" data-i18n-placeholder="ranks.filter" data-i18n-aria-label="ranks.filterLabel" placeholder="Filter the table by name…" aria-label="Filter the Rankings table by player name" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="search" />
         <button type="button" id="ranksFindMe" class="rk-find-me" hidden title="👤 Find this player in the table" aria-label="👤 Find this player in the table" data-i18n-title="ranks.findMe" data-i18n-aria-label="ranks.findMe">👤</button>
       </span>
-      <label class="tgl-switch rk-remove-ranks" title="Remove the tier separators from the Rankings table" data-i18n-title="ranks.removeRanksTitle">
-        <input type="checkbox" id="removeRanksToggle" /> <span data-i18n="ranks.removeRanks">Remove ranks</span>
+      <label class="tgl-switch rk-remove-ranks" title="Hide the tier separators in the Rankings table" data-i18n-title="ranks.removeRanksTitle">
+        <input type="checkbox" id="removeRanksToggle" /> <span data-i18n="ranks.removeRanks">Hide ranks</span>
+      </label>
+      <!-- owner t648u: Locate player — only with exactly ONE name entered (same rule as 👤); when on, every sort scrolls the table to that row. -->
+      <label class="tgl-switch rk-locate" id="locateWrap" hidden title="After each sort, scroll the table to this player's row" data-i18n-title="ranks.locateTitle">
+        <input type="checkbox" id="locateToggle" /> <span data-i18n="ranks.locate">Locate player</span>
       </label>
     </div>
     <div class="ranks-table-wrap" id="ranksScroll" style="content-visibility: auto; contain-intrinsic-size: auto 800px;">
@@ -574,7 +578,7 @@
   </footer>
 
   <script type="module" src="i18n.mjs"></script>
-  <script type="module" src="app.js?v=20261025-tipx1"></script>
+  <script type="module" src="app.js?v=20261025-loc1"></script>
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").catch(function () {});

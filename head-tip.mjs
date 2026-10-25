@@ -8,7 +8,7 @@
  * sort handlers (app.js stats tables, rankings.mjs ranks table).
  */
 
-import { watchDismiss } from "./tip-dismiss.mjs?v=20261025-tipx1";
+import { watchDismiss } from "./tip-dismiss.mjs?v=20261025-loc1";
 
 export const HEAD_TIP_MS = 5000; // owner t643u: keep the 5 s read time; tip-dismiss.mjs closes it early on a scroll / tap elsewhere / tab switch
 

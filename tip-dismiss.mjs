@@ -21,10 +21,21 @@ export const TIP_SCROLL_GRACE_MS = 300;
 
 export function watchDismiss(isOpen, hide, { inside = () => false, graceMs = TIP_SCROLL_GRACE_MS } = {}) {
   let openedAt = 0;
-  const markOpened = () => { openedAt = Date.now(); };
+  let armed = true;
+  // The scroll the opening tap itself causes (sort → list jump, Locate player t648u) lands in
+  // the next frame, which can be >graceMs away after a big re-render: ignore scrolls until two
+  // frames have painted, AND for graceMs. Wheel / touchmove are user moves and always close.
+  const raf = typeof requestAnimationFrame === "function" ? requestAnimationFrame : null;
+  const markOpened = () => {
+    openedAt = Date.now();
+    if (!raf) return;
+    armed = false;
+    const id = openedAt;
+    raf(() => raf(() => { if (openedAt === id) armed = true; }));
+  };
   if (typeof document === "undefined") return markOpened;
   const close = () => { if (isOpen()) hide(); };
-  const onScroll = () => { if (isOpen() && Date.now() - openedAt >= graceMs) hide(); };
+  const onScroll = () => { if (isOpen() && armed && Date.now() - openedAt >= graceMs) hide(); };
   const opt = { passive: true, capture: true };
   window.addEventListener("scroll", onScroll, opt);
   document.addEventListener("scroll", onScroll, opt);

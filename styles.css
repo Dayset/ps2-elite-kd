@@ -2262,6 +2262,12 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
 /* Table filter (selection itself is the names box at the top) */
 .rk-filter-row { margin: 0 0 0.5rem; display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
 .rk-filter-row .rk-remove-ranks { flex: 0 0 auto; }
+.rk-filter-row .rk-locate { flex: 0 0 auto; }
+.rk-filter-row .rk-locate[hidden] { display: none; } /* owner t648u: only with exactly one name entered */
+/* owner t649u: phones — each table switch is a full row, label on the left, switch at the right edge. */
+@media (max-width: 600px) {
+  .rk-filter-row .rk-remove-ranks, .rk-filter-row .rk-locate { flex: 1 1 100%; flex-direction: row-reverse; justify-content: space-between; }
+}
 .rk-filter-row input[type="search"] {
   box-sizing: border-box; width: 100%; max-width: 28rem;
   font: inherit; font-size: 1rem; padding: 0.5rem 0.7rem; min-height: 2.6rem;

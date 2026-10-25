@@ -207,7 +207,7 @@ describe("Skill graph section: no placeholder, collapsible, pops on analyze (own
     assert.match(index, /id="removeRanksToggle"/);
     assert.match(index, /id="removeRanksToggleSettings"/);
     assert.match(index, /data-i18n="ranks\.removeRanks"/);
-    assert.match(read("i18n/en.json"), /"ranks\.removeRanks": "Remove ranks"/);
+    assert.match(read("i18n/en.json"), /"ranks\.removeRanks": "Hide ranks"/); // renamed "Remove" → "Hide" (owner t648u)
     // app.js owns the saved value and keeps the pair in sync.
     assert.match(app, /LS_REMOVE_RANKS = "ps2-elite-kd-remove-ranks"/);
     assert.match(app, /removeRanksToggleSettings/);

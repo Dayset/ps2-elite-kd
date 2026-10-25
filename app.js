@@ -36,9 +36,9 @@ import {
 } from "./math.mjs?v=20261010-sav1";
 import { formatClock, fmtNum, slugKey, bareName, parseNames, namesEqualIgnoreCase, namesSetKey, niceLinTicks, niceNum, niceLogTicks, formatTick, escapeHtml, makeAbortError, isAbortError, checkAborted, readJsonLS, writeJsonLS } from "./app-util.mjs?v=20261024-split1";
 import { createShareAdd } from "./share-add.mjs?v=20261024-split12";
-import { createSharedIndex } from "./shared-index.mjs?v=20261025-tipx1";
+import { createSharedIndex } from "./shared-index.mjs?v=20261025-loc1";
 import { createNamesField } from "./names-field.mjs?v=20261024-split10";
-import { createStatsTable } from "./stats-table.mjs?v=20261025-tipx1";
+import { createStatsTable } from "./stats-table.mjs?v=20261025-loc1";
 import { createChartWave } from "./chart-wave.mjs?v=20261024-split8";
 import { createChart } from "./chart.mjs?v=20261024-split7";
 import { createLoader } from "./loader.mjs?v=20261024-split6";
@@ -63,10 +63,10 @@ import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261022-wpc1";
 import { infantryKillsUrl, summarizeInfantryKills } from "./infantry.mjs?v=20261023-short1";
 import { infMedian } from "./tractor.mjs?v=20261024-trac1";
 import { mountWeapons } from "./weapons.mjs?v=20261022-wp4";
-import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261025-tipx1";
+import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261025-loc1";
 import { createWheelSwiper } from "./dist-cycle.mjs?v=20261017-cycle15";
 import { slideSwap, attachDragCarousel } from "./chart-slide.mjs?v=20261020-flick1";
-import { mountStatsCarousel } from "./stats-carousel.mjs?v=20261025-tipx1";
+import { mountStatsCarousel } from "./stats-carousel.mjs?v=20261025-loc1";
 import { pickGraphForKeys } from "./graph-keys.mjs?v=20261017-graphkeys1";
 import { entryFetchedAt, pickNewest, writeWithEviction } from "./cache-pick.mjs?v=20261010-sav1";
 import {
@@ -128,7 +128,7 @@ import { autoMarksHtml } from "./auto-marks.mjs?v=20261024-trac1";
 // Account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times: chart name list only.
 import { accountTimes, flairsHtml, flairsFor } from "./flairs.mjs?v=20261010-sav1";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
-import "./name-peek.mjs?v=20261025-tipx1";
+import "./name-peek.mjs?v=20261025-loc1";
 import { sfx, recentGesture, mountSfxToggle } from "./sfx.mjs?v=20261022-nosfx";
 import { mountNameSuggest } from "./name-suggest.mjs?v=20261024-br1";
 import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261010-sav1";

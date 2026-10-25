@@ -21,7 +21,7 @@ import { compareByCharName, columnRef, honuProfileUrl, pctFromRef, pctTitle, fmt
 import { dotSlot } from "./online-status.mjs?v=20261018-onl1";
 import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261022-wpc1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
-import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261025-tipx1";
+import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261025-loc1";
 import { statMark, isPenalizedPadder, POOP_TIP, POOP_MARK, markNote } from "./padding.mjs?v=20261023-short1";
 import { autoMarksHtml } from "./auto-marks.mjs?v=20261024-trac1";
 

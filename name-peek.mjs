@@ -22,7 +22,7 @@
 
 /** ~80% of cached names (incl. "[TAG] ") are ≤ 18 characters (2026-10-07, 461 players). */
 export const NAME_MAX_CH = 18;
-import { watchDismiss } from "./tip-dismiss.mjs?v=20261025-tipx1";
+import { watchDismiss } from "./tip-dismiss.mjs?v=20261025-loc1";
 
 export const LONG_PRESS_MS = 450;
 const PEEK_MS = 10000;

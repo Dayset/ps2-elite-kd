@@ -14,8 +14,8 @@ import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP, isPen
 import { HUT_MARK, HUT_TIP, HUT_DIFF_NOTE } from "./hut.mjs?v=20261023-short1";
 import { paletteColor } from "./palette.mjs?v=20261010-sav1";
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261020-wide1";
-import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261025-tipx1";
-import { watchDismiss } from "./tip-dismiss.mjs?v=20261025-tipx1";
+import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261025-loc1";
+import { watchDismiss } from "./tip-dismiss.mjs?v=20261025-loc1";
 import { deskUiScale } from "./desk-scale.mjs?v=20261010-sav1";
 import { matchPicks } from "./pick-sync.mjs?v=20261023-twin1";
 import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261020-i18n2";
@@ -1508,6 +1508,54 @@ export function initRankings(host) {
     b.hidden = !n;
     b.dataset.name = n;
     if (b.parentElement) b.parentElement.classList.toggle("has-find-me", !!n); // room for 👤 only while it shows (t646u)
+    syncLocate();
+  }
+  /*
+   * Locate player (owner t648u): a switch next to Hide ranks, shown only while exactly
+   * ONE name is entered (same rule as 👤). When on, every sort (and turning it on) scrolls
+   * the table box so that player's row sits in the middle, neighbours above and below,
+   * and flashes it (the chart jump's rk-flash). Instant scroll, no focus (no keyboard).
+   * Not in the table (filtered out / not a ranked player): nothing happens.
+   */
+  const LS_LOCATE = "ps2-elite-kd-locate";
+  const locateEl = $("locateToggle");
+  if (locateEl) {
+    try { locateEl.checked = localStorage.getItem(LS_LOCATE) === "1"; } catch {}
+    locateEl.addEventListener("change", () => {
+      try { localStorage.setItem(LS_LOCATE, locateEl.checked ? "1" : "0"); } catch {}
+      if (locateEl.checked) locatePlayer();
+    });
+  }
+  function syncLocate() {
+    const w = $("locateWrap");
+    if (w) w.hidden = host.getNames().length !== 1;
+  }
+  function locateOn() {
+    const w = $("locateWrap");
+    return !!(locateEl && locateEl.checked && w && !w.hidden);
+  }
+  function locatePlayer() {
+    if (!locateOn() || !renderState || picked.size !== 1) return;
+    const sec = $("ranksTableSection");
+    if (sec && !sec.open) return;
+    const q = [...picked.keys()][0];
+    const k = renderState.list.findIndex((r) => r.query === q);
+    if (k < 0) return; // filtered out / not in the table: quietly nothing
+    openTiersFor(k, k + 1);
+    renderRowsTo(k + 40);
+    const row = $("ranksBody").querySelector(`tr[data-q="${CSS.escape(q)}"]`);
+    const box = $("ranksScroll");
+    if (!row || !box) return;
+    const headH = $("ranksHead").getBoundingClientRect().height || 0;
+    const rr = row.getBoundingClientRect();
+    const top = rr.top - box.getBoundingClientRect().top + box.scrollTop - headH;
+    box.scrollTop = Math.max(0, Math.round(top - (box.clientHeight - headH - rr.height) / 2));
+    clearTimeout(flashTimer);
+    $("ranksBody").querySelectorAll("tr.rk-flash").forEach((t) => t.classList.remove("rk-flash"));
+    void $("ranksBody").offsetWidth;
+    row.classList.add("rk-flash");
+    flashTimer = setTimeout(() => $("ranksBody").querySelectorAll("tr.rk-flash").forEach((t) => t.classList.remove("rk-flash")), 2600);
+    window.__lastLocate = { q, index: k };
   }
   if ($("ranksFindMe")) $("ranksFindMe").addEventListener("click", (e) => {
     e.preventDefault();
@@ -1552,6 +1600,7 @@ export function initRankings(host) {
     // t329u: keep the sorted column in view horizontally (wrapper only).
     const newTh = [...$("ranksHead").querySelectorAll("th.sortable")].find((h) => h.getAttribute("data-key") === key);
     if (newTh) keepSortedColumnVisible(newTh.closest(".ranks-table-wrap"), newTh, prevLeft);
+    locatePlayer(); // t648u: Locate player on → the row stays in view after every sort
     // Phones have no hover: show the column's description for 5 s after a tap.
     if (newTh && isTouchUi()) showHeadTip(newTh.getAttribute("title"), newTh);
   });
