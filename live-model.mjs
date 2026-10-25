@@ -64,6 +64,12 @@ export const DPS_HP = 1000;
 export const DPS_ASSIST = 500;
 export const DPS_TAU_MS = 10000;
 export const DPS_ASSIST_XP = new Set([2, 3, 371, 372]); // kill-assist GainExperience ids (same list as worker ASSIST_EXP_IDS)
+/**
+ * Owner 2026-10-25 (gas-counter scroll): the scroll easing — quadratic
+ * ease-in, so the counter starts slow and speeds up into its target.
+ */
+export const easeInQuad = (p) => p * p;
+
 export function dpsNow(events, now, tauMs = DPS_TAU_MS, holdMs = 0) {
   const tau = tauMs > 0 ? tauMs : DPS_TAU_MS;
   const hold = holdMs > 0 ? holdMs : 0;

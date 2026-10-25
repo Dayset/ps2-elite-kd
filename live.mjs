@@ -19,8 +19,8 @@ await i18nReady;
  *     fetch in the background (one at a time, newest first, #32) and upgrade in place.
  * Pure helpers are exported for tests; the DOM part runs only in a browser.
  */
-export * from "./live-model.mjs?v=20261025-hld1"; // #66: the pure part (tests import it from here)
-import { VICTIM_LINES, classifyDeath, fmtGap, censusStats, LIVE_COLS, tipText, FILL_DIM, HOLLOW_PX, HOLLOW_INK, goodPct, fillDriver, emojiFill, unknownFill, infUnit, OUTLINE_PX, unitGlow, LIVE_GLOWS, LIVE_FPS, liveFps, HALO_KEY, haloOn, easeFill, glowIn, BEAT, TIER_MOTION, haloAt, SHINE, shineFrame, beatSleep, weaponIcon, glowTier, eventAt, overlayPush, overlayRows, nextBgFetch, liveRowFromPlayer, ME_REFRESH_MS, mergeFresh, SHARE_MAX, shareDelay, cellText, slugKey, bountyNext, dpsNow, DPS_HP, DPS_ASSIST, DPS_ASSIST_XP, cashTotals, cashFormula, combatHoldMs, spawnRunHoldMs } from "./live-model.mjs?v=20261025-hld1";
+export * from "./live-model.mjs?v=20261025-scr1"; // #66: the pure part (tests import it from here)
+import { VICTIM_LINES, classifyDeath, fmtGap, censusStats, LIVE_COLS, tipText, FILL_DIM, HOLLOW_PX, HOLLOW_INK, goodPct, fillDriver, emojiFill, unknownFill, infUnit, OUTLINE_PX, unitGlow, LIVE_GLOWS, LIVE_FPS, liveFps, HALO_KEY, haloOn, easeFill, glowIn, BEAT, TIER_MOTION, haloAt, SHINE, shineFrame, beatSleep, weaponIcon, glowTier, eventAt, overlayPush, overlayRows, nextBgFetch, liveRowFromPlayer, ME_REFRESH_MS, mergeFresh, SHARE_MAX, shareDelay, cellText, slugKey, bountyNext, dpsNow, DPS_HP, DPS_ASSIST, DPS_ASSIST_XP, cashTotals, cashFormula, combatHoldMs, spawnRunHoldMs, easeInQuad } from "./live-model.mjs?v=20261025-scr1";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261023-short1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
@@ -591,6 +591,35 @@ function start() {
   const CASH_BOOST_PCT = 34;
   const cashIv = (p) => (p && p.cached && Number.isFinite(p.cached.adjs) ? Math.round(Math.max(0, p.cached.adjs) * (1 + CASH_BOOST_PCT / 100)) : null);
   let lastDps = "", lastDpsLabel = "", lastHold = "", lastCash = "";
+  // Owner 2026-10-25 (gas-counter scroll): each kill/assist after the
+  // meter starts queues one scroll — its own DPM jump at the τ of the
+  // moment — and scrolls play one by one, 700 ms each, ease-in (slow
+  // start, speeding up). While a scroll plays, the tick leaves the
+  // number alone; when the queue is empty the tick eases the shown
+  // value toward the true one instead of snapping, so decay and
+  // post-scroll reconcile read as a gentle roll, never a jump. Deaths
+  // never enqueue: the engine freezes at once, but the frozen number
+  // only shows once the spinners ahead have played — the hold waits
+  // its turn without any extra machinery, and simultaneous deaths just
+  // re-freeze the same clock (settle + restart, banking guarded), so
+  // nothing stacks.
+  const SCROLL_MS = 700;
+  let scrollQ = [], scrollJob = null, shownDps = null;
+  function startScroll() {
+    if (scrollJob || !scrollQ.length || shownDps === null) return;
+    const delta = scrollQ.shift();
+    scrollJob = { from: shownDps, to: shownDps + delta, start: performance.now() };
+    const step = (now) => {
+      if (!scrollJob) return;
+      const p = Math.min(1, (now - scrollJob.start) / SCROLL_MS);
+      const v = scrollJob.from + (scrollJob.to - scrollJob.from) * easeInQuad(p);
+      shownDps = v;
+      if (dpsEl) dpsEl.textContent = v.toFixed(1);
+      if (p < 1) requestAnimationFrame(step);
+      else scrollJob = null;
+    };
+    requestAnimationFrame(step);
+  }
   function dpsTick() {
     // Owner 2026-10-25 (elite combat damage meter): the decay clock.
     // A freeze lifts by itself once the average spawn run elapses (the
@@ -611,15 +640,25 @@ function start() {
       // note that the meter starts at 3, so no unheld spike is ever shown
       // as a rate. The spikes still accumulate from the first one, so the
       // meter starts with a real held value, not from zero.
-      let v, label;
+      let label;
       if (dpsEvents.length < 3) {
-        v = `${dpsEvents.length}/3`;
+        const v = `${dpsEvents.length}/3`;
         label = tr("live.dpmWarm", "DPM starts at 3");
+        if (v !== lastDps) { dpsEl.textContent = v; lastDps = v; }
       } else {
-        v = (dpsNow(dpsEvents, effNow, dpmTauMs, holdMs) * 60).toFixed(1);
         label = tr("live.dps", "DPM");
+        const trueDpm = dpsNow(dpsEvents, effNow, dpmTauMs, holdMs) * 60;
+        if (shownDps === null) { shownDps = trueDpm; dpsEl.textContent = shownDps.toFixed(1); }
+        else if (!scrollJob) {
+          if (scrollQ.length) startScroll();
+          else {
+            if (Math.abs(trueDpm - shownDps) < 0.05) shownDps = trueDpm;
+            else shownDps += (trueDpm - shownDps) * 0.35;
+            dpsEl.textContent = shownDps.toFixed(1);
+          }
+        }
+        // a scroll in flight owns the number — the tick leaves it alone
       }
-      if (v !== lastDps) { dpsEl.textContent = v; lastDps = v; }
       if (dpsLabelEl && label !== lastDpsLabel) { dpsLabelEl.textContent = label; lastDpsLabel = label; }
       const holdText = tr("live.dpmHold", "hold {s}s", { s: Math.round(holdMs / 1000) });
       if (dpsHoldEl && holdText !== lastHold) { dpsHoldEl.textContent = holdText; lastHold = holdText; }
@@ -802,7 +841,7 @@ function start() {
       // exactly the old clear plus the new run's early lines.
       if (wasStreak === 0) st = { ...st, victims: st.victims.filter((r) => r.seq === seq || pendingSeq.has(r.seq)) };
       // DPM at the event's own time: a commit deferred behind a slow lookup doesn't shift the decay
-      dpsEvents.push({ t: Number.isFinite(ev.at) ? ev.at : Date.now(), dmg: DPS_HP }); liftFreeze(Number.isFinite(ev.at) ? ev.at : Date.now()); cashKills.push({ cid: ev.opp, iv: cashIv(p) }); dpsTick();
+      dpsEvents.push({ t: Number.isFinite(ev.at) ? ev.at : Date.now(), dmg: DPS_HP }); if (shownDps !== null) scrollQ.push(dpsNow([{ t: 0, dmg: DPS_HP }], 0, dpmTauMs) * 60); liftFreeze(Number.isFinite(ev.at) ? ev.at : Date.now()); cashKills.push({ cid: ev.opp, iv: cashIv(p) }); dpsTick();
     }
     // Owner 2026-10-25: ANY death dims the killed list and the observed
     // player's own name to 50% — you are dead, the feed shows it — until
@@ -850,7 +889,7 @@ function start() {
       // assist XP tick for the tracked player adds +500 to the DPM counter.
       if (j.payload?.event_name === "GainExperience") {
         const p = j.payload;
-        if (String(p.character_id) === me.cid && DPS_ASSIST_XP.has(Number(p.experience_id))) { setOnline("online"); dpsEvents.push({ t: Date.now(), dmg: DPS_ASSIST }); liftFreeze(Date.now()); dpsTick(); }
+        if (String(p.character_id) === me.cid && DPS_ASSIST_XP.has(Number(p.experience_id))) { setOnline("online"); dpsEvents.push({ t: Date.now(), dmg: DPS_ASSIST }); if (shownDps !== null) scrollQ.push(dpsNow([{ t: 0, dmg: DPS_ASSIST }], 0, dpmTauMs) * 60); liftFreeze(Date.now()); dpsTick(); }
         return;
       }
       // Owner 2026-10-25: login/logout for the tracked player drives the online pill.

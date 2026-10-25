@@ -2,7 +2,7 @@
 // drain with a 10 s time constant, so the value jumps and drains down.
 import test from "node:test";
 import assert from "node:assert/strict";
-import { dpsNow, DPS_HP, DPS_ASSIST, DPS_TAU_MS, DPS_ASSIST_XP, cashTotals, cashFormula, median, combatHoldMs, spawnRunHoldMs } from "../live-model.mjs";
+import { dpsNow, DPS_HP, DPS_ASSIST, DPS_TAU_MS, DPS_ASSIST_XP, cashTotals, cashFormula, median, combatHoldMs, spawnRunHoldMs, easeInQuad } from "../live-model.mjs";
 
 const close = (a, b, eps = 0.01) => assert.ok(Math.abs(a - b) <= eps, `${a} != ${b}`);
 
@@ -86,4 +86,11 @@ test("spawnRunHoldMs: median death→next-spike run; open runs contribute nothin
   assert.equal(spawnRunHoldMs([0], []), 0);
   assert.equal(spawnRunHoldMs([], [30000]), 0);
   assert.equal(spawnRunHoldMs([0], [0]), 0); // a spike at the death instant is not after it
+});
+
+test("easeInQuad (owner 2026-10-25): the gas-counter scroll starts slow and speeds up", () => {
+  assert.equal(easeInQuad(0), 0);
+  assert.equal(easeInQuad(0.5), 0.25);
+  assert.equal(easeInQuad(1), 1);
+  assert.ok(easeInQuad(0.25) < 0.25 && easeInQuad(0.75) > 0.5, "slow start, fast finish");
 });

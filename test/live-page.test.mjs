@@ -685,7 +685,7 @@ test("adjustable tau (owner 2026-10-25): DPM decay tau is a persisted page contr
 test("bounty (owner 2026-10-25): hearts on the centre line's second row, 💰💰💰 at 7, one removed per death", () => {
   const js = liveSrc();
   const css = cssSrc();
-  assert.match(js, /bountyNext[^}]*\} from "\.\/live-model\.mjs\?v=20261025-hld1"/);
+  assert.match(js, /bountyNext[^}]*\} from "\.\/live-model\.mjs\?v=20261025-scr1"/);
   assert.match(js, /const b = bountyNext\(\{ streak: bountyStreak, lives: bountyLives \}, ev\.kind === "kill"\);/);
   assert.match(js, /if \(bountyLives > 0\) return `<span class="lv-wn">\$\{"💰"\.repeat\(bountyLives\)\}<\/span>`;/); // one mark per life left, not one mark for all three
   assert.match(js, /Array\.from\(\{ length: 7 \}, \(_, i\) => `<span class="lv-bh\$\{i < bountyStreak \? "" : " lv-bh-empty"\}">❤️‍🔥<\/span>`\)\.join\(""\)/); // 7 slots, filled + dim
@@ -705,7 +705,7 @@ test("mobile names + legend + DPS (owner 2026-10-25): table 100% with a flexible
   assert.match(js, /eventNames: \["Death", "GainExperience_experience_id_2", "GainExperience_experience_id_3", "GainExperience_experience_id_371", "GainExperience_experience_id_372", "PlayerLogin", "PlayerLogout"\]/);
   assert.match(js, /DPS_ASSIST_XP\.has\(Number\(p\.experience_id\)\)/);
   assert.match(js, /setInterval\(dpsTick, 100\)/);
-  assert.match(js, /\(dpsNow\(dpsEvents, effNow, dpmTauMs, holdMs\) \* 60\)\.toFixed\(1\)/); // DPM, one decimal
+  assert.match(js, /const trueDpm = dpsNow\(dpsEvents, effNow, dpmTauMs, holdMs\) \* 60;/);
   assert.match(js, /cashKills\.push\(\{ cid: ev\.opp, iv: cashIv\(p\) \}\)/); // one ledger entry per kill
   assert.match(js, /for \(const e of cashKills\) if \(e\.cid === cid && !Number\.isFinite\(e\.iv\)\) e\.iv = cashIv\(p\);/); // late iVi finalizes in the list
   assert.match(js, /tr\("live\.cashSum", "Σ iVi"\)/);
@@ -723,7 +723,7 @@ test("mobile names + legend + DPS (owner 2026-10-25): table 100% with a flexible
   assert.match(js, /if \(cashHist\.length > 5\) cashHist\.length = 5;/);
   assert.match(js, /cashKills\.length = 0;/);
   assert.match(js, /tr\("live\.cashHist", "Past runs"\)/);
-  assert.match(css, /\.live-cash-hist \{ margin-top: 0.25rem; font-size: 0.72rem; color: var\(--dim\); \}/);
+  assert.match(css, /\.live-cash-hist \{ margin-top: 0.25rem; font-size: 0.72rem; color: var\(--dim\); background: var\(--panel\); padding: 0.25rem 0.5rem; \}/);
   assert.match(js, /Math\.round\(Math\.max\(0, p\.cached\.adjs\) \* \(1 \+ CASH_BOOST_PCT \/ 100\)\)/); // floor first, then the boost (a sub-0 victim still pays 0) // sub-0 victims pay 0, never subtract
   assert.match(js, /tr\("live\.cashAvg", "avg"\)/);
 });
@@ -764,9 +764,9 @@ test("hold meter (owner 2026-10-25): decay freezes on death, lifts on a spike or
   assert.match(js, /if \(freezeStart && Date\.now\(\) >= freezeStart \+ freezeFor\) \{ timeDebtMs \+= freezeFor; freezeStart = 0; freezeFor = 0; \}/);
   assert.match(js, /const effNow = freezeStart \? freezeStart - timeDebtMs : Date\.now\(\) - timeDebtMs;/);
   assert.match(js, /if \(ev\.kind === "death"\) \{ liftFreeze\(ev\.at\); deathTimes\.push\(ev\.at\); freezeStart = ev\.at; freezeFor = spawnRunHoldMs\(deathTimes, spikeTimes\(\)\); \}/);
-  assert.match(js, /dpsEvents\.push\(\{ t: Number\.isFinite\(ev\.at\) \? ev\.at : Date\.now\(\), dmg: DPS_HP \}\); liftFreeze\(Number\.isFinite\(ev\.at\) \? ev\.at : Date\.now\(\)\);/);
-  assert.match(js, /dpsEvents\.push\(\{ t: Date\.now\(\), dmg: DPS_ASSIST \}\); liftFreeze\(Date\.now\(\)\);/);
-  assert.match(js, /combatHoldMs, spawnRunHoldMs \} from "\.\/live-model\.mjs\?v=20261025-hld1"/);
+  assert.match(js, /dpsEvents\.push\(\{ t: Number\.isFinite\(ev\.at\) \? ev\.at : Date\.now\(\), dmg: DPS_HP \}\); if \(shownDps !== null\) scrollQ\.push\(dpsNow\(\[\{ t: 0, dmg: DPS_HP \}\], 0, dpmTauMs\) \* 60\); liftFreeze\(Number\.isFinite\(ev\.at\) \? ev\.at : Date\.now\(\)\);/);
+  assert.match(js, /dpsEvents\.push\(\{ t: Date\.now\(\), dmg: DPS_ASSIST \}\); if \(shownDps !== null\) scrollQ\.push\(dpsNow\(\[\{ t: 0, dmg: DPS_ASSIST \}\], 0, dpmTauMs\) \* 60\); liftFreeze\(Date\.now\(\)\);/);
+  assert.match(js, /combatHoldMs, spawnRunHoldMs, easeInQuad \} from "\.\/live-model\.mjs\?v=20261025-scr1"/);
 });
 
 test("warm-up (owner 2026-10-25): the meter waits for its 3rd chunk — first two spikes only bump the count", () => {
@@ -788,4 +788,27 @@ test("hold indicator (owner 2026-10-25): the current hold in whole seconds, next
   assert.match(js, /const holdMs = combatHoldMs\(spikeTimes\(\), deathTimes\);/);
   assert.match(js, /const holdText = tr\("live\.dpmHold", "hold \{s\}s", \{ s: Math\.round\(holdMs \/ 1000\) \}\);/);
   assert.match(js, /if \(dpsHoldEl && holdText !== lastHold\) \{ dpsHoldEl\.textContent = holdText; lastHold = holdText; \}/);
+});
+
+test("scroll (owner 2026-10-25): gas-counter queue — one 700 ms ease-in scroll per spike, deaths never enqueue", () => {
+  const js = liveSrc();
+  assert.match(js, /const SCROLL_MS = 700;/);
+  assert.match(js, /let scrollQ = \[\], scrollJob = null, shownDps = null;/);
+  assert.match(js, /if \(scrollJob \|\| !scrollQ\.length \|\| shownDps === null\) return;/);
+  assert.match(js, /const p = Math\.min\(1, \(now - scrollJob\.start\) \/ SCROLL_MS\);/);
+  assert.match(js, /const v = scrollJob\.from \+ \(scrollJob\.to - scrollJob\.from\) \* easeInQuad\(p\);/);
+  assert.match(js, /if \(p < 1\) requestAnimationFrame\(step\);/);
+  assert.match(js, /if \(shownDps !== null\) scrollQ\.push\(dpsNow\(\[\{ t: 0, dmg: DPS_HP \}\], 0, dpmTauMs\) \* 60\);/);
+  assert.match(js, /if \(shownDps !== null\) scrollQ\.push\(dpsNow\(\[\{ t: 0, dmg: DPS_ASSIST \}\], 0, dpmTauMs\) \* 60\);/);
+  assert.match(js, /if \(shownDps === null\) \{ shownDps = trueDpm; dpsEl\.textContent = shownDps\.toFixed\(1\); \}/);
+  assert.match(js, /if \(scrollQ\.length\) startScroll\(\);/);
+  assert.match(js, /if \(Math\.abs\(trueDpm - shownDps\) < 0\.05\) shownDps = trueDpm;/);
+  assert.match(js, /shownDps \+= \(trueDpm - shownDps\) \* 0\.35;/);
+  assert.match(js, /easeInQuad \} from "\.\/live-model\.mjs\?v=20261025-scr1"/);
+});
+
+test("past cashouts background (owner 2026-10-25): the history sits on the theme panel, not transparent", () => {
+  const css = cssSrc();
+  assert.match(css, /\.live-cash-hist \{[^}]*background: var\(--panel\);/);
+  assert.match(css, /\.live-cash-hist:empty \{ padding: 0; \}/);
 });

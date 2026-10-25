@@ -265,7 +265,9 @@ describe("🎥 live.html in a browser", () => {
       const afterKill = await ev(until(`Number(document.getElementById("liveDpsVal").textContent) >= 15000`)) && await ev(`Number(document.getElementById("liveDpsVal").textContent)`);
       assert.ok(afterKill >= 15000, `tau=10 s three kills spike high: ${afterKill}`);
       await ev(`document.getElementById("liveDpmTauVal").value = "60"; document.getElementById("liveDpmTauVal").dispatchEvent(new Event("change", { bubbles: true }));`);
-      const afterTau = await ev(until(`Number(document.getElementById("liveDpsVal").textContent) < 5000`)) && await ev(`Number(document.getElementById("liveDpsVal").textContent)`);
+      // the counter glides to the rescaled value instead of jumping — wait
+      // for the glide to converge, not just to cross 5000 mid-glide
+      const afterTau = await ev(until(`Number(document.getElementById("liveDpsVal").textContent) < 3200`)) && await ev(`Number(document.getElementById("liveDpsVal").textContent)`);
       assert.ok(afterTau > 2500 && afterTau < 3200, `tau=60 s rescales the same kills to ~2900: ${afterTau}`);
       assert.deepEqual(errors, [], "no page errors");
     });
@@ -325,14 +327,25 @@ describe("🎥 live.html in a browser", () => {
       assert.ok(ivs.length === 2 && ivs.every(Number.isFinite) && ivs.every((v) => v > 0), `both victims show an iVi: ${ivs}`);
       const b = (v) => Math.round(v * 1.34);
       const sum = b(ivs[1]) + b(ivs[0]), avg = (sum / 2).toFixed(1), formula = `${sum} (${b(ivs[1])} + ${b(ivs[0])})+34%`; // rows are newest-first, the formula is kill order; parts are boosted
-      assert.equal(await ev(until(`document.getElementById("liveCashSumVal").textContent === "${formula}"`)), true, `cash sum shows the formula: ${formula}`);
-      assert.equal(await ev(until(`document.getElementById("liveCashAvgVal").textContent === "${avg}"`)), true, `cash avg is per victim: ${avg}`);
+      // ±1 tolerance, like the cashed-out-runs test: the page boosts RAW
+      // adjs while the test only sees ROUNDED displays, so a fixture
+      // drifting across a rounding boundary shifts a part by 1 (seen
+      // 2026-10-25: raw ~1401.2 displays 1401 but boosts to 1878, not 1877)
+      assert.equal(await ev(until(`document.getElementById("liveCashSumVal").textContent.includes(" + ")`)), true, `cash sum shows the formula: ${formula}`);
+      const sumText = await ev(`document.getElementById("liveCashSumVal").textContent`);
+      const m = sumText.match(/^(\d+) \((\d+) \+ (\d+)\)\+34%$/);
+      assert.ok(m, `formula parses: ${sumText}`);
+      assert.ok(Math.abs(Number(m[2]) - b(ivs[1])) <= 1 && Math.abs(Number(m[3]) - b(ivs[0])) <= 1, `parts within 1 of display-derived: ${sumText} vs ${formula}`);
+      assert.equal(Number(m[1]), Number(m[2]) + Number(m[3]), "sum matches its parts");
+      const avgText = await ev(`document.getElementById("liveCashAvgVal").textContent`);
+      assert.ok(Math.abs(Number(avgText) - Number(avg)) <= 1.0, `cash avg is per victim: ${avgText} vs ${avg}`);
       // the killer does not pay: ME dies, the run is banked and the pot resets for the new run
       await ev(`window.__fakeWs.emit(${death(OPP[2].cid, ME.cid, "432", false)})`);
       assert.equal(await ev(until(`document.getElementById("liveCashSumVal").textContent === "0"`)), true, "the pot resets for the new run");
       assert.equal(await ev(until(`document.getElementById("liveCashAvgVal").textContent === "–"`)), true, "the avg empties with the pot");
       assert.equal(await ev(until(`document.querySelectorAll("#liveCashHist > div").length === 2`)), true, "one banked run in the history");
-      assert.equal(await ev(`document.querySelectorAll("#liveCashHist > div")[1].textContent`), `Σ ${formula} · avg ${avg}`, "the banked run keeps its formula");
+      assert.equal(await ev(`document.querySelectorAll("#liveCashHist > div")[1].textContent`), `Σ ${sumText} · avg ${avgText}`, "the banked run keeps its formula");
+      assert.notEqual(await ev(`getComputedStyle(document.getElementById("liveCashHist")).backgroundColor`), "rgba(0, 0, 0, 0)", "past cashouts sit on a background, not transparent");
       assert.deepEqual(errors, [], "no page errors");
     });
   });
@@ -368,11 +381,15 @@ describe("🎥 live.html in a browser", () => {
       assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)").length === 2`)), true, "two victims mid-run");
       await ev(`window.__fakeWs.emit(${death(OPP[2].cid, ME.cid, "432", false)})`);
       assert.equal(await ev(until(`document.querySelector("#liveList tbody.lv-atk:not(.lv-empty)")`)), true, "killer row shows the death");
+      // rows land on arrival with "…" names — wait for the lookups to fill
+      // them before asserting anything about the names themselves
+      assert.equal(await ev(until(`![...document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)")].some((t) => t.textContent.includes("…"))`)), true, "victim names filled in");
       let texts = await vicTexts();
       assert.equal(texts.length, 2, "old run's names stay through the death");
       assert.ok(texts.join("|").includes(OPP[0].name) && texts.join("|").includes(OPP[1].name), "old names still on screen");
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[3].cid, "80", false)})`);
       assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)").length === 1`)), true, "one victim after the new streak's first kill");
+      assert.equal(await ev(until(`![...document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)")].some((t) => t.textContent.includes("…"))`)), true, "new victim name filled in");
       texts = await vicTexts();
       assert.ok(texts[0].includes(OPP[3].name), "the new name lands alone below");
       assert.deepEqual(errors, [], "no page errors");
@@ -438,8 +455,16 @@ describe("🎥 live.html in a browser", () => {
       const ivs = await ev(`[...document.querySelectorAll("#liveList tbody.lv-vic .lv-iv")].map((e) => Number(e.textContent))`);
       assert.ok(ivs[0] > 0 && ivs[1] === 0, `newest victim positive, sub-0 victim shown floored: ${ivs}`);
       const bp = Math.round(ivs[0] * 1.34);
-      assert.equal(await ev(until(`document.getElementById("liveCashSumVal").textContent === "${bp} (0 + ${bp})+34%"`)), true, "the pot shows the boosted formula: floored 0 plus the boosted payout");
-      assert.equal(await ev(until(`document.getElementById("liveCashAvgVal").textContent === "${(bp / 2).toFixed(1)}"`)), true, "the average counts the floored 0");
+      // ±1 tolerance (same rounding-boundary note as the cash-out test):
+      // the page boosts the raw adj, the test only sees the rounded display
+      assert.equal(await ev(until(`document.getElementById("liveCashSumVal").textContent.includes("(0 + ")`)), true, "the pot shows the boosted formula: floored 0 plus the boosted payout");
+      const sumText = await ev(`document.getElementById("liveCashSumVal").textContent`);
+      const m = sumText.match(/^(\d+) \(0 \+ (\d+)\)\+34%$/);
+      assert.ok(m, `formula parses: ${sumText}`);
+      assert.ok(Math.abs(Number(m[2]) - bp) <= 1, `boosted part within 1 of display-derived ${bp}: ${m[2]}`);
+      assert.equal(Number(m[1]), Number(m[2]), "sum is the boosted part alone (floored 0 adds nothing)");
+      const avgText = await ev(`document.getElementById("liveCashAvgVal").textContent`);
+      assert.ok(Math.abs(Number(avgText) - bp / 2) <= 1.0, `the average counts the floored 0: ${avgText} vs ${bp / 2}`);
       assert.deepEqual(errors, [], "no page errors");
     });
   });
@@ -492,3 +517,69 @@ describe("🎥 live hold meter in a browser", () => {
     });
   });
 });
+
+describe("🎥 live gas-counter scroll in a browser", () => {
+  it("scroll (owner 2026-10-25): the counter rolls ease-in — barely moves at first, then rushes the jump", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      for (let i = 0; i < 3; i++) await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[i].cid, "80", false)})`);
+      const base = await ev(until(`Number(document.getElementById("liveDpsVal").textContent) > 10000`)) && await ev(`Number(document.getElementById("liveDpsVal").textContent)`);
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[3].cid, "80", false)})`); // 4th kill: one 6000 scroll
+      const v0 = await ev(`Number(document.getElementById("liveDpsVal").textContent)`);
+      assert.ok(v0 < base + 2000, `slow start: barely moved right after the kill: ${base} -> ${v0}`);
+      assert.equal(await ev(until(`Number(document.getElementById("liveDpsVal").textContent) > ${base + 1000}`)), true, "scroll underway");
+      await new Promise((r) => setTimeout(r, 500));
+      const v1 = await ev(`Number(document.getElementById("liveDpsVal").textContent)`);
+      assert.ok(v1 > v0 + 2000, `speeding up: the rush phase gained 2000+ in 500 ms: ${v0} -> ${v1}`);
+      assert.deepEqual(errors, [], "no page errors");
+    });
+  });
+
+  it("queue (owner 2026-10-25): two quick kills scroll one by one — still rising after the first scroll's time", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      for (let i = 0; i < 3; i++) await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[i].cid, "80", false)})`);
+      const base = await ev(until(`Number(document.getElementById("liveDpsVal").textContent) > 10000`)) && await ev(`Number(document.getElementById("liveDpsVal").textContent)`);
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[3].cid, "80", false)})`);
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[4].cid, "80", false)})`); // two scrolls queued, 6000 each
+      // no sleeps: a loaded machine overshoots setTimeout past the second
+      // scroll, so poll for the value states instead — the counter only
+      // rises while a scroll plays, so each crossing pins the order
+      assert.equal(await ev(until(`Number(document.getElementById("liveDpsVal").textContent) > ${base + 5000}`)), true, "first scroll landed");
+      const vMid = await ev(`Number(document.getElementById("liveDpsVal").textContent)`);
+      assert.ok(vMid < base + 11000, `second scroll not yet landed: ${base} -> ${vMid}`);
+      assert.equal(await ev(until(`Number(document.getElementById("liveDpsVal").textContent) > ${base + 10000}`)), true, "second scroll landed");
+      const vEnd = await ev(`Number(document.getElementById("liveDpsVal").textContent)`);
+      assert.ok(vEnd < base + 12500, `both scrolls kept, no overshoot: ${base} -> ${vEnd}`);
+      assert.deepEqual(errors, [], "no page errors");
+    });
+  });
+
+  it("death waits (owner 2026-10-25): a death never cuts a scroll, and three deaths at once leave the meter safe", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      for (let i = 0; i < 3; i++) await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[i].cid, "80", false)})`);
+      assert.equal(await ev(until(`Number(document.getElementById("liveDpsVal").textContent) > 10000`)), true, "meter started");
+      await ev(`window.__fakeWs.emit(${death(OPP[3].cid, ME.cid, "432", false)})`); // death 1: no average yet, no freeze
+      await new Promise((r) => setTimeout(r, 5000)); // the spawn run, measured
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[4].cid, "80", false)})`); // kill 4: measures the 5 s run, starts a scroll
+      await ev(`window.__fakeWs.emit(${death(OPP[5].cid, ME.cid, "432", false)})`); // deaths 2, 3, 4 at once, mid-scroll
+      await ev(`window.__fakeWs.emit(${death(OPP[6].cid, ME.cid, "432", false)})`);
+      await ev(`window.__fakeWs.emit(${death(OPP[0].cid, ME.cid, "432", false)})`);
+      await new Promise((r) => setTimeout(r, 400));
+      const a = await ev(`Number(document.getElementById("liveDpsVal").textContent)`);
+      await new Promise((r) => setTimeout(r, 300));
+      const b = await ev(`Number(document.getElementById("liveDpsVal").textContent)`);
+      assert.ok(b > a, `the scroll kept rising through the deaths instead of freezing mid-roll: ${a} -> ${b}`);
+      await new Promise((r) => setTimeout(r, 3000)); // scroll done + ease converged to the frozen value
+      const f1 = await ev(`document.getElementById("liveDpsVal").textContent`);
+      await new Promise((r) => setTimeout(r, 1000));
+      const f2 = await ev(`document.getElementById("liveDpsVal").textContent`);
+      assert.equal(f1, f2, `frozen through the 5 s hold, three deaths and all: ${f1} vs ${f2}`);
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[1].cid, "80", false)})`); // next kill: the meter is not stuck
+      assert.equal(await ev(until(`Number(document.getElementById("liveDpsVal").textContent) > ${Number(f2) + 1000}`)), true, "a kill after the deaths scrolls up again");
+      assert.deepEqual(errors, [], "no page errors");
+    });
+  });
+});
+

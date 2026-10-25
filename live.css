@@ -176,7 +176,8 @@ col.lv-c-iz { width: var(--lv-iz); }
 /* Owner 2026-10-25: imaginary DPS under the feed — a counter that jumps on kills/assists and drains down. */
 .live-dps { margin-top: 0.5rem; font-size: 1.3rem; }
 /* Owner 2026-10-25: cashed-out runs history — small, dim, under the DPM line. */
-.live-cash-hist { margin-top: 0.25rem; font-size: 0.72rem; color: var(--dim); }
+.live-cash-hist { margin-top: 0.25rem; font-size: 0.72rem; color: var(--dim); background: var(--panel); padding: 0.25rem 0.5rem; }
+.live-cash-hist:empty { padding: 0; }
 /* Owner 2026-10-25: while the observed player is dead, the killed list and their own name sit at 50% — a new kill
    brings them back to full. The killer line above stays full (it is the new information); iVi and inf/zerg stay full
    so the banked run stays readable. */
