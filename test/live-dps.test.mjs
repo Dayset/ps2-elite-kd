@@ -66,18 +66,29 @@ test("hold (owner 2026-10-25): the decay clock starts after the average gap", ()
   close(dpsNow(ev, 5000, 10000, -100), 100 / Math.sqrt(Math.E)); // negative hold ignored
 });
 
-test("combatHoldMs: median within-run gap; a gap with a death inside is a spawn run", () => {
+test("combatHoldMs (owner 2026-10-25, decision A): median of the first two gaps after each death; fallback to within-run gaps", () => {
+  // one death, two kills: spawn run 40 s + combat gap 10 s → median 25 s
+  assert.equal(combatHoldMs([40000, 50000], [0]), 25000);
+  // death with only one kill after: just the spawn run
+  assert.equal(combatHoldMs([40000], [0]), 40000);
+  // a death-anchored gap beats the fallback even alone: the old code said
+  // 0 here (the only gap spans a death) — the spawn run IS the measure now
+  assert.equal(combatHoldMs([0, 30000], [15000]), 15000);
+  // death after all spikes contributes nothing → fallback to the clean gap
+  assert.equal(combatHoldMs([0, 30000], [45000]), 30000);
+  // no deaths at all → fallback, the old behavior exactly
   assert.equal(combatHoldMs([0, 30000, 60000], []), 30000);
-  assert.equal(combatHoldMs([0, 30000, 60000], [45000]), 30000); // only the clean gap counts
-  assert.equal(combatHoldMs([0, 30000], [15000]), 0); // the only gap spans a death
+  // two deaths pooled: [40 s, 10 s, 40 s, 10 s] → median 25 s
+  assert.equal(combatHoldMs([40000, 50000, 140000, 150000], [0, 100000]), 25000);
   assert.equal(combatHoldMs([5000], []), 0); // one spike: no gap yet
   assert.equal(combatHoldMs([], []), 0);
   assert.equal(median([]), 0);
   assert.equal(median([5]), 5);
   assert.equal(median([1, 2, 3, 4]), 2.5);
-  // trailing 10: 12 gaps of 1..12 s → median of the last 10 (3..12) is 7.5 s
-  const spikes = [0]; for (let i = 1; i <= 12; i++) spikes.push(spikes[i - 1] + i * 1000);
-  assert.equal(combatHoldMs(spikes, []), 7500);
+  // trailing 10: 6 deaths × 2 gaps of 1..12 s → median of the last 10 (3..12) is 7.5 s
+  const spikes = [], deaths = [];
+  for (let i = 0; i < 6; i++) { deaths.push(i * 100000); spikes.push(i * 100000 + (2 * i + 1) * 1000, i * 100000 + (4 * i + 3) * 1000); }
+  assert.equal(combatHoldMs(spikes, deaths), 7500);
 });
 
 test("spawnRunHoldMs: median death→next-spike run; open runs contribute nothing", () => {

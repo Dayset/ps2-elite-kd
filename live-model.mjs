@@ -102,17 +102,41 @@ export function median(values) {
   const m = s.length >> 1;
   return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
 }
+/**
+ * Owner 2026-10-25 (decision A): the hold is anchored at deaths — for
+ * each death, the first two spikes after it contribute their gaps:
+ * death→first spike (the spawn run) and first→second spike (the combat
+ * gap). Pooled across deaths, trailing 10, median. A fast combat pace
+ * can't drag the hold below the spawn rhythm, and the hold stays
+ * gap-sized (never the whole death→second-kill span, which would peg
+ * the meter). With no death-anchored gap yet (no deaths, or deaths with
+ * no following spike), it falls back to the within-run gaps, so the
+ * meter still has a hold before the first death.
+ */
 export function combatHoldMs(spikeTimes, deathTimes, maxGaps = 10) {
   const spikes = [...spikeTimes].sort((a, b) => a - b);
   const deaths = [...deathTimes].sort((a, b) => a - b);
   const gaps = [];
+  for (const d of deaths) {
+    const k1 = spikes.find((t) => t > d);
+    if (k1 === undefined) continue;
+    const g1 = k1 - d;
+    if (g1 > 0) gaps.push(g1);
+    const k2 = spikes.find((t) => t > k1);
+    if (k2 === undefined) continue;
+    const g2 = k2 - k1;
+    if (g2 > 0) gaps.push(g2);
+  }
+  if (gaps.length) return median(gaps.slice(-maxGaps));
+  // Fallback: no death-anchored gap yet — the within-run gaps, as before.
+  const clean = [];
   for (let i = 1; i < spikes.length; i++) {
     const gap = spikes[i] - spikes[i - 1];
     if (gap <= 0) continue;
     if (deaths.some((d) => d > spikes[i - 1] && d < spikes[i])) continue;
-    gaps.push(gap);
+    clean.push(gap);
   }
-  return median(gaps.slice(-maxGaps));
+  return median(clean.slice(-maxGaps));
 }
 export function spawnRunHoldMs(deathTimes, spikeTimes, maxRuns = 10) {
   const spikes = [...spikeTimes].sort((a, b) => a - b);

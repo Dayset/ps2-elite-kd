@@ -583,3 +583,20 @@ describe("🎥 live gas-counter scroll in a browser", () => {
   });
 });
 
+
+describe("🎥 live death-anchored hold in a browser", () => {
+  it("hold A (owner 2026-10-25): a death plus two kills sets the hold from the death, not just between kills", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      assert.equal(await ev(until(`document.getElementById("liveDpsHold").textContent === "hold 0s"`)), true, "no gaps yet: hold 0s");
+      await ev(`window.__fakeWs.emit(${death(OPP[0].cid, ME.cid, "432", false)})`); // death first: the anchor
+      await new Promise((r) => setTimeout(r, 4000));
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[1].cid, "80", false)})`); // kill 1: 4 s after the death
+      await new Promise((r) => setTimeout(r, 2000));
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[2].cid, "80", false)})`); // kill 2: 2 s after kill 1
+      // pool [4 s, 2 s] → median 3 s; the old within-run-only hold would say 2 s
+      assert.equal(await ev(until(`document.getElementById("liveDpsHold").textContent === "hold 3s"`)), true, "death-anchored median: hold 3s");
+      assert.deepEqual(errors, [], "no page errors");
+    });
+  });
+});

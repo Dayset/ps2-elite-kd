@@ -685,7 +685,7 @@ test("adjustable tau (owner 2026-10-25): DPM decay tau is a persisted page contr
 test("bounty (owner 2026-10-25): hearts on the centre line's second row, 💰💰💰 at 7, one removed per death", () => {
   const js = liveSrc();
   const css = cssSrc();
-  assert.match(js, /bountyNext[^}]*\} from "\.\/live-model\.mjs\?v=20261025-scr1"/);
+  assert.match(js, /bountyNext[^}]*\} from "\.\/live-model\.mjs\?v=20261025-hld2"/);
   assert.match(js, /const b = bountyNext\(\{ streak: bountyStreak, lives: bountyLives \}, ev\.kind === "kill"\);/);
   assert.match(js, /if \(bountyLives > 0\) return `<span class="lv-wn">\$\{"💰"\.repeat\(bountyLives\)\}<\/span>`;/); // one mark per life left, not one mark for all three
   assert.match(js, /Array\.from\(\{ length: 7 \}, \(_, i\) => `<span class="lv-bh\$\{i < bountyStreak \? "" : " lv-bh-empty"\}">❤️‍🔥<\/span>`\)\.join\(""\)/); // 7 slots, filled + dim
@@ -766,7 +766,7 @@ test("hold meter (owner 2026-10-25): decay freezes on death, lifts on a spike or
   assert.match(js, /if \(ev\.kind === "death"\) \{ liftFreeze\(ev\.at\); deathTimes\.push\(ev\.at\); freezeStart = ev\.at; freezeFor = spawnRunHoldMs\(deathTimes, spikeTimes\(\)\); \}/);
   assert.match(js, /dpsEvents\.push\(\{ t: Number\.isFinite\(ev\.at\) \? ev\.at : Date\.now\(\), dmg: DPS_HP \}\); if \(shownDps !== null\) scrollQ\.push\(dpsNow\(\[\{ t: 0, dmg: DPS_HP \}\], 0, dpmTauMs\) \* 60\); liftFreeze\(Number\.isFinite\(ev\.at\) \? ev\.at : Date\.now\(\)\);/);
   assert.match(js, /dpsEvents\.push\(\{ t: Date\.now\(\), dmg: DPS_ASSIST \}\); if \(shownDps !== null\) scrollQ\.push\(dpsNow\(\[\{ t: 0, dmg: DPS_ASSIST \}\], 0, dpmTauMs\) \* 60\); liftFreeze\(Date\.now\(\)\);/);
-  assert.match(js, /combatHoldMs, spawnRunHoldMs, easeInQuad \} from "\.\/live-model\.mjs\?v=20261025-scr1"/);
+  assert.match(js, /combatHoldMs, spawnRunHoldMs, easeInQuad \} from "\.\/live-model\.mjs\?v=20261025-hld2"/);
 });
 
 test("warm-up (owner 2026-10-25): the meter waits for its 3rd chunk — first two spikes only bump the count", () => {
@@ -804,7 +804,7 @@ test("scroll (owner 2026-10-25): gas-counter queue — one 700 ms ease-in scroll
   assert.match(js, /if \(scrollQ\.length\) startScroll\(\);/);
   assert.match(js, /if \(Math\.abs\(trueDpm - shownDps\) < 0\.05\) shownDps = trueDpm;/);
   assert.match(js, /shownDps \+= \(trueDpm - shownDps\) \* 0\.35;/);
-  assert.match(js, /easeInQuad \} from "\.\/live-model\.mjs\?v=20261025-scr1"/);
+  assert.match(js, /easeInQuad \} from "\.\/live-model\.mjs\?v=20261025-hld2"/);
 });
 
 test("past cashouts background (owner 2026-10-25): the history sits on the theme panel, not transparent", () => {
