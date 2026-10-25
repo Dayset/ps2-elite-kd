@@ -152,12 +152,12 @@ describe("🎥 live.html in a browser", () => {
       assert.equal(s.killerWn, "C-4");
       assert.equal(s.killerHs, true);
       assert.equal(s.hsTip, "Headshot");
-      assert.equal(s.meWn, "", "no weapon on the centre line");
+      assert.equal(s.meWn, "❤️‍🔥".repeat(7), "no weapon on the centre line — 7 bounty slots, all dim after the death reset");
       assert.equal(s.meHs, false, "no headshot mark on the centre line");
       assert.equal(s.noIcons, 0, "no weapon icon column left");
       assert.equal(s.noEmojis, 0, "no emoji meters on the lines (parked)");
       assert.ok(s.nmW >= 280, `the name column absorbed the weapon column: ${s.nmW}px`);
-      const izFmt = /^(?:\d+\/(?:~\d+|\d+|–)%|–\/(?:~\d+|\d+)%|)$/;
+      const izFmt = /^(?:\[\d+\/(?:~\d+|\d+|–)\]|\[–\/(?:~\d+|\d+)\]|)$/;
       for (const t of [...s.victimIz, s.killerIz, s.meIz]) assert.match(t, izFmt, `inf/zerg cell: ${t}`);
       assert.ok([...s.victimIz, s.killerIz, s.meIz].some((t) => t !== ""), "at least one inf/zerg value on screen");
       assert.equal(s.svgFilters, 0, "no SVG filters on the page");
@@ -188,14 +188,16 @@ describe("🎥 live.html in a browser", () => {
   it("bounty (owner 2026-10-25): hearts per kill on the centre line, 💰 at 7 held for 3 deaths", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      const slots = () => ev(`(() => { const w = document.querySelector("#liveList tbody.lv-me .lv-wn"); if (!w) return null; const all = w.querySelectorAll(".lv-bh"); return { text: w.textContent, total: all.length, filled: [...all].filter((b) => !b.classList.contains("lv-bh-empty")).length }; })()`);
+      const slotsAre = async (total, filled, why) => assert.equal(await ev(until(`(() => { const w = document.querySelector("#liveList tbody.lv-me .lv-wn"); if (!w) return false; const all = w.querySelectorAll(".lv-bh"); return all.length === ${total} && [...all].filter((b) => !b.classList.contains("lv-bh-empty")).length === ${filled}; })()`)), true, why);
       const bountyIs = async (t, why) => assert.equal(await ev(until(`document.querySelector("#liveList tbody.lv-me .lv-wn").textContent === ${JSON.stringify(t)}`)), true, why);
-      await bountyIs("", "no hearts before any kill");
+      await slotsAre(7, 0, "7 slots, none filled, before any kill");
       for (let i = 0; i < 3; i++) await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[i].cid, "80", false)})`);
-      await bountyIs("❤️‍🔥".repeat(3), "one heart per kill");
+      await slotsAre(7, 3, "each kill fills one slot");
       await ev(`window.__fakeWs.emit(${death(OPP[0].cid, ME.cid, "432", false)})`);
-      await bountyIs("", "a death below 7 resets everything");
+      await slotsAre(7, 0, "a death below 7 empties the slots");
       for (let i = 0; i < 7; i++) await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[i].cid, "80", false)})`);
-      await bountyIs("💰", "the 7th kill earns the bounty mark");
+      await bountyIs("💰", "the 7th kill flips the slots to the bounty mark");
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
       await bountyIs("💰", "a kill while bountied changes nothing");
       await ev(`window.__fakeWs.emit(${death(OPP[0].cid, ME.cid, "432", false)})`);
@@ -203,26 +205,26 @@ describe("🎥 live.html in a browser", () => {
       await ev(`window.__fakeWs.emit(${death(OPP[1].cid, ME.cid, "432", false)})`);
       await bountyIs("💰", "bounty held after the 2nd death");
       await ev(`window.__fakeWs.emit(${death(OPP[2].cid, ME.cid, "432", false)})`);
-      await bountyIs("", "the 3rd death clears the bounty");
+      await slotsAre(7, 0, "the 3rd death clears the bounty back to empty slots");
       assert.deepEqual(errors, [], "no page errors");
     });
   });
 
-  it("imaginary DPS (owner 2026-10-25): kill jumps it, it drains, an assist adds half a kill", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+  it("imaginary DPM (owner 2026-10-25): kill jumps it, it drains, an assist adds half a kill", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
       const dps = () => ev(`Number(document.getElementById("liveDpsVal").textContent)`);
-      assert.equal(await ev(until(`document.getElementById("liveDpsVal").textContent === "0"`)), true, "DPS starts at 0");
+      assert.equal(await ev(until(`document.getElementById("liveDpsVal").textContent === "0.000"`)), true, "DPM starts at 0.000");
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
-      const afterKill = await ev(until(`Number(document.getElementById("liveDpsVal").textContent) >= 85`)) && await dps();
-      assert.ok(afterKill >= 85 && afterKill <= 100, `a kill jumps DPS to ~100: ${afterKill}`);
+      const afterKill = await ev(until(`Number(document.getElementById("liveDpsVal").textContent) >= 5000`)) && await dps();
+      assert.ok(afterKill >= 5000 && afterKill <= 6000, `a kill jumps DPM to ~6000: ${afterKill}`);
       await new Promise((r) => setTimeout(r, 2500));
       const drained = await dps();
-      assert.ok(drained < 85 && drained > 40, `DPS drains down after the kill: ${drained}`);
+      assert.ok(drained < afterKill && drained > 3000, `DPM drains down after the kill: ${drained}`);
       const gain = JSON.stringify({ event_name: "GainExperience", character_id: ME.cid, experience_id: 2, amount: 100, timestamp: "0" });
       await ev(`window.__fakeWs.emit(${gain})`);
-      const afterAssist = await ev(until(`Number(document.getElementById("liveDpsVal").textContent) > ${drained + 30}`)) && await dps();
-      assert.ok(afterAssist > drained + 30, `an assist adds ~50: ${drained} -> ${afterAssist}`);
+      const afterAssist = await ev(until(`Number(document.getElementById("liveDpsVal").textContent) > ${drained + 2000}`)) && await dps();
+      assert.ok(afterAssist > drained + 2000, `an assist adds ~3000: ${drained} -> ${afterAssist}`);
       assert.deepEqual(errors, [], "no page errors");
     });
   });
@@ -241,4 +243,53 @@ describe("🎥 live.html in a browser", () => {
       assert.ok(s.nmW > 160, `the name column takes the leftover (was 140 at the old 8.78rem): ${Math.round(s.nmW)}`);
       assert.deepEqual(errors, [], "no page errors");
     }, { width: 390, height: 844 });
+  });
+
+  it("trends (owner 2026-10-25): interval lines only, faction colours, 3-item legend", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[1].cid, "80", false)})`);
+      await ev(`window.__fakeWs.emit(${death(OPP[2].cid, ME.cid, "432", false)})`);
+      await ev(`window.__fakeWs.emit(${death(OPP[3].cid, ME.cid, "432", false)})`);
+      assert.equal(await ev(until(`!document.getElementById("liveTrends").classList.contains("live-trends-skel")`)), true, "chart drawn (not skeleton)");
+      // interval lines need two 30 s buckets: wait one bucket out, then one more death redraws with two points per line
+      await new Promise((r) => setTimeout(r, 31000));
+      await ev(`window.__fakeWs.emit(${death(OPP[4].cid, ME.cid, "432", false)})`);
+      await new Promise((r) => setTimeout(r, 500));
+      const s = await ev(`(() => {
+        const cv = document.getElementById("liveTrendCanvas");
+        const w = cv.width, d = cv.getContext("2d").getImageData(0, 0, w, cv.height).data;
+        const top = Math.round(16 * (w / cv.clientWidth)); // the plot area starts below the axis titles
+        const near = (hex) => { const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16); let n = 0; for (let i = 0; i < d.length; i += 4) { const y = Math.floor(i / 4 / w); if (y >= top && d[i + 3] > 100 && Math.abs(d[i] - r) < 40 && Math.abs(d[i + 1] - g) < 40 && Math.abs(d[i + 2] - b) < 40) n++; } return n; };
+        return {
+          legend: [...document.querySelectorAll("#liveTrendLegend .lv-tl")].map((e) => e.textContent).join(" | "),
+          ncBlue: near("#3e8ef7"), trRed: near("#e0453a"), vsPurple: near("#b061ff"),
+        };
+      })()`);
+      assert.equal(s.legend, "KPM interval | DPM interval | K/D interval");
+      assert.ok(s.ncBlue > 0 && s.trRed > 0 && s.vsPurple > 0, `all three faction colours drawn: blue ${s.ncBlue}, red ${s.trRed}, purple ${s.vsPurple}`);
+      assert.deepEqual(errors, [], "no page errors");
+    });
+  });
+
+  it("cash-out (owner 2026-10-25): victims' iVi summed + averaged next to DPM, live on the tick", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      assert.equal(await ev(until(`document.getElementById("liveCashSumVal").textContent === "0"`)), true, "cash sum starts at 0");
+      assert.equal(await ev(until(`document.getElementById("liveCashAvgVal").textContent === "–"`)), true, "cash avg starts empty");
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[1].cid, "80", false)})`);
+      assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)").length === 2`)), true, "two victim rows on screen");
+      const ivs = await ev(`[...document.querySelectorAll("#liveList tbody.lv-vic .lv-iv")].map((e) => Number(e.textContent))`);
+      assert.ok(ivs.length === 2 && ivs.every(Number.isFinite) && ivs.every((v) => v > 0), `both victims show an iVi: ${ivs}`);
+      const sum = ivs[0] + ivs[1], avg = (sum / 2).toFixed(1);
+      assert.equal(await ev(until(`document.getElementById("liveCashSumVal").textContent === "${sum}"`)), true, `cash sum is the victims' iVi: ${sum}`);
+      assert.equal(await ev(until(`document.getElementById("liveCashAvgVal").textContent === "${avg}"`)), true, `cash avg is per victim: ${avg}`);
+      // the killer does not pay: ME dies, the cash-out stands
+      await ev(`window.__fakeWs.emit(${death(OPP[2].cid, ME.cid, "432", false)})`);
+      await new Promise((r) => setTimeout(r, 300));
+      assert.equal(await ev(`document.getElementById("liveCashSumVal").textContent`), String(sum), "a death changes nothing");
+      assert.deepEqual(errors, [], "no page errors");
+    });
   });

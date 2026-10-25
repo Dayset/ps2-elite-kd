@@ -74,6 +74,18 @@ export function dpsNow(events, now) {
 }
 
 /**
+ * Owner 2026-10-25: cash-out — the ⚔️ iVi of every victim of the tracked
+ * player, summed, with the average per victim. Entries are one per kill (a
+ * repeat victim pays again); unknown iVi (null) is skipped from both sum and
+ * count, so the average stays honest. avg is null until the first known iVi.
+ */
+export function cashTotals(ivs) {
+  let sum = 0, count = 0;
+  for (const v of ivs || []) if (typeof v === "number" && Number.isFinite(v)) { sum += v; count++; }
+  return { sum, count, avg: count ? sum / count : null };
+}
+
+/**
  * Feed state step: newest event on top, every event its own row (owner t587u: no dedupe — a repeat
  * opponent gets a new row too); the oldest row drops out past FEED_MAX.
  * ⏱️ stopwatch: the top row runs (gap null); when a new event lands, the old

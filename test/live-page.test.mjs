@@ -269,7 +269,7 @@ test("no value = empty 0% emoji, never a dash (owner t567u): stats, iVi, uncache
   assert.match(js, /const meter = \(e\) => `<span class="lv-em lv-x\$\{emojiIdx\.get\(e\)\}" aria-hidden="true" data-e="\$\{e\}"><i class="lv-gl"><\/i><i class="lv-b"><\/i><i class="lv-sw"><i class="lv-s"><i class="lv-shn"><\/i><\/i><\/i><\/span>`;/);
   assert.match(js, /const vals = p\.cached \|\| \{\};/); // uncached too
   assert.match(js, /IVI\.map\(\(c\) => `<td class="lv-ivc">\$\{iviText\(c, vals\[c\.id\]\)\}<\/td>`\)/);
-  assert.match(js, /return `<td class="lv-iz" data-tip="Infantry \$\{infS\}% · Zerg \$\{zgS\}">\$\{infS\}\/\$\{zgS\}%<\/td>`;/); // owner 2026-10-25: one plain inf/zerg cell, one % at the end
+  assert.match(js, /return `<td class="lv-iz" data-tip="Infantry \$\{infS\}% · Zerg \$\{zgS\}">\[\$\{infS\}\/\$\{zgS\}\]<\/td>`;/); // owner 2026-10-25: the pair in square brackets, no % sign
   assert.match(js, /if \(!Number\.isFinite\(inf\) && !Number\.isFinite\(zg\)\) return `<td class="lv-iz"><\/td>`;/); // both unknown = empty cell
   assert.match(js, /const zgS = Number\.isFinite\(zg\) \? \(est != null \? `~\$\{Math\.round\(zg\)\}` : String\(Math\.round\(zg\)\)\) : "–";/); // t614: "~N" estimate survives as text
   assert.doesNotMatch(js, /<td class="lv-ems">/); // no emoji cells on the lines any more
@@ -631,9 +631,14 @@ test("trends graph (owner 2026-10-25): no numbers on the chart, 2 rows tall, DPM
   const trends = readFileSync(new URL("live-trends.mjs", root), "utf8");
   assert.doesNotMatch(trends, /fmtClock|fillText\(String\(/); // no numeric tick labels on either axis
   assert.match(trends, /line\(series\.dpmInt, YL, colors\.dpm, false\);/); // DPM shares the KPM (left) axis
-  assert.match(trends, /line\(series\.dpmTrend, YL, colors\.dpm, true\);/);
+  assert.match(trends, /line\(series\.kpmInt, YL, colors\.kpm, false\);/);
+  assert.match(trends, /line\(series\.kdInt, YR, colors\.kd, false\);/);
+  assert.doesNotMatch(trends, /line\(series\.\w+Trend/); // the dashed trend lines are gone
+  assert.match(trends, /const maxLeft = niceCeil\(Math\.max\(0, \.\.\.series\.kpmInt\.map\(\(p\) => p\.y\), \.\.\.series\.dpmInt\.map\(\(p\) => p\.y\)\)\);/); // scale to the lines drawn — trend values would squash them onto the same pixels
+  assert.match(trends, /const maxKd = niceCeil\(Math\.max\(0, \.\.\.series\.kdInt\.map\(\(p\) => p\.y\)\)\);/);
   assert.match(js, /item\("lv-tl-dpm", "live\.trendDpmInt", "DPM interval"\)/);
-  assert.match(js, /item\("lv-tl-dpm lv-tl-dash", "live\.trendDpmTrend", "DPM trend"\)/);
+  assert.doesNotMatch(js, /live\.trend\w+Trend/); // no dashed trend entries in the legend any more (keys kept, never deleted)
+  assert.match(css, /\.lv-iz \{[^}]*font-size: 0\.72rem; color: var\(--dim\);/); // the pair in the weapon's small dim style
   assert.match(css, /\.live-trend-canvas \{ display: block; width: 100%; height: 5\.6rem; \}/); // exactly 2 feed rows
   assert.match(css, /\.live-feed \.live-trend-canvas \{ height: 7\.3rem; \}/);
   assert.match(css, /\.live-feed \.live-trend-canvas \{ height: 4\.8rem; \}/);
@@ -642,10 +647,11 @@ test("trends graph (owner 2026-10-25): no numbers on the chart, 2 rows tall, DPM
 test("bounty (owner 2026-10-25): hearts on the centre line's second row, 💰 at 7 held for 3 deaths", () => {
   const js = liveSrc();
   const css = cssSrc();
-  assert.match(js, /bountyNext[^}]*\} from "\.\/live-model\.mjs\?v=20261025-dps1"/);
+  assert.match(js, /bountyNext[^}]*\} from "\.\/live-model\.mjs\?v=20261025-csh1"/);
   assert.match(js, /const b = bountyNext\(\{ streak: bountyStreak, lives: bountyLives \}, ev\.kind === "kill"\);/);
   assert.match(js, /if \(bountyLives > 0\) return `<span class="lv-wn">💰<\/span>`;/);
-  assert.match(js, /"❤️‍🔥"\.repeat\(bountyStreak\)/);
+  assert.match(js, /Array\.from\(\{ length: 7 \}, \(_, i\) => `<span class="lv-bh\$\{i < bountyStreak \? "" : " lv-bh-empty"\}">❤️‍🔥<\/span>`\)\.join\(""\)/); // 7 slots, filled + dim
+  assert.match(css, /\.live-table tbody\.lv-me \.lv-wn \.lv-bh-empty \{ opacity: 0\.25; \}/);
   assert.match(js, /const wn = isMe \? bountyHtml\(\) : `<span class="lv-wn">/);
   assert.match(css, /\.live-table tbody\.lv-me \.lv-wn \{ font-size: 1rem; line-height: 1\.1; \}/);
 });
@@ -659,8 +665,13 @@ test("mobile names + legend + DPS (owner 2026-10-25): table 100% with a flexible
   assert.match(css, /@media \(max-width: 600px\)[\s\S]*?col\.lv-c-nm \{ width: auto; \}/);
   assert.ok(live.indexOf("liveTrendTitle") < live.indexOf("liveTrendLegend") && live.indexOf("liveTrendLegend") < live.indexOf("liveTrendCanvas"), "legend sits between title and graph");
   assert.match(css, /\.live-trend-legend \{[^}]*font-size: 0\.7rem;/);
-  assert.match(swap, /<div id="liveDps" class="live-dps"><span id="liveDpsLabel"><\/span> <span id="liveDpsVal">0<\/span><\/div>/);
+  assert.match(swap, /<div id="liveDps" class="live-dps"><span id="liveDpsLabel"><\/span> <span id="liveDpsVal">0\.000<\/span> <span aria-hidden="true">·<\/span> <span id="liveCashSumLabel"><\/span> <span id="liveCashSumVal">0<\/span> <span aria-hidden="true">·<\/span> <span id="liveCashAvgLabel"><\/span> <span id="liveCashAvgVal">–<\/span><\/div>/);
   assert.match(js, /eventNames: \["Death", "GainExperience_experience_id_2", "GainExperience_experience_id_3", "GainExperience_experience_id_371", "GainExperience_experience_id_372"\]/);
   assert.match(js, /DPS_ASSIST_XP\.has\(Number\(p\.experience_id\)\)/);
   assert.match(js, /setInterval\(dpsTick, 100\)/);
+  assert.match(js, /\(dpsNow\(dpsEvents, Date\.now\(\)\) \* 60\)\.toFixed\(3\)/); // DPM, three decimals
+  assert.match(js, /cashKills\.push\(\{ cid: ev\.opp, iv: cashIv\(p\) \}\)/); // one ledger entry per kill
+  assert.match(js, /for \(const e of cashKills\) if \(e\.cid === cid && !Number\.isFinite\(e\.iv\)\) e\.iv = cashIv\(p\);/); // late iVi finalizes in the list
+  assert.match(js, /tr\("live\.cashSum", "Σ iVi"\)/);
+  assert.match(js, /tr\("live\.cashAvg", "avg"\)/);
 });

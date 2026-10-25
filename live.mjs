@@ -19,8 +19,8 @@ await i18nReady;
  *     fetch in the background (one at a time, newest first, #32) and upgrade in place.
  * Pure helpers are exported for tests; the DOM part runs only in a browser.
  */
-export * from "./live-model.mjs?v=20261025-dps1"; // #66: the pure part (tests import it from here)
-import { VICTIM_LINES, classifyDeath, fmtGap, censusStats, LIVE_COLS, tipText, FILL_DIM, HOLLOW_PX, HOLLOW_INK, goodPct, fillDriver, emojiFill, unknownFill, infUnit, OUTLINE_PX, unitGlow, LIVE_GLOWS, LIVE_FPS, liveFps, HALO_KEY, haloOn, easeFill, glowIn, BEAT, TIER_MOTION, haloAt, SHINE, shineFrame, beatSleep, weaponIcon, glowTier, eventAt, overlayPush, overlayRows, nextBgFetch, liveRowFromPlayer, ME_REFRESH_MS, mergeFresh, SHARE_MAX, shareDelay, cellText, slugKey, bountyNext, dpsNow, DPS_HP, DPS_ASSIST, DPS_ASSIST_XP } from "./live-model.mjs?v=20261025-dps1";
+export * from "./live-model.mjs?v=20261025-csh1"; // #66: the pure part (tests import it from here)
+import { VICTIM_LINES, classifyDeath, fmtGap, censusStats, LIVE_COLS, tipText, FILL_DIM, HOLLOW_PX, HOLLOW_INK, goodPct, fillDriver, emojiFill, unknownFill, infUnit, OUTLINE_PX, unitGlow, LIVE_GLOWS, LIVE_FPS, liveFps, HALO_KEY, haloOn, easeFill, glowIn, BEAT, TIER_MOTION, haloAt, SHINE, shineFrame, beatSleep, weaponIcon, glowTier, eventAt, overlayPush, overlayRows, nextBgFetch, liveRowFromPlayer, ME_REFRESH_MS, mergeFresh, SHARE_MAX, shareDelay, cellText, slugKey, bountyNext, dpsNow, DPS_HP, DPS_ASSIST, DPS_ASSIST_XP, cashTotals } from "./live-model.mjs?v=20261025-csh1";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261023-short1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
@@ -28,7 +28,7 @@ import { traitPools, zergScore } from "./trait-scores.mjs?v=20261024-crowd1";
 import { zergEstimate } from "./zerg-revive.mjs?v=20261024-crowd1";
 import { infMedian, tractorCuts, TRACTOR_EMOJI } from "./tractor.mjs?v=20261024-trac1";
 import { drawEmojiSprite, spriteCss } from "./live-sprites.mjs?v=20261024-beat1";
-import { trendSeries, trendColors, drawTrends as paintTrends, drawTrendsSkeleton as paintSkeleton } from "./live-trends.mjs?v=20261025-grf1";
+import { trendSeries, trendColors, drawTrends as paintTrends, drawTrendsSkeleton as paintSkeleton } from "./live-trends.mjs?v=20261025-fac1";
 
 const CENSUS = `https://census.daybreakgames.com/s:${CENSUS_SERVICE_ID}/get/ps2:v2/`;
 const STREAM = `wss://push.planetside2.com/streaming?environment=ps2&service-id=s:${CENSUS_SERVICE_ID}`;
@@ -224,11 +224,12 @@ function start() {
    */
   /**
    * Owner 2026-10-25 (columns-only swap, per the owner's "for now"): the emoji
-   * meters are parked — one plain cell, infantry % over zerg score, one % at
-   * the end ("95/41%"). An unknown side is –, both unknown is an empty cell
-   * (never a lone "—", t567u). Zerg falls back to the ~N estimate (t614) when
-   * unscored. The emoji machinery (live-sprites, fills, glows, halo, ticker)
-   * stays in place, dormant, for the owner's later emoji revisit.
+   * meters are parked — one plain cell, infantry over zerg in square brackets
+   * ("[95/41]", no % sign), in the weapon's small dim style. An unknown side
+   * is –, both unknown is an empty cell (never a lone "—", t567u). Zerg falls
+   * back to the ~N estimate (t614) when unscored. The emoji machinery
+   * (live-sprites, fills, glows, halo, ticker) stays in place, dormant, for
+   * the owner's later emoji revisit.
    */
   function izHtml(vals) {
     const inf = vals.inf, scored = vals.zerg, est = scored == null ? vals.zest : null;
@@ -236,16 +237,18 @@ function start() {
     if (!Number.isFinite(inf) && !Number.isFinite(zg)) return `<td class="lv-iz"></td>`;
     const infS = Number.isFinite(inf) ? String(Math.round(inf)) : "–";
     const zgS = Number.isFinite(zg) ? (est != null ? `~${Math.round(zg)}` : String(Math.round(zg))) : "–";
-    return `<td class="lv-iz" data-tip="Infantry ${infS}% · Zerg ${zgS}">${infS}/${zgS}%</td>`;
+    return `<td class="lv-iz" data-tip="Infantry ${infS}% · Zerg ${zgS}">[${infS}/${zgS}]</td>`;
   }
   // Owner 2026-10-25: the tracked player's bounty, on their own (centre) line's
-  // second row — one ❤️‍🔥 per kill of the current streak, capped at 7; at 7 the
-  // streak becomes the bounty mark 💰, held for 3 deaths (bountyNext). The
-  // centre line never carries a weapon, so its second line is free for this.
+  // second row — all 7 heart slots visible at once: each kill fills one, the
+  // rest sit dim; at 7 the slots flip to the bounty mark 💰, held for 3
+  // deaths (bountyNext). The centre line never carries a weapon, so its
+  // second line is free for this.
   let bountyStreak = 0, bountyLives = 0;
   function bountyHtml() {
     if (bountyLives > 0) return `<span class="lv-wn">💰</span>`;
-    return `<span class="lv-wn">${"❤️‍🔥".repeat(bountyStreak)}</span>`; // repeat(0) = "" — an empty line, like before
+    const slots = Array.from({ length: 7 }, (_, i) => `<span class="lv-bh${i < bountyStreak ? "" : " lv-bh-empty"}">❤️‍🔥</span>`).join("");
+    return `<span class="lv-wn">${slots}</span>`;
   }
   function cells(p, isMe, r) {
     const vals = p.cached || {};
@@ -478,7 +481,8 @@ function start() {
   // Owner t546u: no skill graph in Live any more (it stays on the main page).
 
   // Owner 2026-10-25: Honu-style session trends ABOVE the feed — one combined
-  // chart (KPM + K/D, one colour per metric, trend dashed). The overlay keeps
+  // chart (interval lines only, faction colours: KPM NC blue, DPM TR red,
+  // K/D VS purple). The overlay keeps
   // only 6 victim lines, so the chart keeps its own history: every kill/death
   // timestamp since tracking started (the stream subscribe, kept across
   // reconnects). Redrawn on every event and every 30 s, so an idle stretch
@@ -493,9 +497,9 @@ function start() {
   if (trendLegend) {
     const item = (cls, key, fallback) => `<span class="lv-tl ${cls}"><i></i>${esc(tr(key, fallback))}</span>`;
     trendLegend.innerHTML =
-      item("lv-tl-kpm", "live.trendKpmInt", "KPM interval") + item("lv-tl-kpm lv-tl-dash", "live.trendKpmTrend", "KPM trend") +
-      item("lv-tl-dpm", "live.trendDpmInt", "DPM interval") + item("lv-tl-dpm lv-tl-dash", "live.trendDpmTrend", "DPM trend") +
-      item("lv-tl-kd", "live.trendKdInt", "K/D interval") + item("lv-tl-kd lv-tl-dash", "live.trendKdTrend", "K/D trend");
+      item("lv-tl-kpm", "live.trendKpmInt", "KPM interval") +
+      item("lv-tl-dpm", "live.trendDpmInt", "DPM interval") +
+      item("lv-tl-kd", "live.trendKdInt", "K/D interval");
   }
   function drawTrends() {
     if (!trendEl || !trendCanvas) return;
@@ -505,7 +509,7 @@ function start() {
     for (const el of trendLegend.querySelectorAll(".lv-tl-dpm")) el.style.color = colors.dpm;
     for (const el of trendLegend.querySelectorAll(".lv-tl-kd")) el.style.color = colors.kd;
     const s = trendStart ? trendSeries(trendKills, trendDeaths, trendStart, Date.now()) : null;
-    const any = s && (s.kpmInt.length || s.kpmTrend.length || s.kdInt.length || s.kdTrend.length || s.dpmInt.length || s.dpmTrend.length);
+    const any = s && (s.kpmInt.length || s.dpmInt.length || s.kdInt.length); // interval lines only — the trend lines are gone
     trendEl.classList.toggle("live-trends-skel", !any);
     if (!any) { paintSkeleton(trendCanvas, colors, tr("live.trendsWait", "Waiting for kills…")); return; }
     paintTrends(trendCanvas, s, colors);
@@ -513,18 +517,38 @@ function start() {
   drawTrends(); // the skeleton shows from page load, before the stream connects
   setInterval(drawTrends, 30000);
 
-  // Owner 2026-10-25: imaginary DPS under the feed — kills (+1000) and
+  // Owner 2026-10-25: imaginary DPM under the feed — kills (+1000) and
   // assists (+500, via GainExperience) jump the value, exponential drain
-  // pulls it back down. Updated every 100 ms so the drain reads as a drain,
-  // not steps; the write is skipped when the rounded value did not change.
+  // pulls it back down. The engine is damage per second (dpsNow); the counter
+  // shows damage per minute (× 60, three decimals), so a steady 1-kill-per-
+  // minute pace averages 1000.000. The cash-out rides the same tick: the
+  // ⚔️ iVi of every victim, summed, with the average per victim — the killer
+  // (the top line) is not counted, for now. Every value is written only when
+  // its text changed; the tick runs every 100 ms so the drain reads as a
+  // drain, not steps, and a late-arriving victim iVi lands within 100 ms.
   const dpsEl = $("liveDpsVal");
-  if ($("liveDpsLabel")) $("liveDpsLabel").textContent = tr("live.dps", "DPS");
+  if ($("liveDpsLabel")) $("liveDpsLabel").textContent = tr("live.dps", "DPM");
+  const cashSumEl = $("liveCashSumVal"), cashAvgEl = $("liveCashAvgVal");
+  if ($("liveCashSumLabel")) $("liveCashSumLabel").textContent = tr("live.cashSum", "Σ iVi");
+  if ($("liveCashAvgLabel")) $("liveCashAvgLabel").textContent = tr("live.cashAvg", "avg");
   const dpsEvents = [];
-  let lastDps = -1;
+  const cashKills = []; // one per kill: { cid, iv } — iv null until the victim's iVi is known
+  const cashIv = (p) => (p && p.cached && Number.isFinite(p.cached.adjs) ? Math.round(p.cached.adjs) : null);
+  let lastDps = "", lastCash = "";
   function dpsTick() {
-    if (!dpsEl) return;
-    const v = Math.round(dpsNow(dpsEvents, Date.now()));
-    if (v !== lastDps) { dpsEl.textContent = v; lastDps = v; }
+    if (dpsEl) {
+      const v = (dpsNow(dpsEvents, Date.now()) * 60).toFixed(3);
+      if (v !== lastDps) { dpsEl.textContent = v; lastDps = v; }
+    }
+    if (cashSumEl && cashAvgEl) {
+      const t = cashTotals(cashKills.map((e) => e.iv));
+      const key = `${t.sum}|${t.avg}`;
+      if (key !== lastCash) {
+        cashSumEl.textContent = t.sum;
+        cashAvgEl.textContent = t.avg == null ? "–" : t.avg.toFixed(1);
+        lastCash = key;
+      }
+    }
   }
   setInterval(dpsTick, 100);
 
@@ -548,6 +572,8 @@ function start() {
       const player = await a.fetchPlayerBg(p.name);
       if (player) {
         p.cached = liveRowFromPlayer(player, p.name);
+        // a victim whose iVi was unknown at kill time pays out now
+        for (const e of cashKills) if (e.cid === cid && !Number.isFinite(e.iv)) e.iv = cashIv(p);
         render();
         if (typeof onBgFetched === "function") onBgFetched(p.name, player);
       }
@@ -636,7 +662,7 @@ function start() {
     if (ev.kind === "kill") trendKills.push(ev.at || Date.now()); else trendDeaths.push(ev.at || Date.now());
     const b = bountyNext({ streak: bountyStreak, lives: bountyLives }, ev.kind === "kill");
     bountyStreak = b.streak; bountyLives = b.lives;
-    if (ev.kind === "kill") { dpsEvents.push({ t: Date.now(), dmg: DPS_HP }); dpsTick(); }
+    if (ev.kind === "kill") { dpsEvents.push({ t: Date.now(), dmg: DPS_HP }); cashKills.push({ cid: ev.opp, iv: cashIv(p) }); dpsTick(); }
     st = overlayPush(st, ev);
     render();
     drawTrends();
@@ -659,7 +685,7 @@ function start() {
       let j; try { j = JSON.parse(m.data); } catch { return; }
       if (j.type !== "serviceMessage") return;
       // Owner 2026-10-25: assists live in GainExperience, not Death — an
-      // assist XP tick for the tracked player adds +500 to the DPS counter.
+      // assist XP tick for the tracked player adds +500 to the DPM counter.
       if (j.payload?.event_name === "GainExperience") {
         const p = j.payload;
         if (String(p.character_id) === me.cid && DPS_ASSIST_XP.has(Number(p.experience_id))) { dpsEvents.push({ t: Date.now(), dmg: DPS_ASSIST }); dpsTick(); }

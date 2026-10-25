@@ -55,8 +55,9 @@ col.lv-c-time { width: var(--lv-tm); }
 col.lv-c-nm { width: var(--lv-nm); }
 col.lv-c-iv { width: var(--lv-iw); }
 col.lv-c-iz { width: var(--lv-iz); }
-/* Owner 2026-10-25: the parked emoji meters' column is gone; the inf/zerg cell is a plain right-aligned number. */
-.lv-iz { vertical-align: middle; text-align: right; font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+/* Owner 2026-10-25: the parked emoji meters' column is gone; the inf/zerg cell
+   is the pair in square brackets, in the weapon's small dim style. */
+.lv-iz { vertical-align: middle; text-align: right; font-size: 0.72rem; color: var(--dim); font-variant-numeric: tabular-nums; }
 /* Zebra on the victim lines only (each line is its own <tbody>). */
 .live-table tbody.lv-vic:nth-of-type(even) > tr > td { background-color: var(--row-alt); }
 .live-table td { position: relative; border: 1px solid var(--border); padding: 0 0.3rem; line-height: 1.25; height: var(--lv-ez); white-space: nowrap; overflow: hidden; }
@@ -145,6 +146,7 @@ col.lv-c-iz { width: var(--lv-iz); }
 .lv-wn { display: block; min-height: 0.9em; font-size: 0.72rem; line-height: 1.2; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* Owner 2026-10-25: the centre line's second row carries the bounty (hearts / 💰), not a weapon — bigger, so it reads. */
 .live-table tbody.lv-me .lv-wn { font-size: 1rem; line-height: 1.1; }
+.live-table tbody.lv-me .lv-wn .lv-bh-empty { opacity: 0.25; } /* bounty slots not yet filled */
 .lv-hs2 { flex: none; width: 0.85em; height: 0.85em; color: var(--err); }
 .lv-hs2 svg { display: block; width: 100%; height: 100%; }
 .live-table .lv-name:has(+ .poop-mark + .lv-hs2) { max-width: calc(100% - 2.4em); }

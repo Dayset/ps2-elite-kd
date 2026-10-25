@@ -66,10 +66,11 @@ test("guards: single kill, empty window, unsorted input, out-of-range events", (
   close(c.kpmInt[0].y, 4); // the pre-start kill is not counted
 });
 
-test("trendColors: one colour per metric, dark/light palettes differ", () => {
+test("trendColors: faction colours, same on both themes (only grid/text vary)", () => {
   const d = trendColors(false), l = trendColors(true);
-  assert.notEqual(d.kpm, d.kd);
-  assert.notEqual(d.kpm, d.dpm);
-  assert.notEqual(d.kd, d.dpm);
-  assert.notEqual(d.kpm, l.kpm);
+  assert.equal(d.kpm, "#3e8ef7"); // NC blue
+  assert.equal(d.dpm, "#e0453a"); // TR red
+  assert.equal(d.kd, "#b061ff"); // VS purple
+  assert.deepEqual([l.kpm, l.dpm, l.kd], [d.kpm, d.dpm, d.kd]);
+  assert.notEqual(d.grid, l.grid);
 });

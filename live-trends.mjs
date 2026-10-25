@@ -106,11 +106,13 @@ export function trendSeries(kills, deaths, start, now) {
   return out;
 }
 
-/** Line colours per theme (same grid/text tones as theme.mjs chartTheme). */
+/** Line colours: faction colours, same hexes as the names (.fac-* in styles.css)
+ *  — KPM NC blue, DPM TR red, K/D VS purple — on both themes; only the
+ *  grid/text tones vary by theme. */
 export function trendColors(light) {
   return light
-    ? { kpm: "#1565c0", kd: "#c25700", dpm: "#388e3c", grid: "#d0c8ba", text: "#1c1914" }
-    : { kpm: "#64b5f6", kd: "#ffb74d", dpm: "#81c784", grid: "#2a2e36", text: "#f2f0ea" };
+    ? { kpm: "#3e8ef7", dpm: "#e0453a", kd: "#b061ff", grid: "#d0c8ba", text: "#1c1914" }
+    : { kpm: "#3e8ef7", dpm: "#e0453a", kd: "#b061ff", grid: "#2a2e36", text: "#f2f0ea" };
 }
 
 const niceCeil = (v) => {
@@ -151,7 +153,8 @@ export function drawTrendsSkeleton(canvas, colors, hint) {
 
 /** Draw the series on a canvas (CSS-sized by the caller). Owner 2026-10-25: no
  *  numbers anywhere on the chart — gridlines + axis titles + legend only, the
- *  lines speak for themselves. Axes: per-minute rates (KPM + DPM) left, K/D right; trend dashed. */
+ *  lines speak for themselves. Interval lines only (the dashed trend lines are
+ *  gone); faction colours. Axes: per-minute rates (KPM + DPM) left, K/D right. */
 export function drawTrends(canvas, series, colors) {
   const ctx = canvas.getContext("2d");
   const w = canvas.clientWidth || 300, h = canvas.clientHeight || 240;
@@ -162,8 +165,11 @@ export function drawTrends(canvas, series, colors) {
   const L = 8, R = 8, T = 16, B = 6, pw = w - L - R, ph = h - T - B; // no tick labels to make room for
   if (pw <= 0 || ph <= 0) return;
   const maxX = series.maxX > 0 ? series.maxX : 60;
-  const maxLeft = niceCeil(Math.max(0, ...series.kpmInt.map((p) => p.y), ...series.kpmTrend.map((p) => p.y), ...series.dpmInt.map((p) => p.y), ...series.dpmTrend.map((p) => p.y)));
-  const maxKd = niceCeil(Math.max(0, ...series.kdInt.map((p) => p.y), ...series.kdTrend.map((p) => p.y)));
+  // Scale to the lines actually drawn: the trend series' early values (one kill
+  // seconds into a session = hundreds of KPM) used to squash the interval lines
+  // onto the same bottom pixels, where DPM painted over KPM entirely.
+  const maxLeft = niceCeil(Math.max(0, ...series.kpmInt.map((p) => p.y), ...series.dpmInt.map((p) => p.y)));
+  const maxKd = niceCeil(Math.max(0, ...series.kdInt.map((p) => p.y)));
   const X = (x) => L + (x / maxX) * pw;
   const YL = (y) => T + ph - (y / maxLeft) * ph;
   const YR = (y) => T + ph - (y / maxKd) * ph;
@@ -190,10 +196,7 @@ export function drawTrends(canvas, series, colors) {
     ctx.setLineDash([]);
   };
   line(series.kpmInt, YL, colors.kpm, false);
-  line(series.kpmTrend, YL, colors.kpm, true);
   line(series.dpmInt, YL, colors.dpm, false);
-  line(series.dpmTrend, YL, colors.dpm, true);
   line(series.kdInt, YR, colors.kd, false);
-  line(series.kdTrend, YR, colors.kd, true);
   ctx.restore();
 }
