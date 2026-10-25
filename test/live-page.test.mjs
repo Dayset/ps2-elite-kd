@@ -639,6 +639,11 @@ test("trends removed (owner 2026-10-25): no chart, no module, pill kept in the D
   assert.match(swap, /<span id="liveOnline" class="live-online" data-state="unknown">/); // the pill survives
 });
 
+test("iz cell (owner 2026-10-25): infantry/zerg aligned left", () => {
+  const css = cssSrc();
+  assert.match(css, /\.lv-iz \{[^}]*text-align: left;/);
+});
+
 test("bounty (owner 2026-10-25): hearts on the centre line's second row, 💰 at 7 held for 3 deaths", () => {
   const js = liveSrc();
   const css = cssSrc();

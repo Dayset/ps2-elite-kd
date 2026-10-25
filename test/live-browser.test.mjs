@@ -256,6 +256,7 @@ describe("🎥 live.html in a browser", () => {
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[1].cid, "80", false)})`);
       assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)").length === 2`)), true, "two victim rows on screen");
+      assert.equal(await ev(`getComputedStyle(document.querySelector("#liveList tbody.lv-vic .lv-iz")).textAlign`), "left", "the inf/zerg cell aligns left");
       const ivs = await ev(`[...document.querySelectorAll("#liveList tbody.lv-vic .lv-iv")].map((e) => Number(e.textContent))`);
       assert.ok(ivs.length === 2 && ivs.every(Number.isFinite) && ivs.every((v) => v > 0), `both victims show an iVi: ${ivs}`);
       const sum = ivs[0] + ivs[1], avg = (sum / 2).toFixed(1);
