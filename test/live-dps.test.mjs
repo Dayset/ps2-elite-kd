@@ -2,7 +2,7 @@
 // drain with a 10 s time constant, so the value jumps and drains down.
 import test from "node:test";
 import assert from "node:assert/strict";
-import { dpsNow, DPS_HP, DPS_ASSIST, DPS_TAU_MS, DPS_ASSIST_XP, cashTotals, cashFormula, median, combatHoldMs, spawnRunHoldMs, easeInQuad } from "../live-model.mjs";
+import { dpsNow, DPS_HP, DPS_ASSIST, DPS_TAU_MS, DPS_ASSIST_XP, cashTotals, cashFormula, median, combatHoldMs, spawnRunHoldMs, timeToCombatMs, easeInQuad } from "../live-model.mjs";
 
 const close = (a, b, eps = 0.01) => assert.ok(Math.abs(a - b) <= eps, `${a} != ${b}`);
 
@@ -89,6 +89,18 @@ test("combatHoldMs (owner 2026-10-25, decision A): median of the first two gaps 
   const spikes = [], deaths = [];
   for (let i = 0; i < 6; i++) { deaths.push(i * 100000); spikes.push(i * 100000 + (2 * i + 1) * 1000, i * 100000 + (4 * i + 3) * 1000); }
   assert.equal(combatHoldMs(spikes, deaths), 7500);
+});
+
+test("timeToCombatMs (owner 2026-10-25): median of ALL death→first-combat runs, no trailing cap", () => {
+  // 12 runs of 1..12 s: uncapped median is 6.5 s (the freeze's trailing-10 cap would say 7.5 s)
+  const deaths = [], spikes = [];
+  for (let i = 0; i < 12; i++) { deaths.push(i * 100000); spikes.push(i * 100000 + (i + 1) * 1000); }
+  assert.deepEqual(timeToCombatMs(deaths, spikes), { ms: 6500, n: 12 });
+  // a death with no combat after it contributes nothing
+  assert.deepEqual(timeToCombatMs([0, 50000], [30000]), { ms: 30000, n: 1 });
+  // median, not mean: one 600 s AFK gap among 30 s runs leaves the average at 30 s
+  assert.deepEqual(timeToCombatMs([0, 100000, 200000, 300000], [30000, 130000, 230000, 900000]), { ms: 30000, n: 4 });
+  assert.deepEqual(timeToCombatMs([], []), { ms: 0, n: 0 });
 });
 
 test("spawnRunHoldMs: median death→next-spike run; open runs contribute nothing", () => {

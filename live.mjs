@@ -19,8 +19,8 @@ await i18nReady;
  *     fetch in the background (one at a time, newest first, #32) and upgrade in place.
  * Pure helpers are exported for tests; the DOM part runs only in a browser.
  */
-export * from "./live-model.mjs?v=20261025-hld2"; // #66: the pure part (tests import it from here)
-import { VICTIM_LINES, classifyDeath, fmtGap, censusStats, LIVE_COLS, tipText, FILL_DIM, HOLLOW_PX, HOLLOW_INK, goodPct, fillDriver, emojiFill, unknownFill, infUnit, OUTLINE_PX, unitGlow, LIVE_GLOWS, LIVE_FPS, liveFps, HALO_KEY, haloOn, easeFill, glowIn, BEAT, TIER_MOTION, haloAt, SHINE, shineFrame, beatSleep, weaponIcon, glowTier, eventAt, overlayPush, overlayRows, nextBgFetch, liveRowFromPlayer, ME_REFRESH_MS, mergeFresh, SHARE_MAX, shareDelay, cellText, slugKey, bountyNext, dpsNow, DPS_HP, DPS_ASSIST, DPS_ASSIST_XP, cashTotals, cashFormula, combatHoldMs, spawnRunHoldMs, easeInQuad } from "./live-model.mjs?v=20261025-hld2";
+export * from "./live-model.mjs?v=20261025-ttc1"; // #66: the pure part (tests import it from here)
+import { VICTIM_LINES, classifyDeath, fmtGap, censusStats, LIVE_COLS, tipText, FILL_DIM, HOLLOW_PX, HOLLOW_INK, goodPct, fillDriver, emojiFill, unknownFill, infUnit, OUTLINE_PX, unitGlow, LIVE_GLOWS, LIVE_FPS, liveFps, HALO_KEY, haloOn, easeFill, glowIn, BEAT, TIER_MOTION, haloAt, SHINE, shineFrame, beatSleep, weaponIcon, glowTier, eventAt, overlayPush, overlayRows, nextBgFetch, liveRowFromPlayer, ME_REFRESH_MS, mergeFresh, SHARE_MAX, shareDelay, cellText, slugKey, bountyNext, dpsNow, DPS_HP, DPS_ASSIST, DPS_ASSIST_XP, cashTotals, cashFormula, combatHoldMs, spawnRunHoldMs, timeToCombatMs, easeInQuad } from "./live-model.mjs?v=20261025-ttc1";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261023-short1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
@@ -540,6 +540,7 @@ function start() {
   const dpsEl = $("liveDpsVal");
   const dpsLabelEl = $("liveDpsLabel");
   const dpsHoldEl = $("liveDpsHold");
+  const dpsCombatEl = $("liveDpsCombat"), dpsCombatSepEl = $("liveDpsCombatSep");
   if ($("liveDpsLabel")) $("liveDpsLabel").textContent = tr("live.dps", "DPM");
   const cashSumEl = $("liveCashSumVal"), cashAvgEl = $("liveCashAvgVal");
   if ($("liveCashSumLabel")) $("liveCashSumLabel").textContent = tr("live.cashSum", "Σ iVi");
@@ -590,7 +591,7 @@ function start() {
   // the formula's +34% suffix says the parts are boosted). A floored 0 stays 0 (0 × 1.34 = 0).
   const CASH_BOOST_PCT = 34;
   const cashIv = (p) => (p && p.cached && Number.isFinite(p.cached.adjs) ? Math.round(Math.max(0, p.cached.adjs) * (1 + CASH_BOOST_PCT / 100)) : null);
-  let lastDps = "", lastDpsLabel = "", lastHold = "", lastCash = "";
+  let lastDps = "", lastDpsLabel = "", lastHold = "", lastCombat = "", lastCash = "";
   // Owner 2026-10-25 (gas-counter scroll): each kill/assist after the
   // meter starts queues one scroll — its own DPM jump at the τ of the
   // moment — and scrolls play one by one, 700 ms each, ease-in (slow
@@ -662,6 +663,14 @@ function start() {
       if (dpsLabelEl && label !== lastDpsLabel) { dpsLabelEl.textContent = label; lastDpsLabel = label; }
       const holdText = tr("live.dpmHold", "hold {s}s", { s: Math.round(holdMs / 1000) });
       if (dpsHoldEl && holdText !== lastHold) { dpsHoldEl.textContent = holdText; lastHold = holdText; }
+      // empty (and its separator hidden) until the first death→combat run
+      // completes — a "combat 0s" would be a lie, not a measurement
+      const combat = timeToCombatMs(deathTimes, spikeTimes());
+      const combatText = combat.n ? tr("live.dpmCombat", "combat {s}s (n={n})", { s: Math.round(combat.ms / 1000), n: combat.n }) : "";
+      if (dpsCombatEl && combatText !== lastCombat) { dpsCombatEl.textContent = combatText; lastCombat = combatText; }
+      // outside the text-change guard: the separator must hide on the first
+      // tick too, when empty text equals the initial state and no write runs
+      if (dpsCombatSepEl) dpsCombatSepEl.style.display = combat.n ? "" : "none";
     }
     if (cashSumEl && cashAvgEl) {
       const t = cashTotals(cashKills.map((e) => e.iv));

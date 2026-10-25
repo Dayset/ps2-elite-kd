@@ -138,14 +138,31 @@ export function combatHoldMs(spikeTimes, deathTimes, maxGaps = 10) {
   }
   return median(clean.slice(-maxGaps));
 }
-export function spawnRunHoldMs(deathTimes, spikeTimes, maxRuns = 10) {
+function combatRuns(deathTimes, spikeTimes) {
   const spikes = [...spikeTimes].sort((a, b) => a - b);
   const runs = [];
   for (const d of [...deathTimes].sort((a, b) => a - b)) {
     const next = spikes.find((t) => t > d);
     if (next != null) runs.push(next - d);
   }
-  return median(runs.slice(-maxRuns));
+  return runs;
+}
+
+export function spawnRunHoldMs(deathTimes, spikeTimes, maxRuns = 10) {
+  return median(combatRuns(deathTimes, spikeTimes).slice(-maxRuns));
+}
+
+/**
+ * Owner 2026-10-25: the full-picture time to combat — median of ALL
+ * death→first-combat (kill or assist) runs in the session, no trailing
+ * cap, plus how many deaths it covers. Unlike the hold (trailing 10)
+ * and the freeze (trailing 10), this never drops an old death. A death
+ * with no combat after it contributes nothing. Median, not mean: one
+ * AFK gap must not drag the session average.
+ */
+export function timeToCombatMs(deathTimes, spikeTimes) {
+  const runs = combatRuns(deathTimes, spikeTimes);
+  return { ms: median(runs), n: runs.length };
 }
 
 /**

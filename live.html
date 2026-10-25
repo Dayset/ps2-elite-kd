@@ -363,7 +363,7 @@
   <section id="liveFeed" class="live-feed" aria-label="Live kills and deaths" aria-live="polite">
     <div id="liveState" class="live-state">Connecting…</div>
     <table id="liveList" class="live-table"></table>
-    <div id="liveDps" class="live-dps"><span id="liveDpsLabel"></span> <span id="liveDpsVal">0.0</span> <span aria-hidden="true">·</span> <span id="liveDpsHold"></span> <span aria-hidden="true">·</span> <span id="liveCashSumLabel"></span> <span id="liveCashSumVal">0</span> <span aria-hidden="true">·</span> <span id="liveCashAvgLabel"></span> <span id="liveCashAvgVal">–</span> <span aria-hidden="true">·</span> <span id="liveOnline" class="live-online" data-state="unknown"><i></i><span id="liveOnlineText">…</span></span></div>
+    <div id="liveDps" class="live-dps"><span id="liveDpsLabel"></span> <span id="liveDpsVal">0.0</span> <span aria-hidden="true">·</span> <span id="liveDpsHold"></span> <span id="liveDpsCombatSep" aria-hidden="true">·</span> <span id="liveDpsCombat"></span> <span aria-hidden="true">·</span> <span id="liveCashSumLabel"></span> <span id="liveCashSumVal">0</span> <span aria-hidden="true">·</span> <span id="liveCashAvgLabel"></span> <span id="liveCashAvgVal">–</span> <span aria-hidden="true">·</span> <span id="liveOnline" class="live-online" data-state="unknown"><i></i><span id="liveOnlineText">…</span></span></div>
     <div id="liveDpmTau" class="live-dpm-tau">τ <input id="liveDpmTauVal" type="number" min="1" max="3600" step="1" value="10">s <button id="liveDpmTauDown" type="button">−</button><button id="liveDpmTauUp" type="button">+</button></div>
     <div id="liveCashHist" class="live-cash-hist"></div>
   </section>
@@ -584,6 +584,6 @@
       navigator.serviceWorker.register("sw.js").catch(function () {});
     }
   </script>
-  <script type="module" src="live.mjs?v=20261025-hld2"></script>
+  <script type="module" src="live.mjs?v=20261025-ttc1"></script>
 </body>
 </html>

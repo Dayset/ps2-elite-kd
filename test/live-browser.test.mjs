@@ -600,3 +600,25 @@ describe("🎥 live death-anchored hold in a browser", () => {
     });
   });
 });
+
+describe("🎥 live combat average in a browser", () => {
+  it("combat average (owner 2026-10-25): median of ALL death→first-combat runs, shown next to hold", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      // before any death→combat run: the span is empty and its separator hidden
+      assert.equal(await ev(until(`document.getElementById("liveDpsCombat").textContent === "" && document.getElementById("liveDpsCombatSep").style.display === "none"`)), true, "no run yet: combat hidden");
+      await ev(`window.__fakeWs.emit(${death(OPP[0].cid, ME.cid, "432", false)})`); // death 1
+      await new Promise((r) => setTimeout(r, 4000));
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[1].cid, "80", false)})`); // combat 4 s after death 1
+      assert.equal(await ev(until(`document.getElementById("liveDpsCombat").textContent === "combat 4s (n=1)"`)), true, "first run: combat 4s (n=1)");
+      // the combat span sits in the same DPM row, right after hold
+      assert.equal(await ev(`document.getElementById("liveDpsCombat").previousElementSibling.id === "liveDpsCombatSep" && document.getElementById("liveDpsCombatSep").previousElementSibling.id === "liveDpsHold"`), true, "combat sits right after hold");
+      await ev(`window.__fakeWs.emit(${death(OPP[2].cid, ME.cid, "432", false)})`); // death 2
+      await new Promise((r) => setTimeout(r, 8000));
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[3].cid, "80", false)})`); // combat 8 s after death 2
+      // median([4 s, 8 s]) = 6 s, over both deaths — the trailing-10 freeze/hold caps don't apply here
+      assert.equal(await ev(until(`document.getElementById("liveDpsCombat").textContent === "combat 6s (n=2)"`)), true, "all deaths: combat 6s (n=2)");
+      assert.deepEqual(errors, [], "no page errors");
+    });
+  });
+});
