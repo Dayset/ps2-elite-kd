@@ -64,14 +64,58 @@ export const DPS_HP = 1000;
 export const DPS_ASSIST = 500;
 export const DPS_TAU_MS = 10000;
 export const DPS_ASSIST_XP = new Set([2, 3, 371, 372]); // kill-assist GainExperience ids (same list as worker ASSIST_EXP_IDS)
-export function dpsNow(events, now, tauMs = DPS_TAU_MS) {
+export function dpsNow(events, now, tauMs = DPS_TAU_MS, holdMs = 0) {
   const tau = tauMs > 0 ? tauMs : DPS_TAU_MS;
+  const hold = holdMs > 0 ? holdMs : 0;
   let v = 0;
   for (const e of events) {
     const dt = now - e.t;
-    if (dt >= 0 && dt < 6 * tau) v += e.dmg * Math.exp(-dt / tau); // 6τ: past that a spike is under 0.25% — invisible; at the 10 s default this is the old 60 s cutoff
+    // Owner 2026-10-25 (elite combat damage meter): the hold — the decay
+    // clock starts only after the average gap, so the line holds flat
+    // through the player's own rhythm and then drains with τ. With no
+    // hold this is exactly the old behavior (same cutoff, same decay).
+    if (dt >= 0 && dt < 6 * tau + hold) v += e.dmg * Math.exp(-Math.max(0, dt - hold) / tau);
   }
   return v / (tau / 1000);
+}
+
+/**
+ * Owner 2026-10-25 (elite combat damage meter): the two holds, both
+ * session averages from the player's own spikes, both adjusting to pace.
+ * combatHoldMs = median of the trailing (at most 10) WITHIN-RUN gaps
+ * between consecutive spikes — a gap with a death inside it is a spawn
+ * run, not combat rhythm, so it never feeds this average. spawnRunHoldMs
+ * = median of the trailing (at most 10) death→next-spike runs — the run
+ * from spawn to combat. A death with no spike after it yet contributes
+ * nothing (its run is still open). Either is 0 when unmeasured, which
+ * means "no hold yet — the meter behaves as before".
+ */
+export function median(values) {
+  if (!values.length) return 0;
+  const s = [...values].sort((a, b) => a - b);
+  const m = s.length >> 1;
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+export function combatHoldMs(spikeTimes, deathTimes, maxGaps = 10) {
+  const spikes = [...spikeTimes].sort((a, b) => a - b);
+  const deaths = [...deathTimes].sort((a, b) => a - b);
+  const gaps = [];
+  for (let i = 1; i < spikes.length; i++) {
+    const gap = spikes[i] - spikes[i - 1];
+    if (gap <= 0) continue;
+    if (deaths.some((d) => d > spikes[i - 1] && d < spikes[i])) continue;
+    gaps.push(gap);
+  }
+  return median(gaps.slice(-maxGaps));
+}
+export function spawnRunHoldMs(deathTimes, spikeTimes, maxRuns = 10) {
+  const spikes = [...spikeTimes].sort((a, b) => a - b);
+  const runs = [];
+  for (const d of [...deathTimes].sort((a, b) => a - b)) {
+    const next = spikes.find((t) => t > d);
+    if (next != null) runs.push(next - d);
+  }
+  return median(runs.slice(-maxRuns));
 }
 
 /**

@@ -19,8 +19,8 @@ await i18nReady;
  *     fetch in the background (one at a time, newest first, #32) and upgrade in place.
  * Pure helpers are exported for tests; the DOM part runs only in a browser.
  */
-export * from "./live-model.mjs?v=20261025-bst1"; // #66: the pure part (tests import it from here)
-import { VICTIM_LINES, classifyDeath, fmtGap, censusStats, LIVE_COLS, tipText, FILL_DIM, HOLLOW_PX, HOLLOW_INK, goodPct, fillDriver, emojiFill, unknownFill, infUnit, OUTLINE_PX, unitGlow, LIVE_GLOWS, LIVE_FPS, liveFps, HALO_KEY, haloOn, easeFill, glowIn, BEAT, TIER_MOTION, haloAt, SHINE, shineFrame, beatSleep, weaponIcon, glowTier, eventAt, overlayPush, overlayRows, nextBgFetch, liveRowFromPlayer, ME_REFRESH_MS, mergeFresh, SHARE_MAX, shareDelay, cellText, slugKey, bountyNext, dpsNow, DPS_HP, DPS_ASSIST, DPS_ASSIST_XP, cashTotals, cashFormula } from "./live-model.mjs?v=20261025-bst1";
+export * from "./live-model.mjs?v=20261025-hld1"; // #66: the pure part (tests import it from here)
+import { VICTIM_LINES, classifyDeath, fmtGap, censusStats, LIVE_COLS, tipText, FILL_DIM, HOLLOW_PX, HOLLOW_INK, goodPct, fillDriver, emojiFill, unknownFill, infUnit, OUTLINE_PX, unitGlow, LIVE_GLOWS, LIVE_FPS, liveFps, HALO_KEY, haloOn, easeFill, glowIn, BEAT, TIER_MOTION, haloAt, SHINE, shineFrame, beatSleep, weaponIcon, glowTier, eventAt, overlayPush, overlayRows, nextBgFetch, liveRowFromPlayer, ME_REFRESH_MS, mergeFresh, SHARE_MAX, shareDelay, cellText, slugKey, bountyNext, dpsNow, DPS_HP, DPS_ASSIST, DPS_ASSIST_XP, cashTotals, cashFormula, combatHoldMs, spawnRunHoldMs } from "./live-model.mjs?v=20261025-hld1";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261023-short1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
@@ -543,6 +543,16 @@ function start() {
   if ($("liveCashSumLabel")) $("liveCashSumLabel").textContent = tr("live.cashSum", "Σ iVi");
   if ($("liveCashAvgLabel")) $("liveCashAvgLabel").textContent = tr("live.cashAvg", "avg");
   const dpsEvents = [];
+  // Owner 2026-10-25 (elite combat damage meter): the two holds. deathTimes
+  // holds every death's event time; timeDebtMs is the total frozen time
+  // excised from the decay clock; freezeStart/freezeFor is the active
+  // post-death freeze (freezeStart 0 = none). A spike (kill or assist)
+  // lifts the freeze, excising only the frozen time up to the average
+  // spawn run — a spike after the average expired excises exactly the
+  // average, never more, so the clock continues where it froze.
+  let deathTimes = [], timeDebtMs = 0, freezeStart = 0, freezeFor = 0;
+  const spikeTimes = () => dpsEvents.map((e) => e.t);
+  const liftFreeze = (at) => { if (freezeStart) { timeDebtMs += Math.min(Math.max(0, at - freezeStart), freezeFor); freezeStart = 0; freezeFor = 0; } };
   const cashKills = []; // one per kill: { cid, iv } — iv null until the victim's iVi is known
   // Owner 2026-10-25: adjustable DPM decay τ (seconds) — the owner tries
   // values live. A setting, so it persists across reloads (session data
@@ -580,8 +590,17 @@ function start() {
   const cashIv = (p) => (p && p.cached && Number.isFinite(p.cached.adjs) ? Math.round(Math.max(0, p.cached.adjs) * (1 + CASH_BOOST_PCT / 100)) : null);
   let lastDps = "", lastCash = "";
   function dpsTick() {
+    // Owner 2026-10-25 (elite combat damage meter): the decay clock.
+    // A freeze lifts by itself once the average spawn run elapses (the
+    // average is excised, the rest counts normally); while frozen, effNow
+    // stands still, so the meter holds its death value. On any lift the
+    // clock continues exactly where it froze — no jump either way — and
+    // the inter-spike hold flattens each spike through the player's own
+    // average gap before τ drains it.
+    if (freezeStart && Date.now() >= freezeStart + freezeFor) { timeDebtMs += freezeFor; freezeStart = 0; freezeFor = 0; }
+    const effNow = freezeStart ? freezeStart - timeDebtMs : Date.now() - timeDebtMs;
     if (dpsEl) {
-      const v = (dpsNow(dpsEvents, Date.now(), dpmTauMs) * 60).toFixed(1);
+      const v = (dpsNow(dpsEvents, effNow, dpmTauMs, combatHoldMs(spikeTimes(), deathTimes)) * 60).toFixed(1);
       if (v !== lastDps) { dpsEl.textContent = v; lastDps = v; }
     }
     if (cashSumEl && cashAvgEl) {
@@ -762,13 +781,19 @@ function start() {
       // exactly the old clear plus the new run's early lines.
       if (wasStreak === 0) st = { ...st, victims: st.victims.filter((r) => r.seq === seq || pendingSeq.has(r.seq)) };
       // DPM at the event's own time: a commit deferred behind a slow lookup doesn't shift the decay
-      dpsEvents.push({ t: Number.isFinite(ev.at) ? ev.at : Date.now(), dmg: DPS_HP }); cashKills.push({ cid: ev.opp, iv: cashIv(p) }); dpsTick();
+      dpsEvents.push({ t: Number.isFinite(ev.at) ? ev.at : Date.now(), dmg: DPS_HP }); liftFreeze(Number.isFinite(ev.at) ? ev.at : Date.now()); cashKills.push({ cid: ev.opp, iv: cashIv(p) }); dpsTick();
     }
     // Owner 2026-10-25: ANY death dims the killed list and the observed
     // player's own name to 50% — you are dead, the feed shows it — until
     // the next kill re-lights them. (Banking below is stricter: only the
     // death that ends a run banks it.)
     if (ev.kind === "death") namesDim = true;
+    // Owner 2026-10-25: decay freezes ON the death event — you can't do
+    // anything about the run from spawn, so it must not drain the meter.
+    // A previous freeze (died, respawned, died again with no spike) is
+    // settled first, then the new freeze runs for the average spawn run
+    // measured so far (0 = no average yet = no freeze, meter as before).
+    if (ev.kind === "death") { liftFreeze(ev.at); deathTimes.push(ev.at); freezeStart = ev.at; freezeFor = spawnRunHoldMs(deathTimes, spikeTimes()); }
     if (ev.kind === "death" && wasStreak > 0 && bountyStreak === 0) {
       // Owner 2026-10-25: the death that ends a run banks it and resets
       // the pot for the new run — the pot shows 0 until the next kill.
@@ -804,7 +829,7 @@ function start() {
       // assist XP tick for the tracked player adds +500 to the DPM counter.
       if (j.payload?.event_name === "GainExperience") {
         const p = j.payload;
-        if (String(p.character_id) === me.cid && DPS_ASSIST_XP.has(Number(p.experience_id))) { setOnline("online"); dpsEvents.push({ t: Date.now(), dmg: DPS_ASSIST }); dpsTick(); }
+        if (String(p.character_id) === me.cid && DPS_ASSIST_XP.has(Number(p.experience_id))) { setOnline("online"); dpsEvents.push({ t: Date.now(), dmg: DPS_ASSIST }); liftFreeze(Date.now()); dpsTick(); }
         return;
       }
       // Owner 2026-10-25: login/logout for the tracked player drives the online pill.

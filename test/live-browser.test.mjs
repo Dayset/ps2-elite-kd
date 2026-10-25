@@ -437,3 +437,39 @@ describe("🎥 live.html in a browser", () => {
       assert.deepEqual(errors, [], "no page errors");
     });
   });
+
+describe("🎥 live hold meter in a browser", () => {
+  it("hold (owner 2026-10-25): a 12 s gap holds the line flat — DPM stays above 8000 eight seconds after the second kill", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
+      assert.equal(await ev(until(`Number(document.getElementById("liveDpsVal").textContent) >= 5000`)), true, "first kill spikes DPM");
+      await new Promise((r) => setTimeout(r, 12000)); // a slow player's real gap — the average gap becomes the hold
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[1].cid, "80", false)})`);
+      assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)").length === 2`)), true, "second kill on screen");
+      await new Promise((r) => setTimeout(r, 8000)); // 8 s after the second kill — inside the 12 s hold
+      const dpm = await ev(`Number(document.getElementById("liveDpsVal").textContent)`);
+      assert.ok(dpm > 8000, `held DPM stays above 8000 (with no hold it would be ~3500 here): ${dpm}`);
+      assert.deepEqual(errors, [], "no page errors");
+    });
+  });
+
+  it("freeze (owner 2026-10-25): decay pauses on death for the average spawn run — DPM holds its death value", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
+      assert.equal(await ev(until(`Number(document.getElementById("liveDpsVal").textContent) >= 5000`)), true, "first kill spikes DPM");
+      await ev(`window.__fakeWs.emit(${death(OPP[1].cid, ME.cid, "432", false)})`); // death 1: no average yet, so no freeze
+      await new Promise((r) => setTimeout(r, 5000)); // the spawn run, measured
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[1].cid, "80", false)})`); // kill 2: measures the 5 s run (and clears the old run's row)
+      assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)").length === 1`)), true, "second kill on screen");
+      await ev(`window.__fakeWs.emit(${death(OPP[2].cid, ME.cid, "432", false)})`); // death 2: freeze for the 5 s average
+      await new Promise((r) => setTimeout(r, 300)); // let the death commit and the tick freeze
+      const atDeath = await ev(`Number(document.getElementById("liveDpsVal").textContent)`);
+      await new Promise((r) => setTimeout(r, 4000)); // 4 s into the 5 s freeze
+      const held = await ev(`Number(document.getElementById("liveDpsVal").textContent)`);
+      assert.ok(held >= atDeath * 0.95, `frozen DPM holds its death value (with no freeze it would drain to ~67%): ${atDeath} -> ${held}`);
+      assert.deepEqual(errors, [], "no page errors");
+    });
+  });
+});

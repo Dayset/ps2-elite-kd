@@ -677,7 +677,7 @@ test("cash formula (owner 2026-10-25): pot and banked runs show total plus parts
 test("adjustable tau (owner 2026-10-25): DPM decay tau is a persisted page control", () => {
   const js = liveSrc();
   const swap = readFileSync(new URL("scripts/build-live.mjs", root), "utf8");
-  assert.match(js, /dpsNow\(dpsEvents, Date\.now\(\), dpmTauMs\)/);
+  assert.match(js, /dpsNow\(dpsEvents, effNow, dpmTauMs, combatHoldMs\(spikeTimes\(\), deathTimes\)\)/);
   assert.match(js, /ps2-live-dpm-tau/);
   assert.match(swap, /<input id="liveDpmTauVal" type="number" min="1" max="3600" step="1" value="10">/);
 });
@@ -685,7 +685,7 @@ test("adjustable tau (owner 2026-10-25): DPM decay tau is a persisted page contr
 test("bounty (owner 2026-10-25): hearts on the centre line's second row, 💰💰💰 at 7, one removed per death", () => {
   const js = liveSrc();
   const css = cssSrc();
-  assert.match(js, /bountyNext[^}]*\} from "\.\/live-model\.mjs\?v=20261025-bst1"/);
+  assert.match(js, /bountyNext[^}]*\} from "\.\/live-model\.mjs\?v=20261025-hld1"/);
   assert.match(js, /const b = bountyNext\(\{ streak: bountyStreak, lives: bountyLives \}, ev\.kind === "kill"\);/);
   assert.match(js, /if \(bountyLives > 0\) return `<span class="lv-wn">\$\{"💰"\.repeat\(bountyLives\)\}<\/span>`;/); // one mark per life left, not one mark for all three
   assert.match(js, /Array\.from\(\{ length: 7 \}, \(_, i\) => `<span class="lv-bh\$\{i < bountyStreak \? "" : " lv-bh-empty"\}">❤️‍🔥<\/span>`\)\.join\(""\)/); // 7 slots, filled + dim
@@ -705,7 +705,7 @@ test("mobile names + legend + DPS (owner 2026-10-25): table 100% with a flexible
   assert.match(js, /eventNames: \["Death", "GainExperience_experience_id_2", "GainExperience_experience_id_3", "GainExperience_experience_id_371", "GainExperience_experience_id_372", "PlayerLogin", "PlayerLogout"\]/);
   assert.match(js, /DPS_ASSIST_XP\.has\(Number\(p\.experience_id\)\)/);
   assert.match(js, /setInterval\(dpsTick, 100\)/);
-  assert.match(js, /\(dpsNow\(dpsEvents, Date\.now\(\), dpmTauMs\) \* 60\)\.toFixed\(1\)/); // DPM, three decimals
+  assert.match(js, /\(dpsNow\(dpsEvents, effNow, dpmTauMs, combatHoldMs\(spikeTimes\(\), deathTimes\)\) \* 60\)\.toFixed\(1\)/); // DPM, one decimal
   assert.match(js, /cashKills\.push\(\{ cid: ev\.opp, iv: cashIv\(p\) \}\)/); // one ledger entry per kill
   assert.match(js, /for \(const e of cashKills\) if \(e\.cid === cid && !Number\.isFinite\(e\.iv\)\) e\.iv = cashIv\(p\);/); // late iVi finalizes in the list
   assert.match(js, /tr\("live\.cashSum", "Σ iVi"\)/);
@@ -754,4 +754,17 @@ test("#76 snappy feed: the row lands on arrival, lookups run in parallel, accoun
   assert.doesNotMatch(commit, /overlayPush\(/);
   assert.match(commit, /dpsEvents\.push\(\{ t: Number\.isFinite\(ev\.at\) \? ev\.at : Date\.now\(\), dmg: DPS_HP \}\)/);
   assert.match(commit, /pendingSeq\.delete\(seq\);/);
+});
+
+test("hold meter (owner 2026-10-25): decay freezes on death, lifts on a spike or the average spawn run", () => {
+  const js = liveSrc();
+  assert.match(js, /let deathTimes = \[\], timeDebtMs = 0, freezeStart = 0, freezeFor = 0;/);
+  assert.match(js, /const spikeTimes = \(\) => dpsEvents\.map\(\(e\) => e\.t\);/);
+  assert.match(js, /const liftFreeze = \(at\) => \{ if \(freezeStart\) \{ timeDebtMs \+= Math\.min\(Math\.max\(0, at - freezeStart\), freezeFor\); freezeStart = 0; freezeFor = 0; \} \};/);
+  assert.match(js, /if \(freezeStart && Date\.now\(\) >= freezeStart \+ freezeFor\) \{ timeDebtMs \+= freezeFor; freezeStart = 0; freezeFor = 0; \}/);
+  assert.match(js, /const effNow = freezeStart \? freezeStart - timeDebtMs : Date\.now\(\) - timeDebtMs;/);
+  assert.match(js, /if \(ev\.kind === "death"\) \{ liftFreeze\(ev\.at\); deathTimes\.push\(ev\.at\); freezeStart = ev\.at; freezeFor = spawnRunHoldMs\(deathTimes, spikeTimes\(\)\); \}/);
+  assert.match(js, /dpsEvents\.push\(\{ t: Number\.isFinite\(ev\.at\) \? ev\.at : Date\.now\(\), dmg: DPS_HP \}\); liftFreeze\(Number\.isFinite\(ev\.at\) \? ev\.at : Date\.now\(\)\);/);
+  assert.match(js, /dpsEvents\.push\(\{ t: Date\.now\(\), dmg: DPS_ASSIST \}\); liftFreeze\(Date\.now\(\)\);/);
+  assert.match(js, /combatHoldMs, spawnRunHoldMs \} from "\.\/live-model\.mjs\?v=20261025-hld1"/);
 });

@@ -2,7 +2,7 @@
 // drain with a 10 s time constant, so the value jumps and drains down.
 import test from "node:test";
 import assert from "node:assert/strict";
-import { dpsNow, DPS_HP, DPS_ASSIST, DPS_TAU_MS, DPS_ASSIST_XP, cashTotals, cashFormula } from "../live-model.mjs";
+import { dpsNow, DPS_HP, DPS_ASSIST, DPS_TAU_MS, DPS_ASSIST_XP, cashTotals, cashFormula, median, combatHoldMs, spawnRunHoldMs } from "../live-model.mjs";
 
 const close = (a, b, eps = 0.01) => assert.ok(Math.abs(a - b) <= eps, `${a} != ${b}`);
 
@@ -55,4 +55,35 @@ test("cashTotals: one entry per kill, unknown iVi skipped from sum and count", (
   assert.deepEqual(cashTotals([2746, null, 1403, undefined, NaN]), { sum: 4149, count: 2, avg: 2074.5 });
   assert.deepEqual(cashTotals([null, null]), { sum: 0, count: 0, avg: null });
   assert.deepEqual(cashTotals([1000, 1000]), { sum: 2000, count: 2, avg: 1000 }); // a repeat victim pays again
+});
+
+test("hold (owner 2026-10-25): the decay clock starts after the average gap", () => {
+  const ev = [{ t: 0, dmg: 1000 }];
+  assert.equal(dpsNow(ev, 5000, 10000, 10000), 100); // inside the hold: flat at full
+  close(dpsNow(ev, 15000, 10000, 10000), 100 / Math.sqrt(Math.E)); // 5 s past the hold (close: 1-ULP float noise, not a value miss)
+  assert.equal(dpsNow(ev, 71000, 10000, 10000), 0); // past 6τ + hold: gone
+  close(dpsNow(ev, 5000, 10000, 0), 100 / Math.sqrt(Math.E)); // no hold: old decay
+  close(dpsNow(ev, 5000, 10000, -100), 100 / Math.sqrt(Math.E)); // negative hold ignored
+});
+
+test("combatHoldMs: median within-run gap; a gap with a death inside is a spawn run", () => {
+  assert.equal(combatHoldMs([0, 30000, 60000], []), 30000);
+  assert.equal(combatHoldMs([0, 30000, 60000], [45000]), 30000); // only the clean gap counts
+  assert.equal(combatHoldMs([0, 30000], [15000]), 0); // the only gap spans a death
+  assert.equal(combatHoldMs([5000], []), 0); // one spike: no gap yet
+  assert.equal(combatHoldMs([], []), 0);
+  assert.equal(median([]), 0);
+  assert.equal(median([5]), 5);
+  assert.equal(median([1, 2, 3, 4]), 2.5);
+  // trailing 10: 12 gaps of 1..12 s → median of the last 10 (3..12) is 7.5 s
+  const spikes = [0]; for (let i = 1; i <= 12; i++) spikes.push(spikes[i - 1] + i * 1000);
+  assert.equal(combatHoldMs(spikes, []), 7500);
+});
+
+test("spawnRunHoldMs: median death→next-spike run; open runs contribute nothing", () => {
+  assert.equal(spawnRunHoldMs([0, 100000], [30000, 130000]), 30000);
+  assert.equal(spawnRunHoldMs([0, 100000], [30000]), 30000); // second death's run still open
+  assert.equal(spawnRunHoldMs([0], []), 0);
+  assert.equal(spawnRunHoldMs([], [30000]), 0);
+  assert.equal(spawnRunHoldMs([0], [0]), 0); // a spike at the death instant is not after it
 });
