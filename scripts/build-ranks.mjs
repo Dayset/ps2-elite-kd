@@ -53,7 +53,7 @@ export function burstStatus(dataDir) {
     try { raw = JSON.parse(fs.readFileSync(path.join(dataDir, e.file), "utf8")); } catch { continue; }
     const pl = (raw && (raw.player || raw)) || {};
     const slug = e.slug || path.basename(e.file, ".json");
-    players.push({ slug, name: pl.display || e.name || slug, cid: pl.cid, assists: pl.assists, xp: readXp(dataDir, slug),
+    players.push({ slug, name: pl.display || e.name || slug, cid: pl.cid, kd: pl.global_kd, assists: pl.assists, xp: readXp(dataDir, slug),
       hidden: !!hidden.match({ slug, name: pl.display || e.name, cid: pl.cid }) });
   }
   // Owner decisions: outlier-guard KNOWN_EXTREMES + reviewed.json "burst" entries (reviewed.json wins).

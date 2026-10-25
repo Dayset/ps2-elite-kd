@@ -30,3 +30,22 @@ test("human review wins: reviewed players are cleared, cheaters labelled, nothin
   assert.equal(r.flaggedPlayers, 1);
   assert.equal(r.clearedPlayers, 1);
 });
+
+test("own-normal margin: skilled players with a burst <= 2x their median are skipped; cheaters/padders stay", () => {
+  const sess = (burst, others) => ({ sessions: { b: burst, ...Object.fromEntries(others.map((o, i) => ["o" + i, o])) } });
+  const five = (kpm) => Array.from({ length: 5 }, (_, i) => [0, kpm * 20, 1200, i]); // 20-min sessions
+  const pl = (slug, kd, assists) => ({ slug, name: slug, cid: "1", kd, assists });
+  const r = burstSessions([
+    pl("plasma", 2.5, sess([0, 62, 570, 1], five(3.75))),   // 6.53 KPM vs 3.75 median -> skipped
+    pl("spike", 2.5, sess([0, 62, 570, 1], five(1))),       // 6.5x own median -> review
+    pl("fewsess", 2.5, { sessions: { b: [0, 62, 570, 1] } }), // no history -> review
+    pl("padder", 34.8, sess([0, 378, 2748, 1], five(5.7))), // K/D >= 10 -> review
+    pl("Add1ti0nal", 24.7, { sessions: { b: [0, 64, 504, 1] } }),
+    pl("VanuBestFaction2", 44.3, { sessions: { b: [0, 177, 1410, 1] } }),
+  ], { reviewed: { Add1ti0nal: "Confirmed cheater", VanuBestFaction2: "Excluded after review" } });
+  assert.equal(r.ownNormalSkipped, 1);
+  assert.deepEqual([...new Set(r.items.filter((i) => i.session === "b").map((i) => i.slug + ":" + i.status))].sort().map((x) => x.split(":")), [["Add1ti0nal", "cheater"], ["VanuBestFaction2", "cheater"], ["fewsess", "review"], ["padder", "review"], ["spike", "review"]]);
+  // human review wins: a reviewed player is still listed even within own normal
+  const h = burstSessions([pl("plasma", 2.5, sess([0, 62, 570, 1], five(3.75)))], { reviewed: { plasma: "Owner cleared" } });
+  assert.equal(h.items[0].status, "cleared");
+});

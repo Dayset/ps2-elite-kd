@@ -11,7 +11,11 @@
 import { KNOWN_EXTREMES } from "./outlier-guard.mjs";
 
 export const BURST_RULE = Object.freeze({ KPM: 5, KILLS: 15, MIN_SECONDS: 120, MAX_LISTED: 200 });
-export const burstRuleText = (r = BURST_RULE) => `KPM ≥ ${r.KPM} and ≥ ${r.KILLS} kills in ≥ ${r.MIN_SECONDS / 60} min (one stored session, no 10-minute floor)`;
+/** Own-normal margin (owner t630): an unreviewed burst is skipped from review when the player has
+ *  >= MIN_SESSIONS other stored sessions of >= MIN_SECONDS, the burst KPM is <= MAX_RATIO x their own
+ *  median KPM over those sessions, and career K/D < MAX_KD (skilled top performers, e.g. A2G). */
+export const OWN_NORMAL = Object.freeze({ MIN_SESSIONS: 5, MIN_SECONDS: 600, MAX_RATIO: 2, MAX_KD: 10 });
+export const burstRuleText = (r = BURST_RULE) => `KPM ≥ ${r.KPM} and ≥ ${r.KILLS} kills in ≥ ${r.MIN_SECONDS / 60} min (one stored session, no 10-minute floor); skipped when within the player's own normal (≥ ${OWN_NORMAL.MIN_SESSIONS} other sessions of ≥ ${OWN_NORMAL.MIN_SECONDS / 60} min, ≤ ${OWN_NORMAL.MAX_RATIO}× their median KPM, career K/D < ${OWN_NORMAL.MAX_KD})`;
 
 /** Stored sessions of one player → { id: { kills, seconds, startMs } } (assists tuples + XP detail). */
 export function storedSessions(assists, xp) {
@@ -50,12 +54,25 @@ export function burstReviewed(reviewedJson) {
   return out;
 }
 
-export function burstSessions(players, { rule = BURST_RULE, reviewed = KNOWN_EXTREMES } = {}) {
+/** True when burst session `id` is within the player's own normal (see OWN_NORMAL). */
+export function withinOwnNormal(sessions, id, kd, o = OWN_NORMAL) {
+  const s = sessions[id];
+  if (!s || !(Number.isFinite(+kd) && +kd < o.MAX_KD)) return false;
+  const k = Object.entries(sessions).filter(([i, x]) => i !== id && x.seconds >= o.MIN_SECONDS).map(([, x]) => x.kills / (x.seconds / 60)).sort((a, b) => a - b);
+  if (k.length < o.MIN_SESSIONS) return false;
+  const med = k.length % 2 ? k[k.length >> 1] : (k[k.length / 2 - 1] + k[k.length / 2]) / 2;
+  return med > 0 && s.kills / (s.seconds / 60) <= o.MAX_RATIO * med;
+}
+
+export function burstSessions(players, { rule = BURST_RULE, reviewed = KNOWN_EXTREMES, ownNormal = OWN_NORMAL } = {}) {
   const items = [];
+  let ownNormalSkipped = 0;
   for (const p of players || []) {
-    for (const [id, s] of Object.entries(storedSessions(p.assists, p.xp))) {
+    const all = storedSessions(p.assists, p.xp);
+    for (const [id, s] of Object.entries(all)) {
       if (!isBurst(s, rule)) continue;
       const why = reviewed[p.slug] || null;
+      if (!why && ownNormal && withinOwnNormal(all, id, p.kd, ownNormal)) { ownNormalSkipped++; continue; } // human review wins
       const status = !why ? "review" : /^\s*(confirmed cheater|excluded after review)/i.test(why) ? "cheater" : "cleared"; // "not a cheater" / "rampage cheaters" in a note = cleared
       items.push({
         slug: p.slug, name: p.name || p.slug, cid: p.cid ? String(p.cid) : "", session: id,
@@ -69,7 +86,7 @@ export function burstSessions(players, { rule = BURST_RULE, reviewed = KNOWN_EXT
   const players1 = (pred) => new Set(items.filter(pred).map((i) => i.slug)).size;
   return {
     rule: burstRuleText(rule), checkedAt: new Date().toISOString(),
-    sessions: items.length, flaggedPlayers: players1((i) => i.status === "review" && !i.hidden), clearedPlayers: players1((i) => i.cleared),
+    sessions: items.length, ownNormalSkipped, flaggedPlayers: players1((i) => i.status === "review" && !i.hidden), clearedPlayers: players1((i) => i.cleared),
     hiddenPlayers: players1((i) => i.status !== "cleared" && (i.hidden || i.status === "cheater")),
     items: items.slice(0, rule.MAX_LISTED),
   };
