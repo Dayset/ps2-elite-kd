@@ -768,3 +768,13 @@ test("hold meter (owner 2026-10-25): decay freezes on death, lifts on a spike or
   assert.match(js, /dpsEvents\.push\(\{ t: Date\.now\(\), dmg: DPS_ASSIST \}\); liftFreeze\(Date\.now\(\)\);/);
   assert.match(js, /combatHoldMs, spawnRunHoldMs \} from "\.\/live-model\.mjs\?v=20261025-hld1"/);
 });
+
+test("warm-up (owner 2026-10-25): the meter waits for its 3rd chunk — first two spikes only bump the count", () => {
+  const js = liveSrc();
+  assert.match(js, /const dpsLabelEl = \$\("liveDpsLabel"\);/);
+  assert.match(js, /let lastDps = "", lastDpsLabel = "", lastCash = "";/);
+  assert.match(js, /if \(dpsEvents\.length < 3\) \{/);
+  assert.match(js, /v = `\$\{dpsEvents\.length\}\/3`;/);
+  assert.match(js, /label = tr\("live\.dpmWarm", "DPM starts at 3"\);/);
+  assert.match(js, /if \(dpsLabelEl && label !== lastDpsLabel\) \{ dpsLabelEl\.textContent = label; lastDpsLabel = label; \}/);
+});

@@ -538,6 +538,7 @@ function start() {
   // its text changed; the tick runs every 100 ms so the drain reads as a
   // drain, not steps, and a late-arriving victim iVi lands within 100 ms.
   const dpsEl = $("liveDpsVal");
+  const dpsLabelEl = $("liveDpsLabel");
   if ($("liveDpsLabel")) $("liveDpsLabel").textContent = tr("live.dps", "DPM");
   const cashSumEl = $("liveCashSumVal"), cashAvgEl = $("liveCashAvgVal");
   if ($("liveCashSumLabel")) $("liveCashSumLabel").textContent = tr("live.cashSum", "Σ iVi");
@@ -588,7 +589,7 @@ function start() {
   // the formula's +34% suffix says the parts are boosted). A floored 0 stays 0 (0 × 1.34 = 0).
   const CASH_BOOST_PCT = 34;
   const cashIv = (p) => (p && p.cached && Number.isFinite(p.cached.adjs) ? Math.round(Math.max(0, p.cached.adjs) * (1 + CASH_BOOST_PCT / 100)) : null);
-  let lastDps = "", lastCash = "";
+  let lastDps = "", lastDpsLabel = "", lastCash = "";
   function dpsTick() {
     // Owner 2026-10-25 (elite combat damage meter): the decay clock.
     // A freeze lifts by itself once the average spawn run elapses (the
@@ -600,8 +601,21 @@ function start() {
     if (freezeStart && Date.now() >= freezeStart + freezeFor) { timeDebtMs += freezeFor; freezeStart = 0; freezeFor = 0; }
     const effNow = freezeStart ? freezeStart - timeDebtMs : Date.now() - timeDebtMs;
     if (dpsEl) {
-      const v = (dpsNow(dpsEvents, effNow, dpmTauMs, combatHoldMs(spikeTimes(), deathTimes)) * 60).toFixed(1);
+      // Owner 2026-10-25: the meter waits for its 3rd data chunk — the
+      // first two kills/assists only bump the count (1/3, 2/3) under the
+      // note that the meter starts at 3, so no unheld spike is ever shown
+      // as a rate. The spikes still accumulate from the first one, so the
+      // meter starts with a real held value, not from zero.
+      let v, label;
+      if (dpsEvents.length < 3) {
+        v = `${dpsEvents.length}/3`;
+        label = tr("live.dpmWarm", "DPM starts at 3");
+      } else {
+        v = (dpsNow(dpsEvents, effNow, dpmTauMs, combatHoldMs(spikeTimes(), deathTimes)) * 60).toFixed(1);
+        label = tr("live.dps", "DPM");
+      }
       if (v !== lastDps) { dpsEl.textContent = v; lastDps = v; }
+      if (dpsLabelEl && label !== lastDpsLabel) { dpsLabelEl.textContent = label; lastDpsLabel = label; }
     }
     if (cashSumEl && cashAvgEl) {
       const t = cashTotals(cashKills.map((e) => e.iv));

@@ -216,18 +216,24 @@ describe("🎥 live.html in a browser", () => {
     });
   });
 
-  it("imaginary DPM (owner 2026-10-25): kill jumps it, it drains, an assist adds half a kill", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+  it("imaginary DPM (owner 2026-10-25): warm-up bumps to 3, then it drains, an assist adds half a kill", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
       const dps = () => ev(`Number(document.getElementById("liveDpsVal").textContent)`);
-      assert.equal(await ev(until(`document.getElementById("liveDpsVal").textContent === "0.0"`)), true, "DPM starts at 0.0");
+      assert.equal(await ev(until(`document.getElementById("liveDpsVal").textContent === "0/3"`)), true, "meter waits at 0/3");
+      assert.equal(await ev(`document.getElementById("liveDpsLabel").textContent`), "DPM starts at 3", "warm-up explains the wait");
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
-      const afterKill = await ev(until(`Number(document.getElementById("liveDpsVal").textContent) >= 5000`)) && await dps();
-      assert.ok(afterKill >= 5000 && afterKill <= 6000, `a kill jumps DPM to ~6000: ${afterKill}`);
+      assert.equal(await ev(until(`document.getElementById("liveDpsVal").textContent === "1/3"`)), true, "first kill bumps the count");
+      const gain = JSON.stringify({ event_name: "GainExperience", character_id: ME.cid, experience_id: 2, amount: 100, timestamp: "0" });
+      await ev(`window.__fakeWs.emit(${gain})`);
+      assert.equal(await ev(until(`document.getElementById("liveDpsVal").textContent === "2/3"`)), true, "an assist bumps the count too");
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[1].cid, "80", false)})`);
+      const afterKill = await ev(until(`Number(document.getElementById("liveDpsVal").textContent) >= 10000`)) && await dps();
+      assert.ok(afterKill >= 10000, `the 3rd chunk starts the meter high: ${afterKill}`);
+      assert.equal(await ev(`document.getElementById("liveDpsLabel").textContent`), "DPM", "label back to DPM once started");
       await new Promise((r) => setTimeout(r, 2500));
       const drained = await dps();
-      assert.ok(drained < afterKill && drained > 3000, `DPM drains down after the kill: ${drained}`);
-      const gain = JSON.stringify({ event_name: "GainExperience", character_id: ME.cid, experience_id: 2, amount: 100, timestamp: "0" });
+      assert.ok(drained < afterKill && drained > 3000, `DPM drains down after the start: ${drained}`);
       await ev(`window.__fakeWs.emit(${gain})`);
       const afterAssist = await ev(until(`Number(document.getElementById("liveDpsVal").textContent) > ${drained + 2000}`)) && await dps();
       assert.ok(afterAssist > drained + 2000, `an assist adds ~3000: ${drained} -> ${afterAssist}`);
@@ -255,12 +261,12 @@ describe("🎥 live.html in a browser", () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
       assert.equal(await ev(`document.getElementById("liveDpmTauVal").value`), "10", "tau defaults to 10 s");
-      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
-      const afterKill = await ev(until(`Number(document.getElementById("liveDpsVal").textContent) >= 5000`)) && await ev(`Number(document.getElementById("liveDpsVal").textContent)`);
-      assert.ok(afterKill >= 5000 && afterKill <= 6000, `tau=10 s kill spikes ~6000: ${afterKill}`);
+      for (let i = 0; i < 3; i++) await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[i].cid, "80", false)})`); // three chunks to start the meter
+      const afterKill = await ev(until(`Number(document.getElementById("liveDpsVal").textContent) >= 15000`)) && await ev(`Number(document.getElementById("liveDpsVal").textContent)`);
+      assert.ok(afterKill >= 15000, `tau=10 s three kills spike high: ${afterKill}`);
       await ev(`document.getElementById("liveDpmTauVal").value = "60"; document.getElementById("liveDpmTauVal").dispatchEvent(new Event("change", { bubbles: true }));`);
-      const afterTau = await ev(until(`Number(document.getElementById("liveDpsVal").textContent) < 1500`)) && await ev(`Number(document.getElementById("liveDpsVal").textContent)`);
-      assert.ok(afterTau > 800 && afterTau < 1001, `tau=60 s rescales the same kill to ~1000: ${afterTau}`);
+      const afterTau = await ev(until(`Number(document.getElementById("liveDpsVal").textContent) < 5000`)) && await ev(`Number(document.getElementById("liveDpsVal").textContent)`);
+      assert.ok(afterTau > 2500 && afterTau < 3200, `tau=60 s rescales the same kills to ~2900: ${afterTau}`);
       assert.deepEqual(errors, [], "no page errors");
     });
   });
@@ -273,7 +279,7 @@ describe("🎥 live.html in a browser", () => {
       await ev(`window.__fakeWs.emit(${death(ME.cid, TEAM.cid, "80", false)})`);
       // #76: the row lands on arrival and is retracted when the commit proves the same faction
       assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)").length === 0 && !document.querySelector("#liveList .lv-pend")`)), true, "a teamkill leaves no victim row");
-      assert.equal(await ev(`document.getElementById("liveDpsVal").textContent`), "0.0", "a teamkill adds no DPM");
+      assert.equal(await ev(`document.getElementById("liveDpsVal").textContent`), "0/3", "a teamkill adds no DPM chunk");
       await slotsAre(7, 0, "a teamkill fills no heart");
       for (let i = 0; i < 7; i++) await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[i].cid, "80", false)})`);
       await bountyIs("💰💰💰", "7 enemy kills earn three bounty marks");
@@ -439,17 +445,20 @@ describe("🎥 live.html in a browser", () => {
   });
 
 describe("🎥 live hold meter in a browser", () => {
-  it("hold (owner 2026-10-25): a 12 s gap holds the line flat — DPM stays above 8000 eight seconds after the second kill", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+  it("hold (owner 2026-10-25): two 12 s gaps hold the line flat — DPM stays above 8000 eight seconds after the third kill", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
-      assert.equal(await ev(until(`Number(document.getElementById("liveDpsVal").textContent) >= 5000`)), true, "first kill spikes DPM");
-      await new Promise((r) => setTimeout(r, 12000)); // a slow player's real gap — the average gap becomes the hold
+      assert.equal(await ev(until(`document.getElementById("liveDpsVal").textContent === "1/3"`)), true, "first kill bumps the count");
+      await new Promise((r) => setTimeout(r, 12000)); // a slow player's real gap
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[1].cid, "80", false)})`);
-      assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)").length === 2`)), true, "second kill on screen");
-      await new Promise((r) => setTimeout(r, 8000)); // 8 s after the second kill — inside the 12 s hold
+      assert.equal(await ev(until(`document.getElementById("liveDpsVal").textContent === "2/3"`)), true, "second kill bumps the count");
+      await new Promise((r) => setTimeout(r, 12000)); // the same gap again — the hold becomes 12 s
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[2].cid, "80", false)})`);
+      assert.equal(await ev(until(`Number(document.getElementById("liveDpsVal").textContent) >= 10000`)), true, "third kill starts the meter held");
+      await new Promise((r) => setTimeout(r, 8000)); // 8 s after the third kill — inside the 12 s hold
       const dpm = await ev(`Number(document.getElementById("liveDpsVal").textContent)`);
-      assert.ok(dpm > 8000, `held DPM stays above 8000 (with no hold it would be ~3500 here): ${dpm}`);
+      assert.ok(dpm > 8000, `held DPM stays above 8000 (with no hold it would be ~3750 here): ${dpm}`);
       assert.deepEqual(errors, [], "no page errors");
     });
   });
@@ -458,12 +467,14 @@ describe("🎥 live hold meter in a browser", () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
-      assert.equal(await ev(until(`Number(document.getElementById("liveDpsVal").textContent) >= 5000`)), true, "first kill spikes DPM");
+      assert.equal(await ev(until(`document.getElementById("liveDpsVal").textContent === "1/3"`)), true, "first kill bumps the count");
       await ev(`window.__fakeWs.emit(${death(OPP[1].cid, ME.cid, "432", false)})`); // death 1: no average yet, so no freeze
       await new Promise((r) => setTimeout(r, 5000)); // the spawn run, measured
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[1].cid, "80", false)})`); // kill 2: measures the 5 s run (and clears the old run's row)
       assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)").length === 1`)), true, "second kill on screen");
-      await ev(`window.__fakeWs.emit(${death(OPP[2].cid, ME.cid, "432", false)})`); // death 2: freeze for the 5 s average
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[2].cid, "80", false)})`); // kill 3: starts the meter
+      assert.equal(await ev(until(`Number(document.getElementById("liveDpsVal").textContent) >= 10000`)), true, "third kill starts the meter");
+      await ev(`window.__fakeWs.emit(${death(OPP[3].cid, ME.cid, "432", false)})`); // death 2: freeze for the 5 s average
       await new Promise((r) => setTimeout(r, 300)); // let the death commit and the tick freeze
       const atDeath = await ev(`Number(document.getElementById("liveDpsVal").textContent)`);
       await new Promise((r) => setTimeout(r, 4000)); // 4 s into the 5 s freeze
