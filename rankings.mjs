@@ -179,6 +179,7 @@ export function initRankings(host) {
   let tableStale = false;
   /** Names box → ✅ boxes / chart / positions. Cheap no-op when nothing changed. */
   function syncPicks({ force = false } = {}) {
+    syncFindMe();
     if (!data) return;
     // t359u: a graphed name that's new to this browser's cache (quick fetch /
     // Fetch fresh after Rankings loaded) → re-merge so it joins 📊 / 🏅 / the table.
@@ -192,6 +193,7 @@ export function initRankings(host) {
     picked.clear();
     pickedSrc.clear();
     for (const h of hits) { picked.set(h.query, h.name); pickedSrc.set(h.query, h.src || h.query); }
+    syncFindMe();
     // ⚔️ tiers: a newly added name opens its tier, even one closed by hand.
     for (const h of hits) {
       if (before.has(h.query)) continue;
@@ -1484,7 +1486,37 @@ export function initRankings(host) {
     const sig = hlSignature();
     if (sig !== hlSig) { hlSig = sig; requestAnimationFrame(() => drawDist()); }
   }
+  /**
+   * 👤 find-me (owner t641u): while the filter is empty and exactly ONE name is in
+   * the names box, a static 👤 sits where the search ✕ goes; a click puts that
+   * player's name (the table's spelling when it matched) in the filter, so the
+   * ✕ comes back as usual. 0 or 2+ names, or any filter text: hidden (as before).
+   */
+  function findMeName() {
+    const names = host.getNames();
+    if (names.length !== 1 || bare($("ranksSearch").value || "")) return "";
+    const hit = picked.size === 1 ? [...picked.values()][0] : "";
+    return String(hit || names[0] || "").trim();
+  }
+  function syncFindMe() {
+    const b = $("ranksFindMe");
+    if (!b) return;
+    const n = findMeName();
+    b.hidden = !n;
+    b.dataset.name = n;
+  }
+  if ($("ranksFindMe")) $("ranksFindMe").addEventListener("click", (e) => {
+    e.preventDefault();
+    const n = findMeName();
+    if (!n) return syncFindMe();
+    const i = $("ranksSearch");
+    i.value = n;
+    syncFindMe();
+    applyFilter(); // filter now (no typing pause)
+    i.focus({ preventScroll: true });
+  });
   $("ranksSearch").addEventListener("input", (e) => {
+    syncFindMe();
     lastTypeAt = performance.now();
     clearTimeout(searchTimer);
     searchTimer = setTimeout(applyFilter, 150);

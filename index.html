@@ -74,7 +74,7 @@
       });
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261024-fill1" />
+  <link rel="stylesheet" href="styles.css?v=20261025-find1" />
   <style>
     /* Installed-app launch splash (t465u). Android draws its own launch splash first:
        the maskable icon (big medal on black) seen through a 192 px circle, on the
@@ -490,7 +490,10 @@
     <details id="ranksTableSection" class="dist-section rk-table-section">
       <summary><span data-i18n="ranks.allPlayers">📋 All players</span> <span id="ranksTableCount" class="rk-table-count"></span></summary>
     <div class="rk-filter-row">
-      <input id="ranksSearch" type="search" data-i18n-placeholder="ranks.filter" data-i18n-aria-label="ranks.filterLabel" placeholder="Filter the table by name…" aria-label="Filter the Rankings table by player name" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="search" />
+      <span class="rk-search-box"><!-- owner t641u: 👤 sits where ✕ does while the filter is empty and ONE name is in the names box; a click puts that name in the filter -->
+        <input id="ranksSearch" type="search" data-i18n-placeholder="ranks.filter" data-i18n-aria-label="ranks.filterLabel" placeholder="Filter the table by name…" aria-label="Filter the Rankings table by player name" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="search" />
+        <button type="button" id="ranksFindMe" class="rk-find-me" hidden title="👤 Find this player in the table" aria-label="👤 Find this player in the table" data-i18n-title="ranks.findMe" data-i18n-aria-label="ranks.findMe">👤</button>
+      </span>
       <label class="tgl-switch rk-remove-ranks" title="Remove the tier separators from the Rankings table" data-i18n-title="ranks.removeRanksTitle">
         <input type="checkbox" id="removeRanksToggle" /> <span data-i18n="ranks.removeRanks">Remove ranks</span>
       </label>
@@ -562,7 +565,7 @@
   </footer>
 
   <script type="module" src="i18n.mjs"></script>
-  <script type="module" src="app.js?v=20261024-trac1"></script>
+  <script type="module" src="app.js?v=20261025-find1"></script>
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").catch(function () {});

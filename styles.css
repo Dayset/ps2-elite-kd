@@ -2269,6 +2269,16 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
   background: var(--input-bg); color: var(--text); outline: none;
 }
 .rk-filter-row input[type="search"]:focus { border-color: var(--accent); outline: 1px solid var(--accent); }
+/* 👤 find-me (owner t641u): where the search ✕ sits, only while the filter is empty and ONE name is entered; static, no animation. */
+.rk-filter-row .rk-search-box { position: relative; display: block; width: 100%; max-width: 28rem; }
+.rk-filter-row .rk-search-box input[type="search"] { max-width: none; padding-right: 2.6rem; }
+.rk-find-me {
+  position: absolute; right: 0.3rem; top: 50%; transform: translateY(-50%);
+  min-width: 2.1rem; min-height: 2.1rem; padding: 0 0.3rem; border: 0; border-radius: 4px;
+  background: none; color: inherit; font: inherit; font-size: 1.1rem; line-height: 1; cursor: pointer;
+}
+.rk-find-me:hover, .rk-find-me:focus-visible { background: var(--input-hover); }
+.rk-find-me[hidden] { display: none; }
 
 .ranks-status { min-height: 1.35rem; margin: 0 0 0.5rem; font-size: 0.9rem; }
 .ranks-status:empty { display: none; }

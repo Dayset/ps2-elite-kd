@@ -36,7 +36,7 @@ import {
 } from "./math.mjs?v=20261010-sav1";
 import { formatClock, fmtNum, slugKey, bareName, parseNames, namesEqualIgnoreCase, namesSetKey, niceLinTicks, niceNum, niceLogTicks, formatTick, escapeHtml, makeAbortError, isAbortError, checkAborted, readJsonLS, writeJsonLS } from "./app-util.mjs?v=20261024-split1";
 import { createShareAdd } from "./share-add.mjs?v=20261024-split12";
-import { createSharedIndex } from "./shared-index.mjs?v=20261024-trac1";
+import { createSharedIndex } from "./shared-index.mjs?v=20261025-find1";
 import { createNamesField } from "./names-field.mjs?v=20261024-split10";
 import { createStatsTable } from "./stats-table.mjs?v=20261024-trac1";
 import { createChartWave } from "./chart-wave.mjs?v=20261024-split8";
