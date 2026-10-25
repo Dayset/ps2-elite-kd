@@ -580,6 +580,20 @@ function start() {
   }
   setInterval(dpsTick, 100);
 
+  // Owner 2026-10-25: cashed-out runs live as a small history on the page
+  // only — in memory, newest first, capped at 5, written nowhere (no
+  // database, no storage) until a hook formula worth persisting exists.
+  // A run is banked when the death that ends it lands; a late iVi
+  // arriving after that death no longer reaches the banked total.
+  const cashHistEl = $("liveCashHist");
+  const cashHist = [];
+  function renderCashHist() {
+    if (!cashHistEl) return;
+    cashHistEl.innerHTML = cashHist.length
+      ? `<div>${esc(tr("live.cashHist", "Past runs"))}</div>` + cashHist.map((h) => `<div>Σ ${h.sum} · ${tr("live.cashAvg", "avg")} ${h.avg == null ? "–" : h.avg.toFixed(1)}</div>`).join("")
+      : "";
+  }
+
   // #32: uncached opponents → full Census fetch in the background, one at a time.
   let bgQueue = []; // cids, newest first
   const bgTried = new Set();
@@ -700,6 +714,18 @@ function start() {
       // under a held bounty (streak 7, lives left) keep the lines.
       if (wasStreak === 0) st = { ...st, victims: [] };
       dpsEvents.push({ t: Date.now(), dmg: DPS_HP }); cashKills.push({ cid: ev.opp, iv: cashIv(p) }); dpsTick();
+    }
+    if (ev.kind === "death" && wasStreak > 0 && bountyStreak === 0) {
+      // Owner 2026-10-25: the death that ends a run banks it and resets
+      // the pot for the new run — the pot shows 0 until the next kill.
+      // Deaths under a held bounty (lives left, streak kept) do not end
+      // the run, so they bank nothing.
+      const t = cashTotals(cashKills.map((e) => e.iv));
+      if (cashKills.length) cashHist.unshift({ sum: t.sum, avg: t.avg });
+      if (cashHist.length > 5) cashHist.length = 5;
+      cashKills.length = 0;
+      renderCashHist();
+      dpsTick();
     }
     st = overlayPush(st, ev);
     render();

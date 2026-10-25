@@ -75,7 +75,7 @@
     } catch (e) {}
   </script>
   <link rel="stylesheet" href="styles.css?v=20261024-fill1" />
-  <link rel="stylesheet" href="live.css?v=20261025-onl1" />
+  <link rel="stylesheet" href="live.css?v=20261025-hist1" />
   <style>
     /* Installed-app launch splash (t465u). Android draws its own launch splash first:
        the maskable icon (big medal on black) seen through a 192 px circle, on the
@@ -369,6 +369,7 @@
     <div id="liveState" class="live-state">Connecting…</div>
     <table id="liveList" class="live-table"></table>
     <div id="liveDps" class="live-dps"><span id="liveDpsLabel"></span> <span id="liveDpsVal">0.0</span> <span aria-hidden="true">·</span> <span id="liveCashSumLabel"></span> <span id="liveCashSumVal">0</span> <span aria-hidden="true">·</span> <span id="liveCashAvgLabel"></span> <span id="liveCashAvgVal">–</span></div>
+    <div id="liveCashHist" class="live-cash-hist"></div>
   </section>
 
   <!-- 🏆 Auraxium weapons (weapons.mjs): one player only, collapsed by default,
@@ -580,6 +581,6 @@
       navigator.serviceWorker.register("sw.js").catch(function () {});
     }
   </script>
-  <script type="module" src="live.mjs?v=20261025-run1"></script>
+  <script type="module" src="live.mjs?v=20261025-hist1"></script>
 </body>
 </html>

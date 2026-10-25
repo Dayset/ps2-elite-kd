@@ -286,10 +286,12 @@ describe("🎥 live.html in a browser", () => {
       const sum = ivs[0] + ivs[1], avg = (sum / 2).toFixed(1);
       assert.equal(await ev(until(`document.getElementById("liveCashSumVal").textContent === "${sum}"`)), true, `cash sum is the victims' iVi: ${sum}`);
       assert.equal(await ev(until(`document.getElementById("liveCashAvgVal").textContent === "${avg}"`)), true, `cash avg is per victim: ${avg}`);
-      // the killer does not pay: ME dies, the cash-out stands
+      // the killer does not pay: ME dies, the run is banked and the pot resets for the new run
       await ev(`window.__fakeWs.emit(${death(OPP[2].cid, ME.cid, "432", false)})`);
-      await new Promise((r) => setTimeout(r, 300));
-      assert.equal(await ev(`document.getElementById("liveCashSumVal").textContent`), String(sum), "a death changes nothing");
+      assert.equal(await ev(until(`document.getElementById("liveCashSumVal").textContent === "0"`)), true, "the pot resets for the new run");
+      assert.equal(await ev(until(`document.getElementById("liveCashAvgVal").textContent === "–"`)), true, "the avg empties with the pot");
+      assert.equal(await ev(until(`document.querySelectorAll("#liveCashHist > div").length === 2`)), true, "one banked run in the history");
+      assert.equal(await ev(`document.querySelectorAll("#liveCashHist > div")[1].textContent`), `Σ ${sum} · avg ${avg}`, "the banked run keeps its total");
       assert.deepEqual(errors, [], "no page errors");
     });
   });
@@ -332,6 +334,28 @@ describe("🎥 live.html in a browser", () => {
       assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)").length === 1`)), true, "one victim after the new streak's first kill");
       texts = await vicTexts();
       assert.ok(texts[0].includes(OPP[3].name), "the new name lands alone below");
+      assert.deepEqual(errors, [], "no page errors");
+    });
+  });
+
+  it("cashed-out runs (owner 2026-10-25): death banks the run, pot resets, history caps at 5 on the page", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      const pot = () => ev(`[document.getElementById("liveCashSumVal").textContent, document.getElementById("liveCashAvgVal").textContent]`);
+      const histEntries = () => ev(`[...document.querySelectorAll("#liveCashHist > div")].slice(1).map((d) => d.textContent)`);
+      const runSums = [];
+      for (let i = 0; i < 6; i++) {
+        await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[i].cid, "80", false)})`);
+        assert.equal(await ev(until(`document.querySelector("#liveList tbody.lv-vic .lv-iv") && Number(document.querySelector("#liveList tbody.lv-vic .lv-iv").textContent) > 0`)), true, `run ${i + 1}: victim iVi on screen`);
+        runSums.push(await ev(`Number(document.querySelector("#liveList tbody.lv-vic .lv-iv").textContent)`));
+        await ev(`window.__fakeWs.emit(${death(OPP[6].cid, ME.cid, "432", false)})`);
+        assert.deepEqual(await ev(until(`document.getElementById("liveCashSumVal").textContent === "0" && document.getElementById("liveCashAvgVal").textContent === "–" && document.querySelectorAll("#liveCashHist > div").length === ${Math.min(i + 2, 6)}`)), true, `run ${i + 1}: banked, pot reset`);
+      }
+      const entries = await histEntries();
+      assert.equal(entries.length, 5, "history caps at 5 runs");
+      assert.equal(entries[0], `Σ ${runSums[5]} · avg ${runSums[5].toFixed(1)}`, "newest run first");
+      assert.ok(!entries.join("|").includes(`Σ ${runSums[0]} `), "the oldest run dropped off");
+      assert.deepEqual(await pot(), ["0", "–"], "pot empty after the last run ends");
       assert.deepEqual(errors, [], "no page errors");
     });
   });

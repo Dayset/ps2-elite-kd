@@ -683,5 +683,11 @@ test("mobile names + legend + DPS (owner 2026-10-25): table 100% with a flexible
   assert.match(css, /\.live-online\[data-state="offline"\] i \{ background: var\(--err\); \}/);
   assert.match(js, /const wasStreak = bountyStreak;/); // a kill starting a new streak clears the old run's victim lines
   assert.match(js, /if \(wasStreak === 0\) st = \{ \.\.\.st, victims: \[\] \};/);
+  assert.match(swap, /<div id="liveCashHist" class="live-cash-hist"><\/div>/); // banked runs live on the page only
+  assert.match(js, /if \(ev\.kind === "death" && wasStreak > 0 && bountyStreak === 0\)/);
+  assert.match(js, /if \(cashHist\.length > 5\) cashHist\.length = 5;/);
+  assert.match(js, /cashKills\.length = 0;/);
+  assert.match(js, /tr\("live\.cashHist", "Past runs"\)/);
+  assert.match(css, /\.live-cash-hist \{ margin-top: 0.25rem; font-size: 0.72rem; color: var\(--dim\); \}/);
   assert.match(js, /tr\("live\.cashAvg", "avg"\)/);
 });
