@@ -348,6 +348,25 @@ describe("🎥 live.html in a browser", () => {
     });
   });
 
+  it("dim names on death (owner 2026-10-25): killed list + own name at 50% while dead, full again on a kill", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      const op = (sel) => ev(`getComputedStyle(document.querySelector("${sel}")).opacity`);
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
+      assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)").length === 1`)), true, "one victim on screen");
+      assert.equal(await ev(until(`getComputedStyle(document.querySelector("#liveList tbody.lv-vic .lv-nm")).opacity === "1"`)), true, "victim name full once its 0.42 s pop-in finishes");
+      assert.equal(await op("#liveList tbody.lv-me .lv-nm"), "1", "own name full while alive");
+      await ev(`window.__fakeWs.emit(${death(OPP[2].cid, ME.cid, "432", false)})`);
+      assert.equal(await ev(until(`getComputedStyle(document.querySelector("#liveList tbody.lv-vic .lv-nm")).opacity === "0.5"`)), true, "victim name dims on death");
+      assert.equal(await op("#liveList tbody.lv-me .lv-nm"), "0.5", "own name dims on death");
+      assert.equal(await ev(until(`getComputedStyle(document.querySelector("#liveList tbody.lv-atk .lv-nm")).opacity === "1"`)), true, "the killer line stays full once its pop-in finishes");
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[1].cid, "80", false)})`);
+      assert.equal(await ev(until(`getComputedStyle(document.querySelector("#liveList tbody.lv-me .lv-nm")).opacity === "1"`)), true, "own name re-lights on a kill");
+      assert.equal(await ev(until(`getComputedStyle(document.querySelector("#liveList tbody.lv-vic .lv-nm")).opacity === "1"`)), true, "the new run's victim name is full once its pop-in finishes");
+      assert.deepEqual(errors, [], "no page errors");
+    });
+  });
+
   it("cashed-out runs (owner 2026-10-25): death banks the run, pot resets, history caps at 5 on the page", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");

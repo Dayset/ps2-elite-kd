@@ -245,6 +245,10 @@ function start() {
   // 3 → 2 → 1 → hearts). The centre line never carries a weapon, so its
   // second line is free for this.
   let bountyStreak = 0, bountyLives = 0;
+  // Owner 2026-10-25: while the observed player is dead, the killed list
+  // and their own name sit at 50% — a new kill brings them back to full.
+  // Render-time flag, so it survives every re-render (bgPump included).
+  let namesDim = false;
   function bountyHtml() {
     if (bountyLives > 0) return `<span class="lv-wn">${"💰".repeat(bountyLives)}</span>`;
     const slots = Array.from({ length: 7 }, (_, i) => `<span class="lv-bh${i < bountyStreak ? "" : " lv-bh-empty"}">❤️‍🔥</span>`).join("");
@@ -324,6 +328,7 @@ function start() {
     const mid = `<tbody class="lv-ev lv-me${fm.cls}"${fm.sty}><tr><td class="lv-time"></td>${cells(me, true)}</tr></tbody>`;
     const low = Array.from({ length: VICTIM_LINES }, (_, i) => (st.victims[i] ? oppLine(st.victims[i], "vic") : emptyLine("vic"))).join("");
     listEl.innerHTML = cols + atk + mid + low;
+    listEl.classList.toggle("lv-dim-names", namesDim);
     collectMotion();
     startFills();
     wake();
@@ -714,9 +719,16 @@ function start() {
       // lines first, so the new name lands alone below as the first line
       // of the new run. Mid-run kills (streak already > 0) and kills
       // under a held bounty (streak 7, lives left) keep the lines.
+      // Any kill also re-lights the names the death had dimmed.
+      namesDim = false;
       if (wasStreak === 0) st = { ...st, victims: [] };
       dpsEvents.push({ t: Date.now(), dmg: DPS_HP }); cashKills.push({ cid: ev.opp, iv: cashIv(p) }); dpsTick();
     }
+    // Owner 2026-10-25: ANY death dims the killed list and the observed
+    // player's own name to 50% — you are dead, the feed shows it — until
+    // the next kill re-lights them. (Banking below is stricter: only the
+    // death that ends a run banks it.)
+    if (ev.kind === "death") namesDim = true;
     if (ev.kind === "death" && wasStreak > 0 && bountyStreak === 0) {
       // Owner 2026-10-25: the death that ends a run banks it and resets
       // the pot for the new run — the pot shows 0 until the next kill.

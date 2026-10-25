@@ -177,6 +177,10 @@ col.lv-c-iz { width: var(--lv-iz); }
 .live-dps { margin-top: 0.5rem; font-size: 1.3rem; }
 /* Owner 2026-10-25: cashed-out runs history — small, dim, under the DPM line. */
 .live-cash-hist { margin-top: 0.25rem; font-size: 0.72rem; color: var(--dim); }
+/* Owner 2026-10-25: while the observed player is dead, the killed list and their own name sit at 50% — a new kill
+   brings them back to full. The killer line above stays full (it is the new information); iVi and inf/zerg stay full
+   so the banked run stays readable. */
+.live-table.lv-dim-names tbody.lv-vic .lv-nm, .live-table.lv-dim-names tbody.lv-me .lv-nm { opacity: 0.5; }
 /* Owner 2026-10-25: adjustable DPM decay τ — small, dim, under the DPM line (symbols only, no words to translate). */
 .live-dpm-tau { margin-top: 0.25rem; font-size: 0.72rem; color: var(--dim); }
 .live-dpm-tau input { width: 4rem; background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 0.25rem; padding: 0.1rem 0.3rem; font: inherit; }

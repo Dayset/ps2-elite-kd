@@ -356,7 +356,7 @@ test("emoji fill grows 0 → level over 10 s when a line appears (owner t578u/t5
   assert.match(js, /if \(h\) h\.gw = glowIn\(k\);/); // halo off for 80%, then in
   assert.match(js, /function startFills\(\) \{\n\s*if \(!listEl \|\| reduced\(\)\) return;/); // reduced motion = the final fill at once
   assert.match(js, /startFills\(\); \/\/ lines drawn before the pictures were ready start filling now/);
-  assert.match(js, /listEl\.innerHTML = cols \+ atk \+ mid \+ low;\n\s*collectMotion\(\);\n\s*startFills\(\);\n\s*wake\(\);/);
+  assert.match(js, /listEl\.innerHTML = cols \+ atk \+ mid \+ low;\n\s*listEl\.classList\.toggle\("lv-dim-names", namesDim\);\n\s*collectMotion\(\);\n\s*startFills\(\);\n\s*wake\(\);/);
   assert.doesNotMatch(js, /\.animate\(\[/); // nothing runs at the screen's own rate
   // same curve as the old CSS fill: cubic-bezier(0.22, 1, 0.36, 1)
   assert.equal(easeFill(0), 0);
@@ -647,6 +647,16 @@ test("iz cell (owner 2026-10-25): infantry/zerg aligned left", () => {
 test("teamkill (owner 2026-10-25): own-faction kills farm nothing, own-faction deaths still count", () => {
   const js = liveSrc();
   assert.match(js, /if \(ev\.kind === "kill" && p\.faction && me && me\.faction && p\.faction === me\.faction\) return;/);
+});
+
+test("dim names on death (owner 2026-10-25): death dims the killed list and your name to 50%, a kill re-lights them", () => {
+  const js = liveSrc();
+  const css = readFileSync(new URL("live.css", root), "utf8");
+  assert.match(js, /let namesDim = false;/);
+  assert.match(js, /if \(ev\.kind === "death"\) namesDim = true;/);
+  assert.match(js, /namesDim = false;/);
+  assert.match(js, /listEl\.classList\.toggle\("lv-dim-names", namesDim\);/);
+  assert.match(css, /\.live-table\.lv-dim-names tbody\.lv-vic \.lv-nm, \.live-table\.lv-dim-names tbody\.lv-me \.lv-nm \{ opacity: 0\.5; \}/);
 });
 
 test("cash boost (owner 2026-10-25): payouts x1.34 at the cash choke point, formula carries +34%", () => {
