@@ -28,7 +28,6 @@ import { traitPools, zergScore } from "./trait-scores.mjs?v=20261024-crowd1";
 import { zergEstimate } from "./zerg-revive.mjs?v=20261024-crowd1";
 import { infMedian, tractorCuts, TRACTOR_EMOJI } from "./tractor.mjs?v=20261024-trac1";
 import { drawEmojiSprite, spriteCss } from "./live-sprites.mjs?v=20261024-beat1";
-import { trendSeries, trendColors, drawTrends as paintTrends, drawTrendsSkeleton as paintSkeleton } from "./live-trends.mjs?v=20261025-fac1";
 
 const CENSUS = `https://census.daybreakgames.com/s:${CENSUS_SERVICE_ID}/get/ps2:v2/`;
 const STREAM = `wss://push.planetside2.com/streaming?environment=ps2&service-id=s:${CENSUS_SERVICE_ID}`;
@@ -480,45 +479,10 @@ function start() {
 
   // Owner t546u: no skill graph in Live any more (it stays on the main page).
 
-  // Owner 2026-10-25: Honu-style session trends ABOVE the feed — one combined
-  // chart (interval lines only, faction colours: KPM NC blue, DPM TR red,
-  // K/D VS purple). The overlay keeps
-  // only 6 victim lines, so the chart keeps its own history: every kill/death
-  // timestamp since tracking started (the stream subscribe, kept across
-  // reconnects). Redrawn on every event and every 30 s, so an idle stretch
-  // falls to 0 on the interval line instead of freezing the chart.
-  // Owner 2026-10-25: a session too young to draw (< 2 events) shows a
-  // skeleton frame in the chart's place, not a gap — same size, so nothing
-  // shifts when the first lines appear.
-  const trendEl = $("liveTrends"), trendCanvas = $("liveTrendCanvas"), trendLegend = $("liveTrendLegend");
-  let trendStart = 0;
-  const trendKills = [], trendDeaths = [];
-  const trendTitleText = $("liveTrendTitleText") || $("liveTrendTitle");
-  if (trendTitleText) trendTitleText.textContent = tr("live.trends", "Trends");
-  if (trendLegend) {
-    const item = (cls, key, fallback) => `<span class="lv-tl ${cls}"><i></i>${esc(tr(key, fallback))}</span>`;
-    trendLegend.innerHTML =
-      item("lv-tl-kpm", "live.trendKpmInt", "KPM interval") +
-      item("lv-tl-dpm", "live.trendDpmInt", "DPM interval") +
-      item("lv-tl-kd", "live.trendKdInt", "K/D interval");
-  }
-  function drawTrends() {
-    if (!trendEl || !trendCanvas) return;
-    trendEl.hidden = false;
-    const colors = trendColors(document.documentElement.getAttribute("data-theme") === "light");
-    for (const el of trendLegend.querySelectorAll(".lv-tl-kpm")) el.style.color = colors.kpm;
-    for (const el of trendLegend.querySelectorAll(".lv-tl-dpm")) el.style.color = colors.dpm;
-    for (const el of trendLegend.querySelectorAll(".lv-tl-kd")) el.style.color = colors.kd;
-    const s = trendStart ? trendSeries(trendKills, trendDeaths, trendStart, Date.now()) : null;
-    const any = s && (s.kpmInt.length || s.dpmInt.length || s.kdInt.length); // interval lines only — the trend lines are gone
-    trendEl.classList.toggle("live-trends-skel", !any);
-    if (!any) { paintSkeleton(trendCanvas, colors, tr("live.trendsWait", "Waiting for kills…")); return; }
-    paintTrends(trendCanvas, s, colors);
-  }
-  drawTrends(); // the skeleton shows from page load, before the stream connects
-  setInterval(drawTrends, 30000);
-
-  // Owner 2026-10-25: online pill over the graph — green while the tracked
+  // Owner 2026-10-25: trends REMOVED (sluggish 30 s buckets, no numbers) —
+  // the live numbers (DPM, cash-out) carry the session now. The online
+  // pill survives the removal, moved into the DPM row.
+  // Owner 2026-10-25: online pill in the DPM row — green while the tracked
   // player is online, red while offline, grey until the first signal. Two
   // sources: the stream itself (any Death/GainExperience for them, or a
   // PlayerLogin/PlayerLogout event) and a 60 s poll of Census
@@ -705,8 +669,6 @@ function start() {
   async function onEventNow(ev) {
     setOnline("online"); // any Death involving them means they are playing right now
     const p = await person(ev.opp);
-    if (!trendStart) trendStart = ev.at || Date.now();
-    if (ev.kind === "kill") trendKills.push(ev.at || Date.now()); else trendDeaths.push(ev.at || Date.now());
     const wasStreak = bountyStreak;
     const b = bountyNext({ streak: bountyStreak, lives: bountyLives }, ev.kind === "kill");
     bountyStreak = b.streak; bountyLives = b.lives;
@@ -733,7 +695,6 @@ function start() {
     }
     st = overlayPush(st, ev);
     render();
-    drawTrends();
     if (!p.cached && !bgTried.has(ev.opp)) { bgQueue = [ev.opp, ...bgQueue.filter((c) => c !== ev.opp)]; bgPump(); }
   }
 
@@ -745,10 +706,8 @@ function start() {
       backoff = 2000;
       ws.send(JSON.stringify({ service: "event", action: "subscribe", characters: [me.cid], eventNames: ["Death", "GainExperience_experience_id_2", "GainExperience_experience_id_3", "GainExperience_experience_id_371", "GainExperience_experience_id_372", "PlayerLogin", "PlayerLogout"] })); // filtered server-side (the worker's pattern) — never the whole XP firehose
       pollOnline(); // the stream reports transitions only; the poll says what is true right now
-      if (!trendStart) trendStart = Date.now(); // the trends session starts when tracking starts, not on reconnect
       setState(`<span class="live-dot">●</span> waiting for kills and deaths…`, "on");
       render();
-      drawTrends();
     };
     ws.onmessage = (m) => {
       let j; try { j = JSON.parse(m.data); } catch { return; }

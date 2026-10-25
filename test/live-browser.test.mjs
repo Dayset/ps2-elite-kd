@@ -248,34 +248,6 @@ describe("🎥 live.html in a browser", () => {
     }, { width: 390, height: 844 });
   });
 
-  it("trends (owner 2026-10-25): interval lines only, faction colours, 3-item legend", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
-    await withLive(async ({ ev, errors }) => {
-      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
-      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
-      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[1].cid, "80", false)})`);
-      await ev(`window.__fakeWs.emit(${death(OPP[2].cid, ME.cid, "432", false)})`);
-      await ev(`window.__fakeWs.emit(${death(OPP[3].cid, ME.cid, "432", false)})`);
-      assert.equal(await ev(until(`!document.getElementById("liveTrends").classList.contains("live-trends-skel")`)), true, "chart drawn (not skeleton)");
-      // interval lines need two 30 s buckets: wait one bucket out, then one more death redraws with two points per line
-      await new Promise((r) => setTimeout(r, 31000));
-      await ev(`window.__fakeWs.emit(${death(OPP[4].cid, ME.cid, "432", false)})`);
-      await new Promise((r) => setTimeout(r, 500));
-      const s = await ev(`(() => {
-        const cv = document.getElementById("liveTrendCanvas");
-        const w = cv.width, d = cv.getContext("2d").getImageData(0, 0, w, cv.height).data;
-        const top = Math.round(16 * (w / cv.clientWidth)); // the plot area starts below the axis titles
-        const near = (hex) => { const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16); let n = 0; for (let i = 0; i < d.length; i += 4) { const y = Math.floor(i / 4 / w); if (y >= top && d[i + 3] > 100 && Math.abs(d[i] - r) < 40 && Math.abs(d[i + 1] - g) < 40 && Math.abs(d[i + 2] - b) < 40) n++; } return n; };
-        return {
-          legend: [...document.querySelectorAll("#liveTrendLegend .lv-tl")].map((e) => e.textContent).join(" | "),
-          ncBlue: near("#3e8ef7"), trRed: near("#e0453a"), vsPurple: near("#b061ff"),
-        };
-      })()`);
-      assert.equal(s.legend, "KPM interval | DPM interval | K/D interval");
-      assert.ok(s.ncBlue > 0 && s.trRed > 0 && s.vsPurple > 0, `all three faction colours drawn: blue ${s.ncBlue}, red ${s.trRed}, purple ${s.vsPurple}`);
-      assert.deepEqual(errors, [], "no page errors");
-    });
-  });
-
   it("cash-out (owner 2026-10-25): victims' iVi summed + averaged next to DPM, live on the tick", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
@@ -299,17 +271,17 @@ describe("🎥 live.html in a browser", () => {
     });
   });
 
-  it("online pill (owner 2026-10-25): green online, red offline, over the graph", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+  it("online pill (owner 2026-10-25): green online, red offline, in the DPM row", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
-      const pill = () => ev(`(() => { const p = document.getElementById("liveOnline"); return { state: p.dataset.state, text: document.getElementById("liveOnlineText").textContent, above: p.getBoundingClientRect().bottom <= document.getElementById("liveTrendCanvas").getBoundingClientRect().top }; })()`);
+      const pill = () => ev(`(() => { const p = document.getElementById("liveOnline"); return { state: p.dataset.state, text: document.getElementById("liveOnlineText").textContent, inDps: document.getElementById("liveDps").contains(p) }; })()`);
       assert.equal((await pill()).state, "unknown", "grey until the first signal");
       const login = JSON.stringify({ event_name: "PlayerLogin", character_id: ME.cid, timestamp: "0" });
       const logout = JSON.stringify({ event_name: "PlayerLogout", character_id: ME.cid, timestamp: "0" });
       await ev(`window.__fakeWs.emit(${login})`);
       let st = await ev(until(`document.getElementById("liveOnline").dataset.state === "online"`)) && await pill();
       assert.equal(st.text, "Online", "login turns the pill green");
-      assert.equal(st.above, true, "the pill sits over the graph");
+      assert.equal(st.inDps, true, "the pill sits in the DPM row");
       await ev(`window.__fakeWs.emit(${logout})`);
       st = await ev(until(`document.getElementById("liveOnline").dataset.state === "offline"`)) && await pill();
       assert.equal(st.text, "Offline", "logout turns the pill red");

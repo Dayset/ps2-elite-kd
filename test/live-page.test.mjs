@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { buildLive } from "../scripts/build-live.mjs";
 import { infMedian, infDial, isTractor, tractorHint, tractorCuts, tractorRule, tractorMarked, tractorCleared, tracXpIds, tracSample } from "../tractor.mjs";
 import { autoMarksHtml, tractorMark } from "../auto-marks.mjs";
@@ -625,23 +625,18 @@ test("centre refresh (owner t586u): fresh Census numbers every 5 min, paused whi
   assert.match(js, /animateFill\(u, \+before\.f\[i\], 1200\)/); // the new fill eases in from the old one
 });
 
-test("trends graph (owner 2026-10-25): no numbers on the chart, 2 rows tall, DPM experiment", () => {
+test("trends removed (owner 2026-10-25): no chart, no module, pill kept in the DPM row", () => {
   const js = liveSrc();
   const css = cssSrc();
-  const trends = readFileSync(new URL("live-trends.mjs", root), "utf8");
-  assert.doesNotMatch(trends, /fmtClock|fillText\(String\(/); // no numeric tick labels on either axis
-  assert.match(trends, /line\(series\.dpmInt, YL, colors\.dpm, false\);/); // DPM shares the KPM (left) axis
-  assert.match(trends, /line\(series\.kpmInt, YL, colors\.kpm, false\);/);
-  assert.match(trends, /line\(series\.kdInt, YR, colors\.kd, false\);/);
-  assert.doesNotMatch(trends, /line\(series\.\w+Trend/); // the dashed trend lines are gone
-  assert.match(trends, /const maxLeft = niceCeil\(Math\.max\(0, \.\.\.series\.kpmInt\.map\(\(p\) => p\.y\), \.\.\.series\.dpmInt\.map\(\(p\) => p\.y\)\)\);/); // scale to the lines drawn — trend values would squash them onto the same pixels
-  assert.match(trends, /const maxKd = niceCeil\(Math\.max\(0, \.\.\.series\.kdInt\.map\(\(p\) => p\.y\)\)\);/);
-  assert.match(js, /item\("lv-tl-dpm", "live\.trendDpmInt", "DPM interval"\)/);
-  assert.doesNotMatch(js, /live\.trend\w+Trend/); // no dashed trend entries in the legend any more (keys kept, never deleted)
-  assert.match(css, /\.lv-iz \{[^}]*font-size: 0\.72rem; color: var\(--dim\);/); // the pair in the weapon's small dim style
-  assert.match(css, /\.live-trend-canvas \{ display: block; width: 100%; height: 5\.6rem; \}/); // exactly 2 feed rows
-  assert.match(css, /\.live-feed \.live-trend-canvas \{ height: 7\.3rem; \}/);
-  assert.match(css, /\.live-feed \.live-trend-canvas \{ height: 4\.8rem; \}/);
+  const live = readFileSync(new URL("live.html", root), "utf8");
+  const swap = readFileSync(new URL("scripts/build-live.mjs", root), "utf8");
+  assert.doesNotMatch(js, /live-trends|drawTrends|trendSeries|trendStart|trendKills|trendDeaths|liveTrend/);
+  assert.doesNotMatch(live, /liveTrends|liveTrendCanvas|liveTrendLegend|liveTrendTitle/);
+  assert.doesNotMatch(swap, /liveTrends|liveTrendCanvas|liveTrendLegend|liveTrendTitle/);
+  assert.doesNotMatch(css, /live-trend|\.lv-tl/);
+  assert.ok(!existsSync(new URL("live-trends.mjs", root)), "live-trends.mjs deleted");
+  assert.ok(!existsSync(new URL("test/live-trends.test.mjs", root)), "live-trends test deleted");
+  assert.match(swap, /<span id="liveOnline" class="live-online" data-state="unknown">/); // the pill survives
 });
 
 test("bounty (owner 2026-10-25): hearts on the centre line's second row, 💰 at 7 held for 3 deaths", () => {
@@ -663,9 +658,7 @@ test("mobile names + legend + DPS (owner 2026-10-25): table 100% with a flexible
   const swap = readFileSync(new URL("scripts/build-live.mjs", root), "utf8");
   assert.match(css, /@media \(max-width: 600px\)[\s\S]*?\.live-table \{[^}]*width: 100%;/);
   assert.match(css, /@media \(max-width: 600px\)[\s\S]*?col\.lv-c-nm \{ width: auto; \}/);
-  assert.ok(live.indexOf("liveTrendTitle") < live.indexOf("liveTrendLegend") && live.indexOf("liveTrendLegend") < live.indexOf("liveTrendCanvas"), "legend sits between title and graph");
-  assert.match(css, /\.live-trend-legend \{[^}]*font-size: 0\.7rem;/);
-  assert.match(swap, /<div id="liveDps" class="live-dps"><span id="liveDpsLabel"><\/span> <span id="liveDpsVal">0\.0<\/span> <span aria-hidden="true">·<\/span> <span id="liveCashSumLabel"><\/span> <span id="liveCashSumVal">0<\/span> <span aria-hidden="true">·<\/span> <span id="liveCashAvgLabel"><\/span> <span id="liveCashAvgVal">–<\/span><\/div>/);
+  assert.match(swap, /<div id="liveDps" class="live-dps"><span id="liveDpsLabel"><\/span> <span id="liveDpsVal">0\.0<\/span> <span aria-hidden="true">·<\/span> <span id="liveCashSumLabel"><\/span> <span id="liveCashSumVal">0<\/span> <span aria-hidden="true">·<\/span> <span id="liveCashAvgLabel"><\/span> <span id="liveCashAvgVal">–<\/span> <span aria-hidden="true">·<\/span> <span id="liveOnline" class="live-online" data-state="unknown"><i><\/i><span id="liveOnlineText">…<\/span><\/span><\/div>/);
   assert.match(js, /eventNames: \["Death", "GainExperience_experience_id_2", "GainExperience_experience_id_3", "GainExperience_experience_id_371", "GainExperience_experience_id_372", "PlayerLogin", "PlayerLogout"\]/);
   assert.match(js, /DPS_ASSIST_XP\.has\(Number\(p\.experience_id\)\)/);
   assert.match(js, /setInterval\(dpsTick, 100\)/);
@@ -673,8 +666,7 @@ test("mobile names + legend + DPS (owner 2026-10-25): table 100% with a flexible
   assert.match(js, /cashKills\.push\(\{ cid: ev\.opp, iv: cashIv\(p\) \}\)/); // one ledger entry per kill
   assert.match(js, /for \(const e of cashKills\) if \(e\.cid === cid && !Number\.isFinite\(e\.iv\)\) e\.iv = cashIv\(p\);/); // late iVi finalizes in the list
   assert.match(js, /tr\("live\.cashSum", "Σ iVi"\)/);
-  assert.match(swap, /<span id="liveOnline" class="live-online" data-state="unknown"><i><\/i><span id="liveOnlineText">…<\/span><\/span>/); // pill over the graph
-  assert.match(swap, /<span id="liveTrendTitleText"><\/span>/);
+  assert.match(swap, /<span id="liveOnline" class="live-online" data-state="unknown"><i><\/i><span id="liveOnlineText">…<\/span><\/span>/); // pill survives in the DPM row
   assert.match(js, /characters_online_status\/\?character_id=\$\{me\.cid\}/); // Census is the source of truth for "right now"
   assert.match(js, /setInterval\(pollOnline, 60000\)/);
   assert.match(js, /event_name === "PlayerLogin" \? "online" : "offline"/);
