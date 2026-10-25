@@ -81,7 +81,7 @@ describe("🧪 session stats", () => {
     const { session, guard, hidden: hiddenInfo } = buildRanksWithGuard(dataDir);
     const flagged = new Set(session.flagged.map((f) => f.slug));
     const hidden = JSON.parse(fs.readFileSync(path.join(dataDir, "hidden.json"), "utf8")).players;
-    const cheaters = session.reference.filter((r) => r.group === "confirmed cheater");
+    const cheaters = session.reference.filter((r) => r.group === "excluded after review") // #61 renamed "confirmed cheater";
     // Hidden entries may name not-yet-cached players (hiddenSummary matched:false);
     // only matched entries can appear in the session reference.
     assert.equal(cheaters.length, hiddenInfo.players.filter((p) => p.matched).length);

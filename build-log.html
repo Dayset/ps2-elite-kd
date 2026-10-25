@@ -230,6 +230,11 @@
           <details class="st-info"><summary>ⓘ How it works</summary><div class="st-rule">Run by scripts/build-ranks.mjs → outlier-guard.mjs on the numbers the site shows, one row per player. Unexplained may mean a formula gap (like the old 🦁 Brave 6094). Explained = also a 🚩 pattern, a 🌾 or † entry, or reviewed by hand: auto-accepted and folded away.</div><div id="guardRule" class="st-rule"></div></details>
           <div id="guard" class="st-dim">Loading…</div>
         </details>
+        <details class="st-sub-sec" id="secLiveReview">
+          <summary><h3>🔬 Live-cache test review (#10) <span id="lrCount" class="st-count">…</span></h3></summary>
+          <p class="st-note">Players the live-cache tests (🧪 outlier guard, 🧪 session stats) can’t explain yet. For the owner to check one by one. Nothing here changes stats, marks or hides anyone.</p>
+          <div id="liveReview" class="st-dim">Loading…</div>
+        </details>
       </details>
 
       <details class="st-card st-sec st-flags" id="cardStalker">
@@ -922,6 +927,34 @@
       }
     }
 
+    /* ---------- 🔬 Live-cache test review (#10): unexplained 🧪 guard players + their numbers and Honu links ---------- */
+    async function renderLiveReview(status) {
+      const g = status && status.outlierGuard;
+      const players = ((g && (Array.isArray(g.players) ? g.players : groupOutliers(g.items || []))) || []).filter((p) => !p.explained && p.slug && !isSolved(p));
+      $("lrCount").textContent = String(players.length);
+      $("lrCount").classList.toggle("hot", players.length > 0);
+      if (!players.length) { $("liveReview").innerHTML = '<div class="st-dim">Nobody right now: the live-cache tests pass.</div>'; return; }
+      const facts = await Promise.all(players.map(async (p) => {
+        try { const r = await fetch("data/players/" + encodeURIComponent(p.slug) + ".json", { cache: "no-store" }); return r.ok ? ((await r.json()).player || null) : null; } catch { return null; }
+      }));
+      const body = players.map((p, i) => {
+        const f = facts[i] || {}, a = f.assists || {};
+        const cid = f.cid || cidBySlug.get(p.slug) || "";
+        const h = honu(cid);
+        const links = h ? '<a href="' + esc(h + "/sessions") + '" target="_blank" rel="noopener noreferrer">Honu sessions</a> · <a href="' + esc(h) + '" target="_blank" rel="noopener noreferrer">Honu profile</a>' : '<span class="st-dim">no character id</span>';
+        const trips = p.metrics.map((m) => m.id === "forensics"
+          ? esc(m.label) + (m.note ? ": " + esc(m.note).replace(/session (\d{3,12})/, (x, id) => '<a href="https://wt.honu.pw/s/' + id + '" target="_blank" rel="noopener noreferrer">session ' + id + "</a>") : "")
+          : esc(m.label) + " <strong>" + esc(nfmt(m.value)) + "</strong> (limit " + esc(nfmt(m.bound)) + ")").join("<br>");
+        const n = (v, d) => (typeof v === "number" && Number.isFinite(v) ? v.toFixed(d) : "—");
+        return '<tr id="lr-' + esc(p.slug) + '"><td>' + nameCell({ name: p.name, cid }) + radarCell(p.slug, cid) + '<div style="font-size:0.8em">' + links + "</div></td>" +
+          '<td class="st-metrics">' + trips + "</td>" +
+          '<td class="st-num">' + n(f.global_kd, 2) + '</td><td class="st-num">' + n(f.own_kpm != null ? f.own_kpm : f.global_kpm, 2) + '</td><td class="st-num">' + n(f.acc, 1) + '</td><td class="st-num">' + n(f.hsr, 1) +
+          '</td><td class="st-num">' + n(f.ivi, 0) + '</td><td class="st-num">' + (a.kills_counted != null ? esc(a.kills_counted) + " / " + esc(a.sessions_counted || 0) : "—") + "</td></tr>";
+      }).join("");
+      $("liveReview").innerHTML = '<div class="st-dim">' + players.length + " player" + (players.length === 1 ? "" : "s") + " · the same list makes both tests fail (run with LIVE_CACHE_CHECK=1) · checked " + esc(g.checkedAt ? ago(Date.parse(g.checkedAt)) : "—") + "</div>" +
+        '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th>What trips the test (value, limit)</th><th class="st-num">KD</th><th class="st-num">KPM</th><th class="st-num">Acc %</th><th class="st-num">HS %</th><th class="st-num">iVi</th><th class="st-num">Kills / sessions counted</th></tr>' + body + "</table></div>";
+    }
+
     /* ---------- 🧪 Session stats (status.json sessionStats; never public) ---------- */
     const SESS_REF_COLS = ["s_apk", "s_hsk", "s_kd", "s_maxKd", "s_kpm", "s_maxKpm", "s_ksk", "s_domk", "s_revDom", "s_savk", "s_spotk", "s_share"];
     /** 🔎 Session forensics (status.json forensics, build-ranks.mjs over data/forensics.json). */
@@ -1082,6 +1115,7 @@
       setReview(st);
       await loadRadar();
       renderGuard(st);
+      renderLiveReview(st).catch((e) => console.warn(e));
       if (window.renderStatusBar) window.renderStatusBar(st);
       renderHidden(st);
       renderSession(st);
