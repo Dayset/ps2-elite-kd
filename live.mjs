@@ -19,8 +19,8 @@ await i18nReady;
  *     fetch in the background (one at a time, newest first, #32) and upgrade in place.
  * Pure helpers are exported for tests; the DOM part runs only in a browser.
  */
-export * from "./live-model.mjs?v=20261025-cf1"; // #66: the pure part (tests import it from here)
-import { VICTIM_LINES, classifyDeath, fmtGap, censusStats, LIVE_COLS, tipText, FILL_DIM, HOLLOW_PX, HOLLOW_INK, goodPct, fillDriver, emojiFill, unknownFill, infUnit, OUTLINE_PX, unitGlow, LIVE_GLOWS, LIVE_FPS, liveFps, HALO_KEY, haloOn, easeFill, glowIn, BEAT, TIER_MOTION, haloAt, SHINE, shineFrame, beatSleep, weaponIcon, glowTier, eventAt, overlayPush, overlayRows, nextBgFetch, liveRowFromPlayer, ME_REFRESH_MS, mergeFresh, SHARE_MAX, shareDelay, cellText, slugKey, bountyNext, dpsNow, DPS_HP, DPS_ASSIST, DPS_ASSIST_XP, cashTotals, cashFormula } from "./live-model.mjs?v=20261025-cf1";
+export * from "./live-model.mjs?v=20261025-bst1"; // #66: the pure part (tests import it from here)
+import { VICTIM_LINES, classifyDeath, fmtGap, censusStats, LIVE_COLS, tipText, FILL_DIM, HOLLOW_PX, HOLLOW_INK, goodPct, fillDriver, emojiFill, unknownFill, infUnit, OUTLINE_PX, unitGlow, LIVE_GLOWS, LIVE_FPS, liveFps, HALO_KEY, haloOn, easeFill, glowIn, BEAT, TIER_MOTION, haloAt, SHINE, shineFrame, beatSleep, weaponIcon, glowTier, eventAt, overlayPush, overlayRows, nextBgFetch, liveRowFromPlayer, ME_REFRESH_MS, mergeFresh, SHARE_MAX, shareDelay, cellText, slugKey, bountyNext, dpsNow, DPS_HP, DPS_ASSIST, DPS_ASSIST_XP, cashTotals, cashFormula } from "./live-model.mjs?v=20261025-bst1";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261023-short1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
@@ -526,20 +526,49 @@ function start() {
   if ($("liveCashAvgLabel")) $("liveCashAvgLabel").textContent = tr("live.cashAvg", "avg");
   const dpsEvents = [];
   const cashKills = []; // one per kill: { cid, iv } — iv null until the victim's iVi is known
+  // Owner 2026-10-25: adjustable DPM decay τ (seconds) — the owner tries
+  // values live. A setting, so it persists across reloads (session data
+  // does not); the events never change, only their weighting. Note the
+  // scale moves with τ: a kill spikes to 6000 at 10 s but 1000 at 60 s —
+  // the steady pace average (1 KPM → 1000) does not, so compare shapes,
+  // not heights, across τ.
+  let dpmTauMs = 10000;
+  try { const saved = Number(localStorage.getItem("ps2-live-dpm-tau")); if (Number.isFinite(saved) && saved >= 1 && saved <= 3600) dpmTauMs = saved * 1000; } catch {}
+  const tauInput = $("liveDpmTauVal");
+  if (tauInput) {
+    tauInput.value = String(Math.round(dpmTauMs / 1000));
+    const applyTau = () => {
+      let s = Math.round(Number(tauInput.value));
+      if (!Number.isFinite(s)) s = 10;
+      s = Math.min(3600, Math.max(1, s));
+      tauInput.value = String(s);
+      dpmTauMs = s * 1000;
+      try { localStorage.setItem("ps2-live-dpm-tau", String(s)); } catch {}
+      dpsTick();
+    };
+    tauInput.addEventListener("change", applyTau);
+    const tauDown = $("liveDpmTauDown"), tauUp = $("liveDpmTauUp");
+    if (tauDown) tauDown.addEventListener("click", () => { tauInput.value = String(Math.max(1, Math.round(Number(tauInput.value) || 10) - 10)); applyTau(); });
+    if (tauUp) tauUp.addEventListener("click", () => { tauInput.value = String(Math.min(3600, Math.round(Number(tauInput.value) || 10) + 10)); applyTau(); });
+  }
   // Owner 2026-10-25: a sub-0 victim pays 0, never a negative — the pot
   // is a currency, and a kill cannot subtract from it. The feed's iVi
   // cell still shows the victim's real (negative) adjs; only the payout
   // is floored. Unknown (null) stays unknown, never counted as 0.
-  const cashIv = (p) => (p && p.cached && Number.isFinite(p.cached.adjs) ? Math.max(0, Math.round(p.cached.adjs)) : null);
+  // Owner 2026-10-25: the +34% boost trial — every payout is ×1.34, rounded, at this one choke point (live pot,
+  // average, and banked history all scale together; the feed's iVi column still shows the unboosted value, and
+  // the formula's +34% suffix says the parts are boosted). A floored 0 stays 0 (0 × 1.34 = 0).
+  const CASH_BOOST_PCT = 34;
+  const cashIv = (p) => (p && p.cached && Number.isFinite(p.cached.adjs) ? Math.round(Math.max(0, p.cached.adjs) * (1 + CASH_BOOST_PCT / 100)) : null);
   let lastDps = "", lastCash = "";
   function dpsTick() {
     if (dpsEl) {
-      const v = (dpsNow(dpsEvents, Date.now()) * 60).toFixed(1);
+      const v = (dpsNow(dpsEvents, Date.now(), dpmTauMs) * 60).toFixed(1);
       if (v !== lastDps) { dpsEl.textContent = v; lastDps = v; }
     }
     if (cashSumEl && cashAvgEl) {
       const t = cashTotals(cashKills.map((e) => e.iv));
-      const f = cashFormula(cashKills.map((e) => e.iv));
+      const f = cashFormula(cashKills.map((e) => e.iv), CASH_BOOST_PCT);
       const key = `${f}|${t.avg}`; // the formula itself is the key — two part-sets can share a sum and average
       if (key !== lastCash) {
         cashSumEl.textContent = f;
@@ -694,7 +723,7 @@ function start() {
       // Deaths under a held bounty (lives left, streak kept) do not end
       // the run, so they bank nothing.
       const t = cashTotals(cashKills.map((e) => e.iv));
-      if (cashKills.length) cashHist.unshift({ sum: t.sum, avg: t.avg, formula: cashFormula(cashKills.map((e) => e.iv)) });
+      if (cashKills.length) cashHist.unshift({ sum: t.sum, avg: t.avg, formula: cashFormula(cashKills.map((e) => e.iv), CASH_BOOST_PCT) });
       if (cashHist.length > 5) cashHist.length = 5;
       cashKills.length = 0;
       renderCashHist();

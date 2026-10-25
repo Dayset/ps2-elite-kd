@@ -35,6 +35,18 @@ test("cashFormula (owner 2026-10-25): the pot shows its own arithmetic", () => {
   assert.equal(cashFormula([300, 500, 434]), "1234 (300 + 500 + 434)");
   assert.equal(cashFormula([0, 500]), "500 (0 + 500)"); // a known 0 counts and shows
   assert.equal(cashFormula([null, 200, null]), "200"); // unknowns never shown
+  assert.equal(cashFormula([402, 670, 582], 34), "1654 (402 + 670 + 582)+34%");
+  assert.equal(cashFormula([402], 34), "402+34%");
+  assert.equal(cashFormula([], 34), "0");
+  assert.equal(cashFormula([0], 34), "0"); // a pot of nothing carries no suffix
+  assert.equal(cashFormula([0, 0], 34), "0");
+});
+
+test("dpsNow tau (owner 2026-10-25): longer tau lowers the spike, keeps old events", () => {
+  const now = 1000000;
+  assert.equal(dpsNow([{ t: now, dmg: 1000 }], now, 60000), 1000 / 60);
+  assert.ok(Math.abs(dpsNow([{ t: now - 61000, dmg: 1000 }], now, 60000) - 1000 * Math.exp(-61 / 60) / 60) < 1e-9);
+  assert.equal(dpsNow([{ t: now - 61000, dmg: 1000 }], now), 0); // default 10 s still cuts at 60 s
 });
 
 test("cashTotals: one entry per kill, unknown iVi skipped from sum and count", () => {

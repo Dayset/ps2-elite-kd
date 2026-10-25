@@ -249,6 +249,20 @@ describe("🎥 live.html in a browser", () => {
     }, { width: 390, height: 844 });
   });
 
+  it("adjustable tau (owner 2026-10-25): changing tau rescales DPM live", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      assert.equal(await ev(`document.getElementById("liveDpmTauVal").value`), "10", "tau defaults to 10 s");
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
+      const afterKill = await ev(until(`Number(document.getElementById("liveDpsVal").textContent) >= 5000`)) && await ev(`Number(document.getElementById("liveDpsVal").textContent)`);
+      assert.ok(afterKill >= 5000 && afterKill <= 6000, `tau=10 s kill spikes ~6000: ${afterKill}`);
+      await ev(`document.getElementById("liveDpmTauVal").value = "60"; document.getElementById("liveDpmTauVal").dispatchEvent(new Event("change", { bubbles: true }));`);
+      const afterTau = await ev(until(`Number(document.getElementById("liveDpsVal").textContent) < 1500`)) && await ev(`Number(document.getElementById("liveDpsVal").textContent)`);
+      assert.ok(afterTau > 800 && afterTau < 1001, `tau=60 s rescales the same kill to ~1000: ${afterTau}`);
+      assert.deepEqual(errors, [], "no page errors");
+    });
+  });
+
   it("teamkill (owner 2026-10-25): own-faction kills farm nothing, own-faction deaths still spend bounty", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
@@ -278,7 +292,8 @@ describe("🎥 live.html in a browser", () => {
       assert.equal(await ev(`getComputedStyle(document.querySelector("#liveList tbody.lv-vic .lv-iz")).textAlign`), "left", "the inf/zerg cell aligns left");
       const ivs = await ev(`[...document.querySelectorAll("#liveList tbody.lv-vic .lv-iv")].map((e) => Number(e.textContent))`);
       assert.ok(ivs.length === 2 && ivs.every(Number.isFinite) && ivs.every((v) => v > 0), `both victims show an iVi: ${ivs}`);
-      const sum = ivs[0] + ivs[1], avg = (sum / 2).toFixed(1), formula = `${sum} (${ivs[1]} + ${ivs[0]})`; // rows are newest-first, the formula is kill order
+      const b = (v) => Math.round(v * 1.34);
+      const sum = b(ivs[1]) + b(ivs[0]), avg = (sum / 2).toFixed(1), formula = `${sum} (${b(ivs[1])} + ${b(ivs[0])})+34%`; // rows are newest-first, the formula is kill order; parts are boosted
       assert.equal(await ev(until(`document.getElementById("liveCashSumVal").textContent === "${formula}"`)), true, `cash sum shows the formula: ${formula}`);
       assert.equal(await ev(until(`document.getElementById("liveCashAvgVal").textContent === "${avg}"`)), true, `cash avg is per victim: ${avg}`);
       // the killer does not pay: ME dies, the run is banked and the pot resets for the new run
@@ -348,8 +363,10 @@ describe("🎥 live.html in a browser", () => {
       }
       const entries = await histEntries();
       assert.equal(entries.length, 5, "history caps at 5 runs");
-      assert.equal(entries[0], `Σ ${runSums[5]} · avg ${runSums[5].toFixed(1)}`, "newest run first");
-      assert.ok(!entries.join("|").includes(`Σ ${runSums[0]} `), "the oldest run dropped off");
+      const b5 = Math.round(runSums[5] * 1.34), b0 = Math.round(runSums[0] * 1.34);
+      const entrySum = (e) => Number(e.match(/Σ (\d+)\+34%/)?.[1]);
+      assert.ok(Math.abs(entrySum(entries[0]) - b5) <= 1, `newest run first (within display rounding: the row iVi is already rounded, the pot boosts the raw value): ${entries[0]} vs ${b5}`);
+      assert.ok(!entries.map(entrySum).some((v) => Math.abs(v - b0) <= 1), "the oldest run dropped off");
       assert.deepEqual(await pot(), ["0", "–"], "pot empty after the last run ends");
       assert.deepEqual(errors, [], "no page errors");
     });
@@ -370,8 +387,9 @@ describe("🎥 live.html in a browser", () => {
       assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)").length === 2`)), true, "two victims on screen");
       const ivs = await ev(`[...document.querySelectorAll("#liveList tbody.lv-vic .lv-iv")].map((e) => Number(e.textContent))`);
       assert.ok(ivs[0] > 0 && ivs[1] === 0, `newest victim positive, sub-0 victim shown floored: ${ivs}`);
-      assert.equal(await ev(until(`document.getElementById("liveCashSumVal").textContent === "${ivs[0]} (0 + ${ivs[0]})"`)), true, "the pot shows the formula: floored 0 plus the positive payout");
-      assert.equal(await ev(until(`document.getElementById("liveCashAvgVal").textContent === "${(ivs[0] / 2).toFixed(1)}"`)), true, "the average counts the floored 0");
+      const bp = Math.round(ivs[0] * 1.34);
+      assert.equal(await ev(until(`document.getElementById("liveCashSumVal").textContent === "${bp} (0 + ${bp})+34%"`)), true, "the pot shows the boosted formula: floored 0 plus the boosted payout");
+      assert.equal(await ev(until(`document.getElementById("liveCashAvgVal").textContent === "${(bp / 2).toFixed(1)}"`)), true, "the average counts the floored 0");
       assert.deepEqual(errors, [], "no page errors");
     });
   });

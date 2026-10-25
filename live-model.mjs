@@ -64,13 +64,14 @@ export const DPS_HP = 1000;
 export const DPS_ASSIST = 500;
 export const DPS_TAU_MS = 10000;
 export const DPS_ASSIST_XP = new Set([2, 3, 371, 372]); // kill-assist GainExperience ids (same list as worker ASSIST_EXP_IDS)
-export function dpsNow(events, now) {
+export function dpsNow(events, now, tauMs = DPS_TAU_MS) {
+  const tau = tauMs > 0 ? tauMs : DPS_TAU_MS;
   let v = 0;
   for (const e of events) {
     const dt = now - e.t;
-    if (dt >= 0 && dt < 60000) v += e.dmg * Math.exp(-dt / DPS_TAU_MS);
+    if (dt >= 0 && dt < 6 * tau) v += e.dmg * Math.exp(-dt / tau); // 6τ: past that a spike is under 0.25% — invisible; at the 10 s default this is the old 60 s cutoff
   }
-  return v / (DPS_TAU_MS / 1000);
+  return v / (tau / 1000);
 }
 
 /**
@@ -93,12 +94,13 @@ export function cashTotals(ivs) {
  * counts in the average). Empty → "0"; a single value needs no breakdown
  * → just the total.
  */
-export function cashFormula(ivs) {
+export function cashFormula(ivs, boostPct = 0) {
   const parts = [];
   for (const v of ivs || []) if (typeof v === "number" && Number.isFinite(v)) parts.push(v);
-  if (!parts.length) return "0";
   const sum = parts.reduce((a, b) => a + b, 0);
-  return parts.length > 1 ? `${sum} (${parts.join(" + ")})` : String(sum);
+  if (!parts.length || sum === 0) return "0"; // a pot of nothing carries no suffix — there is nothing the boost could have lifted
+  const base = parts.length > 1 ? `${sum} (${parts.join(" + ")})` : String(sum);
+  return boostPct > 0 ? `${base}+${boostPct}%` : base;
 }
 
 /**

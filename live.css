@@ -177,4 +177,8 @@ col.lv-c-iz { width: var(--lv-iz); }
 .live-dps { margin-top: 0.5rem; font-size: 1.3rem; }
 /* Owner 2026-10-25: cashed-out runs history — small, dim, under the DPM line. */
 .live-cash-hist { margin-top: 0.25rem; font-size: 0.72rem; color: var(--dim); }
+/* Owner 2026-10-25: adjustable DPM decay τ — small, dim, under the DPM line (symbols only, no words to translate). */
+.live-dpm-tau { margin-top: 0.25rem; font-size: 0.72rem; color: var(--dim); }
+.live-dpm-tau input { width: 4rem; background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 0.25rem; padding: 0.1rem 0.3rem; font: inherit; }
+.live-dpm-tau button { background: none; border: 1px solid var(--border); color: var(--text); border-radius: 0.25rem; padding: 0.1rem 0.5rem; margin-left: 0.25rem; cursor: pointer; font: inherit; }
 .live-dps #liveDpsVal { font-weight: 600; font-variant-numeric: tabular-nums; }

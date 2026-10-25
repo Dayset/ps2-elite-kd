@@ -649,18 +649,33 @@ test("teamkill (owner 2026-10-25): own-faction kills farm nothing, own-faction d
   assert.match(js, /if \(ev\.kind === "kill" && p\.faction && me && me\.faction && p\.faction === me\.faction\) return;/);
 });
 
+test("cash boost (owner 2026-10-25): payouts x1.34 at the cash choke point, formula carries +34%", () => {
+  const js = liveSrc();
+  assert.match(js, /const CASH_BOOST_PCT = 34;/);
+  assert.match(js, /Math\.round\(Math\.max\(0, p\.cached\.adjs\) \* \(1 \+ CASH_BOOST_PCT \/ 100\)\)/);
+  assert.match(js, /cashFormula\(cashKills\.map\(\(e\) => e\.iv\), CASH_BOOST_PCT\)/);
+});
+
 test("cash formula (owner 2026-10-25): pot and banked runs show total plus parts", () => {
   const js = liveSrc();
-  assert.match(js, /const f = cashFormula\(cashKills\.map\(\(e\) => e\.iv\)\);/);
+  assert.match(js, /const f = cashFormula\(cashKills\.map\(\(e\) => e\.iv\), CASH_BOOST_PCT\);/);
   assert.match(js, /cashSumEl\.textContent = f;/);
-  assert.match(js, /cashHist\.unshift\(\{ sum: t\.sum, avg: t\.avg, formula: cashFormula\(cashKills\.map\(\(e\) => e\.iv\)\) \}\);/);
+  assert.match(js, /cashHist\.unshift\(\{ sum: t\.sum, avg: t\.avg, formula: cashFormula\(cashKills\.map\(\(e\) => e\.iv\), CASH_BOOST_PCT\) \}\);/);
   assert.match(js, /<div>Σ \$\{h\.formula\} · /);
+});
+
+test("adjustable tau (owner 2026-10-25): DPM decay tau is a persisted page control", () => {
+  const js = liveSrc();
+  const swap = readFileSync(new URL("scripts/build-live.mjs", root), "utf8");
+  assert.match(js, /dpsNow\(dpsEvents, Date\.now\(\), dpmTauMs\)/);
+  assert.match(js, /ps2-live-dpm-tau/);
+  assert.match(swap, /<input id="liveDpmTauVal" type="number" min="1" max="3600" step="1" value="10">/);
 });
 
 test("bounty (owner 2026-10-25): hearts on the centre line's second row, 💰💰💰 at 7, one removed per death", () => {
   const js = liveSrc();
   const css = cssSrc();
-  assert.match(js, /bountyNext[^}]*\} from "\.\/live-model\.mjs\?v=20261025-cf1"/);
+  assert.match(js, /bountyNext[^}]*\} from "\.\/live-model\.mjs\?v=20261025-bst1"/);
   assert.match(js, /const b = bountyNext\(\{ streak: bountyStreak, lives: bountyLives \}, ev\.kind === "kill"\);/);
   assert.match(js, /if \(bountyLives > 0\) return `<span class="lv-wn">\$\{"💰"\.repeat\(bountyLives\)\}<\/span>`;/); // one mark per life left, not one mark for all three
   assert.match(js, /Array\.from\(\{ length: 7 \}, \(_, i\) => `<span class="lv-bh\$\{i < bountyStreak \? "" : " lv-bh-empty"\}">❤️‍🔥<\/span>`\)\.join\(""\)/); // 7 slots, filled + dim
@@ -680,7 +695,7 @@ test("mobile names + legend + DPS (owner 2026-10-25): table 100% with a flexible
   assert.match(js, /eventNames: \["Death", "GainExperience_experience_id_2", "GainExperience_experience_id_3", "GainExperience_experience_id_371", "GainExperience_experience_id_372", "PlayerLogin", "PlayerLogout"\]/);
   assert.match(js, /DPS_ASSIST_XP\.has\(Number\(p\.experience_id\)\)/);
   assert.match(js, /setInterval\(dpsTick, 100\)/);
-  assert.match(js, /\(dpsNow\(dpsEvents, Date\.now\(\)\) \* 60\)\.toFixed\(1\)/); // DPM, three decimals
+  assert.match(js, /\(dpsNow\(dpsEvents, Date\.now\(\), dpmTauMs\) \* 60\)\.toFixed\(1\)/); // DPM, three decimals
   assert.match(js, /cashKills\.push\(\{ cid: ev\.opp, iv: cashIv\(p\) \}\)/); // one ledger entry per kill
   assert.match(js, /for \(const e of cashKills\) if \(e\.cid === cid && !Number\.isFinite\(e\.iv\)\) e\.iv = cashIv\(p\);/); // late iVi finalizes in the list
   assert.match(js, /tr\("live\.cashSum", "Σ iVi"\)/);
@@ -699,6 +714,6 @@ test("mobile names + legend + DPS (owner 2026-10-25): table 100% with a flexible
   assert.match(js, /cashKills\.length = 0;/);
   assert.match(js, /tr\("live\.cashHist", "Past runs"\)/);
   assert.match(css, /\.live-cash-hist \{ margin-top: 0.25rem; font-size: 0.72rem; color: var\(--dim\); \}/);
-  assert.match(js, /Math\.max\(0, Math\.round\(p\.cached\.adjs\)\)/); // sub-0 victims pay 0, never subtract
+  assert.match(js, /Math\.round\(Math\.max\(0, p\.cached\.adjs\) \* \(1 \+ CASH_BOOST_PCT \/ 100\)\)/); // floor first, then the boost (a sub-0 victim still pays 0) // sub-0 victims pay 0, never subtract
   assert.match(js, /tr\("live\.cashAvg", "avg"\)/);
 });
