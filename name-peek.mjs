@@ -22,6 +22,8 @@
 
 /** ~80% of cached names (incl. "[TAG] ") are ≤ 18 characters (2026-10-07, 461 players). */
 export const NAME_MAX_CH = 18;
+import { watchDismiss } from "./tip-dismiss.mjs?v=20261025-tipx1";
+
 export const LONG_PRESS_MS = 450;
 const PEEK_MS = 10000;
 const MOVE_TOLERANCE_PX = 10;
@@ -72,6 +74,7 @@ export function peekParts(el) {
 
 let peekEl = null;
 let peekTimer = 0;
+let peekOpened = () => {};
 
 export function hideNamePeek() {
   if (peekTimer) {
@@ -145,6 +148,7 @@ export function showNamePeek(anchor, text, desc = "", url = "") {
   void peekEl.offsetWidth;
   peekEl.classList.add("name-peek-pop");
   peekTimer = setTimeout(hideNamePeek, PEEK_MS);
+  peekOpened();
 }
 
 /**
@@ -235,6 +239,9 @@ export function installNamePeek() {
     true
   );
   window.addEventListener("scroll", () => { if (peekEl && !peekEl.hidden) hideNamePeek(); }, { passive: true });
+  // Owner t642u–t644u: also closes at once on a scroll inside a box (Rankings list), a wheel turn,
+  // a finger drag, a tap outside the popup or the tab going to the background (tip-dismiss.mjs).
+  peekOpened = watchDismiss(() => !!peekEl && !peekEl.hidden, hideNamePeek, { inside: (t) => !!(peekEl && t && peekEl.contains(t)) });
   window.addEventListener("resize", () => { if (peekEl && !peekEl.hidden) hideNamePeek(); });
 }
 

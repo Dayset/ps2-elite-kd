@@ -8,10 +8,13 @@
  * sort handlers (app.js stats tables, rankings.mjs ranks table).
  */
 
-export const HEAD_TIP_MS = 5000;
+import { watchDismiss } from "./tip-dismiss.mjs?v=20261025-tipx1";
+
+export const HEAD_TIP_MS = 5000; // owner t643u: keep the 5 s read time; tip-dismiss.mjs closes it early on a scroll / tap elsewhere / tab switch
 
 let el = null;
 let timer = null;
+let markOpened = null; // tip-dismiss.mjs (owner t642u–t644u)
 
 /** True when the primary pointer cannot hover (phones, most tablets). */
 export function isTouchUi() {
@@ -47,6 +50,7 @@ export function showHeadTip(text, anchor) {
     el.className = "dist-tip head-tip";
     el.setAttribute("role", "tooltip");
     document.body.appendChild(el);
+    markOpened = watchDismiss(() => !!el && !el.hidden, hideHeadTip, { inside: (t) => !!(t && el.contains(t)) });
   }
   el.textContent = "";
   for (const p of richParts(text)) {
@@ -66,6 +70,7 @@ export function showHeadTip(text, anchor) {
   el.style.top = Math.round(r.bottom + 6 + (window.scrollY || 0)) + "px";
   clearTimeout(timer);
   timer = setTimeout(hideHeadTip, HEAD_TIP_MS);
+  if (markOpened) markOpened();
 }
 
 export function hideHeadTip() {

@@ -11,8 +11,8 @@
  * modes are always the same height (CSS align-items: stretch).
  */
 
-import { hideHeadTip } from "./head-tip.mjs?v=20261021-theory1";
-import { hideNamePeek } from "./name-peek.mjs?v=20261020-peekwin1";
+import { hideHeadTip } from "./head-tip.mjs?v=20261025-tipx1";
+import { hideNamePeek } from "./name-peek.mjs?v=20261025-tipx1";
 
 const KEY = "ps2-elite-kd-stats-mode";
 const SCROLLERS = ".stats-table-wrap, .rk-pos-wrap";

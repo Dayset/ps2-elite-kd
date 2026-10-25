@@ -25,5 +25,26 @@ test("👤 find-me button: markup, logic, 9-language hover, static", () => {
     const v = JSON.parse(read(`i18n/${l}.json`))["ranks.findMe"];
     assert.ok(v && v.startsWith("👤 ") && v.length <= 45 && !v.includes("\n"), `${l}: ${v}`);
   }
-  assert.match(read("shared-index.mjs"), /rankings\.mjs\?v=20261025-find1/);
+  assert.match(read("shared-index.mjs"), /rankings\.mjs\?v=20261025-tipx1/);
+});
+
+test("👤 fill does not focus the input (owner t645u: no phone keyboard)", () => {
+  const rk = readFileSync(new URL("../rankings.mjs", import.meta.url), "utf8");
+  const h = rk.slice(rk.indexOf('$("ranksFindMe").addEventListener("click"'));
+  const body = h.slice(0, h.indexOf("\n  });") + 6);
+  assert.doesNotMatch(body, /\.focus\(/);
+  assert.match(body, /\.blur\(\)/);
+  assert.match(body, /applyFilter\(\)/);
+});
+
+
+test("filter ✕ is the browser's own search cancel, themed; room for 👤 only while it shows (owner t646u)", () => {
+  const css = readFileSync(new URL("../styles.css", import.meta.url), "utf8");
+  assert.doesNotMatch(css, /search-cancel-button/); // no custom ✕ styling
+  assert.match(css, /html:not\(\[data-theme="light"\]\) \.rk-filter-row input#ranksSearch \{ color-scheme: dark; \}/);
+  assert.match(css, /\.rk-search-box\.has-find-me input\[type="search"\] \{ padding-right: 2\.6rem; \}/);
+  const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  assert.match(html, /<input id="ranksSearch" type="search"/);
+  const rk = readFileSync(new URL("../rankings.mjs", import.meta.url), "utf8");
+  assert.match(rk, /classList\.toggle\("has-find-me", !!n\)/);
 });

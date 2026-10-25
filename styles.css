@@ -2271,7 +2271,14 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
 .rk-filter-row input[type="search"]:focus { border-color: var(--accent); outline: 1px solid var(--accent); }
 /* 👤 find-me (owner t641u): where the search ✕ sits, only while the filter is empty and ONE name is entered; static, no animation. */
 .rk-filter-row .rk-search-box { position: relative; display: block; width: 100%; max-width: 28rem; }
-.rk-filter-row .rk-search-box input[type="search"] { max-width: none; padding-right: 2.6rem; }
+.rk-filter-row .rk-search-box input[type="search"] { max-width: none; }
+/* owner t646u: the clear ✕ is the browser's own (type=search cancel button), no custom ✕. The field
+   follows the page theme so Chrome/Safari/Edge draw their normal dark/light ✕ (it was the light-mode
+   blue one on the dark field); Firefox shows none — clear with the keyboard (t647u). Room on the right
+   only while 👤 shows, so the native ✕ sits in that same spot at the right edge. */
+html:not([data-theme="light"]) .rk-filter-row input#ranksSearch { color-scheme: dark; }
+html[data-theme="light"] .rk-filter-row input#ranksSearch { color-scheme: light; }
+.rk-filter-row .rk-search-box.has-find-me input[type="search"] { padding-right: 2.6rem; }
 .rk-find-me {
   position: absolute; right: 0.3rem; top: 50%; transform: translateY(-50%);
   min-width: 2.1rem; min-height: 2.1rem; padding: 0 0.3rem; border: 0; border-radius: 4px;

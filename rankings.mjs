@@ -14,7 +14,8 @@ import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP, isPen
 import { HUT_MARK, HUT_TIP, HUT_DIFF_NOTE } from "./hut.mjs?v=20261023-short1";
 import { paletteColor } from "./palette.mjs?v=20261010-sav1";
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261020-wide1";
-import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261021-theory1";
+import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261025-tipx1";
+import { watchDismiss } from "./tip-dismiss.mjs?v=20261025-tipx1";
 import { deskUiScale } from "./desk-scale.mjs?v=20261010-sav1";
 import { matchPicks } from "./pick-sync.mjs?v=20261023-twin1";
 import { mountJumpButtons, jumpButtonsVisible, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261020-i18n2";
@@ -1409,6 +1410,7 @@ export function initRankings(host) {
 
   let lastPointer = "mouse";
   let tipBin = -1;
+  let distTipOpened = () => {}; // set below (tip-dismiss.mjs, owner t642u–t644u)
 
   function showTip(ev, b, h, col, bi = -1) {
     const tip = $("distTip");
@@ -1416,6 +1418,7 @@ export function initRankings(host) {
     const range = binRangeText(b, h, col);
     const touch = lastPointer === "touch" || lastPointer === "pen" || ev.pointerType === "touch" || ev.pointerType === "pen";
     tipBin = bi;
+    distTipOpened();
     const from = b.kind === "under" ? -Infinity : b.x0;
     const top = b.kind === "under" ? 100 : shareAtOrAbove(h.sorted, from);
     tip.innerHTML =
@@ -1504,6 +1507,7 @@ export function initRankings(host) {
     const n = findMeName();
     b.hidden = !n;
     b.dataset.name = n;
+    if (b.parentElement) b.parentElement.classList.toggle("has-find-me", !!n); // room for 👤 only while it shows (t646u)
   }
   if ($("ranksFindMe")) $("ranksFindMe").addEventListener("click", (e) => {
     e.preventDefault();
@@ -1513,7 +1517,9 @@ export function initRankings(host) {
     i.value = n;
     syncFindMe();
     applyFilter(); // filter now (no typing pause)
-    i.focus({ preventScroll: true });
+    // Owner t645u: no focus — the phone keyboard must not open; drop focus from the input / button.
+    const act = document.activeElement;
+    if (act && (act === i || act === e.currentTarget) && act.blur) act.blur();
   });
   $("ranksSearch").addEventListener("input", (e) => {
     syncFindMe();
@@ -1767,9 +1773,9 @@ export function initRankings(host) {
       if (w !== lastDistW) { lastDistW = w; drawDist(); }
     }, 120);
   });
-  document.addEventListener("pointerdown", (e) => {
-    if (!e.target.closest || !e.target.closest("#distChart")) hideTip();
-  });
+  // Owner t642u–t644u: the bar tip closes on a tap outside the chart (as before) and
+  // now also at once on any scroll / wheel / finger drag / tab to the background (tip-dismiss.mjs).
+  distTipOpened = watchDismiss(() => !$("distTip").hidden, hideTip, { inside: (t) => !!(t && t.closest && t.closest("#distChart")) });
 
   /* ---------- ⬆ / ⬇ quick jumps (shared module jump-btns.mjs) ----------
    * The rankings list scrolls inside its own box (sticky header / columns), and
