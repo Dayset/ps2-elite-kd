@@ -7,9 +7,9 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-export const LIVE_JS = "live.mjs?v=20261024-trac1";
+export const LIVE_JS = "live.mjs?v=20261025-trend1";
 /** #66: the live page's own CSS (moved out of styles.css), loaded right after styles.css. */
-export const LIVE_CSS = "live.css?v=20261024-live-css2";
+export const LIVE_CSS = "live.css?v=20261025-trend1";
 
 export function buildLive(index) {
   const swaps = [
@@ -18,7 +18,7 @@ export function buildLive(index) {
     ['<body class="main-page">', '<body class="main-page live-mode">'],
     ['id="liveBtn" type="button" class="live-btn" aria-pressed="false" title="🎥 Live: follow the first name\'s kills and deaths as they happen" data-i18n-title="live.title"',
       'id="liveBtn" type="button" class="live-btn" aria-pressed="true" title="🎥 Live is on: click to turn it off and edit names" data-i18n-title="live.titleOn"'],
-    ['<div id="status"></div>', '<div id="status"></div>\n\n  <section id="liveFeed" class="live-feed" aria-label="Live kills and deaths" aria-live="polite">\n    <div id="liveState" class="live-state">Connecting…</div>\n    <table id="liveList" class="live-table"></table>\n  </section>'],
+    ['<div id="status"></div>', '<div id="status"></div>\n\n  <section id="liveFeed" class="live-feed" aria-label="Live kills and deaths" aria-live="polite">\n    <div id="liveState" class="live-state">Connecting…</div>\n    <table id="liveList" class="live-table"></table>\n    <div id="liveTrends" class="live-trends" hidden>\n      <div id="liveTrendTitle" class="live-trend-title"></div>\n      <canvas id="liveTrendCanvas" class="live-trend-canvas"></canvas>\n      <div id="liveTrendLegend" class="live-trend-legend"></div>\n    </div>\n  </section>'],
   ];
   swaps.push([/(<link rel="stylesheet" href="styles\.css\?v=[^"]*" \/>)/, `$1\n  <link rel="stylesheet" href="${LIVE_CSS}" />`]);
   let out = index;

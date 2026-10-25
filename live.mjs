@@ -27,6 +27,7 @@ import { traitPools, zergScore } from "./trait-scores.mjs?v=20261024-crowd1";
 import { zergEstimate } from "./zerg-revive.mjs?v=20261024-crowd1";
 import { infMedian, tractorCuts, TRACTOR_EMOJI } from "./tractor.mjs?v=20261024-trac1";
 import { drawEmojiSprite, spriteCss } from "./live-sprites.mjs?v=20261024-beat1";
+import { trendSeries, trendColors, drawTrends as paintTrends } from "./live-trends.mjs?v=20261025-trend1";
 
 const CENSUS = `https://census.daybreakgames.com/s:${CENSUS_SERVICE_ID}/get/ps2:v2/`;
 const STREAM = `wss://push.planetside2.com/streaming?environment=ps2&service-id=s:${CENSUS_SERVICE_ID}`;
@@ -448,6 +449,36 @@ function start() {
 
   // Owner t546u: no skill graph in Live any more (it stays on the main page).
 
+  // Owner 2026-10-25: Honu-style session trends below the feed — one combined
+  // chart (KPM + K/D, one colour per metric, trend dashed). The overlay keeps
+  // only 6 victim lines, so the chart keeps its own history: every kill/death
+  // timestamp since tracking started (the stream subscribe, kept across
+  // reconnects). Redrawn on every event and every 30 s, so an idle stretch
+  // falls to 0 on the interval line instead of freezing the chart.
+  const trendEl = $("liveTrends"), trendCanvas = $("liveTrendCanvas"), trendLegend = $("liveTrendLegend");
+  let trendStart = 0;
+  const trendKills = [], trendDeaths = [];
+  if ($("liveTrendTitle")) $("liveTrendTitle").textContent = tr("live.trends", "Trends");
+  if (trendLegend) {
+    const item = (cls, key, fallback) => `<span class="lv-tl ${cls}"><i></i>${esc(tr(key, fallback))}</span>`;
+    trendLegend.innerHTML =
+      item("lv-tl-kpm", "live.trendKpmInt", "KPM interval") + item("lv-tl-kpm lv-tl-dash", "live.trendKpmTrend", "KPM trend") +
+      item("lv-tl-kd", "live.trendKdInt", "K/D interval") + item("lv-tl-kd lv-tl-dash", "live.trendKdTrend", "K/D trend");
+  }
+  function drawTrends() {
+    if (!trendEl || !trendCanvas) return;
+    if (!trendStart) { trendEl.hidden = true; return; }
+    const s = trendSeries(trendKills, trendDeaths, trendStart, Date.now());
+    const any = s.kpmInt.length || s.kpmTrend.length || s.kdInt.length || s.kdTrend.length;
+    trendEl.hidden = !any;
+    if (!any) return;
+    const colors = trendColors(document.documentElement.getAttribute("data-theme") === "light");
+    for (const el of trendLegend.querySelectorAll(".lv-tl-kpm")) el.style.color = colors.kpm;
+    for (const el of trendLegend.querySelectorAll(".lv-tl-kd")) el.style.color = colors.kd;
+    paintTrends(trendCanvas, s, colors);
+  }
+  setInterval(drawTrends, 30000);
+
   // #32: uncached opponents → full Census fetch in the background, one at a time.
   let bgQueue = []; // cids, newest first
   const bgTried = new Set();
@@ -552,8 +583,11 @@ function start() {
   const onEvent = (ev) => { evChain = evChain.then(() => onEventNow(ev), () => onEventNow(ev)); };
   async function onEventNow(ev) {
     const p = await person(ev.opp);
+    if (!trendStart) trendStart = ev.at || Date.now();
+    if (ev.kind === "kill") trendKills.push(ev.at || Date.now()); else trendDeaths.push(ev.at || Date.now());
     st = overlayPush(st, ev);
     render();
+    drawTrends();
     if (!p.cached && !bgTried.has(ev.opp)) { bgQueue = [ev.opp, ...bgQueue.filter((c) => c !== ev.opp)]; bgPump(); }
   }
 
@@ -564,8 +598,10 @@ function start() {
     ws.onopen = () => {
       backoff = 2000;
       ws.send(JSON.stringify({ service: "event", action: "subscribe", characters: [me.cid], eventNames: ["Death"] }));
+      if (!trendStart) trendStart = Date.now(); // the trends session starts when tracking starts, not on reconnect
       setState(`<span class="live-dot">●</span> waiting for kills and deaths…`, "on");
       render();
+      drawTrends();
     };
     ws.onmessage = (m) => {
       let j; try { j = JSON.parse(m.data); } catch { return; }
