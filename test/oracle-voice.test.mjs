@@ -10,7 +10,8 @@ test("spoken order (owner t652u wording): Defend / Attack / Go / Prepare / Spoil
   assert.equal(sayText("NC", { quiet: true, focus: null }), "Hold your lanes.");
   assert.equal(sayText("NC", { focus: { kind: "take", bases: ["Roothouse Distillery"], target: "TR", cuts: ["Johari Cove"], now: 7.8, then: 100 } }),
     "Attack Roothouse Distillery, cuts 1, plus 92.");
-  assert.equal(sayText("NC", { focus: { kind: "plan", bases: ["A", "B"], target: "TR", cuts: [], now: 10, then: 30 } }), "Attack A, then B, plus 20.");
+  assert.equal(sayText("NC", { focus: { kind: "plan", bases: ["A", "B"], target: "TR", cuts: [], now: 10, then: 30 } }), "Attack A and B, plus 20.");
+  assert.equal(sayText("NC", { focus: { kind: "plan", bases: ["A", "B"], target: "TR", cuts: ["c"], now: 10, then: 30 } }), "Attack A and B, cuts 1, plus 20.");
   assert.equal(sayText("NC", { focus: { kind: "push", bases: ["Edgewater Overlook"], target: "VS", cuts: [], now: 100, then: 100, heat: 46 } }), "Go Edgewater Overlook, the fight is there.");
   assert.equal(sayText("NC", { focus: { kind: "guard", bases: ["Hurakan"], target: "VS", cuts: [] } }), "Prepare Hurakan, likely next target.");
   assert.equal(sayText("VS", { focus: { kind: "spoil", bases: ["The Crown"], target: "TR", cuts: [] } }), "Spoil TR: take The Crown.");

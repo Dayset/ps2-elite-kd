@@ -265,6 +265,6 @@ function describe(f, c) {
   const cut = c.cuts.length ? ` — cuts off ${c.cuts.length} ${c.kind === "hold" ? "of ours" : "enemy"} base${c.cuts.length > 1 ? "s" : ""} (${list(c.cuts)})` : "";
   const rec = c.reconnects.length ? ` — reconnects ${c.reconnects.length} cut-off base${c.reconnects.length > 1 ? "s" : ""}` : "";
   if (c.kind === "hold") return `Hold ${c.bases[0]} against ${c.target}${c.cuts.length ? ` — losing it cuts off ${c.cuts.length} of ours (${list(c.cuts)})` : ""}`;
-  if (c.kind === "plan") return `Take ${c.bases[0]}, then ${c.bases[1]}${cut}${rec}`;
+  if (c.kind === "plan") return `Take ${c.bases[0]} and ${c.bases[1]}${cut}${rec}`; // "and", not "then": pick either (owner t654u)
   return `Take ${c.bases[0]} from ${c.target}${cut}${rec}`;
 }

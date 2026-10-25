@@ -47,6 +47,7 @@ test("with time left, a two-capture plan that sets up the cut beats its first st
   assert.equal(p.NC.focus.kind, "plan", JSON.stringify(p.NC.focus));
   assert.deepEqual(p.NC.focus.bases, ["Hurakan Western Pass", "Roothouse Distillery"]);
   assert.ok(p.NC.focus.then > p.NC.focus.now + 10);
+  assert.match(p.NC.focus.text, /^Take Hurakan Western Pass and Roothouse Distillery\b/, "\"and\", not \"then\" (owner t654u)");
   const sets = [p.NC.focus, ...p.NC.backups].filter((x) => x.kind === "plan").map((x) => [...x.bases].sort().join("+"));
   assert.equal(new Set(sets).size, sets.length, "A-then-B and B-then-A shown once");
 });

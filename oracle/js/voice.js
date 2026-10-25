@@ -154,7 +154,7 @@ export function sayText(f, p, race = null, pockets = null) { // eslint-disable-l
   const x = p.focus, d = Math.round(Math.abs((x.then ?? 0) - (x.now ?? 0)));
   const n = (x.cuts || []).length, cut = n ? `, cuts ${n}` : "";
   if (x.kind === "hold") return `Defend ${x.bases[0]} or minus ${d}${cut}.${st}`;
-  if (x.kind === "plan") return `Attack ${x.bases[0]}, then ${x.bases[1]}${cut}, plus ${d}.${st}`;
+  if (x.kind === "plan") return `Attack ${x.bases[0]} and ${x.bases[1]}${cut}, plus ${d}.${st}`; // "and": either one (owner t654u)
   if (x.kind === "push") return `Go ${x.bases[0]}, the fight is there.${st}`;
   if (x.kind === "guard") return `Prepare ${x.bases[0]}, likely next target.${st}`;
   if (x.kind === "spoil") return `Spoil ${x.target}: take ${x.bases[0]}${cut}.${st}`;
