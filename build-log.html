@@ -680,6 +680,8 @@
     import { forensicsRuleText } from "./session-forensics.mjs?v=20261010-sav1";
     import { reviewDecision, CLEARING_DECISIONS, PADDING_BORDERLINE_SHARE, ADJUSTED_BORDERLINE_SHARE } from "./padding.mjs?v=20261023-short1";
     import { honuProfileUrl as honu } from "./analyze-run.mjs?v=20261023-priv1";
+    import { isConfirmedCheater as isOOR, OOR_TAG, OOR_TIP } from "./hidden.mjs?v=20261025-oor1";
+    const oorTag = () => '<span class="st-dim" title="' + OOR_TIP + '"><strong>' + OOR_TAG + "</strong></span> ";
     import "./name-peek.mjs?v=20261020-peekwin1"; // full-name popup for truncated .nm names
     import { radarProfileUrl, radarBadge, radarPriority } from "./radar.mjs?v=20261010-sav1";
 
@@ -971,7 +973,7 @@
       const rows = players.slice().sort((a, b) => radarUp(b.slug) - radarUp(a.slug)).map((p) => {
         const w = p.worst;
         const tag = p.flagged ? '<span class="st-tag hot">🚩</span> ' : p.odd ? '<span class="st-tag">📉 review</span> ' : "";
-        const who = esc(p.name) + (p.confirmedCheater ? ' <span class="st-dim" title="On the 🙈 hide list: excluded after review">(excluded)</span>' : "") + radarCell(p.slug);
+        const who = esc(p.name) + (p.confirmedCheater ? " " + oorTag() : "") + radarCell(p.slug);
         if (!w) return "<tr><td>" + who + '</td><td colspan="5" class="st-dim">No Honu sessions with 30+ kills · checked ' + esc(p.checkedAt ? ago(Date.parse(p.checkedAt)) : "—") + "</td></tr>";
         const weap = (w.weapons || []).map((x) => esc(x.name) + ' <span class="st-dim">' + x.kills + " (" + pct(x.share) + ", max " + x.max1s + "/s)</span>").join("<br>");
         const v = w.victims || {};
@@ -1081,12 +1083,12 @@
       const key = (s) => String(s || "").trim().toLowerCase().replace(/^\[.*?\]\s*/, "").replace(/[^a-z0-9]+/g, "");
       const rows = Object.entries(list).map(([k, v]) => {
         const m = matched.find((x) => x.matched && (x.cid === k || x.slug === key(k)));
-        return { name: (m && m.name) || k, slug: (m && m.slug) || "", cid: (m && m.cid) || (/^\d{5,25}$/.test(k) ? k : ""), reason: (v && v.reason) || "", at: (v && v.at) || "", cached: !!m };
+        return { name: (m && m.name) || k, slug: (m && m.slug) || "", cid: (m && m.cid) || (/^\d{5,25}$/.test(k) ? k : ""), reason: (v && v.reason) || "", at: (v && v.at) || "", cached: !!m, oor: isOOR(v) };
       });
       $("hiddenCount").textContent = String(rows.length);
       let html = rows.length
         ? '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th>Reason</th><th>Since</th><th></th></tr>' +
-          rows.map((r) => "<tr><td>" + nameCell(r) + radarCell(r.slug, r.cid) + "</td><td>" + esc(r.reason) + "</td><td>" + esc(r.at) + "</td><td>" +
+          rows.map((r) => "<tr><td>" + nameCell(r) + radarCell(r.slug, r.cid) + "</td><td>" + (r.oor ? oorTag() : "") + esc(r.reason) + "</td><td>" + esc(r.at) + "</td><td>" +
             (r.cached ? "" : '<span class="st-dim" title="Not matched in ranks.json build yet (not cached, or the next refresh will pick it up)">not matched yet</span>') + "</td></tr>").join("") +
           "</table></div>"
         : '<div class="st-dim">Nobody hidden.</div>';
@@ -1393,8 +1395,8 @@
       // cheater, already hidden) leave this list — only "needs a look" stays.
       const items = ((b && b.items) || []).filter((i) => !(i.rampage || i.hidden || i.cleared || i.status === "cleared" || i.status === "cheater"));
       const when = (ms) => (ms ? new Date(ms).toLocaleString([], { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "—");
-      const badge = (i) => i.rampage ? '<span class="st-dim" title="Flagged: impossible stats (rampage gate), hidden from Rankings">🚨 rampage gate</span>' : i.status === "cleared" ? '<span title="' + esc(i.reason || "") + '">✅ cleared</span>'
-        : i.status === "cheater" ? '<span class="st-dim" title="' + esc(i.reason || "") + '">excluded after review</span>'
+      const badge = (i) => i.rampage ? '<span class="st-dim" title="Flagged: impossible stats (rampage gate), hidden from Rankings">' + oorTag() + '🚨 rampage gate</span>' : i.status === "cleared" ? '<span title="' + esc(i.reason || "") + '">✅ cleared</span>'
+        : i.status === "cheater" ? oorTag() + '<span class="st-dim" title="' + esc(i.reason || "") + '">excluded after review</span>'
         : i.hidden ? '<span class="st-dim">🙈 already hidden</span>' : '<span class="st-err">needs a look</span>';
       $("burstCount").textContent = b ? String(b.flaggedPlayers) : "?";
       $("burstCount").classList.toggle("hot", !!(b && b.flaggedPlayers));
@@ -1418,7 +1420,7 @@
         // Human review wins: players cleared in data/reviewed.json ("burst": "cleared") are solved, not listed here.
         let rv = reviewed;
         if (!rv) try { rv = await (await fetch("data/reviewed.json?t=" + Date.now(), { cache: "no-store" })).json(); } catch { rv = null; }
-        const cleared = (n) => { const e = rv && rv.players && rv.players[String(n || "").toLowerCase()]; return !!e && e.burst === "cleared"; };
+        const cleared = (n) => { const e = rv && rv.players && rv.players[String(n || "").toLowerCase()]; return !!e && (e.burst === "cleared" || e.burst === "excluded"); };
         let solved = 0;
         for (const a of keys) {
           const j = await (await fetch(API + "/alert?key=" + encodeURIComponent(a.key), { cache: "no-store" })).json();
@@ -1429,7 +1431,7 @@
             rows.map(({ a, o }) => "<tr><td>" + esc(o.name || o.cid) + (o.outfit ? ' <span class="st-dim">[' + esc(o.outfit) + "]</span>" : "") + "</td><td>" + o.kills + "</td><td>" + o.minutes + "</td><td>" + o.kpm +
               "</td><td>" + esc(a.world_name + " · " + a.zone_name) + '</td><td><a href="https://wt.honu.pw/c/' + encodeURIComponent(o.cid) + '" target="_blank" rel="noopener noreferrer">Honu</a></td></tr>').join("") + "</table></div>"
           : "No burst-tier players in the oracle's alert reports this week.";
-        if (solved) $("burstOracle").insertAdjacentHTML("beforeend", '<p class="st-dim">' + solved + " owner-cleared (data/reviewed.json) not shown.</p>");
+        if (solved) $("burstOracle").insertAdjacentHTML("beforeend", '<p class="st-dim">' + solved + " owner-reviewed (data/reviewed.json: cleared or OOR) not shown.</p>");
       } catch { $("burstOracle").textContent = "Oracle not reachable right now."; burstOracleAt = 0; }
     }
 

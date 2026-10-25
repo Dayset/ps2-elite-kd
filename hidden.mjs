@@ -53,6 +53,10 @@ export function hiddenList(json) {
  */
 export const HIDE_KINDS = Object.freeze({ excluded: "excluded after review", flagged: "flagged: impossible stats" });
 
+/** Short tag (t637) for reviewed / rule-matched exclusions; "OOR" in every language, tip in i18n "oor.tip". */
+export const OOR_TAG = "OOR";
+export const OOR_TIP = "OOR: stats out of the possible range, excluded after review";
+
 /** True when a hide-list entry is a reviewed or rule-matched exclusion (was "confirmed cheater"; t323u). */
 export function isConfirmedCheater(hit) {
   if (!hit) return false;
