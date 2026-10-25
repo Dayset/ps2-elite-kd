@@ -4,8 +4,8 @@ import { get } from "./api.js?v=20261018-scrub2";
 import { drawMap, highlightBase, recolorMap } from "./map.js?v=20261024-i18n1";
 import { chart, chartHover } from "./chart.js?v=20261024-i18n1";
 import { lockCard, lockTick } from "./lock.js?v=20261024-i18n1";
-import { commander, commanderIdle } from "./commander.js?v=20261025-gear1";
-import { voiceToggle, voiceTick, bindVoiceMenu } from "./voice.js?v=20261025-gear1";
+import { commander, commanderIdle } from "./commander.js?v=20261025-gap1";
+import { voiceToggle, voiceTick, bindVoiceMenu } from "./voice.js?v=20261025-gap1";
 import { reportPanel } from "./players.js?v=20261024-i18n1";
 import { benchPanel, initResults, refreshHistory, renderHist } from "./results.js?v=20261024-i18n1";
 import { initAuth } from "./auth.js?v=20261024-i18n1";
@@ -205,8 +205,8 @@ function render2(now) {
   $("main").querySelectorAll("[data-cf]").forEach((b) => b.onclick = () => { S.cmdFac = b.dataset.cf; render(Math.floor(Date.now() / 1000)); });
   // 🔊 Commander voice (#65): speaks the followed faction's top order when it changes.
   const cmdNow = a.status === "live" ? (a.commander || (s && s.commander)) : null;
-  $("main").querySelectorAll("[data-voice]").forEach((b) => b.onclick = () => { voiceToggle(b.dataset.voice, cmdNow && cmdNow.focus, win, cmdNow && cmdNow.pockets); render(Math.floor(Date.now() / 1000)); });
-  if (cmdNow) voiceTick(cmdNow.focus, undefined, false, undefined, win, cmdNow.pockets);
+  $("main").querySelectorAll("[data-voice]").forEach((b) => b.onclick = () => { voiceToggle(b.dataset.voice, cmdNow && cmdNow.focus, s, cmdNow && cmdNow.pockets); render(Math.floor(Date.now() / 1000)); });
+  if (cmdNow) voiceTick(cmdNow.focus, undefined, false, undefined, s, cmdNow.pockets); // s: territory + 15-min change for the gap ending (owner t652u)
   bindVoiceMenu($("main")); // ⚙️ voice list (owner t650u), replaces the always-visible dropdown
   $("mini").innerHTML = `<b>${esc(a.world_name)} · ${esc(a.zone_name)}</b>${win ? `<span>${FACS.map((f) => `<span class="${f}">${f} ${pct1(win[f].pct)}%</span>`).join(" ")}</span>` : ""}`;
   miniSync();

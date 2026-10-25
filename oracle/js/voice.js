@@ -103,38 +103,67 @@ export function setVoice(name) { V.voice = name; save(); speak("Voice set."); }
 export const voiceSupported = () => typeof window !== "undefined" && "speechSynthesis" in window && typeof SpeechSynthesisUtterance !== "undefined";
 export const voiceState = () => ({ on: V.on, fac: V.fac });
 
-const ORD = ["1st", "2nd", "3rd"];
-/** "32% 1st place": our win chance and rank among the three (header odds). */
-function standing(f, win) {
-  const pct = (g) => (win && win[g] ? +(win[g].pct ?? win[g]) : NaN);
-  if (!Number.isFinite(pct(f))) return "";
-  const rank = ["VS", "NC", "TR"].filter((g) => g !== f && pct(g) > pct(f)).length;
-  return ` ${Math.round(pct(f))}% ${ORD[rank]} place.`;
+/*
+ * Ending: the gap to the faction we race (owner t652u), in minutes of the current
+ * territory swing, or in percent when minutes can't be measured or the race is tight.
+ *   1st vs 2nd: "Lead 15 minutes."          2nd vs 1st / 3rd vs 2nd: "Second, 15 minutes difference."
+ *   tight:      "First. Pay attention! Only plus 2 percent difference."
+ * Data: Worker state.territory (share %) and state.momentum (share change over the last
+ * 15 min, engine.js). minutes = gap / (|change of the gap over 15 min| / 15).
+ * Thresholds measured 2026-10-25 on the Worker's own minute ticks (/history + /alert,
+ * 73 alerts, 12,369 faction-pair minutes):
+ *  - GAP_TIGHT 4: under 4 points apart the order of the two flips within 5 minutes in
+ *    26-48 % of cases (3-4 pts: 26 %, 4-5 pts: 17 %, 5-7 pts: 10 %).
+ *  - SWING_MIN 1: a 15-min gap change under 1 point is not a capture (the smallest real
+ *    steps are 1.0-1.2 points, one base; 0.1-0.6 are rounding), so no minutes then.
+ *    Check: "under 15 minutes" calls on a closing gap flipped within 15 min in 42-56 % of
+ *    cases, 15-30 min ones in 17 %, longer ones in about 10 %.
+ */
+export const GAP_TIGHT = 4, SWING_MIN = 1;
+const PLACE = ["First", "Second", "Third"];
+const FACS3 = ["VS", "NC", "TR"];
+const roundMin = (m) => (m < 10 ? Math.max(1, Math.round(m)) : m < 60 ? Math.round(m / 5) * 5 : Math.round(m / 10) * 10);
+const pctWord = (d) => (d < 1 ? (Math.round(d * 10) / 10).toString() : String(Math.round(d)));
+export function gapEnding(f, race) {
+  const terr = race && race.territory, mom = (race && race.momentum) || {};
+  if (!terr || !FACS3.every((g) => Number.isFinite(+terr[g]))) return "";
+  const order = [...FACS3].sort((a, b) => terr[b] - terr[a] || (a === f ? -1 : b === f ? 1 : 0));
+  const place = order.indexOf(f);
+  if (place < 0) return "";
+  const rival = place === 0 ? order[1] : order[place - 1];
+  const gap = Math.abs(terr[f] - terr[rival]);
+  const swing = Math.abs((+mom[f] || 0) - (+mom[rival] || 0));
+  const sign = place === 0 ? "plus" : "minus";
+  if (gap < GAP_TIGHT) return ` ${PLACE[place]}. Pay attention! Only ${sign} ${pctWord(gap)} percent difference.`;
+  if (swing < SWING_MIN) return place === 0 ? ` First, ${sign} ${pctWord(gap)} percent difference.` : ` ${PLACE[place]}, ${sign} ${pctWord(gap)} percent difference.`;
+  const m = roundMin(gap / (swing / 15)), mins = `${m} minute${m === 1 ? "" : "s"}`;
+  return place === 0 ? ` Lead ${mins}.` : ` ${PLACE[place]}, ${mins} difference.`;
 }
 
 /**
- * Focus entry (Worker focus.js) -> spoken order, battlefield short (owner 2026-10-24):
- * no faction name (you follow your own), base, what it's worth, then our standing.
- *   "Hold Heyoka or 5% lost. 32% 1st place."   "Hold your lanes. 32% 1st place."
+ * Focus entry (Worker focus.js) -> spoken order, battlefield short (owner t652u wording):
+ * no faction name (you follow your own), base, what it's worth, then the gap ending.
+ *   "Defend Heyoka or minus 5. Lead 15 minutes."   "Hold your lanes. Second, 10 minutes difference."
+ * race = Worker state ({territory, momentum}). Pockets are not spoken for now (owner t652u);
+ * the pockets argument is kept so callers don't change.
  */
-export function sayText(f, p, win = null, pockets = null) {
+export function sayText(f, p, race = null, pockets = null) { // eslint-disable-line no-unused-vars
   if (!p) return null;
-  // 🥶 our worst pocket, unless the order is already to hold its chokepoint.
-  const pk = (pockets || [])[0], fb = p.focus && p.focus.bases && p.focus.bases[0];
-  const st = standing(f, win) + (pk && !(p.focus && p.focus.kind === "hold" && fb === pk.chokepoint) ? ` Pocket: hold ${pk.chokepoint}.` : "");
+  const st = gapEnding(f, race);
   if (p.quiet || !p.focus) return `Hold your lanes.${st}`;
   const x = p.focus, d = Math.round(Math.abs((x.then ?? 0) - (x.now ?? 0)));
   const n = (x.cuts || []).length, cut = n ? `, cuts ${n}` : "";
-  if (x.kind === "hold") return pk && fb === pk.chokepoint ? `Hold ${x.bases[0]}, pocket of ${pk.n} behind it, or ${d}% lost.${st}` : `Hold ${x.bases[0]} or ${d}% lost${cut}.${st}`;
-  if (x.kind === "plan") return `Take ${x.bases[0]}, then ${x.bases[1]}${cut}, plus ${d}%.${st}`;
-  if (x.kind === "push") return `Push ${x.bases[0]}, the fight is there.${st}`;
-  if (x.kind === "guard") return `Guard ${x.bases[0]}, likely hit next.${st}`;
+  if (x.kind === "hold") return `Defend ${x.bases[0]} or minus ${d}${cut}.${st}`;
+  if (x.kind === "plan") return `Attack ${x.bases[0]}, then ${x.bases[1]}${cut}, plus ${d}.${st}`;
+  if (x.kind === "push") return `Go ${x.bases[0]}, the fight is there.${st}`;
+  if (x.kind === "guard") return `Prepare ${x.bases[0]}, likely next target.${st}`;
   if (x.kind === "spoil") return `Spoil ${x.target}: take ${x.bases[0]}${cut}.${st}`;
-  return `Take ${x.bases[0]}${cut}, plus ${d}%.${st}`;
+  return `Attack ${x.bases[0]}${cut}, plus ${d}.${st}`;
 }
 
 /** Same order = same kind and bases (odds wobbling doesn't re-announce). */
-export const orderKey = (f, p, pockets = null) => (!p ? null : (p.quiet || !p.focus ? `${f}|quiet` : `${f}|${p.focus.kind}|${p.focus.bases.join("+")}|${p.focus.target}`) + `|${((pockets || [])[0] || {}).chokepoint || ""}`);
+// Pockets aren't spoken for now (owner t652u), so a pocket change doesn't re-announce.
+export const orderKey = (f, p, pockets = null) => (!p ? null : (p.quiet || !p.focus ? `${f}|quiet` : `${f}|${p.focus.kind}|${p.focus.bases.join("+")}|${p.focus.target}`)); // eslint-disable-line no-unused-vars
 
 function speak(text) {
   if (!voiceSupported() || !text) return;
@@ -156,22 +185,22 @@ export function voiceButton(f) {
 }
 
 /** Click on a faction's speaker (a click, so the browser allows speech): follow it, or stop. */
-export function voiceToggle(f, focus, win = null, pocketsAll = null) {
+export function voiceToggle(f, focus, race = null, pocketsAll = null) {
   if (V.on && V.fac === f) { V.on = false; if (voiceSupported()) window.speechSynthesis.cancel(); }
   else { V.on = true; V.fac = f; V.lastKey = null; }
   save();
-  if (V.on) voiceTick(focus, f, true, undefined, win, pocketsAll);
+  if (V.on) voiceTick(focus, f, true, undefined, race, pocketsAll);
 }
 
 /** Called after every render with the alert's focus map ({VS:{focus,...}}). */
-export function voiceTick(focus, fac = V.fac, force = false, nowS = Date.now() / 1000, win = null, pocketsAll = null) {
+export function voiceTick(focus, fac = V.fac, force = false, nowS = Date.now() / 1000, race = null, pocketsAll = null) {
   if (!V.on || !fac || !focus) return null;
   const p = focus[fac];
   const pockets = pocketsAll && pocketsAll[fac];
   const k = orderKey(fac, p, pockets);
   if (!k) return null;
   if (!force && k === V.lastKey && nowS - V.lastTs < REMIND_S) return null;
-  const text = sayText(fac, p, win, pockets);
+  const text = sayText(fac, p, race, pockets);
   V.lastKey = k; V.lastTs = nowS;
   speak(text);
   return text;
