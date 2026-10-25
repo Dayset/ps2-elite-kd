@@ -26,11 +26,12 @@ const OPP = pick.slice(1).map((name, i) => ({ cid: String(5428000000000000100n +
 // A real sub-0 player from the cache (typical of the bottom quartile, not the extreme tail).
 const sub0row = ranks.rows.find((r) => { const a = r[ci("adjs")]; return typeof a === "number" && a < -100 && a > -600; });
 const SUB0 = { cid: "5428000000000000200", name: sub0row[ci("name")] };
+const TEAM = { cid: "5428000000000000999", name: "TeamMate" }; // same faction as ME (stub returns "1" for it)
 
 /** Page-side fakes: Census REST (character lookups) and the push stream (window.__fakeWs.emit(payload)). */
 const FAKES = `(() => {
-  const ME = ${JSON.stringify(ME)}, OPP = ${JSON.stringify(OPP)}, SUB0 = ${JSON.stringify(SUB0)};
-  const byCid = new Map([[ME.cid, ME], [SUB0.cid, SUB0], ...OPP.map((o) => [o.cid, o])]);
+  const ME = ${JSON.stringify(ME)}, OPP = ${JSON.stringify(OPP)}, SUB0 = ${JSON.stringify(SUB0)}, TEAM = ${JSON.stringify(TEAM)};
+  const byCid = new Map([[ME.cid, ME], [SUB0.cid, SUB0], [TEAM.cid, TEAM], ...OPP.map((o) => [o.cid, o])]);
   const json = (o) => new Response(JSON.stringify(o), { status: 200, headers: { "content-type": "application/json" } });
   const realFetch = window.fetch.bind(window);
   window.fetch = (input, init) => {
@@ -38,7 +39,7 @@ const FAKES = `(() => {
     if (u.includes("census.daybreakgames.com")) {
       if (/character\\?name\\.first_lower=/.test(u)) return Promise.resolve(json({ returned: 1, character_list: [{ character_id: ME.cid, name: { first: ME.name }, faction_id: "1" }] }));
       const m = u.match(/character_id=(\\d+)/);
-      if (m && byCid.has(m[1])) { const p = byCid.get(m[1]); return Promise.resolve(json({ returned: 1, character_list: [{ character_id: p.cid, name: { first: p.name }, faction_id: "2" }] })); }
+      if (m && byCid.has(m[1])) { const p = byCid.get(m[1]); return Promise.resolve(json({ returned: 1, character_list: [{ character_id: p.cid, name: { first: p.name }, faction_id: p.cid === TEAM.cid ? "1" : "2" }] })); }
       return Promise.resolve(json({ returned: 0, character_list: [] }));
     }
     if (/workers\\.dev|honu|ps2radar/.test(u)) return Promise.resolve(new Response("", { status: 404 }));
@@ -246,6 +247,24 @@ describe("🎥 live.html in a browser", () => {
       assert.ok(s.nmW > 160, `the name column takes the leftover (was 140 at the old 8.78rem): ${Math.round(s.nmW)}`);
       assert.deepEqual(errors, [], "no page errors");
     }, { width: 390, height: 844 });
+  });
+
+  it("teamkill (owner 2026-10-25): own-faction kills farm nothing, own-faction deaths still spend bounty", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      const slotsAre = async (total, filled, why) => assert.equal(await ev(until(`(() => { const w = document.querySelector("#liveList tbody.lv-me .lv-wn"); if (!w) return false; const all = w.querySelectorAll(".lv-bh"); return all.length === ${total} && [...all].filter((b) => !b.classList.contains("lv-bh-empty")).length === ${filled}; })()`)), true, why);
+      const bountyIs = async (t, why) => assert.equal(await ev(until(`document.querySelector("#liveList tbody.lv-me .lv-wn").textContent === ${JSON.stringify(t)}`)), true, why);
+      await ev(`window.__fakeWs.emit(${death(ME.cid, TEAM.cid, "80", false)})`);
+      assert.equal(await ev(until(`document.getElementById("liveOnline").dataset.state === "online"`)), true, "the teamkill was processed (pill online)");
+      assert.equal(await ev(`document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)").length`), 0, "a teamkill leaves no victim row");
+      assert.equal(await ev(`document.getElementById("liveDpsVal").textContent`), "0.0", "a teamkill adds no DPM");
+      await slotsAre(7, 0, "a teamkill fills no heart");
+      for (let i = 0; i < 7; i++) await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[i].cid, "80", false)})`);
+      await bountyIs("💰💰💰", "7 enemy kills earn three bounty marks");
+      await ev(`window.__fakeWs.emit(${death(TEAM.cid, ME.cid, "432", false)})`);
+      await bountyIs("💰💰", "a death to your own faction still spends one bounty mark");
+      assert.deepEqual(errors, [], "no page errors");
+    });
   });
 
   it("cash-out (owner 2026-10-25): victims' iVi summed + averaged next to DPM, live on the tick", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {

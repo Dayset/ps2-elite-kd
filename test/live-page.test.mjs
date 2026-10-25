@@ -644,6 +644,11 @@ test("iz cell (owner 2026-10-25): infantry/zerg aligned left", () => {
   assert.match(css, /\.lv-iz \{[^}]*text-align: left;/);
 });
 
+test("teamkill (owner 2026-10-25): own-faction kills farm nothing, own-faction deaths still count", () => {
+  const js = liveSrc();
+  assert.match(js, /if \(ev\.kind === "kill" && p\.faction && me && me\.faction && p\.faction === me\.faction\) return;/);
+});
+
 test("bounty (owner 2026-10-25): hearts on the centre line's second row, 💰💰💰 at 7, one removed per death", () => {
   const js = liveSrc();
   const css = cssSrc();

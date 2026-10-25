@@ -670,6 +670,11 @@ function start() {
   async function onEventNow(ev) {
     setOnline("online"); // any Death involving them means they are playing right now
     const p = await person(ev.opp);
+    // Owner 2026-10-25: a kill on your own faction is a teamkill, not a kill — it farms nothing: no DPM, no hearts,
+    // no cash, no feed row (the NC infinite-DPM bug: teamkills counted as kills). Unknown faction (failed lookup)
+    // still counts as a kill — only a PROVEN same faction is skipped. A death TO your own faction still counts as
+    // a death — you died, whoever shot you — so bounties spend and the run banks as usual.
+    if (ev.kind === "kill" && p.faction && me && me.faction && p.faction === me.faction) return;
     const wasStreak = bountyStreak;
     const b = bountyNext({ streak: bountyStreak, lives: bountyLives }, ev.kind === "kill");
     bountyStreak = b.streak; bountyLives = b.lives;
