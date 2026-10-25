@@ -116,23 +116,35 @@ function start() {
       infC = j.tracCuts && Number.isFinite(j.tracCuts.cut) ? j.tracCuts.cut : tractorCuts(pools.inf, []).cut; // owner t622u: 🚜 below the build's cut
     } catch { ranks = new Map(); }
   }
+  // #76: one lookup per cid in flight. Two fast kills on the same victim share the fetch (the second must not
+  // resolve early against the pending placeholder with an unknown faction); a rejected lookup is forgotten so the
+  // next call retries. `pending` = still looking up: the name shows "…" (never a raw #id).
+  const peopleP = new Map();
   async function person(cid) {
-    if (people.has(cid)) return people.get(cid);
-    const p = { name: `#${cid}`, faction: "", kd: null, kpm: null, cached: null };
+    if (people.has(cid) && !people.get(cid).pending) return people.get(cid);
+    if (peopleP.has(cid)) return peopleP.get(cid);
+    const p = { name: `#${cid}`, faction: "", kd: null, kpm: null, cached: null, pending: true };
     people.set(cid, p);
-    try {
-      const j = await getJson(`${CENSUS}character?character_id=${cid}&c:show=character_id,name.first,faction_id&c:resolve=stat_history(stat_name,all_time)`);
-      const ch = (j.character_list || [])[0];
-      if (ch) {
-        p.name = (ch.name && ch.name.first) || p.name;
-        p.faction = FACTION[ch.faction_id] || "";
-        Object.assign(p, censusStats(ch));
-      }
-    } catch { /* keep #id */ }
-    if (!ranks) await loadRanks();
-    const c = ranks.get(slugKey(p.name));
-    if (c) p.cached = c;
-    return p;
+    const pr = (async () => {
+      try {
+        const j = await getJson(`${CENSUS}character?character_id=${cid}&c:show=character_id,name.first,faction_id&c:resolve=stat_history(stat_name,all_time)`);
+        const ch = (j.character_list || [])[0];
+        if (ch) {
+          p.name = (ch.name && ch.name.first) || p.name;
+          p.faction = FACTION[ch.faction_id] || "";
+          Object.assign(p, censusStats(ch));
+        }
+      } catch { /* keep #id */ }
+      try {
+        if (!ranks) await loadRanks();
+        const c = ranks.get(slugKey(p.name));
+        if (c) p.cached = c;
+      } finally { p.pending = false; }
+      return p;
+    })();
+    peopleP.set(cid, pr);
+    pr.catch(() => peopleP.delete(cid));
+    return pr;
   }
 
   const fmt = (v, d) => (typeof v === "number" && Number.isFinite(v) ? v.toFixed(d) : "—");
@@ -214,6 +226,7 @@ function start() {
   }
   /** Name (faction colour) + 💩; a long name is cut with … at the end. Uncached: Census K/D · KPM in the hover. */
   function nameHtml(p, tip, hs = "") {
+    if (p.pending) return `<span class="lv-pn"><span class="lv-name lv-pend"><bdi>…</bdi></span>${hs}</span>`; // #76: lookup in flight
     return `<span class="lv-pn"><span class="lv-name fac-${p.faction || ""}" title="${esc(p.name + (tip || ""))}"><bdi>${esc(p.name)}</bdi></span>${poopFor(p.name)}${hs}</span>`;
   }
   /**
@@ -699,17 +712,41 @@ function start() {
     shareSchedule();
   };
 
-  // owner t576u: events go through one queue (a slow name lookup can't reorder them) and keep their own time.
+  // #76 (snappy feed): the row lands the moment the event arrives — before any name lookup — with the event's own
+  // time. Lookups run in parallel; the ACCOUNTING (bounty, DPM, cash, run-clear, teamkill) still commits strictly
+  // in arrival order through evChain (owner t576u: a slow lookup can't reorder events).
+  // Pending rows are tracked by `seq`, stamped on the row at arrival: overlayPush/feedPush copy rows ({ ...r })
+  // when they stop the top row's timer on the next arrival, so identity breaks under rapid fire (the first kill's
+  // row was dropped by the run-clear); the spread keeps `seq`. The model never reads it.
   let evChain = Promise.resolve();
-  const onEvent = (ev) => { evChain = evChain.then(() => onEventNow(ev), () => onEventNow(ev)); };
-  async function onEventNow(ev) {
+  let evSeq = 0;
+  const pendingSeq = new Set();
+  const onEvent = (ev) => {
     setOnline("online"); // any Death involving them means they are playing right now
-    const p = await person(ev.opp);
+    const fetchP = person(ev.opp); // starts now, in parallel — never awaited here
+    fetchP.then(render, render); // the name replaces "…" as soon as ITS lookup lands, even while an older commit waits
+    st = overlayPush(st, ev);
+    const row = st.lastEv;
+    row.seq = ++evSeq;
+    pendingSeq.add(row.seq);
+    render();
+    evChain = evChain.then(() => commitEvent(ev, fetchP, row.seq), () => commitEvent(ev, fetchP, row.seq));
+  };
+  async function commitEvent(ev, fetchP, seq) {
+    let p;
+    try { p = await fetchP; } catch { p = people.get(ev.opp); if (p) p.pending = false; } // failed lookup = unknown, never a stranded "…"
+    p = p || { name: `#${ev.opp}`, faction: "", kd: null, kpm: null, cached: null };
     // Owner 2026-10-25: a kill on your own faction is a teamkill, not a kill — it farms nothing: no DPM, no hearts,
     // no cash, no feed row (the NC infinite-DPM bug: teamkills counted as kills). Unknown faction (failed lookup)
     // still counts as a kill — only a PROVEN same faction is skipped. A death TO your own faction still counts as
     // a death — you died, whoever shot you — so bounties spend and the run banks as usual.
-    if (ev.kind === "kill" && p.faction && me && me.faction && p.faction === me.faction) return;
+    // #76: its row is already on screen (arrival push) and no accounting ran for it: retract just that row.
+    if (ev.kind === "kill" && p.faction && me && me.faction && p.faction === me.faction) {
+      st = { ...st, victims: st.victims.filter((r) => r.seq !== seq) };
+      pendingSeq.delete(seq);
+      render();
+      return;
+    }
     const wasStreak = bountyStreak;
     const b = bountyNext({ streak: bountyStreak, lives: bountyLives }, ev.kind === "kill");
     bountyStreak = b.streak; bountyLives = b.lives;
@@ -721,8 +758,11 @@ function start() {
       // under a held bounty (streak 7, lives left) keep the lines.
       // Any kill also re-lights the names the death had dimmed.
       namesDim = false;
-      if (wasStreak === 0) st = { ...st, victims: [] };
-      dpsEvents.push({ t: Date.now(), dmg: DPS_HP }); cashKills.push({ cid: ev.opp, iv: cashIv(p) }); dpsTick();
+      // #76: rows still pending are strictly later arrivals (commits run in arrival order), so keeping them is
+      // exactly the old clear plus the new run's early lines.
+      if (wasStreak === 0) st = { ...st, victims: st.victims.filter((r) => r.seq === seq || pendingSeq.has(r.seq)) };
+      // DPM at the event's own time: a commit deferred behind a slow lookup doesn't shift the decay
+      dpsEvents.push({ t: Number.isFinite(ev.at) ? ev.at : Date.now(), dmg: DPS_HP }); cashKills.push({ cid: ev.opp, iv: cashIv(p) }); dpsTick();
     }
     // Owner 2026-10-25: ANY death dims the killed list and the observed
     // player's own name to 50% — you are dead, the feed shows it — until
@@ -741,7 +781,7 @@ function start() {
       renderCashHist();
       dpsTick();
     }
-    st = overlayPush(st, ev);
+    pendingSeq.delete(seq); // the row was pushed at arrival (onEvent): no second overlayPush
     render();
     if (!p.cached && !bgTried.has(ev.opp)) { bgQueue = [ev.opp, ...bgQueue.filter((c) => c !== ev.opp)]; bgPump(); }
   }

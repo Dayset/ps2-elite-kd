@@ -27,11 +27,12 @@ const OPP = pick.slice(1).map((name, i) => ({ cid: String(5428000000000000100n +
 const sub0row = ranks.rows.find((r) => { const a = r[ci("adjs")]; return typeof a === "number" && a < -100 && a > -600; });
 const SUB0 = { cid: "5428000000000000200", name: sub0row[ci("name")] };
 const TEAM = { cid: "5428000000000000999", name: "TeamMate" }; // same faction as ME (stub returns "1" for it)
+const SLOW = { cid: "5428000000000000777", name: "Slowpoke" }; // #76: its Census lookup takes 1.5 s
 
 /** Page-side fakes: Census REST (character lookups) and the push stream (window.__fakeWs.emit(payload)). */
 const FAKES = `(() => {
-  const ME = ${JSON.stringify(ME)}, OPP = ${JSON.stringify(OPP)}, SUB0 = ${JSON.stringify(SUB0)}, TEAM = ${JSON.stringify(TEAM)};
-  const byCid = new Map([[ME.cid, ME], [SUB0.cid, SUB0], [TEAM.cid, TEAM], ...OPP.map((o) => [o.cid, o])]);
+  const ME = ${JSON.stringify(ME)}, OPP = ${JSON.stringify(OPP)}, SUB0 = ${JSON.stringify(SUB0)}, TEAM = ${JSON.stringify(TEAM)}, SLOW = ${JSON.stringify(SLOW)};
+  const byCid = new Map([[ME.cid, ME], [SUB0.cid, SUB0], [TEAM.cid, TEAM], [SLOW.cid, SLOW], ...OPP.map((o) => [o.cid, o])]);
   const json = (o) => new Response(JSON.stringify(o), { status: 200, headers: { "content-type": "application/json" } });
   const realFetch = window.fetch.bind(window);
   window.fetch = (input, init) => {
@@ -39,6 +40,7 @@ const FAKES = `(() => {
     if (u.includes("census.daybreakgames.com")) {
       if (/character\\?name\\.first_lower=/.test(u)) return Promise.resolve(json({ returned: 1, character_list: [{ character_id: ME.cid, name: { first: ME.name }, faction_id: "1" }] }));
       const m = u.match(/character_id=(\\d+)/);
+      if (m && m[1] === SLOW.cid) return new Promise((r) => setTimeout(() => r(json({ returned: 1, character_list: [{ character_id: SLOW.cid, name: { first: SLOW.name }, faction_id: "2" }] })), 1500));
       if (m && byCid.has(m[1])) { const p = byCid.get(m[1]); return Promise.resolve(json({ returned: 1, character_list: [{ character_id: p.cid, name: { first: p.name }, faction_id: p.cid === TEAM.cid ? "1" : "2" }] })); }
       return Promise.resolve(json({ returned: 0, character_list: [] }));
     }
@@ -269,14 +271,37 @@ describe("🎥 live.html in a browser", () => {
       const slotsAre = async (total, filled, why) => assert.equal(await ev(until(`(() => { const w = document.querySelector("#liveList tbody.lv-me .lv-wn"); if (!w) return false; const all = w.querySelectorAll(".lv-bh"); return all.length === ${total} && [...all].filter((b) => !b.classList.contains("lv-bh-empty")).length === ${filled}; })()`)), true, why);
       const bountyIs = async (t, why) => assert.equal(await ev(until(`document.querySelector("#liveList tbody.lv-me .lv-wn").textContent === ${JSON.stringify(t)}`)), true, why);
       await ev(`window.__fakeWs.emit(${death(ME.cid, TEAM.cid, "80", false)})`);
-      assert.equal(await ev(until(`document.getElementById("liveOnline").dataset.state === "online"`)), true, "the teamkill was processed (pill online)");
-      assert.equal(await ev(`document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)").length`), 0, "a teamkill leaves no victim row");
+      // #76: the row lands on arrival and is retracted when the commit proves the same faction
+      assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)").length === 0 && !document.querySelector("#liveList .lv-pend")`)), true, "a teamkill leaves no victim row");
       assert.equal(await ev(`document.getElementById("liveDpsVal").textContent`), "0.0", "a teamkill adds no DPM");
       await slotsAre(7, 0, "a teamkill fills no heart");
       for (let i = 0; i < 7; i++) await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[i].cid, "80", false)})`);
       await bountyIs("💰💰💰", "7 enemy kills earn three bounty marks");
       await ev(`window.__fakeWs.emit(${death(TEAM.cid, ME.cid, "432", false)})`);
       await bountyIs("💰💰", "a death to your own faction still spends one bounty mark");
+      assert.deepEqual(errors, [], "no page errors");
+    });
+  });
+
+  it("#76 snappy feed: a slow name lookup shows … at once, never holds back later kills, and no row is lost", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      const names = `[...document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty) .lv-name")].map((n) => n.textContent)`;
+      // an earlier run, ended by a death: its lines must clear when the next run starts
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[5].cid, "80", false)})`);
+      await ev(`window.__fakeWs.emit(${death(OPP[6].cid, ME.cid, "432", false)})`);
+      assert.equal(await ev(until(`${names}.join("|") === ${JSON.stringify(OPP[5].name)}`)), true, "the old run's line");
+      // new run, rapid fire: the slow victim first, then three fast ones, all in the same task
+      const burst = [SLOW.cid, ...OPP.slice(0, 3).map((o) => o.cid)].map((c) => `window.__fakeWs.emit(${death(ME.cid, c, "80", false)});`).join(" ");
+      await ev(burst);
+      const now = await ev(names);
+      assert.equal(now.length, 5, `every row lands on arrival (4 new + the old run's, not yet cleared): ${now}`);
+      assert.equal(now[3], "…", "the slow victim shows … in the name while its lookup runs");
+      assert.ok(!now.join("|").includes("#"), "no raw #id on screen");
+      // the fast victims' names fill in before the slow lookup lands
+      assert.equal(await ev(until(`${names}.slice(0, 3).join("|") === ${JSON.stringify(OPP.slice(0, 3).map((o) => o.name).reverse().join("|"))}`, 1200)), true, "later kills are not held back by the slow lookup");
+      // after the slow lookup: the old run is cleared, all four new rows stay, newest on top
+      assert.equal(await ev(until(`${names}.join("|") === ${JSON.stringify([...OPP.slice(0, 3).map((o) => o.name).reverse(), SLOW.name].join("|"))}`)), true, "all four rows of the new run, old run cleared");
       assert.deepEqual(errors, [], "no page errors");
     });
   });

@@ -321,7 +321,7 @@ test("⏱️ timer (owner t576u): the event's own time, one stopwatch — only t
   const js = liveSrc();
   assert.match(js, /if \(ev\) ev\.at = eventAt\(j\.payload\);/);
   assert.match(js, /const ageHtml = \(r\) => \(r\.gap == null \? `<span class="lv-timer" data-at="\$\{r\.at\}">\$\{fmtGap\(Date\.now\(\) - r\.at\)\}<\/span>` : fmtGap\(r\.gap\)\);/);
-  assert.match(js, /evChain = evChain\.then\(\(\) => onEventNow\(ev\), \(\) => onEventNow\(ev\)\)/); // events keep their order
+  assert.match(js, /evChain = evChain\.then\(\(\) => commitEvent\(ev, fetchP, row\.seq\), \(\) => commitEvent\(ev, fetchP, row\.seq\)\)/); // accounting keeps the order
   assert.match(js, /el\.textContent = `\$\{fmtGap\(Date\.now\(\) - \+el\.dataset\.at\)\}`/); // ticks every second
 });
 
@@ -646,7 +646,7 @@ test("iz cell (owner 2026-10-25): infantry/zerg aligned left", () => {
 
 test("teamkill (owner 2026-10-25): own-faction kills farm nothing, own-faction deaths still count", () => {
   const js = liveSrc();
-  assert.match(js, /if \(ev\.kind === "kill" && p\.faction && me && me\.faction && p\.faction === me\.faction\) return;/);
+  assert.match(js, /if \(ev\.kind === "kill" && p\.faction && me && me\.faction && p\.faction === me\.faction\) \{\s*st = \{ \.\.\.st, victims: st\.victims\.filter\(\(r\) => r\.seq !== seq\) \};/); // #76: retract only the arrival row
 });
 
 test("dim names on death (owner 2026-10-25): death dims the killed list and your name to 50%, a kill re-lights them", () => {
@@ -717,7 +717,7 @@ test("mobile names + legend + DPS (owner 2026-10-25): table 100% with a flexible
   assert.match(css, /\.live-online\[data-state="online"\] i \{ background: #4caf50; \}/);
   assert.match(css, /\.live-online\[data-state="offline"\] i \{ background: var\(--err\); \}/);
   assert.match(js, /const wasStreak = bountyStreak;/); // a kill starting a new streak clears the old run's victim lines
-  assert.match(js, /if \(wasStreak === 0\) st = \{ \.\.\.st, victims: \[\] \};/);
+  assert.match(js, /if \(wasStreak === 0\) st = \{ \.\.\.st, victims: st\.victims\.filter\(\(r\) => r\.seq === seq \|\| pendingSeq\.has\(r\.seq\)\) \};/); // #76: keeps the new run's early rows
   assert.match(swap, /<div id="liveCashHist" class="live-cash-hist"><\/div>/); // banked runs live on the page only
   assert.match(js, /if \(ev\.kind === "death" && wasStreak > 0 && bountyStreak === 0\)/);
   assert.match(js, /if \(cashHist\.length > 5\) cashHist\.length = 5;/);
@@ -726,4 +726,32 @@ test("mobile names + legend + DPS (owner 2026-10-25): table 100% with a flexible
   assert.match(css, /\.live-cash-hist \{ margin-top: 0.25rem; font-size: 0.72rem; color: var\(--dim\); \}/);
   assert.match(js, /Math\.round\(Math\.max\(0, p\.cached\.adjs\) \* \(1 \+ CASH_BOOST_PCT \/ 100\)\)/); // floor first, then the boost (a sub-0 victim still pays 0) // sub-0 victims pay 0, never subtract
   assert.match(js, /tr\("live\.cashAvg", "avg"\)/);
+});
+
+test("#76 snappy feed: the row lands on arrival, lookups run in parallel, accounting stays in order", async () => {
+  const js = liveSrc();
+  const on = js.slice(js.indexOf("const onEvent = (ev) =>"), js.indexOf("async function commitEvent"));
+  // arrival: lookup started (not awaited), row pushed and rendered before the commit is chained
+  assert.match(on, /const fetchP = person\(ev\.opp\);/);
+  assert.doesNotMatch(on, /\bawait\b/);
+  assert.ok(on.indexOf("st = overlayPush(st, ev)") < on.indexOf("evChain = evChain.then"), "row pushed before the commit");
+  assert.ok(on.indexOf("render()") < on.indexOf("evChain = evChain.then"), "rendered before the commit");
+  // pending rows are keyed by seq, not identity: overlayPush copies rows when it stops the top timer
+  assert.match(on, /row\.seq = \+\+evSeq;/);
+  const { overlayPush } = await import("../live-model.mjs");
+  let st = overlayPush(null, { kind: "kill", opp: "a", at: 1000 });
+  const first = st.lastEv; first.seq = 1;
+  st = overlayPush(st, { kind: "kill", opp: "b", at: 1100 });
+  assert.notEqual(st.victims[1], first, "the first row was copied (identity lost) …");
+  assert.equal(st.victims[1].seq, 1, "… but its seq survived");
+  // one lookup per cid in flight; pending shows "…"
+  assert.match(js, /if \(peopleP\.has\(cid\)\) return peopleP\.get\(cid\);/);
+  assert.match(js, /pr\.catch\(\(\) => peopleP\.delete\(cid\)\)/);
+  assert.match(js, /if \(p\.pending\) return `<span class="lv-pn"><span class="lv-name lv-pend"><bdi>…<\/bdi>/);
+  // commit: a failed lookup never strands "…"; no second push; DPM at the event's time
+  const commit = js.slice(js.indexOf("async function commitEvent"), js.indexOf("let ws = null"));
+  assert.match(commit, /try \{ p = await fetchP; \} catch \{ p = people\.get\(ev\.opp\); if \(p\) p\.pending = false; \}/);
+  assert.doesNotMatch(commit, /overlayPush\(/);
+  assert.match(commit, /dpsEvents\.push\(\{ t: Number\.isFinite\(ev\.at\) \? ev\.at : Date\.now\(\), dmg: DPS_HP \}\)/);
+  assert.match(commit, /pendingSeq\.delete\(seq\);/);
 });
