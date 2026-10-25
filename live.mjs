@@ -689,9 +689,18 @@ function start() {
     const p = await person(ev.opp);
     if (!trendStart) trendStart = ev.at || Date.now();
     if (ev.kind === "kill") trendKills.push(ev.at || Date.now()); else trendDeaths.push(ev.at || Date.now());
+    const wasStreak = bountyStreak;
     const b = bountyNext({ streak: bountyStreak, lives: bountyLives }, ev.kind === "kill");
     bountyStreak = b.streak; bountyLives = b.lives;
-    if (ev.kind === "kill") { dpsEvents.push({ t: Date.now(), dmg: DPS_HP }); cashKills.push({ cid: ev.opp, iv: cashIv(p) }); dpsTick(); }
+    if (ev.kind === "kill") {
+      // Owner 2026-10-25: a kill that starts a new streak — the previous
+      // run was cashed out by the death — clears the old run's victim
+      // lines first, so the new name lands alone below as the first line
+      // of the new run. Mid-run kills (streak already > 0) and kills
+      // under a held bounty (streak 7, lives left) keep the lines.
+      if (wasStreak === 0) st = { ...st, victims: [] };
+      dpsEvents.push({ t: Date.now(), dmg: DPS_HP }); cashKills.push({ cid: ev.opp, iv: cashIv(p) }); dpsTick();
+    }
     st = overlayPush(st, ev);
     render();
     drawTrends();
