@@ -677,7 +677,7 @@ test("cash formula (owner 2026-10-25): pot and banked runs show total plus parts
 test("adjustable tau (owner 2026-10-25): DPM decay tau is a persisted page control", () => {
   const js = liveSrc();
   const swap = readFileSync(new URL("scripts/build-live.mjs", root), "utf8");
-  assert.match(js, /dpsNow\(dpsEvents, effNow, dpmTauMs, combatHoldMs\(spikeTimes\(\), deathTimes\)\)/);
+  assert.match(js, /dpsNow\(dpsEvents, effNow, dpmTauMs, holdMs\)/);
   assert.match(js, /ps2-live-dpm-tau/);
   assert.match(swap, /<input id="liveDpmTauVal" type="number" min="1" max="3600" step="1" value="10">/);
 });
@@ -701,11 +701,11 @@ test("mobile names + legend + DPS (owner 2026-10-25): table 100% with a flexible
   const swap = readFileSync(new URL("scripts/build-live.mjs", root), "utf8");
   assert.match(css, /@media \(max-width: 600px\)[\s\S]*?\.live-table \{[^}]*width: 100%;/);
   assert.match(css, /@media \(max-width: 600px\)[\s\S]*?col\.lv-c-nm \{ width: auto; \}/);
-  assert.match(swap, /<div id="liveDps" class="live-dps"><span id="liveDpsLabel"><\/span> <span id="liveDpsVal">0\.0<\/span> <span aria-hidden="true">·<\/span> <span id="liveCashSumLabel"><\/span> <span id="liveCashSumVal">0<\/span> <span aria-hidden="true">·<\/span> <span id="liveCashAvgLabel"><\/span> <span id="liveCashAvgVal">–<\/span> <span aria-hidden="true">·<\/span> <span id="liveOnline" class="live-online" data-state="unknown"><i><\/i><span id="liveOnlineText">…<\/span><\/span><\/div>/);
+  assert.match(swap, /<div id="liveDps" class="live-dps"><span id="liveDpsLabel"><\/span> <span id="liveDpsVal">0\.0<\/span> <span aria-hidden="true">·<\/span> <span id="liveDpsHold"><\/span> <span aria-hidden="true">·<\/span> <span id="liveCashSumLabel"><\/span> <span id="liveCashSumVal">0<\/span> <span aria-hidden="true">·<\/span> <span id="liveCashAvgLabel"><\/span> <span id="liveCashAvgVal">–<\/span> <span aria-hidden="true">·<\/span> <span id="liveOnline" class="live-online" data-state="unknown"><i><\/i><span id="liveOnlineText">…<\/span><\/span><\/div>/);
   assert.match(js, /eventNames: \["Death", "GainExperience_experience_id_2", "GainExperience_experience_id_3", "GainExperience_experience_id_371", "GainExperience_experience_id_372", "PlayerLogin", "PlayerLogout"\]/);
   assert.match(js, /DPS_ASSIST_XP\.has\(Number\(p\.experience_id\)\)/);
   assert.match(js, /setInterval\(dpsTick, 100\)/);
-  assert.match(js, /\(dpsNow\(dpsEvents, effNow, dpmTauMs, combatHoldMs\(spikeTimes\(\), deathTimes\)\) \* 60\)\.toFixed\(1\)/); // DPM, one decimal
+  assert.match(js, /\(dpsNow\(dpsEvents, effNow, dpmTauMs, holdMs\) \* 60\)\.toFixed\(1\)/); // DPM, one decimal
   assert.match(js, /cashKills\.push\(\{ cid: ev\.opp, iv: cashIv\(p\) \}\)/); // one ledger entry per kill
   assert.match(js, /for \(const e of cashKills\) if \(e\.cid === cid && !Number\.isFinite\(e\.iv\)\) e\.iv = cashIv\(p\);/); // late iVi finalizes in the list
   assert.match(js, /tr\("live\.cashSum", "Σ iVi"\)/);
@@ -772,9 +772,20 @@ test("hold meter (owner 2026-10-25): decay freezes on death, lifts on a spike or
 test("warm-up (owner 2026-10-25): the meter waits for its 3rd chunk — first two spikes only bump the count", () => {
   const js = liveSrc();
   assert.match(js, /const dpsLabelEl = \$\("liveDpsLabel"\);/);
-  assert.match(js, /let lastDps = "", lastDpsLabel = "", lastCash = "";/);
+  assert.match(js, /let lastDps = "", lastDpsLabel = "", lastHold = "", lastCash = "";/);
   assert.match(js, /if \(dpsEvents\.length < 3\) \{/);
   assert.match(js, /v = `\$\{dpsEvents\.length\}\/3`;/);
   assert.match(js, /label = tr\("live\.dpmWarm", "DPM starts at 3"\);/);
   assert.match(js, /if \(dpsLabelEl && label !== lastDpsLabel\) \{ dpsLabelEl\.textContent = label; lastDpsLabel = label; \}/);
+});
+
+test("hold indicator (owner 2026-10-25): the current hold in whole seconds, next to the meter", () => {
+  const js = liveSrc();
+  const swap = readFileSync(new URL("scripts/build-live.mjs", root), "utf8");
+  assert.match(swap, /<span id="liveDpsVal">0\.0<\/span> <span aria-hidden="true">·<\/span> <span id="liveDpsHold"><\/span>/);
+  assert.match(js, /const dpsHoldEl = \$\("liveDpsHold"\);/);
+  assert.match(js, /let lastDps = "", lastDpsLabel = "", lastHold = "", lastCash = "";/);
+  assert.match(js, /const holdMs = combatHoldMs\(spikeTimes\(\), deathTimes\);/);
+  assert.match(js, /const holdText = tr\("live\.dpmHold", "hold \{s\}s", \{ s: Math\.round\(holdMs \/ 1000\) \}\);/);
+  assert.match(js, /if \(dpsHoldEl && holdText !== lastHold\) \{ dpsHoldEl\.textContent = holdText; lastHold = holdText; \}/);
 });

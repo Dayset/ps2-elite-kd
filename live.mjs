@@ -539,6 +539,7 @@ function start() {
   // drain, not steps, and a late-arriving victim iVi lands within 100 ms.
   const dpsEl = $("liveDpsVal");
   const dpsLabelEl = $("liveDpsLabel");
+  const dpsHoldEl = $("liveDpsHold");
   if ($("liveDpsLabel")) $("liveDpsLabel").textContent = tr("live.dps", "DPM");
   const cashSumEl = $("liveCashSumVal"), cashAvgEl = $("liveCashAvgVal");
   if ($("liveCashSumLabel")) $("liveCashSumLabel").textContent = tr("live.cashSum", "Σ iVi");
@@ -589,7 +590,7 @@ function start() {
   // the formula's +34% suffix says the parts are boosted). A floored 0 stays 0 (0 × 1.34 = 0).
   const CASH_BOOST_PCT = 34;
   const cashIv = (p) => (p && p.cached && Number.isFinite(p.cached.adjs) ? Math.round(Math.max(0, p.cached.adjs) * (1 + CASH_BOOST_PCT / 100)) : null);
-  let lastDps = "", lastDpsLabel = "", lastCash = "";
+  let lastDps = "", lastDpsLabel = "", lastHold = "", lastCash = "";
   function dpsTick() {
     // Owner 2026-10-25 (elite combat damage meter): the decay clock.
     // A freeze lifts by itself once the average spawn run elapses (the
@@ -600,6 +601,10 @@ function start() {
     // average gap before τ drains it.
     if (freezeStart && Date.now() >= freezeStart + freezeFor) { timeDebtMs += freezeFor; freezeStart = 0; freezeFor = 0; }
     const effNow = freezeStart ? freezeStart - timeDebtMs : Date.now() - timeDebtMs;
+    // Owner 2026-10-25: the current hold, shown next to the meter — the
+    // same median gap the decay uses, in whole seconds, so the player can
+    // see exactly how much flat time each spike gets.
+    const holdMs = combatHoldMs(spikeTimes(), deathTimes);
     if (dpsEl) {
       // Owner 2026-10-25: the meter waits for its 3rd data chunk — the
       // first two kills/assists only bump the count (1/3, 2/3) under the
@@ -611,11 +616,13 @@ function start() {
         v = `${dpsEvents.length}/3`;
         label = tr("live.dpmWarm", "DPM starts at 3");
       } else {
-        v = (dpsNow(dpsEvents, effNow, dpmTauMs, combatHoldMs(spikeTimes(), deathTimes)) * 60).toFixed(1);
+        v = (dpsNow(dpsEvents, effNow, dpmTauMs, holdMs) * 60).toFixed(1);
         label = tr("live.dps", "DPM");
       }
       if (v !== lastDps) { dpsEl.textContent = v; lastDps = v; }
       if (dpsLabelEl && label !== lastDpsLabel) { dpsLabelEl.textContent = label; lastDpsLabel = label; }
+      const holdText = tr("live.dpmHold", "hold {s}s", { s: Math.round(holdMs / 1000) });
+      if (dpsHoldEl && holdText !== lastHold) { dpsHoldEl.textContent = holdText; lastHold = holdText; }
     }
     if (cashSumEl && cashAvgEl) {
       const t = cashTotals(cashKills.map((e) => e.iv));

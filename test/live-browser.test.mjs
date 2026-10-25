@@ -445,20 +445,28 @@ describe("🎥 live.html in a browser", () => {
   });
 
 describe("🎥 live hold meter in a browser", () => {
-  it("hold (owner 2026-10-25): two 12 s gaps hold the line flat — DPM stays above 8000 eight seconds after the third kill", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+  it("hold (owner 2026-10-25): two clean 12 s gaps hold the line flat — DPM stays above 8000 eight seconds after the fourth kill", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      assert.equal(await ev(until(`document.getElementById("liveDpsHold").textContent === "hold 0s"`)), true, "no gaps yet: hold 0s");
+      // Two throwaway kills first: the first commit loads the ranks, so the
+      // gap it spans is dirty (~1 s of load time) — the sleeps below start
+      // after commits, so only gaps between fast commits measure cleanly.
+      // The median absorbs the dirty gap: median(1 s, 12 s, 12 s) = 12 s.
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
       assert.equal(await ev(until(`document.getElementById("liveDpsVal").textContent === "1/3"`)), true, "first kill bumps the count");
-      await new Promise((r) => setTimeout(r, 12000)); // a slow player's real gap
+      assert.equal(await ev(`document.getElementById("liveDpsHold").textContent`), "hold 0s", "one spike: still no gap, hold 0s");
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[1].cid, "80", false)})`);
       assert.equal(await ev(until(`document.getElementById("liveDpsVal").textContent === "2/3"`)), true, "second kill bumps the count");
-      await new Promise((r) => setTimeout(r, 12000)); // the same gap again — the hold becomes 12 s
+      await new Promise((r) => setTimeout(r, 12000)); // a slow player's real gap, cleanly measured
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[2].cid, "80", false)})`);
       assert.equal(await ev(until(`Number(document.getElementById("liveDpsVal").textContent) >= 10000`)), true, "third kill starts the meter held");
-      await new Promise((r) => setTimeout(r, 8000)); // 8 s after the third kill — inside the 12 s hold
+      await new Promise((r) => setTimeout(r, 12000)); // the same gap again
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[3].cid, "80", false)})`);
+      await new Promise((r) => setTimeout(r, 8000)); // 8 s after the fourth kill — inside the 12 s hold
       const dpm = await ev(`Number(document.getElementById("liveDpsVal").textContent)`);
-      assert.ok(dpm > 8000, `held DPM stays above 8000 (with no hold it would be ~3750 here): ${dpm}`);
+      assert.ok(dpm > 8000, `held DPM stays above 8000 (with no hold it would be ~3900 here): ${dpm}`);
+      assert.equal(await ev(`document.getElementById("liveDpsHold").textContent`), "hold 12s", "median of the gaps: hold 12s");
       assert.deepEqual(errors, [], "no page errors");
     });
   });
