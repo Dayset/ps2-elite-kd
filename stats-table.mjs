@@ -8,7 +8,7 @@ import { newbieFactor, newPlayerHours } from "./newbie-diff.mjs?v=20261023-nbh1"
 import { isFiniteNum } from "./math.mjs?v=20261010-sav1";
 import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261024-crowd1";
 import { zergEstimate } from "./zerg-revive.mjs?v=20261024-crowd1";
-import { infMedian } from "./tractor.mjs?v=20261024-veh1";
+import { infMedian } from "./tractor.mjs?v=20261024-trac1";
 import { mountWeapons } from "./weapons.mjs?v=20261022-wp4";
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261020-wide1";
 import { PS_SERVERS, censusNsBase, roomLsKey } from "./rooms.mjs?v=20261022-ps1";
@@ -23,7 +23,7 @@ import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261022-wpc1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261021-theory1";
 import { statMark, isPenalizedPadder, POOP_TIP, POOP_MARK, markNote } from "./padding.mjs?v=20261023-short1";
-import { autoMarksHtml } from "./auto-marks.mjs?v=20261024-veh1";
+import { autoMarksHtml } from "./auto-marks.mjs?v=20261024-trac1";
 
 /**
  * $ = app.js state and functions this part uses, as live getters (and setters for state it changes), so app.js
@@ -67,6 +67,7 @@ export function createStatsTable($) {
   let infPool = null;
 
   let infMed = null;
+  let tracCuts = null; // owner t622u: 🚜 cuts from the build (ranks-lite "tracCuts")
 
   const playMinOf = (p) => (p ? playMinutes(p.infantry && p.infantry.kills, p.global_kpm) : NaN);
 
@@ -122,10 +123,12 @@ export function createStatsTable($) {
         if (ii >= 0 && si >= 0) {
           const mi = payload.cols.indexOf("infMax");
           const vi = payload.cols.indexOf("infVeh");
+          const ti = payload.cols.indexOf("trc"); // 🚜 name mark (1 / 0) from the build
+          tracCuts = payload.tracCuts || null;
           infBySlug = new Map();
-          for (const row of payload.rows) if (isFiniteNum(row[ii])) infBySlug.set(row[si], { inf: row[ii], max: mi >= 0 ? row[mi] : null, veh: vi >= 0 ? row[vi] : null });
+          for (const row of payload.rows) if (isFiniteNum(row[ii])) infBySlug.set(row[si], { inf: row[ii], max: mi >= 0 ? row[mi] : null, veh: vi >= 0 ? row[vi] : null, trc: ti >= 0 ? row[ti] : null });
           infPool = [...infBySlug.values()].map((e) => e.inf).sort((a, b) => a - b);
-          infMed = infMedian(infPool); // owner t590u: 🚜 below this (median infantry %, from the data)
+          infMed = infMedian(infPool); // owner t590u: median infantry % (the 🚜 mark itself uses the build cuts, t622u)
         }
         const hi = payload.cols.indexOf("hut");
         if (hi >= 0 && si >= 0) {
@@ -565,8 +568,8 @@ export function createStatsTable($) {
     const d = row.p.display;
     const g = aimGap(traitP, shownValue(row, "adjs"), row.ivi, $.hutOf(d), vdfOf(d), nbdOf(d, row.p));
     const z = zergScore(traitP, shownValue(row, "inflation"), apkBySlug && apkBySlug.get(slugKey(d)), rvpOf(d), crpOf(d));
-    const ie = infBySlug && infBySlug.get(slugKey(d)); // owner t592u: 🚜 by the name below the median infantry %
-    return autoMarksHtml(g, z, row.p.times || null, Date.now(), nbhOf(d, row.p), ie ? { inf: ie.inf, med: infMed } : null);
+    const ie = infBySlug && infBySlug.get(slugKey(d)); // owner t622u: 🚜 by the name from the build's rule (tractor.mjs)
+    return autoMarksHtml(g, z, row.p.times || null, Date.now(), nbhOf(d, row.p), ie ? { inf: ie.inf, trc: ie.trc, cuts: tracCuts } : null);
   }
 
   /** 🛖 safe-spot player (hut.mjs HUT_TIP): positive 🔀 Diff damped; next to the name, never in the Diff cell (owner t504u). */

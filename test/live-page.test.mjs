@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { buildLive } from "../scripts/build-live.mjs";
-import { infMedian, infDial, isTractor, tractorHint } from "../tractor.mjs";
+import { infMedian, infDial, isTractor, tractorHint, tractorCuts, tractorRule, tractorMarked, tractorCleared, tracXpIds, tracSample } from "../tractor.mjs";
 import { autoMarksHtml, tractorMark } from "../auto-marks.mjs";
 import { infUnit, classifyDeath, feedPush, censusStats, cellText, fmtGap, LIVE_COLS, tipText, ME_REFRESH_MS, mergeFresh, FEED_MAX, emojiFill, fillDriver, glowTier, unknownFill, FULL_AT, EMPTY_AT, goodPct, FILL_DIM, HOLLOW_PX, overlayPush, overlayRows, VICTIM_LINES, eventAt, EVENT_SKEW_MS, unitGlow, ZERG_GOLD_OVER, OUTLINE_PX, LIVE_GLOWS, weaponIcon, CARD_CATEGORIES, LIVE_FPS, liveFps, HALO_KEY, haloOn, bezier, easeFill, glowIn, BEAT, TIER_MOTION, beatAt, haloAt, SHINE, shineFrame, beatSleep } from "../live.mjs";
 import { disk, dilate, erode, blurAlpha, inkBox, outlineMasks, hollowRim, spriteCss, shineAt } from "../live-sprites.mjs";
@@ -476,25 +476,37 @@ test("🪖 / 🚜 infantry dial (owner t590u): median from the data, 🪖 fills 
   assert.equal(infUnit(85, m).glow, 0);
   assert.equal(infUnit(63.75, m).glow, glowTier(EMPTY_AT + 0.5 * (FULL_AT - EMPTY_AT)));
   assert.equal(infUnit(null, m), null);
+  // t622u: with the 🚜 cut C: 🚜 below C (fill C → C/2), an empty 🪖 between C and M, 🪖 fill above M as before
+  assert.deepEqual(infDial(60, m, 72), { emoji: "🚜", tractor: true, fill: 33.3 });
+  assert.deepEqual(infDial(36, m, 72), { emoji: "🚜", tractor: true, fill: 100 });
+  assert.deepEqual(infDial(80, m, 72), { emoji: "🪖", tractor: false, fill: 0 });
+  assert.deepEqual(infDial(92.5, m, 72), { emoji: "🪖", tractor: false, fill: 50 });
+  assert.equal(infUnit(36, m, 72).glow, 3);
+  assert.equal(infUnit(80, m, 72).glow, 0);
   const js = liveSrc();
   assert.match(js, /infM = infMedian\(pools\.inf\);/);
+  assert.match(js, /infC = j\.tracCuts && Number\.isFinite\(j\.tracCuts\.cut\) \? j\.tracCuts\.cut : tractorCuts\(pools\.inf, \[\]\)\.cut;/); // t622u: 🚜 below the build cut
+  assert.match(js, /infUnit\(v, infM, infC\)/);
   assert.match(js, /style="--f:\$\{iu\.fill\}"[^\n]*\$\{meter\(iu\.emoji\)\}/); // own emoji, own fill
   assert.match(js, /const EMOJIS = \[\.\.\.new Set\(\[\.\.\.LIVE_COLS\.map\(shortLab\), TRACTOR_EMOJI\]\)\];/); // 🚜 gets its pictures too
-  // main site (t591u–t593u): a static 🚜 NAME mark next to 🪦 (auto-marks.mjs), Infantry cell unchanged, 2-line hint
-  assert.equal(isTractor(84.9, m), true);
-  assert.equal(isTractor(85, m), false);
-  assert.equal(tractorMark({ inf: 90, med: m }), null);
+  // main site (t591u–t593u, rule t622u): a static 🚜 NAME mark next to 🪦 (auto-marks.mjs), Infantry cell unchanged, 2-3 line hint
+  assert.equal(isTractor(84.9, m), true); // the old median helper stays (not used for the mark any more)
+  const cuts = { cut: 72, fb: 22, med: m, rep: 0.9, vk: 0.2 };
+  assert.equal(tractorMark({ inf: 90, trc: 0, cuts }), null);
   assert.equal(tractorMark(null), null);
-  assert.deepEqual(tractorMark({ inf: 60, med: m }), { id: "tractor", mark: "🚜", tip: tractorHint(m) });
-  assert.match(tractorHint(m), /^🚜 Vehicle mark[^\n]+\n[^\n]+\(85\.0%\)\.(\n[^\n]+)?$/); // t597u: 2-3 lines, not the iVi cut / Diff damp 🚜
+  assert.equal(tractorMark({ inf: 60, trc: 0, cuts }), null); // under the cut but no XP confirmation: no 🚜
+  assert.deepEqual(tractorMark({ inf: 60, trc: 1, cuts }), { id: "tractor", mark: "🚜", tip: tractorHint(cuts) });
+  assert.ok(tractorMark({ inf: 20, trc: null, cuts })); // not in the build: fallback only
+  assert.equal(tractorMark({ inf: 40, trc: null, cuts }), null);
+  assert.match(tractorHint(cuts), /^🚜 Vehicle mark[^\n]+\n[^\n]+< 72\.0%[^\n]+\n[^\n]+< 22\.0%[^\n]+$/); // t597u: 2-3 lines, not the iVi cut / Diff damp 🚜
   const now = Date.UTC(2026, 9, 24), s = now / 1000, day = 86400;
-  const h = autoMarksHtml(null, { score: 90, rvp: 99, confirmed: true }, { created: s - 3000 * day, last: s - 400 * day }, now, null, { inf: 50, med: m });
+  const h = autoMarksHtml(null, { score: 90, rvp: 99, confirmed: true }, { created: s - 3000 * day, last: s - 400 * day }, now, null, { inf: 50, trc: 1, cuts });
   assert.match(h, /auto-mark-zerg.*🪳.*<span class="poop-mark auto-mark auto-mark-tractor" title="🚜 [^"]+" aria-label="🚜 [^"]+">🚜<\/span><span class="poop-mark auto-mark auto-mark-inactive"[^>]*>🪦/s); // order 🪳 🐣 🚜 🪦
-  assert.doesNotMatch(autoMarksHtml(null, null, null, now, null, { inf: 90, med: m }), /🚜/);
+  assert.doesNotMatch(autoMarksHtml(null, null, null, now, null, { inf: 90, trc: 0, cuts }), /🚜/);
   const app = appSource();
   const rk = readFileSync(new URL("rankings.mjs", root), "utf8");
-  assert.match(app, /nbhOf\(d, row\.p\), ie \? \{ inf: ie\.inf, med: infMed \} : null\)/);
-  assert.match(rk, /r\.nbh, fin\(r\.inf\) \? \{ inf: r\.inf, med: infMed\(\) \} : null\)/);
+  assert.match(app, /nbhOf\(d, row\.p\), ie \? \{ inf: ie\.inf, trc: ie\.trc, cuts: tracCuts \} : null\)/);
+  assert.match(rk, /r\.nbh, fin\(r\.inf\) \? \{ inf: r\.inf, trc: r\.trc, cuts: tracCuts\(\) \} : null\)/);
   assert.doesNotMatch(app + rk, /inf-trac/); // nothing in the Infantry cell
   for (const l of ["en", "ja", "ru", "de", "fr", "zh", "es", "uk", "it"]) {
     const d = JSON.parse(readFileSync(new URL(`i18n/${l}.json`, root), "utf8"));
@@ -504,6 +516,37 @@ test("🪖 / 🚜 infantry dial (owner t590u): median from the data, 🪖 fills 
     assert.ok(d["cp.infTractor"].includes("🚜"), l);
   }
   assert.match(readFileSync(new URL("columns.html", root), "utf8"), /data-i18n="cp\.infTractor"/);
+});
+
+test("🚜 name mark rule (owner t622u): infantry < p25 + vehicle XP ≥ p75, or infantry < p2; cuts from the data, ~400 on PC", () => {
+  const ids = tracXpIds({ 1: ["Kill Player", 100], 90: ["Repair Sunderer", 10], 91: ["Repair MAX", 10], 92: ["Vehicle Destruction - Flash", 50], 93: ["Kill Assist - Lightning", 30] });
+  assert.deepEqual(ids, { repair: ["90"], vkill: ["92", "93"] });
+  assert.equal(tracSample({ seconds_counted: 3600, totals: { g: { 90: [60, 600] } } }, ids), null); // under 2 h
+  assert.deepEqual(tracSample({ seconds_counted: 7200, totals: { g: { 90: [240, 2400], 92: [12, 600], 93: [12, 360] } } }, ids), { rep: 2, vk: 0.2 });
+  const inf = Array.from({ length: 100 }, (_, i) => i + 0.5); // 0.5 … 99.5
+  const xs = Array.from({ length: 100 }, (_, i) => ({ rep: i / 100, vk: i / 1000 }));
+  const c = tractorCuts(inf, xs);
+  assert.deepEqual(c, { cut: 25.5, fb: 2.5, med: 50, rep: 0.75, vk: 0.075 });
+  assert.equal(tractorRule(2, null, c), 1); // fallback, no XP
+  assert.equal(tractorRule(20, null, c), 0); // under the cut, no XP
+  assert.equal(tractorRule(20, { rep: 0.8, vk: 0 }, c), 1); // repair confirms
+  assert.equal(tractorRule(20, { rep: 0, vk: 0.08 }, c), 1); // vehicle kills confirm
+  assert.equal(tractorRule(30, { rep: 5, vk: 5 }, c), 0); // above the cut
+  assert.equal(tractorRule(null, null, c), null);
+  assert.equal(tractorMarked(1, 90, c), true);
+  assert.equal(tractorMarked(0, 1, c), false); // the build (incl. reviewed "cleared") wins
+  assert.equal(tractorCleared({ players: { a: { tractor: "cleared" } } }, "a"), true);
+  assert.equal(tractorCleared({ players: { a: { zerg: "cleared" } } }, "a"), false);
+  for (const [dir, lo, hi] of [["data", 300, 600], ["data-ps", 5, 120]]) {
+    const j = JSON.parse(readFileSync(new URL(`${dir}/ranks.json`, root), "utf8"));
+    const ti = j.cols.indexOf("trc"), ii = j.cols.indexOf("inf");
+    assert.ok(ti >= 0 && j.tracCuts && j.tracCuts.cut > j.tracCuts.fb && j.tracCuts.med > j.tracCuts.cut, dir);
+    const n = j.rows.filter((r) => r[ti] === 1).length;
+    assert.ok(n >= lo && n <= hi, `${dir}: ${n}`);
+    assert.ok(j.rows.every((r) => r[ti] !== 1 || r[ii] < j.tracCuts.cut), dir); // every 🚜 is under the infantry cut
+    const lite = JSON.parse(readFileSync(new URL(`${dir}/ranks-lite.json`, root), "utf8"));
+    assert.ok(lite.cols.includes("trc") && lite.tracCuts && lite.tracCuts.cut === j.tracCuts.cut, dir);
+  }
 });
 
 test("hollow empty part (owner t589u): light inner ring inside the black outline, dark greyscale interior, filled part untouched", () => {

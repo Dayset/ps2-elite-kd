@@ -26,7 +26,7 @@ import { HUT_MARK_MIN } from "./hut.mjs?v=20261023-short1";
 import { fmtSigned } from "./trait-tips.mjs?v=20261024-crowd1";
 import { flairsFor } from "./flairs.mjs?v=20261010-sav1";
 import { t as tr, currentLang } from "./i18n.mjs";
-import { isTractor, tractorHint, TRACTOR_EMOJI } from "./tractor.mjs?v=20261024-veh1";
+import { tractorMarked, tractorHint, TRACTOR_EMOJI } from "./tractor.mjs?v=20261024-trac1";
 
 export const ZERG_MARK = "🪳";
 export const NBD_MARK = "🐣";
@@ -73,11 +73,12 @@ export function inactiveMark(times, now = Date.now()) {
   return { id: "inactive", mark: INACTIVE_MARK, tip: tr("flair.inactive", "🪦 Inactive: no activity for over a year (last played {date})", { date: lastPlayed(+times.last) }) };
 }
 
-/** 🚜 mark (owner t592u): { id, mark, tip } when trac.inf is below trac.med, else null. */
+/** 🚜 mark (owner t592u, rule t622u): { id, mark, tip } when tractor.mjs tractorMarked(trc, inf, cuts), else null. */
 export function tractorMark(trac) {
-  if (!trac || !isTractor(trac.inf, trac.med)) return null;
-  const k = trac.med + "|" + currentLang(); // one hint per median + language (rankings draws ~14k rows)
-  if (tracTipKey !== k) { tracTipKey = k; tracTip = tractorHint(trac.med); }
+  if (!trac || !tractorMarked(trac.trc, trac.inf, trac.cuts)) return null;
+  const c = trac.cuts || {};
+  const k = c.cut + "|" + c.fb + "|" + currentLang(); // one hint per cuts + language (rankings draws ~14k rows)
+  if (tracTipKey !== k) { tracTipKey = k; tracTip = tractorHint(c); }
   return { id: "tractor", mark: TRACTOR_EMOJI, tip: tracTip };
 }
 let tracTipKey = null, tracTip = "";
@@ -87,8 +88,8 @@ const esc = (s) =>
 
 /**
  * Order after the name: (* / 💩 / 🛖 drawn by the caller) 🪳 🐣 🚜 🪦.
- * Owner t592u/t593u: 🚜 = infantry share below the data's median (tractor.mjs), static, same look and hover as 🪦, just before it.
- * trac = { inf, med } (infantry % and the median) or null. Same look as 🛖 (poop-mark class: name width rules already reserve room).
+ * Owner t592u/t593u/t622u: 🚜 = the build's vehicle mark (tractor.mjs rule: infantry < p25 + vehicle XP ≥ p75, or infantry < p2),
+ * static, same look and hover as 🪦, just before it. trac = { inf, trc, cuts } (infantry %, build mark 1/0/null, ranks "tracCuts") or null. Same look as 🛖 (poop-mark class: name width rules already reserve room).
  * 🪦 wins over 🐣 (owner 2026-10-23): an inactive player shows no 🐣 mark (new-player or softened);
  * only the mark is dropped, the softened Diff itself is unchanged.
  */

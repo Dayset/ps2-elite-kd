@@ -4,7 +4,7 @@
  * weapon lookup. No DOM; the browser part (stream, data, drawing) is live.mjs, which re-exports all of this.
  */
 import { normalizePlayer, playerMetrics, shownValue } from "./player-metrics.mjs?v=20261022-wpc1";
-import { infDial } from "./tractor.mjs?v=20261024-veh1";
+import { infDial } from "./tractor.mjs?v=20261024-trac1";
 import { infantryShares } from "./infantry.mjs?v=20261023-short1";
 
 export const FEED_MAX = 6; // victim lines below the centre (owner t575u: "back to 6 lines"; t563u had 3)
@@ -129,10 +129,10 @@ export function unknownFill(col) { return col && col.unknown === "full" ? 100 : 
 export const ZERG_GOLD_OVER = 35;
 /** Owner t590u: 🪖 / 🚜 unit for one infantry % and the data's median M (tractor.mjs infDial): emoji, fill 0..100 and a glow
  *  tier that follows the fill — the fill is mapped back onto the driver scale the other emojis use (fill 0 = EMPTY_AT,
- *  100 = FULL_AT), so the same thresholds apply: a full 🪖 (100% infantry) or a full 🚜 (≤ M/2) = TOP gold.
+ *  100 = FULL_AT), so the same thresholds apply: a full 🪖 (100% infantry) or a full 🚜 (≤ C/2) = TOP gold.
  *  null = no value or no median (the caller falls back to the plain 🪖). */
-export function infUnit(v, M) {
-  const d = infDial(v, M);
+export function infUnit(v, M, C = null) {
+  const d = infDial(v, M, C); // owner t622u: C = the 🚜 cut (below it 🚜; C..M an empty 🪖)
   if (!d) return null;
   return { emoji: d.emoji, tractor: d.tractor, fill: d.fill, glow: glowTier(EMPTY_AT + (d.fill / 100) * (FULL_AT - EMPTY_AT)) };
 }

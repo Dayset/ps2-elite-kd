@@ -7,7 +7,7 @@ await i18nReady;
  *     centred on the tracked player — ONE line above for the latest player who killed them (each new killer
  *     replaces it), the tracked player on the centre line, and the last 6 players they killed below
  *     (newest on top; t587u: every kill is its own line, the same victim twice = two lines);
- *   - every line shows everything at once, in one shared column order: [⏱️][name][iVi][🏃][🦁][🛡️][🪖|🚜][☠️][🪳] (t580u: 🪳 last; t590u: 🤝🔀⚡ removed, 🚜 below the median infantry %),
+ *   - every line shows everything at once, in one shared column order: [⏱️][name][iVi][🏃][🦁][🛡️][🪖|🚜][☠️][🪳] (t580u: 🪳 last; t590u: 🤝🔀⚡ removed, 🚜 below the 🚜 infantry cut, t622u),
  *     the emojis as fill meters (t564u, t573u) with glow tiers (t568u) — no flip, no skill graph;
  *   - owner 2026-10-24: the weapon of the kill (white silhouette from assets/weapons) and a headshot mark sit in front of
  *     the name; the emoji meters are pre-drawn images (live-sprites.mjs) — the old per-frame SVG filters and endless
@@ -18,14 +18,14 @@ await i18nReady;
  *     fetch in the background (one at a time, newest first, #32) and upgrade in place.
  * Pure helpers are exported for tests; the DOM part runs only in a browser.
  */
-export * from "./live-model.mjs?v=20261024-veh1"; // #66: the pure part (tests import it from here)
-import { VICTIM_LINES, classifyDeath, fmtGap, censusStats, LIVE_COLS, tipText, FILL_DIM, HOLLOW_PX, HOLLOW_INK, goodPct, fillDriver, emojiFill, unknownFill, infUnit, OUTLINE_PX, unitGlow, LIVE_GLOWS, LIVE_FPS, liveFps, HALO_KEY, haloOn, easeFill, glowIn, BEAT, TIER_MOTION, haloAt, SHINE, shineFrame, beatSleep, weaponIcon, glowTier, eventAt, overlayPush, overlayRows, nextBgFetch, liveRowFromPlayer, ME_REFRESH_MS, mergeFresh, SHARE_MAX, shareDelay, cellText, slugKey } from "./live-model.mjs?v=20261024-veh1";
+export * from "./live-model.mjs?v=20261024-trac1"; // #66: the pure part (tests import it from here)
+import { VICTIM_LINES, classifyDeath, fmtGap, censusStats, LIVE_COLS, tipText, FILL_DIM, HOLLOW_PX, HOLLOW_INK, goodPct, fillDriver, emojiFill, unknownFill, infUnit, OUTLINE_PX, unitGlow, LIVE_GLOWS, LIVE_FPS, liveFps, HALO_KEY, haloOn, easeFill, glowIn, BEAT, TIER_MOTION, haloAt, SHINE, shineFrame, beatSleep, weaponIcon, glowTier, eventAt, overlayPush, overlayRows, nextBgFetch, liveRowFromPlayer, ME_REFRESH_MS, mergeFresh, SHARE_MAX, shareDelay, cellText, slugKey } from "./live-model.mjs?v=20261024-trac1";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261023-short1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
 import { traitPools, zergScore } from "./trait-scores.mjs?v=20261024-crowd1";
 import { zergEstimate } from "./zerg-revive.mjs?v=20261024-crowd1";
-import { infMedian, TRACTOR_EMOJI } from "./tractor.mjs?v=20261024-veh1";
+import { infMedian, tractorCuts, TRACTOR_EMOJI } from "./tractor.mjs?v=20261024-trac1";
 import { drawEmojiSprite, spriteCss } from "./live-sprites.mjs?v=20261024-beat1";
 
 const CENSUS = `https://census.daybreakgames.com/s:${CENSUS_SERVICE_ID}/get/ps2:v2/`;
@@ -74,7 +74,8 @@ function start() {
   let me = null; // { cid, name, faction }
   let ranks = null; // slug -> { adjs, kd }
   const pools = {}; // col id -> sorted finite values (percentiles, same as the Rankings table)
-  let infM = null; // median infantry % over ranks.json (owner t590u 🚜 switch point)
+  let infM = null; // median infantry % over ranks.json (owner t590u: 🪖 fill starts here)
+  let infC = null; // 🚜 infantry cut (owner t622u: ranks.json "tracCuts".cut, p25 of the data; 🚜 below it)
 
   const app = () => window.__ps2EliteKd || null;
 
@@ -110,7 +111,8 @@ function start() {
         const vals = c.id === "zerg" ? zergCol : colOf(c.id);
         pools[c.id] = vals.filter(fin).sort((a, b) => a - b);
       }
-      infM = infMedian(pools.inf); // owner t590u: 🪖 / 🚜 switch point, from the data (85.1 on 2026-10-24)
+      infM = infMedian(pools.inf); // owner t590u: 🪖 fill start, from the data (85.1 on 2026-10-24)
+      infC = j.tracCuts && Number.isFinite(j.tracCuts.cut) ? j.tracCuts.cut : tractorCuts(pools.inf, []).cut; // owner t622u: 🚜 below the build's cut
     } catch { ranks = new Map(); }
   }
   async function person(cid) {
@@ -198,7 +200,7 @@ function start() {
       const ug = unitGlow(c, null);
       return `<span class="lv-u lv-fl lv-nil${ug ? ` lv-g${ug}` : ""}" style="--f:${u}" data-tip="${esc(tipText(c, null))}">${meter(shortLab(c))}</span>`;
     }
-    const iu = c.id === "inf" ? infUnit(v, infM) : null; // owner t590u: 🪖 above / 🚜 below the median, own fill + glow
+    const iu = c.id === "inf" ? infUnit(v, infM, infC) : null; // owner t590u/t622u: 🚜 below the cut, empty 🪖 up to the median, 🪖 fill above
     if (iu) return `<span class="lv-u lv-fl${iu.glow ? ` lv-g${iu.glow}` : ""}${iu.tractor ? " lv-trac" : ""}" style="--f:${iu.fill}" data-tip="${esc(tipText(c, v))}">${meter(iu.emoji)}</span>`;
     const g = unitGlow(c, v, driverOf(c, v)); // t568u tiers from the fill's own driver; t577u: 🪳 > 35 = gold
     const top = g ? ` lv-g${g}` : "";

@@ -31,6 +31,7 @@ import { nbdCuts, newbieFactor, newbieCleared, newPlayerHours, NBD_BAND, NBD_NEW
 import { hutCuts, hutParts, hutCleared, deathsPerMin, HUT_ACT_MULT, HUT_ACT_MULT_TOP, HUT_EXP_BAND, playMinutes, HUT_DPM_BAND, HUT_INF_BAND, HUT_ACC_BAND, HUT_MARK_MIN } from "../hut.mjs";
 import { traitPools, aimGap, zergScore } from "../trait-scores.mjs";
 import { crowdSample, crowdPercentiles, zergEstimate, zergCleared, CROWD_MIN_DEATHS, CROWD_MIN_MIN, REV_SOFT_BAND, REV_CONFIRM, ZEST_MIN, HL_MIN, HL_W } from "../zerg-revive.mjs";
+import { tracXpIds, tracSample, tractorCuts, tractorRule, tractorCleared, TRAC_INF_Q, TRAC_XP_Q, TRAC_FALLBACK_Q, TRAC_XP_MIN } from "../tractor.mjs";
 import { vehDiffStart, vehDiffFactor, vehDiffCleared } from "../diff-vehicle.mjs";
 import { percentileOf } from "../dist.mjs";
 import { forensicsSummary, honuSessionUrl } from "../session-forensics.mjs";
@@ -368,6 +369,8 @@ export function buildRanksWithGuard(dataDir, { known = KNOWN_EXTREMES } = {}) {
   const confirmed = readConfirmedPadders(dataDir);
   const hiddenFound = [];
   const revShare = new Map(); // 🪳 revive check: slug → { share, revived, deaths, kills } (data/xp detail)
+  const tracS = new Map(); // 🚜 name mark: slug → { rep, vk } per minute (data/xp, 2+ h; owner t622u)
+  const tracIds = readTracIds(dataDir);
   const playMin = new Map(); // 🛖 experience: estimated lifetime play minutes by slug (owner t508u)
   const forensics = readForensics(dataDir);
   const farmFound = [];
@@ -389,6 +392,8 @@ export function buildRanksWithGuard(dataDir, { known = KNOWN_EXTREMES } = {}) {
       const sm = sessionMetrics({ assists: pl.assists, xp: xpd });
       const rs = crowdSample(xpd); // 🪳 crowd check (zerg-revive.mjs): null below the sample minimum
       if (rs) revShare.set(row[2], rs);
+      const ts = tracSample(xpd, tracIds); // 🚜 XP confirmation sample (null under 2 h)
+      if (ts) tracS.set(row[2], ts);
       const sf = sessionFlag(sm, { hsr: pl.hsr, kd: pl.global_kd });
       for (const id of SESSION_METRIC_IDS) values[id] = sm && sm.measured ? sm.values[id] : null;
       const patterns = sf.flagged ? [...f.patterns, "session"] : f.patterns.slice();
@@ -416,6 +421,7 @@ export function buildRanksWithGuard(dataDir, { known = KNOWN_EXTREMES } = {}) {
   const vehDiff = applyVehDiffColumn(ranks, reviewedJson); // 🔀🚜 trailing "vdf" column (vehicle damp on positive 🔀 Diff)
   const newbieDiff = applyNewbieDiffColumn(ranks, reviewedJson, playMin); // 🐣 trailing "nbd" column (play-time factor on negative 🔀 Diff)
   const zergRevive = applyReviveColumn(ranks, reviewedJson, revShare); // 🪳 trailing "rvp" / "crp" columns (revive / crowd percentiles)
+  const tractor = applyTractorColumn(ranks, reviewedJson, tracS); // 🚜 trailing "trc" column (1 = name mark)
   const found = findOutliers(players, [...METRIC_COLS, ...SESSION_METRIC_IDS], { known });
   found.items.push(...forensicsGuardItems(players));
   const guard = guardStatus(found);
@@ -428,6 +434,7 @@ export function buildRanksWithGuard(dataDir, { known = KNOWN_EXTREMES } = {}) {
     hut,
     vehDiff,
     zergRevive,
+    tractor,
     newbieDiff,
     assistGroups: assistGroups(players), // 🤝 groups stay build-log only (the 🤝 apk column itself is public since t382u)
     assistGap: assistGapStatus(players),
@@ -636,6 +643,59 @@ export function applyNewbieDiffColumn(ranks, reviewed, playMin) {
     newPlayers,
     graveHidden,
     cleared,
+  };
+}
+
+/** data/exp-types.json (room folder first, else the PC one) → 🚜 XP ids (tractor.mjs tracXpIds); null when missing. */
+function readTracIds(dataDir) {
+  for (const f of [path.join(dataDir, "exp-types.json"), path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "data", "exp-types.json")]) {
+    try { return tracXpIds(JSON.parse(fs.readFileSync(f, "utf8")).types); } catch { /* next */ }
+  }
+  return null;
+}
+
+/**
+ * 🚜 vehicle name mark (tractor.mjs, owner t622u 2026-10-24, like 🪳: a low percentile + an XP confirmation).
+ * Cuts from this build's data: infantry % below p25 of every player with a value AND repair / min or
+ * vehicle-kill events / min ≥ p75 of the players with 2+ h of XP detail; OR infantry % below p2 (no XP needed).
+ * Trailing column "trc" = 1 marked / 0 not / null no infantry %; reviewed.json "tractor": "cleared" → 0.
+ * ranks.tracCuts = { cut, fb, med, rep, vk } (LIVE dial + pages). Returns the status.json "tractorMark" block.
+ */
+export function applyTractorColumn(ranks, reviewed, tracS) {
+  const ix = Object.fromEntries(ranks.cols.map((c, i) => [c, i]));
+  const get = (r, k) => (ix[k] != null ? r[ix[k]] : null);
+  const fin = (x) => typeof x === "number" && Number.isFinite(x);
+  const pool = [];
+  for (const r of ranks.rows) { const s = tracS && tracS.get(get(r, "slug")); if (s && fin(get(r, "inf"))) pool.push(s); }
+  const cuts = tractorCuts(ranks.rows.map((r) => get(r, "inf")), pool);
+  const r3 = (x) => (fin(x) ? Math.round(x * 1000) / 1000 : null);
+  const tc = { cut: cuts.cut, fb: cuts.fb, med: cuts.med, rep: r3(cuts.rep), vk: r3(cuts.vk) };
+  ranks.tracCuts = tc;
+  ranks.cols.push("trc");
+  let marked = 0, byXp = 0, byFallback = 0, medianBefore = 0, withInf = 0;
+  const cleared = [], near = [];
+  for (const r of ranks.rows) {
+    const inf = get(r, "inf"), slug = get(r, "slug"), s = tracS && tracS.get(slug);
+    let v = tractorRule(inf, s, cuts);
+    if (fin(inf)) { withInf++; if (fin(cuts.med) && inf < cuts.med) medianBefore++; }
+    if (v === 1 && tractorCleared(reviewed, slug)) { cleared.push({ name: get(r, "name"), slug, inf }); v = 0; }
+    if (v === 1) { marked++; if (fin(cuts.fb) && inf < cuts.fb) byFallback++; else byXp++; }
+    r.push(v);
+    // Near the cut: under the infantry cut with XP within ±25% of the XP cut, or infantry within 2 points of either cut.
+    if (fin(inf) && v != null) {
+      const xr = s ? Math.max(fin(tc.rep) && tc.rep > 0 ? s.rep / tc.rep : 0, fin(tc.vk) && tc.vk > 0 ? s.vk / tc.vk : 0) : null;
+      const nearXp = inf < cuts.cut && xr != null && xr >= 0.75 && xr < 1.25;
+      const nearInf = (s && Math.abs(inf - cuts.cut) <= 2) || Math.abs(inf - cuts.fb) <= 2;
+      if (nearXp || nearInf) near.push({ name: get(r, "name"), slug, inf, rep: s ? r3(s.rep) : null, vk: s ? r3(s.vk) : null, xpRatio: xr == null ? null : Math.round(xr * 100) / 100, marked: v === 1 });
+    }
+  }
+  const dist = (n) => (n.xpRatio != null && n.inf < cuts.cut ? Math.abs(n.xpRatio - 1) : Math.min(Math.abs(n.inf - cuts.cut), Math.abs(n.inf - cuts.fb)) / 2);
+  near.sort((a, b) => dist(a) - dist(b) || a.inf - b.inf); // closest to a line first (XP ratio 1 or an infantry cut)
+  return {
+    checkedAt: new Date().toISOString(),
+    rule: `🚜 = infantry % < p${TRAC_INF_Q} (${tc.cut}%) and (vehicle repair/min ≥ p${TRAC_XP_Q} (${tc.rep}) or vehicle kills/min ≥ p${TRAC_XP_Q} (${tc.vk}) of the ${pool.length} players with ${TRAC_XP_MIN / 60}+ h of XP detail), or infantry % < p${TRAC_FALLBACK_Q} (${tc.fb}%)`,
+    cuts: tc, xpPool: pool.length, withInf, marked, byXp, byFallback, medianBefore,
+    cleared, near: near.slice(0, 40),
   };
 }
 
@@ -1046,8 +1106,8 @@ export function buildNames(index, { withFile = false } = {}) {
  * "inflation" rides along for 🪳 Zerg (owner 2026-10-21, trait-scores.mjs): the
  * lower of the 🎈 Inflation and 🤝 Assists percentiles needs the Inflation pool.
  */
-export const LITE_COLS = ["name", "slug", "adjs", "cons", "apk", "inf", "infMax", "infVeh", "ivi", "inflation", "hut", "hutMk", "vdf", "rvp", "crp", "nbd", "nbh"];
-const LITE_DIGITS = { adjs: 1, cons: 4, apk: 3, inf: 1, infMax: 1, infVeh: 1, ivi: 1, inflation: 2, hut: 3, hutMk: 0, vdf: 3, rvp: 0, crp: 0, nbd: 3, nbh: 1 };
+export const LITE_COLS = ["name", "slug", "adjs", "cons", "apk", "inf", "infMax", "infVeh", "ivi", "inflation", "hut", "hutMk", "vdf", "rvp", "crp", "nbd", "nbh", "trc"];
+const LITE_DIGITS = { adjs: 1, cons: 4, apk: 3, inf: 1, infMax: 1, infVeh: 1, ivi: 1, inflation: 2, hut: 3, hutMk: 0, vdf: 3, rvp: 0, crp: 0, nbd: 3, nbh: 1, trc: 0 };
 export function buildRanksLite(ranks) {
   const ix = LITE_COLS.map((k) => (ranks && Array.isArray(ranks.cols) ? ranks.cols.indexOf(k) : -1));
   if (ix.some((i) => i < 0) || !Array.isArray(ranks.rows)) return null;
@@ -1058,6 +1118,7 @@ export function buildRanksLite(ranks) {
   }));
   const out = { v: 1, updatedAt: ranks.updatedAt || null, count: rows.length, cols: LITE_COLS, rows };
   if (ranks.nbdCuts) out.nbdCuts = ranks.nbdCuts; // 🐣 cuts for players fetched after the build
+  if (ranks.tracCuts) out.tracCuts = ranks.tracCuts; // 🚜 cuts (name-mark fallback + LIVE dial)
   return out;
 }
 
@@ -1146,7 +1207,7 @@ if (isMain) {
     const marathonHidden = autoHideMarathonRampage(dataDir);
     if (marathonHidden.length) console.log(`auto-hide: ${marathonHidden.length} marathon rampage account(s) added to hidden.json: ${marathonHidden.map((a) => a.name).join(", ")}`);
   }
-  const { ranks: out, guard, hidden: hiddenInfo, bins, session, forensics: forensicsInfo, review, assistGroups: assistInfo, padderPenalty: padderInfo, vehicleCut: vehCutInfo, hut: hutInfo, vehDiff: vehDiffInfo, zergRevive: zrevInfo, newbieDiff: nbdInfo, assistGap: gapInfo } = buildRanksWithGuard(dataDir, room === "ps" ? { known: {} } : undefined);
+  const { ranks: out, guard, hidden: hiddenInfo, bins, session, forensics: forensicsInfo, review, assistGroups: assistInfo, padderPenalty: padderInfo, vehicleCut: vehCutInfo, hut: hutInfo, vehDiff: vehDiffInfo, zergRevive: zrevInfo, tractor: tracInfo, newbieDiff: nbdInfo, assistGap: gapInfo } = buildRanksWithGuard(dataDir, room === "ps" ? { known: {} } : undefined);
   if (room === "ps") addServerColumn(out, JSON.parse(fs.readFileSync(path.join(dataDir, "index.json"), "utf8")));
   fs.writeFileSync(path.join(dataDir, "ranks.json"), JSON.stringify(out) + "\n");
   try {
@@ -1177,6 +1238,8 @@ if (isMain) {
   console.log(`🐣 newbie softening: ${nbdInfo.loH} h → ${nbdInfo.hiH} h; ${nbdInfo.softened} negative Diffs softened, Impostors ${nbdInfo.impBefore} → ${nbdInfo.impAfter}, ${nbdInfo.cleared.length} cleared; new players < ${nbdInfo.newH} h: ${nbdInfo.newCount}; 🐣 shown: ${nbdInfo.marked}; 🐣 hidden by 🪦: ${nbdInfo.graveHiddenCount}`);
   st.vehDiff = vehDiffInfo; // 🔀🚜 build-log list (ranks.json "vdf")
   st.zergRevive = zrevInfo; // 🪳 crowd check build-log list (ranks.json "rvp" / "crp")
+  st.tractorMark = tracInfo; // 🚜 name mark (ranks.json "trc" + "tracCuts")
+  console.log(`🚜 vehicle mark: ${tracInfo.marked} of ${tracInfo.withInf} players (${tracInfo.byXp} by infantry < ${tracInfo.cuts.cut}% + XP, ${tracInfo.byFallback} by infantry < ${tracInfo.cuts.fb}%; median rule would give ${tracInfo.medianBefore}), XP pool ${tracInfo.xpPool}, ${tracInfo.cleared.length} cleared`);
   console.log(`🔀🚜 Diff vehicle damp: start ${vehDiffInfo.start}% vehicle share; ${vehDiffInfo.damped} players' Diff lowered, DieHards ${vehDiffInfo.dieHardHut} (after 🛖) → ${vehDiffInfo.dieHardAfter}, ${vehDiffInfo.cleared.length} cleared`);
   console.log(`🪳 crowd check: ${zrevInfo.measured} measured (${zrevInfo.measuredZerg} of ${zrevInfo.zergScored} Zerg-scored), ${zrevInfo.confirmed} confirmed (${zrevInfo.confirmedHigh} with Zerg ≥ 67, ${zrevInfo.byCrowdOnly} by crowd score only), ${zrevInfo.softened} softened, ${zrevInfo.estimated} estimated, ${zrevInfo.cleared.length} cleared`);
   console.log(`🛖 safe-spot: Activity median ${hutInfo.cuts.actMedian} → cut ${hutInfo.cuts.actCut}…${hutInfo.cuts.actCutTop} (by ⚔️ iVi percentile), deaths/min ${hutInfo.cuts.dpmLo}→${hutInfo.cuts.dpmHi}, accuracy ${hutInfo.cuts.accLo}→${hutInfo.cuts.accHi}; ${hutInfo.marked} shown with 🛖, DieHards ${hutInfo.dieHardBefore} → ${hutInfo.dieHardAfter}, ${hutInfo.cleared.length} cleared by the owner`);

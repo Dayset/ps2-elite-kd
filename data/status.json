@@ -355,7 +355,7 @@
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-24T23:42:44.392Z",
+    "checkedAt": "2026-10-25T00:15:25.931Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 25,
     "explained": 28,
@@ -1976,7 +1976,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-24T23:42:48.889Z",
+    "checkedAt": "2026-10-25T00:15:31.751Z",
     "red": 54,
     "padding": 42,
     "adjusted": 21,
@@ -1987,7 +1987,7 @@
     "forensics": 30
   },
   "sessionStats": {
-    "checkedAt": "2026-10-24T23:42:44.446Z",
+    "checkedAt": "2026-10-25T00:15:25.979Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -4104,7 +4104,7 @@
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-24T23:42:44.487Z",
+    "checkedAt": "2026-10-25T00:15:26.017Z",
     "candidates": [
       "chocoiatevs",
       "nebelhexe",
@@ -32307,7 +32307,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-24T23:42:44.499Z",
+    "checkedAt": "2026-10-25T00:15:26.028Z",
     "count": 376,
     "players": [
       {
@@ -35427,7 +35427,7 @@
     ]
   },
   "infantry": {
-    "checkedAt": "2026-10-24T23:42:50.529Z",
+    "checkedAt": "2026-10-25T00:15:33.333Z",
     "players": 14535,
     "counts": {
       "infantry": 9454,
@@ -35484,7 +35484,7 @@
       }
     },
     "tagMin": 20,
-    "checkedAt": "2026-10-24T23:42:48.717Z",
+    "checkedAt": "2026-10-25T00:15:31.537Z",
     "coverage": {
       "players": 14508,
       "withSessions": 13204,
@@ -35795,7 +35795,7 @@
   },
   "burst": {
     "rule": "KPM ≥ 5 and ≥ 15 kills in ≥ 2 min (one stored session, no 10-minute floor)",
-    "checkedAt": "2026-10-24T23:42:52.684Z",
+    "checkedAt": "2026-10-25T00:15:35.523Z",
     "sessions": 14,
     "flaggedPlayers": 1,
     "clearedPlayers": 2,
@@ -36008,7 +36008,7 @@
     ]
   },
   "padderPenalty": {
-    "checkedAt": "2026-10-24T23:42:44.527Z",
+    "checkedAt": "2026-10-25T00:15:26.056Z",
     "ranked": 14453,
     "penalty": 0.1,
     "ref": 610.6,
@@ -36229,7 +36229,7 @@
     ]
   },
   "vehicleCut": {
-    "checkedAt": "2026-10-24T23:42:44.576Z",
+    "checkedAt": "2026-10-25T00:15:26.108Z",
     "ranked": 14453,
     "cut": 8652,
     "buckets": {
@@ -38784,7 +38784,7 @@
     ]
   },
   "hut": {
-    "builtAt": "2026-10-24T23:42:43.926Z",
+    "builtAt": "2026-10-25T00:15:25.465Z",
     "cuts": {
       "actMedian": 0.2712,
       "actMult": 1.333,
@@ -43228,7 +43228,7 @@
     "cleared": []
   },
   "vehDiff": {
-    "builtAt": "2026-10-24T23:42:43.998Z",
+    "builtAt": "2026-10-25T00:15:25.534Z",
     "start": 14.9,
     "damped": 3231,
     "dieHardHut": 1086,
@@ -78780,7 +78780,7 @@
     "cleared": []
   },
   "zergRevive": {
-    "builtAt": "2026-10-24T23:42:44.142Z",
+    "builtAt": "2026-10-25T00:15:25.665Z",
     "zergScored": 6131,
     "measured": 1047,
     "measuredZerg": 935,
@@ -82068,7 +82068,7 @@
     "cleared": []
   },
   "newbieDiff": {
-    "builtAt": "2026-10-24T23:42:44.089Z",
+    "builtAt": "2026-10-25T00:15:25.617Z",
     "loH": 6.1,
     "hiH": 375.4,
     "n": 14442,
@@ -130119,7 +130119,7 @@
     "cleared": []
   },
   "assistGap": {
-    "checkedAt": "2026-10-24T23:42:48.720Z",
+    "checkedAt": "2026-10-25T00:15:31.542Z",
     "start": "2026-04-01T13:00:00.000Z",
     "end": "2026-05-07T05:00:00.000Z",
     "url": "https://www.planetside2.com/patch-notes/may-6-hotfix-2026",
@@ -131152,6 +131152,386 @@
         "kept": 710,
         "apkBefore": 0.358,
         "apk": 0.361
+      }
+    ]
+  },
+  "tractorMark": {
+    "checkedAt": "2026-10-25T00:15:25.687Z",
+    "rule": "🚜 = infantry % < p25 (71.9%) and (vehicle repair/min ≥ p75 (0.924) or vehicle kills/min ≥ p75 (0.213) of the 1269 players with 2+ h of XP detail), or infantry % < p2 (21.7%)",
+    "cuts": {
+      "cut": 71.9,
+      "fb": 21.7,
+      "med": 85.1,
+      "rep": 0.924,
+      "vk": 0.213
+    },
+    "xpPool": 1269,
+    "withInf": 13349,
+    "marked": 444,
+    "byXp": 178,
+    "byFallback": 266,
+    "medianBefore": 6665,
+    "cleared": [],
+    "near": [
+      {
+        "name": "GrogurlTR",
+        "slug": "grogurltr",
+        "inf": 21.7,
+        "rep": null,
+        "vk": null,
+        "xpRatio": null,
+        "marked": false
+      },
+      {
+        "name": "ColdSerpentTR",
+        "slug": "coldserpenttr",
+        "inf": 21.7,
+        "rep": null,
+        "vk": null,
+        "xpRatio": null,
+        "marked": false
+      },
+      {
+        "name": "Shuriks",
+        "slug": "shuriks",
+        "inf": 21.7,
+        "rep": null,
+        "vk": null,
+        "xpRatio": null,
+        "marked": false
+      },
+      {
+        "name": "Xvenator",
+        "slug": "xvenator",
+        "inf": 71.9,
+        "rep": 0.371,
+        "vk": 0.192,
+        "xpRatio": 0.9,
+        "marked": false
+      },
+      {
+        "name": "CharlieChopChopNSO",
+        "slug": "charliechopchopnso",
+        "inf": 29.8,
+        "rep": 0.686,
+        "vk": 0.21,
+        "xpRatio": 0.99,
+        "marked": false
+      },
+      {
+        "name": "deathforfun",
+        "slug": "deathforfun",
+        "inf": 62.4,
+        "rep": 0.496,
+        "vk": 0.211,
+        "xpRatio": 0.99,
+        "marked": false
+      },
+      {
+        "name": "Parazetamol",
+        "slug": "parazetamol",
+        "inf": 71,
+        "rep": 0.934,
+        "vk": 0.195,
+        "xpRatio": 1.01,
+        "marked": true
+      },
+      {
+        "name": "NorwayNSO",
+        "slug": "norwaynso",
+        "inf": 18.5,
+        "rep": 0.534,
+        "vk": 0.209,
+        "xpRatio": 0.98,
+        "marked": true
+      },
+      {
+        "name": "GigiErBullo",
+        "slug": "gigierbullo",
+        "inf": 63.7,
+        "rep": 0.899,
+        "vk": 0.132,
+        "xpRatio": 0.97,
+        "marked": false
+      },
+      {
+        "name": "Cooii",
+        "slug": "cooii",
+        "inf": 67.6,
+        "rep": 0.116,
+        "vk": 0.22,
+        "xpRatio": 1.03,
+        "marked": true
+      },
+      {
+        "name": "Zeonel",
+        "slug": "zeonel",
+        "inf": 61.8,
+        "rep": 0.888,
+        "vk": 0.116,
+        "xpRatio": 0.96,
+        "marked": false
+      },
+      {
+        "name": "IFireRax",
+        "slug": "ifirerax",
+        "inf": 65.6,
+        "rep": 0.381,
+        "vk": 0.222,
+        "xpRatio": 1.04,
+        "marked": true
+      },
+      {
+        "name": "NoNameKIl",
+        "slug": "nonamekil",
+        "inf": 69,
+        "rep": 0.885,
+        "vk": 0.126,
+        "xpRatio": 0.96,
+        "marked": false
+      },
+      {
+        "name": "SpotSteer",
+        "slug": "spotsteer",
+        "inf": 70.3,
+        "rep": 0.741,
+        "vk": 0.221,
+        "xpRatio": 1.04,
+        "marked": true
+      },
+      {
+        "name": "HalonTR",
+        "slug": "halontr",
+        "inf": 21.6,
+        "rep": null,
+        "vk": null,
+        "xpRatio": null,
+        "marked": true
+      },
+      {
+        "name": "BOCAI1",
+        "slug": "bocai1",
+        "inf": 47.1,
+        "rep": 0.968,
+        "vk": 0.189,
+        "xpRatio": 1.05,
+        "marked": true
+      },
+      {
+        "name": "LordPuetzi2",
+        "slug": "lordpuetzi2",
+        "inf": 56.8,
+        "rep": 0.878,
+        "vk": 0.158,
+        "xpRatio": 0.95,
+        "marked": false
+      },
+      {
+        "name": "Yyavanna",
+        "slug": "yyavanna",
+        "inf": 21.8,
+        "rep": null,
+        "vk": null,
+        "xpRatio": null,
+        "marked": false
+      },
+      {
+        "name": "duyaoqaq",
+        "slug": "duyaoqaq",
+        "inf": 21.8,
+        "rep": null,
+        "vk": null,
+        "xpRatio": null,
+        "marked": false
+      },
+      {
+        "name": "redeployman",
+        "slug": "redeployman",
+        "inf": 38.4,
+        "rep": 0.233,
+        "vk": 0.225,
+        "xpRatio": 1.06,
+        "marked": true
+      },
+      {
+        "name": "YuigahamaYui",
+        "slug": "yuigahamayui",
+        "inf": 54.1,
+        "rep": 0.871,
+        "vk": 0.166,
+        "xpRatio": 0.94,
+        "marked": false
+      },
+      {
+        "name": "SW4GG3RM0F0",
+        "slug": "sw4gg3rm0f0",
+        "inf": 69.5,
+        "rep": 0.866,
+        "vk": 0.187,
+        "xpRatio": 0.94,
+        "marked": false
+      },
+      {
+        "name": "xXMartix02Xx",
+        "slug": "xxmartix02xx",
+        "inf": 70.3,
+        "rep": 0.865,
+        "vk": 0.083,
+        "xpRatio": 0.94,
+        "marked": false
+      },
+      {
+        "name": "xXredsunXx",
+        "slug": "xxredsunxx",
+        "inf": 70.9,
+        "rep": 0.691,
+        "vk": 0.226,
+        "xpRatio": 1.06,
+        "marked": true
+      },
+      {
+        "name": "Martinus59",
+        "slug": "martinus59",
+        "inf": 66.3,
+        "rep": 0.487,
+        "vk": 0.229,
+        "xpRatio": 1.07,
+        "marked": true
+      },
+      {
+        "name": "0Y0Nuc1eaR0Y0",
+        "slug": "0y0nuc1ear0y0",
+        "inf": 65.3,
+        "rep": 0.684,
+        "vk": 0.195,
+        "xpRatio": 0.92,
+        "marked": false
+      },
+      {
+        "name": "PrezRR",
+        "slug": "prezrr",
+        "inf": 66.9,
+        "rep": 0.548,
+        "vk": 0.197,
+        "xpRatio": 0.92,
+        "marked": false
+      },
+      {
+        "name": "VssSuper",
+        "slug": "vsssuper",
+        "inf": 65.1,
+        "rep": 0.329,
+        "vk": 0.195,
+        "xpRatio": 0.91,
+        "marked": false
+      },
+      {
+        "name": "BenceHUN0902",
+        "slug": "bencehun0902",
+        "inf": 66.2,
+        "rep": 1.006,
+        "vk": 0.143,
+        "xpRatio": 1.09,
+        "marked": true
+      },
+      {
+        "name": "HARONECOME",
+        "slug": "haronecome",
+        "inf": 72.1,
+        "rep": 1.078,
+        "vk": 0.13,
+        "xpRatio": 1.17,
+        "marked": false
+      },
+      {
+        "name": "duyaocc",
+        "slug": "duyaocc",
+        "inf": 21.5,
+        "rep": null,
+        "vk": null,
+        "xpRatio": null,
+        "marked": true
+      },
+      {
+        "name": "BlindDeafGunner",
+        "slug": "blinddeafgunner",
+        "inf": 21.9,
+        "rep": null,
+        "vk": null,
+        "xpRatio": null,
+        "marked": false
+      },
+      {
+        "name": "HMXavtak",
+        "slug": "hmxavtak",
+        "inf": 21.9,
+        "rep": null,
+        "vk": null,
+        "xpRatio": null,
+        "marked": false
+      },
+      {
+        "name": "B3rserk",
+        "slug": "b3rserk",
+        "inf": 52.7,
+        "rep": 0.826,
+        "vk": 0.189,
+        "xpRatio": 0.89,
+        "marked": false
+      },
+      {
+        "name": "Quarkfreakz",
+        "slug": "quarkfreakz",
+        "inf": 71.7,
+        "rep": 0.401,
+        "vk": 0.19,
+        "xpRatio": 0.89,
+        "marked": false
+      },
+      {
+        "name": "BackA11eySa11y",
+        "slug": "backa11eysa11y",
+        "inf": 46.5,
+        "rep": 1.024,
+        "vk": 0.112,
+        "xpRatio": 1.11,
+        "marked": true
+      },
+      {
+        "name": "XenNC",
+        "slug": "xennc",
+        "inf": 70.6,
+        "rep": 1.03,
+        "vk": 0.143,
+        "xpRatio": 1.11,
+        "marked": true
+      },
+      {
+        "name": "RWFangCN",
+        "slug": "rwfangcn",
+        "inf": 61.4,
+        "rep": 0.731,
+        "vk": 0.239,
+        "xpRatio": 1.12,
+        "marked": true
+      },
+      {
+        "name": "Aplikators",
+        "slug": "aplikators",
+        "inf": 64.8,
+        "rep": 0.244,
+        "vk": 0.238,
+        "xpRatio": 1.12,
+        "marked": true
+      },
+      {
+        "name": "Metralleto",
+        "slug": "metralleto",
+        "inf": 65.5,
+        "rep": 1.031,
+        "vk": 0.108,
+        "xpRatio": 1.12,
+        "marked": true
       }
     ]
   }

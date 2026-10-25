@@ -33,7 +33,7 @@
     }
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-24T23:41:35.365Z",
+    "checkedAt": "2026-10-25T00:15:37.025Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 1,
     "explained": 3,
@@ -228,7 +228,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-24T23:41:35.420Z",
+    "checkedAt": "2026-10-25T00:15:37.084Z",
     "red": 7,
     "padding": 0,
     "adjusted": 219,
@@ -239,7 +239,7 @@
     "forensics": 0
   },
   "sessionStats": {
-    "checkedAt": "2026-10-24T23:41:35.368Z",
+    "checkedAt": "2026-10-25T00:15:37.029Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -644,7 +644,7 @@
     "outliersUnexplained": 0
   },
   "forensics": {
-    "checkedAt": "2026-10-24T23:41:35.373Z",
+    "checkedAt": "2026-10-25T00:15:37.033Z",
     "candidates": [
       "thingzzvs",
       "hkn1",
@@ -712,7 +712,7 @@
     "players": []
   },
   "review": {
-    "checkedAt": "2026-10-24T23:41:35.383Z",
+    "checkedAt": "2026-10-25T00:15:37.041Z",
     "count": 223,
     "players": [
       {
@@ -2543,7 +2543,7 @@
     },
     "predict": {},
     "tagMin": 20,
-    "checkedAt": "2026-10-24T23:41:35.395Z",
+    "checkedAt": "2026-10-25T00:15:37.051Z",
     "coverage": {
       "players": 1682,
       "withSessions": 785,
@@ -2842,7 +2842,7 @@
     }
   },
   "padderPenalty": {
-    "checkedAt": "2026-10-24T23:41:35.386Z",
+    "checkedAt": "2026-10-25T00:15:37.045Z",
     "ranked": 1675,
     "penalty": 0.1,
     "ref": 610.6,
@@ -2852,7 +2852,7 @@
     "players": []
   },
   "vehicleCut": {
-    "checkedAt": "2026-10-24T23:41:35.394Z",
+    "checkedAt": "2026-10-25T00:15:37.050Z",
     "ranked": 1675,
     "cut": 987,
     "buckets": {
@@ -5128,7 +5128,7 @@
     "watch": []
   },
   "infantry": {
-    "checkedAt": "2026-10-24T23:41:35.632Z",
+    "checkedAt": "2026-10-25T00:15:37.260Z",
     "players": 1689,
     "counts": {
       "infantry": 1090,
@@ -5147,7 +5147,7 @@
   },
   "burst": {
     "rule": "KPM ≥ 5 and ≥ 15 kills in ≥ 2 min (one stored session, no 10-minute floor)",
-    "checkedAt": "2026-10-24T23:41:35.883Z",
+    "checkedAt": "2026-10-25T00:15:37.470Z",
     "sessions": 3,
     "flaggedPlayers": 3,
     "clearedPlayers": 0,
@@ -5212,7 +5212,7 @@
     "caught": []
   },
   "hut": {
-    "builtAt": "2026-10-24T23:41:35.307Z",
+    "builtAt": "2026-10-25T00:15:36.972Z",
     "cuts": {
       "actMedian": 0.2388,
       "actMult": 1.333,
@@ -5716,7 +5716,7 @@
     "cleared": []
   },
   "newbieDiff": {
-    "builtAt": "2026-10-24T23:41:35.330Z",
+    "builtAt": "2026-10-25T00:15:36.992Z",
     "loH": 6.8,
     "hiH": 318.6,
     "n": 1670,
@@ -11200,7 +11200,7 @@
     "cleared": []
   },
   "vehDiff": {
-    "builtAt": "2026-10-24T23:41:35.318Z",
+    "builtAt": "2026-10-25T00:15:36.980Z",
     "start": 14.6,
     "damped": 396,
     "dieHardHut": 188,
@@ -15567,7 +15567,7 @@
     "cleared": []
   },
   "zergRevive": {
-    "builtAt": "2026-10-24T23:41:35.334Z",
+    "builtAt": "2026-10-25T00:15:36.996Z",
     "zergScored": 136,
     "measured": 0,
     "measuredZerg": 0,
@@ -15591,7 +15591,7 @@
     "cleared": []
   },
   "assistGap": {
-    "checkedAt": "2026-10-24T23:41:35.396Z",
+    "checkedAt": "2026-10-25T00:15:37.052Z",
     "start": "2026-04-01T13:00:00.000Z",
     "end": "2026-05-07T05:00:00.000Z",
     "url": "https://www.planetside2.com/patch-notes/may-6-hotfix-2026",
@@ -15599,5 +15599,124 @@
     "count": 0,
     "lost": 0,
     "players": []
+  },
+  "tractorMark": {
+    "checkedAt": "2026-10-25T00:15:37.000Z",
+    "rule": "🚜 = infantry % < p25 (72.1%) and (vehicle repair/min ≥ p75 (null) or vehicle kills/min ≥ p75 (null) of the 0 players with 2+ h of XP detail), or infantry % < p2 (24%)",
+    "cuts": {
+      "cut": 72.1,
+      "fb": 24,
+      "med": 85.4,
+      "rep": null,
+      "vk": null
+    },
+    "xpPool": 0,
+    "withInf": 1526,
+    "marked": 30,
+    "byXp": 0,
+    "byFallback": 30,
+    "medianBefore": 758,
+    "cleared": [],
+    "near": [
+      {
+        "name": "Duffney",
+        "slug": "duffney",
+        "inf": 24,
+        "rep": null,
+        "vk": null,
+        "xpRatio": null,
+        "marked": false
+      },
+      {
+        "name": "iBringDeath555",
+        "slug": "ibringdeath555",
+        "inf": 24.2,
+        "rep": null,
+        "vk": null,
+        "xpRatio": null,
+        "marked": false
+      },
+      {
+        "name": "Cgsr2",
+        "slug": "cgsr2",
+        "inf": 24.5,
+        "rep": null,
+        "vk": null,
+        "xpRatio": null,
+        "marked": false
+      },
+      {
+        "name": "Tzany",
+        "slug": "tzany",
+        "inf": 24.5,
+        "rep": null,
+        "vk": null,
+        "xpRatio": null,
+        "marked": false
+      },
+      {
+        "name": "Tzany",
+        "slug": "tzany-eu",
+        "inf": 24.7,
+        "rep": null,
+        "vk": null,
+        "xpRatio": null,
+        "marked": false
+      },
+      {
+        "name": "Rustolium",
+        "slug": "rustolium",
+        "inf": 25,
+        "rep": null,
+        "vk": null,
+        "xpRatio": null,
+        "marked": false
+      },
+      {
+        "name": "Wlk907TR",
+        "slug": "wlk907tr",
+        "inf": 25.2,
+        "rep": null,
+        "vk": null,
+        "xpRatio": null,
+        "marked": false
+      },
+      {
+        "name": "BigBeer",
+        "slug": "bigbeer",
+        "inf": 22.7,
+        "rep": null,
+        "vk": null,
+        "xpRatio": null,
+        "marked": true
+      },
+      {
+        "name": "Janderson16",
+        "slug": "janderson16",
+        "inf": 25.3,
+        "rep": null,
+        "vk": null,
+        "xpRatio": null,
+        "marked": false
+      },
+      {
+        "name": "Lil570TR",
+        "slug": "lil570tr",
+        "inf": 22.4,
+        "rep": null,
+        "vk": null,
+        "xpRatio": null,
+        "marked": true
+      },
+      {
+        "name": "SokMelon",
+        "slug": "sokmelon",
+        "inf": 25.6,
+        "rep": null,
+        "vk": null,
+        "xpRatio": null,
+        "marked": false
+      }
+    ]
   }
 }
