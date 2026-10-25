@@ -642,10 +642,25 @@ test("trends graph (owner 2026-10-25): no numbers on the chart, 2 rows tall, DPM
 test("bounty (owner 2026-10-25): hearts on the centre line's second row, 💰 at 7 held for 3 deaths", () => {
   const js = liveSrc();
   const css = cssSrc();
-  assert.match(js, /bountyNext \} from "\.\/live-model\.mjs\?v=20261025-bnt1"/);
+  assert.match(js, /bountyNext[^}]*\} from "\.\/live-model\.mjs\?v=20261025-dps1"/);
   assert.match(js, /const b = bountyNext\(\{ streak: bountyStreak, lives: bountyLives \}, ev\.kind === "kill"\);/);
   assert.match(js, /if \(bountyLives > 0\) return `<span class="lv-wn">💰<\/span>`;/);
   assert.match(js, /"❤️‍🔥"\.repeat\(bountyStreak\)/);
   assert.match(js, /const wn = isMe \? bountyHtml\(\) : `<span class="lv-wn">/);
   assert.match(css, /\.live-table tbody\.lv-me \.lv-wn \{ font-size: 1rem; line-height: 1\.1; \}/);
+});
+
+test("mobile names + legend + DPS (owner 2026-10-25): table 100% with a flexible name column, legend above the graph small, DPS under the feed", () => {
+  const js = liveSrc();
+  const css = cssSrc();
+  const live = readFileSync(new URL("live.html", root), "utf8");
+  const swap = readFileSync(new URL("scripts/build-live.mjs", root), "utf8");
+  assert.match(css, /@media \(max-width: 600px\)[\s\S]*?\.live-table \{[^}]*width: 100%;/);
+  assert.match(css, /@media \(max-width: 600px\)[\s\S]*?col\.lv-c-nm \{ width: auto; \}/);
+  assert.ok(live.indexOf("liveTrendTitle") < live.indexOf("liveTrendLegend") && live.indexOf("liveTrendLegend") < live.indexOf("liveTrendCanvas"), "legend sits between title and graph");
+  assert.match(css, /\.live-trend-legend \{[^}]*font-size: 0\.7rem;/);
+  assert.match(swap, /<div id="liveDps" class="live-dps"><span id="liveDpsLabel"><\/span> <span id="liveDpsVal">0<\/span><\/div>/);
+  assert.match(js, /eventNames: \["Death", "GainExperience_experience_id_2", "GainExperience_experience_id_3", "GainExperience_experience_id_371", "GainExperience_experience_id_372"\]/);
+  assert.match(js, /DPS_ASSIST_XP\.has\(Number\(p\.experience_id\)\)/);
+  assert.match(js, /setInterval\(dpsTick, 100\)/);
 });

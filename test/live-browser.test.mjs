@@ -207,3 +207,38 @@ describe("🎥 live.html in a browser", () => {
       assert.deepEqual(errors, [], "no page errors");
     });
   });
+
+  it("imaginary DPS (owner 2026-10-25): kill jumps it, it drains, an assist adds half a kill", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      const dps = () => ev(`Number(document.getElementById("liveDpsVal").textContent)`);
+      assert.equal(await ev(until(`document.getElementById("liveDpsVal").textContent === "0"`)), true, "DPS starts at 0");
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
+      const afterKill = await ev(until(`Number(document.getElementById("liveDpsVal").textContent) >= 85`)) && await dps();
+      assert.ok(afterKill >= 85 && afterKill <= 100, `a kill jumps DPS to ~100: ${afterKill}`);
+      await new Promise((r) => setTimeout(r, 2500));
+      const drained = await dps();
+      assert.ok(drained < 85 && drained > 40, `DPS drains down after the kill: ${drained}`);
+      const gain = JSON.stringify({ event_name: "GainExperience", character_id: ME.cid, experience_id: 2, amount: 100, timestamp: "0" });
+      await ev(`window.__fakeWs.emit(${gain})`);
+      const afterAssist = await ev(until(`Number(document.getElementById("liveDpsVal").textContent) > ${drained + 30}`)) && await dps();
+      assert.ok(afterAssist > drained + 30, `an assist adds ~50: ${drained} -> ${afterAssist}`);
+      assert.deepEqual(errors, [], "no page errors");
+    });
+  });
+
+  it("mobile names (owner 2026-10-25): the table fills the phone and the name column takes the leftover", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
+      assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)").length === 1`)), true, "a victim row on screen");
+      const s = await ev(`(() => {
+        const feed = document.getElementById("liveFeed"), tbl = document.getElementById("liveList");
+        const col = document.querySelector("col.lv-c-nm");
+        return { feedW: feed.getBoundingClientRect().width, tblW: tbl.getBoundingClientRect().width, nmW: col.getBoundingClientRect().width };
+      })()`);
+      assert.ok(s.tblW / s.feedW > 0.98, `the table fills the phone: ${Math.round(s.tblW)}/${Math.round(s.feedW)}`);
+      assert.ok(s.nmW > 160, `the name column takes the leftover (was 140 at the old 8.78rem): ${Math.round(s.nmW)}`);
+      assert.deepEqual(errors, [], "no page errors");
+    }, { width: 390, height: 844 });
+  });

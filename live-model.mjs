@@ -52,6 +52,28 @@ export function bountyNext(s, isKill) {
 }
 
 /**
+ * Owner 2026-10-25: imaginary DPS — estimated damage per second from the
+ * Death stream alone (no damage numbers exist on it). One player = 1000 HP
+ * (health + shields); a kill = 1000 damage, an assist = 500 (half a kill —
+ * the stream carries no damage share, so this is the experiment's stated
+ * assumption, not a measurement). The value jumps on every kill/assist and
+ * drains exponentially (10 s time constant), so sustained killing converges
+ * to kills-per-second × 1000. Events: [{ t, dmg }]; now in ms.
+ */
+export const DPS_HP = 1000;
+export const DPS_ASSIST = 500;
+export const DPS_TAU_MS = 10000;
+export const DPS_ASSIST_XP = new Set([2, 3, 371, 372]); // kill-assist GainExperience ids (same list as worker ASSIST_EXP_IDS)
+export function dpsNow(events, now) {
+  let v = 0;
+  for (const e of events) {
+    const dt = now - e.t;
+    if (dt >= 0 && dt < 60000) v += e.dmg * Math.exp(-dt / DPS_TAU_MS);
+  }
+  return v / (DPS_TAU_MS / 1000);
+}
+
+/**
  * Feed state step: newest event on top, every event its own row (owner t587u: no dedupe — a repeat
  * opponent gets a new row too); the oldest row drops out past FEED_MAX.
  * ⏱️ stopwatch: the top row runs (gap null); when a new event lands, the old

@@ -19,8 +19,8 @@ await i18nReady;
  *     fetch in the background (one at a time, newest first, #32) and upgrade in place.
  * Pure helpers are exported for tests; the DOM part runs only in a browser.
  */
-export * from "./live-model.mjs?v=20261025-bnt1"; // #66: the pure part (tests import it from here)
-import { VICTIM_LINES, classifyDeath, fmtGap, censusStats, LIVE_COLS, tipText, FILL_DIM, HOLLOW_PX, HOLLOW_INK, goodPct, fillDriver, emojiFill, unknownFill, infUnit, OUTLINE_PX, unitGlow, LIVE_GLOWS, LIVE_FPS, liveFps, HALO_KEY, haloOn, easeFill, glowIn, BEAT, TIER_MOTION, haloAt, SHINE, shineFrame, beatSleep, weaponIcon, glowTier, eventAt, overlayPush, overlayRows, nextBgFetch, liveRowFromPlayer, ME_REFRESH_MS, mergeFresh, SHARE_MAX, shareDelay, cellText, slugKey, bountyNext } from "./live-model.mjs?v=20261025-bnt1";
+export * from "./live-model.mjs?v=20261025-dps1"; // #66: the pure part (tests import it from here)
+import { VICTIM_LINES, classifyDeath, fmtGap, censusStats, LIVE_COLS, tipText, FILL_DIM, HOLLOW_PX, HOLLOW_INK, goodPct, fillDriver, emojiFill, unknownFill, infUnit, OUTLINE_PX, unitGlow, LIVE_GLOWS, LIVE_FPS, liveFps, HALO_KEY, haloOn, easeFill, glowIn, BEAT, TIER_MOTION, haloAt, SHINE, shineFrame, beatSleep, weaponIcon, glowTier, eventAt, overlayPush, overlayRows, nextBgFetch, liveRowFromPlayer, ME_REFRESH_MS, mergeFresh, SHARE_MAX, shareDelay, cellText, slugKey, bountyNext, dpsNow, DPS_HP, DPS_ASSIST, DPS_ASSIST_XP } from "./live-model.mjs?v=20261025-dps1";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261023-short1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
@@ -513,6 +513,21 @@ function start() {
   drawTrends(); // the skeleton shows from page load, before the stream connects
   setInterval(drawTrends, 30000);
 
+  // Owner 2026-10-25: imaginary DPS under the feed — kills (+1000) and
+  // assists (+500, via GainExperience) jump the value, exponential drain
+  // pulls it back down. Updated every 100 ms so the drain reads as a drain,
+  // not steps; the write is skipped when the rounded value did not change.
+  const dpsEl = $("liveDpsVal");
+  if ($("liveDpsLabel")) $("liveDpsLabel").textContent = tr("live.dps", "DPS");
+  const dpsEvents = [];
+  let lastDps = -1;
+  function dpsTick() {
+    if (!dpsEl) return;
+    const v = Math.round(dpsNow(dpsEvents, Date.now()));
+    if (v !== lastDps) { dpsEl.textContent = v; lastDps = v; }
+  }
+  setInterval(dpsTick, 100);
+
   // #32: uncached opponents → full Census fetch in the background, one at a time.
   let bgQueue = []; // cids, newest first
   const bgTried = new Set();
@@ -621,6 +636,7 @@ function start() {
     if (ev.kind === "kill") trendKills.push(ev.at || Date.now()); else trendDeaths.push(ev.at || Date.now());
     const b = bountyNext({ streak: bountyStreak, lives: bountyLives }, ev.kind === "kill");
     bountyStreak = b.streak; bountyLives = b.lives;
+    if (ev.kind === "kill") { dpsEvents.push({ t: Date.now(), dmg: DPS_HP }); dpsTick(); }
     st = overlayPush(st, ev);
     render();
     drawTrends();
@@ -633,7 +649,7 @@ function start() {
     try { ws = new WebSocket(STREAM); } catch { retry(); return; }
     ws.onopen = () => {
       backoff = 2000;
-      ws.send(JSON.stringify({ service: "event", action: "subscribe", characters: [me.cid], eventNames: ["Death"] }));
+      ws.send(JSON.stringify({ service: "event", action: "subscribe", characters: [me.cid], eventNames: ["Death", "GainExperience_experience_id_2", "GainExperience_experience_id_3", "GainExperience_experience_id_371", "GainExperience_experience_id_372"] })); // filtered server-side (the worker's pattern) — never the whole XP firehose
       if (!trendStart) trendStart = Date.now(); // the trends session starts when tracking starts, not on reconnect
       setState(`<span class="live-dot">●</span> waiting for kills and deaths…`, "on");
       render();
@@ -642,6 +658,13 @@ function start() {
     ws.onmessage = (m) => {
       let j; try { j = JSON.parse(m.data); } catch { return; }
       if (j.type !== "serviceMessage") return;
+      // Owner 2026-10-25: assists live in GainExperience, not Death — an
+      // assist XP tick for the tracked player adds +500 to the DPS counter.
+      if (j.payload?.event_name === "GainExperience") {
+        const p = j.payload;
+        if (String(p.character_id) === me.cid && DPS_ASSIST_XP.has(Number(p.experience_id))) { dpsEvents.push({ t: Date.now(), dmg: DPS_ASSIST }); dpsTick(); }
+        return;
+      }
       const ev = classifyDeath(j.payload, me.cid);
       if (ev) ev.at = eventAt(j.payload); // owner t576u: the time of the kill/death, not of the (later) name lookup
       if (ev) {
