@@ -561,7 +561,11 @@ function start() {
   if ($("liveCashAvgLabel")) $("liveCashAvgLabel").textContent = tr("live.cashAvg", "avg");
   const dpsEvents = [];
   const cashKills = []; // one per kill: { cid, iv } — iv null until the victim's iVi is known
-  const cashIv = (p) => (p && p.cached && Number.isFinite(p.cached.adjs) ? Math.round(p.cached.adjs) : null);
+  // Owner 2026-10-25: a sub-0 victim pays 0, never a negative — the pot
+  // is a currency, and a kill cannot subtract from it. The feed's iVi
+  // cell still shows the victim's real (negative) adjs; only the payout
+  // is floored. Unknown (null) stays unknown, never counted as 0.
+  const cashIv = (p) => (p && p.cached && Number.isFinite(p.cached.adjs) ? Math.max(0, Math.round(p.cached.adjs)) : null);
   let lastDps = "", lastCash = "";
   function dpsTick() {
     if (dpsEl) {

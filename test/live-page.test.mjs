@@ -689,5 +689,6 @@ test("mobile names + legend + DPS (owner 2026-10-25): table 100% with a flexible
   assert.match(js, /cashKills\.length = 0;/);
   assert.match(js, /tr\("live\.cashHist", "Past runs"\)/);
   assert.match(css, /\.live-cash-hist \{ margin-top: 0.25rem; font-size: 0.72rem; color: var\(--dim\); \}/);
+  assert.match(js, /Math\.max\(0, Math\.round\(p\.cached\.adjs\)\)/); // sub-0 victims pay 0, never subtract
   assert.match(js, /tr\("live\.cashAvg", "avg"\)/);
 });

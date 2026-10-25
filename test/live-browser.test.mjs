@@ -23,11 +23,14 @@ const named = ranks.rows.filter((r) => typeof r[ci("adjs")] === "number").sort((
 const pick = Array.from({ length: 8 }, (_, i) => named[Math.floor((i / 8) * named.length * 0.5)][ci("name")]);
 const ME = { cid: "5428000000000000001", name: pick[0] };
 const OPP = pick.slice(1).map((name, i) => ({ cid: String(5428000000000000100n + BigInt(i)), name }));
+// A real sub-0 player from the cache (typical of the bottom quartile, not the extreme tail).
+const sub0row = ranks.rows.find((r) => { const a = r[ci("adjs")]; return typeof a === "number" && a < -100 && a > -600; });
+const SUB0 = { cid: "5428000000000000200", name: sub0row[ci("name")] };
 
 /** Page-side fakes: Census REST (character lookups) and the push stream (window.__fakeWs.emit(payload)). */
 const FAKES = `(() => {
-  const ME = ${JSON.stringify(ME)}, OPP = ${JSON.stringify(OPP)};
-  const byCid = new Map([[ME.cid, ME], ...OPP.map((o) => [o.cid, o])]);
+  const ME = ${JSON.stringify(ME)}, OPP = ${JSON.stringify(OPP)}, SUB0 = ${JSON.stringify(SUB0)};
+  const byCid = new Map([[ME.cid, ME], [SUB0.cid, SUB0], ...OPP.map((o) => [o.cid, o])]);
   const json = (o) => new Response(JSON.stringify(o), { status: 200, headers: { "content-type": "application/json" } });
   const realFetch = window.fetch.bind(window);
   window.fetch = (input, init) => {
@@ -356,6 +359,27 @@ describe("🎥 live.html in a browser", () => {
       assert.equal(entries[0], `Σ ${runSums[5]} · avg ${runSums[5].toFixed(1)}`, "newest run first");
       assert.ok(!entries.join("|").includes(`Σ ${runSums[0]} `), "the oldest run dropped off");
       assert.deepEqual(await pot(), ["0", "–"], "pot empty after the last run ends");
+      assert.deepEqual(errors, [], "no page errors");
+    });
+  });
+
+  it("sub-0 floor (owner 2026-10-25): a negative-iVi victim pays 0, never subtracts", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    // The fixture proof is data-side: SUB0's cached adjs is negative. The
+    // feed cell itself already floors (adjs column floorZero), so the
+    // screen shows 0 for them — the pot must now match that, not go below.
+    assert.ok(sub0row[ci("adjs")] < -100, `SUB0 is genuinely sub-0 in the cache: ${sub0row[ci("adjs")]}`);
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      await ev(`window.__fakeWs.emit(${death(ME.cid, SUB0.cid, "80", false)})`);
+      assert.equal(await ev(until(`document.querySelector("#liveList tbody.lv-vic .lv-iv") && document.querySelector("#liveList tbody.lv-vic .lv-iv").textContent === "0"`)), true, "the feed already floors their shown iVi at 0");
+      assert.equal(await ev(until(`document.getElementById("liveCashSumVal").textContent === "0"`)), true, "the floored payout is 0, not negative");
+      assert.equal(await ev(until(`document.getElementById("liveCashAvgVal").textContent === "0.0"`)), true, "a known 0 payout counts in the average");
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
+      assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)").length === 2`)), true, "two victims on screen");
+      const ivs = await ev(`[...document.querySelectorAll("#liveList tbody.lv-vic .lv-iv")].map((e) => Number(e.textContent))`);
+      assert.ok(ivs[0] > 0 && ivs[1] === 0, `newest victim positive, sub-0 victim shown floored: ${ivs}`);
+      assert.equal(await ev(until(`document.getElementById("liveCashSumVal").textContent === "${ivs[0]}"`)), true, "the pot holds only the positive payout");
+      assert.equal(await ev(until(`document.getElementById("liveCashAvgVal").textContent === "${(ivs[0] / 2).toFixed(1)}"`)), true, "the average counts the floored 0");
       assert.deepEqual(errors, [], "no page errors");
     });
   });
