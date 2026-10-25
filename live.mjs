@@ -19,8 +19,8 @@ await i18nReady;
  *     fetch in the background (one at a time, newest first, #32) and upgrade in place.
  * Pure helpers are exported for tests; the DOM part runs only in a browser.
  */
-export * from "./live-model.mjs?v=20261024-trac1"; // #66: the pure part (tests import it from here)
-import { VICTIM_LINES, classifyDeath, fmtGap, censusStats, LIVE_COLS, tipText, FILL_DIM, HOLLOW_PX, HOLLOW_INK, goodPct, fillDriver, emojiFill, unknownFill, infUnit, OUTLINE_PX, unitGlow, LIVE_GLOWS, LIVE_FPS, liveFps, HALO_KEY, haloOn, easeFill, glowIn, BEAT, TIER_MOTION, haloAt, SHINE, shineFrame, beatSleep, weaponIcon, glowTier, eventAt, overlayPush, overlayRows, nextBgFetch, liveRowFromPlayer, ME_REFRESH_MS, mergeFresh, SHARE_MAX, shareDelay, cellText, slugKey } from "./live-model.mjs?v=20261024-trac1";
+export * from "./live-model.mjs?v=20261025-bnt1"; // #66: the pure part (tests import it from here)
+import { VICTIM_LINES, classifyDeath, fmtGap, censusStats, LIVE_COLS, tipText, FILL_DIM, HOLLOW_PX, HOLLOW_INK, goodPct, fillDriver, emojiFill, unknownFill, infUnit, OUTLINE_PX, unitGlow, LIVE_GLOWS, LIVE_FPS, liveFps, HALO_KEY, haloOn, easeFill, glowIn, BEAT, TIER_MOTION, haloAt, SHINE, shineFrame, beatSleep, weaponIcon, glowTier, eventAt, overlayPush, overlayRows, nextBgFetch, liveRowFromPlayer, ME_REFRESH_MS, mergeFresh, SHARE_MAX, shareDelay, cellText, slugKey, bountyNext } from "./live-model.mjs?v=20261025-bnt1";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261023-short1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
@@ -238,11 +238,20 @@ function start() {
     const zgS = Number.isFinite(zg) ? (est != null ? `~${Math.round(zg)}` : String(Math.round(zg))) : "–";
     return `<td class="lv-iz" data-tip="Infantry ${infS}% · Zerg ${zgS}">${infS}/${zgS}%</td>`;
   }
+  // Owner 2026-10-25: the tracked player's bounty, on their own (centre) line's
+  // second row — one ❤️‍🔥 per kill of the current streak, capped at 7; at 7 the
+  // streak becomes the bounty mark 💰, held for 3 deaths (bountyNext). The
+  // centre line never carries a weapon, so its second line is free for this.
+  let bountyStreak = 0, bountyLives = 0;
+  function bountyHtml() {
+    if (bountyLives > 0) return `<span class="lv-wn">💰</span>`;
+    return `<span class="lv-wn">${"❤️‍🔥".repeat(bountyStreak)}</span>`; // repeat(0) = "" — an empty line, like before
+  }
   function cells(p, isMe, r) {
     const vals = p.cached || {};
     const tip = p.cached || isMe ? "" : ` · not in cache · K/D ${fmt(p.kd, 2)} · KPM ${fmt(p.kpm, 2)}`;
     const w = r ? weaponIcon(catalog, r.weapon) : null; // owner 2026-10-25: the weapon's NAME under the player name (small, dim), not an icon
-    const wn = `<span class="lv-wn">${w ? esc(w.name) : ""}</span>`; // always rendered (empty when unknown), so the names stay lined up
+    const wn = isMe ? bountyHtml() : `<span class="lv-wn">${w ? esc(w.name) : ""}</span>`; // always rendered (empty when unknown), so the names stay lined up
     return `<td class="lv-nm"><span class="lv-nm2">${nameHtml(p, tip, hsHtml(r))}${wn}</span></td>${IVI.map((c) => `<td class="lv-ivc">${iviText(c, vals[c.id])}</td>`).join("")}${izHtml(vals)}`;
   }
   const blank = `<td class="lv-nm"></td><td class="lv-ivc"></td><td class="lv-iz"></td>`; // same box as a filled line, so the overlay never grows
@@ -610,6 +619,8 @@ function start() {
     const p = await person(ev.opp);
     if (!trendStart) trendStart = ev.at || Date.now();
     if (ev.kind === "kill") trendKills.push(ev.at || Date.now()); else trendDeaths.push(ev.at || Date.now());
+    const b = bountyNext({ streak: bountyStreak, lives: bountyLives }, ev.kind === "kill");
+    bountyStreak = b.streak; bountyLives = b.lives;
     st = overlayPush(st, ev);
     render();
     drawTrends();

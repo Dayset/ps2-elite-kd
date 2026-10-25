@@ -27,6 +27,31 @@ export function classifyDeath(payload, cid) {
 }
 
 /**
+ * Owner 2026-10-25: the in-game bounty, tracked locally from the Death stream
+ * (no bounty field exists on it, and the killer's bounty-XP GainExperience is
+ * not on the tracked player's own stream — streak counting IS the sync).
+ * 7 kills without dying earns the bounty (💰); a death below 7 resets the
+ * streak to 0; a bounty survives 3 deaths, then clears. Kills while bountied
+ * change nothing (streak stays capped). State: { streak: 0-7, lives: 0-3 }
+ * (lives > 0 means bountied). Session-only: a page reload restarts at 0.
+ */
+export const BOUNTY_KILLS = 7;
+export const BOUNTY_LIVES = 3;
+export function bountyNext(s, isKill) {
+  const streak = s?.streak ?? 0, lives = s?.lives ?? 0;
+  if (isKill) {
+    if (lives > 0) return { streak, lives };
+    const next = Math.min(BOUNTY_KILLS, streak + 1);
+    return next >= BOUNTY_KILLS ? { streak: next, lives: BOUNTY_LIVES } : { streak: next, lives: 0 };
+  }
+  if (lives > 0) {
+    const left = lives - 1;
+    return left > 0 ? { streak, lives: left } : { streak: 0, lives: 0 };
+  }
+  return { streak: 0, lives: 0 };
+}
+
+/**
  * Feed state step: newest event on top, every event its own row (owner t587u: no dedupe — a repeat
  * opponent gets a new row too); the oldest row drops out past FEED_MAX.
  * ⏱️ stopwatch: the top row runs (gap null); when a new event lands, the old

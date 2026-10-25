@@ -184,3 +184,26 @@ describe("🎥 live.html in a browser", () => {
     }, { query: "&fps=60" });
   });
 });
+
+  it("bounty (owner 2026-10-25): hearts per kill on the centre line, 💰 at 7 held for 3 deaths", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      const bountyIs = async (t, why) => assert.equal(await ev(until(`document.querySelector("#liveList tbody.lv-me .lv-wn").textContent === ${JSON.stringify(t)}`)), true, why);
+      await bountyIs("", "no hearts before any kill");
+      for (let i = 0; i < 3; i++) await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[i].cid, "80", false)})`);
+      await bountyIs("❤️‍🔥".repeat(3), "one heart per kill");
+      await ev(`window.__fakeWs.emit(${death(OPP[0].cid, ME.cid, "432", false)})`);
+      await bountyIs("", "a death below 7 resets everything");
+      for (let i = 0; i < 7; i++) await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[i].cid, "80", false)})`);
+      await bountyIs("💰", "the 7th kill earns the bounty mark");
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
+      await bountyIs("💰", "a kill while bountied changes nothing");
+      await ev(`window.__fakeWs.emit(${death(OPP[0].cid, ME.cid, "432", false)})`);
+      await bountyIs("💰", "bounty held after the 1st death");
+      await ev(`window.__fakeWs.emit(${death(OPP[1].cid, ME.cid, "432", false)})`);
+      await bountyIs("💰", "bounty held after the 2nd death");
+      await ev(`window.__fakeWs.emit(${death(OPP[2].cid, ME.cid, "432", false)})`);
+      await bountyIs("", "the 3rd death clears the bounty");
+      assert.deepEqual(errors, [], "no page errors");
+    });
+  });

@@ -638,3 +638,14 @@ test("trends graph (owner 2026-10-25): no numbers on the chart, 2 rows tall, DPM
   assert.match(css, /\.live-feed \.live-trend-canvas \{ height: 7\.3rem; \}/);
   assert.match(css, /\.live-feed \.live-trend-canvas \{ height: 4\.8rem; \}/);
 });
+
+test("bounty (owner 2026-10-25): hearts on the centre line's second row, 💰 at 7 held for 3 deaths", () => {
+  const js = liveSrc();
+  const css = cssSrc();
+  assert.match(js, /bountyNext \} from "\.\/live-model\.mjs\?v=20261025-bnt1"/);
+  assert.match(js, /const b = bountyNext\(\{ streak: bountyStreak, lives: bountyLives \}, ev\.kind === "kill"\);/);
+  assert.match(js, /if \(bountyLives > 0\) return `<span class="lv-wn">💰<\/span>`;/);
+  assert.match(js, /"❤️‍🔥"\.repeat\(bountyStreak\)/);
+  assert.match(js, /const wn = isMe \? bountyHtml\(\) : `<span class="lv-wn">/);
+  assert.match(css, /\.live-table tbody\.lv-me \.lv-wn \{ font-size: 1rem; line-height: 1\.1; \}/);
+});
