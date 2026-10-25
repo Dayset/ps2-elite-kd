@@ -157,7 +157,12 @@ test("full alert lifecycle: live → settling → settled from Census final scor
   assert.equal(DB.raw.prepare("SELECT winner FROM alert").get().winner, "TR");
   assert.equal(DB.raw.prepare("SELECT balance FROM wallet").get().balance, 1150, "credited once");
 
-  const hist = await (await worker.fetch(new Request("https://x/history"), env)).json();
+  // /history keeps the last 7 days of the real clock: read it "just after" this test alert
+  // (the fixed T0 fell out of the window on 2026-10-25 and blocked Worker deploys).
+  const realNow = Date.now;
+  Date.now = () => (END + 900) * 1000;
+  let hist;
+  try { hist = await (await worker.fetch(new Request("https://x/history"), env)).json(); } finally { Date.now = realNow; }
   assert.equal(hist.alerts[0].winner, "TR");
   assert.ok(hist.benchmark["90"].t60.n === 1);
   const one = await (await worker.fetch(new Request("https://x/alert?key=1-4-500"), env)).json();
