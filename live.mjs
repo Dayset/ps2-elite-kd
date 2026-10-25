@@ -9,8 +9,8 @@ await i18nReady;
  *     (newest on top; t587u: every kill is its own line, the same victim twice = two lines);
  *   - every line shows everything at once, in one shared column order: [⏱️][name][iVi][🏃][🦁][🛡️][🪖|🚜][☠️][🪳] (t580u: 🪳 last; t590u: 🤝🔀⚡ removed, 🚜 below the 🚜 infantry cut, t622u),
  *     the emojis as fill meters (t564u, t573u) with glow tiers (t568u) — no flip, no skill graph;
- *   - owner 2026-10-24: the weapon of the kill (white silhouette from assets/weapons) and a headshot mark sit in front of
- *     the name; the emoji meters are pre-drawn images (live-sprites.mjs) — the old per-frame SVG filters and endless
+ *   - owner 2026-10-25: no weapon icon — the weapon's name sits under the player name (small, dim) and a headshot
+ *     is a small custom mark after the name (a head with a bullet in and out); the emoji meters are pre-drawn images (live-sprites.mjs) — the old per-frame SVG filters and endless
  *     pulses used ~25 % of a 9850X3D; everything that moves is drawn by one 30 fps ticker (LIVE_FPS, ?fps=60) and the
  *     rank tiers move on a shared beat (BEAT: green still, blue flares, gold flares + a shine instead of the ✦ star);
  *   - a missing stat is an empty (hollow, t589u) emoji, never "—" (t567u); uncached opponents show all-empty emojis
@@ -213,24 +213,28 @@ function start() {
     return `<span class="lv-iv" data-tip="${esc(tipText(c, v))}">${cellText(c, v)}</span>`;
   }
   /** Name (faction colour) + 💩; a long name is cut with … at the end. Uncached: Census K/D · KPM in the hover. */
-  function nameHtml(p, tip) {
-    return `<span class="lv-pn"><span class="lv-name fac-${p.faction || ""}" title="${esc(p.name + (tip || ""))}"><bdi>${esc(p.name)}</bdi></span>${poopFor(p.name)}</span>`;
+  function nameHtml(p, tip, hs = "") {
+    return `<span class="lv-pn"><span class="lv-name fac-${p.faction || ""}" title="${esc(p.name + (tip || ""))}"><bdi>${esc(p.name)}</bdi></span>${poopFor(p.name)}${hs}</span>`;
   }
   /**
    * Owner t575u: one line = one player, everything at once (no flip), ONE shared column order for every line:
    *   [⏱️ time][name][iVi][🏃][🦁][🛡️][🪖|🚜][☠️][🪳] (t580u: 🪳 last; t590u order) — so the emojis line up down the whole overlay.
    * Owner t567u: not cached = all-empty emojis; the Census numbers stay in the name's hover.
    */
-  function cells(p, isMe) {
+  function cells(p, isMe, r) {
     const vals = p.cached || {};
     const tip = p.cached || isMe ? "" : ` · not in cache · K/D ${fmt(p.kd, 2)} · KPM ${fmt(p.kpm, 2)}`;
-    return `<td class="lv-nm">${nameHtml(p, tip)}</td>${IVI.map((c) => `<td class="lv-ivc">${iviText(c, vals[c.id])}</td>`).join("")}<td class="lv-ems"><span class="lv-row">${REST.map((c) => unit(c, vals[c.id], c.id === "zerg" ? vals.zest : null)).join("")}</span></td>`;
+    const w = r ? weaponIcon(catalog, r.weapon) : null; // owner 2026-10-25: the weapon's NAME under the player name (small, dim), not an icon
+    const wn = `<span class="lv-wn">${w ? esc(w.name) : ""}</span>`; // always rendered (empty when unknown), so the names stay lined up
+    return `<td class="lv-nm"><span class="lv-nm2">${nameHtml(p, tip, hsHtml(r))}${wn}</span></td>${IVI.map((c) => `<td class="lv-ivc">${iviText(c, vals[c.id])}</td>`).join("")}<td class="lv-ems"><span class="lv-row">${REST.map((c) => unit(c, vals[c.id], c.id === "zerg" ? vals.zest : null)).join("")}</span></td>`;
   }
   const blank = `<td class="lv-nm"></td><td class="lv-ivc"></td><td class="lv-ems"><span class="lv-row"></span></td>`; // same box as a filled line, so the overlay never grows
   /**
-   * Owner 2026-10-24: the weapon of the kill + a headshot mark, in front of the name (kill-feed style): on a victim
-   * line the weapon the tracked player used, on the killer line the weapon that killed them. Unknown weapon = empty slot.
-   * Hover: the weapon's name / "Headshot".
+   * Owner 2026-10-25: no weapon icon any more (its column is gone, the width went to the name column) — the weapon's
+   * NAME sits under the player name (cells), and a headshot is a small custom mark after the name: a head with a
+   * bullet in one side and out the other (inline SVG, no asset). On a victim line the weapon the tracked player
+   * used, on the killer line the weapon that killed them. The headshot flag itself (classifyDeath is_headshot) is
+   * untouched — only the free game-icons mark it used to draw is gone.
    */
   let catalog = null;
   fetch("assets/weapons/catalog.json", { cache: "force-cache" })
@@ -238,11 +242,9 @@ function start() {
     .then((j) => { catalog = j; if (j && me && (st.killer || st.victims.length)) render(); })
     .catch(() => {});
   const HS_TIP = tr("live.hs", "Headshot");
-  function wpHtml(r) {
-    const w = r ? weaponIcon(catalog, r.weapon) : null;
-    const gun = w ? `<span class="lv-wi${w.card ? " lv-wi-c" : ""}" style="--wi:url('assets/weapons/${esc(w.image)}.webp')" data-tip="${esc(w.name)}"></span>` : `<span class="lv-wi"></span>`;
-    const hs = r && r.headshot ? `<span class="lv-hs" role="img" aria-label="${esc(HS_TIP)}" data-tip="${esc(HS_TIP)}"></span>` : `<span class="lv-hs lv-hs-0"></span>`; // empty slot keeps the guns lined up
-    return `<td class="lv-wp"><span class="lv-wpb">${gun}${hs}</span></td>`;
+  const HS_SVG = `<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="0.5" y1="7" x2="15.5" y2="7" stroke="currentColor" stroke-width="1.2"/><circle cx="3.5" cy="7" r="1.4" fill="currentColor"/><path d="M12.5 4.5 15 2M12.5 9.5 15 12" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>`;
+  function hsHtml(r) {
+    return r && r.headshot ? `<span class="lv-hs2" role="img" aria-label="${esc(HS_TIP)}" data-tip="${esc(HS_TIP)}">${HS_SVG}</span>` : "";
   }
   /** Owner t562u juice: an upset = the winner's iVi percentile is ≥ UPSET_GAP points below the loser's → a short shake. */
   const UPSET_GAP = 50;
@@ -274,14 +276,14 @@ function start() {
     const isNew = r === fresh;
     const wP = iviPct(kill ? me : p), lP = iviPct(kill ? p : me);
     const upset = isNew && wP != null && lP != null && lP - wP >= UPSET_GAP ? " lv-upset" : "";
-    return `<tbody class="lv-ev lv-${where} lv-${r.last}${isNew ? " lv-new" : ""}${upset}${extra}${fi.cls}"${fi.sty}><tr><td class="lv-time">${ageHtml(r)}</td>${wpHtml(r)}${cells(p, false)}</tr></tbody>`;
+    return `<tbody class="lv-ev lv-${where} lv-${r.last}${isNew ? " lv-new" : ""}${upset}${extra}${fi.cls}"${fi.sty}><tr><td class="lv-time">${ageHtml(r)}</td>${cells(p, false, r)}</tr></tbody>`;
   }
-  const emptyLine = (where) => `<tbody class="lv-ev lv-${where} lv-empty"><tr><td class="lv-time"></td>${wpHtml(null)}${blank}</tr></tbody>`;
+  const emptyLine = (where) => `<tbody class="lv-ev lv-${where} lv-empty"><tr><td class="lv-time"></td>${blank}</tr></tbody>`;
   function render() {
     if (!listEl) return;
     // Owner t575u: a fixed grid of 1 + 1 + VICTIM_LINES lines — killer above, the tracked player in the centre,
     // the players they killed below (newest on top). Empty slots keep their height, so the overlay never changes size.
-    const cols = `<colgroup><col class="lv-c-time"><col class="lv-c-wp"><col class="lv-c-nm"><col class="lv-c-iv"><col class="lv-c-em"></colgroup>`;
+    const cols = `<colgroup><col class="lv-c-time"><col class="lv-c-nm"><col class="lv-c-iv"><col class="lv-c-em"></colgroup>`;
     const newest = st.lastEv || null;
     fresh = newest && newest !== shown ? newest : null;
     shown = newest;
@@ -290,7 +292,7 @@ function start() {
     goneShown = st.gone;
     const atk = st.killer ? oppLine(st.killer, "atk") : fade ? oppLine(st.gone, "atk", " lv-out") : emptyLine("atk");
     const fm = fillIn(`me:${me.cached ? "c" : "u"}`);
-    const mid = `<tbody class="lv-ev lv-me${fm.cls}"${fm.sty}><tr><td class="lv-time"></td>${wpHtml(null)}${cells(me, true)}</tr></tbody>`;
+    const mid = `<tbody class="lv-ev lv-me${fm.cls}"${fm.sty}><tr><td class="lv-time"></td>${cells(me, true)}</tr></tbody>`;
     const low = Array.from({ length: VICTIM_LINES }, (_, i) => (st.victims[i] ? oppLine(st.victims[i], "vic") : emptyLine("vic"))).join("");
     listEl.innerHTML = cols + atk + mid + low;
     collectMotion();

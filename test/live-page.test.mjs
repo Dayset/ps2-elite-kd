@@ -186,13 +186,13 @@ test("overlay layout (owner t575u): no flip, ONE column order on every line, fix
   assert.doesNotMatch(css, /lv-phB|lv-pa\b|lv-pb\b|lv-bL|lv-bR|lv-li\b|lv-blk|rotateX/);
   assert.doesNotMatch(js, /❯|lv-arrow|<thead/);
   // one shared order: [time][name][iVi][🏃🦁🛡️🪖🪳] — the same cells() for killer, player and victims
-  assert.match(js, /return `<td class="lv-nm">\$\{nameHtml\(p, tip\)\}<\/td>\$\{IVI\.map[^\n]*<td class="lv-ems"><span class="lv-row">\$\{REST\.map/);
-  assert.match(js, /<tr><td class="lv-time">\$\{ageHtml\(r\)\}<\/td>\$\{wpHtml\(r\)\}\$\{cells\(p, false\)\}<\/tr>/);
-  assert.match(js, /<tbody class="lv-ev lv-me\$\{fm\.cls\}"\$\{fm\.sty\}><tr><td class="lv-time"><\/td>\$\{wpHtml\(null\)\}\$\{cells\(me, true\)\}<\/tr><\/tbody>/);
+  assert.match(js, /<td class="lv-nm"><span class="lv-nm2">\$\{nameHtml\(p, tip, hsHtml\(r\)\)\}\$\{wn\}/);
+  assert.match(js, /<tr><td class="lv-time">\$\{ageHtml\(r\)\}<\/td>\$\{cells\(p, false, r\)\}<\/tr>/);
+  assert.match(js, /<tbody class="lv-ev lv-me\$\{fm\.cls\}"\$\{fm\.sty\}><tr><td class="lv-time"><\/td>\$\{cells\(me, true\)\}<\/tr><\/tbody>/);
   assert.match(js, /Array\.from\(\{ length: VICTIM_LINES \}, \(_, i\) => \(st\.victims\[i\] \? oppLine\(st\.victims\[i\], "vic"\) : emptyLine\("vic"\)\)\)/);
   assert.match(js, /listEl\.innerHTML = cols \+ atk \+ mid \+ low;/);
   assert.match(js, /const blank = `<td class="lv-nm"><\/td><td class="lv-ivc"><\/td><td class="lv-ems"><span class="lv-row"><\/span><\/td>`;/); // empty = same box
-  assert.deepEqual([...js.matchAll(/<col class="(lv-c-[a-z]+)">/g)].map((m) => m[1]), ["lv-c-time", "lv-c-wp", "lv-c-nm", "lv-c-iv", "lv-c-em"]);
+  assert.deepEqual([...js.matchAll(/<col class="(lv-c-[a-z]+)">/g)].map((m) => m[1]), ["lv-c-time", "lv-c-nm", "lv-c-iv", "lv-c-em"]);
   // fixed size: fixed layout, fixed line height, fixed column widths
   assert.match(css, /\.live-table \{[^}]*table-layout: fixed;/);
   assert.match(css, /\.live-table td \{[^}]*height: var\(--lv-ez\);[^}]*overflow: hidden;/);
@@ -574,31 +574,29 @@ test("hollow empty part (owner t589u): light inner ring inside the black outline
   assert.doesNotMatch(css, /lv-x1/);
 });
 
-test("weapon + headshot (owner 2026-10-24): kill-feed icons in front of the name, from our own weapon pictures", () => {
+test("weapon name + headshot mark (owner 2026-10-25): no weapon icon — the weapon's name under the player name, small and dim; headshot is a custom head-with-bullet mark", () => {
   const cat = { items: { 80: ["Orion VS54", "LMG", 1, 6030], 44505: ["Frag Grenade", "Grenade", 0, 87006], 432: ["C-4", "Explosive", 0, 89142], 7: ["No picture", "LMG", 1, 0] } };
-  assert.deepEqual(weaponIcon(cat, "80"), { name: "Orion VS54", image: "6030", card: false }); // a gun → silhouette
-  assert.equal(weaponIcon(cat, "44505").card, true); // grenade / explosive pictures keep their colours
+  assert.deepEqual(weaponIcon(cat, "80"), { name: "Orion VS54", image: "6030", card: false }); // the catalog lookup still resolves the name
+  assert.equal(weaponIcon(cat, "44505").card, true);
   assert.equal(weaponIcon(cat, "432").card, true);
   assert.equal(weaponIcon(cat, "7"), null); // no picture
   assert.equal(weaponIcon(cat, "999"), null);
   assert.equal(weaponIcon(null, "80"), null);
   assert.equal(weaponIcon(cat, null), null);
   assert.ok(CARD_CATEGORIES.test("Infantry Abilities") && !CARD_CATEGORIES.test("Assault Rifle"));
-  // the real catalog: the common kill weapons have pictures in assets/weapons/
-  const real = JSON.parse(readFileSync(new URL("assets/weapons/catalog.json", root), "utf8"));
-  for (const id of ["80", "43", "70998", "1"]) {
-    const w = weaponIcon(real, id);
-    assert.ok(w && readFileSync(new URL(`assets/weapons/${w.image}.webp`, root)).length > 100, id);
-  }
   const js = liveSrc();
   const css = cssSrc();
-  assert.match(js, /const HS_TIP = tr\("live\.hs", "Headshot"\);/);
-  assert.match(js, /style="--wi:url\('assets\/weapons\/\$\{esc\(w\.image\)\}\.webp'\)" data-tip="\$\{esc\(w\.name\)\}"/); // hover = the weapon's name
-  assert.match(js, /`<span class="lv-hs lv-hs-0"><\/span>`/); // no headshot: the slot stays, so the guns line up
-  assert.match(css, /\.lv-wi\[style\] \{ background: var\(--text\); -webkit-mask: var\(--wi\)/); // silhouette in the theme's text colour
-  assert.match(css, /\.lv-hs \{[^}]*background: var\(--err\); -webkit-mask: url\("assets\/icons\/headshot\.svg"\)/);
-  assert.match(readFileSync(new URL("assets/icons/headshot.svg", root), "utf8"), /Lorc, https:\/\/game-icons\.net \(CC BY 3\.0\)/);
-  assert.match(readFileSync(new URL("NOTICE", root), "utf8"), /assets\/icons\/headshot\.svg: "Headshot" icon by Lorc/);
+  assert.match(js, /const HS_TIP = tr\("live\.hs", "Headshot"\);/); // the headshot flag + tooltip stay
+  assert.match(js, /<span class="lv-wn">\$\{w \? esc\(w\.name\) : ""\}<\/span>/); // the weapon's name under the player name
+  assert.match(js, /<span class="lv-hs2" role="img" aria-label="\$\{esc\(HS_TIP\)\}" data-tip="\$\{esc\(HS_TIP\)\}">\$\{HS_SVG\}<\/span>/); // headshot only when it IS one
+  assert.match(js, /viewBox="0 0 16 16"/); // the custom head-with-bullet mark (inline SVG, no asset)
+  assert.doesNotMatch(js, /wpHtml|lv-wp|lv-wi/); // no weapon column, no gun icon
+  assert.doesNotMatch(css, /\.lv-wp|\.lv-wi|\.lv-hs \{|headshot\.svg/); // no icon rules, no free-icon asset
+  assert.match(css, /\.lv-wn \{[^}]*color: var\(--dim\)/); // small, dim weapon name
+  assert.match(css, /\.lv-hs2 \{[^}]*color: var\(--err\)/);
+  assert.match(css, /\.live-table \{[^}]*--lv-nm: 14\.15rem/); // the name column absorbed the weapon column
+  assert.throws(() => readFileSync(new URL("assets/icons/headshot.svg", root), "utf8")); // the free icon is gone
+  assert.doesNotMatch(readFileSync(new URL("NOTICE", root), "utf8"), /headshot\.svg/);
   // the event keeps its weapon on the line it lands on
   let st = overlayPush(null, { kind: "kill", opp: "a", weapon: "80", headshot: true }, 1000);
   assert.equal(st.victims[0].weapon, "80");

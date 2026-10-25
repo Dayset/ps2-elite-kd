@@ -42,17 +42,15 @@ body.live-mode .room-select { display: none; }
      so the emojis line up down the whole overlay.
      --lv-u = one emoji unit, --lv-ez = line height, --lv-fe = emoji (t564u "300%" size), --lv-fa = iVi number,
      --lv-fm = name, --lv-nm = name column, --lv-tm = time column. */
-  --lv-fe: 1.5rem; --lv-u: 2.1rem; --lv-ez: 2.8rem; --lv-fa: 1.87rem; --lv-fm: 1.3rem; --lv-nm: 10rem; --lv-tm: 3.2rem;
+  --lv-fe: 1.5rem; --lv-u: 2.1rem; --lv-ez: 2.8rem; --lv-fa: 1.87rem; --lv-fm: 1.3rem; --lv-nm: 14.15rem; --lv-tm: 3.2rem; /* owner 2026-10-25: the name column absorbed the removed weapon column (10rem + 4.15rem), so the overlay keeps its width */
   --lv-n: 6; /* emoji units per line (live.mjs sets it from LIVE_COLS; owner t590u: 🏃🦁🛡️🪖☠️🪳) */
   --lv-iw: calc(var(--lv-fa) * 2.4 + 0.5rem); /* t564u: 4 tabular digits of room */
-  --lv-wp: calc(var(--lv-fe) * 2.5 + 0.4rem); /* 2026-10-24: weapon silhouette + headshot mark */
   border-collapse: collapse; table-layout: fixed; max-width: none;
-  width: calc(var(--lv-tm) + var(--lv-wp) + var(--lv-nm) + var(--lv-iw) + var(--lv-n) * var(--lv-u));
+  width: calc(var(--lv-tm) + var(--lv-nm) + var(--lv-iw) + var(--lv-n) * var(--lv-u));
   font-size: 0.85rem; font-variant-numeric: tabular-nums;
   background: var(--panel); /* owner t550u: the feed had no background (theme variable: light + dark) */
 }
 col.lv-c-time { width: var(--lv-tm); }
-col.lv-c-wp { width: var(--lv-wp); }
 col.lv-c-nm { width: var(--lv-nm); }
 col.lv-c-iv { width: var(--lv-iw); }
 col.lv-c-em { width: calc(var(--lv-n) * var(--lv-u)); }
@@ -136,23 +134,24 @@ col.lv-c-em { width: calc(var(--lv-n) * var(--lv-u)); }
    the halo fades in over the last 20%. */
 .lv-g2 > .lv-em > .lv-gl, .lv-g3 > .lv-em > .lv-gl { will-change: opacity, transform; }
 @property --f { syntax: "<number>"; inherits: true; initial-value: 0; }
-/* Owner 2026-10-24: the weapon of the kill (a silhouette in the text colour, kill-feed style; grenades / mines / abilities
-   keep their card pictures) and a headshot mark ("Headshot" by Lorc, game-icons.net, CC BY 3.0 — see NOTICE). */
-.lv-wp { padding: 0 0.15rem !important; }
-.lv-wpb { display: flex; align-items: center; justify-content: flex-end; gap: 0.1rem; height: var(--lv-ez); font-size: var(--lv-fe); }
-.lv-wi { flex: none; width: 1.7em; height: 0.85em; }
-.lv-wi[style] { background: var(--text); -webkit-mask: var(--wi) center / contain no-repeat; mask: var(--wi) center / contain no-repeat; }
-.lv-wi.lv-wi-c { background: var(--wi) center / contain no-repeat; -webkit-mask: none; mask: none; }
-.lv-hs { flex: none; width: 0.72em; height: 0.72em; background: var(--err); -webkit-mask: url("assets/icons/headshot.svg") center / contain no-repeat; mask: url("assets/icons/headshot.svg") center / contain no-repeat; }
-.lv-hs.lv-hs-0 { visibility: hidden; }
+/* Owner 2026-10-25: no weapon icon — the weapon's name under the player name (small, dim) and a small custom headshot
+   mark after it (a head with a bullet in one side and out the other; inline SVG in live.mjs, no asset). The name cell
+   is two lines tall inside the fixed line height; the weapon line is always rendered (empty when unknown) so the
+   names stay lined up across lines. */
+.lv-nm2 { display: flex; flex-direction: column; justify-content: center; height: 100%; min-width: 0; }
+.lv-wn { display: block; min-height: 0.9em; font-size: 0.72rem; line-height: 1.2; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lv-hs2 { flex: none; width: 0.85em; height: 0.85em; color: var(--err); }
+.lv-hs2 svg { display: block; width: 100%; height: 100%; }
+.live-table .lv-name:has(+ .poop-mark + .lv-hs2) { max-width: calc(100% - 2.4em); }
+.live-table .lv-name:has(+ .lv-hs2) { max-width: calc(100% - 1em); }
 /* Owner t561u: LIVE is a PC stream overlay. Big screens (1920) get everything 1.3× bigger for readability. */
 @media (min-width: 1600px) {
-  .live-table { --lv-fe: 1.95rem; --lv-u: 2.75rem; --lv-ez: 3.65rem; --lv-fa: 2.43rem; --lv-fm: 1.7rem; --lv-nm: 13rem; --lv-tm: 4rem; font-size: 1.1rem; }
+  .live-table { --lv-fe: 1.95rem; --lv-u: 2.75rem; --lv-ez: 3.65rem; --lv-fa: 2.43rem; --lv-fm: 1.7rem; --lv-nm: 18.28rem; --lv-tm: 4rem; font-size: 1.1rem; }
   .lv-time { font-size: 0.95rem; }
 }
 /* Phones (t561u: not a target; it only must not break — sideways scroll is fine). */
 @media (max-width: 600px) {
-  .live-table { --lv-fe: 1.15rem; --lv-u: 1.6rem; --lv-ez: 2.4rem; --lv-fa: 1.58rem; --lv-fm: 1rem; --lv-nm: 5.5rem; --lv-tm: 2.4rem; font-size: 0.72rem; }
+  .live-table { --lv-fe: 1.15rem; --lv-u: 1.6rem; --lv-ez: 2.4rem; --lv-fa: 1.58rem; --lv-fm: 1rem; --lv-nm: 8.78rem; --lv-tm: 2.4rem; font-size: 0.72rem; }
   .lv-time { font-size: 0.6rem; padding: 0 0.1rem !important; }
 }
 .live-feed { overflow-x: auto; }
