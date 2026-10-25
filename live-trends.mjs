@@ -18,9 +18,11 @@
 export const TREND_PERIOD_MS = 30000; // Honu's bucket: 30 s
 export const TREND_WINDOW = 9; // trailing buckets in the interval window (9 x 30 s = 4.5 min)
 
-/** Points { x: seconds since start, y } for the four series, plus maxX. Empty series when its guard fails (Honu: < 2 events). */
+/** Points { x: seconds since start, y } for the six series, plus maxX. Empty series when its guard fails (Honu: < 2 events).
+ *  DPM (deaths per minute, owner 2026-10-25 experiment) mirrors KPM on deaths: same buckets, same trailing window,
+ *  same cumulative trend — it shares the KPM (left) axis, since both are per-minute rates. */
 export function trendSeries(kills, deaths, start, now) {
-  const out = { kpmInt: [], kpmTrend: [], kdInt: [], kdTrend: [], maxX: 0 };
+  const out = { kpmInt: [], kpmTrend: [], kdInt: [], kdTrend: [], dpmInt: [], dpmTrend: [], maxX: 0 };
   if (!Number.isFinite(start) || !Number.isFinite(now) || now <= start) return out;
   out.maxX = (now - start) / 1000;
   const ks = [...(kills || [])].filter(Number.isFinite).sort((a, b) => a - b);
@@ -31,6 +33,7 @@ export function trendSeries(kills, deaths, start, now) {
     let ki = 0, di = 0;
     const prevKpm = []; // raw per-bucket KPM rates
     const prevKd = []; // raw per-bucket { k, d }
+    const prevDpm = []; // raw per-bucket DPM rates
     for (let t = start; t <= now; t += TREND_PERIOD_MS) {
       const tEnd = t + TREND_PERIOD_MS;
       let kc = 0, dc = 0;
@@ -50,6 +53,13 @@ export function trendSeries(kills, deaths, start, now) {
         const sumD = prevKd.reduce((a, b) => a + b.d, 0);
         out.kdInt.push({ x, y: (kc + sumK) / Math.max(1, dc + sumD) });
         prevKd.push({ k: kc, d: dc });
+      }
+      if (ds.length >= 2) {
+        if (prevDpm.length > TREND_WINDOW - 1) prevDpm.shift();
+        const rate = dc / (TREND_PERIOD_MS / 60000);
+        const rates = [...prevDpm, rate];
+        out.dpmInt.push({ x, y: rates.reduce((a, b) => a + b, 0) / rates.length });
+        prevDpm.push(rate);
       }
     }
   }
@@ -79,14 +89,28 @@ export function trendSeries(kills, deaths, start, now) {
     }
     out.kdTrend.push({ x: out.maxX, y: k / Math.max(1, d) });
   }
+
+  // ---- DPM trend: cumulative deaths / elapsed minutes, one point per death ----
+  if (ds.length >= 2) {
+    const mins = (t) => (t - start) / 60000;
+    out.dpmTrend.push({ x: (ds[0] - start) / 1000, y: 0 });
+    let total = 0;
+    for (const d of ds) {
+      total++;
+      const m = mins(d);
+      if (m > 0) out.dpmTrend.push({ x: (d - start) / 1000, y: total / m });
+    }
+    const totalM = mins(now);
+    if (totalM > 0) out.dpmTrend.push({ x: out.maxX, y: total / totalM });
+  }
   return out;
 }
 
 /** Line colours per theme (same grid/text tones as theme.mjs chartTheme). */
 export function trendColors(light) {
   return light
-    ? { kpm: "#1565c0", kd: "#c25700", grid: "#d0c8ba", text: "#1c1914" }
-    : { kpm: "#64b5f6", kd: "#ffb74d", grid: "#2a2e36", text: "#f2f0ea" };
+    ? { kpm: "#1565c0", kd: "#c25700", dpm: "#388e3c", grid: "#d0c8ba", text: "#1c1914" }
+    : { kpm: "#64b5f6", kd: "#ffb74d", dpm: "#81c784", grid: "#2a2e36", text: "#f2f0ea" };
 }
 
 const niceCeil = (v) => {
@@ -95,7 +119,6 @@ const niceCeil = (v) => {
   for (const m of [1, 2, 5, 10]) if (m * p >= v) return m * p;
   return 10 * p;
 };
-const fmtClock = (s) => `${Math.floor(s / 3600)}:${String(Math.floor((s % 3600) / 60)).padStart(2, "0")}`;
 
 /** Skeleton frame for a session too young to draw (< 2 events): the same plot
  *  area, axes and titles as the real chart, no lines, one dim hint in the
@@ -108,7 +131,7 @@ export function drawTrendsSkeleton(canvas, colors, hint) {
   if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) { canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr); }
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, w, h);
-  const L = 36, R = 36, T = 16, B = 20, pw = w - L - R, ph = h - T - B;
+  const L = 8, R = 8, T = 16, B = 6, pw = w - L - R, ph = h - T - B; // owner 2026-10-25: no numbers on the chart, so no room is kept for tick labels
   if (pw <= 0 || ph <= 0) return;
   ctx.strokeStyle = colors.grid; ctx.lineWidth = 1;
   for (let i = 0; i <= 4; i++) {
@@ -126,7 +149,9 @@ export function drawTrendsSkeleton(canvas, colors, hint) {
   }
 }
 
-/** Draw the four series on a canvas (CSS-sized by the caller). Axes: KPM left, K/D right; trend dashed. */
+/** Draw the series on a canvas (CSS-sized by the caller). Owner 2026-10-25: no
+ *  numbers anywhere on the chart — gridlines + axis titles + legend only, the
+ *  lines speak for themselves. Axes: per-minute rates (KPM + DPM) left, K/D right; trend dashed. */
 export function drawTrends(canvas, series, colors) {
   const ctx = canvas.getContext("2d");
   const w = canvas.clientWidth || 300, h = canvas.clientHeight || 240;
@@ -134,36 +159,24 @@ export function drawTrends(canvas, series, colors) {
   if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) { canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr); }
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, w, h);
-  const L = 36, R = 36, T = 16, B = 20, pw = w - L - R, ph = h - T - B;
+  const L = 8, R = 8, T = 16, B = 6, pw = w - L - R, ph = h - T - B; // no tick labels to make room for
   if (pw <= 0 || ph <= 0) return;
   const maxX = series.maxX > 0 ? series.maxX : 60;
-  const maxKpm = niceCeil(Math.max(0, ...series.kpmInt.map((p) => p.y), ...series.kpmTrend.map((p) => p.y)));
+  const maxLeft = niceCeil(Math.max(0, ...series.kpmInt.map((p) => p.y), ...series.kpmTrend.map((p) => p.y), ...series.dpmInt.map((p) => p.y), ...series.dpmTrend.map((p) => p.y)));
   const maxKd = niceCeil(Math.max(0, ...series.kdInt.map((p) => p.y), ...series.kdTrend.map((p) => p.y)));
   const X = (x) => L + (x / maxX) * pw;
-  const YL = (y) => T + ph - (y / maxKpm) * ph;
+  const YL = (y) => T + ph - (y / maxLeft) * ph;
   const YR = (y) => T + ph - (y / maxKd) * ph;
   ctx.font = "11px sans-serif";
-  // grid + left (KPM) ticks
-  ctx.strokeStyle = colors.grid; ctx.fillStyle = colors.text; ctx.lineWidth = 1;
+  // gridlines only (no numbers)
+  ctx.strokeStyle = colors.grid; ctx.lineWidth = 1;
   for (let i = 0; i <= 4; i++) {
-    const y = T + (ph * i) / 4, v = (maxKpm * (4 - i)) / 4;
+    const y = T + (ph * i) / 4;
     ctx.beginPath(); ctx.moveTo(L, y); ctx.lineTo(L + pw, y); ctx.stroke();
-    ctx.textAlign = "right"; ctx.fillText(String(Math.round(v * 100) / 100), L - 4, y + 4);
-  }
-  // right (K/D) ticks
-  for (let i = 0; i <= 4; i++) {
-    const y = T + (ph * i) / 4, v = (maxKd * (4 - i)) / 4;
-    ctx.textAlign = "left"; ctx.fillText(String(Math.round(v * 100) / 100), L + pw + 4, y + 4);
   }
   // axis titles
   ctx.fillStyle = colors.kpm; ctx.textAlign = "left"; ctx.fillText("KPM", L, 11);
   ctx.fillStyle = colors.kd; ctx.textAlign = "right"; ctx.fillText("K/D", L + pw, 11);
-  // x ticks (~5, H:MM like Honu)
-  ctx.fillStyle = colors.text; ctx.textAlign = "center";
-  for (let i = 0; i <= 4; i++) {
-    const x = (maxX * i) / 4;
-    ctx.fillText(fmtClock(x), X(x), T + ph + 15);
-  }
   // series (clipped to the plot area)
   ctx.save();
   ctx.beginPath(); ctx.rect(L, T, pw, ph); ctx.clip();
@@ -178,6 +191,8 @@ export function drawTrends(canvas, series, colors) {
   };
   line(series.kpmInt, YL, colors.kpm, false);
   line(series.kpmTrend, YL, colors.kpm, true);
+  line(series.dpmInt, YL, colors.dpm, false);
+  line(series.dpmTrend, YL, colors.dpm, true);
   line(series.kdInt, YR, colors.kd, false);
   line(series.kdTrend, YR, colors.kd, true);
   ctx.restore();

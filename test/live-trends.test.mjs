@@ -41,9 +41,23 @@ test("K/D trend: cumulative ratio, deaths floored at 1", () => {
   ]);
 });
 
+test("DPM interval + trend: KPM's mirror on deaths (owner 2026-10-25 experiment)", () => {
+  const s = trendSeries([10 * 1000, 40 * 1000, 70 * 1000], [], S, 90 * 1000); // kills only: no DPM
+  assert.deepEqual([s.dpmInt, s.dpmTrend], [[], []]);
+  const d = trendSeries([], [10 * 1000, 40 * 1000, 70 * 1000], S, 90 * 1000); // deaths only: DPM draws, KPM does not
+  assert.deepEqual(d.kpmInt, []);
+  assert.deepEqual(ys(d.dpmInt), [2, 2, 2, 1.5]);
+  const t = trendSeries([], [60 * 1000, 120 * 1000, 180 * 1000], S, 240 * 1000);
+  assert.deepEqual(t.dpmTrend, [
+    { x: 60, y: 0 }, { x: 60, y: 1 }, { x: 120, y: 1 }, { x: 180, y: 1 }, { x: 240, y: 0.75 },
+  ]);
+  const one = trendSeries([], [10 * 1000], S, 60 * 1000);
+  assert.deepEqual([one.dpmInt, one.dpmTrend], [[], []]); // a single death draws nothing, like a single kill
+});
+
 test("guards: single kill, empty window, unsorted input, out-of-range events", () => {
   const one = trendSeries([10 * 1000], [], S, 60 * 1000);
-  assert.deepEqual([one.kpmInt, one.kpmTrend, one.kdInt, one.kdTrend], [[], [], [], []]);
+  assert.deepEqual([one.kpmInt, one.kpmTrend, one.kdInt, one.kdTrend, one.dpmInt, one.dpmTrend], [[], [], [], [], [], []]);
   assert.deepEqual(trendSeries([10 * 1000], [], 60 * 1000, 60 * 1000).kpmInt, []);
   const a = trendSeries([70 * 1000, 10 * 1000, 40 * 1000], [], S, 90 * 1000);
   const b = trendSeries([10 * 1000, 40 * 1000, 70 * 1000], [], S, 90 * 1000);
@@ -55,5 +69,7 @@ test("guards: single kill, empty window, unsorted input, out-of-range events", (
 test("trendColors: one colour per metric, dark/light palettes differ", () => {
   const d = trendColors(false), l = trendColors(true);
   assert.notEqual(d.kpm, d.kd);
+  assert.notEqual(d.kpm, d.dpm);
+  assert.notEqual(d.kd, d.dpm);
   assert.notEqual(d.kpm, l.kpm);
 });

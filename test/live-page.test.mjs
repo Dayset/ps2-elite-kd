@@ -624,3 +624,17 @@ test("centre refresh (owner t586u): fresh Census numbers every 5 min, paused whi
   assert.doesNotMatch(api, /cachePut|suggestSharedCache/);
   assert.match(js, /animateFill\(u, \+before\.f\[i\], 1200\)/); // the new fill eases in from the old one
 });
+
+test("trends graph (owner 2026-10-25): no numbers on the chart, 2 rows tall, DPM experiment", () => {
+  const js = liveSrc();
+  const css = cssSrc();
+  const trends = readFileSync(new URL("live-trends.mjs", root), "utf8");
+  assert.doesNotMatch(trends, /fmtClock|fillText\(String\(/); // no numeric tick labels on either axis
+  assert.match(trends, /line\(series\.dpmInt, YL, colors\.dpm, false\);/); // DPM shares the KPM (left) axis
+  assert.match(trends, /line\(series\.dpmTrend, YL, colors\.dpm, true\);/);
+  assert.match(js, /item\("lv-tl-dpm", "live\.trendDpmInt", "DPM interval"\)/);
+  assert.match(js, /item\("lv-tl-dpm lv-tl-dash", "live\.trendDpmTrend", "DPM trend"\)/);
+  assert.match(css, /\.live-trend-canvas \{ display: block; width: 100%; height: 5\.6rem; \}/); // exactly 2 feed rows
+  assert.match(css, /\.live-feed \.live-trend-canvas \{ height: 7\.3rem; \}/);
+  assert.match(css, /\.live-feed \.live-trend-canvas \{ height: 4\.8rem; \}/);
+});

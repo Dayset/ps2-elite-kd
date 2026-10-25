@@ -28,7 +28,7 @@ import { traitPools, zergScore } from "./trait-scores.mjs?v=20261024-crowd1";
 import { zergEstimate } from "./zerg-revive.mjs?v=20261024-crowd1";
 import { infMedian, tractorCuts, TRACTOR_EMOJI } from "./tractor.mjs?v=20261024-trac1";
 import { drawEmojiSprite, spriteCss } from "./live-sprites.mjs?v=20261024-beat1";
-import { trendSeries, trendColors, drawTrends as paintTrends, drawTrendsSkeleton as paintSkeleton } from "./live-trends.mjs?v=20261025-col1";
+import { trendSeries, trendColors, drawTrends as paintTrends, drawTrendsSkeleton as paintSkeleton } from "./live-trends.mjs?v=20261025-grf1";
 
 const CENSUS = `https://census.daybreakgames.com/s:${CENSUS_SERVICE_ID}/get/ps2:v2/`;
 const STREAM = `wss://push.planetside2.com/streaming?environment=ps2&service-id=s:${CENSUS_SERVICE_ID}`;
@@ -485,6 +485,7 @@ function start() {
     const item = (cls, key, fallback) => `<span class="lv-tl ${cls}"><i></i>${esc(tr(key, fallback))}</span>`;
     trendLegend.innerHTML =
       item("lv-tl-kpm", "live.trendKpmInt", "KPM interval") + item("lv-tl-kpm lv-tl-dash", "live.trendKpmTrend", "KPM trend") +
+      item("lv-tl-dpm", "live.trendDpmInt", "DPM interval") + item("lv-tl-dpm lv-tl-dash", "live.trendDpmTrend", "DPM trend") +
       item("lv-tl-kd", "live.trendKdInt", "K/D interval") + item("lv-tl-kd lv-tl-dash", "live.trendKdTrend", "K/D trend");
   }
   function drawTrends() {
@@ -492,9 +493,10 @@ function start() {
     trendEl.hidden = false;
     const colors = trendColors(document.documentElement.getAttribute("data-theme") === "light");
     for (const el of trendLegend.querySelectorAll(".lv-tl-kpm")) el.style.color = colors.kpm;
+    for (const el of trendLegend.querySelectorAll(".lv-tl-dpm")) el.style.color = colors.dpm;
     for (const el of trendLegend.querySelectorAll(".lv-tl-kd")) el.style.color = colors.kd;
     const s = trendStart ? trendSeries(trendKills, trendDeaths, trendStart, Date.now()) : null;
-    const any = s && (s.kpmInt.length || s.kpmTrend.length || s.kdInt.length || s.kdTrend.length);
+    const any = s && (s.kpmInt.length || s.kpmTrend.length || s.kdInt.length || s.kdTrend.length || s.dpmInt.length || s.dpmTrend.length);
     trendEl.classList.toggle("live-trends-skel", !any);
     if (!any) { paintSkeleton(trendCanvas, colors, tr("live.trendsWait", "Waiting for kills…")); return; }
     paintTrends(trendCanvas, s, colors);
