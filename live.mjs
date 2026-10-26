@@ -19,8 +19,8 @@ await i18nReady;
  *     fetch in the background (one at a time, newest first, #32) and upgrade in place.
  * Pure helpers are exported for tests; the DOM part runs only in a browser.
  */
-export * from "./live-model.mjs?v=20261026-share1"; // #66: the pure part (tests import it from here)
-import { VICTIM_LINES, classifyDeath, censusStats, LIVE_COLS, tipText, FILL_DIM, HOLLOW_PX, HOLLOW_INK, goodPct, fillDriver, emojiFill, unknownFill, infUnit, OUTLINE_PX, unitGlow, LIVE_GLOWS, LIVE_FPS, liveFps, HALO_KEY, haloOn, easeFill, glowIn, BEAT, TIER_MOTION, haloAt, SHINE, shineFrame, beatSleep, weaponIcon, glowTier, eventAt, overlayPush, overlayRows, nextBgFetch, liveRowFromPlayer, ME_REFRESH_MS, median, mergeFresh, SHARE_MAX, shareDelay, cellText, slugKey, bountyNext, dpsNow, DPS_HP, DPS_ASSIST, DPS_ASSIST_XP, assistShare, xpMultAt, KILL_BASE_XP, cashTotals, cashFormula, combatHoldMs, holdGaps, combatRuns, spawnRunHoldMs, timeToCombatMs, timerBarPct, easeInQuad } from "./live-model.mjs?v=20261026-share1";
+export * from "./live-model.mjs?v=20261026-hold1"; // #66: the pure part (tests import it from here)
+import { VICTIM_LINES, classifyDeath, censusStats, LIVE_COLS, tipText, FILL_DIM, HOLLOW_PX, HOLLOW_INK, goodPct, fillDriver, emojiFill, unknownFill, infUnit, OUTLINE_PX, unitGlow, LIVE_GLOWS, LIVE_FPS, liveFps, HALO_KEY, haloOn, easeFill, glowIn, BEAT, TIER_MOTION, haloAt, SHINE, shineFrame, beatSleep, weaponIcon, glowTier, eventAt, overlayPush, overlayRows, nextBgFetch, liveRowFromPlayer, ME_REFRESH_MS, median, mergeFresh, SHARE_MAX, shareDelay, cellText, slugKey, bountyNext, dpsNow, DPS_HP, DPS_ASSIST, DPS_ASSIST_XP, assistShare, xpMultAt, KILL_BASE_XP, cashTotals, cashFormula, combatHoldMs, holdGaps, combatRuns, spawnRunHoldMs, timeToCombatMs, timerBarPct, easeInQuad } from "./live-model.mjs?v=20261026-hold1";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261023-short1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
@@ -705,8 +705,8 @@ function start() {
     // average is excised, the rest counts normally); while frozen, effNow
     // stands still, so the meter holds its death value. On any lift the
     // clock continues exactly where it froze — no jump either way — and
-    // the inter-spike hold flattens each spike through the player's own
-    // average gap before τ drains it.
+    // the global hold flattens the whole meter through the player's own
+    // average gap after the latest spike before τ drains it.
     if (freezeStart && Date.now() >= freezeStart + freezeFor) { timeDebtMs += freezeFor; freezeStart = 0; freezeFor = 0; }
     const effNow = freezeStart ? freezeStart - timeDebtMs : Date.now() - timeDebtMs;
     // Owner 2026-10-25: the current hold, shown next to the meter — the
@@ -772,7 +772,7 @@ function start() {
       if (killerTimerEl) { const w = timerBarPct(lastDeath != null && !combatDone ? combat.ms - (Date.now() - lastDeath) : 0, combat.ms); if (w !== lastKillerTimerW) { killerTimerEl.style.width = w; lastKillerTimerW = w; } }
       if (dpsCombatLineEl) dpsCombatLineEl.style.display = combat.n ? "" : "none";
       // Owner 2026-10-26 (debug box): the medians plus the exact inputs
-      // to decompile combat efficiency back — hold gaps (trailing 10),
+      // to decompile combat efficiency back — hold gaps (all of them),
       // all combat runs, current τ. Plain text, copyable at stream end.
       // Write-on-change, like the session line.
       if (dbgEl) {

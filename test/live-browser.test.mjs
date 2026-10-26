@@ -826,6 +826,45 @@ describe("🎥 live assist share in a browser", () => {
   });
 });
 
+describe("🎥 live global hold in a browser", () => {
+  it("global hold (owner 2026-10-26): line 1 flat while line 2 drains, falling only after the hold runs out", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      const assist = () => ev(`window.__fakeWs.emit(${JSON.stringify({ event_name: "GainExperience", character_id: ME.cid, experience_id: 2, amount: 100, timestamp: "0" })})`);
+      await assist();
+      await new Promise((r) => setTimeout(r, 2000));
+      await assist();
+      await new Promise((r) => setTimeout(r, 2000));
+      await assist(); // 3 spikes 2 s apart -> hold ~2 s from the fallback gaps
+      assert.equal(await ev(until(`!document.getElementById("liveDpsVal").textContent.includes("/")`)), true, "meter started at the 3rd spike");
+      await new Promise((r) => setTimeout(r, 400));
+      const v0 = parseFloat(await ev(`document.getElementById("liveDpsVal").textContent`));
+      await new Promise((r) => setTimeout(r, 1000)); // still inside the ~2 s hold
+      const v1 = parseFloat(await ev(`document.getElementById("liveDpsVal").textContent`));
+      assert.ok(Math.abs(v1 - v0) / v0 < 0.05, `flat while the hold drains: ${v0} -> ${v1}`);
+      await new Promise((r) => setTimeout(r, 2100)); // past the hold, decayed ~14%
+      const v2 = parseFloat(await ev(`document.getElementById("liveDpsVal").textContent`));
+      assert.ok(v2 < v1 * 0.95, `falls together after the hold: ${v1} -> ${v2}`);
+      assert.deepEqual(errors, [], "no page errors");
+    });
+  });
+});
+
+describe("🎥 live headshot name in a browser", () => {
+  it("headshot name (owner 2026-10-26): a marked victim name is not truncated in a wide column", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", true)})`); // headshot kill
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[1].cid, "80", false)})`); // plain kill, control
+      assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic .lv-name").length === 2 && ![...document.querySelectorAll("#liveList tbody.lv-vic .lv-name")].some((n) => n.textContent.includes("…"))`)), true, "victim rows landed with names");
+      const rows = JSON.parse(await ev(`JSON.stringify([...document.querySelectorAll("#liveList tbody.lv-vic .lv-name")].map((n) => ({ text: n.textContent, sw: n.scrollWidth, cw: n.clientWidth, hs: !!n.parentElement.querySelector(".lv-hs2") })))`));
+      assert.equal(rows.length, 2);
+      for (const r of rows) assert.ok(r.sw <= r.cw + 1, `${r.text} (headshot: ${r.hs}) truncated: scroll ${r.sw} > client ${r.cw}`);
+      assert.deepEqual(errors, [], "no page errors");
+    });
+  });
+});
+
 describe("🎥 live assist hold in a browser", () => {
   it("assist hold (owner 2026-10-26): an assist refills bar 2 exactly like a kill", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {

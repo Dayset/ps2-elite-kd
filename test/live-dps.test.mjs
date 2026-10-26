@@ -38,7 +38,7 @@ test("a kill jumps to 100 and drains exponentially", () => {
 
 test("kills and assists add up; old and future events do not count", () => {
   assert.equal(dpsNow([{ t: 0, dmg: 1000 }, { t: 0, dmg: 500 }], 0), 150);
-  close(dpsNow([{ t: 0, dmg: 1000 }, { t: 10000, dmg: 1000 }], 10000), 100 + 100 / Math.E);
+  assert.equal(dpsNow([{ t: 0, dmg: 1000 }, { t: 10000, dmg: 1000 }], 10000), 200); // owner 2026-10-26 global hold: latest spike fresh -> all full, not per-spike decay
   assert.equal(dpsNow([{ t: 0, dmg: 1000 }], 60000), 0); // drained past the window
   assert.equal(dpsNow([{ t: 10000, dmg: 1000 }], 0), 0); // future damage is not damage yet
   assert.equal(dpsNow([], 0), 0);
@@ -82,6 +82,14 @@ test("hold (owner 2026-10-25): the decay clock starts after the average gap", ()
   close(dpsNow(ev, 5000, 10000, -100), 100 / Math.sqrt(Math.E)); // negative hold ignored
 });
 
+test("global hold (owner 2026-10-26): line 1 holds flat while line 2 drains, then all spikes fall together", () => {
+  const ev = [{ t: 0, dmg: 1000 }, { t: 10000, dmg: 1000 }];
+  assert.equal(dpsNow(ev, 10000, 10000, 10000), 200); // latest spike fresh: full
+  assert.equal(dpsNow(ev, 15000, 10000, 10000), 200); // line 2 at half, line 1 still flat
+  close(dpsNow(ev, 25000, 10000, 10000), 200 / Math.sqrt(Math.E)); // hold over: both fall by the same age
+  assert.equal(dpsNow(ev, 85000, 10000, 10000), 0); // each spike still expires on its own 6τ + hold clock
+});
+
 test("combatHoldMs (owner 2026-10-25, decision A): median of the first two gaps after each death; fallback to within-run gaps", () => {
   // one death, two kills: spawn run 40 s + combat gap 10 s → median 25 s
   assert.equal(combatHoldMs([40000, 50000], [0]), 25000);
@@ -101,14 +109,14 @@ test("combatHoldMs (owner 2026-10-25, decision A): median of the first two gaps 
   assert.equal(median([]), 0);
   assert.equal(median([5]), 5);
   assert.equal(median([1, 2, 3, 4]), 2.5);
-  // trailing 10: 6 deaths × 2 gaps of 1..12 s → median of the last 10 (3..12) is 7.5 s
+  // owner 2026-10-26, no static cap: 6 deaths × 2 gaps of 1..12 s → median of all 12 is 6.5 s
   const spikes = [], deaths = [];
   for (let i = 0; i < 6; i++) { deaths.push(i * 100000); spikes.push(i * 100000 + (2 * i + 1) * 1000, i * 100000 + (4 * i + 3) * 1000); }
-  assert.equal(combatHoldMs(spikes, deaths), 7500);
+  assert.equal(combatHoldMs(spikes, deaths), 6500);
 });
 
 test("holdGaps + combatRuns (owner 2026-10-26): the debug box shows the exact inputs the medians come from", () => {
-  // death-anchored: [40 s, 10 s] for one death, trailing cap shared with combatHoldMs
+  // death-anchored: [40 s, 10 s] for one death, no cap — the box shows every gap the median comes from
   assert.deepEqual(holdGaps([40000, 50000], [0]), [40000, 10000]);
   assert.equal(combatHoldMs([40000, 50000], [0]), median(holdGaps([40000, 50000], [0])));
   // fallback when no death-anchored gap exists yet

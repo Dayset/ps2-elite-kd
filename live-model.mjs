@@ -93,14 +93,20 @@ export const easeInQuad = (p) => p * p;
 export function dpsNow(events, now, tauMs = DPS_TAU_MS, holdMs = 0) {
   const tau = tauMs > 0 ? tauMs : DPS_TAU_MS;
   const hold = holdMs > 0 ? holdMs : 0;
+  if (!events.length) return 0;
+  // Owner 2026-10-26 (elite combat damage meter, global hold): decay is
+  // gated by the LATEST spike, not per spike. While line 2 drains (the
+  // hold window after the latest spike), line 1 holds flat — running
+  // between victims is still combat, not decay. Once the window runs
+  // out, every surviving spike decays together by the same age. Each
+  // spike still expires on its own clock (6τ + hold), so a long fight
+  // cannot carry ancient damage forever.
+  const lastT = Math.max(...events.map((e) => e.t));
+  const age = Math.max(0, now - lastT - hold);
   let v = 0;
   for (const e of events) {
     const dt = now - e.t;
-    // Owner 2026-10-25 (elite combat damage meter): the hold — the decay
-    // clock starts only after the average gap, so the line holds flat
-    // through the player's own rhythm and then drains with τ. With no
-    // hold this is exactly the old behavior (same cutoff, same decay).
-    if (dt >= 0 && dt < 6 * tau + hold) v += e.dmg * Math.exp(-Math.max(0, dt - hold) / tau);
+    if (dt >= 0 && dt < 6 * tau + hold) v += e.dmg * Math.exp(-age / tau);
   }
   return v / (tau / 1000);
 }
@@ -123,24 +129,25 @@ export function median(values) {
   return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
 }
 /**
- * Owner 2026-10-25 (decision A): the hold is anchored at deaths — for
- * each death, the first two spikes after it contribute their gaps:
- * death→first spike (the spawn run) and first→second spike (the combat
- * gap). Pooled across deaths, trailing 10, median. A fast combat pace
- * can't drag the hold below the spawn rhythm, and the hold stays
- * gap-sized (never the whole death→second-kill span, which would peg
- * the meter). With no death-anchored gap yet (no deaths, or deaths with
- * no following spike), it falls back to the within-run gaps, so the
- * meter still has a hold before the first death.
+ * Owner 2026-10-25 (decision A), cap dropped 2026-10-26: the hold is
+ * anchored at deaths — for each death, the first two spikes after it
+ * contribute their gaps: death→first spike (the spawn run) and
+ * first→second spike (the combat gap). Pooled across deaths, ALL of
+ * them, median — no static trailing number. A fast combat pace can't
+ * drag the hold below the spawn rhythm, and the hold stays gap-sized
+ * (never the whole death→second-kill span, which would peg the meter).
+ * With no death-anchored gap yet (no deaths, or deaths with no
+ * following spike), it falls back to the within-run gaps, so the meter
+ * still has a hold before the first death.
  */
 /**
  * Owner 2026-10-26 (debug box): the exact gap list combatHoldMs medians
  * over — death-anchored (death→first spike, first→second spike) per
- * death, trailing maxGaps, falling back to within-run gaps when no
+ * death, all of them, falling back to within-run gaps when no
  * death-anchored gap exists yet. Shared, so the box and the meter can
  * never disagree.
  */
-export function holdGaps(spikeTimes, deathTimes, maxGaps = 10) {
+export function holdGaps(spikeTimes, deathTimes) {
   const spikes = [...spikeTimes].sort((a, b) => a - b);
   const deaths = [...deathTimes].sort((a, b) => a - b);
   const gaps = [];
@@ -154,7 +161,7 @@ export function holdGaps(spikeTimes, deathTimes, maxGaps = 10) {
     const g2 = k2 - k1;
     if (g2 > 0) gaps.push(g2);
   }
-  if (gaps.length) return gaps.slice(-maxGaps);
+  if (gaps.length) return gaps;
   // Fallback: no death-anchored gap yet — the within-run gaps, as before.
   const clean = [];
   for (let i = 1; i < spikes.length; i++) {
@@ -163,10 +170,10 @@ export function holdGaps(spikeTimes, deathTimes, maxGaps = 10) {
     if (deaths.some((d) => d > spikes[i - 1] && d < spikes[i])) continue;
     clean.push(gap);
   }
-  return clean.slice(-maxGaps);
+  return clean;
 }
-export function combatHoldMs(spikeTimes, deathTimes, maxGaps = 10) {
-  return median(holdGaps(spikeTimes, deathTimes, maxGaps));
+export function combatHoldMs(spikeTimes, deathTimes) {
+  return median(holdGaps(spikeTimes, deathTimes));
 }
 export function combatRuns(deathTimes, spikeTimes) {
   const spikes = [...spikeTimes].sort((a, b) => a - b);
@@ -185,10 +192,10 @@ export function spawnRunHoldMs(deathTimes, spikeTimes, maxRuns = 10) {
 /**
  * Owner 2026-10-25: the full-picture time to combat — median of ALL
  * death→first-combat (kill or assist) runs in the session, no trailing
- * cap, plus how many deaths it covers. Unlike the hold (trailing 10)
- * and the freeze (trailing 10), this never drops an old death. A death
- * with no combat after it contributes nothing. Median, not mean: one
- * AFK gap must not drag the session average.
+ * cap, plus how many deaths it covers. Like the hold, this never drops
+ * an old death; unlike the freeze (trailing 10). A death with no
+ * combat after it contributes nothing. Median, not mean: one AFK gap
+ * must not drag the session average.
  */
 export function timeToCombatMs(deathTimes, spikeTimes) {
   const runs = combatRuns(deathTimes, spikeTimes);
