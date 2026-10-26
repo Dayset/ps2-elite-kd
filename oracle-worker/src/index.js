@@ -364,7 +364,9 @@ export async function runCycle(env, nowMs = Date.now()) {
     // record, but give every vote back (we can't be sure who really won).
     if (flags.some((f) => f.startsWith("neutral_heavy")) && flags.some((f) => f.startsWith("snapshot_winner_")) && !flags.includes("votes_void")) flags.push("votes_void");
     const rec = { ...base, end_ts: endTs, final: finalOk ? final : null, checks, flags };
-    if (checks < 3) { out.push({ ...rec, status: "settling" }); continue; }
+    // #77: a territory draw goes to Sudden Death (15 min kill race) straight away; show it as
+    // such from its start row instead of "settling" on the frozen territory end for 10 minutes.
+    if (checks < 3) { const sd0 = findSuddenDeath(all, a, endTs); out.push({ ...rec, status: sd0 && !sd0.end ? "sudden_death" : "settling" }); continue; }
     // Census ended row without scores: fall back to our last pre-end snapshot when
     // it is clean (fresh, not neutral-heavy); otherwise unresolved (votes given back).
     const finalWinner = async () => {

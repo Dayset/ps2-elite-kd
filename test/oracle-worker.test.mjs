@@ -188,6 +188,16 @@ test("a draw waits for sudden death and settles on its kills", { skip }, async (
   assert.deepEqual({ ...row }, { status: "settled", winner: "TR", basis: "sudden_death" });
 });
 
+test("#77: sudden death shows at once, not 'settling' for the first 10 minutes", { skip }, async () => {
+  const { runCycle } = await import("../oracle-worker/src/index.js");
+  const DB = fakeD1();
+  const T0 = 1_792_974_056, END = T0 + 90 * 60 + 1;
+  const census = { map: { 1: 30, 2: 30, 3: 28 }, metagame: [mg(49412, 151, "started", T0), mg(49412, 151, "ended", END, 36.86, 36.86, 25.88), mg(49413, 239, "started", END + 4)], flips: [] };
+  installCensus(census);
+  await runCycle({ DB }, (END + 120) * 1000);
+  assert.equal(DB.raw.prepare("SELECT status FROM alert WHERE instance_id=49412").get().status, "sudden_death");
+});
+
 test("Census outage: errors are reported, nothing throws, health turns unhealthy", { skip }, async () => {
   const { runCycle, default: worker } = await import("../oracle-worker/src/index.js");
   const DB = fakeD1();
