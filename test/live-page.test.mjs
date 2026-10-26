@@ -825,7 +825,7 @@ test("session line (owner 2026-10-26): duration, kills, deaths, Σ + avg across 
   const swap = readFileSync(new URL("scripts/build-live.mjs", root), "utf8");
   assert.match(swap, /<div id="liveSession" class="live-session"><\/div>/);
   assert.match(css, /\.live-session \{ margin-top: 0\.25rem; font-size: 0\.72rem; color: var\(--dim\); \}/);
-  assert.match(js, /let sessionStartMs = 0, sessionDeaths = 0, lastSession = "";/);
+  assert.match(js, /let sessionStartMs = 0, sessionDeaths = 0, lastSession = "", lastStream = "";/);
   assert.match(js, /const sessionEl = \$\("liveSession"\);/);
   assert.match(js, /const sessionDur = \(ms\) => \{ const s = Math\.floor\(ms \/ 1000\);/);
   assert.match(js, /if \(!sessionStartMs\) sessionStartMs = Date\.now\(\);/); // first Death arrival starts the clock
@@ -889,4 +889,21 @@ test("share (owner 2026-10-26): one tap copies link + numbers, cash-out first, t
   assert.ok(js.includes('if (sh) sh.style.display = "none"')); // no target, no button
   const tpl = js.slice(js.indexOf("live: ${location.origin}"));
   assert.ok(tpl.indexOf("Σ ") < tpl.indexOf("· avg ") && tpl.indexOf("· avg ") < tpl.indexOf("· DPM "));
+});
+
+test("stream overlay (owner 2026-10-26): ?stream=1 shows meters + session card with K/D, hides feed/controls/history", () => {
+  const js = liveSrc();
+  const css = cssSrc();
+  const swap = readFileSync(new URL("scripts/build-live.mjs", root), "utf8");
+  assert.ok(swap.includes('<div id="liveStreamCard" class="live-stream-card"><div class="live-stream-kd">K/D <span id="liveStreamKd">–</span></div><div class="live-stream-session" id="liveStreamSession"></div></div>'));
+  assert.ok(swap.indexOf('id="liveStreamCard"') > swap.indexOf('id="liveSession"'));
+  assert.ok(swap.indexOf('id="liveStreamCard"') < swap.indexOf('id="liveShare"'));
+  assert.ok(css.includes("#liveStreamCard { display: none; }"));
+  assert.ok(css.includes("body.live-stream #liveStreamCard { display: block; }"));
+  assert.ok(css.includes("body.live-stream #liveList, body.live-stream #liveState, body.live-stream #liveDpmTau, body.live-stream #liveCashHist, body.live-stream #liveShare, body.live-stream #liveSession { display: none; }"));
+  assert.ok(css.includes("body.live-stream #liveDps .live-metric:last-child { display: none; }"));
+  assert.ok(js.includes('const streamMode = new URLSearchParams(location.search).get("stream") === "1";'));
+  assert.ok(js.includes('document.body.classList.add("live-stream")'));
+  assert.ok(js.includes('const streamKdEl = $("liveStreamKd"), streamSesEl = $("liveStreamSession");'));
+  assert.ok(js.includes('sessionDeaths ? (sKills / sessionDeaths).toFixed(2) : "–"'));
 });

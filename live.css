@@ -189,6 +189,13 @@ col.lv-c-iz { width: var(--lv-iz); }
 /* Owner 2026-10-26: session trace-back line — small, dim, under the DPM block. */
 .live-session { margin-top: 0.25rem; font-size: 0.72rem; color: var(--dim); }
 .live-share { margin-top: 0.25rem; font-size: 0.72rem; background: none; border: 1px solid var(--border); color: var(--text); border-radius: 0.25rem; padding: 0.1rem 0.5rem; cursor: pointer; font: inherit; }
+#liveStreamCard { display: none; }
+.live-stream-card { margin-top: 0.5rem; background: var(--panel); border: 1px solid var(--border); border-radius: 0.5rem; padding: 0.5rem 0.75rem; }
+.live-stream-kd { font-size: 1.4rem; font-weight: 600; }
+.live-stream-session { margin-top: 0.25rem; font-size: 0.85rem; color: var(--dim); }
+body.live-stream #liveStreamCard { display: block; }
+body.live-stream #liveList, body.live-stream #liveState, body.live-stream #liveDpmTau, body.live-stream #liveCashHist, body.live-stream #liveShare, body.live-stream #liveSession { display: none; }
+body.live-stream #liveDps .live-metric:last-child { display: none; } /* online pill: meters + session only */
 .live-dps #liveDpsVal { font-weight: 600; font-variant-numeric: tabular-nums; }
 /* Owner 2026-10-26: DPM row as stacked meter lines — DPM glows and grows
    with the shown value, hold/combat bars shrink as their seconds fall.

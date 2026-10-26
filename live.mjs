@@ -40,6 +40,10 @@ function start() {
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const $ = (id) => document.getElementById(id);
   const target = (new URLSearchParams(location.search).get("names") || "").split(",")[0].trim();
+  // Owner 2026-10-26 (stream overlay): ?stream=1 strips the page to the
+  // meters + session card for OBS Browser Source over the game.
+  const streamMode = new URLSearchParams(location.search).get("stream") === "1";
+  if (streamMode) document.body.classList.add("live-stream");
   const stateEl = $("liveState");
   const listEl = $("liveList");
   // Owner 2026-10-24 (CPU): the t579u outline, the t589u hollow and the t568u glows are drawn once per size into
@@ -563,8 +567,9 @@ function start() {
   // and avg. Session-only like the pot and history: a reload restarts
   // it, and the line hides until the first event, so a reload is visible
   // as the duration resetting to zero.
-  let sessionStartMs = 0, sessionDeaths = 0, lastSession = "";
+  let sessionStartMs = 0, sessionDeaths = 0, lastSession = "", lastStream = "";
   const sessionEl = $("liveSession");
+  const streamKdEl = $("liveStreamKd"), streamSesEl = $("liveStreamSession");
   const sessionDur = (ms) => { const s = Math.floor(ms / 1000); if (s < 60) return `${s}s`; const m = Math.floor(s / 60); if (m < 60) return `${m}m`; return `${Math.floor(m / 60)}h${String(m % 60).padStart(2, "0")}m`; };
   // Owner 2026-10-25: adjustable DPM decay τ (seconds) — the owner tries
   // values live. A setting, so it persists across reloads (session data
@@ -743,6 +748,19 @@ function start() {
         lastSession = sKey;
       }
       sessionEl.style.display = sessionStartMs ? "" : "none";
+      // Owner 2026-10-26 (stream overlay): the same session numbers plus
+      // K/D, in a card that lives from load (zeros before the first event) —
+      // the normal session line stays hidden until the first event.
+      if (streamKdEl && streamSesEl) {
+        const stDur = sessionStartMs ? sDur : "0s";
+        const stKd = sessionDeaths ? (sKills / sessionDeaths).toFixed(2) : "–";
+        const stKey = `${stDur}|${sKills}|${sessionDeaths}|${sSum}|${sAvg}`;
+        if (stKey !== lastStream) {
+          streamKdEl.textContent = stKd;
+          streamSesEl.textContent = tr("live.sessionLine", "session {dur} · {kills} kills · {deaths} deaths · Σ {sum} · avg {avg}", { dur: stDur, kills: sKills, deaths: sessionDeaths, sum: sSum, avg: sAvg == null ? "–" : sAvg.toFixed(1) });
+          lastStream = stKey;
+        }
+      }
     }
   }
   setInterval(dpsTick, 100);

@@ -689,3 +689,28 @@ describe("🎥 live share in a browser", () => {
     });
   });
 });
+
+describe("🎥 live stream overlay in a browser", () => {
+  it("stream (owner 2026-10-26): meters + session card only, K/D included", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      // before any event: the card is already there, K/D empty
+      assert.equal(await ev(`getComputedStyle(document.getElementById("liveStreamCard")).display`), "block", "card shows from load");
+      assert.equal(await ev(`document.getElementById("liveStreamKd").textContent`), "–", "K/D empty before the first death");
+      assert.equal(await ev(`getComputedStyle(document.getElementById("liveList")).display`), "none", "feed hidden");
+      assert.equal(await ev(`getComputedStyle(document.getElementById("liveDpmTau")).display`), "none", "tau controls hidden");
+      assert.equal(await ev(`getComputedStyle(document.getElementById("liveCashHist")).display`), "none", "history hidden");
+      assert.equal(await ev(`getComputedStyle(document.getElementById("liveShare")).display`), "none", "share hidden");
+      assert.equal(await ev(`getComputedStyle(document.getElementById("liveSession")).display`), "none", "normal session line hidden");
+      assert.equal(await ev(`getComputedStyle(document.querySelector("#liveDps .live-metric:last-child")).display`), "none", "online pill hidden");
+      assert.equal(await ev(`getComputedStyle(document.getElementById("liveDps")).display`), "block", "DPM block stays");
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[1].cid, "80", false)})`);
+      await ev(`window.__fakeWs.emit(${death(OPP[2].cid, ME.cid, "432", false)})`);
+      assert.equal(await ev(until(`document.getElementById("liveStreamKd").textContent === "2.00"`)), true, "K/D 2.00 after two kills and a death");
+      const sesText = await ev(`document.getElementById("liveStreamSession").textContent`);
+      assert.ok(sesText.includes("2 kills") && sesText.includes("1 deaths") && /Σ \d+/.test(sesText), `session card carries the session: ${sesText}`);
+      assert.deepEqual(errors, [], "no page errors");
+    }, { query: "&stream=1" });
+  });
+});
