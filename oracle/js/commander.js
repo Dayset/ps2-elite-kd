@@ -59,8 +59,17 @@ export function commander(c, ts, now, lead) {
     const front = x.kind === "push" || x.kind === "guard";   // no move changes the result: the busiest front
     const tail = front ? `<span class="note">${tr("or.c.front", "{n}% chance it changes hands in the next 10 min · nothing here changes the result", { n: x.heat })}</span>` : `${x.kind === "hold" ? tr("or.c.ifLost", "if lost:") + " " : ""}${odds(who, x)}${diff(x)}`;
     const icon = x.kind === "hold" || x.kind === "guard" ? "🛡️" : x.kind === "spoil" ? "🃏" : x.kind === "push" ? "🔥" : "🎯";
+    // OBS block capture (owner 2026-10-25): the All-forces box is one exact
+    // rectangle — header, one facility per line, values + info — no matter
+    // the names or the base count. The prose stays, below the values, so
+    // nothing it carried (target, cuts, reconnects) is lost; anything past
+    // the box clips inside instead of moving it.
+    const head = front || x.kind === "spoil"
+      ? `${num(k)}${icon} <b class="fkind">${front ? tr("or.c.busiest", "Busiest front:") : tr("or.c.allForces", "All forces:")}</b>`
+      : `${num(k)}<b class="fkind">${tr("or.c.allForces", "All forces:")}</b>${x.kind === "hold" ? ` ${tr("or.c.defend", "🛡️ Defend")}` : ` ${tr("or.c.attack", "⚔️ Attack")}`}`;
+    const pocket = x.pocket ? ` <span class="note" title="${tr("or.c.pocketTip", "inside a pocket whose chokepoint is under attack: worth less if it gets cut")}">${tr("or.c.inPocket", "🥶 in a pocket")}</span>` : "";
     return main
-      ? `<div class="focus ${esc(x.kind)}" data-base="${esc(x.bases[0])}"><div class="fhead">${num(k)}${icon} <b class="fkind">${front ? tr("or.c.busiest", "Busiest front:") : tr("or.c.allForces", "All forces:")}</b> ${linked(x.text, xNames(x))}${cut}${x.pocket ? ` <span class="note" title="${tr("or.c.pocketTip", "inside a pocket whose chokepoint is under attack: worth less if it gets cut")}">${tr("or.c.inPocket", "🥶 in a pocket")}</span>` : ""}</div><div class="fodds">${tail}</div></div>`
+      ? `<div class="focus ${esc(x.kind)}" data-base="${esc(x.bases[0])}"><div class="fhead"><div class="fkindline">${head}</div>${(x.bases || []).map((b) => `<div class="fbase">${bl(b)}</div>`).join("")}</div><div class="fodds">${tail}${pocket}<div class="ftext">${linked(x.text, xNames(x))}</div></div></div>`
       : `<li data-base="${esc(x.bases[0])}">${num(k)}${linked(x.text, xNames(x))}${cut} ${front ? ` <span class="note">⏳${x.heat}%</span>` : `<span class="note">${x.kind === "hold" ? tr("or.c.ifLost2", "if lost") + " " : ""}${x.then}%</span>${diff(x)}`}</li>`;
   };
   const focusHtml = (f) => {

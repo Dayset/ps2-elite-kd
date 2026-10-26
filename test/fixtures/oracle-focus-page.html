@@ -1,0 +1,36 @@
+<!doctype html>
+<!-- Fixture page for test/oracle-focus-browser.test.mjs: renders the real
+     oracle/js/commander.js focus block for every focus kind, so the test can
+     measure the box as OBS would capture it. No Worker fetch: fixtures only. -->
+<html><head><meta charset="utf-8">
+<link rel="stylesheet" href="/oracle/oracle.css">
+<style>body{margin:0} .slot{width:400px} .slot.narrow{width:200px} .slot .cmdgrid{grid-template-columns:1fr !important}</style>
+</head><body>
+<div id="slots"></div>
+<script type="module">
+import { commander } from "/oracle/js/commander.js";
+import { S } from "/oracle/js/state.js";
+S.me = null; S.cmdFac = null;
+const fac = () => ({ war_shape: "TWO-FRONT WAR", attack: [], defend: [], kingmaker: [], eliminated: false });
+const foc = (f) => ({ focus: f, backups: [], quiet: false });
+const cases = [
+  ["take", "wide", { factions: { VS: fac() }, focus: { VS: foc({ kind: "take", bases: ["Hurakan Western Pass"], text: "Take Hurakan Western Pass from TR", now: 30, then: 55, heat: 0 }) } }],
+  ["plan", "wide", { factions: { VS: fac() }, focus: { VS: foc({ kind: "plan", bases: ["A Very Long Facility Name That Keeps Going On", "Another Extremely Long Facility Name Here Too"], text: "Take A Very Long Facility Name That Keeps Going On and Another Extremely Long Facility Name Here Too — cuts off 5 enemy bases (Alpha, Bravo, Charlie, Delta, Echo) — reconnects 3 cut-off bases", now: 30, then: 55, heat: 0 }) } }],
+  ["hold", "wide", { factions: { VS: fac() }, focus: { VS: foc({ kind: "hold", bases: ["The Ascent"], text: "Hold The Ascent against NC — losing it cuts off 2 of ours (Alpha, Bravo)", now: 40, then: 25, heat: 0, pocket: true }) } }],
+  ["spoil", "wide", { factions: { VS: fac() }, focus: { VS: foc({ kind: "spoil", bases: ["Xenotech Labs"], leader: "TR", text: "Spoiler: take Xenotech Labs from TR — cuts off 3 of theirs", now: 45, then: 20, heat: 0 }) } }],
+  ["front", "wide", { factions: { VS: fac() }, focus: { VS: foc({ kind: "push", bases: ["Crossroads Watchtower"], text: "Push Crossroads Watchtower (TR): the fight is there", now: 33, then: 33, heat: 88 }) } }],
+  ["quiet", "wide", { factions: { VS: fac() }, focus: { VS: { focus: null, backups: [], quiet: true } } }],
+  ["plan", "narrow", { factions: { VS: fac() }, focus: { VS: foc({ kind: "plan", bases: ["A Very Long Facility Name That Keeps Going On", "Another Extremely Long Facility Name Here Too"], text: "Take A Very Long Facility Name That Keeps Going On and Another Extremely Long Facility Name Here Too — cuts off 5 enemy bases (Alpha, Bravo, Charlie, Delta, Echo) — reconnects 3 cut-off bases", now: 30, then: 55, heat: 0 }) } }],
+];
+const slots = document.getElementById("slots");
+for (const [name, slot, c] of cases) {
+  const d = document.createElement("div");
+  d.className = "slot" + (slot === "narrow" ? " narrow" : "");
+  d.dataset.case = name; d.dataset.slot = slot;
+  d.innerHTML = commander(c, null, 100, "VS");
+  slots.appendChild(d);
+}
+window.__focusDone = true;
+window.__focusBoxes = [...document.querySelectorAll(".focus")].map((el) => ({ case: el.closest(".slot").dataset.case, slot: el.closest(".slot").dataset.slot, w: el.offsetWidth, h: el.offsetHeight }));
+</script>
+</body></html>

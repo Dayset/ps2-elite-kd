@@ -89,6 +89,11 @@ td.num { font-variant-numeric: tabular-nums; }
 .cmd ol { margin: 0; padding-left: var(--s-5); }
 .cmd li { margin: 2px 0; }
 .cmd .focus { border: 1px solid var(--border); border-radius: var(--r-sm, 6px); padding: var(--s-2, 6px) var(--s-3, 8px); margin: var(--s-2, 6px) 0; background: rgba(255,255,255,0.03); }
+/* OBS block capture (owner 2026-10-25): the All-forces box is one exact
+   rectangle — header, two facility lines, values + info — no matter the
+   base names or the base count. Longer text clips inside; the box never moves. */
+.cmd .focus { height: 132px; overflow: hidden; line-height: 1.35; }
+.cmd .focus .fhead .fbase { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cmd .focus .fhead { line-height: 1.35; }
 .cmd .focus .fodds { margin-top: 2px; font-size: var(--fs-16, 16px); }
 .cmd .focus.hold { border-color: rgba(255, 170, 60, 0.45); }
