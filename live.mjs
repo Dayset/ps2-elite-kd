@@ -20,7 +20,7 @@ await i18nReady;
  * Pure helpers are exported for tests; the DOM part runs only in a browser.
  */
 export * from "./live-model.mjs?v=20261026-timer1"; // #66: the pure part (tests import it from here)
-import { VICTIM_LINES, classifyDeath, fmtGap, censusStats, LIVE_COLS, tipText, FILL_DIM, HOLLOW_PX, HOLLOW_INK, goodPct, fillDriver, emojiFill, unknownFill, infUnit, OUTLINE_PX, unitGlow, LIVE_GLOWS, LIVE_FPS, liveFps, HALO_KEY, haloOn, easeFill, glowIn, BEAT, TIER_MOTION, haloAt, SHINE, shineFrame, beatSleep, weaponIcon, glowTier, eventAt, overlayPush, overlayRows, nextBgFetch, liveRowFromPlayer, ME_REFRESH_MS, median, mergeFresh, SHARE_MAX, shareDelay, cellText, slugKey, bountyNext, dpsNow, DPS_HP, DPS_ASSIST, DPS_ASSIST_XP, cashTotals, cashFormula, combatHoldMs, holdGaps, combatRuns, spawnRunHoldMs, timeToCombatMs, timerBarPct, easeInQuad } from "./live-model.mjs?v=20261026-timer1";
+import { VICTIM_LINES, classifyDeath, censusStats, LIVE_COLS, tipText, FILL_DIM, HOLLOW_PX, HOLLOW_INK, goodPct, fillDriver, emojiFill, unknownFill, infUnit, OUTLINE_PX, unitGlow, LIVE_GLOWS, LIVE_FPS, liveFps, HALO_KEY, haloOn, easeFill, glowIn, BEAT, TIER_MOTION, haloAt, SHINE, shineFrame, beatSleep, weaponIcon, glowTier, eventAt, overlayPush, overlayRows, nextBgFetch, liveRowFromPlayer, ME_REFRESH_MS, median, mergeFresh, SHARE_MAX, shareDelay, cellText, slugKey, bountyNext, dpsNow, DPS_HP, DPS_ASSIST, DPS_ASSIST_XP, cashTotals, cashFormula, combatHoldMs, holdGaps, combatRuns, spawnRunHoldMs, timeToCombatMs, timerBarPct, easeInQuad } from "./live-model.mjs?v=20261026-timer1";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261023-short1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
@@ -82,6 +82,7 @@ function start() {
   let infM = null; // median infantry % over ranks.json (owner t590u: 🪖 fill starts here)
   let infC = null; // 🚜 infantry cut (owner t622u: ranks.json "tracCuts".cut, p25 of the data; 🚜 below it)
   let zergMed = null; // median 🪳 Zerg over ranks.json (owner 2026-10-26: above it = roach)
+  let showRoach = false; // owner 2026-10-26: "Show Tactical Superiority" is off by default — roaches stay hidden until checked
 
   const app = () => window.__ps2EliteKd || null;
 
@@ -249,38 +250,48 @@ function start() {
   function izHtml(vals) {
     const scored = vals.zerg, est = scored == null ? vals.zest : null;
     const zg = scored ?? est;
-    if (!Number.isFinite(zg)) return `<td class="lv-iz" data-tip="Zerg ?">🪳</td>`;
+    if (!Number.isFinite(zg)) return `<td class="lv-iz" data-tip="Zerg ?">${showRoach ? "🪳" : ""}</td>`;
     const zgS = est != null ? `~${Math.round(zg)}` : String(Math.round(zg));
     const roach = zergMed != null && zg > zergMed;
-    return `<td class="lv-iz" data-tip="Zerg ${zgS}">${roach ? "🪳" : ""}${zgS}</td>`;
+    // Owner 2026-10-26: with "Show Tactical Superiority" on, a roach shows
+    // as 🪳 alone, no number beside it; with it off, only the value
+    // number shows, without the emoji.
+    if (roach && showRoach) return `<td class="lv-iz" data-tip="Zerg ${zgS}">🪳</td>`;
+    return `<td class="lv-iz" data-tip="Zerg ${zgS}">${zgS}</td>`;
   }
   // Owner 2026-10-26 (one icon + count): the tracked player's bounty, on
-  // their own (centre) line's second row — a streak shows as one coffin
+  // their own (centre) line's left slot — a streak shows as one coffin
   // plus its count (⚰️×3), and at 7 it flips to one money bag plus its
-  // lives (💰×3), spent one per death (3 → 2 → 1 → gone). The centre line
-  // also carries the latest kill's weapon above this.
+  // lives (💰×3), spent one per death (3 → 2 → 1 → gone). The assist
+  // count sits under it in the same slot (🤝×N), small like the old
+  // stopwatch that lived there.
   let bountyStreak = 0, bountyLives = 0;
   let meWeaponId = null; // latest kill's weapon id, shown under the centre name
+  let assistN = 0; // assists since the last kill or death — a kill or a death hides it
   // Owner 2026-10-25: while the observed player is dead, the killed list
   // and their own name sit at 50% — a new kill brings them back to full.
   // Render-time flag, so it survives every re-render (bgPump included).
   let namesDim = false;
   function bountyHtml() {
-    if (bountyLives > 0) return `<span class="lv-wn">💰×${bountyLives}</span>`;
-    if (bountyStreak > 0) return `<span class="lv-wn">⚰️×${bountyStreak}</span>`;
+    if (bountyLives > 0) return `<span class="lv-em">💰×${bountyLives}</span>`;
+    if (bountyStreak > 0) return `<span class="lv-em">⚰️×${bountyStreak}</span>`;
     return "";
+  }
+  function assistHtml() {
+    return assistN > 0 ? `<span class="lv-em">🤝×${assistN}</span>` : "";
   }
   function cells(p, isMe, r, hideWeapon = false) {
     const vals = p.cached || {};
     const tip = p.cached || isMe ? "" : ` · not in cache · K/D ${fmt(p.kd, 2)} · KPM ${fmt(p.kpm, 2)}`;
     const w = r ? weaponIcon(catalog, r.weapon) : null;
     // Owner 2026-10-26: weapons live under the tracked (centre) name only —
-    // victim rows carry no weapon line. The centre line stacks its latest
-    // kill's weapon (small, dim) above the bounty count.
+    // victim rows carry no weapon line. The bounty left the name cell for
+    // the left slot (stopwatch's old place); the centre name keeps only
+    // its latest kill's weapon, small and dim.
     let wn;
     if (isMe) {
       const mw = meWeaponId != null ? weaponIcon(catalog, meWeaponId) : null;
-      wn = `<span class="lv-wn lv-wn-weapon">${mw ? esc(mw.name) : ""}</span>${bountyHtml()}`;
+      wn = `<span class="lv-wn lv-wn-weapon">${mw ? esc(mw.name) : ""}</span>`;
     } else if (hideWeapon) {
       wn = "";
     } else {
@@ -326,8 +337,9 @@ function start() {
     const played = now - fillStart.get(key);
     return played >= FILL_MS ? NO_FILL : { cls: " lv-fillin", sty: ` data-fk="${esc(key)}"` };
   }
-  /** ⏱️ the newest event runs (ticks every second), every older line shows its frozen gap (owner t576u). */
-  const ageHtml = (r) => (r.gap == null ? `<span class="lv-timer" data-at="${r.at}">${fmtGap(Date.now() - r.at)}</span>` : fmtGap(r.gap));
+  // Owner 2026-10-26: the stopwatches are gone from every row — the timer
+  // bars carry timing now, and the centre's left slot holds the emoji
+  // lines instead. (feedPush gaps stay in the model, unused on screen.)
   /** One opponent line: the killer above (lv-death) or a victim below (lv-kill). */
   function oppLine(r, where, extra = "") {
     const fi = extra ? NO_FILL : fillIn(`${r.opp}@${r.at}:${(people.get(r.opp) || {}).cached ? "c" : "u"}`);
@@ -336,7 +348,7 @@ function start() {
     const isNew = r === fresh;
     const wP = iviPct(kill ? me : p), lP = iviPct(kill ? p : me);
     const upset = isNew && wP != null && lP != null && lP - wP >= UPSET_GAP ? " lv-upset" : "";
-    return `<tbody class="lv-ev lv-${where} lv-${r.last}${isNew ? " lv-new" : ""}${upset}${extra}${fi.cls}"${fi.sty}><tr><td class="lv-time">${ageHtml(r)}</td>${cells(p, false, r, where === "vic")}</tr></tbody>`;
+    return `<tbody class="lv-ev lv-${where} lv-${r.last}${isNew ? " lv-new" : ""}${upset}${extra}${fi.cls}"${fi.sty}><tr><td class="lv-time"></td>${cells(p, false, r, where === "vic")}</tr></tbody>`;
   }
   const emptyLine = (where) => `<tbody class="lv-ev lv-${where} lv-empty"><tr><td class="lv-time"></td>${blank}</tr></tbody>`;
   function render() {
@@ -352,7 +364,7 @@ function start() {
     goneShown = st.gone;
     const atk = st.killer ? oppLine(st.killer, "atk") : fade ? oppLine(st.gone, "atk", " lv-out") : emptyLine("atk");
     const fm = fillIn(`me:${me.cached ? "c" : "u"}`);
-    const mid = `<tbody class="lv-ev lv-me${fm.cls}"${fm.sty}><tr><td class="lv-time"></td>${cells(me, true)}</tr></tbody>`;
+    const mid = `<tbody class="lv-ev lv-me${fm.cls}"${fm.sty}><tr><td class="lv-time">${bountyHtml()}${assistHtml()}</td>${cells(me, true)}</tr></tbody>`;
     const low = Array.from({ length: VICTIM_LINES }, (_, i) => (st.victims[i] ? oppLine(st.victims[i], "vic") : emptyLine("vic"))).join("");
     listEl.innerHTML = cols + atk + mid + low;
     listEl.classList.toggle("lv-dim-names", namesDim);
@@ -505,11 +517,6 @@ function start() {
       for (const u of tb.querySelectorAll(".lv-u")) if (![...fills].some((a) => a.u === u)) animateFill(u, 0, FILL_MS, played, true);
     }
   }
-  setInterval(() => {
-    if (!listEl) return;
-    for (const el of listEl.querySelectorAll(".lv-timer[data-at]")) el.textContent = `${fmtGap(Date.now() - +el.dataset.at)}`;
-  }, 1000);
-
   // Owner t546u: no skill graph in Live any more (it stays on the main page).
 
   // Owner 2026-10-25: trends REMOVED (sluggish 30 s buckets, no numbers) —
@@ -606,6 +613,17 @@ function start() {
     const tauDown = $("liveDpmTauDown"), tauUp = $("liveDpmTauUp");
     if (tauDown) tauDown.addEventListener("click", () => { tauInput.value = String(Math.max(1, Math.round(Number(tauInput.value) || 10) - 10)); applyTau(); });
     if (tauUp) tauUp.addEventListener("click", () => { tauInput.value = String(Math.min(3600, Math.round(Number(tauInput.value) || 10) + 10)); applyTau(); });
+  }
+  // Owner 2026-10-26 (tactical superiority): off by default — roaches stay
+  // hidden until "Show Tactical Superiority" is checked. The choice
+  // persists like τ, and re-rendering applies it at once.
+  const showTacticalEl = $("liveShowTactical");
+  const showTacticalLabelEl = $("liveShowTacticalLabel");
+  if (showTacticalLabelEl) showTacticalLabelEl.textContent = tr("live.showTactical", "Show Tactical Superiority");
+  if (showTacticalEl) {
+    try { showRoach = localStorage.getItem("ps2-live-show-tactical") === "1"; } catch {}
+    showTacticalEl.checked = showRoach;
+    showTacticalEl.addEventListener("change", () => { showRoach = showTacticalEl.checked; try { localStorage.setItem("ps2-live-show-tactical", showRoach ? "1" : "0"); } catch {} render(); });
   }
   // Owner 2026-10-26 (share): one tap copies a Messenger-ready block — the
   // watch link (the target's name in the URL, so the recipient follows the
@@ -967,6 +985,7 @@ function start() {
       // Any kill also re-lights the names the death had dimmed.
       namesDim = false;
       if (ev.weapon != null) meWeaponId = ev.weapon; // latest kill's weapon, under the centre name
+      assistN = 0; // a kill hides the assist count
       // #76: rows still pending are strictly later arrivals (commits run in arrival order), so keeping them is
       // exactly the old clear plus the new run's early lines.
       if (wasStreak === 0) st = { ...st, victims: st.victims.filter((r) => r.seq === seq || pendingSeq.has(r.seq)) };
@@ -978,6 +997,7 @@ function start() {
     // the next kill re-lights them. (Banking below is stricter: only the
     // death that ends a run banks it.)
     if (ev.kind === "death") namesDim = true;
+    if (ev.kind === "death") assistN = 0; // a death hides the assist count
     // Owner 2026-10-25: decay freezes ON the death event — you can't do
     // anything about the run from spawn, so it must not drain the meter.
     // A previous freeze (died, respawned, died again with no spike) is
@@ -1026,7 +1046,7 @@ function start() {
       // assist XP tick for the tracked player adds +500 to the DPM counter.
       if (j.payload?.event_name === "GainExperience") {
         const p = j.payload;
-        if (String(p.character_id) === me.cid && DPS_ASSIST_XP.has(Number(p.experience_id))) { if (!sessionStartMs) sessionStartMs = Date.now(); setOnline("online"); dpsEvents.push({ t: Date.now(), dmg: DPS_ASSIST }); if (shownDps !== null) scrollQ.push(dpsNow([{ t: 0, dmg: DPS_ASSIST }], 0, dpmTauMs) * 60); liftFreeze(Date.now()); lastSpikeEff = dpsEvents[dpsEvents.length - 1].t - timeDebtMs; dpsTick(); }
+        if (String(p.character_id) === me.cid && DPS_ASSIST_XP.has(Number(p.experience_id))) { if (!sessionStartMs) sessionStartMs = Date.now(); setOnline("online"); dpsEvents.push({ t: Date.now(), dmg: DPS_ASSIST }); if (shownDps !== null) scrollQ.push(dpsNow([{ t: 0, dmg: DPS_ASSIST }], 0, dpmTauMs) * 60); liftFreeze(Date.now()); lastSpikeEff = dpsEvents[dpsEvents.length - 1].t - timeDebtMs; assistN++; dpsTick(); render(); }
         return;
       }
       // Owner 2026-10-25: login/logout for the tracked player drives the online pill.

@@ -164,7 +164,7 @@ describe("🎥 live.html in a browser", () => {
       assert.equal(s.noIcons, 0, "no weapon icon column left");
       assert.equal(s.noEmojis, 0, "no emoji meters on the lines (parked)");
       assert.ok(s.nmW >= 280, `the name column absorbed the weapon column: ${s.nmW}px`);
-      const izFmt = /^(?:🪳(?:~?\d+)?|~?\d+)$/;
+      const izFmt = /^(?:🪳|~?\d+)$/;
       for (const t of [...s.victimIz, s.killerIz, s.meIz]) assert.match(t, izFmt, `zerg-only cell: ${t}`);
       assert.ok([...s.victimIz, s.killerIz, s.meIz].some((t) => t !== ""), "at least one zerg value on screen");
       assert.equal(s.svgFilters, 0, "no SVG filters on the page");
@@ -192,25 +192,28 @@ describe("🎥 live.html in a browser", () => {
   });
 });
 
-  it("bounty (owner 2026-10-26): one ⚰️×streak, then one 💰×lives, weapon under the centre name", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+  it("bounty (owner 2026-10-26): one ⚰️×streak, then one 💰×lives, in the left slot, weapon under the centre name", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
       const linesAre = async (arr, why) => assert.equal(await ev(until(`JSON.stringify([...document.querySelectorAll("#liveList tbody.lv-me .lv-wn")].map((w) => w.textContent)) === ${JSON.stringify(JSON.stringify(arr))}`)), true, why); // double-stringify: JSON text vs a quoted literal, never vs an array
-      await linesAre([""], "weapon line only, no bounty, before any kill");
+      const emAre = async (arr, why) => assert.equal(await ev(until(`JSON.stringify([...document.querySelectorAll("#liveList tbody.lv-me .lv-time .lv-em")].map((w) => w.textContent)) === ${JSON.stringify(JSON.stringify(arr))}`)), true, why);
+      await linesAre([""], "weapon line only, before any kill");
+      await emAre([], "left slot empty, no bounty, before any kill");
       for (let i = 0; i < 3; i++) await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[i].cid, "80", false)})`);
-      await linesAre(["Orion VS54", "⚰️×3"], "3 kills: weapon + one coffin ×3");
+      await linesAre(["Orion VS54"], "3 kills: weapon under the name");
+      await emAre(["⚰️×3"], "3 kills: one coffin ×3 in the left slot");
       await ev(`window.__fakeWs.emit(${death(OPP[0].cid, ME.cid, "432", false)})`);
-      await linesAre(["Orion VS54"], "a death below 7 clears the bounty, weapon stays");
+      await emAre([], "a death below 7 clears the bounty, weapon stays");
       for (let i = 0; i < 7; i++) await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[i].cid, "80", false)})`);
-      await linesAre(["Orion VS54", "💰×3"], "the 7th kill flips the coffin to one bag ×3");
+      await emAre(["💰×3"], "the 7th kill flips the coffin to one bag ×3");
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
-      await linesAre(["Orion VS54", "💰×3"], "a kill while bountied changes nothing");
+      await emAre(["💰×3"], "a kill while bountied changes nothing");
       await ev(`window.__fakeWs.emit(${death(OPP[0].cid, ME.cid, "432", false)})`);
-      await linesAre(["Orion VS54", "💰×2"], "the 1st death removes one life");
+      await emAre(["💰×2"], "the 1st death removes one life");
       await ev(`window.__fakeWs.emit(${death(OPP[1].cid, ME.cid, "432", false)})`);
-      await linesAre(["Orion VS54", "💰×1"], "the 2nd death removes another, one left");
+      await emAre(["💰×1"], "the 2nd death removes another, one left");
       await ev(`window.__fakeWs.emit(${death(OPP[2].cid, ME.cid, "432", false)})`);
-      await linesAre(["Orion VS54"], "the 3rd death clears the bounty back to the weapon line alone");
+      await emAre([], "the 3rd death clears the bounty, left slot empty again");
       assert.deepEqual(errors, [], "no page errors");
     });
   });
@@ -280,11 +283,14 @@ describe("🎥 live.html in a browser", () => {
       // #76: the row lands on arrival and is retracted when the commit proves the same faction
       assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)").length === 0 && !document.querySelector("#liveList .lv-pend")`)), true, "a teamkill leaves no victim row");
       assert.equal(await ev(`document.getElementById("liveDpsVal").textContent`), "0/3", "a teamkill adds no DPM chunk");
+      const emAre = async (arr, why) => assert.equal(await ev(until(`JSON.stringify([...document.querySelectorAll("#liveList tbody.lv-me .lv-time .lv-em")].map((w) => w.textContent)) === ${JSON.stringify(JSON.stringify(arr))}`)), true, why);
       await linesAre([""], "a teamkill starts no streak");
+      await emAre([], "a teamkill starts no bounty in the left slot");
       for (let i = 0; i < 7; i++) await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[i].cid, "80", false)})`);
-      await linesAre(["Orion VS54", "💰×3"], "7 enemy kills earn one bag ×3");
+      await linesAre(["Orion VS54"], "7 enemy kills: weapon under the name");
+      await emAre(["💰×3"], "7 enemy kills earn one bag ×3");
       await ev(`window.__fakeWs.emit(${death(TEAM.cid, ME.cid, "432", false)})`);
-      await linesAre(["Orion VS54", "💰×2"], "a death to your own faction still spends one life");
+      await emAre(["💰×2"], "a death to your own faction still spends one life");
       assert.deepEqual(errors, [], "no page errors");
     });
   });
@@ -752,6 +758,51 @@ describe("🎥 live timers in a browser", () => {
       const dbg = await ev(`document.getElementById("liveDbg").textContent`);
       assert.ok(dbg.includes("hold") && dbg.includes("combat") && dbg.includes("τ"), `debug box labels: ${dbg}`);
       assert.ok(dbg.includes("(n=2)"), `two combat runs counted: ${dbg}`);
+      assert.deepEqual(errors, [], "no page errors");
+    });
+  });
+});
+
+describe("🎥 live left slot + tactical switch in a browser", () => {
+  it("left slot (owner 2026-10-26): bounty on top, assist under it, both small; a kill or a death hides the assist", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      const emAre = async (arr, why) => assert.equal(await ev(until(`JSON.stringify([...document.querySelectorAll("#liveList tbody.lv-me .lv-time .lv-em")].map((w) => w.textContent)) === ${JSON.stringify(JSON.stringify(arr))}`)), true, why);
+      const assist = () => ev(`window.__fakeWs.emit(${JSON.stringify({ event_name: "GainExperience", character_id: ME.cid, experience_id: 2, amount: 100, timestamp: "0" })})`);
+      await emAre([], "left slot empty before any event");
+      for (let i = 0; i < 3; i++) await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[i].cid, "80", false)})`);
+      await emAre(["⚰️×3"], "3 kills: bounty line only");
+      await assist();
+      await emAre(["⚰️×3", "🤝×1"], "an assist adds its line under the bounty");
+      assert.equal(await ev(`getComputedStyle(document.querySelector("#liveList tbody.lv-me .lv-time .lv-em")).display`), "block", "emoji lines stack");
+      await assist();
+      await emAre(["⚰️×3", "🤝×2"], "a second assist without a kill counts up");
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[3].cid, "80", false)})`);
+      await emAre(["⚰️×4"], "a kill hides the assist count, streak grows");
+      await assist();
+      await emAre(["⚰️×4", "🤝×1"], "an assist after the kill counts again");
+      await ev(`window.__fakeWs.emit(${death(OPP[0].cid, ME.cid, "432", false)})`);
+      await emAre([], "a death hides the assist and clears the streak below 7");
+      assert.deepEqual(errors, [], "no page errors");
+    });
+  });
+
+  it("tactical switch (owner 2026-10-26): off by default — roaches hidden, numbers only; checked shows the roach alone", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      assert.equal(await ev(`document.getElementById("liveShowTactical").checked`), false, "off by default");
+      assert.equal(await ev(`document.getElementById("liveShowTacticalLabel").textContent`), "Show Tactical Superiority", "label text");
+      await ev(`window.__fakeWs.emit(${death(ME.cid, SLOW.cid, "80", false)})`);
+      assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)").length === 1`)), true, "unknown victim row on screen");
+      const iz = () => ev(`document.querySelector("#liveList tbody.lv-vic .lv-iz").textContent`);
+      assert.equal(await iz(), "", "unknown shows nothing while the switch is off (no number exists)");
+      await ev(`document.getElementById("liveShowTactical").click()`);
+      assert.equal(await ev(until(`document.querySelector("#liveList tbody.lv-vic .lv-iz").textContent === "🪳"`)), true, "checked: unknown shows the lone roach");
+      assert.equal(await ev(`localStorage.getItem("ps2-live-show-tactical")`), "1", "choice persists");
+      assert.equal(await ev(`getComputedStyle(document.querySelector("#liveList tbody.lv-me .lv-nm")).textAlign`), "center", "centre name centered");
+      assert.equal(await ev(`getComputedStyle(document.querySelector("#liveList tbody.lv-me .lv-nm2")).alignItems`), "center", "centre name lines centered");
+      await ev(`document.getElementById("liveShowTactical").click()`);
+      assert.equal(await ev(until(`document.querySelector("#liveList tbody.lv-vic .lv-iz").textContent === ""`)), true, "unchecked again: roach hidden");
       assert.deepEqual(errors, [], "no page errors");
     });
   });

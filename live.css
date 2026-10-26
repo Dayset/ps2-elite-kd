@@ -92,7 +92,7 @@ col.lv-c-iz { width: var(--lv-iz); }
 .live-mode #distSection,
 .live-mode #weaponsSection { display: none !important; } /* owner t550u: no 📊 chart and no 🏆 Auraxium weapons in LIVE */
 /* Name (faction colour, cut with … at the end), iVi number, then the five emoji units — every line the same. */
-.lv-nm { cursor: help; }
+.lv-nm { cursor: help; text-align: center; } /* owner 2026-10-26: the name sits centered on live */
 .lv-pn { display: flex; align-items: center; min-width: 0; font-size: var(--lv-fm); line-height: 1.1; }
 .live-table .lv-name { display: inline-block; min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .live-table .lv-pn .poop-mark { flex: none; }
@@ -142,7 +142,7 @@ col.lv-c-iz { width: var(--lv-iz); }
    mark after it (a head with a bullet in one side and out the other; inline SVG in live.mjs, no asset). The name cell
    is two lines tall inside the fixed line height; the weapon line is always rendered (empty when unknown) so the
    names stay lined up across lines. */
-.lv-nm2 { display: flex; flex-direction: column; justify-content: center; height: 100%; min-width: 0; }
+.lv-nm2 { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; min-width: 0; }
 .lv-wn { display: block; min-height: 0.9em; font-size: 0.72rem; line-height: 1.2; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* Owner 2026-10-26: the centre line stacks its latest kill's weapon (small, dim) above the bounty count (⚰️×N / 💰×N) — bigger, so it reads. */
 .live-table tbody.lv-me .lv-wn { font-size: 1rem; line-height: 1.1; }
@@ -195,8 +195,10 @@ col.lv-c-iz { width: var(--lv-iz); }
 .live-stream-session { margin-top: 0.25rem; font-size: 0.85rem; color: var(--dim); }
 body.live-stream #liveStreamCard { display: block; }
 .live-dbg { margin-top: 0.25rem; font-size: 0.72rem; color: var(--dim); font-family: monospace; white-space: pre-line; overflow-wrap: anywhere; } /* owner 2026-10-26: the medians + their inputs under the meter, plain debug text, copyable at stream end */
+.lv-time .lv-em { display: block; } /* owner 2026-10-26: the left-slot emoji lines stack, small like the old stopwatch */
+.live-show-tactical { margin-top: 0.25rem; font-size: 0.72rem; color: var(--dim); }
 body.live-stream > :not(#liveFeed) { display: none; } /* owner 2026-10-26: no header, no footer, no controls — the overlay is only the live section */
-body.live-stream #liveState, body.live-stream #liveDpmTau, body.live-stream #liveCashHist, body.live-stream #liveShare, body.live-stream #liveSession { display: none; } /* owner 2026-10-26: stream shows the names list + DPM block + the card */
+body.live-stream #liveState, body.live-stream #liveDpmTau, body.live-stream #liveCashHist, body.live-stream #liveShare, body.live-stream #liveSession, body.live-stream #liveShowTacticalWrap { display: none; } /* owner 2026-10-26: stream shows the names list + DPM block + the card */
 body.live-stream #liveDps .live-metric:last-child { display: none; } /* online pill: meters + session only */
 .live-dps #liveDpsVal { font-weight: 600; font-variant-numeric: tabular-nums; }
 /* Owner 2026-10-26: DPM row as stacked meter lines — DPM glows and grows
