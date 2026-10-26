@@ -4,34 +4,32 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "40271635869",
+    "runId": "40272825138",
     "event": "workflow_dispatch",
-    "kind": "on-demand",
-    "startedAt": "2026-10-26T05:02:57.280Z",
-    "endedAt": "2026-10-26T05:06:00.852Z",
-    "seconds": 184,
+    "kind": "discovery",
+    "startedAt": "2026-10-26T05:11:10.295Z",
+    "endedAt": "2026-10-26T05:14:23.918Z",
+    "seconds": 194,
     "updated": [],
-    "added": [
-      "Bird999"
-    ],
+    "added": [],
     "failed": [],
-    "stoppedEarly": null,
+    "stoppedEarly": "another run is waiting (site request or fallback cron)",
     "indexSize": 14958,
+    "discovery": {
+      "cap": 15000,
+      "queue": 0,
+      "slice": null,
+      "sweepInProgress": false
+    },
     "honu": {
       "day": "2026-10-26",
-      "calls": 1329,
+      "calls": 1364,
       "cap": 10000
     },
-    "batch": [
-      {
-        "name": "Bird999",
-        "src": "on-demand",
-        "status": "done"
-      }
-    ]
+    "batch": []
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-26T05:06:19.194Z",
+    "checkedAt": "2026-10-26T05:14:42.530Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 16,
     "explained": 31,
@@ -66,7 +64,7 @@
         "id": "s_revDom",
         "value": 27,
         "bound": 21.343,
-        "z": 41.665,
+        "z": 41.741,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -228,8 +226,8 @@
         "name": "geiloVS",
         "id": "s_kd",
         "value": 113,
-        "bound": 39.265,
-        "z": 106.315,
+        "bound": 39.264,
+        "z": 106.304,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (aim), listed there",
@@ -322,8 +320,8 @@
         "name": "ALandWhaleNC",
         "id": "s_kd",
         "value": 53.25,
-        "bound": 39.265,
-        "z": 49.235,
+        "bound": 39.264,
+        "z": 49.23,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (aim, session-forensics), listed there",
@@ -757,14 +755,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 41.665,
+        "maxZ": 41.741,
         "metrics": [
           {
             "id": "s_revDom",
             "label": "🧪 Revenge ÷ domination",
             "value": 27,
             "bound": 21.343,
-            "z": 41.665,
+            "z": 41.741,
             "side": "high"
           }
         ]
@@ -1112,8 +1110,8 @@
             "id": "s_kd",
             "label": "🧪 Session K/D",
             "value": 113,
-            "bound": 39.265,
-            "z": 106.315,
+            "bound": 39.264,
+            "z": 106.304,
             "side": "high"
           }
         ]
@@ -1169,8 +1167,8 @@
             "id": "s_kd",
             "label": "🧪 Session K/D",
             "value": 53.25,
-            "bound": 39.265,
-            "z": 49.235,
+            "bound": 39.264,
+            "z": 49.23,
             "side": "high"
           }
         ]
@@ -1546,7 +1544,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-26T05:06:25.372Z",
+    "checkedAt": "2026-10-26T05:14:48.786Z",
     "red": 57,
     "padding": 42,
     "adjusted": 21,
@@ -1557,7 +1555,7 @@
     "forensics": 31
   },
   "sessionStats": {
-    "checkedAt": "2026-10-26T05:06:19.255Z",
+    "checkedAt": "2026-10-26T05:14:42.598Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -1573,11 +1571,11 @@
       "players": 14957,
       "withSessions": 13776,
       "measured": 6584,
-      "sessions": 57812,
-      "kills": 2451189,
+      "sessions": 57827,
+      "kills": 2452258,
       "xpPlayers": 1575,
       "xpMeasured": 1136,
-      "xpSessions": 9509
+      "xpSessions": 9524
     },
     "metrics": [
       {
@@ -1792,7 +1790,7 @@
         "n": 1219,
         "min": 0,
         "p01": 0,
-        "p05": 0.158,
+        "p05": 0.167,
         "median": 0.886,
         "p95": 3.25,
         "p99": 6,
@@ -1824,7 +1822,7 @@
         "p01": 0.06,
         "p05": 0.118,
         "median": 0.184,
-        "p95": 0.3,
+        "p95": 0.298,
         "p99": 0.365,
         "max": 0.536
       },
@@ -3715,14 +3713,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 41.665,
+        "maxZ": 41.741,
         "metrics": [
           {
             "id": "s_revDom",
             "label": "🧪 Revenge ÷ domination",
             "value": 27,
             "bound": 21.343,
-            "z": 41.665,
+            "z": 41.741,
             "side": "high"
           }
         ]
@@ -3741,8 +3739,8 @@
             "id": "s_kd",
             "label": "🧪 Session K/D",
             "value": 113,
-            "bound": 39.265,
-            "z": 106.315,
+            "bound": 39.264,
+            "z": 106.304,
             "side": "high"
           }
         ]
@@ -3790,8 +3788,8 @@
             "id": "s_kd",
             "label": "🧪 Session K/D",
             "value": 53.25,
-            "bound": 39.265,
-            "z": 49.235,
+            "bound": 39.264,
+            "z": 49.23,
             "side": "high"
           }
         ]
@@ -3800,9 +3798,9 @@
     "outliersUnexplained": 1
   },
   "size": {
-    "at": "2026-10-26T05:06:01.394Z",
+    "at": "2026-10-26T05:14:24.393Z",
     "repoBytes": 237630464,
-    "dataBytes": 310234625,
+    "dataBytes": 310249776,
     "playersBytes": 280952027,
     "playerFiles": 14958,
     "warnAtBytes": 734003200,
@@ -3810,7 +3808,7 @@
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-26T05:06:19.302Z",
+    "checkedAt": "2026-10-26T05:14:42.642Z",
     "candidates": [
       "chocoiatevs",
       "nebelhexe",
@@ -32764,7 +32762,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-26T05:06:19.319Z",
+    "checkedAt": "2026-10-26T05:14:42.655Z",
     "count": 386,
     "players": [
       {
@@ -35968,7 +35966,7 @@
     ]
   },
   "infantry": {
-    "checkedAt": "2026-10-26T05:06:27.360Z",
+    "checkedAt": "2026-10-26T05:14:50.774Z",
     "players": 14958,
     "counts": {
       "infantry": 9711,
@@ -36025,7 +36023,7 @@
       }
     },
     "tagMin": 20,
-    "checkedAt": "2026-10-26T05:06:25.189Z",
+    "checkedAt": "2026-10-26T05:14:48.600Z",
     "coverage": {
       "players": 14929,
       "withSessions": 13748,
@@ -36336,7 +36334,7 @@
   },
   "burst": {
     "rule": "KPM ≥ 5 and ≥ 15 kills in ≥ 2 min (one stored session, no 10-minute floor); skipped when within the player's own normal (≥ 5 other sessions of ≥ 10 min, ≤ 2× their median KPM, career K/D < 10)",
-    "checkedAt": "2026-10-26T05:06:30.035Z",
+    "checkedAt": "2026-10-26T05:14:53.446Z",
     "sessions": 16,
     "ownNormalSkipped": 0,
     "flaggedPlayers": 0,
@@ -36580,7 +36578,7 @@
     ]
   },
   "padderPenalty": {
-    "checkedAt": "2026-10-26T05:06:19.353Z",
+    "checkedAt": "2026-10-26T05:14:42.690Z",
     "ranked": 14864,
     "penalty": 0.1,
     "ref": 610.6,
@@ -36801,7 +36799,7 @@
     ]
   },
   "vehicleCut": {
-    "checkedAt": "2026-10-26T05:06:19.406Z",
+    "checkedAt": "2026-10-26T05:14:42.748Z",
     "ranked": 14864,
     "cut": 8887,
     "buckets": {
@@ -39219,7 +39217,7 @@
       "HIP": 0.9,
       "HSR": 0.55
     },
-    "checkedAt": "2026-10-26T05:06:04.496Z",
+    "checkedAt": "2026-10-26T05:14:27.852Z",
     "checked": 15,
     "errors": 0,
     "pending": 0,
@@ -39388,7 +39386,7 @@
     ]
   },
   "hut": {
-    "builtAt": "2026-10-26T05:06:18.624Z",
+    "builtAt": "2026-10-26T05:14:41.940Z",
     "cuts": {
       "actMedian": 0.2697,
       "actMult": 1.333,
@@ -43972,7 +43970,7 @@
     "cleared": []
   },
   "vehDiff": {
-    "builtAt": "2026-10-26T05:06:18.709Z",
+    "builtAt": "2026-10-26T05:14:42.028Z",
     "start": 14.9,
     "damped": 3312,
     "dieHardHut": 1120,
@@ -80415,7 +80413,7 @@
     "cleared": []
   },
   "zergRevive": {
-    "builtAt": "2026-10-26T05:06:18.879Z",
+    "builtAt": "2026-10-26T05:14:42.200Z",
     "zergScored": 6527,
     "measured": 1152,
     "measuredZerg": 1009,
@@ -80508,11 +80506,11 @@
       {
         "name": "AhornVS",
         "slug": "ahornvs",
-        "share": 89.5,
-        "revived": 213,
-        "deaths": 238,
-        "minutes": 833,
-        "rvp": 98,
+        "share": 93.7,
+        "revived": 253,
+        "deaths": 270,
+        "minutes": 905,
+        "rvp": 99,
         "crp": 99,
         "hl": null,
         "zergRaw": 95,
@@ -80593,9 +80591,9 @@
         "name": "Landmate",
         "slug": "landmate",
         "share": 100,
-        "revived": 354,
-        "deaths": 327,
-        "minutes": 2159,
+        "revived": 465,
+        "deaths": 443,
+        "minutes": 2770,
         "rvp": 99,
         "crp": 99,
         "hl": null,
@@ -80960,7 +80958,7 @@
         "revived": 56,
         "deaths": 61,
         "minutes": 198,
-        "rvp": 99,
+        "rvp": 98,
         "crp": 98,
         "hl": null,
         "zergRaw": 81,
@@ -81829,10 +81827,10 @@
         "deaths": 114,
         "minutes": 625,
         "rvp": 7,
-        "crp": 13,
+        "crp": 12,
         "hl": null,
         "zergRaw": 57,
-        "zerg": 13,
+        "zerg": 12,
         "status": "softened"
       },
       {
@@ -82151,7 +82149,7 @@
         "deaths": 188,
         "minutes": 429,
         "rvp": 26,
-        "crp": 13,
+        "crp": 14,
         "hl": null,
         "zergRaw": 45,
         "zerg": 27,
@@ -82361,10 +82359,10 @@
         "deaths": 210,
         "minutes": 262,
         "rvp": 7,
-        "crp": 14,
+        "crp": 15,
         "hl": null,
         "zergRaw": 38,
-        "zerg": 14,
+        "zerg": 15,
         "status": "softened"
       },
       {
@@ -82473,7 +82471,7 @@
         "deaths": 108,
         "minutes": 686,
         "rvp": 31,
-        "crp": 29,
+        "crp": 28,
         "hl": null,
         "zergRaw": 35,
         "zerg": 32,
@@ -82627,10 +82625,10 @@
         "deaths": 199,
         "minutes": 1227,
         "rvp": 14,
-        "crp": 29,
+        "crp": 28,
         "hl": null,
         "zergRaw": 32,
-        "zerg": 29,
+        "zerg": 28,
         "status": "softened"
       },
       {
@@ -82697,10 +82695,10 @@
         "deaths": 332,
         "minutes": 1117,
         "rvp": 28,
-        "crp": 29,
+        "crp": 28,
         "hl": null,
         "zergRaw": 30,
-        "zerg": 29,
+        "zerg": 28,
         "status": "softened"
       },
       {
@@ -82711,7 +82709,7 @@
         "deaths": 143,
         "minutes": 295,
         "rvp": 28,
-        "crp": 13,
+        "crp": 14,
         "hl": null,
         "zergRaw": 29,
         "zerg": 28,
@@ -82781,7 +82779,7 @@
         "deaths": 289,
         "minutes": 1742,
         "rvp": 26,
-        "crp": 16,
+        "crp": 17,
         "hl": null,
         "zergRaw": 28,
         "zerg": 26,
@@ -82851,7 +82849,7 @@
         "deaths": 76,
         "minutes": 317,
         "rvp": 9,
-        "crp": 7,
+        "crp": 6,
         "hl": null,
         "zergRaw": 26,
         "zerg": 9,
@@ -83117,10 +83115,10 @@
         "deaths": 73,
         "minutes": 423,
         "rvp": 7,
-        "crp": 13,
+        "crp": 14,
         "hl": null,
         "zergRaw": 18,
-        "zerg": 13,
+        "zerg": 14,
         "status": "softened"
       },
       {
@@ -83734,7 +83732,7 @@
         "revived": 26,
         "deaths": 76,
         "minutes": 409,
-        "rvp": 58,
+        "rvp": 59,
         "crp": 84,
         "hl": 0.042,
         "zergRaw": null,
@@ -83941,7 +83939,7 @@
     "cleared": []
   },
   "newbieDiff": {
-    "builtAt": "2026-10-26T05:06:18.819Z",
+    "builtAt": "2026-10-26T05:14:42.136Z",
     "loH": 5.9,
     "hiH": 369.7,
     "n": 14861,
@@ -133437,7 +133435,7 @@
     "cleared": []
   },
   "assistGap": {
-    "checkedAt": "2026-10-26T05:06:25.192Z",
+    "checkedAt": "2026-10-26T05:14:48.603Z",
     "start": "2026-04-01T13:00:00.000Z",
     "end": "2026-05-07T05:00:00.000Z",
     "url": "https://www.planetside2.com/patch-notes/may-6-hotfix-2026",
@@ -134564,7 +134562,7 @@
     ]
   },
   "tractorMark": {
-    "checkedAt": "2026-10-26T05:06:18.909Z",
+    "checkedAt": "2026-10-26T05:14:42.226Z",
     "rule": "🚜 = infantry % < p25 (71.9%) and (vehicle repair/min ≥ p75 (0.923) or vehicle kills/min ≥ p75 (0.216) of the 1373 players with 2+ h of XP detail), or infantry % < p2 (21.6%)",
     "cuts": {
       "cut": 71.9,
