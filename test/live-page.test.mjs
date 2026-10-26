@@ -184,7 +184,7 @@ test("overlay layout (owner t575u): no flip, ONE column order on every line, fix
   assert.doesNotMatch(js, /❯|lv-arrow|<thead/);
   // one shared order: [time][name][iVi][🏃🦁🛡️🪖🪳] — the same cells() for killer, player and victims
   assert.match(js, /<td class="lv-nm"><span class="lv-nm2">\$\{nameHtml\(p, tip, hsHtml\(r\)\)\}\$\{wn\}/);
-  assert.match(js, /<tr><td class="lv-time"><\/td>\$\{cells\(p, false, r, where === "vic"\)\}<\/tr>/);
+  assert.match(js, /<tr><td class="lv-time"><\/td>\$\{cells\(p, false, r, where === "vic", where === "atk"\)\}<\/tr>/);
   assert.match(js, /<tbody class="lv-ev lv-me\$\{fm\.cls\}"\$\{fm\.sty\}><tr><td class="lv-time">\$\{bountyHtml\(\)\}\$\{assistHtml\(\)\}<\/td>\$\{cells\(me, true\)\}<\/tr><\/tbody>/);
   assert.match(js, /Array\.from\(\{ length: VICTIM_LINES \}, \(_, i\) => \(st\.victims\[i\] \? oppLine\(st\.victims\[i\], "vic"\) : emptyLine\("vic"\)\)\)/);
   assert.match(js, /listEl\.innerHTML = cols \+ atk \+ mid \+ low;/);
@@ -590,7 +590,7 @@ test("weapon name + headshot mark (owner 2026-10-25): no weapon icon — the wea
   assert.match(js, /const HS_TIP = tr\("live\.hs", "Headshot"\);/); // the headshot flag + tooltip stay
   assert.ok(js.includes('wn = `<span class="lv-wn lv-wn-weapon">${mw ? esc(mw.name) : ""}</span>`;'), "owner 2026-10-26: centre name keeps only its weapon — the bounty moved to the left slot");
   assert.ok(js.includes('} else if (hideWeapon) {'), "owner 2026-10-26: victim rows carry no weapon line");
-  assert.ok(js.includes('cells(p, false, r, where === "vic")'), "owner 2026-10-26: killer keeps its weapon, victims drop theirs");
+  assert.ok(js.includes('cells(p, false, r, where === "vic", where === "atk")'), "owner 2026-10-26: killer keeps its weapon, victims drop theirs");
   assert.ok(js.includes('if (ev.weapon != null) meWeaponId = ev.weapon;'), "owner 2026-10-26: latest kill weapon tracked at commit");
   assert.match(js, /<span class="lv-hs2" role="img" aria-label="\$\{esc\(HS_TIP\)\}" data-tip="\$\{esc\(HS_TIP\)\}">\$\{HS_SVG\}<\/span>/); // headshot only when it IS one
   assert.match(js, /viewBox="0 0 16 16"/); // the custom head-with-bullet mark (inline SVG, no asset)

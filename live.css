@@ -193,7 +193,11 @@ col.lv-c-iz { width: var(--lv-iz); }
 body.live-stream #liveStreamCard { display: block; }
 .live-dbg { margin-top: 0.25rem; font-size: 0.72rem; color: var(--dim); font-family: monospace; white-space: pre-line; overflow-wrap: anywhere; } /* owner 2026-10-26: the medians + their inputs under the meter, plain debug text, copyable at stream end */
 .lv-time .lv-em { display: block; } /* owner 2026-10-26: the left-slot emoji lines stack, small like the old stopwatch */
-.live-table tbody.lv-me .lv-time .lv-em { width: auto; height: auto; font-size: 0.72rem; } /* owner 2026-10-26: slot lines are text, not emoji-meter sprites — sized to their text at the dim size, so a two-digit count fits the fixed time column (2.4rem on phones) instead of clipping at the cell edge */
+.live-table tbody.lv-me .lv-time .lv-em { width: auto; height: auto; font-size: 0.72rem; }
+/* Owner 2026-10-26: the death run timer on the top line — a red gradient edge on the killer name's border,
+   draining over the median combat time. The killer row only lives for the run (a kill clears it), so the edge
+   is the run; the name cell is position: relative, so the edge sits inside it without moving the name. */
+.lv-killer-timer { position: absolute; left: 0; bottom: 0; height: 3px; width: 0%; background: linear-gradient(90deg, #ff1744, #ff5252, #b71c1c); border-radius: 999px; } /* owner 2026-10-26: slot lines are text, not emoji-meter sprites — sized to their text at the dim size, so a two-digit count fits the fixed time column (2.4rem on phones) instead of clipping at the cell edge */
 
 .live-show-tactical { margin-top: 0.25rem; font-size: 0.72rem; color: var(--dim); }
 body.live-stream > :not(#liveFeed) { display: none; } /* owner 2026-10-26: no header, no footer, no controls — the overlay is only the live section */

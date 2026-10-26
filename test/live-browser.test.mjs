@@ -882,3 +882,29 @@ describe("🎥 live centre row border in a browser", () => {
     });
   });
 });
+
+describe("🎥 live killer timer in a browser", () => {
+  it("killer timer (owner 2026-10-26): the death run drains as a red gradient edge on the top line only", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      const w = () => ev(`(() => { const el = document.getElementById("liveKillerTimer"); if (!el) return null; const cs = getComputedStyle(el); return { w: parseFloat(el.style.width) || 0, bg: cs.backgroundImage, top: el.closest("tbody").className.includes("lv-atk") }; })()`);
+      await ev(`window.__fakeWs.emit(${death(OPP[0].cid, ME.cid, "80", false)})`); // death 1: killer row appears
+      assert.equal(await ev(until(`document.getElementById("liveKillerTimer") !== null`)), true, "killer timer present after death 1");
+      await new Promise((r) => setTimeout(r, 2000)); // run builds to ~2 s
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`); // kill 1: run 1 completes, killer line clears
+      assert.equal(await ev(until(`![...document.querySelectorAll("#liveList tbody.lv-vic .lv-nm")].some((el) => el.textContent.includes("…"))`)), true, "kill 1 committed");
+      await ev(`window.__fakeWs.emit(${death(OPP[0].cid, ME.cid, "80", false)})`); // death 2: timer drains over ~2 s
+      assert.equal(await ev(until(`document.getElementById("liveKillerTimer") !== null`)), true, "killer timer present after death 2");
+      await new Promise((r) => setTimeout(r, 300)); // let the 100 ms tick set the width (initial CSS is 0%)
+      const first = await w();
+      assert.ok(first && first.w > 50, `timer starts near full after death 2: ${JSON.stringify(first)}`);
+      assert.ok(first.bg.includes("linear-gradient"), `timer is a gradient: ${first.bg}`);
+      assert.equal(first.top, true, "timer sits on the top (killer) line only");
+      assert.equal(await ev(`document.querySelectorAll("#liveKillerTimer").length`), 1, "exactly one killer timer");
+      await new Promise((r) => setTimeout(r, 1200));
+      const second = await w();
+      assert.ok(second && second.w < first.w, `timer drains: ${first.w}% -> ${second.w}%`);
+      assert.deepEqual(errors, [], "no page errors");
+    });
+  });
+});

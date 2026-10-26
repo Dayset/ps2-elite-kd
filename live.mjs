@@ -281,7 +281,7 @@ function start() {
   function assistHtml() {
     return assistN > 0 ? `<span class="lv-em">🤝×${assistN}</span>` : "";
   }
-  function cells(p, isMe, r, hideWeapon = false) {
+  function cells(p, isMe, r, hideWeapon = false, isKiller = false) {
     const vals = p.cached || {};
     const tip = p.cached || isMe ? "" : ` · not in cache · K/D ${fmt(p.kd, 2)} · KPM ${fmt(p.kpm, 2)}`;
     const w = r ? weaponIcon(catalog, r.weapon) : null;
@@ -298,7 +298,7 @@ function start() {
     } else {
       wn = `<span class="lv-wn">${w ? esc(w.name) : ""}</span>`;
     }
-    return `<td class="lv-nm"><span class="lv-nm2">${nameHtml(p, tip, hsHtml(r))}${wn}</span></td>${IVI.map((c) => `<td class="lv-ivc">${iviText(c, vals[c.id])}</td>`).join("")}${izHtml(vals)}`;
+    return `<td class="lv-nm"><span class="lv-nm2">${nameHtml(p, tip, hsHtml(r))}${wn}</span>${isKiller ? `<span id="liveKillerTimer" class="lv-killer-timer"></span>` : ""}</td>${IVI.map((c) => `<td class="lv-ivc">${iviText(c, vals[c.id])}</td>`).join("")}${izHtml(vals)}`;
   }
   const blank = `<td class="lv-nm"></td><td class="lv-ivc"></td><td class="lv-iz"></td>`; // same box as a filled line, so the overlay never grows
   /**
@@ -349,7 +349,7 @@ function start() {
     const isNew = r === fresh;
     const wP = iviPct(kill ? me : p), lP = iviPct(kill ? p : me);
     const upset = isNew && wP != null && lP != null && lP - wP >= UPSET_GAP ? " lv-upset" : "";
-    return `<tbody class="lv-ev lv-${where} lv-${r.last}${isNew ? " lv-new" : ""}${upset}${extra}${fi.cls}"${fi.sty}><tr><td class="lv-time"></td>${cells(p, false, r, where === "vic")}</tr></tbody>`;
+    return `<tbody class="lv-ev lv-${where} lv-${r.last}${isNew ? " lv-new" : ""}${upset}${extra}${fi.cls}"${fi.sty}><tr><td class="lv-time"></td>${cells(p, false, r, where === "vic", where === "atk")}</tr></tbody>`;
   }
   const emptyLine = (where) => `<tbody class="lv-ev lv-${where} lv-empty"><tr><td class="lv-time"></td>${blank}</tr></tbody>`;
   function render() {
@@ -563,6 +563,7 @@ function start() {
   const dpsLabelEl = $("liveDpsLabel");
   const dpsCombatLineEl = $("liveDpsCombatLine");
   const dpsBarEl = $("liveDpsBar"), dpsHoldBarEl = $("liveDpsHoldBar"), dpsCombatBarEl = $("liveDpsCombatBar");
+  let lastKillerTimerW = "";
   const dbgEl = $("liveDbg");
   if ($("liveDpsLabel")) $("liveDpsLabel").textContent = tr("live.dps", "DPM");
   const cashSumEl = $("liveCashSumVal"), cashAvgEl = $("liveCashAvgVal");
@@ -758,6 +759,11 @@ function start() {
       const lastDeath = deaths.length ? deaths[deaths.length - 1] : null;
       const combatDone = lastDeath != null && spikes.some((t) => t > lastDeath);
       if (dpsCombatBarEl) setBar(dpsCombatBarEl, "combat", timerBarPct(lastDeath != null && !combatDone ? combat.ms - (Date.now() - lastDeath) : 0, combat.ms));
+      // Owner 2026-10-26: the death run timer also rides the top line — a red gradient edge on the killer name's
+      // border, draining over the same combat median. The row is re-rendered on events, so the element is looked
+      // up fresh every tick, not cached; a write-on-change guard keeps the tick cheap.
+      const killerTimerEl = document.getElementById("liveKillerTimer");
+      if (killerTimerEl) { const w = timerBarPct(lastDeath != null && !combatDone ? combat.ms - (Date.now() - lastDeath) : 0, combat.ms); if (w !== lastKillerTimerW) { killerTimerEl.style.width = w; lastKillerTimerW = w; } }
       if (dpsCombatLineEl) dpsCombatLineEl.style.display = combat.n ? "" : "none";
       // Owner 2026-10-26 (debug box): the medians plus the exact inputs
       // to decompile combat efficiency back — hold gaps (trailing 10),
