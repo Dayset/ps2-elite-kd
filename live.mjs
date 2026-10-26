@@ -20,7 +20,7 @@ await i18nReady;
  * Pure helpers are exported for tests; the DOM part runs only in a browser.
  */
 export * from "./live-model.mjs?v=20261025-ttc1"; // #66: the pure part (tests import it from here)
-import { VICTIM_LINES, classifyDeath, fmtGap, censusStats, LIVE_COLS, tipText, FILL_DIM, HOLLOW_PX, HOLLOW_INK, goodPct, fillDriver, emojiFill, unknownFill, infUnit, OUTLINE_PX, unitGlow, LIVE_GLOWS, LIVE_FPS, liveFps, HALO_KEY, haloOn, easeFill, glowIn, BEAT, TIER_MOTION, haloAt, SHINE, shineFrame, beatSleep, weaponIcon, glowTier, eventAt, overlayPush, overlayRows, nextBgFetch, liveRowFromPlayer, ME_REFRESH_MS, mergeFresh, SHARE_MAX, shareDelay, cellText, slugKey, bountyNext, dpsNow, DPS_HP, DPS_ASSIST, DPS_ASSIST_XP, cashTotals, cashFormula, combatHoldMs, spawnRunHoldMs, timeToCombatMs, easeInQuad } from "./live-model.mjs?v=20261025-ttc1";
+import { VICTIM_LINES, classifyDeath, fmtGap, censusStats, LIVE_COLS, tipText, FILL_DIM, HOLLOW_PX, HOLLOW_INK, goodPct, fillDriver, emojiFill, unknownFill, infUnit, OUTLINE_PX, unitGlow, LIVE_GLOWS, LIVE_FPS, liveFps, HALO_KEY, haloOn, easeFill, glowIn, BEAT, TIER_MOTION, haloAt, SHINE, shineFrame, beatSleep, weaponIcon, glowTier, eventAt, overlayPush, overlayRows, nextBgFetch, liveRowFromPlayer, ME_REFRESH_MS, median, mergeFresh, SHARE_MAX, shareDelay, cellText, slugKey, bountyNext, dpsNow, DPS_HP, DPS_ASSIST, DPS_ASSIST_XP, cashTotals, cashFormula, combatHoldMs, spawnRunHoldMs, timeToCombatMs, easeInQuad } from "./live-model.mjs?v=20261025-ttc1";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261023-short1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
@@ -81,6 +81,7 @@ function start() {
   const pools = {}; // col id -> sorted finite values (percentiles, same as the Rankings table)
   let infM = null; // median infantry % over ranks.json (owner t590u: 🪖 fill starts here)
   let infC = null; // 🚜 infantry cut (owner t622u: ranks.json "tracCuts".cut, p25 of the data; 🚜 below it)
+  let zergMed = null; // median 🪳 Zerg over ranks.json (owner 2026-10-26: above it = roach)
 
   const app = () => window.__ps2EliteKd || null;
 
@@ -109,6 +110,7 @@ function start() {
       const zergOf = (r) => { const z = zergScore(tp, iF >= 0 ? r[iF] : null, iA >= 0 ? r[iA] : null, iR >= 0 ? r[iR] : null, iC >= 0 ? r[iC] : null); return z ? z.score : null; };
       const fin = (v) => typeof v === "number" && Number.isFinite(v);
       const zergCol = j.rows.map(zergOf);
+      zergMed = median(zergCol.filter((v) => typeof v === "number" && Number.isFinite(v)));
       j.rows.forEach((r, k) => { const o = ranks.get(r[iS]); if (o) o.zerg = zergCol[k]; });
       // 🪳 "~N" estimate (zerg-revive.mjs zergEstimate) where there is no Zerg: fill + hover only, never in the pool.
       j.rows.forEach((r, k) => { const o = ranks.get(r[iS]); if (o && zergCol[k] == null) o.zest = zergEstimate(iR >= 0 ? r[iR] : null, iC >= 0 ? r[iC] : null); });
@@ -239,43 +241,51 @@ function start() {
    * Owner t567u: not cached = all-empty emojis; the Census numbers stay in the name's hover.
    */
   /**
-   * Owner 2026-10-25 (columns-only swap, per the owner's "for now"): the emoji
-   * meters are parked — one plain cell, infantry over zerg in square brackets
-   * ("[95/41]", no % sign), in the weapon's small dim style. An unknown side
-   * is –, both unknown is an empty cell (never a lone "—", t567u). Zerg falls
-   * back to the ~N estimate (t614) when unscored. The emoji machinery
-   * (live-sprites, fills, glows, halo, ticker) stays in place, dormant, for
-   * the owner's later emoji revisit.
+   * Owner 2026-10-26 (roach rule): the extra cell shows ONLY the Zerg value
+   * — no infantry, no other icons. A 🪳 marks a roach: unknown (no value at
+   * all) or above the ranked median. Zerg falls back to the ~N estimate
+   * (t614) when unscored.
    */
   function izHtml(vals) {
-    const inf = vals.inf, scored = vals.zerg, est = scored == null ? vals.zest : null;
+    const scored = vals.zerg, est = scored == null ? vals.zest : null;
     const zg = scored ?? est;
-    if (!Number.isFinite(inf) && !Number.isFinite(zg)) return `<td class="lv-iz"></td>`;
-    const infS = Number.isFinite(inf) ? String(Math.round(inf)) : "–";
-    const zgS = Number.isFinite(zg) ? (est != null ? `~${Math.round(zg)}` : String(Math.round(zg))) : "–";
-    return `<td class="lv-iz" data-tip="Infantry ${infS}% · Zerg ${zgS}">[${infS}/${zgS}]</td>`;
+    if (!Number.isFinite(zg)) return `<td class="lv-iz" data-tip="Zerg ?">🪳</td>`;
+    const zgS = est != null ? `~${Math.round(zg)}` : String(Math.round(zg));
+    const roach = zergMed != null && zg > zergMed;
+    return `<td class="lv-iz" data-tip="Zerg ${zgS}">${roach ? "🪳" : ""}${zgS}</td>`;
   }
-  // Owner 2026-10-25: the tracked player's bounty, on their own (centre) line's
-  // second row — all 7 heart slots visible at once: each kill fills one, the
-  // rest sit dim; at 7 the slots flip to THREE bounty marks 💰💰💰 (the
-  // game's rule, not one), and each death removes one (bountyNext lives
-  // 3 → 2 → 1 → hearts). The centre line never carries a weapon, so its
-  // second line is free for this.
+  // Owner 2026-10-26 (one icon + count): the tracked player's bounty, on
+  // their own (centre) line's second row — a streak shows as one coffin
+  // plus its count (⚰️×3), and at 7 it flips to one money bag plus its
+  // lives (💰×3), spent one per death (3 → 2 → 1 → gone). The centre line
+  // also carries the latest kill's weapon above this.
   let bountyStreak = 0, bountyLives = 0;
+  let meWeaponId = null; // latest kill's weapon id, shown under the centre name
   // Owner 2026-10-25: while the observed player is dead, the killed list
   // and their own name sit at 50% — a new kill brings them back to full.
   // Render-time flag, so it survives every re-render (bgPump included).
   let namesDim = false;
   function bountyHtml() {
-    if (bountyLives > 0) return `<span class="lv-wn">${"💰".repeat(bountyLives)}</span>`;
-    const slots = Array.from({ length: 7 }, (_, i) => `<span class="lv-bh${i < bountyStreak ? "" : " lv-bh-empty"}">❤️‍🔥</span>`).join("");
-    return `<span class="lv-wn">${slots}</span>`;
+    if (bountyLives > 0) return `<span class="lv-wn">💰×${bountyLives}</span>`;
+    if (bountyStreak > 0) return `<span class="lv-wn">⚰️×${bountyStreak}</span>`;
+    return "";
   }
-  function cells(p, isMe, r) {
+  function cells(p, isMe, r, hideWeapon = false) {
     const vals = p.cached || {};
     const tip = p.cached || isMe ? "" : ` · not in cache · K/D ${fmt(p.kd, 2)} · KPM ${fmt(p.kpm, 2)}`;
-    const w = r ? weaponIcon(catalog, r.weapon) : null; // owner 2026-10-25: the weapon's NAME under the player name (small, dim), not an icon
-    const wn = isMe ? bountyHtml() : `<span class="lv-wn">${w ? esc(w.name) : ""}</span>`; // always rendered (empty when unknown), so the names stay lined up
+    const w = r ? weaponIcon(catalog, r.weapon) : null;
+    // Owner 2026-10-26: weapons live under the tracked (centre) name only —
+    // victim rows carry no weapon line. The centre line stacks its latest
+    // kill's weapon (small, dim) above the bounty count.
+    let wn;
+    if (isMe) {
+      const mw = meWeaponId != null ? weaponIcon(catalog, meWeaponId) : null;
+      wn = `<span class="lv-wn lv-wn-weapon">${mw ? esc(mw.name) : ""}</span>${bountyHtml()}`;
+    } else if (hideWeapon) {
+      wn = "";
+    } else {
+      wn = `<span class="lv-wn">${w ? esc(w.name) : ""}</span>`;
+    }
     return `<td class="lv-nm"><span class="lv-nm2">${nameHtml(p, tip, hsHtml(r))}${wn}</span></td>${IVI.map((c) => `<td class="lv-ivc">${iviText(c, vals[c.id])}</td>`).join("")}${izHtml(vals)}`;
   }
   const blank = `<td class="lv-nm"></td><td class="lv-ivc"></td><td class="lv-iz"></td>`; // same box as a filled line, so the overlay never grows
@@ -326,7 +336,7 @@ function start() {
     const isNew = r === fresh;
     const wP = iviPct(kill ? me : p), lP = iviPct(kill ? p : me);
     const upset = isNew && wP != null && lP != null && lP - wP >= UPSET_GAP ? " lv-upset" : "";
-    return `<tbody class="lv-ev lv-${where} lv-${r.last}${isNew ? " lv-new" : ""}${upset}${extra}${fi.cls}"${fi.sty}><tr><td class="lv-time">${ageHtml(r)}</td>${cells(p, false, r)}</tr></tbody>`;
+    return `<tbody class="lv-ev lv-${where} lv-${r.last}${isNew ? " lv-new" : ""}${upset}${extra}${fi.cls}"${fi.sty}><tr><td class="lv-time">${ageHtml(r)}</td>${cells(p, false, r, where === "vic")}</tr></tbody>`;
   }
   const emptyLine = (where) => `<tbody class="lv-ev lv-${where} lv-empty"><tr><td class="lv-time"></td>${blank}</tr></tbody>`;
   function render() {
@@ -927,6 +937,7 @@ function start() {
       // under a held bounty (streak 7, lives left) keep the lines.
       // Any kill also re-lights the names the death had dimmed.
       namesDim = false;
+      if (ev.weapon != null) meWeaponId = ev.weapon; // latest kill's weapon, under the centre name
       // #76: rows still pending are strictly later arrivals (commits run in arrival order), so keeping them is
       // exactly the old clear plus the new run's early lines.
       if (wasStreak === 0) st = { ...st, victims: st.victims.filter((r) => r.seq === seq || pendingSeq.has(r.seq)) };
