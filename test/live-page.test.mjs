@@ -268,7 +268,7 @@ test("no value = empty 0% emoji, never a dash (owner t567u): stats, iVi, uncache
   // owner t569u: unknown 🪳 Zerg = full roach (display only); every other missing stat stays empty
   for (const c of LIVE_COLS) assert.equal(unknownFill(c), c.id === "zerg" ? 100 : 0, c.id);
   assert.equal(emojiFill(LIVE_COLS.find((c) => c.id === "zerg"), null, 50), null); // the value itself stays unknown
-  assert.match(js, /if \(fillOf\(c, v\) == null\) return `<span class="lv-iv lv-nil" style="--f:0"[^`]*\$\{meter\(shortLab\(c\)\)\}/); // empty ⚔️ in the iVi box
+  assert.match(js, /if \(fillOf\(c, v\) == null\) return `<span class="lv-iv lv-nil" data-tip="\$\{esc\(tipText\(c, null\)\)\}">0000<\/span>`;/); // unknown iVi = 0000, never an emoji
   // one meter = halo, hollow+outline picture, solid picture in its window (0% fill = the window sits below the ink)
   assert.match(js, /const meter = \(e\) => `<span class="lv-em lv-x\$\{emojiIdx\.get\(e\)\}" aria-hidden="true" data-e="\$\{e\}"><i class="lv-gl"><\/i><i class="lv-b"><\/i><i class="lv-sw"><i class="lv-s"><i class="lv-shn"><\/i><\/i><\/i><\/span>`;/);
   assert.match(js, /const vals = p\.cached \|\| \{\};/); // uncached too

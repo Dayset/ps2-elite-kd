@@ -947,3 +947,15 @@ describe("🎥 live feed arrival animations in a browser", () => {
     });
   });
 });
+
+describe("🎥 live unknown iVi in a browser", () => {
+  it("unknown iVi (owner 2026-10-26): an uncached victim shows 0000, never an emoji", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      await ev(`window.__fakeWs.emit(${death(ME.cid, SLOW.cid, "80", false)})`); // ME kills SLOW: not a ranks row, so its iVi stays unknown
+      assert.equal(await ev(until(`![...document.querySelectorAll("#liveList tbody.lv-vic .lv-nm")].some((el) => el.textContent.includes("…"))`)), true, "victim name filled (commit render)");
+      assert.equal(await ev(`document.querySelector("#liveList tbody.lv-vic .lv-ivc").textContent`), "0000", "unknown iVi reads 0000");
+      assert.deepEqual(errors, [], "no page errors");
+    });
+  });
+});

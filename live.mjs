@@ -227,9 +227,9 @@ function start() {
     const top = g ? ` lv-g${g}` : "";
     return `<span class="lv-u lv-fl${top}" style="--f:${f}" data-tip="${esc(tipText(c, v))}">${meter(shortLab(c))}</span>`;
   }
-  /** iVi number, no ⚔️ (owner t560u), no comma, 4 digits of room (t564u); no iVi (t567u) = an empty 25% ⚔️ in the same box. */
+  /** iVi number, no ⚔️ (owner t560u), no comma, 4 digits of room (t564u); no iVi (owner 2026-10-26) = 0000, never an emoji. */
   function iviText(c, v) {
-    if (fillOf(c, v) == null) return `<span class="lv-iv lv-nil" style="--f:0" data-tip="${esc(tipText(c, null))}">${meter(shortLab(c))}</span>`;
+    if (fillOf(c, v) == null) return `<span class="lv-iv lv-nil" data-tip="${esc(tipText(c, null))}">0000</span>`;
     return `<span class="lv-iv" data-tip="${esc(tipText(c, v))}">${cellText(c, v)}</span>`;
   }
   /** Name (faction colour) + 💩; a long name is cut with … at the end. Uncached: Census K/D · KPM in the hover. */
