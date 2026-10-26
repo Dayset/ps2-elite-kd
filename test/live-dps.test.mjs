@@ -1,8 +1,8 @@
-// imaginary DPS (owner 2026-10-25): kills +1000, assists +500, exponential
+// imaginary DPS (owner 2026-10-25): kills +1000, assists 1000 × share (flat 500 only for spawn/invalid), exponential
 // drain with a 10 s time constant, so the value jumps and drains down.
 import test from "node:test";
 import assert from "node:assert/strict";
-import { dpsNow, DPS_HP, DPS_ASSIST, DPS_TAU_MS, DPS_ASSIST_XP, cashTotals, cashFormula, median, combatHoldMs, holdGaps, combatRuns, spawnRunHoldMs, timeToCombatMs, timerBarPct, easeInQuad } from "../live-model.mjs";
+import { dpsNow, DPS_HP, DPS_ASSIST, DPS_TAU_MS, DPS_ASSIST_XP, assistShare, xpMultAt, ASSIST_BASE_XP, KILL_BASE_XP, cashTotals, cashFormula, median, combatHoldMs, holdGaps, combatRuns, spawnRunHoldMs, timeToCombatMs, timerBarPct, easeInQuad } from "../live-model.mjs";
 
 const close = (a, b, eps = 0.01) => assert.ok(Math.abs(a - b) <= eps, `${a} != ${b}`);
 
@@ -11,6 +11,22 @@ test("DPS constants: one player 1000 HP, assist half a kill, 10 s drain", () => 
   assert.equal(DPS_ASSIST, 500);
   assert.equal(DPS_TAU_MS, 10000);
   assert.deepEqual([...DPS_ASSIST_XP].sort((a, b) => a - b), [2, 3, 371, 372]);
+});
+
+test("assist share (owner 2026-10-26): amount / multiplier / base, worker recipe", () => {
+  assert.deepEqual(ASSIST_BASE_XP, { 2: 100, 371: 150, 372: 300 });
+  assert.deepEqual(KILL_BASE_XP, { 1: 100, 278: 150, 279: 300 });
+  assert.equal(assistShare(100, 2, 1), 1); // full share, unboosted
+  assert.equal(assistShare(40, 2, 1), 0.4); // 40% damage -> +400, not +500
+  assert.equal(assistShare(150, 2, 1.5), 1); // boosted: 150 on a 1.5x multiplier is still a full share
+  assert.equal(assistShare(60, 371, 1), 0.4); // 60 on the 150 base
+  assert.equal(assistShare(250, 2, 1), 1); // over 1 halves (1.25) then caps at 1
+  assert.equal(assistShare(100, 3, 1), null); // spawn assist: no base, no share -> flat 500 fallback
+  assert.equal(assistShare(-5, 2, 1), null);
+  assert.equal(assistShare(NaN, 2, 1), null);
+  assert.equal(xpMultAt([], 1000), 1); // no kills yet: assume unboosted
+  assert.equal(xpMultAt([[100, 1], [200, 2]], 190), 2); // nearest kill in time wins
+  assert.equal(xpMultAt([[100, 1], [200, 2]], 110), 1);
 });
 
 test("a kill jumps to 100 and drains exponentially", () => {

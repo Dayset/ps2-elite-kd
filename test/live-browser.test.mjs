@@ -807,3 +807,19 @@ describe("🎥 live left slot + tactical switch in a browser", () => {
     });
   });
 });
+
+describe("🎥 live assist share in a browser", () => {
+  it("share (owner 2026-10-26): a 10% assist spikes 100, not 500 — three of them land far below the flat value", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      const assist = (amount) => ev(`window.__fakeWs.emit(${JSON.stringify({ event_name: "GainExperience", character_id: ME.cid, experience_id: 2, amount, timestamp: "0" })})`);
+      for (let i = 0; i < 3; i++) await assist(10); // share 0.1 each, no kills yet so multiplier 1
+      assert.equal(await ev(until(`!document.getElementById("liveDpsVal").textContent.includes("/")`)), true, "meter started at the 3rd spike");
+      await new Promise((r) => setTimeout(r, 1000)); // easing + decay settle
+      const v = parseFloat(await ev(`document.getElementById("liveDpsVal").textContent`));
+      assert.ok(v > 500 && v < 4000, `three 10% assists read ~1800 decaying, not the flat ~9000: ${v}`);
+      assert.equal(await ev(`JSON.stringify([...document.querySelectorAll("#liveList tbody.lv-me .lv-time .lv-em")].map((w) => w.textContent))`), JSON.stringify(["🤝×3"]), "the assist counter still counts every assist");
+      assert.deepEqual(errors, [], "no page errors");
+    });
+  });
+});

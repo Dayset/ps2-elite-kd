@@ -64,6 +64,26 @@ export const DPS_HP = 1000;
 export const DPS_ASSIST = 500;
 export const DPS_TAU_MS = 10000;
 export const DPS_ASSIST_XP = new Set([2, 3, 371, 372]); // kill-assist GainExperience ids (same list as worker ASSIST_EXP_IDS)
+// Owner 2026-10-26 (assist share): the same recipe as worker
+// sessionAssistStats — an assist's damage share is its XP amount divided
+// by the earner's current XP multiplier (estimated from nearby kill XP)
+// divided by the id's base XP. Spawn assists (id 3) have no base and no
+// share; they keep the flat DPS_ASSIST.
+export const ASSIST_BASE_XP = { 2: 100, 371: 150, 372: 300 };
+export const KILL_BASE_XP = { 1: 100, 278: 150, 279: 300 };
+export function assistShare(amount, id, mult) {
+  const base = ASSIST_BASE_XP[id];
+  if (!base || !Number.isFinite(amount) || amount < 0) return null;
+  let share = amount / Math.max(1, mult) / base;
+  if (share > 1) share /= 2;
+  return Math.min(1, share);
+}
+export function xpMultAt(refs, t) {
+  if (!refs.length) return 1;
+  let best = refs[0];
+  for (const x of refs) if (Math.abs(x[0] - t) < Math.abs(best[0] - t)) best = x;
+  return best[1];
+}
 /**
  * Owner 2026-10-25 (gas-counter scroll): the scroll easing — quadratic
  * ease-in, so the counter starts slow and speeds up into its target.

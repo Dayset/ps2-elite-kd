@@ -19,8 +19,8 @@ await i18nReady;
  *     fetch in the background (one at a time, newest first, #32) and upgrade in place.
  * Pure helpers are exported for tests; the DOM part runs only in a browser.
  */
-export * from "./live-model.mjs?v=20261026-timer1"; // #66: the pure part (tests import it from here)
-import { VICTIM_LINES, classifyDeath, censusStats, LIVE_COLS, tipText, FILL_DIM, HOLLOW_PX, HOLLOW_INK, goodPct, fillDriver, emojiFill, unknownFill, infUnit, OUTLINE_PX, unitGlow, LIVE_GLOWS, LIVE_FPS, liveFps, HALO_KEY, haloOn, easeFill, glowIn, BEAT, TIER_MOTION, haloAt, SHINE, shineFrame, beatSleep, weaponIcon, glowTier, eventAt, overlayPush, overlayRows, nextBgFetch, liveRowFromPlayer, ME_REFRESH_MS, median, mergeFresh, SHARE_MAX, shareDelay, cellText, slugKey, bountyNext, dpsNow, DPS_HP, DPS_ASSIST, DPS_ASSIST_XP, cashTotals, cashFormula, combatHoldMs, holdGaps, combatRuns, spawnRunHoldMs, timeToCombatMs, timerBarPct, easeInQuad } from "./live-model.mjs?v=20261026-timer1";
+export * from "./live-model.mjs?v=20261026-share1"; // #66: the pure part (tests import it from here)
+import { VICTIM_LINES, classifyDeath, censusStats, LIVE_COLS, tipText, FILL_DIM, HOLLOW_PX, HOLLOW_INK, goodPct, fillDriver, emojiFill, unknownFill, infUnit, OUTLINE_PX, unitGlow, LIVE_GLOWS, LIVE_FPS, liveFps, HALO_KEY, haloOn, easeFill, glowIn, BEAT, TIER_MOTION, haloAt, SHINE, shineFrame, beatSleep, weaponIcon, glowTier, eventAt, overlayPush, overlayRows, nextBgFetch, liveRowFromPlayer, ME_REFRESH_MS, median, mergeFresh, SHARE_MAX, shareDelay, cellText, slugKey, bountyNext, dpsNow, DPS_HP, DPS_ASSIST, DPS_ASSIST_XP, assistShare, xpMultAt, KILL_BASE_XP, cashTotals, cashFormula, combatHoldMs, holdGaps, combatRuns, spawnRunHoldMs, timeToCombatMs, timerBarPct, easeInQuad } from "./live-model.mjs?v=20261026-share1";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261023-short1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
@@ -268,6 +268,7 @@ function start() {
   let bountyStreak = 0, bountyLives = 0;
   let meWeaponId = null; // latest kill's weapon id, shown under the centre name
   let assistN = 0; // assists since the last kill or death — a kill or a death hides it
+  let killXpRefs = []; // [t, amount/base] for MY kill XP — the XP-multiplier estimate behind assist shares (capped, newest only)
   // Owner 2026-10-25: while the observed player is dead, the killed list
   // and their own name sit at 50% — a new kill brings them back to full.
   // Render-time flag, so it survives every re-render (bgPump included).
@@ -1034,7 +1035,7 @@ function start() {
     ws.onopen = () => {
       backoff = 2000;
       openedAt = Date.now();
-      ws.send(JSON.stringify({ service: "event", action: "subscribe", characters: [me.cid], eventNames: ["Death", "GainExperience_experience_id_2", "GainExperience_experience_id_3", "GainExperience_experience_id_371", "GainExperience_experience_id_372", "PlayerLogin", "PlayerLogout"] })); // filtered server-side (the worker's pattern) — never the whole XP firehose
+      ws.send(JSON.stringify({ service: "event", action: "subscribe", characters: [me.cid], eventNames: ["Death", "GainExperience_experience_id_1", "GainExperience_experience_id_278", "GainExperience_experience_id_279", "GainExperience_experience_id_2", "GainExperience_experience_id_3", "GainExperience_experience_id_371", "GainExperience_experience_id_372", "PlayerLogin", "PlayerLogout"] })); // filtered server-side (the worker's pattern) — never the whole XP firehose
       pollOnline(); // the stream reports transitions only; the poll says what is true right now
       setState(`<span class="live-dot">●</span> waiting for kills and deaths…`, "on");
       render();
@@ -1046,7 +1047,21 @@ function start() {
       // assist XP tick for the tracked player adds +500 to the DPM counter.
       if (j.payload?.event_name === "GainExperience") {
         const p = j.payload;
-        if (String(p.character_id) === me.cid && DPS_ASSIST_XP.has(Number(p.experience_id))) { if (!sessionStartMs) sessionStartMs = Date.now(); setOnline("online"); dpsEvents.push({ t: Date.now(), dmg: DPS_ASSIST }); if (shownDps !== null) scrollQ.push(dpsNow([{ t: 0, dmg: DPS_ASSIST }], 0, dpmTauMs) * 60); liftFreeze(Date.now()); lastSpikeEff = dpsEvents[dpsEvents.length - 1].t - timeDebtMs; assistN++; dpsTick(); render(); }
+        if (String(p.character_id) === me.cid) {
+          const xid = Number(p.experience_id), amt = Number(p.amount);
+          const kbase = KILL_BASE_XP[xid];
+          if (kbase && Number.isFinite(amt) && amt > 0) { killXpRefs.push([Date.now(), amt / kbase]); if (killXpRefs.length > 100) killXpRefs.shift(); }
+          else if (DPS_ASSIST_XP.has(xid)) {
+            // Owner 2026-10-26 (share, not flat): an assist spikes 1000 × its
+            // damage share (amount / multiplier / base, worker recipe) —
+            // a 40% assist is +400, not +500. Spawn assists (id 3) and
+            // invalid amounts keep the flat 500.
+            if (!sessionStartMs) sessionStartMs = Date.now(); setOnline("online");
+            const share = assistShare(amt, xid, xpMultAt(killXpRefs, Date.now()));
+            const dmg = share == null ? DPS_ASSIST : Math.round(1000 * share);
+            dpsEvents.push({ t: Date.now(), dmg }); if (shownDps !== null) scrollQ.push(dpsNow([{ t: 0, dmg }], 0, dpmTauMs) * 60); liftFreeze(Date.now()); lastSpikeEff = dpsEvents[dpsEvents.length - 1].t - timeDebtMs; assistN++; dpsTick(); render();
+          }
+        }
         return;
       }
       // Owner 2026-10-25: login/logout for the tracked player drives the online pill.
