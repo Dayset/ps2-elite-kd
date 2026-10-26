@@ -908,3 +908,35 @@ describe("🎥 live killer timer in a browser", () => {
     });
   });
 });
+
+describe("🎥 live feed arrival animations in a browser", () => {
+  // SLOW's 1.5 s lookup keeps the lv-new arrival render alive long enough to catch the animation mid-flight.
+  // moved() polls the computed transform for 500 ms: true only if the row really translates (not just a named animation).
+  const moved = (sel) => `(async () => { const td = document.querySelector("${sel}"); if (!td) return false; const t0 = performance.now(); return await new Promise((res) => { (function tick() { if (getComputedStyle(td).transform !== "none") return res(true); if (performance.now() - t0 > 500) return res(false); requestAnimationFrame(tick); })(); }); })()`;
+  it("victim slide (owner 2026-10-26): a new victim row slides down under the centre row, then settles", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      await ev(`window.__fakeWs.emit(${death(ME.cid, SLOW.cid, "80", false)})`); // ME kills SLOW: victim row arrives, name fills 1.5 s later
+      assert.equal(await ev(until(`document.querySelector("tbody.lv-vic.lv-new") !== null`)), true, "victim row arrives with lv-new");
+      assert.equal(await ev(moved("tbody.lv-vic.lv-new td")), true, "victim row actually moves mid-slide");
+      const anim = await ev(`getComputedStyle(document.querySelector("tbody.lv-vic.lv-new td")).animationName`);
+      assert.ok(anim.includes("lvVicSlide"), `victim slides: ${anim}`);
+      assert.equal(await ev(until(`![...document.querySelectorAll("#liveList tbody.lv-vic .lv-nm")].some((el) => el.textContent.includes("…"))`)), true, "victim name filled (commit render)");
+      assert.equal(await ev(`document.querySelector("tbody.lv-vic.lv-new")`), null, "lv-new is one-shot: gone after the commit render");
+      assert.deepEqual(errors, [], "no page errors");
+    });
+  });
+  it("killer drop (owner 2026-10-26): the killer row falls onto the centre row and settles into the top row", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      await ev(`window.__fakeWs.emit(${death(SLOW.cid, ME.cid, "80", false)})`); // SLOW kills ME: killer row arrives, name fills 1.5 s later
+      assert.equal(await ev(until(`document.querySelector("tbody.lv-atk.lv-new") !== null`)), true, "killer row arrives with lv-new");
+      assert.equal(await ev(moved("tbody.lv-atk.lv-new td")), true, "killer row actually moves mid-drop");
+      const anim = await ev(`getComputedStyle(document.querySelector("tbody.lv-atk.lv-new td")).animationName`);
+      assert.ok(anim.includes("lvKillerDrop"), `killer drops: ${anim}`);
+      assert.equal(await ev(until(`![...document.querySelectorAll("#liveList tbody.lv-atk .lv-nm")].some((el) => el.textContent.includes("…"))`)), true, "killer name filled (commit render)");
+      assert.equal(await ev(`document.querySelector("tbody.lv-atk.lv-new")`), null, "lv-new is one-shot: gone after the commit render");
+      assert.deepEqual(errors, [], "no page errors");
+    });
+  });
+});
