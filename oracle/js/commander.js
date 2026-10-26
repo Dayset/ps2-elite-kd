@@ -1,6 +1,6 @@
 // PS2MapOracle dashboard — split from index.html (#15). No behaviour change.
 import { S, FACS, esc, det } from "./state.js?v=20261018-scrub2";
-import { voiceButton } from "./voice.js?v=20261026-pct1";
+import { voiceButton } from "./voice.js?v=20261026-pulse1";
 import { t as tr } from "../../i18n.mjs";
 
 /** Grayed placeholder shown between alerts so users see the panel exists. */
@@ -30,7 +30,7 @@ export function mapOrders(c, f) {
 }
 
 export function commander(c, ts, now, lead, mode = "solo") {
-  S.cmdOrders = []; S.cmdOn = null; S.cmdOnLive = false; S.cmdPockets = [];
+  S.cmdOrders = []; S.cmdOn = null; S.cmdOnLive = false; S.cmdPockets = []; S.cmdMode = mode;
   if (!c || !c.factions) return "";
   // Phone: one faction at a time. Default: the signed-in player's faction, else the leader.
   const live = FACS.filter((f) => c.factions[f]);
@@ -64,9 +64,10 @@ export function commander(c, ts, now, lead, mode = "solo") {
     // the names or the base count. The prose stays, below the values, so
     // nothing it carried (target, cuts, reconnects) is lost; anything past
     // the box clips inside instead of moving it.
-    const head = front || x.kind === "spoil"
-      ? `${num(k)}${icon} <b class="fkind">${front ? tr("or.c.busiest", "Busiest front:") : tr("or.c.allForces", "All forces:")}</b>`
-      : `${num(k)}<b class="fkind">${tr("or.c.allForces", "All forces:")}</b>${x.kind === "hold" ? ` ${tr("or.c.defend", "🛡️ Defend")}` : ` ${tr("or.c.attack", "⚔️ Attack")}`}`;
+    // No "All forces:" prefix (owner t689u): just "⚔️ Attack" / "🛡️ Defend".
+    const head = front
+      ? `${num(k)}${icon} <b class="fkind">${tr("or.c.busiest", "Busiest front:")}</b>`
+      : `${num(k)}<b class="fkind">${x.kind === "hold" ? tr("or.c.defend", "🛡️ Defend") : tr("or.c.attack", "⚔️ Attack")}</b>`;
     const pocket = x.pocket ? ` <span class="note" title="${tr("or.c.pocketTip", "inside a pocket whose chokepoint is under attack: worth less if it gets cut")}">${tr("or.c.inPocket", "🥶 in a pocket")}</span>` : "";
     return main
       ? `<div class="focus ${esc(x.kind)}" data-base="${esc(x.bases[0])}"><div class="fhead"><div class="fkindline">${head}</div>${(x.bases || []).map((b) => `<div class="fbase">${bl(b)}</div>`).join("")}</div><div class="fodds">${tail}${pocket}<div class="ftext">${linked(x.text, xNames(x))}</div></div></div>`
@@ -83,9 +84,9 @@ export function commander(c, ts, now, lead, mode = "solo") {
   // Orders mode (owner t665u): remembered on this device; no extra requests either way.
   const mb = (m, label, tip) => `<button type="button" data-cmode="${m}" class="${m === mode ? "on" : ""}" aria-pressed="${m === mode}" title="${tip}">${label}</button>`;
   const modeNote = mode === "big"
-    ? (c.focus_ahead ? tr("or.c.bigNote", "Orders aimed {n} min ahead, so a big squad arrives in time. They can change every minute.", { n: c.ahead_min || 3 }) : tr("or.c.bigWait", "The 3-min-ahead orders appear with the next update."))
-    : tr("or.c.soloNote", "An order stays until it is done (base taken or lost, or about 5 min passed), unless a clearly better or urgent one appears.");
-  const modeBar = `<div class="cmode" role="group" aria-label="${tr("or.c.mode", "Orders for")}"><span class="note">${tr("or.c.mode", "Orders for")}</span>${mb("solo", tr("or.c.solo", "Solo"), tr("or.c.soloTip", "Steady orders for a player or a small group"))}${mb("big", tr("or.c.big", "Big squad"), tr("or.c.bigTip", "Orders aimed 3 minutes ahead for a squad or platoon"))}</div><div class="note cmodenote">${modeNote}</div>`;
+    ? (c.focus_mix ? tr("or.c.bigNote", "Attacks aimed {n} min ahead, so a big squad arrives in time; defends only when a base is under attack. Three directions that can change every minute.", { n: c.ahead_min || 3 }) : tr("or.c.bigWait", "The new orders appear with the next update."))
+    : tr("or.c.soloNote", "Attacks aimed {n} min ahead; defends only when a base is under attack. One order stays until it is done (base taken or lost, or about 5 min passed), unless a clearly better or urgent one appears.", { n: c.ahead_min || 3 });
+  const modeBar = `<div class="cmode" role="group" aria-label="${tr("or.c.mode", "Orders for")}"><span class="note">${tr("or.c.mode", "Orders for")}</span>${mb("solo", tr("or.c.solo", "Solo"), tr("or.c.soloTip", "One steady direction for a player or a small group"))}${mb("big", tr("or.c.big", "Big squad"), tr("or.c.bigTip", "Three directions for a squad or platoon, updated every minute"))}</div><div class="note cmodenote">${modeNote}</div>`;
   return `<section class="card cmd" style="margin-top:14px"><h2 data-sec="ai-commander">${tr("or.h.cmd", "🎖️ AI Commander")} ${age}</h2>${modeBar}${seg}<div class="cmdgrid">${FACS.map((f) => {
     const x = c.factions[f]; if (!x) return "";
     if (x.eliminated) return `<div class="cf${f === on ? " on" : ""}"><h3 class="${f}">${f} · ${tr("or.c.elim", "eliminated")}</h3><div class="note">${tr("or.c.out", "Mathematically out: spoiler plays only (kingmaker below).")}</div>${(x.kingmaker || []).length ? `<ul>${x.kingmaker.slice(0, 2).map((k) => `<li>${esc(k.text || "")}</li>`).join("")}</ul>` : ""}</div>`;

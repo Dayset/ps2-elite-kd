@@ -119,7 +119,7 @@ describe("oracle page smoke test (#28)", { skip }, () => {
         });
         await page.click(".cf h3.VS [data-voice]");
         const said = await page.evaluate(() => window.__said);
-        assert.deepEqual(said, ["Defend Cairn Station or minus 10, cuts 1. First, plus 10 percent difference."]);
+        assert.deepEqual(said, ["Defend Cairn Station."]);
         assert.equal(await page.$eval(".cf h3.VS [data-voice]", (b) => b.getAttribute("aria-pressed")), "true");
         // ⚙️ voice list (owner t650u): no always-visible dropdown; ⚙️ next to the speaker opens a compact list.
         assert.equal(await page.$(".voicesel, #main select[data-voicesel]"), null, "no voice dropdown");

@@ -26,6 +26,7 @@ import { handleVote, settleStatements } from "./vote.js";
 import { handlePrivacy } from "./privacy.js";
 import { cutAwareSnap } from "./cut.js";
 import { focusPlan } from "./focus.js";
+import { mixPlan, underwayCheck } from "./modes.js";
 import { cutAwareDefends } from "./defend.js";
 import { liveHeat } from "./heat.js";
 import { computePockets } from "./pockets.js";
@@ -547,6 +548,16 @@ export async function commanderFor(env, key, nowMs = Date.now()) {
       cmd.focus_ahead = focusPlan({ ...focusArgs, t: focusArgs.t + AHEAD_CLOCK_MIN, holds: {} });
       cmd.ahead_min = AHEAD_CLOCK_MIN - 1;
     } catch { /* plain plan still stands */ }
+    // Both modes (owner t691u): ATTACK orders from the plan aimed ahead, DEFEND orders from the
+    // plan for now, only when the enemy took a base next to it (or it changed hands) in the last
+    // UNDERWAY_MIN minutes. Backtest on the same 57 alerts (2026-10-26, CHANGELOG): attack came
+    // true 30.8% Big / 28.9% Solo (was 33.2 / 30.5); defends on bases under attack held 70.0% /
+    // 70.7% (old plans on those same bases: 67.5 / 67.7); switching unchanged.
+    try {
+      const atk = focusPlan({ ...focusArgs, t: focusArgs.t + AHEAD_CLOCK_MIN, holds: {}, only: "attack" });
+      const dfn = focusPlan({ ...focusArgs, holds: {}, only: "defend" });
+      cmd.focus_mix = mixPlan(atk, dfn, underwayCheck({ own, lattice, flips, nowTs: Math.trunc(now) }));
+    } catch { /* older plans still stand */ }
     // "All moves" defend list on the same cut-aware win drop as the focus (#63).
     for (const f of FACS) for (const p of pk.pockets[f] || []) { const h = holds[f] && holds[f].get(p.cp_fid); p.hold_drop = h ? Math.round(Math.max(0, h.loss) * 10) / 10 : null; }
     cmd.pockets = pk.pockets;

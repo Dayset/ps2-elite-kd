@@ -123,12 +123,20 @@ export async function drawMap(a) {
     const v = Math.round(parseFloat(String(o.short).replace("−", "-")) || 0);
     return { n: o.n, c, txt: v ? `${v > 0 ? "+" : "−"}${Math.abs(v)}%` : "" };
   }).filter(Boolean);
+  // Pulsing rings (owner t688u) on the selected faction's target bases: Solo #1 only, Big
+  // squad #1-#3. An HTML overlay over the map (not inside the SVG) so the pulse is a
+  // compositor-only transform/opacity animation and never repaints the hexes; apply()
+  // moves the rings with pan/zoom. prefers-reduced-motion: static ring (oracle.css).
+  const pulseData = ordData.filter((o) => o.n <= (S.cmdMode === "big" ? 3 : 1));
+  // Ring radius in screen px for unit = map units per screen px: clear on a phone, not huge zoomed in.
+  const ringPx = (unit) => Math.max(15, Math.min(45, (r / unit) * 1.6));
   const layoutOrds = (unit, names) => {   // unit = map units per screen px
-    const fs = 13 * unit, br = 8.5 * unit, gap = 7 * unit, placed = [];
+    const fs = 13 * unit, br = 8.5 * unit, gap0 = 7 * unit, placed = [];
     if (names) for (const nm2 of Object.keys(fidsByName)) { const c = baseCen(nm2); if (c) { const w = nm2.length * 12 * 0.55 * unit; placed.push([c[0] - w / 2, c[1] - r * 0.9 - 9 * unit, c[0] + w / 2, c[1] - r * 0.9 + 3 * unit]); } }
     const hit = (b) => placed.some((p) => b[0] < p[2] && b[2] > p[0] && b[1] < p[3] && b[3] > p[1]);
     return ordData.map((o) => {
       const w = br * 2 + (o.txt ? 4 * unit + o.txt.length * fs * 0.56 : 0), h = br * 2, [cx, cy] = o.c;
+      const gap = pulseData.includes(o) ? (ringPx(unit) + 3) * unit : gap0;   // badge outside the ring
       const spots = [[cx + gap, cy - h / 2], [cx - gap - w, cy - h / 2], [cx - w / 2, cy + gap], [cx - w / 2, cy - gap - h]];
       let b = null;
       for (const [x, y] of spots) { const t = [x, y, x + w, y + h]; if (!hit(t)) { b = t; break; } }
@@ -157,6 +165,7 @@ export async function drawMap(a) {
       <g class="ords" pointer-events="none"></g>
       <g class="lbls" text-anchor="middle" fill="#fff" stroke="#0b0c0e" paint-order="stroke" font-weight="600" pointer-events="none">${labels}</g>
     </g></svg>
+    ${pulseData.length ? `<div class="pulses" aria-hidden="true">${pulseData.map((o) => `<div class="pw" data-n="${o.n}"><span class="ps"></span><span class="pp"></span></div>`).join("")}</div>` : ""}
     ${liveOrders ? `<div class="ordseg" role="group" aria-label="${tr("or.m.ordersFor", "Orders for")}">${tr("or.m.ordersFor", "Orders for")} ${FACS.map((f) => `<button type="button" class="${f}${f === S.cmdOn ? " on" : ""}" aria-pressed="${f === S.cmdOn}" data-mapfac="${f}">${f}</button>`).join("")}</div>` : ""}
     <div class="legend"><span><i class="sw" style="background:var(--vs)"></i>VS</span><span><i class="sw" style="background:var(--nc)"></i>NC</span><span><i class="sw" style="background:var(--tr)"></i>TR</span><span><i class="sw hatch"></i>${tr("or.m.neutral", "neutral / unknown")}</span><span><i class="sw wgs"></i>${tr("or.m.wg", "warpgate")}</span><span><i class="sw poi"></i>${tr("or.m.outpost", "outpost")}</span><span><i class="sw poi big"></i>${tr("or.m.big", "big base")}</span><span>${tr("or.m.ctf", "⚑ capture the flag")}</span>${pk.length ? `<span><i class="sw pkring"></i>${tr("or.m.pocket", "🥶 pocket chokepoint: hold it")}</span>` : ""}<span><i class="sw poi cons"></i>${tr("or.m.cons", "construction")}</span><span class="hint">${tr("or.m.hint", "1 2 3: Commander orders, full text in the AI Commander card · 🔥 hot · 🥶 cut off or almost cut · scroll/pinch to zoom, double-click to reset")}</span></div>
     <div class="tip" hidden></div><div class="sheet" hidden role="dialog" aria-label="${tr("or.m.details", "Base details")}"></div>`;
@@ -165,7 +174,18 @@ export async function drawMap(a) {
   cur = { svg, geo, nm, r, owners };
   // ---------------------------------------------------------------- zoom / pan (#19)
   // One transform on <g class="vp">; hexes are never re-rendered while panning.
-  const vp = svg.querySelector(".vp"), lbls = svg.querySelector(".lbls"), ords = svg.querySelector(".ords");
+  const vp = svg.querySelector(".vp"), lbls = svg.querySelector(".lbls"), ords = svg.querySelector(".ords"), pul = host.querySelector(".pulses");
+  cur.pul = pul;
+  if (pul && scrubOwners) pul.hidden = true;
+  const placePulses = () => {
+    const rc = svg.getBoundingClientRect(), hr = host.getBoundingClientRect(), sc = rc.width / vb[2] || 0;
+    pul.style.cssText = `left:${(rc.left - hr.left).toFixed(1)}px;top:${(rc.top - hr.top).toFixed(1)}px;width:${rc.width.toFixed(1)}px;height:${rc.height.toFixed(1)}px`;
+    const size = 2 * ringPx(1 / (view.k * sc || 1));
+    pul.querySelectorAll(".pw").forEach((el, i) => {
+      const [x, y] = pulseData[i].c, px = (view.tx + view.k * x - vb[0]) * sc, py = (view.ty + view.k * y - vb[1]) * sc;
+      el.style.cssText = `left:${px.toFixed(1)}px;top:${py.toFixed(1)}px;width:${size.toFixed(0)}px;height:${size.toFixed(0)}px;--pc:${COLOR[S.cmdOn] || "#ffd54a"}`;
+    });
+  };
   const key = a.zone;
   if (!view || view.key !== key) view = { key, k: 1, tx: 0, ty: 0 };
   const apply = () => {
@@ -180,6 +200,7 @@ export async function drawMap(a) {
     if (show) { const w = svg.getBoundingClientRect().width || 600, fs = 12 * vb[2] / w / k; lbls.setAttribute("font-size", fs.toFixed(1)); lbls.setAttribute("stroke-width", (fs * 0.3).toFixed(1)); }   // ~12 px on screen
     if (ordData.length) { const w = svg.getBoundingClientRect().width || 600, key2 = `${k.toFixed(2)}|${w}`; if (ords.dataset.k !== key2) { ords.dataset.k = key2; ords.innerHTML = layoutOrds(vb[2] / w / k, show); } }
     svg.classList.toggle("zoomed", k > 1.01);
+    if (pul) placePulses();
   };
   const toSvg = (cx, cy) => { const rc = svg.getBoundingClientRect(); return [vb[0] + (cx - rc.left) / rc.width * vb[2], vb[1] + (cy - rc.top) / rc.height * vb[3]]; };
   const zoomAt = (cx, cy, factor) => {
@@ -240,6 +261,7 @@ export async function drawMap(a) {
     sheet.querySelector(".x").onclick = () => { sheet.hidden = true; };
   });
   apply();
+  if (pul && typeof ResizeObserver !== "undefined") new ResizeObserver(() => { if (svg.isConnected) schedule(); }).observe(svg);
   if (hlName) highlightBase(hlName);
   if (scrubOwners) recolorMap(scrubOwners);
 }
@@ -261,6 +283,7 @@ export function recolorMap(owners) {
     p.setAttribute("fill", fill); p.setAttribute("stroke", fill.startsWith("url") ? "var(--neutral)" : fill);
   }
   cur.svg.classList.toggle("replay", !!scrubOwners);
+  if (cur.pul) cur.pul.hidden = !!scrubOwners;   // the rings belong to the current moment
 }
 /** Outline every hex of the base called `name` and label it (commander row hover); null clears. */
 export function highlightBase(name) {

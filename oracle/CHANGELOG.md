@@ -336,3 +336,35 @@ approved it, "shipped" means it is live in the running pipeline.
   The "Pay attention! Only …" tight-race ending and the "Lead N minutes" /
   "Second, N minutes difference" endings are gone (`voice.js gapEnding`; nothing on screen
   showed them). The minutes-rate code was used only there and is removed.
+
+## 2026-10-26: pulsing rings, short voice orders, no "All forces:"
+
+- **Pulsing rings (owner t688u).** When a faction's Commander is selected, the map
+  puts a faction-coloured pulsing ring on order #1 (Solo) or #1, #2, #3 (Big squad).
+  One ring that grows and fades every 1.4 s, transform/opacity only, in an HTML layer
+  over the map (no SVG repaint); it follows pan/zoom, and the number badge sits just
+  outside it. Reduced-motion settings get a still ring. Oracle page only.
+- **Voice (owner t689u):** just the order — "Attack {base}." / "Attack {base} and
+  {base2}." / "Defend {base}." / "Go {base}." / "Hold your lanes." No percent, cuts,
+  place or percent-difference ending (`gapEnding` removed).
+- **Commander header:** "All forces:" prefix removed ("⚔️ Attack" / "🛡️ Defend");
+  the `or.c.allForces` key is deleted from all 9 languages (no other user).
+- **Mode logic (owner t691u).** Both modes: ATTACK orders come from the plan aimed 3 min
+  ahead (`focusPlan(..., only: "attack")`), DEFEND orders from the plan for right now
+  (`only: "defend"`) and only while an attack is underway: the attacker took a base next
+  to ours, or ours changed hands, in the last 10 min (`oracle-worker/src/modes.js`, stored
+  as `commander.focus_mix`). Solo keeps one sticky order; Big squad shows #1-#3 and may
+  switch every minute. Backtest, same 57 alerts / 4,698 minutes (2026-10-26,
+  `/workspace/modes/bt3.mjs`), order #1:
+
+  | | attack came true | defend held | different 1/2/3 min later | changes / h |
+  |---|---|---|---|---|
+  | Big squad before | 33.2 % | 72.4 % | 41 / 62 / 73 % | 23.9 |
+  | Big squad now | 30.8 % | 70.0 % | 42 / 62 / 74 % | 24.6 |
+  | Solo before | 30.5 % | 73.2 % | 24 / 43 / 59 % | 14.6 |
+  | Solo now | 28.9 % | 70.7 % | 24 / 44 / 59 % | 14.7 |
+
+  Defends are now only on bases under real attack, which are harder to hold: the old
+  plans' defends on those same bases held 67.5 % (Big) / 67.7 % (Solo), so the new ones
+  are better there. Window 5 / 10 / 15 min tested: 10 min matches the heat model's window
+  (15 min scores ~1 point higher but includes older fights).

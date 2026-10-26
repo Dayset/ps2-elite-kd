@@ -1,17 +1,17 @@
 // PS2MapOracle dashboard — split from index.html (#15). No behaviour change.
 import { S, FACS, COLOR, esc, $, stars, mins, bar, pct1, det, info, wide, syncDetails, PHONE_MQ } from "./state.js?v=20261018-scrub2";
 import { get, names } from "./api.js?v=20261018-scrub2";
-import { drawMap, highlightBase, recolorMap } from "./map.js?v=20261024-i18n1";
+import { drawMap, highlightBase, recolorMap } from "./map.js?v=20261026-pulse1";
 import { chart, chartHover } from "./chart.js?v=20261024-i18n1";
 import { lockCard, lockTick } from "./lock.js?v=20261024-i18n1";
-import { commander, commanderIdle } from "./commander.js?v=20261026-pct1";
-import { modeFocus, ownerLookup, heatLookup, pickMode, MODE_KEY } from "./sticky.js?v=20261026-mode1";
+import { commander, commanderIdle } from "./commander.js?v=20261026-pulse1";
+import { modeFocus, ownerLookup, heatLookup, pickMode, MODE_KEY } from "./sticky.js?v=20261026-pulse1";
 import { nextPoll } from "./poll.js?v=20261026-mode1";
-import { voiceToggle, voiceTick, bindVoiceMenu } from "./voice.js?v=20261026-pct1";
+import { voiceToggle, voiceTick, bindVoiceMenu } from "./voice.js?v=20261026-pulse1";
 import { reportPanel } from "./players.js?v=20261024-i18n1";
 import { benchPanel, initResults, refreshHistory, renderHist } from "./results.js?v=20261024-i18n1";
 import { initAuth } from "./auth.js?v=20261024-i18n1";
-import { enhance, onSectionExpand, refreshSummary } from "./collapse.js?v=20261024-i18n1";
+import { enhance, onSectionExpand, refreshSummary } from "./collapse.js?v=20261026-pulse1";
 import { t as tr, ready } from "../../i18n.mjs";
 await ready;   // #73: the language file is in before anything renders
 document.title = tr("or.title", "PS2MapOracle — live PlanetSide 2 alert odds");

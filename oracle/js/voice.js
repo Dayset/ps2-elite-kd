@@ -103,46 +103,20 @@ export function setVoice(name) { V.voice = name; save(); speak("Voice set."); }
 export const voiceSupported = () => typeof window !== "undefined" && "speechSynthesis" in window && typeof SpeechSynthesisUtterance !== "undefined";
 export const voiceState = () => ({ on: V.on, fac: V.fac });
 
-/*
- * Ending: the gap to the faction we race (owner t652u), always in plain percent
- * (owner t680u/t681u: no "Pay attention!" tight-race form and no minutes endings).
- *   1st vs 2nd: "First, plus 2 percent difference."
- *   2nd vs 1st / 3rd vs 2nd: "Second, minus 2 percent difference."
- * Data: Worker state.territory (share %). Under 1 point it is said with one decimal.
- */
-const PLACE = ["First", "Second", "Third"];
-const FACS3 = ["VS", "NC", "TR"];
-const pctWord = (d) => (d < 1 ? (Math.round(d * 10) / 10).toString() : String(Math.round(d)));
-export function gapEnding(f, race) {
-  const terr = race && race.territory;
-  if (!terr || !FACS3.every((g) => Number.isFinite(+terr[g]))) return "";
-  const order = [...FACS3].sort((a, b) => terr[b] - terr[a] || (a === f ? -1 : b === f ? 1 : 0));
-  const place = order.indexOf(f);
-  if (place < 0) return "";
-  const rival = place === 0 ? order[1] : order[place - 1];
-  const gap = Math.abs(terr[f] - terr[rival]);
-  return ` ${PLACE[place]}, ${place === 0 ? "plus" : "minus"} ${pctWord(gap)} percent difference.`;
-}
-
 /**
- * Focus entry (Worker focus.js) -> spoken order, battlefield short (owner t652u wording):
- * no faction name (you follow your own), base, what it's worth, then the gap ending.
- *   "Defend Heyoka or minus 5. First, plus 10 percent difference."   "Hold your lanes. Second, minus 3 percent difference."
- * race = Worker state ({territory, momentum}). Pockets are not spoken for now (owner t652u);
- * the pockets argument is kept so callers don't change.
+ * Focus entry (Worker focus.js) -> spoken order: just the order (owner t689u), no
+ * percent, no cuts, no place/percent-difference ending.
+ *   "Attack Heyoka."  "Attack A and B."  "Defend Heyoka."  "Go Bitol."  "Hold your lanes."
+ * race/pockets arguments are kept so callers don't change.
  */
 export function sayText(f, p, race = null, pockets = null) { // eslint-disable-line no-unused-vars
   if (!p) return null;
-  const st = gapEnding(f, race);
-  if (p.quiet || !p.focus) return `Hold your lanes.${st}`;
-  const x = p.focus, d = Math.round(Math.abs((x.then ?? 0) - (x.now ?? 0)));
-  const n = (x.cuts || []).length, cut = n ? `, cuts ${n}` : "";
-  if (x.kind === "hold") return `Defend ${x.bases[0]} or minus ${d}${cut}.${st}`;
-  if (x.kind === "plan") return `Attack ${x.bases[0]} and ${x.bases[1]}${cut}, plus ${d}.${st}`; // "and": either one (owner t654u)
-  if (x.kind === "push") return `Go ${x.bases[0]}, the fight is there.${st}`;
-  if (x.kind === "guard") return `Prepare ${x.bases[0]}, likely next target.${st}`;
-  if (x.kind === "spoil") return `Spoil ${x.target}: take ${x.bases[0]}${cut}.${st}`;
-  return `Attack ${x.bases[0]}${cut}, plus ${d}.${st}`;
+  if (p.quiet || !p.focus) return "Hold your lanes.";
+  const x = p.focus, b = x.bases || [];
+  if (x.kind === "hold" || x.kind === "guard") return `Defend ${b[0]}.`;
+  if (x.kind === "plan" && b[1]) return `Attack ${b[0]} and ${b[1]}.`;   // "and": either one (owner t654u)
+  if (x.kind === "push") return `Go ${b[0]}.`;
+  return `Attack ${b[0]}.`;   // take / spoil
 }
 
 /** Same order = same kind and bases (odds wobbling doesn't re-announce). */

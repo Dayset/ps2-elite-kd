@@ -103,8 +103,10 @@ const decided = (w) => FACS.some((f) => w[f] >= 99.95);
  * holds (optional {}): filled with every threatened base per faction,
  * holds[f] = Map fid -> {fid, base, vs, p, loss, cuts} (the worst enemy for that
  * base), for the "All moves" defend list (src/defend.js).
+ * only (optional): "attack" = no threat (hold/guard) moves, "defend" = only threats
+ * (Commander modes, owner t691u: attacks from the look-ahead plan, defends from now).
  */
-export function focusPlan({ own, lattice, getBin, t, dur, mom, header, pf = () => P_DEFAULT, nFac, noCuts = false, holds = null, heat = null, frozen = null }) {
+export function focusPlan({ own, lattice, getBin, t, dur, mom, header, pf = () => P_DEFAULT, nFac, noCuts = false, holds = null, heat = null, frozen = null, only = null }) {
   const hot = (fid) => (heat && fid != null ? heat(fid) || 0 : 0);
   const { adj, names } = lattice;
   const wg = Object.keys(names).filter((f) => /warpgate/i.test(names[f]));
@@ -148,7 +150,7 @@ export function focusPlan({ own, lattice, getBin, t, dur, mom, header, pf = () =
   for (const f of FACS) {
     const fo = INV[f];
     const cands = [];
-    if (left >= TAKE_MIN_LEFT) {
+    if (left >= TAKE_MIN_LEFT && only !== "defend") {
       const firsts = [];
       for (const fid of attackable(own, base.reach, f)) {
         const o2 = new Map(own); const from = FAC[own.get(fid)]; o2.set(fid, fo);
@@ -180,7 +182,7 @@ export function focusPlan({ own, lattice, getBin, t, dur, mom, header, pf = () =
       }
     }
     // Threats: the enemy capture of one of our bases that hurts most.
-    if (left >= TAKE_MIN_LEFT) {
+    if (left >= TAKE_MIN_LEFT && only !== "attack") {
       for (const g of FACS) {
         if (g === f) continue;
         const reachG = base.reach;

@@ -1,5 +1,6 @@
-// Commander mode (owner t665u): "Solo" keeps one order until it is done, "Big squad"
-// takes the order aimed 3 minutes ahead and may switch every minute.
+// Commander mode (owner t665u, t691u): both modes get attacks aimed 3 minutes ahead and
+// defends only when a base is under attack (Worker focus_mix, oracle-worker/src/modes.js).
+// "Solo" keeps one order until it is done; "Big squad" shows #1-#3 and may switch every minute.
 // Pure functions: no DOM, no requests (a backtest script imports this file).
 //
 // Solo (sticky): an order is kept until
@@ -102,10 +103,11 @@ export function heatLookup(c) {
  */
 export function modeFocus(c, mode, mem, ctx) {
   if (!c || !c.focus) return c ? c.focus : null;
-  if (mode === "big") return c.focus_ahead || c.focus;
+  // focus_mix (owner t691u): attacks aimed ahead + defends only under attack, for both modes.
+  if (mode === "big") return c.focus_mix || c.focus_ahead || c.focus;
   if (mem.out && mem.ts === ctx.ts) return mem.out;
   mem.st = mem.st || {};
-  mem.out = soloFocus(c.focus, mem.st, { nowS: ctx.ts, ownerOf: ctx.ownerOf, heatOf: ctx.heatOf });
+  mem.out = soloFocus(c.focus_mix || c.focus, mem.st, { nowS: ctx.ts, ownerOf: ctx.ownerOf, heatOf: ctx.heatOf });
   mem.ts = ctx.ts;
   return mem.out;
 }

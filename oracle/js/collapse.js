@@ -35,7 +35,7 @@ const SUMMARIZERS = {
     const scope = card.querySelector(".cf.on") || card;
     // Focus first: the one move the commander wants (focus.js).
     const fo = scope.querySelector(".focus:not(.quiet)");
-    if (fo) return `${(fo.querySelector(".fhead") || fo).textContent.replace(tr("or.c.allForces", "All forces:"), "").replace(/\s+/g, " ").trim()} · ${(fo.querySelector(".fodds") || {}).textContent || ""}`.trim();
+    if (fo) return `${(fo.querySelector(".fhead") || fo).textContent.replace(/\s+/g, " ").trim()} · ${(fo.querySelector(".fodds") || {}).textContent || ""}`.trim();
     let atk = "", def = "";
     scope.querySelectorAll(".note").forEach((n) => {
       const ol = n.nextElementSibling;
