@@ -81,7 +81,7 @@ function start() {
   const pools = {}; // col id -> sorted finite values (percentiles, same as the Rankings table)
   let infM = null; // median infantry % over ranks.json (owner t590u: 🪖 fill starts here)
   let infC = null; // 🚜 infantry cut (owner t622u: ranks.json "tracCuts".cut, p25 of the data; 🚜 below it)
-  let zergMed = null; // median 🪳 Zerg over ranks.json (owner 2026-10-26: above it = roach)
+  let zergMed = null; // median 🪳 Zerg over ranks.json (owner 2026-10-26: reaching it = roach)
   let showRoach = false; // owner 2026-10-26: "Show Tactical Superiority" is off by default — roaches stay hidden until checked
 
   const app = () => window.__ps2EliteKd || null;
@@ -252,10 +252,10 @@ function start() {
     const zg = scored ?? est;
     if (!Number.isFinite(zg)) return `<td class="lv-iz" data-tip="Zerg ?">${showRoach ? "🪳" : ""}</td>`;
     const zgS = est != null ? `~${Math.round(zg)}` : String(Math.round(zg));
-    const roach = zergMed != null && zg > zergMed;
-    // Owner 2026-10-26: with "Show Tactical Superiority" on, a roach shows
-    // as 🪳 alone, no number beside it; with it off, only the value
-    // number shows, without the emoji.
+    const roach = zergMed != null && zg >= zergMed;
+    // Owner 2026-10-26: with "Show Tactical Superiority" on, a number
+    // that reaches the median turns into the 🪳 (no number beside it);
+    // with it off, only the value number shows, without the emoji.
     if (roach && showRoach) return `<td class="lv-iz" data-tip="Zerg ${zgS}">🪳</td>`;
     return `<td class="lv-iz" data-tip="Zerg ${zgS}">${zgS}</td>`;
   }

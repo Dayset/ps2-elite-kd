@@ -164,8 +164,8 @@ describe("🎥 live.html in a browser", () => {
       assert.equal(s.noIcons, 0, "no weapon icon column left");
       assert.equal(s.noEmojis, 0, "no emoji meters on the lines (parked)");
       assert.ok(s.nmW >= 280, `the name column absorbed the weapon column: ${s.nmW}px`);
-      const izFmt = /^(?:🪳|~?\d+)$/;
-      for (const t of [...s.victimIz, s.killerIz, s.meIz]) assert.match(t, izFmt, `zerg-only cell: ${t}`);
+      const izFmt = /^(?:🪳|~?\d+|)$/; // blank = unknown with the switch off (LostGuardVS: apk null, no estimate — specified blank, covered deterministically by the SLOW case)
+      for (const [label, t] of [["victim", ...s.victimIz], ["killer", s.killerIz], ["centre", s.meIz]].flatMap(([label, ...ts]) => ts.map((t) => [label, t]))) assert.match(t, izFmt, `zerg-only cell (${label}): ${t}`);
       assert.ok([...s.victimIz, s.killerIz, s.meIz].some((t) => t !== ""), "at least one zerg value on screen");
       assert.equal(s.svgFilters, 0, "no SVG filters on the page");
       assert.deepEqual(s.endless, [], "nothing animates forever (CPU)");

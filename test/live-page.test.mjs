@@ -265,8 +265,8 @@ test("no value = empty 0% emoji, never a dash (owner t567u): stats, iVi, uncache
   assert.match(js, /const vals = p\.cached \|\| \{\};/); // uncached too
   assert.match(js, /IVI\.map\(\(c\) => `<td class="lv-ivc">\$\{iviText\(c, vals\[c\.id\]\)\}<\/td>`\)/);
   assert.ok(js.includes('return `<td class="lv-iz" data-tip="Zerg ?">${showRoach ? "🪳" : ""}</td>`;'), "owner 2026-10-26: unknown = roach when shown, blank when hidden");
-  assert.ok(js.includes('const roach = zergMed != null && zg > zergMed;'), "owner 2026-10-26: above the ranked median = roach");
-  assert.ok(js.includes('if (roach && showRoach) return `<td class="lv-iz" data-tip="Zerg ${zgS}">🪳</td>`;'), "owner 2026-10-26: roach = 🪳 alone when shown, number only when hidden");
+  assert.ok(js.includes('const roach = zergMed != null && zg >= zergMed;'), "owner 2026-10-26: median and above = roach");
+  assert.ok(js.includes('if (roach && showRoach) return `<td class="lv-iz" data-tip="Zerg ${zgS}">🪳</td>`;'), "owner 2026-10-26: roach = number turns into 🪳 when shown, number only when hidden");
   assert.ok(js.includes('zergMed = median(zergCol.filter'), "owner 2026-10-26: median from the ranked zerg column");
   assert.ok(js.includes('return `<td class="lv-iz" data-tip="Zerg ?">${showRoach ? "🪳" : ""}</td>`;'), "owner 2026-10-26: unknown = roach when shown, blank when hidden, never a dash");
   assert.match(js, /const zgS = est != null \? `~\$\{Math\.round\(zg\)\}` : String\(Math\.round\(zg\)\);/); // owner 2026-10-26: zerg-only, no infantry fallback, no dash // t614: "~N" estimate survives as text
