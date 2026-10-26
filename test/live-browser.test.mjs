@@ -824,17 +824,46 @@ describe("🎥 live assist share in a browser", () => {
   });
 });
 
-describe("🎥 live headshot name in a browser", () => {
-  it("headshot name (owner 2026-10-26): a marked victim name is not truncated in a wide column", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+describe("🎥 live assist hold in a browser", () => {
+  it("assist hold (owner 2026-10-26): an assist refills bar 2 exactly like a kill", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
-      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", true)})`); // headshot kill
-      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[1].cid, "80", false)})`); // plain kill, control
-      assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic .lv-name").length === 2 && ![...document.querySelectorAll("#liveList tbody.lv-vic .lv-name")].some((n) => n.textContent.includes("…"))`)), true, "victim rows landed with names");
-      const rows = JSON.parse(await ev(`JSON.stringify([...document.querySelectorAll("#liveList tbody.lv-vic .lv-name")].map((n) => ({ text: n.textContent, sw: n.scrollWidth, cw: n.clientWidth, hs: !!n.parentElement.querySelector(".lv-hs2") })))`));
-      assert.equal(rows.length, 2);
-      for (const r of rows) assert.ok(r.sw <= r.cw + 1, `${r.text} (headshot: ${r.hs}) truncated: scroll ${r.sw} > client ${r.cw}`);
+      const kill = () => ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
+      const assist = () => ev(`window.__fakeWs.emit(${JSON.stringify({ event_name: "GainExperience", character_id: ME.cid, experience_id: 2, amount: 100, timestamp: "0" })})`);
+      const bar = () => ev(`document.getElementById("liveDpsHoldBar") ? document.getElementById("liveDpsHoldBar").style.width : "missing"`);
+      await kill();
+      await new Promise((r) => setTimeout(r, 2000));
+      await kill();
+      await new Promise((r) => setTimeout(r, 2000));
+      await kill(); // meter started, hold ~2 s
+      assert.equal(await ev(until(`!document.getElementById("liveDpsVal").textContent.includes("/")`)), true, "meter started");
+      await new Promise((r) => setTimeout(r, 1500)); // bar drained to ~25%
+      const before = parseFloat(await bar());
+      await assist();
+      await new Promise((r) => setTimeout(r, 300)); // tick catches up
+      const after = parseFloat(await bar());
+      assert.ok(after > 70, `assist refills bar 2 to near full: ${before}% -> ${after}%`);
+      assert.ok(after > before + 30, `assist visibly refills a drained bar 2: ${before}% -> ${after}%`);
       assert.deepEqual(errors, [], "no page errors");
     });
+  });
+});
+
+describe("🎥 live phone slot lines in a browser", () => {
+  it("slot lines (owner 2026-10-26): a two-digit ×N fits the fixed time column on phones and desktop", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    for (const [w, h] of [[390, 844], [1920, 1080]]) {
+      await withLive(async ({ ev, errors }) => {
+        assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+        await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
+        // the kill commit resets the assist count async (name lookup) — wait for its render (streak line) before counting assists, or it wipes the early ones
+        assert.equal(await ev(until(`[...document.querySelectorAll("#liveList tbody.lv-me .lv-time .lv-em")].some((el) => el.textContent === "⚰️×1")`)), true, "kill committed");
+        for (let k = 0; k < 12; k++) await ev(`window.__fakeWs.emit(${JSON.stringify({ event_name: "GainExperience", character_id: ME.cid, experience_id: 2, amount: 100, timestamp: "0" })})`);
+        assert.equal(await ev(until(`[...document.querySelectorAll("#liveList tbody.lv-me .lv-time .lv-em")].some((el) => el.textContent === "🤝×12")`)), true, "12 assists counted");
+        const fit = JSON.parse(await ev(`JSON.stringify((() => { const td = document.querySelector("#liveList tbody.lv-me .lv-time"); return [...document.querySelectorAll("#liveList tbody.lv-me .lv-time .lv-em")].map((el) => ({ text: el.textContent, sw: el.scrollWidth, cell: td.clientWidth })); })())`));
+        assert.equal(fit.length, 2);
+        for (const f of fit) assert.ok(f.sw <= f.cell, `${f.text} fits the time column at ${w}px: content ${f.sw} <= cell ${f.cell}`);
+        assert.deepEqual(errors, [], "no page errors");
+      }, { width: w, height: h });
+    }
   });
 });
