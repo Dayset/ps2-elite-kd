@@ -127,7 +127,7 @@ export async function drawMap(a) {
   // squad #1-#3. An HTML overlay over the map (not inside the SVG) so the pulse is a
   // compositor-only transform/opacity animation and never repaints the hexes; apply()
   // moves the rings with pan/zoom. prefers-reduced-motion: static ring (oracle.css).
-  const pulseData = ordData.filter((o) => o.n <= (S.cmdMode === "big" ? 3 : 1));
+  const pulseData = ordData.filter((o) => o.n <= (S.cmdPulse ?? (S.cmdMode === "big" ? 3 : 1)));
   // Ring radius in screen px for unit = map units per screen px: clear on a phone, not huge zoomed in.
   const ringPx = (unit) => Math.max(15, Math.min(45, (r / unit) * 1.6));
   const layoutOrds = (unit, names) => {   // unit = map units per screen px

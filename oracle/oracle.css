@@ -373,3 +373,6 @@ footer { color: var(--dim); font-size: var(--fs-12); margin-top: var(--s-5); }
 #map .pulses .ps { box-shadow: 0 0 0 2px rgba(11, 12, 14, .9), inset 0 0 0 2px rgba(11, 12, 14, .9); }
 #map .pulses .pp { opacity: 0; will-change: transform, opacity; animation: orPulse 1.4s ease-out infinite; }
 @keyframes orPulse { 0% { transform: scale(1); opacity: .9; } 100% { transform: scale(1.8); opacity: 0; } }
+/* 🔥 Heat toggle (owner t692u): grey when off, like the muted speaker. */
+.heatbtn:not(.on) { filter: grayscale(1); opacity: .65; }
+.heatbtn.on { border-color: #ff7a2f; background: #2a1a10; }

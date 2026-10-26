@@ -368,3 +368,18 @@ approved it, "shipped" means it is live in the running pipeline.
   plans' defends on those same bases held 67.5 % (Big) / 67.7 % (Solo), so the new ones
   are better there. Window 5 / 10 / 15 min tested: 10 min matches the heat model's window
   (15 min scores ~1 point higher but includes older fights).
+- **🔥 Heat toggle (owner t692u).** A 🔥 button next to each faction's voice button: when on,
+  the Commander ignores the alert / win math and sends the faction to the hottest fight
+  (`oracle-worker/src/heatmode.js`, `commander.focus_heat`): fight heat = the existing
+  heatScore (flip at the base 100, next to it 40, fading over 4 min); defend our hot base, or
+  attack a hot enemy base next to ours. One direction; a second one when its heat is at
+  least 0.6 × the first. Pulsing rings on those bases, voice "Attack X." / "Defend X.",
+  remembered on the device (`ps2oracle_heatmode`), 9 languages. Uses the flip list the
+  Commander already reads: in the archive every map-snapshot change had a flip event, the
+  flip a median 28 s earlier, so snapshot diffs add nothing; no extra reads or writes.
+  Backtest, 57 alerts (2026-10-26, `/workspace/modes/heat*.mjs`): the hottest pick still had
+  a fight at or next to it in the 5 min after the order was heard 39.6% of the time
+  (attack 40.0%, defend 39.2%); a random front-line base 32.5%; the base itself changed
+  hands again 7.8%. Close second: a #2 with ≥ 0.6 × the heat still had a fight as often as
+  #1 (46% / 40% vs 39% / 40%), below 0.6 it was 9-11 points worse; two directions about a
+  third of the time.

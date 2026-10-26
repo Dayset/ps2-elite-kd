@@ -1,11 +1,11 @@
 // PS2MapOracle dashboard — split from index.html (#15). No behaviour change.
 import { S, FACS, COLOR, esc, $, stars, mins, bar, pct1, det, info, wide, syncDetails, PHONE_MQ } from "./state.js?v=20261018-scrub2";
 import { get, names } from "./api.js?v=20261018-scrub2";
-import { drawMap, highlightBase, recolorMap } from "./map.js?v=20261026-pulse1";
+import { drawMap, highlightBase, recolorMap } from "./map.js?v=20261026-heat1";
 import { chart, chartHover } from "./chart.js?v=20261024-i18n1";
 import { lockCard, lockTick } from "./lock.js?v=20261024-i18n1";
-import { commander, commanderIdle } from "./commander.js?v=20261026-pulse1";
-import { modeFocus, ownerLookup, heatLookup, pickMode, MODE_KEY } from "./sticky.js?v=20261026-pulse1";
+import { commander, commanderIdle } from "./commander.js?v=20261026-heat1";
+import { modeFocus, ownerLookup, heatLookup, pickMode, MODE_KEY, pickHeat, HEAT_KEY } from "./sticky.js?v=20261026-heat1";
 import { nextPoll } from "./poll.js?v=20261026-mode1";
 import { voiceToggle, voiceTick, bindVoiceMenu } from "./voice.js?v=20261026-pulse1";
 import { reportPanel } from "./players.js?v=20261024-i18n1";
@@ -193,7 +193,7 @@ function render2(now) {
       </div>
     </div>
     <section class="card chart" style="margin-top:14px"><h2 data-sec="win-chance-over-time">${tr("or.h.chart", "Win chance over time")}</h2><div id="chart"><div class="sk sk-chart" aria-label="${tr("or.loading", "Loading")}"></div></div></section>
-    ${a.status === "live" ? commander(cmdView, a.commander_ts, now, lead, cmdMode) : `${commanderIdle()}${reportPanel(a)}`}
+    ${a.status === "live" ? commander(cmdView, a.commander_ts, now, lead, cmdMode, heatOn) : `${commanderIdle()}${reportPanel(a)}`}
     ${benchPanel(a)}`;
   if ($("backLive")) $("backLive").onclick = backToLive;
   $("main").querySelectorAll("li[data-base]").forEach((li) => { li.onmouseenter = () => highlightBase(li.dataset.base); li.onmouseleave = () => highlightBase(null); });
@@ -209,6 +209,7 @@ function render2(now) {
   // 🔊 Commander voice (#65): speaks the followed faction's top order when it changes.
   const cmdNow = cmdView;
   $("main").querySelectorAll("[data-cmode]").forEach((b) => b.onclick = () => { cmdMode = pickMode(b.dataset.cmode); try { localStorage.setItem(MODE_KEY, cmdMode); } catch {} render(Math.floor(Date.now() / 1000)); });
+  $("main").querySelectorAll("[data-heat]").forEach((b) => b.onclick = () => { heatOn = !heatOn; try { localStorage.setItem(HEAT_KEY, heatOn ? "1" : "0"); } catch {} render(Math.floor(Date.now() / 1000)); });
   $("main").querySelectorAll("[data-voice]").forEach((b) => b.onclick = () => { voiceToggle(b.dataset.voice, cmdNow && cmdNow.focus, s, cmdNow && cmdNow.pockets); render(Math.floor(Date.now() / 1000)); });
   if (cmdNow) voiceTick(cmdNow.focus, undefined, false, undefined, s, cmdNow.pockets); // s: territory + 15-min change for the gap ending (owner t652u)
   bindVoiceMenu($("main")); // ⚙️ voice list (owner t650u), replaces the always-visible dropdown
@@ -227,13 +228,15 @@ function render2(now) {
 // Worker's 3-min-ahead plan. Both use the same /live payload: no extra requests.
 let cmdMode = "solo";
 try { cmdMode = pickMode(localStorage.getItem(MODE_KEY)); } catch {}
+let heatOn = false;          // 🔥 Heat toggle (owner t692u), remembered on this device
+try { heatOn = pickHeat(localStorage.getItem(HEAT_KEY)); } catch {}
 const soloMem = {};          // per alert key: sticky state, stepped once per commander update
 const regionsOf = {};        // zone -> regions file (static asset, loaded once)
 function withMode(a, c) {
   if (!c || !c.focus) return c;
   if (!(a.zone in regionsOf)) { regionsOf[a.zone] = null; names(a.zone).then((r) => { regionsOf[a.zone] = r || {}; }).catch(() => {}); }
   const mem = soloMem[a.key] || (soloMem[a.key] = {});
-  const focus = modeFocus(c, cmdMode, mem, { ts: a.commander_ts || 0, ownerOf: ownerLookup(a.state && a.state.owners, regionsOf[a.zone]), heatOf: heatLookup(c) });
+  const focus = modeFocus(c, cmdMode, mem, { ts: a.commander_ts || 0, ownerOf: ownerLookup(a.state && a.state.owners, regionsOf[a.zone]), heatOf: heatLookup(c) }, heatOn);
   return { ...c, focus };
 }
 

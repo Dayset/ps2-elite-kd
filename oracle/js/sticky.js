@@ -82,6 +82,9 @@ export function soloFocus(focus, mem, ctx) {
 
 export const MODE_KEY = "ps2oracle_cmdmode";
 export const pickMode = (v) => (v === "big" ? "big" : "solo");
+// 🔥 Heat toggle (owner t692u): on top of either mode, remembered on this device.
+export const HEAT_KEY = "ps2oracle_heatmode";
+export const pickHeat = (v) => v === "1";
 
 /** Base name -> owner ("VS"|"NC"|"TR", null = neutral, undefined = unknown) from /live state.owners + the regions file. */
 export function ownerLookup(owners, regions) {
@@ -101,8 +104,10 @@ export function heatLookup(c) {
  * The focus the page shows for a mode. "big": the Worker's 3-min-ahead plan (falls back to the
  * plain one); "solo": sticky orders, stepped once per commander update (mem is per alert, mutated).
  */
-export function modeFocus(c, mode, mem, ctx) {
+export function modeFocus(c, mode, mem, ctx, heat = false) {
   if (!c || !c.focus) return c ? c.focus : null;
+  // 🔥 Heat (owner t692u): the Worker's hottest-fight plan, no alert math (older rows: normal plan).
+  if (heat && c.focus_heat) return c.focus_heat;
   // focus_mix (owner t691u): attacks aimed ahead + defends only under attack, for both modes.
   if (mode === "big") return c.focus_mix || c.focus_ahead || c.focus;
   if (mem.out && mem.ts === ctx.ts) return mem.out;

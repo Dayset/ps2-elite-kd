@@ -27,6 +27,7 @@ import { handlePrivacy } from "./privacy.js";
 import { cutAwareSnap } from "./cut.js";
 import { focusPlan } from "./focus.js";
 import { mixPlan, underwayCheck } from "./modes.js";
+import { heatPlan } from "./heatmode.js";
 import { cutAwareDefends } from "./defend.js";
 import { liveHeat } from "./heat.js";
 import { computePockets } from "./pockets.js";
@@ -558,6 +559,10 @@ export async function commanderFor(env, key, nowMs = Date.now()) {
       const dfn = focusPlan({ ...focusArgs, holds: {}, only: "defend" });
       cmd.focus_mix = mixPlan(atk, dfn, underwayCheck({ own, lattice, flips, nowTs: Math.trunc(now) }));
     } catch { /* older plans still stand */ }
+    // 🔥 Heat mode (owner t692u): no alert math, just the hottest fight per faction (src/heatmode.js).
+    // Same flips, same row: no extra reads or writes. Hottest pick still had a fight at or next to
+    // it 5 min after it was heard 39.6% of the time (random front-line base: 32.5%), 57 alerts.
+    try { cmd.focus_heat = heatPlan({ own, lattice, flips, nowTs: Math.trunc(now) }); } catch { /* other plans still stand */ }
     // "All moves" defend list on the same cut-aware win drop as the focus (#63).
     for (const f of FACS) for (const p of pk.pockets[f] || []) { const h = holds[f] && holds[f].get(p.cp_fid); p.hold_drop = h ? Math.round(Math.max(0, h.loss) * 10) / 10 : null; }
     cmd.pockets = pk.pockets;
