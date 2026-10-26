@@ -211,6 +211,8 @@ body.live-stream > :not(#liveFeed) { display: none; } /* owner 2026-10-26: no he
 body.live-stream #liveState, body.live-stream #liveDpmTau, body.live-stream #liveCashHist, body.live-stream #liveShare, body.live-stream #liveSession, body.live-stream #liveShowTacticalWrap { display: none; } /* owner 2026-10-26: stream shows the names list + DPM block + the card */
 body.live-stream #liveDps .live-metric:last-child { display: none; } /* online pill: meters + session only */
 .live-dps #liveDpsVal { font-weight: 600; font-variant-numeric: tabular-nums; }
+.live-dps #liveDpsVal.live-dps-warm { font-size: 0.72rem; font-weight: 400; color: var(--dim); }
+.live-dps #liveDpsVal .live-dps-warm-n { font-size: 1rem; font-weight: 600; color: var(--text); }
 /* Owner 2026-10-26: DPM row as stacked meter lines — DPM glows and grows
    with the shown value, hold/combat bars shrink as their seconds fall.
    No width transition: bars move frame-for-frame with the numbers. */

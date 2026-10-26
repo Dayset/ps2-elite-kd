@@ -660,7 +660,7 @@ function start() {
   // the formula's +34% suffix says the parts are boosted). A floored 0 stays 0 (0 × 1.34 = 0).
   const CASH_BOOST_PCT = 34;
   const cashIv = (p) => (p && p.cached && Number.isFinite(p.cached.adjs) ? Math.round(Math.max(0, p.cached.adjs) * (1 + CASH_BOOST_PCT / 100)) : null);
-  let lastDps = "", lastDpsLabel = "", lastCash = "", lastDbg = "", lastSpikeEff = null;
+  let lastDps = "", lastDpsLabel = null, lastCash = "", lastDbg = "", lastSpikeEff = null; // null so the first tick clears the init "DPM" label during warm-up
   // Owner 2026-10-26 (DPM row bars): each meter line carries a bar under
   // its text — DPM glows and grows with the shown value (full = two
   // kill-spikes at the current τ), hold/combat bars are value-proportional
@@ -722,11 +722,16 @@ function start() {
       let label;
       if (dpsEvents.length < 3) {
         const v = `${dpsEvents.length}/3`;
-        label = tr("live.dpmWarm", "DPM starts at 3");
-        if (v !== lastDps) { dpsEl.textContent = v; lastDps = v; }
+        label = "";
+        if (v !== lastDps) {
+          dpsEl.innerHTML = tr("live.dpmWait", "waiting {frac} deaths", { frac: `<span class="live-dps-warm-n">${v}</span>` });
+          dpsEl.classList.add("live-dps-warm");
+          lastDps = v;
+        }
         setBar(dpsBarEl, "dpm", "0.0%");
       } else {
         label = tr("live.dps", "DPM");
+        dpsEl.classList.remove("live-dps-warm");
         const trueDpm = dpsNow(dpsEvents, effNow, dpmTauMs, holdMs) * 60;
         if (shownDps === null) { shownDps = trueDpm; dpsEl.textContent = shownDps.toFixed(1); setBar(dpsBarEl, "dpm", dpmBarPct(shownDps)); }
         else if (!scrollJob) {

@@ -224,13 +224,13 @@ describe("🎥 live.html in a browser", () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
       const dps = () => ev(`Number(document.getElementById("liveDpsVal").textContent)`);
-      assert.equal(await ev(until(`document.getElementById("liveDpsVal").textContent === "0/3"`)), true, "meter waits at 0/3");
-      assert.equal(await ev(`document.getElementById("liveDpsLabel").textContent`), "DPM starts at 3", "warm-up explains the wait");
+      assert.equal(await ev(until(`document.getElementById("liveDpsVal").textContent === "waiting 0/3 deaths"`)), true, "meter waits at 0/3");
+      assert.equal(await ev(`document.getElementById("liveDpsLabel").textContent`), "", "warm-up explains the wait");
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
-      assert.equal(await ev(until(`document.getElementById("liveDpsVal").textContent === "1/3"`)), true, "first kill bumps the count");
+      assert.equal(await ev(until(`document.getElementById("liveDpsVal").textContent === "waiting 1/3 deaths"`)), true, "first kill bumps the count");
       const gain = JSON.stringify({ event_name: "GainExperience", character_id: ME.cid, experience_id: 2, amount: 100, timestamp: "0" });
       await ev(`window.__fakeWs.emit(${gain})`);
-      assert.equal(await ev(until(`document.getElementById("liveDpsVal").textContent === "2/3"`)), true, "an assist bumps the count too");
+      assert.equal(await ev(until(`document.getElementById("liveDpsVal").textContent === "waiting 2/3 deaths"`)), true, "an assist bumps the count too");
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[1].cid, "80", false)})`);
       const afterKill = await ev(until(`Number(document.getElementById("liveDpsVal").textContent) >= 10000`)) && await dps();
       assert.ok(afterKill >= 10000, `the 3rd chunk starts the meter high: ${afterKill}`);
@@ -284,7 +284,7 @@ describe("🎥 live.html in a browser", () => {
       await ev(`window.__fakeWs.emit(${death(ME.cid, TEAM.cid, "80", false)})`);
       // #76: the row lands on arrival and is retracted when the commit proves the same faction
       assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)").length === 0 && !document.querySelector("#liveList .lv-pend")`)), true, "a teamkill leaves no victim row");
-      assert.equal(await ev(`document.getElementById("liveDpsVal").textContent`), "0/3", "a teamkill adds no DPM chunk");
+      assert.equal(await ev(`document.getElementById("liveDpsVal").textContent`), "waiting 0/3 deaths", "a teamkill adds no DPM chunk");
       const emAre = async (arr, why) => assert.equal(await ev(until(`JSON.stringify([...document.querySelectorAll("#liveList tbody.lv-me .lv-time .lv-em")].map((w) => w.textContent)) === ${JSON.stringify(JSON.stringify(arr))}`)), true, why);
       await linesAre([""], "a teamkill starts no streak");
       await emAre([], "a teamkill starts no bounty in the left slot");
@@ -491,10 +491,10 @@ describe("🎥 live hold meter in a browser", () => {
       // after commits, so only gaps between fast commits measure cleanly.
       // The median absorbs the dirty gap: median(1 s, 12 s, 12 s) = 12 s.
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
-      assert.equal(await ev(until(`document.getElementById("liveDpsVal").textContent === "1/3"`)), true, "first kill bumps the count");
+      assert.equal(await ev(until(`document.getElementById("liveDpsVal").textContent === "waiting 1/3 deaths"`)), true, "first kill bumps the count");
       assert.equal(await ev(`document.getElementById("liveDpsHoldBar").style.width`), "0%", "one spike: still no gap, hold bar at zero");
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[1].cid, "80", false)})`);
-      assert.equal(await ev(until(`document.getElementById("liveDpsVal").textContent === "2/3"`)), true, "second kill bumps the count");
+      assert.equal(await ev(until(`document.getElementById("liveDpsVal").textContent === "waiting 2/3 deaths"`)), true, "second kill bumps the count");
       await new Promise((r) => setTimeout(r, 12000)); // a slow player's real gap, cleanly measured
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[2].cid, "80", false)})`);
       assert.equal(await ev(until(`Number(document.getElementById("liveDpsVal").textContent) >= 10000`)), true, "third kill starts the meter held");
@@ -514,7 +514,7 @@ describe("🎥 live hold meter in a browser", () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
-      assert.equal(await ev(until(`document.getElementById("liveDpsVal").textContent === "1/3"`)), true, "first kill bumps the count");
+      assert.equal(await ev(until(`document.getElementById("liveDpsVal").textContent === "waiting 1/3 deaths"`)), true, "first kill bumps the count");
       await ev(`window.__fakeWs.emit(${death(OPP[1].cid, ME.cid, "432", false)})`); // death 1: no average yet, so no freeze
       await new Promise((r) => setTimeout(r, 5000)); // the spawn run, measured
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[1].cid, "80", false)})`); // kill 2: measures the 5 s run (and clears the old run's row)
@@ -672,7 +672,7 @@ describe("🎥 live reconnect in a browser", () => {
       // immediate reconnect: a new socket opens without waiting out a backoff timer
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "reconnected at once");
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
-      assert.equal(await ev(until(`document.getElementById("liveDpsVal").textContent === "1/3"`)), true, "kill on the new socket counts");
+      assert.equal(await ev(until(`document.getElementById("liveDpsVal").textContent === "waiting 1/3 deaths"`)), true, "kill on the new socket counts");
       assert.deepEqual(errors, [], "no page errors");
     });
   });
@@ -955,6 +955,24 @@ describe("🎥 live unknown iVi in a browser", () => {
       await ev(`window.__fakeWs.emit(${death(ME.cid, SLOW.cid, "80", false)})`); // ME kills SLOW: not a ranks row, so its iVi stays unknown
       assert.equal(await ev(until(`![...document.querySelectorAll("#liveList tbody.lv-vic .lv-nm")].some((el) => el.textContent.includes("…"))`)), true, "victim name filled (commit render)");
       assert.equal(await ev(`document.querySelector("#liveList tbody.lv-vic .lv-ivc").textContent`), "0000", "unknown iVi reads 0000");
+      assert.deepEqual(errors, [], "no page errors");
+    });
+  });
+});
+
+describe("🎥 live warm-up readout in a browser", () => {
+  it("warm-up (owner 2026-10-26): small dark-gray 'waiting N/3 deaths' with the N/3 bigger inside, then a real number at 3", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      assert.equal(await ev(`document.querySelector("#liveDpsVal").textContent`), "waiting 0/3 deaths", "waiting 0/3 at load");
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
+      assert.equal(await ev(until(`document.querySelector("#liveDpsVal").textContent === "waiting 1/3 deaths"`)), true, "waiting 1/3 after one kill");
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[1].cid, "80", false)})`);
+      assert.equal(await ev(until(`document.querySelector("#liveDpsVal").textContent === "waiting 2/3 deaths"`)), true, "waiting 2/3 after two kills");
+      const [valSize, fracSize] = await ev(`[getComputedStyle(document.querySelector("#liveDpsVal")).fontSize, getComputedStyle(document.querySelector("#liveDpsVal .live-dps-warm-n")).fontSize]`);
+      assert.ok(parseFloat(fracSize) > parseFloat(valSize), `N/3 (${fracSize}) bigger than the small text (${valSize})`);
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[2].cid, "80", false)})`);
+      assert.equal(await ev(until(`!document.querySelector("#liveDpsVal").textContent.includes("waiting")`)), true, "real DPM number at the 3rd spike");
       assert.deepEqual(errors, [], "no page errors");
     });
   });

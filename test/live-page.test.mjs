@@ -791,10 +791,12 @@ test("hold meter (owner 2026-10-25): decay freezes on death, lifts on a spike or
 test("warm-up (owner 2026-10-25): the meter waits for its 3rd chunk — first two spikes only bump the count", () => {
   const js = liveSrc();
   assert.match(js, /const dpsLabelEl = \$\("liveDpsLabel"\);/);
-  assert.match(js, /let lastDps = "", lastDpsLabel = "", lastCash = "", lastDbg = "", lastSpikeEff = null;/);
+  assert.match(js, /let lastDps = "", lastDpsLabel = null, lastCash = "", lastDbg = "", lastSpikeEff = null;/); // null so the first tick clears the init "DPM" label
   assert.match(js, /if \(dpsEvents\.length < 3\) \{/);
   assert.match(js, /v = `\$\{dpsEvents\.length\}\/3`;/);
-  assert.match(js, /label = tr\("live\.dpmWarm", "DPM starts at 3"\);/);
+  assert.match(js, /dpsEl\.innerHTML = tr\("live\.dpmWait", "waiting \{frac\} deaths", \{ frac: `<span class="live-dps-warm-n">\$\{v\}<\/span>` \}\);/); // warm-up reads "waiting N/3 deaths"
+  assert.match(cssSrc(), /\.live-dps #liveDpsVal\.live-dps-warm \{ font-size: 0\.72rem; font-weight: 400; color: var\(--dim\); \}/); // small dark gray
+  assert.match(cssSrc(), /\.live-dps #liveDpsVal \.live-dps-warm-n \{ font-size: 1rem; font-weight: 600; color: var\(--text\); \}/); // the N inside is bigger
   assert.match(js, /if \(dpsLabelEl && label !== lastDpsLabel\) \{ dpsLabelEl\.textContent = label; lastDpsLabel = label; \}/);
 });
 
@@ -802,7 +804,7 @@ test("hold indicator (owner 2026-10-26): the hold bar drains from the latest spi
   const js = liveSrc();
   const swap = readFileSync(new URL("scripts/build-live.mjs", root), "utf8");
   assert.match(swap, /<div class="live-metric"><div class="live-bar" aria-hidden="true"><div id="liveDpsHoldBar" class="live-bar-fill"><\/div><\/div><\/div>/);
-  assert.match(js, /let lastDps = "", lastDpsLabel = "", lastCash = "", lastDbg = "", lastSpikeEff = null;/);
+  assert.match(js, /let lastDps = "", lastDpsLabel = null, lastCash = "", lastDbg = "", lastSpikeEff = null;/);
   assert.match(js, /const holdMs = combatHoldMs\(spikeTimes\(\), deathTimes\);/);
   assert.ok(js.includes('if (dpsHoldBarEl) setBar(dpsHoldBarEl, "hold", timerBarPct(lastSpikeEff != null ? holdMs - (effNow - lastSpikeEff) : 0, holdMs));'), "owner 2026-10-26: hold drains from the latest spike over the median");
   assert.doesNotMatch(js, /\$\("liveDpsHold"\)/);
