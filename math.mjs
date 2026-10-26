@@ -213,6 +213,22 @@ export function slope2575(p) {
   return curveSlope(p);
 }
 
+/**
+ * curveSlope measured with every enemy KPM multiplied by `scale` (PlayStation 🦁 Brave, owner t700:
+ * scale = the weekly PC / PS kill-speed gap from ps-baseline.mjs, so PS fights sit on the PC kill-speed
+ * scale). scale 1 (PC) = curveSlope(p) unchanged.
+ */
+export function scaledCurveSlope(p, scale = 1) {
+  const g = +scale;
+  if (!(g > 0) || g === 1) return curveSlope(p);
+  if (Array.isArray(p.rows) && p.rows.length) {
+    const rows = p.rows.map((r) => ({ ...r, kpm: (+r.kpm || 0) * g }));
+    return curveSlope({ rows, curve: kpmCurve(rows) });
+  }
+  const curve = (Array.isArray(p.curve) ? p.curve : []).map((pt) => ({ ...pt, kpm: (+pt.kpm || 0) * g }));
+  return curveSlope({ curve });
+}
+
 /** LionHeart = Activity × (shifted slope)^1.5 */
 export function pressureVolume(activity, slope) {
   if (activity !== activity || slope !== slope) return NaN;

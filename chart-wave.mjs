@@ -2,8 +2,8 @@
  * The 🌊 wave (the y-scale slider swinging on its own, drawn at most ~120 times a second) and the K/D ⇄ iVi y-scale
  * switch (#66: moved out of app.js unchanged).
  */
-import { isFiniteNum } from "./math.mjs?v=20261026-psb1";
-import { escapeHtml } from "./app-util.mjs?v=20261026-psb1";
+import { isFiniteNum } from "./math.mjs?v=20261026-brv1";
+import { escapeHtml } from "./app-util.mjs?v=20261026-brv1";
 
 /**
  * $ = app.js state and functions this part uses, as live getters (and setters for state it changes), so app.js

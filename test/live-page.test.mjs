@@ -696,7 +696,7 @@ test("adjustable tau (owner 2026-10-25): DPM decay tau is a persisted page contr
 test("bounty (owner 2026-10-26): one ⚰️×streak, then one 💰×lives, weapon under the centre name", () => {
   const js = liveSrc();
   const css = cssSrc();
-  assert.match(js, /bountyNext[^}]*\} from "\.\/live-model\.mjs\?v=20261026-psb1"/);
+  assert.match(js, /bountyNext[^}]*\} from "\.\/live-model\.mjs\?v=20261026-brv1"/);
   assert.match(js, /const b = bountyNext\(\{ streak: bountyStreak, lives: bountyLives \}, ev\.kind === "kill"\);/);
   assert.match(js, /if \(bountyLives > 0\) return `<span class="lv-em">💰×\$\{bountyLives\}<\/span>`;/); // one bag + count, not one per life
   assert.match(js, /if \(bountyStreak > 0\) return `<span class="lv-em">⚰️×\$\{bountyStreak\}<\/span>`;/); // one coffin + count
@@ -782,7 +782,7 @@ test("hold meter (owner 2026-10-25): decay freezes on death, lifts on a spike or
   assert.ok(js.includes('killXpRefs.push([Date.now(), amt / kbase])'), "owner 2026-10-26: kill XP ratios feed the multiplier");
   assert.ok(js.includes('const share = assistShare(amt, xid, xpMultAt(killXpRefs, Date.now()));'), "owner 2026-10-26: assist share from amount / multiplier / base");
   assert.ok(js.includes('const dmg = share == null ? DPS_ASSIST : Math.round(1000 * share);'), "owner 2026-10-26: scaled spike, flat 500 fallback for spawn/invalid");
-  assert.match(js, /combatHoldMs, holdGaps, combatRuns, spawnRunHoldMs, timeToCombatMs, timerBarPct, easeInQuad \} from "\.\/live-model\.mjs\?v=20261026-psb1"/);
+  assert.match(js, /combatHoldMs, holdGaps, combatRuns, spawnRunHoldMs, timeToCombatMs, timerBarPct, easeInQuad \} from "\.\/live-model\.mjs\?v=20261026-brv1"/);
 });
 
 test("warm-up (owner 2026-10-25): the meter waits for its 3rd chunk — first two spikes only bump the count", () => {
@@ -897,7 +897,7 @@ test("scroll (owner 2026-10-25): gas-counter queue — one 700 ms ease-in scroll
   assert.match(js, /if \(scrollQ\.length\) startScroll\(\);/);
   assert.match(js, /if \(Math\.abs\(trueDpm - shownDps\) < 0\.05\) shownDps = trueDpm;/);
   assert.match(js, /shownDps \+= \(trueDpm - shownDps\) \* 0\.35;/);
-  assert.match(js, /easeInQuad \} from "\.\/live-model\.mjs\?v=20261026-psb1"/);
+  assert.match(js, /easeInQuad \} from "\.\/live-model\.mjs\?v=20261026-brv1"/);
 });
 
 test("past cashouts background (owner 2026-10-25): the history sits on the theme panel, not transparent", () => {

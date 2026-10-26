@@ -1798,6 +1798,12 @@ footer .foot-opts .ranks-meta { margin: 0; font-size: 0.78rem; }
 footer .foot-opts .footer-thanks { font-size: 0.78rem; }
 footer .foot-opts .thanks-gap { margin-top: 0.45rem; }
 footer .footer-thanks { margin: 0; color: var(--dim); }
+/* t701: PS footer "PlayStation vs PC difference", collapsed by default, no animation. */
+footer details.ps-baseline-note > summary { cursor: pointer; list-style: none; }
+footer details.ps-baseline-note > summary::-webkit-details-marker { display: none; }
+footer details.ps-baseline-note > summary::before { content: "▸ "; }
+footer details.ps-baseline-note[open] > summary::before { content: "▾ "; }
+footer details.ps-baseline-note > p { margin: 0.2em 0 0; }
 footer .foot-links a { text-decoration: none; font-size: 0.82rem; width: fit-content; }
 footer .foot-links a:hover { text-decoration: underline; }
 /* "(N commits since Oct 7, 2026)" counter beside 📝 Update log (Dayset 2026-10-20):

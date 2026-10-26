@@ -14,15 +14,16 @@ import {
   combatOutput,
   projectedMech,
   curveSlope,
+  scaledCurveSlope,
   pressureVolume,
   resolveIvi,
   deathMixLite,
-} from "./math.mjs?v=20261026-psb1";
+} from "./math.mjs?v=20261026-brv1";
 import { splitFarm, chopScrims, isScrimRoom, isPenalizedPadder, padderPenalty } from "./padding.mjs?v=20261023-short1";
 import { vehicleCutFor, applyVehicleCut, isVehicleCutCleared } from "./vehicle-cut.mjs?v=20261022-wpc1";
 import { OPPONENT_TOP_N, LEGACY_TOP_N, sampleTopN } from "./census-fetch.mjs?v=20261010-sav1";
 import { cleanTimes } from "./flairs.mjs?v=20261010-sav1";
-import { rfBaseFor } from "./ps-baseline.mjs?v=20261026-psb1";
+import { rfBaseFor, kpmScaleFor } from "./ps-baseline.mjs?v=20261026-brv1";
 
 /**
  * Older shared-cache files were scored on the top 50 opponents; new fetches use
@@ -259,7 +260,11 @@ function metricsRow(p) {
   const sampleKills = m && isFiniteNum(m.kills) ? m.kills : 0;
   const sampleDeaths = m && isFiniteNum(m.deaths) ? m.deaths : 0;
   const thin = !enoughFights(sampleKills, sampleDeaths);
-  const pvs = pressureVolume(act, slope);
+  // 🦁 Brave: PS measures the slope with enemy KPM × the weekly kill-speed gap and multiplies 🏃 Activity by it
+  // (owner t700, Option B; ps-baseline.mjs). PC: gap 1 = unchanged. 📉 Slope / 🏃 Activity columns stay raw.
+  const braveScale = kpmScaleFor(p && p.room);
+  const braveSlope = braveScale === 1 ? slope : scaledCurveSlope(p, braveScale);
+  const pvs = pressureVolume(act * braveScale, braveSlope);
   return {
     p,
     m,
@@ -279,6 +284,8 @@ function metricsRow(p) {
     // 🧱 Consistency (0–1): holds up vs hard opposition; main page shows its population percentile.
     cons: consistencyOf(p),
     slope,
+    braveScale,
+    braveSlope,
     // Unblanked values (build-log shows them; red-flag rules read m.raw).
     pvs,
     // Sample size; below MIN_FIGHTS the page shows THIN_METRICS as "—" (shownValue).

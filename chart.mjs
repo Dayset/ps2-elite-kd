@@ -2,11 +2,11 @@
  * The skill chart: raw / smooth modes, 👻 ghosts, the y-scale and zoom, the SVG drawing (also the 🌊 wave frames), and
  * the chart section's idle / skeleton states (#66: moved out of app.js unchanged).
  */
-import { playerMetrics } from "./player-metrics.mjs?v=20261026-psb1";
-import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261026-psb1";
+import { playerMetrics } from "./player-metrics.mjs?v=20261026-brv1";
+import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261026-brv1";
 import GHOST_MODEL from "./data/ghost-model.mjs?v=20261010-sav1";
-import { kpmBandCurve, isFiniteNum, X_MAX, bandReliability, clampYZoom, Y_ZOOM_DEFAULT, yScale, windowYValues, applyYZoom, xMaxForZoom, EASY_MAX, HARD_MIN } from "./math.mjs?v=20261026-psb1";
-import { niceLogTicks, niceLinTicks, formatTick, slugKey } from "./app-util.mjs?v=20261026-psb1";
+import { kpmBandCurve, isFiniteNum, X_MAX, bandReliability, clampYZoom, Y_ZOOM_DEFAULT, yScale, windowYValues, applyYZoom, xMaxForZoom, EASY_MAX, HARD_MIN } from "./math.mjs?v=20261026-brv1";
+import { niceLogTicks, niceLinTicks, formatTick, slugKey } from "./app-util.mjs?v=20261026-brv1";
 import { POOP_MARK, POOP_TIP, isPenalizedPadder } from "./padding.mjs?v=20261023-short1";
 import { HUT_MARK, HUT_TIP } from "./hut.mjs?v=20261023-short1";
 import { t as tr } from "./i18n.mjs";

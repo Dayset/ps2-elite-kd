@@ -77,7 +77,7 @@
       });
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261025-loc1" />
+  <link rel="stylesheet" href="styles.css?v=20261026-brv1" />
   <style>
     /* Installed-app launch splash (t465u). Android draws its own launch splash first:
        the maskable icon (big medal on black) seen through a 192 px circle, on the
@@ -554,7 +554,7 @@
             <p id="ranksMeta" class="ranks-meta"></p>
             <p id="pageNameRate" class="ranks-meta" hidden></p>
             <p class="footer-thanks thanks-gap"><span data-i18n="foot.thanks">Data from the Daybreak Census API</span></p>
-            <p id="psBaselineNote" class="footer-thanks ps-baseline-note" hidden></p>
+            <details id="psBaselineNote" class="footer-thanks ps-baseline-note" hidden><summary data-i18n="foot.psVsPc">PlayStation vs PC difference</summary><p id="psBaselineText"></p></details>
             <p class="footer-thanks"><span data-i18n="foot.thanksTo">Thanks to</span> <a href="https://wt.honu.pw/" target="_blank" rel="noopener noreferrer">HONU</a> / Varunda</p>
           </div>
         </div>
@@ -573,7 +573,7 @@
   </footer>
 
   <script type="module" src="i18n.mjs"></script>
-  <script type="module" src="app.js?v=20261026-psb1"></script>
+  <script type="module" src="app.js?v=20261026-brv1"></script>
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").catch(function () {});

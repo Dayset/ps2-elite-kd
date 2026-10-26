@@ -79,3 +79,31 @@ test("weekly workflow: cached data only, commits data-ps/ on change", () => {
   assert.match(y, /COMMIT_DIR: data-ps\//);
   assert.doesNotMatch(y, /CENSUS_|secrets\.|honu\.pw/);
 });
+
+test("🦁 Brave (owner t700): PS slope on enemy KPM × gap and Activity × gap; PC unchanged", async () => {
+  const { curveSlope, scaledCurveSlope, pressureVolume } = await import("../math.mjs");
+  const { kpmScaleFor } = await import("../ps-baseline.mjs");
+  const { playerMetrics, normalizePlayer } = await import("../player-metrics.mjs");
+  const rows = [];
+  for (let i = 0; i < 40; i++) rows.push({ name: "o" + i, kpm: 0.2 + i * 0.02, kills: 30 - i * 0.5, deaths: 10 + i * 0.3 });
+  const base = { display: "T", global_kd: 1.5, global_kpm: 0.9, own_kpm: 0.9, acc: 0.2, hsr: 0.2, ivi: 900, rows };
+  const prev = psKpmRatio();
+  try {
+    setPsKpmRatio(1.69);
+    assert.equal(kpmScaleFor("pc"), 1);
+    assert.equal(kpmScaleFor("ps"), 1.69);
+    assert.equal(scaledCurveSlope({ rows }, 1), curveSlope({ rows }));
+    const pc = playerMetrics(normalizePlayer({ ...base }));
+    const ps = playerMetrics(normalizePlayer({ ...base, room: "ps" }));
+    assert.ok(Math.abs(pc.pvs - pressureVolume(pc.act, pc.slope)) < 1e-9);
+    assert.equal(ps.braveScale, 1.69);
+    assert.equal(ps.slope, pc.slope); // 📉 Slope column stays raw
+    assert.equal(ps.act, pc.act); // 🏃 Activity column stays raw
+    const scaledRows = rows.map((r) => ({ ...r, kpm: r.kpm * 1.69 }));
+    assert.ok(Math.abs(ps.braveSlope - curveSlope({ rows: scaledRows, curve: [] })) < 1e-9);
+    assert.ok(Math.abs(ps.pvs - pressureVolume(ps.act * 1.69, ps.braveSlope)) < 1e-9);
+    assert.ok(ps.pvs > pc.pvs);
+  } finally {
+    setPsKpmRatio(prev);
+  }
+});

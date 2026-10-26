@@ -9,11 +9,11 @@
  * (exampleFacts / exampleCard), so Node tests cover them.
  */
 import { t as tr } from "./i18n.mjs";
-import { normalizePlayer, playerMetrics, consistencyParts, MIN_FIGHTS_RULE } from "./player-metrics.mjs?v=20261026-psb1";
-import { RF_SOFT, SPEED_BAND_LOW, SPEED_BAND_HIGH, speedSlowFactor, speedAdjustment, SLOPE_FLOOR, SLOPE_EPS } from "./math.mjs?v=20261026-psb1";
-import { rfBaseFor } from "./ps-baseline.mjs?v=20261026-psb1";
+import { normalizePlayer, playerMetrics, consistencyParts, MIN_FIGHTS_RULE } from "./player-metrics.mjs?v=20261026-brv1";
+import { RF_SOFT, SPEED_BAND_LOW, SPEED_BAND_HIGH, speedSlowFactor, speedAdjustment, SLOPE_FLOOR, SLOPE_EPS } from "./math.mjs?v=20261026-brv1";
+import { rfBaseFor } from "./ps-baseline.mjs?v=20261026-brv1";
 import { percentileOf, quantile } from "./dist.mjs?v=20261010-sav1";
-import { slugKey, bareName } from "./rank-row.mjs?v=20261026-psb1";
+import { slugKey, bareName } from "./rank-row.mjs?v=20261026-brv1";
 import { PADDER_PENALTY_REF } from "./padding.mjs?v=20261023-short1";
 
 export const DEMO_NAME = "YuigahamaYui";
@@ -67,7 +67,8 @@ export function exampleFacts(raw, pools = {}) {
     median: pools.adjs ? quantile(pools.adjs, 0.5) : NaN,
     iviPct: pools.ivi ? percentileOf(pools.ivi, m.ivi) : null,
     act: m.act, slope: m.slope,
-    shifted: fin(m.slope) ? Math.max(m.slope - SLOPE_FLOOR + SLOPE_EPS, SLOPE_EPS) : NaN,
+    braveScale: fin(m.braveScale) ? m.braveScale : 1, // PS: the weekly kill-speed gap (owner t700), PC 1
+    shifted: fin(m.braveSlope) ? Math.max(m.braveSlope - SLOPE_FLOOR + SLOPE_EPS, SLOPE_EPS) : NaN,
     pvs: m.pvs,
     consLo: cp ? cp.lo : NaN, consHi: cp ? cp.hi : NaN, cons: cp ? cp.value : NaN,
     kd05: m.kd05, inflation: m.inflation, coi: m.coi, mech: m.mech,
@@ -118,7 +119,8 @@ export function exampleCard(x) {
     tr("cx.trackers", '<p><b>What trackers show:</b> <span class="st-num">KD {kd} · IvI {ivi}</span>, which looks {look}.</p>', { kd: f(x.kd), ivi: r0(x.ivi), look: trackerLook(x.iviPct) }) +
     "\n      " + tr("cx.sees", "<p><b>What the site sees:</b></p>") +
     `\n      <ol class="st-list st-num">\n${list}\n      </ol>\n      ` +
-    tr("cx.result", "<p><b>Result:</b> {v}, better than {pct}% of tracked players (median {median}). The public IvI said {ivi}. Same sample: 🏃 Activity {act} · 🦁 Brave {brave} · ⚡ Const {cons}.</p>", { v: r0(shown), pct: x.pct == null ? "—" : x.pct, median: r0(x.median), ivi: r0(x.ivi), act: f(x.act), brave: f(x.pvs), cons: f(x.cons) })
+    tr("cx.result", "<p><b>Result:</b> {v}, better than {pct}% of tracked players (median {median}). The public IvI said {ivi}. Same sample: 🏃 Activity {act} · 🦁 Brave {brave} · ⚡ Const {cons}.</p>", { v: r0(shown), pct: x.pct == null ? "—" : x.pct, median: r0(x.median), ivi: r0(x.ivi), act: f(x.act), brave: f(x.pvs), cons: f(x.cons) }) +
+    (x.braveScale > 1 ? "\n      " + tr("cx.bravePs", "<p>🎮 PlayStation 🦁 Brave: enemy kill speeds and 🏃 Activity × {g} (the weekly PC/PlayStation kill-speed gap).</p>", { g: (+x.braveScale).toFixed(2) }) : "")
   );
 }
 

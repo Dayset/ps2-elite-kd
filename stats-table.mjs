@@ -3,9 +3,9 @@
  * their marks (💩 🌾 🛖 🐣 † …) (#66: moved out of app.js unchanged).
  */
 import { playMinutes, HUT_TIP, HUT_MARK } from "./hut.mjs?v=20261023-short1";
-import { slugKey, escapeHtml, fmtNum } from "./app-util.mjs?v=20261026-psb1";
+import { slugKey, escapeHtml, fmtNum } from "./app-util.mjs?v=20261026-brv1";
 import { newbieFactor, newPlayerHours } from "./newbie-diff.mjs?v=20261023-nbh1";
-import { isFiniteNum } from "./math.mjs?v=20261026-psb1";
+import { isFiniteNum } from "./math.mjs?v=20261026-brv1";
 import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261024-crowd1";
 import { zergEstimate } from "./zerg-revive.mjs?v=20261024-crowd1";
 import { infMedian } from "./tractor.mjs?v=20261024-trac1";
@@ -16,7 +16,7 @@ import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { t as tr } from "./i18n.mjs";
 import { AIMGAP_HINT, ZERG_HINT, ZERG_MISSING, zergCellTip, zergEstHtml, AIMGAP_MISSING, fmtSigned, aimGapCellTip, diffValueHtml } from "./trait-tips.mjs?v=20261024-crowd1";
 import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261023-short1";
-import { THIN_MARK, THIN_NOTE_HEAD, playerMetrics, shownValue, THIN_METRICS, thinPlayerLine, isLegacySample, LEGACY_SAMPLE_TIP, LEGACY_SAMPLE_MARK } from "./player-metrics.mjs?v=20261026-psb1";
+import { THIN_MARK, THIN_NOTE_HEAD, playerMetrics, shownValue, THIN_METRICS, thinPlayerLine, isLegacySample, LEGACY_SAMPLE_TIP, LEGACY_SAMPLE_MARK } from "./player-metrics.mjs?v=20261026-brv1";
 import { compareByCharName, columnRef, honuProfileUrl, pctFromRef, pctTitle, fmtPctFromRef } from "./analyze-run.mjs?v=20261023-priv1";
 import { dotSlot } from "./online-status.mjs?v=20261018-onl1";
 import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261022-wpc1";

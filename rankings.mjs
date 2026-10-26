@@ -9,7 +9,7 @@ import { t as tr, currentLang } from "./i18n.mjs";
 const tipOf = (c) => (c.id ? tr("tip." + c.id, c.tip || "") : c.tip || "") + (c.tipExtra ? " " + c.tipExtra : "");
 import { compareByCharName } from "./analyze-run.mjs?v=20261023-priv1";
 import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits, binJumpTarget } from "./dist.mjs?v=20261010-sav1";
-import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261026-psb1";
+import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261026-brv1";
 import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP, isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261023-short1";
 import { HUT_MARK, HUT_TIP, HUT_DIFF_NOTE } from "./hut.mjs?v=20261023-short1";
 import { paletteColor } from "./palette.mjs?v=20261010-sav1";
@@ -23,10 +23,10 @@ import { groupByTier, openTierIds, pickedInGroup, groupIndexAt, tierOf } from ".
 import { createDistCycler, createWheelSwiper } from "./dist-cycle.mjs?v=20261017-cycle15";
 import { sfx } from "./sfx.mjs?v=20261026-sfx1";
 import { slideSwap, attachDragCarousel } from "./chart-slide.mjs?v=20261020-flick1";
-import { mergeFreshRows } from "./rank-row.mjs?v=20261026-psb1";
+import { mergeFreshRows } from "./rank-row.mjs?v=20261026-brv1";
 import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-sav1";
 import { confirmedPadderSlugs } from "./padding.mjs?v=20261023-short1";
-import { slugKey, bareName } from "./rank-row.mjs?v=20261026-psb1";
+import { slugKey, bareName } from "./rank-row.mjs?v=20261026-brv1";
 import { hiddenList } from "./hidden.mjs?v=20261010-sav1";
 // PC | PlayStation rooms (#55): each room ranks its own players only (data/ or data-ps/).
 import { pageRoom, dataPrefix, roomLsKey, psServer } from "./rooms.mjs?v=20261022-ps1";

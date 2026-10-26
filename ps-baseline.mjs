@@ -16,7 +16,7 @@
  * Node: whatever was set before) → PS_KPM_RATIO_DEFAULT (first measurement).
  * The gap is clamped to [PS_KPM_RATIO_MIN, PS_KPM_RATIO_MAX] (sanity).
  */
-import { RF_SOFT } from "./math.mjs?v=20261026-psb1";
+import { RF_SOFT } from "./math.mjs?v=20261026-brv1";
 
 export const PS_KPM_RATIO_MIN = 1.0;
 export const PS_KPM_RATIO_MAX = 3.0;
@@ -64,6 +64,14 @@ export function psIviBaseline() {
 /** RF baseline for adjustedIvi(ivi, rf, base): PS rooms 0.6 ÷ gap, everything else RF_SOFT. */
 export function rfBaseFor(room) {
   return room === "ps" ? RF_SOFT / state.ratio : RF_SOFT;
+}
+
+/**
+ * 🦁 Brave kill-speed scale (owner t700, Option B): PS rooms = the gap (enemy KPMs × gap for the Brave slope,
+ * 🏃 Activity × gap inside Brave), everything else 1 (PC unchanged).
+ */
+export function kpmScaleFor(room) {
+  return room === "ps" ? state.ratio : 1;
 }
 
 // ---- load the stored value ----
