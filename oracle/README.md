@@ -68,6 +68,7 @@ ps2maporacle/
 ├── INFRASTRUCTURE.md      # how the live pipeline + cron jobs work
 ├── REPEAT.md              # what is needed to repeat / migrate it
 ├── CENSUS_ERRORS.md       # Census API + PS2Alerts errors seen in practice
+├── knowledge.md           # what the Oracle can/can't see + planned commander vision (#78)
 ├── backend/               # Python backend (143 files)
 │   ├── map_poller.py          # 60s Census map snapshots
 │   ├── census_events.py       # WebSocket: deaths, flips, alerts
