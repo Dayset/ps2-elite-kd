@@ -324,7 +324,6 @@ function start() {
   const iviPct = (p) => { const c = IVI[0]; return p && p.cached ? goodOf(c, p.cached[c.id]) : null; };
   let shown = null; // the newest event that already played its entrance (a re-render must not replay it)
   let fresh = null;
-  let goneShown = null; // the cleared killer whose fade-out already played
   /** Owner t578u: emoji fill grows 0 → level over FILL_MS when a line first shows (or its stats arrive later: the key
    *  changes from "u" to "c"). Re-renders pass the time already played as a negative delay, so nothing restarts. */
   const FILL_MS = 10000; // owner t588u: 10 s (was 5 s)
@@ -361,10 +360,8 @@ function start() {
     const newest = st.lastEv || null;
     fresh = newest && newest !== shown ? newest : null;
     shown = newest;
-    // owner t576u: a kill clears the killer line — the cleared killer fades out once, then the slot stays empty
-    const fade = !st.killer && st.gone && st.gone !== goneShown;
-    goneShown = st.gone;
-    const atk = st.killer ? oppLine(st.killer, "atk") : fade ? oppLine(st.gone, "atk", " lv-out") : emptyLine("atk");
+    // owner 2026-10-26: a kill only dims the killer line to 15% — the old killer stays until the next death fills the slot again
+    const atk = st.killer ? oppLine(st.killer, "atk") : st.gone ? oppLine(st.gone, "atk", " lv-dim") : emptyLine("atk");
     const fm = fillIn(`me:${me.cached ? "c" : "u"}`);
     const mid = `<tbody class="lv-ev lv-me${fm.cls}"${fm.sty}><tr><td class="lv-time">${bountyHtml()}${assistHtml()}</td>${cells(me, true)}</tr></tbody>`;
     const low = Array.from({ length: VICTIM_LINES }, (_, i) => (st.victims[i] ? oppLine(st.victims[i], "vic") : emptyLine("vic"))).join("");
@@ -724,7 +721,7 @@ function start() {
         const v = `${dpsEvents.length}/3`;
         label = "";
         if (v !== lastDps) {
-          dpsEl.innerHTML = tr("live.dpmWait", "waiting {frac} deaths", { frac: `<span class="live-dps-warm-n">${v}</span>` });
+          dpsEl.innerHTML = tr("live.dpmWait", "Start at {frac}", { frac: `<span class="live-dps-warm-n">${v}</span>` });
           dpsEl.classList.add("live-dps-warm");
           lastDps = v;
         }

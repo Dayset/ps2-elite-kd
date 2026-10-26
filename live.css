@@ -86,10 +86,8 @@ col.lv-c-iz { width: var(--lv-iz); }
 @keyframes lvKillerDrop { 0% { opacity: 0; transform: translateY(-160%) scale(0.97); } 60% { opacity: 1; transform: translateY(6%) scale(1.01); } 80% { transform: translateY(-2%); } 100% { opacity: 1; transform: none; } }
 @keyframes lvFlash { from { opacity: 1; } to { opacity: 0; } }
 @keyframes lvShake { 20% { transform: translateX(-3px); } 40% { transform: translateX(3px); } 60% { transform: translateX(-2px); } 80% { transform: translateX(2px); } }
-/* Owner t576u: a kill clears the killer line — a quick fade, the line keeps its place (the overlay never resizes). */
-.lv-ev.lv-out > tr > td { animation: lvOut 0.35s ease-in forwards; }
-@keyframes lvOut { to { opacity: 0; visibility: hidden; } }
-@media (prefers-reduced-motion: reduce) { .lv-ev.lv-out > tr > td { animation: none; opacity: 0; } }
+/* Owner 2026-10-26: a kill only dims the killer line — the old killer stays at 15% until the next death replaces it. */
+.lv-ev.lv-dim > tr > td { opacity: 0.15; }
 @media (prefers-reduced-motion: reduce) { .lv-ev.lv-new > tr > td, .lv-ev.lv-new > tr > td::after, .live-state .live-dot { animation: none !important; } }
 .lv-time { font-size: 0.72rem; color: var(--dim); vertical-align: middle; text-align: right; padding: 0 0.25rem !important; /* fixed column: "59m 59s" fits, nothing shifts */ }
 /* Owner t546u: no skill graph in Live (the main page keeps it). */

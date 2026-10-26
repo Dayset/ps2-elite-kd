@@ -496,7 +496,7 @@ export function overlayPush(state, ev, now = Date.now()) {
     return { killer: k, victims, lastEv: k, gone: null };
   }
   const { rows } = feedPush(victims, ev, at);
-  return { killer: null, victims: rows, lastEv: rows[0], gone: killer };
+  return { killer: null, victims: rows, lastEv: rows[0], gone: killer || s.gone }; // owner 2026-10-26: the dim killer stays through further kills, until the next death
 }
 /** Every opponent on screen (killer first), for the background-fetch queue. */
 export function overlayRows(state) { return state ? [state.killer, ...state.victims].filter(Boolean) : []; }

@@ -285,25 +285,26 @@ test("no value = empty 0% emoji, never a dash (owner t567u): stats, iVi, uncache
   assert.match(css, /\.lv-iv\.lv-nil \{ display: inline-flex;/);
 });
 
-test("killer line clears on a kill (owner t576u): kill after death empties the top, the next death fills it again", () => {
+test("killer line dims on a kill (owner 2026-10-26): kill after death dims the top to 15%, the next death fills it again", () => {
   let st = overlayPush(null, { kind: "death", opp: "k1" }, 1000);
   assert.equal(st.killer.opp, "k1");
   assert.equal(st.gone, null);
   st = overlayPush(st, { kind: "kill", opp: "v1" }, 5000);
   assert.equal(st.killer, null);
-  assert.equal(st.gone.opp, "k1"); // the cleared killer, for its one fade-out
+  assert.equal(st.gone.opp, "k1"); // the cleared killer, kept dim until the next death
   assert.equal(st.gone.gap, 4000); // frozen at the time until the kill
   st = overlayPush(st, { kind: "kill", opp: "v2" }, 6000);
   assert.equal(st.killer, null);
-  assert.equal(st.gone, null); // nothing left to fade
+  assert.equal(st.gone.opp, "k1"); // the dim killer stays through further kills, until the next death
   st = overlayPush(st, { kind: "death", opp: "k2" }, 7000);
   assert.equal(st.killer.opp, "k2");
   assert.deepEqual(st.victims.map((r) => r.opp), ["v2", "v1"]);
   const js = liveSrc();
   const css = cssSrc();
-  assert.match(js, /const atk = st\.killer \? oppLine\(st\.killer, "atk"\) : fade \? oppLine\(st\.gone, "atk", " lv-out"\) : emptyLine\("atk"\);/);
-  assert.match(css, /\.lv-ev\.lv-out > tr > td \{ animation: lvOut 0\.35s ease-in forwards; \}/);
-  assert.match(css, /prefers-reduced-motion: reduce\) \{ \.lv-ev\.lv-out > tr > td \{ animation: none; opacity: 0; \} \}/);
+  assert.match(js, /const atk = st\.killer \? oppLine\(st\.killer, "atk"\) : st\.gone \? oppLine\(st\.gone, "atk", " lv-dim"\) : emptyLine\("atk"\);/);
+  assert.match(css, /\.lv-ev\.lv-dim > tr > td \{ opacity: 0\.15; \}/);
+  assert.doesNotMatch(js, /lv-out|goneShown/);
+  assert.doesNotMatch(css, /lvOut/);
 });
 
 test("⏱️ timer removed (owner 2026-10-26): event times still feed the model, but no stopwatch shows on any row", () => {
@@ -794,7 +795,7 @@ test("warm-up (owner 2026-10-25): the meter waits for its 3rd chunk — first tw
   assert.match(js, /let lastDps = "", lastDpsLabel = null, lastCash = "", lastDbg = "", lastSpikeEff = null;/); // null so the first tick clears the init "DPM" label
   assert.match(js, /if \(dpsEvents\.length < 3\) \{/);
   assert.match(js, /v = `\$\{dpsEvents\.length\}\/3`;/);
-  assert.match(js, /dpsEl\.innerHTML = tr\("live\.dpmWait", "waiting \{frac\} deaths", \{ frac: `<span class="live-dps-warm-n">\$\{v\}<\/span>` \}\);/); // warm-up reads "waiting N/3 deaths"
+  assert.match(js, /dpsEl\.innerHTML = tr\("live\.dpmWait", "Start at \{frac\}", \{ frac: `<span class="live-dps-warm-n">\$\{v\}<\/span>` \}\);/); // warm-up reads "Start at N/3"
   assert.match(cssSrc(), /\.live-dps #liveDpsVal\.live-dps-warm \{ font-size: 0\.72rem; font-weight: 400; color: var\(--dim\); \}/); // small dark gray
   assert.match(cssSrc(), /\.live-dps #liveDpsVal \.live-dps-warm-n \{ font-size: 1rem; font-weight: 600; color: var\(--text\); \}/); // the N inside is bigger
   assert.match(js, /if \(dpsLabelEl && label !== lastDpsLabel\) \{ dpsLabelEl\.textContent = label; lastDpsLabel = label; \}/);
