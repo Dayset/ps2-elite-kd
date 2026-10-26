@@ -67,7 +67,10 @@
       // Small review files first (padding.mjs / vehicle-cut.mjs wait for them before app.js runs),
       // then the startup name list and the few ranks columns 🎲 / ✨ Stats need. The full
       // ranks.json (1.7 MB) is left to the Rankings section, which loads lazily.
-      [["reviewed", D + "reviewed.json"], ["notFarm", D + "not-farm.json"], ["farm", D + "farm.json"], ["names", D + "names.json"], ["ranksLite", D + "ranks-lite.json"]].forEach(function (e) {
+      var early = [["reviewed", D + "reviewed.json"], ["notFarm", D + "not-farm.json"], ["farm", D + "farm.json"], ["names", D + "names.json"], ["ranksLite", D + "ranks-lite.json"]];
+      // PS only: the weekly kill-speed gap for the lower iVi baseline (ps-baseline.mjs, owner t698).
+      if (window.__ps2Room === "ps") early.unshift(["psKpm", D + "kpm-ratio.json"]);
+      early.forEach(function (e) {
         var opt = { cache: "no-cache" };
         if (e[2]) opt.priority = e[2];
         window.__ps2Early[e[0]] = fetch(e[1], opt).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
@@ -566,6 +569,7 @@
             <p id="ranksMeta" class="ranks-meta"></p>
             <p id="pageNameRate" class="ranks-meta" hidden></p>
             <p class="footer-thanks thanks-gap"><span data-i18n="foot.thanks">Data from the Daybreak Census API</span></p>
+            <p id="psBaselineNote" class="footer-thanks ps-baseline-note" hidden></p>
             <p class="footer-thanks"><span data-i18n="foot.thanksTo">Thanks to</span> <a href="https://wt.honu.pw/" target="_blank" rel="noopener noreferrer">HONU</a> / Varunda</p>
           </div>
         </div>
@@ -584,7 +588,7 @@
   </footer>
 
   <script type="module" src="i18n.mjs"></script>
-  <script type="module" src="app.js?v=20261025-loc2"></script>
+  <script type="module" src="app.js?v=20261026-psb1"></script>
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").catch(function () {});

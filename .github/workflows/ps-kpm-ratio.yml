@@ -1,0 +1,59 @@
+name: PlayStation iVi baseline (weekly)
+
+# Owner t698 (2026-10-26): the PS adjusted-iVi baseline is 600 ÷ the PC /
+# PlayStation kill-speed gap (median opponent KPM, data/ranks.json vs
+# data-ps/ranks.json), rechecked once a week. Cached data only: no Census or
+# Honu calls. Commits data-ps/ only, and only when the gap changed (then the
+# PS ranks are rebuilt with the new baseline). Shares the PS room's
+# concurrency group so it never races a PS refresh.
+
+on:
+  schedule:
+    - cron: "17 11 * * 1" # Mondays 11:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write # commit data-ps/
+
+concurrency:
+  group: refresh-ps-room
+  cancel-in-progress: false
+
+jobs:
+  gap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "20"
+
+      - name: Git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Measure the kill-speed gap
+        id: gap
+        run: node scripts/ps-kpm-ratio.mjs
+
+      - name: Rebuild PS ranks and commit (data-ps/ only, only on change)
+        if: steps.gap.outputs.changed == '1'
+        env:
+          COMMIT_DIR: data-ps/
+          REBUILD_DERIVED: node scripts/build-ranks.mjs --room ps
+        run: |
+          node scripts/build-ranks.mjs --room ps
+          stray=$(git status --porcelain | grep -v ' data-ps/' || true)
+          if [ -n "$stray" ]; then
+            echo "::error::baseline run changed files outside data-ps/: $stray"
+            git checkout -- . ':!data-ps' 2>/dev/null || true
+            git clean -fdq -- . ':!data-ps' 2>/dev/null || true
+          fi
+          scripts/ci-commit-push.sh "chore(ps-baseline): PlayStation iVi baseline ${{ steps.gap.outputs.old }} → ${{ steps.gap.outputs.baseline }} (weekly kill-speed gap ${{ steps.gap.outputs.ratio }}) [bot]"

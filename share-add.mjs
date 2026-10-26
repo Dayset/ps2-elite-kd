@@ -2,7 +2,7 @@
  * Sending freshly loaded players to the shared cache (/add, /seen notes), the 🔗 share link, and which names the page
  * starts with (?names=, reload, last comparison) (#66: moved out of app.js unchanged).
  */
-import { slugKey, escapeHtml, parseNames } from "./app-util.mjs?v=20261024-split1";
+import { slugKey, escapeHtml, parseNames } from "./app-util.mjs?v=20261026-psb1";
 import { t as tr } from "./i18n.mjs";
 import { withRoom } from "./rooms.mjs?v=20261022-ps1";
 import { sfx } from "./sfx.mjs?v=20261026-sfx1";

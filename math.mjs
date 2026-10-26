@@ -79,10 +79,15 @@ export function rfIf(p, sliceN) {
   };
 }
 
-/** adjIvI = 600 * (1 + log2(RF / 0.6)); soft RF 0.6 ≈ public IvI 600. */
-export function adjustedIvi(ivi, rf) {
+/**
+ * adjIvI = 600 * (1 + log2(RF / base)); soft RF 0.6 ≈ public IvI 600 (PC).
+ * base defaults to RF_SOFT; the PlayStation room passes a lower one
+ * (ps-baseline.mjs: 0.6 ÷ the PC / PlayStation kill-speed gap, owner t698).
+ */
+export function adjustedIvi(ivi, rf, base = RF_SOFT) {
   if (rf == null || !(rf > 0)) return NaN;
-  return 600 * (1 + Math.log2(rf / RF_SOFT));
+  const b = base > 0 ? base : RF_SOFT;
+  return 600 * (1 + Math.log2(rf / b));
 }
 
 /**

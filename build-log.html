@@ -204,6 +204,11 @@
           <details class="st-info"><summary>ⓘ How it works</summary><div id="hutRule" class="st-rule"></div></details>
           <div id="hut" class="st-dim">Loading…</div>
         </details>
+        <details class="st-sub-sec" id="secPsBaseline">
+          <summary><h3>🎮 PlayStation iVi baseline <span id="psbCount" class="st-count">…</span></h3></summary>
+          <details class="st-info"><summary>ⓘ How it works</summary><div class="st-rule">Automatic, PlayStation room only (owner t698, 2026-10-26). PS lobbies kill slower, so ⚔️ adjusted iVi on PS rates against a lower baseline: 600 ÷ gap, gap = PC median 🎯 opponent KPM ÷ PS median opponent KPM (data/ranks.json vs data-ps/ranks.json, players with enough fights). Rechecked every Monday by .github/workflows/ps-kpm-ratio.yml (cached data only, no Census / Honu); data-ps/kpm-ratio.json and the PS ranks change only when the gap changes. Gap clamped to 1.0–3.0. PC stays at 600. Shown publicly in the PS footer.</div></details>
+          <div id="psBaseline" class="st-dim">Loading…</div>
+        </details>
         <details class="st-sub-sec" id="secVehDiff">
           <summary><h3>🔀🚜 Diff vehicle damp <span id="vdiffCount" class="st-count">…</span></h3></summary>
           <details class="st-info"><summary>ⓘ How it works</summary><div id="vdiffRule" class="st-rule"></div></details>
@@ -1235,6 +1240,19 @@
 
     /** 🛖 Safe-spot damping (status.json "hut", scripts/build-ranks.mjs + hut.mjs): only players shown with 🛖 (Diff drop ≥ markMin, owner t512u; smaller reductions still apply but are not listed); click a header to sort (default: original Diff). */
     let hutSort = { key: "diffRaw", dir: -1 };
+    /** 🎮 PlayStation iVi baseline (data-ps/kpm-ratio.json, scripts/ps-kpm-ratio.mjs weekly; owner t698). */
+    async function renderPsBaseline() {
+      let d = null;
+      try { const r = await fetch("data-ps/kpm-ratio.json?t=" + Date.now(), { cache: "no-store" }); if (r.ok) d = await r.json(); } catch { /* keep the last render */ }
+      if (!d) { $("psBaseline").innerHTML = "Not measured yet (next weekly check)."; $("psbCount").textContent = "—"; return; }
+      $("psbCount").textContent = String(d.baseline);
+      const h = (d.history || []).map((e) => "<tr><td>" + esc(e.at) + "</td><td>" + fmt(e.ratio, 3) + "</td><td>" + esc(e.baseline) + "</td></tr>").join("");
+      $("psBaseline").innerHTML =
+        "<p>Now: gap <b>" + fmt(d.ratio, 3) + "</b> → PS baseline <b>" + esc(d.baseline) + "</b> (PC 600). Measured " + esc(d.measuredAt) +
+        ": PC median opponent KPM " + fmt(d.pc && d.pc.ekpm, 3) + " over " + esc(d.pc && d.pc.n) + " players, PS " + fmt(d.ps && d.ps.ekpm, 3) + " over " + esc(d.ps && d.ps.n) + ".</p>" +
+        (h ? '<table class="st-table"><thead><tr><th>Changed</th><th>Gap</th><th>Baseline</th></tr></thead><tbody>' + h + "</tbody></table>" : "");
+    }
+    renderPsBaseline();
     function renderHut(st) {
       const b = st && st.hut;
       const shown = b ? ((b.players) || []).filter((i) => i.marked) : [];

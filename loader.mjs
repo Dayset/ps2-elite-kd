@@ -2,14 +2,14 @@
  * Loading one player: this browser's copy, the shared cache (data/), or live from Census (paced, retried), with the
  * removal list checked before and after (#61) (#66: moved out of app.js unchanged).
  */
-import { checkAborted, slugKey, isAbortError, escapeHtml } from "./app-util.mjs?v=20261024-split1";
+import { checkAborted, slugKey, isAbortError, escapeHtml } from "./app-util.mjs?v=20261026-psb1";
 import { entryFetchedAt, pickNewest } from "./cache-pick.mjs?v=20261010-sav1";
 import { censusQueryName, NameLoadError, classifyLoadError, isTransientKind } from "./analyze-run.mjs?v=20261023-priv1";
 import { parsePsKey, censusNsBase, PS_SERVERS, nsOfBase } from "./rooms.mjs?v=20261022-ps1";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { t as tr } from "./i18n.mjs";
 import { censusRequest, OPPONENT_TOP_N, fetchPlayerCensus } from "./census-fetch.mjs?v=20261010-sav1";
-import { kpmCurve } from "./math.mjs?v=20261010-sav1";
+import { kpmCurve } from "./math.mjs?v=20261026-psb1";
 import { accountTimes } from "./flairs.mjs?v=20261010-sav1";
 import { infantryKillsUrl, summarizeInfantryKills } from "./infantry.mjs?v=20261023-short1";
 import { removedList } from "./opt-out.mjs?v=20261023-proof1";

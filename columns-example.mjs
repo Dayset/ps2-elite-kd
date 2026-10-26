@@ -9,10 +9,11 @@
  * (exampleFacts / exampleCard), so Node tests cover them.
  */
 import { t as tr } from "./i18n.mjs";
-import { normalizePlayer, playerMetrics, consistencyParts, MIN_FIGHTS_RULE } from "./player-metrics.mjs?v=20261022-wpc1";
-import { RF_SOFT, SPEED_BAND_LOW, SPEED_BAND_HIGH, speedSlowFactor, speedAdjustment, SLOPE_FLOOR, SLOPE_EPS } from "./math.mjs?v=20261010-sav1";
+import { normalizePlayer, playerMetrics, consistencyParts, MIN_FIGHTS_RULE } from "./player-metrics.mjs?v=20261026-psb1";
+import { RF_SOFT, SPEED_BAND_LOW, SPEED_BAND_HIGH, speedSlowFactor, speedAdjustment, SLOPE_FLOOR, SLOPE_EPS } from "./math.mjs?v=20261026-psb1";
+import { rfBaseFor } from "./ps-baseline.mjs?v=20261026-psb1";
 import { percentileOf, quantile } from "./dist.mjs?v=20261010-sav1";
-import { slugKey, bareName } from "./rank-row.mjs?v=20261023-twin1";
+import { slugKey, bareName } from "./rank-row.mjs?v=20261026-psb1";
 import { PADDER_PENALTY_REF } from "./padding.mjs?v=20261023-short1";
 
 export const DEMO_NAME = "YuigahamaYui";
@@ -52,7 +53,8 @@ export function exampleFacts(raw, pools = {}) {
     thin: m.thin,
     kd: m.kd, kpm: m.kpm, own, acc: m.acc, hsr: m.hsr, ivi: m.ivi,
     kills: s.kills, deaths: s.deaths, ekpm: m.ekpm, rkd: m.rkd, rf: m.rf,
-    log2: fin(m.rf) && m.rf > 0 ? Math.log2(m.rf / RF_SOFT) : NaN,
+    base: rfBaseFor(p.room), // 0.6 (PC) or 0.6 ÷ the PS kill-speed gap (ps-baseline.mjs)
+    log2: fin(m.rf) && m.rf > 0 ? Math.log2(m.rf / rfBaseFor(p.room)) : NaN,
     adj: m.adj,
     slowFactor: speedSlowFactor(own),
     speedDelta: speedAdjustment(own, m.adj),
@@ -101,7 +103,7 @@ export function exampleCard(x) {
     tr("cx.opp", "Their {top} most-fought opponents kill at {ekpm} per minute (a typical player’s opponents: ~0.35).{opp}", { top: x.top, ekpm: f(x.ekpm), opp: oppWords(x.ekpm) }),
     tr("cx.kd", "☠️ K/D against them: {k} ÷ {d} = <b>{v}</b>", { k: x.kills, d: x.deaths, v: f(x.rkd) }),
     tr("cx.resist", "🛡️ Resist: {a} × {b} = <b>{v}</b>", { a: f(x.rkd), b: f(x.ekpm), v: f(x.rf, 3) }),
-    tr("cx.rating", "Rating: 600 × (1 + log₂({rf} ÷ 0.6)) = <b>{v}</b>", { rf: f(x.rf, 3), v: fmtSigned(x.adj) }),
+    tr("cx.rating", "Rating: 600 × (1 + log₂({rf} ÷ {base})) = <b>{v}</b>", { rf: f(x.rf, 3), base: +(x.base > 0 ? x.base : RF_SOFT).toFixed(3), v: fmtSigned(x.adj) }),
     pace,
   ];
   if (x.poop) items.push(tr("cx.poop", "💩 Confirmed padder: {cut} → ⚔️ iVi <b>{v}</b>", { cut: x.speed > 0 ? "−10%" : `−${Math.round(0.1 * PADDER_PENALTY_REF)}`, v: fmtSigned(x.afterPoop) }));

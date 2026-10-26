@@ -2,10 +2,10 @@
  * The shared-cache name index (names.json / index.json, early fetches from index.html), name lookups, and the lazy
  * Rankings loads (ranks-lite.json, ranks.json, rankings.mjs) (#66: moved out of app.js unchanged).
  */
-import { slugKey, bareName } from "./app-util.mjs?v=20261024-split1";
+import { slugKey, bareName } from "./app-util.mjs?v=20261026-psb1";
 import { confirmedPadderSlugs } from "./padding.mjs?v=20261023-short1";
 import { parsePsKey } from "./rooms.mjs?v=20261022-ps1";
-import { isFiniteNum } from "./math.mjs?v=20261010-sav1";
+import { isFiniteNum } from "./math.mjs?v=20261026-psb1";
 
 /**
  * $ = app.js state and functions this part uses, as live getters (and setters for state it changes), so app.js
@@ -268,7 +268,7 @@ export function createSharedIndex($) {
 
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261025-loc2")
+    rankingsLoading = import("./rankings.mjs?v=20261026-psb1")
       .then((m) => {
         $.rankingsApi = m.initRankings(rankingsHost);
         return $.rankingsApi.ready;

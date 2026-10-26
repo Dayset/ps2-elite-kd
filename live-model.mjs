@@ -3,7 +3,7 @@
  * (killer above, player, 6 victims), stat → emoji fill and rank tier, hover texts, the 30 fps / beat / shine timing,
  * weapon lookup. No DOM; the browser part (stream, data, drawing) is live.mjs, which re-exports all of this.
  */
-import { normalizePlayer, playerMetrics, shownValue } from "./player-metrics.mjs?v=20261022-wpc1";
+import { normalizePlayer, playerMetrics, shownValue } from "./player-metrics.mjs?v=20261026-psb1";
 import { infDial } from "./tractor.mjs?v=20261024-trac1";
 import { infantryShares } from "./infantry.mjs?v=20261023-short1";
 
