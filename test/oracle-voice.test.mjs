@@ -1,7 +1,7 @@
 // AI Commander voice (#65): spoken text and when it speaks.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { sayText, orderKey, voiceTick, gapEnding, GAP_TIGHT, SWING_MIN } from "../oracle/js/voice.js";
+import { sayText, orderKey, voiceTick, gapEnding } from "../oracle/js/voice.js";
 
 const hold = { focus: { kind: "hold", bases: ["Heyoka"], target: "NC", cuts: [], now: 32.1, then: 27.1 }, backups: [], quiet: false };
 
@@ -21,30 +21,27 @@ test("spoken order (owner t652u wording): Defend / Attack / Go / Prepare / Spoil
   assert.equal(sayText("TR", hold, null, pk), "Defend Heyoka or minus 5.");
 });
 
-test("gap ending: minutes of the current swing for 1st / 2nd / 3rd", () => {
-  // VS 45, NC 35, TR 20; NC gained 4 on VS in 15 min -> 10 pts at 4/15 per min = 37.5 -> 40 min.
+test("gap ending: always plain percent for 1st / 2nd / 3rd", () => {
+  // Always plain percent (owner t680u/t681u): no minutes, no "Pay attention!", whatever the swing.
   const race = { territory: { VS: 45, NC: 35, TR: 20 }, momentum: { VS: -2, NC: 2, TR: 0 } };
-  assert.equal(gapEnding("VS", race), " Lead 40 minutes.");
-  assert.equal(gapEnding("NC", race), " Second, 40 minutes difference.");
-  assert.equal(gapEnding("TR", race), " Third, 110 minutes difference."); // 15 pts vs NC, gap moved 2 in 15 min = 112 -> 110
-  assert.equal(sayText("VS", hold, race), "Defend Heyoka or minus 5. Lead 40 minutes.");
-  assert.equal(gapEnding("VS", { territory: { VS: 45, NC: 37, TR: 18 }, momentum: { VS: 6, NC: -6, TR: 0 } }), " Lead 10 minutes.");
-  assert.equal(gapEnding("VS", { territory: { VS: 45, NC: 40, TR: 15 }, momentum: { VS: 0, NC: 15, TR: -15 } }), " Lead 5 minutes.");
-  assert.equal(gapEnding("VS", { territory: { VS: 45, NC: 39, TR: 16 }, momentum: { VS: -45, NC: 45, TR: 0 } }), " Lead 1 minute.");
+  assert.equal(gapEnding("VS", race), " First, plus 10 percent difference.");
+  assert.equal(gapEnding("NC", race), " Second, minus 10 percent difference.");
+  assert.equal(gapEnding("TR", race), " Third, minus 15 percent difference.");
+  assert.equal(sayText("VS", hold, race), "Defend Heyoka or minus 5. First, plus 10 percent difference.");
+  assert.equal(gapEnding("VS", { territory: { VS: 45, NC: 39, TR: 16 }, momentum: { VS: -45, NC: 45, TR: 0 } }), " First, plus 6 percent difference.");
 });
 
-test("gap ending: percent when the race is tight or the swing can't be measured", () => {
+test("gap ending: tight and frozen races use the same plain percent form", () => {
   const tight = { territory: { VS: 50, NC: 49, TR: 1 }, momentum: { VS: 3, NC: -3, TR: 0 } };
-  assert.equal(gapEnding("VS", tight), " First. Pay attention! Only plus 1 percent difference.");
-  assert.equal(gapEnding("NC", tight), " Second. Pay attention! Only minus 1 percent difference.");
-  assert.equal(gapEnding("TR", { territory: { VS: 36, NC: 33, TR: 31 }, momentum: {} }), " Third. Pay attention! Only minus 2 percent difference.");
-  assert.equal(gapEnding("VS", { territory: { VS: 40.2, NC: 39.8, TR: 20 }, momentum: {} }), " First. Pay attention! Only plus 0.4 percent difference.");
-  // Frozen map (gap moved under 1 point in 15 min): no minutes, plain percent.
+  assert.equal(gapEnding("VS", tight), " First, plus 1 percent difference.");
+  assert.equal(gapEnding("NC", tight), " Second, minus 1 percent difference.");
+  assert.equal(gapEnding("TR", { territory: { VS: 36, NC: 33, TR: 31 }, momentum: {} }), " Third, minus 2 percent difference.");
+  assert.equal(gapEnding("VS", { territory: { VS: 40.2, NC: 39.8, TR: 20 }, momentum: {} }), " First, plus 0.4 percent difference.");
   const frozen = { territory: { VS: 50, NC: 30, TR: 20 }, momentum: { VS: 0.4, NC: 0, TR: -0.4 } };
   assert.equal(gapEnding("VS", frozen), " First, plus 20 percent difference.");
   assert.equal(gapEnding("NC", frozen), " Second, minus 20 percent difference.");
   assert.equal(gapEnding("TR", frozen), " Third, minus 10 percent difference.");
-  assert.equal(GAP_TIGHT, 4); assert.equal(SWING_MIN, 1);
+  for (const r of [tight, frozen]) for (const f of ["VS", "NC", "TR"]) assert.doesNotMatch(gapEnding(f, r), /attention|minute|Lead/i);
   assert.equal(gapEnding("VS", null), "", "no territory: no ending");
 });
 

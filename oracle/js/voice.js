@@ -104,46 +104,30 @@ export const voiceSupported = () => typeof window !== "undefined" && "speechSynt
 export const voiceState = () => ({ on: V.on, fac: V.fac });
 
 /*
- * Ending: the gap to the faction we race (owner t652u), in minutes of the current
- * territory swing, or in percent when minutes can't be measured or the race is tight.
- *   1st vs 2nd: "Lead 15 minutes."          2nd vs 1st / 3rd vs 2nd: "Second, 15 minutes difference."
- *   tight:      "First. Pay attention! Only plus 2 percent difference."
- * Data: Worker state.territory (share %) and state.momentum (share change over the last
- * 15 min, engine.js). minutes = gap / (|change of the gap over 15 min| / 15).
- * Thresholds measured 2026-10-25 on the Worker's own minute ticks (/history + /alert,
- * 73 alerts, 12,369 faction-pair minutes):
- *  - GAP_TIGHT 4: under 4 points apart the order of the two flips within 5 minutes in
- *    26-48 % of cases (3-4 pts: 26 %, 4-5 pts: 17 %, 5-7 pts: 10 %).
- *  - SWING_MIN 1: a 15-min gap change under 1 point is not a capture (the smallest real
- *    steps are 1.0-1.2 points, one base; 0.1-0.6 are rounding), so no minutes then.
- *    Check: "under 15 minutes" calls on a closing gap flipped within 15 min in 42-56 % of
- *    cases, 15-30 min ones in 17 %, longer ones in about 10 %.
+ * Ending: the gap to the faction we race (owner t652u), always in plain percent
+ * (owner t680u/t681u: no "Pay attention!" tight-race form and no minutes endings).
+ *   1st vs 2nd: "First, plus 2 percent difference."
+ *   2nd vs 1st / 3rd vs 2nd: "Second, minus 2 percent difference."
+ * Data: Worker state.territory (share %). Under 1 point it is said with one decimal.
  */
-export const GAP_TIGHT = 4, SWING_MIN = 1;
 const PLACE = ["First", "Second", "Third"];
 const FACS3 = ["VS", "NC", "TR"];
-const roundMin = (m) => (m < 10 ? Math.max(1, Math.round(m)) : m < 60 ? Math.round(m / 5) * 5 : Math.round(m / 10) * 10);
 const pctWord = (d) => (d < 1 ? (Math.round(d * 10) / 10).toString() : String(Math.round(d)));
 export function gapEnding(f, race) {
-  const terr = race && race.territory, mom = (race && race.momentum) || {};
+  const terr = race && race.territory;
   if (!terr || !FACS3.every((g) => Number.isFinite(+terr[g]))) return "";
   const order = [...FACS3].sort((a, b) => terr[b] - terr[a] || (a === f ? -1 : b === f ? 1 : 0));
   const place = order.indexOf(f);
   if (place < 0) return "";
   const rival = place === 0 ? order[1] : order[place - 1];
   const gap = Math.abs(terr[f] - terr[rival]);
-  const swing = Math.abs((+mom[f] || 0) - (+mom[rival] || 0));
-  const sign = place === 0 ? "plus" : "minus";
-  if (gap < GAP_TIGHT) return ` ${PLACE[place]}. Pay attention! Only ${sign} ${pctWord(gap)} percent difference.`;
-  if (swing < SWING_MIN) return place === 0 ? ` First, ${sign} ${pctWord(gap)} percent difference.` : ` ${PLACE[place]}, ${sign} ${pctWord(gap)} percent difference.`;
-  const m = roundMin(gap / (swing / 15)), mins = `${m} minute${m === 1 ? "" : "s"}`;
-  return place === 0 ? ` Lead ${mins}.` : ` ${PLACE[place]}, ${mins} difference.`;
+  return ` ${PLACE[place]}, ${place === 0 ? "plus" : "minus"} ${pctWord(gap)} percent difference.`;
 }
 
 /**
  * Focus entry (Worker focus.js) -> spoken order, battlefield short (owner t652u wording):
  * no faction name (you follow your own), base, what it's worth, then the gap ending.
- *   "Defend Heyoka or minus 5. Lead 15 minutes."   "Hold your lanes. Second, 10 minutes difference."
+ *   "Defend Heyoka or minus 5. First, plus 10 percent difference."   "Hold your lanes. Second, minus 3 percent difference."
  * race = Worker state ({territory, momentum}). Pockets are not spoken for now (owner t652u);
  * the pockets argument is kept so callers don't change.
  */

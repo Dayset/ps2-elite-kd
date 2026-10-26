@@ -328,3 +328,11 @@ approved it, "shipped" means it is live in the running pipeline.
 - **Census limits per call**: map 8 s, events 12 s (were 20 s), from a 2026-10-26 probe
   (map p95 5.7 s, events p95 10.5 s), so one slow world can no longer hold every
   alert's commander for 20 s. A cut map call reuses that world's last snapshot.
+
+## 2026-10-26: voice ending always in percent
+
+- **Owner decision (t680u/t681u), shipped.** The spoken ending after an order is always
+  "First, plus {d} percent difference." / "Second, minus {d} …" / "Third, minus {d} …".
+  The "Pay attention! Only …" tight-race ending and the "Lead N minutes" /
+  "Second, N minutes difference" endings are gone (`voice.js gapEnding`; nothing on screen
+  showed them). The minutes-rate code was used only there and is removed.
