@@ -980,14 +980,16 @@ test("idle note (owner 2026-10-26): after 10 silent minutes the waiting line say
   assert.equal(en["live.idleNote"], "No kills or deaths in the last {min} min — this character may be offline or idle.");
 });
 
-test("dynamic scale + nudges (owner 2026-10-26): bar full = 2× estDPM, floor 1000, 120000/τ fallback; avg/p90 ticks ride the track", () => {
+test("session-adaptive scale (owner 2026-10-26): bar full = max(2× estDPM floor, 1.5× session avg DPM); avg/p90 ticks ride the track", () => {
   const js = liveSrc();
   const css = cssSrc();
   const swap = readFileSync(new URL("scripts/build-live.mjs", root), "utf8");
   const en = JSON.parse(readFileSync(new URL("i18n/en.json", root), "utf8"));
   assert.match(js, /const DPM_TICK_AVG = 514, DPM_TICK_P90 = 1393;/);
   assert.match(js, /const estDpm = \(adjs\) => \(0\.385 \+ 0\.000623 \* adjs\) \* 1170;/);
-  assert.match(js, /return Number\.isFinite\(a\) \? Math\.max\(1000, 2 \* estDpm\(a\)\) : 120000 \/ \(dpmTauMs \/ 1000\);/);
+  assert.match(js, /const floor = Number\.isFinite\(a\) \? Math\.max\(1000, 2 \* estDpm\(a\)\) : 120000 \/ \(dpmTauMs \/ 1000\);/);
+  assert.match(js, /if \(mins >= 1\) avg = dpsEvents\.reduce\(\(s, e\) => s \+ e\.dmg, 0\) \/ mins;/);
+  assert.match(js, /return Math\.max\(floor, 1\.5 \* avg\);/);
   assert.match(js, /const dpmBarPct = \(v\) => `\$\{Math\.min\(100, Math\.max\(0, \(v \/ dpmFull\(\)\) \* 100\)\)\.toFixed\(1\)\}%`;/);
   assert.match(js, /if \(tickAvgEl\) tickAvgEl\.style\.left = `\$\{Math\.min\(100, \(DPM_TICK_AVG \/ tickFull\) \* 100\)\.toFixed\(1\)\}%`;/);
   assert.match(js, /if \(tickP90El\) tickP90El\.style\.left = `\$\{Math\.min\(100, \(DPM_TICK_P90 \/ tickFull\) \* 100\)\.toFixed\(1\)\}%`;/);

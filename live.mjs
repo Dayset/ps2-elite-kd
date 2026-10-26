@@ -544,18 +544,30 @@ function start() {
   if ($("liveDpsLabel")) $("liveDpsLabel").textContent = tr("live.dps", "DPM");
   const cashAvgEl = $("liveCashAvgVal");
   if ($("liveCashAvgLabel")) $("liveCashAvgLabel").textContent = tr("live.cashAvg", "avg");
-  // Owner 2026-10-26 (dynamic scale + nudges): the bar's full point fits
-  // the player's own killing pace — twice their estimated DPM, from adjs
-  // via the KPM regression (kills + assists damage at median share).
-  // Floored so a slow player still gets a readable bar; unknown adjs
-  // fall back to the old fixed point (two fresh spikes at current τ).
-  // τ still only decays the number, it no longer sets the scale. The
-  // ticks mark the average player and the 90th percentile on the track.
+  // Owner 2026-10-26 (session-adaptive scale): the bar's full point fits
+  // the player's own pace twice over — a floor from their estimated DPM
+  // (twice estDPM from adjs via the KPM regression, kills + assists damage
+  // at median share; unknown adjs fall back to the old fixed point, two
+  // fresh spikes at current τ), and above it the session itself: 1.5× the
+  // session's own average DPM so far (total damage over wall-clock minutes
+  // since the first spike — a burst barely moves an average over minutes,
+  // so it can't stretch the scale). At your session average you read ~67%;
+  // to pin you must sustain 1.5× that average, and sustaining it raises the
+  // average, which raises full — the bar unpins itself. τ still only decays
+  // the number, it never sets the scale. The ticks mark the average player
+  // and the 90th percentile on the track; they slide left as the session
+  // heats up and full grows.
   const DPM_TICK_AVG = 514, DPM_TICK_P90 = 1393;
   const estDpm = (adjs) => (0.385 + 0.000623 * adjs) * 1170;
   const dpmFull = () => {
     const a = me && me.cached && me.cached.adjs;
-    return Number.isFinite(a) ? Math.max(1000, 2 * estDpm(a)) : 120000 / (dpmTauMs / 1000);
+    const floor = Number.isFinite(a) ? Math.max(1000, 2 * estDpm(a)) : 120000 / (dpmTauMs / 1000);
+    let avg = 0;
+    if (dpsEvents.length >= 2) {
+      const mins = (Date.now() - dpsEvents[0].t) / 60000;
+      if (mins >= 1) avg = dpsEvents.reduce((s, e) => s + e.dmg, 0) / mins;
+    }
+    return Math.max(floor, 1.5 * avg);
   };
   const tickAvgEl = $("liveDpmTickAvg"), tickP90El = $("liveDpmTickP90");
   if (tickAvgEl) tickAvgEl.title = tr("live.dpmTickAvg", "Average player: {v} DPM", { v: DPM_TICK_AVG });
@@ -641,8 +653,8 @@ function start() {
   const cashIv = (p) => (p && p.cached && Number.isFinite(p.cached.adjs) ? Math.round(Math.max(0, p.cached.adjs) * (1 + CASH_BOOST_PCT / 100)) : null);
   let lastDps = "", lastDpsLabel = null, lastCash = "", lastDbg = "", lastSpikeEff = null, lastScale = 0; // null so the first tick clears the init "DPM" label during warm-up
   // Owner 2026-10-26 (DPM row bars): each meter line carries a bar under
-  // its text — DPM glows and grows with the shown value (full = two
-  // kill-spikes at the current τ), hold/combat bars are value-proportional
+  // its text — DPM glows and grows with the shown value (full = the
+  // session-adaptive scale, dpmFull), hold/combat bars are value-proportional
   // (full = 60 s) and shrink as their seconds fall. Writes go through
   // this guard so a steady value writes once.
   const barState = { dpm: "", hold: "" };
