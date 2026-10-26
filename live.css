@@ -64,8 +64,8 @@ col.lv-c-iz { width: var(--lv-iz); }
 .lv-ev.lv-kill { border-left-color: #43a047; }
 .lv-ev.lv-death { border-left-color: #e53935; }
 /* The centre line (the tracked player): an accent tint and accent rules above and below, so it reads apart from killer and victims. */
-.live-table tbody.lv-me > tr > td { background-color: color-mix(in srgb, var(--accent) 13%, var(--panel)); border-top: 2px solid var(--accent); border-bottom: 2px solid var(--accent); }
-.lv-ev.lv-me { border-left-color: var(--accent); }
+.live-table tbody.lv-me > tr > td { background-color: color-mix(in srgb, var(--accent) 13%, var(--panel)); } /* owner 2026-10-26: no accent frame around the centre row — the thick blue top/bottom border is removed, the tint stays */
+/* owner 2026-10-26: the centre row keeps the transparent left edge from .lv-ev — no accent bar */
 /* Owner t562u "juice" (stream overlay): all short, transforms/shadows only, so the overlay never changes size.
    New victim line: drops in with a small scale pop + a green flash; new killer line: swaps in with a red flash.
    Upset (winner's iVi percentile ≥ 50 points below the loser's, live.mjs UPSET_GAP): gold flash + a short shake. */

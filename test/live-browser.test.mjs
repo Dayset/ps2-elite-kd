@@ -867,3 +867,18 @@ describe("🎥 live phone slot lines in a browser", () => {
     }
   });
 });
+
+describe("🎥 live centre row border in a browser", () => {
+  it("centre row (owner 2026-10-26): no thick accent frame around the tracked character", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
+      assert.equal(await ev(until(`document.querySelector("#liveList tbody.lv-me") !== null`)), true, "centre row present");
+      const b = JSON.parse(await ev(`JSON.stringify((() => { const td = document.querySelector("#liveList tbody.lv-me td"); const tb = document.querySelector("#liveList tbody.lv-me"); const cs = getComputedStyle(td); const ts = getComputedStyle(tb); return { top: cs.borderTopWidth, bottom: cs.borderBottomWidth, leftColor: ts.borderLeftColor }; })())`));
+      assert.equal(b.top, "1px");
+      assert.equal(b.bottom, "1px");
+      assert.ok(b.leftColor === "rgba(0, 0, 0, 0)" || b.leftColor === "transparent", `left bar transparent, got ${b.leftColor}`);
+      assert.deepEqual(errors, [], "no page errors");
+    });
+  });
+});

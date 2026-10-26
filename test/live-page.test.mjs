@@ -196,8 +196,9 @@ test("overlay layout (owner t575u): no flip, ONE column order on every line, fix
   assert.match(css, /\.lv-row \{ display: flex; height: var\(--lv-ez\); \}/);
   assert.match(css, /col\.lv-c-iz \{ width: var\(--lv-iz\); \}/);
   assert.match(css, /--lv-n: 6;/); // t590u: 6 emoji units
-  // the centre line is set apart (accent rules above and below, a tint)
-  assert.match(css, /tbody\.lv-me > tr > td \{ background-color: color-mix\(in srgb, var\(--accent\) 13%, var\(--panel\)\); border-top: 2px solid var\(--accent\); border-bottom: 2px solid var\(--accent\); \}/);
+  // the centre line is set apart by its tint only (owner 2026-10-26: the accent frame is removed)
+  assert.match(css, /tbody\.lv-me > tr > td \{ background-color: color-mix\(in srgb, var\(--accent\) 13%, var\(--panel\)\); \}/);
+  assert.doesNotMatch(css, /tbody\.lv-me > tr > td \{[^}]*border-top: 2px solid var\(--accent\)/);
   assert.match(css, /\.live-table \.lv-name \{[^}]*text-overflow: ellipsis;/);
 });
 
