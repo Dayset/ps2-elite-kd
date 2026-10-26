@@ -2,7 +2,7 @@
  * The name field: name chips, the 6-name limit (note, toast, lock), 🎲 random players, failed-name chips with retry
  * (#66: moved out of app.js unchanged).
  */
-import { sfx } from "./sfx.mjs?v=20261026-sfx1";
+import { sfx } from "./sfx.mjs?v=20261026-sfx2";
 import { t as tr } from "./i18n.mjs";
 import { slugKey, namesEqualIgnoreCase, bareName, parseNames } from "./app-util.mjs?v=20261026-brv1";
 import { forgetFailures } from "./analyze-run.mjs?v=20261023-priv1";

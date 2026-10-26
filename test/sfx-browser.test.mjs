@@ -88,4 +88,20 @@ describe("🎥 live event sounds in a browser", () => {
       assert.deepEqual(errors, [], "no page errors");
     });
   });
+
+  it("rate (owner 2026-10-26): streamer mode plays sounds 1.3× faster — offsets and lengths scale, pitch stays", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withPage(async ({ ev, errors }) => {
+      assert.equal(await ev(`new Promise((res) => { const t = setInterval(() => { if (window.__sfxDone) { clearInterval(t); res(true); } }, 20); })`), true, "fixture loaded");
+      await ev(`window.dispatchEvent(new PointerEvent("pointerdown"))`); // unlocks the fake context
+      await ev(`window.__sfxTest.setSfxRate(1.3)`);
+      await ev(`window.__sfxTest.sfx("victory", { event: true })`);
+      const starts = await ev(`window.__fakeOsc.map((o) => o.startedAt)`);
+      assert.equal(starts.length, 4, "fanfare has four notes");
+      const near = (a, b) => Math.abs(a - b) < 0.001;
+      assert.ok(near(starts[0], 0.01) && near(starts[1], 0.01 + 0.1 / 1.3) && near(starts[2], 0.01 + 0.2 / 1.3) && near(starts[3], 0.01 + 0.3 / 1.3), `note starts scale by 1/1.3: ${starts}`);
+      const stops = await ev(`window.__fakeOsc.map((o) => o.stoppedAt)`);
+      assert.ok(near(stops[0], 0.01 + 0.12 / 1.3 + 0.03), `note lengths scale too: ${stops}`);
+      assert.deepEqual(errors, [], "no page errors");
+    });
+  });
 });

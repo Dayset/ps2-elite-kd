@@ -28,7 +28,7 @@ import { traitPools, zergScore } from "./trait-scores.mjs?v=20261024-crowd1";
 import { zergEstimate } from "./zerg-revive.mjs?v=20261024-crowd1";
 import { infMedian, tractorCuts, TRACTOR_EMOJI } from "./tractor.mjs?v=20261024-trac1";
 import { drawEmojiSprite, spriteCss } from "./live-sprites.mjs?v=20261024-beat1";
-import { sfx } from "./sfx.mjs?v=20261026-sfx1";
+import { sfx, setSfxRate } from "./sfx.mjs?v=20261026-sfx2";
 
 const CENSUS = `https://census.daybreakgames.com/s:${CENSUS_SERVICE_ID}/get/ps2:v2/`;
 const STREAM = `wss://push.planetside2.com/streaming?environment=ps2&service-id=s:${CENSUS_SERVICE_ID}`;
@@ -44,7 +44,7 @@ function start() {
   // Owner 2026-10-26 (stream overlay): ?stream=1 strips the page to the
   // meters + session card for OBS Browser Source over the game.
   const streamMode = new URLSearchParams(location.search).get("stream") === "1";
-  if (streamMode) document.body.classList.add("live-stream");
+  if (streamMode) { document.body.classList.add("live-stream"); setSfxRate(1.3); }
   const stateEl = $("liveState");
   const listEl = $("liveList");
   // Owner 2026-10-24 (CPU): the t579u outline, the t589u hollow and the t568u glows are drawn once per size into
@@ -73,7 +73,7 @@ function start() {
     listEl.addEventListener("mouseleave", () => { tipEl.hidden = true; });
   }
   const setState = (html, cls = "") => { if (stateEl) { stateEl.innerHTML = html; stateEl.className = "live-state " + cls; } };
-  if (!target) { setState("Add a name on the main page, then press 🎥.", "err"); const sh = $("liveShare"); if (sh) sh.style.display = "none"; return; }
+  if (!target) { setState("Add a name on the main page, then press 🎥.", "err"); const sh = $("liveShare"); if (sh) sh.style.display = "none"; const sb = $("liveStreamBtn"); if (sb) sb.style.display = "none"; return; }
 
   const people = new Map(); // cid -> { name, faction, kd, cached: {adjs, kd} | null }
   let st = { killer: null, victims: [], lastEv: null, gone: null }; // owner t575u overlay state (overlayPush)
@@ -541,9 +541,9 @@ function start() {
   const dpsBarEl = $("liveDpsBar"), dpsHoldBarEl = $("liveDpsHoldBar");
   let lastDeathLineW = "";
   const dbgEl = $("liveDbg");
-  if ($("liveDpsLabel")) $("liveDpsLabel").textContent = tr("live.dps", "DPM");
+  if ($("liveDpsLabel")) $("liveDpsLabel").textContent = tr("live.dps", "Damage");
   const cashAvgEl = $("liveCashAvgVal");
-  if ($("liveCashAvgLabel")) $("liveCashAvgLabel").textContent = tr("live.cashAvg", "avg");
+  if ($("liveCashAvgLabel")) $("liveCashAvgLabel").textContent = tr("live.cashAvg", "Enemy avg ivi");
   // Owner 2026-10-26 (session-adaptive scale): the bar's full point fits
   // the player's own pace twice over — a floor from their estimated DPM
   // (twice estDPM from adjs via the KPM regression, kills + assists damage
@@ -627,7 +627,7 @@ function start() {
     shareEl.textContent = tr("live.share", "Share");
     shareEl.addEventListener("click", async () => {
       const dpm = dpsEvents.length < 3 ? "–" : (dpsEl ? dpsEl.textContent : "–");
-      const text = `${target} live: ${location.origin}${location.pathname}?names=${encodeURIComponent(target)}\navg ${cashAvgEl ? cashAvgEl.textContent : "–"} · DPM ${dpm}`;
+      const text = `${target} live: ${location.origin}${location.pathname}?names=${encodeURIComponent(target)}\nEnemy avg ivi ${cashAvgEl ? cashAvgEl.textContent : "–"} · Damage ${dpm}`;
       let ok = false;
       try { await navigator.clipboard.writeText(text); ok = true; } catch {}
       if (!ok) {
@@ -642,6 +642,25 @@ function start() {
       if (ok) { shareEl.textContent = "✓"; setTimeout(() => { shareEl.textContent = tr("live.share", "Share"); }, 2000); }
     });
   }
+  // Owner 2026-10-26 (streamer mode): one tap switches the page to the
+  // chromakey overlay — same class ?stream=1 adds at load, so the session
+  // (meter, pot, history) survives the switch, no reload. The URL gains
+  // stream=1 so a refresh or a restored tab stays in overlay mode. There
+  // is deliberately NO button back: to leave, drop stream=1 from the URL.
+  // Sounds speed up 1.3× in overlay mode.
+  const streamBtn = $("liveStreamBtn");
+  if (streamBtn) {
+    streamBtn.textContent = tr("live.streamer", "Streamer mode");
+    streamBtn.addEventListener("click", () => {
+      document.body.classList.add("live-stream");
+      setSfxRate(1.3);
+      try {
+        const u = new URL(location.href);
+        u.searchParams.set("stream", "1");
+        history.replaceState(null, "", u);
+      } catch {}
+    });
+  }
   // Owner 2026-10-25: a sub-0 victim pays 0, never a negative — the pot
   // is a currency, and a kill cannot subtract from it. The feed's iVi
   // cell still shows the victim's real (negative) adjs; only the payout
@@ -651,7 +670,7 @@ function start() {
   // the formula's +34% suffix says the parts are boosted). A floored 0 stays 0 (0 × 1.34 = 0).
   const CASH_BOOST_PCT = 34;
   const cashIv = (p) => (p && p.cached && Number.isFinite(p.cached.adjs) ? Math.round(Math.max(0, p.cached.adjs) * (1 + CASH_BOOST_PCT / 100)) : null);
-  let lastDps = "", lastDpsLabel = null, lastCash = "", lastDbg = "", lastSpikeEff = null, lastScale = 0; // null so the first tick clears the init "DPM" label during warm-up
+  let lastDps = "", lastDpsLabel = null, lastCash = "", lastDbg = "", lastSpikeEff = null, lastScale = 0; // null so the first tick clears the init "Damage" label during warm-up
   // Owner 2026-10-26 (DPM row bars): each meter line carries a bar under
   // its text — DPM glows and grows with the shown value (full = the
   // session-adaptive scale, dpmFull), hold/combat bars are value-proportional
@@ -733,7 +752,7 @@ function start() {
         }
         setBar(dpsBarEl, "dpm", "0.0%");
       } else {
-        label = tr("live.dps", "DPM");
+        label = tr("live.dps", "Damage");
         dpsEl.classList.remove("live-dps-warm");
         const trueDpm = dpsNow(dpsEvents, effNow, dpmTauMs, holdMs) * 60;
         if (shownDps === null) { shownDps = trueDpm; dpsEl.textContent = shownDps.toFixed(1); setBar(dpsBarEl, "dpm", dpmBarPct(shownDps)); }
@@ -823,7 +842,7 @@ function start() {
       const sAvg = sKnown ? sSum / sKnown : null;
       const sKey = `${sDur}|${sKills}|${sessionDeaths}|${sSum}|${sAvg}`;
       if (sKey !== lastSession) {
-        sessionEl.textContent = sessionStartMs ? tr("live.sessionLine", "session {dur} · {kills} kills · {deaths} deaths · Σ {sum} · avg {avg}", { dur: sDur, kills: sKills, deaths: sessionDeaths, sum: sSum, avg: sAvg == null ? "–" : sAvg.toFixed(1) }) : "";
+        sessionEl.textContent = sessionStartMs ? tr("live.sessionLine", "session {dur} · {kills} kills · {deaths} deaths · Σ {sum} · Enemy avg ivi {avg}", { dur: sDur, kills: sKills, deaths: sessionDeaths, sum: sSum, avg: sAvg == null ? "–" : sAvg.toFixed(1) }) : "";
         lastSession = sKey;
       }
       sessionEl.style.display = sessionStartMs ? "" : "none";
@@ -836,7 +855,7 @@ function start() {
         const stKey = `${stDur}|${sKills}|${sessionDeaths}|${sSum}|${sAvg}`;
         if (stKey !== lastStream) {
           streamKdEl.textContent = stKd;
-          streamSesEl.textContent = tr("live.sessionLine", "session {dur} · {kills} kills · {deaths} deaths · Σ {sum} · avg {avg}", { dur: stDur, kills: sKills, deaths: sessionDeaths, sum: sSum, avg: sAvg == null ? "–" : sAvg.toFixed(1) });
+          streamSesEl.textContent = tr("live.sessionLine", "session {dur} · {kills} kills · {deaths} deaths · Σ {sum} · Enemy avg ivi {avg}", { dur: stDur, kills: sKills, deaths: sessionDeaths, sum: sSum, avg: sAvg == null ? "–" : sAvg.toFixed(1) });
           lastStream = stKey;
         }
       }
@@ -854,7 +873,7 @@ function start() {
   function renderCashHist() {
     if (!cashHistEl) return;
     cashHistEl.innerHTML = cashHist.length
-      ? `<div>${esc(tr("live.cashHist", "Past runs"))}</div>` + cashHist.map((h) => `<div>${tr("live.cashAvg", "avg")} ${h.avg == null ? "–" : h.avg.toFixed(1)}</div>`).join("")
+      ? `<div>${esc(tr("live.cashHist", "Past runs"))}</div>` + cashHist.map((h) => `<div>${tr("live.cashAvg", "Enemy avg ivi")} ${h.avg == null ? "–" : h.avg.toFixed(1)}</div>`).join("")
       : "";
   }
 

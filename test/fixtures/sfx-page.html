@@ -10,7 +10,7 @@
 window.__fakeOsc = [];
 class FakeOsc {
   constructor() { this.freqs = []; this.type = "sine"; this.frequency = { setValueAtTime: (f) => { this.freqs.push(f); }, exponentialRampToValueAtTime: (f) => { this.freqs.push(f); } }; }
-  connect() { return this; } start() {} stop() {}
+  connect() { return this; } start(t) { this.startedAt = t; } stop(t) { this.stoppedAt = t; }
 }
 class FakeGain {
   constructor() { this.gain = { value: 1, setValueAtTime() {}, linearRampToValueAtTime() {}, exponentialRampToValueAtTime() {} }; }
@@ -25,8 +25,8 @@ class FakeAudioContext {
 window.AudioContext = FakeAudioContext;
 </script>
 <script type="module">
-import { sfx, setSfxEnabled } from "/sfx.mjs?v=20261026-sfx1";
-window.__sfxTest = { sfx, setSfxEnabled };
+import { sfx, setSfxEnabled, setSfxRate } from "/sfx.mjs?v=20261026-sfx2";
+window.__sfxTest = { sfx, setSfxEnabled, setSfxRate };
 window.__sfxDone = true;
 </script>
 </body></html>

@@ -41,7 +41,7 @@ body.live-mode .room-select { display: none; }
      emoji meters are parked, one plain cell instead), one shared order, so the numbers line up down the whole overlay.
      --lv-u = one emoji unit (parked with the meters), --lv-ez = line height, --lv-fe = emoji (t564u "300%" size),
      --lv-fa = iVi number, --lv-fm = name, --lv-nm = name column, --lv-tm = time column. */
-  --lv-fe: 1.5rem; --lv-u: 2.1rem; --lv-ez: 2.8rem; --lv-fa: 1.87rem; --lv-fm: 1.45rem; --lv-nm: 19.15rem; --lv-tm: 3.2rem; /* owner 2026-10-25: the name column absorbed the removed weapon column (10rem + 4.15rem), so the overlay keeps its width */
+  --lv-fe: 1.5rem; --lv-u: 2.1rem; --lv-ez: 2.8rem; --lv-fa: 1.87rem; --lv-fm: 1.45rem; --lv-nm: 9.575rem; --lv-tm: 3.2rem; /* owner 2026-10-25: the name column absorbed the removed weapon column (10rem + 4.15rem), so the overlay keeps its width; owner 2026-10-26: halved */
   --lv-n: 6; /* emoji units per line (live.mjs sets it from LIVE_COLS; parked with the meters) */
   --lv-iw: calc(var(--lv-fa) * 2.4 + 0.5rem); /* t564u: 4 tabular digits of room */
   border-collapse: collapse; table-layout: fixed; max-width: none;
@@ -94,7 +94,7 @@ col.lv-c-iv { width: var(--lv-iw); }
 .live-mode #weaponsSection { display: none !important; } /* owner t550u: no 📊 chart and no 🏆 Auraxium weapons in LIVE */
 /* Name (faction colour, cut with … at the end), iVi number, then the five emoji units — every line the same. */
 .lv-nm { cursor: help; text-align: center; } /* owner 2026-10-26: the name sits centered on live */
-.lv-pn { display: flex; align-items: center; min-width: 0; font-size: var(--lv-fm); line-height: 1.1; }
+.lv-pn { display: flex; align-items: center; min-width: 0; font-size: var(--lv-fm); line-height: 1.25; } /* owner 2026-10-26: 1.1 clipped descenders (g/q/y lost a few pixels inside the overflow-hidden name box) — 1.25 clears the font's natural descent */
 .live-table .lv-name { display: inline-block; min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .live-table .lv-pn .poop-mark { flex: none; }
 .lv-ivc { text-align: right; padding: 0 0.3rem 0 0 !important; }
@@ -152,7 +152,7 @@ col.lv-c-iv { width: var(--lv-iw); }
 .lv-hs2 svg { display: block; width: 100%; height: 100%; }
 /* Owner t561u: LIVE is a PC stream overlay. Big screens (1920) get everything 1.3× bigger for readability. */
 @media (min-width: 1600px) {
-  .live-table { --lv-fe: 1.95rem; --lv-u: 2.75rem; --lv-ez: 3.65rem; --lv-fa: 2.43rem; --lv-fm: 1.9rem; --lv-nm: 24.78rem; --lv-tm: 4rem; font-size: 1.1rem; }
+  .live-table { --lv-fe: 1.95rem; --lv-u: 2.75rem; --lv-ez: 3.65rem; --lv-fa: 2.43rem; --lv-fm: 1.9rem; --lv-nm: 12.39rem; --lv-tm: 4rem; font-size: 1.1rem; }
   .lv-time { font-size: 0.95rem; }
 }
 /* Phones (t561u: not a target; it only must not break — sideways scroll is fine).
@@ -161,7 +161,7 @@ col.lv-c-iv { width: var(--lv-iw); }
    is left — names actually fit instead of truncating at 8.78rem. Desktop keeps
    the fixed overlay size (a stream overlay never changes size). */
 @media (max-width: 600px) {
-  .live-table { --lv-fe: 1.15rem; --lv-u: 1.6rem; --lv-ez: 2.4rem; --lv-fa: 1.58rem; --lv-fm: 1.12rem; --lv-nm: 8.78rem; --lv-tm: 2.4rem; font-size: 0.72rem; width: 100%; }
+  .live-table { --lv-fe: 1.15rem; --lv-u: 1.6rem; --lv-ez: 2.4rem; --lv-fa: 1.58rem; --lv-fm: 1.12rem; --lv-nm: 4.39rem; --lv-tm: 2.4rem; font-size: 0.72rem; width: 100%; }
   col.lv-c-nm { width: auto; } /* fixed layout: the auto column absorbs the leftover */
   .lv-time { font-size: 0.6rem; padding: 0 0.1rem !important; }
 }
@@ -203,7 +203,13 @@ body.live-stream #liveStreamCard { display: block; }
 
 .live-show-tactical { margin-top: 0.25rem; font-size: 0.72rem; color: var(--dim); }
 body.live-stream > :not(#liveFeed) { display: none; } /* owner 2026-10-26: no header, no footer, no controls — the overlay is only the live section */
-body.live-stream #liveState, body.live-stream #liveDpmTau, body.live-stream #liveCashHist, body.live-stream #liveShare, body.live-stream #liveSession { display: none; } /* owner 2026-10-26: stream shows the names list + DPM block + the card */
+body.live-stream { background: #00ff00 !important; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; } /* owner 2026-10-26: pure chromakey green + a black outline on every glyph, so the overlay reads over gameplay; !important so the mode beats the dark main-page background */
+body.live-stream #liveDpsVal { text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000; } /* the counter is the hero glyph: a heavier outline */
+body.live-stream #liveDps > .live-metric:first-child { display: flex; flex-direction: column; } /* owner 2026-10-26: in overlay mode the DPM counter sits BELOW the bar */
+body.live-stream #liveDpsLabel { order: 1; }
+body.live-stream #liveDps > .live-metric:first-child .live-bar { order: 2; }
+body.live-stream #liveDpsVal { order: 3; }
+body.live-stream #liveState, body.live-stream #liveDpmTau, body.live-stream #liveCashHist, body.live-stream #liveShare, body.live-stream #liveStreamBtn, body.live-stream #liveSession { display: none; } /* owner 2026-10-26: stream shows the names list + DPM block + the card; no button back — the switch button hides with the rest */
 body.live-stream #liveDps .live-metric:last-child { display: none; } /* online pill: meters + session only */
 .live-dps #liveDpsVal { font-weight: 600; font-variant-numeric: tabular-nums; }
 .live-dps #liveDpsVal.live-dps-warm { font-size: 0.72rem; font-weight: 400; color: var(--dim); }
@@ -214,9 +220,9 @@ body.live-stream #liveDps .live-metric:last-child { display: none; } /* online p
 .live-metric { margin-bottom: 0.15rem; }
 .live-bar { height: 6px; margin-top: 0.15rem; background: var(--grid); border-radius: 999px; overflow: hidden; }
 /* Owner 2026-10-26: DPM track is fat (12 px); hold/combat tracks stay thin (6 px). */
-.live-bar-fat { height: 12px; position: relative; }
+.live-bar-fat { height: 12px; position: relative; overflow: visible; } /* owner 2026-10-26: the ticks stick out of the bar, so the fat track must not clip them (the fill keeps its own pill radius) */
 /* Owner 2026-10-26: dynamic-scale nudges — avg/p90 marks riding the fat DPM track, centred on their value, above the fill. */
-.live-dpm-tick { position: absolute; top: 0; bottom: 0; width: 2px; transform: translateX(-50%); background: var(--text); opacity: 0.55; border-radius: 999px; }
+.live-dpm-tick { position: absolute; top: -3px; bottom: -3px; width: 3px; transform: translateX(-50%); background: #000; border-radius: 999px; } /* owner 2026-10-26: nudges stand out — pitch black, bolder, sticking out of the bar up and down */
 .live-bar-fill { height: 100%; width: 0%; background: var(--dim); border-radius: 999px; }
 .live-bar-dpm { background: linear-gradient(90deg, #7c4dff, #00b0ff, #00e676, #ffea00, #ff9100, #ff1744); box-shadow: 0 0 8px var(--accent); }
 .live-bar-hold { background: linear-gradient(90deg, #1b5e20, #43a047, #81c784); }

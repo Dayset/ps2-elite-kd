@@ -42,8 +42,13 @@ if (typeof window !== "undefined") {
 // it, so this only removes the first-click setup cost from the click path.
 if (typeof window !== "undefined" && sfxEnabled()) ensureCtx();
 
+let sfxRate = 1;
+/** Streamer mode plays sounds faster (1.3×): start offsets and lengths scale, pitch stays. */
+export function setSfxRate(r) { sfxRate = Number.isFinite(r) && r > 0 ? r : 1; }
+
 /** One soft note: freq (Hz, or [from,to] glide), start offset s, length s. */
 function tone(c, out, { f, t = 0, d = 0.12, type = "sine", g = 0.06 }) {
+  t /= sfxRate; d /= sfxRate;
   const t0 = c.currentTime + 0.01 + t;
   const o = c.createOscillator();
   const v = c.createGain();

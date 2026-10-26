@@ -161,7 +161,7 @@ describe("🎥 live.html in a browser", () => {
       assert.equal(s.meHs, false, "no headshot mark on the centre line");
       assert.equal(s.noIcons, 0, "no weapon icon column left");
       assert.equal(s.noEmojis, 0, "no emoji meters on the lines (parked)");
-      assert.ok(s.nmW >= 280, `the name column absorbed the weapon column: ${s.nmW}px`);
+      assert.ok(s.nmW >= 200, `the name column absorbed the weapon column, halved 2026-10-26: ${s.nmW}px`);
       assert.equal(s.svgFilters, 0, "no SVG filters on the page");
       assert.deepEqual(s.endless, [], "nothing animates forever (CPU)");
       assert.equal(s.noStar, true, "no ✦ star (the gold shine replaced it)");
@@ -227,7 +227,7 @@ describe("🎥 live.html in a browser", () => {
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[1].cid, "80", false)})`);
       const afterKill = await ev(until(`Number(document.getElementById("liveDpsVal").textContent) >= 10000`)) && await dps();
       assert.ok(afterKill >= 10000, `the 3rd chunk starts the meter high: ${afterKill}`);
-      assert.equal(await ev(`document.getElementById("liveDpsLabel").textContent`), "DPM", "label back to DPM once started");
+      assert.equal(await ev(`document.getElementById("liveDpsLabel").textContent`), "Damage", "label back to Damage once started");
       await new Promise((r) => setTimeout(r, 2500));
       const drained = await dps();
       assert.ok(drained < afterKill && drained > 3000, `DPM drains down after the start: ${drained}`);
@@ -339,8 +339,8 @@ describe("🎥 live.html in a browser", () => {
       assert.equal(await ev(until(`document.getElementById("liveCashAvgVal").textContent === "–"`)), true, "the avg empties with the pot");
       assert.equal(await ev(until(`document.querySelectorAll("#liveCashHist > div").length === 2`)), true, "one banked run in the history");
       const banked = await ev(`document.querySelectorAll("#liveCashHist > div")[1].textContent`);
-      const bm = banked.match(/^avg ([\d.]+)$/);
-      assert.ok(bm, `the banked run shows avg only: ${banked}`);
+      const bm = banked.match(/^Enemy avg ivi ([\d.]+)$/);
+      assert.ok(bm, `the banked run shows Enemy avg ivi only: ${banked}`);
       assert.ok(Math.abs(Number(bm[1]) - Number(avg)) <= 1.0, `banked avg matches: ${banked} vs ${avg}`);
       assert.notEqual(await ev(`getComputedStyle(document.getElementById("liveCashHist")).backgroundColor`), "rgba(0, 0, 0, 0)", "past cashouts sit on a background, not transparent");
       assert.deepEqual(errors, [], "no page errors");
@@ -428,7 +428,7 @@ describe("🎥 live.html in a browser", () => {
       const entries = await histEntries();
       assert.equal(entries.length, 5, "history caps at 5 runs");
       const b5 = Math.round(runAvgs[5] * 1.34), b0 = Math.round(runAvgs[0] * 1.34);
-      const entryAvg = (e) => Number(e.match(/avg ([\d.]+)/)?.[1]);
+      const entryAvg = (e) => Number(e.match(/Enemy avg ivi ([\d.]+)/)?.[1]);
       assert.ok(Math.abs(entryAvg(entries[0]) - b5) <= 1, `newest run first (within display rounding: the row iVi is already rounded, the pot boosts the raw value): ${entries[0]} vs ${b5}`);
       assert.ok(!entries.map(entryAvg).some((v) => Math.abs(v - b0) <= 1), "the oldest run dropped off");
       assert.equal(await pot(), "–", "pot empty after the last run ends");
@@ -635,7 +635,7 @@ describe("🎥 live session line in a browser", () => {
       assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)").length === 2`)), true, "two victim rows on screen");
       assert.equal(await ev(until(`document.getElementById("liveSession").textContent.includes("2 kills")`)), true, "session line counts the kills");
       const line = await ev(`document.getElementById("liveSession").textContent`);
-      assert.match(line, /^session \d+s · 2 kills · 0 deaths · Σ \d+ · avg [\d.]+$/, `session line after two kills: ${line}`);
+      assert.match(line, /^session \d+s · 2 kills · 0 deaths · Σ \d+ · Enemy avg ivi [\d.]+$/, `session line after two kills: ${line}`);
       await ev(`window.__fakeWs.emit(${death(OPP[2].cid, ME.cid, "432", false)})`); // ME dies: no banking (bounty held), pot keeps the kills
       assert.equal(await ev(until(`document.getElementById("liveSession").textContent.includes("1 deaths")`)), true, "death counted in the session line");
       assert.deepEqual(errors, [], "no page errors");
@@ -659,7 +659,7 @@ describe("🎥 live reconnect in a browser", () => {
 });
 
 describe("🎥 live share in a browser", () => {
-  it("share (owner 2026-10-26): one tap copies link + avg + DPM, cash-out first", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+  it("share (owner 2026-10-26): one tap copies link + Enemy avg ivi + Damage, cash-out first", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
       await ev(`Object.defineProperty(navigator, "clipboard", { value: { writeText: (t) => { window.__copied = t; return Promise.resolve(); } }, configurable: true })`);
@@ -675,8 +675,8 @@ describe("🎥 live share in a browser", () => {
       const copied = await ev(`window.__copied`);
       const avgText = await ev(`document.getElementById("liveCashAvgVal").textContent`);
       assert.ok(copied.startsWith(`${ME.name} live: `) && copied.includes(`/live.html?names=${encodeURIComponent(ME.name)}`), `first line is the watch link: ${copied}`);
-      assert.ok(copied.includes(`avg ${avgText} · DPM `), `numbers line matches the page: ${copied}`);
-      const dpmPart = copied.split("· DPM ")[1];
+      assert.ok(copied.includes(`Enemy avg ivi ${avgText} · Damage `), `numbers line matches the page: ${copied}`);
+      const dpmPart = copied.split("· Damage ")[1];
       assert.ok(/^\d+\.\d+$/.test(dpmPart), `DPM is a started-meter number, not warm-up: ${dpmPart}`);
       assert.deepEqual(errors, [], "no page errors");
     });
@@ -1035,14 +1035,15 @@ describe("🎥 live bar colors in a browser", () => {
 });
 
 describe("🎥 live feed frame lines in a browser", () => {
-  it("frame lines (owner 2026-10-26): death line above the table, Recharge below it, name column wider, names unclipped and centered", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+  it("frame lines (owner 2026-10-26): death line above the table, Recharge below it, name column halved, names unclipped and centered", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
       assert.equal(await ev(until(`document.querySelector("#liveList tbody.lv-me .lv-nm") !== null`)), true, "centre row on screen");
-      const frame = await ev(`(() => { const dl = document.getElementById("liveDeathLine"); const hb = document.getElementById("liveDpsHoldBar"); const dps = document.getElementById("liveDps"); const tbl = document.getElementById("liveList"); const cs = getComputedStyle(tbl); const nm = document.querySelector("#liveList tbody.lv-me .lv-nm"); return { dlBefore: dl.nextElementSibling.id, holdBeforeDps: dps.previousElementSibling.contains(hb), nmVar: cs.getPropertyValue("--lv-nm").trim(), fmVar: cs.getPropertyValue("--lv-fm").trim(), clip: nm.scrollHeight <= nm.clientHeight, centered: getComputedStyle(nm).textAlign }; })()`);
+      const frame = await ev(`(() => { const dl = document.getElementById("liveDeathLine"); const hb = document.getElementById("liveDpsHoldBar"); const dps = document.getElementById("liveDps"); const tbl = document.getElementById("liveList"); const cs = getComputedStyle(tbl); const nm = document.querySelector("#liveList tbody.lv-me .lv-nm"); const pn = document.querySelector("#liveList tbody.lv-me .lv-pn"); const pnCs = getComputedStyle(pn); return { dlBefore: dl.nextElementSibling.id, holdBeforeDps: dps.previousElementSibling.contains(hb), nmVar: cs.getPropertyValue("--lv-nm").trim(), fmVar: cs.getPropertyValue("--lv-fm").trim(), clip: nm.scrollHeight <= nm.clientHeight, centered: getComputedStyle(nm).textAlign, lhRatio: parseFloat(pnCs.lineHeight) / parseFloat(pnCs.fontSize) }; })()`);
       assert.equal(frame.dlBefore, "liveList", "death line directly above the table");
       assert.equal(frame.holdBeforeDps, true, "Recharge sits between the table and the DPM block");
-      assert.equal(frame.nmVar, "24.78rem", "name column took the zerg width (big tier at 1920px)");
+      assert.equal(frame.nmVar, "12.39rem", "name column halved (big tier at 1920px)");
+      assert.ok(frame.lhRatio >= 1.2, `name line tall enough for descenders: ${frame.lhRatio}`);
       assert.equal(frame.fmVar, "1.9rem", "name font bumped ~12% (big tier at 1920px)");
       assert.equal(frame.clip, true, "centre name not clipped at the bigger font");
       assert.equal(frame.centered, "center", "centre name centered");
@@ -1092,6 +1093,24 @@ describe("🎥 live dynamic scale in a browser", () => {
       assert.ok(a < p, `avg tick left of p90 tick: ${a}% < ${p}%`);
       const titles = await ev(`[document.getElementById("liveDpmTickAvg").title, document.getElementById("liveDpmTickP90").title]`);
       assert.ok(titles[0].includes("514") && titles[1].includes("1393"), `tick tooltips name their values: ${titles}`);
+      assert.deepEqual(errors, [], "no page errors");
+    });
+  });
+});
+
+describe("🎥 live streamer mode in a browser", () => {
+  it("streamer mode (owner 2026-10-26): one tap greens the page, outlines text, drops the counter below the bar, no back button", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      assert.equal(await ev(`document.getElementById("liveStreamBtn").textContent`), "Streamer mode", "switch button labelled");
+      assert.equal(await ev(`document.body.classList.contains("live-stream")`), false, "normal mode at load");
+      await ev(`document.getElementById("liveStreamBtn").click()`);
+      assert.equal(await ev(`document.body.classList.contains("live-stream")`), true, "one tap switches to overlay mode");
+      assert.equal(await ev(`getComputedStyle(document.body).backgroundColor`), "rgb(0, 255, 0)", "chromakey green background");
+      assert.equal(await ev(`getComputedStyle(document.getElementById("liveStreamBtn")).display`), "none", "switch button hides itself — no button back");
+      assert.ok(await ev(`location.search.includes("stream=1")`), "URL gains stream=1");
+      const pos = await ev(`(() => { const bar = document.querySelector("#liveDps .live-bar"); const val = document.getElementById("liveDpsVal"); const b = bar.getBoundingClientRect(), v = val.getBoundingClientRect(); return [b.bottom, v.top]; })()`);
+      assert.ok(pos[1] >= pos[0] - 1, `counter below the bar: bar bottom ${pos[0]}, val top ${pos[1]}`);
       assert.deepEqual(errors, [], "no page errors");
     });
   });

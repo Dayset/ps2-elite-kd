@@ -130,7 +130,7 @@ import { autoMarksHtml } from "./auto-marks.mjs?v=20261024-trac1";
 import { accountTimes, flairsHtml, flairsFor } from "./flairs.mjs?v=20261010-sav1";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
 import "./name-peek.mjs?v=20261025-loc1";
-import { sfx, recentGesture, mountSfxToggle } from "./sfx.mjs?v=20261026-sfx1";
+import { sfx, recentGesture, mountSfxToggle } from "./sfx.mjs?v=20261026-sfx2";
 import { mountNameSuggest } from "./name-suggest.mjs?v=20261024-br1";
 import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261010-sav1";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
