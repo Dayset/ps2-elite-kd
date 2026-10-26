@@ -825,7 +825,7 @@ test("DPM row bars (owner 2026-10-26): stacked meter lines, DPM glows and grows,
   assert.doesNotMatch(swap, /liveDpsCombatSep/);
   assert.match(css, /\.live-bar \{ height: 6px; margin-top: 0\.15rem; background: var\(--grid\); border-radius: 999px; overflow: hidden; \}/);
   assert.match(css, /\.live-bar-fill \{ height: 100%; width: 0%; background: var\(--dim\); border-radius: 999px; \}/);
-  assert.match(css, /\.live-bar-dpm \{ background: linear-gradient\(90deg, #ff1744, #ff9100, #ffea00, #00e676, #00b0ff, #7c4dff\); box-shadow: 0 0 8px var\(--accent\); \}/); // main DPM = rainbow
+  assert.match(css, /\.live-bar-dpm \{ background: linear-gradient\(90deg, #7c4dff, #00b0ff, #00e676, #ffea00, #ff9100, #ff1744\); box-shadow: 0 0 8px var\(--accent\); \}/); // main DPM = rainbow
   assert.match(css, /\.live-bar-hold \{ background: linear-gradient\(90deg, #1b5e20, #43a047, #81c784\); \}/); // Recharge = green
   assert.match(css, /\.live-bar-fat \{ height: 12px; \}/); // DPM track is fat; hold track stays thin (6 px)
   assert.doesNotMatch(css, /\.live-bar-fill \{[^}]*transition/); // bars move frame-for-frame, no easing

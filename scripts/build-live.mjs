@@ -9,7 +9,7 @@ import { fileURLToPath } from "node:url";
 
 export const LIVE_JS = "live.mjs?v=20261026-lines1";
 /** #66: the live page's own CSS (moved out of styles.css), loaded right after styles.css. */
-export const LIVE_CSS = "live.css?v=20261026-frame1";
+export const LIVE_CSS = "live.css?v=20261026-rev1";
 
 export function buildLive(index) {
   const swaps = [

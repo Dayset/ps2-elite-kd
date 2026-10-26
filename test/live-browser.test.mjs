@@ -1038,6 +1038,7 @@ describe("🎥 live bar colors in a browser", () => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
       const [dpm, hold] = await ev(`[getComputedStyle(document.querySelector("#liveDpsBar")).backgroundImage, getComputedStyle(document.querySelector("#liveDpsHoldBar")).backgroundImage]`);
       assert.ok(dpm.includes("linear-gradient") && dpm.includes("rgb(255, 23, 68)") && dpm.includes("rgb(0, 176, 255)"), `DPM rainbow: ${dpm}`);
+      assert.ok(dpm.indexOf("rgb(124, 77, 255)") < dpm.indexOf("rgb(255, 23, 68)"), `DPM palette reversed: purple first, red last: ${dpm}`);
       assert.ok(hold.includes("linear-gradient") && hold.includes("rgb(67, 160, 71)"), `Recharge green: ${hold}`);
       assert.deepEqual(errors, [], "no page errors");
     });
