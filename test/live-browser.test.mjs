@@ -478,14 +478,15 @@ describe("🎥 live hold meter in a browser", () => {
   it("hold (owner 2026-10-25): two clean 12 s gaps hold the line flat — DPM stays above 8000 eight seconds after the fourth kill", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
-      assert.equal(await ev(until(`document.getElementById("liveDpsHold").textContent === "hold 0s"`)), true, "no gaps yet: hold 0s");
+      // CSSOM normalizes "0.0%" → "0%" on readback, so bar widths assert the normalized form (6.7% keeps its decimal)
+      assert.equal(await ev(until(`document.getElementById("liveDpsHoldBar").style.width === "0%"`)), true, "no gaps yet: hold bar at zero");
       // Two throwaway kills first: the first commit loads the ranks, so the
       // gap it spans is dirty (~1 s of load time) — the sleeps below start
       // after commits, so only gaps between fast commits measure cleanly.
       // The median absorbs the dirty gap: median(1 s, 12 s, 12 s) = 12 s.
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
       assert.equal(await ev(until(`document.getElementById("liveDpsVal").textContent === "1/3"`)), true, "first kill bumps the count");
-      assert.equal(await ev(`document.getElementById("liveDpsHold").textContent`), "hold 0s", "one spike: still no gap, hold 0s");
+      assert.equal(await ev(`document.getElementById("liveDpsHoldBar").style.width`), "0%", "one spike: still no gap, hold bar at zero");
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[1].cid, "80", false)})`);
       assert.equal(await ev(until(`document.getElementById("liveDpsVal").textContent === "2/3"`)), true, "second kill bumps the count");
       await new Promise((r) => setTimeout(r, 12000)); // a slow player's real gap, cleanly measured
@@ -497,7 +498,7 @@ describe("🎥 live hold meter in a browser", () => {
       await new Promise((r) => setTimeout(r, 8000)); // 8 s after the fourth kill — inside the 12 s hold
       const dpm = await ev(`Number(document.getElementById("liveDpsVal").textContent)`);
       assert.ok(dpm > 8000, `held DPM stays above 8000 (with no hold it would be ~3900 here): ${dpm}`);
-      assert.equal(await ev(`document.getElementById("liveDpsHold").textContent`), "hold 12s", "median of the gaps: hold 12s");
+      assert.equal(await ev(`document.getElementById("liveDpsHoldBar").style.width`), "20%", "median of the gaps: hold bar 20% (12 s of 60 s)");
       assert.deepEqual(errors, [], "no page errors");
     });
   });
@@ -594,14 +595,14 @@ describe("🎥 live death-anchored hold in a browser", () => {
   it("hold A (owner 2026-10-25): a death plus two kills sets the hold from the death, not just between kills", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
-      assert.equal(await ev(until(`document.getElementById("liveDpsHold").textContent === "hold 0s"`)), true, "no gaps yet: hold 0s");
+      assert.equal(await ev(until(`document.getElementById("liveDpsHoldBar").style.width === "0%"`)), true, "no gaps yet: hold bar at zero");
       await ev(`window.__fakeWs.emit(${death(OPP[0].cid, ME.cid, "432", false)})`); // death first: the anchor
       await new Promise((r) => setTimeout(r, 4000));
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[1].cid, "80", false)})`); // kill 1: 4 s after the death
       await new Promise((r) => setTimeout(r, 2000));
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[2].cid, "80", false)})`); // kill 2: 2 s after kill 1
       // pool [4 s, 2 s] → median 3 s; the old within-run-only hold would say 2 s
-      assert.equal(await ev(until(`document.getElementById("liveDpsHold").textContent === "hold 3s"`)), true, "death-anchored median: hold 3s");
+      assert.equal(await ev(until(`document.getElementById("liveDpsHoldBar").style.width === "5%"`)), true, "death-anchored median: hold bar 5% (3 s of 60 s)");
       assert.deepEqual(errors, [], "no page errors");
     });
   });
@@ -611,20 +612,20 @@ describe("🎥 live combat average in a browser", () => {
   it("combat average (owner 2026-10-25): median of ALL death→first-combat runs, shown next to hold", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
-      // before any death→combat run: the span is empty and its line hidden
-      assert.equal(await ev(until(`document.getElementById("liveDpsCombat").textContent === "" && document.getElementById("liveDpsCombatLine").style.display === "none"`)), true, "no run yet: combat hidden");
+      // before any death→combat run: its line hidden
+      assert.equal(await ev(until(`document.getElementById("liveDpsCombatLine").style.display === "none"`)), true, "no run yet: combat line hidden");
       await ev(`window.__fakeWs.emit(${death(OPP[0].cid, ME.cid, "432", false)})`); // death 1
       await new Promise((r) => setTimeout(r, 4000));
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[1].cid, "80", false)})`); // combat 4 s after death 1
-      assert.equal(await ev(until(`document.getElementById("liveDpsCombat").textContent === "combat 4s (n=1)"`)), true, "first run: combat 4s (n=1)");
+      assert.equal(await ev(until(`document.getElementById("liveDpsCombatBar").style.width === "6.7%"`)), true, "first run: combat bar 6.7% (4 s of 60 s)");
       // the combat line sits in the same DPM stack, right after the hold line
-      assert.equal(await ev(`document.getElementById("liveDpsCombatLine").previousElementSibling.querySelector("#liveDpsHold") !== null`), true, "combat line sits right after hold line");
+      assert.equal(await ev(`document.getElementById("liveDpsCombatLine").previousElementSibling.querySelector("#liveDpsHoldBar") !== null`), true, "combat line sits right after hold line");
       assert.equal(await ev(`document.getElementById("liveDpsCombatBar").style.width`), "6.7%", "combat bar: 4 s of 60 s");
       await ev(`window.__fakeWs.emit(${death(OPP[2].cid, ME.cid, "432", false)})`); // death 2
       await new Promise((r) => setTimeout(r, 8000));
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[3].cid, "80", false)})`); // combat 8 s after death 2
       // median([4 s, 8 s]) = 6 s, over both deaths — the trailing-10 freeze/hold caps don't apply here
-      assert.equal(await ev(until(`document.getElementById("liveDpsCombat").textContent === "combat 6s (n=2)"`)), true, "all deaths: combat 6s (n=2)");
+      assert.equal(await ev(until(`document.getElementById("liveDpsCombatBar").style.width === "10%"`)), true, "all deaths: combat bar 10% (6 s of 60 s)");
       assert.deepEqual(errors, [], "no page errors");
     });
   });

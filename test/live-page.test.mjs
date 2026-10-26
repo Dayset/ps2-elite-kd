@@ -702,7 +702,7 @@ test("mobile names + legend + DPS (owner 2026-10-25): table 100% with a flexible
   const swap = readFileSync(new URL("scripts/build-live.mjs", root), "utf8");
   assert.match(css, /@media \(max-width: 600px\)[\s\S]*?\.live-table \{[^}]*width: 100%;/);
   assert.match(css, /@media \(max-width: 600px\)[\s\S]*?col\.lv-c-nm \{ width: auto; \}/);
-  assert.match(swap, /<div id="liveDps" class="live-dps"><div class="live-metric"><span id="liveDpsLabel"><\/span> <span id="liveDpsVal">0\.0<\/span><div class="live-bar" aria-hidden="true"><div id="liveDpsBar" class="live-bar-fill live-bar-dpm"><\/div><\/div><\/div><div class="live-metric"><span id="liveDpsHold"><\/span><div class="live-bar" aria-hidden="true"><div id="liveDpsHoldBar" class="live-bar-fill"><\/div><\/div><\/div><div class="live-metric" id="liveDpsCombatLine"><span id="liveDpsCombat"><\/span><div class="live-bar" aria-hidden="true"><div id="liveDpsCombatBar" class="live-bar-fill"><\/div><\/div><\/div><div class="live-metric"><span id="liveCashSumLabel"><\/span> <span id="liveCashSumVal">0<\/span><\/div><div class="live-metric"><span id="liveCashAvgLabel"><\/span> <span id="liveCashAvgVal">–<\/span><\/div><div class="live-metric"><span id="liveOnline" class="live-online" data-state="unknown"><i><\/i><span id="liveOnlineText">…<\/span><\/span><\/div><\/div>/);
+  assert.match(swap, /<div id="liveDps" class="live-dps"><div class="live-metric"><span id="liveDpsLabel"><\/span> <span id="liveDpsVal">0\.0<\/span><div class="live-bar live-bar-fat" aria-hidden="true"><div id="liveDpsBar" class="live-bar-fill live-bar-dpm"><\/div><\/div><\/div><div class="live-metric"><div class="live-bar" aria-hidden="true"><div id="liveDpsHoldBar" class="live-bar-fill"><\/div><\/div><\/div><div class="live-metric" id="liveDpsCombatLine"><div class="live-bar" aria-hidden="true"><div id="liveDpsCombatBar" class="live-bar-fill"><\/div><\/div><\/div><div class="live-metric"><span id="liveCashSumLabel"><\/span> <span id="liveCashSumVal">0<\/span><\/div><div class="live-metric"><span id="liveCashAvgLabel"><\/span> <span id="liveCashAvgVal">–<\/span><\/div><div class="live-metric"><span id="liveOnline" class="live-online" data-state="unknown"><i><\/i><span id="liveOnlineText">…<\/span><\/span><\/div><\/div>/);
   assert.match(js, /eventNames: \["Death", "GainExperience_experience_id_2", "GainExperience_experience_id_3", "GainExperience_experience_id_371", "GainExperience_experience_id_372", "PlayerLogin", "PlayerLogout"\]/);
   assert.match(js, /DPS_ASSIST_XP\.has\(Number\(p\.experience_id\)\)/);
   assert.match(js, /setInterval\(dpsTick, 100\)/);
@@ -773,45 +773,44 @@ test("hold meter (owner 2026-10-25): decay freezes on death, lifts on a spike or
 test("warm-up (owner 2026-10-25): the meter waits for its 3rd chunk — first two spikes only bump the count", () => {
   const js = liveSrc();
   assert.match(js, /const dpsLabelEl = \$\("liveDpsLabel"\);/);
-  assert.match(js, /let lastDps = "", lastDpsLabel = "", lastHold = "", lastCombat = "", lastCash = "";/);
+  assert.match(js, /let lastDps = "", lastDpsLabel = "", lastCash = "";/);
   assert.match(js, /if \(dpsEvents\.length < 3\) \{/);
   assert.match(js, /v = `\$\{dpsEvents\.length\}\/3`;/);
   assert.match(js, /label = tr\("live\.dpmWarm", "DPM starts at 3"\);/);
   assert.match(js, /if \(dpsLabelEl && label !== lastDpsLabel\) \{ dpsLabelEl\.textContent = label; lastDpsLabel = label; \}/);
 });
 
-test("hold indicator (owner 2026-10-25): the current hold in whole seconds, next to the meter", () => {
+test("hold indicator (owner 2026-10-26): the hold as a bare thin bar — no text, the line IS the value", () => {
   const js = liveSrc();
   const swap = readFileSync(new URL("scripts/build-live.mjs", root), "utf8");
-  assert.match(swap, /<div class="live-metric"><span id="liveDpsHold"><\/span><div class="live-bar" aria-hidden="true"><div id="liveDpsHoldBar" class="live-bar-fill"><\/div><\/div><\/div>/);
-  assert.match(js, /const dpsHoldEl = \$\("liveDpsHold"\);/);
-  assert.match(js, /let lastDps = "", lastDpsLabel = "", lastHold = "", lastCombat = "", lastCash = "";/);
+  assert.match(swap, /<div class="live-metric"><div class="live-bar" aria-hidden="true"><div id="liveDpsHoldBar" class="live-bar-fill"><\/div><\/div><\/div>/);
+  assert.match(js, /let lastDps = "", lastDpsLabel = "", lastCash = "";/);
   assert.match(js, /const holdMs = combatHoldMs\(spikeTimes\(\), deathTimes\);/);
-  assert.match(js, /const holdText = tr\("live\.dpmHold", "hold \{s\}s", \{ s: Math\.round\(holdMs \/ 1000\) \}\);/);
-  assert.match(js, /if \(dpsHoldEl && holdText !== lastHold\) \{ dpsHoldEl\.textContent = holdText; lastHold = holdText; setBar\(dpsHoldBarEl, "hold", secBarPct\(Math\.round\(holdMs \/ 1000\)\)\); \}/);
+  assert.match(js, /if \(dpsHoldBarEl\) setBar\(dpsHoldBarEl, "hold", secBarPct\(Math\.round\(holdMs \/ 1000\)\)\);/);
+  assert.doesNotMatch(js, /\$\("liveDpsHold"\)/);
 });
 
-test("combat average (owner 2026-10-25): median of ALL death→first-combat runs, next to hold", () => {
+test("combat average (owner 2026-10-26): median of ALL death→first-combat runs, as a bare thin bar next to hold", () => {
   const js = liveSrc();
   const swap = readFileSync(new URL("scripts/build-live.mjs", root), "utf8");
-  assert.match(swap, /<div class="live-metric" id="liveDpsCombatLine"><span id="liveDpsCombat"><\/span><div class="live-bar" aria-hidden="true"><div id="liveDpsCombatBar" class="live-bar-fill"><\/div><\/div><\/div>/);
-  assert.match(js, /const dpsCombatEl = \$\("liveDpsCombat"\), dpsCombatLineEl = \$\("liveDpsCombatLine"\);/);
+  assert.match(swap, /<div class="live-metric" id="liveDpsCombatLine"><div class="live-bar" aria-hidden="true"><div id="liveDpsCombatBar" class="live-bar-fill"><\/div><\/div><\/div>/);
   assert.match(js, /const combat = timeToCombatMs\(deathTimes, spikeTimes\(\)\);/);
-  assert.match(js, /const combatText = combat\.n \? tr\("live\.dpmCombat", "combat \{s\}s \(n=\{n\}\)", \{ s: Math\.round\(combat\.ms \/ 1000\), n: combat\.n \}\) : "";/);
-  assert.match(js, /if \(dpsCombatEl && combatText !== lastCombat\) \{ dpsCombatEl\.textContent = combatText; lastCombat = combatText; setBar\(dpsCombatBarEl, "combat", secBarPct\(Math\.round\(combat\.ms \/ 1000\)\)\); \}/);
+  assert.match(js, /if \(dpsCombatBarEl\) setBar\(dpsCombatBarEl, "combat", secBarPct\(Math\.round\(combat\.ms \/ 1000\)\)\);/);
   assert.match(js, /if \(dpsCombatLineEl\) dpsCombatLineEl\.style\.display = combat\.n \? "" : "none";/);
+  assert.doesNotMatch(js, /\$\("liveDpsCombat"\)/);
 });
 
 test("DPM row bars (owner 2026-10-26): stacked meter lines, DPM glows and grows, hold/combat shrink", () => {
   const js = liveSrc();
   const css = cssSrc();
   const swap = readFileSync(new URL("scripts/build-live.mjs", root), "utf8");
-  assert.match(swap, /<div class="live-metric"><span id="liveDpsLabel"><\/span> <span id="liveDpsVal">0\.0<\/span><div class="live-bar" aria-hidden="true"><div id="liveDpsBar" class="live-bar-fill live-bar-dpm"><\/div><\/div><\/div>/);
+  assert.match(swap, /<div class="live-metric"><span id="liveDpsLabel"><\/span> <span id="liveDpsVal">0\.0<\/span><div class="live-bar live-bar-fat" aria-hidden="true"><div id="liveDpsBar" class="live-bar-fill live-bar-dpm"><\/div><\/div><\/div>/);
   assert.match(swap, /<div class="live-metric"><span id="liveCashSumLabel"><\/span> <span id="liveCashSumVal">0<\/span><\/div><div class="live-metric"><span id="liveCashAvgLabel"><\/span> <span id="liveCashAvgVal">–<\/span><\/div>/); // pot: total + avg lines, no parts formula
   assert.doesNotMatch(swap, /liveDpsCombatSep/);
   assert.match(css, /\.live-bar \{ height: 6px; margin-top: 0\.15rem; background: var\(--grid\); border-radius: 999px; overflow: hidden; \}/);
   assert.match(css, /\.live-bar-fill \{ height: 100%; width: 0%; background: var\(--dim\); border-radius: 999px; \}/);
   assert.match(css, /\.live-bar-dpm \{ background: linear-gradient\(90deg, var\(--accent\), #e8f6ff\); box-shadow: 0 0 8px var\(--accent\); \}/);
+  assert.match(css, /\.live-bar-fat \{ height: 12px; \}/); // DPM track is fat; hold/combat tracks stay thin (6 px)
   assert.doesNotMatch(css, /\.live-bar-fill \{[^}]*transition/); // bars move frame-for-frame, no easing
   assert.match(js, /const dpsBarEl = \$\("liveDpsBar"\), dpsHoldBarEl = \$\("liveDpsHoldBar"\), dpsCombatBarEl = \$\("liveDpsCombatBar"\);/);
   assert.match(js, /const dpmBarPct = \(v\) => `\$\{Math\.min\(100, Math\.max\(0, \(v \/ \(120000 \/ \(dpmTauMs \/ 1000\)\)\) \* 100\)\)\.toFixed\(1\)\}%`;/); // full = two kill-spikes at the current τ

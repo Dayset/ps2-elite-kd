@@ -539,8 +539,7 @@ function start() {
   // drain, not steps, and a late-arriving victim iVi lands within 100 ms.
   const dpsEl = $("liveDpsVal");
   const dpsLabelEl = $("liveDpsLabel");
-  const dpsHoldEl = $("liveDpsHold");
-  const dpsCombatEl = $("liveDpsCombat"), dpsCombatLineEl = $("liveDpsCombatLine");
+  const dpsCombatLineEl = $("liveDpsCombatLine");
   const dpsBarEl = $("liveDpsBar"), dpsHoldBarEl = $("liveDpsHoldBar"), dpsCombatBarEl = $("liveDpsCombatBar");
   if ($("liveDpsLabel")) $("liveDpsLabel").textContent = tr("live.dps", "DPM");
   const cashSumEl = $("liveCashSumVal"), cashAvgEl = $("liveCashAvgVal");
@@ -601,7 +600,7 @@ function start() {
   // the formula's +34% suffix says the parts are boosted). A floored 0 stays 0 (0 × 1.34 = 0).
   const CASH_BOOST_PCT = 34;
   const cashIv = (p) => (p && p.cached && Number.isFinite(p.cached.adjs) ? Math.round(Math.max(0, p.cached.adjs) * (1 + CASH_BOOST_PCT / 100)) : null);
-  let lastDps = "", lastDpsLabel = "", lastHold = "", lastCombat = "", lastCash = "";
+  let lastDps = "", lastDpsLabel = "", lastCash = "";
   // Owner 2026-10-26 (DPM row bars): each meter line carries a bar under
   // its text — DPM glows and grows with the shown value (full = two
   // kill-spikes at the current τ), hold/combat bars are value-proportional
@@ -683,15 +682,14 @@ function start() {
         // a scroll in flight owns the number — the tick leaves it alone
       }
       if (dpsLabelEl && label !== lastDpsLabel) { dpsLabelEl.textContent = label; lastDpsLabel = label; }
-      const holdText = tr("live.dpmHold", "hold {s}s", { s: Math.round(holdMs / 1000) });
-      if (dpsHoldEl && holdText !== lastHold) { dpsHoldEl.textContent = holdText; lastHold = holdText; setBar(dpsHoldBarEl, "hold", secBarPct(Math.round(holdMs / 1000))); }
-      // empty (and its line hidden) until the first death→combat run
-      // completes — a "combat 0s" would be a lie, not a measurement
+      // Owner 2026-10-26 (fat/thin bars): the timers are bare bars now —
+      // no text, the line IS the value (full = 60 s). setBar guards its own
+      // writes, so the tick calls it flat out.
+      if (dpsHoldBarEl) setBar(dpsHoldBarEl, "hold", secBarPct(Math.round(holdMs / 1000)));
+      // hidden until the first death→combat run completes — a 0 s bar
+      // would be a lie, not a measurement
       const combat = timeToCombatMs(deathTimes, spikeTimes());
-      const combatText = combat.n ? tr("live.dpmCombat", "combat {s}s (n={n})", { s: Math.round(combat.ms / 1000), n: combat.n }) : "";
-      if (dpsCombatEl && combatText !== lastCombat) { dpsCombatEl.textContent = combatText; lastCombat = combatText; setBar(dpsCombatBarEl, "combat", secBarPct(Math.round(combat.ms / 1000))); }
-      // outside the text-change guard: the line must hide on the first
-      // tick too, when empty text equals the initial state and no write runs
+      if (dpsCombatBarEl) setBar(dpsCombatBarEl, "combat", secBarPct(Math.round(combat.ms / 1000)));
       if (dpsCombatLineEl) dpsCombatLineEl.style.display = combat.n ? "" : "none";
     }
     // Owner 2026-10-26: the main pot shows only the total and the average
