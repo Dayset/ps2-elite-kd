@@ -542,9 +542,24 @@ function start() {
   let lastDeathLineW = "";
   const dbgEl = $("liveDbg");
   if ($("liveDpsLabel")) $("liveDpsLabel").textContent = tr("live.dps", "DPM");
-  const cashSumEl = $("liveCashSumVal"), cashAvgEl = $("liveCashAvgVal");
-  if ($("liveCashSumLabel")) $("liveCashSumLabel").textContent = tr("live.cashSum", "Σ iVi");
+  const cashAvgEl = $("liveCashAvgVal");
   if ($("liveCashAvgLabel")) $("liveCashAvgLabel").textContent = tr("live.cashAvg", "avg");
+  // Owner 2026-10-26 (dynamic scale + nudges): the bar's full point fits
+  // the player's own killing pace — twice their estimated DPM, from adjs
+  // via the KPM regression (kills + assists damage at median share).
+  // Floored so a slow player still gets a readable bar; unknown adjs
+  // fall back to the old fixed point (two fresh spikes at current τ).
+  // τ still only decays the number, it no longer sets the scale. The
+  // ticks mark the average player and the 90th percentile on the track.
+  const DPM_TICK_AVG = 514, DPM_TICK_P90 = 1393;
+  const estDpm = (adjs) => (0.385 + 0.000623 * adjs) * 1170;
+  const dpmFull = () => {
+    const a = me && me.cached && me.cached.adjs;
+    return Number.isFinite(a) ? Math.max(1000, 2 * estDpm(a)) : 120000 / (dpmTauMs / 1000);
+  };
+  const tickAvgEl = $("liveDpmTickAvg"), tickP90El = $("liveDpmTickP90");
+  if (tickAvgEl) tickAvgEl.title = tr("live.dpmTickAvg", "Average player: {v} DPM", { v: DPM_TICK_AVG });
+  if (tickP90El) tickP90El.title = tr("live.dpmTickP90", "90th percentile: {v} DPM", { v: DPM_TICK_P90 });
   const dpsEvents = [];
   // Owner 2026-10-25 (elite combat damage meter): the two holds. deathTimes
   // holds every death's event time; timeDebtMs is the total frozen time
@@ -600,7 +615,7 @@ function start() {
     shareEl.textContent = tr("live.share", "Share");
     shareEl.addEventListener("click", async () => {
       const dpm = dpsEvents.length < 3 ? "–" : (dpsEl ? dpsEl.textContent : "–");
-      const text = `${target} live: ${location.origin}${location.pathname}?names=${encodeURIComponent(target)}\nΣ ${cashSumEl ? cashSumEl.textContent : "0"} · avg ${cashAvgEl ? cashAvgEl.textContent : "–"} · DPM ${dpm}`;
+      const text = `${target} live: ${location.origin}${location.pathname}?names=${encodeURIComponent(target)}\navg ${cashAvgEl ? cashAvgEl.textContent : "–"} · DPM ${dpm}`;
       let ok = false;
       try { await navigator.clipboard.writeText(text); ok = true; } catch {}
       if (!ok) {
@@ -624,7 +639,7 @@ function start() {
   // the formula's +34% suffix says the parts are boosted). A floored 0 stays 0 (0 × 1.34 = 0).
   const CASH_BOOST_PCT = 34;
   const cashIv = (p) => (p && p.cached && Number.isFinite(p.cached.adjs) ? Math.round(Math.max(0, p.cached.adjs) * (1 + CASH_BOOST_PCT / 100)) : null);
-  let lastDps = "", lastDpsLabel = null, lastCash = "", lastDbg = "", lastSpikeEff = null; // null so the first tick clears the init "DPM" label during warm-up
+  let lastDps = "", lastDpsLabel = null, lastCash = "", lastDbg = "", lastSpikeEff = null, lastScale = 0; // null so the first tick clears the init "DPM" label during warm-up
   // Owner 2026-10-26 (DPM row bars): each meter line carries a bar under
   // its text — DPM glows and grows with the shown value (full = two
   // kill-spikes at the current τ), hold/combat bars are value-proportional
@@ -632,7 +647,7 @@ function start() {
   // this guard so a steady value writes once.
   const barState = { dpm: "", hold: "" };
   const setBar = (el, key, pct) => { if (el && barState[key] !== pct) { el.style.width = pct; barState[key] = pct; } };
-  const dpmBarPct = (v) => `${Math.min(100, Math.max(0, (v / (120000 / (dpmTauMs / 1000))) * 100)).toFixed(1)}%`;
+  const dpmBarPct = (v) => `${Math.min(100, Math.max(0, (v / dpmFull()) * 100)).toFixed(1)}%`;
   // Owner 2026-10-25 (gas-counter scroll): each kill/assist after the
   // meter starts queues one scroll — its own DPM jump at the τ of the
   // moment — and scrolls play one by one, 700 ms each, ease-in (slow
@@ -722,6 +737,16 @@ function start() {
         // a scroll in flight owns the number — the tick leaves it alone
       }
       if (dpsLabelEl && label !== lastDpsLabel) { dpsLabelEl.textContent = label; lastDpsLabel = label; }
+      // Owner 2026-10-26 (nudges): the average-player and p90 marks ride
+      // the fat track at value/full, clamped to the track; write-on-change
+      // so a tick only moves when the scale itself moves (adjs landing,
+      // τ changing), not every 100 ms.
+      const tickFull = dpmFull();
+      if (tickFull !== lastScale) {
+        if (tickAvgEl) tickAvgEl.style.left = `${Math.min(100, (DPM_TICK_AVG / tickFull) * 100).toFixed(1)}%`;
+        if (tickP90El) tickP90El.style.left = `${Math.min(100, (DPM_TICK_P90 / tickFull) * 100).toFixed(1)}%`;
+        lastScale = tickFull;
+      }
       // Owner 2026-10-26 (timers): the thin bars are countdowns now, so
       // everyone watching sees time running out — the hold bar drains
       // from the latest spike over the median hold, the death line
@@ -763,14 +788,13 @@ function start() {
         }
       }
     }
-    // Owner 2026-10-26: the main pot shows only the total and the average
-    // — the parts formula moved off this line (banked runs in the history
-    // below still carry theirs).
-    if (cashSumEl && cashAvgEl) {
+    // Owner 2026-10-26: the pot shows the average only — the Σ total is
+    // hidden from display (still computed for the session line and the
+    // banked runs, just not shown here).
+    if (cashAvgEl) {
       const t = cashTotals(cashKills.map((e) => e.iv));
       const key = `${t.sum}|${t.avg}`;
       if (key !== lastCash) {
-        cashSumEl.textContent = String(t.sum);
         cashAvgEl.textContent = t.avg == null ? "–" : t.avg.toFixed(1);
         lastCash = key;
       }
@@ -818,7 +842,7 @@ function start() {
   function renderCashHist() {
     if (!cashHistEl) return;
     cashHistEl.innerHTML = cashHist.length
-      ? `<div>${esc(tr("live.cashHist", "Past runs"))}</div>` + cashHist.map((h) => `<div>Σ ${h.formula} · ${tr("live.cashAvg", "avg")} ${h.avg == null ? "–" : h.avg.toFixed(1)}</div>`).join("")
+      ? `<div>${esc(tr("live.cashHist", "Past runs"))}</div>` + cashHist.map((h) => `<div>${tr("live.cashAvg", "avg")} ${h.avg == null ? "–" : h.avg.toFixed(1)}</div>`).join("")
       : "";
   }
 

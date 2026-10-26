@@ -314,10 +314,9 @@ describe("🎥 live.html in a browser", () => {
     });
   });
 
-  it("cash-out (owner 2026-10-25): victims' iVi summed + averaged next to DPM, live on the tick", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+  it("cash-out (owner 2026-10-26): victims' iVi averaged next to DPM, live on the tick", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
-      assert.equal(await ev(until(`document.getElementById("liveCashSumVal").textContent === "0"`)), true, "cash sum starts at 0");
       assert.equal(await ev(until(`document.getElementById("liveCashAvgVal").textContent === "–"`)), true, "cash avg starts empty");
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[1].cid, "80", false)})`);
@@ -325,29 +324,24 @@ describe("🎥 live.html in a browser", () => {
       const ivs = await ev(`[...document.querySelectorAll("#liveList tbody.lv-vic .lv-iv")].map((e) => Number(e.textContent))`);
       assert.ok(ivs.length === 2 && ivs.every(Number.isFinite) && ivs.every((v) => v > 0), `both victims show an iVi: ${ivs}`);
       const b = (v) => Math.round(v * 1.34);
-      const sum = b(ivs[1]) + b(ivs[0]), avg = (sum / 2).toFixed(1), formula = `${sum} (${b(ivs[1])} + ${b(ivs[0])})+34%`; // rows are newest-first, the formula is kill order; parts are boosted
+      const sum = b(ivs[1]) + b(ivs[0]), avg = (sum / 2).toFixed(1); // rows are newest-first; the average is per victim
       // ±1 tolerance per part, like the cashed-out-runs test: the page boosts RAW
       // adjs while the test only sees ROUNDED displays, so a fixture
       // drifting across a rounding boundary shifts a part by 1 (seen
       // 2026-10-25: raw ~1401.2 displays 1401 but boosts to 1878, not 1877)
-      // the main pot shows only the total now (owner 2026-10-26) — the parts
-      // formula lives on in the banked history below, not here
-      assert.equal(await ev(until(`document.getElementById("liveCashSumVal").textContent !== "0"`)), true, "pot total landed");
-      const sumText = await ev(`document.getElementById("liveCashSumVal").textContent`);
-      assert.ok(/^\d+$/.test(sumText), `pot shows a bare total: ${sumText}`);
-      assert.ok(Math.abs(Number(sumText) - sum) <= 2, `pot total within rounding of display-derived: ${sumText} vs ${sum}`);
+      // the main pot shows only the average now (owner 2026-10-26) — the Σ
+      // total is hidden from display, not here
+      assert.equal(await ev(until(`document.getElementById("liveCashAvgVal").textContent !== "–"`)), true, "pot avg landed");
       const avgText = await ev(`document.getElementById("liveCashAvgVal").textContent`);
       assert.ok(Math.abs(Number(avgText) - Number(avg)) <= 1.0, `cash avg is per victim: ${avgText} vs ${avg}`);
       // the killer does not pay: ME dies, the run is banked and the pot resets for the new run
       await ev(`window.__fakeWs.emit(${death(OPP[2].cid, ME.cid, "432", false)})`);
-      assert.equal(await ev(until(`document.getElementById("liveCashSumVal").textContent === "0"`)), true, "the pot resets for the new run");
       assert.equal(await ev(until(`document.getElementById("liveCashAvgVal").textContent === "–"`)), true, "the avg empties with the pot");
       assert.equal(await ev(until(`document.querySelectorAll("#liveCashHist > div").length === 2`)), true, "one banked run in the history");
       const banked = await ev(`document.querySelectorAll("#liveCashHist > div")[1].textContent`);
-      const bm = banked.match(/^Σ (\d+) \((\d+) \+ (\d+)\)\+34% · avg ([\d.]+)$/);
-      assert.ok(bm, `the banked run keeps its formula: ${banked}`);
-      assert.ok(Math.abs(Number(bm[2]) - b(ivs[1])) <= 1 && Math.abs(Number(bm[3]) - b(ivs[0])) <= 1, `banked parts within 1 of display-derived: ${banked} vs ${formula}`);
-      assert.equal(Number(bm[1]), Number(bm[2]) + Number(bm[3]), "banked sum matches its parts");
+      const bm = banked.match(/^avg ([\d.]+)$/);
+      assert.ok(bm, `the banked run shows avg only: ${banked}`);
+      assert.ok(Math.abs(Number(bm[1]) - Number(avg)) <= 1.0, `banked avg matches: ${banked} vs ${avg}`);
       assert.notEqual(await ev(`getComputedStyle(document.getElementById("liveCashHist")).backgroundColor`), "rgba(0, 0, 0, 0)", "past cashouts sit on a background, not transparent");
       assert.deepEqual(errors, [], "no page errors");
     });
@@ -421,23 +415,23 @@ describe("🎥 live.html in a browser", () => {
   it("cashed-out runs (owner 2026-10-25): death banks the run, pot resets, history caps at 5 on the page", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
-      const pot = () => ev(`[document.getElementById("liveCashSumVal").textContent, document.getElementById("liveCashAvgVal").textContent]`);
+      const pot = () => ev(`document.getElementById("liveCashAvgVal").textContent`);
       const histEntries = () => ev(`[...document.querySelectorAll("#liveCashHist > div")].slice(1).map((d) => d.textContent)`);
-      const runSums = [];
+      const runAvgs = [];
       for (let i = 0; i < 6; i++) {
         await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[i].cid, "80", false)})`);
         assert.equal(await ev(until(`document.querySelector("#liveList tbody.lv-vic .lv-iv") && Number(document.querySelector("#liveList tbody.lv-vic .lv-iv").textContent) > 0`)), true, `run ${i + 1}: victim iVi on screen`);
-        runSums.push(await ev(`Number(document.querySelector("#liveList tbody.lv-vic .lv-iv").textContent)`));
+        runAvgs.push(await ev(`Number(document.querySelector("#liveList tbody.lv-vic .lv-iv").textContent)`));
         await ev(`window.__fakeWs.emit(${death(OPP[6].cid, ME.cid, "432", false)})`);
-        assert.deepEqual(await ev(until(`document.getElementById("liveCashSumVal").textContent === "0" && document.getElementById("liveCashAvgVal").textContent === "–" && document.querySelectorAll("#liveCashHist > div").length === ${Math.min(i + 2, 6)}`)), true, `run ${i + 1}: banked, pot reset`);
+        assert.deepEqual(await ev(until(`document.getElementById("liveCashAvgVal").textContent === "–" && document.querySelectorAll("#liveCashHist > div").length === ${Math.min(i + 2, 6)}`)), true, `run ${i + 1}: banked, pot reset`);
       }
       const entries = await histEntries();
       assert.equal(entries.length, 5, "history caps at 5 runs");
-      const b5 = Math.round(runSums[5] * 1.34), b0 = Math.round(runSums[0] * 1.34);
-      const entrySum = (e) => Number(e.match(/Σ (\d+)\+34%/)?.[1]);
-      assert.ok(Math.abs(entrySum(entries[0]) - b5) <= 1, `newest run first (within display rounding: the row iVi is already rounded, the pot boosts the raw value): ${entries[0]} vs ${b5}`);
-      assert.ok(!entries.map(entrySum).some((v) => Math.abs(v - b0) <= 1), "the oldest run dropped off");
-      assert.deepEqual(await pot(), ["0", "–"], "pot empty after the last run ends");
+      const b5 = Math.round(runAvgs[5] * 1.34), b0 = Math.round(runAvgs[0] * 1.34);
+      const entryAvg = (e) => Number(e.match(/avg ([\d.]+)/)?.[1]);
+      assert.ok(Math.abs(entryAvg(entries[0]) - b5) <= 1, `newest run first (within display rounding: the row iVi is already rounded, the pot boosts the raw value): ${entries[0]} vs ${b5}`);
+      assert.ok(!entries.map(entryAvg).some((v) => Math.abs(v - b0) <= 1), "the oldest run dropped off");
+      assert.equal(await pot(), "–", "pot empty after the last run ends");
       assert.deepEqual(errors, [], "no page errors");
     });
   });
@@ -451,8 +445,7 @@ describe("🎥 live.html in a browser", () => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
       await ev(`window.__fakeWs.emit(${death(ME.cid, SUB0.cid, "80", false)})`);
       assert.equal(await ev(until(`document.querySelector("#liveList tbody.lv-vic .lv-iv") && document.querySelector("#liveList tbody.lv-vic .lv-iv").textContent === "0"`)), true, "the feed already floors their shown iVi at 0");
-      assert.equal(await ev(until(`document.getElementById("liveCashSumVal").textContent === "0"`)), true, "the floored payout is 0, not negative");
-      assert.equal(await ev(until(`document.getElementById("liveCashAvgVal").textContent === "0.0"`)), true, "a known 0 payout counts in the average");
+      assert.equal(await ev(until(`document.getElementById("liveCashAvgVal").textContent === "0.0"`)), true, "a known 0 payout counts in the average (floored, never negative)");
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
       assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)").length === 2`)), true, "two victims on screen");
       const ivs = await ev(`[...document.querySelectorAll("#liveList tbody.lv-vic .lv-iv")].map((e) => Number(e.textContent))`);
@@ -460,12 +453,9 @@ describe("🎥 live.html in a browser", () => {
       const bp = Math.round(ivs[0] * 1.34);
       // ±1 tolerance (same rounding-boundary note as the cash-out test):
       // the page boosts the raw adj, the test only sees the rounded display
-      // the main pot shows only the total now (owner 2026-10-26): the floored 0
-      // adds nothing, so the total is the boosted part alone
-      assert.equal(await ev(until(`document.getElementById("liveCashSumVal").textContent !== "0"`)), true, "the pot total landed");
-      const sumText = await ev(`document.getElementById("liveCashSumVal").textContent`);
-      assert.ok(/^\d+$/.test(sumText), `pot shows a bare total: ${sumText}`);
-      assert.ok(Math.abs(Number(sumText) - bp) <= 1, `total within 1 of display-derived boosted part ${bp}: ${sumText}`);
+      // the main pot shows only the average now (owner 2026-10-26): the floored 0
+      // adds nothing to the numerator, so the average is the boosted part alone over 2
+      assert.equal(await ev(until(`document.getElementById("liveCashAvgVal").textContent !== "–"`)), true, "the pot avg landed");
       const avgText = await ev(`document.getElementById("liveCashAvgVal").textContent`);
       assert.ok(Math.abs(Number(avgText) - bp / 2) <= 1.0, `the average counts the floored 0: ${avgText} vs ${bp / 2}`);
       assert.deepEqual(errors, [], "no page errors");
@@ -669,7 +659,7 @@ describe("🎥 live reconnect in a browser", () => {
 });
 
 describe("🎥 live share in a browser", () => {
-  it("share (owner 2026-10-26): one tap copies link + Σ + avg + DPM, cash-out first", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+  it("share (owner 2026-10-26): one tap copies link + avg + DPM, cash-out first", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
       await ev(`Object.defineProperty(navigator, "clipboard", { value: { writeText: (t) => { window.__copied = t; return Promise.resolve(); } }, configurable: true })`);
@@ -679,14 +669,13 @@ describe("🎥 live share in a browser", () => {
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[2].cid, "80", false)})`);
       // wait until every victim's name filled in, so the pot and avg are final
       assert.equal(await ev(until(`![...document.querySelectorAll("#liveList tbody.lv-vic .lv-nm")].some((e) => e.textContent.includes("…"))`)), true, "all three names filled");
-      assert.equal(await ev(until(`document.getElementById("liveCashSumVal").textContent !== "0"`)), true, "pot landed");
+      assert.equal(await ev(until(`document.getElementById("liveCashAvgVal").textContent !== "–"`)), true, "pot avg landed");
       await ev(`document.getElementById("liveShare").click()`);
       assert.equal(await ev(until(`document.getElementById("liveShare").textContent === "✓"`)), true, "tap shows the tick");
       const copied = await ev(`window.__copied`);
-      const sumText = await ev(`document.getElementById("liveCashSumVal").textContent`);
       const avgText = await ev(`document.getElementById("liveCashAvgVal").textContent`);
       assert.ok(copied.startsWith(`${ME.name} live: `) && copied.includes(`/live.html?names=${encodeURIComponent(ME.name)}`), `first line is the watch link: ${copied}`);
-      assert.ok(copied.includes(`Σ ${sumText} · avg ${avgText} · DPM `), `numbers line matches the page: ${copied}`);
+      assert.ok(copied.includes(`avg ${avgText} · DPM `), `numbers line matches the page: ${copied}`);
       const dpmPart = copied.split("· DPM ")[1];
       assert.ok(/^\d+\.\d+$/.test(dpmPart), `DPM is a started-meter number, not warm-up: ${dpmPart}`);
       assert.deepEqual(errors, [], "no page errors");
@@ -1085,6 +1074,24 @@ describe("🎥 live idle note in a browser", () => {
       assert.ok(st.cls.includes("on"), `on class stays: ${st.cls}`);
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`); // first kill
       assert.equal(await ev(until(`document.getElementById("liveState").textContent === ""`)), true, "first event clears the line");
+      assert.deepEqual(errors, [], "no page errors");
+    });
+  });
+});
+
+describe("🎥 live dynamic scale in a browser", () => {
+  it("dynamic scale (owner 2026-10-26): bar full fits ME's pace, avg/p90 ticks sit at value/full", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      // ME is the top-adjs row in the harness cache; the scale follows once its row loads
+      const adjs = named[0][ci("adjs")];
+      const full = Math.max(1000, 2 * (0.385 + 0.000623 * adjs) * 1170);
+      const avgLeft = Math.min(100, (514 / full) * 100), p90Left = Math.min(100, (1393 / full) * 100);
+      assert.equal(await ev(until(`(() => { const [a, p] = [document.getElementById("liveDpmTickAvg").style.left, document.getElementById("liveDpmTickP90").style.left].map((s) => parseFloat(s)); return Math.abs(a - ${avgLeft}) < 0.6 && Math.abs(p - ${p90Left}) < 0.6; })()`)), true, `ticks at value/full for ME adjs ${adjs}: avg ${avgLeft.toFixed(1)}%, p90 ${p90Left.toFixed(1)}%`);
+      const [a, p] = await ev(`[document.getElementById("liveDpmTickAvg").style.left, document.getElementById("liveDpmTickP90").style.left].map((s) => parseFloat(s))`);
+      assert.ok(a < p, `avg tick left of p90 tick: ${a}% < ${p}%`);
+      const titles = await ev(`[document.getElementById("liveDpmTickAvg").title, document.getElementById("liveDpmTickP90").title]`);
+      assert.ok(titles[0].includes("514") && titles[1].includes("1393"), `tick tooltips name their values: ${titles}`);
       assert.deepEqual(errors, [], "no page errors");
     });
   });
