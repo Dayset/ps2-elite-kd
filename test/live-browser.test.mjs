@@ -132,19 +132,15 @@ describe("🎥 live.html in a browser", () => {
         const atk = L.querySelector("tbody.lv-atk");
         const me = L.querySelector("tbody.lv-me");
         const wnOf = (tb) => { const w = tb.querySelector(".lv-wn"); return w ? w.textContent : null; };
-        const izOf = (tb) => { const w = tb.querySelector(".lv-iz"); return w ? w.textContent : null; };
         return {
           lines: lines.length,
           names: vic.map((t) => t.querySelector(".lv-name").textContent),
           victimWn: vic.map(wnOf),
           victimHs: vic.map((t) => !!t.querySelector(".lv-hs2")),
-          victimIz: vic.map(izOf),
           killerWn: wnOf(atk),
           killerHs: !!atk.querySelector(".lv-hs2"),
-          killerIz: izOf(atk),
           meWn: wnOf(me),
           meHs: !!me.querySelector(".lv-hs2"),
-          meIz: izOf(me),
           noIcons: L.querySelectorAll(".lv-wi, .lv-wp, .lv-c-wp").length,
           noEmojis: L.querySelectorAll(".lv-em, .lv-sw, .lv-gl, .lv-c-em").length,
           nmW: Math.round(L.querySelector("tbody.lv-vic .lv-nm").getBoundingClientRect().width),
@@ -166,9 +162,6 @@ describe("🎥 live.html in a browser", () => {
       assert.equal(s.noIcons, 0, "no weapon icon column left");
       assert.equal(s.noEmojis, 0, "no emoji meters on the lines (parked)");
       assert.ok(s.nmW >= 280, `the name column absorbed the weapon column: ${s.nmW}px`);
-      const izFmt = /^(?:🪳|~?\d+|)$/; // blank = unknown with the switch off (LostGuardVS: apk null, no estimate — specified blank, covered deterministically by the SLOW case)
-      for (const [label, t] of [["victim", ...s.victimIz], ["killer", s.killerIz], ["centre", s.meIz]].flatMap(([label, ...ts]) => ts.map((t) => [label, t]))) assert.match(t, izFmt, `zerg-only cell (${label}): ${t}`);
-      assert.ok([...s.victimIz, s.killerIz, s.meIz].some((t) => t !== ""), "at least one zerg value on screen");
       assert.equal(s.svgFilters, 0, "no SVG filters on the page");
       assert.deepEqual(s.endless, [], "nothing animates forever (CPU)");
       assert.equal(s.noStar, true, "no ✦ star (the gold shine replaced it)");
@@ -329,7 +322,6 @@ describe("🎥 live.html in a browser", () => {
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[1].cid, "80", false)})`);
       assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)").length === 2`)), true, "two victim rows on screen");
-      assert.equal(await ev(`getComputedStyle(document.querySelector("#liveList tbody.lv-vic .lv-iz")).textAlign`), "left", "the inf/zerg cell aligns left");
       const ivs = await ev(`[...document.querySelectorAll("#liveList tbody.lv-vic .lv-iv")].map((e) => Number(e.textContent))`);
       assert.ok(ivs.length === 2 && ivs.every(Number.isFinite) && ivs.every((v) => v > 0), `both victims show an iVi: ${ivs}`);
       const b = (v) => Math.round(v * 1.34);
@@ -619,27 +611,25 @@ describe("🎥 live death-anchored hold in a browser", () => {
 });
 
 describe("🎥 live combat average in a browser", () => {
-  it("combat average (owner 2026-10-25): median of ALL death→first-combat runs, shown next to hold", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+  it("combat average (owner 2026-10-26): median of ALL death→first-combat runs, shown in the debug box (no bar)", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
-      // before any death→combat run: its line hidden
-      assert.equal(await ev(until(`document.getElementById("liveDpsCombatLine").style.display === "none"`)), true, "no run yet: combat line hidden");
+      // owner 2026-10-26: the combat bar is gone — the red death line
+      // drains over this median instead, the median itself lives here
+      assert.equal(await ev(`document.getElementById("liveDpsCombatBar") === null && document.getElementById("liveDpsCombatLine") === null`), true, "no combat bar left");
       await ev(`window.__fakeWs.emit(${death(OPP[0].cid, ME.cid, "432", false)})`); // death 1
       await new Promise((r) => setTimeout(r, 4000));
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[1].cid, "80", false)})`); // combat 4 s after death 1
-      // owner 2026-10-26: the run completed, so the timer sits empty (the median lives in the debug box now)
-      assert.equal(await ev(until(`document.getElementById("liveDpsCombatBar").style.width === "0%"`)), true, "first run done: combat timer empty");
-      // the combat line sits in the same DPM stack, right after the hold line
-      assert.equal(await ev(`document.getElementById("liveDpsCombatLine").previousElementSibling.querySelector("#liveDpsHoldBar") !== null`), true, "combat line sits right after hold line");
-      await ev(`window.__fakeWs.emit(${death(OPP[2].cid, ME.cid, "432", false)})`); // death 2: timer drains over the 4 s median
-      assert.equal(await ev(until(`parseFloat(document.getElementById("liveDpsCombatBar").style.width) >= 90`)), true, "second death: combat timer starts full");
-      await new Promise((r) => setTimeout(r, 2000)); // half the 4 s timer
-      const combatW = Number.parseFloat(await ev(`document.getElementById("liveDpsCombatBar").style.width`));
-      assert.ok(combatW >= 30 && combatW <= 70, `owner 2026-10-26: half the 4 s combat timer left: ${combatW}`);
-      await new Promise((r) => setTimeout(r, 6000));
+      assert.equal(await ev(until(`document.getElementById("liveDbg").textContent.includes("(n=1)")`)), true, "first run counted");
+      const dbg1 = await ev(`document.getElementById("liveDbg").textContent`);
+      assert.match(dbg1, /combat 4\.\ds \(n=1\)/, `first run median ~4 s: ${dbg1}`);
+      await ev(`window.__fakeWs.emit(${death(OPP[2].cid, ME.cid, "432", false)})`); // death 2
+      await new Promise((r) => setTimeout(r, 8000));
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[3].cid, "80", false)})`); // combat 8 s after death 2
       // median([4 s, 8 s]) = 6 s, over both deaths — the trailing-10 freeze/hold caps don't apply here
-      assert.equal(await ev(until(`document.getElementById("liveDpsCombatBar").style.width === "0%"`)), true, "second run done: combat timer empty again");
+      assert.equal(await ev(until(`document.getElementById("liveDbg").textContent.includes("(n=2)")`)), true, "second run counted");
+      const dbg2 = await ev(`document.getElementById("liveDbg").textContent`);
+      assert.match(dbg2, /combat 6\.\ds \(n=2\)/, `second run median ~6 s: ${dbg2}`);
       assert.deepEqual(errors, [], "no page errors");
     });
   });
@@ -732,7 +722,7 @@ describe("🎥 live stream overlay in a browser", () => {
 });
 
 describe("🎥 live timers in a browser", () => {
-  it("timers (owner 2026-10-26): combat drains from each death, hold drains from each kill, debug box holds the medians", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+  it("timers (owner 2026-10-26): death line drains from each death, hold drains from each kill, debug box holds the medians", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
       const barW = (id) => ev(`parseFloat(document.getElementById("${id}").style.width) || 0`);
@@ -744,12 +734,12 @@ describe("🎥 live timers in a browser", () => {
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[1].cid, "80", false)})`); // K1: combat run ~5 s, hold gap ~5 s
       await wait(2000);
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[2].cid, "80", false)})`); // K2: hold gap ~2 s
-      // combat timer: the next death drains over the 5 s median
+      // death line: the next death drains over the 5 s median
       await ev(`window.__fakeWs.emit(${death(OPP[2].cid, ME.cid, "432", false)})`); // D2
-      assert.equal(await ev(until(`parseFloat(document.getElementById("liveDpsCombatBar").style.width) >= 90`)), true, "combat bar starts full at the death");
+      assert.equal(await ev(until(`parseFloat(document.getElementById("liveDeathLine").style.width) >= 90`)), true, "death line starts full at the death");
       await wait(2000);
-      const combatMid = await barW("liveDpsCombatBar");
-      assert.ok(combatMid >= 30 && combatMid <= 75, `combat bar drained after 2 s of 5: ${combatMid}`);
+      const deathMid = await barW("liveDeathLine");
+      assert.ok(deathMid >= 30 && deathMid <= 75, `death line drained after 2 s of 5: ${deathMid}`);
       // hold timer: the next kill drains over the ~2 s median ([5, 2, 2] → 2 s)
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[3].cid, "80", false)})`); // K3: D2→K3 ~2 s joins the hold pool
       assert.equal(await ev(until(`parseFloat(document.getElementById("liveDpsHoldBar").style.width) >= 90`)), true, "hold bar starts full at the kill");
@@ -765,7 +755,7 @@ describe("🎥 live timers in a browser", () => {
   });
 });
 
-describe("🎥 live left slot + tactical switch in a browser", () => {
+describe("🎥 live left slot in a browser", () => {
   it("left slot (owner 2026-10-26): bounty on top, assist under it, both small; a kill or a death hides the assist", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
@@ -789,25 +779,6 @@ describe("🎥 live left slot + tactical switch in a browser", () => {
     });
   });
 
-  it("tactical switch (owner 2026-10-26): off by default — roaches hidden, numbers only; checked shows the roach alone", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
-    await withLive(async ({ ev, errors }) => {
-      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
-      assert.equal(await ev(`document.getElementById("liveShowTactical").checked`), false, "off by default");
-      assert.equal(await ev(`document.getElementById("liveShowTacticalLabel").textContent`), "Show Tactical Superiority", "label text");
-      await ev(`window.__fakeWs.emit(${death(ME.cid, SLOW.cid, "80", false)})`);
-      assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)").length === 1`)), true, "unknown victim row on screen");
-      const iz = () => ev(`document.querySelector("#liveList tbody.lv-vic .lv-iz").textContent`);
-      assert.equal(await iz(), "", "unknown shows nothing while the switch is off (no number exists)");
-      await ev(`document.getElementById("liveShowTactical").click()`);
-      assert.equal(await ev(until(`document.querySelector("#liveList tbody.lv-vic .lv-iz").textContent === "🪳"`)), true, "checked: unknown shows the lone roach");
-      assert.equal(await ev(`localStorage.getItem("ps2-live-show-tactical")`), "1", "choice persists");
-      assert.equal(await ev(`getComputedStyle(document.querySelector("#liveList tbody.lv-me .lv-nm")).textAlign`), "center", "centre name centered");
-      assert.equal(await ev(`getComputedStyle(document.querySelector("#liveList tbody.lv-me .lv-nm2")).alignItems`), "center", "centre name lines centered");
-      await ev(`document.getElementById("liveShowTactical").click()`);
-      assert.equal(await ev(until(`document.querySelector("#liveList tbody.lv-vic .lv-iz").textContent === ""`)), true, "unchecked again: roach hidden");
-      assert.deepEqual(errors, [], "no page errors");
-    });
-  });
 });
 
 describe("🎥 live assist share in a browser", () => {
@@ -924,27 +895,25 @@ describe("🎥 live centre row border in a browser", () => {
   });
 });
 
-describe("🎥 live killer timer in a browser", () => {
-  it("killer timer (owner 2026-10-26): the death run drains as a red gradient edge on the top line only", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+describe("🎥 live death line in a browser", () => {
+  it("death line (owner 2026-10-26): the death run drains as a full-width red gradient line above the feed", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
-      const w = () => ev(`(() => { const el = document.getElementById("liveKillerTimer"); if (!el) return null; const cs = getComputedStyle(el); return { w: parseFloat(el.style.width) || 0, bg: cs.backgroundImage, top: el.closest("tbody").className.includes("lv-atk") }; })()`);
+      const w = () => ev(`(() => { const el = document.getElementById("liveDeathLine"); if (!el) return null; const cs = getComputedStyle(el); return { w: parseFloat(el.style.width) || 0, bg: cs.backgroundImage, before: el.nextElementSibling && el.nextElementSibling.id, one: document.querySelectorAll("#liveDeathLine").length }; })()`);
       await ev(`window.__fakeWs.emit(${death(OPP[0].cid, ME.cid, "80", false)})`); // death 1: killer row appears
-      assert.equal(await ev(until(`document.getElementById("liveKillerTimer") !== null`)), true, "killer timer present after death 1");
       await new Promise((r) => setTimeout(r, 2000)); // run builds to ~2 s
-      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`); // kill 1: run 1 completes, killer line clears
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`); // kill 1: run 1 completes, killer line dims
       assert.equal(await ev(until(`![...document.querySelectorAll("#liveList tbody.lv-vic .lv-nm")].some((el) => el.textContent.includes("…"))`)), true, "kill 1 committed");
-      await ev(`window.__fakeWs.emit(${death(OPP[0].cid, ME.cid, "80", false)})`); // death 2: timer drains over ~2 s
-      assert.equal(await ev(until(`document.getElementById("liveKillerTimer") !== null`)), true, "killer timer present after death 2");
+      await ev(`window.__fakeWs.emit(${death(OPP[0].cid, ME.cid, "80", false)})`); // death 2: line drains over ~2 s
       await new Promise((r) => setTimeout(r, 300)); // let the 100 ms tick set the width (initial CSS is 0%)
       const first = await w();
-      assert.ok(first && first.w > 50, `timer starts near full after death 2: ${JSON.stringify(first)}`);
-      assert.ok(first.bg.includes("linear-gradient"), `timer is a gradient: ${first.bg}`);
-      assert.equal(first.top, true, "timer sits on the top (killer) line only");
-      assert.equal(await ev(`document.querySelectorAll("#liveKillerTimer").length`), 1, "exactly one killer timer");
+      assert.ok(first && first.w > 50, `line starts near full after death 2: ${JSON.stringify(first)}`);
+      assert.ok(first.bg.includes("linear-gradient"), `line is a gradient: ${first.bg}`);
+      assert.equal(first.before, "liveList", "line sits directly above the feed table");
+      assert.equal(first.one, 1, "exactly one death line");
       await new Promise((r) => setTimeout(r, 1200));
       const second = await w();
-      assert.ok(second && second.w < first.w, `timer drains: ${first.w}% -> ${second.w}%`);
+      assert.ok(second && second.w < first.w, `line drains: ${first.w}% -> ${second.w}%`);
       assert.deepEqual(errors, [], "no page errors");
     });
   });
@@ -1036,15 +1005,68 @@ describe("🎥 live killer stays dim in a browser", () => {
   });
 });
 
-describe("🎥 live bar colors in a browser", () => {
-  it("bar colors (owner 2026-10-26): main DPM fill is rainbow, Recharge fill is green, combat fill untouched", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+describe("🎥 live hold drops on death in a browser", () => {
+  it("hold drop (owner 2026-10-26): death drops Recharge to zero; DPM value and debug box unchanged", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
-      const [dpm, hold, combat] = await ev(`[getComputedStyle(document.querySelector("#liveDpsBar")).backgroundImage, getComputedStyle(document.querySelector("#liveDpsHoldBar")).backgroundImage, getComputedStyle(document.querySelector("#liveDpsCombatBar")).backgroundImage]`);
-      assert.ok(dpm.includes("linear-gradient") && dpm.includes("rgb(255, 23, 68)") && dpm.includes("rgb(0, 176, 255)"), `DPM rainbow: ${dpm}`);
-      assert.ok(hold.includes("linear-gradient") && hold.includes("rgb(67, 160, 71)"), `Recharge green: ${hold}`);
-      assert.ok(!combat.includes("linear-gradient"), `combat untouched: ${combat}`);
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`); // spike before any death
+      await ev(`window.__fakeWs.emit(${death(OPP[1].cid, ME.cid, "432", false)})`); // D1
+      await new Promise((r) => setTimeout(r, 2000));
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[1].cid, "80", false)})`); // K1: hold gap ~2 s
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[2].cid, "80", false)})`); // K2: hold bar refills over the ~2 s median
+      assert.equal(await ev(until(`parseFloat(document.getElementById("liveDpsHoldBar").style.width) >= 90`)), true, "hold bar full at the kill");
+      await new Promise((r) => setTimeout(r, 2000)); // both scrolls + ease settle: the value must be stable before the death
+      const dps0 = await ev(`document.getElementById("liveDpsVal").textContent`);
+      const dbg0 = await ev(`document.getElementById("liveDbg").textContent`);
+      await ev(`window.__fakeWs.emit(${death(OPP[2].cid, ME.cid, "432", false)})`); // D2
+      assert.equal(await ev(until(`document.getElementById("liveDpsHoldBar").style.width === "0%"`)), true, "death drops Recharge to zero");
+      const dps1 = await ev(`document.getElementById("liveDpsVal").textContent`);
+      // owner 2026-10-26: the meter still decays normally between the two
+      // reads (the freeze starts at the death, not at the first read),
+      // so the pin is a tight band, not exact equality — a real drop
+      // (DPH math touched) would be far outside it
+      assert.ok(Math.abs(parseFloat(dps1) - parseFloat(dps0)) / parseFloat(dps0) < 0.02, `DPM value frozen within decay noise: ${dps0} -> ${dps1}`);
+      assert.equal(await ev(`document.getElementById("liveDbg").textContent`), dbg0, "debug box unchanged: DPH math untouched");
       assert.deepEqual(errors, [], "no page errors");
     });
+  });
+});
+
+describe("🎥 live bar colors in a browser", () => {
+  it("bar colors (owner 2026-10-26): main DPM fill is rainbow, Recharge fill is green", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      const [dpm, hold] = await ev(`[getComputedStyle(document.querySelector("#liveDpsBar")).backgroundImage, getComputedStyle(document.querySelector("#liveDpsHoldBar")).backgroundImage]`);
+      assert.ok(dpm.includes("linear-gradient") && dpm.includes("rgb(255, 23, 68)") && dpm.includes("rgb(0, 176, 255)"), `DPM rainbow: ${dpm}`);
+      assert.ok(hold.includes("linear-gradient") && hold.includes("rgb(67, 160, 71)"), `Recharge green: ${hold}`);
+      assert.deepEqual(errors, [], "no page errors");
+    });
+  });
+});
+
+describe("🎥 live feed frame lines in a browser", () => {
+  it("frame lines (owner 2026-10-26): death line above the table, Recharge below it, name column wider, names unclipped and centered", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      assert.equal(await ev(until(`document.querySelector("#liveList tbody.lv-me .lv-nm") !== null`)), true, "centre row on screen");
+      const frame = await ev(`(() => { const dl = document.getElementById("liveDeathLine"); const hb = document.getElementById("liveDpsHoldBar"); const dps = document.getElementById("liveDps"); const tbl = document.getElementById("liveList"); const cs = getComputedStyle(tbl); const nm = document.querySelector("#liveList tbody.lv-me .lv-nm"); return { dlBefore: dl.nextElementSibling.id, holdBeforeDps: dps.previousElementSibling.contains(hb), nmVar: cs.getPropertyValue("--lv-nm").trim(), fmVar: cs.getPropertyValue("--lv-fm").trim(), clip: nm.scrollHeight <= nm.clientHeight, centered: getComputedStyle(nm).textAlign }; })()`);
+      assert.equal(frame.dlBefore, "liveList", "death line directly above the table");
+      assert.equal(frame.holdBeforeDps, true, "Recharge sits between the table and the DPM block");
+      assert.equal(frame.nmVar, "24.78rem", "name column took the zerg width (big tier at 1920px)");
+      assert.equal(frame.fmVar, "1.9rem", "name font bumped ~12% (big tier at 1920px)");
+      assert.equal(frame.clip, true, "centre name not clipped at the bigger font");
+      assert.equal(frame.centered, "center", "centre name centered");
+      assert.deepEqual(errors, [], "no page errors");
+    });
+  });
+  it("frame lines on phones (owner 2026-10-26): name font 1.12rem, names unclipped", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      assert.equal(await ev(until(`document.querySelector("#liveList tbody.lv-me .lv-nm") !== null`)), true, "centre row on screen");
+      const phone = await ev(`(() => { const tbl = document.getElementById("liveList"); const cs = getComputedStyle(tbl); const nm = document.querySelector("#liveList tbody.lv-me .lv-nm"); return { fmVar: cs.getPropertyValue("--lv-fm").trim(), clip: nm.scrollHeight <= nm.clientHeight }; })()`);
+      assert.equal(phone.fmVar, "1.12rem", "phone name font bumped");
+      assert.equal(phone.clip, true, "phone centre name not clipped");
+      assert.deepEqual(errors, [], "no page errors");
+    }, { width: 390, height: 844 });
   });
 });

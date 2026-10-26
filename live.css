@@ -40,23 +40,20 @@ body.live-mode .room-select { display: none; }
      on the centre line, the last 6 victims below. Every line = [⏱️][name][iVi][inf/zerg%] (owner 2026-10-25: the
      emoji meters are parked, one plain cell instead), one shared order, so the numbers line up down the whole overlay.
      --lv-u = one emoji unit (parked with the meters), --lv-ez = line height, --lv-fe = emoji (t564u "300%" size),
-     --lv-fa = iVi number, --lv-fm = name, --lv-nm = name column, --lv-tm = time column, --lv-iz = inf/zerg column. */
-  --lv-fe: 1.5rem; --lv-u: 2.1rem; --lv-ez: 2.8rem; --lv-fa: 1.87rem; --lv-fm: 1.3rem; --lv-nm: 14.15rem; --lv-tm: 3.2rem; /* owner 2026-10-25: the name column absorbed the removed weapon column (10rem + 4.15rem), so the overlay keeps its width */
+     --lv-fa = iVi number, --lv-fm = name, --lv-nm = name column, --lv-tm = time column. */
+  --lv-fe: 1.5rem; --lv-u: 2.1rem; --lv-ez: 2.8rem; --lv-fa: 1.87rem; --lv-fm: 1.45rem; --lv-nm: 19.15rem; --lv-tm: 3.2rem; /* owner 2026-10-25: the name column absorbed the removed weapon column (10rem + 4.15rem), so the overlay keeps its width */
   --lv-n: 6; /* emoji units per line (live.mjs sets it from LIVE_COLS; parked with the meters) */
   --lv-iw: calc(var(--lv-fa) * 2.4 + 0.5rem); /* t564u: 4 tabular digits of room */
-  --lv-iz: 5rem; /* owner 2026-10-25: "100/100%" fits with room */
   border-collapse: collapse; table-layout: fixed; max-width: none;
-  width: calc(var(--lv-tm) + var(--lv-nm) + var(--lv-iw) + var(--lv-iz));
+  width: calc(var(--lv-tm) + var(--lv-nm) + var(--lv-iw));
   font-size: 0.85rem; font-variant-numeric: tabular-nums;
   background: var(--panel); /* owner t550u: the feed had no background (theme variable: light + dark) */
 }
 col.lv-c-time { width: var(--lv-tm); }
 col.lv-c-nm { width: var(--lv-nm); }
 col.lv-c-iv { width: var(--lv-iw); }
-col.lv-c-iz { width: var(--lv-iz); }
 /* Owner 2026-10-25: the parked emoji meters' column is gone; the inf/zerg cell
    is the pair in square brackets, in the weapon's small dim style. */
-.lv-iz { vertical-align: middle; text-align: left; font-size: 0.72rem; color: var(--dim); font-variant-numeric: tabular-nums; }
 /* Zebra on the victim lines only (each line is its own <tbody>). */
 .live-table tbody.lv-vic:nth-of-type(even) > tr > td { background-color: var(--row-alt); }
 .live-table td { position: relative; border: 1px solid var(--border); padding: 0 0.3rem; line-height: 1.25; height: var(--lv-ez); white-space: nowrap; overflow: hidden; }
@@ -155,7 +152,7 @@ col.lv-c-iz { width: var(--lv-iz); }
 .lv-hs2 svg { display: block; width: 100%; height: 100%; }
 /* Owner t561u: LIVE is a PC stream overlay. Big screens (1920) get everything 1.3× bigger for readability. */
 @media (min-width: 1600px) {
-  .live-table { --lv-fe: 1.95rem; --lv-u: 2.75rem; --lv-ez: 3.65rem; --lv-fa: 2.43rem; --lv-fm: 1.7rem; --lv-nm: 18.28rem; --lv-tm: 4rem; --lv-iz: 6.5rem; font-size: 1.1rem; }
+  .live-table { --lv-fe: 1.95rem; --lv-u: 2.75rem; --lv-ez: 3.65rem; --lv-fa: 2.43rem; --lv-fm: 1.9rem; --lv-nm: 24.78rem; --lv-tm: 4rem; font-size: 1.1rem; }
   .lv-time { font-size: 0.95rem; }
 }
 /* Phones (t561u: not a target; it only must not break — sideways scroll is fine).
@@ -164,7 +161,7 @@ col.lv-c-iz { width: var(--lv-iz); }
    is left — names actually fit instead of truncating at 8.78rem. Desktop keeps
    the fixed overlay size (a stream overlay never changes size). */
 @media (max-width: 600px) {
-  .live-table { --lv-fe: 1.15rem; --lv-u: 1.6rem; --lv-ez: 2.4rem; --lv-fa: 1.58rem; --lv-fm: 1rem; --lv-nm: 8.78rem; --lv-tm: 2.4rem; --lv-iz: 4.5rem; font-size: 0.72rem; width: 100%; }
+  .live-table { --lv-fe: 1.15rem; --lv-u: 1.6rem; --lv-ez: 2.4rem; --lv-fa: 1.58rem; --lv-fm: 1.12rem; --lv-nm: 8.78rem; --lv-tm: 2.4rem; font-size: 0.72rem; width: 100%; }
   col.lv-c-nm { width: auto; } /* fixed layout: the auto column absorbs the leftover */
   .lv-time { font-size: 0.6rem; padding: 0 0.1rem !important; }
 }
@@ -202,11 +199,11 @@ body.live-stream #liveStreamCard { display: block; }
 /* Owner 2026-10-26: the death run timer on the top line — a red gradient edge on the killer name's border,
    draining over the median combat time. The killer row only lives for the run (a kill clears it), so the edge
    is the run; the name cell is position: relative, so the edge sits inside it without moving the name. */
-.lv-killer-timer { position: absolute; left: 0; bottom: 0; height: 3px; width: 0%; background: linear-gradient(90deg, #ff1744, #ff5252, #b71c1c); border-radius: 999px; } /* owner 2026-10-26: slot lines are text, not emoji-meter sprites — sized to their text at the dim size, so a two-digit count fits the fixed time column (2.4rem on phones) instead of clipping at the cell edge */
+.live-death-line { height: 3px; width: 0%; background: linear-gradient(90deg, #ff1744, #ff5252, #b71c1c); border-radius: 999px; } /* owner 2026-10-26: slot lines are text, not emoji-meter sprites — sized to their text at the dim size, so a two-digit count fits the fixed time column (2.4rem on phones) instead of clipping at the cell edge */
 
 .live-show-tactical { margin-top: 0.25rem; font-size: 0.72rem; color: var(--dim); }
 body.live-stream > :not(#liveFeed) { display: none; } /* owner 2026-10-26: no header, no footer, no controls — the overlay is only the live section */
-body.live-stream #liveState, body.live-stream #liveDpmTau, body.live-stream #liveCashHist, body.live-stream #liveShare, body.live-stream #liveSession, body.live-stream #liveShowTacticalWrap { display: none; } /* owner 2026-10-26: stream shows the names list + DPM block + the card */
+body.live-stream #liveState, body.live-stream #liveDpmTau, body.live-stream #liveCashHist, body.live-stream #liveShare, body.live-stream #liveSession { display: none; } /* owner 2026-10-26: stream shows the names list + DPM block + the card */
 body.live-stream #liveDps .live-metric:last-child { display: none; } /* online pill: meters + session only */
 .live-dps #liveDpsVal { font-weight: 600; font-variant-numeric: tabular-nums; }
 .live-dps #liveDpsVal.live-dps-warm { font-size: 0.72rem; font-weight: 400; color: var(--dim); }

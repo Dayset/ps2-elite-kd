@@ -82,8 +82,6 @@ function start() {
   const pools = {}; // col id -> sorted finite values (percentiles, same as the Rankings table)
   let infM = null; // median infantry % over ranks.json (owner t590u: 🪖 fill starts here)
   let infC = null; // 🚜 infantry cut (owner t622u: ranks.json "tracCuts".cut, p25 of the data; 🚜 below it)
-  let zergMed = null; // median 🪳 Zerg over ranks.json (owner 2026-10-26: reaching it = roach)
-  let showRoach = false; // owner 2026-10-26: "Show Tactical Superiority" is off by default — roaches stay hidden until checked
 
   const app = () => window.__ps2EliteKd || null;
 
@@ -112,7 +110,6 @@ function start() {
       const zergOf = (r) => { const z = zergScore(tp, iF >= 0 ? r[iF] : null, iA >= 0 ? r[iA] : null, iR >= 0 ? r[iR] : null, iC >= 0 ? r[iC] : null); return z ? z.score : null; };
       const fin = (v) => typeof v === "number" && Number.isFinite(v);
       const zergCol = j.rows.map(zergOf);
-      zergMed = median(zergCol.filter((v) => typeof v === "number" && Number.isFinite(v)));
       j.rows.forEach((r, k) => { const o = ranks.get(r[iS]); if (o) o.zerg = zergCol[k]; });
       // 🪳 "~N" estimate (zerg-revive.mjs zergEstimate) where there is no Zerg: fill + hover only, never in the pool.
       j.rows.forEach((r, k) => { const o = ranks.get(r[iS]); if (o && zergCol[k] == null) o.zest = zergEstimate(iR >= 0 ? r[iR] : null, iC >= 0 ? r[iC] : null); });
@@ -242,24 +239,6 @@ function start() {
    *   [⏱️ time][name][iVi][🏃][🦁][🛡️][🪖|🚜][☠️][🪳] (t580u: 🪳 last; t590u order) — so the emojis line up down the whole overlay.
    * Owner t567u: not cached = all-empty emojis; the Census numbers stay in the name's hover.
    */
-  /**
-   * Owner 2026-10-26 (roach rule): the extra cell shows ONLY the Zerg value
-   * — no infantry, no other icons. A 🪳 marks a roach: unknown (no value at
-   * all) or above the ranked median. Zerg falls back to the ~N estimate
-   * (t614) when unscored.
-   */
-  function izHtml(vals) {
-    const scored = vals.zerg, est = scored == null ? vals.zest : null;
-    const zg = scored ?? est;
-    if (!Number.isFinite(zg)) return `<td class="lv-iz" data-tip="Zerg ?">${showRoach ? "🪳" : ""}</td>`;
-    const zgS = est != null ? `~${Math.round(zg)}` : String(Math.round(zg));
-    const roach = zergMed != null && zg >= zergMed;
-    // Owner 2026-10-26: with "Show Tactical Superiority" on, a number
-    // that reaches the median turns into the 🪳 (no number beside it);
-    // with it off, only the value number shows, without the emoji.
-    if (roach && showRoach) return `<td class="lv-iz" data-tip="Zerg ${zgS}">🪳</td>`;
-    return `<td class="lv-iz" data-tip="Zerg ${zgS}">${zgS}</td>`;
-  }
   // Owner 2026-10-26 (one icon + count): the tracked player's bounty, on
   // their own (centre) line's left slot — a streak shows as one coffin
   // plus its count (⚰️×3), and at 7 it flips to one money bag plus its
@@ -282,7 +261,7 @@ function start() {
   function assistHtml() {
     return assistN > 0 ? `<span class="lv-em">🤝×${assistN}</span>` : "";
   }
-  function cells(p, isMe, r, hideWeapon = false, isKiller = false) {
+  function cells(p, isMe, r, hideWeapon = false) {
     const vals = p.cached || {};
     const tip = p.cached || isMe ? "" : ` · not in cache · K/D ${fmt(p.kd, 2)} · KPM ${fmt(p.kpm, 2)}`;
     const w = r ? weaponIcon(catalog, r.weapon) : null;
@@ -299,9 +278,9 @@ function start() {
     } else {
       wn = `<span class="lv-wn">${w ? esc(w.name) : ""}</span>`;
     }
-    return `<td class="lv-nm"><span class="lv-nm2">${nameHtml(p, tip, hsHtml(r))}${wn}</span>${isKiller ? `<span id="liveKillerTimer" class="lv-killer-timer"></span>` : ""}</td>${IVI.map((c) => `<td class="lv-ivc">${iviText(c, vals[c.id])}</td>`).join("")}${izHtml(vals)}`;
+    return `<td class="lv-nm"><span class="lv-nm2">${nameHtml(p, tip, hsHtml(r))}${wn}</span></td>${IVI.map((c) => `<td class="lv-ivc">${iviText(c, vals[c.id])}</td>`).join("")}`;
   }
-  const blank = `<td class="lv-nm"></td><td class="lv-ivc"></td><td class="lv-iz"></td>`; // same box as a filled line, so the overlay never grows
+  const blank = `<td class="lv-nm"></td><td class="lv-ivc"></td>`; // same box as a filled line, so the overlay never grows
   /**
    * Owner 2026-10-25: no weapon icon any more (its column is gone, the width went to the name column) — the weapon's
    * NAME sits under the player name (cells), and a headshot is a small custom mark after the name: a head with a
@@ -349,14 +328,14 @@ function start() {
     const isNew = r === fresh;
     const wP = iviPct(kill ? me : p), lP = iviPct(kill ? p : me);
     const upset = isNew && wP != null && lP != null && lP - wP >= UPSET_GAP ? " lv-upset" : "";
-    return `<tbody class="lv-ev lv-${where} lv-${r.last}${isNew ? " lv-new" : ""}${upset}${extra}${fi.cls}"${fi.sty}><tr><td class="lv-time"></td>${cells(p, false, r, where === "vic", where === "atk")}</tr></tbody>`;
+    return `<tbody class="lv-ev lv-${where} lv-${r.last}${isNew ? " lv-new" : ""}${upset}${extra}${fi.cls}"${fi.sty}><tr><td class="lv-time"></td>${cells(p, false, r, where === "vic")}</tr></tbody>`;
   }
   const emptyLine = (where) => `<tbody class="lv-ev lv-${where} lv-empty"><tr><td class="lv-time"></td>${blank}</tr></tbody>`;
   function render() {
     if (!listEl) return;
     // Owner t575u: a fixed grid of 1 + 1 + VICTIM_LINES lines — killer above, the tracked player in the centre,
     // the players they killed below (newest on top). Empty slots keep their height, so the overlay never changes size.
-    const cols = `<colgroup><col class="lv-c-time"><col class="lv-c-nm"><col class="lv-c-iv"><col class="lv-c-iz"></colgroup>`;
+    const cols = `<colgroup><col class="lv-c-time"><col class="lv-c-nm"><col class="lv-c-iv"></colgroup>`;
     const newest = st.lastEv || null;
     fresh = newest && newest !== shown ? newest : null;
     shown = newest;
@@ -559,9 +538,8 @@ function start() {
   // drain, not steps, and a late-arriving victim iVi lands within 100 ms.
   const dpsEl = $("liveDpsVal");
   const dpsLabelEl = $("liveDpsLabel");
-  const dpsCombatLineEl = $("liveDpsCombatLine");
-  const dpsBarEl = $("liveDpsBar"), dpsHoldBarEl = $("liveDpsHoldBar"), dpsCombatBarEl = $("liveDpsCombatBar");
-  let lastKillerTimerW = "";
+  const dpsBarEl = $("liveDpsBar"), dpsHoldBarEl = $("liveDpsHoldBar");
+  let lastDeathLineW = "";
   const dbgEl = $("liveDbg");
   if ($("liveDpsLabel")) $("liveDpsLabel").textContent = tr("live.dps", "DPM");
   const cashSumEl = $("liveCashSumVal"), cashAvgEl = $("liveCashAvgVal");
@@ -614,17 +592,6 @@ function start() {
     if (tauDown) tauDown.addEventListener("click", () => { tauInput.value = String(Math.max(1, Math.round(Number(tauInput.value) || 10) - 10)); applyTau(); });
     if (tauUp) tauUp.addEventListener("click", () => { tauInput.value = String(Math.min(3600, Math.round(Number(tauInput.value) || 10) + 10)); applyTau(); });
   }
-  // Owner 2026-10-26 (tactical superiority): off by default — roaches stay
-  // hidden until "Show Tactical Superiority" is checked. The choice
-  // persists like τ, and re-rendering applies it at once.
-  const showTacticalEl = $("liveShowTactical");
-  const showTacticalLabelEl = $("liveShowTacticalLabel");
-  if (showTacticalLabelEl) showTacticalLabelEl.textContent = tr("live.showTactical", "Show Tactical Superiority");
-  if (showTacticalEl) {
-    try { showRoach = localStorage.getItem("ps2-live-show-tactical") === "1"; } catch {}
-    showTacticalEl.checked = showRoach;
-    showTacticalEl.addEventListener("change", () => { showRoach = showTacticalEl.checked; try { localStorage.setItem("ps2-live-show-tactical", showRoach ? "1" : "0"); } catch {} render(); });
-  }
   // Owner 2026-10-26 (share): one tap copies a Messenger-ready block — the
   // watch link (the target's name in the URL, so the recipient follows the
   // same session) plus the current numbers, cash-out first, then DPM.
@@ -663,7 +630,7 @@ function start() {
   // kill-spikes at the current τ), hold/combat bars are value-proportional
   // (full = 60 s) and shrink as their seconds fall. Writes go through
   // this guard so a steady value writes once.
-  const barState = { dpm: "", hold: "", combat: "" };
+  const barState = { dpm: "", hold: "" };
   const setBar = (el, key, pct) => { if (el && barState[key] !== pct) { el.style.width = pct; barState[key] = pct; } };
   const dpmBarPct = (v) => `${Math.min(100, Math.max(0, (v / (120000 / (dpmTauMs / 1000))) * 100)).toFixed(1)}%`;
   // Owner 2026-10-25 (gas-counter scroll): each kill/assist after the
@@ -745,7 +712,7 @@ function start() {
       if (dpsLabelEl && label !== lastDpsLabel) { dpsLabelEl.textContent = label; lastDpsLabel = label; }
       // Owner 2026-10-26 (timers): the thin bars are countdowns now, so
       // everyone watching sees time running out — the hold bar drains
-      // from the latest spike over the median hold, the combat bar
+      // from the latest spike over the median hold, the death line
       // drains from the latest death over the median combat time (wall
       // time, spawn included). The hold clock is the decay clock at the
       // spike (lastSpikeEff, set at commit after any freeze lifts), so
@@ -756,18 +723,15 @@ function start() {
       // its own writes, so the tick calls it flat out.
       const spikes = spikeTimes(), deaths = deathTimes;
       if (dpsHoldBarEl) setBar(dpsHoldBarEl, "hold", timerBarPct(lastSpikeEff != null ? holdMs - (effNow - lastSpikeEff) : 0, holdMs));
-      // hidden until the first death→combat run completes — with no
-      // median yet there is nothing to drain over
+      // no median yet: the death line sits empty until the first run completes
       const combat = timeToCombatMs(deaths, spikes);
       const lastDeath = deaths.length ? deaths[deaths.length - 1] : null;
       const combatDone = lastDeath != null && spikes.some((t) => t > lastDeath);
-      if (dpsCombatBarEl) setBar(dpsCombatBarEl, "combat", timerBarPct(lastDeath != null && !combatDone ? combat.ms - (Date.now() - lastDeath) : 0, combat.ms));
-      // Owner 2026-10-26: the death run timer also rides the top line — a red gradient edge on the killer name's
-      // border, draining over the same combat median. The row is re-rendered on events, so the element is looked
+      // Owner 2026-10-26: the death run timer also rides the top line — a full-width red gradient line above the feed,
+      // draining over the same combat median. The row is re-rendered on events, so the element is looked
       // up fresh every tick, not cached; a write-on-change guard keeps the tick cheap.
-      const killerTimerEl = document.getElementById("liveKillerTimer");
-      if (killerTimerEl) { const w = timerBarPct(lastDeath != null && !combatDone ? combat.ms - (Date.now() - lastDeath) : 0, combat.ms); if (w !== lastKillerTimerW) { killerTimerEl.style.width = w; lastKillerTimerW = w; } }
-      if (dpsCombatLineEl) dpsCombatLineEl.style.display = combat.n ? "" : "none";
+      const deathLineEl = document.getElementById("liveDeathLine");
+      if (deathLineEl) { const w = timerBarPct(lastDeath != null && !combatDone ? combat.ms - (Date.now() - lastDeath) : 0, combat.ms); if (w !== lastDeathLineW) { deathLineEl.style.width = w; lastDeathLineW = w; } }
       // Owner 2026-10-26 (debug box): the medians plus the exact inputs
       // to decompile combat efficiency back — hold gaps (all of them),
       // all combat runs, current τ. Plain text, copyable at stream end.
@@ -1013,7 +977,12 @@ function start() {
     // A previous freeze (died, respawned, died again with no spike) is
     // settled first, then the new freeze runs for the average spawn run
     // measured so far (0 = no average yet = no freeze, meter as before).
-    if (ev.kind === "death") { sessionDeaths++; liftFreeze(ev.at); deathTimes.push(ev.at); freezeStart = ev.at; freezeFor = spawnRunHoldMs(deathTimes, spikeTimes()); }
+    // Owner 2026-10-26: death drops the Recharge bar to zero — Recharge
+    // is the median on each combat event, never the leftover from the
+    // last window, so the anchor is cleared here. The next kill/assist
+    // re-stamps it and the bar refills over a fresh median. DPM/DPH
+    // untouched: the spike list and freeze clock are not touched here.
+    if (ev.kind === "death") { sessionDeaths++; lastSpikeEff = null; liftFreeze(ev.at); deathTimes.push(ev.at); freezeStart = ev.at; freezeFor = spawnRunHoldMs(deathTimes, spikeTimes()); }
     if (ev.kind === "death" && wasStreak > 0 && bountyStreak === 0) {
       // Owner 2026-10-25: the death that ends a run banks it and resets
       // the pot for the new run — the pot shows 0 until the next kill.

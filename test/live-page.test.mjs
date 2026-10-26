@@ -182,19 +182,19 @@ test("overlay layout (owner t575u): no flip, ONE column order on every line, fix
   assert.doesNotMatch(js, /phaseAt|PHASE_A_MS|PHASE_B_MS|lv-phB|setPhase|lv-pa|lv-pb|lv-bL|lv-bR|reverse\(\)|letter\(/);
   assert.doesNotMatch(css, /lv-phB|lv-pa\b|lv-pb\b|lv-bL|lv-bR|lv-li\b|lv-blk|rotateX/);
   assert.doesNotMatch(js, /❯|lv-arrow|<thead/);
-  // one shared order: [time][name][iVi][🏃🦁🛡️🪖🪳] — the same cells() for killer, player and victims
+  // one shared order: [time][name][iVi] — the same cells() for killer, player and victims
   assert.match(js, /<td class="lv-nm"><span class="lv-nm2">\$\{nameHtml\(p, tip, hsHtml\(r\)\)\}\$\{wn\}/);
-  assert.match(js, /<tr><td class="lv-time"><\/td>\$\{cells\(p, false, r, where === "vic", where === "atk"\)\}<\/tr>/);
+  assert.match(js, /<tr><td class="lv-time"><\/td>\$\{cells\(p, false, r, where === "vic"\)\}<\/tr>/);
   assert.match(js, /<tbody class="lv-ev lv-me\$\{fm\.cls\}"\$\{fm\.sty\}><tr><td class="lv-time">\$\{bountyHtml\(\)\}\$\{assistHtml\(\)\}<\/td>\$\{cells\(me, true\)\}<\/tr><\/tbody>/);
   assert.match(js, /Array\.from\(\{ length: VICTIM_LINES \}, \(_, i\) => \(st\.victims\[i\] \? oppLine\(st\.victims\[i\], "vic"\) : emptyLine\("vic"\)\)\)/);
   assert.match(js, /listEl\.innerHTML = cols \+ atk \+ mid \+ low;/);
-  assert.match(js, /const blank = `<td class="lv-nm"><\/td><td class="lv-ivc"><\/td><td class="lv-iz"><\/td>`;/); // empty = same box
-  assert.deepEqual([...js.matchAll(/<col class="(lv-c-[a-z]+)">/g)].map((m) => m[1]), ["lv-c-time", "lv-c-nm", "lv-c-iv", "lv-c-iz"]);
+  assert.match(js, /const blank = `<td class="lv-nm"><\/td><td class="lv-ivc"><\/td>`;/); // empty = same box
+  assert.deepEqual([...js.matchAll(/<col class="(lv-c-[a-z]+)">/g)].map((m) => m[1]), ["lv-c-time", "lv-c-nm", "lv-c-iv"]);
   // fixed size: fixed layout, fixed line height, fixed column widths
   assert.match(css, /\.live-table \{[^}]*table-layout: fixed;/);
   assert.match(css, /\.live-table td \{[^}]*height: var\(--lv-ez\);[^}]*overflow: hidden;/);
   assert.match(css, /\.lv-row \{ display: flex; height: var\(--lv-ez\); \}/);
-  assert.match(css, /col\.lv-c-iz \{ width: var\(--lv-iz\); \}/);
+  assert.match(css, /width: calc\(var\(--lv-tm\) \+ var\(--lv-nm\) \+ var\(--lv-iw\)\);/); // no iz column left in the width
   assert.match(css, /--lv-n: 6;/); // t590u: 6 emoji units
   // the centre line is set apart by its tint only (owner 2026-10-26: the accent frame is removed)
   assert.match(css, /tbody\.lv-me > tr > td \{ background-color: color-mix\(in srgb, var\(--accent\) 13%, var\(--panel\)\); \}/);
@@ -273,12 +273,6 @@ test("no value = empty 0% emoji, never a dash (owner t567u): stats, iVi, uncache
   assert.match(js, /const meter = \(e\) => `<span class="lv-em lv-x\$\{emojiIdx\.get\(e\)\}" aria-hidden="true" data-e="\$\{e\}"><i class="lv-gl"><\/i><i class="lv-b"><\/i><i class="lv-sw"><i class="lv-s"><i class="lv-shn"><\/i><\/i><\/i><\/span>`;/);
   assert.match(js, /const vals = p\.cached \|\| \{\};/); // uncached too
   assert.match(js, /IVI\.map\(\(c\) => `<td class="lv-ivc">\$\{iviText\(c, vals\[c\.id\]\)\}<\/td>`\)/);
-  assert.ok(js.includes('return `<td class="lv-iz" data-tip="Zerg ?">${showRoach ? "🪳" : ""}</td>`;'), "owner 2026-10-26: unknown = roach when shown, blank when hidden");
-  assert.ok(js.includes('const roach = zergMed != null && zg >= zergMed;'), "owner 2026-10-26: median and above = roach");
-  assert.ok(js.includes('if (roach && showRoach) return `<td class="lv-iz" data-tip="Zerg ${zgS}">🪳</td>`;'), "owner 2026-10-26: roach = number turns into 🪳 when shown, number only when hidden");
-  assert.ok(js.includes('zergMed = median(zergCol.filter'), "owner 2026-10-26: median from the ranked zerg column");
-  assert.ok(js.includes('return `<td class="lv-iz" data-tip="Zerg ?">${showRoach ? "🪳" : ""}</td>`;'), "owner 2026-10-26: unknown = roach when shown, blank when hidden, never a dash");
-  assert.match(js, /const zgS = est != null \? `~\$\{Math\.round\(zg\)\}` : String\(Math\.round\(zg\)\);/); // owner 2026-10-26: zerg-only, no infantry fallback, no dash // t614: "~N" estimate survives as text
   assert.doesNotMatch(js, /<td class="lv-ems">/); // no emoji cells on the lines any more
   assert.doesNotMatch(js, /lv-none|lv-unc|>—<\/span>/); // no K/D-over-KPM text, no dash cells
   assert.doesNotMatch(css, /lv-none|lv-unc|\.lv-ini\b/);
@@ -599,7 +593,7 @@ test("weapon name + headshot mark (owner 2026-10-25): no weapon icon — the wea
   assert.match(js, /const HS_TIP = tr\("live\.hs", "Headshot"\);/); // the headshot flag + tooltip stay
   assert.ok(js.includes('wn = `<span class="lv-wn lv-wn-weapon">${mw ? esc(mw.name) : ""}</span>`;'), "owner 2026-10-26: centre name keeps only its weapon — the bounty moved to the left slot");
   assert.ok(js.includes('} else if (hideWeapon) {'), "owner 2026-10-26: victim rows carry no weapon line");
-  assert.ok(js.includes('cells(p, false, r, where === "vic", where === "atk")'), "owner 2026-10-26: killer keeps its weapon, victims drop theirs");
+  assert.ok(js.includes('cells(p, false, r, where === "vic")'), "owner 2026-10-26: killer keeps its weapon, victims drop theirs");
   assert.ok(js.includes('if (ev.weapon != null) meWeaponId = ev.weapon;'), "owner 2026-10-26: latest kill weapon tracked at commit");
   assert.match(js, /<span class="lv-hs2" role="img" aria-label="\$\{esc\(HS_TIP\)\}" data-tip="\$\{esc\(HS_TIP\)\}">\$\{HS_SVG\}<\/span>/); // headshot only when it IS one
   assert.match(js, /viewBox="0 0 16 16"/); // the custom head-with-bullet mark (inline SVG, no asset)
@@ -607,7 +601,11 @@ test("weapon name + headshot mark (owner 2026-10-25): no weapon icon — the wea
   assert.doesNotMatch(css, /\.lv-wp|\.lv-wi|\.lv-hs \{|headshot\.svg/); // no icon rules, no free-icon asset
   assert.match(css, /\.lv-wn \{[^}]*color: var\(--dim\)/); // small, dim weapon name
   assert.match(css, /\.lv-hs2 \{[^}]*color: var\(--err\)/);
-  assert.match(css, /\.live-table \{[^}]*--lv-nm: 14\.15rem/); // the name column absorbed the weapon column
+  assert.match(css, /\.live-table \{[^}]*--lv-nm: 19\.15rem/); // the name column absorbed the weapon + zerg columns
+  assert.match(css, /--lv-nm: 24\.78rem/); // big tier took the zerg width too
+  assert.match(css, /--lv-fm: 1\.45rem/); // name font bumped ~12%
+  assert.match(css, /--lv-fm: 1\.9rem/);
+  assert.match(css, /--lv-fm: 1\.12rem/);
   assert.throws(() => readFileSync(new URL("assets/icons/headshot.svg", root), "utf8")); // the free icon is gone
   assert.doesNotMatch(readFileSync(new URL("NOTICE", root), "utf8"), /headshot\.svg/);
   // the event keeps its weapon on the line it lands on
@@ -655,10 +653,6 @@ test("name centered (owner 2026-10-26): the live name column sits at the center"
   assert.match(css, /\.lv-nm2 \{[^}]*align-items: center;/); // the flex column centers its lines too
 });
 
-test("iz cell (owner 2026-10-25): infantry/zerg aligned left", () => {
-  const css = cssSrc();
-  assert.match(css, /\.lv-iz \{[^}]*text-align: left;/);
-});
 
 test("teamkill (owner 2026-10-25): own-faction kills farm nothing, own-faction deaths still count", () => {
   const js = liveSrc();
@@ -718,7 +712,7 @@ test("mobile names + legend + DPS (owner 2026-10-25): table 100% with a flexible
   const swap = readFileSync(new URL("scripts/build-live.mjs", root), "utf8");
   assert.match(css, /@media \(max-width: 600px\)[\s\S]*?\.live-table \{[^}]*width: 100%;/);
   assert.match(css, /@media \(max-width: 600px\)[\s\S]*?col\.lv-c-nm \{ width: auto; \}/);
-  assert.match(swap, /<div id="liveDps" class="live-dps"><div class="live-metric"><span id="liveDpsLabel"><\/span> <span id="liveDpsVal">0\.0<\/span><div class="live-bar live-bar-fat" aria-hidden="true"><div id="liveDpsBar" class="live-bar-fill live-bar-dpm"><\/div><\/div><\/div><div class="live-metric"><div class="live-bar" aria-hidden="true"><div id="liveDpsHoldBar" class="live-bar-fill live-bar-hold"><\/div><\/div><\/div><div class="live-metric" id="liveDpsCombatLine"><div class="live-bar" aria-hidden="true"><div id="liveDpsCombatBar" class="live-bar-fill"><\/div><\/div><\/div><div class="live-metric"><span id="liveCashSumLabel"><\/span> <span id="liveCashSumVal">0<\/span><\/div><div class="live-metric"><span id="liveCashAvgLabel"><\/span> <span id="liveCashAvgVal">–<\/span><\/div><div class="live-metric"><span id="liveOnline" class="live-online" data-state="unknown"><i><\/i><span id="liveOnlineText">…<\/span><\/span><\/div><\/div>/);
+  assert.match(swap, /<div id="liveDps" class="live-dps"><div class="live-metric"><span id="liveDpsLabel"><\/span> <span id="liveDpsVal">0\.0<\/span><div class="live-bar live-bar-fat" aria-hidden="true"><div id="liveDpsBar" class="live-bar-fill live-bar-dpm"><\/div><\/div><\/div><div class="live-metric"><span id="liveCashSumLabel"><\/span> <span id="liveCashSumVal">0<\/span><\/div><div class="live-metric"><span id="liveCashAvgLabel"><\/span> <span id="liveCashAvgVal">–<\/span><\/div><div class="live-metric"><span id="liveOnline" class="live-online" data-state="unknown"><i><\/i><span id="liveOnlineText">…<\/span><\/span><\/div><\/div>/);
   assert.match(js, /eventNames: \["Death", "GainExperience_experience_id_1", "GainExperience_experience_id_278", "GainExperience_experience_id_279", "GainExperience_experience_id_2", "GainExperience_experience_id_3", "GainExperience_experience_id_371", "GainExperience_experience_id_372", "PlayerLogin", "PlayerLogout"\]/); // owner 2026-10-26: kill XP joins the subscribe
   assert.match(js, /DPS_ASSIST_XP\.has\(xid\)/);
   assert.match(js, /setInterval\(dpsTick, 100\)/);
@@ -780,7 +774,8 @@ test("hold meter (owner 2026-10-25): decay freezes on death, lifts on a spike or
   assert.match(js, /const liftFreeze = \(at\) => \{ if \(freezeStart\) \{ timeDebtMs \+= Math\.min\(Math\.max\(0, at - freezeStart\), freezeFor\); freezeStart = 0; freezeFor = 0; \} \};/);
   assert.match(js, /if \(freezeStart && Date\.now\(\) >= freezeStart \+ freezeFor\) \{ timeDebtMs \+= freezeFor; freezeStart = 0; freezeFor = 0; \}/);
   assert.match(js, /const effNow = freezeStart \? freezeStart - timeDebtMs : Date\.now\(\) - timeDebtMs;/);
-  assert.match(js, /if \(ev\.kind === "death"\) \{ sessionDeaths\+\+; liftFreeze\(ev\.at\); deathTimes\.push\(ev\.at\); freezeStart = ev\.at; freezeFor = spawnRunHoldMs\(deathTimes, spikeTimes\(\)\); \}/);
+  assert.match(js, /if \(ev\.kind === "death"\) \{ sessionDeaths\+\+; lastSpikeEff = null; liftFreeze\(ev\.at\); deathTimes\.push\(ev\.at\); freezeStart = ev\.at; freezeFor = spawnRunHoldMs\(deathTimes, spikeTimes\(\)\); \}/);
+  assert.ok(js.includes('lastSpikeEff = null'), "owner 2026-10-26: death drops Recharge to zero");
   assert.match(js, /dpsEvents\.push\(\{ t: Number\.isFinite\(ev\.at\) \? ev\.at : Date\.now\(\), dmg: DPS_HP \}\); if \(shownDps !== null\) scrollQ\.push\(dpsNow\(\[\{ t: 0, dmg: DPS_HP \}\], 0, dpmTauMs\) \* 60\); liftFreeze\(Number\.isFinite\(ev\.at\) \? ev\.at : Date\.now\(\)\);/);
   assert.ok(js.includes('GainExperience_experience_id_1", "GainExperience_experience_id_278", "GainExperience_experience_id_279'), "owner 2026-10-26: kill XP joins the subscribe (multiplier refs)");
   assert.ok(js.includes('killXpRefs.push([Date.now(), amt / kbase])'), "owner 2026-10-26: kill XP ratios feed the multiplier");
@@ -811,17 +806,17 @@ test("hold indicator (owner 2026-10-26): the hold bar drains from the latest spi
   assert.doesNotMatch(js, /\$\("liveDpsHold"\)/);
 });
 
-test("combat average (owner 2026-10-26): median of ALL death→first-combat runs, draining as a timer from each death", () => {
+test("combat average (owner 2026-10-26): median of ALL death→first-combat runs, in the debug box; no combat bar left", () => {
   const js = liveSrc();
   const swap = readFileSync(new URL("scripts/build-live.mjs", root), "utf8");
-  assert.match(swap, /<div class="live-metric" id="liveDpsCombatLine"><div class="live-bar" aria-hidden="true"><div id="liveDpsCombatBar" class="live-bar-fill"><\/div><\/div><\/div>/);
   assert.match(js, /const combat = timeToCombatMs\(deaths, spikes\);/);
-  assert.ok(js.includes('if (dpsCombatBarEl) setBar(dpsCombatBarEl, "combat", timerBarPct(lastDeath != null && !combatDone ? combat.ms - (Date.now() - lastDeath) : 0, combat.ms));'), "owner 2026-10-26: combat drains from the latest death over the median");
-  assert.match(js, /if \(dpsCombatLineEl\) dpsCombatLineEl\.style\.display = combat\.n \? "" : "none";/);
+  assert.ok(js.includes('tr("live.dpmCombat", "combat {s}s (n={n})"'), "median lives in the debug box");
+  assert.doesNotMatch(js, /liveDpsCombatBar|liveDpsCombatLine|dpsCombatBarEl|dpsCombatLineEl/);
+  assert.doesNotMatch(swap, /liveDpsCombatBar|liveDpsCombatLine/);
   assert.doesNotMatch(js, /\$\("liveDpsCombat"\)/);
 });
 
-test("DPM row bars (owner 2026-10-26): stacked meter lines, DPM glows and grows, hold/combat drain as countdown timers", () => {
+test("DPM row bars (owner 2026-10-26): stacked meter lines, DPM glows and grows, hold drains as a countdown timer", () => {
   const js = liveSrc();
   const css = cssSrc();
   const swap = readFileSync(new URL("scripts/build-live.mjs", root), "utf8");
@@ -832,9 +827,9 @@ test("DPM row bars (owner 2026-10-26): stacked meter lines, DPM glows and grows,
   assert.match(css, /\.live-bar-fill \{ height: 100%; width: 0%; background: var\(--dim\); border-radius: 999px; \}/);
   assert.match(css, /\.live-bar-dpm \{ background: linear-gradient\(90deg, #ff1744, #ff9100, #ffea00, #00e676, #00b0ff, #7c4dff\); box-shadow: 0 0 8px var\(--accent\); \}/); // main DPM = rainbow
   assert.match(css, /\.live-bar-hold \{ background: linear-gradient\(90deg, #1b5e20, #43a047, #81c784\); \}/); // Recharge = green
-  assert.match(css, /\.live-bar-fat \{ height: 12px; \}/); // DPM track is fat; hold/combat tracks stay thin (6 px)
+  assert.match(css, /\.live-bar-fat \{ height: 12px; \}/); // DPM track is fat; hold track stays thin (6 px)
   assert.doesNotMatch(css, /\.live-bar-fill \{[^}]*transition/); // bars move frame-for-frame, no easing
-  assert.match(js, /const dpsBarEl = \$\("liveDpsBar"\), dpsHoldBarEl = \$\("liveDpsHoldBar"\), dpsCombatBarEl = \$\("liveDpsCombatBar"\);/);
+  assert.match(js, /const dpsBarEl = \$\("liveDpsBar"\), dpsHoldBarEl = \$\("liveDpsHoldBar"\);/);
   assert.match(js, /const dpmBarPct = \(v\) => `\$\{Math\.min\(100, Math\.max\(0, \(v \/ \(120000 \/ \(dpmTauMs \/ 1000\)\)\) \* 100\)\)\.toFixed\(1\)\}%`;/); // full = two kill-spikes at the current τ
   assert.doesNotMatch(js, /secBarPct/); // owner 2026-10-26: timers replaced the 60 s scale
   assert.ok(js.includes("timerBarPct"), "owner 2026-10-26: bars drain over their medians");
@@ -856,21 +851,16 @@ test("debug box (owner 2026-10-26): medians + their inputs under the meter, copy
   assert.ok(!css.includes("body.live-stream #liveDbg"), "stream mode keeps the box (it is copied at stream end)");
 });
 
-test("left slot + tactical switch (owner 2026-10-26): bounty and assists sit small where the stopwatch was, roaches opt-in", () => {
+test("left slot (owner 2026-10-26): bounty and assists sit small where the stopwatch was", () => {
   const js = liveSrc();
   const css = cssSrc();
   const swap = readFileSync(new URL("scripts/build-live.mjs", root), "utf8");
-  assert.match(swap, /<div id="liveShowTacticalWrap" class="live-show-tactical"><label><input id="liveShowTactical" type="checkbox"> <span id="liveShowTacticalLabel"><\/span><\/label><\/div>/); // under the copybox
-  assert.ok(js.includes('tr("live.showTactical", "Show Tactical Superiority")'), "label text from its key");
-  assert.ok(js.includes('localStorage.getItem("ps2-live-show-tactical")'), "choice persists like τ");
-  assert.ok(js.includes('let showRoach = false;'), "off by default: roaches hidden until checked");
   assert.ok(js.includes('const mid = `<tbody class="lv-ev lv-me${fm.cls}"${fm.sty}><tr><td class="lv-time">${bountyHtml()}${assistHtml()}</td>${cells(me, true)}</tr></tbody>`;'), "centre left slot holds bounty + assist");
   assert.ok(js.includes('return assistN > 0 ? `<span class="lv-em">🤝×${assistN}</span>` : "";'), "assist line under the bounty line");
   assert.ok(js.includes('assistN++;'), "an assist bumps the count");
   assert.ok(js.includes('assistN = 0; // a kill hides the assist count'), "a kill hides it");
   assert.ok(js.includes('if (ev.kind === "death") assistN = 0; // a death hides the assist count'), "a death hides it");
   assert.match(css, /\.lv-time \.lv-em \{ display: block; \}/); // two lines stacked, small
-  assert.ok(css.includes("body.live-stream #liveShowTacticalWrap"), "stream mode hides the checkbox itself");
 });
 
 test("session line (owner 2026-10-26): duration, kills, deaths, Σ + avg across all runs — everything to read adj iVi back", () => {
@@ -883,7 +873,7 @@ test("session line (owner 2026-10-26): duration, kills, deaths, Σ + avg across 
   assert.match(js, /const sessionEl = \$\("liveSession"\);/);
   assert.match(js, /const sessionDur = \(ms\) => \{ const s = Math\.floor\(ms \/ 1000\);/);
   assert.match(js, /if \(!sessionStartMs\) sessionStartMs = Date\.now\(\);/); // first Death arrival starts the clock
-  assert.match(js, /if \(ev\.kind === "death"\) \{ sessionDeaths\+\+; liftFreeze\(ev\.at\);/);
+  assert.match(js, /if \(ev\.kind === "death"\) \{ sessionDeaths\+\+; lastSpikeEff = null; liftFreeze\(ev\.at\);/);
   assert.match(js, /const sKills = cashKills\.length \+ cashHist\.reduce\(\(a, h\) => a \+ \(h\.kills \|\| 0\), 0\);/);
   assert.match(js, /const sSum = cashHist\.reduce\(\(a, h\) => a \+ h\.sum, 0\) \+ cashTotals\(cashKills\.map\(\(e\) => e\.iv\)\)\.sum;/);
   assert.match(js, /sessionEl\.style\.display = sessionStartMs \? "" : "none";/); // hidden until the first event
@@ -955,11 +945,25 @@ test("stream overlay (owner 2026-10-26): ?stream=1 shows names list + meters + s
   assert.ok(css.includes("#liveStreamCard { display: none; }"));
   assert.ok(css.includes("body.live-stream #liveStreamCard { display: block; }"));
   assert.ok(css.includes("body.live-stream > :not(#liveFeed) { display: none; }"), "owner 2026-10-26: stream hides header + footer + controls");
-  assert.ok(css.includes("body.live-stream #liveState, body.live-stream #liveDpmTau, body.live-stream #liveCashHist, body.live-stream #liveShare, body.live-stream #liveSession, body.live-stream #liveShowTacticalWrap { display: none; }"), "owner 2026-10-26: stream shows the names list + DPM block + the card");
   assert.ok(!css.includes("body.live-stream #liveList"), "owner 2026-10-26: the names list is NOT hidden in stream mode");
   assert.ok(css.includes("body.live-stream #liveDps .live-metric:last-child { display: none; }"));
   assert.ok(js.includes('const streamMode = new URLSearchParams(location.search).get("stream") === "1";'));
   assert.ok(js.includes('document.body.classList.add("live-stream")'));
   assert.ok(js.includes('const streamKdEl = $("liveStreamKd"), streamSesEl = $("liveStreamSession");'));
   assert.ok(js.includes('sessionDeaths ? (sKills / sessionDeaths).toFixed(2) : "–"'));
+});
+
+test("feed frame lines (owner 2026-10-26): death line above the table, Recharge below it, no zerg column left", () => {
+  const js = liveSrc();
+  const css = cssSrc();
+  const swap = readFileSync(new URL("scripts/build-live.mjs", root), "utf8");
+  assert.match(js, /function cells\(p, isMe, r, hideWeapon = false\) \{/); // killer-timer arg gone
+  assert.match(js, /cells\(p, false, r, where === "vic"\)/);
+  assert.match(js, /document\.getElementById\("liveDeathLine"\)/);
+  assert.match(css, /\.live-death-line \{ height: 3px; width: 0%; background: linear-gradient\(90deg, #ff1744, #ff5252, #b71c1c\); border-radius: 999px; \}/);
+  assert.ok(swap.indexOf("liveDeathLine") > swap.indexOf("liveState") && swap.indexOf("liveDeathLine") < swap.indexOf("liveList"), "death line sits above the feed table");
+  assert.ok(swap.indexOf("liveDpsHoldBar") > swap.indexOf("</table>") && swap.indexOf("liveDpsHoldBar") < swap.indexOf('id="liveDps"'), "Recharge sits between the table and the DPM block");
+  assert.doesNotMatch(js, /lv-iz|izHtml|showRoach|liveShowTactical|liveKillerTimer|isKiller/);
+  assert.doesNotMatch(css, /lv-iz|lv-c-iz|--lv-iz|lv-killer-timer/);
+  assert.doesNotMatch(swap, /liveShowTactical/);
 });
