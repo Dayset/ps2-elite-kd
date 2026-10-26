@@ -558,6 +558,15 @@ function start() {
   const spikeTimes = () => dpsEvents.map((e) => e.t);
   const liftFreeze = (at) => { if (freezeStart) { timeDebtMs += Math.min(Math.max(0, at - freezeStart), freezeFor); freezeStart = 0; freezeFor = 0; } };
   const cashKills = []; // one per kill: { cid, iv } — iv null until the victim's iVi is known
+  // Owner 2026-10-26 (session trace-back line): everything needed to read
+  // adj iVi back, in one pastable line — duration from the first event
+  // this page saw, session kills and deaths across all runs, session Σ
+  // and avg. Session-only like the pot and history: a reload restarts
+  // it, and the line hides until the first event, so a reload is visible
+  // as the duration resetting to zero.
+  let sessionStartMs = 0, sessionDeaths = 0, lastSession = "";
+  const sessionEl = $("liveSession");
+  const sessionDur = (ms) => { const s = Math.floor(ms / 1000); if (s < 60) return `${s}s`; const m = Math.floor(s / 60); if (m < 60) return `${m}m`; return `${Math.floor(m / 60)}h${String(m % 60).padStart(2, "0")}m`; };
   // Owner 2026-10-25: adjustable DPM decay τ (seconds) — the owner tries
   // values live. A setting, so it persists across reloads (session data
   // does not); the events never change, only their weighting. Note the
@@ -697,6 +706,23 @@ function start() {
         lastCash = key;
       }
     }
+    // Owner 2026-10-26 (session trace-back line): duration from the first
+    // event this page saw, kills and deaths across all runs (current pot
+    // plus banked runs), session Σ and avg over known-iVi kills. Hidden
+    // until the first event — no session yet, no line.
+    if (sessionEl) {
+      const sDur = sessionStartMs ? sessionDur(Date.now() - sessionStartMs) : "";
+      const sKills = cashKills.length + cashHist.reduce((a, h) => a + (h.kills || 0), 0);
+      const sKnown = cashKills.filter((e) => Number.isFinite(e.iv)).length + cashHist.reduce((a, h) => a + (h.known || 0), 0);
+      const sSum = cashHist.reduce((a, h) => a + h.sum, 0) + cashTotals(cashKills.map((e) => e.iv)).sum;
+      const sAvg = sKnown ? sSum / sKnown : null;
+      const sKey = `${sDur}|${sKills}|${sessionDeaths}|${sSum}|${sAvg}`;
+      if (sKey !== lastSession) {
+        sessionEl.textContent = sessionStartMs ? tr("live.sessionLine", "session {dur} · {kills} kills · {deaths} deaths · Σ {sum} · avg {avg}", { dur: sDur, kills: sKills, deaths: sessionDeaths, sum: sSum, avg: sAvg == null ? "–" : sAvg.toFixed(1) }) : "";
+        lastSession = sKey;
+      }
+      sessionEl.style.display = sessionStartMs ? "" : "none";
+    }
   }
   setInterval(dpsTick, 100);
 
@@ -825,6 +851,7 @@ function start() {
   let evSeq = 0;
   const pendingSeq = new Set();
   const onEvent = (ev) => {
+    if (!sessionStartMs) sessionStartMs = Date.now();
     setOnline("online"); // any Death involving them means they are playing right now
     const fetchP = person(ev.opp); // starts now, in parallel — never awaited here
     fetchP.then(render, render); // the name replaces "…" as soon as ITS lookup lands, even while an older commit waits
@@ -877,14 +904,14 @@ function start() {
     // A previous freeze (died, respawned, died again with no spike) is
     // settled first, then the new freeze runs for the average spawn run
     // measured so far (0 = no average yet = no freeze, meter as before).
-    if (ev.kind === "death") { liftFreeze(ev.at); deathTimes.push(ev.at); freezeStart = ev.at; freezeFor = spawnRunHoldMs(deathTimes, spikeTimes()); }
+    if (ev.kind === "death") { sessionDeaths++; liftFreeze(ev.at); deathTimes.push(ev.at); freezeStart = ev.at; freezeFor = spawnRunHoldMs(deathTimes, spikeTimes()); }
     if (ev.kind === "death" && wasStreak > 0 && bountyStreak === 0) {
       // Owner 2026-10-25: the death that ends a run banks it and resets
       // the pot for the new run — the pot shows 0 until the next kill.
       // Deaths under a held bounty (lives left, streak kept) do not end
       // the run, so they bank nothing.
       const t = cashTotals(cashKills.map((e) => e.iv));
-      if (cashKills.length) cashHist.unshift({ sum: t.sum, avg: t.avg, formula: cashFormula(cashKills.map((e) => e.iv), CASH_BOOST_PCT) });
+      if (cashKills.length) cashHist.unshift({ sum: t.sum, avg: t.avg, formula: cashFormula(cashKills.map((e) => e.iv), CASH_BOOST_PCT), kills: cashKills.length, known: t.count });
       if (cashHist.length > 5) cashHist.length = 5;
       cashKills.length = 0;
       renderCashHist();
@@ -920,7 +947,7 @@ function start() {
       // assist XP tick for the tracked player adds +500 to the DPM counter.
       if (j.payload?.event_name === "GainExperience") {
         const p = j.payload;
-        if (String(p.character_id) === me.cid && DPS_ASSIST_XP.has(Number(p.experience_id))) { setOnline("online"); dpsEvents.push({ t: Date.now(), dmg: DPS_ASSIST }); if (shownDps !== null) scrollQ.push(dpsNow([{ t: 0, dmg: DPS_ASSIST }], 0, dpmTauMs) * 60); liftFreeze(Date.now()); dpsTick(); }
+        if (String(p.character_id) === me.cid && DPS_ASSIST_XP.has(Number(p.experience_id))) { if (!sessionStartMs) sessionStartMs = Date.now(); setOnline("online"); dpsEvents.push({ t: Date.now(), dmg: DPS_ASSIST }); if (shownDps !== null) scrollQ.push(dpsNow([{ t: 0, dmg: DPS_ASSIST }], 0, dpmTauMs) * 60); liftFreeze(Date.now()); dpsTick(); }
         return;
       }
       // Owner 2026-10-25: login/logout for the tracked player drives the online pill.

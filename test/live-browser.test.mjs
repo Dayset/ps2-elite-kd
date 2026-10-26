@@ -630,6 +630,24 @@ describe("🎥 live combat average in a browser", () => {
   });
 });
 
+describe("🎥 live session line in a browser", () => {
+  it("session line (owner 2026-10-26): hidden until the first event, then duration + kills + deaths + Σ + avg", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      assert.equal(await ev(until(`document.getElementById("liveSession").style.display === "none"`)), true, "no session yet: line hidden");
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[1].cid, "80", false)})`);
+      assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)").length === 2`)), true, "two victim rows on screen");
+      assert.equal(await ev(until(`document.getElementById("liveSession").textContent.includes("2 kills")`)), true, "session line counts the kills");
+      const line = await ev(`document.getElementById("liveSession").textContent`);
+      assert.match(line, /^session \d+s · 2 kills · 0 deaths · Σ \d+ · avg [\d.]+$/, `session line after two kills: ${line}`);
+      await ev(`window.__fakeWs.emit(${death(OPP[2].cid, ME.cid, "432", false)})`); // ME dies: no banking (bounty held), pot keeps the kills
+      assert.equal(await ev(until(`document.getElementById("liveSession").textContent.includes("1 deaths")`)), true, "death counted in the session line");
+      assert.deepEqual(errors, [], "no page errors");
+    });
+  });
+});
+
 describe("🎥 live reconnect in a browser", () => {
   it("reconnect (owner 2026-10-25): a healthy drop reconnects at once, and a kill on the new socket counts", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {

@@ -671,7 +671,7 @@ test("cash formula (owner 2026-10-25): pot shows the total only, banked runs kee
   assert.match(js, /cashSumEl\.textContent = String\(t\.sum\);/);
   assert.match(js, /const key = `\$\{t\.sum\}\|\$\{t\.avg\}`;/);
   assert.doesNotMatch(js, /cashSumEl\.textContent = f;/);
-  assert.match(js, /cashHist\.unshift\(\{ sum: t\.sum, avg: t\.avg, formula: cashFormula\(cashKills\.map\(\(e\) => e\.iv\), CASH_BOOST_PCT\) \}\);/);
+  assert.match(js, /cashHist\.unshift\(\{ sum: t\.sum, avg: t\.avg, formula: cashFormula\(cashKills\.map\(\(e\) => e\.iv\), CASH_BOOST_PCT\), kills: cashKills\.length, known: t\.count \}\);/);
   assert.match(js, /<div>Σ \$\{h\.formula\} · /);
 });
 
@@ -764,7 +764,7 @@ test("hold meter (owner 2026-10-25): decay freezes on death, lifts on a spike or
   assert.match(js, /const liftFreeze = \(at\) => \{ if \(freezeStart\) \{ timeDebtMs \+= Math\.min\(Math\.max\(0, at - freezeStart\), freezeFor\); freezeStart = 0; freezeFor = 0; \} \};/);
   assert.match(js, /if \(freezeStart && Date\.now\(\) >= freezeStart \+ freezeFor\) \{ timeDebtMs \+= freezeFor; freezeStart = 0; freezeFor = 0; \}/);
   assert.match(js, /const effNow = freezeStart \? freezeStart - timeDebtMs : Date\.now\(\) - timeDebtMs;/);
-  assert.match(js, /if \(ev\.kind === "death"\) \{ liftFreeze\(ev\.at\); deathTimes\.push\(ev\.at\); freezeStart = ev\.at; freezeFor = spawnRunHoldMs\(deathTimes, spikeTimes\(\)\); \}/);
+  assert.match(js, /if \(ev\.kind === "death"\) \{ sessionDeaths\+\+; liftFreeze\(ev\.at\); deathTimes\.push\(ev\.at\); freezeStart = ev\.at; freezeFor = spawnRunHoldMs\(deathTimes, spikeTimes\(\)\); \}/);
   assert.match(js, /dpsEvents\.push\(\{ t: Number\.isFinite\(ev\.at\) \? ev\.at : Date\.now\(\), dmg: DPS_HP \}\); if \(shownDps !== null\) scrollQ\.push\(dpsNow\(\[\{ t: 0, dmg: DPS_HP \}\], 0, dpmTauMs\) \* 60\); liftFreeze\(Number\.isFinite\(ev\.at\) \? ev\.at : Date\.now\(\)\);/);
   assert.match(js, /dpsEvents\.push\(\{ t: Date\.now\(\), dmg: DPS_ASSIST \}\); if \(shownDps !== null\) scrollQ\.push\(dpsNow\(\[\{ t: 0, dmg: DPS_ASSIST \}\], 0, dpmTauMs\) \* 60\); liftFreeze\(Date\.now\(\)\);/);
   assert.match(js, /combatHoldMs, spawnRunHoldMs, timeToCombatMs, easeInQuad \} from "\.\/live-model\.mjs\?v=20261025-ttc1"/);
@@ -818,6 +818,25 @@ test("DPM row bars (owner 2026-10-26): stacked meter lines, DPM glows and grows,
   assert.match(js, /const secBarPct = \(s\) => `\$\{Math\.min\(100, Math\.max\(0, \(s \/ 60\) \* 100\)\)\.toFixed\(1\)\}%`;/); // full = 60 s
   assert.match(js, /setBar\(dpsBarEl, "dpm", dpmBarPct\(v\)\);/); // scroll frames move the bar
   assert.match(js, /setBar\(dpsBarEl, "dpm", "0\.0%"\);/); // warm-up: bar at zero
+});
+
+test("session line (owner 2026-10-26): duration, kills, deaths, Σ + avg across all runs — everything to read adj iVi back", () => {
+  const js = liveSrc();
+  const css = cssSrc();
+  const swap = readFileSync(new URL("scripts/build-live.mjs", root), "utf8");
+  assert.match(swap, /<div id="liveSession" class="live-session"><\/div>/);
+  assert.match(css, /\.live-session \{ margin-top: 0\.25rem; font-size: 0\.72rem; color: var\(--dim\); \}/);
+  assert.match(js, /let sessionStartMs = 0, sessionDeaths = 0, lastSession = "";/);
+  assert.match(js, /const sessionEl = \$\("liveSession"\);/);
+  assert.match(js, /const sessionDur = \(ms\) => \{ const s = Math\.floor\(ms \/ 1000\);/);
+  assert.match(js, /if \(!sessionStartMs\) sessionStartMs = Date\.now\(\);/); // first Death arrival starts the clock
+  assert.match(js, /if \(ev\.kind === "death"\) \{ sessionDeaths\+\+; liftFreeze\(ev\.at\);/);
+  assert.match(js, /const sKills = cashKills\.length \+ cashHist\.reduce\(\(a, h\) => a \+ \(h\.kills \|\| 0\), 0\);/);
+  assert.match(js, /const sSum = cashHist\.reduce\(\(a, h\) => a \+ h\.sum, 0\) \+ cashTotals\(cashKills\.map\(\(e\) => e\.iv\)\)\.sum;/);
+  assert.match(js, /sessionEl\.style\.display = sessionStartMs \? "" : "none";/); // hidden until the first event
+  assert.match(js, /tr\("live\.sessionLine", "session \{dur\} · \{kills\} kills · \{deaths\} deaths · Σ \{sum\} · avg \{avg\}"/);
+  const en = JSON.parse(readFileSync(new URL("i18n/en.json", root), "utf8"));
+  assert.equal(en["live.sessionLine"], "session {dur} · {kills} kills · {deaths} deaths · Σ {sum} · avg {avg}");
 });
 
 test("scroll (owner 2026-10-25): gas-counter queue — one 700 ms ease-in scroll per spike, deaths never enqueue", () => {
