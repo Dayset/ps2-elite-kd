@@ -194,6 +194,7 @@ col.lv-c-iz { width: var(--lv-iz); }
 .live-stream-kd { font-size: 1.4rem; font-weight: 600; }
 .live-stream-session { margin-top: 0.25rem; font-size: 0.85rem; color: var(--dim); }
 body.live-stream #liveStreamCard { display: block; }
+.live-dbg { margin-top: 0.25rem; font-size: 0.72rem; color: var(--dim); font-family: monospace; white-space: pre-line; overflow-wrap: anywhere; } /* owner 2026-10-26: the medians + their inputs under the meter, plain debug text, copyable at stream end */
 body.live-stream > :not(#liveFeed) { display: none; } /* owner 2026-10-26: no header, no footer, no controls — the overlay is only the live section */
 body.live-stream #liveState, body.live-stream #liveDpmTau, body.live-stream #liveCashHist, body.live-stream #liveShare, body.live-stream #liveSession { display: none; } /* owner 2026-10-26: stream shows the names list + DPM block + the card */
 body.live-stream #liveDps .live-metric:last-child { display: none; } /* online pill: meters + session only */

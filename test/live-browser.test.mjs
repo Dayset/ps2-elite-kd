@@ -114,14 +114,14 @@ const framesPerSecond = `new Promise((r) => { let n = 0; const mo = new Mutation
 const death = (att, vic, weapon, hs) => JSON.stringify({ event_name: "Death", attacker_character_id: att, character_id: vic, attacker_weapon_id: weapon, is_headshot: hs ? "1" : "0", timestamp: "0" });
 
 describe("🎥 live.html in a browser", () => {
-  it("8 lines, zerg-only info with 🪳 roaches, weapon under the centre name, nothing that animates forever", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+  it("4 lines, zerg-only info with 🪳 roaches, weapon under the centre name, nothing that animates forever", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
       // 6 kills (weapons: Orion, TRAC-5, NS-11A, Frag Grenade, knife, unknown), then a death by a headshot with C-4's id
       const kills = [["80", true], ["43", false], ["70998", true], ["44505", false], ["1", false], ["0", false]];
       for (const [i, [w, hs]] of kills.entries()) await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[i].cid, w, hs)})`);
       await ev(`window.__fakeWs.emit(${death(OPP[6].cid, ME.cid, "432", true)})`);
-      assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)").length === 6 && document.querySelector("#liveList tbody.lv-atk:not(.lv-empty)")`)), true, "6 victims + the killer on screen");
+      assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)").length === 2 && document.querySelector("#liveList tbody.lv-atk:not(.lv-empty)")`)), true, "2 victims + the killer on screen");
       assert.equal(await ev(until(`document.querySelector("#liveList tbody.lv-atk .lv-wn").textContent === "C-4"`)), true, "killer weapon shown (catalog loaded)");
       const s = await ev(`(() => {
         const L = document.getElementById("liveList");
@@ -152,10 +152,10 @@ describe("🎥 live.html in a browser", () => {
           hsTip: (atk.querySelector(".lv-hs2") || {}).dataset.tip,
         };
       })()`);
-      assert.equal(s.lines, 8, "killer + centre + 6 victims");
-      assert.deepEqual(s.names, OPP.slice(0, 6).map((o) => o.name).reverse(), "newest kill on top");
-      assert.deepEqual(s.victimWn, [null, null, null, null, null, null], "no weapon under victim names");
-      assert.deepEqual(s.victimHs, [false, false, false, true, false, true], "headshot mark only on headshots");
+      assert.equal(s.lines, 4, "killer + centre + 2 victims");
+      assert.deepEqual(s.names, [OPP[5].name, OPP[4].name], "newest 2 on top");
+      assert.deepEqual(s.victimWn, [null, null], "no weapon under victim names");
+      assert.deepEqual(s.victimHs, [false, false], "headshot mark only on headshots");
       assert.equal(s.killerWn, "C-4");
       assert.equal(s.killerHs, true);
       assert.equal(s.hsTip, "Headshot");
@@ -184,7 +184,7 @@ describe("🎥 live.html in a browser", () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
       for (let i = 0; i < 6; i++) await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[i].cid, "80", false)})`);
-      assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)").length === 6`)), true, "lines on screen");
+      assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)").length === 2`)), true, "lines on screen");
       const fps = await ev(framesPerSecond);
       assert.ok(fps < 5, `no per-frame style mutations with the meters parked: ${fps}`);
       assert.deepEqual(errors, [], "no page errors");
@@ -297,17 +297,18 @@ describe("🎥 live.html in a browser", () => {
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[5].cid, "80", false)})`);
       await ev(`window.__fakeWs.emit(${death(OPP[6].cid, ME.cid, "432", false)})`);
       assert.equal(await ev(until(`${names}.join("|") === ${JSON.stringify(OPP[5].name)}`)), true, "the old run's line");
-      // new run, rapid fire: the slow victim first, then three fast ones, all in the same task
-      const burst = [SLOW.cid, ...OPP.slice(0, 3).map((o) => o.cid)].map((c) => `window.__fakeWs.emit(${death(ME.cid, c, "80", false)});`).join(" ");
+      // new run, rapid fire: the slow victim first, then one fast one, all in the same task
+      // (owner 2026-10-26: only the last 2 victims show, so the burst is slow + one fast)
+      const burst = [SLOW.cid, OPP[0].cid].map((c) => `window.__fakeWs.emit(${death(ME.cid, c, "80", false)});`).join(" ");
       await ev(burst);
       const now = await ev(names);
-      assert.equal(now.length, 5, `every row lands on arrival (4 new + the old run's, not yet cleared): ${now}`);
-      assert.equal(now[3], "…", "the slow victim shows … in the name while its lookup runs");
+      assert.equal(now.length, 2, `every row lands on arrival (2 new, the old run's pushed out by the cap): ${now}`);
+      assert.equal(now[1], "…", "the slow victim shows … in the name while its lookup runs");
       assert.ok(!now.join("|").includes("#"), "no raw #id on screen");
-      // the fast victims' names fill in before the slow lookup lands
-      assert.equal(await ev(until(`${names}.slice(0, 3).join("|") === ${JSON.stringify(OPP.slice(0, 3).map((o) => o.name).reverse().join("|"))}`, 1200)), true, "later kills are not held back by the slow lookup");
-      // after the slow lookup: the old run is cleared, all four new rows stay, newest on top
-      assert.equal(await ev(until(`${names}.join("|") === ${JSON.stringify([...OPP.slice(0, 3).map((o) => o.name).reverse(), SLOW.name].join("|"))}`)), true, "all four rows of the new run, old run cleared");
+      // the fast victim's name fills in before the slow lookup lands
+      assert.equal(await ev(until(`${names}.join("|") === ${JSON.stringify([OPP[0].name, "…"].join("|"))}`, 1200)), true, "later kills are not held back by the slow lookup");
+      // after the slow lookup: both new rows stay, newest on top
+      assert.equal(await ev(until(`${names}.join("|") === ${JSON.stringify([OPP[0].name, SLOW.name].join("|"))}`)), true, "both rows of the new run, slow name filled");
       assert.deepEqual(errors, [], "no page errors");
     });
   });
@@ -495,7 +496,8 @@ describe("🎥 live hold meter in a browser", () => {
       await new Promise((r) => setTimeout(r, 8000)); // 8 s after the fourth kill — inside the 12 s hold
       const dpm = await ev(`Number(document.getElementById("liveDpsVal").textContent)`);
       assert.ok(dpm > 8000, `held DPM stays above 8000 (with no hold it would be ~3900 here): ${dpm}`);
-      assert.equal(await ev(`document.getElementById("liveDpsHoldBar").style.width`), "20%", "median of the gaps: hold bar 20% (12 s of 60 s)");
+      const holdW = Number.parseFloat(await ev(`document.getElementById("liveDpsHoldBar").style.width`));
+      assert.ok(holdW >= 25 && holdW <= 45, `owner 2026-10-26: 8 s into the 12 s hold timer, ~33% left: ${holdW}`);
       assert.deepEqual(errors, [], "no page errors");
     });
   });
@@ -599,7 +601,10 @@ describe("🎥 live death-anchored hold in a browser", () => {
       await new Promise((r) => setTimeout(r, 2000));
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[2].cid, "80", false)})`); // kill 2: 2 s after kill 1
       // pool [4 s, 2 s] → median 3 s; the old within-run-only hold would say 2 s
-      assert.equal(await ev(until(`document.getElementById("liveDpsHoldBar").style.width === "5%"`)), true, "death-anchored median: hold bar 5% (3 s of 60 s)");
+      assert.equal(await ev(until(`parseFloat(document.getElementById("liveDpsHoldBar").style.width) >= 90`)), true, "death-anchored median: hold timer starts full at the kill");
+      await new Promise((r) => setTimeout(r, 1500)); // half the 3 s timer
+      const holdAW = Number.parseFloat(await ev(`document.getElementById("liveDpsHoldBar").style.width`));
+      assert.ok(holdAW >= 30 && holdAW <= 70, `owner 2026-10-26: half the 3 s hold timer left: ${holdAW}`);
       assert.deepEqual(errors, [], "no page errors");
     });
   });
@@ -614,15 +619,19 @@ describe("🎥 live combat average in a browser", () => {
       await ev(`window.__fakeWs.emit(${death(OPP[0].cid, ME.cid, "432", false)})`); // death 1
       await new Promise((r) => setTimeout(r, 4000));
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[1].cid, "80", false)})`); // combat 4 s after death 1
-      assert.equal(await ev(until(`document.getElementById("liveDpsCombatBar").style.width === "6.7%"`)), true, "first run: combat bar 6.7% (4 s of 60 s)");
+      // owner 2026-10-26: the run completed, so the timer sits empty (the median lives in the debug box now)
+      assert.equal(await ev(until(`document.getElementById("liveDpsCombatBar").style.width === "0%"`)), true, "first run done: combat timer empty");
       // the combat line sits in the same DPM stack, right after the hold line
       assert.equal(await ev(`document.getElementById("liveDpsCombatLine").previousElementSibling.querySelector("#liveDpsHoldBar") !== null`), true, "combat line sits right after hold line");
-      assert.equal(await ev(`document.getElementById("liveDpsCombatBar").style.width`), "6.7%", "combat bar: 4 s of 60 s");
-      await ev(`window.__fakeWs.emit(${death(OPP[2].cid, ME.cid, "432", false)})`); // death 2
-      await new Promise((r) => setTimeout(r, 8000));
+      await ev(`window.__fakeWs.emit(${death(OPP[2].cid, ME.cid, "432", false)})`); // death 2: timer drains over the 4 s median
+      assert.equal(await ev(until(`parseFloat(document.getElementById("liveDpsCombatBar").style.width) >= 90`)), true, "second death: combat timer starts full");
+      await new Promise((r) => setTimeout(r, 2000)); // half the 4 s timer
+      const combatW = Number.parseFloat(await ev(`document.getElementById("liveDpsCombatBar").style.width`));
+      assert.ok(combatW >= 30 && combatW <= 70, `owner 2026-10-26: half the 4 s combat timer left: ${combatW}`);
+      await new Promise((r) => setTimeout(r, 6000));
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[3].cid, "80", false)})`); // combat 8 s after death 2
       // median([4 s, 8 s]) = 6 s, over both deaths — the trailing-10 freeze/hold caps don't apply here
-      assert.equal(await ev(until(`document.getElementById("liveDpsCombatBar").style.width === "10%"`)), true, "all deaths: combat bar 10% (6 s of 60 s)");
+      assert.equal(await ev(until(`document.getElementById("liveDpsCombatBar").style.width === "0%"`)), true, "second run done: combat timer empty again");
       assert.deepEqual(errors, [], "no page errors");
     });
   });
@@ -711,5 +720,39 @@ describe("🎥 live stream overlay in a browser", () => {
       assert.ok(sesText.includes("2 kills") && sesText.includes("1 deaths") && /Σ \d+/.test(sesText), `session card carries the session: ${sesText}`);
       assert.deepEqual(errors, [], "no page errors");
     }, { query: "&stream=1" });
+  });
+});
+
+describe("🎥 live timers in a browser", () => {
+  it("timers (owner 2026-10-26): combat drains from each death, hold drains from each kill, debug box holds the medians", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      const barW = (id) => ev(`parseFloat(document.getElementById("${id}").style.width) || 0`);
+      const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+      // build medians: death, 5 s to first combat, 2 s to second kill
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`); // a spike before any death
+      await ev(`window.__fakeWs.emit(${death(OPP[1].cid, ME.cid, "432", false)})`); // D1
+      await wait(5000);
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[1].cid, "80", false)})`); // K1: combat run ~5 s, hold gap ~5 s
+      await wait(2000);
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[2].cid, "80", false)})`); // K2: hold gap ~2 s
+      // combat timer: the next death drains over the 5 s median
+      await ev(`window.__fakeWs.emit(${death(OPP[2].cid, ME.cid, "432", false)})`); // D2
+      assert.equal(await ev(until(`parseFloat(document.getElementById("liveDpsCombatBar").style.width) >= 90`)), true, "combat bar starts full at the death");
+      await wait(2000);
+      const combatMid = await barW("liveDpsCombatBar");
+      assert.ok(combatMid >= 30 && combatMid <= 75, `combat bar drained after 2 s of 5: ${combatMid}`);
+      // hold timer: the next kill drains over the ~2 s median ([5, 2, 2] → 2 s)
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[3].cid, "80", false)})`); // K3: D2→K3 ~2 s joins the hold pool
+      assert.equal(await ev(until(`parseFloat(document.getElementById("liveDpsHoldBar").style.width) >= 90`)), true, "hold bar starts full at the kill");
+      await wait(1000);
+      const holdMid = await barW("liveDpsHoldBar");
+      assert.ok(holdMid >= 25 && holdMid <= 75, `hold bar drained after 1 s of 2: ${holdMid}`);
+      // debug box: medians + counts, copyable text
+      const dbg = await ev(`document.getElementById("liveDbg").textContent`);
+      assert.ok(dbg.includes("hold") && dbg.includes("combat") && dbg.includes("τ"), `debug box labels: ${dbg}`);
+      assert.ok(dbg.includes("(n=2)"), `two combat runs counted: ${dbg}`);
+      assert.deepEqual(errors, [], "no page errors");
+    });
   });
 });

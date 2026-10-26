@@ -7,7 +7,7 @@ import { normalizePlayer, playerMetrics, shownValue } from "./player-metrics.mjs
 import { infDial } from "./tractor.mjs?v=20261024-trac1";
 import { infantryShares } from "./infantry.mjs?v=20261023-short1";
 
-export const FEED_MAX = 6; // victim lines below the centre (owner t575u: "back to 6 lines"; t563u had 3)
+export const FEED_MAX = 2; // victim lines below the centre (owner 2026-10-26: last 2, not 6)
 export const VICTIM_LINES = FEED_MAX;
 
 /** Death payload → { kind: "kill" | "death", opp, headshot, weapon } for target cid, or null (suicide / unrelated / no attacker).
@@ -113,7 +113,14 @@ export function median(values) {
  * no following spike), it falls back to the within-run gaps, so the
  * meter still has a hold before the first death.
  */
-export function combatHoldMs(spikeTimes, deathTimes, maxGaps = 10) {
+/**
+ * Owner 2026-10-26 (debug box): the exact gap list combatHoldMs medians
+ * over — death-anchored (death→first spike, first→second spike) per
+ * death, trailing maxGaps, falling back to within-run gaps when no
+ * death-anchored gap exists yet. Shared, so the box and the meter can
+ * never disagree.
+ */
+export function holdGaps(spikeTimes, deathTimes, maxGaps = 10) {
   const spikes = [...spikeTimes].sort((a, b) => a - b);
   const deaths = [...deathTimes].sort((a, b) => a - b);
   const gaps = [];
@@ -127,7 +134,7 @@ export function combatHoldMs(spikeTimes, deathTimes, maxGaps = 10) {
     const g2 = k2 - k1;
     if (g2 > 0) gaps.push(g2);
   }
-  if (gaps.length) return median(gaps.slice(-maxGaps));
+  if (gaps.length) return gaps.slice(-maxGaps);
   // Fallback: no death-anchored gap yet — the within-run gaps, as before.
   const clean = [];
   for (let i = 1; i < spikes.length; i++) {
@@ -136,9 +143,12 @@ export function combatHoldMs(spikeTimes, deathTimes, maxGaps = 10) {
     if (deaths.some((d) => d > spikes[i - 1] && d < spikes[i])) continue;
     clean.push(gap);
   }
-  return median(clean.slice(-maxGaps));
+  return clean.slice(-maxGaps);
 }
-function combatRuns(deathTimes, spikeTimes) {
+export function combatHoldMs(spikeTimes, deathTimes, maxGaps = 10) {
+  return median(holdGaps(spikeTimes, deathTimes, maxGaps));
+}
+export function combatRuns(deathTimes, spikeTimes) {
   const spikes = [...spikeTimes].sort((a, b) => a - b);
   const runs = [];
   for (const d of [...deathTimes].sort((a, b) => a - b)) {
@@ -163,6 +173,16 @@ export function spawnRunHoldMs(deathTimes, spikeTimes, maxRuns = 10) {
 export function timeToCombatMs(deathTimes, spikeTimes) {
   const runs = combatRuns(deathTimes, spikeTimes);
   return { ms: median(runs), n: runs.length };
+}
+
+/**
+ * Owner 2026-10-26 (timers): a countdown bar's width — the time left
+ * over the total it drains from, capped 0–100%. No total, no timer:
+ * an empty bar, never a division by zero.
+ */
+export function timerBarPct(leftMs, totalMs) {
+  if (!(totalMs > 0)) return "0.0%";
+  return `${Math.min(100, Math.max(0, (leftMs / totalMs) * 100)).toFixed(1)}%`;
 }
 
 /**

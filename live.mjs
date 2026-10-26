@@ -19,8 +19,8 @@ await i18nReady;
  *     fetch in the background (one at a time, newest first, #32) and upgrade in place.
  * Pure helpers are exported for tests; the DOM part runs only in a browser.
  */
-export * from "./live-model.mjs?v=20261025-ttc1"; // #66: the pure part (tests import it from here)
-import { VICTIM_LINES, classifyDeath, fmtGap, censusStats, LIVE_COLS, tipText, FILL_DIM, HOLLOW_PX, HOLLOW_INK, goodPct, fillDriver, emojiFill, unknownFill, infUnit, OUTLINE_PX, unitGlow, LIVE_GLOWS, LIVE_FPS, liveFps, HALO_KEY, haloOn, easeFill, glowIn, BEAT, TIER_MOTION, haloAt, SHINE, shineFrame, beatSleep, weaponIcon, glowTier, eventAt, overlayPush, overlayRows, nextBgFetch, liveRowFromPlayer, ME_REFRESH_MS, median, mergeFresh, SHARE_MAX, shareDelay, cellText, slugKey, bountyNext, dpsNow, DPS_HP, DPS_ASSIST, DPS_ASSIST_XP, cashTotals, cashFormula, combatHoldMs, spawnRunHoldMs, timeToCombatMs, easeInQuad } from "./live-model.mjs?v=20261025-ttc1";
+export * from "./live-model.mjs?v=20261026-timer1"; // #66: the pure part (tests import it from here)
+import { VICTIM_LINES, classifyDeath, fmtGap, censusStats, LIVE_COLS, tipText, FILL_DIM, HOLLOW_PX, HOLLOW_INK, goodPct, fillDriver, emojiFill, unknownFill, infUnit, OUTLINE_PX, unitGlow, LIVE_GLOWS, LIVE_FPS, liveFps, HALO_KEY, haloOn, easeFill, glowIn, BEAT, TIER_MOTION, haloAt, SHINE, shineFrame, beatSleep, weaponIcon, glowTier, eventAt, overlayPush, overlayRows, nextBgFetch, liveRowFromPlayer, ME_REFRESH_MS, median, mergeFresh, SHARE_MAX, shareDelay, cellText, slugKey, bountyNext, dpsNow, DPS_HP, DPS_ASSIST, DPS_ASSIST_XP, cashTotals, cashFormula, combatHoldMs, holdGaps, combatRuns, spawnRunHoldMs, timeToCombatMs, timerBarPct, easeInQuad } from "./live-model.mjs?v=20261026-timer1";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261023-short1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
@@ -555,6 +555,7 @@ function start() {
   const dpsLabelEl = $("liveDpsLabel");
   const dpsCombatLineEl = $("liveDpsCombatLine");
   const dpsBarEl = $("liveDpsBar"), dpsHoldBarEl = $("liveDpsHoldBar"), dpsCombatBarEl = $("liveDpsCombatBar");
+  const dbgEl = $("liveDbg");
   if ($("liveDpsLabel")) $("liveDpsLabel").textContent = tr("live.dps", "DPM");
   const cashSumEl = $("liveCashSumVal"), cashAvgEl = $("liveCashAvgVal");
   if ($("liveCashSumLabel")) $("liveCashSumLabel").textContent = tr("live.cashSum", "Σ iVi");
@@ -638,7 +639,7 @@ function start() {
   // the formula's +34% suffix says the parts are boosted). A floored 0 stays 0 (0 × 1.34 = 0).
   const CASH_BOOST_PCT = 34;
   const cashIv = (p) => (p && p.cached && Number.isFinite(p.cached.adjs) ? Math.round(Math.max(0, p.cached.adjs) * (1 + CASH_BOOST_PCT / 100)) : null);
-  let lastDps = "", lastDpsLabel = "", lastCash = "";
+  let lastDps = "", lastDpsLabel = "", lastCash = "", lastDbg = "", lastSpikeEff = null;
   // Owner 2026-10-26 (DPM row bars): each meter line carries a bar under
   // its text — DPM glows and grows with the shown value (full = two
   // kill-spikes at the current τ), hold/combat bars are value-proportional
@@ -647,7 +648,6 @@ function start() {
   const barState = { dpm: "", hold: "", combat: "" };
   const setBar = (el, key, pct) => { if (el && barState[key] !== pct) { el.style.width = pct; barState[key] = pct; } };
   const dpmBarPct = (v) => `${Math.min(100, Math.max(0, (v / (120000 / (dpmTauMs / 1000))) * 100)).toFixed(1)}%`;
-  const secBarPct = (s) => `${Math.min(100, Math.max(0, (s / 60) * 100)).toFixed(1)}%`;
   // Owner 2026-10-25 (gas-counter scroll): each kill/assist after the
   // meter starts queues one scroll — its own DPM jump at the τ of the
   // moment — and scrolls play one by one, 700 ms each, ease-in (slow
@@ -720,15 +720,44 @@ function start() {
         // a scroll in flight owns the number — the tick leaves it alone
       }
       if (dpsLabelEl && label !== lastDpsLabel) { dpsLabelEl.textContent = label; lastDpsLabel = label; }
-      // Owner 2026-10-26 (fat/thin bars): the timers are bare bars now —
-      // no text, the line IS the value (full = 60 s). setBar guards its own
-      // writes, so the tick calls it flat out.
-      if (dpsHoldBarEl) setBar(dpsHoldBarEl, "hold", secBarPct(Math.round(holdMs / 1000)));
-      // hidden until the first death→combat run completes — a 0 s bar
-      // would be a lie, not a measurement
-      const combat = timeToCombatMs(deathTimes, spikeTimes());
-      if (dpsCombatBarEl) setBar(dpsCombatBarEl, "combat", secBarPct(Math.round(combat.ms / 1000)));
+      // Owner 2026-10-26 (timers): the thin bars are countdowns now, so
+      // everyone watching sees time running out — the hold bar drains
+      // from the latest spike over the median hold, the combat bar
+      // drains from the latest death over the median combat time (wall
+      // time, spawn included). The hold clock is the decay clock at the
+      // spike (lastSpikeEff, set at commit after any freeze lifts), so
+      // a mid-streak kill drains at once instead of waiting out every
+      // past freeze, and a kill after a death still pauses while the
+      // new freeze holds. The medians themselves live in the debug box
+      // below. A bar with no running timer sits empty. setBar guards
+      // its own writes, so the tick calls it flat out.
+      const spikes = spikeTimes(), deaths = deathTimes;
+      if (dpsHoldBarEl) setBar(dpsHoldBarEl, "hold", timerBarPct(lastSpikeEff != null ? holdMs - (effNow - lastSpikeEff) : 0, holdMs));
+      // hidden until the first death→combat run completes — with no
+      // median yet there is nothing to drain over
+      const combat = timeToCombatMs(deaths, spikes);
+      const lastDeath = deaths.length ? deaths[deaths.length - 1] : null;
+      const combatDone = lastDeath != null && spikes.some((t) => t > lastDeath);
+      if (dpsCombatBarEl) setBar(dpsCombatBarEl, "combat", timerBarPct(lastDeath != null && !combatDone ? combat.ms - (Date.now() - lastDeath) : 0, combat.ms));
       if (dpsCombatLineEl) dpsCombatLineEl.style.display = combat.n ? "" : "none";
+      // Owner 2026-10-26 (debug box): the medians plus the exact inputs
+      // to decompile combat efficiency back — hold gaps (trailing 10),
+      // all combat runs, current τ. Plain text, copyable at stream end.
+      // Write-on-change, like the session line.
+      if (dbgEl) {
+        const gaps = holdGaps(spikes, deaths);
+        const runs = combatRuns(deaths, spikes);
+        const sec1 = (ms) => (ms / 1000).toFixed(1);
+        const key = `${holdMs}|${gaps.join(",")}|${combat.ms}|${combat.n}|${runs.join(",")}|${dpmTauMs}`;
+        if (key !== lastDbg) {
+          dbgEl.textContent = [
+            `${tr("live.dpmHold", "hold {s}s", { s: sec1(holdMs) })}${gaps.length ? `: ${gaps.map(sec1).join(", ")}` : ""}`,
+            `${tr("live.dpmCombat", "combat {s}s (n={n})", { s: sec1(combat.ms), n: combat.n })}${runs.length ? `: ${runs.map(sec1).join(", ")}` : ""}`,
+            `τ ${(dpmTauMs / 1000).toFixed(0)}s`,
+          ].join("\n");
+          lastDbg = key;
+        }
+      }
     }
     // Owner 2026-10-26: the main pot shows only the total and the average
     // — the parts formula moved off this line (banked runs in the history
@@ -942,7 +971,7 @@ function start() {
       // exactly the old clear plus the new run's early lines.
       if (wasStreak === 0) st = { ...st, victims: st.victims.filter((r) => r.seq === seq || pendingSeq.has(r.seq)) };
       // DPM at the event's own time: a commit deferred behind a slow lookup doesn't shift the decay
-      dpsEvents.push({ t: Number.isFinite(ev.at) ? ev.at : Date.now(), dmg: DPS_HP }); if (shownDps !== null) scrollQ.push(dpsNow([{ t: 0, dmg: DPS_HP }], 0, dpmTauMs) * 60); liftFreeze(Number.isFinite(ev.at) ? ev.at : Date.now()); cashKills.push({ cid: ev.opp, iv: cashIv(p) }); dpsTick();
+      dpsEvents.push({ t: Number.isFinite(ev.at) ? ev.at : Date.now(), dmg: DPS_HP }); if (shownDps !== null) scrollQ.push(dpsNow([{ t: 0, dmg: DPS_HP }], 0, dpmTauMs) * 60); liftFreeze(Number.isFinite(ev.at) ? ev.at : Date.now()); lastSpikeEff = dpsEvents[dpsEvents.length - 1].t - timeDebtMs; cashKills.push({ cid: ev.opp, iv: cashIv(p) }); dpsTick();
     }
     // Owner 2026-10-25: ANY death dims the killed list and the observed
     // player's own name to 50% — you are dead, the feed shows it — until
@@ -997,7 +1026,7 @@ function start() {
       // assist XP tick for the tracked player adds +500 to the DPM counter.
       if (j.payload?.event_name === "GainExperience") {
         const p = j.payload;
-        if (String(p.character_id) === me.cid && DPS_ASSIST_XP.has(Number(p.experience_id))) { if (!sessionStartMs) sessionStartMs = Date.now(); setOnline("online"); dpsEvents.push({ t: Date.now(), dmg: DPS_ASSIST }); if (shownDps !== null) scrollQ.push(dpsNow([{ t: 0, dmg: DPS_ASSIST }], 0, dpmTauMs) * 60); liftFreeze(Date.now()); dpsTick(); }
+        if (String(p.character_id) === me.cid && DPS_ASSIST_XP.has(Number(p.experience_id))) { if (!sessionStartMs) sessionStartMs = Date.now(); setOnline("online"); dpsEvents.push({ t: Date.now(), dmg: DPS_ASSIST }); if (shownDps !== null) scrollQ.push(dpsNow([{ t: 0, dmg: DPS_ASSIST }], 0, dpmTauMs) * 60); liftFreeze(Date.now()); lastSpikeEff = dpsEvents[dpsEvents.length - 1].t - timeDebtMs; dpsTick(); }
         return;
       }
       // Owner 2026-10-25: login/logout for the tracked player drives the online pill.

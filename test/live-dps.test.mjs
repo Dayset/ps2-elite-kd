@@ -2,7 +2,7 @@
 // drain with a 10 s time constant, so the value jumps and drains down.
 import test from "node:test";
 import assert from "node:assert/strict";
-import { dpsNow, DPS_HP, DPS_ASSIST, DPS_TAU_MS, DPS_ASSIST_XP, cashTotals, cashFormula, median, combatHoldMs, spawnRunHoldMs, timeToCombatMs, easeInQuad } from "../live-model.mjs";
+import { dpsNow, DPS_HP, DPS_ASSIST, DPS_TAU_MS, DPS_ASSIST_XP, cashTotals, cashFormula, median, combatHoldMs, holdGaps, combatRuns, spawnRunHoldMs, timeToCombatMs, timerBarPct, easeInQuad } from "../live-model.mjs";
 
 const close = (a, b, eps = 0.01) => assert.ok(Math.abs(a - b) <= eps, `${a} != ${b}`);
 
@@ -89,6 +89,28 @@ test("combatHoldMs (owner 2026-10-25, decision A): median of the first two gaps 
   const spikes = [], deaths = [];
   for (let i = 0; i < 6; i++) { deaths.push(i * 100000); spikes.push(i * 100000 + (2 * i + 1) * 1000, i * 100000 + (4 * i + 3) * 1000); }
   assert.equal(combatHoldMs(spikes, deaths), 7500);
+});
+
+test("holdGaps + combatRuns (owner 2026-10-26): the debug box shows the exact inputs the medians come from", () => {
+  // death-anchored: [40 s, 10 s] for one death, trailing cap shared with combatHoldMs
+  assert.deepEqual(holdGaps([40000, 50000], [0]), [40000, 10000]);
+  assert.equal(combatHoldMs([40000, 50000], [0]), median(holdGaps([40000, 50000], [0])));
+  // fallback when no death-anchored gap exists yet
+  assert.deepEqual(holdGaps([0, 30000], []), [30000]);
+  assert.deepEqual(holdGaps([5000], []), []);
+  // combat runs: all of them, uncapped, open runs excluded
+  assert.deepEqual(combatRuns([0, 100000], [30000, 130000]), [30000, 30000]);
+  assert.deepEqual(combatRuns([0, 50000], [30000]), [30000]);
+  assert.deepEqual(combatRuns([50000], [30000]), []);
+});
+
+test("timerBarPct (owner 2026-10-26): a countdown bar's width, capped, never NaN", () => {
+  assert.equal(timerBarPct(5000, 10000), "50.0%");
+  assert.equal(timerBarPct(10000, 10000), "100.0%");
+  assert.equal(timerBarPct(15000, 10000), "100.0%"); // over full caps
+  assert.equal(timerBarPct(-500, 10000), "0.0%"); // overdue empties
+  assert.equal(timerBarPct(0, 0), "0.0%"); // no total, no timer
+  assert.equal(timerBarPct(5000, 0), "0.0%");
 });
 
 test("timeToCombatMs (owner 2026-10-25): median of ALL death→first-combat runs, no trailing cap", () => {

@@ -32,7 +32,7 @@ test("classifyDeath: kill, death, suicide, unrelated", () => {
   assert.equal(classifyDeath(d("3", "4"), "1"), null);
 });
 
-test("feedPush (owner t587u): every kill is its own line (repeats too), 7th drops the oldest, stopwatch freezes the old top", () => {
+test("feedPush (owner t587u): every kill is its own line (repeats too), 3rd drops the oldest, stopwatch freezes the old top", () => {
   let rows = [];
   rows = feedPush(rows, { kind: "kill", opp: "a" }, 1000).rows;
   assert.equal(rows[0].gap, null);
@@ -40,17 +40,14 @@ test("feedPush (owner t587u): every kill is its own line (repeats too), 7th drop
   assert.equal(rows[1].gap, 3000);
   assert.equal(rows[0].gap, null);
   rows = feedPush(rows, { kind: "kill", opp: "a" }, 5000).rows;
-  assert.deepEqual(rows.map((r) => r.opp), ["a", "b", "a"]); // a again = a new line on top, the old a line stays
+  assert.deepEqual(rows.map((r) => r.opp), ["a", "b"]); // a again = a new line on top, the first a line drops
   assert.equal(rows[1].gap, 1000); // b froze when a came back
-  assert.equal(rows[2].gap, 3000); // the first a line keeps its own time
-  rows = feedPush(rows, { kind: "kill", opp: "a" }, 7000).rows;
-  assert.deepEqual(rows.map((r) => [r.opp, r.gap]), [["a", null], ["a", 2000], ["b", 1000], ["a", 3000]]);
   let dropped = null;
-  for (const [i, o] of ["c", "d", "e", "f"].entries()) ({ rows, dropped } = feedPush(rows, { kind: "kill", opp: o }, 8000 + i));
+  for (const [i, o] of ["c", "d", "e"].entries()) ({ rows, dropped } = feedPush(rows, { kind: "kill", opp: o }, 8000 + i));
   assert.equal(rows.length, FEED_MAX);
-  assert.equal(FEED_MAX, 6); // owner t575u: back to 6 lines (victims)
-  assert.equal(dropped.opp, "b"); // the oldest lines go first
-  assert.deepEqual(rows.map((r) => r.opp), ["f", "e", "d", "c", "a", "a"]);
+  assert.equal(FEED_MAX, 2); // owner 2026-10-26: last 2 lines (victims)
+  assert.equal(dropped.opp, "c"); // the oldest lines go first
+  assert.deepEqual(rows.map((r) => r.opp), ["e", "d"]);
 });
 
 test("fmtGap", () => {
@@ -151,8 +148,8 @@ test("LIVE: no distribution chart, no title once kills arrive, a themed backgrou
   assert.doesNotMatch(js, /Live: <strong/);
 });
 
-test("overlay (owner t575u): one killer line above (each new killer replaces it), the player in the centre, 6 victims below", () => {
-  assert.equal(VICTIM_LINES, 6);
+test("overlay (owner t575u): one killer line above (each new killer replaces it), the player in the centre, 2 victims below", () => {
+  assert.equal(VICTIM_LINES, 2); // owner 2026-10-26: last 2, not 6
   let st = overlayPush(null, { kind: "kill", opp: "a" }, 1000);
   assert.equal(st.killer, null);
   assert.deepEqual(st.victims.map((r) => r.opp), ["a"]);
@@ -165,12 +162,12 @@ test("overlay (owner t575u): one killer line above (each new killer replaces it)
   st = overlayPush(st, { kind: "death", opp: "k2" }, 3000);
   assert.equal(st.killer.opp, "k2"); // only one line above
   for (const [i, o] of ["b", "c", "a", "d", "e", "f", "g"].entries()) st = overlayPush(st, { kind: "kill", opp: o }, 4000 + i);
-  assert.deepEqual(st.victims.map((r) => r.opp), ["g", "f", "e", "d", "a", "c"]); // newest on top, max 6 (t587u: the first a is pushed out)
+  assert.deepEqual(st.victims.map((r) => r.opp), ["g", "f"]); // newest on top, max 2 (owner 2026-10-26: last 2)
   assert.equal(st.lastEv.opp, "g");
   assert.equal(st.killer, null); // owner t576u: a kill clears the killer line
-  assert.deepEqual(overlayRows(st).map((r) => r.opp), ["g", "f", "e", "d", "a", "c"]);
+  assert.deepEqual(overlayRows(st).map((r) => r.opp), ["g", "f"]);
   st = overlayPush(st, { kind: "kill", opp: "g" }, 5000); // owner t587u: same victim again = a new line on top
-  assert.deepEqual(st.victims.map((r) => r.opp), ["g", "g", "f", "e", "d", "a"]);
+  assert.deepEqual(st.victims.map((r) => r.opp), ["g", "g"]);
   assert.notEqual(st.victims[0], st.victims[1]);
   assert.equal(st.victims[0].gap, null); // only the new line runs
   assert.equal(st.victims[1].gap, 5000 - 4006); // the earlier g line keeps its own frozen time
@@ -178,7 +175,7 @@ test("overlay (owner t575u): one killer line above (each new killer replaces it)
   assert.deepEqual(overlayRows(overlayPush(null, { kind: "kill", opp: "x" }, 0)).map((r) => r.opp), ["x"]);
 });
 
-test("overlay layout (owner t575u): no flip, ONE column order on every line, fixed 1 + 1 + 6 lines, a marked centre line", () => {
+test("overlay layout (owner t575u): no flip, ONE column order on every line, fixed 1 + 1 + 2 lines, a marked centre line", () => {
   const js = liveSrc();
   const css = cssSrc();
   // no flip / phase / mirroring code left
@@ -692,7 +689,7 @@ test("adjustable tau (owner 2026-10-25): DPM decay tau is a persisted page contr
 test("bounty (owner 2026-10-26): one ⚰️×streak, then one 💰×lives, weapon under the centre name", () => {
   const js = liveSrc();
   const css = cssSrc();
-  assert.match(js, /bountyNext[^}]*\} from "\.\/live-model\.mjs\?v=20261025-ttc1"/);
+  assert.match(js, /bountyNext[^}]*\} from "\.\/live-model\.mjs\?v=20261026-timer1"/);
   assert.match(js, /const b = bountyNext\(\{ streak: bountyStreak, lives: bountyLives \}, ev\.kind === "kill"\);/);
   assert.match(js, /if \(bountyLives > 0\) return `<span class="lv-wn">💰×\$\{bountyLives\}<\/span>`;/); // one bag + count, not one per life
   assert.match(js, /if \(bountyStreak > 0\) return `<span class="lv-wn">⚰️×\$\{bountyStreak\}<\/span>`;/); // one coffin + count
@@ -773,40 +770,40 @@ test("hold meter (owner 2026-10-25): decay freezes on death, lifts on a spike or
   assert.match(js, /if \(ev\.kind === "death"\) \{ sessionDeaths\+\+; liftFreeze\(ev\.at\); deathTimes\.push\(ev\.at\); freezeStart = ev\.at; freezeFor = spawnRunHoldMs\(deathTimes, spikeTimes\(\)\); \}/);
   assert.match(js, /dpsEvents\.push\(\{ t: Number\.isFinite\(ev\.at\) \? ev\.at : Date\.now\(\), dmg: DPS_HP \}\); if \(shownDps !== null\) scrollQ\.push\(dpsNow\(\[\{ t: 0, dmg: DPS_HP \}\], 0, dpmTauMs\) \* 60\); liftFreeze\(Number\.isFinite\(ev\.at\) \? ev\.at : Date\.now\(\)\);/);
   assert.match(js, /dpsEvents\.push\(\{ t: Date\.now\(\), dmg: DPS_ASSIST \}\); if \(shownDps !== null\) scrollQ\.push\(dpsNow\(\[\{ t: 0, dmg: DPS_ASSIST \}\], 0, dpmTauMs\) \* 60\); liftFreeze\(Date\.now\(\)\);/);
-  assert.match(js, /combatHoldMs, spawnRunHoldMs, timeToCombatMs, easeInQuad \} from "\.\/live-model\.mjs\?v=20261025-ttc1"/);
+  assert.match(js, /combatHoldMs, holdGaps, combatRuns, spawnRunHoldMs, timeToCombatMs, timerBarPct, easeInQuad \} from "\.\/live-model\.mjs\?v=20261026-timer1"/);
 });
 
 test("warm-up (owner 2026-10-25): the meter waits for its 3rd chunk — first two spikes only bump the count", () => {
   const js = liveSrc();
   assert.match(js, /const dpsLabelEl = \$\("liveDpsLabel"\);/);
-  assert.match(js, /let lastDps = "", lastDpsLabel = "", lastCash = "";/);
+  assert.match(js, /let lastDps = "", lastDpsLabel = "", lastCash = "", lastDbg = "", lastSpikeEff = null;/);
   assert.match(js, /if \(dpsEvents\.length < 3\) \{/);
   assert.match(js, /v = `\$\{dpsEvents\.length\}\/3`;/);
   assert.match(js, /label = tr\("live\.dpmWarm", "DPM starts at 3"\);/);
   assert.match(js, /if \(dpsLabelEl && label !== lastDpsLabel\) \{ dpsLabelEl\.textContent = label; lastDpsLabel = label; \}/);
 });
 
-test("hold indicator (owner 2026-10-26): the hold as a bare thin bar — no text, the line IS the value", () => {
+test("hold indicator (owner 2026-10-26): the hold bar drains from the latest spike over the median hold", () => {
   const js = liveSrc();
   const swap = readFileSync(new URL("scripts/build-live.mjs", root), "utf8");
   assert.match(swap, /<div class="live-metric"><div class="live-bar" aria-hidden="true"><div id="liveDpsHoldBar" class="live-bar-fill"><\/div><\/div><\/div>/);
-  assert.match(js, /let lastDps = "", lastDpsLabel = "", lastCash = "";/);
+  assert.match(js, /let lastDps = "", lastDpsLabel = "", lastCash = "", lastDbg = "", lastSpikeEff = null;/);
   assert.match(js, /const holdMs = combatHoldMs\(spikeTimes\(\), deathTimes\);/);
-  assert.match(js, /if \(dpsHoldBarEl\) setBar\(dpsHoldBarEl, "hold", secBarPct\(Math\.round\(holdMs \/ 1000\)\)\);/);
+  assert.ok(js.includes('if (dpsHoldBarEl) setBar(dpsHoldBarEl, "hold", timerBarPct(lastSpikeEff != null ? holdMs - (effNow - lastSpikeEff) : 0, holdMs));'), "owner 2026-10-26: hold drains from the latest spike over the median");
   assert.doesNotMatch(js, /\$\("liveDpsHold"\)/);
 });
 
-test("combat average (owner 2026-10-26): median of ALL death→first-combat runs, as a bare thin bar next to hold", () => {
+test("combat average (owner 2026-10-26): median of ALL death→first-combat runs, draining as a timer from each death", () => {
   const js = liveSrc();
   const swap = readFileSync(new URL("scripts/build-live.mjs", root), "utf8");
   assert.match(swap, /<div class="live-metric" id="liveDpsCombatLine"><div class="live-bar" aria-hidden="true"><div id="liveDpsCombatBar" class="live-bar-fill"><\/div><\/div><\/div>/);
-  assert.match(js, /const combat = timeToCombatMs\(deathTimes, spikeTimes\(\)\);/);
-  assert.match(js, /if \(dpsCombatBarEl\) setBar\(dpsCombatBarEl, "combat", secBarPct\(Math\.round\(combat\.ms \/ 1000\)\)\);/);
+  assert.match(js, /const combat = timeToCombatMs\(deaths, spikes\);/);
+  assert.ok(js.includes('if (dpsCombatBarEl) setBar(dpsCombatBarEl, "combat", timerBarPct(lastDeath != null && !combatDone ? combat.ms - (Date.now() - lastDeath) : 0, combat.ms));'), "owner 2026-10-26: combat drains from the latest death over the median");
   assert.match(js, /if \(dpsCombatLineEl\) dpsCombatLineEl\.style\.display = combat\.n \? "" : "none";/);
   assert.doesNotMatch(js, /\$\("liveDpsCombat"\)/);
 });
 
-test("DPM row bars (owner 2026-10-26): stacked meter lines, DPM glows and grows, hold/combat shrink", () => {
+test("DPM row bars (owner 2026-10-26): stacked meter lines, DPM glows and grows, hold/combat drain as countdown timers", () => {
   const js = liveSrc();
   const css = cssSrc();
   const swap = readFileSync(new URL("scripts/build-live.mjs", root), "utf8");
@@ -820,9 +817,24 @@ test("DPM row bars (owner 2026-10-26): stacked meter lines, DPM glows and grows,
   assert.doesNotMatch(css, /\.live-bar-fill \{[^}]*transition/); // bars move frame-for-frame, no easing
   assert.match(js, /const dpsBarEl = \$\("liveDpsBar"\), dpsHoldBarEl = \$\("liveDpsHoldBar"\), dpsCombatBarEl = \$\("liveDpsCombatBar"\);/);
   assert.match(js, /const dpmBarPct = \(v\) => `\$\{Math\.min\(100, Math\.max\(0, \(v \/ \(120000 \/ \(dpmTauMs \/ 1000\)\)\) \* 100\)\)\.toFixed\(1\)\}%`;/); // full = two kill-spikes at the current τ
-  assert.match(js, /const secBarPct = \(s\) => `\$\{Math\.min\(100, Math\.max\(0, \(s \/ 60\) \* 100\)\)\.toFixed\(1\)\}%`;/); // full = 60 s
+  assert.doesNotMatch(js, /secBarPct/); // owner 2026-10-26: timers replaced the 60 s scale
+  assert.ok(js.includes("timerBarPct"), "owner 2026-10-26: bars drain over their medians");
   assert.match(js, /setBar\(dpsBarEl, "dpm", dpmBarPct\(v\)\);/); // scroll frames move the bar
   assert.match(js, /setBar\(dpsBarEl, "dpm", "0\.0%"\);/); // warm-up: bar at zero
+});
+
+test("debug box (owner 2026-10-26): medians + their inputs under the meter, copyable at stream end", () => {
+  const js = liveSrc();
+  const css = cssSrc();
+  const swap = readFileSync(new URL("scripts/build-live.mjs", root), "utf8");
+  assert.match(swap, /<div id="liveDbg" class="live-dbg"><\/div>/); // own box under the meter
+  assert.match(css, /\.live-dbg \{[^}]*font-family: monospace/);
+  assert.ok(js.includes('const dbgEl = $("liveDbg");'));
+  assert.ok(js.includes('tr("live.dpmHold", "hold {s}s"'), "hold label reuses its key");
+  assert.ok(js.includes('tr("live.dpmCombat", "combat {s}s (n={n})"'), "combat label reuses its key");
+  assert.ok(js.includes("holdGaps(spikes, deaths)"), "box shows the exact hold inputs");
+  assert.ok(js.includes("combatRuns(deaths, spikes)"), "box shows all combat runs");
+  assert.ok(!css.includes("body.live-stream #liveDbg"), "stream mode keeps the box (it is copied at stream end)");
 });
 
 test("session line (owner 2026-10-26): duration, kills, deaths, Σ + avg across all runs — everything to read adj iVi back", () => {
@@ -858,7 +870,7 @@ test("scroll (owner 2026-10-25): gas-counter queue — one 700 ms ease-in scroll
   assert.match(js, /if \(scrollQ\.length\) startScroll\(\);/);
   assert.match(js, /if \(Math\.abs\(trueDpm - shownDps\) < 0\.05\) shownDps = trueDpm;/);
   assert.match(js, /shownDps \+= \(trueDpm - shownDps\) \* 0\.35;/);
-  assert.match(js, /easeInQuad \} from "\.\/live-model\.mjs\?v=20261025-ttc1"/);
+  assert.match(js, /easeInQuad \} from "\.\/live-model\.mjs\?v=20261026-timer1"/);
 });
 
 test("past cashouts background (owner 2026-10-25): the history sits on the theme panel, not transparent", () => {
