@@ -870,3 +870,23 @@ test("reconnect (owner 2026-10-25): one immediate retry per healthy drop, backof
   assert.match(js, /connectTimer = setTimeout\(connect, backoff\);/);
   assert.match(js, /if \(!document\.hidden && \(!ws \|\| ws\.readyState === WebSocket\.CLOSED\)\) connect\(\);/);
 });
+
+test("share (owner 2026-10-26): one tap copies link + numbers, cash-out first, then DPM", () => {
+  const js = liveSrc();
+  const css = cssSrc();
+  const swap = readFileSync(new URL("scripts/build-live.mjs", root), "utf8");
+  const en = JSON.parse(readFileSync(new URL("i18n/en.json", root), "utf8"));
+  assert.ok(swap.includes('<button id="liveShare" class="live-share" type="button"></button>'));
+  assert.ok(swap.indexOf('id="liveShare"') > swap.indexOf('id="liveSession"'));
+  assert.ok(swap.indexOf('id="liveShare"') < swap.indexOf('id="liveDpmTau"'));
+  assert.ok(css.includes(".live-share {"));
+  assert.equal(en["live.share"], "Share");
+  assert.ok(js.includes('const shareEl = $("liveShare");'));
+  assert.ok(js.includes('tr("live.share", "Share")'));
+  assert.ok(js.includes('navigator.clipboard.writeText(text)'));
+  assert.ok(js.includes("encodeURIComponent(target)"));
+  assert.ok(js.includes("location.origin") && js.includes("location.pathname"));
+  assert.ok(js.includes('if (sh) sh.style.display = "none"')); // no target, no button
+  const tpl = js.slice(js.indexOf("live: ${location.origin}"));
+  assert.ok(tpl.indexOf("Σ ") < tpl.indexOf("· avg ") && tpl.indexOf("· avg ") < tpl.indexOf("· DPM "));
+});

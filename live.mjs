@@ -68,7 +68,7 @@ function start() {
     listEl.addEventListener("mouseleave", () => { tipEl.hidden = true; });
   }
   const setState = (html, cls = "") => { if (stateEl) { stateEl.innerHTML = html; stateEl.className = "live-state " + cls; } };
-  if (!target) { setState("Add a name on the main page, then press 🎥.", "err"); return; }
+  if (!target) { setState("Add a name on the main page, then press 🎥.", "err"); const sh = $("liveShare"); if (sh) sh.style.display = "none"; return; }
 
   const people = new Map(); // cid -> { name, faction, kd, cached: {adjs, kd} | null }
   let st = { killer: null, victims: [], lastEv: null, gone: null }; // owner t575u overlay state (overlayPush)
@@ -590,6 +590,29 @@ function start() {
     const tauDown = $("liveDpmTauDown"), tauUp = $("liveDpmTauUp");
     if (tauDown) tauDown.addEventListener("click", () => { tauInput.value = String(Math.max(1, Math.round(Number(tauInput.value) || 10) - 10)); applyTau(); });
     if (tauUp) tauUp.addEventListener("click", () => { tauInput.value = String(Math.min(3600, Math.round(Number(tauInput.value) || 10) + 10)); applyTau(); });
+  }
+  // Owner 2026-10-26 (share): one tap copies a Messenger-ready block — the
+  // watch link (the target's name in the URL, so the recipient follows the
+  // same session) plus the current numbers, cash-out first, then DPM.
+  const shareEl = $("liveShare");
+  if (shareEl) {
+    shareEl.textContent = tr("live.share", "Share");
+    shareEl.addEventListener("click", async () => {
+      const dpm = dpsEvents.length < 3 ? "–" : (dpsEl ? dpsEl.textContent : "–");
+      const text = `${target} live: ${location.origin}${location.pathname}?names=${encodeURIComponent(target)}\nΣ ${cashSumEl ? cashSumEl.textContent : "0"} · avg ${cashAvgEl ? cashAvgEl.textContent : "–"} · DPM ${dpm}`;
+      let ok = false;
+      try { await navigator.clipboard.writeText(text); ok = true; } catch {}
+      if (!ok) {
+        try {
+          const ta = document.createElement("textarea");
+          ta.value = text; ta.readOnly = true; ta.style.position = "fixed"; ta.style.opacity = "0";
+          document.body.appendChild(ta); ta.select();
+          ok = document.execCommand("copy");
+          ta.remove();
+        } catch { ok = false; }
+      }
+      if (ok) { shareEl.textContent = "✓"; setTimeout(() => { shareEl.textContent = tr("live.share", "Share"); }, 2000); }
+    });
   }
   // Owner 2026-10-25: a sub-0 victim pays 0, never a negative — the pot
   // is a currency, and a kill cannot subtract from it. The feed's iVi

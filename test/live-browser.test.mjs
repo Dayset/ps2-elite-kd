@@ -663,3 +663,29 @@ describe("🎥 live reconnect in a browser", () => {
     });
   });
 });
+
+describe("🎥 live share in a browser", () => {
+  it("share (owner 2026-10-26): one tap copies link + Σ + avg + DPM, cash-out first", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      await ev(`Object.defineProperty(navigator, "clipboard", { value: { writeText: (t) => { window.__copied = t; return Promise.resolve(); } }, configurable: true })`);
+      assert.equal(await ev(`document.getElementById("liveShare").textContent`), "Share", "share button labelled");
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[1].cid, "80", false)})`);
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[2].cid, "80", false)})`);
+      // wait until every victim's name filled in, so the pot and avg are final
+      assert.equal(await ev(until(`![...document.querySelectorAll("#liveList tbody.lv-vic .lv-nm")].some((e) => e.textContent.includes("…"))`)), true, "all three names filled");
+      assert.equal(await ev(until(`document.getElementById("liveCashSumVal").textContent !== "0"`)), true, "pot landed");
+      await ev(`document.getElementById("liveShare").click()`);
+      assert.equal(await ev(until(`document.getElementById("liveShare").textContent === "✓"`)), true, "tap shows the tick");
+      const copied = await ev(`window.__copied`);
+      const sumText = await ev(`document.getElementById("liveCashSumVal").textContent`);
+      const avgText = await ev(`document.getElementById("liveCashAvgVal").textContent`);
+      assert.ok(copied.startsWith(`${ME.name} live: `) && copied.includes(`/live.html?names=${encodeURIComponent(ME.name)}`), `first line is the watch link: ${copied}`);
+      assert.ok(copied.includes(`Σ ${sumText} · avg ${avgText} · DPM `), `numbers line matches the page: ${copied}`);
+      const dpmPart = copied.split("· DPM ")[1];
+      assert.ok(/^\d+\.\d+$/.test(dpmPart), `DPM is a started-meter number, not warm-up: ${dpmPart}`);
+      assert.deepEqual(errors, [], "no page errors");
+    });
+  });
+});
