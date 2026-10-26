@@ -358,3 +358,9 @@ footer { color: var(--dim); font-size: var(--fs-12); margin-top: var(--s-5); }
 .voicemenu .vopt:hover, .voicemenu .vopt:focus-visible { background: var(--panel2); outline: none; }
 .voicemenu .vopt.on { font-weight: 700; }
 @media (pointer: coarse) { .voicegear { min-height: 40px; min-width: 40px; } .voicemenu .vopt { min-height: 44px; } }
+
+/* Commander orders mode (Solo / Big squad): static, no animation. */
+.cmode { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); margin: 0 0 var(--s-1); }
+.cmode button { min-height: 36px; padding: 0 var(--s-3, 12px); background: var(--panel2); border: 1px solid var(--border); border-radius: var(--r-md); font: inherit; font-weight: 700; cursor: pointer; transition: none; }
+.cmode button.on { border-color: currentColor; background: #1a2230; }
+.cmodenote { margin-bottom: var(--s-2); }

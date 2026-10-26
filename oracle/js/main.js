@@ -1,10 +1,12 @@
 // PS2MapOracle dashboard — split from index.html (#15). No behaviour change.
 import { S, FACS, COLOR, esc, $, stars, mins, bar, pct1, det, info, wide, syncDetails, PHONE_MQ } from "./state.js?v=20261018-scrub2";
-import { get } from "./api.js?v=20261018-scrub2";
+import { get, names } from "./api.js?v=20261018-scrub2";
 import { drawMap, highlightBase, recolorMap } from "./map.js?v=20261024-i18n1";
 import { chart, chartHover } from "./chart.js?v=20261024-i18n1";
 import { lockCard, lockTick } from "./lock.js?v=20261024-i18n1";
-import { commander, commanderIdle } from "./commander.js?v=20261025-foc1";
+import { commander, commanderIdle } from "./commander.js?v=20261026-mode1";
+import { modeFocus, ownerLookup, heatLookup, pickMode, MODE_KEY } from "./sticky.js?v=20261026-mode1";
+import { nextPoll } from "./poll.js?v=20261026-mode1";
 import { voiceToggle, voiceTick, bindVoiceMenu } from "./voice.js?v=20261025-and1";
 import { reportPanel } from "./players.js?v=20261024-i18n1";
 import { benchPanel, initResults, refreshHistory, renderHist } from "./results.js?v=20261024-i18n1";
@@ -180,6 +182,7 @@ function render2(now) {
   const cutList = s && Array.isArray(s.cut) ? s.cut : [];
   const cutNote = cutList.length && a.status === "live" ? `<div class="note">${tr("or.cut", "✂️ Cut off, not scoring:")} ${FACS.map((f) => { const n = cutList.filter((c) => c.fac === f); return n.length ? `<span class="${f}">${f} ${n.length}</span> (${esc(n.slice(0, 3).map((c) => c.name).join(", "))}${n.length > 3 ? ` +${n.length - 3}` : ""})` : ""; }).filter(Boolean).join(" · ")}${s.cut_aware ? tr("or.cutAware", " · counted in the odds") : ""}</div>` : "";
   const suspectNote = s && s.suspect && s.suspect.length ? `<div class="note" style="color:var(--warn)">${tr("or.suspect", "Census map data looks broken right now ({why}). Odds may be wrong and voting is paused.", { why: esc(s.suspect.map((x) => x.startsWith("neutral_heavy") ? tr("or.susNeutral", "only {p}% of bases owned", { p: x.split(":")[1] }) : x === "map_frozen" ? tr("or.susFrozen", "map frozen while captures continue") : tr("or.susStale", "no fresh map")).join(", ")) })}</div>` : "";
+  const cmdView = a.status === "live" ? withMode(a, a.commander || (s && s.commander)) : null;
   $("main").innerHTML = `
     <div class="title"><b>${esc(a.world_name)} · ${esc(a.zone_name)}${a.kind === "meltdown" ? " Meltdown" : ""}</b><span class="badge ${a.status}">${esc(badgeLabel(a.status))}</span><span class="note">${esc(left)} · ${tr("or.durAlert", "{n}-min alert", { n: a.dur })}</span>${liveA ? "" : `<button type="button" class="more backlive" id="backLive">${tr("or.backLive", "← Back to live")}</button>`}</div>
     <div class="grid">
@@ -190,7 +193,7 @@ function render2(now) {
       </div>
     </div>
     <section class="card chart" style="margin-top:14px"><h2 data-sec="win-chance-over-time">${tr("or.h.chart", "Win chance over time")}</h2><div id="chart"><div class="sk sk-chart" aria-label="${tr("or.loading", "Loading")}"></div></div></section>
-    ${a.status === "live" ? commander(a.commander || (s && s.commander), a.commander_ts, now, lead) : `${commanderIdle()}${reportPanel(a)}`}
+    ${a.status === "live" ? commander(cmdView, a.commander_ts, now, lead, cmdMode) : `${commanderIdle()}${reportPanel(a)}`}
     ${benchPanel(a)}`;
   if ($("backLive")) $("backLive").onclick = backToLive;
   $("main").querySelectorAll("li[data-base]").forEach((li) => { li.onmouseenter = () => highlightBase(li.dataset.base); li.onmouseleave = () => highlightBase(null); });
@@ -204,7 +207,8 @@ function render2(now) {
   });
   $("main").querySelectorAll("[data-cf]").forEach((b) => b.onclick = () => { S.cmdFac = b.dataset.cf; render(Math.floor(Date.now() / 1000)); });
   // 🔊 Commander voice (#65): speaks the followed faction's top order when it changes.
-  const cmdNow = a.status === "live" ? (a.commander || (s && s.commander)) : null;
+  const cmdNow = cmdView;
+  $("main").querySelectorAll("[data-cmode]").forEach((b) => b.onclick = () => { cmdMode = pickMode(b.dataset.cmode); try { localStorage.setItem(MODE_KEY, cmdMode); } catch {} render(Math.floor(Date.now() / 1000)); });
   $("main").querySelectorAll("[data-voice]").forEach((b) => b.onclick = () => { voiceToggle(b.dataset.voice, cmdNow && cmdNow.focus, s, cmdNow && cmdNow.pockets); render(Math.floor(Date.now() / 1000)); });
   if (cmdNow) voiceTick(cmdNow.focus, undefined, false, undefined, s, cmdNow.pockets); // s: territory + 15-min change for the gap ending (owner t652u)
   bindVoiceMenu($("main")); // ⚙️ voice list (owner t650u), replaces the always-visible dropdown
@@ -217,6 +221,20 @@ function render2(now) {
     ? `<section class="card lock">${lockCard(a, now)}</section>`
     : `<section class="card lock idle"><h2 data-sec="live-timer">${tr("or.h.timer", "⏱ Live timer")}</h2><div class="locktimer">--:--</div><div class="note">${tr("or.timerIdle", "No live alert — the countdown starts when the next one begins.")}</div></section>`;
   drawMap(a);
+}
+
+// Commander mode (owner t665u): "solo" (default) keeps an order until it is done; "big" shows the
+// Worker's 3-min-ahead plan. Both use the same /live payload: no extra requests.
+let cmdMode = "solo";
+try { cmdMode = pickMode(localStorage.getItem(MODE_KEY)); } catch {}
+const soloMem = {};          // per alert key: sticky state, stepped once per commander update
+const regionsOf = {};        // zone -> regions file (static asset, loaded once)
+function withMode(a, c) {
+  if (!c || !c.focus) return c;
+  if (!(a.zone in regionsOf)) { regionsOf[a.zone] = null; names(a.zone).then((r) => { regionsOf[a.zone] = r || {}; }).catch(() => {}); }
+  const mem = soloMem[a.key] || (soloMem[a.key] = {});
+  const focus = modeFocus(c, cmdMode, mem, { ts: a.commander_ts || 0, ownerOf: ownerLookup(a.state && a.state.owners, regionsOf[a.zone]), heatOf: heatLookup(c) });
+  return { ...c, focus };
 }
 
 // Error banner (#18): Worker unreachable or /health stale; cleared on the next good poll.
@@ -233,10 +251,18 @@ function pageTitle() {
   document.title = `${f} ${pct1(a.state.win[f].pct)}% · ${a.world_name} ${a.zone_name} — PS2MapOracle`;
 }
 
+// Fetch timing (owner t665u): right after the Worker's next cycle lands (poll.js), one request
+// each time; the status line comes from the /live cycle hint, so /health is only asked when an
+// older Worker sends no hint.
+let pollTimer = null, pollPrevTs = null, pollRetries = 0, lastFetchS = 0;
+function schedule(delayS) { clearTimeout(pollTimer); pollTimer = setTimeout(refreshLive, Math.max(1, delayS) * 1000); }
 async function refreshLive() {
   const now = Math.floor(Date.now() / 1000);
+  lastFetchS = now;
   try {
-    const [live, health] = await Promise.all([get("/live"), get("/health").catch(() => null)]);
+    const live = await get("/live");
+    const cy = live.cycle || null;
+    const health = cy ? { ok: cy.age_s < 180, last_ok_age_s: cy.ok_age_s, last_cycle_age_s: cy.age_s } : await get("/health").catch(() => null);
     S.alerts = (live.alerts || []).sort((x, y) => (x.status === "live" ? 0 : 1) - (y.status === "live" ? 0 : 1) || y.start_ts - x.start_ts);
     if (!S.alerts.find((x) => x.key === S.selected) && !S.pinned) { S.selected = S.alerts.length ? S.alerts[0].key : null; if (S.selected) setUrlAlert(S.selected); }
     const ok = health && health.ok && health.last_ok_age_s !== null && health.last_ok_age_s < 300;
@@ -246,13 +272,20 @@ async function refreshLive() {
     pageTitle();
     render(now);
     if (S.selected && S.ticksFor !== S.selected) loadTicks();
+    const np = nextPoll(cy, pollPrevTs, pollRetries, Math.floor(Date.now() / 1000), S.alerts.some((x) => x.status === "live"));
+    if (np.complete && cy) pollPrevTs = cy.ts;
+    pollRetries = np.retries;
+    schedule(np.delayS);
   } catch (e) {
     $("dot").className = "dot bad";
     $("statusText").textContent = tr("or.unreach", "oracle unreachable");
     banner(tr("or.unreachBanner", "The oracle backend is not reachable — retrying…"));
     if (!S.alerts.length) $("main").innerHTML = `<div class="empty">${tr("or.unreachMain", "The oracle backend is not reachable right now.")}</div>`;
+    schedule(30);
   }
 }
+// Back on the tab after a while (timers sleep in background tabs): catch up once.
+document.addEventListener("visibilitychange", () => { if (!document.hidden && Date.now() / 1000 - lastFetchS > 70) refreshLive(); });
 
 // Phone: sticky mini-header (alert name + three win %) once the title scrolls away.
 function miniSync() {
@@ -278,7 +311,6 @@ initResults();
 initAuth();
 
 refreshLive(); refreshHistory();
-setInterval(refreshLive, 30000);
 setInterval(() => { lockTick(); const c = document.querySelector("#lockHere .card"); if (c) refreshSummary(c); }, 1000); // ⏱ live countdown ticks every second, no re-render
 setInterval(loadTicks, 60000);
 setInterval(refreshHistory, 120000);

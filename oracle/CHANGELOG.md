@@ -308,3 +308,23 @@ approved it, "shipped" means it is live in the running pipeline.
   fair-play rules (voting card, sign-in note, README) say so; "back your faction,
   then go help it win" and "riggers and cheaters aren't welcome" stay. The
   2026-10-18 entry above keeps the rule of its time.
+
+## 2026-10-26: Solo / Big squad orders, faster fetch
+
+- **Owner decision (t665u), shipped.** The AI Commander card gets a remembered
+  "Solo / Big squad" switch (all 9 languages, no animation; voice follows it).
+  - **Solo** (default, `oracle/js/sticky.js`): an order stays until its base is taken
+    or lost, 5 min pass, a clearly better one (expected value ≥ 1.25×) or an urgent
+    defence (our base ≥ 50 % predicted to flip) appears. Values from a backtest on 57
+    past alerts (4,698 minutes): attack came true 30.5 % (plain plan 31.9 %), defend
+    held 73.2 % (72.6 %), order different 1 / 2 / 3 min later 24 / 43 / 59 %
+    (41 / 61 / 73 %), order changes 14.6 / h (24.3 / h).
+  - **Big squad**: the Worker's plan with the alert clock 3 min ahead (+1 min data age;
+    no guessed flips), `commander.focus_ahead`, computed in the same commander run and
+    stored in the same row. Backtest: attack came true 33.2 %.
+- **Fetch timing**: the page asks `/live` just after the Worker's next cycle lands
+  (`oracle/js/poll.js`, from the new `/live` `cycle` hint) instead of `/live` + `/health`
+  every 30 s: about 1.1-1.3 requests a minute instead of 4.
+- **Census limits per call**: map 8 s, events 12 s (were 20 s), from a 2026-10-26 probe
+  (map p95 5.7 s, events p95 10.5 s), so one slow world can no longer hold every
+  alert's commander for 20 s. A cut map call reuses that world's last snapshot.

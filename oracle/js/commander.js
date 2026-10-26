@@ -29,7 +29,7 @@ export function mapOrders(c, f) {
   return out;
 }
 
-export function commander(c, ts, now, lead) {
+export function commander(c, ts, now, lead, mode = "solo") {
   S.cmdOrders = []; S.cmdOn = null; S.cmdOnLive = false; S.cmdPockets = [];
   if (!c || !c.factions) return "";
   // Phone: one faction at a time. Default: the signed-in player's faction, else the leader.
@@ -77,10 +77,16 @@ export function commander(c, ts, now, lead) {
     if (!p) return "";
     if (p.quiet || !p.focus) return `<div class="focus quiet"><div class="fhead">${tr("or.c.quiet", "No decisive move right now: hold your lanes.")}</div></div>`;
     const nb = (x) => (f === on ? numOf.get(x.bases[0]) || 0 : 0);
-    return focusLine(f, p.focus, true, nb(p.focus)) + ((p.backups || []).length ? `<div class="note">${tr("or.c.backup", "Backup:")}</div><ul class="fback">${p.backups.map((b) => focusLine(f, b, false, nb(b))).join("")}</ul>` : "");
+    return (p.kept ? `<div class="note kept">${tr("or.c.kept", "📌 Kept order: stays until it is done")}</div>` : "") + focusLine(f, p.focus, true, nb(p.focus)) + ((p.backups || []).length ? `<div class="note">${tr("or.c.backup", "Backup:")}</div><ul class="fback">${p.backups.map((b) => focusLine(f, b, false, nb(b))).join("")}</ul>` : "");
   };
   const age = ts ? `<span class="note">${tr("or.c.updated", "updated {n}s ago", { n: Math.max(0, now - ts) })}</span>` : "";
-  return `<section class="card cmd" style="margin-top:14px"><h2 data-sec="ai-commander">${tr("or.h.cmd", "🎖️ AI Commander")} ${age}</h2>${seg}<div class="cmdgrid">${FACS.map((f) => {
+  // Orders mode (owner t665u): remembered on this device; no extra requests either way.
+  const mb = (m, label, tip) => `<button type="button" data-cmode="${m}" class="${m === mode ? "on" : ""}" aria-pressed="${m === mode}" title="${tip}">${label}</button>`;
+  const modeNote = mode === "big"
+    ? (c.focus_ahead ? tr("or.c.bigNote", "Orders aimed {n} min ahead, so a big squad arrives in time. They can change every minute.", { n: c.ahead_min || 3 }) : tr("or.c.bigWait", "The 3-min-ahead orders appear with the next update."))
+    : tr("or.c.soloNote", "An order stays until it is done (base taken or lost, or about 5 min passed), unless a clearly better or urgent one appears.");
+  const modeBar = `<div class="cmode" role="group" aria-label="${tr("or.c.mode", "Orders for")}"><span class="note">${tr("or.c.mode", "Orders for")}</span>${mb("solo", tr("or.c.solo", "Solo"), tr("or.c.soloTip", "Steady orders for a player or a small group"))}${mb("big", tr("or.c.big", "Big squad"), tr("or.c.bigTip", "Orders aimed 3 minutes ahead for a squad or platoon"))}</div><div class="note cmodenote">${modeNote}</div>`;
+  return `<section class="card cmd" style="margin-top:14px"><h2 data-sec="ai-commander">${tr("or.h.cmd", "🎖️ AI Commander")} ${age}</h2>${modeBar}${seg}<div class="cmdgrid">${FACS.map((f) => {
     const x = c.factions[f]; if (!x) return "";
     if (x.eliminated) return `<div class="cf${f === on ? " on" : ""}"><h3 class="${f}">${f} · ${tr("or.c.elim", "eliminated")}</h3><div class="note">${tr("or.c.out", "Mathematically out: spoiler plays only (kingmaker below).")}</div>${(x.kingmaker || []).length ? `<ul>${x.kingmaker.slice(0, 2).map((k) => `<li>${esc(k.text || "")}</li>`).join("")}</ul>` : ""}</div>`;
     const nf = (n) => (f === on ? numOf.get(n) || 0 : 0);

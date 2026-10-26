@@ -55,9 +55,16 @@ const json = (data, status = 200, extra = {}) =>
 
 // ---------------------------------------------------------------- Census
 
-async function census(sid, path) {
+// Per-call time limits, from a 2026-10-26 probe of live Census (322 map calls, 108 event calls):
+// map/ p95 5.7 s, p99 11 s; world_event p95 10.5 s, p99 13.9 s. One slow world used to hold the
+// whole cycle (and every alert's commander) for up to 20 s. A map call cut at 8 s (~3% of calls)
+// falls back to that world's last stored snapshot; a cut event call (~3%) is picked up next minute
+// (the event query reaches back far enough). Worst case wait drops from 20 s to 12 s.
+export const CENSUS_MAP_MS = 8000, CENSUS_EVENT_MS = 12000;
+
+async function census(sid, path, ms = 20000) {
   const res = await fetch(`${CENSUS}/s:${sid}/get/ps2:v2/${path}`, {
-    headers: { "User-Agent": UA }, signal: AbortSignal.timeout(20000),
+    headers: { "User-Agent": UA }, signal: AbortSignal.timeout(ms),
   });
   if (!res.ok) throw new Error(`census ${res.status} ${path.split("?")[0]}`);
   const j = await res.json();
@@ -196,9 +203,9 @@ export async function runCycle(env, nowMs = Date.now()) {
   // 1) Census, all in parallel.
   const worldIds = WORLDS.join(",");
   const [maps, mg, fac] = await Promise.all([
-    Promise.allSettled(WORLDS.map((w) => census(sid, `map/?world_id=${w}&zone_ids=${ZONES.join(",")}`))),
-    census(sid, `world_event/?world_id=${worldIds}&type=METAGAME&c:limit=60`).catch((e) => e),
-    census(sid, `world_event/?world_id=${worldIds}&type=FACILITY&c:limit=250`).catch((e) => e),
+    Promise.allSettled(WORLDS.map((w) => census(sid, `map/?world_id=${w}&zone_ids=${ZONES.join(",")}`, CENSUS_MAP_MS))),
+    census(sid, `world_event/?world_id=${worldIds}&type=METAGAME&c:limit=60`, CENSUS_EVENT_MS).catch((e) => e),
+    census(sid, `world_event/?world_id=${worldIds}&type=FACILITY&c:limit=250`, CENSUS_EVENT_MS).catch((e) => e),
   ]);
 
   // 2) Store.
@@ -476,6 +483,8 @@ const FAC_NAME = { 1: "VS", 2: "NC", 3: "TR" };
  * alert.commander. Runs in its own invocation (see fanOutCommander) so its CPU
  * never counts against the odds/settlement cycle.
  */
+export const AHEAD_CLOCK_MIN = 4;
+
 export async function commanderFor(env, key, nowMs = Date.now()) {
   const db = env.DB;
   const now = Math.floor(nowMs / 1000);
@@ -523,13 +532,21 @@ export async function commanderFor(env, key, nowMs = Date.now()) {
     const heat = (fid) => heatMap.get(String(fid)) || 0;
     // 🥶 pockets: our bases behind a chokepoint under attack (src/pockets.js). Not on Meltdowns (no cut rule there).
     const pk = meltdown ? { pockets: {}, frozen: null } : computePockets({ own, lattice, flips, nowTs: Math.trunc(now) });
-    cmd.focus = focusPlan({
+    const focusArgs = {
       own, lattice, getBin: binGetter(a.zone), t: Math.max(0, (now - a.start_ts) / 60), dur: a.dur,
       mom: Object.fromEntries(FACS.map((f) => [f, terrNow[f] - terr15[f]])),
       header: a.win ? JSON.parse(a.win) : null,
       pf: (fid) => (pf[`${fid}|P1:pressured`] || {}).p ?? 0.33,
       nFac: meltdown ? Object.keys(zNow).length : undefined, noCuts: meltdown, holds, heat, frozen: pk.frozen,
-    });
+    };
+    cmd.focus = focusPlan(focusArgs);
+    // "Big squad" mode on the page: the same plan with the alert clock moved AHEAD_CLOCK_MIN on
+    // (data age ~1 min + 3 min lookahead; same bases, no guessed flips). Backtest on 57 past alerts
+    // (2026-10-26): attack came true 33.2% vs 31.9% for the plain plan. Same invocation, same row.
+    try {
+      cmd.focus_ahead = focusPlan({ ...focusArgs, t: focusArgs.t + AHEAD_CLOCK_MIN, holds: {} });
+      cmd.ahead_min = AHEAD_CLOCK_MIN - 1;
+    } catch { /* plain plan still stands */ }
     // "All moves" defend list on the same cut-aware win drop as the focus (#63).
     for (const f of FACS) for (const p of pk.pockets[f] || []) { const h = holds[f] && holds[f].get(p.cp_fid); p.hold_drop = h ? Math.round(Math.max(0, h.loss) * 10) / 10 : null; }
     cmd.pockets = pk.pockets;
@@ -683,8 +700,15 @@ async function handle(request, env) {
   }
 
   if (url.pathname === "/live") {
-    const rows = (await db.prepare(`SELECT a.*, ${REPORT_COLS} FROM alert a LEFT JOIN report r ON r.key = a.key WHERE a.status IN ('live','settling','sudden_death') OR (a.end_ts IS NOT NULL AND a.end_ts > ?) ORDER BY a.start_ts DESC`).bind(now - 3 * 3600).all()).results || [];
-    return json({ now, worlds: WORLD_NAMES, alerts: rows.map(parseRow) });
+    const [res, last, lastOk, lastCmd] = await Promise.all([
+      db.prepare(`SELECT a.*, ${REPORT_COLS} FROM alert a LEFT JOIN report r ON r.key = a.key WHERE a.status IN ('live','settling','sudden_death') OR (a.end_ts IS NOT NULL AND a.end_ts > ?) ORDER BY a.start_ts DESC`).bind(now - 3 * 3600).all(),
+      getMeta(db, "last_cycle"), getMeta(db, "last_ok"), getMeta(db, "last_commander"),
+    ]);
+    const rows = (res && res.results) || [];
+    // Cycle hint: lets the page fetch right after the next cycle lands (and drop its /health poll).
+    const cycle = last ? { ts: last.ts, ms: last.ms ?? null, age_s: now - last.ts, ok_age_s: lastOk ? now - lastOk : null,
+      errors: (last.errors || []).length, commander_ts: lastCmd ? lastCmd.ts : null } : null;
+    return json({ now, worlds: WORLD_NAMES, alerts: rows.map(parseRow), cycle });
   }
 
   if (url.pathname === "/alert/frames") {

@@ -273,6 +273,9 @@ test("commander runs per live alert, inline and through the SELF binding", { ski
   assert.ok(!cmd.focus_error, cmd.focus_error);
   assert.deepEqual(Object.keys(cmd.focus).sort(), ["NC", "TR", "VS"], "focus plan per faction");
   for (const f of ["VS", "NC", "TR"]) assert.ok(cmd.focus[f].quiet || cmd.focus[f].focus.text, JSON.stringify(cmd.focus[f]));
+  // Big squad mode (t665u): the same plan 3 min ahead, in the same row (no extra request or write).
+  assert.deepEqual(Object.keys(cmd.focus_ahead).sort(), ["NC", "TR", "VS"], "3-min-ahead plan per faction");
+  assert.equal(cmd.ahead_min, 3);
   // Through a SELF binding: the internal endpoint requires the key.
   const self = { fetch: (req) => worker.fetch(req, env) };
   const viaSelf = await fanOutCommander({ ...env, SELF: self }, rep.live_keys);
@@ -281,6 +284,8 @@ test("commander runs per live alert, inline and through the SELF binding", { ski
   assert.match(noKey[0].error, /403/);
   const live = await (await worker.fetch(new Request("https://x/live"), env)).json();
   assert.ok(live.alerts[0].commander.factions.VS);
+  // Cycle hint: the page times its next fetch from it and drops the /health poll (t665u).
+  assert.ok(live.cycle && live.cycle.ts > 0 && live.cycle.age_s >= 0, JSON.stringify(live.cycle));
 });
 
 test("Honu bridge: queue -> oracle-honu job -> ingest (population, outlier report, PS2 Radar cache)", { skip }, async () => {
