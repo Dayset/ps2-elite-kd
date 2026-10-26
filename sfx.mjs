@@ -67,14 +67,26 @@ const SOUNDS = {
   fail: [{ f: 660, d: 0.14, type: "triangle", g: 0.045 }, { f: 494, t: 0.13, d: 0.17, type: "triangle", g: 0.045 }],
   chime: [784, 988, 1175, 1568].map((f, i) => ({ f, t: i * 0.07, d: i === 3 ? 0.36 : 0.22, g: 0.04 })),
   fresh: [{ f: 1047, d: 0.3, g: 0.04 }, { f: 1568, t: 0.09, d: 0.4, g: 0.03 }],
+  // Owner 2026-10-26: live feed event sounds. Death: a sad descent. Assist: a short rising
+  // motivational run. Kill: a victory fanfare. Pot rise: casino dings — its notes start at 0.6 s,
+  // right after the victory fanfare ends, so a kill reads as victory… then money, not a muddle.
+  sad: [{ f: 330, d: 0.25, type: "triangle", g: 0.05 }, { f: 262, t: 0.22, d: 0.25, type: "triangle", g: 0.05 }, { f: 196, t: 0.44, d: 0.4, type: "triangle", g: 0.05 }],
+  assist: [{ f: 523, d: 0.1, g: 0.04 }, { f: 659, t: 0.08, d: 0.1, g: 0.04 }, { f: 784, t: 0.16, d: 0.18, g: 0.04 }],
+  victory: [{ f: 523, d: 0.12, g: 0.05 }, { f: 659, t: 0.1, d: 0.12, g: 0.05 }, { f: 784, t: 0.2, d: 0.12, g: 0.05 }, { f: 1047, t: 0.3, d: 0.3, g: 0.05 }],
+  chaChing: [{ f: 2093, t: 0.6, d: 0.12, g: 0.04 }, { f: 2637, t: 0.72, d: 0.12, g: 0.04 }, { f: 3520, t: 0.84, d: 0.25, g: 0.04 }],
 };
 
-/** Play a named sound. Silent when muted or with no recent user gesture (unless force). */
-export function sfx(name, { force = false } = {}) {
+/** Play a named sound. Silent when muted or with no recent user gesture (unless force).
+ *  Live feed events pass { event: true }: they are not gestures, and they must never queue
+ *  on a suspended context — its clock is frozen, so every queued tone would blast at once
+ *  on the next resume. Event sounds play only while the context is already running (i.e.
+ *  the user has clicked the page at least once); before that they stay silent. */
+export function sfx(name, { force = false, event = false } = {}) {
   if (!sfxEnabled() || !SOUNDS[name]) return;
-  if (!force && !recentGesture()) return;
+  if (!force && !event && !recentGesture()) return;
   const c = ensureCtx();
   if (!c) return;
+  if (event && c.state !== "running") return;
   // The gesture that just happened resumes the context asynchronously; the
   // click's sound must not wait for that promise — schedule the tones now
   // and they play as soon as the context runs (same gesture, milliseconds).

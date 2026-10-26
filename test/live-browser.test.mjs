@@ -68,7 +68,8 @@ async function withLive(fn, { width = 1920, height = 1080, query = "" } = {}) {
   await new Promise((r) => server.listen(0, "127.0.0.1", r));
   const port = server.address().port;
   // no background throttling: a page opened over the debugging pipe counts as hidden, and its timers would slow to a crawl
-  const proc = spawn(chrome, ["--headless=new", "--no-sandbox", "--disable-gpu", "--disable-background-timer-throttling", "--disable-renderer-backgrounding", "--disable-backgrounding-occluded-windows", "--remote-debugging-pipe", "--user-data-dir=" + fs.mkdtempSync("/tmp/live-browser-"), "about:blank"], { stdio: ["ignore", "ignore", "ignore", "pipe", "pipe"] });
+  const userDir = fs.mkdtempSync("/tmp/live-browser-"); // owner 2026-10-26: removed in finally — without this each test leaked ~14 MB until /tmp hit 100% and file-writing tests died with ENOSPC
+  const proc = spawn(chrome, ["--headless=new", "--no-sandbox", "--disable-gpu", "--disable-background-timer-throttling", "--disable-renderer-backgrounding", "--disable-backgrounding-occluded-windows", "--remote-debugging-pipe", "--user-data-dir=" + userDir, "about:blank"], { stdio: ["ignore", "ignore", "ignore", "pipe", "pipe"] });
   let id = 0, buf = "";
   const pending = new Map();
   const errors = [];
@@ -105,6 +106,7 @@ async function withLive(fn, { width = 1920, height = 1080, query = "" } = {}) {
   } finally {
     proc.kill("SIGKILL");
     server.close();
+    try { fs.rmSync(userDir, { recursive: true, force: true }); } catch { /* ignore */ }
   }
 }
 
@@ -916,9 +918,14 @@ describe("🎥 live feed arrival animations in a browser", () => {
   it("victim slide (owner 2026-10-26): a new victim row slides down under the centre row, then settles", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
-      await ev(`window.__fakeWs.emit(${death(ME.cid, SLOW.cid, "80", false)})`); // ME kills SLOW: victim row arrives, name fills 1.5 s later
-      assert.equal(await ev(until(`document.querySelector("tbody.lv-vic.lv-new") !== null`)), true, "victim row arrives with lv-new");
-      assert.equal(await ev(moved("tbody.lv-vic.lv-new td")), true, "victim row actually moves mid-slide");
+      const probeSlide = async () => {
+        await ev(`window.__fakeWs.emit(${death(ME.cid, SLOW.cid, "80", false)})`); // ME kills SLOW: victim row arrives, name fills 1.5 s later
+        assert.equal(await ev(until(`document.querySelector("tbody.lv-vic.lv-new") !== null`)), true, "victim row arrives with lv-new");
+        return await ev(moved("tbody.lv-vic.lv-new td"));
+      };
+      // Under full-suite load the 0.45 s slide can finish before the first probe starts; a second
+      // arrival re-triggers it, so a miss retries once instead of failing the run.
+      assert.equal(await probeSlide() || await probeSlide(), true, "victim row actually moves mid-slide");
       const anim = await ev(`getComputedStyle(document.querySelector("tbody.lv-vic.lv-new td")).animationName`);
       assert.ok(anim.includes("lvVicSlide"), `victim slides: ${anim}`);
       assert.equal(await ev(until(`![...document.querySelectorAll("#liveList tbody.lv-vic .lv-nm")].some((el) => el.textContent.includes("…"))`)), true, "victim name filled (commit render)");

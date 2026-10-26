@@ -33,7 +33,8 @@ describe("build-log renders without errors", () => {
       await new Promise((r) => server.listen(0, "127.0.0.1", r));
       base = `http://127.0.0.1:${server.address().port}`;
     }
-    const proc = spawn(chrome, ["--headless=new", "--no-sandbox", "--disable-gpu", "--remote-debugging-pipe", "--user-data-dir=" + fs.mkdtempSync("/tmp/buildlog-"), "about:blank"], { stdio: ["ignore", "ignore", "ignore", "pipe", "pipe"] });
+    const userDir = fs.mkdtempSync("/tmp/buildlog-"); // owner 2026-10-26: removed in finally — each run leaked ~14 MB until /tmp hit 100%
+    const proc = spawn(chrome, ["--headless=new", "--no-sandbox", "--disable-gpu", "--remote-debugging-pipe", "--user-data-dir=" + userDir, "about:blank"], { stdio: ["ignore", "ignore", "ignore", "pipe", "pipe"] });
     let id = 0, buf = "";
     const pending = new Map();
     const errors = [];
@@ -85,6 +86,7 @@ describe("build-log renders without errors", () => {
       assert.deepEqual(bad, [], "no JS errors: " + bad.join(" | "));
     } finally {
       proc.kill("SIGKILL");
+      try { fs.rmSync(userDir, { recursive: true, force: true }); } catch { /* ignore */ }
       if (server) server.close();
     }
   });

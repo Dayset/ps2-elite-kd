@@ -28,6 +28,7 @@ import { traitPools, zergScore } from "./trait-scores.mjs?v=20261024-crowd1";
 import { zergEstimate } from "./zerg-revive.mjs?v=20261024-crowd1";
 import { infMedian, tractorCuts, TRACTOR_EMOJI } from "./tractor.mjs?v=20261024-trac1";
 import { drawEmojiSprite, spriteCss } from "./live-sprites.mjs?v=20261024-beat1";
+import { sfx } from "./sfx.mjs?v=20261026-sfx1";
 
 const CENSUS = `https://census.daybreakgames.com/s:${CENSUS_SERVICE_ID}/get/ps2:v2/`;
 const STREAM = `wss://push.planetside2.com/streaming?environment=ps2&service-id=s:${CENSUS_SERVICE_ID}`;
@@ -997,13 +998,13 @@ function start() {
       // exactly the old clear plus the new run's early lines.
       if (wasStreak === 0) st = { ...st, victims: st.victims.filter((r) => r.seq === seq || pendingSeq.has(r.seq)) };
       // DPM at the event's own time: a commit deferred behind a slow lookup doesn't shift the decay
-      dpsEvents.push({ t: Number.isFinite(ev.at) ? ev.at : Date.now(), dmg: DPS_HP }); if (shownDps !== null) scrollQ.push(dpsNow([{ t: 0, dmg: DPS_HP }], 0, dpmTauMs) * 60); liftFreeze(Number.isFinite(ev.at) ? ev.at : Date.now()); lastSpikeEff = dpsEvents[dpsEvents.length - 1].t - timeDebtMs; cashKills.push({ cid: ev.opp, iv: cashIv(p) }); dpsTick();
+      dpsEvents.push({ t: Number.isFinite(ev.at) ? ev.at : Date.now(), dmg: DPS_HP }); if (shownDps !== null) scrollQ.push(dpsNow([{ t: 0, dmg: DPS_HP }], 0, dpmTauMs) * 60); liftFreeze(Number.isFinite(ev.at) ? ev.at : Date.now()); lastSpikeEff = dpsEvents[dpsEvents.length - 1].t - timeDebtMs; const iv = cashIv(p); cashKills.push({ cid: ev.opp, iv }); dpsTick(); sfx("victory", { event: true }); if (iv > 0) sfx("chaChing", { event: true });
     }
     // Owner 2026-10-25: ANY death dims the killed list and the observed
     // player's own name to 50% — you are dead, the feed shows it — until
     // the next kill re-lights them. (Banking below is stricter: only the
     // death that ends a run banks it.)
-    if (ev.kind === "death") namesDim = true;
+    if (ev.kind === "death") { namesDim = true; sfx("sad", { event: true }); }
     if (ev.kind === "death") assistN = 0; // a death hides the assist count
     // Owner 2026-10-25: decay freezes ON the death event — you can't do
     // anything about the run from spawn, so it must not drain the meter.
@@ -1065,7 +1066,7 @@ function start() {
             if (!sessionStartMs) sessionStartMs = Date.now(); setOnline("online");
             const share = assistShare(amt, xid, xpMultAt(killXpRefs, Date.now()));
             const dmg = share == null ? DPS_ASSIST : Math.round(1000 * share);
-            dpsEvents.push({ t: Date.now(), dmg }); if (shownDps !== null) scrollQ.push(dpsNow([{ t: 0, dmg }], 0, dpmTauMs) * 60); liftFreeze(Date.now()); lastSpikeEff = dpsEvents[dpsEvents.length - 1].t - timeDebtMs; assistN++; dpsTick(); render();
+            dpsEvents.push({ t: Date.now(), dmg }); if (shownDps !== null) scrollQ.push(dpsNow([{ t: 0, dmg }], 0, dpmTauMs) * 60); liftFreeze(Date.now()); lastSpikeEff = dpsEvents[dpsEvents.length - 1].t - timeDebtMs; assistN++; sfx("assist", { event: true }); dpsTick(); render();
           }
         }
         return;

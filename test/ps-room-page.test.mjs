@@ -63,7 +63,8 @@ async function withPage(fn) {
   });
   await new Promise((r) => server.listen(0, "127.0.0.1", r));
   const port = server.address().port;
-  const proc = spawn(chrome, ["--headless=new", "--no-sandbox", "--disable-gpu", "--remote-debugging-pipe", "--user-data-dir=" + fs.mkdtempSync(path.join(os.tmpdir(), "ps-room-chrome-")), "about:blank"], { stdio: ["ignore", "ignore", "ignore", "pipe", "pipe"] });
+  const userDir = fs.mkdtempSync(path.join(os.tmpdir(), "ps-room-chrome-")); // owner 2026-10-26: removed in finally — each run leaked ~14 MB until /tmp hit 100%
+  const proc = spawn(chrome, ["--headless=new", "--no-sandbox", "--disable-gpu", "--remote-debugging-pipe", "--user-data-dir=" + userDir, "about:blank"], { stdio: ["ignore", "ignore", "ignore", "pipe", "pipe"] });
   let id = 0, buf = "";
   const pending = new Map();
   proc.stdio[4].on("data", (d) => {
@@ -105,6 +106,7 @@ async function withPage(fn) {
     await fn({ ev, nav });
   } finally {
     proc.kill("SIGKILL");
+    try { fs.rmSync(userDir, { recursive: true, force: true }); } catch { /* ignore */ }
     server.close();
   }
 }

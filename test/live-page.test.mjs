@@ -253,6 +253,12 @@ test("LIVE juice (owner t562u): pop-in row, flip switch, top-rank glow, upset sh
   assert.match(css, /\.lv-ev\.lv-new\.lv-atk > tr > td \{ animation: lvKillerDrop 0\.6s /); // killer: falls and settles into the top row
   assert.match(css, /\.lv-ev\.lv-new > tr > td::after \{[^}]*background: rgba\(67, 160, 71, 0\.32\); animation: lvFlash 0\.8s ease-out; \}/); // … + green flash
   assert.match(css, /\.lv-ev\.lv-new\.lv-upset > tr > td::after \{ background: rgba\(255, 193, 7, 0\.4\); animation-duration: 1\.1s; \}/); // upset: gold
+  const sfx = readFileSync(new URL("sfx.mjs", root), "utf8");
+  for (const n of ["sad", "assist", "victory", "chaChing"]) assert.match(sfx, new RegExp(`^  ${n}: \\[`, "m")); // live event sounds defined
+  assert.match(sfx, /if \(event && c\.state !== "running"\) return;/); // event sounds never queue on a suspended context
+  assert.match(js, /sfx\("victory", \{ event: true \}\); if \(iv > 0\) sfx\("chaChing", \{ event: true \}\);/); // kill: victory, dings only when the pot rises
+  assert.match(js, /sfx\("sad", \{ event: true \}\);/); // death: sad descent
+  assert.match(js, /sfx\("assist", \{ event: true \}\);/); // assist: motivational rise
 });
 
 test("no value = empty 0% emoji, never a dash (owner t567u): stats, iVi, uncached players, skeleton row", () => {
@@ -662,7 +668,7 @@ test("dim names on death (owner 2026-10-25): death dims the killed list and your
   const js = liveSrc();
   const css = readFileSync(new URL("live.css", root), "utf8");
   assert.match(js, /let namesDim = false;/);
-  assert.match(js, /if \(ev\.kind === "death"\) namesDim = true;/);
+  assert.match(js, /if \(ev\.kind === "death"\) \{ namesDim = true; sfx\("sad", \{ event: true \}\); \}/); // death dims + sad descent
   assert.match(js, /namesDim = false;/);
   assert.match(js, /listEl\.classList\.toggle\("lv-dim-names", namesDim\);/);
   assert.match(css, /\.live-table\.lv-dim-names tbody\.lv-vic \.lv-nm, \.live-table\.lv-dim-names tbody\.lv-me \.lv-nm \{ opacity: 0\.5; \}/);
@@ -716,7 +722,7 @@ test("mobile names + legend + DPS (owner 2026-10-25): table 100% with a flexible
   assert.match(js, /DPS_ASSIST_XP\.has\(xid\)/);
   assert.match(js, /setInterval\(dpsTick, 100\)/);
   assert.match(js, /const trueDpm = dpsNow\(dpsEvents, effNow, dpmTauMs, holdMs\) \* 60;/);
-  assert.match(js, /cashKills\.push\(\{ cid: ev\.opp, iv: cashIv\(p\) \}\)/); // one ledger entry per kill
+  assert.match(js, /const iv = cashIv\(p\); cashKills\.push\(\{ cid: ev\.opp, iv \}\);/); // one ledger entry per kill
   assert.match(js, /for \(const e of cashKills\) if \(e\.cid === cid && !Number\.isFinite\(e\.iv\)\) e\.iv = cashIv\(p\);/); // late iVi finalizes in the list
   assert.match(js, /tr\("live\.cashSum", "Σ iVi"\)/);
   assert.match(swap, /<span id="liveOnline" class="live-online" data-state="unknown"><i><\/i><span id="liveOnlineText">…<\/span><\/span>/); // pill survives in the DPM row

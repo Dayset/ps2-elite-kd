@@ -1,0 +1,32 @@
+<!doctype html>
+<!-- Fixture for test/sfx-browser.test.mjs: sfx.mjs against a recording
+     FakeAudioContext, so the sound definitions and the event gate are testable
+     without real audio hardware. The fake starts suspended like a real context
+     before any user gesture; a synthetic pointerdown resumes it (the page's
+     gesture listener does not check trust — the browser's real resume does,
+     which is the browser's job, not this test's). -->
+<html><head><meta charset="utf-8"></head><body>
+<script>
+window.__fakeOsc = [];
+class FakeOsc {
+  constructor() { this.freqs = []; this.type = "sine"; this.frequency = { setValueAtTime: (f) => { this.freqs.push(f); }, exponentialRampToValueAtTime: (f) => { this.freqs.push(f); } }; }
+  connect() { return this; } start() {} stop() {}
+}
+class FakeGain {
+  constructor() { this.gain = { value: 1, setValueAtTime() {}, linearRampToValueAtTime() {}, exponentialRampToValueAtTime() {} }; }
+  connect(t) { return t || this; } disconnect() {}
+}
+class FakeAudioContext {
+  constructor() { this.state = "suspended"; this.currentTime = 0; this.destination = {}; }
+  resume() { this.state = "running"; return Promise.resolve(); }
+  createOscillator() { const o = new FakeOsc(); window.__fakeOsc.push(o); return o; }
+  createGain() { return new FakeGain(); }
+}
+window.AudioContext = FakeAudioContext;
+</script>
+<script type="module">
+import { sfx, setSfxEnabled } from "/sfx.mjs?v=20261026-sfx1";
+window.__sfxTest = { sfx, setSfxEnabled };
+window.__sfxDone = true;
+</script>
+</body></html>

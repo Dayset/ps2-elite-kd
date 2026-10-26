@@ -32,7 +32,8 @@ async function withPage(fn, { width = 1280, height = 900, mobile = false } = {})
     ? "primaryPointerType=2,availablePointerTypes=2,primaryHoverType=1,availableHoverTypes=1"
     : "primaryPointerType=4,availablePointerTypes=4,primaryHoverType=2,availableHoverTypes=2";
   const headless = mobile || !process.env.HEADFUL;
-  const proc = spawn(chrome, [...(headless ? ["--headless=new"] : []), "--blink-settings=" + input, "--no-sandbox", "--disable-gpu", "--remote-debugging-pipe", "--user-data-dir=" + fs.mkdtempSync("/tmp/bg-toggle-"), "about:blank"], { stdio: ["ignore", "ignore", "ignore", "pipe", "pipe"] });
+  const userDir = fs.mkdtempSync("/tmp/bg-toggle-"); // owner 2026-10-26: removed in finally — each run leaked ~14 MB until /tmp hit 100%
+  const proc = spawn(chrome, [...(headless ? ["--headless=new"] : []), "--blink-settings=" + input, "--no-sandbox", "--disable-gpu", "--remote-debugging-pipe", "--user-data-dir=" + userDir, "about:blank"], { stdio: ["ignore", "ignore", "ignore", "pipe", "pipe"] });
   let id = 0, buf = "";
   const pending = new Map();
   proc.stdio[4].on("data", (d) => {
@@ -64,6 +65,7 @@ async function withPage(fn, { width = 1280, height = 900, mobile = false } = {})
     await fn({ ev, nav });
   } finally {
     proc.kill("SIGKILL");
+    try { fs.rmSync(userDir, { recursive: true, force: true }); } catch { /* ignore */ }
     server.close();
   }
 }

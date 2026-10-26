@@ -5,7 +5,7 @@
 import { slugKey, escapeHtml, parseNames } from "./app-util.mjs?v=20261024-split1";
 import { t as tr } from "./i18n.mjs";
 import { withRoom } from "./rooms.mjs?v=20261022-ps1";
-import { sfx } from "./sfx.mjs?v=20261022-nosfx";
+import { sfx } from "./sfx.mjs?v=20261026-sfx1";
 import { resolveStartupSelection } from "./analyze-run.mjs?v=20261023-priv1";
 
 /**

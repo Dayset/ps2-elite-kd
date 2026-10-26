@@ -44,7 +44,8 @@ async function withPage(url, fn, { width = 1600, height = 1000 } = {}) {
   await new Promise((r) => server.listen(0, "127.0.0.1", r));
   const port = server.address().port;
   // no background throttling: a page opened over the debugging pipe counts as hidden, and its timers would slow to a crawl
-  const proc = spawn(chrome, ["--headless=new", "--no-sandbox", "--disable-gpu", "--disable-background-timer-throttling", "--disable-renderer-backgrounding", "--disable-backgrounding-occluded-windows", "--remote-debugging-pipe", "--user-data-dir=" + fs.mkdtempSync("/tmp/main-smoke-"), "about:blank"], { stdio: ["ignore", "ignore", "ignore", "pipe", "pipe"] });
+  const userDir = fs.mkdtempSync("/tmp/main-smoke-"); // owner 2026-10-26: removed in finally — each run leaked ~14 MB until /tmp hit 100%
+  const proc = spawn(chrome, ["--headless=new", "--no-sandbox", "--disable-gpu", "--disable-background-timer-throttling", "--disable-renderer-backgrounding", "--disable-backgrounding-occluded-windows", "--remote-debugging-pipe", "--user-data-dir=" + userDir, "about:blank"], { stdio: ["ignore", "ignore", "ignore", "pipe", "pipe"] });
   let id = 0, buf = "";
   const pending = new Map();
   const errors = [];
@@ -80,6 +81,7 @@ async function withPage(url, fn, { width = 1600, height = 1000 } = {}) {
     await fn({ ev, errors });
   } finally {
     proc.kill("SIGKILL");
+    try { fs.rmSync(userDir, { recursive: true, force: true }); } catch { /* ignore */ }
     server.close();
   }
 }

@@ -42,7 +42,8 @@ describe("no NaN in the Rankings", () => {
     });
     await new Promise((r) => server.listen(0, "127.0.0.1", r));
     const port = server.address().port;
-    const proc = spawn(chrome, ["--headless=new", "--no-sandbox", "--disable-gpu", "--remote-debugging-pipe", "--user-data-dir=" + fs.mkdtempSync("/tmp/ranks-nan-"), "about:blank"], { stdio: ["ignore", "ignore", "ignore", "pipe", "pipe"] });
+    const userDir = fs.mkdtempSync("/tmp/ranks-nan-"); // owner 2026-10-26: removed in finally — each run leaked ~14 MB until /tmp hit 100%
+    const proc = spawn(chrome, ["--headless=new", "--no-sandbox", "--disable-gpu", "--remote-debugging-pipe", "--user-data-dir=" + userDir, "about:blank"], { stdio: ["ignore", "ignore", "ignore", "pipe", "pipe"] });
     let id = 0, buf = "";
     const pending = new Map();
     proc.stdio[4].on("data", (d) => {
@@ -119,6 +120,7 @@ describe("no NaN in the Rankings", () => {
       }
     } finally {
       proc.kill("SIGKILL");
+      try { fs.rmSync(userDir, { recursive: true, force: true }); } catch { /* ignore */ }
       server.close();
     }
   });
