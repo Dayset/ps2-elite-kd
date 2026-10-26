@@ -663,7 +663,19 @@ function start() {
     };
     requestAnimationFrame(step);
   }
+  // Owner 2026-10-26 (idle note): the waiting line is set once on open and
+  // only clears on the first kill or death, so an offline name sits on it
+  // forever. After 10 silent minutes the tick swaps it for a note that the
+  // character may be offline or idle — never a definitive offline, a live
+  // player can go quiet too. Write-on-change: setState rewrites innerHTML
+  // every call, so the guard keeps the tick cheap and the dot blinking.
+  const IDLE_AFTER_MS = 600000;
+  let idleShown = false;
   function dpsTick() {
+    if (!st.lastEv && openedAt && !idleShown && Date.now() - openedAt >= IDLE_AFTER_MS) {
+      setState(`<span class="live-dot">●</span> ${tr("live.idleNote", "No kills or deaths in the last {min} min — this character may be offline or idle.", { min: 10 })}`, "on");
+      idleShown = true;
+    }
     // Owner 2026-10-25 (elite combat damage meter): the decay clock.
     // A freeze lifts by itself once the average spawn run elapses (the
     // average is excised, the rest counts normally); while frozen, effNow
@@ -1016,6 +1028,7 @@ function start() {
       ws.send(JSON.stringify({ service: "event", action: "subscribe", characters: [me.cid], eventNames: ["Death", "GainExperience_experience_id_1", "GainExperience_experience_id_278", "GainExperience_experience_id_279", "GainExperience_experience_id_2", "GainExperience_experience_id_3", "GainExperience_experience_id_371", "GainExperience_experience_id_372", "PlayerLogin", "PlayerLogout"] })); // filtered server-side (the worker's pattern) — never the whole XP firehose
       pollOnline(); // the stream reports transitions only; the poll says what is true right now
       setState(`<span class="live-dot">●</span> waiting for kills and deaths…`, "on");
+      idleShown = false; // fresh connection, fresh 10-minute window
       render();
     };
     ws.onmessage = (m) => {

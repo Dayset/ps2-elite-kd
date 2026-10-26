@@ -1071,3 +1071,21 @@ describe("🎥 live feed frame lines in a browser", () => {
     }, { width: 390, height: 844 });
   });
 });
+
+describe("🎥 live idle note in a browser", () => {
+  it("idle note (owner 2026-10-26): 10 silent minutes swap the waiting line for may-be-offline-or-idle, dot and on class stay, first event clears it", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      assert.equal(await ev(until(`document.getElementById("liveState").textContent.includes("waiting for kills and deaths")`)), true, "waiting line on open");
+      // jump the page clock 11 minutes past open (offset, still advancing) — the 100 ms tick then fires the idle note without a real wait
+      await ev(`(() => { const real = Date.now; window.Date = class extends Date { static now() { return real() + 660000; } }; })()`);
+      assert.equal(await ev(until(`document.getElementById("liveState").textContent.includes("may be offline or idle")`)), true, "idle note after 10 silent minutes");
+      const st = await ev(`(() => { const el = document.getElementById("liveState"); return { dot: el.querySelector(".live-dot") !== null, cls: el.className }; })()`);
+      assert.equal(st.dot, true, "blinking dot stays");
+      assert.ok(st.cls.includes("on"), `on class stays: ${st.cls}`);
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`); // first kill
+      assert.equal(await ev(until(`document.getElementById("liveState").textContent === ""`)), true, "first event clears the line");
+      assert.deepEqual(errors, [], "no page errors");
+    });
+  });
+});

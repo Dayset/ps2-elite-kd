@@ -967,3 +967,14 @@ test("feed frame lines (owner 2026-10-26): death line above the table, Recharge 
   assert.doesNotMatch(css, /lv-iz|lv-c-iz|--lv-iz|lv-killer-timer/);
   assert.doesNotMatch(swap, /liveShowTactical/);
 });
+
+test("idle note (owner 2026-10-26): after 10 silent minutes the waiting line says the character may be offline or idle", () => {
+  const js = liveSrc();
+  const en = JSON.parse(readFileSync(new URL("i18n/en.json", root), "utf8"));
+  assert.match(js, /const IDLE_AFTER_MS = 600000;/);
+  assert.match(js, /if \(!st\.lastEv && openedAt && !idleShown && Date\.now\(\) - openedAt >= IDLE_AFTER_MS\) \{/);
+  assert.match(js, /tr\("live\.idleNote", "No kills or deaths in the last \{min\} min — this character may be offline or idle\.", \{ min: 10 \}\)/);
+  assert.match(js, /idleShown = false; \/\/ fresh connection, fresh 10-minute window/);
+  assert.match(js, /if \(!st\.lastEv\) setState\("", "on"\);/); // first event still clears the line
+  assert.equal(en["live.idleNote"], "No kills or deaths in the last {min} min — this character may be offline or idle.");
+});
