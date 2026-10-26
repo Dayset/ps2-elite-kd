@@ -1035,3 +1035,16 @@ describe("🎥 live killer stays dim in a browser", () => {
     });
   });
 });
+
+describe("🎥 live bar colors in a browser", () => {
+  it("bar colors (owner 2026-10-26): main DPM fill is rainbow, Recharge fill is green, combat fill untouched", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      const [dpm, hold, combat] = await ev(`[getComputedStyle(document.querySelector("#liveDpsBar")).backgroundImage, getComputedStyle(document.querySelector("#liveDpsHoldBar")).backgroundImage, getComputedStyle(document.querySelector("#liveDpsCombatBar")).backgroundImage]`);
+      assert.ok(dpm.includes("linear-gradient") && dpm.includes("rgb(255, 23, 68)") && dpm.includes("rgb(0, 176, 255)"), `DPM rainbow: ${dpm}`);
+      assert.ok(hold.includes("linear-gradient") && hold.includes("rgb(67, 160, 71)"), `Recharge green: ${hold}`);
+      assert.ok(!combat.includes("linear-gradient"), `combat untouched: ${combat}`);
+      assert.deepEqual(errors, [], "no page errors");
+    });
+  });
+});
