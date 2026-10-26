@@ -50,9 +50,10 @@ const FAKES = `(() => {
   class FakeWs {
     constructor() { window.__fakeWs = this; this.readyState = 0; setTimeout(() => { this.readyState = 1; this.onopen && this.onopen(); }, 0); }
     send() {}
-    close() { this.readyState = 3; }
+    close() { this.readyState = 3; this.onclose && this.onclose(); }
     emit(payload) { this.onmessage && this.onmessage({ data: JSON.stringify({ type: "serviceMessage", service: "event", payload }) }); }
   }
+  FakeWs.CONNECTING = 0; FakeWs.OPEN = 1; FakeWs.CLOSING = 2; FakeWs.CLOSED = 3;
   window.WebSocket = FakeWs;
 })();`;
 
@@ -618,6 +619,21 @@ describe("🎥 live combat average in a browser", () => {
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[3].cid, "80", false)})`); // combat 8 s after death 2
       // median([4 s, 8 s]) = 6 s, over both deaths — the trailing-10 freeze/hold caps don't apply here
       assert.equal(await ev(until(`document.getElementById("liveDpsCombat").textContent === "combat 6s (n=2)"`)), true, "all deaths: combat 6s (n=2)");
+      assert.deepEqual(errors, [], "no page errors");
+    });
+  });
+});
+
+describe("🎥 live reconnect in a browser", () => {
+  it("reconnect (owner 2026-10-25): a healthy drop reconnects at once, and a kill on the new socket counts", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      await new Promise((r) => setTimeout(r, 6000)); // the socket lived past the 5 s healthy mark
+      await ev(`window.__fakeWs.close()`); // FakeWs.close fires onclose, like a real drop
+      // immediate reconnect: a new socket opens without waiting out a backoff timer
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "reconnected at once");
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
+      assert.equal(await ev(until(`document.getElementById("liveDpsVal").textContent === "1/3"`)), true, "kill on the new socket counts");
       assert.deepEqual(errors, [], "no page errors");
     });
   });

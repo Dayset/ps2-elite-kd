@@ -823,3 +823,13 @@ test("past cashouts background (owner 2026-10-25): the history sits on the theme
   assert.match(css, /\.live-cash-hist \{[^}]*background: var\(--panel\);/);
   assert.match(css, /\.live-cash-hist:empty \{ padding: 0; \}/);
 });
+
+test("reconnect (owner 2026-10-25): one immediate retry per healthy drop, backoff otherwise, no second socket", () => {
+  const js = liveSrc();
+  assert.match(js, /if \(ws && \(ws\.readyState === WebSocket\.OPEN \|\| ws\.readyState === WebSocket\.CONNECTING\)\) return;/);
+  assert.match(js, /if \(connectTimer\) \{ clearTimeout\(connectTimer\); connectTimer = null; \}/);
+  assert.match(js, /const lived = openedAt && Date\.now\(\) - openedAt > 5000;/);
+  assert.match(js, /if \(lived\) connect\(\); else retry\(\);/);
+  assert.match(js, /connectTimer = setTimeout\(connect, backoff\);/);
+  assert.match(js, /if \(!document\.hidden && \(!ws \|\| ws\.readyState === WebSocket\.CLOSED\)\) connect\(\);/);
+});

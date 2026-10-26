@@ -880,12 +880,19 @@ function start() {
     if (!p.cached && !bgTried.has(ev.opp)) { bgQueue = [ev.opp, ...bgQueue.filter((c) => c !== ev.opp)]; bgPump(); }
   }
 
-  let ws = null, backoff = 2000;
+  let ws = null, backoff = 2000, openedAt = 0, connectTimer = null, connectStartedAt = 0;
   function connect() {
+    // never open a second socket while one is live or connecting — a stale
+    // retry timer firing after an immediate reconnect must not duplicate events
+    if (ws && ws.readyState === WebSocket.CONNECTING && connectStartedAt && Date.now() - connectStartedAt > 30000) { try { ws.close(); } catch {} ws = null; }
+    if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return;
+    if (connectTimer) { clearTimeout(connectTimer); connectTimer = null; }
     setState("Connecting to Census…");
     try { ws = new WebSocket(STREAM); } catch { retry(); return; }
+    connectStartedAt = Date.now();
     ws.onopen = () => {
       backoff = 2000;
+      openedAt = Date.now();
       ws.send(JSON.stringify({ service: "event", action: "subscribe", characters: [me.cid], eventNames: ["Death", "GainExperience_experience_id_2", "GainExperience_experience_id_3", "GainExperience_experience_id_371", "GainExperience_experience_id_372", "PlayerLogin", "PlayerLogout"] })); // filtered server-side (the worker's pattern) — never the whole XP firehose
       pollOnline(); // the stream reports transitions only; the poll says what is true right now
       setState(`<span class="live-dot">●</span> waiting for kills and deaths…`, "on");
@@ -913,14 +920,29 @@ function start() {
         onEvent(ev);
       }
     };
-    ws.onclose = () => retry();
+    ws.onclose = () => {
+      // one immediate retry per healthy drop — the close event fires at once,
+      // but a background tab's setTimeout would sleep up to a minute; a flap
+      // (lived under 5 s) or a failed connect falls through to backoff instead
+      const lived = openedAt && Date.now() - openedAt > 5000;
+      openedAt = 0;
+      if (lived) connect(); else retry();
+    };
     ws.onerror = () => { try { ws.close(); } catch {} };
   }
   function retry() {
     setState(`Census stream dropped — reconnecting in ${Math.round(backoff / 1000)} s…`, "err");
-    setTimeout(connect, backoff);
+    if (connectTimer) clearTimeout(connectTimer);
+    connectTimer = setTimeout(connect, backoff);
     backoff = Math.min(backoff * 2, 60000);
   }
+
+  // Owner 2026-10-25: coming back to the tab recovers at once instead of
+  // waiting out a timer the background tab throttled — connect() itself
+  // refuses a second socket while one is live or connecting
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden && (!ws || ws.readyState === WebSocket.CLOSED)) connect();
+  });
 
   (async () => {
     try {
