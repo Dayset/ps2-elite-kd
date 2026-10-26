@@ -823,3 +823,18 @@ describe("🎥 live assist share in a browser", () => {
     });
   });
 });
+
+describe("🎥 live headshot name in a browser", () => {
+  it("headshot name (owner 2026-10-26): a marked victim name is not truncated in a wide column", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", true)})`); // headshot kill
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[1].cid, "80", false)})`); // plain kill, control
+      assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic .lv-name").length === 2 && ![...document.querySelectorAll("#liveList tbody.lv-vic .lv-name")].some((n) => n.textContent.includes("…"))`)), true, "victim rows landed with names");
+      const rows = JSON.parse(await ev(`JSON.stringify([...document.querySelectorAll("#liveList tbody.lv-vic .lv-name")].map((n) => ({ text: n.textContent, sw: n.scrollWidth, cw: n.clientWidth, hs: !!n.parentElement.querySelector(".lv-hs2") })))`));
+      assert.equal(rows.length, 2);
+      for (const r of rows) assert.ok(r.sw <= r.cw + 1, `${r.text} (headshot: ${r.hs}) truncated: scroll ${r.sw} > client ${r.cw}`);
+      assert.deepEqual(errors, [], "no page errors");
+    });
+  });
+});

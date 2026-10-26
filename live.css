@@ -1,7 +1,6 @@
 /* 🎥 Live page only (live.html = index.html + body.live-mode; scripts/build-live.mjs adds this file after styles.css).
    Moved out of styles.css unchanged (#66), so the main page doesn't load it and the live overlay's rules sit in one file. */
 /* #72: the last live-only rules from styles.css, kept first here so the cascade order is unchanged. */
-.live-table .lv-name:has(+ .poop-mark) { max-width: calc(100% - 1.4em); }
 .live-mode #statsCarousel { display: none !important; }
 body.live-mode .room-select { display: none; }
 .live-table tbody tr:nth-child(even) > :is(td, th) { background-color: var(--row-alt); }
@@ -149,8 +148,6 @@ col.lv-c-iz { width: var(--lv-iz); }
 .live-table tbody.lv-me .lv-wn.lv-wn-weapon { font-size: 0.72rem; }
 .lv-hs2 { flex: none; width: 0.85em; height: 0.85em; color: var(--err); }
 .lv-hs2 svg { display: block; width: 100%; height: 100%; }
-.live-table .lv-name:has(+ .poop-mark + .lv-hs2) { max-width: calc(100% - 2.4em); }
-.live-table .lv-name:has(+ .lv-hs2) { max-width: calc(100% - 1em); }
 /* Owner t561u: LIVE is a PC stream overlay. Big screens (1920) get everything 1.3× bigger for readability. */
 @media (min-width: 1600px) {
   .live-table { --lv-fe: 1.95rem; --lv-u: 2.75rem; --lv-ez: 3.65rem; --lv-fa: 2.43rem; --lv-fm: 1.7rem; --lv-nm: 18.28rem; --lv-tm: 4rem; --lv-iz: 6.5rem; font-size: 1.1rem; }
