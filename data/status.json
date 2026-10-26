@@ -4,22 +4,22 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "40278299698",
+    "runId": "40278299558",
     "event": "workflow_dispatch",
     "kind": "on-demand",
-    "startedAt": "2026-10-26T06:30:51.486Z",
-    "endedAt": "2026-10-26T06:33:52.097Z",
-    "seconds": 181,
-    "updated": [],
-    "added": [
+    "startedAt": "2026-10-26T06:35:00.666Z",
+    "endedAt": "2026-10-26T06:38:31.508Z",
+    "seconds": 211,
+    "updated": [
       "ExhoUmbral"
     ],
+    "added": [],
     "failed": [],
     "stoppedEarly": null,
     "indexSize": 14967,
     "honu": {
       "day": "2026-10-26",
-      "calls": 1793,
+      "calls": 1826,
       "cap": 10000
     },
     "batch": [
@@ -31,7 +31,7 @@
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-26T06:34:06.047Z",
+    "checkedAt": "2026-10-26T06:39:34.736Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 17,
     "explained": 31,
@@ -54,7 +54,7 @@
         "id": "inflation",
         "value": 21.201,
         "bound": 12.481,
-        "z": 48.074,
+        "z": 48.051,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -66,7 +66,7 @@
         "id": "s_revDom",
         "value": 27,
         "bound": 21.343,
-        "z": 41.741,
+        "z": 41.796,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -78,7 +78,7 @@
         "id": "inflation",
         "value": 16.698,
         "bound": 12.481,
-        "z": 36.737,
+        "z": 36.719,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -226,8 +226,8 @@
         "name": "vsls612",
         "id": "s_maxKd",
         "value": 195,
-        "bound": 105.295,
-        "z": 125.451,
+        "bound": 105.29,
+        "z": 125.331,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (aim), listed there",
@@ -266,8 +266,8 @@
         "name": "ALandWhaleNC",
         "id": "s_maxKd",
         "value": 131,
-        "bound": 105.295,
-        "z": 83.776,
+        "bound": 105.29,
+        "z": 83.696,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (aim, session-forensics), listed there",
@@ -390,7 +390,7 @@
         "id": "inflation",
         "value": 18.641,
         "bound": 12.481,
-        "z": 41.629,
+        "z": 41.609,
         "side": "high",
         "explained": true,
         "reason": "Reviewed 2026-10-18 (#10): 🎈 inflation 19.2 = lifetime KD 1.82 vs 121 kills / 992 deaths against 200 opponents; real data, big sample, the public board flatters",
@@ -751,14 +751,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 48.074,
+        "maxZ": 48.051,
         "metrics": [
           {
             "id": "inflation",
             "label": "🎈 Inflation",
             "value": 21.201,
             "bound": 12.481,
-            "z": 48.074,
+            "z": 48.051,
             "side": "high"
           }
         ]
@@ -769,14 +769,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 41.741,
+        "maxZ": 41.796,
         "metrics": [
           {
             "id": "s_revDom",
             "label": "🧪 Revenge ÷ domination",
             "value": 27,
             "bound": 21.343,
-            "z": 41.741,
+            "z": 41.796,
             "side": "high"
           }
         ]
@@ -787,14 +787,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 36.737,
+        "maxZ": 36.719,
         "metrics": [
           {
             "id": "inflation",
             "label": "🎈 Inflation",
             "value": 16.698,
             "bound": 12.481,
-            "z": 36.737,
+            "z": 36.719,
             "side": "high"
           }
         ]
@@ -1156,14 +1156,14 @@
         "red": [
           "aim"
         ],
-        "maxZ": 125.451,
+        "maxZ": 125.331,
         "metrics": [
           {
             "id": "s_maxKd",
             "label": "🧪 Best-session K/D",
             "value": 195,
-            "bound": 105.295,
-            "z": 125.451,
+            "bound": 105.29,
+            "z": 125.331,
             "side": "high"
           },
           {
@@ -1185,14 +1185,14 @@
           "aim",
           "session-forensics"
         ],
-        "maxZ": 83.776,
+        "maxZ": 83.696,
         "metrics": [
           {
             "id": "s_maxKd",
             "label": "🧪 Best-session K/D",
             "value": 131,
-            "bound": 105.295,
-            "z": 83.776,
+            "bound": 105.29,
+            "z": 83.696,
             "side": "high"
           },
           {
@@ -1231,14 +1231,14 @@
         "explained": true,
         "reason": "Reviewed 2026-10-18 (#10): 🎈 inflation 19.2 = lifetime KD 1.82 vs 121 kills / 992 deaths against 200 opponents; real data, big sample, the public board flatters",
         "red": [],
-        "maxZ": 41.629,
+        "maxZ": 41.609,
         "metrics": [
           {
             "id": "inflation",
             "label": "🎈 Inflation",
             "value": 18.641,
             "bound": 12.481,
-            "z": 41.629,
+            "z": 41.609,
             "side": "high"
           }
         ]
@@ -1576,7 +1576,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-26T06:34:11.182Z",
+    "checkedAt": "2026-10-26T06:39:40.827Z",
     "red": 57,
     "padding": 42,
     "adjusted": 21,
@@ -1587,7 +1587,7 @@
     "forensics": 31
   },
   "sessionStats": {
-    "checkedAt": "2026-10-26T06:34:06.105Z",
+    "checkedAt": "2026-10-26T06:39:34.801Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -1603,11 +1603,11 @@
       "players": 14966,
       "withSessions": 13785,
       "measured": 6590,
-      "sessions": 57974,
-      "kills": 2457858,
+      "sessions": 57989,
+      "kills": 2458030,
       "xpPlayers": 1590,
       "xpMeasured": 1147,
-      "xpSessions": 9677
+      "xpSessions": 9689
     },
     "metrics": [
       {
@@ -1773,7 +1773,7 @@
         "min": 0.271,
         "p01": 0.535,
         "p05": 0.789,
-        "median": 2.346,
+        "median": 2.348,
         "p95": 9.417,
         "p99": 28.083,
         "max": 355
@@ -1783,7 +1783,7 @@
         "min": 0,
         "p01": 0.009,
         "p05": 0.062,
-        "median": 0.249,
+        "median": 0.248,
         "p95": 0.481,
         "p99": 0.704,
         "max": 0.972
@@ -3745,14 +3745,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 41.741,
+        "maxZ": 41.796,
         "metrics": [
           {
             "id": "s_revDom",
             "label": "🧪 Revenge ÷ domination",
             "value": 27,
             "bound": 21.343,
-            "z": 41.741,
+            "z": 41.796,
             "side": "high"
           }
         ]
@@ -3803,14 +3803,14 @@
         "red": [
           "aim"
         ],
-        "maxZ": 125.451,
+        "maxZ": 125.331,
         "metrics": [
           {
             "id": "s_maxKd",
             "label": "🧪 Best-session K/D",
             "value": 195,
-            "bound": 105.295,
-            "z": 125.451,
+            "bound": 105.29,
+            "z": 125.331,
             "side": "high"
           }
         ]
@@ -3824,14 +3824,14 @@
           "aim",
           "session-forensics"
         ],
-        "maxZ": 83.776,
+        "maxZ": 83.696,
         "metrics": [
           {
             "id": "s_maxKd",
             "label": "🧪 Best-session K/D",
             "value": 131,
-            "bound": 105.295,
-            "z": 83.776,
+            "bound": 105.29,
+            "z": 83.696,
             "side": "high"
           },
           {
@@ -3848,17 +3848,17 @@
     "outliersUnexplained": 2
   },
   "size": {
-    "at": "2026-10-26T06:33:52.673Z",
+    "at": "2026-10-26T06:38:32.020Z",
     "repoBytes": 233777152,
-    "dataBytes": 310603113,
-    "playersBytes": 281134207,
+    "dataBytes": 310611868,
+    "playersBytes": 281134356,
     "playerFiles": 14967,
     "warnAtBytes": 734003200,
     "warning": false
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-26T06:34:06.147Z",
+    "checkedAt": "2026-10-26T06:39:34.856Z",
     "candidates": [
       "chocoiatevs",
       "nebelhexe",
@@ -32812,7 +32812,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-26T06:34:06.161Z",
+    "checkedAt": "2026-10-26T06:39:34.869Z",
     "count": 386,
     "players": [
       {
@@ -36017,7 +36017,7 @@
     ]
   },
   "infantry": {
-    "checkedAt": "2026-10-26T06:34:12.705Z",
+    "checkedAt": "2026-10-26T06:39:42.773Z",
     "players": 14967,
     "counts": {
       "infantry": 9715,
@@ -36074,7 +36074,7 @@
       }
     },
     "tagMin": 20,
-    "checkedAt": "2026-10-26T06:34:11.013Z",
+    "checkedAt": "2026-10-26T06:39:40.647Z",
     "coverage": {
       "players": 14938,
       "withSessions": 13757,
@@ -36385,7 +36385,7 @@
   },
   "burst": {
     "rule": "KPM ≥ 5 and ≥ 15 kills in ≥ 2 min (one stored session, no 10-minute floor); skipped when within the player's own normal (≥ 5 other sessions of ≥ 10 min, ≤ 2× their median KPM, career K/D < 10)",
-    "checkedAt": "2026-10-26T06:34:14.708Z",
+    "checkedAt": "2026-10-26T06:39:45.491Z",
     "sessions": 16,
     "ownNormalSkipped": 0,
     "flaggedPlayers": 0,
@@ -36629,7 +36629,7 @@
     ]
   },
   "padderPenalty": {
-    "checkedAt": "2026-10-26T06:34:06.188Z",
+    "checkedAt": "2026-10-26T06:39:34.908Z",
     "ranked": 14873,
     "penalty": 0.1,
     "ref": 610.6,
@@ -36850,7 +36850,7 @@
     ]
   },
   "vehicleCut": {
-    "checkedAt": "2026-10-26T06:34:06.234Z",
+    "checkedAt": "2026-10-26T06:39:34.961Z",
     "ranked": 14873,
     "cut": 8895,
     "buckets": {
@@ -39268,7 +39268,7 @@
       "HIP": 0.9,
       "HSR": 0.55
     },
-    "checkedAt": "2026-10-26T06:33:55.003Z",
+    "checkedAt": "2026-10-26T06:39:20.727Z",
     "checked": 15,
     "errors": 0,
     "pending": 0,
@@ -39437,7 +39437,7 @@
     ]
   },
   "hut": {
-    "builtAt": "2026-10-26T06:34:05.541Z",
+    "builtAt": "2026-10-26T06:39:34.199Z",
     "cuts": {
       "actMedian": 0.2692,
       "actMult": 1.333,
@@ -44001,7 +44001,7 @@
     "cleared": []
   },
   "vehDiff": {
-    "builtAt": "2026-10-26T06:34:05.610Z",
+    "builtAt": "2026-10-26T06:39:34.278Z",
     "start": 14.9,
     "damped": 3315,
     "dieHardHut": 1119,
@@ -80477,7 +80477,7 @@
     "cleared": []
   },
   "zergRevive": {
-    "builtAt": "2026-10-26T06:34:05.744Z",
+    "builtAt": "2026-10-26T06:39:34.439Z",
     "zergScored": 6533,
     "measured": 1160,
     "measuredZerg": 1017,
@@ -81298,11 +81298,11 @@
       {
         "name": "Namlicnuoc",
         "slug": "namlicnuoc",
-        "share": 51.2,
-        "revived": 88,
-        "deaths": 172,
-        "minutes": 603,
-        "rvp": 84,
+        "share": 52,
+        "revived": 103,
+        "deaths": 198,
+        "minutes": 671,
+        "rvp": 85,
         "crp": 94,
         "hl": null,
         "zergRaw": 75,
@@ -81316,8 +81316,8 @@
         "revived": 192,
         "deaths": 371,
         "minutes": 1962,
-        "rvp": 85,
-        "crp": 93,
+        "rvp": 84,
+        "crp": 92,
         "hl": null,
         "zergRaw": 74,
         "zerg": 74,
@@ -81638,7 +81638,7 @@
         "revived": 87,
         "deaths": 168,
         "minutes": 320,
-        "rvp": 85,
+        "rvp": 84,
         "crp": 54,
         "hl": null,
         "zergRaw": 69,
@@ -83671,7 +83671,7 @@
         "deaths": 94,
         "minutes": 344,
         "rvp": 93,
-        "crp": 65,
+        "crp": 63,
         "hl": null,
         "zergRaw": null,
         "zerg": null,
@@ -83699,11 +83699,11 @@
         "deaths": 77,
         "minutes": 188,
         "rvp": 90,
-        "crp": 92,
+        "crp": 91,
         "hl": null,
         "zergRaw": null,
         "zerg": null,
-        "est": 92
+        "est": 91
       },
       {
         "name": "imferno",
@@ -84059,7 +84059,7 @@
     "cleared": []
   },
   "newbieDiff": {
-    "builtAt": "2026-10-26T06:34:05.693Z",
+    "builtAt": "2026-10-26T06:39:34.382Z",
     "loH": 5.9,
     "hiH": 370.1,
     "n": 14870,
@@ -94794,14 +94794,6 @@
         "diff": -16
       },
       {
-        "name": "ExhoUmbral",
-        "slug": "exhoumbral",
-        "h": 14.4,
-        "factor": 0.216,
-        "diffRaw": -30,
-        "diff": -6
-      },
-      {
         "name": "GIANT0013",
         "slug": "giant0013",
         "h": 17.5,
@@ -95360,6 +95352,14 @@
         "factor": 0.699,
         "diffRaw": -29,
         "diff": -20
+      },
+      {
+        "name": "ExhoUmbral",
+        "slug": "exhoumbral",
+        "h": 14.4,
+        "factor": 0.216,
+        "diffRaw": -29,
+        "diff": -6
       },
       {
         "name": "ionizag",
@@ -131643,7 +131643,7 @@
         "name": "ExhoUmbral",
         "slug": "exhoumbral",
         "h": 14.4,
-        "diffRaw": -30,
+        "diffRaw": -29,
         "diff": -6
       },
       {
@@ -133602,7 +133602,7 @@
     "cleared": []
   },
   "assistGap": {
-    "checkedAt": "2026-10-26T06:34:11.016Z",
+    "checkedAt": "2026-10-26T06:39:40.651Z",
     "start": "2026-04-01T13:00:00.000Z",
     "end": "2026-05-07T05:00:00.000Z",
     "url": "https://www.planetside2.com/patch-notes/may-6-hotfix-2026",
@@ -134738,7 +134738,7 @@
     ]
   },
   "tractorMark": {
-    "checkedAt": "2026-10-26T06:34:05.775Z",
+    "checkedAt": "2026-10-26T06:39:34.465Z",
     "rule": "🚜 = infantry % < p25 (71.9%) and (vehicle repair/min ≥ p75 (0.923) or vehicle kills/min ≥ p75 (0.215) of the 1387 players with 2+ h of XP detail), or infantry % < p2 (21.6%)",
     "cuts": {
       "cut": 71.9,
