@@ -328,16 +328,16 @@ describe("🎥 live.html in a browser", () => {
       assert.ok(ivs.length === 2 && ivs.every(Number.isFinite) && ivs.every((v) => v > 0), `both victims show an iVi: ${ivs}`);
       const b = (v) => Math.round(v * 1.34);
       const sum = b(ivs[1]) + b(ivs[0]), avg = (sum / 2).toFixed(1), formula = `${sum} (${b(ivs[1])} + ${b(ivs[0])})+34%`; // rows are newest-first, the formula is kill order; parts are boosted
-      // ±1 tolerance, like the cashed-out-runs test: the page boosts RAW
+      // ±1 tolerance per part, like the cashed-out-runs test: the page boosts RAW
       // adjs while the test only sees ROUNDED displays, so a fixture
       // drifting across a rounding boundary shifts a part by 1 (seen
       // 2026-10-25: raw ~1401.2 displays 1401 but boosts to 1878, not 1877)
-      assert.equal(await ev(until(`document.getElementById("liveCashSumVal").textContent.includes(" + ")`)), true, `cash sum shows the formula: ${formula}`);
+      // the main pot shows only the total now (owner 2026-10-26) — the parts
+      // formula lives on in the banked history below, not here
+      assert.equal(await ev(until(`document.getElementById("liveCashSumVal").textContent !== "0"`)), true, "pot total landed");
       const sumText = await ev(`document.getElementById("liveCashSumVal").textContent`);
-      const m = sumText.match(/^(\d+) \((\d+) \+ (\d+)\)\+34%$/);
-      assert.ok(m, `formula parses: ${sumText}`);
-      assert.ok(Math.abs(Number(m[2]) - b(ivs[1])) <= 1 && Math.abs(Number(m[3]) - b(ivs[0])) <= 1, `parts within 1 of display-derived: ${sumText} vs ${formula}`);
-      assert.equal(Number(m[1]), Number(m[2]) + Number(m[3]), "sum matches its parts");
+      assert.ok(/^\d+$/.test(sumText), `pot shows a bare total: ${sumText}`);
+      assert.ok(Math.abs(Number(sumText) - sum) <= 2, `pot total within rounding of display-derived: ${sumText} vs ${sum}`);
       const avgText = await ev(`document.getElementById("liveCashAvgVal").textContent`);
       assert.ok(Math.abs(Number(avgText) - Number(avg)) <= 1.0, `cash avg is per victim: ${avgText} vs ${avg}`);
       // the killer does not pay: ME dies, the run is banked and the pot resets for the new run
@@ -345,7 +345,11 @@ describe("🎥 live.html in a browser", () => {
       assert.equal(await ev(until(`document.getElementById("liveCashSumVal").textContent === "0"`)), true, "the pot resets for the new run");
       assert.equal(await ev(until(`document.getElementById("liveCashAvgVal").textContent === "–"`)), true, "the avg empties with the pot");
       assert.equal(await ev(until(`document.querySelectorAll("#liveCashHist > div").length === 2`)), true, "one banked run in the history");
-      assert.equal(await ev(`document.querySelectorAll("#liveCashHist > div")[1].textContent`), `Σ ${sumText} · avg ${avgText}`, "the banked run keeps its formula");
+      const banked = await ev(`document.querySelectorAll("#liveCashHist > div")[1].textContent`);
+      const bm = banked.match(/^Σ (\d+) \((\d+) \+ (\d+)\)\+34% · avg ([\d.]+)$/);
+      assert.ok(bm, `the banked run keeps its formula: ${banked}`);
+      assert.ok(Math.abs(Number(bm[2]) - b(ivs[1])) <= 1 && Math.abs(Number(bm[3]) - b(ivs[0])) <= 1, `banked parts within 1 of display-derived: ${banked} vs ${formula}`);
+      assert.equal(Number(bm[1]), Number(bm[2]) + Number(bm[3]), "banked sum matches its parts");
       assert.notEqual(await ev(`getComputedStyle(document.getElementById("liveCashHist")).backgroundColor`), "rgba(0, 0, 0, 0)", "past cashouts sit on a background, not transparent");
       assert.deepEqual(errors, [], "no page errors");
     });
@@ -458,12 +462,12 @@ describe("🎥 live.html in a browser", () => {
       const bp = Math.round(ivs[0] * 1.34);
       // ±1 tolerance (same rounding-boundary note as the cash-out test):
       // the page boosts the raw adj, the test only sees the rounded display
-      assert.equal(await ev(until(`document.getElementById("liveCashSumVal").textContent.includes("(0 + ")`)), true, "the pot shows the boosted formula: floored 0 plus the boosted payout");
+      // the main pot shows only the total now (owner 2026-10-26): the floored 0
+      // adds nothing, so the total is the boosted part alone
+      assert.equal(await ev(until(`document.getElementById("liveCashSumVal").textContent !== "0"`)), true, "the pot total landed");
       const sumText = await ev(`document.getElementById("liveCashSumVal").textContent`);
-      const m = sumText.match(/^(\d+) \(0 \+ (\d+)\)\+34%$/);
-      assert.ok(m, `formula parses: ${sumText}`);
-      assert.ok(Math.abs(Number(m[2]) - bp) <= 1, `boosted part within 1 of display-derived ${bp}: ${m[2]}`);
-      assert.equal(Number(m[1]), Number(m[2]), "sum is the boosted part alone (floored 0 adds nothing)");
+      assert.ok(/^\d+$/.test(sumText), `pot shows a bare total: ${sumText}`);
+      assert.ok(Math.abs(Number(sumText) - bp) <= 1, `total within 1 of display-derived boosted part ${bp}: ${sumText}`);
       const avgText = await ev(`document.getElementById("liveCashAvgVal").textContent`);
       assert.ok(Math.abs(Number(avgText) - bp / 2) <= 1.0, `the average counts the floored 0: ${avgText} vs ${bp / 2}`);
       assert.deepEqual(errors, [], "no page errors");
@@ -487,6 +491,7 @@ describe("🎥 live hold meter in a browser", () => {
       await new Promise((r) => setTimeout(r, 12000)); // a slow player's real gap, cleanly measured
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[2].cid, "80", false)})`);
       assert.equal(await ev(until(`Number(document.getElementById("liveDpsVal").textContent) >= 10000`)), true, "third kill starts the meter held");
+      assert.ok(Number.parseFloat(await ev(`document.getElementById("liveDpsBar").style.width`)) > 0, "DPM bar grows with the meter");
       await new Promise((r) => setTimeout(r, 12000)); // the same gap again
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[3].cid, "80", false)})`);
       await new Promise((r) => setTimeout(r, 8000)); // 8 s after the fourth kill — inside the 12 s hold
@@ -606,14 +611,15 @@ describe("🎥 live combat average in a browser", () => {
   it("combat average (owner 2026-10-25): median of ALL death→first-combat runs, shown next to hold", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
-      // before any death→combat run: the span is empty and its separator hidden
-      assert.equal(await ev(until(`document.getElementById("liveDpsCombat").textContent === "" && document.getElementById("liveDpsCombatSep").style.display === "none"`)), true, "no run yet: combat hidden");
+      // before any death→combat run: the span is empty and its line hidden
+      assert.equal(await ev(until(`document.getElementById("liveDpsCombat").textContent === "" && document.getElementById("liveDpsCombatLine").style.display === "none"`)), true, "no run yet: combat hidden");
       await ev(`window.__fakeWs.emit(${death(OPP[0].cid, ME.cid, "432", false)})`); // death 1
       await new Promise((r) => setTimeout(r, 4000));
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[1].cid, "80", false)})`); // combat 4 s after death 1
       assert.equal(await ev(until(`document.getElementById("liveDpsCombat").textContent === "combat 4s (n=1)"`)), true, "first run: combat 4s (n=1)");
-      // the combat span sits in the same DPM row, right after hold
-      assert.equal(await ev(`document.getElementById("liveDpsCombat").previousElementSibling.id === "liveDpsCombatSep" && document.getElementById("liveDpsCombatSep").previousElementSibling.id === "liveDpsHold"`), true, "combat sits right after hold");
+      // the combat line sits in the same DPM stack, right after the hold line
+      assert.equal(await ev(`document.getElementById("liveDpsCombatLine").previousElementSibling.querySelector("#liveDpsHold") !== null`), true, "combat line sits right after hold line");
+      assert.equal(await ev(`document.getElementById("liveDpsCombatBar").style.width`), "6.7%", "combat bar: 4 s of 60 s");
       await ev(`window.__fakeWs.emit(${death(OPP[2].cid, ME.cid, "432", false)})`); // death 2
       await new Promise((r) => setTimeout(r, 8000));
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[3].cid, "80", false)})`); // combat 8 s after death 2

@@ -540,7 +540,8 @@ function start() {
   const dpsEl = $("liveDpsVal");
   const dpsLabelEl = $("liveDpsLabel");
   const dpsHoldEl = $("liveDpsHold");
-  const dpsCombatEl = $("liveDpsCombat"), dpsCombatSepEl = $("liveDpsCombatSep");
+  const dpsCombatEl = $("liveDpsCombat"), dpsCombatLineEl = $("liveDpsCombatLine");
+  const dpsBarEl = $("liveDpsBar"), dpsHoldBarEl = $("liveDpsHoldBar"), dpsCombatBarEl = $("liveDpsCombatBar");
   if ($("liveDpsLabel")) $("liveDpsLabel").textContent = tr("live.dps", "DPM");
   const cashSumEl = $("liveCashSumVal"), cashAvgEl = $("liveCashAvgVal");
   if ($("liveCashSumLabel")) $("liveCashSumLabel").textContent = tr("live.cashSum", "Σ iVi");
@@ -592,6 +593,15 @@ function start() {
   const CASH_BOOST_PCT = 34;
   const cashIv = (p) => (p && p.cached && Number.isFinite(p.cached.adjs) ? Math.round(Math.max(0, p.cached.adjs) * (1 + CASH_BOOST_PCT / 100)) : null);
   let lastDps = "", lastDpsLabel = "", lastHold = "", lastCombat = "", lastCash = "";
+  // Owner 2026-10-26 (DPM row bars): each meter line carries a bar under
+  // its text — DPM glows and grows with the shown value (full = two
+  // kill-spikes at the current τ), hold/combat bars are value-proportional
+  // (full = 60 s) and shrink as their seconds fall. Writes go through
+  // this guard so a steady value writes once.
+  const barState = { dpm: "", hold: "", combat: "" };
+  const setBar = (el, key, pct) => { if (el && barState[key] !== pct) { el.style.width = pct; barState[key] = pct; } };
+  const dpmBarPct = (v) => `${Math.min(100, Math.max(0, (v / (120000 / (dpmTauMs / 1000))) * 100)).toFixed(1)}%`;
+  const secBarPct = (s) => `${Math.min(100, Math.max(0, (s / 60) * 100)).toFixed(1)}%`;
   // Owner 2026-10-25 (gas-counter scroll): each kill/assist after the
   // meter starts queues one scroll — its own DPM jump at the τ of the
   // moment — and scrolls play one by one, 700 ms each, ease-in (slow
@@ -616,6 +626,7 @@ function start() {
       const v = scrollJob.from + (scrollJob.to - scrollJob.from) * easeInQuad(p);
       shownDps = v;
       if (dpsEl) dpsEl.textContent = v.toFixed(1);
+      setBar(dpsBarEl, "dpm", dpmBarPct(v));
       if (p < 1) requestAnimationFrame(step);
       else scrollJob = null;
     };
@@ -646,38 +657,42 @@ function start() {
         const v = `${dpsEvents.length}/3`;
         label = tr("live.dpmWarm", "DPM starts at 3");
         if (v !== lastDps) { dpsEl.textContent = v; lastDps = v; }
+        setBar(dpsBarEl, "dpm", "0.0%");
       } else {
         label = tr("live.dps", "DPM");
         const trueDpm = dpsNow(dpsEvents, effNow, dpmTauMs, holdMs) * 60;
-        if (shownDps === null) { shownDps = trueDpm; dpsEl.textContent = shownDps.toFixed(1); }
+        if (shownDps === null) { shownDps = trueDpm; dpsEl.textContent = shownDps.toFixed(1); setBar(dpsBarEl, "dpm", dpmBarPct(shownDps)); }
         else if (!scrollJob) {
           if (scrollQ.length) startScroll();
           else {
             if (Math.abs(trueDpm - shownDps) < 0.05) shownDps = trueDpm;
             else shownDps += (trueDpm - shownDps) * 0.35;
             dpsEl.textContent = shownDps.toFixed(1);
+            setBar(dpsBarEl, "dpm", dpmBarPct(shownDps));
           }
         }
         // a scroll in flight owns the number — the tick leaves it alone
       }
       if (dpsLabelEl && label !== lastDpsLabel) { dpsLabelEl.textContent = label; lastDpsLabel = label; }
       const holdText = tr("live.dpmHold", "hold {s}s", { s: Math.round(holdMs / 1000) });
-      if (dpsHoldEl && holdText !== lastHold) { dpsHoldEl.textContent = holdText; lastHold = holdText; }
-      // empty (and its separator hidden) until the first death→combat run
+      if (dpsHoldEl && holdText !== lastHold) { dpsHoldEl.textContent = holdText; lastHold = holdText; setBar(dpsHoldBarEl, "hold", secBarPct(Math.round(holdMs / 1000))); }
+      // empty (and its line hidden) until the first death→combat run
       // completes — a "combat 0s" would be a lie, not a measurement
       const combat = timeToCombatMs(deathTimes, spikeTimes());
       const combatText = combat.n ? tr("live.dpmCombat", "combat {s}s (n={n})", { s: Math.round(combat.ms / 1000), n: combat.n }) : "";
-      if (dpsCombatEl && combatText !== lastCombat) { dpsCombatEl.textContent = combatText; lastCombat = combatText; }
-      // outside the text-change guard: the separator must hide on the first
+      if (dpsCombatEl && combatText !== lastCombat) { dpsCombatEl.textContent = combatText; lastCombat = combatText; setBar(dpsCombatBarEl, "combat", secBarPct(Math.round(combat.ms / 1000))); }
+      // outside the text-change guard: the line must hide on the first
       // tick too, when empty text equals the initial state and no write runs
-      if (dpsCombatSepEl) dpsCombatSepEl.style.display = combat.n ? "" : "none";
+      if (dpsCombatLineEl) dpsCombatLineEl.style.display = combat.n ? "" : "none";
     }
+    // Owner 2026-10-26: the main pot shows only the total and the average
+    // — the parts formula moved off this line (banked runs in the history
+    // below still carry theirs).
     if (cashSumEl && cashAvgEl) {
       const t = cashTotals(cashKills.map((e) => e.iv));
-      const f = cashFormula(cashKills.map((e) => e.iv), CASH_BOOST_PCT);
-      const key = `${f}|${t.avg}`; // the formula itself is the key — two part-sets can share a sum and average
+      const key = `${t.sum}|${t.avg}`;
       if (key !== lastCash) {
-        cashSumEl.textContent = f;
+        cashSumEl.textContent = String(t.sum);
         cashAvgEl.textContent = t.avg == null ? "–" : t.avg.toFixed(1);
         lastCash = key;
       }
