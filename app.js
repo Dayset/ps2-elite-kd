@@ -124,7 +124,7 @@ function thinCellTip(r) {
 import { markNote, statMark, confirmedPadderSlugs, isPenalizedPadder, POOP_MARK, POOP_TIP, setRoomRule } from "./padding.mjs?v=20261023-short1";
 import { psIviBaseline, psKpmRatio } from "./ps-baseline.mjs?v=20261026-brv1";
 import { removedList } from "./opt-out.mjs?v=20261023-proof1";
-import { createPairMatch } from "./pair-match.mjs?v=20261026-pm1"; // t710: 👯 play-pattern match of two names
+import { createPairMatch, PAIR_MATCH_ENABLED } from "./pair-match.mjs?v=20261027-pmoff1"; // t710: 👯 play-pattern match of two names
 import { HUT_MARK, HUT_TIP, HUT_DIFF_NOTE, playMinutes } from "./hut.mjs?v=20261023-short1";
 import { autoMarksHtml } from "./auto-marks.mjs?v=20261024-trac1";
 // Account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times: chart name list only.
@@ -2008,7 +2008,7 @@ import {
     els.diceLowBtn?.addEventListener("click", () => { if (!lockedClick(els.diceLowBtn)) rollDice("low"); });
     els.diceHighBtn?.addEventListener("click", () => { if (!lockedClick(els.diceHighBtn)) rollDice("high"); });
     // t710: 👯 shows for exactly two names (PC room, nobody on the removal list); one line on click, public play-time data only.
-    if (els.pairMatchBtn && !LIVE_MODE) { // 🎥 live page: stays hidden
+    if (els.pairMatchBtn && !LIVE_MODE && PAIR_MATCH_ENABLED) { // t715: switched off in pair-match.mjs for now // 🎥 live page: stays hidden
       createPairMatch({
         get els() { return els; },
         get nameTokens() { return nameTokens; },

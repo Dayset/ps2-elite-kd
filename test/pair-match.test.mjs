@@ -8,7 +8,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { pairVisible, pctText, createPairMatch } from "../pair-match.mjs";
+import { pairVisible, pctText, createPairMatch, PAIR_MATCH_ENABLED } from "../pair-match.mjs";
 import { removedList } from "../opt-out.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -16,7 +16,7 @@ const read = (f) => JSON.parse(fs.readFileSync(path.join(ROOT, f), "utf8"));
 
 test("👯 shows only for exactly 2 different names, PC room, list loaded, nobody removed", () => {
   const removed = removedList({ players: { "5428000000000000001": { name: "GoneGuy", proof: "test", at: "2026-10-26" } } });
-  const ok = { removed, ready: true };
+  const ok = { enabled: true, removed, ready: true };
   assert.equal(pairVisible(["Ahorn", "MrHorns"], ok), true);
   assert.equal(pairVisible(["Ahorn"], ok), false);
   assert.equal(pairVisible(["Ahorn", "MrHorns", "Bhorn"], ok), false);
@@ -24,7 +24,14 @@ test("👯 shows only for exactly 2 different names, PC room, list loaded, nobod
   assert.equal(pairVisible(["Ahorn", "GoneGuy"], ok), false, "removed player hides the button");
   assert.equal(pairVisible(["[XX] goneguy", "Ahorn"], ok), false);
   assert.equal(pairVisible(["Ahorn", "MrHorns"], { ...ok, isPs: true }), false, "PC only");
-  assert.equal(pairVisible(["Ahorn", "MrHorns"], { removed, ready: false }), false, "fail closed before the list loads");
+  assert.equal(pairVisible(["Ahorn", "MrHorns"], { enabled: true, removed, ready: false }), false, "fail closed before the list loads");
+});
+
+test("t715: switched off — hidden for any names, and app.js never starts it", () => {
+  assert.equal(PAIR_MATCH_ENABLED, false);
+  assert.equal(pairVisible(["Ahorn", "MrHorns"], { ready: true }), false);
+  const app = fs.readFileSync(path.join(ROOT, "app.js"), "utf8");
+  assert.match(app, /pairMatchBtn && !LIVE_MODE && PAIR_MATCH_ENABLED/);
 });
 
 test("percent text never says a false 0 or 100", () => {
@@ -65,7 +72,7 @@ test("browser score = build-alts score for the saved test pairs (no network)", a
     const note = { textContent: "", hidden: true, setAttribute() {}, removeAttribute() {} };
     let tokens = [];
     const pm = createPairMatch({
-      els: { pairMatchBtn: null, pairMatchNote: note }, get nameTokens() { return tokens; }, IS_PS: false, DATA: "data/",
+      enabled: true, els: { pairMatchBtn: null, pairMatchNote: note }, get nameTokens() { return tokens; }, IS_PS: false, DATA: "data/",
       removedNow: removedList(read("data/opt-out.json")), removedReady: async () => {}, loadRanksPayload: async () => ranks,
       censusJson: async () => null, CENSUS: "", tagName: (n) => tagBySlug.get(n.toLowerCase().replace(/[^a-z0-9]/g, "")) || "",
     });

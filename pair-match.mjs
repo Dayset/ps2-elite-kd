@@ -16,6 +16,10 @@ import { t as tr } from "./i18n.mjs";
 import { compactSessions, sessionClues, nameClue, profileVector, robustScale, profileDistance, jaccard, scorePair } from "./scripts/alts-lib.mjs?v=20261026-pm1";
 import { removedKey } from "./opt-out.mjs?v=20261023-proof1";
 
+/** Off switch (owner t715, 2026-10-27: "hide duplicate finder for now from UI"). false → the 👯 button never
+ * shows on any page and app.js never starts this part (no removal-list, data or Honu fetches). true → back on. */
+export const PAIR_MATCH_ENABLED = false;
+
 const HONU = "https://wt.honu.pw/api/character/";
 const DAY = 86400e3;
 const KEEP_DAYS = 365; // same window as build-alts.mjs
@@ -63,8 +67,8 @@ export function pctText(p) {
 }
 
 /** Show the button? PC room, exactly two names, neither on the removal list. */
-export function pairVisible(names, { isPs = false, removed = null, ready = false } = {}) {
-  if (isPs || !ready || !Array.isArray(names) || names.length !== 2) return false;
+export function pairVisible(names, { enabled = PAIR_MATCH_ENABLED, isPs = false, removed = null, ready = false } = {}) {
+  if (!enabled || isPs || !ready || !Array.isArray(names) || names.length !== 2) return false;
   if (removedKey(names[0]) === removedKey(names[1])) return false;
   if (removed && names.some((n) => removed.match({ slug: removedKey(n), name: n }))) return false;
   return true;
@@ -94,10 +98,11 @@ export function createPairMatch($) {
   function sync() {
     const b = btn();
     const names = $.nameTokens.slice();
-    const show = pairVisible(names, { isPs: $.IS_PS, removed: $.removedNow, ready: removedLoaded });
+    const show = pairVisible(names, { enabled: $.enabled ?? PAIR_MATCH_ENABLED, isPs: $.IS_PS, removed: $.removedNow, ready: removedLoaded });
     if (b) b.hidden = !show;
     runId++; // names changed: an old result no longer applies
     setNote("");
+    if (!($.enabled ?? PAIR_MATCH_ENABLED)) return; // switched off: no fetches at all
     if (!removedLoaded && !removedAsked && !$.IS_PS && names.length === 2) {
       removedAsked = true;
       // Fail closed: no removal list (network error) → the button stays hidden.
@@ -172,7 +177,7 @@ export function createPairMatch($) {
 
   async function run() {
     const names = $.nameTokens.slice();
-    if (!pairVisible(names, { isPs: $.IS_PS, removed: $.removedNow, ready: removedLoaded })) return;
+    if (!pairVisible(names, { enabled: $.enabled ?? PAIR_MATCH_ENABLED, isPs: $.IS_PS, removed: $.removedNow, ready: removedLoaded })) return;
     const my = ++runId;
     const b = btn();
     if (b) b.setAttribute("aria-busy", "true");
