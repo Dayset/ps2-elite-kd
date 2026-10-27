@@ -2,10 +2,10 @@
   "room": "ps",
   "running": false,
   "lastRun": {
-    "runId": "40479883535",
+    "runId": "40531908552",
     "kind": "discovery",
-    "startedAt": "2026-10-27T09:19:54.766Z",
-    "endedAt": "2026-10-27T09:19:55.129Z",
+    "startedAt": "2026-10-27T15:32:38.735Z",
+    "endedAt": "2026-10-27T15:32:39.028Z",
     "seconds": 0,
     "added": [],
     "updated": [],
@@ -14,9 +14,9 @@
     "indexSize": 1821,
     "assists": {
       "calls": 1,
-      "rows": 296,
-      "players": 150,
-      "skipped": 103,
+      "rows": 160,
+      "players": 54,
+      "skipped": 82,
       "error": null
     },
     "servers": {
@@ -33,7 +33,7 @@
     }
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-27T09:19:57.154Z",
+    "checkedAt": "2026-10-27T15:32:41.126Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 1,
     "explained": 4,
@@ -238,7 +238,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-27T09:19:57.207Z",
+    "checkedAt": "2026-10-27T15:32:41.193Z",
     "red": 10,
     "padding": 0,
     "adjusted": 236,
@@ -249,7 +249,7 @@
     "forensics": 0
   },
   "sessionStats": {
-    "checkedAt": "2026-10-27T09:19:57.158Z",
+    "checkedAt": "2026-10-27T15:32:41.133Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -263,10 +263,10 @@
     "ruleText": "[session pattern] in recent Honu sessions (≥ 100 kills counted): assists per kill ≤ 0.1, headshot share ≥ 50% (headshot XP per kill; Census lifetime HSR when no XP detail) and K/D ≥ 7 (session deaths; Census lifetime KD when none). A very one-sided record; a lead for manual review, not proof.",
     "coverage": {
       "players": 1821,
-      "withSessions": 1091,
+      "withSessions": 1094,
       "measured": 339,
-      "sessions": 5224,
-      "kills": 122602,
+      "sessions": 5299,
+      "kills": 123028,
       "xpPlayers": 0,
       "xpMeasured": 0,
       "xpSessions": 0
@@ -385,7 +385,7 @@
         "min": 0.4,
         "p01": 0.468,
         "p05": 0.507,
-        "median": 0.586,
+        "median": 0.585,
         "p95": 0.67,
         "p99": 0.695,
         "max": 0.774
@@ -395,7 +395,7 @@
         "min": 0.072,
         "p01": 0.11,
         "p05": 0.149,
-        "median": 0.375,
+        "median": 0.374,
         "p95": 1.376,
         "p99": 2.016,
         "max": 15.21
@@ -760,7 +760,7 @@
     "outliersUnexplained": 0
   },
   "forensics": {
-    "checkedAt": "2026-10-27T09:19:57.162Z",
+    "checkedAt": "2026-10-27T15:32:41.140Z",
     "candidates": [
       "thingzzvs",
       "taculotte",
@@ -828,7 +828,7 @@
     "players": []
   },
   "review": {
-    "checkedAt": "2026-10-27T09:19:57.170Z",
+    "checkedAt": "2026-10-27T15:32:41.150Z",
     "count": 242,
     "players": [
       {
@@ -2791,7 +2791,7 @@
     "byTag": {
       "infantry": {
         "count": 223,
-        "medApk": 0.291,
+        "medApk": 0.289,
         "medShare": 0.59
       },
       "mixed": {
@@ -2801,7 +2801,7 @@
       },
       "vehicle": {
         "count": 23,
-        "medApk": 0.213,
+        "medApk": 0.211,
         "medShare": 0.572
       },
       "untagged": {
@@ -2819,18 +2819,18 @@
         "balanced": 0.757
       },
       "share": {
-        "threshold": 0.55,
+        "threshold": 0.542,
         "dir": "<=",
-        "vehicleCaught": 0.435,
-        "infantryCleared": 0.834,
-        "balanced": 0.634
+        "vehicleCaught": 0.391,
+        "infantryCleared": 0.888,
+        "balanced": 0.64
       }
     },
     "tagMin": 20,
-    "checkedAt": "2026-10-27T09:19:57.187Z",
+    "checkedAt": "2026-10-27T15:32:41.169Z",
     "coverage": {
       "players": 1814,
-      "withSessions": 1088,
+      "withSessions": 1091,
       "measured": 337,
       "measuredPct": 18.6
     },
@@ -2842,7 +2842,7 @@
       "iviLo": 207.744,
       "iviHi": 423.334,
       "medApk": 0.278,
-      "medShare": 0.586
+      "medShare": 0.585
     },
     "rule": {
       "KD_PCT": 0.75,
@@ -2985,6 +2985,17 @@
             "flagged": true
           },
           {
+            "slug": "teamkillingisop",
+            "name": "TeamKillingIsOp",
+            "kd": 3.91,
+            "kpm": 0.506,
+            "ivi": 482.477,
+            "apk": 0.077,
+            "share": 0.541,
+            "kills": 196,
+            "flagged": true
+          },
+          {
             "slug": "wertytr",
             "name": "WertyTR",
             "kd": 3.702,
@@ -3026,17 +3037,6 @@
             "apk": 0.356,
             "share": 0.468,
             "kills": 104,
-            "flagged": false
-          },
-          {
-            "slug": "t4m4l33",
-            "name": "T4M4L33",
-            "kd": 3.008,
-            "kpm": 0.544,
-            "ivi": 343.111,
-            "apk": 0.357,
-            "share": 0.545,
-            "kills": 168,
             "flagged": false
           }
         ]
@@ -3137,7 +3137,7 @@
     }
   },
   "padderPenalty": {
-    "checkedAt": "2026-10-27T09:19:57.173Z",
+    "checkedAt": "2026-10-27T15:32:41.153Z",
     "ranked": 1804,
     "penalty": 0.1,
     "ref": 610.6,
@@ -3147,7 +3147,7 @@
     "players": []
   },
   "vehicleCut": {
-    "checkedAt": "2026-10-27T09:19:57.178Z",
+    "checkedAt": "2026-10-27T15:32:41.159Z",
     "ranked": 1804,
     "cut": 1057,
     "buckets": {
@@ -5423,7 +5423,7 @@
     "watch": []
   },
   "infantry": {
-    "checkedAt": "2026-10-27T09:19:57.348Z",
+    "checkedAt": "2026-10-27T15:32:41.379Z",
     "players": 1821,
     "counts": {
       "infantry": 1173,
@@ -5442,7 +5442,7 @@
   },
   "burst": {
     "rule": "KPM ≥ 5 and ≥ 15 kills in ≥ 2 min (one stored session, no 10-minute floor); skipped when within the player's own normal (≥ 5 other sessions of ≥ 10 min, ≤ 2× their median KPM, career K/D < 10)",
-    "checkedAt": "2026-10-27T09:19:57.520Z",
+    "checkedAt": "2026-10-27T15:32:41.598Z",
     "sessions": 4,
     "ownNormalSkipped": 0,
     "flaggedPlayers": 3,
@@ -5522,7 +5522,7 @@
     "caught": []
   },
   "hut": {
-    "builtAt": "2026-10-27T09:19:57.109Z",
+    "builtAt": "2026-10-27T15:32:41.075Z",
     "cuts": {
       "actMedian": 0.2399,
       "actMult": 1.333,
@@ -6046,7 +6046,7 @@
     "cleared": []
   },
   "newbieDiff": {
-    "builtAt": "2026-10-27T09:19:57.128Z",
+    "builtAt": "2026-10-27T15:32:41.095Z",
     "loH": 6.5,
     "hiH": 310.8,
     "n": 1801,
@@ -11847,7 +11847,7 @@
     "cleared": []
   },
   "vehDiff": {
-    "builtAt": "2026-10-27T09:19:57.118Z",
+    "builtAt": "2026-10-27T15:32:41.084Z",
     "start": 14.5,
     "damped": 427,
     "dieHardHut": 174,
@@ -16555,7 +16555,7 @@
     "cleared": []
   },
   "zergRevive": {
-    "builtAt": "2026-10-27T09:19:57.132Z",
+    "builtAt": "2026-10-27T15:32:41.099Z",
     "zergScored": 336,
     "measured": 0,
     "measuredZerg": 0,
@@ -16579,7 +16579,7 @@
     "cleared": []
   },
   "assistGap": {
-    "checkedAt": "2026-10-27T09:19:57.188Z",
+    "checkedAt": "2026-10-27T15:32:41.169Z",
     "start": "2026-04-01T13:00:00.000Z",
     "end": "2026-05-07T05:00:00.000Z",
     "url": "https://www.planetside2.com/patch-notes/may-6-hotfix-2026",
@@ -16589,7 +16589,7 @@
     "players": []
   },
   "tractorMark": {
-    "checkedAt": "2026-10-27T09:19:57.134Z",
+    "checkedAt": "2026-10-27T15:32:41.102Z",
     "rule": "🚜 = infantry % < p25 (72.3%) and (vehicle repair/min ≥ p75 (null) or vehicle kills/min ≥ p75 (null) of the 0 players with 2+ h of XP detail), or infantry % < p2 (24%)",
     "cuts": {
       "cut": 72.3,
