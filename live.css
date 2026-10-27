@@ -215,7 +215,7 @@ body.live-stream #liveStreamCard { display: block; }
 
 .live-show-tactical { margin-top: 0.25rem; font-size: 0.72rem; color: var(--dim); }
 body.live-stream > :not(#liveFeed) { display: none; } /* owner 2026-10-26: no header, no footer, no controls — the overlay is only the live section */
-body.live-stream { background: #00ff00 !important; -webkit-text-stroke: 2px #000; paint-order: stroke fill; } /* owner 2026-10-26: pure chromakey green + a true vector outline on every glyph, so the overlay reads over gameplay; !important so the mode beats the dark main-page background; no shadows (owner 2026-10-26) */
+body.live-stream { background: #00ff00 !important; -webkit-text-stroke: 3px #000; paint-order: stroke fill; } /* owner 2026-10-26: pure chromakey green + a true vector outline on every glyph, so the overlay reads over gameplay; !important so the mode beats the dark main-page background; no shadows (owner 2026-10-26); 3px (was 2px) so the keyer cuts a cleaner edge on small text */
 body.live-stream #liveDpsVal:not(.live-dps-warm) { -webkit-text-stroke: 4px #000; paint-order: stroke fill; } /* the counter is the hero glyph: a heavier stroke; the tiny warm-up line keeps the body stroke so it stays readable */
 body.live-stream #liveDps > .live-metric:first-child { display: flex; flex-direction: column; } /* owner 2026-10-26: in overlay mode the DPM counter sits BELOW the bar */
 body.live-stream #liveDpsLabel { order: 1; }

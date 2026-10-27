@@ -1016,7 +1016,7 @@ test("streamer mode (owner 2026-10-26): button switches to the chromakey overlay
   assert.match(js, /if \(streamMode\) document\.body\.classList\.add\("live-stream"\);\n  setSfxRate\(1\.3\);/); // 1.3x on every live page, not just stream mode
   assert.match(js, /import \{ sfx, setSfxRate \} from "\.\/sfx\.mjs\?v=20261026-sfx2";/);
   assert.doesNotMatch(js, /liveStreamBack|exitStream|backToNormal/);
-  assert.match(css, /body\.live-stream \{ background: #00ff00 !important; -webkit-text-stroke: 2px #000; paint-order: stroke fill; \}/);
+  assert.match(css, /body\.live-stream \{ background: #00ff00 !important; -webkit-text-stroke: 3px #000; paint-order: stroke fill; \}/);
   assert.match(css, /body\.live-stream \.live-table, body\.live-stream \.live-stream-card, body\.live-stream \.live-bar \{ background: transparent; \}/);
   assert.match(css, /body\.live-stream \.live-table tbody\.lv-vic:nth-of-type\(even\) > tr > td \{ background-color: transparent; \}/);
   assert.match(css, /body\.live-stream \.live-table tbody\.lv-me > tr > td \{ background-color: transparent; \}/);
