@@ -31,10 +31,10 @@
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-26T23:54:14.959Z",
+    "checkedAt": "2026-10-27T00:06:22.629Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
-    "unexplained": 17,
-    "explained": 33,
+    "unexplained": 16,
+    "explained": 34,
     "items": [
       {
         "slug": "fretec",
@@ -91,18 +91,6 @@
         "value": 28.524,
         "bound": 19.812,
         "z": 36.008,
-        "side": "high",
-        "explained": false,
-        "reason": "",
-        "red": []
-      },
-      {
-        "slug": "alandwhaletr",
-        "name": "ALandWhaleTR",
-        "id": "s_kd",
-        "value": 38.042,
-        "bound": 36.571,
-        "z": 35.087,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -478,6 +466,18 @@
         ]
       },
       {
+        "slug": "alandwhaletr",
+        "name": "ALandWhaleTR",
+        "id": "s_kd",
+        "value": 38.042,
+        "bound": 36.571,
+        "z": 35.087,
+        "side": "high",
+        "explained": true,
+        "reason": "Owner dismissed 2026-10-26 (#10, t703): 🧪 Session K/D 38.0, no catchable marks so far; the owner keeps watching this account by hand (data still collected)",
+        "red": []
+      },
+      {
         "slug": "igorrrrrr",
         "name": "igOrRrRrR",
         "id": "rf",
@@ -843,24 +843,6 @@
             "value": 28.524,
             "bound": 19.812,
             "z": 36.008,
-            "side": "high"
-          }
-        ]
-      },
-      {
-        "slug": "alandwhaletr",
-        "name": "ALandWhaleTR",
-        "explained": false,
-        "reason": "",
-        "red": [],
-        "maxZ": 35.087,
-        "metrics": [
-          {
-            "id": "s_kd",
-            "label": "🧪 Session K/D",
-            "value": 38.042,
-            "bound": 36.571,
-            "z": 35.087,
             "side": "high"
           }
         ]
@@ -1303,6 +1285,24 @@
         ]
       },
       {
+        "slug": "alandwhaletr",
+        "name": "ALandWhaleTR",
+        "explained": true,
+        "reason": "Owner dismissed 2026-10-26 (#10, t703): 🧪 Session K/D 38.0, no catchable marks so far; the owner keeps watching this account by hand (data still collected)",
+        "red": [],
+        "maxZ": 35.087,
+        "metrics": [
+          {
+            "id": "s_kd",
+            "label": "🧪 Session K/D",
+            "value": 38.042,
+            "bound": 36.571,
+            "z": 35.087,
+            "side": "high"
+          }
+        ]
+      },
+      {
         "slug": "doomxdeltanc",
         "name": "DOOMxDeltaNC",
         "explained": true,
@@ -1400,8 +1400,8 @@
         ]
       }
     ],
-    "playersUnexplained": 12,
-    "playersExplained": 15,
+    "playersUnexplained": 11,
+    "playersExplained": 16,
     "playersAlsoRed": 8,
     "playersChartOnly": 19
   },
@@ -1643,10 +1643,10 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-26T23:54:21.557Z",
+    "checkedAt": "2026-10-27T00:06:29.020Z",
     "red": 60,
-    "padding": 42,
-    "adjusted": 21,
+    "padding": 44,
+    "adjusted": 19,
     "outlier": 27,
     "chartOnly": 81,
     "both": 9,
@@ -1654,7 +1654,7 @@
     "forensics": 32
   },
   "sessionStats": {
-    "checkedAt": "2026-10-26T23:54:15.021Z",
+    "checkedAt": "2026-10-27T00:06:22.674Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -3900,24 +3900,6 @@
         ]
       },
       {
-        "slug": "alandwhaletr",
-        "name": "ALandWhaleTR",
-        "explained": false,
-        "reason": "",
-        "red": [],
-        "maxZ": 35.087,
-        "metrics": [
-          {
-            "id": "s_kd",
-            "label": "🧪 Session K/D",
-            "value": 38.042,
-            "bound": 36.571,
-            "z": 35.087,
-            "side": "high"
-          }
-        ]
-      },
-      {
         "slug": "angeh2026",
         "name": "angeh2026",
         "explained": true,
@@ -4006,9 +3988,27 @@
             "side": "high"
           }
         ]
+      },
+      {
+        "slug": "alandwhaletr",
+        "name": "ALandWhaleTR",
+        "explained": true,
+        "reason": "Owner dismissed 2026-10-26 (#10, t703): 🧪 Session K/D 38.0, no catchable marks so far; the owner keeps watching this account by hand (data still collected)",
+        "red": [],
+        "maxZ": 35.087,
+        "metrics": [
+          {
+            "id": "s_kd",
+            "label": "🧪 Session K/D",
+            "value": 38.042,
+            "bound": 36.571,
+            "z": 35.087,
+            "side": "high"
+          }
+        ]
       }
     ],
-    "outliersUnexplained": 2
+    "outliersUnexplained": 1
   },
   "size": {
     "at": "2026-10-26T23:53:57.222Z",
@@ -4021,7 +4021,7 @@
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-26T23:54:15.064Z",
+    "checkedAt": "2026-10-27T00:06:22.705Z",
     "candidates": [
       "chocoiatevs",
       "nebelhexe",
@@ -33507,7 +33507,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-26T23:54:15.081Z",
+    "checkedAt": "2026-10-27T00:06:22.715Z",
     "count": 392,
     "players": [
       {
@@ -34272,14 +34272,6 @@
         ]
       },
       {
-        "slug": "bosscreinbot",
-        "name": "BossCreinBot",
-        "cid": "5429423269692755745",
-        "lists": [
-          "adjusted"
-        ]
-      },
-      {
         "slug": "burkeso",
         "name": "Burkeso",
         "cid": "5429201282572093329",
@@ -34315,14 +34307,6 @@
         "slug": "dragonqux",
         "name": "DragonQuX",
         "cid": "5428631729613471409",
-        "lists": [
-          "adjusted"
-        ]
-      },
-      {
-        "slug": "ekiard",
-        "name": "Ekiard",
-        "cid": "5429074240452114225",
         "lists": [
           "adjusted"
         ]
@@ -36451,6 +36435,14 @@
         ]
       },
       {
+        "slug": "bosscreinbot",
+        "name": "BossCreinBot",
+        "cid": "5429423269692755745",
+        "lists": [
+          "padding"
+        ]
+      },
+      {
         "slug": "bosscreinvs",
         "name": "BossCreinVS",
         "cid": "5429423912977216897",
@@ -36534,6 +36526,14 @@
         "slug": "ehukay",
         "name": "EHUKAY",
         "cid": "5429342752045236593",
+        "lists": [
+          "padding"
+        ]
+      },
+      {
+        "slug": "ekiard",
+        "name": "Ekiard",
+        "cid": "5429074240452114225",
         "lists": [
           "padding"
         ]
@@ -36765,7 +36765,7 @@
     ]
   },
   "infantry": {
-    "checkedAt": "2026-10-26T23:54:23.587Z",
+    "checkedAt": "2026-10-27T00:06:30.501Z",
     "players": 15270,
     "counts": {
       "infantry": 9889,
@@ -36822,7 +36822,7 @@
       }
     },
     "tagMin": 20,
-    "checkedAt": "2026-10-26T23:54:21.367Z",
+    "checkedAt": "2026-10-27T00:06:28.809Z",
     "coverage": {
       "players": 15240,
       "withSessions": 14116,
@@ -37133,7 +37133,7 @@
   },
   "burst": {
     "rule": "KPM ≥ 5 and ≥ 15 kills in ≥ 2 min (one stored session, no 10-minute floor); skipped when within the player's own normal (≥ 5 other sessions of ≥ 10 min, ≤ 2× their median KPM, career K/D < 10)",
-    "checkedAt": "2026-10-26T23:54:26.314Z",
+    "checkedAt": "2026-10-27T00:06:32.333Z",
     "sessions": 17,
     "ownNormalSkipped": 0,
     "flaggedPlayers": 0,
@@ -37391,12 +37391,12 @@
     ]
   },
   "padderPenalty": {
-    "checkedAt": "2026-10-26T23:54:15.113Z",
+    "checkedAt": "2026-10-27T00:06:22.740Z",
     "ranked": 15172,
     "penalty": 0.1,
     "ref": 610.6,
     "rule": "Confirmed stat padders (data/reviewed.json \"padding\") get 💩 and −10% adjusted iVi, on top of the farm-kill removal and the * mark. A score at or below 0 gets a fixed −61 instead (10% of 610.6, the median positive iVi on 2026-10-19), so it always drops. Owner override: \"penalty\": \"cleared\" on the reviewed.json entry (or decision \"cleared\").",
-    "penalized": 21,
+    "penalized": 23,
     "cleared": 0,
     "players": [
       {
@@ -37556,7 +37556,17 @@
         "before": 921.4,
         "after": 829.3,
         "rankBefore": 2816,
-        "rankAfter": 3332,
+        "rankAfter": 3331,
+        "fixedDrop": false
+      },
+      {
+        "slug": "bosscreinbot",
+        "name": "BossCreinBot",
+        "status": "penalized",
+        "before": 844.8,
+        "after": 760.3,
+        "rankBefore": 3235,
+        "rankAfter": 3755,
         "fixedDrop": false
       },
       {
@@ -37608,11 +37618,21 @@
         "rankBefore": 11210,
         "rankAfter": 11224,
         "fixedDrop": false
+      },
+      {
+        "slug": "ekiard",
+        "name": "Ekiard",
+        "status": "penalized",
+        "before": -248,
+        "after": -420.8,
+        "rankBefore": 12446,
+        "rankAfter": 13295,
+        "fixedDrop": true
       }
     ]
   },
   "vehicleCut": {
-    "checkedAt": "2026-10-26T23:54:15.166Z",
+    "checkedAt": "2026-10-27T00:06:22.780Z",
     "ranked": 15172,
     "cut": 9063,
     "buckets": {
@@ -37661,7 +37681,7 @@
         "before": 2691,
         "after": 788.5,
         "rankBefore": 3,
-        "rankAfter": 3580
+        "rankAfter": 3579
       },
       {
         "slug": "renamedsoldier12345",
@@ -37736,7 +37756,7 @@
         "before": 2457.4,
         "after": 783.9,
         "rankBefore": 15,
-        "rankAfter": 3606
+        "rankAfter": 3605
       },
       {
         "slug": "lilkavs",
@@ -37751,7 +37771,7 @@
         "before": 2336,
         "after": 819.9,
         "rankBefore": 26,
-        "rankAfter": 3383
+        "rankAfter": 3382
       },
       {
         "slug": "alandwhaletr",
@@ -38411,7 +38431,7 @@
         "before": 1943.6,
         "after": 816.3,
         "rankBefore": 174,
-        "rankAfter": 3407
+        "rankAfter": 3406
       },
       {
         "slug": "simplsai",
@@ -38576,7 +38596,7 @@
         "before": 1888.6,
         "after": 787.6,
         "rankBefore": 223,
-        "rankAfter": 3588
+        "rankAfter": 3587
       },
       {
         "slug": "daber222",
@@ -38651,7 +38671,7 @@
         "before": 1861.6,
         "after": 843.3,
         "rankBefore": 249,
-        "rankAfter": 3243
+        "rankAfter": 3242
       },
       {
         "slug": "himhantr",
@@ -39944,7 +39964,7 @@
         "before": 2336,
         "after": 819.9,
         "rankBefore": 26,
-        "rankAfter": 3383
+        "rankAfter": 3382
       },
       {
         "slug": "nebelhexe",
@@ -40199,7 +40219,7 @@
     ]
   },
   "hut": {
-    "builtAt": "2026-10-26T23:54:14.392Z",
+    "builtAt": "2026-10-27T00:06:22.211Z",
     "cuts": {
       "actMedian": 0.2675,
       "actMult": 1.333,
@@ -44863,9 +44883,9 @@
     "cleared": []
   },
   "vehDiff": {
-    "builtAt": "2026-10-26T23:54:14.470Z",
+    "builtAt": "2026-10-27T00:06:22.264Z",
     "start": 15,
-    "damped": 3356,
+    "damped": 3355,
     "dieHardHut": 1145,
     "dieHardAfter": 430,
     "rule": "🔀 Diff vehicle damp, gradual, start from this build's players: start = median 🪖 vehicle share (15.0%). Vehicle share at or below the start → no change; above → factor = (100 − vehicle %) ÷ (100 − start), so only the on-foot part of a positive Diff counts (all-vehicle → 0). Negative Diff untouched. ⚔️ iVi already carries the 🚜 cut; this one keeps the Diff comparison about infantry. With 🛖 the lower factor applies (never both multiplied). Diff before = with 🛖 only. No mark next to the name; the Diff hover says “🚜 Reduced from …”. Owner override: \"vehDiff\": \"cleared\" on the data/reviewed.json player entry, or the 🚜 \"vehicleCutCleared\" exemption.",
@@ -79587,17 +79607,6 @@
         "diff": 4
       },
       {
-        "name": "Ekiard",
-        "slug": "ekiard",
-        "veh": 28.3,
-        "factor": 0.844,
-        "hut": null,
-        "by": "veh",
-        "diffRaw": 5,
-        "diffHut": 5,
-        "diff": 4
-      },
-      {
         "name": "JIumbo",
         "slug": "jiumbo",
         "veh": 33.9,
@@ -81790,7 +81799,7 @@
     "cleared": []
   },
   "zergRevive": {
-    "builtAt": "2026-10-26T23:54:14.637Z",
+    "builtAt": "2026-10-27T00:06:22.379Z",
     "zergScored": 6798,
     "measured": 1219,
     "measuredZerg": 1060,
@@ -85456,7 +85465,7 @@
     "cleared": []
   },
   "newbieDiff": {
-    "builtAt": "2026-10-26T23:54:14.572Z",
+    "builtAt": "2026-10-27T00:06:22.336Z",
     "loH": 5.7,
     "hiH": 365,
     "n": 15170,
@@ -95927,14 +95936,6 @@
         "diff": -14
       },
       {
-        "name": "skeletlox1",
-        "slug": "skeletlox1",
-        "h": 152.9,
-        "factor": 0.79,
-        "diffRaw": -31,
-        "diff": -24
-      },
-      {
         "name": "HUNTERycz",
         "slug": "hunterycz",
         "h": 270.7,
@@ -96261,6 +96262,14 @@
         "factor": 0.308,
         "diffRaw": -30,
         "diff": -9
+      },
+      {
+        "name": "skeletlox1",
+        "slug": "skeletlox1",
+        "h": 152.9,
+        "factor": 0.79,
+        "diffRaw": -30,
+        "diff": -24
       },
       {
         "name": "Xi956",
@@ -129141,8 +129150,8 @@
         "name": "Rivendale",
         "slug": "rivendale",
         "h": 7.9,
-        "diffRaw": 1,
-        "diff": 1
+        "diffRaw": 2,
+        "diff": 2
       },
       {
         "name": "AskMeAboutDinosaurs",
@@ -136076,7 +136085,7 @@
     "cleared": []
   },
   "assistGap": {
-    "checkedAt": "2026-10-26T23:54:21.370Z",
+    "checkedAt": "2026-10-27T00:06:28.813Z",
     "start": "2026-04-01T13:00:00.000Z",
     "end": "2026-05-07T05:00:00.000Z",
     "url": "https://www.planetside2.com/patch-notes/may-6-hotfix-2026",
@@ -137275,7 +137284,7 @@
     ]
   },
   "tractorMark": {
-    "checkedAt": "2026-10-26T23:54:14.661Z",
+    "checkedAt": "2026-10-27T00:06:22.397Z",
     "rule": "🚜 = infantry % < p25 (71.9%) and (vehicle repair/min ≥ p75 (0.924) or vehicle kills/min ≥ p75 (0.216) of the 1443 players with 2+ h of XP detail), or infantry % < p2 (21.7%)",
     "cuts": {
       "cut": 71.9,

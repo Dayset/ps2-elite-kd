@@ -44,6 +44,7 @@ export const KNOWN_EXTREMES = Object.freeze({
   renamedsoldier12345: "Owner reviewed 2026-10-18 (#10): vehicle main try-harding K/D (lifetime KD 33, 658 kills / 25 deaths vs 200 opponents); explained, not a cheater",
   pikaqiuill: "Owner reviewed 2026-10-25 (#10, t640): vehicle main protecting his K/D; explained",
   searchosirisonepvp: "Owner reviewed 2026-10-25 (#10, t640): regular player; fell through the terrain, survived and kept killing, which tripped the checks",
+  alandwhaletr: "Owner dismissed 2026-10-26 (#10, t703): 🧪 Session K/D 38.0, no catchable marks so far; the owner keeps watching this account by hand (data still collected)",
   fright1vs: "Reviewed 2026-10-18 (#10): 🎈 inflation 19.2 = lifetime KD 1.82 vs 121 kills / 992 deaths against 200 opponents; real data, big sample, the public board flatters",
 });
 
