@@ -36,17 +36,17 @@ import {
 } from "./math.mjs?v=20261026-brv1";
 import { formatClock, fmtNum, slugKey, bareName, parseNames, namesEqualIgnoreCase, namesSetKey, niceLinTicks, niceNum, niceLogTicks, formatTick, escapeHtml, makeAbortError, isAbortError, checkAborted, readJsonLS, writeJsonLS } from "./app-util.mjs?v=20261026-brv1";
 import { createShareAdd } from "./share-add.mjs?v=20261026-brv1";
-import { createSharedIndex } from "./shared-index.mjs?v=20261026-brv1";
+import { createSharedIndex } from "./shared-index.mjs?v=20261027-rfps1";
 import { createNamesField } from "./names-field.mjs?v=20261026-brv1";
-import { createStatsTable } from "./stats-table.mjs?v=20261026-brv1";
+import { createStatsTable } from "./stats-table.mjs?v=20261027-rfps1";
 import { createChartWave } from "./chart-wave.mjs?v=20261026-brv1";
-import { createChart } from "./chart.mjs?v=20261026-brv1";
+import { createChart } from "./chart.mjs?v=20261027-rfps1";
 import { createLoader } from "./loader.mjs?v=20261026-brv1";
 import { createCacheChips } from "./cache-chips.mjs?v=20261026-brv1";
 import { createLocalCache } from "./local-cache.mjs?v=20261026-brv1";
 import { createProgress } from "./progress.mjs?v=20261026-brv1";
 import { createTheme } from "./theme.mjs?v=20261024-split2";
-import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261026-brv1";
+import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261027-rfps1";
 import GHOST_MODEL from "./data/ghost-model.mjs?v=20261010-sav1";
 import { t as tr, ready as i18nReady } from "./i18n.mjs";
 // Wait for the chosen language file (English loads nothing), so the first render is translated.
@@ -109,7 +109,7 @@ import {
   THIN_MARK,
   THIN_NOTE_HEAD,
   thinPlayerLine,
-} from "./player-metrics.mjs?v=20261026-brv1";
+} from "./player-metrics.mjs?v=20261027-rfps1";
 /** "22 kills / 60 deaths" in the opponent sample (MIN_FIGHTS counts). */
 function fightsText(r) {
   const k = r.sampleKills || 0;
@@ -212,7 +212,8 @@ import {
     const sum = el.querySelector("summary");
     if (sum) sum.textContent = tr("foot.psVsPc", "PlayStation vs PC difference");
     const body = el.querySelector("#psBaselineText") || el;
-    body.textContent = tr("foot.psBaseline", "On PlayStation, adjusted iVi uses a lower baseline (600 divided by the PC/PlayStation kill-speed gap, currently about {n}, rechecked weekly), and 🦁 Brave uses the same gap (×{g}) for enemy kill speed and Activity, so top players compare fairly with PC.", { n: Math.round(psIviBaseline()), g: psKpmRatio().toFixed(2) });
+    body.textContent = tr("foot.psBaseline", "On PlayStation, adjusted iVi uses a lower baseline (600 divided by the PC/PlayStation kill-speed gap, currently about {n}, rechecked weekly), and 🦁 Brave uses the same gap (×{g}) for enemy kill speed and Activity, so top players compare fairly with PC.", { n: Math.round(psIviBaseline()), g: psKpmRatio().toFixed(2) }) +
+      " " + tr("foot.psResist", "🛡️ Resist, 📊 COI and ⚙️ Mech% use the same gap (Resist ×{g}), so they read on the PC scale.", { g: psKpmRatio().toFixed(2) }); // owner t717
   }
   if (IS_PS && typeof window !== "undefined") {
     paintPsBaselineNote();

@@ -9,11 +9,11 @@
  * (exampleFacts / exampleCard), so Node tests cover them.
  */
 import { t as tr } from "./i18n.mjs";
-import { normalizePlayer, playerMetrics, consistencyParts, MIN_FIGHTS_RULE } from "./player-metrics.mjs?v=20261026-brv1";
+import { normalizePlayer, playerMetrics, consistencyParts, MIN_FIGHTS_RULE } from "./player-metrics.mjs?v=20261027-rfps1";
 import { RF_SOFT, SPEED_BAND_LOW, SPEED_BAND_HIGH, speedSlowFactor, speedAdjustment, SLOPE_FLOOR, SLOPE_EPS } from "./math.mjs?v=20261026-brv1";
 import { rfBaseFor } from "./ps-baseline.mjs?v=20261026-brv1";
 import { percentileOf, quantile } from "./dist.mjs?v=20261010-sav1";
-import { slugKey, bareName } from "./rank-row.mjs?v=20261026-brv1";
+import { slugKey, bareName } from "./rank-row.mjs?v=20261027-rfps1";
 import { PADDER_PENALTY_REF } from "./padding.mjs?v=20261023-short1";
 
 export const DEMO_NAME = "YuigahamaYui";
@@ -52,9 +52,10 @@ export function exampleFacts(raw, pools = {}) {
     top: p.top,
     thin: m.thin,
     kd: m.kd, kpm: m.kpm, own, acc: m.acc, hsr: m.hsr, ivi: m.ivi,
-    kills: s.kills, deaths: s.deaths, ekpm: m.ekpm, rkd: m.rkd, rf: m.rf,
+    kills: s.kills, deaths: s.deaths, ekpm: m.ekpm, rkd: m.rkd, rf: fin(m.rfRaw) ? m.rfRaw : m.rf,
+    rfScale: fin(m.rfScale) ? m.rfScale : 1, rfShown: m.rf, // PS: shown 🛡️ Resist = measured × the weekly gap (owner t717)
     base: rfBaseFor(p.room), // 0.6 (PC) or 0.6 ÷ the PS kill-speed gap (ps-baseline.mjs)
-    log2: fin(m.rf) && m.rf > 0 ? Math.log2(m.rf / rfBaseFor(p.room)) : NaN,
+    log2: fin(m.rfRaw) && m.rfRaw > 0 ? Math.log2(m.rfRaw / rfBaseFor(p.room)) : NaN,
     adj: m.adj,
     slowFactor: speedSlowFactor(own),
     speedDelta: speedAdjustment(own, m.adj),
@@ -104,6 +105,7 @@ export function exampleCard(x) {
     tr("cx.opp", "Their {top} most-fought opponents kill at {ekpm} per minute (a typical player’s opponents: ~0.35).{opp}", { top: x.top, ekpm: f(x.ekpm), opp: oppWords(x.ekpm) }),
     tr("cx.kd", "☠️ K/D against them: {k} ÷ {d} = <b>{v}</b>", { k: x.kills, d: x.deaths, v: f(x.rkd) }),
     tr("cx.resist", "🛡️ Resist: {a} × {b} = <b>{v}</b>", { a: f(x.rkd), b: f(x.ekpm), v: f(x.rf, 3) }),
+    ...(x.rfScale > 1 ? [tr("cx.resistPs", "🎮 PlayStation: the 🛡️ Resist, 📊 COI and ⚙️ Mech% columns use {v} × {g} (the weekly PC/PlayStation kill-speed gap) = <b>{s}</b>", { v: f(x.rf, 3), g: (+x.rfScale).toFixed(2), s: f(x.rfShown, 3) })] : []),
     tr("cx.rating", "Rating: 600 × (1 + log₂({rf} ÷ {base})) = <b>{v}</b>", { rf: f(x.rf, 3), base: +(x.base > 0 ? x.base : RF_SOFT).toFixed(3), v: fmtSigned(x.adj) }),
     pace,
   ];

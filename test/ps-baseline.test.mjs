@@ -107,3 +107,47 @@ test("🦁 Brave (owner t700): PS slope on enemy KPM × gap and Activity × gap;
     setPsKpmRatio(prev);
   }
 });
+
+test("🛡️ Resist / 📊 COI / ⚙️ Mech% (owner t717): PS shows Resist × gap (base 0.6 ÷ gap); PC unchanged; iVi untouched", async () => {
+  const { rfIf, combatOutput, projectedMech, RF_SOFT: SOFT } = await import("../math.mjs");
+  const { playerMetrics, normalizePlayer } = await import("../player-metrics.mjs");
+  const { ghostFeatures } = await import("../ghost.mjs");
+  const { exampleFacts, exampleCard } = await import("../columns-example.mjs");
+  const rows = [];
+  for (let i = 0; i < 40; i++) rows.push({ name: "o" + i, kpm: 0.2 + i * 0.02, kills: 30 - i * 0.5, deaths: 10 + i * 0.3 });
+  const base = { display: "T", global_kd: 1.5, global_kpm: 0.9, own_kpm: 0.9, acc: 0.2, hsr: 0.2, ivi: 900, rows };
+  const prev = psKpmRatio();
+  try {
+    setPsKpmRatio(1.69);
+    const pc = playerMetrics(normalizePlayer({ ...base }));
+    const ps = playerMetrics(normalizePlayer({ ...base, room: "ps" }));
+    const raw = rfIf(normalizePlayer({ ...base })).rf;
+    // PC: exactly the old numbers
+    assert.equal(pc.rfScale, 1);
+    assert.equal(pc.rf, raw);
+    assert.equal(pc.rfRaw, raw);
+    assert.equal(pc.coi, combatOutput(raw));
+    assert.equal(pc.mech, projectedMech(raw));
+    // PS: measured against 0.6 ÷ gap
+    assert.ok(Math.abs(ps.rfScale - 1.69) < 1e-12);
+    assert.equal(ps.rfRaw, raw);
+    assert.ok(Math.abs(ps.rf - raw * 1.69) < 1e-12);
+    assert.ok(Math.abs(ps.coi - raw / rfBaseFor("ps")) < 1e-12);
+    assert.ok(Math.abs(ps.coi - ps.rf / SOFT) < 1e-12);
+    assert.ok(Math.abs(ps.mech - projectedMech(raw * 1.69)) < 1e-12);
+    // not changed by this: adjusted iVi still uses the raw Resist with the PS base, ghost style features stay raw
+    assert.ok(Math.abs(ps.adj - adjustedIvi(ps.ivi, raw, rfBaseFor("ps"))) < 1e-9);
+    assert.deepEqual(ghostFeatures(ps)[4], ghostFeatures(pc)[4]);
+    // worked example: PS line shows raw × gap, PC has none
+    const xps = exampleFacts({ ...base, room: "ps" });
+    const xpc = exampleFacts({ ...base });
+    assert.equal(xps.rf, raw);
+    assert.match(exampleCard(xps), /1\.69/);
+    assert.doesNotMatch(exampleCard(xpc), /🎮 PlayStation: the 🛡️ Resist/);
+    // follows the weekly gap, no hardcoded number
+    setPsKpmRatio(2);
+    assert.ok(Math.abs(playerMetrics(normalizePlayer({ ...base, room: "ps" })).rf - raw * 2) < 1e-12);
+  } finally {
+    setPsKpmRatio(prev);
+  }
+});

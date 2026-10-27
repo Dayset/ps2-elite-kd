@@ -41,7 +41,7 @@ export function ghostFeatures(m) {
     isFiniteNum(m.ownKpm) ? clamp(m.ownKpm, 0, 4) : NaN,
     isFiniteNum(m.acc) ? clamp(m.acc, 0, 100) / 100 : NaN,
     isFiniteNum(m.hsr) ? clamp(m.hsr, 0, 100) / 100 : NaN,
-    logPos(m.rf),
+    logPos(isFiniteNum(m.rfRaw) ? m.rfRaw : m.rf), // measured Resist (PS shows it × gap; style match stays on the raw value)
     isFiniteNum(m.slope) ? clamp(m.slope, -3, 1) : NaN,
     logPos(m.pvs),
     logPos(m.inflation),

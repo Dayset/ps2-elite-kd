@@ -18,6 +18,7 @@ import {
   pressureVolume,
   resolveIvi,
   deathMixLite,
+  RF_SOFT,
 } from "./math.mjs?v=20261026-brv1";
 import { splitFarm, chopScrims, isScrimRoom, isPenalizedPadder, padderPenalty } from "./padding.mjs?v=20261023-short1";
 import { vehicleCutFor, applyVehicleCut, isVehicleCutCleared } from "./vehicle-cut.mjs?v=20261022-wpc1";
@@ -265,6 +266,10 @@ function metricsRow(p) {
   const braveScale = kpmScaleFor(p && p.room);
   const braveSlope = braveScale === 1 ? slope : scaledCurveSlope(p, braveScale);
   const pvs = pressureVolume(act * braveScale, braveSlope);
+  // 🛡️ Resist / 📊 COI / ⚙️ Mech% shown on the PS scale: measured against the PS base 0.6 ÷ the weekly gap,
+  // i.e. raw Resist × gap (owner t717, ps-baseline.mjs). PC: scale 1 = unchanged. rfRaw keeps the measured value.
+  const rfScale = RF_SOFT / rfBaseFor(p && p.room);
+  const rfShown = rfScale === 1 ? rf : rf * rfScale;
   return {
     p,
     m,
@@ -277,10 +282,12 @@ function metricsRow(p) {
     rkd,
     ekpm,
     own,
-    rf,
+    rf: rfShown,
+    rfRaw: rf,
+    rfScale,
     act,
-    coi: combatOutput(rf),
-    mech: projectedMech(rf),
+    coi: combatOutput(rfShown),
+    mech: projectedMech(rfShown),
     // 🧱 Consistency (0–1): holds up vs hard opposition; main page shows its population percentile.
     cons: consistencyOf(p),
     slope,
