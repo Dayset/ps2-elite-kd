@@ -44,7 +44,8 @@ function start() {
   // Owner 2026-10-26 (stream overlay): ?stream=1 strips the page to the
   // meters + session card for OBS Browser Source over the game.
   const streamMode = new URLSearchParams(location.search).get("stream") === "1";
-  if (streamMode) { document.body.classList.add("live-stream"); setSfxRate(1.3); }
+  if (streamMode) document.body.classList.add("live-stream");
+  setSfxRate(1.3); // owner 2026-10-26: 1.3x on every live page, not just stream mode
   const stateEl = $("liveState");
   const listEl = $("liveList");
   // Owner 2026-10-24 (CPU): the t579u outline, the t589u hollow and the t568u glows are drawn once per size into
@@ -594,31 +595,10 @@ function start() {
   const sessionEl = $("liveSession");
   const streamKdEl = $("liveStreamKd"), streamSesEl = $("liveStreamSession");
   const sessionDur = (ms) => { const s = Math.floor(ms / 1000); if (s < 60) return `${s}s`; const m = Math.floor(s / 60); if (m < 60) return `${m}m`; return `${Math.floor(m / 60)}h${String(m % 60).padStart(2, "0")}m`; };
-  // Owner 2026-10-25: adjustable DPM decay τ (seconds) — the owner tries
-  // values live. A setting, so it persists across reloads (session data
-  // does not); the events never change, only their weighting. Note the
-  // scale moves with τ: a kill spikes to 6000 at 10 s but 1000 at 60 s —
-  // the steady pace average (1 KPM → 1000) does not, so compare shapes,
-  // not heights, across τ.
-  let dpmTauMs = 10000;
-  try { const saved = Number(localStorage.getItem("ps2-live-dpm-tau")); if (Number.isFinite(saved) && saved >= 1 && saved <= 3600) dpmTauMs = saved * 1000; } catch {}
-  const tauInput = $("liveDpmTauVal");
-  if (tauInput) {
-    tauInput.value = String(Math.round(dpmTauMs / 1000));
-    const applyTau = () => {
-      let s = Math.round(Number(tauInput.value));
-      if (!Number.isFinite(s)) s = 10;
-      s = Math.min(3600, Math.max(1, s));
-      tauInput.value = String(s);
-      dpmTauMs = s * 1000;
-      try { localStorage.setItem("ps2-live-dpm-tau", String(s)); } catch {}
-      dpsTick();
-    };
-    tauInput.addEventListener("change", applyTau);
-    const tauDown = $("liveDpmTauDown"), tauUp = $("liveDpmTauUp");
-    if (tauDown) tauDown.addEventListener("click", () => { tauInput.value = String(Math.max(1, Math.round(Number(tauInput.value) || 10) - 10)); applyTau(); });
-    if (tauUp) tauUp.addEventListener("click", () => { tauInput.value = String(Math.min(3600, Math.round(Number(tauInput.value) || 10) + 10)); applyTau(); });
-  }
+  // Owner 2026-10-26: DPM decay τ locked at 60 s, adjuster hidden — the
+  // owner tried values live and settled on 60. A kill spikes to 1000;
+  // the steady pace average (1 KPM → 1000) does not depend on τ.
+  let dpmTauMs = 60000;
   // Owner 2026-10-26 (share): one tap copies a Messenger-ready block — the
   // watch link (the target's name in the URL, so the recipient follows the
   // same session) plus the current numbers, cash-out first, then DPM.
@@ -801,19 +781,16 @@ function start() {
       const deathLineEl = document.getElementById("liveDeathLine");
       if (deathLineEl) { const w = timerBarPct(lastDeath != null && !combatDone ? combat.ms - (Date.now() - lastDeath) : 0, combat.ms); if (w !== lastDeathLineW) { deathLineEl.style.width = w; lastDeathLineW = w; } }
       // Owner 2026-10-26 (debug box): the medians plus the exact inputs
-      // to decompile combat efficiency back — hold gaps (all of them),
-      // all combat runs, current τ. Plain text, copyable at stream end.
+      // medians only (owner 2026-10-26) — no per-gap/per-run lists, no τ.
+      // Plain text, copyable at stream end.
       // Write-on-change, like the session line.
       if (dbgEl) {
-        const gaps = holdGaps(spikes, deaths);
-        const runs = combatRuns(deaths, spikes);
         const sec1 = (ms) => (ms / 1000).toFixed(1);
-        const key = `${holdMs}|${gaps.join(",")}|${combat.ms}|${combat.n}|${runs.join(",")}|${dpmTauMs}`;
+        const key = `${holdMs}|${combat.ms}|${combat.n}`;
         if (key !== lastDbg) {
           dbgEl.textContent = [
-            `${tr("live.dpmHold", "hold {s}s", { s: sec1(holdMs) })}${gaps.length ? `: ${gaps.map(sec1).join(", ")}` : ""}`,
-            `${tr("live.dpmCombat", "combat {s}s (n={n})", { s: sec1(combat.ms), n: combat.n })}${runs.length ? `: ${runs.map(sec1).join(", ")}` : ""}`,
-            `τ ${(dpmTauMs / 1000).toFixed(0)}s`,
+            `${tr("live.dpmHold", "hold {s}s", { s: sec1(holdMs) })}`,
+            `${tr("live.dpmCombat", "combat {s}s (n={n})", { s: sec1(combat.ms), n: combat.n })}`,
           ].join("\n");
           lastDbg = key;
         }

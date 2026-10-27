@@ -213,7 +213,7 @@ describe("🎥 live.html in a browser", () => {
     });
   });
 
-  it("imaginary DPM (owner 2026-10-25): warm-up bumps to 3, then it drains, an assist adds half a kill", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+  it("imaginary DPM (owner 2026-10-25): warm-up bumps to 3, then it drains, an assist adds its full share", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
       const dps = () => ev(`Number(document.getElementById("liveDpsVal").textContent)`);
@@ -225,15 +225,15 @@ describe("🎥 live.html in a browser", () => {
       await ev(`window.__fakeWs.emit(${gain})`);
       assert.equal(await ev(until(`document.getElementById("liveDpsVal").textContent === "Start at 2/3"`)), true, "an assist bumps the count too");
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[1].cid, "80", false)})`);
-      const afterKill = await ev(until(`Number(document.getElementById("liveDpsVal").textContent) >= 10000`)) && await dps();
-      assert.ok(afterKill >= 10000, `the 3rd chunk starts the meter high: ${afterKill}`);
+      const afterKill = await ev(until(`Number(document.getElementById("liveDpsVal").textContent) >= 2000`)) && await dps();
+      assert.ok(afterKill >= 2000, `the 3rd chunk starts the meter: ${afterKill}`);
       assert.equal(await ev(`document.getElementById("liveDpsLabel").textContent`), "Damage", "label back to Damage once started");
       await new Promise((r) => setTimeout(r, 2500));
       const drained = await dps();
-      assert.ok(drained < afterKill && drained > 3000, `DPM drains down after the start: ${drained}`);
+      assert.ok(drained < afterKill && drained > 2000, `DPM drains down after the start: ${drained}`);
       await ev(`window.__fakeWs.emit(${gain})`);
-      const afterAssist = await ev(until(`Number(document.getElementById("liveDpsVal").textContent) > ${drained + 2000}`)) && await dps();
-      assert.ok(afterAssist > drained + 2000, `an assist adds ~3000: ${drained} -> ${afterAssist}`);
+      const afterAssist = await ev(until(`Number(document.getElementById("liveDpsVal").textContent) > ${drained + 500}`)) && await dps();
+      assert.ok(afterAssist > drained + 500, `an assist adds ~1000: ${drained} -> ${afterAssist}`);
       assert.deepEqual(errors, [], "no page errors");
     });
   });
@@ -254,18 +254,14 @@ describe("🎥 live.html in a browser", () => {
     }, { width: 390, height: 844 });
   });
 
-  it("adjustable tau (owner 2026-10-25): changing tau rescales DPM live", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+  it("tau locked (owner 2026-10-26): adjuster hidden, τ stays 60", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
-      assert.equal(await ev(`document.getElementById("liveDpmTauVal").value`), "10", "tau defaults to 10 s");
+      assert.equal(await ev(`getComputedStyle(document.getElementById("liveDpmTau")).display`), "none", "adjuster hidden");
+      assert.equal(await ev(`document.getElementById("liveDpmTauVal").value`), "60", "tau locked at 60 s");
       for (let i = 0; i < 3; i++) await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[i].cid, "80", false)})`); // three chunks to start the meter
-      const afterKill = await ev(until(`Number(document.getElementById("liveDpsVal").textContent) >= 15000`)) && await ev(`Number(document.getElementById("liveDpsVal").textContent)`);
-      assert.ok(afterKill >= 15000, `tau=10 s three kills spike high: ${afterKill}`);
-      await ev(`document.getElementById("liveDpmTauVal").value = "60"; document.getElementById("liveDpmTauVal").dispatchEvent(new Event("change", { bubbles: true }));`);
-      // the counter glides to the rescaled value instead of jumping — wait
-      // for the glide to converge, not just to cross 5000 mid-glide
-      const afterTau = await ev(until(`Number(document.getElementById("liveDpsVal").textContent) < 3200`)) && await ev(`Number(document.getElementById("liveDpsVal").textContent)`);
-      assert.ok(afterTau > 2500 && afterTau < 3200, `tau=60 s rescales the same kills to ~2900: ${afterTau}`);
+      const afterKill = await ev(until(`Number(document.getElementById("liveDpsVal").textContent) >= 2000`)) && await ev(`Number(document.getElementById("liveDpsVal").textContent)`);
+      assert.ok(afterKill > 2000 && afterKill < 3200, `tau=60 s three kills spike to ~2900: ${afterKill}`);
       assert.deepEqual(errors, [], "no page errors");
     });
   });
@@ -463,7 +459,7 @@ describe("🎥 live.html in a browser", () => {
   });
 
 describe("🎥 live hold meter in a browser", () => {
-  it("hold (owner 2026-10-25): two clean 12 s gaps hold the line flat — DPM stays above 8000 eight seconds after the fourth kill", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+  it("hold (owner 2026-10-25): two clean 12 s gaps hold the line flat — DPM stays flat eight seconds after the fourth kill", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
       // CSSOM normalizes "0.0%" → "0%" on readback, so bar widths assert the normalized form (6.7% keeps its decimal)
@@ -479,13 +475,13 @@ describe("🎥 live hold meter in a browser", () => {
       assert.equal(await ev(until(`document.getElementById("liveDpsVal").textContent === "Start at 2/3"`)), true, "second kill bumps the count");
       await new Promise((r) => setTimeout(r, 12000)); // a slow player's real gap, cleanly measured
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[2].cid, "80", false)})`);
-      assert.equal(await ev(until(`Number(document.getElementById("liveDpsVal").textContent) >= 10000`)), true, "third kill starts the meter held");
+      assert.equal(await ev(until(`Number(document.getElementById("liveDpsVal").textContent) >= 2000`)), true, "third kill starts the meter held");
       assert.ok(Number.parseFloat(await ev(`document.getElementById("liveDpsBar").style.width`)) > 0, "DPM bar grows with the meter");
       await new Promise((r) => setTimeout(r, 12000)); // the same gap again
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[3].cid, "80", false)})`);
       await new Promise((r) => setTimeout(r, 8000)); // 8 s after the fourth kill — inside the 12 s hold
       const dpm = await ev(`Number(document.getElementById("liveDpsVal").textContent)`);
-      assert.ok(dpm > 8000, `held DPM stays above 8000 (with no hold it would be ~3900 here): ${dpm}`);
+      assert.ok(dpm > 3200, `held DPM stays flat (with no hold it would be ~2990 here): ${dpm}`);
       const holdW = Number.parseFloat(await ev(`document.getElementById("liveDpsHoldBar").style.width`));
       assert.ok(holdW >= 25 && holdW <= 45, `owner 2026-10-26: 8 s into the 12 s hold timer, ~33% left: ${holdW}`);
       assert.deepEqual(errors, [], "no page errors");
@@ -502,13 +498,13 @@ describe("🎥 live hold meter in a browser", () => {
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[1].cid, "80", false)})`); // kill 2: measures the 5 s run (and clears the old run's row)
       assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)").length === 1`)), true, "second kill on screen");
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[2].cid, "80", false)})`); // kill 3: starts the meter
-      assert.equal(await ev(until(`Number(document.getElementById("liveDpsVal").textContent) >= 10000`)), true, "third kill starts the meter");
+      assert.equal(await ev(until(`Number(document.getElementById("liveDpsVal").textContent) >= 2000`)), true, "third kill starts the meter");
       await ev(`window.__fakeWs.emit(${death(OPP[3].cid, ME.cid, "432", false)})`); // death 2: freeze for the 5 s average
       await new Promise((r) => setTimeout(r, 300)); // let the death commit and the tick freeze
       const atDeath = await ev(`Number(document.getElementById("liveDpsVal").textContent)`);
       await new Promise((r) => setTimeout(r, 4000)); // 4 s into the 5 s freeze
       const held = await ev(`Number(document.getElementById("liveDpsVal").textContent)`);
-      assert.ok(held >= atDeath * 0.95, `frozen DPM holds its death value (with no freeze it would drain to ~67%): ${atDeath} -> ${held}`);
+      assert.ok(held >= atDeath * 0.95, `frozen DPM holds its death value (with no freeze it would drain to ~94%): ${atDeath} -> ${held}`);
       assert.deepEqual(errors, [], "no page errors");
     });
   });
@@ -519,14 +515,14 @@ describe("🎥 live gas-counter scroll in a browser", () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
       for (let i = 0; i < 3; i++) await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[i].cid, "80", false)})`);
-      const base = await ev(until(`Number(document.getElementById("liveDpsVal").textContent) > 10000`)) && await ev(`Number(document.getElementById("liveDpsVal").textContent)`);
-      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[3].cid, "80", false)})`); // 4th kill: one 6000 scroll
+      const base = await ev(until(`Number(document.getElementById("liveDpsVal").textContent) > 2000`)) && await ev(`Number(document.getElementById("liveDpsVal").textContent)`);
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[3].cid, "80", false)})`); // 4th kill: one 1000 scroll
       const v0 = await ev(`Number(document.getElementById("liveDpsVal").textContent)`);
-      assert.ok(v0 < base + 2000, `slow start: barely moved right after the kill: ${base} -> ${v0}`);
-      assert.equal(await ev(until(`Number(document.getElementById("liveDpsVal").textContent) > ${base + 1000}`)), true, "scroll underway");
+      assert.ok(v0 < base + 300, `slow start: barely moved right after the kill: ${base} -> ${v0}`);
+      assert.equal(await ev(until(`Number(document.getElementById("liveDpsVal").textContent) > ${base + 300}`)), true, "scroll underway");
       await new Promise((r) => setTimeout(r, 500));
       const v1 = await ev(`Number(document.getElementById("liveDpsVal").textContent)`);
-      assert.ok(v1 > v0 + 2000, `speeding up: the rush phase gained 2000+ in 500 ms: ${v0} -> ${v1}`);
+      assert.ok(v1 > v0 + 500, `speeding up: the rush phase gained 500+ in 500 ms: ${v0} -> ${v1}`);
       assert.deepEqual(errors, [], "no page errors");
     });
   });
@@ -535,18 +531,18 @@ describe("🎥 live gas-counter scroll in a browser", () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
       for (let i = 0; i < 3; i++) await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[i].cid, "80", false)})`);
-      const base = await ev(until(`Number(document.getElementById("liveDpsVal").textContent) > 10000`)) && await ev(`Number(document.getElementById("liveDpsVal").textContent)`);
+      const base = await ev(until(`Number(document.getElementById("liveDpsVal").textContent) > 2000`)) && await ev(`Number(document.getElementById("liveDpsVal").textContent)`);
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[3].cid, "80", false)})`);
-      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[4].cid, "80", false)})`); // two scrolls queued, 6000 each
+      await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[4].cid, "80", false)})`); // two scrolls queued, 1000 each
       // no sleeps: a loaded machine overshoots setTimeout past the second
       // scroll, so poll for the value states instead — the counter only
       // rises while a scroll plays, so each crossing pins the order
-      assert.equal(await ev(until(`Number(document.getElementById("liveDpsVal").textContent) > ${base + 5000}`)), true, "first scroll landed");
+      assert.equal(await ev(until(`Number(document.getElementById("liveDpsVal").textContent) > ${base + 800}`)), true, "first scroll landed");
       const vMid = await ev(`Number(document.getElementById("liveDpsVal").textContent)`);
-      assert.ok(vMid < base + 11000, `second scroll not yet landed: ${base} -> ${vMid}`);
-      assert.equal(await ev(until(`Number(document.getElementById("liveDpsVal").textContent) > ${base + 10000}`)), true, "second scroll landed");
+      assert.ok(vMid < base + 1800, `second scroll not yet landed: ${base} -> ${vMid}`);
+      assert.equal(await ev(until(`Number(document.getElementById("liveDpsVal").textContent) > ${base + 1700}`)), true, "second scroll landed");
       const vEnd = await ev(`Number(document.getElementById("liveDpsVal").textContent)`);
-      assert.ok(vEnd < base + 12500, `both scrolls kept, no overshoot: ${base} -> ${vEnd}`);
+      assert.ok(vEnd < base + 2100, `both scrolls kept, no overshoot: ${base} -> ${vEnd}`);
       assert.deepEqual(errors, [], "no page errors");
     });
   });
@@ -555,7 +551,7 @@ describe("🎥 live gas-counter scroll in a browser", () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
       for (let i = 0; i < 3; i++) await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[i].cid, "80", false)})`);
-      assert.equal(await ev(until(`Number(document.getElementById("liveDpsVal").textContent) > 10000`)), true, "meter started");
+      assert.equal(await ev(until(`Number(document.getElementById("liveDpsVal").textContent) > 2000`)), true, "meter started");
       await ev(`window.__fakeWs.emit(${death(OPP[3].cid, ME.cid, "432", false)})`); // death 1: no average yet, no freeze
       await new Promise((r) => setTimeout(r, 5000)); // the spawn run, measured
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[4].cid, "80", false)})`); // kill 4: measures the 5 s run, starts a scroll
@@ -573,7 +569,7 @@ describe("🎥 live gas-counter scroll in a browser", () => {
       const f2 = await ev(`document.getElementById("liveDpsVal").textContent`);
       assert.equal(f1, f2, `frozen through the 5 s hold, three deaths and all: ${f1} vs ${f2}`);
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[1].cid, "80", false)})`); // next kill: the meter is not stuck
-      assert.equal(await ev(until(`Number(document.getElementById("liveDpsVal").textContent) > ${Number(f2) + 1000}`)), true, "a kill after the deaths scrolls up again");
+      assert.equal(await ev(until(`Number(document.getElementById("liveDpsVal").textContent) > ${Number(f2) + 500}`)), true, "a kill after the deaths scrolls up again");
       assert.deepEqual(errors, [], "no page errors");
     });
   });
@@ -737,7 +733,7 @@ describe("🎥 live timers in a browser", () => {
       assert.ok(holdMid >= 25 && holdMid <= 75, `hold bar drained after 1 s of 2: ${holdMid}`);
       // debug box: medians + counts, copyable text
       const dbg = await ev(`document.getElementById("liveDbg").textContent`);
-      assert.ok(dbg.includes("hold") && dbg.includes("combat") && dbg.includes("τ"), `debug box labels: ${dbg}`);
+      assert.ok(dbg.includes("hold") && dbg.includes("combat") && !dbg.includes(":"), `debug box shows medians only: ${dbg}`);
       assert.ok(dbg.includes("(n=2)"), `two combat runs counted: ${dbg}`);
       assert.deepEqual(errors, [], "no page errors");
     });
@@ -779,7 +775,7 @@ describe("🎥 live assist share in a browser", () => {
       assert.equal(await ev(until(`!document.getElementById("liveDpsVal").textContent.includes("/")`)), true, "meter started at the 3rd spike");
       await new Promise((r) => setTimeout(r, 1000)); // easing + decay settle
       const v = parseFloat(await ev(`document.getElementById("liveDpsVal").textContent`));
-      assert.ok(v > 500 && v < 4000, `three 10% assists read ~1800 decaying, not the flat ~9000: ${v}`);
+      assert.ok(v > 100 && v < 1000, `three 10% assists read ~300 decaying, not the flat ~1500: ${v}`);
       assert.equal(await ev(`JSON.stringify([...document.querySelectorAll("#liveList tbody.lv-me .lv-time .lv-em")].map((w) => w.textContent))`), JSON.stringify(["🤝×3"]), "the assist counter still counts every assist");
       assert.deepEqual(errors, [], "no page errors");
     });
@@ -802,7 +798,7 @@ describe("🎥 live global hold in a browser", () => {
       await new Promise((r) => setTimeout(r, 1000)); // still inside the ~2 s hold
       const v1 = parseFloat(await ev(`document.getElementById("liveDpsVal").textContent`));
       assert.ok(Math.abs(v1 - v0) / v0 < 0.05, `flat while the hold drains: ${v0} -> ${v1}`);
-      await new Promise((r) => setTimeout(r, 2100)); // past the hold, decayed ~14%
+      await new Promise((r) => setTimeout(r, 5000)); // past the hold, decayed ~7%
       const v2 = parseFloat(await ev(`document.getElementById("liveDpsVal").textContent`));
       assert.ok(v2 < v1 * 0.95, `falls together after the hold: ${v1} -> ${v2}`);
       assert.deepEqual(errors, [], "no page errors");
@@ -1022,13 +1018,13 @@ describe("🎥 live hold drops on death in a browser", () => {
 });
 
 describe("🎥 live bar colors in a browser", () => {
-  it("bar colors (owner 2026-10-26): main DPM fill is rainbow, Recharge fill is green", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+  it("bar colors (owner 2026-10-26): main DPM fill is rainbow, Recharge fill is blue", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
       const [dpm, hold] = await ev(`[getComputedStyle(document.querySelector("#liveDpsBar")).backgroundImage, getComputedStyle(document.querySelector("#liveDpsHoldBar")).backgroundImage]`);
       assert.ok(dpm.includes("linear-gradient") && dpm.includes("rgb(255, 23, 68)") && dpm.includes("rgb(0, 176, 255)"), `DPM rainbow: ${dpm}`);
       assert.ok(dpm.indexOf("rgb(124, 77, 255)") < dpm.indexOf("rgb(255, 23, 68)"), `DPM palette reversed: purple first, red last: ${dpm}`);
-      assert.ok(hold.includes("linear-gradient") && hold.includes("rgb(67, 160, 71)"), `Recharge green: ${hold}`);
+      assert.ok(hold.includes("linear-gradient") && hold.includes("rgb(25, 118, 210)"), `Recharge blue: ${hold}`);
       assert.deepEqual(errors, [], "no page errors");
     });
   });
@@ -1111,6 +1107,16 @@ describe("🎥 live streamer mode in a browser", () => {
       assert.ok(await ev(`location.search.includes("stream=1")`), "URL gains stream=1");
       const pos = await ev(`(() => { const bar = document.querySelector("#liveDps .live-bar"); const val = document.getElementById("liveDpsVal"); const b = bar.getBoundingClientRect(), v = val.getBoundingClientRect(); return [b.bottom, v.top]; })()`);
       assert.ok(pos[1] >= pos[0] - 1, `counter below the bar: bar bottom ${pos[0]}, val top ${pos[1]}`);
+      const bg = await ev(`(() => { const cs = (el) => getComputedStyle(el); return { tbl: cs(document.getElementById("liveList")).backgroundColor, track: cs(document.querySelector("#liveDps .live-bar")).backgroundColor, hold: cs(document.getElementById("liveDpsHoldBar")).backgroundImage }; })()`);
+      assert.equal(bg.tbl, "rgba(0, 0, 0, 0)", `table background drops out in stream mode: ${bg.tbl}`);
+      assert.equal(bg.track, "rgba(0, 0, 0, 0)", `bar track drops out in stream mode: ${bg.track}`);
+      assert.ok(bg.hold.includes("linear-gradient") && bg.hold.includes("13, 71, 161"), `Recharge is blue in stream mode: ${bg.hold}`);
+      for (let i = 0; i < 3; i++) await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[i].cid, "80", false)})`);
+      assert.equal(await ev(until(`document.getElementById("liveDpsLabel").textContent === "Damage"`)), true, "meter started");
+      const st = await ev(`(() => { const cs = (el) => getComputedStyle(el); const v = document.getElementById("liveDpsVal"); return { body: cs(document.body).webkitTextStrokeWidth, val: cs(v).webkitTextStrokeWidth, shadow: cs(v).textShadow }; })()`);
+      assert.equal(st.body, "2px", `body vector stroke: ${JSON.stringify(st)}`);
+      assert.equal(st.val, "4px", `counter vector stroke: ${JSON.stringify(st)}`);
+      assert.equal(st.shadow, "none", `no shadows anywhere on the counter: ${JSON.stringify(st)}`);
       assert.deepEqual(errors, [], "no page errors");
     });
   });
@@ -1133,5 +1139,19 @@ describe("🎥 live bars follow the table in a browser", () => {
       assert.ok(Math.abs(ws.tbl - ws.dps) <= 2, `phone bars match the table width: ${JSON.stringify(ws)}`);
       assert.deepEqual(errors, [], "no page errors");
     }, { width: 390, height: 844 });
+  });
+});
+
+describe("🎥 live Damage counter position in a browser", () => {
+  it("counter below the bar (owner 2026-10-26): the Damage label + value line sits under the DPM bar in normal mode", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      for (let i = 0; i < 3; i++) await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[i].cid, "80", false)})`);
+      assert.equal(await ev(until(`document.getElementById("liveDpsLabel").textContent === "Damage"`)), true, "meter started");
+      const r = await ev(`(() => { const bar = document.querySelector("#liveDps .live-bar").getBoundingClientRect(); const lb = document.getElementById("liveDpsLabel").getBoundingClientRect(); const vl = document.getElementById("liveDpsVal").getBoundingClientRect(); return { barBottom: bar.bottom, lbTop: lb.top, vlTop: vl.top }; })()`);
+      assert.ok(r.lbTop >= r.barBottom - 1, `label under the bar: ${JSON.stringify(r)}`);
+      assert.ok(r.vlTop >= r.barBottom - 1, `value under the bar: ${JSON.stringify(r)}`);
+      assert.deepEqual(errors, [], "no page errors");
+    });
   });
 });

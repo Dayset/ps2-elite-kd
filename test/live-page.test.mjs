@@ -685,12 +685,16 @@ test("cash (owner 2026-10-26): pot shows avg only, Σ hidden from display — su
   assert.match(js, /<div>\$\{tr\("live\.cashAvg", "Enemy avg ivi"\)\} \$\{h\.avg == null \? "–" : h\.avg\.toFixed\(1\)\}<\/div>/);
 });
 
-test("adjustable tau (owner 2026-10-25): DPM decay tau is a persisted page control", () => {
+test("tau locked (owner 2026-10-26): τ is 60s, adjuster hidden", () => {
   const js = liveSrc();
+  const css = cssSrc();
   const swap = readFileSync(new URL("scripts/build-live.mjs", root), "utf8");
   assert.match(js, /dpsNow\(dpsEvents, effNow, dpmTauMs, holdMs\)/);
-  assert.match(js, /ps2-live-dpm-tau/);
-  assert.match(swap, /<input id="liveDpmTauVal" type="number" min="1" max="3600" step="1" value="10">/);
+  assert.match(js, /let dpmTauMs = 60000;/);
+  assert.ok(!js.includes('localStorage.getItem("ps2-live-dpm-tau")'), "saved values ignored");
+  assert.ok(!js.includes("applyTau"), "no adjuster wiring left");
+  assert.match(css, /#liveDpmTau \{ display: none; \}/);
+  assert.match(swap, /<input id="liveDpmTauVal" type="number" min="1" max="3600" step="1" value="60">/);
 });
 
 test("bounty (owner 2026-10-26): one ⚰️×streak, then one 💰×lives, weapon under the centre name", () => {
@@ -712,7 +716,7 @@ test("mobile names + legend + DPS (owner 2026-10-25): table 100% with a flexible
   const swap = readFileSync(new URL("scripts/build-live.mjs", root), "utf8");
   assert.match(css, /@media \(max-width: 600px\)[\s\S]*?\.live-table \{[^}]*width: 100%;/);
   assert.match(css, /@media \(max-width: 600px\)[\s\S]*?col\.lv-c-nm \{ width: auto; \}/);
-  assert.match(swap, /<div id="liveDps" class="live-dps"><div class="live-metric"><span id="liveDpsLabel"><\/span> <span id="liveDpsVal">0\.0<\/span><div class="live-bar live-bar-fat" aria-hidden="true"><div id="liveDpsBar" class="live-bar-fill live-bar-dpm"><\/div><div id="liveDpmTickAvg" class="live-dpm-tick"><\/div><div id="liveDpmTickP90" class="live-dpm-tick"><\/div><\/div><\/div><div class="live-metric"><span id="liveCashAvgLabel"><\/span> <span id="liveCashAvgVal">–<\/span><\/div><div class="live-metric"><span id="liveOnline" class="live-online" data-state="unknown"><i><\/i><span id="liveOnlineText">…<\/span><\/span><\/div><\/div>/);
+  assert.match(swap, /<div id="liveDps" class="live-dps"><div class="live-metric"><div class="live-bar live-bar-fat" aria-hidden="true"><div id="liveDpsBar" class="live-bar-fill live-bar-dpm"><\/div><div id="liveDpmTickAvg" class="live-dpm-tick"><\/div><div id="liveDpmTickP90" class="live-dpm-tick"><\/div><\/div><span id="liveDpsLabel"><\/span> <span id="liveDpsVal">0\.0<\/span><\/div><div class="live-metric"><span id="liveCashAvgLabel"><\/span> <span id="liveCashAvgVal">–<\/span><\/div><div class="live-metric"><span id="liveOnline" class="live-online" data-state="unknown"><i><\/i><span id="liveOnlineText">…<\/span><\/span><\/div><\/div>/);
   assert.match(js, /eventNames: \["Death", "GainExperience_experience_id_1", "GainExperience_experience_id_278", "GainExperience_experience_id_279", "GainExperience_experience_id_2", "GainExperience_experience_id_3", "GainExperience_experience_id_371", "GainExperience_experience_id_372", "PlayerLogin", "PlayerLogout"\]/); // owner 2026-10-26: kill XP joins the subscribe
   assert.match(js, /DPS_ASSIST_XP\.has\(xid\)/);
   assert.match(js, /setInterval\(dpsTick, 100\)/);
@@ -821,13 +825,13 @@ test("DPM row bars (owner 2026-10-26): stacked meter lines, DPM glows and grows,
   const js = liveSrc();
   const css = cssSrc();
   const swap = readFileSync(new URL("scripts/build-live.mjs", root), "utf8");
-  assert.match(swap, /<div class="live-metric"><span id="liveDpsLabel"><\/span> <span id="liveDpsVal">0\.0<\/span><div class="live-bar live-bar-fat" aria-hidden="true"><div id="liveDpsBar" class="live-bar-fill live-bar-dpm"><\/div><div id="liveDpmTickAvg" class="live-dpm-tick"><\/div><div id="liveDpmTickP90" class="live-dpm-tick"><\/div><\/div><\/div>/);
+  assert.match(swap, /<div class="live-metric"><div class="live-bar live-bar-fat" aria-hidden="true"><div id="liveDpsBar" class="live-bar-fill live-bar-dpm"><\/div><div id="liveDpmTickAvg" class="live-dpm-tick"><\/div><div id="liveDpmTickP90" class="live-dpm-tick"><\/div><\/div><span id="liveDpsLabel"><\/span> <span id="liveDpsVal">0\.0<\/span><\/div>/);
   assert.match(swap, /<div class="live-metric"><span id="liveCashAvgLabel"><\/span> <span id="liveCashAvgVal">–<\/span><\/div>/); // pot: avg line only, Σ hidden
   assert.doesNotMatch(swap, /liveDpsCombatSep/);
   assert.match(css, /\.live-bar \{ height: 6px; margin-top: 0\.15rem; background: var\(--grid\); border-radius: 999px; overflow: hidden; \}/);
   assert.match(css, /\.live-bar-fill \{ height: 100%; width: 0%; background: var\(--dim\); border-radius: 999px; \}/);
   assert.match(css, /\.live-bar-dpm \{ background: linear-gradient\(90deg, #7c4dff, #00b0ff, #00e676, #ffea00, #ff9100, #ff1744\); box-shadow: 0 0 8px var\(--accent\); \}/); // main DPM = rainbow
-  assert.match(css, /\.live-bar-hold \{ background: linear-gradient\(90deg, #1b5e20, #43a047, #81c784\); \}/); // Recharge = green
+  assert.match(css, /\.live-bar-hold \{ background: linear-gradient\(90deg, #0d47a1, #1976d2, #64b5f6\); \}/); // Recharge = blue (green would key out over the chromakey background)
   assert.match(css, /\.live-bar-fat \{ height: 12px; position: relative; overflow: visible; \}/); // DPM track is fat and anchors the ticks; hold track stays thin (6 px); overflow visible so the ticks stick out (2026-10-26)
   assert.doesNotMatch(css, /\.live-bar-fill \{[^}]*transition/); // bars move frame-for-frame, no easing
   assert.match(js, /const dpsBarEl = \$\("liveDpsBar"\), dpsHoldBarEl = \$\("liveDpsHoldBar"\);/);
@@ -838,7 +842,7 @@ test("DPM row bars (owner 2026-10-26): stacked meter lines, DPM glows and grows,
   assert.match(js, /setBar\(dpsBarEl, "dpm", "0\.0%"\);/); // warm-up: bar at zero
 });
 
-test("debug box (owner 2026-10-26): medians + their inputs under the meter, copyable at stream end", () => {
+test("debug box (owner 2026-10-26): medians only under the meter, copyable at stream end", () => {
   const js = liveSrc();
   const css = cssSrc();
   const swap = readFileSync(new URL("scripts/build-live.mjs", root), "utf8");
@@ -847,8 +851,8 @@ test("debug box (owner 2026-10-26): medians + their inputs under the meter, copy
   assert.ok(js.includes('const dbgEl = $("liveDbg");'));
   assert.ok(js.includes('tr("live.dpmHold", "hold {s}s"'), "hold label reuses its key");
   assert.ok(js.includes('tr("live.dpmCombat", "combat {s}s (n={n})"'), "combat label reuses its key");
-  assert.ok(js.includes("holdGaps(spikes, deaths)"), "box shows the exact hold inputs");
-  assert.ok(js.includes("combatRuns(deaths, spikes)"), "box shows all combat runs");
+  assert.ok(!js.includes('`: ${gaps.map(sec1).join(", ")}`') && !js.includes('`: ${runs.map(sec1).join(", ")}`') && !js.includes("`τ ${"), "debug box shows medians only");
+  assert.ok(!js.includes("holdGaps(spikes, deaths)") && !js.includes("combatRuns(deaths, spikes)"), "no per-gap/per-run inputs computed for the box");
   assert.ok(!css.includes("body.live-stream #liveDbg"), "stream mode keeps the box (it is copied at stream end)");
 });
 
@@ -1009,11 +1013,13 @@ test("streamer mode (owner 2026-10-26): button switches to the chromakey overlay
   assert.match(js, /streamBtn\.textContent = tr\("live\.streamer", "Streamer mode"\);/);
   assert.match(js, /    streamBtn\.addEventListener\("click", \(\) => \{\n      document\.body\.classList\.add\("live-stream"\);\n      setSfxRate\(1\.3\);/);
   assert.match(js, /u\.searchParams\.set\("stream", "1"\);\n        history\.replaceState\(null, "", u\);/);
-  assert.match(js, /if \(streamMode\) \{ document\.body\.classList\.add\("live-stream"\); setSfxRate\(1\.3\); \}/);
+  assert.match(js, /if \(streamMode\) document\.body\.classList\.add\("live-stream"\);\n  setSfxRate\(1\.3\);/); // 1.3x on every live page, not just stream mode
   assert.match(js, /import \{ sfx, setSfxRate \} from "\.\/sfx\.mjs\?v=20261026-sfx2";/);
   assert.doesNotMatch(js, /liveStreamBack|exitStream|backToNormal/);
-  assert.match(css, /body\.live-stream \{ background: #00ff00 !important; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; \}/);
-  assert.match(css, /body\.live-stream #liveDpsVal \{ text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000; \}/);
+  assert.match(css, /body\.live-stream \{ background: #00ff00 !important; -webkit-text-stroke: 2px #000; paint-order: stroke fill; \}/);
+  assert.match(css, /body\.live-stream \.live-table, body\.live-stream \.live-stream-card, body\.live-stream \.live-bar \{ background: transparent; \}/);
+  assert.match(css, /body\.live-stream \.live-table tbody\.lv-vic:nth-of-type\(even\) > tr > td \{ background-color: transparent; \}/);
+  assert.match(css, /body\.live-stream #liveDpsVal:not\(\.live-dps-warm\) \{ -webkit-text-stroke: 4px #000; paint-order: stroke fill; \}/);
   assert.match(css, /body\.live-stream #liveDps > \.live-metric:first-child \{ display: flex; flex-direction: column; \}/);
   assert.match(css, /body\.live-stream #liveDpsVal \{ order: 3; \}/);
   assert.match(css, /body\.live-stream #liveState, body\.live-stream #liveDpmTau, body\.live-stream #liveCashHist, body\.live-stream #liveShare, body\.live-stream #liveStreamBtn, body\.live-stream #liveSession \{ display: none; \}/);

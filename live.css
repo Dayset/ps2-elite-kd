@@ -196,6 +196,7 @@ col.lv-c-iv { width: var(--lv-iw); }
 .live-dpm-tau { margin-top: 0.25rem; font-size: 0.72rem; color: var(--dim); }
 .live-dpm-tau input { width: 4rem; background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 0.25rem; padding: 0.1rem 0.3rem; font: inherit; }
 .live-dpm-tau button { background: none; border: 1px solid var(--border); color: var(--text); border-radius: 0.25rem; padding: 0.1rem 0.5rem; margin-left: 0.25rem; cursor: pointer; font: inherit; }
+#liveDpmTau { display: none; } /* owner 2026-10-26: τ locked at 60, adjuster hidden */
 /* Owner 2026-10-26: session trace-back line — small, dim, under the DPM block. */
 .live-session { margin-top: 0.25rem; font-size: 0.72rem; color: var(--dim); }
 .live-share { margin-top: 0.25rem; font-size: 0.72rem; background: none; border: 1px solid var(--border); color: var(--text); border-radius: 0.25rem; padding: 0.1rem 0.5rem; cursor: pointer; font: inherit; }
@@ -214,14 +215,16 @@ body.live-stream #liveStreamCard { display: block; }
 
 .live-show-tactical { margin-top: 0.25rem; font-size: 0.72rem; color: var(--dim); }
 body.live-stream > :not(#liveFeed) { display: none; } /* owner 2026-10-26: no header, no footer, no controls — the overlay is only the live section */
-body.live-stream { background: #00ff00 !important; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; } /* owner 2026-10-26: pure chromakey green + a black outline on every glyph, so the overlay reads over gameplay; !important so the mode beats the dark main-page background */
-body.live-stream #liveDpsVal { text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000; } /* the counter is the hero glyph: a heavier outline */
+body.live-stream { background: #00ff00 !important; -webkit-text-stroke: 2px #000; paint-order: stroke fill; } /* owner 2026-10-26: pure chromakey green + a true vector outline on every glyph, so the overlay reads over gameplay; !important so the mode beats the dark main-page background; no shadows (owner 2026-10-26) */
+body.live-stream #liveDpsVal:not(.live-dps-warm) { -webkit-text-stroke: 4px #000; paint-order: stroke fill; } /* the counter is the hero glyph: a heavier stroke; the tiny warm-up line keeps the body stroke so it stays readable */
 body.live-stream #liveDps > .live-metric:first-child { display: flex; flex-direction: column; } /* owner 2026-10-26: in overlay mode the DPM counter sits BELOW the bar */
 body.live-stream #liveDpsLabel { order: 1; }
 body.live-stream #liveDps > .live-metric:first-child .live-bar { order: 2; }
 body.live-stream #liveDpsVal { order: 3; }
 body.live-stream #liveState, body.live-stream #liveDpmTau, body.live-stream #liveCashHist, body.live-stream #liveShare, body.live-stream #liveStreamBtn, body.live-stream #liveSession { display: none; } /* owner 2026-10-26: stream shows the names list + DPM block + the card; no button back — the switch button hides with the rest */
 body.live-stream #liveDps .live-metric:last-child { display: none; } /* online pill: meters + session only */
+body.live-stream .live-table, body.live-stream .live-stream-card, body.live-stream .live-bar { background: transparent; } /* owner 2026-10-26: chromakey — every background drops out (table panel, card panel, bar tracks) so the body's green shows through and only text + bars survive the key */
+body.live-stream .live-table tbody.lv-vic:nth-of-type(even) > tr > td { background-color: transparent; } /* zebra rows too */
 .live-dps #liveDpsVal { font-weight: 600; font-variant-numeric: tabular-nums; }
 .live-dps #liveDpsVal.live-dps-warm { font-size: 0.72rem; font-weight: 400; color: var(--dim); }
 .live-dps #liveDpsVal .live-dps-warm-n { font-size: 1rem; font-weight: 600; color: var(--text); }
@@ -236,4 +239,4 @@ body.live-stream #liveDps .live-metric:last-child { display: none; } /* online p
 .live-dpm-tick { position: absolute; top: -3px; bottom: -3px; width: 3px; transform: translateX(-50%); background: #000; border-radius: 999px; } /* owner 2026-10-26: nudges stand out — pitch black, bolder, sticking out of the bar up and down */
 .live-bar-fill { height: 100%; width: 0%; background: var(--dim); border-radius: 999px; }
 .live-bar-dpm { background: linear-gradient(90deg, #7c4dff, #00b0ff, #00e676, #ffea00, #ff9100, #ff1744); box-shadow: 0 0 8px var(--accent); }
-.live-bar-hold { background: linear-gradient(90deg, #1b5e20, #43a047, #81c784); }
+.live-bar-hold { background: linear-gradient(90deg, #0d47a1, #1976d2, #64b5f6); } /* owner 2026-10-26: Recharge is blue — a green bar would key out over the chromakey background */
