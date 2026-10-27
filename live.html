@@ -77,7 +77,7 @@
       });
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261026-brv1" />
+  <link rel="stylesheet" href="styles.css?v=20261026-pm1" />
   <link rel="stylesheet" href="live.css?v=20261026-stroke2" />
   <style>
     /* Installed-app launch splash (t465u). Android draws its own launch splash first:
@@ -270,8 +270,10 @@
       <button id="diceBtn" type="button" data-i18n-title="dice.any.title" data-i18n-aria-label="dice.any.label" title="Random player in range of the list" aria-label="Random player in range">🎲</button>
       <button id="diceHighBtn" type="button" data-i18n-title="dice.high.title" data-i18n-aria-label="dice.high.label" title="Random player with more ⚔️ iVi (+25% of the list)" aria-label="Random player with more iVi">&gt;</button>
     </div>
+    <button id="pairMatchBtn" type="button" class="pair-match-btn" hidden data-i18n-title="pair.title" data-i18n-aria-label="pair.label" title="Play-pattern match of the 2 names — compares public play-time data only (Honu sessions, saved stats). Likely, never proof." aria-label="Play-pattern match of the 2 names">👯</button>
     <button id="liveBtn" type="button" class="live-btn" aria-pressed="true" title="🎥 Live is on: click to turn it off and edit names" data-i18n-title="live.titleOn" aria-label="Live kill and death feed" data-i18n-aria-label="live.aria">🎥</button>
     <div id="namesLimitNote" class="names-limit-note" data-i18n="names.limit" hidden aria-live="polite">Name field locked: the comparison shows up to 6 players at once. Remove a name to add another.</div>
+    <div id="pairMatchNote" class="pair-match-note" hidden aria-live="polite" data-i18n-title="pair.title" title="Play-pattern match of the 2 names — compares public play-time data only (Honu sessions, saved stats). Likely, never proof."></div>
 
     <div class="fresh-row">
       <span class="fresh-left">
@@ -588,7 +590,7 @@
   </footer>
 
   <script type="module" src="i18n.mjs"></script>
-  <script type="module" src="app.js?v=20261026-psrate1"></script>
+  <script type="module" src="app.js?v=20261026-pm1"></script>
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").catch(function () {});
