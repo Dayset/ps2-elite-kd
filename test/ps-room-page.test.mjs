@@ -155,3 +155,16 @@ describe("PlayStation room page (#55)", { skip: !chrome && "no Chrome" }, () => 
     });
   });
 });
+
+describe("🎥 PS footer per-day line (owner 2026-10-26)", () => {
+  it("per-day line shows in the PS room too: no IS_PS early return, room-aware launch, names file, and storage key", () => {
+    const js = fs.readFileSync(path.join(root, "app.js"), "utf8");
+    const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
+    assert.ok(!js.includes('if (!el || IS_PS) return;'), "the #55 PS early return is gone");
+    assert.ok(js.includes("function pageNameRate()"));
+    assert.ok(js.includes('const LAUNCH_UTC = IS_PS ? Date.UTC(2026, 9, 22) : Date.UTC(2026, 9, 7);'), "PS launch Oct 22, PC launch Oct 7");
+    assert.ok(js.includes('fetch(IS_PS ? "data-ps/names.json" : "data/names.json"'), "PS room fetches its own names file");
+    assert.ok(js.includes('const KEY = IS_PS ? "ps2ekd-page-namerate-ps" : "ps2ekd-page-namerate";'), "cached total is room-scoped");
+    assert.ok(html.includes('<p id="pageNameRate"'), "the footer element exists in the shared footer");
+  });
+});

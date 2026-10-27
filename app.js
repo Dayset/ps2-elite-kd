@@ -1789,16 +1789,17 @@ import {
 
   /**
    * Footer cache-growth line, under the commit count: how many new names
-   * the shared cache adds per day = total cached names (data/names.json)
-   * ÷ days online (launch = first commit, Oct 7, 2026). Computed in the
+   * the shared cache adds per day = total cached names (data/names.json,
+   * data-ps/names.json in the PlayStation room) ÷ days online (launch =
+   * first commit: Oct 7, 2026 PC, Oct 22, 2026 PS). Computed in the
    * page like the commit counter above; the total is re-fetched at most
    * once a day (localStorage day stamp), the per-day rate is recomputed
    * from the stored total on every load.
    */
   (function pageNameRate() {
     const el = document.getElementById("pageNameRate");
-    if (!el || IS_PS) return; // PC cache growth: not shown in the PlayStation room (#55)
-    const LAUNCH_UTC = Date.UTC(2026, 9, 7);
+    if (!el) return; // owner 2026-10-26: both rooms — the line is the mirror's liveness signal
+    const LAUNCH_UTC = IS_PS ? Date.UTC(2026, 9, 22) : Date.UTC(2026, 9, 7);
     const compute = (total) => {
       const now = new Date();
       const todayUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
@@ -1815,7 +1816,7 @@ import {
         el.hidden = false;
       }
     };
-    const KEY = "ps2ekd-page-namerate";
+    const KEY = IS_PS ? "ps2ekd-page-namerate-ps" : "ps2ekd-page-namerate"; // room-scoped: a PC total cached today must not show in the PS room
     const today = new Date().toDateString();
     try {
       const c = JSON.parse(localStorage.getItem(KEY) || "null");
@@ -1824,7 +1825,7 @@ import {
         return;
       }
     } catch {}
-    fetch("data/names.json", { cache: "no-cache" })
+    fetch(IS_PS ? "data-ps/names.json" : "data/names.json", { cache: "no-cache" })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         const total = d && (Number.isFinite(d.count) ? d.count : Array.isArray(d.players) ? d.players.length : 0);
