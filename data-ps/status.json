@@ -2,10 +2,10 @@
   "room": "ps",
   "running": false,
   "lastRun": {
-    "runId": "40398294680",
+    "runId": "40428575373",
     "kind": "discovery",
-    "startedAt": "2026-10-26T20:44:49.729Z",
-    "endedAt": "2026-10-26T20:44:50.030Z",
+    "startedAt": "2026-10-27T00:47:36.160Z",
+    "endedAt": "2026-10-27T00:47:36.488Z",
     "seconds": 0,
     "added": [],
     "updated": [],
@@ -14,9 +14,9 @@
     "indexSize": 1799,
     "assists": {
       "calls": 1,
-      "rows": 410,
-      "players": 161,
-      "skipped": 187,
+      "rows": 381,
+      "players": 188,
+      "skipped": 135,
       "error": null
     },
     "servers": {
@@ -33,7 +33,7 @@
     }
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-26T21:30:59.959Z",
+    "checkedAt": "2026-10-27T00:47:38.635Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 1,
     "explained": 5,
@@ -55,8 +55,8 @@
         "name": "WertyTR",
         "id": "s_kd",
         "value": 986,
-        "bound": 29.823,
-        "z": 1071.591,
+        "bound": 29.916,
+        "z": 1108.445,
         "side": "high",
         "explained": true,
         "reason": "In 📉 chart anomalies only († adjusted — needs review)",
@@ -79,8 +79,8 @@
         "name": "XxJEAMPIERRExX",
         "id": "s_maxKpm",
         "value": 13.594,
-        "bound": 10.492,
-        "z": 36.331,
+        "bound": 10.515,
+        "z": 37.229,
         "side": "high",
         "explained": true,
         "reason": "In 📉 chart anomalies only († adjusted — needs review)",
@@ -91,8 +91,8 @@
         "name": "WertyTR",
         "id": "s_maxKpm",
         "value": 13.551,
-        "bound": 10.492,
-        "z": 36.21,
+        "bound": 10.515,
+        "z": 37.105,
         "side": "high",
         "explained": true,
         "reason": "In 📉 chart anomalies only († adjusted — needs review)",
@@ -103,8 +103,8 @@
         "name": "XxJEAMPIERRExX",
         "id": "s_kd",
         "value": 30.595,
-        "bound": 29.823,
-        "z": 31.728,
+        "bound": 29.916,
+        "z": 32.853,
         "side": "high",
         "explained": true,
         "reason": "In 📉 chart anomalies only († adjusted — needs review)",
@@ -136,22 +136,22 @@
         "explained": true,
         "reason": "In 📉 chart anomalies only († adjusted — needs review)",
         "red": [],
-        "maxZ": 1071.591,
+        "maxZ": 1108.445,
         "metrics": [
           {
             "id": "s_kd",
             "label": "🧪 Session K/D",
             "value": 986,
-            "bound": 29.823,
-            "z": 1071.591,
+            "bound": 29.916,
+            "z": 1108.445,
             "side": "high"
           },
           {
             "id": "s_maxKpm",
             "label": "🧪 Best-session KPM",
             "value": 13.551,
-            "bound": 10.492,
-            "z": 36.21,
+            "bound": 10.515,
+            "z": 37.105,
             "side": "high"
           }
         ]
@@ -162,22 +162,22 @@
         "explained": true,
         "reason": "In 📉 chart anomalies only († adjusted — needs review)",
         "red": [],
-        "maxZ": 36.331,
+        "maxZ": 37.229,
         "metrics": [
           {
             "id": "s_maxKpm",
             "label": "🧪 Best-session KPM",
             "value": 13.594,
-            "bound": 10.492,
-            "z": 36.331,
+            "bound": 10.515,
+            "z": 37.229,
             "side": "high"
           },
           {
             "id": "s_kd",
             "label": "🧪 Session K/D",
             "value": 30.595,
-            "bound": 29.823,
-            "z": 31.728,
+            "bound": 29.916,
+            "z": 32.853,
             "side": "high"
           }
         ]
@@ -268,7 +268,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-26T21:31:00.025Z",
+    "checkedAt": "2026-10-27T00:47:38.702Z",
     "red": 10,
     "padding": 0,
     "adjusted": 236,
@@ -279,7 +279,7 @@
     "forensics": 0
   },
   "sessionStats": {
-    "checkedAt": "2026-10-26T21:30:59.963Z",
+    "checkedAt": "2026-10-27T00:47:38.640Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -293,10 +293,10 @@
     "ruleText": "[session pattern] in recent Honu sessions (≥ 100 kills counted): assists per kill ≤ 0.1, headshot share ≥ 50% (headshot XP per kill; Census lifetime HSR when no XP detail) and K/D ≥ 7 (session deaths; Census lifetime KD when none). A very one-sided record; a lead for manual review, not proof.",
     "coverage": {
       "players": 1799,
-      "withSessions": 1045,
-      "measured": 308,
-      "sessions": 4569,
-      "kills": 109882,
+      "withSessions": 1054,
+      "measured": 319,
+      "sessions": 4810,
+      "kills": 113129,
       "xpPlayers": 0,
       "xpMeasured": 0,
       "xpSessions": 0
@@ -401,72 +401,72 @@
     ],
     "distributions": {
       "s_apk": {
-        "n": 308,
+        "n": 319,
         "min": 0,
-        "p01": 0.019,
-        "p05": 0.12,
-        "median": 0.275,
-        "p95": 0.505,
-        "p99": 0.654,
+        "p01": 0.023,
+        "p05": 0.118,
+        "median": 0.277,
+        "p95": 0.506,
+        "p99": 0.639,
         "max": 1.065
       },
       "s_share": {
-        "n": 307,
+        "n": 318,
         "min": 0.4,
         "p01": 0.478,
-        "p05": 0.511,
+        "p05": 0.509,
         "median": 0.585,
         "p95": 0.667,
         "p99": 0.689,
         "max": 0.774
       },
       "s_kpm": {
-        "n": 308,
-        "min": 0.075,
-        "p01": 0.118,
-        "p05": 0.159,
-        "median": 0.384,
+        "n": 319,
+        "min": 0.072,
+        "p01": 0.113,
+        "p05": 0.153,
+        "median": 0.379,
         "p95": 1.376,
         "p99": 2.016,
         "max": 15.21
       },
       "s_maxKpm": {
-        "n": 305,
+        "n": 315,
         "min": 0.153,
         "p01": 0.184,
-        "p05": 0.213,
-        "median": 0.583,
+        "p05": 0.217,
+        "median": 0.575,
         "p95": 1.763,
         "p99": 3.06,
         "max": 15.266
       },
       "s_kpmCv": {
-        "n": 259,
+        "n": 272,
         "min": 0.002,
         "p01": 0.017,
         "p05": 0.04,
-        "median": 0.264,
-        "p95": 0.546,
+        "median": 0.262,
+        "p95": 0.543,
         "p99": 0.661,
         "max": 1.548
       },
       "s_kd": {
-        "n": 308,
+        "n": 319,
         "min": 0.283,
-        "p01": 0.408,
+        "p01": 0.407,
         "p05": 0.507,
-        "median": 1.444,
+        "median": 1.413,
         "p95": 4.597,
         "p99": 8.538,
         "max": 9685
       },
       "s_maxKd": {
-        "n": 305,
+        "n": 315,
         "min": 0.441,
         "p01": 0.534,
         "p05": 0.667,
         "median": 2,
-        "p95": 13.333,
+        "p95": 13.5,
         "p99": 290.25,
         "max": 9684
       },
@@ -740,22 +740,22 @@
         "explained": true,
         "reason": "In 📉 chart anomalies only († adjusted — needs review)",
         "red": [],
-        "maxZ": 1071.591,
+        "maxZ": 1108.445,
         "metrics": [
           {
             "id": "s_kd",
             "label": "🧪 Session K/D",
             "value": 986,
-            "bound": 29.823,
-            "z": 1071.591,
+            "bound": 29.916,
+            "z": 1108.445,
             "side": "high"
           },
           {
             "id": "s_maxKpm",
             "label": "🧪 Best-session KPM",
             "value": 13.551,
-            "bound": 10.492,
-            "z": 36.21,
+            "bound": 10.515,
+            "z": 37.105,
             "side": "high"
           }
         ]
@@ -766,22 +766,22 @@
         "explained": true,
         "reason": "In 📉 chart anomalies only († adjusted — needs review)",
         "red": [],
-        "maxZ": 36.331,
+        "maxZ": 37.229,
         "metrics": [
           {
             "id": "s_maxKpm",
             "label": "🧪 Best-session KPM",
             "value": 13.594,
-            "bound": 10.492,
-            "z": 36.331,
+            "bound": 10.515,
+            "z": 37.229,
             "side": "high"
           },
           {
             "id": "s_kd",
             "label": "🧪 Session K/D",
             "value": 30.595,
-            "bound": 29.823,
-            "z": 31.728,
+            "bound": 29.916,
+            "z": 32.853,
             "side": "high"
           }
         ]
@@ -790,7 +790,7 @@
     "outliersUnexplained": 0
   },
   "forensics": {
-    "checkedAt": "2026-10-26T21:30:59.967Z",
+    "checkedAt": "2026-10-27T00:47:38.646Z",
     "candidates": [
       "thingzzvs",
       "taculotte",
@@ -859,7 +859,7 @@
     "players": []
   },
   "review": {
-    "checkedAt": "2026-10-26T21:30:59.978Z",
+    "checkedAt": "2026-10-27T00:47:38.655Z",
     "count": 241,
     "players": [
       {
@@ -2814,14 +2814,14 @@
   "assistGroups": {
     "byTag": {
       "infantry": {
-        "count": 204,
-        "medApk": 0.29,
-        "medShare": 0.591
+        "count": 211,
+        "medApk": 0.289,
+        "medShare": 0.589
       },
       "mixed": {
-        "count": 73,
+        "count": 77,
         "medApk": 0.247,
-        "medShare": 0.579
+        "medShare": 0.577
       },
       "vehicle": {
         "count": 22,
@@ -2831,40 +2831,40 @@
       "untagged": {
         "count": 7,
         "medApk": 0.378,
-        "medShare": 0.567
+        "medShare": 0.566
       }
     },
     "predict": {
       "apk": {
-        "threshold": 0.27,
+        "threshold": 0.256,
         "dir": "<=",
         "vehicleCaught": 0.909,
-        "infantryCleared": 0.583,
-        "balanced": 0.746
+        "infantryCleared": 0.626,
+        "balanced": 0.767
       },
       "share": {
         "threshold": 0.561,
         "dir": "<=",
         "vehicleCaught": 0.591,
-        "infantryCleared": 0.76,
-        "balanced": 0.675
+        "infantryCleared": 0.763,
+        "balanced": 0.677
       }
     },
     "tagMin": 20,
-    "checkedAt": "2026-10-26T21:30:59.995Z",
+    "checkedAt": "2026-10-27T00:47:38.673Z",
     "coverage": {
       "players": 1792,
-      "withSessions": 1042,
-      "measured": 306,
-      "measuredPct": 17.1
+      "withSessions": 1051,
+      "measured": 317,
+      "measuredPct": 17.7
     },
     "cuts": {
-      "kd": 2.247,
-      "shareHi": 0.618,
+      "kd": 2.244,
+      "shareHi": 0.616,
       "shareLo": 0.557,
       "apk": 0.424,
-      "iviLo": 207.496,
-      "iviHi": 423.259,
+      "iviLo": 205.295,
+      "iviHi": 423.035,
       "medApk": 0.277,
       "medShare": 0.585
     },
@@ -2905,17 +2905,6 @@
             "flagged": true
           },
           {
-            "slug": "anxavier",
-            "name": "AnXavier",
-            "kd": 5.394,
-            "kpm": 1.621,
-            "ivi": 472.603,
-            "apk": 0.124,
-            "share": 0.628,
-            "kills": 346,
-            "flagged": true
-          },
-          {
             "slug": "tacob0t",
             "name": "TacoB0T",
             "kd": 5.017,
@@ -2949,14 +2938,25 @@
             "flagged": true
           },
           {
+            "slug": "ppjj",
+            "name": "ppjj",
+            "kd": 4.097,
+            "kpm": 1,
+            "ivi": 536.517,
+            "apk": 0.049,
+            "share": 0.628,
+            "kills": 163,
+            "flagged": true
+          },
+          {
             "slug": "aiert",
             "name": "AIert",
             "kd": 4.122,
             "kpm": 0.794,
             "ivi": 418.86,
-            "apk": 0.257,
-            "share": 0.625,
-            "kills": 175,
+            "apk": 0.246,
+            "share": 0.617,
+            "kills": 211,
             "flagged": true
           },
           {
@@ -2973,7 +2973,7 @@
         ]
       },
       "finishers": {
-        "count": 19,
+        "count": 18,
         "top": [
           {
             "slug": "blackgirlqueen",
@@ -3066,7 +3066,7 @@
         ]
       },
       "support": {
-        "count": 20,
+        "count": 19,
         "top": [
           {
             "slug": "ggwvtzzz",
@@ -3074,9 +3074,9 @@
             "kd": 0.762,
             "kpm": 0.226,
             "ivi": 269.005,
-            "apk": 0.669,
+            "apk": 0.66,
             "share": 0.539,
-            "kills": 257,
+            "kills": 262,
             "flagged": false
           },
           {
@@ -3085,9 +3085,9 @@
             "kd": 1.216,
             "kpm": 0.521,
             "ivi": 289.998,
-            "apk": 0.668,
-            "share": 0.514,
-            "kills": 229,
+            "apk": 0.639,
+            "share": 0.526,
+            "kills": 269,
             "flagged": false
           },
           {
@@ -3107,9 +3107,9 @@
             "kd": 0.369,
             "kpm": 0.093,
             "ivi": 257.031,
-            "apk": 0.574,
-            "share": 0.52,
-            "kills": 101,
+            "apk": 0.566,
+            "share": 0.515,
+            "kills": 106,
             "flagged": false
           },
           {
@@ -3146,14 +3146,14 @@
             "flagged": false
           },
           {
-            "slug": "truh111",
-            "name": "Truh111",
-            "kd": 0.85,
-            "kpm": 0.382,
-            "ivi": 285.75,
-            "apk": 0.526,
+            "slug": "ncindigo",
+            "name": "NCIndigo",
+            "kd": 0.502,
+            "kpm": 0.1,
+            "ivi": 362.731,
+            "apk": 0.509,
             "share": 0.578,
-            "kills": 251,
+            "kills": 108,
             "flagged": false
           }
         ]
@@ -3161,7 +3161,7 @@
     }
   },
   "padderPenalty": {
-    "checkedAt": "2026-10-26T21:30:59.982Z",
+    "checkedAt": "2026-10-27T00:47:38.658Z",
     "ranked": 1783,
     "penalty": 0.1,
     "ref": 610.6,
@@ -3171,7 +3171,7 @@
     "players": []
   },
   "vehicleCut": {
-    "checkedAt": "2026-10-26T21:30:59.987Z",
+    "checkedAt": "2026-10-27T00:47:38.664Z",
     "ranked": 1783,
     "cut": 1045,
     "buckets": {
@@ -5447,7 +5447,7 @@
     "watch": []
   },
   "infantry": {
-    "checkedAt": "2026-10-26T21:31:00.195Z",
+    "checkedAt": "2026-10-27T00:47:38.873Z",
     "players": 1799,
     "counts": {
       "infantry": 1160,
@@ -5466,7 +5466,7 @@
   },
   "burst": {
     "rule": "KPM ≥ 5 and ≥ 15 kills in ≥ 2 min (one stored session, no 10-minute floor); skipped when within the player's own normal (≥ 5 other sessions of ≥ 10 min, ≤ 2× their median KPM, career K/D < 10)",
-    "checkedAt": "2026-10-26T21:31:00.395Z",
+    "checkedAt": "2026-10-27T00:47:39.075Z",
     "sessions": 4,
     "ownNormalSkipped": 0,
     "flaggedPlayers": 3,
@@ -5546,7 +5546,7 @@
     "caught": []
   },
   "hut": {
-    "builtAt": "2026-10-26T21:30:59.913Z",
+    "builtAt": "2026-10-27T00:47:38.586Z",
     "cuts": {
       "actMedian": 0.2401,
       "actMult": 1.333,
@@ -6070,7 +6070,7 @@
     "cleared": []
   },
   "newbieDiff": {
-    "builtAt": "2026-10-26T21:30:59.930Z",
+    "builtAt": "2026-10-27T00:47:38.604Z",
     "loH": 6.6,
     "hiH": 311.3,
     "n": 1779,
@@ -11794,7 +11794,7 @@
     "cleared": []
   },
   "vehDiff": {
-    "builtAt": "2026-10-26T21:30:59.921Z",
+    "builtAt": "2026-10-27T00:47:38.595Z",
     "start": 14.6,
     "damped": 420,
     "dieHardHut": 172,
@@ -16425,8 +16425,8 @@
     "cleared": []
   },
   "zergRevive": {
-    "builtAt": "2026-10-26T21:30:59.934Z",
-    "zergScored": 306,
+    "builtAt": "2026-10-27T00:47:38.608Z",
+    "zergScored": 317,
     "measured": 0,
     "measuredZerg": 0,
     "confirmed": 0,
@@ -16449,7 +16449,7 @@
     "cleared": []
   },
   "assistGap": {
-    "checkedAt": "2026-10-26T21:30:59.996Z",
+    "checkedAt": "2026-10-27T00:47:38.673Z",
     "start": "2026-04-01T13:00:00.000Z",
     "end": "2026-05-07T05:00:00.000Z",
     "url": "https://www.planetside2.com/patch-notes/may-6-hotfix-2026",
@@ -16459,7 +16459,7 @@
     "players": []
   },
   "tractorMark": {
-    "checkedAt": "2026-10-26T21:30:59.936Z",
+    "checkedAt": "2026-10-27T00:47:38.610Z",
     "rule": "🚜 = infantry % < p25 (72.3%) and (vehicle repair/min ≥ p75 (null) or vehicle kills/min ≥ p75 (null) of the 0 players with 2+ h of XP detail), or infantry % < p2 (24%)",
     "cuts": {
       "cut": 72.3,
