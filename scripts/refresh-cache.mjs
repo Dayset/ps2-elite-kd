@@ -28,6 +28,7 @@ import { censusQueryName } from "../analyze-run.mjs";
 import { accountTimes } from "../flairs.mjs";
 import { analyzeSessionKills, knownSessions, pickForensicSessions } from "../session-forensics.mjs";
 import { startYieldWatch } from "./yield-check.mjs";
+import { addSpawnCampSession } from "./spawn-camp.mjs";
 import { removedList } from "../opt-out.mjs";
 import { purgeRemoved } from "./purge-removed.mjs";
 import { syncRemovals } from "./sync-removals.mjs";
@@ -72,6 +73,7 @@ const REQUESTED_PATH = path.join(DATA_DIR, "requested.json");
 const FETCH_COUNTS_PATH = path.join(DATA_DIR, "fetch-counts.json");
 const EXP_TYPES_PATH = path.join(DATA_DIR, "exp-types.json");
 const FORENSICS_PATH = path.join(DATA_DIR, "forensics.json");
+const SPAWNCAMP_PATH = path.join(DATA_DIR, "spawncamp.json"); // ⛺ spawn camp check (hidden build-log only)
 const XP_DIR = path.join(DATA_DIR, "xp");
 const OPT_OUT_PATH = path.join(DATA_DIR, "opt-out.json");
 /** 🚫 Removal list (opt-out.mjs, #61), loaded in main() after the purge. */
@@ -821,6 +823,8 @@ async function forensicsPhase(index, until) {
     return fetchJson(u, { retries: 2 });
   };
   const bySlug = new Map((index.players || []).map((p) => [p.slug, p]));
+  const spawnCamp = readJsonSafe(SPAWNCAMP_PATH, {}) || {};
+  let spawnCampDirty = false;
   let calls0 = honuUsage.calls;
   for (const slug of queue) {
     if (forensicsHonuLeft() < 2 || Date.now() > until) break;
@@ -846,6 +850,14 @@ async function forensicsPhase(index, until) {
         const report = analyzeSessionKills(events, cid, { sessionId: id, session: sess });
         report.analyzedAt = new Date().toISOString();
         mergeForensics(store, slug, { cid, name, report });
+        // ⛺ spawn camp check: 1 extra Honu XP call per forensics session with 60+ kills, once ever.
+        if (report.kills >= 60 && !(spawnCamp.sessions || {})[id] && forensicsHonuLeft() >= 1) {
+          try {
+            const exp = await getJson(`${HONU_API}exp/sessions/${encodeURIComponent(id)}`);
+            const row = addSpawnCampSession(spawnCamp, { session: id, cid, name, killRows: events, expEvents: (exp && exp.events) || [] });
+            if (row) { spawnCampDirty = true; console.log(`  [⛺] ${slug} session ${id}: ${row.sk}/${row.kills} kills without kill XP, ${row.skVictims} victim(s)`); }
+          } catch (e) { console.warn(`  [⛺] ${slug} session ${id} skipped: ${String(e && e.message).slice(0, 80)}`); }
+        }
         console.log(`  [forensics] ${slug} session ${id}: ${report.kills} kills / ${report.deaths} deaths` +
           (report.flagged ? ` → 🚩 ${report.reasons.join("; ")}` : report.oddities.length ? ` → 📉 ${report.oddities.join("; ")}` : " → nothing odd"));
       }
@@ -856,6 +868,7 @@ async function forensicsPhase(index, until) {
   }
   store.updatedAt = new Date().toISOString();
   writeFileAtomic(FORENSICS_PATH, JSON.stringify(store) + "\n");
+  if (spawnCampDirty) writeFileAtomic(SPAWNCAMP_PATH, JSON.stringify(spawnCamp, null, 1) + "\n");
   saveHonuUsage();
   console.log(`Session forensics: ${honuUsage.calls - calls0} Honu call(s) this run; forensics ${honuUsage.forensics}/${FORENSICS_DAILY_RESERVE} today.`);
 }

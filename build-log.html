@@ -180,6 +180,13 @@
         <div id="fx" class="st-dim">Loading…</div>
       </details>
 
+      <details class="st-card st-sec st-flags" id="cardSpawnCamp">
+        <summary id="spawnCampSummary"><h2>⛺ Spawn camp check <span id="spawnCampCount" class="st-count">…</span></h2></summary>
+        <p class="st-note">PC sessions with an unusual share of kills on players who had just spawned. A review hint only, not proof: big fights near a spawn room push this up too. Private to this page: never shown on the site, never hides or flags anyone.</p>
+        <details class="st-info"><summary>ⓘ How it works</summary><div class="st-rule" id="spawnCampRule"></div><div class="st-rule">A spawn kill = a kill that paid no kill XP (the game gives none for a player who just spawned). The bar is the top 10% of a random sample of PC sessions with 60+ kills (data/spawncamp.json “stats”), measured again whenever the sample grows (weekly, .github/workflows/spawn-camp.yml). 🔎 Session forensics sessions with 60+ kills are checked too (1 extra Honu XP call each) but don’t move the bar. Crowd = 3+ teammates also spawn-killing on the same continent within ±2 min; known only from live recordings, so most rows say “unknown”.</div></details>
+        <div id="spawnCamp" class="st-dim">Loading…</div>
+      </details>
+
       <details class="st-card st-sec st-flags st-anoms" id="cardAnoms">
         <summary id="anomsSummary"><h2>📉 Chart anomalies <span id="anomsCount" class="st-count">…</span></h2></summary>
         <p class="st-note">Stats we changed automatically, and values far outside everyone else. Not accusations. Count = ones that need a look.</p>
@@ -689,6 +696,7 @@
     const oorTag = () => '<span class="st-dim" title="' + OOR_TIP + '"><strong>' + OOR_TAG + "</strong></span> ";
     import "./name-peek.mjs?v=20261025-loc1"; // full-name popup for truncated .nm names
     import { radarProfileUrl, radarBadge, radarPriority } from "./radar.mjs?v=20261010-sav1";
+    import { spawnCampRows, spawnCampExcluded } from "./spawn-camp.mjs?v=20261026-sc1";
 
     const POLL_MS = 30 * 1000;
     const $ = (id) => document.getElementById(id);
@@ -1138,6 +1146,7 @@
       try { renderZergRevive(st); } catch (e) { console.warn(e); }
       try { renderNewbieDiff(st); } catch (e) { console.warn(e); }
       try { await renderAlts(); } catch (e) { console.warn(e); }
+      try { await renderSpawnCamp(); } catch (e) { console.warn(e); }
     }
 
     /** 👥 Likely alts (data/alts.json, scripts/build-alts.mjs, owner t600): pair % + per-clue reasons. */
@@ -1385,6 +1394,34 @@
           items.map((i) => "<tr><td>" + nameCell(i) + (i.status === "penalized" ? " 💩" : "") + "</td><td>" + n(i.before) + "</td><td>" + n(i.after) + (i.fixedDrop ? ' <span class="st-dim" title="Score at or below 0: fixed drop instead of −10%">(fixed drop)</span>' : "") +
             "</td><td>" + rk(i.rankBefore) + "</td><td>" + rk(i.rankAfter) + "</td><td>" + (i.status === "penalized" ? "−10% iVi" : "✅ cleared (owner)") + "</td></tr>").join("") + "</table></div>"
         : "No confirmed padders.";
+    }
+
+    /** ⛺ Spawn camp check (data/spawncamp.json, spawn-camp.mjs, owner t704–t713): hidden page only. */
+    let spawnCampAt = 0;
+    async function renderSpawnCamp() {
+      if (Date.now() - spawnCampAt < 5 * 60 * 1000) return; // changes at most once per refresh run
+      spawnCampAt = Date.now();
+      let d = null;
+      try { const r = await fetch("data/spawncamp.json?t=" + Date.now(), { cache: "no-store" }); d = r.ok ? await r.json() : null; } catch { d = null; }
+      if (!d || !d.stats) { $("spawnCampCount").textContent = "–"; $("spawnCamp").innerHTML = '<span class="st-dim">No check yet (scripts/spawn-camp.mjs).</span>'; spawnCampAt = 0; return; }
+      let rv = reviewed;
+      if (!rv) try { rv = await (await fetch("data/reviewed.json?t=" + Date.now(), { cache: "no-store" })).json(); } catch { rv = null; }
+      const st = d.stats, all = Object.values(d.sessions || {});
+      const rows = spawnCampRows(d, rv);
+      const left = all.filter((x) => spawnCampExcluded(x, rv)).length;
+      $("spawnCampCount").textContent = String(rows.length);
+      $("spawnCampRule").textContent = d.rule || "";
+      const crowd = (c) => c === "crowd" ? '<span title="3+ teammates also spawn-killing on the same continent within ±2 min">🪳 crowd</span>' : c === "not crowd" ? '<span class="st-err">not crowd</span>' : '<span class="st-dim">unknown</span>';
+      const pc = (v) => (v == null ? "—" : v + "%");
+      $("spawnCamp").innerHTML =
+        '<div class="st-dim" style="margin-bottom:6px;">Bar ' + pc(st.bar) + " (top 10%) · median " + pc(st.median) + " · top 5% " + pc(st.p95) + " · top 1% " + pc(st.p99) + " · max " + pc(st.max) +
+        " · sample " + st.n + " PC session(s)" + (st.enough ? "" : " (small sample, bar not firm yet)") + " · " + all.length + " session(s) checked, " + left + " left out (padders / 1–2 victims / under 60 kills)" +
+        (st.measuredAt ? " · measured " + esc(new Date(st.measuredAt).toLocaleDateString()) : "") + "</div>" +
+        (rows.length
+          ? '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th>Kills</th><th>Spawn kills</th><th>Spawn-kill %</th><th>Victims</th><th title="Share of the spawn kills on the top 2 victims">Top-2 share</th><th>Crowd</th><th></th></tr>' +
+            rows.map((i) => "<tr><td>⛺ " + nameCell(i) + "</td><td>" + i.kills + "</td><td>" + i.sk + "</td><td>" + i.pct + "%</td><td>" + i.skVictims + "</td><td>" + Math.round(i.top2 * 100) + "%</td><td>" + crowd(i.crowd) +
+              '</td><td><a href="https://wt.honu.pw/s/' + encodeURIComponent(i.session) + '" target="_blank" rel="noopener noreferrer">Honu session</a></td></tr>').join("") + "</table></div>"
+          : "No session at or above the bar.");
     }
 
     /** 🚨 Rampage gate (status.json "rampage", scripts/build-ranks.mjs): uncleared auto-catches only. */

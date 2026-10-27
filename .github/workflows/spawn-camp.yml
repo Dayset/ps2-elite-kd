@@ -1,0 +1,48 @@
+name: Spawn camp check sample (weekly)
+
+# Owner t704–t713 (2026-10-26): ⛺ spawn camp check, hidden build-log only.
+# Adds 20 random PC sessions with 60+ kills to data/spawncamp.json and re-measures
+# the top-10% bar from the sample. Honu: 2 history calls + 2 per session = 42 calls
+# a week, one every 6.5 s. Commits data/spawncamp.json only.
+
+on:
+  schedule:
+    - cron: "43 9 * * 3" # Wednesdays 09:43 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write # commit data/spawncamp.json
+
+concurrency:
+  group: spawn-camp-sample
+  cancel-in-progress: false
+
+jobs:
+  sample:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "20"
+
+      - name: Git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Sample and re-measure
+        run: node scripts/spawn-camp.mjs --sample 20
+
+      - name: Commit (data/spawncamp.json only)
+        env:
+          COMMIT_DIR: data/spawncamp.json
+        run: |
+          git checkout -- data/honu-usage.json 2>/dev/null || true
+          scripts/ci-commit-push.sh "chore(spawn-camp): weekly PC sample + bar re-measure [bot]"
