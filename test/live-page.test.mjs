@@ -601,8 +601,8 @@ test("weapon name + headshot mark (owner 2026-10-25): no weapon icon — the wea
   assert.doesNotMatch(css, /\.lv-wp|\.lv-wi|\.lv-hs \{|headshot\.svg/); // no icon rules, no free-icon asset
   assert.match(css, /\.lv-wn \{[^}]*color: var\(--dim\)/); // small, dim weapon name
   assert.match(css, /\.lv-hs2 \{[^}]*color: var\(--err\)/);
-  assert.match(css, /\.live-table \{[^}]*--lv-nm: 9\.575rem/); // the name column absorbed the weapon + zerg columns, halved 2026-10-26
-  assert.match(css, /--lv-nm: 12\.39rem/); // big tier took the zerg width too, halved 2026-10-26
+  assert.match(css, /#liveFeed \{[^}]*--lv-nm: 14\.36rem/); // the name column absorbed the weapon + zerg columns, halved then +50% 2026-10-26
+  assert.match(css, /--lv-nm: 18\.59rem/); // big tier took the zerg width too, halved then +50% 2026-10-26
   assert.match(css, /--lv-fm: 1\.45rem/); // name font bumped ~12%
   assert.match(css, /--lv-fm: 1\.9rem/);
   assert.match(css, /--lv-fm: 1\.12rem/);
@@ -1017,9 +1017,9 @@ test("streamer mode (owner 2026-10-26): button switches to the chromakey overlay
   assert.match(css, /body\.live-stream #liveDps > \.live-metric:first-child \{ display: flex; flex-direction: column; \}/);
   assert.match(css, /body\.live-stream #liveDpsVal \{ order: 3; \}/);
   assert.match(css, /body\.live-stream #liveState, body\.live-stream #liveDpmTau, body\.live-stream #liveCashHist, body\.live-stream #liveShare, body\.live-stream #liveStreamBtn, body\.live-stream #liveSession \{ display: none; \}/);
-  assert.match(css, /--lv-nm: 9\.575rem;/);
-  assert.match(css, /--lv-nm: 12\.39rem;/);
-  assert.match(css, /--lv-nm: 4\.39rem;/);
+  assert.match(css, /--lv-nm: 14\.36rem;/);
+  assert.match(css, /--lv-nm: 18\.59rem;/);
+  assert.match(css, /--lv-nm: 6\.59rem;/);
   assert.equal(en["live.streamer"], "Streamer mode");
   assert.match(sfx, /export function setSfxRate\(r\) \{ sfxRate = Number\.isFinite\(r\) && r > 0 \? r : 1; \}/);
   assert.match(sfx, /t \/= sfxRate; d \/= sfxRate;/);
@@ -1034,4 +1034,15 @@ test("nudges (owner 2026-10-26): pitch black, bolder, sticking out of the bar up
   const css = cssSrc();
   assert.match(css, /\.live-dpm-tick \{ position: absolute; top: -3px; bottom: -3px; width: 3px; transform: translateX\(-50%\); background: #000; border-radius: 999px; \}/);
   assert.match(css, /\.live-bar-fat \{ height: 12px; position: relative; overflow: visible; \}/);
+});
+
+test("bars follow the table (owner 2026-10-26): sizing tokens on #liveFeed, bars take the table calc, death line drains inside a table-width wrap", () => {
+  const css = cssSrc();
+  const swap = readFileSync(new URL("scripts/build-live.mjs", root), "utf8");
+  assert.match(css, /#liveFeed \{[^}]*--lv-nm: 14\.36rem;/);
+  assert.match(css, /#liveFeed \{[^}]*--lv-nm: 18\.59rem;/);
+  assert.match(css, /#liveFeed \{[^}]*--lv-nm: 6\.59rem;/);
+  assert.match(css, /#liveDeathLineWrap, #liveFeed > \.live-metric, #liveDps \{ width: calc\(var\(--lv-tm\) \+ var\(--lv-nm\) \+ var\(--lv-iw\)\); \}/);
+  assert.match(css, /#liveDeathLineWrap, #liveFeed > \.live-metric, #liveDps \{ width: auto; \}/);
+  assert.match(swap, /<div id="liveDeathLineWrap" class="live-death-line-wrap"><div id="liveDeathLine" class="live-death-line"><\/div><\/div>/);
 });

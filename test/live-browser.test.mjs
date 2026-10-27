@@ -161,7 +161,7 @@ describe("🎥 live.html in a browser", () => {
       assert.equal(s.meHs, false, "no headshot mark on the centre line");
       assert.equal(s.noIcons, 0, "no weapon icon column left");
       assert.equal(s.noEmojis, 0, "no emoji meters on the lines (parked)");
-      assert.ok(s.nmW >= 200, `the name column absorbed the weapon column, halved 2026-10-26: ${s.nmW}px`);
+      assert.ok(s.nmW >= 280, `the name column +50% from halved 2026-10-26: ${s.nmW}px`);
       assert.equal(s.svgFilters, 0, "no SVG filters on the page");
       assert.deepEqual(s.endless, [], "nothing animates forever (CPU)");
       assert.equal(s.noStar, true, "no ✦ star (the gold shine replaced it)");
@@ -885,10 +885,10 @@ describe("🎥 live centre row border in a browser", () => {
 });
 
 describe("🎥 live death line in a browser", () => {
-  it("death line (owner 2026-10-26): the death run drains as a full-width red gradient line above the feed", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+  it("death line (owner 2026-10-26): the death run drains as a red gradient line above the feed, as wide as the table", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
-      const w = () => ev(`(() => { const el = document.getElementById("liveDeathLine"); if (!el) return null; const cs = getComputedStyle(el); return { w: parseFloat(el.style.width) || 0, bg: cs.backgroundImage, before: el.nextElementSibling && el.nextElementSibling.id, one: document.querySelectorAll("#liveDeathLine").length }; })()`);
+      const w = () => ev(`(() => { const el = document.getElementById("liveDeathLine"); if (!el) return null; const cs = getComputedStyle(el); return { w: parseFloat(el.style.width) || 0, bg: cs.backgroundImage, before: el.parentElement.nextElementSibling && el.parentElement.nextElementSibling.id, one: document.querySelectorAll("#liveDeathLine").length }; })()`);
       await ev(`window.__fakeWs.emit(${death(OPP[0].cid, ME.cid, "80", false)})`); // death 1: killer row appears
       await new Promise((r) => setTimeout(r, 2000)); // run builds to ~2 s
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`); // kill 1: run 1 completes, killer line dims
@@ -1039,10 +1039,10 @@ describe("🎥 live feed frame lines in a browser", () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
       assert.equal(await ev(until(`document.querySelector("#liveList tbody.lv-me .lv-nm") !== null`)), true, "centre row on screen");
-      const frame = await ev(`(() => { const dl = document.getElementById("liveDeathLine"); const hb = document.getElementById("liveDpsHoldBar"); const dps = document.getElementById("liveDps"); const tbl = document.getElementById("liveList"); const cs = getComputedStyle(tbl); const nm = document.querySelector("#liveList tbody.lv-me .lv-nm"); const pn = document.querySelector("#liveList tbody.lv-me .lv-pn"); const pnCs = getComputedStyle(pn); return { dlBefore: dl.nextElementSibling.id, holdBeforeDps: dps.previousElementSibling.contains(hb), nmVar: cs.getPropertyValue("--lv-nm").trim(), fmVar: cs.getPropertyValue("--lv-fm").trim(), clip: nm.scrollHeight <= nm.clientHeight, centered: getComputedStyle(nm).textAlign, lhRatio: parseFloat(pnCs.lineHeight) / parseFloat(pnCs.fontSize) }; })()`);
-      assert.equal(frame.dlBefore, "liveList", "death line directly above the table");
+      const frame = await ev(`(() => { const wrap = document.getElementById("liveDeathLineWrap"); const hb = document.getElementById("liveDpsHoldBar"); const dps = document.getElementById("liveDps"); const tbl = document.getElementById("liveList"); const cs = getComputedStyle(tbl); const nm = document.querySelector("#liveList tbody.lv-me .lv-nm"); const pn = document.querySelector("#liveList tbody.lv-me .lv-pn"); const pnCs = getComputedStyle(pn); return { dlBefore: wrap.nextElementSibling.id, holdBeforeDps: dps.previousElementSibling.contains(hb), nmVar: cs.getPropertyValue("--lv-nm").trim(), fmVar: cs.getPropertyValue("--lv-fm").trim(), clip: nm.scrollHeight <= nm.clientHeight, centered: getComputedStyle(nm).textAlign, lhRatio: parseFloat(pnCs.lineHeight) / parseFloat(pnCs.fontSize) }; })()`);
+      assert.equal(frame.dlBefore, "liveList", "death line wrap directly above the table");
       assert.equal(frame.holdBeforeDps, true, "Recharge sits between the table and the DPM block");
-      assert.equal(frame.nmVar, "12.39rem", "name column halved (big tier at 1920px)");
+      assert.equal(frame.nmVar, "18.59rem", "name column +50% from halved (big tier at 1920px)");
       assert.ok(frame.lhRatio >= 1.2, `name line tall enough for descenders: ${frame.lhRatio}`);
       assert.equal(frame.fmVar, "1.9rem", "name font bumped ~12% (big tier at 1920px)");
       assert.equal(frame.clip, true, "centre name not clipped at the bigger font");
@@ -1113,5 +1113,25 @@ describe("🎥 live streamer mode in a browser", () => {
       assert.ok(pos[1] >= pos[0] - 1, `counter below the bar: bar bottom ${pos[0]}, val top ${pos[1]}`);
       assert.deepEqual(errors, [], "no page errors");
     });
+  });
+});
+
+describe("🎥 live bars follow the table in a browser", () => {
+  it("bars follow the table (owner 2026-10-26): death-line wrap, Recharge, DPM block and track all as wide as the feed table", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      const ws = await ev(`(() => { const r = (el) => el.getBoundingClientRect().width; return { tbl: r(document.getElementById("liveList")), wrap: r(document.getElementById("liveDeathLineWrap")), hold: r(document.getElementById("liveDpsHoldBar").closest(".live-metric")), dps: r(document.getElementById("liveDps")), track: r(document.querySelector("#liveDps .live-bar")) }; })()`);
+      const spread = Math.max(ws.tbl, ws.wrap, ws.hold, ws.dps, ws.track) - Math.min(ws.tbl, ws.wrap, ws.hold, ws.dps, ws.track);
+      assert.ok(spread <= 2, `bars match the table width: ${JSON.stringify(ws)}`);
+      assert.deepEqual(errors, [], "no page errors");
+    });
+  });
+  it("bars follow the table on phones (owner 2026-10-26): table and DPM block both fill the phone", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      const ws = await ev(`(() => { const r = (el) => el.getBoundingClientRect().width; return { tbl: r(document.getElementById("liveList")), dps: r(document.getElementById("liveDps")) }; })()`);
+      assert.ok(Math.abs(ws.tbl - ws.dps) <= 2, `phone bars match the table width: ${JSON.stringify(ws)}`);
+      assert.deepEqual(errors, [], "no page errors");
+    }, { width: 390, height: 844 });
   });
 });
