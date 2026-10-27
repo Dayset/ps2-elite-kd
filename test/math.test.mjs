@@ -131,6 +131,12 @@ describe("Inflation @ 0.5 KPM", () => {
     const dm = deathMixLite(p);
     assert.ok(Number.isNaN(dm.inflation));
   });
+
+  it("NaN inflation when Census zeroed the lifetime K/D (#79)", () => {
+    const rows = [{ name: "avg", kpm: 0.6, kills: 10, deaths: 10 }];
+    assert.ok(Number.isNaN(deathMixLite({ global_kd: 0, rows }).inflation));
+    assert.ok(Number.isNaN(deathMixLite({ global_kd: null, rows }).inflation));
+  });
 });
 
 describe("curveSlope (full-curve, deaths > 0)", () => {

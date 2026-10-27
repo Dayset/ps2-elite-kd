@@ -16,7 +16,7 @@
  * Node: whatever was set before) → PS_KPM_RATIO_DEFAULT (first measurement).
  * The gap is clamped to [PS_KPM_RATIO_MIN, PS_KPM_RATIO_MAX] (sanity).
  */
-import { RF_SOFT } from "./math.mjs?v=20261026-brv1";
+import { RF_SOFT } from "./math.mjs?v=20261027-z79";
 
 export const PS_KPM_RATIO_MIN = 1.0;
 export const PS_KPM_RATIO_MAX = 3.0;

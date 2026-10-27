@@ -19,12 +19,12 @@ import {
   resolveIvi,
   deathMixLite,
   RF_SOFT,
-} from "./math.mjs?v=20261026-brv1";
+} from "./math.mjs?v=20261027-z79";
 import { splitFarm, chopScrims, isScrimRoom, isPenalizedPadder, padderPenalty } from "./padding.mjs?v=20261023-short1";
 import { vehicleCutFor, applyVehicleCut, isVehicleCutCleared } from "./vehicle-cut.mjs?v=20261022-wpc1";
 import { OPPONENT_TOP_N, LEGACY_TOP_N, sampleTopN } from "./census-fetch.mjs?v=20261010-sav1";
 import { cleanTimes } from "./flairs.mjs?v=20261010-sav1";
-import { rfBaseFor, kpmScaleFor } from "./ps-baseline.mjs?v=20261026-brv1";
+import { rfBaseFor, kpmScaleFor } from "./ps-baseline.mjs?v=20261027-z79";
 
 /**
  * Older shared-cache files were scored on the top 50 opponents; new fetches use

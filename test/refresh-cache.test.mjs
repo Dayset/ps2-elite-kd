@@ -12,6 +12,7 @@ import {
   isPlausibleName,
   opponentRow,
   honuHistoryToStatHistory,
+  hasHistory,
   staleCandidates,
   nextStaleAt,
   computeSchedule,
@@ -147,6 +148,13 @@ describe("Honu history_stats fallback (only when Census lacks stat_history)", ()
       [{ stat_name: "kills", all_time: "38716" }, { stat_name: "deaths", all_time: "13857" }, { stat_name: "time", all_time: "954345" }]
     );
     assert.deepEqual(honuHistoryToStatHistory(null).map((r) => r.all_time), ["0", "0", "0"]);
+  });
+  it("treats Census all-zero lifetime stats as missing, so the fallback runs (#79)", () => {
+    const sh = (k, d, t) => ({ stats: { stat_history: [{ stat_name: "kills", all_time: k }, { stat_name: "deaths", all_time: d }, { stat_name: "time", all_time: t }] } });
+    assert.equal(hasHistory(sh("38716", "13857", "954345")), true);
+    assert.equal(hasHistory(sh("0", "0", "0")), false); // BlastReality's Census answer
+    assert.equal(hasHistory(sh("12", "0", "600")), true); // no deaths yet is fine
+    assert.equal(hasHistory({ stats: {} }), false);
   });
   it("classifies connect failures (runner can't reach Census)", () => {
     assert.equal(isConnectFailure(new Error("fetch failed (UND_ERR_CONNECT_TIMEOUT) for census.daybreakgames.com")), true);

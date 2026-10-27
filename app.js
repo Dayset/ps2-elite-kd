@@ -33,27 +33,27 @@ import {
   windowYValues,
   kpmBandCurve,
   bandReliability,
-} from "./math.mjs?v=20261026-brv1";
-import { formatClock, fmtNum, slugKey, bareName, parseNames, namesEqualIgnoreCase, namesSetKey, niceLinTicks, niceNum, niceLogTicks, formatTick, escapeHtml, makeAbortError, isAbortError, checkAborted, readJsonLS, writeJsonLS } from "./app-util.mjs?v=20261026-brv1";
-import { createShareAdd } from "./share-add.mjs?v=20261026-brv1";
-import { createSharedIndex } from "./shared-index.mjs?v=20261027-rfps1";
-import { createNamesField } from "./names-field.mjs?v=20261026-brv1";
-import { createStatsTable } from "./stats-table.mjs?v=20261027-rfps1";
-import { createChartWave } from "./chart-wave.mjs?v=20261026-brv1";
-import { createChart } from "./chart.mjs?v=20261027-rfps1";
-import { createLoader } from "./loader.mjs?v=20261026-brv1";
-import { createCacheChips } from "./cache-chips.mjs?v=20261026-brv1";
-import { createLocalCache } from "./local-cache.mjs?v=20261026-brv1";
-import { createProgress } from "./progress.mjs?v=20261026-brv1";
+} from "./math.mjs?v=20261027-z79";
+import { formatClock, fmtNum, slugKey, bareName, parseNames, namesEqualIgnoreCase, namesSetKey, niceLinTicks, niceNum, niceLogTicks, formatTick, escapeHtml, makeAbortError, isAbortError, checkAborted, readJsonLS, writeJsonLS } from "./app-util.mjs?v=20261027-z79";
+import { createShareAdd } from "./share-add.mjs?v=20261027-z79";
+import { createSharedIndex } from "./shared-index.mjs?v=20261027-z79";
+import { createNamesField } from "./names-field.mjs?v=20261027-z79";
+import { createStatsTable } from "./stats-table.mjs?v=20261027-z79";
+import { createChartWave } from "./chart-wave.mjs?v=20261027-z79";
+import { createChart } from "./chart.mjs?v=20261027-z79";
+import { createLoader } from "./loader.mjs?v=20261027-z79";
+import { createCacheChips } from "./cache-chips.mjs?v=20261027-z79";
+import { createLocalCache } from "./local-cache.mjs?v=20261027-z79";
+import { createProgress } from "./progress.mjs?v=20261027-z79";
 import { createTheme } from "./theme.mjs?v=20261024-split2";
-import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261027-rfps1";
+import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261027-z79";
 import GHOST_MODEL from "./data/ghost-model.mjs?v=20261010-sav1";
 import { t as tr, ready as i18nReady } from "./i18n.mjs";
 // Wait for the chosen language file (English loads nothing), so the first render is translated.
 await i18nReady;
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261020-wide1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
-import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261024-crowd1";
+import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261027-z79";
 import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, diffValueHtml, aimGapCellTip, zergCellTip } from "./trait-tips.mjs?v=20261024-crowd1";
 import { ZREV_NOTE } from "./zerg-revive.mjs?v=20261024-crowd1";
 import { VDIFF_NOTE } from "./diff-vehicle.mjs?v=20261023-short1";
@@ -109,7 +109,7 @@ import {
   THIN_MARK,
   THIN_NOTE_HEAD,
   thinPlayerLine,
-} from "./player-metrics.mjs?v=20261027-rfps1";
+} from "./player-metrics.mjs?v=20261027-z79";
 /** "22 kills / 60 deaths" in the opponent sample (MIN_FIGHTS counts). */
 function fightsText(r) {
   const k = r.sampleKills || 0;
@@ -122,7 +122,7 @@ function thinCellTip(r) {
   return tr("fights.sample", "{tip}. This sample: {sample}", { tip: MIN_FIGHTS_TIP, sample: fightsText(r).replace(/[()]/g, "") });
 }
 import { markNote, statMark, confirmedPadderSlugs, isPenalizedPadder, POOP_MARK, POOP_TIP, setRoomRule } from "./padding.mjs?v=20261023-short1";
-import { psIviBaseline, psKpmRatio } from "./ps-baseline.mjs?v=20261026-brv1";
+import { psIviBaseline, psKpmRatio } from "./ps-baseline.mjs?v=20261027-z79";
 import { removedList } from "./opt-out.mjs?v=20261023-proof1";
 import { createPairMatch, PAIR_MATCH_ENABLED } from "./pair-match.mjs?v=20261027-pmoff1"; // t710: 👯 play-pattern match of two names
 import { HUT_MARK, HUT_TIP, HUT_DIFF_NOTE, playMinutes } from "./hut.mjs?v=20261023-short1";

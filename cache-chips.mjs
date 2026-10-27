@@ -5,7 +5,7 @@
 import { t as tr } from "./i18n.mjs";
 import { alphabetJumpLetters, groupByCharName, compareByCharName } from "./analyze-run.mjs?v=20261023-priv1";
 import { sectionJumpState, glideTo, scrollBehavior, mountJumpButtons } from "./jump-btns.mjs?v=20261020-i18n2";
-import { slugKey } from "./app-util.mjs?v=20261026-brv1";
+import { slugKey } from "./app-util.mjs?v=20261027-z79";
 import { isPenalizedPadder } from "./padding.mjs?v=20261023-short1";
 
 /**

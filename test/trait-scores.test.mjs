@@ -24,6 +24,7 @@ test("Zerg = the lower of the Inflation and Assists percentiles: solo farmers st
   assert.equal(zergScore(pools, 3, 0.1).score, 0); // high inflation, few assists → not zerg
   assert.equal(zergScore(pools, 1, 1).score, 0); // many assists, no inflation → not zerg
   assert.equal(zergScore(pools, 2, null), null); // no 🤝 (under 100 session kills) → "—"
+  assert.equal(zergScore(pools, 0, 1), null); // inflation 0 = Census zeroed lifetime stats (#79) → unknown, not 0.1
 });
 
 test("values are rounded like ranks-lite.json, so Stats and Rankings agree", () => {

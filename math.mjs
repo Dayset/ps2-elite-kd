@@ -248,11 +248,14 @@ export function resolveIvi(p) {
 /**
  * Lightweight death_mix metrics at inflation cutoff INFLATION_KPM (0.5).
  * inflation = global_kd / KD among rows with enemy kpm ≥ cutoff.
+ * A lifetime K/D of 0 next to a killboard with kills is not a measurement:
+ * Census reports some characters' lifetime stats as all zeros (#79), so
+ * inflation is NaN ("unknown") then, never 0.
  */
 export function deathMixLite(p, cut = INFLATION_KPM) {
   const { kd: kdCut, deaths: dCut, n: nCut } = sliceAt(p.rows || [], cut);
   const gkd = +p.global_kd || 0;
-  const inflation = isFiniteNum(kdCut) && kdCut > 0.05 ? gkd / kdCut : NaN;
+  const inflation = gkd > 0 && isFiniteNum(kdCut) && kdCut > 0.05 ? gkd / kdCut : NaN;
   return {
     kd05: kdCut,
     d05: dCut,

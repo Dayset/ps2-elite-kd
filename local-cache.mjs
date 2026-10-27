@@ -2,7 +2,7 @@
  * This browser's own copy of loaded players (localStorage, pruned), the last comparison, the pending name chips, and
  * the 🗑️ wipe of everything this site stored (#66: moved out of app.js unchanged).
  */
-import { readJsonLS, writeJsonLS, slugKey } from "./app-util.mjs?v=20261026-brv1";
+import { readJsonLS, writeJsonLS, slugKey } from "./app-util.mjs?v=20261027-z79";
 import { writeWithEviction } from "./cache-pick.mjs?v=20261010-sav1";
 import { namesListKey } from "./analyze-run.mjs?v=20261023-priv1";
 import { t as tr } from "./i18n.mjs";

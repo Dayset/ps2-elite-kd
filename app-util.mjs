@@ -2,7 +2,7 @@
  * Small pure helpers used by app.js (#66 step E: moved out of app.js unchanged; no page state, no DOM).
  * Formatting, name parsing, chart ticks, abort errors and safe localStorage JSON.
  */
-import { isFiniteNum } from "./math.mjs?v=20261026-brv1";
+import { isFiniteNum } from "./math.mjs?v=20261027-z79";
 
 export function formatClock(ms) {
   if (!Number.isFinite(ms) || ms < 0) return "0:00";

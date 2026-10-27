@@ -3,7 +3,7 @@
  * Shared by scripts/build-flags.mjs (precomputes data/flags.json in the refresh
  * workflow) and build-log.html, so both use the exact same rules.
  */
-import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261027-rfps1";
+import { normalizePlayer, playerMetrics } from "./player-metrics.mjs?v=20261027-z79";
 import { reviewFlags } from "./red-flags.mjs?v=20261023-agap1";
 import { sprout, sampleEvents, farmAccount } from "./sprouts.mjs?v=20261010-sav1";
 import { isNotFarm, farmListEntry } from "./padding.mjs?v=20261023-short1";

@@ -4,7 +4,7 @@
  */
 import { etaLearnLiveMs, estimateRemainingMs, nextEtaDeadline, expectedNameMs, formatEtaLeft } from "./analyze-run.mjs?v=20261023-priv1";
 import { t as tr } from "./i18n.mjs";
-import { formatClock } from "./app-util.mjs?v=20261026-brv1";
+import { formatClock } from "./app-util.mjs?v=20261027-z79";
 
 /**
  * $ = app.js state and functions this part uses, as live getters (and setters for state it changes), so app.js

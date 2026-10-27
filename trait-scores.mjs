@@ -81,7 +81,8 @@ export function aimGap(pools, adjs, ivi, hut = null, veh = null, nbd = null) {
  * percentile (zerg-revive.mjs; null = no data); chk = the higher of the two.
  */
 export function zergScore(pools, inflation, apk, rvp = null, crp = null) {
-  const f = pct(pools, "inflation", inflation), a = pct(pools, "apk", apk);
+  // Inflation 0 = Census zeroed the lifetime stats (#79), not a real 0: unknown.
+  const f = +inflation > 0 ? pct(pools, "inflation", inflation) : null, a = pct(pools, "apk", apk);
   if (f == null || a == null) return null;
   const raw = Math.min(f, a);
   const rv = fin(rvp) ? rvp : null, cr = fin(crp) ? crp : null;

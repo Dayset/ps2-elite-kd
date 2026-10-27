@@ -341,8 +341,15 @@ async function resolveCensus(name) {
   return c;
 }
 
-function hasHistory(c) {
-  return ["kills", "deaths", "time"].every((t) => (((c.stats || {}).stat_history) || []).some((r) => r && r.stat_name === t));
+/**
+ * Usable lifetime history: kills, deaths and time entries present AND kills/time
+ * above 0. Census answers some characters with all-zero entries (#79); those
+ * need the Honu fallback just like characters with no entries.
+ */
+export function hasHistory(c) {
+  const rows = ((c.stats || {}).stat_history) || [];
+  if (!["kills", "deaths", "time"].every((t) => rows.some((r) => r && r.stat_name === t))) return false;
+  return hist(c, "kills") > 0 && hist(c, "time") > 0;
 }
 
 /** Honu /history_stats rows -> Census stat_history rows (kills, deaths, time). */
@@ -362,8 +369,11 @@ async function honuHistoryFallback(c) {
   try {
     const history = await fetchJson(`${HONU}${c.character_id}/history_stats`, { retries: 2 });
     if (!Array.isArray(history) || !history.length) return;
-    c.stats = { ...(c.stats || {}), stat_history: honuHistoryToStatHistory(history) };
-    console.log(`  (history_stats from Honu: Census had none for ${c.character_id})`);
+    const rows = honuHistoryToStatHistory(history);
+    // Honu zeros too: keep Census's rows (the page then shows the stats as unknown).
+    if (!(+rows[0].all_time > 0)) return;
+    c.stats = { ...(c.stats || {}), stat_history: rows };
+    console.log(`  (history_stats from Honu: Census had none or zeros for ${c.character_id})`);
   } catch (e) {
     console.warn(`  Honu history_stats fallback failed: ${String(e.message).slice(0, 80)}`);
   }
