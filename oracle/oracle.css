@@ -250,6 +250,8 @@ footer { color: var(--dim); font-size: var(--fs-12); margin-top: var(--s-5); }
 .banner[hidden] { display: none; }
 /* Maintenance notice (t721u): calm info, not a warning. */
 .banner.info { background: rgba(122,170,255,.08); border-color: rgba(122,170,255,.45); }
+.banner.info { flex-wrap: wrap; }
+.banner a { white-space: nowrap; color: inherit; text-decoration: underline; text-underline-offset: 2px; }
 .sk { position: relative; overflow: hidden; background: var(--panel2); border-radius: var(--r-md); }
 .sk::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,.05), transparent); animation: sk 1.4s infinite; }
 @keyframes sk { to { transform: translateX(100%); } }

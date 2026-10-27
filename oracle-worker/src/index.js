@@ -33,7 +33,7 @@ import { liveHeat } from "./heat.js";
 import { computePockets } from "./pockets.js";
 import { alertFrames, archiveAlert, nextToArchive, putBundle, validBundle } from "./archive.js";
 export { AuthWatcher } from "./auth-watcher.js";
-import { parseWorldStates, serverStatus, holdFinals, serversHint } from "./maintenance.js";
+import { parseWorldStates, serverStatus, holdFinals, serversHint, STEAM_NEWS_URL, pickSchedule, schedDue, schedHint } from "./maintenance.js";
 
 const CENSUS = "https://census.daybreakgames.com";
 const UA = "ps2-elite-kd-oracle/1.0 (+https://github.com/Dayset/ps2-elite-kd; contact: github.com/Dayset)";
@@ -205,13 +205,14 @@ export async function runCycle(env, nowMs = Date.now()) {
 
   // 1) Census, all in parallel.
   const worldIds = WORLDS.join(",");
-  const [maps, mg, fac, ws, prevCycle] = await Promise.all([
+  const [maps, mg, fac, ws, prevCycle, schedMeta] = await Promise.all([
     Promise.allSettled(WORLDS.map((w) => census(sid, `map/?world_id=${w}&zone_ids=${ZONES.join(",")}`, CENSUS_MAP_MS))),
     census(sid, `world_event/?world_id=${worldIds}&type=METAGAME&c:limit=60`, CENSUS_EVENT_MS).catch((e) => e),
     census(sid, `world_event/?world_id=${worldIds}&type=FACILITY&c:limit=250`, CENSUS_EVENT_MS).catch((e) => e),
     // Maintenance check (t721u): world up/locked, one small call.
     census(sid, `world/?world_id=${worldIds}&c:show=world_id,state`, CENSUS_MAP_MS).catch((e) => e),
     getMeta(db, "last_cycle").catch(() => null),
+    getMeta(db, "maint_sched").catch(() => null),
   ]);
   // Server verdict first, so a down world's frozen/failed map is neither stored nor counted as our delay.
   const flipsNow = fac instanceof Error ? [] : parseFlips(fac);
@@ -223,6 +224,21 @@ export async function runCycle(env, nowMs = Date.now()) {
   const servers = serverStatus(WORLDS, prevCycle && prevCycle.servers, states, mapOk, lastFlip, now);
   report.servers = servers;
   if (ws instanceof Error) report.notes = [`world state: ${ws.message}`];
+  // Announced maintenance window (t723u): Daybreak's Steam post, read at most every 30 min
+  // (10 min while a server is down). A failed read keeps the last real answer.
+  let sched = schedMeta;
+  if (schedDue(schedMeta, servers, now)) {
+    try {
+      const r = await fetch(STEAM_NEWS_URL, { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(6000) });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      sched = { checked: now, sched: pickSchedule(await r.json(), now) };
+    } catch (e) {
+      sched = { checked: now, sched: (schedMeta && schedMeta.sched) || null, err: String((e && e.message) || e).slice(0, 120) };
+      (report.notes ||= []).push(`schedule: ${sched.err}`);
+    }
+    await setMeta(db, "maint_sched", sched).catch(() => {});
+  }
+  report.sched = schedHint(sched, now);
 
   // 2) Store.
   const stmts = [];
@@ -718,7 +734,7 @@ async function handle(request, env) {
     const ageS = last ? now - last.ts : null;
     const lastCmd = await getMeta(db, "last_commander");
     const lastHonu = await getMeta(db, "last_honu");
-    return json({ ok: ageS !== null && ageS < 180, service: "ps2-oracle", now, servers: last ? serversHint(last.servers) : null, last_cycle_age_s: ageS, last_ok_age_s: lastOk ? now - lastOk : null, last_cycle: last, last_commander: lastCmd, last_honu: lastHonu }, 200, { "Cache-Control": "no-store" });
+    return json({ ok: ageS !== null && ageS < 180, service: "ps2-oracle", now, servers: last ? serversHint(last.servers) : null, sched: last ? last.sched || null : null, last_cycle_age_s: ageS, last_ok_age_s: lastOk ? now - lastOk : null, last_cycle: last, last_commander: lastCmd, last_honu: lastHonu }, 200, { "Cache-Control": "no-store" });
   }
 
   // Manual kick + diagnostics: runs one cycle now unless one ran in the last
@@ -748,7 +764,7 @@ async function handle(request, env) {
     const rows = (res && res.results) || [];
     // Cycle hint: lets the page fetch right after the next cycle lands (and drop its /health poll).
     const cycle = last ? { ts: last.ts, ms: last.ms ?? null, age_s: now - last.ts, ok_age_s: lastOk ? now - lastOk : null,
-      errors: (last.errors || []).length, commander_ts: lastCmd ? lastCmd.ts : null, servers: serversHint(last.servers) } : null;
+      errors: (last.errors || []).length, commander_ts: lastCmd ? lastCmd.ts : null, servers: serversHint(last.servers), sched: last.sched || null } : null;
     return json({ now, worlds: WORLD_NAMES, alerts: rows.map(parseRow), cycle });
   }
 

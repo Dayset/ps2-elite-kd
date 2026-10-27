@@ -13,7 +13,7 @@ import { benchPanel, initResults, refreshHistory, renderHist } from "./results.j
 import { initAuth } from "./auth.js?v=20261024-i18n1";
 import { enhance, onSectionExpand, refreshSummary } from "./collapse.js?v=20261026-pulse1";
 import { t as tr, ready } from "../../i18n.mjs";
-import { maintNotice, clock } from "./maint.js?v=20261027-maint1";
+import { maintNotice, when, schedState, lastOnline, STATUS_URL } from "./maint.js?v=20261027-maint3";
 await ready;   // #73: the language file is in before anything renders
 document.title = tr("or.title", "PS2MapOracle — live PlanetSide 2 alert odds");
 
@@ -153,7 +153,7 @@ function render2(now) {
   if (!a && S.pinned && S.selected) { $("main").innerHTML = `<div class="empty">${tr("or.loadingAlert", "Loading alert…")}</div>`; return; }
   if (!a) {
     $("mini").innerHTML = ""; miniSync();
-    if (S.maint && S.maint.all) { $("main").innerHTML = `<div class="empty">${tr("or.mt.empty", "Game servers are down for maintenance. Alerts and live odds come back here on their own when the servers return.")}</div>`; return; }
+    if (S.maint && S.maint.all) { $("main").innerHTML = `<div class="empty">${tr("or.mt.empty", "PlanetSide 2 servers are down for maintenance. Alerts and live odds show up here again on their own once they're back.")}</div>`; return; }
     $("main").innerHTML = `<div class="empty">${tr("or.noAlerts", "No territory alerts running on Osprey, Wainwright or SolTech right now. Live odds appear here the minute one starts.")}</div>`;
     return;
   }
@@ -243,9 +243,10 @@ function withMode(a, c) {
 }
 
 // Error banner (#18): Worker unreachable or /health stale; cleared on the next good poll.
-function banner(text, cls = "") {
+function banner(text, cls = "", link = null) {
   const b = $("banner");
   b.hidden = !text; b.className = "banner " + cls; b.textContent = text ? (cls === "info" ? "ℹ " : "⚠ ") + text : "";
+  for (const l of (text && link) ? [].concat(link) : []) { const a = document.createElement("a"); a.href = l.url; a.target = "_blank"; a.rel = "noopener"; a.textContent = l.label; b.append(a); }
 }
 // Page title shows the leading live alert's win % (#18).
 const BASE_TITLE = document.title;
@@ -276,13 +277,33 @@ async function refreshLive() {
     const lang = document.documentElement.lang;
     $("dot").className = "dot " + (mt && mt.all ? "info" : ok ? "ok" : "bad");
     $("statusText").textContent = mt && mt.all ? tr("or.mt.status", "servers in maintenance") : ok ? tr("or.updated", "live · updated {n}s ago", { n: health.last_cycle_age_s }) : tr("or.delayed", "data delayed");
+    // Daybreak's announced window (t723u), only when it came from their own post; never a guess.
+    const ss = schedState(cy && cy.sched, mt, now), T = (ts) => when(ts, lang, now);
+    // Links: Daybreak's own status page (t724u) and, when we read a window from it, their notice.
+    const status = { url: STATUS_URL, label: tr("or.mt.statusLink", "Official server status") };
+    const src = ss && ss.url ? { url: ss.url, label: tr("or.mt.src", "Daybreak's notice") } : null;
+    const links = src ? [status, src] : [status];
+    const schedText = (x) => {
+      const v = { hours: Number(x.hours).toLocaleString(lang || undefined), start: T(x.start), end: T(x.end) };
+      return x.key === "eta" ? tr("or.mt.eta", "Daybreak planned about {hours} h from {start}, so they should be back around {end}.", v)
+        : x.key === "late" ? tr("or.mt.late", "Daybreak planned about {hours} h from {start}; it is taking longer than that.", v)
+        : tr("or.mt.soon", "Daybreak has announced maintenance at {start}, about {hours} h (back around {end}).", v);
+    };
     if (mt && (ok || mt.all)) {
-      const time = mt.lastOk ? clock(mt.lastOk, lang) : null, names = mt.names.join(", ");
-      banner(mt.all ? (time ? tr("or.mt.all", "Game servers are down for maintenance. Showing the last data, from {time}. Live updates come back on their own when the servers return.", { time })
-          : tr("or.mt.allNoTime", "Game servers are down for maintenance. Live updates come back on their own when the servers return."))
-        : time ? tr("or.mt.some", "Offline for maintenance: {names} (last data {time}). The other servers update as normal.", { names, time })
-          : tr("or.mt.someNoTime", "Offline for maintenance: {names}. The other servers update as normal.", { names }), "info");
-    } else
+      const lo = lastOnline(mt), parts = [];
+      if (mt.all) {
+        parts.push(tr("or.mt.all", "PlanetSide 2 servers are down for maintenance."));
+        if (lo && lo.one) parts.push(tr("or.mt.lastAll", "Last online {time}.", { time: T(lo.one) }));
+        else if (lo) parts.push(tr("or.mt.lastList", "Last online: {list}.", { list: lo.each.map((d) => `${d.name} ${T(d.lastUp)}`).join(", ") }));
+        parts.push(tr("or.mt.keep", "You're seeing the last data we got; live updates come back on their own."));
+      } else {
+        const names = mt.down.map((d) => d.lastUp ? tr("or.mt.lastUp", "{name} (last online {time})", { name: d.name, time: T(d.lastUp) }) : d.name).join(", ");
+        parts.push(tr("or.mt.some", "Down for maintenance: {names}. The other servers update as normal.", { names }));
+      }
+      if (ss) parts.push(schedText(ss));
+      banner(parts.join(" "), "info", links);
+    } else if (ok && ss) banner(schedText(ss), "info", links);
+    else
     banner(ok ? "" : health && health.last_ok_age_s != null ? tr("or.staleMin", "Live data is {n} min old — retrying…", { n: Math.round(health.last_ok_age_s / 60) }) : tr("or.stale", "Live data is a while old — retrying…"), "warn");
     pageTitle();
     render(now);
