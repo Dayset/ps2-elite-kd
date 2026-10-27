@@ -13,6 +13,7 @@ import { benchPanel, initResults, refreshHistory, renderHist } from "./results.j
 import { initAuth } from "./auth.js?v=20261024-i18n1";
 import { enhance, onSectionExpand, refreshSummary } from "./collapse.js?v=20261026-pulse1";
 import { t as tr, ready } from "../../i18n.mjs";
+import { maintNotice, clock } from "./maint.js?v=20261027-maint1";
 await ready;   // #73: the language file is in before anything renders
 document.title = tr("or.title", "PS2MapOracle — live PlanetSide 2 alert odds");
 
@@ -152,6 +153,7 @@ function render2(now) {
   if (!a && S.pinned && S.selected) { $("main").innerHTML = `<div class="empty">${tr("or.loadingAlert", "Loading alert…")}</div>`; return; }
   if (!a) {
     $("mini").innerHTML = ""; miniSync();
+    if (S.maint && S.maint.all) { $("main").innerHTML = `<div class="empty">${tr("or.mt.empty", "Game servers are down for maintenance. Alerts and live odds come back here on their own when the servers return.")}</div>`; return; }
     $("main").innerHTML = `<div class="empty">${tr("or.noAlerts", "No territory alerts running on Osprey, Wainwright or SolTech right now. Live odds appear here the minute one starts.")}</div>`;
     return;
   }
@@ -243,7 +245,7 @@ function withMode(a, c) {
 // Error banner (#18): Worker unreachable or /health stale; cleared on the next good poll.
 function banner(text, cls = "") {
   const b = $("banner");
-  b.hidden = !text; b.className = "banner " + cls; b.textContent = text ? "⚠ " + text : "";
+  b.hidden = !text; b.className = "banner " + cls; b.textContent = text ? (cls === "info" ? "ℹ " : "⚠ ") + text : "";
 }
 // Page title shows the leading live alert's win % (#18).
 const BASE_TITLE = document.title;
@@ -269,8 +271,16 @@ async function refreshLive() {
     S.alerts = (live.alerts || []).sort((x, y) => (x.status === "live" ? 0 : 1) - (y.status === "live" ? 0 : 1) || y.start_ts - x.start_ts);
     if (!S.alerts.find((x) => x.key === S.selected) && !S.pinned) { S.selected = S.alerts.length ? S.alerts[0].key : null; if (S.selected) setUrlAlert(S.selected); }
     const ok = health && health.ok && health.last_ok_age_s !== null && health.last_ok_age_s < 300;
-    $("dot").className = "dot " + (ok ? "ok" : "bad");
-    $("statusText").textContent = ok ? tr("or.updated", "live · updated {n}s ago", { n: health.last_cycle_age_s }) : tr("or.delayed", "data delayed");
+    // Game servers down for maintenance (t721u): calm info, not "data delayed"; clears itself when they return.
+    const mt = S.maint = maintNotice(cy && cy.servers, live.worlds);
+    const lang = document.documentElement.lang;
+    $("dot").className = "dot " + (mt && mt.all ? "info" : ok ? "ok" : "bad");
+    $("statusText").textContent = mt && mt.all ? tr("or.mt.status", "servers in maintenance") : ok ? tr("or.updated", "live · updated {n}s ago", { n: health.last_cycle_age_s }) : tr("or.delayed", "data delayed");
+    if (mt && (ok || mt.all)) {
+      const time = mt.lastOk ? clock(mt.lastOk, lang) : "—";
+      banner(mt.all ? tr("or.mt.all", "Game servers are down for maintenance. Showing the last data, from {time}. Live updates come back on their own when the servers return.", { time })
+        : tr("or.mt.some", "Offline for maintenance: {names} (last data {time}). The other servers update as normal.", { names: mt.names.join(", "), time }), "info");
+    } else
     banner(ok ? "" : health && health.last_ok_age_s != null ? tr("or.staleMin", "Live data is {n} min old — retrying…", { n: Math.round(health.last_ok_age_s / 60) }) : tr("or.stale", "Live data is a while old — retrying…"), "warn");
     pageTitle();
     render(now);

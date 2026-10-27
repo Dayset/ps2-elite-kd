@@ -33,6 +33,7 @@ import { liveHeat } from "./heat.js";
 import { computePockets } from "./pockets.js";
 import { alertFrames, archiveAlert, nextToArchive, putBundle, validBundle } from "./archive.js";
 export { AuthWatcher } from "./auth-watcher.js";
+import { parseWorldStates, serverStatus, holdFinals, serversHint } from "./maintenance.js";
 
 const CENSUS = "https://census.daybreakgames.com";
 const UA = "ps2-elite-kd-oracle/1.0 (+https://github.com/Dayset/ps2-elite-kd; contact: github.com/Dayset)";
@@ -204,11 +205,24 @@ export async function runCycle(env, nowMs = Date.now()) {
 
   // 1) Census, all in parallel.
   const worldIds = WORLDS.join(",");
-  const [maps, mg, fac] = await Promise.all([
+  const [maps, mg, fac, ws, prevCycle] = await Promise.all([
     Promise.allSettled(WORLDS.map((w) => census(sid, `map/?world_id=${w}&zone_ids=${ZONES.join(",")}`, CENSUS_MAP_MS))),
     census(sid, `world_event/?world_id=${worldIds}&type=METAGAME&c:limit=60`, CENSUS_EVENT_MS).catch((e) => e),
     census(sid, `world_event/?world_id=${worldIds}&type=FACILITY&c:limit=250`, CENSUS_EVENT_MS).catch((e) => e),
+    // Maintenance check (t721u): world up/locked, one small call.
+    census(sid, `world/?world_id=${worldIds}&c:show=world_id,state`, CENSUS_MAP_MS).catch((e) => e),
+    getMeta(db, "last_cycle").catch(() => null),
   ]);
+  // Server verdict first, so a down world's frozen/failed map is neither stored nor counted as our delay.
+  const flipsNow = fac instanceof Error ? [] : parseFlips(fac);
+  const lastFlip = {};
+  for (const f of flipsNow) if (!(lastFlip[f.world] >= f.ts)) lastFlip[f.world] = f.ts;
+  const mapOk = {};
+  maps.forEach((r, i) => { if (r.status === "fulfilled" && Object.keys(parseMap(r.value)).length) mapOk[WORLDS[i]] = true; });
+  const states = ws instanceof Error ? null : parseWorldStates(ws);
+  const servers = serverStatus(WORLDS, prevCycle && prevCycle.servers, states, mapOk, lastFlip, now);
+  report.servers = servers;
+  if (ws instanceof Error) report.notes = [`world state: ${ws.message}`];
 
   // 2) Store.
   const stmts = [];
@@ -216,6 +230,7 @@ export async function runCycle(env, nowMs = Date.now()) {
   const snapRows = [];
   maps.forEach((r, i) => {
     const w = WORLDS[i];
+    if (servers[w].down) { report.worlds[w] = `down (${servers[w].state || "maintenance"})`; return; }
     if (r.status !== "fulfilled") { report.worlds[w] = "error"; report.errors.push(`map w${w}: ${r.reason && r.reason.message}`); return; }
     const zones = parseMap(r.value);
     const n = Object.keys(zones).length;
@@ -239,7 +254,7 @@ export async function runCycle(env, nowMs = Date.now()) {
   }
   if (fac instanceof Error) report.errors.push(`facility: ${fac.message}`);
   else {
-    const flips = parseFlips(fac);
+    const flips = flipsNow;
     report.flips = flips.length;
     if (flips.length) stmts.push(bulkInsert(db, "flip", ["world", "zone", "facility", "ts", "old", "new", "held", "outfit"], flips));
   }
@@ -276,7 +291,9 @@ export async function runCycle(env, nowMs = Date.now()) {
     const base = { key: a.key, world: a.world, zone: a.zone, instance_id: a.instance_id, event_id: a.event_id, start_ts: startTs, dur, kind: alertKind(a.event_id) };
 
     if (!a.end) {
-      if (now > startTs + dur * 60 + 1800) { out.push({ ...base, status: "unresolved" }); continue; }
+      // Maintenance: never give up on an alert while its server is down or just back (t721u).
+      if (now > startTs + dur * 60 + 1800 && !holdFinals(servers, a.world, now)) { out.push({ ...base, status: "unresolved" }); continue; }
+      if (now > startTs + dur * 60 + 1800) { out.push({ ...base, status: "settling", flags: ["maintenance_hold"] }); continue; }
       if (now > startTs + dur * 60 + 300) { out.push({ ...base, status: "settling" }); continue; }
       // Live alert: compute the state.
       if (!hasTree(a.zone)) continue;
@@ -346,6 +363,13 @@ export async function runCycle(env, nowMs = Date.now()) {
 
     // Ended or canceled.
     const endTs = a.end.ts;
+    // An alert that ended at/after its server went down (shutdown end): hold it until the
+    // server is back and settled for BACK_GRACE_S, then the normal checks run (t721u).
+    const sv = servers[a.world];
+    const downFrom = sv && (sv.since || sv.down_from);
+    if (holdFinals(servers, a.world, now) && downFrom && endTs >= downFrom - 600) {
+      out.push({ ...base, status: "settling", end_ts: endTs, checks: 0, flags: ["maintenance_hold"] }); continue;
+    }
     if (a.end.state === "canceled") { out.push({ ...base, status: "canceled", end_ts: endTs }); continue; }
     const final = { VS: a.end.vs, NC: a.end.nc, TR: a.end.tr };
     const finalOk = FACS.every((f) => final[f] !== null && final[f] !== undefined && Number.isFinite(+final[f]));
@@ -408,7 +432,7 @@ export async function runCycle(env, nowMs = Date.now()) {
         if (!fw) { out.push({ ...rec, status: "unresolved" }); continue; }
         ({ winner, basis } = fw);
       }
-      else if (now > sd.start.ts + 45 * 60) { out.push({ ...rec, status: "unresolved" }); continue; }
+      else if (now > sd.start.ts + 45 * 60 && !holdFinals(servers, a.world, now)) { out.push({ ...rec, status: "unresolved" }); continue; }
       else { out.push({ ...rec, status: "sudden_death" }); continue; }
     } else {
       const fw = await finalWinner();
@@ -472,7 +496,8 @@ export async function runCycle(env, nowMs = Date.now()) {
   report.settled = settled;
   report.ms = Date.now() - t0;
   await setMeta(db, "last_cycle", report);
-  if (!report.errors.length) await setMeta(db, "last_ok", now);
+  // Errors from a world that is down for maintenance are not our delay (t721u).
+  if (!report.errors.some((e) => !WORLDS.some((w) => servers[w].down && e.startsWith(`map w${w}:`)))) await setMeta(db, "last_ok", now);
   return report;
 }
 
@@ -693,7 +718,7 @@ async function handle(request, env) {
     const ageS = last ? now - last.ts : null;
     const lastCmd = await getMeta(db, "last_commander");
     const lastHonu = await getMeta(db, "last_honu");
-    return json({ ok: ageS !== null && ageS < 180, service: "ps2-oracle", now, last_cycle_age_s: ageS, last_ok_age_s: lastOk ? now - lastOk : null, last_cycle: last, last_commander: lastCmd, last_honu: lastHonu }, 200, { "Cache-Control": "no-store" });
+    return json({ ok: ageS !== null && ageS < 180, service: "ps2-oracle", now, servers: last ? serversHint(last.servers) : null, last_cycle_age_s: ageS, last_ok_age_s: lastOk ? now - lastOk : null, last_cycle: last, last_commander: lastCmd, last_honu: lastHonu }, 200, { "Cache-Control": "no-store" });
   }
 
   // Manual kick + diagnostics: runs one cycle now unless one ran in the last
@@ -723,7 +748,7 @@ async function handle(request, env) {
     const rows = (res && res.results) || [];
     // Cycle hint: lets the page fetch right after the next cycle lands (and drop its /health poll).
     const cycle = last ? { ts: last.ts, ms: last.ms ?? null, age_s: now - last.ts, ok_age_s: lastOk ? now - lastOk : null,
-      errors: (last.errors || []).length, commander_ts: lastCmd ? lastCmd.ts : null } : null;
+      errors: (last.errors || []).length, commander_ts: lastCmd ? lastCmd.ts : null, servers: serversHint(last.servers) } : null;
     return json({ now, worlds: WORLD_NAMES, alerts: rows.map(parseRow), cycle });
   }
 
