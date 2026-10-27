@@ -277,9 +277,11 @@ async function refreshLive() {
     $("dot").className = "dot " + (mt && mt.all ? "info" : ok ? "ok" : "bad");
     $("statusText").textContent = mt && mt.all ? tr("or.mt.status", "servers in maintenance") : ok ? tr("or.updated", "live · updated {n}s ago", { n: health.last_cycle_age_s }) : tr("or.delayed", "data delayed");
     if (mt && (ok || mt.all)) {
-      const time = mt.lastOk ? clock(mt.lastOk, lang) : "—";
-      banner(mt.all ? tr("or.mt.all", "Game servers are down for maintenance. Showing the last data, from {time}. Live updates come back on their own when the servers return.", { time })
-        : tr("or.mt.some", "Offline for maintenance: {names} (last data {time}). The other servers update as normal.", { names: mt.names.join(", "), time }), "info");
+      const time = mt.lastOk ? clock(mt.lastOk, lang) : null, names = mt.names.join(", ");
+      banner(mt.all ? (time ? tr("or.mt.all", "Game servers are down for maintenance. Showing the last data, from {time}. Live updates come back on their own when the servers return.", { time })
+          : tr("or.mt.allNoTime", "Game servers are down for maintenance. Live updates come back on their own when the servers return."))
+        : time ? tr("or.mt.some", "Offline for maintenance: {names} (last data {time}). The other servers update as normal.", { names, time })
+          : tr("or.mt.someNoTime", "Offline for maintenance: {names}. The other servers update as normal.", { names }), "info");
     } else
     banner(ok ? "" : health && health.last_ok_age_s != null ? tr("or.staleMin", "Live data is {n} min old — retrying…", { n: Math.round(health.last_ok_age_s / 60) }) : tr("or.stale", "Live data is a while old — retrying…"), "warn");
     pageTitle();

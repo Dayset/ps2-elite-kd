@@ -48,7 +48,7 @@ test("page wiring + 9 languages", () => {
   assert.match(css, /\.banner\.info/); assert.match(css, /prefers-reduced-motion: reduce\) \{ \.dot\.info/);
   for (const l of ["en", "de", "es", "fr", "it", "ja", "ru", "uk", "zh"]) {
     const j = JSON.parse(read(`i18n/${l}.json`));
-    for (const k of ["or.mt.status", "or.mt.all", "or.mt.some", "or.mt.empty"]) assert.ok(j[k], `${l} ${k}`);
+    for (const k of ["or.mt.status", "or.mt.all", "or.mt.some", "or.mt.empty", "or.mt.allNoTime", "or.mt.someNoTime"]) assert.ok(j[k], `${l} ${k}`);
     assert.ok(j["or.mt.all"].includes("{time}") && j["or.mt.some"].includes("{names}") && j["or.mt.some"].includes("{time}"), l);
   }
 });
