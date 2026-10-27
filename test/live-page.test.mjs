@@ -1019,6 +1019,7 @@ test("streamer mode (owner 2026-10-26): button switches to the chromakey overlay
   assert.match(css, /body\.live-stream \{ background: #00ff00 !important; -webkit-text-stroke: 2px #000; paint-order: stroke fill; \}/);
   assert.match(css, /body\.live-stream \.live-table, body\.live-stream \.live-stream-card, body\.live-stream \.live-bar \{ background: transparent; \}/);
   assert.match(css, /body\.live-stream \.live-table tbody\.lv-vic:nth-of-type\(even\) > tr > td \{ background-color: transparent; \}/);
+  assert.match(css, /body\.live-stream \.live-table tbody\.lv-me > tr > td \{ background-color: transparent; \}/);
   assert.match(css, /body\.live-stream #liveDpsVal:not\(\.live-dps-warm\) \{ -webkit-text-stroke: 4px #000; paint-order: stroke fill; \}/);
   assert.match(css, /body\.live-stream #liveDps > \.live-metric:first-child \{ display: flex; flex-direction: column; \}/);
   assert.match(css, /body\.live-stream #liveDpsVal \{ order: 3; \}/);

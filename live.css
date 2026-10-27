@@ -225,6 +225,7 @@ body.live-stream #liveState, body.live-stream #liveDpmTau, body.live-stream #liv
 body.live-stream #liveDps .live-metric:last-child { display: none; } /* online pill: meters + session only */
 body.live-stream .live-table, body.live-stream .live-stream-card, body.live-stream .live-bar { background: transparent; } /* owner 2026-10-26: chromakey — every background drops out (table panel, card panel, bar tracks) so the body's green shows through and only text + bars survive the key */
 body.live-stream .live-table tbody.lv-vic:nth-of-type(even) > tr > td { background-color: transparent; } /* zebra rows too */
+body.live-stream .live-table tbody.lv-me > tr > td { background-color: transparent; } /* owner 2026-10-26: the centre row's accent tint drops out too — no box behind your own name on the key */
 .live-dps #liveDpsVal { font-weight: 600; font-variant-numeric: tabular-nums; }
 .live-dps #liveDpsVal.live-dps-warm { font-size: 0.72rem; font-weight: 400; color: var(--dim); }
 .live-dps #liveDpsVal .live-dps-warm-n { font-size: 1rem; font-weight: 600; color: var(--text); }

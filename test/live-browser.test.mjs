@@ -1113,10 +1113,11 @@ describe("🎥 live streamer mode in a browser", () => {
       assert.ok(bg.hold.includes("linear-gradient") && bg.hold.includes("13, 71, 161"), `Recharge is blue in stream mode: ${bg.hold}`);
       for (let i = 0; i < 3; i++) await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[i].cid, "80", false)})`);
       assert.equal(await ev(until(`document.getElementById("liveDpsLabel").textContent === "Damage"`)), true, "meter started");
-      const st = await ev(`(() => { const cs = (el) => getComputedStyle(el); const v = document.getElementById("liveDpsVal"); return { body: cs(document.body).webkitTextStrokeWidth, val: cs(v).webkitTextStrokeWidth, shadow: cs(v).textShadow }; })()`);
+      const st = await ev(`(() => { const cs = (el) => getComputedStyle(el); const v = document.getElementById("liveDpsVal"); const me = document.querySelector("#liveList tbody.lv-me td"); return { body: cs(document.body).webkitTextStrokeWidth, val: cs(v).webkitTextStrokeWidth, shadow: cs(v).textShadow, meBg: me ? cs(me).backgroundColor : "missing" }; })()`);
       assert.equal(st.body, "2px", `body vector stroke: ${JSON.stringify(st)}`);
       assert.equal(st.val, "4px", `counter vector stroke: ${JSON.stringify(st)}`);
       assert.equal(st.shadow, "none", `no shadows anywhere on the counter: ${JSON.stringify(st)}`);
+      assert.equal(st.meBg, "rgba(0, 0, 0, 0)", `centre row tint drops out in stream mode: ${JSON.stringify(st)}`);
       assert.deepEqual(errors, [], "no page errors");
     });
   });
