@@ -668,6 +668,8 @@ test("dim names on death (owner 2026-10-25): death dims the killed list and your
   assert.match(js, /namesDim = false;/);
   assert.match(js, /listEl\.classList\.toggle\("lv-dim-names", namesDim\);/);
   assert.match(css, /\.live-table\.lv-dim-names tbody\.lv-vic \.lv-nm, \.live-table\.lv-dim-names tbody\.lv-me \.lv-nm \{ opacity: 0\.5; \}/);
+  assert.match(css, /body\.live-stream \.live-table\.lv-dim-names tbody\.lv-vic \.lv-nm, body\.live-stream \.live-table\.lv-dim-names tbody\.lv-me \.lv-nm \{ opacity: 1; color: var\(--dim\); \}/); // owner 2026-10-28: stream dims by color, never opacity — no green bleed through glyphs
+  assert.match(css, /body\.live-stream \.lv-ev\.lv-dim > tr > td \{ opacity: 1; color: var\(--dim\); \}/);
 });
 
 test("cash boost (owner 2026-10-25): payouts x1.34 at the cash choke point, formula carries +34%", () => {
