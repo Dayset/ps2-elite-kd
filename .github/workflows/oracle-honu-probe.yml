@@ -6,6 +6,11 @@ name: Oracle Honu probe
 
 on:
   workflow_dispatch:
+    inputs:
+      paths:
+        description: "Space-separated API paths to probe (empty = the default set)"
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -18,8 +23,10 @@ jobs:
       - name: Probe Honu API
         run: |
           UA="ps2-elite-kd-oracle/1.0 (+https://github.com/Dayset/ps2-elite-kd; contact: github.com/Dayset)"
-          for path in "population/1/zones" "realtime-alert" "alerts/1/49344/participants?excludeOutfits=true" "character/5428010618035323201"; do
+          PATHS="${{ github.event.inputs.paths }}"
+          [ -n "$PATHS" ] || PATHS="population/1/zones realtime-alert alerts/1/49344/participants?excludeOutfits=true character/5428010618035323201"
+          for path in $PATHS; do
             out=$(curl -s -o body.txt -w "%{http_code} %{content_type}" -H "Accept: application/json" -A "$UA" "https://wt.honu.pw/api/$path")
             title=$(grep -oiE "<title>[^<]{0,60}" body.txt | head -1)
-            echo "::notice::$path -> $out bytes=$(wc -c < body.txt) $title head=$(head -c 120 body.txt | tr -d '\n\"')"
+            echo "::notice::$path -> $out bytes=$(wc -c < body.txt) $title head=$(head -c 400 body.txt | tr -d '\n\"')"
           done
