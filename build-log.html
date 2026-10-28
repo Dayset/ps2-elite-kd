@@ -1492,7 +1492,7 @@
         let solved = 0;
         for (const a of keys) {
           const j = await (await fetch(API + "/alert?key=" + encodeURIComponent(a.key), { cache: "no-store" })).json();
-          for (const o of j.outliers || []) if (o.severity === "burst") { if (cleared(o.name)) solved++; else rows.push({ a, o }); }
+          for (const o of j.outliers || []) if (o.severity === "burst") { if (cleared(o.name) || isSolved({ name: o.name })) solved++; else rows.push({ a, o }); }
         }
         $("burstOracle").innerHTML = rows.length
           ? '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th>Kills</th><th>Min</th><th>KPM</th><th>Alert</th><th></th></tr>' +
@@ -1506,7 +1506,7 @@
                 "</td><td>" + esc(a.world_name + " · " + a.zone_name) + "</td><td>" + link + "</td></tr>";
             }).join("") + "</table></div>"
           : "No burst-tier players in the oracle's alert reports this week.";
-        if (solved) $("burstOracle").insertAdjacentHTML("beforeend", '<p class="st-dim">' + solved + " owner-reviewed (data/reviewed.json: cleared or OOR) not shown.</p>");
+        if (solved) $("burstOracle").insertAdjacentHTML("beforeend", '<p class="st-dim">' + solved + " solved (reviewed.json cleared/OOR, or 🙈 hidden) not shown.</p>");
       } catch { $("burstOracle").textContent = "Oracle not reachable right now."; burstOracleAt = 0; }
     }
 
