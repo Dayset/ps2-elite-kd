@@ -3055,8 +3055,8 @@ html[data-room="ps"] .controls .fresh-row-end select.room-select { border-color:
 .scr-section .scr-status { margin: 0.3rem 0; color: var(--dim); }
 /* Fixed widths (owner 2026-10-28: "different lengths of columns"): every column has its width in the
  * <colgroup> (scrims-panel.mjs), names cut with …, weapons take what is left. */
-.scr-table { min-width: 52rem; }
-.scr-table.scr-top { min-width: 64rem; }
+.scr-table { min-width: 69rem; } /* = the column widths below (weapons 14rem): never squeeze a column to 0 */
+.scr-table.scr-top { min-width: 84rem; }
 .scr-table col.scr-w-num { width: 2.6rem; }
 .scr-table col.scr-w-name { width: 15rem; }
 .scr-table col.scr-w-size { width: 4.6rem; }
@@ -3064,6 +3064,7 @@ html[data-room="ps"] .controls .fresh-row-end select.room-select { border-color:
 .scr-table col.scr-w-result { width: 9.5rem; }
 .scr-table col.scr-w-len { width: 5.4rem; }
 .scr-table col.scr-w-zone { width: 6.6rem; }
+.scr-table col.scr-w-weapons { width: 14rem; }
 .scr-table th.rk-num, .scr-table td.rk-num { left: 0; }
 .scr-table th.scr-name, .scr-table td.scr-name {
   position: sticky; left: 2.6rem; z-index: 1; text-align: left; box-shadow: 4px 0 8px -4px var(--shadow);
@@ -3078,6 +3079,8 @@ html[data-room="ps"] .controls .fresh-row-end select.room-select { border-color:
   .scr-table th.rk-num, .scr-table td.rk-num, .kf-table th.rk-num, .kf-table td.rk-num { left: 0; box-shadow: 4px 0 8px -4px var(--shadow); }
   .scr-table th.scr-name, .scr-table td.scr-name { left: auto; box-shadow: none; }
   .scr-table col.scr-w-name { width: 12.5rem; }
+  .scr-table { min-width: 66.5rem; }
+  .scr-table.scr-top { min-width: 79rem; }
   /* Kill feed: real widths for the name and weapon too (the box scrolls sideways). */
   .kf-table { min-width: 41rem; }
   .kf-table col.kf-w-time { width: 5.6rem; }
