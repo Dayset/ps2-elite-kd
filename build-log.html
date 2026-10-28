@@ -1461,10 +1461,23 @@
           items.map((i) => "<tr><td>" + nameCell(i) + "</td><td>" + i.kills + "</td><td>" + i.minutes + "</td><td>" + i.kpm + "</td><td>" + esc(when(i.startMs)) + "</td><td>" + badge(i) +
             '</td><td><a href="https://wt.honu.pw/s/' + encodeURIComponent(i.session) + '" target="_blank" rel="noopener noreferrer">Honu session</a></td></tr>').join("") + "</table></div>"
         : "Nothing to check — solved players live in 🙈 Hidden below.";
-      renderBurstOracle();
+      renderBurstOracle((b && b.items) || []);
+    }
+    /** Match an Oracle burst row to a stored burst session: same character id, session window overlapping the alert window. One character cannot have two overlapping sessions, so the first overlap is the match. */
+    function matchBurstSession(stored, cid, alertStartMs, alertEndMs) {
+      const id = String(cid || "");
+      if (!id || !Number.isFinite(alertStartMs)) return null;
+      const end = Number.isFinite(alertEndMs) ? alertEndMs : alertStartMs;
+      for (const i of stored || []) {
+        if (String(i.cid || "") !== id) continue;
+        if (!Number.isFinite(i.startMs)) continue;
+        const sEnd = i.startMs + (Number(i.minutes) || 0) * 60000;
+        if (i.startMs <= end && sEnd >= alertStartMs) return i;
+      }
+      return null;
     }
     let burstOracleAt = 0;
-    async function renderBurstOracle() {
+    async function renderBurstOracle(stored) {
       if (Date.now() - burstOracleAt < 10 * 60 * 1000) return; // the oracle report changes slowly
       burstOracleAt = Date.now();
       const API = "https://ps2-oracle.dayset.workers.dev";
@@ -1483,8 +1496,14 @@
         }
         $("burstOracle").innerHTML = rows.length
           ? '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th>Kills</th><th>Min</th><th>KPM</th><th>Alert</th><th></th></tr>' +
-            rows.map(({ a, o }) => "<tr><td>" + esc(o.name || o.cid) + (o.outfit ? ' <span class="st-dim">[' + esc(o.outfit) + "]</span>" : "") + "</td><td>" + o.kills + "</td><td>" + o.minutes + "</td><td>" + o.kpm +
-              "</td><td>" + esc(a.world_name + " · " + a.zone_name) + '</td><td><a href="https://wt.honu.pw/c/' + encodeURIComponent(o.cid) + '" target="_blank" rel="noopener noreferrer">Honu</a></td></tr>').join("") + "</table></div>"
+            rows.map(({ a, o }) => {
+              const m = matchBurstSession(stored, o.cid, a.start_ts * 1000, (a.end_ts || (a.start_ts + (a.dur || 0) * 60)) * 1000);
+              const link = m
+                ? '<a href="https://wt.honu.pw/s/' + encodeURIComponent(m.session) + '" target="_blank" rel="noopener noreferrer">Honu session</a>'
+                : '<a href="https://wt.honu.pw/c/' + encodeURIComponent(o.cid) + '" target="_blank" rel="noopener noreferrer">Honu</a>';
+              return "<tr><td>" + esc(o.name || o.cid) + (o.outfit ? ' <span class="st-dim">[' + esc(o.outfit) + "]</span>" : "") + "</td><td>" + o.kills + "</td><td>" + o.minutes + "</td><td>" + o.kpm +
+                "</td><td>" + esc(a.world_name + " · " + a.zone_name) + "</td><td>" + link + "</td></tr>";
+            }).join("") + "</table></div>"
           : "No burst-tier players in the oracle's alert reports this week.";
         if (solved) $("burstOracle").insertAdjacentHTML("beforeend", '<p class="st-dim">' + solved + " owner-reviewed (data/reviewed.json: cleared or OOR) not shown.</p>");
       } catch { $("burstOracle").textContent = "Oracle not reachable right now."; burstOracleAt = 0; }
