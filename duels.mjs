@@ -19,9 +19,8 @@ import { eventsUrl, compactEvent, mergeEvents, EVENT_PAGE } from "./scrims.mjs?v
 export const DUEL_GAP = 600;
 /** A fight is "1v1" when it has min+ kills and focus+ of the history player's kills & deaths in that time were with the other one. */
 export const ONE_V_ONE = Object.freeze({ min: 3, focus: 0.75 });
-/** Census pages (1,000 events) read on first open, and per "Read further back" click. */
+/** Census pages (1,000 events) read on first open; "Read further back" reads to the end of the history. */
 export const AUTO_PAGES = 5;
-export const MORE_PAGES = 5;
 
 /** Census loadout id → class (NC 1–7, TR 8–14, VS 15–21, NSO 28–32 + 45). */
 export const CLASS_OF = Object.freeze({

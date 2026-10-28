@@ -92,6 +92,18 @@ test("head-to-head from the real RoyaIGreenBeret vs GimmeDatAnchor scrim (15–1
   assert.equal(s.a.shots, null, "no weapon stats → no ≈ shots");
 });
 
+test("\"Read further back\" pages to the end of the history in one load", async () => {
+  // 2,500 events of the history player: three Census pages (1,000 / 1,000 / ~500, edge second re-asked).
+  const events = [];
+  for (let i = 0; i < 2500; i++) events.push([300000 - i, i % 2, ANCHOR, 1, 0, 2, 1, 8, 0]);
+  const { get, calls } = fakeCensus(events, ROYAL);
+  const st = { pid: ROYAL, qid: ANCHOR, all: [], cursor: 0, done: false, pages: 0 };
+  await readPairPages(st, { base: "https://x/get/ps2ps4us:v2/", get, pages: Infinity });
+  assert.equal(st.done, true, "the short last page ends the read");
+  assert.equal(calls.length, 3, "all three pages fetched in one load");
+  assert.equal(st.pages, 3);
+});
+
 test("fights break after 10 minutes without a kill between them; newest first", () => {
   const ev = (t, aKill) => ({ t, aKill, w: 1, hs: false, z: 2, aL: 1, bL: 8, veh: 0 });
   const pe = [ev(1000, true), ev(1100, false), ev(1650, true), ev(5000, true)];
@@ -135,6 +147,10 @@ test("tab wiring: both rooms, one or two players, translated, shared table look"
   assert.match(st, /duelsPanel\.setPlayers\(\$\.LIVE_MODE \? \[\] : list \|\| \[\]\)/);
   const panel = readFileSync(new URL("../duels-panel.mjs", import.meta.url), "utf8");
   assert.match(panel, /ok\.length === 1 \? "crowd" : ok\.length === 2 \? "pair" : null/);
+  assert.match(panel, /pages: more \? Infinity : AUTO_PAGES/, "\"Read further back\" reads to the end of the history in one press");
+  assert.doesNotMatch(panel, /MORE_PAGES/, "no per-click page chunk left");
+  assert.match(panel, /className = "spinner"/, "small spinner while the history loads");
+  assert.match(panel, /spin\.remove\(\)/, "spinner removed when the load settles");
   assert.match(panel, /pairApi = null/, "own kill store hook stays off until the Worker serves it");
   const index = readFileSync(new URL("../index.html", import.meta.url), "utf8");
   assert.match(index, /<details id="duelsSection" class="dist-section duel-section" hidden>/);

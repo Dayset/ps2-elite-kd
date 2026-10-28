@@ -3,16 +3,17 @@
  * the page already has, nemesis / favourite target; no Census call); two players → head-to-head:
  * a comparison of both sides and every kill between them, cut into fights (▸ opens a fight).
  * Logic in duels.mjs. Head-to-head data on first open: up to 5 Census pages of one player's
- * kills & deaths (more on "Read further back"), plus 2 calls for the weapons' lifetime shots / hits.
+ * kills & deaths (the whole history on "Read further back"), plus 2 calls for the weapons' lifetime shots / hits.
+ * A small spinner sits in the status line while a load runs.
  */
 import { t as tr, currentLang } from "./i18n.mjs";
 import { zoneName } from "./scrims-panel.mjs?v=20261028-os2";
 import { mergeEvents } from "./scrims.mjs?v=20261028-os2";
 import {
-  AUTO_PAGES, MORE_PAGES, DUEL_GAP, ONE_V_ONE, classOf, bareName, crowdRows, crowdSummary, expectedCount, pagerOf,
+  AUTO_PAGES, DUEL_GAP, ONE_V_ONE, classOf, bareName, crowdRows, crowdSummary, expectedCount, pagerOf,
   readPairPages, pairEvents, fightsOf, fightResult, weaponShotUrls, parseShotStats, perKill, pairSummary,
   charInfoUrl, parseCharInfo, pairWarnings, WORLD_NAME,
-} from "./duels.mjs?v=20261028-warn1";
+} from "./duels.mjs?v=20261028-duelall1";
 
 const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const lang = () => { try { return currentLang() || undefined; } catch { return undefined; } };
@@ -81,6 +82,10 @@ export function mountDuels(section, o = {}) {
   warn.setAttribute("role", "note");
   warn.hidden = true;
   section.insertBefore(warn, status);
+  // Small spinner in the status line while a load runs (site .spinner, 14px).
+  const spin = document.createElement("span");
+  spin.className = "spinner";
+  spin.setAttribute("aria-hidden", "true");
   const pairs = new Map(); // "cidA|cidB" → { st, stats, need, pIsA, … }
   let catP = null;
   let mode = null, a = null, b = null, shownKey = "";
@@ -175,7 +180,7 @@ export function mountDuels(section, o = {}) {
       } catch (_) { /* the Census path below */ }
       if (!fromApi) job.census = true;
     }
-    if (!fromApi) await readPairPages(job.st, { base: job.base, get: getJson, pages: more ? MORE_PAGES : AUTO_PAGES, need: more ? null : job.need });
+    if (!fromApi) await readPairPages(job.st, { base: job.base, get: getJson, pages: more ? Infinity : AUTO_PAGES, need: more ? null : job.need });
     // Lifetime shots / hits of the weapons used in kills between them (asked once per weapon).
     const pe = pairEvents(job.st.all, job.st.qid, job.pIsA);
     const items = [...new Set(pe.map((e) => String(e.w)).filter((w) => w !== "0" && !job.asked.has(w)))];
@@ -305,6 +310,7 @@ export function mountDuels(section, o = {}) {
     if (!more) { clear(); opened.clear(); }
     moreBtn.disabled = true;
     setStatus(tr("duel.loading", "Reading the kills between them…"));
+    status.appendChild(spin);
     try {
       const [job, items] = await Promise.all([loadPair(more), cat()]);
       if (mode !== "pair" || pairKey() !== key) return;
@@ -317,6 +323,7 @@ export function mountDuels(section, o = {}) {
     } finally {
       busy = false;
       moreBtn.disabled = false;
+      spin.remove();
     }
   }
 
