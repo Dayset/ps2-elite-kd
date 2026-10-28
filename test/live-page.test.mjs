@@ -703,7 +703,7 @@ test("tau locked (owner 2026-10-26): τ is 60s, adjuster hidden", () => {
 test("bounty (owner 2026-10-26): one ⚰️×streak, then one 💰×lives, weapon under the centre name", () => {
   const js = liveSrc();
   const css = cssSrc();
-  assert.match(js, /bountyNext[^}]*\} from "\.\/live-model\.mjs\?v=20261028-voice1"/);
+  assert.match(js, /bountyNext[^}]*\} from "\.\/live-model\.mjs\?v=20261028-check1"/);
   assert.match(js, /const b = bountyNext\(\{ streak: bountyStreak, lives: bountyLives \}, ev\.kind === "kill"\);/);
   assert.match(js, /if \(bountyLives > 0\) return `<span class="lv-em">💰×\$\{bountyLives\}<\/span>`;/); // one bag + count, not one per life
   assert.match(js, /if \(bountyStreak > 0\) return `<span class="lv-em">⚰️×\$\{bountyStreak\}<\/span>`;/); // one coffin + count
@@ -791,7 +791,7 @@ test("hold meter (owner 2026-10-25): decay freezes on death, lifts on a spike or
   assert.ok(js.includes('killXpRefs.push([Date.now(), amt / kbase])'), "owner 2026-10-26: kill XP ratios feed the multiplier");
   assert.ok(js.includes('const share = assistShare(amt, xid, xpMultAt(killXpRefs, Date.now()));'), "owner 2026-10-26: assist share from amount / multiplier / base");
   assert.ok(js.includes('const dmg = share == null ? DPS_ASSIST : Math.round(1000 * share);'), "owner 2026-10-26: scaled spike, flat 500 fallback for spawn/invalid");
-  assert.match(js, /combatHoldMs, holdGaps, combatRuns, spawnRunHoldMs, timeToCombatMs, timerBarPct, easeInQuad, tierLabel, tierVoiceLine, TIER_VOICE_LINES, cidNameEntry \} from "\.\/live-model\.mjs\?v=20261028-voice1"/);
+  assert.match(js, /combatHoldMs, holdGaps, combatRuns, spawnRunHoldMs, timeToCombatMs, timerBarPct, easeInQuad, tierLabel, tierVoiceLine, TIER_VOICE_LINES, cidNameEntry \} from "\.\/live-model\.mjs\?v=20261028-check1"/);
 });
 
 test("warm-up (owner 2026-10-25): the meter waits for its 3rd chunk — first two spikes only bump the count", () => {
@@ -906,7 +906,7 @@ test("scroll (owner 2026-10-25): gas-counter queue — one 700 ms ease-in scroll
   assert.match(js, /if \(scrollQ\.length\) startScroll\(\);/);
   assert.match(js, /if \(Math\.abs\(trueDpm - shownDps\) < 0\.05\) shownDps = trueDpm;/);
   assert.match(js, /shownDps \+= \(trueDpm - shownDps\) \* 0\.35;/);
-  assert.match(js, /easeInQuad, tierLabel, tierVoiceLine, TIER_VOICE_LINES, cidNameEntry \} from "\.\/live-model\.mjs\?v=20261028-voice1"/);
+  assert.match(js, /easeInQuad, tierLabel, tierVoiceLine, TIER_VOICE_LINES, cidNameEntry \} from "\.\/live-model\.mjs\?v=20261028-check1"/);
 });
 
 test("past cashouts background (owner 2026-10-25): the history sits on the theme panel, not transparent", () => {
@@ -1090,15 +1090,28 @@ test("tierVoiceLine: default phrase per tier, stored override wins, blank overri
   assert.equal(tierVoiceLine("++", { "++": "boss down" }), "boss down");
   assert.equal(tierVoiceLine("++", { "++": "   " }), "giant down");
   assert.equal(tierVoiceLine("?", {}), null);
-  assert.equal(tierVoiceLine("0", {}), null);
+  assert.equal(tierVoiceLine("0", {}), "zero"); // owner 2026-10-28: zero has its own line now
+  assert.equal(tierVoiceLine("0", { "0": "ghost" }), "ghost");
+  assert.equal(tierVoiceLine("0", { "0": "   " }), "zero");
 });
 
-test("live feed has a voice lines panel: 5 tier fields, speakTier uses the stored line", () => {
+test("live feed has a voice lines panel: 6 fields (5 tiers + zero), speakTier uses the stored line", () => {
   const html = buildLive(readFileSync(new URL("index.html", root), "utf8"));
   assert.ok(html.includes('id="liveVoiceLines"'));
-  for (const t of ["--", "-", "≈", "+", "++"]) assert.ok(html.includes(`data-tier="${t}"`), `field for tier ${t}`);
+  for (const t of ["--", "-", "≈", "+", "++", "0"]) assert.ok(html.includes(`data-tier="${t}"`), `field for tier ${t}`);
   const js = liveSrc();
   assert.match(js, /tierVoiceLine\(label, readVoiceLines\(\)\)/);
   assert.match(js, /localStorage\.getItem\("ps2_live_voice_lines"\)/);
   assert.match(js, /localStorage\.setItem\("ps2_live_voice_lines"/);
+});
+
+test("live feed has a tier checker by the voice lines panel", () => {
+  const html = buildLive(readFileSync(new URL("index.html", root), "utf8"));
+  assert.ok(html.includes('id="liveTierCheck"'));
+  assert.ok(html.includes('id="liveTierCheckName"'));
+  assert.ok(html.includes('id="liveTierCheckOut"'));
+  const js = liveSrc();
+  assert.match(js, /tr\("live\.tierCheck", "Check a player's tier"\)/);
+  assert.match(js, /ranks\.get\(slugKey\(name\)\)/); // checker reuses the feed's ranks lookup
+  assert.match(js, /tierVoiceLine\(label, readVoiceLines\(\)\)/);
 });

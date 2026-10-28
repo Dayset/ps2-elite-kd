@@ -9,7 +9,7 @@ import http from "node:http";
 import path from "node:path";
 import { spawn, execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { tierLabel } from "../live-model.mjs";
+import { tierLabel, tierVoiceLine } from "../live-model.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -1178,15 +1178,32 @@ describe("🎥 live streamer mode in a browser", () => {
 });
 
 describe("🎥 live voice lines panel in a browser", () => {
-  it("voice lines panel (owner 2026-10-28): 5 fields prefilled with the default lines, edits persist, panel hides in stream mode", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+  it("voice lines panel (owner 2026-10-28): 6 fields prefilled with the default lines, edits persist, panel hides in stream mode", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
       const vals = await ev(`[...document.querySelectorAll(".live-voice-line")].map((i) => [i.dataset.tier, i.value])`);
-      assert.deepEqual(vals, [["--", "no contest"], ["-", "weaker"], ["≈", "even"], ["+", "strong"], ["++", "giant down"]], `fields prefilled: ${JSON.stringify(vals)}`);
+      assert.deepEqual(vals, [["--", "no contest"], ["-", "weaker"], ["≈", "even"], ["+", "strong"], ["++", "giant down"], ["0", "zero"]], `fields prefilled: ${JSON.stringify(vals)}`);
       await ev(`(() => { const i = document.querySelector('.live-voice-line[data-tier="++"]'); i.value = "boss down"; i.dispatchEvent(new Event("input", { bubbles: true })); })()`);
       assert.equal(await ev(until(`(JSON.parse(localStorage.getItem("ps2_live_voice_lines") || "{}"))["++"] === "boss down"`)), true, "edit persists to localStorage");
       await ev(`document.getElementById("liveStreamBtn").click()`);
       assert.equal(await ev(until(`getComputedStyle(document.getElementById("liveVoiceLines")).display === "none"`)), true, "panel hides in stream mode");
+      assert.deepEqual(errors, [], "no page errors");
+    });
+  });
+});
+
+describe("🎥 live tier checker in a browser", () => {
+  it("tier checker (owner 2026-10-28): a known name shows tier + line, an unknown name shows ?, a sub-0 name shows 0 + zero", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      const type = async (name) => { await ev(`(() => { const i = document.getElementById("liveTierCheckName"); i.value = ${JSON.stringify(name)}; i.dispatchEvent(new Event("input", { bubbles: true })); })()`); };
+      const tier = tierLabel(ME_ADJS, adjsOf(OPP[0].name));
+      await type(OPP[0].name);
+      assert.equal(await ev(until(`document.getElementById("liveTierCheckOut").textContent === ${JSON.stringify(`${tier} · ${tierVoiceLine(tier, {})}`)}`)), true, `known name shows ${tier} + line`);
+      await type("NoSuchPlayerXYZ");
+      assert.equal(await ev(until(`document.getElementById("liveTierCheckOut").textContent === "?"`)), true, "unknown name shows ?");
+      await type(SUB0.name);
+      assert.equal(await ev(until(`document.getElementById("liveTierCheckOut").textContent === "0 · zero"`)), true, "sub-0 name shows 0 + zero");
       assert.deepEqual(errors, [], "no page errors");
     });
   });
