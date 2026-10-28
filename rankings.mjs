@@ -71,8 +71,6 @@ export function initRankings(host) {
     { id: "diff", label: tr("col.diff", "🔀 Diff"), digits: 0, aimgap: true, tip: AIMGAP_HINT }, // short hover (owner t9); details on columns.html#diff
     { id: "zerg", label: tr("col.zerg", "🪳 Zerg"), digits: 0, zerg: true, tip: ZERG_HINT }, // short hover (owner t9); details on columns.html#zerg
     { id: "inf", label: tr("col.infantry", "🪖 Infantry"), digits: 1, inf: true, tip: INF_HINT },
-    // 🎈 Inflation: current data (owner 2026-10-28 "inflation is a new data"), back with the default columns.
-    { id: "inflation", label: "🎈 Inflation", digits: 2, tip: "Global KD ÷ KD at ≥0.5 enemy KPM — lower is better", ascFirst: true },
   ];
   const DEBUG = [
     { id: "mech", label: "⚙️ Mech%", digits: 1, tip: "Estimated share of your fights that are vehicle or mech play, projected from 🛡️ Resist rather than measured from shooting." },
@@ -81,6 +79,8 @@ export function initRankings(host) {
     { id: "own", label: "own KPM", digits: 2, tip: "Your weapon pace" },
     { id: "coi", label: "📊 COI", digits: 2, tip: "Combat Output Index" },
     { id: "slope", label: "📉 Slope", digits: 2, tip: "Curve slope (death-weighted)" },
+    // t345u: rarely meaningful → older stats only (table with the debug box; not in the chart menu).
+    { id: "inflation", label: "🎈 Inflation", digits: 2, tip: "Global KD ÷ KD at ≥0.5 enemy KPM — lower is better", ascFirst: true },
   ];
 
   // Public stats (in ranks.json; chart only — the table keeps the main page's columns).
@@ -979,8 +979,8 @@ export function initRankings(host) {
 
   function fillMetricSelect() {
     const sel = $("distMetric");
-    // t345u/t346u: only our own current metrics (VISIBLE, incl. 🎈 Inflation since
-    // 2026-10-28) — no debug columns and no 📊 Public lifetime Census stats.
+    // t345u/t346u: only our own current metrics — no older / outdated stats
+    // (DEBUG, incl. 🎈 Inflation) and no 📊 Public lifetime Census stats.
     const groups = [["✨ Adjusted", VISIBLE]];
     sel.innerHTML = groups
       .map(([g, cols]) => `<optgroup label="${esc(g)}">` + cols.map((c) => `<option value="${c.id}">${esc(c.label)}</option>`).join("") + `</optgroup>`)
