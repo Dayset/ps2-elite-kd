@@ -1,6 +1,7 @@
 // 🪖 Infantry column + table column order on the main stats table and the Rankings;
 // ranks.json carries inf / infMax / infVeh. Column order (Dayset 2026-10-21):
-// ☠️ K/D sits right after 🛡️ Resist, and 🔀 Diff before 🪳 Zerg (swapped), 🪖 last.
+// ☠️ K/D sits right after 🛡️ Resist, 🪳 Zerg before 🪖 last (visible);
+// 🔀 Diff is debug-only since 2026-10-28 (owner: low value currently).
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
@@ -14,7 +15,12 @@ test("column order and ranks.json columns", () => {
     const at = (id) => src.indexOf(`id: "${id}"`);
     assert.ok(at("rf") >= 0 && at("rf") < at("rkd"), `${f}: ☠️ K/D right after 🛡️ Resist`);
     assert.ok(at("rkd") < at("cons"), `${f}: ☠️ K/D before ⚡ Const`);
-    assert.ok(at("apk") < at("diff") && at("diff") < at("zerg") && at("zerg") < at("inf"), `${f}: 🔀 Diff before 🪳 Zerg (swapped), 🪖 Infantry last`);
+    // 🔀 Diff is debug-only (owner 2026-10-28): visible order keeps 🪖 last.
+    assert.ok(at("apk") < at("zerg") && at("zerg") < at("inf"), `${f}: 🤝 Assists, 🪳 Zerg, 🪖 Infantry last (visible)`);
+    const dbg = f === "rankings.mjs"
+      ? src.slice(src.indexOf("const DEBUG = ["), src.indexOf("const PUBLIC = ["))
+      : src.slice(src.indexOf("const adjDebugCols = ["), src.indexOf("];", src.indexOf("const adjDebugCols = [")));
+    assert.ok(dbg.indexOf('id: "inflation"') >= 0 && dbg.indexOf('id: "inflation"') < dbg.indexOf('id: "diff"'), `${f}: 🔀 Diff in debug, after 🎈 Inflation`);
   }
   assert.match(read("scripts/build-ranks.mjs"), /ranks\.cols\.push\("inf", "infMax", "infVeh"\)/);
 });

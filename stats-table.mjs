@@ -345,10 +345,6 @@ export function createStatsTable($) {
       { id: "rkd", label: "☠️ K/D", hint: tr("tip.rkd", "K/D against the ~200 players you fight most, not your whole lifetime."), fn: (r) => r.rkd, digits: 3 },
       { id: "cons", label: "⚡ Const", hint: tr("tip.cons", "K/D kept vs your strongest third of foes, compared with the weakest: 1.00 = holds, 0.50 = halves."), fn: (r) => r.cons, digits: 2, pctileCell: true },
       { id: "apk", label: tr("col.assists", "🤝 Assists"), hint: tr("tip.apk", "Assists per kill in recent Honu sessions: how often you help teammates get kills."), fn: (r) => (apkBySlug && r.p ? apkBySlug.get(slugKey(r.p.display)) : undefined), digits: 2, apkCell: true, pctDir: "low", pctLowPhrase: "more assists" },
-      // 🤥😤 Impostor–DieHard (owner t484u): ⚔️ iVi percentile − IvI percentile, −99…+99; neither side is better.
-      // Short hover (owner t9: 2–3 lines); 🛖 / 🚜 / 🐣 details live in columns.html#diff.
-      { id: "diff", label: tr("col.diff", "🔀 Diff"), hint: tr("tip.diff", AIMGAP_HINT), digits: 0, aimGapCell: true,
-        fn: (r) => { const g = traitP ? aimGap(traitP, shownValue(r, "adjs"), r.ivi, r.p ? $.hutOf(r.p.display) : null, r.p ? vdfOf(r.p.display) : null, r.p ? nbdOf(r.p.display, r.p) : null) : null; return g ? g.score : NaN; } },
       // 🪳 Zerg (owner t480u): lower of the 🎈 Inflation and 🤝 Assists percentiles; lower is better (like 🤝: reversed grey %).
       // Short hover (owner t9); 🪳 revive details in columns.html#zerg.
       { id: "zerg", label: tr("col.zerg", "🪳 Zerg"), hint: tr("tip.zerg", ZERG_HINT), digits: 0, zergCell: true, pctDir: "low",
@@ -365,7 +361,11 @@ export function createStatsTable($) {
       { id: "slope", label: "📉 Slope", hint: "Overall graph angle: death-weighted K/D vs enemy KPM across the full curve — negative means K/D falls as opposition hardens (feeds 🦁 Brave).", fn: (r) => r.slope, digits: 2 },
       // t345u: 🎈 Inflation rarely shows anything meaningful → older stats only.
       { id: "inflation", label: "🎈 Inflation", hint: "Global KD ÷ KD at ≥0.5 enemy KPM — how much soft opposition inflates your KD (avg planetman ~0.35).", fn: (r) => r.inflation, digits: 2, pctDir: "low", pctRefFloor: 1.0 },
-      // (🔀 Diff debug column retired 2026-10-21: the public 🤥😤 Impostor–DieHard column is the same number.)
+      // owner 2026-10-28: 🔀 Diff moved to debug-only (low value currently); the public column is gone, so the debug column returns.
+      // 🤥😤 Impostor–DieHard (owner t484u): ⚔️ iVi percentile − IvI percentile, −99…+99; neither side is better.
+      // Short hover (owner t9: 2–3 lines); 🛖 / 🚜 / 🐣 details live in columns.html#diff.
+      { id: "diff", label: tr("col.diff", "🔀 Diff"), hint: tr("tip.diff", AIMGAP_HINT), digits: 0, aimGapCell: true,
+        fn: (r) => { const g = traitP ? aimGap(traitP, shownValue(r, "adjs"), r.ivi, r.p ? $.hutOf(r.p.display) : null, r.p ? vdfOf(r.p.display) : null, r.p ? nbdOf(r.p.display, r.p) : null) : null; return g ? g.score : NaN; } },
     ];
     // Opponent-sample metrics: "—" below MIN_FIGHTS (player-metrics.mjs), so they
     // also drop out of sorting and the % column references.

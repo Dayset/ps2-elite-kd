@@ -63,7 +63,7 @@ test("freshEtaText: n × learned live time, default 7 s", () => {
   assert.match(app, /fetchFresh\.addEventListener\("change", updateFreshEta\)/);
 });
 
-test("Rankings chart menu: only our own current metrics; 🎈 Inflation is an older stat (t345u/t346u)", () => {
+test("Rankings chart menu: only our own current metrics; 🎈 Inflation is an older stat (t345u/t346u); 🔀 Diff is debug-only (owner 2026-10-28)", () => {
   assert.match(ranks, /const groups = \[\["✨ Adjusted", VISIBLE\]\];/);
   assert.match(ranks, /const DIST_IDS = new Set\(VISIBLE\.map/);
   const vis = ranks.slice(ranks.indexOf("const VISIBLE = ["), ranks.indexOf("const DEBUG = ["));
@@ -74,4 +74,8 @@ test("Rankings chart menu: only our own current metrics; 🎈 Inflation is an ol
   assert.match(adjDebug, /id: "inflation"/);
   const adjVis = app.slice(app.indexOf("const adjVisibleCols = ["), app.indexOf("const adjDebugCols = ["));
   assert.doesNotMatch(adjVis, /id: "inflation"/);
+  assert.doesNotMatch(vis, /id: "diff"/);
+  assert.match(dbg, /id: "diff"/);
+  assert.match(adjDebug, /id: "diff"/);
+  assert.doesNotMatch(adjVis, /id: "diff"/);
 });

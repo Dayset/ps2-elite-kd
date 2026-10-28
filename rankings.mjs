@@ -68,7 +68,6 @@ export function initRankings(host) {
     { id: "cons", label: "⚡ Const", digits: 2, tip: "K/D kept vs your strongest third of foes, compared with the weakest: 1.00 = holds, 0.50 = halves." },
     { id: "apk", label: tr("col.assists", "🤝 Assists"), digits: 2, apk: true, tip: "Assists per kill in recent Honu sessions: how often you help teammates get kills." },
     // 🪳 Zerg / 🤥😤 Impostor–DieHard (owner t480u–t485u): computed here from the ranks.json pools (trait-scores.mjs), same numbers as ✨ Stats.
-    { id: "diff", label: tr("col.diff", "🔀 Diff"), digits: 0, aimgap: true, tip: AIMGAP_HINT }, // short hover (owner t9); details on columns.html#diff
     { id: "zerg", label: tr("col.zerg", "🪳 Zerg"), digits: 0, zerg: true, tip: ZERG_HINT }, // short hover (owner t9); details on columns.html#zerg
     { id: "inf", label: tr("col.infantry", "🪖 Infantry"), digits: 1, inf: true, tip: INF_HINT },
   ];
@@ -81,6 +80,8 @@ export function initRankings(host) {
     { id: "slope", label: "📉 Slope", digits: 2, tip: "Curve slope (death-weighted)" },
     // t345u: rarely meaningful → older stats only (table with the debug box; not in the chart menu).
     { id: "inflation", label: "🎈 Inflation", digits: 2, tip: "Global KD ÷ KD at ≥0.5 enemy KPM — lower is better", ascFirst: true },
+    // owner 2026-10-28: low value currently → older stats only (table with the debug box; not in the chart menu).
+    { id: "diff", label: tr("col.diff", "🔀 Diff"), digits: 0, aimgap: true, tip: AIMGAP_HINT }, // short hover (owner t9); details on columns.html#diff
   ];
 
   // Public stats (in ranks.json; chart only — the table keeps the main page's columns).
