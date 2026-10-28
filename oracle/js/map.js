@@ -11,8 +11,14 @@ export const MAP_IMG_DEFAULT = 0.4;     // terrain image opacity
 export const MAP_COLOR_DEFAULT = 1;     // territory colour opacity
 // zone -> [file in oracle/maps/, [x, y, width, height] in map units]. The wiki images cover the
 // whole world (-4096..4096 on both axes, same orientation as the hexes; checked against the
-// wiki's own base markers); the files are cropped to the hex area at 2.5 m per pixel.
-export const MAPIMG = { 2: ["indar",[-3536,-3360,7072,6720]], 4: ["hossin",[-3920,-3648,7792,7552]], 6: ["amerish",[-3632,-3360,7264,6896]], 8: ["esamir",[-3440,-3008,6784,6368]], 344: ["oshur",[-3776,-3152,7104,6048]] };
+// wiki's own base markers); the files are cropped to the (shifted) hex area at 2.5 m per pixel.
+export const MAPIMG = { 2: ["indar",[-3536,-3472,7072,6720]], 4: ["hossin",[-3920,-3648,7792,7552]], 6: ["amerish",[-3632,-3472,7264,6880]], 8: ["esamir",[-3440,-3120,6784,6368]], 344: ["oshur",[-3776,-3216,7104,6048]] };
+// Hex grid shift in hex radii, per zone (owner 2026-10-28: "BG image is a bit high"). The
+// hexmaps built from Census tiles (build_hexmaps.py) sit one radius south of the real game
+// grid: shifting them up makes their outer edge follow the in-game boundary on the wiki
+// terrain and puts every base's own Census location inside its base (Indar 84 -> 89 of 89,
+// Amerish 78 -> 81 of 81). Hossin's replay hexmap is built differently and already fits.
+export const HEX_SHIFT_R = { 2: -1, 6: -1, 8: -1, 344: -1 };
 const OPA_KEY = { img: "ps2o-map-img", col: "ps2o-map-col" };
 export function mapOpacity(which) {
   const def = which === "img" ? MAP_IMG_DEFAULT : MAP_COLOR_DEFAULT;
@@ -31,21 +37,25 @@ export async function drawMap(a) {
   const links = (await asset(SLUG[a.zone] + "_links.json")) || [];
   const regs = (await asset(SLUG[a.zone] + "_regions.json")) || [];
   const owners = (a.state && a.state.owners) || {};
-  const hx = hm.hexes;
+  const hx0 = hm.hexes;
   // Hex spacing and orientation from the data itself: nearest-neighbour
   // distance d; neighbours straight above/below mean flat-top hexes.
-  const n = Math.min(hx.length, 400);
+  const n = Math.min(hx0.length, 400);
   let d = Infinity;
   for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
-    const dd = Math.hypot(hx[j][0] - hx[i][0], hx[j][1] - hx[i][1]);
+    const dd = Math.hypot(hx0[j][0] - hx0[i][0], hx0[j][1] - hx0[i][1]);
     if (dd > 1 && dd < d) d = dd;
   }
   let flatTop = false;
   for (let i = 0; i < n && !flatTop; i++) for (let j = i + 1; j < n; j++) {
-    const dx = hx[j][0] - hx[i][0], dy = hx[j][1] - hx[i][1];
+    const dx = hx0[j][0] - hx0[i][0], dy = hx0[j][1] - hx0[i][1];
     if (Math.abs(dx) < 1 && Math.abs(Math.abs(dy) - d) < 1) { flatTop = true; break; }
   }
   const r = d / Math.sqrt(3);
+  // Census hex tiles come out one hex radius too far south (+y) against the game world:
+  // the base locations, the in-game boundary and the wiki terrain all agree on this.
+  const shiftY = (HEX_SHIFT_R[a.zone] || 0) * r;
+  const hx = shiftY ? hx0.map(([x, y, ...rest]) => [x, y + shiftY, ...rest]) : hx0;
   const off = flatTop ? 0 : Math.PI / 6;
   const pts = [...Array(6)].map((_, k) => [r * Math.cos(off + k * Math.PI / 3), r * Math.sin(off + k * Math.PI / 3)]);
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
