@@ -1497,7 +1497,8 @@
         $("burstOracle").innerHTML = rows.length
           ? '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th>Kills</th><th>Min</th><th>KPM</th><th>Alert</th><th></th></tr>' +
             rows.map(({ a, o }) => {
-              const m = matchBurstSession(stored, o.cid, a.start_ts * 1000, (a.end_ts || (a.start_ts + (a.dur || 0) * 60)) * 1000);
+              // #81: the session the oracle-honu job resolved (outlier.session) first, then a stored match, then the profile.
+              const m = o.session ? { session: o.session } : matchBurstSession(stored, o.cid, a.start_ts * 1000, (a.end_ts || (a.start_ts + (a.dur || 0) * 60)) * 1000);
               const link = m
                 ? '<a href="https://wt.honu.pw/s/' + encodeURIComponent(m.session) + '" target="_blank" rel="noopener noreferrer">Honu session</a>'
                 : '<a href="https://wt.honu.pw/c/' + encodeURIComponent(o.cid) + '" target="_blank" rel="noopener noreferrer">Honu</a>';

@@ -8,6 +8,8 @@
  *                                      settled alerts needing an outlier report
  *   2. Honu GET /api/population/{world}/zones          (one call per live world)
  *      Honu GET /api/alerts/{world}/{instance}/participants  (per report)
+ *      Honu GET /api/character/{cid}/sessions for burst-tier outliers (#81: the build-log
+ *        links the burst session itself, outlier.session = Honu session id)
  *      PS2 Radar GET /api/v1/players/{id} for flagged players (radar.mjs rules)
  *   3. POST {ORACLE_API}/honu/ingest  results
  *
@@ -59,6 +61,26 @@ export async function honuAlertId(honu, a) {
   return hit ? hit.id : { err: `honu has no alert ${a.world}-${a.zone}-${a.instance_id}` };
 }
 
+const honuTs = (t) => (t ? Date.parse(/[zZ]|[+-]\d\d:?\d\d$/.test(String(t)) ? t : `${t}Z`) / 1000 : NaN);
+/** Burst outliers per run that get a sessions lookup (one Honu call each). */
+export const SESSION_LOOKUPS_MAX = 10;
+
+/**
+ * The Honu session (character/{cid}/sessions) that holds the alert: overlapping the alert
+ * window [from, to] (unix s, 2 min slack); several → most kills, then most overlap. null if none.
+ */
+export function pickSession(list, from, to, now = Date.now() / 1000) {
+  let best = null;
+  for (const x of Array.isArray(list) ? list : []) {
+    const a = honuTs(x && x.start), b = x && x.end ? honuTs(x.end) : now;
+    if (!(a <= to + 120) || !(b >= from - 120)) continue;
+    const overlap = Math.min(b, to) - Math.max(a, from);
+    const kills = +x.kills || 0;
+    if (!best || kills > best.kills || (kills === best.kills && overlap > best.overlap)) best = { id: x.id, kills, overlap };
+  }
+  return best ? String(best.id) : null;
+}
+
 export async function runHonuJob({ api, key, fetchImpl = fetch, log = console.log, gapMs = { honu: HONU_GAP_MS, radar: RADAR_GAP_MS } } = {}) {
   const auth = { "X-Oracle-Key": key, "User-Agent": UA };
   const q = await getJson(fetchImpl, `${api}/honu/queue`, auth);
@@ -85,6 +107,7 @@ export async function runHonuJob({ api, key, fetchImpl = fetch, log = console.lo
 
   // 2) Outlier reports for settled alerts.
   const flagged = [];
+  let sessionLookups = 0;
   for (const a of reports) {
     // Census instance ids repeat across continents on one world (Wainwright 46374 was both
     // an Indar and an Amerish alert on 2026-10-23), and Honu's {world}/{instance} route returns
@@ -98,6 +121,16 @@ export async function runHonuJob({ api, key, fetchImpl = fetch, log = console.lo
     if (!rep.players) { out.reports.push({ key: a.key, status: "pending", err: "no participants yet" }); continue; }
     out.reports.push({ key: a.key, status: "ok", report: rep });
     flagged.push(...rep.outliers);
+    // #81: the burst session itself, so a reviewer lands on it (not just the profile).
+    const from = +a.start_ts, to = +a.end_ts || from + (+a.dur || 90) * 60;
+    for (const o of rep.outliers) {
+      if (o.severity !== "burst" || !from || sessionLookups >= SESSION_LOOKUPS_MAX) continue;
+      sessionLookups++;
+      const s = await honu(`character/${o.cid}/sessions`);
+      if (s.status !== 200 || !s.isJson) { out.errors.push(`sessions ${o.cid}: ${s.status}`); continue; }
+      const id = pickSession(s.body, from, to);
+      if (id) o.session = id;
+    }
   }
 
   // 3) PS2 Radar second opinion for flagged players (cached answers first).
