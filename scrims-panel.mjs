@@ -12,7 +12,7 @@
  * The table uses the shared Rankings table look (zebra, pinned header, # pinned, sortable).
  */
 import { t as tr, currentLang } from "./i18n.mjs";
-import { detectScrims, eventsUrl, compactEvent, finalWindow, scrimRow, upsertScrims, scrimResult, scrimMinutes, isOneSided, isScrimRowWeaponsOk, weaponCategory, EVENT_PAGE, SCRIM_RULE } from "./scrims.mjs?v=20261028-scr2";
+import { detectScrims, eventsUrl, compactEvent, finalWindow, scrimRow, upsertScrims, scrimResult, scrimMinutes, isOneSided, isScrimRowWeaponsOk, weaponCategory, EVENT_PAGE, SCRIM_RULE } from "./scrims.mjs?v=20261028-os2";
 
 const scrimResultLabel = (res) => (res === "won" ? tr("scr.won", "Won") : res === "lost" ? tr("scr.lost", "Lost") : tr("scr.draw", "Draw"));
 
@@ -36,9 +36,12 @@ export function scrimTotals(rows) {
   return t;
 }
 
-/** Rows to show: one-sided scrims stay hidden unless the toggle shows them. */
+/** Rows to show: one-sided scrims — including zero-back rows (a side with no kills
+ *  back has no top weapon, so it would otherwise never reach the toggle) — stay
+ *  hidden unless the toggle shows them. */
 export function visibleScrims(rows, showOneSided) {
-  return showOneSided ? (rows || []).slice() : (rows || []).filter((r) => !isOneSided(r));
+  if (showOneSided) return (rows || []).slice();
+  return (rows || []).filter((r) => !isOneSided(r) && Math.min(r.k, r.d) > 0);
 }
 
 /** Census name lookup for opponent ids (one call, ≤ 100 ids). */

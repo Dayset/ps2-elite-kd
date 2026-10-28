@@ -90,15 +90,15 @@ export function isScrimEvent(x, catOf = null) {
 }
 
 /**
- * True when a stored scrim row's top weapons may stay: BOTH sides must have a
- * weapon — a 0 side renders as "-" (one-sided suicide/MAX leftover, not a
- * fight) and is dropped whatever the catalog state — and each side must be
+ * True when a stored scrim row's top weapons may stay: each side must be
  * infantry/knife or unknown (an id the catalog does not know is kept; history
  * is not nuked on missing catalog data — only known-bad rows are dropped).
+ * A 0 side ("-") is NOT dropped here: a zero-back row is a one-sided row, and
+ * the panel's one-sided toggle hides/shows it (visibleScrims) instead of
+ * deleting it outright — otherwise the toggle could never reveal it.
  */
 export function isScrimRowWeaponsOk(row, catOf = null) {
   if (!row || !Array.isArray(row.w)) return true;
-  if (row.w[0] === 0 || row.w[1] === 0) return false;
   if (!catOf) return true;
   return row.w.every((w) => {
     if (!w) return true;

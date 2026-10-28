@@ -311,7 +311,7 @@ test("infantry-only: knife kills count toward a scrim, MAX weapons do not", () =
   assert.equal(isScrimEvent([0, 1, "777", 7254, 0, 2, 0, 0, 0], catOf), true);
 });
 
-test("infantry-only: stored rows with a Claymore / vehicle top weapon are dropped, unknown kept, blank side dropped", () => {
+test("infantry-only: stored rows with a Claymore / vehicle top weapon are dropped, unknown kept, blank side kept for the toggle", () => {
   const rifle = { t0: 100, t1: 900, o: [["us-2", "B", 5, 4]], k: 5, d: 4, n: 0, z: 2, w: [7254, 7236] };
   const clay = { ...rifle, t0: 2000, t1: 2900, w: [7254, 429] };
   const veh = { ...rifle, t0: 4000, t1: 4900, w: [3730, 7236] };
@@ -323,20 +323,20 @@ test("infantry-only: stored rows with a Claymore / vehicle top weapon are droppe
   assert.equal(isScrimRowWeaponsOk(clay, catOf), false);
   assert.equal(isScrimRowWeaponsOk(veh, catOf), false);
   assert.equal(isScrimRowWeaponsOk(unknown, catOf), true);
-  assert.equal(isScrimRowWeaponsOk(blank, catOf), false);
-  assert.equal(isScrimRowWeaponsOk(blankOther, catOf), false);
-  assert.equal(isScrimRowWeaponsOk(bothBlank, catOf), false);
-  assert.equal(isScrimRowWeaponsOk(blank, null), false); // dash rule needs no catalog
+  assert.equal(isScrimRowWeaponsOk(blank, catOf), true); // 0 side kept here; the toggle hides it
+  assert.equal(isScrimRowWeaponsOk(blankOther, catOf), true);
+  assert.equal(isScrimRowWeaponsOk(bothBlank, catOf), true);
+  assert.equal(isScrimRowWeaponsOk(blank, null), true);
   assert.equal(isScrimRowWeaponsOk(clay, null), true); // no catalog: keep
   const top = buildTopScrims([{ v: 1, key: "us-1", name: "A", from: 1, done: true, scrims: [rifle, clay, veh, blank] }], SCRIM_RULE.GAP, catOf);
-  assert.equal(top.total, 1);
-  assert.equal(top.rows[0].w[0], 7254);
+  assert.equal(top.total, 2); // blank-side rows reach the toggle layer, not deleted here
+  assert.equal(top.rows.some((r) => r.w[0] === 0), true);
 });
 
-test("one-sided toggle: hidden by default, shown on toggle", () => {
-  const rows = [{ k: 300, d: 2 }, { k: 14, d: 15 }, { k: 10, d: 0 }];
-  assert.deepEqual(visibleScrims(rows, false).map((r) => r.k), [14, 10]);
-  assert.deepEqual(visibleScrims(rows, true).map((r) => r.k), [300, 14, 10]);
+test("one-sided toggle: one-sided and zero-back hidden by default, shown on toggle", () => {
+  const rows = [{ k: 300, d: 2 }, { k: 14, d: 15 }, { k: 10, d: 0 }, { k: 100, d: 0 }];
+  assert.deepEqual(visibleScrims(rows, false).map((r) => r.k), [14]);
+  assert.deepEqual(visibleScrims(rows, true).map((r) => r.k), [300, 14, 10, 100]);
   assert.deepEqual(visibleScrims(null, false), []);
 });
 
@@ -346,6 +346,7 @@ test("one-sided toggle wiring: checkbox, hidden by default", () => {
   assert.match(panel, /scr\.showOneSided/);
   assert.match(panel, /type="checkbox"/);
   assert.match(panel, /oneWrap\.hidden = shown\.oneTotal === 0/);
+  assert.match(panel, /Math\.min\(r\.k, r\.d\) > 0/);
 });
 
 test("Scrims tab live: Claymore-only history finds nothing with a catalog", () => {
