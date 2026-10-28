@@ -11,8 +11,8 @@ import { zergEstimate } from "./zerg-revive.mjs?v=20261024-crowd1";
 import { infMedian } from "./tractor.mjs?v=20261024-trac1";
 import { mountWeapons } from "./weapons.mjs?v=20261022-wp4";
 import { mountKillFeed } from "./kill-feed.mjs?v=20261028-scr1";
-import { mountScrims } from "./scrims-panel.mjs?v=20261028-scr1";
-import { mountOldTabs } from "./old-tabs.mjs?v=20261028-scr1";
+import { mountScrims } from "./scrims-panel.mjs?v=20261028-top1";
+import { mountOldTabs } from "./old-tabs.mjs?v=20261028-top1";
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261020-wide1";
 import { PS_SERVERS, censusNsBase, roomLsKey } from "./rooms.mjs?v=20261022-ps1";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
@@ -297,7 +297,7 @@ export function createStatsTable($) {
         knownNames: roomNames,
       });
     }
-    scrimsPanel.setPlayers($.IS_PS && !$.LIVE_MODE ? shownList : []);
+    scrimsPanel.setPlayers($.IS_PS && !$.LIVE_MODE ? shownList : null); // PS: one player's scrims, else the room's top list
     if (!weaponsPanel) {
       weaponsPanel = mountWeapons(document.getElementById("weaponsSection"), {
         getJson: (u) => $.censusJson(u),

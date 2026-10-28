@@ -3,19 +3,22 @@
  * one row. Each tab will open the table."): ONE row of buttons over the
  * ⚔️ Latest 100 kills & deaths, 🏆 Auraxium weapons and 📊 Census / Fisu / Honu style
  * panels. Each panel stays a <details> (its module keeps loading on "toggle"); the
- * summaries are hidden by CSS and their translated text becomes the tab label.
+ * summaries are hidden by CSS; the tab shows a short name (otab.*) + the panel's count, and the
+ * panel's full translated title is the hover.
  *  - one open at a time; clicking the open tab closes it; all closed on load;
  *  - a tab shows only while its panel is on the page (kill feed / weapons: one player);
  *  - instant switch (no animation). DOM-only, no network.
  */
 import { t as tr } from "./i18n.mjs";
 
+const esc = (x) => String(x).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
 /** Panel selectors in tab order (the Census one is re-rendered by stats-table.mjs). */
 export const OLD_TAB_PANELS = Object.freeze([
-  { id: "pub", sel: "#statsPublic > details.stats-public" },
-  { id: "kf", sel: "#killFeedSection" },
-  { id: "scr", sel: "#scrimsSection" }, // 🥊 PlayStation room only
-  { id: "wp", sel: "#weaponsSection" },
+  { id: "pub", sel: "#statsPublic > details.stats-public", key: "otab.pub", label: "📊 Stats" },
+  { id: "kf", sel: "#killFeedSection", key: "otab.kf", label: "⚔️ Last 100" },
+  { id: "scr", sel: "#scrimsSection", key: "otab.scr", label: "🥊 Scrims" }, // 🥊 PlayStation room only
+  { id: "wp", sel: "#weaponsSection", key: "otab.wp", label: "🏆 Auraxium" },
 ]);
 
 export function mountOldTabs(host) {
@@ -49,8 +52,14 @@ export function mountOldTabs(host) {
         if (b.hidden === on) b.hidden = !on;
         if (!on) return;
         any = true;
-        const label = labelOf(d);
-        if (label && b.textContent !== label) b.textContent = label;
+        // Short tab names (owner 2026-10-28: one row on phones); the panel's full title is the hover.
+        const cnt = d.querySelector(":scope > summary .rk-table-count");
+        const n = cnt ? cnt.textContent.trim() : "";
+        const label = tr(p.key, p.label);
+        const html = `${esc(label)}${n ? ` <span class="old-tab-n">${esc(n.replace(/[()]/g, ""))}</span>` : ""}`;
+        if (b.innerHTML !== html) b.innerHTML = html;
+        const full = labelOf(d);
+        if (full && b.title !== full) b.title = full;
         const open = d.open ? "true" : "false";
         if (b.getAttribute("aria-expanded") !== open) b.setAttribute("aria-expanded", open);
         if (!d.id) d.id = `oldTabPanel-${p.id}`;

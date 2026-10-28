@@ -61,6 +61,7 @@ const oneSidedHtml = (s) => (isOneSided(s) ? ` <span class="scr-group scr-one" t
 
 function columns() {
   return [
+    { id: "size", label: tr("scr.size", "Kills"), hint: tr("scr.sizeTip", "Kills in the scrim, both sides together."), fn: (r) => r.k + r.d },
     { id: "date", label: tr("scr.date", "Date"), hint: tr("scr.dateTip", "When the scrim started (hover: how long ago it ended)."), fn: (r) => r.t0 },
     { id: "result", label: tr("scr.result", "Result"), hint: tr("scr.resultTip", "Who won: this player's kills – deaths against the opponent in the scrim."), fn: (r) => r.k - r.d, tie: (r) => r.k + r.d },
     { id: "len", label: tr("scr.length", "Length"), hint: tr("scr.lengthTip", "From the first to the last kill of the scrim."), fn: (r) => r.t1 - r.t0 },
@@ -86,6 +87,18 @@ export function mountScrims(section, o = {}) {
   const cache = new Map();
   let player = null, shown = null;
   let sortKey = "date", sortDir = "desc";
+  /** 🥊 Top mode (no single player on the page): the room's biggest scrims, data-ps/scrims-top.json. */
+  const TOP = { cid: "top", top: true };
+  let wantTop = false;
+
+  async function loadTop() {
+    const [top, cat] = await Promise.all([
+      Promise.resolve().then(() => fetchJson(`${dataDir}scrims-top.json`)),
+      Promise.resolve().then(() => catalog()).catch(() => null),
+    ]);
+    if (!top || top.v !== 1 || !Array.isArray(top.rows)) throw new Error("no top list");
+    return { top, rows: top.rows.map((r) => ({ ...r, o: r.o.map((x) => x.slice()) })), cat: (cat && cat.items) || {} };
+  }
 
   async function load(p) {
     const key = keyOf(p);
@@ -124,10 +137,12 @@ export function mountScrims(section, o = {}) {
 
   const wName = (cat, id) => { const e = id && cat[String(id)]; return e ? e[0] : id ? `#${id}` : "–"; };
   const oppText = (r) => r.o.map((x) => bare(x[1]) || "?").join(", ");
+  const pText = (r) => bare(r.p && r.p[1]) || "?";
 
   function sorted(rows) {
     const dir = sortDir === "asc" ? 1 : -1;
     if (sortKey === "opp") return rows.slice().sort((a, b) => dir * oppText(a).localeCompare(oppText(b)) || b.t0 - a.t0);
+    if (sortKey === "player") return rows.slice().sort((a, b) => dir * pText(a).localeCompare(pText(b)) || b.t0 - a.t0);
     if (sortKey === "weapons") return rows.slice().sort((a, b) => dir * wName(shown.cat, a.w[0]).localeCompare(wName(shown.cat, b.w[0])) || b.t0 - a.t0);
     const col = columns().find((c) => c.id === sortKey) || columns()[0];
     return rows.slice().sort((a, b) => {
@@ -137,15 +152,16 @@ export function mountScrims(section, o = {}) {
     });
   }
 
+  function personHtml(full) {
+    const nm = bare(full);
+    if (!nm) return `<span class="kf-unknown">${esc(tr("kf.unknown", "Unknown player"))}</span>`;
+    const tag = tagOf(full);
+    return `${tag ? `<span class="kf-tag">[${esc(tag)}]</span> ` : ""}<button type="button" class="kf-name" data-name="${esc(nm)}" title="${esc(tr("kf.addTip", "Add {name} to the names", { name: nm }))}">${esc(nm)}</button>`;
+  }
+
   function oppCell(r) {
     const group = r.o.length > 1;
-    const people = r.o.map((x) => {
-      const nm = bare(x[1]);
-      if (!nm) return `<span class="kf-unknown">${esc(tr("kf.unknown", "Unknown player"))}</span>`;
-      const tag = tagOf(x[1]);
-      return `${tag ? `<span class="kf-tag">[${esc(tag)}]</span> ` : ""}<button type="button" class="kf-name" data-name="${esc(nm)}" title="${esc(tr("kf.addTip", "Add {name} to the names", { name: nm }))}">${esc(nm)}</button>` +
-        (group ? ` <span class="scr-sub">${x[2]}–${x[3]}</span>` : "");
-    }).join(", ");
+    const people = r.o.map((x) => personHtml(x[1]) + (group ? ` <span class="scr-sub">${x[2]}–${x[3]}</span>` : "")).join(", ");
     return group ? `<span class="scr-group" title="${esc(tr("scr.groupTip", "Small-group scrim: this player's kills – deaths against each of them, and in total under Result."))}">${esc(tr("scr.group", "Group"))}</span> ${people}` : people;
   }
 
@@ -154,8 +170,10 @@ export function mountScrims(section, o = {}) {
     const cols = columns();
     const ind = (id) => `<span class="sort-ind${sortKey === id ? " active" : ""}">${sortKey === id ? (sortDir === "asc" ? "▲" : "▼") : "▼"}</span>`;
     const th = (id, label, hint, cls = "") => `<th class="${cls}sortable${sortKey === id ? " sorted" : ""}" data-sort="${id}" scope="col"${hint ? ` title="${esc(hint)}"` : ""}>${esc(label)}${ind(id)}</th>`;
+    const top = !!shown.top;
     table.querySelector("thead").innerHTML = `<tr><th class="rk-num" scope="col">#</th>` +
-      th("opp", tr("scr.opponent", "Opponent"), tr("scr.opponentTip", "Who the scrim was against. Click a name to add it to the names."), "scr-name ") +
+      (top ? th("player", tr("scr.player", "Player"), tr("scr.playerTip", "The winner of a 1v1 (in a group scrim: the player whose history found it). Click a name to add it to the names."), "scr-name ") : "") +
+      th("opp", tr("scr.opponent", "Opponent"), tr("scr.opponentTip", "Who the scrim was against. Click a name to add it to the names."), top ? "" : "scr-name ") +
       cols.map((c) => th(c.id, c.label, c.hint)).join("") + `</tr>`;
     const now = Date.now();
     table.querySelector("tbody").innerHTML = sorted(shown.rows).map((r, i) => {
@@ -163,7 +181,8 @@ export function mountScrims(section, o = {}) {
       const start = new Date(r.t0 * 1000);
       const ago = (() => { try { return new Intl.RelativeTimeFormat(lang(), { numeric: "auto", style: "short" }).format(-Math.round((now - r.t1 * 1000) / 86400000), "day"); } catch { return ""; } })();
       return `<tr class="scr-${res}"><td class="rk-num">${i + 1}</td>` +
-        `<td class="scr-name">${oppCell(r)}</td>` +
+        (top ? `<td class="scr-name">${personHtml(r.p && r.p[1])}</td><td class="scr-opp">${oppCell(r)}</td>` : `<td class="scr-name">${oppCell(r)}</td>`) +
+        `<td class="scr-size">${(r.k + r.d).toLocaleString(lang())}</td>` +
         `<td class="scr-date" title="${esc(ago)}">${esc(start.toLocaleString(lang(), { dateStyle: "medium", timeStyle: "short" }))}</td>` +
         `<td class="scr-result"><span class="scr-res scr-${res}">${esc(scrimResultLabel(res))}</span> ${r.k.toLocaleString(lang())}–${r.d.toLocaleString(lang())}${oneSidedHtml(r)}</td>` +
         `<td>${esc(tr("scr.min", "{n} min", { n: scrimMinutes(r).toLocaleString(lang()) }))}</td>` +
@@ -184,8 +203,36 @@ export function mountScrims(section, o = {}) {
       : tr("scr.readNone", "Older history is read in the background.");
   }
 
+  async function showTop() {
+    if (!section.open || player !== TOP) return;
+    if (shown && shown.top) return;
+    let job = cache.get("top");
+    if (!job) {
+      job = loadTop();
+      cache.set("top", job);
+      job.catch(() => cache.delete("top"));
+    }
+    setStatus(tr("scr.loading", "Looking for scrims…"));
+    try {
+      const r = await job;
+      if (player !== TOP) return;
+      shown = { cid: "top", ...r };
+      count.textContent = "";
+      sum.textContent = tr("scr.topSummary", "Top {n} PlayStation scrims (of {total} found)", { n: r.rows.length.toLocaleString(lang()), total: r.top.total.toLocaleString(lang()) });
+      sum.title = tr("scr.ruleTip", "Scrim: 10+ kills and deaths in a row with one opponent (no 10-minute break), and that opponent is 60%+ of all kills and deaths in that time. Small groups (2–6 players) count too.");
+      sum.hidden = false;
+      setStatus(tr("scr.topNote", "Biggest first; one-sided ones left out. History read for {players} players so far. Add one name to see that player's scrims.", { players: r.top.players.toLocaleString(lang()) }));
+      wrap.hidden = !r.rows.length;
+      render();
+    } catch (e) {
+      if (player !== TOP) return;
+      setStatus(tr("scr.topNone", "No scrims found yet."));
+    }
+  }
+
   async function show() {
     const p = player;
+    if (p === TOP) return showTop();
     if (!p || !p.cid || !section.open) return;
     if (shown && shown.cid === p.cid) return;
     let job = cache.get(p.cid);
@@ -223,7 +270,7 @@ export function mountScrims(section, o = {}) {
     if (!th || !shown) return;
     const k = th.dataset.sort;
     if (sortKey === k) sortDir = sortDir === "asc" ? "desc" : "asc";
-    else { sortKey = k; sortDir = k === "opp" || k === "zone" || k === "weapons" ? "asc" : "desc"; }
+    else { sortKey = k; sortDir = k === "opp" || k === "player" || k === "zone" || k === "weapons" ? "asc" : "desc"; }
     const prevLeft = wrap.scrollLeft;
     render();
     if (sortScroll) sortScroll(wrap, table.querySelector(`th[data-sort="${k}"]`), prevLeft);
@@ -248,12 +295,16 @@ export function mountScrims(section, o = {}) {
   }
 
   return {
-    /** Loaded PlayStation players on the page; the tab shows for exactly one. */
+    /**
+     * Loaded PlayStation players on the page: exactly one → that player's scrims; none or
+     * several → the room's top list (setPlayers(null) = not the PS room: hidden).
+     */
     setPlayers(list) {
-      const one = list && list.length === 1 && list[0] && list[0].cid ? list[0] : null;
-      section.hidden = !one;
-      if (!one) { player = null; return; }
+      if (list == null) { section.hidden = true; player = null; return; }
+      const one = list.length === 1 && list[0] && list[0].cid ? list[0] : TOP;
+      section.hidden = false;
       if (player && player.cid === one.cid) return;
+      if (!player || (player === TOP) !== (one === TOP)) { sortKey = one === TOP ? "size" : "date"; sortDir = "desc"; }
       player = one;
       shown = null;
       count.textContent = "";

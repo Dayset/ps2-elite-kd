@@ -3106,22 +3106,39 @@ html[data-room="ps"] .controls .fresh-row-end select.room-select { border-color:
 /* 🗂️ Tracker data tabs (old-tabs.mjs, owner 2026-10-28): one row of buttons above the ✨ table;
  * the panels' own summaries are hidden (their text is the tab label), closed panels take no
  * space, the open one shows right below the row. Instant, no transition. Wraps on phones. */
-.old-tabs-block { margin: 0 0 0.85rem; }
-.old-tabs { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0 0 0.4rem; }
-.old-tab {
-  font: inherit; font-size: 0.88rem; font-weight: 600; color: var(--text); cursor: pointer;
-  background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
-  padding: 0.3rem 0.65rem; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis;
+.old-tabs-block:not(:has(.old-tabs:not([hidden]))) { display: none; }
+/* One panel like the other blocks (owner 2026-10-28: "no solid background … different spacing,
+ * different size of fonts"): same border, radius, fill and padding as .dist-section; the tabs are
+ * one row of equal segments that always fits (phones too); the open panel sits inside with no
+ * box of its own. */
+.old-tabs-block {
+  margin: 0 0 0.85rem; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--panel); padding: 0.45rem 0.75rem 0.6rem;
 }
-.old-tab:hover { border-color: var(--accent); }
+.old-tabs { display: flex; flex-wrap: nowrap; gap: 0.35rem; margin: 0; }
+.old-tab {
+  flex: 1 1 0; min-width: 0;
+  font: inherit; font-size: 0.85rem; font-weight: 600; color: var(--muted); cursor: pointer;
+  background: var(--input-bg); border: 1px solid var(--border); border-radius: 6px;
+  padding: 0.32rem 0.5rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center;
+}
+.old-tab:hover { border-color: var(--accent); color: var(--text); }
+.old-tab-n { font-size: 0.78em; font-weight: 500; color: var(--dim); font-variant-numeric: tabular-nums; }
 .old-tab[aria-expanded="true"] { border-color: var(--accent); color: var(--accent); background: var(--grid); }
 .old-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 /* Only the tab panels themselves (a 🥊 scrim row inside the kill feed is a <details> too). */
 #oldTabs > details > summary, #oldTabs > #statsPublic > details > summary { display: none; }
 #oldTabs > details:not([open]), #oldTabs > #statsPublic > details:not([open]) { display: none; }
-#oldTabs #statsPublic > details.stats-public[open] {
-  border: 1px solid var(--border); border-radius: 8px; background: var(--panel); padding: 0.45rem 0.6rem 0.6rem;
+/* The open panel: no second box inside the block, same font size as the block text. */
+#oldTabs > details.dist-section[open], #oldTabs #statsPublic > details.stats-public[open] {
+  border: 0; border-radius: 0; background: none; margin: 0.55rem 0 0; padding: 0;
 }
+#oldTabs #statsPublic { margin: 0; }
+#oldTabs .kf-summary, #oldTabs .scr-status, #oldTabs .kf-status, #oldTabs .wp-status { font-size: 0.85rem; }
+#oldTabs .kf-summary { margin: 0 0 0.4rem; }
 @media (max-width: 600px) {
-  .old-tab { font-size: 0.82rem; padding: 0.28rem 0.5rem; }
+  .old-tabs-block { padding: 0.4rem 0.45rem 0.5rem; }
+  .old-tabs { gap: 0.25rem; }
+  .old-tab { flex: 1 1 auto; font-size: 0.76rem; padding: 0.3rem 0.2rem; }
+  .old-tab-n { display: none; } /* counts stay in the panel's own summary line */
 }

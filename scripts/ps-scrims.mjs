@@ -12,6 +12,9 @@
  *     history has been read) and data-ps/scrims-state.json (per-player cursors).
  *     NAMES="a,b" (names or keys): those players' whole history first (up to half the run).
  *
+ *   node scripts/ps-scrims.mjs --top
+ *     Rebuild data-ps/scrims-top.json (room-wide top list) from data-ps/scrims/ (no Census; --run does it too).
+ *
  *   node scripts/ps-scrims.mjs --probe "Name1,Name2" [--pages 20]
  *     Measurement only: the compact events of the named players into scrim-probe/<key>.json.
  */
@@ -20,7 +23,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { censusRequest, tokenBucket } from "../census-fetch.mjs";
 import { PS_SERVERS, censusNsBase, parsePsKey, psKey } from "../rooms.mjs";
-import { eventsUrl, compactEvent, mergeEvents, EVENT_PAGE, SCRIM_RULE, detectScrims, finalWindow, scrimRow, mirrorRow, upsertScrims } from "../scrims.mjs";
+import { eventsUrl, compactEvent, mergeEvents, EVENT_PAGE, SCRIM_RULE, detectScrims, finalWindow, scrimRow, mirrorRow, upsertScrims, isOneSided } from "../scrims.mjs";
 import { removedList, REMOVED_NAME } from "../opt-out.mjs";
 import { viaCensusProxy } from "./refresh-cache.mjs";
 
@@ -170,6 +173,56 @@ function scrubRemoved(rows, gone) {
   return n > 0;
 }
 
+/** How many scrims the room-wide 🥊 top list keeps. */
+export const TOP_N = 300;
+
+/**
+ * Room-wide 🥊 top list (owner 2026-10-28: "top scrims tab … when no character is selected"):
+ * every file's scrims, each scrim once (both players' copies match by players + overlapping
+ * time), one-sided farms left out, the biggest TOP_N by kills (both sides). A 1v1 is told from
+ * the winner's side. → { v, at, total, players, done, rows: [{ t0, t1, p:[key,name], o, k, d, z, w }] }
+ */
+export function buildTopScrims(files, gap = SCRIM_RULE.GAP) {
+  const seen = new Map();
+  const all = [];
+  let players = 0, done = 0;
+  for (const f of files) {
+    if (!f || f.v !== 1 || !Array.isArray(f.scrims)) continue;
+    if (f.from) players++;
+    if (f.done) done++;
+    for (const r of f.scrims) {
+      if (!r || !Array.isArray(r.o) || !r.o.length) continue;
+      if (isOneSided(r)) continue;
+      const people = [f.key, ...r.o.map((x) => x[0] || x[1])].sort().join(",");
+      const list = seen.get(people) || [];
+      const hit = list.find((x) => x.t0 <= r.t1 + gap && r.t0 <= x.t1 + gap);
+      let row = { t0: r.t0, t1: r.t1, p: [f.key, f.name || ""], o: r.o.map((x) => x.slice()), k: r.k, d: r.d, z: r.z, w: (r.w || [0, 0]).slice() };
+      if (row.o.length === 1 && row.d > row.k) {
+        const [key, name, ok, od] = row.o[0];
+        row = { ...row, p: [key, name], o: [[f.key, f.name || "", od, ok]], k: r.d, d: r.k, w: [row.w[1], row.w[0]] };
+      }
+      if (hit) {
+        if (row.k + row.d > hit.row.k + hit.row.d) { all[hit.i] = row; hit.row = row; hit.t0 = row.t0; hit.t1 = row.t1; }
+        continue;
+      }
+      list.push({ t0: row.t0, t1: row.t1, i: all.length, row });
+      seen.set(people, list);
+      all.push(row);
+    }
+  }
+  const rows = all.sort((a, b) => b.k + b.d - (a.k + a.d) || b.t1 - a.t1).slice(0, TOP_N);
+  return { v: 1, at: new Date().toISOString(), total: all.length, players, done, rows };
+}
+
+function writeTop() {
+  let names = [];
+  try { names = fs.readdirSync(SCRIM_DIR).filter((f) => f.endsWith(".json")); } catch {}
+  const top = buildTopScrims(names.map((f) => readJson(path.join(SCRIM_DIR, f), null)));
+  writeJson(path.join(DATA_DIR, "scrims-top.json"), top);
+  console.log(`🥊 top list: ${top.rows.length} of ${top.total} scrims (one-sided left out), ${top.players} players read.`);
+  return top;
+}
+
 async function run() {
   const t0 = Date.now();
   const budgetMs = (Number(process.env.TIME_BUDGET_MIN) || 20) * 60_000;
@@ -305,6 +358,7 @@ async function run() {
   state.updatedAt = new Date().toISOString();
   state.rule = SCRIM_RULE;
   writeJson(STATE_FILE, state);
+  writeTop();
   const msg = `🥊 PS scrims: ${calls} Census calls, visits ${tally.first} first / ${tally.new} new / ${tally.back} older, ${tally.events.toLocaleString("en")} events, ${tally.scrims} scrims found, ${touched.size} files written, ${tally.fails} failed. ` +
     `${sts.length}/${players.length} players started, ${sts.filter((s) => s.done).length} read to the start; median depth ${day(depths[Math.floor(depths.length / 2)])}, deepest ${day(depths[0])}.`;
   console.log(`::notice::${msg}`);
@@ -342,5 +396,6 @@ async function probe() {
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   if (process.argv.includes("--probe")) await probe();
   else if (process.argv.includes("--run")) await run();
+  else if (process.argv.includes("--top")) writeTop();
   else { console.error("usage: node scripts/ps-scrims.mjs --run | --probe \"Name1,Name2\" [--pages 20]"); process.exit(2); }
 }

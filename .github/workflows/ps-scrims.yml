@@ -94,7 +94,7 @@ jobs:
           stray=$(git status --porcelain | grep -v ' data-ps/scrims' || true)
           if [ -n "$stray" ]; then
             echo "::error::scrims run changed files outside data-ps/scrims*: $stray"
-            git checkout -- . ':!data-ps/scrims' ':!data-ps/scrims-state.json' 2>/dev/null || true
-            git clean -fdq -- . ':!data-ps/scrims' ':!data-ps/scrims-state.json' 2>/dev/null || true
+            git checkout -- . ':!data-ps/scrims' ':!data-ps/scrims-state.json' ':!data-ps/scrims-top.json' 2>/dev/null || true
+            git clean -fdq -- . ':!data-ps/scrims' ':!data-ps/scrims-state.json' ':!data-ps/scrims-top.json' 2>/dev/null || true
           fi
           scripts/ci-commit-push.sh "chore(ps-scrims): ${{ steps.run.outputs.scrims || '0' }} scrims, ${{ steps.run.outputs.files || '0' }} files [bot]"

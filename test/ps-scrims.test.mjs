@@ -219,9 +219,38 @@ test("Scrims tab: PS only, one player, inside the tracker tabs, data from data-p
   assert.ok(a < b && b < c);
   assert.match(index.slice(b, c), /class="ranks-table scr-table"/);
   const st = fs.readFileSync(new URL("../stats-table.mjs", import.meta.url), "utf8");
-  assert.match(st, /scrimsPanel\.setPlayers\(\$\.IS_PS && !\$\.LIVE_MODE \? shownList : \[\]\)/);
+  assert.match(st, /scrimsPanel\.setPlayers\(\$\.IS_PS && !\$\.LIVE_MODE \? shownList : null\)/);
   assert.match(st, /scrims: \(\) => \$\.IS_PS/);
   const panel = fs.readFileSync(new URL("../scrims-panel.mjs", import.meta.url), "utf8");
   assert.match(panel, /\$\{dataDir\}scrims\/\$\{key\}\.json/);
   assert.doesNotMatch(panel + fs.readFileSync(new URL("../kill-feed.mjs", import.meta.url), "utf8"), /cheat|padd/i);
+});
+
+/* 🥊 Room-wide top list (no single player on the page). */
+import { buildTopScrims } from "../scripts/ps-scrims.mjs";
+
+test("top list: each scrim once (both players' copies), told by the winner, one-sided left out, biggest first", () => {
+  const A = { v: 1, key: "us-1", name: "Alpha", from: 1, done: true, scrims: [
+    { t0: 100, t1: 900, o: [["us-2", "Bravo", 14, 15]], k: 14, d: 15, n: 0, z: 2, w: [7, 8] },
+    { t0: 5000, t1: 6000, o: [["us-3", "Farm", 300, 0]], k: 300, d: 0, n: 0, z: 2, w: [7, 0] },
+    { t0: 9000, t1: 9900, o: [["us-4", "C", 20, 10], ["us-5", "D", 15, 15]], k: 35, d: 25, n: 1, z: 6, w: [7, 9] },
+  ] };
+  const B = { v: 1, key: "us-2", name: "Bravo", from: 1, done: false, scrims: [
+    { t0: 100, t1: 900, o: [["us-1", "Alpha", 15, 14]], k: 15, d: 14, n: 3, z: 2, w: [8, 7] },
+  ] };
+  const top = buildTopScrims([A, B]);
+  assert.equal(top.total, 2);
+  assert.deepEqual([top.players, top.done], [2, 1]);
+  assert.equal(top.rows[0].o.length, 2, "the 60-kill group scrim is bigger than the 29-kill 1v1");
+  const duel = top.rows[1];
+  assert.deepEqual(duel.p, ["us-2", "Bravo"], "1v1 told from the winner's side");
+  assert.deepEqual([duel.k, duel.d, duel.w], [15, 14, [8, 7]]);
+});
+
+test("Scrims tab shows the room's top list when not exactly one PS player is on the page", () => {
+  const panel = fs.readFileSync(new URL("../scrims-panel.mjs", import.meta.url), "utf8");
+  assert.match(panel, /\$\{dataDir\}scrims-top\.json/);
+  assert.match(panel, /const one = list\.length === 1 && list\[0\] && list\[0\]\.cid \? list\[0\] : TOP;/);
+  const st = fs.readFileSync(new URL("../stats-table.mjs", import.meta.url), "utf8");
+  assert.match(st, /scrimsPanel\.setPlayers\(\$\.IS_PS && !\$\.LIVE_MODE \? shownList : null\)/);
 });

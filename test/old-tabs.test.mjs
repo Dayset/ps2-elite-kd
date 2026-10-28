@@ -26,7 +26,7 @@ test("all closed by default, one open at a time, no animation, labels from the t
   assert.match(st, /let publicStatsOpen = false;/);
   const css = readFileSync(new URL("../styles.css", import.meta.url), "utf8");
   const blk = css.slice(css.indexOf("/* 🗂️ Tracker data tabs"));
-  assert.match(blk, /\.old-tabs \{ display: flex; flex-wrap: wrap;/);
+  assert.match(blk, /\.old-tabs \{ display: flex; flex-wrap: nowrap;/); // owner 2026-10-28: one row on phones, short names (otab.*)
   // Only the panels themselves: a folded 🥊 scrim row inside the kill feed is a <details> too.
   assert.match(blk, /#oldTabs > details:not\(\[open\]\), #oldTabs > #statsPublic > details:not\(\[open\]\) \{ display: none; \}/);
   assert.doesNotMatch(blk.replace(/\/\*[\s\S]*?\*\//g, ""), /transition|animation/);
