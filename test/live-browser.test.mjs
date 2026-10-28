@@ -963,6 +963,18 @@ describe("🎥 live unknown iVi in a browser", () => {
   });
 });
 
+describe("🎥 live DMG adds on any kill in a browser", () => {
+  it("DMG adds on any kill (owner 2026-10-28): the meter counts the kill while the name is still …", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      await ev(`window.__fakeWs.emit(${death(ME.cid, SLOW.cid, "80", false)})`); // ME kills SLOW: 1.5 s lookup, the meter must not wait for it
+      assert.equal(await ev(until(`document.querySelector("#liveDpsVal").textContent.includes("1/3")`)), true, "meter counts the kill at arrival");
+      assert.ok(await ev(`document.querySelector("#liveList tbody.lv-vic .lv-nm").textContent.includes("…")`), "… and the name is still resolving");
+      assert.deepEqual(errors, [], "no page errors");
+    });
+  });
+});
+
 describe("🎥 live warm-up readout in a browser", () => {
   it("warm-up (owner 2026-10-26): small dark-gray 'Start at N/3' with the N/3 bigger inside, then a real number at 3", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {

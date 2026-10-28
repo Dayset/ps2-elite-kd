@@ -998,7 +998,7 @@ function start() {
   };
 
   // #76 (snappy feed): the row lands the moment the event arrives — before any name lookup — with the event's own
-  // time. Lookups run in parallel; the ACCOUNTING (bounty, DPM, cash, run-clear, teamkill) still commits strictly
+  // time. Lookups run in parallel; the ACCOUNTING (bounty, cash, run-clear, teamkill) still commits strictly
   // in arrival order through evChain (owner t576u: a slow lookup can't reorder events).
   // Pending rows are tracked by `seq`, stamped on the row at arrival: overlayPush/feedPush copy rows ({ ...r })
   // when they stop the top row's timer on the next arrival, so identity breaks under rapid fire (the first kill's
@@ -1006,6 +1006,7 @@ function start() {
   let evChain = Promise.resolve();
   let evSeq = 0;
   const pendingSeq = new Set();
+  const spikeBySeq = new Map(); // arrival DPM spike per row seq — a teamkill retract removes its spike at commit
   const onEvent = (ev) => {
     if (!sessionStartMs) sessionStartMs = Date.now();
     setOnline("online"); // any Death involving them means they are playing right now
@@ -1016,6 +1017,13 @@ function start() {
     row.seq = ++evSeq;
     pendingSeq.add(row.seq);
     render();
+    // Owner 2026-10-28: the meter adds on ANY kill the moment it arrives —
+    // it never waits for the name lookup (a slow lookup used to stall every
+    // later kill's DMG too, behind evChain). Assists already spike this way.
+    if (ev.kind === "kill") {
+      dpsEvents.push({ t: Number.isFinite(ev.at) ? ev.at : Date.now(), dmg: DPS_HP }); if (shownDps !== null) scrollQ.push(dpsNow([{ t: 0, dmg: DPS_HP }], 0, dpmTauMs) * 60); liftFreeze(Number.isFinite(ev.at) ? ev.at : Date.now());
+      spikeBySeq.set(row.seq, dpsEvents[dpsEvents.length - 1]); lastSpikeEff = dpsEvents[dpsEvents.length - 1].t - timeDebtMs; dpsTick();
+    }
     evChain = evChain.then(() => commitEvent(ev, fetchP, row.seq), () => commitEvent(ev, fetchP, row.seq));
   };
   async function commitEvent(ev, fetchP, seq) {
@@ -1030,6 +1038,11 @@ function start() {
     if (ev.kind === "kill" && p.faction && me && me.faction && p.faction === me.faction) {
       st = { ...st, victims: st.victims.filter((r) => r.seq !== seq) };
       pendingSeq.delete(seq);
+      // Owner 2026-10-28: the arrival spike goes with the row — a teamkill
+      // farms nothing, not even a flash on the meter.
+      const spike = spikeBySeq.get(seq);
+      if (spike) { const i = dpsEvents.indexOf(spike); if (i >= 0) dpsEvents.splice(i, 1); spikeBySeq.delete(seq); }
+      dpsTick();
       render();
       return;
     }
@@ -1050,7 +1063,7 @@ function start() {
       // exactly the old clear plus the new run's early lines.
       if (wasStreak === 0) st = { ...st, victims: st.victims.filter((r) => r.seq === seq || pendingSeq.has(r.seq)) };
       // DPM at the event's own time: a commit deferred behind a slow lookup doesn't shift the decay
-      dpsEvents.push({ t: Number.isFinite(ev.at) ? ev.at : Date.now(), dmg: DPS_HP }); if (shownDps !== null) scrollQ.push(dpsNow([{ t: 0, dmg: DPS_HP }], 0, dpmTauMs) * 60); liftFreeze(Number.isFinite(ev.at) ? ev.at : Date.now()); lastSpikeEff = dpsEvents[dpsEvents.length - 1].t - timeDebtMs; const iv = cashIv(p); cashKills.push({ cid: ev.opp, iv }); dpsTick(); sfx("victory", { event: true }); if (iv > 0) sfx("chaChing", { event: true }); speakRatio(p);
+      const iv = cashIv(p); cashKills.push({ cid: ev.opp, iv }); dpsTick(); sfx("victory", { event: true }); if (iv > 0) sfx("chaChing", { event: true }); speakRatio(p);
     }
     // Owner 2026-10-25: ANY death dims the killed list and the observed
     // player's own name to 50% — you are dead, the feed shows it — until
@@ -1081,7 +1094,7 @@ function start() {
       renderCashHist();
       dpsTick();
     }
-    pendingSeq.delete(seq); // the row was pushed at arrival (onEvent): no second overlayPush
+    pendingSeq.delete(seq); spikeBySeq.delete(seq); // the row was pushed at arrival (onEvent): no second overlayPush
     render();
     if (!p.cached && !bgTried.has(ev.opp)) { bgQueue = [ev.opp, ...bgQueue.filter((c) => c !== ev.opp)]; bgPump(); }
   }

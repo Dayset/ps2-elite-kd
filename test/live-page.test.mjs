@@ -657,6 +657,7 @@ test("name centered (owner 2026-10-26): the live name column sits at the center"
 test("teamkill (owner 2026-10-25): own-faction kills farm nothing, own-faction deaths still count", () => {
   const js = liveSrc();
   assert.match(js, /if \(ev\.kind === "kill" && p\.faction && me && me\.faction && p\.faction === me\.faction\) \{\s*st = \{ \.\.\.st, victims: st\.victims\.filter\(\(r\) => r\.seq !== seq\) \};/); // #76: retract only the arrival row
+  assert.match(js, /const spike = spikeBySeq\.get\(seq\);/); // owner 2026-10-28: the arrival spike is retracted with the row
 });
 
 test("dim names on death (owner 2026-10-25): death dims the killed list and your name to 50%, a kill re-lights them", () => {
@@ -754,6 +755,8 @@ test("#76 snappy feed: the row lands on arrival, lookups run in parallel, accoun
   assert.ok(on.indexOf("render()") < on.indexOf("evChain = evChain.then"), "rendered before the commit");
   // pending rows are keyed by seq, not identity: overlayPush copies rows when it stops the top timer
   assert.match(on, /row\.seq = \+\+evSeq;/);
+  // Owner 2026-10-28: the meter adds on any kill at arrival, never at commit
+  assert.match(on, /dpsEvents\.push\(\{ t: Number\.isFinite\(ev\.at\) \? ev\.at : Date\.now\(\), dmg: DPS_HP \}\)/);
   const { overlayPush } = await import("../live-model.mjs");
   let st = overlayPush(null, { kind: "kill", opp: "a", at: 1000 });
   const first = st.lastEv; first.seq = 1;
@@ -764,11 +767,11 @@ test("#76 snappy feed: the row lands on arrival, lookups run in parallel, accoun
   assert.match(js, /if \(peopleP\.has\(cid\)\) return peopleP\.get\(cid\);/);
   assert.match(js, /pr\.catch\(\(\) => peopleP\.delete\(cid\)\)/);
   assert.match(js, /if \(p\.pending\) return `<span class="lv-pn"><span class="lv-name lv-pend"><bdi>…<\/bdi>/);
-  // commit: a failed lookup never strands "…"; no second push; DPM at the event's time
+  // commit: a failed lookup never strands "…"; no second push, no second spike (the DPM spike already landed at arrival)
   const commit = js.slice(js.indexOf("async function commitEvent"), js.indexOf("let ws = null"));
   assert.match(commit, /try \{ p = await fetchP; \} catch \{ p = people\.get\(ev\.opp\); if \(p\) p\.pending = false; \}/);
   assert.doesNotMatch(commit, /overlayPush\(/);
-  assert.match(commit, /dpsEvents\.push\(\{ t: Number\.isFinite\(ev\.at\) \? ev\.at : Date\.now\(\), dmg: DPS_HP \}\)/);
+  assert.doesNotMatch(commit, /dpsEvents\.push\(/);
   assert.match(commit, /pendingSeq\.delete\(seq\);/);
 });
 
