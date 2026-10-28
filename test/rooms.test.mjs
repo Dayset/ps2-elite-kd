@@ -72,7 +72,7 @@ test("page code reads player data through the room's prefix (no hard-coded data/
   // app.js: no literal data/ fetch left. The footer growth line shows in both rooms (owner 2026-10-26) and reads the room's own names.json.
   const hits = app.split("\n").filter((l) => hard.test(l));
   assert.equal(hits.length, 0, hits.join("\n"));
-  assert.match(app, /fetch\(IS_PS \? "data-ps\/names\.json" : "data\/names\.json"/);
+  assert.match(app, /fetchJson\(IS_PS \? "data-ps\/names\.json" : "data\/names\.json"/);
   // The name-guessed PC file path is never tried in the PS room.
   assert.match(app, /if \(!IS_PS\) candidates\.push\(`data\/players\/\$\{key\}\.json`\);/);
   // The PC cache Worker never hears about PS names.

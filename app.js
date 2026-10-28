@@ -1335,36 +1335,60 @@ import {
       const days = Math.max(1, Math.round((todayUtc - LAUNCH_UTC) / 86400000));
       return { total, perDay: Math.round(total / days) };
     };
+    const fmtStamp = (iso) => {
+      const t = Date.parse(iso || "");
+      if (!Number.isFinite(t)) return "";
+      return new Date(t).toLocaleString(undefined, { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
+    };
     const show = (r) => {
       if (r && r.total > 0) {
-        // Display is the rate only (Dayset 2026-10-20): the cached total
-        // itself already shows in the recent players added line.
-        el.textContent = tr("foot.namesPerDay", "≈{perDay} New names a day.", {
+        // Rate first (Dayset 2026-10-20; the cached total itself already shows
+        // in the recent players added line), then the stacked liveness stamps
+        // (owner 2026-10-28): growth, then last bot run.
+        let text = tr("foot.namesPerDay", "≈{perDay} New names a day.", {
           perDay: r.perDay.toLocaleString(),
         });
+        const grown = fmtStamp(r.updatedAt);
+        if (grown) text += " " + tr("foot.mirrorUpdated", "Mirror updated {date}.", { date: grown });
+        const run = fmtStamp(r.lastRun);
+        if (run) text += " " + tr("foot.lastRun", "Last bot run {date}.", { date: run });
+        el.textContent = text;
         el.hidden = false;
       }
+    };
+    // Last discovery sweep doneAt: PC has one sweep; PS takes the latest across its servers.
+    const runOf = (d) => {
+      if (!d) return null;
+      if (!IS_PS) return (d.lastSweep && d.lastSweep.doneAt) || (d.sweep && d.sweep.lastDoneAt) || d.updatedAt || null;
+      const servers = d.servers ? Object.values(d.servers) : [];
+      const done = servers.map((s) => (s.lastSweep && s.lastSweep.doneAt) || (s.sweep && s.sweep.lastDoneAt)).filter(Boolean);
+      if (done.length) return done.sort()[done.length - 1];
+      return d.updatedAt || null;
     };
     const KEY = IS_PS ? "ps2ekd-page-namerate-ps" : "ps2ekd-page-namerate"; // room-scoped: a PC total cached today must not show in the PS room
     const today = new Date().toDateString();
     try {
       const c = JSON.parse(localStorage.getItem(KEY) || "null");
-      if (c && c.day === today && c.total > 0) {
-        show(compute(c.total));
+      // lastRun !== undefined: pre-stamp caches (no such field) refetch once, then the new shape is kept.
+      if (c && c.day === today && c.total > 0 && c.lastRun !== undefined) {
+        show({ ...compute(c.total), updatedAt: c.updatedAt || null, lastRun: c.lastRun });
         return;
       }
     } catch {}
-    fetch(IS_PS ? "data-ps/names.json" : "data/names.json", { cache: "no-cache" })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => {
-        const total = d && (Number.isFinite(d.count) ? d.count : Array.isArray(d.players) ? d.players.length : 0);
-        if (!total) return;
-        try {
-          localStorage.setItem(KEY, JSON.stringify({ day: today, total }));
-        } catch {}
-        show(compute(total));
-      })
-      .catch(() => {});
+    const fetchJson = (u) => fetch(u, { cache: "no-cache" }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+    Promise.all([
+      fetchJson(IS_PS ? "data-ps/names.json" : "data/names.json"),
+      fetchJson(IS_PS ? "data-ps/discovery.json" : "data/discovery.json"),
+    ]).then(([n, d]) => {
+      const total = n && (Number.isFinite(n.count) ? n.count : Array.isArray(n.players) ? n.players.length : 0);
+      if (!total) return;
+      const updatedAt = (n && n.updatedAt) || null;
+      const lastRun = runOf(d);
+      try {
+        localStorage.setItem(KEY, JSON.stringify({ day: today, total, updatedAt, lastRun }));
+      } catch {}
+      show({ ...compute(total), updatedAt, lastRun });
+    }).catch(() => {});
   })();
 
   /* t379u: keep the reading position across a refresh. The browser restores

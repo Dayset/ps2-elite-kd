@@ -163,7 +163,13 @@ describe("🎥 PS footer per-day line (owner 2026-10-26)", () => {
     assert.ok(!js.includes('if (!el || IS_PS) return;'), "the #55 PS early return is gone");
     assert.ok(js.includes("function pageNameRate()"));
     assert.ok(js.includes('const LAUNCH_UTC = IS_PS ? Date.UTC(2026, 9, 22) : Date.UTC(2026, 9, 7);'), "PS launch Oct 22, PC launch Oct 7");
-    assert.ok(js.includes('fetch(IS_PS ? "data-ps/names.json" : "data/names.json"'), "PS room fetches its own names file");
+    assert.ok(js.includes('fetchJson(IS_PS ? "data-ps/names.json" : "data/names.json")'), "PS room fetches its own names file");
+    assert.ok(js.includes('fetchJson(IS_PS ? "data-ps/discovery.json" : "data/discovery.json")'), "PS room fetches its own discovery file");
+    assert.ok(js.includes("foot.mirrorUpdated") && js.includes("foot.lastRun"), "stacked liveness stamps");
+    assert.ok(js.includes("updatedAt, lastRun"), "stamps cached alongside the total");
+    const en = JSON.parse(fs.readFileSync(path.join(root, "i18n/en.json"), "utf8"));
+    assert.ok(en["foot.mirrorUpdated"] && en["foot.mirrorUpdated"].includes("{date}"), "growth stamp key");
+    assert.ok(en["foot.lastRun"] && en["foot.lastRun"].includes("{date}"), "run stamp key");
     assert.ok(js.includes('const KEY = IS_PS ? "ps2ekd-page-namerate-ps" : "ps2ekd-page-namerate";'), "cached total is room-scoped");
     assert.ok(html.includes('<p id="pageNameRate"'), "the footer element exists in the shared footer");
   });
