@@ -134,6 +134,9 @@ function speak(text) {
   s.speak(u);
 }
 
+/** Speak any short text aloud with the Commander's voice (the live feed uses it for name + iVi ratio). */
+export function say(text) { speak(text); }
+
 /** Speaker button on a faction's Commander card: one faction is followed at a time. */
 export function voiceButton(f) {
   if (!voiceSupported()) return "";

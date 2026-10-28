@@ -304,6 +304,22 @@ export function tipText(col, v) {
 }
 
 /**
+ * Owner 2026-10-27 (live iVi ratio): one signed number for an opponent's
+ * strength against the tracked player — the feed shows the division, never
+ * a raw iVi on opponent rows. opp >= me → "+N" (N× stronger); opp < me →
+ * "-N" (N× weaker, N = me/opp); opp 0 or below → "0" (never a division);
+ * either side unknown, or me 0 or below → "?" (uncomputable, never a
+ * division by zero).
+ */
+export function ratioLabel(meAdjs, oppAdjs) {
+  if (typeof meAdjs !== "number" || !Number.isFinite(meAdjs) || typeof oppAdjs !== "number" || !Number.isFinite(oppAdjs)) return "?";
+  if (oppAdjs <= 0) return "0";
+  if (meAdjs <= 0) return "?";
+  if (oppAdjs >= meAdjs) return `+${Math.round(oppAdjs / meAdjs)}`;
+  return `-${Math.round(meAdjs / oppAdjs)}`;
+}
+
+/**
  * Emoji fill meter (owner t564u, replaces the t546u/t558u rank-based sizes): every emoji has one size;
  * a hollow copy (t589u: light inner ring, dark 18% greyscale inside; was 25%-visible) shows the whole emoji and a solid copy on top fills it from the bottom up to:
  *   🪖 Infantry → the player's infantry % itself (50% infantry = half filled);

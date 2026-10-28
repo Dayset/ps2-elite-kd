@@ -4,7 +4,7 @@ import { readFileSync, existsSync } from "node:fs";
 import { buildLive } from "../scripts/build-live.mjs";
 import { infMedian, infDial, isTractor, tractorHint, tractorCuts, tractorRule, tractorMarked, tractorCleared, tracXpIds, tracSample } from "../tractor.mjs";
 import { autoMarksHtml, tractorMark } from "../auto-marks.mjs";
-import { infUnit, classifyDeath, feedPush, censusStats, cellText, fmtGap, LIVE_COLS, tipText, ME_REFRESH_MS, mergeFresh, FEED_MAX, emojiFill, fillDriver, glowTier, unknownFill, FULL_AT, EMPTY_AT, goodPct, FILL_DIM, HOLLOW_PX, overlayPush, overlayRows, VICTIM_LINES, eventAt, EVENT_SKEW_MS, unitGlow, ZERG_GOLD_OVER, OUTLINE_PX, LIVE_GLOWS, weaponIcon, CARD_CATEGORIES, LIVE_FPS, liveFps, HALO_KEY, haloOn, bezier, easeFill, glowIn, BEAT, TIER_MOTION, beatAt, haloAt, SHINE, shineFrame, beatSleep } from "../live.mjs";
+import { infUnit, classifyDeath, feedPush, censusStats, cellText, fmtGap, LIVE_COLS, tipText, ME_REFRESH_MS, mergeFresh, FEED_MAX, emojiFill, fillDriver, glowTier, unknownFill, FULL_AT, EMPTY_AT, goodPct, FILL_DIM, HOLLOW_PX, overlayPush, overlayRows, VICTIM_LINES, eventAt, EVENT_SKEW_MS, unitGlow, ZERG_GOLD_OVER, OUTLINE_PX, LIVE_GLOWS, weaponIcon, CARD_CATEGORIES, LIVE_FPS, liveFps, HALO_KEY, haloOn, bezier, easeFill, glowIn, BEAT, TIER_MOTION, beatAt, haloAt, SHINE, shineFrame, beatSleep, ratioLabel } from "../live.mjs";
 import { disk, dilate, erode, blurAlpha, inkBox, outlineMasks, hollowRim, spriteCss, shineAt } from "../live-sprites.mjs";
 import { appSource } from "./app-source.mjs";
 
@@ -663,7 +663,7 @@ test("dim names on death (owner 2026-10-25): death dims the killed list and your
   const js = liveSrc();
   const css = readFileSync(new URL("live.css", root), "utf8");
   assert.match(js, /let namesDim = false;/);
-  assert.match(js, /if \(ev\.kind === "death"\) \{ namesDim = true; sfx\("sad", \{ event: true \}\); \}/); // death dims + sad descent
+  assert.match(js, /if \(ev\.kind === "death"\) \{ namesDim = true; sfx\("sad", \{ event: true \}\); speakRatio\(p\); \}/); // death dims + sad descent + spoken ratio
   assert.match(js, /namesDim = false;/);
   assert.match(js, /listEl\.classList\.toggle\("lv-dim-names", namesDim\);/);
   assert.match(css, /\.live-table\.lv-dim-names tbody\.lv-vic \.lv-nm, \.live-table\.lv-dim-names tbody\.lv-me \.lv-nm \{ opacity: 0\.5; \}/);
@@ -700,7 +700,7 @@ test("tau locked (owner 2026-10-26): τ is 60s, adjuster hidden", () => {
 test("bounty (owner 2026-10-26): one ⚰️×streak, then one 💰×lives, weapon under the centre name", () => {
   const js = liveSrc();
   const css = cssSrc();
-  assert.match(js, /bountyNext[^}]*\} from "\.\/live-model\.mjs\?v=20261027-z79"/);
+  assert.match(js, /bountyNext[^}]*\} from "\.\/live-model\.mjs\?v=20261027-ratio1"/);
   assert.match(js, /const b = bountyNext\(\{ streak: bountyStreak, lives: bountyLives \}, ev\.kind === "kill"\);/);
   assert.match(js, /if \(bountyLives > 0\) return `<span class="lv-em">💰×\$\{bountyLives\}<\/span>`;/); // one bag + count, not one per life
   assert.match(js, /if \(bountyStreak > 0\) return `<span class="lv-em">⚰️×\$\{bountyStreak\}<\/span>`;/); // one coffin + count
@@ -786,7 +786,7 @@ test("hold meter (owner 2026-10-25): decay freezes on death, lifts on a spike or
   assert.ok(js.includes('killXpRefs.push([Date.now(), amt / kbase])'), "owner 2026-10-26: kill XP ratios feed the multiplier");
   assert.ok(js.includes('const share = assistShare(amt, xid, xpMultAt(killXpRefs, Date.now()));'), "owner 2026-10-26: assist share from amount / multiplier / base");
   assert.ok(js.includes('const dmg = share == null ? DPS_ASSIST : Math.round(1000 * share);'), "owner 2026-10-26: scaled spike, flat 500 fallback for spawn/invalid");
-  assert.match(js, /combatHoldMs, holdGaps, combatRuns, spawnRunHoldMs, timeToCombatMs, timerBarPct, easeInQuad \} from "\.\/live-model\.mjs\?v=20261027-z79"/);
+  assert.match(js, /combatHoldMs, holdGaps, combatRuns, spawnRunHoldMs, timeToCombatMs, timerBarPct, easeInQuad, ratioLabel \} from "\.\/live-model\.mjs\?v=20261027-ratio1"/);
 });
 
 test("warm-up (owner 2026-10-25): the meter waits for its 3rd chunk — first two spikes only bump the count", () => {
@@ -901,7 +901,7 @@ test("scroll (owner 2026-10-25): gas-counter queue — one 700 ms ease-in scroll
   assert.match(js, /if \(scrollQ\.length\) startScroll\(\);/);
   assert.match(js, /if \(Math\.abs\(trueDpm - shownDps\) < 0\.05\) shownDps = trueDpm;/);
   assert.match(js, /shownDps \+= \(trueDpm - shownDps\) \* 0\.35;/);
-  assert.match(js, /easeInQuad \} from "\.\/live-model\.mjs\?v=20261027-z79"/);
+  assert.match(js, /easeInQuad, ratioLabel \} from "\.\/live-model\.mjs\?v=20261027-ratio1"/);
 });
 
 test("past cashouts background (owner 2026-10-25): the history sits on the theme panel, not transparent", () => {
@@ -1052,4 +1052,23 @@ test("bars follow the table (owner 2026-10-26): sizing tokens on #liveFeed, bars
   assert.match(css, /#liveDeathLineWrap, #liveFeed > \.live-metric, #liveDps \{ width: calc\(var\(--lv-tm\) \+ var\(--lv-nm\) \+ var\(--lv-iw\)\); \}/);
   assert.match(css, /#liveDeathLineWrap, #liveFeed > \.live-metric, #liveDps \{ width: auto; \}/);
   assert.match(swap, /<div id="liveDeathLineWrap" class="live-death-line-wrap"><div id="liveDeathLine" class="live-death-line"><\/div><\/div>/);
+});
+
+test("ratioLabel: signed iVi division, zero shows 0, unknown shows ?", () => {
+  assert.equal(ratioLabel(1500, 500), "-3");
+  assert.equal(ratioLabel(1500, 3000), "+2");
+  assert.equal(ratioLabel(1500, 1500), "+1");
+  assert.equal(ratioLabel(1500, 1400), "-1");
+  assert.equal(ratioLabel(1500, 1600), "+1");
+  assert.equal(ratioLabel(1500, 750), "-2");
+  assert.equal(ratioLabel(1500, 0), "0");
+  assert.equal(ratioLabel(1500, -50), "0");
+  assert.equal(ratioLabel(1500, null), "?");
+  assert.equal(ratioLabel(null, 500), "?");
+  assert.equal(ratioLabel(0, 500), "?");
+});
+
+test("live feed has a voice toggle button", () => {
+  const html = buildLive(readFileSync(new URL("index.html", root), "utf8"));
+  assert.ok(html.includes('id="liveVoiceBtn"'));
 });

@@ -19,8 +19,8 @@ await i18nReady;
  *     fetch in the background (one at a time, newest first, #32) and upgrade in place.
  * Pure helpers are exported for tests; the DOM part runs only in a browser.
  */
-export * from "./live-model.mjs?v=20261027-z79"; // #66: the pure part (tests import it from here)
-import { VICTIM_LINES, classifyDeath, censusStats, LIVE_COLS, tipText, FILL_DIM, HOLLOW_PX, HOLLOW_INK, goodPct, fillDriver, emojiFill, unknownFill, infUnit, OUTLINE_PX, unitGlow, LIVE_GLOWS, LIVE_FPS, liveFps, HALO_KEY, haloOn, easeFill, glowIn, BEAT, TIER_MOTION, haloAt, SHINE, shineFrame, beatSleep, weaponIcon, glowTier, eventAt, overlayPush, overlayRows, nextBgFetch, liveRowFromPlayer, ME_REFRESH_MS, median, mergeFresh, SHARE_MAX, shareDelay, cellText, slugKey, bountyNext, dpsNow, DPS_HP, DPS_ASSIST, DPS_ASSIST_XP, assistShare, xpMultAt, KILL_BASE_XP, cashTotals, cashFormula, combatHoldMs, holdGaps, combatRuns, spawnRunHoldMs, timeToCombatMs, timerBarPct, easeInQuad } from "./live-model.mjs?v=20261027-z79";
+export * from "./live-model.mjs?v=20261027-ratio1"; // #66: the pure part (tests import it from here)
+import { VICTIM_LINES, classifyDeath, censusStats, LIVE_COLS, tipText, FILL_DIM, HOLLOW_PX, HOLLOW_INK, goodPct, fillDriver, emojiFill, unknownFill, infUnit, OUTLINE_PX, unitGlow, LIVE_GLOWS, LIVE_FPS, liveFps, HALO_KEY, haloOn, easeFill, glowIn, BEAT, TIER_MOTION, haloAt, SHINE, shineFrame, beatSleep, weaponIcon, glowTier, eventAt, overlayPush, overlayRows, nextBgFetch, liveRowFromPlayer, ME_REFRESH_MS, median, mergeFresh, SHARE_MAX, shareDelay, cellText, slugKey, bountyNext, dpsNow, DPS_HP, DPS_ASSIST, DPS_ASSIST_XP, assistShare, xpMultAt, KILL_BASE_XP, cashTotals, cashFormula, combatHoldMs, holdGaps, combatRuns, spawnRunHoldMs, timeToCombatMs, timerBarPct, easeInQuad, ratioLabel } from "./live-model.mjs?v=20261027-ratio1";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261023-short1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
@@ -29,6 +29,7 @@ import { zergEstimate } from "./zerg-revive.mjs?v=20261024-crowd1";
 import { infMedian, tractorCuts, TRACTOR_EMOJI } from "./tractor.mjs?v=20261024-trac1";
 import { drawEmojiSprite, spriteCss } from "./live-sprites.mjs?v=20261024-beat1";
 import { sfx, setSfxRate } from "./sfx.mjs?v=20261026-sfx2";
+import { say } from "./oracle/js/voice.js?v=20261027-say1";
 
 const CENSUS = `https://census.daybreakgames.com/s:${CENSUS_SERVICE_ID}/get/ps2:v2/`;
 const STREAM = `wss://push.planetside2.com/streaming?environment=ps2&service-id=s:${CENSUS_SERVICE_ID}`;
@@ -230,6 +231,18 @@ function start() {
     if (fillOf(c, v) == null) return `<span class="lv-iv lv-nil" data-tip="${esc(tipText(c, null))}">0000</span>`;
     return `<span class="lv-iv" data-tip="${esc(tipText(c, v))}">${cellText(c, v)}</span>`;
   }
+  /** Owner 2026-10-27 (live iVi ratio): the opponent's iVi cell — the
+   *  signed division against the tracked player (ratioLabel), with a
+   *  tooltip that says what the number means. Unknown = "?", dimmed. */
+  function ratioCell(oppAdjs) {
+    const label = ratioLabel(me && me.cached ? me.cached.adjs : null, oppAdjs);
+    const tip = label === "?" ? tr("live.ratioUnknown", "Opponent iVi unknown")
+      : label === "0" ? tr("live.ratioZero", "Opponent iVi is 0")
+      : label[0] === "+" ? tr("live.ratioStronger", "{n}× stronger than you", { n: label.slice(1) })
+      : tr("live.ratioWeaker", "{n}× weaker than you", { n: label.slice(1) });
+    const cls = label === "?" ? "lv-iv lv-nil" : "lv-iv";
+    return `<span class="${cls}" data-tip="${esc(tip)}">${label}</span>`;
+  }
   /** Name (faction colour) + 💩; a long name is cut with … at the end. Uncached: Census K/D · KPM in the hover. */
   function nameHtml(p, tip, hs = "") {
     if (p.pending) return `<span class="lv-pn"><span class="lv-name lv-pend"><bdi>…</bdi></span>${hs}</span>`; // #76: lookup in flight
@@ -279,7 +292,12 @@ function start() {
     } else {
       wn = `<span class="lv-wn">${w ? esc(w.name) : ""}</span>`;
     }
-    return `<td class="lv-nm"><span class="lv-nm2">${nameHtml(p, tip, hsHtml(r))}${wn}</span></td>${IVI.map((c) => `<td class="lv-ivc">${iviText(c, vals[c.id])}</td>`).join("")}`;
+    // Owner 2026-10-27 (live iVi ratio): opponent rows show the division
+    // against the tracked player, never the raw iVi; the centre row keeps it.
+    const ivCells = isMe
+      ? IVI.map((c) => `<td class="lv-ivc">${iviText(c, vals[c.id])}</td>`).join("")
+      : IVI.map((c) => `<td class="lv-ivc">${ratioCell(vals[c.id])}</td>`).join("");
+    return `<td class="lv-nm"><span class="lv-nm2">${nameHtml(p, tip, hsHtml(r))}${wn}</span></td>${ivCells}`;
   }
   const blank = `<td class="lv-nm"></td><td class="lv-ivc"></td>`; // same box as a filled line, so the overlay never grows
   /**
@@ -641,6 +659,30 @@ function start() {
       } catch {}
     });
   }
+  // Owner 2026-10-27 (live voice): the Oracle's speech (voice.js say)
+  // reads each kill/death opponent's name with the iVi ratio after it.
+  // One tap on 🔊/🔇 mutes; default on, like the sounds. Speech is
+  // separate from the blips: muting one never mutes the other.
+  const VOICE_KEY = "ps2_live_voice";
+  const voiceOn = () => { try { return localStorage.getItem(VOICE_KEY) !== "off"; } catch { return true; } };
+  const setVoiceOn = (on) => { try { localStorage.setItem(VOICE_KEY, on ? "on" : "off"); } catch { /* ignore */ } };
+  const voiceBtn = $("liveVoiceBtn");
+  const paintVoice = () => {
+    if (!voiceBtn) return;
+    const on = voiceOn();
+    voiceBtn.textContent = on ? "🔊" : "🔇";
+    const t = on ? tr("live.voiceOn", "Voice on — click to mute") : tr("live.voiceOff", "Voice off — click to speak names");
+    voiceBtn.title = t; voiceBtn.setAttribute("aria-label", t); voiceBtn.setAttribute("aria-pressed", on ? "true" : "false");
+  };
+  if (voiceBtn) { voiceBtn.addEventListener("click", () => { setVoiceOn(!voiceOn()); paintVoice(); }); paintVoice(); }
+  /** Speak one feed event: the opponent's name, then the ratio value ("Bhorn minus three"). Unknown iVi = name only; a "#id" name is never spoken. */
+  const speakRatio = (p) => {
+    if (!voiceOn() || !p || !p.name || p.name.startsWith("#")) return;
+    const label = ratioLabel(me && me.cached ? me.cached.adjs : null, p.cached ? p.cached.adjs : null);
+    if (label === "?") { say(p.name); return; }
+    if (label === "0") { say(`${p.name} zero`); return; }
+    say(`${p.name} ${label[0] === "+" ? "plus" : "minus"} ${label.slice(1)}`);
+  };
   // Owner 2026-10-25: a sub-0 victim pays 0, never a negative — the pot
   // is a currency, and a kill cannot subtract from it. The feed's iVi
   // cell still shows the victim's real (negative) adjs; only the payout
@@ -1008,13 +1050,13 @@ function start() {
       // exactly the old clear plus the new run's early lines.
       if (wasStreak === 0) st = { ...st, victims: st.victims.filter((r) => r.seq === seq || pendingSeq.has(r.seq)) };
       // DPM at the event's own time: a commit deferred behind a slow lookup doesn't shift the decay
-      dpsEvents.push({ t: Number.isFinite(ev.at) ? ev.at : Date.now(), dmg: DPS_HP }); if (shownDps !== null) scrollQ.push(dpsNow([{ t: 0, dmg: DPS_HP }], 0, dpmTauMs) * 60); liftFreeze(Number.isFinite(ev.at) ? ev.at : Date.now()); lastSpikeEff = dpsEvents[dpsEvents.length - 1].t - timeDebtMs; const iv = cashIv(p); cashKills.push({ cid: ev.opp, iv }); dpsTick(); sfx("victory", { event: true }); if (iv > 0) sfx("chaChing", { event: true });
+      dpsEvents.push({ t: Number.isFinite(ev.at) ? ev.at : Date.now(), dmg: DPS_HP }); if (shownDps !== null) scrollQ.push(dpsNow([{ t: 0, dmg: DPS_HP }], 0, dpmTauMs) * 60); liftFreeze(Number.isFinite(ev.at) ? ev.at : Date.now()); lastSpikeEff = dpsEvents[dpsEvents.length - 1].t - timeDebtMs; const iv = cashIv(p); cashKills.push({ cid: ev.opp, iv }); dpsTick(); sfx("victory", { event: true }); if (iv > 0) sfx("chaChing", { event: true }); speakRatio(p);
     }
     // Owner 2026-10-25: ANY death dims the killed list and the observed
     // player's own name to 50% — you are dead, the feed shows it — until
     // the next kill re-lights them. (Banking below is stricter: only the
     // death that ends a run banks it.)
-    if (ev.kind === "death") { namesDim = true; sfx("sad", { event: true }); }
+    if (ev.kind === "death") { namesDim = true; sfx("sad", { event: true }); speakRatio(p); }
     if (ev.kind === "death") assistN = 0; // a death hides the assist count
     // Owner 2026-10-25: decay freezes ON the death event — you can't do
     // anything about the run from spawn, so it must not drain the meter.

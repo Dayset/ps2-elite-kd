@@ -9,6 +9,7 @@ import http from "node:http";
 import path from "node:path";
 import { spawn, execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { ratioLabel } from "../live-model.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -26,6 +27,8 @@ const OPP = pick.slice(1).map((name, i) => ({ cid: String(5428000000000000100n +
 // A real sub-0 player from the cache (typical of the bottom quartile, not the extreme tail).
 const sub0row = ranks.rows.find((r) => { const a = r[ci("adjs")]; return typeof a === "number" && a < -100 && a > -600; });
 const SUB0 = { cid: "5428000000000000200", name: sub0row[ci("name")] };
+const adjsOf = (name) => ranks.rows.find((r) => r[ci("name")] === name)[ci("adjs")];
+const ME_ADJS = adjsOf(ME.name);
 const TEAM = { cid: "5428000000000000999", name: "TeamMate" }; // same faction as ME (stub returns "1" for it)
 const SLOW = { cid: "5428000000000000777", name: "Slowpoke" }; // #76: its Census lookup takes 1.5 s
 
@@ -317,16 +320,17 @@ describe("🎥 live.html in a browser", () => {
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[1].cid, "80", false)})`);
       assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)").length === 2`)), true, "two victim rows on screen");
-      const ivs = await ev(`[...document.querySelectorAll("#liveList tbody.lv-vic .lv-iv")].map((e) => Number(e.textContent))`);
-      assert.ok(ivs.length === 2 && ivs.every(Number.isFinite) && ivs.every((v) => v > 0), `both victims show an iVi: ${ivs}`);
-      const b = (v) => Math.round(v * 1.34);
-      const sum = b(ivs[1]) + b(ivs[0]), avg = (sum / 2).toFixed(1); // rows are newest-first; the average is per victim
-      // ±1 tolerance per part, like the cashed-out-runs test: the page boosts RAW
-      // adjs while the test only sees ROUNDED displays, so a fixture
-      // drifting across a rounding boundary shifts a part by 1 (seen
-      // 2026-10-25: raw ~1401.2 displays 1401 but boosts to 1878, not 1877)
-      // the main pot shows only the average now (owner 2026-10-26) — the Σ
-      // total is hidden from display, not here
+      // Owner 2026-10-27: opponent rows show the signed iVi division, not
+      // the raw iVi — rows are newest-first, so [0] is OPP[1], [1] is OPP[0].
+      assert.equal(await ev(until(`![...document.querySelectorAll("#liveList tbody.lv-vic .lv-iv")].some((e) => e.textContent === "?")`)), true, "victim ratios filled (ranks loaded)");
+      const cells = await ev(`[...document.querySelectorAll("#liveList tbody.lv-vic .lv-iv")].map((e) => e.textContent)`);
+      assert.deepEqual(cells, [ratioLabel(ME_ADJS, adjsOf(OPP[1].name)), ratioLabel(ME_ADJS, adjsOf(OPP[0].name))], `both victims show their ratio: ${cells}`);
+      // The pot still boosts the RAW adjs, so the average comes from the
+      // fixture values, not the displayed ratios. The main pot shows only
+      // the average now (owner 2026-10-26) — the Σ total is hidden from
+      // display, not here
+      const b = (v) => Math.round(Math.max(0, v) * 1.34);
+      const sum = b(adjsOf(OPP[1].name)) + b(adjsOf(OPP[0].name)), avg = (sum / 2).toFixed(1); // rows are newest-first; the average is per victim
       assert.equal(await ev(until(`document.getElementById("liveCashAvgVal").textContent !== "–"`)), true, "pot avg landed");
       const avgText = await ev(`document.getElementById("liveCashAvgVal").textContent`);
       assert.ok(Math.abs(Number(avgText) - Number(avg)) <= 1.0, `cash avg is per victim: ${avgText} vs ${avg}`);
@@ -416,16 +420,16 @@ describe("🎥 live.html in a browser", () => {
       const runAvgs = [];
       for (let i = 0; i < 6; i++) {
         await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[i].cid, "80", false)})`);
-        assert.equal(await ev(until(`document.querySelector("#liveList tbody.lv-vic .lv-iv") && Number(document.querySelector("#liveList tbody.lv-vic .lv-iv").textContent) > 0`)), true, `run ${i + 1}: victim iVi on screen`);
-        runAvgs.push(await ev(`Number(document.querySelector("#liveList tbody.lv-vic .lv-iv").textContent)`));
+        assert.equal(await ev(until(`document.querySelector("#liveList tbody.lv-vic .lv-iv") && document.querySelector("#liveList tbody.lv-vic .lv-iv").textContent !== "?"`)), true, `run ${i + 1}: victim ratio on screen`);
+        runAvgs.push(adjsOf(OPP[i].name)); // the pot boosts raw adjs, not the displayed ratio
         await ev(`window.__fakeWs.emit(${death(OPP[6].cid, ME.cid, "432", false)})`);
         assert.deepEqual(await ev(until(`document.getElementById("liveCashAvgVal").textContent === "–" && document.querySelectorAll("#liveCashHist > div").length === ${Math.min(i + 2, 6)}`)), true, `run ${i + 1}: banked, pot reset`);
       }
       const entries = await histEntries();
       assert.equal(entries.length, 5, "history caps at 5 runs");
-      const b5 = Math.round(runAvgs[5] * 1.34), b0 = Math.round(runAvgs[0] * 1.34);
+      const b5 = Math.round(Math.max(0, runAvgs[5]) * 1.34), b0 = Math.round(Math.max(0, runAvgs[0]) * 1.34);
       const entryAvg = (e) => Number(e.match(/Enemy avg ivi ([\d.]+)/)?.[1]);
-      assert.ok(Math.abs(entryAvg(entries[0]) - b5) <= 1, `newest run first (within display rounding: the row iVi is already rounded, the pot boosts the raw value): ${entries[0]} vs ${b5}`);
+      assert.ok(Math.abs(entryAvg(entries[0]) - b5) <= 1, `newest run first (the pot boosts raw adjs): ${entries[0]} vs ${b5}`);
       assert.ok(!entries.map(entryAvg).some((v) => Math.abs(v - b0) <= 1), "the oldest run dropped off");
       assert.equal(await pot(), "–", "pot empty after the last run ends");
       assert.deepEqual(errors, [], "no page errors");
@@ -434,8 +438,8 @@ describe("🎥 live.html in a browser", () => {
 
   it("sub-0 floor (owner 2026-10-25): a negative-iVi victim pays 0, never subtracts", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     // The fixture proof is data-side: SUB0's cached adjs is negative. The
-    // feed cell itself already floors (adjs column floorZero), so the
-    // screen shows 0 for them — the pot must now match that, not go below.
+    // feed cell itself shows 0 for them (owner 2026-10-27: the ratio branch
+    // for opp <= 0 never divides), so the pot must now match that, not go below.
     assert.ok(sub0row[ci("adjs")] < -100, `SUB0 is genuinely sub-0 in the cache: ${sub0row[ci("adjs")]}`);
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
@@ -444,9 +448,11 @@ describe("🎥 live.html in a browser", () => {
       assert.equal(await ev(until(`document.getElementById("liveCashAvgVal").textContent === "0.0"`)), true, "a known 0 payout counts in the average (floored, never negative)");
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
       assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)").length === 2`)), true, "two victims on screen");
-      const ivs = await ev(`[...document.querySelectorAll("#liveList tbody.lv-vic .lv-iv")].map((e) => Number(e.textContent))`);
-      assert.ok(ivs[0] > 0 && ivs[1] === 0, `newest victim positive, sub-0 victim shown floored: ${ivs}`);
-      const bp = Math.round(ivs[0] * 1.34);
+      // Owner 2026-10-27: rows show ratios now — newest is OPP[0]'s ratio,
+      // the sub-0 victim still reads 0 (negative adjs is never divided).
+      const cells = await ev(`[...document.querySelectorAll("#liveList tbody.lv-vic .lv-iv")].map((e) => e.textContent)`);
+      assert.deepEqual(cells, [ratioLabel(ME_ADJS, adjsOf(OPP[0].name)), "0"], `newest victim ratio, sub-0 victim floored: ${cells}`);
+      const bp = Math.round(Math.max(0, adjsOf(OPP[0].name)) * 1.34);
       // ±1 tolerance (same rounding-boundary note as the cash-out test):
       // the page boosts the raw adj, the test only sees the rounded display
       // the main pot shows only the average now (owner 2026-10-26): the floored 0
@@ -911,9 +917,13 @@ describe("🎥 live feed arrival animations in a browser", () => {
   it("victim slide (owner 2026-10-26): a new victim row slides down under the centre row, then settles", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      // The retry below is the documented behaviour (owner 2026-10-26):
+      // under load the slide can finish before the first probe starts,
+      // so a miss returns false and the second arrival retries — the
+      // assert used to throw here, which defeated the retry entirely.
       const probeSlide = async () => {
         await ev(`window.__fakeWs.emit(${death(ME.cid, SLOW.cid, "80", false)})`); // ME kills SLOW: victim row arrives, name fills 1.5 s later
-        assert.equal(await ev(until(`document.querySelector("tbody.lv-vic.lv-new") !== null`)), true, "victim row arrives with lv-new");
+        if (!(await ev(until(`document.querySelector("tbody.lv-vic.lv-new") !== null`)))) return false;
         return await ev(moved("tbody.lv-vic.lv-new td"));
       };
       // Under full-suite load the 0.45 s slide can finish before the first probe starts; a second
@@ -942,12 +952,12 @@ describe("🎥 live feed arrival animations in a browser", () => {
 });
 
 describe("🎥 live unknown iVi in a browser", () => {
-  it("unknown iVi (owner 2026-10-26): an uncached victim shows 0000, never an emoji", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+  it("unknown iVi (owner 2026-10-27): an uncached victim shows ?, never an emoji", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
       await ev(`window.__fakeWs.emit(${death(ME.cid, SLOW.cid, "80", false)})`); // ME kills SLOW: not a ranks row, so its iVi stays unknown
       assert.equal(await ev(until(`![...document.querySelectorAll("#liveList tbody.lv-vic .lv-nm")].some((el) => el.textContent.includes("…"))`)), true, "victim name filled (commit render)");
-      assert.equal(await ev(`document.querySelector("#liveList tbody.lv-vic .lv-ivc").textContent`), "0000", "unknown iVi reads 0000");
+      assert.equal(await ev(`document.querySelector("#liveList tbody.lv-vic .lv-ivc").textContent`), "?", "unknown iVi reads ? (no division to show)");
       assert.deepEqual(errors, [], "no page errors");
     });
   });
