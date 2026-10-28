@@ -1,0 +1,71 @@
+name: PlayStation scrims
+
+# 🥊 PlayStation scrims (owner 2026-10-28): group 1v1 scrims out of the players' KILL / DEATH
+# history and write down date + result. PS namespaces only (ps2ps4us / ps2ps4eu), via the
+# cache Worker's Census proxy. Shares the PS room's concurrency group so it never races a
+# PS refresh.
+#
+# mode=probe: measurement only. Pages back through the named players' history and pushes the
+#   compact events to the side branch claude/scrim-probe (never to main).
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "probe"
+        required: false
+        default: "probe"
+      names:
+        description: "PS names or keys (probe)"
+        required: false
+        default: ""
+      pages:
+        description: "Census pages (1,000 events) per player (probe)"
+        required: false
+        default: "20"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-ps-room
+  cancel-in-progress: false
+
+env:
+  CENSUS_RPM: "30"
+  TIME_BUDGET_MIN: "25"
+  CENSUS_SERVICE_ID: ${{ secrets.CENSUS_SERVICE_ID || vars.CENSUS_SERVICE_ID || 'daysetps2legends' }}
+
+jobs:
+  scrims:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "20"
+
+      - name: Git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Probe (side branch only)
+        if: github.event.inputs.mode == 'probe'
+        env:
+          CENSUS_PROXY: ${{ vars.CENSUS_PROXY || 'https://ps2-elite-kd-cache.dayset.workers.dev' }}
+          CENSUS_PROXY_KEY: ${{ secrets.CENSUS_PROXY_KEY }}
+          NAMES: ${{ github.event.inputs.names }}
+          PAGES: ${{ github.event.inputs.pages }}
+        run: |
+          node scripts/ps-scrims.mjs --probe "$NAMES" --pages "$PAGES"
+          git checkout -q -b claude/scrim-probe
+          git add -f scrim-probe
+          git commit -q -m "scrim probe: raw compact events (measurement only) [bot]" || exit 0
+          git push -q -f origin HEAD:refs/heads/claude/scrim-probe
