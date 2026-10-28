@@ -246,3 +246,37 @@ export function pairSummary(pe, fights, stats, aCid, bCid) {
     fights: fights.length, ones: fights.filter((f) => f.one).length,
   };
 }
+
+/* ---------------------------------------------------------------- warnings (owner 2026-10-28) */
+
+/** One Census call: both characters' faction and server (world). */
+export function charInfoUrl(base, cids) {
+  return `${base}character/?character_id=${cids.map((x) => encodeURIComponent(String(x))).join(",")}&c:show=character_id,faction_id` +
+    `&c:join=characters_world^inject_at:w^show:world_id&c:limit=${cids.length}`;
+}
+
+/** Census reply → Map cid → { faction, world }. */
+export function parseCharInfo(json) {
+  const m = new Map();
+  for (const c of (json && json.character_list) || []) {
+    if (!c || !c.character_id) continue;
+    m.set(String(c.character_id), { faction: +c.faction_id || 0, world: +(c.w && c.w.world_id) || 0 });
+  }
+  return m;
+}
+
+export const FACTION_TAG = Object.freeze({ 1: "VS", 2: "NC", 3: "TR" });
+export const WORLD_NAME = Object.freeze({ 1: "Osprey", 10: "Wainwright", 19: "Jaeger", 40: "SolTech", 1000: "Genudine", 2000: "Ceres" });
+
+/**
+ * Why the head-to-head may be empty: same faction (only teamkills; NSO can play on any side,
+ * so never counts) and different servers. → [{ kind: "faction", faction } | { kind: "world", wa, wb }]
+ */
+export function pairWarnings(info, aCid, bCid) {
+  const x = info && info.get(String(aCid)), y = info && info.get(String(bCid));
+  if (!x || !y) return [];
+  const out = [];
+  if (x.faction && x.faction === y.faction && FACTION_TAG[x.faction]) out.push({ kind: "faction", faction: FACTION_TAG[x.faction] });
+  if (x.world && y.world && x.world !== y.world) out.push({ kind: "world", wa: x.world, wb: y.world });
+  return out;
+}

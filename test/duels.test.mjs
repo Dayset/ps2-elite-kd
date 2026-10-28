@@ -140,3 +140,16 @@ test("tab wiring: both rooms, one or two players, translated, shared table look"
   assert.match(index, /<details id="duelsSection" class="dist-section duel-section" hidden>/);
   assert.match(index, /class="ranks-table duel-table"/);
 });
+
+test("warnings: same faction (teamkills only, NSO never counts) and different servers", async () => {
+  const { charInfoUrl, parseCharInfo, pairWarnings } = await import("../duels.mjs");
+  assert.match(charInfoUrl("https://x/get/ps2:v2/", ["1", "2"]), /character\/\?character_id=1,2&c:show=character_id,faction_id&c:join=characters_world/);
+  const info = (fa, wa, fb, wb) => parseCharInfo({ character_list: [
+    { character_id: "1", faction_id: String(fa), w: { world_id: String(wa) } },
+    { character_id: "2", faction_id: String(fb), w: { world_id: String(wb) } }] });
+  assert.deepEqual(pairWarnings(info(2, 1, 2, 1), "1", "2"), [{ kind: "faction", faction: "NC" }]);
+  assert.deepEqual(pairWarnings(info(1, 1, 3, 10), "1", "2"), [{ kind: "world", wa: 1, wb: 10 }]);
+  assert.deepEqual(pairWarnings(info(4, 1, 4, 1), "1", "2"), [], "NSO plays on any side");
+  assert.deepEqual(pairWarnings(info(1, 1, 3, 1), "1", "2"), []);
+  assert.deepEqual(pairWarnings(new Map(), "1", "2"), [], "no Census info → no warning");
+});

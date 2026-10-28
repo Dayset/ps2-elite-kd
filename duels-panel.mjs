@@ -11,7 +11,8 @@ import { mergeEvents } from "./scrims.mjs?v=20261028-os2";
 import {
   AUTO_PAGES, MORE_PAGES, DUEL_GAP, ONE_V_ONE, classOf, bareName, crowdRows, crowdSummary, expectedCount, pagerOf,
   readPairPages, pairEvents, fightsOf, fightResult, weaponShotUrls, parseShotStats, perKill, pairSummary,
-} from "./duels.mjs?v=20261028-duel1";
+  charInfoUrl, parseCharInfo, pairWarnings, WORLD_NAME,
+} from "./duels.mjs?v=20261028-warn1";
 
 const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const lang = () => { try { return currentLang() || undefined; } catch { return undefined; } };
@@ -74,6 +75,12 @@ export function mountDuels(section, o = {}) {
   const wrap = section.querySelector(".duel-scroll");
   const table = section.querySelector(".duel-table");
   const moreBtn = section.querySelector(".duel-more");
+  // ⚠️ Same faction / different servers (owner 2026-10-28): say so up front, so an empty result isn't a surprise.
+  const warn = document.createElement("p");
+  warn.className = "duel-warn";
+  warn.setAttribute("role", "note");
+  warn.hidden = true;
+  section.insertBefore(warn, status);
   const pairs = new Map(); // "cidA|cidB" → { st, stats, need, pIsA, … }
   let catP = null;
   let mode = null, a = null, b = null, shownKey = "";
@@ -93,6 +100,7 @@ export function mountDuels(section, o = {}) {
     table.querySelector("thead").innerHTML = ""; table.querySelector("tbody").innerHTML = "";
     const cg = table.querySelector("colgroup"); if (cg) cg.remove();
     moreBtn.hidden = true;
+    warn.hidden = true; warn.textContent = "";
     setStatus("");
   }
   function colgroup(cols) {
@@ -148,6 +156,9 @@ export function mountDuels(section, o = {}) {
       pairs.set(key, job);
     }
     if (job.servers) return job;
+    if (!job.info) {
+      try { job.info = parseCharInfo(await getJson(charInfoUrl(job.base, [a.cid, b.cid]))); } catch (_) { job.info = new Map(); /* warnings are a bonus */ }
+    }
     let fromApi = false;
     if (pairApi && !job.census) {
       try {
@@ -198,6 +209,11 @@ export function mountDuels(section, o = {}) {
 
   function renderPair(job, items) {
     const aName = bareName(a.display), bName = bareName(b.display);
+    const ws = pairWarnings(job.info, a.cid, b.cid).map((w) => (w.kind === "faction"
+      ? tr("duel.warnFaction", "⚠️ Both play {faction}: kills between them can only be teamkills, so expect few or none.", { faction: w.faction })
+      : tr("duel.warnWorld", "⚠️ {a} plays on {wa}, {b} on {wb}: players on different servers almost never meet, so expect few or no kills.", { a: aName, b: bName, wa: WORLD_NAME[w.wa] || `#${w.wa}`, wb: WORLD_NAME[w.wb] || `#${w.wb}` })));
+    warn.textContent = ws.join(" ");
+    warn.hidden = !ws.length;
     table.classList.remove("duel-crowd"); table.classList.add("duel-pair");
     const pe = pairEvents(job.st.all, job.st.qid, job.pIsA);
     const fights = fightsOf(pe, job.st.all, job.st.pid, DUEL_GAP);
