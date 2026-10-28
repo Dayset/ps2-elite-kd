@@ -12,9 +12,9 @@ import { t as tr } from "./i18n.mjs";
 
 /** Panel selectors in tab order (the Census one is re-rendered by stats-table.mjs). */
 export const OLD_TAB_PANELS = Object.freeze([
+  { id: "pub", sel: "#statsPublic > details.stats-public" },
   { id: "kf", sel: "#killFeedSection" },
   { id: "wp", sel: "#weaponsSection" },
-  { id: "pub", sel: "#statsPublic > details.stats-public" },
 ]);
 
 export function mountOldTabs(host) {

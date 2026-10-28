@@ -77,7 +77,7 @@
       });
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261028-cfh1" />
+  <link rel="stylesheet" href="styles.css?v=20261028-otab2" />
   <link rel="stylesheet" href="live.css?v=20261028-check1" />
   <style>
     /* Installed-app launch splash (t465u). Android draws its own launch splash first:
@@ -381,28 +381,6 @@
     <div id="liveCashHist" class="live-cash-hist"></div>
   </section>
 
-  <!-- ⚔️ Latest 100 kills & deaths (kill-feed.mjs): one player only, collapsed by default,
-       one Census call on first open. -->
-  <details id="killFeedSection" class="dist-section kf-section" hidden>
-    <summary><span data-i18n="kf.title">⚔️ Latest 100 kills &amp; deaths</span></summary>
-    <p class="kf-status ranks-status" role="status" hidden></p>
-    <p class="kf-summary" hidden></p>
-    <ol class="kf-list" hidden></ol>
-  </details>
-
-  <!-- 🏆 Auraxium weapons (weapons.mjs): one player only, collapsed by default,
-       loads from Census on first open. Same pins as the Rankings table. -->
-  <details id="weaponsSection" class="dist-section wp-section" hidden>
-    <summary><span data-i18n="wp.title">🏆 Auraxium weapons</span> <span class="wp-count rk-table-count"></span></summary>
-    <p class="wp-status ranks-status" role="status" hidden></p>
-    <div class="ranks-table-wrap wp-scroll" hidden>
-      <table class="ranks-table wp-table" aria-label="Auraxium weapons" data-i18n-aria-label="wp.title">
-        <thead></thead>
-        <tbody></tbody>
-      </table>
-    </div>
-  </details>
-
   <div id="progress" class="progress-modal" hidden aria-hidden="true">
     <div class="progress-modal-backdrop" aria-hidden="true"></div>
     <div class="progress-modal-card" role="dialog" aria-modal="true" aria-labelledby="progressTitle" aria-describedby="progressText">
@@ -421,6 +399,42 @@
       </div>
     </div>
   </div>
+
+  <!-- 🗂️ Tracker data tabs (owner 2026-10-28: "tabs for those older data in one row; each tab
+       opens the table"; 2026-10-28 follow-up: "(Census/Fisu/Honu) (latest 100 kills) (auraxium
+       weapons) above the skill table"): 📊 Census / Fisu / Honu style · ⚔️ Latest 100 kills & deaths ·
+       🏆 Auraxium weapons, right ABOVE the ✨ skill table. old-tabs.mjs builds the one row of tab buttons
+       from the panels' own (translated) summaries; one open at a time, a second click closes,
+       all closed on load, no animation. The panels stay <details> so their modules work as before. -->
+  <section id="oldTabs" class="old-tabs-block" aria-label="Tracker data" data-i18n-aria-label="otab.aria">
+    <div class="old-tabs" role="group" hidden></div>
+    <!-- 📊 Census / Fisu / Honu style (owner t747u): the plain tracker numbers (moved up from
+         the footer: people look for it a lot). stats-table.mjs renders the folded <details>. -->
+    <div id="statsPublic" class="stats-panel stats-panel-public" aria-label="Census / Fisu / Honu style stats" data-i18n-aria-label="stats.publicPanelAria"></div>
+
+    <!-- ⚔️ Latest 100 kills & deaths (kill-feed.mjs): one player only, collapsed by default,
+         one Census call on first open. -->
+    <details id="killFeedSection" class="dist-section kf-section" hidden>
+      <summary><span data-i18n="kf.title">⚔️ Latest 100 kills &amp; deaths</span></summary>
+      <p class="kf-status ranks-status" role="status" hidden></p>
+      <p class="kf-summary" hidden></p>
+      <ol class="kf-list" hidden></ol>
+    </details>
+
+    <!-- 🏆 Auraxium weapons (weapons.mjs): one player only, collapsed by default,
+         loads from Census on first open. Same pins as the Rankings table. -->
+    <details id="weaponsSection" class="dist-section wp-section" hidden>
+      <summary><span data-i18n="wp.title">🏆 Auraxium weapons</span> <span class="wp-count rk-table-count"></span></summary>
+      <p class="wp-status ranks-status" role="status" hidden></p>
+      <div class="ranks-table-wrap wp-scroll" hidden>
+        <table class="ranks-table wp-table" aria-label="Auraxium weapons" data-i18n-aria-label="wp.title">
+          <thead></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </details>
+
+  </section>
 
   <!-- One spot, two modes (2026-10-19): ✨ Stats ⇄ 🏅 Positions, side-swipe only
        (stats-carousel.mjs). No tab bar / dots (owner 2026-10-22): users find the
@@ -447,12 +461,6 @@
       } catch (e) {}
     })();
   </script>
-
-  <!-- 📊 Census / Fisu / Honu style (owner t747u): the plain tracker numbers, right under the
-       ✨ skill table (moved up from the footer: people look for it a lot). Folded by default. -->
-  <section class="stats-public-block" aria-label="Census / Fisu / Honu style stats" data-i18n-aria-label="stats.publicAria">
-    <div id="statsPublic" class="stats-panel stats-panel-public" aria-label="Census / Fisu / Honu style stats" data-i18n-aria-label="stats.publicPanelAria"></div>
-  </section>
 
   <details id="chartSection" class="dist-section chart-section" hidden>
     <summary><span data-i18n="chart.title">📈 Skill graph</span> <span id="chartSectionNames" class="chart-section-names"></span></summary>
@@ -575,7 +583,7 @@
         </nav>
         <div class="foot-col foot-opts footer-row">
           <div class="foot-h" data-i18n="foot.options">Options</div>
-          <label class="debug-cols-toggle foot-switch" data-i18n-title="foot.debugColsTitle" title="Add the older debug columns (ivi, eKPM, own KPM, COI, Slope, Inflation) to the tables">
+          <label class="debug-cols-toggle foot-switch" data-i18n-title="foot.debugColsTitle" title="Add the older debug columns (ivi, eKPM, own KPM, COI, Slope) to the tables">
             <input type="checkbox" id="debugColsToggle" /> <span data-i18n="foot.debugCols">show older debug stats</span>
           </label>
           <label class="hide-zero-ivi-toggle foot-switch" data-i18n-title="foot.hideZeroTitle" title="Hide players with adjusted iVi ≤ 0 in Rankings; a name search still finds them">
@@ -604,7 +612,7 @@
   </footer>
 
   <script type="module" src="i18n.mjs"></script>
-  <script type="module" src="app.js?v=20261028-cfh1"></script>
+  <script type="module" src="app.js?v=20261028-otab2"></script>
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").catch(function () {});

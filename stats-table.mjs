@@ -11,7 +11,7 @@ import { zergEstimate } from "./zerg-revive.mjs?v=20261024-crowd1";
 import { infMedian } from "./tractor.mjs?v=20261024-trac1";
 import { mountWeapons } from "./weapons.mjs?v=20261022-wp4";
 import { mountKillFeed } from "./kill-feed.mjs?v=20261028-kfivi1";
-import { mountOldTabs } from "./old-tabs.mjs?v=20261028-otab1";
+import { mountOldTabs } from "./old-tabs.mjs?v=20261028-otab2";
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261020-wide1";
 import { PS_SERVERS, censusNsBase, roomLsKey } from "./rooms.mjs?v=20261022-ps1";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
@@ -320,6 +320,8 @@ export function createStatsTable($) {
       { id: "zerg", label: tr("col.zerg", "🪳 Zerg"), hint: tr("tip.zerg", ZERG_HINT), digits: 0, zergCell: true, pctDir: "low",
         fn: (r) => { const z = traitP && r.p ? zergScore(traitP, shownValue(r, "inflation"), apkBySlug && apkBySlug.get(slugKey(r.p.display)), rvpOf(r.p.display), crpOf(r.p.display)) : null; return z ? z.score : NaN; } },
       { id: "inf", label: tr("col.infantry", "🪖 Infantry"), hint: tr("tip.inf", INF_HINT), fn: (r) => { const e = infBySlug && r.p ? infBySlug.get(slugKey(r.p.display)) : undefined; return e ? e.inf : undefined; }, digits: 1, infCell: true },
+      // 🎈 Inflation is current data (owner 2026-10-28: "inflation is a new data"; was older-stats only since t345u).
+      { id: "inflation", label: "🎈 Inflation", hint: "Global KD ÷ KD at ≥0.5 enemy KPM — how much soft opposition inflates your KD (avg planetman ~0.35).", fn: (r) => r.inflation, digits: 2, pctDir: "low", pctRefFloor: 1.0 },
     ];
     // Older debug columns: appended only when "show older debug stats" (footer) is ticked.
     const adjDebugCols = [
@@ -329,8 +331,6 @@ export function createStatsTable($) {
       { id: "own", label: "own KPM", hint: "Your weapon pace used on the elite K/D curve and for the ⚔️ iVi speed adjustment.", fn: (r) => r.own, digits: 2 },
       { id: "coi", label: "📊 COI", hint: "Combat Output Index derived from 🛡️ Resist.", fn: (r) => r.coi, digits: 2 },
       { id: "slope", label: "📉 Slope", hint: "Overall graph angle: death-weighted K/D vs enemy KPM across the full curve — negative means K/D falls as opposition hardens (feeds 🦁 Brave).", fn: (r) => r.slope, digits: 2 },
-      // t345u: 🎈 Inflation rarely shows anything meaningful → older stats only.
-      { id: "inflation", label: "🎈 Inflation", hint: "Global KD ÷ KD at ≥0.5 enemy KPM — how much soft opposition inflates your KD (avg planetman ~0.35).", fn: (r) => r.inflation, digits: 2, pctDir: "low", pctRefFloor: 1.0 },
       // (🔀 Diff debug column retired 2026-10-21: the public 🤥😤 Impostor–DieHard column is the same number.)
     ];
     // Opponent-sample metrics: "—" below MIN_FIGHTS (player-metrics.mjs), so they
@@ -540,8 +540,8 @@ export function createStatsTable($) {
     const pubSorted = sortRows(metrics, publicCols, statsSortState.public);
     const adjSorted = sortRows(metrics, adjCols, statsSortState.adjusted);
 
-    // 📊 Census / Fisu / Honu style (#statsPublic, folded) sits right under the
-    // ✨ skill table (owner t747u; it used to be in the footer); ✨ has no title line.
+    // 📊 Census / Fisu / Honu style (#statsPublic, folded) is the first 🗂️ tab above the
+    // ✨ skill table (owner t747u + tabs follow-up; it used to be in the footer); ✨ has no title line.
     const publicHtml = `
       <details class="stats-section stats-public"${publicStatsOpen ? " open" : ""}>
         <summary>${tr("stats.publicHead", "📊 Census / Fisu / Honu style")}</summary>
