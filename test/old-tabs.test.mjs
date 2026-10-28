@@ -6,10 +6,10 @@ import { OLD_TAB_PANELS } from "../old-tabs.mjs";
 
 const index = readFileSync(new URL("../index.html", import.meta.url), "utf8");
 
-test("one tab row ABOVE the ✨ skill table, in order: Census / Fisu / Honu, kill feed, 🥊 scrims (PS only), weapons", () => {
-  assert.deepEqual(OLD_TAB_PANELS.map((p) => p.id), ["pub", "kf", "scr", "wp"]);
+test("one tab row ABOVE the ✨ skill table, in order: Census / Fisu / Honu, kill feed, 🥊 scrims (PS only), 🤺 duels, weapons", () => {
+  assert.deepEqual(OLD_TAB_PANELS.map((p) => p.id), ["pub", "kf", "scr", "duel", "wp"]);
   const at = (s) => index.indexOf(s);
-  const order = [at('id="namesBox"'), at('<section id="oldTabs"'), at('class="old-tabs"'), at('id="statsPublic"'), at('<details id="killFeedSection"'), at('<details id="scrimsSection"'), at('<details id="weaponsSection"'), at('<section id="statsCarousel"'), at('<details id="chartSection"')];
+  const order = [at('id="namesBox"'), at('<section id="oldTabs"'), at('class="old-tabs"'), at('id="statsPublic"'), at('<details id="killFeedSection"'), at('<details id="scrimsSection"'), at('<details id="duelsSection"'), at('<details id="weaponsSection"'), at('<section id="statsCarousel"'), at('<details id="chartSection"')];
   order.forEach((v, i) => { assert.ok(v > 0, `missing #${i}`); if (i) assert.ok(order[i - 1] < v, `order #${i}`); });
   const block = index.slice(at('<section id="oldTabs"'), at('<section id="statsCarousel"'));
   assert.equal(index.split('id="statsPublic"').length, 2);

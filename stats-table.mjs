@@ -12,7 +12,8 @@ import { infMedian } from "./tractor.mjs?v=20261024-trac1";
 import { mountWeapons } from "./weapons.mjs?v=20261022-wp4";
 import { mountKillFeed } from "./kill-feed.mjs?v=20261028-os2";
 import { mountScrims } from "./scrims-panel.mjs?v=20261028-os2";
-import { mountOldTabs } from "./old-tabs.mjs?v=20261028-top1";
+import { mountOldTabs } from "./old-tabs.mjs?v=20261028-duel1";
+import { mountDuels } from "./duels-panel.mjs?v=20261028-duel1";
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261020-wide1";
 import { PS_SERVERS, censusNsBase, roomLsKey } from "./rooms.mjs?v=20261022-ps1";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
@@ -268,6 +269,9 @@ export function createStatsTable($) {
     return m;
   }));
 
+  /* 🤺 Duels tab (duels-panel.mjs): one player vs the crowd, two players head-to-head (both rooms). */
+  let duelsPanel = null;
+
   /* 🗂️ One row of tabs over kill feed / weapons / Census table (old-tabs.mjs). */
   const ensureOldTabs = () => { if (typeof document !== "undefined") mountOldTabs(document.getElementById("oldTabs")); };
 
@@ -299,6 +303,16 @@ export function createStatsTable($) {
       });
     }
     scrimsPanel.setPlayers($.IS_PS && !$.LIVE_MODE ? shownList : null); // PS: one player's scrims, else the room's top list
+    if (!duelsPanel) {
+      duelsPanel = mountDuels(document.getElementById("duelsSection"), {
+        getJson: (u) => $.censusJson(u),
+        baseOf: censusBaseOf,
+        addName: (name, anchor) => { if ($.toggleNameInField) $.toggleNameInField(name, anchor); },
+        sortScroll: keepSortedColumnVisible,
+        catalog: () => fetch("assets/weapons/catalog.json", { cache: "force-cache" }).then((r) => (r.ok ? r.json() : null)),
+      });
+    }
+    duelsPanel.setPlayers($.LIVE_MODE ? [] : list || []); // 🤺 one player: vs the crowd; two: head-to-head
     if (!weaponsPanel) {
       weaponsPanel = mountWeapons(document.getElementById("weaponsSection"), {
         getJson: (u) => $.censusJson(u),

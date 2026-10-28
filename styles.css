@@ -3088,6 +3088,56 @@ html[data-room="ps"] .controls .fresh-row-end select.room-select { border-color:
   .kf-table col.kf-w-gear { width: 10.6rem; }
 }
 
+/* 🤺 Duels (duels-panel.mjs, owner 2026-10-28): one player vs the crowd, or two players head-to-head.
+ * Shared Rankings table look; widths come from the colgroup (min-width = their sum). */
+.duel-section .duel-status { margin: 0.3rem 0; color: var(--dim); }
+.duel-cmp-wrap { max-width: 40rem; margin: 0 0 0.6rem; max-height: none; }
+/* Small 3-column table: sized by its content (names and labels wrap, never cut). */
+.duel-cmp { table-layout: auto; }
+.duel-cmp th[scope="row"] { text-align: left; font-weight: 600; color: var(--dim); white-space: normal; }
+.duel-cmp thead th.duel-a, .duel-cmp thead th.duel-b { white-space: normal; overflow-wrap: anywhere; width: 36%; }
+.duel-cmp thead th:first-child { width: 28%; }
+.duel-cmp td { white-space: normal; }
+.duel-cmp thead th.duel-a { color: var(--token-ok-fg); }
+.duel-cmp thead th.duel-b { color: var(--token-fail-fg); }
+.duel-cmp tr.duel-big td { font-weight: 700; font-size: 0.9rem; }
+.duel-scroll { max-height: 30rem; }
+.duel-table th.rk-num, .duel-table td.rk-num { left: 0; }
+.duel-table td { overflow: hidden; text-overflow: ellipsis; }
+.duel-table.duel-crowd { min-width: 38.6rem; }
+.duel-table col.duel-w-num { width: 2.6rem; }
+.duel-table col.duel-w-name { width: 15rem; }
+.duel-table col.duel-w-n { width: 4.2rem; }
+.duel-table.duel-crowd col.duel-w-n { width: 4.2rem; }
+.duel-table th.duel-name, .duel-table td.duel-name {
+  position: sticky; left: 2.6rem; z-index: 1; text-align: left; box-shadow: 4px 0 8px -4px var(--shadow);
+}
+.duel-table thead th.duel-name { z-index: 4; }
+.duel-table.duel-pair { min-width: 51.6rem; }
+.duel-table col.duel-w-time { width: 7.4rem; }
+.duel-table col.duel-w-killer { width: 10rem; }
+.duel-table col.duel-w-weapon { width: 12rem; }
+.duel-table col.duel-w-cls { width: 7.2rem; }
+.duel-table col.duel-w-gap { width: 4.6rem; }
+.duel-table.duel-pair col.duel-w-n { width: 3.9rem; }
+.duel-table th.duel-c-time, .duel-table td.duel-c-time,
+.duel-table th.duel-c-killer, .duel-table td.duel-c-killer,
+.duel-table th.duel-c-weapon, .duel-table td.duel-c-weapon,
+.duel-table th.duel-c-cls, .duel-table td.duel-c-cls,
+.duel-table td.duel-fight-cell { text-align: left; }
+.duel-table td.duel-c-time { color: var(--dim); }
+.duel-table td.duel-c-killer .kf-mark { max-width: 100%; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }
+.duel-table tr.kf-sub-row td.duel-c-time { padding-left: 0.9rem; box-shadow: inset 2px 0 0 var(--accent); }
+.duel-more { margin: 0.5rem 0 0; font: inherit; font-size: 0.85rem; }
+#oldTabs .duel-status, #oldTabs .duel-summary { font-size: 0.85rem; }
+@media (max-width: 600px) {
+  .duel-table th.rk-num, .duel-table td.rk-num { box-shadow: 4px 0 8px -4px var(--shadow); }
+  .duel-table th.duel-name, .duel-table td.duel-name { left: auto; box-shadow: none; }
+  .duel-table col.duel-w-name { width: 12.5rem; }
+  .duel-table.duel-crowd { min-width: 36.1rem; }
+  .duel-cmp thead th.duel-a, .duel-cmp thead th.duel-b { font-size: 0.72rem; }
+}
+
 /* 🏆 Auraxium weapons (weapons.mjs, owner 2026-10-22): one player only, under the
  * name field, collapsed by default. Reuses the Rankings table look and both pins
  * (header on top, # + weapon on the left); no pick column, so # sits at left 0. */
@@ -3161,3 +3211,8 @@ html[data-room="ps"] .controls .fresh-row-end select.room-select { border-color:
   .old-tab { flex: 1 1 auto; font-size: 0.76rem; padding: 0.3rem 0.2rem; }
   .old-tab-n { display: none; } /* counts stay in the panel's own summary line */
 }
+/* Tight row (old-tabs.mjs fit(): a full label would be cut, e.g. 5 tabs on a phone): icons only,
+ * the open tab shows its name and takes the room left. */
+.old-tabs.is-tight .old-tab { flex: 0 0 auto; padding-left: 0.45rem; padding-right: 0.45rem; }
+.old-tabs.is-tight .old-tab:not([aria-expanded="true"]) .old-tab-txt { display: none; }
+.old-tabs.is-tight .old-tab[aria-expanded="true"] { flex: 1 1 auto; }

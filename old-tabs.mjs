@@ -18,6 +18,7 @@ export const OLD_TAB_PANELS = Object.freeze([
   { id: "pub", sel: "#statsPublic > details.stats-public", key: "otab.pub", label: "📊 Stats" },
   { id: "kf", sel: "#killFeedSection", key: "otab.kf", label: "⚔️ Last 100" },
   { id: "scr", sel: "#scrimsSection", key: "otab.scr", label: "🥊 Scrims" }, // 🥊 PlayStation room only
+  { id: "duel", sel: "#duelsSection", key: "otab.duel", label: "🤺 Duels" }, // one player vs the crowd, or two head-to-head
   { id: "wp", sel: "#weaponsSection", key: "otab.wp", label: "🏆 Auraxium" },
 ]);
 
@@ -56,7 +57,11 @@ export function mountOldTabs(host) {
         const cnt = d.querySelector(":scope > summary .rk-table-count");
         const n = cnt ? cnt.textContent.trim() : "";
         const label = tr(p.key, p.label);
-        const html = `${esc(label)}${n ? ` <span class="old-tab-n">${esc(n.replace(/[()]/g, ""))}</span>` : ""}`;
+        // Icon + text apart: when the labels don't fit one row (phones, 5 tabs), only the open tab keeps its text.
+        const sp = label.indexOf(" ");
+        const ico = sp > 0 ? label.slice(0, sp) : "", txt = sp > 0 ? label.slice(sp + 1) : label;
+        const html = `${ico ? `<span class="old-tab-ico">${esc(ico)}</span> ` : ""}<span class="old-tab-txt">${esc(txt)}</span>${n ? ` <span class="old-tab-n">${esc(n.replace(/[()]/g, ""))}</span>` : ""}`;
+        if (b.getAttribute("aria-label") !== label) b.setAttribute("aria-label", label);
         if (b.innerHTML !== html) b.innerHTML = html;
         const full = labelOf(d);
         if (full && b.title !== full) b.title = full;
@@ -66,8 +71,17 @@ export function mountOldTabs(host) {
         if (b.getAttribute("aria-controls") !== d.id) b.setAttribute("aria-controls", d.id);
       });
       if (row.hidden === any) row.hidden = !any;
+      fit();
     } finally { syncing = false; }
   }
+  /** Tight mode (owner 2026-10-28: one row on phones): icons only, except the open tab, when a full label would be cut. */
+  function fit() {
+    if (row.hidden || typeof row.getBoundingClientRect !== "function") return;
+    row.classList.remove("is-tight");
+    const cut = btns.some((b) => !b.hidden && b.scrollWidth > b.clientWidth + 1);
+    if (cut) row.classList.add("is-tight");
+  }
+  if (typeof window !== "undefined") window.addEventListener("resize", () => { if (!syncing) fit(); }, { passive: true });
   row.addEventListener("click", (e) => {
     const b = e.target.closest && e.target.closest("button.old-tab");
     if (!b) return;
