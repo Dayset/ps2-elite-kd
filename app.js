@@ -39,7 +39,7 @@ import { createAnalyze } from "./analyze.mjs?v=20261027-an69";
 import { createShareAdd } from "./share-add.mjs?v=20261027-z79";
 import { createSharedIndex } from "./shared-index.mjs?v=20261027-z79";
 import { createNamesField } from "./names-field.mjs?v=20261027-z79";
-import { createStatsTable } from "./stats-table.mjs?v=20261027-z79";
+import { createStatsTable } from "./stats-table.mjs?v=20261027-kf1";
 import { createChartWave } from "./chart-wave.mjs?v=20261027-z79";
 import { createChart } from "./chart.mjs?v=20261027-z79";
 import { createLoader } from "./loader.mjs?v=20261027-z79";
@@ -980,6 +980,7 @@ import {
       get serverTagHtml() { return serverTagHtml; },
       get showDebugCols() { return showDebugCols; },
       get thinCellTip() { return thinCellTip; },
+      get toggleNameInField() { return toggleNameInField; },
       get vdfBySlug() { return vdfBySlug; }, set vdfBySlug(v) { vdfBySlug = v; },
     }));
   }

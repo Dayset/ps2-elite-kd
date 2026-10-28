@@ -10,6 +10,7 @@ import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261027-z79
 import { zergEstimate } from "./zerg-revive.mjs?v=20261024-crowd1";
 import { infMedian } from "./tractor.mjs?v=20261024-trac1";
 import { mountWeapons } from "./weapons.mjs?v=20261022-wp4";
+import { mountKillFeed } from "./kill-feed.mjs?v=20261027-kf1";
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261020-wide1";
 import { PS_SERVERS, censusNsBase, roomLsKey } from "./rooms.mjs?v=20261022-ps1";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
@@ -190,22 +191,35 @@ export function createStatsTable($) {
   /* 🏆 Auraxium weapons (weapons.mjs): shown for exactly one player on the page. */
   let weaponsPanel = null;
 
+  /* ⚔️ Latest 100 kills & deaths (kill-feed.mjs): same rule, sits above the weapons. */
+  let killFeedPanel = null;
+  const censusBaseOf = (p) => {
+    if (!$.IS_PS) return $.CENSUS;
+    const s = Object.values(PS_SERVERS).find((x) => x.name === p.server);
+    return s ? censusNsBase(s.ns, CENSUS_SERVICE_ID) : $.CENSUS_BASES[0];
+  };
+
   function syncWeapons(list) {
+    const shownList = $.currentNamesInField().length > 1 ? [] : list || [];
+    if (!killFeedPanel) {
+      killFeedPanel = mountKillFeed(document.getElementById("killFeedSection"), {
+        getJson: (u) => $.censusJson(u),
+        baseOf: censusBaseOf,
+        addName: (name, anchor) => { if ($.toggleNameInField) $.toggleNameInField(name, anchor); },
+      });
+    }
+    killFeedPanel.setPlayers($.LIVE_MODE ? [] : shownList); // not on the LIVE page
     if (!weaponsPanel) {
       weaponsPanel = mountWeapons(document.getElementById("weaponsSection"), {
         getJson: (u) => $.censusJson(u),
-        baseOf: (p) => {
-          if (!$.IS_PS) return $.CENSUS;
-          const s = Object.values(PS_SERVERS).find((x) => x.name === p.server);
-          return s ? censusNsBase(s.ns, CENSUS_SERVICE_ID) : $.CENSUS_BASES[0];
-        },
+        baseOf: censusBaseOf,
         sortScroll: keepSortedColumnVisible,
         // "Fetch fresh data" loaded this player live → weapons are fetched live once too.
         isFresh: (p) => String(p.source || "").startsWith("live"),
         lsKey: (cid) => roomLsKey(`ps2-elite-kd-weapons:${cid}`, $.ROOM),
       });
     }
-    weaponsPanel.setPlayers($.currentNamesInField().length > 1 ? [] : list || []);
+    weaponsPanel.setPlayers(shownList);
   }
 
   function renderStatsTable(list) {

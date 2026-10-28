@@ -3025,6 +3025,35 @@ html[data-room="ps"] .controls .fresh-row-end select.room-select { border-color:
   border: 1px solid var(--border); border-radius: 4px; opacity: 0.75; white-space: nowrap;
 }
 
+/* ⚔️ Latest 100 kills & deaths (kill-feed.mjs, owner t746u): one player only, above the
+ * Auraxium weapons, collapsed by default. A plain list that wraps on phones; no animation. */
+.kf-section > summary { margin: 0; }
+.kf-section[open] > summary { margin-bottom: 0.4rem; }
+.kf-section .kf-status { margin: 0.3rem 0; color: var(--dim); }
+.kf-summary { margin: 0.2rem 0 0.4rem; font-weight: 600; font-size: 0.9rem; }
+.kf-list { list-style: none; margin: 0; padding: 0; max-height: 26rem; overflow-y: auto; font-size: 0.88rem; }
+.kf-row {
+  display: grid; grid-template-columns: 5.5rem 4.6rem minmax(0, 1fr) minmax(0, 1.2fr); gap: 0.2rem 0.5rem;
+  align-items: center; padding: 0.22rem 0.3rem; border-bottom: 1px solid var(--border);
+}
+.kf-row:last-child { border-bottom: 0; }
+.kf-time { color: var(--dim); font-size: 0.8rem; white-space: nowrap; }
+.kf-mark { display: inline-block; text-align: center; border-radius: 4px; padding: 0 0.3rem; font-size: 0.78rem; font-weight: 700; color: #fff; }
+.kf-kill { background: #2e9d57; }
+.kf-death { background: #c0392b; }
+.kf-sui { background: #7f7f7f; }
+.kf-tk { display: inline-block; border-radius: 4px; padding: 0 0.3rem; font-size: 0.72rem; font-weight: 700; background: var(--warn); color: #000; }
+.kf-who { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kf-tag { color: var(--dim); font-size: 0.8rem; }
+.kf-name { font: inherit; font-weight: 600; background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline dotted; }
+.kf-name:not([class*="fac-"]) { color: inherit; }
+.kf-name.kf-unknown { cursor: default; text-decoration: none; color: var(--dim); }
+.kf-gear { min-width: 0; color: var(--dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 560px) {
+  .kf-row { grid-template-columns: auto auto minmax(0, 1fr); }
+  .kf-gear { grid-column: 1 / -1; white-space: normal; }
+}
+
 /* 🏆 Auraxium weapons (weapons.mjs, owner 2026-10-22): one player only, under the
  * name field, collapsed by default. Reuses the Rankings table look and both pins
  * (header on top, # + weapon on the left); no pick column, so # sits at left 0. */
