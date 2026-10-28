@@ -2953,33 +2953,6 @@ html[data-theme="light"] .dist-pill:hover { opacity: 1; }
   .stats-carousel .stats-table td .pct,
   .stats-carousel .rk-pos-table td .pct { position: absolute; margin-left: 0.3em; margin-top: 0.3em; font-size: 0.64em; line-height: 1.2; }
 }
-/* TEST 2026-10-24 (owner: try it): skill table numbers sit under the header
- * text's first letter, instead of right (phones) / centered (PC). Stats
- * table only — Positions keeps the shared center/right look for now.
- * Later in the file than both the shared right rule and the PC center rule,
- * so it wins at equal specificity. Header and number share the same left
- * padding, and the number is indented past the leading emoji (emoji + space
- * ≈ 1.3em, the 2026-10-19 calibration), so its first digit lands under the
- * header text's first letter. On phones the grey tag stacks under the number,
- * indented the same way. */
-.stats-carousel .stats-table th:not(.stats-name),
-.stats-carousel .stats-table td:not(.stats-name) { text-align: left; }
-.stats-carousel .stats-table[data-stats-table="adjusted"] td:not(.stats-name) { text-indent: 1.3em; }
-/* text-indent is inherited: the 🔀 Diff digits live in an inline-block
- * (.sgn-num, PC) inside the indented cell, so without this they would be
- * indented a second time and sit a full 1.3em right of every other number.
- * Same for the grey .pct tag: absolute positioning blockifies it, so it
- * inherits the cell's indent and its text lands ~1.3em right of its box —
- * detached from the number, and poking past the last column's edge. */
-.stats-carousel .stats-table .sgn-num,
-.stats-carousel .stats-table td .pct { text-indent: 0; }
-@media (min-width: 601px) {
-  .stats-carousel .stats-table th:not(.stats-name) { padding-left: 1.15em; }
-  .stats-carousel .stats-table th:not(.stats-name):last-child { padding-left: 1.9em; }
-}
-@media (max-width: 600px) {
-  .stats-carousel .stats-table td .pct { margin-left: 1.3em; }
-}
 /* t459u: invisible tag in cells without one (stats-carousel.mjs fillTagSlots), so every
  * cell has the same structure and numbers line up with tagged neighbours. */
 /* t492u/t494u: 🔀 Diff on PC — the +/− sign hangs left of the digits (out of the
