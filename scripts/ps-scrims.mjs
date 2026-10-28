@@ -23,7 +23,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { censusRequest, tokenBucket } from "../census-fetch.mjs";
 import { PS_SERVERS, censusNsBase, parsePsKey, psKey } from "../rooms.mjs";
-import { eventsUrl, compactEvent, mergeEvents, EVENT_PAGE, SCRIM_RULE, detectScrims, finalWindow, scrimRow, mirrorRow, upsertScrims, isOneSided } from "../scrims.mjs";
+import { eventsUrl, compactEvent, mergeEvents, EVENT_PAGE, SCRIM_RULE, detectScrims, finalWindow, scrimRow, mirrorRow, upsertScrims, isOneSided, isScrimRowWeaponsOk, weaponCategory } from "../scrims.mjs";
 import { removedList, REMOVED_NAME } from "../opt-out.mjs";
 import { viaCensusProxy } from "./refresh-cache.mjs";
 
@@ -104,7 +104,7 @@ export async function pageBack(base, cid, { before = 0, pages = 1, get = getCens
  * One visit of one player. mode: "first" (newest history, first time), "new" (everything since
  * st.fwd), "back" (older than st.old). Mutates st; → { scrims, events, pages, skipped? }.
  */
-export async function visit(st, { base, cid, mode, now, get = getCensus, gap = SCRIM_RULE.GAP, pages = BACK_PAGES }) {
+export async function visit(st, { base, cid, mode, now, get = getCensus, gap = SCRIM_RULE.GAP, pages = BACK_PAGES, catOf = null }) {
   let r, asc, oldOpen, newOpen;
   if (mode === "new") {
     r = await fetchSpan(base, cid, { until: st.fwd, minPages: 1, maxPages: 50, gap, get });
@@ -137,7 +137,7 @@ export async function visit(st, { base, cid, mode, now, get = getCensus, gap = S
   if (mode === "first") Object.assign(st, { old: asc[lo][0], fwd: asc[hi - 1][0], done: !oldOpen });
   else if (mode === "new") { if (hi > 0) st.fwd = asc[hi - 1][0]; }
   else Object.assign(st, { old: asc[lo][0], done: !oldOpen });
-  return { scrims: detectScrims(asc.slice(lo, hi), cid), events: asc.length, pages: r.pages };
+  return { scrims: detectScrims(asc.slice(lo, hi), cid, SCRIM_RULE, catOf), events: asc.length, pages: r.pages };
 }
 
 /** Names for opponent ids of one namespace (≤ 100 per call): "[TAG] Name". */
@@ -159,6 +159,17 @@ async function lookupNames(ns, ids, get = getCensus) {
 }
 
 const fileOf = (key) => path.join(SCRIM_DIR, `${key}.json`);
+
+/**
+ * Weapon-category lookup from the site's catalog (assets/weapons/catalog.json),
+ * or null when the catalog is missing/empty — then only the vehicle check applies
+ * and stored rows are kept (scrims.mjs isScrimRowWeaponsOk with no lookup).
+ */
+function loadCatalog() {
+  const cat = readJson(path.join(ROOT, "assets", "weapons", "catalog.json"), null);
+  const items = cat && cat.items;
+  return items && Object.keys(items).length ? (id) => weaponCategory(items, id) : null;
+}
 function loadFile(key, fallback) {
   const f = readJson(fileOf(key), null);
   return f && f.v === 1 && Array.isArray(f.scrims) ? f : { v: 1, ...fallback, from: null, to: null, done: false, scrims: [] };
@@ -182,7 +193,7 @@ export const TOP_N = Infinity; // owner 2026-10-28: every scrim found, not just 
  * time), one-sided farms included (badge), all of them by kills (both sides). A 1v1 is told from
  * the winner's side. → { v, at, total, players, done, rows: [{ t0, t1, p:[key,name], o, k, d, z, w }] }
  */
-export function buildTopScrims(files, gap = SCRIM_RULE.GAP) {
+export function buildTopScrims(files, gap = SCRIM_RULE.GAP, catOf = null) {
   const seen = new Map();
   const all = [];
   let players = 0, done = 0;
@@ -192,6 +203,7 @@ export function buildTopScrims(files, gap = SCRIM_RULE.GAP) {
     if (f.done) done++;
     for (const r of f.scrims) {
       if (!r || !Array.isArray(r.o) || !r.o.length) continue;
+      if (!isScrimRowWeaponsOk(r, catOf)) continue; // owner 2026-10-28: no Claymore / vehicle top weapons in the room list
       const people = [f.key, ...r.o.map((x) => x[0] || x[1])].sort().join(",");
       const list = seen.get(people) || [];
       const hit = list.find((x) => x.t0 <= r.t1 + gap && r.t0 <= x.t1 + gap);
@@ -216,7 +228,7 @@ export function buildTopScrims(files, gap = SCRIM_RULE.GAP) {
 function writeTop() {
   let names = [];
   try { names = fs.readdirSync(SCRIM_DIR).filter((f) => f.endsWith(".json")); } catch {}
-  const top = buildTopScrims(names.map((f) => readJson(path.join(SCRIM_DIR, f), null)));
+  const top = buildTopScrims(names.map((f) => readJson(path.join(SCRIM_DIR, f), null)), SCRIM_RULE.GAP, loadCatalog());
   writeJson(path.join(DATA_DIR, "scrims-top.json"), top);
   console.log(`🥊 room list: ${top.rows.length} scrims, ${top.players} players read.`);
   return top;
@@ -254,6 +266,7 @@ async function run() {
   let outages = 0;
   const names = new Map(); // key → display name
   for (const e of index.players) names.set(e.key, e.name);
+  const catOf = loadCatalog();
 
   async function one({ e, mode }) {
     const { ns, cid } = parsePsKey(e.key);
@@ -262,7 +275,7 @@ async function run() {
     const before = JSON.stringify(st);
     let r;
     try {
-      r = await visit(st, { base, cid, mode, now: now() });
+      r = await visit(st, { base, cid, mode, now: now(), catOf });
       outages = 0;
     } catch (err) {
       tally.fails++;
@@ -286,8 +299,16 @@ async function run() {
     const rows = r.scrims.map((s) => scrimRow(s, oppOf));
     const me = { key: e.key, name: e.name };
     const file = loadFile(e.key, { key: e.key, name: e.name, server: e.server });
+    // Stored rows from before the infantry-only rule: drop known-bad top weapons
+    // BEFORE upserting, or the old (bigger, unfiltered) row would win the overlap.
+    let cleaned = 0;
+    if (catOf) {
+      const kept = file.scrims.filter((x) => isScrimRowWeaponsOk(x, catOf));
+      cleaned = file.scrims.length - kept.length;
+      file.scrims = kept;
+    }
     const changed = upsertScrims(file.scrims, rows);
-    if (changed || JSON.stringify(st) !== before) {
+    if (changed || cleaned || JSON.stringify(st) !== before) {
       Object.assign(file, { name: e.name, from: st.old || null, to: st.fwd || null, done: !!st.done, at: st.at });
       writeJson(fileOf(e.key), file);
       touched.add(e.key);

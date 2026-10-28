@@ -15,7 +15,7 @@
  * stay in the list but leave the summary numbers (same idea as the PS scrim rule in the stats).
  */
 import { t as tr, currentLang } from "./i18n.mjs";
-import { detectScrims, scrimResult, scrimMinutes, isOneSided } from "./scrims.mjs?v=20261028-scr1";
+import { detectScrims, scrimResult, scrimMinutes, isOneSided } from "./scrims.mjs?v=20261028-scr2";
 
 export const FEED_LIMIT = 100;
 const FAC = { 1: "vs", 2: "nc", 3: "tr", 4: "nso" };

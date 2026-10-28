@@ -233,7 +233,9 @@ import { buildTopScrims } from "../scripts/ps-scrims.mjs";
 test("room list: each scrim once (both players' copies), told by the winner, all kept, biggest first", () => {
   const A = { v: 1, key: "us-1", name: "Alpha", from: 1, done: true, scrims: [
     { t0: 100, t1: 900, o: [["us-2", "Bravo", 14, 15]], k: 14, d: 15, n: 0, z: 2, w: [7, 8] },
-    { t0: 5000, t1: 6000, o: [["us-3", "Farm", 300, 0]], k: 300, d: 0, n: 0, z: 2, w: [7, 0] },
+    // One-sided farm stays listed (2 kills back, weapons on both sides); a 300–0
+    // row would carry a blank side and is dropped by the dash rule (see below).
+    { t0: 5000, t1: 6000, o: [["us-3", "Farm", 300, 2]], k: 300, d: 2, n: 0, z: 2, w: [7, 8] },
     { t0: 9000, t1: 9900, o: [["us-4", "C", 20, 10], ["us-5", "D", 15, 15]], k: 35, d: 25, n: 1, z: 6, w: [7, 9] },
   ] };
   const B = { v: 1, key: "us-2", name: "Bravo", from: 1, done: false, scrims: [
@@ -247,6 +249,117 @@ test("room list: each scrim once (both players' copies), told by the winner, all
   const duel = top.rows[2];
   assert.deepEqual(duel.p, ["us-2", "Bravo"], "1v1 told from the winner's side");
   assert.deepEqual([duel.k, duel.d, duel.w], [15, 14, [8, 7]]);
+});
+
+/* Owner 2026-10-28: only infantry weapons + knives count as scrims. */
+import { isScrimEvent, isScrimWeaponCategory, isScrimRowWeaponsOk, weaponCategory } from "../scrims.mjs";
+
+// Inline catalog categories for the weapon ids these tests use (hermetic: no catalog file).
+const CAT = { 1: "Knife", 429: "Explosive", 704: "Vehicle Weapons", 3730: "Vanguard Primary Weapon", 7254: "LMG", 7236: "LMG", 7518: "AI MAX (Left)", 6009517: "Knife" };
+const catOf = (id) => CAT[id] ?? null;
+
+test("infantry-only: a Claymore-only run is not a scrim", () => {
+  const ev = [];
+  let t = 3_000_000;
+  for (let i = 0; i < 14; i++) { t += 50; ev.push([t, i % 2, "777", 429, 0, 2, 0, 0, 0]); }
+  assert.deepEqual(detectScrims(ev, "1", SCRIM_RULE, catOf), []);
+});
+
+test("infantry-only: vehicle weapons and vehicle seats are not scrims", () => {
+  const ev = [];
+  let t = 4_000_000;
+  for (let i = 0; i < 14; i++) { t += 50; ev.push([t, i % 2, "777", 3730, 0, 2, 0, 0, 0]); }
+  assert.deepEqual(detectScrims(ev, "1", SCRIM_RULE, catOf), []);
+  // Same run from a vehicle seat with a rifle: out too (attacker_vehicle_id).
+  const ev2 = ev.map((x) => { const y = x.slice(); y[8] = 1234; y[3] = 7254; return y; });
+  assert.deepEqual(detectScrims(ev2, "1", SCRIM_RULE, catOf), []);
+  // And without any catalog the vehicle-seat run is still out (vehicle check needs no catalog).
+  assert.deepEqual(detectScrims(ev2, "1"), []);
+});
+
+test("infantry-only: a half-Claymore run is not a scrim; a mostly-rifle run counts rifle events only", () => {
+  // 12 rifle + 12 Claymore alternating vs one opp, nothing else: eligible focus 12/24 < 0.75.
+  const ev = [];
+  let t = 5_000_000;
+  for (let i = 0; i < 24; i++) { t += 45; ev.push([t, i % 2, "777", i % 2 ? 429 : 7254, 0, 2, 0, 0, 0]); }
+  assert.deepEqual(detectScrims(ev, "1", SCRIM_RULE, catOf), []);
+  // 30 rifle + 2 Claymore after: focus 1.0 over the rifle window, scrim counts the 30 rifle events.
+  const ev2 = [];
+  t = 6_000_000;
+  for (let i = 0; i < 30; i++) { t += 45; ev2.push([t, i % 2, "777", 7254, 0, 2, 0, 0, 0]); }
+  for (let i = 0; i < 2; i++) { t += 45; ev2.push([t, 1, "777", 429, 0, 2, 0, 0, 0]); }
+  const s = detectScrims(ev2, "1", SCRIM_RULE, catOf);
+  assert.equal(s.length, 1);
+  assert.equal(s[0].k + s[0].d, 30);
+  assert.equal(s[0].myW, 7254);
+});
+
+test("infantry-only: knife kills count toward a scrim, MAX weapons do not", () => {
+  const ev = [];
+  let t = 7_000_000;
+  for (let i = 0; i < 12; i++) { t += 50; ev.push([t, i % 2, "777", i % 3 === 0 ? 1 : 7254, 0, 2, 0, 0, 0]); }
+  const s = detectScrims(ev, "1", SCRIM_RULE, catOf);
+  assert.equal(s.length, 1);
+  assert.equal(s[0].k + s[0].d, 12);
+  const mx = [];
+  t = 8_000_000;
+  for (let i = 0; i < 14; i++) { t += 50; mx.push([t, i % 2, "777", 7518, 0, 2, 0, 0, 0]); }
+  assert.deepEqual(detectScrims(mx, "1", SCRIM_RULE, catOf), []);
+  assert.equal(isScrimWeaponCategory("AI MAX (Left)"), false);
+  assert.equal(isScrimWeaponCategory("Knife"), true);
+  assert.equal(isScrimEvent([0, 1, "777", 429, 0, 2, 0, 0, 0], catOf), false);
+  assert.equal(isScrimEvent([0, 1, "777", 7254, 0, 2, 0, 0, 0], catOf), true);
+});
+
+test("infantry-only: stored rows with a Claymore / vehicle top weapon are dropped, unknown kept, blank side dropped", () => {
+  const rifle = { t0: 100, t1: 900, o: [["us-2", "B", 5, 4]], k: 5, d: 4, n: 0, z: 2, w: [7254, 7236] };
+  const clay = { ...rifle, t0: 2000, t1: 2900, w: [7254, 429] };
+  const veh = { ...rifle, t0: 4000, t1: 4900, w: [3730, 7236] };
+  const unknown = { ...rifle, t0: 6000, t1: 6900, w: [999999, 7236] };
+  const blank = { ...rifle, t0: 8000, t1: 8900, w: [0, 7236] };
+  const blankOther = { ...rifle, t0: 10000, t1: 10900, w: [7254, 0] };
+  const bothBlank = { ...rifle, t0: 12000, t1: 12900, w: [0, 0] };
+  assert.equal(isScrimRowWeaponsOk(rifle, catOf), true);
+  assert.equal(isScrimRowWeaponsOk(clay, catOf), false);
+  assert.equal(isScrimRowWeaponsOk(veh, catOf), false);
+  assert.equal(isScrimRowWeaponsOk(unknown, catOf), true);
+  assert.equal(isScrimRowWeaponsOk(blank, catOf), false);
+  assert.equal(isScrimRowWeaponsOk(blankOther, catOf), false);
+  assert.equal(isScrimRowWeaponsOk(bothBlank, catOf), false);
+  assert.equal(isScrimRowWeaponsOk(blank, null), false); // dash rule needs no catalog
+  assert.equal(isScrimRowWeaponsOk(clay, null), true); // no catalog: keep
+  const top = buildTopScrims([{ v: 1, key: "us-1", name: "A", from: 1, done: true, scrims: [rifle, clay, veh, blank] }], SCRIM_RULE.GAP, catOf);
+  assert.equal(top.total, 1);
+  assert.equal(top.rows[0].w[0], 7254);
+});
+
+test("Scrims tab live: Claymore-only history finds nothing with a catalog", () => {
+  const list = [];
+  let t = 9_000_000;
+  for (let i = 0; i < 14; i++) { t += 50; list.push({ timestamp: String(t), table_type: i % 2 ? "kills" : "deaths", character_id: i % 2 ? "777" : fx.cid, attacker_character_id: i % 2 ? fx.cid : "777", attacker_weapon_id: "429", zone_id: "2" }); }
+  const r = liveScrims({ characters_event_list: list }, fx.cid, "us", () => "", catOf);
+  assert.equal(r.rows.length, 0);
+});
+
+test("pipeline: a Claymore-only history finds no scrim when the collector has a catalog", async () => {
+  const ev = [];
+  let t = 10_000_000;
+  for (let i = 0; i < 14; i++) { t += 50; ev.push({ timestamp: String(t), table_type: i % 2 ? "kills" : "deaths", character_id: i % 2 ? "777" : "1", attacker_character_id: i % 2 ? "1" : "777", attacker_weapon_id: "429", zone_id: "2" }); }
+  ev.sort((a, b) => +b.timestamp - +a.timestamp);
+  const get = async (url) => { const before = +(/before=(\d+)/.exec(url)?.[1] || Infinity); return { characters_event_list: ev.filter((e) => +e.timestamp < before).slice(0, EVENT_PAGE) }; };
+  const st = {};
+  const r = await visit(st, { base: "B/", cid: "1", mode: "first", now: t + 99_999, get, pages: 1, catOf });
+  assert.equal(r.scrims.length, 0);
+});
+
+test("infantry-only: the real catalog agrees (Claymore is Explosive, knives are Knife)", () => {
+  const items = JSON.parse(fs.readFileSync(new URL("../assets/weapons/catalog.json", import.meta.url), "utf8")).items;
+  assert.equal(weaponCategory(items, 429), "Explosive");
+  assert.equal(weaponCategory(items, 1044), "Explosive");
+  assert.equal(weaponCategory(items, 1), "Knife");
+  assert.equal(weaponCategory(items, 7254), "LMG");
+  assert.equal(isScrimWeaponCategory(weaponCategory(items, 429)), false);
+  assert.equal(isScrimWeaponCategory(weaponCategory(items, 1)), true);
 });
 
 test("Scrims tab shows the room's top list when not exactly one PS player is on the page", () => {

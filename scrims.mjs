@@ -55,6 +55,58 @@ export const eventKey = (x) => `${x[0]}|${x[1]}|${x[2]}|${x[3]}|${x[6]}|${x[7]}`
  */
 export const SCRIM_RULE = Object.freeze({ GAP: 600, MIN_EVENTS: 10, MIN_FOCUS: 0.75, GROUP_EACH: 5, GROUP_MIN: 20, GROUP_MAX: 4, GROUP_FOCUS: 0.85, GROUP_BALANCE: 0.25 });
 
+/**
+ * Owner 2026-10-28: only infantry weapons + knives count as scrims. Categories are
+ * Census item_category names (assets/weapons/catalog.json, built weekly by
+ * scripts/build-weapon-catalog.mjs). Everything else is out: vehicle weapons and
+ * gunner seats, MAX weapons, mines / C-4 / grenades ("Explosive", "Grenade"),
+ * MANA turrets ("Infantry Weapons" is the turret category, not a firearm),
+ * abilities, gear, and anything with no category. A weapon id the catalog does
+ * not know is out of new detections (strict) but kept in stored rows (below).
+ */
+export const INFANTRY_WEAPON_CATEGORIES = Object.freeze(new Set([
+  "Knife", "Pistol", "Carbine", "Assault Rifle", "SMG", "LMG", "Shotgun",
+  "Sniper Rifle", "Scout Rifle", "Rocket Launcher", "Heavy Weapon",
+  "Anti-Materiel Rifle", "Crossbow", "Heavy Crossbow",
+  "Amphibious Rifle", "Amphibious Sidearm", "Hybrid Rifle",
+]));
+
+/** Category of a weapon id in a catalog items map ({ id: [name, category, ...] }). */
+export const weaponCategory = (items, id) => { const e = items && items[String(id)]; return e ? e[1] : null; };
+
+/** True when a category is an infantry weapon or knife. */
+export const isScrimWeaponCategory = (cat) => INFANTRY_WEAPON_CATEGORIES.has(cat || "");
+
+/**
+ * True when a compact event may count toward a scrim: the attacker was on foot
+ * (attacker_vehicle_id == 0, index 8) and, when a catalog lookup is given, the
+ * attacker's weapon is an infantry weapon or knife. Without a lookup only the
+ * vehicle check applies (callers that have the catalog must pass one).
+ */
+export function isScrimEvent(x, catOf = null) {
+  if (!x || x[8]) return false;
+  if (!catOf) return true;
+  return isScrimWeaponCategory(catOf(x[3]));
+}
+
+/**
+ * True when a stored scrim row's top weapons may stay: BOTH sides must have a
+ * weapon — a 0 side renders as "-" (one-sided suicide/MAX leftover, not a
+ * fight) and is dropped whatever the catalog state — and each side must be
+ * infantry/knife or unknown (an id the catalog does not know is kept; history
+ * is not nuked on missing catalog data — only known-bad rows are dropped).
+ */
+export function isScrimRowWeaponsOk(row, catOf = null) {
+  if (!row || !Array.isArray(row.w)) return true;
+  if (row.w[0] === 0 || row.w[1] === 0) return false;
+  if (!catOf) return true;
+  return row.w.every((w) => {
+    if (!w) return true;
+    const c = catOf(w);
+    return c == null || isScrimWeaponCategory(c);
+  });
+}
+
 const topOf = (counts) => {
   let best = 0, id = 0;
   for (const [k, v] of counts) if (v > best) { best = v; id = k; }
@@ -101,13 +153,17 @@ function summarize(evs, asc, me) {
  * a group scrim; failing that, the biggest run can still be a 1v1.
  * Suicides (no other player, or the player himself) are ignored.
  */
-export function detectScrims(events, cid, rule = SCRIM_RULE) {
+export function detectScrims(events, cid, rule = SCRIM_RULE, catOf = null) {
   const me = String(cid);
   const asc = (events || []).filter((x) => x && x[2] && x[2] !== "0" && x[2] !== me).slice().sort((a, b) => a[0] - b[0]);
   if (!asc.length) return [];
+  // Runs are built from eligible events only (infantry/knife, on foot), but focus
+  // still counts everything the player did meanwhile (asc): a run that is half
+  // Claymore kills is not a scrim either, it just never reaches focus.
+  const elig = asc.filter((x) => isScrimEvent(x, catOf));
   const open = new Map();
   const runs = [];
-  for (const x of asc) {
+  for (const x of elig) {
     const r = open.get(x[2]);
     if (r && x[0] - r.last <= rule.GAP) { r.evs.push(x); r.last = x[0]; continue; }
     if (r) runs.push(r);

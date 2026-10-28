@@ -12,7 +12,7 @@
  * The table uses the shared Rankings table look (zebra, pinned header, # pinned, sortable).
  */
 import { t as tr, currentLang } from "./i18n.mjs";
-import { detectScrims, eventsUrl, compactEvent, finalWindow, scrimRow, upsertScrims, scrimResult, scrimMinutes, isOneSided, EVENT_PAGE, SCRIM_RULE } from "./scrims.mjs?v=20261028-scr1";
+import { detectScrims, eventsUrl, compactEvent, finalWindow, scrimRow, upsertScrims, scrimResult, scrimMinutes, isOneSided, isScrimRowWeaponsOk, weaponCategory, EVENT_PAGE, SCRIM_RULE } from "./scrims.mjs?v=20261028-scr2";
 
 const scrimResultLabel = (res) => (res === "won" ? tr("scr.won", "Won") : res === "lost" ? tr("scr.lost", "Lost") : tr("scr.draw", "Draw"));
 
@@ -46,14 +46,17 @@ export function namesUrl(base, ids) {
  * Live part: the newest 1,000 events → stored-row shape (scrims.mjs scrimRow). A scrim cut by
  * the page edge is left out when older history follows (the bot's copy has it whole).
  */
-export function liveScrims(json, cid, srv, nameOf) {
+/** Catalog items → weapon-category lookup, or null when the catalog is missing/empty (then only the vehicle check applies). */
+export const mkCatOf = (cat) => (cat && cat.items && Object.keys(cat.items).length ? (id) => weaponCategory(cat.items, id) : null);
+
+export function liveScrims(json, cid, srv, nameOf, catOf = null) {
   const list = (json && json.characters_event_list) || [];
   const asc = list.map((e) => compactEvent(e, cid)).filter(Boolean).sort((a, b) => a[0] - b[0]);
   if (!asc.length) return { rows: [], oldest: 0, ids: [] };
   const w = finalWindow(asc, { oldOpen: list.length >= EVENT_PAGE, newOpen: false, gap: SCRIM_RULE.GAP }) || { lo: 0, hi: asc.length };
-  const found = detectScrims(asc.slice(w.lo, w.hi), cid);
+  const found = detectScrims(asc.slice(w.lo, w.hi), cid, SCRIM_RULE, catOf);
   const ids = [...new Set(found.flatMap((s) => s.opp.map((o) => o.id)))];
-  const rows = found.map((s) => scrimRow(s, (id) => ({ key: `${srv}-${id}`, name: nameOf(`${srv}-${id}`) || "" })));
+  const rows = found.map((s) => scrimRow(s, (id) => ({ key: `${srv}-${id}`, name: nameOf(`${srv}-${id}`) || "" }))).filter((r) => isScrimRowWeaponsOk(r, catOf));
   return { rows, oldest: asc[0][0], ids };
 }
 
@@ -97,7 +100,7 @@ export function mountScrims(section, o = {}) {
       Promise.resolve().then(() => catalog()).catch(() => null),
     ]);
     if (!top || top.v !== 1 || !Array.isArray(top.rows)) throw new Error("no top list");
-    return { top, rows: top.rows.map((r) => ({ ...r, o: r.o.map((x) => x.slice()) })), cat: (cat && cat.items) || {} };
+    return { top, rows: top.rows.map((r) => ({ ...r, o: r.o.map((x) => x.slice()) })).filter((r) => isScrimRowWeaponsOk(r, mkCatOf(cat))), cat: (cat && cat.items) || {} };
   }
 
   async function load(p) {
@@ -108,13 +111,14 @@ export function mountScrims(section, o = {}) {
       Promise.resolve().then(() => knownNames()).catch(() => new Map()),
       Promise.resolve().then(() => catalog()).catch(() => null),
     ]);
-    const stored = file && file.v === 1 && Array.isArray(file.scrims) ? file.scrims.map((r) => ({ ...r, o: r.o.map((x) => x.slice()) })) : [];
+    const catOf = mkCatOf(cat);
+    const stored = file && file.v === 1 && Array.isArray(file.scrims) ? file.scrims.map((r) => ({ ...r, o: r.o.map((x) => x.slice()) })).filter((r) => isScrimRowWeaponsOk(r, catOf)) : [];
     for (const r of stored) for (const x of r.o) if (x[0] && x[1] && !names.has(x[0])) names.set(x[0], x[1]);
     let live = null, note = "";
     try {
       const j = await getJson(eventsUrl(baseOf(p), p.cid, { limit: EVENT_PAGE }));
       if (!j || !Array.isArray(j.characters_event_list)) throw new Error("bad census reply");
-      live = liveScrims(j, p.cid, srv, (k) => names.get(k));
+      live = liveScrims(j, p.cid, srv, (k) => names.get(k), catOf);
       const missing = live.ids.filter((id) => !names.has(`${srv}-${id}`));
       if (missing.length) {
         try {
