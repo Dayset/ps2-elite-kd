@@ -14,6 +14,7 @@ import { t as tr } from "./i18n.mjs";
 export const OLD_TAB_PANELS = Object.freeze([
   { id: "pub", sel: "#statsPublic > details.stats-public" },
   { id: "kf", sel: "#killFeedSection" },
+  { id: "scr", sel: "#scrimsSection" }, // 🥊 PlayStation room only
   { id: "wp", sel: "#weaponsSection" },
 ]);
 

@@ -1,45 +1,52 @@
 name: PlayStation scrims
 
-# 🥊 PlayStation scrims (owner 2026-10-28): group 1v1 scrims out of the players' KILL / DEATH
-# history and write down date + result. PS namespaces only (ps2ps4us / ps2ps4eu), via the
-# cache Worker's Census proxy. Shares the PS room's concurrency group so it never races a
-# PS refresh.
+# 🥊 PlayStation scrims (owner 2026-10-28): find 1v1 / small-group scrims in the PS players'
+# KILL / DEATH history and write down date + result (data-ps/scrims/<key>.json), going back
+# through each player's whole history over many runs (newest first, shallowest players first).
+# PS namespaces only (ps2ps4us / ps2ps4eu), via the cache Worker's Census proxy, 30 calls/min.
+# Commits data-ps/scrims/ and data-ps/scrims-state.json only. Its own concurrency group: it
+# touches no file the PS refresh writes, so the two can run side by side.
 #
+# mode=run (schedule): one background round (scripts/ps-scrims.mjs --run).
 # mode=probe: measurement only. Pages back through the named players' history and pushes the
 #   compact events to the side branch claude/scrim-probe (never to main).
 
 on:
+  schedule:
+    - cron: "23 */2 * * *"
   workflow_dispatch:
     inputs:
       mode:
-        description: "probe"
+        description: "run | probe"
         required: false
-        default: "probe"
+        default: "run"
       names:
         description: "PS names or keys (probe)"
         required: false
         default: ""
       pages:
-        description: "Census pages (1,000 events) per player (probe)"
+        description: "Census pages (1,000 events) per player (probe: total; run: per older-history visit)"
         required: false
-        default: "20"
+        default: ""
 
 permissions:
   contents: write
 
 concurrency:
-  group: refresh-ps-room
+  group: ps-scrims
   cancel-in-progress: false
 
 env:
   CENSUS_RPM: "30"
-  TIME_BUDGET_MIN: "25"
+  TIME_BUDGET_MIN: "20"
   CENSUS_SERVICE_ID: ${{ secrets.CENSUS_SERVICE_ID || vars.CENSUS_SERVICE_ID || 'daysetps2legends' }}
+  CENSUS_PROXY: ${{ vars.CENSUS_PROXY || 'https://ps2-elite-kd-cache.dayset.workers.dev' }}
+  CENSUS_PROXY_KEY: ${{ secrets.CENSUS_PROXY_KEY }}
 
 jobs:
   scrims:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 35
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -59,13 +66,34 @@ jobs:
       - name: Probe (side branch only)
         if: github.event.inputs.mode == 'probe'
         env:
-          CENSUS_PROXY: ${{ vars.CENSUS_PROXY || 'https://ps2-elite-kd-cache.dayset.workers.dev' }}
-          CENSUS_PROXY_KEY: ${{ secrets.CENSUS_PROXY_KEY }}
           NAMES: ${{ github.event.inputs.names }}
-          PAGES: ${{ github.event.inputs.pages }}
+          PAGES: ${{ github.event.inputs.pages || '20' }}
+          TIME_BUDGET_MIN: "25"
         run: |
           node scripts/ps-scrims.mjs --probe "$NAMES" --pages "$PAGES"
           git checkout -q -b claude/scrim-probe
           git add -f scrim-probe
           git commit -q -m "scrim probe: raw compact events (measurement only) [bot]" || exit 0
           git push -q -f origin HEAD:refs/heads/claude/scrim-probe
+
+      - name: Find scrims (data-ps/scrims only)
+        id: run
+        if: github.event.inputs.mode != 'probe'
+        continue-on-error: true
+        env:
+          PAGES: ${{ github.event.inputs.pages || '3' }}
+        run: node scripts/ps-scrims.mjs --run
+
+      - name: Commit (data-ps/scrims only, one commit per run)
+        if: always() && github.event.inputs.mode != 'probe'
+        env:
+          COMMIT_DIR: data-ps/
+        run: |
+          # Guard: this workflow must never leave a change outside data-ps/scrims*.
+          stray=$(git status --porcelain | grep -v ' data-ps/scrims' || true)
+          if [ -n "$stray" ]; then
+            echo "::error::scrims run changed files outside data-ps/scrims*: $stray"
+            git checkout -- . ':!data-ps/scrims' ':!data-ps/scrims-state.json' 2>/dev/null || true
+            git clean -fdq -- . ':!data-ps/scrims' ':!data-ps/scrims-state.json' 2>/dev/null || true
+          fi
+          scripts/ci-commit-push.sh "chore(ps-scrims): ${{ steps.run.outputs.scrims || '0' }} scrims, ${{ steps.run.outputs.files || '0' }} files [bot]"

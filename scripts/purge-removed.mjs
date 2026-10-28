@@ -232,6 +232,18 @@ export function purgeRemoved({ dataDir, room = "pc", force = false, log = consol
     j.count = j.players.length;
     return before - j.players.length;
   });
+  if (ps) {
+    // 🥊 Scrim records (scripts/ps-scrims.mjs): the removed player's file and cursor go; their name
+    // as an opponent in other files is blanked by the next scrims run (it re-reads the list).
+    for (const k of gone.keys) {
+      const f = path.join(dataDir, "scrims", `${k}.json`);
+      if (fs.existsSync(f)) {
+        fs.unlinkSync(f);
+        report.cleaned["scrims/"] = (report.cleaned["scrims/"] || 0) + 1;
+      }
+    }
+    clean("scrims-state.json", (j) => dropKeys(j.players, ids));
+  }
   if (!ps) {
     for (const s of gone.slugs) {
       const xp = path.join(dataDir, "xp", `${s}.json`);

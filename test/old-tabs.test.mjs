@@ -6,10 +6,10 @@ import { OLD_TAB_PANELS } from "../old-tabs.mjs";
 
 const index = readFileSync(new URL("../index.html", import.meta.url), "utf8");
 
-test("one tab row ABOVE the ✨ skill table, in order: Census / Fisu / Honu, kill feed, weapons", () => {
-  assert.deepEqual(OLD_TAB_PANELS.map((p) => p.id), ["pub", "kf", "wp"]);
+test("one tab row ABOVE the ✨ skill table, in order: Census / Fisu / Honu, kill feed, 🥊 scrims (PS only), weapons", () => {
+  assert.deepEqual(OLD_TAB_PANELS.map((p) => p.id), ["pub", "kf", "scr", "wp"]);
   const at = (s) => index.indexOf(s);
-  const order = [at('id="namesBox"'), at('<section id="oldTabs"'), at('class="old-tabs"'), at('id="statsPublic"'), at('<details id="killFeedSection"'), at('<details id="weaponsSection"'), at('<section id="statsCarousel"'), at('<details id="chartSection"')];
+  const order = [at('id="namesBox"'), at('<section id="oldTabs"'), at('class="old-tabs"'), at('id="statsPublic"'), at('<details id="killFeedSection"'), at('<details id="scrimsSection"'), at('<details id="weaponsSection"'), at('<section id="statsCarousel"'), at('<details id="chartSection"')];
   order.forEach((v, i) => { assert.ok(v > 0, `missing #${i}`); if (i) assert.ok(order[i - 1] < v, `order #${i}`); });
   const block = index.slice(at('<section id="oldTabs"'), at('<section id="statsCarousel"'));
   assert.equal(index.split('id="statsPublic"').length, 2);
@@ -27,7 +27,8 @@ test("all closed by default, one open at a time, no animation, labels from the t
   const css = readFileSync(new URL("../styles.css", import.meta.url), "utf8");
   const blk = css.slice(css.indexOf("/* 🗂️ Tracker data tabs"));
   assert.match(blk, /\.old-tabs \{ display: flex; flex-wrap: wrap;/);
-  assert.match(blk, /#oldTabs details:not\(\[open\]\) \{ display: none; \}/);
+  // Only the panels themselves: a folded 🥊 scrim row inside the kill feed is a <details> too.
+  assert.match(blk, /#oldTabs > details:not\(\[open\]\), #oldTabs > #statsPublic > details:not\(\[open\]\) \{ display: none; \}/);
   assert.doesNotMatch(blk.replace(/\/\*[\s\S]*?\*\//g, ""), /transition|animation/);
   for (const l of ["en", "ja", "ru", "de", "fr", "zh", "es", "uk", "it"]) {
     const j = JSON.parse(readFileSync(new URL(`../i18n/${l}.json`, import.meta.url), "utf8"));

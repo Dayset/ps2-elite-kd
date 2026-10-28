@@ -3030,6 +3030,45 @@ html[data-room="ps"] .controls .fresh-row-end select.room-select { border-color:
   .kf-gear { grid-column: 1 / -1; white-space: normal; }
 }
 
+/* 🥊 PlayStation scrims (owner 2026-10-28). In the Latest 100: one folded row per scrim
+ * (same grid as a kill row, opens to its kills & deaths). Tab: scrims-panel.mjs table with the
+ * Rankings look (header + # pinned, name pinned on PC only). Theme tokens only, nothing moves. */
+.kf-scrim { border-bottom: 1px solid var(--border); }
+.kf-scrim:last-child { border-bottom: 0; }
+.kf-scrim > details > summary { list-style: none; cursor: pointer; border-bottom: 0; }
+.kf-scrim > details > summary::-webkit-details-marker { display: none; }
+.kf-scrim > details[open] > summary { background: var(--row-alt); }
+.kf-scr { background: var(--accent); color: var(--btn-text); white-space: nowrap; }
+.kf-caret::before { content: " ▸"; }
+.kf-scrim > details[open] .kf-caret::before { content: " ▾"; }
+.kf-sub { list-style: none; margin: 0 0 0.3rem 0.9rem; padding: 0 0 0 0.4rem; border-left: 2px solid var(--grid); }
+.kf-sub .kf-row { padding-top: 0.15rem; padding-bottom: 0.15rem; }
+.kf-scrim-head .kf-who { white-space: normal; }
+.scr-res { font-weight: 700; }
+.scr-res.scr-won { color: var(--token-ok-fg); }
+.scr-res.scr-lost { color: var(--token-fail-fg); }
+.scr-res.scr-draw { color: var(--dim); }
+.scr-section > summary { margin: 0; }
+.scr-section[open] > summary { margin-bottom: 0.5rem; }
+.scr-section .scr-status { margin: 0.3rem 0; color: var(--dim); }
+.scr-table { table-layout: auto; }
+.scr-table th.rk-num, .scr-table td.rk-num { left: 0; width: 2.2rem; box-shadow: none; }
+.scr-table th.scr-name, .scr-table td.scr-name {
+  position: sticky; left: 2.2rem; z-index: 1; text-align: left;
+  box-shadow: 4px 0 8px -4px var(--shadow); max-width: 30ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.scr-table thead th.scr-name { z-index: 4; }
+.scr-table td { white-space: nowrap; }
+.scr-table td.scr-result { font-variant-numeric: tabular-nums; }
+.scr-table .scr-weapons { color: var(--dim); }
+.scr-group { display: inline-block; font-size: 0.72rem; font-weight: 700; border: 1px solid var(--grid); border-radius: 3px; padding: 0 0.25rem; color: var(--dim); cursor: help; }
+.scr-sub { color: var(--dim); font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+@media (max-width: 600px) {
+  /* Phones: like Rankings, only # stays pinned so the result gets the screen. */
+  .scr-table th.rk-num, .scr-table td.rk-num { left: 0; box-shadow: 4px 0 8px -4px var(--shadow); }
+  .scr-table th.scr-name, .scr-table td.scr-name { left: auto; box-shadow: none; max-width: 22ch; }
+}
+
 /* 🏆 Auraxium weapons (weapons.mjs, owner 2026-10-22): one player only, under the
  * name field, collapsed by default. Reuses the Rankings table look and both pins
  * (header on top, # + weapon on the left); no pick column, so # sits at left 0. */
@@ -3077,8 +3116,9 @@ html[data-room="ps"] .controls .fresh-row-end select.room-select { border-color:
 .old-tab:hover { border-color: var(--accent); }
 .old-tab[aria-expanded="true"] { border-color: var(--accent); color: var(--accent); background: var(--grid); }
 .old-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-#oldTabs details > summary { display: none; }
-#oldTabs details:not([open]) { display: none; }
+/* Only the tab panels themselves (a 🥊 scrim row inside the kill feed is a <details> too). */
+#oldTabs > details > summary, #oldTabs > #statsPublic > details > summary { display: none; }
+#oldTabs > details:not([open]), #oldTabs > #statsPublic > details:not([open]) { display: none; }
 #oldTabs #statsPublic > details.stats-public[open] {
   border: 1px solid var(--border); border-radius: 8px; background: var(--panel); padding: 0.45rem 0.6rem 0.6rem;
 }

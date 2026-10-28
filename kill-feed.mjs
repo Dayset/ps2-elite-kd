@@ -9,8 +9,13 @@
  *
  * Shown only when exactly one player is on the page; collapsed by default and
  * loaded on first open (no Census call for people who never open it).
+ *
+ * 🥊 PlayStation room (owner 2026-10-28): a scrim inside the 100 (scrims.mjs detectScrims) is
+ * folded into ONE row with the score and the winner; it opens to its kills & deaths. Scrim rows
+ * stay in the list but leave the summary numbers (same idea as the PS scrim rule in the stats).
  */
 import { t as tr, currentLang } from "./i18n.mjs";
+import { detectScrims, scrimResult, scrimMinutes, isOneSided } from "./scrims.mjs?v=20261028-scr1";
 
 export const FEED_LIMIT = 100;
 const FAC = { 1: "vs", 2: "nc", 3: "tr", 4: "nso" };
@@ -119,6 +124,70 @@ export function rowHtml(r, now = Date.now(), iviOf = null) {
     `${mark}<span class="kf-who">${who}${tk}</span><span class="kf-gear">${gear}${hs}</span></li>`;
 }
 
+/**
+ * 🥊 Scrims inside the feed (PlayStation room). rows: parseKillFeed rows, newest first.
+ * → { items: [{ r } | { scrim, rows }], scrims, inScrim }: a scrim sits where its newest row was;
+ * rows of other players during the scrim stay outside it, in time order.
+ */
+export function groupFeedScrims(rows, cid) {
+  const me = String(cid);
+  const list = rows || [];
+  const sec = (r) => Math.floor((r.at || 0) / 1000);
+  const ev = list.map((r) => [sec(r), r.kill ? 1 : 0, r.suicide ? me : String(r.otherId || "0"), 0, r.headshot ? 1 : 0, 0, 0, 0, 0]);
+  const scrims = detectScrims(ev, me);
+  if (!scrims.length) return { items: list.map((r) => ({ r })), scrims, inScrim: 0 };
+  const owner = new Map();
+  scrims.forEach((s, si) => {
+    const ids = new Set(s.opp.map((o) => o.id));
+    list.forEach((r, i) => {
+      const t = sec(r);
+      if (!r.suicide && !owner.has(i) && ids.has(String(r.otherId)) && t >= s.t0 && t <= s.t1) owner.set(i, si);
+    });
+  });
+  const items = [];
+  const placed = new Set();
+  list.forEach((r, i) => {
+    if (!owner.has(i)) { items.push({ r }); return; }
+    const si = owner.get(i);
+    if (placed.has(si)) return;
+    placed.add(si);
+    items.push({ scrim: scrims[si], rows: list.filter((_, j) => owner.get(j) === si) });
+  });
+  return { items, scrims, inScrim: owner.size };
+}
+
+export const scrimResultLabel = (res) => (res === "won" ? tr("scr.won", "Won") : res === "lost" ? tr("scr.lost", "Lost") : tr("scr.draw", "Draw"));
+
+const nameBtn = (r, iviOf) => {
+  if (!r || !r.name) return `<span class="kf-name kf-unknown">${esc(tr("kf.unknown", "Unknown player"))}</span>`;
+  const tag = r.tag ? `<span class="kf-tag">[${esc(r.tag)}]</span> ` : "";
+  return `${tag}<button type="button" class="kf-name${r.fac ? ` fac-${r.fac}` : ""}" data-name="${esc(r.name)}" title="${esc(tr("kf.addTip", "Add {name} to the names", { name: r.name }))}">${esc(r.name)}</button>${iviOf ? iviHtml(iviOf(r.name)) : ""}`;
+};
+
+const oneSidedHtml = (s) => (isOneSided(s) ? ` <span class="scr-group scr-one" title="${esc(tr("scr.oneSidedTip", "Almost no kills back (2% or less): not a fair fight."))}">${esc(tr("scr.oneSided", "One-sided"))}</span>` : "");
+
+/** One folded scrim row: 🥊 Scrim ▸ · vs NAME · Won 15–14 · 36 min; opens to its kills & deaths. */
+export function scrimChunkHtml(item, now = Date.now(), iviOf = null) {
+  const s = item.scrim;
+  const by = new Map();
+  for (const r of item.rows) if (!by.has(String(r.otherId))) by.set(String(r.otherId), r);
+  const names = s.opp.map((o) => nameBtn(by.get(o.id), iviOf)).join(", ");
+  const res = scrimResult(s);
+  const end = s.t1 * 1000;
+  const when = new Date(s.t0 * 1000).toLocaleString(lang(), { dateStyle: "medium", timeStyle: "short" });
+  const kind = s.kind === "group" ? tr("kf.groupScrim", "Group scrim") : tr("kf.scrim", "Scrim");
+  return `<li class="kf-scrim kf-scr-${res}"><details><summary class="kf-row kf-scrim-head">` +
+    `<time class="kf-time" datetime="${new Date(end).toISOString()}" title="${esc(when)}">${esc(relTime(end, now))}</time>` +
+    `<span class="kf-mark kf-scr" title="${esc(tr("scr.ruleTip", "Scrim: 10+ kills and deaths in a row with one opponent (no 10-minute break), and that opponent is 60%+ of all kills and deaths in that time. Small groups (2–6 players) count too."))}">🥊 ${esc(kind)}<span class="kf-caret" aria-hidden="true"></span></span>` +
+    `<span class="kf-who">${esc(tr("kf.vs", "vs"))} ${names}</span>` +
+    `<span class="kf-gear"><span class="scr-res scr-${res}">${esc(scrimResultLabel(res))}</span> ${s.k.toLocaleString(lang())}–${s.d.toLocaleString(lang())} · ${esc(tr("scr.min", "{n} min", { n: scrimMinutes(s).toLocaleString(lang()) }))}${oneSidedHtml(s)}</span>` +
+    `</summary><ol class="kf-sub">${item.rows.map((r) => rowHtml(r, now, iviOf)).join("")}</ol></details></li>`;
+}
+
+export function scrimsNoteText(n, rows) {
+  return tr("kf.scrimsNote", "🥊 Scrims folded below: {n} ({rows} kills & deaths), not counted in these numbers.", { n: n.toLocaleString(lang()), rows: rows.toLocaleString(lang()) });
+}
+
 export function summaryText(s) {
   return tr("kf.summary", "{k} kills · {d} deaths · K/D {kd} · headshots {hs} of kills", {
     k: s.kills.toLocaleString(lang()), d: s.deaths.toLocaleString(lang()),
@@ -131,14 +200,20 @@ export function summaryText(s) {
  * @param opts getJson(url) → Promise<json>, baseOf(player) → Census base, addName(name, anchor),
  *   ratings(cb): optional; calls cb(iviOf) each time a (better) cached-rating lookup is ready.
  */
-export function mountKillFeed(section, { getJson, baseOf, addName, ratings } = {}) {
+export function mountKillFeed(section, { getJson, baseOf, addName, ratings, scrims = () => false } = {}) {
   if (!section) return { setPlayers() {} };
   const status = section.querySelector(".kf-status");
   const sum = section.querySelector(".kf-summary");
   const list = section.querySelector(".kf-list");
   const cache = new Map();
-  let player = null, shownCid = null, shownRows = null, iviOf = null, ratingsAsked = false;
-  const paint = () => { if (shownRows) list.innerHTML = shownRows.map((r) => rowHtml(r, Date.now(), iviOf)).join(""); };
+  let player = null, shownCid = null, shownRows = null, shownItems = null, iviOf = null, ratingsAsked = false;
+  const paint = () => {
+    if (!shownRows) return;
+    const now = Date.now();
+    list.innerHTML = shownItems
+      ? shownItems.map((it) => (it.scrim ? scrimChunkHtml(it, now, iviOf) : rowHtml(it.r, now, iviOf))).join("")
+      : shownRows.map((r) => rowHtml(r, now, iviOf)).join("");
+  };
 
   function setStatus(text) { status.textContent = text || ""; status.hidden = !text; }
 
@@ -162,7 +237,15 @@ export function mountKillFeed(section, { getJson, baseOf, addName, ratings } = {
       shownCid = p.cid;
       if (!rows.length) { setStatus(tr("kf.none", "No kills or deaths found for this player.")); sum.hidden = true; list.hidden = true; return; }
       setStatus("");
-      sum.textContent = summaryText(summarizeKillFeed(rows));
+      const g = scrims(p) ? groupFeedScrims(rows, p.cid) : null;
+      if (g && g.scrims.length) {
+        const inScrim = new Set(g.items.filter((it) => it.scrim).flatMap((it) => it.rows));
+        sum.textContent = `${summaryText(summarizeKillFeed(rows.filter((r) => !inScrim.has(r))))} · ${scrimsNoteText(g.scrims.length, g.inScrim)}`;
+        shownItems = g.items;
+      } else {
+        sum.textContent = summaryText(summarizeKillFeed(rows));
+        shownItems = null;
+      }
       sum.hidden = false;
       shownRows = rows;
       paint();
@@ -176,6 +259,7 @@ export function mountKillFeed(section, { getJson, baseOf, addName, ratings } = {
   section.addEventListener("toggle", () => { if (section.open) show(); });
   list.addEventListener("click", (e) => {
     const b = e.target.closest && e.target.closest("button.kf-name[data-name]");
+    if (b && b.closest("summary")) e.preventDefault(); // a name in a folded scrim row: don't toggle the row
     if (b && addName) addName(b.dataset.name, b);
   });
 
@@ -189,7 +273,7 @@ export function mountKillFeed(section, { getJson, baseOf, addName, ratings } = {
       player = one;
       shownCid = null;
       sum.hidden = true; sum.textContent = "";
-      list.hidden = true; list.innerHTML = ""; shownRows = null;
+      list.hidden = true; list.innerHTML = ""; shownRows = null; shownItems = null;
       setStatus("");
       show();
     },

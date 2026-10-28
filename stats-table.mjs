@@ -10,8 +10,9 @@ import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261027-z79
 import { zergEstimate } from "./zerg-revive.mjs?v=20261024-crowd1";
 import { infMedian } from "./tractor.mjs?v=20261024-trac1";
 import { mountWeapons } from "./weapons.mjs?v=20261022-wp4";
-import { mountKillFeed } from "./kill-feed.mjs?v=20261028-kfivi1";
-import { mountOldTabs } from "./old-tabs.mjs?v=20261028-otab2";
+import { mountKillFeed } from "./kill-feed.mjs?v=20261028-scr1";
+import { mountScrims } from "./scrims-panel.mjs?v=20261028-scr1";
+import { mountOldTabs } from "./old-tabs.mjs?v=20261028-scr1";
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261020-wide1";
 import { PS_SERVERS, censusNsBase, roomLsKey } from "./rooms.mjs?v=20261022-ps1";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
@@ -249,6 +250,24 @@ export function createStatsTable($) {
     });
   }
 
+  /* 🥊 Scrims tab (scrims-panel.mjs): PlayStation room only, one player. */
+  let scrimsPanel = null;
+  const psKeyOf = (p) => {
+    if (p && /^(us|eu)-\d+$/.test(String(p.key || ""))) return p.key;
+    const s = Object.values(PS_SERVERS).find((x) => x.name === (p && p.server));
+    return s ? `${s.key}-${p.cid}` : "";
+  };
+  let roomNamesP = null;
+  /** key → "[TAG] Name" from the room's own names.json (PS rows: [name, savedAt, file, slug]). */
+  const roomNames = () => roomNamesP || (roomNamesP = fetch(`${$.DATA}names.json`).then((r) => (r.ok ? r.json() : null)).catch(() => null).then((j) => {
+    const m = new Map();
+    for (const row of (j && j.players) || []) {
+      const f = Array.isArray(row) && /players\/((?:us|eu)-\d+)\.json$/.exec(String(row[2] || ""));
+      if (f) m.set(f[1], String(row[0] || ""));
+    }
+    return m;
+  }));
+
   /* 🗂️ One row of tabs over kill feed / weapons / Census table (old-tabs.mjs). */
   const ensureOldTabs = () => { if (typeof document !== "undefined") mountOldTabs(document.getElementById("oldTabs")); };
 
@@ -261,9 +280,24 @@ export function createStatsTable($) {
         baseOf: censusBaseOf,
         addName: (name, anchor) => { if ($.toggleNameInField) $.toggleNameInField(name, anchor); },
         ratings: killFeedRatings,
+        scrims: () => $.IS_PS, // 🥊 PlayStation: fold scrims into one row each
       });
     }
     killFeedPanel.setPlayers($.LIVE_MODE ? [] : shownList); // not on the LIVE page
+    if (!scrimsPanel) {
+      scrimsPanel = mountScrims(document.getElementById("scrimsSection"), {
+        getJson: (u) => $.censusJson(u),
+        fetchJson: (u) => fetch(u, { cache: "no-cache" }).then((r) => (r.ok ? r.json() : null)),
+        baseOf: censusBaseOf,
+        keyOf: psKeyOf,
+        dataDir: $.DATA,
+        addName: (name, anchor) => { if ($.toggleNameInField) $.toggleNameInField(name, anchor); },
+        sortScroll: keepSortedColumnVisible,
+        catalog: () => fetch("assets/weapons/catalog.json", { cache: "force-cache" }).then((r) => (r.ok ? r.json() : null)),
+        knownNames: roomNames,
+      });
+    }
+    scrimsPanel.setPlayers($.IS_PS && !$.LIVE_MODE ? shownList : []);
     if (!weaponsPanel) {
       weaponsPanel = mountWeapons(document.getElementById("weaponsSection"), {
         getJson: (u) => $.censusJson(u),

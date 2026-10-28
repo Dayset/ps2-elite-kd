@@ -24,6 +24,7 @@ How PS2 Elite (https://dayset.github.io/ps2-elite-kd) and the PS2Map Oracle hand
 |---|---|
 | Cached player files (`data/players/`, `data-ps/players/`) | Refreshed while the character exists; deleted on a removal request |
 | PlayStation login/logout and assist sessions (cache Worker) | 45 days, then deleted automatically |
+| PlayStation scrim records (`data-ps/scrims/`: date, opponent, kills – deaths, continent, weapons; built from public Census kill/death history) | Kept while the character exists; deleted on a removal request (the removed player is also blanked as an opponent) |
 | PC kill-monitor pilot (10 characters, cache Worker, from 2026-10-17) | Kept for the pilot analysis; deleted on request |
 | Oracle outlier reports (per alert) | Kept for fair-play research; deleted on request |
 | Oracle map snapshots / population / flips and ticks | 30 days / 30 days / 90 days |
