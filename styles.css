@@ -1767,8 +1767,7 @@ footer a { color: var(--accent); }
 
 /* Footer (2026-10-19): data first, then one card with three columns —
  * about + data line, links, options (switches) — and a quiet bottom row. */
-footer .footer-data { margin: 1rem 0 0.75rem; }
-footer #statsPublic { color: var(--text); }
+#statsPublic { color: var(--text); }
 footer .footer-block {
   background: var(--panel);
   border: 1px solid var(--border);
@@ -2734,7 +2733,7 @@ html[data-theme="light"] .rk-filter-row input#ranksSearch { color-scheme: light;
   .settings-row.bg-row { display: flex; }
 }
 
-/* t375u: 📊 Public table under the skill graph. */
+/* t747u: 📊 Census / Fisu / Honu style table right under the ✨ skill table. */
 .stats-panel-public:empty { display: none; }
 .stats-panel-public { margin-top: 0.5rem; }
 
@@ -3012,7 +3011,6 @@ body.main-page .dist-section { margin-bottom: 0.34rem; }
  * the footer's first child — rendered ~24px against ~6px everywhere else
  * (Dayset 2026-10-20). Same 0.4rem as the other main-page box gaps. */
 body.main-page footer { margin-top: 0.4rem; }
-body.main-page footer .footer-data { margin: 0.4rem 0 0.3rem; }
 body.main-page footer .footer-block { margin-top: 0.3rem; }
 
 /* PC | PlayStation rooms (#55). The PS room is marked on <html data-room="ps">

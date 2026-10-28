@@ -77,7 +77,7 @@
       });
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261027-kf1" />
+  <link rel="stylesheet" href="styles.css?v=20261028-cfh1" />
   <link rel="stylesheet" href="live.css?v=20261028-voice1" />
   <style>
     /* Installed-app launch splash (t465u). Android draws its own launch splash first:
@@ -447,6 +447,12 @@
     })();
   </script>
 
+  <!-- 📊 Census / Fisu / Honu style (owner t747u): the plain tracker numbers, right under the
+       ✨ skill table (moved up from the footer: people look for it a lot). Folded by default. -->
+  <section class="stats-public-block" aria-label="Census / Fisu / Honu style stats" data-i18n-aria-label="stats.publicAria">
+    <div id="statsPublic" class="stats-panel stats-panel-public" aria-label="Census / Fisu / Honu style stats" data-i18n-aria-label="stats.publicPanelAria"></div>
+  </section>
+
   <details id="chartSection" class="dist-section chart-section" hidden>
     <summary><span data-i18n="chart.title">📈 Skill graph</span> <span id="chartSectionNames" class="chart-section-names"></span></summary>
   <div class="chart-wrap" style="contain: layout paint style;">
@@ -548,11 +554,8 @@
   </section>
 
   <footer>
-    <!-- 2026-10-19: footer redesign. Data first (📊 Public), then one card:
-         about + data line, links, options; disclaimer and legal line at the bottom. -->
-    <section class="footer-data" aria-label="Public stats" data-i18n-aria-label="stats.publicAria">
-      <div id="statsPublic" class="stats-panel stats-panel-public" aria-label="Public stats (Census / Honu)" data-i18n-aria-label="stats.publicPanelAria"></div>
-    </section>
+    <!-- 2026-10-19: footer redesign: one card: about + data line, links, options;
+         disclaimer and legal line at the bottom. (📊 tracker table moved up, t747u.) -->
     <section class="footer-block" aria-label="About, links and options" data-i18n-aria-label="foot.aboutAria">
       <div class="foot-grid">
         <div class="foot-col foot-about">
@@ -600,7 +603,7 @@
   </footer>
 
   <script type="module" src="i18n.mjs"></script>
-  <script type="module" src="app.js?v=20261027-kf1"></script>
+  <script type="module" src="app.js?v=20261028-cfh1"></script>
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").catch(function () {});

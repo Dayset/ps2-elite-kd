@@ -484,11 +484,11 @@ export function createStatsTable($) {
     const pubSorted = sortRows(metrics, publicCols, statsSortState.public);
     const adjSorted = sortRows(metrics, adjCols, statsSortState.adjusted);
 
-    // 📊 Public lives in the footer (#statsPublic, folded);
-    // ✨ Adjusted stays above it without a title line.
+    // 📊 Census / Fisu / Honu style (#statsPublic, folded) sits right under the
+    // ✨ skill table (owner t747u; it used to be in the footer); ✨ has no title line.
     const publicHtml = `
       <details class="stats-section stats-public"${publicStatsOpen ? " open" : ""}>
-        <summary>${tr("stats.publicHead", "📊 Public (Census / Honu)")}</summary>
+        <summary>${tr("stats.publicHead", "📊 Census / Fisu / Honu style")}</summary>
         <div class="stats-table-wrap">
           <table class="stats-table stats-table-transposed" data-stats-table="public">
             <thead><tr>${metricHead(publicCols, "public", statsSortState.public)}</tr></thead>

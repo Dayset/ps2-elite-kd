@@ -17,7 +17,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261027-kf1" />
+  <link rel="stylesheet" href="styles.css?v=20261028-cfh1" />
   <style>
     body { overflow: auto; }
     .st-wrap { max-width: none; margin: 0 auto; padding: 0; } /* Dayset 2026-10-19: same width as the main page — body.site-page already carries max-width: var(--page-w) (#29, site-layout.css); the wrapper no longer narrows it */
@@ -102,7 +102,7 @@
     <nav class="st-toc" aria-label="On this page" data-i18n-aria-label="cp.tocAria">
       <div class="st-toc-group"><a href="#picture" data-i18n="cp.tocIdea">The idea</a> <span class="sep">·</span> <a href="#why-trackers" data-i18n="cp.tocWhy">Why trackers don’t have it</a> <span class="sep">·</span> <a href="#worked-example" data-i18n="cp.tocExample">Example</a> <span class="sep">·</span> <a href="#debug" data-i18n="cp.tocDebug">Debug columns</a></div>
       <div class="st-toc-group"><a class="st-toc-sec" href="#adjusted">✨ Adjusted</a> <span class="sep">·</span> <a href="#ivi">⚔️ iVi</a> <span class="sep">·</span> <a href="#activity">🏃 Activity</a> <span class="sep">·</span> <a href="#brave">🦁 Brave</a> <span class="sep">·</span> <a href="#resist">🛡️ Resist</a> <span class="sep">·</span> <a href="#const">⚡ Const</a> <span class="sep">·</span> <a href="#matchup-kd">☠️ K/D</a> <span class="sep">·</span> <a href="#infantry" data-i18n="cp.tocInfantry">🪖 Infantry</a> <span class="sep">·</span> <a href="#zerg" data-i18n="cp.tocZerg">🪳 Zerg</a> <span class="sep">·</span> <a href="#diff" data-i18n="cp.tocDiff">🔀 Diff</a> <span class="sep">·</span> <a href="#vehicle-cut" data-i18n="cp.tocVehicle">🚜 Vehicle cut</a> <span class="sep">·</span> <a href="#padder" data-i18n="cp.tocPadder">💩 Padders</a> <span class="sep">·</span> <a href="#hut" data-i18n="cp.tocHut">What 🛖 means</a></div>
-      <div class="st-toc-group"><a class="st-toc-sec" href="#public" data-i18n="cp.tocPublic">📊 Public</a> <span class="sep">·</span> <a href="#pub-kd">KD</a> <span class="sep">·</span> <a href="#pub-kpm">KPM</a> <span class="sep">·</span> <a href="#pub-own-kpm">own KPM</a> <span class="sep">·</span> <a href="#pub-acc">Acc %</a> <span class="sep">·</span> <a href="#pub-hsr">HSR %</a> <span class="sep">·</span> <a href="#pub-ivi">IvI</a></div>
+      <div class="st-toc-group"><a class="st-toc-sec" href="#public" data-i18n="cp.tocPublic">📊 Census / Fisu / Honu</a> <span class="sep">·</span> <a href="#pub-kd">KD</a> <span class="sep">·</span> <a href="#pub-kpm">KPM</a> <span class="sep">·</span> <a href="#pub-own-kpm">own KPM</a> <span class="sep">·</span> <a href="#pub-acc">Acc %</a> <span class="sep">·</span> <a href="#pub-hsr">HSR %</a> <span class="sep">·</span> <a href="#pub-ivi">IvI</a></div>
     </nav>
 
     <div class="st-card">
@@ -125,7 +125,7 @@
 
     <div class="st-card">
       <h2 id="why-trackers" data-i18n="cp.whyH">Why Honu and Fisu don’t show these</h2>
-      <p data-i18n="cp.whyP">They look up one player. These columns also need the stats of your ~200 opponents, so this site keeps them all cached and refreshed. The 📊 Public columns are the same numbers the trackers show.</p>
+      <p data-i18n="cp.whyP">They look up one player. These columns also need the stats of your ~200 opponents, so this site keeps them all cached and refreshed. The 📊 Census / Fisu / Honu style columns are the same numbers the trackers show.</p>
     </div>
 
     <h2 class="st-section" id="adjusted" data-i18n="cp.secAdjusted">✨ Adjusted (the default columns)</h2>
@@ -247,7 +247,7 @@
     </div>
 
     <div class="st-sec-head">
-    <h2 class="st-section" id="public" data-i18n="cp.pubH">📊 Public (the tracker numbers)</h2>
+    <h2 class="st-section" id="public" data-i18n="cp.pubH">📊 Census / Fisu / Honu style (the tracker numbers)</h2>
     <p class="st-dim" data-i18n="cp.pubSub">Lifetime numbers from Census, no adjustment. The same ones Honu and Fisu show.</p>
     </div>
 
@@ -289,7 +289,7 @@
           <dt>⚙️ Mech%</dt><dd data-i18n="cp.dbgMech">A guess of your vehicle / mech share, projected from 🛡️ Resist. Not measured.</dd>
           <dt>🎯🎈 ivi</dt><dd data-i18n="cp.dbgIvi">⚔️ iVi before the pace bonus or cut, so slow play still looks good.</dd>
           <dt>eKPM</dt><dd data-i18n="cp.dbgEkpm">How fast your opponents kill, on average. Higher = harder opposition.</dd>
-          <dt>own KPM</dt><dd data-i18n="cp.dbgOwn">Same as the 📊 Public column.</dd>
+          <dt>own KPM</dt><dd data-i18n="cp.dbgOwn">Same as the 📊 Census / Fisu / Honu style column.</dd>
           <dt>📊 COI</dt><dd data-i18n="cp.dbgCoi">🛡️ Resist ÷ 0.6. 1.0 = soft opposition; higher = harder.</dd>
           <dt>📉 Slope</dt><dd data-i18n="cp.dbgSlope">The angle of your line. Negative = your K/D drops against harder enemies. Feeds 🦁 Brave.</dd>
           <dt>🎈 Inflation</dt><dd data-i18n="cp.dbgInfl">Lifetime KD ÷ KD against enemies killing at 0.5+ per minute. Above 1 = easy fights inflate your KD. Lower is better.</dd>
