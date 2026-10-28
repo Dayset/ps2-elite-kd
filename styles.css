@@ -2996,54 +2996,56 @@ html[data-room="ps"] .controls .fresh-row-end select.room-select { border-color:
   border: 1px solid var(--border); border-radius: 4px; opacity: 0.75; white-space: nowrap;
 }
 
-/* ⚔️ Latest 100 kills & deaths (kill-feed.mjs, owner t746u): one player only, above the
- * Auraxium weapons, collapsed by default. A plain list that wraps on phones; no animation. */
+/* ⚔️ Latest 100 kills & deaths (kill-feed.mjs, owner t746u): one player only, collapsed by
+ * default. A real table since 2026-10-28 (owner: "more like a table with proper alignment"):
+ * the Rankings look, fixed column widths from the <colgroup>, # pinned left, header pinned,
+ * names / weapons cut with … (full text on hover). Phones scroll sideways inside the box. */
 .kf-section > summary { margin: 0; }
 .kf-section[open] > summary { margin-bottom: 0.4rem; }
 .kf-section .kf-status { margin: 0.3rem 0; color: var(--dim); }
 .kf-summary { margin: 0.2rem 0 0.4rem; font-weight: 600; font-size: 0.9rem; }
-.kf-list { list-style: none; margin: 0; padding: 0; max-height: 26rem; overflow-y: auto; font-size: 0.88rem; }
-.kf-row {
-  display: grid; grid-template-columns: 5.5rem 4.6rem minmax(0, 1fr) minmax(0, 1.2fr); gap: 0.2rem 0.5rem;
-  align-items: center; padding: 0.22rem 0.3rem; border-bottom: 1px solid var(--border);
-}
-.kf-row:last-child { border-bottom: 0; }
-.kf-time { color: var(--dim); font-size: 0.8rem; white-space: nowrap; }
-.kf-mark { display: inline-block; text-align: center; border-radius: 4px; padding: 0 0.3rem; font-size: 0.78rem; font-weight: 700; color: #fff; }
+.kf-scroll { max-height: 30rem; }
+.kf-table { min-width: 38rem; }
+.kf-table col.kf-w-num { width: 2.6rem; }
+.kf-table col.kf-w-time { width: 6.2rem; }
+.kf-table col.kf-w-mark { width: 6.4rem; }
+.kf-table col.kf-w-ivi { width: 5.2rem; }
+.kf-table col.kf-w-gear { width: 38%; }
+.kf-table th.rk-num, .kf-table td.rk-num { left: 0; }
+.kf-table th.kf-c-time, .kf-table td.kf-c-time,
+.kf-table th.kf-c-mark, .kf-table td.kf-c-mark,
+.kf-table th.kf-c-who, .kf-table td.kf-c-who,
+.kf-table th.kf-c-gear, .kf-table td.kf-c-gear { text-align: left; }
+.kf-table td { overflow: hidden; text-overflow: ellipsis; }
+.kf-table td.kf-c-time { color: var(--dim); }
+.kf-table td.kf-c-gear { color: var(--dim); }
+.kf-mark { display: inline-block; text-align: center; border-radius: 4px; padding: 0 0.3rem; font-size: 0.74rem; font-weight: 700; color: #fff; line-height: 1.35; }
 .kf-kill { background: #2e9d57; }
 .kf-death { background: #c0392b; }
 .kf-sui { background: #7f7f7f; }
-.kf-tk { display: inline-block; border-radius: 4px; padding: 0 0.3rem; font-size: 0.72rem; font-weight: 700; background: var(--warn); color: #000; }
-.kf-who { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.kf-tag { color: var(--dim); font-size: 0.8rem; }
+.kf-tk { display: inline-block; border-radius: 4px; padding: 0 0.25rem; font-size: 0.68rem; font-weight: 700; background: var(--warn); color: #000; }
+.kf-tag { color: var(--dim); font-weight: 400; }
 .kf-name { font: inherit; font-weight: 600; background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline dotted; }
 .kf-name:not([class*="fac-"]) { color: inherit; }
 .kf-name.kf-unknown { cursor: default; text-decoration: none; color: var(--dim); }
-/* Opponent ⚔️ iVi (cached ranks only): small, tier emoji + number; hover = iVi tip. */
-.kf-ivi { font-size: 0.78rem; font-variant-numeric: tabular-nums; color: var(--dim); white-space: nowrap; cursor: help; }
+/* Opponent ⚔️ iVi (cached ranks only): tier emoji + number; hover = iVi tip. */
+.kf-ivi { font-variant-numeric: tabular-nums; color: var(--dim); white-space: nowrap; cursor: help; }
 .kf-ivi.kf-t-top1, .kf-ivi.kf-t-top5, .kf-ivi.kf-t-top10 { color: var(--accent); font-weight: 600; }
 .kf-pad { font-weight: 700; cursor: help; }
 .kf-oor { font-size: 0.72rem; font-weight: 700; color: var(--dim); border: 1px solid var(--grid); border-radius: 3px; padding: 0 0.2rem; cursor: help; }
-.kf-gear { min-width: 0; color: var(--dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-@media (max-width: 560px) {
-  .kf-row { grid-template-columns: auto auto minmax(0, 1fr); }
-  .kf-gear { grid-column: 1 / -1; white-space: normal; }
-}
 
-/* 🥊 PlayStation scrims (owner 2026-10-28). In the Latest 100: one folded row per scrim
- * (same grid as a kill row, opens to its kills & deaths). Tab: scrims-panel.mjs table with the
- * Rankings look (header + # pinned, name pinned on PC only). Theme tokens only, nothing moves. */
-.kf-scrim { border-bottom: 1px solid var(--border); }
-.kf-scrim:last-child { border-bottom: 0; }
-.kf-scrim > details > summary { list-style: none; cursor: pointer; border-bottom: 0; }
-.kf-scrim > details > summary::-webkit-details-marker { display: none; }
-.kf-scrim > details[open] > summary { background: var(--row-alt); }
+/* 🥊 PlayStation scrims (owner 2026-10-28). In the Latest 100: one row per scrim (▸ on the # opens
+ * its kills & deaths as indented rows under it). Tab: scrims-panel.mjs table with the same look and
+ * fixed column widths. Theme tokens only, nothing moves. */
+.kf-scr-row td { cursor: pointer; font-weight: 600; }
+.kf-scr-row.is-open td { background: var(--row-alt); }
 .kf-scr { background: var(--accent); color: var(--btn-text); white-space: nowrap; }
-.kf-caret::before { content: " ▸"; }
-.kf-scrim > details[open] .kf-caret::before { content: " ▾"; }
-.kf-sub { list-style: none; margin: 0 0 0.3rem 0.9rem; padding: 0 0 0 0.4rem; border-left: 2px solid var(--grid); }
-.kf-sub .kf-row { padding-top: 0.15rem; padding-bottom: 0.15rem; }
-.kf-scrim-head .kf-who { white-space: normal; }
+.kf-caret { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; white-space: nowrap; }
+.kf-caret::before { content: "▸ "; color: var(--accent); }
+.kf-scr-row.is-open .kf-caret::before { content: "▾ "; }
+.kf-table tr.kf-sub-row td.kf-c-time { padding-left: 0.9rem; box-shadow: inset 2px 0 0 var(--accent); }
+.kf-vs { color: var(--dim); font-weight: 400; }
+.kf-more { color: var(--dim); font-weight: 600; cursor: help; }
 .scr-res { font-weight: 700; }
 .scr-res.scr-won { color: var(--token-ok-fg); }
 .scr-res.scr-lost { color: var(--token-fail-fg); }
@@ -3051,22 +3053,36 @@ html[data-room="ps"] .controls .fresh-row-end select.room-select { border-color:
 .scr-section > summary { margin: 0; }
 .scr-section[open] > summary { margin-bottom: 0.5rem; }
 .scr-section .scr-status { margin: 0.3rem 0; color: var(--dim); }
-.scr-table { table-layout: auto; }
-.scr-table th.rk-num, .scr-table td.rk-num { left: 0; width: 2.2rem; box-shadow: none; }
+/* Fixed widths (owner 2026-10-28: "different lengths of columns"): every column has its width in the
+ * <colgroup> (scrims-panel.mjs), names cut with …, weapons take what is left. */
+.scr-table { min-width: 52rem; }
+.scr-table.scr-top { min-width: 64rem; }
+.scr-table col.scr-w-num { width: 2.6rem; }
+.scr-table col.scr-w-name { width: 15rem; }
+.scr-table col.scr-w-size { width: 4.6rem; }
+.scr-table col.scr-w-date { width: 10.5rem; }
+.scr-table col.scr-w-result { width: 9.5rem; }
+.scr-table col.scr-w-len { width: 5.4rem; }
+.scr-table col.scr-w-zone { width: 6.6rem; }
+.scr-table th.rk-num, .scr-table td.rk-num { left: 0; }
 .scr-table th.scr-name, .scr-table td.scr-name {
-  position: sticky; left: 2.2rem; z-index: 1; text-align: left;
-  box-shadow: 4px 0 8px -4px var(--shadow); max-width: 30ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  position: sticky; left: 2.6rem; z-index: 1; text-align: left; box-shadow: 4px 0 8px -4px var(--shadow);
 }
 .scr-table thead th.scr-name { z-index: 4; }
-.scr-table td { white-space: nowrap; }
-.scr-table td.scr-result { font-variant-numeric: tabular-nums; }
-.scr-table .scr-weapons { color: var(--dim); }
-.scr-group { display: inline-block; font-size: 0.72rem; font-weight: 700; border: 1px solid var(--grid); border-radius: 3px; padding: 0 0.25rem; color: var(--dim); cursor: help; }
-.scr-sub { color: var(--dim); font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+.scr-table th.scr-opp, .scr-table td.scr-opp, .scr-table th.scr-weapons, .scr-table td.scr-weapons { text-align: left; }
+.scr-table td { overflow: hidden; text-overflow: ellipsis; }
+.scr-table td.scr-weapons { color: var(--dim); }
+.scr-group { display: inline-block; font-size: 0.68rem; font-weight: 700; border: 1px solid var(--grid); border-radius: 3px; padding: 0 0.2rem; color: var(--dim); cursor: help; vertical-align: 0.05em; }
 @media (max-width: 600px) {
   /* Phones: like Rankings, only # stays pinned so the result gets the screen. */
-  .scr-table th.rk-num, .scr-table td.rk-num { left: 0; box-shadow: 4px 0 8px -4px var(--shadow); }
-  .scr-table th.scr-name, .scr-table td.scr-name { left: auto; box-shadow: none; max-width: 22ch; }
+  .scr-table th.rk-num, .scr-table td.rk-num, .kf-table th.rk-num, .kf-table td.rk-num { left: 0; box-shadow: 4px 0 8px -4px var(--shadow); }
+  .scr-table th.scr-name, .scr-table td.scr-name { left: auto; box-shadow: none; }
+  .scr-table col.scr-w-name { width: 12.5rem; }
+  /* Kill feed: real widths for the name and weapon too (the box scrolls sideways). */
+  .kf-table { min-width: 41rem; }
+  .kf-table col.kf-w-time { width: 5.6rem; }
+  .kf-table col.kf-w-who { width: 11rem; }
+  .kf-table col.kf-w-gear { width: 10.6rem; }
 }
 
 /* 🏆 Auraxium weapons (weapons.mjs, owner 2026-10-22): one player only, under the

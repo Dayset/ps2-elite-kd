@@ -159,10 +159,12 @@ export function mountScrims(section, o = {}) {
     return `${tag ? `<span class="kf-tag">[${esc(tag)}]</span> ` : ""}<button type="button" class="kf-name" data-name="${esc(nm)}" title="${esc(tr("kf.addTip", "Add {name} to the names", { name: nm }))}">${esc(nm)}</button>`;
   }
 
+  /** One line, fixed width: first opponent + "+N" for a group (each one's kills – deaths on hover). */
   function oppCell(r) {
-    const group = r.o.length > 1;
-    const people = r.o.map((x) => personHtml(x[1]) + (group ? ` <span class="scr-sub">${x[2]}–${x[3]}</span>` : "")).join(", ");
-    return group ? `<span class="scr-group" title="${esc(tr("scr.groupTip", "Small-group scrim: this player's kills – deaths against each of them, and in total under Result."))}">${esc(tr("scr.group", "Group"))}</span> ${people}` : people;
+    if (r.o.length < 2) return personHtml(r.o[0] && r.o[0][1]);
+    const all = r.o.map((x) => `${bare(x[1]) || "?"} ${x[2]}–${x[3]}`).join(", ");
+    const tip = `${tr("scr.groupTip", "Small-group scrim: this player's kills – deaths against each of them, and in total under Result.")} ${all}`;
+    return `<span class="scr-group" title="${esc(tip)}">+${r.o.length - 1}</span> ${personHtml(r.o[0][1])}`;
   }
 
   function render() {
@@ -171,10 +173,14 @@ export function mountScrims(section, o = {}) {
     const ind = (id) => `<span class="sort-ind${sortKey === id ? " active" : ""}">${sortKey === id ? (sortDir === "asc" ? "▲" : "▼") : "▼"}</span>`;
     const th = (id, label, hint, cls = "") => `<th class="${cls}sortable${sortKey === id ? " sorted" : ""}" data-sort="${id}" scope="col"${hint ? ` title="${esc(hint)}"` : ""}>${esc(label)}${ind(id)}</th>`;
     const top = !!shown.top;
+    table.classList.toggle("scr-top", top);
+    let cg = table.querySelector("colgroup");
+    if (!cg) { cg = document.createElement("colgroup"); table.insertBefore(cg, table.firstChild); }
+    cg.innerHTML = ["num", ...(top ? ["name", "name"] : ["name"]), "size", "date", "result", "len", "zone", "weapons"].map((c) => `<col class="scr-w-${c}" />`).join("");
     table.querySelector("thead").innerHTML = `<tr><th class="rk-num" scope="col">#</th>` +
       (top ? th("player", tr("scr.player", "Player"), tr("scr.playerTip", "The winner of a 1v1 (in a group scrim: the player whose history found it). Click a name to add it to the names."), "scr-name ") : "") +
-      th("opp", tr("scr.opponent", "Opponent"), tr("scr.opponentTip", "Who the scrim was against. Click a name to add it to the names."), top ? "" : "scr-name ") +
-      cols.map((c) => th(c.id, c.label, c.hint)).join("") + `</tr>`;
+      th("opp", tr("scr.opponent", "Opponent"), tr("scr.opponentTip", "Who the scrim was against. Click a name to add it to the names."), top ? "scr-opp " : "scr-name ") +
+      cols.map((c) => th(c.id, c.label, c.hint, c.id === "weapons" ? "scr-weapons " : "")).join("") + `</tr>`;
     const now = Date.now();
     table.querySelector("tbody").innerHTML = sorted(shown.rows).map((r, i) => {
       const res = scrimResult(r);
@@ -187,7 +193,7 @@ export function mountScrims(section, o = {}) {
         `<td class="scr-result"><span class="scr-res scr-${res}">${esc(scrimResultLabel(res))}</span> ${r.k.toLocaleString(lang())}–${r.d.toLocaleString(lang())}${oneSidedHtml(r)}</td>` +
         `<td>${esc(tr("scr.min", "{n} min", { n: scrimMinutes(r).toLocaleString(lang()) }))}</td>` +
         `<td>${esc(zoneName(r.z))}</td>` +
-        `<td class="scr-weapons">${esc(wName(shown.cat, r.w[0]))} · ${esc(wName(shown.cat, r.w[1]))}</td></tr>`;
+        ((w) => `<td class="scr-weapons" title="${esc(w)}">${esc(w)}</td></tr>`)(`${wName(shown.cat, r.w[0])} · ${wName(shown.cat, r.w[1])}`);
     }).join("");
   }
 

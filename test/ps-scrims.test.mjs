@@ -178,12 +178,13 @@ test("Latest 100 (PS): the scrim is one folded row at its newest kill, other pla
   assert.equal(g.items.length, rows.length - 29 + 1);
   assert.equal(g.items[0].r.otherId, "5428406084400988449", "the newer death to someone else stays first");
   assert.ok(g.items[1].scrim, "the scrim row comes right after it");
-  const html = scrimChunkHtml(chunks[0], fx.events[0][0] * 1000 + 60_000);
-  assert.match(html, /<li class="kf-scrim kf-scr-won"><details><summary class="kf-row kf-scrim-head">/);
+  const html = scrimChunkHtml(chunks[0], fx.events[0][0] * 1000 + 60_000, null, "2", 0);
+  assert.match(html, /^<tr class="kf-scr-row kf-scr-won" data-scr="0"><td class="rk-num"><button type="button" class="kf-caret" aria-expanded="false"/);
   assert.match(html, /🥊 Scrim/);
   assert.match(html, /data-name="GimmeDatAnchor"/);
   assert.match(html, /scr-won">Won<\/span> 15–14 · 36 min/);
-  assert.equal((html.match(/<li class="kf-row/g) || []).length, 29, "the 29 rows are inside");
+  assert.equal((html.match(/<tr data-of="0" class="kf-row[^"]* kf-sub-row" hidden>/g) || []).length, 29, "the 29 rows follow it, hidden until ▸");
+  assert.equal((html.match(/<td/g) || []).length, 30 * 6, "every row has the table's 6 cells");
   // Summary numbers leave the scrim out.
   const inScrim = new Set(chunks[0].rows);
   const rest = rows.filter((r) => !inScrim.has(r));

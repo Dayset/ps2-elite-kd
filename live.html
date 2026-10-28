@@ -77,7 +77,7 @@
       });
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261028-top1" />
+  <link rel="stylesheet" href="styles.css?v=20261028-kft1" />
   <link rel="stylesheet" href="live.css?v=20261028-voice2" />
   <style>
     /* Installed-app launch splash (t465u). Android draws its own launch splash first:
@@ -417,7 +417,13 @@
       <summary><span data-i18n="kf.title">⚔️ Latest 100 kills &amp; deaths</span></summary>
       <p class="kf-status ranks-status" role="status" hidden></p>
       <p class="kf-summary" hidden></p>
-      <ol class="kf-list" hidden></ol>
+      <div class="ranks-table-wrap kf-scroll" hidden>
+        <table class="ranks-table kf-table" aria-label="Latest 100 kills &amp; deaths" data-i18n-aria-label="kf.title">
+          <colgroup><col class="kf-w-num" /><col class="kf-w-time" /><col class="kf-w-mark" /><col class="kf-w-who" /><col class="kf-w-ivi" /><col class="kf-w-gear" /></colgroup>
+          <thead></thead>
+          <tbody class="kf-list"></tbody>
+        </table>
+      </div>
     </details>
 
     <!-- 🥊 Scrims (scrims-panel.mjs, owner 2026-10-28): PlayStation room only, one player only,
@@ -626,7 +632,7 @@
   </footer>
 
   <script type="module" src="i18n.mjs"></script>
-  <script type="module" src="app.js?v=20261028-top1"></script>
+  <script type="module" src="app.js?v=20261028-kft1"></script>
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").catch(function () {});

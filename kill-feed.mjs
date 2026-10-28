@@ -107,21 +107,36 @@ export function iviHtml(info) {
   return `${mark}${poop} <span class="kf-ivi${info.tier ? ` kf-t-${esc(info.tier)}` : ""}" title="${esc(tip)}">${emo ? `${emo}\u2009` : ""}${n.toLocaleString(lang())}</span>`;
 }
 
-export function rowHtml(r, now = Date.now(), iviOf = null) {
-  const when = r.at ? new Date(r.at).toLocaleString(lang(), { dateStyle: "medium", timeStyle: "short" }) : "";
+/** Table head (owner 2026-10-28: "more like a table with proper alignment"). */
+export function feedHeadHtml() {
+  return `<tr><th class="rk-num" scope="col">#</th><th class="kf-c-time" scope="col">${esc(tr("kf.colWhen", "When"))}</th>` +
+    `<th class="kf-c-mark" scope="col">${esc(tr("kf.colWhat", "Result"))}</th><th class="kf-c-who" scope="col">${esc(tr("kf.colPlayer", "Player"))}</th>` +
+    `<th class="kf-c-ivi" scope="col" title="${esc(tr("tip.adjs", "Rating vs the ~200 players you fight most. Stronger foes count more; fast kills add, slow safe play costs."))}">⚔️ iVi</th>` +
+    `<th class="kf-c-gear" scope="col">${esc(tr("kf.colWeapon", "Weapon"))}</th></tr>`;
+}
+
+const timeCell = (ms, now, titleMs = ms) => {
+  const when = titleMs ? new Date(titleMs).toLocaleString(lang(), { dateStyle: "medium", timeStyle: "short" }) : "";
+  return `<td class="kf-c-time"><time datetime="${ms ? new Date(ms).toISOString() : ""}" title="${esc(when)}">${esc(ms ? relTime(ms, now) : "")}</time></td>`;
+};
+
+/** One kill / death as a table row. num: the # shown (sub-rows of a scrim have none). */
+export function rowHtml(r, now = Date.now(), iviOf = null, num = "", sub = false) {
   const mark = r.suicide
     ? `<span class="kf-mark kf-sui">${esc(tr("kf.suicide", "Suicide"))}</span>`
     : r.kill ? `<span class="kf-mark kf-kill">${esc(tr("kf.kill", "Kill"))}</span>` : `<span class="kf-mark kf-death">${esc(tr("kf.death", "Death"))}</span>`;
   const tk = r.teamkill ? ` <span class="kf-tk">${esc(tr("kf.teamkill", "Teamkill"))}</span>` : "";
   const tag = r.tag ? `<span class="kf-tag">[${esc(r.tag)}]</span> ` : "";
   const who = r.suicide ? "" : r.name
-    ? `${tag}<button type="button" class="kf-name${r.fac ? ` fac-${r.fac}` : ""}" data-name="${esc(r.name)}" title="${esc(tr("kf.addTip", "Add {name} to the names", { name: r.name }))}">${esc(r.name)}</button>${iviOf ? iviHtml(iviOf(r.name)) : ""}`
+    ? `${tag}<button type="button" class="kf-name${r.fac ? ` fac-${r.fac}` : ""}" data-name="${esc(r.name)}" title="${esc(tr("kf.addTip", "Add {name} to the names", { name: r.name }))}">${esc(r.name)}</button>`
     : `<span class="kf-name kf-unknown">${esc(tr("kf.unknown", "Unknown player"))}</span>`;
-  const gear = [r.weapon, r.vehicle ? `🚜 ${r.vehicle}` : ""].filter(Boolean).map(esc).join(" · ");
-  const hs = r.headshot ? ` <span class="kf-hs" title="${esc(tr("kf.headshot", "Headshot"))}">🎯</span>` : "";
-  return `<li class="kf-row${r.kill ? " is-kill" : " is-death"}${r.teamkill ? " is-tk" : ""}${r.suicide ? " is-sui" : ""}">` +
-    `<time class="kf-time" datetime="${r.at ? new Date(r.at).toISOString() : ""}" title="${esc(when)}">${esc(r.at ? relTime(r.at, now) : "")}</time>` +
-    `${mark}<span class="kf-who">${who}${tk}</span><span class="kf-gear">${gear}${hs}</span></li>`;
+  const ivi = !r.suicide && r.name && iviOf ? iviHtml(iviOf(r.name)) : "";
+  const gearTxt = [r.weapon, r.vehicle ? `🚜 ${r.vehicle}` : ""].filter(Boolean).join(" · ");
+  const hs = r.headshot ? `<span class="kf-hs" title="${esc(tr("kf.headshot", "Headshot"))}">🎯</span> ` : "";
+  return `<tr class="kf-row${r.kill ? " is-kill" : " is-death"}${r.teamkill ? " is-tk" : ""}${r.suicide ? " is-sui" : ""}${sub ? " kf-sub-row" : ""}"${sub ? " hidden" : ""}>` +
+    `<td class="rk-num">${esc(num)}</td>${timeCell(r.at, now)}<td class="kf-c-mark">${mark}${tk}</td>` +
+    `<td class="kf-c-who">${who}</td><td class="kf-c-ivi">${ivi}</td>` +
+    `<td class="kf-c-gear" title="${esc(gearTxt)}">${hs}${esc(gearTxt)}</td></tr>`;
 }
 
 /**
@@ -166,22 +181,28 @@ const nameBtn = (r, iviOf) => {
 
 const oneSidedHtml = (s) => (isOneSided(s) ? ` <span class="scr-group scr-one" title="${esc(tr("scr.oneSidedTip", "Almost no kills back (2% or less): not a fair fight."))}">${esc(tr("scr.oneSided", "One-sided"))}</span>` : "");
 
-/** One folded scrim row: 🥊 Scrim ▸ · vs NAME · Won 15–14 · 36 min; opens to its kills & deaths. */
-export function scrimChunkHtml(item, now = Date.now(), iviOf = null) {
+/**
+ * One folded scrim: a header row (▸ · time · 🥊 Scrim · vs NAME · opponent iVi · Won 15–14 · 36 min)
+ * and its kills & deaths as hidden rows right under it (data-scr ties them; ▸ opens them).
+ */
+export function scrimChunkHtml(item, now = Date.now(), iviOf = null, num = "", idx = 0) {
   const s = item.scrim;
   const by = new Map();
   for (const r of item.rows) if (!by.has(String(r.otherId))) by.set(String(r.otherId), r);
-  const names = s.opp.map((o) => nameBtn(by.get(o.id), iviOf)).join(", ");
+  const first = by.get(s.opp[0].id);
+  const more = s.opp.length - 1;
+  const all = s.opp.map((o) => { const r = by.get(o.id); return `${(r && r.name) || "?"} ${o.k}–${o.d}`; }).join(", ");
+  const who = `<span class="kf-vs">${esc(tr("kf.vs", "vs"))}</span> ${nameBtn(first, null)}${more ? ` <span class="kf-more" title="${esc(all)}">+${more}</span>` : ""}`;
   const res = scrimResult(s);
   const end = s.t1 * 1000;
-  const when = new Date(s.t0 * 1000).toLocaleString(lang(), { dateStyle: "medium", timeStyle: "short" });
   const kind = s.kind === "group" ? tr("kf.groupScrim", "Group scrim") : tr("kf.scrim", "Scrim");
-  return `<li class="kf-scrim kf-scr-${res}"><details><summary class="kf-row kf-scrim-head">` +
-    `<time class="kf-time" datetime="${new Date(end).toISOString()}" title="${esc(when)}">${esc(relTime(end, now))}</time>` +
-    `<span class="kf-mark kf-scr" title="${esc(tr("scr.ruleTip", "Scrim: 10+ kills and deaths in a row with one opponent (no 10-minute break), and that opponent is 60%+ of all kills and deaths in that time. Small groups (2–6 players) count too."))}">🥊 ${esc(kind)}<span class="kf-caret" aria-hidden="true"></span></span>` +
-    `<span class="kf-who">${esc(tr("kf.vs", "vs"))} ${names}</span>` +
-    `<span class="kf-gear"><span class="scr-res scr-${res}">${esc(scrimResultLabel(res))}</span> ${s.k.toLocaleString(lang())}–${s.d.toLocaleString(lang())} · ${esc(tr("scr.min", "{n} min", { n: scrimMinutes(s).toLocaleString(lang()) }))}${oneSidedHtml(s)}</span>` +
-    `</summary><ol class="kf-sub">${item.rows.map((r) => rowHtml(r, now, iviOf)).join("")}</ol></details></li>`;
+  const open = tr("kf.scrimOpen", "Show the scrim's kills & deaths");
+  return `<tr class="kf-scr-row kf-scr-${res}" data-scr="${idx}"><td class="rk-num"><button type="button" class="kf-caret" aria-expanded="false" aria-label="${esc(open)}" title="${esc(open)}">${esc(num)}</button></td>` +
+    timeCell(end, now, s.t0 * 1000) +
+    `<td class="kf-c-mark"><span class="kf-mark kf-scr" title="${esc(tr("scr.ruleTip", "Scrim: 10+ kills and deaths in a row with one opponent (no 10-minute break), and that opponent is 60%+ of all kills and deaths in that time. Small groups (2–6 players) count too."))}">🥊 ${esc(kind)}</span></td>` +
+    `<td class="kf-c-who">${who}</td><td class="kf-c-ivi">${first && first.name && iviOf && !more ? iviHtml(iviOf(first.name)) : ""}</td>` +
+    `<td class="kf-c-gear"><span class="scr-res scr-${res}">${esc(scrimResultLabel(res))}</span> ${s.k.toLocaleString(lang())}–${s.d.toLocaleString(lang())} · ${esc(tr("scr.min", "{n} min", { n: scrimMinutes(s).toLocaleString(lang()) }))}${oneSidedHtml(s)}</td></tr>` +
+    item.rows.map((r) => rowHtml(r, now, iviOf, "", true).replace("<tr ", `<tr data-of="${idx}" `)).join("");
 }
 
 export function scrimsNoteText(n, rows) {
@@ -204,18 +225,34 @@ export function mountKillFeed(section, { getJson, baseOf, addName, ratings, scri
   if (!section) return { setPlayers() {} };
   const status = section.querySelector(".kf-status");
   const sum = section.querySelector(".kf-summary");
-  const list = section.querySelector(".kf-list");
+  const list = section.querySelector(".kf-list"); // <tbody>
+  const wrap = section.querySelector(".kf-scroll");
+  const head = section.querySelector(".kf-table thead");
+  const opened = new Set(); // scrim rows the reader opened (kept across repaints)
   const cache = new Map();
   let player = null, shownCid = null, shownRows = null, shownItems = null, iviOf = null, ratingsAsked = false;
   const paint = () => {
     if (!shownRows) return;
     const now = Date.now();
-    list.innerHTML = shownItems
-      ? shownItems.map((it) => (it.scrim ? scrimChunkHtml(it, now, iviOf) : rowHtml(it.r, now, iviOf))).join("")
-      : shownRows.map((r) => rowHtml(r, now, iviOf)).join("");
+    if (head && !head.innerHTML) head.innerHTML = feedHeadHtml();
+    let n = 0, k = 0;
+    list.innerHTML = (shownItems || shownRows.map((r) => ({ r }))).map((it) => {
+      n++;
+      return it.scrim ? scrimChunkHtml(it, now, iviOf, String(n), k++) : rowHtml(it.r, now, iviOf, String(n));
+    }).join("");
+    for (const i of opened) setOpen(i, true);
   };
 
   function setStatus(text) { status.textContent = text || ""; status.hidden = !text; }
+  function setOpen(i, on) {
+    const row = list.querySelector(`tr.kf-scr-row[data-scr="${i}"]`);
+    if (!row) return;
+    row.classList.toggle("is-open", on);
+    const b = row.querySelector(".kf-caret");
+    if (b) b.setAttribute("aria-expanded", on ? "true" : "false");
+    for (const r of list.querySelectorAll(`tr[data-of="${i}"]`)) r.hidden = !on;
+    if (on) opened.add(i); else opened.delete(i);
+  }
 
   async function show() {
     const p = player;
@@ -235,7 +272,7 @@ export function mountKillFeed(section, { getJson, baseOf, addName, ratings, scri
       const rows = await job;
       if (player !== p) return;
       shownCid = p.cid;
-      if (!rows.length) { setStatus(tr("kf.none", "No kills or deaths found for this player.")); sum.hidden = true; list.hidden = true; return; }
+      if (!rows.length) { setStatus(tr("kf.none", "No kills or deaths found for this player.")); sum.hidden = true; wrap.hidden = true; return; }
       setStatus("");
       const g = scrims(p) ? groupFeedScrims(rows, p.cid) : null;
       if (g && g.scrims.length) {
@@ -248,8 +285,9 @@ export function mountKillFeed(section, { getJson, baseOf, addName, ratings, scri
       }
       sum.hidden = false;
       shownRows = rows;
+      opened.clear();
       paint();
-      list.hidden = false;
+      wrap.hidden = false;
     } catch (_) {
       if (player !== p) return;
       setStatus(tr("kf.error", "Census is busy: close and open this block to try again."));
@@ -259,8 +297,9 @@ export function mountKillFeed(section, { getJson, baseOf, addName, ratings, scri
   section.addEventListener("toggle", () => { if (section.open) show(); });
   list.addEventListener("click", (e) => {
     const b = e.target.closest && e.target.closest("button.kf-name[data-name]");
-    if (b && b.closest("summary")) e.preventDefault(); // a name in a folded scrim row: don't toggle the row
-    if (b && addName) addName(b.dataset.name, b);
+    if (b) { if (addName) addName(b.dataset.name, b); return; }
+    const row = e.target.closest && e.target.closest("tr.kf-scr-row");
+    if (row) setOpen(row.dataset.scr, !row.classList.contains("is-open"));
   });
 
   return {
@@ -273,7 +312,7 @@ export function mountKillFeed(section, { getJson, baseOf, addName, ratings, scri
       player = one;
       shownCid = null;
       sum.hidden = true; sum.textContent = "";
-      list.hidden = true; list.innerHTML = ""; shownRows = null; shownItems = null;
+      wrap.hidden = true; list.innerHTML = ""; shownRows = null; shownItems = null; opened.clear();
       setStatus("");
       show();
     },
