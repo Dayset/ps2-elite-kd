@@ -19,8 +19,8 @@ await i18nReady;
  *     fetch in the background (one at a time, newest first, #32) and upgrade in place.
  * Pure helpers are exported for tests; the DOM part runs only in a browser.
  */
-export * from "./live-model.mjs?v=20261028-check1"; // #66: the pure part (tests import it from here)
-import { VICTIM_LINES, classifyDeath, censusStats, LIVE_COLS, tipText, FILL_DIM, HOLLOW_PX, HOLLOW_INK, goodPct, fillDriver, emojiFill, unknownFill, infUnit, OUTLINE_PX, unitGlow, LIVE_GLOWS, LIVE_FPS, liveFps, HALO_KEY, haloOn, easeFill, glowIn, BEAT, TIER_MOTION, haloAt, SHINE, shineFrame, beatSleep, weaponIcon, glowTier, eventAt, overlayPush, overlayRows, nextBgFetch, liveRowFromPlayer, ME_REFRESH_MS, median, mergeFresh, SHARE_MAX, shareDelay, cellText, slugKey, bountyNext, dpsNow, DPS_HP, DPS_ASSIST, DPS_ASSIST_XP, assistShare, xpMultAt, KILL_BASE_XP, cashTotals, cashFormula, combatHoldMs, holdGaps, combatRuns, spawnRunHoldMs, timeToCombatMs, timerBarPct, easeInQuad, tierLabel, tierVoiceLine, TIER_VOICE_LINES, cidNameEntry } from "./live-model.mjs?v=20261028-check1";
+export * from "./live-model.mjs?v=20261028-voice2"; // #66: the pure part (tests import it from here)
+import { VICTIM_LINES, classifyDeath, censusStats, LIVE_COLS, tipText, FILL_DIM, HOLLOW_PX, HOLLOW_INK, goodPct, fillDriver, emojiFill, unknownFill, infUnit, OUTLINE_PX, unitGlow, LIVE_GLOWS, LIVE_FPS, liveFps, HALO_KEY, haloOn, easeFill, glowIn, BEAT, TIER_MOTION, haloAt, SHINE, shineFrame, beatSleep, weaponIcon, glowTier, eventAt, overlayPush, overlayRows, nextBgFetch, liveRowFromPlayer, ME_REFRESH_MS, median, mergeFresh, SHARE_MAX, shareDelay, cellText, slugKey, bountyNext, dpsNow, DPS_HP, DPS_ASSIST, DPS_ASSIST_XP, assistShare, xpMultAt, KILL_BASE_XP, cashTotals, cashFormula, combatHoldMs, holdGaps, combatRuns, spawnRunHoldMs, timeToCombatMs, timerBarPct, easeInQuad, tierLabel, tierVoiceLine, TIER_VOICE_LINES, cidNameEntry } from "./live-model.mjs?v=20261028-voice2";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261023-short1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
@@ -28,7 +28,7 @@ import { traitPools, zergScore } from "./trait-scores.mjs?v=20261027-z79";
 import { zergEstimate } from "./zerg-revive.mjs?v=20261024-crowd1";
 import { infMedian, tractorCuts, TRACTOR_EMOJI } from "./tractor.mjs?v=20261024-trac1";
 import { drawEmojiSprite, spriteCss } from "./live-sprites.mjs?v=20261024-beat1";
-import { sfx, setSfxRate } from "./sfx.mjs?v=20261026-sfx2";
+import { sfx, setSfxRate, sfxEnabled, setSfxEnabled } from "./sfx.mjs?v=20261026-sfx2";
 import { say } from "./oracle/js/voice.js?v=20261027-say1";
 
 const CENSUS = `https://census.daybreakgames.com/s:${CENSUS_SERVICE_ID}/get/ps2:v2/`;
@@ -260,9 +260,11 @@ function start() {
     return `<span class="lv-iv" data-tip="${esc(tipText(c, v))}">${cellText(c, v)}</span>`;
   }
   /** Owner 2026-10-28 (live iVi tiers): the opponent's iVi cell — the
-   *  tier against the tracked player (tierLabel), with a tooltip that
-   *  says what the tier means. Unknown = "?", dimmed. */
-  function tierCell(oppAdjs) {
+   *  tier against the tracked player (tierLabel) plus the raw number,
+   *  in one cell (owner 2026-10-28: the tier is a very small addition
+   *  to the iVi, not its own column). Tooltip says what the tier
+   *  means. Unknown = "?", dimmed, no number. */
+  function tierCell(c, oppAdjs) {
     const label = tierLabel(me && me.cached ? me.cached.adjs : null, oppAdjs);
     const tip = label === "?" ? tr("live.ratioUnknown", "Opponent iVi unknown")
       : label === "0" ? tr("live.ratioZero", "Opponent iVi is 0")
@@ -272,7 +274,8 @@ function start() {
       : label === "+" ? tr("live.tierStronger", "Stronger than you")
       : tr("live.tierMuchStronger", "Much stronger than you");
     const cls = label === "?" ? "lv-iv lv-nil" : "lv-iv";
-    return `<span class="${cls}" data-tip="${esc(tip)}">${label}</span>`;
+    const num = label === "?" ? "" : ` ${cellText(c, oppAdjs)}`;
+    return `<span class="${cls}" data-tip="${esc(tip)}">${label}${num}</span>`;
   }
   /** Name (faction colour) + 💩; a long name is cut with … at the end. Uncached: Census K/D · KPM in the hover. */
   function nameHtml(p, tip, hs = "") {
@@ -324,11 +327,12 @@ function start() {
     } else {
       wn = `<span class="lv-wn">${w ? esc(w.name) : ""}</span>`;
     }
-    // Owner 2026-10-27 (live iVi ratio): opponent rows show the division
-    // against the tracked player, never the raw iVi; the centre row keeps it.
+    // Owner 2026-10-28 (live iVi tiers + numbers): opponent rows show the
+    // tier against the tracked player plus the raw iVi, in one cell; the
+    // centre row keeps the raw number alone.
     const ivCells = isMe
       ? IVI.map((c) => `<td class="lv-ivc">${iviText(c, vals[c.id])}</td>`).join("")
-      : IVI.map((c) => `<td class="lv-ivc">${tierCell(vals[c.id])}</td>`).join("");
+      : IVI.map((c) => `<td class="lv-ivc">${tierCell(c, vals[c.id])}</td>`).join("");
     return `<td class="lv-nm"><span class="lv-nm2">${nameHtml(p, tip, hsHtml(r))}${wn}</span></td>${ivCells}`;
   }
   const blank = `<td class="lv-nm"></td><td class="lv-ivc"></td>`; // same box as a filled line, so the overlay never grows
@@ -707,15 +711,38 @@ function start() {
     voiceBtn.title = t; voiceBtn.setAttribute("aria-label", t); voiceBtn.setAttribute("aria-pressed", on ? "true" : "false");
   };
   if (voiceBtn) { voiceBtn.addEventListener("click", () => { setVoiceOn(!voiceOn()); paintVoice(); }); paintVoice(); }
-  /** Speak one feed event: the opponent's name, then the tier's voice line ("Bhorn, giant down"). Unknown iVi = name only (no line exists for "?"); a "#id" name is never spoken. Lines come from the Voice lines panel (localStorage) or the defaults — the zero line is one of them now, so "name zero" became "name, zero" like every other tier. */
+  // Owner 2026-10-28 (SFX mute button): the blips have their own toggle next to the voice button — muting one never mutes the other. Stored per device in ps2_sfx (default on), same store the sounds already read.
+  const sfxBtn = $("liveSfxBtn");
+  const paintSfx = () => {
+    if (!sfxBtn) return;
+    const on = sfxEnabled();
+    sfxBtn.textContent = on ? "🔔" : "🔕";
+    const t = on ? tr("live.sfxOn", "Sound effects on — click to mute") : tr("live.sfxOff", "Sound effects off — click to unmute");
+    sfxBtn.title = t; sfxBtn.setAttribute("aria-label", t); sfxBtn.setAttribute("aria-pressed", on ? "true" : "false");
+  };
+  if (sfxBtn) { sfxBtn.addEventListener("click", () => { setSfxEnabled(!sfxEnabled()); paintSfx(); }); paintSfx(); }
+  /** Speak one feed event: the opponent's name, then the tier's voice line ("Bhorn, giant down"). Unknown iVi speaks the "?" line ("name, unknown"); a "#id" name is never spoken. Lines come from the Voice lines panel (localStorage) or the defaults. */
   const readVoiceLines = () => { try { const j = JSON.parse(localStorage.getItem("ps2_live_voice_lines") || "{}"); return j && typeof j === "object" ? j : {}; } catch { return {}; } };
+  // Owner 2026-10-28 (queued speech): a commit whose tier is still unknown queues its line — when the stats land (bgPump, or a centre refresh), the tier speaks then instead of never. One entry per player: the tier is per-player, so a second commit while uncached would only repeat the same line. Entries wait until their tier is known; a voice-off drain drops them silently.
+  const pendingSpeech = new Map();
+  const drainPendingSpeech = () => {
+    for (const p of pendingSpeech.keys()) {
+      const label = tierLabel(me && me.cached ? me.cached.adjs : null, p.cached ? p.cached.adjs : null);
+      if (label === "?") continue;
+      pendingSpeech.delete(p);
+      if (!voiceOn() || !p.name || p.name.startsWith("#")) continue;
+      const line = tierVoiceLine(label, readVoiceLines());
+      if (line) say(`${p.name}, ${line}`);
+    }
+  };
   const speakTier = (p) => {
     if (!voiceOn() || !p || !p.name || p.name.startsWith("#")) return;
     const label = tierLabel(me && me.cached ? me.cached.adjs : null, p.cached ? p.cached.adjs : null);
+    if (label === "?" && !p.cached) pendingSpeech.set(p, true);
     const line = tierVoiceLine(label, readVoiceLines());
     say(line ? `${p.name}, ${line}` : p.name);
   };
-  // Owner 2026-10-28 (voice lines panel): 6 prefilled fields, one per tier plus the zero line — the phrase spoken after the name. Stored per device; an emptied field falls back to its default.
+  // Owner 2026-10-28 (voice lines panel): 7 prefilled fields, one per tier plus the zero and unknown lines — the phrase spoken after the name. Stored per device; an emptied field falls back to its default.
   const voiceLinesEl = document.getElementById("liveVoiceLines");
   if (voiceLinesEl) {
     const titleEl = document.getElementById("liveVoiceLinesTitle");
@@ -731,29 +758,10 @@ function start() {
       const v = inp.value.trim();
       if (v) ov[inp.dataset.tier] = v; else delete ov[inp.dataset.tier];
       try { localStorage.setItem("ps2_live_voice_lines", JSON.stringify(ov)); } catch { /* private mode: the line still works for this session */ }
-      refreshTierCheck(); // an edited line changes what the checker shows, too
     }));
     paintVoiceLines();
   }
-  // Owner 2026-10-28 (tier checker): type any player name, see their tier against you and the line that would speak — the same tierLabel/tierVoiceLine the feed uses, so the checker never disagrees with the feed. Unknown name (or you, uncached) = "?".
-  const tierCheckName = document.getElementById("liveTierCheckName");
-  const tierCheckOut = document.getElementById("liveTierCheckOut");
-  async function refreshTierCheck() {
-    if (!tierCheckName || !tierCheckOut) return;
-    const name = tierCheckName.value.trim();
-    if (!name) { tierCheckOut.textContent = ""; return; }
-    if (!ranks) await loadRanks();
-    const c = ranks ? ranks.get(slugKey(name)) : null;
-    const label = tierLabel(me && me.cached ? me.cached.adjs : null, c ? c.adjs : null);
-    if (label === "?") { tierCheckOut.textContent = "?"; return; }
-    const line = tierVoiceLine(label, readVoiceLines());
-    tierCheckOut.textContent = line ? `${label} · ${line}` : label;
-  }
-  if (tierCheckName) {
-    const tierCheckLabel = document.getElementById("liveTierCheckLabel");
-    if (tierCheckLabel) tierCheckLabel.textContent = tr("live.tierCheck", "Check a player's tier");
-    tierCheckName.addEventListener("input", refreshTierCheck);
-  }
+  // Owner 2026-10-28: no manual tier checker — checking is automatic. Every feed row already computes its tier against the tracked player (centre row), so a typed name would only repeat what the feed shows.
   // Owner 2026-10-25: a sub-0 victim pays 0, never a negative — the pot
   // is a currency, and a kill cannot subtract from it. The feed's iVi
   // cell still shows the victim's real (negative) adjs; only the payout
@@ -990,6 +998,7 @@ function start() {
         // a victim whose iVi was unknown at kill time pays out now
         for (const e of cashKills) if (e.cid === cid && !Number.isFinite(e.iv)) e.iv = cashIv(p);
         render();
+        drainPendingSpeech(); // and a queued tier line speaks now, if its tier is known
         if (typeof onBgFetched === "function") onBgFetched(p.name, player);
       }
     } catch { /* keep the K/D · KPM row; never retried this page load */ }
@@ -1011,6 +1020,7 @@ function start() {
         const before = meSnapshot();
         me.cached = mergeFresh(me.cached, me.fresh);
         render();
+        drainPendingSpeech(); // a centre refresh can also resolve queued tiers (tracked player was unknown at commit)
         easeMe(before);
       }
     } catch { /* keep the shown numbers; try again next round */ }
@@ -1252,12 +1262,15 @@ function start() {
   });
 
   (async () => {
+    // Owner 2026-10-28 (centre name): the tracked name shows from the first paint, as typed in ?names= — never "?" in the middle. The Census lookup only upgrades it (true case, faction). If the lookup finds nothing, the typed name stays with the error state.
+    if (target) { me = { cid: null, name: target, faction: "", cached: null, named: true, pending: false }; render(); }
     try {
       const bare = target.replace(/^\s*\[[^\]]*\]\s*/, "").trim().toLowerCase();
       const j = await getJson(`${CENSUS}character?name.first_lower=${encodeURIComponent(bare)}&c:show=character_id,name.first,faction_id`);
       const ch = (j.character_list || [])[0];
       if (!ch) { setState(`No character named <strong>${esc(target)}</strong> on Census.`, "err"); return; }
-      me = { cid: String(ch.character_id), name: ch.name.first, faction: FACTION[ch.faction_id] || "", cached: null };
+      me = { cid: String(ch.character_id), name: ch.name.first, faction: FACTION[ch.faction_id] || "", cached: null, named: true };
+      render();
       loadRanks().then(() => {
         me.cached = me.fresh ? mergeFresh(ranks.get(slugKey(me.name)), me.fresh) : ranks.get(slugKey(me.name)) || null;
         if (!me.cached) refreshMe(); // not in the cache: fetch the centre player once right away (t586u)

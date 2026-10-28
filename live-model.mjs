@@ -338,8 +338,8 @@ export function tierLabel(meAdjs, oppAdjs) {
   return "++";
 }
 
-/** Owner 2026-10-28 (voice lines): the spoken phrase after the name, per tier — plus "0" for opponents at or below 0 iVi (owner 2026-10-28: its own panel field, no longer a hardcoded "zero"). Users override these in the live page's Voice lines panel (stored per device); a blank override falls back to the default here. */
-export const TIER_VOICE_LINES = { "--": "no contest", "-": "weaker", "≈": "even", "+": "strong", "++": "giant down", "0": "zero" };
+/** Owner 2026-10-28 (voice lines): the spoken phrase after the name, per tier — plus "0" for opponents at or below 0 iVi and "?" for unknown iVi (both own panel fields, no longer hardcoded). Users override these in the live page's Voice lines panel (stored per device); a blank override falls back to the default here. */
+export const TIER_VOICE_LINES = { "--": "no contest", "-": "weaker", "≈": "even", "+": "strong", "++": "giant down", "0": "zero", "?": "unknown" };
 /** The spoken tier phrase: a stored override wins, else the default above; unknown/zero tiers have no phrase (callers handle them). */
 export function tierVoiceLine(label, overrides) {
   const def = TIER_VOICE_LINES[label];

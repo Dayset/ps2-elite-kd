@@ -9,7 +9,7 @@ import http from "node:http";
 import path from "node:path";
 import { spawn, execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { tierLabel, tierVoiceLine } from "../live-model.mjs";
+import { tierLabel, tierVoiceLine, cellText, LIVE_COLS } from "../live-model.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -29,6 +29,9 @@ const sub0row = ranks.rows.find((r) => { const a = r[ci("adjs")]; return typeof 
 const SUB0 = { cid: "5428000000000000200", name: sub0row[ci("name")] };
 const adjsOf = (name) => ranks.rows.find((r) => r[ci("name")] === name)[ci("adjs")];
 const ME_ADJS = adjsOf(ME.name);
+// Owner 2026-10-28: opponent cells show tier + raw number in one cell (cellText floors sub-0 at 0, like the centre row).
+const IVI_COL = LIVE_COLS.find((c) => c.mode === "ivi");
+const tierCellText = (oppAdjs) => { const t = tierLabel(ME_ADJS, oppAdjs); return t === "?" ? "?" : `${t} ${cellText(IVI_COL, oppAdjs)}`; };
 const TEAM = { cid: "5428000000000000999", name: "TeamMate" }; // same faction as ME (stub returns "1" for it)
 const SLOW = { cid: "5428000000000000777", name: "Slowpoke" }; // #76: its Census lookup takes 1.5 s
 // #80: data/cid-names.json is stubbed. MAPPED = a cached player the map knows with faction: zero Census calls (its Census
@@ -50,6 +53,8 @@ const FAKES = `(() => {
     const u = decodeURIComponent(typeof input === "string" ? input : input.url);
     if (/(^|\\/)data\\/cid-names\\.json/.test(u)) return Promise.resolve(json({ [MAPPED.cid]: [MAPPED.name, "nc"], [HALF.cid]: HALF.name }));
     if (u.includes("census.daybreakgames.com")) {
+      const nm = u.match(/name\\.first_lower=([^&]*)/);
+      if (nm && decodeURIComponent(nm[1]) === "ghostnobody") return Promise.resolve(json({ returned: 0, character_list: [] }));
       if (/character\\?name\\.first_lower=/.test(u)) return Promise.resolve(json({ returned: 1, character_list: [{ character_id: ME.cid, name: { first: ME.name }, faction_id: "1" }] }));
       const m = u.match(/character_id=(\\d+)/);
       if (m) window.__censusCalls.push(m[1]);
@@ -72,7 +77,7 @@ const FAKES = `(() => {
   window.WebSocket = FakeWs;
 })();`;
 
-async function withLive(fn, { width = 1920, height = 1080, query = "" } = {}) {
+async function withLive(fn, { width = 1920, height = 1080, query = "", names = ME.name } = {}) {
   const types = { ".html": "text/html", ".js": "text/javascript", ".mjs": "text/javascript", ".json": "application/json", ".css": "text/css", ".svg": "image/svg+xml", ".webp": "image/webp", ".png": "image/png" };
   const server = http.createServer((req, res) => {
     const p = path.join(root, decodeURIComponent(new URL(req.url, "http://x").pathname));
@@ -116,7 +121,7 @@ async function withLive(fn, { width = 1920, height = 1080, query = "" } = {}) {
       if (r.exceptionDetails) throw new Error(r.exceptionDetails.text + " " + (r.exceptionDetails.exception?.description || ""));
       return r.result.value;
     };
-    await send("Page.navigate", { url: `http://127.0.0.1:${port}/live.html?names=${encodeURIComponent(ME.name)}${query}` }, sessionId);
+    await send("Page.navigate", { url: `http://127.0.0.1:${port}/live.html?names=${encodeURIComponent(names)}${query}` }, sessionId);
     await fn({ ev, errors });
   } finally {
     proc.kill("SIGKILL");
@@ -352,11 +357,11 @@ describe("🎥 live.html in a browser", () => {
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[1].cid, "80", false)})`);
       assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)").length === 2`)), true, "two victim rows on screen");
-      // Owner 2026-10-28: opponent rows show the iVi tier, not
-      // the raw iVi — rows are newest-first, so [0] is OPP[1], [1] is OPP[0].
+      // Owner 2026-10-28: opponent rows show tier + raw iVi in one
+      // cell — rows are newest-first, so [0] is OPP[1], [1] is OPP[0].
       assert.equal(await ev(until(`![...document.querySelectorAll("#liveList tbody.lv-vic .lv-iv")].some((e) => e.textContent === "?")`)), true, "victim tiers filled (ranks loaded)");
       const cells = await ev(`[...document.querySelectorAll("#liveList tbody.lv-vic .lv-iv")].map((e) => e.textContent)`);
-      assert.deepEqual(cells, [tierLabel(ME_ADJS, adjsOf(OPP[1].name)), tierLabel(ME_ADJS, adjsOf(OPP[0].name))], `both victims show their tier: ${cells}`);
+      assert.deepEqual(cells, [tierCellText(adjsOf(OPP[1].name)), tierCellText(adjsOf(OPP[0].name))], `both victims show tier + number: ${cells}`);
       // The pot still boosts the RAW adjs, so the average comes from the
       // fixture values, not the displayed ratios. The main pot shows only
       // the average now (owner 2026-10-26) — the Σ total is hidden from
@@ -476,14 +481,15 @@ describe("🎥 live.html in a browser", () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
       await ev(`window.__fakeWs.emit(${death(ME.cid, SUB0.cid, "80", false)})`);
-      assert.equal(await ev(until(`document.querySelector("#liveList tbody.lv-vic .lv-iv") && document.querySelector("#liveList tbody.lv-vic .lv-iv").textContent === "0"`)), true, "the feed already floors their shown iVi at 0");
+      assert.equal(await ev(until(`document.querySelector("#liveList tbody.lv-vic .lv-iv") && document.querySelector("#liveList tbody.lv-vic .lv-iv").textContent === "0 0"`)), true, "the feed already floors their shown iVi at 0");
       assert.equal(await ev(until(`document.getElementById("liveCashAvgVal").textContent === "0.0"`)), true, "a known 0 payout counts in the average (floored, never negative)");
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
       assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)").length === 2`)), true, "two victims on screen");
-      // Owner 2026-10-28: rows show tiers now — newest is OPP[0]'s tier,
-      // the sub-0 victim still reads 0 (negative adjs is never divided).
+      // Owner 2026-10-28: rows show tier + number now — newest is
+      // OPP[0]'s cell, the sub-0 victim reads "0 0" (tier 0, number
+      // floored at 0, never divided, never negative).
       const cells = await ev(`[...document.querySelectorAll("#liveList tbody.lv-vic .lv-iv")].map((e) => e.textContent)`);
-      assert.deepEqual(cells, [tierLabel(ME_ADJS, adjsOf(OPP[0].name)), "0"], `newest victim tier, sub-0 victim floored: ${cells}`);
+      assert.deepEqual(cells, [tierCellText(adjsOf(OPP[0].name)), tierCellText(adjsOf(SUB0.name))], `newest victim cell, sub-0 victim floored: ${cells}`);
       const bp = Math.round(Math.max(0, adjsOf(OPP[0].name)) * 1.34);
       // ±1 tolerance (same rounding-boundary note as the cash-out test):
       // the page boosts the raw adj, the test only sees the rounded display
@@ -1178,11 +1184,11 @@ describe("🎥 live streamer mode in a browser", () => {
 });
 
 describe("🎥 live voice lines panel in a browser", () => {
-  it("voice lines panel (owner 2026-10-28): 6 fields prefilled with the default lines, edits persist, panel hides in stream mode", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+  it("voice lines panel (owner 2026-10-28): 7 fields prefilled with the default lines, edits persist, panel hides in stream mode", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
       const vals = await ev(`[...document.querySelectorAll(".live-voice-line")].map((i) => [i.dataset.tier, i.value])`);
-      assert.deepEqual(vals, [["--", "no contest"], ["-", "weaker"], ["≈", "even"], ["+", "strong"], ["++", "giant down"], ["0", "zero"]], `fields prefilled: ${JSON.stringify(vals)}`);
+      assert.deepEqual(vals, [["--", "no contest"], ["-", "weaker"], ["≈", "even"], ["+", "strong"], ["++", "giant down"], ["0", "zero"], ["?", "unknown"]], `fields prefilled: ${JSON.stringify(vals)}`);
       await ev(`(() => { const i = document.querySelector('.live-voice-line[data-tier="++"]'); i.value = "boss down"; i.dispatchEvent(new Event("input", { bubbles: true })); })()`);
       assert.equal(await ev(until(`(JSON.parse(localStorage.getItem("ps2_live_voice_lines") || "{}"))["++"] === "boss down"`)), true, "edit persists to localStorage");
       await ev(`document.getElementById("liveStreamBtn").click()`);
@@ -1192,20 +1198,28 @@ describe("🎥 live voice lines panel in a browser", () => {
   });
 });
 
-describe("🎥 live tier checker in a browser", () => {
-  it("tier checker (owner 2026-10-28): a known name shows tier + line, an unknown name shows ?, a sub-0 name shows 0 + zero", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+describe("🎥 live SFX button in a browser", () => {
+  it("SFX button (owner 2026-10-28): toggles ps2_sfx and its icon", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
-      const type = async (name) => { await ev(`(() => { const i = document.getElementById("liveTierCheckName"); i.value = ${JSON.stringify(name)}; i.dispatchEvent(new Event("input", { bubbles: true })); })()`); };
-      const tier = tierLabel(ME_ADJS, adjsOf(OPP[0].name));
-      await type(OPP[0].name);
-      assert.equal(await ev(until(`document.getElementById("liveTierCheckOut").textContent === ${JSON.stringify(`${tier} · ${tierVoiceLine(tier, {})}`)}`)), true, `known name shows ${tier} + line`);
-      await type("NoSuchPlayerXYZ");
-      assert.equal(await ev(until(`document.getElementById("liveTierCheckOut").textContent === "?"`)), true, "unknown name shows ?");
-      await type(SUB0.name);
-      assert.equal(await ev(until(`document.getElementById("liveTierCheckOut").textContent === "0 · zero"`)), true, "sub-0 name shows 0 + zero");
+      assert.equal(await ev(`document.getElementById("liveSfxBtn").textContent`), "🔔", "sounds on by default");
+      await ev(`document.getElementById("liveSfxBtn").click()`);
+      assert.equal(await ev(until(`localStorage.getItem("ps2_sfx") === "off"`)), true, "muted stored");
+      assert.equal(await ev(`document.getElementById("liveSfxBtn").textContent`), "🔕", "icon flips to muted");
+      await ev(`document.getElementById("liveSfxBtn").click()`);
+      assert.equal(await ev(until(`localStorage.getItem("ps2_sfx") === "on"`)), true, "unmuted stored");
       assert.deepEqual(errors, [], "no page errors");
     });
+  });
+});
+
+describe("🎥 live centre name in a browser", () => {
+  it("centre name (owner 2026-10-28): the ?names= value shows at once, even when Census finds nobody", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until(`document.querySelector("tbody.lv-me .lv-name") && document.querySelector("tbody.lv-me .lv-name").textContent === "GhostNobody"`)), true, "typed name in the middle");
+      assert.equal(await ev(until(`document.getElementById("liveState").textContent.includes("No character named")`)), true, "error state names the missing character");
+      assert.deepEqual(errors, [], "no page errors");
+    }, { names: "GhostNobody" });
   });
 });
 

@@ -78,7 +78,7 @@
     } catch (e) {}
   </script>
   <link rel="stylesheet" href="styles.css?v=20261028-otab2" />
-  <link rel="stylesheet" href="live.css?v=20261028-check1" />
+  <link rel="stylesheet" href="live.css?v=20261028-voice2" />
   <style>
     /* Installed-app launch splash (t465u). Android draws its own launch splash first:
        the maskable icon (big medal on black) seen through a 192 px circle, on the
@@ -374,9 +374,8 @@
     <div id="liveDbg" class="live-dbg"></div>
     <div id="liveSession" class="live-session"></div>
     <div id="liveStreamCard" class="live-stream-card"><div class="live-stream-kd">K/D <span id="liveStreamKd">–</span></div><div class="live-stream-session" id="liveStreamSession"></div></div>
-    <button id="liveShare" class="live-share" type="button"></button><button id="liveStreamBtn" class="live-share" type="button"></button><button id="liveVoiceBtn" class="live-share" type="button"></button>
-    <details id="liveVoiceLines" class="live-voice-lines"><summary id="liveVoiceLinesTitle"></summary><div id="liveVoiceLinesHint" class="live-voice-lines-hint"></div><label>-- <input class="live-voice-line" data-tier="--" type="text"></label><label>- <input class="live-voice-line" data-tier="-" type="text"></label><label>≈ <input class="live-voice-line" data-tier="≈" type="text"></label><label>+ <input class="live-voice-line" data-tier="+" type="text"></label><label>++ <input class="live-voice-line" data-tier="++" type="text"></label><label>0 <input class="live-voice-line" data-tier="0" type="text"></label></details>
-    <div id="liveTierCheck" class="live-tier-check"><label id="liveTierCheckLabel"></label> <input id="liveTierCheckName" type="text" autocomplete="off" spellcheck="false"> <span id="liveTierCheckOut"></span></div>
+    <button id="liveShare" class="live-share" type="button"></button><button id="liveStreamBtn" class="live-share" type="button"></button><button id="liveVoiceBtn" class="live-share" type="button"></button><button id="liveSfxBtn" class="live-share" type="button"></button>
+    <details id="liveVoiceLines" class="live-voice-lines"><summary id="liveVoiceLinesTitle"></summary><div id="liveVoiceLinesHint" class="live-voice-lines-hint"></div><label>-- <input class="live-voice-line" data-tier="--" type="text"></label><label>- <input class="live-voice-line" data-tier="-" type="text"></label><label>≈ <input class="live-voice-line" data-tier="≈" type="text"></label><label>+ <input class="live-voice-line" data-tier="+" type="text"></label><label>++ <input class="live-voice-line" data-tier="++" type="text"></label><label>0 <input class="live-voice-line" data-tier="0" type="text"></label><label>? <input class="live-voice-line" data-tier="?" type="text"></label></details>
     <div id="liveDpmTau" class="live-dpm-tau">τ <input id="liveDpmTauVal" type="number" min="1" max="3600" step="1" value="60">s <button id="liveDpmTauDown" type="button">−</button><button id="liveDpmTauUp" type="button">+</button></div>
     <div id="liveCashHist" class="live-cash-hist"></div>
   </section>
@@ -618,6 +617,6 @@
       navigator.serviceWorker.register("sw.js").catch(function () {});
     }
   </script>
-  <script type="module" src="live.mjs?v=20261028-check1"></script>
+  <script type="module" src="live.mjs?v=20261028-voice2"></script>
 </body>
 </html>
