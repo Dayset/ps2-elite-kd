@@ -10,7 +10,8 @@ import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261027-z79
 import { zergEstimate } from "./zerg-revive.mjs?v=20261024-crowd1";
 import { infMedian } from "./tractor.mjs?v=20261024-trac1";
 import { mountWeapons } from "./weapons.mjs?v=20261022-wp4";
-import { mountKillFeed } from "./kill-feed.mjs?v=20261027-kf1";
+import { mountKillFeed } from "./kill-feed.mjs?v=20261028-kfivi1";
+import { mountOldTabs } from "./old-tabs.mjs?v=20261028-otab1";
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261020-wide1";
 import { PS_SERVERS, censusNsBase, roomLsKey } from "./rooms.mjs?v=20261022-ps1";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
@@ -25,6 +26,9 @@ import { percentileOf } from "./dist.mjs?v=20261010-sav1";
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261025-loc1";
 import { statMark, isPenalizedPadder, POOP_TIP, POOP_MARK, markNote } from "./padding.mjs?v=20261023-short1";
 import { autoMarksHtml } from "./auto-marks.mjs?v=20261024-trac1";
+import { tierOf, IVI_TIERS, BELOW_TIER } from "./tiers.mjs?v=20261017-tier1";
+import { hiddenList, isConfirmedCheater as isOorHit } from "./hidden.mjs?v=20261025-oor1";
+import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261023-short1";
 
 /**
  * $ = app.js state and functions this part uses, as live getters (and setters for state it changes), so app.js
@@ -199,13 +203,64 @@ export function createStatsTable($) {
     return s ? censusNsBase(s.ns, CENSUS_SERVICE_ID) : $.CENSUS_BASES[0];
   };
 
+  /* Opponent ⚔️ iVi in the kill feed: ONLY files the page already loads for this room
+   * (ranks-lite.json at start, ranks.json for Rankings, hidden.json) — no Census / Honu call. */
+  function killFeedRatings(cb) {
+    const fin = (v) => typeof v === "number" && Number.isFinite(v);
+    const tierLabel = (id) => { const t = [...IVI_TIERS, BELOW_TIER].find((x) => x.id === id); return t ? tr("tier." + id, t.label) : ""; };
+    const hiddenP = fetch(`${$.DATA}hidden.json`, { cache: "no-cache" }).then((r) => (r.ok ? r.json() : null)).catch(() => null).then((j) => hiddenList(j));
+    const build = (d, hidden) => {
+      if (!d || !Array.isArray(d.cols) || !Array.isArray(d.rows)) return null;
+      const ix = (k) => d.cols.indexOf(k);
+      const iS = ix("slug"), iN = ix("name"), iA = ix("adjs"), iM = ix("mark");
+      if (iA < 0) return null;
+      const pool = d.rows.map((r) => r[iA]).filter(fin).sort((a, b) => a - b);
+      const by = new Map();
+      for (const r of d.rows) {
+        const k = slugKey(iS >= 0 && r[iS] ? r[iS] : r[iN]);
+        if (k && !by.has(k)) by.set(k, r);
+      }
+      return (name) => {
+        const k = slugKey(name);
+        if (!k) return null;
+        const hit = hidden && hidden.match({ slug: k, name });
+        if (hit && isOorHit(hit)) return { oor: true, oorTip: tr("oor.tip", "OOR: stats out of the possible range, excluded after review") };
+        const r = by.get(k);
+        if (!r || !fin(r[iA])) return null;
+        const mk = iM >= 0 ? r[iM] : "";
+        const tier = tierOf(r[iA], pool);
+        return {
+          adjs: r[iA], tier, tierLabel: tierLabel(tier),
+          mark: mk === "padding" ? PADDING_MARK : mk === "adjusted" ? ADJUSTED_MARK : "",
+          markTip: mk === "padding" ? PADDING_MARK_TIP : mk === "adjusted" ? ADJUSTED_MARK_TIP : "",
+          poop: isPenalizedPadder(k), poopTip: POOP_TIP,
+        };
+      };
+    };
+    let full = false;
+    Promise.all([Promise.resolve().then(() => $.loadRanksLite()).catch(() => null), hiddenP]).then(([d, h]) => {
+      const fn = !full && build(d, h);
+      if (fn) cb(fn);
+    });
+    // ranks.json (with the * / † marks) is the same shared load the Rankings section makes.
+    if ($.loadRanksPayload) Promise.all([Promise.resolve().then(() => $.loadRanksPayload()).catch(() => null), hiddenP]).then(([d, h]) => {
+      const fn = build(d, h);
+      if (fn) { full = true; cb(fn); }
+    });
+  }
+
+  /* 🗂️ One row of tabs over kill feed / weapons / Census table (old-tabs.mjs). */
+  const ensureOldTabs = () => { if (typeof document !== "undefined") mountOldTabs(document.getElementById("oldTabs")); };
+
   function syncWeapons(list) {
+    ensureOldTabs();
     const shownList = $.currentNamesInField().length > 1 ? [] : list || [];
     if (!killFeedPanel) {
       killFeedPanel = mountKillFeed(document.getElementById("killFeedSection"), {
         getJson: (u) => $.censusJson(u),
         baseOf: censusBaseOf,
         addName: (name, anchor) => { if ($.toggleNameInField) $.toggleNameInField(name, anchor); },
+        ratings: killFeedRatings,
       });
     }
     killFeedPanel.setPlayers($.LIVE_MODE ? [] : shownList); // not on the LIVE page
@@ -223,6 +278,7 @@ export function createStatsTable($) {
   }
 
   function renderStatsTable(list) {
+    ensureOldTabs();
     loadConsPool();
     syncWeapons(list);
     if (!$.els.stats) return;

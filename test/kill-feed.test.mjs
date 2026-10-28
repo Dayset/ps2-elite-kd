@@ -2,7 +2,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { FEED_LIMIT, killFeedUrl, parseKillFeed, summarizeKillFeed, rowHtml } from "../kill-feed.mjs";
+import { FEED_LIMIT, killFeedUrl, parseKillFeed, summarizeKillFeed, rowHtml, iviHtml } from "../kill-feed.mjs";
 
 const ME = "111";
 const ev = (o) => ({ is_headshot: "0", attacker_vehicle_id: "0", attacker_weapon_id: "7232", timestamp: "1793155624", team_id: "3", attacker_team_id: "2", ...o });
@@ -49,4 +49,23 @@ test("the block sits right above the Auraxium weapons, collapsed and hidden unti
   const css = readFileSync(new URL("../styles.css", import.meta.url), "utf8");
   const kf = css.slice(css.indexOf(".kf-section >"), css.indexOf("/* 🏆 Auraxium weapons"));
   assert.doesNotMatch(kf, /transition|animation/);
+});
+
+test("opponent ⚔️ iVi from cached ranks only: number (≤0 → 0), padder marks, OOR, nothing when not cached", () => {
+  const row = { kill: true, name: "Vic", fac: "tr" };
+  assert.doesNotMatch(rowHtml(row, Date.now(), () => null), /kf-ivi|kf-oor/);
+  const h = rowHtml(row, Date.now(), () => ({ adjs: 1234.6, tier: "top5", tierLabel: "💎 Top 1–5%" }));
+  assert.match(h, /<span class="kf-ivi kf-t-top5" title="⚔️ iVi 1,235 · 💎 Top 1–5%\. Rating vs/);
+  assert.match(h, />💎\u2009?1,235<\/span>/);
+  assert.match(iviHtml({ adjs: -40, tier: "below", tierLabel: "Below the rating scale (iVi 0)" }), />0<\/span>/);
+  assert.match(iviHtml({ adjs: 900, mark: "*", markTip: "pad", poop: true, poopTip: "p" }), /<span class="kf-pad" title="pad">\*<\/span><span class="poop-mark" title="p">💩<\/span>/);
+  assert.match(iviHtml({ oor: true, oorTip: "x" }), /<span class="kf-oor" title="x">OOR<\/span>/);
+  assert.equal(iviHtml(null), "");
+  assert.doesNotMatch(readFileSync(new URL("../kill-feed.mjs", import.meta.url), "utf8"), /cheater/i);
+  // Lookups only from files the page already loads (no Census / Honu URL in the ratings builder).
+  const st = readFileSync(new URL("../stats-table.mjs", import.meta.url), "utf8");
+  const fn = st.slice(st.indexOf("function killFeedRatings"), st.indexOf("function syncWeapons"));
+  assert.match(fn, /\$\.loadRanksLite\(\)/);
+  assert.match(fn, /\$\.loadRanksPayload\(\)/);
+  assert.doesNotMatch(fn.replace(/\/\*[\s\S]*?\*\//g, ""), /census|honu|getJson/i);
 });

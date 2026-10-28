@@ -3046,6 +3046,11 @@ html[data-room="ps"] .controls .fresh-row-end select.room-select { border-color:
 .kf-name { font: inherit; font-weight: 600; background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline dotted; }
 .kf-name:not([class*="fac-"]) { color: inherit; }
 .kf-name.kf-unknown { cursor: default; text-decoration: none; color: var(--dim); }
+/* Opponent ⚔️ iVi (cached ranks only): small, tier emoji + number; hover = iVi tip. */
+.kf-ivi { font-size: 0.78rem; font-variant-numeric: tabular-nums; color: var(--dim); white-space: nowrap; cursor: help; }
+.kf-ivi.kf-t-top1, .kf-ivi.kf-t-top5, .kf-ivi.kf-t-top10 { color: var(--accent); font-weight: 600; }
+.kf-pad { font-weight: 700; cursor: help; }
+.kf-oor { font-size: 0.72rem; font-weight: 700; color: var(--dim); border: 1px solid var(--grid); border-radius: 3px; padding: 0 0.2rem; cursor: help; }
 .kf-gear { min-width: 0; color: var(--dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media (max-width: 560px) {
   .kf-row { grid-template-columns: auto auto minmax(0, 1fr); }
@@ -3085,3 +3090,25 @@ html[data-room="ps"] .controls .fresh-row-end select.room-select { border-color:
   background-color: var(--row-alt);
 }
 .ranks-table tbody tr:hover td { background: var(--input-hover); }
+
+/* 🗂️ Tracker data tabs (old-tabs.mjs, owner 2026-10-28): one row of buttons under the ✨ table;
+ * the panels' own summaries are hidden (their text is the tab label), closed panels take no
+ * space, the open one shows right below the row. Instant, no transition. Wraps on phones. */
+.old-tabs-block { margin: 0 0 0.85rem; }
+.old-tabs { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0 0 0.4rem; }
+.old-tab {
+  font: inherit; font-size: 0.88rem; font-weight: 600; color: var(--text); cursor: pointer;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+  padding: 0.3rem 0.65rem; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis;
+}
+.old-tab:hover { border-color: var(--accent); }
+.old-tab[aria-expanded="true"] { border-color: var(--accent); color: var(--accent); background: var(--grid); }
+.old-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+#oldTabs details > summary { display: none; }
+#oldTabs details:not([open]) { display: none; }
+#oldTabs #statsPublic > details.stats-public[open] {
+  border: 1px solid var(--border); border-radius: 8px; background: var(--panel); padding: 0.45rem 0.6rem 0.6rem;
+}
+@media (max-width: 600px) {
+  .old-tab { font-size: 0.82rem; padding: 0.28rem 0.5rem; }
+}

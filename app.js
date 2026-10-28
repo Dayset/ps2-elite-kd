@@ -39,7 +39,7 @@ import { createAnalyze } from "./analyze.mjs?v=20261027-an69";
 import { createShareAdd } from "./share-add.mjs?v=20261027-z79";
 import { createSharedIndex } from "./shared-index.mjs?v=20261027-z79";
 import { createNamesField } from "./names-field.mjs?v=20261027-z79";
-import { createStatsTable } from "./stats-table.mjs?v=20261028-cfh1";
+import { createStatsTable } from "./stats-table.mjs?v=20261028-otab1";
 import { createChartWave } from "./chart-wave.mjs?v=20261027-z79";
 import { createChart } from "./chart.mjs?v=20261027-z79";
 import { createLoader } from "./loader.mjs?v=20261027-z79";
@@ -967,6 +967,8 @@ import {
       get liteSlugs() { return liteSlugs; }, set liteSlugs(v) { liteSlugs = v; },
       get LIVE_MODE() { return LIVE_MODE; },
       get loadRanksLite() { return loadRanksLite; },
+      get loadRanksPayload() { return () => sharedPart().loadRanksPayload(); },
+      get DATA() { return DATA; },
       get LS_DEBUG_COLS() { return LS_DEBUG_COLS; },
       get nameTokens() { return nameTokens; },
       get nbdBySlug() { return nbdBySlug; }, set nbdBySlug(v) { nbdBySlug = v; },

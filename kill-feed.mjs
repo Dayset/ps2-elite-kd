@@ -84,7 +84,25 @@ export function relTime(ms, now = Date.now()) {
   try { return new Intl.RelativeTimeFormat(lang(), { numeric: "auto", style: "short" }).format(v, u); } catch { return new Date(ms).toLocaleString(); }
 }
 
-export function rowHtml(r, now = Date.now()) {
+/**
+ * Opponent ⚔️ iVi next to the name (owner steering after t747u): only from data the
+ * page already has (ranks.json / ranks-lite.json of this room, hidden.json), never a
+ * new Census / Honu call. info = { adjs, tier, tierLabel, mark, markTip, poop, poopTip,
+ * oor, oorTip } or null → nothing shown. Same number as the ✨ table: 0 digits, ≤ 0 → 0.
+ */
+export function iviHtml(info) {
+  if (!info) return "";
+  if (info.oor) return ` <span class="kf-oor" title="${esc(info.oorTip || "")}">OOR</span>`;
+  const n = typeof info.adjs === "number" && Number.isFinite(info.adjs) ? Math.round(Math.max(0, info.adjs)) : null;
+  const mark = info.mark ? `<span class="kf-pad" title="${esc(info.markTip || "")}">${esc(info.mark)}</span>` : "";
+  const poop = info.poop ? `<span class="poop-mark" title="${esc(info.poopTip || "")}">💩</span>` : "";
+  if (n == null) return mark || poop ? `${mark}${poop}` : "";
+  const tip = tr("kf.iviTip", "⚔️ iVi {n} · {tier}. {about}", { n: n.toLocaleString(lang()), tier: info.tierLabel || "", about: tr("tip.adjs", "Rating vs the ~200 players you fight most. Stronger foes count more; fast kills add, slow safe play costs.") });
+  const emo = /^\p{Extended_Pictographic}/u.test(info.tierLabel || "") ? String(info.tierLabel).split(" ")[0] : "";
+  return `${mark}${poop} <span class="kf-ivi${info.tier ? ` kf-t-${esc(info.tier)}` : ""}" title="${esc(tip)}">${emo ? `${emo}\u2009` : ""}${n.toLocaleString(lang())}</span>`;
+}
+
+export function rowHtml(r, now = Date.now(), iviOf = null) {
   const when = r.at ? new Date(r.at).toLocaleString(lang(), { dateStyle: "medium", timeStyle: "short" }) : "";
   const mark = r.suicide
     ? `<span class="kf-mark kf-sui">${esc(tr("kf.suicide", "Suicide"))}</span>`
@@ -92,7 +110,7 @@ export function rowHtml(r, now = Date.now()) {
   const tk = r.teamkill ? ` <span class="kf-tk">${esc(tr("kf.teamkill", "Teamkill"))}</span>` : "";
   const tag = r.tag ? `<span class="kf-tag">[${esc(r.tag)}]</span> ` : "";
   const who = r.suicide ? "" : r.name
-    ? `${tag}<button type="button" class="kf-name${r.fac ? ` fac-${r.fac}` : ""}" data-name="${esc(r.name)}" title="${esc(tr("kf.addTip", "Add {name} to the names", { name: r.name }))}">${esc(r.name)}</button>`
+    ? `${tag}<button type="button" class="kf-name${r.fac ? ` fac-${r.fac}` : ""}" data-name="${esc(r.name)}" title="${esc(tr("kf.addTip", "Add {name} to the names", { name: r.name }))}">${esc(r.name)}</button>${iviOf ? iviHtml(iviOf(r.name)) : ""}`
     : `<span class="kf-name kf-unknown">${esc(tr("kf.unknown", "Unknown player"))}</span>`;
   const gear = [r.weapon, r.vehicle ? `🚜 ${r.vehicle}` : ""].filter(Boolean).map(esc).join(" · ");
   const hs = r.headshot ? ` <span class="kf-hs" title="${esc(tr("kf.headshot", "Headshot"))}">🎯</span>` : "";
@@ -110,21 +128,24 @@ export function summaryText(s) {
 
 /**
  * @param section the <details id="killFeedSection">
- * @param opts getJson(url) → Promise<json>, baseOf(player) → Census base, addName(name, anchor)
+ * @param opts getJson(url) → Promise<json>, baseOf(player) → Census base, addName(name, anchor),
+ *   ratings(cb): optional; calls cb(iviOf) each time a (better) cached-rating lookup is ready.
  */
-export function mountKillFeed(section, { getJson, baseOf, addName } = {}) {
+export function mountKillFeed(section, { getJson, baseOf, addName, ratings } = {}) {
   if (!section) return { setPlayers() {} };
   const status = section.querySelector(".kf-status");
   const sum = section.querySelector(".kf-summary");
   const list = section.querySelector(".kf-list");
   const cache = new Map();
-  let player = null, shownCid = null;
+  let player = null, shownCid = null, shownRows = null, iviOf = null, ratingsAsked = false;
+  const paint = () => { if (shownRows) list.innerHTML = shownRows.map((r) => rowHtml(r, Date.now(), iviOf)).join(""); };
 
   function setStatus(text) { status.textContent = text || ""; status.hidden = !text; }
 
   async function show() {
     const p = player;
     if (!p || !p.cid || !section.open || shownCid === p.cid) return;
+    if (ratings && !ratingsAsked) { ratingsAsked = true; try { ratings((fn) => { iviOf = fn; paint(); }); } catch (_) {} }
     let job = cache.get(p.cid);
     if (!job) {
       job = Promise.resolve().then(() => getJson(killFeedUrl(baseOf(p), p.cid))).then((j) => {
@@ -143,8 +164,8 @@ export function mountKillFeed(section, { getJson, baseOf, addName } = {}) {
       setStatus("");
       sum.textContent = summaryText(summarizeKillFeed(rows));
       sum.hidden = false;
-      const now = Date.now();
-      list.innerHTML = rows.map((r) => rowHtml(r, now)).join("");
+      shownRows = rows;
+      paint();
       list.hidden = false;
     } catch (_) {
       if (player !== p) return;
@@ -168,7 +189,7 @@ export function mountKillFeed(section, { getJson, baseOf, addName } = {}) {
       player = one;
       shownCid = null;
       sum.hidden = true; sum.textContent = "";
-      list.hidden = true; list.innerHTML = "";
+      list.hidden = true; list.innerHTML = ""; shownRows = null;
       setStatus("");
       show();
     },
