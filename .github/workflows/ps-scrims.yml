@@ -82,6 +82,7 @@ jobs:
         continue-on-error: true
         env:
           PAGES: ${{ github.event.inputs.pages || '3' }}
+          NAMES: ${{ github.event.inputs.names || '' }} # these players' whole history first
         run: node scripts/ps-scrims.mjs --run
 
       - name: Commit (data-ps/scrims only, one commit per run)
