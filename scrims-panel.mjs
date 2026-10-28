@@ -224,10 +224,10 @@ export function mountScrims(section, o = {}) {
       if (player !== TOP) return;
       shown = { cid: "top", ...r };
       count.textContent = "";
-      sum.textContent = tr("scr.topSummary", "Top {n} PlayStation scrims (of {total} found)", { n: r.rows.length.toLocaleString(lang()), total: r.top.total.toLocaleString(lang()) });
+      sum.textContent = tr("scr.topSummary", "All {n} PlayStation scrims found", { n: r.rows.length.toLocaleString(lang()) });
       sum.title = tr("scr.ruleTip", "Scrim: 10+ kills and deaths in a row with one opponent (no 10-minute break), and that opponent is 60%+ of all kills and deaths in that time. Small groups (2–6 players) count too.");
       sum.hidden = false;
-      setStatus(tr("scr.topNote", "Biggest first; one-sided ones left out. History read for {players} players so far. Add one name to see that player's scrims.", { players: r.top.players.toLocaleString(lang()) }));
+      setStatus(tr("scr.topNote", "Biggest first; click a column to sort. History read for {players} players so far. Add one name to see that player's scrims.", { players: r.top.players.toLocaleString(lang()) }));
       wrap.hidden = !r.rows.length;
       render();
     } catch (e) {

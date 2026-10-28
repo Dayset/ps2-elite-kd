@@ -174,12 +174,12 @@ function scrubRemoved(rows, gone) {
 }
 
 /** How many scrims the room-wide 🥊 top list keeps. */
-export const TOP_N = 300;
+export const TOP_N = Infinity; // owner 2026-10-28: every scrim found, not just the top 300
 
 /**
  * Room-wide 🥊 top list (owner 2026-10-28: "top scrims tab … when no character is selected"):
  * every file's scrims, each scrim once (both players' copies match by players + overlapping
- * time), one-sided farms left out, the biggest TOP_N by kills (both sides). A 1v1 is told from
+ * time), one-sided farms included (badge), all of them by kills (both sides). A 1v1 is told from
  * the winner's side. → { v, at, total, players, done, rows: [{ t0, t1, p:[key,name], o, k, d, z, w }] }
  */
 export function buildTopScrims(files, gap = SCRIM_RULE.GAP) {
@@ -192,7 +192,6 @@ export function buildTopScrims(files, gap = SCRIM_RULE.GAP) {
     if (f.done) done++;
     for (const r of f.scrims) {
       if (!r || !Array.isArray(r.o) || !r.o.length) continue;
-      if (isOneSided(r)) continue;
       const people = [f.key, ...r.o.map((x) => x[0] || x[1])].sort().join(",");
       const list = seen.get(people) || [];
       const hit = list.find((x) => x.t0 <= r.t1 + gap && r.t0 <= x.t1 + gap);
@@ -219,7 +218,7 @@ function writeTop() {
   try { names = fs.readdirSync(SCRIM_DIR).filter((f) => f.endsWith(".json")); } catch {}
   const top = buildTopScrims(names.map((f) => readJson(path.join(SCRIM_DIR, f), null)));
   writeJson(path.join(DATA_DIR, "scrims-top.json"), top);
-  console.log(`🥊 top list: ${top.rows.length} of ${top.total} scrims (one-sided left out), ${top.players} players read.`);
+  console.log(`🥊 room list: ${top.rows.length} scrims, ${top.players} players read.`);
   return top;
 }
 
