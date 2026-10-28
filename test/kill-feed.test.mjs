@@ -45,7 +45,7 @@ test("the block sits right above the Auraxium weapons, collapsed and hidden unti
   assert.doesNotMatch(index.slice(a, b), /<details[^>]*\sopen/);
   const st = readFileSync(new URL("../stats-table.mjs", import.meta.url), "utf8");
   assert.match(st, /killFeedPanel\.setPlayers\(\$\.LIVE_MODE \? \[\] : shownList\)/);
-  assert.match(st, /const shownList = \$\.currentNamesInField\(\)\.length > 1 \? \[\] : list \|\| \[\];/);
+  assert.match(st, /const shownList = list && list\.length > 1 \? \[\] : list \|\| \[\];/);
   const css = readFileSync(new URL("../styles.css", import.meta.url), "utf8");
   const kf = css.slice(css.indexOf(".kf-section >"), css.indexOf("/* 🏆 Auraxium weapons"));
   assert.doesNotMatch(kf, /transition|animation/);

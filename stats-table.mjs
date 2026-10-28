@@ -33,7 +33,7 @@ import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from
 
 /**
  * $ = app.js state and functions this part uses, as live getters (and setters for state it changes), so app.js
- * stays the one owner: CENSUS, CENSUS_BASES, IS_PS, LIVE_MODE, LS_DEBUG_COLS, ROOM, censusJson, confirmedPadders, currentNamesInField, els, hutBySlug, hutMarked, hutOf, isSavedName, lastStatsList, liteSlugs, loadRanksLite, nameTokens, nbdBySlug, nbdCutsLite, nbhBySlug, refreshOnlineRoom, rvpBySlug, seriesColor, serverTagHtml, showDebugCols, thinCellTip, vdfBySlug.
+ * stays the one owner: CENSUS, CENSUS_BASES, IS_PS, LIVE_MODE, LS_DEBUG_COLS, ROOM, censusJson, confirmedPadders, els, hutBySlug, hutMarked, hutOf, isSavedName, lastStatsList, liteSlugs, loadRanksLite, nameTokens, nbdBySlug, nbdCutsLite, nbhBySlug, refreshOnlineRoom, rvpBySlug, seriesColor, serverTagHtml, showDebugCols, thinCellTip, vdfBySlug.
  */
 export function createStatsTable($) {
   /* Per-table sort state: key "name" | col index, dir "asc"|"desc" */
@@ -273,7 +273,8 @@ export function createStatsTable($) {
 
   function syncWeapons(list) {
     ensureOldTabs();
-    const shownList = $.currentNamesInField().length > 1 ? [] : list || [];
+    // Displayed list, not the field: un-analyzed tokens must not hide one-player panels on a stale re-render.
+    const shownList = list && list.length > 1 ? [] : list || [];
     if (!killFeedPanel) {
       killFeedPanel = mountKillFeed(document.getElementById("killFeedSection"), {
         getJson: (u) => $.censusJson(u),
