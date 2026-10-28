@@ -21,7 +21,7 @@ import {
 } from "./engine.js";
 import { binGetter, hasTree, regionMap, latticeFor, captureModel, resistanceModel, heatModel } from "./models.js";
 import { runCommander, ownership, applyElimination } from "./commander.js";
-import { handleAuth, CHALLENGE_KEEP_S } from "./auth.js";
+import { handleAuth, CHALLENGE_KEEP_S, ensureAuthTables } from "./auth.js";
 import { handleVote, settleStatements } from "./vote.js";
 import { handlePrivacy } from "./privacy.js";
 import { cutAwareSnap } from "./cut.js";
@@ -193,6 +193,9 @@ export function pruneStatements(db, now) {
     db.prepare("DELETE FROM tick WHERE ts < ?").bind(now - 90 * 86400),
     db.prepare("DELETE FROM pop WHERE ts < ?").bind(now - 30 * 86400),
     db.prepare("DELETE FROM challenge WHERE created < ?").bind(now - CHALLENGE_KEEP_S),
+    // #82: one-time QR links (code hash only) and claim attempts (keyed IP hash), a day like the challenges.
+    db.prepare("DELETE FROM link WHERE created < ?").bind(now - CHALLENGE_KEEP_S),
+    db.prepare("DELETE FROM link_try WHERE ts < ?").bind(now - CHALLENGE_KEEP_S),
   ];
 }
 
@@ -504,6 +507,7 @@ export async function runCycle(env, nowMs = Date.now()) {
   //    sign-in challenges (character + keyed IP hash) 1 day (#61, PRIVACY.md).
   const d = new Date(nowMs);
   if (d.getUTCHours() === 4 && d.getUTCMinutes() === 7) {
+    await ensureAuthTables(db); // the link tables may not exist yet if nobody signed in since the deploy
     await db.batch(pruneStatements(db, now));
   }
 

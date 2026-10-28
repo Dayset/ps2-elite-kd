@@ -3,13 +3,16 @@
  * BonusCheques, a meme currency with no cash value. Talks to the ps2-oracle Worker:
  *   GET  /vote/quote?key=   odds for every amount (no sign-in needed)
  *   GET  /vote/me           balance, votes, daily BonusCheque availability (Bearer token)
- *   POST /vote/place        {key, outcome, amount, seen_pct}
+ *   POST /vote/place        {key, outcome, amount, seen_pct, vote_id}  one vote per faction per alert (#82)
  *   POST /vote/bonus        +25 once per UTC day
  *   GET  /vote/leaderboard
  * When signed in and no live alert is selected: a compact "My votes" card from /vote/me.
  * Listens for:  "oracle:alert" {detail: alert|null}   (selected alert changed / refreshed)
  *               "oracle:auth"  {detail: character|null} (signed in / out)
  * Renders into <section id="voteSlot">. Uses localStorage "ps2oracle_token".
+ * #82 (PC + phone signed in as one character): the server decides every vote and bonus at call time. This panel
+ * refetches every 30 s, when the tab comes back into view or gets focus, after every vote / bonus call and after
+ * any 409, and takes the balance a refusal carries at once. Factions already backed on the alert show ✓.
  */
 import { t as tr, ready } from "../../i18n.mjs";
 await ready;   // #73: DISCLAIMER below is built once, in the page language
@@ -29,11 +32,29 @@ export const DISCLAIMER = `<details class="fair"><summary>${tr("or.fair.sum", "B
     <li>${tr("or.fair.1", "BonusCheques can't be bought, sold, traded or cashed out, and you can't win anything of value. Everyone starts with 1,000; you get +25 a day, and a little more if you run dry.")}</li>
     <li>${tr("or.fair.2", "Voting is here to get you into the game: back your faction, then log in and help it win.")}</li>
     <li>${tr("or.fair.3", "You can vote for any faction.")}</li>
+    <li>${tr("or.fair.3b", "One vote per faction per alert, from any of your devices.")}</li>
     <li>${tr("or.fair.4", "Signing in needs an in-game logout of your character. That proves the character is yours; we never ask for a password or email. We keep your character, a sign-in token, your BonusCheques and votes ({privacy}).", { privacy: `<a href="../privacy.html">${tr("or.fair.privacy", "privacy")}</a>` })}</li>
     <li>${tr("or.fair.5", "Fair play only. Riggers, alert throwers and cheaters aren't welcome, and their votes and leaderboard spots can be removed.")}</li>
   </ul></details>`;
 
-let alert = null, me = null, wallet = null, quotes = null, pick = null, amount = 50, busy = false, msg = "";
+let alert = null, me = null, wallet = null, quotes = null, pick = null, amount = 50, busy = false, msg = "", lastRefresh = 0;
+
+/** #82: a random id per vote click; a retry of the same click reuses it, so the vote lands once. */
+const newVoteId = () => (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `v${Date.now()}${Math.random().toString(36).slice(2, 12)}`);
+/** #82: factions this character already backed on the alert (one vote per faction per alert). */
+export function votedFactions(w, key) {
+  return new Set(((w && w.votes) || []).filter((v) => v.key === key).map((v) => v.outcome));
+}
+/** #82: what a refused vote says. The other device is the usual cause of the wallet-related ones. */
+export function voteErrorText(err, body = {}) {
+  const b = body || {};
+  if (err === "already_voted") return tr("or.e.voted", "You already voted {f} on this alert (maybe from another device).", { f: (b.vote && b.vote.outcome) || "" });
+  if (err === "insufficient_balance") return b.balance != null ? tr("or.e.fundsN", "Not enough BonusCheques: you have {n} (it may have changed on another device).", { n: pts(b.balance) }) : tr("or.e.funds", "Not enough BonusCheques.");
+  if (err === "already_claimed_today") return tr("or.e.claimed", "Today's BonusCheque was already claimed (maybe on another device).");
+  return ({ odds_changed: tr("or.e.moved", "The odds moved; check the new odds and try again."), closed: tr("or.e.closed", "Voting just closed."),
+    own_faction_only: tr("or.e.own", "You can vote only for your own faction."), odds_stale: tr("or.e.stale", "Odds are refreshing; try again in a minute."), decided: tr("or.e.decided", "That outcome is already decided."),
+    data_suspect: tr("or.e.suspect", "Voting is paused while Census map data looks broken."), not_signed_in: tr("or.e.signedOut", "This device was signed out. Sign in again to vote.") })[err] || tr("or.e.other", "Couldn't record the vote.");
+}
 
 async function call(path, method = "GET", body) {
   const t = token();
@@ -95,6 +116,7 @@ export async function fetchMyVotes() {
 
 async function refresh() {
   if (!slot()) return;
+  lastRefresh = Date.now();
   if (!alert || alert.status !== "live") {
     if (!me) { slot().innerHTML = voteIdleHtml(); return; }
     try { wallet = await fetchMyVotes(); } catch { wallet = null; }
@@ -128,10 +150,12 @@ function render() {
     el.innerHTML = `<div class="card vote idle">${head}<div class="note">${q && q.reason === "closed" ? tr("or.v.closedLast", "Voting closed for this alert (last 5%).") : q && q.reason === "data_suspect" ? tr("or.v.paused", "Voting paused: Census map data looks broken right now. It reopens when the map is healthy again.") : tr("or.v.opensFresh", "Voting opens when fresh odds are available.")}</div>${DISCLAIMER}</div>`;
     return;
   }
+  const voted = votedFactions(wallet, alert.key);
+  if (pick && voted.has(pick)) pick = null;
   const facBtn = (f) => {
-    const off = q.quotes[f] == null || (ownOnly && f !== own);
-    return `<button class="facpick ${f} ${pick === f ? "on" : ""}" data-f="${f}" ${off ? "disabled" : ""} aria-pressed="${pick === f}">
-      <b>${f}</b><span>${q.pcts[f]}%</span></button>`;
+    const off = q.quotes[f] == null || (ownOnly && f !== own) || voted.has(f);
+    return `<button class="facpick ${f} ${pick === f ? "on" : ""}" data-f="${f}" ${off ? "disabled" : ""} aria-pressed="${pick === f}"${voted.has(f) ? ` title="${esc(tr("or.v.backed", "You already voted {f} on this alert", { f }))}"` : ""}>
+      <b>${f}${voted.has(f) ? " ✓" : ""}</b><span>${q.pcts[f]}%</span></button>`;
   };
   const sel = pick && q.quotes[pick] && q.quotes[pick][amount];
   const feeNote = (f) => (q.fee_rate[f] ? tr("or.v.fee", " · late fee {p}%", { p: Math.round(q.fee_rate[f] * 100) }) : "");
@@ -159,16 +183,27 @@ function render() {
   const si = el.querySelector("#voteSignIn");
   if (si) si.onclick = () => document.getElementById("signIn") && document.getElementById("signIn").click();
   const bonus = el.querySelector("#voteBonus");
-  if (bonus) bonus.onclick = async () => { const r = await call("/vote/bonus", "POST", {}); msg = r.status === 200 ? tr("or.v.added", "+25 BonusCheques added.") : tr("or.v.already", "Already claimed today."); refresh(); };
+  if (bonus) bonus.onclick = async () => {
+    let r = null;
+    try { r = await call("/vote/bonus", "POST", {}); } catch { /* network */ }
+    msg = !r ? tr("or.e.reach", "The oracle didn't answer. Try again.") : r.status === 200 ? tr("or.v.added", "+25 BonusCheques added.") : voteErrorText(r.body.error, r.body);
+    if (r && r.body && r.body.balance != null && wallet) { wallet.balance = r.body.balance; wallet.bonus_available = r.status === 200 ? false : !!r.body.bonus_available; }
+    refresh();
+  };
   const place = el.querySelector("#votePlace");
   if (place) place.onclick = async () => {
+    if (busy) return;
     busy = true; render();
-    const r = await call("/vote/place", "POST", { key: alert.key, outcome: pick, amount, seen_pct: q.pcts[pick] });
+    const f = pick, n = amount;
+    const body = { key: alert.key, outcome: f, amount: n, seen_pct: q.pcts[f], vote_id: newVoteId() };
+    let r = null;
+    for (let i = 0; i < 2 && !r; i++) { try { r = await call("/vote/place", "POST", body); } catch { /* network: one retry with the same vote_id */ } }
     busy = false;
-    msg = r.status === 200 ? tr("or.v.done", "Voted {f} with {n}: {r} back if {f} wins. Now go help them!", { f: pick, n: amount, r: pts(r.body.vote.reward) })
-      : ({ odds_changed: tr("or.e.moved", "The odds moved; check the new odds and try again."), insufficient_balance: tr("or.e.funds", "Not enough BonusCheques."), closed: tr("or.e.closed", "Voting just closed."),
-        own_faction_only: tr("or.e.own", "You can vote only for your own faction."), odds_stale: tr("or.e.stale", "Odds are refreshing; try again in a minute."), decided: tr("or.e.decided", "That outcome is already decided."),
-        data_suspect: tr("or.e.suspect", "Voting is paused while Census map data looks broken.") })[r.body.error] || tr("or.e.other", "Couldn't record the vote.");
+    if (r && r.body && r.body.balance != null && wallet) wallet.balance = r.body.balance; // the refusal's balance is the real one
+    msg = !r ? tr("or.e.reach", "The oracle didn't answer. Try again.")
+      : r.status === 200 ? tr("or.v.done", "Voted {f} with {n}: {r} back if {f} wins. Now go help them!", { f, n, r: pts(r.body.vote.potential != null ? r.body.vote.potential : r.body.vote.reward) })
+      : voteErrorText(r.body.error, r.body);
+    if (r && r.status === 401) { msg = voteErrorText("not_signed_in"); }
     refresh();
   };
   const lb = el.querySelector("details.lb");
@@ -220,5 +255,9 @@ function mount() {
   });
   addEventListener("oracle:auth", (e) => { me = e.detail || null; wallet = null; pick = null; refresh(); });
   setInterval(refresh, 30000);
+  // #82: switching from the PC to the phone (or back) shows what the other device did, right away.
+  const soon = () => { if (Date.now() - lastRefresh > 2000) refresh(); };
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) soon(); });
+  addEventListener("focus", soon);
 }
 mount();

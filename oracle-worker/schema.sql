@@ -128,7 +128,7 @@ CREATE TABLE IF NOT EXISTS challenge (
 );
 CREATE INDEX IF NOT EXISTS challenge_ip ON challenge (ip_hash, created);
 
--- Verified characters. token_id = the one active token (NULL after sign-out).
+-- Verified characters. token_id = a pre-#82 token, moved to session on first use (NULL afterwards).
 CREATE TABLE IF NOT EXISTS account (
   cid TEXT PRIMARY KEY,
   name TEXT NOT NULL,
@@ -167,6 +167,8 @@ CREATE TABLE IF NOT EXISTS vote (
 );
 CREATE INDEX IF NOT EXISTS vote_cid ON vote (cid, placed_ts);
 CREATE INDEX IF NOT EXISTS vote_open ON vote (status, key);
+-- One vote per faction per alert (owner 2026-10-28, #82); also created lazily by the Worker (vote.js VOTE_INDEX).
+CREATE UNIQUE INDEX IF NOT EXISTS vote_one_per_faction ON vote (cid, key, outcome);
 DROP TABLE IF EXISTS bet;            -- renamed to vote on 2026-10-18 (was empty)
 
 -- Self-service removal from PS2 Elite (#61, oracle-worker/src/privacy.js; also created lazily by the Worker).
@@ -177,3 +179,29 @@ CREATE TABLE IF NOT EXISTS removal (
   at INTEGER NOT NULL,
   proof TEXT NOT NULL
 );
+
+-- #82 second-device sign-in (oracle-worker/src/auth.js AUTH_TABLES; also created lazily by the Worker).
+-- One row per signed-in device; a new in-game verification deletes all rows of the character.
+CREATE TABLE IF NOT EXISTS session (
+  id TEXT PRIMARY KEY,
+  cid TEXT NOT NULL,
+  kind TEXT NOT NULL,                -- verified | linked
+  created INTEGER NOT NULL,
+  last_seen INTEGER NOT NULL,        -- written at most once an hour
+  linked_from TEXT
+);
+CREATE INDEX IF NOT EXISTS session_cid ON session (cid, last_seen);
+-- One-time QR codes: only the SHA-256 of the code is stored; 3 min, single use, pruned after a day.
+CREATE TABLE IF NOT EXISTS link (
+  hash TEXT PRIMARY KEY,
+  cid TEXT NOT NULL,
+  session_id TEXT NOT NULL,
+  created INTEGER NOT NULL,
+  expires INTEGER NOT NULL,
+  used_at INTEGER,
+  used_session TEXT
+);
+CREATE INDEX IF NOT EXISTS link_cid ON link (cid, created);
+-- Link claim attempts per keyed IP hash (rate limit), pruned after a day.
+CREATE TABLE IF NOT EXISTS link_try (ip_hash TEXT NOT NULL, ts INTEGER NOT NULL);
+CREATE INDEX IF NOT EXISTS link_try_ip ON link_try (ip_hash, ts);

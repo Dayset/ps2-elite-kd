@@ -121,6 +121,8 @@ dialog.auth::backdrop { background: rgba(0,0,0,.6); }
 .auth .row2 { display: flex; gap: var(--s-3); align-items: center; margin-top: var(--s-3); flex-wrap: wrap; }
 .auth .err { color: var(--err); font-size: var(--fs-14); margin-top: var(--s-2); } .auth .ok { color: var(--ok); }
 .auth .count { font-size: var(--fs-36); font-weight: 700; font-variant-numeric: tabular-nums; }
+.auth .qr { background: #fff; border-radius: var(--r-md); width: min(260px, 70vw); margin: var(--s-3) auto; } /* #82: QR stays black on white in both themes */
+.auth .qr svg { display: block; width: 100%; height: auto; }
 .auth .bar { height: 6px; background: var(--panel2); border-radius: var(--r-xs); overflow: hidden; margin-top: var(--s-2); } .auth .bar span { display: block; height: 100%; background: var(--accent); }
 footer { color: var(--dim); font-size: var(--fs-12); margin-top: var(--s-5); }
 .hoverline { min-height: 18px; font-size: var(--fs-14); color: var(--muted); margin-top: var(--s-2); font-variant-numeric: tabular-nums; }

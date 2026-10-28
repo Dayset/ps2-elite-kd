@@ -44,7 +44,7 @@ export async function handlePrivacy(request, env, url, json, now = Math.floor(Da
     return json({ removals: rows }, 200, ns);
   }
 
-  const acct = await accountFromRequest(request, db);
+  const acct = await accountFromRequest(request, db, now);
   if (!acct) return json({ error: "not_signed_in" }, 401, ns);
   const id = parseIdent(acct.cid);
   if (!id) return json({ error: "bad_identity" }, 400, ns);

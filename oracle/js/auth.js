@@ -3,14 +3,23 @@
 import { S, esc, $ } from "./state.js?v=20261018-scrub2";
 import { authCall, store, TOKEN_KEY, PENDING_KEY } from "./api.js?v=20261018-scrub2";
 import { t as tr } from "../../i18n.mjs";
+import { linkCodeFromHash, hashWithoutLink, qrSvg } from "./link.js?v=20261028-qr1";
+
+// #82: opened from a PC's one-time QR link (oracle/#link=<code>): take the code and clear it from the address bar
+// at once (it is evaluated when main.js imports this module, before anything renders or rewrites the URL).
+const LINK_CODE = typeof location !== "undefined" ? linkCodeFromHash(location.hash) : "";
+if (LINK_CODE) history.replaceState(null, "", location.pathname + location.search + hashWithoutLink(location.hash));
 
 function renderWho() {
   dispatchEvent(new CustomEvent("oracle:auth", { detail: S.me || null }));
   $("who").innerHTML = S.me
-    ? `<span>${tr("or.a.signedAs", "Signed in as {n}", { n: `<b class="${esc(S.me.faction || "")}">${esc(S.me.name)}</b>` })}</span><button class="link" id="signOut">${tr("or.a.signOut", "Sign out")}</button>`
+    ? `<span>${tr("or.a.signedAs", "Signed in as {n}", { n: `<b class="${esc(S.me.faction || "")}">${esc(S.me.name)}</b>` })}</span><button class="link" id="linkPhone">${tr("or.l.btn", "📱 Phone")}</button><button class="link" id="signOut">${tr("or.a.signOut", "Sign out")}</button>`
     : `<button class="btn" id="signIn">${tr("or.a.signIn", "Sign in")}</button>`;
-  if (S.me) $("signOut").onclick = async () => { await authCall("/auth/logout", "POST", {}); store.set("localStorage", TOKEN_KEY, null); S.me = null; renderWho(); };
-  else $("signIn").onclick = () => openAuth();
+  if (S.me) {
+    // #82: signs out this device only; the other devices stay signed in.
+    $("signOut").onclick = async () => { await authCall("/auth/logout", "POST", {}).catch(() => null); store.set("localStorage", TOKEN_KEY, null); S.me = null; renderWho(); };
+    $("linkPhone").onclick = () => openLink();
+  } else $("signIn").onclick = () => openAuth();
 }
 async function loadMe() {
   if (!store.get("localStorage", TOKEN_KEY)) { S.me = null; renderWho(); return; }
@@ -101,6 +110,79 @@ function watchStep(id, total) {
   S.authTimer = setInterval(poll, 2000);
   poll();
 }
+/** #82: sign out every device of this character (this one too). */
+async function signOutAll() {
+  stopTimer();
+  await authCall("/auth/logout", "POST", { all: true }).catch(() => null);
+  store.set("localStorage", TOKEN_KEY, null); S.me = null; renderWho();
+  authView(`<h3>${tr("or.l.allDone", "Signed out on all devices")}</h3><div class="note">${tr("or.l.allDoneWhy", "Every device that was signed in as this character is signed out, this one too. Sign in again with the in-game logout.")}</div><div class="row2"><button class="btn" id="authClose">${tr("or.a.done", "Done")}</button></div>`);
+  $("authClose").onclick = () => $("auth").close();
+}
+const mmss = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+/**
+ * #82: the PC shows a one-time QR code; the phone that scans it is signed in as the same character
+ * (no second in-game logout). 3 minutes, works once; the dialog follows the server until the phone is in.
+ */
+async function openLink() {
+  stopTimer();
+  const title = `<h3>${tr("or.l.title", "Sign in on your phone")}</h3>`;
+  authView(`${title}<div class="note">${tr("or.l.making", "Making a one-time code…")}</div>`);
+  if (!$("auth").open) $("auth").showModal();
+  let r = null;
+  try { r = await authCall("/auth/link", "POST", {}); } catch { /* shown below */ }
+  if (!r || r.status !== 200) {
+    if (r && r.status === 401) { store.set("localStorage", TOKEN_KEY, null); S.me = null; renderWho(); }
+    authView(`${title}<div class="err">${r && r.body.error === "too_many_links" ? tr("or.l.tooMany", "Too many codes. Try again in 10 minutes.") : tr("or.l.failed", "Couldn't make a code right now.")}</div>`);
+    return;
+  }
+  const { url, id, expires_in_s: ttl } = r.body;
+  const n = `<b class="${esc((S.me && S.me.faction) || "")}">${esc((S.me && S.me.name) || "")}</b>`;
+  authView(`${title}<div class="note">${tr("or.l.how", "Scan this with your phone's camera. It signs the phone in as {n}, no second logout. The code works once, for 3 minutes.", { n })}</div>
+    <div class="qr">${qrSvg(url, tr("or.l.qrTitle", "One-time sign-in code"))}</div>
+    <div class="note" id="linkState">${tr("or.l.waiting", "Waiting for your phone…")} <b id="linkLeft">${mmss(ttl)}</b></div>
+    <div class="row2"><button class="link" id="linkAll">${tr("or.l.all", "Sign out all devices")}</button></div>`);
+  $("linkAll").onclick = signOutAll;
+  let left = ttl, ticks = 0;
+  const poll = async () => {
+    left = Math.max(0, left - 1);
+    const el = $("linkLeft"); if (el) el.textContent = mmss(left);
+    if (++ticks % 2 && left > 0) return; // ask the server every 2 s
+    let st = null;
+    try { st = await authCall(`/auth/link/status?id=${encodeURIComponent(id)}`); } catch { return; }
+    if (!$("auth").open || !$("linkState")) { stopTimer(); return; }
+    if (st.status === 401) { stopTimer(); store.set("localStorage", TOKEN_KEY, null); S.me = null; renderWho(); $("auth").close(); return; }
+    if (st.status !== 200) return;
+    if (st.body.status === "linked") {
+      stopTimer();
+      authView(`<h3 class="ok">${tr("or.l.linked", "Phone signed in ✓")}</h3><div class="note">${tr("or.l.linkedWhy", "Signed in on {d} devices. Signing out on one keeps the others; a new in-game verification signs out all of them.", { d: st.body.devices })}</div>
+        <div class="row2"><button class="btn" id="authClose">${tr("or.a.done", "Done")}</button><button class="link" id="linkAll">${tr("or.l.all", "Sign out all devices")}</button></div>`);
+      $("authClose").onclick = () => $("auth").close();
+      $("linkAll").onclick = signOutAll;
+    } else if (st.body.status === "expired" || left <= 0) {
+      stopTimer();
+      authView(`${title}<div class="note">${tr("or.l.expired", "The code expired.")}</div><div class="row2"><button class="btn" id="linkNew">${tr("or.l.new", "New code")}</button></div>`);
+      $("linkNew").onclick = openLink;
+    } else if (st.body.left_s != null) left = st.body.left_s;
+  };
+  S.authTimer = setInterval(poll, 1000);
+}
+/** #82: this browser opened a one-time link: claim it; on success this device is signed in as that character. */
+async function claimLink(code) {
+  let r = null;
+  try { r = await authCall("/auth/link/claim", "POST", { code }); } catch { /* shown below */ }
+  if (r && r.status === 200) {
+    // A different session on this browser signs out first (server side too), then the new token is kept.
+    if (store.get("localStorage", TOKEN_KEY)) await authCall("/auth/logout", "POST", {}).catch(() => null);
+    store.set("localStorage", TOKEN_KEY, r.body.token);
+    S.me = r.body.character; renderWho();
+    authView(`<h3 class="ok">${tr("or.a.verified", "Verified ✓")}</h3><div class="note">${tr("or.l.here", "Signed in as {n} on this device. The device that showed the code stays signed in.", { n: `<b class="${esc(S.me.faction || "")}">${esc(S.me.name)}</b>` })}</div><div class="row2"><button class="btn" id="authClose">${tr("or.a.done", "Done")}</button></div>`);
+  } else {
+    await loadMe(); // keep whatever this browser had
+    authView(`<h3>${tr("or.l.bad", "This sign-in link doesn't work")}</h3><div class="note">${r ? tr("or.l.badWhy", "It expired or was already used. On your PC, press 📱 Phone next to your name for a new QR code.") : tr("or.a.eReach", "The oracle is not reachable.")}</div><div class="row2"><button class="btn" id="authClose">${tr("or.a.done", "Done")}</button></div>`);
+  }
+  $("authClose").onclick = () => $("auth").close();
+  if (!$("auth").open) $("auth").showModal();
+}
 async function resumePending() {
   const id = store.get("sessionStorage", PENDING_KEY);
   if (!id || S.me) return;
@@ -124,5 +206,5 @@ export function initAuth() {
     if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
     else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
   });
-  loadMe().then(resumePending);
+  if (LINK_CODE) claimLink(LINK_CODE); else loadMe().then(resumePending);
 }

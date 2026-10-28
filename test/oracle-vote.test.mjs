@@ -95,19 +95,24 @@ test("place, guard, settle and pay out exactly once", { skip }, async () => {
   const nc = await call("POST", "/vote/place", now, { key: "1-4-1", outcome: "NC", amount: 200 }, "NC");
   assert.equal(nc.status, 200);
 
-  // Spend the VS wallet down: 900 left -> four more 200 votes, then refused.
-  for (let i = 0; i < 4; i++) assert.equal((await call("POST", "/vote/place", now + i, { key: "1-4-1", outcome: "VS", amount: 200 }, "VS")).status, 200);
-  const broke = await call("POST", "/vote/place", now + 5, { key: "1-4-1", outcome: "VS", amount: 200 }, "VS");
-  assert.equal(broke.body.error, "insufficient_balance");
-  assert.equal(DB.raw.prepare("SELECT COUNT(*) n FROM vote WHERE cid=?").get(VS_CID).n, 5, "no vote row without a debit");
+  // #82 (owner 2026-10-28): one vote per faction per alert. VS again is refused; NC and TR are allowed once each.
+  const again = await call("POST", "/vote/place", now + 1, { key: "1-4-1", outcome: "VS", amount: 200 }, "VS");
+  assert.equal(again.status, 409);
+  assert.equal(again.body.error, "already_voted");
+  assert.equal(again.body.vote.outcome, "VS");
+  assert.equal(again.body.balance, 900, "the refusal carries the real balance");
+  for (const f of ["NC", "TR"]) assert.equal((await call("POST", "/vote/place", now + 2, { key: "1-4-1", outcome: f, amount: 200 }, "VS")).status, 200, `VS may also back ${f}`);
+  assert.equal((await call("POST", "/vote/place", now + 3, { key: "1-4-1", outcome: "TR", amount: 25 }, "VS")).body.error, "already_voted");
+  assert.equal(DB.raw.prepare("SELECT COUNT(*) n FROM vote WHERE cid=?").get(VS_CID).n, 3, "one row per faction, no row without a debit");
+  assert.equal((await call("GET", "/vote/me", now + 4, null, "VS")).body.balance, 500);
 
   // Late in the alert: fee applies; past 95 % voting is closed; stale odds close it too.
   setState(T0 + 75 * 60, [70, 20, 10]);                          // 83 % in
   assert.equal((await call("GET", "/vote/quote?key=1-4-1", T0 + 75 * 60 + 10)).body.fee_rate.VS, 0.15);
   setState(T0 + 86 * 60, [80, 15, 5]);
-  assert.equal((await call("POST", "/vote/place", T0 + 86 * 60 + 5, { key: "1-4-1", outcome: "NC", amount: 25 }, "NC")).body.error, "closed");
+  assert.equal((await call("POST", "/vote/place", T0 + 86 * 60 + 5, { key: "1-4-1", outcome: "TR", amount: 25 }, "NC")).body.error, "closed"); // TR: NC already backed NC (#82)
   setState(T0 + 60 * 60, [80, 15, 5]);
-  assert.equal((await call("POST", "/vote/place", T0 + 70 * 60, { key: "1-4-1", outcome: "NC", amount: 25 }, "NC")).body.error, "odds_stale");
+  assert.equal((await call("POST", "/vote/place", T0 + 70 * 60, { key: "1-4-1", outcome: "TR", amount: 25 }, "NC")).body.error, "odds_stale");
 
   // Settlement: VS wins; credited once even if the settle step runs twice.
   DB.raw.prepare("UPDATE alert SET status='settled', winner='VS' WHERE key='1-4-1'").run();
@@ -115,16 +120,19 @@ test("place, guard, settle and pay out exactly once", { skip }, async () => {
   await DB.batch(settleStatements(DB, alerts, T0 + 6000));
   await DB.batch(settleStatements(DB, [], T0 + 6060));
   const me = await call("GET", "/vote/me", T0 + 6100, null, "VS");
-  // 100 cheques were never voted (1000 - 100 - 4 x 200), plus every winning vote.
-  const expected = Math.round((100 + DB.raw.prepare("SELECT SUM(potential) s FROM vote WHERE cid=?").get(VS_CID).s) * 100) / 100;
+  // 500 cheques were never voted (1000 - 100 VS - 200 NC - 200 TR), plus the winning VS vote.
+  const expected = Math.round((500 + DB.raw.prepare("SELECT SUM(potential) s FROM vote WHERE cid=? AND outcome='VS'").get(VS_CID).s) * 100) / 100;
   assert.equal(me.body.balance, expected);
-  assert.ok(me.body.balance > 1000, "VS backed the winner");
+  assert.ok(me.body.balance > 500 + 100, "VS backed the winner: more back than the 100 put in");
   assert.ok(back > 190 && back < 200);
   const meNc = await call("GET", "/vote/me", T0 + 6100, null, "NC");
   assert.equal(meNc.body.balance, 800);
   assert.equal(meNc.body.votes[0].status, "lost");
   const lb = await call("GET", "/vote/leaderboard", T0 + 6100);
-  assert.equal(lb.body.leaders[0].name, "Vee");
+  // Ordered by net gain: Vee won VS but lost NC + TR (#82: one vote per faction), Enn lost one NC vote.
+  assert.deepEqual(lb.body.leaders.map((l) => l.name).sort(), ["Enn", "Vee"]);
+  assert.ok(lb.body.leaders[0].gain >= lb.body.leaders[1].gain, JSON.stringify(lb.body.leaders));
+  assert.equal(lb.body.leaders.find((l) => l.name === "Vee").gain, me.body.gain);
 });
 
 test("a draw or cancellation gives the full amount back, fee included", { skip }, async () => {

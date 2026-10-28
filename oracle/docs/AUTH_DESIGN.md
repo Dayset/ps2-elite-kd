@@ -42,8 +42,11 @@ Fail = timeout, wrong character, or logout before ACCEPT (ignored as stale).
 
 - On pass: server issues an **HMAC-signed token**, no expiry.
 - Stored in the browser as `ps2oracle_token` (localStorage), indefinitely.
-- **One active token per character.** A new verification revokes the old token.
-- Lost token or new device/browser → re-do the challenge.
+- **One session per device (#82, 2026-10-28).** Token = `cid.sessionId.hmac`; table `session`, at most 5 per character (the least recently seen *linked* one goes first; the verified one is never dropped).
+- **Second device by QR, no second logout (#82).** A signed-in device presses 📱 Phone: `POST /auth/link` mints a 256-bit one-time code (only its SHA-256 is stored, table `link`), shown as a QR of `oracle/#link=<code>` (fragment: never in server logs; the page strips it at once). The phone `POST /auth/link/claim`s it within 3 minutes, once, and gets its own `linked` session for the same character (a PlayStation identity stays `pc_only` for voting). Limits: 5 codes per character per 10 min (superseded codes still count), 20 claim attempts per keyed IP hash per 10 min. No approve step on the PC; the PC dialog shows "Phone signed in ✓" and "Sign out all devices".
+- **Revocation.** Sign out = this device only. `POST /auth/logout {all:true}` = every device. **A new verification revokes all sessions and open codes** (the old "one token" rule, now also the way to cut off a misused QR).
+- Pre-#82 tokens (`account.token_id`) become a `verified` session on first use; nobody was signed out by the change.
+- Lost token or new device/browser → re-do the challenge, or scan a QR from a device that is still signed in.
 - **No PC fingerprinting** — unreliable and privacy-invasive.
 
 ## Anti-abuse notes

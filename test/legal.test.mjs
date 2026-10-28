@@ -55,7 +55,7 @@ test("pages load no third-party scripts, styles, fonts, frames or images", () =>
 });
 
 test("no analytics, trackers or error reporters", () => {
-  const TRACKERS = /google-analytics|googletagmanager|gtag\(|plausible\.io|umami\.is|static\.cloudflareinsights|beacon\.min\.js|sentry|hotjar|clarity\.ms|connect\.facebook|matomo|segment\.com|mixpanel/i;
+  const TRACKERS = /google-analytics|googletagmanager|(?<![A-Za-z])gtag\(|plausible\.io|umami\.is|static\.cloudflareinsights|beacon\.min\.js|sentry|hotjar|clarity\.ms|connect\.facebook|matomo|segment\.com|mixpanel/i;
   for (const f of [...PAGES, ...SITE_JS]) assert.doesNotMatch(read(f), TRACKERS, `${f}: tracker found (update PRIVACY.md first)`);
 });
 

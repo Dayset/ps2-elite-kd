@@ -6,13 +6,20 @@
  *                                 and asks the AuthWatcher to watch the character
  *   GET  /auth/check?id=       -> created | accepted | passed | expired | completed
  *   POST /auth/complete {id}   -> passed challenge -> token (one active per character)
- *   GET  /auth/me              -> Authorization: Bearer <token> -> character
- *   POST /auth/logout          -> revokes the token
+ *   GET  /auth/me              -> Authorization: Bearer <token> -> character (+ devices signed in)
+ *   POST /auth/logout {all?}   -> revokes this device's session (all: every session of the character)
+ *   POST /auth/link            -> signed in: one-time QR link for a second device (#82), 3 min
+ *   GET  /auth/link/status?id= -> signed in: waiting | linked | expired (the PC dialog polls it)
+ *   POST /auth/link/claim {code} -> the second device: new session for the same character
  *   GET  /auth/health          -> stream watcher state
  *
- * Token = base64url("<cid>.<tokenId>.<hmac>"), HMAC-SHA256 with a random server
- * secret created once and kept in D1 (meta "auth_secret"). The account row holds
- * the current tokenId, so a new verification revokes the old token.
+ * Token = base64url("<cid>.<sessionId>.<hmac>"), HMAC-SHA256 with a random server
+ * secret created once and kept in D1 (meta "auth_secret"). #82: one session row per
+ * device (table session, at most MAX_SESSIONS per character). A new in-game logout
+ * verification revokes every session of the character (the old "verifying on another
+ * device signs this one out" rule, and the way to cut off a misused QR link). Tokens
+ * issued before #82 (account.token_id) become a "verified" session on first use.
+ * Link codes: 256 random bits, only their SHA-256 is stored, single use, LINK_TTL_S.
  */
 export const ACCEPT_WAIT_S = 5;
 export const WINDOW_S = 60;
@@ -88,6 +95,50 @@ export async function ipHash(db, ip) {
 /** Sign-in challenges are only needed for minutes; kept a day for the rate limit, then deleted. */
 export const CHALLENGE_KEEP_S = 86400;
 
+/** #82 second-device sign-in: link lifetime, limits, sessions per character, last_seen write interval. */
+export const LINK_TTL_S = 180;
+export const LINK_MINTS_PER_10MIN = 5;
+export const LINK_CLAIMS_PER_IP_10MIN = 20;
+export const MAX_SESSIONS = 5;
+const SEEN_EVERY_S = 3600;
+export const LINK_URL = "https://dayset.github.io/ps2-elite-kd/oracle/#link=";
+const CODE_RE = /^[A-Za-z0-9_-]{40,48}$/;
+
+/** #82 tables, created lazily like removal (privacy.js): schema.sql is not applied on deploy. */
+export const AUTH_TABLES = [
+  `CREATE TABLE IF NOT EXISTS session (
+    id TEXT PRIMARY KEY,        -- token's session id
+    cid TEXT NOT NULL,
+    kind TEXT NOT NULL,         -- verified (in-game logout) | linked (QR from a signed-in device)
+    created INTEGER NOT NULL,
+    last_seen INTEGER NOT NULL, -- written at most once an hour
+    linked_from TEXT            -- session id that minted the link
+  )`,
+  "CREATE INDEX IF NOT EXISTS session_cid ON session (cid, last_seen)",
+  `CREATE TABLE IF NOT EXISTS link (
+    hash TEXT PRIMARY KEY,      -- SHA-256 of the one-time code (the code itself is never stored)
+    cid TEXT NOT NULL,
+    session_id TEXT NOT NULL,   -- minting session
+    created INTEGER NOT NULL,
+    expires INTEGER NOT NULL,
+    used_at INTEGER,
+    used_session TEXT
+  )`,
+  "CREATE INDEX IF NOT EXISTS link_cid ON link (cid, created)",
+  "CREATE TABLE IF NOT EXISTS link_try (ip_hash TEXT NOT NULL, ts INTEGER NOT NULL)",
+  "CREATE INDEX IF NOT EXISTS link_try_ip ON link_try (ip_hash, ts)",
+];
+const tablesReady = new WeakSet();
+export async function ensureAuthTables(db) {
+  if (tablesReady.has(db)) return;
+  for (const sql of AUTH_TABLES) await db.prepare(sql).run();
+  tablesReady.add(db);
+}
+const sha256 = async (s) => b64u(new Uint8Array(await crypto.subtle.digest("SHA-256", enc.encode(s))));
+const bearer = (request) => (request.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
+const platformOf = (cid) => (parseIdent(cid) || {}).platform || "pc";
+const characterOf = (a) => ({ cid: a.cid, name: a.name, faction: a.faction, world: a.world, since: a.created, platform: platformOf(a.cid) });
+
 /** Census: character by exact name -> {cid, name, faction, world, online} or null. */
 export async function lookupCharacter(sid, name, fetchImpl = fetch, ns = "ps2") {
   const base = `https://census.daybreakgames.com/s:${sid}/get/${ns}:v2`;
@@ -114,6 +165,8 @@ export async function handleAuth(request, env, url, json, now = Math.floor(Date.
   const db = env.DB;
   const p = url.pathname;
   const body = request.method === "POST" ? await request.json().catch(() => ({})) : {};
+  const ns = { "Cache-Control": "no-store" };
+  await ensureAuthTables(db);
 
   if (p === "/auth/start" && request.method === "POST") {
     const name = String(body.name || "").trim().replace(/^\[[^\]]*\]\s*/, "");
@@ -164,25 +217,81 @@ export async function handleAuth(request, env, url, json, now = Math.floor(Date.
     const tokenId = randomId(16);
     const secret = await authSecret(db);
     const token = await signToken(secret, c.cid, tokenId);
+    // #82: a fresh in-game verification revokes every session (and open link) of the character.
     await db.batch([
-      db.prepare(`INSERT INTO account (cid, name, world, faction, token_id, created, updated) VALUES (?,?,?,?,?,?,?)
-        ON CONFLICT(cid) DO UPDATE SET name=excluded.name, world=excluded.world, faction=excluded.faction, token_id=excluded.token_id, updated=excluded.updated`)
-        .bind(c.cid, c.name, c.world, c.faction, tokenId, now, now),
+      db.prepare(`INSERT INTO account (cid, name, world, faction, token_id, created, updated) VALUES (?,?,?,?,NULL,?,?)
+        ON CONFLICT(cid) DO UPDATE SET name=excluded.name, world=excluded.world, faction=excluded.faction, token_id=NULL, updated=excluded.updated`)
+        .bind(c.cid, c.name, c.world, c.faction, now, now),
+      db.prepare("DELETE FROM session WHERE cid=?").bind(c.cid),
+      db.prepare("DELETE FROM link WHERE cid=? AND used_at IS NULL").bind(c.cid),
+      db.prepare("INSERT INTO session (id, cid, kind, created, last_seen) VALUES (?,?,'verified',?,?)").bind(tokenId, c.cid, now, now),
       db.prepare("UPDATE challenge SET status='completed' WHERE id=? AND status='passed'").bind(c.id),
     ]);
     return json({ token, character: { cid: c.cid, name: c.name, faction: c.faction, world: c.world, platform: (parseIdent(c.cid) || {}).platform || "pc" } }, 200, { "Cache-Control": "no-store" });
   }
 
-  if (p === "/auth/me" || (p === "/auth/logout" && request.method === "POST")) {
-    const token = (request.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
-    const t = token && (await readToken(await authSecret(db), token));
-    const a = t && (await db.prepare("SELECT cid, name, world, faction, token_id, created FROM account WHERE cid=?").bind(t.cid).first());
-    if (!a || a.token_id !== t.tokenId) return json({ error: "not_signed_in" }, 401, { "Cache-Control": "no-store" });
-    if (p === "/auth/logout") {
-      await db.prepare("UPDATE account SET token_id=NULL, updated=? WHERE cid=? AND token_id=?").bind(now, a.cid, t.tokenId).run();
-      return json({ ok: true }, 200, { "Cache-Control": "no-store" });
+  if (p === "/auth/link/claim" && request.method === "POST") {
+    const ipKey = await ipHash(db, request.headers.get("CF-Connecting-IP"));
+    const tries = await db.prepare("SELECT COUNT(*) AS n FROM link_try WHERE ip_hash=? AND ts > ?").bind(ipKey, now - 600).first();
+    if (tries && tries.n >= LINK_CLAIMS_PER_IP_10MIN) return json({ error: "too_many_attempts", retry_after_s: 600 }, 429, ns);
+    await db.prepare("INSERT INTO link_try (ip_hash, ts) VALUES (?,?)").bind(ipKey, now).run();
+    const code = String(body.code || "");
+    const l = CODE_RE.test(code) ? await db.prepare("SELECT * FROM link WHERE hash=?").bind(await sha256(code)).first() : null;
+    if (!l) return json({ error: "unknown_link" }, 404, ns);
+    if (l.used_at) return json({ error: "link_used" }, 409, ns);
+    if (l.expires < now) return json({ error: "link_expired" }, 409, ns);
+    const from = await db.prepare("SELECT id FROM session WHERE id=? AND cid=?").bind(l.session_id, l.cid).first();
+    const a = await db.prepare("SELECT * FROM account WHERE cid=?").bind(l.cid).first();
+    if (!from || !a) return json({ error: "link_expired" }, 409, ns); // the PC signed out or was revoked since
+    const sid = randomId(16);
+    const [claim] = await db.batch([
+      db.prepare("UPDATE link SET used_at=?, used_session=? WHERE hash=? AND used_at IS NULL AND expires >= ?").bind(now, sid, l.hash, now),
+      db.prepare("INSERT INTO session (id, cid, kind, created, last_seen, linked_from) SELECT ?,?,'linked',?,?,? WHERE changes() = 1").bind(sid, l.cid, now, now, l.session_id),
+    ]);
+    if (!claim.meta || !claim.meta.changes) return json({ error: "link_used" }, 409, ns); // another device won the race
+    // At most MAX_SESSIONS per character: drop the least recently seen linked ones (never the verified one, never this one).
+    const n = await db.prepare("SELECT COUNT(*) AS n FROM session WHERE cid=?").bind(l.cid).first();
+    if (n && n.n > MAX_SESSIONS) {
+      await db.prepare("DELETE FROM session WHERE id IN (SELECT id FROM session WHERE cid=? AND kind='linked' AND id != ? ORDER BY last_seen ASC, created ASC LIMIT ?)")
+        .bind(l.cid, sid, n.n - MAX_SESSIONS).run();
     }
-    return json({ character: { cid: a.cid, name: a.name, faction: a.faction, world: a.world, since: a.created, platform: (parseIdent(a.cid) || {}).platform || "pc" } }, 200, { "Cache-Control": "no-store" });
+    const token = await signToken(await authSecret(db), l.cid, sid);
+    return json({ token, character: characterOf(a) }, 200, ns);
+  }
+
+  if (p === "/auth/me" || p.startsWith("/auth/link") || (p === "/auth/logout" && request.method === "POST")) {
+    const me = await sessionFromRequest(request, db, now);
+    if (!me) return json({ error: "not_signed_in" }, 401, ns);
+    const { account: a, session: sess } = me;
+    if (p === "/auth/logout") {
+      if (body.all === true) {
+        await db.batch([db.prepare("DELETE FROM session WHERE cid=?").bind(a.cid), db.prepare("DELETE FROM link WHERE cid=? AND used_at IS NULL").bind(a.cid)]);
+      } else {
+        await db.batch([db.prepare("DELETE FROM session WHERE id=?").bind(sess.id), db.prepare("DELETE FROM link WHERE session_id=? AND used_at IS NULL").bind(sess.id)]);
+      }
+      return json({ ok: true }, 200, ns);
+    }
+    if (p === "/auth/link" && request.method === "POST") {
+      const recent = await db.prepare("SELECT COUNT(*) AS n FROM link WHERE cid=? AND created > ?").bind(a.cid, now - 600).first();
+      if (recent && recent.n >= LINK_MINTS_PER_10MIN) return json({ error: "too_many_links", retry_after_s: 600 }, 429, ns);
+      const code = randomId(32);
+      const hash = await sha256(code);
+      await db.batch([
+        // One live code per device. Expired, not deleted: superseded codes still count toward the mint limit.
+        db.prepare("UPDATE link SET expires=? WHERE session_id=? AND used_at IS NULL AND expires >= ?").bind(now - 1, sess.id, now),
+        db.prepare("INSERT INTO link (hash, cid, session_id, created, expires) VALUES (?,?,?,?,?)").bind(hash, a.cid, sess.id, now, now + LINK_TTL_S),
+      ]);
+      return json({ url: LINK_URL + code, id: hash, expires_in_s: LINK_TTL_S }, 200, ns);
+    }
+    if (p === "/auth/link/status") {
+      const l = await db.prepare("SELECT used_at, expires FROM link WHERE hash=? AND session_id=?").bind(url.searchParams.get("id") || "", sess.id).first();
+      const devices = (await db.prepare("SELECT COUNT(*) AS n FROM session WHERE cid=?").bind(a.cid).first()).n;
+      const status = !l ? "expired" : l.used_at ? "linked" : l.expires < now ? "expired" : "waiting";
+      return json({ status, left_s: l && !l.used_at ? Math.max(0, l.expires - now) : 0, devices }, 200, ns);
+    }
+    if (p !== "/auth/me") return json({ error: "not_found" }, 404, ns);
+    const devices = (await db.prepare("SELECT COUNT(*) AS n FROM session WHERE cid=?").bind(a.cid).first()).n;
+    return json({ character: characterOf(a), session: { kind: sess.kind }, devices }, 200, ns);
   }
 
   if (p === "/auth/health") {
@@ -195,12 +304,32 @@ export async function handleAuth(request, env, url, json, now = Math.floor(Date.
   return json({ error: "not_found" }, 404);
 }
 
-/** Bearer token -> account row (for the voting endpoints), or null. */
-export async function accountFromRequest(request, db) {
-  const token = (request.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
+/**
+ * Bearer token -> { account, session } or null. A token issued before #82 (account.token_id)
+ * becomes the character's "verified" session on first use, so nobody is signed out by the change.
+ */
+export async function sessionFromRequest(request, db, now = Math.floor(Date.now() / 1000)) {
+  const token = bearer(request);
   if (!token) return null;
   const t = await readToken(await authSecret(db), token);
   if (!t) return null;
+  await ensureAuthTables(db);
   const a = await db.prepare("SELECT * FROM account WHERE cid=?").bind(t.cid).first();
-  return a && a.token_id === t.tokenId ? a : null;
+  if (!a) return null;
+  let s = await db.prepare("SELECT * FROM session WHERE id=? AND cid=?").bind(t.tokenId, t.cid).first();
+  if (!s && a.token_id && a.token_id === t.tokenId) {
+    // Both idempotent, so two first requests at once are harmless.
+    await db.prepare("INSERT OR IGNORE INTO session (id, cid, kind, created, last_seen) VALUES (?,?,'verified',?,?)").bind(t.tokenId, t.cid, a.updated || now, now).run();
+    await db.prepare("UPDATE account SET token_id=NULL WHERE cid=? AND token_id=?").bind(t.cid, t.tokenId).run();
+    s = await db.prepare("SELECT * FROM session WHERE id=? AND cid=?").bind(t.tokenId, t.cid).first();
+  }
+  if (!s) return null;
+  if (now - s.last_seen >= SEEN_EVERY_S) await db.prepare("UPDATE session SET last_seen=? WHERE id=?").bind(now, s.id).run();
+  return { account: a, session: s };
+}
+
+/** Bearer token -> account row (voting, privacy), or null. */
+export async function accountFromRequest(request, db, now = Math.floor(Date.now() / 1000)) {
+  const r = await sessionFromRequest(request, db, now);
+  return r ? r.account : null;
 }

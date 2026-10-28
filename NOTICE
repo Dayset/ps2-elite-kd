@@ -33,8 +33,14 @@ right to that content.
 4. PS2 Radar (ps2radar.com): second-opinion results for flagged players
    (data/radar.json, oracle radar cache).
 
-Runtime dependencies: none. The site loads no third-party scripts, styles or
-fonts. Build and test tools (wrangler, cwebp, Playwright) are used only in
+Vendored code (served from this site, not loaded from elsewhere):
+- oracle/js/vendor/qrcode.mjs: qrcode-generator 2.0.4, Copyright (c) 2009
+  Kazuhiko Arase, MIT license (https://github.com/kazuhikoarase/qrcode-generator).
+  Draws the one-time sign-in QR code on the oracle page (#82). "QR Code" is a
+  registered trademark of DENSO WAVE INCORPORATED.
+
+Runtime dependencies: none besides the vendored file above. The site loads no
+third-party scripts, styles or fonts. Build and test tools (wrangler, cwebp, Playwright) are used only in
 GitHub Actions or on a developer machine and are not distributed.
 
 Data sources, their terms and how we comply: DATA_SOURCES.md

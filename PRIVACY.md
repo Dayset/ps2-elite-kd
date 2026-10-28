@@ -26,6 +26,8 @@ How PS2 Elite (https://dayset.github.io/ps2-elite-kd) and the PS2Map Oracle hand
 | PlayStation login/logout and assist sessions (cache Worker) | 45 days, then deleted automatically |
 | PlayStation scrim records (`data-ps/scrims/`: date, opponent, kills – deaths, continent, weapons; built from public Census kill/death history) | Kept while the character exists; deleted on a removal request (the removed player is also blanked as an opponent) |
 | PC kill-monitor pilot (10 characters, cache Worker, from 2026-10-17) | Kept for the pilot analysis; deleted on request |
+| Oracle sign-in sessions (one per device: character id, created, last used) | Until that device signs out, "Sign out all devices", or the next in-game logout check |
+| Oracle one-time QR sign-in codes (code hash only) and keyed IP hashes of attempts to use them | 1 day |
 | Oracle outlier reports (per alert) | Kept for fair-play research; deleted on request |
 | Oracle map snapshots / population / flips and ticks | 30 days / 30 days / 90 days |
 | Older copies in the repository's Git history and in GitHub Actions logs | Git history stays (rewriting it is possible on request but disruptive); logs up to 90 days |
@@ -42,7 +44,8 @@ How PS2 Elite (https://dayset.github.io/ps2-elite-kd) and the PS2Map Oracle hand
 
 - Sign-in proves you play a character by asking you to log out of the game within a short window (PC for voting; PC and PlayStation for removing your character). We store the character's id, name, server and faction, a sign-in token (kept in your browser as `ps2oracle_token`; the removal page keeps its own token only until the tab is closed), your BonusCheque balance and your votes. BonusCheques are a joke currency: no cash value, never bought, sold, traded or paid out.
 - Each sign-in attempt stores the character and a keyed hash of your IP address for a 10-minute rate limit. Attempts are deleted after 1 day.
-- Account, balance and votes are kept while the account exists. Signing out revokes the token. To delete the account, balance and votes, open an issue (or use the removal form below) and they are deleted.
+- A signed-in PC can show a one-time QR code that signs a phone (or another browser) in as the same character without a second logout (#82). Each device gets its own sign-in token; we store one session row per device (character id, when it was created and last used, at most hourly) and, for each QR code, only a hash of the code, when it was made and used, and the session that made it. Codes work once, for 3 minutes; code records and the keyed IP hashes of attempts to use one are deleted after 1 day.
+- Account, balance and votes are kept while the account exists. Signing out revokes that device's token; "Sign out all devices" or a new in-game logout check revokes every device. To delete the account, balance and votes, open an issue (or use the removal form below) and they are deleted.
 
 ## 4. Your choices and rights
 

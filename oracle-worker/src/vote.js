@@ -16,6 +16,11 @@
  *   cheques back for net amount m on outcome X with model prob p:
  *     s = b · ln(1 + (e^(m/b) − 1) / p)
  *
+ * One vote per faction per alert (owner 2026-10-28, #82): a character may back VS, NC and TR on the same
+ * alert, once each. Enforced in the debit itself (one D1 batch = one transaction) and by the unique index
+ * vote_one_per_faction. A client vote_id makes a retried or double-tapped vote land once (replayed).
+ * Every error that depends on the wallet carries the current balance, so a stale second device corrects itself.
+ *
  * Late-vote fee (owner-approved ladder, oracle/goal/GOAL.md): 5 % after 50 % of the
  * alert, 15 % after 80 %, 30 % after 90 %, +10 % when the pick is above 75 %. Fees
  * just disappear (refunded in full when a vote is voided). Voting closes at 95 % of
@@ -46,6 +51,17 @@ export function quote(amount, pct, progress, b = VOTE.LIQUIDITY) {
   const back = Math.round(shares * 100) / 100;
   return { amount, fee, net, reward: back, odds: Math.round((net / shares) * 10000) / 10000, pct };
 }
+
+/** #82: created lazily (schema.sql is not applied on deploy). Live D1 had no duplicates on 2026-10-28. */
+export const VOTE_INDEX = "CREATE UNIQUE INDEX IF NOT EXISTS vote_one_per_faction ON vote (cid, key, outcome)";
+const indexReady = new WeakSet();
+async function ensureVoteIndex(db) {
+  if (indexReady.has(db)) return;
+  try { await db.prepare(VOTE_INDEX).run(); } catch (e) { console.warn("vote_one_per_faction not created:", String(e && e.message)); } // the debit guard still holds
+  indexReady.add(db);
+}
+const VOTE_ID_RE = /^[A-Za-z0-9_-]{16,64}$/;
+const VOTE_COLS = "id, key, outcome, amount, fee, net, potential, pct, progress, placed_ts, status, reward";
 
 const day = (ts) => new Date(ts * 1000).toISOString().slice(0, 10);
 const r2 = (x) => Math.round((x || 0) * 100) / 100;
@@ -134,7 +150,7 @@ export async function handleVote(request, env, url, json, now = Math.floor(Date.
     return json({ leaders: rows.map((r) => ({ ...r, gain: r2(r.gain), balance: r2(r.balance) })) }, 200, { "Cache-Control": "public, max-age=30" });
   }
 
-  const acct = await accountFromRequest(request, db);
+  const acct = await accountFromRequest(request, db, now);
   if (!acct) return json({ error: "not_signed_in" }, 401, ns);
   // The oracle predicts PC alerts: PlayStation sign-ins (us-/eu-<cid>, #61) can't vote.
   if (!/^\d{5,25}$/.test(String(acct.cid))) return json({ error: "pc_only" }, 403, ns);
@@ -144,14 +160,17 @@ export async function handleVote(request, env, url, json, now = Math.floor(Date.
     const votes = (await db.prepare("SELECT id, key, outcome, amount, fee, net, potential, pct, progress, placed_ts, status, reward FROM vote WHERE cid=? ORDER BY placed_ts DESC LIMIT 50").bind(acct.cid).all()).results || [];
     const settledRows = votes.filter((v) => v.status !== "open");
     return json({ balance: r2(w.balance), bonus_available: w.last_manual_day !== day(now),
-      own_faction: acct.faction, votes, gain: r2(settledRows.reduce((s, v) => s + v.reward - v.amount, 0)) }, 200, ns);
+      own_faction: acct.faction, votes, gain: r2(settledRows.reduce((s, v) => s + v.reward - v.amount, 0)), server_ts: now }, 200, ns);
   }
 
   if (p === "/vote/bonus" && request.method === "POST") {
     await wallet(db, acct.cid, now);
     const r = await db.prepare("UPDATE wallet SET balance=balance+?, last_manual_day=? WHERE cid=? AND (last_manual_day IS NULL OR last_manual_day != ?)")
       .bind(VOTE.DAILY_BONUS, day(now), acct.cid, day(now)).run();
-    if (!r.meta.changes) return json({ error: "already_claimed_today" }, 409, ns);
+    if (!r.meta.changes) {
+      const w = await wallet(db, acct.cid, now);
+      return json({ error: "already_claimed_today", balance: r2(w.balance), bonus_available: false }, 409, ns);
+    }
     const w = await wallet(db, acct.cid, now);
     return json({ ok: true, balance: r2(w.balance) }, 200, ns);
   }
@@ -161,8 +180,23 @@ export async function handleVote(request, env, url, json, now = Math.floor(Date.
     const outcome = String(body.outcome || "");
     if (!VOTE.AMOUNTS.includes(amount)) return json({ error: "bad_amount", amounts: VOTE.AMOUNTS }, 400, ns);
     if (!FACS.includes(outcome)) return json({ error: "bad_outcome" }, 400, ns);
+    if (body.vote_id != null && !VOTE_ID_RE.test(String(body.vote_id))) return json({ error: "bad_vote_id" }, 400, ns);
+    await ensureVoteIndex(db);
+    const balanceNow = async () => r2((await wallet(db, acct.cid, now)).balance);
+    // #82: the same click again (retry after a timeout, double tap) -> the vote it already made, debited once.
+    const vid = body.vote_id != null ? String(body.vote_id) : crypto.randomUUID();
+    const prev = await db.prepare(`SELECT cid, ${VOTE_COLS} FROM vote WHERE id=?`).bind(vid).first();
+    if (prev) {
+      if (prev.cid !== acct.cid) return json({ error: "bad_vote_id" }, 409, ns);
+      const { cid: _c, ...vote } = prev;
+      return json({ ok: true, replayed: true, vote, balance: await balanceNow() }, 200, ns);
+    }
+    const key = String(body.key || "");
+    const same = async () => db.prepare(`SELECT ${VOTE_COLS} FROM vote WHERE cid=? AND key=? AND outcome=?`).bind(acct.cid, key, outcome).first();
+    const already = await same();
+    if (already) return json({ error: "already_voted", vote: already, balance: await balanceNow() }, 409, ns);
     if (VOTE.OWN_FACTION_ONLY && FACS.includes(acct.faction) && outcome !== acct.faction) return json({ error: "own_faction_only", faction: acct.faction }, 403, ns);
-    const a = await db.prepare("SELECT * FROM alert WHERE key=?").bind(String(body.key || "")).first();
+    const a = await db.prepare("SELECT * FROM alert WHERE key=?").bind(key).first();
     const m = marketFor(a, now);
     if (!m.open) return json({ error: m.reason }, 409, ns);
     const pct = m.pcts[outcome];
@@ -170,16 +204,31 @@ export async function handleVote(request, env, url, json, now = Math.floor(Date.
     if (body.seen_pct != null && Math.abs(+body.seen_pct - pct) > VOTE.MAX_DRIFT_PCT) return json({ error: "odds_changed", pct }, 409, ns);
     await wallet(db, acct.cid, now);
     const q = quote(amount, pct, m.progress);
-    const id = crypto.randomUUID();
-    const [debit] = await db.batch([
-      db.prepare("UPDATE wallet SET balance = balance - ? WHERE cid = ? AND balance >= ?").bind(amount, acct.cid, amount),
-      db.prepare(`INSERT INTO vote (id, cid, key, outcome, amount, fee, net, potential, pct, progress, placed_ts, status, reward, credited)
-        SELECT ?,?,?,?,?,?,?,?,?,?,?,'open',0,0 WHERE changes() = 1`)
-        .bind(id, acct.cid, a.key, outcome, amount, q.fee, q.net, q.reward, pct, Math.round(m.progress * 1000) / 1000, now),
-    ]);
-    if (!debit.meta || !debit.meta.changes) return json({ error: "insufficient_balance" }, 409, ns);
+    let debit;
+    try {
+      // One transaction: debit only if the balance covers it AND this faction isn't backed yet, insert only after
+      // that debit. Two devices racing on the same faction: D1 runs the batches one after the other, one wins.
+      [debit] = await db.batch([
+        db.prepare("UPDATE wallet SET balance = balance - ? WHERE cid = ? AND balance >= ? AND NOT EXISTS (SELECT 1 FROM vote WHERE cid = ? AND key = ? AND outcome = ?)")
+          .bind(amount, acct.cid, amount, acct.cid, a.key, outcome),
+        db.prepare(`INSERT INTO vote (id, cid, key, outcome, amount, fee, net, potential, pct, progress, placed_ts, status, reward, credited)
+          SELECT ?,?,?,?,?,?,?,?,?,?,?,'open',0,0 WHERE changes() = 1`)
+          .bind(vid, acct.cid, a.key, outcome, amount, q.fee, q.net, q.reward, pct, Math.round(m.progress * 1000) / 1000, now),
+      ]);
+    } catch (e) {
+      // Unique index hit (rolled back, nothing debited): the same click or the other device won.
+      if (!/UNIQUE|constraint/i.test(String(e && e.message))) throw e;
+      debit = { meta: { changes: 0 } };
+    }
+    if (!debit.meta || !debit.meta.changes) {
+      const won = await db.prepare(`SELECT cid, ${VOTE_COLS} FROM vote WHERE id=?`).bind(vid).first();
+      if (won && won.cid === acct.cid) { const { cid: _c, ...vote } = won; return json({ ok: true, replayed: true, vote, balance: await balanceNow() }, 200, ns); }
+      const other = await same();
+      if (other) return json({ error: "already_voted", vote: other, balance: await balanceNow() }, 409, ns);
+      return json({ error: "insufficient_balance", balance: await balanceNow() }, 409, ns);
+    }
     const w = await db.prepare("SELECT balance FROM wallet WHERE cid=?").bind(acct.cid).first();
-    return json({ ok: true, vote: { id, key: a.key, outcome, ...q }, balance: r2(w.balance) }, 200, ns);
+    return json({ ok: true, vote: { id: vid, key: a.key, outcome, ...q }, balance: r2(w.balance) }, 200, ns);
   }
 
   return json({ error: "not_found" }, 404, ns);
