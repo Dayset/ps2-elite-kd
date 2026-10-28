@@ -9,7 +9,7 @@ import http from "node:http";
 import path from "node:path";
 import { spawn, execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { ratioLabel } from "../live-model.mjs";
+import { tierLabel } from "../live-model.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -352,11 +352,11 @@ describe("🎥 live.html in a browser", () => {
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[1].cid, "80", false)})`);
       assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)").length === 2`)), true, "two victim rows on screen");
-      // Owner 2026-10-27: opponent rows show the signed iVi division, not
+      // Owner 2026-10-28: opponent rows show the iVi tier, not
       // the raw iVi — rows are newest-first, so [0] is OPP[1], [1] is OPP[0].
-      assert.equal(await ev(until(`![...document.querySelectorAll("#liveList tbody.lv-vic .lv-iv")].some((e) => e.textContent === "?")`)), true, "victim ratios filled (ranks loaded)");
+      assert.equal(await ev(until(`![...document.querySelectorAll("#liveList tbody.lv-vic .lv-iv")].some((e) => e.textContent === "?")`)), true, "victim tiers filled (ranks loaded)");
       const cells = await ev(`[...document.querySelectorAll("#liveList tbody.lv-vic .lv-iv")].map((e) => e.textContent)`);
-      assert.deepEqual(cells, [ratioLabel(ME_ADJS, adjsOf(OPP[1].name)), ratioLabel(ME_ADJS, adjsOf(OPP[0].name))], `both victims show their ratio: ${cells}`);
+      assert.deepEqual(cells, [tierLabel(ME_ADJS, adjsOf(OPP[1].name)), tierLabel(ME_ADJS, adjsOf(OPP[0].name))], `both victims show their tier: ${cells}`);
       // The pot still boosts the RAW adjs, so the average comes from the
       // fixture values, not the displayed ratios. The main pot shows only
       // the average now (owner 2026-10-26) — the Σ total is hidden from
@@ -470,7 +470,7 @@ describe("🎥 live.html in a browser", () => {
 
   it("sub-0 floor (owner 2026-10-25): a negative-iVi victim pays 0, never subtracts", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     // The fixture proof is data-side: SUB0's cached adjs is negative. The
-    // feed cell itself shows 0 for them (owner 2026-10-27: the ratio branch
+    // feed cell itself shows 0 for them (owner 2026-10-28: the tier branch
     // for opp <= 0 never divides), so the pot must now match that, not go below.
     assert.ok(sub0row[ci("adjs")] < -100, `SUB0 is genuinely sub-0 in the cache: ${sub0row[ci("adjs")]}`);
     await withLive(async ({ ev, errors }) => {
@@ -480,10 +480,10 @@ describe("🎥 live.html in a browser", () => {
       assert.equal(await ev(until(`document.getElementById("liveCashAvgVal").textContent === "0.0"`)), true, "a known 0 payout counts in the average (floored, never negative)");
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
       assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)").length === 2`)), true, "two victims on screen");
-      // Owner 2026-10-27: rows show ratios now — newest is OPP[0]'s ratio,
+      // Owner 2026-10-28: rows show tiers now — newest is OPP[0]'s tier,
       // the sub-0 victim still reads 0 (negative adjs is never divided).
       const cells = await ev(`[...document.querySelectorAll("#liveList tbody.lv-vic .lv-iv")].map((e) => e.textContent)`);
-      assert.deepEqual(cells, [ratioLabel(ME_ADJS, adjsOf(OPP[0].name)), "0"], `newest victim ratio, sub-0 victim floored: ${cells}`);
+      assert.deepEqual(cells, [tierLabel(ME_ADJS, adjsOf(OPP[0].name)), "0"], `newest victim tier, sub-0 victim floored: ${cells}`);
       const bp = Math.round(Math.max(0, adjsOf(OPP[0].name)) * 1.34);
       // ±1 tolerance (same rounding-boundary note as the cash-out test):
       // the page boosts the raw adj, the test only sees the rounded display
@@ -1172,6 +1172,21 @@ describe("🎥 live streamer mode in a browser", () => {
       assert.equal(st.val, "4px", `counter vector stroke: ${JSON.stringify(st)}`);
       assert.equal(st.shadow, "none", `no shadows anywhere on the counter: ${JSON.stringify(st)}`);
       assert.equal(st.meBg, "rgba(0, 0, 0, 0)", `centre row tint drops out in stream mode: ${JSON.stringify(st)}`);
+      assert.deepEqual(errors, [], "no page errors");
+    });
+  });
+});
+
+describe("🎥 live voice lines panel in a browser", () => {
+  it("voice lines panel (owner 2026-10-28): 5 fields prefilled with the default lines, edits persist, panel hides in stream mode", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      const vals = await ev(`[...document.querySelectorAll(".live-voice-line")].map((i) => [i.dataset.tier, i.value])`);
+      assert.deepEqual(vals, [["--", "no contest"], ["-", "weaker"], ["≈", "even"], ["+", "strong"], ["++", "giant down"]], `fields prefilled: ${JSON.stringify(vals)}`);
+      await ev(`(() => { const i = document.querySelector('.live-voice-line[data-tier="++"]'); i.value = "boss down"; i.dispatchEvent(new Event("input", { bubbles: true })); })()`);
+      assert.equal(await ev(until(`(JSON.parse(localStorage.getItem("ps2_live_voice_lines") || "{}"))["++"] === "boss down"`)), true, "edit persists to localStorage");
+      await ev(`document.getElementById("liveStreamBtn").click()`);
+      assert.equal(await ev(until(`getComputedStyle(document.getElementById("liveVoiceLines")).display === "none"`)), true, "panel hides in stream mode");
       assert.deepEqual(errors, [], "no page errors");
     });
   });

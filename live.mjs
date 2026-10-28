@@ -19,8 +19,8 @@ await i18nReady;
  *     fetch in the background (one at a time, newest first, #32) and upgrade in place.
  * Pure helpers are exported for tests; the DOM part runs only in a browser.
  */
-export * from "./live-model.mjs?v=20261028-cid80"; // #66: the pure part (tests import it from here)
-import { VICTIM_LINES, classifyDeath, censusStats, LIVE_COLS, tipText, FILL_DIM, HOLLOW_PX, HOLLOW_INK, goodPct, fillDriver, emojiFill, unknownFill, infUnit, OUTLINE_PX, unitGlow, LIVE_GLOWS, LIVE_FPS, liveFps, HALO_KEY, haloOn, easeFill, glowIn, BEAT, TIER_MOTION, haloAt, SHINE, shineFrame, beatSleep, weaponIcon, glowTier, eventAt, overlayPush, overlayRows, nextBgFetch, liveRowFromPlayer, ME_REFRESH_MS, median, mergeFresh, SHARE_MAX, shareDelay, cellText, slugKey, bountyNext, dpsNow, DPS_HP, DPS_ASSIST, DPS_ASSIST_XP, assistShare, xpMultAt, KILL_BASE_XP, cashTotals, cashFormula, combatHoldMs, holdGaps, combatRuns, spawnRunHoldMs, timeToCombatMs, timerBarPct, easeInQuad, ratioLabel, cidNameEntry } from "./live-model.mjs?v=20261028-cid80";
+export * from "./live-model.mjs?v=20261028-voice1"; // #66: the pure part (tests import it from here)
+import { VICTIM_LINES, classifyDeath, censusStats, LIVE_COLS, tipText, FILL_DIM, HOLLOW_PX, HOLLOW_INK, goodPct, fillDriver, emojiFill, unknownFill, infUnit, OUTLINE_PX, unitGlow, LIVE_GLOWS, LIVE_FPS, liveFps, HALO_KEY, haloOn, easeFill, glowIn, BEAT, TIER_MOTION, haloAt, SHINE, shineFrame, beatSleep, weaponIcon, glowTier, eventAt, overlayPush, overlayRows, nextBgFetch, liveRowFromPlayer, ME_REFRESH_MS, median, mergeFresh, SHARE_MAX, shareDelay, cellText, slugKey, bountyNext, dpsNow, DPS_HP, DPS_ASSIST, DPS_ASSIST_XP, assistShare, xpMultAt, KILL_BASE_XP, cashTotals, cashFormula, combatHoldMs, holdGaps, combatRuns, spawnRunHoldMs, timeToCombatMs, timerBarPct, easeInQuad, tierLabel, tierVoiceLine, TIER_VOICE_LINES, cidNameEntry } from "./live-model.mjs?v=20261028-voice1";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261023-short1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
@@ -259,15 +259,18 @@ function start() {
     if (fillOf(c, v) == null) return `<span class="lv-iv lv-nil" data-tip="${esc(tipText(c, null))}">0000</span>`;
     return `<span class="lv-iv" data-tip="${esc(tipText(c, v))}">${cellText(c, v)}</span>`;
   }
-  /** Owner 2026-10-27 (live iVi ratio): the opponent's iVi cell — the
-   *  signed division against the tracked player (ratioLabel), with a
-   *  tooltip that says what the number means. Unknown = "?", dimmed. */
-  function ratioCell(oppAdjs) {
-    const label = ratioLabel(me && me.cached ? me.cached.adjs : null, oppAdjs);
+  /** Owner 2026-10-28 (live iVi tiers): the opponent's iVi cell — the
+   *  tier against the tracked player (tierLabel), with a tooltip that
+   *  says what the tier means. Unknown = "?", dimmed. */
+  function tierCell(oppAdjs) {
+    const label = tierLabel(me && me.cached ? me.cached.adjs : null, oppAdjs);
     const tip = label === "?" ? tr("live.ratioUnknown", "Opponent iVi unknown")
       : label === "0" ? tr("live.ratioZero", "Opponent iVi is 0")
-      : label[0] === "+" ? tr("live.ratioStronger", "{n}× stronger than you", { n: label.slice(1) })
-      : tr("live.ratioWeaker", "{n}× weaker than you", { n: label.slice(1) });
+      : label === "--" ? tr("live.tierMuchWeaker", "Much weaker than you")
+      : label === "-" ? tr("live.tierWeaker", "Weaker than you")
+      : label === "≈" ? tr("live.tierEven", "About even with you")
+      : label === "+" ? tr("live.tierStronger", "Stronger than you")
+      : tr("live.tierMuchStronger", "Much stronger than you");
     const cls = label === "?" ? "lv-iv lv-nil" : "lv-iv";
     return `<span class="${cls}" data-tip="${esc(tip)}">${label}</span>`;
   }
@@ -325,7 +328,7 @@ function start() {
     // against the tracked player, never the raw iVi; the centre row keeps it.
     const ivCells = isMe
       ? IVI.map((c) => `<td class="lv-ivc">${iviText(c, vals[c.id])}</td>`).join("")
-      : IVI.map((c) => `<td class="lv-ivc">${ratioCell(vals[c.id])}</td>`).join("");
+      : IVI.map((c) => `<td class="lv-ivc">${tierCell(vals[c.id])}</td>`).join("");
     return `<td class="lv-nm"><span class="lv-nm2">${nameHtml(p, tip, hsHtml(r))}${wn}</span></td>${ivCells}`;
   }
   const blank = `<td class="lv-nm"></td><td class="lv-ivc"></td>`; // same box as a filled line, so the overlay never grows
@@ -704,14 +707,35 @@ function start() {
     voiceBtn.title = t; voiceBtn.setAttribute("aria-label", t); voiceBtn.setAttribute("aria-pressed", on ? "true" : "false");
   };
   if (voiceBtn) { voiceBtn.addEventListener("click", () => { setVoiceOn(!voiceOn()); paintVoice(); }); paintVoice(); }
-  /** Speak one feed event: the opponent's name, then the ratio value ("Bhorn minus three"). Unknown iVi = name only; a "#id" name is never spoken. */
-  const speakRatio = (p) => {
+  /** Speak one feed event: the opponent's name, then the tier's voice line ("Bhorn, giant down"). Unknown iVi = name only; a "#id" name is never spoken. Lines come from the Voice lines panel (localStorage) or the defaults. */
+  const readVoiceLines = () => { try { const j = JSON.parse(localStorage.getItem("ps2_live_voice_lines") || "{}"); return j && typeof j === "object" ? j : {}; } catch { return {}; } };
+  const speakTier = (p) => {
     if (!voiceOn() || !p || !p.name || p.name.startsWith("#")) return;
-    const label = ratioLabel(me && me.cached ? me.cached.adjs : null, p.cached ? p.cached.adjs : null);
+    const label = tierLabel(me && me.cached ? me.cached.adjs : null, p.cached ? p.cached.adjs : null);
     if (label === "?") { say(p.name); return; }
     if (label === "0") { say(`${p.name} zero`); return; }
-    say(`${p.name} ${label[0] === "+" ? "plus" : "minus"} ${label.slice(1)}`);
+    const line = tierVoiceLine(label, readVoiceLines());
+    say(line ? `${p.name}, ${line}` : p.name);
   };
+  // Owner 2026-10-28 (voice lines panel): 5 prefilled fields, one per tier — the phrase spoken after the name. Stored per device; an emptied field falls back to its default.
+  const voiceLinesEl = document.getElementById("liveVoiceLines");
+  if (voiceLinesEl) {
+    const titleEl = document.getElementById("liveVoiceLinesTitle");
+    if (titleEl) titleEl.textContent = tr("live.voiceLines", "Voice lines");
+    const hintEl = document.getElementById("liveVoiceLinesHint");
+    if (hintEl) hintEl.textContent = tr("live.voiceLinesHint", "Spoken after the name; an emptied field uses the default line.");
+    const paintVoiceLines = () => {
+      const ov = readVoiceLines();
+      voiceLinesEl.querySelectorAll(".live-voice-line").forEach((inp) => { const t = inp.dataset.tier; inp.value = (ov[t] && ov[t].trim()) ? ov[t] : TIER_VOICE_LINES[t]; });
+    };
+    voiceLinesEl.querySelectorAll(".live-voice-line").forEach((inp) => inp.addEventListener("input", () => {
+      const ov = readVoiceLines();
+      const v = inp.value.trim();
+      if (v) ov[inp.dataset.tier] = v; else delete ov[inp.dataset.tier];
+      try { localStorage.setItem("ps2_live_voice_lines", JSON.stringify(ov)); } catch { /* private mode: the line still works for this session */ }
+    }));
+    paintVoiceLines();
+  }
   // Owner 2026-10-25: a sub-0 victim pays 0, never a negative — the pot
   // is a currency, and a kill cannot subtract from it. The feed's iVi
   // cell still shows the victim's real (negative) adjs; only the payout
@@ -1094,13 +1118,13 @@ function start() {
       // exactly the old clear plus the new run's early lines.
       if (wasStreak === 0) st = { ...st, victims: st.victims.filter((r) => r.seq === seq || pendingSeq.has(r.seq)) };
       // DPM at the event's own time: a commit deferred behind a slow lookup doesn't shift the decay
-      const iv = cashIv(p); cashKills.push({ cid: ev.opp, iv }); dpsTick(); sfx("victory", { event: true }); if (iv > 0) sfx("chaChing", { event: true }); speakRatio(p);
+      const iv = cashIv(p); cashKills.push({ cid: ev.opp, iv }); dpsTick(); sfx("victory", { event: true }); if (iv > 0) sfx("chaChing", { event: true }); speakTier(p);
     }
     // Owner 2026-10-25: ANY death dims the killed list and the observed
     // player's own name to 50% — you are dead, the feed shows it — until
     // the next kill re-lights them. (Banking below is stricter: only the
     // death that ends a run banks it.)
-    if (ev.kind === "death") { namesDim = true; sfx("sad", { event: true }); speakRatio(p); }
+    if (ev.kind === "death") { namesDim = true; sfx("sad", { event: true }); speakTier(p); }
     if (ev.kind === "death") assistN = 0; // a death hides the assist count
     // Owner 2026-10-25: decay freezes ON the death event — you can't do
     // anything about the run from spawn, so it must not drain the meter.

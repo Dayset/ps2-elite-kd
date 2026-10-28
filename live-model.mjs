@@ -316,19 +316,36 @@ export function tipText(col, v) {
 }
 
 /**
- * Owner 2026-10-27 (live iVi ratio): one signed number for an opponent's
- * strength against the tracked player — the feed shows the division, never
- * a raw iVi on opponent rows. opp >= me → "+N" (N× stronger); opp < me →
- * "-N" (N× weaker, N = me/opp); opp 0 or below → "0" (never a division);
- * either side unknown, or me 0 or below → "?" (uncomputable, never a
- * division by zero).
+ * Owner 2026-10-28 (live iVi tiers, replaces the 2026-10-27 signed
+ * division): one coarse tier for an opponent's strength against the
+ * tracked player — the feed shows the tier, never a raw iVi and never a
+ * division, on opponent rows. Bands are log-symmetric (0.8 = 1/1.25,
+ * 0.5 = 1/2): opp under half → "--" (much weaker); half to 0.8× → "-"
+ * (weaker); within 25% either way → "≈" (even — a 19% gap no longer
+ * prints as a verdict); 1.25× to 2× → "+" (stronger); over 2× → "++"
+ * (much stronger). opp 0 or below → "0" (never divided); either side
+ * unknown, or me 0 or below → "?" (uncomputable, never a division).
  */
-export function ratioLabel(meAdjs, oppAdjs) {
+export function tierLabel(meAdjs, oppAdjs) {
   if (typeof meAdjs !== "number" || !Number.isFinite(meAdjs) || typeof oppAdjs !== "number" || !Number.isFinite(oppAdjs)) return "?";
   if (oppAdjs <= 0) return "0";
   if (meAdjs <= 0) return "?";
-  if (oppAdjs >= meAdjs) return `+${Math.round(oppAdjs / meAdjs)}`;
-  return `-${Math.round(meAdjs / oppAdjs)}`;
+  const r = oppAdjs / meAdjs;
+  if (r < 0.5) return "--";
+  if (r < 0.8) return "-";
+  if (r <= 1.25) return "≈";
+  if (r <= 2) return "+";
+  return "++";
+}
+
+/** Owner 2026-10-28 (voice lines): the spoken phrase after the name, per tier. Users override these in the live page's Voice lines panel (stored per device); a blank override falls back to the default here. */
+export const TIER_VOICE_LINES = { "--": "no contest", "-": "weaker", "≈": "even", "+": "strong", "++": "giant down" };
+/** The spoken tier phrase: a stored override wins, else the default above; unknown/zero tiers have no phrase (callers handle them). */
+export function tierVoiceLine(label, overrides) {
+  const def = TIER_VOICE_LINES[label];
+  if (def == null) return null;
+  const o = overrides && typeof overrides[label] === "string" ? overrides[label].trim() : "";
+  return o || def;
 }
 
 /**

@@ -222,6 +222,12 @@ body.live-stream #liveDpsLabel { order: 1; }
 body.live-stream #liveDps > .live-metric:first-child .live-bar { order: 2; }
 body.live-stream #liveDpsVal { order: 3; }
 body.live-stream #liveState, body.live-stream #liveDpmTau, body.live-stream #liveCashHist, body.live-stream #liveShare, body.live-stream #liveStreamBtn, body.live-stream #liveSession { display: none; } /* owner 2026-10-26: stream shows the names list + DPM block + the card; no button back — the switch button hides with the rest */
+/* Owner 2026-10-28: the voice lines panel is settings UI, never overlay content. */
+body.live-stream #liveVoiceLines { display: none; }
+/* Owner 2026-10-28: voice lines panel — collapsed by default (advanced users only), one prefilled field per tier. */
+.live-voice-lines { margin-top: 0.25rem; font-size: 0.72rem; color: var(--dim); }
+.live-voice-lines label { display: block; margin-top: 0.15rem; }
+.live-voice-lines input { background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 0.25rem; padding: 0.1rem 0.3rem; font: inherit; margin-left: 0.25rem; }
 body.live-stream #liveDps .live-metric:last-child { display: none; } /* online pill: meters + session only */
 body.live-stream .live-table, body.live-stream .live-stream-card, body.live-stream .live-bar { background: transparent; } /* owner 2026-10-26: chromakey — every background drops out (table panel, card panel, bar tracks) so the body's green shows through and only text + bars survive the key */
 body.live-stream .live-table tbody.lv-vic:nth-of-type(even) > tr > td { background-color: transparent; } /* zebra rows too */
