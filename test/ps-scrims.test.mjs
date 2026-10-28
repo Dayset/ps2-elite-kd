@@ -160,7 +160,7 @@ test("pipeline: a player still playing keeps the open session for the next visit
 
 /* UI: the Latest 100 folds a scrim into one row; the Scrims tab reads the live page the same way. */
 import { groupFeedScrims, scrimChunkHtml, summarizeKillFeed } from "../kill-feed.mjs";
-import { liveScrims, scrimTotals, zoneName } from "../scrims-panel.mjs";
+import { liveScrims, scrimTotals, visibleScrims, zoneName } from "../scrims-panel.mjs";
 
 const feedRows = () => fx.events.map((x) => ({
   at: x[0] * 1000, kill: !!x[1], suicide: x[2] === fx.cid, teamkill: false, headshot: !!x[4],
@@ -331,6 +331,21 @@ test("infantry-only: stored rows with a Claymore / vehicle top weapon are droppe
   const top = buildTopScrims([{ v: 1, key: "us-1", name: "A", from: 1, done: true, scrims: [rifle, clay, veh, blank] }], SCRIM_RULE.GAP, catOf);
   assert.equal(top.total, 1);
   assert.equal(top.rows[0].w[0], 7254);
+});
+
+test("one-sided toggle: hidden by default, shown on toggle", () => {
+  const rows = [{ k: 300, d: 2 }, { k: 14, d: 15 }, { k: 10, d: 0 }];
+  assert.deepEqual(visibleScrims(rows, false).map((r) => r.k), [14, 10]);
+  assert.deepEqual(visibleScrims(rows, true).map((r) => r.k), [300, 14, 10]);
+  assert.deepEqual(visibleScrims(null, false), []);
+});
+
+test("one-sided toggle wiring: checkbox, hidden by default", () => {
+  const panel = fs.readFileSync(new URL("../scrims-panel.mjs", import.meta.url), "utf8");
+  assert.match(panel, /let showOneSided = false/);
+  assert.match(panel, /scr\.showOneSided/);
+  assert.match(panel, /type="checkbox"/);
+  assert.match(panel, /oneWrap\.hidden = shown\.oneTotal === 0/);
 });
 
 test("Scrims tab live: Claymore-only history finds nothing with a catalog", () => {

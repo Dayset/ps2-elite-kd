@@ -36,6 +36,11 @@ export function scrimTotals(rows) {
   return t;
 }
 
+/** Rows to show: one-sided scrims stay hidden unless the toggle shows them. */
+export function visibleScrims(rows, showOneSided) {
+  return showOneSided ? (rows || []).slice() : (rows || []).filter((r) => !isOneSided(r));
+}
+
 /** Census name lookup for opponent ids (one call, ≤ 100 ids). */
 export function namesUrl(base, ids) {
   return `${base}character/?character_id=${ids.slice(0, 100).join(",")}&c:show=character_id,name.first` +
@@ -90,6 +95,14 @@ export function mountScrims(section, o = {}) {
   const cache = new Map();
   let player = null, shown = null;
   let sortKey = "date", sortDir = "desc";
+  let showOneSided = false;
+  const oneWrap = document.createElement("div");
+  oneWrap.className = "scr-one-toggle";
+  oneWrap.hidden = true;
+  oneWrap.innerHTML = `<label title="${esc(tr("scr.showOneSidedTip", "One-sided scrims (almost no kills back) are hidden by default."))}"><input type="checkbox"> ${esc(tr("scr.showOneSided", "Show one-sided"))} <span class="scr-one-count"></span></label>`;
+  section.insertBefore(oneWrap, wrap);
+  const oneBox = oneWrap.querySelector("input");
+  const oneCount = oneWrap.querySelector(".scr-one-count");
   /** 🥊 Top mode (no single player on the page): the room's biggest scrims, data-ps/scrims-top.json. */
   const TOP = { cid: "top", top: true };
   let wantTop = false;
@@ -201,6 +214,37 @@ export function mountScrims(section, o = {}) {
     }).join("");
   }
 
+  /** Apply the one-sided toggle to the shown rows + toggle row. */
+  function applyOneFilter() {
+    if (!shown || !shown.allRows) return;
+    shown.rows = visibleScrims(shown.allRows, showOneSided);
+    shown.oneTotal = shown.allRows.filter(isOneSided).length;
+    oneWrap.hidden = shown.oneTotal === 0;
+    oneCount.textContent = shown.oneTotal
+      ? showOneSided
+        ? tr("scr.oneShown", "{n} shown", { n: shown.oneTotal.toLocaleString(lang()) })
+        : tr("scr.oneHidden", "{n} hidden", { n: shown.oneTotal.toLocaleString(lang()) })
+      : "";
+  }
+
+  /** Count/summary/wrap for the currently shown rows (both modes), then render. */
+  function refreshHead() {
+    if (!shown) return;
+    if (shown.top) {
+      count.textContent = "";
+      sum.textContent = tr("scr.topSummary", "All {n} PlayStation scrims found", { n: shown.rows.length.toLocaleString(lang()) });
+      wrap.hidden = !shown.rows.length;
+    } else {
+      const t = scrimTotals(shown.rows);
+      count.textContent = t.n ? `(${t.n.toLocaleString(lang())})` : "";
+      sum.textContent = t.n
+        ? tr("scr.summary", "{n} scrims · won {won} · lost {lost} · draw {draw}", { n: t.n.toLocaleString(lang()), won: t.won.toLocaleString(lang()), lost: t.lost.toLocaleString(lang()), draw: t.draw.toLocaleString(lang()) })
+        : tr("scr.none", "No scrims found so far.");
+      wrap.hidden = !t.n;
+    }
+    render();
+  }
+
   function setStatus(text) { status.textContent = text || ""; status.hidden = !text; }
 
   function coverage(r) {
@@ -226,14 +270,12 @@ export function mountScrims(section, o = {}) {
     try {
       const r = await job;
       if (player !== TOP) return;
-      shown = { cid: "top", ...r };
-      count.textContent = "";
-      sum.textContent = tr("scr.topSummary", "All {n} PlayStation scrims found", { n: r.rows.length.toLocaleString(lang()) });
+      shown = { cid: "top", ...r, allRows: r.rows };
+      applyOneFilter();
       sum.title = tr("scr.ruleTip", "Scrim: 10+ kills and deaths in a row with one opponent (no 10-minute break), and that opponent is 60%+ of all kills and deaths in that time. Small groups (2–6 players) count too.");
       sum.hidden = false;
       setStatus(tr("scr.topNote", "Biggest first; click a column to sort. History read for {players} players so far. Add one name to see that player's scrims.", { players: r.top.players.toLocaleString(lang()) }));
-      wrap.hidden = !r.rows.length;
-      render();
+      refreshHead();
     } catch (e) {
       if (player !== TOP) return;
       setStatus(tr("scr.topNone", "No scrims found yet."));
@@ -255,17 +297,12 @@ export function mountScrims(section, o = {}) {
     try {
       const r = await job;
       if (player !== p) return;
-      shown = { cid: p.cid, ...r };
-      const t = scrimTotals(r.rows);
-      count.textContent = t.n ? `(${t.n.toLocaleString(lang())})` : "";
-      sum.textContent = t.n
-        ? tr("scr.summary", "{n} scrims · won {won} · lost {lost} · draw {draw}", { n: t.n.toLocaleString(lang()), won: t.won.toLocaleString(lang()), lost: t.lost.toLocaleString(lang()), draw: t.draw.toLocaleString(lang()) })
-        : tr("scr.none", "No scrims found so far.");
+      shown = { cid: p.cid, ...r, allRows: r.rows };
+      applyOneFilter();
       sum.title = tr("scr.ruleTip", "Scrim: 10+ kills and deaths in a row with one opponent (no 10-minute break), and that opponent is 60%+ of all kills and deaths in that time. Small groups (2–6 players) count too.");
       sum.hidden = false;
       setStatus([r.note, coverage(r)].filter(Boolean).join(" "));
-      wrap.hidden = !t.n;
-      render();
+      refreshHead();
     } catch (e) {
       if (player !== p) return;
       setStatus(tr("scr.error", "Census is busy: close and open this tab to try again."));
@@ -284,6 +321,13 @@ export function mountScrims(section, o = {}) {
     const prevLeft = wrap.scrollLeft;
     render();
     if (sortScroll) sortScroll(wrap, table.querySelector(`th[data-sort="${k}"]`), prevLeft);
+  });
+
+  oneBox.addEventListener("change", () => {
+    showOneSided = oneBox.checked;
+    if (!shown) return;
+    applyOneFilter();
+    refreshHead();
   });
 
   // Same header pin as the Rankings and weapons tables.
@@ -320,6 +364,7 @@ export function mountScrims(section, o = {}) {
       count.textContent = "";
       sum.hidden = true; sum.textContent = "";
       wrap.hidden = true;
+      oneWrap.hidden = true;
       table.querySelector("thead").innerHTML = "";
       table.querySelector("tbody").innerHTML = "";
       setStatus("");
