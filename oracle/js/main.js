@@ -1,7 +1,7 @@
 // PS2MapOracle dashboard — split from index.html (#15). No behaviour change.
 import { S, FACS, COLOR, esc, $, stars, mins, bar, pct1, det, info, wide, syncDetails, PHONE_MQ } from "./state.js?v=20261018-scrub2";
 import { get, names } from "./api.js?v=20261018-scrub2";
-import { drawMap, highlightBase, recolorMap } from "./map.js?v=20261026-heat1";
+import { drawMap, highlightBase, recolorMap } from "./map.js?v=20261027-terrain1";
 import { chart, chartHover } from "./chart.js?v=20261024-i18n1";
 import { lockCard, lockTick } from "./lock.js?v=20261024-i18n1";
 import { commander, commanderIdle } from "./commander.js?v=20261026-heat1";

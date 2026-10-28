@@ -3,6 +3,24 @@ import { S, COLOR, HEXFILE, SLUG, FACS, esc, $ } from "./state.js?v=20261018-scr
 import { asset, names } from "./api.js?v=20261018-scrub2";
 import { t as tr } from "../../i18n.mjs";
 
+// Terrain overlay (owner 2026-10-27): the PlanetSide 2 Wiki (Fandom) terrain image of each
+// continent, drawn above the territory colours and under the borders, lattice, dots and names,
+// so those stay readable at any setting. Two sliders under the map, saved in localStorage;
+// 0 hides that layer. Change the defaults here (0..1).
+export const MAP_IMG_DEFAULT = 0.4;     // terrain image opacity
+export const MAP_COLOR_DEFAULT = 1;     // territory colour opacity
+// zone -> [file in oracle/maps/, [x, y, width, height] in map units]. The wiki images cover the
+// whole world (-4096..4096 on both axes, same orientation as the hexes; checked against the
+// wiki's own base markers); the files are cropped to the hex area at 2.5 m per pixel.
+export const MAPIMG = { 2: ["indar",[-3536,-3360,7072,6720]], 4: ["hossin",[-3920,-3648,7792,7552]], 6: ["amerish",[-3632,-3360,7264,6896]], 8: ["esamir",[-3440,-3008,6784,6368]], 344: ["oshur",[-3776,-3152,7104,6048]] };
+const OPA_KEY = { img: "ps2o-map-img", col: "ps2o-map-col" };
+export function mapOpacity(which) {
+  const def = which === "img" ? MAP_IMG_DEFAULT : MAP_COLOR_DEFAULT;
+  try { const v = localStorage.getItem(OPA_KEY[which]); if (v !== null && v !== "" && Number.isFinite(+v)) return Math.max(0, Math.min(1, +v / 100)); } catch { /* private mode */ }
+  return def;
+}
+const pct = (v) => Math.round(v * 100);
+
 export async function drawMap(a) {
   const host = $("map");
   if (!host) return;
@@ -151,10 +169,12 @@ export async function drawMap(a) {
   const wgOutline = Object.values(geo).filter((g) => g.wg).flatMap((g) => g.pts).map((ps) => `<polygon points="${ps}"/>`).join("");
   const pad = r;
   const vb = [x0 - pad, y0 - pad, x1 - x0 + 2 * pad, y1 - y0 + 2 * pad];
+  const mi = MAPIMG[a.zone], oImg = mapOpacity("img"), oCol = mapOpacity("col");
   host.innerHTML = `<svg viewBox="${vb.join(" ")}" role="img" aria-label="${tr("or.m.aria", "{z} territory map", { z: esc(a.zone_name) })}">
     <defs><pattern id="hatch" width="${(r * 0.7).toFixed(1)}" height="${(r * 0.7).toFixed(1)}" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="100%" height="100%" fill="var(--neutral)"/><line x1="0" y1="0" x2="0" y2="${(r * 0.7).toFixed(1)}" stroke="#5a5f69" stroke-width="${(r * 0.25).toFixed(1)}"/></pattern></defs>
     <g class="vp">
-      <g stroke="#0b0c0e" stroke-width="${(r * 0.12).toFixed(1)}" stroke-linejoin="round">${polys.join("")}</g>
+      <g class="fills" opacity="${oCol}" stroke="#0b0c0e" stroke-width="${(r * 0.12).toFixed(1)}" stroke-linejoin="round">${polys.join("")}</g>
+      ${mi ? `<image class="terrain" x="${mi[1][0]}" y="${mi[1][1]}" width="${mi[1][2]}" height="${mi[1][3]}" preserveAspectRatio="none" opacity="${oImg}"${oImg > 0 ? ` href="maps/${mi[0]}.webp"` : ""} pointer-events="none"/>` : ""}
       <g class="wgo" fill="none" stroke="#e8e6df" stroke-width="${(r * 0.18).toFixed(1)}" stroke-dasharray="${(r * 0.5).toFixed(1)} ${(r * 0.3).toFixed(1)}" pointer-events="none">${wgOutline}</g>
       <path class="borders" d="${edges.join("")}" fill="none" stroke="#0b0c0e" stroke-width="3" vector-effect="non-scaling-stroke" stroke-linecap="round" pointer-events="none"/>
       <g class="links" stroke="rgba(255,255,255,.28)" stroke-width="${(r * 0.12).toFixed(1)}" stroke-linecap="round" pointer-events="none">${linkLines}</g>
@@ -168,9 +188,19 @@ export async function drawMap(a) {
     ${pulseData.length ? `<div class="pulses" aria-hidden="true">${pulseData.map((o) => `<div class="pw" data-n="${o.n}"><span class="ps"></span><span class="pp"></span></div>`).join("")}</div>` : ""}
     ${liveOrders ? `<div class="ordseg" role="group" aria-label="${tr("or.m.ordersFor", "Orders for")}">${tr("or.m.ordersFor", "Orders for")} ${FACS.map((f) => `<button type="button" class="${f}${f === S.cmdOn ? " on" : ""}" aria-pressed="${f === S.cmdOn}" data-mapfac="${f}">${f}</button>`).join("")}</div>` : ""}
     <div class="legend"><span><i class="sw" style="background:var(--vs)"></i>VS</span><span><i class="sw" style="background:var(--nc)"></i>NC</span><span><i class="sw" style="background:var(--tr)"></i>TR</span><span><i class="sw hatch"></i>${tr("or.m.neutral", "neutral / unknown")}</span><span><i class="sw wgs"></i>${tr("or.m.wg", "warpgate")}</span><span><i class="sw poi"></i>${tr("or.m.outpost", "outpost")}</span><span><i class="sw poi big"></i>${tr("or.m.big", "big base")}</span><span>${tr("or.m.ctf", "⚑ capture the flag")}</span>${pk.length ? `<span><i class="sw pkring"></i>${tr("or.m.pocket", "🥶 pocket chokepoint: hold it")}</span>` : ""}<span><i class="sw poi cons"></i>${tr("or.m.cons", "construction")}</span><span class="hint">${tr("or.m.hint", "1 2 3: Commander orders, full text in the AI Commander card · 🔥 hot · 🥶 cut off or almost cut · scroll/pinch to zoom, double-click to reset")}</span></div>
+    <div class="mapctl">${mi ? `<label>${tr("or.m.imgOpa", "Terrain image")} <input type="range" min="0" max="100" step="5" value="${pct(oImg)}" data-opa="img" aria-label="${tr("or.m.imgOpa", "Terrain image")}"><output>${pct(oImg)}%</output></label>` : ""}<label>${tr("or.m.colOpa", "Territory colours")} <input type="range" min="0" max="100" step="5" value="${pct(oCol)}" data-opa="col" aria-label="${tr("or.m.colOpa", "Territory colours")}"><output>${pct(oCol)}%</output></label>${mi ? `<span class="credit">${tr("or.m.credit", "Map images: PlanetSide 2 Wiki (Fandom), CC BY-NC")}</span>` : ""}</div>
     <div class="tip" hidden></div><div class="sheet" hidden role="dialog" aria-label="${tr("or.m.details", "Base details")}"></div>`;
   host.querySelectorAll("[data-mapfac]").forEach((b) => b.onclick = () => { S.cmdFac = b.dataset.mapfac; if (S.hooks.rerender) S.hooks.rerender(); });
   const svg = host.querySelector("svg"), tip = host.querySelector(".tip"), sheet = host.querySelector(".sheet");
+  // Opacity sliders: live update of the two layers, no redraw.
+  host.querySelectorAll("[data-opa]").forEach((inp) => inp.oninput = () => {
+    const w = inp.dataset.opa, v = Math.max(0, Math.min(100, +inp.value || 0));
+    try { localStorage.setItem(OPA_KEY[w], String(v)); } catch { /* private mode */ }
+    inp.nextElementSibling.textContent = v + "%";
+    const el = svg.querySelector(w === "img" ? ".terrain" : ".fills"); if (!el) return;
+    el.setAttribute("opacity", String(v / 100));
+    if (w === "img" && v > 0 && mi && !el.getAttribute("href")) el.setAttribute("href", `maps/${mi[0]}.webp`);
+  });
   cur = { svg, geo, nm, r, owners };
   // ---------------------------------------------------------------- zoom / pan (#19)
   // One transform on <g class="vp">; hexes are never re-rendered while panning.

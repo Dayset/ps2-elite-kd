@@ -383,3 +383,9 @@ footer { color: var(--dim); font-size: var(--fs-12); margin-top: var(--s-5); }
 /* 🔥 Heat toggle (owner t692u): grey when off, like the muted speaker. */
 .heatbtn:not(.on) { filter: grayscale(1); opacity: .65; }
 .heatbtn.on { border-color: #ff7a2f; background: #2a1a10; }
+/* Terrain image + territory colour sliders under the map (owner 2026-10-27). */
+#map .mapctl { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; margin-top: 6px; font-size: var(--fs-12, 12px); color: var(--muted, #9aa3ad); }
+#map .mapctl label { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; }
+#map .mapctl input[type="range"] { width: 120px; accent-color: #ffd54a; }
+#map .mapctl output { min-width: 3.2em; font-variant-numeric: tabular-nums; color: var(--text, #e8e6df); }
+#map .mapctl .credit { color: var(--dim, #6b7280); font-size: 11px; }
