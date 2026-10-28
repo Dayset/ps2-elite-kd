@@ -19,8 +19,8 @@ await i18nReady;
  *     fetch in the background (one at a time, newest first, #32) and upgrade in place.
  * Pure helpers are exported for tests; the DOM part runs only in a browser.
  */
-export * from "./live-model.mjs?v=20261027-ratio1"; // #66: the pure part (tests import it from here)
-import { VICTIM_LINES, classifyDeath, censusStats, LIVE_COLS, tipText, FILL_DIM, HOLLOW_PX, HOLLOW_INK, goodPct, fillDriver, emojiFill, unknownFill, infUnit, OUTLINE_PX, unitGlow, LIVE_GLOWS, LIVE_FPS, liveFps, HALO_KEY, haloOn, easeFill, glowIn, BEAT, TIER_MOTION, haloAt, SHINE, shineFrame, beatSleep, weaponIcon, glowTier, eventAt, overlayPush, overlayRows, nextBgFetch, liveRowFromPlayer, ME_REFRESH_MS, median, mergeFresh, SHARE_MAX, shareDelay, cellText, slugKey, bountyNext, dpsNow, DPS_HP, DPS_ASSIST, DPS_ASSIST_XP, assistShare, xpMultAt, KILL_BASE_XP, cashTotals, cashFormula, combatHoldMs, holdGaps, combatRuns, spawnRunHoldMs, timeToCombatMs, timerBarPct, easeInQuad, ratioLabel } from "./live-model.mjs?v=20261027-ratio1";
+export * from "./live-model.mjs?v=20261028-cid80"; // #66: the pure part (tests import it from here)
+import { VICTIM_LINES, classifyDeath, censusStats, LIVE_COLS, tipText, FILL_DIM, HOLLOW_PX, HOLLOW_INK, goodPct, fillDriver, emojiFill, unknownFill, infUnit, OUTLINE_PX, unitGlow, LIVE_GLOWS, LIVE_FPS, liveFps, HALO_KEY, haloOn, easeFill, glowIn, BEAT, TIER_MOTION, haloAt, SHINE, shineFrame, beatSleep, weaponIcon, glowTier, eventAt, overlayPush, overlayRows, nextBgFetch, liveRowFromPlayer, ME_REFRESH_MS, median, mergeFresh, SHARE_MAX, shareDelay, cellText, slugKey, bountyNext, dpsNow, DPS_HP, DPS_ASSIST, DPS_ASSIST_XP, assistShare, xpMultAt, KILL_BASE_XP, cashTotals, cashFormula, combatHoldMs, holdGaps, combatRuns, spawnRunHoldMs, timeToCombatMs, timerBarPct, easeInQuad, ratioLabel, cidNameEntry } from "./live-model.mjs?v=20261028-cid80";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261023-short1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
@@ -92,6 +92,9 @@ function start() {
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     return r.json();
   }
+  // #80: cid → name map (data/cid-names.json, ~0.6 MB, rebuilt by every refresh run). Fetched at once, so a known
+  // victim's name shows with no Census call; a failed or missing file is just an empty map (Census fallback).
+  const cidNamesP = getJson("data/cid-names.json").then((j) => (j && typeof j === "object" ? j : {}), () => ({}));
   let ranksP = null;
   function loadRanks() { return ranksP || (ranksP = loadRanksOnce()); }
   async function loadRanksOnce() {
@@ -125,28 +128,53 @@ function start() {
   }
   // #76: one lookup per cid in flight. Two fast kills on the same victim share the fetch (the second must not
   // resolve early against the pending placeholder with an unknown faction); a rejected lookup is forgotten so the
-  // next call retries. `pending` = still looking up: the name shows "…" (never a raw #id).
+  // next call retries. `pending` = data still loading (faction, stats, cached iVi): commits wait for it.
+  // #80 (name first, data after): `named` = the name is known and shows at once, even while `pending`; `nameP`
+  // resolves as soon as it is (render on it). Name from data/cid-names.json when the cid is there (no Census call
+  // for the name; none at all when the map also knows the faction and the player is cached), else from a light
+  // Census query (name + faction only), with stats fetched after. Until named the cell shows "…", and a lookup
+  // that finds no name shows "?" (never a raw #id).
   const peopleP = new Map();
+  const CHAR = (cid) => `${CENSUS}character?character_id=${cid}`;
   async function person(cid) {
     if (people.has(cid) && !people.get(cid).pending) return people.get(cid);
     if (peopleP.has(cid)) return peopleP.get(cid);
-    const p = { name: `#${cid}`, faction: "", kd: null, kpm: null, cached: null, pending: true };
+    const p = { name: `#${cid}`, faction: "", kd: null, kpm: null, cached: null, pending: true, named: false };
+    let nameDone;
+    p.nameP = new Promise((r) => { nameDone = r; });
+    const setName = (name) => { if (name) { p.name = name; p.named = true; } nameDone(p); };
     people.set(cid, p);
     const pr = (async () => {
       try {
-        const j = await getJson(`${CENSUS}character?character_id=${cid}&c:show=character_id,name.first,faction_id&c:resolve=stat_history(stat_name,all_time)`);
-        const ch = (j.character_list || [])[0];
-        if (ch) {
-          p.name = (ch.name && ch.name.first) || p.name;
-          p.faction = FACTION[ch.faction_id] || "";
-          Object.assign(p, censusStats(ch));
+        let hit = null;
+        try { hit = cidNameEntry(await cidNamesP, cid); } catch { /* no map */ }
+        if (hit) { setName(hit.name); p.faction = hit.faction; }
+        if (!hit || !hit.faction) {
+          // Faction is needed for the teamkill check. A map hit with no faction: one query for faction + stats (the
+          // name is already shown; Census wins on a rename). A miss: name + faction first, stats after.
+          try {
+            const j = await getJson(hit ? `${CHAR(cid)}&c:show=character_id,name.first,faction_id&c:resolve=stat_history(stat_name,all_time)` : `${CHAR(cid)}&c:show=character_id,name.first,faction_id`);
+            const ch = (j.character_list || [])[0];
+            if (ch) {
+              setName((ch.name && ch.name.first) || "");
+              p.faction = FACTION[ch.faction_id] || "";
+              if (hit) Object.assign(p, censusStats(ch));
+            }
+          } catch { /* name stays unknown: "?" */ }
         }
-      } catch { /* keep #id */ }
-      try {
+        nameDone(p); // no name found: stop waiting (the cell shows "?")
         if (!ranks) await loadRanks();
-        const c = ranks.get(slugKey(p.name));
+        const c = p.named ? ranks.get(slugKey(p.name)) : null;
         if (c) p.cached = c;
-      } finally { p.pending = false; }
+        // Uncached players get their Census K/D · KPM for the name's hover (cached ones never needed it).
+        if (!c && p.named && p.kd == null && p.kpm == null) {
+          try {
+            const j = await getJson(`${CHAR(cid)}&c:show=character_id&c:resolve=stat_history(stat_name,all_time)`);
+            const ch = (j.character_list || [])[0];
+            if (ch) Object.assign(p, censusStats(ch));
+          } catch { /* stats stay unknown */ }
+        }
+      } finally { nameDone(p); p.pending = false; }
       return p;
     })();
     peopleP.set(cid, pr);
@@ -245,7 +273,8 @@ function start() {
   }
   /** Name (faction colour) + 💩; a long name is cut with … at the end. Uncached: Census K/D · KPM in the hover. */
   function nameHtml(p, tip, hs = "") {
-    if (p.pending) return `<span class="lv-pn"><span class="lv-name lv-pend"><bdi>…</bdi></span>${hs}</span>`; // #76: lookup in flight
+    if (!p.named && p.pending) return `<span class="lv-pn"><span class="lv-name lv-pend"><bdi>…</bdi></span>${hs}</span>`; // #76: lookup in flight
+    if (!p.named) return `<span class="lv-pn"><span class="lv-name lv-unk"><bdi>?</bdi></span>${hs}</span>`; // #80: no name found — never a raw #id
     return `<span class="lv-pn"><span class="lv-name fac-${p.faction || ""}" title="${esc(p.name + (tip || ""))}"><bdi>${esc(p.name)}</bdi></span>${poopFor(p.name)}${hs}</span>`;
   }
   /**
@@ -1011,7 +1040,9 @@ function start() {
     if (!sessionStartMs) sessionStartMs = Date.now();
     setOnline("online"); // any Death involving them means they are playing right now
     const fetchP = person(ev.opp); // starts now, in parallel — never awaited here
-    fetchP.then(render, render); // the name replaces "…" as soon as ITS lookup lands, even while an older commit waits
+    const pp = people.get(ev.opp);
+    if (pp && pp.nameP) pp.nameP.then(render, render); // #80: the name replaces "…" the moment it is known (map or Census)
+    fetchP.then(render, render); // then the rest of the row once ITS data lands, even while an older commit waits
     st = overlayPush(st, ev);
     const row = st.lastEv;
     row.seq = ++evSeq;

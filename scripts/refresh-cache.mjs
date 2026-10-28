@@ -296,6 +296,9 @@ async function fetchJson(url, { retries = 4 } = {}) {
   throw lastErr || new Error(`fetch failed: ${url}`);
 }
 
+/** Census faction_id → the live page's faction tag (live.mjs FACTION). */
+const FACTION_TAG = { 1: "vs", 2: "nc", 3: "tr", 4: "nso" };
+
 export function hist(c, stat) {
   for (const row of ((c.stats || {}).stat_history) || []) {
     if (row.stat_name === stat) return +row.all_time || 0;
@@ -939,6 +942,8 @@ async function loadLive(name, { prevAssists = null, prevInfantry = null, prevWea
   const gkpm = gt ? gk / (gt / 60) : 0;
   const tag = outfit.alias ? `[${outfit.alias}] ` : "";
   const display = `${tag}${(c.name && c.name.first) || censusQueryName(name)}`;
+  // #80: the faction rides along (same Census row, no extra call) for data/cid-names.json; it never changes.
+  const faction = FACTION_TAG[c.faction_id] || "";
 
   // Census errors propagate as outages (old data is kept).
   const r = await fetchPlayerCensus(cid, { base: CENSUS, getJson: (u) => fetchJson(u), topN: TOP_N, memo: oppMemo });
@@ -994,6 +999,7 @@ async function loadLive(name, { prevAssists = null, prevInfantry = null, prevWea
       n_scored: rows.length,
       honu: `https://wt.honu.pw/c/${cid}/killboard`,
       source: "census",
+      ...(faction ? { faction } : {}),
       ...(assists ? { assists } : {}),
       ...(infantry ? { infantry } : {}),
       ...(weapons ? { weapons } : {}),

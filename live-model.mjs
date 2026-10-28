@@ -266,6 +266,18 @@ export function fmtGap(ms) {
 }
 
 /** Lifetime K/D and KPM from a Census character with c:resolve=stat_history ("time" is seconds played). */
+/**
+ * #80: one entry of data/cid-names.json → { name, faction } or null. Entries are "Name" or ["Name", "vs"]
+ * (faction only where the player file knew it). Anything malformed is a miss, never a wrong name.
+ */
+export function cidNameEntry(map, cid) {
+  const v = map && Object.prototype.hasOwnProperty.call(map, String(cid)) ? map[String(cid)] : null;
+  const name = typeof v === "string" ? v : Array.isArray(v) && typeof v[0] === "string" ? v[0] : "";
+  if (!name.trim()) return null;
+  const faction = Array.isArray(v) && ["vs", "nc", "tr", "nso"].includes(v[1]) ? v[1] : "";
+  return { name: name.trim(), faction };
+}
+
 export function censusStats(ch) {
   const list = (ch && ch.stats && ch.stats.stat_history) || [];
   const at = (name) => +((list.find((s) => s.stat_name === name) || {}).all_time || 0);

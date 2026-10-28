@@ -31,18 +31,30 @@ const adjsOf = (name) => ranks.rows.find((r) => r[ci("name")] === name)[ci("adjs
 const ME_ADJS = adjsOf(ME.name);
 const TEAM = { cid: "5428000000000000999", name: "TeamMate" }; // same faction as ME (stub returns "1" for it)
 const SLOW = { cid: "5428000000000000777", name: "Slowpoke" }; // #76: its Census lookup takes 1.5 s
+// #80: data/cid-names.json is stubbed. MAPPED = a cached player the map knows with faction: zero Census calls (its Census
+// reply is held 5 s, so a name shown sooner came from the map). HALF = in the map without faction: name at once, faction
+// from a 1.5 s Census call. NOBODY = in neither: Census finds nothing, the cell must show "?" (never "…" or a raw #id).
+const MAPPED = { cid: "5428000000000000555", name: named[Math.floor(named.length * 0.6)][ci("name")] };
+const HALF = { cid: "5428000000000000556", name: "HalfMapped" };
+const NOBODY = { cid: "5428000000000000404" };
 
 /** Page-side fakes: Census REST (character lookups) and the push stream (window.__fakeWs.emit(payload)). */
 const FAKES = `(() => {
   const ME = ${JSON.stringify(ME)}, OPP = ${JSON.stringify(OPP)}, SUB0 = ${JSON.stringify(SUB0)}, TEAM = ${JSON.stringify(TEAM)}, SLOW = ${JSON.stringify(SLOW)};
+  const MAPPED = ${JSON.stringify(MAPPED)}, HALF = ${JSON.stringify(HALF)};
+  window.__censusCalls = [];
   const byCid = new Map([[ME.cid, ME], [SUB0.cid, SUB0], [TEAM.cid, TEAM], [SLOW.cid, SLOW], ...OPP.map((o) => [o.cid, o])]);
   const json = (o) => new Response(JSON.stringify(o), { status: 200, headers: { "content-type": "application/json" } });
   const realFetch = window.fetch.bind(window);
   window.fetch = (input, init) => {
     const u = decodeURIComponent(typeof input === "string" ? input : input.url);
+    if (/(^|\\/)data\\/cid-names\\.json/.test(u)) return Promise.resolve(json({ [MAPPED.cid]: [MAPPED.name, "nc"], [HALF.cid]: HALF.name }));
     if (u.includes("census.daybreakgames.com")) {
       if (/character\\?name\\.first_lower=/.test(u)) return Promise.resolve(json({ returned: 1, character_list: [{ character_id: ME.cid, name: { first: ME.name }, faction_id: "1" }] }));
       const m = u.match(/character_id=(\\d+)/);
+      if (m) window.__censusCalls.push(m[1]);
+      if (m && m[1] === MAPPED.cid) return new Promise((r) => setTimeout(() => r(json({ returned: 1, character_list: [{ character_id: MAPPED.cid, name: { first: MAPPED.name }, faction_id: "2" }] })), 5000));
+      if (m && m[1] === HALF.cid) return new Promise((r) => setTimeout(() => r(json({ returned: 1, character_list: [{ character_id: HALF.cid, name: { first: HALF.name }, faction_id: "2" }] })), 1500));
       if (m && m[1] === SLOW.cid) return new Promise((r) => setTimeout(() => r(json({ returned: 1, character_list: [{ character_id: SLOW.cid, name: { first: SLOW.name }, faction_id: "2" }] })), 1500));
       if (m && byCid.has(m[1])) { const p = byCid.get(m[1]); return Promise.resolve(json({ returned: 1, character_list: [{ character_id: p.cid, name: { first: p.name }, faction_id: p.cid === TEAM.cid ? "1" : "2" }] })); }
       return Promise.resolve(json({ returned: 0, character_list: [] }));
@@ -309,6 +321,26 @@ describe("🎥 live.html in a browser", () => {
       assert.equal(await ev(until(`${names}.join("|") === ${JSON.stringify([OPP[0].name, "…"].join("|"))}`, 1200)), true, "later kills are not held back by the slow lookup");
       // after the slow lookup: both new rows stay, newest on top
       assert.equal(await ev(until(`${names}.join("|") === ${JSON.stringify([OPP[0].name, SLOW.name].join("|"))}`)), true, "both rows of the new run, slow name filled");
+      assert.deepEqual(errors, [], "no page errors");
+    });
+  });
+
+  it("#80 name first: a mapped victim's name shows with zero Census calls, a half-mapped one before Census answers, an unknown one as ?", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
+      const names = `[...document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty) .lv-name")].map((n) => n.textContent)`;
+      const callsFor = (cid) => `window.__censusCalls.filter((c) => c === ${JSON.stringify(cid)}).length`;
+      await ev(`window.__fakeWs.emit(${death(ME.cid, MAPPED.cid, "80", false)})`);
+      assert.equal(await ev(until(`${names}[0] === ${JSON.stringify(MAPPED.name)}`, 600)), true, "mapped name on screen at once (its Census reply would take 5 s)");
+      assert.equal(await ev(until(`![...document.querySelectorAll("#liveList tbody.lv-vic .lv-iv")].some((e) => e.textContent === "?")`)), true, "cached iVi ratio filled after (ranks loaded)");
+      assert.equal(await ev(callsFor(MAPPED.cid)), 0, "zero Census calls for a mapped, cached victim");
+      await ev(`window.__fakeWs.emit(${death(ME.cid, HALF.cid, "80", false)})`);
+      assert.equal(await ev(until(`${names}[0] === ${JSON.stringify(HALF.name)}`, 600)), true, "half-mapped name at once, before its 1.5 s Census call answers");
+      assert.equal(await ev(callsFor(HALF.cid)), 1, "one Census call for its faction (teamkill check) + stats, in flight");
+      await ev(`window.__fakeWs.emit(${death(ME.cid, NOBODY.cid, "80", false)})`);
+      assert.equal(await ev(until(`${names}[0] === "?"`)), true, "a lookup that finds nobody shows ?");
+      const shown = await ev(names);
+      assert.ok(!shown.join("|").includes("#") && !shown.includes("…"), `never a raw #id or a stranded …: ${shown}`);
       assert.deepEqual(errors, [], "no page errors");
     });
   });

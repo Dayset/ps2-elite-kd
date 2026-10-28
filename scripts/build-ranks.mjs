@@ -110,6 +110,7 @@ export function readXp(dataDir, slug) {
 export { METRIC_COLS, RANK_COLS, bareName, rankRow } from "../rank-row.mjs";
 import { METRIC_COLS, RANK_COLS, rankRow, bareName, slugKey } from "../rank-row.mjs";
 import { assistGroups } from "../assist-groups.mjs";
+import { removedList } from "../opt-out.mjs";
 import { burstSessions, burstReviewed } from "../burst-sessions.mjs";
 import { RAMPAGE_RULE, RAMPAGE_REASON_PREFIX, rampageCleared, rampageEvidence, rampageRuleText } from "../rampage-gate.mjs";
 
@@ -1071,6 +1072,45 @@ export function infantryStatus(dataDir) {
   return { checkedAt: new Date().toISOString(), players: list.length, counts: infantryTagCounts(v2), v2: v2.length, pending: list.length - v2.length, rule: INFANTRY_TAG };
 }
 
+const CID_NAME_FACTIONS = new Set(["vs", "nc", "tr", "nso"]);
+
+/**
+ * data/cid-names.json (#80): character id → name for the 🎥 live page, so a known victim's name shows with no
+ * Census call. Flat { "<cid>": "Name" }, or { "<cid>": ["Name", "vs"] } when the faction is known (player files
+ * carry `faction` since #80; a character's faction never changes). Sources: every cached player file
+ * (player.cid + player.display, tag stripped) and discovery.json queue rows ({ cid, name }) not cached yet.
+ * Removed players (opt-out.json) are left out. Sorted by cid, no timestamp: an unchanged cache gives a
+ * byte-identical file, so it never makes a bot commit on its own. PC only (the live page is PC-only).
+ */
+export function buildCidNames(dataDir) {
+  let removed;
+  try { removed = removedList(JSON.parse(fs.readFileSync(path.join(dataDir, "opt-out.json"), "utf8"))); } catch { removed = removedList(null); }
+  const out = new Map();
+  const add = (cid, name, faction) => {
+    const id = String(cid || "");
+    const nm = bareName(name);
+    if (!/^\d{5,25}$/.test(id) || !nm || out.has(id) || removed.match({ cid: id, name: nm })) return;
+    out.set(id, CID_NAME_FACTIONS.has(faction) ? [nm, faction] : nm);
+  };
+  const index = JSON.parse(fs.readFileSync(path.join(dataDir, "index.json"), "utf8"));
+  const seen = new Set();
+  for (const e of index.players || []) {
+    if (!e || !e.file || seen.has(e.file)) continue;
+    seen.add(e.file);
+    let raw;
+    try { raw = JSON.parse(fs.readFileSync(path.join(dataDir, e.file), "utf8")); } catch { continue; }
+    const pl = (raw && (raw.player || raw)) || {};
+    add(pl.cid, pl.display || e.name, pl.faction);
+  }
+  try {
+    const d = JSON.parse(fs.readFileSync(path.join(dataDir, "discovery.json"), "utf8"));
+    for (const q of (d && d.queue) || []) if (q) add(q.cid, q.name);
+  } catch { /* no discovery state */ }
+  const map = {};
+  for (const id of [...out.keys()].sort()) map[id] = out.get(id);
+  return map;
+}
+
 /**
  * data/names.json: the slim name list the main page needs at startup (2026-10-19).
  * index.json is ~3.4 MB (≈490 KB gzipped) because every entry repeats file,
@@ -1224,6 +1264,13 @@ if (isMain) {
   } catch (e) { console.log(`names.json not written: ${e.message}`); }
   const lite = buildRanksLite(out);
   if (lite) fs.writeFileSync(path.join(dataDir, "ranks-lite.json"), JSON.stringify(lite) + "\n");
+  if (room === "pc") {
+    try {
+      const cidNames = buildCidNames(dataDir);
+      fs.writeFileSync(path.join(dataDir, "cid-names.json"), JSON.stringify(cidNames) + "\n");
+      console.log(`cid-names.json: ${Object.keys(cidNames).length} names (🎥 live victims)`);
+    } catch (e) { console.log(`cid-names.json not written: ${e.message}`); }
+  }
   console.log(`ranks.json: ${out.count} players (${hiddenInfo.count} on the 🙈 hide list)`);
   // 🧪 Outlier guard → data/status.json (build-log.html). Other status fields are kept.
   const stPath = path.join(dataDir, "status.json");
