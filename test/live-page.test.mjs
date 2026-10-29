@@ -225,7 +225,7 @@ test("cellText: digits, floor at zero, missing", () => {
 
 test("LIVE juice (owner t562u): pop-in row, flip switch, top-rank glow, upset shake — never resizes, honours reduced motion", () => {
   const css = cssSrc();
-  for (const k of ["lvPop", "lvFlash", "lvShake", "lvVicSlide", "lvKillerDrop"]) assert.match(css, new RegExp(`@keyframes ${k} `));
+  for (const k of ["lvPop", "lvFlash", "lvShake", "lvVicSlide"]) assert.match(css, new RegExp(`@keyframes ${k} `));
   // owner 2026-10-24: no endless CSS pulses (they were most of the CPU); the tiers move on live.mjs's 30 fps beat instead
   for (const k of ["lvGlow", "lvGlow1", "lvGlow2", "lvSpark", "lvFlashK", "lvFlashD", "lvFlashU"]) assert.doesNotMatch(css, new RegExp(`@keyframes ${k} `));
   const liveCss = readFileSync(new URL("live.css", root), "utf8"); // the live page's own rules (#66)
@@ -250,7 +250,8 @@ test("LIVE juice (owner t562u): pop-in row, flip switch, top-rank glow, upset sh
   assert.match(css, /\.lv-ev\.lv-new\.lv-death > tr > td::after \{ background: rgba\(229, 57, 53, 0\.28\); \}/); // new killer: red flash
   assert.match(css, /\.lv-ev\.lv-new > tr > td \{ animation: lvPop /); // new line: pop …
   assert.match(css, /\.lv-ev\.lv-new\.lv-vic > tr > td \{ animation: lvVicSlide 0\.45s ease-out; \}/); // victim: slides down under the centre row
-  assert.match(css, /\.lv-ev\.lv-new\.lv-atk > tr > td \{ animation: lvKillerDrop 0\.6s /); // killer: falls and settles into the top row
+  assert.doesNotMatch(css, /lvKillerDrop/); // killer drop disabled 2026-10-29, redesign pending
+  assert.match(css, /\.lv-ev\.lv-new\.lv-atk\.lv-upset > tr > td \{ animation: lvShake 0\.4s ease-in-out 0\.6s; \}/); // upset: shake only, no drop
   assert.match(css, /\.lv-ev\.lv-new > tr > td::after \{[^}]*background: rgba\(67, 160, 71, 0\.32\); animation: lvFlash 0\.8s ease-out; \}/); // … + green flash
   assert.match(css, /\.lv-ev\.lv-new\.lv-upset > tr > td::after \{ background: rgba\(255, 193, 7, 0\.4\); animation-duration: 1\.1s; \}/); // upset: gold
   const sfx = readFileSync(new URL("sfx.mjs", root), "utf8");

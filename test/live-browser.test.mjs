@@ -974,7 +974,8 @@ describe("🎥 live feed arrival animations in a browser", () => {
       assert.deepEqual(errors, [], "no page errors");
     });
   });
-  it("killer drop (owner 2026-10-26): the killer row falls onto the centre row and settles into the top row", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+  // Killer drop disabled 2026-10-29 (owner redesign pending): the test stays, skipped, for the redesign.
+  it("killer drop (owner 2026-10-26): the killer row falls onto the centre row and settles into the top row", { skip: (!chrome && "no Chrome") || "killer drop disabled 2026-10-29, redesign pending", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
       await ev(`window.__fakeWs.emit(${death(SLOW.cid, ME.cid, "80", false)})`); // SLOW kills ME: killer row arrives, name fills 1.5 s later
