@@ -100,17 +100,17 @@ for (const [a, m] of dir) for (const [b, ab] of m) {
   const ba = dir.get(b) && dir.get(b).get(a);
   allPairs.push({ a, b, ka: ba ? (ab.k + ba.d) / 2 : ab.k, kb: ba ? (ab.d + ba.k) / 2 : ab.d });
 }
-/** Oriented rows (hi = higher adjs), infantry subset, both 🪳 known, kills in [min, max). */
-function rowsIn(min, max = Infinity) {
+/** Oriented rows (hi = higher adjs), infantry subset, both 🪳 known (unless anyZerg), kills in [min, max). */
+function rowsIn(min, max = Infinity, anyZerg = false) {
   const out = [];
   for (const p of allPairs) {
     const n = p.ka + p.kb; if (n < min || n >= max) continue;
     const A = P.get(p.a), B = P.get(p.b);
-    if (!fin(A.adjs) || !fin(B.adjs) || A.zerg == null || B.zerg == null) continue;
+    if (!fin(A.adjs) || !fin(B.adjs) || (!anyZerg && (A.zerg == null || B.zerg == null))) continue;
     const [hi, lo, khi, klo] = A.adjs >= B.adjs ? [A, B, p.ka, p.kb] : [B, A, p.kb, p.ka];
     if (!(hi.adjs > 0) || khi <= 0 || klo <= 0 || !(hi.inf >= 75 && lo.inf >= 75)) continue;
     out.push({ a: hi.slug, b: lo.slug, hi, lo, khi, klo, n,
-      adjs_gap: (lo.adjs - hi.adjs) / hi.adjs * 100, kill_gap: (klo - khi) / khi * 100, zerg_gap: lo.zerg - hi.zerg,
+      adjs_gap: (lo.adjs - hi.adjs) / hi.adjs * 100, kill_gap: (klo - khi) / khi * 100, zerg_gap: lo.zerg == null || hi.zerg == null ? null : lo.zerg - hi.zerg,
       lk: Math.log((klo + 0.5) / (khi + 0.5)), w: 1 / (1 / (klo + 0.5) + 1 / (khi + 0.5)) });
   }
   return out;
@@ -253,11 +253,11 @@ function curve(rs, nk = 12) {
   const pl = [...new Set(rs.flatMap((r) => [r.hi, r.lo]))];
   const tiers = TIERS.map((t) => {
     const a = median(pl.filter((p) => p.tier === t).map((p) => p.adjs));
-    const d = a - zergChargedAdjs(a, 50), bs = boots.map((x) => a - ((a + x.K) * Math.exp(-x.l * 50) - x.K));
+    const d = a - zergChargedAdjs(a, ZERG_CHARGE.CENTER + 50), bs = boots.map((x) => a - ((a + x.K) * Math.exp(-x.l * 50) - x.K));
     const lo = quant(bs, 0.025), hi = quant(bs, 0.975);
-    return { tier: t, medAdjs: Math.round(a), drop50: Math.round(d), ci: [Math.round(lo), Math.round(hi)], margin: Math.round((100 * (hi - lo)) / 2 / d) };
+    return { tier: t, medAdjs: Math.round(a), drop50steps: Math.round(d), ci: [Math.round(lo), Math.round(hi)], margin: Math.round((100 * (hi - lo)) / 2 / d) };
   });
-  log("  drop at 🪳 50 (shipped; 95 % from the refits): " + tiers.map((t) => `${t.tier} @${t.medAdjs} −${t.drop50} (${t.ci.join("…")}, ±${t.margin} %)`).join("  "));
+  log(`  drop for 50 🪳 steps (🪳 ${ZERG_CHARGE.CENTER} → ${ZERG_CHARGE.CENTER + 50}; shipped; 95 % from the refits): ` + tiers.map((t) => `${t.tier} @${t.medAdjs} −${t.drop50steps} (${t.ci.join("…")}, ±${t.margin} %)`).join("  "));
   // held-out: fit on one half of the players, test on pairs inside the other half
   const R2 = rng(42), half = new Map(); for (const p of ps) half.set(p, R2() < 0.5 ? 0 : 1);
   const H = [0, 1].map((h) => rs.filter((r) => half.get(r.a) === h && half.get(r.b) === h));
@@ -270,8 +270,24 @@ function curve(rs, nk = 12) {
     held.push({ before: +pctOf(before).toFixed(3), after: +pctOf(after).toFixed(3), logLoss: +((ll(ch) / ll(raw) - 1) * 100).toFixed(3) });
   }
   log("  held-out 🪳 bias per step (raw → adjusted) and log-loss change: " + held.map((h) => `${h.before} % → ${h.after} %, ${h.logLoss} %`).join("  |  "));
-  const pass = ZERG_CHARGE.LAMBDA >= lamCi[0] && ZERG_CHARGE.LAMBDA <= lamCi[1] && held.every((h) => Math.abs(h.after) <= Math.abs(h.before) / 2);
-  log(`  re-run check: ${pass ? "PASS" : "FAIL"} (shipped λ inside the refit range and held-out bias at most half the raw one)`);
-  report.shipped = { K: ZERG_CHARGE.K, lambda: ZERG_CHARGE.LAMBDA, refit: { K: b0.K, lambda: +lam.toFixed(6), ci: lamCi.map((v) => +v.toFixed(6)) }, tiers, held, pass };
+  // center: which 🪳 do players WITHOUT a 🪳 score (plain iVi in the column) duel like?
+  const ra = rowsIn(30, Infinity, true).filter((r) => ok(r.hi) && ok(r.lo));
+  const zn = (p) => (p.zerg == null ? [0, 1] : [p.zerg, 0]);
+  const lowA = ra.reduce((m, r) => Math.min(m, r.hi.adjs, r.lo.adjs), Infinity);
+  const Kc = Math.max(ZERG_CHARGE.K, Math.ceil(10 - lowA));
+  const fitC = (s) => ols(s.map((r) => { const a = zn(r.lo), c = zn(r.hi); return [L(r.lo.adjs, Kc) - L(r.hi.adjs, Kc), ...veh(r), a[0] - c[0], a[1] - c[1]]; }), s.map((r) => r.lk), s.map((r) => r.w));
+  const fc = fitC(ra), eq = fc.beta[4] / fc.beta[3];
+  const psA = [...new Set(ra.flatMap((r) => [r.a, r.b]))], R3 = rng(3), eqB = [];
+  for (let it = 0; it < 60; it++) {
+    const c = new Map(); for (let i = 0; i < psA.length; i++) { const p = psA[Math.floor(R3() * psA.length)]; c.set(p, (c.get(p) || 0) + 1); }
+    const s = []; for (const r of ra) { const m = (c.get(r.a) || 0) * (c.get(r.b) || 0); for (let q = 0; q < m; q++) s.push(r); }
+    const f = fitC(s); eqB.push(f.beta[4] / f.beta[3]);
+  }
+  const eqCi = [quant(eqB, 0.025), quant(eqB, 0.975)];
+  const zKnown = [...P.values()].filter((p) => p.zerg != null).map((p) => p.zerg);
+  log(`  center ${ZERG_CHARGE.CENTER}: players without 🪳 (${ra.length} pairs incl. them) duel like 🪳 ${r1(eq)} (95 % ${eqCi.map(r1).join("…")}); median 🪳 of the rest ${median(zKnown)}`);
+  const pass = ZERG_CHARGE.LAMBDA >= lamCi[0] && ZERG_CHARGE.LAMBDA <= lamCi[1] && held.every((h) => Math.abs(h.after) <= Math.abs(h.before) / 2) && ZERG_CHARGE.CENTER >= eqCi[0] && ZERG_CHARGE.CENTER <= eqCi[1];
+  log(`  re-run check: ${pass ? "PASS" : "FAIL"} (shipped λ inside the refit range, held-out bias at most half the raw one, center inside the no-🪳 range)`);
+  report.shipped = { K: ZERG_CHARGE.K, lambda: ZERG_CHARGE.LAMBDA, center: ZERG_CHARGE.CENTER, refit: { K: b0.K, lambda: +lam.toFixed(6), ci: lamCi.map((v) => +v.toFixed(6)) }, noZergLike: { zerg: r1(eq), ci: eqCi.map(r1) }, tiers, held, pass };
 }
 if (JSON_OUT) fs.writeFileSync(JSON_OUT, JSON.stringify(report, null, 1) + "\n");

@@ -7,48 +7,52 @@ import { fileURLToPath } from "node:url";
 import { zergChargedAdjs, ZERG_CHARGE } from "../zerg-charge.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const { K, LAMBDA } = ZERG_CHARGE;
+const { K, LAMBDA, CENTER } = ZERG_CHARGE;
 const near = (a, b, eps = 1e-9) => assert.ok(Math.abs(a - b) < eps, `${a} ≈ ${b}`);
 
-test("measured constants", () => {
+test("measured constants and the owner's center", () => {
   assert.equal(K, 3100);
   assert.equal(LAMBDA, 0.00021);
+  assert.equal(CENTER, 25);
 });
 
-test("adjs > 0: (iVi + K)·exp(−λ·🪳) − K, about the same points in every tier", () => {
-  near(zergChargedAdjs(1000, 50), (1000 + K) * Math.exp(-LAMBDA * 50) - K);
-  const drop = (a, z) => a - zergChargedAdjs(a, z);
-  // 🪳 50 drops 30–60 points from iVi 170 to 2,050 (measured: −34 … −53)
+test("(iVi + K)·exp(−λ·(🪳 − 25)) − K: about the same points in every tier", () => {
+  near(zergChargedAdjs(1000, 50), (1000 + K) * Math.exp(-LAMBDA * (50 - CENTER)) - K);
+  const change = (a, z) => zergChargedAdjs(a, z) - a;
+  // 🪳 75 (50 steps above the center): −30 … −60 points from iVi 170 to 2,050 (measured 🪳 50 drop: −34 … −53)
   for (const a of [170, 535, 962, 1330, 1646, 2050]) {
-    const d = drop(a, 50);
+    const d = -change(a, 75);
     assert.ok(d > 30 && d < 60, `iVi ${a}: −${d.toFixed(1)}`);
   }
-  assert.ok(drop(2050, 50) > drop(170, 50), "a bit more at the top (points), much less as a %");
-  assert.ok(drop(1000, 80) > drop(1000, 40) && drop(1000, 40) > 0, "more 🪳, bigger drop");
+  assert.ok(change(2050, 75) < change(170, 75), "a bit more at the top (points), much less as a %");
+  assert.ok(change(1000, 80) < change(1000, 40) && change(1000, 40) < 0, "more 🪳 above 25, bigger drop");
 });
 
-test("adjs ≤ 0: still only goes down, never flips", () => {
+test("🪳 25 = unchanged; below it goes up a little, above it goes down", () => {
+  assert.equal(zergChargedAdjs(1234.5, CENTER), 1234.5);
+  const up = zergChargedAdjs(1000, 0) - 1000, down = zergChargedAdjs(1000, 99) - 1000;
+  assert.ok(up > 20 && up < 23, `🪳 0 at iVi 1,000: +${up.toFixed(1)}`);
+  assert.ok(down < -62 && down > -65, `🪳 99 at iVi 1,000: ${down.toFixed(1)}`);
+  assert.ok(zergChargedAdjs(1000, 14) > 1000 && zergChargedAdjs(1000, 30) < 1000);
+  assert.equal(zergChargedAdjs(800, -5), zergChargedAdjs(800, 0), "a negative 🪳 counts as 0");
+  assert.equal(zergChargedAdjs(800, 140), zergChargedAdjs(800, 100), "and above 100 as 100");
+});
+
+test("adjs ≤ 0: moves the same way, never flips sign through a percentage", () => {
   const v = zergChargedAdjs(-300, 60);
   assert.ok(v < -300);
-  near(v, (-300 + K) * Math.exp(-LAMBDA * 60) - K);
-  assert.equal(zergChargedAdjs(0, 0), 0);
-  assert.ok(zergChargedAdjs(0, 40) < 0);
+  near(v, (-300 + K) * Math.exp(-LAMBDA * (60 - CENTER)) - K);
+  assert.ok(zergChargedAdjs(0, 40) < 0 && zergChargedAdjs(0, 10) > 0);
   // far below anything measured: left alone
   assert.equal(zergChargedAdjs(-K - 5, 50), -K - 5);
 });
 
-test("🪳 0 = unchanged; missing 🪳 or iVi = null", () => {
-  assert.equal(zergChargedAdjs(1234.5, 0), 1234.5);
+test("missing 🪳 or iVi = null", () => {
   assert.equal(zergChargedAdjs(1234.5, null), null);
   assert.equal(zergChargedAdjs(1234.5, undefined), null);
   assert.equal(zergChargedAdjs(1234.5, NaN), null);
   assert.equal(zergChargedAdjs(null, 30), null);
   assert.equal(zergChargedAdjs(NaN, 30), null);
-});
-
-test("never raises a score", () => {
-  for (const a of [-900, -10, 0, 50, 700, 1500, 2700]) for (const z of [0, 1, 10, 50, 99, 100]) assert.ok(zergChargedAdjs(a, z) <= a);
-  assert.equal(zergChargedAdjs(800, -5), 800, "a negative 🪳 is treated as 0");
 });
 
 test("the column is debug-only, PC-only, translated, and documented", () => {
