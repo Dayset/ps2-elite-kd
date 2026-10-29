@@ -399,7 +399,7 @@ export function createStatsTable($) {
       // 🧘‍♂️ Pure iVi (owner 2026-10-29): Muse's uncentered 🪳 charge on the plain ⚔️ iVi, for comparison
       // with the evened-out ⚔️ iVi column. Separate from Claude's #84 (zerg-charge.mjs) — no centering,
       // no freshness gate. PC only; missing 🪳 → "—".
-      { id: "pureivi", label: tr("col.pureivi", "🧘‍♂️ Pure iVi"), hint: tr("tip.pureivi", "Plain ⚔️ iVi with Muse's uncentered 🪳 charge: adjs × (1 − 0.00436 × 🪳). High 🪳 drops hard — monitor column next to the evened-out ⚔️ iVi."), digits: 0, thinTip: true,
+      { id: "pureivi", label: tr("col.pureivi", "🧘‍♂️ Pure iVi"), hint: tr("tip.pureivi", "Your true ability as a solo player: plain ⚔️ iVi with Muse's uncentered 🪳 charge, adjs × (1 − 0.00436 × 🪳). High 🪳 drops hard — monitor column next to the evened-out ⚔️ iVi."), digits: 0, thinTip: true,
         fn: (r) => { if ($.IS_PS) return NaN; const a = shownValue(r, "adjs"); if (!isFiniteNum(a)) return NaN; const z = traitP && r.p ? zergScore(traitP, shownValue(r, "inflation"), apkBySlug && apkBySlug.get(slugKey(r.p.display)), rvpOf(r.p.display), crpOf(r.p.display)) : null; const v = z ? pureIvI(a, z.score) : null; return v == null ? NaN : v; } },
       { id: "mech", label: "⚙️ Mech%", hint: "Estimated share of your fights that are vehicle or mech play, projected from 🛡️ Resist rather than measured from shooting.", fn: (r) => r.mech, digits: 1 },
       { id: "adj", label: "🎯🎈 ivi", hint: "Opposition-weighted IvI before the kill-speed adjustment: public IvI adjusted by 🛡️ Resist so soft-farm padding is tempered. The 🎈 is a reminder that this score is still inflated (slow, safe play is not penalised here — see ⚔️ iVi).", fn: (r) => r.adj, digits: 0 },
