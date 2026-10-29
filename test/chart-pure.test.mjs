@@ -107,13 +107,13 @@ test("one module = one ?v= tag across all importers", () => {
     return found;
   };
   const appFiles = ["app.js"];
-  assert.deepEqual([...tag("chart.mjs", appFiles)], ["20261029-carousel1"]);
+  assert.deepEqual([...tag("chart.mjs", appFiles)], ["20261029-pureanch1"]);
   assert.deepEqual([...tag("stats-table.mjs", appFiles)], ["20261029-carousel1"]);
   assert.deepEqual([...tag("chart-wave.mjs", appFiles)], ["20261029-puregraph1"]);
   assert.deepEqual([...tag("pure-ivi.mjs", ["app.js", "stats-table.mjs", "rankings.mjs", "chart.mjs"])], ["20261029-purevis1"]);
   const htmlTag = (f) => [...read(f).matchAll(/app\.js\?v=([A-Za-z0-9_.-]+)/g)].map((m) => m[1]);
-  assert.deepEqual(htmlTag("index.html"), ["20261029-carousel1"]);
-  assert.deepEqual(htmlTag("live.html"), ["20261029-carousel1"]);
+  assert.deepEqual(htmlTag("index.html"), ["20261029-pureanch1"]);
+  assert.deepEqual(htmlTag("live.html"), ["20261029-pureanch1"]);
 });
 
 test("#86: graph lookup finds PLAYERS in lastStatsList (not rows)", async () => {
@@ -133,4 +133,27 @@ test("#86: an empty mode bar is display: none (not a dot), and the table re-sync
   const at = st.indexOf("$.lastStatsList = list;");
   assert.ok(at > 0 && st.slice(at, at + 300).includes("$.syncChartModeUi()"), "renderStatsTable re-syncs the bar");
   assert.ok(read("app.js").includes("get syncChartModeUi() { return syncChartModeUi; }, // #86"));
+});
+
+test("pure dashed: anchored like the solid, then dropped by the charge (owner 2026-10-29)", async () => {
+  const { createChart } = await import("../chart.mjs");
+  const curve = [];
+  for (let i = 0; i <= 8; i++) curve.push({ kpm: i * 0.25, kd: 0.5 + i * 0.2, deaths: 50, n: 10 });
+  const p = { display: "Test", own_kpm: 1.0, curve };
+  const $ = { chartMode: "smooth", yScaleMode: "pure", yScalePct: 50, pureGraphFor: () => ({ pure: 1000, zerg: 50 }) };
+  const chart = createChart($);
+  const solid = chart.chartPoints(p);
+  const dashed = chart.pureScalePoints(p);
+  const factor = 1 - 0.00436 * 50;
+  assert.equal(dashed.length, solid.length, "same points");
+  for (let i = 0; i < solid.length; i++) {
+    if (!solid[i].valid) continue;
+    assert.ok(Math.abs(dashed[i].kd - solid[i].kd * factor) < 1e-9, `point ${i}: dashed = solid × charge`);
+    assert.ok(dashed[i].kd < solid[i].kd, "dashed sits under the solid");
+  }
+  // Unknown 🪳 or unusable Pure → no dashed at all, like the solid.
+  const $noZerg = { ...$, pureGraphFor: () => ({ pure: 1000, zerg: null }) };
+  assert.deepEqual(createChart($noZerg).pureScalePoints(p), [], "unknown zerg → no dashed");
+  const $noPure = { ...$, pureGraphFor: () => ({ pure: 0, zerg: 50 }) };
+  assert.deepEqual(createChart($noPure).pureScalePoints(p), [], "pure ≤ 0 → no dashed");
 });

@@ -290,13 +290,19 @@ export function createChart($) {
     return pts;
   }
 
-  // 🧘 Pure mode's dashed companion: every base point dropped by the 🪳
-  // charge, same factor as the 🧘‍♂️ Pure iVi column. [] when the 🪳 is unknown.
+  // 🧘 Pure mode's dashed companion (owner 2026-10-29: "anchor the dashed
+  // line too, so it sits just under the solid"): the SOLID line's points
+  // (same Pure-iVi anchor), each dropped by the 🪳 charge — so the two
+  // mappings compare on one scale. [] when the 🪳 is unknown or Pure iVi is
+  // unusable, exactly like the solid: no line at all, never a stand-in.
   function pureScalePoints(p) {
     const g = $.pureGraphFor ? $.pureGraphFor(p.display) : null;
-    if (!g || !isFiniteNum(g.zerg)) return [];
+    if (!g || !isFiniteNum(g.zerg) || !isFiniteNum(g.pure) || g.pure <= 0) return [];
+    const pts = basePoints(p);
+    const sorted = sortedBaseKds(p, pts);
+    const scale = sorted && anchorScale(sorted, g.pure, $.yScalePct);
     const factor = 1 - PURE_IVI_CHARGE.RATE * g.zerg;
-    return basePoints(p).map((pt) => ({ ...pt, kd: isFiniteNum(pt.kd) ? pt.kd * factor : pt.kd }));
+    return pts.map((pt) => ({ ...pt, kd: isFiniteNum(pt.kd) ? pt.kd * (scale || 1) * factor : pt.kd }));
   }
 
   function xToPx(x) {
@@ -1019,5 +1025,5 @@ export function createChart($) {
   }
 
   const waveSortedCache = new WeakMap();
-  return { reliability, syncYScaleUi, syncSmoothBtn, syncChartModeUi, setGhostsOn, metricsFor, ghostPointsFor, setChartMode, bandCurveFor, chartPoints, xToPx, makeYMapper, zoomFromSlider, sliderFromZoom, syncYZoomUi, setYZoom, resetYZoom, setYZoomVisible, clearSvg, waveRigSig, chartYScale, drawYAxis, drawChartLabels, faintPathD, updateWaveFrame, drawChart, drawGhostRuns, drawX, currentChartFontScale, setGhostCaption, setChartSkeleton, setChartIdle, popChartSection, syncChartSectionNames, foldChartSection, showIdleChart, clearChartUi };
+  return { reliability, syncYScaleUi, syncSmoothBtn, syncChartModeUi, setGhostsOn, metricsFor, ghostPointsFor, setChartMode, bandCurveFor, chartPoints, pureScalePoints, xToPx, makeYMapper, zoomFromSlider, sliderFromZoom, syncYZoomUi, setYZoom, resetYZoom, setYZoomVisible, clearSvg, waveRigSig, chartYScale, drawYAxis, drawChartLabels, faintPathD, updateWaveFrame, drawChart, drawGhostRuns, drawX, currentChartFontScale, setGhostCaption, setChartSkeleton, setChartIdle, popChartSection, syncChartSectionNames, foldChartSection, showIdleChart, clearChartUi };
 }
