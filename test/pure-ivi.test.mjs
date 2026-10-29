@@ -37,6 +37,21 @@ test("missing adjs or 🪳 → null", () => {
   assert.equal(pureIvI(NaN, 30), null);
 });
 
+test("rankings: first debug column, same keys, plain value only", () => {
+  const src = fs.readFileSync(path.join(root, "rankings.mjs"), "utf8");
+  const dbg = src.slice(src.indexOf("const DEBUG = ["), src.indexOf("const PUBLIC = ["));
+  assert.ok(dbg.indexOf('id: "pureivi"') > -1, "pureivi is a rankings debug column");
+  assert.ok(dbg.indexOf('id: "pureivi"') < dbg.indexOf('id: "mech"'), "pureivi is the first rankings debug column");
+  const block = dbg.slice(dbg.indexOf('id: "pureivi"'), dbg.indexOf('{ id: "mech"'));
+  assert.ok(block.includes('tr("col.pureivi"') && block.includes('tr("tip.pureivi"'), "same i18n keys as the stats column");
+  const field = src.slice(src.indexOf("o.pureivi ="), src.indexOf("o.pureivi =") + 140);
+  assert.ok(field.includes("pureIvI(") && field.includes("o.adjs0"), "charged from the plain adjs, not the evened-out one");
+  assert.ok(!field.includes("zergChargedAdjs"), "no Claude #84 value in the Pure iVi field");
+  assert.ok(field.includes('ROOM === "ps"'), "PC only");
+  // one module = one ?v= tag: pure-ivi.mjs must carry the same tag in both importers.
+  const tag = (f) => [...fs.readFileSync(path.join(root, f), "utf8").matchAll(/pure-ivi\.mjs\?v=([A-Za-z0-9_.-]+)/g)].map((m) => m[1]);
+  assert.deepEqual(tag("rankings.mjs"), tag("stats-table.mjs"));
+});
 test("first debug column in the stats table, built on the plain value only", () => {
   const src = fs.readFileSync(path.join(root, "stats-table.mjs"), "utf8");
   const dbg = src.slice(src.indexOf("const adjDebugCols"), src.indexOf("const adjCols ="));

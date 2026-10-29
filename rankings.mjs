@@ -35,6 +35,7 @@ import { infMedian } from "./tractor.mjs?v=20261024-trac1";
 import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261022-wpc1";
 import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261027-z79";
 import { zergChargedAdjs, zergFresh } from "./zerg-charge.mjs?v=20261029-zadj2";
+import { pureIvI } from "./pure-ivi.mjs?v=20261029-pureivi1";
 import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, DIFF_THIRD, aimGapCellTip, zergCellTip, zergEstHtml } from "./trait-tips.mjs?v=20261024-crowd1";
 import { ZREV_NOTE, zergEstimate } from "./zerg-revive.mjs?v=20261024-crowd1";
 import { VDIFF_NOTE } from "./diff-vehicle.mjs?v=20261023-short1";
@@ -73,6 +74,9 @@ export function initRankings(host) {
     { id: "inf", label: tr("col.infantry", "🪖 Infantry"), digits: 1, inf: true, tip: INF_HINT },
   ];
   const DEBUG = [
+    // 🧘‍♂️ Pure iVi (owner 2026-10-29): Muse's uncentered 🪳 charge on the plain ⚔️ iVi, same formula as the ✨ Stats
+    // debug column — separate from Claude's #84 evening-out. PC only; missing 🪳 → "—".
+    { id: "pureivi", label: tr("col.pureivi", "🧘‍♂️ Pure iVi"), digits: 0, tip: tr("tip.pureivi", "Your true ability as a solo player: plain ⚔️ iVi with Muse's uncentered 🪳 charge, adjs × (1 − 0.00436 × 🪳). High 🪳 drops hard — monitor column next to the evened-out ⚔️ iVi.") },
     { id: "mech", label: "⚙️ Mech%", digits: 1, tip: "Estimated share of your fights that are vehicle or mech play, projected from 🛡️ Resist rather than measured from shooting." },
     { id: "adj", label: "🎯🎈 ivi", digits: 0, tip: "Opposition-weighted IvI (before speed adjustment)" },
     { id: "ekpm", label: "eKPM", digits: 2, tip: "Average enemy weapon KPM faced" },
@@ -348,6 +352,7 @@ export function initRankings(host) {
         const g = aimGap(tp, o.adjs, o.ivi, o.hut, o.vdf, o.nbd);
         o.diff = g ? g.score : null; o._gap = g;
         o.zerg = z ? z.score : null; o._zerg = z;
+        o.pureivi = ROOM === "ps" ? null : pureIvI(fin(o.adjs0) ? o.adjs0 : o.adjs, z ? z.score : null);
         o.zest = z ? null : zergEstimate(o.rvp, o.crp); // "~N" estimate: display only, never in o.zerg / pools / sorting / marks
       }
       for (const id of ["diff", "zerg"]) {
