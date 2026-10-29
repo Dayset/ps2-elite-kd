@@ -25,7 +25,7 @@ test("👤 find-me button: markup, logic, 9-language hover, static", () => {
     const v = JSON.parse(read(`i18n/${l}.json`))["ranks.findMe"];
     assert.ok(v && v.startsWith("👤 ") && v.length <= 45 && !v.includes("\n"), `${l}: ${v}`);
   }
-  assert.match(read("shared-index.mjs"), /rankings\.mjs\?v=20261029-zadj1/);
+  assert.match(read("shared-index.mjs"), /rankings\.mjs\?v=20261029-zadj2/);
 });
 
 test("👤 fill does not focus the input (owner t645u: no phone keyboard)", () => {

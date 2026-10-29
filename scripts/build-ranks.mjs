@@ -31,7 +31,7 @@ import { VEH_CUT } from "../vehicle-cut.mjs";
 import { nbdCuts, newbieFactor, newbieCleared, newPlayerHours, NBD_BAND, NBD_NEW_Q } from "../newbie-diff.mjs";
 import { hutCuts, hutParts, hutCleared, deathsPerMin, HUT_ACT_MULT, HUT_ACT_MULT_TOP, HUT_EXP_BAND, playMinutes, HUT_DPM_BAND, HUT_INF_BAND, HUT_ACC_BAND, HUT_MARK_MIN } from "../hut.mjs";
 import { traitPools, aimGap, zergScore } from "../trait-scores.mjs";
-import { zergChargedAdjs, ZERG_CHARGE } from "../zerg-charge.mjs";
+import { zergChargedAdjs, ZERG_CHARGE, zergFresh, dayOf } from "../zerg-charge.mjs";
 import { crowdSample, crowdPercentiles, zergEstimate, zergCleared, CROWD_MIN_DEATHS, CROWD_MIN_MIN, REV_SOFT_BAND, REV_CONFIRM, ZEST_MIN, HL_MIN, HL_W } from "../zerg-revive.mjs";
 import { tracXpIds, tracSample, tractorCuts, tractorRule, tractorCleared, TRAC_INF_Q, TRAC_XP_Q, TRAC_FALLBACK_Q, TRAC_XP_MIN } from "../tractor.mjs";
 import { vehDiffStart, vehDiffFactor, vehDiffCleared } from "../diff-vehicle.mjs";
@@ -411,6 +411,8 @@ export function buildRanksWithGuard(dataDir, { known = KNOWN_EXTREMES, zergCharg
       const fa = sp.sprout && !isNotFarm({ name: np.display, cid: np.cid }) ? farmAccount(np.rawRows || np.rows, m.ownKpm) : null;
       // 🤝 Assists per kill (t382u: public now) — null below SESSION_MIN.MIN_KILLS session kills.
       if (!info || !info.hidden) row.push(sm && sm.measured && Number.isFinite(sm.values.s_apk) ? Math.round(sm.values.s_apk * 1000) / 1000 : null);
+      // 🪳⚔️ freshness (#84): day of the newest counted Honu session; stale → ⚔️ iVi not evened out.
+      if (!info || !info.hidden) row.push(dayOf(pl.assists && pl.assists.last));
       // 🪖 Infantry: % of lifetime weapon-stat kills on foot (MAX counted as infantry) + MAX / vehicle % for hover; null until filled.
       if (!info || !info.hidden) { const sh = infantryShares(pl.infantry); row.push(sh ? sh.inf : null, sh ? sh.max : null, sh ? sh.veh : null); }
       // 🚜 vehicle cut on ⚔️ iVi (vehicle-cut.mjs, inside playerMetrics): cut % (1 decimal) for the iVi hover; null = no cut.
@@ -420,6 +422,7 @@ export function buildRanksWithGuard(dataDir, { known = KNOWN_EXTREMES, zergCharg
     },
   });
   ranks.cols.push("apk"); // 🤝 trailing column (see onPlayer); not part of RANK_COLS / rankRow
+  ranks.cols.push("zat"); // 🪳⚔️ day of the newest 🤝 session (zerg-charge.mjs zergFresh)
   ranks.cols.push("inf", "infMax", "infVeh"); // 🪖 trailing columns (see onPlayer), % of lifetime kills
   ranks.cols.push("vcut"); // 🚜 vehicle cut % on adjs (adjs is already cut)
   const reviewedJson = readReviewed(dataDir);
@@ -785,7 +788,7 @@ export function applyReviveColumn(ranks, reviewed, revShare) {
  * so nothing is circular. Always adds "adjs0" (the value before; PS and no-🪳 rows = adjs)
  * so ranks-lite keeps one column set in both rooms. enabled = false (PlayStation): unchanged.
  */
-export function applyZergChargeColumn(ranks, { enabled = true } = {}) {
+export function applyZergChargeColumn(ranks, { enabled = true, now = Date.now() } = {}) {
   const ci = (id) => ranks.cols.indexOf(id);
   const iA = ci("adjs");
   const get = (r, id) => { const i = ci(id); return i >= 0 ? r[i] : null; };
@@ -796,7 +799,7 @@ export function applyZergChargeColumn(ranks, { enabled = true } = {}) {
   for (const r of ranks.rows) {
     const a = r[iA];
     r.push(a);
-    if (!enabled || typeof a !== "number" || !Number.isFinite(a)) continue;
+    if (!enabled || typeof a !== "number" || !Number.isFinite(a) || !zergFresh(get(r, "zat"), now)) continue;
     const z = zergScore(tp, get(r, "inflation"), get(r, "apk"), get(r, "rvp"), get(r, "crp"));
     const v = z ? zergChargedAdjs(a, z.score) : null;
     if (v == null) continue;
@@ -1183,8 +1186,8 @@ export function buildNames(index, { withFile = false } = {}) {
  * "inflation" rides along for 🪳 Zerg (owner 2026-10-21, trait-scores.mjs): the
  * lower of the 🎈 Inflation and 🤝 Assists percentiles needs the Inflation pool.
  */
-export const LITE_COLS = ["name", "slug", "adjs", "adjs0", "cons", "apk", "inf", "infMax", "infVeh", "ivi", "inflation", "hut", "hutMk", "vdf", "rvp", "crp", "nbd", "nbh", "trc"];
-const LITE_DIGITS = { adjs: 1, adjs0: 1, cons: 4, apk: 3, inf: 1, infMax: 1, infVeh: 1, ivi: 1, inflation: 2, hut: 3, hutMk: 0, vdf: 3, rvp: 0, crp: 0, nbd: 3, nbh: 1, trc: 0 };
+export const LITE_COLS = ["name", "slug", "adjs", "adjs0", "zat", "cons", "apk", "inf", "infMax", "infVeh", "ivi", "inflation", "hut", "hutMk", "vdf", "rvp", "crp", "nbd", "nbh", "trc"];
+const LITE_DIGITS = { adjs: 1, adjs0: 1, zat: 0, cons: 4, apk: 3, inf: 1, infMax: 1, infVeh: 1, ivi: 1, inflation: 2, hut: 3, hutMk: 0, vdf: 3, rvp: 0, crp: 0, nbd: 3, nbh: 1, trc: 0 };
 export function buildRanksLite(ranks) {
   const ix = LITE_COLS.map((k) => (ranks && Array.isArray(ranks.cols) ? ranks.cols.indexOf(k) : -1));
   if (ix.some((i) => i < 0) || !Array.isArray(ranks.rows)) return null;

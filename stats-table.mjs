@@ -8,7 +8,7 @@ import { newbieFactor, newPlayerHours } from "./newbie-diff.mjs?v=20261023-nbh1"
 import { isFiniteNum } from "./math.mjs?v=20261027-z79";
 import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261027-z79";
 import { zergEstimate } from "./zerg-revive.mjs?v=20261024-crowd1";
-import { zergChargedAdjs } from "./zerg-charge.mjs?v=20261029-zadj1";
+import { zergChargedAdjs, zergFresh } from "./zerg-charge.mjs?v=20261029-zadj2";
 import { infMedian } from "./tractor.mjs?v=20261024-trac1";
 import { mountWeapons } from "./weapons.mjs?v=20261022-wp4";
 import { mountKillFeed } from "./kill-feed.mjs?v=20261028-os2";
@@ -109,6 +109,8 @@ export function createStatsTable($) {
 
   let zergScores = null;
 
+  let zatBySlug = null; // 🪳⚔️ slug → day of the newest 🤝 session (ranks-lite "zat")
+
   const aimGapPool = () => aimGapScores;
 
   const zergPool = () => zergScores;
@@ -125,6 +127,7 @@ export function createStatsTable($) {
   const zAdjs = (r) => {
     const a = shownValue(r, "adjs");
     if ($.IS_PS || !traitP || !r || !r.p || !isFiniteNum(a)) return a;
+    if (!zergFresh(zatBySlug && zatBySlug.get(slugKey(r.p.display)))) return a; // away for long: plain iVi until fresh 🤝 sessions
     const z = zergScore(traitP, shownValue(r, "inflation"), apkBySlug && apkBySlug.get(slugKey(r.p.display)), rvpOf(r.p.display), crpOf(r.p.display));
     const v = z ? zergChargedAdjs(a, z.score) : null;
     return v == null ? a : v;
@@ -144,6 +147,8 @@ export function createStatsTable($) {
           for (const row of payload.rows) if (isFiniteNum(row[ai])) apkBySlug.set(row[si], row[ai]);
           apkPool = [...apkBySlug.values()].sort((a, b) => a - b);
         }
+        const zi = payload.cols.indexOf("zat"); // 🪳⚔️ freshness (#84)
+        if (zi >= 0 && si >= 0) { zatBySlug = new Map(); for (const row of payload.rows) if (isFiniteNum(row[zi])) zatBySlug.set(row[si], row[zi]); }
         const ii = payload.cols.indexOf("inf");
         if (ii >= 0 && si >= 0) {
           const mi = payload.cols.indexOf("infMax");

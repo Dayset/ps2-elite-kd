@@ -28,6 +28,21 @@
  * DOM-free; used by scripts/build-ranks.mjs, stats-table.mjs, rankings.mjs and the tests.
  */
 export const ZERG_CHARGE = Object.freeze({ K: 3100, LAMBDA: 0.00021, CENTER: 26.8 });
+/**
+ * Fresh 🪳 only (owner 2026-10-29): a player away for a long time keeps the plain iVi until a refresh
+ * brings new 🤝 sessions. zat = day (days since 1970) of the newest counted Honu session
+ * (player.assists.last; ranks.json "zat"). 60 days: past 30 the stale count drops fast (745 → 155).
+ */
+export const ZERG_FRESH_DAYS = 60;
+/** Day number of an ISO date / ms time, or null. */
+export function dayOf(t) {
+  const ms = typeof t === "number" ? t : Date.parse(t);
+  return Number.isFinite(ms) ? Math.floor(ms / 864e5) : null;
+}
+/** True when the 🪳 inputs are recent enough to even out ⚔️ iVi. */
+export function zergFresh(zat, now = Date.now()) {
+  return fin(zat) && now / 864e5 - zat <= ZERG_FRESH_DAYS;
+}
 
 const fin = (v) => typeof v === "number" && Number.isFinite(v);
 

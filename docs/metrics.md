@@ -16,7 +16,7 @@ The opposition-weighted iVi score, adjusted for your own kill speed (`adjs`).
 - Values below zero display as **0** ("Below the rating scale") and sort to the bottom.
 - 💩 **Confirmed stat padders** (owner decision in `data/reviewed.json`) lose **10%** (a score at or below 0 gets a fixed drop instead, never a sign flip). 💩 shows after the name; the hover says why and to contact the site owner to clarify.
 - 🚜 **Vehicle + MAX cuts** (after the 💩 penalty; iVi measures infantry skill only): vehicle cut = `max(0, vehicle% − 10%)`, MAX cut = `max(0, MAX% − 10%)` of lifetime kills, added up with **no cap** (96% vehicle → −86%; 45% vehicle + 40% MAX → −65%). Pure infantry is untouched; no infantry data (under 100 kills) = no cut. No visible mark: the iVi value's hover lists each part. Owner exemption: `vehicleCutCleared` in `data/reviewed.json`.
-- 🪳 **Zerg evening-out** (PC, since 2026-10-29, last step): `(iVi + 3100) × e^(−0.00021 × (🪳 − 26.8)) − 3100`. Below 🪳 26.8 the score goes up, above it goes down; no 🪳 score or PlayStation = unchanged. Measured on 103,689 infantry duel pairs and checked on held-out players: [docs/zerg-adjustment.md](zerg-adjustment.md).
+- 🪳 **Zerg evening-out** (PC, since 2026-10-29, last step): `(iVi + 3100) × e^(−0.00021 × (🪳 − 26.8)) − 3100`. Below 🪳 26.8 the score goes up, above it goes down; no 🪳 score, no 🤝 sessions in the last 60 days, or PlayStation = unchanged. Measured on 103,689 infantry duel pairs and checked on held-out players: [docs/zerg-adjustment.md](zerg-adjustment.md).
 
 ### 🪖 Infantry
 

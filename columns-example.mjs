@@ -16,7 +16,7 @@ import { percentileOf, quantile } from "./dist.mjs?v=20261010-sav1";
 import { slugKey, bareName } from "./rank-row.mjs?v=20261027-z79";
 import { PADDER_PENALTY_REF } from "./padding.mjs?v=20261023-short1";
 import { traitPools, zergScore } from "./trait-scores.mjs?v=20261027-z79";
-import { zergChargedAdjs, ZERG_CHARGE } from "./zerg-charge.mjs?v=20261029-zadj1";
+import { zergChargedAdjs, ZERG_CHARGE, zergFresh } from "./zerg-charge.mjs?v=20261029-zadj2";
 
 export const DEMO_NAME = "YuigahamaYui";
 
@@ -43,7 +43,7 @@ export function findRanksRow(payload, name) {
 
 /** 🪳 score of a ranks.json row (PC; null = no score), from the payload's 🎈 / 🤝 pools. */
 export function rowZerg(payload, row) {
-  if (!payload || !row) return null;
+  if (!payload || !row || !zergFresh(row.zat)) return null; // away for long: no evening-out
   const col = (id) => { const i = payload.cols.indexOf(id); return i >= 0 ? payload.rows.map((r) => r[i]) : []; };
   const z = zergScore(traitPools({ inflation: col("inflation"), apk: col("apk") }), row.inflation, row.apk, row.rvp, row.crp);
   return z ? z.score : null;

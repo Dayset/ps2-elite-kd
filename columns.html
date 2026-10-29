@@ -230,7 +230,7 @@
         <li data-i18n-html="cp.zaL1"><b>Measured, not guessed:</b> 103,689 pairs of players who fought each other 30+ times. At the same ⚔️ iVi, each 🪳 step means about 0.08% fewer kills against the other player.</li>
         <li data-i18n-html="cp.zaL2"><b>Both ways:</b> 🪳 below 26.8 (the average crowd, where players without a 🪳 score fight) goes <b>up</b>, above it goes down. At iVi 1,000: 🪳 0 → +23, 🪳 50 → −20, 🪳 99 → −62.</li>
         <li data-i18n-html="cp.zaL3"><b>Checked on players it never saw:</b> fitted on half the players and tested on the other half, the 🪳 bias in their fights disappeared and fight predictions got slightly better.</li>
-        <li data-i18n="cp.zaL4">Same weight in every tier; most players move by 1% or less. No 🪳 score or PlayStation → unchanged. Vehicles are not counted twice: the 🚜 cut already handles them.</li>
+        <li data-i18n="cp.zaL4">Same weight in every tier; most players move by 1% or less. No 🪳 score or PlayStation → unchanged. Vehicles are not counted twice: the 🚜 cut already handles them. Away for 60+ days (no recent sessions) → unchanged until a refresh brings fresh data.</li>
       </ul>
       <p class="st-dim" data-i18n-html="cp.zaNote">Research and numbers: <a href="https://github.com/Dayset/ps2-elite-kd/blob/main/docs/zerg-adjustment.md">docs/zerg-adjustment.md</a> · discussion: <a href="https://github.com/Dayset/ps2-elite-kd/issues/84">issue #84</a>. Hover ⚔️ iVi to see your before → after.</p>
     </div>
@@ -314,7 +314,7 @@
   </main>
   <button id="toTop" class="st-totop" aria-label="Back to top" title="Back to top" data-i18n-aria-label="cp.top" data-i18n-title="cp.top">↑</button>
   <script type="module" src="i18n.mjs"></script>
-  <script type="module" src="columns-example.mjs?v=20261029-zadj1"></script>
+  <script type="module" src="columns-example.mjs?v=20261029-zadj2"></script>
   <script>
     // TOC jump into the collapsed debug section opens it first.
     document.querySelectorAll('.st-toc a[href^="#"]').forEach(function (a) {

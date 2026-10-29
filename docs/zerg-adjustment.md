@@ -60,6 +60,7 @@ Typical change at each tier's median iVi and median 🪳:
 ## What it does not do
 
 - It does not fix single matchups: two specific players can still be ±25% away from what their iVi says.
+- It does not touch players who have been away: without 🤝 sessions in the last 60 days the plain iVi stays until a refresh brings fresh data (stale 🪳 inputs would describe how they used to play).
 - It does not touch PlayStation (measured on PC), 🪳 itself, 🎈 Inflation, or the 🚜 vehicle cut.
 
 ## Re-checking it

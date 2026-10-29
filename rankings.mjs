@@ -34,7 +34,7 @@ import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261023-sho
 import { infMedian } from "./tractor.mjs?v=20261024-trac1";
 import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261022-wpc1";
 import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261027-z79";
-import { zergChargedAdjs } from "./zerg-charge.mjs?v=20261029-zadj1";
+import { zergChargedAdjs, zergFresh } from "./zerg-charge.mjs?v=20261029-zadj2";
 import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, DIFF_THIRD, aimGapCellTip, zergCellTip, zergEstHtml } from "./trait-tips.mjs?v=20261024-crowd1";
 import { ZREV_NOTE, zergEstimate } from "./zerg-revive.mjs?v=20261024-crowd1";
 import { VDIFF_NOTE } from "./diff-vehicle.mjs?v=20261023-short1";
@@ -293,6 +293,7 @@ export function initRankings(host) {
         vcut: idx.vcut != null ? r[idx.vcut] : null,
         // ⚔️ iVi before the 🪳 evening-out (#84, build-ranks "adjs0"); adjs is already evened out.
         adjs0: idx.adjs0 != null && Number.isFinite(r[idx.adjs0]) ? r[idx.adjs0] : null,
+        zat: idx.zat != null && Number.isFinite(r[idx.zat]) ? r[idx.zat] : null, // 🪳⚔️ newest 🤝 session day
         // 🛖 safe-spot damping factor on positive 🔀 Diff (hut.mjs; null = none).
         hut: idx.hut != null && Number.isFinite(r[idx.hut]) ? r[idx.hut] : null,
         // 🛖 shown only where the drop is meaningful (build-ranks: ≥ HUT_MARK_MIN points).
@@ -339,7 +340,7 @@ export function initRankings(host) {
         const z = zergScore(tp, o.inflation, o.apk, o.rvp, o.crp);
         // 🪳⚔️ (#84): ranks.json rows are already evened out ("adjs0" = before); a row rebuilt from this
         // browser's own fresh copy has no "adjs0" yet, so even it out here the same way (PC only).
-        if (ROOM !== "ps" && o.adjs0 == null && fin(o.adjs) && z) {
+        if (ROOM !== "ps" && o.adjs0 == null && fin(o.adjs) && z && zergFresh(o.zat)) {
           o.adjs0 = o.adjs;
           o.adjs = Math.round(zergChargedAdjs(o.adjs, z.score) * 10) / 10;
           if (pools.adjs) o.pcts.adjs = pctOf(pools.adjs, o.adjs);
