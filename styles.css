@@ -741,7 +741,9 @@ header .sub {
   .controls .names-box .fresh-row-end {
     /* t476u: bottom 0.6rem (was 0.35rem) — measured 4 px low; now centred on the typing line. */
     position: absolute; right: 0.35rem; bottom: 0.6rem;
-    flex: none; z-index: 3;
+    /* Settings panel (z 80) lives inside this stacking context: 10 clears the
+       sticky table headers (3/4) and the jump bar (5), stays below suggestions (50). */
+    flex: none; z-index: 10;
   }
   .fresh-row { position: relative; justify-content: flex-end; align-items: center; min-height: 1.9rem; }
   .fresh-row .fresh-left { position: absolute; left: 0; top: 50%; transform: translateY(-50%); }
