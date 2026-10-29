@@ -504,6 +504,11 @@ export function createChart($) {
   }
 
   function drawChart(list, { waveFrame = false, skipTable = false, pop = true } = {}) {
+    // 2026-10-29: the pure lines lagged one draw behind — pureGraphFor reads
+    // $.lastStatsList, which renderStatsTable only set at this function's end,
+    // so a player added by an analysis drew nothing until the next draw (a
+    // mode flip). The drawn list IS the table's list: record it first.
+    $.lastStatsList = list;
     $.updateWaveRangeWarn(list);
     if (waveFrame && updateWaveFrame(list)) return;
     waveRig = null;

@@ -41,7 +41,7 @@ import { createSharedIndex } from "./shared-index.mjs?v=20261029-purevis1";
 import { createNamesField } from "./names-field.mjs?v=20261027-z79";
 import { createStatsTable } from "./stats-table.mjs?v=20261029-carousel1";
 import { createChartWave } from "./chart-wave.mjs?v=20261029-puregraph1";
-import { createChart } from "./chart.mjs?v=20261029-pureanch1";
+import { createChart } from "./chart.mjs?v=20261029-pureadd1";
 import { createLoader } from "./loader.mjs?v=20261027-z79";
 import { createCacheChips } from "./cache-chips.mjs?v=20261027-z79";
 import { createLocalCache } from "./local-cache.mjs?v=20261027-z79";
@@ -251,6 +251,7 @@ import {
       get lastAnalyzedNames() { return lastAnalyzedNames; }, set lastAnalyzedNames(v) { lastAnalyzedNames = v; },
       get lastChartScale() { return lastChartScale; }, set lastChartScale(v) { lastChartScale = v; },
       get lastLoadedNames() { return lastLoadedNames; }, set lastLoadedNames(v) { lastLoadedNames = v; },
+      get lastStatsList() { return lastStatsList; }, set lastStatsList(v) { lastStatsList = v; },
       get LS_CHART_MODE() { return LS_CHART_MODE; },
       get LS_GHOSTS() { return LS_GHOSTS; },
       get ns() { return ns; },

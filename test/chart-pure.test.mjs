@@ -107,13 +107,13 @@ test("one module = one ?v= tag across all importers", () => {
     return found;
   };
   const appFiles = ["app.js"];
-  assert.deepEqual([...tag("chart.mjs", appFiles)], ["20261029-pureanch1"]);
+  assert.deepEqual([...tag("chart.mjs", appFiles)], ["20261029-pureadd1"]);
   assert.deepEqual([...tag("stats-table.mjs", appFiles)], ["20261029-carousel1"]);
   assert.deepEqual([...tag("chart-wave.mjs", appFiles)], ["20261029-puregraph1"]);
   assert.deepEqual([...tag("pure-ivi.mjs", ["app.js", "stats-table.mjs", "rankings.mjs", "chart.mjs"])], ["20261029-purevis1"]);
   const htmlTag = (f) => [...read(f).matchAll(/app\.js\?v=([A-Za-z0-9_.-]+)/g)].map((m) => m[1]);
-  assert.deepEqual(htmlTag("index.html"), ["20261029-pureanch1"]);
-  assert.deepEqual(htmlTag("live.html"), ["20261029-pureanch1"]);
+  assert.deepEqual(htmlTag("index.html"), ["20261029-pureadd1"]);
+  assert.deepEqual(htmlTag("live.html"), ["20261029-pureadd1"]);
 });
 
 test("#86: graph lookup finds PLAYERS in lastStatsList (not rows)", async () => {
