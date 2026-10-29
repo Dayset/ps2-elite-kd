@@ -246,6 +246,25 @@ test("warnings: same faction (teamkills only, NSO never counts) and different se
   assert.deepEqual(pairWarnings(new Map(), "1", "2"), [], "no Census info → no warning");
 });
 
+test("crowd summary skips the unknown-opponent aggregate (\"0\") for nemesis and target", async () => {
+  const { crowdSummary } = await import("../duels.mjs");
+  const rows = [
+    { name: "0", kills: 0, deaths: 196, kd: null, kpm: 0, share: 0.2 },
+    { name: "[SLNM] HLotus", kills: 51, deaths: 120, kd: 51 / 120, kpm: 0.99, share: 0.1 },
+    { name: "[SLNM] chsYGMRY", kills: 623, deaths: 322, kd: 623 / 322, kpm: 1.37, share: 0.3 },
+  ];
+  const s = crowdSummary(rows);
+  assert.equal(s.nemesis.name, "[SLNM] HLotus", "second available nemesis, not the \"0\" aggregate");
+  assert.equal(s.target.name, "[SLNM] chsYGMRY");
+  assert.equal(s.deaths, 196 + 120 + 322, "totals still count the unknown row's deaths");
+  const t = crowdSummary([
+    { name: "0", kills: 500, deaths: 0, kd: null, kpm: 0, share: 0.5 },
+    { name: "Real", kills: 10, deaths: 5, kd: 2, kpm: 1, share: 0.1 },
+  ]);
+  assert.equal(t.target.name, "Real", "an unknown row with kills is not a favourite target either");
+  assert.equal(t.nemesis, null);
+});
+
 test("creation floor (owner note on #83): Census paging stops at the newer character's creation", async () => {
   const { pairFloor, readPairPages, DUEL_GAP } = await import("../duels.mjs");
   const old = { cid: "1", display: "Vet", times: { created: 1_300_000_000 } }, fresh = { cid: "2", display: "[N] Newbie", times: { created: 1_790_000_000 } };

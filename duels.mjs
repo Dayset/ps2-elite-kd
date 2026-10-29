@@ -94,6 +94,10 @@ export function crowdSummary(rows, leaveOut = "") {
   for (const r of rows || []) {
     if (skip && lc(r.name) === skip) continue;
     k += r.kills; d += r.deaths;
+    // Unknown-opponent aggregate ("0": deaths with no killer id) is never a nemesis or a
+    // favourite target; the next named opponent takes the slot. Totals above still count
+    // it: those deaths happened.
+    if (bareName(r.name) === "0") continue;
     if (r.deaths > r.kills && (!nem || r.deaths > nem.deaths || (r.deaths === nem.deaths && r.kills < nem.kills))) nem = r;
     if (r.kills > r.deaths && (!tgt || r.kills > tgt.kills || (r.kills === tgt.kills && r.deaths < tgt.deaths))) tgt = r;
   }

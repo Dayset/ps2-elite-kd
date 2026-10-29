@@ -19,7 +19,7 @@ import {
   readPairPages, readPairNewer, pairEvents, fightsOf, fightResult, weaponShotUrls, parseShotStats, perKill, pairSummary,
   charInfoUrl, parseCharInfo, pairWarnings, WORLD_NAME,
   DUEL_CACHE_KEY, duelCacheEntry, duelCacheRestore, duelCachePrune,
-} from "./duels.mjs?v=20261028-floor1";
+} from "./duels.mjs?v=20261028-duelgate1";
 
 const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const lang = () => { try { return currentLang() || undefined; } catch { return undefined; } };
@@ -103,7 +103,7 @@ export function mountDuels(section, o = {}) {
   let mode = null, a = null, b = null, shownKey = "";
   let sortKey = "share", sortDir = "desc";
   const opened = new Set();
-  let busy = false, stopAsked = false;
+  let busyKey = null, runId = 0, stopAsked = false;
   const moreLabel = () => tr("duel.more", "Read further back");
 
   const cat = () => catP || (catP = Promise.resolve().then(() => catalog()).catch(() => null).then((c) => (c && c.items) || {}));
@@ -211,6 +211,17 @@ export function mountDuels(section, o = {}) {
     if (!job.infoP) {
       job.infoP = Promise.resolve().then(() => getJson(charInfoUrl(job.base, [a.cid, b.cid]))).then(parseCharInfo, () => new Map())
         .then((m) => { job.info = m; if (mode === "pair" && pairs.get(pairKey()) === job) renderWarn(job); });
+    }
+    // Cross-server gate (owner 2026-10-28, temporary until servers merge): players on
+    // different worlds never meet, so no pair history is fetched for them at all. The one
+    // character lookup above is what detects the worlds; everything after it is skipped.
+    // The pair-fetch code below stays in place for when servers merge. Unknown worlds
+    // (lookup failed) do not block: fetching proceeds as before.
+    {
+      await job.infoP; // resolves to undefined: the lookup chain stores the map on job.info, not on the promise
+      const info = job.info;
+      const x = info && info.get(String(a.cid)), y = info && info.get(String(b.cid));
+      if (x && y && x.world && y.world && x.world !== y.world) { job.servers = true; return job; }
     }
     let fromApi = false;
     if (pairApi && !job.census && nsOfBase(job.base)) {
@@ -382,8 +393,14 @@ export function mountDuels(section, o = {}) {
     }
     const key = pairKey();
     if (!more && shownKey === `p:${key}`) return;
-    if (busy) return;
-    busy = true;
+    // Per-pair loading (owner 2026-10-28): a previous pair's still-running load must not
+    // block the new pair — switching pairs used to sit with no loading text until the
+    // section was closed and reopened, because one global flag held the load. A stale
+    // run's renders are already guarded by the pair-key checks below; it only must not
+    // clear the new run's flag when it settles (see the finally guard).
+    if (busyKey === `p:${key}`) return;
+    busyKey = `p:${key}`;
+    const myRun = ++runId;
     if (!more) { clear(); opened.clear(); }
     stopAsked = false;
     // While reading further back, the button stops the reading (everything read so far stays: on the server and here).
@@ -411,15 +428,13 @@ export function mountDuels(section, o = {}) {
       });
       if (mode !== "pair" || pairKey() !== key) return;
       shownKey = `p:${key}`;
-      if (job.servers) { setStatus(tr("duel.servers", "These two play on different servers: they never meet.")); return; }
+      if (job.servers) { clear(); setStatus(tr("duel.servers", "These two play on different servers: they never meet.")); return; }
       renderPair(job, items);
     } catch (_) {
       if (mode !== "pair" || pairKey() !== key) return;
       setStatus(tr("duel.error", "Census is busy: close and open this tab to try again."));
     } finally {
-      busy = false;
-      moreBtn.disabled = false;
-      moreBtn.textContent = moreLabel();
+      if (runId === myRun) { busyKey = null; moreBtn.disabled = false; moreBtn.textContent = moreLabel(); }
       spin.remove();
       clearInterval(waitTimer);
       wait.remove();
@@ -427,7 +442,7 @@ export function mountDuels(section, o = {}) {
   }
 
   section.addEventListener("toggle", () => { if (section.open) show(); });
-  moreBtn.addEventListener("click", () => { if (busy) { stopAsked = true; moreBtn.disabled = true; return; } show(true); });
+  moreBtn.addEventListener("click", () => { if (busyKey) { stopAsked = true; moreBtn.disabled = true; return; } show(true); });
   table.addEventListener("click", (e) => {
     const nb = e.target.closest && e.target.closest("button.kf-name[data-name]");
     if (nb) { if (addName) addName(nb.dataset.name, nb); return; }
