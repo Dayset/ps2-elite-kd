@@ -13,7 +13,7 @@ import { mountWeapons } from "./weapons.mjs?v=20261022-wp4";
 import { mountKillFeed } from "./kill-feed.mjs?v=20261028-os2";
 import { mountScrims } from "./scrims-panel.mjs?v=20261028-os2";
 import { mountOldTabs } from "./old-tabs.mjs?v=20261028-duel1";
-import { mountDuels } from "./duels-panel.mjs?v=20261028-duelcache1";
+import { mountDuels } from "./duels-panel.mjs?v=20261028-pc2";
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261020-wide1";
 import { PS_SERVERS, censusNsBase, roomLsKey } from "./rooms.mjs?v=20261022-ps1";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
@@ -271,6 +271,7 @@ export function createStatsTable($) {
 
   /* 🤺 Duels tab (duels-panel.mjs): one player vs the crowd, two players head-to-head (both rooms). */
   let duelsPanel = null;
+  const DUEL_API = "https://ps2-elite-kd-cache.dayset.workers.dev"; // same Worker as share-add.mjs /add
 
   /* 🗂️ One row of tabs over kill feed / weapons / Census table (old-tabs.mjs). */
   const ensureOldTabs = () => { if (typeof document !== "undefined") mountOldTabs(document.getElementById("oldTabs")); };
@@ -310,6 +311,9 @@ export function createStatsTable($) {
         addName: (name, anchor) => { if ($.toggleNameInField) $.toggleNameInField(name, anchor); },
         sortScroll: keepSortedColumnVisible,
         catalog: () => fetch("assets/weapons/catalog.json", { cache: "force-cache" }).then((r) => (r.ok ? r.json() : null)),
+        // #83 pair cache on the cache Worker: kept for every device; any failure → the panel reads Census itself.
+        pairApi: ({ ns, p, q, want, seen }) => fetch(`${DUEL_API}/duels/pair?${new URLSearchParams({ ns, p, q, want: String(want), seen: String(seen || 0) })}`, { signal: AbortSignal.timeout(45e3) })
+          .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`pair ${r.status}`)))),
       });
     }
     duelsPanel.setPlayers($.LIVE_MODE ? [] : list || []); // 🤺 one player: vs the crowd; two: head-to-head

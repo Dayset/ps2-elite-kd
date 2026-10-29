@@ -26,6 +26,10 @@ export const DUEL_GAP = 600;
 export const ONE_V_ONE = Object.freeze({ min: 3, focus: 0.75 });
 /** Census pages (1,000 events) read on first open; "Read further back" reads to the end of the history. */
 export const AUTO_PAGES = 5;
+/** #83: a first open shows the newest FIRST_FIGHTS fights (pair cache), "Read further back" the rest. */
+export const FIRST_FIGHTS = 3;
+/** Census namespace of a Census base URL (".../get/ps2ps4us:v2/") or "". */
+export const nsOfBase = (base) => ((/\/get\/([a-z0-9]+):v2\//.exec(String(base || "")) || [])[1] || "");
 
 /** Census loadout id → class (NC 1–7, TR 8–14, VS 15–21, NSO 28–32 + 45). */
 export const CLASS_OF = Object.freeze({
@@ -109,10 +113,10 @@ export function pagerOf(a, b) {
  * Stops after `pages` pages, at the end of the history, or once `need` kills between them are in.
  * Calls onPage(st) after each page that is not the last one read, so a caller can re-render as data arrives.
  */
-export async function readPairPages(st, { base, get, pages = AUTO_PAGES, need = null, onPage = null }) {
+export async function readPairPages(st, { base, get, pages = AUTO_PAGES, need = null, onPage = null, stop = () => false }) {
   let n = 0;
   const qid = String(st.qid);
-  while (n < pages && !st.done) {
+  while (n < pages && !st.done && !stop()) {
     const j = await get(eventsUrl(base, st.pid, { before: st.cursor }));
     if (!j || !Array.isArray(j.characters_event_list)) throw new Error("bad census reply");
     n++;

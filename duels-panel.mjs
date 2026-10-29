@@ -15,11 +15,11 @@ import { t as tr, currentLang } from "./i18n.mjs";
 import { zoneName } from "./scrims-panel.mjs?v=20261028-os2";
 import { mergeEvents } from "./scrims.mjs?v=20261028-os2";
 import {
-  AUTO_PAGES, DUEL_GAP, ONE_V_ONE, classOf, bareName, crowdRows, crowdSummary, expectedCount, pagerOf,
+  AUTO_PAGES, FIRST_FIGHTS, nsOfBase, DUEL_GAP, ONE_V_ONE, classOf, bareName, crowdRows, crowdSummary, expectedCount, pagerOf,
   readPairPages, readPairNewer, pairEvents, fightsOf, fightResult, weaponShotUrls, parseShotStats, perKill, pairSummary,
   charInfoUrl, parseCharInfo, pairWarnings, WORLD_NAME,
   DUEL_CACHE_KEY, duelCacheEntry, duelCacheRestore, duelCachePrune,
-} from "./duels.mjs?v=20261028-duelcache1";
+} from "./duels.mjs?v=20261028-pc2";
 
 const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const lang = () => { try { return currentLang() || undefined; } catch { return undefined; } };
@@ -67,9 +67,12 @@ function crowdColumns() {
  * @param section <details id="duelsSection">
  * @param o getJson(url) (Census), baseOf(p) → Census base, addName(name, anchor), sortScroll,
  *   catalog() → Promise<{ items: { id: [name, category, …] } }>,
- *   pairApi({ base, a, b, before }) → Promise<{ events, done, oldest } | null>: optional own kill store
- *   (planned with the Workers Paid plan, see duels.mjs): A's compact events (every kill with B plus
- *   A's other kills & deaths within 10 minutes of them). null / a throw → the Census path.
+ *   pairApi({ ns, p, q, want, seen }) → Promise<reply>: the cache Worker's pair cache (#83,
+ *   GET /duels/pair, worker/src/duel-store.js). reply = { v: 1, events (p's compact events: every kill
+ *   with q plus p's other kills & deaths within 10 min), rev, lo, hi, done, fights, kills, pages,
+ *   blocks, error? }. Each call reads a few Census pages on the server and keeps them for every
+ *   device; the panel calls again until FIRST_FIGHTS fights (first open) or the whole history ("Read
+ *   further back"), re-drawing after every call. A throw before anything came → the Census path.
  */
 export function mountDuels(section, o = {}) {
   if (!section) return { setPlayers() {} };
@@ -100,7 +103,8 @@ export function mountDuels(section, o = {}) {
   let mode = null, a = null, b = null, shownKey = "";
   let sortKey = "share", sortDir = "desc";
   const opened = new Set();
-  let busy = false;
+  let busy = false, stopAsked = false;
+  const moreLabel = () => tr("duel.more", "Read further back");
 
   const cat = () => catP || (catP = Promise.resolve().then(() => catalog()).catch(() => null).then((c) => (c && c.items) || {}));
   const wName = (items, id) => { const e = id && items[String(id)]; return e ? e[0] : id ? `#${id}` : "–"; };
@@ -203,21 +207,31 @@ export function mountDuels(section, o = {}) {
       if (restored && onCached) onCached(job);
     }
     if (job.servers) return job;
-    if (!job.info) {
-      try { job.info = parseCharInfo(await getJson(charInfoUrl(job.base, [a.cid, b.cid]))); } catch (_) { job.info = new Map(); /* warnings are a bonus */ }
+    // Faction / server lookup runs alongside (never in front of the cached head-to-head); the warning shows when it lands.
+    if (!job.infoP) {
+      job.infoP = Promise.resolve().then(() => getJson(charInfoUrl(job.base, [a.cid, b.cid]))).then(parseCharInfo, () => new Map())
+        .then((m) => { job.info = m; if (mode === "pair" && pairs.get(pairKey()) === job) renderWarn(job); });
     }
     let fromApi = false;
-    if (pairApi && !job.census) {
+    if (pairApi && !job.census && nsOfBase(job.base)) {
+      // #83 pair cache: a few Census pages per call on the server, saved there for every device.
+      // The history player stays the one the panel picked (pagerOf), so every device asks the same store.
+      job.api = job.api || { seen: 0 };
+      const want = more ? 1e6 : FIRST_FIGHTS;
       try {
-        const r = await pairApi({ base: job.base, a: String(a.cid), b: String(b.cid), before: job.st.pid === String(a.cid) ? job.st.cursor : 0 });
-        if (r && Array.isArray(r.events)) {
-          if (job.st.pid !== String(a.cid)) job.st = { pid: String(a.cid), qid: String(b.cid), all: [], cursor: 0, done: false, pages: 0 };
-          job.pid = job.st.pid; job.pIsA = true;
-          job.st.all = mergeEvents(job.st.all, r.events);
-          job.st.done = !!r.done;
-          job.st.oldest = job.st.all.length ? job.st.all[job.st.all.length - 1][0] : 0;
-          job.st.cursor = r.oldest || job.st.oldest;
+        for (let call = 0; call < 400 && !stopAsked; call++) {
+          const r = await pairApi({ ns: nsOfBase(job.base), p: job.st.pid, q: job.st.qid, want, seen: job.api.seen });
+          if (!r || r.v !== 1 || !Array.isArray(r.events)) throw new Error("bad pair reply");
+          if (r.error && !fromApi && !r.blocks) throw new Error(r.error); // nothing stored and Census busy: try Census here
           fromApi = true;
+          job.st.all = mergeEvents(job.st.all, r.events);
+          job.api.seen = r.rev || job.api.seen;
+          job.st.done = !!r.done;
+          job.st.pages = (job.st.pages || 0) + (r.pages || 0);
+          job.st.oldest = r.lo || (job.st.all.length ? job.st.all[job.st.all.length - 1][0] : 0);
+          if (onProgress) onProgress(job);
+          if (r.done || (!more && r.fights >= FIRST_FIGHTS)) break;
+          if (r.error) await new Promise((res) => setTimeout(res, 3000)); // Census busy on the server: short pause
         }
       } catch (_) { /* the Census path below */ }
       if (!fromApi) job.census = true;
@@ -225,7 +239,7 @@ export function mountDuels(section, o = {}) {
     if (!fromApi) {
       const onPage = onProgress ? () => onProgress(job) : undefined;
       if (restored && !more) await readPairNewer(job.st, { base: job.base, get: getJson, onPage });
-      else await readPairPages(job.st, { base: job.base, get: getJson, pages: more ? Infinity : AUTO_PAGES, need: more ? null : job.need, onPage });
+      else await readPairPages(job.st, { base: job.base, get: getJson, pages: more ? Infinity : AUTO_PAGES, need: more ? null : job.need, onPage, stop: () => stopAsked });
     }
     // Lifetime shots / hits of the weapons used in kills between them (asked once per weapon).
     const pe = pairEvents(job.st.all, job.st.qid, job.pIsA);
@@ -259,13 +273,19 @@ export function mountDuels(section, o = {}) {
       `</tbody>`;
   }
 
-  function renderPair(job, items) {
+  /** ⚠️ Same faction / different servers (needs the faction / server lookup; empty until it lands). */
+  function renderWarn(job) {
     const aName = bareName(a.display), bName = bareName(b.display);
     const ws = pairWarnings(job.info, a.cid, b.cid).map((w) => (w.kind === "faction"
       ? tr("duel.warnFaction", "⚠️ Both play {faction}: kills between them can only be teamkills, so expect few or none.", { faction: w.faction })
       : tr("duel.warnWorld", "⚠️ {a} plays on {wa}, {b} on {wb}: players on different servers almost never meet, so expect few or no kills.", { a: aName, b: bName, wa: WORLD_NAME[w.wa] || `#${w.wa}`, wb: WORLD_NAME[w.wb] || `#${w.wb}` })));
     warn.textContent = ws.join(" ");
     warn.hidden = !ws.length;
+  }
+
+  function renderPair(job, items) {
+    const aName = bareName(a.display), bName = bareName(b.display);
+    renderWarn(job);
     table.classList.remove("duel-crowd"); table.classList.add("duel-pair");
     const pe = pairEvents(job.st.all, job.st.qid, job.pIsA);
     const fights = fightsOf(pe, job.st.all, job.st.pid, DUEL_GAP);
@@ -274,7 +294,7 @@ export function mountDuels(section, o = {}) {
     const since = job.st.oldest ? dateOnly(job.st.oldest) : "";
     const read = job.st.done
       ? tr("duel.readAll", "Whole history read.")
-      : job.need != null
+      : job.need != null && pe.length < job.need
         ? tr("duel.readOf", "History read back to {date}: {n} of the {total} kills between them on the killboard found.", { date: since, n: pe.length.toLocaleString(lang()), total: job.need.toLocaleString(lang()) })
         : tr("duel.readTo", "History read back to {date}.", { date: since });
     moreBtn.hidden = job.st.done;
@@ -355,7 +375,9 @@ export function mountDuels(section, o = {}) {
     if (busy) return;
     busy = true;
     if (!more) { clear(); opened.clear(); }
-    moreBtn.disabled = true;
+    stopAsked = false;
+    // While reading further back, the button stops the reading (everything read so far stays: on the server and here).
+    if (more) { moreBtn.textContent = tr("duel.stop", "Stop"); moreBtn.disabled = false; } else moreBtn.disabled = true;
     setStatus(tr("duel.loading", "Reading the kills between them…"));
     status.appendChild(spin);
     // Ticking liveness line: the spinner does not rotate on animation-disabled devices,
@@ -368,7 +390,7 @@ export function mountDuels(section, o = {}) {
     const waitTimer = setInterval(() => { waitSecs++; tickWait(); if (!wait.isConnected) status.appendChild(wait); }, 1000);
     try {
       const items = await cat();
-      const renderLive = (j) => { renderPair(j, items); status.appendChild(spin); status.appendChild(wait); tickWait(); };
+      const renderLive = (j) => { renderPair(j, items); if (more) moreBtn.hidden = false; status.appendChild(spin); status.appendChild(wait); tickWait(); };
       const job = await loadPair(more, (j) => {
         if (mode !== "pair" || pairKey() !== key) return;
         waitPages = j.st.pages;
@@ -387,6 +409,7 @@ export function mountDuels(section, o = {}) {
     } finally {
       busy = false;
       moreBtn.disabled = false;
+      moreBtn.textContent = moreLabel();
       spin.remove();
       clearInterval(waitTimer);
       wait.remove();
@@ -394,7 +417,7 @@ export function mountDuels(section, o = {}) {
   }
 
   section.addEventListener("toggle", () => { if (section.open) show(); });
-  moreBtn.addEventListener("click", () => show(true));
+  moreBtn.addEventListener("click", () => { if (busy) { stopAsked = true; moreBtn.disabled = true; return; } show(true); });
   table.addEventListener("click", (e) => {
     const nb = e.target.closest && e.target.closest("button.kf-name[data-name]");
     if (nb) { if (addName) addName(nb.dataset.name, nb); return; }

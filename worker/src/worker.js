@@ -846,7 +846,8 @@ async function handleCensusProxy(request, env, c) {
 import { KillMonitor, monitorRoute, monitorTick } from "./monitor.js";
 import { oracleTick } from "./oracle-tick.js";
 import { roomTick } from "./room-tick.js";
-export { KillMonitor };
+import { DuelStore, duelRoute } from "./duel-store.js";
+export { KillMonitor, DuelStore };
 
 export default {
   async scheduled(event, env, ctx) {
@@ -892,6 +893,11 @@ export default {
       return json({ error: "origin_not_allowed" }, 403, {});
     }
     try {
+      // 🤺 Duel pair cache (#83): one Durable Object per player history, public read for the site.
+      if (url.pathname === "/duels/pair") {
+        const ip = await ipTag(request.headers.get("CF-Connecting-IP") || "unknown", env.CENSUS_PROXY_KEY);
+        return await duelRoute(request, env, cors, { ip });
+      }
       if (url.pathname === "/health" && request.method === "GET") {
         return json({ ok: true, backupTimer: { cron: BACKUP_CRON, last: await readBackup(env) } }, 200, cors);
       }

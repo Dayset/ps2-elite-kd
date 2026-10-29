@@ -36,14 +36,16 @@ jobs:
             test/worker-kv-budget.test.mjs
             test/worker-oracle-tick.test.mjs
             test/worker-room-tick.test.mjs
+            test/worker-duel-store.test.mjs
+            scrims.mjs
             package.json
 
       - uses: actions/setup-node@v7
         with:
-          node-version: "20"
+          node-version: "22" # node:sqlite for the duel store test
 
       - name: Worker tests
-        run: node --test test/worker-kv-budget.test.mjs test/worker-oracle-tick.test.mjs test/worker-room-tick.test.mjs
+        run: node --test test/worker-kv-budget.test.mjs test/worker-oracle-tick.test.mjs test/worker-room-tick.test.mjs test/worker-duel-store.test.mjs
 
       - name: Dry run (bundle only)
         uses: cloudflare/wrangler-action@v4
@@ -61,3 +63,15 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: worker
           command: deploy
+
+      - name: Smoke check /duels/pair (#83)
+        if: inputs.deploy
+        run: |
+          sleep 20
+          u="https://ps2-elite-kd-cache.dayset.workers.dev/duels/pair?ns=ps2ps4us&p=5428916926438351409&q=5429365615044405249&want=3"
+          for i in 1 2; do
+            t0=$(date +%s%N)
+            body=$(curl -s --max-time 60 "$u")
+            ms=$(( ($(date +%s%N) - t0) / 1000000 ))
+            echo "::notice title=duels/pair call $i (${ms} ms)::$(echo "$body" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const j=JSON.parse(s);console.log(JSON.stringify({v:j.v,fights:j.fights,kills:j.kills,pages:j.pages,blocks:j.blocks,done:j.done,lo:j.lo,hi:j.hi,events:(j.events||[]).length,error:j.error}))}catch{console.log(s.slice(0,300))}})')"
+          done

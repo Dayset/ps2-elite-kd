@@ -226,7 +226,8 @@ test("tab wiring: both rooms, one or two players, translated, shared table look"
   assert.match(panel, /DUEL_CACHE_KEY/, "duels history cached in this browser");
   assert.match(panel, /duelCacheEntry\(job\)/, "completed loads save the pair to the cache");
   assert.match(panel, /onCached\(job\)/, "saved history renders before the refresh runs");
-  assert.match(panel, /pairApi = null/, "own kill store hook stays off until the Worker serves it");
+  assert.match(panel, /pairApi = null/, "no pair cache unless the page passes one");
+  assert.match(st, /pairApi: \(\{ ns, p, q, want, seen \}\) => fetch\(`\$\{DUEL_API\}\/duels\/pair\?/, "#83: the page uses the cache Worker's pair cache");
   const index = readFileSync(new URL("../index.html", import.meta.url), "utf8");
   assert.match(index, /<details id="duelsSection" class="dist-section duel-section" hidden>/);
   assert.match(index, /class="ranks-table duel-table"/);

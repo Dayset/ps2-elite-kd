@@ -25,6 +25,7 @@ How PS2 Elite (https://dayset.github.io/ps2-elite-kd) and the PS2Map Oracle hand
 | Cached player files (`data/players/`, `data-ps/players/`) | Refreshed while the character exists; deleted on a removal request |
 | PlayStation login/logout and assist sessions (cache Worker) | 45 days, then deleted automatically |
 | PlayStation scrim records (`data-ps/scrims/`: date, opponent, kills – deaths, continent, weapons; built from public Census kill/death history) | Kept while the character exists; deleted on a removal request (the removed player is also blanked as an opponent) |
+| 🤺 Duels pair cache (cache Worker, one store per character whose history a head-to-head reads: that character's public Census kill/death events, PC and PlayStation) | 120 days after the last head-to-head that read it, then deleted automatically; deleted on a removal request, and removed characters are refused as either player |
 | PC kill-monitor pilot (10 characters, cache Worker, from 2026-10-17) | Kept for the pilot analysis; deleted on request |
 | Oracle sign-in sessions (one per device: character id, created, last used) | Until that device signs out, "Sign out all devices", or the next in-game logout check |
 | Oracle one-time QR sign-in codes (code hash only) and keyed IP hashes of attempts to use them | 1 day |

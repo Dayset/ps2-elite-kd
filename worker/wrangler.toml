@@ -27,6 +27,16 @@ class_name = "KillMonitor"
 tag = "v1-kill-monitor"
 new_sqlite_classes = ["KillMonitor"]
 
+# 🤺 Duel pair cache (#83): one SQLite-backed Durable Object per player history
+# (name "<ns>:<cid>"), created on first request, deleted after 120 days unused.
+[[durable_objects.bindings]]
+name = "DUEL_STORE"
+class_name = "DuelStore"
+
+[[migrations]]
+tag = "v2-duel-store"
+new_sqlite_classes = ["DuelStore"]
+
 # PS2MapOracle: the 5-minute cron asks ps2-oracle for queued Honu work
 # (src/oracle-tick.js). Worker-to-Worker calls need a service binding.
 [[services]]
