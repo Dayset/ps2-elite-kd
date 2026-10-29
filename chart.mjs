@@ -801,6 +801,10 @@ export function createChart($) {
         pureNote.hidden = true;
       }
     }
+    // The mode bar's visibility is computed from the plotted players, so it
+    // must re-sync on every draw — otherwise the 🧘 button stays hidden after
+    // an analysis (it was only synced at setup, when no players existed yet).
+    syncChartModeUi();
   }
 
   /**
