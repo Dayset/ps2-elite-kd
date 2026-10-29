@@ -28,6 +28,7 @@
 
 export const PS_STREAM_ENVS = { ps2ps4us: "1000", ps2ps4eu: "2000" };
 export const ASSIST_EXP_IDS = [2, 3, 371, 372];
+export const LOCATOR_EVENTS = ["VehicleDestroy", "PlayerFacilityCapture", "PlayerFacilityDefend"];
 /** Same constants as scripts/refresh-cache.mjs (test/ps-assists.test.mjs keeps them equal). */
 export const ASSIST_BASE_XP = { 2: 100, 371: 150, 372: 300 };
 export const KILL_BASE_XP = { 1: 100, 278: 150, 279: 300 };
@@ -40,11 +41,13 @@ const STALE_MS = 120e3; // no message (Census heartbeats every ~30 s) → reconn
 
 const STREAM = (ns, sid) => `https://push.planetside2.com/streaming?environment=${ns}&service-id=s:${sid}`;
 
-export function subscribeMessage(ns) {
+export function subscribeMessage(ns, { locator = true } = {}) {
   const world = PS_STREAM_ENVS[ns];
   if (!world) throw new Error(`not a PlayStation environment: ${ns}`);
   const xp = [...ASSIST_EXP_IDS, ...Object.keys(KILL_BASE_XP).map(Number)].map((id) => `GainExperience_experience_id_${id}`);
-  return { service: "event", action: "subscribe", characters: ["all"], worlds: [world], logicalAndCharactersWithWorlds: true, eventNames: [...xp, "Death", "PlayerLogin", "PlayerLogout"] };
+  // VehicleDestroy + facility capture/defend (paid plan, 2026-10-29): base positions for the live map (live-map.js).
+  // Free plan (plan.js): the subscription from before, unchanged.
+  return { service: "event", action: "subscribe", characters: ["all"], worlds: [world], logicalAndCharactersWithWorlds: true, eventNames: [...xp, "Death", "PlayerLogin", "PlayerLogout", ...(locator ? LOCATOR_EVENTS : [])] };
 }
 
 /**
@@ -148,9 +151,11 @@ function push(arr, x) { arr.push(x); if (arr.length > MAX_EVENTS) arr.splice(0, 
 
 /** The sockets + storage half, owned by KillMonitor. */
 export class PsAssists {
-  constructor(ctx, env) {
+  constructor(ctx, env, { meter = null, onPayload = null } = {}) {
     this.ctx = ctx;
     this.env = env;
+    this.meter = meter; // 💸 meter.js: every message counted (paid plan)
+    this.onPayload = onPayload || (() => {}); // 🗺️ live-map.js
     this.ws = {};
     this.lastMsg = {};
     this.lastCheckpoint = Date.now();
@@ -171,6 +176,7 @@ export class PsAssists {
     const sql = this.ctx.storage.sql;
     if (v === undefined) { const r = sql.exec("SELECT v FROM ps_meta WHERE k=?", k).toArray()[0]; return r ? r.v : null; }
     sql.exec("INSERT OR REPLACE INTO ps_meta (k, v) VALUES (?, ?)", k, String(v));
+    if (this.meter) this.meter.op("rows");
   }
   bump(k) { this.meta(k, (+this.meta(k) || 0) + 1); }
   store(rows) {
@@ -179,13 +185,21 @@ export class PsAssists {
     for (const r of rows) {
       sql.exec("INSERT INTO ps_sess VALUES (?,?,?,?,?,?,?,?,?,?,?)", r.ns, r.cid, r.st, r.sec, r.a, r.k, r.d, r.ss, r.sn, r.mult, at);
     }
+    if (this.meter && rows.length) this.meter.op("rows", Date.now(), rows.length);
   }
   checkpoint() {
     for (const ns of Object.keys(this.sessions)) this.meta("open:" + ns, JSON.stringify(this.sessions[ns].open));
     this.lastCheckpoint = Date.now();
   }
-  /** Called from KillMonitor.ensure() (alarm every 60 s + the 5-minute cron). */
-  async ensure() {
+  /** Called from KillMonitor.ensure() (alarm every 60 s + the 5-minute cron). plan: plan.js. */
+  async ensure(plan = "free") {
+    const locator = plan === "paid";
+    if (this.locator !== undefined && this.locator !== locator) {
+      // Plan switched: reconnect both sockets with the matching subscription.
+      for (const ns of Object.keys(this.ws)) { try { this.ws[ns] && this.ws[ns].close(); } catch {} }
+      this.ws = {};
+    }
+    this.locator = locator;
     if (!this.enabled()) {
       for (const ns of Object.keys(this.ws)) { try { this.ws[ns] && this.ws[ns].close(); } catch {} }
       this.ws = {};
@@ -220,18 +234,25 @@ export class PsAssists {
     ws.addEventListener("message", (m) => this.onMessage(ns, m.data));
     ws.addEventListener("close", () => { if (this.ws[ns] === ws) this.ws[ns] = null; });
     ws.addEventListener("error", () => { if (this.ws[ns] === ws) this.ws[ns] = null; });
-    ws.send(JSON.stringify(subscribeMessage(ns)));
+    ws.send(JSON.stringify(subscribeMessage(ns, { locator: !!this.locator })));
   }
   onMessage(ns, data) {
-    this.lastMsg[ns] = Date.now();
+    const now = Date.now();
+    this.lastMsg[ns] = now;
+    const text = typeof data === "string" ? data : new TextDecoder().decode(data);
     let j;
-    try { j = JSON.parse(typeof data === "string" ? data : new TextDecoder().decode(data)); } catch { return; }
+    try { j = JSON.parse(text); } catch { if (this.meter) this.meter.msg(ns, "other", text.length, now); return; }
+    if (this.meter) {
+      const p0 = j && j.type === "serviceMessage" && j.payload;
+      this.meter.msg(ns, p0 ? (p0.event_name === "GainExperience" ? `GainExperience_${p0.experience_id}` : p0.event_name || "serviceMessage") : (j && (j.type || j.service)) || "other", text.length, now);
+    }
     const p = j && j.type === "serviceMessage" && j.payload;
     if (!p) return;
     // Belt and braces: only this socket's PS world, never anything else.
     if (p.world_id != null && String(p.world_id) !== PS_STREAM_ENVS[ns]) return;
     const rows = this.sessions[ns].onEvent(p);
     if (rows.length) this.store(rows);
+    try { this.onPayload(ns, p, now); } catch {}
   }
   status() {
     const sql = this.ctx.storage.sql;

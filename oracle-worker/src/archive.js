@@ -12,7 +12,8 @@
  *     frames: [{ t, set: {fid: "VS"|"NC"|"TR"|null} }],   // first frame complete, then changes
  *     ticks:  [{ t, terr, win }],                           // minute-by-minute engine output
  *     flips:  [[ts, fid, old, new]],                        // FacilityControl captures
- *     bench:  { slices, brier } | null }
+ *     bench:  { slices, brier } | null,
+ *     fights?: [{ t, pop: [vs,nc,tr,nso] | null, b: [[fid, vs, nc, tr, kills, convFac, convAgo]] }] }  // fights.js, paid plan
  * ~10-25 KB per alert; a 500 MB D1 database holds tens of thousands.
  */
 import { regionMap } from "./models.js";
@@ -49,11 +50,13 @@ export async function buildBundle(db, key) {
   const a = await db.prepare("SELECT * FROM alert WHERE key=?").bind(key).first();
   if (!a || !FINAL.includes(a.status)) return null;
   const end = a.end_ts || a.start_ts + a.dur * 60;
-  const [frames, ticks, flips, bench] = await Promise.all([
+  const [frames, ticks, flips, bench, fights] = await Promise.all([
     alertFrames(db, a),
     db.prepare("SELECT t, terr, win FROM tick WHERE key=? ORDER BY ts").bind(key).all(),
     db.prepare("SELECT ts, facility, old, new FROM flip WHERE world=? AND zone=? AND ts BETWEEN ? AND ? ORDER BY ts").bind(a.world, a.zone, a.start_ts - 600, end + 60).all(),
     db.prepare("SELECT slices, brier FROM bench WHERE key=?").bind(key).first(),
+    // ⚔️ fights.js (#78): absent before the paid plan, and the table may not exist yet.
+    (async () => db.prepare("SELECT t, data FROM fight WHERE key=? ORDER BY ts").bind(key).all())().catch(() => null),
   ]);
   const j = (s) => (s ? JSON.parse(s) : null);
   return {
@@ -63,6 +66,7 @@ export async function buildBundle(db, key) {
     ticks: ((ticks && ticks.results) || []).map((x) => ({ t: x.t, terr: j(x.terr), win: j(x.win) })),
     flips: ((flips && flips.results) || []).map((x) => [x.ts, x.facility, x.old, x.new]),
     bench: bench ? { slices: j(bench.slices), brier: j(bench.brier) } : null,
+    ...(fights && fights.results && fights.results.length ? { fights: fights.results.map((x) => ({ t: x.t, ...j(x.data) })) } : {}),
   };
 }
 

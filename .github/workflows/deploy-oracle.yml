@@ -52,7 +52,7 @@ jobs:
       - name: Oracle tests
         # Failing test names go to annotations (job logs are not always readable where this is debugged).
         run: |
-          node --test test/oracle-engine.test.mjs test/oracle-worker.test.mjs test/oracle-commander.test.mjs test/oracle-outliers.test.mjs test/oracle-auth.test.mjs test/oracle-privacy.test.mjs test/oracle-vote.test.mjs test/oracle-devices.test.mjs > oracle-tests.log 2>&1 && exit 0
+          node --test test/oracle-engine.test.mjs test/oracle-worker.test.mjs test/oracle-commander.test.mjs test/oracle-outliers.test.mjs test/oracle-auth.test.mjs test/oracle-privacy.test.mjs test/oracle-vote.test.mjs test/oracle-devices.test.mjs test/oracle-fights.test.mjs > oracle-tests.log 2>&1 && exit 0
           grep -E "^ *not ok|^ *error:|^ *(expected|actual):" oracle-tests.log | head -9 | sed 's/^ */::error::/'
           tail -3 oracle-tests.log
           exit 1

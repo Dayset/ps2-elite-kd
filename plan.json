@@ -1,0 +1,6 @@
+{
+  "plan": "paid",
+  "auto": false,
+  "since": "2026-10-29",
+  "note": "Cloudflare Workers plan switch. \"paid\" = Workers Paid features on (PC live stream in the kill monitor, Oracle live fights). \"free\" = everything back to what fits the free plan. Both Workers read this file within ~5 minutes; no deploy needed. Emergency override: Worker variable PLAN=free (or paid) in the Cloudflare dashboard, on both Workers. Automatic: .github/workflows/plan-watch.yml (hourly) writes free here when the Workers Paid subscription is gone or free-tier limits show up (auto: true), and paid again only after its own switch when the subscription is back."
+}

@@ -323,10 +323,10 @@ export class DuelStore {
 /* ------------------------------------------------------------- route (main Worker) */
 
 const OPT_OUT = { ps2: "https://dayset.github.io/ps2-elite-kd/data/opt-out.json", ps2ps4us: "https://dayset.github.io/ps2-elite-kd/data-ps/opt-out.json", ps2ps4eu: "https://dayset.github.io/ps2-elite-kd/data-ps/opt-out.json" };
-const PREFIX = { ps2: "", ps2ps4us: "us-", ps2ps4eu: "eu-" };
+export const PREFIX = { ps2: "", ps2ps4us: "us-", ps2ps4eu: "eu-" };
 const optOutCache = new Map(); // url → { at, keys }
 
-async function removedKeys(ns, fetchFn) {
+export async function removedKeys(ns, fetchFn) {
   const u = OPT_OUT[ns];
   const c = optOutCache.get(u);
   if (c && Date.now() - c.at < 10 * 60e3) return c.keys;

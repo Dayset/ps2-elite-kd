@@ -14,6 +14,7 @@ import { initAuth } from "./auth.js?v=20261028-dev82";
 import { enhance, onSectionExpand, refreshSummary } from "./collapse.js?v=20261026-pulse1";
 import { t as tr, ready } from "../../i18n.mjs";
 import { maintNotice, when, schedState, lastOnline, STATUS_URL } from "./maint.js?v=20261027-maint3";
+import { fightsCard, popLiveLine } from "./fights.js?v=20261029-fight1";
 await ready;   // #73: the language file is in before anything renders
 document.title = tr("or.title", "PS2MapOracle — live PlanetSide 2 alert odds");
 
@@ -190,7 +191,8 @@ function render2(now) {
     <div class="grid">
       <section class="card map"><h2 data-sec="map">${tr("or.h.map", "Map")}</h2><div id="replayTag" class="replaytag" hidden></div><div id="map"></div></section>
       <div class="side">
-      <section class="card win"><h2 data-sec="win-chance">${tr("or.h.win", "Win chance")}</h2>${kindNote}${suspectNote}${cutNote}<div class="odds" aria-live="polite" aria-atomic="true">${oddsHtml}</div>${oddLine}${result}${second}${rows || popRows ? det("wdet", tr("or.details", "Details"), `${popAdj}<div class="rows">${rows}${popRows}</div>${popTot ? `<div class="note">${tr("or.pop", "Population: Honu (wt.honu.pw), {n} on continent{nso}.", { n: popTot, nso: s.pop_ns ? tr("or.popNso", " + {n} NSO", { n: s.pop_ns }) : "" })}</div>` : ""}`, "wdet keep") : ""}${calls}</section>
+      <section class="card win"><h2 data-sec="win-chance">${tr("or.h.win", "Win chance")}</h2>${kindNote}${suspectNote}${cutNote}<div class="odds" aria-live="polite" aria-atomic="true">${oddsHtml}</div>${oddLine}${result}${second}${rows || popRows ? det("wdet", tr("or.details", "Details"), `${popAdj}<div class="rows">${rows}${popRows}</div>${popTot ? `<div class="note">${tr("or.pop", "Population: Honu (wt.honu.pw), {n} on continent{nso}.", { n: popTot, nso: s.pop_ns ? tr("or.popNso", " + {n} NSO", { n: s.pop_ns }) : "" })}</div>` : ""}${popLiveLine(s)}`, "wdet keep") : ""}${calls}</section>
+      ${a.status === "live" ? fightsCard(s) : ""}
       <div id="voteHere"></div><div id="lockHere"></div>
       </div>
     </div>

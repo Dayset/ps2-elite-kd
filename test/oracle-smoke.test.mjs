@@ -27,6 +27,11 @@ const skip = !pw ? "Playwright not installed (npm i --no-save playwright && npx 
 function stub() {
   const now = Math.floor(Date.now() / 1000);
   const st = { t: 30, leader: "VS", win: { VS: { pct: 50 }, NC: { pct: 30 }, TR: { pct: 20 } }, territory: { VS: 40, NC: 30, TR: 30 }, momentum: { VS: 1, NC: -1, TR: 0 }, pop: { VS: 100, NC: 90, TR: 80 }, owners: {} };
+  // ⚔️ Live fights (#78 step 1, paid plan): per-base crowd from the cache Worker's live map.
+  st.fights = [{ fid: "266000", name: "Cairn Station", n: { VS: 14, NC: 11, TR: 0 }, k: { VS: 6, NC: 5, TR: 0 }, conv: { VS: 2, NC: 0, TR: 0 }, convAgo: 40, owner: "NC" },
+    { fid: "263000", name: "Hurakan", n: { VS: 3, NC: 0, TR: 6 }, k: { VS: 1, NC: 0, TR: 2 }, conv: { VS: 0, NC: 0, TR: 0 }, convAgo: null }];
+  st.fights_live = true;
+  st.pop_live = { VS: 120, NC: 95, TR: 80, NSO: 4 };
   const alert = { key: "1-4-153-111", world: 1, world_name: "Osprey", zone: 4, zone_name: "Hossin", status: "live", kind: "territory", start_ts: now - 1800, dur: 90, state: st };
   // Commander with a defend row whose loss cuts bases off (#63), focus folded above it.
   const row = { name: "Cairn Station", vs: "NC", win_drop: 22.3, p_loss: 0.11, ev: 1.5, priority: 100, heat: 0, pred_heat: 0, freezing: false, cut_off: false,
@@ -83,6 +88,13 @@ describe("oracle page smoke test (#28)", { skip }, () => {
         assert.deepEqual(errors, [], "page threw");
         assert.match(await page.$eval("#main", (e) => e.textContent), /Osprey · Hossin/, "#main shows the alert title");
         assert.ok(await page.$("#voteSlot .vote"), "#voteSlot .vote rendered");
+        // ⚔️ Live fights card: base links, crowd split, capture-point signal.
+        const fights = await page.$eval(".fightcard", (c) => c.textContent);
+        assert.match(fights, /Cairn Station/);
+        assert.match(fights, /VS 14 · NC 11/);
+        assert.match(fights, /⏳ VS points · now/);
+        assert.match(fights, /~25 players · 11 kills/);
+        assert.ok(await page.$(".fightcard .blink[data-base='Hurakan']"), "fight base names are map links");
         // Defend rows show what losing the base cuts off (✂️ with the base names in its hover).
         const cutMark = await page.$$eval(".cmd span[title^='losing it cuts off']", (xs) => xs.map((x) => [x.textContent, x.title]));
         assert.ok(cutMark.length >= 1, "✂️ on a defend row");

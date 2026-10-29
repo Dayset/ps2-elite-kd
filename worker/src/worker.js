@@ -843,10 +843,10 @@ async function handleCensusProxy(request, env, c) {
   return out;
 }
 
-import { KillMonitor, monitorRoute, monitorTick } from "./monitor.js";
+import { KillMonitor, monitorRoute, monitorTick, liveRoute } from "./monitor.js";
 import { oracleTick } from "./oracle-tick.js";
 import { roomTick } from "./room-tick.js";
-import { DuelStore, duelRoute } from "./duel-store.js";
+import { DuelStore, duelRoute, removedKeys } from "./duel-store.js";
 export { KillMonitor, DuelStore };
 
 export default {
@@ -859,9 +859,11 @@ export default {
     const c = cfg(env);
     const cors = corsHeaders(request, c);
     const url = new URL(request.url);
-    if (url.pathname === "/monitor/status" || url.pathname === "/monitor/export") {
+    if (url.pathname === "/monitor/status" || url.pathname === "/monitor/export" || url.pathname === "/monitor/usage") {
       if (request.method !== "GET") return new Response(null, { status: 405 });
-      return await monitorRoute(request, env, url);
+      // Errors keep their text: plan-watch.yml looks for Cloudflare's free-tier wording here (plan.js).
+      try { return await monitorRoute(request, env, url); }
+      catch (e) { return new Response(JSON.stringify({ error: "monitor_error", detail: String((e && e.message) || e).slice(0, 300) }), { status: 503, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } }); }
     }
     // PlayStation 🤝 assists collector (#60): public status, key-protected export (POST).
     if (url.pathname === "/ps-assists/status" || url.pathname === "/ps-assists/export") {
@@ -897,6 +899,11 @@ export default {
       if (url.pathname === "/duels/pair") {
         const ip = await ipTag(request.headers.get("CF-Connecting-IP") || "unknown", env.CENSUS_PROXY_KEY);
         return await duelRoute(request, env, cors, { ip });
+      }
+      // Live map (paid plan): per-base fight totals (public) + per-player positions (key only), from the KillMonitor's memory.
+      if (url.pathname === "/live/locate" || url.pathname === "/live/activity") {
+        const ip = await ipTag(request.headers.get("CF-Connecting-IP") || "unknown", env.CENSUS_PROXY_KEY);
+        return await liveRoute(request, env, cors, { ip, removed: removedKeys });
       }
       if (url.pathname === "/health" && request.method === "GET") {
         return json({ ok: true, backupTimer: { cron: BACKUP_CRON, last: await readBackup(env) } }, 200, cors);

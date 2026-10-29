@@ -67,6 +67,16 @@ CREATE TABLE IF NOT EXISTS tick (
   PRIMARY KEY (key, ts)
 );
 
+-- ⚔️ Per-base fight totals per minute per live alert (#78, paid plan; fights.js). Created lazily
+-- by the Worker (FIGHT_TABLE); kept 90 days like the ticks; copied into the archive bundle.
+CREATE TABLE IF NOT EXISTS fight (
+  key TEXT NOT NULL,
+  ts INTEGER NOT NULL,
+  t REAL NOT NULL,
+  data TEXT NOT NULL,
+  PRIMARY KEY (key, ts)
+);
+
 -- Benchmark: predicted win probs per slice, Brier at settlement.
 CREATE TABLE IF NOT EXISTS bench (
   key TEXT PRIMARY KEY,

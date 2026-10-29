@@ -391,3 +391,15 @@ footer { color: var(--dim); font-size: var(--fs-12); margin-top: var(--s-5); }
 #map .mapctl input[type="range"] { width: 120px; accent-color: #ffd54a; }
 #map .mapctl output { min-width: 3.2em; font-variant-numeric: tabular-nums; color: var(--text, #e8e6df); }
 #map .mapctl .credit { color: var(--dim, #6b7280); font-size: 11px; }
+
+/* ⚔️ Live fights (#78 step 1, paid plan 2026-10-29; js/fights.js): crowd per faction at each base. */
+.fightcard { margin-top: var(--s-3); }
+.fights { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-3); }
+.fights li { min-width: 0; }
+.fights .fhead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--s-2); font-size: var(--fs-14); }
+.fights .blink { font-weight: 700; color: var(--link, #7cc4ff); text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 2px; cursor: pointer; }
+.fights .blink:hover, .fights .blink:focus-visible { text-decoration-style: solid; outline: none; }
+.fights .fown { font-size: 0.75em; font-weight: 700; border: 1px solid currentColor; border-radius: 3px; padding: 0 0.25em; }
+.fights .fcap { font-size: 0.85em; color: var(--muted); }
+.fights .fbar { margin: 3px 0 2px; height: 10px; justify-content: flex-start; }
+.fights .fnum { font-size: var(--fs-14); font-variant-numeric: tabular-nums; }

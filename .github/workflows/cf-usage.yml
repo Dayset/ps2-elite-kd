@@ -1,0 +1,42 @@
+name: Cloudflare usage check
+
+# 💸 Daily check that the Workers Paid plan isn't overloaded (owner 2026-10-29).
+# Projects the month's usage from Cloudflare's analytics (and the cache Worker's own
+# meter, /monitor/usage) against what the $5 plan includes. Fails, so GitHub emails
+# the owner, when a projection passes 100 %; a warning from 85 %.
+# Plan-aware (plan.json): after a switch back to the free plan it checks daily averages against
+# the free plan's daily limits instead.
+# Needs "Account Analytics: Read" on the CLOUDFLARE_API_TOKEN secret; without it only
+# the kill monitor's own numbers are checked (the run says so).
+
+on:
+  schedule:
+    - cron: "17 7 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cf-usage
+  cancel-in-progress: true
+
+jobs:
+  usage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: |
+            scripts/cf-usage.mjs
+            plan.json
+            package.json
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+      - name: Usage vs the plan
+        env:
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: node scripts/cf-usage.mjs

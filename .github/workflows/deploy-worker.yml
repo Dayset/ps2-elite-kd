@@ -37,6 +37,11 @@ jobs:
             test/worker-oracle-tick.test.mjs
             test/worker-room-tick.test.mjs
             test/worker-duel-store.test.mjs
+            test/worker-live-map.test.mjs
+            test/plan-switch.test.mjs
+            oracle-worker/src/plan.js
+            plan.json
+            scripts/plan-watch.mjs
             scrims.mjs
             package.json
 
@@ -45,7 +50,7 @@ jobs:
           node-version: "22" # node:sqlite for the duel store test
 
       - name: Worker tests
-        run: node --test test/worker-kv-budget.test.mjs test/worker-oracle-tick.test.mjs test/worker-room-tick.test.mjs test/worker-duel-store.test.mjs
+        run: node --test test/worker-kv-budget.test.mjs test/worker-oracle-tick.test.mjs test/worker-room-tick.test.mjs test/worker-duel-store.test.mjs test/worker-live-map.test.mjs test/plan-switch.test.mjs
 
       - name: Dry run (bundle only)
         uses: cloudflare/wrangler-action@v4
@@ -63,6 +68,17 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: worker
           command: deploy
+
+      - name: Smoke check /monitor/usage + /live/activity (paid plan)
+        if: inputs.deploy
+        run: |
+          sleep 75
+          base="https://ps2-elite-kd-cache.dayset.workers.dev"
+          u=$(curl -s --max-time 30 "$base/monitor/usage")
+          echo "::notice title=monitor/usage::$(echo "$u" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const j=JSON.parse(s);console.log(JSON.stringify({pc:j.pc,ps:j.ps,today:j.today,month:j.month&&{doRequests:j.month.doRequests,doGbS:j.month.doGbS,extraUsd:j.month.extraUsd},live:j.live}))}catch{console.log(s.slice(0,300))}})')"
+          sleep 60 # let the PC stream fill the live map for a minute
+          a=$(curl -s --max-time 30 "$base/live/activity?ns=ps2&world=1")
+          echo "::notice title=live/activity w1::$(echo "$a" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const j=JSON.parse(s);console.log(JSON.stringify({stream:j.stream,zones:j.zones,bases:(j.bases||[]).length,top:(j.bases||[]).slice(0,3)}))}catch{console.log(s.slice(0,300))}})')"
 
       - name: Smoke check /duels/pair (#83)
         if: inputs.deploy

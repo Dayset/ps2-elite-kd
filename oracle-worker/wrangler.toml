@@ -30,6 +30,13 @@ enabled = true
 binding = "SELF"
 service = "ps2-oracle"
 
+# ⚔️ Live fights per base (#78, Workers Paid plan 2026-10-29): the cache Worker's KillMonitor keeps
+# an in-memory live map of the PC event stream; src/fights.js asks it once a cycle per world
+# with a live alert (GET /live/activity). Missing or unreachable → no fights, nothing else changes.
+[[services]]
+binding = "CACHE"
+service = "ps2-elite-kd-cache"
+
 # Login: listens to the Census stream only while a challenge is open.
 [[durable_objects.bindings]]
 name = "AUTH"

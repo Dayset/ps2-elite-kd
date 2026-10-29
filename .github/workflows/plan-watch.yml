@@ -1,0 +1,56 @@
+name: Plan watch
+
+# 🔀 Automatic fallback to the Cloudflare free plan (owner 2026-10-29: the project must stay alive
+# on its own if the paid plan's card stops working). Hourly: scripts/plan-watch.mjs looks at the
+# account's subscriptions (needs "Billing: Read" on CLOUDFLARE_API_TOKEN) and at free-tier limit
+# errors in our own Workers; if the account is no longer on Workers Paid it commits
+# "plan": "free" to plan.json, and both Workers drop the paid extras within ~5 minutes.
+# It switches back to "paid" only after an automatic switch, when the subscription is back.
+# The run that switches ends red, so GitHub emails the owner.
+
+on:
+  schedule:
+    - cron: "41 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: plan-watch
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: |
+            plan.json
+            scripts/plan-watch.mjs
+            scripts/ci-commit-push.sh
+            package.json
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+      - name: Check the plan
+        id: check
+        env:
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          node scripts/plan-watch.mjs --write | tee plan-watch.log
+          msg=$(grep '^COMMIT: ' plan-watch.log | sed 's/^COMMIT: //' | tail -1)
+          echo "msg=$msg" >> "$GITHUB_OUTPUT"
+      - name: Commit the switch
+        if: steps.check.outputs.msg != ''
+        env:
+          MSG: ${{ steps.check.outputs.msg }} # via env, never pasted into the script (it quotes error text)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          COMMIT_DIR=plan.json bash scripts/ci-commit-push.sh "$MSG [bot]"
+          echo "::error title=Plan switched::see plan.json"
+          exit 1

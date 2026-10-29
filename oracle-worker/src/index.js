@@ -31,6 +31,11 @@ import { heatPlan } from "./heatmode.js";
 import { cutAwareDefends } from "./defend.js";
 import { liveHeat } from "./heat.js";
 import { computePockets } from "./pockets.js";
+import { liveActivity, fightsOf, fightRow, ensureFightTable } from "./fights.js";
+import { PlanSwitch } from "./plan.js";
+
+// 🔀 paid | free (plan.js, plan.json or the PLAN variable): free = no live fights call, no fight rows.
+const planSw = new PlanSwitch();
 import { alertFrames, archiveAlert, nextToArchive, putBundle, validBundle } from "./archive.js";
 export { AuthWatcher } from "./auth-watcher.js";
 import { parseWorldStates, serverStatus, holdFinals, serversHint, STEAM_NEWS_URL, pickSchedule, schedDue, schedHint } from "./maintenance.js";
@@ -191,6 +196,7 @@ export function pruneStatements(db, now) {
     db.prepare("DELETE FROM snap WHERE ts < ?").bind(now - 30 * 86400),
     db.prepare("DELETE FROM flip WHERE ts < ?").bind(now - 90 * 86400),
     db.prepare("DELETE FROM tick WHERE ts < ?").bind(now - 90 * 86400),
+    db.prepare("DELETE FROM fight WHERE ts < ?").bind(now - 90 * 86400), // ⚔️ per-base fight totals, like the ticks
     db.prepare("DELETE FROM pop WHERE ts < ?").bind(now - 30 * 86400),
     db.prepare("DELETE FROM challenge WHERE created < ?").bind(now - CHALLENGE_KEEP_S),
     // #82: one-time QR links (code hash only) and claim attempts (keyed IP hash), a day like the challenges.
@@ -287,7 +293,11 @@ export async function runCycle(env, nowMs = Date.now()) {
   const benchRows = new Map(((await db.prepare("SELECT b.key, b.slices FROM alert a JOIN bench b ON b.key = a.key WHERE a.start_ts > ? AND b.settled_ts IS NULL")
     .bind(now - 2 * WINDOW_S).all()).results || []).map((r) => [r.key, JSON.parse(r.slices)]));
   const out = [];
-  const ticks = [], benchUp = [], benchSettle = [];
+  const ticks = [], benchUp = [], benchSettle = [], fightRows = [];
+  // ⚔️ Live fights (#78, paid plan): one call per world with a live alert, to the cache Worker's live map.
+  const actCache = {};
+  let planP = null;
+  const activityFor = (w) => (actCache[w] ||= (planP ||= planSw.get(env)).then((plan) => (plan === "paid" ? liveActivity(env, w) : null)));
   const snap15 = {};
   // Population comes from Honu via the oracle-honu Actions job (/honu/ingest):
   // Honu's API is not reachable from Cloudflare's network. Use it while fresh.
@@ -342,6 +352,14 @@ export async function runCycle(env, nowMs = Date.now()) {
         state.pop_source = "honu";
         state.pop_age_s = now - p.ts;
         state.win_popadj = popAdjusted(state.win, state.pop, state.t);
+      }
+      // ⚔️ Per-base fight totals: shown and stored for the #78 backtest; the odds don't read them.
+      const fx = fightsOf(await activityFor(a.world), a.zone, state.owners);
+      if (fx) {
+        state.fights = fx.bases;
+        state.fights_live = fx.live;
+        if (fx.pop) state.pop_live = fx.pop;
+        fightRows.push({ key: a.key, ts: now, t: Math.round(((now - startTs) / 60) * 10) / 10, data: JSON.stringify(fightRow(fx)) });
       }
       out.push({ ...base, status: "live", state });
       live++;
@@ -489,6 +507,10 @@ export async function runCycle(env, nowMs = Date.now()) {
         state=COALESCE(excluded.state, alert.state), updated=excluded.updated`).bind(JSON.stringify(changedRows)));
   }
   if (ticks.length) writes.push(bulkInsert(db, "tick", ["key", "ts", "t", "terr", "win"], ticks));
+  if (fightRows.length) {
+    try { await ensureFightTable(db); writes.push(bulkInsert(db, "fight", ["key", "ts", "t", "data"], fightRows)); report.fights = fightRows.length; }
+    catch (e) { planSw.check(e); report.errors.push(`fight table: ${String(e && e.message).slice(0, 80)}`); }
+  }
   if (benchUp.length) {
     writes.push(db.prepare(`INSERT INTO bench (key, dur, slices)
       SELECT json_extract(value,'$.key'), json_extract(value,'$.dur'), json_extract(value,'$.slices') FROM json_each(?) WHERE true
@@ -508,6 +530,7 @@ export async function runCycle(env, nowMs = Date.now()) {
   const d = new Date(nowMs);
   if (d.getUTCHours() === 4 && d.getUTCMinutes() === 7) {
     await ensureAuthTables(db); // the link tables may not exist yet if nobody signed in since the deploy
+    await ensureFightTable(db); // ⚔️ same for the fight table (no live alert since the deploy)
     await db.batch(pruneStatements(db, now));
   }
 
@@ -738,7 +761,7 @@ async function handle(request, env) {
     const ageS = last ? now - last.ts : null;
     const lastCmd = await getMeta(db, "last_commander");
     const lastHonu = await getMeta(db, "last_honu");
-    return json({ ok: ageS !== null && ageS < 180, service: "ps2-oracle", now, servers: last ? serversHint(last.servers) : null, sched: last ? last.sched || null : null, last_cycle_age_s: ageS, last_ok_age_s: lastOk ? now - lastOk : null, last_cycle: last, last_commander: lastCmd, last_honu: lastHonu }, 200, { "Cache-Control": "no-store" });
+    return json({ ok: ageS !== null && ageS < 180, service: "ps2-oracle", now, plan: planSw.state(), servers: last ? serversHint(last.servers) : null, sched: last ? last.sched || null : null, last_cycle_age_s: ageS, last_ok_age_s: lastOk ? now - lastOk : null, last_cycle: last, last_commander: lastCmd, last_honu: lastHonu }, 200, { "Cache-Control": "no-store" });
   }
 
   // Manual kick + diagnostics: runs one cycle now unless one ran in the last
@@ -930,11 +953,12 @@ export default {
         if (k) await setMeta(env.DB, "last_archive", { ts: Math.floor(Date.now() / 1000), result: (await fanOutArchive(env, [k]))[0] });
       }
     }).catch(async (e) => {
+      planSw.check(e); // 🔀 a free-tier limit (card gone, account back on free): stop the paid extras at once
       try { await setMeta(env.DB, "last_crash", { ts: Math.floor(Date.now() / 1000), error: String(e && e.stack || e) }); } catch {}
     }));
   },
   async fetch(request, env) {
     try { return await handle(request, env); }
-    catch (e) { return json({ error: "internal", detail: String(e && e.message || e) }, 500); }
+    catch (e) { planSw.check(e); return json({ error: "internal", detail: String(e && e.message || e) }, 500); }
   },
 };
