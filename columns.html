@@ -101,7 +101,7 @@
 
     <nav class="st-toc" aria-label="On this page" data-i18n-aria-label="cp.tocAria">
       <div class="st-toc-group"><a href="#picture" data-i18n="cp.tocIdea">The idea</a> <span class="sep">·</span> <a href="#why-trackers" data-i18n="cp.tocWhy">Why trackers don’t have it</a> <span class="sep">·</span> <a href="#worked-example" data-i18n="cp.tocExample">Example</a> <span class="sep">·</span> <a href="#debug" data-i18n="cp.tocDebug">Debug columns</a></div>
-      <div class="st-toc-group"><a class="st-toc-sec" href="#adjusted">✨ Adjusted</a> <span class="sep">·</span> <a href="#ivi">⚔️ iVi</a> <span class="sep">·</span> <a href="#activity">🏃 Activity</a> <span class="sep">·</span> <a href="#brave">🦁 Brave</a> <span class="sep">·</span> <a href="#resist">🛡️ Resist</a> <span class="sep">·</span> <a href="#const">⚡ Const</a> <span class="sep">·</span> <a href="#matchup-kd">☠️ K/D</a> <span class="sep">·</span> <a href="#infantry" data-i18n="cp.tocInfantry">🪖 Infantry</a> <span class="sep">·</span> <a href="#zerg" data-i18n="cp.tocZerg">🪳 Zerg</a> <span class="sep">·</span> <a href="#vehicle-cut" data-i18n="cp.tocVehicle">🚜 Vehicle cut</a> <span class="sep">·</span> <a href="#padder" data-i18n="cp.tocPadder">💩 Padders</a> <span class="sep">·</span> <a href="#hut" data-i18n="cp.tocHut">What 🛖 means</a></div>
+      <div class="st-toc-group"><a class="st-toc-sec" href="#adjusted">✨ Adjusted</a> <span class="sep">·</span> <a href="#ivi">⚔️ iVi</a> <span class="sep">·</span> <a href="#activity">🏃 Activity</a> <span class="sep">·</span> <a href="#brave">🦁 Brave</a> <span class="sep">·</span> <a href="#resist">🛡️ Resist</a> <span class="sep">·</span> <a href="#const">⚡ Const</a> <span class="sep">·</span> <a href="#matchup-kd">☠️ K/D</a> <span class="sep">·</span> <a href="#infantry" data-i18n="cp.tocInfantry">🪖 Infantry</a> <span class="sep">·</span> <a href="#zerg" data-i18n="cp.tocZerg">🪳 Zerg</a> <span class="sep">·</span> <a href="#vehicle-cut" data-i18n="cp.tocVehicle">🚜 Vehicle cut</a> <span class="sep">·</span> <a href="#zerg-adj" data-i18n="cp.tocZergAdj">🪳⚔️ Zerg evening-out</a> <span class="sep">·</span> <a href="#padder" data-i18n="cp.tocPadder">💩 Padders</a> <span class="sep">·</span> <a href="#hut" data-i18n="cp.tocHut">What 🛖 means</a></div>
       <div class="st-toc-group"><a class="st-toc-sec" href="#public" data-i18n="cp.tocPublic">📊 Census / Fisu / Honu</a> <span class="sep">·</span> <a href="#pub-kd">KD</a> <span class="sep">·</span> <a href="#pub-kpm">KPM</a> <span class="sep">·</span> <a href="#pub-own-kpm">own KPM</a> <span class="sep">·</span> <a href="#pub-acc">Acc %</a> <span class="sep">·</span> <a href="#pub-hsr">HSR %</a> <span class="sep">·</span> <a href="#pub-ivi">IvI</a></div>
     </nav>
 
@@ -138,6 +138,7 @@
         <li data-i18n="cp.iviL2">Fast killing adds a bonus; slow, safe play costs a little.</li>
         <li data-i18n-html="cp.iviL3">Infantry only: vehicle and MAX kills above 10% lower it (<a href="#vehicle-cut">🚜</a>). Confirmed padders lose 10% (<a href="#padder">💩</a>).</li>
         <li data-i18n="cp.iviL4">PlayStation: the 600 baseline is divided by the PC/PlayStation kill-speed gap (rechecked weekly), so top players compare fairly with PC.</li>
+        <li data-i18n-html="cp.iviL5">PC: evened out for <a href="#zerg-adj">🪳 Zerg</a>: low 🪳 goes up a little, high 🪳 down, the average crowd (🪳 26.8) stays.</li>
       </ul>
       <ul class="st-hl">
         <li data-i18n-html="cp.iviHigh"><span class="up">High:</span> you beat strong players at a good pace.</li>
@@ -223,6 +224,18 @@
     </div>
 
     <div class="st-card">
+      <h3 id="zerg-adj" data-i18n="cp.zaH">🪳⚔️ Zerg evening-out on ⚔️ iVi</h3>
+      <p data-i18n="cp.zaP">Fighting inside a big crowd lifts the numbers a little beyond what you win on your own. We measured how much on real fights, take exactly that back, and give it to players who fight with less help.</p>
+      <ul class="st-list">
+        <li data-i18n-html="cp.zaL1"><b>Measured, not guessed:</b> 103,689 pairs of players who fought each other 30+ times. At the same ⚔️ iVi, each 🪳 step means about 0.08% fewer kills against the other player.</li>
+        <li data-i18n-html="cp.zaL2"><b>Both ways:</b> 🪳 below 26.8 (the average crowd, where players without a 🪳 score fight) goes <b>up</b>, above it goes down. At iVi 1,000: 🪳 0 → +23, 🪳 50 → −20, 🪳 99 → −62.</li>
+        <li data-i18n-html="cp.zaL3"><b>Checked on players it never saw:</b> fitted on half the players and tested on the other half, the 🪳 bias in their fights disappeared and fight predictions got slightly better.</li>
+        <li data-i18n="cp.zaL4">Same weight in every tier; most players move by 1% or less. No 🪳 score or PlayStation → unchanged. Vehicles are not counted twice: the 🚜 cut already handles them.</li>
+      </ul>
+      <p class="st-dim" data-i18n-html="cp.zaNote">Research and numbers: <a href="https://github.com/Dayset/ps2-elite-kd/blob/main/docs/zerg-adjustment.md">docs/zerg-adjustment.md</a> · discussion: <a href="https://github.com/Dayset/ps2-elite-kd/issues/84">issue #84</a>. Hover ⚔️ iVi to see your before → after.</p>
+    </div>
+
+    <div class="st-card">
       <h3 id="padder" data-i18n="cp.pdH">💩 Confirmed padders: −10% on ⚔️ iVi</h3>
       <p data-i18n="cp.pdP">Players confirmed farming kills on their own or friendly alt accounts get 💩 and lose 10% of iVi (kills on farm accounts are already left out). Hover 💩 for the reason. Think it’s wrong? Contact the site owner.</p>
     </div>
@@ -279,7 +292,7 @@
           <dt>📊 COI</dt><dd data-i18n="cp.dbgCoi">🛡️ Resist ÷ 0.6. 1.0 = soft opposition; higher = harder.</dd>
           <dt>📉 Slope</dt><dd data-i18n="cp.dbgSlope">The angle of your line. Negative = your K/D drops against harder enemies. Feeds 🦁 Brave.</dd>
           <dt>🎈 Inflation</dt><dd data-i18n="cp.dbgInfl">Lifetime KD ÷ KD against enemies killing at 0.5+ per minute. Above 1 = easy fights inflate your KD. Lower is better.</dd>
-          <dt>🪳⚔️ iVi</dt><dd data-i18n="cp.dbgZchg">⚔️ iVi evened out for 🪳 Zerg: (iVi + 3100) × e^(−0.00021 × (🪳 − 26.8)) − 3100. Measured on 103,689 duel pairs: at the same iVi, each 🪳 step costs about 0.08% of kills in duels, about the same number of points in every tier. no 🪳 = unchanged (players without 🪳 duel like 🪳 26.8); at iVi 1,000, 🪳 0 → +23, 🪳 50 → −20, 🪳 99 → −62. No vehicle part: the 🚜 cut already handles vehicles. PC only.</dd>
+          <dt>⚔️ iVi before 🪳</dt><dd data-i18n="cp.dbgAdjs0">⚔️ iVi before the 🪳 Zerg evening-out, to compare with the ⚔️ iVi column.</dd>
         </dl>
       </div>
 
@@ -301,7 +314,7 @@
   </main>
   <button id="toTop" class="st-totop" aria-label="Back to top" title="Back to top" data-i18n-aria-label="cp.top" data-i18n-title="cp.top">↑</button>
   <script type="module" src="i18n.mjs"></script>
-  <script type="module" src="columns-example.mjs?v=20261027-z79"></script>
+  <script type="module" src="columns-example.mjs?v=20261029-zadj1"></script>
   <script>
     // TOC jump into the collapsed debug section opens it first.
     document.querySelectorAll('.st-toc a[href^="#"]').forEach(function (a) {

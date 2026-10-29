@@ -31,6 +31,7 @@ import { VEH_CUT } from "../vehicle-cut.mjs";
 import { nbdCuts, newbieFactor, newbieCleared, newPlayerHours, NBD_BAND, NBD_NEW_Q } from "../newbie-diff.mjs";
 import { hutCuts, hutParts, hutCleared, deathsPerMin, HUT_ACT_MULT, HUT_ACT_MULT_TOP, HUT_EXP_BAND, playMinutes, HUT_DPM_BAND, HUT_INF_BAND, HUT_ACC_BAND, HUT_MARK_MIN } from "../hut.mjs";
 import { traitPools, aimGap, zergScore } from "../trait-scores.mjs";
+import { zergChargedAdjs, ZERG_CHARGE } from "../zerg-charge.mjs";
 import { crowdSample, crowdPercentiles, zergEstimate, zergCleared, CROWD_MIN_DEATHS, CROWD_MIN_MIN, REV_SOFT_BAND, REV_CONFIRM, ZEST_MIN, HL_MIN, HL_W } from "../zerg-revive.mjs";
 import { tracXpIds, tracSample, tractorCuts, tractorRule, tractorCleared, TRAC_INF_Q, TRAC_XP_Q, TRAC_FALLBACK_Q, TRAC_XP_MIN } from "../tractor.mjs";
 import { vehDiffStart, vehDiffFactor, vehDiffCleared } from "../diff-vehicle.mjs";
@@ -368,7 +369,7 @@ export function uniqueQueries(rows, keyOf = new Map()) {
 }
 
 /** Ranks + 🧪 outlier guard over the same shown values (one pass over the cache) + 🙈 hidden summary. */
-export function buildRanksWithGuard(dataDir, { known = KNOWN_EXTREMES } = {}) {
+export function buildRanksWithGuard(dataDir, { known = KNOWN_EXTREMES, zergCharge: zergChargeOn = true } = {}) {
   const players = [];
   const hidden = readHidden(dataDir);
   const confirmed = readConfirmedPadders(dataDir);
@@ -427,6 +428,7 @@ export function buildRanksWithGuard(dataDir, { known = KNOWN_EXTREMES } = {}) {
   const newbieDiff = applyNewbieDiffColumn(ranks, reviewedJson, playMin); // 🐣 trailing "nbd" column (play-time factor on negative 🔀 Diff)
   const zergRevive = applyReviveColumn(ranks, reviewedJson, revShare); // 🪳 trailing "rvp" / "crp" columns (revive / crowd percentiles)
   const tractor = applyTractorColumn(ranks, reviewedJson, tracS); // 🚜 trailing "trc" column (1 = name mark)
+  const zergCharge = applyZergChargeColumn(ranks, { enabled: zergChargeOn }); // 🪳⚔️ ⚔️ iVi evened out for 🪳 Zerg (#84); trailing "adjs0" = before
   const found = findOutliers(players, [...METRIC_COLS, ...SESSION_METRIC_IDS], { known });
   found.items.push(...forensicsGuardItems(players));
   const guard = guardStatus(found);
@@ -440,6 +442,7 @@ export function buildRanksWithGuard(dataDir, { known = KNOWN_EXTREMES } = {}) {
     vehDiff,
     zergRevive,
     tractor,
+    zergCharge,
     newbieDiff,
     assistGroups: assistGroups(players), // 🤝 groups stay build-log only (the 🤝 apk column itself is public since t382u)
     assistGap: assistGapStatus(players),
@@ -774,8 +777,38 @@ export function applyReviveColumn(ranks, reviewed, revShare) {
  * position by ⚔️ adjusted iVi among ranked players with a value (thin samples
  * have none). "cleared" = owner override ("penalty": "cleared"): no 💩, no penalty.
  */
+/**
+ * 🪳⚔️ ⚔️ iVi evened out for 🪳 Zerg (#84, owner 2026-10-29: replaces the plain adjusted iVi).
+ * zerg-charge.mjs: (iVi + 3100) · exp(−0.00021 · (🪳 − 26.8)) − 3100, measured on 103,689 PC
+ * duel pairs (docs/zerg-adjustment.md). Below 🪳 26.8 up, above down; no 🪳 → unchanged.
+ * Runs after the 🪳 inputs exist ("inflation", "apk", "rvp", "crp"); the 🪳 pools don't use adjs,
+ * so nothing is circular. Always adds "adjs0" (the value before; PS and no-🪳 rows = adjs)
+ * so ranks-lite keeps one column set in both rooms. enabled = false (PlayStation): unchanged.
+ */
+export function applyZergChargeColumn(ranks, { enabled = true } = {}) {
+  const ci = (id) => ranks.cols.indexOf(id);
+  const iA = ci("adjs");
+  const get = (r, id) => { const i = ci(id); return i >= 0 ? r[i] : null; };
+  const colOf = (id) => ranks.rows.map((r) => get(r, id));
+  const tp = traitPools({ inflation: colOf("inflation"), apk: colOf("apk") });
+  ranks.cols.push("adjs0");
+  let changed = 0, up = 0, down = 0;
+  for (const r of ranks.rows) {
+    const a = r[iA];
+    r.push(a);
+    if (!enabled || typeof a !== "number" || !Number.isFinite(a)) continue;
+    const z = zergScore(tp, get(r, "inflation"), get(r, "apk"), get(r, "rvp"), get(r, "crp"));
+    const v = z ? zergChargedAdjs(a, z.score) : null;
+    if (v == null) continue;
+    const nv = Math.round(v * 10) / 10;
+    if (nv !== a) { changed++; if (nv > a) up++; else down++; }
+    r[iA] = nv;
+  }
+  return { enabled, changed, up, down, center: ZERG_CHARGE.CENTER, k: ZERG_CHARGE.K, lambda: ZERG_CHARGE.LAMBDA };
+}
+
 export function padderPenaltyStatus(players, ranks) {
-  const ia = ranks.cols.indexOf("adjs"), is = ranks.cols.indexOf("slug");
+  const ia = ranks.cols.indexOf("adjs0") >= 0 ? ranks.cols.indexOf("adjs0") : ranks.cols.indexOf("adjs"), is = ranks.cols.indexOf("slug"); // 💩 / 🚜 steps come before the 🪳 evening-out (#84)
   const fin = (v) => typeof v === "number" && Number.isFinite(v);
   const after = new Map(ranks.rows.filter((r) => fin(r[ia])).map((r) => [r[is], r[ia]]));
   const before = new Map(after);
@@ -809,7 +842,7 @@ export function padderPenaltyStatus(players, ranks) {
  */
 const WATCH = new Set(["igorrrrrr", "renamedsoldier12345", "pikaqiuill", "loontiq", "zugie", "nebelhexe", "shlodog", "lilkavs", "kijax", "libo2"]);
 export function vehicleCutStatus(players, ranks, { topN = 150 } = {}) {
-  const ia = ranks.cols.indexOf("adjs"), is = ranks.cols.indexOf("slug");
+  const ia = ranks.cols.indexOf("adjs0") >= 0 ? ranks.cols.indexOf("adjs0") : ranks.cols.indexOf("adjs"), is = ranks.cols.indexOf("slug"); // 💩 / 🚜 steps come before the 🪳 evening-out (#84)
   const fin = (v) => typeof v === "number" && Number.isFinite(v);
   const after = new Map(ranks.rows.filter((r) => fin(r[ia])).map((r) => [r[is], r[ia]]));
   const before = new Map(after);
@@ -1150,8 +1183,8 @@ export function buildNames(index, { withFile = false } = {}) {
  * "inflation" rides along for 🪳 Zerg (owner 2026-10-21, trait-scores.mjs): the
  * lower of the 🎈 Inflation and 🤝 Assists percentiles needs the Inflation pool.
  */
-export const LITE_COLS = ["name", "slug", "adjs", "cons", "apk", "inf", "infMax", "infVeh", "ivi", "inflation", "hut", "hutMk", "vdf", "rvp", "crp", "nbd", "nbh", "trc"];
-const LITE_DIGITS = { adjs: 1, cons: 4, apk: 3, inf: 1, infMax: 1, infVeh: 1, ivi: 1, inflation: 2, hut: 3, hutMk: 0, vdf: 3, rvp: 0, crp: 0, nbd: 3, nbh: 1, trc: 0 };
+export const LITE_COLS = ["name", "slug", "adjs", "adjs0", "cons", "apk", "inf", "infMax", "infVeh", "ivi", "inflation", "hut", "hutMk", "vdf", "rvp", "crp", "nbd", "nbh", "trc"];
+const LITE_DIGITS = { adjs: 1, adjs0: 1, cons: 4, apk: 3, inf: 1, infMax: 1, infVeh: 1, ivi: 1, inflation: 2, hut: 3, hutMk: 0, vdf: 3, rvp: 0, crp: 0, nbd: 3, nbh: 1, trc: 0 };
 export function buildRanksLite(ranks) {
   const ix = LITE_COLS.map((k) => (ranks && Array.isArray(ranks.cols) ? ranks.cols.indexOf(k) : -1));
   if (ix.some((i) => i < 0) || !Array.isArray(ranks.rows)) return null;
@@ -1254,7 +1287,7 @@ if (isMain) {
     const marathonHidden = autoHideMarathonRampage(dataDir);
     if (marathonHidden.length) console.log(`auto-hide: ${marathonHidden.length} marathon rampage account(s) added to hidden.json: ${marathonHidden.map((a) => a.name).join(", ")}`);
   }
-  const { ranks: out, guard, hidden: hiddenInfo, bins, session, forensics: forensicsInfo, review, assistGroups: assistInfo, padderPenalty: padderInfo, vehicleCut: vehCutInfo, hut: hutInfo, vehDiff: vehDiffInfo, zergRevive: zrevInfo, tractor: tracInfo, newbieDiff: nbdInfo, assistGap: gapInfo } = buildRanksWithGuard(dataDir, room === "ps" ? { known: {} } : undefined);
+  const { ranks: out, guard, hidden: hiddenInfo, bins, session, forensics: forensicsInfo, review, assistGroups: assistInfo, padderPenalty: padderInfo, vehicleCut: vehCutInfo, hut: hutInfo, vehDiff: vehDiffInfo, zergRevive: zrevInfo, tractor: tracInfo, newbieDiff: nbdInfo, assistGap: gapInfo } = buildRanksWithGuard(dataDir, room === "ps" ? { known: {}, zergCharge: false } : undefined);
   if (room === "ps") addServerColumn(out, JSON.parse(fs.readFileSync(path.join(dataDir, "index.json"), "utf8")));
   fs.writeFileSync(path.join(dataDir, "ranks.json"), JSON.stringify(out) + "\n");
   try {

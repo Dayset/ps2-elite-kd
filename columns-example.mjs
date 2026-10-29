@@ -15,6 +15,8 @@ import { rfBaseFor } from "./ps-baseline.mjs?v=20261027-z79";
 import { percentileOf, quantile } from "./dist.mjs?v=20261010-sav1";
 import { slugKey, bareName } from "./rank-row.mjs?v=20261027-z79";
 import { PADDER_PENALTY_REF } from "./padding.mjs?v=20261023-short1";
+import { traitPools, zergScore } from "./trait-scores.mjs?v=20261027-z79";
+import { zergChargedAdjs, ZERG_CHARGE } from "./zerg-charge.mjs?v=20261029-zadj1";
 
 export const DEMO_NAME = "YuigahamaYui";
 
@@ -39,13 +41,23 @@ export function findRanksRow(payload, name) {
   return row ? Object.fromEntries(payload.cols.map((c, j) => [c, row[j]])) : null;
 }
 
-/** Every number the worked example shows, from one raw player file (+ population pools). */
-export function exampleFacts(raw, pools = {}) {
+/** 🪳 score of a ranks.json row (PC; null = no score), from the payload's 🎈 / 🤝 pools. */
+export function rowZerg(payload, row) {
+  if (!payload || !row) return null;
+  const col = (id) => { const i = payload.cols.indexOf(id); return i >= 0 ? payload.rows.map((r) => r[i]) : []; };
+  const z = zergScore(traitPools({ inflation: col("inflation"), apk: col("apk") }), row.inflation, row.apk, row.rvp, row.crp);
+  return z ? z.score : null;
+}
+
+/** Every number the worked example shows, from one raw player file (+ population pools, + the row's 🪳 on PC). */
+export function exampleFacts(raw, pools = {}, { zerg = null } = {}) {
   const p = normalizePlayer(raw);
   const m = playerMetrics(p);
   const cp = consistencyParts(p);
   const s = m.m || {};
   const own = m.ownKpm;
+  // 🪳⚔️ (#84): PC ⚔️ iVi is evened out for 🪳 Zerg as the last step (zerg-charge.mjs).
+  const zeOk = p.room !== "ps" && fin(zerg) && fin(m.adjs);
   const preCut = m.adjsBase != null ? m.adjsBase : m.adjsPreVeh != null && !m.poop ? m.adjsPreVeh : m.adjs;
   return {
     name: bareName(p.display) || p.display,
@@ -63,8 +75,10 @@ export function exampleFacts(raw, pools = {}) {
     poop: !!m.poop,
     afterPoop: m.poop ? (m.adjsPreVeh != null ? m.adjsPreVeh : m.adjs) : NaN,
     vehCut: m.vehCut || 0, vehOnly: m.vehOnly, maxShare: m.maxShare, vehCutVeh: m.vehCutVeh, vehCutMax: m.vehCutMax,
-    adjs: m.adjs,
-    pct: pools.adjs ? percentileOf(pools.adjs, m.adjs) : null,
+    adjsPreZerg: m.adjs,
+    zerg: zeOk ? zerg : null,
+    adjs: zeOk ? zergChargedAdjs(m.adjs, zerg) : m.adjs,
+    pct: pools.adjs ? percentileOf(pools.adjs, zeOk ? zergChargedAdjs(m.adjs, zerg) : m.adjs) : null,
     median: pools.adjs ? quantile(pools.adjs, 0.5) : NaN,
     iviPct: pools.ivi ? percentileOf(pools.ivi, m.ivi) : null,
     act: m.act, slope: m.slope,
@@ -114,8 +128,9 @@ export function exampleCard(x) {
     const parts = [];
     if (x.vehCutVeh > 0) parts.push(tr("veh.partVehicle", "vehicle kills {p}%: −{c}%", { p: Math.round(x.vehOnly * 100), c: Math.round(x.vehCutVeh * 100) }));
     if (x.vehCutMax > 0) parts.push(tr("veh.partMax", "MAX kills {p}%: −{c}%", { p: Math.round(x.maxShare * 100), c: Math.round(x.vehCutMax * 100) }));
-    items.push(tr("cx.veh", '<a href="#vehicle-cut">🚜</a> {parts} → ⚔️ iVi <b>{v}</b>', { parts: parts.join(tr("veh.join", " · ")), v: fmtSigned(x.adjs) }));
+    items.push(tr("cx.veh", '<a href="#vehicle-cut">🚜</a> {parts} → ⚔️ iVi <b>{v}</b>', { parts: parts.join(tr("veh.join", " · ")), v: fmtSigned(x.adjsPreZerg) }));
   }
+  if (x.zerg != null) items.push(tr("cx.zerg", '<a href="#zerg-adj">🪳</a> Zerg {z}, evened out to the average crowd (🪳 {c}) → ⚔️ iVi <b>{v}</b>', { z: x.zerg, c: ZERG_CHARGE.CENTER, v: fmtSigned(x.adjs) }));
   const list = items.map((t) => `        <li>${t}</li>`).join("\n");
   return (
     tr("cx.trackers", '<p><b>What trackers show:</b> <span class="st-num">KD {kd} · IvI {ivi}</span>, which looks {look}.</p>', { kd: f(x.kd), ivi: r0(x.ivi), look: trackerLook(x.iviPct) }) +
@@ -168,7 +183,7 @@ if (typeof document !== "undefined") {
       const raw = await loadFile(row.slug);
       if (my !== seq) return;
       if (!raw) { say(notCachedHtml(typed)); return; }
-      const x = exampleFacts(raw, pools);
+      const x = exampleFacts(raw, pools, { zerg: rowZerg(payload, row) });
       // ranks.json is what the main table shows: prefer its final ⚔️ iVi if the file is a newer copy.
       if (fin(row.adjs) && Math.abs(row.adjs - x.adjs) > 0.5) console.warn("columns example: ranks.json vs file iVi differ", row.adjs, x.adjs);
       say("");

@@ -64,12 +64,12 @@ const lite = JSON.parse(fs.readFileSync(path.join(DIR, "ranks-lite.json"), "utf8
 const ci = (id) => lite.cols.indexOf(id);
 const colOf = (id) => lite.rows.map((r) => r[ci(id)]);
 const tp = traitPools({ adjs: colOf("adjs"), ivi: colOf("ivi"), inflation: colOf("inflation"), apk: colOf("apk") });
-const adjsPool = colOf("adjs").filter(fin).sort((a, b) => a - b);
+const adjsPool = colOf(ci("adjs0") >= 0 ? "adjs0" : "adjs").filter(fin).sort((a, b) => a - b); // fit on iVi BEFORE the 🪳 evening-out
 const P = new Map();
 for (const r of lite.rows) {
   const g = (id) => r[ci(id)];
   const z = zergScore(tp, g("inflation"), g("apk"), g("rvp"), g("crp"));
-  P.set(g("slug"), { name: g("name"), slug: g("slug"), adjs: g("adjs"), inf: g("inf"), infVeh: g("infVeh"), infMax: g("infMax"), zerg: z ? z.score : null, tier: tierOf(g("adjs"), adjsPool) });
+  P.set(g("slug"), { name: g("name"), slug: g("slug"), adjs: ci("adjs0") >= 0 ? g("adjs0") : g("adjs"), inf: g("inf"), infVeh: g("infVeh"), infMax: g("infMax"), zerg: z ? z.score : null, tier: tierOf(ci("adjs0") >= 0 ? g("adjs0") : g("adjs"), adjsPool) });
 }
 const cidNames = ROOM === "pc" && fs.existsSync(path.join(DIR, "cid-names.json")) ? JSON.parse(fs.readFileSync(path.join(DIR, "cid-names.json"), "utf8")) : {};
 const resolve = (name, srv) => {

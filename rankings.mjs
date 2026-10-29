@@ -34,6 +34,7 @@ import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261023-sho
 import { infMedian } from "./tractor.mjs?v=20261024-trac1";
 import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261022-wpc1";
 import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261027-z79";
+import { zergChargedAdjs } from "./zerg-charge.mjs?v=20261029-zadj1";
 import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, DIFF_THIRD, aimGapCellTip, zergCellTip, zergEstHtml } from "./trait-tips.mjs?v=20261024-crowd1";
 import { ZREV_NOTE, zergEstimate } from "./zerg-revive.mjs?v=20261024-crowd1";
 import { VDIFF_NOTE } from "./diff-vehicle.mjs?v=20261023-short1";
@@ -290,6 +291,8 @@ export function initRankings(host) {
         infVeh: idx.infVeh != null ? r[idx.infVeh] : null,
         // 🚜 vehicle / MAX cut % already applied to adjs (null = none).
         vcut: idx.vcut != null ? r[idx.vcut] : null,
+        // ⚔️ iVi before the 🪳 evening-out (#84, build-ranks "adjs0"); adjs is already evened out.
+        adjs0: idx.adjs0 != null && Number.isFinite(r[idx.adjs0]) ? r[idx.adjs0] : null,
         // 🛖 safe-spot damping factor on positive 🔀 Diff (hut.mjs; null = none).
         hut: idx.hut != null && Number.isFinite(r[idx.hut]) ? r[idx.hut] : null,
         // 🛖 shown only where the drop is meaningful (build-ranks: ≥ HUT_MARK_MIN points).
@@ -333,7 +336,15 @@ export function initRankings(host) {
       const colOf = (id) => (idx[id] != null ? payload.rows.map((r) => r[idx[id]]) : []);
       const tp = traitPools({ adjs: colOf("adjs"), ivi: colOf("ivi"), inflation: colOf("inflation"), apk: colOf("apk") });
       for (const o of rows) {
-        const g = aimGap(tp, o.adjs, o.ivi, o.hut, o.vdf, o.nbd), z = zergScore(tp, o.inflation, o.apk, o.rvp, o.crp);
+        const z = zergScore(tp, o.inflation, o.apk, o.rvp, o.crp);
+        // 🪳⚔️ (#84): ranks.json rows are already evened out ("adjs0" = before); a row rebuilt from this
+        // browser's own fresh copy has no "adjs0" yet, so even it out here the same way (PC only).
+        if (ROOM !== "ps" && o.adjs0 == null && fin(o.adjs) && z) {
+          o.adjs0 = o.adjs;
+          o.adjs = Math.round(zergChargedAdjs(o.adjs, z.score) * 10) / 10;
+          if (pools.adjs) o.pcts.adjs = pctOf(pools.adjs, o.adjs);
+        }
+        const g = aimGap(tp, o.adjs, o.ivi, o.hut, o.vdf, o.nbd);
         o.diff = g ? g.score : null; o._gap = g;
         o.zerg = z ? z.score : null; o._zerg = z;
         o.zest = z ? null : zergEstimate(o.rvp, o.crp); // "~N" estimate: display only, never in o.zerg / pools / sorting / marks
@@ -482,7 +493,12 @@ export function initRankings(host) {
 
   /** 🚜 vehicle / MAX cut hover for the ⚔️ iVi cell (vehicle-cut.mjs, no visible mark): parts + total; "" without a cut. */
   function vcutTip(row) {
-    return row && row.vcut > 0 ? vehicleCutTip(row.infVeh, row.infMax, row.vcut) : "";
+    const v = row && row.vcut > 0 ? vehicleCutTip(row.infVeh, row.infMax, row.vcut) : "";
+    // 🪳⚔️ (#84): ⚔️ iVi is evened out for 🪳 Zerg at build time; say so when it moved the value.
+    const z = row && fin(row.adjs0) && fin(row.adjs) && Math.abs(row.adjs - row.adjs0) >= 0.5
+      ? tr("rk.zergAdjTip", "🪳 Zerg: {a} → {b}, evened out to the average crowd (🪳 26.8), measured on 100,000+ duel pairs. Low 🪳 goes up, high 🪳 down; details under “What the columns mean”", { a: Math.round(row.adjs0).toLocaleString(), b: Math.round(row.adjs).toLocaleString() })
+      : "";
+    return [v, z].filter(Boolean).join(". ");
   }
 
   function cellHtml(c, row) {

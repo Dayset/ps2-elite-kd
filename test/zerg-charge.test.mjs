@@ -55,16 +55,34 @@ test("missing 🪳 or iVi = null", () => {
   assert.equal(zergChargedAdjs(NaN, 30), null);
 });
 
-test("the column is debug-only, PC-only, translated, and documented", () => {
+test("⚔️ iVi is the evened-out value on PC: page, Rankings and build agree", async () => {
   const src = fs.readFileSync(path.join(root, "stats-table.mjs"), "utf8");
-  const dbg = src.slice(src.indexOf("const adjDebugCols"), src.indexOf("const adjCols ="));
-  assert.ok(dbg.includes('id: "zchg"'), "zchg sits in adjDebugCols");
   const vis = src.slice(src.indexOf("const adjVisibleCols"), src.indexOf("const adjDebugCols"));
-  assert.ok(!vis.includes('"zchg"'), "not in the default view");
-  assert.match(dbg, /id: "zchg"[\s\S]*?\$\.IS_PS[\s\S]*?zergChargedAdjs/);
-  assert.match(dbg, /tr\("col\.zchg"/);
-  assert.match(dbg, /tr\("tip\.zchg"/);
+  assert.match(vis, /id: "adjs"[^\n]*fn: \(r\) => zAdjs\(r\)/, "⚔️ iVi column uses the evened-out value");
+  assert.match(src, /const zAdjs = [\s\S]*?\$\.IS_PS[\s\S]*?zergChargedAdjs/, "PC only");
+  const dbg = src.slice(src.indexOf("const adjDebugCols"), src.indexOf("const adjCols ="));
+  assert.ok(dbg.includes('id: "adjs0"'), "the before value is a debug column");
+  const rk = fs.readFileSync(path.join(root, "rankings.mjs"), "utf8");
+  assert.match(rk, /ROOM !== "ps" && o\.adjs0 == null[\s\S]*?zergChargedAdjs/);
+  const { applyZergChargeColumn, LITE_COLS } = await import("../scripts/build-ranks.mjs");
+  assert.ok(LITE_COLS.includes("adjs0"));
+  const mk = () => ({ cols: ["name", "adjs", "inflation", "apk", "rvp", "crp"], rows: [["a", 1000, 3.5, 0.6, null, null], ["b", 1000, 1.2, 0.05, null, null], ["c", 1000, null, null, null, null], ["d", 900, 2, 0.3, null, null], ["e", 800, 1.8, 0.2, null, null]] });
+  const r = mk(); const info = applyZergChargeColumn(r);
+  const i0 = r.cols.indexOf("adjs0"), ia = r.cols.indexOf("adjs");
+  assert.ok(i0 > 0 && r.rows.every((row) => row[i0] != null));
+  assert.equal(r.rows[2][ia], 1000, "no 🪳 → unchanged");
+  assert.ok(r.rows[0][ia] < 1000 && r.rows[1][ia] > 1000, "high 🪳 down, low 🪳 up");
+  assert.equal(info.up + info.down, info.changed);
+  const ps = mk(); applyZergChargeColumn(ps, { enabled: false });
+  assert.deepEqual(ps.rows.map((row) => row[1]), mk().rows.map((row) => row[1]), "PlayStation unchanged");
+});
+
+test("documented with the research", () => {
   const en = JSON.parse(fs.readFileSync(path.join(root, "i18n/en.json"), "utf8"));
-  for (const k of ["col.zchg", "tip.zchg", "cp.dbgZchg"]) assert.ok(en[k], k);
-  assert.ok(fs.readFileSync(path.join(root, "columns.html"), "utf8").includes('data-i18n="cp.dbgZchg"'));
+  for (const k of ["col.adjs0", "tip.adjs0", "adjs.zergTip", "rk.zergAdjTip", "cp.zaH", "cp.zaNote", "cp.iviL5", "cp.dbgAdjs0"]) assert.ok(en[k], k);
+  assert.match(en["cp.zaNote"], /docs\/zerg-adjustment\.md/);
+  assert.match(en["cp.zaNote"], /issues\/84/);
+  const html = fs.readFileSync(path.join(root, "columns.html"), "utf8");
+  assert.ok(html.includes('id="zerg-adj"') && html.includes('data-i18n-html="cp.zaNote"'));
+  assert.ok(fs.existsSync(path.join(root, "docs/zerg-adjustment.md")));
 });

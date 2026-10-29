@@ -16,6 +16,7 @@ The opposition-weighted iVi score, adjusted for your own kill speed (`adjs`).
 - Values below zero display as **0** ("Below the rating scale") and sort to the bottom.
 - 💩 **Confirmed stat padders** (owner decision in `data/reviewed.json`) lose **10%** (a score at or below 0 gets a fixed drop instead, never a sign flip). 💩 shows after the name; the hover says why and to contact the site owner to clarify.
 - 🚜 **Vehicle + MAX cuts** (after the 💩 penalty; iVi measures infantry skill only): vehicle cut = `max(0, vehicle% − 10%)`, MAX cut = `max(0, MAX% − 10%)` of lifetime kills, added up with **no cap** (96% vehicle → −86%; 45% vehicle + 40% MAX → −65%). Pure infantry is untouched; no infantry data (under 100 kills) = no cut. No visible mark: the iVi value's hover lists each part. Owner exemption: `vehicleCutCleared` in `data/reviewed.json`.
+- 🪳 **Zerg evening-out** (PC, since 2026-10-29, last step): `(iVi + 3100) × e^(−0.00021 × (🪳 − 26.8)) − 3100`. Below 🪳 26.8 the score goes up, above it goes down; no 🪳 score or PlayStation = unchanged. Measured on 103,689 infantry duel pairs and checked on held-out players: [docs/zerg-adjustment.md](zerg-adjustment.md).
 
 ### 🪖 Infantry
 
@@ -55,7 +56,7 @@ These are hidden by default. Tick **show older debug stats** in the footer to se
 
 - **⚙️ Mech%**: the estimated share of your fights that are vehicle or mech play. It's projected from Resist, not measured from shooting.
 - **🎈 Inflation**: overall K/D ÷ K/D against enemies at **0.5 weapon KPM or higher**. Values above 1.0 mean the overall K/D is higher than the K/D against those enemies. The average player's enemy KPM is about 0.35 for reference. It's hidden by default because it rarely shows anything meaningful.
-- **🪳⚔️ iVi** (#84): ⚔️ iVi evened out for 🪳 Zerg, `(iVi + 3100) × e^(−0.00021 × (🪳 − 26.8)) − 3100` (`zerg-charge.mjs`). It is the iVi that gives the same duel results at 🪳 26.8: below it it goes up a little, above it goes down (at iVi 1,000: 🪳 0 → +23, 🪳 50 → −20, 🪳 99 → −62). Measured on 103,689 PC infantry killboard pairs with vehicle and MAX shares held fixed; checked on held-out players. Center 26.8 (owner, measured): players without a 🪳 score keep their plain iVi and duel like 🪳 26.8 (95% 17.5–36.5). About the same number of points in every tier, margin ±45%. PC only.
+- **⚔️ iVi before 🪳** (#84): the adjusted iVi before the 🪳 Zerg evening-out (ranks.json `adjs0`), to compare with ⚔️ iVi.
 - **🎯🎈 ivi**: the opposition-weighted IvI before the speed adjustment. It's public IvI × Resistance tempering. The 🎈 is a label, not a value. The status page's red-flag review uses this value.
 - **eKPM / own KPM**: the average enemy weapon pace, and your own pace. They're kept separate.
 - **📊 COI**: the combat output index, derived from Resist.

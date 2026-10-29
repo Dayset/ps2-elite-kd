@@ -1,12 +1,14 @@
 /**
- * 🪳⚔️ Zerg-adjusted iVi (debug column only, #84; measured 2026-10-28, scripts/zerg-pairs.mjs).
+ * 🪳⚔️ Zerg-adjusted iVi (#84; measured 2026-10-28, scripts/zerg-pairs.mjs; docs/zerg-adjustment.md).
+ * Since 2026-10-29 (owner) this IS ⚔️ iVi on PC: build-ranks stores it as "adjs" ("adjs0" = before),
+ * stats-table.mjs and rankings.mjs apply it to rows the build has not seen yet.
  *
  * The ⚔️ iVi that would give the same duel results at the reference 🪳 Zerg (CENTER = 26.8):
  *   zergAdj = (iVi + K) · exp(−λ · (🪳 − 26.8)) − K
  * Below 🪳 26.8 the score goes up a little, above it goes down.
  *
  * Why 26.8 (owner 2026-10-28, "data driven"): players with no 🪳 score keep
- * their plain iVi in this column, and in duels they play like 🪳 26.8 (95 % 17.5…36.5); the median
+ * their plain iVi, and in duels they play like 🪳 26.8 (95 % 17.5…36.5); the median
  * 🪳 of players who have one is 31 (top 1 %: 8, top 1–5 %: 16, lower half: 40). 26.8 sits
  * inside that range, so adjusted and plain players compare fairly.
  *
@@ -23,7 +25,7 @@
  * 🪳 0 → +23, 🪳 50 → −20, 🪳 99 → −62; 95 % margin about ±45 %). Missing 🪳 (or iVi) → null ("—").
  * No vehicle term: the 🚜 cut already takes vehicle play out of ⚔️ iVi, and in duels
  * vehicle users get MORE kills than even their uncut iVi says.
- * DOM-free; used by stats-table.mjs (debug column) and the tests.
+ * DOM-free; used by scripts/build-ranks.mjs, stats-table.mjs, rankings.mjs and the tests.
  */
 export const ZERG_CHARGE = Object.freeze({ K: 3100, LAMBDA: 0.00021, CENTER: 26.8 });
 

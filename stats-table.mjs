@@ -8,7 +8,7 @@ import { newbieFactor, newPlayerHours } from "./newbie-diff.mjs?v=20261023-nbh1"
 import { isFiniteNum } from "./math.mjs?v=20261027-z79";
 import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261027-z79";
 import { zergEstimate } from "./zerg-revive.mjs?v=20261024-crowd1";
-import { zergChargedAdjs } from "./zerg-charge.mjs?v=20261028-zchg3";
+import { zergChargedAdjs } from "./zerg-charge.mjs?v=20261029-zadj1";
 import { infMedian } from "./tractor.mjs?v=20261024-trac1";
 import { mountWeapons } from "./weapons.mjs?v=20261022-wp4";
 import { mountKillFeed } from "./kill-feed.mjs?v=20261028-os2";
@@ -112,6 +112,23 @@ export function createStatsTable($) {
   const aimGapPool = () => aimGapScores;
 
   const zergPool = () => zergScores;
+
+  // ⚔️ iVi evened out for 🪳 Zerg (#84, zerg-charge.mjs; ranks.json stores the same value, "adjs0" = before).
+  // PC only; no 🪳 (or before ranks-lite loads) → the plain value. Thin samples stay NaN ("—").
+  /** ⚔️ iVi cell hover part: "🪳 31: 1,234 → 1,226 …" when the 🪳 evening-out moved the value by ≥ 0.5. */
+  const zergAdjTip = (r) => {
+    const a = shownValue(r, "adjs"), b = zAdjs(r);
+    if (!isFiniteNum(a) || !isFiniteNum(b) || Math.abs(b - a) < 0.5) return "";
+    const z = zergScore(traitP, shownValue(r, "inflation"), apkBySlug && apkBySlug.get(slugKey(r.p.display)), rvpOf(r.p.display), crpOf(r.p.display));
+    return tr("adjs.zergTip", "🪳 Zerg {z}: {a} → {b}, evened out to the average crowd (🪳 26.8), measured on 100,000+ duel pairs. Low 🪳 goes up, high 🪳 down; details under “What the columns mean”", { z: z ? z.score : "—", a: Math.round(a).toLocaleString(), b: Math.round(b).toLocaleString() });
+  };
+  const zAdjs = (r) => {
+    const a = shownValue(r, "adjs");
+    if ($.IS_PS || !traitP || !r || !r.p || !isFiniteNum(a)) return a;
+    const z = zergScore(traitP, shownValue(r, "inflation"), apkBySlug && apkBySlug.get(slugKey(r.p.display)), rvpOf(r.p.display), crpOf(r.p.display));
+    const v = z ? zergChargedAdjs(a, z.score) : null;
+    return v == null ? a : v;
+  };
 
   function loadConsPool() {
     if (consPoolLoad) return consPoolLoad;
@@ -358,7 +375,7 @@ export function createStatsTable($) {
 
     // Column order is fixed (sort only reorders rows). Visible by default:
     const adjVisibleCols = [
-      { id: "adjs", label: "⚔️ iVi", hint: tr("tip.adjs", "Rating vs the ~200 players you fight most. Stronger foes count more; fast kills add, slow safe play costs."), fn: (r) => r.adjs, digits: 0, floorZero: true },
+      { id: "adjs", label: "⚔️ iVi", hint: tr("tip.adjs", "Rating vs the ~200 players you fight most. Stronger foes count more; fast kills add, slow safe play costs."), fn: (r) => zAdjs(r), digits: 0, floorZero: true, thinTip: true },
       { id: "act", label: "🏃 Activity", hint: tr("tip.act", "How much winning combat you put out: K/D vs your usual foes × how fast you kill."), fn: (r) => r.act, digits: 2 },
       { id: "pvs", label: "🦁 Brave", hint: tr("tip.pvs", "Stays high if you keep fighting well against the fastest-killing enemies you meet."), fn: (r) => r.pvs, digits: 2 },
       { id: "rf", label: "🛡️ Resist", hint: tr("tip.rf", "How well you hold up vs strong players: K/D vs your usual foes, scaled by how fast they kill."), fn: (r) => r.rf, digits: 2 },
@@ -385,15 +402,10 @@ export function createStatsTable($) {
       // 🤥😤 Impostor–DieHard (owner t484u): ⚔️ iVi percentile − IvI percentile, −99…+99; neither side is better.
       // Short hover (owner t9: 2–3 lines); 🛖 / 🚜 / 🐣 details live in columns.html#diff.
       { id: "diff", label: tr("col.diff", "🔀 Diff"), hint: tr("tip.diff", AIMGAP_HINT), digits: 0, aimGapCell: true,
-        fn: (r) => { const g = traitP ? aimGap(traitP, shownValue(r, "adjs"), r.ivi, r.p ? $.hutOf(r.p.display) : null, r.p ? vdfOf(r.p.display) : null, r.p ? nbdOf(r.p.display, r.p) : null) : null; return g ? g.score : NaN; } },
-      // 🪳⚔️ Zerg-adjusted iVi (#84, zerg-charge.mjs): the ⚔️ iVi that gives the same duel results at 🪳 26.8. PC only (measured on PC pairs).
-      { id: "zchg", label: tr("col.zchg", "🪳⚔️ iVi"), hint: tr("tip.zchg", "⚔️ iVi evened out for 🪳 Zerg: the iVi that gives the same duel results at 🪳 26.8. Below it it goes up a little, above it goes down, about 1 point per 🪳 step (measured on 100,000+ duel pairs). PC only."), digits: 0, floorZero: true,
-        fn: (r) => {
-          if ($.IS_PS || !traitP || !r.p) return NaN;
-          const z = zergScore(traitP, shownValue(r, "inflation"), apkBySlug && apkBySlug.get(slugKey(r.p.display)), rvpOf(r.p.display), crpOf(r.p.display));
-          const v = z ? zergChargedAdjs(shownValue(r, "adjs"), z.score) : null;
-          return v == null ? NaN : v;
-        } },
+        fn: (r) => { const g = traitP ? aimGap(traitP, zAdjs(r), r.ivi, r.p ? $.hutOf(r.p.display) : null, r.p ? vdfOf(r.p.display) : null, r.p ? nbdOf(r.p.display, r.p) : null) : null; return g ? g.score : NaN; } },
+      // ⚔️ iVi before the 🪳 Zerg evening-out (#84): the plain adjusted iVi, for comparison with the ⚔️ iVi column.
+      { id: "adjs0", label: tr("col.adjs0", "⚔️ iVi before 🪳"), hint: tr("tip.adjs0", "⚔️ iVi before it was evened out for 🪳 Zerg. The ⚔️ iVi column is the evened-out value."), digits: 0, floorZero: true, thinTip: true,
+        fn: (r) => shownValue(r, "adjs") },
     ];
     // Opponent-sample metrics: "—" below MIN_FIGHTS (player-metrics.mjs), so they
     // also drop out of sorting and the % column references.
@@ -420,7 +432,7 @@ export function createStatsTable($) {
         }
         // Numeric: default desc means higher first when dir==="desc"
         const col = cols.find((c) => c.id === key);
-        const getter = col ? col.fn : (r) => r.adjs;
+        const getter = col ? col.fn : (r) => zAdjs(r);
         const av = getter(a);
         const bv = getter(b);
         const aOk = isFiniteNum(av);
@@ -500,7 +512,7 @@ export function createStatsTable($) {
               const v = c.fn(row);
               // ⚡ ivi: below-zero values read as "0" (not rated); sort keeps true value so they stay lowest.
               // 🚜 vehicle / MAX cut on ⚔️ iVi (vehicle-cut.mjs): no visible mark (owner), reason in the cell's hover.
-              const vc = c.id === "adjs" && row.vehCut > 0 ? vehicleCutTip(row.vehOnly * 100, row.maxShare * 100, row.vehCut * 100) : "";
+              const vc = c.id === "adjs" ? [row.vehCut > 0 ? vehicleCutTip(row.vehOnly * 100, row.maxShare * 100, row.vehCut * 100) : "", zergAdjTip(row)].filter(Boolean).join(". ") : "";
               if (c.floorZero && isFiniteNum(v) && v < 0) {
                 return `<td class="below-scale" title="${escapeHtml("Below the rating scale" + (vc ? ". " + vc : ""))}">0</td>`;
               }
@@ -558,7 +570,7 @@ export function createStatsTable($) {
               // 🤥😤 Impostor–DieHard: signed score; neutral grey gap in points to the column top; side + both percentiles on hover.
               if (c.aimGapCell) {
                 if (!isFiniteNum(v)) return `<td title="${escapeHtml(tr("diff.missing", AIMGAP_MISSING))}">—</td>`;
-                const g = aimGap(traitP, shownValue(row, "adjs"), row.ivi, row.p ? $.hutOf(row.p.display) : null, row.p ? vdfOf(row.p.display) : null, row.p ? nbdOf(row.p.display, row.p) : null);
+                const g = aimGap(traitP, zAdjs(row), row.ivi, row.p ? $.hutOf(row.p.display) : null, row.p ? vdfOf(row.p.display) : null, row.p ? nbdOf(row.p.display, row.p) : null);
                 const top = Math.max(...metrics.map((m) => c.fn(m)).filter(isFiniteNum));
                 const gap = isFiniteNum(top) && v < top ? top - v : null;
                 const gTag = gap == null ? "" : `<span class="pct" title="${escapeHtml(tr("pct.belowPts", "{n} points below the column top ({ref})", { n: gap, ref: fmtSigned(top) }))}">−${gap}</span>`;
@@ -698,7 +710,7 @@ export function createStatsTable($) {
   function autoMarkHtml(row) {
     if (!traitP || !row || !row.p) return "";
     const d = row.p.display;
-    const g = aimGap(traitP, shownValue(row, "adjs"), row.ivi, $.hutOf(d), vdfOf(d), nbdOf(d, row.p));
+    const g = aimGap(traitP, zAdjs(row), row.ivi, $.hutOf(d), vdfOf(d), nbdOf(d, row.p));
     const z = zergScore(traitP, shownValue(row, "inflation"), apkBySlug && apkBySlug.get(slugKey(d)), rvpOf(d), crpOf(d));
     const ie = infBySlug && infBySlug.get(slugKey(d)); // owner t622u: 🚜 by the name from the build's rule (tractor.mjs)
     return autoMarksHtml(g, z, row.p.times || null, Date.now(), nbhOf(d, row.p), ie ? { inf: ie.inf, trc: ie.trc, cuts: tracCuts } : null);

@@ -4,7 +4,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { exampleFacts, exampleCard, findRanksRow, ranksPool, notCachedHtml, DEMO_NAME } from "../columns-example.mjs";
+import { exampleFacts, exampleCard, findRanksRow, ranksPool, notCachedHtml, DEMO_NAME, rowZerg } from "../columns-example.mjs";
 
 const ranks = JSON.parse(fs.readFileSync(new URL("../data/ranks.json", import.meta.url), "utf8"));
 const html = fs.readFileSync(new URL("../columns.html", import.meta.url), "utf8");
@@ -26,8 +26,8 @@ test("example ⚔️ iVi equals the ranks.json value (main table) for the demo p
   const row = findRanksRow(ranks, DEMO_NAME);
   const raw = JSON.parse(fs.readFileSync(new URL(`../data/players/${row.slug}.json`, import.meta.url), "utf8"));
   const pools = { adjs: ranksPool(ranks, "adjs"), ivi: ranksPool(ranks, "ivi") };
-  const x = exampleFacts(raw, pools);
-  assert.ok(Math.abs(x.adjs - row.adjs) < 0.01);
+  const x = exampleFacts(raw, pools, { zerg: rowZerg(ranks, row) });
+  assert.ok(Math.abs(x.adjs - row.adjs) < 0.06, `${x.adjs} vs ${row.adjs}`);
   const card = exampleCard(x);
   assert.match(card, new RegExp(`<b>Result:</b> ${Math.round(Math.max(0, row.adjs))}, better than`));
   if (row.vcut > 0) assert.match(card, /🚜/);

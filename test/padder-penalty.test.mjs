@@ -38,7 +38,7 @@ describe("💩 padder penalty", () => {
     const st = JSON.parse(fs.readFileSync(new URL("../data/status.json", import.meta.url), "utf8")).padderPenalty;
     assert.ok(st && st.players.length >= 1);
     const rk = JSON.parse(fs.readFileSync(new URL("../data/ranks.json", import.meta.url), "utf8"));
-    const ia = rk.cols.indexOf("adjs"), is = rk.cols.indexOf("slug");
+    const ia = rk.cols.indexOf("adjs0") >= 0 ? rk.cols.indexOf("adjs0") : rk.cols.indexOf("adjs"), is = rk.cols.indexOf("slug"); // before the 🪳 evening-out (#84)
     for (const p of st.players.filter((x) => x.status === "penalized")) {
       assert.ok(p.after < p.before, p.slug);
       assert.ok(p.rankAfter > p.rankBefore, p.slug);
