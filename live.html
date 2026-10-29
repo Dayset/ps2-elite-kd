@@ -77,7 +77,7 @@
       });
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261028-settop1" />
+  <link rel="stylesheet" href="styles.css?v=20261029-setrow1" />
   <link rel="stylesheet" href="live.css?v=20261029-nodrop1" />
   <style>
     /* Installed-app launch splash (t465u). Android draws its own launch splash first:
@@ -339,15 +339,15 @@
               <span class="settings-label" data-i18n="theme.label">Theme</span>
               <button id="themeToggle" type="button" class="mini-btn theme-toggle" title="Switch to light theme" aria-label="Switch to light theme">☀️</button>
             </div>
-            <div class="settings-row">
-              <label class="settings-label" for="maxAgeInput" data-i18n="age.label">Max account age</label>
+            <div class="settings-row age-left">
+              <label class="settings-label" for="maxAgeInput" data-i18n="age.label">Max Age</label>
               <span class="age-cut-ctl">
                 <button id="maxAgeMinus" type="button" class="mini-btn age-step" title="−1" aria-label="Decrease">−</button>
-                <input id="maxAgeInput" type="number" class="age-input" min="0" step="1" inputmode="numeric" title="Hide accounts older than this, in months (Rankings table)" aria-label="Max account age" data-i18n-title="age.title" data-i18n-aria-label="age.label">
+                <input id="maxAgeInput" type="number" class="age-input" min="0" step="1" inputmode="numeric" title="Hide accounts older than this, in months (Rankings table)" aria-label="Max Age" data-i18n-title="age.title" data-i18n-aria-label="age.label">
                 <button id="maxAgePlus" type="button" class="mini-btn age-step" title="+1" aria-label="Increase">+</button>
               </span>
             </div>
-            <div class="settings-row">
+            <div class="settings-row ranks-right">
               <span class="settings-label" data-i18n="ranks.removeRanks">Hide ranks</span>
               <label class="tgl-switch" title="Hide the tier separators in the Rankings table" data-i18n-title="ranks.removeRanksTitle">
                 <input type="checkbox" id="removeRanksToggleSettings" />

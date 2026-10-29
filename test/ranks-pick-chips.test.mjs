@@ -279,7 +279,7 @@ describe("Max account age cut (Settings stepper, owner 2026-10-22)", () => {
     assert.match(index, /id="maxAgePlus"/);
     assert.match(index, /id="maxAgeInput" type="number" class="age-input" min="0" step="1"/);
     assert.match(index, /data-i18n="age\.label"/);
-    assert.match(read("i18n/en.json"), /"age\.label": "Max account age"/);
+    assert.match(read("i18n/en.json"), /"age\.label": "Max Age"/);
   });
 
   it("shared saved key; browse drops accounts older than the value, search keeps them", () => {
