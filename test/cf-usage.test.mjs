@@ -45,3 +45,9 @@ test("free plan: daily averages against the daily limits, no CPU line", () => {
   assert.equal(lines.doGbS.verdict, "warn", "one always-on object is 85 % of the free day (11.1k of 13k GB-s), as before the paid plan");
   assert.match(lines.doRequests.label, /per day/);
 });
+
+test("DO duration: the dataset's own GB-s wins over active time", () => {
+  const l = billingLines({ durableObjectsPeriodicGroups: { duration: 300e3, activeTime: 1 } }, 1).find((x) => x.key === "doGbS");
+  assert.equal(l.mtd, 300e3);
+  assert.equal(l.note, "");
+});

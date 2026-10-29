@@ -71,8 +71,10 @@ export function billingLines(sums, factor, plan = "paid", days = 1) {
   const inv = g("durableObjectsInvocationsAdaptiveGroups", "requests");
   const wsIn = g("durableObjectsPeriodicGroups", "inboundWebsocketMsgCount");
   if (inv != null || wsIn != null) add("doRequests", "Durable Object requests", (inv || 0) + (wsIn || 0) / 20, wsIn == null ? "WebSocket messages not reported" : "");
+  // Billed duration: the dataset's own GB-s sum when it has one, else active time (µs) × 128 MB.
+  const dur = g("durableObjectsPeriodicGroups", "duration");
   const active = g("durableObjectsPeriodicGroups", "activeTime"); // microseconds
-  add("doGbS", "Durable Object GB-s", active == null ? null : (active / 1e6) * DO_GB);
+  add("doGbS", "Durable Object GB-s", dur != null ? dur : active == null ? null : (active / 1e6) * DO_GB, dur != null ? "" : "from active time");
   const d1r = g("d1AnalyticsAdaptiveGroups", "rowsRead"), d1w = g("d1AnalyticsAdaptiveGroups", "rowsWritten");
   const dor = g("durableObjectsPeriodicGroups", "rowsRead"), dow = g("durableObjectsPeriodicGroups", "rowsWritten");
   if (d1r != null || dor != null) add("rowsRead", "SQLite rows read (D1 + DO)", (d1r || 0) + (dor || 0));
@@ -83,7 +85,7 @@ export function billingLines(sums, factor, plan = "paid", days = 1) {
 const WANT = {
   workersInvocationsAdaptive: ["requests", "cpuTimeUs", "errors", "subrequests"],
   durableObjectsInvocationsAdaptiveGroups: ["requests", "errors"],
-  durableObjectsPeriodicGroups: ["activeTime", "cpuTime", "inboundWebsocketMsgCount", "outboundWebsocketMsgCount", "rowsRead", "rowsWritten", "storageReadUnits", "storageWriteUnits", "exceededCpuErrors", "exceededMemoryErrors"],
+  durableObjectsPeriodicGroups: ["duration", "activeTime", "cpuTime", "inboundWebsocketMsgCount", "outboundWebsocketMsgCount", "rowsRead", "rowsWritten", "storageReadUnits", "storageWriteUnits", "exceededCpuErrors", "exceededMemoryErrors"],
   d1AnalyticsAdaptiveGroups: ["readQueries", "writeQueries", "rowsRead", "rowsWritten"],
 };
 
@@ -175,6 +177,8 @@ async function main() {
     out.push([l.verdict === "over" ? "error" : l.verdict === "warn" ? "warning" : "notice", msg]);
   }
   for (const [ds, v] of Object.entries(report.datasets)) if (v.error) out.push(["notice", `${ds}: ${v.error}`]);
+  const dop = report.datasets.durableObjectsPeriodicGroups;
+  if (dop && !dop.error) out.push(["notice", `DO periodic sums: ${Object.entries(dop).map(([k, v]) => `${k} ${fmt(v)}`).join(", ")}`]);
   if (report.monitor && report.monitor.month) {
     const m = report.monitor.month, t = report.monitor.today || {};
     const fd = report.monitor.freeDay;
