@@ -73,3 +73,17 @@ test("visible column right after zerg in the stats table, built on the plain val
   assert.match(en["tip.pureivi"], /0\.00436/);
   assert.doesNotMatch(en["tip.pureivi"], /Muse's/);
 });
+
+test("documented: columns.html section + metrics.md formula", () => {
+  const html = fs.readFileSync(path.join(root, "columns.html"), "utf8");
+  assert.ok(html.includes('id="pureivi"'), "columns.html has the Pure iVi section");
+  assert.ok(html.includes('href="#pureivi"'), "TOC links to it");
+  assert.ok(html.includes('data-i18n="cp.pureiviH"'), "section heading is an i18n key");
+  const en = JSON.parse(fs.readFileSync(path.join(root, "i18n/en.json"), "utf8"));
+  for (const k of ["cp.tocPureivi", "cp.pureiviH", "cp.pureiviP", "cp.pureiviL1", "cp.pureiviL2", "cp.pureiviL3", "cp.pureiviNote"]) assert.ok(en[k], k);
+  assert.match(en["cp.pureiviL1"], /0\.00436/);
+  const md = fs.readFileSync(path.join(root, "docs/metrics.md"), "utf8");
+  assert.ok(md.includes("### 🧘‍♂️ Pure iVi"), "metrics.md has the formula entry");
+  assert.match(md, /0\.00436/);
+  assert.match(md, /610\.6/);
+});

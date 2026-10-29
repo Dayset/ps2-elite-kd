@@ -101,7 +101,7 @@
 
     <nav class="st-toc" aria-label="On this page" data-i18n-aria-label="cp.tocAria">
       <div class="st-toc-group"><a href="#picture" data-i18n="cp.tocIdea">The idea</a> <span class="sep">·</span> <a href="#why-trackers" data-i18n="cp.tocWhy">Why trackers don’t have it</a> <span class="sep">·</span> <a href="#worked-example" data-i18n="cp.tocExample">Example</a> <span class="sep">·</span> <a href="#debug" data-i18n="cp.tocDebug">Debug columns</a></div>
-      <div class="st-toc-group"><a class="st-toc-sec" href="#adjusted">✨ Adjusted</a> <span class="sep">·</span> <a href="#ivi">⚔️ iVi</a> <span class="sep">·</span> <a href="#activity">🏃 Activity</a> <span class="sep">·</span> <a href="#brave">🦁 Brave</a> <span class="sep">·</span> <a href="#resist">🛡️ Resist</a> <span class="sep">·</span> <a href="#const">⚡ Const</a> <span class="sep">·</span> <a href="#matchup-kd">☠️ K/D</a> <span class="sep">·</span> <a href="#infantry" data-i18n="cp.tocInfantry">🪖 Infantry</a> <span class="sep">·</span> <a href="#zerg" data-i18n="cp.tocZerg">🪳 Zerg</a> <span class="sep">·</span> <a href="#vehicle-cut" data-i18n="cp.tocVehicle">🚜 Vehicle cut</a> <span class="sep">·</span> <a href="#zerg-adj" data-i18n="cp.tocZergAdj">🪳⚔️ Zerg evening-out</a> <span class="sep">·</span> <a href="#padder" data-i18n="cp.tocPadder">💩 Padders</a> <span class="sep">·</span> <a href="#hut" data-i18n="cp.tocHut">What 🛖 means</a></div>
+      <div class="st-toc-group"><a class="st-toc-sec" href="#adjusted">✨ Adjusted</a> <span class="sep">·</span> <a href="#ivi">⚔️ iVi</a> <span class="sep">·</span> <a href="#activity">🏃 Activity</a> <span class="sep">·</span> <a href="#brave">🦁 Brave</a> <span class="sep">·</span> <a href="#resist">🛡️ Resist</a> <span class="sep">·</span> <a href="#const">⚡ Const</a> <span class="sep">·</span> <a href="#matchup-kd">☠️ K/D</a> <span class="sep">·</span> <a href="#infantry" data-i18n="cp.tocInfantry">🪖 Infantry</a> <span class="sep">·</span> <a href="#zerg" data-i18n="cp.tocZerg">🪳 Zerg</a> <span class="sep">·</span> <a href="#pureivi" data-i18n="cp.tocPureivi">🧘‍♂️ Pure iVi</a> <span class="sep">·</span> <a href="#vehicle-cut" data-i18n="cp.tocVehicle">🚜 Vehicle cut</a> <span class="sep">·</span> <a href="#zerg-adj" data-i18n="cp.tocZergAdj">🪳⚔️ Zerg evening-out</a> <span class="sep">·</span> <a href="#padder" data-i18n="cp.tocPadder">💩 Padders</a> <span class="sep">·</span> <a href="#hut" data-i18n="cp.tocHut">What 🛖 means</a></div>
       <div class="st-toc-group"><a class="st-toc-sec" href="#public" data-i18n="cp.tocPublic">📊 Census / Fisu / Honu</a> <span class="sep">·</span> <a href="#pub-kd">KD</a> <span class="sep">·</span> <a href="#pub-kpm">KPM</a> <span class="sep">·</span> <a href="#pub-own-kpm">own KPM</a> <span class="sep">·</span> <a href="#pub-acc">Acc %</a> <span class="sep">·</span> <a href="#pub-hsr">HSR %</a> <span class="sep">·</span> <a href="#pub-ivi">IvI</a></div>
     </nav>
 
@@ -209,6 +209,18 @@
       <p class="st-dim" data-i18n="cp.zergNote">Why the lower of the two: a solo farmer of easy fights has high Inflation but few assists, and a team player in hard fights has many assists but no inflation. Neither is a zerg, so both stay low.</p>
       <p class="st-dim" data-i18n="cp.zergRevive">Crowd check: where we have Honu XP detail (50+ deaths, 2+ h), we count per death the revives, heals, shield repairs and ammo you received, plus engineer Hardlight barrier XP (it only ticks inside a big crowd). Zergs die in a crowd, so the crowd picks them up. Revives or the crowd score in the top quarter = Zerg confirmed (hover says so). Both in the bottom half = a high Zerg is softened step by step. Never raised. No 🪳 Zerg but a top-quarter crowd score = an estimate “~N”, shown only, never sorted or marked. No XP detail = no change.</p>
       <p class="st-dim" data-i18n-html="cp.zergGap">Apr 1 – May 6, 2026 is skipped for 🤝 Assists and 🪳 Zerg: a game bug recorded no assists then (<a href="https://www.planetside2.com/patch-notes/may-6-hotfix-2026" target="_blank" rel="noopener noreferrer">fixed May 6</a>). Too few kills left = “—”.</p>
+    </div>
+
+
+    <div class="st-card">
+      <h3 id="pureivi" data-i18n="cp.pureiviH">🧘‍♂️ Pure iVi — your true solo ability</h3>
+      <p data-i18n="cp.pureiviP">What your rating would be if every fight counted as if you fought alone. A high iVi on a zerg surfer says: you have it only because of crowd efforts. Pure iVi says: this is your true ability as a solo player.</p>
+      <ul class="st-list">
+        <li data-i18n-html="cp.pureiviL1"><b>Formula:</b> adjs above 0 → adjs × (1 − 0.00436 × 🪳); adjs at or below 0 → adjs − 0.00436 × 🪳 × 610.6. Each 🪳 point costs about 0.44% of the rating; 🪳 100 → −43.6%.</li>
+        <li data-i18n-html="cp.pureiviL2"><b>Measured, not guessed:</b> fitted on 915 duel pairs (723 infantry-only). At the same adjs gap, each 🪳 point of gap meant 0.286 fewer kill-gap points against 0.656 per adjs point — 0.286 ÷ 0.656 ≈ 0.00436.</li>
+        <li data-i18n-html="cp.pureiviL3"><b>Example:</b> ahorn, adjs 1225 at 🪳 87 → 1225 × (1 − 0.00436 × 87) ≈ <b>760</b>.</li>
+      </ul>
+      <p class="st-dim" data-i18n="cp.pureiviNote">Not a replacement for ⚔️ iVi, and not the 🪳⚔️ evening-out: that one centers on the average crowd (🪳 26.8) and lifts low-🪳 players up; Pure only ever discounts, never boosts, and has no freshness gate. PC only; no 🪳 score → “—”.</p>
     </div>
 
 
