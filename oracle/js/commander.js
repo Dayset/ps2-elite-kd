@@ -35,7 +35,7 @@ export function heatButton(on) {
   return ` <button type="button" class="voicebtn heatbtn${on ? " on" : ""}" data-heat="1" aria-pressed="${on}" title="${t}" aria-label="${t}">🔥</button>`;
 }
 
-export function commander(c, ts, now, lead, mode = "solo", heat = false) {
+export function commander(c, ts, now, lead, mode = "solo", heat = false, liveName = null) {
   S.cmdOrders = []; S.cmdOn = null; S.cmdOnLive = false; S.cmdPockets = []; S.cmdMode = mode;
   const heatLive = !!(heat && c && c.focus_heat);
   S.cmdHeat = heatLive;
@@ -101,7 +101,7 @@ export function commander(c, ts, now, lead, mode = "solo", heat = false) {
     ? (c.focus_mix ? tr("or.c.bigNote", "Attacks aimed {n} min ahead, so a big squad arrives in time; defends only when a base is under attack. Three directions that can change every minute.", { n: c.ahead_min || 3 }) : tr("or.c.bigWait", "The new orders appear with the next update."))
     : tr("or.c.soloNote", "Attacks aimed {n} min ahead; defends only when a base is under attack. One order stays until it is done (base taken or lost, or about 5 min passed), unless a clearly better or urgent one appears.", { n: c.ahead_min || 3 });
   const modeBar = `<div class="cmode" role="group" aria-label="${tr("or.c.mode", "Orders for")}"><span class="note">${tr("or.c.mode", "Orders for")}</span>${mb("solo", tr("or.c.solo", "Solo"), tr("or.c.soloTip", "One steady direction for a player or a small group"))}${mb("big", tr("or.c.big", "Big squad"), tr("or.c.bigTip", "Three directions for a squad or platoon, updated every minute"))}</div><div class="note cmodenote">${modeNote}</div>`;
-  return `<section class="card cmd" style="margin-top:14px"><h2 data-sec="ai-commander">${tr("or.h.cmd", "🎖️ AI Commander")} ${age}</h2>${modeBar}${seg}<div class="cmdgrid">${FACS.map((f) => {
+  return `<section class="card cmd" style="margin-top:14px"><h2 data-sec="ai-commander">${tr("or.h.cmd", "🎖️ AI Commander")} ${age}</h2>${liveName ? `<div class="note livenow" title="${esc(tr("or.f.note", "Rough crowd: players seen fighting at each base in the last 5 min, from the game's live event stream. Not used in the odds yet."))}">🔥 ${bl(liveName)}</div>` : ""}${modeBar}${seg}<div class="cmdgrid">${FACS.map((f) => {
     const x = c.factions[f]; if (!x) return "";
     if (x.eliminated) return `<div class="cf${f === on ? " on" : ""}"><h3 class="${f}">${f} · ${tr("or.c.elim", "eliminated")}</h3><div class="note">${tr("or.c.out", "Mathematically out: spoiler plays only (kingmaker below).")}</div>${(x.kingmaker || []).length ? `<ul>${x.kingmaker.slice(0, 2).map((k) => `<li>${esc(k.text || "")}</li>`).join("")}</ul>` : ""}</div>`;
     const nf = (n) => (f === on ? numOf.get(n) || 0 : 0);

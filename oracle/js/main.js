@@ -4,7 +4,7 @@ import { get, names } from "./api.js?v=20261018-scrub2";
 import { drawMap, highlightBase, recolorMap } from "./map.js?v=20261028-align1";
 import { chart, chartHover } from "./chart.js?v=20261024-i18n1";
 import { lockCard, lockTick } from "./lock.js?v=20261024-i18n1";
-import { commander, commanderIdle } from "./commander.js?v=20261026-heat1";
+import { commander, commanderIdle } from "./commander.js?v=20261029-livenow1";
 import { modeFocus, ownerLookup, heatLookup, pickMode, MODE_KEY, pickHeat, HEAT_KEY } from "./sticky.js?v=20261026-heat1";
 import { nextPoll } from "./poll.js?v=20261026-mode1";
 import { voiceToggle, voiceTick, bindVoiceMenu } from "./voice.js?v=20261027-say1";
@@ -186,6 +186,7 @@ function render2(now) {
   const cutNote = cutList.length && a.status === "live" ? `<div class="note">${tr("or.cut", "✂️ Cut off, not scoring:")} ${FACS.map((f) => { const n = cutList.filter((c) => c.fac === f); return n.length ? `<span class="${f}">${f} ${n.length}</span> (${esc(n.slice(0, 3).map((c) => c.name).join(", "))}${n.length > 3 ? ` +${n.length - 3}` : ""})` : ""; }).filter(Boolean).join(" · ")}${s.cut_aware ? tr("or.cutAware", " · counted in the odds") : ""}</div>` : "";
   const suspectNote = s && s.suspect && s.suspect.length ? `<div class="note" style="color:var(--warn)">${tr("or.suspect", "Census map data looks broken right now ({why}). Odds may be wrong and voting is paused.", { why: esc(s.suspect.map((x) => x.startsWith("neutral_heavy") ? tr("or.susNeutral", "only {p}% of bases owned", { p: x.split(":")[1] }) : x === "map_frozen" ? tr("or.susFrozen", "map frozen while captures continue") : tr("or.susStale", "no fresh map")).join(", ")) })}</div>` : "";
   const cmdView = a.status === "live" ? withMode(a, a.commander || (s && s.commander)) : null;
+  const liveTop = s && Array.isArray(s.fights) && s.fights[0] ? (s.fights[0].name || `#${s.fights[0].fid}`) : null;
   $("main").innerHTML = `
     <div class="title"><b>${esc(a.world_name)} · ${esc(a.zone_name)}${a.kind === "meltdown" ? " Meltdown" : ""}</b><span class="badge ${a.status}">${esc(badgeLabel(a.status))}</span><span class="note">${esc(left)} · ${tr("or.durAlert", "{n}-min alert", { n: a.dur })}</span>${liveA ? "" : `<button type="button" class="more backlive" id="backLive">${tr("or.backLive", "← Back to live")}</button>`}</div>
     <div class="grid">
@@ -197,7 +198,7 @@ function render2(now) {
       </div>
     </div>
     <section class="card chart" style="margin-top:14px"><h2 data-sec="win-chance-over-time">${tr("or.h.chart", "Win chance over time")}</h2><div id="chart"><div class="sk sk-chart" aria-label="${tr("or.loading", "Loading")}"></div></div></section>
-    ${a.status === "live" ? commander(cmdView, a.commander_ts, now, lead, cmdMode, heatOn) : `${commanderIdle()}${reportPanel(a)}`}
+    ${a.status === "live" ? commander(cmdView, a.commander_ts, now, lead, cmdMode, heatOn, liveTop) : `${commanderIdle()}${reportPanel(a)}`}
     ${benchPanel(a)}`;
   if ($("backLive")) $("backLive").onclick = backToLive;
   $("main").querySelectorAll("li[data-base]").forEach((li) => { li.onmouseenter = () => highlightBase(li.dataset.base); li.onmouseleave = () => highlightBase(null); });
