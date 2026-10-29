@@ -8,7 +8,7 @@ import { newbieFactor, newPlayerHours } from "./newbie-diff.mjs?v=20261023-nbh1"
 import { isFiniteNum } from "./math.mjs?v=20261027-z79";
 import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261027-z79";
 import { zergEstimate } from "./zerg-revive.mjs?v=20261024-crowd1";
-import { zergChargedAdjs } from "./zerg-charge.mjs?v=20261028-zchg2";
+import { zergChargedAdjs } from "./zerg-charge.mjs?v=20261028-zchg3";
 import { infMedian } from "./tractor.mjs?v=20261024-trac1";
 import { mountWeapons } from "./weapons.mjs?v=20261022-wp4";
 import { mountKillFeed } from "./kill-feed.mjs?v=20261028-os2";
@@ -386,8 +386,8 @@ export function createStatsTable($) {
       // Short hover (owner t9: 2–3 lines); 🛖 / 🚜 / 🐣 details live in columns.html#diff.
       { id: "diff", label: tr("col.diff", "🔀 Diff"), hint: tr("tip.diff", AIMGAP_HINT), digits: 0, aimGapCell: true,
         fn: (r) => { const g = traitP ? aimGap(traitP, shownValue(r, "adjs"), r.ivi, r.p ? $.hutOf(r.p.display) : null, r.p ? vdfOf(r.p.display) : null, r.p ? nbdOf(r.p.display, r.p) : null) : null; return g ? g.score : NaN; } },
-      // 🪳⚔️ Zerg-adjusted iVi (#84, zerg-charge.mjs): the ⚔️ iVi that gives the same duel results at 🪳 25. PC only (measured on PC pairs).
-      { id: "zchg", label: tr("col.zchg", "🪳⚔️ iVi"), hint: tr("tip.zchg", "⚔️ iVi evened out for 🪳 Zerg: the iVi that gives the same duel results at 🪳 25. Below 25 it goes up a little, above it goes down, about 1 point per 🪳 step (measured on 100,000+ duel pairs). PC only."), digits: 0, floorZero: true,
+      // 🪳⚔️ Zerg-adjusted iVi (#84, zerg-charge.mjs): the ⚔️ iVi that gives the same duel results at 🪳 26.8. PC only (measured on PC pairs).
+      { id: "zchg", label: tr("col.zchg", "🪳⚔️ iVi"), hint: tr("tip.zchg", "⚔️ iVi evened out for 🪳 Zerg: the iVi that gives the same duel results at 🪳 26.8. Below it it goes up a little, above it goes down, about 1 point per 🪳 step (measured on 100,000+ duel pairs). PC only."), digits: 0, floorZero: true,
         fn: (r) => {
           if ($.IS_PS || !traitP || !r.p) return NaN;
           const z = zergScore(traitP, shownValue(r, "inflation"), apkBySlug && apkBySlug.get(slugKey(r.p.display)), rvpOf(r.p.display), crpOf(r.p.display));

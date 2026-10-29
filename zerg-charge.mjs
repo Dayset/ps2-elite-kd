@@ -1,13 +1,13 @@
 /**
  * 🪳⚔️ Zerg-adjusted iVi (debug column only, #84; measured 2026-10-28, scripts/zerg-pairs.mjs).
  *
- * The ⚔️ iVi that would give the same duel results at the reference 🪳 Zerg (CENTER = 25):
- *   zergAdj = (iVi + K) · exp(−λ · (🪳 − 25)) − K
- * Below 🪳 25 the score goes up a little, above it goes down; 🪳 25 is unchanged.
+ * The ⚔️ iVi that would give the same duel results at the reference 🪳 Zerg (CENTER = 26.8):
+ *   zergAdj = (iVi + K) · exp(−λ · (🪳 − 26.8)) − K
+ * Below 🪳 26.8 the score goes up a little, above it goes down.
  *
- * Why 25 (owner 2026-10-28, "even for the general crowd"): players with no 🪳 score keep
- * their plain iVi in this column, and in duels they play like 🪳 29 (95 % 17…40); the median
- * 🪳 of players who have one is 31 (top 1 %: 8, top 1–5 %: 16, lower half: 40). 25 sits
+ * Why 26.8 (owner 2026-10-28, "data driven"): players with no 🪳 score keep
+ * their plain iVi in this column, and in duels they play like 🪳 26.8 (95 % 17.5…36.5); the median
+ * 🪳 of players who have one is 31 (top 1 %: 8, top 1–5 %: 16, lower half: 40). 26.8 sits
  * inside that range, so adjusted and plain players compare fairly.
  *
  * Where K and λ come from: 103,689 PC infantry killboard pairs (both players 🪖 ≥ 75 %,
@@ -20,12 +20,12 @@
  * to −0.02…+0.05 %, and duel predictions get slightly better.
  *
  * Size: about the same number of points in every tier, not a % of iVi (at iVi 1,000:
- * 🪳 0 → +22, 🪳 50 → −21, 🪳 99 → −63; 95 % margin about ±45 %). Missing 🪳 (or iVi) → null ("—").
+ * 🪳 0 → +23, 🪳 50 → −20, 🪳 99 → −62; 95 % margin about ±45 %). Missing 🪳 (or iVi) → null ("—").
  * No vehicle term: the 🚜 cut already takes vehicle play out of ⚔️ iVi, and in duels
  * vehicle users get MORE kills than even their uncut iVi says.
  * DOM-free; used by stats-table.mjs (debug column) and the tests.
  */
-export const ZERG_CHARGE = Object.freeze({ K: 3100, LAMBDA: 0.00021, CENTER: 25 });
+export const ZERG_CHARGE = Object.freeze({ K: 3100, LAMBDA: 0.00021, CENTER: 26.8 });
 
 const fin = (v) => typeof v === "number" && Number.isFinite(v);
 

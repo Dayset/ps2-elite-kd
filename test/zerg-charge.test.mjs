@@ -13,10 +13,10 @@ const near = (a, b, eps = 1e-9) => assert.ok(Math.abs(a - b) < eps, `${a} ≈ ${
 test("measured constants and the owner's center", () => {
   assert.equal(K, 3100);
   assert.equal(LAMBDA, 0.00021);
-  assert.equal(CENTER, 25);
+  assert.equal(CENTER, 26.8);
 });
 
-test("(iVi + K)·exp(−λ·(🪳 − 25)) − K: about the same points in every tier", () => {
+test("(iVi + K)·exp(−λ·(🪳 − 26.8)) − K: about the same points in every tier", () => {
   near(zergChargedAdjs(1000, 50), (1000 + K) * Math.exp(-LAMBDA * (50 - CENTER)) - K);
   const change = (a, z) => zergChargedAdjs(a, z) - a;
   // 🪳 75 (50 steps above the center): −30 … −60 points from iVi 170 to 2,050 (measured 🪳 50 drop: −34 … −53)
@@ -25,14 +25,14 @@ test("(iVi + K)·exp(−λ·(🪳 − 25)) − K: about the same points in every
     assert.ok(d > 30 && d < 60, `iVi ${a}: −${d.toFixed(1)}`);
   }
   assert.ok(change(2050, 75) < change(170, 75), "a bit more at the top (points), much less as a %");
-  assert.ok(change(1000, 80) < change(1000, 40) && change(1000, 40) < 0, "more 🪳 above 25, bigger drop");
+  assert.ok(change(1000, 80) < change(1000, 40) && change(1000, 40) < 0, "more 🪳 above 26.8, bigger drop");
 });
 
-test("🪳 25 = unchanged; below it goes up a little, above it goes down", () => {
+test("🪳 26.8 = unchanged; below it goes up a little, above it goes down", () => {
   assert.equal(zergChargedAdjs(1234.5, CENTER), 1234.5);
   const up = zergChargedAdjs(1000, 0) - 1000, down = zergChargedAdjs(1000, 99) - 1000;
-  assert.ok(up > 20 && up < 23, `🪳 0 at iVi 1,000: +${up.toFixed(1)}`);
-  assert.ok(down < -62 && down > -65, `🪳 99 at iVi 1,000: ${down.toFixed(1)}`);
+  assert.ok(up > 21 && up < 25, `🪳 0 at iVi 1,000: +${up.toFixed(1)}`);
+  assert.ok(down < -60 && down > -64, `🪳 99 at iVi 1,000: ${down.toFixed(1)}`);
   assert.ok(zergChargedAdjs(1000, 14) > 1000 && zergChargedAdjs(1000, 30) < 1000);
   assert.equal(zergChargedAdjs(800, -5), zergChargedAdjs(800, 0), "a negative 🪳 counts as 0");
   assert.equal(zergChargedAdjs(800, 140), zergChargedAdjs(800, 100), "and above 100 as 100");
