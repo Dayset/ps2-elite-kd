@@ -5,15 +5,21 @@
  * Logic in duels.mjs. Head-to-head data on first open: up to 5 Census pages of one player's
  * kills & deaths (the whole history on "Read further back"), plus 2 calls for the weapons' lifetime shots / hits.
  * A small spinner sits in the status line while a load runs.
+ * Each Census page re-renders the table as it arrives, and a ticking page/elapsed line
+ * proves the load is alive between pages (the spinner alone does not rotate on
+ * animation-disabled devices).
+ * Head-to-head history is cached in this browser (last 10 pairs): opening a pair shows the
+ * saved history at once, then fetches only newer kills in the background.
  */
 import { t as tr, currentLang } from "./i18n.mjs";
 import { zoneName } from "./scrims-panel.mjs?v=20261028-os2";
 import { mergeEvents } from "./scrims.mjs?v=20261028-os2";
 import {
   AUTO_PAGES, DUEL_GAP, ONE_V_ONE, classOf, bareName, crowdRows, crowdSummary, expectedCount, pagerOf,
-  readPairPages, pairEvents, fightsOf, fightResult, weaponShotUrls, parseShotStats, perKill, pairSummary,
+  readPairPages, readPairNewer, pairEvents, fightsOf, fightResult, weaponShotUrls, parseShotStats, perKill, pairSummary,
   charInfoUrl, parseCharInfo, pairWarnings, WORLD_NAME,
-} from "./duels.mjs?v=20261028-duelall1";
+  DUEL_CACHE_KEY, duelCacheEntry, duelCacheRestore, duelCachePrune,
+} from "./duels.mjs?v=20261028-duelcache1";
 
 const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const lang = () => { try { return currentLang() || undefined; } catch { return undefined; } };
@@ -86,6 +92,9 @@ export function mountDuels(section, o = {}) {
   const spin = document.createElement("span");
   spin.className = "spinner";
   spin.setAttribute("aria-hidden", "true");
+  // Ticking liveness line next to the spinner (no styling: it rides the status line's font).
+  const wait = document.createElement("span");
+  wait.setAttribute("aria-hidden", "true");
   const pairs = new Map(); // "cidA|cidB" → { st, stats, need, pIsA, … }
   let catP = null;
   let mode = null, a = null, b = null, shownKey = "";
@@ -95,6 +104,35 @@ export function mountDuels(section, o = {}) {
 
   const cat = () => catP || (catP = Promise.resolve().then(() => catalog()).catch(() => null).then((c) => (c && c.items) || {}));
   const wName = (items, id) => { const e = id && items[String(id)]; return e ? e[0] : id ? `#${id}` : "–"; };
+
+  // Duels history cache (owner 2026-10-28): localStorage, last 10 pairs, auto-refresh on open.
+  // A failing cache never breaks the panel: reads fall back to {}, writes are best-effort.
+  function readCacheMap() {
+    try {
+      if (typeof localStorage === "undefined") return {};
+      const m = JSON.parse(localStorage.getItem(DUEL_CACHE_KEY) || "null");
+      return m && typeof m === "object" ? m : {};
+    } catch (_) { return {}; }
+  }
+  function writeCacheMap(map) {
+    try {
+      if (typeof localStorage === "undefined") return;
+      localStorage.setItem(DUEL_CACHE_KEY, JSON.stringify(map));
+    } catch (_) {
+      // Quota: drop the oldest half and retry once.
+      try {
+        const keys = Object.keys(map).sort((x, y) => (map[x].savedAt || 0) - (map[y].savedAt || 0));
+        keys.slice(0, Math.ceil(keys.length / 2)).forEach((k) => delete map[k]);
+        localStorage.setItem(DUEL_CACHE_KEY, JSON.stringify(map));
+      } catch (_) { /* cache is a bonus */ }
+    }
+  }
+  function saveCache(key, job) {
+    if (!job || job.servers || !job.st) return;
+    const map = readCacheMap();
+    map[key] = duelCacheEntry(job);
+    writeCacheMap(duelCachePrune(map));
+  }
 
   function setStatus(text) { status.textContent = text || ""; status.hidden = !text; }
   function clear() {
@@ -149,16 +187,20 @@ export function mountDuels(section, o = {}) {
   /* ---------- two players: head-to-head */
   const pairKey = () => `${a.cid}|${b.cid}`;
 
-  async function loadPair(more) {
+  async function loadPair(more, onProgress, onCached) {
     const key = pairKey();
     let job = pairs.get(key);
+    let restored = false;
     if (!job) {
       const base = baseOf(a);
       if (baseOf(b) !== base) { job = { servers: true }; pairs.set(key, job); return job; }
       const P = pagerOf(a, b), Q = P === a ? b : a;
       const need = expectedCount(P, Q) ?? expectedCount(Q, P);
       job = { base, pid: String(P.cid), pIsA: P === a, need, st: { pid: String(P.cid), qid: String(Q.cid), all: [], cursor: 0, done: false, pages: 0 }, stats: new Map(), asked: new Set() };
+      const entry = readCacheMap()[key];
+      if (entry && duelCacheRestore(entry, job)) restored = true;
       pairs.set(key, job);
+      if (restored && onCached) onCached(job);
     }
     if (job.servers) return job;
     if (!job.info) {
@@ -180,7 +222,11 @@ export function mountDuels(section, o = {}) {
       } catch (_) { /* the Census path below */ }
       if (!fromApi) job.census = true;
     }
-    if (!fromApi) await readPairPages(job.st, { base: job.base, get: getJson, pages: more ? Infinity : AUTO_PAGES, need: more ? null : job.need });
+    if (!fromApi) {
+      const onPage = onProgress ? () => onProgress(job) : undefined;
+      if (restored && !more) await readPairNewer(job.st, { base: job.base, get: getJson, onPage });
+      else await readPairPages(job.st, { base: job.base, get: getJson, pages: more ? Infinity : AUTO_PAGES, need: more ? null : job.need, onPage });
+    }
     // Lifetime shots / hits of the weapons used in kills between them (asked once per weapon).
     const pe = pairEvents(job.st.all, job.st.qid, job.pIsA);
     const items = [...new Set(pe.map((e) => String(e.w)).filter((w) => w !== "0" && !job.asked.has(w)))];
@@ -191,6 +237,7 @@ export function mountDuels(section, o = {}) {
         if (plain && kills && !plain.error && !kills.error) { parseShotStats(plain, kills, job.stats); items.forEach((w) => job.asked.add(w)); }
       } catch (_) { /* the ≈ columns stay "–" */ }
     }
+    saveCache(key, job);
     return job;
   }
 
@@ -311,8 +358,25 @@ export function mountDuels(section, o = {}) {
     moreBtn.disabled = true;
     setStatus(tr("duel.loading", "Reading the kills between them…"));
     status.appendChild(spin);
+    // Ticking liveness line: the spinner does not rotate on animation-disabled devices,
+    // so a slow Census page would otherwise look frozen. renderPair wipes the status line,
+    // so the progress callback re-appends both the spinner and this line after each render.
+    let waitSecs = 0, waitPages = 0;
+    const tickWait = () => { wait.textContent = ` page ${waitPages} · ${waitSecs}s`; };
+    tickWait();
+    status.appendChild(wait);
+    const waitTimer = setInterval(() => { waitSecs++; tickWait(); if (!wait.isConnected) status.appendChild(wait); }, 1000);
     try {
-      const [job, items] = await Promise.all([loadPair(more), cat()]);
+      const items = await cat();
+      const renderLive = (j) => { renderPair(j, items); status.appendChild(spin); status.appendChild(wait); tickWait(); };
+      const job = await loadPair(more, (j) => {
+        if (mode !== "pair" || pairKey() !== key) return;
+        waitPages = j.st.pages;
+        renderLive(j);
+      }, (j) => {
+        if (mode !== "pair" || pairKey() !== key) return;
+        renderLive(j);
+      });
       if (mode !== "pair" || pairKey() !== key) return;
       shownKey = `p:${key}`;
       if (job.servers) { setStatus(tr("duel.servers", "These two play on different servers: they never meet.")); return; }
@@ -324,6 +388,8 @@ export function mountDuels(section, o = {}) {
       busy = false;
       moreBtn.disabled = false;
       spin.remove();
+      clearInterval(waitTimer);
+      wait.remove();
     }
   }
 

@@ -3,8 +3,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
-  classOf, crowdRows, crowdSummary, expectedCount, pagerOf, readPairPages, pairEvents, fightsOf, fightResult,
+  classOf, crowdRows, crowdSummary, expectedCount, pagerOf, readPairPages, readPairNewer, pairEvents, fightsOf, fightResult,
   weaponShotUrls, parseShotStats, perKill, pairSummary, ONE_V_ONE,
+  duelCacheEntry, duelCacheRestore, duelCachePrune,
 } from "../duels.mjs";
 
 const fx = JSON.parse(readFileSync(new URL("./fixtures/scrim-royaigreenberet.json", import.meta.url), "utf8"));
@@ -104,6 +105,72 @@ test("\"Read further back\" pages to the end of the history in one load", async 
   assert.equal(st.pages, 3);
 });
 
+test("readPairPages reports each non-terminal page, so the table can grow while Census answers", async () => {
+  const events = [];
+  for (let i = 0; i < 2500; i++) events.push([300000 - i, i % 2, ANCHOR, 1, 0, 2, 1, 8, 0]);
+  const { get, calls } = fakeCensus(events, ROYAL);
+  const seen = [];
+  const st = { pid: ROYAL, qid: ANCHOR, all: [], cursor: 0, done: false, pages: 0 };
+  await readPairPages(st, { base: "https://x/get/ps2ps4us:v2/", get, pages: Infinity, onPage: (s) => seen.push(s.pages) });
+  assert.equal(calls.length, 3);
+  assert.deepEqual(seen, [1, 2], "the short last page is covered by the final render, not a progress call");
+  assert.equal(st.done, true);
+  assert.equal(st.pages, 3);
+});
+
+test("cached duels refresh only newer kills: pages from the top until a page adds nothing", async () => {
+  // Cached: 1,000 events (t 200000..199001). Since then: 1,000 newer events (t 201000..200001).
+  const cached = [];
+  for (let i = 0; i < 1000; i++) cached.push([200000 - i, i % 2, ANCHOR, 1, 0, 2, 1, 8, 0]);
+  const newer = [];
+  for (let i = 0; i < 1000; i++) newer.push([201000 - i, i % 2, ANCHOR, 1, 0, 2, 1, 8, 0]);
+  const { get, calls } = fakeCensus([...newer, ...cached], ROYAL);
+  const st = { pid: ROYAL, qid: ANCHOR, all: cached, cursor: 199002, done: false, pages: 1, oldest: 199001 };
+  await readPairNewer(st, { base: "https://x/get/ps2ps4us:v2/", get });
+  assert.equal(calls.length, 2, "one newer page, then the boundary page that adds nothing");
+  assert.equal(st.all.length, 2000);
+  assert.equal(st.pages, 3);
+  assert.equal(st.cursor, 199002, "refresh never moves the backward cursor");
+  assert.equal(st.done, false, "refresh never completes the backward history");
+  assert.equal(st.oldest, 199001, "the oldest event is unchanged");
+});
+
+test("cached duels with nothing new stop after one short page", async () => {
+  const cached = [];
+  for (let i = 0; i < 100; i++) cached.push([200000 - i, i % 2, ANCHOR, 1, 0, 2, 1, 8, 0]);
+  const { get, calls } = fakeCensus(cached, ROYAL);
+  const st = { pid: ROYAL, qid: ANCHOR, all: cached, cursor: 199902, done: true, pages: 1, oldest: 199901 };
+  await readPairNewer(st, { base: "https://x/get/ps2ps4us:v2/", get });
+  assert.equal(calls.length, 1);
+  assert.equal(st.all.length, 100, "no duplicates merged");
+  assert.equal(st.done, true);
+});
+
+test("duel cache entries round-trip the job and reject the wrong direction; prune keeps the newest 10", () => {
+  const job = {
+    base: "https://x/get/ps2ps4us:v2/", pid: ROYAL,
+    st: { pid: ROYAL, qid: ANCHOR, all: [[300000, 1, ANCHOR, 1, 0, 2, 1, 8, 0]], cursor: 300001, done: true, pages: 2, oldest: 300000 },
+    stats: new Map([["1|1", { shots: 100, hits: 50, kills: 10 }]]), asked: new Set(["1"]),
+  };
+  const entry = duelCacheEntry(job);
+  assert.equal(entry.v, 1);
+  assert.equal(entry.pid, ROYAL);
+  const back = { base: job.base, pid: ROYAL, st: { qid: ANCHOR } };
+  assert.equal(duelCacheRestore(entry, back), true);
+  assert.deepEqual(back.st.all, job.st.all);
+  assert.equal(back.st.done, true);
+  assert.equal(back.stats.get("1|1").kills, 10);
+  assert.ok(back.asked.has("1"), "asked weapons derive from the saved stats");
+  assert.equal(duelCacheRestore(entry, { base: job.base, pid: ANCHOR, st: { qid: ROYAL } }), false, "a flipped direction must not restore");
+  assert.equal(duelCacheRestore({ v: 1, pid: ROYAL }, back), false, "malformed entries must not restore");
+  const map = {};
+  for (let i = 0; i < 12; i++) map[`k${i}`] = { savedAt: i };
+  const pruned = duelCachePrune(map);
+  assert.equal(Object.keys(pruned).length, 10);
+  assert.equal(pruned.k0, undefined, "the oldest entries go first");
+  assert.ok(pruned.k11, "the newest entry survives");
+});
+
 test("fights break after 10 minutes without a kill between them; newest first", () => {
   const ev = (t, aKill) => ({ t, aKill, w: 1, hs: false, z: 2, aL: 1, bL: 8, veh: 0 });
   const pe = [ev(1000, true), ev(1100, false), ev(1650, true), ev(5000, true)];
@@ -151,6 +218,14 @@ test("tab wiring: both rooms, one or two players, translated, shared table look"
   assert.doesNotMatch(panel, /MORE_PAGES/, "no per-click page chunk left");
   assert.match(panel, /className = "spinner"/, "small spinner while the history loads");
   assert.match(panel, /spin\.remove\(\)/, "spinner removed when the load settles");
+  assert.match(panel, /loadPair\(more, \(j\) =>/, "each page re-renders the table as it arrives");
+  assert.match(panel, /renderPair\(j, items\)/, "progress render uses the loaded pair and catalog");
+  assert.match(panel, /waitSecs/, "ticking elapsed time while the history loads");
+  assert.match(panel, /clearInterval\(waitTimer\)/, "timer stops when the load settles");
+  assert.match(panel, /readPairNewer\(/, "cached pairs refresh only newer kills on open");
+  assert.match(panel, /DUEL_CACHE_KEY/, "duels history cached in this browser");
+  assert.match(panel, /duelCacheEntry\(job\)/, "completed loads save the pair to the cache");
+  assert.match(panel, /onCached\(job\)/, "saved history renders before the refresh runs");
   assert.match(panel, /pairApi = null/, "own kill store hook stays off until the Worker serves it");
   const index = readFileSync(new URL("../index.html", import.meta.url), "utf8");
   assert.match(index, /<details id="duelsSection" class="dist-section duel-section" hidden>/);

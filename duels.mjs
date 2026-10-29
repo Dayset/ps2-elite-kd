@@ -12,6 +12,11 @@
  * Bullets per kill: Census does not record the shots of one kill (nor does any other public
  * source). The "≈" numbers are the killer's LIFETIME average with that weapon (Census
  * characters_weapon_stat fire / hit count ÷ characters_weapon_stat_by_faction kills).
+ *
+ * Cache (owner 2026-10-28): a pair's compact events + weapon stats live in the browser
+ * (localStorage, last 10 pairs, owned by the panel); opening a pair shows the saved history
+ * at once and refreshes only newer kills (readPairNewer pages from the top until a page
+ * adds nothing).
  */
 import { eventsUrl, compactEvent, mergeEvents, EVENT_PAGE } from "./scrims.mjs?v=20261028-os2";
 
@@ -102,8 +107,9 @@ export function pagerOf(a, b) {
 /**
  * Page back through the history player's events. st = { pid, qid, all: [], cursor: 0, done, pages, oldest }.
  * Stops after `pages` pages, at the end of the history, or once `need` kills between them are in.
+ * Calls onPage(st) after each page that is not the last one read, so a caller can re-render as data arrives.
  */
-export async function readPairPages(st, { base, get, pages = AUTO_PAGES, need = null }) {
+export async function readPairPages(st, { base, get, pages = AUTO_PAGES, need = null, onPage = null }) {
   let n = 0;
   const qid = String(st.qid);
   while (n < pages && !st.done) {
@@ -119,9 +125,79 @@ export async function readPairPages(st, { base, get, pages = AUTO_PAGES, need = 
     // The edge second is asked again (+1) so a second split across two pages is never lost; mergeEvents dedupes.
     st.cursor = st.cursor && oldest + 1 >= st.cursor ? oldest : oldest + 1;
     if (need != null && st.all.reduce((c, x) => c + (x[2] === qid ? 1 : 0), 0) >= need) break;
+    if (onPage) onPage(st);
   }
   st.oldest = st.all && st.all.length ? st.all[st.all.length - 1][0] : 0;
   return st;
+}
+
+/**
+ * Refresh a cached run: page from the newest events down until a page adds nothing new
+ * (fully contained in the cache) or a short page ends the available history. Calls onPage(st)
+ * after each page that is not the last one read, like readPairPages. st.cursor / st.done are
+ * untouched: refresh only adds newer events, it never reads further back.
+ */
+export async function readPairNewer(st, { base, get, onPage = null }) {
+  let before = 0;
+  while (true) {
+    const j = await get(eventsUrl(base, st.pid, { before }));
+    if (!j || !Array.isArray(j.characters_event_list)) throw new Error("bad census reply");
+    st.pages = (st.pages || 0) + 1;
+    const list = j.characters_event_list;
+    const page = list.map((e) => compactEvent(e, st.pid)).filter(Boolean);
+    const had = (st.all || []).length;
+    st.all = mergeEvents(st.all || [], page);
+    if (list.length < EVENT_PAGE || !page.length) break;
+    if (st.all.length === had) break;
+    if (onPage) onPage(st);
+    const oldest = page.reduce((m, x) => Math.min(m, x[0]), Infinity);
+    // Same edge-second rule as readPairPages: the boundary second is asked again, mergeEvents dedupes.
+    before = before && oldest + 1 >= before ? oldest : oldest + 1;
+  }
+  st.oldest = st.all && st.all.length ? st.all[st.all.length - 1][0] : 0;
+  return st;
+}
+
+/* ---------------------------------------------------------------- duels history cache */
+
+/** localStorage key for the duels history cache (the panel owns the storage access). */
+export const DUEL_CACHE_KEY = "ps2_duels_cache";
+/** How many pairs the cache keeps (newest first by savedAt). */
+export const DUEL_CACHE_MAX = 10;
+
+/** A pair's job → a plain JSON entry (compact events + weapon stats). */
+export function duelCacheEntry(job) {
+  return {
+    v: 1, pid: String(job.pid), qid: String(job.st.qid), base: job.base,
+    all: job.st.all || [], cursor: job.st.cursor || 0, done: !!job.st.done,
+    pages: job.st.pages || 0, oldest: job.st.oldest || 0,
+    stats: [...(job.stats || [])], savedAt: Date.now(),
+  };
+}
+
+/**
+ * An entry → the job's st / stats / asked, when it matches this pair and direction.
+ * Returns false (job untouched) on any mismatch or malformed entry.
+ */
+export function duelCacheRestore(entry, job) {
+  if (!entry || entry.v !== 1 || entry.pid !== String(job.pid) || entry.qid !== String(job.st.qid) || entry.base !== job.base) return false;
+  if (!Array.isArray(entry.all) || !entry.all.every((x) => Array.isArray(x) && x.length === 9) ||
+      typeof entry.cursor !== "number" || typeof entry.done !== "boolean" || !Array.isArray(entry.stats)) return false;
+  job.st = {
+    pid: String(job.pid), qid: String(job.st.qid), all: entry.all,
+    cursor: entry.cursor, done: entry.done, pages: entry.pages || 0, oldest: entry.oldest || 0,
+  };
+  job.stats = new Map(entry.stats);
+  job.asked = new Set([...job.stats.keys()].map((k) => String(k).split("|")[1]).filter(Boolean));
+  return true;
+}
+
+/** A cache map → the same entries with only the newest DUEL_CACHE_MAX kept (by savedAt). */
+export function duelCachePrune(map, max = DUEL_CACHE_MAX) {
+  const keys = Object.keys(map || {}).sort((x, y) => (map[y].savedAt || 0) - (map[x].savedAt || 0));
+  const out = {};
+  for (const k of keys.slice(0, max)) out[k] = map[k];
+  return out;
 }
 
 /**
