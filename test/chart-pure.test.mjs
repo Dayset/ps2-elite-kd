@@ -107,11 +107,30 @@ test("one module = one ?v= tag across all importers", () => {
     return found;
   };
   const appFiles = ["app.js"];
-  assert.deepEqual([...tag("chart.mjs", appFiles)], ["20261029-purebtn1"]);
-  assert.deepEqual([...tag("stats-table.mjs", appFiles)], ["20261029-puregraph1"]);
+  assert.deepEqual([...tag("chart.mjs", appFiles)], ["20261029-carousel1"]);
+  assert.deepEqual([...tag("stats-table.mjs", appFiles)], ["20261029-carousel1"]);
   assert.deepEqual([...tag("chart-wave.mjs", appFiles)], ["20261029-puregraph1"]);
   assert.deepEqual([...tag("pure-ivi.mjs", ["app.js", "stats-table.mjs", "rankings.mjs", "chart.mjs"])], ["20261029-purevis1"]);
   const htmlTag = (f) => [...read(f).matchAll(/app\.js\?v=([A-Za-z0-9_.-]+)/g)].map((m) => m[1]);
-  assert.deepEqual(htmlTag("index.html"), ["20261029-purebtn1"]);
-  assert.deepEqual(htmlTag("live.html"), ["20261029-purebtn1"]);
+  assert.deepEqual(htmlTag("index.html"), ["20261029-carousel1"]);
+  assert.deepEqual(htmlTag("live.html"), ["20261029-carousel1"]);
+});
+
+test("#86: graph lookup finds PLAYERS in lastStatsList (not rows)", async () => {
+  const { findPlayerByDisplay } = await import("../stats-table.mjs");
+  const list = [{ display: "[TAG] ShloDog" }, { name: "JustV6me" }];
+  assert.equal(findPlayerByDisplay(list, "shlodog"), list[0]);
+  assert.equal(findPlayerByDisplay(list, "[X] JustV6me"), list[1]);
+  assert.equal(findPlayerByDisplay(list, "nobody"), null);
+  assert.equal(findPlayerByDisplay(null, "shlodog"), null);
+  const src = read("stats-table.mjs");
+  assert.ok(src.includes("findPlayerByDisplay($.lastStatsList, display)"), "pureGraphFor uses the player lookup");
+});
+
+test("#86: an empty mode bar is display: none (not a dot), and the table re-syncs it", () => {
+  assert.ok(read("chart.mjs").includes('$.els.chartModeBar.style.display = show ? "" : "none";'));
+  const st = read("stats-table.mjs");
+  const at = st.indexOf("$.lastStatsList = list;");
+  assert.ok(at > 0 && st.slice(at, at + 300).includes("$.syncChartModeUi()"), "renderStatsTable re-syncs the bar");
+  assert.ok(read("app.js").includes("get syncChartModeUi() { return syncChartModeUi; }, // #86"));
 });

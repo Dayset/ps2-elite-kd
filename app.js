@@ -39,9 +39,9 @@ import { createAnalyze } from "./analyze.mjs?v=20261027-an69";
 import { createShareAdd } from "./share-add.mjs?v=20261027-z79";
 import { createSharedIndex } from "./shared-index.mjs?v=20261029-purevis1";
 import { createNamesField } from "./names-field.mjs?v=20261027-z79";
-import { createStatsTable } from "./stats-table.mjs?v=20261029-puregraph1";
+import { createStatsTable } from "./stats-table.mjs?v=20261029-carousel1";
 import { createChartWave } from "./chart-wave.mjs?v=20261029-puregraph1";
-import { createChart } from "./chart.mjs?v=20261029-purebtn1";
+import { createChart } from "./chart.mjs?v=20261029-carousel1";
 import { createLoader } from "./loader.mjs?v=20261027-z79";
 import { createCacheChips } from "./cache-chips.mjs?v=20261027-z79";
 import { createLocalCache } from "./local-cache.mjs?v=20261027-z79";
@@ -965,6 +965,7 @@ import {
       get IS_PS() { return IS_PS; },
       get isSavedName() { return isSavedName; },
       get lastStatsList() { return lastStatsList; }, set lastStatsList(v) { lastStatsList = v; },
+      get syncChartModeUi() { return syncChartModeUi; }, // #86: re-sync 💀 / 🧘 when the table (and its 🪳 pools) re-renders
       get liteSlugs() { return liteSlugs; }, set liteSlugs(v) { liteSlugs = v; },
       get LIVE_MODE() { return LIVE_MODE; },
       get loadRanksLite() { return loadRanksLite; },

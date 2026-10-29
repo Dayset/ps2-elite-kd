@@ -38,6 +38,13 @@ import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from
  * $ = app.js state and functions this part uses, as live getters (and setters for state it changes), so app.js
  * stays the one owner: CENSUS, CENSUS_BASES, IS_PS, LIVE_MODE, LS_DEBUG_COLS, ROOM, censusJson, confirmedPadders, els, hutBySlug, hutMarked, hutOf, isSavedName, lastStatsList, liteSlugs, loadRanksLite, nameTokens, nbdBySlug, nbdCutsLite, nbhBySlug, refreshOnlineRoom, rvpBySlug, seriesColor, serverTagHtml, showDebugCols, thinCellTip, vdfBySlug.
  */
+/** #86: the player in a stats list (renderStatsTable's list of players) whose display / name matches, or null. */
+export function findPlayerByDisplay(list, display) {
+  const k = slugKey(display);
+  if (!k || !Array.isArray(list)) return null;
+  return list.find((p) => p && slugKey(p.display || p.name) === k) || null;
+}
+
 export function createStatsTable($) {
   /* Per-table sort state: key "name" | col index, dir "asc"|"desc" */
   const statsSortState = {
@@ -105,10 +112,14 @@ export function createStatsTable($) {
   // values, recomputed with the same calls the columns use — so the graph and
   // the table can never disagree. null = unknown 🪳 (never a 0): the graph
   // omits such players outright instead of drawing them as if clean.
+  const rowCache = new WeakMap(); // player object → playerMetrics row (same object the table builds from)
+  const metricsOf = (p) => { let r = rowCache.get(p); if (!r) { r = playerMetrics(p); rowCache.set(p, r); } return r; };
   function pureGraphFor(display) {
     if (!display || $.IS_PS) return null;
-    const row = $.lastStatsList ? $.lastStatsList.find((r) => r.p && slugKey(r.p.display) === slugKey(display)) : null;
-    if (!row) return null;
+    // #86: lastStatsList holds PLAYERS (renderStatsTable's list), not stats rows — find the player, then build its row.
+    const p = findPlayerByDisplay($.lastStatsList, display);
+    if (!p) return null;
+    const row = metricsOf(p);
     const z = traitP && row.p ? zergScore(traitP, shownValue(row, "inflation"), apkBySlug && apkBySlug.get(slugKey(row.p.display)), rvpOf(row.p.display), crpOf(row.p.display)) : null;
     const a = shownValue(row, "adjs");
     if (!isFiniteNum(a)) return null;
@@ -376,6 +387,8 @@ export function createStatsTable($) {
     if (!$.els.stats) return;
     if (list.length) requestAnimationFrame(releaseStatsSpace);
     $.lastStatsList = list;
+    // #86: the 🪳 pools arrive after the analysis draw; every table render re-syncs the graph's 💀 / 🧘 bar.
+    if ($.syncChartModeUi) $.syncChartModeUi();
     if (!list.length) {
       $.els.stats.innerHTML = "";
       if ($.els.statsPublic) $.els.statsPublic.innerHTML = "";

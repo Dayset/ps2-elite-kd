@@ -95,7 +95,10 @@ export function createChart($) {
       if (kdBtn) kdBtn.hidden = !($.AIM_VIEW || avail);
       const pureBtn = $.els.chartModeBar.querySelector('[data-yscale="pure-btn"]');
       if (pureBtn) pureBtn.hidden = !avail;
-      $.els.chartModeBar.hidden = ![...$.els.chartModeBar.children].some((x) => !x.hidden);
+      const show = [...$.els.chartModeBar.children].some((x) => !x.hidden);
+      $.els.chartModeBar.hidden = !show;
+      // #86: .chart-mode-bar's display: flex beats [hidden], so an empty bar rendered as a small dot.
+      $.els.chartModeBar.style.display = show ? "" : "none";
     }
   }
 
