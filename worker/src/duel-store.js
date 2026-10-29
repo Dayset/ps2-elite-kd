@@ -10,6 +10,10 @@
  *    the history was reached), at (last top-up), last (last request).
  * Census is read on demand by the object itself (4 pages / ~20 s per call at most). A second
  * request for the same player waits for the running read instead of paging Census twice.
+ * Creation floor (owner note on #83): a pair history cannot start before the newer of the two
+ * characters was created, so reading older pages stops at max(created_p, created_q) − GAP (the
+ * margin keeps the 10-minute context of a first fight). Creation dates come from one Census
+ * character lookup per player, kept in meta ("cr:<cid>"). `done` = the start of the PAIR history.
  *
  * GET /duels/pair?ns=&p=<history cid>&q=<other cid>&want=<fights>&seen=<rev>
  *   → { v: 1, pid, qid, events, rev, segs, lo, hi, done, fights, kills, pages, error? }
@@ -48,6 +52,11 @@ export function compactEvent(e, cid) {
   ];
 }
 const eventKey = (x) => `${x[0]}|${x[1]}|${x[2]}|${x[3]}|${x[6]}|${x[7]}`;
+
+/** Census character lookup: creation time (unix s) of up to 2 characters. */
+export function createdUrl(sid, ns, cids) {
+  return `${CENSUS}/s:${sid}/get/${ns}:v2/character/?character_id=${cids.map(encodeURIComponent).join(",")}&c:show=character_id,times.creation&c:limit=${cids.length}`;
+}
 
 export function eventsUrl(sid, ns, cid, { before = 0, after = 0 } = {}) {
   return `${CENSUS}/s:${sid}/get/${ns}:v2/characters_event/?character_id=${encodeURIComponent(cid)}&type=KILL,DEATH&c:limit=${PAGE}` +
@@ -123,8 +132,35 @@ export class DuelStore {
     return { events: ev, full: list.length >= PAGE };
   }
 
+  /** Creation times (unix s, 0 = unknown) of the characters, from meta or one Census lookup. */
+  async created(ns, ids) {
+    const out = new Map(), miss = [];
+    for (const id of ids) { const v = this.meta(`cr:${id}`); if (v != null) out.set(id, +v || 0); else miss.push(id); }
+    if (miss.length) {
+      try {
+        const sid = this.env.CENSUS_SERVICE_ID || "daysetps2legends";
+        const r = await this.fetchFn(createdUrl(sid, ns, miss), { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(10e3) });
+        const j = r.ok ? await r.json() : null;
+        if (j && Array.isArray(j.character_list)) {
+          const got = new Map(j.character_list.map((c) => [String(c.character_id), +(c.times && c.times.creation) || 0]));
+          for (const id of miss) { const t = got.get(id) || 0; this.meta(`cr:${id}`, t); out.set(id, t); }
+        }
+      } catch { /* no floor this time; asked again next call */ }
+    }
+    for (const id of ids) if (!out.has(id)) out.set(id, 0);
+    return out;
+  }
+
+  /** Oldest time a kill between cid and q can have (minus the context margin), or 0 when unknown. */
+  async floor(ns, cid, q) {
+    const cr = await this.created(ns, [cid, q]);
+    this.cr = [cr.get(cid) || 0, cr.get(q) || 0];
+    const f = Math.max(...this.cr);
+    return f ? f - GAP : 0;
+  }
+
   /** Read Census until `want` fights with q are stored in the newest gap-free range, or the budget runs out. */
-  async read(ns, cid, q, want, pairTimes) {
+  async read(ns, cid, q, want, pairTimes, floor = 0) {
     const t0 = this.now();
     let pages = 0;
     const room = () => pages < MAX_PAGES && this.now() - t0 < BUDGET_MS;
@@ -149,6 +185,7 @@ export class DuelStore {
       const s = this.segs;
       const done = this.meta("done") === "1";
       if (s.length < 2 && done) break;
+      if (floor && s.length && s[0][0] <= floor) break; // older than the newer character: no kills between them there
       const i = s.length > 1 ? 0 : s.length - 1;
       const lo = s[i][0];
       const r = await this.page(ns, cid, { before: stuck ? lo : lo + 1 }); // +1: the edge second again (dupes are dropped on read)
@@ -222,8 +259,10 @@ export class DuelStore {
     let pages = 0, error = null;
     // One Census reader per player at a time: a second request waits for it, then reads storage.
     while (this.running) { try { await this.running; } catch {} }
+    let floor = 0;
     const job = (async () => {
-      pages = await this.read(ns, cid, q, want, await this.pairTimes(q));
+      floor = await this.floor(ns, cid, q);
+      pages = await this.read(ns, cid, q, want, await this.pairTimes(q), floor);
     })();
     this.running = job;
     try { await job; } catch (e) { error = "census_busy"; } finally { this.running = null; }
@@ -233,7 +272,9 @@ export class DuelStore {
     return Response.json({
       v: 1, pid: cid, qid: q, events: a.events, rev: a.rev, segs,
       lo: segs.length ? segs[0][0] : 0, hi: segs.length ? segs[0][1] : 0,
-      done: this.meta("done") === "1" && segs.length < 2, fights: a.fights, kills: a.kills, pages, blocks,
+      // done = nothing older can hold a kill between them: the start of p's history, or the newer character's creation.
+      done: (this.meta("done") === "1" && segs.length < 2) || !!(floor && segs.length && segs[0][0] <= floor),
+      floor, floorHit: !!(floor && segs.length && segs[0][0] <= floor), created: this.cr || [0, 0], fights: a.fights, kills: a.kills, pages, blocks,
       ...(error ? { error } : {}),
     });
   }

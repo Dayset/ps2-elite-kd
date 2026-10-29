@@ -3,7 +3,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { DatabaseSync } from "node:sqlite";
-import { DuelStore, duelRoute, compactEvent, countFights, addSeg, gzip, gunzip, eventsUrl, STALE_MS, PAGE, GAP } from "../worker/src/duel-store.js";
+import { DuelStore, duelRoute, compactEvent, countFights, addSeg, gzip, gunzip, eventsUrl, createdUrl, STALE_MS, PAGE, GAP } from "../worker/src/duel-store.js";
 import { compactEvent as siteCompact } from "../scrims.mjs";
 
 function fakeCtx() {
@@ -38,16 +38,21 @@ function history({ days = 10, fightsPerDay = 1, start = 1_790_000_000 } = {}) {
 }
 const asRow = (e) => ({ timestamp: String(e.ts), table_type: e.kill ? "kills" : "deaths", character_id: e.kill ? e.other : P, attacker_character_id: e.kill ? P : e.other, attacker_weapon_id: "7254", is_headshot: "0", zone_id: "2", attacker_loadout_id: "6", character_loadout_id: "13", attacker_vehicle_id: "0" });
 
-function fakeCensus(hist) {
-  const calls = [];
+function fakeCensus(hist, created = {}) {
+  const calls = [], lookups = [];
   const fetchFn = async (url) => {
+    if (url.includes("/character/?")) {
+      lookups.push(url);
+      const ids = /character_id=([\d,]+)/.exec(url)[1].split(",");
+      return new Response(JSON.stringify({ character_list: ids.map((id) => ({ character_id: id, times: { creation: String(created[id] || 1_300_000_000) } })) }), { status: 200 });
+    }
     calls.push(url);
     const before = +((/before=(\d+)/.exec(url) || [])[1] || Infinity);
     const after = +((/after=(\d+)/.exec(url) || [])[1] || -Infinity);
     const page = hist.filter((e) => e.ts < before && e.ts > after).slice(0, PAGE);
     return new Response(JSON.stringify({ characters_event_list: page.map(asRow), returned: page.length }), { status: 200 });
   };
-  return { fetchFn, calls };
+  return { fetchFn, calls, lookups };
 }
 
 const ask = async (store, params) => (await store.fetch(new Request(`https://duel/pair?${new URLSearchParams({ ns: "ps2", p: P, q: Q, ...params })}`))).json();
@@ -135,6 +140,41 @@ test("newer kills are read after 10 minutes (Census after=), older stay stored",
   assert.equal(r2.kills, r1.kills + 6);
   assert.equal(r2.events.filter((x) => x[2] === Q).length, 6, "only the new fight is sent");
   assert.equal(r2.done, true);
+});
+
+test("creation floor: a new character vs a long history stops at the newer one's creation (owner note on #83)", async () => {
+  // 60 days of p's history; q was created 5 days ago and fought p once a day since.
+  const days = 60;
+  const hist = [];
+  const start = 1_790_000_000;
+  for (let d = 0; d < days; d++) {
+    const base = start + d * 86400;
+    for (let i = 0; i < 400; i++) hist.push({ ts: base + i * 15, other: String(5429000000000000000n + BigInt(i % 50)), kill: i % 2 });
+    if (d >= days - 5) for (let k = 0; k < 6; k++) hist.push({ ts: base + 3000 + k * 30, other: Q, kill: k % 2 });
+  }
+  hist.sort((a, b) => b.ts - a.ts);
+  const qCreated = start + (days - 5) * 86400 - 3600;
+  const now = (hist[0].ts + 60) * 1000;
+  const { fetchFn, calls, lookups } = fakeCensus(hist, { [Q]: qCreated, [P]: 1_400_000_000 });
+  const ctx = fakeCtx();
+  const store = new DuelStore(ctx, {}, { blob: (u8) => u8, fetchFn, now: () => now });
+  let r = await ask(store, { want: 1e6 });
+  let rounds = 0;
+  while (!r.done && rounds++ < 20) r = await ask(store, { want: 1e6, seen: r.rev });
+  assert.equal(r.done, true);
+  assert.equal(r.floorHit, true);
+  assert.equal(r.floor, qCreated - GAP);
+  assert.deepEqual(r.created, [1_400_000_000, qCreated]);
+  assert.equal(r.fights, 5);
+  assert.equal(r.kills, 30);
+  assert.ok(r.lo <= qCreated - GAP, "read down to the floor");
+  assert.ok(calls.length <= 4, `only the last days of a 60-day history were read (${calls.length} pages, 24 for all)`);
+  assert.equal(lookups.length, 1, "creation dates looked up once, kept in the store");
+  assert.match(createdUrl("sid", "ps2", [P, Q]), /character\/\?character_id=\d+,\d+&c:show=character_id,times\.creation&c:limit=2$/);
+  // Later calls: no new lookup, still done.
+  const again = await ask(store, { want: 1e6, seen: r.rev });
+  assert.equal(again.done, true);
+  assert.equal(lookups.length, 1);
 });
 
 test("two requests at once for one player: Census is read once", async () => {

@@ -15,11 +15,11 @@ import { t as tr, currentLang } from "./i18n.mjs";
 import { zoneName } from "./scrims-panel.mjs?v=20261028-os2";
 import { mergeEvents } from "./scrims.mjs?v=20261028-os2";
 import {
-  AUTO_PAGES, FIRST_FIGHTS, nsOfBase, DUEL_GAP, ONE_V_ONE, classOf, bareName, crowdRows, crowdSummary, expectedCount, pagerOf,
+  AUTO_PAGES, FIRST_FIGHTS, nsOfBase, pairFloor, DUEL_GAP, ONE_V_ONE, classOf, bareName, crowdRows, crowdSummary, expectedCount, pagerOf,
   readPairPages, readPairNewer, pairEvents, fightsOf, fightResult, weaponShotUrls, parseShotStats, perKill, pairSummary,
   charInfoUrl, parseCharInfo, pairWarnings, WORLD_NAME,
   DUEL_CACHE_KEY, duelCacheEntry, duelCacheRestore, duelCachePrune,
-} from "./duels.mjs?v=20261028-pc2";
+} from "./duels.mjs?v=20261028-floor1";
 
 const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const lang = () => { try { return currentLang() || undefined; } catch { return undefined; } };
@@ -200,7 +200,7 @@ export function mountDuels(section, o = {}) {
       if (baseOf(b) !== base) { job = { servers: true }; pairs.set(key, job); return job; }
       const P = pagerOf(a, b), Q = P === a ? b : a;
       const need = expectedCount(P, Q) ?? expectedCount(Q, P);
-      job = { base, pid: String(P.cid), pIsA: P === a, need, st: { pid: String(P.cid), qid: String(Q.cid), all: [], cursor: 0, done: false, pages: 0 }, stats: new Map(), asked: new Set() };
+      job = { base, pid: String(P.cid), pIsA: P === a, need, fl: pairFloor(a, b), st: { pid: String(P.cid), qid: String(Q.cid), all: [], cursor: 0, done: false, pages: 0 }, stats: new Map(), asked: new Set() };
       const entry = readCacheMap()[key];
       if (entry && duelCacheRestore(entry, job)) restored = true;
       pairs.set(key, job);
@@ -229,6 +229,12 @@ export function mountDuels(section, o = {}) {
           job.st.done = !!r.done;
           job.st.pages = (job.st.pages || 0) + (r.pages || 0);
           job.st.oldest = r.lo || (job.st.all.length ? job.st.all[job.st.all.length - 1][0] : 0);
+          // The server's creation dates win (same Census source; the files can be older).
+          if (Array.isArray(r.created) && Math.max(...r.created) > 0) {
+            const [cp, cq] = r.created.map(Number), pA = job.st.pid === String(a.cid);
+            const ca = pA ? cp : cq, cb = pA ? cq : cp;
+            job.fl = { floor: Math.max(ca, cb) - DUEL_GAP, created: Math.max(ca, cb), newer: ca >= cb ? a : b };
+          }
           if (onProgress) onProgress(job);
           if (r.done || (!more && r.fights >= FIRST_FIGHTS)) break;
           if (r.error) await new Promise((res) => setTimeout(res, 3000)); // Census busy on the server: short pause
@@ -239,7 +245,7 @@ export function mountDuels(section, o = {}) {
     if (!fromApi) {
       const onPage = onProgress ? () => onProgress(job) : undefined;
       if (restored && !more) await readPairNewer(job.st, { base: job.base, get: getJson, onPage });
-      else await readPairPages(job.st, { base: job.base, get: getJson, pages: more ? Infinity : AUTO_PAGES, need: more ? null : job.need, onPage, stop: () => stopAsked });
+      else await readPairPages(job.st, { base: job.base, get: getJson, pages: more ? Infinity : AUTO_PAGES, need: more ? null : job.need, onPage, stop: () => stopAsked, floor: job.fl ? job.fl.floor : 0 });
     }
     // Lifetime shots / hits of the weapons used in kills between them (asked once per weapon).
     const pe = pairEvents(job.st.all, job.st.qid, job.pIsA);
@@ -292,7 +298,11 @@ export function mountDuels(section, o = {}) {
     const s = pairSummary(pe, fights, job.stats, a.cid, b.cid);
     count.textContent = pe.length ? `(${pe.length.toLocaleString(lang())})` : "";
     const since = job.st.oldest ? dateOnly(job.st.oldest) : "";
-    const read = job.st.done
+    const fl = job.fl || {};
+    const floorHit = job.st.done && fl.floor && job.st.oldest && job.st.oldest <= fl.floor && fl.newer;
+    const read = floorHit
+      ? tr("duel.readFloor", "Read back to when {name} was created ({date}): every kill between them is here.", { name: bareName(fl.newer.display), date: dateOnly(fl.created) })
+      : job.st.done
       ? tr("duel.readAll", "Whole history read.")
       : job.need != null && pe.length < job.need
         ? tr("duel.readOf", "History read back to {date}: {n} of the {total} kills between them on the killboard found.", { date: since, n: pe.length.toLocaleString(lang()), total: job.need.toLocaleString(lang()) })

@@ -245,3 +245,24 @@ test("warnings: same faction (teamkills only, NSO never counts) and different se
   assert.deepEqual(pairWarnings(info(1, 1, 3, 1), "1", "2"), []);
   assert.deepEqual(pairWarnings(new Map(), "1", "2"), [], "no Census info → no warning");
 });
+
+test("creation floor (owner note on #83): Census paging stops at the newer character's creation", async () => {
+  const { pairFloor, readPairPages, DUEL_GAP } = await import("../duels.mjs");
+  const old = { cid: "1", display: "Vet", times: { created: 1_300_000_000 } }, fresh = { cid: "2", display: "[N] Newbie", times: { created: 1_790_000_000 } };
+  const f = pairFloor(old, fresh);
+  assert.equal(f.floor, 1_790_000_000 - DUEL_GAP);
+  assert.equal(f.newer, fresh);
+  assert.deepEqual(pairFloor({ cid: "1" }, { cid: "2" }), { floor: 0, created: 0, newer: null });
+  // 20 full pages of history reaching far below the floor: paging stops at the page that crosses it.
+  const pageOf = (before) => {
+    const top = Math.min(before || 1_790_100_000, 1_790_100_000);
+    return { characters_event_list: Array.from({ length: 1000 }, (_, i) => ({ timestamp: String(top - 1 - i * 30), table_type: "kills", character_id: "9", attacker_character_id: "1" })) };
+  };
+  let calls = 0;
+  const get = async (url) => { calls++; return pageOf(+((/before=(\d+)/.exec(url) || [])[1] || 0)); };
+  const st = { pid: "1", qid: "2", all: [], cursor: 0, done: false, pages: 0 };
+  await readPairPages(st, { base: "https://x/get/ps2:v2/", get, pages: 20, floor: f.floor });
+  assert.equal(st.done, true);
+  assert.ok(st.oldest <= f.floor);
+  assert.ok(calls <= 4, `${calls} pages`);
+});

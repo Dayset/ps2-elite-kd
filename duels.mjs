@@ -28,6 +28,17 @@ export const ONE_V_ONE = Object.freeze({ min: 3, focus: 0.75 });
 export const AUTO_PAGES = 5;
 /** #83: a first open shows the newest FIRST_FIGHTS fights (pair cache), "Read further back" the rest. */
 export const FIRST_FIGHTS = 3;
+/**
+ * Creation floor (owner note on #83): no kill between two characters can be older than the newer
+ * one's creation. → { floor: that time − DUEL_GAP (keeps a first fight's 10-minute context), newer:
+ * the newer player } from the loaded players' times.created, or { floor: 0 } when unknown.
+ */
+export function pairFloor(a, b) {
+  const ca = +(a && a.times && a.times.created) || 0, cb = +(b && b.times && b.times.created) || 0;
+  const t = Math.max(ca, cb);
+  return t ? { floor: t - DUEL_GAP, created: t, newer: ca >= cb ? a : b } : { floor: 0, created: 0, newer: null };
+}
+
 /** Census namespace of a Census base URL (".../get/ps2ps4us:v2/") or "". */
 export const nsOfBase = (base) => ((/\/get\/([a-z0-9]+):v2\//.exec(String(base || "")) || [])[1] || "");
 
@@ -113,7 +124,7 @@ export function pagerOf(a, b) {
  * Stops after `pages` pages, at the end of the history, or once `need` kills between them are in.
  * Calls onPage(st) after each page that is not the last one read, so a caller can re-render as data arrives.
  */
-export async function readPairPages(st, { base, get, pages = AUTO_PAGES, need = null, onPage = null, stop = () => false }) {
+export async function readPairPages(st, { base, get, pages = AUTO_PAGES, need = null, onPage = null, stop = () => false, floor = 0 }) {
   let n = 0;
   const qid = String(st.qid);
   while (n < pages && !st.done && !stop()) {
@@ -128,6 +139,7 @@ export async function readPairPages(st, { base, get, pages = AUTO_PAGES, need = 
     const oldest = page.reduce((m, x) => Math.min(m, x[0]), Infinity);
     // The edge second is asked again (+1) so a second split across two pages is never lost; mergeEvents dedupes.
     st.cursor = st.cursor && oldest + 1 >= st.cursor ? oldest : oldest + 1;
+    if (floor && oldest <= floor) { st.done = true; break; } // older than the newer character: no kills between them there
     if (need != null && st.all.reduce((c, x) => c + (x[2] === qid ? 1 : 0), 0) >= need) break;
     if (onPage) onPage(st);
   }
