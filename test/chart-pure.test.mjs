@@ -1,6 +1,5 @@
 // 🧘 Pure graph view (owner 2026-10-29): the skill graph's third view — one
-// solid line anchored to 🧘‍♂️ Pure iVi plus one dashed line with every point
-// dropped by the 🪳 charge, so the two mappings can be compared on one graph.
+// dashed line per player, anchored to 🧘‍♂️ Pure iVi at the slider percentile.
 // Unknown 🪳 draws nothing (never an unscaled line standing in for a Pure one).
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -8,7 +7,6 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { anchorScale } from "../chart.mjs";
-import { PURE_IVI_CHARGE } from "../pure-ivi.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (f) => fs.readFileSync(path.join(root, f), "utf8");
@@ -37,20 +35,18 @@ test("chart: pure branch anchors like ivi, and omits unknown 🪳 outright", () 
   assert.ok(src.includes("anchorScale(sorted, ivi, $.yScalePct)"), "ivi mode kept its anchor (refactor did not change it)");
   assert.ok(src.includes("anchorScale(sorted, g.pure, $.yScalePct)"), "pure mode anchors to Pure iVi");
   assert.ok(src.includes("if (!g || !isFiniteNum(g.pure) || g.pure <= 0) return []"), "unknown 🪳 or Pure iVi ≤ 0 draws nothing");
-  assert.ok(src.includes("function pureScalePoints(p)"), "dashed companion exists");
-  assert.ok(src.includes("1 - PURE_IVI_CHARGE.RATE * g.zerg"), "dashed line drops every point by the charge");
-  assert.equal(PURE_IVI_CHARGE.RATE, 0.00436);
-  assert.ok(src.includes('stroke-dasharray", "5 4"'), "companion is dashed");
+  assert.ok(src.includes('stroke-dasharray", "5 4"'), "pure line is dashed");
+  assert.ok(src.includes('$.yScaleMode !== "pure"'), "no solid segments in pure mode");
   assert.ok(src.includes('tr("chart.ylabPure"'), "pure Y label key");
   assert.ok(src.includes('getElementById("chartPureNote")') && src.includes('tr("chart.pureHidden"'), "hidden-players note");
   assert.ok(src.includes("function pureAvailable()"), "bar/flip availability helper");
   assert.ok(src.includes('querySelector(\'[data-yscale="pure-btn"]\')'), "pure button wired in UI sync");
 });
 
-test("chart: Y fit includes the dashed companion so it never clips", () => {
+test("chart: pure line joins the Y fit via the plotted points (no separate scale curves)", () => {
   const src = read("chart.mjs");
-  assert.ok(src.includes("pureScaleByPlayer"), "per-player scale lines computed on draw");
-  assert.ok(src.includes("for (const pts of validScaleCurves) for (const pt of pts) yvals.push(pt.kd)"), "scale levels join the Y fit");
+  assert.ok(!src.includes("validScaleCurves"), "no separate scale curves remain");
+  assert.ok(src.includes("for (const pts of validCurves) for (const pt of pts) yvals.push(pt.kd)"), "plotted levels set the Y fit");
 });
 
 test("chart: mode bar re-syncs on every draw, so the 🧘 button appears after analysis", () => {
@@ -107,13 +103,13 @@ test("one module = one ?v= tag across all importers", () => {
     return found;
   };
   const appFiles = ["app.js"];
-  assert.deepEqual([...tag("chart.mjs", appFiles)], ["20261029-pureadd1"]);
+  assert.deepEqual([...tag("chart.mjs", appFiles)], ["20261029-pureline1"]);
   assert.deepEqual([...tag("stats-table.mjs", appFiles)], ["20261029-carousel1"]);
   assert.deepEqual([...tag("chart-wave.mjs", appFiles)], ["20261029-puregraph1"]);
   assert.deepEqual([...tag("pure-ivi.mjs", ["app.js", "stats-table.mjs", "rankings.mjs", "chart.mjs"])], ["20261029-purevis1"]);
   const htmlTag = (f) => [...read(f).matchAll(/app\.js\?v=([A-Za-z0-9_.-]+)/g)].map((m) => m[1]);
-  assert.deepEqual(htmlTag("index.html"), ["20261029-pureadd1"]);
-  assert.deepEqual(htmlTag("live.html"), ["20261029-pureadd1"]);
+  assert.deepEqual(htmlTag("index.html"), ["20261029-pureline1"]);
+  assert.deepEqual(htmlTag("live.html"), ["20261029-pureline1"]);
 });
 
 test("#86: graph lookup finds PLAYERS in lastStatsList (not rows)", async () => {
@@ -135,25 +131,29 @@ test("#86: an empty mode bar is display: none (not a dot), and the table re-sync
   assert.ok(read("app.js").includes("get syncChartModeUi() { return syncChartModeUi; }, // #86"));
 });
 
-test("pure dashed: anchored like the solid, then dropped by the charge (owner 2026-10-29)", async () => {
+test("pure line: dashed, anchored to Pure iVi at the slider point (owner 2026-10-29)", async () => {
   const { createChart } = await import("../chart.mjs");
   const curve = [];
   for (let i = 0; i <= 8; i++) curve.push({ kpm: i * 0.25, kd: 0.5 + i * 0.2, deaths: 50, n: 10 });
   const p = { display: "Test", own_kpm: 1.0, curve };
-  const $ = { chartMode: "smooth", yScaleMode: "pure", yScalePct: 50, pureGraphFor: () => ({ pure: 1000, zerg: 50 }) };
+  const $ = { chartMode: "smooth", yScaleMode: "kd", yScalePct: 50, pureGraphFor: () => ({ pure: 1000, zerg: 50 }) };
   const chart = createChart($);
-  const solid = chart.chartPoints(p);
-  const dashed = chart.pureScalePoints(p);
-  const factor = 1 - 0.00436 * 50;
-  assert.equal(dashed.length, solid.length, "same points");
-  for (let i = 0; i < solid.length; i++) {
-    if (!solid[i].valid) continue;
-    assert.ok(Math.abs(dashed[i].kd - solid[i].kd * factor) < 1e-9, `point ${i}: dashed = solid × charge`);
-    assert.ok(dashed[i].kd < solid[i].kd, "dashed sits under the solid");
+  const kd = chart.chartPoints(p);
+  $.yScaleMode = "pure";
+  const pure = chart.chartPoints(p);
+  // Base points are pace-adjusted (own_kpm 1.0 → ×0.25): 0.125…0.525, median
+  // 0.325 at kpm 1.0; at pct 50 the anchor is exactly that median, so the
+  // kpm-1.0 point reads Pure iVi and every point is the kd point × 1000/0.325.
+  assert.equal(pure.length, kd.length, "same points");
+  const scale = 1000 / 0.325;
+  for (let i = 0; i < kd.length; i++) {
+    if (!kd[i].valid) continue;
+    assert.ok(Math.abs(pure[i].kd - kd[i].kd * scale) < 1e-6, `point ${i}: pure = kd × anchor scale`);
   }
-  // Unknown 🪳 or unusable Pure → no dashed at all, like the solid.
-  const $noZerg = { ...$, pureGraphFor: () => ({ pure: 1000, zerg: null }) };
-  assert.deepEqual(createChart($noZerg).pureScalePoints(p), [], "unknown zerg → no dashed");
-  const $noPure = { ...$, pureGraphFor: () => ({ pure: 0, zerg: 50 }) };
-  assert.deepEqual(createChart($noPure).pureScalePoints(p), [], "pure ≤ 0 → no dashed");
+  assert.ok(Math.abs(pure[4].kd - 1000) < 1e-6, "slider point reads Pure iVi");
+  // Unknown 🪳 or unusable Pure → no line at all.
+  const $noPure = { ...$, pureGraphFor: () => ({ pure: null, zerg: null }) };
+  assert.deepEqual(createChart($noPure).chartPoints(p), [], "unknown zerg → no line");
+  const $zeroPure = { ...$, pureGraphFor: () => ({ pure: 0, zerg: 50 }) };
+  assert.deepEqual(createChart($zeroPure).chartPoints(p), [], "pure ≤ 0 → no line");
 });

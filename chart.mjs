@@ -11,7 +11,6 @@ import { POOP_MARK, POOP_TIP, isPenalizedPadder } from "./padding.mjs?v=20261023
 import { HUT_MARK, HUT_TIP } from "./hut.mjs?v=20261023-short1";
 import { t as tr } from "./i18n.mjs";
 import { chartFontScale } from "./desk-scale.mjs?v=20261010-sav1";
-import { PURE_IVI_CHARGE } from "./pure-ivi.mjs?v=20261029-purevis1";
 
 /**
  * $ = app.js state and functions this part uses, as live getters (and setters for state it changes), so app.js
@@ -275,7 +274,7 @@ export function createChart($) {
       }
       return pts;
     }
-    // 🧘 Pure mode (owner 2026-10-29): the solid line anchors the slider
+    // 🧘 Pure mode (owner 2026-10-29): the dashed line anchors the slider
     // percentile to the player's 🧘‍♂️ Pure iVi, exactly like ivi mode anchors
     // to public IvI. Unknown 🪳 (or Pure iVi ≤ 0) draws NOTHING — never an
     // unscaled line standing in for a Pure one.
@@ -288,21 +287,6 @@ export function createChart($) {
       return pts;
     }
     return pts;
-  }
-
-  // 🧘 Pure mode's dashed companion (owner 2026-10-29: "anchor the dashed
-  // line too, so it sits just under the solid"): the SOLID line's points
-  // (same Pure-iVi anchor), each dropped by the 🪳 charge — so the two
-  // mappings compare on one scale. [] when the 🪳 is unknown or Pure iVi is
-  // unusable, exactly like the solid: no line at all, never a stand-in.
-  function pureScalePoints(p) {
-    const g = $.pureGraphFor ? $.pureGraphFor(p.display) : null;
-    if (!g || !isFiniteNum(g.zerg) || !isFiniteNum(g.pure) || g.pure <= 0) return [];
-    const pts = basePoints(p);
-    const sorted = sortedBaseKds(p, pts);
-    const scale = sorted && anchorScale(sorted, g.pure, $.yScalePct);
-    const factor = 1 - PURE_IVI_CHARGE.RATE * g.zerg;
-    return pts.map((pt) => ({ ...pt, kd: isFiniteNum(pt.kd) ? pt.kd * (scale || 1) * factor : pt.kd }));
   }
 
   function xToPx(x) {
@@ -560,14 +544,10 @@ export function createChart($) {
 
     const banded = $.chartMode === "banded";
     const ptsByPlayer = list.map((p) => chartPoints(p));
-    // 🧘 Pure view: the dashed companion per player (charge-scaled base points); its levels join the Y fit so it never clips.
-    const pureScaleByPlayer = $.yScaleMode === "pure" ? list.map((p) => pureScalePoints(p)) : list.map(() => []);
     const validCurves = ptsByPlayer.map((pts) => pts.filter((pt) => pt.valid));
-    const validScaleCurves = pureScaleByPlayer.map((pts) => pts.filter((pt) => pt.valid));
     const ghostsByPlayer = list.map((p, i) => ghostPointsFor(p, ptsByPlayer[i]));
     const yvals = [];
     for (const pts of validCurves) for (const pt of pts) yvals.push(pt.kd);
-    for (const pts of validScaleCurves) for (const pt of pts) yvals.push(pt.kd);
     // Ghost centres may widen Y a little (so dashed lines stay visible) but
     // never more than 1.5× the real max: predictions must not set the scale.
     const realMax = yvals.length ? Math.max(...yvals) : 0;
@@ -703,7 +683,8 @@ export function createChart($) {
       rigSeries.push(rs);
 
       const faint = pts.filter((pt) => pt.valid);
-      if (faint.length >= 2) {
+      // Owner 2026-10-29: pure view draws ONLY the dashed line — no solid.
+      if ($.yScaleMode !== "pure" && faint.length >= 2) {
         const path = $.ns("path");
         rs.path = path;
         // Banded: hidden (too few fights) stretches break the line instead of bridging.
@@ -715,7 +696,7 @@ export function createChart($) {
         seriesG.appendChild(path);
       }
 
-      for (let a = 0; a < pts.length - 1; a++) {
+      if ($.yScaleMode !== "pure") for (let a = 0; a < pts.length - 1; a++) {
         const A = pts[a], B = pts[a + 1];
         if (!A.valid || !B.valid) continue;
         const r = Math.min(A.rel, B.rel);
@@ -733,9 +714,10 @@ export function createChart($) {
         rs.segs.push({ el: seg, a, b: a + 1 });
       }
 
-      // 🧘 Pure view: the charge-scaled companion as one dashed path in the player's colour (same faint-path shape; wave frames redraw it on the next full draw).
+      // 🧘 Pure view: the player's line is one dashed path in their colour —
+      // the anchored Pure-iVi points themselves (wave frames redraw it on the next full draw).
       if ($.yScaleMode === "pure") {
-        const sp = pureScaleByPlayer[i].filter((pt) => pt.valid);
+        const sp = pts.filter((pt) => pt.valid);
         if (sp.length >= 2) {
           const dpath = $.ns("path");
           dpath.setAttribute("d", faintPathD(sp, banded, yToPx));
@@ -1030,5 +1012,5 @@ export function createChart($) {
   }
 
   const waveSortedCache = new WeakMap();
-  return { reliability, syncYScaleUi, syncSmoothBtn, syncChartModeUi, setGhostsOn, metricsFor, ghostPointsFor, setChartMode, bandCurveFor, chartPoints, pureScalePoints, xToPx, makeYMapper, zoomFromSlider, sliderFromZoom, syncYZoomUi, setYZoom, resetYZoom, setYZoomVisible, clearSvg, waveRigSig, chartYScale, drawYAxis, drawChartLabels, faintPathD, updateWaveFrame, drawChart, drawGhostRuns, drawX, currentChartFontScale, setGhostCaption, setChartSkeleton, setChartIdle, popChartSection, syncChartSectionNames, foldChartSection, showIdleChart, clearChartUi };
+  return { reliability, syncYScaleUi, syncSmoothBtn, syncChartModeUi, setGhostsOn, metricsFor, ghostPointsFor, setChartMode, bandCurveFor, chartPoints, xToPx, makeYMapper, zoomFromSlider, sliderFromZoom, syncYZoomUi, setYZoom, resetYZoom, setYZoomVisible, clearSvg, waveRigSig, chartYScale, drawYAxis, drawChartLabels, faintPathD, updateWaveFrame, drawChart, drawGhostRuns, drawX, currentChartFontScale, setGhostCaption, setChartSkeleton, setChartIdle, popChartSection, syncChartSectionNames, foldChartSection, showIdleChart, clearChartUi };
 }
