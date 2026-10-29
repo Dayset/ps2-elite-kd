@@ -39,9 +39,9 @@ import { createAnalyze } from "./analyze.mjs?v=20261027-an69";
 import { createShareAdd } from "./share-add.mjs?v=20261027-z79";
 import { createSharedIndex } from "./shared-index.mjs?v=20261029-purevis1";
 import { createNamesField } from "./names-field.mjs?v=20261027-z79";
-import { createStatsTable } from "./stats-table.mjs?v=20261029-purevis1";
-import { createChartWave } from "./chart-wave.mjs?v=20261027-z79";
-import { createChart } from "./chart.mjs?v=20261027-z79";
+import { createStatsTable } from "./stats-table.mjs?v=20261029-puregraph1";
+import { createChartWave } from "./chart-wave.mjs?v=20261029-puregraph1";
+import { createChart } from "./chart.mjs?v=20261029-puregraph1";
 import { createLoader } from "./loader.mjs?v=20261027-z79";
 import { createCacheChips } from "./cache-chips.mjs?v=20261027-z79";
 import { createLocalCache } from "./local-cache.mjs?v=20261027-z79";
@@ -256,6 +256,7 @@ import {
       get ns() { return ns; },
       get playerMark() { return playerMark; },
       get players() { return players; }, set players(v) { players = v; },
+      get pureGraphFor() { return pureGraphFor; },
       get PLOT() { return PLOT; },
       get renderStatsTable() { return renderStatsTable; },
       get seriesColor() { return seriesColor; },
@@ -990,6 +991,7 @@ import {
   function reserveStatsSpace(...a) { return statsPart().reserveStatsSpace(...a); }
   function syncWeapons(...a) { return statsPart().syncWeapons(...a); }
   function renderStatsTable(...a) { return statsPart().renderStatsTable(...a); }
+  function pureGraphFor(...a) { return statsPart().pureGraphFor(...a); }
   function nameSpan(...a) { return statsPart().nameSpan(...a); }
   function playerMark(...a) { return statsPart().playerMark(...a); }
   function poopHtml(...a) { return statsPart().poopHtml(...a); }
@@ -1479,20 +1481,22 @@ import {
   }
   syncChartModeUi();
 
-  /* t383u: 👆 swipe sideways on the skill graph switches 💀 ⇄ 🎯 (two views,
+  // 🧘 Pure view (owner 2026-10-29): the skill graph flips 💀 ⇄ 🧘 only when at least one plotted player has a usable Pure value; the 🎯 view stays off per t488u.
+  const pureAvailable = () => !IS_PS && players.some((p) => { const g = pureGraphFor(p.display); return g && isFiniteNum(g.pure) && g.pure > 0; });
+  /* t383u: 👆 swipe sideways on the skill graph switches 💀 ⇄ 🧘 (two views,
    * so either direction flips). Touch, mouse drag, or a two-finger trackpad
    * swipe; vertical drags keep scrolling the page. Phones also get the short
-   * "who wins fights / who aims best" tip for the view they landed on. */
+   * "who wins fights / solo ability" tip for the view they landed on. */
   if (els.chart) {
     const flipView = (dir = 1) => {
-      if (!AIM_VIEW) return; // t488u: one view only, nothing to flip to
+      if (!pureAvailable()) return; // 🧘 flip needs a usable Pure value somewhere; 🎯 stays off per t488u
       // t384u: the other view slides in, carousel-style (restored after d758c9e dropped it).
       const wrap = els.chart.closest(".chart-wrap");
       const panel = wrap ? getComputedStyle(wrap).backgroundColor : "";
-      slideSwap({ container: wrap, svg: els.chart, dir, background: panel, draw: () => setYScaleMode(yScaleMode === "kd" ? "ivi" : "kd") });
-      sfx("sparkle"); // same dice-press sound: K/D ⇄ iVi mode switch (swipe / keys)
+      slideSwap({ container: wrap, svg: els.chart, dir, background: panel, draw: () => setYScaleMode(yScaleMode === "pure" ? "kd" : "pure") });
+      sfx("sparkle"); // same dice-press sound: K/D ⇄ Pure mode switch (swipe / keys)
       if (isTouchUi()) {
-        const on = document.querySelector(yScaleMode === "kd" ? '[data-yscale="kd-btn"]' : '.chart-mode-btn[data-mode="cumulative"]');
+        const on = document.querySelector(yScaleMode === "kd" ? '[data-yscale="kd-btn"]' : '[data-yscale="pure-btn"]');
         if (on && on.getAttribute("data-tip")) showHeadTip(on.getAttribute("data-tip"), on);
       }
     };
@@ -1501,7 +1505,7 @@ import {
     // mid-drag); release past ¼ width or flick to finish, else spring back.
     const showViewTip = () => {
       if (!isTouchUi()) return;
-      const on = document.querySelector(yScaleMode === "kd" ? '[data-yscale="kd-btn"]' : '.chart-mode-btn[data-mode="cumulative"]');
+      const on = document.querySelector(yScaleMode === "kd" ? '[data-yscale="kd-btn"]' : '[data-yscale="pure-btn"]');
       if (on && on.getAttribute("data-tip")) showHeadTip(on.getAttribute("data-tip"), on);
     };
     let viewAtDragStart = yScaleMode;
@@ -1512,23 +1516,23 @@ import {
         container: chartWrap,
         svg: () => els.chart,
         background: () => getComputedStyle(chartWrap).backgroundColor,
-        canStart: () => AIM_VIEW && players.length > 0 && !els.chart.hasAttribute("hidden"),
+        canStart: () => pureAvailable() && players.length > 0 && !els.chart.hasAttribute("hidden"),
         onStart: () => { viewAtDragStart = yScaleMode; },
-        show: () => { const want = viewAtDragStart === "kd" ? "ivi" : "kd"; if (yScaleMode !== want) setYScaleMode(want); },
+        show: () => { const want = viewAtDragStart === "pure" ? "kd" : "pure"; if (yScaleMode !== want) setYScaleMode(want); },
         restore: () => { if (yScaleMode !== viewAtDragStart) setYScaleMode(viewAtDragStart); },
         onCommit: showViewTip,
       });
     }
     const wheelSw = createWheelSwiper();
     els.chart.addEventListener("wheel", (e) => {
-      if (!AIM_VIEW) return; // t488u: sideways wheel scrolls like anywhere else
+      if (!pureAvailable()) return; // no Pure value anywhere → sideways wheel scrolls like anywhere else
       const dir = wheelSw.push(e.deltaX, e.deltaY);
       if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) e.preventDefault(); // not browser back / forward
       if (dir && players.length) flipView(dir);
     }, { passive: false });
     // ⌨️ Global ←/→: whichever graph holds the middle of the screen gets the
     // keys — 📊 steps to the next / previous metric, the skill graph flips
-    // 💀 ⇄ 🎯 (same as swiping). The pills' own focused-key handler owns
+    // 💀 ⇄ 🧘 (same as swiping). The pills' own focused-key handler owns
     // arrows while a pill has focus; typing in any field is untouched, and
     // when neither graph is centred the keys keep scrolling the page.
     // t489u: CAPTURE phase + stopPropagation on a claim. A control that kept
@@ -1555,7 +1559,7 @@ import {
         e.stopPropagation();
         rankingsApi.stepDist(dir);
         sfx("sparkle");
-      } else if (pick === "skill" && AIM_VIEW) {
+      } else if (pick === "skill" && pureAvailable()) {
         e.preventDefault();
         e.stopPropagation();
         flipView(dir);
@@ -1569,12 +1573,19 @@ import {
       if (b && isTouchUi()) showHeadTip(b.getAttribute("data-tip"), b);
     });
   }
-  // 💀 button toggles K/D mode (in chartModeBar)
+  // 💀 button selects K/D mode, 🧘 selects Pure mode (in chartModeBar)
   const kdBtn = document.querySelector('[data-yscale="kd-btn"]');
   if (kdBtn) {
     kdBtn.addEventListener("click", () => {
-      setYScaleMode(yScaleMode === "kd" ? "ivi" : "kd");
-      sfx("sparkle"); // same dice-press sound: K/D ⇄ iVi mode switch
+      setYScaleMode("kd");
+      sfx("sparkle"); // same dice-press sound: K/D ⇄ Pure mode switch
+    });
+  }
+  const pureBtn = document.querySelector('[data-yscale="pure-btn"]');
+  if (pureBtn) {
+    pureBtn.addEventListener("click", () => {
+      setYScaleMode("pure");
+      sfx("sparkle"); // same dice-press sound: K/D ⇄ Pure mode switch
     });
   }
   // Slider input
@@ -1585,7 +1596,7 @@ import {
       stopWave();
       const v = parseFloat(ySlider.value);
       if (ySliderVal) ySliderVal.textContent = v >= 10 ? v.toFixed(0) + "%" : v.toFixed(1) + "%";
-      setYScaleMode("ivi", v);
+      setYScaleMode(yScaleMode, v); // keep the current scale (💀 stays 💀, 🧘 stays 🧘); the slider only moves the anchor percentile
     });
   }
   // Wave animation: slider oscillates 0.1% <-> 98% on a sine (ease-in-out free).

@@ -69,9 +69,10 @@ export function createChartWave($) {
     } catch { return 0; }
   }
 
-  // Y-scale display switch: K/D / A (iVi-median) / B (iVi-start)
+  // Y-scale display switch: K/D / A (iVi-median) / B (iVi-start) / 🧘 Pure
   function setYScaleMode(mode, pct) {
-    $.yScaleMode = $.AIM_VIEW ? mode : "kd"; // t488u: always 💀 K/D while the 🎯 view is off
+    // t488u: always 💀 K/D while the 🎯 view is off — except 🧘 Pure, which is its own owner-approved view (2026-10-29) and needs no AIM_VIEW.
+    $.yScaleMode = (mode === "ivi" && !$.AIM_VIEW) ? "kd" : mode;
     if (pct !== undefined) $.yScalePct = pct;
     $.syncYScaleUi();
     $.syncChartModeUi();

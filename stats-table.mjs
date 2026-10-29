@@ -101,6 +101,21 @@ export function createStatsTable($) {
   const rvpOf = (display) => ($.rvpBySlug && display ? $.rvpBySlug.get(slugKey(display)) ?? null : null);
   const crpOf = (display) => ($.crpBySlug && display ? $.crpBySlug.get(slugKey(display)) ?? null : null); // 🪳 crowd-score percentile
 
+  // 🧘 Pure graph lookup (owner 2026-10-29): the stats row's own 🪳 + 🧘‍♂️ Pure iVi
+  // values, recomputed with the same calls the columns use — so the graph and
+  // the table can never disagree. null = unknown 🪳 (never a 0): the graph
+  // omits such players outright instead of drawing them as if clean.
+  function pureGraphFor(display) {
+    if (!display || $.IS_PS) return null;
+    const row = $.lastStatsList ? $.lastStatsList.find((r) => r.p && slugKey(r.p.display) === slugKey(display)) : null;
+    if (!row) return null;
+    const z = traitP && row.p ? zergScore(traitP, shownValue(row, "inflation"), apkBySlug && apkBySlug.get(slugKey(row.p.display)), rvpOf(row.p.display), crpOf(row.p.display)) : null;
+    const a = shownValue(row, "adjs");
+    if (!isFiniteNum(a)) return null;
+    const v = z ? pureIvI(a, z.score) : null;
+    return { pure: v == null ? null : v, zerg: z ? z.score : null };
+  }
+
   // 🤥😤 Impostor–DieHard + 🪳 Zerg (owner 2026-10-21, trait-scores.mjs): rounded
   // ⚔️ iVi / IvI / 🎈 Inflation / 🤝 Assists pools from the same lite payload
   // (Rankings builds the same pools from ranks.json, so both show the same score).
@@ -764,5 +779,5 @@ export function createStatsTable($) {
     if (src.startsWith("live:")) return tr("src.live", "live Honu/Census");
     return src;
   }
-  return { readShowDebugCols, loadConsPool, reserveStatsSpace, releaseStatsSpace, syncWeapons, renderStatsTable, nameSpan, isConfirmedPadder, playerMark, padMarkHtml, autoMarkHtml, hutHtml, poopHtml, legacySampleHtml, farmTitle, nameSpanHtml, sourceLabel };
+  return { readShowDebugCols, loadConsPool, reserveStatsSpace, releaseStatsSpace, syncWeapons, renderStatsTable, pureGraphFor, nameSpan, isConfirmedPadder, playerMark, padMarkHtml, autoMarkHtml, hutHtml, poopHtml, legacySampleHtml, farmTitle, nameSpanHtml, sourceLabel };
 }

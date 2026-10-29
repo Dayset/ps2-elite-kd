@@ -11,11 +11,30 @@ import { POOP_MARK, POOP_TIP, isPenalizedPadder } from "./padding.mjs?v=20261023
 import { HUT_MARK, HUT_TIP } from "./hut.mjs?v=20261023-short1";
 import { t as tr } from "./i18n.mjs";
 import { chartFontScale } from "./desk-scale.mjs?v=20261010-sav1";
+import { PURE_IVI_CHARGE } from "./pure-ivi.mjs?v=20261029-purevis1";
 
 /**
  * $ = app.js state and functions this part uses, as live getters (and setters for state it changes), so app.js
- * stays the one owner: AIM_VIEW, IS_PS, LS_CHART_MODE, LS_GHOSTS, PLOT, VB, analyzeSeq, chartFs, chartMode, chartTheme, els, ghostsOn, hutMarked, isLightTheme, lastAnalyzedNames, lastChartScale, lastLoadedNames, ns, playerMark, players, renderStatsTable, seriesColor, startWave, stopWave, syncWeapons, updateWaveRangeWarn, viewXMax, yScaleMode, yScalePct, yZoom.
+ * stays the one owner: AIM_VIEW, IS_PS, LS_CHART_MODE, LS_GHOSTS, PLOT, VB, analyzeSeq, chartFs, chartMode, chartTheme, els, ghostsOn, hutMarked, isLightTheme, lastAnalyzedNames, lastChartScale, lastLoadedNames, ns, playerMark, players, pureGraphFor, renderStatsTable, seriesColor, startWave, stopWave, syncWeapons, updateWaveRangeWarn, viewXMax, yScaleMode, yScalePct, yZoom.
  */
+/**
+ * Anchor scale for a Y-rescaled curve (ivi + pure share it): given the sorted
+ * valid K/Ds, the target value and the slider percent, return the factor that
+ * puts the slider-percentile point exactly on the target, or null when there
+ * is nothing sane to anchor to. Cosine interpolation: continuous, no jumps.
+ */
+export function anchorScale(sortedKds, target, pct) {
+  if (!Array.isArray(sortedKds) || !sortedKds.length || !isFiniteNum(target) || target <= 0) return null;
+  const frac = Math.max(0.00001, Math.min(1, pct / 100));
+  const pos = frac * (sortedKds.length - 1);
+  const i0 = Math.floor(pos);
+  const i1 = Math.min(sortedKds.length - 1, i0 + 1);
+  const t = pos - i0;
+  const tc = (1 - Math.cos(Math.PI * t)) / 2;
+  const anchor = sortedKds[i0] * (1 - tc) + sortedKds[i1] * tc;
+  return anchor > 0 ? target / anchor : null;
+}
+
 export function createChart($) {
   const DOT_R = 3;
 
@@ -33,6 +52,12 @@ export function createChart($) {
       kdBtn.classList.toggle("active", on);
       kdBtn.setAttribute("aria-pressed", on ? "true" : "false");
     }
+    const pureBtn = document.querySelector('[data-yscale="pure-btn"]');
+    if (pureBtn) {
+      const on = $.yScaleMode === "pure";
+      pureBtn.classList.toggle("active", on);
+      pureBtn.setAttribute("aria-pressed", on ? "true" : "false");
+    }
     const ySlider = document.getElementById("yScaleSlider");
     if (ySlider) {
       ySlider.disabled = $.yScaleMode === "kd";
@@ -42,6 +67,14 @@ export function createChart($) {
     }
   }
 
+  // At least one plotted player with a usable Pure value (PC + known 🪳 + Pure iVi > 0).
+  function pureAvailable() {
+    return !$.IS_PS && $.players.some((p) => {
+      const g = $.pureGraphFor ? $.pureGraphFor(p.display) : null;
+      return g && isFiniteNum(g.pure) && g.pure > 0;
+    });
+  }
+
   function syncSmoothBtn() {
     // Dayset 2026-10-20: Smooth (banded) and its 🌊 wave are retired from the
     // UI — "fancy but useless". The button now stays hidden even with the
@@ -49,9 +82,19 @@ export function createChart($) {
     // it). The banded / wave code itself is left in place, untouched.
     const b = document.querySelector('[data-mode="banded"]');
     if (b) b.hidden = true;
-    // t488u: no 🎯 view → no 💀 / 🎯 switch either (the whole corner bar goes when nothing is left in it).
-    if (!$.AIM_VIEW && $.els.chartModeBar) {
-      for (const x of $.els.chartModeBar.querySelectorAll('[data-mode="cumulative"], [data-yscale="kd-btn"]')) x.hidden = true;
+    // t488u: no 🎯 view → the 🎯 button stays hidden (the ivi scale itself is untouched, still gated in setYScaleMode).
+    // 🧘 Pure view (owner 2026-10-29): the 💀 / 🧘 switch shows only when at least one plotted player has a
+    // usable Pure value — otherwise the bar keeps the one-view behaviour (nothing to flip to).
+    if ($.els.chartModeBar) {
+      if (!$.AIM_VIEW) {
+        const cum = $.els.chartModeBar.querySelector('[data-mode="cumulative"]');
+        if (cum) cum.hidden = true;
+      }
+      const avail = pureAvailable();
+      const kdBtn = $.els.chartModeBar.querySelector('[data-yscale="kd-btn"]');
+      if (kdBtn) kdBtn.hidden = !($.AIM_VIEW || avail);
+      const pureBtn = $.els.chartModeBar.querySelector('[data-yscale="pure-btn"]');
+      if (pureBtn) pureBtn.hidden = !avail;
       $.els.chartModeBar.hidden = ![...$.els.chartModeBar.children].some((x) => !x.hidden);
     }
   }
@@ -168,67 +211,89 @@ export function createChart($) {
   }
 
   /**
-   * Points to draw for player p in the current chart mode, each with
-   * rel (line strength 0..1) and valid (drawable). Same X grid either way.
+   * Base points for player p in the current chart mode, each with rel (line
+   * strength 0..1) and valid (drawable), before any Y-scale transform.
+   * Same X grid either way.
    */
-  function chartPoints(p) {
+  function basePoints(p) {
     // Pace-adjusted K/D (Dayset 2026-10-13): quadratic penalty for low KPM.
     // factor = (own_kpm / 2.0)^2 capped [0, 1.0] — penalize only, never boost.
     // Raw K/D stays in tooltips; the line expresses skill.
     const _kpm = p.own_kpm || p.global_kpm;
     const _paceFactor = (_kpm > 0) ? Math.min(1.0, Math.pow(_kpm / 2.0, 2)) : 1;
     const _paceKd = (kd) => (isFiniteNum(kd) ? kd * _paceFactor : kd);
-    let pts;
     if ($.chartMode === "banded") {
-      pts = bandCurveFor(p)
+      return bandCurveFor(p)
         .filter((pt) => pt.kpm <= X_MAX + 1e-9)
         .map((pt) => {
           const rel = bandReliability(pt.events);
           return { ...pt, kd: _paceKd(pt.kd), rel, valid: rel > 0 && isFiniteNum(pt.kd) };
         });
-    } else {
-      pts = (p.curve || [])
-        .filter((pt) => pt.kpm <= X_MAX + 1e-9)
-        .map((pt) => ({
-          ...pt,
-          kd: _paceKd(pt.kd),
-          rel: reliability(pt),
-          valid: isFiniteNum(pt.kd) && pt.deaths > 0,
-        }));
     }
+    return (p.curve || [])
+      .filter((pt) => pt.kpm <= X_MAX + 1e-9)
+      .map((pt) => ({
+        ...pt,
+        kd: _paceKd(pt.kd),
+        rel: reliability(pt),
+        valid: isFiniteNum(pt.kd) && pt.deaths > 0,
+      }));
+  }
+
+  // Sorted valid K/Ds for one player's base points, cached per player-curve
+  // (avoids re-sort every wave frame). Raw and Smooth curves can have the
+  // same length: key on the mode too. The sorted list is transform-free, so
+  // ivi and pure share one cache entry.
+  function sortedBaseKds(p, pts) {
+    let sorted = waveSortedCache.get(p);
+    const cacheKey = `${$.chartMode}:${pts.length}`;
+    if (!sorted || sorted._n !== cacheKey) {
+      const validKds = pts.filter((pt) => pt.valid && isFiniteNum(pt.kd)).map((pt) => pt.kd);
+      sorted = [...validKds].sort((a, b) => a - b);
+      sorted._n = cacheKey;
+      waveSortedCache.set(p, sorted);
+    }
+    return sorted.length > 0 ? sorted : null;
+  }
+
+  /**
+   * Points to draw for player p in the current chart mode and Y scale.
+   */
+  function chartPoints(p) {
+    const pts = basePoints(p);
     // Y-scale iVi mode: anchor the slider percentile to iVi.
     // Y = iVi × K/D(x) / K/D_p(slider), slider 100% (max) → 0.1% (min).
     if ($.yScaleMode === "ivi") {
       const ivi = p.ivi;
       if (isFiniteNum(ivi) && ivi > 0) {
-        // Cache sorted K/D per player-curve (avoids re-sort every wave frame)
-        let sorted = waveSortedCache.get(p);
-        // Raw and Smooth curves can have the same length: key on the mode too.
-        const cacheKey = `${$.chartMode}:${pts.length}`;
-        if (!sorted || sorted._n !== cacheKey) {
-          const validKds = pts.filter((pt) => pt.valid && isFiniteNum(pt.kd)).map((pt) => pt.kd);
-          sorted = [...validKds].sort((a, b) => a - b);
-          sorted._n = cacheKey;
-          waveSortedCache.set(p, sorted);
-        }
-        if (sorted.length > 0) {
-          const frac = Math.max(0.00001, Math.min(1, $.yScalePct / 100));
-          // Smooth interpolation: continuous anchor, no discrete jumps
-          const pos = frac * (sorted.length - 1);
-          const i0 = Math.floor(pos);
-          const i1 = Math.min(sorted.length - 1, i0 + 1);
-          const t = pos - i0;
-          // Cosine interpolation: smoother than linear, eases between points
-          const tc = (1 - Math.cos(Math.PI * t)) / 2;
-          const anchor = sorted[i0] * (1 - tc) + sorted[i1] * tc;
-          if (anchor > 0) {
-            const scale = ivi / anchor;
-            pts = pts.map((pt) => ({ ...pt, kd: isFiniteNum(pt.kd) ? pt.kd * scale : pt.kd }));
-          }
-        }
+        const sorted = sortedBaseKds(p, pts);
+        const scale = sorted && anchorScale(sorted, ivi, $.yScalePct);
+        if (scale) return pts.map((pt) => ({ ...pt, kd: isFiniteNum(pt.kd) ? pt.kd * scale : pt.kd }));
       }
+      return pts;
+    }
+    // 🧘 Pure mode (owner 2026-10-29): the solid line anchors the slider
+    // percentile to the player's 🧘‍♂️ Pure iVi, exactly like ivi mode anchors
+    // to public IvI. Unknown 🪳 (or Pure iVi ≤ 0) draws NOTHING — never an
+    // unscaled line standing in for a Pure one.
+    if ($.yScaleMode === "pure") {
+      const g = $.pureGraphFor ? $.pureGraphFor(p.display) : null;
+      if (!g || !isFiniteNum(g.pure) || g.pure <= 0) return [];
+      const sorted = sortedBaseKds(p, pts);
+      const scale = sorted && anchorScale(sorted, g.pure, $.yScalePct);
+      if (scale) return pts.map((pt) => ({ ...pt, kd: isFiniteNum(pt.kd) ? pt.kd * scale : pt.kd }));
+      return pts;
     }
     return pts;
+  }
+
+  // 🧘 Pure mode's dashed companion: every base point dropped by the 🪳
+  // charge, same factor as the 🧘‍♂️ Pure iVi column. [] when the 🪳 is unknown.
+  function pureScalePoints(p) {
+    const g = $.pureGraphFor ? $.pureGraphFor(p.display) : null;
+    if (!g || !isFiniteNum(g.zerg)) return [];
+    const factor = 1 - PURE_IVI_CHARGE.RATE * g.zerg;
+    return basePoints(p).map((pt) => ({ ...pt, kd: isFiniteNum(pt.kd) ? pt.kd * factor : pt.kd }));
   }
 
   function xToPx(x) {
@@ -481,10 +546,14 @@ export function createChart($) {
 
     const banded = $.chartMode === "banded";
     const ptsByPlayer = list.map((p) => chartPoints(p));
+    // 🧘 Pure view: the dashed companion per player (charge-scaled base points); its levels join the Y fit so it never clips.
+    const pureScaleByPlayer = $.yScaleMode === "pure" ? list.map((p) => pureScalePoints(p)) : list.map(() => []);
     const validCurves = ptsByPlayer.map((pts) => pts.filter((pt) => pt.valid));
+    const validScaleCurves = pureScaleByPlayer.map((pts) => pts.filter((pt) => pt.valid));
     const ghostsByPlayer = list.map((p, i) => ghostPointsFor(p, ptsByPlayer[i]));
     const yvals = [];
     for (const pts of validCurves) for (const pt of pts) yvals.push(pt.kd);
+    for (const pts of validScaleCurves) for (const pt of pts) yvals.push(pt.kd);
     // Ghost centres may widen Y a little (so dashed lines stay visible) but
     // never more than 1.5× the real max: predictions must not set the scale.
     const realMax = yvals.length ? Math.max(...yvals) : 0;
@@ -568,7 +637,7 @@ export function createChart($) {
     ylab.setAttribute("text-anchor", "middle");
     ylab.setAttribute("transform", `rotate(90 ${$.PLOT.x + $.PLOT.w + 44} ${$.PLOT.y + $.PLOT.h / 2})`);
     // t378u/t381u: 🎯 aim mode rescales each curve to its player's iVi; say so on the axis.
-    ylab.textContent = banded ? tr("chart.ylabBanded", "K/D vs enemies near this KPM") : $.yScaleMode === "ivi" ? tr("chart.ylabAim", "Aim score (public IvI)") : tr("chart.ylabKpd", "Kills per death");
+    ylab.textContent = banded ? tr("chart.ylabBanded", "K/D vs enemies near this KPM") : $.yScaleMode === "pure" ? tr("chart.ylabPure", "Solo ability — solid: anchored to Pure iVi · dashed: charge-scaled") : $.yScaleMode === "ivi" ? tr("chart.ylabAim", "Aim score (public IvI)") : tr("chart.ylabKpd", "Kills per death");
     svg.appendChild(ylab);
 
     for (const x of xTicks) {
@@ -650,6 +719,21 @@ export function createChart($) {
         rs.segs.push({ el: seg, a, b: a + 1 });
       }
 
+      // 🧘 Pure view: the charge-scaled companion as one dashed path in the player's colour (same faint-path shape; wave frames redraw it on the next full draw).
+      if ($.yScaleMode === "pure") {
+        const sp = pureScaleByPlayer[i].filter((pt) => pt.valid);
+        if (sp.length >= 2) {
+          const dpath = $.ns("path");
+          dpath.setAttribute("d", faintPathD(sp, banded, yToPx));
+          dpath.setAttribute("fill", "none");
+          dpath.setAttribute("stroke", col);
+          dpath.setAttribute("stroke-width", lightLines ? "0.9" : "0.7");
+          dpath.setAttribute("stroke-opacity", "0.7");
+          dpath.setAttribute("stroke-dasharray", "5 4");
+          seriesG.appendChild(dpath);
+        }
+      }
+
       // Fixed small markers (no √deaths sizing)
       for (let k = 0; k < pts.length; k++) {
         const pt = pts[k];
@@ -697,6 +781,26 @@ export function createChart($) {
 
     if (!skipTable) $.renderStatsTable(list);
     setGhostCaption($.ghostsOn, drewGhost);
+    // 🧘 Pure view: name the players hidden for having no usable Pure value (unknown 🪳 or Pure iVi ≤ 0) — never silently dropped.
+    const pureNote = document.getElementById("chartPureNote");
+    if (pureNote) {
+      if ($.yScaleMode === "pure") {
+        const hidden = list.filter((p) => {
+          const g = $.pureGraphFor ? $.pureGraphFor(p.display) : null;
+          return !(g && isFiniteNum(g.pure) && g.pure > 0);
+        }).map((p) => p.display).filter(Boolean);
+        if (hidden.length) {
+          pureNote.textContent = tr("chart.pureHidden", "Pure view hides players with no usable Pure iVi: {names}", { names: hidden.join(", ") });
+          pureNote.hidden = false;
+        } else {
+          pureNote.textContent = "";
+          pureNote.hidden = true;
+        }
+      } else {
+        pureNote.textContent = "";
+        pureNote.hidden = true;
+      }
+    }
   }
 
   /**

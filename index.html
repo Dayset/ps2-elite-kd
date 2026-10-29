@@ -493,6 +493,8 @@
       <div id="chartModeBar" class="chart-mode-bar" role="group" data-i18n-aria-label="chart.modeLabel" aria-label="Graph view">
         <button type="button" class="chart-mode-btn" data-yscale="kd-btn" aria-pressed="true" data-i18n-title="chart.modeKd" data-i18n-tip="chart.modeKdTip"
                 title="💀 Who wins fights: kills per death against easy → hard enemies. Higher line = wins more fights." data-tip="💀 Who wins fights: kills per death vs easy → hard enemies. Higher = wins more.">💀</button>
+        <button type="button" class="chart-mode-btn" data-yscale="pure-btn" aria-pressed="false" data-i18n-title="chart.modePure" data-i18n-tip="chart.modePureTip"
+                title="🧘 Who is who without the crowd: solid = anchored to Pure iVi, dashed = every point dropped by the charge." data-tip="🧘 Solid: anchored to Pure iVi · Dashed: charge-scaled. Slider moves the solid line only.">🧘</button>
         <button type="button" class="chart-mode-btn" data-mode="cumulative" aria-pressed="false" data-i18n-title="chart.modeAim" data-i18n-tip="chart.modeAimTip"
                 title="🎯 Who aims best in theory: lines lifted to each player's aim (accuracy × headshots). Higher = better aim, not more wins." data-tip="🎯 Who aims best **in theory**: higher = better aim (accuracy × headshots), not more wins.">🎯</button>
         <button type="button" class="chart-mode-btn" data-mode="banded" aria-pressed="false" data-i18n-title="chart.modeBanded"
@@ -531,6 +533,7 @@
       <span class="ghost-caption-swatch" aria-hidden="true"></span><span class="ghost-caption-text" data-i18n="ghost.text">dashed = predicted from play style,<br />not real fights</span>
     </div>
     <span id="waveRangeWarn" hidden style="font-size:0.72rem; color:#c90; margin-left:8px;"></span>
+    <span id="chartPureNote" hidden style="font-size:0.72rem; margin-left:8px; opacity:0.75;"></span>
     </div>
   </div>
   </details>
@@ -635,7 +638,7 @@
   </footer>
 
   <script type="module" src="i18n.mjs"></script>
-  <script type="module" src="app.js?v=20261029-purevis1"></script>
+  <script type="module" src="app.js?v=20261029-puregraph1"></script>
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").catch(function () {});
