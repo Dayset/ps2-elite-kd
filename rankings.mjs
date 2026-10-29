@@ -35,7 +35,7 @@ import { infMedian } from "./tractor.mjs?v=20261024-trac1";
 import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261022-wpc1";
 import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261027-z79";
 import { zergChargedAdjs, zergFresh } from "./zerg-charge.mjs?v=20261029-zadj2";
-import { pureIvI } from "./pure-ivi.mjs?v=20261029-pureivi1";
+import { pureIvI } from "./pure-ivi.mjs?v=20261029-purevis1";
 import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, DIFF_THIRD, aimGapCellTip, zergCellTip, zergEstHtml } from "./trait-tips.mjs?v=20261024-crowd1";
 import { ZREV_NOTE, zergEstimate } from "./zerg-revive.mjs?v=20261024-crowd1";
 import { VDIFF_NOTE } from "./diff-vehicle.mjs?v=20261023-short1";
@@ -71,12 +71,12 @@ export function initRankings(host) {
     { id: "apk", label: tr("col.assists", "🤝 Assists"), digits: 2, apk: true, tip: "Assists per kill in recent Honu sessions: how often you help teammates get kills." },
     // 🪳 Zerg / 🤥😤 Impostor–DieHard (owner t480u–t485u): computed here from the ranks.json pools (trait-scores.mjs), same numbers as ✨ Stats.
     { id: "zerg", label: tr("col.zerg", "🪳 Zerg"), digits: 0, zerg: true, tip: ZERG_HINT }, // short hover (owner t9); details on columns.html#zerg
+    // 🧘‍♂️ Pure iVi (owner 2026-10-29): the uncentered 🪳 charge on the plain ⚔️ iVi, same formula as the ✨ Stats
+    // column — separate from Claude's #84 evening-out. PC only; missing 🪳 → "—".
+    { id: "pureivi", label: tr("col.pureivi", "🧘‍♂️ Pure iVi"), digits: 0, tip: tr("tip.pureivi", "Your true ability as a solo player: plain ⚔️ iVi with the uncentered 🪳 charge, adjs × (1 − 0.00436 × 🪳). High 🪳 drops hard — monitor column next to the evened-out ⚔️ iVi.") },
     { id: "inf", label: tr("col.infantry", "🪖 Infantry"), digits: 1, inf: true, tip: INF_HINT },
   ];
   const DEBUG = [
-    // 🧘‍♂️ Pure iVi (owner 2026-10-29): Muse's uncentered 🪳 charge on the plain ⚔️ iVi, same formula as the ✨ Stats
-    // debug column — separate from Claude's #84 evening-out. PC only; missing 🪳 → "—".
-    { id: "pureivi", label: tr("col.pureivi", "🧘‍♂️ Pure iVi"), digits: 0, tip: tr("tip.pureivi", "Your true ability as a solo player: plain ⚔️ iVi with Muse's uncentered 🪳 charge, adjs × (1 − 0.00436 × 🪳). High 🪳 drops hard — monitor column next to the evened-out ⚔️ iVi.") },
     { id: "mech", label: "⚙️ Mech%", digits: 1, tip: "Estimated share of your fights that are vehicle or mech play, projected from 🛡️ Resist rather than measured from shooting." },
     { id: "adj", label: "🎯🎈 ivi", digits: 0, tip: "Opposition-weighted IvI (before speed adjustment)" },
     { id: "ekpm", label: "eKPM", digits: 2, tip: "Average enemy weapon KPM faced" },
@@ -355,7 +355,7 @@ export function initRankings(host) {
         o.pureivi = ROOM === "ps" ? null : pureIvI(fin(o.adjs0) ? o.adjs0 : o.adjs, z ? z.score : null);
         o.zest = z ? null : zergEstimate(o.rvp, o.crp); // "~N" estimate: display only, never in o.zerg / pools / sorting / marks
       }
-      for (const id of ["diff", "zerg"]) {
+      for (const id of ["diff", "zerg", "pureivi"]) {
         pools[id] = rows.map((o) => o[id]).filter(fin).sort((a, b) => a - b);
         for (const o of rows) o.pcts[id] = pctOf(pools[id], o[id]);
       }

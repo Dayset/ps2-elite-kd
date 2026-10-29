@@ -1,5 +1,5 @@
 /**
- * 🧘‍♂️ Pure iVi — Muse's uncentered 🪳 charge on the plain ⚔️ iVi (2026-10-28 duel study).
+ * 🧘‍♂️ Pure iVi — the uncentered 🪳 charge on the plain ⚔️ iVi (2026-10-28 duel study).
  * NOT Claude's #84 (zerg-charge.mjs): no centering on 26.8, no 60-day freshness gate,
  * no K/λ curve — the straight linear charge, kept as a debug monitor column so the
  * owner can watch what the uncentered numbers would do next to the evened-out ⚔️ iVi.

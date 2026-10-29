@@ -1,4 +1,4 @@
-// 🧘‍♂️ Pure iVi (Muse's uncentered 🪳 charge) and its first-debug-column wiring.
+// 🧘‍♂️ Pure iVi (the uncentered 🪳 charge) and its visible-column wiring.
 // Separate from Claude's #84 (zerg-charge.mjs): no centering, no freshness gate.
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -37,31 +37,39 @@ test("missing adjs or 🪳 → null", () => {
   assert.equal(pureIvI(NaN, 30), null);
 });
 
-test("rankings: first debug column, same keys, plain value only", () => {
+test("rankings: visible column right after zerg, same keys, plain value only", () => {
   const src = fs.readFileSync(path.join(root, "rankings.mjs"), "utf8");
+  const vis = src.slice(src.indexOf("const VISIBLE = ["), src.indexOf("const DEBUG = ["));
+  assert.ok(vis.indexOf('id: "pureivi"') > -1, "pureivi is a visible rankings column");
+  assert.ok(vis.indexOf('id: "pureivi"') > vis.indexOf('id: "zerg"') && vis.indexOf('id: "pureivi"') < vis.indexOf('id: "inf"'), "pureivi right after zerg, before infantry");
   const dbg = src.slice(src.indexOf("const DEBUG = ["), src.indexOf("const PUBLIC = ["));
-  assert.ok(dbg.indexOf('id: "pureivi"') > -1, "pureivi is a rankings debug column");
-  assert.ok(dbg.indexOf('id: "pureivi"') < dbg.indexOf('id: "mech"'), "pureivi is the first rankings debug column");
-  const block = dbg.slice(dbg.indexOf('id: "pureivi"'), dbg.indexOf('{ id: "mech"'));
+  assert.ok(!dbg.includes('id: "pureivi"'), "no longer a debug column");
+  const block = vis.slice(vis.indexOf('id: "pureivi"'), vis.indexOf('{ id: "inf"'));
   assert.ok(block.includes('tr("col.pureivi"') && block.includes('tr("tip.pureivi"'), "same i18n keys as the stats column");
+  assert.ok(!block.includes("Muse's"), "no solo credit in the hint");
   const field = src.slice(src.indexOf("o.pureivi ="), src.indexOf("o.pureivi =") + 140);
   assert.ok(field.includes("pureIvI(") && field.includes("o.adjs0"), "charged from the plain adjs, not the evened-out one");
   assert.ok(!field.includes("zergChargedAdjs"), "no Claude #84 value in the Pure iVi field");
   assert.ok(field.includes('ROOM === "ps"'), "PC only");
+  assert.ok(src.includes('["diff", "zerg", "pureivi"]'), "distribution pool covers pureivi (positions rank + pct)");
   // one module = one ?v= tag: pure-ivi.mjs must carry the same tag in both importers.
   const tag = (f) => [...fs.readFileSync(path.join(root, f), "utf8").matchAll(/pure-ivi\.mjs\?v=([A-Za-z0-9_.-]+)/g)].map((m) => m[1]);
   assert.deepEqual(tag("rankings.mjs"), tag("stats-table.mjs"));
 });
-test("first debug column in the stats table, built on the plain value only", () => {
+test("visible column right after zerg in the stats table, built on the plain value only", () => {
   const src = fs.readFileSync(path.join(root, "stats-table.mjs"), "utf8");
+  const vis = src.slice(src.indexOf("const adjVisibleCols = ["), src.indexOf("const adjDebugCols"));
+  assert.ok(vis.indexOf('id: "pureivi"') > -1, "pureivi is a visible stats column");
+  assert.ok(vis.indexOf('id: "pureivi"') > vis.indexOf('id: "zerg"') && vis.indexOf('id: "pureivi"') < vis.indexOf('id: "inf"'), "pureivi right after zerg, before infantry");
   const dbg = src.slice(src.indexOf("const adjDebugCols"), src.indexOf("const adjCols ="));
-  assert.ok(dbg.indexOf('id: "pureivi"') > -1, "pureivi is a debug column");
-  assert.ok(dbg.indexOf('id: "pureivi"') < dbg.indexOf('id: "mech"'), "pureivi is the first debug column");
-  const block = dbg.slice(dbg.indexOf('id: "pureivi"'), dbg.indexOf('{ id: "mech"'));
+  assert.ok(!dbg.includes('id: "pureivi"'), "no longer a debug column");
+  const block = vis.slice(vis.indexOf('id: "pureivi"'), vis.indexOf('{ id: "inf"'));
   assert.ok(!block.includes("zAdjs") && !block.includes("zergChargedAdjs"), "no Claude #84 value in the Pure iVi formula");
   assert.ok(block.includes('shownValue(r, "adjs")'), "charged from the plain adjs, not the evened-out one");
   assert.ok(block.includes("$.IS_PS"), "PC only");
+  assert.ok(!block.includes("Muse's"), "no solo credit in the hint");
   const en = JSON.parse(fs.readFileSync(path.join(root, "i18n/en.json"), "utf8"));
   assert.equal(en["col.pureivi"], "🧘‍♂️ Pure iVi");
   assert.match(en["tip.pureivi"], /0\.00436/);
+  assert.doesNotMatch(en["tip.pureivi"], /Muse's/);
 });
