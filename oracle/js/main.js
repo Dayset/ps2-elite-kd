@@ -187,8 +187,9 @@ function render2(now) {
   const suspectNote = s && s.suspect && s.suspect.length ? `<div class="note" style="color:var(--warn)">${tr("or.suspect", "Census map data looks broken right now ({why}). Odds may be wrong and voting is paused.", { why: esc(s.suspect.map((x) => x.startsWith("neutral_heavy") ? tr("or.susNeutral", "only {p}% of bases owned", { p: x.split(":")[1] }) : x === "map_frozen" ? tr("or.susFrozen", "map frozen while captures continue") : tr("or.susStale", "no fresh map")).join(", ")) })}</div>` : "";
   const cmdView = a.status === "live" ? withMode(a, a.commander || (s && s.commander)) : null;
   const liveTop = s && Array.isArray(s.fights) && s.fights[0] ? (s.fights[0].name || `#${s.fights[0].fid}`) : null;
+  const linkTip = tr("or.linkBtn", "Copy link to this page");
   $("main").innerHTML = `
-    <div class="title"><b>${esc(a.world_name)} · ${esc(a.zone_name)}${a.kind === "meltdown" ? " Meltdown" : ""}</b><span class="badge ${a.status}">${esc(badgeLabel(a.status))}</span><span class="note">${esc(left)} · ${tr("or.durAlert", "{n}-min alert", { n: a.dur })}</span>${liveA ? "" : `<button type="button" class="more backlive" id="backLive">${tr("or.backLive", "← Back to live")}</button>`}</div>
+    <div class="title"><b>${esc(a.world_name)} · ${esc(a.zone_name)}${a.kind === "meltdown" ? " Meltdown" : ""}</b><span class="badge ${a.status}">${esc(badgeLabel(a.status))}</span><span class="note">${esc(left)} · ${tr("or.durAlert", "{n}-min alert", { n: a.dur })}</span><button type="button" class="more linkbtn" id="copyLink" title="${linkTip}" aria-label="${linkTip}">🔗</button>${liveA ? "" : `<button type="button" class="more backlive" id="backLive">${tr("or.backLive", "← Back to live")}</button>`}</div>
     <div class="grid">
       <section class="card map"><h2 data-sec="map">${tr("or.h.map", "Map")}</h2><div id="replayTag" class="replaytag" hidden></div><div id="map"></div></section>
       <div class="side">
@@ -201,6 +202,13 @@ function render2(now) {
     ${a.status === "live" ? commander(cmdView, a.commander_ts, now, lead, cmdMode, heatOn, liveTop) : `${commanderIdle()}${reportPanel(a)}`}
     ${benchPanel(a)}`;
   if ($("backLive")) $("backLive").onclick = backToLive;
+  if ($("copyLink")) $("copyLink").onclick = () => {
+    const b = $("copyLink");
+    const done = () => { b.textContent = "✓"; b.title = tr("or.copied", "Copied ✓"); setTimeout(() => { b.textContent = "🔗"; b.title = linkTip; }, 2000); };
+    const fallback = () => { try { const ta = document.createElement("textarea"); ta.value = location.href; ta.style.cssText = "position:fixed;opacity:0"; document.body.append(ta); ta.select(); const ok = document.execCommand("copy"); ta.remove(); return ok; } catch { return false; } };
+    if (navigator.clipboard?.writeText) navigator.clipboard.writeText(location.href).then(done, () => { if (fallback()) done(); });
+    else if (fallback()) done();
+  };
   $("main").querySelectorAll("li[data-base]").forEach((li) => { li.onmouseenter = () => highlightBase(li.dataset.base); li.onmouseleave = () => highlightBase(null); });
   // Base names in the Commander are links: hover highlights, tap / Enter highlights and brings the map into view.
   $("main").querySelectorAll(".blink[data-base]").forEach((el) => {
