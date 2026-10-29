@@ -133,13 +133,29 @@ export async function readPairPages(st, { base, get, pages = AUTO_PAGES, need = 
   const qid = String(st.qid);
   while (n < pages && !st.done && !stop()) {
     const j = await get(eventsUrl(base, st.pid, { before: st.cursor }));
-    if (!j || !Array.isArray(j.characters_event_list)) throw new Error("bad census reply");
+    if (!j || j.error || !Array.isArray(j.characters_event_list)) throw new Error("bad census reply");
     n++;
     st.pages = (st.pages || 0) + 1;
-    const list = j.characters_event_list;
-    const page = list.map((e) => compactEvent(e, st.pid)).filter(Boolean);
+    let list = j.characters_event_list;
+    let page = list.map((e) => compactEvent(e, st.pid)).filter(Boolean);
+    // A short page is the end of history — unless Census hiccuped (owner 2026-10-28: one
+    // bad page used to fake "done" and stop a 500+ kill history at 7). Re-ask the same
+    // window once and merge both answers: a full retry means the first page was a blip
+    // and the read continues; a short retry corroborates the end; a SHORTER retry means
+    // Census is flapping, so the loop breaks WITHOUT done and the button stays.
+    if (list.length < EVENT_PAGE || !page.length) {
+      const r = await get(eventsUrl(base, st.pid, { before: st.cursor }));
+      if (!r || r.error || !Array.isArray(r.characters_event_list)) throw new Error("bad census reply");
+      const firstLen = list.length;
+      page = mergeEvents(page, r.characters_event_list.map((e) => compactEvent(e, st.pid)).filter(Boolean));
+      list = r.characters_event_list;
+      if (list.length < EVENT_PAGE || !page.length) {
+        st.all = mergeEvents(st.all || [], page);
+        if (list.length < firstLen) break;
+        st.done = true; break;
+      }
+    }
     st.all = mergeEvents(st.all || [], page);
-    if (list.length < EVENT_PAGE || !page.length) { st.done = true; break; }
     const oldest = page.reduce((m, x) => Math.min(m, x[0]), Infinity);
     // The edge second is asked again (+1) so a second split across two pages is never lost; mergeEvents dedupes.
     st.cursor = st.cursor && oldest + 1 >= st.cursor ? oldest : oldest + 1;
@@ -161,10 +177,19 @@ export async function readPairNewer(st, { base, get, onPage = null }) {
   let before = 0;
   while (true) {
     const j = await get(eventsUrl(base, st.pid, { before }));
-    if (!j || !Array.isArray(j.characters_event_list)) throw new Error("bad census reply");
+    if (!j || j.error || !Array.isArray(j.characters_event_list)) throw new Error("bad census reply");
     st.pages = (st.pages || 0) + 1;
-    const list = j.characters_event_list;
-    const page = list.map((e) => compactEvent(e, st.pid)).filter(Boolean);
+    let list = j.characters_event_list;
+    let page = list.map((e) => compactEvent(e, st.pid)).filter(Boolean);
+    // Same one-retry rule as readPairPages: a transient short page must not end the
+    // refresh early when the retry comes back full. (Refresh never sets done, so a
+    // short retry just breaks as before.)
+    if (list.length < EVENT_PAGE || !page.length) {
+      const r = await get(eventsUrl(base, st.pid, { before }));
+      if (!r || r.error || !Array.isArray(r.characters_event_list)) throw new Error("bad census reply");
+      page = mergeEvents(page, r.characters_event_list.map((e) => compactEvent(e, st.pid)).filter(Boolean));
+      list = r.characters_event_list;
+    }
     const had = (st.all || []).length;
     st.all = mergeEvents(st.all || [], page);
     if (list.length < EVENT_PAGE || !page.length) break;

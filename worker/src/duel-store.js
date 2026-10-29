@@ -116,14 +116,31 @@ export class DuelStore {
   /** One Census page → stored block. Returns { events, full } or throws "census". */
   async page(ns, cid, opts) {
     const sid = this.env.CENSUS_SERVICE_ID || "daysetps2legends";
-    let j = null;
-    try {
-      const r = await this.fetchFn(eventsUrl(sid, ns, cid, opts), { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(15e3) });
-      j = r.ok ? await r.json() : null;
-    } catch { j = null; }
-    if (!j || !Array.isArray(j.characters_event_list)) throw new Error("census");
-    const list = j.characters_event_list;
-    const ev = list.map((e) => compactEvent(e, cid)).filter(Boolean).sort((a, b) => b[0] - a[0]);
+    const one = async () => {
+      let j = null;
+      try {
+        const r = await this.fetchFn(eventsUrl(sid, ns, cid, opts), { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(15e3) });
+        j = r.ok ? await r.json() : null;
+      } catch { j = null; }
+      if (!j || j.error || !Array.isArray(j.characters_event_list)) throw new Error("census");
+      return j.characters_event_list;
+    };
+    let list = await one();
+    // Same one-retry rule as the panel (owner 2026-10-28): a short page is the end of
+    // history only if a second fetch of the same window corroborates it. A full retry
+    // means the first page was a blip; a SHORTER retry means Census is flapping, and
+    // throwing (the caller retries, nothing sealed) beats sealing a gap as done.
+    let ev = list.map((e) => compactEvent(e, cid)).filter(Boolean);
+    // No retry on top-up (after=) reads: a short top-up never sets done, so re-asking
+    // it would only double every 10-minute refresh. Backward reads retry (above).
+    if (list.length < PAGE && !opts.after) {
+      const retry = await one();
+      if (retry.length < list.length) throw new Error("census");
+      const seen = new Set(ev.map(eventKey));
+      for (const x of retry.map((e) => compactEvent(e, cid)).filter(Boolean)) if (!seen.has(eventKey(x))) ev.push(x);
+      list = retry;
+    }
+    ev.sort((a, b) => b[0] - a[0]);
     if (ev.length) {
       const opps = "," + [...new Set(ev.map((x) => x[2]))].join(",") + ",";
       this.ctx.storage.sql.exec("INSERT INTO blk (t0, t1, n, opps, ev) VALUES (?, ?, ?, ?, ?)",
@@ -184,7 +201,25 @@ export class DuelStore {
     while (room() && fightsNewest() < want) {
       const s = this.segs;
       const done = this.meta("done") === "1";
-      if (s.length < 2 && done) break;
+      if (s.length < 2 && done) {
+        // Done flags written before the short-page retry (owner 2026-10-28) may be false:
+        // one page below the oldest range re-checks. Events there clear done and extend
+        // the range; an empty page confirms it. Skipped when the creation floor already
+        // ends the history (its done does not come from a page). The probe uses a STRICT
+        // cursor (before = lo, not lo + 1): the +1 edge-second rule would re-read the
+        // already-stored oldest second and falsely clear done on every call.
+        if (s.length && !(floor && s[0][0] <= floor)) {
+          const r = await this.page(ns, cid, { before: s[0][0] });
+          pages++;
+          note(r.events);
+          if (r.events.length) {
+            this.meta("done", "0");
+            this.segs = addSeg(s, r.events[r.events.length - 1][0], s[0][0]);
+            continue;
+          }
+        }
+        break;
+      }
       if (floor && s.length && s[0][0] <= floor) break; // older than the newer character: no kills between them there
       const i = s.length > 1 ? 0 : s.length - 1;
       const lo = s[i][0];

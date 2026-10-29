@@ -19,7 +19,7 @@ import {
   readPairPages, readPairNewer, pairEvents, fightsOf, fightResult, weaponShotUrls, parseShotStats, perKill, pairSummary,
   charInfoUrl, parseCharInfo, pairWarnings, WORLD_NAME,
   DUEL_CACHE_KEY, duelCacheEntry, duelCacheRestore, duelCachePrune,
-} from "./duels.mjs?v=20261028-duelgate1";
+} from "./duels.mjs?v=20261028-duelerr1";
 
 const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const lang = () => { try { return currentLang() || undefined; } catch { return undefined; } };
@@ -237,7 +237,10 @@ export function mountDuels(section, o = {}) {
           fromApi = true;
           job.st.all = mergeEvents(job.st.all, r.events);
           job.api.seen = r.rev || job.api.seen;
-          job.st.done = !!r.done;
+          // An errored reply never claims completion: the loop still stops on r.done
+          // (no hammering), but done is not stored, so the next open re-asks the server
+          // instead of serving a possibly false "Whole history read."
+          job.st.done = !!r.done && !r.error;
           job.st.pages = (job.st.pages || 0) + (r.pages || 0);
           job.st.oldest = r.lo || (job.st.all.length ? job.st.all[job.st.all.length - 1][0] : 0);
           // The server's creation dates win (same Census source; the files can be older).

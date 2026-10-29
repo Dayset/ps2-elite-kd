@@ -67,7 +67,7 @@ test("head-to-head from the real RoyaIGreenBeret vs GimmeDatAnchor scrim (15–1
   const st = { pid: ROYAL, qid: ANCHOR, all: [], cursor: 0, done: false, pages: 0 };
   await readPairPages(st, { base: "https://x/get/ps2ps4us:v2/", get, pages: 5 });
   assert.ok(st.done, "fixture history fits in one short page");
-  assert.equal(calls.length, 1);
+  assert.equal(calls.length, 2, "the short page is re-asked once, then corroborated");
   const pe = pairEvents(st.all, ANCHOR, true);
   const aKills = pe.filter((e) => e.aKill).length;
   assert.equal(aKills, 15);
@@ -101,7 +101,7 @@ test("\"Read further back\" pages to the end of the history in one load", async 
   const st = { pid: ROYAL, qid: ANCHOR, all: [], cursor: 0, done: false, pages: 0 };
   await readPairPages(st, { base: "https://x/get/ps2ps4us:v2/", get, pages: Infinity });
   assert.equal(st.done, true, "the short last page ends the read");
-  assert.equal(calls.length, 3, "all three pages fetched in one load");
+  assert.equal(calls.length, 4, "three pages, plus the short last page re-asked once");
   assert.equal(st.pages, 3);
 });
 
@@ -112,7 +112,7 @@ test("readPairPages reports each non-terminal page, so the table can grow while 
   const seen = [];
   const st = { pid: ROYAL, qid: ANCHOR, all: [], cursor: 0, done: false, pages: 0 };
   await readPairPages(st, { base: "https://x/get/ps2ps4us:v2/", get, pages: Infinity, onPage: (s) => seen.push(s.pages) });
-  assert.equal(calls.length, 3);
+  assert.equal(calls.length, 4, "three pages, plus the short last page re-asked once");
   assert.deepEqual(seen, [1, 2], "the short last page is covered by the final render, not a progress call");
   assert.equal(st.done, true);
   assert.equal(st.pages, 3);
@@ -141,7 +141,7 @@ test("cached duels with nothing new stop after one short page", async () => {
   const { get, calls } = fakeCensus(cached, ROYAL);
   const st = { pid: ROYAL, qid: ANCHOR, all: cached, cursor: 199902, done: true, pages: 1, oldest: 199901 };
   await readPairNewer(st, { base: "https://x/get/ps2ps4us:v2/", get });
-  assert.equal(calls.length, 1);
+  assert.equal(calls.length, 2, "the short page is re-asked once, then the refresh stops");
   assert.equal(st.all.length, 100, "no duplicates merged");
   assert.equal(st.done, true);
 });
@@ -263,6 +263,49 @@ test("crowd summary skips the unknown-opponent aggregate (\"0\") for nemesis and
   ]);
   assert.equal(t.target.name, "Real", "an unknown row with kills is not a favourite target either");
   assert.equal(t.nemesis, null);
+});
+
+test("short Census pages are re-asked once before they count as the end (owner 2026-10-28)", async () => {
+  const { readPairPages, readPairNewer } = await import("../duels.mjs");
+  const raw = (ts, kill, other) => ({ timestamp: String(ts), table_type: kill ? "kills" : "deaths", character_id: kill ? other : "1", attacker_character_id: kill ? "1" : other });
+  // Error payload with an empty list: throws, never done.
+  {
+    const st = { pid: "1", qid: "2", all: [], cursor: 0, done: false, pages: 0 };
+    const get = async () => ({ error: "Census busy", characters_event_list: [] });
+    await assert.rejects(readPairPages(st, { base: "https://x/", get }), /bad census reply/);
+    assert.equal(st.done, false);
+  }
+  // Short page, then a full page: the read continues past the blip, both pages kept.
+  {
+    const full = Array.from({ length: 1000 }, (_, i) => raw(1_790_000_000 - i * 30, true, "9"));
+    const short = [raw(1_790_100_000, true, "2"), raw(1_790_100_000 - 30, false, "2")];
+    const seq = [{ characters_event_list: short }, { characters_event_list: full }, { characters_event_list: [] }, { characters_event_list: [] }];
+    let i = 0;
+    const get = async () => seq[Math.min(i++, seq.length - 1)];
+    const st = { pid: "1", qid: "2", all: [], cursor: 0, done: false, pages: 0 };
+    await readPairPages(st, { base: "https://x/", get, pages: 5 });
+    assert.equal(st.done, true, "ends on the corroborated short page");
+    assert.ok(st.all.some((x) => x[0] === 1_790_100_000), "the blip page's events are kept");
+    assert.ok(st.all.length > 1000, "the full retry page is kept too");
+  }
+  // Short page, then a SHORTER one (flapping): breaks WITHOUT done, events kept.
+  {
+    const first = Array.from({ length: 5 }, (_, i) => raw(1_790_100_000 - i * 30, true, "2"));
+    const second = Array.from({ length: 3 }, (_, i) => raw(1_790_100_000 - i * 30, true, "2"));
+    const seq = [{ characters_event_list: first }, { characters_event_list: second }];
+    let i = 0;
+    const get = async () => seq[Math.min(i++, seq.length - 1)];
+    const st = { pid: "1", qid: "2", all: [], cursor: 0, done: false, pages: 0 };
+    await readPairPages(st, { base: "https://x/", get, pages: 5 });
+    assert.equal(st.done, false, "flapping Census never claims completion");
+    assert.equal(st.all.length, 5, "both pages' events are kept (deduped)");
+  }
+  // readPairNewer: an error payload throws too.
+  {
+    const st = { pid: "1", qid: "2", all: [], cursor: 0, done: false, pages: 0 };
+    const get = async () => ({ error: "Census busy", characters_event_list: [] });
+    await assert.rejects(readPairNewer(st, { base: "https://x/", get }), /bad census reply/);
+  }
 });
 
 test("creation floor (owner note on #83): Census paging stops at the newer character's creation", async () => {

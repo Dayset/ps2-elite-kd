@@ -234,3 +234,76 @@ test("route: checks input, refuses removed players (and wipes their store), forw
   assert.equal((await go("ns=ps2ps4us&p=5428000000000000001&q=5428000000000000008")).status, 404);
   assert.equal((await go("ns=ps2ps4eu&p=5428000000000000001&q=5428000000000000008")).status, 200, "us- removal does not touch Ceres");
 });
+
+test("short pages are re-asked once before they count as the end (owner 2026-10-28)", async () => {
+  const now = 1_790_100_000 * 1000;
+  // 1. Error payload with an empty list: throws, nothing stored.
+  {
+    const ctx = fakeCtx();
+    const fetchFn = async () => new Response(JSON.stringify({ error: "Census busy", characters_event_list: [] }), { status: 200 });
+    const store = new DuelStore(ctx, {}, { blob: (u8) => u8, fetchFn, now: () => now });
+    await assert.rejects(store.page("ps2", P, {}), /census/);
+    assert.equal(ctx.storage.sql.exec("SELECT COUNT(*) AS c FROM blk").toArray()[0].c, 0);
+  }
+  // 2. Short page, then a full page: the read continues (full), union stored.
+  {
+    const hist = history({ days: 10 });
+    const short = hist.slice(0, 2).map(asRow);
+    const full = hist.slice(0, 1000).map(asRow);
+    let calls = 0;
+    const fetchFn = async () => new Response(JSON.stringify({ characters_event_list: calls++ === 0 ? short : full }), { status: 200 });
+    const ctx = fakeCtx();
+    const store = new DuelStore(ctx, {}, { blob: (u8) => u8, fetchFn, now: () => now });
+    const r = await store.page("ps2", P, {});
+    assert.equal(r.full, true);
+    assert.equal(r.events.length, 1000, "the full retry stands (the blip events are inside it)");
+    assert.equal(ctx.storage.sql.exec("SELECT n FROM blk").toArray()[0].n, 1000);
+  }
+  // 3. Short page, then a SHORTER one (flapping): throws, nothing sealed.
+  {
+    const hist = history({ days: 10 });
+    let calls = 0;
+    const fetchFn = async () => new Response(JSON.stringify({ characters_event_list: hist.slice(0, calls++ === 0 ? 5 : 3).map(asRow) }), { status: 200 });
+    const ctx = fakeCtx();
+    const store = new DuelStore(ctx, {}, { blob: (u8) => u8, fetchFn, now: () => now });
+    await assert.rejects(store.page("ps2", P, {}), /census/);
+    assert.equal(ctx.storage.sql.exec("SELECT COUNT(*) AS c FROM blk").toArray()[0].c, 0);
+  }
+});
+
+test("a done flag from before the retry rule is re-verified, not trusted (owner 2026-10-28)", async () => {
+  const hist = history({ days: 30 });
+  const now = (hist[0].ts + 60) * 1000;
+  const { fetchFn } = fakeCensus(hist);
+  const ctx = fakeCtx();
+  const store = new DuelStore(ctx, {}, { blob: (u8) => u8, fetchFn, now: () => now });
+  // One first-open call stores only the newest range; then a pre-fix done flag is planted.
+  const r1 = await ask(store, { want: 3 });
+  assert.equal(r1.done, false);
+  assert.ok(r1.kills < 180, "only the newest fights are stored yet");
+  ctx.storage.sql.exec("INSERT OR REPLACE INTO meta (k, v) VALUES ('done', '1')");
+  // The planted done must not stop the read: loop to the true end.
+  let r = await ask(store, { want: 1e6, seen: r1.rev });
+  let rounds = 0;
+  while (!r.done && rounds++ < 50) r = await ask(store, { want: 1e6, seen: r.rev });
+  assert.equal(r.done, true);
+  assert.equal(r.kills, 180, "the full history is reached despite the planted done");
+});
+
+test("a true done costs one verification page and stands", async () => {
+  const hist = history({ days: 30 });
+  const now = (hist[0].ts + 60) * 1000;
+  const { fetchFn, calls } = fakeCensus(hist);
+  const ctx = fakeCtx();
+  const store = new DuelStore(ctx, {}, { blob: (u8) => u8, fetchFn, now: () => now });
+  let r = await ask(store, { want: 1e6 });
+  let rounds = 0;
+  while (!r.done && rounds++ < 50) r = await ask(store, { want: 1e6, seen: r.rev });
+  assert.equal(r.done, true);
+  assert.equal(r.kills, 180);
+  const n = calls.length;
+  const again = await ask(store, { want: 1e6, seen: r.rev });
+  assert.equal(again.done, true);
+  assert.equal(again.kills, 180);
+  assert.equal(calls.length, n + 2, "one verification page, re-asked once as a short page, then it stands");
+});
