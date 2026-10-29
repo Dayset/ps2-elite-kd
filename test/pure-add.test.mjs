@@ -72,11 +72,12 @@ async function withPage(fn, { width = 1280, height = 900 } = {}) {
 
 const snap = `(() => {
   const seriesG = document.querySelector('#chart g[clip-path]');
-  const segs = seriesG ? seriesG.querySelectorAll(":scope > line").length : 0;
+  const segEls = seriesG ? [...seriesG.querySelectorAll(":scope > line")] : [];
+  const segStrokes = [...new Set(segEls.map((l) => l.getAttribute("stroke")).filter(Boolean))];
   const dashedEls = seriesG ? [...seriesG.querySelectorAll(":scope > path[stroke-dasharray]")] : [];
   const dashedStrokes = [...new Set(dashedEls.map((p) => p.getAttribute("stroke")))];
   const note = document.getElementById("chartPureNote");
-  return { players: window.__ps2EliteKd.getPlayerNames(), segs, dashed: dashedEls.length, dashedStrokes, noteHidden: note ? !!note.hidden : null };
+  return { players: window.__ps2EliteKd.getPlayerNames(), segStrokes, dashed: dashedEls.length, dashedStrokes, noteHidden: note ? !!note.hidden : null };
 })()`;
 
 describe("🧘 pure view: added name draws without a flip", () => {
@@ -96,8 +97,8 @@ describe("🧘 pure view: added name draws without a flip", () => {
       await new Promise((q) => setTimeout(q, 1000));
       const s = await ev(snap);
       assert.deepEqual(s.players, ["ShloDog", "JustV6me"]);
-      assert.equal(s.segs, 0, "no solid segments in pure mode: " + JSON.stringify(s));
-      assert.equal(s.dashed, 2, "both players draw a dashed Pure line: " + JSON.stringify(s));
+      assert.equal(s.segStrokes.length, 2, "both players draw a solid line: " + JSON.stringify(s));
+      assert.equal(s.dashed, 2, "both players draw a dashed companion: " + JSON.stringify(s));
       assert.equal(s.dashedStrokes.length, 2, "one dashed colour per player: " + JSON.stringify(s));
       assert.equal(s.noteHidden, true, "nobody is falsely hidden: " + JSON.stringify(s));
     });
