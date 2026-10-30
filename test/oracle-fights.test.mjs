@@ -36,6 +36,7 @@ test("fightsOf: the alert's continent only, small skirmishes dropped, biggest fi
   const row = fightRow(f);
   assert.deepEqual(row.pop, [120, 80, 95, 7]);
   assert.deepEqual(row.b[1], ["261000", 3, 9, 0, 4, "NC", 40]);
+  assert.equal(f.bases[0].killAgo, 5, "⚔️ last-kill age rides along (did the fight pick up after a capture)");
   assert.equal(fightsOf(null, 4), null);
   assert.equal(fightsOf(act([]), 4).bases.length, 0);
 });

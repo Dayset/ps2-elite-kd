@@ -92,8 +92,9 @@ describe("oracle page smoke test (#28)", { skip }, () => {
         const fights = await page.$eval(".fightcard", (c) => c.textContent);
         assert.match(fights, /Cairn Station/);
         assert.match(fights, /VS 14 · NC 11/);
-        assert.match(fights, /⏳ VS points · now/);
-        assert.match(fights, /~25 players · 11 kills/);
+        assert.match(fights, /⏳VS/);
+        assert.match(fights, /VS 14 · NC 11 · 💀11/);
+        assert.doesNotMatch(fights, /players|Recent captures|Rough crowd/, "short row: details live in hovers (owner 2026-10-30)");
         assert.ok(await page.$(".fightcard .blink[data-base='Hurakan']"), "fight base names are map links");
         // Defend rows show what losing the base cuts off (✂️ with the base names in its hover).
         const cutMark = await page.$$eval(".cmd span[title^='losing it cuts off']", (xs) => xs.map((x) => [x.textContent, x.title]));

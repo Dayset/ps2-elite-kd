@@ -358,6 +358,7 @@ export async function runCycle(env, nowMs = Date.now()) {
       if (fx) {
         state.fights = fx.bases;
         state.fights_live = fx.live;
+        state.fights_at = fx.at; // ⚔️ snapshot time (s): killAgo / convAgo count back from here
         if (fx.pop) state.pop_live = fx.pop;
         state.caps = fx.caps; // 🏴 capture tags (shown only, not in the odds)
         fightRows.push({ key: a.key, ts: now, t: Math.round(((now - startTs) / 60) * 10) / 10, data: JSON.stringify(fightRow(fx)) });

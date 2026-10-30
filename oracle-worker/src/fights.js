@@ -84,6 +84,7 @@ export function fightsOf(act, zone, owners = null) {
     const crowd = n.VS + n.NC + n.TR, kills = k.VS + k.NC + k.TR;
     if (crowd < FIGHT_MIN_CROWD && kills < FIGHT_MIN_KILLS) continue;
     const row = { fid: String(b.f), name: b.fn || null, n, k, conv, convAgo: b.convAgo == null ? null : +b.convAgo };
+    if (b.killAgo != null && Number.isFinite(+b.killAgo)) row.killAgo = Math.max(0, Math.round(+b.killAgo)); // ⚔️ last kill (s): did the fight pick up after a capture
     if (owners && owners[row.fid]) row.owner = owners[row.fid];
     const sp = spawnsOf(b.sp);
     if (sp) row.sp = sp; // 🚐 forward spawns (shown only, not in the odds)
