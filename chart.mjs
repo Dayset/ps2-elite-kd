@@ -8,7 +8,7 @@ import GHOST_MODEL from "./data/ghost-model.mjs?v=20261010-sav1";
 import { kpmBandCurve, isFiniteNum, X_MAX, bandReliability, clampYZoom, Y_ZOOM_DEFAULT, yScale, windowYValues, applyYZoom, xMaxForZoom, EASY_MAX, HARD_MIN } from "./math.mjs?v=20261027-z79";
 import { niceLogTicks, niceLinTicks, formatTick, slugKey } from "./app-util.mjs?v=20261027-z79";
 import { POOP_MARK, POOP_TIP, isPenalizedPadder } from "./padding.mjs?v=20261023-short1";
-import { HUT_MARK, HUT_TIP } from "./hut.mjs?v=20261023-short1";
+import { hutMarkOf } from "./hut.mjs?v=20261030-hs1";
 import { t as tr } from "./i18n.mjs";
 import { chartFontScale } from "./desk-scale.mjs?v=20261010-sav1";
 import { PURE_IVI_CHARGE } from "./pure-ivi.mjs?v=20261029-purevis1";
@@ -429,10 +429,10 @@ export function createChart($) {
       num.setAttribute("font-size", fz(14));
       num.setAttribute("font-weight", "800");
       num.setAttribute("text-anchor", "end");
-      num.textContent = String(lab.i + 1) + lab.mark.mark + (lab.poop ? POOP_MARK : "") + (lab.hut ? HUT_MARK : "");
+      num.textContent = String(lab.i + 1) + lab.mark.mark + (lab.poop ? POOP_MARK : "") + (lab.hut ? hutMarkOf(lab.hut).mark : "");
       if (lab.mark.mark || lab.poop || lab.hut) {
         const t = $.ns("title");
-        t.textContent = [lab.mark.mark ? `${lab.display}${lab.mark.mark}: ${lab.mark.tip}` : "", lab.poop ? `${lab.display} ${POOP_TIP}` : "", lab.hut ? `${lab.display} ${HUT_TIP}` : ""].filter(Boolean).join("\n");
+        t.textContent = [lab.mark.mark ? `${lab.display}${lab.mark.mark}: ${lab.mark.tip}` : "", lab.poop ? `${lab.display} ${POOP_TIP}` : "", lab.hut ? `${lab.display} ${hutMarkOf(lab.hut).tip}` : ""].filter(Boolean).join("\n");
         num.appendChild(t);
       }
       g.appendChild(num);

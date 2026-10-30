@@ -51,6 +51,23 @@ export const HUT_MARK_MIN = 10; // 🛖 shown only when Diff drops by at least t
 // Short hover on the 🛖 mark (owner t511u); the full meaning lives in HUT_EXPLAIN ("♿ What … means" under ✨ Stats, columns.html#hut).
 export const HUT_TIP = tr("hut.tip", "🛖 Spawn Room Warrior");
 export const HUT_EXPLAIN = tr("hut.explain", "🛖 Spawn Room Warrior: rarely dies, slow pace and weak aim, yet a high ⚔️ iVi. Likely plays from safe spots, so the 🔀 Diff is lowered.");
+// ⛑️ instead of 🛖 (owner t781u: "get rid of spawn room warrior icon if it's combat squad pocket med/engi/support
+// (replace spawnroom warrior with ⛑️) because same safe activity but outside of the spawnroom"): a 🛖 player who is
+// (or whose linked account is) a ⛑️ Heavy support player (pocket duo, steady squad or general medic; data/heavysupport.json)
+// gets ⛑️. Same 🔀 Diff damping. build-ranks stores hutMk = 2 for these (1 = 🛖).
+export const HUT_HS_MARK = "⛑️";
+export const HUT_HS_TIP = tr("hut.hsTip", "⛑️ Squad support: safe play outside the spawn room");
+/** Mark and hover text for a hutMk value: 1 → 🛖, 2 → ⛑️, anything else → null. */
+export function hutMarkOf(mk) {
+  if (mk === 2) return { mark: HUT_HS_MARK, tip: HUT_HS_TIP };
+  if (mk === 1 || mk === true) return { mark: HUT_MARK, tip: HUT_TIP };
+  return null;
+}
+/** Owner override: reviewed.json "heavySupport": "cleared" keeps 🛖 (no ⛑️ swap). */
+export function hutHsCleared(reviewed, slug) {
+  const e = reviewed && reviewed.players && reviewed.players[slug];
+  return !!e && (e.heavySupport === "cleared" || e.heavySupport === false);
+}
 export const HUT_DIFF_NOTE = tr("hut.diffNote", "🛖 players (rarely die, slow pace, low accuracy): a positive Diff is reduced.");
 
 const fin = (v) => typeof v === "number" && Number.isFinite(v);

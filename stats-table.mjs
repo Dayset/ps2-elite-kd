@@ -2,7 +2,7 @@
  * The ✨ Stats table (public + adjusted views, sorting, debug columns, the consistency pool) and the name cells with
  * their marks (💩 🌾 🛖 🐣 † …) (#66: moved out of app.js unchanged).
  */
-import { playMinutes, HUT_TIP, HUT_MARK } from "./hut.mjs?v=20261023-short1";
+import { playMinutes, HUT_TIP, HUT_MARK, hutMarkOf } from "./hut.mjs?v=20261030-hs1";
 import { slugKey, escapeHtml, fmtNum } from "./app-util.mjs?v=20261027-z79";
 import { newbieFactor, newPlayerHours } from "./newbie-diff.mjs?v=20261023-nbh1";
 import { isFiniteNum } from "./math.mjs?v=20261027-z79";
@@ -29,7 +29,7 @@ import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261022-wpc1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261025-loc1";
 import { statMark, isPenalizedPadder, POOP_TIP, POOP_MARK, markNote } from "./padding.mjs?v=20261023-short1";
-import { autoMarksHtml } from "./auto-marks.mjs?v=20261024-trac1";
+import { autoMarksHtml } from "./auto-marks.mjs?v=20261030-hs1";
 import { tierOf, IVI_TIERS, BELOW_TIER } from "./tiers.mjs?v=20261017-tier1";
 import { hiddenList, isConfirmedCheater as isOorHit } from "./hidden.mjs?v=20261025-oor1";
 import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261023-short1";
@@ -191,7 +191,7 @@ export function createStatsTable($) {
         if (hi >= 0 && si >= 0) {
           $.hutBySlug = new Map();
           const mi = payload.cols.indexOf("hutMk");
-          for (const row of payload.rows) if (isFiniteNum(row[hi])) $.hutBySlug.set(row[si], { f: row[hi], mk: mi >= 0 && row[mi] === 1 });
+          for (const row of payload.rows) if (isFiniteNum(row[hi])) $.hutBySlug.set(row[si], { f: row[hi], mk: mi >= 0 && (row[mi] === 1 || row[mi] === 2) ? row[mi] : 0 }); // 1 = 🛖, 2 = ⛑️ (owner t781u)
         }
         if (si >= 0) $.liteSlugs = new Set(payload.rows.map((row) => row[si]));
         const nc = payload.nbdCuts;
@@ -739,7 +739,7 @@ export function createStatsTable($) {
   /** Mark after the name (tooltip explains); "" when the stats weren't altered. */
   function padMarkHtml(p) {
     const mk = playerMark(p);
-    const poop = (p && isPenalizedPadder(p.display) ? poopHtml() : "") + (p && $.hutMarked(p.display) ? hutHtml() : "");
+    const poop = (p && isPenalizedPadder(p.display) ? poopHtml() : "") + (p && $.hutMarked(p.display) ? hutHtml($.hutMarked(p.display)) : "");
     if (!mk.mark) return poop;
     return `<span class="pad-mark mark-${mk.kind}" title="${escapeHtml(mk.tip)}">${mk.mark}</span>${poop}`;
   }
@@ -755,8 +755,9 @@ export function createStatsTable($) {
   }
 
   /** 🛖 safe-spot player (hut.mjs HUT_TIP): positive 🔀 Diff damped; next to the name, never in the Diff cell (owner t504u). */
-  function hutHtml() {
-    return `<span class="poop-mark hut-mark" title="${escapeHtml(HUT_TIP)}" aria-label="${escapeHtml(HUT_TIP)}">${HUT_MARK}</span>`;
+  function hutHtml(mk) {
+    const m = hutMarkOf(mk) || { mark: HUT_MARK, tip: HUT_TIP }; // ⛑️ for Heavy support players (owner t781u)
+    return `<span class="poop-mark hut-mark" title="${escapeHtml(m.tip)}" aria-label="${escapeHtml(m.tip)}">${m.mark}</span>`;
   }
 
   /** 💩 confirmed padder (padding.mjs POOP_TIP): −10% adjusted iVi; owner override in data/reviewed.json. */

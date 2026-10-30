@@ -267,6 +267,19 @@ export function heavySupportRows(store, rule = HS_RULE) {
   return rows.sort((a, b) => (b.top - a.top) || LABEL_ORDER[a.label] - LABEL_ORDER[b.label] || (b.pPct || 0) - (a.pPct || 0));
 }
 
+/**
+ * owner t781u: slugs that get ⛑️ instead of 🛖. A checked supporter with a pocket duo, steady squad or general
+ * medic label ("thin" = too few days, left out), plus every account linked to one (famOf: slug → family key).
+ */
+export function heavySupportSlugs(store, famOf = {}, rule = HS_RULE) {
+  const sup = new Set();
+  for (const r of heavySupportRows(store, rule)) for (const m of r.members) if (m.label !== "thin") sup.add(m.sup.slug);
+  const fams = new Set([...sup].map((s) => famOf[s] || s));
+  const out = new Set(sup);
+  for (const [slug, f] of Object.entries(famOf || {})) if (fams.has(f)) out.add(slug);
+  return out;
+}
+
 /** Filter rows: label "all" | pocket | steady | general; world number or "all"; name search (any supporter or partner). */
 export function filterHeavySupport(rows, { label = "all", world = "all", q = "" } = {}) {
   const s = slugOf(q);

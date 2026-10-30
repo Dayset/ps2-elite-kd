@@ -37,12 +37,12 @@ import {
 import { formatClock, fmtNum, slugKey, bareName, parseNames, namesEqualIgnoreCase, namesSetKey, niceLinTicks, niceNum, niceLogTicks, formatTick, escapeHtml, makeAbortError, isAbortError, checkAborted, readJsonLS, writeJsonLS } from "./app-util.mjs?v=20261027-z79";
 import { createAnalyze } from "./analyze.mjs?v=20261030-cxl1";
 import { createShareAdd } from "./share-add.mjs?v=20261027-z79";
-import { createSharedIndex } from "./shared-index.mjs?v=20261030-purefloor1";
+import { createSharedIndex } from "./shared-index.mjs?v=20261030-hs1";
 import { createNamesField } from "./names-field.mjs?v=20261030-of2";
 import { createOutfitRoster, canTakeName as canTakeNameRule, OUTFIT_MAX_NAMES } from "./outfit-tags.mjs?v=20261030-of2";
-import { createStatsTable } from "./stats-table.mjs?v=20261029-carousel1";
+import { createStatsTable } from "./stats-table.mjs?v=20261030-hs1";
 import { createChartWave } from "./chart-wave.mjs?v=20261029-puregraph1";
-import { createChart } from "./chart.mjs?v=20261029-purepair1";
+import { createChart } from "./chart.mjs?v=20261030-hs1";
 import { createLoader } from "./loader.mjs?v=20261027-z79";
 import { createCacheChips } from "./cache-chips.mjs?v=20261027-z79";
 import { createLocalCache } from "./local-cache.mjs?v=20261027-z79";
@@ -127,8 +127,8 @@ import { markNote, statMark, confirmedPadderSlugs, isPenalizedPadder, POOP_MARK,
 import { psIviBaseline, psKpmRatio } from "./ps-baseline.mjs?v=20261027-z79";
 import { removedList } from "./opt-out.mjs?v=20261023-proof1";
 import { createPairMatch, PAIR_MATCH_ENABLED } from "./pair-match.mjs?v=20261027-pmoff1"; // t710: 👯 play-pattern match of two names
-import { HUT_MARK, HUT_TIP, HUT_DIFF_NOTE, playMinutes } from "./hut.mjs?v=20261023-short1";
-import { autoMarksHtml } from "./auto-marks.mjs?v=20261024-trac1";
+import { HUT_MARK, HUT_TIP, HUT_DIFF_NOTE, playMinutes } from "./hut.mjs?v=20261030-hs1";
+import { autoMarksHtml } from "./auto-marks.mjs?v=20261030-hs1";
 // Account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times: chart name list only.
 import { accountTimes, flairsHtml, flairsFor } from "./flairs.mjs?v=20261010-sav1";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.

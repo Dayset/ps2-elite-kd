@@ -11,7 +11,7 @@ import { compareByCharName } from "./analyze-run.mjs?v=20261030-cxl1";
 import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits, binJumpTarget } from "./dist.mjs?v=20261010-sav1";
 import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261027-z79";
 import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP, isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261023-short1";
-import { HUT_MARK, HUT_TIP, HUT_DIFF_NOTE } from "./hut.mjs?v=20261023-short1";
+import { HUT_DIFF_NOTE, hutMarkOf } from "./hut.mjs?v=20261030-hs1";
 import { paletteColor } from "./palette.mjs?v=20261010-sav1";
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261020-wide1";
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261025-loc1";
@@ -40,7 +40,7 @@ import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, DIFF_T
 import { ZREV_NOTE, zergEstimate } from "./zerg-revive.mjs?v=20261024-crowd1";
 import { VDIFF_NOTE } from "./diff-vehicle.mjs?v=20261023-short1";
 import { NBD_NOTE } from "./newbie-diff.mjs?v=20261023-nbh1";
-import { autoMarksHtml } from "./auto-marks.mjs?v=20261024-trac1";
+import { autoMarksHtml } from "./auto-marks.mjs?v=20261030-hs1";
 
 /**
  * @param {{ getNames: () => string[], toggleName: (name: string, anchor: Element, add: boolean) => void, maxNames?: number }} host
@@ -301,7 +301,7 @@ export function initRankings(host) {
         // 🛖 safe-spot damping factor on positive 🔀 Diff (hut.mjs; null = none).
         hut: idx.hut != null && Number.isFinite(r[idx.hut]) ? r[idx.hut] : null,
         // 🛖 shown only where the drop is meaningful (build-ranks: ≥ HUT_MARK_MIN points).
-        hutMk: idx.hutMk != null && r[idx.hutMk] === 1,
+        hutMk: idx.hutMk != null && (r[idx.hutMk] === 1 || r[idx.hutMk] === 2) ? r[idx.hutMk] : 0, // 1 = 🛖, 2 = ⛑️ (owner t781u)
         // 🔀 vehicle damp factor on positive Diff (diff-vehicle.mjs; null = none) and 🪳 revive percentile (zerg-revive.mjs; null = no XP detail).
         vdf: idx.vdf != null && Number.isFinite(r[idx.vdf]) ? r[idx.vdf] : null,
         rvp: idx.rvp != null && Number.isFinite(r[idx.rvp]) ? r[idx.rvp] : null,
@@ -327,8 +327,8 @@ export function initRankings(host) {
       o.poop = isPenalizedPadder(o.slug || o.query);
       // 🛖 safe-spot player (hut.mjs): positive 🔀 Diff damped; reviewed.json "hut": "cleared" wins.
       // reviewed.json "hut": "cleared" is applied at build time (scripts/build-ranks.mjs → null factor, no mark).
-      if (o.hut == null) o.hutMk = false;
-      o.label = o.name + o.mark + (o.poop ? POOP_MARK : "") + (o.hutMk ? HUT_MARK : "");
+      if (o.hut == null) o.hutMk = 0;
+      o.label = o.name + o.mark + (o.poop ? POOP_MARK : "") + (o.hutMk ? hutMarkOf(o.hutMk).mark : "");
       for (const id of Object.keys(pools)) {
         const v = r[idx[id]];
         o[id] = v;
@@ -551,7 +551,8 @@ export function initRankings(host) {
   }
   /** 🛖 next to the name (owner t504u: auto changes are marked by the name, never inside numeric cells). */
   function hutHtml(r) {
-    return r && r.hutMk ? `<span class="poop-mark hut-mark" title="${esc(HUT_TIP)}" aria-label="${esc(HUT_TIP)}">${HUT_MARK}</span>` : "";
+    const hm = r && r.hutMk ? hutMarkOf(r.hutMk) : null;
+    return hm ? `<span class="poop-mark hut-mark" title="${esc(hm.tip)}" aria-label="${esc(hm.tip)}">${hm.mark}</span>` : "";
   }
   /** PlayStation room: the player's server after the name ("Genudine" / "Ceres"). */
   function srvTagHtml(r) {
@@ -1263,7 +1264,7 @@ export function initRankings(host) {
     const hlItems = [];
     hl.forEach((r, i) => {
       const x = xOf(r[distMetric]);
-      if (x != null) hlItems.push({ r, i, x, text: shortName(r.name) + r.mark + (r.poop ? POOP_MARK : "") + (r.hutMk ? HUT_MARK : "") });
+      if (x != null) hlItems.push({ r, i, x, text: shortName(r.name) + r.mark + (r.poop ? POOP_MARK : "") + (r.hutMk ? hutMarkOf(r.hutMk).mark : "") });
     });
     const famly = getComputedStyle(svg).fontFamily || "sans-serif";
     const widthAt = (k, scale) => textWidth(hlItems[k].text, fs * scale, famly);
@@ -1382,7 +1383,7 @@ export function initRankings(host) {
       gm.appendChild(t);
       const shown = col.floorZero && fin(v) && v < 0 ? tr("dist.zeroBelow", "0 (below scale)") : fin(v) ? (+v).toFixed(col.digits) : "—";
       const p = r.pcts[distMetric];
-      gm.appendChild(svgEl("title", {}, tr("dist.dotTip", "{label}{mark}{poop}: {col} {shown}{p} · rank #{rank} (current sort){fresh}", { label: r.label, mark: r.mark ? ` (${r.markTip})` : "", poop: (r.poop ? ` (${POOP_TIP})` : "") + (r.hutMk ? ` (${HUT_TIP})` : ""), col: col.label, shown, p: p != null ? ` · p${p}` : "", rank: r.rank, fresh: r.freshAt ? tr("dist.freshTag", " · {mark} your fresh fetch", { mark: FRESH_MARK }) : "" })));
+      gm.appendChild(svgEl("title", {}, tr("dist.dotTip", "{label}{mark}{poop}: {col} {shown}{p} · rank #{rank} (current sort){fresh}", { label: r.label, mark: r.mark ? ` (${r.markTip})` : "", poop: (r.poop ? ` (${POOP_TIP})` : "") + (r.hutMk ? ` (${hutMarkOf(r.hutMk).tip})` : ""), col: col.label, shown, p: p != null ? ` · p${p}` : "", rank: r.rank, fresh: r.freshAt ? tr("dist.freshTag", " · {mark} your fresh fetch", { mark: FRESH_MARK }) : "" })));
       marks.appendChild(gm);
     });
     svg.appendChild(leaders);

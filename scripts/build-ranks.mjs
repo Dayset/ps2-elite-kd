@@ -29,7 +29,8 @@ import { findOutliers, guardStatus, KNOWN_EXTREMES } from "../outlier-guard.mjs"
 import { infantryTagCounts, INFANTRY_TAG, infantryShares } from "../infantry.mjs";
 import { VEH_CUT } from "../vehicle-cut.mjs";
 import { nbdCuts, newbieFactor, newbieCleared, newPlayerHours, NBD_BAND, NBD_NEW_Q } from "../newbie-diff.mjs";
-import { hutCuts, hutParts, hutCleared, deathsPerMin, HUT_ACT_MULT, HUT_ACT_MULT_TOP, HUT_EXP_BAND, playMinutes, HUT_DPM_BAND, HUT_INF_BAND, HUT_ACC_BAND, HUT_MARK_MIN } from "../hut.mjs";
+import { heavySupportSlugs, familyIndex } from "../heavy-support.mjs";
+import { hutHsCleared, hutCuts, hutParts, hutCleared, deathsPerMin, HUT_ACT_MULT, HUT_ACT_MULT_TOP, HUT_EXP_BAND, playMinutes, HUT_DPM_BAND, HUT_INF_BAND, HUT_ACC_BAND, HUT_MARK_MIN } from "../hut.mjs";
 import { traitPools, aimGap, zergScore } from "../trait-scores.mjs";
 import { zergChargedAdjs, ZERG_CHARGE, zergFresh, dayOf } from "../zerg-charge.mjs";
 import { crowdSample, crowdPercentiles, zergEstimate, zergCleared, CROWD_MIN_DEATHS, CROWD_MIN_MIN, REV_SOFT_BAND, REV_CONFIRM, ZEST_MIN, HL_MIN, HL_W } from "../zerg-revive.mjs";
@@ -426,7 +427,7 @@ export function buildRanksWithGuard(dataDir, { known = KNOWN_EXTREMES, zergCharg
   ranks.cols.push("inf", "infMax", "infVeh"); // 🪖 trailing columns (see onPlayer), % of lifetime kills
   ranks.cols.push("vcut"); // 🚜 vehicle cut % on adjs (adjs is already cut)
   const reviewedJson = readReviewed(dataDir);
-  const hut = applyHutColumn(ranks, reviewedJson, { playMin }); // 🛖 trailing "hut" column (damping factor on positive 🔀 Diff)
+  const hut = applyHutColumn(ranks, reviewedJson, { playMin, hsSlugs: readHeavySupportSlugs(dataDir) }); // 🛖 trailing "hut" column (damping factor on positive 🔀 Diff)
   const vehDiff = applyVehDiffColumn(ranks, reviewedJson); // 🔀🚜 trailing "vdf" column (vehicle damp on positive 🔀 Diff)
   const newbieDiff = applyNewbieDiffColumn(ranks, reviewedJson, playMin); // 🐣 trailing "nbd" column (play-time factor on negative 🔀 Diff)
   const zergRevive = applyReviveColumn(ranks, reviewedJson, revShare); // 🪳 trailing "rvp" / "crp" columns (revive / crowd percentiles)
@@ -486,7 +487,15 @@ function readReviewed(dataDir) {
  * Returns the status.json "hut" block for build-log: cuts, counts, the 🛖-marked (t512u)
  * player with Diff before / after and the gate weights, and the owner-cleared ones.
  */
-export function applyHutColumn(ranks, reviewed, { playMin = null } = {}) {
+/** owner t781u: ⛑️ Heavy support slugs (and their linked accounts) from data/heavysupport.json + the alt data; empty when absent (PS room). */
+export function readHeavySupportSlugs(dataDir) {
+  const rd = (f) => { try { return JSON.parse(fs.readFileSync(path.join(dataDir, f), "utf8")); } catch { return null; } };
+  const store = rd("heavysupport.json");
+  if (!store) return new Set();
+  return heavySupportSlugs(store, familyIndex({ altFamilies: rd("alt-families.json"), alts: rd("alts.json"), extra: store.families }));
+}
+
+export function applyHutColumn(ranks, reviewed, { playMin = null, hsSlugs = null } = {}) {
   const ix = Object.fromEntries(ranks.cols.map((c, i) => [c, i]));
   const get = (r, k) => (ix[k] != null ? r[ix[k]] : null);
   // playMin: Map slug → estimated play minutes; without the map (tests / old callers) the experience ramp is off (e = 1).
@@ -512,11 +521,13 @@ export function applyHutColumn(ranks, reviewed, { playMin = null } = {}) {
       h = null;
     }
     const after = g ? aimGap(tp, get(r, "adjs"), get(r, "ivi"), h).score : null;
-    const mk = g && h != null && g.raw - after >= HUT_MARK_MIN ? 1 : null;
+    let mk = g && h != null && g.raw - after >= HUT_MARK_MIN ? 1 : null;
+    // ⛑️ instead of 🛖 for Heavy support players (owner t781u); reviewed.json "heavySupport": "cleared" keeps 🛖.
+    if (mk && hsSlugs && hsSlugs.has(slug) && !hutHsCleared(reviewed, slug)) mk = 2;
     r.push(h, mk);
     if (g && g.raw >= 33) dieHardBefore++;
     if (after != null && after >= 33) dieHardAfter++;
-    if (mk) players.push({ ...info(), diff: after, marked: true }); // build-log lists only 🛖-marked players (owner t512u); smaller reductions still apply in ranks.json
+    if (mk) players.push({ ...info(), diff: after, marked: true, ...(mk === 2 ? { hs: true } : {}) }); // build-log lists only 🛖-marked players (owner t512u); smaller reductions still apply in ranks.json
   }
   players.sort((a, b) => (b.diffRaw ?? -999) - (a.diffRaw ?? -999));
   const r4 = (v) => (Number.isFinite(v) ? Math.round(v * 10000) / 10000 : null);
@@ -531,6 +542,7 @@ export function applyHutColumn(ranks, reviewed, { playMin = null } = {}) {
       infLo: cuts.infLo, infHi: cuts.infHi, markMin: HUT_MARK_MIN, n: cuts.n,
     },
     marked: players.length,
+    hsSwapped: players.filter((p) => p.hs).length, // ⛑️ instead of 🛖 (owner t781u)
     dieHardBefore, dieHardAfter,
     rule: `🛖 safe-spot damping, gradual, all cuts from this build's players. a = (🏃 Activity ÷ cut)², cut = median × (${HUT_ACT_MULT} + (${HUT_ACT_MULT_TOP} − ${HUT_ACT_MULT}) × ⚔️ iVi percentile ÷ 100 × e), a straight line, where e = experience 0 → 1 on estimated play time (lifetime kills ÷ lifetime KPM) from ${pc(HUT_EXP_BAND[0])} to ${pc(HUT_EXP_BAND[1])} of this build's players (new accounts stay near ×${HUT_ACT_MULT}), so weaker players get a lower cut and the top of the board up to ×${HUT_ACT_MULT_TOP} (Activity at or above the cut → no change). w = product of three 0–1 ramps: deaths/min (KPM ÷ K/D) 1 at ${pc(HUT_DPM_BAND[0])} → 0 at ${pc(HUT_DPM_BAND[1])}; 🪖 infantry 0 at ${HUT_INF_BAND[0]}% → 1 at ${HUT_INF_BAND[1]}%; accuracy 1 at the median → 0 at ${pc(HUT_ACC_BAND[1])}. A positive 🔀 Diff × (1 − w × (1 − a)), rounded; a negative Diff is untouched. 🛖 next to the name only when Diff drops by ${HUT_MARK_MIN}+ points. Owner override: "hut": "cleared" on the data/reviewed.json entry (no 🛖, no damping).`,
     players,

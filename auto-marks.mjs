@@ -22,7 +22,7 @@
  */
 import { REV_CONFIRM, zrevConfirmedTip } from "./zerg-revive.mjs?v=20261024-crowd1";
 import { nbdFromTip, nbdNewTip } from "./newbie-diff.mjs?v=20261023-nbh1";
-import { HUT_MARK_MIN } from "./hut.mjs?v=20261023-short1";
+import { HUT_MARK_MIN } from "./hut.mjs?v=20261030-hs1";
 import { fmtSigned } from "./trait-tips.mjs?v=20261024-crowd1";
 import { flairsFor } from "./flairs.mjs?v=20261010-sav1";
 import { t as tr, currentLang } from "./i18n.mjs";
