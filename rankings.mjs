@@ -1490,11 +1490,19 @@ export function initRankings(host) {
     render();
   });
 
-  // Ranks switch (2026-10-30 flip): ON shows the tier separators; the stored
-  // flag is hide-based, so the checkbox reads inverted here too.
+  // Ranks toggle (2026-10-30 flip): pressed/ON shows the tier separators; the
+  // stored flag is hide-based, so the Settings checkbox reads inverted here.
+  // The toolbar button has no "change" event: its click just flips this
+  // module's own flag, which stays in sync because both modules start from
+  // the same saved flag and each click flips both exactly once.
   for (const id of ["removeRanksToggle", "removeRanksToggleSettings"]) {
     const el = $(id);
-    if (el) el.addEventListener("change", () => {
+    if (!el) continue;
+    if (el.tagName === "BUTTON") el.addEventListener("click", () => {
+      removeRanks = !removeRanks;
+      render();
+    });
+    else el.addEventListener("change", () => {
       removeRanks = !el.checked;
       render();
     });

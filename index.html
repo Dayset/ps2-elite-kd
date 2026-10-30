@@ -77,7 +77,7 @@
       });
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261030-age1" />
+  <link rel="stylesheet" href="styles.css?v=20261030-rankbtn1" />
   <style>
     /* Installed-app launch splash (t465u). Android draws its own launch splash first:
        the maskable icon (big medal on black) seen through a 192 px circle, on the
@@ -565,9 +565,7 @@
         <input id="ranksSearch" type="search" data-i18n-placeholder="ranks.filter" data-i18n-aria-label="ranks.filterLabel" placeholder="Filter the table by name…" aria-label="Filter the Rankings table by player name" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="search" />
         <button type="button" id="ranksFindMe" class="rk-find-me" hidden title="👤 Find this player in the table" aria-label="👤 Find this player in the table" data-i18n-title="ranks.findMe" data-i18n-aria-label="ranks.findMe">👤</button>
       </span>
-      <label class="tgl-switch rk-remove-ranks" title="Show the tier separators in the Rankings table" data-i18n-title="ranks.showRanksTitle">
-        <input type="checkbox" id="removeRanksToggle" /> <span data-i18n="ranks.showRanks">Ranks</span>
-      </label>
+      <button type="button" class="rk-find-btn rk-remove-ranks" id="removeRanksToggle" aria-pressed="false" title="Show the tier separators in the Rankings table" data-i18n-title="ranks.showRanksTitle" data-i18n="ranks.showRanks">Ranks</button>
       <!-- owner 2026-10-30: Find player button — only with exactly ONE name entered (same rule as 👤); a tap scrolls the table to that row once (no sticky mode). -->
       <span class="rk-locate" id="locateWrap" hidden>
         <button type="button" class="rk-find-btn" id="findPlayerBtn" title="Scroll the table to this player's row" data-i18n-title="ranks.findPlayerTitle" data-i18n="ranks.findPlayer">Find player</button>
@@ -646,7 +644,7 @@
   </footer>
 
   <script type="module" src="i18n.mjs"></script>
-  <script type="module" src="app.js?v=20261030-hs1"></script>
+  <script type="module" src="app.js?v=20261030-rankbtn1"></script>
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").catch(function () {});

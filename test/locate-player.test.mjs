@@ -1,5 +1,5 @@
-// owner t648u/t649u: "Remove ranks" → "Hide ranks"; 2026-10-30: the switch reads
-// "Ranks" (ON = show) and "Locate player" became a one-shot "Find player" button.
+// owner t648u/t649u: "Remove ranks" → "Hide ranks"; 2026-10-30: the button reads
+// "Ranks" (pressed = show) and "Locate player" became a one-shot "Find player" button.
 // Phones: search row, then Ranks + Find + Age on one row.
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -7,7 +7,7 @@ import { readFileSync } from "node:fs";
 const read = (f) => readFileSync(new URL("../" + f, import.meta.url), "utf8");
 const LANGS = ["en", "ja", "ru", "de", "fr", "zh", "es", "uk", "it"];
 
-test("Ranks switch + Find player button labels", () => {
+test("Ranks button + Find player button labels", () => {
   const en = JSON.parse(read("i18n/en.json"));
   assert.equal(en["ranks.showRanks"], "Ranks");
   assert.equal(en["ranks.showRanksTitle"], "Show the tier separators in the Rankings table");
@@ -23,7 +23,8 @@ test("Ranks switch + Find player button labels", () => {
   const html = read("index.html");
   assert.doesNotMatch(html, />Hide ranks</);
   assert.doesNotMatch(html, /id="locateToggle"/);
-  assert.match(html, /<label class="tgl-switch rk-remove-ranks"[^>]*data-i18n-title="ranks\.showRanksTitle">\s*<input type="checkbox" id="removeRanksToggle" \/> <span data-i18n="ranks\.showRanks">Ranks<\/span>/);
+  assert.match(html, /<button type="button" class="rk-find-btn rk-remove-ranks" id="removeRanksToggle" aria-pressed="false"[^>]*data-i18n="ranks.showRanks">Ranks<\/button>/);
+  assert.doesNotMatch(html, /<input type="checkbox" id="removeRanksToggle" \/>/);
   assert.match(html, /<span class="rk-locate" id="locateWrap" hidden>\s*<button type="button" class="rk-find-btn" id="findPlayerBtn"[^>]*data-i18n="ranks\.findPlayer">Find player<\/button>/);
   assert.ok(html.indexOf('id="removeRanksToggle"') < html.indexOf('id="findPlayerBtn"'), "next to Ranks");
 });

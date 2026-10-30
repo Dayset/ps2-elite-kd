@@ -202,11 +202,11 @@ describe("Skill graph section: no placeholder, collapsible, pops on analyze (own
     assert.match(css, /\.rk-skeleton \{ height: calc\(100vh - 13rem\); \}/);
   });
 
-  it("Ranks switch: ON shows tiers (owner 2026-10-30 flip); stored flag stays hide-based", () => {
+  it("Ranks button: pressed shows tiers (owner 2026-10-30 flip); stored flag stays hide-based", () => {
     const index = read("index.html");
     const app = appSource();
     const rk = read("rankings.mjs");
-    assert.match(index, /id="removeRanksToggle"/);
+    assert.match(index, /<button[^>]*id="removeRanksToggle"[^>]*aria-pressed="false"/);
     assert.match(index, /id="removeRanksToggleSettings"/);
     assert.match(index, /data-i18n="ranks\.showRanks"/);
     assert.match(read("i18n/en.json"), /"ranks\.showRanks": "Ranks"/); // renamed "Hide ranks" → "Ranks", logic flipped
@@ -214,17 +214,19 @@ describe("Skill graph section: no placeholder, collapsible, pops on analyze (own
     // app.js owns the saved value and keeps the pair in sync.
     assert.match(app, /LS_REMOVE_RANKS = "ps2-elite-kd-remove-ranks"/);
     assert.match(app, /removeRanksToggleSettings/);
-    // Stored default still hide (only a saved "0" shows); the checkbox shows its inverse.
-    assert.match(rk, /localStorage\.getItem\(LS_REMOVE_RANKS\) !== "0"/);
-    assert.match(app, /localStorage\.getItem\(LS_REMOVE_RANKS\) !== "0"/);
-    assert.match(app, /el\.checked = !hide/);
+    // Stored default still hide (only a saved "0" shows); toolbar button pressed / Settings checkbox checked show its inverse.
+    assert.match(rk, /localStorage.getItem\(LS_REMOVE_RANKS\) !== "0"/);
+    assert.match(app, /localStorage.getItem\(LS_REMOVE_RANKS\) !== "0"/);
+    assert.match(app, /setState\(el, !hide\)/);
+    assert.match(app, /aria-pressed", show \? "true" : "false"/);
     assert.match(app, /setItem\(LS_REMOVE_RANKS, show \? "0" : "1"\)/);
     // Rankings reads the same key and drops tiers + bin dividers when hidden.
     assert.match(rk, /function readRemoveRanks\(\)/);
     assert.match(rk, /const tieredView = \(\) => sortKey === "adjs" && !removeRanks;/);
     assert.match(rk, /!\(removeRanks && sortKey === "adjs"\) \? getHist\(sortKey\) : null/);
     assert.match(rk, /"removeRanksToggle", "removeRanksToggleSettings"/);
-    assert.match(rk, /removeRanks = !el\.checked;/);
+    assert.match(rk, /removeRanks = !el\.checked;/); // Settings checkbox path
+    assert.match(rk, /removeRanks = !removeRanks;/); // toolbar button path
   });
 
   it("Distribution block carries a title on PC, bare 📊 on phones (owner 2026-10-22)", () => {

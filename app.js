@@ -37,7 +37,7 @@ import {
 import { formatClock, fmtNum, slugKey, bareName, parseNames, namesEqualIgnoreCase, namesSetKey, niceLinTicks, niceNum, niceLogTicks, formatTick, escapeHtml, makeAbortError, isAbortError, checkAborted, readJsonLS, writeJsonLS } from "./app-util.mjs?v=20261027-z79";
 import { createAnalyze } from "./analyze.mjs?v=20261030-cxl1";
 import { createShareAdd } from "./share-add.mjs?v=20261027-z79";
-import { createSharedIndex } from "./shared-index.mjs?v=20261030-hs1";
+import { createSharedIndex } from "./shared-index.mjs?v=20261030-rankbtn1";
 import { createNamesField } from "./names-field.mjs?v=20261030-of2";
 import { createOutfitRoster, canTakeName as canTakeNameRule, OUTFIT_MAX_NAMES } from "./outfit-tags.mjs?v=20261030-of2";
 import { createStatsTable } from "./stats-table.mjs?v=20261030-hs1";
@@ -1055,26 +1055,34 @@ import {
     });
   }
 
-  /* Ranks switch (Dayset 2026-10-30): the switch reads "Ranks" and ON means
-   * the tier separators SHOW. The stored flag is still hide-based ("1" =
-   * hidden, absent = hidden, the 2026-10-22 default view), so the checkbox
-   * shows its inverse; Rankings hears the same "change" and re-renders. The
-   * default view is unchanged (flat) — the switch just rests OFF now. */
+  /* Ranks toggle (Dayset 2026-10-30): the toolbar control is a toggle BUTTON
+   * (pressed = tier separators SHOW); Settings keeps its checkbox switch.
+   * The stored flag is still hide-based ("1" = hidden, absent = hidden, the
+   * 2026-10-22 default view), so both controls show its inverse; Rankings
+   * hears the Settings "change" and the toolbar button "click" and re-renders.
+   * The default view is unchanged (flat) — the button just rests unpressed. */
   {
     const pair = [els.removeRanksToggle, els.removeRanksToggleSettings].filter(Boolean);
     if (pair.length) {
       let hide = true; // default: hidden (flat), as since 2026-10-22
       try { hide = localStorage.getItem(LS_REMOVE_RANKS) !== "0"; } catch (_) { /* private mode */ }
-      pair.forEach((el) => { el.checked = !hide; });
-      pair.forEach((el) => el.addEventListener("change", () => {
-        const show = !!el.checked;
-        pair.forEach((o) => { o.checked = show; });
+      const setState = (el, show) => {
+        if (el.tagName === "BUTTON") el.setAttribute("aria-pressed", show ? "true" : "false");
+        else el.checked = show;
+      };
+      const applyShow = (show) => {
+        pair.forEach((o) => setState(o, show));
         try {
           localStorage.setItem(LS_REMOVE_RANKS, show ? "0" : "1");
         } catch (_) {
           /* private mode: Rankings keeps its own in-memory choice */
         }
-      }));
+      };
+      pair.forEach((el) => setState(el, !hide));
+      pair.forEach((el) => {
+        if (el.tagName === "BUTTON") el.addEventListener("click", () => applyShow(el.getAttribute("aria-pressed") !== "true"));
+        else el.addEventListener("change", () => applyShow(!!el.checked));
+      });
     }
   }
 
