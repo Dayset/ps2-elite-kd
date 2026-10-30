@@ -2724,10 +2724,6 @@ html[data-theme="light"] .rk-filter-row input#ranksSearch { color-scheme: light;
   box-shadow: 0 0.6rem 1.6rem rgba(0, 0, 0, 0.45);
 }
 .settings-row { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; }
-/* Grouped settings rows: the age stepper hugs its label on the left
-   ("Max Age − 12 +"); Hide ranks hugs the right edge. Same at every width. */
-.settings-row.age-left { justify-content: flex-start; gap: 0.5rem; }
-.settings-row.ranks-right { justify-content: flex-end; gap: 0.5rem; }
 .settings-row[hidden] { display: none; }
 .settings-label { font-size: 0.88rem; color: var(--text); white-space: nowrap; }
 .age-cut-ctl { display: inline-flex; align-items: center; gap: 0.3rem; }
