@@ -42,7 +42,7 @@ test("Find player logic: one name only, one-shot, no focus, quiet when missing",
   assert.doesNotMatch(fn, /\.focus\(|scrollIntoView|window\.scroll/);
   const css = read("styles.css");
   assert.match(css, /\.rk-filter-row \.rk-locate\[hidden\] \{ display: none; \}/);
-  assert.match(css, /@media \(max-width: 600px\) \{\s*\.rk-filter-row \{ gap: 0\.5rem; \}\s*\.rk-filter-row \.rk-remove-ranks, \.rk-filter-row \.rk-locate \{ flex: 0 1 auto; flex-direction: row; \}\s*\.rk-filter-row \.rk-max-age \{ flex: 0 1 auto; \}\s*\}/);
+  assert.match(css, /@media \(max-width: 600px\) \{\s*\.rk-filter-row \{ gap: 0\.5rem; justify-content: space-between; \}\s*\.rk-filter-row \.rk-remove-ranks, \.rk-filter-row \.rk-locate \{ flex: 0 1 auto; flex-direction: row; \}\s*\.rk-filter-row \.rk-max-age \{ flex: 0 1 auto; \}\s*\}/);
 });
 
 // owner 2026-10-30: the t655u sticky re-apply behavior left with the switch —

@@ -2286,8 +2286,11 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
 .rk-max-age .age-cut-ctl:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }
 .rk-max-age .age-input:focus { outline: none; }
 /* owner t649u revised (Dayset 2026-10-30): phones — search keeps its own row; Ranks + Find + Max Age share one row below it (tighter gap). */
+/* Owner 2026-10-30: phones — spread the row across the full width: Ranks left,
+ * Find centered, Age right (Ranks left / Age right when Find is hidden).
+ * The search box keeps its own full-width row above, so it is unaffected. */
 @media (max-width: 600px) {
-  .rk-filter-row { gap: 0.5rem; }
+  .rk-filter-row { gap: 0.5rem; justify-content: space-between; }
   .rk-filter-row .rk-remove-ranks, .rk-filter-row .rk-locate { flex: 0 1 auto; flex-direction: row; }
   .rk-filter-row .rk-max-age { flex: 0 1 auto; }
 }
