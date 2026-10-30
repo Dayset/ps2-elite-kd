@@ -25,7 +25,7 @@ import { markNote, statMark, confirmedPadderSlugs, isFarmListed, isNotFarm, farm
 import { setVehicleCutReviewed } from "../vehicle-cut.mjs";
 import { roomById } from "../rooms.mjs";
 import { sprout, sampleEvents, farmAccount } from "../sprouts.mjs";
-import { findOutliers, guardStatus, KNOWN_EXTREMES } from "../outlier-guard.mjs";
+import { findOutliers, guardStatus, KNOWN_EXTREMES, isEstablished, carveOutReason } from "../outlier-guard.mjs";
 import { infantryTagCounts, INFANTRY_TAG, infantryShares } from "../infantry.mjs";
 import { VEH_CUT } from "../vehicle-cut.mjs";
 import { nbdCuts, newbieFactor, newbieCleared, newPlayerHours, NBD_BAND, NBD_NEW_Q } from "../newbie-diff.mjs";
@@ -113,7 +113,7 @@ export { METRIC_COLS, RANK_COLS, bareName, rankRow } from "../rank-row.mjs";
 import { METRIC_COLS, RANK_COLS, rankRow, bareName, slugKey } from "../rank-row.mjs";
 import { assistGroups } from "../assist-groups.mjs";
 import { removedList } from "../opt-out.mjs";
-import { burstSessions, burstReviewed } from "../burst-sessions.mjs";
+import { burstSessions, burstReviewed, storedSessions } from "../burst-sessions.mjs";
 import { RAMPAGE_RULE, RAMPAGE_REASON_PREFIX, rampageCleared, rampageEvidence, rampageRuleText } from "../rampage-gate.mjs";
 
 /** data/reviewed.json → Set of slugs confirmed as stat padders (decision "padding"; missing file = none). */
@@ -402,6 +402,11 @@ export function buildRanksWithGuard(dataDir, { known = KNOWN_EXTREMES, zergCharg
       const ts = tracSample(xpd, tracIds); // 🚜 XP confirmation sample (null under 2 h)
       if (ts) tracS.set(row[2], ts);
       const sf = sessionFlag(sm, { hsr: pl.hsr, kd: pl.global_kd });
+      // 🛡️ Established-player carve-out (owner 2026-10-30): established players are
+      // never listed by the outlier guard (outlier-guard.mjs explains them).
+      const tt = pl.times || {};
+      const spanDays = Number.isFinite(tt.created) && Number.isFinite(tt.last) ? (tt.last - tt.created) / 86400 : null;
+      const established = isEstablished({ spanDays, ekpm: values.ekpm, sessions: Object.keys(storedSessions(pl.assists, xpd)).length });
       for (const id of SESSION_METRIC_IDS) values[id] = sm && sm.measured ? sm.values[id] : null;
       const patterns = sf.flagged ? [...f.patterns, "session"] : f.patterns.slice();
       // 🔎 session forensics (data/forensics.json, refresh pipeline): ⚡ / 🔥 → 🚩 "session-forensics".
@@ -419,7 +424,7 @@ export function buildRanksWithGuard(dataDir, { known = KNOWN_EXTREMES, zergCharg
       // 🚜 vehicle cut on ⚔️ iVi (vehicle-cut.mjs, inside playerMetrics): cut % (1 decimal) for the iVi hover; null = no cut.
       const vcut = m.vehCut > 0 && !m.thin ? Math.round(m.vehCut * 1000) / 10 : null;
       if (!info || !info.hidden) row.push(vcut);
-      players.push({ vehCut: vcut, vehCutVeh: vcut != null ? Math.round(m.vehCutVeh * 1000) / 10 : null, vehCutMax: vcut != null ? Math.round(m.vehCutMax * 1000) / 10 : null, vehShare: Number.isFinite(m.vehShare) ? m.vehShare : null, vehOnly: Number.isFinite(m.vehOnly) ? m.vehOnly : null, maxShare: Number.isFinite(m.maxShare) ? m.maxShare : null, adjsPreVeh: vcut != null ? m.adjsPreVeh : null, vehCutCleared: !!m.vehCutCleared, poop: !!m.poop, adjsBase: m.poop && !m.thin ? m.adjsBase : null, confirmedPadder: confirmed.has(row[2]), infTag: (pl.infantry && pl.infantry.v >= 2 && pl.infantry.tag) || null, slug: row[2], name: row[0], cid: String(np.cid || ""), farmAcct: !!(fa && fa.farm), flagged: f.flagged || sf.flagged || fx.flagged, patterns, values, session: sm, sessionFlag: sf, forensics: fx, row, hidden: !!(info && info.hidden), confirmedCheater: !!(info && info.confirmedCheater) });
+      players.push({ vehCut: vcut, vehCutVeh: vcut != null ? Math.round(m.vehCutVeh * 1000) / 10 : null, vehCutMax: vcut != null ? Math.round(m.vehCutMax * 1000) / 10 : null, vehShare: Number.isFinite(m.vehShare) ? m.vehShare : null, vehOnly: Number.isFinite(m.vehOnly) ? m.vehOnly : null, maxShare: Number.isFinite(m.maxShare) ? m.maxShare : null, adjsPreVeh: vcut != null ? m.adjsPreVeh : null, vehCutCleared: !!m.vehCutCleared, poop: !!m.poop, adjsBase: m.poop && !m.thin ? m.adjsBase : null, confirmedPadder: confirmed.has(row[2]), infTag: (pl.infantry && pl.infantry.v >= 2 && pl.infantry.tag) || null, slug: row[2], name: row[0], cid: String(np.cid || ""), farmAcct: !!(fa && fa.farm), flagged: f.flagged || sf.flagged || fx.flagged, patterns, values, session: sm, sessionFlag: sf, forensics: fx, row, hidden: !!(info && info.hidden), confirmedCheater: !!(info && info.confirmedCheater), established });
     },
   });
   ranks.cols.push("apk"); // 🤝 trailing column (see onPlayer); not part of RANK_COLS / rankRow
@@ -1014,7 +1019,7 @@ export function forensicsGuardItems(players) {
     const fx = p.forensics;
     if (!fx || !fx.odd || !fx.worst || p.confirmedCheater) continue;
     const red = classifyBins({ patterns: p.patterns || [] }).red;
-    const reason = red.length ? "Also in 🚩 red flags (" + red.join(", ") + "), listed there" : KNOWN_EXTREMES[p.slug] || "";
+    const reason = red.length ? "Also in 🚩 red flags (" + red.join(", ") + "), listed there" : KNOWN_EXTREMES[p.slug] || (p.established ? carveOutReason() : "");
     items.push({
       slug: p.slug, name: p.name, id: "forensics", value: fx.worst.peak60s, red,
       bound: null, z: null, side: "high", explained: !!reason, reason,

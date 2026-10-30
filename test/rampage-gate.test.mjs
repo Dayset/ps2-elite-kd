@@ -41,6 +41,14 @@ test("hidden.json sync: add with evidence, skip already hidden, owner clear un-h
   assert.deepEqual(applyRampage(owner, { 77: s }, cleared, "d").removed, []); // manual entries never touched
 });
 
+test("🛡️ carve-out: established players are never auto-flagged", () => {
+  const s = { slug: "vet", name: "[X] Vet", cid: "1", session: "77", inf: 100, hs: 70, hip: 100, ads: 0, minutes: 10, kpm: 10, match: true };
+  const r = applyRampage({ players: {} }, { 77: s }, null, "2026-10-30", new Set(["vet"]));
+  assert.deepEqual(r.added, []);
+  assert.deepEqual(r.skippedEstablished, ["vet"]);
+  assert.equal(r.players.Vet, undefined);
+});
+
 test("build-log status hides owner-cleared players completely", () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "rampage-"));
   const ses = (slug, id) => ({ slug, name: slug, cid: id, inf: 100, hs: 70, hip: 100, ads: 0, minutes: 10, kpm: 10, match: true });
