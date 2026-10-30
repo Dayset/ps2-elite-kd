@@ -293,15 +293,15 @@ describe("Max account age cut (Settings stepper, owner 2026-10-22)", () => {
     assert.match(index, /id="maxAgeMinus2"/);
     assert.match(index, /id="maxAgePlus2"/);
     assert.match(index, /id="maxAgeInput2" type="number" class="age-input" min="0" step="1"/);
-    assert.match(read("i18n/en.json"), /"age\.short": "Max Age"/);
+    assert.match(read("i18n/en.json"), /"age\.short": "Age"/);
     assert.match(appSource(), /maxAgeInput2: document\.getElementById\("maxAgeInput2"\)/);
     assert.match(appSource(), /if \(els\.maxAgeInput2\) els\.maxAgeInput2\.value = String\(cl\)/);
     assert.match(rankingsSource(), /\$\("maxAgeInput2"\)/);
     // Toolbar label matches the Ranks toggle text (0.8rem, muted).
     assert.match(read("styles.css"), /\.rk-filter-row \.rk-max-age-label \{ font-size: 0\.8rem; color: var\(--muted, var\(--dim\)\); \}/);
-    // "Max Age" lives inside the stepper's own box, between − and +.
-    assert.match(index, /class="rk-max-age">\s*<span class="age-cut-ctl">\s*<button id="maxAgeMinus2"/);
-    assert.match(index, /id="maxAgeMinus2"[^>]*>−<\/button>\s*<span class="rk-max-age-label"/);
+    // "Age" is a normal label beside the stepper's box, which holds only −, value, +.
+    assert.match(index, /class="rk-max-age">\s*<span class="rk-max-age-label"[^>]*>Age<\/span>\s*<span class="age-cut-ctl">\s*<button id="maxAgeMinus2"/);
+    assert.match(index, /id="maxAgeMinus2"[^>]*>−<\/button>\s*<input id="maxAgeInput2"/);
     assert.match(read("styles.css"), /\.rk-max-age \.age-cut-ctl \{ border: 1px solid var\(--border\);/);
     assert.match(read("styles.css"), /\.rk-max-age \.age-step \{ border: none; background: transparent; min-width: 1\.5rem; color: var\(--text\); \}/);
     assert.match(read("styles.css"), /\.rk-max-age \.age-input \{ border: none; background: transparent; width: 2\.2em; \}/);

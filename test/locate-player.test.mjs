@@ -1,6 +1,6 @@
 // owner t648u/t649u: "Remove ranks" → "Hide ranks"; 2026-10-30: the switch reads
 // "Ranks" (ON = show) and "Locate player" became a one-shot "Find player" button.
-// Phones: search row, then Ranks + Find + Max Age on one row.
+// Phones: search row, then Ranks + Find + Age on one row.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
