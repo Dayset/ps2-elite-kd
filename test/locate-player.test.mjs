@@ -34,7 +34,7 @@ test("Locate player logic: one name only, after every sort, no focus, quiet when
   assert.doesNotMatch(fn, /\.focus\(|scrollIntoView|window\.scroll/);
   const css = read("styles.css");
   assert.match(css, /\.rk-filter-row \.rk-locate\[hidden\] \{ display: none; \}/);
-  assert.match(css, /@media \(max-width: 600px\) \{\s*\.rk-filter-row \.rk-remove-ranks, \.rk-filter-row \.rk-locate \{ flex: 1 1 100%; flex-direction: row-reverse; justify-content: space-between; \}/);
+  assert.match(css, /@media \(max-width: 600px\) \{\s*\.rk-filter-row \.rk-remove-ranks, \.rk-filter-row \.rk-locate \{ flex: 0 1 auto; flex-direction: row; \}\s*\.rk-filter-row \.rk-max-age \{ flex: 0 1 auto; \}\s*\}/);
 });
 
 // owner t655u: saved ON (or a duplicated tab) + a new name lookup showed ON but didn't locate
