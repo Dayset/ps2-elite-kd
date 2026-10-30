@@ -188,7 +188,7 @@ header.top-bar {
   font-size: 1rem;
   line-height: 1;
   padding: 0.3rem 0.55rem;
-  border-radius: 999px;
+  border-radius: 0;
   border: 1px solid var(--border);
   background: var(--ctrl-btn-bg);
   color: var(--text);
@@ -229,7 +229,7 @@ header.top-bar {
   font-weight: 600;
   line-height: 1;
   padding: 0.3rem 0.55rem;
-  border-radius: 6px; /* same as the 🗑️ button (.controls button) */
+  border-radius: 0; /* same as the 🗑️ button (.controls button) */
   border: 1px solid var(--border);
   background: var(--ctrl-btn-bg);
   color: var(--text);
@@ -308,7 +308,7 @@ header.top-bar {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
+  border-radius: 0;
   border: 1px solid var(--ctrl-btn-border);
   background: var(--ctrl-btn-muted-bg);
   color: var(--accent);
@@ -332,7 +332,7 @@ header.top-bar {
   font-size: 0.82rem;
   font-weight: 600;
   padding: 0.35rem 0.75rem;
-  border-radius: 999px;
+  border-radius: 0;
   border: 1px solid var(--border);
   background: var(--ctrl-btn-bg);
   color: var(--text);
@@ -382,7 +382,7 @@ header .sub {
   padding: 0.75rem 0.9rem;
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 0;
 }
 
 .controls label {
@@ -400,7 +400,7 @@ header .sub {
   gap: 0.25rem;
   background: var(--input-bg);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 0;
   padding: 0.25rem 0.3rem 0.25rem 0.45rem;
   box-sizing: border-box;
   min-height: var(--ctl-h);
@@ -427,7 +427,7 @@ header .sub {
   margin: 0;
   padding: 0;
   border: none;
-  border-radius: 4px;
+  border-radius: 0;
   background: transparent;
   color: var(--dim);
   font-size: 1.35rem;
@@ -512,7 +512,7 @@ header .sub {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  border-radius: 999px;
+  border-radius: 0;
   padding: 0.15rem 0.55rem;
   font-size: 0.8rem;
   line-height: 1.35;
@@ -594,7 +594,7 @@ header .sub {
   font-size: 0.95rem;
   line-height: 1;
   padding: 0 0.15rem;
-  border-radius: 999px;
+  border-radius: 0;
   opacity: 0.75;
 }
 .name-token-x:hover,
@@ -605,7 +605,7 @@ header .sub {
 .name-token-x:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
-  border-radius: 999px;
+  border-radius: 0;
 }
 
 .name-token:focus-visible {
@@ -620,7 +620,7 @@ header .sub {
   border: 1px solid var(--border);
   color: var(--text);
   padding: 0.5rem 0.65rem;
-  border-radius: 6px;
+  border-radius: 0;
   font-size: 0.95rem;
   min-height: 2.35rem;
 }
@@ -635,7 +635,7 @@ header .sub {
   color: var(--text);
   border: 1px solid var(--ctrl-btn-border);
   padding: 0.45rem 0.9rem;
-  border-radius: 6px;
+  border-radius: 0;
   cursor: pointer;
   font-size: 0.9rem;
 }
@@ -851,7 +851,7 @@ header .sub {
   height: 1.9rem;
   padding: 0 0.55rem;
   border: 1px solid transparent;
-  border-radius: 6px;
+  border-radius: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -936,7 +936,7 @@ details.cache-shared { display: none; }
   flex: 1 1 100%;
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 0;
   padding: 0.35rem 0.6rem 0.4rem;
   margin: 0;
 }
@@ -969,7 +969,7 @@ details.cache-browser { display: none; }
   line-height: 1;
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 0;
   cursor: pointer;
   user-select: none;
 }
@@ -987,7 +987,7 @@ details.cache-browser { display: none; }
   padding: 0.35rem;
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 0;
 }
 
 .cache-shared > summary::before {
@@ -1061,7 +1061,7 @@ details.cache-browser { display: none; }
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  border-radius: 6px;
+  border-radius: 0;
   border: 1px solid var(--chip-border);
   background: var(--chip-bg);
   color: var(--accent);
@@ -1129,7 +1129,7 @@ details.cache-browser { display: none; }
   background: var(--chip-bg);
   color: var(--accent);
   border: 1px solid var(--chip-border);
-  border-radius: 999px;
+  border-radius: 0;
   padding: 0.2rem 0.65rem;
   font-size: 0.78rem;
   cursor: pointer;
@@ -1176,7 +1176,7 @@ details.cache-browser { display: none; }
   background: var(--skip-bg);
   border: 1px solid var(--skip-bd);
   border-left-width: 3px;
-  border-radius: 8px;
+  border-radius: 0;
   line-height: 1.4;
   margin-bottom: 0.15rem;
 }
@@ -1193,7 +1193,7 @@ details.cache-browser { display: none; }
   padding: 0.45rem 0.7rem;
   background: var(--chip-active-bg);
   border: 1px solid var(--accent);
-  border-radius: 8px;
+  border-radius: 0;
   margin-bottom: 0.65rem;
   transition: opacity 0.45s ease;
 }
@@ -1237,7 +1237,7 @@ details.cache-browser { display: none; }
   width: min(420px, 100%);
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: 0;
   box-shadow: 0 18px 48px var(--shadow);
   padding: 1.6rem 1.5rem 1.4rem;
   text-align: center;
@@ -1262,7 +1262,7 @@ details.cache-browser { display: none; }
   align-items: center;
   justify-content: center;
   border: 1px solid transparent;
-  border-radius: 10px;
+  border-radius: 0;
   background: transparent;
   color: var(--muted);
   font-size: 1.35rem;
@@ -1312,7 +1312,7 @@ details.cache-browser { display: none; }
   width: 100%;
   height: 12px;
   background: var(--spinner-track);
-  border-radius: 999px;
+  border-radius: 0;
   overflow: hidden;
   border: 1px solid var(--border);
 }
@@ -1321,7 +1321,7 @@ details.cache-browser { display: none; }
   height: 100%;
   width: 0%;
   background: linear-gradient(90deg, var(--accent), #6ec6a0);
-  border-radius: 999px;
+  border-radius: 0;
   transition: width 0.28s linear;
 }
 
@@ -1383,7 +1383,7 @@ html[data-theme="light"] .progress-modal-backdrop {
   position: relative;
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 0;
   padding: 0.5rem 0.25rem 0.75rem;
   overflow: hidden;
   max-width: 100%;
@@ -1425,7 +1425,7 @@ html[data-theme="light"] .progress-modal-backdrop {
   padding: 2px;
   gap: 2px;
   border: 1px solid var(--ctrl-btn-border);
-  border-radius: 999px;
+  border-radius: 0;
   background: var(--ctrl-btn-muted-bg);
 }
 .chart-mode-btn {
@@ -1435,7 +1435,7 @@ html[data-theme="light"] .progress-modal-backdrop {
   line-height: 1.2;
   padding: 0.2rem 0.6rem;
   border: none;
-  border-radius: 999px;
+  border-radius: 0;
   background: transparent;
   color: var(--muted);
   cursor: pointer;
@@ -1568,7 +1568,7 @@ html[data-theme="light"] .progress-modal-backdrop {
 }
 #yZoomSlider::-webkit-slider-runnable-track {
   width: 3px;
-  border-radius: 999px;
+  border-radius: 0;
   background: color-mix(in srgb, var(--grid) 80%, transparent);
 }
 /* Flat wide thumb (===) instead of round O — short along track, wide across */
@@ -1578,7 +1578,7 @@ html[data-theme="light"] .progress-modal-backdrop {
   width: 18px;
   height: 5px;
   margin-left: -7.5px;
-  border-radius: 1px;
+  border-radius: 0;
   background: var(--accent);
   border: none;
   box-shadow: 0 1px 3px var(--shadow);
@@ -1586,13 +1586,13 @@ html[data-theme="light"] .progress-modal-backdrop {
 }
 #yZoomSlider::-moz-range-track {
   width: 3px;
-  border-radius: 999px;
+  border-radius: 0;
   background: color-mix(in srgb, var(--grid) 80%, transparent);
 }
 #yZoomSlider::-moz-range-thumb {
   width: 18px;
   height: 5px;
-  border-radius: 1px;
+  border-radius: 0;
   background: var(--accent);
   border: none;
   box-shadow: 0 1px 3px var(--shadow);
@@ -1604,7 +1604,7 @@ html[data-theme="light"] .progress-modal-backdrop {
   font-weight: 700;
   letter-spacing: 0.03em;
   padding: 0.18rem 0.4rem;
-  border-radius: 6px;
+  border-radius: 0;
   border: 1px solid var(--ctrl-btn-border);
   background: color-mix(in srgb, var(--ctrl-btn-bg) 85%, transparent);
   color: var(--text);
@@ -1646,7 +1646,7 @@ html[data-theme="light"] .progress-modal-backdrop {
 .stats-section {
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 0;
   padding: 0.55rem 0.75rem 0.7rem;
   margin-bottom: 0.55rem;
 }
@@ -1773,7 +1773,7 @@ footer a { color: var(--accent); }
 footer .footer-block {
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 0.75rem;
+  border-radius: 0;
   padding: 1rem 1.15rem 0.75rem;
   margin: 0.75rem 0 1.25rem;
 }
@@ -1816,12 +1816,12 @@ footer .footer-row { margin: 0; }
 .tgl-switch:hover, footer .foot-switch:hover { color: var(--text); }
 .tgl-switch input, footer .foot-switch input {
   appearance: none; -webkit-appearance: none; flex: 0 0 auto; margin: 0; cursor: pointer;
-  width: 2rem; height: 1.1rem; border-radius: 999px; position: relative;
+  width: 2rem; height: 1.1rem; border-radius: 0; position: relative;
   background: var(--border); transition: background 0.18s;
 }
 .tgl-switch input::after, footer .foot-switch input::after {
   content: ""; position: absolute; top: 2px; left: 2px; width: calc(1.1rem - 4px); height: calc(1.1rem - 4px);
-  border-radius: 50%; background: var(--text); transition: transform 0.18s;
+  border-radius: 0; background: var(--text); transition: transform 0.18s;
 }
 .tgl-switch input:checked, footer .foot-switch input:checked { background: var(--accent); }
 .tgl-switch input:checked::after, footer .foot-switch input:checked::after { transform: translateX(0.9rem); background: var(--panel); }
@@ -1969,7 +1969,7 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
 .jump-btn {
   position: relative;
   pointer-events: auto;
-  width: 2.75rem; height: 2.75rem; border-radius: 50%;
+  width: 2.75rem; height: 2.75rem; border-radius: 0;
   display: inline-flex; align-items: center; justify-content: center;
   border: 2px solid var(--border); background: var(--ctrl-btn-bg); color: var(--accent);
   box-shadow: 0 4px 14px var(--shadow);
@@ -1985,7 +1985,7 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
 .jump-btn::after {
   content: attr(data-hint);
   position: absolute; right: calc(100% + 8px); top: 50%; transform: translate(3px, -50%);
-  white-space: nowrap; padding: 0.25rem 0.55rem; border-radius: 6px;
+  white-space: nowrap; padding: 0.25rem 0.55rem; border-radius: 0;
   font-size: 0.78rem; font-weight: 600;
   background: var(--bg); color: var(--text); border: 1px solid var(--accent);
   box-shadow: 0 4px 14px var(--shadow);
@@ -2006,7 +2006,7 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
   flex-direction: column;
   gap: 0.1rem;
   padding: 0.5rem 0.8rem;
-  border-radius: 8px;
+  border-radius: 0;
   background: var(--panel);
   color: var(--warn);
   border: 1px solid var(--warn);
@@ -2057,7 +2057,7 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
   z-index: 1100;
   max-width: calc(100vw - 16px);
   padding: 0.45rem 0.75rem;
-  border-radius: 8px;
+  border-radius: 0;
   background: var(--panel);
   color: var(--text);
   border: 1px solid var(--accent);
@@ -2108,7 +2108,7 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
 .census-retry-btn {
   margin-left: 0.4em;
   padding: 0.15em 0.6em;
-  border-radius: 999px;
+  border-radius: 0;
   border: 1px solid currentColor;
   background: transparent;
   color: inherit;
@@ -2255,7 +2255,7 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
 /* 🏅 where the selected players rank (rank # + percentile per metric) */
 .rk-positions { margin: 0 0 0.85rem; }
 .rk-pos-hint { color: var(--dim); font-size: 0.85rem; margin: 0.2rem 0 0.4rem; }
-.rk-pos-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.rk-pos-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 0; background: var(--panel); -webkit-overflow-scrolling: touch; scrollbar-width: none; }
 .rk-pos-wrap::-webkit-scrollbar { display: none; }
 .rk-pos-table { border-collapse: separate; border-spacing: 0; width: max-content; min-width: 100%; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
 .rk-pos-table th, .rk-pos-table td { padding: 0.35rem 0.4rem; border-bottom: 1px solid var(--row-border); white-space: nowrap; text-align: right; background: var(--panel); }
@@ -2273,14 +2273,14 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
 .rk-filter-row .rk-locate[hidden] { display: none; } /* owner t648u: only with exactly one name entered */
 .rk-filter-row .rk-max-age { display: inline-flex; align-items: center; gap: 0.4rem; flex: 0 0 auto; }
 .rk-filter-row .rk-max-age-label { font-size: 0.8rem; color: var(--muted, var(--dim)); }
-.rk-filter-row .rk-find-btn { font-size: 0.8rem; padding: 0.3rem 0.6rem; border: 1px solid var(--border); border-radius: 6px; background: var(--panel); color: var(--text); }
+.rk-filter-row .rk-find-btn { font-size: 0.8rem; padding: 0.3rem 0.6rem; border: 1px solid var(--border); border-radius: 0; background: var(--panel); color: var(--text); }
 /* Toolbar Ranks toggle button (Dayset 2026-10-30): same box as Find player;
  * pressed (tiers shown) reads as an accent-bordered, shaded button. */
 .rk-filter-row .rk-find-btn[aria-pressed="true"] { border-color: var(--accent); background: var(--grid); color: var(--text); }
 /* Table stepper (Dayset 2026-10-30): "Age" is a normal label beside the
  * stepper's box, which holds only −, value, +. Scoped here so
  * the ⚙️ Settings stepper keeps its own (larger) shape. */
-.rk-max-age .age-cut-ctl { border: 1px solid var(--border); border-radius: 0.4rem; background: var(--bg); padding: 0.1rem 0.2rem; }
+.rk-max-age .age-cut-ctl { border: 1px solid var(--border); border-radius: 0; background: var(--bg); padding: 0.1rem 0.2rem; }
 .rk-max-age .age-step { border: none; background: transparent; min-width: 1.5rem; color: var(--text); }
 .rk-max-age .age-input { border: none; background: transparent; width: 2.2em; }
 .rk-max-age .age-cut-ctl:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }
@@ -2297,7 +2297,7 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
 .rk-filter-row input[type="search"] {
   box-sizing: border-box; width: 100%; max-width: 28rem;
   font: inherit; font-size: 1rem; padding: 0.5rem 0.7rem; min-height: 2.6rem;
-  border: 1px solid var(--border); border-radius: 6px;
+  border: 1px solid var(--border); border-radius: 0;
   background: var(--input-bg); color: var(--text); outline: none;
 }
 .rk-filter-row input[type="search"]:focus { border-color: var(--accent); outline: 1px solid var(--accent); }
@@ -2313,7 +2313,7 @@ html[data-theme="light"] .rk-filter-row input#ranksSearch { color-scheme: light;
 .rk-filter-row .rk-search-box.has-find-me input[type="search"] { padding-right: 2.6rem; }
 .rk-find-me {
   position: absolute; right: 0.3rem; top: 50%; transform: translateY(-50%);
-  min-width: 2.1rem; min-height: 2.1rem; padding: 0 0.3rem; border: 0; border-radius: 4px;
+  min-width: 2.1rem; min-height: 2.1rem; padding: 0 0.3rem; border: 0; border-radius: 0;
   background: none; color: inherit; font: inherit; font-size: 1.1rem; line-height: 1; cursor: pointer;
 }
 .rk-find-me:hover, .rk-find-me:focus-visible { background: var(--input-hover); }
@@ -2327,7 +2327,7 @@ html[data-theme="light"] .rk-filter-row input#ranksSearch { color-scheme: light;
   max-height: calc(100vh - 11rem);
   -webkit-overflow-scrolling: touch;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 0;
   background: var(--panel);
   /* Always reserve the vertical scrollbar gutter (Dayset 2026-10-19): if the
    * scrollbar appears/disappears as sorts or tier toggles change the row
@@ -2463,7 +2463,7 @@ html[data-theme="light"] .rk-filter-row input#ranksSearch { color-scheme: light;
 .ranks-table input[type="checkbox"] { margin: 0; cursor: pointer; vertical-align: middle; }
 /* 📊 Distribution (hand-rolled SVG like the main chart) */
 .dist-section {
-  margin: 0 0 0.85rem; border: 1px solid var(--border); border-radius: 8px;
+  margin: 0 0 0.85rem; border: 1px solid var(--border); border-radius: 0;
   background: var(--panel); padding: 0.45rem 0.75rem 0.6rem;
 }
 /* Emoji picker row lives outside the <details> so it stays visible when the
@@ -2483,7 +2483,7 @@ html[data-theme="light"] .rk-filter-row input#ranksSearch { color-scheme: light;
 .dist-section[open] > summary::before { content: "▾ "; }
 .dist-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.9rem; margin: 0.5rem 0 0.35rem; font-size: 0.85rem; }
 .dist-controls select {
-  font: inherit; font-size: 0.9rem; padding: 0.3rem 0.5rem; border-radius: 6px;
+  font: inherit; font-size: 0.9rem; padding: 0.3rem 0.5rem; border-radius: 0;
   border: 1px solid var(--border); background: var(--input-bg); color: var(--text);
 }
 .dist-chart { position: relative; width: 100%; }
@@ -2508,7 +2508,7 @@ html[data-theme="light"] .rk-filter-row input#ranksSearch { color-scheme: light;
 .dist-tip {
   position: absolute; z-index: 5; pointer-events: none;
   max-width: min(20rem, calc(100% - 8px));
-  padding: 0.4rem 0.65rem; border-radius: 8px; font-size: 0.8rem; line-height: 1.35;
+  padding: 0.4rem 0.65rem; border-radius: 0; font-size: 0.8rem; line-height: 1.35;
   background: var(--bg); color: var(--text); border: 1px solid var(--accent);
   border-left-width: 3px; box-shadow: 0 6px 20px var(--shadow);
 }
@@ -2529,7 +2529,7 @@ html[data-theme="light"] .rk-filter-row input#ranksSearch { color-scheme: light;
 /* t357u: collapsible big table block (same frame as 📊 Distribution) */
 .rk-table-section[open] > summary { margin-bottom: 0.5rem; }
 .rk-table-section .rk-table-count { color: var(--dim); font-weight: 400; font-size: 0.85rem; }
-.rk-table-section .ranks-table-wrap { border-radius: 6px; }
+.rk-table-section .ranks-table-wrap { border-radius: 0; }
 
 /* t358u: 🏅 positions block folds like the chart / table */
 .rk-pos-section[open] > summary { margin-bottom: 0.5rem; }
@@ -2575,7 +2575,7 @@ html[data-theme="light"] .rk-filter-row input#ranksSearch { color-scheme: light;
 .controls .pair-match-note[hidden] { display: none; }
 
 /* Debug battle simulator (footer, shown only with "show older debug stats"). */
-.battle-panel { margin: 0.75rem 0; padding: 0.75rem; border: 1px dashed var(--dim); border-radius: 6px; }
+.battle-panel { margin: 0.75rem 0; padding: 0.75rem; border: 1px dashed var(--dim); border-radius: 0; }
 .battle-panel[hidden] { display: none; }
 .battle-panel h3 { margin: 0 0 0.5rem; font-size: 1rem; }
 .battle-form { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: end; }
@@ -2610,7 +2610,7 @@ html[data-theme="light"] .rk-filter-row input#ranksSearch { color-scheme: light;
   list-style: none;
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 0;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
   max-height: 18rem;
   overflow-y: auto;
@@ -2694,7 +2694,7 @@ html[data-theme="light"] .rk-filter-row input#ranksSearch { color-scheme: light;
   height: 1.9rem;
   min-height: 0;
   padding: 0;
-  border-radius: 6px;
+  border-radius: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2710,7 +2710,7 @@ html[data-theme="light"] .rk-filter-row input#ranksSearch { color-scheme: light;
   box-sizing: border-box; height: 1.9rem; padding: 0 0.3rem;
   /* Full language names in the selection (owner 2026-10-20 evening): no
    * width cap, the select sizes to "🇫🇷 Français" and friends. */
-  font: inherit; font-size: 1rem; border-radius: 6px; cursor: pointer;
+  font: inherit; font-size: 1rem; border-radius: 0; cursor: pointer;
   border: 1px solid var(--border); background: var(--input-bg); color: var(--text);
 }
 .controls .fresh-row-end select.lang-select:focus-visible { outline: 1px solid var(--accent); }
@@ -2727,7 +2727,7 @@ html[data-theme="light"] .rk-filter-row input#ranksSearch { color-scheme: light;
   box-sizing: border-box; height: 1.9rem; padding: 0 0.55rem;
   display: inline-flex; align-items: center; gap: 0.35rem;
   font-size: 0.92rem; line-height: 1; white-space: nowrap;
-  border: 1px solid var(--border); border-radius: 6px;
+  border: 1px solid var(--border); border-radius: 0;
   background: var(--input-bg); color: var(--text);
   cursor: pointer; user-select: none; opacity: 0.85;
 }
@@ -2739,7 +2739,7 @@ html[data-theme="light"] .rk-filter-row input#ranksSearch { color-scheme: light;
   width: min(17.5rem, calc(100vw - 1rem));
   display: flex; flex-direction: column; gap: 0.5rem;
   padding: 0.65rem 0.7rem;
-  background: var(--panel); border: 1px solid var(--border); border-radius: 0.6rem;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 0;
   box-shadow: 0 0.6rem 1.6rem rgba(0, 0, 0, 0.45);
 }
 .settings-row { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; }
@@ -2747,7 +2747,7 @@ html[data-theme="light"] .rk-filter-row input#ranksSearch { color-scheme: light;
 .settings-label { font-size: 0.88rem; color: var(--text); white-space: nowrap; }
 .age-cut-ctl { display: inline-flex; align-items: center; gap: 0.3rem; }
 .age-step { min-width: 1.7rem; padding: 0.1rem 0.3rem; touch-action: none; -webkit-touch-callout: none; user-select: none; }
-.age-input { font: inherit; font-size: 0.88rem; width: 3.6em; text-align: center; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 0.4rem; padding: 0.12rem 0.2rem; -moz-appearance: textfield; appearance: textfield; }
+.age-input { font: inherit; font-size: 0.88rem; width: 3.6em; text-align: center; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 0; padding: 0.12rem 0.2rem; -moz-appearance: textfield; appearance: textfield; }
 .age-input::-webkit-outer-spin-button, .age-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .settings-row.bg-row { display: none; }
 @media (hover: hover) and (pointer: fine) and (min-width: 1400px) {
@@ -2776,7 +2776,7 @@ html[data-theme="light"] .rk-filter-row input#ranksSearch { color-scheme: light;
   gap: 0.15rem;
   padding: 0.12rem;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: 0;
   background: var(--input-bg, var(--bg));
 }
 .dist-pill {
@@ -2787,7 +2787,7 @@ html[data-theme="light"] .rk-filter-row input#ranksSearch { color-scheme: light;
   min-width: 1.6rem;
   padding: 0 0.32rem;
   border: 0;
-  border-radius: 999px;
+  border-radius: 0;
   background: transparent;
   color: var(--text);
   font: inherit;
@@ -2873,7 +2873,7 @@ html[data-theme="light"] .dist-pill:hover { opacity: 1; }
 
 /* ---------- 🎥 Live (live.html = index.html + body.live-mode) ---------- */
 .controls .live-btn {
-  border-radius: 8px;
+  border-radius: 0;
   padding: 0.35rem 0.55rem;
   background: var(--ctrl-btn-muted, transparent);
   cursor: pointer;
@@ -2909,7 +2909,7 @@ html[data-theme="light"] .dist-pill:hover { opacity: 1; }
  * waits whenever the page is busy loading. The frame draws the rounded border and fill
  * without clipping; table cells are see-through except the sticky name column, whose
  * corner cells are rounded to match. */
-.sc-frame { border: 1px solid var(--border); border-radius: 8px; background: var(--panel); }
+.sc-frame { border: 1px solid var(--border); border-radius: 0; background: var(--panel); }
 .sc-viewport { overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
 .sc-viewport::-webkit-scrollbar { display: none; }
 .sc-track { display: flex; align-items: stretch; }
@@ -3014,7 +3014,7 @@ html[data-room="ps"] .controls .fresh-row-end select.room-select { border-color:
 .srv-tag {
   display: inline-block; margin-left: 0.35em; padding: 0 0.3em;
   font-size: 0.7em; font-weight: 400; line-height: 1.35; vertical-align: 0.1em;
-  border: 1px solid var(--border); border-radius: 4px; opacity: 0.75; white-space: nowrap;
+  border: 1px solid var(--border); border-radius: 0; opacity: 0.75; white-space: nowrap;
 }
 
 /* ⚔️ Latest 100 kills & deaths (kill-feed.mjs, owner t746u): one player only, collapsed by
@@ -3040,11 +3040,11 @@ html[data-room="ps"] .controls .fresh-row-end select.room-select { border-color:
 .kf-table td { overflow: hidden; text-overflow: ellipsis; }
 .kf-table td.kf-c-time { color: var(--dim); }
 .kf-table td.kf-c-gear { color: var(--dim); }
-.kf-mark { display: inline-block; text-align: center; border-radius: 4px; padding: 0 0.3rem; font-size: 0.74rem; font-weight: 700; color: #fff; line-height: 1.35; }
+.kf-mark { display: inline-block; text-align: center; border-radius: 0; padding: 0 0.3rem; font-size: 0.74rem; font-weight: 700; color: #fff; line-height: 1.35; }
 .kf-kill { background: #2e9d57; }
 .kf-death { background: #c0392b; }
 .kf-sui { background: #7f7f7f; }
-.kf-tk { display: inline-block; border-radius: 4px; padding: 0 0.25rem; font-size: 0.68rem; font-weight: 700; background: var(--warn); color: #000; }
+.kf-tk { display: inline-block; border-radius: 0; padding: 0 0.25rem; font-size: 0.68rem; font-weight: 700; background: var(--warn); color: #000; }
 .kf-tag { color: var(--dim); font-weight: 400; }
 .kf-name { font: inherit; font-weight: 600; background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline dotted; }
 .kf-name:not([class*="fac-"]) { color: inherit; }
@@ -3053,7 +3053,7 @@ html[data-room="ps"] .controls .fresh-row-end select.room-select { border-color:
 .kf-ivi { font-variant-numeric: tabular-nums; color: var(--dim); white-space: nowrap; cursor: help; }
 .kf-ivi.kf-t-top1, .kf-ivi.kf-t-top5, .kf-ivi.kf-t-top10 { color: var(--accent); font-weight: 600; }
 .kf-pad { font-weight: 700; cursor: help; }
-.kf-oor { font-size: 0.72rem; font-weight: 700; color: var(--dim); border: 1px solid var(--grid); border-radius: 3px; padding: 0 0.2rem; cursor: help; }
+.kf-oor { font-size: 0.72rem; font-weight: 700; color: var(--dim); border: 1px solid var(--grid); border-radius: 0; padding: 0 0.2rem; cursor: help; }
 
 /* 🥊 PlayStation scrims (owner 2026-10-28). In the Latest 100: one row per scrim (▸ on the # opens
  * its kills & deaths as indented rows under it). Tab: scrims-panel.mjs table with the same look and
@@ -3094,7 +3094,7 @@ html[data-room="ps"] .controls .fresh-row-end select.room-select { border-color:
 .scr-table th.scr-opp, .scr-table td.scr-opp, .scr-table th.scr-weapons, .scr-table td.scr-weapons { text-align: left; }
 .scr-table td { overflow: hidden; text-overflow: ellipsis; }
 .scr-table td.scr-weapons { color: var(--dim); }
-.scr-group { display: inline-block; font-size: 0.68rem; font-weight: 700; border: 1px solid var(--grid); border-radius: 3px; padding: 0 0.2rem; color: var(--dim); cursor: help; vertical-align: 0.05em; }
+.scr-group { display: inline-block; font-size: 0.68rem; font-weight: 700; border: 1px solid var(--grid); border-radius: 0; padding: 0 0.2rem; color: var(--dim); cursor: help; vertical-align: 0.05em; }
 @media (max-width: 600px) {
   /* Phones: like Rankings, only # stays pinned so the result gets the screen. */
   .scr-table th.rk-num, .scr-table td.rk-num, .kf-table th.rk-num, .kf-table td.rk-num { left: 0; box-shadow: 4px 0 8px -4px var(--shadow); }
@@ -3112,7 +3112,7 @@ html[data-room="ps"] .controls .fresh-row-end select.room-select { border-color:
 /* 🤺 Duels (duels-panel.mjs, owner 2026-10-28): one player vs the crowd, or two players head-to-head.
  * Shared Rankings table look; widths come from the colgroup (min-width = their sum). */
 .duel-section .duel-status { margin: 0.3rem 0; color: var(--dim); }
-.duel-warn { margin: 0 0 0.4rem; padding: 0.3rem 0.5rem; border: 1px solid var(--warn); border-radius: 6px; font-size: 0.85rem; }
+.duel-warn { margin: 0 0 0.4rem; padding: 0.3rem 0.5rem; border: 1px solid var(--warn); border-radius: 0; font-size: 0.85rem; }
 .duel-cmp-wrap { max-width: 40rem; margin: 0 0 0.6rem; max-height: none; }
 /* Small 3-column table: sized by its content (names and labels wrap, never cut). */
 .duel-cmp { table-layout: auto; }
@@ -3203,14 +3203,14 @@ html[data-room="ps"] .controls .fresh-row-end select.room-select { border-color:
  * one row of equal segments that always fits (phones too); the open panel sits inside with no
  * box of its own. */
 .old-tabs-block {
-  margin: 0 0 0.85rem; border: 1px solid var(--border); border-radius: 8px;
+  margin: 0 0 0.85rem; border: 1px solid var(--border); border-radius: 0;
   background: var(--panel); padding: 0.45rem 0.75rem 0.6rem;
 }
 .old-tabs { display: flex; flex-wrap: nowrap; gap: 0.35rem; margin: 0; }
 .old-tab {
   flex: 1 1 0; min-width: 0;
   font: inherit; font-size: 0.85rem; font-weight: 600; color: var(--muted); cursor: pointer;
-  background: var(--input-bg); border: 1px solid var(--border); border-radius: 6px;
+  background: var(--input-bg); border: 1px solid var(--border); border-radius: 0;
   padding: 0.32rem 0.5rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center;
 }
 .old-tab:hover { border-color: var(--accent); color: var(--text); }

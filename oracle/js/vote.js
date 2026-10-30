@@ -219,14 +219,14 @@ const css = `
 .vote { margin-top: 14px; }
 .votebar { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 14px; margin-bottom: 10px; flex-wrap: wrap; }
 .facrow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.facpick { background: var(--panel2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 6px; font: inherit; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 56px; }
+.facpick { background: var(--panel2); border: 1px solid var(--border); border-radius: 0; padding: 10px 6px; font: inherit; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 56px; }
 .facpick.VS { color: var(--vs); } .facpick.NC { color: var(--nc); } .facpick.TR { color: var(--tr); }
 .facpick b { font-size: 13px; letter-spacing: .08em; } .facpick span { color: var(--text); font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .facpick.on { border-color: currentColor; box-shadow: 0 0 0 1px currentColor inset; background: #181b22; }
 .facpick:focus-visible, .amount:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .facpick:disabled { opacity: .35; cursor: default; }
 .amounts { display: flex; gap: 8px; margin: 12px 0 6px; flex-wrap: wrap; }
-.amount { flex: 1; min-width: 56px; min-height: 44px; background: var(--panel2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font: inherit; font-weight: 600; cursor: pointer; }
+.amount { flex: 1; min-width: 56px; min-height: 44px; background: var(--panel2); border: 1px solid var(--border); border-radius: 0; color: var(--text); font: inherit; font-weight: 600; cursor: pointer; }
 .amount.on { border-color: var(--accent); background: #1a2230; }
 .vote .row2 { margin-top: 10px; } .vote .btn.big { width: 100%; }
 .votemsg { color: var(--accent); margin-top: 8px; }

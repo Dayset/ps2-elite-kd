@@ -834,8 +834,8 @@ test("DPM row bars (owner 2026-10-26): stacked meter lines, DPM glows and grows,
   assert.match(swap, /<div class="live-metric"><div class="live-bar live-bar-fat" aria-hidden="true"><div id="liveDpsBar" class="live-bar-fill live-bar-dpm"><\/div><div id="liveDpmTickAvg" class="live-dpm-tick"><\/div><div id="liveDpmTickP90" class="live-dpm-tick"><\/div><\/div><span id="liveDpsLabel"><\/span> <span id="liveDpsVal">0\.0<\/span><\/div>/);
   assert.match(swap, /<div class="live-metric"><span id="liveCashAvgLabel"><\/span> <span id="liveCashAvgVal">–<\/span><\/div>/); // pot: avg line only, Σ hidden
   assert.doesNotMatch(swap, /liveDpsCombatSep/);
-  assert.match(css, /\.live-bar \{ height: 6px; margin-top: 0\.15rem; background: var\(--grid\); border-radius: 999px; overflow: hidden; \}/);
-  assert.match(css, /\.live-bar-fill \{ height: 100%; width: 0%; background: var\(--dim\); border-radius: 999px; \}/);
+  assert.match(css, /\.live-bar \{ height: 6px; margin-top: 0\.15rem; background: var\(--grid\); border-radius: 0; overflow: hidden; \}/);
+  assert.match(css, /\.live-bar-fill \{ height: 100%; width: 0%; background: var\(--dim\); border-radius: 0; \}/);
   assert.match(css, /\.live-bar-dpm \{ background: linear-gradient\(90deg, #7c4dff, #00b0ff, #00e676, #ffea00, #ff9100, #ff1744\); box-shadow: 0 0 8px var\(--accent\); \}/); // main DPM = rainbow
   assert.match(css, /\.live-bar-hold \{ background: linear-gradient\(90deg, #0d47a1, #1976d2, #64b5f6\); \}/); // Recharge = blue (green would key out over the chromakey background)
   assert.match(css, /\.live-bar-fat \{ height: 12px; position: relative; overflow: visible; \}/); // DPM track is fat and anchors the ticks; hold track stays thin (6 px); overflow visible so the ticks stick out (2026-10-26)
@@ -971,7 +971,7 @@ test("feed frame lines (owner 2026-10-26): death line above the table, Recharge 
   assert.match(js, /function cells\(p, isMe, r, hideWeapon = false\) \{/); // killer-timer arg gone
   assert.match(js, /cells\(p, false, r, where === "vic"\)/);
   assert.match(js, /document\.getElementById\("liveDeathLine"\)/);
-  assert.match(css, /\.live-death-line \{ height: 3px; width: 0%; background: linear-gradient\(90deg, #ff1744, #ff5252, #b71c1c\); border-radius: 999px; \}/);
+  assert.match(css, /\.live-death-line \{ height: 3px; width: 0%; background: linear-gradient\(90deg, #ff1744, #ff5252, #b71c1c\); border-radius: 0; \}/);
   assert.ok(swap.indexOf("liveDeathLine") > swap.indexOf("liveState") && swap.indexOf("liveDeathLine") < swap.indexOf("liveList"), "death line sits above the feed table");
   assert.ok(swap.indexOf("liveDpsHoldBar") > swap.indexOf("</table>") && swap.indexOf("liveDpsHoldBar") < swap.indexOf('id="liveDps"'), "Recharge sits between the table and the DPM block");
   assert.doesNotMatch(js, /lv-iz|izHtml|showRoach|liveShowTactical|liveKillerTimer|isKiller/);
@@ -1004,7 +1004,7 @@ test("session-adaptive scale (owner 2026-10-26): bar full = max(2× estDPM floor
   assert.match(js, /if \(tickAvgEl\) tickAvgEl\.style\.left = `\$\{Math\.min\(100, \(DPM_TICK_AVG \/ tickFull\) \* 100\)\.toFixed\(1\)\}%`;/);
   assert.match(js, /if \(tickP90El\) tickP90El\.style\.left = `\$\{Math\.min\(100, \(DPM_TICK_P90 \/ tickFull\) \* 100\)\.toFixed\(1\)\}%`;/);
   assert.match(swap, /<div id="liveDpmTickAvg" class="live-dpm-tick"><\/div><div id="liveDpmTickP90" class="live-dpm-tick"><\/div>/);
-  assert.match(css, /\.live-dpm-tick \{ position: absolute; top: -3px; bottom: -3px; width: 3px; transform: translateX\(-50%\); background: #000; border-radius: 999px; \}/);
+  assert.match(css, /\.live-dpm-tick \{ position: absolute; top: -3px; bottom: -3px; width: 3px; transform: translateX\(-50%\); background: #000; border-radius: 0; \}/);
   assert.equal(en["live.dpmTickAvg"], "Average player: {v} DPM");
   assert.equal(en["live.dpmTickP90"], "90th percentile: {v} DPM");
 });
@@ -1045,7 +1045,7 @@ test("name descenders (owner 2026-10-26): the name line is tall enough that g/q/
 
 test("nudges (owner 2026-10-26): pitch black, bolder, sticking out of the bar up and down", () => {
   const css = cssSrc();
-  assert.match(css, /\.live-dpm-tick \{ position: absolute; top: -3px; bottom: -3px; width: 3px; transform: translateX\(-50%\); background: #000; border-radius: 999px; \}/);
+  assert.match(css, /\.live-dpm-tick \{ position: absolute; top: -3px; bottom: -3px; width: 3px; transform: translateX\(-50%\); background: #000; border-radius: 0; \}/);
   assert.match(css, /\.live-bar-fat \{ height: 12px; position: relative; overflow: visible; \}/);
 });
 

@@ -17,14 +17,14 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261028-settop1" />
+  <link rel="stylesheet" href="styles.css?v=20261030-flat1" />
   <style>
     body { overflow: auto; }
     .st-wrap { max-width: none; margin: 0; padding: 18px 16px 40px; padding-inline: 0; } /* width: body.site-page (#29) */
     .st-wrap h1 { font-size: 1.25rem; margin: 0 0 4px; }
     .st-sub { color: var(--dim); font-size: 0.85rem; margin-bottom: 16px; }
     .st-pop { font-size: 0.95rem; margin: 0 0 14px; }
-    .st-card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
+    .st-card { background: var(--panel); border: 1px solid var(--border); border-radius: 0; padding: 12px 14px; margin-bottom: 12px; }
     .st-card h2 { font-size: 0.95rem; margin: 0 0 8px; color: var(--accent); font-weight: 600; }
     .st-big { font-size: 1.05rem; font-weight: 600; }
     .st-ok { color: var(--ok); }
@@ -32,7 +32,7 @@
     .st-dim { color: var(--dim); }
     .st-err { color: #ff8a8a; }
     .st-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 2px; padding: 0; list-style: none; }
-    .st-list li { border: 1px solid var(--border); border-radius: 999px; padding: 2px 9px; font-size: 0.85rem; }
+    .st-list li { border: 1px solid var(--border); border-radius: 0; padding: 2px 9px; font-size: 0.85rem; }
     .st-list li.add { border-color: var(--ok); }
     .st-list li.fail { border-color: #c06060; text-decoration: line-through; opacity: 0.85; }
     .st-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
@@ -48,14 +48,14 @@
     .st-sec > summary::before, .st-sub-sec > summary::before { content: "▸ "; color: var(--dim); display: inline-block; width: 1.1em; }
     .st-sec[open] > summary::before, .st-sub-sec[open] > summary::before { content: "▾ "; }
     .st-sec[open] > summary { margin-bottom: 8px; }
-    .st-sec > summary:focus-visible, .st-sub-sec > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+    .st-sec > summary:focus-visible, .st-sub-sec > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 0; }
     .st-sub-sec { margin: 12px 0 0; padding-top: 8px; border-top: 1px solid var(--row-border); }
     .st-sub-sec > summary h3 { font-size: 0.95rem; }
     .st-sub-sec[open] > summary { margin-bottom: 4px; }
-    .st-count { display: inline-block; min-width: 1.4em; padding: 0 6px; margin-left: 4px; border-radius: 999px; font-size: 0.8rem; font-weight: 700; text-align: center; border: 1px solid var(--border); color: var(--dim); }
+    .st-count { display: inline-block; min-width: 1.4em; padding: 0 6px; margin-left: 4px; border-radius: 0; font-size: 0.8rem; font-weight: 700; text-align: center; border: 1px solid var(--border); color: var(--dim); }
     .st-count:empty { display: none; }
     .st-tools { float: right; font-size: 0.8rem; }
-    .st-tools button { background: none; border: 1px solid var(--border); color: var(--dim); border-radius: 999px; padding: 1px 9px; margin-left: 4px; cursor: pointer; font: inherit; }
+    .st-tools button { background: none; border: 1px solid var(--border); color: var(--dim); border-radius: 0; padding: 1px 9px; margin-left: 4px; cursor: pointer; font: inherit; }
     .st-tools button:hover { color: var(--text); }
     /* Red flags 🚩 (review leads, collapsed by default) */
     .st-flags .st-count.hot { color: #ff8a8a; border-color: #c06060; }
@@ -66,7 +66,7 @@
     .st-flags .st-table td, .st-flags .st-table th { white-space: nowrap; }
     .st-flags .st-num { text-align: right; font-variant-numeric: tabular-nums; }
     .st-flags .st-rule { color: var(--dim); font-size: 0.8rem; margin: 8px 0 4px; line-height: 1.4; }
-    .st-flags .st-tag { display: inline-block; margin-right: 3px; padding: 0 6px; border-radius: 999px; font-size: 0.74rem; border: 1px solid var(--border); color: var(--muted); }
+    .st-flags .st-tag { display: inline-block; margin-right: 3px; padding: 0 6px; border-radius: 0; font-size: 0.74rem; border: 1px solid var(--border); color: var(--muted); }
     .st-flags .st-tag.aim { border-color: #c06060; }
     .st-flags .st-tag.vehicle { border-color: #c08050; }
     .st-flags .st-tag.rampage { border-color: #d04040; }
@@ -92,7 +92,7 @@
     .st-radar { font-size: 0.74rem; white-space: nowrap; margin-left: 4px; }
     .st-radar a { color: var(--dim); }
     .st-radar a:hover { color: var(--text); }
-    .st-rb { display: inline-block; margin-left: 3px; padding: 0 5px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); }
+    .st-rb { display: inline-block; margin-left: 3px; padding: 0 5px; border-radius: 0; border: 1px solid var(--border); color: var(--muted); }
     .st-rb.hot { color: #ff8a8a; border-color: #c06060; font-weight: 600; }
     .st-rb.warn { color: var(--warn); border-color: #b08840; }
     .st-rb.ok { color: #8fd493; border-color: #6fbf73; }
@@ -102,7 +102,7 @@
     .st-top { margin-bottom: 12px; }
     .st-top .st-sub { margin-bottom: 0; }
     .st-glance { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-bottom: 12px; }
-    .st-tile { display: block; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; color: var(--text); text-decoration: none; min-width: 0; }
+    .st-tile { display: block; background: var(--panel); border: 1px solid var(--border); border-radius: 0; padding: 8px 12px; color: var(--text); text-decoration: none; min-width: 0; }
     a.st-tile.st-jump { font-size: inherit; white-space: normal; }
     a.st-tile:hover { border-color: var(--accent); }
     .st-tile.st-state { grid-column: span 2; }
@@ -123,12 +123,12 @@
     .st-info .st-rule { color: var(--dim); font-size: 0.8rem; margin: 4px 0; line-height: 1.45; }
     .st-h3 { margin: 14px 0 6px; font-size: 1em; }
     .st-sec.st-hl { outline: 2px solid var(--accent); outline-offset: 2px; }
-    .st-hide-form { margin-top: 12px; padding: 10px; border: 1px dashed var(--border); border-radius: 8px; }
+    .st-hide-form { margin-top: 12px; padding: 10px; border: 1px dashed var(--border); border-radius: 0; }
     .st-hide-title { font-weight: 700; margin-bottom: 8px; }
     .st-hide-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-    .st-in { padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text); }
-    .st-btn { padding: 4px 12px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text); cursor: pointer; font: inherit; }
-    .st-pre { background: var(--bg2, #1a1a1a); padding: 8px; border-radius: 4px; overflow-x: auto; font-size: 0.85em; }
+    .st-in { padding: 4px 8px; border: 1px solid var(--border); border-radius: 0; background: var(--bg); color: var(--text); }
+    .st-btn { padding: 4px 12px; border: 1px solid var(--border); border-radius: 0; background: var(--bg); color: var(--text); cursor: pointer; font: inherit; }
+    .st-pre { background: var(--bg2, #1a1a1a); padding: 8px; border-radius: 0; overflow-x: auto; font-size: 0.85em; }
   </style>
 </head>
 <body class="site-page">
@@ -1490,7 +1490,7 @@
       const badge = (r) => (r.top ? '<strong style="white-space:nowrap;">' + esc(topMarker(r)) + "</strong>" : "");
       const supName = (r) => esc((r.supporters[0] && (r.supporters[0].name || r.supporters[0].slug)) || "?") + (r.supporters.length > 1 ? " ×" + r.supporters.length : "");
       const tops = rows.filter((r) => r.top);
-      $("heavySupportTop").innerHTML = tops.map((r) => '<span class="st-chip" style="border:1px solid var(--row-border);border-radius:6px;padding:2px 6px;">' + supName(r) + " → " + badge(r) + "</span>").join("");
+      $("heavySupportTop").innerHTML = tops.map((r) => '<span class="st-chip" style="border:1px solid var(--row-border);border-radius: 0;padding:2px 6px;">' + supName(r) + " → " + badge(r) + "</span>").join("");
       $("heavySupport").innerHTML =
         '<div class="st-dim" style="margin-bottom:6px;">' + esc(T("summary", { scored: st.scored, top10: st.top10, cut10: st.cut10, checked: st.checked, pocket: c.pocket, steady: c.steady, general: c.general, thin: c.thin })) +
         (d.lastRun ? " · " + esc(T("lastRun", { when: new Date(d.lastRun.at).toLocaleString(hsL), calls: d.lastRun.calls })) : "") + " · " + esc(T("showing", { n: rows.length })) + "</div>" +

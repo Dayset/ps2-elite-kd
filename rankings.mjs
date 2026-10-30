@@ -1297,7 +1297,7 @@ export function initRankings(host) {
       const y = yL(b.pct);
       const tail = b.kind !== "core";
       bars.appendChild(svgEl("rect", {
-        x, y, width: w, height: Math.max(0, M.t + PH - y), rx: 1.5,
+        x, y, width: w, height: Math.max(0, M.t + PH - y), rx: 0,
         fill: tail ? st.tail : st.bar, "fill-opacity": tail ? st.tailOp : st.barOp,
         stroke: tail ? "none" : st.barStroke, "stroke-width": LT ? 0.6 : 0,
       }));

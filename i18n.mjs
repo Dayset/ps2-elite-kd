@@ -144,7 +144,7 @@ function showDetectedBanner() {
   const en = document.createElement("button");
   en.type = "button";
   en.textContent = "English";
-  en.style.cssText = "cursor:pointer;font:inherit;color:var(--accent);background:none;border:1px solid var(--border);border-radius:6px;padding:2px 10px";
+  en.style.cssText = "cursor:pointer;font:inherit;color:var(--accent);background:none;border:1px solid var(--border);border-radius: 0;padding:2px 10px";
   const x = document.createElement("button");
   x.type = "button";
   x.textContent = "×";

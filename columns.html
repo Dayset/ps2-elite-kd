@@ -17,37 +17,37 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261028-settop1" />
+  <link rel="stylesheet" href="styles.css?v=20261030-flat1" />
   <style>
     body { overflow: auto; }
     .st-wrap { max-width: none; margin: 0 auto; padding: 0; } /* Dayset 2026-10-19: same width as the main page — body.site-page already carries max-width: var(--page-w) (#29, site-layout.css); the wrapper no longer narrows it */
-    .st-head { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
+    .st-head { background: var(--panel); border: 1px solid var(--border); border-radius: 0; padding: 12px 14px; margin-bottom: 12px; }
     .st-head { position: relative; }
     .st-head .lang-select { position: absolute; top: 10px; right: 12px; }
     /* Owner 2026-10-20: a good big visible way back — 🔙 only, no text,
        top-left of the header, mirroring the language menu top-right. */
     .st-head { padding-left: 4.75rem; }
-    .st-back { position: absolute; top: 10px; left: 12px; width: 3rem; height: 3rem; display: inline-flex; align-items: center; justify-content: center; font-size: 1.7rem; line-height: 1; text-decoration: none; background: var(--ctrl-btn-bg); border: 1px solid var(--border); border-radius: 10px; }
+    .st-back { position: absolute; top: 10px; left: 12px; width: 3rem; height: 3rem; display: inline-flex; align-items: center; justify-content: center; font-size: 1.7rem; line-height: 1; text-decoration: none; background: var(--ctrl-btn-bg); border: 1px solid var(--border); border-radius: 0; }
     .st-back:hover { border-color: var(--accent); }
     .st-head h1 { font-size: 1.25rem; margin: 0 0 4px; padding-right: 8.5rem; }
     .st-head .st-sub { margin-bottom: 0; }
     .st-sub { color: var(--dim); font-size: 0.85rem; margin-bottom: 16px; }
-    .st-card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
+    .st-card { background: var(--panel); border: 1px solid var(--border); border-radius: 0; padding: 12px 14px; margin-bottom: 12px; }
     .st-card h2 { font-size: 1rem; margin: 0 0 6px; }
     .st-card h3 { font-size: 0.95rem; margin: 0 0 4px; }
     .st-card h4 { font-size: 0.85rem; margin: 10px 0 2px; color: var(--accent); }
     .st-dim { color: var(--dim); }
     .st-wrap a { color: var(--accent); }
-    .st-section { font-size: 1.05rem; margin: 22px 0 10px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; }
-    .st-sec-head { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; margin: 22px 0 10px; }
+    .st-section { font-size: 1.05rem; margin: 22px 0 10px; background: var(--panel); border: 1px solid var(--border); border-radius: 0; padding: 10px 14px; }
+    .st-sec-head { background: var(--panel); border: 1px solid var(--border); border-radius: 0; padding: 10px 14px; margin: 22px 0 10px; }
     .st-sec-head .st-section { background: none; border: none; border-radius: 0; padding: 0; margin: 0 0 6px; }
     .st-sec-head .st-dim { margin: 0; }
     .st-debug-sep { margin: 56px 0 20px; border: none; border-top: 2px solid var(--border); }
-    .st-debug-box { background: var(--panel); border: 1px dashed var(--border); border-radius: 10px; padding: 12px 14px; }
+    .st-debug-box { background: var(--panel); border: 1px dashed var(--border); border-radius: 0; padding: 12px 14px; }
     .st-debug-box summary { cursor: pointer; font-weight: 600; }
     .st-debug-box summary h2 { display: inline; font-size: 1rem; margin: 0; }
     .st-num { font-variant-numeric: tabular-nums; }
-    .st-toc { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; font-size: 0.85rem; }
+    .st-toc { background: var(--panel); border: 1px solid var(--border); border-radius: 0; padding: 10px 14px; margin-bottom: 12px; font-size: 0.85rem; }
     .st-toc-title { font-weight: 700; margin-bottom: 4px; }
     .st-toc-group { margin: 3px 0; line-height: 1.5; }
     .st-toc-sec { font-weight: 600; }
@@ -55,7 +55,7 @@
     .st-toc a { text-decoration: none; }
     .st-toc a:hover { text-decoration: underline; }
     .st-wrap h2[id], .st-wrap h3[id] { scroll-margin-top: 12px; }
-    .st-totop { position: fixed; right: 1.25rem; bottom: 1.25rem; width: 2.5rem; height: 2.5rem; border-radius: 50%; background: var(--panel); border: 1px solid var(--border); color: var(--text); font-size: 1.2rem; line-height: 1; cursor: pointer; opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 50; box-shadow: 0 2px 8px rgba(0,0,0,0.35); padding: 0; }
+    .st-totop { position: fixed; right: 1.25rem; bottom: 1.25rem; width: 2.5rem; height: 2.5rem; border-radius: 0; background: var(--panel); border: 1px solid var(--border); color: var(--text); font-size: 1.2rem; line-height: 1; cursor: pointer; opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 50; box-shadow: 0 2px 8px rgba(0,0,0,0.35); padding: 0; }
     .st-totop.show { opacity: 1; pointer-events: auto; }
     .st-totop:hover { border-color: var(--accent); }
     .st-card p { margin: 0 0 6px; }
@@ -76,7 +76,7 @@
     .st-curve .band { fill: var(--accent); opacity: 0.08; }
     .st-curve text { fill: var(--dim); font-size: 12px; font-family: inherit; }
     .st-curve text.k { fill: var(--text); font-weight: 600; }
-    .st-name-in { font: inherit; color: inherit; background: transparent; border: 1px solid var(--border); border-radius: 6px; padding: 0 6px; max-width: 100%; box-sizing: border-box; }
+    .st-name-in { font: inherit; color: inherit; background: transparent; border: 1px solid var(--border); border-radius: 0; padding: 0 6px; max-width: 100%; box-sizing: border-box; }
     .st-name-in:focus { outline: none; border-color: var(--accent); }
   </style>
 </head>

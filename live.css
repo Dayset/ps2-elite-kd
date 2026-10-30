@@ -5,7 +5,7 @@
 body.live-mode .room-select { display: none; }
 .live-table tbody tr:nth-child(even) > :is(td, th) { background-color: var(--row-alt); }
 /* ✨ halo switch (live page only, live.mjs, left of 🖥️ ⚙️ Settings): on = gold, off = muted. Off hides the halos and the gold shine. */
-.controls .lv-halo-btn { margin-right: 0.35rem; border: 1px solid var(--border); border-radius: 8px; padding: 0.15rem 0.45rem; background: transparent; cursor: pointer; }
+.controls .lv-halo-btn { margin-right: 0.35rem; border: 1px solid var(--border); border-radius: 0; padding: 0.15rem 0.45rem; background: transparent; cursor: pointer; }
 .controls .lv-halo-btn[aria-pressed="false"] { opacity: 0.5; filter: grayscale(1); }
 .controls .lv-halo-btn[aria-pressed="true"] { background: color-mix(in srgb, #ffc107 22%, transparent); color: inherit; box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.35); }
 .lv-nohalo .lv-gl, .lv-nohalo .lv-shn { display: none; }
@@ -132,7 +132,7 @@ col.lv-c-iv { width: var(--lv-iw); }
 .lv-nosprite .lv-em { width: auto; height: auto; }
 .lv-nosprite .lv-em::before { content: attr(data-e); }
 /* Owner t584u: hover value box (live.mjs), fixed and click-through, so it never moves the overlay. */
-.lv-tip { position: fixed; z-index: 50; pointer-events: none; padding: 0.15rem 0.45rem; border-radius: 4px; background: rgba(0, 0, 0, 0.88); color: #fff; font-size: 0.85rem; white-space: nowrap; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5); }
+.lv-tip { position: fixed; z-index: 50; pointer-events: none; padding: 0.15rem 0.45rem; border-radius: 0; background: rgba(0, 0, 0, 0.88); color: #fff; font-size: 0.85rem; white-space: nowrap; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5); }
 .lv-tip[hidden] { display: none; }
 [data-tip] { cursor: help; }
 /* Owner t568u glow tiers (live.mjs glowTier, same value as the fill): TOP (91+) gold, HIGH (71–90) blue, AVERAGE (51–70)
@@ -177,7 +177,7 @@ col.lv-c-iv { width: var(--lv-iw); }
 .live-feed { overflow-x: auto; }
 
 /* Owner 2026-10-25: online pill in the DPM row — green online, red offline, grey until the first signal. */
-.live-online { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.7rem; font-weight: 400; padding: 0.15rem 0.5rem; border: 1px solid var(--dim); border-radius: 999px; white-space: nowrap; }
+.live-online { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.7rem; font-weight: 400; padding: 0.15rem 0.5rem; border: 1px solid var(--dim); border-radius: 0; white-space: nowrap; }
 .live-online i { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--dim); }
 .live-online[data-state="online"] i { background: #4caf50; }
 .live-online[data-state="offline"] i { background: var(--err); }
@@ -192,14 +192,14 @@ col.lv-c-iv { width: var(--lv-iw); }
 .live-table.lv-dim-names tbody.lv-vic .lv-nm, .live-table.lv-dim-names tbody.lv-me .lv-nm { opacity: 0.5; }
 /* Owner 2026-10-25: adjustable DPM decay τ — small, dim, under the DPM line (symbols only, no words to translate). */
 .live-dpm-tau { margin-top: 0.25rem; font-size: 0.72rem; color: var(--dim); }
-.live-dpm-tau input { width: 4rem; background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 0.25rem; padding: 0.1rem 0.3rem; font: inherit; }
-.live-dpm-tau button { background: none; border: 1px solid var(--border); color: var(--text); border-radius: 0.25rem; padding: 0.1rem 0.5rem; margin-left: 0.25rem; cursor: pointer; font: inherit; }
+.live-dpm-tau input { width: 4rem; background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 0; padding: 0.1rem 0.3rem; font: inherit; }
+.live-dpm-tau button { background: none; border: 1px solid var(--border); color: var(--text); border-radius: 0; padding: 0.1rem 0.5rem; margin-left: 0.25rem; cursor: pointer; font: inherit; }
 #liveDpmTau { display: none; } /* owner 2026-10-26: τ locked at 60, adjuster hidden */
 /* Owner 2026-10-26: session trace-back line — small, dim, under the DPM block. */
 .live-session { margin-top: 0.25rem; font-size: 0.72rem; color: var(--dim); }
-.live-share { margin-top: 0.25rem; font-size: 0.72rem; background: none; border: 1px solid var(--border); color: var(--text); border-radius: 0.25rem; padding: 0.1rem 0.5rem; cursor: pointer; font: inherit; }
+.live-share { margin-top: 0.25rem; font-size: 0.72rem; background: none; border: 1px solid var(--border); color: var(--text); border-radius: 0; padding: 0.1rem 0.5rem; cursor: pointer; font: inherit; }
 #liveStreamCard { display: none; }
-.live-stream-card { margin-top: 0.5rem; background: var(--panel); border: 1px solid var(--border); border-radius: 0.5rem; padding: 0.5rem 0.75rem; }
+.live-stream-card { margin-top: 0.5rem; background: var(--panel); border: 1px solid var(--border); border-radius: 0; padding: 0.5rem 0.75rem; }
 .live-stream-kd { font-size: 1.4rem; font-weight: 600; }
 .live-stream-session { margin-top: 0.25rem; font-size: 0.85rem; color: var(--dim); }
 body.live-stream #liveStreamCard { display: block; }
@@ -209,7 +209,7 @@ body.live-stream #liveStreamCard { display: block; }
 /* Owner 2026-10-26: the death run timer on the top line — a red gradient edge on the killer name's border,
    draining over the median combat time. The killer row only lives for the run (a kill clears it), so the edge
    is the run; the name cell is position: relative, so the edge sits inside it without moving the name. */
-.live-death-line { height: 3px; width: 0%; background: linear-gradient(90deg, #ff1744, #ff5252, #b71c1c); border-radius: 999px; } /* owner 2026-10-26: slot lines are text, not emoji-meter sprites — sized to their text at the dim size, so a two-digit count fits the fixed time column (2.4rem on phones) instead of clipping at the cell edge */
+.live-death-line { height: 3px; width: 0%; background: linear-gradient(90deg, #ff1744, #ff5252, #b71c1c); border-radius: 0; } /* owner 2026-10-26: slot lines are text, not emoji-meter sprites — sized to their text at the dim size, so a two-digit count fits the fixed time column (2.4rem on phones) instead of clipping at the cell edge */
 
 .live-show-tactical { margin-top: 0.25rem; font-size: 0.72rem; color: var(--dim); }
 body.live-stream > :not(#liveFeed) { display: none; } /* owner 2026-10-26: no header, no footer, no controls — the overlay is only the live section */
@@ -226,7 +226,7 @@ body.live-stream #liveVoiceLines { display: none; }
 /* Owner 2026-10-28: voice lines panel — collapsed by default (advanced users only), one prefilled field per tier. */
 .live-voice-lines { margin-top: 0.25rem; font-size: 0.72rem; color: var(--dim); }
 .live-voice-lines label { display: block; margin-top: 0.15rem; }
-.live-voice-lines input { background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 0.25rem; padding: 0.1rem 0.3rem; font: inherit; margin-left: 0.25rem; }
+.live-voice-lines input { background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 0; padding: 0.1rem 0.3rem; font: inherit; margin-left: 0.25rem; }
 
 body.live-stream #liveDps .live-metric:last-child { display: none; } /* online pill: meters + session only */
 body.live-stream .live-table, body.live-stream .live-stream-card, body.live-stream .live-bar { background: transparent; } /* owner 2026-10-26: chromakey — every background drops out (table panel, card panel, bar tracks) so the body's green shows through and only text + bars survive the key */
@@ -246,12 +246,12 @@ body.live-stream .lv-ev.lv-dim > tr > td { opacity: 1; color: var(--dim); }
    with the shown value, hold/combat bars shrink as their seconds fall.
    No width transition: bars move frame-for-frame with the numbers. */
 .live-metric { margin-bottom: 0.15rem; }
-.live-bar { height: 6px; margin-top: 0.15rem; background: var(--grid); border-radius: 999px; overflow: hidden; }
+.live-bar { height: 6px; margin-top: 0.15rem; background: var(--grid); border-radius: 0; overflow: hidden; }
 /* Owner 2026-10-26: DPM track is fat (12 px); hold/combat tracks stay thin (6 px). */
 .live-bar-fat { height: 12px; position: relative; overflow: visible; } /* owner 2026-10-26: the ticks stick out of the bar, so the fat track must not clip them (the fill keeps its own pill radius) */
 /* Owner 2026-10-26: dynamic-scale nudges — avg/p90 marks riding the fat DPM track, centred on their value, above the fill. */
-.live-dpm-tick { position: absolute; top: -3px; bottom: -3px; width: 3px; transform: translateX(-50%); background: #000; border-radius: 999px; } /* owner 2026-10-26: nudges stand out — pitch black, bolder, sticking out of the bar up and down */
-.live-bar-fill { height: 100%; width: 0%; background: var(--dim); border-radius: 999px; }
+.live-dpm-tick { position: absolute; top: -3px; bottom: -3px; width: 3px; transform: translateX(-50%); background: #000; border-radius: 0; } /* owner 2026-10-26: nudges stand out — pitch black, bolder, sticking out of the bar up and down */
+.live-bar-fill { height: 100%; width: 0%; background: var(--dim); border-radius: 0; }
 .live-bar-dpm { background: linear-gradient(90deg, #7c4dff, #00b0ff, #00e676, #ffea00, #ff9100, #ff1744); box-shadow: 0 0 8px var(--accent); }
 .live-bar-hold { background: linear-gradient(90deg, #0d47a1, #1976d2, #64b5f6); } /* owner 2026-10-26: Recharge is blue — a green bar would key out over the chromakey background */
 
