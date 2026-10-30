@@ -901,7 +901,7 @@ export default {
         return await duelRoute(request, env, cors, { ip });
       }
       // Live map (paid plan): per-base fight totals (public) + per-player positions (key only), from the KillMonitor's memory.
-      if (url.pathname === "/live/locate" || url.pathname === "/live/activity") {
+      if (url.pathname === "/live/locate" || url.pathname === "/live/activity" || url.pathname === "/live/captures") {
         const ip = await ipTag(request.headers.get("CF-Connecting-IP") || "unknown", env.CENSUS_PROXY_KEY);
         return await liveRoute(request, env, cors, { ip, removed: removedKeys });
       }

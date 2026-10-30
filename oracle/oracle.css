@@ -403,3 +403,15 @@ footer { color: var(--dim); font-size: var(--fs-12); margin-top: var(--s-5); }
 .fights .fcap { font-size: 0.85em; color: var(--muted); }
 .fights .fbar { margin: 3px 0 2px; height: 10px; justify-content: flex-start; }
 .fights .fnum { font-size: var(--fs-14); font-variant-numeric: tabular-nums; }
+/* 🏴 Capture tags (owner 2026-10-30; js/fights.js capLine): leading outfit per base capture. */
+.capt { font-size: 0.85em; display: inline-block; }
+.capt b { color: var(--text, #e8e8e8); }
+.capt .capcred { color: var(--muted); }
+.fights .fcapt { margin-top: 1px; }
+.caph { font-size: var(--fs-14); margin: var(--s-3) 0 var(--s-2); }
+.fights.caps { gap: var(--s-2); }
+.fights.caps li { font-size: var(--fs-14); }
+.capt.capnew { animation: capPop 0.9s ease-out 1, capGlow 2.4s ease-in-out 2; transform-origin: left center; }
+@keyframes capPop { 0% { opacity: 0; transform: scale(0.6) rotate(-6deg); } 60% { opacity: 1; transform: scale(1.12) rotate(2deg); } 100% { transform: none; } }
+@keyframes capGlow { 50% { text-shadow: 0 0 8px rgba(255, 210, 90, 0.9); } }
+@media (prefers-reduced-motion: reduce) { .capt.capnew { animation: none; } }

@@ -359,6 +359,7 @@ export async function runCycle(env, nowMs = Date.now()) {
         state.fights = fx.bases;
         state.fights_live = fx.live;
         if (fx.pop) state.pop_live = fx.pop;
+        state.caps = fx.caps; // 🏴 capture tags (shown only, not in the odds)
         fightRows.push({ key: a.key, ts: now, t: Math.round(((now - startTs) / 60) * 10) / 10, data: JSON.stringify(fightRow(fx)) });
       }
       out.push({ ...base, status: "live", state });

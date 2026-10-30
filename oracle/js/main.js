@@ -1,7 +1,7 @@
 // PS2MapOracle dashboard — split from index.html (#15). No behaviour change.
 import { S, FACS, COLOR, esc, $, stars, mins, bar, pct1, det, info, wide, syncDetails, PHONE_MQ } from "./state.js?v=20261018-scrub2";
 import { get, names } from "./api.js?v=20261018-scrub2";
-import { drawMap, highlightBase, recolorMap } from "./map.js?v=20261028-align1";
+import { drawMap, highlightBase, recolorMap } from "./map.js?v=20261030-cap1";
 import { chart, chartHover } from "./chart.js?v=20261024-i18n1";
 import { lockCard, lockTick } from "./lock.js?v=20261024-i18n1";
 import { commander, commanderIdle } from "./commander.js?v=20261029-livenow1";
@@ -14,7 +14,7 @@ import { initAuth } from "./auth.js?v=20261028-dev82";
 import { enhance, onSectionExpand, refreshSummary } from "./collapse.js?v=20261026-pulse1";
 import { t as tr, ready } from "../../i18n.mjs";
 import { maintNotice, when, schedState, lastOnline, STATUS_URL } from "./maint.js?v=20261027-maint3";
-import { fightsCard, popLiveLine } from "./fights.js?v=20261029-fight1";
+import { fightsCard, popLiveLine } from "./fights.js?v=20261030-cap1";
 await ready;   // #73: the language file is in before anything renders
 document.title = tr("or.title", "PS2MapOracle — live PlanetSide 2 alert odds");
 

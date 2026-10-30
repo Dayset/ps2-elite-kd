@@ -78,7 +78,7 @@
     } catch (e) {}
   </script>
   <link rel="stylesheet" href="styles.css?v=20261030-of1" />
-  <link rel="stylesheet" href="live.css?v=20261029-nodrop1" />
+  <link rel="stylesheet" href="live.css?v=20261030-cap1" />
   <style>
     /* Installed-app launch splash (t465u). Android draws its own launch splash first:
        the maskable icon (big medal on black) seen through a 192 px circle, on the
@@ -373,6 +373,7 @@
     <div id="liveDps" class="live-dps"><div class="live-metric"><div class="live-bar live-bar-fat" aria-hidden="true"><div id="liveDpsBar" class="live-bar-fill live-bar-dpm"></div><div id="liveDpmTickAvg" class="live-dpm-tick"></div><div id="liveDpmTickP90" class="live-dpm-tick"></div></div><span id="liveDpsLabel"></span> <span id="liveDpsVal">0.0</span></div><div class="live-metric"><span id="liveCashAvgLabel"></span> <span id="liveCashAvgVal">–</span></div><div class="live-metric"><span id="liveOnline" class="live-online" data-state="unknown"><i></i><span id="liveOnlineText">…</span></span></div></div>
     <div id="liveDbg" class="live-dbg"></div>
     <div id="liveSession" class="live-session"></div>
+    <div id="liveCaps" class="live-caps" hidden aria-live="polite"></div>
     <div id="liveStreamCard" class="live-stream-card"><div class="live-stream-kd">K/D <span id="liveStreamKd">–</span></div><div class="live-stream-session" id="liveStreamSession"></div></div>
     <button id="liveShare" class="live-share" type="button"></button><button id="liveStreamBtn" class="live-share" type="button"></button><button id="liveVoiceBtn" class="live-share" type="button"></button><button id="liveSfxBtn" class="live-share" type="button"></button>
     <details id="liveVoiceLines" class="live-voice-lines"><summary id="liveVoiceLinesTitle"></summary><div id="liveVoiceLinesHint" class="live-voice-lines-hint"></div><label>-- <input class="live-voice-line" data-tier="--" type="text"></label><label>- <input class="live-voice-line" data-tier="-" type="text"></label><label>≈ <input class="live-voice-line" data-tier="≈" type="text"></label><label>+ <input class="live-voice-line" data-tier="+" type="text"></label><label>++ <input class="live-voice-line" data-tier="++" type="text"></label><label>0 <input class="live-voice-line" data-tier="0" type="text"></label><label>? <input class="live-voice-line" data-tier="?" type="text"></label></details>
@@ -668,6 +669,6 @@
       navigator.serviceWorker.register("sw.js").catch(function () {});
     }
   </script>
-  <script type="module" src="live.mjs?v=20261028-voice2"></script>
+  <script type="module" src="live.mjs?v=20261030-cap1"></script>
 </body>
 </html>

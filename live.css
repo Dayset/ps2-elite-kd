@@ -254,3 +254,16 @@ body.live-stream .lv-ev.lv-dim > tr > td { opacity: 1; color: var(--dim); }
 .live-bar-fill { height: 100%; width: 0%; background: var(--dim); border-radius: 999px; }
 .live-bar-dpm { background: linear-gradient(90deg, #7c4dff, #00b0ff, #00e676, #ffea00, #ff9100, #ff1744); box-shadow: 0 0 8px var(--accent); }
 .live-bar-hold { background: linear-gradient(90deg, #0d47a1, #1976d2, #64b5f6); } /* owner 2026-10-26: Recharge is blue — a green bar would key out over the chromakey background */
+
+/* 🏴 Capture tags (owner 2026-10-30; live-caps.mjs): latest base captures on this server, outfit tags only. */
+.live-caps { margin-top: 0.35rem; font-size: 0.72rem; color: var(--dim); line-height: 1.4; }
+.live-caps .lc-head { font-weight: 700; }
+.live-caps b { color: var(--text, #eee); }
+.live-caps .lc-zone, .live-caps .lc-cred { opacity: 0.75; }
+.live-caps .lc-fac { font-weight: 700; }
+.live-caps .lc-fac.vs { color: #b05cff; } .live-caps .lc-fac.nc { color: #3d8cff; } .live-caps .lc-fac.tr { color: #ff4d4d; }
+.live-caps .lc-new { animation: lcPop 0.9s ease-out 1, lcGlow 2.4s ease-in-out 2; transform-origin: left center; }
+@keyframes lcPop { 0% { opacity: 0; transform: translateX(-8px) scale(0.9); } 60% { opacity: 1; transform: scale(1.04); } 100% { transform: none; } }
+@keyframes lcGlow { 50% { text-shadow: 0 0 8px rgba(255, 210, 90, 0.9); } }
+@media (prefers-reduced-motion: reduce) { .live-caps .lc-new { animation: none; } }
+body.live-stream #liveCaps { display: none; }

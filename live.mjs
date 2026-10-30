@@ -30,6 +30,7 @@ import { infMedian, tractorCuts, TRACTOR_EMOJI } from "./tractor.mjs?v=20261024-
 import { drawEmojiSprite, spriteCss } from "./live-sprites.mjs?v=20261024-beat1";
 import { sfx, setSfxRate, sfxEnabled, setSfxEnabled } from "./sfx.mjs?v=20261026-sfx2";
 import { say } from "./oracle/js/voice.js?v=20261027-say1";
+import { capsUrl, capsStrip, CAPS_POLL_MS } from "./live-caps.mjs?v=20261030-cap1";
 
 const CENSUS = `https://census.daybreakgames.com/s:${CENSUS_SERVICE_ID}/get/ps2:v2/`;
 const STREAM = `wss://push.planetside2.com/streaming?environment=ps2&service-id=s:${CENSUS_SERVICE_ID}`;
@@ -1261,6 +1262,25 @@ function start() {
     if (!document.hidden && (!ws || ws.readyState === WebSocket.CLOSED)) connect();
   });
 
+  // 🏴 Latest base captures on the tracked player's server (live-caps.mjs): server-wide, outfit tags only.
+  async function capsLoop() {
+    const el = $("liveCaps");
+    if (!el || !me || !me.cid) return;
+    let world = null;
+    try { const w = await getJson(`${CENSUS}characters_world?character_id=${me.cid}&c:show=world_id`); world = w && w.characters_world_list && w.characters_world_list[0] ? w.characters_world_list[0].world_id : null; } catch {}
+    if (!capsUrl(world)) return;
+    const tick = async () => {
+      if (!document.hidden) {
+        try {
+          const r = await fetch(capsUrl(world), { cache: "no-store" });
+          if (r.ok) { const j = await r.json(); const html = capsStrip(j && j.caps, tr); el.innerHTML = html; el.hidden = !html; }
+        } catch {}
+      }
+      setTimeout(tick, CAPS_POLL_MS);
+    };
+    tick();
+  }
+
   (async () => {
     // Owner 2026-10-28 (centre name): the tracked name shows from the first paint, as typed in ?names= — never "?" in the middle. The Census lookup only upgrades it (true case, faction). If the lookup finds nothing, the typed name stays with the error state.
     if (target) { me = { cid: null, name: target, faction: "", cached: null, named: true, pending: false }; render(); }
@@ -1277,6 +1297,7 @@ function start() {
       });
       connect();
       meRefreshLoop();
+      capsLoop();
     } catch {
       setState("Census is not answering — reload to retry.", "err");
     }

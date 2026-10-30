@@ -2,6 +2,7 @@
 import { S, COLOR, HEXFILE, SLUG, FACS, esc, $ } from "./state.js?v=20261018-scrub2";
 import { asset, names } from "./api.js?v=20261018-scrub2";
 import { t as tr } from "../../i18n.mjs";
+import { capLine } from "./fights.js?v=20261030-cap1";
 
 // Terrain overlay (owner 2026-10-27): the PlanetSide 2 Wiki (Fandom) terrain image of each
 // continent, drawn above the territory colours and under the borders, lattice, dots and names,
@@ -37,6 +38,9 @@ export async function drawMap(a) {
   const links = (await asset(SLUG[a.zone] + "_links.json")) || [];
   const regs = (await asset(SLUG[a.zone] + "_regions.json")) || [];
   const owners = (a.state && a.state.owners) || {};
+  // 🏴 Latest capture tag per base (live alerts; js/fights.js capLine): tooltip + base sheet.
+  const capBy = {};
+  if (a.status === "live" && a.state && Array.isArray(a.state.caps)) for (const c of a.state.caps) if (c && !capBy[c.f]) capBy[c.f] = c;
   const hx0 = hm.hexes;
   // Hex spacing and orientation from the data itself: nearest-neighbour
   // distance d; neighbours straight above/below mean flat-top hexes.
@@ -279,7 +283,7 @@ export async function drawMap(a) {
     const b = baseOf(e);
     if (!b) { tip.hidden = true; return; }
     const o = owners[b.f], h = info[b.n.name] && info[b.n.name].heat;
-    tip.innerHTML = `<b>${esc(b.n.name)}</b>${o ? ` · <span class="${o}">${o}</span>` : ` · ${tr("or.m.neutral1", "neutral")}`}${h ? ` · ${tr("or.m.heat", "heat {n}", { n: h })}${h >= 40 ? " 🔥" : ""}` : ""}`;
+    tip.innerHTML = `<b>${esc(b.n.name)}</b>${o ? ` · <span class="${o}">${o}</span>` : ` · ${tr("or.m.neutral1", "neutral")}`}${h ? ` · ${tr("or.m.heat", "heat {n}", { n: h })}${h >= 40 ? " 🔥" : ""}` : ""}${capBy[b.f] ? `<br>${capLine(capBy[b.f])}` : ""}`;
     tip.hidden = false;
     const hr = host.getBoundingClientRect();
     tip.style.left = Math.max(4, Math.min(e.clientX - hr.left + 12, hr.width - tip.offsetWidth - 4)) + "px";
@@ -295,7 +299,7 @@ export async function drawMap(a) {
     const km = cmd && cmd.factions ? FACS.flatMap((f) => ((cmd.factions[f] && cmd.factions[f].kingmaker) || []).filter((k) => k && k.text && k.text.includes(b.n.name)).map((k) => `<span class="${f}">${f}</span> ${esc(k.text)}`)) : [];
     const lines = [...(x ? x.lines : []), ...km];
     sheet.innerHTML = `<button type="button" class="x" aria-label="${tr("or.close", "Close")}">✕</button><b>${esc(b.n.name)}</b>
-      <div>${o ? tr("or.m.owner", "Owner {f}", { f: `<span class="${o}">${o}</span>` }) : tr("or.m.neutralU", "Neutral / unknown")}${x && x.heat ? ` · ${tr("or.m.heat", "heat {n}", { n: x.heat })}${x.heat >= 40 ? " 🔥" : ""}` : ""}${x && x.freezing ? (x.cut ? ` · ${tr("or.m.cut", "🥶 cut off from the warpgate")}` : ` · ${tr("or.m.almost", "🥶 almost cut (supply chokepoint under attack)")}`) : ""}</div>
+      <div>${o ? tr("or.m.owner", "Owner {f}", { f: `<span class="${o}">${o}</span>` }) : tr("or.m.neutralU", "Neutral / unknown")}${x && x.heat ? ` · ${tr("or.m.heat", "heat {n}", { n: x.heat })}${x.heat >= 40 ? " 🔥" : ""}` : ""}${x && x.freezing ? (x.cut ? ` · ${tr("or.m.cut", "🥶 cut off from the warpgate")}` : ` · ${tr("or.m.almost", "🥶 almost cut (supply chokepoint under attack)")}`) : ""}</div>${capBy[b.f] ? `<div>${capLine(capBy[b.f])}</div>` : ""}
       ${lines.length ? `<ul>${lines.map((l) => `<li>${l}</li>`).join("")}</ul>` : `<div class="note">${tr("or.m.noLine", "No AI Commander line mentions this base.")}</div>`}`;
     sheet.hidden = false; tip.hidden = true;
     sheet.querySelector(".x").onclick = () => { sheet.hidden = true; };

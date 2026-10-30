@@ -20,7 +20,7 @@
 export const PC_WORLDS = Object.freeze(["1", "10", "40"]);
 export const PC_SOFT = 4_000_000;
 export const PC_HARD = 8_000_000;
-const CORE = ["Death", "VehicleDestroy", "PlayerFacilityCapture", "PlayerFacilityDefend", "PlayerLogin", "PlayerLogout", "GainExperience_experience_id_272"];
+const CORE = ["Death", "VehicleDestroy", "PlayerFacilityCapture", "PlayerFacilityDefend", "PlayerLogin", "PlayerLogout", "GainExperience_experience_id_272", "FacilityControl"]; // FacilityControl: 🏴 capture tags (low volume)
 const CHATTY = ["GainExperience_experience_id_557", "GainExperience_experience_id_556"];
 export const PC_EVENTS = Object.freeze({ full: Object.freeze([...CORE, ...CHATTY]), lean: Object.freeze([...CORE]) });
 const STALE_MS = 120e3; // Census heartbeats every ~30 s

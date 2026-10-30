@@ -21,6 +21,7 @@ import { Meter } from "./meter.js";
 import { LiveMap, ENV_WORLDS } from "./live-map.js";
 import { PcStream } from "./pc-stream.js";
 import { PlanSwitch } from "./plan.js";
+import { CaptureTags } from "./capture-tags.js";
 
 /*
  * Workers Paid plan (2026-10-29): the same object now also holds the PC live stream
@@ -34,6 +35,8 @@ const STREAM = (sid) => `https://push.planetside2.com/streaming?environment=ps2&
 const DAILY_ROW_CAP = 60000;
 const ALARM_MS = 60e3;
 export const LOCATE_MAX = 50;
+const CAPS_ACTIVITY_S = 30 * 60;     // captures riding along with /live/activity
+const CAPS_HISTORY_S = 7 * 86400;    // /live/captures?since= reaches back this far
 
 export class KillMonitor {
   constructor(ctx, env) {
@@ -48,7 +51,9 @@ export class KillMonitor {
     this.meter = Meter.load(this.meta("meter"));
     this.meterSaved = Date.now();
     this.live = new LiveMap();
-    const feed = (envName, p, now) => { try { this.live.onEvent(envName, p, now); } catch {} };
+    // 🏴 Capture tags (capture-tags.js): one row per base capture, outfit tags only.
+    this.caps = new CaptureTags(sql, { meter: this.meter });
+    const feed = (envName, p, now) => { try { this.live.onEvent(envName, p, now); } catch {} try { this.caps.onEvent(envName, p, now); } catch {} };
     this.ps = new PsAssists(ctx, env, { meter: this.meter, onPayload: feed });
     this.pc = new PcStream(ctx, env, { meter: this.meter, onPayload: feed });
     // 🔀 paid | free (plan.js): plan.json or the PLAN variable; the last known value survives restarts.
@@ -82,6 +87,7 @@ export class KillMonitor {
     try { psOn = await this.ps.ensure(plan); } catch (e) { this.meta("psError", String(e && e.message).slice(0, 160)); }
     try { pcOn = await this.pc.ensure(Date.now(), plan); } catch (e) { this.meta("pcError", String(e && e.message).slice(0, 160)); }
     try { this.live.prune(); } catch {}
+    try { await this.caps.settle(this.env); } catch {}
     this.saveMeter();
     const done = this.expired();
     if ((psOn || pcOn || !done) && !(await this.ctx.storage.getAlarm())) await this.ctx.storage.setAlarm(Date.now() + ALARM_MS);
@@ -147,7 +153,18 @@ export class KillMonitor {
       const w = url.searchParams.get("world");
       if (!ENV_WORLDS[ns] || !ENV_WORLDS[ns].includes(String(w))) return Response.json({ error: "bad_request" }, { status: 400 });
       const z = url.searchParams.get("zone");
-      return Response.json({ v: 1, ns, world: +w, stream: this.streamOn(ns), ...this.live.activity(ns, w, Date.now(), z && /^\d+$/.test(z) ? +z : null) });
+      const zn = z && /^\d+$/.test(z) ? +z : null, now = Date.now();
+      const caps = ns === "ps2" ? this.caps.recent(w, Math.floor(now / 1000) - CAPS_ACTIVITY_S, zn) : [];
+      return Response.json({ v: 1, ns, world: +w, stream: this.streamOn(ns), ...this.live.activity(ns, w, now, zn), caps });
+    }
+    if (url.pathname === "/live/captures") {
+      const w = url.searchParams.get("world");
+      if (!ENV_WORLDS.ps2.includes(String(w))) return Response.json({ error: "bad_request" }, { status: 400 });
+      const z = url.searchParams.get("zone"), now = Math.floor(Date.now() / 1000);
+      const since = Math.max(now - CAPS_HISTORY_S, +url.searchParams.get("since") || now - 3600);
+      const zn = z && /^\d+$/.test(z) ? +z : null;
+      const caps = since >= now - 7000 ? this.caps.recent(w, since, zn, 200) : this.caps.history(w, since, zn, 200);
+      return Response.json({ v: 1, ns: "ps2", world: +w, at: now, stream: this.streamOn("ps2"), caps });
     }
     await this.ensure();
     const sql = this.ctx.storage.sql;
@@ -155,7 +172,7 @@ export class KillMonitor {
       const now = Date.now();
       const u = this.meter.usage(now);
       return Response.json({ v: 1, at: Math.floor(now / 1000), plan: this.planSw.state(now), ...u, today: { ps2: this.meter.today("ps2", now), ps2ps4us: this.meter.today("ps2ps4us", now), ps2ps4eu: this.meter.today("ps2ps4eu", now) },
-        pc: this.pc.status(now), ps: Object.fromEntries(Object.entries(this.ps.status().envs).map(([k, v]) => [k, { connected: v.connected, lastMsgAgoS: v.lastMsgAgoS }])), live: this.live.stats() });
+        pc: this.pc.status(now), ps: Object.fromEntries(Object.entries(this.ps.status().envs).map(([k, v]) => [k, { connected: v.connected, lastMsgAgoS: v.lastMsgAgoS }])), live: this.live.stats(), caps: this.caps.info() });
     }
     if (url.pathname === "/ps-assists/status") return Response.json(this.ps.status());
     if (url.pathname === "/ps-assists/export") {
@@ -185,6 +202,8 @@ export const LIVE_CALLS_PER_10MIN = 240;
  * Live map reads, answered from the KillMonitor's memory:
  *   GET /live/activity?ns=ps2&world=1[&zone=2]  → per-base totals, no player ids (public: the
  *       Oracle's ⚔️ Live fights, #78)
+ *   GET /live/captures?world=1[&zone=2][&since=<unix s>] → 🏴 recent base captures with the
+ *       leading outfit's tag (public; outfit tags only, no player ids)
  *   GET /live/locate?ns=ps2&ids=<cid>,…  (≤ 50) → where each player is now. INTERNAL ONLY:
  *       needs the proxy key (X-Proxy-Key). Owner 2026-10-29: per-player positions are not a
  *       public feature (privacy). Players on the removal list (#61) are never located.
@@ -204,7 +223,7 @@ export async function liveRoute(request, env, cors, { ip = "", fetchFn = (u, o) 
     else if (++h[0] > LIVE_CALLS_PER_10MIN) return reply({ error: "rate_limited" }, 429);
   }
   const stub = env.KILL_MONITOR.get(env.KILL_MONITOR.idFromName("pilot"));
-  if (url.pathname === "/live/activity") {
+  if (url.pathname === "/live/activity" || url.pathname === "/live/captures") {
     const r = await stub.fetch(new Request(url.toString(), { method: "GET" }));
     return new Response(r.body, { status: r.status, headers: hdr });
   }
