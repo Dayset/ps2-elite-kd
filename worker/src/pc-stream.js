@@ -9,20 +9,25 @@
  * nothing is stored per kill.
  *
  * Budget governor (per UTC day, PC messages counted by the meter):
- *   - below SOFT: full subscription;
+ *   - below SPAWN_SOFT: full subscription, with the 🚐 spawn XP (forward spawns, owner 2026-10-30);
+ *   - from SPAWN_SOFT: "points" — the spawn XP is dropped first (display only, lowest priority);
  *   - from SOFT: "lean" — the point-tick XP (557 / 556, the chattiest) is dropped;
  *   - from HARD: the socket closes until the next UTC day.
- * Worker variables: PC_STREAM = "off" turns it off; PC_STREAM_SOFT / PC_STREAM_HARD
+ * Worker variables: PC_STREAM = "off" turns it off; PC_STREAM_SPAWN_SOFT / PC_STREAM_SOFT / PC_STREAM_HARD
  * override the caps. On the free plan (plan.js: plan.json or PLAN=free) it is always off. At HARD every day the month costs about $1.70 above the plan
  * (HARD × 30 / 20 billed requests), the worst it can get.
  */
 
 export const PC_WORLDS = Object.freeze(["1", "10", "40"]);
+export const PC_SPAWN_SOFT = 3_000_000;
 export const PC_SOFT = 4_000_000;
 export const PC_HARD = 8_000_000;
 const CORE = ["Death", "VehicleDestroy", "PlayerFacilityCapture", "PlayerFacilityDefend", "PlayerLogin", "PlayerLogout", "GainExperience_experience_id_272", "FacilityControl"]; // FacilityControl: 🏴 capture tags (low volume)
 const CHATTY = ["GainExperience_experience_id_557", "GainExperience_experience_id_556"];
-export const PC_EVENTS = Object.freeze({ full: Object.freeze([...CORE, ...CHATTY]), lean: Object.freeze([...CORE]) });
+// 🚐 Forward spawns (live-map.js SPAWN_XP / SPAWN_HIT_XP): about +25-30 % messages. Dropped first.
+export const SPAWN_XP_IDS = Object.freeze([233, 1542, 1410, 56, 201, 1543, 355, 1988, 1737, 68, 2151, 113, 2154, 1409]);
+const SPAWN = SPAWN_XP_IDS.map((x) => `GainExperience_experience_id_${x}`);
+export const PC_EVENTS = Object.freeze({ full: Object.freeze([...CORE, ...CHATTY, ...SPAWN]), points: Object.freeze([...CORE, ...CHATTY]), lean: Object.freeze([...CORE]) });
 const STALE_MS = 120e3; // Census heartbeats every ~30 s
 const STREAM = (sid) => `https://push.planetside2.com/streaming?environment=ps2&service-id=s:${sid}`;
 
@@ -32,7 +37,7 @@ export function pcSubscribe(level) {
   return { service: "event", action: "subscribe", characters: ["all"], worlds: [...PC_WORLDS], logicalAndCharactersWithWorlds: true, eventNames: [...names] };
 }
 
-/** full | lean | off for today's PC message count (and the plan: free → off). */
+/** full | points | lean | off for today's PC message count (and the plan: free → off). */
 export function streamLevel(env, todayMsgs, plan = "paid") {
   const e = env || {};
   if (plan !== "paid") return "off";
@@ -41,6 +46,7 @@ export function streamLevel(env, todayMsgs, plan = "paid") {
   const soft = num("PC_STREAM_SOFT", PC_SOFT), hard = num("PC_STREAM_HARD", PC_HARD);
   if (todayMsgs >= hard) return "off";
   if (todayMsgs >= soft) return "lean";
+  if (todayMsgs >= Math.min(soft, num("PC_STREAM_SPAWN_SOFT", PC_SPAWN_SOFT))) return "points";
   return "full";
 }
 

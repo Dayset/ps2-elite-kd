@@ -44,6 +44,22 @@ export async function liveActivity(env, world, timeoutMs = 3000) {
   } catch { return null; }
 }
 
+/** 🚐 Spawn kinds (cache Worker live-map.js SPAWN_XP): Sunderer, Router, beacon, Galaxy, Valkyrie/Galaxy, ANT, Deliverer. */
+export const SPAWN_KINDS = ["su", "ro", "be", "ga", "sv", "an", "de"];
+/** 🚐 Forward spawns at one base, cleaned: { VS: { su: 3 }, … } with only known factions / kinds, or null. */
+export function spawnsOf(sp) {
+  if (!sp || typeof sp !== "object") return null;
+  const out = {};
+  for (const f of FACS) {
+    const q = sp[f];
+    if (!q || typeof q !== "object") continue;
+    const o = {};
+    for (const k of SPAWN_KINDS) { const n = Math.max(0, Math.min(99, Math.round(+q[k] || 0))); if (n) o[k] = n; }
+    if (Object.keys(o).length) out[f] = o;
+  }
+  return Object.keys(out).length ? out : null;
+}
+
 const pick = (o) => Object.fromEntries(FACS.map((f) => [f, Math.max(0, Math.round(+((o || {})[f]) || 0))]));
 
 /**
@@ -61,6 +77,8 @@ export function fightsOf(act, zone, owners = null) {
     if (crowd < FIGHT_MIN_CROWD && kills < FIGHT_MIN_KILLS) continue;
     const row = { fid: String(b.f), name: b.fn || null, n, k, conv, convAgo: b.convAgo == null ? null : +b.convAgo };
     if (owners && owners[row.fid]) row.owner = owners[row.fid];
+    const sp = spawnsOf(b.sp);
+    if (sp) row.sp = sp; // 🚐 forward spawns (shown only, not in the odds)
     bases.push(row);
   }
   const size = (x) => x.n.VS + x.n.NC + x.n.TR;
@@ -85,7 +103,7 @@ export function capsOf(act, zone) {
     if (!c || +c.z !== z || !Number.isFinite(+c.t)) continue;
     out.push({ t: +c.t, f: String(c.f), fn: c.fn ? String(c.fn).slice(0, 60) : null, old: str(c.old), fac: str(c.fac),
       tag: c.oid ? (c.tag || "") : null, share: Math.max(0, Math.min(100, Math.round(+c.share || 0))), lead: !!c.lead,
-      cr: c.co ? (c.cr || "") : null, same: !!c.same, n: Math.max(0, Math.round(+c.n || 0)), quick: !!c.quick });
+      cr: c.co ? (c.cr || "") : null, same: !!c.same, n: Math.max(0, Math.round(+c.n || 0)), quick: !!c.quick, ...(spawnsOf(c.sp) ? { sp: spawnsOf(c.sp) } : {}) }); // 🚐
   }
   out.sort((a, b) => b.t - a.t);
   return out.slice(0, CAPS_MAX);

@@ -266,4 +266,8 @@ body.live-stream .lv-ev.lv-dim > tr > td { opacity: 1; color: var(--dim); }
 @keyframes lcPop { 0% { opacity: 0; transform: translateX(-8px) scale(0.9); } 60% { opacity: 1; transform: scale(1.04); } 100% { transform: none; } }
 @keyframes lcGlow { 50% { text-shadow: 0 0 8px rgba(255, 210, 90, 0.9); } }
 @media (prefers-reduced-motion: reduce) { .live-caps .lc-new { animation: none; } }
+/* 🚐 Forward spawns under each capture (forward-spawns.mjs): spawn points per side, last 10 min. */
+.live-caps .lc-sp { padding-left: 0.8rem; opacity: 0.9; }
+.live-caps .fspawn .vs { color: #b05cff; } .live-caps .fspawn .nc { color: #3d8cff; } .live-caps .fspawn .tr { color: #ff4d4d; }
+.live-caps .fspawn span { font-weight: 700; }
 body.live-stream #liveCaps { display: none; }

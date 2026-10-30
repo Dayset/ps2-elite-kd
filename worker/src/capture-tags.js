@@ -58,8 +58,9 @@ export function rankCapture(parts) {
 }
 
 export class CaptureTags {
-  constructor(sql = null, { meter = null } = {}) {
+  constructor(sql = null, { meter = null, spawns = null } = {}) {
     this.sql = sql;
+    this.spawns = spawns;      // 🚐 (w, f) → { VS: { su: 3 } … } forward spawns at that base (live-map.js), or null
     this.meter = meter;
     this.xp = new Map();       // cid → [[tSec, amount]] point XP (memory only, never exposed)
     this.pending = new Map();  // "w|f" → open capture
@@ -121,6 +122,7 @@ export class CaptureTags {
       if (now - c.touch < CAP_SETTLE_MS) continue;
       this.pending.delete(k);
       const r = this.build(c);
+      if (r && this.spawns) { try { const sp = this.spawns(String(r.w), String(r.f)); if (sp) r.sp = sp; } catch {} }
       if (r) ready.push(r);
     }
     if (ready.length) {

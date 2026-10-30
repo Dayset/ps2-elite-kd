@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 import { DatabaseSync } from "node:sqlite";
 import { LiveMap, FRESH_MS, WINDOW_MS, KEEP_MS, SHOW_BASE_MS, zoneDef } from "../worker/src/live-map.js";
 import { Meter, INCLUDED, WS_RATIO, DO_GB, MONTH_S } from "../worker/src/meter.js";
-import { pcSubscribe, streamLevel, messageName, PC_WORLDS, PC_SOFT, PC_HARD, PcStream } from "../worker/src/pc-stream.js";
+import { pcSubscribe, streamLevel, messageName, PC_WORLDS, PC_SPAWN_SOFT, PC_SOFT, PC_HARD, PcStream } from "../worker/src/pc-stream.js";
 import { subscribeMessage, LOCATOR_EVENTS } from "../worker/src/ps-assists.js";
 import { KillMonitor, liveRoute, LOCATE_MAX } from "../worker/src/monitor.js";
 
@@ -89,7 +89,7 @@ test("team kills, logout, world filter, zone change, prune", () => {
   assert.equal(m.locate("ps2", B, T0 + 7e3).zn, "Hossin");
   assert.equal(m.locate("ps2", B, T0 + 7e3).f, undefined);
   m.prune(T0 + KEEP_MS + 60e3);
-  assert.deepEqual(m.stats().ps2, { players: 0, placed: 0, bases: 0, zones: 0 });
+  assert.deepEqual(m.stats().ps2, { players: 0, placed: 0, bases: 0, zones: 0, spawns: 0 });
   assert.equal(zoneDef(0x10000 + 344), 344, "instanced zone ids map to their continent");
 });
 
@@ -169,6 +169,8 @@ test("PC stream: live worlds only, governor steps full → lean → off, owner s
   assert.equal(streamLevel({}, 0, "free"), "off", "free plan: no PC stream");
   assert.deepEqual(subscribeMessage("ps2ps4us", { locator: false }).eventNames.filter((e) => LOCATOR_EVENTS.includes(e)), [], "free plan: the PS subscription from before");
   assert.equal(streamLevel({}, PC_SOFT), "lean");
+  assert.equal(streamLevel({}, PC_SPAWN_SOFT), "points", "🚐 the spawn XP is dropped first");
+  assert.equal(streamLevel({}, PC_SPAWN_SOFT - 1), "full");
   assert.equal(streamLevel({}, PC_HARD), "off");
   assert.equal(streamLevel({ PC_STREAM: "off" }, 0), "off");
   assert.equal(streamLevel({ PC_STREAM_SOFT: "10", PC_STREAM_HARD: "20" }, 15), "lean");

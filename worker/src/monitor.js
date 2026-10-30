@@ -52,7 +52,7 @@ export class KillMonitor {
     this.meterSaved = Date.now();
     this.live = new LiveMap();
     // 🏴 Capture tags (capture-tags.js): one row per base capture, outfit tags only.
-    this.caps = new CaptureTags(sql, { meter: this.meter });
+    this.caps = new CaptureTags(sql, { meter: this.meter, spawns: (w, f) => this.live.spawnsAt("ps2", w, f) });
     const feed = (envName, p, now) => { try { this.live.onEvent(envName, p, now); } catch {} try { this.caps.onEvent(envName, p, now); } catch {} };
     this.ps = new PsAssists(ctx, env, { meter: this.meter, onPayload: feed });
     this.pc = new PcStream(ctx, env, { meter: this.meter, onPayload: feed });

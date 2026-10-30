@@ -5,6 +5,7 @@
 // odds and orders don't read it until a backtest shows a gain.
 import { FACS, COLOR, esc } from "./state.js?v=20261018-scrub2";
 import { t as tr } from "../../i18n.mjs";
+import { spawnLine } from "../../forward-spawns.mjs?v=20261030-sp1";
 
 export const FIGHTS_SHOWN = 6;
 export const CAPS_SHOWN = 5;
@@ -33,7 +34,7 @@ export function capsList(s, nowS = Math.floor(Date.now() / 1000)) {
   if (!caps.length) return "";
   const li = caps.map((c) => {
     const nm = c.fn || `#${c.f}`;
-    return `<li data-base="${esc(nm)}"><span class="blink" tabindex="0" role="button" data-base="${esc(nm)}">${esc(nm)}</span> <span class="${esc(c.fac || "")}">${esc(c.fac || "")}</span> <span class="note">${esc(agoTxt(nowS - c.t))}</span><br>${capLine(c, nowS)}</li>`;
+    return `<li data-base="${esc(nm)}"><span class="blink" tabindex="0" role="button" data-base="${esc(nm)}">${esc(nm)}</span> <span class="${esc(c.fac || "")}">${esc(c.fac || "")}</span> <span class="note">${esc(agoTxt(nowS - c.t))}</span><br>${capLine(c, nowS)}${c.sp ? `<div class="fsp">${spawnLine(c.sp, tr, { own: c.old, att: c.fac, cls: nowS - c.t < CAP_FRESH_S ? "fspnew" : "" })}</div>` : ""}</li>`;
   }).join("");
   return `<h3 class="caph">${tr("or.cap.h", "🏴 Recent captures")}</h3><ul class="fights caps">${li}</ul>`;
 }
@@ -56,8 +57,11 @@ export function fightsCard(s) {
     const seg = FACS.map((q) => (f.n[q] ? `<span style="width:${(100 * f.n[q] / big).toFixed(1)}%;background:${COLOR[q]}" title="${q} ${f.n[q]}"></span>` : "")).join("");
     const nums = FACS.filter((q) => f.n[q]).map((q) => `<span class="${q}">${q} ${f.n[q]}</span>`).join(" · ");
     const flag = f.cap ? `<div class="fcapt">${capLine(f.cap)}</div>` : "";
+    // 🚐 Forward spawns at this base (last 10 min): defender = owner before a fresh flip, else the owner now.
+    const spl = f.sp ? spawnLine(f.sp, tr, f.cap ? { own: f.cap.old, att: f.cap.fac } : { own: f.owner || null }) : "";
+    const spw = spl ? `<div class="fsp">${spl}</div>` : "";
     return `<li data-base="${esc(nm)}"><div class="fhead"><span class="blink" tabindex="0" role="button" data-base="${esc(nm)}">${esc(nm)}</span>${own}${cap}</div>${flag}` +
-      `<div class="track fbar" aria-hidden="true">${seg}</div>` +
+      `<div class="track fbar" aria-hidden="true">${seg}</div>${spw}` +
       `<div class="fnum">${nums || "·"}<span class="note"> · ${esc(tr("or.f.players", "~{n} players", { n: tot }))}${kills ? ` · ${esc(tr("or.f.kills", "{n} kills", { n: kills }))}` : ""}</span></div></li>`;
   }).join("");
   const body = list.length ? `<ul class="fights">${rows}</ul>` : `<div class="note">${s.fights_live === false ? tr("or.f.off", "Live stream reconnecting: fights show up within a minute.") : tr("or.f.none", "No big fights right now.")}</div>`;
