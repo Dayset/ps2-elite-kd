@@ -46,7 +46,7 @@ export async function liveActivity(env, world, timeoutMs = 3000) {
 
 /** 🚐 Spawn kinds (cache Worker live-map.js SPAWN_XP): Sunderer, Router, beacon, Galaxy, Valkyrie/Galaxy, ANT, Deliverer. */
 export const SPAWN_KINDS = ["su", "ro", "be", "ga", "sv", "an", "de"];
-/** 🚐 Forward spawns at one base, cleaned: { VS: { su: 3 }, … } with only known factions / kinds, or null. */
+/** 🚐 Forward spawns at one base, cleaned: { VS: { su: 3, n: 42 }, … } (n = spawns) with only known factions / kinds, or null. */
 export function spawnsOf(sp) {
   if (!sp || typeof sp !== "object") return null;
   const out = {};
@@ -55,7 +55,7 @@ export function spawnsOf(sp) {
     if (!q || typeof q !== "object") continue;
     const o = {};
     for (const k of SPAWN_KINDS) { const n = Math.max(0, Math.min(99, Math.round(+q[k] || 0))); if (n) o[k] = n; }
-    if (Object.keys(o).length) out[f] = o;
+    if (Object.keys(o).length) { const n = Math.max(0, Math.min(9999, Math.round(+q.n || 0))); if (n) o.n = n; out[f] = o; } // n = spawns there
   }
   return Object.keys(out).length ? out : null;
 }

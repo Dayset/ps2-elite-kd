@@ -30,7 +30,7 @@ test("spawn XP: distinct Sunderers, Routers and beacons per base and faction, ne
   lm.onEvent("ps2", xp(T0 + 9e3, P(4), 56, P(8), 2), T0 + 9e3);                                     // same beacon, another spawn
   lm.onEvent("ps2", xp(T0 + 9e3, P(5), 233, "0", 3), T0 + 9e3);                                     // no vehicle id → ignored
   const sp = lm.spawnsAt("ps2", "10", 4001, T0 + 10e3);
-  assert.deepEqual(sp, { TR: { su: 2, ro: 1 }, NC: { be: 1 } });
+  assert.deepEqual(sp, { TR: { su: 2, ro: 1, n: 7 }, NC: { be: 1, n: 2 } });
   const a = lm.activity("ps2", "10", T0 + 10e3);
   const b = a.bases.find((x) => x.f === 4001);
   assert.deepEqual(b.sp, sp);
@@ -38,7 +38,7 @@ test("spawn XP: distinct Sunderers, Routers and beacons per base and faction, ne
   assert.equal(lm.stats().ps2.spawns, 4);
   // Kill XP marks a known one lost and does not add a new one.
   lm.onEvent("ps2", xp(T0 + 11e3, P(7), 68, V(1), 2), T0 + 11e3);
-  assert.deepEqual(lm.spawnsAt("ps2", "10", 4001, T0 + 12e3), { TR: { su: 2, ro: 1 }, NC: { be: 1 } });
+  assert.deepEqual(lm.spawnsAt("ps2", "10", 4001, T0 + 12e3), { TR: { su: 2, ro: 1, n: 7 }, NC: { be: 1, n: 2 } });
   // Forgotten after SPAWN_MS.
   lm.prune(T0 + 12e3 + SPAWN_MS);
   assert.equal(lm.spawnsAt("ps2", "10", 4001, T0 + 12e3 + SPAWN_MS), null);
@@ -92,4 +92,16 @@ test("pages: reduced motion respected, ⛺ not used", () => {
   const css = readFileSync(new URL("../oracle/oracle.css", import.meta.url), "utf8");
   assert.match(css, /prefers-reduced-motion: reduce\) \{ \.fspawn\.fspnew \{ animation: none; \}/);
   assert.ok(!readFileSync(new URL("../forward-spawns.mjs", import.meta.url), "utf8").includes("⛺"));
+});
+
+test("🚐 spawn counts: live-map totals per faction, cleaned, shown wide and compact", async () => {
+  const { spawnLine: line, spawnList: list } = await import("../forward-spawns.mjs");
+  const tr = (k, f, v) => String(f).replace(/\{(\w+)\}/g, (_, x) => (v && v[x] != null ? v[x] : ""));
+  assert.deepEqual(spawnsOf({ VS: { su: 3, n: 42.4 }, NC: { n: 5 }, TR: { be: 1, n: -3 } }), { VS: { su: 3, n: 42 }, TR: { be: 1 } });
+  const l = list({ su: 3, n: 42 }, tr);
+  assert.match(l, /3× Sunderer <span class="fspn fspl">\(42 spawns\)<\/span><span class="fspn fsps">\(42\)<\/span>/);
+  assert.equal(list({ su: 2 }, tr), "2× Sunderer");
+  const h = line({ VS: { su: 3, n: 42 }, NC: { be: 2, n: 9 } }, tr, { own: "NC" });
+  assert.match(h, /Attacker .*VS.*3× Sunderer.*\(42 spawns\).*Defender .*NC.*2× squad beacon.*\(9 spawns\)/);
+  assert.doesNotMatch(h, /track|locat/i);
 });

@@ -7,9 +7,9 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-export const LIVE_JS = "live.mjs?v=20261030-sp1";
+export const LIVE_JS = "live.mjs?v=20261030-sp2";
 /** #66: the live page's own CSS (moved out of styles.css), loaded right after styles.css. */
-export const LIVE_CSS = "live.css?v=20261030-sp1";
+export const LIVE_CSS = "live.css?v=20261030-sp2";
 
 export function buildLive(index) {
   const swaps = [

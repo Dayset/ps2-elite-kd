@@ -5,7 +5,7 @@
  * tracked player is. Outfit tags only; shown, not used anywhere else.
  * 🚐 Each capture also shows the spawn points each side had at that base (forward-spawns.mjs).
  */
-import { spawnLine } from "./forward-spawns.mjs?v=20261030-sp1";
+import { spawnLine } from "./forward-spawns.mjs?v=20261030-sp2";
 export const CAPS_API = "https://ps2-elite-kd-cache.dayset.workers.dev/live/captures";
 export const CAPS_POLL_MS = 60e3;
 export const CAPS_LIVE_SHOWN = 3;

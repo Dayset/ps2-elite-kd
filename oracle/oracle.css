@@ -421,3 +421,7 @@ footer { color: var(--dim); font-size: var(--fs-12); margin-top: var(--s-5); }
 .fspawn.fspnew { animation: fspIn 0.8s ease-out 1; }
 @keyframes fspIn { 0% { opacity: 0; transform: translateY(-3px); } 100% { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .fspawn.fspnew { animation: none; } }
+/* 🚐 spawn count: "(42 spawns)" wide, "(42)" on phones */
+.fspn { font-variant-numeric: tabular-nums; }
+.fspawn .fsps { display: none; }
+@media (max-width: 600px) { .fspawn .fspl { display: none; } .fspawn .fsps { display: inline; } .fspawn { font-size: 0.8em; } }

@@ -5,7 +5,7 @@
  * spawn XP in the game's live event stream (cache Worker live-map.js). Faction totals only;
  * shown, never read by the odds.
  *
- * sp = { VS: { su: 3, ro: 2 }, NC: { be: 2 } }   (su ro be ga sv an de)
+ * sp = { VS: { su: 3, ro: 2, n: 42 }, NC: { be: 2, n: 9 } }   (su ro be ga sv an de; n = spawns there)
  */
 export const SPAWN_KINDS = ["su", "ro", "be", "ga", "sv", "an", "de"];
 const FACS = ["VS", "NC", "TR"];
@@ -13,10 +13,18 @@ const KIND = { su: "Sunderer", ro: "Router", be: "squad beacon", ga: "Galaxy", s
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const has = (sp, f) => !!(sp && sp[f] && SPAWN_KINDS.some((k) => +sp[f][k] > 0));
 
-/** "3× Sunderer · 2× Router" for one faction ("" when none). */
+/** "(42 spawns)" for one faction: the full words on wide screens, "(42)" on phones (CSS .fspl / .fsps). */
+export function spawnCount(q, tr) {
+  const n = q ? Math.round(+q.n || 0) : 0;
+  if (!(n > 0)) return "";
+  return ` <span class="fspn fspl">${esc(tr("sp.n", "({n} spawns)", { n }))}</span><span class="fspn fsps">(${n})</span>`;
+}
+
+/** "3× Sunderer · 2× Router (42 spawns)" for one faction ("" when none). */
 export function spawnList(q, tr) {
   if (!q) return "";
-  return SPAWN_KINDS.filter((k) => +q[k] > 0).map((k) => `${Math.round(+q[k])}× ${esc(tr(`sp.${k}`, KIND[k]))}`).join(" · ");
+  const list = SPAWN_KINDS.filter((k) => +q[k] > 0).map((k) => `${Math.round(+q[k])}× ${esc(tr(`sp.${k}`, KIND[k]))}`).join(" · ");
+  return list ? list + spawnCount(q, tr) : "";
 }
 
 /**
@@ -37,6 +45,6 @@ export function spawnLine(sp, tr, { own = null, att = null, cls = "" } = {}) {
     const list = FACS.filter((f) => has(sp, f)).map((f) => `${fac(f)} ${spawnList(sp[f], tr)}`).join(" — ");
     parts.push(tr("sp.all", "🚐 Spawn points: {list}", { list }));
   }
-  const tip = esc(tr("sp.tip", "Spawn points each side had at this base in the last 10 min (Sunderers, Routers, squad beacons, Galaxies…), counted from spawns in the game's live event stream. Rough: a Sunderer pulled again counts as a new one. Shown only, not used in the odds."));
+  const tip = esc(tr("sp.tip", "Spawn points each side had at this base in the last 10 min (Sunderers, Routers, squad beacons, Galaxies…), counted from spawns in the game's live event stream. Rough: a Sunderer pulled again counts as a new one. Shown only, not used in the odds. The number in brackets is how many spawns happened there."));
   return `<span class="fspawn${cls ? " " + cls : ""}" title="${tip}">${parts.join(" — ")}</span>`;
 }

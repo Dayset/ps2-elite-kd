@@ -5,7 +5,7 @@
 // odds and orders don't read it until a backtest shows a gain.
 import { FACS, COLOR, esc } from "./state.js?v=20261018-scrub2";
 import { t as tr } from "../../i18n.mjs";
-import { spawnLine } from "../../forward-spawns.mjs?v=20261030-sp1";
+import { spawnLine } from "../../forward-spawns.mjs?v=20261030-sp2";
 
 export const FIGHTS_SHOWN = 6;
 export const CAPS_SHOWN = 5;

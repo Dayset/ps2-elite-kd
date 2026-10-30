@@ -213,7 +213,7 @@ export class LiveMap {
     const r = E.pos.get(s.own);
     return r && r.f && now - r.ft <= FRESH_MS ? r.f : null;
   }
-  /** 🚐 Spawn points per base for one world: Map fid → { VS: { su: 3, ro: 2 }, … } (faction totals only). */
+  /** 🚐 Spawn points per base for one world: Map fid → { VS: { su: 3, ro: 2, n: 42 }, … } (n = spawns there; faction totals only). */
   spawnIndex(env, world, now = Date.now()) {
     const E = this.envs[env], out = new Map();
     if (!E || !E.spawns) return out;
@@ -225,6 +225,7 @@ export class LiveMap {
       const b = out.get(String(f)) || {};
       const q = (b[s.fac] ||= {});
       q[s.k] = (q[s.k] || 0) + 1;
+      q.n = (q.n || 0) + s.n; // 🚐 spawns (people who spawned there), faction total
       out.set(String(f), b);
     }
     return out;
