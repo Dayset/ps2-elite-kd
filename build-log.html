@@ -188,14 +188,16 @@
       </details>
 
       <details class="st-card st-sec st-flags" id="cardHeavySupport">
-        <summary id="heavySupportSummary"><h2>⛑️ Heavy support <span id="heavySupportCount" class="st-count">…</span></h2></summary>
-        <p class="st-note">Play style: players who spend most of their time healing, reviving, resupplying and repairing, and the regular partner they support (example: GingerBaby supports Zyr0s). ⛑️ = top pair. Private to this page: never shown on the site, never hides or flags anyone.</p>
-        <details class="st-info"><summary>ⓘ How it works</summary><div class="st-rule" id="heavySupportRule"></div></details>
+        <summary id="heavySupportSummary"><h2>⛑️ <span data-hs="title">Heavy support</span> <span id="heavySupportCount" class="st-count">…</span></h2></summary>
+        <p class="st-note" data-hs="note">Play style: players who spend most of their time healing, reviving, resupplying and repairing, and the regular partner they support. Private to this page.</p>
+        <details class="st-info"><summary data-hs="how">ⓘ How it works</summary><div class="st-rule" id="heavySupportRule"></div></details>
         <div id="heavySupportFilters" style="display:flex;flex-wrap:wrap;gap:8px;margin:6px 0;">
-          <label>Label <select id="hsLabel"><option value="all">all</option><option value="pocket">🎯 pocket duo</option><option value="steady">👥 steady squad</option><option value="general">➕ general medic</option></select></label>
-          <label>Server <select id="hsWorld"><option value="all">all</option></select></label>
-          <label>Name <input id="hsName" type="search" placeholder="any player in a pair" autocomplete="off" /></label>
+          <label><span data-hs="fLabel">Label</span> <select id="hsLabel"><option value="all" data-hs="all">all</option><option value="pocket">⛑️🎯 pocket duo</option><option value="steady">👥 steady squad</option><option value="general">➕ general medic</option></select></label>
+          <label><span data-hs="fServer">Server</span> <select id="hsWorld"><option value="all" data-hs="all">all</option></select></label>
+          <label><span data-hs="fName">Name</span> <input id="hsName" type="search" placeholder="any player in a pair" autocomplete="off" /></label>
+          <label>🌐 <span data-hs="fLang">Language</span> <select id="hsLang"></select></label>
         </div>
+        <div id="heavySupportTop" style="display:flex;flex-wrap:wrap;gap:6px;margin:6px 0;"></div>
         <div id="heavySupport" class="st-dim">Loading…</div>
       </details>
 
@@ -709,7 +711,8 @@
     import "./name-peek.mjs?v=20261025-loc1"; // full-name popup for truncated .nm names
     import { radarProfileUrl, radarBadge, radarPriority } from "./radar.mjs?v=20261010-sav1";
     import { spawnCampRows, spawnCampExcluded } from "./spawn-camp.mjs?v=20261026-sc1";
-    import { heavySupportRows, filterHeavySupport, heavySupportCounts, heavySupportRuleText, HS_LABELS, worldName } from "./heavy-support.mjs?v=20261029-hs1";
+    import { heavySupportRows, filterHeavySupport, heavySupportCounts, ruleVars, topMarker, HS_LABELS, worldName } from "./heavy-support.mjs?v=20261029-hs2";
+    import { HS_LANGS, hsLang, hsT, hsRuleLines } from "./heavy-support-i18n.mjs?v=20261029-hs2";
 
     const POLL_MS = 30 * 1000;
     const $ = (id) => document.getElementById(id);
@@ -1440,25 +1443,40 @@
 
     /** ⛑️ Heavy support (data/heavysupport.json, heavy-support.mjs, owner t757–t760): hidden page only. */
     let heavySupportAt = 0, heavySupportData = null;
+    let hsL = "en";
+    try { hsL = hsLang(localStorage.getItem("ps2-elite-kd-lang"), navigator.languages); } catch { hsL = "en"; }
+    /** Static card text in the chosen language (9 site languages, heavy-support-i18n.mjs). */
+    function hsStatic() {
+      const T = (k, v) => hsT(hsL, k, v);
+      document.querySelectorAll("#cardHeavySupport [data-hs]").forEach((el) => { el.textContent = T(el.dataset.hs); });
+      for (const o of $("hsLabel").options) if (o.value !== "all") o.textContent = (HS_LABELS[o.value].icon === "🎯" ? "⛑️🎯 " : HS_LABELS[o.value].icon + " ") + T(o.value);
+      $("hsName").placeholder = T("namePh");
+      const ls = $("hsLang");
+      if (!ls.options.length) ls.innerHTML = HS_LANGS.map((l) => '<option value="' + l.code + '">' + l.flag + " " + esc(l.name) + "</option>").join("");
+      ls.value = hsL;
+      if (heavySupportData) $("heavySupportRule").innerHTML = hsRuleLines(hsL, ruleVars(heavySupportData.d.stats)).map((t) => "<div>" + esc(t) + "</div>").join("");
+    }
     async function renderHeavySupport() {
       if (Date.now() - heavySupportAt < 5 * 60 * 1000) return; // changes at most once per refresh run
       heavySupportAt = Date.now();
       let d = null;
       try { const r = await fetch("data/heavysupport.json?t=" + Date.now(), { cache: "no-store" }); d = r.ok ? await r.json() : null; } catch { d = null; }
-      if (!d || !d.stats) { $("heavySupportCount").textContent = "–"; $("heavySupport").innerHTML = '<span class="st-dim">No check yet (scripts/heavy-support.mjs).</span>'; heavySupportAt = 0; return; }
+      if (!d || !d.stats) { hsStatic(); $("heavySupportCount").textContent = "–"; $("heavySupport").innerHTML = '<span class="st-dim">' + esc(hsT(hsL, "noData")) + "</span>"; heavySupportAt = 0; return; }
       heavySupportData = { d, rows: heavySupportRows(d) };
-      $("heavySupportRule").innerHTML = heavySupportRuleText(d.stats).map((t) => "<div>" + esc(t) + "</div>").join("");
+      hsStatic();
       const sel = $("hsWorld"), have = new Set([...sel.options].map((o) => o.value));
       for (const w of [...new Set(heavySupportData.rows.flatMap((r) => r.worlds))].sort((a, b) => a - b))
         if (!have.has(String(w))) sel.insertAdjacentHTML("beforeend", '<option value="' + w + '">' + esc(worldName(w)) + "</option>");
       if (!sel.dataset.wired) {
         sel.dataset.wired = "1";
         for (const id of ["hsLabel", "hsWorld", "hsName"]) $(id).addEventListener(id === "hsName" ? "input" : "change", drawHeavySupport);
+        $("hsLang").addEventListener("change", () => { hsL = $("hsLang").value; hsStatic(); drawHeavySupport(); });
       }
       drawHeavySupport();
     }
     function drawHeavySupport() {
       if (!heavySupportData) return;
+      const T = (k, v) => hsT(hsL, k, v);
       const { d, rows: all } = heavySupportData, st = d.stats;
       const rows = filterHeavySupport(all, { label: $("hsLabel").value, world: $("hsWorld").value, q: $("hsName").value });
       const c = heavySupportCounts(all);
@@ -1467,16 +1485,21 @@
       const rg = (a, n) => (!a ? "—" : a[0] === a[1] ? a[0].toFixed(n) : a[0].toFixed(n) + "–" + a[1].toFixed(n));
       const mark = (m) => (m === "OOR" ? oorTag() : m === "padder" ? '<span class="st-dim" title="Stat padding (reviewed)"><strong>padder</strong></span> ' : "");
       const people = (list) => list.length ? list.map((p) => mark(p.mark) + nameCell({ name: p.name || p.slug, cid: p.cid })).join(" + ") : '<span class="st-dim">—</span>';
-      const lab = (k) => { const L = HS_LABELS[k] || {}; return '<span title="' + esc(L.tip || "") + '">' + (L.icon || "") + " " + esc(L.text || k) + "</span>"; };
+      const lab = (k) => { const L = HS_LABELS[k] || {}; return '<span title="' + esc(T(k + "Tip")) + '">' + (k === "pocket" ? "⛑️🎯" : L.icon || "") + " " + esc(T(k)) + "</span>"; };
+      // ⛑️ marker: partner name · partner's share of time together · hours together, always visible (no hover needed on phones).
+      const badge = (r) => (r.top ? '<strong style="white-space:nowrap;">' + esc(topMarker(r)) + "</strong>" : "");
+      const supName = (r) => esc((r.supporters[0] && (r.supporters[0].name || r.supporters[0].slug)) || "?") + (r.supporters.length > 1 ? " ×" + r.supporters.length : "");
+      const tops = rows.filter((r) => r.top);
+      $("heavySupportTop").innerHTML = tops.map((r) => '<span class="st-chip" style="border:1px solid var(--row-border);border-radius:6px;padding:2px 6px;">' + supName(r) + " → " + badge(r) + "</span>").join("");
       $("heavySupport").innerHTML =
-        '<div class="st-dim" style="margin-bottom:6px;">' + st.scored + " players scored · top 10% = " + st.top10 + " (score ≥ " + st.cut10 + ") · " + st.checked + " pair-checked · " +
-        c.pocket + " 🎯 pocket duo · " + c.steady + " 👥 steady squad · " + c.general + " ➕ general medic · " + c.thin + " too few days · ⛑️ " + c.top + " top pair(s)" +
-        (d.lastRun ? " · last run " + esc(new Date(d.lastRun.at).toLocaleString()) + ", " + d.lastRun.calls + " Honu call(s)" : "") + " · showing " + rows.length + "</div>" +
+        '<div class="st-dim" style="margin-bottom:6px;">' + esc(T("summary", { scored: st.scored, top10: st.top10, cut10: st.cut10, checked: st.checked, pocket: c.pocket, steady: c.steady, general: c.general, thin: c.thin })) +
+        (d.lastRun ? " · " + esc(T("lastRun", { when: new Date(d.lastRun.at).toLocaleString(hsL), calls: d.lastRun.calls })) : "") + " · " + esc(T("showing", { n: rows.length })) + "</div>" +
         (rows.length
-          ? '<div class="st-scroll"><table class="st-table"><tr><th></th><th>Supporter</th><th>Partner</th><th>Server</th><th title="Share of the supporter\u2019s play time spent online with the partner">Supporter time</th><th title="Share of the partner\u2019s play time spent online with the supporter">Partner time</th><th title="Share of the supporter\u2019s support actions that went to this partner">Support share</th><th>Partner iVi</th><th>Partner K/D</th><th title="Days with squad support to the partner (summed over grouped accounts)">Days</th><th>Label</th></tr>' +
-            rows.map((r) => "<tr><td>" + (r.top ? '<span title="Top pair">⛑️</span>' : "") + "</td><td>" + people(r.supporters) + "</td><td>" + people(r.partners) + "</td><td>" + esc(r.worlds.map(worldName).join(", ") || "?") +
+          ? '<div class="st-scroll"><table class="st-table"><tr><th>' + esc(T("hTop")) + "</th><th>" + esc(T("hSup")) + "</th><th>" + esc(T("hPart")) + "</th><th>" + esc(T("hServer")) + '</th><th title="' + esc(T("tSupTime")) + '">' + esc(T("hSupTime")) + '</th><th title="' + esc(T("tPartTime")) + '">' + esc(T("hPartTime")) +
+            '</th><th title="' + esc(T("tShare")) + '">' + esc(T("hShare")) + "</th><th>" + esc(T("hIvi")) + "</th><th>" + esc(T("hKd")) + '</th><th title="' + esc(T("tDays")) + '">' + esc(T("hDays")) + "</th><th>" + esc(T("hLabel")) + "</th></tr>" +
+            rows.map((r) => "<tr><td>" + badge(r) + "</td><td>" + people(r.supporters) + "</td><td>" + people(r.partners) + "</td><td>" + esc(r.worlds.map(worldName).join(", ") || "?") +
               "</td><td>" + pc(r.supPct) + "</td><td>" + pc(r.pPct) + "</td><td>" + pc(r.share) + "</td><td>" + rg(r.ivi, 0) + "</td><td>" + rg(r.kd, 2) + "</td><td>" + (r.days || "—") + "</td><td>" + lab(r.label) + "</td></tr>").join("") + "</table></div>"
-          : "No pair matches the filter.");
+          : esc(T("none")));
     }
 
     /** 🚨 Rampage gate (status.json "rampage", scripts/build-ranks.mjs): uncleared auto-catches only. */

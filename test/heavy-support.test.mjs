@@ -2,8 +2,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import { HS_TEXT, HS_LANGS, hsT, hsRuleLines } from "../heavy-support-i18n.mjs";
 import { HS_RULE, supportFeatures, scoreHeavySupport, supportWindows, supportRecipients, timeTogether, buildCheck, pairLabel, isTopPair,
-  familyIndex, heavySupportRows, filterHeavySupport, heavySupportCounts, heavySupportRuleText, HS_LABELS } from "../heavy-support.mjs";
+  familyIndex, heavySupportRows, filterHeavySupport, heavySupportCounts, ruleVars, topMarker, HS_LABELS } from "../heavy-support.mjs";
 
 const iso = (h) => new Date(Date.UTC(2026, 9, 1) + h * 3600000).toISOString();
 
@@ -51,16 +52,16 @@ test("repeat partner = squad support on 2+ days; time together both ways", () =>
   assert.equal(c.parts[0].share, 3 / 6);
 });
 
-test("labels: Ginger → Zyr0s is a pocket duo; average mutual pair is a steady squad", () => {
+test("labels (owner t761): partner ≥ 51% of their time with the supporter = ⛑️ pocket duo, skill does not matter", () => {
   const ginger = { days: 3, sq: 20, myPct: 0.15, pPct: 0.98, ivi: 1383 };
-  assert.equal(pairLabel(ginger, 807), "pocket");
-  assert.ok(isTopPair("pocket", ginger));
-  const tony = { days: 2, sq: 5, myPct: 0.71, pPct: 0.75, ivi: 243 };
-  assert.equal(pairLabel(tony, 807), "steady");
-  assert.ok(isTopPair("steady", tony));
-  const outfit = { days: 3, sq: 5, myPct: 0.77, pPct: 0.09, ivi: 1176 };
-  assert.equal(pairLabel(outfit, 807), "general", "partner rarely with the supporter = not a pair");
-  assert.equal(pairLabel({ days: 1, sq: 5, myPct: 0.9, pPct: 0.9, ivi: 2000 }, 807), "general", "one day is not a regular partner");
+  assert.equal(pairLabel(ginger), "pocket");
+  assert.ok(isTopPair("pocket"));
+  assert.equal(pairLabel({ days: 2, sq: 5, myPct: 0.05, pPct: 0.51, ivi: 150 }), "pocket", "51% is enough, low iVi is fine");
+  assert.equal(pairLabel({ days: 2, sq: 5, myPct: 0.9, pPct: 0.5, ivi: 2000 }), "steady", "50% is a steady squad");
+  assert.equal(pairLabel({ days: 2, sq: 5, myPct: 0.1, pPct: 0.25 }), "steady");
+  assert.ok(!isTopPair("steady"));
+  assert.equal(pairLabel({ days: 3, sq: 5, myPct: 0.77, pPct: 0.09, ivi: 1176 }), "general", "partner rarely with the supporter = not a pair");
+  assert.equal(pairLabel({ days: 1, sq: 5, myPct: 0.9, pPct: 0.9, ivi: 2000 }), "general", "one day is not a regular partner");
 });
 
 test("alt families group 5 account pairs into one ⛑️ row; filters by label, server and name", () => {
@@ -69,7 +70,7 @@ test("alt families group 5 account pairs into one ⛑️ row; filters by label, 
   assert.equal(fam.x2, fam.x1);
   const part = (slug, pPct) => ({ cid: slug, slug, name: slug.toUpperCase(), ticks: 10, sq: 10, share: 0.1, days: 3, myPct: 0.3, pPct, pHours: 10, ivi: 1500, kd: 4 });
   const store = {
-    familyOf: fam, stats: { strongIvi: 807 },
+    familyOf: fam, stats: {},
     checks: {
       g1: { cid: "1", name: "G1", world: 1, windows: 4, myHours: 30, parts: [part("z1", 0.9)] },
       g2: { cid: "2", name: "G2", world: 10, windows: 4, myHours: 30, parts: [part("z2", 0.8)] },
@@ -88,12 +89,28 @@ test("alt families group 5 account pairs into one ⛑️ row; filters by label, 
   assert.equal(filterHeavySupport(rows, { q: "z2" }).length, 1, "partner name search");
   assert.equal(filterHeavySupport(rows, { q: "medic" }).length, 1);
   assert.deepEqual(heavySupportCounts(rows), { pocket: 1, steady: 0, general: 1, thin: 1, top: 1 });
+  // ⛑️ marker: partner (most hours together) · partner's share · hours together (0.3 × 30 h × 2 accounts = 18 h)
+  assert.equal(rows[0].hours, 18);
+  assert.equal(topMarker(rows[0]), "⛑️ Z1 · " + Math.round(rows[0].pPct * 100) + "% · 18h");
+  assert.equal(topMarker(rows[1]), "", "no marker on other rows");
 });
 
 test("rule fits the Honu budget and wording stays play-style", () => {
   assert.ok(HS_RULE.PER_RUN * (1 + HS_RULE.WINDOWS + HS_RULE.PICKS) <= 40);
-  const text = [...heavySupportRuleText({ scored: 1, cut10: 80, strongIvi: 807 }), ...Object.values(HS_LABELS).map((l) => l.tip + l.text)].join(" ");
-  assert.doesNotMatch(text, /cheat|track|locat|stalk|follow/i);
+  const text = [...hsRuleLines("en", ruleVars({ scored: 1, cut10: 80 })), ...Object.values(HS_TEXT.en), ...Object.values(HS_LABELS).map((l) => l.tip + l.text)].join(" ");
+  assert.doesNotMatch(text, /cheat|track|locat|stalk|follow|spy|watch/i);
+  assert.doesNotMatch(text, /iVi ≥/, "no skill requirement in the rule");
+  assert.match(text, /51% or more of their play time/);
+  // all 9 site languages, same keys and placeholders as English, no "cheat" words in any language
+  const ph = (x) => [...String(x).matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort().join(",");
+  assert.deepEqual(Object.keys(HS_TEXT), HS_LANGS.map((l) => l.code));
+  for (const [code, tbl] of Object.entries(HS_TEXT)) {
+    assert.deepEqual(Object.keys(tbl), Object.keys(HS_TEXT.en), code + " has every key");
+    for (const k of Object.keys(tbl)) assert.equal(ph(tbl[k]), ph(HS_TEXT.en[k]), code + "." + k + " placeholders");
+    assert.doesNotMatch(Object.values(tbl).join(" "), /cheat|tricheur|tramposo|baro|imbrogli|читер|чітер|чит|作弊|チート|track|locat|отслеж|відстеж|追踪|追跡/i, code);
+  }
+  assert.equal(hsT("ja", "pocket"), "専属デュオ");
+  assert.equal(hsT("xx", "pocket"), "pocket duo", "English fallback");
   const html = fs.readFileSync(new URL("../build-log.html", import.meta.url), "utf8");
   const card = html.slice(html.indexOf('id="cardHeavySupport"'), html.indexOf("</details>", html.indexOf('id="heavySupport"')));
   assert.match(card, /Private to this page/);
@@ -110,4 +127,8 @@ test("data/heavysupport.json is consistent", () => {
   const rows = heavySupportRows(d);
   assert.ok(rows.some((r) => r.top && r.supporters.some((s) => s.slug === "gingerbaby")), "Ginger → Zyr0s is a ⛑️ pair");
   assert.equal(rows.filter((r) => r.supporters.some((s) => s.slug.startsWith("gingerbaby"))).length, 1, "the 5 Ginger accounts are one row");
+  const g = rows.find((r) => r.supporters.some((s) => s.slug === "gingerbaby"));
+  assert.match(topMarker(g), /^⛑️ Zyr0s · \d+% · \d+h$/);
+  for (const r of rows) assert.equal(r.top, r.label === "pocket", "⛑️ = pocket duo");
+  assert.deepEqual(d.stats.labels, heavySupportCounts(rows), "stored counts match the rule");
 });

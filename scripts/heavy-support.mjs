@@ -12,7 +12,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { HS_RULE, SUPPORT_EXP, supportRecipients, supportFeatures, scoreHeavySupport, percentile, supportWindows, buildCheck, familyIndex, slugOf, heavySupportRows, heavySupportCounts } from "../heavy-support.mjs";
+import { HS_RULE, SUPPORT_EXP, supportRecipients, supportFeatures, scoreHeavySupport, supportWindows, buildCheck, familyIndex, slugOf, heavySupportRows, heavySupportCounts } from "../heavy-support.mjs";
 import { hiddenList, isConfirmedCheater } from "../hidden.mjs";
 import { removedList } from "../opt-out.mjs";
 
@@ -50,7 +50,6 @@ export function rebuild(store, { xpFiles, ranks, hiddenJson, reviewed, optOut, a
     return { slug: f.slug, cid: f.cid, name: R.name || f.slug, rank: f.rank, hs: r1(f.hs), spm: r1(f.spm, 2), sxs: r1(f.sxs, 3), dpm: r1(f.dpm, 3),
       kd: r1(R.kd, 2), ivi: r1(R.ivi, 0), inf: R.inf ?? null, mark: markOf(f, ctx) };
   });
-  const strongIvi = percentile([...ranksBySlug.values()].map((r) => r.ivi), HS_RULE.STRONG_PCT);
   // refresh partner iVi / K/D / marks, drop removed characters
   const checks = store.checks || {};
   for (const [slug, c] of Object.entries(checks)) {
@@ -67,7 +66,7 @@ export function rebuild(store, { xpFiles, ranks, hiddenJson, reviewed, optOut, a
   const used = new Set();
   for (const [slug, c] of Object.entries(checks)) { used.add(slug); for (const p of c.parts || []) used.add(p.slug); }
   store.familyOf = Object.fromEntries([...used].filter((s) => idx[s]).map((s) => [s, idx[s]]).sort());
-  store.stats = { scored: sc.n, top10: nTop, cut10: r1(sc.cut10), cut20: r1(sc.cut20), top20: Math.floor(sc.n * 0.2), strongIvi: r1(strongIvi, 0),
+  store.stats = { scored: sc.n, top10: nTop, cut10: r1(sc.cut10), cut20: r1(sc.cut20), top20: Math.floor(sc.n * 0.2),
     checked: Object.keys(checks).length };
   const rows = heavySupportRows(store);
   store.stats.rows = rows.length;

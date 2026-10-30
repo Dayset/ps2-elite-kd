@@ -12,7 +12,8 @@
  *    support sessions → who received the support (squad-type events on ≥ 2
  *    days = a repeat partner) → both players' session lists → how much of each
  *    player's time was spent online together.
- * 3. Labels (HS_RULE): 🎯 pocket duo / 👥 steady squad / ➕ general medic.
+ * 3. Labels (HS_RULE): ⛑️🎯 pocket duo (partner ≥ 51% of their time with the
+ *    supporter, owner t761) / 👥 steady squad (25–50%) / ➕ general medic.
  *
  * DOM-free; used by build-log.html, scripts/heavy-support.mjs and tests.
  */
@@ -31,20 +32,16 @@ export const HS_RULE = Object.freeze({
   WINDOWS: 4, // ≤ 4 recent support days read per supporter (1 Honu call each)
   PICKS: 3, // ≤ 3 repeat partners compared (1 Honu call each)
   MIN_DAYS: 2, // repeat partner: squad support on ≥ 2 different days
-  POCKET_PARTNER: 0.6, // pocket duo: partner spends ≥ 60% of their time with the supporter (Ginger→Zyr0s lowest: 71%)
-  POCKET_SUPPORTER: 0.15, // …and the supporter ≥ 15% of theirs (Ginger→Zyr0s lowest: 15%)
-  STRONG_PCT: 90, // …and the partner is strong: iVi in the top 10% of ranks (all 5 Zyr0s accounts are)
-  STEADY: 0.5, // steady squad: one player spends ≥ 50% of their time with the other…
-  STEADY_MIN: 0.25, // …and the other ≥ 25% (both sides; a big outfit's regular is not a pair)
-  TOP_MUTUAL: 0.6, // ⛑️ on a steady squad when BOTH spend ≥ 60% of their time together
+  POCKET: 0.51, // ⛑️ pocket duo (top pair): the partner spends ≥ 51% of their play time with the supporter (owner t761; skill does not matter)
+  STEADY: 0.25, // 👥 steady squad: a regular partner who spends 25–50% of their time with the supporter
   RECHECK_DAYS: 30, // a checked supporter is re-checked after 30 days
   PER_RUN: 5, // ≤ 5 supporters per scheduled run (≤ 5 × 8 = 40 Honu calls)
   DAY_CAP: 300, // ≤ 300 ⛑️ Honu calls per UTC day
 });
 
 export const HS_LABELS = Object.freeze({
-  pocket: { icon: "🎯", text: "pocket duo", tip: "Supports one strong regular partner who plays most of their time with them" },
-  steady: { icon: "👥", text: "steady squad", tip: "Supports a regular partner (an average player) on several days" },
+  pocket: { icon: "🎯", text: "pocket duo", tip: "A regular partner who spends more than half of their play time with the supporter" },
+  steady: { icon: "👥", text: "steady squad", tip: "A regular partner who spends a quarter to half of their play time with the supporter" },
   general: { icon: "➕", text: "general medic", tip: "Supports whoever is around; no regular partner" },
   thin: { icon: "·", text: "too few days", tip: "Fewer than 2 recent support days to compare" },
 });
@@ -179,20 +176,19 @@ export function buildCheck({ cid, name, sessions, blocks, partnerSessions, since
     ticks: R.ticks, uniq: R.uniq, myHours: total(mine) / 3600000, parts };
 }
 
-/** Label of one supporter → partner pair (p = stored part + ivi). */
-export function pairLabel(p, strongIvi, rule = HS_RULE) {
+/** Label of one supporter → partner pair (p = stored part). Only the partner's share of time together counts. */
+export function pairLabel(p, rule = HS_RULE) {
   if (!p) return "general";
   const repeat = (p.days || 0) >= rule.MIN_DAYS && (p.sq || 0) > 0;
   if (!repeat) return "general";
-  const strong = strongIvi != null && Number.isFinite(p.ivi) && p.ivi >= strongIvi;
-  if (strong && p.pPct >= rule.POCKET_PARTNER && p.myPct >= rule.POCKET_SUPPORTER) return "pocket";
-  if (Math.max(p.myPct, p.pPct) >= rule.STEADY && Math.min(p.myPct, p.pPct) >= rule.STEADY_MIN) return "steady";
+  if (p.pPct >= rule.POCKET) return "pocket";
+  if (p.pPct >= rule.STEADY) return "steady";
   return "general";
 }
 
-/** ⛑️ top pair: every pocket duo, and a steady squad where both spend ≥ TOP_MUTUAL of their time together. */
-export function isTopPair(label, p, rule = HS_RULE) {
-  return label === "pocket" || (label === "steady" && Math.min(p.myPct, p.pPct) >= rule.TOP_MUTUAL);
+/** ⛑️ top pair = pocket duo. */
+export function isTopPair(label) {
+  return label === "pocket";
 }
 
 /**
@@ -223,7 +219,6 @@ const agg = (xs) => { const v = xs.filter(Number.isFinite); return v.length ? [M
 export function heavySupportRows(store, rule = HS_RULE) {
   const st = store || {};
   const fam = st.familyOf || {};
-  const strong = st.stats && st.stats.strongIvi;
   const top = new Map((st.top || []).map((t) => [t.slug, t]));
   const groups = new Map();
   for (const [slug, c] of Object.entries(st.checks || {})) {
@@ -232,7 +227,7 @@ export function heavySupportRows(store, rule = HS_RULE) {
     let pairs = [];
     if ((c.windows || 0) < rule.MIN_DAYS) pairs = [{ label: "thin", part: null }];
     else {
-      const lab = (c.parts || []).map((p) => ({ part: p, label: pairLabel(p, strong, rule) }));
+      const lab = (c.parts || []).map((p) => ({ part: p, label: pairLabel(p, rule) }));
       const keep = lab.filter((x) => x.label !== "general");
       pairs = keep.length ? keep : [{ label: "general", part: (c.parts || [])[0] || null }];
     }
@@ -241,7 +236,7 @@ export function heavySupportRows(store, rule = HS_RULE) {
       const key = sk + "→" + pk + (pk ? "" : "·" + label);
       let g = groups.get(key);
       if (!g) groups.set(key, (g = { key, members: [] }));
-      g.members.push({ sup, part, label, top: !!part && isTopPair(label, part, rule) });
+      g.members.push({ sup, part, label, top: !!part && isTopPair(label) });
     }
   }
   const rows = [];
@@ -255,11 +250,15 @@ export function heavySupportRows(store, rule = HS_RULE) {
       ticks += m.part.ticks || 0; tot += m.part.share ? m.part.ticks / m.part.share : 0;
     }
     const parts = ms.filter((m) => m.part).map((m) => m.part);
+    // ⛑️ marker name: the partner account with the most hours together.
+    let lead = null, leadH = -1;
+    for (const m of ms) if (m.part) { const h = m.part.myPct * m.sup.myHours; if (h > leadH) { leadH = h; lead = m.part; } }
     rows.push({
       key: g.key, label, top: ms.some((m) => m.top),
       supporters: [...new Map(ms.map((m) => [m.sup.slug, m.sup])).values()],
       partners: [...new Map(parts.map((p) => [p.slug, p])).values()],
       worlds: [...new Set(ms.map((m) => m.sup.world).filter((w) => w != null))].sort((a, b) => a - b),
+      lead: lead ? { name: lead.name || lead.slug, slug: lead.slug, cid: lead.cid } : null, hours: myH ? ov : null,
       supPct: myH ? ov / myH : null, pPct: parts.length && pH ? ov / pH : null,
       share: tot ? ticks / tot : null, ivi: agg(parts.map((p) => p.ivi)), kd: agg(parts.map((p) => p.kd)),
       days: parts.reduce((t, p) => t + (p.days || 0), 0), members: ms,
@@ -283,16 +282,21 @@ export function heavySupportCounts(rows) {
   return c;
 }
 
-/** Plain rule text for ⓘ How it works (thresholds + measured numbers). */
-export function heavySupportRuleText(stats = {}, rule = HS_RULE) {
-  const p = (x) => Math.round(x * 100) + "%";
+/** ⛑️ marker text, e.g. "⛑️ Zyr0s · 85% · 41h" (partner name, partner's share of time together, hours together). */
+export function topMarker(r) {
+  if (!r || !r.top) return "";
+  const pc = r.pPct == null ? "—" : Math.round(r.pPct * 100) + "%";
+  const h = r.hours == null ? "—" : Math.round(r.hours) + "h";
+  return "⛑️ " + ((r.lead && r.lead.name) || "?") + " · " + pc + " · " + h;
+}
+
+/** Numbers the ⓘ rule text fills in (heavy-support-i18n.mjs). */
+export function ruleVars(stats = {}, rule = HS_RULE) {
   const f1 = (x) => (Number.isFinite(x) ? x.toFixed(1) : "—");
-  return [
-    `Heavy-support score: the average of three percentiles over ${stats.scored ?? "—"} players with ${rule.MIN_MINUTES}+ minutes of XP detail — support actions per minute, support share of all earned XP, and how rarely the player dies. Top 10% = score ≥ ${f1(stats.cut10)} (${stats.top10 ?? "—"} players); top 20% = ≥ ${f1(stats.cut20)}.`,
-    `Pair check (top 10%, K/D ≥ ${rule.CHECK_MIN_KD}, infantry ≥ ${rule.CHECK_MIN_INF}%): the ${rule.WINDOWS} most recent support days in the last ${rule.SINCE_DAYS} days; a regular partner got squad support on ≥ ${rule.MIN_DAYS} of them (up to ${rule.PICKS} partners). Time together = share of each player's own play time spent online at the same time.`,
-    `🎯 pocket duo: the partner spends ≥ ${p(rule.POCKET_PARTNER)} of their time with the supporter, the supporter ≥ ${p(rule.POCKET_SUPPORTER)}, and the partner is strong (iVi ≥ ${stats.strongIvi != null ? Math.round(stats.strongIvi) : "—"}, the top ${100 - rule.STRONG_PCT}% of ranks). Reference: GingerBaby → Zyr0s, partner 71–99%, supporter 15–46%, iVi 1383–1758.`,
-    `👥 steady squad: a regular partner, one player spends ≥ ${p(rule.STEADY)} of their time with the other and the other ≥ ${p(rule.STEADY_MIN)} (an average partner). ➕ general medic: no regular partner. · too few days: under ${rule.MIN_DAYS} support days to compare.`,
-    `⛑️ top pair: every pocket duo, and a steady squad where both spend ≥ ${p(rule.TOP_MUTUAL)} of their time together. Known alt accounts (👥 Likely alts data and confirmed families) are grouped into one row.`,
-    `Refresh: ≤ ${rule.PER_RUN} supporters per scheduled run (≤ ${rule.PER_RUN * (1 + rule.WINDOWS + rule.PICKS)} Honu calls), unchecked first, re-checked after ${rule.RECHECK_DAYS} days, ≤ ${rule.DAY_CAP} calls a day.`,
-  ];
+  return {
+    scored: stats.scored ?? "—", min: rule.MIN_MINUTES, cut10: f1(stats.cut10), top10: stats.top10 ?? "—", cut20: f1(stats.cut20),
+    kd: rule.CHECK_MIN_KD, inf: rule.CHECK_MIN_INF, win: rule.WINDOWS, since: rule.SINCE_DAYS, days: rule.MIN_DAYS, picks: rule.PICKS,
+    pocket: Math.round(rule.POCKET * 100), steady: Math.round(rule.STEADY * 100), steadyTo: Math.round(rule.POCKET * 100) - 1,
+    perRun: rule.PER_RUN, calls: rule.PER_RUN * (1 + rule.WINDOWS + rule.PICKS), recheck: rule.RECHECK_DAYS, dayCap: rule.DAY_CAP,
+  };
 }
