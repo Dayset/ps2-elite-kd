@@ -957,7 +957,7 @@ export function initRankings(host) {
   function getHist(id) {
     if (!histCache.has(id)) {
       const vals = data.rows.map((r) => r[id]);
-      histCache.set(id, histogram(vals, { floor: id === "adjs" ? 0 : null }));
+      histCache.set(id, histogram(vals, { floor: id === "adjs" || id === "pureivi" ? 0 : null }));
     }
     return histCache.get(id);
   }
