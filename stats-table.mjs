@@ -23,7 +23,7 @@ import { t as tr } from "./i18n.mjs";
 import { AIMGAP_HINT, ZERG_HINT, ZERG_MISSING, zergCellTip, zergEstHtml, AIMGAP_MISSING, fmtSigned, aimGapCellTip, diffValueHtml } from "./trait-tips.mjs?v=20261024-crowd1";
 import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261023-short1";
 import { THIN_MARK, THIN_NOTE_HEAD, playerMetrics, shownValue, THIN_METRICS, thinPlayerLine, isLegacySample, LEGACY_SAMPLE_TIP, LEGACY_SAMPLE_MARK } from "./player-metrics.mjs?v=20261027-z79";
-import { compareByCharName, columnRef, honuProfileUrl, pctFromRef, pctTitle, fmtPctFromRef } from "./analyze-run.mjs?v=20261023-priv1";
+import { compareByCharName, columnRef, honuProfileUrl, pctFromRef, pctTitle, fmtPctFromRef } from "./analyze-run.mjs?v=20261030-cxl1";
 import { dotSlot } from "./online-status.mjs?v=20261018-onl1";
 import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261022-wpc1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";

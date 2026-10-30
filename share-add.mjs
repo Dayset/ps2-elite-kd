@@ -6,7 +6,7 @@ import { slugKey, escapeHtml, parseNames } from "./app-util.mjs?v=20261027-z79";
 import { t as tr } from "./i18n.mjs";
 import { withRoom } from "./rooms.mjs?v=20261022-ps1";
 import { sfx } from "./sfx.mjs?v=20261026-sfx2";
-import { resolveStartupSelection } from "./analyze-run.mjs?v=20261023-priv1";
+import { resolveStartupSelection } from "./analyze-run.mjs?v=20261030-cxl1";
 
 /**
  * $ = app.js state and functions this part uses, as live getters (and setters for state it changes), so app.js

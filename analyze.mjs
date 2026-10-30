@@ -5,7 +5,7 @@
 import { t as tr } from "./i18n.mjs";
 import { slugKey, namesEqualIgnoreCase, namesSetKey, isAbortError, makeAbortError, escapeHtml } from "./app-util.mjs?v=20261027-z79";
 import { recentGesture, sfx } from "./sfx.mjs?v=20261026-sfx2";
-import { shouldShowGraphReady, loadEach, summarizeFailures } from "./analyze-run.mjs?v=20261023-priv1";
+import { shouldShowGraphReady, loadEach, summarizeFailures, cancelledSkips } from "./analyze-run.mjs?v=20261030-cxl1";
 import { mountNameSuggest } from "./name-suggest.mjs?v=20261024-br1";
 
 /**
@@ -190,8 +190,16 @@ export function createAnalyze($) {
       }
     }
 
-    // Cancelled: keep previous graph as-is; lastAnalyzedNames unchanged.
-    if (result.cancelled || signal.aborted) { $.setChartSkeleton(false); return; }
+    // Cancelled with nothing loaded (or a newer run took over): keep the previous graph as-is.
+    // t779u (owner: "When the outfit fetch is canceled, I can see the distribution graph but
+    // not the skill graph"): players already loaded draw like a normal finish; the rest are
+    // listed as skipped ("fetch cancelled") and load on the next Analyze.
+    const wasCancelled = !!(result.cancelled || signal.aborted);
+    if (wasCancelled) {
+      $.setChartSkeleton(false);
+      if (($.activeRun && $.activeRun !== run) || !result.loaded.length) return;
+      result.failed = result.failed.concat(cancelledSkips(clean, result.loaded, result.failed));
+    }
 
     // t351u: chips removed while this run was loading must not come back.
     const nowKeys = new Set($.currentNamesInField().map(slugKey));
@@ -202,6 +210,7 @@ export function createAnalyze($) {
 
     for (const ok of result.loaded) $.failedNames.delete(slugKey(ok.name));
     for (const f of result.failed) {
+      if (f.kind === "cancelled") continue; // not a failure: the chip stays pending
       const key = slugKey(f.name);
       if (key) $.failedNames.set(key, { name: f.name, kind: f.kind, reason: f.reason });
     }
@@ -265,7 +274,7 @@ export function createAnalyze($) {
     } else {
       $.setStatus(notes, notes ? "warn census-note" : "");
     }
-    if (userRun) {
+    if (userRun && !wasCancelled) {
       if (summary) sfx("fail", { force: true });
       else sfx(fresh ? "fresh" : "chime", { force: true });
     }

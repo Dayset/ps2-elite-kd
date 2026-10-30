@@ -2,7 +2,7 @@
  * The Analyze progress bar: percent, creeping between names, and the time estimate learned from earlier runs (#66: moved
  * out of app.js unchanged).
  */
-import { etaLearnLiveMs, estimateRemainingMs, nextEtaDeadline, expectedNameMs, formatEtaLeft } from "./analyze-run.mjs?v=20261023-priv1";
+import { etaLearnLiveMs, estimateRemainingMs, nextEtaDeadline, expectedNameMs, formatEtaLeft } from "./analyze-run.mjs?v=20261030-cxl1";
 import { t as tr } from "./i18n.mjs";
 import { formatClock } from "./app-util.mjs?v=20261027-z79";
 

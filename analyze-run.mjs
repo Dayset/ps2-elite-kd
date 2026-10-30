@@ -13,8 +13,19 @@ export const FAIL_REASONS = {
   "bad-response": "bad response",
   "census-busy": "Census busy/down",
   removed: "removed at the player's request",
+  cancelled: "not loaded, fetch cancelled",
   error: "error",
 };
+
+/**
+ * t779u: after ✕ the names that never loaded, as skipped entries (kind "cancelled"), so the
+ * graph and table draw for everyone already loaded, exactly like a normal finish.
+ */
+export function cancelledSkips(names, loaded, failed = []) {
+  const done = new Set([...(loaded || []), ...(failed || [])].map((x) => String(x.name).toLowerCase()));
+  return (names || []).map((name, idx) => ({ name, idx })).filter(({ name }) => !done.has(String(name).toLowerCase()))
+    .map(({ name, idx }) => ({ name, idx, kind: "cancelled", reason: failureReason("cancelled"), message: "cancelled" }));
+}
 
 /** Kinds that are probably temporary (worth a retry), not a typo. */
 const TRANSIENT_KINDS = new Set(["network", "timeout", "bad-response", "census-busy"]);
@@ -156,7 +167,8 @@ export function summarizeFailures(failed, okCount) {
   } else {
     // 🚫 Removed at the player's request (#61) is its own reason, never a typo.
     const removed = failed.filter((f) => f.kind === "removed").length;
-    const typos = failed.length - transient - removed;
+    const cancelled = failed.filter((f) => f.kind === "cancelled").length; // t779u: ✕, not a typo
+    const typos = failed.length - transient - removed - cancelled;
     const parts = [];
     if (typos) {
       parts.push((removed ? typos > 1 : many)
@@ -164,6 +176,7 @@ export function summarizeFailures(failed, okCount) {
         : tr("fail.whyTypoOne", "Probably misspelled or not a real character."));
     }
     if (transient) parts.push(tr("fail.whyTemp", "Network errors may be temporary — try again."));
+    if (cancelled) parts.push(tr("fail.whyCancelled", "Fetch cancelled: press Analyze to load the rest."));
     why = parts.join(" ");
   }
   const rest = tr("fail.rest", "Showing the rest.");
