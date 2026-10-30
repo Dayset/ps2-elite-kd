@@ -4,7 +4,8 @@
  * keeps the summaries in data/rampage.json, and keeps data/hidden.json in sync:
  *   - a match (not cleared by the owner) is added as "flagged: impossible stats — auto: rampage gate (…evidence…)", kind "flagged";
  *   - an auto entry whose player the owner cleared (reviewed.json "burst": "cleared") is removed (un-hide).
- * Manual hidden.json entries are never touched. Run by the refresh workflow before build-ranks.
+ * Manual hidden.json entries are never touched. Established players (🛡️ carve-out,
+ * outlier-guard.mjs) are never auto-flagged. Run by the refresh workflow before build-ranks.
  * Honu politeness: one request every 6.5 s, ≤ RAMPAGE_MAX_CALLS (default 20) per run, counted in
  * data/honu-usage.json and stopped at its daily cap. A session is re-checked only if its stored kill
  * count grew (session was still running). No network with --offline (sync hidden.json only).
@@ -14,7 +15,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { storedSessions, isBurst } from "../burst-sessions.mjs";
 import { hiddenList } from "../hidden.mjs";
-import { bareName } from "../rank-row.mjs";
+import { bareName, rankRow, METRIC_COLS } from "../rank-row.mjs";
+import { isEstablished } from "../outlier-guard.mjs";
 import { RAMPAGE_RULE, RAMPAGE_REASON_PREFIX, RAMPAGE_REASON_LEGACY, summarizeSessionKills, isRampage, rampageEvidence, rampageCleared, rampageRuleText } from "../rampage-gate.mjs";
 
 const USER_AGENT = "ps2-elite-kd-cache-bot/2.0 (+https://github.com/Dayset/ps2-elite-kd; contact: github.com/Dayset)";
@@ -44,12 +46,12 @@ export function gateCandidates(dataDir, rule = RAMPAGE_RULE) {
 }
 
 /**
- * Pure: sync hidden.json players with the gate results. Returns { players, added, removed }.
+ * Pure: sync hidden.json players with the gate results. Returns { players, added, removed, skippedEstablished }.
  * sessions: rampage.json sessions; reviewed: reviewed.json; today: "YYYY-MM-DD".
  */
-export function applyRampage(hiddenJson, sessions, reviewed, today) {
+export function applyRampage(hiddenJson, sessions, reviewed, today, established = new Set()) {
   const players = { ...((hiddenJson && hiddenJson.players) || {}) };
-  const added = [], removed = [];
+  const added = [], removed = [], skippedEstablished = [];
   const bySlug = new Map();
   for (const s of Object.values(sessions || {})) if (s && s.match && !bySlug.has(s.slug)) bySlug.set(s.slug, s);
   // Un-hide: auto entries of players the owner cleared.
@@ -61,13 +63,14 @@ export function applyRampage(hiddenJson, sessions, reviewed, today) {
   const hidden = hiddenList({ players });
   for (const [slug, s] of bySlug) {
     if (rampageCleared(reviewed, slug)) continue;
+    if (established.has(slug)) { skippedEstablished.push(slug); continue; } // 🛡️ established-player carve-out (owner 2026-10-30)
     if (hidden.match({ slug, name: s.name, cid: s.cid })) continue; // already hidden (owner or earlier run)
     const key = bareName(s.name) || slug;
     if (players[key]) continue;
     players[key] = { reason: `${RAMPAGE_REASON_PREFIX} (${rampageEvidence(s)})`, kind: "flagged", at: today };
     added.push(key);
   }
-  return { players, added, removed };
+  return { players, added, removed, skippedEstablished };
 }
 
 async function main() {
@@ -84,6 +87,29 @@ async function main() {
   if (!usage || usage.day !== day) usage = { ...(usage || {}), day, calls: 0, forensics: 0 };
   const cap = Number(process.env.HONU_DAILY_CAP) > 0 ? Number(process.env.HONU_DAILY_CAP) : usage.cap || 10000;
   const cands = gateCandidates(dataDir);
+  // 🛡️ Established-player carve-out (owner 2026-10-30): never auto-flag an established player.
+  const established = new Set();
+  {
+    const index = readJson(path.join(dataDir, "index.json"), { players: [] });
+    const fileBySlug = new Map();
+    for (const e of index.players || []) fileBySlug.set(e.slug || path.basename(e.file, ".json"), e.file);
+    for (const slug of new Set(cands.map((c) => c.slug))) {
+      const file = fileBySlug.get(slug);
+      if (!file) continue;
+      const raw = readJson(path.join(dataDir, file));
+      if (!raw) continue;
+      const pl = raw.player || raw;
+      const xp = readJson(path.join(dataDir, "xp", `${slug}.json`));
+      let ekpm = null;
+      try {
+        const row = rankRow(raw, { slug, savedAt: raw.savedAt });
+        if (row) ekpm = row[4 + METRIC_COLS.indexOf("ekpm")];
+      } catch { /* not established on failure */ }
+      const t = pl.times || {};
+      const spanDays = Number.isFinite(t.created) && Number.isFinite(t.last) ? (t.last - t.created) / 86400 : null;
+      if (isEstablished({ spanDays, ekpm, sessions: Object.keys(storedSessions(pl.assists, xp)).length })) established.add(slug);
+    }
+  }
   const todo = cands.filter((c) => { const o = rp.sessions[c.session]; return !o || o.error || (o.storedKills || 0) < c.kills; });
   let calls = 0;
   for (const c of todo) {
@@ -111,11 +137,12 @@ async function main() {
   if (calls) fs.writeFileSync(usagePath, JSON.stringify(usage) + "\n");
   const hiddenPath = path.join(dataDir, "hidden.json");
   const hiddenJson = readJson(hiddenPath, { players: {} });
-  const { players, added, removed } = applyRampage(hiddenJson, rp.sessions, readJson(path.join(dataDir, "reviewed.json")), day);
+  const { players, added, removed, skippedEstablished } = applyRampage(hiddenJson, rp.sessions, readJson(path.join(dataDir, "reviewed.json")), day, established);
   if (added.length || removed.length) {
     fs.writeFileSync(hiddenPath, asciiJson({ ...hiddenJson, players }));
     console.log(`rampage gate: hidden +${added.length} (${added.join(", ")}) −${removed.length} (${removed.join(", ")})`);
   }
+  if (skippedEstablished.length) console.log(`rampage gate: 🛡️ carve-out skipped ${skippedEstablished.length} (${skippedEstablished.join(", ")})`);
   console.log(`rampage gate: ${cands.length} candidate session(s), ${calls} checked now, ${rp.pending} pending`);
 }
 

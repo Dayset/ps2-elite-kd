@@ -8,7 +8,8 @@
  *   - robust z = (v − median) / (1.4826 × MAD) beyond ±Z, and
  *   - it sits past p99 + K × (p99 − median)   (or p01 − K × (median − p01)).
  * Each outlier is "explained" when the player is already in the 🚩 bin, has a 🌾
- * padding or † adjusted entry, or is reviewed in KNOWN_EXTREMES; anything else is a warning.
+ * padding or † adjusted entry, is reviewed in KNOWN_EXTREMES, or is 🛡️ established
+ * (CARVE_OUT below); anything else is a warning.
  * Bin routing (bins.mjs classifyBins, user rule t280u): an outlier is a 📉 chart
  * anomaly; a player with only chart issues stays in 📉, a player who also has a
  * 🚩 pattern is listed in 🚩 with a cross-reference to this 📉 entry.
@@ -21,6 +22,27 @@ import { classifyBins } from "./bins.mjs?v=20261010-sav1";
 import { SESSION_LABELS } from "./session-stats.mjs?v=20261023-agap1";
 
 export const GUARD_RULE = Object.freeze({ Z: 6, SPAN_K: 3, MIN_N: 50 });
+
+/**
+ * 🛡️ Established-player carve-out (owner 2026-10-30): an automatic flag or
+ * review listing is skipped when the player is established — all three legs
+ * required, one leg alone never skips anything. Bars set by the measured
+ * separation between auto-flagged players (spans ≤ 0.64d, ≤ 2 sessions,
+ * ekpm ≤ 0.56) and owner-dismissed top performers (spans ≥ 1154d, ≥ 6 sessions,
+ * ekpm ≥ 0.84); re-check them when the next dismissal or flag lands.
+ * Never a trigger: fresh or soft-opponent play alone never flags anyone.
+ */
+export const CARVE_OUT = Object.freeze({ MIN_SPAN_DAYS: 365, MIN_EKPM: 0.75, MIN_SESSIONS: 3 });
+
+/** Pure: spanDays/ekpm/sessions must all clear their bars (null/NaN never passes). */
+export function isEstablished({ spanDays, ekpm, sessions } = {}) {
+  return Number.isFinite(spanDays) && spanDays >= CARVE_OUT.MIN_SPAN_DAYS
+    && Number.isFinite(ekpm) && ekpm >= CARVE_OUT.MIN_EKPM
+    && Number.isFinite(sessions) && sessions >= CARVE_OUT.MIN_SESSIONS;
+}
+
+/** Build-log reason for a carve-out-explained outlier row. */
+export const carveOutReason = () => `🛡️ Established player (account ≥ 1 year, eKPM ≥ ${CARVE_OUT.MIN_EKPM}, ≥ ${CARVE_OUT.MIN_SESSIONS} stored sessions) — auto-accepted, not listed`;
 
 /**
  * Reviewed real extremes (slug → why). Real data, not a formula gap; still shown.
@@ -87,6 +109,7 @@ function outlierReason(p, known) {
   const b = classifyBins({ patterns: p.patterns || [], outlier: true });
   if (b.red.length) return "Also in 🚩 red flags (" + b.red.join(", ") + "), listed there";
   if (known[p.slug]) return known[p.slug];
+  if (p.established) return carveOutReason();
   if (b.chart.includes("padding")) return "In 📉 chart anomalies only (🌾 stat padding)";
   if (b.chart.includes("adjusted")) return "In 📉 chart anomalies only († adjusted — needs review)";
   return "";
@@ -115,7 +138,7 @@ export function groupOutliers(items) {
 }
 
 /**
- * players: [{ slug, name, flagged: bool, confirmedCheater?: bool, values: { id: number|null } }]
+ * players: [{ slug, name, flagged: bool, confirmedCheater?: bool, established?: bool, values: { id: number|null } }]
  * confirmedCheater players count toward the bounds but are omitted from items.
  * → { bounds: { id: … }, items: [{ slug, name, id, value, bound, z, side, explained, reason }] }
  */

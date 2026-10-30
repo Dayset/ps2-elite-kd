@@ -169,7 +169,7 @@
       <details class="st-card st-sec" id="cardRampage">
         <summary><h2>🚨 Rampage gate <span id="rampageCount" class="st-count">…</span></h2></summary>
         <p class="st-note">Burst sessions that are blatant hipfire headshot spraying. A match is flagged (impossible stats) and hidden from Rankings automatically: a pattern match, not proof.</p>
-        <details class="st-info"><summary>ⓘ How it works</summary><div class="st-rule" id="rampageRule">A 💥 burst session with ≥ 50 infantry kills, hipfire ≥ 90% and headshots ≥ 55% of them (Honu kill list, checked once per session on the regular refresh) = flagged and hidden from Rankings (🙈 hide list) with the reason “flagged: impossible stats — auto: rampage gate” and the evidence. Owner override: data/reviewed.json "burst": "cleared" un-hides the player and removes them from this list.</div></details>
+        <details class="st-info"><summary>ⓘ How it works</summary><div class="st-rule" id="rampageRule">A 💥 burst session with ≥ 50 infantry kills, hipfire ≥ 90% and headshots ≥ 55% of them (Honu kill list, checked once per session on the regular refresh) = flagged and hidden from Rankings (🙈 hide list) with the reason “flagged: impossible stats — auto: rampage gate” and the evidence. Owner override: data/reviewed.json "burst": "cleared" un-hides the player and removes them from this list. 🛡️ Established players (account ≥ 1 year, opponents' mean KPM ≥ 0.75, ≥ 3 stored sessions) are never auto-flagged.</div></details>
         <div id="rampage" class="st-dim">Loading…</div>
       </details>
 
@@ -253,7 +253,7 @@
         <details class="st-sub-sec" id="secGuard">
           <summary><h3>🧪 Outlier guard <span id="guardCount" class="st-count">…</span></h3></summary>
           <p class="st-note">Values far outside everyone else, checked every refresh. Only unexplained ones need a look.</p>
-          <details class="st-info"><summary>ⓘ How it works</summary><div class="st-rule">Run by scripts/build-ranks.mjs → outlier-guard.mjs on the numbers the site shows, one row per player. Unexplained may mean a formula gap (like the old 🦁 Brave 6094). Explained = also a 🚩 pattern, a 🌾 or † entry, or reviewed by hand: auto-accepted and folded away.</div><div id="guardRule" class="st-rule"></div></details>
+          <details class="st-info"><summary>ⓘ How it works</summary><div class="st-rule">Run by scripts/build-ranks.mjs → outlier-guard.mjs on the numbers the site shows, one row per player. Unexplained may mean a formula gap (like the old 🦁 Brave 6094). Explained = also a 🚩 pattern, a 🌾 or † entry, reviewed by hand, or 🛡️ established (account ≥ 1 year, eKPM ≥ 0.75, ≥ 3 stored sessions): auto-accepted and folded away.</div><div id="guardRule" class="st-rule"></div></details>
           <div id="guard" class="st-dim">Loading…</div>
         </details>
         <details class="st-sub-sec" id="secLiveReview">
@@ -701,7 +701,7 @@
        same metrics as the main tables (player-metrics.mjs). Leads for review, not proof. -->
   <script type="module">
     import { stalkerRuleText, reviewRuleText, anomalyRuleText, paddingRuleText } from "./red-flags.mjs?v=20261023-agap1";
-    import { groupOutliers } from "./outlier-guard.mjs?v=20261026-r10b";
+    import { groupOutliers } from "./outlier-guard.mjs?v=20261030-carve1";
     import { classifyBins, CHART_LABELS } from "./bins.mjs?v=20261010-sav1";
     import { forensicsRuleText } from "./session-forensics.mjs?v=20261010-sav1";
     import { reviewDecision, CLEARING_DECISIONS, PADDING_BORDERLINE_SHARE, ADJUSTED_BORDERLINE_SHARE } from "./padding.mjs?v=20261023-short1";

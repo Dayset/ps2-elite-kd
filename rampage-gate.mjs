@@ -14,13 +14,16 @@
  * Source: Honu GET /api/kills/session/{id} (one call per burst session, ever; summaries are kept
  * in data/rampage.json). DOM-free; used by scripts/rampage-gate.mjs and scripts/build-ranks.mjs.
  * Human override wins: data/reviewed.json "burst": "cleared" (or decision "cleared") un-hides.
+ * 🛡️ Established-player carve-out (owner 2026-10-30): established players are never auto-flagged.
  */
+import { CARVE_OUT } from "./outlier-guard.mjs";
+
 export const RAMPAGE_RULE = Object.freeze({ MIN_KILLS: 50, HIP: 0.9, HSR: 0.55 });
 export const RAMPAGE_REASON_PREFIX = "flagged: impossible stats — auto: rampage gate";
 /** Earlier wording of the same auto entries (before #61). */
 export const RAMPAGE_REASON_LEGACY = "confirmed cheater — auto: rampage gate";
 export const rampageRuleText = (r = RAMPAGE_RULE) =>
-  `💥 burst session (KPM ≥ 5, ≥ 15 kills, ≥ 2 min) with ≥ ${r.MIN_KILLS} infantry kills, hipfire ≥ ${Math.round(r.HIP * 100)}% and headshots ≥ ${Math.round(r.HSR * 100)}% of them`;
+  `💥 burst session (KPM ≥ 5, ≥ 15 kills, ≥ 2 min) with ≥ ${r.MIN_KILLS} infantry kills, hipfire ≥ ${Math.round(r.HIP * 100)}% and headshots ≥ ${Math.round(r.HSR * 100)}% of them; 🛡️ established players (account ≥ 1 year, eKPM ≥ ${CARVE_OUT.MIN_EKPM}, ≥ ${CARVE_OUT.MIN_SESSIONS} stored sessions) are never auto-flagged`;
 
 /** Honu /api/kills/session/{id} rows → { kills, inf, hs, hip, ads } for the session's character. */
 export function summarizeSessionKills(rows, cid) {

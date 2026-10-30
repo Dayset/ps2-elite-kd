@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { metricBounds, findOutliers, guardStatus, groupOutliers, GUARD_RULE, KNOWN_EXTREMES, METRIC_LABELS } from "../outlier-guard.mjs";
-import { buildRanksWithGuard, METRIC_COLS } from "../scripts/build-ranks.mjs";
+import { metricBounds, findOutliers, guardStatus, groupOutliers, GUARD_RULE, KNOWN_EXTREMES, METRIC_LABELS, CARVE_OUT, isEstablished } from "../outlier-guard.mjs";
+import { buildRanksWithGuard, forensicsGuardItems, METRIC_COLS } from "../scripts/build-ranks.mjs";
 import { normalizePlayer, playerMetrics } from "../player-metrics.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -48,6 +48,39 @@ describe("outlier guard", () => {
     assert.equal(st.unexplained, 0);
     assert.equal(st.explained, 2);
     assert.match(st.rule, new RegExp(`±${GUARD_RULE.Z}`));
+  });
+
+  it("🛡️ carve-out: all three legs required, boundaries inclusive, null never passes", () => {
+    assert.ok(isEstablished({ spanDays: CARVE_OUT.MIN_SPAN_DAYS, ekpm: CARVE_OUT.MIN_EKPM, sessions: CARVE_OUT.MIN_SESSIONS }));
+    assert.ok(isEstablished({ spanDays: 3000, ekpm: 0.9, sessions: 18 }));
+    assert.ok(!isEstablished({ spanDays: CARVE_OUT.MIN_SPAN_DAYS - 1, ekpm: 0.9, sessions: 18 }));
+    assert.ok(!isEstablished({ spanDays: 3000, ekpm: 0.74, sessions: 18 }));
+    assert.ok(!isEstablished({ spanDays: 3000, ekpm: 0.9, sessions: CARVE_OUT.MIN_SESSIONS - 1 }));
+    assert.ok(!isEstablished({ spanDays: null, ekpm: 0.9, sessions: 18 }));
+    assert.ok(!isEstablished({}));
+  });
+
+  it("🛡️ carve-out: an established player's outlier is explained, a fresh one is not", () => {
+    const r = findOutliers(population([
+      { slug: "vet", name: "Vet", flagged: false, established: true, values: { pvs: 6094 } },
+      { slug: "new", name: "New", flagged: false, established: false, values: { pvs: 6094 } },
+    ]), ["pvs"], { known: {} });
+    const by = Object.fromEntries(r.items.map((o) => [o.slug, o]));
+    assert.equal(by.vet.explained, true);
+    assert.match(by.vet.reason, /Established player/);
+    assert.equal(by.new.explained, false);
+  });
+
+  it("🛡️ carve-out: an established player's forensics row is explained too", () => {
+    const fx = { odd: true, worst: { peak60s: 50, oddities: ["odd"], sessionId: "1" } };
+    const items = forensicsGuardItems([
+      { slug: "vet", name: "Vet", patterns: [], established: true, forensics: fx },
+      { slug: "new", name: "New", patterns: [], established: false, forensics: fx },
+    ]);
+    const by = Object.fromEntries(items.map((o) => [o.slug, o]));
+    assert.equal(by.vet.explained, true);
+    assert.match(by.vet.reason, /Established player/);
+    assert.equal(by.new.explained, false);
   });
 
   it("groups hits by player: one row each, all metrics inline, sorted unexplained first then by count; counts are players", () => {
