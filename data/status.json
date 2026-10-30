@@ -37,7 +37,7 @@
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-30T07:08:07.498Z",
+    "checkedAt": "2026-10-30T07:29:28.730Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 22,
     "explained": 38,
@@ -1925,7 +1925,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-30T07:08:18.184Z",
+    "checkedAt": "2026-10-30T07:29:40.292Z",
     "red": 61,
     "padding": 45,
     "adjusted": 22,
@@ -1936,7 +1936,7 @@
     "forensics": 33
   },
   "sessionStats": {
-    "checkedAt": "2026-10-30T07:08:07.574Z",
+    "checkedAt": "2026-10-30T07:29:28.788Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -4540,7 +4540,7 @@
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-30T07:08:07.622Z",
+    "checkedAt": "2026-10-30T07:29:28.828Z",
     "candidates": [
       "chocoiatevs",
       "nebelhexe",
@@ -35821,7 +35821,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-30T07:08:07.639Z",
+    "checkedAt": "2026-10-30T07:29:28.837Z",
     "count": 415,
     "players": [
       {
@@ -39270,7 +39270,7 @@
     ]
   },
   "infantry": {
-    "checkedAt": "2026-10-30T07:08:20.353Z",
+    "checkedAt": "2026-10-30T07:29:41.957Z",
     "players": 16115,
     "counts": {
       "infantry": 10441,
@@ -39327,7 +39327,7 @@
       }
     },
     "tagMin": 20,
-    "checkedAt": "2026-10-30T07:08:15.707Z",
+    "checkedAt": "2026-10-30T07:29:38.326Z",
     "coverage": {
       "players": 16082,
       "withSessions": 15845,
@@ -39638,7 +39638,7 @@
   },
   "burst": {
     "rule": "KPM ≥ 5 and ≥ 15 kills in ≥ 2 min (one stored session, no 10-minute floor); skipped when within the player's own normal (≥ 5 other sessions of ≥ 10 min, ≤ 2× their median KPM, career K/D < 10)",
-    "checkedAt": "2026-10-30T07:08:23.326Z",
+    "checkedAt": "2026-10-30T07:29:44.214Z",
     "sessions": 19,
     "ownNormalSkipped": 0,
     "flaggedPlayers": 1,
@@ -39925,7 +39925,7 @@
     ]
   },
   "padderPenalty": {
-    "checkedAt": "2026-10-30T07:08:07.674Z",
+    "checkedAt": "2026-10-30T07:29:28.865Z",
     "ranked": 16007,
     "penalty": 0.1,
     "ref": 610.6,
@@ -40166,7 +40166,7 @@
     ]
   },
   "vehicleCut": {
-    "checkedAt": "2026-10-30T07:08:07.735Z",
+    "checkedAt": "2026-10-30T07:29:28.908Z",
     "ranked": 16007,
     "cut": 9513,
     "buckets": {
@@ -42769,7 +42769,7 @@
     ]
   },
   "hut": {
-    "builtAt": "2026-10-30T07:08:06.807Z",
+    "builtAt": "2026-10-30T07:29:28.171Z",
     "cuts": {
       "actMedian": 0.2647,
       "actMult": 1.333,
@@ -42805,6 +42805,7 @@
       }
     },
     "marked": 240,
+    "hsSwapped": 20,
     "dieHardBefore": 1346,
     "dieHardAfter": 1210,
     "rule": "🛖 safe-spot damping, gradual, all cuts from this build's players. a = (🏃 Activity ÷ cut)², cut = median × (1.333 + (8 − 1.333) × ⚔️ iVi percentile ÷ 100 × e), a straight line, where e = experience 0 → 1 on estimated play time (lifetime kills ÷ lifetime KPM) from p5 to p25 of this build's players (new accounts stay near ×1.333), so weaker players get a lower cut and the top of the board up to ×8 (Activity at or above the cut → no change). w = product of three 0–1 ramps: deaths/min (KPM ÷ K/D) 1 at p10 → 0 at p20; 🪖 infantry 0 at 75% → 1 at 85%; accuracy 1 at the median → 0 at p60. A positive 🔀 Diff × (1 − w × (1 − a)), rounded; a negative Diff is untouched. 🛖 next to the name only when Diff drops by 10+ points. Owner override: \"hut\": \"cleared\" on the data/reviewed.json entry (no 🛖, no damping).",
@@ -42827,7 +42828,8 @@
         "wInf": 1,
         "wAcc": 1,
         "diff": 21,
-        "marked": true
+        "marked": true,
+        "hs": true
       },
       {
         "name": "contruk",
@@ -42867,7 +42869,8 @@
         "wInf": 1,
         "wAcc": 1,
         "diff": 16,
-        "marked": true
+        "marked": true,
+        "hs": true
       },
       {
         "name": "GingerBabyEUNC",
@@ -42887,7 +42890,8 @@
         "wInf": 1,
         "wAcc": 1,
         "diff": 10,
-        "marked": true
+        "marked": true,
+        "hs": true
       },
       {
         "name": "GingerBabyEU",
@@ -42907,7 +42911,8 @@
         "wInf": 1,
         "wAcc": 1,
         "diff": 11,
-        "marked": true
+        "marked": true,
+        "hs": true
       },
       {
         "name": "Easter999Bunny",
@@ -42987,7 +42992,8 @@
         "wInf": 1,
         "wAcc": 1,
         "diff": 11,
-        "marked": true
+        "marked": true,
+        "hs": true
       },
       {
         "name": "JonaNSO",
@@ -43167,7 +43173,8 @@
         "wInf": 0.86,
         "wAcc": 1,
         "diff": 13,
-        "marked": true
+        "marked": true,
+        "hs": true
       },
       {
         "name": "Mindlessdoomer",
@@ -43347,7 +43354,8 @@
         "wInf": 0.96,
         "wAcc": 1,
         "diff": 10,
-        "marked": true
+        "marked": true,
+        "hs": true
       },
       {
         "name": "MOL0TILKA",
@@ -43607,7 +43615,8 @@
         "wInf": 1,
         "wAcc": 1,
         "diff": 9,
-        "marked": true
+        "marked": true,
+        "hs": true
       },
       {
         "name": "ARARAGl",
@@ -43747,7 +43756,8 @@
         "wInf": 1,
         "wAcc": 1,
         "diff": 19,
-        "marked": true
+        "marked": true,
+        "hs": true
       },
       {
         "name": "luchuanma",
@@ -43807,7 +43817,8 @@
         "wInf": 0.81,
         "wAcc": 1,
         "diff": 10,
-        "marked": true
+        "marked": true,
+        "hs": true
       },
       {
         "name": "lotall",
@@ -44167,7 +44178,8 @@
         "wInf": 1,
         "wAcc": 1,
         "diff": 1,
-        "marked": true
+        "marked": true,
+        "hs": true
       },
       {
         "name": "MANMIMNAM",
@@ -44247,7 +44259,8 @@
         "wInf": 1,
         "wAcc": 1,
         "diff": 2,
-        "marked": true
+        "marked": true,
+        "hs": true
       },
       {
         "name": "Mastermuffel02",
@@ -44267,7 +44280,8 @@
         "wInf": 0.63,
         "wAcc": 1,
         "diff": 17,
-        "marked": true
+        "marked": true,
+        "hs": true
       },
       {
         "name": "Xiaolu0",
@@ -44347,7 +44361,8 @@
         "wInf": 1,
         "wAcc": 0.643,
         "diff": 29,
-        "marked": true
+        "marked": true,
+        "hs": true
       },
       {
         "name": "Combustion",
@@ -44527,7 +44542,8 @@
         "wInf": 1,
         "wAcc": 1,
         "diff": 23,
-        "marked": true
+        "marked": true,
+        "hs": true
       },
       {
         "name": "BismarckTR",
@@ -45287,7 +45303,8 @@
         "wInf": 1,
         "wAcc": 1,
         "diff": 2,
-        "marked": true
+        "marked": true,
+        "hs": true
       },
       {
         "name": "ThePhoenixBearer",
@@ -45327,7 +45344,8 @@
         "wInf": 1,
         "wAcc": 1,
         "diff": 9,
-        "marked": true
+        "marked": true,
+        "hs": true
       },
       {
         "name": "Wightboi",
@@ -46387,7 +46405,8 @@
         "wInf": 1,
         "wAcc": 1,
         "diff": 2,
-        "marked": true
+        "marked": true,
+        "hs": true
       },
       {
         "name": "OmegaStarRed",
@@ -46827,7 +46846,8 @@
         "wInf": 1,
         "wAcc": 1,
         "diff": 0,
-        "marked": true
+        "marked": true,
+        "hs": true
       },
       {
         "name": "xNineFingersx",
@@ -47287,7 +47307,8 @@
         "wInf": 0.94,
         "wAcc": 0.957,
         "diff": 4,
-        "marked": true
+        "marked": true,
+        "hs": true
       },
       {
         "name": "Cosmo997",
@@ -47613,7 +47634,7 @@
     "cleared": []
   },
   "vehDiff": {
-    "builtAt": "2026-10-30T07:08:06.899Z",
+    "builtAt": "2026-10-30T07:29:28.255Z",
     "start": 14.9,
     "damped": 3536,
     "dieHardHut": 1210,
@@ -86520,7 +86541,7 @@
     "cleared": []
   },
   "zergRevive": {
-    "builtAt": "2026-10-30T07:08:07.082Z",
+    "builtAt": "2026-10-30T07:29:28.411Z",
     "zergScored": 7857,
     "measured": 1398,
     "measuredZerg": 1228,
@@ -91152,7 +91173,7 @@
     "cleared": []
   },
   "newbieDiff": {
-    "builtAt": "2026-10-30T07:08:07.017Z",
+    "builtAt": "2026-10-30T07:29:28.349Z",
     "loH": 5.5,
     "hiH": 345.7,
     "n": 16007,
@@ -144217,7 +144238,7 @@
     "cleared": []
   },
   "assistGap": {
-    "checkedAt": "2026-10-30T07:08:15.710Z",
+    "checkedAt": "2026-10-30T07:29:38.330Z",
     "start": "2026-04-01T13:00:00.000Z",
     "end": "2026-05-07T05:00:00.000Z",
     "url": "https://www.planetside2.com/patch-notes/may-6-hotfix-2026",
@@ -145857,7 +145878,7 @@
     ]
   },
   "tractorMark": {
-    "checkedAt": "2026-10-30T07:08:07.110Z",
+    "checkedAt": "2026-10-30T07:29:28.442Z",
     "rule": "🚜 = infantry % < p25 (71.9%) and (vehicle repair/min ≥ p75 (0.928) or vehicle kills/min ≥ p75 (0.214) of the 1641 players with 2+ h of XP detail), or infantry % < p2 (21.7%)",
     "cuts": {
       "cut": 71.9,
