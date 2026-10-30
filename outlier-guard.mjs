@@ -46,6 +46,10 @@ export const KNOWN_EXTREMES = Object.freeze({
   searchosirisonepvp: "Owner reviewed 2026-10-25 (#10, t640): regular player; fell through the terrain, survived and kept killing, which tripped the checks",
   alandwhaletr: "Owner dismissed 2026-10-26 (#10, t703): 🧪 Session K/D 38.0, no catchable marks so far; the owner keeps watching this account by hand (data still collected)",
   fright1vs: "Reviewed 2026-10-18 (#10): 🎈 inflation 19.2 = lifetime KD 1.82 vs 121 kills / 992 deaths against 200 opponents; real data, big sample, the public board flatters",
+  // Owner dismissals 2026-10-30 (reviewed.json outlier:dismissed to match): top performers, no mark, no stat change.
+  oloyxbjtr: "Owner dismissed 2026-10-30: top performer (adjs 1863, act 7.59, KD 3.70 at 2.59 KPM)",
+  wopocc: "Owner dismissed 2026-10-30: no tracker data on record; dismissed from the build-log review list",
+  printmepssr: "Owner dismissed 2026-10-30: top performer (adjs 1235, KD 2.76 at 1.29 KPM)",
 });
 
 const fin = (v) => typeof v === "number" && Number.isFinite(v);
