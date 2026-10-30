@@ -37,7 +37,7 @@ import {
 import { formatClock, fmtNum, slugKey, bareName, parseNames, namesEqualIgnoreCase, namesSetKey, niceLinTicks, niceNum, niceLogTicks, formatTick, escapeHtml, makeAbortError, isAbortError, checkAborted, readJsonLS, writeJsonLS } from "./app-util.mjs?v=20261027-z79";
 import { createAnalyze } from "./analyze.mjs?v=20261030-of1";
 import { createShareAdd } from "./share-add.mjs?v=20261027-z79";
-import { createSharedIndex } from "./shared-index.mjs?v=20261029-maxage2";
+import { createSharedIndex } from "./shared-index.mjs?v=20261030-sketch1";
 import { createNamesField } from "./names-field.mjs?v=20261030-of2";
 import { createOutfitRoster, canTakeName as canTakeNameRule, OUTFIT_MAX_NAMES } from "./outfit-tags.mjs?v=20261030-of2";
 import { createStatsTable } from "./stats-table.mjs?v=20261029-carousel1";
@@ -1055,20 +1055,22 @@ import {
     });
   }
 
-  /* Remove ranks (Dayset 2026-10-22): one switch by the Rankings filter and
-   * the same switch inside ⚙️ Settings — the pair stays in sync, the choice
-   * is saved, and Rankings hears the same "change" and re-renders flat. */
+  /* Ranks switch (Dayset 2026-10-30): the switch reads "Ranks" and ON means
+   * the tier separators SHOW. The stored flag is still hide-based ("1" =
+   * hidden, absent = hidden, the 2026-10-22 default view), so the checkbox
+   * shows its inverse; Rankings hears the same "change" and re-renders. The
+   * default view is unchanged (flat) — the switch just rests OFF now. */
   {
     const pair = [els.removeRanksToggle, els.removeRanksToggleSettings].filter(Boolean);
     if (pair.length) {
-      let on = true; // default ON (Dayset 2026-10-22); only a saved "0" is off
-      try { on = localStorage.getItem(LS_REMOVE_RANKS) !== "0"; } catch (_) { /* private mode */ }
-      pair.forEach((el) => { el.checked = on; });
+      let hide = true; // default: hidden (flat), as since 2026-10-22
+      try { hide = localStorage.getItem(LS_REMOVE_RANKS) !== "0"; } catch (_) { /* private mode */ }
+      pair.forEach((el) => { el.checked = !hide; });
       pair.forEach((el) => el.addEventListener("change", () => {
-        const v = !!el.checked;
-        pair.forEach((o) => { o.checked = v; });
+        const show = !!el.checked;
+        pair.forEach((o) => { o.checked = show; });
         try {
-          localStorage.setItem(LS_REMOVE_RANKS, v ? "1" : "0");
+          localStorage.setItem(LS_REMOVE_RANKS, show ? "0" : "1");
         } catch (_) {
           /* private mode: Rankings keeps its own in-memory choice */
         }
@@ -1132,12 +1134,19 @@ import {
       if (!btn) return;
       let timer = 0, pressed = false;
       const stop = () => { clearTimeout(timer); timer = 0; };
+      // Dayset 2026-10-30: + at the ceiling loops to 1 (the min). − at 1
+      // already wraps to the ceiling via clampAge (0 = ceiling).
+      const step = () => {
+        const cur = shown();
+        if (dir > 0 && cur >= ageCeil()) return 1;
+        return cur + dir;
+      };
       btn.addEventListener("pointerdown", (e) => {
         e.preventDefault();
         pressed = true;
-        applyAge(shown() + dir, true);
+        applyAge(step(), true);
         let n = 0;
-        const tick = () => { applyAge(shown() + dir, true); n += 1; timer = setTimeout(tick, n < 10 ? 80 : 30); };
+        const tick = () => { applyAge(step(), true); n += 1; timer = setTimeout(tick, n < 10 ? 80 : 30); };
         stop();
         timer = setTimeout(tick, 400);
       });
@@ -1145,7 +1154,7 @@ import {
       btn.addEventListener("contextmenu", (e) => e.preventDefault());
       btn.addEventListener("click", () => {
         if (pressed) { pressed = false; return; }
-        applyAge(shown() + dir, true);
+        applyAge(step(), true);
       });
     };
     holdStep(els.maxAgeMinus, -1);

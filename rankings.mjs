@@ -1489,11 +1489,12 @@ export function initRankings(host) {
     render();
   });
 
-  // Remove ranks: both switches (filter row + ⚙️ Settings) re-render flat.
+  // Ranks switch (2026-10-30 flip): ON shows the tier separators; the stored
+  // flag is hide-based, so the checkbox reads inverted here too.
   for (const id of ["removeRanksToggle", "removeRanksToggleSettings"]) {
     const el = $(id);
     if (el) el.addEventListener("change", () => {
-      removeRanks = !!el.checked;
+      removeRanks = !el.checked;
       render();
     });
   }
@@ -1546,22 +1547,20 @@ export function initRankings(host) {
     syncLocate();
   }
   /*
-   * Locate player (owner t648u): a switch next to Hide ranks, shown only while exactly
-   * ONE name is entered (same rule as 👤). When on, every sort (and turning it on) scrolls
-   * the table box so that player's row sits in the middle, neighbours above and below,
-   * and flashes it (the chart jump's rk-flash). Instant scroll, no focus (no keyboard).
-   * Not in the table (filtered out / not a ranked player): nothing happens.
+   * Find player button (owner 2026-10-30, replaces the t648u sticky switch):
+   * shown only while exactly ONE name is entered (same rule as 👤). A tap
+   * scrolls the table box so that player's row sits in the middle, neighbours
+   * above and below, and flashes it (the chart jump's rk-flash). Instant
+   * scroll, no focus (no keyboard). Not in the table (filtered out / not a
+   * ranked player): nothing happens. locateEl stays null, so locateOn() is
+   * false and the old auto paths (relocateSoon, after-sort) safely no-op.
    */
-  const LS_LOCATE = "ps2-elite-kd-locate";
   const locateEl = $("locateToggle");
-  if (locateEl) {
-    try { locateEl.checked = localStorage.getItem(LS_LOCATE) === "1"; } catch {}
-    locateEl.addEventListener("change", () => {
-      try { localStorage.setItem(LS_LOCATE, locateEl.checked ? "1" : "0"); } catch {}
-      locatedFor = "";
-      if (locateEl.checked) locatePlayer();
-    });
-  }
+  const findBtn = $("findPlayerBtn");
+  if (findBtn) findBtn.addEventListener("click", () => {
+    locatedFor = "";
+    locatePlayer(true);
+  });
   /** t655u: the single name changed / rows (re)built → locate it (next frame, after the render). */
   function relocateSoon() {
     const q = locateOn() && picked.size === 1 ? [...picked.keys()][0] : "";
@@ -1578,8 +1577,8 @@ export function initRankings(host) {
     const w = $("locateWrap");
     return !!(locateEl && locateEl.checked && w && !w.hidden);
   }
-  function locatePlayer() {
-    if (!locateOn() || !renderState || picked.size !== 1) return;
+  function locatePlayer(manual = false) {
+    if ((!manual && !locateOn()) || !renderState || picked.size !== 1) return;
     const sec = $("ranksTableSection");
     if (sec && !sec.open) return;
     const q = [...picked.keys()][0];

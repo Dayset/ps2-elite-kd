@@ -202,26 +202,29 @@ describe("Skill graph section: no placeholder, collapsible, pops on analyze (own
     assert.match(css, /\.rk-skeleton \{ height: calc\(100vh - 13rem\); \}/);
   });
 
-  it("Remove ranks: one switch by the filter + one in Settings, tiers gated off (owner 2026-10-22)", () => {
+  it("Ranks switch: ON shows tiers (owner 2026-10-30 flip); stored flag stays hide-based", () => {
     const index = read("index.html");
     const app = appSource();
     const rk = read("rankings.mjs");
     assert.match(index, /id="removeRanksToggle"/);
     assert.match(index, /id="removeRanksToggleSettings"/);
-    assert.match(index, /data-i18n="ranks\.removeRanks"/);
-    assert.match(read("i18n/en.json"), /"ranks\.removeRanks": "Hide ranks"/); // renamed "Remove" → "Hide" (owner t648u)
+    assert.match(index, /data-i18n="ranks\.showRanks"/);
+    assert.match(read("i18n/en.json"), /"ranks\.showRanks": "Ranks"/); // renamed "Hide ranks" → "Ranks", logic flipped
+    assert.match(read("i18n/en.json"), /"ranks\.removeRanks": "Hide ranks"/); // old key kept, unused
     // app.js owns the saved value and keeps the pair in sync.
     assert.match(app, /LS_REMOVE_RANKS = "ps2-elite-kd-remove-ranks"/);
     assert.match(app, /removeRanksToggleSettings/);
-    // Default ON (owner 2026-10-22): only a saved "0" turns it off.
+    // Stored default still hide (only a saved "0" shows); the checkbox shows its inverse.
     assert.match(rk, /localStorage\.getItem\(LS_REMOVE_RANKS\) !== "0"/);
     assert.match(app, /localStorage\.getItem\(LS_REMOVE_RANKS\) !== "0"/);
-    assert.match(app, /setItem\(LS_REMOVE_RANKS, v \? "1" : "0"\)/);
-    // Rankings reads the same key and drops tiers + bin dividers when on.
+    assert.match(app, /el\.checked = !hide/);
+    assert.match(app, /setItem\(LS_REMOVE_RANKS, show \? "0" : "1"\)/);
+    // Rankings reads the same key and drops tiers + bin dividers when hidden.
     assert.match(rk, /function readRemoveRanks\(\)/);
     assert.match(rk, /const tieredView = \(\) => sortKey === "adjs" && !removeRanks;/);
     assert.match(rk, /!\(removeRanks && sortKey === "adjs"\) \? getHist\(sortKey\) : null/);
     assert.match(rk, /"removeRanksToggle", "removeRanksToggleSettings"/);
+    assert.match(rk, /removeRanks = !el\.checked;/);
   });
 
   it("Distribution block carries a title on PC, bare 📊 on phones (owner 2026-10-22)", () => {
@@ -294,8 +297,18 @@ describe("Max account age cut (Settings stepper, owner 2026-10-22)", () => {
     assert.match(appSource(), /maxAgeInput2: document\.getElementById\("maxAgeInput2"\)/);
     assert.match(appSource(), /if \(els\.maxAgeInput2\) els\.maxAgeInput2\.value = String\(cl\)/);
     assert.match(rankingsSource(), /\$\("maxAgeInput2"\)/);
-    // Toolbar label matches the Hide ranks toggle text (0.8rem, muted).
+    // Toolbar label matches the Ranks toggle text (0.8rem, muted).
     assert.match(read("styles.css"), /\.rk-filter-row \.rk-max-age-label \{ font-size: 0\.8rem; color: var\(--muted, var\(--dim\)\); \}/);
+    // "Max Age" lives inside the stepper's own box, between − and +.
+    assert.match(index, /class="rk-max-age">\s*<span class="age-cut-ctl">\s*<button id="maxAgeMinus2"/);
+    assert.match(index, /id="maxAgeMinus2"[^>]*>−<\/button>\s*<span class="rk-max-age-label"/);
+    assert.match(read("styles.css"), /\.rk-max-age \.age-cut-ctl \{ border: 1px solid var\(--border\);/);
+    assert.match(read("styles.css"), /\.rk-max-age \.age-step \{ border: none; background: transparent; min-width: 1\.5rem; color: var\(--text\); \}/);
+    assert.match(read("styles.css"), /\.rk-max-age \.age-input \{ border: none; background: transparent; width: 2\.2em; \}/);
+    // Find player button + wrap: + at the ceiling loops to 1.
+    assert.match(index, /id="findPlayerBtn"/);
+    assert.match(read("i18n/en.json"), /"ranks\.findPlayer": "Find player"/);
+    assert.match(appSource(), /if \(dir > 0 && cur >= ageCeil\(\)\) return 1;/);
   });
 
   it("shared saved key; browse drops accounts older than the value, search keeps them", () => {

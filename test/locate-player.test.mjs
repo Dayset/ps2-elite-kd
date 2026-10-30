@@ -1,13 +1,18 @@
-// owner t648u/t649u: "Remove ranks" → "Hide ranks"; new "Locate player" switch (one name only),
-// every sort scrolls the table to that player's row; phones: label left, switch right.
+// owner t648u/t649u: "Remove ranks" → "Hide ranks"; 2026-10-30: the switch reads
+// "Ranks" (ON = show) and "Locate player" became a one-shot "Find player" button.
+// Phones: search row, then Ranks + Find + Max Age on one row.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 const read = (f) => readFileSync(new URL("../" + f, import.meta.url), "utf8");
 const LANGS = ["en", "ja", "ru", "de", "fr", "zh", "es", "uk", "it"];
 
-test("Hide ranks + Locate player labels in all 9 languages", () => {
+test("Ranks switch + Find player button labels", () => {
   const en = JSON.parse(read("i18n/en.json"));
+  assert.equal(en["ranks.showRanks"], "Ranks");
+  assert.equal(en["ranks.showRanksTitle"], "Show the tier separators in the Rankings table");
+  assert.equal(en["ranks.findPlayer"], "Find player");
+  // Old keys are kept, never deleted — just no longer used in the page.
   assert.equal(en["ranks.removeRanks"], "Hide ranks");
   assert.equal(en["ranks.locate"], "Locate player");
   for (const l of LANGS) {
@@ -16,42 +21,29 @@ test("Hide ranks + Locate player labels in all 9 languages", () => {
     if (l !== "en") assert.notEqual(d["ranks.locate"], en["ranks.locate"], `${l} translated`);
   }
   const html = read("index.html");
-  assert.doesNotMatch(html, />Remove ranks</);
-  assert.match(html, /<label class="tgl-switch rk-locate" id="locateWrap" hidden [^>]*data-i18n-title="ranks\.locateTitle">\s*<input type="checkbox" id="locateToggle" \/> <span data-i18n="ranks\.locate">Locate player<\/span>/);
-  assert.ok(html.indexOf('id="removeRanksToggle"') < html.indexOf('id="locateToggle"'), "next to Hide ranks");
+  assert.doesNotMatch(html, />Hide ranks</);
+  assert.doesNotMatch(html, /id="locateToggle"/);
+  assert.match(html, /<label class="tgl-switch rk-remove-ranks"[^>]*data-i18n-title="ranks\.showRanksTitle">\s*<input type="checkbox" id="removeRanksToggle" \/> <span data-i18n="ranks\.showRanks">Ranks<\/span>/);
+  assert.match(html, /<span class="rk-locate" id="locateWrap" hidden>\s*<button type="button" class="rk-find-btn" id="findPlayerBtn"[^>]*data-i18n="ranks\.findPlayer">Find player<\/button>/);
+  assert.ok(html.indexOf('id="removeRanksToggle"') < html.indexOf('id="findPlayerBtn"'), "next to Ranks");
 });
 
-test("Locate player logic: one name only, after every sort, no focus, quiet when missing", () => {
+test("Find player logic: one name only, one-shot, no focus, quiet when missing", () => {
   const rk = read("rankings.mjs");
   assert.match(rk, /function syncLocate\(\) \{\s*const w = \$\("locateWrap"\);\s*if \(w\) w\.hidden = host\.getNames\(\)\.length !== 1;/);
   assert.match(rk, /syncLocate\(\);\s*\}/); // called from syncFindMe (same moments as 👤)
-  assert.match(rk, /keepSortedColumnVisible\([^;]*;\s*locatePlayer\(\);/); // after every header sort
-  assert.match(rk, /if \(locateEl\.checked\) locatePlayer\(\);/); // when turned on
-  const fn = rk.slice(rk.indexOf("function locatePlayer()"), rk.indexOf("window.__lastLocate"));
+  assert.match(rk, /findBtn\.addEventListener\("click", \(\) => \{\s*locatedFor = "";\s*locatePlayer\(true\);\s*\}\);/);
+  assert.match(rk, /function locatePlayer\(manual = false\) \{\s*if \(\(!manual && !locateOn\(\)\) \|\| !renderState \|\| picked\.size !== 1\) return;/);
+  const fn = rk.slice(rk.indexOf("function locatePlayer(manual"), rk.indexOf("window.__lastLocate"));
   assert.match(fn, /if \(k < 0\) return;/);
   assert.match(fn, /box\.scrollTop = /);
   assert.match(fn, /rk-flash/);
   assert.doesNotMatch(fn, /\.focus\(|scrollIntoView|window\.scroll/);
   const css = read("styles.css");
   assert.match(css, /\.rk-filter-row \.rk-locate\[hidden\] \{ display: none; \}/);
-  assert.match(css, /@media \(max-width: 600px\) \{\s*\.rk-filter-row \.rk-remove-ranks, \.rk-filter-row \.rk-locate \{ flex: 0 1 auto; flex-direction: row; \}\s*\.rk-filter-row \.rk-max-age \{ flex: 0 1 auto; \}\s*\}/);
+  assert.match(css, /@media \(max-width: 600px\) \{\s*\.rk-filter-row \{ gap: 0\.5rem; \}\s*\.rk-filter-row \.rk-remove-ranks, \.rk-filter-row \.rk-locate \{ flex: 0 1 auto; flex-direction: row; \}\s*\.rk-filter-row \.rk-max-age \{ flex: 0 1 auto; \}\s*\}/);
 });
 
-// owner t655u: saved ON (or a duplicated tab) + a new name lookup showed ON but didn't locate
-// until OFF → ON. Root cause: locatePlayer() only ran on the switch's change event and after a
-// header sort, never when the single name changed or the table rows were (re)built.
-test("Locate player re-applies on a new name / load / re-render (as if OFF → ON)", () => {
-  const rk = read("rankings.mjs");
-  const fn = rk.slice(rk.indexOf("function relocateSoon()"), rk.indexOf("function locateOn()"));
-  assert.match(fn, /const q = locateOn\(\) && picked\.size === 1 \? \[\.\.\.picked\.keys\(\)\]\[0\] : "";/); // the CURRENT name
-  assert.match(fn, /if \(q === locatedFor\) return;/);
-  assert.match(fn, /requestAnimationFrame\(\(\) => \{ relocRaf = 0; locatePlayer\(\); \}\)/); // after the render, not before
-  const sync = rk.slice(rk.indexOf("function syncPicks("), rk.indexOf("function updateTicks()"));
-  assert.match(sync, /drawDist\(\);\s*relocateSoon\(\);\s*\}\s*\/\*\*/); // after picks + re-render
-  const body = rk.slice(rk.indexOf("function renderBody()"), rk.indexOf("function render()"));
-  assert.match(body, /renderState = st;\s*renderRowsTo\(FIRST_CHUNK\);\s*scheduleFill\(\);\s*relocateSoon\(\);/);
-  assert.match(rk, /scheduleFill\(\);\s*relocateSoon\(\); \/\/ t655u: folded/); // table opened later
-  assert.match(rk, /locatedFor = "";\s*if \(locateEl\.checked\) locatePlayer\(\);/); // manual toggle still forces
-  assert.match(rk, /locatedFor = q;\s*window\.__lastLocate/); // only a real locate counts
-  assert.ok(rk.indexOf('let locatedFor = ""') < rk.indexOf("function syncPicks("), "declared before first use");
-});
+// owner 2026-10-30: the t655u sticky re-apply behavior left with the switch —
+// the Find button locates once per tap; there is no auto-locate after sorts.
+// (relocateSoon / locateOn stay in the code but no-op: no toggle to be on.)
