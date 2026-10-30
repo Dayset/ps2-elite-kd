@@ -49,6 +49,16 @@ export function burstStatus(dataDir) {
   const players = [];
   const seen = new Set();
   const hidden = readHidden(dataDir);
+  // 🛡️ Established-player carve-out (owner 2026-10-30): ekpm comes from the
+  // ranks.json this build just wrote (main flow runs burstStatus after ranks).
+  // Standalone runs fall back to the previous build's file; a missing file
+  // means no carve-out (safe: listed as before, never wrongly cleared).
+  let ekpmBySlug = new Map(), ekpmIdx = -1;
+  try {
+    const rk = JSON.parse(fs.readFileSync(path.join(dataDir, "ranks.json"), "utf8"));
+    ekpmIdx = (rk.cols || []).indexOf("ekpm");
+    if (ekpmIdx >= 0) for (const r of rk.rows || []) ekpmBySlug.set(r[2], r[ekpmIdx]);
+  } catch { /* no ranks yet: established stays false */ }
   for (const e of index.players || []) {
     if (!e || !e.file || seen.has(e.file)) continue;
     seen.add(e.file);
@@ -56,8 +66,12 @@ export function burstStatus(dataDir) {
     try { raw = JSON.parse(fs.readFileSync(path.join(dataDir, e.file), "utf8")); } catch { continue; }
     const pl = (raw && (raw.player || raw)) || {};
     const slug = e.slug || path.basename(e.file, ".json");
-    players.push({ slug, name: pl.display || e.name || slug, cid: pl.cid, kd: pl.global_kd, assists: pl.assists, xp: readXp(dataDir, slug),
-      hidden: !!hidden.match({ slug, name: pl.display || e.name, cid: pl.cid }) });
+    const xpd = readXp(dataDir, slug);
+    const tt = pl.times || {};
+    const spanDays = Number.isFinite(tt.created) && Number.isFinite(tt.last) ? (tt.last - tt.created) / 86400 : null;
+    players.push({ slug, name: pl.display || e.name || slug, cid: pl.cid, kd: pl.global_kd, assists: pl.assists, xp: xpd,
+      hidden: !!hidden.match({ slug, name: pl.display || e.name, cid: pl.cid }),
+      established: isEstablished({ spanDays, ekpm: ekpmBySlug.get(slug) ?? null, sessions: Object.keys(storedSessions(pl.assists, xpd)).length }) });
   }
   // Owner decisions: outlier-guard KNOWN_EXTREMES + reviewed.json "burst" entries (reviewed.json wins).
   let rv = null;

@@ -31,6 +31,23 @@ test("human review wins: reviewed players are cleared, cheaters labelled, nothin
   assert.equal(r.clearedPlayers, 1);
 });
 
+test("🛡️ carve-out: established players show as cleared, never as review", () => {
+  const p = (slug, established) => ({ slug, name: slug, cid: "1", established, assists: { sessions: { [slug]: [0, 30, 240, 1] } } });
+  const r = burstSessions([p("vet", true), p("new", false)], { reviewed: {} });
+  assert.deepEqual(r.items.map((i) => [i.slug, i.status]), [["new", "review"], ["vet", "cleared"]]);
+  assert.match(r.items.find((i) => i.slug === "vet").reason, /Established player/);
+  assert.equal(r.clearedPlayers, 1);
+  assert.equal(r.flaggedPlayers, 1);
+});
+
+test("🛡️ carve-out: an established burst shows as cleared even within own normal (never silently skipped)", () => {
+  const five = (kpm) => Array.from({ length: 5 }, (_, i) => [0, kpm * 20, 1200, i]);
+  const sess = { sessions: { b: [0, 62, 570, 1], ...Object.fromEntries(five(3.75).map((o, i) => ["o" + i, o])) } };
+  const r = burstSessions([{ slug: "vet", name: "vet", cid: "1", kd: 2.5, established: true, assists: sess }], { reviewed: {} });
+  assert.equal(r.ownNormalSkipped, 0);
+  assert.equal(r.items[0].status, "cleared");
+});
+
 test("own-normal margin: skilled players with a burst <= 2x their median are skipped; cheaters/padders stay", () => {
   const sess = (burst, others) => ({ sessions: { b: burst, ...Object.fromEntries(others.map((o, i) => ["o" + i, o])) } });
   const five = (kpm) => Array.from({ length: 5 }, (_, i) => [0, kpm * 20, 1200, i]); // 20-min sessions

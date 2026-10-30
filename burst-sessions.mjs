@@ -7,15 +7,17 @@
  * so it costs no Honu calls. It is a REVIEW SIGNAL ONLY: it never changes a player's
  * public stats, never adds * or †, never hides anyone. Human review wins: players in
  * outlier-guard.mjs KNOWN_EXTREMES (owner-reviewed / explained) are listed as cleared.
+ * 🛡️ Established players (outlier-guard.mjs CARVE_OUT, owner 2026-10-30) are listed
+ * as cleared automatically, so no pro player needs a manual clear when a burst trips.
  */
-import { KNOWN_EXTREMES } from "./outlier-guard.mjs";
+import { KNOWN_EXTREMES, CARVE_OUT, carveOutReason } from "./outlier-guard.mjs";
 
 export const BURST_RULE = Object.freeze({ KPM: 5, KILLS: 15, MIN_SECONDS: 120, MAX_LISTED: 200 });
 /** Own-normal margin (owner t630): an unreviewed burst is skipped from review when the player has
  *  >= MIN_SESSIONS other stored sessions of >= MIN_SECONDS, the burst KPM is <= MAX_RATIO x their own
  *  median KPM over those sessions, and career K/D < MAX_KD (skilled top performers, e.g. A2G). */
 export const OWN_NORMAL = Object.freeze({ MIN_SESSIONS: 5, MIN_SECONDS: 600, MAX_RATIO: 2, MAX_KD: 10 });
-export const burstRuleText = (r = BURST_RULE) => `KPM ≥ ${r.KPM} and ≥ ${r.KILLS} kills in ≥ ${r.MIN_SECONDS / 60} min (one stored session, no 10-minute floor); skipped when within the player's own normal (≥ ${OWN_NORMAL.MIN_SESSIONS} other sessions of ≥ ${OWN_NORMAL.MIN_SECONDS / 60} min, ≤ ${OWN_NORMAL.MAX_RATIO}× their median KPM, career K/D < ${OWN_NORMAL.MAX_KD})`;
+export const burstRuleText = (r = BURST_RULE) => `KPM ≥ ${r.KPM} and ≥ ${r.KILLS} kills in ≥ ${r.MIN_SECONDS / 60} min (one stored session, no 10-minute floor); skipped when within the player's own normal (≥ ${OWN_NORMAL.MIN_SESSIONS} other sessions of ≥ ${OWN_NORMAL.MIN_SECONDS / 60} min, ≤ ${OWN_NORMAL.MAX_RATIO}× their median KPM, career K/D < ${OWN_NORMAL.MAX_KD}); 🛡️ established players (account ≥ 1 year, eKPM ≥ ${CARVE_OUT.MIN_EKPM}, ≥ ${CARVE_OUT.MIN_SESSIONS} stored sessions) show as cleared automatically`;
 
 /** Stored sessions of one player → { id: { kills, seconds, startMs } } (assists tuples + XP detail). */
 export function storedSessions(assists, xp) {
@@ -35,9 +37,9 @@ export function isBurst(s, r = BURST_RULE) {
 }
 
 /**
- * players: [{ slug, name, cid, assists, xp, hidden? }] → { rule, items, … }.
+ * players: [{ slug, name, cid, assists, xp, hidden?, established? }] → { rule, items, … }.
  * items: one row per burst session, still-to-review first, worst KPM first.
- * status: "review" | "cleared" (KNOWN_EXTREMES legit/explained) | "cheater" (KNOWN_EXTREMES
+ * status: "review" | "cleared" (KNOWN_EXTREMES legit/explained, or 🛡️ established) | "cheater" (KNOWN_EXTREMES
  * says confirmed cheater) ; `hidden` = already on the 🙈 hide list.
  */
 /**
@@ -71,8 +73,8 @@ export function burstSessions(players, { rule = BURST_RULE, reviewed = KNOWN_EXT
     const all = storedSessions(p.assists, p.xp);
     for (const [id, s] of Object.entries(all)) {
       if (!isBurst(s, rule)) continue;
-      const why = reviewed[p.slug] || null;
-      if (!why && ownNormal && withinOwnNormal(all, id, p.kd, ownNormal)) { ownNormalSkipped++; continue; } // human review wins
+      const why = reviewed[p.slug] || (p.established ? carveOutReason() : null);
+      if (!why && ownNormal && withinOwnNormal(all, id, p.kd, ownNormal)) { ownNormalSkipped++; continue; } // human review wins; 🛡️ established shows as cleared, never skipped silently
       const status = !why ? "review" : /^\s*(confirmed cheater|excluded after review)/i.test(why) ? "cheater" : "cleared"; // "not a cheater" / "rampage cheaters" in a note = cleared
       items.push({
         slug: p.slug, name: p.name || p.slug, cid: p.cid ? String(p.cid) : "", session: id,
