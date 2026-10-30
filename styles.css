@@ -3222,3 +3222,13 @@ html[data-room="ps"] .controls .fresh-row-end select.room-select { border-color:
 .old-tabs.is-tight .old-tab { flex: 0 0 auto; padding-left: 0.45rem; padding-right: 0.45rem; }
 .old-tabs.is-tight .old-tab:not([aria-expanded="true"]) .old-tab-txt { display: none; }
 .old-tabs.is-tight .old-tab[aria-expanded="true"] { flex: 1 1 auto; }
+
+/* t765u: outfit tag note under the names box ("[WARP]" → its members as chips). No animation. */
+.controls .outfit-note { flex: 1 1 100%; margin: 0.2rem 0 0; font-size: 0.8rem; line-height: 1.35; color: var(--muted); }
+.controls .outfit-note[hidden] { display: none; }
+.controls .outfit-note.ok { color: var(--text); }
+.controls .outfit-note.warn { color: var(--warn); }
+.controls .outfit-note.err { color: var(--err); }
+.outfit-note .outfit-fetch-all { font: inherit; font-size: 0.8rem; padding: 0.1rem 0.5rem; margin-left: 0.25rem; cursor: pointer; }
+.outfit-note .outfit-note-sub { color: var(--muted); font-size: 0.75rem; }
+.outfit-note .outfit-note-x { font: inherit; background: none; border: 0; color: var(--muted); cursor: pointer; padding: 0 0.3rem; }

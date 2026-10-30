@@ -7,6 +7,7 @@ import { t as tr } from "./i18n.mjs";
 import { slugKey, namesEqualIgnoreCase, bareName, parseNames } from "./app-util.mjs?v=20261027-z79";
 import { forgetFailures } from "./analyze-run.mjs?v=20261023-priv1";
 import { isPenalizedPadder } from "./padding.mjs?v=20261023-short1";
+import { createOutfitTags, extractOutfitTags } from "./outfit-tags.mjs?v=20261030-of1";
 
 /**
  * $ = app.js state and functions this part uses, as live getters (and setters for state it changes), so app.js
@@ -158,7 +159,8 @@ export function createNamesField($) {
    * Add one name as a chip. Returns false (and shows "N players limit reached")
    * when the field is already full, so callers can keep the text instead of eating it.
    */
-  function addNameToField(name) {
+  function addNameToField(name, { quiet = false } = {}) {
+    if (quiet) sfxChipQuietUntil = Date.now() + 400; // t765u: an outfit's chips land together, one sound
     const clean = bareName(String(name).trim());
     if (!clean) return true;
     if ($.nameTokens.some((n) => namesEqualIgnoreCase(n, clean))) {
@@ -483,15 +485,32 @@ export function createNamesField($) {
    * text field and the limit hint is shown — nothing is silently dropped.
    */
   function commitFragment({ clearInput = true } = {}) {
-    if (!$.els.namesInput) return { tokens: [], rejected: [] };
-    const raw = $.els.namesInput.value;
+    if (!$.els.namesInput) return { tokens: [], rejected: [], outfits: null };
+    // t765u: a tag on its own ("[WARP]") is an outfit: its members are added as chips (outfit-tags.mjs).
+    const { aliases, rest } = extractOutfitTags($.els.namesInput.value);
+    const raw = aliases.length ? rest : $.els.namesInput.value;
     const tokens = parseNames(raw);
     const rejected = [];
     for (const t of tokens) if (!addNameToField(t)) rejected.push(t);
     if (clearInput) $.els.namesInput.value = rejected.join(" ");
     if (rejected.length) showLimitHint();
     syncNamesPlaceholder();
-    return { tokens, rejected };
+    const outfits = aliases.length && !$.LIVE_MODE ? outfitPart().expand(aliases).then((r) => { if (r.some((x) => x && x.added)) sfx("plink"); return r; }) : null;
+    return { tokens, rejected, outfits };
+  }
+
+  let _outfit = null;
+  function outfitPart() {
+    return _outfit || (_outfit = createOutfitTags({
+      addNameToField,
+      censusJson: (url) => $.censusJson(url),
+      get CENSUS_BASES() { return $.CENSUS_BASES; },
+      get els() { return $.els; },
+      isCached: (n) => !!($.findSharedEntry(n) || $.cacheGet(n)), // already saved: costs no extra call
+      get nameLimit() { return $.nameLimit; },
+      get nameTokens() { return $.nameTokens; },
+      removedReady: () => $.removedReady(),
+    }));
   }
 
   /**
@@ -500,7 +519,7 @@ export function createNamesField($) {
    */
   function currentNamesInField() {
     const out = $.nameTokens.slice();
-    const frag = $.els.namesInput ? String($.els.namesInput.value || "").trim() : "";
+    const frag = $.els.namesInput ? extractOutfitTags(String($.els.namesInput.value || "")).rest : ""; // t765u: an outfit tag is not a name
     if (frag) {
       for (const t of parseNames(frag)) {
         if (!out.some((n) => namesEqualIgnoreCase(n, t))) out.push(t);

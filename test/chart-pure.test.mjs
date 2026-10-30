@@ -111,8 +111,9 @@ test("one module = one ?v= tag across all importers", () => {
   assert.deepEqual([...tag("chart-wave.mjs", appFiles)], ["20261029-puregraph1"]);
   assert.deepEqual([...tag("pure-ivi.mjs", ["app.js", "stats-table.mjs", "rankings.mjs", "chart.mjs"])], ["20261029-purevis1"]);
   const htmlTag = (f) => [...read(f).matchAll(/app\.js\?v=([A-Za-z0-9_.-]+)/g)].map((m) => m[1]);
-  assert.deepEqual(htmlTag("index.html"), ["20261029-purepair1"]);
-  assert.deepEqual(htmlTag("live.html"), ["20261029-purepair1"]);
+  // t765u: app.js tag moves on with later work; both pages must just agree on one tag.
+  assert.equal(htmlTag("index.html").length, 1);
+  assert.deepEqual(htmlTag("live.html"), htmlTag("index.html"));
 });
 
 test("#86: graph lookup finds PLAYERS in lastStatsList (not rows)", async () => {

@@ -397,7 +397,9 @@ export function createAnalyze($) {
   /** The 🔍 Analyze action (button, shared-link auto-run). */
   function runAnalyzeFromUi() {
     $.collapseSharedCache();
-    const { rejected } = $.commitFragment({ clearInput: true });
+    const { rejected, outfits } = $.commitFragment({ clearInput: true });
+    // t765u: "[WARP]" in the field: wait for the outfit's members, then analyze them (unless filling the list already started a run).
+    if (outfits) return outfits.then(() => ($.fetching || $.activeRun || !$.nameTokens.length ? undefined : analyzeNames($.currentNamesInField())));
     if (rejected.length) {
       // Field is full and extra text is waiting: warn instead of eating it or
       // showing "graph is ready".
@@ -483,8 +485,12 @@ export function createAnalyze($) {
       $.els.namesInput.addEventListener("keydown", (e) => {
         if (e.key === "Enter") {
           e.preventDefault();
-          const { rejected } = $.commitFragment({ clearInput: true });
+          const { rejected, outfits } = $.commitFragment({ clearInput: true });
           if (rejected.length) return; // limit hint shown, typed text kept
+          if (outfits) { // t765u: outfit tag: add its members first, then the same Analyze (a full list starts it by itself)
+            outfits.then(() => { if (!$.fetching && !$.activeRun && !$.isListFull() && $.nameTokens.length && $.els.analyzeBtn) $.els.analyzeBtn.click(); });
+            return;
+          }
           if (!$.fetching && $.els.analyzeBtn) $.els.analyzeBtn.click();
           return;
         }

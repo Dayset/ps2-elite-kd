@@ -85,7 +85,7 @@ test("every data-i18n key used by index.html exists in en.json", () => {
 
 test("every tr(\"key\", …) call in the UI modules exists in en.json", () => {
   const used = new Set();
-  for (const file of [...new Set([...["app.js", "rankings.mjs", "name-suggest.mjs", "infantry.mjs", "vehicle-cut.mjs", "analyze-run.mjs", "padding.mjs", "player-metrics.mjs", "jump-btns.mjs", "live.mjs", "columns-example.mjs", "weapons.mjs", "privacy-remove.mjs", "kill-feed.mjs", "scrims-panel.mjs", "old-tabs.mjs", "duels-panel.mjs"], ...appParts(), ...readdirSync(new URL("oracle/js/", root)).filter((f) => f.endsWith(".js")).map((f) => "oracle/js/" + f)])]) { // #73: Oracle modules // #66: app.js parts too
+  for (const file of [...new Set([...["app.js", "rankings.mjs", "name-suggest.mjs", "infantry.mjs", "vehicle-cut.mjs", "analyze-run.mjs", "padding.mjs", "player-metrics.mjs", "jump-btns.mjs", "live.mjs", "columns-example.mjs", "weapons.mjs", "privacy-remove.mjs", "kill-feed.mjs", "scrims-panel.mjs", "old-tabs.mjs", "duels-panel.mjs", "outfit-tags.mjs"], ...appParts(), ...readdirSync(new URL("oracle/js/", root)).filter((f) => f.endsWith(".js")).map((f) => "oracle/js/" + f)])]) { // #73: Oracle modules // #66: app.js parts too
     for (const m of read(file).matchAll(/\btr\("([^"]+)"/g)) used.add(m[1]);
   }
   assert.ok(used.size > 30, "the UI modules use the translator");
