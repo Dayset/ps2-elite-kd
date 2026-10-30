@@ -282,6 +282,20 @@ describe("Max account age cut (Settings stepper, owner 2026-10-22)", () => {
     assert.match(read("i18n/en.json"), /"age\.label": "Max account age"/);
   });
 
+  it("second stepper on the All players toolbar, synced with Settings", () => {
+    const index = read("index.html");
+    const locateAt = index.indexOf('id="locateWrap"');
+    const age2At = index.indexOf('id="maxAgeInput2"');
+    assert.ok(locateAt >= 0 && age2At > locateAt, "table stepper sits after Locate in the filter row");
+    assert.match(index, /id="maxAgeMinus2"/);
+    assert.match(index, /id="maxAgePlus2"/);
+    assert.match(index, /id="maxAgeInput2" type="number" class="age-input" min="0" step="1"/);
+    assert.match(read("i18n/en.json"), /"age\.short": "Max Age"/);
+    assert.match(appSource(), /maxAgeInput2: document\.getElementById\("maxAgeInput2"\)/);
+    assert.match(appSource(), /if \(els\.maxAgeInput2\) els\.maxAgeInput2\.value = String\(cl\)/);
+    assert.match(rankingsSource(), /\$\("maxAgeInput2"\)/);
+  });
+
   it("shared saved key; browse drops accounts older than the value, search keeps them", () => {
     const s = rankingsSource();
     assert.match(s, /LS_MAX_AGE_MONTHS = "ps2-elite-kd-max-age-months"/);

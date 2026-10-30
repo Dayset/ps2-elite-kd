@@ -383,6 +383,11 @@ export function initRankings(host) {
     const saved = readMaxAgeMonths();
     input.max = String(Math.max(ceil, saved || 0));
     if (saved == null) input.value = String(ceil);
+    const input2 = $("maxAgeInput2");
+    if (input2) {
+      input2.max = String(Math.max(ceil, saved || 0));
+      if (saved == null) input2.value = String(ceil);
+    }
   }
 
   function sortedFiltered() {

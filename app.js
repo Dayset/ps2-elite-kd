@@ -37,7 +37,7 @@ import {
 import { formatClock, fmtNum, slugKey, bareName, parseNames, namesEqualIgnoreCase, namesSetKey, niceLinTicks, niceNum, niceLogTicks, formatTick, escapeHtml, makeAbortError, isAbortError, checkAborted, readJsonLS, writeJsonLS } from "./app-util.mjs?v=20261027-z79";
 import { createAnalyze } from "./analyze.mjs?v=20261027-an69";
 import { createShareAdd } from "./share-add.mjs?v=20261027-z79";
-import { createSharedIndex } from "./shared-index.mjs?v=20261029-purevis1";
+import { createSharedIndex } from "./shared-index.mjs?v=20261029-maxage2";
 import { createNamesField } from "./names-field.mjs?v=20261027-z79";
 import { createStatsTable } from "./stats-table.mjs?v=20261029-carousel1";
 import { createChartWave } from "./chart-wave.mjs?v=20261029-puregraph1";
@@ -480,6 +480,9 @@ import {
     maxAgeInput: document.getElementById("maxAgeInput"),
     maxAgeMinus: document.getElementById("maxAgeMinus"),
     maxAgePlus: document.getElementById("maxAgePlus"),
+    maxAgeInput2: document.getElementById("maxAgeInput2"),
+    maxAgeMinus2: document.getElementById("maxAgeMinus2"),
+    maxAgePlus2: document.getElementById("maxAgePlus2"),
   };
   // ✨ Stats ⇄ 🏅 Positions share one spot (stats-carousel.mjs); same switch sound as the graph modes.
   if (!LIVE_MODE) mountStatsCarousel({ root: document.getElementById("statsCarousel"), onChange: () => sfx("sparkle") });
@@ -1082,6 +1085,7 @@ import {
     const applyAge = (v, fire) => {
       const cl = clampAge(v);
       els.maxAgeInput.value = String(cl);
+      if (els.maxAgeInput2) els.maxAgeInput2.value = String(cl);
       try {
         localStorage.setItem(LS_MAX_AGE_MONTHS, String(cl));
         localStorage.removeItem(LS_MAX_AGE_YEARS);
@@ -1089,6 +1093,7 @@ import {
       if (fire) els.maxAgeInput.dispatchEvent(new Event("change", { bubbles: true }));
     };
     els.maxAgeInput.max = AGE_CEIL_FALLBACK;
+    if (els.maxAgeInput2) els.maxAgeInput2.max = AGE_CEIL_FALLBACK;
     let savedAge = NaN;
     try {
       savedAge = parseFloat(localStorage.getItem(LS_MAX_AGE_MONTHS));
@@ -1103,20 +1108,21 @@ import {
       }
     } catch (_) { /* private mode */ }
     els.maxAgeInput.value = String(Number.isFinite(savedAge) ? clampAge(savedAge) : AGE_CEIL_FALLBACK);
+    if (els.maxAgeInput2) els.maxAgeInput2.value = els.maxAgeInput.value;
     /* Press-and-hold repeats, faster the longer the hold (Dayset 2026-10-22):
      * one step on press, repeats start after 0.4 s at ~12/s, then ~33/s.
      * The click that follows a pointer press is swallowed (the press already
      * stepped); a click without a press (keyboard / assistive) steps once. */
-    const holdStep = (btn, dir) => {
+    const holdStep = (btn, dir, shown = ageShown) => {
       if (!btn) return;
       let timer = 0, pressed = false;
       const stop = () => { clearTimeout(timer); timer = 0; };
       btn.addEventListener("pointerdown", (e) => {
         e.preventDefault();
         pressed = true;
-        applyAge(ageShown() + dir, true);
+        applyAge(shown() + dir, true);
         let n = 0;
-        const tick = () => { applyAge(ageShown() + dir, true); n += 1; timer = setTimeout(tick, n < 10 ? 80 : 30); };
+        const tick = () => { applyAge(shown() + dir, true); n += 1; timer = setTimeout(tick, n < 10 ? 80 : 30); };
         stop();
         timer = setTimeout(tick, 400);
       });
@@ -1124,12 +1130,22 @@ import {
       btn.addEventListener("contextmenu", (e) => e.preventDefault());
       btn.addEventListener("click", () => {
         if (pressed) { pressed = false; return; }
-        applyAge(ageShown() + dir, true);
+        applyAge(shown() + dir, true);
       });
     };
     holdStep(els.maxAgeMinus, -1);
     holdStep(els.maxAgePlus, 1);
     els.maxAgeInput.addEventListener("change", () => applyAge(ageShown(), false));
+    // Second stepper on the All players toolbar: same value, same saved key;
+    // its edits fire the primary's change, so Rankings re-renders as usual.
+    const ageShown2 = () => {
+      if (!els.maxAgeInput2) return ageCeil();
+      const v = parseFloat(els.maxAgeInput2.value);
+      return Number.isFinite(v) ? v : ageCeil();
+    };
+    holdStep(els.maxAgeMinus2, -1, ageShown2);
+    holdStep(els.maxAgePlus2, 1, ageShown2);
+    if (els.maxAgeInput2) els.maxAgeInput2.addEventListener("change", () => applyAge(ageShown2(), true));
   }
 
  // median infantry % (owner t590u 🚜 switch point)
