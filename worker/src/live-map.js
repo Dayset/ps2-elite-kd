@@ -213,18 +213,20 @@ export class LiveMap {
     const r = E.pos.get(s.own);
     return r && r.f && now - r.ft <= FRESH_MS ? r.f : null;
   }
-  /** 🚐 Spawn points per base for one world: Map fid → { VS: { su: 3, ro: 2, n: 42 }, … } (n = spawns there; faction totals only). */
+  /** 🚐 Spawn points per base for one world: Map fid → { VS: { su: 3, suN: 40, suL: 2, ro: 1, roN: 2, n: 42 }, … } (kN = spawns at that kind, kL = destroyed in the window, n = all spawns; faction totals only). */
   spawnIndex(env, world, now = Date.now()) {
     const E = this.envs[env], out = new Map();
     if (!E || !E.spawns) return out;
     const w = String(world), since = now - SPAWN_MS;
     for (const s of E.spawns.values()) {
-      if (s.w !== w || s.t < since) continue;
+      if (s.w !== w || Math.max(s.t, s.lost || 0) < since) continue;
       const f = this.spawnBase(E, s, now);
       if (!f) continue;
       const b = out.get(String(f)) || {};
       const q = (b[s.fac] ||= {});
       q[s.k] = (q[s.k] || 0) + 1;
+      q[s.k + "N"] = (q[s.k + "N"] || 0) + s.n; // 🚐 spawns at this kind
+      if (s.lost >= since) q[s.k + "L"] = (q[s.k + "L"] || 0) + 1; // 🚐 destroyed in the window (kill XP, not assists)
       q.n = (q.n || 0) + s.n; // 🚐 spawns (people who spawned there), faction total
       out.set(String(f), b);
     }
@@ -286,7 +288,7 @@ export class LiveMap {
         for (const key of ["k", "vk", "conv", "tick", "dtick"]) b[key] = b[key].filter(([t]) => t >= since);
         if (!b.crowd.size && !b.k.length && !b.vk.length && !b.conv.length && !b.tick.length && !b.dtick.length) E.bases.delete(k);
       }
-      if (E.spawns) for (const [k, s] of E.spawns) if (now - s.t > SPAWN_MS) E.spawns.delete(k);
+      if (E.spawns) for (const [k, s] of E.spawns) if (now - Math.max(s.t, s.lost || 0) > SPAWN_MS) E.spawns.delete(k);
       for (const [k, zk] of E.zones) {
         for (const [cid, [t]] of zk.crowd) if (t < since) zk.crowd.delete(cid);
         if (!zk.crowd.size) E.zones.delete(k);

@@ -5,7 +5,7 @@
 // odds and orders don't read it until a backtest shows a gain.
 import { FACS, COLOR, esc } from "./state.js?v=20261018-scrub2";
 import { t as tr } from "../../i18n.mjs";
-import { spawnLine } from "../../forward-spawns.mjs?v=20261030-sp2";
+import { spawnLine } from "../../forward-spawns.mjs?v=20261030-sp3";
 
 export const FIGHTS_SHOWN = 6;
 export const CAPS_SHOWN = 5;
@@ -62,7 +62,7 @@ export function fightsCard(s) {
     const spw = spl ? `<div class="fsp">${spl}</div>` : "";
     return `<li data-base="${esc(nm)}"><div class="fhead"><span class="blink" tabindex="0" role="button" data-base="${esc(nm)}">${esc(nm)}</span>${own}${cap}</div>${flag}` +
       `<div class="track fbar" aria-hidden="true">${seg}</div>${spw}` +
-      `<div class="fnum">${nums || "·"}<span class="note"> · ${esc(tr("or.f.players", "~{n} players", { n: tot }))}${kills ? ` · ${esc(tr("or.f.kills", "{n} kills", { n: kills }))}` : ""}</span></div></li>`;
+      `<div class="fnum">${nums || "·"}<span class="note"> · ${esc(tr("or.f.players", "~{n} players", { n: tot }))}${kills ? ` · <span class="fkills" title="${esc(tr("or.f.kills", "{n} kills", { n: kills }))}">💀${kills}</span>` : ""}</span></div></li>`;
   }).join("");
   const body = list.length ? `<ul class="fights">${rows}</ul>` : `<div class="note">${s.fights_live === false ? tr("or.f.off", "Live stream reconnecting: fights show up within a minute.") : tr("or.f.none", "No big fights right now.")}</div>`;
   return `<section class="card fightcard"><h2 data-sec="live-fights">${tr("or.h.fights", "⚔️ Live fights")}</h2>${body}${capsList(s)}` +

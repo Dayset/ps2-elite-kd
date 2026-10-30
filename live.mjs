@@ -30,7 +30,7 @@ import { infMedian, tractorCuts, TRACTOR_EMOJI } from "./tractor.mjs?v=20261024-
 import { drawEmojiSprite, spriteCss } from "./live-sprites.mjs?v=20261024-beat1";
 import { sfx, setSfxRate, sfxEnabled, setSfxEnabled } from "./sfx.mjs?v=20261026-sfx2";
 import { say } from "./oracle/js/voice.js?v=20261027-say1";
-import { capsUrl, capsStrip, CAPS_POLL_MS } from "./live-caps.mjs?v=20261030-sp2";
+import { capsUrl, capsStrip, CAPS_POLL_MS } from "./live-caps.mjs?v=20261030-sp3";
 
 const CENSUS = `https://census.daybreakgames.com/s:${CENSUS_SERVICE_ID}/get/ps2:v2/`;
 const STREAM = `wss://push.planetside2.com/streaming?environment=ps2&service-id=s:${CENSUS_SERVICE_ID}`;
