@@ -7,11 +7,11 @@ import { t as tr } from "./i18n.mjs";
 import { slugKey, namesEqualIgnoreCase, bareName, parseNames } from "./app-util.mjs?v=20261027-z79";
 import { forgetFailures } from "./analyze-run.mjs?v=20261023-priv1";
 import { isPenalizedPadder } from "./padding.mjs?v=20261023-short1";
-import { createOutfitTags, extractOutfitTags } from "./outfit-tags.mjs?v=20261030-of1";
+import { createOutfitTags, extractOutfitTags } from "./outfit-tags.mjs?v=20261030-of2";
 
 /**
  * $ = app.js state and functions this part uses, as live getters (and setters for state it changes), so app.js
- * stays the one owner: DEFAULT_PLACEHOLDER_NAME, LIMIT_HINT_HTML, LIVE_MODE, MAX_NAMES, cacheGet, clearGraphReadyHint, els, failedNames, fetching, findSharedEntry, graphReadyHintTimer, isListFull, isSavedName, lastLoadedNames, limitLockReady, limitNoteFaded, loadRankVals, nameLimit, nameSpan, nameTokens, persistPendingNames, players, poopHtml, rankVals, rankingsSync, renderCacheChips, runAnalyzeFromUi, scheduleGraphSync, setChartIdle, setStatus, tokenLabel, topTierFloorAdjs.
+ * stays the one owner: DEFAULT_PLACEHOLDER_NAME, LIMIT_HINT_HTML, canTakeName, outfitRoom, outfitRoster, LIVE_MODE, MAX_NAMES, cacheGet, clearGraphReadyHint, els, failedNames, fetching, findSharedEntry, graphReadyHintTimer, isListFull, isSavedName, lastLoadedNames, limitLockReady, limitNoteFaded, loadRankVals, nameLimit, nameSpan, nameTokens, persistPendingNames, players, poopHtml, rankVals, rankingsSync, renderCacheChips, runAnalyzeFromUi, scheduleGraphSync, setChartIdle, setStatus, tokenLabel, topTierFloorAdjs.
  */
 export function createNamesField($) {
   /** Warn (status line) that the field is full; replaces any "graph is ready" hint. */
@@ -137,7 +137,7 @@ export function createNamesField($) {
       const key = clean.toLowerCase();
       if (seen.has(key)) continue;
       seen.add(key);
-      if ($.nameTokens.length >= $.nameLimit()) {
+      if (!$.canTakeName(clean)) { // t766u: outfit players have their own places
         overflow++;
         continue;
       }
@@ -159,7 +159,7 @@ export function createNamesField($) {
    * Add one name as a chip. Returns false (and shows "N players limit reached")
    * when the field is already full, so callers can keep the text instead of eating it.
    */
-  function addNameToField(name, { quiet = false } = {}) {
+  function addNameToField(name, { quiet = false, outfit = false } = {}) {
     if (quiet) sfxChipQuietUntil = Date.now() + 400; // t765u: an outfit's chips land together, one sound
     const clean = bareName(String(name).trim());
     if (!clean) return true;
@@ -170,10 +170,11 @@ export function createNamesField($) {
       $.renderCacheChips();
       return true;
     }
-    if ($.nameTokens.length >= $.nameLimit()) {
-      showLimitHint();
+    if (!$.canTakeName(clean, outfit || $.outfitRoster.has(clean))) {
+      if (!outfit) showLimitHint();
       return false;
     }
+    if (outfit) $.outfitRoster.add(clean); // t766u: counts against the outfit places, not the 6
     clearNameFailures([clean]);
     $.nameTokens.push(clean);
     renderNameTokens();
@@ -325,6 +326,7 @@ export function createNamesField($) {
   }
 
   function syncLimitLock() {
+    if ($.limitLockReady) $.outfitRoster.prune($.nameTokens); // t766u: a removed outfit chip frees its place
     const full = $.isListFull();
     const empty = $.nameTokens.length === 0;
     if (!full) $.limitNoteFaded = false; // a new full episode may show the note again
@@ -508,6 +510,7 @@ export function createNamesField($) {
       get els() { return $.els; },
       isCached: (n) => !!($.findSharedEntry(n) || $.cacheGet(n)), // already saved: costs no extra call
       get nameLimit() { return $.nameLimit; },
+      outfitRoom: () => $.outfitRoom(), // t766u: places left for outfit players (cap OUTFIT_MAX_NAMES)
       get nameTokens() { return $.nameTokens; },
       removedReady: () => $.removedReady(),
     }));

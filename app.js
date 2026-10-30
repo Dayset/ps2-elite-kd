@@ -38,7 +38,8 @@ import { formatClock, fmtNum, slugKey, bareName, parseNames, namesEqualIgnoreCas
 import { createAnalyze } from "./analyze.mjs?v=20261030-of1";
 import { createShareAdd } from "./share-add.mjs?v=20261027-z79";
 import { createSharedIndex } from "./shared-index.mjs?v=20261029-maxage2";
-import { createNamesField } from "./names-field.mjs?v=20261030-of1";
+import { createNamesField } from "./names-field.mjs?v=20261030-of2";
+import { createOutfitRoster, canTakeName as canTakeNameRule, OUTFIT_MAX_NAMES } from "./outfit-tags.mjs?v=20261030-of2";
 import { createStatsTable } from "./stats-table.mjs?v=20261029-carousel1";
 import { createChartWave } from "./chart-wave.mjs?v=20261029-puregraph1";
 import { createChart } from "./chart.mjs?v=20261029-purepair1";
@@ -607,7 +608,15 @@ import {
    * on adding, no limit warnings, no input/button lock, no truncation.
    * readShowDebugCols (hoisted declaration below) is the same source of
    * truth the debug columns render from; every call site runs live. */
-  const nameLimit = () => (readShowDebugCols() ? Number.POSITIVE_INFINITY : MAX_NAMES);
+  /* t766u: players added from an outfit tag ([WARP]) don't use the 6 places: the limit is 6 typed
+   * names plus the outfit players in the field (at most OUTFIT_MAX_NAMES, see outfit-tags.mjs). */
+  const outfitRoster = createOutfitRoster((() => { try { return window.sessionStorage; } catch { return null; } })());
+  const isOutfitName = (n) => outfitRoster.has(n);
+  const nameLimit = () => (readShowDebugCols() ? Number.POSITIVE_INFINITY : MAX_NAMES + outfitRoster.count(nameTokens));
+  const outfitRoom = () => (readShowDebugCols() ? Number.POSITIVE_INFINITY : Math.max(0, OUTFIT_MAX_NAMES - outfitRoster.count(nameTokens)));
+  /** May `name` join the field? outfit = it comes from an outfit tag. */
+  const canTakeName = (name, outfit = isOutfitName(name)) =>
+    canTakeNameRule({ tokens: nameTokens, isOutfit: isOutfitName, outfit, typedMax: readShowDebugCols() ? Number.POSITIVE_INFINITY : MAX_NAMES });
   const LIMIT_HINT_HTML = `<span class="warn">${tr("msg.limitReached", "{n} players limit reached", { n: MAX_NAMES })}</span>`;
 
   // #66: the name field (chips, limit note and toast, 🎲 dice, failed names) moved to names-field.mjs unchanged. These wrappers keep the old names; the part is created on
@@ -636,6 +645,9 @@ import {
       get loadRankVals() { return loadRankVals; },
       get MAX_NAMES() { return MAX_NAMES; },
       get nameLimit() { return nameLimit; },
+      get canTakeName() { return canTakeName; },
+      get outfitRoom() { return outfitRoom; },
+      get outfitRoster() { return outfitRoster; },
       get nameSpan() { return nameSpan; },
       get nameTokens() { return nameTokens; }, set nameTokens(v) { nameTokens = v; },
       get persistPendingNames() { return persistPendingNames; },

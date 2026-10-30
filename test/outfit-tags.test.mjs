@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { outfitAlias, extractOutfitTags, outfitUrl, membersUrl, outfitServer, pickOutfit, sortMembers, freePlaces, createOutfitTags, INACTIVE_MS } from "../outfit-tags.mjs";
+import { outfitAlias, extractOutfitTags, outfitUrl, membersUrl, outfitServer, pickOutfit, sortMembers, freePlaces, createOutfitTags, createOutfitRoster, canTakeName, INACTIVE_MS, OUTFIT_MAX_NAMES, OUTFIT_ROSTER_KEY } from "../outfit-tags.mjs";
 
 const root = new URL("../", import.meta.url);
 const read = (p) => readFileSync(new URL(p, root), "utf8");
@@ -60,54 +60,103 @@ test("free places: the 6-name limit, or no limit in the debug view", () => {
   assert.equal(freePlaces(Infinity, 50), Infinity);
 });
 
-function fakeField({ limit = 6, tokens = [], members, outfits, cached = [] }) {
+function fakeField({ debug = false, tokens = [], members, outfits, cached = [] }) {
   const calls = [];
+  const roster = createOutfitRoster(null);
+  const typedMax = debug ? Infinity : 6;
   const $ = {
     nameTokens: tokens.slice(),
     CENSUS_BASES: ["https://census.daybreakgames.com/s:x/get/ps2:v2/"],
     els: {},
-    nameLimit: () => limit,
     isCached: (n) => cached.includes(n),
     removedReady: async () => ({ size: 0 }),
-    addNameToField: (n) => { if ($.nameTokens.length >= limit) return false; $.nameTokens.push(n); return true; },
+    outfitRoom: () => (debug ? Infinity : OUTFIT_MAX_NAMES - roster.count($.nameTokens)),
+    addNameToField: (n, { outfit = false } = {}) => {
+      if (!canTakeName({ tokens: $.nameTokens, isOutfit: roster.has, outfit, typedMax })) return false;
+      if (outfit) roster.add(n);
+      $.nameTokens.push(n);
+      return true;
+    },
     censusJson: async (url) => { calls.push(url); return url.includes("outfit_member") ? { outfit_member_list: members } : { outfit_list: outfits }; },
   };
-  return { $, calls, part: createOutfitTags($) };
+  return { $, calls, roster, part: createOutfitTags($) };
 }
+const at = (d) => String(Math.round((Date.now() - d * DAY) / 1000));
+const member = (n, d, i) => ({ character_id: String(i), c: { name: { first: n }, times: { last_login: at(d) } } });
+const WARP = [{ outfit_id: "1", alias: "WARP", name: "Endless Warp", member_count: "8", leader: { world_id: "1" } }];
 
-test("expand: unknown tag adds nothing; a known tag fills the free places (2 Census calls, no Honu)", async () => {
+test("expand: unknown tag adds nothing; a known tag adds every active member past the 6 typed places (2 Census calls, no Honu)", async () => {
   const none = fakeField({ outfits: [], members: [] });
   const [u] = await none.part.expand(["zzzz"]);
   assert.equal(u.unknown, true);
   assert.deepEqual(none.$.nameTokens, []);
-  const now = Date.now();
-  const at = (d) => String(Math.round((now - d * DAY) / 1000));
-  const members = ["A", "B", "C", "D", "E", "F", "G"].map((n, i) => ({ character_id: String(i), c: { name: { first: n }, times: { last_login: at(i) } } }));
-  members.push({ character_id: "9", c: { name: { first: "Sleepy" }, times: { last_login: at(400) } } });
-  const f = fakeField({ tokens: ["Me"], cached: ["G"], members, outfits: [{ outfit_id: "1", alias: "WARP", name: "Endless Warp", member_count: "8", leader: { world_id: "1" } }] });
+  const members = ["A", "B", "C", "D", "E", "F", "G"].map((n, i) => member(n, i, i));
+  members.push(member("Sleepy", 400, 9));
+  const f = fakeField({ tokens: ["Me", "T2", "T3", "T4", "T5"], cached: ["G"], members, outfits: WARP });
   const [r] = await f.part.expand(["warp"]);
-  assert.deepEqual(f.$.nameTokens, ["Me", "G", "A", "B", "C", "D"], "cached G first, then most recent");
-  assert.equal(r.added, 5);
-  assert.equal(r.cached, 1);
-  assert.equal(r.fresh, 4);
-  assert.equal(r.noRoom, 2);
-  assert.equal(r.inactive, 1);
+  assert.deepEqual(f.$.nameTokens, ["Me", "T2", "T3", "T4", "T5", "G", "A", "B", "C", "D", "E", "F"], "cached G first, then most recent; 12 names on a 6-name page");
+  assert.deepEqual([r.added, r.cached, r.fresh, r.noRoom, r.inactive], [7, 1, 6, 0, 1]);
   assert.equal(f.calls.length, 2);
   assert.ok(f.calls.every((u) => u.startsWith("https://census.daybreakgames.com/")), "Census only");
+  // typed names keep the normal limit: one typed place left, then full
+  assert.equal(f.$.addNameToField("Typed6"), true);
+  assert.equal(f.$.addNameToField("Typed7"), false);
 });
 
-test("Fetch all adds the inactive members (debug view: no limit)", async () => {
-  const now = Date.now();
-  const at = (d) => String(Math.round((now - d * DAY) / 1000));
-  const members = [["A", 1], ["B", 200], ["C", 900]].map(([n, d], i) => ({ character_id: String(i), c: { name: { first: n }, times: { last_login: at(d) } } }));
-  const f = fakeField({ limit: Infinity, members, outfits: [{ outfit_id: "1", alias: "HOUR", name: "ONLY PLAY 1HOUR", member_count: "3", leader: { world_id: "1" } }] });
+test("safety cap: a huge outfit adds at most OUTFIT_MAX_NAMES; the note says why", async () => {
+  assert.equal(OUTFIT_MAX_NAMES, 50);
+  const members = Array.from({ length: 300 }, (_, i) => member("P" + i, i % 100, i));
+  const f = fakeField({ members, outfits: [{ ...WARP[0], member_count: "300" }] });
+  const [r] = await f.part.expand(["dig"]);
+  assert.equal(f.$.nameTokens.length, 50);
+  assert.equal(r.noRoom, 250);
+  assert.equal(r.canMore, false, "no Fetch all once the cap is reached");
+  // a second tag finds the cap
+  const [r2] = await f.part.expand(["hour"]);
+  assert.equal(r2.added, 0);
+  // debug view: no cap
+  const d = fakeField({ debug: true, members, outfits: WARP });
+  await d.part.expand(["dig"]);
+  assert.equal(d.$.nameTokens.length, 300);
+});
+
+test("Fetch all adds the inactive members, past the 6 places too", async () => {
+  const members = [["A", 1], ["B", 200], ["C", 900], ["D", 300], ["E", 250], ["F", 400], ["G", 500], ["H", 600]].map(([n, d], i) => member(n, d, i));
+  const f = fakeField({ members, outfits: [{ outfit_id: "1", alias: "HOUR", name: "ONLY PLAY 1HOUR", member_count: "8", leader: { world_id: "1" } }] });
   const [r] = await f.part.expand(["hour"]);
   assert.deepEqual(f.$.nameTokens, ["A"]);
   assert.equal(r.canMore, true);
   const more = f.part.fetchAll();
-  assert.equal(more.fresh, 2);
-  assert.deepEqual(f.$.nameTokens, ["A", "B", "C"]);
+  assert.equal(more.fresh, 7);
+  assert.equal(f.$.nameTokens.length, 8);
   assert.equal(f.part.fetchAll(), null, "once");
+});
+
+test("roster: kept for the session, a removed chip frees its place", () => {
+  const store = new Map();
+  const ss = { getItem: (k) => store.get(k) ?? null, setItem: (k, v) => store.set(k, v), removeItem: (k) => store.delete(k) };
+  const a = createOutfitRoster(ss);
+  a.add("Sarleyy"); a.add("softcoreTR");
+  assert.ok(createOutfitRoster(ss).has("sarleyy"), "survives a refresh");
+  assert.equal(a.count(["Sarleyy", "Bob", "softcoretr"]), 2);
+  a.prune(["Bob", "softcoreTR"]);
+  assert.equal(a.has("Sarleyy"), false);
+  a.prune([]);
+  assert.equal(store.has(OUTFIT_ROSTER_KEY), false);
+  const six = ["a", "b", "c", "d", "e", "f"];
+  assert.equal(canTakeName({ tokens: six, isOutfit: () => false, outfit: false, typedMax: 6 }), false);
+  assert.equal(canTakeName({ tokens: six, isOutfit: () => false, outfit: true, typedMax: 6 }), true);
+  assert.equal(canTakeName({ tokens: six, isOutfit: () => false, outfit: false, typedMax: Infinity }), true);
+});
+
+test("the app wires it: limit = 6 typed + outfit players; setNameTokens / addNameToField use canTakeName", () => {
+  const app = read("app.js");
+  assert.match(app, /MAX_NAMES \+ outfitRoster\.count\(nameTokens\)/);
+  const nf = read("names-field.mjs");
+  assert.match(nf, /if \(!\$\.canTakeName\(clean\)\)/);
+  assert.match(nf, /\$\.outfitRoster\.add\(clean\)/);
+  assert.match(nf, /\$\.outfitRoster\.prune\(\$\.nameTokens\)/);
+  assert.match(read("outfit-tags.mjs"), /addNameToField\(n, \{ quiet: true, outfit: true \}\)/);
 });
 
 test("the field wires it: commitFragment pulls tags, Analyze / Enter wait for the members", () => {
@@ -122,7 +171,7 @@ test("the field wires it: commitFragment pulls tags, Analyze / Enter wait for th
 test("9 languages: every outfit.* key, same placeholders, no banned words", () => {
   const en = JSON.parse(read("i18n/en.json"));
   const keys = Object.keys(en).filter((k) => k.startsWith("outfit."));
-  assert.ok(keys.length >= 14);
+  assert.ok(keys.length >= 15);
   const ph = (s) => [...String(s).matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort().join(",");
   for (const code of ["en", "ja", "ru", "de", "fr", "zh", "es", "uk", "it"]) {
     const j = JSON.parse(read(`i18n/${code}.json`));
