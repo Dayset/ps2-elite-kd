@@ -1,5 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import {
   sortedFinite, quantile, lowerBound, percentileOf, shareAtOrAbove,
   niceStep, histogram, binIndexOf, stepDigits,
@@ -56,6 +57,14 @@ describe("dist helpers", () => {
     // pct sums to 100
     assert.ok(Math.abs(h.bins.reduce((a, b) => a + b.pct, 0) - 100) < 1e-9);
     assert.ok(Math.abs(h.median - 499.5) < 1);
+  });
+
+  it("dist chart wiring: pureivi joins adjs in the getHist floor rule (2026-10-30)", () => {
+    // rankings.mjs is a browser module; guard the wiring at the source level.
+    const src = readFileSync(new URL("../rankings.mjs", import.meta.url), "utf8");
+    const line = src.split("\n").find((l) => l.includes("histogram(vals, { floor:"));
+    assert.ok(line, "getHist floor line present");
+    assert.ok(line.includes('"adjs"') && line.includes('"pureivi"'), `floor covers adjs + pureivi: ${line.trim()}`);
   });
 
   it("histogram floor: below-scale values (< 0) go to the lowest overflow bin", () => {
