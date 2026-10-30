@@ -18,6 +18,43 @@ export const INACTIVE_MS = 183 * 24 * 3600 * 1000;
 /** Census member list ceiling for one outfit (the largest PC outfits have ~7,600). */
 export const OUTFIT_MEMBER_LIMIT = 10000;
 
+/* t766u (Dayset: "Yes, let outfit tags go past the 6-name limit"): players added from an outfit tag
+ * don't use the 6 typed-name places. Safety cap: one list holds at most OUTFIT_MAX_NAMES of them,
+ * so a huge outfit ([DIG] has 7,600+ members) can't start an hour-long run. Each new player is
+ * ~8 Census calls at the polite 60/min pace (~8 s); 50 new players ≈ 7 min, saved ones are instant.
+ * Honu is only a rare history fallback (≤ 1 call a player), far under its 10k a day. */
+export const OUTFIT_MAX_NAMES = 50;
+/** Seconds one not-yet-saved player takes at the polite Census pace (~8 calls at 60/min). */
+export const SECONDS_PER_NEW_PLAYER = 8;
+export const OUTFIT_ROSTER_KEY = "ps2kd.outfitNames";
+
+/**
+ * Which names in the field came from an outfit tag (lower case), kept for the tab's session so a
+ * refresh keeps the big list. storage = sessionStorage (or a stub in tests).
+ */
+export function createOutfitRoster(storage) {
+  let set = new Set();
+  try { const a = JSON.parse((storage && storage.getItem(OUTFIT_ROSTER_KEY)) || "[]"); if (Array.isArray(a)) set = new Set(a.map((n) => String(n).toLowerCase())); } catch {}
+  const save = () => { try { if (storage) set.size ? storage.setItem(OUTFIT_ROSTER_KEY, JSON.stringify([...set])) : storage.removeItem(OUTFIT_ROSTER_KEY); } catch {} };
+  const has = (n) => set.has(String(n || "").toLowerCase());
+  return {
+    has,
+    add(n) { set.add(String(n).toLowerCase()); save(); },
+    delete(n) { if (set.delete(String(n || "").toLowerCase())) save(); },
+    /** Forget names no longer in the field (a removed chip, a cleared box). */
+    prune(tokens) { const keep = new Set((tokens || []).map((n) => String(n).toLowerCase())); let ch = false; for (const n of set) if (!keep.has(n)) { set.delete(n); ch = true; } if (ch) save(); },
+    count(tokens) { return (tokens || []).filter(has).length; },
+  };
+}
+
+/** May this name join the field? Outfit names: up to OUTFIT_MAX_NAMES; typed names: the normal limit. */
+export function canTakeName({ tokens, isOutfit, outfit, typedMax, outfitMax = OUTFIT_MAX_NAMES }) {
+  if (!Number.isFinite(typedMax)) return true; // debug view: no limit at all
+  const nOutfit = (tokens || []).filter(isOutfit).length;
+  if (outfit) return nOutfit < outfitMax;
+  return (tokens || []).length - nOutfit < typedMax;
+}
+
 /** PC server names by world id (PlayStation servers come from rooms.mjs). */
 export const WORLD_NAMES = Object.freeze({ 1: "Connery", 10: "Miller", 13: "Cobalt", 17: "Emerald", 19: "Jaeger", 40: "SolTech", 1000: "Genudine", 2000: "Ceres" });
 
@@ -120,7 +157,7 @@ export function freePlaces(limit, used) {
 
 /**
  * The field side. $ = names-field.mjs helpers and app.js state: addNameToField, censusJson, CENSUS_BASES, els,
- * isCached, nameLimit, nameTokens, removedReady.
+ * isCached, nameTokens, outfitRoom (places left for outfit players), removedReady.
  */
 export function createOutfitTags($) {
   let noteEl = null;
@@ -149,8 +186,8 @@ export function createOutfitTags($) {
 
   async function addOutfit(alias) {
     const tag = `[${alias.toUpperCase()}]`;
-    if (freePlaces($.nameLimit(), $.nameTokens.length) <= 0) {
-      note(escapeHtml(tr("outfit.full", "The list is full: remove a name to add players from {tag}.", { tag })), "warn");
+    if ($.outfitRoom() <= 0) {
+      note(escapeHtml(tr("outfit.capFull", "The list already holds {max} outfit players, the most it takes. Remove some to add players from {tag}.", { tag, max: OUTFIT_MAX_NAMES })), "warn");
       return { added: 0 };
     }
     note(escapeHtml(tr("outfit.looking", "⏳ Looking up outfit {tag}…", { tag })));
@@ -197,8 +234,8 @@ export function createOutfitTags($) {
     const cachedSet = new Set(cachedList);
     let cached = 0, fresh = 0, noRoom = 0;
     for (const n of names) {
-      if (freePlaces($.nameLimit(), $.nameTokens.length) <= 0) { noRoom++; continue; }
-      if (!$.addNameToField(n, { quiet: true })) { noRoom++; continue; }
+      if ($.outfitRoom() <= 0) { noRoom++; continue; }
+      if (!$.addNameToField(n, { quiet: true, outfit: true })) { noRoom++; continue; }
       if (cachedSet.has(n)) cached++; else fresh++;
     }
     return { cached, fresh, noRoom };
@@ -211,7 +248,9 @@ export function createOutfitTags($) {
     else if (!added && sorted.already && !sorted.cached.length && !sorted.active.length && !sorted.inactive.length) parts.push(escapeHtml(tr("outfit.allIn", "{outfit}: its members are already in the list.", { outfit: label })));
     else {
       parts.push(escapeHtml(tr("outfit.added", "{outfit}: added {added} of {total} members ({cached} already saved, {fresh} new).", { outfit: label, added, total: sorted.total, cached: res.cached, fresh: res.fresh })));
-      if (res.noRoom > 0 && Number.isFinite($.nameLimit())) parts.push(escapeHtml(tr("outfit.noRoom", "{n} didn't fit (the list holds {max} names).", { n: res.noRoom, max: $.nameLimit() })));
+      if (res.noRoom > 0) parts.push(escapeHtml(tr("outfit.noRoom", "{n} more not added: a list takes at most {max} outfit players, to keep loading quick and polite to Daybreak's servers.", { n: res.noRoom, max: OUTFIT_MAX_NAMES })));
+      const slowMin = Math.ceil((res.fresh * SECONDS_PER_NEW_PLAYER) / 60);
+      if (res.fresh > 6) parts.push(escapeHtml(tr("outfit.slow", "Loading {n} new players takes about {min} min; ✕ stops it any time.", { n: res.fresh, min: slowMin })));
       if (!afterAll && sorted.inactive.length) parts.push(escapeHtml(tr("outfit.inactive", "{n} inactive for 6+ months skipped.", { n: sorted.inactive.length })));
     }
     if (others.length) {
@@ -219,7 +258,7 @@ export function createOutfitTags($) {
       parts.push(escapeHtml(tr("outfit.also", "Same tag also on: {list}.", { list: also })));
     }
     let html = parts.join(" ");
-    const canMore = !afterAll && sorted.inactive.length && freePlaces($.nameLimit(), $.nameTokens.length) > 0;
+    const canMore = !afterAll && sorted.inactive.length && $.outfitRoom() > 0;
     if (canMore) {
       const hint = tr("outfit.fetchAllHint", "Adds the inactive members too. It might take a while.");
       html += ` <button type="button" class="outfit-fetch-all" title="${escapeHtml(hint)}">${escapeHtml(tr("outfit.fetchAll", "Fetch all"))}</button> <span class="outfit-note-sub">${escapeHtml(hint)}</span>`;
