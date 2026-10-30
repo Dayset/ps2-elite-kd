@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, existsSync } from "node:fs";
 import { buildLive } from "../scripts/build-live.mjs";
+import { launchLine, LAUNCH_FLAGS } from "../live.mjs";
 import { infMedian, infDial, isTractor, tractorHint, tractorCuts, tractorRule, tractorMarked, tractorCleared, tracXpIds, tracSample } from "../tractor.mjs";
 import { autoMarksHtml, tractorMark } from "../auto-marks.mjs";
 import { infUnit, classifyDeath, feedPush, censusStats, cellText, fmtGap, LIVE_COLS, tipText, ME_REFRESH_MS, mergeFresh, FEED_MAX, emojiFill, fillDriver, glowTier, unknownFill, FULL_AT, EMPTY_AT, goodPct, FILL_DIM, HOLLOW_PX, overlayPush, overlayRows, VICTIM_LINES, eventAt, EVENT_SKEW_MS, unitGlow, ZERG_GOLD_OVER, OUTLINE_PX, LIVE_GLOWS, weaponIcon, CARD_CATEGORIES, LIVE_FPS, liveFps, HALO_KEY, haloOn, bezier, easeFill, glowIn, BEAT, TIER_MOTION, beatAt, haloAt, SHINE, shineFrame, beatSleep, tierLabel, tierVoiceLine, TIER_VOICE_LINES } from "../live.mjs";
@@ -17,6 +18,21 @@ const liveSrc = () => readFileSync(new URL("live.mjs", root), "utf8") + "\n" + r
 test("live.html is built from index.html (run node scripts/build-live.mjs)", () => {
   const want = buildLive(readFileSync(new URL("index.html", root), "utf8"));
   assert.equal(readFileSync(new URL("live.html", root), "utf8"), want);
+});
+
+test("overlay launcher (owner 2026-10-30): Edge line, Chromium toggle, tracked name + stream=1 in the --app URL", () => {
+  const edge = launchLine("edge", "Fantom220TR", "https://dayset.github.io", "/ps2-elite-kd/live.html");
+  assert.equal(edge, `start "" "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe" --user-data-dir="C:\\PS2Live\\EdgeProfile" --app="https://dayset.github.io/ps2-elite-kd/live.html?names=Fantom220TR&stream=1" ${LAUNCH_FLAGS}`);
+  assert.ok(LAUNCH_FLAGS.includes("--disable-background-timer-throttling"));
+  assert.ok(LAUNCH_FLAGS.includes("--disable-backgrounding-occluded-windows"));
+  assert.ok(LAUNCH_FLAGS.includes("--disable-renderer-backgrounding"));
+  assert.ok(LAUNCH_FLAGS.includes("--disable-features=CalculateNativeWinOcclusion"));
+  const chrom = launchLine("chromium", "Fantom220TR", "https://dayset.github.io", "/ps2-elite-kd/live.html");
+  assert.ok(chrom.includes("C:\\Program Files\\Chromium\\Application\\chrome.exe"));
+  assert.ok(chrom.includes('--user-data-dir="C:\\PS2Live\\ChromiumProfile"'));
+  assert.ok(chrom.includes("?names=Fantom220TR&stream=1"));
+  assert.equal(launchLine("bogus", "X", "https://h", "/p"), launchLine("edge", "X", "https://h", "/p"), "unknown browser falls back to Edge");
+  assert.ok(launchLine("edge", "Name With Space", "https://h", "/p").includes("?names=Name%20With%20Space&stream=1"));
 });
 
 test("classifyDeath: kill, death, suicide, unrelated", () => {

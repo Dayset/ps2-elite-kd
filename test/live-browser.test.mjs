@@ -286,6 +286,26 @@ describe("🎥 live.html in a browser", () => {
     });
   });
 
+  it("overlay launcher (owner 2026-10-30): prefilled Edge line for the tracked name, Chromium toggle, hidden in stream mode", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until(`document.getElementById("liveLaunchCmd") && document.getElementById("liveLaunchCmd").value`)), true, "launcher field prefilled");
+      const line = await ev(`document.getElementById("liveLaunchCmd").value`);
+      assert.ok(line.includes("msedge.exe"), `Edge first (owner's browser): ${line}`);
+      assert.ok(line.includes(`?names=${encodeURIComponent(ME.name)}&stream=1`), `tracked name + stream=1 in the --app URL: ${line}`);
+      assert.ok(line.includes("--disable-background-timer-throttling") && line.includes("--disable-backgrounding-occluded-windows"), "anti-throttle flags present");
+      await ev(`document.getElementById("liveLaunchChromium").click()`);
+      const chrom = await ev(`document.getElementById("liveLaunchCmd").value`);
+      assert.ok(chrom.includes("chrome.exe") && chrom.includes("ChromiumProfile"), `Chromium toggle: ${chrom}`);
+      assert.equal(await ev(`document.getElementById("liveLaunchEdge").getAttribute("aria-pressed")`), "false", "Edge unpressed after toggle");
+      await ev(`document.getElementById("liveLaunchCopy").click()`); // copy path must not throw (clipboard may be unavailable headless; the fallback covers it)
+      assert.deepEqual(errors, [], "no page errors");
+    });
+    await withLive(async ({ ev, errors }) => {
+      assert.equal(await ev(until(`getComputedStyle(document.getElementById("liveLaunch")).display === "none"`)), true, "launcher hidden in stream mode");
+      assert.deepEqual(errors, [], "no page errors");
+    }, { query: "&stream=1" });
+  });
+
   it("teamkill (owner 2026-10-25): own-faction kills farm nothing, own-faction deaths still spend bounty", { skip: !chrome && "no Chrome", timeout: 90000 }, async () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");

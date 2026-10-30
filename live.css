@@ -228,6 +228,16 @@ body.live-stream #liveVoiceLines { display: none; }
 .live-voice-lines label { display: block; margin-top: 0.15rem; }
 .live-voice-lines input { background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 0; padding: 0.1rem 0.3rem; font: inherit; margin-left: 0.25rem; }
 
+/* Owner 2026-10-30: overlay launcher — the Windows line for this page's overlay, copyable. Setup UI, never overlay content. */
+body.live-stream #liveLaunch { display: none; }
+.live-launch { margin-top: 0.5rem; font-size: 0.85rem; }
+.live-launch label { display: block; margin-bottom: 0.25rem; }
+.live-launch-row { display: flex; gap: 0.25rem; align-items: center; }
+.live-launch-row .live-share { margin-top: 0; }
+.live-launch-cmd { flex: 1; min-width: 0; background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 0; padding: 0.25rem 0.4rem; font-family: monospace; font-size: 0.8rem; }
+.live-launch-browser[aria-pressed="true"] { border-color: var(--accent); background: var(--grid); }
+.live-launch-hint { margin-top: 0.25rem; font-size: 0.8rem; color: var(--dim); }
+
 body.live-stream #liveDps .live-metric:last-child { display: none; } /* online pill: meters + session only */
 body.live-stream .live-table, body.live-stream .live-stream-card, body.live-stream .live-bar { background: transparent; } /* owner 2026-10-26: chromakey — every background drops out (table panel, card panel, bar tracks) so the body's green shows through and only text + bars survive the key */
 body.live-stream .live-table tbody.lv-vic:nth-of-type(even) > tr > td { background-color: transparent; } /* zebra rows too */

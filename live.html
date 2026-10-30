@@ -78,7 +78,7 @@
     } catch (e) {}
   </script>
   <link rel="stylesheet" href="styles.css?v=20261030-flat1" />
-  <link rel="stylesheet" href="live.css?v=20261030-flat2" />
+  <link rel="stylesheet" href="live.css?v=20261030-launch1" />
   <style>
     /* Installed-app launch splash (t465u). Android draws its own launch splash first:
        the maskable icon (big medal on black) seen through a 192 px circle, on the
@@ -378,7 +378,7 @@
     <button id="liveShare" class="live-share" type="button"></button><button id="liveStreamBtn" class="live-share" type="button"></button><button id="liveVoiceBtn" class="live-share" type="button"></button><button id="liveSfxBtn" class="live-share" type="button"></button>
     <details id="liveVoiceLines" class="live-voice-lines"><summary id="liveVoiceLinesTitle"></summary><div id="liveVoiceLinesHint" class="live-voice-lines-hint"></div><label>-- <input class="live-voice-line" data-tier="--" type="text"></label><label>- <input class="live-voice-line" data-tier="-" type="text"></label><label>≈ <input class="live-voice-line" data-tier="≈" type="text"></label><label>+ <input class="live-voice-line" data-tier="+" type="text"></label><label>++ <input class="live-voice-line" data-tier="++" type="text"></label><label>0 <input class="live-voice-line" data-tier="0" type="text"></label><label>? <input class="live-voice-line" data-tier="?" type="text"></label></details>
     <div id="liveDpmTau" class="live-dpm-tau">τ <input id="liveDpmTauVal" type="number" min="1" max="3600" step="1" value="60">s <button id="liveDpmTauDown" type="button">−</button><button id="liveDpmTauUp" type="button">+</button></div>
-    <div id="liveCashHist" class="live-cash-hist"></div>
+    <div id="liveCashHist" class="live-cash-hist"></div><div id="liveLaunch" class="live-launch"><label id="liveLaunchLabel" for="liveLaunchCmd"></label><div class="live-launch-row"><button id="liveLaunchEdge" class="live-share live-launch-browser" type="button" aria-pressed="true">Edge</button><button id="liveLaunchChromium" class="live-share live-launch-browser" type="button" aria-pressed="false">Chromium</button><input id="liveLaunchCmd" class="live-launch-cmd" type="text" spellcheck="false"><button id="liveLaunchCopy" class="live-share" type="button"></button></div><div id="liveLaunchHint" class="live-launch-hint"></div></div>
   </section>
 
   <div id="progress" class="progress-modal" hidden aria-hidden="true">
@@ -667,6 +667,6 @@
       navigator.serviceWorker.register("sw.js").catch(function () {});
     }
   </script>
-  <script type="module" src="live.mjs?v=20261030-sp3"></script>
+  <script type="module" src="live.mjs?v=20261030-launch1"></script>
 </body>
 </html>

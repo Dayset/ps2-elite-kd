@@ -36,6 +36,22 @@ const CENSUS = `https://census.daybreakgames.com/s:${CENSUS_SERVICE_ID}/get/ps2:
 const STREAM = `wss://push.planetside2.com/streaming?environment=ps2&service-id=s:${CENSUS_SERVICE_ID}`;
 const FACTION = { 1: "vs", 2: "nc", 3: "tr", 4: "nso" };
 
+// Owner 2026-10-30 (overlay launcher): the Windows line that opens this
+// page's overlay in its own window — own profile (the flags apply even
+// with the main browser running) + --app (no tabs, nothing to discard) +
+// the anti-throttle flags. Edge first (owner's browser), Chromium second.
+// Pure (unit-tested): the page wiring only fills the field with it.
+export const LAUNCH_FLAGS = "--disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-renderer-backgrounding --disable-features=CalculateNativeWinOcclusion";
+export const LAUNCH_BROWSERS = {
+  edge: { exe: "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe", profile: "C:\\PS2Live\\EdgeProfile" },
+  chromium: { exe: "C:\\Program Files\\Chromium\\Application\\chrome.exe", profile: "C:\\PS2Live\\ChromiumProfile" },
+};
+export function launchLine(browser, target, origin, pathname) {
+  const b = LAUNCH_BROWSERS[browser] || LAUNCH_BROWSERS.edge;
+  const url = `${origin}${pathname}?names=${encodeURIComponent(target)}&stream=1`;
+  return `start "" "${b.exe}" --user-data-dir="${b.profile}" --app="${url}" ${LAUNCH_FLAGS}`;
+}
+
 /* ---------------- browser part ---------------- */
 if (typeof window !== "undefined" && typeof document !== "undefined") start();
 
@@ -76,7 +92,7 @@ function start() {
     listEl.addEventListener("mouseleave", () => { tipEl.hidden = true; });
   }
   const setState = (html, cls = "") => { if (stateEl) { stateEl.innerHTML = html; stateEl.className = "live-state " + cls; } };
-  if (!target) { setState("Add a name on the main page, then press 🎥.", "err"); const sh = $("liveShare"); if (sh) sh.style.display = "none"; const sb = $("liveStreamBtn"); if (sb) sb.style.display = "none"; return; }
+  if (!target) { setState("Add a name on the main page, then press 🎥.", "err"); const sh = $("liveShare"); if (sh) sh.style.display = "none"; const sb = $("liveStreamBtn"); if (sb) sb.style.display = "none"; const ln = $("liveLaunch"); if (ln) ln.style.display = "none"; return; }
 
   const people = new Map(); // cid -> { name, faction, kd, cached: {adjs, kd} | null }
   let st = { killer: null, victims: [], lastEv: null, gone: null }; // owner t575u overlay state (overlayPush)
@@ -695,6 +711,35 @@ function start() {
         history.replaceState(null, "", u);
       } catch {}
     });
+  }
+  // Owner 2026-10-30 (overlay launcher): one tap copies the Windows line
+  // for this page's overlay — prefilled with the tracked name, editable
+  // (a Chromium in another folder), Edge first (owner's browser). The
+  // field itself is setup UI: live.css hides it in stream mode.
+  const launchLabel = $("liveLaunchLabel"), launchCmd = $("liveLaunchCmd"), launchCopy = $("liveLaunchCopy");
+  const launchEdge = $("liveLaunchEdge"), launchChrom = $("liveLaunchChromium");
+  if (launchCmd && launchCopy) {
+    if (launchLabel) launchLabel.textContent = tr("live.launchLabel", "Overlay launcher (Windows)");
+    const launchHint = $("liveLaunchHint");
+    if (launchHint) launchHint.textContent = tr("live.launchHint", "Save as a .bat file and double-click it. The overlay opens in its own window, with background throttling and tab discard switched off.");
+    let launchBrowser = "edge";
+    const paintLaunch = () => {
+      launchCmd.value = launchLine(launchBrowser, target, location.origin, location.pathname);
+      if (launchEdge) launchEdge.setAttribute("aria-pressed", String(launchBrowser === "edge"));
+      if (launchChrom) launchChrom.setAttribute("aria-pressed", String(launchBrowser === "chromium"));
+    };
+    if (launchEdge) launchEdge.addEventListener("click", () => { launchBrowser = "edge"; paintLaunch(); });
+    if (launchChrom) launchChrom.addEventListener("click", () => { launchBrowser = "chromium"; paintLaunch(); });
+    launchCopy.textContent = tr("live.launchCopy", "Copy");
+    launchCopy.addEventListener("click", async () => {
+      let ok = false;
+      try { await navigator.clipboard.writeText(launchCmd.value); ok = true; } catch {}
+      if (!ok) {
+        try { launchCmd.select(); ok = document.execCommand("copy"); } catch { ok = false; }
+      }
+      if (ok) { launchCopy.textContent = "✓"; setTimeout(() => { launchCopy.textContent = tr("live.launchCopy", "Copy"); }, 2000); }
+    });
+    paintLaunch();
   }
   // Owner 2026-10-27 (live voice): the Oracle's speech (voice.js say)
   // reads each kill/death opponent's name with the iVi ratio after it.
