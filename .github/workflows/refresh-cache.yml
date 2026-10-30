@@ -118,6 +118,17 @@ jobs:
           RADAR_BUDGET_SEC: "240"
         run: node scripts/radar-lookup.mjs
 
+      - name: ⛑️ Heavy support pair check (≤ 5 supporters, ≤ 40 Honu calls)
+        # heavy-support.mjs / scripts/heavy-support.mjs: re-score from data/xp (no network), then
+        # pair-check ≤ 5 unchecked (or 30-day-old) top-10% supporters, one Honu call every 6.5 s,
+        # counted in data/honu-usage.json, ≤ 300 a day. Usually 0 calls once all are checked. Never fails the run.
+        if: always() && env.ON_DEMAND != 'true'
+        continue-on-error: true
+        timeout-minutes: 7
+        env:
+          HS_BUDGET_SEC: "300"
+        run: node scripts/heavy-support.mjs --check 5
+
       - name: Commit (one commit per run, skipped if nothing refreshed)
         if: always()
         env:
@@ -131,8 +142,8 @@ jobs:
             # Nothing refreshed (idle / outage / all names bad): don't spend a Pages
             # build on bookkeeping. Only a changed data/schedule.json (read by the
             # Worker cron to decide whether to dispatch) is committed on its own.
-            # Discovery progress (sweep cursor + queue), the Honu day counter and the PS2 Radar cache are kept too.
-            keep="schedule.json discovery.json honu-usage.json radar.json"
+            # Discovery progress (sweep cursor + queue), the Honu day counter, the PS2 Radar cache and ⛑️ pair checks are kept too.
+            keep="schedule.json discovery.json honu-usage.json radar.json heavysupport.json"
             for f in $keep; do cp "data/$f" "/tmp/$f" 2>/dev/null || true; done
             git checkout -- data/ && git clean -fdq data/
             changed_meta=0

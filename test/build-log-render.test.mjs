@@ -20,7 +20,7 @@ const chrome = ["google-chrome", "chromium", "chromium-browser", "google-chrome-
 });
 
 describe("build-log renders without errors", () => {
-  it("red flags, padding all compute (no ReferenceError)", { skip: !chrome && "no Chrome installed", timeout: 300000 }, async () => {
+  it("red flags, padding, ⛑️ heavy support all compute (no ReferenceError)", { skip: !chrome && "no Chrome installed", timeout: 300000 }, async () => {
     const types = { ".html": "text/html", ".js": "text/javascript", ".mjs": "text/javascript", ".json": "application/json", ".css": "text/css", ".svg": "image/svg+xml", ".png": "image/png" };
     let server = null, base = process.env.BUILD_LOG_BASE;
     if (!base) {
@@ -66,7 +66,7 @@ describe("build-log renders without errors", () => {
         if (r.exceptionDetails) throw new Error(r.exceptionDetails.text);
         return r.result.value;
       };
-      const ids = ["flags", "adjusted", "padding"];
+      const ids = ["flags", "adjusted", "padding", "heavySupport"];
       const r = await ev(`(async () => {
         const ids = ${JSON.stringify(ids)};
         const txt = () => ids.map((i) => (document.getElementById(i) || {}).textContent || "");
