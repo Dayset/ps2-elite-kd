@@ -35,7 +35,7 @@ import {
   bandReliability,
 } from "./math.mjs?v=20261027-z79";
 import { formatClock, fmtNum, slugKey, bareName, parseNames, namesEqualIgnoreCase, namesSetKey, niceLinTicks, niceNum, niceLogTicks, formatTick, escapeHtml, makeAbortError, isAbortError, checkAborted, readJsonLS, writeJsonLS } from "./app-util.mjs?v=20261027-z79";
-import { createAnalyze } from "./analyze.mjs?v=20261030-of1";
+import { createAnalyze } from "./analyze.mjs?v=20261030-cxl1";
 import { createShareAdd } from "./share-add.mjs?v=20261027-z79";
 import { createSharedIndex } from "./shared-index.mjs?v=20261030-purefloor1";
 import { createNamesField } from "./names-field.mjs?v=20261030-of2";
@@ -97,7 +97,7 @@ import {
   etaLearnLiveMs,
   freshEtaText,
   expectedNameMs,
-} from "./analyze-run.mjs?v=20261023-priv1";
+} from "./analyze-run.mjs?v=20261030-cxl1";
 import {
   normalizePlayer as normalizePlayerShared,
   playerMetrics,
