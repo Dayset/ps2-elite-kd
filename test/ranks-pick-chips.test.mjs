@@ -294,6 +294,8 @@ describe("Max account age cut (Settings stepper, owner 2026-10-22)", () => {
     assert.match(appSource(), /maxAgeInput2: document\.getElementById\("maxAgeInput2"\)/);
     assert.match(appSource(), /if \(els\.maxAgeInput2\) els\.maxAgeInput2\.value = String\(cl\)/);
     assert.match(rankingsSource(), /\$\("maxAgeInput2"\)/);
+    // Toolbar label matches the Hide ranks toggle text (0.8rem, muted).
+    assert.match(read("styles.css"), /\.rk-filter-row \.rk-max-age-label \{ font-size: 0\.8rem; color: var\(--muted, var\(--dim\)\); \}/);
   });
 
   it("shared saved key; browse drops accounts older than the value, search keeps them", () => {
