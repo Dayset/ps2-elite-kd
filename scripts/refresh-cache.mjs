@@ -889,9 +889,9 @@ async function forensicsPhase(index, until) {
 async function resolveCensusOnly(raw) {
   let url;
   if (/^\d{16,}$/.test(raw)) {
-    url = `${CENSUS}character?character_id=${encodeURIComponent(raw)}&c:resolve=outfit,stat_history`;
+    url = `${CENSUS}character?character_id=${encodeURIComponent(raw)}&c:resolve=outfit,stat_history,world`;
   } else {
-    url = `${CENSUS}character?name.first_lower=${encodeURIComponent(raw.toLowerCase())}&c:resolve=outfit,stat_history`;
+    url = `${CENSUS}character?name.first_lower=${encodeURIComponent(raw.toLowerCase())}&c:resolve=outfit,stat_history,world`;
   }
   const data = await fetchJson(url, { retries: 3 });
   if (data && !Array.isArray(data.character_list) && (data.error || data.errorCode)) {
@@ -944,6 +944,8 @@ async function loadLive(name, { prevAssists = null, prevInfantry = null, prevWea
   const display = `${tag}${(c.name && c.name.first) || censusQueryName(name)}`;
   // #80: the faction rides along (same Census row, no extra call) for data/cid-names.json; it never changes.
   const faction = FACTION_TAG[c.faction_id] || "";
+  // t798u: the home world rides along too (c:resolve=world, same call) for data/servers.json; old worlds map via server-rating.mjs.
+  const world = /^\d+$/.test(String(c.world_id || "")) ? +c.world_id : null;
 
   // Census errors propagate as outages (old data is kept).
   const r = await fetchPlayerCensus(cid, { base: CENSUS, getJson: (u) => fetchJson(u), topN: TOP_N, memo: oppMemo });
@@ -1000,6 +1002,7 @@ async function loadLive(name, { prevAssists = null, prevInfantry = null, prevWea
       honu: `https://wt.honu.pw/c/${cid}/killboard`,
       source: "census",
       ...(faction ? { faction } : {}),
+      ...(world ? { world } : {}),
       ...(assists ? { assists } : {}),
       ...(infantry ? { infantry } : {}),
       ...(weapons ? { weapons } : {}),

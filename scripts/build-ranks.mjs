@@ -40,6 +40,7 @@ import { percentileOf } from "../dist.mjs";
 import { forensicsSummary, honuSessionUrl } from "../session-forensics.mjs";
 import { hiddenList, isConfirmedCheater } from "../hidden.mjs";
 import { factionOf, buildFactionRating } from "../faction-rating.mjs";
+import { worldOf, serverOfWorld, buildServerRating, SERVERS_PC, SERVERS_PS } from "../server-rating.mjs";
 import { cleanTimes, flairsFor } from "../flairs.mjs";
 import { sessionMetrics, sessionFlag, sessionRuleText, distribution, SESSION_METRICS, SESSION_METRIC_IDS, SESSION_MIN, SESSION_RULE, ASSIST_GAP } from "../session-stats.mjs";
 
@@ -396,6 +397,8 @@ export function buildRanksWithGuard(dataDir, { known = KNOWN_EXTREMES, zergCharg
   const playMin = new Map(); // 🛖 experience: estimated lifetime play minutes by slug (owner t508u)
   const factionBy = new Map(); // 🏳️ faction by slug (player file "faction" or data/faction-backfill.json; t795u)
   const facBackfill = readFactionBackfill(dataDir);
+  const worldBy = new Map(); // 🌐 Census home world by slug (player file "world" or data/server-backfill.json; t798u)
+  const worldBackfill = readServerBackfill(dataDir);
   const forensics = readForensics(dataDir);
   const farmFound = [];
   const ranks = buildRanks(dataDir, {
@@ -413,6 +416,7 @@ export function buildRanksWithGuard(dataDir, { known = KNOWN_EXTREMES, zergCharg
       const pl = raw.player || raw;
       playMin.set(row[2], playMinutes(pl.infantry && pl.infantry.kills, pl.global_kpm));
       factionBy.set(row[2], factionOf(pl, facBackfill));
+      worldBy.set(row[2], worldOf(pl, worldBackfill));
       const xpd = readXp(dataDir, row[2]);
       const sm = sessionMetrics({ assists: pl.assists, xp: xpd });
       const rs = crowdSample(xpd); // 🪳 crowd check (zerg-revive.mjs): null below the sample minimum
@@ -474,7 +478,31 @@ export function buildRanksWithGuard(dataDir, { known = KNOWN_EXTREMES, zergCharg
     assistGroups: assistGroups(players), // 🤝 groups stay build-log only (the 🤝 apk column itself is public since t382u)
     assistGap: assistGapStatus(players),
     factions: factionRatingOf(ranks, { factionBy, playMin, padders: confirmed, famOf: readFamilyIndex(dataDir) }),
+    serverInputs: { worldBy, playMin, padders: confirmed }, // 🌐 servers.json is built after the PS server column (main)
   };
+}
+
+/** data/server-backfill.json → { cid: world_id } (Census, for PC player files saved before t798u). */
+export function readServerBackfill(dataDir) {
+  try { return JSON.parse(fs.readFileSync(path.join(dataDir, "server-backfill.json"), "utf8")).worlds || {}; } catch { return {}; }
+}
+
+/**
+ * 🌐 Server rating (server-rating.mjs) over the final ranks rows. PC: server from the Census world (merged worlds map
+ * to Osprey / Wainwright); PS: the "srv" column (us = Genudine, eu = Ceres).
+ */
+export function serverRatingOf(ranks, { worldBy = new Map(), playMin = new Map(), padders = new Set(), isPs = false, now = Date.now() } = {}) {
+  const ix = Object.fromEntries(ranks.cols.map((c, i) => [c, i]));
+  const g = (r, k) => (ix[k] != null ? r[ix[k]] : null);
+  const PS_SRV = { us: "genudine", eu: "ceres" };
+  const players = ranks.rows.map((r) => {
+    const slug = g(r, "slug");
+    const m = playMin.get(slug);
+    const world = isPs ? null : (worldBy.get(slug) ?? null);
+    const server = isPs ? PS_SRV[g(r, "srv")] || null : serverOfWorld(world);
+    return { slug, name: g(r, "name"), server, world, adjs: g(r, "adjs"), kd: g(r, "kd"), kpm: g(r, "kpm"), playH: Number.isFinite(m) ? m / 60 : null, last: g(r, "last"), thin: !!g(r, "thin"), padder: padders.has(slug) };
+  });
+  return { ps: !!isPs, ...buildServerRating(players, { servers: isPs ? SERVERS_PS : SERVERS_PC, now }) };
 }
 
 /** data/faction-backfill.json → { cid: "vs" | "nc" | "tr" | "nso" } (Census, for player files saved before #80). */
@@ -1350,9 +1378,15 @@ if (isMain) {
     const marathonHidden = autoHideMarathonRampage(dataDir);
     if (marathonHidden.length) console.log(`auto-hide: ${marathonHidden.length} marathon rampage account(s) added to hidden.json: ${marathonHidden.map((a) => a.name).join(", ")}`);
   }
-  const { ranks: out, guard, hidden: hiddenInfo, bins, session, forensics: forensicsInfo, review, assistGroups: assistInfo, padderPenalty: padderInfo, vehicleCut: vehCutInfo, hut: hutInfo, vehDiff: vehDiffInfo, zergRevive: zrevInfo, tractor: tracInfo, newbieDiff: nbdInfo, assistGap: gapInfo, factions: facInfo } = buildRanksWithGuard(dataDir, room === "ps" ? { known: {}, zergCharge: false } : undefined);
+  const { ranks: out, guard, hidden: hiddenInfo, bins, session, forensics: forensicsInfo, review, assistGroups: assistInfo, padderPenalty: padderInfo, vehicleCut: vehCutInfo, hut: hutInfo, vehDiff: vehDiffInfo, zergRevive: zrevInfo, tractor: tracInfo, newbieDiff: nbdInfo, assistGap: gapInfo, factions: facInfo, serverInputs } = buildRanksWithGuard(dataDir, room === "ps" ? { known: {}, zergCharge: false } : undefined);
   if (room === "ps") addServerColumn(out, JSON.parse(fs.readFileSync(path.join(dataDir, "index.json"), "utf8")));
   fs.writeFileSync(path.join(dataDir, "ranks.json"), JSON.stringify(out) + "\n");
+  // 🌐 Server rating (t798u): main-page section + the server-name alias (PC Osprey / Wainwright, PS Genudine / Ceres).
+  try {
+    const srv = serverRatingOf(out, { ...(serverInputs || {}), isPs: room === "ps" });
+    fs.writeFileSync(path.join(dataDir, "servers.json"), JSON.stringify({ updatedAt: out.updatedAt, ...srv }) + "\n");
+    console.log(`servers.json: ${srv.rated} rated players (${srv.servers.map((s) => `${s} ${srv.stats[s].n}`).join(", ")}; ${srv.left.noServer} on other worlds)`);
+  } catch (e) { console.log(`servers.json not written: ${e.message}`); }
   try {
     const names = buildNames(JSON.parse(fs.readFileSync(path.join(dataDir, "index.json"), "utf8")), { withFile: room === "ps" });
     fs.writeFileSync(path.join(dataDir, "names.json"), JSON.stringify(names) + "\n");

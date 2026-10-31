@@ -7,9 +7,11 @@ import { t as tr } from "./i18n.mjs";
 import { slugKey, namesEqualIgnoreCase, bareName, parseNames } from "./app-util.mjs?v=20261027-z79";
 import { forgetFailures } from "./analyze-run.mjs?v=20261030-cxl1";
 import { isPenalizedPadder } from "./padding.mjs?v=20261023-short1";
-import { createOutfitTags, extractOutfitTags } from "./outfit-tags.mjs?v=20261030-of2";
+import { createOutfitTags, extractOutfitTags } from "./outfit-tags.mjs?v=20261031-sr1";
 import { extractFactionAliases } from "./faction-rating.mjs?v=20261031-fr1";
 import { addFactionPlayers } from "./faction-panel.mjs?v=20261031-fr3";
+import { extractServerAliases } from "./server-rating.mjs?v=20261031-sr1";
+import { addServerPlayers } from "./server-panel.mjs?v=20261031-sr1";
 
 /**
  * $ = app.js state and functions this part uses, as live getters (and setters for state it changes), so app.js
@@ -494,18 +496,22 @@ export function createNamesField($) {
     const { aliases, rest } = extractOutfitTags($.els.namesInput.value);
     // t795u: "NC", "TR", "VS", "NS" (any case, a word on its own) = that faction's top players (faction-rating.mjs).
     const fa = $.LIVE_MODE ? { factions: [], rest: aliases.length ? rest : $.els.namesInput.value } : extractFactionAliases(aliases.length ? rest : $.els.namesInput.value);
-    const raw = fa.rest;
+    // t798u: "osprey", "wainwright" (PS: "genudine", "ceres"), any case, a word on its own = that server's top players.
+    const sa = $.LIVE_MODE ? { servers: [], rest: fa.rest } : extractServerAliases(fa.rest, !!$.IS_PS);
+    const raw = sa.rest;
     const tokens = parseNames(raw);
     const rejected = [];
     for (const t of tokens) if (!addNameToField(t)) rejected.push(t);
     if (clearInput) $.els.namesInput.value = rejected.join(" ");
     if (rejected.length) showLimitHint();
     syncNamesPlaceholder();
-    const outfits = aliases.length && !$.LIVE_MODE ? outfitPart().expand(aliases).then((r) => { if (r.some((x) => x && x.added)) sfx("plink"); return r; }) : null;
+    const outfits = aliases.length && !$.LIVE_MODE ? outfitPart().expand(aliases).then((r) => { if (r.some((x) => x && x.added)) { sfx("plink"); resetAge(); } return r; }) : null;
     const factions = fa.factions.length && !$.LIVE_MODE ? addFactions(fa.factions) : null;
-    // Analyze / Enter wait on `outfits` (analyze.mjs): it covers the faction alias too.
-    const pending = outfits && factions ? Promise.all([outfits, factions]) : outfits || factions;
-    return { tokens, rejected, outfits: pending, factions };
+    const servers = sa.servers.length && !$.LIVE_MODE ? addServers(sa.servers) : null;
+    // Analyze / Enter wait on `outfits` (analyze.mjs): it covers the faction and server aliases too.
+    const all = [outfits, factions, servers].filter(Boolean);
+    const pending = all.length > 1 ? Promise.all(all) : all[0] || null;
+    return { tokens, rejected, outfits: pending, factions, servers };
   }
 
   /** t795u: add the top players of these factions ("nc" / "tr" / "vs" / "nso") like an outfit tag (same cap). */
@@ -516,8 +522,22 @@ export function createNamesField($) {
       note: (html, cls) => outfitPart().note(html, cls),
       isPs: !!$.IS_PS,
       show: (f) => { if ($.factionShow) $.factionShow(f); },
-    }).then((r) => { if (r.some((x) => x && x.added)) sfx("plink"); return r; });
+    }).then((r) => { if (r.some((x) => x && x.added)) { sfx("plink"); resetAge(); } return r; });
   }
+
+  /** t798u: add the top players of these servers ("osprey" / "wainwright"; PS "genudine" / "ceres"), same cap. */
+  function addServers(list) {
+    return addServerPlayers(list, {
+      addNameToField,
+      outfitRoom: () => $.outfitRoom(),
+      note: (html, cls) => outfitPart().note(html, cls),
+      isPs: !!$.IS_PS,
+      show: (sv) => { if ($.serverShow) $.serverShow(sv); },
+    }).then((r) => { if (r.some((x) => x && x.added)) { sfx("plink"); resetAge(); } return r; });
+  }
+
+  /** t800u: after an outfit / faction / server fetch the age filter goes back to its full range (owner). */
+  function resetAge() { if ($.resetAgeFilter) $.resetAgeFilter(); }
 
   let _outfit = null;
   function outfitPart() {
@@ -531,6 +551,7 @@ export function createNamesField($) {
       outfitRoom: () => $.outfitRoom(), // t766u: places left for outfit players (cap OUTFIT_MAX_NAMES)
       get nameTokens() { return $.nameTokens; },
       removedReady: () => $.removedReady(),
+      onFetched: () => resetAge(), // t800u: "Fetch all" also resets the age filter
     }));
   }
 
@@ -540,7 +561,7 @@ export function createNamesField($) {
    */
   function currentNamesInField() {
     const out = $.nameTokens.slice();
-    const frag = $.els.namesInput ? extractFactionAliases(extractOutfitTags(String($.els.namesInput.value || "")).rest).rest : ""; // t765u: an outfit tag is not a name
+    const frag = $.els.namesInput ? extractServerAliases(extractFactionAliases(extractOutfitTags(String($.els.namesInput.value || "")).rest).rest, !!$.IS_PS).rest : ""; // t765u: an outfit tag is not a name
     if (frag) {
       for (const t of parseNames(frag)) {
         if (!out.some((n) => namesEqualIgnoreCase(n, t))) out.push(t);
@@ -548,5 +569,5 @@ export function createNamesField($) {
     }
     return out.slice(0, $.nameLimit());
   }
-  return { addFactions, getNameFailure, isNameFetched, setNameTokens, clearNameFailures, addNameToField, namesMatch, rollDice, toggleNameInField, removeNameToken, syncNamesPlaceholder, showLimitNote, hideLimitNote, syncLimitLock, lockedClick, renderNameTokens, makeFailedToken, retryFailedName, commitFragment, currentNamesInField, clearNamesFromInput, showLimitHint, hideLimitToast, showLimitToast, clearLimitHint };
+  return { addFactions, addServers, getNameFailure, isNameFetched, setNameTokens, clearNameFailures, addNameToField, namesMatch, rollDice, toggleNameInField, removeNameToken, syncNamesPlaceholder, showLimitNote, hideLimitNote, syncLimitLock, lockedClick, renderNameTokens, makeFailedToken, retryFailedName, commitFragment, currentNamesInField, clearNamesFromInput, showLimitHint, hideLimitToast, showLimitToast, clearLimitHint };
 }

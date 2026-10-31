@@ -277,7 +277,11 @@ export function createOutfitTags($) {
   function fetchAll() {
     const f = pendingAll;
     pendingAll = null;
-    return f ? f() : null;
+    // t800u: tell the name field once the extra members are in (it resets the age filter to its full range).
+    if (!f) return null;
+    const r = f();
+    const done = (x) => { if ($.onFetched && x && (x.added || x.cached || x.fresh)) $.onFetched(x); return x; };
+    return r && typeof r.then === "function" ? r.then(done) : done(r);
   }
 
   /** Expand every alias in order (each one fills what the one before left free). */
