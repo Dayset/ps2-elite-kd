@@ -13,7 +13,7 @@
  *     ticks:  [{ t, terr, win }],                           // minute-by-minute engine output
  *     flips:  [[ts, fid, old, new]],                        // FacilityControl captures
  *     bench:  { slices, brier } | null,
- *     fights?: [{ t, pop: [vs,nc,tr,nso] | null, b: [[fid, vs, nc, tr, kills, convFac, convAgo]] }] }  // fights.js, paid plan
+ *     fights?: [{ t, pop: [vs,nc,tr,nso] | null, b: [[fid, vs, nc, tr, kills, convFac, convAgo, spawns?, ivi?]] }] }  // fights.js fightRow, paid plan
  * ~10-25 KB per alert; a 500 MB D1 database holds tens of thousands.
  */
 import { regionMap } from "./models.js";

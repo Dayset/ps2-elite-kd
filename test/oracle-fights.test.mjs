@@ -137,3 +137,19 @@ test("cycle: live alert gets state.fights + pop_live, one fight row per minute, 
   assert.deepEqual(b.fights[0].b[0].slice(1, 5), [14, 11, 0, 11]);
   assert.deepEqual(b.fights[0].pop, [150, 90, 60, 4]);
 });
+
+test("fightRow: 🚐 spawn totals and 👥 best iVi ride along only when present (#87)", () => {
+  const f = { pop: null, bases: [
+    { fid: "1", n: { VS: 10, NC: 2, TR: 0 }, k: { VS: 5, NC: 1, TR: 0 }, conv: { VS: 3, NC: 0, TR: 0 }, convAgo: 20,
+      sp: { VS: { su: 2, suN: 30, be: 1, beN: 4, n: 34 }, NC: { ro: 1, roN: 2, n: 2 } },
+      top: [{ n: "a", f: "VS", k: 9, d: 1, i: 310 }, { n: "b", f: "VS", k: 4, d: 2, i: 120 }, { n: "c", f: "NC", k: 2, d: 5, i: null }] },
+    { fid: "2", n: { VS: 0, NC: 4, TR: 4 }, k: { VS: 0, NC: 2, TR: 2 }, conv: { VS: 0, NC: 0, TR: 0 }, convAgo: null,
+      top: [{ n: "d", f: "TR", k: 3, d: 0, i: 205 }] },
+    { fid: "3", n: { VS: 3, NC: 0, TR: 0 }, k: { VS: 0, NC: 0, TR: 0 }, conv: { VS: 0, NC: 0, TR: 0 }, convAgo: null, top: [["555555555555555555", "VS", 1, 0]] },
+  ] };
+  const r = fightRow(f);
+  assert.deepEqual(r.b[0], ["1", 10, 2, 0, 6, "VS", 20, [3, 1, 0, 34, 2, 0], [310, 0, 0]]);
+  assert.deepEqual(r.b[1], ["2", 0, 4, 4, 4, null, null, null, [0, 0, 205]], "index 7 null when only iVi is there");
+  assert.deepEqual(r.b[2], ["3", 3, 0, 0, 0, null, null], "unnamed ids never stored, row stays 7 fields");
+  assert.ok(!JSON.stringify(r).match(/\d{17,}/), "no character ids");
+});

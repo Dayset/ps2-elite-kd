@@ -141,7 +141,8 @@ export function prepAlert(b) {
   const wg = new Set(Object.keys(L.names).filter((f) => /warpgate/i.test(L.names[f])));
   const fights = b.fights.filter((r) => r && Array.isArray(r.b) && Number.isFinite(+r.t)).map((r) => ({
     t: +r.t,
-    b: new Map(r.b.map((x) => [String(x[0]), { n: [+x[1] || 0, +x[2] || 0, +x[3] || 0], k: +x[4] || 0, cf: x[5] ? FI[x[5]] || 0 : 0, ca: x[6] == null ? null : +x[6] }])),
+    b: new Map(r.b.map((x) => [String(x[0]), { n: [+x[1] || 0, +x[2] || 0, +x[3] || 0], k: +x[4] || 0, cf: x[5] ? FI[x[5]] || 0 : 0, ca: x[6] == null ? null : +x[6],
+      sp: Array.isArray(x[7]) && x[7].length === 6 ? x[7].map((v) => +v || 0) : null, iv: Array.isArray(x[8]) && x[8].length === 3 ? x[8].map((v) => +v || 0) : null }])),
   })).sort((x, y) => x.t - y.t);
   return { key, zone: +b.zone, world: +b.world, dur, start, winner: b.winner, event_id: b.event_id, L, r2f, frames, flips, wg, fights, pf: captureModel(b.zone) };
 }
@@ -190,7 +191,11 @@ export function features(a, pair, m, nowTs, r) {
   const ca = r && r.ca != null ? r.ca : null;
   const point = [r && r.cf === B && ca != null && ca <= 120 ? 1 : 0, r && r.cf === B && ca != null && ca <= 300 ? 1 : 0,
     r && r.cf === A && ca != null && ca <= 300 ? 1 : 0, r && r.cf === B && ca != null ? Math.exp(-ca / 120) : 0];
-  return { map, crowd, point };
+  // 🚐 forward spawns (points, spawns) and 👥 best scoreboard iVi per side; zeros when the row has none.
+  const sp = r && r.sp ? r.sp : null, iv = r && r.iv ? r.iv : null;
+  const spawn = [sp ? 1 : 0, l1p(sp ? sp[B - 1] : 0), l1p(sp ? sp[A - 1] : 0), l1p(sp ? sp[B + 2] : 0), l1p(sp ? sp[A + 2] : 0)];
+  const skill = [iv ? 1 : 0, (iv ? iv[B - 1] : 0) / 100, (iv ? iv[A - 1] : 0) / 100];
+  return { map, crowd, point, spawn, skill };
 }
 
 /** Labels: B captures fid in (m, m+H]; null when the window runs past the alert end. */
@@ -240,7 +245,7 @@ export function samplesFor(a, rnd = mulberry(87)) {
       const X = features(a, pair, m, nowTs, r), Xn = features(a, pair, m, nowTs, nrow.b.get(pair.fid));
       const nB = r ? r.n[pair.B - 1] : 0, nA = r ? r.n[pair.A - 1] : 0;
       out.push({ key: a.key, m, dur: a.dur, fid: pair.fid, A: pair.A, B: pair.B, X, Xn, y,
-        listed: !!r, stale: !!(r && r.cf === pair.B && r.ca != null && r.ca <= 180),
+        listed: !!r, hasSp: !!(r && r.sp), hasIv: !!(r && r.iv), stale: !!(r && r.cf === pair.B && r.ca != null && r.ca <= 180),
         lopsided: !!r && nA + nB >= 4 && Math.max(nA, nB) >= 1.5 * Math.max(1, Math.min(nA, nB)),
         pf: capP(a.pf, pair.fid, true) });
     }
@@ -254,10 +259,18 @@ export const VARIANTS = {
   point: (s) => [...s.X.map, ...s.X.point],
   both: (s) => [...s.X.map, ...s.X.crowd, ...s.X.point],
   noisy: (s) => [...s.Xn.map, ...s.Xn.crowd, ...s.Xn.point],
+  spawn: (s) => [...s.X.map, ...s.X.crowd, ...s.X.point, ...s.X.spawn],
+  skill: (s) => [...s.X.map, ...s.X.crowd, ...s.X.point, ...s.X.skill],
 };
+export const BASE_VARIANTS = ["map", "crowd", "point", "both", "noisy"];
+/** 🚐 / 👥 variants only once enough alerts carry the data (rows from 2026-10-31 on). */
+export function extraVariants(samples, minAlerts = 3) {
+  const al = (k) => new Set(samples.filter((s) => s[k]).map((s) => s.key)).size;
+  return [...(al("hasSp") >= minAlerts ? ["spawn"] : []), ...(al("hasIv") >= minAlerts ? ["skill"] : [])];
+}
 
 /** Out-of-fold predictions, folds by whole alerts. → Map variant → Float64Array aligned with samples (NaN = no label). */
-export function crossFit(samples, H, keys, variants = Object.keys(VARIANTS), folds = FOLDS) {
+export function crossFit(samples, H, keys, variants = BASE_VARIANTS, folds = FOLDS) {
   const foldOf = new Map(keys.map((k, i) => [k, i % folds]));
   const out = {};
   for (const v of variants) {
@@ -370,8 +383,10 @@ export function scoreWin(rows) {
   }
   const per = new Map();
   for (const r of rows) { const q = per.get(r.key) || per.set(r.key, { n: 0, prod: 0, projMap: 0, projFights: 0 }).get(r.key); q.n++; q.prod += r.prod; q.projMap += r.projMap; q.projFights += r.projFights; }
-  const dF = [], dFM = [];
-  for (const q of per.values()) { dF.push((q.projFights - q.prod) / q.n); dFM.push((q.projFights - q.projMap) / q.n); }
+  const dF = [], dFM = [], dM = [];
+  for (const q of per.values()) { dF.push((q.projFights - q.prod) / q.n); dFM.push((q.projFights - q.projMap) / q.n); dM.push((q.projMap - q.prod) / q.n); }
+  out.delta_projmap_vs_prod = bootMean(dM);
+  out.alerts_projmap_better_than_prod = dM.filter((d) => d < 0).length;
   out.alerts = per.size;
   out.delta_fights_vs_prod = bootMean(dF);
   out.delta_fights_vs_projmap = bootMean(dFM);
@@ -482,7 +497,11 @@ export function runAll(bundles) {
   const report = { alerts: alerts.length, skipped, minutes: alerts.reduce((s, a) => s + a.fights.length, 0), pairs: samples.length,
     durations: alerts.reduce((m, a) => ((m[a.dur] = (m[a.dur] || 0) + 1), m), {}), flips: {} };
   const preds = {};
-  for (const H of HORIZONS) { preds[H] = crossFit(samples, H, keys); report.flips[H] = scoreFlips(samples, preds[H], H); }
+  const extra = extraVariants(samples);
+  report.extra_variants = extra;
+  report.with_spawns = new Set(samples.filter((s) => s.hasSp).map((s) => s.key)).size;
+  report.with_ivi = new Set(samples.filter((s) => s.hasIv).map((s) => s.key)).size;
+  for (const H of HORIZONS) { preds[H] = crossFit(samples, H, keys, [...BASE_VARIANTS, ...extra]); report.flips[H] = scoreFlips(samples, preds[H], H); }
   const idx = (v) => { const m = new Map(); samples.forEach((s, i) => { const p = preds[LAG_MIN][v][i]; if (!Number.isNaN(p)) m.set(`${s.key}|${s.m}|${s.fid}|${s.B}`, p); }); return m; };
   const pMap = idx("map"), pF = idx("both");
   const live15 = new Map(); samples.forEach((s, i) => { const p = preds[15].both[i]; if (!Number.isNaN(p)) live15.set(`${s.key}|${s.m}|${s.fid}|${s.B}`, p); });
@@ -507,13 +526,19 @@ export function verdict(rep) {
     if (!f.delta_both || f.delta_both.hi >= 0) why.push(`flips ${H} min: gain not clear across alerts`);
     if (!f.delta_noisy || f.delta_noisy.hi >= 0) why.push(`flips ${H} min: gain does not survive noise`);
   }
+  // Win chance, two separate questions: does projecting the map ahead help at all (map-only
+  // capture chances, no new data), and do fights add to that projection?
   const w = rep.win;
   if (w && w.buckets) {
-    const worse = Object.entries(w.buckets).filter(([, b]) => b.projFights > b.prod + 1e-5).map(([k]) => k);
-    if (worse.length) why.push(`win chance: worse than production in ${worse.join(", ")}`);
-    if (!w.delta_fights_vs_prod || w.delta_fights_vs_prod.hi >= 0) why.push("win chance: gain not clear across alerts");
+    const worseP = Object.entries(w.buckets).filter(([k, b]) => b.n >= 100 && b.projMap > b.prod + 1e-5).map(([k]) => k);
+    if (worseP.length) why.push(`projection: worse than production in ${worseP.join(", ")}`);
+    if (!w.delta_projmap_vs_prod || w.delta_projmap_vs_prod.hi >= 0) why.push("projection: gain not clear across alerts");
+    const worse = Object.entries(w.buckets).filter(([k, b]) => b.n >= 100 && b.projFights > b.projMap + 1e-5).map(([k]) => k);
+    if (worse.length) why.push(`win chance: fights worse than the map-only projection in ${worse.join(", ")}`);
+    if (!w.delta_fights_vs_projmap || w.delta_fights_vs_projmap.hi >= 0) why.push("win chance: fights' gain over the projection not clear across alerts");
   }
-  return { keep_flips: !why.some((x) => x.startsWith("flips")), keep_win: !why.some((x) => x.startsWith("win")), why };
+  return { keep_flips: !why.some((x) => x.startsWith("flips")), keep_projection: !why.some((x) => x.startsWith("projection")),
+    keep_win: !why.some((x) => x.startsWith("win")), why };
 }
 
 async function main() {
@@ -558,10 +583,10 @@ async function main() {
   if (out) writeFileSync(out, JSON.stringify(rep, null, 1) + "\n");
   const f3 = rep.flips[3] && rep.flips[3].buckets.all, f15 = rep.flips[15] && rep.flips[15].buckets.all, w = rep.win.buckets.all;
   const n = (x) => (x == null ? "–" : x);
-  console.log(`::notice title=fights coverage::alerts ${rep.alerts} (listed ${rep.listed}), minutes ${rep.minutes}, pairs ${rep.pairs}, skipped ${JSON.stringify(rep.skipped)}, durations ${JSON.stringify(rep.durations)}`);
-  if (f3) console.log(`::notice title=flips 3 min::n ${f3.n} rate ${f3.rate} | map ${f3.map} crowd ${f3.crowd} point ${f3.point} both ${f3.both} noisy ${f3.noisy} pf ${f3.pf} | alerts better ${rep.flips[3].alerts_better}/${rep.flips[3].alerts} Δ ${JSON.stringify(rep.flips[3].delta_both)}`);
-  if (f15) console.log(`::notice title=flips 15 min::n ${f15.n} rate ${f15.rate} | map ${f15.map} crowd ${f15.crowd} point ${f15.point} both ${f15.both} noisy ${f15.noisy} pf ${f15.pf} | alerts better ${rep.flips[15].alerts_better}/${rep.flips[15].alerts} Δ ${JSON.stringify(rep.flips[15].delta_both)}`);
-  if (w) console.log(`::notice title=win chance::n ${w.n} prod ${w.prod} fresh ${w.fresh} projMap ${w.projMap} projFights ${w.projFights} | better than prod ${rep.win.alerts_better_than_prod}/${rep.win.alerts} Δ ${JSON.stringify(rep.win.delta_fights_vs_prod)}`);
+  console.log(`::notice title=fights coverage::alerts ${rep.alerts} (listed ${rep.listed}), minutes ${rep.minutes}, pairs ${rep.pairs}, skipped ${JSON.stringify(rep.skipped)}, durations ${JSON.stringify(rep.durations)}, with spawns ${rep.with_spawns}, with iVi ${rep.with_ivi}`);
+  if (f3) console.log(`::notice title=flips 3 min::n ${f3.n} rate ${f3.rate} | map ${f3.map} crowd ${f3.crowd} point ${f3.point} both ${f3.both} noisy ${f3.noisy} spawn ${n(f3.spawn)} skill ${n(f3.skill)} pf ${f3.pf} | alerts better ${rep.flips[3].alerts_better}/${rep.flips[3].alerts} Δ ${JSON.stringify(rep.flips[3].delta_both)}`);
+  if (f15) console.log(`::notice title=flips 15 min::n ${f15.n} rate ${f15.rate} | map ${f15.map} crowd ${f15.crowd} point ${f15.point} both ${f15.both} noisy ${f15.noisy} spawn ${n(f15.spawn)} skill ${n(f15.skill)} pf ${f15.pf} | alerts better ${rep.flips[15].alerts_better}/${rep.flips[15].alerts} Δ ${JSON.stringify(rep.flips[15].delta_both)}`);
+  if (w) console.log(`::notice title=win chance::n ${w.n} prod ${w.prod} fresh ${w.fresh} projMap ${w.projMap} projFights ${w.projFights} | projMap vs prod: better ${rep.win.alerts_projmap_better_than_prod}/${rep.win.alerts} Δ ${JSON.stringify(rep.win.delta_projmap_vs_prod)} | fights vs projMap: better ${rep.win.alerts_better_than_projmap}/${rep.win.alerts} Δ ${JSON.stringify(rep.win.delta_fights_vs_projmap)}`);
   const c = rep.commander;
   console.log(`::notice title=commander::orders ${c.orders}, changed ${n(c.share_changed)}; fixed ${JSON.stringify(c.fixed)}; live ${JSON.stringify(c.live)}`);
   if (rep.rosters) console.log(`::notice title=rosters::${JSON.stringify(rep.rosters).slice(0, 900)}`);

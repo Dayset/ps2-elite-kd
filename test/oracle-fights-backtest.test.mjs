@@ -15,7 +15,7 @@ const FN = { 1: "VS", 2: "NC", 3: "TR" };
 /** Synthetic Indar alert: owners by distance from the three warpgates, captures along the front;
  * the fights row shows a lopsided crowd and the point being taken at a base about to fall
  * (signal = true) or random crowds everywhere (signal = false). */
-function synthAlert(seed, signal) {
+function synthAlert(seed, signal, spawns = false) {
   const rnd = mulberry(seed);
   const L = latticeFor(ZONE);
   const wgs = Object.keys(L.names).filter((f) => /warpgate/i.test(L.names[f])).slice(0, 3);
@@ -50,7 +50,9 @@ function synthAlert(seed, signal) {
       const n = [0, 0, 0];
       if (signal) { n[p[2] - 1] = 20 + Math.floor(rnd() * 10); n[p[3] - 1] = 3 + Math.floor(rnd() * 4); }
       else { n[p[2] - 1] = 2 + Math.floor(rnd() * 20); n[p[3] - 1] = 2 + Math.floor(rnd() * 20); }
-      rows.push([p[1], ...n, 10, signal ? FN[p[2]] : null, signal ? 30 : null]);
+      const row = [p[1], ...n, 10, signal ? FN[p[2]] : null, signal ? 30 : null];
+      if (spawns) { const sp = [0, 0, 0, 0, 0, 0]; sp[p[2] - 1] = 3; sp[p[2] + 2] = 40; row.push(sp, [0, 0, 0].map((_, i) => (i === p[2] - 1 ? 250 : 80))); }
+      rows.push(row);
     }
     // Decoy fights at front bases that don't fall.
     for (let i = 0; i < (signal ? 4 : 8) && front.length; i++) {
@@ -147,4 +149,16 @@ test("rosters: skill helps only when it is in the data", () => {
 test("bootMean brackets the mean", () => {
   const b = bootMean([-0.01, -0.02, -0.015, -0.005]);
   assert.ok(b.lo <= b.mean && b.mean <= b.hi && b.hi < 0);
+});
+
+test("🚐 / 👥 variants switch on once rows carry spawns and iVi", () => {
+  const rep = runAll([31, 32, 33].map((x) => synthAlert(x, true, true)));
+  assert.deepEqual(rep.extra_variants, ["spawn", "skill"]);
+  assert.equal(rep.with_spawns, 3);
+  const f = rep.flips[3].buckets.all;
+  assert.ok(Number.isFinite(f.spawn) && Number.isFinite(f.skill));
+  const plain = runAll([31, 32, 33].map((x) => synthAlert(x, true, false)));
+  assert.deepEqual(plain.extra_variants, []);
+  assert.equal(plain.flips[3].buckets.all.spawn, undefined);
+  assert.equal(typeof verdict(rep).keep_projection, "boolean");
 });

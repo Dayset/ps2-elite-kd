@@ -98,7 +98,7 @@ export function fightsOf(act, zone, owners = null) {
     if (b.killAgo != null && Number.isFinite(+b.killAgo)) row.killAgo = Math.max(0, Math.round(+b.killAgo)); // ⚔️ last kill (s): did the fight pick up after a capture
     if (owners && owners[row.fid]) row.owner = owners[row.fid];
     const sp = spawnsOf(b.sp);
-    if (sp) row.sp = sp; // 🚐 forward spawns (shown only, not in the odds)
+    if (sp) row.sp = sp; // 🚐 forward spawns (shown; stored per minute for the #87 backtest, not in the odds)
     const top = topOf(b.top);
     if (top) row.top = top; // 👥 scoreboard ids (players.js names them; shown only, not in the odds)
     bases.push(row);
@@ -131,14 +131,38 @@ export function capsOf(act, zone) {
   return out.slice(0, CAPS_MAX);
 }
 
-/** Compact per-minute record for the `fight` table / archive: [fid, vs, nc, tr, kills, convFac|null, convAgo|null]. */
+/** 🚐 Spawn points and spawns per faction at one base: [ptsVS, ptsNC, ptsTR, spawnsVS, spawnsNC, spawnsTR], or null. */
+export function spawnTotals(sp) {
+  if (!sp) return null;
+  const pts = FACS.map((f) => SPAWN_KINDS.reduce((s, k) => s + ((sp[f] && sp[f][k]) || 0), 0));
+  const n = FACS.map((f) => (sp[f] && sp[f].n) || 0);
+  return pts.some(Boolean) || n.some(Boolean) ? [...pts, ...n] : null;
+}
+/** 👥 Best iVi per faction among the named scoreboard players at one base: [VS, NC, TR] (0 = none), or null. */
+export function topIvi(top) {
+  if (!Array.isArray(top)) return null;
+  const best = { VS: 0, NC: 0, TR: 0 };
+  for (const p of top) if (p && !Array.isArray(p) && best[p.f] != null && Number.isFinite(+p.i) && +p.i > best[p.f]) best[p.f] = Math.round(+p.i);
+  return best.VS || best.NC || best.TR ? [best.VS, best.NC, best.TR] : null;
+}
+
+/**
+ * Compact per-minute record for the `fight` table / archive:
+ * [fid, vs, nc, tr, kills, convFac|null, convAgo|null, spawns?, ivi?]
+ * spawns (#87, 2026-10-31) = spawnTotals(), ivi = topIvi(); both only when the base has them
+ * (index 7 is null when only ivi is there), so older 7-field rows read the same.
+ */
 export function fightRow(f) {
   if (!f) return null;
   return {
     pop: f.pop ? [f.pop.VS, f.pop.NC, f.pop.TR, f.pop.NSO || 0] : null,
     b: f.bases.map((x) => {
       const cf = FACS.reduce((m, q) => (x.conv[q] > (m ? x.conv[m] : 0) ? q : m), null);
-      return [x.fid, x.n.VS, x.n.NC, x.n.TR, x.k.VS + x.k.NC + x.k.TR, cf, x.convAgo];
+      const row = [x.fid, x.n.VS, x.n.NC, x.n.TR, x.k.VS + x.k.NC + x.k.TR, cf, x.convAgo];
+      const sp = spawnTotals(x.sp), iv = topIvi(x.top);
+      if (sp || iv) row.push(sp);
+      if (iv) row.push(iv);
+      return row;
     }),
   };
 }
