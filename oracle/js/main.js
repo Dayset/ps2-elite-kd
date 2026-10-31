@@ -47,7 +47,11 @@ const minLeft = (n) => tr("or.minLeft", "{n} min left", { n });
 function renderTabs(now) {
   if (!S.alerts.length) { $("tabs").innerHTML = ""; return; }
   $("tabs").innerHTML = S.alerts.map((a) => {
-    const terr = (a.state && a.state.territory) || {};
+    // Owner 2026-10-31 (settled tabs): a settled alert's tab shows its
+    // final territory, not the latest map snapshot — post-end ticks can
+    // carry a post-lock map (e.g. TR-only) that is not the result.
+    // No final (decided from snapshot) falls back to state.territory.
+    const terr = a.status === "settled" && a.final ? a.final : (a.state && a.state.territory) || {};
     return `<button class="tab ${a.key === S.selected ? "on" : ""}" data-k="${esc(a.key)}">
       <b>${esc(a.world_name)} · ${esc(a.zone_name)}</b><small class="tl0">${esc(statusLabel(a, now))}</small><small class="tl">${esc(a.status === "live" ? minLeft(mins(a.start_ts + a.dur * 60 - now)) : statusLabel(a, now))}</small>
       <div class="bar">${bar(terr)}</div></button>`;
