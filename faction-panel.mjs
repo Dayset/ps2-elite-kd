@@ -48,15 +48,14 @@ export function factionHtml(d, hi = null) {
     fam.n ? bars(tr("fr.chFam", "Same player, different faction"), tr("fr.chFamSub", "head-to-head wins inside alt families (⚔️ iVi)"), FACTIONS.map((f) => { const h = fam.h2h[f] || {}; return { f, v: h.rate, label: h.n ? `${pct(h.rate)} · ${h.w}/${h.n}` : "—" }; }), hi) : "",
     bars(tr("fr.chPlayers", "Players"), tr("fr.chPlayersSub", "rated players in the cache"), FACTIONS.map((f) => ({ f, v: F[f].n, label: n0(F[f].n) })), hi),
   ].join("");
-  const head = [tr("fr.thFaction", "Faction"), tr("fr.thPlayers", "Players"), tr("fr.thMed", "Median ⚔️ iVi"), tr("fr.thMean", "Average ⚔️ iVi"), tr("fr.thKd", "Median K/D"), tr("fr.thKpm", "Median KPM"), tr("fr.thHours", "Median hours"), tr("fr.thFamDelta", "Family Δ ⚔️ iVi"), ""];
+  const head = [tr("fr.thFaction", "Faction"), tr("fr.thPlayers", "Players"), tr("fr.thMed", "Median ⚔️ iVi"), tr("fr.thMean", "Average ⚔️ iVi"), tr("fr.thKd", "Median K/D"), tr("fr.thKpm", "Median KPM"), tr("fr.thHours", "Median hours"), ""];
   const rows = FACTIONS.map((f) => {
-    const x = F[f], dl = (fam.delta || {})[f] || {};
+    const x = F[f];
     const btn = `<button type="button" class="fr-load mini-btn" data-faction="${f}" title="${escapeHtml(tr("fr.loadTip", "Put this faction's top {n} players in the name box", { n: FACTION_TOP_N }))}">${escapeHtml(tr("fr.load", "Top {n}", { n: FACTION_TOP_N }))}</button>`;
-    const delta = dl.n ? `${dl.med > 0 ? "+" : ""}${n0(dl.med)}` : "—";
-    return `<tr${f === hi ? ' class="fr-hi"' : ""}><td>${chip(f)}</td><td>${n0(x.n)}</td><td>${n0(x.medIvi)}</td><td>${n0(x.meanIvi)}</td><td>${fx(x.medKd, 2)}</td><td>${fx(x.medKpm, 2)}</td><td>${n0(x.medH)}</td><td>${delta}</td><td>${btn}</td></tr>`;
+    return `<tr${f === hi ? ' class="fr-hi"' : ""}><td>${chip(f)}</td><td>${n0(x.n)}</td><td>${n0(x.medIvi)}</td><td>${n0(x.meanIvi)}</td><td>${fx(x.medKd, 2)}</td><td>${fx(x.medKpm, 2)}</td><td>${n0(x.medH)}</td><td>${btn}</td></tr>`;
   }).join("");
   const table = `<div class="fr-table-wrap"><table class="fr-table"><thead><tr>${head.map((h) => `<th scope="col">${escapeHtml(h)}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div>`;
-  const note = tr("fr.note", "NS = Nanite Systems (NSO). Faction = the character's own. OOR players and confirmed padders are left out ({left} padders). Alt families: the site's own alt groups with alts on 2+ factions; alts under {h} h played (the bottom 10%) don't count; each faction's value is its alts' play-time-weighted ⚔️ iVi; Family Δ = median difference from the family's own average. Small samples: read the family part as a hint.", { left: (d.left && d.left.padders) || 0, h: fx(fam.minH, 0) });
+  const note = tr("fr.note", "NS = Nanite Systems (NSO). Faction = the character's own. OOR players and confirmed padders are left out ({left} padders). Alt families: the site's own alt groups with alts on 2+ factions; alts under {h} h played (the bottom 10%) don't count; each faction's value is its alts' play-time-weighted ⚔️ iVi. Small samples: read the family part as a hint.", { left: (d.left && d.left.padders) || 0, h: fx(fam.minH, 0) });
   const tip = tr("fr.aliasTip", "Tip: type NC, TR, VS or NS in the name box to load that faction's top {n} players.", { n: FACTION_TOP_N });
   return `${lead}<div class="fr-charts">${charts}</div>${table}<p class="fr-note">${escapeHtml(note)}</p><p class="fr-note">${escapeHtml(tip)}</p>`;
 }

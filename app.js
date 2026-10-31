@@ -38,8 +38,8 @@ import { formatClock, fmtNum, slugKey, bareName, parseNames, namesEqualIgnoreCas
 import { createAnalyze } from "./analyze.mjs?v=20261030-cxl1";
 import { createShareAdd } from "./share-add.mjs?v=20261027-z79";
 import { createSharedIndex } from "./shared-index.mjs?v=20261030-flat1";
-import { createNamesField } from "./names-field.mjs?v=20261031-fr1";
-import { initFactionPanel } from "./faction-panel.mjs?v=20261031-fr1";
+import { createNamesField } from "./names-field.mjs?v=20261031-fr2";
+import { initFactionPanel } from "./faction-panel.mjs?v=20261031-fr2";
 import { createOutfitRoster, canTakeName as canTakeNameRule, OUTFIT_MAX_NAMES } from "./outfit-tags.mjs?v=20261030-of2";
 import { createStatsTable } from "./stats-table.mjs?v=20261030-hs1";
 import { createChartWave } from "./chart-wave.mjs?v=20261029-puregraph1";
