@@ -9,7 +9,7 @@ import { forgetFailures } from "./analyze-run.mjs?v=20261030-cxl1";
 import { isPenalizedPadder } from "./padding.mjs?v=20261023-short1";
 import { createOutfitTags, extractOutfitTags } from "./outfit-tags.mjs?v=20261030-of2";
 import { extractFactionAliases } from "./faction-rating.mjs?v=20261031-fr1";
-import { addFactionPlayers } from "./faction-panel.mjs?v=20261031-fr2";
+import { addFactionPlayers } from "./faction-panel.mjs?v=20261031-fr3";
 
 /**
  * $ = app.js state and functions this part uses, as live getters (and setters for state it changes), so app.js

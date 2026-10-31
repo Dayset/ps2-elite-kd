@@ -67,6 +67,8 @@ test("wired: name field, Analyze waits, section in index.html, 9 languages", () 
   assert.match(nf, /outfits: pending/);
   assert.match(read("index.html"), /id="factionSection"/);
   assert.match(read("app.js"), /initFactionPanel\(/);
+  // t797u: "Top 50" jumps up to the name box, instantly
+  assert.match(read("faction-panel.mjs"), /glideTo\(null, [^\n]*"auto"\)/);
   const en = JSON.parse(read("i18n/en.json"));
   const keys = Object.keys(en).filter((k) => k.startsWith("fr."));
   assert.ok(keys.length >= 30);

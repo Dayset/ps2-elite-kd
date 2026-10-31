@@ -5,6 +5,7 @@
  */
 import { t as tr } from "./i18n.mjs";
 import { escapeHtml } from "./app-util.mjs?v=20261027-z79";
+import { glideTo } from "./jump-btns.mjs?v=20261020-i18n2";
 import { FACTIONS, FACTION_LABEL, FACTION_COLOR, FACTION_TOP_N, leader } from "./faction-rating.mjs?v=20261031-fr1";
 
 const URL_ = "./data/factions.json";
@@ -83,7 +84,15 @@ export function initFactionPanel({ isPs = false, addFactions = null } = {}) {
   if (sec.open) draw();
   sec.addEventListener("click", (e) => {
     const b = e.target.closest && e.target.closest(".fr-load");
-    if (b && addFactions) addFactions([b.dataset.faction]);
+    if (!b || !addFactions) return;
+    // t797u: jump (instant, no glide on the main site) up to the name box so the new chips are in view.
+    const toNames = () => {
+      const box = document.getElementById("namesBox");
+      if (!box || !box.getBoundingClientRect) return;
+      glideTo(null, Math.max(0, Math.round(box.getBoundingClientRect().top + (window.scrollY || 0) - 10)), "auto");
+    };
+    toNames();
+    Promise.resolve(addFactions([b.dataset.faction])).then(toNames, toNames);
   });
   document.addEventListener("click", (e) => {
     const a = e.target.closest && e.target.closest("a.fr-jump");
