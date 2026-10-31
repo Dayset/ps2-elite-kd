@@ -14,6 +14,7 @@
  * so the features are the same in both places.
  */
 import { warpgateConnected, heatScore } from "./commander.js";
+import { spawnTotals, topIvi } from "./fights.js";
 
 const FI = { VS: 1, NC: 2, TR: 3 };
 const FACS = ["VS", "NC", "TR"];
@@ -60,7 +61,7 @@ export function rowFromBase(b) {
   const k = FACS.reduce((s, f) => s + (+((b.k || {})[f]) || 0), 0);
   const conv = b.conv || {};
   const cf = FACS.reduce((m, q) => ((+conv[q] || 0) > (m ? +conv[m] || 0 : 0) ? q : m), null);
-  return { n, k, cf: cf ? FI[cf] : 0, ca: b.convAgo == null ? null : +b.convAgo, sp: null, iv: null };
+  return { n, k, cf: cf ? FI[cf] : 0, ca: b.convAgo == null ? null : +b.convAgo, sp: spawnTotals(b.sp), iv: topIvi(b.top) };
 }
 
 /**
@@ -134,18 +135,4 @@ export function livePf(live, pf) {
     for (const B of [1, 2, 3]) { const q = live.p.get(`${fid}|${B}`); if (q != null && (best == null || q > best)) best = q; }
     return best == null ? fixed(fid) : best;
   };
-}
-
-// ---------------------------------------------------------------- 🚐 spawns for the Solo orders
-
-/** Spawn kinds anyone can use (no squad needed): Sunderer, Router. Beacons, Valkyries and Galaxies are squad spawns. */
-export const PUBLIC_SPAWNS = Object.freeze(["su", "ro"]);
-export const SQUAD_SPAWNS = Object.freeze(["be", "ga", "sv", "de"]);
-
-/** Live spawn points per kind at one base for one faction (points seen minus destroyed), from fights.js spawnsOf(). */
-export function aliveSpawns(q) {
-  if (!q) return null;
-  const out = {};
-  for (const k of [...PUBLIC_SPAWNS, ...SQUAD_SPAWNS]) { const n = Math.max(0, (+q[k] || 0) - (+q[k + "L"] || 0)); if (n) out[k] = n; }
-  return Object.keys(out).length ? out : null;
 }

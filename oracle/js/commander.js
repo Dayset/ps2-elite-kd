@@ -1,7 +1,7 @@
 // PS2MapOracle dashboard — split from index.html (#15). No behaviour change.
 import { S, FACS, esc, det } from "./state.js?v=20261018-scrub2";
 import { voiceButton } from "./voice.js?v=20261027-say1";
-import { t as tr } from "../../i18n.mjs";
+import { t as tr, currentLang } from "../../i18n.mjs";
 
 /** Grayed placeholder shown between alerts so users see the panel exists. */
 export function commanderIdle() {
@@ -61,6 +61,14 @@ export function commander(c, ts, now, lead, mode = "solo", heat = false, liveNam
   const prio = (e) => (e.priority ? "" : ` <span class="note" title="${tr("or.c.deadTip", "can't change the result: cut off, or the winner is already locked")}">${tr("or.c.dead", "dead")}</span>`);
   const sgn = (d) => `${d > 0 ? "+" : d < 0 ? "−" : "±"}${Math.abs(d).toFixed(1)}%`;
   const diff = (x) => ` <span class="note">(${sgn(Math.round((x.then - x.now) * 10) / 10)})</span>`;
+  // 🚐 Spawn options at an attack's target (#87, Worker cmd.*.spawn): ours, live, by kind.
+  const spawnChip = (x) => {
+    if (x.spawn === undefined || !["take", "plan", "spoil", "push"].includes(x.kind)) return "";
+    if (!x.spawn) return ` <span class="note nospawn" title="${tr("or.c.noSpawnTip", "No spawn of ours here: drive a Sunderer or bring a squad spawn")}" aria-label="${tr("or.c.noSpawnTip", "No spawn of ours here: drive a Sunderer or bring a squad spawn")}">🚐✗</span>`;
+    const nm = { su: tr("or.sp.su", "Sunderer"), ro: tr("or.sp.ro", "router"), be: tr("or.sp.be", "squad beacon"), ga: tr("or.sp.ga", "Galaxy"), sv: tr("or.sp.sv", "Valkyrie / Galaxy"), de: tr("or.sp.de", "Deliverer") };
+    const list = Object.entries(x.spawn).filter(([k, n]) => nm[k] && n > 0).map(([k, n]) => (n > 1 ? `${n.toLocaleString(currentLang())}× ${nm[k]}` : nm[k])).join(", ");
+    return list ? ` <span class="note spawnchip" title="${esc(tr("or.c.spawnTip", "Our spawns here: {list}", { list }))}">🚐 ${esc(list)}</span>` : "";
+  };
   // 🎯 Focus (Worker focus.js): one move per faction, judged when it lands, cuts included.
   const P = c.focus || {};
   const odds = (f, x) => `<span class="${f}">${f} ${x.now}%</span> → <b class="${f}">${x.then}%</b>`;
@@ -81,14 +89,14 @@ export function commander(c, ts, now, lead, mode = "solo", heat = false, liveNam
       : `${num(k)}<b class="fkind">${x.kind === "hold" ? tr("or.c.defend", "🛡️ Defend") : tr("or.c.attack", "⚔️ Attack")}</b>`;
     const pocket = x.pocket ? ` <span class="note" title="${tr("or.c.pocketTip", "inside a pocket whose chokepoint is under attack: worth less if it gets cut")}">${tr("or.c.inPocket", "🥶 in a pocket")}</span>` : "";
     return main
-      ? `<div class="focus ${esc(x.kind)}" data-base="${esc(x.bases[0])}"><div class="fhead"><div class="fkindline">${head}</div>${(x.bases || []).map((b) => `<div class="fbase">${bl(b)}</div>`).join("")}</div><div class="fodds">${tail}${pocket}<div class="ftext">${linked(x.text, xNames(x))}</div></div></div>`
+      ? `<div class="focus ${esc(x.kind)}" data-base="${esc(x.bases[0])}"><div class="fhead"><div class="fkindline">${head}</div>${(x.bases || []).map((b) => `<div class="fbase">${bl(b)}</div>`).join("")}</div><div class="fodds">${tail}${pocket}${spawnChip(x)}<div class="ftext">${linked(x.text, xNames(x))}</div></div></div>`
       : x.hot ? `<li data-base="${esc(x.bases[0])}">${num(k)}${x.kind === "hold" ? tr("or.c.defend", "🛡️ Defend") : tr("or.c.attack", "⚔️ Attack")} ${bl(x.bases[0])} <span class="note">${tr("or.c.heatN", "🔥 fight heat {n}", { n: x.heat })}</span></li>`
-      : `<li data-base="${esc(x.bases[0])}">${num(k)}${linked(x.text, xNames(x))}${cut} ${front ? ` <span class="note">⏳${x.heat}%</span>` : `<span class="note">${x.kind === "hold" ? tr("or.c.ifLost2", "if lost") + " " : ""}${x.then}%</span>${diff(x)}`}</li>`;
+      : `<li data-base="${esc(x.bases[0])}">${num(k)}${linked(x.text, xNames(x))}${cut} ${front ? ` <span class="note">⏳${x.heat}%</span>` : `<span class="note">${x.kind === "hold" ? tr("or.c.ifLost2", "if lost") + " " : ""}${x.then}%</span>${diff(x)}`}${spawnChip(x)}</li>`;
   };
   const focusHtml = (f) => {
     const p = P[f];
     if (!p) return "";
-    if (p.quiet || !p.focus) return `<div class="focus quiet"><div class="fhead">${tr("or.c.quiet", "No decisive move right now: hold your lanes.")}</div></div>`;
+    if (p.quiet || !p.focus) return `<div class="focus quiet"><div class="fhead">${p.nospawn ? tr("or.c.noSpawn", "No attack with a Sunderer or router of ours right now: defend, or bring one.") : tr("or.c.quiet", "No decisive move right now: hold your lanes.")}</div></div>`;
     const nb = (x) => (f === on ? numOf.get(x.bases[0]) || 0 : 0);
     return (p.kept ? `<div class="note kept">${tr("or.c.kept", "📌 Kept order: stays until it is done")}</div>` : "") + focusLine(f, p.focus, true, nb(p.focus)) + ((p.backups || []).length ? `<div class="note">${tr("or.c.backup", "Backup:")}</div><ul class="fback">${p.backups.map((b) => focusLine(f, b, false, nb(b))).join("")}</ul>` : "");
   };
@@ -99,7 +107,8 @@ export function commander(c, ts, now, lead, mode = "solo", heat = false, liveNam
     : heat ? tr("or.c.bigWait", "The new orders appear with the next update.")
     : mode === "big"
     ? (c.focus_mix ? tr("or.c.bigNote", "Attacks aimed {n} min ahead, so a big squad arrives in time; defends only when a base is under attack. Three directions that can change every minute.", { n: c.ahead_min || 3 }) : tr("or.c.bigWait", "The new orders appear with the next update."))
-    : tr("or.c.soloNote", "Attacks aimed {n} min ahead; defends only when a base is under attack. One order stays until it is done (base taken or lost, or about 5 min passed), unless a clearly better or urgent one appears.", { n: c.ahead_min || 3 });
+    : tr("or.c.soloNote", "Attacks aimed {n} min ahead; defends only when a base is under attack. One order stays until it is done (base taken or lost, or about 5 min passed), unless a clearly better or urgent one appears.", { n: c.ahead_min || 3 })
+      + (c.focus_solo ? " " + tr("or.c.soloSpawn", "Solo attacks only bases with a Sunderer or router of ours (🚐).") : "");
   const modeBar = `<div class="cmode" role="group" aria-label="${tr("or.c.mode", "Orders for")}"><span class="note">${tr("or.c.mode", "Orders for")}</span>${mb("solo", tr("or.c.solo", "Solo"), tr("or.c.soloTip", "One steady direction for a player or a small group"))}${mb("big", tr("or.c.big", "Big squad"), tr("or.c.bigTip", "Three directions for a squad or platoon, updated every minute"))}</div><div class="note cmodenote">${modeNote}</div>`;
   return `<section class="card cmd" style="margin-top:14px"><h2 data-sec="ai-commander">${tr("or.h.cmd", "🎖️ AI Commander")} ${age}</h2>${liveName ? `<div class="note livenow" title="${esc(tr("or.f.note", "Rough crowd: players seen fighting at each base in the last 5 min, from the game's live event stream. Not used in the odds yet."))}">🔥 ${bl(liveName)}</div>` : ""}${modeBar}${seg}<div class="cmdgrid">${FACS.map((f) => {
     const x = c.factions[f]; if (!x) return "";

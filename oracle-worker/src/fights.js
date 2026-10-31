@@ -69,6 +69,31 @@ export function spawnsOf(sp) {
   return Object.keys(out).length ? out : null;
 }
 
+/** 🚐 Spawn kinds anyone can use (no squad needed): Sunderer, Router. Beacons, Valkyries, Galaxies and Deliverers are squad spawns. */
+export const PUBLIC_SPAWNS = Object.freeze(["su", "ro"]);
+export const SQUAD_SPAWNS = Object.freeze(["be", "ga", "sv", "de"]);
+/** 🚐 Live spawn points per kind for one faction at one base (seen in the window minus destroyed), or null. */
+export function aliveSpawns(q) {
+  if (!q) return null;
+  const out = {};
+  for (const k of [...PUBLIC_SPAWNS, ...SQUAD_SPAWNS]) { const n = Math.max(0, (+q[k] || 0) - (+q[k + "L"] || 0)); if (n) out[k] = n; }
+  return Object.keys(out).length ? out : null;
+}
+/** 🚐 Every base of one continent with a live spawn point: { fid: { VS: { su: 1, be: 2 }, … } } (faction totals only). */
+export function spawnMapOf(act, zone) {
+  const out = {};
+  if (!act || !Array.isArray(act.bases)) return out;
+  for (const b of act.bases) {
+    if (+b.z !== +zone || !b.sp) continue;
+    const sp = spawnsOf(b.sp);
+    if (!sp) continue;
+    const row = {};
+    for (const f of FACS) { const a = aliveSpawns(sp[f]); if (a) row[f] = a; }
+    if (Object.keys(row).length) out[String(b.f)] = row;
+  }
+  return out;
+}
+
 /** 👥 Scoreboard players at one base, cleaned: [[cid, fac, kills, deaths]] (≤ 3), or null. */
 export const TOP_N = 3;
 export function topOf(top) {
@@ -109,7 +134,8 @@ export function fightsOf(act, zone, owners = null) {
   const caps = capsOf(act, z);
   const at = +act.at || Math.floor(Date.now() / 1000);
   for (const b of bases) { const c = caps.find((x) => String(x.f) === b.fid && at - x.t <= CAP_TAG_S); if (c) b.cap = c; }
-  return { at: +act.at || null, live: act.stream !== false, pop: zp ? { ...pick(zp), NSO: Math.max(0, +zp.NSO || 0) } : null, bases: bases.slice(0, FIGHTS_MAX), caps };
+  return { at: +act.at || null, live: act.stream !== false, pop: zp ? { ...pick(zp), NSO: Math.max(0, +zp.NSO || 0) } : null, bases: bases.slice(0, FIGHTS_MAX), caps,
+    spawns: spawnMapOf(act, z) }; // 🚐 all bases, for the Solo orders (#87)
 }
 
 /**

@@ -7,7 +7,8 @@
 //   - its base is taken (attack) or lost (defend),
 //   - its time is up: HOLD_MIN minutes (travel + one capture),
 //   - a clearly better order appears: expected value ≥ (1 + MARGIN) × the kept one,
-//   - or an urgent defence appears: our base with a predicted flip chance ≥ URGENT_HEAT %.
+//   - or an urgent defence appears: our base with a predicted flip chance ≥ URGENT_HEAT %,
+//   - or (🚐 #87) it is an attack and our last Sunderer / router there is gone.
 // Values from a backtest on 57 past alerts (4,698 minutes, 2026-10-26), grid HOLD 3-8 min x
 // MARGIN 0.25-2 x URGENT 30/50/off: the fewest switches with "attack came true" within 1.5 points
 // of the plain plan and "defend held" no worse. Plain: 31.9% / 72.6%, order different 1 min
@@ -34,7 +35,8 @@ export function entryEv(x) {
 /**
  * One Solo step for one faction.
  * prev: {x, ev, since} or null; p: the Worker plan {focus, backups, quiet};
- * ctx: {fac, nowS, ownerOf(name) -> "VS"|"NC"|"TR"|null|undefined, heatOf(name) -> 0..100}
+ * ctx: {fac, nowS, ownerOf(name) -> "VS"|"NC"|"TR"|null|undefined, heatOf(name) -> 0..100,
+ *       canSpawn(fac, name) -> true|false|undefined (🚐 public spawn there; undefined = no data)}
  * Returns {plan, state, why}: plan has the same shape as p (the kept order as focus).
  */
 export function soloStep(prev, p, ctx, cfg = {}) {
@@ -51,6 +53,8 @@ export function soloStep(prev, p, ctx, cfg = {}) {
     if ((x.kind === "hold" || x.kind === "guard") && own !== f) return adopt("lost");
   }
   if (ctx.nowS - prev.since >= hold * 60) return adopt("time");
+  if (ATTACK.has(x.kind) && x.kind !== "spoil" && ctx.canSpawn && ctx.canSpawn(f, x.bases && x.bases[0]) === false) return adopt("nospawn");
+  if (x.kind === "spoil" && ctx.canSpawn && ctx.canSpawn(f, x.bases && x.bases[0]) === false) return adopt("nospawn");
   // The kept order as the Worker sees it now (fresh numbers), if it is still listed.
   const list = p && !p.quiet ? [p.focus, ...(p.backups || [])].filter(Boolean) : [];
   const k = entryKey(x);
@@ -86,6 +90,19 @@ export const pickMode = (v) => (v === "big" ? "big" : "solo");
 export const HEAT_KEY = "ps2oracle_heatmode";
 export const pickHeat = (v) => v === "1";
 
+/** 🚐 (fac, base name) -> true when that faction has a live Sunderer / router there, false when not, undefined without data (state.spawn_map + the regions file). */
+export function spawnLookup(spawnMap, regions) {
+  if (!spawnMap || !Object.keys(spawnMap).length) return () => undefined;
+  const fidOf = new Map();
+  for (const [fid, r] of Object.entries(regions || {})) if (r && r.name && !fidOf.has(r.name)) fidOf.set(r.name, fid);
+  return (fac, name) => {
+    const fid = fidOf.get(name);
+    if (fid == null) return undefined;
+    const q = spawnMap[fid] && spawnMap[fid][fac];
+    return !!(q && ((+q.su || 0) > 0 || (+q.ro || 0) > 0));
+  };
+}
+
 /** Base name -> owner ("VS"|"NC"|"TR", null = neutral, undefined = unknown) from /live state.owners + the regions file. */
 export function ownerLookup(owners, regions) {
   const fidOf = new Map();
@@ -112,7 +129,8 @@ export function modeFocus(c, mode, mem, ctx, heat = false) {
   if (mode === "big") return c.focus_mix || c.focus_ahead || c.focus;
   if (mem.out && mem.ts === ctx.ts) return mem.out;
   mem.st = mem.st || {};
-  mem.out = soloFocus(c.focus_mix || c.focus, mem.st, { nowS: ctx.ts, ownerOf: ctx.ownerOf, heatOf: ctx.heatOf });
+  // 🚐 #87: Solo attacks only where we have a Sunderer or router (Worker focus_solo; older rows: the mix).
+  mem.out = soloFocus(c.focus_solo || c.focus_mix || c.focus, mem.st, { nowS: ctx.ts, ownerOf: ctx.ownerOf, heatOf: ctx.heatOf, canSpawn: c.focus_solo ? ctx.canSpawn : null });
   mem.ts = ctx.ts;
   return mem.out;
 }

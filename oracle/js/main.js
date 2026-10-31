@@ -4,8 +4,8 @@ import { get, names } from "./api.js?v=20261018-scrub2";
 import { drawMap, highlightBase, recolorMap } from "./map.js?v=20261030-sb1";
 import { chart, chartHover } from "./chart.js?v=20261024-i18n1";
 import { lockCard, lockTick } from "./lock.js?v=20261024-i18n1";
-import { commander, commanderIdle } from "./commander.js?v=20261029-livenow1";
-import { modeFocus, ownerLookup, heatLookup, pickMode, MODE_KEY, pickHeat, HEAT_KEY } from "./sticky.js?v=20261026-heat1";
+import { commander, commanderIdle } from "./commander.js?v=20261031-spawn1";
+import { modeFocus, ownerLookup, heatLookup, spawnLookup, pickMode, MODE_KEY, pickHeat, HEAT_KEY } from "./sticky.js?v=20261031-spawn1";
 import { nextPoll } from "./poll.js?v=20261026-mode1";
 import { voiceToggle, voiceTick, bindVoiceMenu } from "./voice.js?v=20261027-say1";
 import { reportPanel } from "./players.js?v=20261024-i18n1";
@@ -253,7 +253,8 @@ function withMode(a, c) {
   if (!c || !c.focus) return c;
   if (!(a.zone in regionsOf)) { regionsOf[a.zone] = null; names(a.zone).then((r) => { regionsOf[a.zone] = r || {}; }).catch(() => {}); }
   const mem = soloMem[a.key] || (soloMem[a.key] = {});
-  const focus = modeFocus(c, cmdMode, mem, { ts: a.commander_ts || 0, ownerOf: ownerLookup(a.state && a.state.owners, regionsOf[a.zone]), heatOf: heatLookup(c) }, heatOn);
+  const focus = modeFocus(c, cmdMode, mem, { ts: a.commander_ts || 0, ownerOf: ownerLookup(a.state && a.state.owners, regionsOf[a.zone]), heatOf: heatLookup(c),
+    canSpawn: spawnLookup(a.state && a.state.spawn_map, regionsOf[a.zone]) }, heatOn);
   return { ...c, focus };
 }
 

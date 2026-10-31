@@ -13,10 +13,10 @@ on:
         description: "Commit the report (true/false)"
         default: "true"
       fit:
-        description: "Also refit the live capture chance (src/capture-live.gen.js) and commit it (true/false)"
+        description: "Also refit the live capture chance (src/capture-live.gen.js; only while the backtest passes) and commit it (true/false)"
         default: "false"
   schedule:
-    - cron: "43 7 * * 1"   # weekly, Monday 07:43 UTC (the data grows every day)
+    - cron: "43 7 * * 1"   # weekly, Monday 07:43 UTC (the data grows every day); also refits the live capture chance
 
 permissions:
   contents: write
@@ -38,7 +38,7 @@ jobs:
         env:
           ORACLE_API: ${{ vars.ORACLE_API || 'https://ps2-oracle.dayset.workers.dev' }}
           CENSUS_PROXY_KEY: ${{ secrets.CENSUS_PROXY_KEY }}
-        run: node oracle-worker/history/fights-backtest.mjs --out oracle/backend/fights_backtest.json ${{ inputs.fit == 'true' && '--fit oracle-worker/src/capture-live.gen.js' || '' }}
+        run: node oracle-worker/history/fights-backtest.mjs --out oracle/backend/fights_backtest.json ${{ (github.event_name == 'schedule' || inputs.fit == 'true') && '--fit oracle-worker/src/capture-live.gen.js' || '' }}
       - name: Commit report
         if: github.event_name == 'schedule' || inputs.commit == 'true'
         run: |

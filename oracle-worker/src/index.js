@@ -32,7 +32,9 @@ import { heatPlan } from "./heatmode.js";
 import { cutAwareDefends } from "./defend.js";
 import { liveHeat } from "./heat.js";
 import { computePockets } from "./pockets.js";
-import { liveActivity, fightsOf, fightRow, ensureFightTable } from "./fights.js";
+import { liveActivity, fightsOf, fightRow, ensureFightTable, PUBLIC_SPAWNS } from "./fights.js";
+import { liveChances, livePf } from "./capture-live.js";
+import { CAPTURE_LIVE } from "./capture-live.gen.js";
 import { PlanSwitch } from "./plan.js";
 
 // 🔀 paid | free (plan.js, plan.json or the PLAN variable): free = no live fights call, no fight rows.
@@ -363,6 +365,7 @@ export async function runCycle(env, nowMs = Date.now()) {
         state.fights_at = fx.at; // ⚔️ snapshot time (s): killAgo / convAgo count back from here
         if (fx.pop) state.pop_live = fx.pop;
         state.caps = fx.caps; // 🏴 capture tags (shown only, not in the odds)
+        state.spawn_map = fx.spawns; // 🚐 live spawn points per base and faction: Solo orders attack only where there is one (#87)
         fightRows.push({ key: a.key, ts: now, t: Math.round(((now - startTs) / 60) * 10) / 10, data: JSON.stringify(fightRow(fx)) });
       }
       out.push({ ...base, status: "live", state });
@@ -562,7 +565,7 @@ export const AHEAD_CLOCK_MIN = 4;
 export async function commanderFor(env, key, nowMs = Date.now()) {
   const db = env.DB;
   const now = Math.floor(nowMs / 1000);
-  const a = await db.prepare("SELECT key, world, zone, event_id, start_ts, dur, status, json_extract(state, '$.suspect') AS suspect, json_extract(state, '$.win') AS win FROM alert WHERE key=?").bind(key).first();
+  const a = await db.prepare("SELECT key, world, zone, event_id, start_ts, dur, status, json_extract(state, '$.suspect') AS suspect, json_extract(state, '$.win') AS win, json_extract(state, '$.fights') AS fights, json_extract(state, '$.fights_live') AS fights_live, json_extract(state, '$.fights_at') AS fights_at, json_extract(state, '$.spawn_map') AS spawn_map FROM alert WHERE key=?").bind(key).first();
   if (!a || a.status !== "live") return { key, skipped: "not live" };
   // Corrupt map window: keep the last good orders instead of computing from bad data.
   if (a.suspect && JSON.parse(a.suspect).length) return { key, skipped: "data suspect" };
@@ -606,13 +609,23 @@ export async function commanderFor(env, key, nowMs = Date.now()) {
     const heat = (fid) => heatMap.get(String(fid)) || 0;
     // 🥶 pockets: our bases behind a chokepoint under attack (src/pockets.js). Not on Meltdowns (no cut rule there).
     const pk = meltdown ? { pockets: {}, frozen: null } : computePockets({ own, lattice, flips, nowTs: Math.trunc(now) });
+    // 🎯 Live capture chance (#87, src/capture-live.js): the fitted map model, plus the ⚔️ fights rows
+    // while the PC stream is live and fresh. Territory alerts only; without a fitted model the fixed chance.
+    const tNow = Math.max(0, (now - a.start_ts) / 60);
+    const fightsList = a.fights ? JSON.parse(a.fights) : null;
+    const fightsFresh = !!a.fights_live && Number.isFinite(+a.fights_at) && now - +a.fights_at <= 300;
+    const capLive = meltdown ? null : liveChances({ model: CAPTURE_LIVE, own, lattice, flips, nowTs: Math.trunc(now), t: tNow, dur: a.dur, pf, fights: fightsList, fightsLive: fightsFresh });
+    cmd.capture_live = capLive ? { variant: capLive.variant, fitted: CAPTURE_LIVE.fitted || null, pairs: capLive.p.size } : null;
     const focusArgs = {
-      own, lattice, getBin: binGetter(a.zone), t: Math.max(0, (now - a.start_ts) / 60), dur: a.dur,
+      own, lattice, getBin: binGetter(a.zone), t: tNow, dur: a.dur,
       mom: Object.fromEntries(FACS.map((f) => [f, terrNow[f] - terr15[f]])),
       header: a.win ? JSON.parse(a.win) : null,
-      pf: (fid) => (pf[`${fid}|P1:pressured`] || {}).p ?? 0.33,
+      pf: livePf(capLive, pf),
       nFac: meltdown ? Object.keys(zNow).length : undefined, noCuts: meltdown, holds, heat, frozen: pk.frozen,
     };
+    // 🚐 Spawns (#87, owner 2026-10-31): live Sunderers / routers per base and faction from the PC stream.
+    const spawnMap = fightsFresh && a.spawn_map ? JSON.parse(a.spawn_map) : null;
+    const hasSpawns = !!(spawnMap && Object.keys(spawnMap).length);
     cmd.focus = focusPlan(focusArgs);
     // "Big squad" mode on the page: the same plan with the alert clock moved AHEAD_CLOCK_MIN on
     // (data age ~1 min + 3 min lookahead; same bases, no guessed flips). Backtest on 57 past alerts
@@ -629,12 +642,31 @@ export async function commanderFor(env, key, nowMs = Date.now()) {
     try {
       const atk = focusPlan({ ...focusArgs, t: focusArgs.t + AHEAD_CLOCK_MIN, holds: {}, only: "attack" });
       const dfn = focusPlan({ ...focusArgs, holds: {}, only: "defend" });
-      cmd.focus_mix = mixPlan(atk, dfn, underwayCheck({ own, lattice, flips, nowTs: Math.trunc(now) }));
+      const underway = underwayCheck({ own, lattice, flips, nowTs: Math.trunc(now) });
+      cmd.focus_mix = mixPlan(atk, dfn, underway);
+      // 🚐 Solo (owner 2026-10-31): a lone player can only reach an attack through a public spawn,
+      // so Solo attacks only bases where our faction has a live Sunderer or router (squad beacons,
+      // Valkyries and Galaxies need a squad). Defends need none (the base's own spawn room).
+      // No spawn data (stream off, governor dropped spawn XP): Solo uses the plain mix.
+      if (hasSpawns) {
+        const gate = (f, fid) => { const q = spawnMap[String(fid)] && spawnMap[String(fid)][f]; return !!(q && PUBLIC_SPAWNS.some((k) => q[k] > 0)); };
+        const atkS = focusPlan({ ...focusArgs, t: focusArgs.t + AHEAD_CLOCK_MIN, holds: {}, only: "attack", allowAttack: gate });
+        cmd.focus_solo = mixPlan(atkS, dfn, underway);
+        for (const f of FACS) if (cmd.focus_solo[f] && cmd.focus_solo[f].quiet && cmd.focus_mix[f] && !cmd.focus_mix[f].quiet) cmd.focus_solo[f].nospawn = true;
+      }
     } catch { /* older plans still stand */ }
     // 🔥 Heat mode (owner t692u): no alert math, just the hottest fight per faction (src/heatmode.js).
     // Same flips, same row: no extra reads or writes. Hottest pick still had a fight at or next to
     // it 5 min after it was heard 39.6% of the time (random front-line base: 32.5%), 57 alerts.
     try { cmd.focus_heat = heatPlan({ own, lattice, flips, nowTs: Math.trunc(now) }); } catch { /* other plans still stand */ }
+    // 🚐 Every attack order carries the attacker's live spawn options at its target ({su, ro, be, ga, sv, de}).
+    if (hasSpawns) {
+      const fidOfName = new Map(Object.entries(lattice.names).map(([fid, n]) => [n, fid]));
+      const mark = (plan) => { for (const f of FACS) { const p = plan && plan[f]; if (!p) continue;
+        for (const x of [p.focus, ...(p.backups || [])]) { if (!x || !["take", "plan", "spoil", "push"].includes(x.kind)) continue;
+          const fid = fidOfName.get(x.bases && x.bases[0]); const q = fid != null && spawnMap[String(fid)] && spawnMap[String(fid)][f]; x.spawn = q || null; } } };
+      for (const k of ["focus", "focus_ahead", "focus_mix", "focus_solo", "focus_heat"]) mark(cmd[k]);
+    }
     // "All moves" defend list on the same cut-aware win drop as the focus (#63).
     for (const f of FACS) for (const p of pk.pockets[f] || []) { const h = holds[f] && holds[f].get(p.cp_fid); p.hold_drop = h ? Math.round(Math.max(0, h.loss) * 10) / 10 : null; }
     cmd.pockets = pk.pockets;

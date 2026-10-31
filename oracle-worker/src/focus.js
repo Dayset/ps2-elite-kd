@@ -99,14 +99,17 @@ const decided = (w) => FACS.some((f) => w[f] >= 99.95);
 /**
  * Focus per faction. own: Map fid -> 0..3; lattice {adj, names}; mom: territory
  * change per faction over 15 min; header: {VS:{pct}} odds the dashboard shows;
- * pf(fid) -> capture chance. Returns {VS: {focus, backups, quiet}, ...}.
+ * pf(fid, by) -> capture chance of base fid by faction `by` (src/capture-live.js livePf; a
+ * fixed per-base chance ignores `by`). Returns {VS: {focus, backups, quiet}, ...}.
+ * allowAttack (optional (f, fid) -> bool): attack moves (take / plan / spoiler / push) only
+ * on bases it allows; Solo orders use it to skip bases without a public spawn (🚐, #87).
  * holds (optional {}): filled with every threatened base per faction,
  * holds[f] = Map fid -> {fid, base, vs, p, loss, cuts} (the worst enemy for that
  * base), for the "All moves" defend list (src/defend.js).
  * only (optional): "attack" = no threat (hold/guard) moves, "defend" = only threats
  * (Commander modes, owner t691u: attacks from the look-ahead plan, defends from now).
  */
-export function focusPlan({ own, lattice, getBin, t, dur, mom, header, pf = () => P_DEFAULT, nFac, noCuts = false, holds = null, heat = null, frozen = null, only = null }) {
+export function focusPlan({ own, lattice, getBin, t, dur, mom, header, pf = () => P_DEFAULT, nFac, noCuts = false, holds = null, heat = null, frozen = null, only = null, allowAttack = null }) {
   const hot = (fid) => (heat && fid != null ? heat(fid) || 0 : 0);
   const { adj, names } = lattice;
   const wg = Object.keys(names).filter((f) => /warpgate/i.test(names[f]));
@@ -153,10 +156,11 @@ export function focusPlan({ own, lattice, getBin, t, dur, mom, header, pf = () =
     if (left >= TAKE_MIN_LEFT && only !== "defend") {
       const firsts = [];
       for (const fid of attackable(own, base.reach, f)) {
+        if (allowAttack && !allowAttack(f, fid)) continue;
         const o2 = new Map(own); const from = FAC[own.get(fid)]; o2.set(fid, fo);
         const e = evalPos(o2, at(1));
         const gain = e.win[f] - quo[1][f];
-        const p = pf(fid);
+        const p = pf(fid, f);
         const severs = lostBy(base.cut, e.cut, from);
         const reconnects = [...base.cut].filter((x) => own.get(x) === fo && !e.cut.has(x));
         const c = { kind: "take", bases: [nm(fid)], target: from, p: +p.toFixed(2), gain, ev: p * gain, win: e.win,
@@ -171,7 +175,7 @@ export function focusPlan({ own, lattice, getBin, t, dur, mom, header, pf = () =
             const o3 = new Map(c1._o); const from = FAC[c1._o.get(fid)]; o3.set(fid, fo);
             const e = evalPos(o3, at(2));
             const gain = e.win[f] - quo[2][f];
-            const p = c1.p * pf(fid);
+            const p = c1.p * pf(fid, f);
             // Only when the pair is clearly more than its first step.
             if (at(2) <= at(1) || gain < c1.gain + MIN_SWING || gain < 1.5 * Math.max(c1.gain, 0)) continue;
             const severs = [...new Set([...c1.cuts, ...lostBy(c1._e.cut, e.cut, from).map(nm)])];
@@ -191,7 +195,7 @@ export function focusPlan({ own, lattice, getBin, t, dur, mom, header, pf = () =
           const o2 = new Map(own); o2.set(fid, INV[g]);
           const e = evalPos(o2, at(1));
           const loss = quo[1][f] - e.win[f];
-          const p = pf(fid);
+          const p = pf(fid, g);
           const cuts = lostBy(base.cut, e.cut, f).map(nm);
           cands.push({ kind: "hold", bases: [nm(fid)], target: g, p: +p.toFixed(2), gain: loss, ev: p * loss, win: e.win,
             cuts, reconnects: [], _fid: fid });

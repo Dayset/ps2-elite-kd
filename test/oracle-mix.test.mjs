@@ -56,7 +56,8 @@ test("both modes use focus_mix; Solo keeps one, Big shows #1-#3", () => {
   assert.equal(modeFocus({ ...c, focus_mix: undefined }, "big", {}, { ts: 1 }).VS.focus.bases[0], "AHEAD", "older Worker rows still work");
   const w = read("../oracle-worker/src/index.js");
   assert.match(w, /only: "attack"/); assert.match(w, /only: "defend"/);
-  assert.match(w, /cmd\.focus_mix = mixPlan\(atk, dfn, underwayCheck\(/);
+  assert.match(w, /cmd\.focus_mix = mixPlan\(atk, dfn, underway\)/);
+  assert.match(w, /const underway = underwayCheck\(/);
   for (const l of ["en", "ja", "ru", "de", "fr", "zh", "es", "uk", "it"]) {
     const j = JSON.parse(read(`../i18n/${l}.json`));
     assert.match(j["or.c.soloNote"], /\{n\}/, `${l} soloNote keeps {n}`);

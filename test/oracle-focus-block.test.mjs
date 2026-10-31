@@ -16,7 +16,7 @@ const html = readFileSync(new URL("../oracle/index.html", import.meta.url), "utf
 test("focus block: header, one facility per line, values before prose", () => {
   assert.match(js, /<div class="fkindline">/);
   assert.match(js, /\(x\.bases \|\| \[\]\)\.map\(\(b\) => `<div class="fbase">\$\{bl\(b\)\}<\/div>`\)\.join\(""\)/);
-  assert.match(js, /<div class="fodds">\$\{tail\}\$\{pocket\}<div class="ftext">\$\{linked\(x\.text, xNames\(x\)\)\}<\/div><\/div>/);
+  assert.match(js, /<div class="fodds">\$\{tail\}\$\{pocket\}\$\{spawnChip\(x\)\}<div class="ftext">\$\{linked\(x\.text, xNames\(x\)\)\}<\/div><\/div>/); // 🚐 #87: spawn options before the prose
   // the header verb reuses the existing Attack/Defend keys — no new i18n text
   assert.match(js, /tr\("or\.c\.attack", "⚔️ Attack"\)/);
   assert.match(js, /tr\("or\.c\.defend", "🛡️ Defend"\)/);
@@ -31,7 +31,7 @@ test("focus box: one fixed height, long names ellipsis, never grows", () => {
 });
 
 test("focus pins: commander + main + css move together", () => {
-  assert.match(main, /\.\/commander\.js\?v=20261026-heat1/);
-  assert.match(html, /js\/main\.js\?v=20261029-fight1/);
-  assert.match(html, /oracle\.css\?v=20261029-fight1/);
+  assert.match(main, /\.\/commander\.js\?v=20261031-spawn1/);
+  assert.match(html, /js\/main\.js\?v=20261031-spawn1/);
+  assert.match(html, /oracle\.css\?v=20261030-sb1/);
 });
