@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-31T05:43:09.744Z",
+ "generated": "2026-10-31T05:47:52.575Z",
  "listed": 23,
  "alerts": 15,
  "skipped": {
@@ -386,6 +386,9 @@
    }
   }
  },
+ "extra_variants": [],
+ "with_spawns": 0,
+ "with_ivi": 0,
  "win": {
   "buckets": {
    "all": {
@@ -431,6 +434,12 @@
     "projFights": 0.10942
    }
   },
+  "delta_projmap_vs_prod": {
+   "mean": -0.00277,
+   "lo": -0.00493,
+   "hi": -0.00031
+  },
+  "alerts_projmap_better_than_prod": 11,
   "alerts": 15,
   "delta_fights_vs_prod": {
    "mean": -0.00328,
@@ -486,36 +495,39 @@
   }
  },
  "rosters": {
-  "n": 70,
+  "n": 71,
   "caps": 27,
-  "with_ivi": 70,
+  "with_ivi": 71,
   "crowd": {
-   "brier": 0.05708,
-   "logloss": 0.20229
+   "brier": 0.05616,
+   "logloss": 0.19952
   },
   "crowd_skill": {
-   "brier": 0.04827,
-   "logloss": 0.17908
+   "brier": 0.04769,
+   "logloss": 0.17761
   },
   "crowd_kills": {
-   "brier": 0.05483,
-   "logloss": 0.1991
+   "brier": 0.05388,
+   "logloss": 0.19618
   },
   "all": {
-   "brier": 0.04839,
-   "logloss": 0.17888
+   "brier": 0.04806,
+   "logloss": 0.17784
   },
   "skill_weights": {
-   "att_mean_ivi": -0.795,
-   "def_mean_ivi": -0.48,
-   "att_elite": 0.506,
-   "def_elite": 0.277
+   "att_mean_ivi": -0.794,
+   "def_mean_ivi": -0.476,
+   "att_elite": 0.51,
+   "def_elite": 0.283
   },
-  "rows": 80
+  "rows": 83
  },
  "verdict": {
   "keep_flips": true,
-  "keep_win": true,
-  "why": []
+  "keep_projection": true,
+  "keep_win": false,
+  "why": [
+   "win chance: fights worse than the map-only projection in early"
+  ]
  }
 }
