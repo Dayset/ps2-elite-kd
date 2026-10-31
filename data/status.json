@@ -4,93 +4,39 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "41161070422",
+    "runId": "41161565066",
     "event": "workflow_dispatch",
-    "kind": "discovery",
-    "startedAt": "2026-10-31T02:41:10.362Z",
-    "endedAt": "2026-10-31T02:48:16.508Z",
-    "seconds": 426,
-    "updated": [
-      "[CTIA] deathrulen0te",
-      "[VX15] DeFeNdeRNK",
-      "[TRID] GoldRuch",
-      "[DGia] MorderSchnitzel",
-      "[D514] SergeantSazu",
-      "[KR4C] acacacacac",
-      "[DER] Bencevar",
-      "[TOoX] Grammos",
-      "[BHO] St0rm76"
-    ],
+    "kind": "on-demand",
+    "startedAt": "2026-10-31T02:49:31.390Z",
+    "endedAt": "2026-10-31T02:54:06.366Z",
+    "seconds": 275,
+    "updated": [],
     "added": [],
-    "failed": [],
-    "stoppedEarly": "another run is waiting (site request or fallback cron)",
+    "failed": [
+      {
+        "name": "Suprachiasmax",
+        "reason": "Census is busy or down (timeout)",
+        "outage": true
+      }
+    ],
+    "stoppedEarly": null,
     "indexSize": 16299,
-    "discovery": {
-      "cap": 18000,
-      "queue": 0,
-      "slice": null,
-      "sweepInProgress": false
-    },
     "honu": {
       "day": "2026-10-31",
-      "calls": 291,
+      "calls": 323,
       "cap": 10000
     },
     "batch": [
       {
-        "name": "breatheaven",
-        "src": "retry",
-        "status": "pending"
-      },
-      {
-        "name": "[CTIA] deathrulen0te",
-        "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "[VX15] DeFeNdeRNK",
-        "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "[TRID] GoldRuch",
-        "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "[DGia] MorderSchnitzel",
-        "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "[D514] SergeantSazu",
-        "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "[KR4C] acacacacac",
-        "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "[DER] Bencevar",
-        "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "[TOoX] Grammos",
-        "src": "refresh",
-        "status": "done"
-      },
-      {
-        "name": "[BHO] St0rm76",
-        "src": "refresh",
-        "status": "done"
+        "name": "Suprachiasmax",
+        "src": "on-demand",
+        "status": "failed",
+        "reason": "Census is busy or down (timeout)"
       }
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-10-31T02:48:33.804Z",
+    "checkedAt": "2026-10-31T02:54:21.810Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 18,
     "explained": 50,
@@ -2201,7 +2147,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-10-31T02:48:42.882Z",
+    "checkedAt": "2026-10-31T02:54:31.627Z",
     "red": 63,
     "padding": 45,
     "adjusted": 24,
@@ -2212,7 +2158,7 @@
     "forensics": 34
   },
   "sessionStats": {
-    "checkedAt": "2026-10-31T02:48:33.868Z",
+    "checkedAt": "2026-10-31T02:54:21.859Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -2228,11 +2174,11 @@
       "players": 16298,
       "withSessions": 16079,
       "measured": 8162,
-      "sessions": 75666,
-      "kills": 3103137,
+      "sessions": 75678,
+      "kills": 3103418,
       "xpPlayers": 1930,
       "xpMeasured": 1396,
-      "xpSessions": 12544
+      "xpSessions": 12556
     },
     "metrics": [
       {
@@ -2359,7 +2305,7 @@
         "p01": 0.118,
         "p05": 0.178,
         "median": 0.515,
-        "p95": 1.891,
+        "p95": 1.886,
         "p99": 2.732,
         "max": 16.942
       },
@@ -4902,9 +4848,9 @@
     "outliersUnexplained": 1
   },
   "size": {
-    "at": "2026-10-31T02:48:17.174Z",
+    "at": "2026-10-31T02:54:06.943Z",
     "repoBytes": 296626176,
-    "dataBytes": 344856420,
+    "dataBytes": 344866125,
     "playersBytes": 309153881,
     "playerFiles": 16299,
     "warnAtBytes": 734003200,
@@ -4912,7 +4858,7 @@
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-10-31T02:48:33.909Z",
+    "checkedAt": "2026-10-31T02:54:21.892Z",
     "candidates": [
       "chocoiatevs",
       "nebelhexe",
@@ -6241,7 +6187,7 @@
         "flagged": true,
         "odd": false,
         "analyzed": 5,
-        "checkedAt": "2026-10-28T02:51:18.901Z",
+        "checkedAt": "2026-10-31T02:54:05.721Z",
         "worst": {
           "sessionId": "15764281",
           "url": "https://wt.honu.pw/s/15764281",
@@ -6342,8 +6288,8 @@
         "confirmedCheater": false,
         "flagged": true,
         "odd": false,
-        "analyzed": 3,
-        "checkedAt": "2026-10-28T02:51:06.708Z",
+        "analyzed": 4,
+        "checkedAt": "2026-10-31T02:54:05.719Z",
         "worst": {
           "sessionId": "36358765",
           "url": "https://wt.honu.pw/s/36358765",
@@ -9431,8 +9377,8 @@
         "confirmedCheater": false,
         "flagged": false,
         "odd": true,
-        "analyzed": 3,
-        "checkedAt": "2026-10-28T02:51:18.901Z",
+        "analyzed": 4,
+        "checkedAt": "2026-10-31T02:54:06.353Z",
         "worst": {
           "sessionId": "57934977",
           "url": "https://wt.honu.pw/s/57934977",
@@ -36654,7 +36600,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-10-31T02:48:33.918Z",
+    "checkedAt": "2026-10-31T02:54:21.902Z",
     "count": 423,
     "players": [
       {
@@ -40172,7 +40118,7 @@
     ]
   },
   "infantry": {
-    "checkedAt": "2026-10-31T02:48:44.514Z",
+    "checkedAt": "2026-10-31T02:54:33.085Z",
     "players": 16299,
     "counts": {
       "infantry": 10535,
@@ -40229,7 +40175,7 @@
       }
     },
     "tagMin": 20,
-    "checkedAt": "2026-10-31T02:48:40.968Z",
+    "checkedAt": "2026-10-31T02:54:29.903Z",
     "coverage": {
       "players": 16265,
       "withSessions": 16046,
@@ -40540,7 +40486,7 @@
   },
   "burst": {
     "rule": "KPM ≥ 5 and ≥ 15 kills in ≥ 2 min (one stored session, no 10-minute floor); skipped when within the player's own normal (≥ 5 other sessions of ≥ 10 min, ≤ 2× their median KPM, career K/D < 10); 🛡️ established players (account ≥ 1 year, eKPM ≥ 0.75, ≥ 3 stored sessions) show as cleared automatically",
-    "checkedAt": "2026-10-31T02:48:46.871Z",
+    "checkedAt": "2026-10-31T02:54:35.171Z",
     "sessions": 19,
     "ownNormalSkipped": 0,
     "flaggedPlayers": 0,
@@ -40827,7 +40773,7 @@
     ]
   },
   "padderPenalty": {
-    "checkedAt": "2026-10-31T02:48:33.946Z",
+    "checkedAt": "2026-10-31T02:54:21.926Z",
     "ranked": 16190,
     "penalty": 0.1,
     "ref": 610.6,
@@ -41068,7 +41014,7 @@
     ]
   },
   "vehicleCut": {
-    "checkedAt": "2026-10-31T02:48:33.990Z",
+    "checkedAt": "2026-10-31T02:54:21.965Z",
     "ranked": 16190,
     "cut": 9594,
     "buckets": {
@@ -43486,7 +43432,7 @@
       "HIP": 0.9,
       "HSR": 0.55
     },
-    "checkedAt": "2026-10-31T02:48:20.745Z",
+    "checkedAt": "2026-10-31T02:54:09.202Z",
     "checked": 18,
     "errors": 0,
     "pending": 0,
@@ -43671,7 +43617,7 @@
     ]
   },
   "hut": {
-    "builtAt": "2026-10-31T02:48:33.269Z",
+    "builtAt": "2026-10-31T02:54:21.351Z",
     "cuts": {
       "actMedian": 0.264,
       "actMult": 1.333,
@@ -48656,7 +48602,7 @@
     "cleared": []
   },
   "vehDiff": {
-    "builtAt": "2026-10-31T02:48:33.340Z",
+    "builtAt": "2026-10-31T02:54:21.415Z",
     "start": 14.9,
     "damped": 3577,
     "dieHardHut": 1235,
@@ -88014,7 +87960,7 @@
     "cleared": []
   },
   "zergRevive": {
-    "builtAt": "2026-10-31T02:48:33.486Z",
+    "builtAt": "2026-10-31T02:54:21.544Z",
     "zergScored": 8079,
     "measured": 1442,
     "measuredZerg": 1269,
@@ -88028,11 +87974,11 @@
       "minDeaths": 50,
       "minMinutes": 120,
       "p25": 19.6,
-      "p50": 30,
+      "p50": 29.8,
       "p75": 44.9,
       "n": 1442
     },
-    "rule": "🪳 Zerg crowd check, from Honu XP detail (data/xp, players looked up or discovered; 50+ deaths by enemy players and 2+ h of play there, no kill minimum). Per death we count what the player RECEIVED: revives (Revive + Squad Revive), heals, shield repairs and resupplies (each + its squad version). rvp = the revived share's percentile among the 1442 measured players of this build (revived share p25 19.6%, median 30%, p75 44.9%). Crowd score = mean of the four percentiles; engineers with Hardlight barrier blocking XP (id 1393, only ticks inside a big crowd) at 0.02+ events/min get max(crowd, 0.8 × crowd + 0.2 × their Hardlight percentile) — it can only add (57 players). crp = the crowd score's percentile again among the same players. rvp ≥ 75 OR crp ≥ 75 → Zerg confirmed (unchanged, said on hover; 109 confirmed by the crowd score alone). Softening uses the HIGHER of rvp and crp (check): w = 1 at/below p25 → 0 at/above p50, Zerg = raw − round(w × max(0, raw − check)); never raised. No XP detail → unchanged. Estimated 🪳 (no Zerg score, e.g. few kills or assists): max(rvp, crp) when ≥ 75, shown as \"~N\" — display only, never sorted, pooled or marked (40 players). Listed: every softened player, confirmed ones with raw Zerg ≥ 67, and the estimates. Owner override: \"zerg\": \"cleared\" on the data/reviewed.json player entry (no crowd result at all; also left out of the pools).",
+    "rule": "🪳 Zerg crowd check, from Honu XP detail (data/xp, players looked up or discovered; 50+ deaths by enemy players and 2+ h of play there, no kill minimum). Per death we count what the player RECEIVED: revives (Revive + Squad Revive), heals, shield repairs and resupplies (each + its squad version). rvp = the revived share's percentile among the 1442 measured players of this build (revived share p25 19.6%, median 29.8%, p75 44.9%). Crowd score = mean of the four percentiles; engineers with Hardlight barrier blocking XP (id 1393, only ticks inside a big crowd) at 0.02+ events/min get max(crowd, 0.8 × crowd + 0.2 × their Hardlight percentile) — it can only add (57 players). crp = the crowd score's percentile again among the same players. rvp ≥ 75 OR crp ≥ 75 → Zerg confirmed (unchanged, said on hover; 109 confirmed by the crowd score alone). Softening uses the HIGHER of rvp and crp (check): w = 1 at/below p25 → 0 at/above p50, Zerg = raw − round(w × max(0, raw − check)); never raised. No XP detail → unchanged. Estimated 🪳 (no Zerg score, e.g. few kills or assists): max(rvp, crp) when ≥ 75, shown as \"~N\" — display only, never sorted, pooled or marked (40 players). Listed: every softened player, confirmed ones with raw Zerg ≥ 67, and the estimates. Owner override: \"zerg\": \"cleared\" on the data/reviewed.json player entry (no crowd result at all; also left out of the pools).",
     "players": [
       {
         "name": "CNKiller0",
@@ -92786,7 +92732,7 @@
     "cleared": []
   },
   "newbieDiff": {
-    "builtAt": "2026-10-31T02:48:33.432Z",
+    "builtAt": "2026-10-31T02:54:21.498Z",
     "loH": 5.5,
     "hiH": 343.7,
     "n": 16167,
@@ -146364,7 +146310,7 @@
     "cleared": []
   },
   "assistGap": {
-    "checkedAt": "2026-10-31T02:48:40.972Z",
+    "checkedAt": "2026-10-31T02:54:29.905Z",
     "start": "2026-04-01T13:00:00.000Z",
     "end": "2026-05-07T05:00:00.000Z",
     "url": "https://www.planetside2.com/patch-notes/may-6-hotfix-2026",
@@ -148148,7 +148094,7 @@
     ]
   },
   "tractorMark": {
-    "checkedAt": "2026-10-31T02:48:33.506Z",
+    "checkedAt": "2026-10-31T02:54:21.567Z",
     "rule": "🚜 = infantry % < p25 (72%) and (vehicle repair/min ≥ p75 (0.923) or vehicle kills/min ≥ p75 (0.213) of the 1683 players with 2+ h of XP detail), or infantry % < p2 (21.3%)",
     "cuts": {
       "cut": 72,
