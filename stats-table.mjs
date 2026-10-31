@@ -422,7 +422,7 @@ export function createStatsTable($) {
         fn: (r) => { const z = traitP && r.p ? zergScore(traitP, shownValue(r, "inflation"), apkBySlug && apkBySlug.get(slugKey(r.p.display)), rvpOf(r.p.display), crpOf(r.p.display)) : null; return z ? z.score : NaN; } },
       // 🧘‍♂️ Pure iVi (owner 2026-10-29): the uncentered 🪳 charge on the plain ⚔️ iVi — your true solo
       // ability, separate from Claude's #84 evening-out. PC only; missing 🪳 → "—".
-      { id: "pureivi", label: tr("col.pureivi", "🧘‍♂️ Pure iVi"), hint: tr("tip.pureivi", "Your true ability as a solo player: plain ⚔️ iVi with the uncentered 🪳 charge, adjs × (1 − 0.00436 × 🪳). High 🪳 drops hard — monitor column next to the evened-out ⚔️ iVi."), digits: 0, thinTip: true,
+      { id: "pureivi", label: tr("col.pureivi", "🧘‍♂️ Pure iVi"), hint: tr("tip.pureivi", "Your true ability as a solo player: plain ⚔️ iVi with the uncentered 🪳 charge, adjs × (1 − 0.00436 × 🪳). High 🪳 drops hard — monitor column next to the evened-out ⚔️ iVi. Below it, the same score before the 🚜 vehicle/MAX cuts and before any 🪳 charge."), digits: 0, thinTip: true, preVehCell: true,
         fn: (r) => { if ($.IS_PS) return NaN; const a = shownValue(r, "adjs"); if (!isFiniteNum(a)) return NaN; const z = traitP && r.p ? zergScore(traitP, shownValue(r, "inflation"), apkBySlug && apkBySlug.get(slugKey(r.p.display)), rvpOf(r.p.display), crpOf(r.p.display)) : null; const v = z ? pureIvI(a, z.score) : null; return v == null ? NaN : v; } },
       { id: "inf", label: tr("col.infantry", "🪖 Infantry"), hint: tr("tip.inf", INF_HINT), fn: (r) => { const e = infBySlug && r.p ? infBySlug.get(slugKey(r.p.display)) : undefined; return e ? e.inf : undefined; }, digits: 1, infCell: true },
     ];
@@ -619,6 +619,12 @@ export function createStatsTable($) {
                 const pctl = isFiniteNum(v) && consPool ? percentileOf(consPool, v) : null;
                 const txt = pctl == null ? "—" : `${pctl}%`;
                 return `<td title="${tr("stats.pctile", "Population percentile: higher than {n}% of cached players", { n: pctl ?? "—" })}">${txt}${pct}</td>`;
+              }
+              // 🧘 second line: pre-vehicle/pre-🪳 value in the same column (owner 2026-10-31);
+              // playerMetrics carries adjsPreVeh when cut, else the plain pre-🪳 value. Line 1 unchanged.
+              if (c.preVehCell && isFiniteNum(v)) {
+                const pre = isFiniteNum(row.adjsPreVeh) ? row.adjsPreVeh : shownValue(row, "adjs");
+                if (isFiniteNum(pre)) return `<td${tdTitle}>${fmtNum(v, c.digits)}${pct}<br><span class="preveh">${fmtNum(pre, 0)}</span></td>`;
               }
               return `<td${tdTitle}>${fmtNum(v, c.digits)}${pct}</td>`;
             })

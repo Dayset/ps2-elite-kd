@@ -446,6 +446,9 @@ export function buildRanksWithGuard(dataDir, { known = KNOWN_EXTREMES, zergCharg
       // 🚜 vehicle cut on ⚔️ iVi (vehicle-cut.mjs, inside playerMetrics): cut % (1 decimal) for the iVi hover; null = no cut.
       const vcut = m.vehCut > 0 && !m.thin ? Math.round(m.vehCut * 1000) / 10 : null;
       if (!info || !info.hidden) row.push(vcut);
+      // 🧘 iVi before the 🚜 vehicle/MAX cuts and before any 🪳 charge (owner 2026-10-31):
+      // stacked under 🧘 Pure iVi in both tables. No cut → the post-cut value (eventual "adjs0").
+      if (!info || !info.hidden) row.push(Number.isFinite(m.adjsPreVeh) ? Math.round(m.adjsPreVeh * 1e6) / 1e6 : (Number.isFinite(m.adjs) ? Math.round(m.adjs * 1e6) / 1e6 : null));
       players.push({ vehCut: vcut, vehCutVeh: vcut != null ? Math.round(m.vehCutVeh * 1000) / 10 : null, vehCutMax: vcut != null ? Math.round(m.vehCutMax * 1000) / 10 : null, vehShare: Number.isFinite(m.vehShare) ? m.vehShare : null, vehOnly: Number.isFinite(m.vehOnly) ? m.vehOnly : null, maxShare: Number.isFinite(m.maxShare) ? m.maxShare : null, adjsPreVeh: vcut != null ? m.adjsPreVeh : null, vehCutCleared: !!m.vehCutCleared, poop: !!m.poop, adjsBase: m.poop && !m.thin ? m.adjsBase : null, confirmedPadder: confirmed.has(row[2]), infTag: (pl.infantry && pl.infantry.v >= 2 && pl.infantry.tag) || null, slug: row[2], name: row[0], cid: String(np.cid || ""), farmAcct: !!(fa && fa.farm), flagged: f.flagged || sf.flagged || fx.flagged, patterns, values, session: sm, sessionFlag: sf, forensics: fx, row, hidden: !!(info && info.hidden), confirmedCheater: !!(info && info.confirmedCheater), established });
     },
   });
@@ -453,6 +456,7 @@ export function buildRanksWithGuard(dataDir, { known = KNOWN_EXTREMES, zergCharg
   ranks.cols.push("zat"); // 🪳⚔️ day of the newest 🤝 session (zerg-charge.mjs zergFresh)
   ranks.cols.push("inf", "infMax", "infVeh"); // 🪖 trailing columns (see onPlayer), % of lifetime kills
   ranks.cols.push("vcut"); // 🚜 vehicle cut % on adjs (adjs is already cut)
+  ranks.cols.push("adjsPreVeh"); // 🧘 pre-vehicle/pre-🪳 iVi (see onPlayer); ranks.json only, not lite
   const reviewedJson = readReviewed(dataDir);
   const hut = applyHutColumn(ranks, reviewedJson, { playMin, hsSlugs: readHeavySupportSlugs(dataDir) }); // 🛖 trailing "hut" column (damping factor on positive 🔀 Diff)
   const vehDiff = applyVehDiffColumn(ranks, reviewedJson); // 🔀🚜 trailing "vdf" column (vehicle damp on positive 🔀 Diff)
