@@ -73,7 +73,7 @@ export function initRankings(host) {
     { id: "zerg", label: tr("col.zerg", "🪳 Zerg"), digits: 0, zerg: true, tip: ZERG_HINT }, // short hover (owner t9); details on columns.html#zerg
     // 🧘‍♂️ Pure iVi (owner 2026-10-29): the uncentered 🪳 charge on the plain ⚔️ iVi, same formula as the ✨ Stats
     // column — separate from Claude's #84 evening-out. PC only; missing 🪳 → "—".
-    { id: "pureivi", label: tr("col.pureivi", "🧘‍♂️ Pure iVi"), digits: 0, preVeh: true, tip: tr("tip.pureivi", "Your true ability as a solo player: plain ⚔️ iVi with the uncentered 🪳 charge, adjs × (1 − 0.00436 × 🪳). High 🪳 drops hard — monitor column next to the evened-out ⚔️ iVi. Below it, the same score before the 🚜 vehicle/MAX cuts and before any 🪳 charge.") },
+    { id: "pureivi", label: tr("col.pureivi", "🧘‍♂️ Pure iVi"), digits: 0, preVeh: true, tip: tr("tip.pureivi", "Your true ability as a solo player: plain ⚔️ iVi with the uncentered 🪳 charge, adjs × (1 − 0.00436 × 🪳). High 🪳 drops hard — monitor column next to the evened-out ⚔️ iVi. After the slash, the same score before the 🚜 vehicle/MAX cuts and before any 🪳 charge.") },
     { id: "inf", label: tr("col.infantry", "🪖 Infantry"), digits: 1, inf: true, tip: INF_HINT },
   ];
   const DEBUG = [
@@ -531,9 +531,10 @@ export function initRankings(host) {
     if (!fin(v)) return `<td>—</td>`;
     const p = row.pcts[c.id];
     const pct = p == null ? "" : `<span class="pct" title="${tr("stats.pctile", "Population percentile: higher than {n}% of cached players", { n: p })}">p${p}</span>`;
-    // 🧘 second line: pre-vehicle/pre-🪳 value in the same column (owner 2026-10-31); line 1 unchanged.
-    const pre = c.preVeh && fin(row.adjsPreVeh) ? `<br><span class="preveh">${fmt(row.adjsPreVeh, 0)}</span>` : "";
-    return `<td${vc ? ` title="${esc(vc)}"` : ""}>${fmt(v, c.digits)}${pct}${pre}</td>`;
+    // 🧘 second value, side by side: pre-vehicle/pre-🪳 value after a slash in the same column
+    // (owner 2026-10-31); the pct tag trails the pair, line 1's number unchanged.
+    const pre = c.preVeh && fin(row.adjsPreVeh) ? `/<span class="preveh">${fmt(row.adjsPreVeh, 0)}</span>` : "";
+    return `<td${vc ? ` title="${esc(vc)}"` : ""}>${fmt(v, c.digits)}${pre}${pct}</td>`;
   }
 
   /**
