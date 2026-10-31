@@ -12,6 +12,9 @@ on:
       commit:
         description: "Commit the report (true/false)"
         default: "true"
+      fit:
+        description: "Also refit the live capture chance (src/capture-live.gen.js) and commit it (true/false)"
+        default: "false"
   schedule:
     - cron: "43 7 * * 1"   # weekly, Monday 07:43 UTC (the data grows every day)
 
@@ -35,12 +38,12 @@ jobs:
         env:
           ORACLE_API: ${{ vars.ORACLE_API || 'https://ps2-oracle.dayset.workers.dev' }}
           CENSUS_PROXY_KEY: ${{ secrets.CENSUS_PROXY_KEY }}
-        run: node oracle-worker/history/fights-backtest.mjs --out oracle/backend/fights_backtest.json
+        run: node oracle-worker/history/fights-backtest.mjs --out oracle/backend/fights_backtest.json ${{ inputs.fit == 'true' && '--fit oracle-worker/src/capture-live.gen.js' || '' }}
       - name: Commit report
         if: github.event_name == 'schedule' || inputs.commit == 'true'
         run: |
-          if [ -z "$(git status --porcelain oracle/backend/fights_backtest.json)" ]; then echo "::notice::no report change"; exit 0; fi
+          if [ -z "$(git status --porcelain oracle/backend/fights_backtest.json oracle-worker/src/capture-live.gen.js)" ]; then echo "::notice::no report change"; exit 0; fi
           git config user.name "oracle-history[bot]"; git config user.email "oracle-history@users.noreply.github.com"
-          git add oracle/backend/fights_backtest.json
+          git add oracle/backend/fights_backtest.json oracle-worker/src/capture-live.gen.js
           git commit -m "oracle: fights backtest report (#87) [bot]"
           for i in 1 2 3; do git pull --rebase origin main && git push origin HEAD:main && break; sleep 5; done

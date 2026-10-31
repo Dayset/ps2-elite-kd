@@ -33,8 +33,8 @@ import { writeFileSync, readFileSync, existsSync } from "node:fs";
 import { forecast, brier, FACS, MELTDOWN, territory } from "../src/engine.js";
 import { binGetter, hasTree, regionMap, latticeFor, captureModel } from "../src/models.js";
 import { cutAwareSnap } from "../src/cut.js";
-import { warpgateConnected, heatScore } from "../src/commander.js";
 import { focusPlan } from "../src/focus.js";
+import { capP, capturePairs, pairFeatures, vectorOf, predict } from "../src/capture-live.js";
 
 const FN = { 1: "VS", 2: "NC", 3: "TR" };
 const FI = { VS: 1, NC: 2, TR: 3 };
@@ -105,16 +105,11 @@ export function fitLogit(X, y, l2 = 1, iters = 12) {
   }
   return { w, mu, sd };
 }
-export function predLogit(m, x) {
-  let s = m.w[0];
-  for (let j = 0; j < x.length; j++) s += m.w[j + 1] * ((x[j] - m.mu[j]) / m.sd[j]);
-  return sig(s);
-}
+export const predLogit = predict;
 const brier1 = (p, y) => (p - y) ** 2;
 const logloss = (p, y) => { const q = Math.min(1 - 1e-6, Math.max(1e-6, p)); return -(y ? Math.log(q) : Math.log(1 - q)); };
 
 // ---------- one alert ----------
-const capP = (pf, fid, pressured) => { const e = pf[`${fid}|${pressured ? "P1:pressured" : "P0:none"}`]; return e ? e.p : pressured ? 0.33 : 0.18; };
 
 /**
  * Archive bundle → prepared alert, or {key, skip}. Owners per minute come from the frames,
@@ -144,7 +139,8 @@ export function prepAlert(b) {
     b: new Map(r.b.map((x) => [String(x[0]), { n: [+x[1] || 0, +x[2] || 0, +x[3] || 0], k: +x[4] || 0, cf: x[5] ? FI[x[5]] || 0 : 0, ca: x[6] == null ? null : +x[6],
       sp: Array.isArray(x[7]) && x[7].length === 6 ? x[7].map((v) => +v || 0) : null, iv: Array.isArray(x[8]) && x[8].length === 3 ? x[8].map((v) => +v || 0) : null }])),
   })).sort((x, y) => x.t - y.t);
-  return { key, zone: +b.zone, world: +b.world, dur, start, winner: b.winner, event_id: b.event_id, L, r2f, frames, flips, wg, fights, pf: captureModel(b.zone) };
+  const flipsW = flips.map((x) => [x.ts, FN[x.nw], FN[x.old], x.fid]); // Worker shape for src/capture-live.js
+  return { key, zone: +b.zone, world: +b.world, dur, start, winner: b.winner, event_id: b.event_id, L, r2f, frames, flips, flipsW, wg, fights, pf: captureModel(b.zone) };
 }
 
 /** Map as production saw it at minute m (frames only). */
@@ -158,44 +154,12 @@ export function ownAt(a, m) {
   return own;
 }
 
-/** Front-line pairs at minute m: [{fid, A, B, nbB, pressured}]. */
-export function frontier(a, own, m) {
-  const reach = warpgateConnected(own, a.L.adj, a.L.names);
-  const out = [];
-  for (const [fid, A] of own) {
-    if (!FN[A] || a.wg.has(fid)) continue;
-    const nbs = a.L.adj.get(fid) || [];
-    for (const B of [1, 2, 3]) {
-      if (B === A) continue;
-      const linked = nbs.filter((nb) => own.get(nb) === B && reach.has(B) && reach.get(B).has(nb));
-      if (!linked.length) continue;
-      const nbSet = new Set(nbs.map(String));
-      const pressured = a.flips.some((x) => x.m <= m && x.m > m - 15 && x.nw === B && nbSet.has(x.fid));
-      out.push({ fid, A, B, nbB: linked.length, pressured });
-    }
-  }
-  return out;
-}
+/** Front-line pairs at minute m: [{fid, A, B, nbB, pressured}] (src/capture-live.js, same as the Worker). */
+export function frontier(a, own, m) { return capturePairs({ own, lattice: a.L, flips: a.flipsW, nowTs: a.start + m * 60 }); }
 
-/** Feature groups for one pair (fights row r may be undefined = base not among the 8 fights). */
+/** Feature groups for one pair (src/capture-live.js pairFeatures; r = the base's fights row or undefined). */
 export function features(a, pair, m, nowTs, r) {
-  const { fid, A, B } = pair;
-  const flipsC = [];
-  for (const x of a.flips) { if (x.ts > nowTs) break; flipsC.push([x.ts, FN[x.nw], FN[x.old], x.fid]); }
-  let last = null; for (const x of a.flips) { if (x.m > m) break; if (x.fid === fid) last = x.m; }
-  const map = [logit(capP(a.pf, fid, pair.pressured)), pair.pressured ? 1 : 0, heatScore(fid, flipsC, nowTs, a.L.adj, 4) / 100,
-    l1p(last == null ? 60 : Math.min(60, m - last)), pair.nbB, m / a.dur];
-  const n = r ? r.n : [0, 0, 0];
-  const nA = n[A - 1], nB = n[B - 1], nC = n[6 - A - B - 1];
-  const crowd = [r ? 1 : 0, l1p(nB), l1p(nA), l1p(nC), (nB - nA) / (nB + nA + 2), l1p(r ? r.k : 0)];
-  const ca = r && r.ca != null ? r.ca : null;
-  const point = [r && r.cf === B && ca != null && ca <= 120 ? 1 : 0, r && r.cf === B && ca != null && ca <= 300 ? 1 : 0,
-    r && r.cf === A && ca != null && ca <= 300 ? 1 : 0, r && r.cf === B && ca != null ? Math.exp(-ca / 120) : 0];
-  // 🚐 forward spawns (points, spawns) and 👥 best scoreboard iVi per side; zeros when the row has none.
-  const sp = r && r.sp ? r.sp : null, iv = r && r.iv ? r.iv : null;
-  const spawn = [sp ? 1 : 0, l1p(sp ? sp[B - 1] : 0), l1p(sp ? sp[A - 1] : 0), l1p(sp ? sp[B + 2] : 0), l1p(sp ? sp[A + 2] : 0)];
-  const skill = [iv ? 1 : 0, (iv ? iv[B - 1] : 0) / 100, (iv ? iv[A - 1] : 0) / 100];
-  return { map, crowd, point, spawn, skill };
+  return pairFeatures({ pair, lattice: a.L, flips: a.flipsW, nowTs, t: m, dur: a.dur, pf: a.pf, row: r });
 }
 
 /** Labels: B captures fid in (m, m+H]; null when the window runs past the alert end. */
@@ -254,13 +218,9 @@ export function samplesFor(a, rnd = mulberry(87)) {
 }
 
 export const VARIANTS = {
-  map: (s) => s.X.map,
-  crowd: (s) => [...s.X.map, ...s.X.crowd],
-  point: (s) => [...s.X.map, ...s.X.point],
-  both: (s) => [...s.X.map, ...s.X.crowd, ...s.X.point],
-  noisy: (s) => [...s.Xn.map, ...s.Xn.crowd, ...s.Xn.point],
-  spawn: (s) => [...s.X.map, ...s.X.crowd, ...s.X.point, ...s.X.spawn],
-  skill: (s) => [...s.X.map, ...s.X.crowd, ...s.X.point, ...s.X.skill],
+  map: (s) => vectorOf("map", s.X), crowd: (s) => vectorOf("crowd", s.X), point: (s) => vectorOf("point", s.X),
+  both: (s) => vectorOf("both", s.X), noisy: (s) => vectorOf("both", s.Xn),
+  spawn: (s) => vectorOf("spawn", s.X), skill: (s) => vectorOf("skill", s.X),
 };
 export const BASE_VARIANTS = ["map", "crowd", "point", "both", "noisy"];
 /** 🚐 / 👥 variants only once enough alerts carry the data (rows from 2026-10-31 on). */
@@ -488,7 +448,17 @@ export function scoreRosters(samples, folds = 5) {
 }
 
 // ---------- run ----------
-export function runAll(bundles) {
+/** 🎯 Coefficients for the Worker (src/capture-live.gen.js): map-only and fights-aware, 15 min, all alerts. */
+export function fitLiveModel(samples, keys) {
+  const tr = samples.filter((s) => s.y[15] != null);
+  if (tr.length < 500 || !tr.some((s) => s.y[15])) return null;
+  const pack = (m) => ({ w: m.w.map((v) => +v.toFixed(6)), mu: m.mu.map((v) => +v.toFixed(6)), sd: m.sd.map((v) => +v.toFixed(6)) });
+  const y = tr.map((s) => s.y[15]);
+  return { horizon: 15, alerts: keys.length, pairs: tr.length, rate: +(y.reduce((a, v) => a + v, 0) / y.length).toFixed(4),
+    map: pack(fitLogit(tr.map(VARIANTS.map), y)), both: pack(fitLogit(tr.map(VARIANTS.both), y)) };
+}
+
+export function runAll(bundles, { fit = false } = {}) {
   const prepped = bundles.map(prepAlert);
   const alerts = prepped.filter((a) => !a.skip);
   const skipped = prepped.filter((a) => a.skip).reduce((m, a) => ((m[a.skip] = (m[a.skip] || 0) + 1), m), {});
@@ -511,6 +481,7 @@ export function runAll(bundles) {
     cmd.push(...commanderRows(a, live15));
   }
   report.win = scoreWin(win);
+  if (fit) report.live_model = fitLiveModel(samples, keys);
   report.commander = scoreCommander(cmd, (r) => { let s = 0, any = false; for (const B of [1, 2, 3]) { const q = live15.get(`${r.key}|${r.m}|${r.fixed.fid}|${B}`); if (q != null && (r.fixed.kind !== "take" && r.fixed.kind !== "plan" ? B !== FI[r.f] : B === FI[r.f])) { s += q; any = true; } } return any ? Math.min(1, s) : null; });
   return report;
 }
@@ -557,7 +528,14 @@ async function main() {
   }
   const bundles = [];
   for (let i = 0; i < list.length; i += 6) bundles.push(...(await Promise.all(list.slice(i, i + 6).map((x) => get(`/archive?key=${x.key}`)))).filter(Boolean));
-  const rep = { generated: new Date().toISOString(), listed: list.length, ...runAll(bundles) };
+  const fitOut = arg("--fit");
+  const rep = { generated: new Date().toISOString(), listed: list.length, ...runAll(bundles, { fit: !!fitOut }) };
+  if (fitOut && rep.live_model) {
+    const lm = { fitted: rep.generated.slice(0, 10), ...rep.live_model };
+    writeFileSync(fitOut, `// GENERATED by oracle-worker/history/fights-backtest.mjs --fit (#87) — do not edit.\n// 🎯 Live capture chance (src/capture-live.js): logistic models, P(captured within ${lm.horizon} min).\nexport const CAPTURE_LIVE = ${JSON.stringify(lm)};\n`);
+    console.log(`::notice title=live model::fitted on ${lm.alerts} alerts, ${lm.pairs} pairs, rate ${lm.rate} → ${fitOut}`);
+  }
+  delete rep.live_model;
   // Part D: rosters (internal, proxy key). Aggregates only: no ids or names leave this run.
   if (process.env.CENSUS_PROXY_KEY) {
     const C = process.env.CACHE_URL || "https://ps2-elite-kd-cache.dayset.workers.dev";
