@@ -22,6 +22,8 @@ import { LiveMap, ENV_WORLDS } from "./live-map.js";
 import { PcStream } from "./pc-stream.js";
 import { PlanSwitch } from "./plan.js";
 import { CaptureTags } from "./capture-tags.js";
+import { Rosters } from "./rosters.js";
+import { removedKeys } from "./duel-store.js";
 
 /*
  * Workers Paid plan (2026-10-29): the same object now also holds the PC live stream
@@ -53,7 +55,9 @@ export class KillMonitor {
     this.live = new LiveMap();
     // 🏴 Capture tags (capture-tags.js): one row per base capture, outfit tags only.
     this.caps = new CaptureTags(sql, { meter: this.meter, spawns: (w, f) => this.live.spawnsAt("ps2", w, f) });
-    const feed = (envName, p, now) => { try { this.live.onEvent(envName, p, now); } catch {} try { this.caps.onEvent(envName, p, now); } catch {} };
+    // 👥 Base rosters (rosters.js): who was at a base when it was captured or defended. Internal only.
+    this.rost = new Rosters(sql, { meter: this.meter, roster: (w, f) => this.live.roster("ps2", w, f), removed: () => removedKeys("ps2", (u, o) => fetch(u, o)) });
+    const feed = (envName, p, now) => { try { this.live.onEvent(envName, p, now); } catch {} try { this.caps.onEvent(envName, p, now); } catch {} try { this.rost.onEvent(envName, p, now); } catch {} };
     this.ps = new PsAssists(ctx, env, { meter: this.meter, onPayload: feed });
     this.pc = new PcStream(ctx, env, { meter: this.meter, onPayload: feed });
     // 🔀 paid | free (plan.js): plan.json or the PLAN variable; the last known value survives restarts.
@@ -88,6 +92,7 @@ export class KillMonitor {
     try { pcOn = await this.pc.ensure(Date.now(), plan); } catch (e) { this.meta("pcError", String(e && e.message).slice(0, 160)); }
     try { this.live.prune(); } catch {}
     try { await this.caps.settle(this.env); } catch {}
+    try { await this.rost.settle(); } catch {}
     this.saveMeter();
     const done = this.expired();
     if ((psOn || pcOn || !done) && !(await this.ctx.storage.getAlarm())) await this.ctx.storage.setAlarm(Date.now() + ALARM_MS);
@@ -157,6 +162,13 @@ export class KillMonitor {
       const caps = ns === "ps2" ? this.caps.recent(w, Math.floor(now / 1000) - CAPS_ACTIVITY_S, zn) : [];
       return Response.json({ v: 1, ns, world: +w, stream: this.streamOn(ns), ...this.live.activity(ns, w, now, zn), caps });
     }
+    if (url.pathname === "/live/rosters") {
+      const now = Math.floor(Date.now() / 1000);
+      const since = Math.max(now - 31 * 86400, +url.searchParams.get("since") || now - 3600);
+      const w = url.searchParams.get("world");
+      const rows = this.rost.read(since, w && ENV_WORLDS.ps2.includes(w) ? w : null, Math.min(2000, +url.searchParams.get("limit") || 500));
+      return Response.json({ v: 1, at: now, info: this.rost.info(), size: this.rost.size(), rows });
+    }
     if (url.pathname === "/live/captures") {
       const w = url.searchParams.get("world");
       if (!ENV_WORLDS.ps2.includes(String(w))) return Response.json({ error: "bad_request" }, { status: 400 });
@@ -172,7 +184,7 @@ export class KillMonitor {
       const now = Date.now();
       const u = this.meter.usage(now);
       return Response.json({ v: 1, at: Math.floor(now / 1000), plan: this.planSw.state(now), ...u, today: { ps2: this.meter.today("ps2", now), ps2ps4us: this.meter.today("ps2ps4us", now), ps2ps4eu: this.meter.today("ps2ps4eu", now) },
-        pc: this.pc.status(now), ps: Object.fromEntries(Object.entries(this.ps.status().envs).map(([k, v]) => [k, { connected: v.connected, lastMsgAgoS: v.lastMsgAgoS }])), live: this.live.stats(), caps: this.caps.info() });
+        pc: this.pc.status(now), ps: Object.fromEntries(Object.entries(this.ps.status().envs).map(([k, v]) => [k, { connected: v.connected, lastMsgAgoS: v.lastMsgAgoS }])), live: this.live.stats(), rosters: this.rost.info(), caps: this.caps.info() });
     }
     if (url.pathname === "/ps-assists/status") return Response.json(this.ps.status());
     if (url.pathname === "/ps-assists/export") {
@@ -200,8 +212,10 @@ export const LIVE_CALLS_PER_10MIN = 240;
 
 /**
  * Live map reads, answered from the KillMonitor's memory:
- *   GET /live/activity?ns=ps2&world=1[&zone=2]  → per-base totals, no player ids (public: the
- *       Oracle's ⚔️ Live fights, #78)
+ *   GET /live/activity?ns=ps2&world=1[&zone=2]  → per-base totals (public: the Oracle's ⚔️ Live
+ *       fights, #78) and `top`, the 👥 scoreboard's 3 players per base (owner-approved
+ *       2026-10-30; players on the removal list dropped)
+ *   GET /live/rosters?since=<unix s>[&world=1]  → 👥 stored base rosters. INTERNAL ONLY (proxy key).
  *   GET /live/captures?world=1[&zone=2][&since=<unix s>] → 🏴 recent base captures with the
  *       leading outfit's tag (public; outfit tags only, no player ids)
  *   GET /live/locate?ns=ps2&ids=<cid>,…  (≤ 50) → where each player is now. INTERNAL ONLY:
@@ -223,12 +237,26 @@ export async function liveRoute(request, env, cors, { ip = "", fetchFn = (u, o) 
     else if (++h[0] > LIVE_CALLS_PER_10MIN) return reply({ error: "rate_limited" }, 429);
   }
   const stub = env.KILL_MONITOR.get(env.KILL_MONITOR.idFromName("pilot"));
-  if (url.pathname === "/live/activity" || url.pathname === "/live/captures") {
+  if (url.pathname === "/live/captures") {
     const r = await stub.fetch(new Request(url.toString(), { method: "GET" }));
     return new Response(r.body, { status: r.status, headers: hdr });
   }
+  if (url.pathname === "/live/activity") {
+    // 👥 The scoreboard's player ids: players on the removal list (#61) never leave here.
+    const r = await stub.fetch(new Request(url.toString(), { method: "GET" }));
+    if (!r.ok) return new Response(r.body, { status: r.status, headers: hdr });
+    const j = await r.json();
+    const gone = removed ? await removed(ns, fetchFn) : new Set();
+    const pre = { ps2: "", ps2ps4us: "us-", ps2ps4eu: "eu-" }[ns];
+    for (const b of (j && j.bases) || []) if (b.top) { b.top = b.top.filter((p) => !gone.has(pre + p[0])); if (!b.top.length) delete b.top; }
+    return reply(j);
+  }
   const key = typeof env.CENSUS_PROXY_KEY === "string" ? env.CENSUS_PROXY_KEY : "";
   if (!key || request.headers.get("X-Proxy-Key") !== key) return new Response(JSON.stringify({ error: "forbidden" }), { status: 403, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
+  if (url.pathname === "/live/rosters") {
+    const r = await stub.fetch(new Request(url.toString(), { method: "GET" }));
+    return new Response(r.body, { status: r.status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" } });
+  }
   const ids = [...new Set((url.searchParams.get("ids") || "").split(",").filter((x) => /^\d{5,25}$/.test(x)))].slice(0, LOCATE_MAX);
   if (!ids.length) return reply({ error: "bad_request" }, 400);
   const gone = removed ? await removed(ns, fetchFn) : new Set();

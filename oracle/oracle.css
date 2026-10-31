@@ -416,6 +416,14 @@ footer { color: var(--dim); font-size: var(--fs-12); margin-top: var(--s-5); }
 @media (prefers-reduced-motion: reduce) { .capt.capnew { animation: none; } }
 /* 🚐 Forward spawns (owner 2026-10-30; forward-spawns.mjs): spawn points per side at a base, last 10 min. */
 .fsp { margin-top: 1px; }
+/* 👥 Folded scoreboard under a fight (owner 2026-10-30): top 3 players, kills/deaths · iVi. */
+.fsb { margin-top: 1px; font-size: var(--fs-13, 13px); }
+.fsb > summary { cursor: pointer; color: var(--muted); list-style: none; width: max-content; }
+.fsb > summary::-webkit-details-marker { display: none; }
+.fsb > summary::after { content: " ▸"; color: var(--dim); }
+.fsb[open] > summary::after { content: " ▾"; }
+.fsb > ol { margin: 1px 0 0; padding-left: 1.4em; }
+.fsb > ol > li { margin: 0; overflow-wrap: anywhere; }
 .fspawn { font-size: 0.85em; color: var(--muted); display: inline-block; }
 .fspawn.fspnew { animation: fspIn 0.8s ease-out 1; }
 @keyframes fspIn { 0% { opacity: 0; transform: translateY(-3px); } 100% { opacity: 1; transform: none; } }

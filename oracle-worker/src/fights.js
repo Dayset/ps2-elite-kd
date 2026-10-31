@@ -5,7 +5,8 @@
  * (worker/src/live-map.js). Once a cycle the oracle asks it, through the CACHE service
  * binding, for one world's per-base totals (GET /live/activity?ns=ps2&world=W): a rough
  * crowd per faction at each base (players placed there in the last 5 minutes), kills
- * and point-capture XP. No player id ever comes back.
+ * and point-capture XP. Player ids only in `top` (👥 scoreboard, owner-approved 2026-10-30),
+ * which players.js turns into names + iVi before anything is stored or shown.
  *
  * Shown on the dashboard ("⚔️ Live fights") and stored per minute (table `fight`, kept
  * like the ticks, copied into the alert archive) so the commander can be re-tuned on
@@ -68,6 +69,16 @@ export function spawnsOf(sp) {
   return Object.keys(out).length ? out : null;
 }
 
+/** 👥 Scoreboard players at one base, cleaned: [[cid, fac, kills, deaths]] (≤ 3), or null. */
+export const TOP_N = 3;
+export function topOf(top) {
+  if (!Array.isArray(top)) return null;
+  const cl = (x) => Math.max(0, Math.min(999, Math.round(+x || 0)));
+  const out = top.filter((p) => Array.isArray(p) && /^\d{5,25}$/.test(String(p[0])))
+    .slice(0, TOP_N).map((p) => [String(p[0]), ["VS", "NC", "TR", "NSO"].includes(p[1]) ? p[1] : null, cl(p[2]), cl(p[3])]);
+  return out.length ? out : null;
+}
+
 const pick = (o) => Object.fromEntries(FACS.map((f) => [f, Math.max(0, Math.round(+((o || {})[f]) || 0))]));
 
 /**
@@ -88,6 +99,8 @@ export function fightsOf(act, zone, owners = null) {
     if (owners && owners[row.fid]) row.owner = owners[row.fid];
     const sp = spawnsOf(b.sp);
     if (sp) row.sp = sp; // 🚐 forward spawns (shown only, not in the odds)
+    const top = topOf(b.top);
+    if (top) row.top = top; // 👥 scoreboard ids (players.js names them; shown only, not in the odds)
     bases.push(row);
   }
   const size = (x) => x.n.VS + x.n.NC + x.n.TR;

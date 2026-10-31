@@ -102,7 +102,7 @@ test("PlayStation environments only take their own world", () => {
   assert.ok(LOCATOR_EVENTS.every((e) => subscribeMessage("ps2ps4us").eventNames.includes(e)));
 });
 
-test("activity: crowd per faction in the window, no player ids anywhere", () => {
+test("activity: crowd per faction in the window, player ids only in the 3-player scoreboard", () => {
   const m = new LiveMap();
   const ids = Array.from({ length: 12 }, (_, i) => String(5428000000000001000n + BigInt(i)));
   ids.forEach((id, i) => m.onEvent("ps2", capture(T0, id, "201"), T0));
@@ -114,8 +114,10 @@ test("activity: crowd per faction in the window, no player ids anywhere", () => 
   assert.equal(b.n.NC, 4);
   assert.equal(b.n.TR, 1, "the victim is placed near the base too");
   assert.equal(act.zones[2].n.VS + act.zones[2].n.NC + act.zones[2].n.TR, 13);
-  const txt = JSON.stringify(act);
-  for (const id of [...ids, D]) assert.ok(!txt.includes(id), "no character id in activity");
+  // 👥 Owner-approved exception (2026-10-30): the top 3 by kills per base; no id anywhere else.
+  assert.ok(act.bases.every((x) => !x.top || x.top.length <= 3));
+  const txt = JSON.stringify({ ...act, bases: act.bases.map(({ top, ...x }) => x) });
+  for (const id of [...ids, D]) assert.ok(!txt.includes(id), "no character id outside the scoreboard");
   assert.equal(m.activity("ps2", "1", T0 + WINDOW_MS + 60e3).bases[0]?.n.VS ?? 0, 0, "outside the window");
 });
 

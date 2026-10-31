@@ -24,6 +24,7 @@ import { runCommander, ownership, applyElimination } from "./commander.js";
 import { handleAuth, CHALLENGE_KEEP_S, ensureAuthTables } from "./auth.js";
 import { handleVote, settleStatements } from "./vote.js";
 import { handlePrivacy } from "./privacy.js";
+import { namePlayers } from "./players.js";
 import { cutAwareSnap } from "./cut.js";
 import { focusPlan } from "./focus.js";
 import { mixPlan, underwayCheck } from "./modes.js";
@@ -356,6 +357,7 @@ export async function runCycle(env, nowMs = Date.now()) {
       // ⚔️ Per-base fight totals: shown and stored for the #78 backtest; the odds don't read them.
       const fx = fightsOf(await activityFor(a.world), a.zone, state.owners);
       if (fx) {
+        try { await namePlayers(env, fx.bases); } catch { for (const b of fx.bases) delete b.top; } // 👥 ids → names + iVi
         state.fights = fx.bases;
         state.fights_live = fx.live;
         state.fights_at = fx.at; // ⚔️ snapshot time (s): killAgo / convAgo count back from here

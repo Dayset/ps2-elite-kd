@@ -66,6 +66,30 @@ export function fightGoneAt(f, s) {
 }
 
 /** The card's inner HTML for one live alert state (no card when there is nothing to say). */
+/** 👥 Scoreboards the reader unfolded stay open across the minute refresh (by base name). */
+export const SB_OPEN = new Set();
+if (typeof document !== "undefined" && document.addEventListener) {
+  document.addEventListener("toggle", (e) => {
+    const d = e.target;
+    if (!d || !d.classList || !d.classList.contains("fsb")) return;
+    if (d.open) SB_OPEN.add(d.dataset.sb); else SB_OPEN.delete(d.dataset.sb);
+  }, true);
+}
+
+/** 👥 Folded scoreboard under one fight (owner 2026-10-30): top 3 players by kills there in the last 5 min. */
+export function scoreboard(f, nm) {
+  const top = Array.isArray(f.top) ? f.top.filter((p) => p && typeof p === "object").slice(0, 3) : [];
+  if (!top.length) return "";
+  const li = top.map((p) => {
+    const iv = Number.isFinite(p.i) && p.i > 0 ? String(Math.round(p.i)) : "–";
+    const k = Math.max(0, +p.k || 0), d = Math.max(0, +p.d || 0);
+    const hint = tr("or.f.sbRow", "{k} kills, {d} deaths at this base · iVi {i}", { k, d, i: iv });
+    return `<li title="${esc(hint)}"><span class="${FACS.includes(p.f) ? p.f : ""}">${esc(p.n || "?")}</span> <span class="note">${k}/${d} · ${iv}</span></li>`;
+  }).join("");
+  const tip = tr("or.f.sbTip", "Top 3 players seen at this base in the last 5 min, ranked by kills here (fewer deaths first on a tie). Numbers: kills/deaths · iVi from the site's stats (– when unknown). Rough, from the game's live event stream; not used in the odds.");
+  return `<details class="fsb" data-sb="${esc(nm)}"${SB_OPEN.has(nm) ? " open" : ""}><summary title="${esc(tip)}">${tr("or.f.sb", "👥 Top 3")}</summary><ol>${li}</ol></details>`;
+}
+
 export function fightsCard(s, nowS = Math.floor(Date.now() / 1000)) {
   if (!s || !Array.isArray(s.fights)) return "";
   const list = s.fights.filter((f) => { const g = fightGoneAt(f, s); return g == null || nowS < g; }).slice(0, FIGHTS_SHOWN);
@@ -90,7 +114,7 @@ export function fightsCard(s, nowS = Math.floor(Date.now() / 1000)) {
     const gone = fightGoneAt(f, s);
     return `<li data-base="${esc(nm)}"${gone != null ? ` data-gone="${gone}"` : ""}><div class="fhead"><span class="blink" tabindex="0" role="button" data-base="${esc(nm)}">${esc(nm)}</span>${own}${cap}${flag}</div>` +
       `<div class="track fbar" aria-hidden="true">${seg}</div>${spw}` +
-      `<div class="fnum" title="${esc(tr("or.f.players", "~{n} players", { n: tot }))}">${nums || "·"}<span class="note">${kl}</span></div></li>`;
+      `<div class="fnum" title="${esc(tr("or.f.players", "~{n} players", { n: tot }))}">${nums || "·"}<span class="note">${kl}</span></div>${scoreboard(f, nm)}</li>`;
   }).join("");
   const body = list.length ? `<ul class="fights">${rows}</ul>` : `<div class="note">${s.fights_live === false ? tr("or.f.off", "Live stream reconnecting: fights show up within a minute.") : tr("or.f.none", "No big fights right now.")}</div>`;
   // Owner 2026-10-30: no "Recent captures" list and no footer note here; the note is the heading's hover.

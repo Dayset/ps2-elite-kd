@@ -2,7 +2,7 @@
 import { S, COLOR, HEXFILE, SLUG, FACS, esc, $ } from "./state.js?v=20261018-scrub2";
 import { asset, names } from "./api.js?v=20261018-scrub2";
 import { t as tr } from "../../i18n.mjs";
-import { capLine } from "./fights.js?v=20261030-ft1";
+import { capLine } from "./fights.js?v=20261030-sb1";
 
 // Terrain overlay (owner 2026-10-27): the PlanetSide 2 Wiki (Fandom) terrain image of each
 // continent, drawn above the territory colours and under the borders, lattice, dots and names,

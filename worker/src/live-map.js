@@ -5,7 +5,12 @@
  * since #60). Nothing here is written to storage: after a restart it refills
  * within minutes. Two read paths:
  *   - activity(env, w)  → per-base totals for the Oracle (#78): rough crowd per
- *                         faction, kills, point-capture XP. Never a player id. Public.
+ *                         faction, kills, point-capture XP. Public. One owner-approved
+ *                         exception (2026-10-30, Oracle scoreboard): `top`, the TOP_N
+ *                         players per base by kills there in the window ([cid, fac, k, d]);
+ *                         the main Worker drops players on the removal list (#61).
+ *   - roster(env, w, f) → everyone seen at one base in the window with kills / deaths
+ *                         there. INTERNAL ONLY (rosters.js stores it per capture / defense).
  *   - locate(env, cid)  → one player's continent and base. INTERNAL ONLY (key-protected
  *                         route; owner 2026-10-29: not a public feature, privacy).
  *
@@ -32,6 +37,7 @@ export const ONLINE_MS = 30 * 60e3; // no event for this long → not shown as a
 export const KEEP_MS = 60 * 60e3;   // positions forgotten after this
 export const FAC = Object.freeze({ 1: "VS", 2: "NC", 3: "TR", 4: "NSO" });
 export const POINT_XP = Object.freeze({ 272: "conv", 557: "tick", 556: "dtick" });
+export const TOP_N = 3;             // 👥 scoreboard: players per base in activity()
 export const SPAWN_MS = 10 * 60e3; // 🚐 a spawn point counts this long after its last spawn
 /** 🚐 Spawn XP → kind: su Sunderer, ro Router, be squad beacon, ga Galaxy, sv squad vehicle (Valkyrie or Galaxy), an ANT, de Deliverer. */
 export const SPAWN_XP = Object.freeze({ 233: "su", 1542: "su", 1410: "ro", 56: "be", 201: "ga", 1543: "ga", 355: "sv", 1988: "an", 1737: "de" });
@@ -87,6 +93,9 @@ export class LiveMap {
         const b = this.base(E, w, z, f);
         const tk = fa && fv && fa === fv;
         b.k.push([t, tk ? "tk" : fa || "?"]);
+        // 👥 Per-player kills / deaths at this base (a team kill or a suicide is no kill).
+        if (ra && !tk) this.stat(b, a, fa, t, "k");
+        if (rv) this.stat(b, cid, fv, t, "d");
       }
       return true;
     }
@@ -178,8 +187,33 @@ export class LiveMap {
   base(E, w, z, f) {
     const k = `${w}|${f}`;
     let b = E.bases.get(k);
-    if (!b) { b = { w, z: zoneDef(z), f: String(f), crowd: new Map(), k: [], vk: [], conv: [], tick: [], dtick: [] }; E.bases.set(k, b); }
+    if (!b) { b = { w, z: zoneDef(z), f: String(f), crowd: new Map(), pl: new Map(), k: [], vk: [], conv: [], tick: [], dtick: [] }; E.bases.set(k, b); }
     return b;
+  }
+  stat(b, cid, fac, t, key) {
+    let s = b.pl.get(cid);
+    if (!s) { s = { fac: null, k: [], d: [] }; b.pl.set(cid, s); }
+    if (fac) s.fac = fac;
+    s[key].push(t);
+  }
+  /** 👥 Everyone at one base in the window: [[cid, fac, kills, deaths]], most kills first. */
+  players(b, since) {
+    const m = new Map();
+    for (const [cid, [t, fac]] of b.crowd) if (t >= since) m.set(cid, [cid, fac || null, 0, 0]);
+    for (const [cid, s] of b.pl) {
+      const k = s.k.filter((t) => t >= since).length, d = s.d.filter((t) => t >= since).length;
+      if (!k && !d) continue;
+      const r = m.get(cid) || [cid, null, 0, 0];
+      r[1] = r[1] || s.fac; r[2] = k; r[3] = d;
+      m.set(cid, r);
+    }
+    return [...m.values()].sort((x, y) => y[2] - x[2] || x[3] - y[3] || (x[0] < y[0] ? -1 : 1));
+  }
+  /** 👥 One base's full list (internal only, never on a public page). */
+  roster(env, world, f, now = Date.now()) {
+    const E = this.envs[env];
+    const b = E && E.bases.get(`${world}|${f}`);
+    return b ? this.players(b, now - WINDOW_MS) : [];
   }
   zone(E, w, z) {
     const k = `${w}|${zoneDef(z)}`;
@@ -237,7 +271,7 @@ export class LiveMap {
     return this.spawnIndex(env, world, now).get(String(f)) || null;
   }
 
-  /** Per-base and per-zone totals for one world (no player ids). */
+  /** Per-base and per-zone totals for one world (player ids only in `top`, the 👥 scoreboard). */
   activity(env, world, now = Date.now(), zone = null) {
     const E = this.envs[env];
     const out = { at: Math.floor(now / 1000), window: WINDOW_MS / 1000, zones: {}, bases: [] };
@@ -272,6 +306,8 @@ export class LiveMap {
       const fx = FACILITY[b.f];
       const row = { f: +b.f, fn: fx ? fx[0] : null, z: b.z, n, k, vk, conv, tick, convAgo: last(b.conv.filter(([t]) => t >= since)), killAgo: last(b.k) };
       if (spi.has(String(b.f))) row.sp = spi.get(String(b.f));
+      const top = this.players(b, since).filter((r) => r[2] + r[3] > 0).slice(0, TOP_N);
+      if (top.length) row.top = top;
       out.bases.push(row);
     }
     out.bases.sort((x, y) => (y.n.VS + y.n.NC + y.n.TR + y.n.NSO) - (x.n.VS + x.n.NC + x.n.TR + x.n.NSO) || Object.values(y.k).reduce((s, v) => s + v, 0) - Object.values(x.k).reduce((s, v) => s + v, 0));
@@ -286,6 +322,7 @@ export class LiveMap {
       for (const [k, b] of E.bases) {
         for (const [cid, [t]] of b.crowd) if (t < since) b.crowd.delete(cid);
         for (const key of ["k", "vk", "conv", "tick", "dtick"]) b[key] = b[key].filter(([t]) => t >= since);
+        for (const [cid, s] of b.pl) { s.k = s.k.filter((t) => t >= since); s.d = s.d.filter((t) => t >= since); if (!s.k.length && !s.d.length) b.pl.delete(cid); }
         if (!b.crowd.size && !b.k.length && !b.vk.length && !b.conv.length && !b.tick.length && !b.dtick.length) E.bases.delete(k);
       }
       if (E.spawns) for (const [k, s] of E.spawns) if (now - Math.max(s.t, s.lost || 0) > SPAWN_MS) E.spawns.delete(k);
