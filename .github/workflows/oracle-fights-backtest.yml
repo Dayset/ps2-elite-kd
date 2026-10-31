@@ -1,0 +1,46 @@
+name: Oracle fights backtest
+
+# #87 (#78 steps 2-3): do live per-base crowds, the capture-point signal and the players'
+# skill make the odds and the commander better? oracle-worker/history/fights-backtest.mjs
+# replays every archived alert that carries per-minute fights rows. Read-only on the
+# Workers; results as notices and in oracle/backend/fights_backtest.json (aggregates only:
+# no player ids or names). The odds and the commander do not read fights until this passes.
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: "Commit the report (true/false)"
+        default: "true"
+  schedule:
+    - cron: "43 7 * * 1"   # weekly, Monday 07:43 UTC (the data grows every day)
+
+permissions:
+  contents: write
+
+concurrency:
+  group: oracle-fights-backtest
+  cancel-in-progress: false
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Backtest
+        env:
+          ORACLE_API: ${{ vars.ORACLE_API || 'https://ps2-oracle.dayset.workers.dev' }}
+          CENSUS_PROXY_KEY: ${{ secrets.CENSUS_PROXY_KEY }}
+        run: node oracle-worker/history/fights-backtest.mjs --out oracle/backend/fights_backtest.json
+      - name: Commit report
+        if: github.event_name == 'schedule' || inputs.commit == 'true'
+        run: |
+          if [ -z "$(git status --porcelain oracle/backend/fights_backtest.json)" ]; then echo "::notice::no report change"; exit 0; fi
+          git config user.name "oracle-history[bot]"; git config user.email "oracle-history@users.noreply.github.com"
+          git add oracle/backend/fights_backtest.json
+          git commit -m "oracle: fights backtest report (#87) [bot]"
+          for i in 1 2 3; do git pull --rebase origin main && git push origin HEAD:main && break; sleep 5; done
