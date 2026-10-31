@@ -29,9 +29,9 @@ const sub0row = ranks.rows.find((r) => { const a = r[ci("adjs")]; return typeof 
 const SUB0 = { cid: "5428000000000000200", name: sub0row[ci("name")] };
 const adjsOf = (name) => ranks.rows.find((r) => r[ci("name")] === name)[ci("adjs")];
 const ME_ADJS = adjsOf(ME.name);
-// Owner 2026-10-28: opponent cells show tier + raw number in one cell (cellText floors sub-0 at 0, like the centre row).
+// Owner 2026-10-30: opponent cells show the raw number only (cellText floors sub-0 at 0, like the centre row).
 const IVI_COL = LIVE_COLS.find((c) => c.mode === "ivi");
-const tierCellText = (oppAdjs) => { const t = tierLabel(ME_ADJS, oppAdjs); return t === "?" ? "?" : `${t} ${cellText(IVI_COL, oppAdjs)}`; };
+const tierCellText = (oppAdjs) => { const t = tierLabel(ME_ADJS, oppAdjs); return t === "?" ? "?" : cellText(IVI_COL, oppAdjs); };
 const TEAM = { cid: "5428000000000000999", name: "TeamMate" }; // same faction as ME (stub returns "1" for it)
 const SLOW = { cid: "5428000000000000777", name: "Slowpoke" }; // #76: its Census lookup takes 1.5 s
 // #80: data/cid-names.json is stubbed. MAPPED = a cached player the map knows with faction: zero Census calls (its Census
@@ -377,11 +377,11 @@ describe("🎥 live.html in a browser", () => {
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[1].cid, "80", false)})`);
       assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)").length === 2`)), true, "two victim rows on screen");
-      // Owner 2026-10-28: opponent rows show tier + raw iVi in one
-      // cell — rows are newest-first, so [0] is OPP[1], [1] is OPP[0].
-      assert.equal(await ev(until(`![...document.querySelectorAll("#liveList tbody.lv-vic .lv-iv")].some((e) => e.textContent === "?")`)), true, "victim tiers filled (ranks loaded)");
+      // Owner 2026-10-30: opponent rows show the raw iVi number in
+      // one cell — rows are newest-first, so [0] is OPP[1], [1] is OPP[0].
+      assert.equal(await ev(until(`![...document.querySelectorAll("#liveList tbody.lv-vic .lv-iv")].some((e) => e.textContent === "?")`)), true, "victim iVi filled (ranks loaded)");
       const cells = await ev(`[...document.querySelectorAll("#liveList tbody.lv-vic .lv-iv")].map((e) => e.textContent)`);
-      assert.deepEqual(cells, [tierCellText(adjsOf(OPP[1].name)), tierCellText(adjsOf(OPP[0].name))], `both victims show tier + number: ${cells}`);
+      assert.deepEqual(cells, [tierCellText(adjsOf(OPP[1].name)), tierCellText(adjsOf(OPP[0].name))], `both victims show number only: ${cells}`);
       // The pot still boosts the RAW adjs, so the average comes from the
       // fixture values, not the displayed ratios. The main pot shows only
       // the average now (owner 2026-10-26) — the Σ total is hidden from
@@ -501,13 +501,13 @@ describe("🎥 live.html in a browser", () => {
     await withLive(async ({ ev, errors }) => {
       assert.equal(await ev(until("window.__fakeWs && window.__fakeWs.readyState === 1")), true, "stream connected");
       await ev(`window.__fakeWs.emit(${death(ME.cid, SUB0.cid, "80", false)})`);
-      assert.equal(await ev(until(`document.querySelector("#liveList tbody.lv-vic .lv-iv") && document.querySelector("#liveList tbody.lv-vic .lv-iv").textContent === "0 0"`)), true, "the feed already floors their shown iVi at 0");
+      assert.equal(await ev(until(`document.querySelector("#liveList tbody.lv-vic .lv-iv") && document.querySelector("#liveList tbody.lv-vic .lv-iv").textContent === "0"`)), true, "the feed already floors their shown iVi at 0");
       assert.equal(await ev(until(`document.getElementById("liveCashAvgVal").textContent === "0.0"`)), true, "a known 0 payout counts in the average (floored, never negative)");
       await ev(`window.__fakeWs.emit(${death(ME.cid, OPP[0].cid, "80", false)})`);
       assert.equal(await ev(until(`document.querySelectorAll("#liveList tbody.lv-vic:not(.lv-empty)").length === 2`)), true, "two victims on screen");
-      // Owner 2026-10-28: rows show tier + number now — newest is
-      // OPP[0]'s cell, the sub-0 victim reads "0 0" (tier 0, number
-      // floored at 0, never divided, never negative).
+      // Owner 2026-10-30: rows show the number only now — newest is
+      // OPP[0]'s cell, the sub-0 victim reads "0" (number floored
+      // at 0, never negative).
       const cells = await ev(`[...document.querySelectorAll("#liveList tbody.lv-vic .lv-iv")].map((e) => e.textContent)`);
       assert.deepEqual(cells, [tierCellText(adjsOf(OPP[0].name)), tierCellText(adjsOf(SUB0.name))], `newest victim cell, sub-0 victim floored: ${cells}`);
       const bp = Math.round(Math.max(0, adjsOf(OPP[0].name)) * 1.34);

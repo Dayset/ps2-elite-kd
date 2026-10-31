@@ -1131,10 +1131,11 @@ test("live feed centre name (owner 2026-10-28): seeded from ?names=, upgraded by
   assert.match(js, /me = \{ cid: String\(ch\.character_id\), name: ch\.name\.first, faction: FACTION\[ch\.faction_id\] \|\| "", cached: null, named: true \};\n      render\(\);/);
 });
 
-test("live feed tier cells (owner 2026-10-28): tier + raw number in one cell", () => {
+test("live feed tier cells (owner 2026-10-30): number only, no tier sign", () => {
   const js = liveSrc();
   assert.match(js, /function tierCell\(c, oppAdjs\)/);
-  assert.match(js, /const num = label === "\?" \? "" : ` \$\{cellText\(c, oppAdjs\)\}`;/);
+  assert.match(js, /const num = label === "\?" \? "\?" : cellText\(c, oppAdjs\);/);
+  assert.doesNotMatch(js, /\$\{label\}\$\{num\}/);
   assert.match(js, /IVI\.map\(\(c\) => `<td class="lv-ivc">\$\{tierCell\(c, vals\[c\.id\]\)\}<\/td>`\)/);
 });
 

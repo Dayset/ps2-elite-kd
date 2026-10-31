@@ -276,11 +276,11 @@ function start() {
     if (fillOf(c, v) == null) return `<span class="lv-iv lv-nil" data-tip="${esc(tipText(c, null))}">0000</span>`;
     return `<span class="lv-iv" data-tip="${esc(tipText(c, v))}">${cellText(c, v)}</span>`;
   }
-  /** Owner 2026-10-28 (live iVi tiers): the opponent's iVi cell — the
-   *  tier against the tracked player (tierLabel) plus the raw number,
-   *  in one cell (owner 2026-10-28: the tier is a very small addition
-   *  to the iVi, not its own column). Tooltip says what the tier
-   *  means. Unknown = "?", dimmed, no number. */
+  /** Owner 2026-10-30 (live iVi tiers removed): the opponent's iVi cell
+   *  shows the raw number only — the tier sign (--, -, ≈, +, ++) in
+   *  front of it is gone. The tier still drives the hover tooltip
+   *  (what the ratio means) and the spoken voice line. Unknown = "?",
+   *  dimmed, no number. */
   function tierCell(c, oppAdjs) {
     const label = tierLabel(me && me.cached ? me.cached.adjs : null, oppAdjs);
     const tip = label === "?" ? tr("live.ratioUnknown", "Opponent iVi unknown")
@@ -291,8 +291,8 @@ function start() {
       : label === "+" ? tr("live.tierStronger", "Stronger than you")
       : tr("live.tierMuchStronger", "Much stronger than you");
     const cls = label === "?" ? "lv-iv lv-nil" : "lv-iv";
-    const num = label === "?" ? "" : ` ${cellText(c, oppAdjs)}`;
-    return `<span class="${cls}" data-tip="${esc(tip)}">${label}${num}</span>`;
+    const num = label === "?" ? "?" : cellText(c, oppAdjs);
+    return `<span class="${cls}" data-tip="${esc(tip)}">${num}</span>`;
   }
   /** Name (faction colour) + 💩; a long name is cut with … at the end. Uncached: Census K/D · KPM in the hover. */
   function nameHtml(p, tip, hs = "") {
