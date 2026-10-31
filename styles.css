@@ -2376,7 +2376,7 @@ html[data-theme="light"] .rk-filter-row input#ranksSearch { color-scheme: light;
    * browser still measures cell content in fixed layout.) */
   table-layout: fixed;
 }
-/* Owner 2026-10-31: rankings numbers centered (trial — compare vs right-aligned, keep-or-revert pending). */
+/* Owner 2026-10-31: rankings numbers centered (kept after comparison; centered everywhere now). */
 .ranks-table th, .ranks-table td {
   padding: 0.28rem 0.35rem;
   border-bottom: 1px solid var(--row-border);
@@ -2930,10 +2930,11 @@ html[data-theme="light"] .dist-pill:hover { opacity: 1; }
 /* One table look for both modes. */
 .stats-carousel .stats-table,
 .stats-carousel .rk-pos-table { width: max-content; min-width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+/* Owner 2026-10-31: centered everywhere (was PC-only center, phones right). */
 .stats-carousel .stats-table th,
 .stats-carousel .stats-table td,
 .stats-carousel .rk-pos-table th,
-.stats-carousel .rk-pos-table td { padding: 0.34rem 0.42rem; border-bottom: 1px solid var(--row-border); white-space: nowrap; text-align: right; background: transparent; }
+.stats-carousel .rk-pos-table td { padding: 0.34rem 0.42rem; border-bottom: 1px solid var(--row-border); white-space: nowrap; text-align: center; background: transparent; }
 .stats-carousel .stats-table[data-stats-table="adjusted"] td:not(.stats-name) { text-indent: 0; }
 .stats-carousel .stats-table thead th,
 .stats-carousel .rk-pos-table thead th { color: var(--text); font-weight: 600; border-bottom-color: var(--border); }
