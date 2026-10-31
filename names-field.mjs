@@ -8,6 +8,8 @@ import { slugKey, namesEqualIgnoreCase, bareName, parseNames } from "./app-util.
 import { forgetFailures } from "./analyze-run.mjs?v=20261030-cxl1";
 import { isPenalizedPadder } from "./padding.mjs?v=20261023-short1";
 import { createOutfitTags, extractOutfitTags } from "./outfit-tags.mjs?v=20261030-of2";
+import { extractFactionAliases } from "./faction-rating.mjs?v=20261031-fr1";
+import { addFactionPlayers } from "./faction-panel.mjs?v=20261031-fr1";
 
 /**
  * $ = app.js state and functions this part uses, as live getters (and setters for state it changes), so app.js
@@ -490,7 +492,9 @@ export function createNamesField($) {
     if (!$.els.namesInput) return { tokens: [], rejected: [], outfits: null };
     // t765u: a tag on its own ("[WARP]") is an outfit: its members are added as chips (outfit-tags.mjs).
     const { aliases, rest } = extractOutfitTags($.els.namesInput.value);
-    const raw = aliases.length ? rest : $.els.namesInput.value;
+    // t795u: "NC", "TR", "VS", "NS" (any case, a word on its own) = that faction's top players (faction-rating.mjs).
+    const fa = $.LIVE_MODE ? { factions: [], rest: aliases.length ? rest : $.els.namesInput.value } : extractFactionAliases(aliases.length ? rest : $.els.namesInput.value);
+    const raw = fa.rest;
     const tokens = parseNames(raw);
     const rejected = [];
     for (const t of tokens) if (!addNameToField(t)) rejected.push(t);
@@ -498,7 +502,21 @@ export function createNamesField($) {
     if (rejected.length) showLimitHint();
     syncNamesPlaceholder();
     const outfits = aliases.length && !$.LIVE_MODE ? outfitPart().expand(aliases).then((r) => { if (r.some((x) => x && x.added)) sfx("plink"); return r; }) : null;
-    return { tokens, rejected, outfits };
+    const factions = fa.factions.length && !$.LIVE_MODE ? addFactions(fa.factions) : null;
+    // Analyze / Enter wait on `outfits` (analyze.mjs): it covers the faction alias too.
+    const pending = outfits && factions ? Promise.all([outfits, factions]) : outfits || factions;
+    return { tokens, rejected, outfits: pending, factions };
+  }
+
+  /** t795u: add the top players of these factions ("nc" / "tr" / "vs" / "nso") like an outfit tag (same cap). */
+  function addFactions(list) {
+    return addFactionPlayers(list, {
+      addNameToField,
+      outfitRoom: () => $.outfitRoom(),
+      note: (html, cls) => outfitPart().note(html, cls),
+      isPs: !!$.IS_PS,
+      show: (f) => { if ($.factionShow) $.factionShow(f); },
+    }).then((r) => { if (r.some((x) => x && x.added)) sfx("plink"); return r; });
   }
 
   let _outfit = null;
@@ -522,7 +540,7 @@ export function createNamesField($) {
    */
   function currentNamesInField() {
     const out = $.nameTokens.slice();
-    const frag = $.els.namesInput ? extractOutfitTags(String($.els.namesInput.value || "")).rest : ""; // t765u: an outfit tag is not a name
+    const frag = $.els.namesInput ? extractFactionAliases(extractOutfitTags(String($.els.namesInput.value || "")).rest).rest : ""; // t765u: an outfit tag is not a name
     if (frag) {
       for (const t of parseNames(frag)) {
         if (!out.some((n) => namesEqualIgnoreCase(n, t))) out.push(t);
@@ -530,5 +548,5 @@ export function createNamesField($) {
     }
     return out.slice(0, $.nameLimit());
   }
-  return { getNameFailure, isNameFetched, setNameTokens, clearNameFailures, addNameToField, namesMatch, rollDice, toggleNameInField, removeNameToken, syncNamesPlaceholder, showLimitNote, hideLimitNote, syncLimitLock, lockedClick, renderNameTokens, makeFailedToken, retryFailedName, commitFragment, currentNamesInField, clearNamesFromInput, showLimitHint, hideLimitToast, showLimitToast, clearLimitHint };
+  return { addFactions, getNameFailure, isNameFetched, setNameTokens, clearNameFailures, addNameToField, namesMatch, rollDice, toggleNameInField, removeNameToken, syncNamesPlaceholder, showLimitNote, hideLimitNote, syncLimitLock, lockedClick, renderNameTokens, makeFailedToken, retryFailedName, commitFragment, currentNamesInField, clearNamesFromInput, showLimitHint, hideLimitToast, showLimitToast, clearLimitHint };
 }

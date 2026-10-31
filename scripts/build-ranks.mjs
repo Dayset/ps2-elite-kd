@@ -39,6 +39,7 @@ import { vehDiffStart, vehDiffFactor, vehDiffCleared } from "../diff-vehicle.mjs
 import { percentileOf } from "../dist.mjs";
 import { forensicsSummary, honuSessionUrl } from "../session-forensics.mjs";
 import { hiddenList, isConfirmedCheater } from "../hidden.mjs";
+import { factionOf, buildFactionRating } from "../faction-rating.mjs";
 import { cleanTimes, flairsFor } from "../flairs.mjs";
 import { sessionMetrics, sessionFlag, sessionRuleText, distribution, SESSION_METRICS, SESSION_METRIC_IDS, SESSION_MIN, SESSION_RULE, ASSIST_GAP } from "../session-stats.mjs";
 
@@ -393,6 +394,8 @@ export function buildRanksWithGuard(dataDir, { known = KNOWN_EXTREMES, zergCharg
   const tracS = new Map(); // 🚜 name mark: slug → { rep, vk } per minute (data/xp, 2+ h; owner t622u)
   const tracIds = readTracIds(dataDir);
   const playMin = new Map(); // 🛖 experience: estimated lifetime play minutes by slug (owner t508u)
+  const factionBy = new Map(); // 🏳️ faction by slug (player file "faction" or data/faction-backfill.json; t795u)
+  const facBackfill = readFactionBackfill(dataDir);
   const forensics = readForensics(dataDir);
   const farmFound = [];
   const ranks = buildRanks(dataDir, {
@@ -409,6 +412,7 @@ export function buildRanksWithGuard(dataDir, { known = KNOWN_EXTREMES, zergCharg
       // 🧪 Honu session metrics (assists pass + data/xp detail); only measured players count.
       const pl = raw.player || raw;
       playMin.set(row[2], playMinutes(pl.infantry && pl.infantry.kills, pl.global_kpm));
+      factionBy.set(row[2], factionOf(pl, facBackfill));
       const xpd = readXp(dataDir, row[2]);
       const sm = sessionMetrics({ assists: pl.assists, xp: xpd });
       const rs = crowdSample(xpd); // 🪳 crowd check (zerg-revive.mjs): null below the sample minimum
@@ -469,7 +473,31 @@ export function buildRanksWithGuard(dataDir, { known = KNOWN_EXTREMES, zergCharg
     newbieDiff,
     assistGroups: assistGroups(players), // 🤝 groups stay build-log only (the 🤝 apk column itself is public since t382u)
     assistGap: assistGapStatus(players),
+    factions: factionRatingOf(ranks, { factionBy, playMin, padders: confirmed, famOf: readFamilyIndex(dataDir) }),
   };
+}
+
+/** data/faction-backfill.json → { cid: "vs" | "nc" | "tr" | "nso" } (Census, for player files saved before #80). */
+export function readFactionBackfill(dataDir) {
+  try { return JSON.parse(fs.readFileSync(path.join(dataDir, "faction-backfill.json"), "utf8")).factions || {}; } catch { return {}; }
+}
+
+/** slug → alt-family key (the site's alt groups, same as ⛑️: alt-families.json, alts.json, heavysupport families). */
+function readFamilyIndex(dataDir) {
+  const rd = (f) => { try { return JSON.parse(fs.readFileSync(path.join(dataDir, f), "utf8")); } catch { return null; } };
+  return familyIndex({ altFamilies: rd("alt-families.json"), alts: rd("alts.json"), extra: (rd("heavysupport.json") || {}).families });
+}
+
+/** 🏳️ Faction rating (faction-rating.mjs) over the final ranks rows (⚔️ iVi after every adjustment). */
+export function factionRatingOf(ranks, { factionBy = new Map(), playMin = new Map(), padders = new Set(), famOf = {}, now = Date.now() } = {}) {
+  const ix = Object.fromEntries(ranks.cols.map((c, i) => [c, i]));
+  const g = (r, k) => (ix[k] != null ? r[ix[k]] : null);
+  const players = ranks.rows.map((r) => {
+    const slug = g(r, "slug");
+    const m = playMin.get(slug);
+    return { slug, name: g(r, "name"), faction: factionBy.get(slug) || null, adjs: g(r, "adjs"), kd: g(r, "kd"), kpm: g(r, "kpm"), playH: Number.isFinite(m) ? m / 60 : null, last: g(r, "last"), thin: !!g(r, "thin"), padder: padders.has(slug) };
+  });
+  return buildFactionRating(players, famOf, { now });
 }
 
 /**
@@ -1159,6 +1187,7 @@ export function buildCidNames(dataDir) {
     if (!/^\d{5,25}$/.test(id) || !nm || out.has(id) || removed.match({ cid: id, name: nm })) return;
     out.set(id, CID_NAME_FACTIONS.has(faction) ? [nm, faction] : nm);
   };
+  const facBackfill = readFactionBackfill(dataDir); // t795u: Census faction for files saved before #80
   const index = JSON.parse(fs.readFileSync(path.join(dataDir, "index.json"), "utf8"));
   const seen = new Set();
   for (const e of index.players || []) {
@@ -1167,7 +1196,7 @@ export function buildCidNames(dataDir) {
     let raw;
     try { raw = JSON.parse(fs.readFileSync(path.join(dataDir, e.file), "utf8")); } catch { continue; }
     const pl = (raw && (raw.player || raw)) || {};
-    add(pl.cid, pl.display || e.name, pl.faction);
+    add(pl.cid, pl.display || e.name, factionOf(pl, facBackfill));
   }
   try {
     const d = JSON.parse(fs.readFileSync(path.join(dataDir, "discovery.json"), "utf8"));
@@ -1321,7 +1350,7 @@ if (isMain) {
     const marathonHidden = autoHideMarathonRampage(dataDir);
     if (marathonHidden.length) console.log(`auto-hide: ${marathonHidden.length} marathon rampage account(s) added to hidden.json: ${marathonHidden.map((a) => a.name).join(", ")}`);
   }
-  const { ranks: out, guard, hidden: hiddenInfo, bins, session, forensics: forensicsInfo, review, assistGroups: assistInfo, padderPenalty: padderInfo, vehicleCut: vehCutInfo, hut: hutInfo, vehDiff: vehDiffInfo, zergRevive: zrevInfo, tractor: tracInfo, newbieDiff: nbdInfo, assistGap: gapInfo } = buildRanksWithGuard(dataDir, room === "ps" ? { known: {}, zergCharge: false } : undefined);
+  const { ranks: out, guard, hidden: hiddenInfo, bins, session, forensics: forensicsInfo, review, assistGroups: assistInfo, padderPenalty: padderInfo, vehicleCut: vehCutInfo, hut: hutInfo, vehDiff: vehDiffInfo, zergRevive: zrevInfo, tractor: tracInfo, newbieDiff: nbdInfo, assistGap: gapInfo, factions: facInfo } = buildRanksWithGuard(dataDir, room === "ps" ? { known: {}, zergCharge: false } : undefined);
   if (room === "ps") addServerColumn(out, JSON.parse(fs.readFileSync(path.join(dataDir, "index.json"), "utf8")));
   fs.writeFileSync(path.join(dataDir, "ranks.json"), JSON.stringify(out) + "\n");
   try {
@@ -1337,6 +1366,11 @@ if (isMain) {
       fs.writeFileSync(path.join(dataDir, "cid-names.json"), JSON.stringify(cidNames) + "\n");
       console.log(`cid-names.json: ${Object.keys(cidNames).length} names (🎥 live victims)`);
     } catch (e) { console.log(`cid-names.json not written: ${e.message}`); }
+    // 🏳️ Faction rating (t795u): main-page section + the NC / TR / VS / NS name-box alias.
+    if (facInfo) {
+      fs.writeFileSync(path.join(dataDir, "factions.json"), JSON.stringify({ updatedAt: out.updatedAt, ...facInfo }) + "\n");
+      console.log(`factions.json: ${facInfo.rated} rated players, ${facInfo.families.n} alt families on 2+ factions (${facInfo.families.alts} alts)`);
+    }
   }
   console.log(`ranks.json: ${out.count} players (${hiddenInfo.count} on the 🙈 hide list)`);
   // 🧪 Outlier guard → data/status.json (build-log.html). Other status fields are kept.

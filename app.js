@@ -38,7 +38,8 @@ import { formatClock, fmtNum, slugKey, bareName, parseNames, namesEqualIgnoreCas
 import { createAnalyze } from "./analyze.mjs?v=20261030-cxl1";
 import { createShareAdd } from "./share-add.mjs?v=20261027-z79";
 import { createSharedIndex } from "./shared-index.mjs?v=20261030-flat1";
-import { createNamesField } from "./names-field.mjs?v=20261030-of2";
+import { createNamesField } from "./names-field.mjs?v=20261031-fr1";
+import { initFactionPanel } from "./faction-panel.mjs?v=20261031-fr1";
 import { createOutfitRoster, canTakeName as canTakeNameRule, OUTFIT_MAX_NAMES } from "./outfit-tags.mjs?v=20261030-of2";
 import { createStatsTable } from "./stats-table.mjs?v=20261030-hs1";
 import { createChartWave } from "./chart-wave.mjs?v=20261029-puregraph1";
@@ -642,6 +643,8 @@ import {
       get limitLockReady() { return limitLockReady; },
       get limitNoteFaded() { return limitNoteFaded; }, set limitNoteFaded(v) { limitNoteFaded = v; },
       get LIVE_MODE() { return LIVE_MODE; },
+      get IS_PS() { return IS_PS; },
+      factionShow: (f) => { if (factionPanel) factionPanel.show(f); },
       get loadRankVals() { return loadRankVals; },
       get MAX_NAMES() { return MAX_NAMES; },
       get nameLimit() { return nameLimit; },
@@ -678,6 +681,8 @@ import {
   function lockedClick(...a) { return namesPart().lockedClick(...a); }
   function renderNameTokens(...a) { return namesPart().renderNameTokens(...a); }
   function commitFragment(...a) { return namesPart().commitFragment(...a); }
+  // 🏳️ Faction rating section (t795u): fills on first open; its "Top 50" buttons work like the NC / TR / VS / NS alias.
+  var factionPanel = LIVE_MODE ? null : initFactionPanel({ isPs: IS_PS, addFactions: (list) => namesPart().addFactions(list) });
   function currentNamesInField(...a) { return namesPart().currentNamesInField(...a); }
   function clearNamesFromInput(...a) { return namesPart().clearNamesFromInput(...a); }
   function showLimitHint(...a) { return namesPart().showLimitHint(...a); }

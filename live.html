@@ -77,7 +77,7 @@
       });
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261030-flat1" />
+  <link rel="stylesheet" href="styles.css?v=20261031-fr1" />
   <link rel="stylesheet" href="live.css?v=20261030-launch1" />
   <style>
     /* Installed-app launch splash (t465u). Android draws its own launch splash first:
@@ -609,6 +609,11 @@
       </table>
     </div>
     </details>
+    <!-- t795u: 🏳️ faction rating (data/factions.json from build-ranks); faction-panel.mjs fills it on first open. PC only. -->
+    <details id="factionSection" class="dist-section fr-section">
+      <summary><span data-i18n="fr.title">🏳️ Factions: NC · TR · VS · NS</span> <span id="factionUpdated" class="rk-table-count"></span></summary>
+      <div id="factionBody" class="fr-body"><p class="fr-note" data-i18n="fr.loading">Loading…</p></div>
+    </details>
   </section>
 
   <footer>
@@ -661,7 +666,7 @@
   </footer>
 
   <script type="module" src="i18n.mjs"></script>
-  <script type="module" src="app.js?v=20261030-flat1"></script>
+  <script type="module" src="app.js?v=20261031-fr1"></script>
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").catch(function () {});
