@@ -76,6 +76,23 @@ export function alertName(key) {
 const signed = (x) => `${x > 0 ? "+" : x < 0 ? "−" : ""}${pts(Math.abs(x))}`;
 const STATUS = { won: tr("or.v.right", "right"), lost: tr("or.v.wrong", "wrong"), void: tr("or.v.back", "given back") };
 
+/** Marker for a history row: the signed-in player's votes on that alert ("" when none). */
+export function myVoteMark(votes, key) {
+  const mine = (votes || []).filter((v) => v.key === key);
+  if (!mine.length) return "";
+  const one = (v) => `<span class="myvote"><span class="${esc(v.outcome)}">${esc(v.outcome)}</span> ${esc(STATUS[v.status] || v.status)}</span>`;
+  return `🗳️ ${mine.map(one).join(" ")}`;
+}
+
+/** Tell the dashboard (history rows) the signed-in player's votes changed. Fires only on change, so the 30 s refresh doesn't re-render history for nothing. */
+let lastVotesJson = null;
+function emitVotes() {
+  const j = JSON.stringify(wallet && wallet.votes ? wallet.votes : null);
+  if (j === lastVotesJson) return;
+  lastVotesJson = j;
+  if (typeof dispatchEvent !== "undefined") dispatchEvent(new CustomEvent("oracle:votes", { detail: wallet }));
+}
+
 /**
  * Every vote of the signed-in player (newest first, up to 50 from /vote/me): when it was
  * placed (local time) and how far into the alert, the alert, the faction, what was put in,
@@ -118,8 +135,8 @@ async function refresh() {
   if (!slot()) return;
   lastRefresh = Date.now();
   if (!alert || alert.status !== "live") {
-    if (!me) { slot().innerHTML = voteIdleHtml(); return; }
-    try { wallet = await fetchMyVotes(); } catch { wallet = null; }
+    if (!me) { wallet = null; emitVotes(); slot().innerHTML = voteIdleHtml(); return; }
+    try { wallet = await fetchMyVotes(); emitVotes(); } catch { wallet = null; }
     if (alert && alert.status === "live") return;   // switched while loading
     slot().innerHTML = myVotesHtml(wallet);
     return;
@@ -128,6 +145,7 @@ async function refresh() {
     const [q, w] = await Promise.all([call(`/vote/quote?key=${encodeURIComponent(alert.key)}`), me ? call("/vote/me") : Promise.resolve(null)]);
     quotes = q.body;
     wallet = w && w.status === 200 ? w.body : null;
+    emitVotes();
   } catch { quotes = null; }
   render();
 }

@@ -3,6 +3,11 @@ import { S, FACS, esc, $, when, info, wide } from "./state.js?v=20261018-scrub2"
 import { get } from "./api.js?v=20261018-scrub2";
 import { t as tr } from "../../i18n.mjs";
 import { renderSkillFoot } from "./skill-foot.js?v=20261101-alertskill1";
+import { myVoteMark } from "./vote.js?v=20261101-votejoin1";
+
+// The signed-in player's votes, from vote.js ("oracle:votes" event): history rows mark them, signed-out sees nothing.
+let myVotes = null;
+if (typeof addEventListener !== "undefined") addEventListener("oracle:votes", (e) => { myVotes = e.detail && e.detail.votes ? e.detail.votes : null; renderHist(); });
 
 // Benchmark slices recorded for one alert, with Brier once it settled.
 export function benchPanel(a) {
@@ -34,7 +39,7 @@ export function renderHist() {
   const list = S.histAll ? S.histRows : S.histRows.slice(0, HIST_MAX);
   const rows = list.map((a) => `<tr data-k="${esc(a.key)}" tabindex="0" role="button" aria-label="${tr("or.openAlert", "Open {a} alert", { a: `${esc(a.world_name)} ${esc(a.zone_name)}` })}"><td class="hend">${a.end_ts ? when(a.end_ts) : "—"}</td><td class="hsrv">${esc(a.world_name)}</td><td class="hzone">${esc(a.zone_name)}${a.kind === "meltdown" ? `<span class="melt">${tr("or.meltdown", "Meltdown")}</span>` : ""}</td>
       <td class="num hlen">${a.dur ? tr("or.nMin", "{n} min", { n: esc(a.dur) }) : "—"}</td>
-      <td class="hwin">${a.winner ? `<b class="${a.winner}">${a.winner}</b>` : (a.status === "interrupted" ? `<span title="${esc(tr("or.int", "Server went down mid-alert. No winner, votes refunded."))}">${esc(tr("or.badge.interrupted", "interrupted"))}</span>` : esc(a.status === "unresolved" ? tr("or.badge.unresolved", "unresolved") : a.status))}</td>
+      <td class="hwin">${a.winner ? `<b class="${a.winner}">${a.winner}</b>` : (a.status === "interrupted" ? `<span title="${esc(tr("or.int", "Server went down mid-alert. No winner, votes refunded."))}">${esc(tr("or.badge.interrupted", "interrupted"))}</span>` : esc(a.status === "unresolved" ? tr("or.badge.unresolved", "unresolved") : a.status))}${myVoteMark(myVotes, a.key)}</td>
       <td class="num hfin">${a.final ? FACS.map((f) => (+a.final[f]).toFixed(1)).join(" / ") : "—"}</td>
       <td class="hbas">${a.basis === "sudden_death" ? tr("or.st.sd", "sudden death") : a.basis === "snapshot" ? tr("or.basisSnap", "map snapshot") : a.basis ? tr("or.basisFinal", "Census final") : ""}</td>
       <td class="flag">${a.report && a.report.flagged ? `${a.report.confirmed ? `☠️${a.report.confirmed} ` : ""}${a.report.flagged - a.report.confirmed ? `⚠️${a.report.flagged - a.report.confirmed} ` : ""}` : ""}${(a.flags || []).map((f) => esc(f.replace(/_/g, " "))).join(", ")}</td></tr>`);
