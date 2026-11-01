@@ -5,7 +5,7 @@
 import { t as tr } from "./i18n.mjs";
 import { slugKey, namesEqualIgnoreCase, namesSetKey, isAbortError, makeAbortError, escapeHtml } from "./app-util.mjs?v=20261027-z79";
 import { recentGesture, sfx } from "./sfx.mjs?v=20261026-sfx2";
-import { shouldShowGraphReady, loadEach, summarizeFailures, cancelledSkips } from "./analyze-run.mjs?v=20261030-cxl1";
+import { shouldShowGraphReady, loadEach, summarizeFailures, cancelledSkips, createPauseGate, requestWakeLock, releaseWakeLock } from "./analyze-run.mjs?v=20261101-bg1";
 import { mountNameSuggest } from "./name-suggest.mjs?v=20261024-br1";
 
 /**
@@ -51,6 +51,37 @@ export function createAnalyze($) {
   function findLoadedPlayer(name) {
     const slug = slugKey(name);
     return $.players.find((p) => slugKey(p.display) === slug || namesEqualIgnoreCase(p.display, name));
+  }
+
+  /* Background-tab pause + wake-lock (full stack): one gate for the tab (one run at a time). While hidden,
+   * loadEach waits before the next name; the screen lock is best-effort (sleep only, auto-releases on hide)
+   * and is re-requested on visible / on the next tap (a tap grants activation, visibilitychange alone may not). */
+  const pauseGate = createPauseGate();
+  async function ensureWakeLock(run) {
+    if (!run || run.wakeLock) return run ? run.wakeLock : null;
+    if (run.wakeAttempting) return null;
+    run.wakeAttempting = true;
+    try {
+      const nav = typeof navigator !== "undefined" ? navigator : undefined;
+      run.wakeLock = await requestWakeLock(nav);
+    } finally {
+      run.wakeAttempting = false;
+    }
+    return run.wakeLock || null;
+  }
+  if (typeof document !== "undefined" && document.addEventListener) {
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) pauseGate.pause();
+      else {
+        pauseGate.resume();
+        const run = $.activeRun;
+        if (run && run.wakeLockAttempted) ensureWakeLock(run);
+      }
+    });
+    document.addEventListener("pointerdown", () => {
+      const run = $.activeRun;
+      if (run && run.wakeLockAttempted) ensureWakeLock(run);
+    });
   }
 
   async function analyzeNames(names, { forceFresh = false, quiet = false } = {}) {
@@ -111,6 +142,12 @@ export function createAnalyze($) {
     const signal = run.signal;
     /** True once this run was cancelled (or superseded) — stop touching UI. */
     const cancelled = () => signal.aborted || $.activeRun !== run;
+    // Screen wake-lock (user runs only, best-effort, silent when refused): held for the whole run,
+    // released in the finally below even when a newer run owns the popup now.
+    if (userRun) {
+      run.wakeLockAttempted = true;
+      run.wakeLock = await requestWakeLock(typeof navigator !== "undefined" ? navigator : undefined);
+    }
     setFetching(true);
     if (!quiet) {
       $.setProgress(true, {
@@ -161,6 +198,7 @@ export function createAnalyze($) {
         },
         {
           isCancelled: cancelled,
+          waitWhilePaused: () => pauseGate.waitWhilePaused(),
           onStart: (name, idx, total) => {
             if (quiet) return;
             $.setProgress(true, { title: tr("progress.title", "Analyzing…"), done: idx, total, name, plan: etaPlan });
@@ -187,6 +225,13 @@ export function createAnalyze($) {
         $.activeRun = null;
         setFetching(false);
         $.setProgress(false);
+      }
+      // The screen lock belongs to this run, not the active UI: release it on any end
+      // (normal, cancelled, or superseded), even when a newer run owns the popup now.
+      if (run.wakeLock) {
+        const lock = run.wakeLock;
+        run.wakeLock = null;
+        releaseWakeLock(lock);
       }
     }
 

@@ -353,3 +353,88 @@ describe("Census busy/down failures", () => {
     assert.equal(sumF([{ name: "Typo", kind: "not-found" }], 0).retryable, false);
   });
 });
+
+import { createPauseGate, createHiddenClock, requestWakeLock, releaseWakeLock } from "../analyze-run.mjs";
+
+describe("background-tab pause (gate, hidden clock, wake-lock)", () => {
+  it("gate: waitWhilePaused resolves at once when visible, holds while hidden", async () => {
+    const gate = createPauseGate();
+    assert.equal(gate.isPaused, false);
+    await gate.waitWhilePaused(); // visible: immediate
+    gate.pause();
+    assert.equal(gate.isPaused, true);
+    let resumed = false;
+    const p = gate.waitWhilePaused().then(() => { resumed = true; });
+    await new Promise((r) => setTimeout(r, 0));
+    assert.equal(resumed, false);
+    gate.resume();
+    await p;
+    assert.equal(resumed, true);
+    assert.equal(gate.isPaused, false);
+  });
+
+  it("loadEach: a hidden tab holds the next name until resume; cancel while paused stops", async () => {
+    const gate = createPauseGate();
+    const seen = [];
+    gate.pause(); // hidden before the run
+    const run = loadEach(["a", "b", "c"], async (n) => { seen.push(n); return {}; }, { waitWhilePaused: () => gate.waitWhilePaused() });
+    await new Promise((r) => setTimeout(r, 0));
+    assert.deepEqual(seen, [], "nothing starts while hidden (not even the first name)");
+    gate.resume();
+    const res = await run;
+    assert.deepEqual(seen, ["a", "b", "c"]);
+    assert.equal(res.cancelled, false);
+    // Cancel while paused: resume releases the wait, the cancel check stops the run.
+    const gate2 = createPauseGate();
+    const seen2 = [];
+    let cancel = false;
+    gate2.pause();
+    const run2 = loadEach(["a", "b", "c"], async (n) => { seen2.push(n); return {}; }, { isCancelled: () => cancel, waitWhilePaused: () => gate2.waitWhilePaused() });
+    await new Promise((r) => setTimeout(r, 0));
+    assert.deepEqual(seen2, []);
+    cancel = true;
+    gate2.resume();
+    const res2 = await run2;
+    assert.equal(res2.cancelled, true);
+    assert.deepEqual(seen2, [], "cancelled before any name started");
+  });
+
+  it("hidden clock: hidden spans accumulate, ongoing spans clamp to now, reset clears", () => {
+    let t = 1000;
+    const clock = createHiddenClock({ now: () => t });
+    assert.equal(clock.isHidden, false);
+    assert.equal(clock.hiddenUpTo(), 0);
+    clock.onHidden(); // t=1000
+    t = 1500;
+    assert.equal(clock.isHidden, true);
+    assert.equal(clock.hiddenUpTo(), 500, "ongoing span counts to now");
+    clock.onVisible(); // t=1500
+    assert.equal(clock.hiddenUpTo(), 500);
+    t = 2000;
+    clock.onHidden(); // t=2000
+    t = 2600;
+    assert.equal(clock.hiddenUpTo(), 500 + 600);
+    clock.onHidden(); // double hide: no-op
+    t = 2700;
+    assert.equal(clock.hiddenUpTo(), 500 + 700);
+    clock.onVisible();
+    clock.onVisible(); // double visible: no-op
+    assert.equal(clock.hiddenUpTo(), 1200);
+    clock.reset();
+    assert.equal(clock.hiddenUpTo(), 0);
+    assert.equal(clock.isHidden, false);
+  });
+
+  it("wake-lock: unsupported / refused → null (never throws); release is null-safe", async () => {
+    assert.equal(await requestWakeLock(undefined), null);
+    assert.equal(await requestWakeLock({}), null);
+    assert.equal(await requestWakeLock({ wakeLock: { request: async () => { throw new Error("denied"); } } }), null);
+    let released = false;
+    const lock = { release: async () => { released = true; } };
+    assert.equal(await requestWakeLock({ wakeLock: { request: async () => lock } }), lock);
+    await releaseWakeLock(lock);
+    assert.equal(released, true);
+    await releaseWakeLock(null);
+    await releaseWakeLock({});
+  });
+});

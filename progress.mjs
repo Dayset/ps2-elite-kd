@@ -2,7 +2,7 @@
  * The Analyze progress bar: percent, creeping between names, and the time estimate learned from earlier runs (#66: moved
  * out of app.js unchanged).
  */
-import { etaLearnLiveMs, estimateRemainingMs, nextEtaDeadline, expectedNameMs, formatEtaLeft } from "./analyze-run.mjs?v=20261030-cxl1";
+import { etaLearnLiveMs, estimateRemainingMs, nextEtaDeadline, expectedNameMs, formatEtaLeft, createHiddenClock } from "./analyze-run.mjs?v=20261101-bg1";
 import { t as tr } from "./i18n.mjs";
 import { formatClock } from "./app-util.mjs?v=20261027-z79";
 
@@ -27,6 +27,12 @@ export function createProgress($) {
   /** When the name currently loading started (ms epoch). */
   let progressCurrentStartedAt = 0;
 
+  /** Hidden-time clock for the run (background pause): durations exclude hidden spans. */
+  const hiddenClock = createHiddenClock();
+
+  /** Hidden ms accumulated when the current name started (its exclusion baseline). */
+  let progressHiddenAtCurrentStart = 0;
+
   /** Measured per-name durations by kind (ETA uses their averages). */
   let progressLiveMs = [];
 
@@ -39,6 +45,15 @@ export function createProgress($) {
 
   /** Visual bar % (creeps forward for hope; snaps up on real done/total). */
   let progressDisplayPct = 0;
+
+  // Track hidden spans while a run is active (ignored with no run; cleared on the next fresh run).
+  if (typeof document !== "undefined" && document.addEventListener) {
+    document.addEventListener("visibilitychange", () => {
+      if (!progressStartedAt) return;
+      if (document.hidden) hiddenClock.onHidden();
+      else hiddenClock.onVisible();
+    });
+  }
 
   const avgMs = (arr) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0);
 
@@ -134,6 +149,11 @@ export function createProgress($) {
 
   function renderProgressTiming() {
     if (!progressStartedAt) return;
+    // Paused: the tab is hidden, so nothing progresses — show that, not a frozen creep / growing elapsed.
+    if (hiddenClock.isHidden) {
+      if ($.els.progressTiming) $.els.progressTiming.textContent = tr("progress.paused", "⏸️ Tab hidden — analysis paused. Bring it back to continue.");
+      return;
+    }
     creepProgressBar();
     if (!$.els.progressTiming) return;
     const now = Date.now();
@@ -203,14 +223,20 @@ export function createProgress($) {
       progressCachedMs = [];
       progressEtaDeadline = 0;
       progressDisplayPct = 0; // always start the bar at zero
+      hiddenClock.reset();
+      progressHiddenAtCurrentStart = hiddenClock.hiddenUpTo(now);
     }
     if (Array.isArray(opts.plan)) progressPlan = opts.plan.slice();
     progressDoneCount = done;
     progressTotalCount = total;
     // A name finished: record its duration by kind (cached vs live) for the ETA.
+    // Hidden time is excluded: a player stalled while the tab was hidden must not poison the averages
+    // (or the persisted prior) with minutes it never actually spent loading.
     if (done > prevDone && done > 0) {
+      const hiddenForPlayer = hiddenClock.hiddenUpTo(now) - progressHiddenAtCurrentStart;
+      const took = Math.max(0, (now - (progressCurrentStartedAt || progressStartedAt) - hiddenForPlayer) / (done - prevDone));
       for (let i = prevDone; i < done; i++) {
-        const took = (now - (progressCurrentStartedAt || progressStartedAt)) / (done - prevDone);
+        if (took <= 0) continue; // fully hidden (unmeasurable): keep the prior averages, don't learn 0
         if (progressPlan[i] === false) progressCachedMs.push(took);
         else {
           progressLiveMs.push(took);
@@ -218,6 +244,7 @@ export function createProgress($) {
         }
       }
       progressCurrentStartedAt = now;
+      progressHiddenAtCurrentStart = hiddenClock.hiddenUpTo(now);
     }
 
     // Real progress floor: 0/2→0%, 1/2→50%, 2/2→100%. Bar never goes backwards.

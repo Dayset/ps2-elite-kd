@@ -89,18 +89,22 @@ export function censusQueryName(name) {
  *   isCancelled?: () => boolean,
  *   onStart?: (name: string, idx: number, total: number) => void,
  *   onDone?: (name: string, idx: number, total: number, outcome: object) => void,
+ *   waitWhilePaused?: () => Promise<void>,
  * }} [opts]
  * @returns {Promise<{ loaded: {name: string, idx: number, player: any}[],
  *   failed: {name: string, idx: number, kind: string, reason: string, message: string}[],
  *   cancelled: boolean }>}
  */
 export async function loadEach(names, loadFn, opts = {}) {
-  const { isCancelled = () => false, onStart, onDone } = opts;
+  const { isCancelled = () => false, onStart, onDone, waitWhilePaused } = opts;
   const list = Array.isArray(names) ? names : [];
   const total = list.length;
   const loaded = [];
   const failed = [];
   for (let idx = 0; idx < total; idx++) {
+    if (isCancelled()) return { loaded, failed, cancelled: true };
+    // Background-tab pause: don't start the next name while hidden (in-flight work finishes on its own).
+    if (waitWhilePaused) await waitWhilePaused();
     if (isCancelled()) return { loaded, failed, cancelled: true };
     const name = list[idx];
     if (onStart) onStart(name, idx, total);
@@ -504,4 +508,69 @@ export function resolveStartupSelection({ urlNames = null, pending = null, last 
   const lastList = clean(last);
   if (lastList && lastList.length) return { names: lastList, reason: "last", restoreAfter: null };
   return { names: (defaults || []).slice(), reason: "empty", restoreAfter: null };
+}
+
+/* Background-tab pause + wake-lock (full stack, 2026-11-01): the run stalls while hidden (throttled
+ * timers), so the driver gates the next name on visibility and the progress clock excludes hidden time.
+ * Pure, no DOM: the drivers wire these to visibilitychange / pointerdown. */
+
+/** Gate for loadEach's waitWhilePaused: pause() holds the next name, resume() lets it start. */
+export function createPauseGate() {
+  let paused = false;
+  let waiters = [];
+  return {
+    get isPaused() { return paused; },
+    pause() { paused = true; },
+    resume() {
+      paused = false;
+      const w = waiters;
+      waiters = [];
+      for (const r of w) r();
+    },
+    waitWhilePaused() {
+      if (!paused) return Promise.resolve();
+      return new Promise((r) => waiters.push(r));
+    },
+  };
+}
+
+/** Hidden-time clock (times injected, like tokenBucket's now): onHidden/onVisible bracket hidden spans. */
+export function createHiddenClock({ now = () => Date.now() } = {}) {
+  let total = 0;
+  let since = 0;
+  return {
+    get isHidden() { return !!since; },
+    onHidden() { if (!since) since = now(); },
+    onVisible() {
+      if (since) {
+        total += now() - since;
+        since = 0;
+      }
+    },
+    hiddenUpTo(t = now()) { return total + (since ? Math.max(0, t - since) : 0); },
+    reset() {
+      total = 0;
+      since = 0;
+    },
+  };
+}
+
+/** Screen wake-lock, best-effort: null when unsupported or refused (never throws). */
+export async function requestWakeLock(nav) {
+  try {
+    const wl = nav && nav.wakeLock;
+    if (!wl || typeof wl.request !== "function") return null;
+    return await wl.request("screen");
+  } catch {
+    return null;
+  }
+}
+
+/** Release a wake-lock sentinel; safe on null / already-released (never throws). */
+export async function releaseWakeLock(lock) {
+  try {
+    if (lock && typeof lock.release === "function") await lock.release();
+  } catch {
+    /* ignore */
+  }
 }
