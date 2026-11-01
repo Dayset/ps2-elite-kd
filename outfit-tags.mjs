@@ -56,9 +56,35 @@ export function canTakeName({ tokens, isOutfit, outfit, typedMax, outfitMax = OU
 }
 
 /** PC server names by world id (PlayStation servers come from rooms.mjs). */
-export const WORLD_NAMES = Object.freeze({ 1: "Connery", 10: "Miller", 13: "Cobalt", 17: "Emerald", 19: "Jaeger", 40: "SolTech", 1000: "Genudine", 2000: "Ceres" });
+// NA (owner): Connery (1) and Emerald (17) merged into Osprey, NA's one server today; Census names world 1 "Osprey".
+export const WORLD_NAMES = Object.freeze({ 1: "Osprey", 10: "Miller", 13: "Cobalt", 17: "Osprey", 19: "Jaeger", 40: "SolTech", 1000: "Genudine", 2000: "Ceres" });
 
 const TAG = /^\[([A-Za-z0-9]{1,4})\]$/;
+
+/**
+ * 🌍 Outfit server fallback (owner): an outfit lives on one world, so a member we have no world for (an older browser
+ * copy, a deleted character) takes the outfit's world. slug → world_id in localStorage; the 🌍 table reads it for
+ * browser-only rows and marks the server as "from the outfit" in the hover hint. A player's own world always wins.
+ */
+export const OUTFIT_WORLD_KEY = "ps2ekd:outfitWorld";
+const OUTFIT_WORLD_MAX = 3000;
+
+export function readOutfitWorlds() {
+  try { const o = JSON.parse(localStorage.getItem(OUTFIT_WORLD_KEY) || "{}"); return o && typeof o === "object" ? o : {}; } catch { return {}; }
+}
+
+/** Remember world_id for these member names (PC outfits only; the newest outfit wins, oldest entries drop past the cap). */
+export function rememberOutfitWorld(names, world, base = "") {
+  const w = Number(world);
+  if (!Number.isInteger(w) || w <= 0 || PS_SERVERS[nsOfBase(base)]) return;
+  try {
+    const o = readOutfitWorlds();
+    for (const n of names || []) { const k = slugKey(n); if (k) { delete o[k]; o[k] = w; } }
+    const keys = Object.keys(o);
+    for (const k of keys.slice(0, Math.max(0, keys.length - OUTFIT_WORLD_MAX))) delete o[k];
+    localStorage.setItem(OUTFIT_WORLD_KEY, JSON.stringify(o));
+  } catch {}
+}
 
 /** "[WARP]" → "warp"; anything else (a name, "[WARP] Name", "[toolong]") → null. */
 export function outfitAlias(token) {
@@ -272,6 +298,7 @@ export function createOutfitTags($) {
       if (list && list.size) removed = ({ cid, name }) => !!list.match({ cid, name, slug: slugKey(name), server });
     } catch {}
     const sorted = sortMembers(members, { have: $.nameTokens.slice(), isCached: (n) => $.isCached(n), removed });
+    rememberOutfitWorld(members.map((m) => m && m.c && m.c.name && m.c.name.first), pick.leader && pick.leader.world_id, pick._base);
     if (members.length && !sorted.total) {
       // Rows arrived but no name resolved: the character join failed, not "no members".
       // (addPicked serves the [TAG] text and the 🛡️ button; tag can be "" for a tag-less outfit.)

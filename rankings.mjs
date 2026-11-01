@@ -23,10 +23,11 @@ import { groupByTier, openTierIds, pickedInGroup, groupIndexAt, tierOf } from ".
 import { createDistCycler, createWheelSwiper } from "./dist-cycle.mjs?v=20261017-cycle15";
 import { sfx } from "./sfx.mjs?v=20261026-sfx2";
 import { slideSwap, attachDragCarousel } from "./chart-slide.mjs?v=20261020-flick1";
-import { mergeFreshRows } from "./rank-row.mjs?v=20261027-z79";
+import { mergeFreshRows } from "./rank-row.mjs?v=20261101-osrv1";
+import { readOutfitWorlds } from "./outfit-tags.mjs?v=20261101-osrv1";
 import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-sav1";
 import { confirmedPadderSlugs } from "./padding.mjs?v=20261023-short1";
-import { slugKey, bareName } from "./rank-row.mjs?v=20261027-z79";
+import { slugKey, bareName } from "./rank-row.mjs?v=20261101-osrv1";
 import { hiddenList } from "./hidden.mjs?v=20261025-oor1";
 // PC | PlayStation rooms (#55): each room ranks its own players only (data/ or data-ps/).
 import { pageRoom, dataPrefix, roomLsKey, psServer } from "./rooms.mjs?v=20261022-ps1";
@@ -320,6 +321,8 @@ export function initRankings(host) {
         nbh: idx.nbh != null && Number.isFinite(r[idx.nbh]) ? r[idx.nbh] : null,
         // PlayStation room (#55): "us" Genudine / "eu" Ceres (null on PC).
         srv: idx.srv != null ? r[idx.srv] || null : null,
+        // 🌍 "o" = server taken from the player's outfit (no own world on file): said in the hover hint only.
+        srvBy: idx.srvBy != null ? r[idx.srvBy] || null : null,
         // 📅 Registration epoch — not a stat column, but the Settings
         // max-account-age cut (sortedFiltered) and its ceiling need it per row.
         created: idx.created != null ? r[idx.created] : null,
@@ -963,7 +966,7 @@ export function initRankings(host) {
           `<b>#${k.toLocaleString()}</b>${p != null ? `<span class="pct">p${p}</span>` : ""}</td>`;
       }).join("");
       // t813u: the global table says so too, with the same small tag the server table uses.
-      const srvTag = !srv ? `<span class="srv-pos-tag srv-pos-global" title="${esc(tr("rk.globalTagTip", "Ranked among all {n} cached players (all servers)", { n: data.count.toLocaleString() }))}">${esc(tr("rk.globalTag", "Global"))}</span>` : (sk ? `<span class="srv-pos-tag" title="${esc(tr("rk.srvTagTip", "Ranked among the {n} cached players on {server}", { n: ((data.srvPools[sk] || {}).adjs || []).length.toLocaleString(), server: sname }))}">${esc(sname)}</span>` : `<span class="srv-pos-tag" title="${esc(tr("rk.srvUnknown", "Server unknown (old or closed world, or not looked up yet): no server rank."))}">?</span>`);
+      const srvTag = !srv ? `<span class="srv-pos-tag srv-pos-global" title="${esc(tr("rk.globalTagTip", "Ranked among all {n} cached players (all servers)", { n: data.count.toLocaleString() }))}">${esc(tr("rk.globalTag", "Global"))}</span>` : (sk ? `<span class="srv-pos-tag" title="${esc(tr("rk.srvTagTip", "Ranked among the {n} cached players on {server}", { n: ((data.srvPools[sk] || {}).adjs || []).length.toLocaleString(), server: sname }) + (r.srvBy === "o" ? ". " + tr("rk.srvFromOutfit", "Server taken from the player's outfit (no server of their own on file)") : ""))}">${esc(sname)}</span>` : `<span class="srv-pos-tag" title="${esc(tr("rk.srvUnknown", "Server unknown (old or closed world, or not looked up yet): no server rank."))}">?</span>`);
       // Same "1." series number as the ✨ Stats table (graph colour order), so both modes read alike.
       return `<tr><td class="rk-pos-num" style="color:${paletteColor(i, light)}">${i + 1}.</td><th scope="row" class="rk-pos-name"><a href="#" class="rk-pos-jump" data-q="${esc(r.query)}" style="color:${paletteColor(i, light)}" title="${tr("rk.showTable", "Show {name} in the table", { name: esc(r.name) })}"><span class="nm" data-full="${esc(r.name)}">${esc(r.name)}</span></a>${r.freshAt ? `<span class="sample-fresh" title="${esc(freshTip(r.freshAt, r.localOnly))}">${FRESH_MARK}</span>` : ""}${r.mark ? `<span class="pad-mark mark-${["padding","adjusted"].includes(r.markKind) ? r.markKind : ""}" title="${esc(r.markTip)}">${r.mark}</span>` : ""}${poopHtml(r)}${srvTag}</th>${cells}</tr>`;
     }).join("");
@@ -1978,6 +1981,7 @@ export function initRankings(host) {
         const m = mergeFreshRows(base, store, {
           confirmed: confirmedSet,
           extra: host.getNames(),
+          outfitWorlds: ROOM === "ps" ? null : readOutfitWorlds(),
           skip: (e, key) => !!hidden.match({ slug: key, name: (e.player && e.player.display) || e.name, cid: e.player && e.player.cid }),
         });
         ({ rows, fresh, localOnly } = m);

@@ -127,9 +127,9 @@ export function createLoader($) {
     if ($.IS_PS) return resolveCensusPs(raw, name, signal);
     let url;
     if (/^\d{16,}$/.test(raw)) {
-      url = `${$.CENSUS}character?character_id=${encodeURIComponent(raw)}&c:resolve=outfit,stat_history`;
+      url = `${$.CENSUS}character?character_id=${encodeURIComponent(raw)}&c:resolve=outfit,stat_history,world`;
     } else {
-      url = `${$.CENSUS}character?name.first_lower=${encodeURIComponent(raw.toLowerCase())}&c:resolve=outfit,stat_history`;
+      url = `${$.CENSUS}character?name.first_lower=${encodeURIComponent(raw.toLowerCase())}&c:resolve=outfit,stat_history,world`;
     }
     let data;
     try {
@@ -338,6 +338,8 @@ export function createLoader($) {
         ...(infantry ? { infantry } : {}),
       },
     });
+    // 🌍 The character's own world (c:resolve=world, same call): browser-only rows get a server rank (srv-key.mjs).
+    if (!$.IS_PS && /^\d+$/.test(String(c.world_id || ""))) np.world = +c.world_id;
     np.fetchedAt = Date.now();
     // Graceful partial result: opponents Census couldn't return are left out.
     if (r.skipped || r.ownFailed) np.partialSkipped = r.skipped + (r.ownFailed ? 1 : 0);

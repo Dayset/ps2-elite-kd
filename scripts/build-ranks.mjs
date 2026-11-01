@@ -400,6 +400,7 @@ export function buildRanksWithGuard(dataDir, { known = KNOWN_EXTREMES, zergCharg
   const facBackfill = readFactionBackfill(dataDir);
   const worldBy = new Map(); // 🌐 Census home world by slug (player file "world" or data/server-backfill.json; t798u)
   const worldBackfill = readServerBackfill(dataDir);
+  const worldByOutfit = new Set(); // 🌍 slugs whose world came from their outfit (ranks.json "srvBy" = "o")
   const forensics = readForensics(dataDir);
   const farmFound = [];
   const ranks = buildRanks(dataDir, {
@@ -417,7 +418,11 @@ export function buildRanksWithGuard(dataDir, { known = KNOWN_EXTREMES, zergCharg
       const pl = raw.player || raw;
       playMin.set(row[2], playMinutes(pl.infantry && pl.infantry.kills, pl.global_kpm));
       factionBy.set(row[2], factionOf(pl, facBackfill));
-      worldBy.set(row[2], worldOf(pl, worldBackfill));
+      // 🌍 Own world first (player file, then Census backfill); a world the file took from its outfit
+      // (worldSource "outfit": deleted character, scripts/outfit-worlds.mjs) only when neither knows one.
+      const ownW = pl && pl.worldSource === "outfit" ? worldOf({ cid: pl.cid }, worldBackfill) : worldOf(pl, worldBackfill);
+      if (ownW != null) worldBy.set(row[2], ownW);
+      else { const ow = worldOf(pl); worldBy.set(row[2], ow); if (ow != null) worldByOutfit.add(row[2]); }
       const xpd = readXp(dataDir, row[2]);
       const sm = sessionMetrics({ assists: pl.assists, xp: xpd });
       const rs = crowdSample(xpd); // 🪳 crowd check (zerg-revive.mjs): null below the sample minimum
@@ -483,7 +488,7 @@ export function buildRanksWithGuard(dataDir, { known = KNOWN_EXTREMES, zergCharg
     assistGroups: assistGroups(players), // 🤝 groups stay build-log only (the 🤝 apk column itself is public since t382u)
     assistGap: assistGapStatus(players),
     factions: factionRatingOf(ranks, { factionBy, playMin, padders: confirmed, famOf: readFamilyIndex(dataDir), worldBy }),
-    serverInputs: { worldBy, playMin, padders: confirmed }, // 🌐 servers.json is built after the PS server column (main)
+    serverInputs: { worldBy, worldByOutfit, playMin, padders: confirmed }, // 🌐 servers.json is built after the PS server column (main)
   };
 }
 
@@ -1333,10 +1338,16 @@ export function addServerColumn(ranks, index) {
  * Census home world (serverOfWorld: Connery + Emerald → Osprey, Miller + Cobalt → Wainwright); null for other
  * worlds (SolTech is closed, Jaeger) or an unknown world — the same players the 🌐 Servers section leaves out.
  */
-export function addPcServerColumn(ranks, worldBy) {
+export function addPcServerColumn(ranks, worldBy, worldByOutfit = null) {
   if (ranks.cols.includes("srv")) return ranks;
   ranks.cols.push("srv");
   for (const r of ranks.rows) r.push((worldBy && serverOfWorld(worldBy.get(r[2]))) || null);
+  // 🌍 "srvBy" = "o" when the server came from the player's outfit (hover hint only); added only when some row has it.
+  const si = ranks.cols.length - 1;
+  if (worldByOutfit && worldByOutfit.size && ranks.rows.some((r) => r[si] && worldByOutfit.has(r[2]))) {
+    ranks.cols.push("srvBy");
+    for (const r of ranks.rows) r.push(r[si] && worldByOutfit.has(r[2]) ? "o" : null);
+  }
   return ranks;
 }
 
@@ -1404,7 +1415,7 @@ if (isMain) {
   }
   const { ranks: out, guard, hidden: hiddenInfo, bins, session, forensics: forensicsInfo, review, assistGroups: assistInfo, padderPenalty: padderInfo, vehicleCut: vehCutInfo, hut: hutInfo, vehDiff: vehDiffInfo, zergRevive: zrevInfo, tractor: tracInfo, newbieDiff: nbdInfo, assistGap: gapInfo, factions: facInfo, serverInputs } = buildRanksWithGuard(dataDir, room === "ps" ? { known: {}, zergCharge: false } : undefined);
   if (room === "ps") addServerColumn(out, JSON.parse(fs.readFileSync(path.join(dataDir, "index.json"), "utf8")));
-  else addPcServerColumn(out, serverInputs && serverInputs.worldBy);
+  else addPcServerColumn(out, serverInputs && serverInputs.worldBy, serverInputs && serverInputs.worldByOutfit);
   fs.writeFileSync(path.join(dataDir, "ranks.json"), JSON.stringify(out) + "\n");
   // 🌐 Server rating (t798u): main-page section + the server-name alias (PC Osprey / Wainwright, PS Genudine / Ceres).
   try {

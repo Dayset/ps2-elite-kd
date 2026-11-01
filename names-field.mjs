@@ -7,7 +7,7 @@ import { t as tr } from "./i18n.mjs";
 import { slugKey, namesEqualIgnoreCase, bareName, parseNames } from "./app-util.mjs?v=20261027-z79";
 import { forgetFailures } from "./analyze-run.mjs?v=20261030-cxl1";
 import { isPenalizedPadder } from "./padding.mjs?v=20261023-short1";
-import { createOutfitTags, extractOutfitTags, OUTFIT_MAX_NAMES as OUTFIT_MAX } from "./outfit-tags.mjs?v=20261101-outfit1";
+import { createOutfitTags, extractOutfitTags, OUTFIT_MAX_NAMES as OUTFIT_MAX } from "./outfit-tags.mjs?v=20261101-osrv1";
 import { extractFactionAliases } from "./faction-rating.mjs?v=20261031-fr1";
 import { addFactionPlayers } from "./faction-panel.mjs?v=20261031-fr4";
 import { extractServerAliases } from "./server-rating.mjs?v=20261031-sr1";

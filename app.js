@@ -37,15 +37,15 @@ import {
 import { formatClock, fmtNum, slugKey, bareName, parseNames, namesEqualIgnoreCase, namesSetKey, niceLinTicks, niceNum, niceLogTicks, formatTick, escapeHtml, makeAbortError, isAbortError, checkAborted, readJsonLS, writeJsonLS } from "./app-util.mjs?v=20261027-z79";
 import { createAnalyze } from "./analyze.mjs?v=20261030-cxl1";
 import { createShareAdd } from "./share-add.mjs?v=20261027-z79";
-import { createSharedIndex } from "./shared-index.mjs?v=20261101-numloop1";
-import { createNamesField } from "./names-field.mjs?v=20261101-outfit1";
+import { createSharedIndex } from "./shared-index.mjs?v=20261101-osrv1";
+import { createNamesField } from "./names-field.mjs?v=20261101-osrv1";
 import { initFactionPanel } from "./faction-panel.mjs?v=20261031-fr4";
 import { initServerPanel } from "./server-panel.mjs?v=20261031-sr2";
-import { createOutfitRoster, canTakeName as canTakeNameRule, OUTFIT_MAX_NAMES } from "./outfit-tags.mjs?v=20261101-outfit1";
+import { createOutfitRoster, canTakeName as canTakeNameRule, OUTFIT_MAX_NAMES } from "./outfit-tags.mjs?v=20261101-osrv1";
 import { createStatsTable } from "./stats-table.mjs?v=20261101-duel1";
 import { createChartWave } from "./chart-wave.mjs?v=20261029-puregraph1";
 import { createChart } from "./chart.mjs?v=20261030-hs1";
-import { createLoader } from "./loader.mjs?v=20261101-outfit1";
+import { createLoader } from "./loader.mjs?v=20261101-osrv1";
 import { createCacheChips } from "./cache-chips.mjs?v=20261027-z79";
 import { createLocalCache } from "./local-cache.mjs?v=20261027-z79";
 import { createProgress } from "./progress.mjs?v=20261027-z79";
@@ -795,6 +795,8 @@ import {
       top: p.top,
       honu: p.honu,
       times: p.times || null,
+      // 🌍 Own world (PC browser fetch): the 🌍 table ranks a browser-only row on its server.
+      ...(Number.isInteger(p.world) && p.world > 0 ? { world: p.world } : {}),
       // 🪖 / 🚜 just the kill split the Infantry column and the vehicle / MAX cut need (infantry.mjs v2).
       infantry: p.infantry && p.infantry.v >= 2
         ? { v: p.infantry.v, kills: p.infantry.kills, footKills: p.infantry.footKills, maxKills: p.infantry.maxKills, vehKills: p.infantry.vehKills, otherKills: p.infantry.otherKills }

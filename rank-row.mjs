@@ -6,6 +6,22 @@
 import { normalizePlayer, playerMetrics, shownValue } from "./player-metrics.mjs?v=20261027-z79";
 import { markNote, statMark } from "./padding.mjs?v=20261023-short1";
 import { pickNewest, entryFetchedAt } from "./cache-pick.mjs?v=20261010-sav1";
+import { serverOfWorld } from "./server-rating.mjs?v=20261031-sr1";
+
+const PS_SRV_KEY = { genudine: "us", ceres: "eu" };
+/**
+ * 🌍 "srv" value for a browser copy (ranks.json column): the player's own world first (PC: Census world_id, merged NA
+ * worlds → Osprey; PS: its server), else the outfit's world (outfit-tags.mjs readOutfitWorlds, owner: an outfit lives on
+ * one server). → { srv, by } with by = "o" when the server came from the outfit, else null.
+ */
+export function localSrv(player, key, outfitWorlds = null) {
+  const p = player || {};
+  if (p.room === "ps") return { srv: PS_SRV_KEY[String(p.server || "").toLowerCase()] || null, by: null };
+  const own = serverOfWorld(p.world);
+  if (own) return { srv: own, by: null };
+  const ow = outfitWorlds && key ? serverOfWorld(outfitWorlds[key]) : null;
+  return ow ? { srv: ow, by: "o" } : { srv: null, by: null };
+}
 
 /** Metric ids (same ids as the app.js stats columns). */
 export const METRIC_COLS = Object.freeze([
@@ -73,7 +89,7 @@ export function rankRow(raw, { slug = "", savedAt = null, confirmed = false } = 
  * @param opts.skip   (entry, key) => boolean
  * @returns {{ rows, fresh: Map<slug, fetchedAtMs>, localOnly: Set<slug> }}
  */
-export function mergeFreshRows(payload, store, { confirmed = new Set(), maxAgeMs = 30 * 24 * 3600 * 1000, now = Date.now(), extra = [], skip = null } = {}) {
+export function mergeFreshRows(payload, store, { confirmed = new Set(), maxAgeMs = 30 * 24 * 3600 * 1000, now = Date.now(), extra = [], skip = null, outfitWorlds = null } = {}) {
   const fresh = new Map();
   const localOnly = new Set();
   const rows = payload && Array.isArray(payload.rows) ? payload.rows : [];
@@ -108,6 +124,11 @@ export function mergeFreshRows(payload, store, { confirmed = new Set(), maxAgeMs
     // Same column order as the payload (older payloads may lack trailing columns).
     // The pick key (query) stays the built one: unique per room (one tick = one player).
     const row = cols.map((c) => { if (c === "query") return r[ix.query]; const i = RANK_COLS.indexOf(c); return i >= 0 ? nr[i] : r[ix[c]]; });
+    // 🌍 A ranked row with no server yet takes the browser copy's (own world, else the outfit's).
+    if (ix.srv != null && row[ix.srv] == null) {
+      const ls = localSrv(e.player, slug, outfitWorlds);
+      if (ls.srv) { row[ix.srv] = ls.srv; if (ix.srvBy != null) row[ix.srvBy] = ls.by; }
+    }
     fresh.set(slug, pick.fetchedAt);
     return row;
   });
@@ -123,7 +144,9 @@ export function mergeFreshRows(payload, store, { confirmed = new Set(), maxAgeMs
     const nr = rankRow({ player: e.player }, { slug: key, savedAt: at, confirmed: confirmed.has(key) });
     if (!nr) continue;
     ranked.add(key);
-    out.push(cols.map((c) => { const i = RANK_COLS.indexOf(c); return i >= 0 ? nr[i] : null; }));
+    // 🌍 Server for the 🌍 table (owner, [CP0x]): own world, else the outfit's; null → "?" (no server rank).
+    const ls = localSrv(e.player, key, outfitWorlds);
+    out.push(cols.map((c) => { if (c === "srv") return ls.srv; if (c === "srvBy") return ls.by; const i = RANK_COLS.indexOf(c); return i >= 0 ? nr[i] : null; }));
     fresh.set(key, at);
     localOnly.add(key);
   }

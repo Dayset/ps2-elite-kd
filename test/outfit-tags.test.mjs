@@ -34,8 +34,8 @@ test("Census URLs: alias_lower lookup, one member call with names + last login",
 });
 
 test("server: PC from the leader's world, PS from the namespace; several servers → most members", () => {
-  assert.equal(outfitServer({ leader: { world_id: "1" } }), "Connery");
-  assert.equal(outfitServer({ leader: { world_id: "17" } }), "Emerald");
+  assert.equal(outfitServer({ leader: { world_id: "1" } }), "Osprey");
+  assert.equal(outfitServer({ leader: { world_id: "17" } }), "Osprey");
   assert.equal(outfitServer({}, "https://x/s:y/get/ps2ps4eu:v2/"), "Ceres");
   const { pick, others } = pickOutfit([{ outfit_id: "1", member_count: "2" }, { outfit_id: "2", member_count: "6" }]);
   assert.equal(pick.outfit_id, "2");
@@ -236,7 +236,7 @@ test("🛡️ player outfit: URL, row parsing, label (tag-less outfit too)", asy
   assert.deepEqual(playerOutfitRow({ character_list: [{ character_id: "2", w: { world_id: "10" } }] }), { found: true, outfit: null });
   assert.deepEqual(playerOutfitRow({ character_list: [] }), { found: false, outfit: null });
   const noTag = playerOutfitRow({ character_list: [{ character_id: "3", om: { outfit_id: "9", name: "C70BR", alias: "", member_count: "1" }, w: { world_id: "1" } }] }, B);
-  assert.equal(outfitLabel(noTag.outfit), "C70BR (Connery)");
+  assert.equal(outfitLabel(noTag.outfit), "C70BR (Osprey)");
 });
 
 test("🛡️ addPlayerOutfit: 2 Census calls, one lookup per visit, no outfit / unknown / error handled", async () => {
