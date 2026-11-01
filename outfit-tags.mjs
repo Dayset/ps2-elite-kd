@@ -99,6 +99,42 @@ export function membersUrl(base, outfitId, limit = OUTFIT_MEMBER_LIMIT) {
   );
 }
 
+/**
+ * Census: one player's outfit (owner t832u: the 🛡️ button next to a single name). One call: the character with its
+ * outfit membership (outfit id, tag, name, member count) and its server joined. who = { cid } or { name }.
+ */
+export function playerOutfitUrl(base, who) {
+  const q = who && who.cid ? `character_id=${encodeURIComponent(who.cid)}` : `name.first_lower=${encodeURIComponent(String((who && who.name) || "").toLowerCase())}`;
+  return (
+    `${base}character?${q}&c:show=character_id,name.first` +
+    "&c:join=outfit_member_extended^on:character_id^inject_at:om^show:outfit_id'alias'name'member_count" +
+    "&c:join=characters_world^inject_at:w"
+  );
+}
+
+/**
+ * The outfit row (as outfitUrl gives it, plus _base) from a playerOutfitUrl answer.
+ * @returns {{ found:boolean, outfit:object|null }} found = the character exists; outfit = null when in no outfit.
+ */
+export function playerOutfitRow(json, base = "") {
+  const c = json && Array.isArray(json.character_list) ? json.character_list[0] : null;
+  if (!c || !c.character_id) return { found: false, outfit: null };
+  const om = c.om;
+  if (!om || !om.outfit_id) return { found: true, outfit: null };
+  return {
+    found: true,
+    outfit: { outfit_id: String(om.outfit_id), alias: String(om.alias || ""), name: String(om.name || ""), member_count: String(om.member_count || "0"), leader: { world_id: c.w && c.w.world_id }, _base: base },
+  };
+}
+
+/** "[WWYS] We Want Your Soul (Miller)"; an outfit without a tag shows its name only. */
+export function outfitLabel(row, fallbackTag = "") {
+  const server = outfitServer(row, row && row._base);
+  const alias = (row && row.alias) || fallbackTag;
+  const name = String((row && row.name) || "").trim();
+  return `${alias ? `[${alias}] ` : ""}${name}${server ? ` (${server})` : ""}`.trim();
+}
+
 /** Server name for an outfit row from a Census base (PS namespace) or its leader's world. */
 export function outfitServer(row, base = "") {
   const ps = PS_SERVERS[nsOfBase(base)];
@@ -209,15 +245,20 @@ export function createOutfitTags($) {
       note(escapeHtml(tr("outfit.unknown", "No outfit with the tag {tag} was found. Check the tag, or type a player name.", { tag })), "warn");
       return { added: 0, unknown: true };
     }
+    return addPicked(pick, others, tag);
+  }
+
+  /** Load the members of a found outfit row and add them (shared by the [TAG] text and the 🛡️ button). */
+  async function addPicked(pick, others, tag) {
     const server = outfitServer(pick, pick._base);
-    const label = `[${pick.alias || alias.toUpperCase()}] ${String(pick.name || "").trim()}${server ? ` (${server})` : ""}`;
+    const label = outfitLabel(pick, tag.replace(/^\[|\]$/g, ""));
     note(escapeHtml(tr("outfit.loadingMembers", "⏳ {outfit}: loading {n} members…", { outfit: label, n: Number(pick.member_count) || 0 })));
     let members = [];
     try {
       const j = await $.censusJson(membersUrl(pick._base, pick.outfit_id));
       members = (j && j.outfit_member_list) || [];
     } catch (e) {
-      note(escapeHtml(tr("outfit.error", "Couldn't reach Daybreak Census for {tag}. Try again in a minute.", { tag })), "err");
+      note(escapeHtml(tr("outfit.error", "Couldn't reach Daybreak Census for {tag}. Try again in a minute.", { tag: tag || label })), "err");
       return { added: 0, error: true };
     }
     let removed = null;
@@ -284,6 +325,53 @@ export function createOutfitTags($) {
     return r && typeof r.then === "function" ? r.then(done) : done(r);
   }
 
+  /* t832u (owner: "a button for one person in the input field to fetch his outfit"): 🛡️ next to a single name.
+   * One Census call finds the player's outfit (kept for the visit, so hover + click cost one call), then the same
+   * member list, order, cap and note as a typed [TAG]. Census only, no Honu. */
+  const playerOutfits = new Map(); // slug → Promise<{ found, outfit }>
+  function lookupPlayerOutfit(name, who = null) {
+    const key = slugKey(name);
+    if (!key) return Promise.resolve({ found: false, outfit: null });
+    if (!playerOutfits.has(key)) {
+      const bare = String(name).replace(/^\[[^\]]*\]\s*/, "").trim();
+      const tries = who && who.base ? [{ base: who.base, who: who.cid ? { cid: who.cid } : { name: bare } }] : $.CENSUS_BASES.map((base) => ({ base, who: { name: bare } }));
+      const p = (async () => {
+        let failed = false;
+        for (const t of tries) {
+          let j;
+          try { j = await $.censusJson(playerOutfitUrl(t.base, t.who)); } catch { failed = true; continue; }
+          if (!j || (!Array.isArray(j.character_list) && (j.error || j.errorCode))) { failed = true; continue; }
+          const r = playerOutfitRow(j, t.base);
+          if (r.found) return r;
+        }
+        if (failed) throw new Error("census");
+        return { found: false, outfit: null };
+      })();
+      playerOutfits.set(key, p);
+      p.then((r) => { p.__done = r; }, () => {});
+      p.catch(() => playerOutfits.delete(key)); // a failed lookup can be tried again
+    }
+    return playerOutfits.get(key);
+  }
+  /** Cached answer only (no call): undefined while unknown. */
+  const knownPlayerOutfit = (name) => { const p = playerOutfits.get(slugKey(name)); return p && p.__done; };
+  async function addPlayerOutfit(name, who = null) {
+    const shown = String(name).replace(/^\[[^\]]*\]\s*/, "").trim();
+    if ($.outfitRoom() <= 0) {
+      note(escapeHtml(tr("outfit.capFull", "The list already holds {max} outfit players, the most it takes. Remove some to add players from {tag}.", { tag: shown, max: OUTFIT_MAX_NAMES })), "warn");
+      return { added: 0 };
+    }
+    note(escapeHtml(tr("outfit.playerLooking", "⏳ Looking up {name}'s outfit…", { name: shown })));
+    let r;
+    try { r = await lookupPlayerOutfit(name, who); } catch {
+      note(escapeHtml(tr("outfit.error", "Couldn't reach Daybreak Census for {tag}. Try again in a minute.", { tag: shown })), "err");
+      return { added: 0, error: true };
+    }
+    if (!r.found) { note(escapeHtml(tr("outfit.playerUnknown", "{name} wasn't found on Daybreak Census. Check the spelling.", { name: shown })), "warn"); return { added: 0, unknown: true }; }
+    if (!r.outfit) { note(escapeHtml(tr("outfit.playerNone", "{name} isn't in an outfit.", { name: shown })), "warn"); return { added: 0, none: true }; }
+    return addPicked(r.outfit, [], r.outfit.alias ? `[${r.outfit.alias}]` : "");
+  }
+
   /** Expand every alias in order (each one fills what the one before left free). */
   function expand(aliases) {
     let chain = Promise.resolve([]);
@@ -297,5 +385,5 @@ export function createOutfitTags($) {
     return chain;
   }
 
-  return { expand, note, fetchAll };
+  return { expand, note, fetchAll, lookupPlayerOutfit, addPlayerOutfit, knownPlayerOutfit };
 }

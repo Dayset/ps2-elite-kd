@@ -7,11 +7,13 @@ import { t as tr } from "./i18n.mjs";
 import { slugKey, namesEqualIgnoreCase, bareName, parseNames } from "./app-util.mjs?v=20261027-z79";
 import { forgetFailures } from "./analyze-run.mjs?v=20261030-cxl1";
 import { isPenalizedPadder } from "./padding.mjs?v=20261023-short1";
-import { createOutfitTags, extractOutfitTags } from "./outfit-tags.mjs?v=20261031-sr1";
+import { createOutfitTags, extractOutfitTags, OUTFIT_MAX_NAMES as OUTFIT_MAX } from "./outfit-tags.mjs?v=20261101-pof1";
 import { extractFactionAliases } from "./faction-rating.mjs?v=20261031-fr1";
 import { addFactionPlayers } from "./faction-panel.mjs?v=20261031-fr4";
 import { extractServerAliases } from "./server-rating.mjs?v=20261031-sr1";
 import { addServerPlayers } from "./server-panel.mjs?v=20261031-sr2";
+import { parsePsKey, censusNsBase } from "./rooms.mjs?v=20261022-ps1";
+import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 
 /**
  * $ = app.js state and functions this part uses, as live getters (and setters for state it changes), so app.js
@@ -424,7 +426,73 @@ export function createNamesField($) {
       $.els.nameTokensEl.appendChild(addNum(btn));
     });
     syncNamesPlaceholder();
+    syncOutfitBtn();
     $.rankingsSync();
+  }
+
+  /* t832u (owner: "a button for one person in the input field to fetch his outfit"): 🛡️ shows while exactly one
+   * name is in the field. Hover / focus looks the outfit up (one Census call, kept for the visit) so the hint can
+   * name it; a click adds its members like a typed [TAG] (same order, cap and note; outfit-tags.mjs). */
+  let outfitBtnWired = false;
+  function oneName() {
+    if ($.LIVE_MODE) return "";
+    const list = currentNamesInField();
+    return list.length === 1 ? list[0] : "";
+  }
+  function whoOf(name) {
+    if (!$.IS_PS) return null;
+    const e = $.findSharedEntry && $.findSharedEntry(name);
+    const id = parsePsKey((e && e.key) || "");
+    return id ? { base: censusNsBase(id.ns, CENSUS_SERVICE_ID), cid: id.cid } : null;
+  }
+  const bareOf = (n) => String(n || "").replace(/^\[[^\]]*\]\s*/, "").trim();
+  function outfitHint(name) {
+    const r = outfitPart().knownPlayerOutfit(name);
+    const who = bareOf($.tokenLabel ? $.tokenLabel(name) : name);
+    if (r && r.found && !r.outfit) return tr("outfit.playerNone", "{name} isn't in an outfit.", { name: who });
+    if (r && r.outfit) {
+      const o = r.outfit;
+      return tr("outfit.btnKnown", "🛡️ Add {name}'s outfit {outfit} ({n} members) to the list: up to {max}, active players first.", { name: who, outfit: `${o.alias ? `[${o.alias}] ` : ""}${o.name}`.trim(), n: Number(o.member_count) || 0, max: OUTFIT_MAX });
+    }
+    return tr("outfit.btnTitle", "🛡️ Add {name}'s outfit to the list: up to {max}, active players first.", { name: who, max: OUTFIT_MAX });
+  }
+  function syncOutfitBtn() {
+    const b = $.els.outfitBtn;
+    if (!b) return;
+    if (!outfitBtnWired) wireOutfitBtn(b);
+    const name = oneName();
+    b.hidden = !name;
+    if (!name) return;
+    const hint = outfitHint(name);
+    b.title = hint;
+    b.setAttribute("aria-label", hint);
+  }
+  function wireOutfitBtn(b) {
+    outfitBtnWired = true;
+    const peek = () => {
+      const name = oneName();
+      if (!name || b.getAttribute("aria-busy") === "true") return;
+      outfitPart().lookupPlayerOutfit(name, whoOf(name)).then(() => { if (oneName() === name) syncOutfitBtn(); }, () => {});
+    };
+    b.addEventListener("pointerenter", (e) => { if (e.pointerType === "mouse") peek(); });
+    b.addEventListener("focus", peek);
+    b.addEventListener("click", async () => {
+      if (b.getAttribute("aria-busy") === "true") return;
+      const name = oneName();
+      if (!name) return;
+      // A name still being typed becomes its chip first (same as Enter), so the field keeps it.
+      if (String($.els.namesInput && $.els.namesInput.value || "").trim()) commitFragment({ clearInput: true });
+      b.setAttribute("aria-busy", "true");
+      try {
+        const r = await outfitPart().addPlayerOutfit(name, whoOf(name));
+        if (r && r.added) { sfx("plink"); resetAge(); }
+      } finally {
+        b.removeAttribute("aria-busy");
+        syncOutfitBtn();
+      }
+    });
+    if ($.els.namesInput) $.els.namesInput.addEventListener("input", () => syncOutfitBtn());
+    if (typeof window !== "undefined") window.addEventListener("ps2-lang", () => syncOutfitBtn());
   }
 
   /**
@@ -569,5 +637,5 @@ export function createNamesField($) {
     }
     return out.slice(0, $.nameLimit());
   }
-  return { addFactions, addServers, getNameFailure, isNameFetched, setNameTokens, clearNameFailures, addNameToField, namesMatch, rollDice, toggleNameInField, removeNameToken, syncNamesPlaceholder, showLimitNote, hideLimitNote, syncLimitLock, lockedClick, renderNameTokens, makeFailedToken, retryFailedName, commitFragment, currentNamesInField, clearNamesFromInput, showLimitHint, hideLimitToast, showLimitToast, clearLimitHint };
+  return { addFactions, addServers, getNameFailure, isNameFetched, setNameTokens, clearNameFailures, addNameToField, namesMatch, rollDice, toggleNameInField, removeNameToken, syncNamesPlaceholder, showLimitNote, hideLimitNote, syncLimitLock, lockedClick, renderNameTokens, makeFailedToken, retryFailedName, commitFragment, currentNamesInField, clearNamesFromInput, syncOutfitBtn, showLimitHint, hideLimitToast, showLimitToast, clearLimitHint };
 }

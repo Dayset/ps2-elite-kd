@@ -38,10 +38,10 @@ import { formatClock, fmtNum, slugKey, bareName, parseNames, namesEqualIgnoreCas
 import { createAnalyze } from "./analyze.mjs?v=20261030-cxl1";
 import { createShareAdd } from "./share-add.mjs?v=20261027-z79";
 import { createSharedIndex } from "./shared-index.mjs?v=20261101-numloop1";
-import { createNamesField } from "./names-field.mjs?v=20261031-sr2";
+import { createNamesField } from "./names-field.mjs?v=20261101-pof1";
 import { initFactionPanel } from "./faction-panel.mjs?v=20261031-fr4";
 import { initServerPanel } from "./server-panel.mjs?v=20261031-sr2";
-import { createOutfitRoster, canTakeName as canTakeNameRule, OUTFIT_MAX_NAMES } from "./outfit-tags.mjs?v=20261031-sr1";
+import { createOutfitRoster, canTakeName as canTakeNameRule, OUTFIT_MAX_NAMES } from "./outfit-tags.mjs?v=20261101-pof1";
 import { createStatsTable } from "./stats-table.mjs?v=20261101-duel1";
 import { createChartWave } from "./chart-wave.mjs?v=20261029-puregraph1";
 import { createChart } from "./chart.mjs?v=20261030-hs1";
@@ -454,6 +454,7 @@ import {
     diceLowBtn: document.getElementById("diceLowBtn"),
     diceHighBtn: document.getElementById("diceHighBtn"),
     pairMatchBtn: document.getElementById("pairMatchBtn"),
+    outfitBtn: document.getElementById("outfitBtn"), // t832u: 🛡️ one name → add his outfit
     pairMatchNote: document.getElementById("pairMatchNote"),
     clearNamesBtn: document.getElementById("clearNamesBtn"),
     fetchFresh: document.getElementById("fetchFresh"),

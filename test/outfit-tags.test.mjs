@@ -189,3 +189,63 @@ test("no animation in the outfit note CSS", () => {
   const block = css.slice(css.indexOf("/* t765u: outfit tag note"));
   assert.doesNotMatch(block.slice(0, 1200).replace(/\/\*[\s\S]*?\*\//g, ""), /animation|transition/);
 });
+
+/* t832u: 🛡️ next to a single name adds that player's outfit (same members, order, cap and note as a typed [TAG]). */
+test("🛡️ player outfit: URL, row parsing, label (tag-less outfit too)", async () => {
+  const { playerOutfitUrl, playerOutfitRow, outfitLabel } = await import("../outfit-tags.mjs");
+  const B = "https://census.daybreakgames.com/s:x/get/ps2:v2/";
+  const u = playerOutfitUrl(B, { name: "Andelarin" });
+  assert.match(u, /character\?name\.first_lower=andelarin/);
+  assert.match(u, /outfit_member_extended\^on:character_id\^inject_at:om/);
+  assert.match(playerOutfitUrl(B, { cid: "5429" }), /character\?character_id=5429&/);
+  const j = { character_list: [{ character_id: "1", name: { first: "Andelarin" }, om: { outfit_id: "37", name: "We Want Your Soul", alias: "WWYS", member_count: "5595" }, w: { world_id: "10" } }] };
+  const r = playerOutfitRow(j, B);
+  assert.equal(r.found, true);
+  assert.equal(r.outfit.outfit_id, "37");
+  assert.equal(outfitLabel(r.outfit), "[WWYS] We Want Your Soul (Miller)");
+  assert.deepEqual(playerOutfitRow({ character_list: [{ character_id: "2", w: { world_id: "10" } }] }), { found: true, outfit: null });
+  assert.deepEqual(playerOutfitRow({ character_list: [] }), { found: false, outfit: null });
+  const noTag = playerOutfitRow({ character_list: [{ character_id: "3", om: { outfit_id: "9", name: "C70BR", alias: "", member_count: "1" }, w: { world_id: "1" } }] }, B);
+  assert.equal(outfitLabel(noTag.outfit), "C70BR (Connery)");
+});
+
+test("🛡️ addPlayerOutfit: 2 Census calls, one lookup per visit, no outfit / unknown / error handled", async () => {
+  const members = ["Me", "A", "B"].map((n, i) => member(n, i, i));
+  const mk = (char) => {
+    const f = fakeField({ tokens: ["Me"], members, outfits: [] });
+    f.$.censusJson = async (url) => {
+      f.calls.push(url);
+      if (char === "fail") throw new Error("net");
+      if (url.includes("outfit_member?")) return { outfit_member_list: members };
+      return { character_list: char ? [char] : [] };
+    };
+    return f;
+  };
+  const f = mk({ character_id: "1", om: { outfit_id: "5", alias: "BAWC", name: "Broken Arrow Company", member_count: "3" }, w: { world_id: "10" } });
+  await f.part.lookupPlayerOutfit("Me"); // hover
+  const r = await f.part.addPlayerOutfit("Me");
+  assert.deepEqual(f.$.nameTokens, ["Me", "A", "B"]);
+  assert.equal(r.added, 2);
+  assert.equal(f.calls.length, 2, "hover + click = one lookup + one member list");
+  assert.ok(f.calls.every((u) => u.startsWith("https://census.daybreakgames.com/")), "Census only");
+  assert.equal(f.part.knownPlayerOutfit("me").outfit.alias, "BAWC");
+  const none = mk({ character_id: "2", w: { world_id: "10" } });
+  assert.equal((await none.part.addPlayerOutfit("Me")).none, true);
+  assert.deepEqual(none.$.nameTokens, ["Me"]);
+  assert.equal((await mk(null).part.addPlayerOutfit("Nobody")).unknown, true);
+  const bad = mk("fail");
+  assert.equal((await bad.part.addPlayerOutfit("Me")).error, true);
+  await bad.part.addPlayerOutfit("Me");
+  assert.equal(bad.calls.length, 2, "a failed lookup is tried again");
+});
+
+test("🛡️ button: index + live markup hidden by default, shown for exactly one name, no animation", () => {
+  for (const p of ["index.html", "live.html"]) assert.match(read(p), /<button id="outfitBtn" type="button" class="outfit-btn" hidden/);
+  const nf = read("names-field.mjs");
+  assert.match(nf, /return list\.length === 1 \? list\[0\] : "";/);
+  assert.match(nf, /if \(\$\.LIVE_MODE\) return "";/);
+  const css = read("styles.css");
+  const block = css.slice(css.indexOf("/* t832u"), css.indexOf(".controls .pair-match-note {"));
+  assert.ok(block.length > 50);
+  assert.doesNotMatch(block.replace(/\/\*[\s\S]*?\*\//g, ""), /animation|transition/);
+});
