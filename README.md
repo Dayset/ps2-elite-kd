@@ -2,7 +2,7 @@
 
 **Player statistics for PlanetSide 2: K/D plotted against the weapon KPM of the enemies each player faced, with opposition-weighted and pace-adjusted metrics.**
 
-🎮 **[Open the live site](https://dayset.github.io/ps2-elite-kd/)** · 📘 [Using the site](docs/using-the-site.md) · 📐 [How the numbers are calculated](docs/metrics.md) · ⚙️ [How the shared cache works](docs/pipeline.md) · 🔀 [Theory vs practice: the Diff research](docs/theory-practice-diff.md)
+🎮 **[Open the live site](https://dayset.github.io/ps2-elite-kd/)** · 📘 [Using the site](docs/using-the-site.md) · 📐 [How the numbers are calculated](docs/metrics.md) · ⚙️ [How the shared cache works](docs/pipeline.md) · 🔀 [Theory vs practice: the Diff research](docs/theory-practice-diff.md) · 🗂️ [Decision: continuous data collection (2026-11-01)](docs/decisions/2026-11-01-continuous-data-collection.md)
 
 Free and open source. It's plain HTML, CSS and JavaScript on GitHub Pages. Two small Cloudflare Workers queue cache refreshes and run the alert oracle. No cookies, no analytics, no ads.
 

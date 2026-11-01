@@ -11,6 +11,12 @@ workers_dev = true
 # Secrets (GH_TOKEN, CENSUS_PROXY_KEY) are never touched by a deploy.
 keep_vars = true
 
+# 📦 Data collection switches (decision note: docs/decisions/2026-11-01-continuous-data-collection.md).
+# KILL_CLASSES: "all" = every PC kill 24/7 (tagged in/out of alert) · "alerts" = alert zones only · "off".
+# VEHICLE_KILLS / WORLD_EVENTS / MAP_STATES: set to "off" to stop that table. <KIND>_MAX_MB caps a table's size.
+[vars]
+KILL_CLASSES = "all"
+
 [triggers]
 crons = ["*/5 * * * *"]
 

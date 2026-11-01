@@ -23,6 +23,8 @@ export const PC_SPAWN_SOFT = 3_000_000;
 export const PC_SOFT = 4_000_000;
 export const PC_HARD = 8_000_000;
 const CORE = ["Death", "VehicleDestroy", "PlayerFacilityCapture", "PlayerFacilityDefend", "PlayerLogin", "PlayerLogout", "GainExperience_experience_id_272", "FacilityControl"]; // FacilityControl: 🏴 capture tags (low volume)
+// 🗺️ World events for collect.js (owner t831u, 2026-11-01): alerts and continent locks, a few hundred a day.
+CORE.push("MetagameEvent", "ContinentLock", "ContinentUnlock");
 const CHATTY = ["GainExperience_experience_id_557", "GainExperience_experience_id_556"];
 // 🚐 Forward spawns (live-map.js SPAWN_XP / SPAWN_HIT_XP): about +25-30 % messages. Dropped first.
 export const SPAWN_XP_IDS = Object.freeze([233, 1542, 1410, 56, 201, 1543, 355, 1988, 1737, 68, 2151, 113, 2154, 1409]);

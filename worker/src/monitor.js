@@ -24,6 +24,7 @@ import { PlanSwitch } from "./plan.js";
 import { CaptureTags } from "./capture-tags.js";
 import { Rosters } from "./rosters.js";
 import { KillClasses } from "./kill-classes.js";
+import { Collect } from "./collect.js";
 import { removedKeys } from "./duel-store.js";
 
 /*
@@ -59,8 +60,10 @@ export class KillMonitor {
     // 👥 Base rosters (rosters.js): who was at a base when it was captured or defended. Internal only.
     this.rost = new Rosters(sql, { meter: this.meter, roster: (w, f) => this.live.roster("ps2", w, f), removed: () => removedKeys("ps2", (u, o) => fetch(u, o)) });
     // 🎯 Class vs class kills during PC alerts (kill-classes.js). Internal only.
-    this.kc = new KillClasses(sql, { meter: this.meter, removed: () => removedKeys("ps2", (u, o) => fetch(u, o)), sid: (env && env.CENSUS_SERVICE_ID) || "daysetps2legends", all: !!(env && env.KILL_CLASSES === "all") });
-    const feed = (envName, p, now) => { try { this.live.onEvent(envName, p, now); } catch {} try { this.caps.onEvent(envName, p, now); } catch {} try { this.rost.onEvent(envName, p, now); } catch {} try { this.kc.onEvent(envName, p, now); } catch {} };
+    this.kc = new KillClasses(sql, { meter: this.meter, removed: () => removedKeys("ps2", (u, o) => fetch(u, o)), sid: (env && env.CENSUS_SERVICE_ID) || "daysetps2legends", mode: env && env.KILL_CLASSES, maxMB: env && env.KC_MAX_MB });
+    // 📦 Continuous collection outside alerts (collect.js, owner t831u): vehicle kills, world events, map states. Internal only.
+    this.col = new Collect(sql, env, { meter: this.meter, live: () => this.live, removed: () => removedKeys("ps2", (u, o) => fetch(u, o)) });
+    const feed = (envName, p, now) => { try { this.live.onEvent(envName, p, now); } catch {} try { this.caps.onEvent(envName, p, now); } catch {} try { this.rost.onEvent(envName, p, now); } catch {} try { this.kc.onEvent(envName, p, now); } catch {} try { this.col.onEvent(envName, p, now); } catch {} };
     this.ps = new PsAssists(ctx, env, { meter: this.meter, onPayload: feed });
     this.pc = new PcStream(ctx, env, { meter: this.meter, onPayload: feed });
     // 🔀 paid | free (plan.js): plan.json or the PLAN variable; the last known value survives restarts.
@@ -97,6 +100,7 @@ export class KillMonitor {
     try { await this.caps.settle(this.env); } catch {}
     try { await this.rost.settle(); } catch {}
     try { if (pcOn) await this.kc.settle(); } catch {}
+    try { if (pcOn) await this.col.settle(); } catch {}
     this.saveMeter();
     const done = this.expired();
     if ((psOn || pcOn || !done) && !(await this.ctx.storage.getAlarm())) await this.ctx.storage.setAlarm(Date.now() + ALARM_MS);
@@ -178,6 +182,13 @@ export class KillMonitor {
       const since = Math.max(now - 31 * 86400, +url.searchParams.get("since") || now - 3600);
       return Response.json({ v: 1, at: now, info: this.kc.info(), rows: this.kc.read(since, Math.min(500, +url.searchParams.get("limit") || 100)) });
     }
+    if (url.pathname === "/live/collect") {
+      const now = Math.floor(Date.now() / 1000), kind = url.searchParams.get("kind");
+      const since = Math.max(now - 31 * 86400, +url.searchParams.get("since") || now - 3600);
+      const rows = this.col.read(kind, since, Math.min(500, +url.searchParams.get("limit") || 100));
+      if (!rows) return Response.json({ error: "bad_request", kinds: ["vd", "wev", "ms"] }, { status: 400 });
+      return Response.json({ v: 1, at: now, kind, info: this.col.info()[kind], rows });
+    }
     if (url.pathname === "/live/captures") {
       const w = url.searchParams.get("world");
       if (!ENV_WORLDS.ps2.includes(String(w))) return Response.json({ error: "bad_request" }, { status: 400 });
@@ -193,7 +204,7 @@ export class KillMonitor {
       const now = Date.now();
       const u = this.meter.usage(now);
       return Response.json({ v: 1, at: Math.floor(now / 1000), plan: this.planSw.state(now), ...u, today: { ps2: this.meter.today("ps2", now), ps2ps4us: this.meter.today("ps2ps4us", now), ps2ps4eu: this.meter.today("ps2ps4eu", now) },
-        pc: this.pc.status(now), ps: Object.fromEntries(Object.entries(this.ps.status().envs).map(([k, v]) => [k, { connected: v.connected, lastMsgAgoS: v.lastMsgAgoS }])), live: this.live.stats(), rosters: this.rost.info(), caps: this.caps.info(), killClasses: this.kc.info(now) });
+        pc: this.pc.status(now), ps: Object.fromEntries(Object.entries(this.ps.status().envs).map(([k, v]) => [k, { connected: v.connected, lastMsgAgoS: v.lastMsgAgoS }])), live: this.live.stats(), rosters: this.rost.info(), caps: this.caps.info(), killClasses: this.kc.info(now), collect: this.col.info(now) });
     }
     if (url.pathname === "/ps-assists/status") return Response.json(this.ps.status());
     if (url.pathname === "/ps-assists/export") {
@@ -225,6 +236,7 @@ export const LIVE_CALLS_PER_10MIN = 240;
  *       fights, #78) and `top`, the 👥 scoreboard's 3 players per base (owner-approved
  *       2026-10-30; players on the removal list dropped)
  *   GET /live/rosters?since=<unix s>[&world=1]  → 👥 stored base rosters. INTERNAL ONLY (proxy key).
+ *   GET /live/collect?kind=vd|wev|ms&since=<unix s> → 📦 continuous collection (collect.js). INTERNAL ONLY (proxy key).
  *   GET /live/captures?world=1[&zone=2][&since=<unix s>] → 🏴 recent base captures with the
  *       leading outfit's tag (public; outfit tags only, no player ids)
  *   GET /live/locate?ns=ps2&ids=<cid>,…  (≤ 50) → where each player is now. INTERNAL ONLY:
@@ -262,7 +274,7 @@ export async function liveRoute(request, env, cors, { ip = "", fetchFn = (u, o) 
   }
   const key = typeof env.CENSUS_PROXY_KEY === "string" ? env.CENSUS_PROXY_KEY : "";
   if (!key || request.headers.get("X-Proxy-Key") !== key) return new Response(JSON.stringify({ error: "forbidden" }), { status: 403, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
-  if (url.pathname === "/live/rosters" || url.pathname === "/live/killclasses") {
+  if (url.pathname === "/live/rosters" || url.pathname === "/live/killclasses" || url.pathname === "/live/collect") {
     const r = await stub.fetch(new Request(url.toString(), { method: "GET" }));
     return new Response(r.body, { status: r.status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" } });
   }
