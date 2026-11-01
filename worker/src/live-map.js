@@ -221,6 +221,15 @@ export class LiveMap {
     if (!zk) { zk = { w, z: zoneDef(z), crowd: new Map() }; E.zones.set(k, zk); }
     return zk;
   }
+  /** Everyone in one zone's crowd in the window: [[cid, fac]] (fac may be null). */
+  zoneCrowd(env, world, zone, since) {
+    const E = this.envs[env];
+    const zk = E && E.zones.get(`${world}|${zoneDef(zone)}`);
+    if (!zk) return [];
+    const out = [];
+    for (const [cid, [t, fac]] of zk.crowd) if (t >= since) out.push([cid, fac || null]);
+    return out;
+  }
 
   /** One player (null when not seen in the last KEEP_MS). Internal only, never on a public page. */
   locate(env, cid, now = Date.now()) {

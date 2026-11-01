@@ -251,3 +251,15 @@ test("liveRoute: per-player positions need the key (not public), removed players
   const act = await liveRoute(new Request("https://w/live/activity?ns=ps2&world=1"), env, {}, { ip: "y", removed });
   assert.equal((await act.json()).bases.length, 2);
 });
+
+test("zoneCrowd (#89): one zone's crowd in the window, with factions, nothing else", () => {
+  const m = new LiveMap();
+  m.onEvent("ps2", capture(T0, A, "201"), T0);                    // A, zone 2 (fac set by the death below)
+  m.onEvent("ps2", death(T0 + 1e3, A, B), T0 + 1e3);              // A VS, B NC, zone 2
+  m.onEvent("ps2", capture(T0 + 2e3, C, "203", { zone: "4" }), T0 + 2e3); // C, zone 4 (Hossin)
+  const z2 = m.zoneCrowd("ps2", "1", 2, T0 + 3e3 - WINDOW_MS);
+  assert.deepEqual(new Map(z2), new Map([[A, "VS"], [B, "NC"]]));
+  assert.deepEqual(m.zoneCrowd("ps2", "1", 4, T0 + 3e3 - WINDOW_MS).map(([c]) => c), [C]);
+  assert.deepEqual(m.zoneCrowd("ps2", "1", 2, T0 + 10 * 60e3), [], "past the window: nobody");
+  assert.deepEqual(m.zoneCrowd("ps2", "1", 6, T0 + 3e3 - WINDOW_MS), [], "no such zone");
+});

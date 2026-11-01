@@ -9,7 +9,8 @@ import { modeFocus, ownerLookup, heatLookup, spawnLookup, pickMode, MODE_KEY, pi
 import { nextPoll } from "./poll.js?v=20261026-mode1";
 import { voiceToggle, voiceTick, bindVoiceMenu } from "./voice.js?v=20261027-say1";
 import { reportPanel } from "./players.js?v=20261024-i18n1";
-import { benchPanel, initResults, refreshHistory, renderHist } from "./results.js?v=20261101-int1";
+import { benchPanel, initResults, refreshHistory, renderHist } from "./results.js?v=20261101-alertskill1";
+import { renderAlertSkill } from "./skill-foot.js?v=20261101-alertskill1";
 import { initAuth } from "./auth.js?v=20261028-dev82";
 import { enhance, onSectionExpand, refreshSummary } from "./collapse.js?v=20261026-pulse1";
 import { t as tr, ready } from "../../i18n.mjs";
@@ -238,6 +239,7 @@ function render2(now) {
   if (cmdNow) voiceTick(cmdNow.focus, undefined, false, undefined, s, cmdNow.pockets); // s: territory + 15-min change for the gap ending (owner t652u)
   bindVoiceMenu($("main")); // ⚙️ voice list (owner t650u), replaces the always-visible dropdown
   $("miniMain").innerHTML = `<b>${esc(a.world_name)} · ${esc(a.zone_name)}</b>${win ? `<span>${FACS.map((f) => `<span class="${f}">${f} ${pct1(win[f].pct)}%</span>`).join(" ")}</span>` : ""}`;
+  renderAlertSkill(a); // ⚔️ This alert's skill row (#89), under the global row; hidden without live skill
   miniSync();
   if (S.ticksFor === a.key) { const c = $("chart"); c.innerHTML = chart(S.ticks, a.dur, c.clientWidth); chartHover(c, S.ticks, a.dur, (k, how) => scrub(a, k, how)); }
   if (S.scrub && S.scrub.key === a.key) scrub(a, S.scrub.tick, S.scrub.how);

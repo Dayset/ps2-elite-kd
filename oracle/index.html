@@ -187,7 +187,7 @@
   </dialog>
 
   <div id="banner" class="banner" role="status" aria-live="polite" hidden></div>
-  <div id="mini" class="mini" aria-hidden="true"><div id="miniMain" class="mini-main"></div><div id="miniSkill" class="mini-skill" hidden></div></div>
+  <div id="mini" class="mini" aria-hidden="true"><div id="miniMain" class="mini-main"></div><div id="miniSkill" class="mini-skill" hidden></div><div id="miniSkillAlert" class="mini-skill" hidden></div></div>
   <div id="tabs" class="tabs"></div>
   <div id="main"><div class="grid" aria-busy="true" aria-label="Loading" data-i18n-aria-label="or.loading"><section class="card map"><h2 data-sec="map"><span data-i18n="or.h.map">Map</span></h2><div class="sk sk-map"></div></section><div class="side"><section class="card win"><h2 data-sec="win-chance"><span data-i18n="or.h.win">Win chance</span></h2><div class="sk sk-odds"></div><div class="sk sk-line"></div><div class="sk sk-line" style="width:70%"></div></section></div></div><section class="card chart" style="margin-top:14px"><h2 data-sec="win-chance-over-time"><span data-i18n="or.h.chart">Win chance over time</span></h2><div class="sk sk-chart"></div></section></div>
   <!-- Voting panel: filled by js/vote.js (listens for oracle:alert / oracle:auth). render() moves this node into #voteHere. -->
@@ -205,7 +205,7 @@
 </div>
 
 <script type="module" src="js/vote.js?v=20261030-flat2"></script>
-<script type="module" src="js/main.js?v=20261101-int1"></script>
+<script type="module" src="js/main.js?v=20261101-alertskill1"></script>
 <script>
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("../sw.js").catch(function () {});

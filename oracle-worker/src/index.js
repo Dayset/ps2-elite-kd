@@ -366,9 +366,14 @@ export async function runCycle(env, nowMs = Date.now()) {
         state.win_popadj = popAdjusted(state.win, state.pop, state.t);
       }
       // ⚔️ Per-base fight totals: shown and stored for the #78 backtest; the odds don't read them.
-      const fx = fightsOf(await activityFor(a.world), a.zone, state.owners);
+      const act = await activityFor(a.world);
+      const fx = fightsOf(act, a.zone, state.owners);
       if (fx) {
         try { await namePlayers(env, fx.bases); } catch { for (const b of fx.bases) delete b.top; } // 👥 ids → names + iVi
+        // ⚔️ Alert skill (#89): per-faction median ⚔️ iVi of this alert's placed players
+        // (cache Worker aggregates, from the 5-min live map; shown only, not in the odds).
+        const sk = act && act.zones && act.zones[a.zone] ? act.zones[a.zone].skill : null;
+        if (sk && Object.keys(sk).length) state.alertSkill = sk;
         state.fights = fx.bases;
         state.fights_live = fx.live;
         state.fights_at = fx.at; // ⚔️ snapshot time (s): killAgo / convAgo count back from here

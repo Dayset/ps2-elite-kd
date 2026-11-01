@@ -38,3 +38,26 @@ export async function renderSkillFoot(alerts) {
   if (html) el.innerHTML = html;
   el.hidden = !el.innerHTML;
 }
+
+/** HTML of the mini-bar alert-skill row (#89: this alert's placed players, live map medians),
+    label left, numbers right via .mini-skill flex, or "" when there is no alert skill.
+    Same shape as the global row so the two compare directly. Exported for tests. */
+export function alertSkillHtml(skill) {
+  if (!skill || typeof skill !== "object") return "";
+  const parts = FAC_ORDER.filter(([k]) => skill[k] && Number.isFinite(+skill[k].med)).map(([k, lab]) => `<span class="${lab === "NS" ? "" : lab}">${lab} ${Math.round(+skill[k].med)}</span>`);
+  if (!parts.length) return "";
+  const counts = { vs: 0, nc: 0, tr: 0, ns: 0 };
+  for (const k of ["vs", "nc", "tr"]) if (skill[k] && Number.isFinite(+skill[k].n)) counts[k] = Math.round(+skill[k].n);
+  if (skill.nso && Number.isFinite(+skill.nso.n)) counts.ns = Math.round(+skill.nso.n);
+  const tip = tr("or.skillAlertTip", "Median ⚔️ iVi of this alert's placed players (live map, last 5 minutes; players without a known score left out). Players counted: VS {vs}, NC {nc}, TR {tr}, NS {ns}.", counts);
+  return `<span class="mini-skill-label" title="${esc(tip)}">${esc(tr("or.skillAlert", "⚔️ This alert:"))}</span><span class="mini-skill-values">${parts.join(" · ")}</span>`;
+}
+
+/** Render the alert-skill row for the selected alert (live alerts with skill only); hidden otherwise. */
+export function renderAlertSkill(alert) {
+  const el = $("miniSkillAlert");
+  if (!el) return;
+  const html = alert && alert.status === "live" && alert.state ? alertSkillHtml(alert.state.alertSkill) : "";
+  el.innerHTML = html;
+  el.hidden = !html;
+}

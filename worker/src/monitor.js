@@ -18,7 +18,8 @@
 import { MONITOR_IDS, MONITOR_DAYS } from "./monitor-ids.js";
 import { PsAssists } from "./ps-assists.js";
 import { Meter } from "./meter.js";
-import { LiveMap, ENV_WORLDS } from "./live-map.js";
+import { LiveMap, ENV_WORLDS, WINDOW_MS } from "./live-map.js";
+import { loadSkillMaps, zoneSkillMedians } from "./alert-skill.js";
 import { PcStream } from "./pc-stream.js";
 import { PlanSwitch } from "./plan.js";
 import { CaptureTags } from "./capture-tags.js";
@@ -168,7 +169,18 @@ export class KillMonitor {
       const z = url.searchParams.get("zone");
       const zn = z && /^\d+$/.test(z) ? +z : null, now = Date.now();
       const caps = ns === "ps2" ? this.caps.recent(w, Math.floor(now / 1000) - CAPS_ACTIVITY_S, zn) : [];
-      return Response.json({ v: 1, ns, world: +w, stream: this.streamOn(ns), ...this.live.activity(ns, w, now, zn), caps });
+      const act = this.live.activity(ns, w, now, zn);
+      // ⚔️ Alert skill (#89): per-faction median ⚔️ iVi of each zone's placed players, as
+      // aggregates only (no player ids — the medians are public-safe, the same numbers the
+      // dashboard shows). A failed skill load leaves the activity untouched, never broken.
+      try {
+        const maps = await loadSkillMaps((u, o) => fetch(u, o), now);
+        if (maps) for (const [zk, zv] of Object.entries(act.zones)) {
+          const med = zoneSkillMedians(this.live.zoneCrowd(ns, w, zk, now - WINDOW_MS), maps);
+          if (Object.keys(med).length) zv.skill = med;
+        }
+      } catch {}
+      return Response.json({ v: 1, ns, world: +w, stream: this.streamOn(ns), ...act, caps });
     }
     if (url.pathname === "/live/rosters") {
       const now = Math.floor(Date.now() / 1000);
