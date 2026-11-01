@@ -3149,7 +3149,7 @@ html[data-room="ps"] .controls .fresh-row-end select.room-select { border-color:
 .duel-cmp thead th.duel-b { color: var(--token-fail-fg); }
 .duel-cmp tr.duel-big td { font-weight: 700; font-size: 0.9rem; }
 .duel-scroll { max-height: 30rem; }
-.duel-table th.rk-num, .duel-table td.rk-num { left: 0; }
+.duel-table th.rk-num, .duel-table td.rk-num { position: sticky; left: 0; }
 .duel-table td { overflow: hidden; text-overflow: ellipsis; }
 .duel-table.duel-crowd { min-width: 38.6rem; }
 .duel-table col.duel-w-num { width: 2.6rem; }
@@ -3160,6 +3160,8 @@ html[data-room="ps"] .controls .fresh-row-end select.room-select { border-color:
   position: sticky; left: 2.6rem; z-index: 1; text-align: left; box-shadow: 4px 0 8px -4px var(--shadow);
 }
 .duel-table thead th.duel-name { z-index: 4; }
+/* ⚔️ iVi after the opponent name (crowd view only): dim, never wraps away from the name. */
+.duel-table td.duel-name .duel-ivi { color: var(--dim); font-size: 0.85em; margin-left: 0.3em; white-space: nowrap; }
 .duel-table.duel-pair { min-width: 51.6rem; }
 .duel-table col.duel-w-time { width: 7.4rem; }
 .duel-table col.duel-w-killer { width: 10rem; }
@@ -3180,6 +3182,10 @@ html[data-room="ps"] .controls .fresh-row-end select.room-select { border-color:
 @media (max-width: 600px) {
   .duel-table th.rk-num, .duel-table td.rk-num { box-shadow: 4px 0 8px -4px var(--shadow); }
   .duel-table th.duel-name, .duel-table td.duel-name { left: auto; box-shadow: none; }
+  /* Phones (Dayset 2026-11-01): Kills pins right after # (the name scrolls), so the
+   * kills numbers never slide under the # column when scrolling to Deaths and beyond. */
+  .duel-table th.duel-kills, .duel-table td.duel-kills { position: sticky; left: 2.6rem; z-index: 1; box-shadow: 4px 0 8px -4px var(--shadow); }
+  .duel-table thead th.duel-kills { z-index: 4; }
   .duel-table col.duel-w-name { width: 12.5rem; }
   .duel-table.duel-crowd { min-width: 36.1rem; }
   .duel-cmp thead th.duel-a, .duel-cmp thead th.duel-b { font-size: 0.72rem; }

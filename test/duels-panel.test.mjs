@@ -180,3 +180,30 @@ describe("🤺 duels panel: pair switching and the cross-server gate", () => {
     });
   });
 });
+
+describe("🤺 duels panel: crowd kills pin + opponent iVi (owner 2026-11-01)", () => {
+  it("kills cells carry duel-kills and a cached opponent shows ⚔️ iVi, an unknown one shows none", { skip: !chrome && "no Chrome", timeout: 120000 }, async () => {
+    await withPage(async ({ ev, nav }) => {
+      await nav("index.html");
+      const r = await ev(`(async () => {
+        ${fixture}
+        const { mountDuels } = await import("/duels-panel.mjs");
+        const panel = mountDuels(s, { getJson: async () => ({ error: "stub" }), baseOf: () => "https://x/get/ps2:v2/", catalog: async () => null });
+        panel.setPlayers([{ cid: "99", display: "LeGs2", rows: [
+          { name: "botWaz", kills: 10, deaths: 5, kpm: 1.5 },
+          { name: "NoSuchPlayerZZZ", kills: 3, deaths: 8, kpm: 0.5 },
+        ] }]);
+        await sleep(2500);
+        const rows = [...s.querySelectorAll("tbody tr")].map((tr) => tr.innerHTML);
+        const botRow = rows.find((h) => h.includes("botWaz"));
+        const noRow = rows.find((h) => h.includes("NoSuchPlayerZZZ"));
+        return { head: s.querySelector("thead").innerHTML, rows, botRow, noRow };
+      })()`);
+      assert.match(r.head, /duel-kills/, "kills header carries duel-kills");
+      assert.ok(r.rows.every((h) => h.includes("duel-kills")), "every kills cell carries duel-kills");
+      assert.match(r.botRow, /duel-ivi/, "cached opponent shows iVi");
+      assert.match(r.botRow, /⚔️1,357/, "iVi is the ranks-lite adjs (botWaz 1357.3)");
+      assert.doesNotMatch(r.noRow, /duel-ivi/, "unknown opponent shows no iVi");
+    });
+  });
+});

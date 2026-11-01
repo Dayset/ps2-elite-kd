@@ -76,7 +76,7 @@ function crowdColumns() {
  */
 export function mountDuels(section, o = {}) {
   if (!section) return { setPlayers() {} };
-  const { getJson, baseOf, addName, sortScroll, catalog = async () => null, pairApi = null } = o;
+  const { getJson, baseOf, addName, sortScroll, catalog = async () => null, pairApi = null, dataDir = "data/" } = o;
   const count = section.querySelector(".duel-count");
   const sum = section.querySelector(".duel-summary");
   const status = section.querySelector(".duel-status");
@@ -157,6 +157,39 @@ export function mountDuels(section, o = {}) {
   }
 
   /* ---------- one player: vs the crowd */
+
+  /* ⚔️ iVi for crowd opponents, from the room's ranks-lite (same ⚔️ iVi as the
+   * skill tables: evened adjs, finite and > 0 only). Lazy: fetched on the first
+   * crowd render, then cached for the page; a failed load just means no iVi
+   * (never a broken table). Keyed by lowercased name and by slug, so a
+   * killboard name matches either spelling. */
+  let iviMap = null, iviMapP = null;
+  function ensureIvi() {
+    if (iviMapP) return iviMapP;
+    iviMapP = fetch(`${dataDir}ranks-lite.json`).then((r) => (r.ok ? r.json() : null)).then((d) => {
+      const m = new Map();
+      if (d && Array.isArray(d.cols) && Array.isArray(d.rows)) {
+        const ni = d.cols.indexOf("name"), si = d.cols.indexOf("slug"), ai = d.cols.indexOf("adjs");
+        for (const row of d.rows) {
+          const v = row[ai];
+          if (!Number.isFinite(v) || v <= 0) continue;
+          const n = String(row[ni] || "").toLowerCase();
+          if (n) m.set(n, v);
+          const s = String(row[si] || "").toLowerCase();
+          if (s) m.set(s, v);
+        }
+      }
+      iviMap = m;
+      return m;
+    }).catch(() => { iviMap = new Map(); return iviMap; });
+    return iviMapP;
+  }
+  const iviHtml = (r) => {
+    if (!iviMap) return "";
+    const v = iviMap.get(bareName(r.name).toLowerCase());
+    return Number.isFinite(v) && v > 0 ? ` <span class="duel-ivi">⚔️${int(v)}</span>` : "";
+  };
+
   function renderCrowd() {
     const rows = crowdRows(a);
     const s = crowdSummary(rows);
@@ -177,15 +210,18 @@ export function mountDuels(section, o = {}) {
     colgroup(["num", "name", "n", "n", "n", "n", "n"]);
     table.querySelector("thead").innerHTML = `<tr><th class="rk-num" scope="col">#</th>` +
       th("opp", tr("duel.c.opp", "Opponent"), tr("duel.c.oppTip", "Click a name to add it and see the head-to-head."), "duel-name ") +
-      cols.map((c) => th(c.id, c.label, c.hint)).join("") + `</tr>`;
+      cols.map((c) => th(c.id, c.label, c.hint, c.id === "kills" ? "duel-kills " : "")).join("") + `</tr>`;
     const dir = sortDir === "asc" ? 1 : -1;
     const col = cols.find((c) => c.id === sortKey);
     const list = rows.slice().sort((x, y) => (sortKey === "opp" ? dir * bareName(x.name).localeCompare(bareName(y.name)) : dir * (col.fn(x) - col.fn(y))) || y.share - x.share);
     const badge = (r) => (r === s.nemesis ? ` <span class="scr-group duel-nem" title="${esc(tr("duel.nemesisTip", "Killed this player the most."))}">😈</span>` : r === s.target ? ` <span class="scr-group duel-tgt" title="${esc(tr("duel.targetTip", "This player killed them the most."))}">🎯</span>` : "");
     table.querySelector("tbody").innerHTML = list.map((r, i) =>
-      `<tr><td class="rk-num">${i + 1}</td><td class="duel-name">${personHtml(r.name)}${badge(r)}</td>` +
-      `<td>${int(r.kills)}</td><td>${int(r.deaths)}</td><td>${kdTxt(r.kd)}</td><td>${r.kpm == null ? "–" : r.kpm.toFixed(2)}</td><td>${pct(r.share)}</td></tr>`).join("");
+      `<tr><td class="rk-num">${i + 1}</td><td class="duel-name">${personHtml(r.name)}${iviHtml(r)}${badge(r)}</td>` +
+      `<td class="duel-kills">${int(r.kills)}</td><td>${int(r.deaths)}</td><td>${kdTxt(r.kd)}</td><td>${r.kpm == null ? "–" : r.kpm.toFixed(2)}</td><td>${pct(r.share)}</td></tr>`).join("");
     wrap.hidden = false;
+    if (!iviMap) ensureIvi().then(() => {
+      if (mode === "crowd" && section.open && a && shownKey === `c:${a.cid}`) { shownKey = ""; renderCrowd(); }
+    });
   }
 
   /* ---------- two players: head-to-head */
