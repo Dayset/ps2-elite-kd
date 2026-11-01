@@ -470,7 +470,7 @@ export function buildRanksWithGuard(dataDir, { known = KNOWN_EXTREMES, zergCharg
   const guard = guardStatus(found);
   return {
     ranks, guard, hidden: hiddenSummary(dataDir, hiddenFound), bins: binCounts(players, guard), session: sessionStatus(players, guard, dataDir),
-    forensics: forensicsStatus(players, guard, forensics),
+    forensics: forensicsStatus(players, guard, forensics, undefined, undefined, new Set(Object.entries((reviewedJson && reviewedJson.players) || {}).filter(([, v]) => v && v.outlier === "dismissed").map(([k]) => k))),
     review: reviewStatus(players, guard, forensics, farmFound),
     padderPenalty: padderPenaltyStatus(players, ranks),
     vehicleCut: vehicleCutStatus(players, ranks),
@@ -1116,7 +1116,7 @@ export const FORENSICS_CANDIDATES = Object.freeze({ MAX: 200, TOP_IVI: 30, NEW_D
  * 📉 outliers, 👶 new accounts (< 90 days) with own KPM ≥ 1.5 or top-10% iVi,
  * session KPM peak ≥ 3, top 30 iVi, then hide-list cheaters (references).
  */
-export function forensicsStatus(players, guard, store, rule = FORENSICS_CANDIDATES, now = Date.now()) {
+export function forensicsStatus(players, guard, store, rule = FORENSICS_CANDIDATES, now = Date.now(), dismissed = new Set()) {
   const col = (name) => RANK_COLS.indexOf(name);
   const iAdjs = col("adjs"), iCreated = col("created"), iOwn = col("ownKpm");
   const fin = (v) => typeof v === "number" && Number.isFinite(v);
@@ -1126,6 +1126,9 @@ export function forensicsStatus(players, guard, store, rule = FORENSICS_CANDIDAT
   const top = new Set(players.filter((p) => !p.hidden && p.row && fin(p.row[iAdjs])).sort((a, b) => b.row[iAdjs] - a.row[iAdjs]).slice(0, rule.TOP_IVI).map((p) => p.slug));
   const tiers = [[], [], [], [], [], []];
   for (const p of players) {
+    // Owner-dismissed (reviewed.json outlier:dismissed) players are left out entirely — they still
+    // count nowhere here, not even as hide-list references (owner 2026-11-01, anniversay).
+    if (dismissed.has(p.slug)) continue;
     const r = p.row || [];
     const created = +r[iCreated] || 0;
     const isNew = created > 0 && now / 1000 - created < rule.NEW_DAYS * 86400;
@@ -1139,6 +1142,7 @@ export function forensicsStatus(players, guard, store, rule = FORENSICS_CANDIDAT
   const candidates = tiers.flat().slice(0, rule.MAX).map((p) => p.slug);
   const rows = [];
   for (const p of players) {
+    if (dismissed.has(p.slug)) continue;
     const e = store.players[p.slug];
     if (!e) continue;
     const fx = p.forensics || forensicsSummary(e);

@@ -72,6 +72,9 @@ export const KNOWN_EXTREMES = Object.freeze({
   oloyxbjtr: "Owner dismissed 2026-10-30: top performer (adjs 1863, act 7.59, KD 3.70 at 2.59 KPM)",
   wopocc: "Owner dismissed 2026-10-30: no tracker data on record; dismissed from the build-log review list",
   printmepssr: "Owner dismissed 2026-10-30: top performer (adjs 1235, KD 2.76 at 1.29 KPM)",
+  // Owner dismissal 2026-11-01 (reviewed.json outlier:dismissed to match): already hidden, but still
+  // showed in 🔎 session forensics as a hide-list reference — dismissed from all review surfaces.
+  anniversay: "Owner dismissed 2026-11-01: extreme outlier (lifetime K/D ~45), already hidden; KD-obsessed, not chased further",
 });
 
 const fin = (v) => typeof v === "number" && Number.isFinite(v);
