@@ -1710,6 +1710,10 @@ html[data-theme="light"] .progress-modal-backdrop {
   border-bottom: 1px solid var(--row-border);
   text-align: center;
   white-space: nowrap;
+  /* Owner 2026-11-01: top, not the browser's middle default — a cell with a
+     dimmed % gap is 2 lines, one without is 1, and middle centers the 1-line
+     value midway down the row instead of sharing the value line (HSR case). */
+  vertical-align: top;
 }
 
 /* Numbers sit under the header text, not the leading emoji
