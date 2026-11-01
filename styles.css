@@ -1710,6 +1710,10 @@ html[data-theme="light"] .progress-modal-backdrop {
   border-bottom: 1px solid var(--row-border);
   text-align: center;
   white-space: nowrap;
+  /* Owner 2026-11-01: top, not the browser's middle default — a cell with a
+     dimmed % gap is 2 lines, one without is 1, and middle centers the 1-line
+     value midway down the row instead of sharing the value line (HSR case). */
+  vertical-align: top;
 }
 
 /* Numbers sit under the header text, not the leading emoji
@@ -3017,7 +3021,7 @@ body.main-page footer .footer-block { margin-top: 0.3rem; }
  * so a visitor always sees which room they are in; Live (PC only) never shows. */
 html[data-room="ps"] #liveBtn { display: none !important; }
 html[data-room="ps"] .controls .fresh-row-end select.room-select { border-color: var(--accent); }
-.srv-tag, .srv-pos-tag {
+.srv-tag {
   display: inline-block; margin-left: 0.35em; padding: 0 0.3em;
   font-size: 0.7em; font-weight: 400; line-height: 1.35; vertical-align: 0.1em;
   border: 1px solid var(--border); border-radius: 0; opacity: 0.75; white-space: nowrap;
