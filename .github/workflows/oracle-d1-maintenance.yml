@@ -4,7 +4,8 @@ name: Oracle D1 maintenance (one-off SQL)
 # Each change lives in oracle-worker/maintenance/<name>/ with apply-*.sql, the matching
 # revert-*.sql and a backup of the values it replaces. Every UPDATE is guarded on the
 # old value, so a run is idempotent and a revert only undoes rows still holding the new
-# value. Logs the affected ticks before and after as a run artifact.
+# value. Logs the rows check.sql selects, before and after, as a run artifact (check.sql
+# alone = a read-only look).
 
 on:
   workflow_dispatch:
@@ -45,7 +46,7 @@ jobs:
       - name: Before
         run: |
           mkdir -p out
-          if [ -f "$DIR/check.sql" ]; then npx --yes wrangler@4 d1 execute ps2-oracle --remote --json --file "$DIR/check.sql" > out/before.json; fi
+          if [ -f "$DIR/check.sql" ]; then npx --yes wrangler@4 d1 execute ps2-oracle --remote --json --command "$(cat "$DIR/check.sql")" > out/before.json; fi
       - name: Main database
         run: |
           if [ -f "$DIR/$ACT-main.sql" ]; then npx --yes wrangler@4 d1 execute ps2-oracle --remote --yes --file "$DIR/$ACT-main.sql" | tail -n 20; fi
@@ -54,7 +55,7 @@ jobs:
           if [ -f "$DIR/$ACT-archive.sql" ]; then npx --yes wrangler@4 d1 execute ps2-oracle-archive --remote --yes --file "$DIR/$ACT-archive.sql" | tail -n 20; fi
       - name: After
         run: |
-          if [ -f "$DIR/check.sql" ]; then npx --yes wrangler@4 d1 execute ps2-oracle --remote --json --file "$DIR/check.sql" > out/after.json; fi
+          if [ -f "$DIR/check.sql" ]; then npx --yes wrangler@4 d1 execute ps2-oracle --remote --json --command "$(cat "$DIR/check.sql")" > out/after.json; fi
       - uses: actions/upload-artifact@v4
         with:
           name: d1-maintenance-${{ inputs.change }}-${{ inputs.action }}
