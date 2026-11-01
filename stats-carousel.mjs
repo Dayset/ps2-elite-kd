@@ -241,18 +241,55 @@ export function mountStatsCarousel({ root, onChange }) {
    * an end — finger moves, nothing moves: the viewport is still at its end and
    * no table under the finger scrolled — wraps to the other end via go(), so
    * the mode, the saved slide id and the switch sound follow the normal path.
-   * Touch only: wheel / trackpad keeps the native stop at the ends. */
+   * Touch only: wheel / trackpad keeps the native stop at the ends.
+   * The wrap fires on touchmove (past 48 px), not on touchend: a right swipe
+   * at the first slide is also the browser's back gesture, and when the
+   * browser claims the gesture it ends the touch in touchcancel instead of
+   * touchend — a touchend-only wrap would never fire (the 1-3-2-1 cycle
+   * broke exactly that way, while 1-2-3-1 worked). loopFired stops touchend
+   * from re-firing, and a mid-gesture reversal (finger drags the viewport
+   * back past where the gesture started) drops the programmatic guard so
+   * scrollend does not yank it back to the wrap target. */
   const LOOP_MIN_DX = 48;
   let loopStart = null;
+  let loopFired = null;
   viewport.addEventListener("touchstart", (e) => {
+    loopFired = null;
     if (e.touches.length !== 1) { loopStart = null; return; }
     const t = e.touches[0];
     const slide = slides[clampMode(Math.round(viewport.scrollLeft / width()), slides.length)];
     const scrollers = slide ? [...slide.querySelectorAll(SCROLLERS)] : [];
     loopStart = { x: t.clientX, y: t.clientY, scroll: viewport.scrollLeft, pos: scrollers.map((s) => s.scrollLeft), scrollers };
   }, { passive: true });
-  viewport.addEventListener("touchcancel", () => { loopStart = null; }, { passive: true });
+  viewport.addEventListener("touchcancel", () => { loopStart = null; loopFired = null; }, { passive: true });
+  viewport.addEventListener("touchmove", (e) => {
+    if (loopFired) {
+      if (e.touches.length === 1) {
+        const targetLeft = loopFired.target * width();
+        if ((viewport.scrollLeft - loopFired.startScroll) * (targetLeft - loopFired.startScroll) < 0) {
+          endProgrammatic();
+          loopFired = null;
+        }
+      }
+      return;
+    }
+    if (!loopStart || e.touches.length !== 1) return;
+    const t = e.touches[0];
+    const start = loopStart;
+    const dx = t.clientX - start.x, dy = t.clientY - start.y;
+    if (Math.abs(dx) < LOOP_MIN_DX || Math.abs(dx) <= Math.abs(dy)) return;
+    if (start.scrollers.some((s, k) => Math.abs(s.scrollLeft - start.pos[k]) > 1)) return;
+    if (Math.abs(viewport.scrollLeft - start.scroll) > 2) return;
+    const cur = clampMode(Math.round(viewport.scrollLeft / width()), slides.length);
+    const last = slides.length - 1;
+    const target = cur === 0 && dx > 0 ? last : cur === last && dx < 0 ? 0 : -1;
+    if (target < 0) return;
+    loopStart = null;
+    loopFired = { startScroll: start.scroll, target };
+    go(target);
+  }, { passive: true });
   viewport.addEventListener("touchend", (e) => {
+    loopFired = null;
     if (!loopStart) return;
     const t = e.changedTouches[0];
     const start = loopStart;
