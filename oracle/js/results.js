@@ -2,6 +2,7 @@
 import { S, FACS, esc, $, when, info, wide } from "./state.js?v=20261018-scrub2";
 import { get } from "./api.js?v=20261018-scrub2";
 import { t as tr } from "../../i18n.mjs";
+import { renderSkillFoot } from "./skill-foot.js?v=20261031-popw1";
 
 // Benchmark slices recorded for one alert, with Brier once it settled.
 export function benchPanel(a) {
@@ -56,6 +57,7 @@ export async function refreshHistory() {
       (Object.keys(b).length ? `<div class="note">${tr("or.lowerBetter", "lower is better · coin-flip = {n}", { n: h.uniform })}</div>` : "");
     S.histRows = h.alerts || [];
     renderHist();
+    renderSkillFoot(S.histRows).catch(() => {});
   } catch {
     if (!S.histRows.length) $("hist").querySelector("tbody").innerHTML = `<tr><td colspan="8" class="note">${tr("or.histErr", "Results are unavailable right now — retrying…")}</td></tr>`;
   }

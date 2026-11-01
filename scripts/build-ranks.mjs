@@ -40,6 +40,7 @@ import { percentileOf } from "../dist.mjs";
 import { forensicsSummary, honuSessionUrl } from "../session-forensics.mjs";
 import { hiddenList, isConfirmedCheater } from "../hidden.mjs";
 import { factionOf, buildFactionRating } from "../faction-rating.mjs";
+import { popCells } from "../pop-weight.mjs";
 import { worldOf, serverOfWorld, buildServerRating, SERVERS_PC, SERVERS_PS } from "../server-rating.mjs";
 import { cleanTimes, flairsFor } from "../flairs.mjs";
 import { sessionMetrics, sessionFlag, sessionRuleText, distribution, SESSION_METRICS, SESSION_METRIC_IDS, SESSION_MIN, SESSION_RULE, ASSIST_GAP } from "../session-stats.mjs";
@@ -481,7 +482,7 @@ export function buildRanksWithGuard(dataDir, { known = KNOWN_EXTREMES, zergCharg
     newbieDiff,
     assistGroups: assistGroups(players), // 🤝 groups stay build-log only (the 🤝 apk column itself is public since t382u)
     assistGap: assistGapStatus(players),
-    factions: factionRatingOf(ranks, { factionBy, playMin, padders: confirmed, famOf: readFamilyIndex(dataDir) }),
+    factions: factionRatingOf(ranks, { factionBy, playMin, padders: confirmed, famOf: readFamilyIndex(dataDir), worldBy }),
     serverInputs: { worldBy, playMin, padders: confirmed }, // 🌐 servers.json is built after the PS server column (main)
   };
 }
@@ -521,7 +522,7 @@ function readFamilyIndex(dataDir) {
 }
 
 /** 🏳️ Faction rating (faction-rating.mjs) over the final ranks rows (⚔️ iVi after every adjustment). */
-export function factionRatingOf(ranks, { factionBy = new Map(), playMin = new Map(), padders = new Set(), famOf = {}, now = Date.now() } = {}) {
+export function factionRatingOf(ranks, { factionBy = new Map(), playMin = new Map(), padders = new Set(), famOf = {}, worldBy = null, now = Date.now() } = {}) {
   const ix = Object.fromEntries(ranks.cols.map((c, i) => [c, i]));
   const g = (r, k) => (ix[k] != null ? r[ix[k]] : null);
   const players = ranks.rows.map((r) => {
@@ -529,7 +530,10 @@ export function factionRatingOf(ranks, { factionBy = new Map(), playMin = new Ma
     const m = playMin.get(slug);
     return { slug, name: g(r, "name"), faction: factionBy.get(slug) || null, adjs: g(r, "adjs"), kd: g(r, "kd"), kpm: g(r, "kpm"), playH: Number.isFinite(m) ? m / 60 : null, last: g(r, "last"), thin: !!g(r, "thin"), padder: padders.has(slug) };
   });
-  return buildFactionRating(players, famOf, { now });
+  const out = buildFactionRating(players, famOf, { now });
+  // ⚖️ Faction × server ⚔️ iVi quantiles (pop-weight.mjs, t810u): the Oracle footer weights them by real alert population.
+  if (worldBy) out.popw = popCells(players.filter((p) => !p.padder && !p.thin).map((p) => ({ ...p, server: serverOfWorld(worldBy.get(p.slug)) })));
+  return out;
 }
 
 /**
