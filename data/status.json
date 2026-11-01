@@ -4,12 +4,12 @@
   "runId": "37689275367",
   "startedAt": "2026-10-07T21:25:32.180Z",
   "lastRun": {
-    "runId": "41254850572",
+    "runId": "41257061821",
     "event": "workflow_dispatch",
     "kind": "on-demand",
-    "startedAt": "2026-11-01T00:01:18.961Z",
-    "endedAt": "2026-11-01T00:04:13.969Z",
-    "seconds": 175,
+    "startedAt": "2026-11-01T00:31:22.499Z",
+    "endedAt": "2026-11-01T00:33:56.575Z",
+    "seconds": 154,
     "updated": [],
     "added": [],
     "failed": [
@@ -23,7 +23,7 @@
     "indexSize": 16593,
     "honu": {
       "day": "2026-11-01",
-      "calls": 30,
+      "calls": 58,
       "cap": 10000
     },
     "batch": [
@@ -36,7 +36,7 @@
     ]
   },
   "outlierGuard": {
-    "checkedAt": "2026-11-01T00:04:32.749Z",
+    "checkedAt": "2026-11-01T00:34:40.086Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 19,
     "explained": 56,
@@ -2343,7 +2343,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-11-01T00:04:44.417Z",
+    "checkedAt": "2026-11-01T00:34:45.946Z",
     "red": 68,
     "padding": 45,
     "adjusted": 24,
@@ -2354,7 +2354,7 @@
     "forensics": 35
   },
   "sessionStats": {
-    "checkedAt": "2026-11-01T00:04:32.815Z",
+    "checkedAt": "2026-11-01T00:34:40.131Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -2370,11 +2370,11 @@
       "players": 16592,
       "withSessions": 16376,
       "measured": 8476,
-      "sessions": 79156,
-      "kills": 3230672,
-      "xpPlayers": 1948,
-      "xpMeasured": 1413,
-      "xpSessions": 13003
+      "sessions": 79162,
+      "kills": 3231314,
+      "xpPlayers": 1950,
+      "xpMeasured": 1415,
+      "xpSessions": 13015
     },
     "metrics": [
       {
@@ -2502,7 +2502,7 @@
         "p05": 0.175,
         "median": 0.509,
         "p95": 1.885,
-        "p99": 2.732,
+        "p99": 2.731,
         "max": 16.942
       },
       "s_maxKpm": {
@@ -2516,7 +2516,7 @@
         "max": 16.942
       },
       "s_kpmCv": {
-        "n": 8126,
+        "n": 8127,
         "min": 0,
         "p01": 0.018,
         "p05": 0.062,
@@ -2526,7 +2526,7 @@
         "max": 1.358
       },
       "s_kd": {
-        "n": 8455,
+        "n": 8456,
         "min": 0.195,
         "p01": 0.395,
         "p05": 0.585,
@@ -2536,7 +2536,7 @@
         "max": 413
       },
       "s_maxKd": {
-        "n": 8450,
+        "n": 8451,
         "min": 0.259,
         "p01": 0.519,
         "p05": 0.75,
@@ -2546,7 +2546,7 @@
         "max": 413
       },
       "s_hsk": {
-        "n": 1573,
+        "n": 1575,
         "min": 0,
         "p01": 0.012,
         "p05": 0.069,
@@ -2556,17 +2556,17 @@
         "max": 0.972
       },
       "s_ksk": {
-        "n": 1573,
+        "n": 1575,
         "min": 0,
         "p01": 0.041,
         "p05": 0.095,
         "median": 0.288,
-        "p95": 0.599,
+        "p95": 0.602,
         "p99": 0.839,
         "max": 0.99
       },
       "s_domk": {
-        "n": 1573,
+        "n": 1575,
         "min": 0,
         "p01": 0,
         "p05": 0.019,
@@ -2576,7 +2576,7 @@
         "max": 0.243
       },
       "s_revk": {
-        "n": 1573,
+        "n": 1575,
         "min": 0,
         "p01": 0,
         "p05": 0.018,
@@ -2586,7 +2586,7 @@
         "max": 0.357
       },
       "s_revDom": {
-        "n": 1553,
+        "n": 1555,
         "min": 0,
         "p01": 0.008,
         "p05": 0.212,
@@ -2596,7 +2596,7 @@
         "max": 27
       },
       "s_savk": {
-        "n": 1573,
+        "n": 1575,
         "min": 0,
         "p01": 0.005,
         "p05": 0.025,
@@ -2606,7 +2606,7 @@
         "max": 0.189
       },
       "s_spotk": {
-        "n": 1573,
+        "n": 1575,
         "min": 0,
         "p01": 0,
         "p05": 0,
@@ -2616,17 +2616,17 @@
         "max": 0.352
       },
       "s_prik": {
-        "n": 1573,
+        "n": 1575,
         "min": 0,
         "p01": 0.068,
         "p05": 0.122,
         "median": 0.194,
-        "p95": 0.331,
+        "p95": 0.33,
         "p99": 0.4,
         "max": 0.556
       },
       "s_stopk": {
-        "n": 1573,
+        "n": 1575,
         "min": 0,
         "p01": 0.014,
         "p05": 0.04,
@@ -5094,9 +5094,9 @@
     "outliersUnexplained": 1
   },
   "size": {
-    "at": "2026-11-01T00:04:14.505Z",
-    "repoBytes": 307314688,
-    "dataBytes": 352532561,
+    "at": "2026-11-01T00:33:57.105Z",
+    "repoBytes": 313110528,
+    "dataBytes": 352544307,
     "playersBytes": 315026258,
     "playerFiles": 16593,
     "warnAtBytes": 734003200,
@@ -5104,7 +5104,7 @@
   },
   "sizeWarning": false,
   "forensics": {
-    "checkedAt": "2026-11-01T00:04:32.856Z",
+    "checkedAt": "2026-11-01T00:34:40.162Z",
     "candidates": [
       "chocoiatevs",
       "nebelhexe",
@@ -37470,7 +37470,7 @@
     ]
   },
   "review": {
-    "checkedAt": "2026-11-01T00:04:32.871Z",
+    "checkedAt": "2026-11-01T00:34:40.168Z",
     "count": 430,
     "players": [
       {
@@ -41052,7 +41052,7 @@
     ]
   },
   "infantry": {
-    "checkedAt": "2026-11-01T00:04:46.245Z",
+    "checkedAt": "2026-11-01T00:34:47.100Z",
     "players": 16593,
     "counts": {
       "infantry": 10696,
@@ -41109,7 +41109,7 @@
       }
     },
     "tagMin": 20,
-    "checkedAt": "2026-11-01T00:04:42.101Z",
+    "checkedAt": "2026-11-01T00:34:44.506Z",
     "coverage": {
       "players": 16559,
       "withSessions": 16343,
@@ -41420,7 +41420,7 @@
   },
   "burst": {
     "rule": "KPM ≥ 5 and ≥ 15 kills in ≥ 2 min (one stored session, no 10-minute floor); skipped when within the player's own normal (≥ 5 other sessions of ≥ 10 min, ≤ 2× their median KPM, career K/D < 10); 🛡️ established players (account ≥ 1 year, eKPM ≥ 0.75, ≥ 3 stored sessions) show as cleared automatically",
-    "checkedAt": "2026-11-01T00:04:49.001Z",
+    "checkedAt": "2026-11-01T00:34:48.803Z",
     "sessions": 20,
     "ownNormalSkipped": 0,
     "flaggedPlayers": 1,
@@ -41721,7 +41721,7 @@
     ]
   },
   "padderPenalty": {
-    "checkedAt": "2026-11-01T00:04:32.904Z",
+    "checkedAt": "2026-11-01T00:34:40.190Z",
     "ranked": 16480,
     "penalty": 0.1,
     "ref": 610.6,
@@ -41962,7 +41962,7 @@
     ]
   },
   "vehicleCut": {
-    "checkedAt": "2026-11-01T00:04:32.959Z",
+    "checkedAt": "2026-11-01T00:34:40.224Z",
     "ranked": 16480,
     "cut": 9740,
     "buckets": {
@@ -44380,7 +44380,7 @@
       "HIP": 0.9,
       "HSR": 0.55
     },
-    "checkedAt": "2026-11-01T00:04:17.214Z",
+    "checkedAt": "2026-11-01T00:34:31.395Z",
     "checked": 19,
     "errors": 0,
     "pending": 0,
@@ -44565,7 +44565,7 @@
     ]
   },
   "hut": {
-    "builtAt": "2026-11-01T00:04:32.108Z",
+    "builtAt": "2026-11-01T00:34:39.662Z",
     "cuts": {
       "actMedian": 0.2632,
       "actMult": 1.333,
@@ -49610,7 +49610,7 @@
     "cleared": []
   },
   "vehDiff": {
-    "builtAt": "2026-11-01T00:04:32.194Z",
+    "builtAt": "2026-11-01T00:34:39.722Z",
     "start": 14.9,
     "damped": 3623,
     "dieHardHut": 1259,
@@ -89474,14 +89474,14 @@
     "cleared": []
   },
   "zergRevive": {
-    "builtAt": "2026-11-01T00:04:32.366Z",
+    "builtAt": "2026-11-01T00:34:39.829Z",
     "zergScored": 8389,
-    "measured": 1461,
-    "measuredZerg": 1290,
-    "confirmed": 448,
+    "measured": 1463,
+    "measuredZerg": 1292,
+    "confirmed": 449,
     "confirmedHigh": 117,
-    "softened": 182,
-    "byCrowdOnly": 113,
+    "softened": 183,
+    "byCrowdOnly": 115,
     "hardlight": 57,
     "estimated": 39,
     "cuts": {
@@ -89489,10 +89489,10 @@
       "minMinutes": 120,
       "p25": 19.5,
       "p50": 29.7,
-      "p75": 44.8,
-      "n": 1461
+      "p75": 44.9,
+      "n": 1463
     },
-    "rule": "🪳 Zerg crowd check, from Honu XP detail (data/xp, players looked up or discovered; 50+ deaths by enemy players and 2+ h of play there, no kill minimum). Per death we count what the player RECEIVED: revives (Revive + Squad Revive), heals, shield repairs and resupplies (each + its squad version). rvp = the revived share's percentile among the 1461 measured players of this build (revived share p25 19.5%, median 29.7%, p75 44.8%). Crowd score = mean of the four percentiles; engineers with Hardlight barrier blocking XP (id 1393, only ticks inside a big crowd) at 0.02+ events/min get max(crowd, 0.8 × crowd + 0.2 × their Hardlight percentile) — it can only add (57 players). crp = the crowd score's percentile again among the same players. rvp ≥ 75 OR crp ≥ 75 → Zerg confirmed (unchanged, said on hover; 113 confirmed by the crowd score alone). Softening uses the HIGHER of rvp and crp (check): w = 1 at/below p25 → 0 at/above p50, Zerg = raw − round(w × max(0, raw − check)); never raised. No XP detail → unchanged. Estimated 🪳 (no Zerg score, e.g. few kills or assists): max(rvp, crp) when ≥ 75, shown as \"~N\" — display only, never sorted, pooled or marked (39 players). Listed: every softened player, confirmed ones with raw Zerg ≥ 67, and the estimates. Owner override: \"zerg\": \"cleared\" on the data/reviewed.json player entry (no crowd result at all; also left out of the pools).",
+    "rule": "🪳 Zerg crowd check, from Honu XP detail (data/xp, players looked up or discovered; 50+ deaths by enemy players and 2+ h of play there, no kill minimum). Per death we count what the player RECEIVED: revives (Revive + Squad Revive), heals, shield repairs and resupplies (each + its squad version). rvp = the revived share's percentile among the 1463 measured players of this build (revived share p25 19.5%, median 29.7%, p75 44.9%). Crowd score = mean of the four percentiles; engineers with Hardlight barrier blocking XP (id 1393, only ticks inside a big crowd) at 0.02+ events/min get max(crowd, 0.8 × crowd + 0.2 × their Hardlight percentile) — it can only add (57 players). crp = the crowd score's percentile again among the same players. rvp ≥ 75 OR crp ≥ 75 → Zerg confirmed (unchanged, said on hover; 115 confirmed by the crowd score alone). Softening uses the HIGHER of rvp and crp (check): w = 1 at/below p25 → 0 at/above p50, Zerg = raw − round(w × max(0, raw − check)); never raised. No XP detail → unchanged. Estimated 🪳 (no Zerg score, e.g. few kills or assists): max(rvp, crp) when ≥ 75, shown as \"~N\" — display only, never sorted, pooled or marked (39 players). Listed: every softened player, confirmed ones with raw Zerg ≥ 67, and the estimates. Owner override: \"zerg\": \"cleared\" on the data/reviewed.json player entry (no crowd result at all; also left out of the pools).",
     "players": [
       {
         "name": "CNKiller0",
@@ -89530,7 +89530,7 @@
         "deaths": 243,
         "minutes": 908,
         "rvp": 93,
-        "crp": 97,
+        "crp": 96,
         "hl": null,
         "zergRaw": 97,
         "zerg": 97,
@@ -90453,7 +90453,7 @@
         "revived": 56,
         "deaths": 132,
         "minutes": 335,
-        "rvp": 72,
+        "rvp": 71,
         "crp": 87,
         "hl": null,
         "zergRaw": 77,
@@ -90608,7 +90608,7 @@
         "deaths": 134,
         "minutes": 481,
         "rvp": 88,
-        "crp": 95,
+        "crp": 94,
         "hl": null,
         "zergRaw": 75,
         "zerg": 75,
@@ -91041,8 +91041,8 @@
         "revived": 116,
         "deaths": 211,
         "minutes": 1346,
-        "rvp": 86,
-        "crp": 84,
+        "rvp": 87,
+        "crp": 85,
         "hl": null,
         "zergRaw": 69,
         "zerg": 69,
@@ -91279,7 +91279,7 @@
         "revived": 68,
         "deaths": 216,
         "minutes": 910,
-        "rvp": 53,
+        "rvp": 52,
         "crp": 81,
         "hl": null,
         "zergRaw": 67,
@@ -91419,11 +91419,11 @@
         "revived": 11,
         "deaths": 82,
         "minutes": 284,
-        "rvp": 11,
+        "rvp": 12,
         "crp": 7,
         "hl": null,
         "zergRaw": 57,
-        "zerg": 11,
+        "zerg": 12,
         "status": "softened"
       },
       {
@@ -91434,10 +91434,10 @@
         "deaths": 166,
         "minutes": 548,
         "rvp": 19,
-        "crp": 22,
+        "crp": 23,
         "hl": null,
         "zergRaw": 57,
-        "zerg": 22,
+        "zerg": 23,
         "status": "softened"
       },
       {
@@ -91643,11 +91643,11 @@
         "revived": 23,
         "deaths": 155,
         "minutes": 445,
-        "rvp": 14,
-        "crp": 17,
+        "rvp": 15,
+        "crp": 18,
         "hl": null,
         "zergRaw": 54,
-        "zerg": 17,
+        "zerg": 18,
         "status": "softened"
       },
       {
@@ -91672,10 +91672,10 @@
         "deaths": 237,
         "minutes": 1070,
         "rvp": 25,
-        "crp": 33,
+        "crp": 35,
         "hl": null,
         "zergRaw": 53,
-        "zerg": 39,
+        "zerg": 42,
         "status": "softened"
       },
       {
@@ -91741,11 +91741,11 @@
         "revived": 47,
         "deaths": 221,
         "minutes": 579,
-        "rvp": 29,
+        "rvp": 30,
         "crp": 29,
         "hl": null,
         "zergRaw": 51,
-        "zerg": 33,
+        "zerg": 34,
         "status": "softened"
       },
       {
@@ -91812,7 +91812,7 @@
         "deaths": 380,
         "minutes": 435,
         "rvp": 40,
-        "crp": 22,
+        "crp": 23,
         "hl": null,
         "zergRaw": 49,
         "zerg": 45,
@@ -92399,11 +92399,11 @@
         "revived": 23,
         "deaths": 108,
         "minutes": 686,
-        "rvp": 29,
+        "rvp": 30,
         "crp": 27,
         "hl": null,
         "zergRaw": 35,
-        "zerg": 30,
+        "zerg": 31,
         "status": "softened"
       },
       {
@@ -92456,7 +92456,7 @@
         "deaths": 164,
         "minutes": 610,
         "rvp": 15,
-        "crp": 10,
+        "crp": 11,
         "hl": null,
         "zergRaw": 35,
         "zerg": 15,
@@ -92833,11 +92833,11 @@
         "revived": 19,
         "deaths": 104,
         "minutes": 507,
-        "rvp": 21,
+        "rvp": 22,
         "crp": 17,
         "hl": null,
         "zergRaw": 27,
-        "zerg": 21,
+        "zerg": 22,
         "status": "softened"
       },
       {
@@ -92862,10 +92862,10 @@
         "deaths": 112,
         "minutes": 307,
         "rvp": 14,
-        "crp": 22,
+        "crp": 23,
         "hl": null,
         "zergRaw": 27,
-        "zerg": 22,
+        "zerg": 23,
         "status": "softened"
       },
       {
@@ -93015,11 +93015,11 @@
         "revived": 25,
         "deaths": 186,
         "minutes": 512,
-        "rvp": 11,
+        "rvp": 12,
         "crp": 4,
         "hl": null,
         "zergRaw": 23,
-        "zerg": 11,
+        "zerg": 12,
         "status": "softened"
       },
       {
@@ -93043,11 +93043,11 @@
         "revived": 19,
         "deaths": 128,
         "minutes": 738,
-        "rvp": 14,
+        "rvp": 15,
         "crp": 4,
         "hl": null,
         "zergRaw": 23,
-        "zerg": 14,
+        "zerg": 15,
         "status": "softened"
       },
       {
@@ -93058,7 +93058,7 @@
         "deaths": 155,
         "minutes": 300,
         "rvp": 20,
-        "crp": 15,
+        "crp": 16,
         "hl": null,
         "zergRaw": 23,
         "zerg": 20,
@@ -93169,11 +93169,11 @@
         "revived": 17,
         "deaths": 127,
         "minutes": 258,
-        "rvp": 11,
+        "rvp": 12,
         "crp": 3,
         "hl": null,
         "zergRaw": 20,
-        "zerg": 11,
+        "zerg": 12,
         "status": "softened"
       },
       {
@@ -93226,10 +93226,10 @@
         "deaths": 223,
         "minutes": 593,
         "rvp": 13,
-        "crp": 16,
+        "crp": 17,
         "hl": null,
         "zergRaw": 19,
-        "zerg": 16,
+        "zerg": 17,
         "status": "softened"
       },
       {
@@ -93272,6 +93272,20 @@
         "hl": null,
         "zergRaw": 17,
         "zerg": 10,
+        "status": "softened"
+      },
+      {
+        "name": "SashaRaw12",
+        "slug": "sasharaw12",
+        "share": 13.1,
+        "revived": 13,
+        "deaths": 99,
+        "minutes": 408,
+        "rvp": 11,
+        "crp": 5,
+        "hl": null,
+        "zergRaw": 17,
+        "zerg": 11,
         "status": "softened"
       },
       {
@@ -93690,11 +93704,11 @@
         "deaths": 65,
         "minutes": 1218,
         "rvp": 97,
-        "crp": 99,
+        "crp": 98,
         "hl": null,
         "zergRaw": null,
         "zerg": null,
-        "est": 99
+        "est": 98
       },
       {
         "name": "maxlere",
@@ -93795,20 +93809,6 @@
         "est": 95
       },
       {
-        "name": "Vader10913",
-        "slug": "vader10913",
-        "share": 61.4,
-        "revived": 54,
-        "deaths": 88,
-        "minutes": 406,
-        "rvp": 91,
-        "crp": 94,
-        "hl": null,
-        "zergRaw": null,
-        "zerg": null,
-        "est": 94
-      },
-      {
         "name": "P0KT0P",
         "slug": "p0kt0p",
         "share": 69.2,
@@ -93821,6 +93821,20 @@
         "zergRaw": null,
         "zerg": null,
         "est": 94
+      },
+      {
+        "name": "Vader10913",
+        "slug": "vader10913",
+        "share": 61.4,
+        "revived": 54,
+        "deaths": 88,
+        "minutes": 406,
+        "rvp": 91,
+        "crp": 93,
+        "hl": null,
+        "zergRaw": null,
+        "zerg": null,
+        "est": 93
       },
       {
         "name": "BismarckTR",
@@ -94068,7 +94082,7 @@
         "deaths": 601,
         "minutes": 1127,
         "rvp": 81,
-        "crp": 74,
+        "crp": 72,
         "hl": null,
         "zergRaw": null,
         "zerg": null,
@@ -94232,7 +94246,7 @@
     "cleared": []
   },
   "newbieDiff": {
-    "builtAt": "2026-11-01T00:04:32.303Z",
+    "builtAt": "2026-11-01T00:34:39.789Z",
     "loH": 5.3,
     "hiH": 339.9,
     "n": 16458,
@@ -148713,12 +148727,12 @@
     "cleared": []
   },
   "assistGap": {
-    "checkedAt": "2026-11-01T00:04:42.105Z",
+    "checkedAt": "2026-11-01T00:34:44.509Z",
     "start": "2026-04-01T13:00:00.000Z",
     "end": "2026-05-07T05:00:00.000Z",
     "url": "https://www.planetside2.com/patch-notes/may-6-hotfix-2026",
     "minKills": 100,
-    "count": 206,
+    "count": 207,
     "lost": 44,
     "players": [
       {
@@ -149053,6 +149067,15 @@
         "kept": 148,
         "apkBefore": 0.126,
         "apk": 0.216
+      },
+      {
+        "slug": "pressutoredeploy",
+        "name": "PressUtoRedeploy",
+        "gapSessions": 3,
+        "gapKills": 255,
+        "kept": 293,
+        "apkBefore": 0.215,
+        "apk": 0.379
       },
       {
         "slug": "johnnybbbad",
@@ -150578,16 +150601,16 @@
     ]
   },
   "tractorMark": {
-    "checkedAt": "2026-11-01T00:04:32.391Z",
-    "rule": "🚜 = infantry % < p25 (71.9%) and (vehicle repair/min ≥ p75 (0.904) or vehicle kills/min ≥ p75 (0.213) of the 1700 players with 2+ h of XP detail), or infantry % < p2 (20.7%)",
+    "checkedAt": "2026-11-01T00:34:39.847Z",
+    "rule": "🚜 = infantry % < p25 (71.9%) and (vehicle repair/min ≥ p75 (0.902) or vehicle kills/min ≥ p75 (0.213) of the 1703 players with 2+ h of XP detail), or infantry % < p2 (20.7%)",
     "cuts": {
       "cut": 71.9,
       "fb": 20.7,
       "med": 85.1,
-      "rep": 0.904,
+      "rep": 0.902,
       "vk": 0.213
     },
-    "xpPool": 1700,
+    "xpPool": 1703,
     "withInf": 15077,
     "marked": 532,
     "byXp": 232,
@@ -150623,6 +150646,15 @@
         "marked": false
       },
       {
+        "name": "GigiErBullo",
+        "slug": "gigierbullo",
+        "inf": 63.7,
+        "rep": 0.899,
+        "vk": 0.132,
+        "xpRatio": 1,
+        "marked": false
+      },
+      {
         "name": "CharlieChopChopNSO",
         "slug": "charliechopchopnso",
         "inf": 29.8,
@@ -150650,15 +150682,6 @@
         "marked": false
       },
       {
-        "name": "GigiErBullo",
-        "slug": "gigierbullo",
-        "inf": 63.7,
-        "rep": 0.899,
-        "vk": 0.132,
-        "xpRatio": 0.99,
-        "marked": false
-      },
-      {
         "name": "Zeonel",
         "slug": "zeonel",
         "inf": 61.8,
@@ -150674,6 +150697,15 @@
         "rep": 0.885,
         "vk": 0.126,
         "xpRatio": 0.98,
+        "marked": false
+      },
+      {
+        "name": "YuigahamaYui",
+        "slug": "yuigahamayui",
+        "inf": 54.1,
+        "rep": 0.871,
+        "vk": 0.166,
+        "xpRatio": 0.97,
         "marked": false
       },
       {
@@ -150713,20 +150745,11 @@
         "marked": false
       },
       {
-        "name": "Parazetamol",
-        "slug": "parazetamol",
-        "inf": 71,
-        "rep": 0.934,
-        "vk": 0.195,
-        "xpRatio": 1.03,
-        "marked": true
-      },
-      {
-        "name": "YuigahamaYui",
-        "slug": "yuigahamayui",
-        "inf": 54.1,
-        "rep": 0.871,
-        "vk": 0.166,
+        "name": "erosion139",
+        "slug": "erosion139",
+        "inf": 54.4,
+        "rep": 0.862,
+        "vk": 0.128,
         "xpRatio": 0.96,
         "marked": false
       },
@@ -150785,6 +150808,15 @@
         "marked": false
       },
       {
+        "name": "Parazetamol",
+        "slug": "parazetamol",
+        "inf": 71,
+        "rep": 0.934,
+        "vk": 0.195,
+        "xpRatio": 1.04,
+        "marked": true
+      },
+      {
         "name": "Xvenator",
         "slug": "xvenator",
         "inf": 72,
@@ -150810,15 +150842,6 @@
         "vk": null,
         "xpRatio": null,
         "marked": true
-      },
-      {
-        "name": "erosion139",
-        "slug": "erosion139",
-        "inf": 54.4,
-        "rep": 0.862,
-        "vk": 0.128,
-        "xpRatio": 0.95,
-        "marked": false
       },
       {
         "name": "NCGrandoZ",
@@ -150866,6 +150889,15 @@
         "marked": true
       },
       {
+        "name": "B3rserk",
+        "slug": "b3rserk",
+        "inf": 52.7,
+        "rep": 0.826,
+        "vk": 0.189,
+        "xpRatio": 0.92,
+        "marked": false
+      },
+      {
         "name": "0Y0Nuc1eaR0Y0",
         "slug": "0y0nuc1ear0y0",
         "inf": 65.3,
@@ -150900,15 +150932,6 @@
         "vk": 0.23,
         "xpRatio": 1.08,
         "marked": true
-      },
-      {
-        "name": "B3rserk",
-        "slug": "b3rserk",
-        "inf": 52.7,
-        "rep": 0.826,
-        "vk": 0.189,
-        "xpRatio": 0.91,
-        "marked": false
       },
       {
         "name": "Jero7733",
