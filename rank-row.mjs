@@ -7,6 +7,7 @@ import { normalizePlayer, playerMetrics, shownValue } from "./player-metrics.mjs
 import { markNote, statMark } from "./padding.mjs?v=20261023-short1";
 import { pickNewest, entryFetchedAt } from "./cache-pick.mjs?v=20261010-sav1";
 import { serverOfWorld } from "./server-rating.mjs?v=20261031-sr1";
+import { serverFromOpponents, oppKey } from "./opponent-server.mjs?v=20261101-opsrv1";
 
 const PS_SRV_KEY = { genudine: "us", ceres: "eu" };
 /**
@@ -14,13 +15,28 @@ const PS_SRV_KEY = { genudine: "us", ceres: "eu" };
  * worlds → Osprey; PS: its server), else the outfit's world (outfit-tags.mjs readOutfitWorlds, owner: an outfit lives on
  * one server). → { srv, by } with by = "o" when the server came from the outfit, else null.
  */
-export function localSrv(player, key, outfitWorlds = null) {
+export function localSrv(player, key, outfitWorlds = null, oppSrv = null) {
   const p = player || {};
   if (p.room === "ps") return { srv: PS_SRV_KEY[String(p.server || "").toLowerCase()] || null, by: null };
   const own = serverOfWorld(p.world);
   if (own) return { srv: own, by: null };
   const ow = outfitWorlds && key ? serverOfWorld(outfitWorlds[key]) : null;
-  return ow ? { srv: ow, by: "o" } : { srv: null, by: null };
+  if (ow) return { srv: ow, by: "o" };
+  // 🌍 Last: the server most of the player's opponents are on (opponent-server.mjs; oppSrv = key → their own server).
+  const op = oppSrv ? serverFromOpponents(p.rows, oppSrv, oppKey(p.display) || key).srv : null;
+  return op ? { srv: op, by: "e" } : { srv: null, by: null };
+}
+
+/** key → own server of the ranked PC rows (srvBy empty: never an inferred server as a vote). */
+function ownSrvIndex(rows, ix) {
+  if (ix.srv == null) return null;
+  const m = new Map();
+  for (const r of rows) {
+    if (!r[ix.srv] || (ix.srvBy != null && r[ix.srvBy])) continue;
+    const k = oppKey(r[ix.name] != null ? r[ix.name] : r[0]);
+    if (k && !m.has(k)) m.set(k, r[ix.srv]);
+  }
+  return (k) => m.get(k) || null;
 }
 
 /** Metric ids (same ids as the app.js stats columns). */
@@ -107,6 +123,8 @@ export function mergeFreshRows(payload, store, { confirmed = new Set(), maxAgeMs
   // PS namesakes (owner 2026-10-23, Furkancimen3NS0): a row keyed "us-<cid>" /
   // "eu-<cid>" takes only a browser copy of THAT character (same cid), never
   // the other server's copy that happens to share its slug or name.
+  let oppIdx; // built on first use
+  const oppSrv = (k) => { if (oppIdx === undefined) oppIdx = ownSrvIndex(rows, ix); return oppIdx ? oppIdx(k) : null; };
   const byCid = new Map();
   for (const e of local.values()) if (e.player && e.player.cid != null) byCid.set(String(e.player.cid), e);
   const out = rows.map((r) => {
@@ -126,7 +144,7 @@ export function mergeFreshRows(payload, store, { confirmed = new Set(), maxAgeMs
     const row = cols.map((c) => { if (c === "query") return r[ix.query]; const i = RANK_COLS.indexOf(c); return i >= 0 ? nr[i] : r[ix[c]]; });
     // 🌍 A ranked row with no server yet takes the browser copy's (own world, else the outfit's).
     if (ix.srv != null && row[ix.srv] == null) {
-      const ls = localSrv(e.player, slug, outfitWorlds);
+      const ls = localSrv(e.player, slug, outfitWorlds, oppSrv);
       if (ls.srv) { row[ix.srv] = ls.srv; if (ix.srvBy != null) row[ix.srvBy] = ls.by; }
     }
     fresh.set(slug, pick.fetchedAt);
@@ -145,7 +163,7 @@ export function mergeFreshRows(payload, store, { confirmed = new Set(), maxAgeMs
     if (!nr) continue;
     ranked.add(key);
     // 🌍 Server for the 🌍 table (owner, [CP0x]): own world, else the outfit's; null → "?" (no server rank).
-    const ls = localSrv(e.player, key, outfitWorlds);
+    const ls = localSrv(e.player, key, outfitWorlds, oppSrv);
     out.push(cols.map((c) => { if (c === "srv") return ls.srv; if (c === "srvBy") return ls.by; const i = RANK_COLS.indexOf(c); return i >= 0 ? nr[i] : null; }));
     fresh.set(key, at);
     localOnly.add(key);

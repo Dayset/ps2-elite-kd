@@ -42,6 +42,7 @@ import { hiddenList, isConfirmedCheater } from "../hidden.mjs";
 import { factionOf, buildFactionRating } from "../faction-rating.mjs";
 import { popCells } from "../pop-weight.mjs";
 import { worldOf, serverOfWorld, buildServerRating, SERVERS_PC, SERVERS_PS } from "../server-rating.mjs";
+import { serverFromOpponents, oppKey } from "../opponent-server.mjs";
 import { cleanTimes, flairsFor } from "../flairs.mjs";
 import { sessionMetrics, sessionFlag, sessionRuleText, distribution, SESSION_METRICS, SESSION_METRIC_IDS, SESSION_MIN, SESSION_RULE, ASSIST_GAP } from "../session-stats.mjs";
 
@@ -401,6 +402,9 @@ export function buildRanksWithGuard(dataDir, { known = KNOWN_EXTREMES, zergCharg
   const worldBy = new Map(); // 🌐 Census home world by slug (player file "world" or data/server-backfill.json; t798u)
   const worldBackfill = readServerBackfill(dataDir);
   const worldByOutfit = new Set(); // 🌍 slugs whose world came from their outfit (ranks.json "srvBy" = "o")
+  const worldByOpp = new Set(); // 🌍 slugs whose world came from their opponents (ranks.json "srvBy" = "e")
+  const ownWorldByKey = new Map(); // 🌍 name key → OWN world (votes for opponents-only players; never an inferred one)
+  const noWorld = new Map(); // 🌍 slug → { key, rows } of players with no own / outfit world yet
   const forensics = readForensics(dataDir);
   const farmFound = [];
   const ranks = buildRanks(dataDir, {
@@ -420,9 +424,13 @@ export function buildRanksWithGuard(dataDir, { known = KNOWN_EXTREMES, zergCharg
       factionBy.set(row[2], factionOf(pl, facBackfill));
       // 🌍 Own world first (player file, then Census backfill); a world the file took from its outfit
       // (worldSource "outfit": deleted character, scripts/outfit-worlds.mjs) only when neither knows one.
-      const ownW = pl && pl.worldSource === "outfit" ? worldOf({ cid: pl.cid }, worldBackfill) : worldOf(pl, worldBackfill);
-      if (ownW != null) worldBy.set(row[2], ownW);
-      else { const ow = worldOf(pl); worldBy.set(row[2], ow); if (ow != null) worldByOutfit.add(row[2]); }
+      // Then the opponents' (worldSource "opponents", or the pass after buildRanks; opponent-server.mjs).
+      const inferred = pl && (pl.worldSource === "outfit" || pl.worldSource === "opponents");
+      const ownW = inferred ? worldOf({ cid: pl.cid }, worldBackfill) : worldOf(pl, worldBackfill);
+      const selfKey = oppKey(pl && pl.display) || row[2];
+      if (ownW != null) { worldBy.set(row[2], ownW); if (!ownWorldByKey.has(selfKey)) ownWorldByKey.set(selfKey, ownW); }
+      else if (pl && pl.worldSource === "outfit" && worldOf(pl) != null) { worldBy.set(row[2], worldOf(pl)); worldByOutfit.add(row[2]); }
+      else { worldBy.set(row[2], null); noWorld.set(row[2], { key: selfKey, rows: pl && pl.rows, filed: pl && pl.worldSource === "opponents" ? worldOf(pl) : null }); }
       const xpd = readXp(dataDir, row[2]);
       const sm = sessionMetrics({ assists: pl.assists, xp: xpd });
       const rs = crowdSample(xpd); // 🪳 crowd check (zerg-revive.mjs): null below the sample minimum
@@ -458,6 +466,14 @@ export function buildRanksWithGuard(dataDir, { known = KNOWN_EXTREMES, zergCharg
       players.push({ vehCut: vcut, vehCutVeh: vcut != null ? Math.round(m.vehCutVeh * 1000) / 10 : null, vehCutMax: vcut != null ? Math.round(m.vehCutMax * 1000) / 10 : null, vehShare: Number.isFinite(m.vehShare) ? m.vehShare : null, vehOnly: Number.isFinite(m.vehOnly) ? m.vehOnly : null, maxShare: Number.isFinite(m.maxShare) ? m.maxShare : null, adjsPreVeh: vcut != null ? m.adjsPreVeh : null, vehCutCleared: !!m.vehCutCleared, poop: !!m.poop, adjsBase: m.poop && !m.thin ? m.adjsBase : null, confirmedPadder: confirmed.has(row[2]), infTag: (pl.infantry && pl.infantry.v >= 2 && pl.infantry.tag) || null, slug: row[2], name: row[0], cid: String(np.cid || ""), farmAcct: !!(fa && fa.farm), flagged: f.flagged || sf.flagged || fx.flagged, patterns, values, session: sm, sessionFlag: sf, forensics: fx, row, hidden: !!(info && info.hidden), confirmedCheater: !!(info && info.confirmedCheater), established });
     },
   });
+  // 🌍 Last fallback (owner 2026-11-01): the server most of the player's opponents are on (own worlds only as votes).
+  const worldGroup = (w) => serverOfWorld(w) || (w != null ? "w" + w : null);
+  for (const [slug, nw] of noWorld) {
+    const opp = serverFromOpponents(nw.rows, (k) => worldGroup(ownWorldByKey.get(k)), nw.key);
+    const w = opp.srv === "osprey" ? 1 : opp.srv === "wainwright" ? 10 : null; // other worlds (Jaeger, SolTech) stay unassigned
+    const ww = w != null ? w : (nw.filed != null && serverOfWorld(nw.filed) ? nw.filed : null);
+    if (ww != null) { worldBy.set(slug, ww); worldByOpp.add(slug); }
+  }
   ranks.cols.push("apk"); // 🤝 trailing column (see onPlayer); not part of RANK_COLS / rankRow
   ranks.cols.push("zat"); // 🪳⚔️ day of the newest 🤝 session (zerg-charge.mjs zergFresh)
   ranks.cols.push("inf", "infMax", "infVeh"); // 🪖 trailing columns (see onPlayer), % of lifetime kills
@@ -488,7 +504,7 @@ export function buildRanksWithGuard(dataDir, { known = KNOWN_EXTREMES, zergCharg
     assistGroups: assistGroups(players), // 🤝 groups stay build-log only (the 🤝 apk column itself is public since t382u)
     assistGap: assistGapStatus(players),
     factions: factionRatingOf(ranks, { factionBy, playMin, padders: confirmed, famOf: readFamilyIndex(dataDir), worldBy }),
-    serverInputs: { worldBy, worldByOutfit, playMin, padders: confirmed }, // 🌐 servers.json is built after the PS server column (main)
+    serverInputs: { worldBy, worldByOutfit, worldByOpp, playMin, padders: confirmed }, // 🌐 servers.json is built after the PS server column (main)
   };
 }
 
@@ -1338,15 +1354,17 @@ export function addServerColumn(ranks, index) {
  * Census home world (serverOfWorld: Connery + Emerald → Osprey, Miller + Cobalt → Wainwright); null for other
  * worlds (SolTech is closed, Jaeger) or an unknown world — the same players the 🌐 Servers section leaves out.
  */
-export function addPcServerColumn(ranks, worldBy, worldByOutfit = null) {
+export function addPcServerColumn(ranks, worldBy, worldByOutfit = null, worldByOpp = null) {
   if (ranks.cols.includes("srv")) return ranks;
   ranks.cols.push("srv");
   for (const r of ranks.rows) r.push((worldBy && serverOfWorld(worldBy.get(r[2]))) || null);
-  // 🌍 "srvBy" = "o" when the server came from the player's outfit (hover hint only); added only when some row has it.
+  // 🌍 "srvBy" = "o" when the server came from the player's outfit, "e" from their opponents (hover hint only);
+  // added only when some row has it.
   const si = ranks.cols.length - 1;
-  if (worldByOutfit && worldByOutfit.size && ranks.rows.some((r) => r[si] && worldByOutfit.has(r[2]))) {
+  const by = (r) => (!r[si] ? null : worldByOutfit && worldByOutfit.has(r[2]) ? "o" : worldByOpp && worldByOpp.has(r[2]) ? "e" : null);
+  if (ranks.rows.some(by)) {
     ranks.cols.push("srvBy");
-    for (const r of ranks.rows) r.push(r[si] && worldByOutfit.has(r[2]) ? "o" : null);
+    for (const r of ranks.rows) r.push(by(r));
   }
   return ranks;
 }
@@ -1415,7 +1433,7 @@ if (isMain) {
   }
   const { ranks: out, guard, hidden: hiddenInfo, bins, session, forensics: forensicsInfo, review, assistGroups: assistInfo, padderPenalty: padderInfo, vehicleCut: vehCutInfo, hut: hutInfo, vehDiff: vehDiffInfo, zergRevive: zrevInfo, tractor: tracInfo, newbieDiff: nbdInfo, assistGap: gapInfo, factions: facInfo, serverInputs } = buildRanksWithGuard(dataDir, room === "ps" ? { known: {}, zergCharge: false } : undefined);
   if (room === "ps") addServerColumn(out, JSON.parse(fs.readFileSync(path.join(dataDir, "index.json"), "utf8")));
-  else addPcServerColumn(out, serverInputs && serverInputs.worldBy, serverInputs && serverInputs.worldByOutfit);
+  else addPcServerColumn(out, serverInputs && serverInputs.worldBy, serverInputs && serverInputs.worldByOutfit, serverInputs && serverInputs.worldByOpp);
   fs.writeFileSync(path.join(dataDir, "ranks.json"), JSON.stringify(out) + "\n");
   // 🌐 Server rating (t798u): main-page section + the server-name alias (PC Osprey / Wainwright, PS Genudine / Ceres).
   try {
