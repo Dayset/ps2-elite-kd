@@ -15,6 +15,18 @@ import { hideHeadTip } from "./head-tip.mjs?v=20261025-loc1";
 import { hideNamePeek } from "./name-peek.mjs?v=20261025-loc1";
 
 const KEY = "ps2-elite-kd-stats-mode";
+// t813u: the remembered slide is kept by its id, so a new order (🌍 Server moved
+// before 🏅 Global) still reopens the table the user last looked at. KEY held the
+// index in the old order (✨ Stats, 🏅 Global, 🌍 Server) and is read once to carry it over.
+const SLIDE_KEY = "ps2-elite-kd-stats-slide";
+export const LEGACY_ORDER = ["scSlideStats", "scSlidePos", "scSlideSrv"];
+
+/** Index of the slide to open: saved id first, else the old saved index (old order), else 0. */
+export function savedSlideIndex(ids, savedId, legacyIdx) {
+  let k = savedId ? ids.indexOf(savedId) : -1;
+  if (k < 0 && legacyIdx != null && legacyIdx !== "") k = ids.indexOf(LEGACY_ORDER[legacyIdx | 0]);
+  return k < 0 ? 0 : k;
+}
 const SCROLLERS = ".stats-table-wrap, .rk-pos-wrap";
 
 /** Can this scroller still move in the direction a finger moving by dx would push it? */
@@ -55,7 +67,8 @@ export function mountStatsCarousel({ root, onChange }) {
   const slides = [...root.querySelectorAll(".sc-slide")];
   if (!viewport || !track || slides.length < 2) return null;
   let i = 0;
-  try { i = clampMode(+localStorage.getItem(KEY) || 0, slides.length); } catch {}
+  const ids = slides.map((s) => s.id);
+  try { i = clampMode(savedSlideIndex(ids, localStorage.getItem(SLIDE_KEY), localStorage.getItem(KEY)), slides.length); } catch {}
 
   const width = () => viewport.clientWidth || 1;
   const reduced = () => { try { return matchMedia("(prefers-reduced-motion: reduce)").matches; } catch { return false; } };
@@ -68,7 +81,7 @@ export function mountStatsCarousel({ root, onChange }) {
     if (n === i) return;
     i = n;
     paint();
-    try { localStorage.setItem(KEY, String(i)); } catch {}
+    try { localStorage.setItem(SLIDE_KEY, ids[i] || ""); localStorage.removeItem(KEY); } catch {}
     if (quiet) return;
     if (onChange) onChange(i);
   }

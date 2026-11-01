@@ -459,15 +459,15 @@
 
   </section>
 
-  <!-- One spot, three modes (2026-10-19, t812u): ✨ Stats ⇄ 🏅 Positions ⇄ 🌍 Server positions, side-swipe only
+  <!-- One spot, three modes (2026-10-19, t812u, t813u order): ✨ Stats ⇄ 🌍 Server positions ⇄ 🏅 Global positions, side-swipe only
        (stats-carousel.mjs). No tab bar / dots (owner 2026-10-22): users find the
        left / right swipe on their own. -->
   <section id="statsCarousel" class="stats-carousel" data-i18n-aria-label="sc.label" aria-label="Your players: stats and positions">
     <div class="sc-viewport">
       <div class="sc-track">
         <div class="sc-slide" id="scSlideStats" role="tabpanel" data-i18n-aria-label="sc.stats" aria-label="✨ Stats"><div id="statsPanel" class="stats-panel" aria-label="Player stats comparison" data-i18n-aria-label="stats.panelAria"></div></div>
-        <div class="sc-slide" id="scSlidePos" role="tabpanel" data-i18n-aria-label="sc.positions" aria-label="🏅 Positions"><div id="rkPositions" class="rk-positions" aria-live="polite"><p class="rk-pos-hint" data-i18n="sc.loadingPositions">Loading positions…</p></div></div>
         <div class="sc-slide" id="scSlideSrv" role="tabpanel" data-i18n-aria-label="sc.srvPositions" aria-label="🌍 Server positions"><div id="rkSrvPositions" class="rk-positions" aria-live="polite"><p class="rk-pos-hint" data-i18n="sc.loadingPositions">Loading positions…</p></div></div>
+        <div class="sc-slide" id="scSlidePos" role="tabpanel" data-i18n-aria-label="sc.positions" aria-label="🏅 Positions"><div id="rkPositions" class="rk-positions" aria-live="polite"><p class="rk-pos-hint" data-i18n="sc.loadingPositions">Loading positions…</p></div></div>
       </div>
     </div>
   </section>
@@ -654,7 +654,7 @@
   </footer>
 
   <script type="module" src="i18n.mjs"></script>
-  <script type="module" src="app.js?v=20261101-srvpos1"></script>
+  <script type="module" src="app.js?v=20261101-order1"></script>
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").catch(function () {});
