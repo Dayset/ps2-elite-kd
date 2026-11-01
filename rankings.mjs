@@ -23,11 +23,11 @@ import { groupByTier, openTierIds, pickedInGroup, groupIndexAt, tierOf } from ".
 import { createDistCycler, createWheelSwiper } from "./dist-cycle.mjs?v=20261017-cycle15";
 import { sfx } from "./sfx.mjs?v=20261026-sfx2";
 import { slideSwap, attachDragCarousel } from "./chart-slide.mjs?v=20261020-flick1";
-import { mergeFreshRows } from "./rank-row.mjs?v=20261101-osrv1";
+import { mergeFreshRows } from "./rank-row.mjs?v=20261101-opsrv1";
 import { readOutfitWorlds } from "./outfit-tags.mjs?v=20261101-osrv1";
 import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-sav1";
 import { confirmedPadderSlugs } from "./padding.mjs?v=20261023-short1";
-import { slugKey, bareName } from "./rank-row.mjs?v=20261101-osrv1";
+import { slugKey, bareName } from "./rank-row.mjs?v=20261101-opsrv1";
 import { hiddenList } from "./hidden.mjs?v=20261025-oor1";
 // PC | PlayStation rooms (#55): each room ranks its own players only (data/ or data-ps/).
 import { pageRoom, dataPrefix, roomLsKey, psServer } from "./rooms.mjs?v=20261022-ps1";
@@ -966,7 +966,7 @@ export function initRankings(host) {
           `<b>#${k.toLocaleString()}</b>${p != null ? `<span class="pct">p${p}</span>` : ""}</td>`;
       }).join("");
       // t813u: the global table says so too, with the same small tag the server table uses.
-      const srvTag = !srv ? `<span class="srv-pos-tag srv-pos-global" title="${esc(tr("rk.globalTagTip", "Ranked among all {n} cached players (all servers)", { n: data.count.toLocaleString() }))}">${esc(tr("rk.globalTag", "Global"))}</span>` : (sk ? `<span class="srv-pos-tag" title="${esc(tr("rk.srvTagTip", "Ranked among the {n} cached players on {server}", { n: ((data.srvPools[sk] || {}).adjs || []).length.toLocaleString(), server: sname }) + (r.srvBy === "o" ? ". " + tr("rk.srvFromOutfit", "Server taken from the player's outfit (no server of their own on file)") : ""))}">${esc(sname)}</span>` : `<span class="srv-pos-tag" title="${esc(tr("rk.srvUnknown", "Server unknown (old or closed world, or not looked up yet): no server rank."))}">?</span>`);
+      const srvTag = !srv ? `<span class="srv-pos-tag srv-pos-global" title="${esc(tr("rk.globalTagTip", "Ranked among all {n} cached players (all servers)", { n: data.count.toLocaleString() }))}">${esc(tr("rk.globalTag", "Global"))}</span>` : (sk ? `<span class="srv-pos-tag" title="${esc(tr("rk.srvTagTip", "Ranked among the {n} cached players on {server}", { n: ((data.srvPools[sk] || {}).adjs || []).length.toLocaleString(), server: sname }) + (r.srvBy === "o" ? ". " + tr("rk.srvFromOutfit", "Server taken from the player's outfit (no server of their own on file)") : r.srvBy === "e" ? ". " + tr("rk.srvFromOpponents", "Server taken from the player's opponents: nearly all the players they fought are on it (no own or outfit server on file)") : ""))}">${esc(sname)}</span>` : `<span class="srv-pos-tag" title="${esc(tr("rk.srvUnknown", "Server unknown (old or closed world, or not looked up yet): no server rank."))}">?</span>`);
       // Same "1." series number as the ✨ Stats table (graph colour order), so both modes read alike.
       return `<tr><td class="rk-pos-num" style="color:${paletteColor(i, light)}">${i + 1}.</td><th scope="row" class="rk-pos-name"><a href="#" class="rk-pos-jump" data-q="${esc(r.query)}" style="color:${paletteColor(i, light)}" title="${tr("rk.showTable", "Show {name} in the table", { name: esc(r.name) })}"><span class="nm" data-full="${esc(r.name)}">${esc(r.name)}</span></a>${r.freshAt ? `<span class="sample-fresh" title="${esc(freshTip(r.freshAt, r.localOnly))}">${FRESH_MARK}</span>` : ""}${r.mark ? `<span class="pad-mark mark-${["padding","adjusted"].includes(r.markKind) ? r.markKind : ""}" title="${esc(r.markTip)}">${r.mark}</span>` : ""}${poopHtml(r)}${srvTag}</th>${cells}</tr>`;
     }).join("");
