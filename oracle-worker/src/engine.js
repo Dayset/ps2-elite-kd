@@ -65,8 +65,16 @@ export function liveZone(snap) {
   return active >= 3 ? { snap: out, active, total } : { snap: snap || {}, active: total, total };
 }
 
-/** Meltdown odds are pulled toward even until live data validates them (leave-one-out fit on past Meltdowns, 2026-10-18). */
-export const MELTDOWN_SHRINK = 0.6;
+/**
+ * Pull of Meltdown odds toward even. 0.6 from 2026-10-18 (leave-one-out fit on the t0
+ * scores of 22 past Meltdowns) until live data could validate the odds. Refit
+ * 2026-11-01 on every minute of 67 scored Meltdowns (2,909 minutes, leave-one-alert-out):
+ * every fold picks 0; Brier 0.1405 -> 0.1030, better in every third of the alert and in
+ * 59 of 67 alerts, winner picks unchanged. The pull also caused jumps: a trailer with a
+ * 3 % history chance was lifted to ~31 % while one at 0 % stayed 0 (alert 40-8-32824:
+ * NC 100 % at t25-29, 69 % at t30-35, 100 % at t36 on the same map). So no pull now.
+ */
+export const MELTDOWN_SHRINK = 0;
 
 /** Mix even odds into every faction that is not mathematically out; renormalise. */
 export function shrinkToEven(win, alpha) {
@@ -272,7 +280,7 @@ export function callsAndHints(terr, mom, win, t, dur = 90, nFac = N_FAC) {
 
 /**
  * Win odds for one moment, Meltdown-aware. Territory alerts: unchanged engine.
- * Meltdowns: live-zone shares, live-zone elimination, then shrinkToEven.
+ * Meltdowns: live-zone shares, live-zone elimination (then shrinkToEven when MELTDOWN_SHRINK > 0).
  * Returns {terr, mom, win, raw, trunkv, nFac, zone?, winRaw?, winV0?}.
  */
 export function forecast({ getBin, kind, snapNow, snap15, t, dur, zeroMomentum = false, cutSnap = null }) {
@@ -293,7 +301,7 @@ export function forecast({ getBin, kind, snapNow, snap15, t, dur, zeroMomentum =
   // What the engine said before 2026-10-18 (whole-map shares), logged for comparison.
   const terrAll = territory(snapNow);
   const winV0 = computeWin(getBin, terrAll, momOf(terrAll, snap15 ? territory(snap15) : terrAll), t, dur).win;
-  return { terr, mom, raw, trunkv, nFac: z.active, winRaw, winV0, win: shrinkToEven(winRaw, MELTDOWN_SHRINK),
+  return { terr, mom, raw, trunkv, nFac: z.active, winRaw, winV0, win: MELTDOWN_SHRINK > 0 ? shrinkToEven(winRaw, MELTDOWN_SHRINK) : Object.fromEntries(FACS.map((f) => [f, { ...winRaw[f] }])),
     zone: { active: z.active, total: z.total, share: round1((100 * z.active) / (z.total || 1)) } };
 }
 

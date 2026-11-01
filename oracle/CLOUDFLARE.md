@@ -104,9 +104,10 @@ dashboard first; D1 is enough for now.
   is locked and neutral on the Census map, and Census's scores are shares of the
   whole map (final scores add up to ~31–57 %). The Worker reads Meltdowns on the
   live zone only (`liveZone` in `engine.js`: neutral regions dropped) for shares,
-  momentum, elimination (live-zone base count) and the commander, then pulls the
-  odds toward even (`MELTDOWN_SHRINK` = 0.6, leave-one-out fit on 22 past Meltdowns;
-  mathematically eliminated factions stay at 0). The broken-map guard skips the
+  momentum, elimination (live-zone base count) and the commander. Until 2026-11-01
+  the odds were then pulled toward even (`MELTDOWN_SHRINK` = 0.6, fit on the t0 of 22
+  past Meltdowns); the refit on every minute of 67 scored Meltdowns picked 0 (Brier
+  0.1405 -> 0.1030), so the shown odds are now the live-zone odds. The broken-map guard skips the
   "under 90 % owned" check for Meltdowns. Bench logs `<slice>_raw` (live zone, no
   pull) and `<slice>_v0` (old whole-map reading) beside each Meltdown slice so the
   pull can be refit once ~20 live Meltdowns are scored.

@@ -76,7 +76,7 @@ test("buildState emits the push_live contract", () => {
   assert.ok(Math.abs(sum - 100) < 0.5, `win sums to ${sum}`);
 });
 
-test("Meltdowns: odds read the live zone only, stay cautious, and still eliminate when the math says so", async () => {
+test("Meltdowns: odds read the live zone only, no pull toward even since the 2026-11-01 refit, and still eliminate when the math says so", async () => {
   const { forecast, liveZone, shrinkToEven, MELTDOWN_SHRINK } = await import("../oracle-worker/src/engine.js");
   const regions = Object.keys(JSON.parse(readFileSync(new URL("../oracle/backend/hossin_region_to_facility.json", import.meta.url), "utf8")));
   const snap = (vs, nc, tr) => Object.fromEntries(regions.map((r, i) => [r, i < vs ? "1" : i < vs + nc ? "2" : i < vs + nc + tr ? "3" : "0"]));
@@ -96,7 +96,9 @@ test("Meltdowns: odds read the live zone only, stay cautious, and still eliminat
   const terr = forecast({ getBin: binGetter(4), kind: "territory", snapNow: s, snap15: s, t: 20, dur: 45 });
   assert.equal(terr.winRaw, undefined);
   // Shrink arithmetic: eliminated stays 0, the rest mix with even odds.
-  const sh = shrinkToEven({ VS: { pct: 80 }, NC: { pct: 20 }, TR: { pct: 0 } }, MELTDOWN_SHRINK);
+  assert.equal(MELTDOWN_SHRINK, 0);
+  for (const k of ["VS", "NC", "TR"]) assert.equal(f.win[k].pct, f.winRaw[k].pct, "shown odds are the live-zone odds");
+  const sh = shrinkToEven({ VS: { pct: 80 }, NC: { pct: 20 }, TR: { pct: 0 } }, 0.6);
   assert.deepEqual([sh.VS.pct, sh.NC.pct, sh.TR.pct], [62, 38, 0]);
 });
 
@@ -122,7 +124,7 @@ test("notes fit the time left: per-15-min warnings early, end-of-alert meaning l
   assert.ok(c.includes("NC slipping but holds the lead at this pace (5 min left)"), c.join(" | "));
 });
 
-test("empty history cell for a dominant share falls back to the nearest lower bucket, not 0 % (alert 40-8-32824)", () => {
+test("empty history cell for a dominant share falls back to the nearest lower bucket, not 0 % (alert 40-8-32824)", async () => {
   // SolTech Esamir Meltdown, 2026-11-01: NC held 87-89 % of the live zone, a share no
   // past alert reached at that minute. The empty cell used to read as 0 %: NC 0 % at t16,
   // VS 100 % at t30 while NC went on to win.
@@ -135,6 +137,16 @@ test("empty history cell for a dominant share falls back to the nearest lower bu
     assert.ok(win.VS.pct < 15 && win.TR.pct < 15, JSON.stringify(win));
     const shown = shrinkToEven(win, MELTDOWN_SHRINK);
     assert.ok(shown.NC.pct > shown.VS.pct && shown.NC.pct > shown.TR.pct);
+  }
+  // Same map from t25 to t35 (NC 88.9 %): no dip to ~69 % at t30 any more (the old pull
+  // lifted VS's 2.7 % history chance to 31 % while a 0 % trailer stayed 0).
+  const { forecast } = await import("../oracle-worker/src/engine.js");
+  const regions = Object.keys(JSON.parse(readFileSync(new URL("../oracle/backend/esamir_region_to_facility.json", import.meta.url), "utf8")));
+  const esamir = (vs, nc, tr) => Object.fromEntries(regions.map((r, i) => [r, i < vs ? "1" : i < vs + nc ? "2" : i < vs + nc + tr ? "3" : "0"]));
+  const before = esamir(3, 12, 3), now = esamir(1, 16, 1);   // 18 live bases: 5.6 / 88.9 / 5.6 %, NC up 22 points in 15 min
+  for (const t of [25.1, 30.1, 35.1]) {
+    const f = forecast({ getBin: g, kind: "meltdown", snapNow: now, snap15: before, t, dur: 45 });
+    assert.ok(f.win.NC.pct > 90, `t${t} NC ${f.win.NC.pct}`);
   }
   // Nothing below either: still 0 (a 0 % share with no history at all).
   assert.deepEqual(lookupBelow({ trunk: {} }, null, 3, "VS", 40), [0, "trunk", 0]);
