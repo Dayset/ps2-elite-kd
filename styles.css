@@ -2749,8 +2749,11 @@ html[data-theme="light"] .rk-filter-row input#ranksSearch { color-scheme: light;
   width: min(17.5rem, calc(100vw - 1rem));
   display: flex; flex-direction: column; gap: 0.5rem;
   padding: 0.65rem 0.7rem;
-  background: var(--panel); border: 1px solid var(--border); border-radius: 0;
-  box-shadow: 0 0.6rem 1.6rem rgba(0, 0, 0, 0.45);
+  /* Standing-out border (owner 2026-11-01, low brightness): the theme's own
+   * light/dark pair, not pure black/white — 2px text-colored line + 2px
+   * page-colored halo, so the window reads in dark and light themes alike. */
+  background: var(--panel); border: 2px solid var(--text); border-radius: 0;
+  box-shadow: 0 0 0 2px var(--bg), 0 0.6rem 1.6rem rgba(0, 0, 0, 0.45);
 }
 .settings-row { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; }
 .settings-row[hidden] { display: none; }
