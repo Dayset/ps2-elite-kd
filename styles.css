@@ -2964,6 +2964,14 @@ html[data-theme="light"] .dist-pill:hover { opacity: 1; }
   .stats-carousel .stats-table td .pct,
   .stats-carousel .rk-pos-table td .pct { display: block; margin-left: 0; line-height: 1.1; }
 }
+/* Phones (Dayset 2026-11-01): the positions-table name scrolls with the table, like the
+ * 📋 All players table (2026-10-22) — a long name + server tag took half the phone
+ * screen while pinned. left: auto, not position: static, so only the left pin is
+ * released. When scrolled right, only the numbers show. */
+@media (max-width: 600px) {
+  .rk-pos-table .rk-pos-name,
+  .stats-carousel .rk-pos-table .rk-pos-name { left: auto; box-shadow: none; }
+}
 /* PC alignment (2026-10-19, t448u): on wide screens each big number sits centered
  * under its column name. The small grey % / pN beside it is taken out of the flow
  * (absolute, at its natural spot right after the number), so its width never moves
