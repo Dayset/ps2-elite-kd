@@ -30,6 +30,8 @@ import { slugKey, bareName } from "./rank-row.mjs?v=20261027-z79";
 import { hiddenList } from "./hidden.mjs?v=20261025-oor1";
 // PC | PlayStation rooms (#55): each room ranks its own players only (data/ or data-ps/).
 import { pageRoom, dataPrefix, roomLsKey, psServer } from "./rooms.mjs?v=20261022-ps1";
+import { SERVER_LABEL, serversOfRoom } from "./server-rating.mjs?v=20261031-sr1";
+import { srvKeyOf } from "./srv-key.mjs?v=20261101-srv1";
 import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261023-short1";
 import { infMedian } from "./tractor.mjs?v=20261024-trac1";
 import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261022-wpc1";
@@ -366,7 +368,7 @@ export function initRankings(host) {
     // t360u: new row objects carry no .rank yet → force assignRanks() to run again
     // (it skipped on an unchanged sort and left "undefined" ranks / a broken order).
     rankedFor = "";
-    data = { updatedAt: payload.updatedAt, count: (+payload.count || payload.rows.length - localOnly.size) + localOnly.size, rows, pools, infMed: infMedian(pools.inf), tracCuts: payload.tracCuts || null };
+    data = { updatedAt: payload.updatedAt, count: (+payload.count || payload.rows.length - localOnly.size) + localOnly.size, rows, pools, infMed: infMedian(pools.inf), tracCuts: payload.tracCuts || null, srvPools: serverPools(rows, Object.keys(pools)) };
     histCache.clear();
     syncAgeCeiling();
   }
@@ -893,6 +895,21 @@ export function initRankings(host) {
   }
 
 
+  /* ---------- 🌍 per-server pools (t812u): same columns, only the players of one server ---------- */
+  function serverPools(rows, ids) {
+    const out = {};
+    for (const o of rows) {
+      o.srvKey = srvKeyOf(o.srv, ROOM === "ps");
+      if (o.srvKey) (out[o.srvKey] ||= []).push(o);
+    }
+    for (const k of Object.keys(out)) {
+      const rs = out[k], p = {};
+      for (const id of ids) p[id] = rs.map((o) => o[id]).filter(fin).sort((a, b) => a - b);
+      out[k] = p;
+    }
+    return out;
+  }
+
   /* ---------- 🏅 positions of the selected players ---------- */
 
   /** 1-based rank of v in an ascending pool (higher = better unless asc). */
@@ -907,6 +924,7 @@ export function initRankings(host) {
   }
   function syncPickedUi() {
     const box = $("rkPositions");
+    const sbox = $("rkSrvPositions");
     if (!box || !data) return;
     const names = host.getNames();
     const byQ = new Map(data.rows.map((r) => [r.query, r]));
@@ -918,27 +936,42 @@ export function initRankings(host) {
     const missing = names.filter((n) => !matchPicks([n], rows, 1).length);
     if (!rows.length && !missing.length) {
       box.innerHTML = `<p class="rk-pos-hint">${tr("rk.posHintEmpty", "Add players in the names box (or tick ✅ in the table below) to see where they rank.")}</p>`;
+      if (sbox) sbox.innerHTML = box.innerHTML;
       return;
     }
     const light = document.documentElement.getAttribute("data-theme") === "light";
     const head = `<tr><th scope="col" class="rk-pos-name">${tr("rk.player", "Player")}</th>` + VISIBLE.map((c) => `<th scope="col" data-col="${c.id}" title="${esc(tipOf(c) || c.label)}">${esc(c.label)}</th>`).join("") + `</tr>`;
-    const body = rows.map((r) => {
+    const basisOf = (c) => (c.apk || c.zerg ? tr("rk.basisApk", "players with 100+ session kills") : c.inf ? tr("rk.basisInf", "measured players (100+ kills)") : tr("rk.basisCached", "cached players"));
+    // 🌍 t812u: srv = true → the same table, ranked only among the players of the row's own server.
+    const tableRows = (srv) => rows.map((r) => {
       const i = colorOf.get(r.query);
+      const sk = srv ? r.srvKey : null;
+      const sname = sk ? SERVER_LABEL[sk] || sk : "";
       const cells = VISIBLE.map((c) => {
         const v = r[c.id];
         if ((c.apk || c.inf || c.zerg || c.aimgap) && !fin(v)) return `<td>—</td>`; // t396u: APK ranks like the other columns
         if (!fin(v)) return r.thin && c.thinTip ? `<td class="thin-sample" title="${esc(MIN_FIGHTS_TIP)}">—</td>` : `<td>—</td>`;
-        const pool = data.pools[c.id] || [];
+        if (srv && !sk) return `<td title="${esc(tr("rk.srvUnknown", "Server unknown (old or closed world, or not looked up yet): no server rank."))}">—</td>`;
+        const pool = (srv ? (data.srvPools[sk] || {})[c.id] : data.pools[c.id]) || [];
+        if (!pool.length) return `<td>—</td>`;
         const k = rankIn(pool, v, !!c.ascFirst);
-        const p = r.pcts[c.id];
-        return `<td title="${esc(c.label)} ${fmt(v, c.digits)}: ${tr("rk.rank", "rank {k} of {n} {basis}", { k: k.toLocaleString(), n: pool.length.toLocaleString(), basis: c.apk || c.zerg ? tr("rk.basisApk", "players with 100+ session kills") : c.inf ? tr("rk.basisInf", "measured players (100+ kills)") : tr("rk.basisCached", "cached players") })}${c.id === "adjs" && vcutTip(r) ? ". " + esc(vcutTip(r)) : ""}">` +
+        const p = srv ? pctOf(pool, v) : r.pcts[c.id];
+        const rankTxt = srv
+          ? tr("rk.srvRank", "rank {k} of {n} {basis} on {server}", { k: k.toLocaleString(), n: pool.length.toLocaleString(), basis: basisOf(c), server: sname })
+          : tr("rk.rank", "rank {k} of {n} {basis}", { k: k.toLocaleString(), n: pool.length.toLocaleString(), basis: basisOf(c) });
+        return `<td title="${esc(c.label)} ${fmt(v, c.digits)}: ${esc(rankTxt)}${c.id === "adjs" && vcutTip(r) ? ". " + esc(vcutTip(r)) : ""}">` +
           `<b>#${k.toLocaleString()}</b>${p != null ? `<span class="pct">p${p}</span>` : ""}</td>`;
       }).join("");
+      const srvTag = srv ? (sk ? `<span class="srv-pos-tag" title="${esc(tr("rk.srvTagTip", "Ranked among the {n} cached players on {server}", { n: ((data.srvPools[sk] || {}).adjs || []).length.toLocaleString(), server: sname }))}">${esc(sname)}</span>` : `<span class="srv-pos-tag" title="${esc(tr("rk.srvUnknown", "Server unknown (old or closed world, or not looked up yet): no server rank."))}">?</span>`) : "";
       // Same "1." series number as the ✨ Stats table (graph colour order), so both modes read alike.
-      return `<tr><th scope="row" class="rk-pos-name"><span class="player-num" style="color:${paletteColor(i, light)}">${i + 1}.</span><a href="#" class="rk-pos-jump" data-q="${esc(r.query)}" style="color:${paletteColor(i, light)}" title="${tr("rk.showTable", "Show {name} in the table", { name: esc(r.name) })}"><span class="nm" data-full="${esc(r.name)}">${esc(r.name)}</span></a>${r.freshAt ? `<span class="sample-fresh" title="${esc(freshTip(r.freshAt, r.localOnly))}">${FRESH_MARK}</span>` : ""}${r.mark ? `<span class="pad-mark mark-${["padding","adjusted"].includes(r.markKind) ? r.markKind : ""}" title="${esc(r.markTip)}">${r.mark}</span>` : ""}${poopHtml(r)}</th>${cells}</tr>`;
+      return `<tr><th scope="row" class="rk-pos-name"><span class="player-num" style="color:${paletteColor(i, light)}">${i + 1}.</span><a href="#" class="rk-pos-jump" data-q="${esc(r.query)}" style="color:${paletteColor(i, light)}" title="${tr("rk.showTable", "Show {name} in the table", { name: esc(r.name) })}"><span class="nm" data-full="${esc(r.name)}">${esc(r.name)}</span></a>${r.freshAt ? `<span class="sample-fresh" title="${esc(freshTip(r.freshAt, r.localOnly))}">${FRESH_MARK}</span>` : ""}${r.mark ? `<span class="pad-mark mark-${["padding","adjusted"].includes(r.markKind) ? r.markKind : ""}" title="${esc(r.markTip)}">${r.mark}</span>` : ""}${poopHtml(r)}${srvTag}</th>${cells}</tr>`;
     }).join("");
     const miss = missing.length ? `<p class="rk-pos-hint">${tr("rk.posHint", "Not in the Rankings (new, hidden or not cached yet):")} ${missing.map((n) => `<strong>${esc(n)}</strong>`).join(", ")}</p>` : "";
-    box.innerHTML = (rows.length ? `<div class="rk-pos-wrap"><table class="rk-pos-table" aria-label="${tr("rk.posAria", "Rank of the selected players among {n} cached players", { n: data.count.toLocaleString() })}"><thead>${head}</thead><tbody>${body}</tbody></table></div>` : "") + miss;
+    box.innerHTML = (rows.length ? `<div class="rk-pos-wrap"><table class="rk-pos-table" aria-label="${tr("rk.posAria", "Rank of the selected players among {n} cached players", { n: data.count.toLocaleString() })}"><thead>${head}</thead><tbody>${tableRows(false)}</tbody></table></div>` : "") + miss;
+    if (sbox) {
+      const srvNames = serversOfRoom(ROOM === "ps").map((k) => SERVER_LABEL[k]).join(" / ");
+      sbox.innerHTML = (rows.length ? `<div class="rk-pos-wrap"><table class="rk-pos-table rk-srv-table" aria-label="${esc(tr("rk.srvAria", "Rank of the selected players on their own server ({servers})", { servers: srvNames }))}"><thead>${head}</thead><tbody>${tableRows(true)}</tbody></table></div>` : "") + miss;
+    }
   }
 
   /* ---------- 📊 Distribution chart ---------- */
@@ -1694,7 +1727,7 @@ export function initRankings(host) {
     const tr = btn.closest("tr.rk-tier");
     if (tr) toggleTier(tr.getAttribute("data-tier"));
   });
-  $("rkPositions").addEventListener("click", (e) => {
+  for (const id of ["rkPositions", "rkSrvPositions"]) $(id)?.addEventListener("click", (e) => {
     const a = e.target.closest && e.target.closest("a.rk-pos-jump");
     if (!a) return;
     e.preventDefault();

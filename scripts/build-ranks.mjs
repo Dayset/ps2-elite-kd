@@ -1325,6 +1325,18 @@ export function addServerColumn(ranks, index) {
 }
 
 /**
+ * PC ranks get the same trailing "srv" column (t812u: 🌍 per-server positions): "osprey" / "wainwright" from the
+ * Census home world (serverOfWorld: Connery + Emerald → Osprey, Miller + Cobalt → Wainwright); null for other
+ * worlds (SolTech is closed, Jaeger) or an unknown world — the same players the 🌐 Servers section leaves out.
+ */
+export function addPcServerColumn(ranks, worldBy) {
+  if (ranks.cols.includes("srv")) return ranks;
+  ranks.cols.push("srv");
+  for (const r of ranks.rows) r.push((worldBy && serverOfWorld(worldBy.get(r[2]))) || null);
+  return ranks;
+}
+
+/**
  * PlayStation room auto-hide (owner 2026-10-22: "crazy outliers are not welcome").
  * An account is hidden (PS hide list, by character id) when its lifetime K/D is
  * >= 50 AND >= 90% of its opponent-sample kills are on farm accounts (10,000+
@@ -1388,6 +1400,7 @@ if (isMain) {
   }
   const { ranks: out, guard, hidden: hiddenInfo, bins, session, forensics: forensicsInfo, review, assistGroups: assistInfo, padderPenalty: padderInfo, vehicleCut: vehCutInfo, hut: hutInfo, vehDiff: vehDiffInfo, zergRevive: zrevInfo, tractor: tracInfo, newbieDiff: nbdInfo, assistGap: gapInfo, factions: facInfo, serverInputs } = buildRanksWithGuard(dataDir, room === "ps" ? { known: {}, zergCharge: false } : undefined);
   if (room === "ps") addServerColumn(out, JSON.parse(fs.readFileSync(path.join(dataDir, "index.json"), "utf8")));
+  else addPcServerColumn(out, serverInputs && serverInputs.worldBy);
   fs.writeFileSync(path.join(dataDir, "ranks.json"), JSON.stringify(out) + "\n");
   // 🌐 Server rating (t798u): main-page section + the server-name alias (PC Osprey / Wainwright, PS Genudine / Ceres).
   try {
