@@ -2,7 +2,7 @@
 import { S, FACS, esc, $, when, info, wide } from "./state.js?v=20261018-scrub2";
 import { get } from "./api.js?v=20261018-scrub2";
 import { t as tr } from "../../i18n.mjs";
-import { renderSkillFoot } from "./skill-foot.js?v=20261031-popw1";
+import { renderSkillFoot } from "./skill-foot.js?v=20261101-miniskill1";
 
 // Benchmark slices recorded for one alert, with Brier once it settled.
 export function benchPanel(a) {

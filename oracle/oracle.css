@@ -143,7 +143,20 @@ footer { color: var(--dim); font-size: var(--fs-12); margin-top: var(--s-5); }
 /* Unfold indicator for user-toggleable collapsibles (e.g. Win chance Details). */
 .det.keep > summary::before { content: "▸"; color: var(--dim); margin-right: var(--s-1); }
 .det.keep[open] > summary::before { content: "▾"; }
-.seg, .oddline, .tab .tl, .mini { display: none; }
+.seg, .oddline, .tab .tl { display: none; }
+/* Pinned top bar (owner 2026-11-01): row 1 = alert name + win %, row 2 = ⚖️ skill (label left,
+   numbers right). Fixed at the viewport top; miniSync slides it down once the alert title scrolls
+   away, and it stays there while scrolling (all widths — was phone-only). */
+.mini { display: flex; flex-direction: column; position: fixed; top: 0; left: 0; right: 0; z-index: 20;
+  gap: var(--s-1); padding: var(--s-2) var(--s-3); background: rgba(16,18,22,.96); border-bottom: 1px solid var(--border);
+  font-size: var(--fs-14); transform: translateY(-100%); transition: transform .15s; }
+.mini.show { transform: none; }
+.mini-main { display: flex; gap: var(--s-3); align-items: center; justify-content: space-between; }
+.mini-main > span { display: flex; gap: var(--s-2); font-variant-numeric: tabular-nums; font-weight: 700; }
+.mini-skill { display: flex; gap: var(--s-2); align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.mini-skill[hidden] { display: none; }
+.mini-skill-label { flex: none; }
+.mini-skill-values { margin-left: auto; text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
 @media (min-width: 601px) {
   .det:not(.keep) > summary { display: none; }
   .det.keep > summary { display: block; }
@@ -199,17 +212,11 @@ footer { color: var(--dim); font-size: var(--fs-12); margin-top: var(--s-5); }
   .scroll { overflow-x: visible; }
   .slices { display: table; }
   .card .scroll:has(.slices) { overflow-x: auto; }
-  /* Sticky mini-header */
-  .mini { display: flex; position: fixed; top: 0; left: 0; right: 0; z-index: 20; gap: var(--s-3); align-items: center; justify-content: space-between;
-    padding: var(--s-2) var(--s-3); background: rgba(16,18,22,.96); border-bottom: 1px solid var(--border); font-size: var(--fs-14);
-    transform: translateY(-100%); transition: transform .15s; }
-  .mini.show { transform: none; }
-  .mini > span { display: flex; gap: var(--s-2); font-variant-numeric: tabular-nums; font-weight: 700; }
   dialog.auth { padding: var(--s-4); }
   .auth .x button { min-width: 44px; min-height: 44px; }
   .auth input { min-height: 44px; font-size: var(--fs-16); }
 }
-@media (max-width: 600px) and (prefers-reduced-motion: reduce) { .mini { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .mini { transition: none; } }
 @media (max-width: 600px) {
   .grid > .side { order: -1; }
   .map svg { max-height: 38vh; width: auto; max-width: 100%; margin: 0 auto; }

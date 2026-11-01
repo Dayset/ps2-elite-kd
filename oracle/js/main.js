@@ -9,7 +9,7 @@ import { modeFocus, ownerLookup, heatLookup, spawnLookup, pickMode, MODE_KEY, pi
 import { nextPoll } from "./poll.js?v=20261026-mode1";
 import { voiceToggle, voiceTick, bindVoiceMenu } from "./voice.js?v=20261027-say1";
 import { reportPanel } from "./players.js?v=20261024-i18n1";
-import { benchPanel, initResults, refreshHistory, renderHist } from "./results.js?v=20261031-popw1";
+import { benchPanel, initResults, refreshHistory, renderHist } from "./results.js?v=20261101-miniskill1";
 import { initAuth } from "./auth.js?v=20261028-dev82";
 import { enhance, onSectionExpand, refreshSummary } from "./collapse.js?v=20261026-pulse1";
 import { t as tr, ready } from "../../i18n.mjs";
@@ -157,7 +157,7 @@ function render2(now) {
   const a = liveA || (S.pinned && S.extra && S.extra.key === S.selected ? S.extra : null);
   if (!a && S.pinned && S.selected) { $("main").innerHTML = `<div class="empty">${tr("or.loadingAlert", "Loading alert…")}</div>`; return; }
   if (!a) {
-    $("mini").innerHTML = ""; miniSync();
+    $("miniMain").innerHTML = ""; miniSync();
     if (S.maint && S.maint.all) { $("main").innerHTML = `<div class="empty">${tr("or.mt.empty", "PlanetSide 2 servers are down for maintenance. Alerts and live odds show up here again on their own once they're back.")}</div>`; return; }
     $("main").innerHTML = `<div class="empty">${tr("or.noAlerts", "No territory alerts running on Osprey, Wainwright or SolTech right now. Live odds appear here the minute one starts.")}</div>`;
     return;
@@ -230,7 +230,7 @@ function render2(now) {
   $("main").querySelectorAll("[data-voice]").forEach((b) => b.onclick = () => { voiceToggle(b.dataset.voice, cmdNow && cmdNow.focus, s, cmdNow && cmdNow.pockets); render(Math.floor(Date.now() / 1000)); });
   if (cmdNow) voiceTick(cmdNow.focus, undefined, false, undefined, s, cmdNow.pockets); // s: territory + 15-min change for the gap ending (owner t652u)
   bindVoiceMenu($("main")); // ⚙️ voice list (owner t650u), replaces the always-visible dropdown
-  $("mini").innerHTML = `<b>${esc(a.world_name)} · ${esc(a.zone_name)}</b>${win ? `<span>${FACS.map((f) => `<span class="${f}">${f} ${pct1(win[f].pct)}%</span>`).join(" ")}</span>` : ""}`;
+  $("miniMain").innerHTML = `<b>${esc(a.world_name)} · ${esc(a.zone_name)}</b>${win ? `<span>${FACS.map((f) => `<span class="${f}">${f} ${pct1(win[f].pct)}%</span>`).join(" ")}</span>` : ""}`;
   miniSync();
   if (S.ticksFor === a.key) { const c = $("chart"); c.innerHTML = chart(S.ticks, a.dur, c.clientWidth); chartHover(c, S.ticks, a.dur, (k, how) => scrub(a, k, how)); }
   if (S.scrub && S.scrub.key === a.key) scrub(a, S.scrub.tick, S.scrub.how);
@@ -339,10 +339,11 @@ async function refreshLive() {
 // Back on the tab after a while (timers sleep in background tabs): catch up once.
 document.addEventListener("visibilitychange", () => { if (!document.hidden && Date.now() / 1000 - lastFetchS > 70) refreshLive(); });
 
-// Phone: sticky mini-header (alert name + three win %) once the title scrolls away.
+// Pinned top bar (alert name + win % on row 1, ⚖️ skill on row 2) once the title scrolls away.
+// It stays fixed at the top while scrolling (owner 2026-11-01: pinned forever on top, all widths).
 function miniSync() {
   const t = $("main").querySelector(".title"), m = $("mini");
-  m.classList.toggle("show", !wide() && !!t && !!m.innerHTML && t.getBoundingClientRect().bottom < 0);
+  m.classList.toggle("show", !!t && !!$("miniMain").innerHTML && t.getBoundingClientRect().bottom < 0);
 }
 addEventListener("scroll", miniSync, { passive: true });
 // Remember which collapsibles the user opened on the phone, so 30-s re-renders keep them.
