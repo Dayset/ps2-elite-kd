@@ -242,6 +242,11 @@ export function createOutfitTags($) {
     }
     const { pick, others } = pickOutfit(found);
     if (!pick) {
+      if (found.length) {
+        // Rows arrived but none carried an outfit_id: Census answered malformed, not "no such tag".
+        note(escapeHtml(tr("outfit.error", "Couldn't reach Daybreak Census for {tag}. Try again in a minute.", { tag })), "err");
+        return { added: 0, error: true };
+      }
       note(escapeHtml(tr("outfit.unknown", "No outfit with the tag {tag} was found. Check the tag, or type a player name.", { tag })), "warn");
       return { added: 0, unknown: true };
     }
@@ -267,6 +272,12 @@ export function createOutfitTags($) {
       if (list && list.size) removed = ({ cid, name }) => !!list.match({ cid, name, slug: slugKey(name), server });
     } catch {}
     const sorted = sortMembers(members, { have: $.nameTokens.slice(), isCached: (n) => $.isCached(n), removed });
+    if (members.length && !sorted.total) {
+      // Rows arrived but no name resolved: the character join failed, not "no members".
+      // (addPicked serves the [TAG] text and the 🛡️ button; tag can be "" for a tag-less outfit.)
+      note(escapeHtml(tr("outfit.error", "Couldn't reach Daybreak Census for {tag}. Try again in a minute.", { tag: tag || label })), "err");
+      return { added: 0, error: true };
+    }
     return report(label, others, sorted, addSome([...sorted.cached, ...sorted.active], sorted.cached));
   }
 

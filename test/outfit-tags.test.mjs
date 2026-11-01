@@ -103,6 +103,36 @@ test("expand: unknown tag adds nothing; a known tag adds every active member pas
   assert.equal(f.$.addNameToField("Typed7"), false);
 });
 
+test("expand: a tag row without an outfit_id is a Census error, not 'unknown'", async () => {
+  const f = fakeField({ outfits: [{ alias: "WARP", name: "Endless Warp", member_count: "8", leader: { world_id: "1" } }], members: [] });
+  const [r] = await f.part.expand(["warp"]);
+  assert.equal(r.added, 0);
+  assert.equal(r.error, true);
+  assert.equal(r.unknown, undefined);
+  assert.deepEqual(f.$.nameTokens, []);
+});
+
+test("expand: member rows with no resolved name are a Census error, not 'no members'", async () => {
+  const members = [
+    { character_id: "1", c: { name: { first: "" }, times: { last_login: at(1) } } },
+    { character_id: "2" }, // join returned no character at all
+    { character_id: "3", c: { name: {}, times: { last_login: at(2) } } },
+  ];
+  const f = fakeField({ members, outfits: WARP });
+  const [r] = await f.part.expand(["warp"]);
+  assert.equal(r.added, 0);
+  assert.equal(r.error, true);
+  assert.deepEqual(f.$.nameTokens, []);
+});
+
+test("expand: a known outfit with no members still says 'empty', not an error", async () => {
+  const f = fakeField({ members: [], outfits: WARP });
+  const [r] = await f.part.expand(["warp"]);
+  assert.equal(r.added, 0);
+  assert.equal(r.error, undefined, "a truly empty outfit is not a Census error");
+  assert.deepEqual(f.$.nameTokens, []);
+});
+
 test("safety cap: a huge outfit adds at most OUTFIT_MAX_NAMES; the note says why", async () => {
   assert.equal(OUTFIT_MAX_NAMES, 50);
   const members = Array.from({ length: 300 }, (_, i) => member("P" + i, i % 100, i));

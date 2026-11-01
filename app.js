@@ -38,14 +38,14 @@ import { formatClock, fmtNum, slugKey, bareName, parseNames, namesEqualIgnoreCas
 import { createAnalyze } from "./analyze.mjs?v=20261030-cxl1";
 import { createShareAdd } from "./share-add.mjs?v=20261027-z79";
 import { createSharedIndex } from "./shared-index.mjs?v=20261101-numloop1";
-import { createNamesField } from "./names-field.mjs?v=20261101-pof1";
+import { createNamesField } from "./names-field.mjs?v=20261101-outfit1";
 import { initFactionPanel } from "./faction-panel.mjs?v=20261031-fr4";
 import { initServerPanel } from "./server-panel.mjs?v=20261031-sr2";
-import { createOutfitRoster, canTakeName as canTakeNameRule, OUTFIT_MAX_NAMES } from "./outfit-tags.mjs?v=20261101-pof1";
+import { createOutfitRoster, canTakeName as canTakeNameRule, OUTFIT_MAX_NAMES } from "./outfit-tags.mjs?v=20261101-outfit1";
 import { createStatsTable } from "./stats-table.mjs?v=20261101-duel1";
 import { createChartWave } from "./chart-wave.mjs?v=20261029-puregraph1";
 import { createChart } from "./chart.mjs?v=20261030-hs1";
-import { createLoader } from "./loader.mjs?v=20261027-z79";
+import { createLoader } from "./loader.mjs?v=20261101-outfit1";
 import { createCacheChips } from "./cache-chips.mjs?v=20261027-z79";
 import { createLocalCache } from "./local-cache.mjs?v=20261027-z79";
 import { createProgress } from "./progress.mjs?v=20261027-z79";

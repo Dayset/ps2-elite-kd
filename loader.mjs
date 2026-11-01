@@ -224,7 +224,9 @@ export function createLoader($) {
         bucket: $.censusBucket,
         retries: 4,
         timeoutMs: big ? $.CENSUS_BOARD_TIMEOUT_MS : $.CENSUS_TIMEOUT_MS,
-        expectData: big || url.includes("character?name.first_lower="),
+        // Outfit lookups too: Census returns an empty list when overloaded, so an empty
+        // outfit/member list is retried, not taken as "no such tag" / "no members".
+        expectData: big || url.includes("character?name.first_lower=") || url.includes("outfit?") || url.includes("outfit_member?"),
         baseMs: 1500,
         capMs: 20000,
         onRetry: ({ attempt, retries }) => {
