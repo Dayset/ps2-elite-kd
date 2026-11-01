@@ -139,6 +139,25 @@ export function lookup(bin, xbin, b, fac, terr, mom, marg, rival) {
   return [null, "none", 0];
 }
 
+/**
+ * No history for this share (e.g. a Meltdown leader at 87 % of the live zone,
+ * higher than any past alert reached at that minute): read the nearest lower
+ * territory bucket that has history instead of 0 %, so holding more ground can
+ * never look like a 0 % chance. Trunk first, then xtrunk; [0, "trunk", 0] only
+ * when nothing below exists either. Mirrors push_live_state.lookup_below.
+ */
+export function lookupBelow(bin, xbin, b, fac, terr) {
+  const tb = Math.min(Math.floor(terr / 5), 20);
+  for (let k = tb - 1; k >= 0; k--) {
+    const key = `${b},${fac},${k}`;
+    const cell = (bin.trunk || {})[key];
+    if (cell) return [(100 * cell[0]) / cell[1], "trunk", cell[1]];
+    const x = xbin && xbin[key];
+    if (x) return [(100 * x[0]) / x[1], "xtrunk", x[1]];
+  }
+  return [0, "trunk", 0];
+}
+
 /** Time bin index for minute t of an alert of length dur (duration-aware rescale). */
 export function timeBin(t, dur = 90) {
   const tEff = dur ? (t * 90) / dur : t;
@@ -158,7 +177,7 @@ export function computeWin(getBin, terr, mom, t, dur = 90, nFac = N_FAC) {
     const marg = terr[f] - Math.max(...others.map((k) => terr[k]));
     const rival = argmax(terr, others);
     let [p, level, n] = lookup(bin, xbin, b, f, terr[f], mom[f], marg, rival);
-    if (p === null) { p = 0; level = "trunk"; n = 0; }
+    if (p === null) [p, level, n] = lookupBelow(bin, xbin, b, f, terr[f]);
     raw[f] = p;
     const tb = Math.min(Math.floor(Math.trunc(terr[f]) / 5), 20);
     const cell = (bin.trunk || {})[`${b},${f},${tb}`];

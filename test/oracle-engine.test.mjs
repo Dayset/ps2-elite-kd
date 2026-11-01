@@ -7,7 +7,7 @@ import { readFileSync } from "node:fs";
 import { buildModels } from "../oracle-worker/build-trees.mjs";
 import { TREE_BINS, XTRUNK_BINS, REGION_TO_FACILITY } from "../oracle-worker/src/models.gen.js";
 import { binGetter } from "../oracle-worker/src/models.js";
-import { computeWin, secondPlace, timeBin, maxSwingPP, territory, brier, scoreWinner, sliceMinutes, buildState } from "../oracle-worker/src/engine.js";
+import { computeWin, secondPlace, timeBin, maxSwingPP, territory, brier, scoreWinner, sliceMinutes, buildState, lookupBelow, shrinkToEven, MELTDOWN_SHRINK } from "../oracle-worker/src/engine.js";
 
 const cases = JSON.parse(readFileSync(new URL("./fixtures/oracle-parity.json", import.meta.url), "utf8"));
 const close = (a, b, tol = 0.11) => Math.abs(a - b) <= tol;
@@ -120,4 +120,23 @@ test("notes fit the time left: per-15-min warnings early, end-of-alert meaning l
   // Leader slipping late but safe.
   c = callsAndHints(T(30, 50, 20), T(3, -6, 3), W(10, 85, 5), 85, 90).calls;
   assert.ok(c.includes("NC slipping but holds the lead at this pace (5 min left)"), c.join(" | "));
+});
+
+test("empty history cell for a dominant share falls back to the nearest lower bucket, not 0 % (alert 40-8-32824)", () => {
+  // SolTech Esamir Meltdown, 2026-11-01: NC held 87-89 % of the live zone, a share no
+  // past alert reached at that minute. The empty cell used to read as 0 %: NC 0 % at t16,
+  // VS 100 % at t30 while NC went on to win.
+  const g = binGetter(8);
+  const t16 = computeWin(g, { VS: 6.7, NC: 86.7, TR: 6.7 }, { VS: 0, NC: 33.4, TR: -33.3 }, 16.1, 45, 15);
+  const t30 = computeWin(g, { VS: 5.6, NC: 88.9, TR: 5.6 }, { VS: -1.1, NC: 15.6, TR: -14.4 }, 30.1, 45, 18);
+  for (const { win } of [t16, t30]) {
+    assert.ok(win.NC.n > 0, "NC reads a populated cell");
+    assert.ok(win.NC.pct > 80, `NC ${win.NC.pct}`);
+    assert.ok(win.VS.pct < 15 && win.TR.pct < 15, JSON.stringify(win));
+    const shown = shrinkToEven(win, MELTDOWN_SHRINK);
+    assert.ok(shown.NC.pct > shown.VS.pct && shown.NC.pct > shown.TR.pct);
+  }
+  // Nothing below either: still 0 (a 0 % share with no history at all).
+  assert.deepEqual(lookupBelow({ trunk: {} }, null, 3, "VS", 40), [0, "trunk", 0]);
+  assert.deepEqual(lookupBelow({ trunk: { "3,VS,5": [3, 4] } }, null, 3, "VS", 40), [75, "trunk", 4]);
 });

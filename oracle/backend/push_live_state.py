@@ -136,6 +136,24 @@ def get_commander(world, zone, start_ts, dur=90.0):
         return None
 
 
+def lookup_below(tree, xtree, b, f, terr_f):
+    """No history for this share (e.g. a Meltdown leader at 87 % of the live
+    zone): read the nearest lower territory bucket with history instead of 0 %,
+    trunk first, then xtrunk. (0.0, "trunk", 0) only when nothing below exists.
+    2026-11-01, alert 40-8-32824: NC at 87-89 % showed 0 % and VS 100 %."""
+    tb = min(int(terr_f // 5), 20)
+    xb = xtree["cells"] if xtree else {}
+    for k in range(tb - 1, -1, -1):
+        key = f"{b},{f},{k}"
+        cell = tree["trunk"].get(key)
+        if cell:
+            return 100.0 * cell[0] / cell[1], "trunk", cell[1]
+        cell = xb.get(key)
+        if cell:
+            return 100.0 * cell[0] / cell[1], "xtrunk", cell[1]
+    return 0.0, "trunk", 0
+
+
 def compute_win(tree, terr, mom, t, dur=90.0):
     """Raw tree 3-faction win% with elimination override, normalized to 100.
 
@@ -155,7 +173,7 @@ def compute_win(tree, terr, mom, t, dur=90.0):
         rival = max((k for k in terr if k != f), key=lambda k: terr[k])
         p, level, n = tree_lookup(tree, b, f, terr[f], mom[f], marg, rival, xtree)
         if p is None:
-            p, level, n = 0.0, "trunk", 0
+            p, level, n = lookup_below(tree, xtree, b, f, terr[f])
         raw[f] = p
         tb = min(int(terr[f]) // 5, 20)
         cell = tree["trunk"].get(f"{b},{f},{tb}")
