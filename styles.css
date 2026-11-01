@@ -1702,11 +1702,13 @@ html[data-theme="light"] .progress-modal-backdrop {
   background-color: var(--panel);
 }
 
+/* Owner 2026-11-01: centered everywhere — the 📊 public table lives outside
+   the carousel, so it kept this left rule while the other tables centered. */
 .stats-table th,
 .stats-table td {
   padding: 0.28rem 0.35rem;
   border-bottom: 1px solid var(--row-border);
-  text-align: left;
+  text-align: center;
   white-space: nowrap;
 }
 
