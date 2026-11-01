@@ -64,4 +64,5 @@ jobs:
       - name: Commit (data/outfits.json only)
         env:
           COMMIT_DIR: data/outfits.json
-        run: scripts/ci-commit-push.sh "chore(outfits): outfit iVi dataset [bot]"
+        run: |
+          scripts/ci-commit-push.sh "chore(outfits): outfit iVi dataset [bot]"
