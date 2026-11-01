@@ -72,7 +72,7 @@ and CANNOT be exported. To repeat the project you must rebuild it:
 5. **Critical settlement semantics** (do not re-invent these):
    - Settlement records keyed by **(alertId, endedAt)** — bare alertId collides
      on recycled alert IDs (see `CHANGELOG.md` 2026-10-16).
-   - Triple-check: payout held on checks 1–2, released only on check 3.
+   - Triple-check: reward held on checks 1–2, released only on check 3.
    - Never settle from a live push; never use a post-end snapshot.
    - Ties → 15-min kill-based sudden death.
 6. Implement auth per `docs/AUTH_DESIGN.md` (logout-only). The packaged

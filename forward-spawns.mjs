@@ -64,7 +64,7 @@ export function spawnLine(sp, tr, { own = null, att = null, cls = "" } = {}) {
   } else {
     for (const f of FACS.filter((x) => has(sp, x))) { vis.push(side(f)); tips.push(`${f}: ${spawnTip(sp[f], tr)}`); }
   }
-  tips.push(tr("sp.tip", "Spawn points each side had at this base in the last 10 min, counted from spawns in the game's live event stream. ·40 = spawns there, lost = destroyed in that time. Rough: a Sunderer pulled again counts as a new one. Shown only, not used in the odds."));
+  tips.push(tr("sp.tip", "Spawn points each side had at this base in the last 10 min, counted from spawns in the game's live event stream. ·40 = spawns there, lost = destroyed in that time. Rough: a Sunderer pulled again counts as a new one. Shown only, not used in the win chances."));
   const tip = tips.map(esc).join("&#10;");
   return `<span class="fspawn${cls ? " " + cls : ""}" title="${tip}">🚐 ${vis.join(' <span class="fspsep">|</span> ')}</span>`;
 }

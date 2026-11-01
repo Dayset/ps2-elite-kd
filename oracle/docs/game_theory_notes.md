@@ -7,9 +7,9 @@
 ---
 
 # PART II — Market-design game theory (voter behavior, from betting-market research)
-## Research dive 2026-10-11 — aimed at our parimutuel market design
+## Research dive 2026-10-11 — aimed at our shared-pool vote design
 
-Product context for this part: 3-faction parimutuel prediction market on alert
+Product context for this part: 3-faction shared-pool prediction game on alert
 outcomes, virtual points, no real money. AI oracle posts per-faction win
 probabilities with star confidence ratings. Graded fees by displayed odds: 5%
 at 50%, 15% at 80%, 30% at 90%, +10% kicker above 75%. Fees feed the winners'
@@ -18,8 +18,8 @@ pot; no house cut. A faction's market closes when the oracle locks it at 100%.
 ### HEADLINE FINDING
 The literature predicts this market will systematically OVERPRICE the trailer
 and UNDERPRICE the leader — and our graded fee schedule COMPOUNDS that skew
-instead of correcting it. It taxes leader-bets at 30–40% while trailer-bets
-cost ~5%, and bettor psychology already pushes the same direction (overweight
+instead of correcting it. It taxes leader votes at 30–40% while trailer votes
+cost ~5%, and voter psychology already pushes the same direction (overweight
 small probabilities, underweight large ones). The fee curve accidentally
 mirrors the cognitive distortion. (Sources: Kahneman & Tversky 1979; Snowberg
 & Wolfers 2010; Ziemba 2023 Annual Review.)
@@ -53,7 +53,7 @@ mirrors the cognitive distortion. (Sources: Kahneman & Tversky 1979; Snowberg
   Watanabe 2014), bragging rights (Thaler & Ziemba 1988).
 - It CAN reverse: Hong Kong, Japan, baseball show reverse bias (risk-averse
   bettor populations). Heterogeneous pools explain cross-market differences.
-- In OUR 3-faction pool: the trailer gets overbet, the leader underbet — value
+- In OUR 3-faction pool: the trailer gets over-voted, the leader under-voted — value
   flows from trailer-backers to leader-backers. Milder than 10-horse races
   (less room for extreme longshots), same direction. Twist: fees go to the
   winners' pot, so the "donation" partly recycles — trailer-backers still lose,
@@ -63,10 +63,10 @@ mirrors the cognitive distortion. (Sources: Kahneman & Tversky 1979; Snowberg
 - At 90%+ odds: bettors underweight the large probability (90% *feels* like
   ~75–80%), and cumulative-prospect-theory work finds bettors unwilling to take
   near-certain shots at unfair prices. Add 30% fee + 10% kicker = 40% total:
-  the leader's bet feels doubly bad — psychologically discounted AND heavily
-  taxed. Expect chronic leader underbetting.
+  the leader's vote feels doubly bad — psychologically discounted AND heavily
+  taxed. Expect chronic leader under-voting.
 - At ~20% longshots: overweighting makes 20% feel like ~30%+, fee at its
-  lowest, payoff salient. Expect chronic trailer overbetting — stacks with the
+  lowest, payoff salient. Expect chronic trailer over-voting — stacks with the
   favorite-longshot bias, same direction.
 - Bettors evaluate the FRAMED, edited gain. A hidden 40% fee on a 90% shot is
   a misperception engine.
@@ -75,14 +75,14 @@ mirrors the cognitive distortion. (Sources: Kahneman & Tversky 1979; Snowberg
 - Ellsberg (1961): people prefer known 50/50 urns over unknown-composition
   urns — aversion to uncertainty *about beliefs*, not payoff variance
   (confirmed Whelan, UCD 2025).
-- Making uncertainty explicit (stars) should REDUCE betting on low-star
+- Making uncertainty explicit (stars) should REDUCE voting on low-star
   factions vs a bare probability. Two framing hazards: (1) stars read as
-  *quality grades* ("3 stars = decent bet") not "the model is unsure";
+  *quality grades* ("3 stars = decent pick") not "the model is unsure";
   (2) high stars inflate trust in the point estimate, encouraging leader
   overbetting on top of prospect-theory effects.
 - Interaction with the 100%-lock: locking removes ALL ambiguity for that
   faction, making the remaining two feel relatively MORE ambiguous — expect a
-  brief betting pullback right after a lock, then re-concentration. Don't
+  brief voting pullback right after a lock, then re-concentration. Don't
   misread the pullback as a bug.
 
 ### 5. Sportsbook risk craft — do they predict or balance?
@@ -104,7 +104,7 @@ mirrors the cognitive distortion. (Sources: Kahneman & Tversky 1979; Snowberg
   dual lines, account closure. "Sharp" books (Pinnacle-style) accept the action
   and move the line instead. US retail books routinely limit winners while
   VIP-treating losers (Massachusetts 2026 now requires notification on limits).
-- MAPPING TO US: operator has no exposure (no house cut; parimutuel), so
+- MAPPING TO US: operator has no exposure (no house cut; shared pool), so
   classic book-balancing doesn't apply. The oracle = the oddsmaker posting an
   opener; the pool = the market. Transferable crafts: (1) low-confidence
   openers → explicit uncertainty display; (2) CLV-style profiling → make it
@@ -126,7 +126,7 @@ mirrors the cognitive distortion. (Sources: Kahneman & Tversky 1979; Snowberg
 4. **Reconsider the fee curve vs probability weighting.** Current schedule
    compounds the bias. Either flatten it (e.g. cap total fee ~20%) or frame it
    as the bias-correction mechanism in the UI ("high fee because the model is
-   very confident — the crowd usually underbets these") so it reads as
+   very confident — the crowd usually under-votes these") so it reads as
    information, not punishment.
 5. **Display uncertainty as interval + labeled stars, never a bare high
    probability.** "Model range 55–75%, certainty 3/5 — certainty means model
@@ -140,7 +140,7 @@ mirrors the cognitive distortion. (Sources: Kahneman & Tversky 1979; Snowberg
 
 ### OPEN QUESTIONS (researcher could not verify)
 - No empirical data on gamer/virtual-points populations — all bias magnitudes
-  are from racing/sports/prediction markets. Play-money stakes may dampen or
+  are from racing/sports/prediction markets. Play-money amounts may dampen or
   amplify effects; unverified.
 - Exact fee interpolation between our anchor points was not equilibrium-modeled.
 
@@ -151,9 +151,9 @@ mirrors the cognitive distortion. (Sources: Kahneman & Tversky 1979; Snowberg
 ---
 
 # PART II — Market-design game theory (voter behavior, from betting-market research)
-## Research dive 2026-10-11 — aimed at our parimutuel market design
+## Research dive 2026-10-11 — aimed at our shared-pool vote design
 
-Product context for this part: 3-faction parimutuel prediction market on alert
+Product context for this part: 3-faction shared-pool prediction game on alert
 outcomes, virtual points, no real money. AI oracle posts per-faction win
 probabilities with star confidence ratings. Graded fees by displayed odds: 5%
 at 50%, 15% at 80%, 30% at 90%, +10% kicker above 75%. Fees feed the winners'
@@ -162,8 +162,8 @@ pot; no house cut. A faction's market closes when the oracle locks it at 100%.
 ### HEADLINE FINDING
 The literature predicts this market will systematically OVERPRICE the trailer
 and UNDERPRICE the leader — and our graded fee schedule COMPOUNDS that skew
-instead of correcting it. It taxes leader-bets at 30–40% while trailer-bets
-cost ~5%, and bettor psychology already pushes the same direction (overweight
+instead of correcting it. It taxes leader votes at 30–40% while trailer votes
+cost ~5%, and voter psychology already pushes the same direction (overweight
 small probabilities, underweight large ones). The fee curve accidentally
 mirrors the cognitive distortion. (Sources: Kahneman & Tversky 1979; Snowberg
 & Wolfers 2010; Ziemba 2023 Annual Review.)
@@ -197,7 +197,7 @@ mirrors the cognitive distortion. (Sources: Kahneman & Tversky 1979; Snowberg
   Watanabe 2014), bragging rights (Thaler & Ziemba 1988).
 - It CAN reverse: Hong Kong, Japan, baseball show reverse bias (risk-averse
   bettor populations). Heterogeneous pools explain cross-market differences.
-- In OUR 3-faction pool: the trailer gets overbet, the leader underbet — value
+- In OUR 3-faction pool: the trailer gets over-voted, the leader under-voted — value
   flows from trailer-backers to leader-backers. Milder than 10-horse races
   (less room for extreme longshots), same direction. Twist: fees go to the
   winners' pot, so the "donation" partly recycles — trailer-backers still lose,
@@ -207,10 +207,10 @@ mirrors the cognitive distortion. (Sources: Kahneman & Tversky 1979; Snowberg
 - At 90%+ odds: bettors underweight the large probability (90% *feels* like
   ~75–80%), and cumulative-prospect-theory work finds bettors unwilling to take
   near-certain shots at unfair prices. Add 30% fee + 10% kicker = 40% total:
-  the leader's bet feels doubly bad — psychologically discounted AND heavily
-  taxed. Expect chronic leader underbetting.
+  the leader's vote feels doubly bad — psychologically discounted AND heavily
+  taxed. Expect chronic leader under-voting.
 - At ~20% longshots: overweighting makes 20% feel like ~30%+, fee at its
-  lowest, payoff salient. Expect chronic trailer overbetting — stacks with the
+  lowest, payoff salient. Expect chronic trailer over-voting — stacks with the
   favorite-longshot bias, same direction.
 - Bettors evaluate the FRAMED, edited gain. A hidden 40% fee on a 90% shot is
   a misperception engine.
@@ -219,14 +219,14 @@ mirrors the cognitive distortion. (Sources: Kahneman & Tversky 1979; Snowberg
 - Ellsberg (1961): people prefer known 50/50 urns over unknown-composition
   urns — aversion to uncertainty *about beliefs*, not payoff variance
   (confirmed Whelan, UCD 2025).
-- Making uncertainty explicit (stars) should REDUCE betting on low-star
+- Making uncertainty explicit (stars) should REDUCE voting on low-star
   factions vs a bare probability. Two framing hazards: (1) stars read as
-  *quality grades* ("3 stars = decent bet") not "the model is unsure";
+  *quality grades* ("3 stars = decent pick") not "the model is unsure";
   (2) high stars inflate trust in the point estimate, encouraging leader
   overbetting on top of prospect-theory effects.
 - Interaction with the 100%-lock: locking removes ALL ambiguity for that
   faction, making the remaining two feel relatively MORE ambiguous — expect a
-  brief betting pullback right after a lock, then re-concentration. Don't
+  brief voting pullback right after a lock, then re-concentration. Don't
   misread the pullback as a bug.
 
 ### 5. Sportsbook risk craft — do they predict or balance?
@@ -248,7 +248,7 @@ mirrors the cognitive distortion. (Sources: Kahneman & Tversky 1979; Snowberg
   dual lines, account closure. "Sharp" books (Pinnacle-style) accept the action
   and move the line instead. US retail books routinely limit winners while
   VIP-treating losers (Massachusetts 2026 now requires notification on limits).
-- MAPPING TO US: operator has no exposure (no house cut; parimutuel), so
+- MAPPING TO US: operator has no exposure (no house cut; shared pool), so
   classic book-balancing doesn't apply. The oracle = the oddsmaker posting an
   opener; the pool = the market. Transferable crafts: (1) low-confidence
   openers → explicit uncertainty display; (2) CLV-style profiling → make it
@@ -270,7 +270,7 @@ mirrors the cognitive distortion. (Sources: Kahneman & Tversky 1979; Snowberg
 4. **Reconsider the fee curve vs probability weighting.** Current schedule
    compounds the bias. Either flatten it (e.g. cap total fee ~20%) or frame it
    as the bias-correction mechanism in the UI ("high fee because the model is
-   very confident — the crowd usually underbets these") so it reads as
+   very confident — the crowd usually under-votes these") so it reads as
    information, not punishment.
 5. **Display uncertainty as interval + labeled stars, never a bare high
    probability.** "Model range 55–75%, certainty 3/5 — certainty means model
@@ -284,7 +284,7 @@ mirrors the cognitive distortion. (Sources: Kahneman & Tversky 1979; Snowberg
 
 ### OPEN QUESTIONS (researcher could not verify)
 - No empirical data on gamer/virtual-points populations — all bias magnitudes
-  are from racing/sports/prediction markets. Play-money stakes may dampen or
+  are from racing/sports/prediction markets. Play-money amounts may dampen or
   amplify effects; unverified.
 - Exact fee interpolation between our anchor points was not equilibrium-modeled.
 

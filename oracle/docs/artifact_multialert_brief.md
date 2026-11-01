@@ -3,7 +3,7 @@
 > **Renamed 2026-10-18:** betting is now **voting** (owner decision, #27). BonusCheques are a meme currency: no cash value, nothing is ever paid out, they can't be bought, sold, traded or cashed out. Current-state text below uses vote / amount / reward; dated history and code identifiers (`placebet`, the `bets` table, the `hex-betting-game` artifact) keep their original names. See `oracle/js/vote.js` (`DISCLAIMER`).
 
 ## Context
-The Hex Betting Game (`hex-betting-game`) currently handles a single live alert (world 10 Wainwright/Hossin). The backend now pushes live states for ALL servers and continents. Each push_live call carries one alert's state; there can be 0–4 concurrent live alerts.
+The old Muse voting artifact (`hex-betting-game`) currently handles a single live alert (world 10 Wainwright/Hossin). The backend now pushes live states for ALL servers and continents. Each push_live call carries one alert's state; there can be 0–4 concurrent live alerts.
 
 ## Server/continent reference
 - Worlds: 1=Osprey, 10=Wainwright, 19=Jaeger, 25=Briggs, 40=SolTech

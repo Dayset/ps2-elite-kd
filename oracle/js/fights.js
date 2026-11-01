@@ -21,7 +21,7 @@ const tagTxt = (t) => (t ? `[${t}]` : tr("or.cap.noTag", "(outfit without a tag)
 export function capLine(c, nowS = Math.floor(Date.now() / 1000)) {
   if (!c) return "";
   const fresh = nowS - c.t < CAP_FRESH_S ? " capnew" : "";
-  const tip = esc(tr("or.cap.tip", "Outfit with the biggest share of this capture: half the players on the point, half the point-capture XP. Under 50% = no clear lead. Shown only, not used in the odds."));
+  const tip = esc(tr("or.cap.tip", "Outfit with the biggest share of this capture: half the players on the point, half the point-capture XP. Under 50% = no clear lead. Shown only, not used in the win chances."));
   const main = c.lead && c.tag != null
     ? tr("or.cap.by", "🏴 Captured by {tag} · {p}%", { tag: `<b>${esc(tagTxt(c.tag))}</b>`, p: c.share })
     : tr("or.cap.noLead", "🏴 Captured · no clear lead");
@@ -44,7 +44,7 @@ export function capsList(s, nowS = Math.floor(Date.now() / 1000)) {
 export function capShort(c) {
   if (!c || !c.lead || c.tag == null) return "";
   const full = capLine(c).replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
-  return ` <span class="capt fcapt" title="${esc(`${full} — ${tr("or.cap.tip", "Outfit with the biggest share of this capture: half the players on the point, half the point-capture XP. Under 50% = no clear lead. Shown only, not used in the odds.")}`)}">🏴<b>${esc(tagTxt(c.tag))}</b> ${c.share}%</span>`;
+  return ` <span class="capt fcapt" title="${esc(`${full} — ${tr("or.cap.tip", "Outfit with the biggest share of this capture: half the players on the point, half the point-capture XP. Under 50% = no clear lead. Shown only, not used in the win chances.")}`)}">🏴<b>${esc(tagTxt(c.tag))}</b> ${c.share}%</span>`;
 }
 
 const agoTxt = (s) => (s == null ? "" : s < 60 ? tr("or.f.now", "now") : tr("or.f.ago", "{n} min ago", { n: Math.round(s / 60) }));
@@ -86,7 +86,7 @@ export function scoreboard(f, nm) {
     const hint = tr("or.f.sbRow", "{k} kills, {d} deaths at this base · iVi {i}", { k, d, i: iv });
     return `<li title="${esc(hint)}"><span class="${FACS.includes(p.f) ? p.f : ""}">${esc(p.n || "?")}</span> <span class="note">${k}/${d} · ${iv}</span></li>`;
   }).join("");
-  const tip = tr("or.f.sbTip", "Top 3 players seen at this base in the last 5 min, ranked by kills here (fewer deaths first on a tie). Numbers: kills/deaths · iVi from the site's stats (– when unknown). Rough, from the game's live event stream; not used in the odds.");
+  const tip = tr("or.f.sbTip", "Top 3 players seen at this base in the last 5 min, ranked by kills here (fewer deaths first on a tie). Numbers: kills/deaths · iVi from the site's stats (– when unknown). Rough, from the game's live event stream; not used in the win chances.");
   return `<details class="fsb" data-sb="${esc(nm)}"${SB_OPEN.has(nm) ? " open" : ""}><summary title="${esc(tip)}">${tr("or.f.sb", "👥 Top 3")}</summary><ol>${li}</ol></details>`;
 }
 
@@ -118,7 +118,7 @@ export function fightsCard(s, nowS = Math.floor(Date.now() / 1000)) {
   }).join("");
   const body = list.length ? `<ul class="fights">${rows}</ul>` : `<div class="note">${s.fights_live === false ? tr("or.f.off", "Live stream reconnecting: fights show up within a minute.") : tr("or.f.none", "No big fights right now.")}</div>`;
   // Owner 2026-10-30: no "Recent captures" list and no footer note here; the note is the heading's hover.
-  return `<section class="card fightcard"><h2 data-sec="live-fights" title="${esc(tr("or.f.note", "Rough crowd: players seen fighting at each base in the last 5 min, from the game's live event stream. Not used in the odds yet."))}">${tr("or.h.fights", "⚔️ Live fights")}</h2>${body}</section>`;
+  return `<section class="card fightcard"><h2 data-sec="live-fights" title="${esc(tr("or.f.note", "Rough crowd: players seen fighting at each base in the last 5 min, from the game's live event stream. Not used in the win chances yet."))}">${tr("or.h.fights", "⚔️ Live fights")}</h2>${body}</section>`;
 }
 
 /** One line for the Win chance details: stream population on the continent. */

@@ -73,7 +73,7 @@ const SOUNDS = {
   chime: [784, 988, 1175, 1568].map((f, i) => ({ f, t: i * 0.07, d: i === 3 ? 0.36 : 0.22, g: 0.04 })),
   fresh: [{ f: 1047, d: 0.3, g: 0.04 }, { f: 1568, t: 0.09, d: 0.4, g: 0.03 }],
   // Owner 2026-10-26: live feed event sounds. Death: a sad descent. Assist: a short rising
-  // motivational run. Kill: a victory fanfare. Pot rise: casino dings — its notes start at 0.6 s,
+  // motivational run. Kill: a victory fanfare. Pot rise: bright arcade dings — its notes start at 0.6 s,
   // right after the victory fanfare ends, so a kill reads as victory… then money, not a muddle.
   sad: [{ f: 330, d: 0.25, type: "triangle", g: 0.05 }, { f: 262, t: 0.22, d: 0.25, type: "triangle", g: 0.05 }, { f: 196, t: 0.44, d: 0.4, type: "triangle", g: 0.05 }],
   assist: [{ f: 523, d: 0.1, g: 0.04 }, { f: 659, t: 0.08, d: 0.1, g: 0.04 }, { f: 784, t: 0.16, d: 0.18, g: 0.04 }],

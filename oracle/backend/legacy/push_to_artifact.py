@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Push live states to the hex-betting-game artifact via its HTTP API.
+Push live states to the old Muse artifact via its HTTP API.
 Avoids the transport stringification bug where nested JSON arrives as a string.
 
 Usage: python3 push_to_artifact.py
@@ -16,7 +16,7 @@ import sys
 import urllib.request
 
 # Artifact action endpoint - uses the local artifact runtime
-# The artifact slug is hex-betting-game
+# Real external slug of the retired Muse artifact (kept as-is)
 ARTIFACT_SLUG = "hex-betting-game"
 
 def load_states():

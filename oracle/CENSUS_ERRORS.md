@@ -138,7 +138,7 @@ recorded incident where one exists. This is a field guide, not a theory list.
   older settlement under the same bare alertId (PS2Alerts / Census reuse
   world-zone-event_id across days).
 - **Seen:** 1-4-177 (Oct 13/14); 10-8-150 (Oct 14 — swallowed, alert dropped
-  unsettled, payout not released); 10-2-147 (Oct 14 — stale VS winner
+  unsettled, reward not released); 10-2-147 (Oct 14 — stale VS winner
   contradicted today's TR winner; dashboard showed the wrong winner);
   10-2-148 (Oct 16 — today's NC absorbed by Oct 12 TR).
 - **Fix (shipped 2026-10-16):** settlement records keyed by

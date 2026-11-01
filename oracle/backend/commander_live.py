@@ -692,10 +692,10 @@ def ranked_live(sh, w0, own, adj, names, pf, winfn, flips=None, now_ts=None, res
                             "freezing": freezing})
         attacks.sort(key=lambda x: (-x.get("cut_severs", 0), -x.get("reconnect", False), -x["ev"]))
         defends.sort(key=lambda x: -x["ev"])
-        # Priority 0-100 ABSOLUTE: win% actually at stake for the faction.
+        # Priority 0-100 ABSOLUTE: win% actually on the line for the faction.
         # 0% = dead action (nothing/negative to gain — don't bother),
         # 100% = 10%+ win swing (genuine full throttle).
-        # (Was relative: best-of-bunch got 100% even when every stake was
+        # (Was relative: best-of-bunch got 100% even when every swing was
         # tiny, e.g. three tied 3.9% defends all reading 100%.)
         # Locked-winner rule: if someone's at 100%, non-winners get priority 0
         # for attacks on the winner — fight for second place instead.
@@ -998,7 +998,7 @@ def main():
     sp_km = second_place_kingmaker(sh, w0, t, mom, own, adj, names)
 
     if args.json:
-        # machine-readable output for the betting game artifact
+        # machine-readable output for the old Muse voting artifact
         out = {
             "t": int(t),
             "world": args.world,
@@ -1143,7 +1143,7 @@ def main():
                   f"+{ba['win_gain']:.1f}% win) outranks defense — press the attack.")
         elif bd and best_def >= 1:
             print(f"  VERDICT: defend {bd['name']} first "
-                  f"({bd['win_drop']:.1f}% at stake) — own territory outranks the 3-way.")
+                  f"({bd['win_drop']:.1f}% on the line) — own territory outranks the 3-way.")
         else:
             print("  VERDICT: no decisive play — hold position, watch the map.")
 

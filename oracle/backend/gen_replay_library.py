@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the curated replay library for the Hex Betting Game artifact.
+"""Build the curated replay library for the old Muse hex-map voting artifact.
 
 For each curated alert: per-5-min ticks with territory, tree win% (with
 level/n/trunk + elimination override), commander calls, and per-base

@@ -365,17 +365,17 @@ def kingmaker_ops(sh, w0, own, adj, t, mom):
                 w2 = joint_win(sh2, t, mom) or {}
                 # F's swing
                 f_swing = w2.get(f, 0) - w0.get(f, 0)
-                # participants' stakes
-                a_stake = w0.get(owner, 0) - w2.get(owner, 0)  # owner loses
-                b_stake = w2.get(challenger, 0) - w0.get(challenger, 0)
+                # what each side stands to lose or gain
+                a_loss = w0.get(owner, 0) - w2.get(owner, 0)  # owner loses
+                b_gain = w2.get(challenger, 0) - w0.get(challenger, 0)
                 if abs(f_swing) >= 3:
                     ops.append({
                         "base": _names.get(fid, fid),
                         "holder": owner, "challenger": challenger,
                         "want": challenger if f_swing > 0 else owner,
                         "my_swing": round(f_swing, 1),
-                        "holder_loses": round(a_stake, 1),
-                        "chall_gains": round(b_stake, 1),
+                        "holder_loses": round(a_loss, 1),
+                        "chall_gains": round(b_gain, 1),
                     })
         ops.sort(key=lambda x: -abs(x["my_swing"]))
         out[f] = ops[:3]

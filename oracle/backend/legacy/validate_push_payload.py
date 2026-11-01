@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Pre-flight schema gate for the hex-betting-game live pipeline.
+Pre-flight schema gate for the old Muse artifact live pipeline.
 
 Validates the machine-generated payload BEFORE it reaches the artifact, so a
 bad value is caught here instead of burning a push attempt (and a confusing

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate live push_live states for the Hex Betting Game artifact.
+"""Generate live push_live states for the old Muse hex-map voting artifact.
 
 Sweeps all world/zone combos, detects live alerts, and writes a state per
 live alert (push_live schema) to live_states.json.
@@ -158,7 +158,7 @@ def compute_win(tree, terr, mom, t, dur=90.0):
     """Raw tree 3-faction win% with elimination override, normalized to 100.
 
     This is the odds engine's probability output; benchmark t0 slices reuse
-    it directly so logged probs match what bettors see. Returns
+    it directly so logged probs match what voters see. Returns
     (win, raw, trunkv) where win[f] = {"pct","level","n","trunk"}.
     2026-10-12: duration-aware phase rescale — the tree was trained on 90-min
     alerts only, so short alerts (45/30-min) rescale t to the 90-min phase:
@@ -191,7 +191,7 @@ def compute_win(tree, terr, mom, t, dur=90.0):
         win[leader]["pct"] = 100.0
 
     # normalize to 100: tree marginals are independent and may not sum to 100,
-    # but a betting market needs proper probabilities.
+    # but a voting market needs proper probabilities.
     tot = sum(win[f]["pct"] for f in ("VS", "NC", "TR"))
     if tot > 0:
         for f in ("VS", "NC", "TR"):
@@ -380,7 +380,7 @@ def main():
                     if sd_starts:
                         # Sudden death is running or recent — hold settlement.
                         # The artifact's record_final_check will show
-                        # "awaiting sudden death" and hold payout.
+                        # "awaiting sudden death" and hold the reward.
                         print(f"TIE detected for {world}-{zone}-{ended_eid}, "
                               f"sudden death event found, holding settlement", flush=True)
                         continue

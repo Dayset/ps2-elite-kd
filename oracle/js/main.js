@@ -16,7 +16,7 @@ import { t as tr, ready } from "../../i18n.mjs";
 import { maintNotice, when, schedState, lastOnline, plannedDown, STATUS_URL } from "./maint.js?v=20261101-int1";
 import { fightsCard, popLiveLine } from "./fights.js?v=20261030-sb1";
 await ready;   // #73: the language file is in before anything renders
-document.title = tr("or.title", "PS2MapOracle — live PlanetSide 2 alert odds");
+document.title = tr("or.title", "PS2MapOracle — live PlanetSide 2 alert win chances");
 
 // Shareable links: keep ?alert=<key> in the address bar (other params such as ?api= stay).
 function setUrlAlert(key) {
@@ -159,15 +159,15 @@ function render2(now) {
   if (!a && S.pinned && S.selected) { $("main").innerHTML = `<div class="empty">${tr("or.loadingAlert", "Loading alert…")}</div>`; return; }
   if (!a) {
     $("miniMain").innerHTML = ""; miniSync();
-    if (S.maint && S.maint.all) { $("main").innerHTML = `<div class="empty">${S.maintPlanned ? tr("or.mt.empty", "PlanetSide 2 servers are down for maintenance. Alerts and live odds show up here again on their own once they're back.") : tr("or.off.empty", "PlanetSide 2 servers are offline. Alerts and win chances show up here again on their own once they're back.")}</div>`; return; }
-    $("main").innerHTML = `<div class="empty">${tr("or.noAlerts", "No territory alerts running on Osprey, Wainwright or SolTech right now. Live odds appear here the minute one starts.")}</div>`;
+    if (S.maint && S.maint.all) { $("main").innerHTML = `<div class="empty">${S.maintPlanned ? tr("or.mt.empty", "PlanetSide 2 servers are down for maintenance. Alerts and live win chances show up here again on their own once they're back.") : tr("or.off.empty", "PlanetSide 2 servers are offline. Alerts and win chances show up here again on their own once they're back.")}</div>`; return; }
+    $("main").innerHTML = `<div class="empty">${tr("or.noAlerts", "No territory alerts running on Osprey, Wainwright or SolTech right now. Live win chances appear here the minute one starts.")}</div>`;
     return;
   }
   const s = a.state;
   const win = s ? s.win : null;
   const lead = s && s.leader;
   const left = a.status === "live" ? minLeft(mins(a.start_ts + a.dur * 60 - now)) : statusLabel(a, now);
-  const oddsHtml = win ? FACS.map((f) => `<div class="fac ${f} ${f === lead ? "lead" : ""}"><div class="l">${f}</div><div class="n">${pct1(win[f].pct)}%</div><div class="stars">${stars(win[f].pct)}</div></div>`).join("") : `<div class="note">${a.status === "live" ? tr("or.waitSnap", "Waiting for the first map snapshot…") : tr("or.noOdds", "No live odds were recorded for this alert.")}</div>`;
+  const oddsHtml = win ? FACS.map((f) => `<div class="fac ${f} ${f === lead ? "lead" : ""}"><div class="l">${f}</div><div class="n">${pct1(win[f].pct)}%</div><div class="stars">${stars(win[f].pct)}</div></div>`).join("") : `<div class="note">${a.status === "live" ? tr("or.waitSnap", "Waiting for the first map snapshot…") : tr("or.noOdds", "No live win chances were recorded for this alert.")}</div>`;
   const rows = s ? FACS.map((f) => `<div class="row" data-terr="${f}"><span class="lbl ${f}">${tr("or.terr", "{f} territory", { f })}</span><div class="track"><span style="width:${s.territory[f]}%;background:${COLOR[f]}"></span></div><span class="v">${Math.round(s.territory[f])}%</span></div>`).join("") +
     FACS.map((f) => {
       const base = s.territory[f] || 0, m = s.momentum[f];
@@ -180,7 +180,7 @@ function render2(now) {
   const oddLine = win && s ? `<div class="oddline">${FACS.map((f) => { const base = s.territory[f] || 0, m = s.momentum[f]; const rel = base >= 1 ? (100 * m / base) : m;
     return `<span class="${f}">${f}</span> <span class="stars">${stars(win[f].pct) || "·"}</span> <span class="note">${rel > 0.05 ? "▲" : rel < -0.05 ? "▼" : "·"}${rel >= 0 ? "+" : ""}${rel.toFixed(1)}%</span>`; }).join(" · ")}</div>` : "";
   const popAdj = s && s.win_popadj ? `<div class="second">${tr("or.popW", "With population weighting:")} ${FACS.map((f) => `<span class="${f}">${f} ${pct1(s.win_popadj[f].pct)}%</span>`).join(" · ")} <span class="note">${tr("or.popWnote", "(experimental, fades out by minute 60)")}</span></div>` : "";
-  const kindNote = a.kind === "meltdown" ? `<div class="note">${tr("or.melt", "Unstable Meltdown: only the live part of the continent counts{zone}. Territory shares and odds are of that zone.", { zone: s && s.zone ? tr("or.meltZone", " ({n} bases, {p}% of the map)", { n: s.zone.active, p: s.zone.share }) : "" })}</div>` : "";
+  const kindNote = a.kind === "meltdown" ? `<div class="note">${tr("or.melt", "Unstable Meltdown: only the live part of the continent counts{zone}. Territory shares and win chances are of that zone.", { zone: s && s.zone ? tr("or.meltZone", " ({n} bases, {p}% of the map)", { n: s.zone.active, p: s.zone.share }) : "" })}</div>` : "";
   const calls = s && s.calls && s.calls.length ? `<ul class="calls">${s.calls.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>` : "";
   const second = s && s.second ? `<div class="second">${tr("or.second", "🥈 Second place:")} ${Object.entries(s.second.odds).map(([f, p]) => `<span class="${f}">${f} ${pct1(p)}%</span>`).join(" · ")} ${s.second.locked ? tr("or.locked", "(locked)") : ""}</div>` : "";
   const voided = (a.flags || []).includes("votes_void");
@@ -194,8 +194,8 @@ function render2(now) {
   const result = intNote || (heldBroken(a) ? `<div class="note" style="color:var(--warn)">${tr("or.brokenEnd", "Census sent broken end scores (they add up to {p}%), so there is no result for this alert and every vote on it was given back.", { p: esc(brokenSum) })}</div>` : a.status === "settled" ? `<div class="second">${a.final ? `${tr("or.final", "Census final:")} ${FACS.map((f) => `<span class="${f}">${f} ${(+a.final[f]).toFixed(1)}</span>`).join(" · ")}` : tr("or.noFinal", "Census sent no final scores; decided from our last map snapshot")} — ${tr("or.wins", "{f} wins", { f: `<b class="${a.winner}">${a.winner}</b>` })}${a.basis === "sudden_death" ? tr("or.sdParen", " (sudden death)") : ""}${earlyTag}</div>${voided ? `<div class="note" style="color:var(--warn)">${tr("or.voided", "Census map data was broken at the end and disagreed with the result, so every vote on this alert was given back.")}</div>` : ""}` : "");
   // Cut-off bases don't score in the game; from 80 % of the alert the odds count them for nobody.
   const cutList = s && Array.isArray(s.cut) ? s.cut : [];
-  const cutNote = cutList.length && a.status === "live" ? `<div class="note">${tr("or.cut", "✂️ Cut off, not scoring:")} ${FACS.map((f) => { const n = cutList.filter((c) => c.fac === f); return n.length ? `<span class="${f}">${f} ${n.length}</span> (${esc(n.slice(0, 3).map((c) => c.name).join(", "))}${n.length > 3 ? ` +${n.length - 3}` : ""})` : ""; }).filter(Boolean).join(" · ")}${s.cut_aware ? tr("or.cutAware", " · counted in the odds") : ""}</div>` : "";
-  const suspectNote = s && s.suspect && s.suspect.length ? `<div class="note" style="color:var(--warn)">${tr("or.suspect", "Census map data looks broken right now ({why}). Odds may be wrong and voting is paused.", { why: esc(s.suspect.map((x) => x.startsWith("neutral_heavy") ? tr("or.susNeutral", "only {p}% of bases owned", { p: x.split(":")[1] }) : x === "map_frozen" ? tr("or.susFrozen", "map frozen while captures continue") : tr("or.susStale", "no fresh map")).join(", ")) })}</div>` : "";
+  const cutNote = cutList.length && a.status === "live" ? `<div class="note">${tr("or.cut", "✂️ Cut off, not scoring:")} ${FACS.map((f) => { const n = cutList.filter((c) => c.fac === f); return n.length ? `<span class="${f}">${f} ${n.length}</span> (${esc(n.slice(0, 3).map((c) => c.name).join(", "))}${n.length > 3 ? ` +${n.length - 3}` : ""})` : ""; }).filter(Boolean).join(" · ")}${s.cut_aware ? tr("or.cutAware", " · counted in the win chances") : ""}</div>` : "";
+  const suspectNote = s && s.suspect && s.suspect.length ? `<div class="note" style="color:var(--warn)">${tr("or.suspect", "Census map data looks broken right now ({why}). Win chances may be wrong and voting is paused.", { why: esc(s.suspect.map((x) => x.startsWith("neutral_heavy") ? tr("or.susNeutral", "only {p}% of bases owned", { p: x.split(":")[1] }) : x === "map_frozen" ? tr("or.susFrozen", "map frozen while captures continue") : tr("or.susStale", "no fresh map")).join(", ")) })}</div>` : "";
   const cmdView = a.status === "live" ? withMode(a, a.commander || (s && s.commander)) : null;
   const liveTop = s && Array.isArray(s.fights) && s.fights[0] ? (s.fights[0].name || `#${s.fights[0].fid}`) : null;
   const linkTip = tr("or.linkBtn", "Copy link to this page");

@@ -65,7 +65,7 @@ from this zip pushing via `push_live`.
 
 ### 2e. AI Commander panel
 Per faction, two ranked lists:
-- **Defend:** base name, `vs` attacker, `win_drop` (win% at stake), `priority` 0–100, `heat`, `ev`.
+- **Defend:** base name, `vs` attacker, `win_drop` (win% on the line), `priority` 0–100, `heat`, `ev`.
 - **Attack:** base name, `target` faction, `win_gain`, `margin_gain`, `priority`, `heat`, `ev`, `pred_heat`.
 - **Kingmaker lines:** text + `my_swing`; "+X%" is opportunity, "−X%" is threat/warning.
 - War-shape badge: `1v1 LOCKED` / `TWO-FRONT WAR` / `FREE AGENT`.
@@ -195,7 +195,7 @@ Full JSON schema is in the action definition; key sub-objects:
 ### Settlement (triple-check)
 1. Alert ends → status `settling`, UI shows "settling…".
 2. Backend sends `record_final_check` at +0/+5/+10 min with pre-end snapshots.
-3. Checks 1–2: hold. Check 3: reward = parimutuel share × time weight (1.0/0.8/0.6).
+3. Checks 1–2: hold. Check 3: reward = shared-pool share × time weight (1.0/0.8/0.6).
 4. `settleposition` (or auto) credits bankroll; History shows WON/LOST (+`· corrected` if repaired).
 5. Tie → `record_sudden_death_result` after 15-min overtime instead.
 

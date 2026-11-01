@@ -810,9 +810,9 @@ function start() {
   // Owner 2026-10-28: no manual tier checker — checking is automatic. Every feed row already computes its tier against the tracked player (centre row), so a typed name would only repeat what the feed shows.
   // Owner 2026-10-25: a sub-0 victim pays 0, never a negative — the pot
   // is a currency, and a kill cannot subtract from it. The feed's iVi
-  // cell still shows the victim's real (negative) adjs; only the payout
+  // cell still shows the victim's real (negative) adjs; only the reward
   // is floored. Unknown (null) stays unknown, never counted as 0.
-  // Owner 2026-10-25: the +34% boost trial — every payout is ×1.34, rounded, at this one choke point (live pot,
+  // Owner 2026-10-25: the +34% boost trial — every reward is ×1.34, rounded, at this one choke point (live pot,
   // average, and banked history all scale together; the feed's iVi column still shows the unboosted value, and
   // the formula's +34% suffix says the parts are boosted). A floored 0 stays 0 (0 × 1.34 = 0).
   const CASH_BOOST_PCT = 34;

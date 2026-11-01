@@ -51,8 +51,8 @@ export function voteErrorText(err, body = {}) {
   if (err === "already_voted") return tr("or.e.voted", "You already voted {f} on this alert (maybe from another device).", { f: (b.vote && b.vote.outcome) || "" });
   if (err === "insufficient_balance") return b.balance != null ? tr("or.e.fundsN", "Not enough BonusCheques: you have {n} (it may have changed on another device).", { n: pts(b.balance) }) : tr("or.e.funds", "Not enough BonusCheques.");
   if (err === "already_claimed_today") return tr("or.e.claimed", "Today's BonusCheque was already claimed (maybe on another device).");
-  return ({ odds_changed: tr("or.e.moved", "The odds moved; check the new odds and try again."), closed: tr("or.e.closed", "Voting just closed."),
-    own_faction_only: tr("or.e.own", "You can vote only for your own faction."), odds_stale: tr("or.e.stale", "Odds are refreshing; try again in a minute."), decided: tr("or.e.decided", "That outcome is already decided."),
+  return ({ odds_changed: tr("or.e.moved", "The win chances moved; check the new ones and try again."), closed: tr("or.e.closed", "Voting just closed."),
+    own_faction_only: tr("or.e.own", "You can vote only for your own faction."), odds_stale: tr("or.e.stale", "Win chances are refreshing; try again in a minute."), decided: tr("or.e.decided", "That outcome is already decided."),
     data_suspect: tr("or.e.suspect", "Voting is paused while Census map data looks broken."), not_signed_in: tr("or.e.signedOut", "This device was signed out. Sign in again to vote.") })[err] || tr("or.e.other", "Couldn't record the vote.");
 }
 
@@ -147,7 +147,7 @@ function render() {
   if (!pick && ownOnly) pick = own;
   const head = `<h2 data-sec="vote-for-the-winner">${tr("or.h.vote", "🎲 Vote for the winner")}</h2>`;
   if (!q || !q.open) {
-    el.innerHTML = `<div class="card vote idle">${head}<div class="note">${q && q.reason === "closed" ? tr("or.v.closedLast", "Voting closed for this alert (last 5%).") : q && q.reason === "data_suspect" ? tr("or.v.paused", "Voting paused: Census map data looks broken right now. It reopens when the map is healthy again.") : tr("or.v.opensFresh", "Voting opens when fresh odds are available.")}</div>${DISCLAIMER}</div>`;
+    el.innerHTML = `<div class="card vote idle">${head}<div class="note">${q && q.reason === "closed" ? tr("or.v.closedLast", "Voting closed for this alert (last 5%).") : q && q.reason === "data_suspect" ? tr("or.v.paused", "Voting paused: Census map data looks broken right now. It reopens when the map is healthy again.") : tr("or.v.opensFresh", "Voting opens when fresh win chances are available.")}</div>${DISCLAIMER}</div>`;
     return;
   }
   const voted = votedFactions(wallet, alert.key);
@@ -170,7 +170,7 @@ function render() {
     <div class="facrow">${FACS.map(facBtn).join("")}</div>
     ${ownOnly ? `<div class="note">${tr("or.v.ownOnly", "You fly {f}: vote for your faction, then go help it win.", { f: esc(own) })}</div>` : ""}
     <div class="amounts">${AMOUNTS.map((s) => `<button class="amount ${s === amount ? "on" : ""}" data-s="${s}" aria-pressed="${s === amount}">${s}</button>`).join("")}</div>
-    ${sel ? `<div class="note">${tr("or.v.quote", "{n} back if {f} wins · your odds {p}% (oracle {o}%)", { n: `<b>${pts(sel.reward)}</b>`, f: pick, p: (sel.odds * 100).toFixed(1), o: sel.pct })}${feeNote(pick)}</div>` : ""}
+    ${sel ? `<div class="note">${tr("or.v.quote", "{n} back if {f} wins · your win chance {p}% (oracle {o}%)", { n: `<b>${pts(sel.reward)}</b>`, f: pick, p: (sel.odds * 100).toFixed(1), o: sel.pct })}${feeNote(pick)}</div>` : ""}
     <div class="row2">${action}</div>
     ${msg ? `<div class="note votemsg">${esc(msg)}</div>` : ""}
     ${mine.length ? `<div class="myvotes"><div class="note">${tr("or.v.mine", "🎫 Your votes on this alert")}</div>${mine.map((v) => `<div class="myvote"><span class="${v.outcome}">${v.outcome}</span> ${pts(v.amount)} → ${pts(v.potential)} <span class="note">${tr("or.v.at", "at {p}%", { p: v.pct })}</span></div>`).join("")}</div>` : ""}

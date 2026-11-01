@@ -246,8 +246,8 @@ to destroy.
   Census final scores (8 winners corrected there — a disjoint concern;
   one row, `1-6-178-1792258726`, appears in both lists: its input was
   corrupt *and* its bin winner was later corrected by the rescore).
-- **No payouts were affected.** These are benchmark rows from the retired
-  VM pipeline; live betting settles in the Worker, which never had the
+- **No vote rewards were affected.** These are benchmark rows from the retired
+  VM pipeline; live voting settles in the Worker, which never had the
   dilution bug.
 - **`rescored.json` was not regenerated.** It is the output of
   `rescore_census.py`, which does not yet skip `corrupt_input` rows; its

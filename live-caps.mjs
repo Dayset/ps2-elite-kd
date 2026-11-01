@@ -39,6 +39,6 @@ export function capsLineLive(c, tr, nowS = Math.floor(Date.now() / 1000)) {
 export function capsStrip(caps, tr, nowS = Math.floor(Date.now() / 1000)) {
   const list = (Array.isArray(caps) ? caps : []).filter((c) => c && Number.isFinite(+c.t)).sort((a, b) => b.t - a.t).slice(0, CAPS_LIVE_SHOWN);
   if (!list.length) return "";
-  const tip = esc(tr("or.cap.tip", "Outfit with the biggest share of this capture: half the players on the point, half the point-capture XP. Under 50% = no clear lead. Shown only, not used in the odds."));
+  const tip = esc(tr("or.cap.tip", "Outfit with the biggest share of this capture: half the players on the point, half the point-capture XP. Under 50% = no clear lead. Shown only, not used in the win chances."));
   return `<div class="lc-head" title="${tip}">${tr("live.capsHead", "🏴 Latest captures on this server")}</div>${list.map((c) => capsLineLive(c, tr, nowS)).join("")}`;
 }

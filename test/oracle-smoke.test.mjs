@@ -1,5 +1,5 @@
 // Oracle page smoke test (#28): load the real oracle/ page in headless Chromium against a
-// canned stub API and fail on any pageerror (e.g. 2026-10-18 "betNode is not defined").
+// canned stub API and fail on any pageerror (e.g. the 2026-10-18 undefined-variable error).
 // Needs Playwright (npm "playwright" or "playwright-core") and a Chromium; skipped otherwise.
 // Override the browser with PW_CHROMIUM=/path/to/chrome.
 import { describe, it } from "node:test";

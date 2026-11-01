@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-In-game authentication for PS2Oracle bettors.
+In-game authentication for PS2Oracle voters.
 
 Flow:
 1. User enters character name -> we resolve to Census character ID

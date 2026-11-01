@@ -91,7 +91,7 @@ Cron job `hex-betting-live-push` (every 5m, timeout 300s):
 
 - Alert end → status `settling`, UI shows "settling…".
 - `record_final_check` at +0/+5/+10 min with pre-end snapshots. Checks 1–2 hold
-  payout; check 3 releases it. A later-arriving closer pre-end snapshot is
+  reward; check 3 releases it. A later-arriving closer pre-end snapshot is
   accepted; winner disagreement is logged.
 - Settlement records are keyed by **(alertId, endedAt)** (since 2026-10-16) so
   recycled alert IDs cannot collide.

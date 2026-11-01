@@ -689,7 +689,7 @@ test("dim names on death (owner 2026-10-25): death dims the killed list and your
   assert.match(css, /body\.live-stream \.lv-ev\.lv-dim > tr > td \{ opacity: 1; color: var\(--dim\); \}/);
 });
 
-test("cash boost (owner 2026-10-25): payouts x1.34 at the cash choke point, formula carries +34%", () => {
+test("cash boost (owner 2026-10-25): rewards x1.34 at the cash choke point, formula carries +34%", () => {
   const js = liveSrc();
   assert.match(js, /const CASH_BOOST_PCT = 34;/);
   assert.match(js, /Math\.round\(Math\.max\(0, p\.cached\.adjs\) \* \(1 \+ CASH_BOOST_PCT \/ 100\)\)/);

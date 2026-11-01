@@ -20,9 +20,9 @@ approved it, "shipped" means it is live in the running pipeline.
 
 ## 2026-10-09
 
-- **Second-place flow live.** When a faction hits 100% win, winner betting closes and
+- **Second-place flow live.** When a faction hits 100% win, winner voting closes and
   the two remaining sides get their own market (tree marginals renormalized between
-  the pair, elimination check on head-to-head gap, same fees, parimutuel settlement
+  the pair, elimination check on head-to-head gap, same fees, shared-pool settlement
   by final territory).
 
 ## 2026-10-10
@@ -33,13 +33,13 @@ approved it, "shipped" means it is live in the running pipeline.
 
 ## 2026-10-11
 
-- **Live mode.** The owner is the only real bettor; NC/TR/VS crowd volumes filling
-  parimutuel pools are simulated, odds/fees/payout math runs for real.
+- **Live mode.** The owner is the only real voter; NC/TR/VS crowd volumes filling
+  shared pools are simulated, win-chance/fee/reward math runs for real.
 - **Star ratings** (★–★★★★★) replace tree level names for confidence in the UI.
 - **Heat scores** (commander): 0–100 per base from flip recency (10-min window,
   linear decay; direct flip = 100, adjacent = 40). Hot bases show 🔥 at 40+.
 - **Commander rework:** leader collapse warning at −5%/15min territory slide;
-  priority is ABSOLUTE = win% at stake / 10; bridge attacks reconnecting a severed
+  priority is ABSOLUTE = win% on the line / 10; bridge attacks reconnecting a severed
   pocket sort first with priority ≥ 70.
 - **Time-weighted pot shares approved:** 1.0 / 0.8 / 0.6 for t0–30 / t30–60 / t60–90.
 - **BonusCheques approved:** AUTO +5/hr while balance < 20 (capped at 20);
@@ -82,14 +82,14 @@ approved it, "shipped" means it is live in the running pipeline.
 
 - **Settlement collision, case 2.** World 10 (Wainwright) Esamir 10-8-150 (ended 14:45 UTC, pre-end
   NC 96.1): settlement swallowed by the older instance; alert dropped unsettled,
-  payout not released.
+  reward not released.
 - **Settlement collision, case 3.** World 10 (Wainwright) Indar 10-2-147: stale winner (VS, from
   Oct 13) contradicted today's winner (TR). Dashboard showed the wrong winner.
   Fix decision taken the same day.
 - **First migration package** (`ps2maporacle.zip`, 156 files, 2026-10-14).
 - **Dumb-baseline backtest delivered.** Same out-of-sample set as backtest_phase2:
   tree Brier 0.1488, coin flip 0.2222 (33% edge), territory-share 0.1842 (19% edge),
-  bet-the-leader 0.2372 (worse than random). Tree's advantage is calibration, not
+  pick-the-leader 0.2372 (worse than random). Tree's advantage is calibration, not
   winner-picking. Per-slice territory baseline wiring into `benchmark_log.py`
   proposed — decision PENDING.
 
@@ -119,7 +119,7 @@ approved it, "shipped" means it is live in the running pipeline.
   instance (ended 2026-10-16T17:52:40Z, pre-end NC 51.7 / TR 28.1 / VS 20.2) had
   been absorbed by the Oct 12 TR settlement. After the fix: check 1/3, 2/3, 3/3 →
   settled NC, runner-up TR, payoutDelta 0 (nobody had money on the alert; wrong
-  record, not lost payout). Oct 12 record preserved as TR (verified via migration
+  record, not a lost reward). Oct 12 record preserved as TR (verified via migration
   audit + benchmark, which holds Oct 12 → TR and today → NC independently).
 - **Pop patch SHIPPED.** Per-zone `active_players` was never set by the writer
   (only at world level), so live pop read 0/0/0 and `win_popadj` was dead code.
@@ -195,7 +195,7 @@ approved it, "shipped" means it is live in the running pipeline.
   polls Census REST every minute into D1, computes odds with a JS port of the engine
   (parity-tested against Python), settles from Census final scores with sudden death
   for draws, serves `/oracle/` on GitHub Pages; the commander runs in Actions.
-  Betting/auth remain in the Muse artifact for now.
+  Voting/auth remain in the Muse artifact for now.
 
 ## 2026-10-18 (later): betting renamed to voting
 

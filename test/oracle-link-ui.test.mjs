@@ -26,6 +26,6 @@ test("dashboard helpers: link code from the #fragment, stripped hash, voted fact
   assert.match(voteErrorText("insufficient_balance", { balance: 12.5 }), /you have 12\.5 \(it may have changed on another device\)/);
   assert.equal(voteErrorText("insufficient_balance", {}), "Not enough BonusCheques.");
   assert.match(voteErrorText("already_claimed_today"), /already claimed \(maybe on another device\)/);
-  assert.match(voteErrorText("odds_changed"), /odds moved/);
+  assert.match(voteErrorText("odds_changed"), /win chances moved/);
   assert.equal(voteErrorText("weird"), "Couldn't record the vote.");
 });

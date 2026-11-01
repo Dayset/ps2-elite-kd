@@ -52,7 +52,7 @@ Since 2026-10-18 the live pipeline runs on Cloudflare: the `ps2-oracle` Worker p
 - Never settle from a live push; never use post-end snapshots (corrupt winner-owns-everything)
 - Settlement records keyed by **(alertId, endedAt)** since 2026-10-16 — bare alertId keying collided on recycled alert IDs
 - Ties (4.5% rate) → 15-min kill-based sudden death hold
-- Second-place market settles parimutuel by final territory
+- Second-place market settles as a shared pool by final territory
 
 ### Auth
 In-game character verification: enter name → Census validates → wait 5s → ACCEPT → 60s window → logout via ESC. HMAC token in localStorage, one active token per character. See `docs/AUTH_DESIGN.md`. Note: `backend/auth_challenge.py` + `backend/auth_test.py` still implement the **superseded** suicide+logout flow and are kept for history only.
