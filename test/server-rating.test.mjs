@@ -94,3 +94,34 @@ test("t800u: outfit, faction and server fetches reset the age filter to its full
   assert.match(app, /resetAgeFilter:/);
   assert.match(app, /resetAgeToFull = \(\) => \{\s*applyAge\(ageCeil\(\), true\)/);
 });
+
+// t801u / t803u (owner: "osprey and wainwright return one name PlanetChampion", "there is no server data filled in"):
+// one failed servers.json load was kept for the whole visit, so the alias added nobody (only what was already in the
+// box was analysed) and the Servers section stayed empty. A failure is retried and never kept.
+test("servers.json: a failed load is retried, and never kept for the visit", async () => {
+  const { loadServers, addServerPlayers, fetchJsonRetry } = await import("../server-panel.mjs");
+  const good = { servers: {}, top: { osprey: ["Aekris", "Zyr0sNCx"], wainwright: ["GL0RP"] } };
+  const real = globalThis.fetch;
+  try {
+    // 1) first try 404 (stale edge copy), second try (cache skipped) works
+    let calls = [];
+    globalThis.fetch = async (u, o) => { calls.push([u, o && o.cache]); return calls.length === 1 ? { ok: false, json: async () => null } : { ok: true, json: async () => good }; };
+    const d = await fetchJsonRetry("./data/servers.json");
+    assert.deepEqual(d, good);
+    assert.equal(calls.length, 2);
+    assert.match(calls[1][0], /servers\.json\?r=\d+/);
+    assert.equal(calls[1][1], "reload");
+    // 2) every try fails → null, and the next use fetches again (not stuck on null)
+    let down = true; calls = [];
+    globalThis.fetch = async () => { calls.push(1); if (down) throw new Error("offline"); return { ok: true, json: async () => good }; };
+    assert.equal(await loadServers(true), null);
+    down = false;
+    const field = []; let note = "";
+    const r = await addServerPlayers(["genudine"], { addNameToField: (n) => (field.push(n), true), outfitRoom: () => 50, note: (h) => (note = h), isPs: true });
+    assert.equal(r[0].added, 0); // PS data has no genudine list in this mock, but it was fetched again
+    assert.ok(calls.length >= 3);
+    const r2 = await addServerPlayers(["osprey"], { addNameToField: (n) => (field.push(n), true), outfitRoom: () => 50, note: (h) => (note = h), isPs: false });
+    assert.equal(r2[0].added, 2);
+    assert.deepEqual(field, ["Aekris", "Zyr0sNCx"]);
+  } finally { globalThis.fetch = real; }
+});

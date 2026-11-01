@@ -47,6 +47,9 @@ test("buildFactionRating: medians, top lists, family head-to-head", () => {
   assert.match(html, /fr-chart/);
   assert.match(html, /data-faction="nc"/);
   assert.doesNotMatch(html, /transition|animation/);
+  // t804u: the alt-family part is gone from the section (chart, lead line, note), even when the data has families
+  assert.ok(fr.families.n > 0);
+  assert.doesNotMatch(html, /famil|different faction|Same player/i);
 });
 
 test("alias adds up to the outfit cap, then says so", async () => {
@@ -71,7 +74,8 @@ test("wired: name field, Analyze waits, section in index.html, 9 languages", () 
   assert.match(read("faction-panel.mjs"), /glideTo\(null, [^\n]*"auto"\)/);
   const en = JSON.parse(read("i18n/en.json"));
   const keys = Object.keys(en).filter((k) => k.startsWith("fr."));
-  assert.ok(keys.length >= 30);
+  assert.ok(keys.length >= 27); // t804u: 3 family keys dropped
+  for (const k of ["fr.leadFam", "fr.chFam", "fr.chFamSub"]) assert.ok(!(k in en), k);
   const ph = (s) => [...String(s).matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort().join(",");
   for (const l of ["ja", "ru", "de", "fr", "zh", "es", "uk", "it"]) {
     const t = JSON.parse(read(`i18n/${l}.json`));

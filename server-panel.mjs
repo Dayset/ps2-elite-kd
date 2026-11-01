@@ -8,11 +8,27 @@ import { escapeHtml } from "./app-util.mjs?v=20261027-z79";
 import { glideTo } from "./jump-btns.mjs?v=20261020-i18n2";
 import { SERVER_LABEL, SERVER_COLOR, SERVER_TOP_N, serverLeader } from "./server-rating.mjs?v=20261031-sr1";
 
+/**
+ * t801u / t803u: one failed load (a 404 still cached at the edge right after a deploy, a dropped connection) used to
+ * be kept for the whole visit, so the alias added nobody and the section stayed empty until a reload. Now a failure
+ * is never kept, and the second try skips every cached copy.
+ */
+export async function fetchJsonRetry(url, tries = 2) {
+  for (let i = 0; i < tries; i++) {
+    try {
+      const u = i ? url + (url.includes("?") ? "&" : "?") + "r=" + Date.now() : url;
+      const r = await fetch(u, { cache: i ? "reload" : "no-cache" });
+      if (r && r.ok) { const d = await r.json(); if (d && typeof d === "object") return d; }
+    } catch (e) { /* try again */ }
+  }
+  return null;
+}
+
 const dataP = {};
-/** servers.json for the room, fetched once per page (null on error). */
+/** servers.json for the room: kept once loaded; a failure (null) is not kept, so the next use tries again. */
 export function loadServers(isPs = false) {
   const url = isPs ? "./data-ps/servers.json" : "./data/servers.json";
-  if (!dataP[url]) dataP[url] = fetch(url, { cache: "no-cache" }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  if (!dataP[url]) dataP[url] = fetchJsonRetry(url).then((d) => { if (!d) delete dataP[url]; return d; });
   return dataP[url];
 }
 
@@ -76,7 +92,7 @@ export function initServerPanel({ isPs = false, addServers = null } = {}) {
   const draw = () => loadServers(isPs).then((d) => {
     if (!body) return;
     body.innerHTML = serverHtml(d, hi);
-    drawn = true;
+    drawn = !!d; // t803u: no data yet → the next open tries again
     const at = document.getElementById("serverUpdated");
     if (at && d && d.updatedAt) at.textContent = new Date(d.updatedAt).toLocaleDateString();
   });

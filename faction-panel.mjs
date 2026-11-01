@@ -6,13 +6,15 @@
 import { t as tr } from "./i18n.mjs";
 import { escapeHtml } from "./app-util.mjs?v=20261027-z79";
 import { glideTo } from "./jump-btns.mjs?v=20261020-i18n2";
+import { fetchJsonRetry } from "./server-panel.mjs?v=20261031-sr2";
 import { FACTIONS, FACTION_LABEL, FACTION_COLOR, FACTION_TOP_N, leader } from "./faction-rating.mjs?v=20261031-fr1";
 
 const URL_ = "./data/factions.json";
 let dataP = null;
 /** factions.json, fetched once per page (null on error or in the PlayStation room). */
 export function loadFactions() {
-  if (!dataP) dataP = fetch(URL_, { cache: "no-cache" }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  // t801u: same retry as servers.json; a failure is not kept, so the next use tries again
+  if (!dataP) dataP = fetchJsonRetry(URL_).then((d) => { if (!d) dataP = null; return d; });
   return dataP;
 }
 
@@ -35,18 +37,14 @@ function bars(title, sub, rows, hi) {
 /** Section HTML from factions.json (pure: tests call it). hi = faction to highlight (alias). */
 export function factionHtml(d, hi = null) {
   if (!d || !d.factions) return `<p class="fr-note">${escapeHtml(tr("fr.none", "No faction data yet."))}</p>`;
-  const F = d.factions, fam = d.families || {};
+  const F = d.factions; // t804u: the alt-family part is gone from the section (owner)
   const best = leader(F, (x, f) => x[f].medIvi);
-  const famBest = leader(fam.h2h || {}, (x, f) => (x[f] && x[f].n ? x[f].rate : null));
-  const famLow = (() => { let b = null, bv = Infinity; for (const f of FACTIONS) { const h = (fam.h2h || {})[f]; if (h && h.n && fin(h.rate) && h.rate < bv) { bv = h.rate; b = f; } } return b; })();
   const lead = [
     tr("fr.leadAll", "Strongest overall: {f}, median ⚔️ iVi {v}; {p} of its players are in the top 10%.", { f: FACTION_LABEL[best], v: n0(F[best].medIvi), p: pct(F[best].topRate) }),
-    fam.n ? tr("fr.leadFam", "Same players on alts ({n} families, {alts} alts): {f} wins most often ({r} of head-to-heads), {low} least ({rl}).", { n: fam.n, alts: fam.alts, f: FACTION_LABEL[famBest], r: pct(fam.h2h[famBest].rate), low: FACTION_LABEL[famLow], rl: pct(fam.h2h[famLow].rate) }) : "",
   ].filter(Boolean).map((s) => `<p class="fr-lead">${escapeHtml(s)}</p>`).join("");
   const charts = [
     bars(tr("fr.chIvi", "Median ⚔️ iVi"), tr("fr.chIviSub", "half of the faction's players are above"), FACTIONS.map((f) => ({ f, v: F[f].medIvi, label: n0(F[f].medIvi) })), hi),
     bars(tr("fr.chTop", "In the top 10%"), tr("fr.chTopSub", "share of the faction's own players"), FACTIONS.map((f) => ({ f, v: F[f].topRate, label: `${pct(F[f].topRate)} · ${tr("fr.top100", "top 100: {n}", { n: F[f].top100 })}` })), hi),
-    fam.n ? bars(tr("fr.chFam", "Same player, different faction"), tr("fr.chFamSub", "head-to-head wins inside alt families (⚔️ iVi)"), FACTIONS.map((f) => { const h = fam.h2h[f] || {}; return { f, v: h.rate, label: h.n ? `${pct(h.rate)} · ${h.w}/${h.n}` : "—" }; }), hi) : "",
     bars(tr("fr.chPlayers", "Players"), tr("fr.chPlayersSub", "rated players in the cache"), FACTIONS.map((f) => ({ f, v: F[f].n, label: n0(F[f].n) })), hi),
   ].join("");
   const head = [tr("fr.thFaction", "Faction"), tr("fr.thPlayers", "Players"), tr("fr.thMed", "Median ⚔️ iVi"), tr("fr.thMean", "Average ⚔️ iVi"), tr("fr.thKd", "Median K/D"), tr("fr.thKpm", "Median KPM"), tr("fr.thHours", "Median hours"), ""];
@@ -56,7 +54,7 @@ export function factionHtml(d, hi = null) {
     return `<tr${f === hi ? ' class="fr-hi"' : ""}><td>${chip(f)}</td><td>${n0(x.n)}</td><td>${n0(x.medIvi)}</td><td>${n0(x.meanIvi)}</td><td>${fx(x.medKd, 2)}</td><td>${fx(x.medKpm, 2)}</td><td>${n0(x.medH)}</td><td>${btn}</td></tr>`;
   }).join("");
   const table = `<div class="fr-table-wrap"><table class="fr-table"><thead><tr>${head.map((h) => `<th scope="col">${escapeHtml(h)}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div>`;
-  const note = tr("fr.note", "NS = Nanite Systems (NSO). Faction = the character's own. OOR players and confirmed padders are left out ({left} padders). Alt families: the site's own alt groups with alts on 2+ factions; alts under {h} h played (the bottom 10%) don't count; each faction's value is its alts' play-time-weighted ⚔️ iVi. Small samples: read the family part as a hint.", { left: (d.left && d.left.padders) || 0, h: fx(fam.minH, 0) });
+  const note = tr("fr.note", "NS = Nanite Systems (NSO). Faction = the character's own. OOR players and confirmed padders are left out ({left} padders).", { left: (d.left && d.left.padders) || 0 });
   const tip = tr("fr.aliasTip", "Tip: type NC, TR, VS or NS in the name box to load that faction's top {n} players.", { n: FACTION_TOP_N });
   return `${lead}<div class="fr-charts">${charts}</div>${table}<p class="fr-note">${escapeHtml(note)}</p><p class="fr-note">${escapeHtml(tip)}</p>`;
 }
@@ -75,7 +73,7 @@ export function initFactionPanel({ isPs = false, addFactions = null } = {}) {
   const draw = () => loadFactions().then((d) => {
     if (!body) return;
     body.innerHTML = factionHtml(d, hi);
-    drawn = true;
+    drawn = !!d; // no data yet → the next open tries again
     const at = document.getElementById("factionUpdated");
     if (at && d && d.updatedAt) at.textContent = new Date(d.updatedAt).toLocaleDateString();
   });
