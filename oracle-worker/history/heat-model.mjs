@@ -19,6 +19,7 @@
 import fs from "node:fs";
 import { latticeFor, captureModel } from "../src/models.js";
 import { alertKind } from "../src/engine.js";
+import { KNOWN_INTERRUPTED, alertKey } from "../src/interrupt.js";
 
 const FAC = { VS: 1, NC: 2, TR: 3 };
 const HORIZON = 10, STEP = 2, MIN_N = 200;
@@ -28,6 +29,7 @@ export { pBucket, cellKey, midKey };
 /** One archived alert -> samples [{p, nb, self, fronts, y}]. */
 export function samples(b) {
   if (!b || !Array.isArray(b.frames) || !b.frames.length || alertKind(b.event_id) === "meltdown") return [];
+  if (b.status === "interrupted" || KNOWN_INTERRUPTED.has(alertKey(b.world, b.zone, b.instance_id))) return [];   // server crash mid-alert (t818s2880)
   const L = latticeFor(b.zone);
   if (!L) return [];
   const pf = captureModel(b.zone), dur = +b.dur || 90;

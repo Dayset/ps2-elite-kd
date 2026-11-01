@@ -1,0 +1,6 @@
+{
+  "note": "Alerts cut short by a server crash or shutdown (t818s2880): never trained on. Same lists as oracle-worker/src/interrupt.js (a test keeps them equal). Keys are world-zone-instance. Any other alert that ended 3+ min before its planned length is left out too, unless listed under early_ok (checked: the server kept running).",
+  "early_end_s": 180,
+  "interrupted": ["10-2-46360", "10-2-46374", "10-2-45826", "13-8-37707", "13-8-36634", "13-6-36624", "17-2-54363", "40-2-32145"],
+  "early_ok": ["1-6-49426", "1-8-48995", "10-6-45079"]
+}

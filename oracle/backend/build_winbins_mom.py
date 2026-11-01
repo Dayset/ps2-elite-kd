@@ -7,7 +7,7 @@ momentum dimension so the lookup sees the trajectory, not just the snapshot.
 Falls back to v1 bins when the scenario cell is thin (n<20).
 """
 import json, glob, os
-from build_winbins import territory_minutes, parse_ts, FACTIONS, ROOT
+from build_winbins import territory_minutes, parse_ts, FACTIONS, ROOT, interrupted
 
 def mom_bucket(m):
     if m >= 3:
@@ -30,6 +30,9 @@ def main():
             continue
         inst = rec["instance"]
         if inst.get("zone") != 4:
+            continue
+        if interrupted(inst):   # server crash mid-alert (t818s2880)
+            skipped += 1
             continue
         res = inst.get("result") or {}
         if res.get("draw"):

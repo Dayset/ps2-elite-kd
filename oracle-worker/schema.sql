@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS alert (
   event_id INTEGER NOT NULL,
   start_ts INTEGER NOT NULL,
   dur INTEGER NOT NULL,
-  status TEXT NOT NULL,          -- live | settling | sudden_death | settled | canceled | unresolved
+  status TEXT NOT NULL,          -- live | settling | sudden_death | settled | canceled | unresolved | interrupted (server crash mid-alert: no winner, votes given back, not in the benchmark)
   end_ts INTEGER,
   checks INTEGER NOT NULL DEFAULT 0,
   winner TEXT,                   -- VS | NC | TR | draw

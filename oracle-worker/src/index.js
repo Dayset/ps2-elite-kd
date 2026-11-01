@@ -41,11 +41,12 @@ import { PlanSwitch } from "./plan.js";
 const planSw = new PlanSwitch();
 import { alertFrames, archiveAlert, nextToArchive, putBundle, validBundle } from "./archive.js";
 export { AuthWatcher } from "./auth-watcher.js";
+import { isEarly, endedEarlyS, silenceVerdict, SILENT_FROM_S, DECIDE_BY_S } from "./interrupt.js";
 import { parseWorldStates, serverStatus, holdFinals, serversHint, STEAM_NEWS_URL, pickSchedule, schedDue, schedHint } from "./maintenance.js";
 
 const CENSUS = "https://census.daybreakgames.com";
 const UA = "ps2-elite-kd-oracle/1.0 (+https://github.com/Dayset/ps2-elite-kd; contact: github.com/Dayset)";
-const FINAL = ["settled", "canceled", "unresolved"];
+const FINAL = ["settled", "canceled", "unresolved", "interrupted"];
 const WINDOW_S = 8 * 3600; // how far back alerts are rebuilt from METAGAME rows
 /** A territory alert's ended row must add up to at least this much (% of regions). Healthy rows sum to 90.6–100
  *  (45 of 45 territory alerts, 180 days); a corrupt feed sums to 57 (#67). Meltdowns sum low by design: exempt. */
@@ -324,9 +325,17 @@ export async function runCycle(env, nowMs = Date.now()) {
 
     if (!a.end) {
       // Maintenance: never give up on an alert while its server is down or just back (t721u).
-      if (now > startTs + dur * 60 + 1800 && !holdFinals(servers, a.world, now)) { out.push({ ...base, status: "unresolved" }); continue; }
+      if (now > startTs + dur * 60 + 1800 && !holdFinals(servers, a.world, now)) {
+        // No end row ever came and the server was down meanwhile: cut short by the server (t818s2880).
+        const pf = prev && prev.flags ? JSON.parse(prev.flags) : [];
+        if (pf.includes("maintenance_hold") || pf.includes("server_down")) { out.push({ ...base, status: "interrupted", checks: 3, flags: ["interrupted:server_down", "no_end_row"] }); continue; }
+        out.push({ ...base, status: "unresolved" }); continue;
+      }
       if (now > startTs + dur * 60 + 1800) { out.push({ ...base, status: "settling", flags: ["maintenance_hold"] }); continue; }
       if (now > startTs + dur * 60 + 300) { out.push({ ...base, status: "settling" }); continue; }
+      // Server down mid-alert (t818s2880): freeze. No new odds, no odds minutes, no benchmark
+      // slices until it is back; the last state stays on the page and voting closes (odds_stale).
+      if (servers[a.world] && servers[a.world].down) { out.push({ ...base, status: "live", flags: ["server_down"] }); (report.frozen ||= []).push(a.key); continue; }
       // Live alert: compute the state.
       if (!hasTree(a.zone)) continue;
       const snapNow = fresh[a.world] || (await latestSnap(db, a.world, now));
@@ -417,11 +426,34 @@ export async function runCycle(env, nowMs = Date.now()) {
     if (a.end.state === "canceled") { out.push({ ...base, status: "canceled", end_ts: endTs }); continue; }
     const final = { VS: a.end.vs, NC: a.end.nc, TR: a.end.tr };
     const finalOk = FACS.every((f) => final[f] !== null && final[f] !== undefined && Number.isFinite(+final[f]));
+    // Cut short by a server crash / shutdown (t818s2880, thresholds in interrupt.js): ended 3+ min
+    // early AND the server was seen down around the end or went silent right after it.
+    const earlyS = isEarly(startTs, dur, endTs) ? endedEarlyS(startTs, dur, endTs) : 0;
+    let earlyNote = null;
+    if (earlyS) {
+      const pf = prev && prev.flags ? JSON.parse(prev.flags) : [];
+      const earlyFlag = `ended_early:${Math.round(earlyS / 60)}`;
+      let why = pf.includes("maintenance_hold") || (sv && sv.down_from && endTs >= sv.down_from - 600 && (!sv.back || endTs <= sv.back)) ? "server_down" : null;
+      if (!why && !pf.includes(earlyFlag)) {
+        const fl = (await db.prepare(`SELECT world, ts FROM flip WHERE world IN (${WORLDS.join(",")}) AND zone IN (${ZONES.join(",")}) AND ts > ? AND ts <= ?`)
+          .bind(endTs - SILENT_FROM_S, endTs + DECIDE_BY_S).all()).results || [];
+        const v = silenceVerdict(fl.filter((r) => r.world === a.world).map((r) => r.ts), fl.filter((r) => r.world !== a.world).map((r) => r.ts), endTs, now);
+        if (v === "wait") { out.push({ ...base, status: "settling", end_ts: endTs, checks: 0, flags: pf }); continue; }
+        if (v === "silent") why = "server_silent";
+        else earlyNote = [earlyFlag, ...(v === "unknown" ? ["silence_unknown"] : [])];   // server kept running: settles as normal
+      }
+      if (why) {
+        out.push({ ...base, status: "interrupted", end_ts: endTs, checks: 3, final: finalOk ? final : null,
+          flags: [...pf.filter((f) => f !== earlyFlag), `interrupted:${why}`, earlyFlag] });
+        continue;
+      }
+    }
     // #67: finite scores are not enough. An ended row that sums far below 100 % is corrupt (frozen neutral regions):
     // hold the alert (no winner, votes given back), never settle on it and never fall back to a snapshot.
     const finalCorrupt = finalOk && base.kind !== "meltdown" && finalSum(final) < FINAL_MIN_SUM;
     const checks = Math.min(3, 1 + Math.floor(Math.max(0, now - endTs) / 300));
     const flags = prev && prev.flags ? JSON.parse(prev.flags) : [];
+    for (const f of earlyNote || []) if (!flags.includes(f)) flags.push(f);
     if (finalCorrupt && !flags.some((f) => f.startsWith("final_corrupt"))) flags.push(`final_corrupt:${finalSum(final).toFixed(1)}`);
     // Cross-check: our own last pre-end snapshot (never a post-end one).
     if (!flags.includes("checked")) {
@@ -529,7 +561,7 @@ export async function runCycle(env, nowMs = Date.now()) {
 
   // 4c) Settle votes on alerts that reached a final status (BonusCheques only).
   const toSettle = ((await db.prepare(`SELECT DISTINCT a.key, a.status, a.winner, a.flags FROM vote v JOIN alert a ON a.key = v.key
-    WHERE v.status = 'open' AND a.status IN ('settled','canceled','unresolved')`).all()).results) || [];
+    WHERE v.status = 'open' AND a.status IN ('settled','canceled','unresolved','interrupted')`).all()).results) || [];
   if (toSettle.length) { await db.batch(settleStatements(db, toSettle, now)); report.votes_settled = toSettle.length; }
 
   // 5) Daily pruning at 04:07 UTC: raw snapshots 30 days, flips 90 days,
@@ -715,7 +747,7 @@ export async function honuQueue(db, now) {
   const live = ((await db.prepare("SELECT key, world, zone FROM alert WHERE status='live'").all()).results) || [];
   const reports = ((await db.prepare(
     `SELECT a.key, a.world, a.zone, a.instance_id, a.start_ts, a.end_ts, a.dur FROM alert a LEFT JOIN report r ON r.key = a.key
-     WHERE a.status = 'settled' AND a.end_ts > ? AND (r.key IS NULL OR (r.status != 'ok' AND r.attempts < ? AND r.ts < ?))
+     WHERE a.status IN ('settled','interrupted') AND a.end_ts > ? AND (r.key IS NULL OR (r.status != 'ok' AND r.attempts < ? AND r.ts < ?))
      ORDER BY a.end_ts DESC LIMIT 5`).bind(now - REPORT_WINDOW_S, REPORT_MAX_ATTEMPTS, now - REPORT_RETRY_S).all()).results) || [];
   return { pop: live, reports };
 }
@@ -857,7 +889,7 @@ async function handle(request, env) {
 
   if (url.pathname === "/history") {
     const days = Math.min(30, Math.max(1, +url.searchParams.get("days") || 7));
-    const rows = (await db.prepare(`SELECT a.key, a.world, a.zone, a.instance_id, a.event_id, a.start_ts, a.dur, a.status, a.end_ts, a.checks, a.winner, a.basis, a.final, a.flags, NULL AS state, NULL AS commander, ${REPORT_COLS} FROM alert a LEFT JOIN report r ON r.key = a.key WHERE a.start_ts > ? AND a.status IN ('settled','canceled','unresolved') ORDER BY a.start_ts DESC`).bind(now - days * 86400).all()).results || [];
+    const rows = (await db.prepare(`SELECT a.key, a.world, a.zone, a.instance_id, a.event_id, a.start_ts, a.dur, a.status, a.end_ts, a.checks, a.winner, a.basis, a.final, a.flags, NULL AS state, NULL AS commander, ${REPORT_COLS} FROM alert a LEFT JOIN report r ON r.key = a.key WHERE a.start_ts > ? AND a.status IN ('settled','canceled','unresolved','interrupted') ORDER BY a.start_ts DESC`).bind(now - days * 86400).all()).results || [];
     const bench = (await db.prepare("SELECT key, dur, slices, winner, brier FROM bench WHERE settled_ts IS NOT NULL AND brier IS NOT NULL").all()).results || [];
     const agg = {};
     for (const b of bench) {

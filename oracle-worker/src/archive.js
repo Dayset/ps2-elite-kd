@@ -19,7 +19,7 @@
 import { regionMap } from "./models.js";
 
 const FAC_NAME = { 1: "VS", 2: "NC", 3: "TR" };
-const FINAL = ["settled", "canceled", "unresolved"];
+const FINAL = ["settled", "canceled", "unresolved", "interrupted"];
 
 /** Per-minute base owners for an alert from stored snapshots (first frame full, then changes). */
 export async function alertFrames(db, a) {
@@ -97,7 +97,7 @@ export async function archiveAlert(env, key, nowMs = Date.now()) {
  * status index would read every finished alert ever, each minute (D1 row reads).
  */
 export async function nextToArchive(db, since = 0) {
-  const r = await db.prepare("SELECT key FROM alert WHERE start_ts > ? AND +status IN ('settled','canceled','unresolved') AND archived_ts IS NULL ORDER BY start_ts LIMIT 1").bind(since).first();
+  const r = await db.prepare("SELECT key FROM alert WHERE start_ts > ? AND +status IN ('settled','canceled','unresolved','interrupted') AND archived_ts IS NULL ORDER BY start_ts LIMIT 1").bind(since).first();
   return r ? r.key : null;
 }
 

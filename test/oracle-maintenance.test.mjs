@@ -198,5 +198,7 @@ test("maintenance: an alert 'ended' by the shutdown is held until the server is 
   await runCycle(env, (T0 + 100 * 60) * 1000);
   assert.equal(DB.raw.prepare("SELECT status FROM alert").get().status, "settling");
   await runCycle(env, (T0 + 100 * 60 + BACK_GRACE_S) * 1000);
-  assert.equal(DB.raw.prepare("SELECT status FROM alert").get().status, "unresolved", "#67 corrupt-sum hold applies after return");
+  // Ended 60 min early while the server was down: a crash, not a result (t818s2880).
+  const fin = DB.raw.prepare("SELECT status, winner, flags FROM alert").get();
+  assert.equal(fin.status, "interrupted"); assert.equal(fin.winner, null); assert.match(fin.flags, /interrupted:server_down/);
 });

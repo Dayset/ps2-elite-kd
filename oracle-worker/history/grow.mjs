@@ -24,7 +24,8 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import { computeWin, FACS, brier, MELTDOWN } from "../src/engine.js";
+import { computeWin, FACS, brier, MELTDOWN, TERRITORY_ALERTS } from "../src/engine.js";
+import { interruptedRecord } from "../src/interrupt.js";
 import { latticeFor } from "../src/models.js";
 import { splitTree, splitCells } from "../build-trees.mjs";
 
@@ -106,6 +107,8 @@ export function prepare(rec) {
   const r = rec.result || {};
   if (r.draw || !FAC[r.victor]) return { skip: "no winner" };
   if (!rec.end || !rec.start) return { skip: "no end" };
+  // Cut short by a server crash / shutdown (t818s2880): not a real result, never trained on.
+  if (interruptedRecord(rec, TERRITORY_ALERTS[rec.event])) return { skip: "interrupted" };
   const L = lat(rec.zone);
   if (!L) return { skip: "no lattice" };
   const init = Object.entries(rec.init || {});

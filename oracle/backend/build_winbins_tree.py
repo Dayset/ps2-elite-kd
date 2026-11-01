@@ -14,7 +14,7 @@ A twig with n<20 falls back to its branch; a thin branch falls back
 to the trunk. The tree never pretends a thin twig is certain.
 """
 import json, glob, os
-from build_winbins import territory_minutes, parse_ts, FACTIONS, ROOT
+from build_winbins import territory_minutes, parse_ts, FACTIONS, ROOT, interrupted
 
 MIN_N = 20
 
@@ -48,6 +48,9 @@ def main():
             continue
         inst = rec["instance"]
         if inst.get("zone") != 4:
+            continue
+        if interrupted(inst):   # server crash mid-alert (t818s2880)
+            skipped += 1
             continue
         res = inst.get("result") or {}
         if res.get("draw"):

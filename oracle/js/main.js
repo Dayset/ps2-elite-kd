@@ -9,11 +9,11 @@ import { modeFocus, ownerLookup, heatLookup, spawnLookup, pickMode, MODE_KEY, pi
 import { nextPoll } from "./poll.js?v=20261026-mode1";
 import { voiceToggle, voiceTick, bindVoiceMenu } from "./voice.js?v=20261027-say1";
 import { reportPanel } from "./players.js?v=20261024-i18n1";
-import { benchPanel, initResults, refreshHistory, renderHist } from "./results.js?v=20261101-miniskill1";
+import { benchPanel, initResults, refreshHistory, renderHist } from "./results.js?v=20261101-int1";
 import { initAuth } from "./auth.js?v=20261028-dev82";
 import { enhance, onSectionExpand, refreshSummary } from "./collapse.js?v=20261026-pulse1";
 import { t as tr, ready } from "../../i18n.mjs";
-import { maintNotice, when, schedState, lastOnline, STATUS_URL } from "./maint.js?v=20261027-maint3";
+import { maintNotice, when, schedState, lastOnline, plannedDown, STATUS_URL } from "./maint.js?v=20261101-int1";
 import { fightsCard, popLiveLine } from "./fights.js?v=20261030-sb1";
 await ready;   // #73: the language file is in before anything renders
 document.title = tr("or.title", "PS2MapOracle — live PlanetSide 2 alert odds");
@@ -35,12 +35,13 @@ function statusLabel(a, now) {
   if (a.status === "settling") return tr("or.st.settling", "settling…");
   if (a.status === "sudden_death") return tr("or.st.sd", "sudden death");
   if (a.status === "settled") return tr("or.st.won", "🏆 won by {f}", { f: a.winner });
+  if (a.status === "interrupted") return tr("or.st.int", "server went down");
   return a.status;
 }
 /** Status badge text (#73). */
 function badgeLabel(st) {
   return ({ live: tr("or.badge.live", "live"), settling: tr("or.badge.settling", "settling"), sudden_death: tr("or.st.sd", "sudden death"),
-    settled: tr("or.badge.settled", "settled"), unresolved: tr("or.badge.unresolved", "unresolved") })[st] || st.replace("_", " ");
+    settled: tr("or.badge.settled", "settled"), unresolved: tr("or.badge.unresolved", "unresolved"), interrupted: tr("or.badge.interrupted", "interrupted") })[st] || st.replace("_", " ");
 }
 const minLeft = (n) => tr("or.minLeft", "{n} min left", { n });
 
@@ -158,7 +159,7 @@ function render2(now) {
   if (!a && S.pinned && S.selected) { $("main").innerHTML = `<div class="empty">${tr("or.loadingAlert", "Loading alert…")}</div>`; return; }
   if (!a) {
     $("miniMain").innerHTML = ""; miniSync();
-    if (S.maint && S.maint.all) { $("main").innerHTML = `<div class="empty">${tr("or.mt.empty", "PlanetSide 2 servers are down for maintenance. Alerts and live odds show up here again on their own once they're back.")}</div>`; return; }
+    if (S.maint && S.maint.all) { $("main").innerHTML = `<div class="empty">${S.maintPlanned ? tr("or.mt.empty", "PlanetSide 2 servers are down for maintenance. Alerts and live odds show up here again on their own once they're back.") : tr("or.off.empty", "PlanetSide 2 servers are offline. Alerts and win chances show up here again on their own once they're back.")}</div>`; return; }
     $("main").innerHTML = `<div class="empty">${tr("or.noAlerts", "No territory alerts running on Osprey, Wainwright or SolTech right now. Live odds appear here the minute one starts.")}</div>`;
     return;
   }
@@ -184,7 +185,13 @@ function render2(now) {
   const second = s && s.second ? `<div class="second">${tr("or.second", "🥈 Second place:")} ${Object.entries(s.second.odds).map(([f, p]) => `<span class="${f}">${f} ${pct1(p)}%</span>`).join(" · ")} ${s.second.locked ? tr("or.locked", "(locked)") : ""}</div>` : "";
   const voided = (a.flags || []).includes("votes_void");
   const brokenSum = heldBroken(a) ? ((a.flags || []).find((f) => f.startsWith("final_corrupt")) || "").split(":")[1] : null;
-  const result = heldBroken(a) ? `<div class="note" style="color:var(--warn)">${tr("or.brokenEnd", "Census sent broken end scores (they add up to {p}%), so there is no result for this alert and every vote on it was given back.", { p: esc(brokenSum) })}</div>` : a.status === "settled" ? `<div class="second">${a.final ? `${tr("or.final", "Census final:")} ${FACS.map((f) => `<span class="${f}">${f} ${(+a.final[f]).toFixed(1)}</span>`).join(" · ")}` : tr("or.noFinal", "Census sent no final scores; decided from our last map snapshot")} — ${tr("or.wins", "{f} wins", { f: `<b class="${a.winner}">${a.winner}</b>` })}${a.basis === "sudden_death" ? tr("or.sdParen", " (sudden death)") : ""}</div>${voided ? `<div class="note" style="color:var(--warn)">${tr("or.voided", "Census map data was broken at the end and disagreed with the result, so every vote on this alert was given back.")}</div>` : ""}` : "";
+  // Server crash / shutdown mid-alert (t818s2880): short line, the why in the hover hint.
+  const earlyMin = +(((a.flags || []).find((f) => f.startsWith("ended_early:")) || "").split(":")[1] || 0);
+  const intHint = tr("or.intHint", "The game ended this alert {n} min early and the server went offline right after, so no faction won. It does not count toward the Oracle's accuracy.", { n: earlyMin || "?" });
+  const intNote = a.status === "interrupted" ? `<div class="note" style="color:var(--warn)" title="${esc(intHint)}">${tr("or.int", "Server went down mid-alert. No winner, votes refunded.")}</div>` : "";
+  const earlyTag = a.status === "settled" && earlyMin ? ` <span class="note" title="${esc(tr("or.earlyHint", "Ended {n} min early, but the server kept running, so the result counts.", { n: earlyMin }))}">${tr("or.early", "ended early")}</span>` : "";
+  const frozenNote = a.status === "live" && (a.flags || []).includes("server_down") ? `<div class="note" style="color:var(--warn)" title="${esc(tr("or.frozenHint", "We keep the last numbers until the server is back. Voting is paused meanwhile."))}">${tr("or.frozen", "⏸ Server offline: win chance paused.")}</div>` : "";
+  const result = intNote || (heldBroken(a) ? `<div class="note" style="color:var(--warn)">${tr("or.brokenEnd", "Census sent broken end scores (they add up to {p}%), so there is no result for this alert and every vote on it was given back.", { p: esc(brokenSum) })}</div>` : a.status === "settled" ? `<div class="second">${a.final ? `${tr("or.final", "Census final:")} ${FACS.map((f) => `<span class="${f}">${f} ${(+a.final[f]).toFixed(1)}</span>`).join(" · ")}` : tr("or.noFinal", "Census sent no final scores; decided from our last map snapshot")} — ${tr("or.wins", "{f} wins", { f: `<b class="${a.winner}">${a.winner}</b>` })}${a.basis === "sudden_death" ? tr("or.sdParen", " (sudden death)") : ""}${earlyTag}</div>${voided ? `<div class="note" style="color:var(--warn)">${tr("or.voided", "Census map data was broken at the end and disagreed with the result, so every vote on this alert was given back.")}</div>` : ""}` : "");
   // Cut-off bases don't score in the game; from 80 % of the alert the odds count them for nobody.
   const cutList = s && Array.isArray(s.cut) ? s.cut : [];
   const cutNote = cutList.length && a.status === "live" ? `<div class="note">${tr("or.cut", "✂️ Cut off, not scoring:")} ${FACS.map((f) => { const n = cutList.filter((c) => c.fac === f); return n.length ? `<span class="${f}">${f} ${n.length}</span> (${esc(n.slice(0, 3).map((c) => c.name).join(", "))}${n.length > 3 ? ` +${n.length - 3}` : ""})` : ""; }).filter(Boolean).join(" · ")}${s.cut_aware ? tr("or.cutAware", " · counted in the odds") : ""}</div>` : "";
@@ -197,7 +204,7 @@ function render2(now) {
     <div class="grid">
       <section class="card map"><h2 data-sec="map">${tr("or.h.map", "Map")}</h2><div id="replayTag" class="replaytag" hidden></div><div id="map"></div></section>
       <div class="side">
-      <section class="card win"><h2 data-sec="win-chance">${tr("or.h.win", "Win chance")}</h2>${kindNote}${suspectNote}${cutNote}<div class="odds" aria-live="polite" aria-atomic="true">${oddsHtml}</div>${oddLine}${result}${second}${rows || popRows ? det("wdet", tr("or.details", "Details"), `${popAdj}<div class="rows">${rows}${popRows}</div>${popTot ? `<div class="note">${tr("or.pop", "Population: Honu (wt.honu.pw), {n} on continent{nso}.", { n: popTot, nso: s.pop_ns ? tr("or.popNso", " + {n} NSO", { n: s.pop_ns }) : "" })}</div>` : ""}${popLiveLine(s)}`, "wdet keep") : ""}${calls}</section>
+      <section class="card win"><h2 data-sec="win-chance">${tr("or.h.win", "Win chance")}</h2>${kindNote}${frozenNote}${suspectNote}${cutNote}<div class="odds" aria-live="polite" aria-atomic="true">${oddsHtml}</div>${oddLine}${result}${second}${rows || popRows ? det("wdet", tr("or.details", "Details"), `${popAdj}<div class="rows">${rows}${popRows}</div>${popTot ? `<div class="note">${tr("or.pop", "Population: Honu (wt.honu.pw), {n} on continent{nso}.", { n: popTot, nso: s.pop_ns ? tr("or.popNso", " + {n} NSO", { n: s.pop_ns }) : "" })}</div>` : ""}${popLiveLine(s)}`, "wdet keep") : ""}${calls}</section>
       ${a.status === "live" ? fightsCard(s) : ""}
       <div id="voteHere"></div><div id="lockHere"></div>
       </div>
@@ -291,10 +298,12 @@ async function refreshLive() {
     // Game servers down for maintenance (t721u): calm info, not "data delayed"; clears itself when they return.
     const mt = S.maint = maintNotice(cy && cy.servers, live.worlds);
     const lang = document.documentElement.lang;
-    $("dot").className = "dot " + (mt && mt.all ? "info" : ok ? "ok" : "bad");
-    $("statusText").textContent = mt && mt.all ? tr("or.mt.status", "servers in maintenance") : ok ? tr("or.updated", "live · updated {n}s ago", { n: health.last_cycle_age_s }) : tr("or.delayed", "data delayed");
     // Daybreak's announced window (t723u), only when it came from their own post; never a guess.
     const ss = schedState(cy && cy.sched, mt, now), T = (ts) => when(ts, lang, now);
+    // "maintenance" only inside/just after an announced window; any other downtime is "offline" (t818s2880).
+    const planned = S.maintPlanned = plannedDown(ss);
+    $("dot").className = "dot " + (mt && mt.all ? "info" : ok ? "ok" : "bad");
+    $("statusText").textContent = mt && mt.all ? (planned ? tr("or.mt.status", "servers in maintenance") : tr("or.off.status", "servers offline")) : ok ? tr("or.updated", "live · updated {n}s ago", { n: health.last_cycle_age_s }) : tr("or.delayed", "data delayed");
     // Links: Daybreak's own status page (t724u) and, when we read a window from it, their notice.
     const status = { url: STATUS_URL, label: tr("or.mt.statusLink", "Official server status") };
     const src = ss && ss.url ? { url: ss.url, label: tr("or.mt.src", "Daybreak's notice") } : null;
@@ -308,13 +317,13 @@ async function refreshLive() {
     if (mt && (ok || mt.all)) {
       const lo = lastOnline(mt), parts = [];
       if (mt.all) {
-        parts.push(tr("or.mt.all", "PlanetSide 2 servers are down for maintenance."));
+        parts.push(planned ? tr("or.mt.all", "PlanetSide 2 servers are down for maintenance.") : tr("or.off.all", "PlanetSide 2 servers are offline."));
         if (lo && lo.one) parts.push(tr("or.mt.lastAll", "Last online {time}.", { time: T(lo.one) }));
         else if (lo) parts.push(tr("or.mt.lastList", "Last online: {list}.", { list: lo.each.map((d) => `${d.name} ${T(d.lastUp)}`).join(", ") }));
         parts.push(tr("or.mt.keep", "You're seeing the last data we got; live updates come back on their own."));
       } else {
         const names = mt.down.map((d) => d.lastUp ? tr("or.mt.lastUp", "{name} (last online {time})", { name: d.name, time: T(d.lastUp) }) : d.name).join(", ");
-        parts.push(tr("or.mt.some", "Down for maintenance: {names}. The other servers update as normal.", { names }));
+        parts.push(planned ? tr("or.mt.some", "Down for maintenance: {names}. The other servers update as normal.", { names }) : tr("or.off.some", "Offline: {names}. The other servers update as normal.", { names }));
       }
       if (ss) parts.push(schedText(ss));
       banner(parts.join(" "), "info", links);

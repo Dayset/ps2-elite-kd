@@ -14,7 +14,7 @@ allow (backoff) — the tree grows exactly where the data feeds it, and
 never pretends a thin leaf is certain.
 """
 import json, glob, os, argparse
-from build_winbins import territory_minutes, parse_ts, FACTIONS, ROOT
+from build_winbins import territory_minutes, parse_ts, FACTIONS, ROOT, interrupted
 from build_winbins_tree import mom_bucket, marg_bucket
 
 MIN_N = 20
@@ -47,6 +47,9 @@ def main():
             continue
         inst = rec["instance"]
         if inst.get("zone") != zone:
+            continue
+        if interrupted(inst):   # server crash mid-alert (t818s2880)
+            skipped += 1
             continue
         res = inst.get("result") or {}
         if res.get("draw"):

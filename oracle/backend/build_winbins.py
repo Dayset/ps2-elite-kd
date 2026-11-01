@@ -15,6 +15,22 @@ FACTIONS = {1: "VS", 2: "NC", 3: "TR"}
 def parse_ts(s):
     return datetime.fromisoformat(s.replace("Z", "+00:00"))
 
+_INT = json.load(open(os.path.join(ROOT, "interrupted_alerts.json")))
+
+def interrupted(inst):
+    """True for an alert cut short by a server crash / shutdown (t818s2880): listed in
+    interrupted_alerts.json, or ended 3+ min before its planned length and not checked as normal."""
+    key = f"{inst.get('world')}-{inst.get('zone')}-{str(inst.get('instanceId', inst.get('censusInstanceId'))).split('-')[-1]}"
+    if key in _INT["interrupted"]:
+        return True
+    if key in _INT["early_ok"]:
+        return False
+    dur_ms = inst.get("duration")
+    if not dur_ms or not inst.get("timeStarted") or not inst.get("timeEnded"):
+        return False
+    ran = parse_ts(inst["timeEnded"]).timestamp() - parse_ts(inst["timeStarted"]).timestamp()
+    return dur_ms / 1000 - ran > _INT["early_end_s"]
+
 def territory_minutes(rec):
     """Return list of 91 dicts {VS,NC,TR} territory shares from alert record."""
     inst = rec["instance"]
@@ -58,6 +74,9 @@ def main():
             continue
         inst = rec["instance"]
         if inst.get("zone") != 4:
+            continue
+        if interrupted(inst):
+            skipped += 1
             continue
         res = inst.get("result") or {}
         victor, draw = res.get("victor"), res.get("draw")

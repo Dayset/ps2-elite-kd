@@ -62,6 +62,18 @@ GitHub Actions: deploy-oracle.yml (deploy) · oracle-commander.yml, oracle-honu-
 | `POST /honu/ingest` | `X-Oracle-Key` | Results from the Honu job: `{pop, reports, radar, errors}` |
 | `/auth/*`, `/vote/*` | Bearer token where needed | Sign-in and voting (see `oracle-worker/src/auth.js`, `vote.js`) |
 
+### Server crash mid-alert (2026-11-01)
+
+`oracle-worker/src/interrupt.js`. A timed alert that ends more than 3 min early while its
+server is down (Census world state), or whose server then has a 12-min spell with no
+captures while other servers keep capturing (decided by end + 22 min), is `interrupted`:
+no winner, votes given back in full (the normal void path), benchmark row never settled,
+so it is out of accuracy / Brier, and left out of training (`interruptedRecord`, plus
+`oracle/backend/interrupted_alerts.json` for the Python builders). An early end on a
+server that keeps running settles as usual with the flag `ended_early:N`. While a world
+is down its live alerts keep their last win chances (flag `server_down`): no ticks, no
+benchmark slices, voting closed. Thresholds and the real cases behind them are in the file.
+
 ### D1 tables
 
 `snap` (map snapshots, pruned at 30 days) · `metagame` (METAGAME rows) · `flip` (FACILITY rows, pruned at 90 days) · `alert` (one row per alert: state, status, winner, basis, final, flags, commander) · `tick` (win-history points) · `bench` (benchmark slices + Brier) · `meta` (`last_cycle`, `last_ok`, `last_commander`, `last_honu`, `last_crash`, `cron_seen`) · `pop` (Honu population per world/zone, written by `/honu/ingest` about every 5 min) · `report` (per-alert outlier report) · `radar` (PS2 Radar cache, rechecked after 3 days).

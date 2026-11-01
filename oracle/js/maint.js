@@ -40,6 +40,12 @@ export const STATUS_URL = "https://www.daybreakgames.com/status";
 
 const SAFE_SRC = /^https:\/\/store\.steampowered\.com\//;
 
+/** Down this long after an announced window ended: an outage of its own, not that maintenance (t818s2880). */
+export const LATE_MAX_S = 6 * 3600;
+
+/** Is this downtime Daybreak's announced maintenance? Otherwise the page says "offline" (t818s2880). */
+export const plannedDown = (ss) => !!ss && (ss.key === "eta" || ss.key === "late");
+
 /**
  * Which schedule sentence fits right now, or null.
  *  down: a server is down -> "eta" (inside the announced window) or "late" (past its end)
@@ -52,6 +58,7 @@ export function schedState(sched, mt, now) {
   const base = { start: sched.start, end: sched.end, hours: sched.hours, url };
   if (mt) {
     if (now < sched.start - 3600) return null;   // down well before the announced start: not this window
+    if (now > sched.end + LATE_MAX_S) return null; // long after it: a separate outage
     return { ...base, key: now <= sched.end ? "eta" : "late" };
   }
   if (now < sched.start) return { ...base, key: "soon" };

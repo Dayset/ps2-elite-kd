@@ -383,3 +383,15 @@ approved it, "shipped" means it is live in the running pipeline.
   hands again 7.8%. Close second: a #2 with ≥ 0.6 × the heat still had a fight as often as
   #1 (46% / 40% vs 39% / 40%), below 0.6 it was 9-11 points worse; two directions about a
   third of the time.
+
+## 2026-11-01
+
+- **Server crash mid-alert (owner t818s2880).** An alert cut short by a server crash or
+  shutdown is now "interrupted": no winner, votes given back, left out of the accuracy
+  stats and of training. Detected when the alert ends 3+ min early and the server is down
+  or has no captures for 12 min while other servers do (PS2Alerts history, 4,997 alerts:
+  only 10 ended 3+ min early; the crashes were followed by 13-90 quiet minutes, servers
+  that stayed up captured again within 2-6 min, normal quiet spells reached 9 min at most).
+  Early ends on a running server (Osprey 1-6-49426) still settle, tagged "ended early".
+  Win chances freeze while a server is down. "Server offline" is shown for unannounced
+  outages, "maintenance" only when Daybreak announced it. 9 languages.

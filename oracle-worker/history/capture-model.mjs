@@ -22,7 +22,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { latticeFor } from "../src/models.js";
-import { MELTDOWN } from "../src/engine.js";
+import { MELTDOWN, TERRITORY_ALERTS } from "../src/engine.js";
+import { interruptedRecord, KNOWN_INTERRUPTED, alertKey } from "../src/interrupt.js";
 
 export const SLUG = { 2: "indar", 4: "hossin", 6: "amerish", 8: "esamir", 344: "oshur" };
 export const WRITE_ZONES = [2, 6, 8, 344];   // Hossin: check only
@@ -44,6 +45,7 @@ const minuteBucket = (t) => (t < 30 ? "early:0-30" : t < 60 ? "mid:30-60" : "lat
 export function fromRecord(rec) {
   if (!rec || !rec.init || !rec.start || !rec.end) return null;
   if (rec.event != null && MELTDOWN.has(+rec.event)) return null;
+  if (interruptedRecord(rec, TERRITORY_ALERTS[rec.event])) return null;   // server crash mid-alert (t818s2880)
   const init = new Map(Object.entries(rec.init).map(([f, o]) => [String(f), +o || 0]));
   const flips = (rec.flips || []).map(([sec, fid, nw]) => [sec / 60, String(fid), +nw || 0]).sort((a, b) => a[0] - b[0]);
   return { key: `${rec.world}-${rec.zone}-${rec.id}`, zone: +rec.zone, dur: (rec.end - rec.start) / 60, init, flips };
@@ -53,6 +55,7 @@ export function fromRecord(rec) {
 export function fromBundle(b) {
   if (!b || !Array.isArray(b.frames) || !b.frames.length) return null;
   if (b.event_id != null && MELTDOWN.has(+b.event_id)) return null;
+  if (b.status === "interrupted" || KNOWN_INTERRUPTED.has(alertKey(b.world, b.zone, b.instance_id))) return null;   // t818s2880
   const fac = (o) => (o ? FAC[o] || 0 : 0);
   const init = new Map(Object.entries(b.frames[0].set || {}).map(([f, o]) => [String(f), fac(o)]));
   const flips = [];
