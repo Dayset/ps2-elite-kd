@@ -63,10 +63,22 @@ test("closeSlideHints closes open fold notes in the slides once a switch starts"
   assert.equal(closeSlideHints(root), 0);
   assert.equal(closeSlideHints(null), 0);
   const src = readFileSync(new URL("../stats-carousel.mjs", import.meta.url), "utf8");
-  assert.match(src, /!hintsClosed && Math\.abs\(viewport\.scrollLeft - i \* width\(\)\) > 2/);
+  assert.match(src, /!hintsClosed && Math\.abs\(viewport\.scrollLeft - slotOf\(i\) \* width\(\)\) > 2/);
   const app = appSource();
   for (const m of ["head-tip", "name-peek"]) {
     const a = app.match(new RegExp(m + "\\.mjs\\?v=[^\"']+"))[0];
     assert.ok(src.includes(a), `${m} imported with the same ?v= as app.js (one shared module instance)`);
   }
+});
+
+// #88 (2026-11-01): the loop wraps by rotating the slides' places (CSS order) so the
+// shown slide always has a neighbour on both sides; every wrap is the browser's own
+// snap glide. No instant jump on touchend (a phone's fling carried it one slide on).
+test("loop by rotation: no touchend wrap jump, re-deal only at rest (#88)", () => {
+  const src = readFileSync(new URL("../stats-carousel.mjs", import.meta.url), "utf8");
+  assert.ok(!/addEventListener\("touchend", \(e\) => \{\s*if \(!loopStart\)/.test(src), "the touchend wrap is gone");
+  assert.ok(!/loopStart/.test(src), "no loop snapshot state left");
+  assert.match(src, /s\.style\.order = String\(slots\[k\]\)/, "places are dealt with CSS order");
+  assert.match(src, /if \(touching \|\| !viewport\.clientWidth\) return;/, "never re-deal under a finger");
+  assert.match(src, /progTimer = setTimeout\(/, "the programmatic flag always clears by timer, not only by scrollend");
 });
