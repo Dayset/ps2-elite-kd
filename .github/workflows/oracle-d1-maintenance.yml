@@ -1,0 +1,61 @@
+name: Oracle D1 maintenance (one-off SQL)
+
+# Runs a reviewed, committed SQL change against the oracle's databases, by hand only.
+# Each change lives in oracle-worker/maintenance/<name>/ with apply-*.sql, the matching
+# revert-*.sql and a backup of the values it replaces. Every UPDATE is guarded on the
+# old value, so a run is idempotent and a revert only undoes rows still holding the new
+# value. Logs the affected ticks before and after as a run artifact.
+
+on:
+  workflow_dispatch:
+    inputs:
+      change:
+        description: "Folder under oracle-worker/maintenance/"
+        default: "2026-11-01-rewin"
+      action:
+        description: "apply or revert"
+        type: choice
+        options: [apply, revert]
+        default: apply
+
+permissions:
+  contents: read
+
+concurrency:
+  group: oracle-d1-maintenance
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: oracle-worker
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      DIR: maintenance/${{ inputs.change }}
+      ACT: ${{ inputs.action }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Before
+        run: |
+          mkdir -p out
+          if [ -f "$DIR/check.sql" ]; then npx --yes wrangler@4 d1 execute ps2-oracle --remote --json --file "$DIR/check.sql" > out/before.json; fi
+      - name: Main database
+        run: |
+          if [ -f "$DIR/$ACT-main.sql" ]; then npx --yes wrangler@4 d1 execute ps2-oracle --remote --yes --file "$DIR/$ACT-main.sql" | tail -n 20; fi
+      - name: Archive database
+        run: |
+          if [ -f "$DIR/$ACT-archive.sql" ]; then npx --yes wrangler@4 d1 execute ps2-oracle-archive --remote --yes --file "$DIR/$ACT-archive.sql" | tail -n 20; fi
+      - name: After
+        run: |
+          if [ -f "$DIR/check.sql" ]; then npx --yes wrangler@4 d1 execute ps2-oracle --remote --json --file "$DIR/check.sql" > out/after.json; fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: d1-maintenance-${{ inputs.change }}-${{ inputs.action }}
+          path: oracle-worker/out/
