@@ -1,0 +1,67 @@
+name: Outfits dataset
+
+# 🛡️ Outfits page (#90): resolves every ranked PC player's outfit through Census
+# (scripts/build-outfits.mjs, batches of 100 ids via the cache Worker) and
+# writes data/outfits.json (per-outfit known/total members, median and top 10%
+# avg ⚔️ iVi). Daily. Resumable: the per-player answers live in the Actions
+# cache (never committed), a run refreshes the oldest first within its time
+# budget and the next run carries on. Commits data/outfits.json only.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "37 5 * * *"
+
+permissions:
+  contents: write # commit data/outfits.json
+
+concurrency:
+  group: outfits-dataset
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+
+      - name: Git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Restore lookup state
+        uses: actions/cache/restore@v6
+        with:
+          path: .cache/outfits
+          key: outfits-state-${{ github.run_id }}
+          restore-keys: outfits-state-
+
+      - name: Build data/outfits.json
+        env:
+          CENSUS_SERVICE_ID: ${{ secrets.CENSUS_SERVICE_ID || vars.CENSUS_SERVICE_ID || 'daysetps2legends' }}
+          # Runners can't reach Census directly: the cache Worker proxies it.
+          CENSUS_PROXY: ${{ vars.CENSUS_PROXY || 'https://ps2-elite-kd-cache.dayset.workers.dev' }}
+          CENSUS_PROXY_KEY: ${{ secrets.CENSUS_PROXY_KEY }}
+          CENSUS_RPM: "60"
+          TIME_BUDGET_SEC: "1200"
+        run: node scripts/build-outfits.mjs
+
+      - name: Save lookup state
+        if: always()
+        uses: actions/cache/save@v6
+        with:
+          path: .cache/outfits
+          key: outfits-state-${{ github.run_id }}
+
+      - name: Commit (data/outfits.json only)
+        env:
+          COMMIT_DIR: data/outfits.json
+        run: scripts/ci-commit-push.sh "chore(outfits): outfit iVi dataset [bot]"

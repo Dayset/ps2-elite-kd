@@ -219,6 +219,11 @@ import {
     body.textContent = tr("foot.psBaseline", "On PlayStation, adjusted iVi uses a lower baseline (600 divided by the PC/PlayStation kill-speed gap, currently about {n}, rechecked weekly), and 🦁 Brave uses the same gap (×{g}) for enemy kill speed and Activity, so top players compare fairly with PC.", { n: Math.round(psIviBaseline()), g: psKpmRatio().toFixed(2) }) +
       " " + tr("foot.psResist", "🛡️ Resist, 📊 COI and ⚙️ Mech% use the same gap (Resist ×{g}), so they read on the PC scale.", { g: psKpmRatio().toFixed(2) }); // owner t717
   }
+  if (IS_PS && typeof document !== "undefined") {
+    // 🛡️ Outfits page (#90) is PC only for now: from the PS room it opens with room=ps and says so (never PC data).
+    const ol = document.querySelector("a.foot-outfits");
+    if (ol) ol.setAttribute("href", "outfits.html?room=ps");
+  }
   if (IS_PS && typeof window !== "undefined") {
     paintPsBaselineNote();
     window.addEventListener("ps2-lang", paintPsBaselineNote);

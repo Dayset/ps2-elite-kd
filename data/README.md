@@ -13,6 +13,7 @@ data/
   refresh-state.json     # fetch bookkeeping (last attempt / failures per slug)
   top-killers.txt        # Honu live top killers seen by background runs (7 days)
   status.json            # current batch + last run summary
+  outfits.json           # 🛡️ outfits page (#90): per-outfit known/total members, median + top 10% ⚔️ iVi (outfits.yml, daily)
   README.md              # this file
 ```
 

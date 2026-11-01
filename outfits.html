@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title data-i18n="of.title">PS2 Elite: outfits by ⚔️ iVi</title>
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="styles.css?v=20261031-fr1" />
+  <style>
+    /* 🛡️ Outfits page (#90). Shared table look from styles.css (.ranks-table); only the outfit-specific bits here. */
+    body { overflow: auto; }
+    .st-wrap { max-width: none; margin: 0 auto; padding: 0; }
+    .st-head { position: relative; background: var(--panel); border: 1px solid var(--border); border-radius: 0; padding: 12px 14px 12px 4.75rem; margin-bottom: 12px; }
+    .st-head .lang-select { position: absolute; top: 10px; right: 12px; }
+    .st-back { position: absolute; top: 10px; left: 12px; width: 3rem; height: 3rem; display: inline-flex; align-items: center; justify-content: center; font-size: 1.7rem; line-height: 1; text-decoration: none; background: var(--ctrl-btn-bg); border: 1px solid var(--border); border-radius: 0; }
+    .st-back:hover { border-color: var(--accent); }
+    .st-head h1 { font-size: 1.25rem; margin: 0 0 4px; padding-right: 8.5rem; }
+    .st-sub { color: var(--dim); font-size: 0.85rem; margin: 0; }
+    .st-wrap a { color: var(--accent); }
+    .st-dim { color: var(--dim); }
+    .st-err { color: var(--bad, #ff8a8a); }
+    .of-bar { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; margin: 0 0 8px; font-size: 0.85rem; }
+    .of-bar #ofStatus { flex: 1 1 20rem; }
+    .of-filter { font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--border); border-radius: 0; padding: 4px 8px; width: 14rem; max-width: 100%; box-sizing: border-box; }
+    .of-filter:focus { outline: none; border-color: var(--accent); }
+    .of-count { color: var(--dim); }
+    /* No pick column here: # sits at the left edge, the outfit name right after it. */
+    .of-table { --rk-fixed: 35rem; }
+    .of-table th.rk-num, .of-table td.rk-num { left: 0; }
+    .of-table th.rk-name, .of-table td.rk-name { left: 2.6rem; }
+    @media (max-width: 600px) { .of-table th.rk-name, .of-table td.rk-name { left: auto; } }
+    .of-table col.of-num { width: 2.6rem; }
+    .of-table col.of-fac { width: 4.5rem; }
+    .of-table col.of-srv { width: 7rem; }
+    .of-table col.of-mem { width: 7.5rem; }
+    .of-table col.of-med { width: 7rem; }
+    .of-table col.of-top { width: 7rem; }
+    .of-fac { font-weight: 600; }
+    .of-empty { color: var(--dim); text-align: center; }
+    .of-notes { color: var(--dim); font-size: 0.8rem; margin: 10px 0 0; }
+    .of-notes p { margin: 0 0 4px; }
+  </style>
+</head>
+<body class="site-page">
+  <main class="st-wrap">
+    <div class="st-head">
+      <a class="st-back" href="index.html" aria-label="Back to the stats" data-i18n-aria-label="cp.back">🔙</a>
+      <select id="langSelect" class="lang-select" title="Language" aria-label="Language" data-i18n-title="lang.label" data-i18n-aria-label="lang.label">
+        <option value="en" selected>🇬🇧 English</option>
+        <option value="ja">🇯🇵 日本語</option>
+        <option value="ru">🇷🇺 Русский</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="zh">🇨🇳 中文</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="uk">🇺🇦 Українська</option>
+        <option value="it">🇮🇹 Italiano</option>
+      </select>
+      <h1 data-i18n="of.h1">🛡️ Outfits</h1>
+      <p class="st-sub" data-i18n="of.sub">Estimated ⚔️ iVi per outfit, from the members we have in our rankings. Members read “known of total”: the fewer are known, the rougher the estimate.</p>
+    </div>
+
+    <div class="of-bar">
+      <span id="ofStatus" class="st-dim" aria-live="polite" data-i18n="of.loading">Loading…</span>
+      <input id="ofFilter" class="of-filter" type="search" autocomplete="off" placeholder="Filter by tag or name" aria-label="Filter by tag or name" data-i18n-placeholder="of.filter" data-i18n-aria-label="of.filter" />
+      <span id="ofCount" class="of-count"></span>
+    </div>
+
+    <div id="ofTableBox">
+      <div id="ofScroll" class="ranks-table-wrap">
+        <table id="ofTable" class="ranks-table of-table">
+          <colgroup><col class="of-num" /><col class="rk-name-col" /><col class="of-fac" /><col class="of-srv" /><col class="of-mem" /><col class="of-med" /><col class="of-top" /></colgroup>
+          <thead id="ofHead"></thead>
+          <tbody id="ofBody"></tbody>
+        </table>
+      </div>
+      <div class="of-notes">
+        <p data-i18n="of.noteFloor">Only outfits with at least 5 known members are listed. Hidden players and confirmed padders are left out, the same as in the faction and server ratings.</p>
+        <p data-i18n="of.noteDaily">Rebuilt once a day from Census outfit membership. PC only for now.</p>
+        <p><a href="index.html" data-i18n="cp.back">Back to the stats</a> · <a href="columns.html" data-i18n="columnsLink">📖 What the columns mean</a> · <a href="privacy.html" data-i18n="foot.privacy">🔒 Privacy</a></p>
+      </div>
+    </div>
+  </main>
+  <script type="module" src="i18n.mjs"></script>
+  <script type="module" src="outfits-page.mjs?v=20261101-of1"></script>
+</body>
+</html>

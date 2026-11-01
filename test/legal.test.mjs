@@ -14,7 +14,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (f) => fs.readFileSync(path.join(ROOT, f), "utf8");
 const exists = (f) => fs.existsSync(path.join(ROOT, f));
 
-const PAGES = ["index.html", "live.html", "columns.html", "privacy.html", "updates.html", "misc.html", "ranks.html", "build-log.html", "oracle/index.html"];
+const PAGES = ["index.html", "live.html", "columns.html", "privacy.html", "updates.html", "misc.html", "ranks.html", "build-log.html", "outfits.html", "oracle/index.html"];
 const SITE_JS = [
   ...fs.readdirSync(ROOT).filter((f) => /\.(m?js)$/.test(f)),
   ...fs.readdirSync(path.join(ROOT, "oracle/js")).filter((f) => f.endsWith(".js")).map((f) => `oracle/js/${f}`),
