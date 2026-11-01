@@ -2267,7 +2267,8 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
 .rk-pos-table th, .rk-pos-table td { padding: 0.35rem 0.4rem; border-bottom: 1px solid var(--row-border); white-space: nowrap; text-align: right; background: var(--panel); }
 .rk-pos-table tbody tr:last-child th, .rk-pos-table tbody tr:last-child td { border-bottom: none; }
 .rk-pos-table thead th { color: var(--text); font-weight: 600; }
-.rk-pos-table .rk-pos-name { text-align: left; position: sticky; left: 0; z-index: 1; font-weight: 600; box-shadow: 4px 0 8px -4px var(--shadow); }
+.rk-pos-table .rk-pos-name { text-align: left; position: sticky; left: 2.6rem; z-index: 1; font-weight: 600; box-shadow: 4px 0 8px -4px var(--shadow); }
+.rk-pos-table .rk-pos-num { text-align: center; position: sticky; left: 0; z-index: 1; font-weight: 700; width: 2.6rem; background: var(--panel); opacity: 0.95; font-variant-numeric: tabular-nums; }
 .rk-pos-table .rk-pos-name a { text-decoration: none; }
 .rk-pos-table .rk-pos-name a:hover { text-decoration: underline; }
 .rk-pos-table td b { font-weight: 700; }
@@ -2945,11 +2946,13 @@ html[data-theme="light"] .dist-pill:hover { opacity: 1; }
 .stats-carousel .stats-table thead th,
 .stats-carousel .rk-pos-table thead th { color: var(--text); font-weight: 600; border-bottom-color: var(--border); }
 .stats-carousel .stats-table .stats-name,
-.stats-carousel .rk-pos-table .rk-pos-name { text-align: left; font-weight: 600; position: sticky; left: 0; z-index: 1; box-shadow: 4px 0 8px -4px var(--shadow); background: var(--panel); }
-.stats-carousel .stats-table thead tr:first-child > .stats-name:first-child,
-.stats-carousel .rk-pos-table thead tr:first-child > .rk-pos-name:first-child { border-top-left-radius: 7px; }
-.stats-carousel .stats-table tbody tr:last-child > .stats-name:first-child,
-.stats-carousel .rk-pos-table tbody tr:last-child > .rk-pos-name:first-child { border-bottom-left-radius: 7px; }
+.stats-carousel .rk-pos-table .rk-pos-name { text-align: left; font-weight: 600; position: sticky; left: 2.6rem; z-index: 1; box-shadow: 4px 0 8px -4px var(--shadow); background: var(--panel); }
+.stats-carousel .stats-table .stats-num,
+.stats-carousel .rk-pos-table .rk-pos-num { text-align: center; position: sticky; left: 0; z-index: 1; font-weight: 700; width: 2.6rem; background: var(--panel); opacity: 0.95; font-variant-numeric: tabular-nums; }
+.stats-carousel .stats-table thead tr:first-child > .stats-num:first-child,
+.stats-carousel .rk-pos-table thead tr:first-child > .rk-pos-num:first-child { border-top-left-radius: 7px; }
+.stats-carousel .stats-table tbody tr:last-child > .stats-num:first-child,
+.stats-carousel .rk-pos-table tbody tr:last-child > .rk-pos-num:first-child { border-bottom-left-radius: 7px; }
 .stats-carousel .stats-table thead th.stats-name,
 .stats-carousel .rk-pos-table thead th.rk-pos-name { color: var(--dim); font-weight: 500; z-index: 2; }
 .stats-carousel .stats-table td,
@@ -2959,18 +2962,22 @@ html[data-theme="light"] .dist-pill:hover { opacity: 1; }
 .stats-carousel .rk-pos-table td .pct { margin-left: 0.32em; font-size: 0.72em; font-weight: 400; color: var(--dim); }
 .stats-carousel .stats-table tbody tr:last-child > *,
 .stats-carousel .rk-pos-table tbody tr:last-child > * { border-bottom: none; }
-.stats-carousel .rk-pos-table .player-num { font-weight: 700; margin-right: 0.2rem; opacity: 0.95; }
 @media (max-width: 600px) {
   .stats-carousel .stats-table td .pct,
   .stats-carousel .rk-pos-table td .pct { display: block; margin-left: 0; line-height: 1.1; }
 }
-/* Phones (Dayset 2026-11-01): the positions-table name scrolls with the table, like the
- * 📋 All players table (2026-10-22) — a long name + server tag took half the phone
- * screen while pinned. left: auto, not position: static, so only the left pin is
- * released. When scrolled right, only the numbers show. */
+/* Phones (Dayset 2026-11-01): the positions- and stats-table names scroll with the
+ * table, like the 📋 All players table (2026-10-22) — a long name + server tag took
+ * half the phone screen while pinned. left: auto, not position: static, so only the
+ * left pin is released. The player number keeps its own pinned # column, so when
+ * scrolled right, only numbers show. */
 @media (max-width: 600px) {
   .rk-pos-table .rk-pos-name,
   .stats-carousel .rk-pos-table .rk-pos-name { left: auto; box-shadow: none; }
+  .stats-carousel .stats-table .stats-name { left: auto; box-shadow: none; }
+  .rk-pos-table .rk-pos-num,
+  .stats-carousel .rk-pos-table .rk-pos-num,
+  .stats-carousel .stats-table .stats-num { left: 0; box-shadow: 4px 0 8px -4px var(--shadow); }
 }
 /* PC alignment (2026-10-19, t448u): on wide screens each big number sits centered
  * under its column name. The small grey % / pN beside it is taken out of the flow

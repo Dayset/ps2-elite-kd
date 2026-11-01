@@ -500,6 +500,9 @@ export function createStatsTable($) {
         `data-table="${tableId}" data-sort="name" scope="col" role="columnheader" ` +
         `aria-sort="${nameActive ? (state.dir === "asc" ? "ascending" : "descending") : "none"}" ` +
         `title="${escapeHtml(nameHint)}">${tr("rk.player", "Player")}${sortIndicator(nameActive, state.dir)}</th>`;
+      // ✨ Adjusted only: the series number gets its own pinned # column (phones),
+      // in line with the positions tables. 📊 Public keeps the number in the name cell.
+      const numTh = tableId === "adjusted" ? `<th class="stats-num" scope="col">#</th>` : "";
       const rest = cols
         .map((c) => {
           const active = state.key === c.id;
@@ -518,10 +521,10 @@ export function createStatsTable($) {
           );
         })
         .join("");
-      return nameTh + rest;
+      return numTh + nameTh + rest;
     }
 
-    function playerRows(cols, ordered) {
+    function playerRows(cols, ordered, withNum = false) {
       // Column references over every analysed player (not just the visible order).
       const colRefs = new Map(
         cols.map((c) => [
@@ -631,10 +634,13 @@ export function createStatsTable($) {
             })
             .join("");
           const num = i + 1;
+          const numCell = withNum
+            ? `<td class="stats-num" style="color:${col}" aria-label="${tr("stats.series", "Series {n}", { n: num })}">${num}.</td>`
+            : "";
           return (
-            `<tr><th scope="row" class="stats-name" style="color:${col}">` +
+            `<tr>${numCell}<th scope="row" class="stats-name" style="color:${col}">` +
             dotSlot(row.p.cid) +
-            `<span class="player-num" aria-label="${tr("stats.series", "Series {n}", { n: num })}">${num}.</span>` +
+            (withNum ? "" : `<span class="player-num" aria-label="${tr("stats.series", "Series {n}", { n: num })}">${num}.</span>`) +
             `${nameSpanHtml(row.p.display, farmTitle(row.p), "", $.IS_PS ? "" : honuProfileUrl(row.p.cid))}${$.serverTagHtml(row.p)}${padMarkHtml(row.p)}${autoMarkHtml(row)}${legacySampleHtml(row.p)}</th>${vals}</tr>`
           );
         })
@@ -677,7 +683,7 @@ export function createStatsTable($) {
         <div class="stats-table-wrap">
           <table class="stats-table stats-table-transposed" data-stats-table="adjusted">
             <thead><tr>${metricHead(adjCols, "adjusted", statsSortState.adjusted)}</tr></thead>
-            <tbody>${playerRows(adjCols, adjSorted)}</tbody>
+            <tbody>${playerRows(adjCols, adjSorted, true)}</tbody>
           </table>
         </div>
         ${thinBlock}

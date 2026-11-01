@@ -182,7 +182,7 @@ export function mountStatsCarousel({ root, onChange }) {
         if (p && p.textContent.length > (longest[c] || "").length) longest[c] = p.textContent;
       });
       for (const tr of bodyRows) [...tr.children].forEach((td, c) => {
-        if (td.tagName !== "TD" || td.matches(".stats-name, .rk-pos-name") || td.querySelector(".pct")) return;
+        if (td.tagName !== "TD" || td.matches(".stats-name, .rk-pos-name, .rk-pos-num, .stats-num") || td.querySelector(".pct")) return;
         const ph = document.createElement("span");
         ph.className = "pct pct-ph";
         ph.setAttribute("aria-hidden", "true");
@@ -234,6 +234,38 @@ export function mountStatsCarousel({ root, onChange }) {
     if (e.target !== viewport) return;
     clearTimeout(landTimer);
     landTimer = setTimeout(landed, 200);
+  }, { passive: true });
+
+  /* ----- loop (owner 2026-11-01): an outward swipe at an end slide wraps -----
+   * Native scroll-snap stops at the first / last slide. A deliberate swipe past
+   * an end — finger moves, nothing moves: the viewport is still at its end and
+   * no table under the finger scrolled — wraps to the other end via go(), so
+   * the mode, the saved slide id and the switch sound follow the normal path.
+   * Touch only: wheel / trackpad keeps the native stop at the ends. */
+  const LOOP_MIN_DX = 48;
+  let loopStart = null;
+  viewport.addEventListener("touchstart", (e) => {
+    if (e.touches.length !== 1) { loopStart = null; return; }
+    const t = e.touches[0];
+    const slide = slides[clampMode(Math.round(viewport.scrollLeft / width()), slides.length)];
+    const scrollers = slide ? [...slide.querySelectorAll(SCROLLERS)] : [];
+    loopStart = { x: t.clientX, y: t.clientY, scroll: viewport.scrollLeft, pos: scrollers.map((s) => s.scrollLeft), scrollers };
+  }, { passive: true });
+  viewport.addEventListener("touchcancel", () => { loopStart = null; }, { passive: true });
+  viewport.addEventListener("touchend", (e) => {
+    if (!loopStart) return;
+    const t = e.changedTouches[0];
+    const start = loopStart;
+    loopStart = null;
+    if (!t) return;
+    const dx = t.clientX - start.x, dy = t.clientY - start.y;
+    if (Math.abs(dx) < LOOP_MIN_DX || Math.abs(dx) <= Math.abs(dy)) return;
+    if (start.scrollers.some((s, k) => Math.abs(s.scrollLeft - start.pos[k]) > 1)) return;
+    if (Math.abs(viewport.scrollLeft - start.scroll) > 2) return;
+    const cur = clampMode(Math.round(viewport.scrollLeft / width()), slides.length);
+    const last = slides.length - 1;
+    if (cur === 0 && dx > 0) go(last);
+    else if (cur === last && dx < 0) go(0);
   }, { passive: true });
 
   paint();

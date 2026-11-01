@@ -37,12 +37,12 @@ import {
 import { formatClock, fmtNum, slugKey, bareName, parseNames, namesEqualIgnoreCase, namesSetKey, niceLinTicks, niceNum, niceLogTicks, formatTick, escapeHtml, makeAbortError, isAbortError, checkAborted, readJsonLS, writeJsonLS } from "./app-util.mjs?v=20261027-z79";
 import { createAnalyze } from "./analyze.mjs?v=20261030-cxl1";
 import { createShareAdd } from "./share-add.mjs?v=20261027-z79";
-import { createSharedIndex } from "./shared-index.mjs?v=20261101-order1";
+import { createSharedIndex } from "./shared-index.mjs?v=20261101-numloop1";
 import { createNamesField } from "./names-field.mjs?v=20261031-sr2";
 import { initFactionPanel } from "./faction-panel.mjs?v=20261031-fr4";
 import { initServerPanel } from "./server-panel.mjs?v=20261031-sr2";
 import { createOutfitRoster, canTakeName as canTakeNameRule, OUTFIT_MAX_NAMES } from "./outfit-tags.mjs?v=20261031-sr1";
-import { createStatsTable } from "./stats-table.mjs?v=20261031-preveh2";
+import { createStatsTable } from "./stats-table.mjs?v=20261101-numloop1";
 import { createChartWave } from "./chart-wave.mjs?v=20261029-puregraph1";
 import { createChart } from "./chart.mjs?v=20261030-hs1";
 import { createLoader } from "./loader.mjs?v=20261027-z79";
@@ -70,7 +70,7 @@ import { mountWeapons } from "./weapons.mjs?v=20261022-wp4";
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261025-loc1";
 import { createWheelSwiper } from "./dist-cycle.mjs?v=20261017-cycle15";
 import { slideSwap, attachDragCarousel } from "./chart-slide.mjs?v=20261020-flick1";
-import { mountStatsCarousel } from "./stats-carousel.mjs?v=20261101-order1";
+import { mountStatsCarousel } from "./stats-carousel.mjs?v=20261101-numloop1";
 import { pickGraphForKeys } from "./graph-keys.mjs?v=20261017-graphkeys1";
 import { entryFetchedAt, pickNewest, writeWithEviction } from "./cache-pick.mjs?v=20261010-sav1";
 import {

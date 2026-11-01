@@ -28,7 +28,9 @@ test("carousel block still sets right-aligned numbers (positions keep them; stat
   assert.match(block, /text-align: right/);
   assert.match(block, /\.stats-carousel:has\(#statsPanel:empty\) \{ display: none; \}/);
   const ranks = readFileSync(new URL("../rankings.mjs", import.meta.url), "utf8");
-  assert.match(ranks, /class="player-num"[^`]*\$\{i \+ 1\}\./, "positions rows carry the same series number as the stats rows");
+  assert.match(ranks, /class="rk-pos-num"[^`]*\$\{i \+ 1\}\./, "positions rows carry the series number in their own pinned # column");
+  const stats = readFileSync(new URL("../stats-table.mjs", import.meta.url), "utf8");
+  assert.match(stats, /class="stats-num"[^`]*\$\{num\}\./, "stats rows carry the same series number in their own pinned # column");
 });
 
 test("mountStatsCarousel (t471u): one mount per element", () => {
