@@ -23,6 +23,7 @@ import { PcStream } from "./pc-stream.js";
 import { PlanSwitch } from "./plan.js";
 import { CaptureTags } from "./capture-tags.js";
 import { Rosters } from "./rosters.js";
+import { KillClasses } from "./kill-classes.js";
 import { removedKeys } from "./duel-store.js";
 
 /*
@@ -57,7 +58,9 @@ export class KillMonitor {
     this.caps = new CaptureTags(sql, { meter: this.meter, spawns: (w, f) => this.live.spawnsAt("ps2", w, f) });
     // 👥 Base rosters (rosters.js): who was at a base when it was captured or defended. Internal only.
     this.rost = new Rosters(sql, { meter: this.meter, roster: (w, f) => this.live.roster("ps2", w, f), removed: () => removedKeys("ps2", (u, o) => fetch(u, o)) });
-    const feed = (envName, p, now) => { try { this.live.onEvent(envName, p, now); } catch {} try { this.caps.onEvent(envName, p, now); } catch {} try { this.rost.onEvent(envName, p, now); } catch {} };
+    // 🎯 Class vs class kills during PC alerts (kill-classes.js). Internal only.
+    this.kc = new KillClasses(sql, { meter: this.meter, removed: () => removedKeys("ps2", (u, o) => fetch(u, o)), sid: (env && env.CENSUS_SERVICE_ID) || "daysetps2legends", all: !!(env && env.KILL_CLASSES === "all") });
+    const feed = (envName, p, now) => { try { this.live.onEvent(envName, p, now); } catch {} try { this.caps.onEvent(envName, p, now); } catch {} try { this.rost.onEvent(envName, p, now); } catch {} try { this.kc.onEvent(envName, p, now); } catch {} };
     this.ps = new PsAssists(ctx, env, { meter: this.meter, onPayload: feed });
     this.pc = new PcStream(ctx, env, { meter: this.meter, onPayload: feed });
     // 🔀 paid | free (plan.js): plan.json or the PLAN variable; the last known value survives restarts.
@@ -93,6 +96,7 @@ export class KillMonitor {
     try { this.live.prune(); } catch {}
     try { await this.caps.settle(this.env); } catch {}
     try { await this.rost.settle(); } catch {}
+    try { if (pcOn) await this.kc.settle(); } catch {}
     this.saveMeter();
     const done = this.expired();
     if ((psOn || pcOn || !done) && !(await this.ctx.storage.getAlarm())) await this.ctx.storage.setAlarm(Date.now() + ALARM_MS);
@@ -169,6 +173,11 @@ export class KillMonitor {
       const rows = this.rost.read(since, w && ENV_WORLDS.ps2.includes(w) ? w : null, Math.min(2000, +url.searchParams.get("limit") || 500));
       return Response.json({ v: 1, at: now, info: this.rost.info(), size: this.rost.size(), rows });
     }
+    if (url.pathname === "/live/killclasses") {
+      const now = Math.floor(Date.now() / 1000);
+      const since = Math.max(now - 31 * 86400, +url.searchParams.get("since") || now - 3600);
+      return Response.json({ v: 1, at: now, info: this.kc.info(), rows: this.kc.read(since, Math.min(500, +url.searchParams.get("limit") || 100)) });
+    }
     if (url.pathname === "/live/captures") {
       const w = url.searchParams.get("world");
       if (!ENV_WORLDS.ps2.includes(String(w))) return Response.json({ error: "bad_request" }, { status: 400 });
@@ -184,7 +193,7 @@ export class KillMonitor {
       const now = Date.now();
       const u = this.meter.usage(now);
       return Response.json({ v: 1, at: Math.floor(now / 1000), plan: this.planSw.state(now), ...u, today: { ps2: this.meter.today("ps2", now), ps2ps4us: this.meter.today("ps2ps4us", now), ps2ps4eu: this.meter.today("ps2ps4eu", now) },
-        pc: this.pc.status(now), ps: Object.fromEntries(Object.entries(this.ps.status().envs).map(([k, v]) => [k, { connected: v.connected, lastMsgAgoS: v.lastMsgAgoS }])), live: this.live.stats(), rosters: this.rost.info(), caps: this.caps.info() });
+        pc: this.pc.status(now), ps: Object.fromEntries(Object.entries(this.ps.status().envs).map(([k, v]) => [k, { connected: v.connected, lastMsgAgoS: v.lastMsgAgoS }])), live: this.live.stats(), rosters: this.rost.info(), caps: this.caps.info(), killClasses: this.kc.info(now) });
     }
     if (url.pathname === "/ps-assists/status") return Response.json(this.ps.status());
     if (url.pathname === "/ps-assists/export") {
@@ -253,7 +262,7 @@ export async function liveRoute(request, env, cors, { ip = "", fetchFn = (u, o) 
   }
   const key = typeof env.CENSUS_PROXY_KEY === "string" ? env.CENSUS_PROXY_KEY : "";
   if (!key || request.headers.get("X-Proxy-Key") !== key) return new Response(JSON.stringify({ error: "forbidden" }), { status: 403, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
-  if (url.pathname === "/live/rosters") {
+  if (url.pathname === "/live/rosters" || url.pathname === "/live/killclasses") {
     const r = await stub.fetch(new Request(url.toString(), { method: "GET" }));
     return new Response(r.body, { status: r.status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" } });
   }
