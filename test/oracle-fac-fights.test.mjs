@@ -20,7 +20,7 @@ test("fightsCard takes the followed faction and filters to its fights", () => {
 
 test("main.js: commander runs before fightsCard, which gets S.cmdOn", () => {
   assert.ok(main.includes('const cmdHtml = a.status === "live" ? commander('), "commander hoisted before the template");
-  assert.ok(main.includes("fightsCard(s, S.cmdOn)"), "fights card gets the Commander faction");
+  assert.ok(main.includes("fightsCard(s, S.cmdOn, now, ctfSet)"), "fights card gets the Commander faction and the conduit set");
   assert.ok(main.includes("${cmdHtml}"), "template uses the hoisted commander HTML");
   assert.equal(main.split("commander(cmdView").length - 1, 1, "commander() called exactly once (the hoist, not again in the template)");
 });

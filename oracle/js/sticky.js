@@ -89,6 +89,10 @@ export const pickMode = (v) => (v === "big" ? "big" : "solo");
 // 🔥 Heat toggle (owner t692u): on top of either mode, remembered on this device.
 export const HEAT_KEY = "ps2oracle_heatmode";
 export const pickHeat = (v) => v === "1";
+// 🚩 Conduit exclusion (owner 2026-11-02): like Heat, remembered on this device.
+// Default ON = conduit fights included (current behavior); stored "0" = excluded.
+export const CONDUIT_KEY = "ps2oracle_conduits";
+export const pickConduits = (v) => v !== "0";
 
 /** 🚐 (fac, base name) -> true when that faction has a live Sunderer / router there, false when not, undefined without data (state.spawn_map + the regions file). */
 export function spawnLookup(spawnMap, regions) {

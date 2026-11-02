@@ -65,7 +65,7 @@ export function fightGoneAt(f, s) {
   return t + CAP_GRACE_S;
 }
 
-/** The card's inner HTML for one live alert state (no card when there is nothing to say). fac = the Commander faction being followed: when set, only fights that faction is in, top 3, with the faction in the heading (owner 2026-11-02). */
+/** The card's inner HTML for one live alert state (no card when there is nothing to say). fac = the Commander faction being followed: when set, only fights that faction is in, top 3, with the faction in the heading (owner 2026-11-02). ctfNames = Set of conduit (CTF) base names for the zone, or null: when set, conduit fights are dropped before the top 3, so the Worker's top 8 backfills (owner 2026-11-02). */
 /** 👥 Scoreboards the reader unfolded stay open across the minute refresh (by base name). */
 export const SB_OPEN = new Set();
 if (typeof document !== "undefined" && document.addEventListener) {
@@ -90,9 +90,9 @@ export function scoreboard(f, nm) {
   return `<details class="fsb" data-sb="${esc(nm)}"${SB_OPEN.has(nm) ? " open" : ""}><summary title="${esc(tip)}">${tr("or.f.sb", "👥 Top 3")}</summary><ol>${li}</ol></details>`;
 }
 
-export function fightsCard(s, fac = null, nowS = Math.floor(Date.now() / 1000)) {
+export function fightsCard(s, fac = null, nowS = Math.floor(Date.now() / 1000), ctfNames = null) {
   if (!s || !Array.isArray(s.fights)) return "";
-  const list = s.fights.filter((f) => { const g = fightGoneAt(f, s); return g == null || nowS < g; }).filter((f) => !fac || (f.n && f.n[fac] > 0)).slice(0, FIGHTS_SHOWN);
+  const list = s.fights.filter((f) => { const g = fightGoneAt(f, s); return g == null || nowS < g; }).filter((f) => !fac || (f.n && f.n[fac] > 0)).filter((f) => !ctfNames || !ctfNames.has(f.name || `#${f.fid}`)).slice(0, FIGHTS_SHOWN);
   const big = list.reduce((m, f) => Math.max(m, f.n.VS + f.n.NC + f.n.TR), 0) || 1;
   const rows = list.map((f) => {
     const tot = f.n.VS + f.n.NC + f.n.TR;

@@ -49,7 +49,7 @@ test("heat toggle: page wiring, remembered, voice, 9 languages, Worker", () => {
   const w = read("oracle-worker/src/index.js"), main = read("oracle/js/main.js"), cmd = read("oracle/js/commander.js");
   assert.match(w, /cmd\.focus_heat = heatPlan\(\{ own, lattice, flips, nowTs/);
   assert.match(main, /localStorage\.setItem\(HEAT_KEY/);
-  assert.match(cmd, /\$\{voiceButton\(f\)\}\$\{heatButton\(heat\)\}/, "next to the voice button");
+  assert.match(cmd, /\$\{voiceButton\(f\)\}\$\{f === on \? heatButton\(heat\) : ""\}\$\{f === on \? conduitButton\(conduits\) : ""\}/, "Heat, then Conduits, next to the voice button");
   for (const l of ["en", "ja", "ru", "de", "fr", "zh", "es", "uk", "it"]) {
     const j = JSON.parse(read(`i18n/${l}.json`));
     for (const k of ["or.c.heatOn", "or.c.heatOff", "or.c.heatN", "or.c.heatNote"]) assert.ok(j[k] && j[k].includes("🔥"), `${l} ${k}`);

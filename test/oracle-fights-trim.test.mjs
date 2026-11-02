@@ -17,7 +17,7 @@ test("only the top 3 fights, in the given order", () => {
 });
 
 test("a row is short; the words sit in hovers", () => {
-  const h = fightsCard({ fights: [fight(1, { conv: { VS: 3 }, convAgo: 10, cap: { lead: true, tag: "RWCN", share: 45, t: 1000, fac: "VS", old: "NC" } })] }, 1010);
+  const h = fightsCard({ fights: [fight(1, { conv: { VS: 3 }, convAgo: 10, cap: { lead: true, tag: "RWCN", share: 45, t: 1000, fac: "VS", old: "NC" } })] }, null, 1010);
   const txt = strip(h);
   assert.match(txt, /Base 1 ?NC⏳VS 🏴\[RWCN\] 45%/);
   assert.match(txt, /VS 14 · NC 11 · 💀11/);
@@ -37,18 +37,18 @@ test("a captured base stays 30 s, then leaves unless the fight picks up again", 
   // Only mop-up kills right after the flip (last kill 50 s before the snapshot = 10 s after the flip).
   const quiet = fight(1, { killAgo: 50, convAgo: 59 });
   assert.equal(fightGoneAt(quiet, s(quiet)), T + 30);
-  assert.deepEqual(names(fightsCard(s(quiet), T + 20)), ["Base 1", "Base 2"], "still shown 20 s after the capture");
-  assert.match(fightsCard(s(quiet), T + 20), /data-gone="10030"/, "the page knows when to drop it");
-  assert.deepEqual(names(fightsCard(s(quiet), T + 31)), ["Base 2"], "gone after 30 s");
+  assert.deepEqual(names(fightsCard(s(quiet), null, T + 20)), ["Base 1", "Base 2"], "still shown 20 s after the capture");
+  assert.match(fightsCard(s(quiet), null, T + 20), /data-gone="10030"/, "the page knows when to drop it");
+  assert.deepEqual(names(fightsCard(s(quiet), null, T + 31)), ["Base 2"], "gone after 30 s");
   // Fighting back: a kill 45 s after the flip keeps (or brings back) the base like any fight.
   const back = fight(1, { killAgo: 15 });
   assert.equal(fightGoneAt(back, s(back)), null);
-  assert.deepEqual(names(fightsCard(s(back), T + 300)), ["Base 1", "Base 2"]);
+  assert.deepEqual(names(fightsCard(s(back), null, T + 300)), ["Base 1", "Base 2"]);
   // A capture point taken again after the flip counts too.
   const pts = fight(1, { killAgo: 59, convAgo: 5 });
   assert.equal(fightGoneAt(pts, s(pts)), null);
   // No capture: never dropped. The next fight fills the top 3.
   assert.equal(fightGoneAt(fight(2), s(quiet)), null);
   const five = { fights_at: T + 60, fights: [quiet, fight(2), fight(3), fight(4)], caps: s(quiet).caps };
-  assert.deepEqual(names(fightsCard(five, T + 40)), ["Base 2", "Base 3", "Base 4"]);
+  assert.deepEqual(names(fightsCard(five, null, T + 40)), ["Base 2", "Base 3", "Base 4"]);
 });

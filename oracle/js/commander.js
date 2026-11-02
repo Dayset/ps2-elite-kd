@@ -35,7 +35,13 @@ export function heatButton(on) {
   return ` <button type="button" class="voicebtn heatbtn${on ? " on" : ""}" data-heat="1" aria-pressed="${on}" title="${t}" aria-label="${t}">🔥</button>`;
 }
 
-export function commander(c, ts, now, lead, mode = "solo", heat = false, liveName = null) {
+/** 🚩 Conduit toggle (owner 2026-11-02): next to Heat, on the selected faction's card only; one setting for the page. */
+export function conduitButton(on) {
+  const t = on ? tr("or.c.conduitOn", "🚩 Conduits included: conduit fights can appear in the orders and live fights. Click to exclude them.") : tr("or.c.conduitOff", "🚩 Conduits excluded: conduit fights stay out of the orders and live fights");
+  return ` <button type="button" class="voicebtn conduitbtn${on ? " on" : ""}" data-conduit="1" aria-pressed="${on}" title="${t}" aria-label="${t}">🚩</button>`;
+}
+
+export function commander(c, ts, now, lead, mode = "solo", heat = false, liveName = null, conduits = true) {
   S.cmdOrders = []; S.cmdOn = null; S.cmdOnLive = false; S.cmdPockets = []; S.cmdMode = mode;
   const heatLive = !!(heat && c && c.focus_heat);
   S.cmdHeat = heatLive;
@@ -128,6 +134,6 @@ export function commander(c, ts, now, lead, mode = "solo", heat = false, liveNam
     const kmBlock = kmBig.length ? `<div class="note">${tr("or.c.king", "👑 Kingmaker")}</div><ul>${kmLi(kmBig)}</ul>` : "";
     const lists = `${atk ? `<div class="note">${tr("or.c.attack", "⚔️ Attack")}</div><ul class="olist">${atk}</ul>` : ""}${def ? `<div class="note">${tr("or.c.defend", "🛡️ Defend")}</div><ul class="olist">${def}</ul>` : ""}${kmSmall.length ? `<div class="note">${tr("or.c.king", "👑 Kingmaker")}</div><ul>${kmLi(kmSmall)}</ul>` : ""}`;
     const hasFocus = !!P[f];
-    return `<div class="cf${f === on ? " on" : ""}"><h3 class="${f}">${f} · ${esc(x.war_shape || "")}${voiceButton(f)}${f === on ? heatButton(heat) : ""}</h3>${focusHtml(f)}${pkBlock}${kmBlock}${hasFocus ? (lists ? det(`cmdall-${f}`, tr("or.c.allMoves", "All moves"), lists, "allmoves keep") : "") : lists}</div>`;
+    return `<div class="cf${f === on ? " on" : ""}"><h3 class="${f}">${f} · ${esc(x.war_shape || "")}${voiceButton(f)}${f === on ? heatButton(heat) : ""}${f === on ? conduitButton(conduits) : ""}</h3>${focusHtml(f)}${pkBlock}${kmBlock}${hasFocus ? (lists ? det(`cmdall-${f}`, tr("or.c.allMoves", "All moves"), lists, "allmoves keep") : "") : lists}</div>`;
   }).join("")}</div>${(c.second_place_kingmaker || []).length ? `<div class="note" style="margin-top:8px">${tr("or.second", "🥈 Second place:")} ${c.second_place_kingmaker.map((k) => esc(k.text)).join(" · ")}</div>` : ""}${c.fight_up && c.fight_up.text ? det("why", tr("or.c.why", "Why"), `<pre class="note" style="margin-top:8px;white-space:pre-wrap;font-family:inherit">${esc(c.fight_up.text)}</pre>`, "why") : ""}</section>`;
 }

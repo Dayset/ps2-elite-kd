@@ -1,11 +1,12 @@
 // PS2MapOracle dashboard — split from index.html (#15). No behaviour change.
 import { S, FACS, COLOR, esc, $, stars, mins, bar, pct1, det, info, wide, syncDetails, PHONE_MQ } from "./state.js?v=20261018-scrub2";
 import { get, names } from "./api.js?v=20261018-scrub2";
-import { drawMap, highlightBase, recolorMap } from "./map.js?v=20261102-facfight1";
+import { drawMap, highlightBase, recolorMap } from "./map.js?v=20261102-conduit1";
 import { chart, chartHover } from "./chart.js?v=20261024-i18n1";
 import { lockCard, lockTick } from "./lock.js?v=20261024-i18n1";
-import { commander, commanderIdle } from "./commander.js?v=20261102-heatone1";
-import { modeFocus, ownerLookup, heatLookup, spawnLookup, pickMode, MODE_KEY, pickHeat, HEAT_KEY } from "./sticky.js?v=20261031-spawn1";
+import { commander, commanderIdle } from "./commander.js?v=20261102-conduit1";
+import { ctfNames, filterCommander } from "./conduits.js?v=20261102-conduit1";
+import { modeFocus, ownerLookup, heatLookup, spawnLookup, pickMode, MODE_KEY, pickHeat, HEAT_KEY, pickConduits, CONDUIT_KEY } from "./sticky.js?v=20261102-conduit1";
 import { nextPoll } from "./poll.js?v=20261026-mode1";
 import { voiceToggle, voiceTick, bindVoiceMenu } from "./voice.js?v=20261027-say1";
 import { reportPanel } from "./players.js?v=20261024-i18n1";
@@ -15,7 +16,7 @@ import { initAuth } from "./auth.js?v=20261028-dev82";
 import { enhance, onSectionExpand, refreshSummary } from "./collapse.js?v=20261026-pulse1";
 import { t as tr, ready } from "../../i18n.mjs";
 import { maintNotice, when, schedState, lastOnline, plannedDown, STATUS_URL } from "./maint.js?v=20261101-int1";
-import { fightsCard, popLiveLine } from "./fights.js?v=20261102-facfight1";
+import { fightsCard, popLiveLine } from "./fights.js?v=20261102-conduit1";
 await ready;   // #73: the language file is in before anything renders
 document.title = tr("or.title", "PS2MapOracle — live PlanetSide 2 alert win chances");
 
@@ -197,19 +198,23 @@ function render2(now) {
   const cutList = s && Array.isArray(s.cut) ? s.cut : [];
   const cutNote = cutList.length && a.status === "live" ? `<div class="note">${tr("or.cut", "✂️ Cut off, not scoring:")} ${FACS.map((f) => { const n = cutList.filter((c) => c.fac === f); return n.length ? `<span class="${f}">${f} ${n.length}</span> (${esc(n.slice(0, 3).map((c) => c.name).join(", "))}${n.length > 3 ? ` +${n.length - 3}` : ""})` : ""; }).filter(Boolean).join(" · ")}${s.cut_aware ? tr("or.cutAware", " · counted in the win chances") : ""}</div>` : "";
   const suspectNote = s && s.suspect && s.suspect.length ? `<div class="note" style="color:var(--warn)">${tr("or.suspect", "Census map data looks broken right now ({why}). Win chances may be wrong and voting is paused.", { why: esc(s.suspect.map((x) => x.startsWith("neutral_heavy") ? tr("or.susNeutral", "only {p}% of bases owned", { p: x.split(":")[1] }) : x === "map_frozen" ? tr("or.susFrozen", "map frozen while captures continue") : tr("or.susStale", "no fresh map")).join(", ")) })}</div>` : "";
-  const cmdView = a.status === "live" ? withMode(a, a.commander || (s && s.commander)) : null;
+  // 🚩 Conduit exclusion: filter before withMode so sticky works on the filtered plan; the
+  // same name set goes to fightsCard. Slice normalization runs in both states (see conduits.js),
+  // so a future Worker backfill can't change the included display.
+  const ctfSet = conduitsOn ? null : ctfNames(regionsOf[a.zone] || {});
+  const cmdView = a.status === "live" ? withMode(a, filterCommander(a.commander || (s && s.commander), ctfSet)) : null;
   const liveTop = s && Array.isArray(s.fights) && s.fights[0] ? (s.fights[0].name || `#${s.fights[0].fid}`) : null;
   const linkTip = tr("or.linkBtn", "Copy link to this page");
   // ⚔️ Live fights follow the Commander faction: commander() sets S.cmdOn, so it runs here,
   // before fightsCard(s) is evaluated in the template below (it used to run after it).
-  const cmdHtml = a.status === "live" ? commander(cmdView, a.commander_ts, now, lead, cmdMode, heatOn, liveTop) : `${commanderIdle()}${reportPanel(a)}`;
+  const cmdHtml = a.status === "live" ? commander(cmdView, a.commander_ts, now, lead, cmdMode, heatOn, liveTop, conduitsOn) : `${commanderIdle()}${reportPanel(a)}`;
   $("main").innerHTML = `
     <div class="title"><b>${esc(a.world_name)} · ${esc(a.zone_name)}${a.kind === "meltdown" ? " Meltdown" : ""}</b><span class="badge ${a.status}">${esc(badgeLabel(a.status))}</span><span class="note">${esc(left)} · ${tr("or.durAlert", "{n}-min alert", { n: a.dur })}</span><button type="button" class="more linkbtn" id="copyLink" title="${linkTip}" aria-label="${linkTip}">🔗</button>${liveA ? "" : `<button type="button" class="more backlive" id="backLive">${tr("or.backLive", "← Back to live")}</button>`}</div>
     <div class="grid">
       <section class="card map"><h2 data-sec="map">${tr("or.h.map", "Map")}</h2><div id="replayTag" class="replaytag" hidden></div><div id="map"></div></section>
       <div class="side">
       <section class="card win"><h2 data-sec="win-chance">${tr("or.h.win", "Win chance")}</h2>${kindNote}${frozenNote}${suspectNote}${cutNote}<div class="odds" aria-live="polite" aria-atomic="true">${oddsHtml}</div>${oddLine}${result}${second}${rows || popRows ? det("wdet", tr("or.details", "Details"), `${popAdj}<div class="rows">${rows}${popRows}</div>${popTot ? `<div class="note">${tr("or.pop", "Population: Honu (wt.honu.pw), {n} on continent{nso}.", { n: popTot, nso: s.pop_ns ? tr("or.popNso", " + {n} NSO", { n: s.pop_ns }) : "" })}</div>` : ""}${popLiveLine(s)}`, "wdet keep") : ""}${calls}</section>
-      ${a.status === "live" ? fightsCard(s, S.cmdOn) : ""}
+      ${a.status === "live" ? fightsCard(s, S.cmdOn, now, ctfSet) : ""}
       <div id="voteHere"></div><div id="lockHere"></div>
       </div>
     </div>
@@ -238,6 +243,16 @@ function render2(now) {
   const cmdNow = cmdView;
   $("main").querySelectorAll("[data-cmode]").forEach((b) => b.onclick = () => { cmdMode = pickMode(b.dataset.cmode); try { localStorage.setItem(MODE_KEY, cmdMode); } catch {} render(Math.floor(Date.now() / 1000)); });
   $("main").querySelectorAll("[data-heat]").forEach((b) => b.onclick = () => { heatOn = !heatOn; try { localStorage.setItem(HEAT_KEY, heatOn ? "1" : "0"); } catch {} render(Math.floor(Date.now() / 1000)); });
+  // 🚩 Conduit toggle: like Heat, remembered on this device. A kept conduit order must not
+  // resurrect through sticky, so the alert's sticky state is cleared on toggle; and when the
+  // regions file was not loaded yet, the toggle re-renders once it arrives so the filter applies.
+  $("main").querySelectorAll("[data-conduit]").forEach((b) => b.onclick = () => {
+    conduitsOn = !conduitsOn;
+    try { localStorage.setItem(CONDUIT_KEY, conduitsOn ? "1" : "0"); } catch {}
+    if (S.selected && soloMem[S.selected]) delete soloMem[S.selected];
+    if (!conduitsOn && a && !(a.zone in regionsOf)) names(a.zone).then((r) => { regionsOf[a.zone] = r || {}; render(Math.floor(Date.now() / 1000)); }).catch(() => {});
+    render(Math.floor(Date.now() / 1000));
+  });
   $("main").querySelectorAll("[data-voice]").forEach((b) => b.onclick = () => { voiceToggle(b.dataset.voice, cmdNow && cmdNow.focus, s, cmdNow && cmdNow.pockets); render(Math.floor(Date.now() / 1000)); });
   if (cmdNow) voiceTick(cmdNow.focus, undefined, false, undefined, s, cmdNow.pockets); // s: territory + 15-min change for the gap ending (owner t652u)
   bindVoiceMenu($("main")); // ⚙️ voice list (owner t650u), replaces the always-visible dropdown
@@ -259,11 +274,16 @@ let cmdMode = "solo";
 try { cmdMode = pickMode(localStorage.getItem(MODE_KEY)); } catch {}
 let heatOn = false;          // 🔥 Heat toggle (owner t692u), remembered on this device
 try { heatOn = pickHeat(localStorage.getItem(HEAT_KEY)); } catch {}
+let conduitsOn = true;       // 🚩 Conduit toggle (owner 2026-11-02), remembered on this device
+try { conduitsOn = pickConduits(localStorage.getItem(CONDUIT_KEY)); } catch {}
 const soloMem = {};          // per alert key: sticky state, stepped once per commander update
 const regionsOf = {};        // zone -> regions file (static asset, loaded once)
 function withMode(a, c) {
   if (!c || !c.focus) return c;
-  if (!(a.zone in regionsOf)) { regionsOf[a.zone] = null; names(a.zone).then((r) => { regionsOf[a.zone] = r || {}; }).catch(() => {}); }
+  // When the regions file finishes loading, the alert's sticky state is cleared: orders adopted
+  // while regions were unknown came from unfiltered plans, and a kept conduit order must not
+  // resurrect once the filter can see it.
+  if (!(a.zone in regionsOf)) { regionsOf[a.zone] = null; names(a.zone).then((r) => { regionsOf[a.zone] = r || {}; if (soloMem[a.key]) delete soloMem[a.key]; }).catch(() => {}); }
   const mem = soloMem[a.key] || (soloMem[a.key] = {});
   const focus = modeFocus(c, cmdMode, mem, { ts: a.commander_ts || 0, ownerOf: ownerLookup(a.state && a.state.owners, regionsOf[a.zone]), heatOf: heatLookup(c),
     canSpawn: spawnLookup(a.state && a.state.spawn_map, regionsOf[a.zone]) }, heatOn);
