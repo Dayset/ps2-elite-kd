@@ -3208,6 +3208,14 @@ html[data-room="ps"] .controls .fresh-row-end select.room-select { border-color:
 .duel-table td.duel-c-killer .kf-mark { max-width: 100%; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }
 .duel-table tr.kf-sub-row td.duel-c-time { padding-left: 0.9rem; box-shadow: inset 2px 0 0 var(--accent); }
 .duel-more { margin: 0.5rem 0 0; font: inherit; font-size: 0.85rem; }
+/* ☰ Flat list (owner 2026-11-02): every kill in one list, no fight rows; date on each row. */
+.duel-flat { display: block; margin: 0 0 0.4rem auto; font: inherit; font-size: 0.8rem; padding: 0.15rem 0.5rem; }
+.duel-flat[hidden] { display: none; }
+.duel-flat.is-on { border-color: var(--accent); color: var(--accent); }
+.duel-table.duel-pair.duel-flat-on { min-width: 56.6rem; }
+.duel-table.duel-flat-on col.duel-w-time { width: 12.4rem; }
+.duel-table.duel-flat-on td.duel-c-time { white-space: nowrap; }
+.duel-table.duel-flat-on td.rk-num { color: var(--dim); font-size: 0.8em; }
 #oldTabs .duel-status, #oldTabs .duel-summary { font-size: 0.85rem; }
 @media (max-width: 600px) {
   .duel-table th.rk-num, .duel-table td.rk-num { box-shadow: 4px 0 8px -4px var(--shadow); }

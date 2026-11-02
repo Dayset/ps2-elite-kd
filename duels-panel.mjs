@@ -98,6 +98,23 @@ export function mountDuels(section, o = {}) {
   // Ticking liveness line next to the spinner (no styling: it rides the status line's font).
   const wait = document.createElement("span");
   wait.setAttribute("aria-hidden", "true");
+  // ☰ Flat list (owner 2026-11-02, t844u): one long list of every kill, no fight rows, nothing folded.
+  // Remembered in this browser; only shown for a head-to-head with kills.
+  const FLAT_KEY = "duelFlat";
+  let flat = false;
+  try { flat = typeof localStorage !== "undefined" && localStorage.getItem(FLAT_KEY) === "1"; } catch (_) { /* default off */ }
+  const flatBtn = document.createElement("button");
+  flatBtn.type = "button";
+  flatBtn.className = "duel-flat";
+  flatBtn.hidden = true;
+  const flatLabel = () => {
+    flatBtn.textContent = tr("duel.flat", "☰ Flat list");
+    flatBtn.title = tr("duel.flatTip", "Every kill in one list: no fight rows, nothing folded. Date and map on each row.");
+    flatBtn.setAttribute("aria-pressed", flat ? "true" : "false");
+    flatBtn.classList.toggle("is-on", flat);
+  };
+  flatLabel();
+  wrap.parentNode.insertBefore(flatBtn, wrap);
   const pairs = new Map(); // "cidA|cidB" → { st, stats, need, pIsA, … }
   let catP = null;
   let mode = null, a = null, b = null, shownKey = "";
@@ -147,6 +164,7 @@ export function mountDuels(section, o = {}) {
     table.querySelector("thead").innerHTML = ""; table.querySelector("tbody").innerHTML = "";
     const cg = table.querySelector("colgroup"); if (cg) cg.remove();
     moreBtn.hidden = true;
+    flatBtn.hidden = true;
     warn.hidden = true; warn.textContent = "";
     setStatus("");
   }
@@ -360,7 +378,7 @@ export function mountDuels(section, o = {}) {
     moreBtn.hidden = job.st.done;
     if (!pe.length) {
       setStatus(`${tr("duel.none", "No kills between them found yet.")} ${read}`);
-      cmpWrap.hidden = true; wrap.hidden = true; sum.hidden = true;
+      cmpWrap.hidden = true; wrap.hidden = true; sum.hidden = true; flatBtn.hidden = true;
       return;
     }
     sum.textContent = tr("duel.summary", "{a} {ka} – {kb} {b} · fights: {fights} (1v1: {ones}) · first {first} · last {last}", {
@@ -371,6 +389,9 @@ export function mountDuels(section, o = {}) {
     cmp.innerHTML = cmpHtml(s, items, aName, bName);
     cmpWrap.hidden = false;
 
+    flatLabel();
+    flatBtn.hidden = false;
+    table.classList.toggle("duel-flat-on", flat);
     colgroup(["num", "time", "killer", "weapon", "cls", "n", "n", "gap"]);
     const shotsTip = tr("duel.shotsTip", "Census does not record the bullets of one kill. This is the killer's lifetime average with that weapon: shots fired per kill (hits per kill).");
     table.querySelector("thead").innerHTML = `<tr><th class="rk-num" scope="col">#</th>` +
@@ -384,6 +405,8 @@ export function mountDuels(section, o = {}) {
     const oneTip = tr("duel.oneTip", "1v1: {pct}+ of the kills & deaths in that time were between these two.", { pct: `${ONE_V_ONE.focus * 100}%` });
     const open = tr("duel.fightOpen", "Show the fight's kills");
     if (!opened.size && fights.length) opened.add(0);
+    // Flat list: strictly newest first (fights already are; kills inside a fight flip), numbered n … 1 like the fights.
+    let kn = pe.length;
     table.querySelector("tbody").innerHTML = fights.map((f, i) => {
       const res = fightResult(f);
       const mins = Math.max(1, Math.round((f.t1 - f.t0) / 60));
@@ -392,22 +415,27 @@ export function mountDuels(section, o = {}) {
         ` · ${esc(tr("scr.min", "{n} min", { n: mins.toLocaleString(lang()) }))}${f.one ? ` · <span class="scr-group" title="${esc(oneTip)}">1v1</span>` : ""}` +
         `${f.z ? ` · ${esc(zoneName(f.z))}` : ""}</td></tr>`;
       let prev = 0;
-      const subs = f.ev.map((e) => {
+      const where = f.z ? ` · ${zoneName(f.z)}` : "";
+      const rows = f.ev.map((e) => {
         const gap = prev ? gapTxt(e.t - prev) : "–";
         prev = e.t;
         const pk = perKill(job.stats, e.aKill ? a.cid : b.cid, e.w);
         const killer = e.aKill ? aName : bName;
         const wTxt = `${e.veh ? "🚜 " : ""}${wName(items, e.w)}`;
-        return `<tr class="kf-row kf-sub-row duel-ev ${e.aKill ? "is-kill" : "is-death"}" data-of="${i}" hidden><td class="rk-num"></td>` +
-          `<td class="duel-c-time" title="${esc(dateTime(e.t))}">${esc(clock(e.t))}</td>` +
+        const timeCell = flat
+          ? `<td class="duel-c-time" title="${esc(`${dateTime(e.t)}${where}`)}">${esc(`${dateOnly(e.t)} ${clock(e.t)}`)}</td>`
+          : `<td class="duel-c-time" title="${esc(dateTime(e.t))}">${esc(clock(e.t))}</td>`;
+        return `<tr class="kf-row ${flat ? "duel-flat-row" : "kf-sub-row"} duel-ev ${e.aKill ? "is-kill" : "is-death"}" data-of="${i}"${flat ? "" : " hidden"}><td class="rk-num">${flat ? "#" : ""}</td>` +
+          timeCell +
           `<td class="duel-c-killer"><span class="kf-mark ${e.aKill ? "kf-kill" : "kf-death"}">${esc(killer)}</span></td>` +
           `<td class="duel-c-weapon" title="${esc(wTxt)}">${e.hs ? `<span class="kf-hs" title="${esc(tr("kf.headshot", "Headshot"))}">🎯</span> ` : ""}${esc(wTxt)}</td>` +
           `<td class="duel-c-cls">${((k, v) => (k || v ? `${clsHtml(k)} → ${clsHtml(v)}` : "–"))(classOf(e.aKill ? e.aL : e.bL), classOf(e.aKill ? e.bL : e.aL))}</td>` +
           `<td>${pk ? `≈${num1(pk.shots)}` : "–"}</td><td>${pk && pk.hits != null ? `≈${num1(pk.hits)}` : "–"}</td><td>${esc(gap)}</td></tr>`;
-      }).join("");
-      return head + subs;
+      });
+      if (!flat) return head + rows.join("");
+      return rows.reverse().map((h) => h.replace('<td class="rk-num">#</td>', `<td class="rk-num">${int(kn--)}</td>`)).join("");
     }).join("");
-    for (const i of opened) setOpen(i, true);
+    if (!flat) for (const i of opened) setOpen(i, true);
     wrap.hidden = false;
   }
 
@@ -481,6 +509,13 @@ export function mountDuels(section, o = {}) {
   }
 
   section.addEventListener("toggle", () => { if (section.open) show(); });
+  flatBtn.addEventListener("click", () => {
+    flat = !flat;
+    try { if (typeof localStorage !== "undefined") localStorage.setItem(FLAT_KEY, flat ? "1" : "0"); } catch (_) { /* not remembered */ }
+    const job = mode === "pair" && a && b ? pairs.get(pairKey()) : null;
+    flatLabel();
+    if (job && job.st && !job.servers) cat().then((items) => { if (mode === "pair" && pairs.get(pairKey()) === job) renderPair(job, items); if (busyKey) { status.appendChild(spin); status.appendChild(wait); } });
+  });
   moreBtn.addEventListener("click", () => { if (busyKey) { stopAsked = true; moreBtn.disabled = true; return; } show(true); });
   table.addEventListener("click", (e) => {
     const nb = e.target.closest && e.target.closest("button.kf-name[data-name]");

@@ -207,3 +207,48 @@ describe("🤺 duels panel: crowd kills pin + opponent iVi (owner 2026-11-01)", 
     });
   });
 });
+
+describe("🤺 duels panel: ☰ Flat list (owner 2026-11-02, t844u)", () => {
+  it("flat list drops fight rows, shows every kill with its date, and is remembered", { skip: !chrome && "no Chrome", timeout: 120000 }, async () => {
+    await withPage(async ({ ev, nav }) => {
+      await nav("index.html");
+      const r = await ev(`(async () => {
+        ${fixture}
+        localStorage.removeItem("duelFlat");
+        const { mountDuels } = await import("/duels-panel.mjs");
+        const t = 1792000000;
+        // Two fights a day apart: 2 kills, then 1 kill.
+        const reply = { v: 1, events: [[t, 1, "2", 1, 0, 2, 0, 0, 0], [t - 100, 1, "2", 1, 0, 2, 0, 0, 0], [t - 90000, 1, "2", 1, 0, 2, 0, 0, 0]], rev: 1, lo: t - 90000, hi: t, done: true, fights: 2, kills: 3, pages: 1, blocks: 1 };
+        const getJson = async (u) => (u.includes("character/?character_id=") ? { character_list: [
+          { character_id: "1", faction_id: "1", w: { world_id: "1" } }, { character_id: "2", faction_id: "3", w: { world_id: "1" } } ] } : { error: "stub" });
+        const mk = () => mountDuels(s, { getJson, baseOf: () => "https://x/get/ps2:v2/", catalog: async () => null, pairApi: async () => reply });
+        const panel = mk();
+        panel.setPlayers([{ cid: "1", display: "Alice" }, { cid: "2", display: "Bob" }]);
+        for (let i = 0; i < 30 && !s.querySelector("tr.duel-ev"); i++) await sleep(100);
+        const btn = s.querySelector("button.duel-flat");
+        const vis = () => [...s.querySelectorAll(".duel-table tbody tr")].filter((x) => !x.hidden);
+        const before = { heads: s.querySelectorAll("tr.duel-fight").length, shown: vis().length, btnHidden: btn.hidden, pressed: btn.getAttribute("aria-pressed") };
+        btn.click();
+        await sleep(200);
+        const after = { heads: s.querySelectorAll("tr.duel-fight").length, shown: vis().length, nums: vis().map((x) => x.cells[0].textContent), time: vis()[0].cells[1].textContent, pressed: btn.getAttribute("aria-pressed"), saved: localStorage.getItem("duelFlat") };
+        btn.click();
+        await sleep(200);
+        const back = { heads: s.querySelectorAll("tr.duel-fight").length, saved: localStorage.getItem("duelFlat") };
+        localStorage.removeItem("duelFlat");
+        return { before, after, back };
+      })()`);
+      assert.equal(r.before.btnHidden, false, "button shows for a head-to-head with kills");
+      assert.equal(r.before.pressed, "false");
+      assert.equal(r.before.heads, 2, "folded view has a row per fight");
+      assert.equal(r.before.shown, 4, "folded view: 2 fight rows + the newest fight opened, the older one folded");
+      assert.equal(r.after.heads, 0, "flat list has no fight rows");
+      assert.equal(r.after.shown, 3, "every kill shows");
+      assert.deepEqual(r.after.nums, ["3", "2", "1"], "strictly newest first, numbered n … 1");
+      assert.match(r.after.time, /\d{4}/, "flat rows carry the date (year)");
+      assert.equal(r.after.pressed, "true");
+      assert.equal(r.after.saved, "1", "choice remembered");
+      assert.equal(r.back.heads, 2, "switching back brings the fight rows");
+      assert.equal(r.back.saved, "0");
+    });
+  });
+});
