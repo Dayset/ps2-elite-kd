@@ -65,7 +65,7 @@ export function fightGoneAt(f, s) {
   return t + CAP_GRACE_S;
 }
 
-/** The card's inner HTML for one live alert state (no card when there is nothing to say). */
+/** The card's inner HTML for one live alert state (no card when there is nothing to say). fac = the Commander faction being followed: when set, only fights that faction is in, top 3, with the faction in the heading (owner 2026-11-02). */
 /** 👥 Scoreboards the reader unfolded stay open across the minute refresh (by base name). */
 export const SB_OPEN = new Set();
 if (typeof document !== "undefined" && document.addEventListener) {
@@ -90,9 +90,9 @@ export function scoreboard(f, nm) {
   return `<details class="fsb" data-sb="${esc(nm)}"${SB_OPEN.has(nm) ? " open" : ""}><summary title="${esc(tip)}">${tr("or.f.sb", "👥 Top 3")}</summary><ol>${li}</ol></details>`;
 }
 
-export function fightsCard(s, nowS = Math.floor(Date.now() / 1000)) {
+export function fightsCard(s, fac = null, nowS = Math.floor(Date.now() / 1000)) {
   if (!s || !Array.isArray(s.fights)) return "";
-  const list = s.fights.filter((f) => { const g = fightGoneAt(f, s); return g == null || nowS < g; }).slice(0, FIGHTS_SHOWN);
+  const list = s.fights.filter((f) => { const g = fightGoneAt(f, s); return g == null || nowS < g; }).filter((f) => !fac || (f.n && f.n[fac] > 0)).slice(0, FIGHTS_SHOWN);
   const big = list.reduce((m, f) => Math.max(m, f.n.VS + f.n.NC + f.n.TR), 0) || 1;
   const rows = list.map((f) => {
     const tot = f.n.VS + f.n.NC + f.n.TR;
@@ -116,9 +116,9 @@ export function fightsCard(s, nowS = Math.floor(Date.now() / 1000)) {
       `<div class="track fbar" aria-hidden="true">${seg}</div>${spw}` +
       `<div class="fnum" title="${esc(tr("or.f.players", "~{n} players", { n: tot }))}">${nums || "·"}<span class="note">${kl}</span></div>${scoreboard(f, nm)}</li>`;
   }).join("");
-  const body = list.length ? `<ul class="fights">${rows}</ul>` : `<div class="note">${s.fights_live === false ? tr("or.f.off", "Live stream reconnecting: fights show up within a minute.") : tr("or.f.none", "No big fights right now.")}</div>`;
+  const body = list.length ? `<ul class="fights">${rows}</ul>` : `<div class="note">${s.fights_live === false ? tr("or.f.off", "Live stream reconnecting: fights show up within a minute.") : fac ? tr("or.f.noneFac", "No big fights for {f} right now.", { f: fac }) : tr("or.f.none", "No big fights right now.")}</div>`;
   // Owner 2026-10-30: no "Recent captures" list and no footer note here; the note is the heading's hover.
-  return `<section class="card fightcard"><h2 data-sec="live-fights" title="${esc(tr("or.f.note", "Rough crowd: players seen fighting at each base in the last 5 min, from the game's live event stream. Not used in the win chances yet."))}">${tr("or.h.fights", "⚔️ Live fights")}</h2>${body}</section>`;
+  return `<section class="card fightcard"><h2 data-sec="live-fights" title="${esc(tr("or.f.note", "Rough crowd: players seen fighting at each base in the last 5 min, from the game's live event stream. Not used in the win chances yet."))}">${tr("or.h.fights", "⚔️ Live fights")}${fac ? ` · ${fac}` : ""}</h2>${body}</section>`;
 }
 
 /** One line for the Win chance details: stream population on the continent. */
