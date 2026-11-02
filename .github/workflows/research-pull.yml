@@ -1,0 +1,85 @@
+name: Research data pull (read-only)
+
+# Read-only pull of the private collected data (cache Worker /live/killclasses and /live/collect)
+# for one-off research (t843u, 2026-11-02: faction-vs-faction fights vs shared borders).
+# Writes nothing to the repo or the Workers. Player ids are dropped before the artifact is
+# written (kills keep only time, world, zone, factions, loadouts, vehicle, in-alert flag).
+# The artifact is private to the repo and expires after 3 days. The key is never printed.
+
+on:
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "How many days back (max 31)"
+        default: "31"
+
+permissions:
+  contents: read
+
+jobs:
+  pull:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Pull
+        env:
+          CACHE_URL: ${{ vars.CENSUS_PROXY || 'https://ps2-elite-kd-cache.dayset.workers.dev' }}
+          CENSUS_PROXY_KEY: ${{ secrets.CENSUS_PROXY_KEY }}
+          DAYS: ${{ inputs.days }}
+        run: |
+          mkdir -p out
+          cat > pull.mjs <<'JS'
+          import fs from "node:fs";
+          import zlib from "node:zlib";
+          const base = process.env.CACHE_URL.replace(/\/$/, ""), key = process.env.CENSUS_PROXY_KEY;
+          if (!key) { console.log("::error::no proxy key"); process.exit(1); }
+          const since0 = Math.floor(Date.now() / 1000) - Math.min(31, +process.env.DAYS || 31) * 86400;
+          const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+          async function get(path) {
+            for (let i = 0; i < 5; i++) {
+              const r = await fetch(base + path, { headers: { "X-Proxy-Key": key } });
+              if (r.ok) return r.json();
+              console.log(`status ${r.status}, retry`); await sleep(5000 * (i + 1));
+            }
+            throw new Error("pull failed");
+          }
+          async function pages(path, limit) {
+            const seen = new Set(), all = []; let since = since0, calls = 0;
+            for (;;) {
+              const j = await get(`${path}${path.includes("?") ? "&" : "?"}since=${since}&limit=${limit}`); calls++;
+              const rows = j.rows || []; let added = 0;
+              for (const r of rows) { const id = `${r.t0}|${r.t1}|${r.n}`; if (seen.has(id)) continue; seen.add(id); all.push(r); added++; }
+              if (rows.length < limit || !added) break;
+              since = rows[rows.length - 1].t1;
+              await sleep(1500);
+            }
+            console.log(`${path}: ${all.length} rows, ${calls} calls`);
+            return all;
+          }
+          // Kills: ids dropped. [t, w, z, attackerTeam, victimTeam, attackerLoadout, victimLoadout, attackerVehicle, inAlert, self]
+          const kc = await pages("/live/killclasses", 500);
+          const kills = [];
+          for (const r of kc) for (const x of r.k || []) {
+            const [t, w, z, a, v, al, vl, , av, , at, vt, ia] = x;
+            kills.push([t, w, z, at, vt, al, vl, av, ia ? 1 : 0, (!a || a === "0" || a === v) ? 1 : 0]);
+          }
+          fs.writeFileSync("out/kills.json.gz", zlib.gzipSync(JSON.stringify(kills)));
+          console.log(`kills ${kills.length}`);
+          for (const kind of ["ms", "wev"]) {
+            const rows = await pages(`/live/collect?kind=${kind}`, 500);
+            let items = rows.flatMap((r) => r.k || []);
+            if (kind === "wev") items = items.map((e) => (e[1] === "F" ? [e[0], e[1], e[2], e[3], e[4], e[5], e[6]] : e)); // drop outfit ids
+            fs.writeFileSync(`out/${kind}.json.gz`, zlib.gzipSync(JSON.stringify(items)));
+            console.log(`${kind} ${items.length}`);
+          }
+          JS
+          node pull.mjs
+          ls -la out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: research-pull
+          path: out/
+          retention-days: 3
