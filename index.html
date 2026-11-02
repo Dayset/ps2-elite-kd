@@ -77,7 +77,7 @@
       });
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261101-pof1" />
+  <link rel="stylesheet" href="styles.css?v=20261102-dots1" />
   <style>
     /* Installed-app launch splash (t465u). Android draws its own launch splash first:
        the maskable icon (big medal on black) seen through a 192 px circle, on the
@@ -460,9 +460,9 @@
 
   </section>
 
-  <!-- One spot, three modes (2026-10-19, t812u, t813u order): ✨ Stats ⇄ 🌍 Server positions ⇄ 🏅 Global positions, side-swipe only
-       (stats-carousel.mjs). No tab bar / dots (owner 2026-10-22): users find the
-       left / right swipe on their own. -->
+  <!-- One spot, three modes (2026-10-19, t812u, t813u order): ✨ Stats ⇄ 🌍 Server positions ⇄ 🏅 Global positions, side-swipe
+       or dots (stats-carousel.mjs). Dots restored (owner 2026-11-02) for PC
+       switching; no tab bar. -->
   <section id="statsCarousel" class="stats-carousel" data-i18n-aria-label="sc.label" aria-label="Your players: stats and positions">
     <div class="sc-viewport">
       <div class="sc-track">
@@ -656,7 +656,7 @@
   </footer>
 
   <script type="module" src="i18n.mjs"></script>
-  <script type="module" src="app.js?v=20261101-of1"></script>
+  <script type="module" src="app.js?v=20261102-dots1"></script>
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").catch(function () {});

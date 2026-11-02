@@ -3,8 +3,9 @@
  * 2026-10-19). The two tables sit side by side in a horizontal scroll-snap box;
  * the browser itself moves them (compositor, full refresh rate: the earlier
  * JS-driven drag ran on the main thread and felt ~30 fps on phones). Switch
- * with a finger / trackpad side-swipe only — no tab bar, no dots (owner
- * 2026-10-22: users find the left / right swipe on their own). A table
+ * with a finger / trackpad side-swipe, or with the dots above the tables
+ * (owner 2026-11-02: on a PC there is no swipe, so the dots are the way to
+ * switch views; the tab bar itself is still gone). A table
  * that can still scroll sideways keeps the swipe (the browser hands it on to
  * the slides at the table's edge). Columns of both tables are kept the same
  * width; the table switched to always starts at its first column (t460u); both
@@ -57,7 +58,8 @@ export const clampMode = (i, n) => Math.max(0, Math.min(n - 1, i | 0));
 
 /**
  * @param {{ root: HTMLElement, onChange?: (i: number) => void }} o
- * root holds .sc-viewport > .sc-track > .sc-slide. No tab bar (owner 2026-10-22).
+ * root holds .sc-viewport > .sc-track > .sc-slide. No tab bar (owner 2026-10-22);
+ * the dots are built by mount (owner 2026-11-02).
  */
 export function mountStatsCarousel({ root, onChange }) {
   if (!root) return null;
@@ -69,6 +71,38 @@ export function mountStatsCarousel({ root, onChange }) {
   let i = 0;
   const ids = slides.map((s) => s.id);
   try { i = clampMode(savedSlideIndex(ids, localStorage.getItem(SLIDE_KEY), localStorage.getItem(KEY)), slides.length); } catch {}
+
+  /* ----- dots (owner 2026-11-02): the tab bar is still gone, but the dots are
+   * back — on a PC there is no swipe, so the dots are the way to switch views.
+   * Built here (not in index.html) so they always match the slides: one button
+   * per slide, labelled from the slide itself, carrying the slide's own i18n
+   * key so a later translation pass picks them up too. Clicking one is go() —
+   * the same path as a swipe, rotation and sound included. */
+  let dots = root.querySelector(".sc-dots");
+  if (!dots) {
+    dots = document.createElement("div");
+    dots.className = "sc-dots";
+    dots.setAttribute("role", "tablist");
+    dots.setAttribute("aria-label", "Table mode");
+    dots.setAttribute("data-i18n-aria-label", "sc.tabs");
+    root.insertBefore(dots, viewport);
+  }
+  dots.innerHTML = "";
+  slides.forEach((s, k) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "sc-dot";
+    b.setAttribute("role", "tab");
+    b.dataset.sc = String(k);
+    if (s.id) b.setAttribute("aria-controls", s.id);
+    const label = s.getAttribute("aria-label") || s.id || `Slide ${k + 1}`;
+    b.setAttribute("aria-label", label);
+    b.title = label;
+    const key = s.getAttribute("data-i18n-aria-label");
+    if (key) b.setAttribute("data-i18n-aria-label", key);
+    b.addEventListener("click", () => go(k));
+    dots.appendChild(b);
+  });
 
   const width = () => viewport.clientWidth || 1;
   const reduced = () => { try { return matchMedia("(prefers-reduced-motion: reduce)").matches; } catch { return false; } };
@@ -101,6 +135,11 @@ export function mountStatsCarousel({ root, onChange }) {
   function paint() {
     slides.forEach((s, k) => s.setAttribute("aria-hidden", String(k !== i)));
     root.dataset.mode = String(i);
+    if (dots) dots.querySelectorAll(".sc-dot").forEach((d, k) => {
+      const on = k === i;
+      d.classList.toggle("on", on);
+      d.setAttribute("aria-selected", String(on));
+    });
   }
   function setMode(m, quiet) {
     m = clampMode(m, n);

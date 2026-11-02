@@ -1675,13 +1675,16 @@ html[data-theme="light"] .progress-modal-backdrop {
 .stats-table-wrap {
   overflow-x: auto;
   margin-top: 0.45rem;
-  /* Dayset 2026-10-20: no visible horizontal scrollbar — Android paints the
-   * wrap's bar at rest and only fades it after a nudge. Sideways touch
-   * scrolling still works; the bar is simply never drawn (same treatment
-   * as .sc-viewport). */
-  scrollbar-width: none;
 }
-.stats-table-wrap::-webkit-scrollbar { display: none; }
+/* Dayset 2026-10-20: no visible horizontal scrollbar on touch — Android paints
+ * the wrap's bar at rest and only fades it after a nudge. Sideways touch
+ * scrolling still works; the bar is simply never drawn (same treatment
+ * as .sc-viewport). 2026-11-02: scoped to touch only, like the Rankings wrap —
+ * on a PC the bar stays, so a windowed table's cut columns stay reachable. */
+@media (pointer: coarse) {
+  .stats-table-wrap { scrollbar-width: none; }
+  .stats-table-wrap::-webkit-scrollbar { display: none; }
+}
 
 .stats-table {
   width: max-content;
@@ -2261,8 +2264,12 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
 /* 🏅 where the selected players rank (rank # + percentile per metric) */
 .rk-positions { margin: 0 0 0.85rem; }
 .rk-pos-hint { color: var(--dim); font-size: 0.85rem; margin: 0.2rem 0 0.4rem; }
-.rk-pos-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 0; background: var(--panel); -webkit-overflow-scrolling: touch; scrollbar-width: none; }
-.rk-pos-wrap::-webkit-scrollbar { display: none; }
+.rk-pos-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 0; background: var(--panel); -webkit-overflow-scrolling: touch; }
+/* Same touch-only scrollbar hiding as the stats wrap (2026-11-02): PC keeps its bar. */
+@media (pointer: coarse) {
+  .rk-pos-wrap { scrollbar-width: none; }
+  .rk-pos-wrap::-webkit-scrollbar { display: none; }
+}
 .rk-pos-table { border-collapse: separate; border-spacing: 0; width: max-content; min-width: 100%; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
 .rk-pos-table th, .rk-pos-table td { padding: 0.35rem 0.4rem; border-bottom: 1px solid var(--row-border); white-space: nowrap; text-align: right; background: var(--panel); }
 .rk-pos-table tbody tr:last-child th, .rk-pos-table tbody tr:last-child td { border-bottom: none; }
@@ -2925,7 +2932,11 @@ html[data-theme="light"] .dist-pill:hover { opacity: 1; }
 .stats-carousel { margin: 0.35rem 0 0.85rem; }
 .stats-carousel:has(#statsPanel:empty) { display: none; }
 .stats-carousel.sc-reserve { display: block !important; } /* room kept while the startup graph loads (app.js reserveStatsSpace) */
-/* No tab bar / dots (owner 2026-10-22): the two modes switch by side-swipe only. */
+/* Dots restored (owner 2026-11-02) for PC switching; the tab bar is still gone. */
+.sc-dots { display: flex; justify-content: center; gap: 0.5rem; padding: 0.35rem 0 0.5rem; }
+.sc-dot { width: 10px; height: 10px; padding: 0; border: 1px solid var(--dim); border-radius: 50%; background: transparent; cursor: pointer; transition: background 0.2s, transform 0.2s; }
+.sc-dot.on { background: var(--accent); border-color: var(--accent); transform: scale(1.25); }
+.sc-dot:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 /* Native scroll-snap (2026-10-19): the browser moves the slides on the compositor at the
  * screen's own rate (the old JS drag ran on the main thread and stuttered on phones).
  * A table that can still scroll sideways keeps the swipe; at its edge the swipe passes

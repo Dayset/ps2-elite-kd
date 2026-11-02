@@ -38,19 +38,58 @@ test("mountStatsCarousel (t471u): one mount per element", () => {
   assert.match(src, /if \(root\.__sc\) return root\.__sc;/);
 });
 
-// Owner 2026-10-22: no Stats/Positions tab bar, no dots, no poof — the two
-// modes switch by left / right swipe only, and users find it on their own.
-test("no tab bar, no dots, no poof anywhere (owner 2026-10-22)", () => {
+// Owner 2026-11-02: the tab bar is still gone, but the dots are back — on a PC
+// there is no swipe, so the dots are the way to switch views. They are built by
+// mount (one button per slide), not markup in index.html; the poof stays gone.
+test("dots back, tab bar still gone, no poof (owner 2026-11-02)", () => {
   const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
-  assert.ok(!/sc-bar|sc-tab|sc-dot/.test(html), "index.html carries no bar markup");
+  assert.ok(!/sc-bar|sc-tab/.test(html), "index.html carries no bar/tab markup");
   assert.match(html, /class="sc-viewport"/, "the swipe viewport stays");
   const sc = readFileSync(new URL("../stats-carousel.mjs", import.meta.url), "utf8");
+  assert.match(sc, /className = "sc-dots"/, "mount builds the dots row");
+  assert.match(sc, /b\.addEventListener\("click", \(\) => go\(k\)\)/, "a dot click is go(), the swipe path");
+  assert.match(sc, /d\.classList\.toggle\("on", on\)/, "paint syncs the active dot");
   assert.ok(!/poof|collapseScBar|flipBurst/.test(sc), "carousel has no poof machinery");
   assert.match(sc, /addEventListener\("scroll"/, "mode still follows the swipe scroll");
   const sfx = readFileSync(new URL("../sfx.mjs", import.meta.url), "utf8");
   assert.ok(!/poof/.test(sfx), "the 💨 poof sound is gone from sfx");
   const app = appSource();
   assert.ok(!/poof|onThumb/.test(app), "app.js wires no poof callback");
+});
+
+// Owner 2026-11-02: the table wraps' scrollbar hiding is touch-only — on a PC
+// the bar stays, so a windowed table's cut columns stay reachable (the Rankings
+// wrap already worked this way since 2026-10-20). The slide viewport keeps its
+// hiding on all pointers: the dots switch slides now, not its scrollbar.
+test("table-wrap scrollbars hidden on touch only, PC keeps its bar", () => {
+  const css = readFileSync(new URL("../styles.css", import.meta.url), "utf8");
+  const coarse = [];
+  const stripCoarse = (src) => {
+    let out = "", k = 0;
+    while (k < src.length) {
+      const at = src.indexOf("@media (pointer: coarse)", k);
+      if (at < 0) { out += src.slice(k); break; }
+      out += src.slice(k, at);
+      const open = src.indexOf("{", at);
+      let d = 0, m = open;
+      for (; m < src.length; m++) {
+        if (src[m] === "{") d++;
+        else if (src[m] === "}") { d--; if (d === 0) break; }
+      }
+      coarse.push(src.slice(at, m + 1));
+      k = m + 1;
+    }
+    return out;
+  };
+  const rest = stripCoarse(css);
+  const joined = coarse.join("\n");
+  for (const sel of [".stats-table-wrap", ".rk-pos-wrap"]) {
+    const esc = sel.replace(".", "\\.");
+    assert.ok(!new RegExp(esc + "[^{]*\\{[^}]*scrollbar-width").test(rest), `${sel} rule carries no hiding outside touch`);
+    assert.ok(!new RegExp(esc + "::-webkit-scrollbar").test(rest), `${sel} webkit hiding lives in touch only`);
+    assert.ok(new RegExp(esc + " \\{ scrollbar-width: none; \\}").test(joined), `${sel} hiding is inside a touch block`);
+  }
+  assert.match(css, /\.sc-viewport \{[^}]*scrollbar-width: none;/, "the slide viewport stays hidden on all pointers");
 });
 
 // t540u (owner 2026-10-23): swiping with a hint open left an empty gap on the other side.
