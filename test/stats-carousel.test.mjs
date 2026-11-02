@@ -55,6 +55,11 @@ test("dots back, tab bar still gone, no poof (owner 2026-11-02)", () => {
   assert.ok(!/poof/.test(sfx), "the 💨 poof sound is gone from sfx");
   const app = appSource();
   assert.ok(!/poof|onThumb/.test(app), "app.js wires no poof callback");
+  // Dots vertically centered in the strip (owner 2026-11-02): no top padding,
+  // the whole 0.85rem below, so the dot sits centered between the Stats area
+  // above and the table below instead of hugging the table.
+  const css = readFileSync(new URL("../styles.css", import.meta.url), "utf8");
+  assert.match(css, /\.sc-dots \{[^}]*padding: 0 0 0\.85rem/, "dots row padding centers the dot in the strip");
 });
 
 // Owner 2026-11-02: the table wraps' scrollbar hiding is touch-only — on a PC
