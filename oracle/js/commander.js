@@ -29,7 +29,7 @@ export function mapOrders(c, f) {
   return out;
 }
 
-/** 🔥 Heat toggle (owner t692u): next to each faction's voice button; one setting for the page. */
+/** 🔥 Heat toggle (owner t692u): next to the selected faction's voice button only (owner 2026-11-02); one setting for the page. */
 export function heatButton(on) {
   const t = on ? tr("or.c.heatOn", "🔥 Heat is on: orders go to the hottest fight, ignoring the alert score. Click to turn off.") : tr("or.c.heatOff", "🔥 Heat: send orders to the hottest fight instead, ignoring the alert score");
   return ` <button type="button" class="voicebtn heatbtn${on ? " on" : ""}" data-heat="1" aria-pressed="${on}" title="${t}" aria-label="${t}">🔥</button>`;
@@ -128,6 +128,6 @@ export function commander(c, ts, now, lead, mode = "solo", heat = false, liveNam
     const kmBlock = kmBig.length ? `<div class="note">${tr("or.c.king", "👑 Kingmaker")}</div><ul>${kmLi(kmBig)}</ul>` : "";
     const lists = `${atk ? `<div class="note">${tr("or.c.attack", "⚔️ Attack")}</div><ul class="olist">${atk}</ul>` : ""}${def ? `<div class="note">${tr("or.c.defend", "🛡️ Defend")}</div><ul class="olist">${def}</ul>` : ""}${kmSmall.length ? `<div class="note">${tr("or.c.king", "👑 Kingmaker")}</div><ul>${kmLi(kmSmall)}</ul>` : ""}`;
     const hasFocus = !!P[f];
-    return `<div class="cf${f === on ? " on" : ""}"><h3 class="${f}">${f} · ${esc(x.war_shape || "")}${voiceButton(f)}${heatButton(heat)}</h3>${focusHtml(f)}${pkBlock}${kmBlock}${hasFocus ? (lists ? det(`cmdall-${f}`, tr("or.c.allMoves", "All moves"), lists, "allmoves keep") : "") : lists}</div>`;
+    return `<div class="cf${f === on ? " on" : ""}"><h3 class="${f}">${f} · ${esc(x.war_shape || "")}${voiceButton(f)}${f === on ? heatButton(heat) : ""}</h3>${focusHtml(f)}${pkBlock}${kmBlock}${hasFocus ? (lists ? det(`cmdall-${f}`, tr("or.c.allMoves", "All moves"), lists, "allmoves keep") : "") : lists}</div>`;
   }).join("")}</div>${(c.second_place_kingmaker || []).length ? `<div class="note" style="margin-top:8px">${tr("or.second", "🥈 Second place:")} ${c.second_place_kingmaker.map((k) => esc(k.text)).join(" · ")}</div>` : ""}${c.fight_up && c.fight_up.text ? det("why", tr("or.c.why", "Why"), `<pre class="note" style="margin-top:8px;white-space:pre-wrap;font-family:inherit">${esc(c.fight_up.text)}</pre>`, "why") : ""}</section>`;
 }
