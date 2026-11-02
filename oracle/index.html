@@ -187,7 +187,7 @@
   </dialog>
 
   <div id="banner" class="banner" role="status" aria-live="polite" hidden></div>
-  <div id="mini" class="mini" aria-hidden="true"><div id="miniMain" class="mini-main"></div><div id="miniSkill" class="mini-skill" hidden></div><div id="miniSkillAlert" class="mini-skill" hidden></div></div>
+  <div id="mini" class="mini" aria-hidden="true"><div id="miniMain" class="mini-main"></div><div id="miniSkillAlert" class="mini-skill" hidden></div></div>
   <div id="tabs" class="tabs"></div>
   <div id="main"><div class="grid" aria-busy="true" aria-label="Loading" data-i18n-aria-label="or.loading"><section class="card map"><h2 data-sec="map"><span data-i18n="or.h.map">Map</span></h2><div class="sk sk-map"></div></section><div class="side"><section class="card win"><h2 data-sec="win-chance"><span data-i18n="or.h.win">Win chance</span></h2><div class="sk sk-odds"></div><div class="sk sk-line"></div><div class="sk sk-line" style="width:70%"></div></section></div></div><section class="card chart" style="margin-top:14px"><h2 data-sec="win-chance-over-time"><span data-i18n="or.h.chart">Win chance over time</span></h2><div class="sk sk-chart"></div></section></div>
   <!-- Voting panel: filled by js/vote.js (listens for oracle:alert / oracle:auth). render() moves this node into #voteHere. -->
@@ -200,12 +200,12 @@
     <button id="histMore" class="more" type="button" hidden data-i18n="or.showMore0">Show more</button>
   </section>
 
-  <footer><details class="det info" data-d="foot"><summary data-i18n="or.about">ⓘ About these numbers</summary><div data-i18n="or.aboutText">Win chances update every minute from Census map data. Results settle 10 minutes after an alert ends, from Census's own final scores (sudden death decides draws). Percentages are model estimates, not guarantees.</div></details>
+  <footer><div id="footSkill" class="mini-skill" hidden></div><details class="det info" data-d="foot"><summary data-i18n="or.about">ⓘ About these numbers</summary><div data-i18n="or.aboutText">Win chances update every minute from Census map data. Results settle 10 minutes after an alert ends, from Census's own final scores (sudden death decides draws). Percentages are model estimates, not guarantees.</div></details>
     <p class="note foot-credits" data-i18n-html="or.credits">Data from the Daybreak Census API · alert history from <a href="https://ps2alerts.com/" target="_blank" rel="noopener noreferrer">PS2Alerts</a> · player details from <a href="https://wt.honu.pw/" target="_blank" rel="noopener noreferrer">Honu</a> · second opinions from <a href="https://ps2radar.com/" target="_blank" rel="noopener noreferrer">PS2 Radar</a>. Not affiliated with or endorsed by Daybreak Game Company. PlanetSide 2 is a registered trademark of Daybreak Game Company LLC. · <a href="../privacy.html">🔒 Privacy</a></p></footer>
 </div>
 
 <script type="module" src="js/vote.js?v=20261101-votejoin1"></script>
-<script type="module" src="js/main.js?v=20261101-votejoin1"></script>
+<script type="module" src="js/main.js?v=20261102-globfoot1"></script>
 <script>
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("../sw.js").catch(function () {});

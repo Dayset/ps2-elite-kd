@@ -2,7 +2,7 @@
 import { S, FACS, esc, $, when, info, wide } from "./state.js?v=20261018-scrub2";
 import { get } from "./api.js?v=20261018-scrub2";
 import { t as tr } from "../../i18n.mjs";
-import { renderSkillFoot } from "./skill-foot.js?v=20261101-alertskill1";
+import { renderSkillFoot } from "./skill-foot.js?v=20261102-globfoot1";
 import { myVoteMark } from "./vote.js?v=20261101-votejoin1";
 
 // The signed-in player's votes, from vote.js ("oracle:votes" event): history rows mark them, signed-out sees nothing.

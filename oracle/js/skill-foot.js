@@ -1,5 +1,5 @@
-// ⚖️ Top mini-bar, second row: faction skill (⚔️ iVi) weighted by real population (t810u, moved out of
-// the footer 2026-11-01). Reuses the 7-day history the results table already fetches (no new Worker call);
+// ⚖️ Footer skill row: faction skill (⚔️ iVi) weighted by real population (t810u; pinned bar's second row
+// 2026-11-01, moved back to the footer 2026-11-02). Reuses the 7-day history the results table already fetches (no new Worker call);
 // data/factions.json is a static file, read at most every 30 min. Method in pop-weight.mjs.
 // Names kept (skill-foot / skillFootHtml / renderSkillFoot) to avoid churning results.js + tests.
 import { esc, $ } from "./state.js?v=20261018-scrub2";
@@ -18,7 +18,7 @@ function factions() {
   return facP;
 }
 
-/** HTML of the mini-bar skill row (label left, numbers right via .mini-skill flex), or "" when there is
+/** HTML of the footer skill row (label left, numbers right via .mini-skill flex), or "" when there is
     not enough data. Exported for tests. */
 export function skillFootHtml(fac, alerts) {
   if (!fac || !fac.popw) return "";
@@ -32,7 +32,7 @@ export function skillFootHtml(fac, alerts) {
 }
 
 export async function renderSkillFoot(alerts) {
-  const el = $("miniSkill");
+  const el = $("footSkill");
   if (!el) return;
   const html = skillFootHtml(await factions(), alerts);
   if (html) el.innerHTML = html;
