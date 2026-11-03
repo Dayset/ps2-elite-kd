@@ -5,6 +5,8 @@
 import { Soldier, loadRigs, FX } from './soldier.js';
 import { STATES, FILLERS, PHASES, phaseOf } from './states.js';
 import { shardOf, slugOf } from './shard.mjs';
+import { toDoc } from './doc.mjs?v=20261103-pair1';
+import { pairOf, pairStatus, pairRow, defaultRival, rankedRivals } from './pair.mjs?v=20261103-pair1';
 import { t as tr, ready as i18nReady, currentLang } from '../i18n.mjs';
 
 const cv = document.getElementById('stage'), ctx = cv.getContext('2d');
@@ -27,16 +29,7 @@ const slug = slugOf(rawName);
 const getJson = async (u) => { try { const r = await fetch(u); return r.ok ? await r.json() : null; } catch { return null; } };
 const [meta, shard, catalog] = await Promise.all([getJson('../data/replay/meta.json'),
   slug ? getJson(`../data/replay/${shardOf(slug)}.json`) : null, getJson('../assets/weapons/catalog.json')]);
-// one compact row per player (positional, meta.cols) -> the doc the scene reads
-function toDoc(e) {
-  const stats = {}; meta.cols.forEach((id, i) => { if (e.v?.[i] != null) stats[id] = { v: e.v[i], p: e.p?.[i] ?? null }; });
-  const w = e.m && catalog?.items?.[e.m[0]];
-  return { name: e.n, slug, faction: e.f || 'tr', server: e.s || '', poolSize: meta.pool, stats, builtAt: meta.ranksAt,
-    luck: e.l != null ? { pts: e.l } : null, fightStart: e.fs || null, hasXp: !!e.x,
-    main: e.m ? { id: e.m[0], name: w?.[0] ?? '', cat: w?.[1] ?? '', img: e.m[2] && w?.[3] ? String(w[3]) : null, kills: e.m[1] } : null,
-    classes: e.c && meta.classCols ? Object.fromEntries(meta.classCols.map((k, i) => [k, e.c[i]])) : null };
-}
-const doc = meta && shard?.p?.[slug] ? toDoc(shard.p[slug]) : null;
+const doc = meta && shard?.p?.[slug] ? toDoc(shard.p[slug], { meta, catalog, slug }) : null;
 let fast = false;
 document.title = `🎬 ${doc ? doc.name + ' · ' : ''}${T('title', 'Duel replay')}`;
 const rigs = await loadRigs();
@@ -48,9 +41,45 @@ if (!doc) {
   const n = document.createElement('div'); n.className = 'note';
   n.textContent = T('noneHint', 'Replays cover PC players in the site’s cache. A newly added player shows up after the next daily update.');
   document.getElementById('hud').append(n);
+  window.__pair = () => null;
   window.__ready = true;
   await new Promise(() => {});   // nothing more to run (a module can't return early)
 }
+
+// ---------------------------------------------------------------- pair (?vs=, else A's top rival; #93 — no scene change yet)
+const fit = await getJson('../data/duel-ivi-fit.json');
+const aFile = await getJson(`../data/players/${slug}.json`);
+const aRows = aFile?.player?.rows || [];
+const shardCache = new Map([[shardOf(slug), shard]]);
+const getShard = async (s) => { if (!shardCache.has(s)) shardCache.set(s, await getJson(`../data/replay/${shardOf(s)}.json`)); return shardCache.get(s); };
+let pair = null, pairNote = null;
+const vsRaw = (q.get('vs') || '').trim().slice(0, 40);
+const resolvePair = async (bSlug, bName) => {
+  const bShard = await getShard(bSlug);
+  const bDoc = bShard?.p?.[bSlug] ? toDoc(bShard.p[bSlug], { meta, catalog, slug: bSlug }) : null;
+  const bFile = await getJson(`../data/players/${bSlug}.json`);
+  const bRows = bFile?.player?.rows || [];
+  const status = pairStatus(doc, bDoc, pairRow(aRows, bRows, slug, bSlug));
+  if (status !== 'pair') return status;
+  pair = pairOf({ aDoc: doc, bDoc, aRows, bRows, fit, med: meta.med || null, bSlug, bName });
+  return 'pair';
+};
+if (vsRaw) {
+  const st = await resolvePair(slugOf(vsRaw), vsRaw);
+  if (st === 'sameFaction') pairNote = T('pairSameFaction', '“{name}” fights for the same faction — showing the crowd scene instead.', { name: vsRaw });
+  if (st === 'notFound') pairNote = T('pairNotFound', 'No rival found for “{name}” — showing the crowd scene instead.', { name: vsRaw });
+} else {
+  // probe only the top candidates' shards for their faction (one file each, cached above),
+  // then let the pure selector pick the first confirmed cross-faction rival
+  const cands = rankedRivals(doc, aRows).slice(0, 12);
+  const fac = new Map();
+  for (const c of cands) { const sh = await getShard(c.slug); const f = sh?.p?.[c.slug]?.f; if (f) fac.set(c.slug, f); }
+  const rival = defaultRival(doc, aRows, (s) => fac.get(s) || null);
+  if (rival) await resolvePair(rival.slug, rival.row.name);
+  else pairNote = T('pairNotFound', 'No rival found for “{name}” — showing the crowd scene instead.', { name: doc.name });
+}
+if (pair) document.title = `🎬 ${pair.a.name} vs ${pair.b.name}`;
+window.__pair = () => pair;
 const S = doc.stats, val = id => S[id]?.v ?? null, pct = id => S[id]?.p ?? null;
 
 // ⏱ time to fight. On the live site the value comes from data/xp/<slug>.json (`fight`, collected by
@@ -711,6 +740,7 @@ const CHIPS = [
     (doc.classes ? '\n' + T('classes', 'Class time: {list}. Each life in the scene picks a class by these shares.',
       { list: ['ha', 'med', 'eng', 'la', 'inf', 'max'].map(k => `${CLS[k]} ${doc.classes[k] ?? 0}%`).join(', ') }) : '');
   hud.append(who);
+  if (pairNote) { const pn = document.createElement('div'); pn.className = 'note'; pn.textContent = pairNote; hud.append(pn); }
   for (const [id, v, l0, h0, extra = ''] of CHIPS) {
     const l = CL(id, l0), hint = H_(id, h0) + extra;
     const c = document.createElement('span'); c.className = 'chip' + (v == null ? ' off' : '');

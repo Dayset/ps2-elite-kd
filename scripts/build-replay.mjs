@@ -133,7 +133,10 @@ shards.forEach((s, i) => {
   bytes += txt.length;
   fs.writeFileSync(path.join(OUT, i.toString(16).padStart(2, '0') + '.json'), txt);
 });
-// meta: no clock time, so an unchanged cache gives identical files (and no commit)
-const meta = { v: 1, ranksAt: ranks.updatedAt, pool: rows.length, shards: SHARDS, cols: COLS, classCols: classes.cols };
+// meta: no clock time, so an unchanged cache gives identical files (and no commit).
+// med: population medians for the pair fallback (replay/pair.mjs) when a side has no shard
+// row — same pools and lower-median rule as pct() above, so a rebuild keeps them in sync.
+const meta = { v: 1, ranksAt: ranks.updatedAt, pool: rows.length, shards: SHARDS, cols: COLS, classCols: classes.cols,
+  med: Object.fromEntries(['kpm', 'dpm', 'acc', 'hsr', 'spk', 'hpk', 'apk', 'infVeh'].map((id) => [id, med(id)])) };
 fs.writeFileSync(path.join(OUT, 'meta.json'), JSON.stringify(meta) + '\n');
 console.log(`replay: ${rows.length} players in ${SHARDS} shards, ${(bytes / 1024).toFixed(0)} KB total`);
