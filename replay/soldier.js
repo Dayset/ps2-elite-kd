@@ -166,7 +166,12 @@ export class Soldier {
         if (this.hs) P.head.rot -= 26 * D * Math.sin(clamp(tl / 0.35) * Math.PI / 2) * (1 - 0.4 * fall); // helmet ding: head snaps back
         break;
       }
-      case 'dead': P.alpha = this.downKeep ? 1 : 0; if (this.downKeep) { P.rootPiv = [-95, 0]; P.rootRot = -84 * D; P.head.rot = -14 * D; } break;
+      // #100: a duelist's body stays a moment after death — visible while
+      // the corpse window runs (set by the duel pump), then gone until
+      // respawn. Crowd corpses keep today's rule (downKeep only).
+      case 'dead': { const corpse = this.corpseUntil != null && t < this.corpseUntil;
+        P.alpha = (this.downKeep || corpse) ? 1 : 0;
+        if (this.downKeep || corpse) { P.rootPiv = [-95, 0]; P.rootRot = -84 * D; P.head.rot = -14 * D; } break; }
       case 'revive': { // reverse of the fall, picked up by a teammate
         const r = ease(tl / 0.8); P.rootPiv = [-95, 0]; P.rootRot = -84 * D * (1 - r); P.head.rot = -14 * D * (1 - r);
         P.bright = 1 + 0.8 * (1 - r); P.torso.sy = 1; break;

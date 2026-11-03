@@ -9,12 +9,13 @@ import { toDoc } from './doc.mjs?v=20261103-pair1';
 import { pairOf, pairStatus, pairRow, defaultRival, rankedRivals, MED_KEYS, MED_FALLBACK } from './pair.mjs?v=20261103-pair1';
 import { profileOf, shotsPerSec, toProfile, FALLBACK } from './weapons.mjs?v=20261103-weap1';
 import { baseRate, bulletRate, nextKillAt, calmStretchEnd, rampTo, baseGate, resolvePace } from './director.mjs?v=20261103-pace1';
-import { shooter, headChance } from './engagement.mjs?v=20261103-hs1';
-import { planDuel } from './duel-plan.mjs?v=20261103-exch1';
+import { shooter, headChance } from './engagement.mjs?v=20261103-cam1';
+import { planDuel } from './duel-plan.mjs?v=20261103-cam1';
 import { planScrim, scrimPlanEnd, topScrimPartner } from './scrim-plan.mjs?v=20261103-exch1';
 import { SHIELD, HEALTH, returnBurst, applyHits, recoveryFor } from './exchange.mjs?v=20261103-exch1';
 import { pushLine, visibleLines } from './status.mjs?v=20261103-celeb1';
 import { hpAt, barFracs, sparkFor, scoreAt, engagementAt, lifeAt as duelLifeAt, phaseState, killcamFor } from './duel-scene.mjs?v=20261103-duel2';
+import { cameraFor, coverKinds, hopKinds, approachPath, approachX, offScreenX, CORPSE_KEEP } from './camera.mjs?v=20261103-cam1';
 import { STRIP, coverOf, assignLanes } from './lanes.mjs?v=20261103-strip1';
 import { pickWeighted, drawOpponents } from './crowd.mjs?v=20261103-crowd1';
 import { kpmGauge, kdLives, accBar, hsHeads, spkGauge } from './gauges.mjs?v=20261103-gauge1';
@@ -328,6 +329,7 @@ main.cover = makeCover(main);
 for (const a of allies) a.cover = makeCover(a);
 for (const e of enemies) e.cover = makeCover(e);
 main.cover.wall.forMain = true;
+main.cover.wall.pair = 'a';   // #100: duelist walls take per-engagement kinds
 const walls = [main.cover.wall, ...allies.map(a => a.cover.wall), ...enemies.map(e => e.cover.wall)];
 
 // ---------------------------------------------------------------- rival (#98)
@@ -344,7 +346,7 @@ if (pair) {
   rival = new Soldier(rigs[FB], FB, { x: laneA.rival.x, y: laneA.rival.y, scale: laneA.rival.scale, facing: -1, seed: 7.7,
     rate: bProf ? shotsPerSec(bProf) : 10, speed: 170, mode: bProf?.mode ?? 'auto', reloadMs: bProf?.reloadMs ?? 2400, reducedMotion: reducedOS });
   rival.slot = rival.x; rival.lane = 0; rival.deadAt = -99;
-  rival.cover = makeCover(rival); walls.push(rival.cover.wall); everyone.push(rival);
+  rival.cover = makeCover(rival); rival.cover.wall.pair = 'b'; walls.push(rival.cover.wall); everyone.push(rival);
 }
 
 // ---------------------------------------------------------------- effects
@@ -536,7 +538,13 @@ function pumpDuel(t) {
   const jump = t - pumpT > 5; // a skip jumps past shots: keep states/kills, don't fire a volley
   while (pumpIdx < pumpEvents.length && pumpEvents[pumpIdx].t <= t) {
     const ev = pumpEvents[pumpIdx++];
-    if (ev.kind === 'state') (ev.side === 'a' ? main : rival).set(ev.state, t);
+    if (ev.kind === 'state') {
+      const s = ev.side === 'a' ? main : rival; s.set(ev.state, t);
+      // #100: the body stays a moment (corpse window), and a respawn starts
+      // off-screen — the killer never sees him beam in at the slot.
+      if (ev.state === 'dead') { s.deadAt = t; s.corpseUntil = t + CORPSE_KEEP; }
+      if (ev.state === 'respawn') s.x = offScreenX(ev.side);
+    }
     else if (ev.kind === 'shot') {
       if (jump) continue;
       const sh = ev.shot, from = sh.from === 'a' ? main : rival, to = sh.from === 'a' ? rival : main;
@@ -619,6 +627,7 @@ window.__scrim = () => scrimMode ? { t0: scrimRow.t0, t1: scrimRow.t1, k: scrimR
   exact: scrimExact, endShown: scrimEndShown, planEnd: scrimEndAt } : null;
 window.__exch = () => ({ fights: exchLog, deaths: deathLog, pots: potLog });
 window.__cheer = () => ({ cheerAt: main.cheerAt, wallT, bob: main.lastPose?.bob ?? null, glow: main.lastPose?.cheer ?? null });
+window.__camera = () => ({ scale: camScale, left: camLeft, top: camTop });
 window.__stack = () => ({ all: (main.lines ?? []).map((l) => ({ text: l.text, t0: l.t0, count: l.count })),
   visible: visibleLines(main.lines ?? [], wallT), wallT });
 
@@ -1083,6 +1092,18 @@ function step(t, dt) {
     const targeted = live.some(b => b && !b.done && !b.pot && b.target === s && (b.tank ? b.fired < 2 : b.shooter.state === 'shoot'))
       || bullets.some(b => b.final && b.to === s);   // killing shot still flying: the target stays out until it lands
     s.peekWant = (shooting || targeted) ? 1 : 0;
+    // #100: a duelist whose shield is under 30% hides to regen — he only
+    // peeks while actually firing (an own shot in the last 0.8 s) or when
+    // targeted. The kill-shot rule above still pulls him out.
+    if (duelPlan && (s === main || s === rival) && s.state === 'shoot' && !targeted) {
+      const eng = engagementAt(duelPlan, t);
+      if (eng) {
+        const side = s === main ? 'a' : 'b';
+        const fr = barFracs(hpAt(eng, t, side), side === 'a' ? eng.aClass : eng.bClass);
+        const firing = eng.shots.some((sh) => sh.from === side && sh.t <= t && t - sh.t < 0.8);
+        if (fr.shield < 0.3 && !firing) s.peekWant = 0;
+      }
+    }
     if (s.state !== 'idle' && s.state !== 'shoot') continue;
     const tx = s.peekWant ? s.cover.peekX : s.cover.hiddenX;
     s.x += (tx - s.x) * Math.min(1, dt * 10);
@@ -1101,6 +1122,17 @@ function step(t, dt) {
     else { if (!s.entered) { s.entered = 1; enter(s, t); } cur = s; tick(s, t, dt); }
   }
   pumpDuel(t);
+  // #100: a respawning duelist runs cover-to-cover from off-screen to his
+  // slot during the engagement's approach. The peek pass skips 'run', so
+  // this driver owns x here; it is path-based, so jumps stay consistent.
+  if (duelPlan) {
+    const eng = engagementAt(duelPlan, t);
+    if (eng && eng.respawnSide) {
+      const s = eng.respawnSide === 'a' ? main : rival;
+      const seg = eng.segments.find((sg) => sg.phase === 'approach');
+      if (seg && t >= seg.t0 && t <= seg.t1) s.x = approachX(approachPath(eng, s.slot, eng.respawnSide), t);
+    }
+  }
   if (!scrimMode) background(t, dt);
   for (const b of bullets) {
     const sx = b.vx * dt, sy = b.vy * dt; b.x += sx; b.y += sy; b.age += dt; b.left -= Math.hypot(sx, sy);
@@ -1117,12 +1149,14 @@ function step(t, dt) {
 function drawBg() {
   const g = ctx.createLinearGradient(0, 0, 0, H);
   g.addColorStop(0, '#1b2635'); g.addColorStop(0.62, '#2a3a4c'); g.addColorStop(0.63, '#34452f'); g.addColorStop(1, '#202b1d');
-  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  // #100: the background runs past the strip edges so a zoomed-out camera
+  // never shows empty bands; inside 0..W every pixel is unchanged.
+  ctx.fillStyle = g; ctx.fillRect(-200, -100, W + 400, H + 300);
   // parallax: hills move at 1/4 of the ground while running to the fight
-  const hx = scroll * 0.25; ctx.fillStyle = '#243243'; ctx.beginPath(); ctx.moveTo(0, 253);
-  for (let x = 0; x <= W; x += 40) { const u = x + hx; ctx.lineTo(x, 239 + 16 * Math.sin(u / 170) + 8 * Math.sin(u / 53)); }
-  ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.fill();
-  ctx.fillStyle = '#34452f'; ctx.fillRect(0, 251, W, H - 251);
+  const hx = scroll * 0.25; ctx.fillStyle = '#243243'; ctx.beginPath(); ctx.moveTo(-200, 253);
+  for (let x = -200; x <= W + 200; x += 40) { const u = x + hx; ctx.lineTo(x, 239 + 16 * Math.sin(u / 170) + 8 * Math.sin(u / 53)); }
+  ctx.lineTo(W + 200, H + 200); ctx.lineTo(-200, H + 200); ctx.fill();
+  ctx.fillStyle = '#34452f'; ctx.fillRect(-200, 251, W + 400, H - 251 + 200);
   ctx.fillStyle = 'rgba(0,0,0,.12)'; for (let i = 0; i < 40; i++) ctx.fillRect((((i * 337 - scroll) % W) + W) % W, 261 + (i * 53) % 128, 26, 2);
 }
 const TANK = { tr: ['#7a2a24', '#b8473b'], nc: ['#23407a', '#3f69c0'], vs: ['#4a2a78', '#7a4fc0'] };
@@ -1298,15 +1332,66 @@ function drawWall(w) {
   ctx.save(); ctx.globalAlpha = 0.9;   // 10% transparent: the soldier ghosts through his tile
   ctx.fillStyle = 'rgba(0,0,0,.35)';
   ctx.beginPath(); ctx.ellipse(w.x + w.w / 2, w.y + 2, w.w * 0.55, 10, 0, 0, 7); ctx.fill();
-  ctx.fillStyle = '#46525f'; ctx.fillRect(w.x, w.y - w.h, w.w, w.h);   // basic wall tile
-  ctx.fillStyle = '#6d7c8c'; ctx.fillRect(w.x, w.y - w.h, w.w, 6);      // lit top edge
-  ctx.fillStyle = 'rgba(255,255,255,.08)'; ctx.fillRect(w.x, w.y - w.h + 6, w.w, 10);
-  ctx.fillStyle = 'rgba(0,0,0,.30)'; ctx.fillRect(w.x, w.y - w.h * 0.55, w.w, 3);  // block seams
-  ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.fillRect(w.x + w.w * 0.5, w.y - w.h, 3, w.h);
+  // #100: varied cover per engagement (pair walls carry w.kind; crowd
+  // walls keep the plain tile). All shapes are flat rects/ellipses/polygons.
+  const kind = w.kind ?? 'tile', top = w.y - w.h;
+  if (kind === 'crate') {   // stacked supply crate: boxy, plank lines, metal corners
+    const ch = w.h * 0.55;
+    ctx.fillStyle = '#6b5232'; ctx.fillRect(w.x, w.y - ch, w.w, ch);
+    ctx.fillStyle = '#7d6039'; ctx.fillRect(w.x, w.y - ch, w.w, 8);
+    ctx.fillStyle = 'rgba(0,0,0,.30)'; ctx.fillRect(w.x, w.y - ch * 0.5, w.w, 3);
+    ctx.fillStyle = '#3a3f46'; ctx.fillRect(w.x, w.y - ch, 10, 10); ctx.fillRect(w.x + w.w - 10, w.y - ch, 10, 10);
+    ctx.fillStyle = 'rgba(255,255,255,.10)'; ctx.fillRect(w.x, w.y - ch + 8, w.w, 6);
+  } else if (kind === 'rock') {   // boulder cluster: overlapping ellipses, no corners
+    ctx.fillStyle = '#5a5f66';
+    ctx.beginPath(); ctx.ellipse(w.x + w.w * 0.5, w.y - w.h * 0.22, w.w * 0.48, w.h * 0.24, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = '#4a4f55';
+    ctx.beginPath(); ctx.ellipse(w.x + w.w * 0.28, w.y - w.h * 0.14, w.w * 0.26, w.h * 0.15, 0, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(w.x + w.w * 0.74, w.y - w.h * 0.16, w.w * 0.3, w.h * 0.17, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.10)';
+    ctx.beginPath(); ctx.ellipse(w.x + w.w * 0.42, w.y - w.h * 0.3, w.w * 0.2, w.h * 0.06, -0.4, 0, 7); ctx.fill();
+  } else if (kind === 'lowwall') {   // low wall: short, capped, the soldier's head clears it
+    const lh = w.h * 0.42;
+    ctx.fillStyle = '#46525f'; ctx.fillRect(w.x, w.y - lh, w.w, lh);
+    ctx.fillStyle = '#6d7c8c'; ctx.fillRect(w.x, w.y - lh, w.w, 6);
+    ctx.fillStyle = 'rgba(0,0,0,.30)'; ctx.fillRect(w.x, w.y - lh * 0.5, w.w, 3);
+    ctx.fillStyle = 'rgba(255,255,255,.08)'; ctx.fillRect(w.x, w.y - lh + 6, w.w, 8);
+  } else if (kind === 'doorway') {   // doorway frame: two posts + lintel, dark opening
+    const post = w.w * 0.22;
+    ctx.fillStyle = '#3d434b'; ctx.fillRect(w.x, top, post, w.h); ctx.fillRect(w.x + w.w - post, top, post, w.h);
+    ctx.fillStyle = '#4a515a'; ctx.fillRect(w.x, top, w.w, 14);
+    ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fillRect(w.x + post, top + 14, w.w - 2 * post, w.h - 14);
+    ctx.fillStyle = '#6d7c8c'; ctx.fillRect(w.x, top, w.w, 5);
+  } else {   // plain tile (crowd walls, unchanged)
+    ctx.fillStyle = '#46525f'; ctx.fillRect(w.x, w.y - w.h, w.w, w.h);
+    ctx.fillStyle = '#6d7c8c'; ctx.fillRect(w.x, w.y - w.h, w.w, 6);
+    ctx.fillStyle = 'rgba(255,255,255,.08)'; ctx.fillRect(w.x, w.y - w.h + 6, w.w, 10);
+    ctx.fillStyle = 'rgba(0,0,0,.30)'; ctx.fillRect(w.x, w.y - w.h * 0.55, w.w, 3);
+    ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.fillRect(w.x + w.w * 0.5, w.y - w.h, 3, w.h);
+  }
   ctx.restore();
 }
+// #100 camera state (smoothed toward the phase target each render; the
+// bullet-time cue composes on top, the HUD reset below clears both).
+let camScale = 1, camLeft = 0, camTop = 0, camWallT = 0;
 function render(t) {
   ctx.setTransform(cv.width / W, 0, 0, cv.height / H, 0, 0);
+  // #100: the pair camera frames both duelists and zooms with the phase
+  // (out at trade, in at commit). Reduced motion: no zoom, no pan. The
+  // framing points are the duelists' slots while one runs in from
+  // off-screen (he is off-screen by design, never chased by the camera).
+  if (duelPlan && !reducedOS) {
+    const eng = engagementAt(duelPlan, t);
+    const seg = eng?.segments.find((sg) => sg.t0 <= t && t < sg.t1);
+    const phase = seg?.phase ?? 'gap';
+    const approaching = eng?.respawnSide;
+    const ax = approaching === 'a' ? main.slot : main.x, bx = approaching === 'b' ? rival.slot : rival.x;
+    const target = cameraFor({ ax, bx, phase });
+    const k = Math.min(1, Math.max(0, wallT - camWallT) * 4);
+    camScale += (target.scale - camScale) * k; camLeft += (target.left - camLeft) * k; camTop += (target.top - camTop) * k;
+    ctx.scale(camScale, camScale); ctx.translate(-camLeft, -camTop);
+  } else { camScale = 1; camLeft = 0; camTop = 0; }
+  camWallT = wallT;
   // bullet-time cues: 1.12x push-in centred between shooter and victim, world desaturated
   // (background, boxes, walls); fighters, tracers and pops keep their colour
   if (cue) {
@@ -1328,7 +1413,30 @@ function render(t) {
   drawBullets(back);
   // walls ride the same depth order (by ground y): a wall in front of a soldier occludes him,
   // which is what "behind cover" means here. Main's wall is skipped while the tank is out.
-  const wallsSorted = walls.slice().sort((a, b) => a.y - b.y);
+  // #100: duelist walls take the current engagement's kinds (current, else
+  // next, else last — gaps keep the last fight's cover), and a respawning
+  // duelist's hop covers ride along as terrain for the engagement.
+  const wallsSorted = walls.slice();
+  if (duelPlan) {
+    const engHere = engagementAt(duelPlan, t)
+      ?? duelPlan.engagements.find((e) => e.t0 > t)
+      ?? duelPlan.engagements[duelPlan.engagements.length - 1];
+    if (engHere) {
+      const kinds = coverKinds(engHere.idx);
+      for (const w of wallsSorted) if (w.pair) w.kind = kinds[w.pair];
+      const engNow = engagementAt(duelPlan, t);
+      if (engNow?.respawnSide) {
+        const s = engNow.respawnSide === 'a' ? main : rival;
+        const path = approachPath(engNow, s.slot, engNow.respawnSide);
+        const hKinds = hopKinds(engNow.idx, path.hops.length);
+        path.hops.forEach((hx, i) => {
+          const cw = coverOf(hx, s.y, s.scale, s.facing);
+          wallsSorted.push({ ...cw.wall, kind: hKinds[i] });
+        });
+      }
+    }
+  }
+  wallsSorted.sort((a, b) => a.y - b.y);
   let wi = 0;
   const wallsBefore = (y) => { while (wi < wallsSorted.length && wallsSorted[wi].y < y) { const w = wallsSorted[wi++]; if (w.forMain && tank.on) continue; if (cue) { ctx.save(); ctx.filter = 'saturate(0.15)'; drawWall(w); ctx.restore(); } else drawWall(w); } };
   for (const [i, s] of order.entries()) {

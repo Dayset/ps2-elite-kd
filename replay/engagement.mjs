@@ -13,7 +13,7 @@
  *   the commit — the target regens in the lull, so every commit starts at
  *   full HP and takes ~N hits. Only commit shots kill.
  *
- * Per-shot hit chance = base(phase) × moving × strafing × recoil × flinch:
+ * Per-shot hit chance = base(phase) × moving × strafing × recoil × flinch × range:
  *   moving 0.9 (shooter moving), strafing 0.9 (target strafing), recoil
  *   1/(1 + 0.05 × shot index in burst, reset each burst), flinch 0.95 (the
  *   shooter took a hit within the last 0.5 s). The base rates are solved
@@ -36,6 +36,8 @@
  *   makes the HS KILL share come out at hsr. The same p sets the average
  *   damage per hit, hence N.
  */
+import { rangeFactor } from './camera.mjs?v=20261103-cam1';
+
 export const SHIELD = 500, HEALTH = 500, OVERSHIELD = 450, MAX_HEALTH = 2000;
 export const SHIELD_REGEN_DELAY = 3, SHIELD_REGEN_RATE = 150;
 export const MEDIC_HEAL_DELAY = 5, MEDIC_HEAL_RATE = 25;
@@ -188,6 +190,9 @@ export function engage(a, b, rng, opts = {}) {
   const roll = (sh, from, phase, t, burstIdx, flinchTimes = null) => {
     const s = phase === "commit" ? sh.sCommit : sh.sTrade;
     let m = phase === "commit" ? sh.pCommit : sh.pTrade;
+    // #100: range feeds the hit model — far (trade) hits softer, near
+    // (commit) hits harder. No rangeFor → factor 1, nothing moves.
+    if (opts.rangeFor) m *= rangeFactor(opts.rangeFor(phase));
     if (rng() < P_MOVE[phase]) m *= 1 - s * (1 - MOVE_F);
     if (rng() < P_STRAFE[phase]) m *= 1 - s * (1 - STRAFE_F);
     m *= 1 / (1 + s * RECOIL_K * burstIdx);

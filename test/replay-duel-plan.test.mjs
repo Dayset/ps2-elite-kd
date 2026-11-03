@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { planDuel, streakChain, deriveSeed, DEFAULTS } from "../replay/duel-plan.mjs";
 import { shooter, engage, mulberry } from "../replay/engagement.mjs";
+import { rangeFor } from "../replay/camera.mjs";
 import { toProfile, FALLBACK } from "../replay/weapons.mjs";
 
 const AR = toProfile(FALLBACK["Assault Rifle"]);
@@ -68,9 +69,10 @@ test("plan invariants: no overlaps, nobody shoots while dead, lives alternate, s
     for (let i = 1; i < ls.length; i++) assert.ok(ls[i].start >= ls[i - 1].end - 1e-9, `${sideName} life overlap`);
   }
   // Shots are engage() shots: re-run engage with the derived stream and compare (time-shifted).
+  // The plan passes rangeFor (#100), so the recomputation must too.
   for (const e of plan.engagements.slice(0, 20)) {
     const eng = engage({ ...A.sh, cls: e.aClass }, { ...B.sh, cls: e.bClass },
-      mulberry(deriveSeed(12345, e.idx)), { outcome: e.outcome, wA: pA, victim: e.victim });
+      mulberry(deriveSeed(12345, e.idx)), { outcome: e.outcome, wA: pA, victim: e.victim, rangeFor });
     const expected = eng.shots.map((s) => s.t + e.segments.find((x) => x.phase === "trade").t0);
     const got = e.shots.map((s) => s.t);
     assert.deepEqual(got, expected, `engagement ${e.idx} shots differ from engage()`);

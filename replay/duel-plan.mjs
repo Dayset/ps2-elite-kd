@@ -37,7 +37,8 @@
  * from the master seed, so any engagement can be reproduced standalone
  * with engage(a, b, mulberry(derivedSeed), { outcome, wA }).
  */
-import { engage, mulberry } from "./engagement.mjs?v=20261103-duel1";
+import { engage, mulberry } from "./engagement.mjs?v=20261103-cam1";
+import { rangeFor } from "./camera.mjs?v=20261103-cam1";
 import { SHIELD, HEALTH, recoveryFor } from "./exchange.mjs?v=20261103-exch1";
 
 export const DEFAULTS = { gapMedianS: 45, gapSigma: 0.6, killsPerFight: [2, 4, 9], streakP: 0.55, oneVoneShare: 0.3 };
@@ -142,7 +143,7 @@ export function planDuel(a, b, opts = {}) {
 
     // ---- per-life shooters (class varies per life; profile is the side's own)
     const eng = engage({ ...a, cls: life.a.cls }, { ...b, cls: life.b.cls },
-      mulberry(deriveSeed(seed, idx)), { outcome, wA: pA, victim });
+      mulberry(deriveSeed(seed, idx)), { outcome, wA: pA, victim, rangeFor });
     // Trade length is the true trade end, not the last trade-phase shot: the
     // loser's deferred return fire carries phase "trade" but lands in the
     // commit window, so taking the max trade-phase time would swallow the
