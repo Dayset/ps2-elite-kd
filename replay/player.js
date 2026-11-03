@@ -16,6 +16,7 @@ import { hpAt, barFracs, sparkFor, scoreAt, engagementAt, lifeAt as duelLifeAt, 
 import { STRIP, coverOf, assignLanes } from './lanes.mjs?v=20261103-strip1';
 import { pickWeighted, drawOpponents } from './crowd.mjs?v=20261103-crowd1';
 import { kpmGauge, kdLives, accBar, hsHeads, spkGauge } from './gauges.mjs?v=20261103-gauge1';
+import { sfx } from './sfx.mjs?v=20261103-sfx1';
 import { t as tr, ready as i18nReady, currentLang } from '../i18n.mjs';
 
 const cv = document.getElementById('stage'), ctx = cv.getContext('2d');
@@ -52,8 +53,20 @@ for (const [id, label, hint] of [
   ['cine', '🎬', T('paceCineHint', 'Cinematic: the director — ×2 calm, ×1 trade, ×0.5 before a kill, ×0.2 bullet time, jump cuts.')],
 ]) {
   const b = document.createElement('button'); b.type = 'button'; b.dataset.pace = id; b.textContent = label; b.title = hint; b.setAttribute('aria-label', hint);
-  b.addEventListener('click', () => setPace(id)); paceBtns.append(b); paceBtnMap[id] = b;
+  b.addEventListener('click', () => { sfx.unlock(); setPace(id); }); paceBtns.append(b); paceBtnMap[id] = b;
 }
+// SFX mute (v0.1): the button lives with the pace buttons so it inherits
+// their styling; the choice persists on-device like the pace choice. The
+// click is also the gesture that unlocks audio, so the first in-scene sound
+// is not swallowed by autoplay rules.
+const sfxBtn = document.createElement('button'); sfxBtn.type = 'button';
+sfxBtn.title = T('sfxToggle', 'Toggle sound'); sfxBtn.setAttribute('aria-label', T('sfxToggle', 'Toggle sound'));
+try { sfx.setMuted(localStorage.getItem('ps2ekd:sfxMuted') === '1'); } catch {}
+const paintSfxBtn = () => { sfxBtn.textContent = sfx.muted ? '🔇' : '🔊'; };
+paintSfxBtn();
+sfxBtn.addEventListener('click', () => { sfx.unlock(); sfx.setMuted(!sfx.muted); try { localStorage.setItem('ps2ekd:sfxMuted', sfx.muted ? '1' : '0'); } catch {} paintSfxBtn(); });
+paceBtns.append(sfxBtn);
+window.__sfx = () => ({ muted: sfx.muted });
 const paceRateEl = document.createElement('span'); paceRateEl.className = 'pace-rate'; paceRateEl.title = T('paceRateHint', 'Current playback rate.');
 paceEl.append(paceBtns, paceRateEl); cv.after(paceEl);
 function setPace(p, save = true) {
@@ -377,7 +390,7 @@ function fire(t, from, to, o = {}, r = rng) {
   bullets.push({ x: x0, y: y0, vx: Math.cos(a) * v, vy: Math.sin(a) * v, d, left: o.hit ? d : d + 900, age: 0, from, to, ...o,
     side: o.hit ? 1 : r() < 0.5 ? -1 : 1,
     color: o.shell ? '#ffd27a' : from.fx.tracer, plasma: from.fx.plasma && !o.shell });
-  if (from === main && !o.shell) { stats.shots++; if (o.hit) { stats.hits++; if (o.hs) stats.hh++; } }
+  if (from === main && !o.shell) { stats.shots++; if (o.hit) { stats.hits++; if (o.hs) stats.hh++; } sfx.play('shot'); }
   if (!o.shell) {   // #108: shots in the current fight only (pair: the engagement at t; crowd: a fight segment)
     const fk = duelPlan ? engagementAt(duelPlan, t)?.t0 ?? null : (cur?.id === 'fight' ? cur.t0 : null);
     if (fk != null) {
@@ -422,13 +435,13 @@ function land(t, b) {
   if (s === main && life.cls === 'ha') fx.push({ kind: 'shield', s, t0: t, dur: 0.35 });
   if (b.final) {
     s.hs = !!b.hs; s.set('die', t); s.deadAt = t; s.busy = false;
-    if (s === main) { stats.d++; deathTimes.push(t); if (duelPlan) { recentRival.push({ hs: !!b.hs }); if (recentRival.length > 10) recentRival.shift(); } if (b.from.opp) oppDeaths[b.from.opp.slug] = (oppDeaths[b.from.opp.slug] || 0) + 1; if (!fast && !reducedOS && pace === 'cine') { if (b.hs) freeze = 2; bullet = { kind: 'death', w0: bullet ? wallT - 0.15 : wallT }; } return; }
-    if (b.from === main) { stats.k++; killTimes.push(t); recentMain.push({ hs: !!b.hs }); if (recentMain.length > 10) recentMain.shift(); if (s.opp) oppKills[s.opp.slug] = (oppKills[s.opp.slug] || 0) + 1; if (b.hs) stats.hs++; if (b.veh) stats.veh++;
+    if (s === main) { stats.d++; sfx.play('death'); deathTimes.push(t); if (duelPlan) { recentRival.push({ hs: !!b.hs }); if (recentRival.length > 10) recentRival.shift(); } if (b.from.opp) oppDeaths[b.from.opp.slug] = (oppDeaths[b.from.opp.slug] || 0) + 1; if (!fast && !reducedOS && pace === 'cine') { if (b.hs) freeze = 2; bullet = { kind: 'death', w0: bullet ? wallT - 0.15 : wallT }; } return; }
+    if (b.from === main) { stats.k++; sfx.play(b.hs ? 'headshot' : 'kill'); killTimes.push(t); recentMain.push({ hs: !!b.hs }); if (recentMain.length > 10) recentMain.shift(); if (s.opp) oppKills[s.opp.slug] = (oppKills[s.opp.slug] || 0) + 1; if (b.hs) stats.hs++; if (b.veh) stats.veh++;
       if (b.headHitsBefore !== undefined) hsKillLog.push({ hs: !!b.hs, headBefore: b.headHitsBefore });
       if (!fast && !reducedOS && pace === 'cine') { if (b.hs) freeze = 2; bullet = { kind: 'kill', w0: bullet ? wallT - 0.15 : wallT }; }
       pop(main, b.hs ? T('pop.hs', 'headshot +1') : b.veh ? T('pop.veh', 'vehicle kill +1') : '+1', b.hs ? '#ffe066' : '#fff', t); }
     else if (b.assist) { stats.a++; pop(main, T('pop.assist', '+assist'), '#9fe8ff', t); }
-  }
+  } else if (b.from === main) sfx.play('hit');
 }
 
 // ---------------------------------------------------------------- duel plan (#96)
@@ -867,11 +880,11 @@ const HOOKS = {
               for (const a of allies) a.set('run', t); },
             tick(s, t, dt) { scroll += dt * (s.veh ? 260 : 150); },
             exit(s, t) { for (const a of allies) a.set('idle', t); arrive(t); } },
-  reload: { enter(s, t) { main.reloadAt = t + 0.2; } },
+  reload: { enter(s, t) { main.reloadAt = t + 0.2; sfx.play('reload'); } },
   revivedBy: { enter(s, t) { const m = allies.length ? pick(allies) : null; s.medic = m; },
                tick(s, t) { const tl = t - s.t0, d = s.t1 - s.t0;
                  if (s.medic && !s.healFx && tl > d - 2) { s.healFx = 1; fx.push({ kind: 'heal', from: s.medic, to: main, t0: t, dur: 1.2 }); }
-                 if (!s.up && tl > d - 0.8) { s.up = 1; main.downKeep = false; main.set('revive', t); stats.rev++; pop(main, T('pop.revived', 'revived'), '#8dffa5', t); } } },
+                 if (!s.up && tl > d - 0.8) { s.up = 1; main.downKeep = false; main.set('revive', t); stats.rev++; sfx.play('revive'); pop(main, T('pop.revived', 'revived'), '#8dffa5', t); } } },
   healAlly: { enter(s, t) { const tg = allies.length ? pick(allies) : null; if (tg) fx.push({ kind: 'heal', from: main, to: tg, t0: t, dur: s.t1 - s.t0 }); } },
   ammoBox: { enter(s, t) { life.box = { x: main.home + 40, t0: t, t1: s.t1 }; } },
   shuffle: { enter(s, t) { s.x0 = main.x; s.dx = (main.x > main.home ? -1 : 1) * (20 + rng() * 40); },
@@ -1647,6 +1660,7 @@ if (reduced) {
   const rm = document.getElementById('rm'); rm.hidden = false;
   const go = document.createElement('button'); go.type = 'button'; go.textContent = T('playAnyway', '▶ Play anyway');
   go.addEventListener('click', () => {
+    sfx.unlock();
     reduced = false; rm.hidden = true; if (ui?.skip) ui.skip.hidden = false;
     for (const s of everyone) s.seed = Math.random() * 10;   // the still frame zeroed the pose phases
     startLoop();
