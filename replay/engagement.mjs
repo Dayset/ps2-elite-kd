@@ -150,7 +150,7 @@ function damage(h, st, dmg, t, trade) {
 
 /**
  * One engagement. a, b: shooter() outputs. rng: () => [0,1).
- * opts: { outcome: 'a'|'b'|'break'|'third', wA: P(A wins | decisive) }.
+ * opts: { outcome: 'a'|'b'|'break'|'third', wA: P(A wins | decisive), victim: 'a'|'b' (third only, else sampled) }.
  * The trade count uses the MIX win probabilities (wA × decisive share), so a
  * forced outcome conditions the fight without breaking the averages.
  * → { shots: [{t, from, hit, hs, dmg, phase}], hp: {a: [[t, shield, health, over]], b: [...]}, result }
@@ -207,7 +207,7 @@ export function engage(a, b, rng, opts = {}) {
     const sh = side === "a" ? a : b;
     let t = 0;
     for (let i = 0; i < nTrade[side]; i++) {
-      if (i % sh.burstLen === 0 && i > 0) t += 0.5 + rng() * 1.5; // pause between bursts
+      if (i % sh.burstLen === 0 && i > 0) t += 0.3 + rng() * 0.7; // pause between bursts (kept short: long trades would otherwise stretch duel gaps past the lognormal)
       tradeShots[side].push(t);
       t += 1 / sh.rate;
     }
@@ -232,7 +232,7 @@ export function engage(a, b, rng, opts = {}) {
   }
   if (!win) {
     if (result === "third") {
-      const victim = rng() < 0.5 ? "a" : "b";
+      const victim = opts.victim ?? (rng() < 0.5 ? "a" : "b");
       const t = tradeEnd + 0.1;
       regen(hp[victim], (victim === "a" ? a : b).cls, st[victim], t);
       const dealt = damage(hp[victim], st[victim], hpTotal(hp[victim]), t, false);

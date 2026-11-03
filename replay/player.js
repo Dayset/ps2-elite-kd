@@ -7,8 +7,10 @@ import { STATES, FILLERS, PHASES, phaseOf } from './states.js';
 import { shardOf, slugOf } from './shard.mjs';
 import { toDoc } from './doc.mjs?v=20261103-pair1';
 import { pairOf, pairStatus, pairRow, defaultRival, rankedRivals } from './pair.mjs?v=20261103-pair1';
-import { profileOf, shotsPerSec } from './weapons.mjs?v=20261103-weap1';
+import { profileOf, shotsPerSec, toProfile, FALLBACK } from './weapons.mjs?v=20261103-weap1';
 import { baseRate, speedAt, bulletRate, nextKillAt, calmStretchEnd } from './director.mjs?v=20261103-dir1';
+import { shooter } from './engagement.mjs?v=20261103-duel1';
+import { planDuel } from './duel-plan.mjs?v=20261103-duel1';
 import { t as tr, ready as i18nReady, currentLang } from '../i18n.mjs';
 
 const cv = document.getElementById('stage'), ctx = cv.getContext('2d');
@@ -241,6 +243,36 @@ function land(t, b) {
     else if (b.assist) { stats.a++; pop(main, T('pop.assist', '+assist'), '#9fe8ff', t); }
   }
 }
+
+// ---------------------------------------------------------------- duel plan (#96)
+// When a pair exists, the duel plan is built from the pair's own shooters
+// (main-weapon profiles + shard stats) and #92's pair-model.json when it is
+// there, else the planner defaults. The crowd scene keeps planCycle until
+// #98 renders the plan; the plan is exposed for the headless check.
+let duelPlan = null;
+if (pair) {
+  try {
+    const model = await getJson('../data/replay/pair-model.json');
+    const mkSide = (d) => {
+      const prof = d.main ? profileOf(d.main.id, d.main.cat, profiles?.profiles) : null;
+      const s = d.stats || {};
+      const val = (id) => s[id]?.v ?? null;
+      const classes = {};
+      if (d.classes) for (const [k, v] of Object.entries(d.classes)) if (k !== 'hours' && v > 0) classes[k] = v;
+      return {
+        sh: shooter(prof ?? toProfile(FALLBACK['Assault Rifle']), {
+          kd: val('kd') ?? 1, spk: val('spk') ?? 39.5, hpk: val('hpk') ?? 10.4, hsr: (val('hsr') ?? 18.26) / 100,
+        }),
+        info: { kpm: val('kpm') ?? 1, classShares: classes, revivedShare: val('revivedShare') ?? 0.3, resupplyPm: val('resupplyPm') ?? 0 },
+      };
+    };
+    let pairSeed = seed;
+    for (const c of ('|' + pair.b.slug)) pairSeed = Math.imul(pairSeed ^ c.charCodeAt(0), 16777619);
+    const A = mkSide(pair.a), B = mkSide(pair.b);
+    duelPlan = planDuel(A.sh, B.sh, { seed: pairSeed, durationSec: 7200, pA: pair.pA, model, aInfo: A.info, bInfo: B.info });
+  } catch { duelPlan = null; }
+}
+window.__duelPlan = () => duelPlan;
 
 // ---------------------------------------------------------------- 1:1 timeline planner
 // One "cycle" = from a death (or the first spawn) to the next death. Everything is placed on the real
