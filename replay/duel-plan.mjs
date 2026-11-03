@@ -142,7 +142,15 @@ export function planDuel(a, b, opts = {}) {
     // ---- per-life shooters (class varies per life; profile is the side's own)
     const eng = engage({ ...a, cls: life.a.cls }, { ...b, cls: life.b.cls },
       mulberry(deriveSeed(seed, idx)), { outcome, wA: pA, victim });
-    const tradeDur = eng.shots.filter((s) => s.phase === "trade").reduce((mx, s) => Math.max(mx, s.t), 0);
+    // Trade length is the true trade end, not the last trade-phase shot: the
+    // loser's deferred return fire carries phase "trade" but lands in the
+    // commit window, so taking the max trade-phase time would swallow the
+    // commit (commit shots would predate the commit segment). Decisive
+    // engagements always open the commit at the first commit-phase shot.
+    const commitShots = eng.shots.filter((s) => s.phase === "commit");
+    const tradeDur = commitShots.length
+      ? Math.min(...commitShots.map((s) => s.t)) - 0.5
+      : eng.shots.filter((s) => s.phase === "trade").reduce((mx, s) => Math.max(mx, s.t), 0);
     const commitDur = eng.killAt != null ? eng.killAt - (tradeDur + 0.5) : 0;
 
     // ---- gap: only kill engagements draw a budget; breaks/thirds take base time.
@@ -161,7 +169,7 @@ export function planDuel(a, b, opts = {}) {
     const t0 = tStart;
     const tSpot = t0 + approachDur, tTrade = tSpot + spot;
     const tKill = decisive ? tTrade + eng.killAt : null;
-    const tResolve = decisive ? tKill : outcome === "third" ? tTrade + tradeDur + 0.1 : tTrade + tradeDur;
+    const tResolve = decisive ? tKill : tTrade + tradeDur;
     const aftermathDur = U(rng, 1, 3);
     const t1 = tResolve + 0.5 + aftermathDur;
 
@@ -203,6 +211,8 @@ export function planDuel(a, b, opts = {}) {
       idx, fightIdx: curFight.idx, t0, t1, outcome, victim, revived, respawnSide, respawnDur,
       aClass: life.a.cls, bClass: life.b.cls, segments, shots,
       killAt: tKill, tradeDur, commitDur: Math.max(0, commitDur),
+      // HP traces shifted into plan time (snapshots per shot, plus the commit reset).
+      hp: { a: eng.hp.a.map(([t, s, h, o]) => [t + tTrade, s, h, o]), b: eng.hp.b.map(([t, s, h, o]) => [t + tTrade, s, h, o]) },
     });
 
     // ---- lives: a death closes the victim's life; the next loop reopens it
@@ -229,5 +239,5 @@ export function planDuel(a, b, opts = {}) {
     lives[side].push({ ...life[side], end: duration, deathBy: null });
   }
   if (curFight.kills.length > 0 || fights.length === 0) fights.push({ ...curFight, t1: duration });
-  return { v: 1, pA, params, thirdP, breakP: BREAK_P, lives, engagements, fights, cuts };
+  return { v: 1, pA, params, thirdP, breakP: BREAK_P, duration, lives, engagements, fights, cuts };
 }

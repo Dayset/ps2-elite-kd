@@ -10,7 +10,8 @@ import { pairOf, pairStatus, pairRow, defaultRival, rankedRivals } from './pair.
 import { profileOf, shotsPerSec, toProfile, FALLBACK } from './weapons.mjs?v=20261103-weap1';
 import { baseRate, speedAt, bulletRate, nextKillAt, calmStretchEnd } from './director.mjs?v=20261103-dir1';
 import { shooter } from './engagement.mjs?v=20261103-duel1';
-import { planDuel } from './duel-plan.mjs?v=20261103-duel1';
+import { planDuel } from './duel-plan.mjs?v=20261103-duel2';
+import { hpAt, barFracs, sparkFor, scoreAt, engagementAt, lifeAt as duelLifeAt, phaseState, killcamFor } from './duel-scene.mjs?v=20261103-duel2';
 import { t as tr, ready as i18nReady, currentLang } from '../i18n.mjs';
 
 const cv = document.getElementById('stage'), ctx = cv.getContext('2d');
@@ -166,6 +167,7 @@ const enemies = ENEMY_SLOTS.map(([x, dy, k], i) => {
   const s = new Soldier(rigs[foes[i % 2]], foes[i % 2], { x, y: GROUND + dy, scale: P.enemyScale * k, facing: -1, seed: 3.1 + i * 1.9, rate: 9 + 3 * rng(), speed: 170 });
   s.slot = x; s.deadAt = -99; s.state = 'dead'; return s;
 });
+if (pair) enemies.splice(1, 1); // slot 1 is the rival's; the bot there would overlap him
 const everyone = [main, ...allies, ...enemies];
 // cover: one basic wall tile per soldier, on the far side from the enemy, 10% transparent, and
 // only up to its soldier's eyes (head() height) — the head shows over the top, the body ghosts
@@ -182,6 +184,21 @@ for (const a of allies) a.cover = makeCover(a);
 for (const e of enemies) e.cover = makeCover(e);
 main.cover.wall.forMain = true;
 const walls = [main.cover.wall, ...allies.map(a => a.cover.wall), ...enemies.map(e => e.cover.wall)];
+
+// ---------------------------------------------------------------- rival (#98)
+// In pair mode one enemy slot belongs to the rival: his own faction rig,
+// his main weapon's rate, his slot and wall. Everyone else is already dim
+// (allies) or dimmed here (enemies): third parties stay background.
+let rival = null;
+if (pair) {
+  const FB = pair.b.faction in rigs ? pair.b.faction : 'tr';
+  const bProf = pair.b.main ? profileOf(pair.b.main.id, pair.b.main.cat, profiles?.profiles) : null;
+  rival = new Soldier(rigs[FB], FB, { x: 1030, y: GROUND - 10, scale: P.enemyScale * 0.95, facing: -1, seed: 7.7,
+    rate: bProf ? shotsPerSec(bProf) : 10, speed: 170, mode: bProf?.mode ?? 'auto', reloadMs: bProf?.reloadMs ?? 2400 });
+  rival.slot = 1030; rival.deadAt = -99;
+  rival.cover = makeCover(rival); walls.push(rival.cover.wall); everyone.push(rival);
+  for (const e of enemies) e.dim = true;
+}
 
 // ---------------------------------------------------------------- effects
 let bullets = [], fx = [];
@@ -231,8 +248,8 @@ function currentRate() {
 function land(t, b) {
   const s = b.to;
   if (b.shell) fx.push({ kind: 'boom', x: b.x, y: b.y + 20, t0: t, dur: 0.6 });
-  else fx.push({ kind: 'spark', x: b.x, y: b.y, t0: t, dur: b.hs ? 0.45 : 0.18, big: b.hs, color: b.from.fx.tracer });
-  if (s.state === 'die' || s.state === 'dead') return;
+  else fx.push({ kind: 'spark', x: b.x, y: b.y, t0: t, dur: b.hs ? 0.45 : 0.18, big: b.hs, color: b.spark ?? b.from.fx.tracer });
+  if ((s.state === 'die' || s.state === 'dead') && !(b.final && b.duel)) return;
   s.flinchAt = t;
   if (s === main && life.cls === 'ha') fx.push({ kind: 'shield', s, t0: t, dur: 0.35 });
   if (b.final) {
@@ -273,6 +290,101 @@ if (pair) {
   } catch { duelPlan = null; }
 }
 window.__duelPlan = () => duelPlan;
+
+// ---------------------------------------------------------------- duel scene (#98)
+// The plan drives the duel: a flattened event list (states, shots, kills,
+// returns) pumped as simT advances. Score is recomputed from the plan, so
+// jumps and skips stay honest; tallies come from land() as usual.
+const stripTag = (n) => (n || '').replace(/^\[[^\]]+\]\s*/, '');
+let scoreEl = null, kcEl = null, backEl = null, pumpEvents = [], pumpIdx = 0, pumpT = 0;
+const updateScore = () => {
+  if (!scoreEl || !duelPlan) return;
+  const s = scoreAt(duelPlan, simT);
+  scoreEl.textContent = `${stripTag(pair.a.name)} ${s.a} – ${s.b} ${stripTag(pair.b.name)}`;
+};
+const showKillcam = (eng) => {
+  if (!kcEl) return;
+  const kc = killcamFor(eng, eng.outcome === 'a' ? pair.a : pair.b);
+  kcEl.replaceChildren();
+  const killer = document.createElement('b'); killer.textContent = stripTag(eng.outcome === 'a' ? pair.a.name : pair.b.name); kcEl.append(killer);
+  if (kc.weapon) {
+    kcEl.append(document.createTextNode(' · '));
+    if (kc.weapon.img != null) { const im = document.createElement('img'); im.src = `../assets/weapons/${kc.weapon.img}.webp`; im.alt = ''; kcEl.append(im); kcEl.append(document.createTextNode(' ')); }
+    kcEl.append(document.createTextNode(kc.weapon.name));
+  }
+  const line = document.createElement('div');
+  line.textContent = `${kc.hits} ${T('hits', 'hits')} · ${kc.hs} ${T('headshots', 'headshots')} · TTK ${kc.ttk.toFixed(1)}s`;
+  kcEl.append(line);
+  kcEl.hidden = false;
+};
+const showBackNote = () => {
+  if (!backEl) return;
+  backEl.textContent = T('isBack', '{name} is back', { name: stripTag(pair.b.name) });
+  backEl.hidden = false;
+};
+function pumpDuel(t) {
+  if (!duelPlan) return;
+  if (!engaged) { engaged = true; for (const e of enemies) { e.state = 'idle'; e.x = e.slot; } } // no crowd fights arrive in pair mode; wake the background battle directly
+  const jump = t - pumpT > 5; // a skip jumps past shots: keep states/kills, don't fire a volley
+  while (pumpIdx < pumpEvents.length && pumpEvents[pumpIdx].t <= t) {
+    const ev = pumpEvents[pumpIdx++];
+    if (ev.kind === 'state') (ev.side === 'a' ? main : rival).set(ev.state, t);
+    else if (ev.kind === 'shot') {
+      if (jump) continue;
+      const sh = ev.shot, from = sh.from === 'a' ? main : rival, to = sh.from === 'a' ? rival : main;
+      fire(t, from, to, { hit: sh.hit, hs: sh.hs, final: ev.kill, duel: true, spark: sh.hit ? sparkFor(ev.eng, ev.idx) : null });
+    }
+    else if (ev.kind === 'kill') { showKillcam(ev.eng); updateScore(); }
+    else if (ev.kind === 'back') showBackNote();
+    else if (ev.kind === 'cls') life.cls = ev.cls;
+  }
+  pumpT = t;
+}
+if (pair && duelPlan) {
+  for (const e of duelPlan.engagements) {
+    for (const s of e.segments) {
+      pumpEvents.push({ t: s.t0, kind: 'state', side: 'a', state: phaseState(s.phase, 'a', e) });
+      pumpEvents.push({ t: s.t0, kind: 'state', side: 'b', state: phaseState(s.phase, 'b', e) });
+    }
+    e.shots.forEach((sh, i) => {
+      if (sh.from === 'third') return;
+      pumpEvents.push({ t: sh.t, kind: 'shot', eng: e, idx: i, shot: sh,
+        kill: e.killAt != null && Math.abs(sh.t - e.killAt) < 1e-9 && sh.from === e.outcome });
+    });
+    if (e.killAt != null) pumpEvents.push({ t: e.killAt, kind: 'kill', eng: e });
+    if (e.victim) {
+      const deathT = e.killAt ?? e.segments.find((s) => s.phase === 'resolution').t0;
+      pumpEvents.push({ t: deathT + 1.2, kind: 'state', side: e.victim, state: 'dead' });
+    }
+  }
+  for (const side of ['a', 'b']) {
+    for (const lf of duelPlan.lives[side]) {
+      if (lf.start <= 0) continue;
+      const nextEng = duelPlan.engagements.find((x) => x.respawnSide === side && x.t0 >= lf.start - 1e-9);
+      const revived = nextEng?.revived ?? false;
+      pumpEvents.push({ t: lf.start - (revived ? 1.5 : 0.9), kind: 'state', side, state: revived ? 'revive' : 'respawn' });
+      const startsNow = duelPlan.engagements.some((x) => Math.abs(x.t0 - lf.start) < 1e-9);
+      if (!startsNow) pumpEvents.push({ t: lf.start, kind: 'state', side, state: 'idle' });
+      if (side === 'a') pumpEvents.push({ t: lf.start, kind: 'cls', cls: lf.cls });
+      if (side === 'b') pumpEvents.push({ t: lf.start, kind: 'back' });
+    }
+  }
+  pumpEvents.sort((x, y) => x.t - y.t);
+  const hud = document.getElementById('hud');
+  const chips = document.createElement('div'); chips.id = 'duelChips';
+  const bv = (id) => pair.b.stats?.[id]?.v ?? null;
+  const f1 = (x, d = 1) => x == null ? '—' : (+x).toFixed(d);
+  for (const [label, text] of [['KPM', f1(bv('kpm'), 2)], ['K/D', f1(bv('kd'), 2)], ['acc', f1(bv('acc'), 0) + '%'], ['HS', f1(bv('hsr'), 0) + '%'], ['shots/kill', f1(bv('spk'), 0)]]) {
+    const c = document.createElement('span'); c.className = 'chip'; c.textContent = `${label} ${text}`; chips.append(c);
+  }
+  hud.append(chips);
+  scoreEl = document.createElement('div'); scoreEl.id = 'duelScore';
+  scoreEl.title = T('scoreAllTime', 'All-time: {a}–{b}', { a: pair.row?.kills ?? '—', b: pair.row?.deaths ?? '—' });
+  document.body.append(scoreEl);
+  kcEl = document.createElement('div'); kcEl.id = 'killcam'; kcEl.hidden = true; document.body.append(kcEl);
+  backEl = document.createElement('div'); backEl.id = 'duelBack'; backEl.className = 'note'; backEl.hidden = true; hud.append(backEl);
+  updateScore();
+}
 
 // ---------------------------------------------------------------- 1:1 timeline planner
 // One "cycle" = from a death (or the first spawn) to the next death. Everything is placed on the real
@@ -395,7 +507,50 @@ function planCycle(T, first) {
 }
 plan.stints = []; plan.lives = [];
 function ensurePlan(t) {
+  if (duelPlan) return; // pair mode: the mapped duel segments are complete
   while (plan.end < t + 60) { const c = planCycle(plan.end, plan.cycles === 0); plan.segs.push(...c.segs); plan.end = c.end; }
+}
+
+// ---------------------------------------------------------------- duel segments (#98)
+// Pair mode feeds the director and the life strip from the duel plan: each
+// engagement maps to STATES ids (approach runs, spot idles, trade trades,
+// commit fights, resolution dies for the victim, aftermath reloads when the
+// winner reloads), plus respawn-timer/beam segments for main's returns.
+// The pump owns soldier states; step() skips enter/exit/tick for these.
+if (duelPlan) {
+  const segId = (phase, e) => phase === 'approach' ? 'running' : phase === 'spot' ? 'idle'
+    : phase === 'trade' ? 'trading' : phase === 'commit' ? 'fight'
+    : phase === 'resolution' ? (e.victim === 'a' ? 'dying' : 'idle')
+    : e.segments.find((s) => s.phase === 'aftermath')?.aIntent === 'reload' ? 'reloading' : 'idle';
+  const msegs = [];
+  let prevT1 = 0, prevDeathAt = null;
+  for (const e of duelPlan.engagements) {
+    if (e.respawnSide === 'a' && prevDeathAt != null) {
+      const lf = duelPlan.lives.a.find((l) => l.start > prevDeathAt - 1e-9 && l.start <= e.t0 + 1e-9);
+      const lifeStart = lf ? lf.start : prevDeathAt + e.respawnDur;
+      const beamStart = lifeStart - 0.9;
+      if (prevT1 < beamStart) msegs.push({ id: e.revived ? 'beingRevived' : 'respawnTimer', t0: prevT1, t1: beamStart, duel: true });
+      const b0 = Math.max(prevT1, beamStart);
+      if (b0 < lifeStart) msegs.push({ id: 'respawn', t0: b0, t1: lifeStart, duel: true });
+    }
+    for (const s of e.segments) msegs.push({ id: segId(s.phase, e), t0: s.t0, t1: s.t1, duel: true });
+    prevT1 = e.t1;
+    if (e.victim) prevDeathAt = e.killAt ?? e.segments.find((s) => s.phase === 'resolution').t0;
+  }
+  plan.segs = msegs;
+  plan.end = duelPlan.duration;
+  plan.lives = duelPlan.lives.a.map((lf, i) => {
+    const phases = [];
+    for (const s of msegs) {
+      if (s.t0 < lf.start - 1e-9 || s.t1 > lf.end + 1e-9) continue;
+      const ph = phaseOf(s.id), last = phases[phases.length - 1];
+      if (last && last.ph === ph) last.t1 = s.t1; else phases.push({ ph, t0: s.t0, t1: s.t1 });
+    }
+    if (!phases.length) phases.push({ ph: 'fight', t0: lf.start, t1: lf.end });
+    const retEng = duelPlan.engagements.find((x) => x.respawnSide === 'a' && x.t0 >= lf.start - 1e-9);
+    return { n: i + 1, t0: lf.start, t1: lf.end, phases, revived: retEng?.revived ?? false };
+  });
+  life.cls = duelPlan.lives.a[0]?.cls ?? null;
 }
 
 // ---------------------------------------------------------------- execution (scene clock = real seconds)
@@ -558,9 +713,17 @@ function step(t, dt) {
     s.x += (tx - s.x) * Math.min(1, dt * 10);
   }
   ensurePlan(t);
-  while (plan.segs.length && plan.segs[0].t1 <= t) { const s = plan.segs.shift(); if (!s.entered) { s.entered = 1; enter(s, s.t0); } exit(s, t); if (cur === s) cur = null; }
+  while (plan.segs.length && plan.segs[0].t1 <= t) {
+    const s = plan.segs.shift();
+    if (s.duel) { if (cur === s) cur = null; continue; } // the duel pump owns states
+    if (!s.entered) { s.entered = 1; enter(s, s.t0); } exit(s, t); if (cur === s) cur = null;
+  }
   const s = plan.segs[0];
-  if (s && s.t0 <= t) { if (!s.entered) { s.entered = 1; enter(s, t); } cur = s; tick(s, t, dt); }
+  if (s && s.t0 <= t) {
+    if (s.duel) cur = s; // director reads the id; no enter/tick for duel segments
+    else { if (!s.entered) { s.entered = 1; enter(s, t); } cur = s; tick(s, t, dt); }
+  }
+  pumpDuel(t);
   background(t, dt);
   for (const b of bullets) {
     const sx = b.vx * dt, sy = b.vy * dt; b.x += sx; b.y += sy; b.age += dt; b.left -= Math.hypot(sx, sy);
@@ -643,6 +806,39 @@ function drawFx(t, layer) {
     }
     ctx.restore();
   }
+}
+// ---------------------------------------------------------------- duel overhead (#98)
+// Name tag + class badge + shield-over-health bars for the two duelists,
+// from the plan's HP traces. Hidden while dead between lives. The health
+// fraction also feeds the soldier's hurt pose (hunch below half health).
+function drawDuelistOverhead(s, t) {
+  const side = s === main ? 'a' : 'b';
+  const life = duelLifeAt(duelPlan, side, t);
+  if (!life) return;
+  const eng = engagementAt(duelPlan, t);
+  const snap = eng ? hpAt(eng, t, side)
+    : { shield: 500, health: life.cls === 'max' ? 2000 : 500, over: 0 };
+  const fr = barFracs(snap, life.cls);
+  s.hp = fr.health;
+  const [hx, hy] = head(s);
+  const name = stripTag(side === 'a' ? pair.a.name : pair.b.name);
+  const badge = (life.cls || 'inf').toUpperCase();
+  ctx.save();
+  ctx.font = `700 ${Math.max(15, Math.round(26 * s.scale))}px system-ui,sans-serif`;
+  const nw = ctx.measureText(name).width;
+  ctx.font = `700 ${Math.max(13, Math.round(20 * s.scale))}px system-ui,sans-serif`;
+  const bw = ctx.measureText(badge).width + 12;
+  const tx = s.x - (bw + 6 + nw) / 2, ty = hy - 64;
+  ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.fillRect(tx, ty - 15, bw, 19);
+  ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.fillText(badge, tx + bw / 2, ty);
+  ctx.font = `700 ${Math.max(15, Math.round(26 * s.scale))}px system-ui,sans-serif`;
+  ctx.textAlign = 'left'; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.6)';
+  ctx.strokeText(name, tx + bw + 6, ty); ctx.fillStyle = '#fff'; ctx.fillText(name, tx + bw + 6, ty);
+  const w = 160 * s.scale, x0 = s.x - w / 2, by = hy - 52;
+  ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.fillRect(x0 - 2, by - 2, w + 4, 22);
+  ctx.fillStyle = '#4aa8ff'; ctx.fillRect(x0, by, w * fr.shield, 8);
+  ctx.fillStyle = '#58d058'; ctx.fillRect(x0, by + 10, w * fr.health, 8);
+  ctx.restore();
 }
 function drawHud(t) {
   ctx.save(); ctx.font = '700 22px system-ui,sans-serif'; ctx.fillStyle = 'rgba(0,0,0,.35)';
@@ -744,6 +940,7 @@ function render(t) {
     if (s === main && (tank.on || t - tank.off < 0.4)) { if (tank.on) { drawTank(t); drawBullets(layer[i]); continue; } drawTank(t); }
     if (s === main && alive(main)) { ctx.save(); ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(s.x, s.y + 4, 70, 11, 0, 0, 7); ctx.stroke(); ctx.restore(); }
     s.draw(ctx, t); drawBullets(layer[i]);
+    if (duelPlan && (s === main || s === rival)) drawDuelistOverhead(s, t);
   }
   while (wi < wallsSorted.length) { const w = wallsSorted[wi++]; if (w.forMain && tank.on) continue; if (cue) { ctx.save(); ctx.filter = 'saturate(0.15)'; drawWall(w); ctx.restore(); } else drawWall(w); }
   drawFx(t, 'over');

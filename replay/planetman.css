@@ -22,3 +22,8 @@ canvas{width:100%;height:auto;display:block;border-radius:0;background:#141b24}
 #life .skip{background:none;border:1px solid #30363d;border-radius:0;color:#8b949e;font-size:11px;padding:0 5px;cursor:pointer;opacity:.6}
 #life .skip:hover{opacity:1;color:#c9d1d9}
 body.bare main{padding:0;max-width:none}body.bare #rm,body.bare #hud,body.bare #life{display:none}
+#duelScore{position:fixed;top:10px;right:14px;z-index:5;background:rgba(0,0,0,.55);color:#fff;font-weight:700;font-size:18px;padding:6px 12px;border:1px solid #30363d}
+#killcam{position:fixed;top:52px;right:14px;z-index:5;background:rgba(0,0,0,.6);color:#fff;font-size:14px;padding:8px 12px;border:1px solid #30363d;max-width:300px}
+#killcam img{height:22px;vertical-align:middle}
+#duelChips{display:flex;flex-wrap:wrap;gap:6px;width:100%}
+@media (max-width:480px){#duelScore{font-size:14px;padding:4px 8px}#killcam{font-size:12px;max-width:210px}}
