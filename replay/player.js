@@ -14,6 +14,7 @@ import { planDuel } from './duel-plan.mjs?v=20261103-duel2';
 import { hpAt, barFracs, sparkFor, scoreAt, engagementAt, lifeAt as duelLifeAt, phaseState, killcamFor } from './duel-scene.mjs?v=20261103-duel2';
 import { STRIP, coverOf, assignLanes } from './lanes.mjs?v=20261103-strip1';
 import { pickWeighted, drawOpponents } from './crowd.mjs?v=20261103-crowd1';
+import { kpmGauge, kdLives, accBar, hsHeads, spkGauge } from './gauges.mjs?v=20261103-gauge1';
 import { t as tr, ready as i18nReady, currentLang } from '../i18n.mjs';
 
 const cv = document.getElementById('stage'), ctx = cv.getContext('2d');
@@ -232,6 +233,14 @@ if (pair) {
 // ---------------------------------------------------------------- effects
 let bullets = [], fx = [];
 const stats = { k: 0, d: 0, a: 0, hs: 0, hh: 0, shots: 0, hits: 0, veh: 0, rev: 0, fills: {} };
+// Living gauges (#108): kill/death moments (for KPM marks and K/D lives),
+// last-10 headshot flags, and the current fight's shots. Fight counters reset
+// in fire() when a new fight starts, so they stay right through a __fast jump.
+const killTimes = [], deathTimes = [];
+const recentMain = [], recentRival = [];
+let fightShots = 0, fightHits = 0, rivalFightShots = 0, rivalFightHits = 0, fightKey = null;
+let lifeIntervals = [];
+let gaugeLast = 0, gaugeForce = false;
 const oppKills = {}, oppDeaths = {};   // #103: per-opponent scene kills/deaths, keyed by slug
 const pickStats = { kill: {}, death: {}, mix: {}, first: { kill: {}, death: {}, mix: {} }, swapOk: 0, swapFail: 0 };   // #103: pickTarget outcomes, keyed by slug
 // Headshot rule (#109): a kill is a headshot kill only when the killing shot
@@ -267,6 +276,14 @@ function fire(t, from, to, o = {}, r = rng) {
     side: o.hit ? 1 : r() < 0.5 ? -1 : 1,
     color: o.shell ? '#ffd27a' : from.fx.tracer, plasma: from.fx.plasma && !o.shell });
   if (from === main && !o.shell) { stats.shots++; if (o.hit) { stats.hits++; if (o.hs) stats.hh++; } }
+  if (!o.shell) {   // #108: shots in the current fight only (pair: the engagement at t; crowd: a fight segment)
+    const fk = duelPlan ? engagementAt(duelPlan, t)?.t0 ?? null : (cur?.id === 'fight' ? cur.t0 : null);
+    if (fk != null) {
+      if (fightKey !== fk) { fightShots = 0; fightHits = 0; rivalFightShots = 0; rivalFightHits = 0; fightKey = fk; }
+      if (from === main) { fightShots++; if (o.hit) fightHits++; }
+      else if (duelPlan && from === rival) { rivalFightShots++; if (o.hit) rivalFightHits++; }
+    }
+  }
 }
 
 // ---------------------------------------------------------------- director (wall clock -> data clock, issue #97)
@@ -292,8 +309,8 @@ function land(t, b) {
   if (s === main && life.cls === 'ha') fx.push({ kind: 'shield', s, t0: t, dur: 0.35 });
   if (b.final) {
     s.hs = !!b.hs; s.set('die', t); s.deadAt = t; s.busy = false;
-    if (s === main) { stats.d++; if (b.from.opp) oppDeaths[b.from.opp.slug] = (oppDeaths[b.from.opp.slug] || 0) + 1; if (!fast && !reduced && !speed1) { if (b.hs) freeze = 2; bullet = { kind: 'death', w0: bullet ? wallT - 0.15 : wallT }; } return; }
-    if (b.from === main) { stats.k++; if (s.opp) oppKills[s.opp.slug] = (oppKills[s.opp.slug] || 0) + 1; if (b.hs) stats.hs++; if (b.veh) stats.veh++;
+    if (s === main) { stats.d++; deathTimes.push(t); if (duelPlan) { recentRival.push({ hs: !!b.hs }); if (recentRival.length > 10) recentRival.shift(); } if (b.from.opp) oppDeaths[b.from.opp.slug] = (oppDeaths[b.from.opp.slug] || 0) + 1; if (!fast && !reduced && !speed1) { if (b.hs) freeze = 2; bullet = { kind: 'death', w0: bullet ? wallT - 0.15 : wallT }; } return; }
+    if (b.from === main) { stats.k++; killTimes.push(t); recentMain.push({ hs: !!b.hs }); if (recentMain.length > 10) recentMain.shift(); if (s.opp) oppKills[s.opp.slug] = (oppKills[s.opp.slug] || 0) + 1; if (b.hs) stats.hs++; if (b.veh) stats.veh++;
       if (b.headHitsBefore !== undefined) hsKillLog.push({ hs: !!b.hs, headBefore: b.headHitsBefore });
       if (!fast && !reduced && !speed1) { if (b.hs) freeze = 2; bullet = { kind: 'kill', w0: bullet ? wallT - 0.15 : wallT }; }
       pop(main, b.hs ? T('pop.hs', 'headshot +1') : b.veh ? T('pop.veh', 'vehicle kill +1') : '+1', b.hs ? '#ffe066' : '#fff', t); }
@@ -1093,8 +1110,173 @@ function render(t) {
     ctx.fillStyle = 'rgba(10,14,20,.8)'; ctx.fillRect(W / 2 - w / 2, 84, w, 44);
     ctx.fillStyle = '#fff'; ctx.fillText(jumpCard.text, W / 2, 116); ctx.restore();
   }
-  lifeUi(t);
+  recordLifeIntervals(); lifeUi(t); updateGauges(t);
 }
+
+// ---------------------------------------------------------------- living gauges (#108, DOM under the life strip)
+// One row per gauge, label left, gauge right. Pair mode shows both sides
+// (player left, opponent right); crowd mode shows the player only. Updates
+// at most 10 times a wall second, and __fast forces one update at its end
+// (a __fast render is a discrete jump, not a frame). Reduced motion needs
+// no special case: the page parks at simT 0, so the gauges show the planned
+// first life with no running fill, exactly as the life strip does.
+function recordLifeIntervals() {
+  for (const l of plan.lives) {
+    if (!lifeIntervals.some((x) => x.n === l.n && x.t0 === l.t0)) lifeIntervals.push({ n: l.n, t0: l.t0, t1: l.t1 });
+  }
+}
+function sideVals(statsObj) {
+  const v = (id) => statsObj?.[id]?.v ?? null;
+  return { kpm: v('kpm'), kd: v('kd'), acc: v('acc'), hsr: v('hsr'), spk: v('spk') };
+}
+function gaugeState(t) {
+  const mv = sideVals(S);
+  const inFight = duelPlan ? !!engagementAt(duelPlan, t) : cur?.id === 'fight';
+  const fightLabel = inFight ? T('gaugeThisFight', 'this fight') : (fightKey != null ? T('gaugeLastFight', 'last fight') : T('gaugeThisFight', 'this fight'));
+  const main = {
+    name: doc.name,
+    kpm: kpmGauge(mv.kpm ?? 0, t, killTimes),
+    kd: kdLives(mv.kd ?? 0, lifeIntervals, killTimes, t),
+    acc: accBar(fightHits, fightShots, (mv.acc ?? 0) / 100),
+    hs: hsHeads(recentMain, (mv.hsr ?? 0) / 100),
+    spk: spkGauge(fightShots, mv.spk ?? 0),
+    fightShots, fightHits, fightLabel,
+    kpmVal: mv.kpm, kdVal: mv.kd,
+  };
+  let rival = null;
+  if (duelPlan) {
+    const rv = sideVals(pair.b.stats);
+    const rivalLives = duelPlan.lives.b.map((lf, i) => ({ n: i + 1, t0: lf.start, t1: lf.end }));
+    rival = {
+      name: pair.b.name,
+      kpm: kpmGauge(rv.kpm ?? 0, t, deathTimes),
+      kd: kdLives(rv.kd ?? 0, rivalLives, deathTimes, t),
+      acc: accBar(rivalFightHits, rivalFightShots, (rv.acc ?? 0) / 100),
+      hs: hsHeads(recentRival, (rv.hsr ?? 0) / 100),
+      spk: spkGauge(rivalFightShots, rv.spk ?? 0),
+      fightShots: rivalFightShots, fightHits: rivalFightHits, fightLabel,
+      kpmVal: rv.kpm, kdVal: rv.kd,
+    };
+  }
+  return { main, rival, inFight, simT: t };
+}
+function mk(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+function buildSide(row, name) {
+  const side = mk('div', 'g-side');
+  const nm = mk('span', 'g-side-name', name); side.append(nm);
+  const bar = mk('div', 'g-bar'); const fill = mk('div', 'g-fill'); const marker = mk('span', 'g-marker');
+  const notches = mk('div', 'g-notches'); const marks = mk('div', 'g-marks');
+  bar.append(fill, marker, notches, marks); side.append(bar);
+  const kdRows = mk('div', 'g-kd-rows'); side.append(kdRows);
+  const heads = mk('div', 'g-heads'); side.append(heads);
+  const text = mk('span', 'g-text'); side.append(text);
+  row.append(side);
+  return { side, nm, bar, fill, marker, notches, marks, kdRows, heads, text, lastSpan: -1, lastMarks: -1, lastKd: '', lastHeads: '' };
+}
+let gaugeRefs = null;
+function buildGauges(el) {
+  const defs = [
+    ['kpm', T('gaugeKpm', 'KPM'), T('gaugeKpmHint', 'Expected kill moments in this data minute: notches are the moments, gold marks are real kills.')],
+    ['kd', T('gaugeKd', 'K/D'), T('gaugeKdHint', 'Coffins per life from the lifetime K/D: each kill in the life fills one, the bar is the fraction.')],
+    ['acc', T('gaugeAcc', 'Accuracy'), T('gaugeAccHint', 'Hits ÷ shots in this fight; the marker is the lifetime accuracy.')],
+    ['hs', T('gaugeHs', 'HS'), T('gaugeHsHint', 'The last 10 kills as heads; gold is a headshot kill, expected is the lifetime HS ratio × 10.')],
+    ['spk', T('gaugeSpk', 'Shots/kill'), T('gaugeSpkHint', 'Shots fired in this fight; it freezes at the kill. The marker is the lifetime shots per kill.')],
+  ];
+  const refs = {};
+  for (const [id, label, hint] of defs) {
+    const row = mk('div', 'gauge'); row.dataset.gauge = id;
+    row.append(mk('span', 'g-label', label)); row.title = hint;
+    el.append(row); refs[id] = row;
+  }
+  return refs;
+}
+function syncSide(ref, side, kind) {
+  if (kind === 'kpm') {
+    const g = side.kpm;
+    ref.bar.style.display = ''; ref.kdRows.style.display = 'none'; ref.heads.style.display = 'none';
+    ref.fill.style.width = (g.fill * 100) + '%';
+    if (g.spanIndex !== ref.lastSpan) {
+      ref.lastSpan = g.spanIndex; ref.notches.textContent = '';
+      for (const n of g.notches) {
+        const s = mk('span', 'g-notch' + (n.filled ? ' filled' : ''));
+        s.style.left = (n.frac * 100) + '%'; ref.notches.append(s);
+      }
+    } else {
+      [...ref.notches.children].forEach((s, i) => { if (g.notches[i]) s.className = 'g-notch' + (g.notches[i].filled ? ' filled' : ''); });
+    }
+    if (g.marks.length !== ref.lastMarks) {
+      ref.lastMarks = g.marks.length; ref.marks.textContent = '';
+      for (const m of g.marks) { const s = mk('span', 'g-mark'); s.style.left = (m * 100) + '%'; ref.marks.append(s); }
+    }
+    ref.marker.style.display = 'none';
+    ref.text.textContent = side.kpmVal == null ? '—' : T('gaugeSpanMin', '{n} min', { n: g.spanMin }) + ' · ' + num(side.kpmVal.toFixed(2)) + ' KPM';
+  } else if (kind === 'kd') {
+    ref.bar.style.display = 'none'; ref.heads.style.display = 'none'; ref.kdRows.style.display = '';
+    const json = JSON.stringify(side.kd);
+    if (json !== ref.lastKd) {
+      ref.lastKd = json; ref.kdRows.textContent = '';
+      for (const r of side.kd) {
+        const row = mk('div', 'g-kd-row' + (r.dimmed ? ' dim' : ''));
+        row.append(mk('span', 'g-life', T('gaugeLife', 'Life {n}', { n: r.n })));
+        const coffins = mk('span', 'g-coffins');
+        for (let i = 0; i < r.full; i++) { const c = mk('span', 'coffin' + (i < r.filled ? ' filled' : ''), '⚰️'); coffins.append(c); }
+        row.append(coffins);
+        const partial = mk('span', 'g-partial'); const pi = mk('i'); pi.style.width = (r.partialWidth * 100) + '%'; partial.append(pi); row.append(partial);
+        row.append(mk('span', 'g-kills', T('gaugeKills', '{n} kills', { n: r.kills }) + (r.over ? ' +' + r.over : '')));
+        ref.kdRows.append(row);
+      }
+    } else {
+      [...ref.kdRows.children].forEach((row, i) => {
+        const r = side.kd[i]; if (!r) return;
+        [...row.querySelectorAll('.coffin')].forEach((c, j) => { c.className = 'coffin' + (j < r.filled ? ' filled' : ''); });
+        const pi = row.querySelector('.g-partial i'); if (pi) pi.style.width = (r.partialWidth * 100) + '%';
+        const kl = row.querySelector('.g-kills'); if (kl) kl.textContent = T('gaugeKills', '{n} kills', { n: r.kills }) + (r.over ? ' +' + r.over : '');
+      });
+    }
+    ref.text.textContent = side.kdVal == null ? '—' : num(side.kdVal.toFixed(2)) + ' K/D';
+  } else if (kind === 'acc') {
+    ref.bar.style.display = ''; ref.kdRows.style.display = 'none'; ref.heads.style.display = 'none';
+    ref.fill.style.width = (side.acc.frac * 100) + '%';
+    ref.marker.style.display = ''; ref.marker.style.left = (side.acc.marker * 100) + '%';
+    ref.notches.textContent = ''; ref.marks.textContent = '';
+    ref.text.textContent = side.fightHits + '/' + side.fightShots + ' · ' + side.fightLabel;
+  } else if (kind === 'hs') {
+    ref.bar.style.display = 'none'; ref.kdRows.style.display = 'none'; ref.heads.style.display = '';
+    const json = JSON.stringify(side.hs.heads);
+    if (json !== ref.lastHeads) {
+      ref.lastHeads = json; ref.heads.textContent = '';
+      for (const h of side.hs.heads) { const d = mk('span', 'dot' + (h ? ' hs' : '')); ref.heads.append(d); }
+    }
+    ref.text.textContent = T('gaugeExpected', 'expected {n}', { n: side.hs.expected });
+  } else if (kind === 'spk') {
+    ref.bar.style.display = ''; ref.kdRows.style.display = 'none'; ref.heads.style.display = 'none';
+    ref.fill.style.width = (side.spk.frac * 100) + '%';
+    ref.marker.style.display = ''; ref.marker.style.left = (side.spk.markerFrac * 100) + '%';
+    ref.notches.textContent = ''; ref.marks.textContent = '';
+    ref.text.textContent = side.spk.current + ' · ' + side.fightLabel + (side.spk.lifetime ? ' · lifetime ' + num(side.spk.lifetime.toFixed(1)) : '');
+  }
+}
+function updateGauges(t) {
+  const el = document.getElementById('gauges'); if (!el) return;
+  const w = performance.now(); if (!gaugeForce && w - gaugeLast < 100) return; gaugeLast = w; gaugeForce = false;
+  if (!gaugeRefs) {
+    gaugeRefs = buildGauges(el);
+    for (const id of ['kpm', 'kd', 'acc', 'hs', 'spk']) {
+      gaugeRefs[id]._sides = [buildSide(gaugeRefs[id], '')];
+    }
+  }
+  const st = gaugeState(t);
+  const sides = st.rival ? [st.main, st.rival] : [st.main];
+  for (const id of ['kpm', 'kd', 'acc', 'hs', 'spk']) {
+    const row = gaugeRefs[id];
+    while (row._sides.length < sides.length) row._sides.push(buildSide(row, ''));
+    row._sides.forEach((ref, i) => {
+      ref.nm.textContent = sides[i].name;
+      syncSide(ref, sides[i], id);
+    });
+  }
+}
+window.__gaugeState = () => gaugeState(simT);
 
 // ---------------------------------------------------------------- DOM hints (details live in hover titles)
 const pc = id => pct(id) == null ? '' : '\n' + T('pct', 'Higher than {p}% of {n} players.', { p: pct(id), n: num(doc.poolSize) });
@@ -1139,13 +1321,22 @@ const CHIPS = [
       { list: ['ha', 'med', 'eng', 'la', 'inf', 'max'].map(k => `${CLS[k]} ${doc.classes[k] ?? 0}%`).join(', ') }) : '');
   hud.append(who);
   if (pairNote) { const pn = document.createElement('div'); pn.className = 'note'; pn.textContent = pairNote; hud.append(pn); }
+  // #108: living gauges under the life strip, and the old chips collapsed
+  // below them. Chip content and hover texts are unchanged, only reparented;
+  // the pair-mode opponent chips (#duelChips) move into the same details.
+  const gaugesEl = document.createElement('div'); gaugesEl.id = 'gauges'; hud.append(gaugesEl);
+  const allEl = document.createElement('details'); allEl.id = 'allStats'; allEl.className = 'allStats';
+  const sum = document.createElement('summary'); sum.textContent = T('gaugeAllStats', 'All stats'); allEl.append(sum);
+  const chipsWrap = document.createElement('div'); chipsWrap.className = 'chipsWrap'; allEl.append(chipsWrap);
+  hud.append(allEl);
+  const duelChipsEl = document.getElementById('duelChips'); if (duelChipsEl) chipsWrap.append(duelChipsEl);
   for (const [id, v, l0, h0, extra = ''] of CHIPS) {
     const l = CL(id, l0), hint = H_(id, h0) + extra;
     const c = document.createElement('span'); c.className = 'chip' + (v == null ? ' off' : '');
     const b = document.createElement('b'); b.textContent = l; c.append(b, ' ' + (v ?? '—'));
     c.title = v == null ? (id === 'fightStart' ? hint : hint + '\n' + T('missing', 'Not in the data for this player, so a neutral default is used or this part is skipped.')) : hint + pc(id);
     if (v == null && id === 'fightStart') { c.lastChild.textContent = ' ' + T('fightDefault', '19 s (default)'); if (!fight) c.title = hint + '\n' + T('fightNone', 'Not collected for this player yet, so a neutral 19 s is used.'); }
-    hud.append(c);
+    chipsWrap.append(c);
   }
   const n = document.createElement('div'); n.className = 'note';
   n.textContent = T('note', 'Real time: the scene runs 1:1 with the stats, so quiet players have long quiet stretches. Stand-in art. Site data of {date}.',
@@ -1247,7 +1438,7 @@ function advance(w) {
 window.__render = (w) => { advance(w); render(simT); return true; };
 window.__advance = (w) => { advance(w); return true; };   // test hook: director stepping without drawing
 // test hook: run the scene clock forward without drawing or the director (used by tools/probe checks)
-window.__fast = (sec, dt = 1 / 30) => { fast = true; const end = simT + sec; while (simT < end) { simT += dt; wallT = simT; step(simT, dt); } fast = false; render(simT); return window.__params(); };
+window.__fast = (sec, dt = 1 / 30) => { fast = true; const end = simT + sec; while (simT < end) { simT += dt; wallT = simT; step(simT, dt); } fast = false; gaugeForce = true; render(simT); return window.__params(); };
 // ⏭ skip waiting (testing aid): run the same 1:1 clock forward to just before the next kill, assist,
 // death or phase change. Nothing is cut: every skipped second is stepped through the scene, so the
 // tallies, the session clock and every per-minute rate stay exactly as if it had been watched.
@@ -1267,7 +1458,7 @@ window.__skip = () => {
   const to = Math.max(simT, phaseOf(ev.id) !== phaseOf(cur?.id ?? ev.id) ? ev.t0 + 0.02 : ev.t0 - 0.4);
   fast = true; bullet = null; freeze = 0;
   while (simT < to) { const dt = Math.min(1 / 30, to - simT); simT += dt; step(simT, dt); }
-  fast = false;
+  fast = false; gaugeForce = true;
   if (simT > wallT) { skipped += simT - wallT; wallT = simT; }
   render(simT); lifeUi(simT, true);
   return { from, to: simT, id: ev.id, phase: phaseOf(ev.id), stats: { ...stats } };

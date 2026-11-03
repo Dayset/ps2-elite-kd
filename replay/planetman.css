@@ -27,3 +27,32 @@ body.bare main{padding:0;max-width:none}body.bare #rm,body.bare #hud,body.bare #
 #killcam img{height:22px;vertical-align:middle}
 #duelChips{display:flex;flex-wrap:wrap;gap:6px;width:100%}
 @media (max-width:480px){#duelScore{font-size:14px;padding:4px 8px}#killcam{font-size:12px;max-width:210px}}
+#gauges{width:100%;margin-top:8px;display:flex;flex-direction:column;gap:6px}
+.gauge{display:flex;gap:10px;align-items:flex-start;background:#161b22;border:1px solid #30363d;border-radius:0;padding:6px 8px}
+.g-label{min-width:74px;font-weight:600;white-space:nowrap;cursor:help}
+.g-side{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.g-side-name{font-size:12px;color:#8b949e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.g-bar{position:relative;height:12px;background:#21262d;overflow:hidden}
+.g-fill{position:absolute;left:0;top:0;bottom:0;background:#58a6ff;width:0}
+.g-marker{position:absolute;top:0;bottom:0;width:2px;background:#ffe066}
+.g-notch{position:absolute;top:1px;width:8px;height:8px;background:#21262d;border:1px solid #8b949e;transform:translateX(-50%) rotate(45deg)}
+.g-notch.filled{background:#ffe066;border-color:#ffe066}
+.g-mark{position:absolute;top:3px;width:6px;height:6px;background:#ffe066;transform:translateX(-50%)}
+.g-text{font-size:12px;color:#8b949e}
+.g-kd-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12px}
+.g-life,.g-kills{white-space:nowrap}
+.g-kd-row.dim{opacity:.55}
+.g-life{min-width:52px;color:#8b949e}
+.g-coffins{letter-spacing:1px}
+.coffin{opacity:.35;filter:grayscale(1)}
+.coffin.filled{opacity:1;filter:none}
+.g-partial{display:inline-block;width:34px;height:6px;background:#21262d;vertical-align:middle;overflow:hidden}
+.g-partial i{display:block;height:100%;background:#58a6ff}
+.g-kills{color:#8b949e}
+.g-heads{display:flex;gap:4px}
+.dot{width:12px;height:12px;background:#30363d;border-radius:50%}
+.dot.hs{background:#ffe066}
+.allStats{width:100%;margin-top:2px}
+.allStats summary{cursor:pointer;color:#8b949e;font-size:13px}
+.chipsWrap{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+@media (max-width:480px){.g-label{min-width:58px}}
