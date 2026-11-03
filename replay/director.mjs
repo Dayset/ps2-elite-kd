@@ -54,3 +54,33 @@ export function calmStretchEnd(segs, t) {
   }
   return end != null && end - t > 20 ? end : null;
 }
+
+// Pace selector (#110, pure helpers; the state lives in player.js).
+//
+// resolvePace(urlSpeed, stored): the URL wins when it names a pace
+// (1, 2 or cine — so today's ?speed=1 keeps working), else the stored
+// choice, else the default x1. Anything else falls through, never crashes.
+export function resolvePace(urlSpeed, stored) {
+  if (urlSpeed === '1' || urlSpeed === '2' || urlSpeed === 'cine') return urlSpeed;
+  if (stored === '1' || stored === '2' || stored === 'cine') return stored;
+  return '1';
+}
+// rampTo(from, to, elapsed, dur): a rate change that takes dur wall seconds
+// from start to finish, linear. The caller restarts the ramp from the
+// currently shown rate whenever the target changes, so the rate never steps:
+// a mid-ramp target change starts a fresh dur-second ramp, it does not jump.
+export function rampTo(from, to, elapsed, dur = 0.4) {
+  if (elapsed <= 0) return from;
+  if (elapsed >= dur) return to;
+  return from + (to - from) * (elapsed / dur);
+}
+// baseGate(current, wanted, now, lastChange, minInterval): the Cinematic
+// base rate (x2 calm / x1 the rest) may change at most once per minInterval
+// wall seconds. Returns [base, lastChange]; a too-soon change keeps the old
+// base and the old timestamp, so the wait is measured from the last change
+// that actually happened, not from the last wish.
+export function baseGate(current, wanted, now, lastChange, minInterval = 2) {
+  if (wanted === current) return [current, lastChange];
+  if (now - lastChange >= minInterval) return [wanted, now];
+  return [current, lastChange];
+}

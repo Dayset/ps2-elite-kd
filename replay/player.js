@@ -8,7 +8,7 @@ import { shardOf, slugOf } from './shard.mjs';
 import { toDoc } from './doc.mjs?v=20261103-pair1';
 import { pairOf, pairStatus, pairRow, defaultRival, rankedRivals } from './pair.mjs?v=20261103-pair1';
 import { profileOf, shotsPerSec, toProfile, FALLBACK } from './weapons.mjs?v=20261103-weap1';
-import { baseRate, speedAt, bulletRate, nextKillAt, calmStretchEnd } from './director.mjs?v=20261103-dir1';
+import { baseRate, bulletRate, nextKillAt, calmStretchEnd, rampTo, baseGate, resolvePace } from './director.mjs?v=20261103-pace1';
 import { shooter, headChance } from './engagement.mjs?v=20261103-hs1';
 import { planDuel } from './duel-plan.mjs?v=20261103-duel2';
 import { hpAt, barFracs, sparkFor, scoreAt, engagementAt, lifeAt as duelLifeAt, phaseState, killcamFor } from './duel-scene.mjs?v=20261103-duel2';
@@ -22,7 +22,10 @@ const W = STRIP.W, H = STRIP.H, GROUND = STRIP.GROUND;
 const q = new URLSearchParams(location.search);
 let reduced = matchMedia('(prefers-reduced-motion: reduce)').matches && !q.has('preview') && !q.has('play');
 const debug = q.has('debug');
-const speed1 = q.get('speed') === '1';   // ?speed=1 forces x1 everywhere (tests, owner check)
+const reducedOS = matchMedia('(prefers-reduced-motion: reduce)').matches;   // the OS setting itself, never changed by ▶ Play anyway
+// Pace selector (#110): URL ?speed=1|2|cine wins over the stored choice,
+// else the stored choice, else x1. Storage failures fall back to x1.
+let pace = resolvePace(q.get('speed'), (() => { try { return localStorage.getItem('ps2ekd:replayPace'); } catch { return null; } })());
 if (q.has('bare')) document.body.classList.add('bare');
 const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 const lerp = (a, b, k) => a + (b - a) * k;
@@ -33,6 +36,33 @@ const T = (k, fb, v) => tr('replay.' + k, fb, v);
 const LOC = currentLang();
 const num = (x) => (+x).toLocaleString(LOC);
 const LBL = (id) => T('st.' + id, STATES[id]?.label ?? id);
+// Pace selector (#110, DOM under the canvas, right-aligned): replaces the
+// old canvas speed chip. The URL choice wins for this load only — it is not
+// written back to storage, so a later load without ?speed keeps the stored
+// choice. The rate span shows the last computed rate (advance() owns it;
+// render() only displays it, so displaying never moves the ramp state).
+const paceEl = document.createElement('div'); paceEl.id = 'pace';
+paceEl.setAttribute('aria-label', T('paceLabel', 'Playback pace'));
+const paceBtns = document.createElement('div'); paceBtns.className = 'pace-btns';
+const paceBtnMap = {};
+for (const [id, label, hint] of [
+  ['1', '×1', T('pace1Hint', 'Real time, constant; no slow-mo, no bullet time, no jump cuts.')],
+  ['2', '×2', T('pace2Hint', 'Twice real time, constant; no slow-mo, no bullet time, no jump cuts.')],
+  ['cine', '🎬', T('paceCineHint', 'Cinematic: the director — ×2 calm, ×1 trade, ×0.5 before a kill, ×0.2 bullet time, jump cuts.')],
+]) {
+  const b = document.createElement('button'); b.type = 'button'; b.dataset.pace = id; b.textContent = label; b.title = hint; b.setAttribute('aria-label', hint);
+  b.addEventListener('click', () => setPace(id)); paceBtns.append(b); paceBtnMap[id] = b;
+}
+const paceRateEl = document.createElement('span'); paceRateEl.className = 'pace-rate'; paceRateEl.title = T('paceRateHint', 'Current playback rate.');
+paceEl.append(paceBtns, paceRateEl); cv.after(paceEl);
+function setPace(p, save = true) {
+  pace = p;
+  if (save) { try { localStorage.setItem('ps2ekd:replayPace', p); } catch {} }
+  for (const [id, b] of Object.entries(paceBtnMap)) { const on = id === p; b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.classList.toggle('on', on); }
+}
+setPace(pace, false);
+let paceRateText = '';
+function updatePaceRate() { const s = '×' + rate.toFixed(1); if (s !== paceRateText) { paceRateText = s; paceRateEl.textContent = s; } }
 const rawName = (q.get('name') || '').trim().slice(0, 40);
 const slug = slugOf(rawName);
 const getJson = async (u) => { try { const r = await fetch(u); return r.ok ? await r.json() : null; } catch { return null; } };
@@ -292,12 +322,23 @@ function fire(t, from, to, o = {}, r = rng) {
 // freeze: wall frames left frozen for a headshot impact; jump: the last jump cut;
 // cue: the current frame plays under x0.6 (cues on). Off under reduced motion or ?speed=1.
 let wallT = 0, simT = 0, skipped = 0, rate = 1, bullet = null, freeze = 0, jump = null, jumpCard = null, cue = false;
+// Cinematic ramp state (#110): the shown rate, the ramp it is on, and the
+// gated base rate. x1/x2 never touch this state (they return constants).
+let rateShown = 1, rampTarget = null, rampFrom = 1, rampT0 = 0, baseCurrent = null, baseChangedAt = -10;
 function currentRate() {
-  if (reduced || speed1) return 1;
-  if (bullet && wallT - bullet.w0 >= 1.05) bullet = null;
-  if (bullet) return bulletRate(wallT - bullet.w0);   // the envelope owns the rate while active
+  if (pace === '1') return 1;
+  if (pace === '2') return 2;
+  // Cinematic: under reduced motion, the base rates only — no slow-mo,
+  // bullet time, jump cuts or cue visuals (those are gated on reducedOS too).
+  if (reducedOS) return baseRate(cur?.id);
+  if (bullet && wallT - bullet.w0 >= 1.05) { bullet = null; rampTarget = null; rateShown = 1; }   // envelope ends at x1; the next target ramps from there
+  if (bullet) return bulletRate(wallT - bullet.w0);   // the envelope owns the rate while active, as shipped
   const tKill = nextKillAt(plan.segs, simT);
-  return speedAt(cur?.id, tKill != null ? tKill - simT : null, null);
+  [baseCurrent, baseChangedAt] = baseGate(baseCurrent, baseRate(cur?.id), wallT, baseChangedAt, 2);
+  const target = (tKill != null && tKill - simT <= 1.5) ? 0.5 : baseCurrent;
+  if (target !== rampTarget) { rampTarget = target; rampFrom = rateShown; rampT0 = wallT; }
+  rateShown = rampTo(rampFrom, rampTarget, wallT - rampT0, 0.4);
+  return rateShown;
 }
 
 function land(t, b) {
@@ -309,10 +350,10 @@ function land(t, b) {
   if (s === main && life.cls === 'ha') fx.push({ kind: 'shield', s, t0: t, dur: 0.35 });
   if (b.final) {
     s.hs = !!b.hs; s.set('die', t); s.deadAt = t; s.busy = false;
-    if (s === main) { stats.d++; deathTimes.push(t); if (duelPlan) { recentRival.push({ hs: !!b.hs }); if (recentRival.length > 10) recentRival.shift(); } if (b.from.opp) oppDeaths[b.from.opp.slug] = (oppDeaths[b.from.opp.slug] || 0) + 1; if (!fast && !reduced && !speed1) { if (b.hs) freeze = 2; bullet = { kind: 'death', w0: bullet ? wallT - 0.15 : wallT }; } return; }
+    if (s === main) { stats.d++; deathTimes.push(t); if (duelPlan) { recentRival.push({ hs: !!b.hs }); if (recentRival.length > 10) recentRival.shift(); } if (b.from.opp) oppDeaths[b.from.opp.slug] = (oppDeaths[b.from.opp.slug] || 0) + 1; if (!fast && !reducedOS && pace === 'cine') { if (b.hs) freeze = 2; bullet = { kind: 'death', w0: bullet ? wallT - 0.15 : wallT }; } return; }
     if (b.from === main) { stats.k++; killTimes.push(t); recentMain.push({ hs: !!b.hs }); if (recentMain.length > 10) recentMain.shift(); if (s.opp) oppKills[s.opp.slug] = (oppKills[s.opp.slug] || 0) + 1; if (b.hs) stats.hs++; if (b.veh) stats.veh++;
       if (b.headHitsBefore !== undefined) hsKillLog.push({ hs: !!b.hs, headBefore: b.headHitsBefore });
-      if (!fast && !reduced && !speed1) { if (b.hs) freeze = 2; bullet = { kind: 'kill', w0: bullet ? wallT - 0.15 : wallT }; }
+      if (!fast && !reducedOS && pace === 'cine') { if (b.hs) freeze = 2; bullet = { kind: 'kill', w0: bullet ? wallT - 0.15 : wallT }; }
       pop(main, b.hs ? T('pop.hs', 'headshot +1') : b.veh ? T('pop.veh', 'vehicle kill +1') : '+1', b.hs ? '#ffe066' : '#fff', t); }
     else if (b.assist) { stats.a++; pop(main, T('pop.assist', '+assist'), '#9fe8ff', t); }
   }
@@ -1002,11 +1043,8 @@ function drawHud(t) {
   ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(12, H - 36, w + 24, 26);
   ctx.fillStyle = '#c9d1d9'; ctx.fillText(s, 24, H - 18);
   }
-  // speed chip (top right): the director's current rate
-  const rs = rate === 2 ? '×2' : rate === 1 ? '×1' : '×' + rate.toFixed(1).replace(/\.0$/, '');
-  ctx.font = '700 16px system-ui,sans-serif'; const rw = ctx.measureText(rs).width + 20;
-  ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(W - 14 - rw, 10, rw, 26);
-  ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.fillText(rs, W - 14 - rw / 2, 29); ctx.textAlign = 'left';
+  // (the old canvas speed chip is gone: #110's DOM pace selector + rate span
+  // carry the current rate, and stay clickable on phones)
   // class badge over the main soldier (crowd mode only: pair mode already shows
   // the class badge in the duel overhead, and the two would overlap on the strip)
   drawStateBox(t);
@@ -1110,7 +1148,7 @@ function render(t) {
     ctx.fillStyle = 'rgba(10,14,20,.8)'; ctx.fillRect(W / 2 - w / 2, 84, w, 44);
     ctx.fillStyle = '#fff'; ctx.fillText(jumpCard.text, W / 2, 116); ctx.restore();
   }
-  recordLifeIntervals(); lifeUi(t); updateGauges(t);
+  recordLifeIntervals(); lifeUi(t); updateGauges(t); updatePaceRate();
 }
 
 // ---------------------------------------------------------------- living gauges (#108, DOM under the life strip)
@@ -1416,7 +1454,7 @@ function advance(w) {
   // jump cut: a calm stretch over 20 data s is stepped through (like skip, nothing skipped
   // in the sim) and carded; the stretch is what the plan holds (60 s ahead), so very long
   // stretches jump in chunks, one card each
-  if (!reduced && !speed1 && !fast && baseRate(cur?.id) === 2) {
+  if (!reducedOS && pace === 'cine' && !fast && baseRate(cur?.id) === 2) {
     const end = calmStretchEnd(plan.segs, simT);
     if (end != null) {
       const from = simT;
@@ -1431,7 +1469,7 @@ function advance(w) {
   while (wallT + STEP <= w) {
     wallT += STEP;
     rate = currentRate();
-    cue = !reduced && !speed1 && rate < 0.6;
+    cue = !reducedOS && pace === 'cine' && rate < 0.6;
     const dt = rate * STEP; simT += dt; step(simT, dt);
   }
 }
@@ -1482,7 +1520,7 @@ window.__oppShares = () => ({ kills: { ...oppKills }, deaths: { ...oppDeaths } }
 window.__pickStats = () => JSON.parse(JSON.stringify(pickStats));
 window.__pickWeights = (mode = 'mix') => enemies.map(e => ({ slug: e.opp?.slug ?? 'bot', kills: e.opp?.kills ?? null, deaths: e.opp?.deaths ?? null, w: !e.opp ? 1 : mode === 'kill' ? Math.max(1, e.opp.kills) : mode === 'death' ? Math.max(1, e.opp.deaths) : Math.max(1, e.opp.kills + e.opp.deaths) }));
 window.__life = () => { const L = lifeAt(simT); return L && { n: L.n, phase: phaseAt(L, simT)?.ph, phases: L.phases.map(p => [p.ph, +(p.t1 - p.t0).toFixed(1)]), simT }; };
-window.__slow = () => ({ wallT, simT, scale: currentRate() });
+window.__slow = () => ({ wallT, simT, scale: currentRate(), bullet: !!bullet });
 window.__params = () => ({ st, P, RATE, CYCLE, ALIVE_MEAN, DOWN_MEAN, missing, stats, simT, cur: cur?.id, credit, fight: fightOk ? fight : null, jump });
 window.__plan = () => plan.segs.map(s => [s.id, +s.t0.toFixed(1), +(s.t1 - s.t0).toFixed(1), s.veh ? 'veh' : '']);
 // the loop, factored out so the reduced-motion note can start it on demand: the OS setting
