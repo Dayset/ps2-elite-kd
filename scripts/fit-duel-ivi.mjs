@@ -18,13 +18,14 @@
  * single-k formula on them (log loss per kill and the miss across iVi-gap groups); else v1.
  * Spread: binomial z shrunk by √(1 + (n − 1)·ρ); q90 / q99 / pct from the fitted pairs.
  *
- * Usage: node scripts/fit-duel-ivi.mjs [dataDir=data/]  → <dataDir>duel-ivi-fit.json
+ * Usage: node scripts/fit-duel-ivi.mjs [dataDir=data/] [--players-only]  → <dataDir>duel-ivi-fit.json + duel-ivi-player.json
+ *   --players-only: keep the committed fit, only rebuild the per-player file.
  */
 import fs from "node:fs";
 import path from "node:path";
 import { DUEL_FIT_MIN, duelExpected } from "../duels.mjs";
 
-const dir = process.argv[2] || "data/";
+const dir = process.argv.slice(2).find((a) => !a.startsWith("--")) || "data/";
 const lite = JSON.parse(fs.readFileSync(path.join(dir, "ranks-lite.json"), "utf8"));
 const c = lite.cols, ni = c.indexOf("name"), si = c.indexOf("slug"), ai = c.indexOf("adjs"), vi = c.indexOf("infVeh");
 const ivi = new Map(), veh = new Map();
@@ -121,20 +122,58 @@ function score(fit, rows) {
   const miss = groups.reduce((a, g) => a + Math.abs(g.actual - g.predicted), 0) / G;
   return { logLoss: +(ll / nn).toFixed(5), missPts: +(miss * 100).toFixed(2), groups };
 }
-const oldT = fitV1(train), newT = fitV2(train);
-const so = score(oldT, test), sn = score(newT, test);
-const wins = sn.logLoss < so.logLoss && sn.missPts < so.missPts;
-let fit = wins ? fitV2(list) : fitV1(list);
-let num = 0, den = 0;
-const zs = list.map((q) => { const p = expOf(fit, q); const z = (q.x - q.n * p) / Math.sqrt(q.n * p * (1 - p)); num += (z * z - 1) * (q.n - 1); den += (q.n - 1) ** 2; return [z, q.n]; });
-const rho = Math.max(0, num / den);
-const az = zs.map(([z, n]) => Math.abs(z) / Math.sqrt(1 + (n - 1) * rho)).sort((a, b) => a - b);
-const q = (p) => az[Math.min(az.length - 1, Math.floor(p * az.length))];
-const out = { ...fit, pairs: list.length, min: DUEL_FIT_MIN, rho: +rho.toFixed(5), q90: +q(0.9).toFixed(3), q99: +q(0.99).toFixed(3),
-  // v1 k kept on every file so an older page can still read it.
-  k: +(wins ? fitV1(list).k : fit.k).toFixed(4),
-  // |z| percentiles (every 1%) so the page can say "more one-sided than N% of pairs".
-  pct: Array.from({ length: 99 }, (_, i) => +q((i + 1) / 100).toFixed(3)),
-  holdout: { pairs: test.length, old: { logLoss: so.logLoss, missPts: so.missPts }, new: { logLoss: sn.logLoss, missPts: sn.missPts }, used: wins ? "new" : "old", groupsOld: so.groups, groupsNew: sn.groups } };
-fs.writeFileSync(path.join(dir, "duel-ivi-fit.json"), JSON.stringify(out) + "\n");
-console.log(JSON.stringify({ ...out, pct: undefined, holdout: { ...out.holdout, groupsOld: undefined, groupsNew: undefined } }));
+if (process.argv.includes("--players-only")) {
+  writePlayers(JSON.parse(fs.readFileSync(path.join(dir, "duel-ivi-fit.json"), "utf8")));
+} else {
+  const oldT = fitV1(train), newT = fitV2(train);
+  const so = score(oldT, test), sn = score(newT, test);
+  const wins = sn.logLoss < so.logLoss && sn.missPts < so.missPts;
+  let fit = wins ? fitV2(list) : fitV1(list);
+  let num = 0, den = 0;
+  const zs = list.map((q) => { const p = expOf(fit, q); const z = (q.x - q.n * p) / Math.sqrt(q.n * p * (1 - p)); num += (z * z - 1) * (q.n - 1); den += (q.n - 1) ** 2; return [z, q.n]; });
+  const rho = Math.max(0, num / den);
+  const az = zs.map(([z, n]) => Math.abs(z) / Math.sqrt(1 + (n - 1) * rho)).sort((a, b) => a - b);
+  const q = (p) => az[Math.min(az.length - 1, Math.floor(p * az.length))];
+  const out = { ...fit, pairs: list.length, min: DUEL_FIT_MIN, rho: +rho.toFixed(5), q90: +q(0.9).toFixed(3), q99: +q(0.99).toFixed(3),
+    // v1 k kept on every file so an older page can still read it.
+    k: +(wins ? fitV1(list).k : fit.k).toFixed(4),
+    // |z| percentiles (every 1%) so the page can say "more one-sided than N% of pairs".
+    pct: Array.from({ length: 99 }, (_, i) => +q((i + 1) / 100).toFixed(3)),
+    holdout: { pairs: test.length, old: { logLoss: so.logLoss, missPts: so.missPts }, new: { logLoss: sn.logLoss, missPts: sn.missPts }, used: wins ? "new" : "old", groupsOld: so.groups, groupsNew: sn.groups } };
+  fs.writeFileSync(path.join(dir, "duel-ivi-fit.json"), JSON.stringify(out) + "\n");
+  console.log(JSON.stringify({ ...out, pct: undefined, holdout: { ...out.holdout, groupsOld: undefined, groupsNew: undefined } }));
+  writePlayers(out);
+}
+
+/**
+ * 🎲 per player (owner 2026-11-02, t849u; debug column first): over every opponent with MIN+ kills between them,
+ * the average gap (actual − expected share of those kills, the same model as the duels row), weighted by kills.
+ * Shrunk toward 0 by how noisy the player's average is (empirical Bayes: τ² / (τ² + s²)), so few or small
+ * matchups pull it in. Only players with OPP_MIN+ such opponents. cuts = the player spread: middle 90% normal,
+ * outside 99% "much". → <dataDir>duel-ivi-player.json, {v, model, min, oppMin, pairs, players, cuts, p: {slug: [gap‰, opponents, beat%]}}
+ */
+function writePlayers(fit) {
+  const OPP_MIN = 20;
+  const slug = (k) => k.replace(/[^a-z0-9]+/g, "");
+  const per = new Map();
+  for (const q of list) {
+    const e = duelExpected(Math.exp(q.L), 1, fit, q.va, q.vb), r = q.x / q.n - e;
+    for (const [k, rr] of [[q.A, r], [q.B, -r]]) { let a = per.get(k); if (!a) per.set(k, (a = [])); a.push([rr, q.n]); }
+  }
+  const raw = [];
+  for (const [k, a] of per) {
+    if (a.length < OPP_MIN) continue;
+    const N = a.reduce((s, [, n]) => s + n, 0), g = a.reduce((s, [r, n]) => s + r * n, 0) / N;
+    const s2 = a.reduce((s, [r, n]) => s + (n * (r - g)) ** 2, 0) / (N * N) * (a.length / (a.length - 1));
+    raw.push({ k, g, s2, m: a.length, b: a.filter(([r]) => r > 0).length / a.length });
+  }
+  const mg = raw.reduce((s, x) => s + x.g, 0) / raw.length;
+  const tau2 = Math.max(1e-6, raw.reduce((s, x) => s + (x.g - mg) ** 2, 0) / raw.length - raw.reduce((s, x) => s + x.s2, 0) / raw.length);
+  const p = {};
+  for (const x of raw) { x.v = x.g * (tau2 / (tau2 + x.s2)); p[slug(x.k)] = [Math.round(x.v * 1000), x.m, Math.round(x.b * 100)]; }
+  const vs = raw.map((x) => x.v).sort((a, b) => a - b), qq = (f) => Math.round(vs[Math.min(vs.length - 1, Math.floor(f * vs.length))] * 1000);
+  const o = { v: 1, model: fit.v || 1, min: DUEL_FIT_MIN, oppMin: OPP_MIN, pairs: list.length, players: raw.length,
+    cuts: { lo99: qq(0.005), lo90: qq(0.05), hi90: qq(0.95), hi99: qq(0.995) }, p };
+  fs.writeFileSync(path.join(dir, "duel-ivi-player.json"), JSON.stringify(o) + "\n");
+  console.log(JSON.stringify({ players: o.players, cuts: o.cuts, tau: +Math.sqrt(tau2).toFixed(4) }));
+}

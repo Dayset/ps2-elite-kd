@@ -448,3 +448,17 @@ export function pairWarnings(info, aCid, bCid) {
   if (x.world && y.world && x.world !== y.world) out.push({ kind: "world", wa: x.world, wb: y.world });
   return out;
 }
+
+/**
+ * 🎲 per player (owner 2026-11-02, t849u; debug column first). data = data/duel-ivi-player.json
+ * (scripts/fit-duel-ivi.mjs): p[slug] = [gap‰ (shrunk), opponents, beat%], cuts in ‰ from the player spread.
+ * → { gap (0…1 share points), opps, beat, lvl: 0 as expected | 1 a bit | 2 much, up } or null (too few opponents / no file).
+ */
+export function playerLuck(data, slug) {
+  if (!data || data.v !== 1 || !data.p || !data.cuts) return null;
+  const e = data.p[slug];
+  if (!Array.isArray(e) || !Number.isFinite(e[0])) return null;
+  const g = e[0], c = data.cuts;
+  const lvl = g > c.hi99 || g < c.lo99 ? 2 : g > c.hi90 || g < c.lo90 ? 1 : 0;
+  return { gap: g / 1000, opps: e[1], beat: e[2], lvl, up: g >= 0 };
+}
