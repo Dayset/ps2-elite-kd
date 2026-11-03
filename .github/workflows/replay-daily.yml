@@ -1,0 +1,62 @@
+name: 🎬 Duel replay data (daily)
+
+# 🎬 Duel replay page (replay/, owner 2026-11-03). Once a day, rebuild the per-player
+# replay shards data/replay/00..3f.json + meta.json from the cached site data
+# (data/ranks.json, data/players, data/xp, data/class-times.json,
+# data/duel-ivi-player.json, assets/weapons/catalog.json) with
+# scripts/build-replay.mjs. No network besides git; ~5 s of node. The files carry no
+# timestamp per player, so unchanged inputs give unchanged shards and only meta.json
+# (ranksAt) can move; commits only when something changed.
+
+on:
+  schedule:
+    - cron: "53 8 * * *" # daily 08:53 UTC (after 🎲 Luck at 08:29)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: replay-daily
+  cancel-in-progress: false
+
+jobs:
+  replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          # Cone mode: root *.mjs and the top files of data/ and assets/ come along.
+          sparse-checkout: |
+            scripts
+            replay
+            data/players
+            data/xp
+            data/replay
+            assets/weapons
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "20"
+
+      - name: Rebuild 🎬 replay shards
+        run: node scripts/build-replay.mjs .
+
+      - name: Commit if changed
+        env:
+          BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          git add -A -- data/replay
+          if git diff --cached --quiet -- data/replay; then echo "🎬 Replay data unchanged; no commit."; exit 0; fi
+          git diff --cached --stat -- data/replay | tail -n 3
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -q -m "chore(replay): daily 🎬 replay data rebuild [bot]"
+          for attempt in 1 2 3 4 5; do
+            if git push -q origin "HEAD:${BRANCH}"; then echo "Pushed."; exit 0; fi
+            echo "Push rejected (attempt $attempt); rebasing…"; sleep $((attempt * 5))
+            git pull -q --rebase origin "$BRANCH" || { git rebase --abort 2>/dev/null; exit 1; }
+          done
+          echo "::error::Could not push after 5 attempts"; exit 1

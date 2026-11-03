@@ -3355,3 +3355,13 @@ html[data-room="ps"] .controls .fresh-row-end select.room-select { border-color:
 /* 🎲 vs expected per player (owner 2026-11-02, t849u; debug column): plain words, "a bit" / "much" in the warning colour. */
 /* 🎲 Luck (luck-col.mjs, owner t850u): "+9%". No colour code (owner t851u): plain text like the other numbers; verdict on hover. */
 td.luck-cell, td.luck-few { white-space: nowrap; }
+
+/* 🎬 Duel replay link after a player name (rankings.mjs / stats-table.mjs → replay/). Fixed box like
+ * .poop-mark so the late emoji font does not move columns; faint until hovered; no motion here. */
+.replay-link {
+  display: inline-block; width: 1.25em; margin-left: 0.15em;
+  font-size: 0.8em; line-height: 1; text-align: center; overflow: hidden; vertical-align: baseline;
+  text-decoration: none; opacity: 0.5;
+}
+.replay-link:hover, .replay-link:focus-visible { opacity: 1; }
+.ranks-table td.rk-name a.replay-link:hover { text-decoration: none; }

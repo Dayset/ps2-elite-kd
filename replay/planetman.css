@@ -1,0 +1,13 @@
+html,body{margin:0;background:#0d1117;color:#c9d1d9;font:14px/1.4 system-ui,sans-serif}
+main{max-width:1280px;margin:0 auto;padding:8px}
+canvas{width:100%;height:auto;display:block;border-radius:0;background:#141b24}
+#hud{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center}
+#hud .back{color:#8b949e;text-decoration:none;border:1px solid #30363d;padding:1px 8px}
+#hud .back:hover{color:#c9d1d9}
+#hud .who{font-weight:600;margin-right:6px;display:flex;align-items:center;gap:6px}
+#hud .who img{height:22px}
+#hud .chip{background:#161b22;border:1px solid #30363d;border-radius:0;padding:2px 9px;cursor:help;white-space:nowrap}
+#hud .chip.off{opacity:.45}
+#hud .note{color:#8b949e;font-size:12px;width:100%}
+#rm{color:#8b949e;font-size:12px}
+body.bare main{padding:0;max-width:none}body.bare #rm,body.bare #hud{display:none}

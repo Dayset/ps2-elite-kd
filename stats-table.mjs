@@ -663,7 +663,7 @@ export function createStatsTable($) {
             `<tr>${numCell}<th scope="row" class="stats-name" style="color:${col}">` +
             dotSlot(row.p.cid) +
             (withNum ? "" : `<span class="player-num" aria-label="${tr("stats.series", "Series {n}", { n: num })}">${num}.</span>`) +
-            `${nameSpanHtml(row.p.display, farmTitle(row.p), "", $.IS_PS ? "" : honuProfileUrl(row.p.cid))}${$.serverTagHtml(row.p)}${padMarkHtml(row.p)}${autoMarkHtml(row)}${legacySampleHtml(row.p)}</th>${vals}</tr>`
+            `${nameSpanHtml(row.p.display, farmTitle(row.p), "", $.IS_PS ? "" : honuProfileUrl(row.p.cid))}${$.serverTagHtml(row.p)}${padMarkHtml(row.p)}${autoMarkHtml(row)}${legacySampleHtml(row.p)}${replayLinkHtml(row.p)}</th>${vals}</tr>`
           );
         })
         .join("");
@@ -801,6 +801,12 @@ export function createStatsTable($) {
   }
 
   /** Subtle "◦" after the name when the sample is the older top-50 one. */
+  // 🎬 Duel replay page for this player (replay/, PC cache only). Static link, no motion here.
+  function replayLinkHtml(p) {
+    if ($.IS_PS || !p || !p.display) return "";
+    const tip = escapeHtml(tr("replay.open", "🎬 Duel replay: this player’s stats played out as a short scene"));
+    return ` <a class="replay-link" href="replay/?name=${encodeURIComponent(p.display)}" title="${tip}" aria-label="${tip}">🎬</a>`;
+  }
   function legacySampleHtml(p) {
     if (!isLegacySample(p)) return "";
     return `<span class="sample-legacy" title="${escapeHtml(LEGACY_SAMPLE_TIP)}">${LEGACY_SAMPLE_MARK}</span>`;

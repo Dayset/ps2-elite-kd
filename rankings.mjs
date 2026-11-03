@@ -589,6 +589,12 @@ export function initRankings(host) {
     return hm ? `<span class="poop-mark hut-mark" title="${esc(hm.tip)}" aria-label="${esc(hm.tip)}">${hm.mark}</span>` : "";
   }
   /** PlayStation room: the player's server after the name ("Genudine" / "Ceres"). */
+  // 🎬 Duel replay page for this player (replay/, PC cache only). Static link, no motion here.
+  function replayLinkHtml(r) {
+    if (ROOM === "ps" || !r.name) return "";
+    const tip = esc(tr("replay.open", "🎬 Duel replay: this player’s stats played out as a short scene"));
+    return ` <a class="replay-link" href="replay/?name=${encodeURIComponent(r.name)}" title="${tip}" aria-label="${tip}">🎬</a>`;
+  }
   function srvTagHtml(r) {
     const sv = r && r.srv ? psServer(r.srv) : null;
     return sv ? `<span class="srv-tag" title="${esc(tr("room.serverTip", "PlayStation server: {s}", { s: sv.name }))}">${esc(sv.name)}</span>` : "";
@@ -606,7 +612,7 @@ export function initRankings(host) {
       poopHtml(r) +
       (r.legacy ? `<span class="sample-legacy" title="${esc(LEGACY_SAMPLE_TIP)}">${LEGACY_SAMPLE_MARK}</span>` : "") +
       (r.freshAt ? `<span class="sample-fresh" title="${esc(freshTip(r.freshAt, r.localOnly))}">${FRESH_MARK}</span>` : "") +
-      srvTagHtml(r) + `</td>` +
+      srvTagHtml(r) + replayLinkHtml(r) + `</td>` +
       cols.map((c) => cellHtml(c, r)).join("") +
       `</tr>`
     );
