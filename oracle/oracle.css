@@ -232,6 +232,18 @@ footer { color: var(--dim); font-size: var(--fs-12); margin-top: var(--s-5); }
  * The svg has a viewBox and height:auto, so the aspect ratio is always
  * preserved — it can never come out stretched or squished. */
 #lockHere svg { width: 100%; height: auto; display: block; }
+/* Time row (2026-11-02 layout pass): win chance over time + ⏱ live timer side by side, on the same
+ * columns as the map row above, so the right-hand cards line up in one column down the page. */
+.timerow { display: grid; gap: var(--s-4); align-items: stretch; }
+/* One vertical rhythm between the page's blocks (was a mix of inline 14 px and 16 px gaps). */
+#main > .grid ~ *, .wrap > section.card { margin-top: var(--s-4); }
+#lockHere:empty { display: none; }
+#lockHere > .card { height: 100%; }
+@media (min-width: 861px) {
+  .timerow { grid-template-columns: minmax(0, 1.7fr) minmax(320px, 1fr); }
+  .timerow:has(> #lockHere:empty) { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 600px) { .timerow { gap: var(--s-3); } #main > .grid ~ *, .wrap > section.card { margin-top: var(--s-3); } }
 .locktimer { font-size: var(--fs-28); font-weight: 700; font-variant-numeric: tabular-nums; margin-bottom: var(--s-2); }
 .locktimer .note { font-size: var(--fs-14); font-weight: 400; }
 .cmd li[data-base] { cursor: default; border-radius: 0; }

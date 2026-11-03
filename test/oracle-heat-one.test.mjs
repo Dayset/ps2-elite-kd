@@ -17,5 +17,5 @@ test("heat button renders only on the selected faction's card", () => {
 });
 
 test("commander pin bumped through main.js", () => {
-  assert.ok(main.includes('./commander.js?v=20261102-conduit1'), "main.js imports commander at conduit1");
+  assert.ok(main.includes('./commander.js?v=20261102-layout1'), "main.js imports commander at conduit1");
 });

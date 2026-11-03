@@ -4,13 +4,13 @@ import { get, names } from "./api.js?v=20261018-scrub2";
 import { drawMap, highlightBase, recolorMap } from "./map.js?v=20261102-conduit1";
 import { chart, chartHover } from "./chart.js?v=20261024-i18n1";
 import { lockCard, lockTick } from "./lock.js?v=20261024-i18n1";
-import { commander, commanderIdle } from "./commander.js?v=20261102-conduit1";
+import { commander, commanderIdle } from "./commander.js?v=20261102-layout1";
 import { ctfNames, filterCommander } from "./conduits.js?v=20261102-conduit1";
 import { modeFocus, ownerLookup, heatLookup, spawnLookup, pickMode, MODE_KEY, pickHeat, HEAT_KEY, pickConduits, CONDUIT_KEY } from "./sticky.js?v=20261102-conduit1";
 import { nextPoll } from "./poll.js?v=20261026-mode1";
 import { voiceToggle, voiceTick, bindVoiceMenu } from "./voice.js?v=20261027-say1";
-import { reportPanel } from "./players.js?v=20261024-i18n1";
-import { benchPanel, initResults, refreshHistory, renderHist } from "./results.js?v=20261102-globfoot1";
+import { reportPanel } from "./players.js?v=20261102-layout1";
+import { benchPanel, initResults, refreshHistory, renderHist } from "./results.js?v=20261102-layout1";
 import { renderAlertSkill } from "./skill-foot.js?v=20261102-globfoot1";
 import { initAuth } from "./auth.js?v=20261028-dev82";
 import { enhance, onSectionExpand, refreshSummary } from "./collapse.js?v=20261026-pulse1";
@@ -207,7 +207,8 @@ function render2(now) {
   const linkTip = tr("or.linkBtn", "Copy link to this page");
   // ⚔️ Live fights follow the Commander faction: commander() sets S.cmdOn, so it runs here,
   // before fightsCard(s) is evaluated in the template below (it used to run after it).
-  const cmdHtml = a.status === "live" ? commander(cmdView, a.commander_ts, now, lead, cmdMode, heatOn, liveTop, conduitsOn) : `${commanderIdle()}${reportPanel(a)}`;
+  // Settled / past alerts: no empty "no live alert" commander card (2026-11-02 layout pass); the players report stays.
+  const cmdHtml = a.status === "live" ? commander(cmdView, a.commander_ts, now, lead, cmdMode, heatOn, liveTop, conduitsOn) : reportPanel(a);
   $("main").innerHTML = `
     <div class="title"><b>${esc(a.world_name)} · ${esc(a.zone_name)}${a.kind === "meltdown" ? " Meltdown" : ""}</b><span class="badge ${a.status}">${esc(badgeLabel(a.status))}</span><span class="note">${esc(left)} · ${tr("or.durAlert", "{n}-min alert", { n: a.dur })}</span><button type="button" class="more linkbtn" id="copyLink" title="${linkTip}" aria-label="${linkTip}">🔗</button>${liveA ? "" : `<button type="button" class="more backlive" id="backLive">${tr("or.backLive", "← Back to live")}</button>`}</div>
     <div class="grid">
@@ -215,11 +216,11 @@ function render2(now) {
       <div class="side">
       <section class="card win"><h2 data-sec="win-chance">${tr("or.h.win", "Win chance")}</h2>${kindNote}${frozenNote}${suspectNote}${cutNote}<div class="odds" aria-live="polite" aria-atomic="true">${oddsHtml}</div>${oddLine}${result}${second}${rows || popRows ? det("wdet", tr("or.details", "Details"), `${popAdj}<div class="rows">${rows}${popRows}</div>${popTot ? `<div class="note">${tr("or.pop", "Population: Honu (wt.honu.pw), {n} on continent{nso}.", { n: popTot, nso: s.pop_ns ? tr("or.popNso", " + {n} NSO", { n: s.pop_ns }) : "" })}</div>` : ""}${popLiveLine(s)}`, "wdet keep") : ""}${calls}</section>
       ${a.status === "live" ? fightsCard(s, S.cmdOn, now, ctfSet) : ""}
-      <div id="voteHere"></div><div id="lockHere"></div>
+      <div id="voteHere"></div>
       </div>
     </div>
-    <section class="card chart" style="margin-top:14px"><h2 data-sec="win-chance-over-time">${tr("or.h.chart", "Win chance over time")}</h2><div id="chart"><div class="sk sk-chart" aria-label="${tr("or.loading", "Loading")}"></div></div></section>
     ${cmdHtml}
+    <div class="timerow"><section class="card chart"><h2 data-sec="win-chance-over-time">${tr("or.h.chart", "Win chance over time")}</h2><div id="chart"><div class="sk sk-chart" aria-label="${tr("or.loading", "Loading")}"></div></div></section><div id="lockHere"></div></div>
     ${benchPanel(a)}`;
   if ($("backLive")) $("backLive").onclick = backToLive;
   if ($("copyLink")) $("copyLink").onclick = () => {
@@ -259,12 +260,12 @@ function render2(now) {
   $("miniMain").innerHTML = `<b>${esc(a.world_name)} · ${esc(a.zone_name)}</b>${win ? `<span>${FACS.map((f) => `<span class="${f}">${f} ${pct1(win[f].pct)}%</span>`).join(" ")}</span>` : ""}`;
   renderAlertSkill(a); // ⚔️ This alert's skill row (#89), under the global row; hidden without live skill
   miniSync();
+  const lh = $("lockHere");
+  // ⏱ Live timer sits next to the win-chance chart (both are about time); past alerts have no countdown, so no card.
+  // Filled before the chart is drawn: the chart reads its box width, which depends on this card.
+  if (lh) lh.innerHTML = a.status === "live" ? `<section class="card lock">${lockCard(a, now)}</section>` : "";
   if (S.ticksFor === a.key) { const c = $("chart"); c.innerHTML = chart(S.ticks, a.dur, c.clientWidth); chartHover(c, S.ticks, a.dur, (k, how) => scrub(a, k, how)); }
   if (S.scrub && S.scrub.key === a.key) scrub(a, S.scrub.tick, S.scrub.how);
-  const lh = $("lockHere");
-  if (lh) lh.innerHTML = a.status === "live"
-    ? `<section class="card lock">${lockCard(a, now)}</section>`
-    : `<section class="card lock idle"><h2 data-sec="live-timer">${tr("or.h.timer", "⏱ Live timer")}</h2><div class="locktimer">--:--</div><div class="note">${tr("or.timerIdle", "No live alert — the countdown starts when the next one begins.")}</div></section>`;
   drawMap(a);
 }
 

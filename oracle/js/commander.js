@@ -5,7 +5,7 @@ import { t as tr, currentLang } from "../../i18n.mjs";
 
 /** Grayed placeholder shown between alerts so users see the panel exists. */
 export function commanderIdle() {
-  return `<section class="card cmd idle" style="margin-top:14px"><h2 data-sec="ai-commander">${tr("or.h.cmd", "🎖️ AI Commander")}</h2><div class="note">${tr("or.c.idle", "No live alert — the commander briefs when the next one starts.")}</div></section>`;
+  return `<section class="card cmd idle"><h2 data-sec="ai-commander">${tr("or.h.cmd", "🎖️ AI Commander")}</h2><div class="note">${tr("or.c.idle", "No live alert — the commander briefs when the next one starts.")}</div></section>`;
 }
 
 const sgnPct = (d) => `${d > 0 ? "+" : d < 0 ? "−" : "±"}${Math.abs(d).toFixed(1)}%`;
@@ -116,7 +116,7 @@ export function commander(c, ts, now, lead, mode = "solo", heat = false, liveNam
     : tr("or.c.soloNote", "Attacks aimed {n} min ahead; defends only when a base is under attack. One order stays until it is done (base taken or lost, or about 5 min passed), unless a clearly better or urgent one appears.", { n: c.ahead_min || 3 })
       + (c.focus_solo ? " " + tr("or.c.soloSpawn", "Solo attacks only bases with a Sunderer or router of ours (🚐).") : "");
   const modeBar = `<div class="cmode" role="group" aria-label="${tr("or.c.mode", "Orders for")}"><span class="note">${tr("or.c.mode", "Orders for")}</span>${mb("solo", tr("or.c.solo", "Solo"), tr("or.c.soloTip", "One steady direction for a player or a small group"))}${mb("big", tr("or.c.big", "Big squad"), tr("or.c.bigTip", "Three directions for a squad or platoon, updated every minute"))}</div><div class="note cmodenote">${modeNote}</div>`;
-  return `<section class="card cmd" style="margin-top:14px"><h2 data-sec="ai-commander">${tr("or.h.cmd", "🎖️ AI Commander")} ${age}</h2>${liveName ? `<div class="note livenow" title="${esc(tr("or.f.note", "Rough crowd: players seen fighting at each base in the last 5 min, from the game's live event stream. Not used in the win chances yet."))}">🔥 ${bl(liveName)}</div>` : ""}${modeBar}${seg}<div class="cmdgrid">${FACS.map((f) => {
+  return `<section class="card cmd"><h2 data-sec="ai-commander">${tr("or.h.cmd", "🎖️ AI Commander")} ${age}</h2>${liveName ? `<div class="note livenow" title="${esc(tr("or.f.note", "Rough crowd: players seen fighting at each base in the last 5 min, from the game's live event stream. Not used in the win chances yet."))}">🔥 ${bl(liveName)}</div>` : ""}${modeBar}${seg}<div class="cmdgrid">${FACS.map((f) => {
     const x = c.factions[f]; if (!x) return "";
     if (x.eliminated) return `<div class="cf${f === on ? " on" : ""}"><h3 class="${f}">${f} · ${tr("or.c.elim", "eliminated")}</h3><div class="note">${tr("or.c.out", "Mathematically out: spoiler plays only (kingmaker below).")}</div>${(x.kingmaker || []).length ? `<ul>${x.kingmaker.slice(0, 2).map((k) => `<li>${esc(k.text || "")}</li>`).join("")}</ul>` : ""}</div>`;
     const nf = (n) => (f === on ? numOf.get(n) || 0 : 0);

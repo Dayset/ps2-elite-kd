@@ -18,7 +18,7 @@ export function benchPanel(a) {
   const row = (k, label) => { const p = sl[k] || {}; return `<tr><td>${esc(label)}</td>${FACS.map((f) => `<td class="num ${f}">${p[f] != null ? Math.round(p[f] * 1000) / 10 + "%" : "—"}</td>`).join("")}<td class="num">${br[k] != null ? (+br[k]).toFixed(3) : "—"}</td></tr>`; };
   const rows = keys.map((k) => row(k, k.endsWith("_pop") ? tr("or.withPop", "{k} with pop", { k: k.slice(0, -4) }) : k) + (sl[k + "_pop"] ? row(k + "_pop", tr("or.withPop", "{k} with pop", { k })) : "")).join("");
   if (!rows) return "";
-  return `<section class="card" style="margin-top:14px"><h2 data-sec="benchmark-slices">${tr("or.h.bench", "Benchmark slices")}</h2><div class="scroll"><table class="slices"><thead><tr><th>${tr("or.slice", "Slice")}</th><th>VS</th><th>NC</th><th>TR</th><th>Brier</th></tr></thead><tbody>${rows}</tbody></table></div>${info("bnote", `<div class="note">${tr("or.benchNote", "Win chance recorded at each slice; Brier against the Census winner (lower is better, coin-flip 0.222).")}</div>`)}</section>`;
+  return `<section class="card"><h2 data-sec="benchmark-slices">${tr("or.h.bench", "Benchmark slices")}</h2><div class="scroll"><table class="slices"><thead><tr><th>${tr("or.slice", "Slice")}</th><th>VS</th><th>NC</th><th>TR</th><th>Brier</th></tr></thead><tbody>${rows}</tbody></table></div>${info("bnote", `<div class="note">${tr("or.benchNote", "Win chance recorded at each slice; Brier against the Census winner (lower is better, coin-flip 0.222).")}</div>`)}</section>`;
 }
 
 // Benchmark: keys ending in _pop are the population-weighted variant of the same slice.
