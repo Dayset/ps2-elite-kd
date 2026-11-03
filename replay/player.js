@@ -10,7 +10,7 @@ import { t as tr, ready as i18nReady, currentLang } from '../i18n.mjs';
 const cv = document.getElementById('stage'), ctx = cv.getContext('2d');
 const W = 1280, H = 720, GROUND = 600;
 const q = new URLSearchParams(location.search);
-const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches && !q.has('preview');
+let reduced = matchMedia('(prefers-reduced-motion: reduce)').matches && !q.has('preview') && !q.has('play');
 const debug = q.has('debug');
 if (q.has('bare')) document.body.classList.add('bare');
 const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
@@ -835,14 +835,27 @@ window.__life = () => { const L = lifeAt(simT); return L && { n: L.n, phase: pha
 window.__slow = () => ({ wallT, simT, scale: timeScale(wallT) });
 window.__params = () => ({ st, P, RATE, CYCLE, ALIVE_MEAN, DOWN_MEAN, missing, stats, simT, cur: cur?.id, credit, fight: fightOk ? fight : null });
 window.__plan = () => plan.segs.map(s => [s.id, +s.t0.toFixed(1), +(s.t1 - s.t0).toFixed(1), s.veh ? 'veh' : '']);
+// the loop, factored out so the reduced-motion note can start it on demand: the OS setting
+// parks the scene on a still frame, but one tap on ▶ Play anyway (or ?play in the URL)
+// overrides it for this page — the setting itself is never changed
+function startLoop() {
+  const t0 = performance.now() / 1000;
+  const frame = (now) => { window.__render(now / 1000 - t0 + skipped); requestAnimationFrame(frame); };
+  requestAnimationFrame(frame);
+}
 if (reduced) {
-  document.getElementById('rm').hidden = false;
+  const rm = document.getElementById('rm'); rm.hidden = false;
+  const go = document.createElement('button'); go.type = 'button'; go.textContent = T('playAnyway', '▶ Play anyway');
+  go.addEventListener('click', () => {
+    reduced = false; rm.hidden = true; if (ui?.skip) ui.skip.hidden = false;
+    for (const s of everyone) s.seed = Math.random() * 10;   // the still frame zeroed the pose phases
+    startLoop();
+  });
+  rm.append(' ', go);
   ensurePlan(0); newLife(0, true); engaged = true; for (const e of enemies) { e.state = 'idle'; e.x = e.slot; }
   for (const s of everyone) { s.seed = 0; s.state = 'idle'; }
   render(0);
 } else if (!q.has('preview')) {
-  const t0 = performance.now() / 1000;
-  const frame = (now) => { window.__render(now / 1000 - t0 + skipped); requestAnimationFrame(frame); };
-  requestAnimationFrame(frame);
+  startLoop();
 }
 window.__ready = true;
