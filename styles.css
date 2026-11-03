@@ -3180,10 +3180,10 @@ html[data-room="ps"] .controls .fresh-row-end select.room-select { border-color:
 .duel-cmp tr.duel-big td { font-weight: 700; font-size: 0.9rem; }
 .duel-cmp .duel-sub { color: var(--dim); font-weight: 400; font-size: 0.85em; }
 .duel-cmp .duel-more-pct { color: var(--dim); font-weight: 400; font-size: 0.85em; }
-/* 🎲 vs expected (owner 2026-11-02): unusual splits get the warning colour, a cue to look closer. */
-.duel-cmp .duel-luck-normal, .duel-cmp .duel-luck-few { color: var(--dim); }
-.duel-cmp .duel-luck-unusual, .duel-cmp .duel-luck-very { color: var(--warn); }
-.duel-cmp .duel-luck-very { font-weight: 700; }
+/* 🎲 vs expected (owner 2026-11-02, t847u): plain verdicts; "a bit" / "much" get the warning colour, a cue to look closer. */
+.duel-cmp .duel-luck-as, .duel-cmp .duel-luck-few { color: var(--dim); }
+.duel-cmp .duel-luck-up1, .duel-cmp .duel-luck-down1, .duel-cmp .duel-luck-up2, .duel-cmp .duel-luck-down2 { color: var(--warn); }
+.duel-cmp .duel-luck-up2, .duel-cmp .duel-luck-down2 { font-weight: 700; }
 .duel-scroll { max-height: 30rem; }
 .duel-table th.rk-num, .duel-table td.rk-num { position: sticky; left: 0; }
 .duel-table td { overflow: hidden; text-overflow: ellipsis; }

@@ -17,9 +17,9 @@ import { mergeEvents } from "./scrims.mjs?v=20261028-os2";
 import {
   AUTO_PAGES, FIRST_FIGHTS, nsOfBase, pairFloor, DUEL_GAP, ONE_V_ONE, classOf, bareName, crowdRows, crowdSummary, expectedCount, pagerOf,
   readPairPages, readPairNewer, pairEvents, fightsOf, fightResult, weaponShotUrls, parseShotStats, perKill, pairSummary,
-  charInfoUrl, parseCharInfo, pairWarnings, WORLD_NAME, iviLuck,
+  charInfoUrl, parseCharInfo, pairWarnings, WORLD_NAME, iviLuck, duelFitKind, DUEL_FIT_V1,
   DUEL_CACHE_KEY, duelCacheEntry, duelCacheRestore, duelCachePrune,
-} from "./duels.mjs?v=20261102-luck1";
+} from "./duels.mjs?v=20261102-luck2";
 
 const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const lang = () => { try { return currentLang() || undefined; } catch { return undefined; } };
@@ -182,20 +182,23 @@ export function mountDuels(section, o = {}) {
    * crowd render, then cached for the page; a failed load just means no iVi
    * (never a broken table). Keyed by lowercased name and by slug, so a
    * killboard name matches either spelling. */
-  let iviMap = null, iviMapP = null;
+  let iviMap = null, iviMapP = null, vehMap = new Map();
   function ensureIvi() {
     if (iviMapP) return iviMapP;
     iviMapP = fetch(`${dataDir}ranks-lite.json`).then((r) => (r.ok ? r.json() : null)).then((d) => {
       const m = new Map();
       if (d && Array.isArray(d.cols) && Array.isArray(d.rows)) {
-        const ni = d.cols.indexOf("name"), si = d.cols.indexOf("slug"), ai = d.cols.indexOf("adjs");
+        const ni = d.cols.indexOf("name"), si = d.cols.indexOf("slug"), ai = d.cols.indexOf("adjs"), vi = d.cols.indexOf("infVeh");
         for (const row of d.rows) {
           const v = row[ai];
           if (!Number.isFinite(v) || v <= 0) continue;
-          const n = String(row[ni] || "").toLowerCase();
-          if (n) m.set(n, v);
-          const s = String(row[si] || "").toLowerCase();
-          if (s) m.set(s, v);
+          // Vehicle kill share (0…1) only feeds the 🎲 vs expected row.
+          const vh = vi >= 0 && Number.isFinite(row[vi]) ? row[vi] / 100 : null;
+          for (const k of [String(row[ni] || "").toLowerCase(), String(row[si] || "").toLowerCase()]) {
+            if (!k) continue;
+            m.set(k, v);
+            if (vh != null) vehMap.set(k, vh);
+          }
         }
       }
       iviMap = m;
@@ -203,14 +206,16 @@ export function mountDuels(section, o = {}) {
     }).catch(() => { iviMap = new Map(); return iviMap; });
     return iviMapP;
   }
-  // 🎲 vs expected (owner 2026-11-02, t845u): the ⚔️ iVi → kill-split fit (scripts/fit-duel-ivi.mjs). Lazy, once per page; missing → no row.
+  // 🎲 vs expected (owner 2026-11-02, t845u / t847u): the ⚔️ iVi → kill-split fit (scripts/fit-duel-ivi.mjs). Lazy, once per page.
+  // v2 (curve + vehicle kills) when the file has it; a missing, broken or v1 file falls back to the single-k formula.
   let duelFit = null, duelFitP = null;
   function ensureFit() {
     if (duelFitP) return duelFitP;
-    duelFitP = fetch(`${dataDir}duel-ivi-fit.json`).then((r) => (r.ok ? r.json() : null)).then((d) => { duelFit = d && d.k > 0 ? d : false; return duelFit; })
-      .catch(() => { duelFit = false; return false; });
+    duelFitP = fetch(`${dataDir}duel-ivi-fit.json`).then((r) => (r.ok ? r.json() : null)).then((d) => { duelFit = duelFitKind(d) ? d : DUEL_FIT_V1; return duelFit; })
+      .catch(() => { duelFit = DUEL_FIT_V1; return duelFit; });
     return duelFitP;
   }
+  const vehOf = (p) => { const v = p && vehMap.get(bareName(p.display).toLowerCase()); return Number.isFinite(v) ? v : null; };
   const iviOf = (p) => { const v = iviMap && p && iviMap.get(bareName(p.display).toLowerCase()); return Number.isFinite(v) && v > 0 ? v : null; };
   const iviHtml = (r) => {
     if (!iviMap) return "";
@@ -349,17 +354,28 @@ export function mountDuels(section, o = {}) {
     const shareTxt = (k) => (nk ? ` <span class="duel-sub">${pct0(k / nk)}</span>` : "");
     const more = (x, y) => (x > y && y > 0 ? ` <span class="duel-more-pct">+${int(((x / y) - 1) * 100)}%</span>` : "");
     const ia = iviOf(a), ib = iviOf(b);
-    const luck = ia && ib && duelFit ? iviLuck(s.a.kills, s.b.kills, ia, ib, duelFit) : null;
-    const pts = (v) => `${v >= 0 ? "+" : "−"}${int(Math.abs(v) * 100)}`;
-    const verdictTxt = (v) => tr(`duel.luck.${v}`, { normal: "normal range", unusual: "unusual", very: "very unusual", few: "too few kills" }[v]);
+    const luck = ia && ib && duelFit ? iviLuck(s.a.kills, s.b.kills, ia, ib, duelFit, vehOf(a), vehOf(b)) : null;
     let luckRow = "";
     if (luck) {
-      const tip = tr("duel.m.luckTip", "Kill split vs what the ⚔️ iVi gap predicts. Expected share of A = iVi A^k ÷ (iVi A^k + iVi B^k), k = {k}, fitted on {pairs} pairs with {min}+ kills between them (killboards). Here: expected {ea} vs {eb}, actual {aa} vs {ab}; more lopsided than {rarer} of pairs. Normal = the typical 90% of pairs, very unusual = outside 99%. Not pure duels: an unusual split is only a cue to look closer.", {
-        k: duelFit.k.toLocaleString(lang(), { maximumFractionDigits: 2 }), pairs: int(duelFit.pairs), min: int(duelFit.min || 20),
-        ea: pct0(luck.exp), eb: pct0(1 - luck.exp), aa: pct0(luck.act), ab: pct0(1 - luck.act), rarer: luck.rarer == null ? "–" : `${luck.rarer}%` });
-      const cell = (g, mine) => `${pts(g)} ${esc(tr("duel.pts", "pts"))}${mine ? ` · <span class="duel-luck-${luck.verdict}">${esc(verdictTxt(luck.verdict))}</span>` : ""}`;
-      const expTip = (e) => tr("duel.m.luckExp", "Expected {e}", { e: pct0(e) });
-      luckRow = row(tr("duel.m.luck", "🎲 vs expected"), tip, cell(luck.gap, luck.gap >= 0), cell(-luck.gap, luck.gap < 0), "duel-luck", expTip(luck.exp), expTip(1 - luck.exp));
+      // Plain verdict per side; every number lives in the hover (owner t847u: easy to read).
+      const lvl = { normal: 0, unusual: 1, very: 2 }[luck.verdict];
+      const side = (g) => {
+        if (luck.verdict === "few") return `<span class="duel-luck-few">${esc(tr("duel.luck.few", "too few kills"))}</span>`;
+        if (!lvl) return `<span class="duel-luck-as">≈ ${esc(tr("duel.luck.as", "as expected"))}</span>`;
+        const up = g >= 0;
+        const txt = up ? (lvl === 2 ? tr("duel.luck.better2", "much better") : tr("duel.luck.better1", "a bit better"))
+          : (lvl === 2 ? tr("duel.luck.worse2", "much worse") : tr("duel.luck.worse1", "a bit worse"));
+        return `<span class="duel-luck-${up ? "up" : "down"}${lvl}">${up ? "↑".repeat(lvl) : "↓".repeat(lvl)} ${esc(txt)}</span>`;
+      };
+      const pts = (v) => `${v >= 0 ? "+" : "−"}${int(Math.abs(v) * 100)}`;
+      const how = luck.kind === 2
+        ? tr("duel.m.luckHow2", "Learned from {pairs} real player pairs: higher iVi wins more of the kills, and kills from vehicles count in.", { pairs: int(duelFit.pairs) })
+        : tr("duel.m.luckHow1", "Learned from {pairs} real player pairs: higher iVi wins more of the kills.", { pairs: int(duelFit.pairs) });
+      const tip = tr("duel.m.luckTip", "Kills each one got, compared with what their iVi predicts.\nExpected: {ea} – {eb}. Got: {aa} – {ab}.\nMore one-sided than {rarer} of player pairs.\n{how}\n“As expected” = like 9 in 10 pairs. “Much” = rarer than 1 in 100.\nNot clean 1v1s: “much better” is only a hint to look closer.", {
+        ea: pct0(luck.exp), eb: pct0(1 - luck.exp), aa: pct0(luck.act), ab: pct0(1 - luck.act), rarer: luck.rarer == null ? "–" : `${luck.rarer}%`, how });
+      const sideTip = (e, x, g) => tr("duel.m.luckSide", "Expected {e}, got {a} ({gap} pts).", { e: pct0(e), a: pct0(x), gap: pts(g) });
+      luckRow = row(tr("duel.m.luck", "🎲 vs expected"), tip, side(luck.gap), side(-luck.gap), "duel-luck",
+        sideTip(luck.exp, luck.act, luck.gap), sideTip(1 - luck.exp, 1 - luck.act, -luck.gap));
     }
     return `<thead><tr><th scope="col"></th><th scope="col" class="duel-a">${esc(aName)}</th><th scope="col" class="duel-b">${esc(bName)}</th></tr></thead><tbody>` +
       row(tr("duel.m.kills", "Kills on the other"), tr("duel.m.killsTip", "Kills on each other; % = share of the kills between them, +% = how many more than the other."), `${int(s.a.kills)}${shareTxt(s.a.kills)}${more(s.a.kills, s.b.kills)}`, `${int(s.b.kills)}${shareTxt(s.b.kills)}${more(s.b.kills, s.a.kills)}`, "duel-big") +

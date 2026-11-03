@@ -21,17 +21,42 @@
 import { eventsUrl, compactEvent, mergeEvents, EVENT_PAGE } from "./scrims.mjs?v=20261028-os2";
 
 /**
- * 🎲 vs expected (owner 2026-11-02, t845u): how far the split of the kills between the two is
- * from what their ⚔️ iVi gap predicts. fit = data/duel-ivi-fit.json (scripts/fit-duel-ivi.mjs,
- * fitted on cached killboard pairs): share of A = iVi_A^k ÷ (iVi_A^k + iVi_B^k); |z| shrunk by
- * √(1 + (n − 1)·ρ) for the real-world spread; q90 / q99 from the fitted pairs. Fewer than
- * DUEL_FIT_MIN kills → no verdict.
+ * 🎲 vs expected (owner 2026-11-02, t845u / t847u): how far the split of the kills between the two
+ * is from what their ⚔️ iVi gap predicts. fit = data/duel-ivi-fit.json (scripts/fit-duel-ivi.mjs,
+ * fitted on cached killboard pairs, never changes iVi itself).
+ * v2: logit(share of A) = curve(ln iVi_A/iVi_B) + veh · (vehicle kill share A − B). curve: odd,
+ *     monotonic, piecewise linear through (t[i], y[i]), flat past the last knot.
+ * v1 (or no file): share of A = iVi_A^k ÷ (iVi_A^k + iVi_B^k); DUEL_FIT_V1 is the 2026-11-02 fit.
+ * |z| shrunk by √(1 + (n − 1)·ρ) for the real-world spread; q90 / q99 from the fitted pairs.
+ * Fewer than DUEL_FIT_MIN kills → no verdict.
  */
 export const DUEL_FIT_MIN = 20;
-export function iviLuck(ka, kb, ia, ib, fit) {
+export const DUEL_FIT_V1 = Object.freeze({ v: 1, k: 0.5567, rho: 0.03751, q90: 1.668, q99: 3.191, min: 20, pairs: 408179 });
+const curveOk = (c) => c && Array.isArray(c.t) && Array.isArray(c.y) && c.t.length >= 2 && c.t.length === c.y.length && c.t[0] === 0;
+/** Usable fit: v2 with a valid curve, else v1 with k; anything else → null. */
+export function duelFitKind(fit) {
+  if (!fit) return null;
+  if (fit.v >= 2 && curveOk(fit.curve)) return 2;
+  return fit.k > 0 ? 1 : null;
+}
+/** Expected share of the kills between them for A (0…1). va / vb: vehicle kill share 0…1 (null → fit.vehMed). */
+export function duelExpected(ia, ib, fit, va = null, vb = null) {
+  if (!(ia > 0) || !(ib > 0)) return null;
+  const kind = duelFitKind(fit);
+  if (!kind) return null;
+  const L = Math.log(ia / ib);
+  if (kind === 1) return 1 / (1 + Math.exp(-fit.k * L));
+  const { t, y } = fit.curve, x = Math.abs(L);
+  let g = y[y.length - 1];
+  for (let i = 1; i < t.length; i++) if (x <= t[i]) { g = y[i - 1] + ((y[i] - y[i - 1]) * (x - t[i - 1])) / (t[i] - t[i - 1]); break; }
+  const med = Number.isFinite(fit.vehMed) ? fit.vehMed : 0;
+  const v = (q) => (Number.isFinite(q) && q >= 0 ? Math.min(1, q) : med);
+  return 1 / (1 + Math.exp(-(Math.sign(L) * g + (fit.veh || 0) * (v(va) - v(vb)))));
+}
+export function iviLuck(ka, kb, ia, ib, fit, va = null, vb = null) {
   const n = (+ka || 0) + (+kb || 0);
-  if (!fit || !(fit.k > 0) || !(ia > 0) || !(ib > 0) || !n) return null;
-  const exp = 1 / (1 + Math.pow(ib / ia, fit.k));
+  const exp = n ? duelExpected(ia, ib, fit, va, vb) : null;
+  if (exp == null) return null;
   const act = ka / n;
   const z = (ka - n * exp) / Math.sqrt(n * exp * (1 - exp));
   const za = z / Math.sqrt(1 + (n - 1) * (fit.rho || 0));
@@ -40,7 +65,7 @@ export function iviLuck(ka, kb, ia, ib, fit) {
   const verdict = !enough ? "few" : a > fit.q99 ? "very" : a > fit.q90 ? "unusual" : "normal";
   let rarer = null;
   if (Array.isArray(fit.pct) && fit.pct.length) { rarer = 0; for (const v of fit.pct) if (a > v) rarer++; }
-  return { n, exp, act, gap: act - exp, z, za, verdict, rarer };
+  return { n, exp, act, gap: act - exp, z, za, verdict, rarer, kind: duelFitKind(fit) };
 }
 
 /** A fight between the two breaks after this many seconds without a kill between them. */

@@ -6,7 +6,7 @@ import {
   classOf, crowdRows, crowdSummary, expectedCount, pagerOf, readPairPages, readPairNewer, pairEvents, fightsOf, fightResult,
   weaponShotUrls, parseShotStats, perKill, pairSummary, ONE_V_ONE,
   duelCacheEntry, duelCacheRestore, duelCachePrune,
-  iviLuck,
+  iviLuck, duelExpected, duelFitKind, DUEL_FIT_V1,
 } from "../duels.mjs";
 
 const fx = JSON.parse(readFileSync(new URL("./fixtures/scrim-royaigreenberet.json", import.meta.url), "utf8"));
@@ -350,5 +350,36 @@ describe("🎲 iviLuck: kill split vs the ⚔️ iVi expectation (owner 2026-11-
   it("missing fit or iVi → null", () => {
     assert.equal(iviLuck(5, 5, 1500, 1500, null), null);
     assert.equal(iviLuck(5, 5, 0, 1500, fit), null);
+  });
+});
+
+describe("🎲 duelExpected v2: curve + vehicle kills, v1 fallback (owner 2026-11-02, t847u)", () => {
+  const v2 = { v: 2, curve: { t: [0, 0.5, 1, 2], y: [0, 0.5, 0.8, 1.0] }, veh: 1.2, vehMed: 0.15, k: 0.5567, rho: 0.02, q90: 1.7, q99: 3.1, min: 20 };
+  it("kind: v2 needs a valid curve, else the v1 k, else nothing", () => {
+    assert.equal(duelFitKind(v2), 2);
+    assert.equal(duelFitKind({ ...v2, curve: { t: [0], y: [0] } }), 1, "broken curve → v1 k");
+    assert.equal(duelFitKind({ v: 1, k: 0.5 }), 1);
+    assert.equal(duelFitKind({ v: 2 }), null);
+    assert.equal(duelFitKind(null), null);
+    assert.equal(duelFitKind(DUEL_FIT_V1), 1);
+  });
+  it("equal iVi and vehicle share → 50%; symmetric; monotonic; flat past the last knot", () => {
+    assert.equal(duelExpected(1500, 1500, v2, 0.1, 0.1), 0.5);
+    const p = duelExpected(2000, 1000, v2, 0.1, 0.2), q = duelExpected(1000, 2000, v2, 0.2, 0.1);
+    assert.ok(Math.abs(p + q - 1) < 1e-12, "A vs B mirrors B vs A");
+    let last = 0.5;
+    for (const r of [1.1, 1.5, 2, 3, 5, 8]) { const e = duelExpected(r * 1000, 1000, v2, 0.1, 0.1); assert.ok(e >= last, `monotonic at ${r}`); last = e; }
+    assert.equal(duelExpected(20000, 1000, v2, 0, 0), duelExpected(50000, 1000, v2, 0, 0), "clamped at the extreme");
+    const mid = duelExpected(Math.exp(0.75) * 1000, 1000, v2, 0, 0);
+    assert.ok(Math.abs(mid - 1 / (1 + Math.exp(-0.65))) < 1e-9, "linear between knots");
+  });
+  it("more vehicle kills → bigger expected share; missing share → the median", () => {
+    assert.ok(duelExpected(1500, 1500, v2, 0.5, 0.1) > 0.5);
+    assert.equal(duelExpected(1500, 1500, v2, null, 0.15), 0.5);
+  });
+  it("v1 fit uses the single-k formula, as before", () => {
+    assert.ok(Math.abs(duelExpected(2003.1, 1704.2, DUEL_FIT_V1) - 0.5225) < 0.001);
+    const r = iviLuck(274, 150, 2003.1, 1704.2, DUEL_FIT_V1);
+    assert.equal(r.kind, 1); assert.equal(r.verdict, "normal");
   });
 });

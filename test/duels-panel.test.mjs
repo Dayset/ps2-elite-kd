@@ -253,16 +253,15 @@ describe("🤺 duels panel: ☰ Flat list (owner 2026-11-02, t844u)", () => {
   });
 });
 
-describe("🤺 duels panel: kill share, ⚔️ iVi and 🎲 vs expected (owner 2026-11-02, t845u)", () => {
-  it("comparison shows the share of kills, the iVi gap and the expected-vs-actual verdict", { skip: !chrome && "no Chrome", timeout: 120000 }, async () => {
-    await withPage(async ({ ev, nav }) => {
-      await nav("index.html");
-      const r = await ev(`(async () => {
+describe("🤺 duels panel: kill share, ⚔️ iVi and 🎲 vs expected (owner 2026-11-02, t845u / t847u)", () => {
+  // 40 kills between them, 10 one way and 30 the other, a day apart each (separate fights).
+  // noFit: duel-ivi-fit.json answers 404 → the page must fall back to the single-k formula.
+  const run = (ev, noFit) => ev(`(async () => {
         ${fixture}
         localStorage.removeItem("duelFlat");
-        const { mountDuels } = await import("/duels-panel.mjs");
+        if (${noFit}) { const f0 = window.fetch; window.fetch = (u, ...r) => (String(u).includes("duel-ivi-fit") ? Promise.resolve(new Response("", { status: 404 })) : f0(u, ...r)); }
+        const { mountDuels } = await import("/duels-panel.mjs?nf=${noFit ? 1 : 0}");
         const t = 1792000000;
-        // 40 kills between them, 10 one way and 30 the other, a day apart each (separate fights).
         const events = Array.from({ length: 40 }, (_, i) => [t - i * 90000, i < 10 ? 1 : 0, "2", 1, 0, 2, 0, 0, 0]);
         const reply = { v: 1, events, rev: 1, lo: t - 39 * 90000, hi: t, done: true, fights: 40, kills: 40, pages: 1, blocks: 1 };
         const getJson = async (u) => (u.includes("character/?character_id=") ? { character_list: [
@@ -270,9 +269,14 @@ describe("🤺 duels panel: kill share, ⚔️ iVi and 🎲 vs expected (owner 2
         const panel = mountDuels(s, { getJson, baseOf: () => "https://x/get/ps2:v2/", catalog: async () => null, pairApi: async () => reply });
         panel.setPlayers([{ cid: "1", display: "TolyaNo" }, { cid: "2", display: "Sarleyy" }]);
         for (let i = 0; i < 50 && !s.querySelector(".duel-cmp tr.duel-luck"); i++) await sleep(100);
-        const rows = [...s.querySelectorAll(".duel-cmp tr")].map((x) => ({ th: x.cells[0].textContent, a: x.cells[1] && x.cells[1].textContent, b: x.cells[2] && x.cells[2].textContent, tip: x.cells[0].title, html: x.innerHTML }));
+        await sleep(300);
+        const rows = [...s.querySelectorAll(".duel-cmp tr")].map((x) => ({ th: x.cells[0].textContent, a: x.cells[1] && x.cells[1].textContent, b: x.cells[2] && x.cells[2].textContent, tip: x.cells[0].title, ta: x.cells[1] && x.cells[1].title, tb: x.cells[2] && x.cells[2].title, html: x.innerHTML }));
         return { rows };
       })()`);
+  it("comparison shows the share of kills, the iVi gap and a plain verdict, numbers in the hover", { skip: !chrome && "no Chrome", timeout: 120000 }, async () => {
+    await withPage(async ({ ev, nav }) => {
+      await nav("index.html");
+      const r = await run(ev, false);
       const kills = r.rows.find((x) => /Kills on the other/.test(x.th));
       const ivi = r.rows.find((x) => /iVi/.test(x.th));
       const luck = r.rows.find((x) => /vs expected/.test(x.th));
@@ -280,12 +284,25 @@ describe("🤺 duels panel: kill share, ⚔️ iVi and 🎲 vs expected (owner 2
       assert.deepEqual([kills.a, kills.b].map((x) => x.replace(/\s+/g, " ").trim()).sort(), ["10 25%", "30 75% +200%"], "share of the kills between them, +% on the bigger side");
       assert.match(ivi.a + ivi.b, /1,704/, "TolyaNo ranks-lite adjs");
       assert.match(ivi.a + ivi.b, /2,003 \+18%/, "Sarleyy 18% higher");
-      assert.match(luck.html, /duel-luck-unusual/, "40 kills at 25/75 against a ~52/48 expectation is unusual");
-      assert.match(luck.a + luck.b, /\+23 pts · unusual/, "the 30-kill side is +23 pts over its expected share");
-      assert.match(luck.a + luck.b, /−23 pts/);
-      assert.match(luck.tip, /k = 0\.56/, "hover names the fitted k");
-      assert.match(luck.tip, /408,179 pairs/, "hover names the pair count");
+      assert.equal(luck.a.trim(), "↓ a bit worse");
+      assert.equal(luck.b.trim(), "↑ a bit better");
+      assert.doesNotMatch(luck.a + luck.b, /\d/, "no numbers in the cells");
+      assert.match(luck.tb, /^Expected 51%, got 75% \(\+24 pts\)\.$/, "v2 (curve + vehicle kills) numbers in the cell hover");
+      assert.match(luck.tip, /Expected: 49% – 51%\. Got: 25% – 75%\./);
+      assert.match(luck.tip, /408,179 real player pairs/);
+      assert.match(luck.tip, /kills from vehicles count in/, "v2 hover says vehicle kills count in");
       assert.doesNotMatch(JSON.stringify(r.rows), /cheat/i);
+    });
+  });
+  it("missing fit file falls back to the single-k formula", { skip: !chrome && "no Chrome", timeout: 120000 }, async () => {
+    await withPage(async ({ ev, nav }) => {
+      await nav("index.html");
+      const r = await run(ev, true);
+      const luck = r.rows.find((x) => /vs expected/.test(x.th));
+      assert.ok(luck, "🎲 row still shows without the fit file");
+      assert.match(luck.tb, /^Expected 52%, got 75% \(\+23 pts\)\.$/, "single-k expectation (52%)");
+      assert.doesNotMatch(luck.tip, /vehicles/, "fallback hover doesn't claim vehicle kills");
+      assert.equal(luck.b.trim(), "↑ a bit better");
     });
   });
 });
