@@ -206,6 +206,21 @@ export function mountDuels(section, o = {}) {
     }).catch(() => { iviMap = new Map(); return iviMap; });
     return iviMapP;
   }
+  // 🪦 Reverse favourite targets (owner 2026-11-03): who has the viewed
+  // player as favourite target, precomputed by build-ranks into
+  // data/rev-targets.json (room's dataDir). Lazy like iviMap: fetched on the
+  // first crowd render, then cached; a failed load just hides the line.
+  // Entry: [hunterDisplay, hunterKills, hunterDeaths] — the crowd line flips
+  // the numbers to the viewed player's perspective (k = hunterDeaths).
+  let revTargets = null, revTargetsP = null;
+  function ensureRevTargets() {
+    if (revTargetsP) return revTargetsP;
+    revTargetsP = fetch(`${dataDir}rev-targets.json`).then((r) => (r.ok ? r.json() : null)).then((d) => {
+      revTargets = (d && d.rev) || {};
+      return revTargets;
+    }).catch(() => { revTargets = {}; return revTargets; });
+    return revTargetsP;
+  }
   // 🎲 vs expected (owner 2026-11-02, t845u / t847u): the ⚔️ iVi → kill-split fit (scripts/fit-duel-ivi.mjs). Lazy, once per page.
   // v2 (curve + vehicle kills) when the file has it; a missing, broken or v1 file falls back to the single-k formula.
   let duelFit = null, duelFitP = null;
@@ -230,10 +245,14 @@ export function mountDuels(section, o = {}) {
     count.textContent = rows.length ? `(${rows.length.toLocaleString(lang())})` : "";
     if (!rows.length) { setStatus(tr("duel.crowdNone", "No killboard for this player yet.")); return; }
     const who = bareName(a.display);
+    // 🪦 Third line (owner 2026-11-03): the hunter who has this player as
+    // favourite target. Numbers flipped to this player's perspective.
+    const preyEntry = revTargets && revTargets[bareName(a.display).toLowerCase()];
     sum.textContent = [
       tr("duel.crowdKd", "K/D {kd} vs the crowd", { kd: kdTxt(s.kd) }),
       s.nemesis ? tr("duel.nemesisOf", "😈 Nemesis: {name} ({k}–{d})", { name: bareName(s.nemesis.name), k: int(s.nemesis.kills), d: int(s.nemesis.deaths) }) : "",
       s.target ? tr("duel.targetOf", "🎯 Favourite target: {name} ({k}–{d})", { name: bareName(s.target.name), k: int(s.target.kills), d: int(s.target.deaths) }) : "",
+      preyEntry ? tr("duel.preyOf", "🪦 Mysterious Hunter: {name} ({k}–{d})", { name: bareName(preyEntry[0]), k: int(preyEntry[2]), d: int(preyEntry[1]) }) : "",
     ].filter(Boolean).join(" · ");
     sum.hidden = false;
     setStatus(tr("duel.crowdNote", "The {n} players {name} fights most (Census killboard). Add one of them to the names to see every kill between the two.", { n: rows.length.toLocaleString(lang()), name: who }));
@@ -247,13 +266,21 @@ export function mountDuels(section, o = {}) {
     const dir = sortDir === "asc" ? 1 : -1;
     const col = cols.find((c) => c.id === sortKey);
     const list = rows.slice().sort((x, y) => (sortKey === "opp" ? dir * bareName(x.name).localeCompare(bareName(y.name)) : dir * (col.fn(x) - col.fn(y))) || y.share - x.share);
-    const badge = (r) => (r === s.nemesis ? ` <span class="scr-group duel-nem" title="${esc(tr("duel.nemesisTip", "Killed this player the most."))}">😈</span>` : r === s.target ? ` <span class="scr-group duel-tgt" title="${esc(tr("duel.targetTip", "This player killed them the most."))}">🎯</span>` : "");
+    const preyRow = preyEntry ? rows.find((r) => bareName(r.name).toLowerCase() === bareName(preyEntry[0]).toLowerCase()) : null;
+    const badge = (r) => (r === s.nemesis ? ` <span class="scr-group duel-nem" title="${esc(tr("duel.nemesisTip", "Killed this player the most."))}">😈</span>` : r === s.target ? ` <span class="scr-group duel-tgt" title="${esc(tr("duel.targetTip", "This player killed them the most."))}">🎯</span>` : r === preyRow ? ` <span class="scr-group duel-prey" title="${esc(tr("duel.preyTip", "This player is their favourite target."))}">🪦</span>` : "");
     table.querySelector("tbody").innerHTML = list.map((r, i) =>
       `<tr><td class="rk-num">${i + 1}</td><td class="duel-name">${personHtml(r.name)}${iviHtml(r)}${badge(r)}</td>` +
       `<td class="duel-kills">${int(r.kills)}</td><td>${int(r.deaths)}</td><td>${kdTxt(r.kd)}</td><td>${r.kpm == null ? "–" : r.kpm.toFixed(2)}</td><td>${pct(r.share)}</td></tr>`).join("");
     wrap.hidden = false;
     if (!iviMap) ensureIvi().then(() => {
       if (mode === "crowd" && section.open && a && shownKey === `c:${a.cid}`) { shownKey = ""; renderCrowd(); }
+    });
+    // No shownKey / section.open condition here (unlike ivi above): the ivi
+    // re-render clears shownKey, and a load landing while the section is
+    // closed would otherwise never paint (show() early-returns on shownKey).
+    // Re-rendering the current crowd player is idempotent either way.
+    if (!revTargets) ensureRevTargets().then(() => {
+      if (mode === "crowd" && a) renderCrowd();
     });
   }
 

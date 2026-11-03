@@ -24,6 +24,7 @@ import { setPsKpmRatio } from "../ps-baseline.mjs";
 import { markNote, statMark, confirmedPadderSlugs, isFarmListed, isNotFarm, farmListEntry, isPenalizedPadder, PADDER_PENALTY, PADDER_PENALTY_REF, setNotFarm, setFarmList, setReviewed, setRoomRule } from "../padding.mjs";
 import { setVehicleCutReviewed } from "../vehicle-cut.mjs";
 import { roomById } from "../rooms.mjs";
+import { buildRevTargets } from "../rev-targets.mjs";
 import { sprout, sampleEvents, farmAccount } from "../sprouts.mjs";
 import { findOutliers, guardStatus, KNOWN_EXTREMES, isEstablished, carveOutReason } from "../outlier-guard.mjs";
 import { infantryTagCounts, INFANTRY_TAG, infantryShares } from "../infantry.mjs";
@@ -355,6 +356,33 @@ export function buildRanks(dataDir, { onPlayer = null, onHidden = null, onFarm =
   }
   uniqueQueries(rows, keyOf);
   return { updatedAt: new Date().toISOString(), count: rows.length, cols: RANK_COLS.slice(), rows };
+}
+
+// 🪦 Reverse favourite targets (owner 2026-11-03): one pass over the room's
+// player files; the map itself lives in ../rev-targets.mjs (the panel's target
+// rule, inverted). Written by main() into <dataDir>/rev-targets.json, so the
+// bot's refresh commits it (git add -A) in both rooms. No farm / hidden
+// filter: the map must answer "whose target is this player" exactly as the
+// panel defines a target.
+export function buildRevTargetsData(dataDir) {
+  const index = JSON.parse(fs.readFileSync(path.join(dataDir, "index.json"), "utf8"));
+  const players = [];
+  const seen = new Set();
+  for (const e of index.players || []) {
+    const file = e && e.file;
+    if (!file || seen.has(file)) continue;
+    seen.add(file);
+    let raw;
+    try {
+      raw = JSON.parse(fs.readFileSync(path.join(dataDir, file), "utf8"));
+    } catch {
+      continue;
+    }
+    const pl = raw && (raw.player || raw);
+    if (!pl || !Array.isArray(pl.rows)) continue;
+    players.push({ display: pl.display || e.name || "", rows: pl.rows });
+  }
+  return buildRevTargets(players);
 }
 
 /**
@@ -1435,6 +1463,14 @@ if (isMain) {
   if (room === "ps") addServerColumn(out, JSON.parse(fs.readFileSync(path.join(dataDir, "index.json"), "utf8")));
   else addPcServerColumn(out, serverInputs && serverInputs.worldBy, serverInputs && serverInputs.worldByOutfit, serverInputs && serverInputs.worldByOpp);
   fs.writeFileSync(path.join(dataDir, "ranks.json"), JSON.stringify(out) + "\n");
+  // 🪦 Reverse favourite targets (owner 2026-11-03): who has each player as
+  // favourite target, for the duels crowd line. Same run as ranks.json, so
+  // the bot's refresh keeps it fresh in both rooms.
+  try {
+    const rev = buildRevTargetsData(dataDir);
+    fs.writeFileSync(path.join(dataDir, "rev-targets.json"), JSON.stringify({ updatedAt: out.updatedAt, count: Object.keys(rev).length, rev }) + "\n");
+    console.log(`rev-targets.json: ${Object.keys(rev).length} players are someone's favourite target`);
+  } catch (e) { console.log(`rev-targets.json not written: ${e.message}`); }
   // 🌐 Server rating (t798u): main-page section + the server-name alias (PC Osprey / Wainwright, PS Genudine / Ceres).
   try {
     const srv = serverRatingOf(out, { ...(serverInputs || {}), isPs: room === "ps" });
