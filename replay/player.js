@@ -114,17 +114,34 @@ const CLS = Object.fromEntries(Object.entries({ inf: 'Infiltrator', la: 'Light A
 const F = doc.faction in rigs ? doc.faction : 'tr', foes = ['tr', 'nc', 'vs'].filter(f => f !== F);
 const main = new Soldier(rigs[F], F, { x: 350, y: GROUND + 5, scale: 0.5, facing: 1, seed: 0.3, rate: RATE, speed: 120 });
 main.isMain = true;
-// the crowd: ~70% of the main soldier's size, dimmed, always behind (smaller y) and clear of x≈290–420
-const ALLY_SLOTS = [[205, -40, 0.72], [500, -46, 0.7], [110, -24, 0.7], [260, -84, 0.66], [580, -20, 0.72], [40, -62, 0.68]];
+// the crowd: dimmed, spread wide and staggered in depth, each behind his own wall tile —
+// they sit in cover and only step out to shoot, instead of a line staring at the enemy
+const ALLY_SLOTS = [[110, -115, 0.66], [190, -50, 0.72], [500, -100, 0.66], [600, -30, 0.70], [700, -115, 0.66], [790, -55, 0.72]];
 const allies = ALLY_SLOTS.slice(0, P.allies).map(([x, dy, k], i) => {
   const a = new Soldier(rigs[F], F, { x, y: GROUND + dy, scale: main.scale * k, facing: 1, seed: 1.7 + i * 2.3, rate: 9 + 3 * rng(), speed: 90 });
   a.dim = true; return a; });
-const ENEMY_SLOTS = [[870, -50, 0.9], [985, 8, 1], [1100, -24, 0.95], [930, -92, 0.85], [1050, -70, 0.88]];
+const ENEMY_SLOTS = [[850, -120, 0.85], [945, -25, 0.95], [1020, 5, 1], [1100, -95, 0.88], [975, -60, 0.9]];
 const enemies = ENEMY_SLOTS.map(([x, dy, k], i) => {
   const s = new Soldier(rigs[foes[i % 2]], foes[i % 2], { x, y: GROUND + dy, scale: P.enemyScale * k, facing: -1, seed: 3.1 + i * 1.9, rate: 9 + 3 * rng(), speed: 170 });
   s.slot = x; s.deadAt = -99; s.state = 'dead'; return s;
 });
 const everyone = [main, ...allies, ...enemies];
+// cover: one basic wall tile per soldier, on the far side from the enemy. Hidden = the soldier
+// centred on his wall (the wall, drawn later in depth order, occludes him); peek = stepped out
+// past the wall's firing edge. peekX is the slot/home the rest of the code already uses.
+function makeCover(s) {
+  // rig height is 520 (rigs.json `height`, head top at -520); the wall must clear it, plus a
+  // margin, and clear the head's ~289 width — otherwise helmets poke out over the tile
+  const w = 310 * s.scale, h = 580 * s.scale;
+  const wx = s.facing > 0 ? s.x - 30 - w : s.x + 30;
+  const wall = { x: wx, y: s.y + 8, w, h };
+  return { wall, hiddenX: wx + w / 2, peekX: s.x };
+}
+main.cover = makeCover(main);
+for (const a of allies) a.cover = makeCover(a);
+for (const e of enemies) e.cover = makeCover(e);
+main.cover.wall.forMain = true;
+const walls = [main.cover.wall, ...allies.map(a => a.cover.wall), ...enemies.map(e => e.cover.wall)];
 
 // ---------------------------------------------------------------- effects
 let bullets = [], fx = [];
@@ -139,7 +156,7 @@ const muzzle = s => {
 };
 const pop = (s, text, color = '#fff', t) => fx.push({ kind: 'pop', x: s.x, y: s.y - 560 * s.scale, text, color, t0: t, dur: 1.3 });
 const alive = s => s.state === 'idle' || s.state === 'shoot' || s.state === 'run' || s.state === 'revive';
-const ready = s => (s.state === 'idle' || s.state === 'shoot') && Math.abs(s.x - s.slot) < 2 && !s.busy;
+const ready = s => (s.state === 'idle' || s.state === 'shoot') && (Math.abs(s.x - s.slot) < 2 || (s.cover && Math.abs(s.x - s.cover.hiddenX) < 2)) && !s.busy;
 
 // Shots fly straight inside a narrow cone of fire (5° wide) from the muzzle toward the aim point:
 // hits deviate ≤ 0.8°, misses 1.2–2.5° and keep flying past the target (drawn on a lane just in front
@@ -349,7 +366,7 @@ const HOOKS = {
                  if (s.medic && !s.healFx && tl > d - 2) { s.healFx = 1; fx.push({ kind: 'heal', from: s.medic, to: main, t0: t, dur: 1.2 }); }
                  if (!s.up && tl > d - 0.8) { s.up = 1; main.downKeep = false; main.set('revive', t); stats.rev++; pop(main, T('pop.revived', 'revived'), '#8dffa5', t); } } },
   healAlly: { enter(s, t) { const tg = allies.length ? pick(allies) : null; if (tg) fx.push({ kind: 'heal', from: main, to: tg, t0: t, dur: s.t1 - s.t0 }); } },
-  ammoBox: { enter(s, t) { life.box = { x: main.home - 45, t0: t, t1: s.t1 }; } },
+  ammoBox: { enter(s, t) { life.box = { x: main.home - 170, t0: t, t1: s.t1 }; } },
   shuffle: { enter(s, t) { s.x0 = main.x; s.dx = (main.x > main.home ? -1 : 1) * (20 + rng() * 40); },
              tick(s, t) { const k = clamp((t - s.t0) / (s.t1 - s.t0)); main.x = lerp(s.x0, s.x0 + s.dx, k);
                main.facing = s.dx > 0 ? 1 : -1; main.hop = life.cls === 'la' ? 40 * Math.sin(k * Math.PI) : 0; },
@@ -435,7 +452,7 @@ function background(t, dt) {
     const sh = enemies.filter(e => e.state === 'idle' && !e.busy), tgts = [main, ...allies].filter(alive);
     if (sh.length && tgts.length && !tank.on) {
       const s = pick(sh), tg = rng() < 0.6 && alive(main) ? main : pick(tgts), close = tg === main && rng() < P.dodge;
-      const b = startBurst(t, s, tg, 5 + Math.floor(rng() * 6), 0, false); b.close = close; enemyBursts.push(b);
+      const b = startBurst(t, s, tg, 5 + Math.floor(rng() * 6), 0, false); b.close = close; b.pot = true; enemyBursts.push(b);
       if (close) pop(main, T('pop.close', 'close call'), '#c8d3ff', t + 0.35);
     }
   }
@@ -458,6 +475,21 @@ function background(t, dt) {
 
 // ---------------------------------------------------------------- step
 function step(t, dt) {
+  // cover: a shooter peeks to fire, and the target of a real burst peeks with him — so at the
+  // kill moment the enemy is out in the open, not behind his wall (the kill shot is always the
+  // burst's last, seconds after the peek starts). Pot-shots never pull a target out: they miss
+  // anyway. Only idle/shoot move: run, dead, dying and revive leave x to their own drivers.
+  const live = [cur?.b, cur?.ally, cur?.back, ...allyBursts, ...enemyBursts];
+  for (const s of everyone) {
+    if (!s.cover) continue;
+    const shooting = s.state === 'shoot';
+    const targeted = live.some(b => b && !b.done && !b.pot && b.target === s && (b.tank ? b.fired < 2 : b.shooter.state === 'shoot'))
+      || bullets.some(b => b.final && b.to === s);   // killing shot still flying: the target stays out until it lands
+    s.peekWant = (shooting || targeted) ? 1 : 0;
+    if (s.state !== 'idle' && s.state !== 'shoot') continue;
+    const tx = s.peekWant ? s.cover.peekX : s.cover.hiddenX;
+    s.x += (tx - s.x) * Math.min(1, dt * 10);
+  }
   ensurePlan(t);
   while (plan.segs.length && plan.segs[0].t1 <= t) { const s = plan.segs.shift(); if (!s.entered) { s.entered = 1; enter(s, s.t0); } exit(s, t); if (cur === s) cur = null; }
   const s = plan.segs[0];
@@ -469,7 +501,8 @@ function step(t, dt) {
   }
   bullets = bullets.filter(b => !(b.hit && b.landed) && b.age < 1.2 && b.x > -60 && b.x < W + 60);
   fx = fx.filter(f => t - f.t0 < f.dur);
-  for (const a of allies) a.x += (a.home - a.x) * Math.min(1, dt * 3);
+  // allies ride their cover (moved in step's peek pass above); coverless allies still drift home
+  for (const a of allies) if (!a.cover) a.x += (a.home - a.x) * Math.min(1, dt * 3);
 }
 
 // ---------------------------------------------------------------- drawing
@@ -597,6 +630,17 @@ function drawStateBox(t) {
   if (debug) { ctx.font = '500 12px system-ui,sans-serif'; ctx.fillStyle = '#9aa7b4'; ctx.fillText(`${s.id} · ${(s.t1 - s.t0).toFixed(1)} s`, x, y + 18); }
   ctx.restore();
 }
+function drawWall(w) {
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,.35)';
+  ctx.beginPath(); ctx.ellipse(w.x + w.w / 2, w.y + 2, w.w * 0.55, 10, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = '#46525f'; ctx.fillRect(w.x, w.y - w.h, w.w, w.h);   // basic wall tile
+  ctx.fillStyle = '#6d7c8c'; ctx.fillRect(w.x, w.y - w.h, w.w, 6);      // lit top edge
+  ctx.fillStyle = 'rgba(255,255,255,.08)'; ctx.fillRect(w.x, w.y - w.h + 6, w.w, 10);
+  ctx.fillStyle = 'rgba(0,0,0,.30)'; ctx.fillRect(w.x, w.y - w.h * 0.55, w.w, 3);  // block seams
+  ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.fillRect(w.x + w.w * 0.5, w.y - w.h, 3, w.h);
+  ctx.restore();
+}
 function render(t) {
   ctx.setTransform(cv.width / W, 0, 0, cv.height / H, 0, 0);
   drawBg(); drawBox(t); drawFx(t, 'under');
@@ -610,11 +654,18 @@ function render(t) {
     const i = Math.floor(k); (i < 0 ? back : layer[Math.min(order.length - 1, i)]).push(b);
   }
   drawBullets(back);
+  // walls ride the same depth order (by ground y): a wall in front of a soldier occludes him,
+  // which is what "behind cover" means here. Main's wall is skipped while the tank is out.
+  const wallsSorted = walls.slice().sort((a, b) => a.y - b.y);
+  let wi = 0;
+  const wallsBefore = (y) => { while (wi < wallsSorted.length && wallsSorted[wi].y < y) { const w = wallsSorted[wi++]; if (w.forMain && tank.on) continue; drawWall(w); } };
   for (const [i, s] of order.entries()) {
+    wallsBefore(s.y);
     if (s === main && (tank.on || t - tank.off < 0.4)) { if (tank.on) { drawTank(t); drawBullets(layer[i]); continue; } drawTank(t); }
     if (s === main && alive(main)) { ctx.save(); ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(s.x, s.y + 4, 70, 11, 0, 0, 7); ctx.stroke(); ctx.restore(); }
     s.draw(ctx, t); drawBullets(layer[i]);
   }
+  while (wi < wallsSorted.length) { const w = wallsSorted[wi++]; if (w.forMain && tank.on) continue; drawWall(w); }
   drawFx(t, 'over'); drawHud(t);
   lifeUi(t);
 }
@@ -777,6 +828,10 @@ window.__skip = () => {
   return { from, to: simT, id: ev.id, phase: phaseOf(ev.id), stats: { ...stats } };
 };
 window.__bullets = () => bullets.map(b => ({ hit: !!b.hit, side: b.side, deg: +(Math.atan2(b.vy, b.vx) * 180 / Math.PI).toFixed(2), from: b.from === main ? 'main' : 'other' }));
+window.__cover = () => ({ walls: walls.map(w => [Math.round(w.x), w.y, Math.round(w.w), Math.round(w.h)]),
+  main: { x: +main.x.toFixed(1), peekWant: main.peekWant ?? 0, cover: main.cover, state: main.state },
+  allies: allies.map(a => ({ x: +a.x.toFixed(1), peekWant: a.peekWant ?? 0, cover: a.cover, state: a.state })),
+  enemies: enemies.map(e => ({ x: +e.x.toFixed(1), peekWant: e.peekWant ?? 0, cover: e.cover, state: e.state, slot: e.slot })) });
 window.__life = () => { const L = lifeAt(simT); return L && { n: L.n, phase: phaseAt(L, simT)?.ph, phases: L.phases.map(p => [p.ph, +(p.t1 - p.t0).toFixed(1)]), simT }; };
 window.__slow = () => ({ wallT, simT, scale: timeScale(wallT) });
 window.__params = () => ({ st, P, RATE, CYCLE, ALIVE_MEAN, DOWN_MEAN, missing, stats, simT, cur: cur?.id, credit, fight: fightOk ? fight : null });
