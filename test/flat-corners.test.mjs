@@ -9,7 +9,7 @@ import path from "node:path";
 const ROOT = path.resolve(import.meta.dirname, "..");
 const SKIP = /^(data|data-ps|assets|node_modules|test|oracle\/backend|oracle\/benchmark|oracle\/js\/vendor)\//;
 const ROUND_OK = [
-  /^\.spinner\b/, /^\.dot\b/, /^\.live-online i\b/,
+  /^\.spinner\b/, /^\.dot\b/, /^\.sc-dot\b/, /^\.live-online i\b/,
   /^\.legend \.sw\.(poi|pkring)\b/, /^#map \.pulses\b/,
 ];
 
