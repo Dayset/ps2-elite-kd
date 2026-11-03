@@ -5,13 +5,28 @@
 // percentile among all cached PC players, plus data/replay/meta.json. No network.
 // Uses the site's own modules for 🪳 Zerg, 🎲 Luck and the crowd check, so numbers match the site.
 // A missing value stays missing (the page then uses a neutral default and says so).
-// Usage: node scripts/build-replay.mjs [repoDir=.]
+// Usage: node scripts/build-replay.mjs [repoDir=.] [--room pc|ps]
+// --room ps (#111) reads the PS cache instead (data-ps/ranks.json, data-ps/players,
+// data-ps/class-times.json, data-ps/duel-ivi-player.json) and writes data-ps/replay/.
+// PS differences, all from the PS cache's own shape: shards are keyed by the PS key
+// (us-<cid>/eu-<cid> from data-ps/index.json, so namesakes stay apart), class times are
+// keyed by the same key, there is no Honu XP (no data-ps/xp — revive/heal/resupply rates
+// stay missing and the page uses its neutral defaults), and player files carry no faction
+// (shards omit f). The PC path is untouched by the flag: --room pc reproduces the old output.
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-const REPO = path.resolve(process.argv[2] || '.');
-const OUT = path.join(REPO, 'data/replay');
+const _args = process.argv.slice(2);
+let _repoArg = '.', _room = 'pc';
+for (let i = 0; i < _args.length; i++) {
+  if (_args[i] === '--room') _room = _args[++i] || 'pc';
+  else if (!_args[i].startsWith('--')) _repoArg = _args[i];
+}
+if (_room !== 'pc' && _room !== 'ps') { console.error('usage: node scripts/build-replay.mjs [repoDir=.] [--room pc|ps]'); process.exit(1); }
+const REPO = path.resolve(_repoArg);
+const DIR = _room === 'ps' ? 'data-ps' : 'data';
+const OUT = path.join(REPO, DIR, 'replay');
 const imp = (f) => import(pathToFileURL(path.join(REPO, f)).href);
 const { shardOf, SHARDS } = await imp('replay/shard.mjs');
 const { percentileOf } = await imp('dist.mjs');
@@ -20,8 +35,9 @@ const { playerLuck } = await imp('duels.mjs');
 const { crowdSample } = await imp('zerg-revive.mjs');
 const J = (f) => JSON.parse(fs.readFileSync(path.join(REPO, f), 'utf8'));
 const fin = (v) => typeof v === 'number' && Number.isFinite(v);
-// XP ids per scene state (names from the site's data/exp-types.json, so nothing is guessed)
-const EXP_NAMES = (() => { try { return J('data/exp-types.json').types || {}; } catch { return {}; } })();
+// XP ids per scene state (names from the site's data/exp-types.json, so nothing is guessed).
+// PC only: PS has no Honu XP, so the whole XP block below is skipped for --room ps.
+const EXP_NAMES = (() => { try { return _room === 'pc' ? J('data/exp-types.json').types || {} : {}; } catch { return {}; } })();
 const expIds = (re) => Object.entries(EXP_NAMES).filter(([, v]) => re.test(v[0]) && !/HIVE/.test(v[0])).map(([k]) => k);
 const XP_GROUPS = {
   resupplyPm: ['34', '55'],                                   // Resupply Player, Squad Resupply
@@ -29,13 +45,31 @@ const XP_GROUPS = {
   repairPm: expIds(/Repair/),                                  // every repair tick (vehicles, MAX, terminals, constructions)
 };
 
-const ranks = J('data/ranks.json');
+const ranks = J(DIR + '/ranks.json');
+// PS identity: ranks rows carry a name slug, but the shard key is the PS key
+// (us-<cid>/eu-<cid>) from data-ps/index.json — namesakes share a slug, never a key.
+// Matched on (slug, server group); a slug-only fallback covers rows whose server
+// group is missing. Rows with no key at all are skipped and counted, never emitted
+// under a slug the page (which looks up by key) could never find.
+let keyOf = (o) => o.slug;
+if (_room === 'ps') {
+  const ix = J('data-ps/index.json').players || [];
+  const bySlugSrv = new Map(), bySlug = new Map();
+  for (const p of ix) {
+    if (!p.slug || !p.key) continue;
+    bySlugSrv.set(p.slug + '|' + String(p.ns || '').replace(/^ps2ps4/, ''), p.key);
+    if (!bySlug.has(p.slug)) bySlug.set(p.slug, p.key);
+  }
+  keyOf = (o) => bySlugSrv.get(o.slug + '|' + o.srv) || bySlug.get(o.slug) || null;
+}
 const ix = Object.fromEntries(ranks.cols.map((c, i) => [c, i]));
 const rows = ranks.rows.map((r) => Object.fromEntries(ranks.cols.map((c, i) => [c, r[i]])));
+for (const o of rows) o.key = keyOf(o);
+const skippedNoKey = rows.filter((o) => !o.key).length;
 const col = (id) => rows.map((o) => o[id]);
 const tp = traitPools({ adjs: col('adjs'), ivi: col('ivi'), inflation: col('inflation'), apk: col('apk') });
-const luckData = J('data/duel-ivi-player.json');
-const classes = J('data/class-times.json');
+const luckData = J(DIR + '/duel-ivi-player.json');
+const classes = J(DIR + '/class-times.json');
 const catalog = J('assets/weapons/catalog.json').items;
 const INF_CATS = new Set(['Pistol', 'LMG', 'Assault Rifle', 'SMG', 'Carbine', 'Sniper Rifle', 'Scout Rifle', 'Shotgun', 'Heavy Weapon', 'Battle Rifle', 'Crossbow', 'Infantry Weapons', 'Hybrid Rifle']);
 const bare = (n) => String(n || '').replace(/^\[[^\]]*\]\s*/, '').toLowerCase();
@@ -47,14 +81,14 @@ for (const o of rows) {
   o.zerg = z ? z.score : null;
   const g = aimGap(tp, o.adjs, o.ivi, o.hut, o.vdf, o.nbd);
   o.diff = g ? g.score : null;
-  const l = playerLuck(luckData, o.slug);
+  const l = playerLuck(luckData, o.key) ?? playerLuck(luckData, o.slug);
   o.luck = l ? Math.round(l.gap * 1000) / 10 : null; o.luckOpps = l ? l.opps : null; o.luckLvl = l ? (l.up ? 1 : -1) * l.lvl : null;
   o.dpm = fin(o.kpm) && fin(o.kd) && o.kd > 0 ? o.kpm / o.kd : null;
 }
 
 // per-player-file values (weapons, opponents, assists) for everyone, for the pools
 function fileStats(slug) {
-  const f = path.join(REPO, 'data/players', slug + '.json');
+  const f = path.join(REPO, DIR, 'players', slug + '.json');
   if (!fs.existsSync(f)) return null;
   let p; try { p = JSON.parse(fs.readFileSync(f, 'utf8')).player; } catch { return null; }
   if (!p) return null;
@@ -84,10 +118,11 @@ function fileStats(slug) {
   return out;
 }
 
-for (const o of rows) Object.assign(o, fileStats(o.slug) || {});
-// XP detail (Honu, only some players)
+for (const o of rows) { if (o.key) Object.assign(o, fileStats(o.key) || {}); }
+// XP detail (Honu, only some players; PC only — PS has no Honu XP)
 for (const o of rows) {
-  const f = path.join(REPO, 'data/xp', o.slug + '.json');
+  if (_room !== 'pc') break;
+  const f = path.join(REPO, 'data/xp', o.key + '.json');
   if (!fs.existsSync(f)) continue;
   const xp = JSON.parse(fs.readFileSync(f, 'utf8'));
   o.hasXp = 1; // the page then reads data/xp/<slug>.json for the newest ⏱ time to fight
@@ -100,7 +135,7 @@ for (const o of rows) {
   if (xp.fight && fin(xp.fight.ms) && xp.fight.n > 0) o.fightStart = { ms: xp.fight.ms, n: xp.fight.n, sessions: xp.fight.sessions ?? null };
 }
 const ct = classes.players;
-for (const o of rows) { const c = ct[o.slug]; if (c) o.cls = Object.fromEntries(classes.cols.map((k, i) => [k, c[i]])); }
+for (const o of rows) { const c = o.key && ct[o.key]; if (c) o.cls = Object.fromEntries(classes.cols.map((k, i) => [k, c[i]])); }
 
 const POOL_IDS = ['kd', 'kpm', 'ownKpm', 'dpm', 'acc', 'hsr', 'ivi', 'adjs', 'rkd', 'rf', 'act', 'pvs', 'cons', 'inflation', 'ekpm', 'apk', 'infVeh', 'infMax', 'zerg', 'luck', 'diff', 'spk', 'hpk', 'oppIvi', 'oppKpm', 'revivedShare', 'revivesGivenPm', 'healsGivenPm', 'assistShare', 'resupplyPm', 'capturePm', 'repairPm'];
 const pools = Object.fromEntries(POOL_IDS.map((id) => [id, rows.map((o) => o[id]).filter(fin).sort((a, b) => a - b)]));
@@ -113,7 +148,9 @@ const r3 = (v) => +(+v).toPrecision(3);
 const COLS = ['kd', 'kpm', 'dpm', 'acc', 'hsr', 'spk', 'hpk', 'apk', 'infVeh', 'adjs', 'oppIvi', 'ekpm', 'zerg', 'revivedShare',
   'healsGivenPm', 'revivesGivenPm', 'resupplyPm', 'repairPm', 'capturePm'];
 const shards = Array.from({ length: SHARDS }, () => ({}));
+let emitted = 0;
 for (const o of rows) {
+  if (!o.key) continue; emitted++;
   const d = { n: o.name, v: COLS.map((id) => (fin(o[id]) ? r3(o[id]) : null)), p: COLS.map((id) => pct(id, o[id])) };
   if (o.faction) d.f = o.faction;
   if (o.srv) d.s = o.srv;
@@ -123,7 +160,7 @@ for (const o of rows) {
   if (o.cls) d.c = classes.cols.map((k) => o.cls[k]);
   if (o.fightStart) d.fs = o.fightStart;
   if (o.hasXp) d.x = 1;
-  shards[parseInt(shardOf(o.slug), 16)][o.slug] = d;
+  shards[parseInt(shardOf(o.key), 16)][o.key] = d;
 }
 fs.mkdirSync(OUT, { recursive: true });
 let bytes = 0;
@@ -136,7 +173,7 @@ shards.forEach((s, i) => {
 // meta: no clock time, so an unchanged cache gives identical files (and no commit).
 // med: population medians for the pair fallback (replay/pair.mjs) when a side has no shard
 // row — same pools and lower-median rule as pct() above, so a rebuild keeps them in sync.
-const meta = { v: 1, ranksAt: ranks.updatedAt, pool: rows.length, shards: SHARDS, cols: COLS, classCols: classes.cols,
+const meta = { v: 1, ...(_room === 'ps' ? { room: 'ps' } : {}), ranksAt: ranks.updatedAt, pool: emitted, shards: SHARDS, cols: COLS, classCols: classes.cols,
   med: Object.fromEntries(['kpm', 'dpm', 'acc', 'hsr', 'spk', 'hpk', 'apk', 'infVeh'].map((id) => [id, med(id)])) };
 fs.writeFileSync(path.join(OUT, 'meta.json'), JSON.stringify(meta) + '\n');
-console.log(`replay: ${rows.length} players in ${SHARDS} shards, ${(bytes / 1024).toFixed(0)} KB total`);
+console.log(`replay [${_room}]: ${emitted} players in ${SHARDS} shards, ${(bytes / 1024).toFixed(0)} KB total${skippedNoKey ? `, ${skippedNoKey} rows skipped (no PS key)` : ''}`);

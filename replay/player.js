@@ -6,11 +6,12 @@ import { Soldier, loadRigs, FX } from './soldier.js?v=20261103-mot1';
 import { STATES, FILLERS, PHASES, phaseOf } from './states.js';
 import { shardOf, slugOf } from './shard.mjs';
 import { toDoc } from './doc.mjs?v=20261103-pair1';
-import { pairOf, pairStatus, pairRow, defaultRival, rankedRivals } from './pair.mjs?v=20261103-pair1';
+import { pairOf, pairStatus, pairRow, defaultRival, rankedRivals, MED_KEYS, MED_FALLBACK } from './pair.mjs?v=20261103-pair1';
 import { profileOf, shotsPerSec, toProfile, FALLBACK } from './weapons.mjs?v=20261103-weap1';
 import { baseRate, bulletRate, nextKillAt, calmStretchEnd, rampTo, baseGate, resolvePace } from './director.mjs?v=20261103-pace1';
 import { shooter, headChance } from './engagement.mjs?v=20261103-hs1';
-import { planDuel } from './duel-plan.mjs?v=20261103-duel2';
+import { planDuel } from './duel-plan.mjs?v=20261103-ps1';
+import { planScrim, scrimPlanEnd, topScrimPartner } from './scrim-plan.mjs?v=20261103-ps1';
 import { hpAt, barFracs, sparkFor, scoreAt, engagementAt, lifeAt as duelLifeAt, phaseState, killcamFor } from './duel-scene.mjs?v=20261103-duel2';
 import { STRIP, coverOf, assignLanes } from './lanes.mjs?v=20261103-strip1';
 import { pickWeighted, drawOpponents } from './crowd.mjs?v=20261103-crowd1';
@@ -65,11 +66,23 @@ let paceRateText = '';
 function updatePaceRate() { const s = '×' + rate.toFixed(1); if (s !== paceRateText) { paceRateText = s; paceRateEl.textContent = s; } }
 const rawName = (q.get('name') || '').trim().slice(0, 40);
 const slug = slugOf(rawName);
+// Room (#111): PC ids are name slugs; PS ids are server+cid keys (eu-…,
+// us-…) straight from data-ps, because slugOf would strip the dash and the
+// key would no longer match the shard. dataDir follows the room, so a PS
+// page reads only data-ps/ and never touches the PC cache.
+const room = q.get('room') === 'ps' ? 'ps' : 'pc';
+const dataDir = room === 'ps' ? '../data-ps' : '../data';
+const idk = room === 'ps' ? rawName.toLowerCase() : slug;
 const getJson = async (u) => { try { const r = await fetch(u); return r.ok ? await r.json() : null; } catch { return null; } };
-const [meta, shard, catalog, profiles] = await Promise.all([getJson('../data/replay/meta.json'),
-  slug ? getJson(`../data/replay/${shardOf(slug)}.json`) : null, getJson('../assets/weapons/catalog.json'),
+const [meta, shard, catalog, profiles] = await Promise.all([getJson(`${dataDir}/replay/meta.json`),
+  idk ? getJson(`${dataDir}/replay/${shardOf(idk)}.json`) : null, getJson('../assets/weapons/catalog.json'),
   getJson('../assets/weapons/profiles.json')]);
-const doc = meta && shard?.p?.[slug] ? toDoc(shard.p[slug], { meta, catalog, slug }) : null;
+const doc = meta && shard?.p?.[idk] ? toDoc(shard.p[idk], { meta, catalog, slug: idk }) : null;
+// PS has no faction source anywhere (player files, ranks, names, scrim rows
+// all lack it), and toDoc defaults a missing faction to 'tr' — which would
+// make every PS pair read as same-faction and fall back to the crowd scene.
+// Unknown, not TR, is the honest value for PS.
+if (room === 'ps' && doc) doc.faction = null;
 let fast = false;
 document.title = `🎬 ${doc ? doc.name + ' · ' : ''}${T('title', 'Duel replay')}`;
 const rigs = await loadRigs();
@@ -79,7 +92,9 @@ if (!doc) {
   ctx.textAlign = 'center';
   ctx.fillText(rawName ? T('none', 'No replay stats for “{name}” yet.', { name: rawName }) : T('noName', 'Pick a player: 🎬 next to a name in the table.'), W / 2, H / 2);
   const n = document.createElement('div'); n.className = 'note';
-  n.textContent = T('noneHint', 'Replays cover PC players in the site’s cache. A newly added player shows up after the next daily update.');
+  n.textContent = room === 'ps'
+    ? T('noneHintPs', 'Replays cover PlayStation players in the site’s cache. A newly added player shows up after the next refresh.')
+    : T('noneHint', 'Replays cover PC players in the site’s cache. A newly added player shows up after the next daily update.');
   document.getElementById('hud').append(n);
   window.__pair = () => null;
   window.__ready = true;
@@ -87,27 +102,80 @@ if (!doc) {
 }
 
 // ---------------------------------------------------------------- pair (?vs=, else A's top rival; #93 — no scene change yet)
-const fit = await getJson('../data/duel-ivi-fit.json');
-const aFile = await getJson(`../data/players/${slug}.json`);
+const fit = await getJson(`${dataDir}/duel-ivi-fit.json`);
+const aFile = await getJson(`${dataDir}/players/${idk}.json`);
 const aRows = aFile?.player?.rows || [];
-const shardCache = new Map([[shardOf(slug), shard]]);
-const getShard = async (s) => { if (!shardCache.has(s)) shardCache.set(s, await getJson(`../data/replay/${shardOf(s)}.json`)); return shardCache.get(s); };
+const shardCache = new Map([[shardOf(idk), shard]]);
+const getShard = async (s) => { if (!shardCache.has(s)) shardCache.set(s, await getJson(`${dataDir}/replay/${shardOf(s)}.json`)); return shardCache.get(s); };
 let pair = null, pairNote = null;
-const vsRaw = (q.get('vs') || '').trim().slice(0, 40);
-const resolvePair = async (bSlug, bName) => {
-  const bShard = await getShard(bSlug);
-  const bDoc = bShard?.p?.[bSlug] ? toDoc(bShard.p[bSlug], { meta, catalog, slug: bSlug }) : null;
-  const bFile = await getJson(`../data/players/${bSlug}.json`);
+// Scrim mode (#111): ?room=ps&scrim=<t0> replays one stored 1v1 scrim. The
+// row carries its own opponent, result and weapons, so no killboard row is
+// needed. A t0 with no 1v1 row falls back to pair mode with a note.
+let scrimMode = false, scrimRow = null, scrimExact = false;
+const scrimsFile = room === 'ps' && idk ? await getJson(`${dataDir}/scrims/${idk}.json`) : null;
+const scrimParam = q.get('scrim');
+if (room === 'ps' && scrimParam && scrimsFile) {
+  const t0 = Number(scrimParam);
+  scrimRow = (scrimsFile.scrims || []).find((r) => r.t0 === t0 && r.o && r.o.length === 1) || null;
+  scrimMode = !!scrimRow;
+}
+// bKey is the shard/file key, bSlug the killboard-row slug: identical on PC,
+// different on PS (keys vs name slugs), so pair resolution takes both.
+const resolvePair = async (bSlug, bName, bKey = bSlug) => {
+  const bShard = await getShard(bKey);
+  const bDoc = bShard?.p?.[bKey] ? toDoc(bShard.p[bKey], { meta, catalog, slug: bKey }) : null;
+  if (room === 'ps' && bDoc) bDoc.faction = null;   // unknown, not TR (see above)
+  const bFile = await getJson(`${dataDir}/players/${bKey}.json`);
   const bRows = bFile?.player?.rows || [];
-  const status = pairStatus(doc, bDoc, pairRow(aRows, bRows, slug, bSlug));
+  const status = pairStatus(doc, bDoc, pairRow(aRows, bRows, room === 'ps' ? slugOf(doc.name) : slug, bSlug));
   if (status !== 'pair') return status;
   pair = pairOf({ aDoc: doc, bDoc, aRows, bRows, fit, med: meta.med || null, bSlug, bName });
   return 'pair';
 };
-if (vsRaw) {
-  const st = await resolvePair(slugOf(vsRaw), vsRaw);
-  if (st === 'sameFaction') pairNote = T('pairSameFaction', '“{name}” fights for the same faction — showing the crowd scene instead.', { name: vsRaw });
-  if (st === 'notFound') pairNote = T('pairNotFound', 'No rival found for “{name}” — showing the crowd scene instead.', { name: vsRaw });
+const resolveScrim = async () => {
+  const [pKey, pName] = scrimRow.o[0];
+  const bShard = await getShard(pKey);
+  let bDoc = bShard?.p?.[pKey] ? toDoc(bShard.p[pKey], { meta, catalog, slug: pKey }) : null;
+  if (!bDoc) {
+    // The scrim partner is often not in the replay cache at all (only a
+    // fraction of PS players are cached): synthesize him from the room's
+    // medians + the row's own weapon, the way pairOf synthesizes an
+    // uncached B. Without this, most scrim rows could never replay.
+    const stats = {};
+    for (const id of MED_KEYS) stats[id] = { v: (meta.med && Number.isFinite(meta.med[id])) ? meta.med[id] : MED_FALLBACK[id], p: null };
+    const w = catalog?.items?.[scrimRow.w[1]];
+    bDoc = { name: pName, slug: pKey, faction: null, server: '', poolSize: meta.pool, stats, builtAt: meta.ranksAt,
+      luck: null, fightStart: null, hasXp: false,
+      main: scrimRow.w[1] ? { id: scrimRow.w[1], name: w?.[0] ?? '', cat: w?.[1] ?? '', img: null, kills: null } : null, classes: null };
+  }
+  bDoc.faction = null;
+  const share = (scrimRow.k + scrimRow.d) > 0 ? scrimRow.k / (scrimRow.k + scrimRow.d) : 0.5;
+  pair = { a: doc, b: bDoc, row: { kills: scrimRow.k, deaths: scrimRow.d }, pA: share, pSrc: 'scrim',
+    n: scrimRow.k + scrimRow.d, missing: { a: [], b: [] } };
+  return 'pair';
+};
+const vsRaw = (q.get('vs') || '').trim().slice(0, 40);
+if (scrimMode) {
+  if ((await resolveScrim()) !== 'pair') { scrimMode = false; scrimRow = null; pairNote = T('scrimNotFound', 'No scrim found for that time — showing the pair scene instead.'); }
+} else if (vsRaw) {
+  let st, disp = vsRaw;
+  if (room === 'ps') {
+    // ?vs= carries a PS key, not a name: resolve the doc by key first, then
+    // the killboard row by the partner's name slug.
+    const bKey = vsRaw.toLowerCase();
+    const bRaw = (await getShard(bKey))?.p?.[bKey];
+    if (bRaw) { disp = bRaw.n; st = await resolvePair(slugOf(bRaw.n), bRaw.n, bKey); }
+    else st = 'notFound';
+  } else st = await resolvePair(slugOf(vsRaw), vsRaw);
+  if (st === 'sameFaction') pairNote = T('pairSameFaction', '“{name}” fights for the same faction — showing the crowd scene instead.', { name: disp });
+  if (st === 'notFound') pairNote = T('pairNotFound', 'No rival found for “{name}” — showing the crowd scene instead.', { name: disp });
+} else if (room === 'ps') {
+  // Default rival = top scrim partner, from the player's own scrims file.
+  // PS has no faction to probe, so the killboard defaultRival — which needs
+  // a confirmed cross-faction rival — can never pick one.
+  const top = topScrimPartner(scrimsFile?.scrims);
+  if (top) await resolvePair(slugOf(top.name), top.name, top.key);
+  else pairNote = T('pairNotFound', 'No rival found for “{name}” — showing the crowd scene instead.', { name: doc.name });
 } else {
   // probe only the top candidates' shards for their faction (one file each, cached above),
   // then let the pure selector pick the first confirmed cross-faction rival
@@ -126,10 +194,10 @@ const S = doc.stats, val = id => S[id]?.v ?? null, pct = id => S[id]?.p ?? null;
 // scripts/honu-xp.mjs for players whose replay is opened); it is used only once the sample is big enough.
 const FIGHT_MIN_RUNS = 20, FS_NEUTRAL = 19000;
 let fight = doc.fightStart && doc.fightStart.n > 0 ? doc.fightStart : null;
-if (doc.hasXp) { const x = await getJson(`../data/xp/${slug}.json`); if (x?.fight?.n > 0) fight = x.fight; }
+if (doc.hasXp) { const x = await getJson(`${dataDir}/xp/${idk}.json`); if (x?.fight?.n > 0) fight = x.fight; }
 // an opened replay asks the site's own collector to keep this player's sample growing (same Worker call
 // and 24 h local throttle as the site's markRequested; live site, PC cache only)
-if (location.origin === 'https://dayset.github.io' && !/^ps/i.test(doc.server || '')) try {
+if (room === 'pc' && location.origin === 'https://dayset.github.io' && !/^ps/i.test(doc.server || '')) try {
   const k = `ps2ekd:seen:${slug}`, last = +(localStorage.getItem(k) || 0);
   if (Date.now() - last > 864e5) { localStorage.setItem(k, String(Date.now()));
     fetch('https://ps2-elite-kd-cache.dayset.workers.dev/seen', { method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -178,6 +246,7 @@ const P = {
   killShare: clamp(1 - 0.35 * st.apk - 0.1, 0.4, 0.85),  // share of shots/kill fired in the kill burst itself
 };
 if (st.apk > 0 && P.allies === 0) P.allies = 1;
+if (scrimMode) P.allies = 0;   // a scrim is two players only: no allies, no back lane, no assists, 🪳 ignored
 // mean down time and life length that make deaths per minute come out exactly at DPM
 const DOWN_MEAN = st.revive * 4.5 + (1 - st.revive) * (7.5 + 0.9);
 const CYCLE = 60 / Math.max(0.01, st.dpm);
@@ -217,8 +286,8 @@ if (!pair) {
 // side, innermost first) + one back lane (dimmed, ~70% size) for the crowd.
 // The duel pair takes the two innermost front slots, so the duel is always
 // front lane; pickTarget only ever picks front-lane enemies (see moveToFront).
-const F = doc.faction in rigs ? doc.faction : 'tr', foes = ['tr', 'nc', 'vs'].filter(f => f !== F);
-const laneA = assignLanes({ nAllies: P.allies, nEnemies: pair ? 4 : 5, rival: !!pair, enemyScale: P.enemyScale, pairMode: !!pair });
+const F = (doc.faction && doc.faction in rigs) ? doc.faction : 'tr', foes = ['tr', 'nc', 'vs'].filter(f => f !== F);
+const laneA = assignLanes({ nAllies: P.allies, nEnemies: scrimMode ? 0 : (pair ? 4 : 5), rival: !!pair, enemyScale: P.enemyScale, pairMode: !!pair });
 const main = new Soldier(rigs[F], F, { x: laneA.main.x, y: laneA.main.y, scale: laneA.main.scale, facing: 1, seed: 0.3, rate: RATE, speed: 120, mode: mainProfile?.mode ?? 'auto', reloadMs: mainProfile?.reloadMs ?? 2400 });
 main.isMain = true; main.lane = 0; main.slot = main.x;
 const allies = laneA.allies.map((p, i) => {
@@ -252,7 +321,10 @@ const walls = [main.cover.wall, ...allies.map(a => a.cover.wall), ...enemies.map
 // (allies) or dimmed here (enemies): third parties stay background.
 let rival = null;
 if (pair) {
-  const FB = pair.b.faction in rigs ? pair.b.faction : 'tr';
+  // PS factions are unknown (v1 placeholder): the rival takes a rig visibly
+  // distinct from the main's, so the two sides stay readable, until the bot
+  // stores real factions on scrim rows.
+  const FB = (pair.b.faction && pair.b.faction in rigs) ? pair.b.faction : (room === 'ps' ? (F === 'tr' ? 'nc' : 'tr') : 'tr');
   const bProf = pair.b.main ? profileOf(pair.b.main.id, pair.b.main.cat, profiles?.profiles) : null;
   rival = new Soldier(rigs[FB], FB, { x: laneA.rival.x, y: laneA.rival.y, scale: laneA.rival.scale, facing: -1, seed: 7.7,
     rate: bProf ? shotsPerSec(bProf) : 10, speed: 170, mode: bProf?.mode ?? 'auto', reloadMs: bProf?.reloadMs ?? 2400 });
@@ -364,12 +436,16 @@ function land(t, b) {
 // (main-weapon profiles + shard stats) and #92's pair-model.json when it is
 // there, else the planner defaults. The crowd scene keeps planCycle until
 // #98 renders the plan; the plan is exposed for the headless check.
-let duelPlan = null;
+let duelPlan = null, scrimEndAt = 0;
 if (pair) {
   try {
-    const model = await getJson('../data/replay/pair-model.json');
-    const mkSide = (d) => {
-      const prof = d.main ? profileOf(d.main.id, d.main.cat, profiles?.profiles) : null;
+    const model = await getJson(`${dataDir}/replay/pair-model.json`);
+    // weaponId overrides the doc's main weapon: a scrim row names the
+    // weapon each side actually used most in that scrim.
+    const mkSide = (d, weaponId = null) => {
+      const prof = weaponId != null
+        ? profileOf(weaponId, catalog?.items?.[weaponId]?.[1], profiles?.profiles)
+        : d.main ? profileOf(d.main.id, d.main.cat, profiles?.profiles) : null;
       const s = d.stats || {};
       const val = (id) => s[id]?.v ?? null;
       const classes = {};
@@ -383,8 +459,22 @@ if (pair) {
     };
     let pairSeed = seed;
     for (const c of ('|' + pair.b.slug)) pairSeed = Math.imul(pairSeed ^ c.charCodeAt(0), 16777619);
-    const A = mkSide(pair.a), B = mkSide(pair.b);
-    duelPlan = planDuel(A.sh, B.sh, { seed: pairSeed, durationSec: 7200, pA: pair.pA, model, aInfo: A.info, bInfo: B.info });
+    if (scrimMode) {
+      // The scrim plan runs exactly the row's duration at the row's own
+      // outcome share, and the seed search lands its final score on the
+      // row's real result (else the nearest plan). The row's event rate
+      // (kills+deaths over t1−t0) is what the plan's fight rate reproduces
+      // in aggregate — it is NOT plugged in as a gap median, which would
+      // mean something else entirely.
+      const A = mkSide(pair.a, scrimRow.w[0]), B = mkSide(pair.b, scrimRow.w[1]);
+      const found = planScrim(A.sh, B.sh, { seed: pairSeed, durationSec: scrimRow.t1 - scrimRow.t0,
+        k: scrimRow.k, d: scrimRow.d, model, aInfo: A.info, bInfo: B.info });
+      duelPlan = found.plan; scrimExact = found.exact;
+      scrimEndAt = scrimPlanEnd(duelPlan, scrimRow.t1 - scrimRow.t0);
+    } else {
+      const A = mkSide(pair.a), B = mkSide(pair.b);
+      duelPlan = planDuel(A.sh, B.sh, { seed: pairSeed, durationSec: 7200, pA: pair.pA, model, aInfo: A.info, bInfo: B.info });
+    }
   } catch { duelPlan = null; }
 }
 window.__duelPlan = () => duelPlan;
@@ -395,6 +485,7 @@ window.__duelPlan = () => duelPlan;
 // jumps and skips stay honest; tallies come from land() as usual.
 const stripTag = (n) => (n || '').replace(/^\[[^\]]+\]\s*/, '');
 let scoreEl = null, kcEl = null, backEl = null, pumpEvents = [], pumpIdx = 0, pumpT = 0;
+let scrimEndEl = null, scrimEndShown = false;
 const updateScore = () => {
   if (!scoreEl || !duelPlan) return;
   const s = scoreAt(duelPlan, simT);
@@ -476,6 +567,19 @@ if (pair && duelPlan) {
     const c = document.createElement('span'); c.className = 'chip'; c.textContent = `${label} ${text}`; chips.append(c);
   }
   hud.append(chips);
+  // ---------------------------------------------------------------- scrim end card (#111)
+  // When the scene's data clock passes the plan's own end (scrimEndAt: the
+  // row window plus the final engagement's tail — see scrim-plan.mjs), the
+  // score has counted up to the real final result: show the card, then loop
+  // by reloading — a clean restart (clocks, pump, tallies) for free, and the
+  // same seed re-searches the same plan, so the replay repeats exactly.
+  if (scrimMode && duelPlan) {
+    scrimEndEl = document.createElement('div'); scrimEndEl.id = 'scrimEnd'; scrimEndEl.className = 'note'; scrimEndEl.hidden = true;
+    const dstr = new Date(scrimRow.t0 * 1000).toLocaleDateString(LOC, { day: 'numeric', month: 'short' });
+    scrimEndEl.textContent = T('scrimEnd', 'Scrim · {date} · {a}–{b} · {min} min',
+      { date: dstr, a: scrimRow.k, b: scrimRow.d, min: Math.round((scrimRow.t1 - scrimRow.t0) / 60) });
+    hud.append(scrimEndEl);
+  }
   scoreEl = document.createElement('div'); scoreEl.id = 'duelScore';
   scoreEl.title = T('scoreAllTime', 'All-time: {a}–{b}', { a: pair.row?.kills ?? '—', b: pair.row?.deaths ?? '—' });
   document.body.append(scoreEl);
@@ -483,6 +587,8 @@ if (pair && duelPlan) {
   backEl = document.createElement('div'); backEl.id = 'duelBack'; backEl.className = 'note'; backEl.hidden = true; hud.append(backEl);
   updateScore();
 }
+window.__scrim = () => scrimMode ? { t0: scrimRow.t0, t1: scrimRow.t1, k: scrimRow.k, d: scrimRow.d,
+  exact: scrimExact, endShown: scrimEndShown, planEnd: scrimEndAt } : null;
 
 // ---------------------------------------------------------------- 1:1 timeline planner
 // One "cycle" = from a death (or the first spawn) to the next death. Everything is placed on the real
@@ -893,7 +999,9 @@ function step(t, dt) {
     const tx = s.peekWant ? s.cover.peekX : s.cover.hiddenX;
     s.x += (tx - s.x) * Math.min(1, dt * 10);
   }
-  ensurePlan(t);
+  // Scrim mode runs the duel plan only: no crowd timeline (planCycle),
+  // no background battle, no assists — plan.segs stays empty and cur null.
+  if (!scrimMode) ensurePlan(t);
   while (plan.segs.length && plan.segs[0].t1 <= t) {
     const s = plan.segs.shift();
     if (s.duel) { if (cur === s) cur = null; continue; } // the duel pump owns states
@@ -905,7 +1013,7 @@ function step(t, dt) {
     else { if (!s.entered) { s.entered = 1; enter(s, t); } cur = s; tick(s, t, dt); }
   }
   pumpDuel(t);
-  background(t, dt);
+  if (!scrimMode) background(t, dt);
   for (const b of bullets) {
     const sx = b.vx * dt, sy = b.vy * dt; b.x += sx; b.y += sy; b.age += dt; b.left -= Math.hypot(sx, sy);
     if (b.left <= 0 && !b.landed) { b.landed = true; if (b.hit) land(t, b); }
@@ -1149,6 +1257,10 @@ function render(t) {
     ctx.fillStyle = '#fff'; ctx.fillText(jumpCard.text, W / 2, 116); ctx.restore();
   }
   recordLifeIntervals(); lifeUi(t); updateGauges(t); updatePaceRate();
+  if (scrimMode && scrimEndEl && !scrimEndShown && t >= scrimEndAt) {
+    scrimEndShown = true; scrimEndEl.hidden = false;
+    setTimeout(() => location.reload(), 4000);   // the loop: see the end-card comment
+  }
 }
 
 // ---------------------------------------------------------------- living gauges (#108, DOM under the life strip)
@@ -1540,7 +1652,8 @@ if (reduced) {
     startLoop();
   });
   rm.append(' ', go);
-  ensurePlan(0); newLife(0, true); engaged = true; for (const e of enemies) { e.state = 'idle'; e.x = e.slot; }
+  if (!scrimMode) { ensurePlan(0); newLife(0, true); }
+  engaged = true; for (const e of enemies) { e.state = 'idle'; e.x = e.slot; }
   for (const s of everyone) { s.seed = 0; s.state = 'idle'; }
   render(0);
 } else if (!q.has('preview')) {

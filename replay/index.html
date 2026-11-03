@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex">
 <title>🎬 Duel replay · PS2 Elite</title>
+<script>
+  // Room (#111): the head script's room handling, as on the main page —
+  // ?room=ps marks the PlayStation room before the module loads, so the
+  // page never reads the PC tree for a PS replay.
+  if (new URLSearchParams(location.search).get("room") === "ps") window.__ps2Room = "ps";
+  document.documentElement.setAttribute("data-room", window.__ps2Room || "pc");
+</script>
 <link rel="icon" href="../favicon.ico">
 <link rel="stylesheet" href="planetman.css?v=20261103-pace1">
 </head>
@@ -15,6 +22,6 @@
   <div id="hud"></div>
   <p id="rm" hidden data-i18n="replay.rm">Reduced motion is on, so the scene stays still. The numbers above still apply.</p>
 </main>
-<script type="module" src="player.js?v=20261103-pace1"></script>
+<script type="module" src="player.js?v=20261103-ps1"></script>
 </body>
 </html>

@@ -12,7 +12,7 @@
  * saved history at once, then fetches only newer kills in the background.
  */
 import { t as tr, currentLang } from "./i18n.mjs";
-import { zoneName } from "./scrims-panel.mjs?v=20261028-os2";
+import { zoneName } from "./scrims-panel.mjs?v=20261103-ps1";
 import { mergeEvents } from "./scrims.mjs?v=20261028-os2";
 import {
   AUTO_PAGES, FIRST_FIGHTS, nsOfBase, pairFloor, DUEL_GAP, ONE_V_ONE, classOf, bareName, crowdRows, crowdSummary, expectedCount, pagerOf,

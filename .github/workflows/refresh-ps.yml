@@ -102,5 +102,10 @@ jobs:
             exit 0
           fi
           node scripts/build-ranks.mjs --room ps || echo "::warning::PS build-ranks failed; data-ps/ranks.json not updated this run"
+          # 🎬 Replay PS data (#111): rebuild data-ps/replay/ from the fresh
+          # ranks, so the replay page's PS room never serves stale shards.
+          # Same commit as the refresh (COMMIT_DIR=data-ps/); a failure here
+          # only warns — the ranks refresh itself still lands.
+          node scripts/build-replay.mjs --room ps || echo "::warning::PS build-replay failed; data-ps/replay/ not updated this run"
           export REBUILD_DERIVED='node scripts/build-ranks.mjs --room ps'
           scripts/ci-commit-push.sh "chore(ps-room): refresh, ${changed} player file(s), ${NEW} new [bot]"

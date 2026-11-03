@@ -80,7 +80,7 @@ export const deriveSeed = (master, idx) => (Math.imul((master >>> 0) ^ 0x9e3779b
 
 /**
  * planDuel(a, b, opts): a, b are shooter() outputs (profile + stats inside).
- * opts: { seed, durationSec, pA, model, aInfo, bInfo } where aInfo/bInfo are
+ * opts: { seed, durationSec, pA, model, aInfo, bInfo, shortApproach } where aInfo/bInfo are
  * { kpm, classShares, revivedShare, resupplyPm }.
  * → { v, pA, params, thirdP, breakP, lives: {a, b}, engagements, fights, cuts }
  */
@@ -166,6 +166,11 @@ export function planDuel(a, b, opts = {}) {
       const sinceKill = tStart - prevKillAt;
       approachDur = Math.max(0.5, budget - sinceKill - spot - tradeDur - 0.5 - Math.max(0, commitDur));
     }
+    // Scrim partners meet again fast (#111): after a respawn the approach
+    // is capped at 2 s (never below the 0.5 s "already in position" floor).
+    // The budget logic already floors most post-respawn approaches at 0.5 s;
+    // the cap only trims the long tail a big budget draw would leave.
+    if (opts.shortApproach && respawnSide) approachDur = Math.min(approachDur, 2);
     const t0 = tStart;
     const tSpot = t0 + approachDur, tTrade = tSpot + spot;
     const tKill = decisive ? tTrade + eng.killAt : null;

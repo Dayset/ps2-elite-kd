@@ -187,6 +187,18 @@ export function mountScrims(section, o = {}) {
     return `<span class="scr-group" title="${esc(tip)}">+${r.o.length - 1}</span> ${personHtml(r.o[0][1])}`;
   }
 
+  // 🎬 link (#111): one per 1v1 row that is not one-sided, landing straight
+  // in scrim mode (room=ps + both keys + the row's t0). In top mode the
+  // row's own player key (r.p[0]) is the name= side, else the panel's key.
+  function replayHtml(r) {
+    if (r.o.length !== 1 || isOneSided(r)) return '';
+    const me = shown.top ? (r.p && r.p[0]) : shown.key;
+    const opp = r.o[0][0];
+    // Different PS servers never meet: both keys must share a server prefix.
+    if (!me || !opp || String(me).split("-")[0] !== String(opp).split("-")[0]) return '';
+    return ` <a class="scr-replay" href="replay/?room=ps&name=${esc(me)}&vs=${esc(opp)}&scrim=${r.t0}" title="${esc(tr("scr.replay", "Replay this scrim"))}">🎬</a>`;
+  }
+
   function render() {
     if (!shown) return;
     const cols = columns();
@@ -210,7 +222,7 @@ export function mountScrims(section, o = {}) {
         (top ? `<td class="scr-name">${personHtml(r.p && r.p[1])}</td><td class="scr-opp">${oppCell(r)}</td>` : `<td class="scr-name">${oppCell(r)}</td>`) +
         `<td class="scr-size">${(r.k + r.d).toLocaleString(lang())}</td>` +
         `<td class="scr-date" title="${esc(ago)}">${esc(start.toLocaleString(lang(), { dateStyle: "medium", timeStyle: "short" }))}</td>` +
-        `<td class="scr-result"><span class="scr-res scr-${res}">${esc(scrimResultLabel(res))}</span> ${r.k.toLocaleString(lang())}–${r.d.toLocaleString(lang())}${oneSidedHtml(r)}</td>` +
+        `<td class="scr-result"><span class="scr-res scr-${res}">${esc(scrimResultLabel(res))}</span> ${r.k.toLocaleString(lang())}–${r.d.toLocaleString(lang())}${oneSidedHtml(r)}${replayHtml(r)}</td>` +
         `<td>${esc(tr("scr.min", "{n} min", { n: scrimMinutes(r).toLocaleString(lang()) }))}</td>` +
         `<td>${esc(zoneName(r.z))}</td>` +
         ((w) => `<td class="scr-weapons" title="${esc(w)}">${esc(w)}</td></tr>`)(`${wName(shown.cat, r.w[0])} · ${wName(shown.cat, r.w[1])}`);
