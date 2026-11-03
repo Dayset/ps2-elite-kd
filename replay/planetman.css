@@ -10,4 +10,14 @@ canvas{width:100%;height:auto;display:block;border-radius:0;background:#141b24}
 #hud .chip.off{opacity:.45}
 #hud .note{color:#8b949e;font-size:12px;width:100%}
 #rm{color:#8b949e;font-size:12px}
-body.bare main{padding:0;max-width:none}body.bare #rm,body.bare #hud{display:none}
+#life{display:flex;gap:10px;align-items:center;margin-top:6px;font-variant-numeric:tabular-nums;white-space:nowrap}
+#life .ph-now{min-width:118px;font-weight:600;cursor:help}
+#life .strip{flex:1;display:flex;gap:2px;height:10px;cursor:help;min-width:80px}
+#life .seg{position:relative;background:#21262d;overflow:hidden}
+#life .seg i{position:absolute;left:0;top:0;bottom:0;width:0}
+#life .ph-spawn i{background:#8b949e}#life .ph-travel i{background:#58a6ff}#life .ph-fight i{background:#f0883e}#life .ph-death i{background:#da3633}
+#life .ph-now.ph-spawn{color:#8b949e}#life .ph-now.ph-travel{color:#58a6ff}#life .ph-now.ph-fight{color:#f0883e}#life .ph-now.ph-death{color:#f85149}
+#life .alive,#life .sess{color:#8b949e;font-size:12px;cursor:help}
+#life .skip{background:none;border:1px solid #30363d;border-radius:0;color:#8b949e;font-size:11px;padding:0 5px;cursor:pointer;opacity:.6}
+#life .skip:hover{opacity:1;color:#c9d1d9}
+body.bare main{padding:0;max-width:none}body.bare #rm,body.bare #hud,body.bare #life{display:none}

@@ -3,7 +3,7 @@
 // ~20 real minutes between kills. The time in between is filled with the states in states.js.
 // All randomness is seeded from the player's name.
 import { Soldier, loadRigs, FX } from './soldier.js';
-import { STATES, FILLERS } from './states.js';
+import { STATES, FILLERS, PHASES, phaseOf } from './states.js';
 import { shardOf, slugOf } from './shard.mjs';
 import { t as tr, ready as i18nReady, currentLang } from '../i18n.mjs';
 
@@ -157,7 +157,7 @@ function fire(t, from, to, o = {}) {
 // headshot kill / main soldier's death: ~0.7 s down to 30% speed; normal kill: lighter (~0.45 s, 55%),
 // every 3rd kill at most. The scene clock lags behind real time during slow-mo and catches up later in
 // calm states (≤ 1.25×), so long-run per-minute rates are not changed. Off under reduced motion.
-let wallT = 0, simT = 0, slow = null, slowNext = 0, killsSinceSlow = 0;
+let wallT = 0, simT = 0, skipped = 0, slow = null, slowNext = 0, killsSinceSlow = 0;
 const SLOW = { hs: [0.7, 0.30], death: [0.75, 0.28], kill: [0.45, 0.55] };
 function slowmo(kind) {
   if (reduced || fast) return;
@@ -295,11 +295,17 @@ function planCycle(T, first) {
   const death = seg('dying', aliveEnd, DYING, { n: rn });
   const all = [...out, ...busy, ...fills, death].sort((a, b) => a.t0 - b.t0);
   for (const s of all) if (stint && s.t0 >= stint[0] - 0.01 && s.t0 < stint[1] && s.id !== 'running') s.veh = true;
+  // the life as phases (timeline strip): consecutive segments of one phase merged, gaps closed
+  const phases = [];
+  for (const s of all) { const ph = phaseOf(s.id), last = phases.at(-1);
+    if (last && last.ph === ph) last.t1 = Math.max(last.t1, s.t1); else { if (last) last.t1 = s.t0; phases.push({ ph, t0: s.t0, t1: s.t1 }); } }
+  if (phases.length) { phases[0].t0 = T; phases.at(-1).t1 = aliveEnd + DYING; }
+  plan.lives.push({ n: plan.cycles + 1, t0: T, t1: aliveEnd + DYING, phases, revived });
   plan.cycles++; plan.deathsPlanned++;
   if (stint) plan.stints.push(stint);
   return { segs: all, end: aliveEnd + DYING };
 }
-plan.stints = [];
+plan.stints = []; plan.lives = [];
 function ensurePlan(t) {
   while (plan.end < t + 60) { const c = planCycle(plan.end, plan.cycles === 0); plan.segs.push(...c.segs); plan.end = c.end; }
 }
@@ -595,6 +601,7 @@ function render(t) {
     s.draw(ctx, t);
   }
   drawBullets(); drawFx(t, 'over'); drawHud(t);
+  lifeUi(t);
 }
 
 // ---------------------------------------------------------------- DOM hints (details live in hover titles)
@@ -654,6 +661,67 @@ const CHIPS = [
   hud.append(n);
 }
 
+// ---------------------------------------------------------------- life timeline (DOM, under the canvas)
+// Phase label + its running timer, a strip of this life's phases (filled as it plays), time alive,
+// the life number and the session clock. All of it reads the planner's segments (states.js phase),
+// so it shows the real 1:1 timeline, not a separate animation. Reduced motion: the first life as planned.
+const PH_ICON = { spawn: '⏬', travel: '🏃', fight: '🔫', death: '💀' };
+const PH_EN = { spawn: 'Spawn', travel: 'Travel', fight: 'Fight', death: 'Death' };
+const PH_HINT = {
+  spawn: 'Respawn timer (5–10 s) and beam-in, or a revive (then no travel).',
+  travel: 'Running or driving to the fight; its length comes from ⏱ time to fight.',
+  fight: 'Shooting, kills, assists, reloads, vehicle time and support actions, at the player’s real per-minute rates.',
+  death: 'The lost exchange that ends the life (DPM).' };
+const PH = (ph) => T('ph.' + ph, PH_EN[ph]);
+const PHH = (ph) => T('phHint.' + ph, PH_HINT[ph]);
+const clk = (sec) => { sec = Math.max(0, Math.floor(sec)); const h = Math.floor(sec / 3600), m = Math.floor(sec / 60) % 60, x = sec % 60;
+  return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(x).padStart(2, '0'); };
+const lifeAt = (t) => { while (plan.lives.length > 1 && plan.lives[0].t1 <= t) plan.lives.shift();
+  return plan.lives.find(l => t >= l.t0 && t < l.t1) ?? plan.lives[0] ?? null; };
+const phaseAt = (L, t) => L.phases.find(p => t >= p.t0 && t < p.t1) ?? L.phases.at(-1);
+const ui = (() => {
+  const box = document.getElementById('life'); if (!box) return null;
+  const mk = (tag, cls, title) => { const e = document.createElement(tag); e.className = cls; if (title) e.title = title; return e; };
+  const now = mk('span', 'ph-now'), strip = mk('div', 'strip', T('strip', 'This life, phase by phase. The filled part has already played.'));
+  const alive = mk('span', 'alive', T('aliveHint', 'Time alive in this life, from the end of the spawn to now.'));
+  const sess = mk('span', 'sess', T('sessionHint', 'Life number and session clock: real time since the scene started (skipped time included, so per-minute rates stay true).'));
+  const skip = mk('button', 'skip', T('skipHint', 'Skip waiting: jump to the next kill, death or phase change. The skipped time still counts on the clocks and tallies.'));
+  skip.type = 'button'; skip.textContent = '⏭'; skip.setAttribute('aria-label', skip.title);
+  skip.addEventListener('click', () => window.__skip());
+  if (reduced) skip.hidden = true;
+  box.append(now, strip, alive, sess, skip); box.hidden = false;
+  return { box, now, strip, alive, sess, skip, life: null, cells: [], last: -1 };
+})();
+function lifeUi(t, force) {
+  if (!ui) return;
+  const L = lifeAt(t); if (!L) return;
+  if (ui.life !== L) {   // a new life: rebuild the strip (widths = planned real time per phase)
+    ui.life = L; ui.strip.textContent = ''; ui.cells = [];
+    const len = L.t1 - L.t0;
+    for (const p of L.phases) {
+      const c = document.createElement('span'); c.className = 'seg ph-' + p.ph; c.style.flexGrow = String(Math.max(0.001, p.t1 - p.t0) / len);
+      c.title = T('seg', '{phase}: {d} s', { phase: PH(p.ph), d: (p.t1 - p.t0).toFixed(1) }) + '\n' + PHH(p.ph);
+      const f = document.createElement('i'); c.append(f); ui.strip.append(c); ui.cells.push([p, f]);
+    }
+  }
+  if (reduced) {   // static readout: the planned first life, no running clocks
+    ui.now.textContent = T('plan', 'Life plan'); ui.now.title = T('planHint', 'Reduced motion: the first life as planned, no running clock.');
+    for (const [, f] of ui.cells) f.style.width = '0';
+    ui.alive.textContent = L.phases.map(p => PH_ICON[p.ph] + ' ' + clk(Math.round(p.t1 - p.t0))).join(' · ');
+    ui.sess.textContent = ''; return;
+  }
+  const w = performance.now(); if (!force && w - ui.last < 100) return; ui.last = w;
+  const p = phaseAt(L, t);
+  ui.now.textContent = `${PH_ICON[p.ph]} ${PH(p.ph)} ${clk(t - p.t0)}`;
+  ui.now.className = 'ph-now ph-' + p.ph;
+  ui.now.title = PHH(p.ph) + (cur ? '\n' + T('phNow', 'Now: {state}', { state: LBL(cur.id) }) : '');
+  for (const [q, f] of ui.cells) f.style.width = (100 * clamp((t - q.t0) / (q.t1 - q.t0))) + '%';
+  const sp = L.phases.find(q => q.ph === 'spawn'), de = L.phases.find(q => q.ph === 'death');
+  const a0 = sp ? sp.t1 : L.t0, a1 = de ? Math.min(t, de.t0) : t;
+  ui.alive.textContent = '❤ ' + T('alive', 'Alive {t}', { t: t < a0 ? '0:00' : clk(a1 - a0) });
+  ui.sess.textContent = T('session', 'Life {n} · ⏱ {t}', { n: L.n, t: clk(t) });
+}
+
 // ---------------------------------------------------------------- run
 // wallT = real seconds since start; simT = scene clock. Slow-mo lets simT fall behind; calm states then
 // run at up to 1.25× until simT is back on wallT, so per-minute rates hold over any long stretch.
@@ -669,17 +737,42 @@ window.__render = (w) => {
   render(simT); return true; };
 // test hook: run the scene clock forward without drawing or slow-mo (used by tools/probe checks)
 window.__fast = (sec, dt = 1 / 30) => { fast = true; const end = simT + sec; while (simT < end) { simT += dt; wallT = simT; step(simT, dt); } fast = false; render(simT); return window.__params(); };
+// ⏭ skip waiting (testing aid): run the same 1:1 clock forward to just before the next kill, assist,
+// death or phase change. Nothing is cut: every skipped second is stepped through the scene, so the
+// tallies, the session clock and every per-minute rate stay exactly as if it had been watched.
+const SKIP_EVENTS = new Set(['fight', 'assist', 'dying']);
+function nextEvent(t) {
+  const ph = phaseOf(cur?.id ?? plan.segs[0]?.id);
+  for (let ahead = 60; ahead <= 7200; ahead *= 2) {
+    ensurePlan(t + ahead);
+    const s = plan.segs.find(s => s.t0 > t + 0.6 && (SKIP_EVENTS.has(s.id) || phaseOf(s.id) !== ph));
+    if (s) return s;
+  }
+  return null;
+}
+window.__skip = () => {
+  const from = simT, ev = nextEvent(simT); if (!ev) return null;
+  // a phase change lands just inside the new phase; a kill/assist/death in the same phase just before it
+  const to = Math.max(simT, phaseOf(ev.id) !== phaseOf(cur?.id ?? ev.id) ? ev.t0 + 0.02 : ev.t0 - 0.4);
+  fast = true; slow = null;
+  while (simT < to) { const dt = Math.min(1 / 30, to - simT); simT += dt; step(simT, dt); }
+  fast = false;
+  if (simT > wallT) { skipped += simT - wallT; wallT = simT; }
+  render(simT); lifeUi(simT, true);
+  return { from, to: simT, id: ev.id, phase: phaseOf(ev.id), stats: { ...stats } };
+};
+window.__life = () => { const L = lifeAt(simT); return L && { n: L.n, phase: phaseAt(L, simT)?.ph, phases: L.phases.map(p => [p.ph, +(p.t1 - p.t0).toFixed(1)]), simT }; };
 window.__slow = () => ({ wallT, simT, scale: timeScale(wallT) });
 window.__params = () => ({ st, P, RATE, CYCLE, ALIVE_MEAN, DOWN_MEAN, missing, stats, simT, cur: cur?.id, credit, fight: fightOk ? fight : null });
 window.__plan = () => plan.segs.map(s => [s.id, +s.t0.toFixed(1), +(s.t1 - s.t0).toFixed(1), s.veh ? 'veh' : '']);
 if (reduced) {
   document.getElementById('rm').hidden = false;
-  newLife(0, true); engaged = true; for (const e of enemies) { e.state = 'idle'; e.x = e.slot; }
+  ensurePlan(0); newLife(0, true); engaged = true; for (const e of enemies) { e.state = 'idle'; e.x = e.slot; }
   for (const s of everyone) { s.seed = 0; s.state = 'idle'; }
   render(0);
 } else if (!q.has('preview')) {
   const t0 = performance.now() / 1000;
-  const frame = (now) => { window.__render(now / 1000 - t0); requestAnimationFrame(frame); };
+  const frame = (now) => { window.__render(now / 1000 - t0 + skipped); requestAnimationFrame(frame); };
   requestAnimationFrame(frame);
 }
 window.__ready = true;

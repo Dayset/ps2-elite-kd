@@ -34,3 +34,25 @@ test("replay page text keys exist in en.json", () => {
   for (const k of keys) assert.ok(k in en, k);
   assert.ok("replay.open" in en);
 });
+
+test("every scene state belongs to a life phase, and each phase has text in every language", async () => {
+  const { STATES, PHASES } = await import("../replay/states.js");
+  assert.deepEqual(PHASES, ["spawn", "travel", "fight", "death"]);
+  for (const [id, s] of Object.entries(STATES)) assert.ok(PHASES.includes(s.phase), `${id} has a phase`);
+  const used = new Set(Object.values(STATES).map(s => s.phase));
+  for (const p of PHASES) assert.ok(used.has(p), `some state is in ${p}`);
+  for (const lang of ["en", "ja", "ru", "de", "fr", "zh", "es", "uk", "it"]) {
+    const d = JSON.parse(fs.readFileSync(`i18n/${lang}.json`, "utf8"));
+    for (const p of PHASES) { assert.ok(d["replay.ph." + p], `${lang} ph.${p}`); assert.ok(d["replay.phHint." + p], `${lang} phHint.${p}`); }
+    for (const k of ["skipHint", "alive", "session", "strip", "plan"]) assert.ok(d["replay." + k], `${lang} ${k}`);
+  }
+});
+
+test("timeline strip and ⏭ skip are wired into the page", () => {
+  const js = fs.readFileSync("replay/player.js", "utf8"), html = fs.readFileSync("replay/index.html", "utf8");
+  assert.match(html, /id="life"/);
+  assert.match(js, /window\.__skip = /);
+  assert.match(js, /textContent = '⏭'/);
+  // skipping steps the scene through the skipped time (tallies and per-minute rates stay true)
+  assert.match(js, /while \(simT < to\) \{[^}]*step\(simT, dt\)/);
+});
