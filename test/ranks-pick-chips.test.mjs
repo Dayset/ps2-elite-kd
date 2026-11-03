@@ -148,11 +148,31 @@ describe("Hide adjusted-iVi ≤ 0 players (footer checkbox)", () => {
     assert.match(appSource(), /LS_HIDE_ZERO_IVI/);
   });
 
+  it("hide inactive players (footer checkbox): same pattern, 🪦 mark as the predicate", () => {
+    const index = read("index.html");
+    const zeroAt = index.indexOf('id="hideZeroIviToggle"');
+    const inactAt = index.indexOf('id="hideInactiveToggle"');
+    assert.ok(zeroAt >= 0 && inactAt > zeroAt, "inactive checkbox sits under the hide-≤0 checkbox");
+    assert.match(index, /hide inactive players/);
+    const s = rankingsSource();
+    assert.match(s, /LS_HIDE_INACTIVE = "ps2-elite-kd-hide-inactive"/);
+    // Browse filter: exactly the 🪦-marked rows go (same predicate as the
+    // mark itself, auto-marks.mjs); rows without a last-activity date stay.
+    assert.match(s, /if \(hideInactive\) \{/);
+    assert.match(s, /!inactiveMark\(\{ last: r\.last \}\)/);
+    assert.match(appSource(), /hideInactiveToggle/);
+    assert.match(appSource(), /LS_HIDE_INACTIVE/);
+    const en = JSON.parse(read("i18n/en.json"));
+    assert.equal(en["foot.hideInactive"], "hide inactive players");
+    assert.match(en["foot.hideInactiveTitle"], /inactive players in Rankings/);
+  });
+
   it("players line shows the hidden difference + percentage while hiding", () => {
     const s = rankingsSource();
     assert.match(s, /rk\.metaHidden/);
     // Browse only: a name search skips the drop, so no difference is shown.
-    assert.match(s, /hideZeroIvi && !bare\(filter\)/);
+    // Either toggle shows the segment; both on count their union once.
+    assert.match(s, /\(hideZeroIvi \|\| hideInactive\) && !bare\(filter\)/);
     assert.match(s, /hidden = data\.count - list\.length/);
     const en = JSON.parse(read("i18n/en.json"));
     assert.equal(en["rk.metaHidden"], "{hidden} hidden, {pct}%");

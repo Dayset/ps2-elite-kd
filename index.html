@@ -633,6 +633,9 @@
           <label class="hide-zero-ivi-toggle foot-switch" data-i18n-title="foot.hideZeroTitle" title="Hide players with adjusted iVi ≤ 0 in Rankings; a name search still finds them">
             <input type="checkbox" id="hideZeroIviToggle" /> <span data-i18n="foot.hideZero">hide players with adjusted iVi ≤ 0</span>
           </label>
+          <label class="hide-inactive-toggle foot-switch" data-i18n-title="foot.hideInactiveTitle" title="Hide 🪦 inactive players in Rankings; a name search still finds them">
+            <input type="checkbox" id="hideInactiveToggle" /> <span data-i18n="foot.hideInactive">hide inactive players</span>
+          </label>
           <div class="foot-stats-block">
             <p id="ranksMeta" class="ranks-meta"></p>
             <p id="pageNameRate" class="ranks-meta" hidden></p>
@@ -656,7 +659,7 @@
   </footer>
 
   <script type="module" src="i18n.mjs"></script>
-  <script type="module" src="app.js?v=20261103-flat1"></script>
+  <script type="module" src="app.js?v=20261103-inact1"></script>
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").catch(function () {});

@@ -43,7 +43,7 @@ import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, DIFF_T
 import { ZREV_NOTE, zergEstimate } from "./zerg-revive.mjs?v=20261024-crowd1";
 import { VDIFF_NOTE } from "./diff-vehicle.mjs?v=20261023-short1";
 import { NBD_NOTE } from "./newbie-diff.mjs?v=20261023-nbh1";
-import { autoMarksHtml } from "./auto-marks.mjs?v=20261030-hs1";
+import { autoMarksHtml, inactiveMark } from "./auto-marks.mjs?v=20261030-hs1";
 import { playerLuck, loadLuckData, luckPoints, luckCellHtml, luckLabel, luckText, LUCK_HINT_EN } from "./luck-col.mjs?v=20261102-luck5";
 
 /**
@@ -58,6 +58,7 @@ export function initRankings(host) {
   const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";
   let luckData = null; // 🎲 Luck file (luck-col.mjs), set by loadLuck()
   const LS_HIDE_ZERO_IVI = "ps2-elite-kd-hide-zero-ivi";
+  const LS_HIDE_INACTIVE = "ps2-elite-kd-hide-inactive";
   const LS_REMOVE_RANKS = "ps2-elite-kd-remove-ranks";
   const MONTH_S = 365.25 * 86400 / 12;
   // Same limit as the names box (app.js MAX_NAMES, 6 since t400u; this said 10, so the
@@ -128,6 +129,10 @@ export function initRankings(host) {
     try { return localStorage.getItem(LS_HIDE_ZERO_IVI) === "1"; } catch { return false; }
   }
 
+  function readHideInactive() {
+    try { return localStorage.getItem(LS_HIDE_INACTIVE) === "1"; } catch { return false; }
+  }
+
   function readRemoveRanks() {
     // Default ON (Dayset 2026-10-22): only a saved "0" — the visitor turned
     // it off — brings the tier separators back.
@@ -173,6 +178,7 @@ export function initRankings(host) {
   const tracCuts = () => (data ? data.tracCuts : null); // owner t622u: 🚜 cuts from the build (ranks.json "tracCuts")
   let showDebug = readDebug();
   let hideZeroIvi = readHideZeroIvi();
+  let hideInactive = readHideInactive();
   let removeRanks = readRemoveRanks();
   let maxAgeMonths = readMaxAgeMonths();
   let sortKey = "adjs";
@@ -422,6 +428,12 @@ export function initRankings(host) {
         // Hide adjusted-iVi ≤ 0 rows. Thin rows (no adjs) stay — only players
         // with a real adjusted iVi ≤ 0 are hidden.
         list = list.filter((r) => !(fin(r.adjs) && r.adjs <= 0));
+      }
+      if (hideInactive) {
+        // Hide 🪦 inactive players (auto-marks.mjs: no activity for over a
+        // year). Rows without a last-activity date stay — inactivity can't
+        // be shown for them, exactly like the flair itself.
+        list = list.filter((r) => !inactiveMark({ last: r.last }));
       }
       if (maxAgeMonths) {
         // Hide accounts registered more than maxAgeMonths ago (Settings
@@ -819,10 +831,11 @@ export function initRankings(host) {
     if ($("ranksTableCount")) $("ranksTableCount").textContent = `(${data.count.toLocaleString()})`;
     // Dayset 2026-10-20: the footer stats block shows one fact per line
     // (players / Updated / fresh-fetch), not one "·"-joined sentence.
-    // Hide-≤0 on, browsing: the players line also shows how many the toggle
-    // hides and what share that is (the difference of the two numbers shown).
+    // Hide-≤0 or hide-inactive on, browsing: the players line also shows how
+    // many the toggles hide and what share that is (the difference of the two
+    // numbers shown; both toggles on count their union once).
     let playersLine = tr("rk.metaPlayers", "{shown} of {total} players", { shown: list.length.toLocaleString(), total: data.count.toLocaleString() });
-    if (hideZeroIvi && !bare(filter) && list.length < data.count) {
+    if ((hideZeroIvi || hideInactive) && !bare(filter) && list.length < data.count) {
       const hidden = data.count - list.length;
       playersLine += ` (${tr("rk.metaHidden", "{hidden} hidden, {pct}%", { hidden: hidden.toLocaleString(), pct: (hidden / data.count * 100).toFixed(1) })})`;
     }
@@ -1548,6 +1561,12 @@ export function initRankings(host) {
   const hideZero = $("hideZeroIviToggle");
   hideZero.addEventListener("change", () => {
     hideZeroIvi = !!hideZero.checked;
+    render();
+  });
+
+  const hideInact = $("hideInactiveToggle");
+  hideInact.addEventListener("change", () => {
+    hideInactive = !!hideInact.checked;
     render();
   });
 

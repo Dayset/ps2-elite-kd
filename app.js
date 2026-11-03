@@ -37,7 +37,7 @@ import {
 import { formatClock, fmtNum, slugKey, bareName, parseNames, namesEqualIgnoreCase, namesSetKey, niceLinTicks, niceNum, niceLogTicks, formatTick, escapeHtml, makeAbortError, isAbortError, checkAborted, readJsonLS, writeJsonLS } from "./app-util.mjs?v=20261027-z79";
 import { createAnalyze } from "./analyze.mjs?v=20261101-bg1";
 import { createShareAdd } from "./share-add.mjs?v=20261027-z79";
-import { createSharedIndex } from "./shared-index.mjs?v=20261103-hidepct1";
+import { createSharedIndex } from "./shared-index.mjs?v=20261103-inact1";
 import { createNamesField } from "./names-field.mjs?v=20261102-pending1";
 import { initFactionPanel } from "./faction-panel.mjs?v=20261031-fr4";
 import { initServerPanel } from "./server-panel.mjs?v=20261031-sr2";
@@ -327,6 +327,7 @@ import {
   const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";
   /** "1" = hide adjusted-iVi ≤ 0 players from the Rankings table browse (footer checkbox). */
   const LS_HIDE_ZERO_IVI = "ps2-elite-kd-hide-zero-ivi";
+  const LS_HIDE_INACTIVE = "ps2-elite-kd-hide-inactive";
   /** Remove ranks switches (filter row + Settings): ON by default (Dayset 2026-10-22) — the key stores "1" = on / "0" = off, unset = on. */
   const LS_REMOVE_RANKS = "ps2-elite-kd-remove-ranks";
   /** Max account age in whole months (Settings stepper/input): Rankings browse hides accounts registered longer ago than this. At/above the oldest account in the data it cuts nobody. The years key is the 2026-10-22 first-ship unit; saved years values migrate ×12 on first read. */
@@ -484,6 +485,7 @@ import {
     statsPublic: document.getElementById("statsPublic"),
     debugColsToggle: document.getElementById("debugColsToggle"),
     hideZeroIviToggle: document.getElementById("hideZeroIviToggle"),
+    hideInactiveToggle: document.getElementById("hideInactiveToggle"),
     removeRanksToggle: document.getElementById("removeRanksToggle"),
     removeRanksToggleSettings: document.getElementById("removeRanksToggleSettings"),
     maxAgeInput: document.getElementById("maxAgeInput"),
@@ -1069,6 +1071,19 @@ import {
       try {
         if (els.hideZeroIviToggle.checked) localStorage.setItem(LS_HIDE_ZERO_IVI, "1");
         else localStorage.removeItem(LS_HIDE_ZERO_IVI);
+      } catch (_) {
+        /* private mode: Rankings keeps its own in-memory choice */
+      }
+    });
+  }
+
+  /* Hide 🪦 inactive players from the Rankings table browse (footer box). */
+  if (els.hideInactiveToggle) {
+    try { els.hideInactiveToggle.checked = localStorage.getItem(LS_HIDE_INACTIVE) === "1"; } catch (_) { /* private mode */ }
+    els.hideInactiveToggle.addEventListener("change", () => {
+      try {
+        if (els.hideInactiveToggle.checked) localStorage.setItem(LS_HIDE_INACTIVE, "1");
+        else localStorage.removeItem(LS_HIDE_INACTIVE);
       } catch (_) {
         /* private mode: Rankings keeps its own in-memory choice */
       }
