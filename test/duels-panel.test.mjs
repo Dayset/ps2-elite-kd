@@ -252,3 +252,40 @@ describe("🤺 duels panel: ☰ Flat list (owner 2026-11-02, t844u)", () => {
     });
   });
 });
+
+describe("🤺 duels panel: kill share, ⚔️ iVi and 🎲 vs expected (owner 2026-11-02, t845u)", () => {
+  it("comparison shows the share of kills, the iVi gap and the expected-vs-actual verdict", { skip: !chrome && "no Chrome", timeout: 120000 }, async () => {
+    await withPage(async ({ ev, nav }) => {
+      await nav("index.html");
+      const r = await ev(`(async () => {
+        ${fixture}
+        localStorage.removeItem("duelFlat");
+        const { mountDuels } = await import("/duels-panel.mjs");
+        const t = 1792000000;
+        // 40 kills between them, 10 one way and 30 the other, a day apart each (separate fights).
+        const events = Array.from({ length: 40 }, (_, i) => [t - i * 90000, i < 10 ? 1 : 0, "2", 1, 0, 2, 0, 0, 0]);
+        const reply = { v: 1, events, rev: 1, lo: t - 39 * 90000, hi: t, done: true, fights: 40, kills: 40, pages: 1, blocks: 1 };
+        const getJson = async (u) => (u.includes("character/?character_id=") ? { character_list: [
+          { character_id: "1", faction_id: "1", w: { world_id: "1" } }, { character_id: "2", faction_id: "3", w: { world_id: "1" } } ] } : { error: "stub" });
+        const panel = mountDuels(s, { getJson, baseOf: () => "https://x/get/ps2:v2/", catalog: async () => null, pairApi: async () => reply });
+        panel.setPlayers([{ cid: "1", display: "TolyaNo" }, { cid: "2", display: "Sarleyy" }]);
+        for (let i = 0; i < 50 && !s.querySelector(".duel-cmp tr.duel-luck"); i++) await sleep(100);
+        const rows = [...s.querySelectorAll(".duel-cmp tr")].map((x) => ({ th: x.cells[0].textContent, a: x.cells[1] && x.cells[1].textContent, b: x.cells[2] && x.cells[2].textContent, tip: x.cells[0].title, html: x.innerHTML }));
+        return { rows };
+      })()`);
+      const kills = r.rows.find((x) => /Kills on the other/.test(x.th));
+      const ivi = r.rows.find((x) => /iVi/.test(x.th));
+      const luck = r.rows.find((x) => /vs expected/.test(x.th));
+      assert.ok(kills && ivi && luck, "kills, iVi and 🎲 rows present: " + JSON.stringify(r.rows.map((x) => x.th)));
+      assert.deepEqual([kills.a, kills.b].map((x) => x.replace(/\s+/g, " ").trim()).sort(), ["10 25%", "30 75% +200%"], "share of the kills between them, +% on the bigger side");
+      assert.match(ivi.a + ivi.b, /1,704/, "TolyaNo ranks-lite adjs");
+      assert.match(ivi.a + ivi.b, /2,003 \+18%/, "Sarleyy 18% higher");
+      assert.match(luck.html, /duel-luck-unusual/, "40 kills at 25/75 against a ~52/48 expectation is unusual");
+      assert.match(luck.a + luck.b, /\+23 pts · unusual/, "the 30-kill side is +23 pts over its expected share");
+      assert.match(luck.a + luck.b, /−23 pts/);
+      assert.match(luck.tip, /k = 0\.56/, "hover names the fitted k");
+      assert.match(luck.tip, /408,179 pairs/, "hover names the pair count");
+      assert.doesNotMatch(JSON.stringify(r.rows), /cheat/i);
+    });
+  });
+});

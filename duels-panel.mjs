@@ -17,15 +17,16 @@ import { mergeEvents } from "./scrims.mjs?v=20261028-os2";
 import {
   AUTO_PAGES, FIRST_FIGHTS, nsOfBase, pairFloor, DUEL_GAP, ONE_V_ONE, classOf, bareName, crowdRows, crowdSummary, expectedCount, pagerOf,
   readPairPages, readPairNewer, pairEvents, fightsOf, fightResult, weaponShotUrls, parseShotStats, perKill, pairSummary,
-  charInfoUrl, parseCharInfo, pairWarnings, WORLD_NAME,
+  charInfoUrl, parseCharInfo, pairWarnings, WORLD_NAME, iviLuck,
   DUEL_CACHE_KEY, duelCacheEntry, duelCacheRestore, duelCachePrune,
-} from "./duels.mjs?v=20261028-duelerr1";
+} from "./duels.mjs?v=20261102-luck1";
 
 const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const lang = () => { try { return currentLang() || undefined; } catch { return undefined; } };
 const int = (n) => Math.round(n).toLocaleString(lang());
 const num1 = (n) => (n == null || !Number.isFinite(n) ? "–" : n < 10 ? n.toLocaleString(lang(), { maximumFractionDigits: 1, minimumFractionDigits: 1 }) : int(n));
 const kdTxt = (n) => (n == null || !Number.isFinite(n) ? "–" : n.toFixed(2));
+const pct0 = (n) => (n == null || !Number.isFinite(n) ? "–" : `${Math.round(n * 100)}%`);
 const pct = (n) => (n == null || !Number.isFinite(n) ? "–" : `${(n * 100).toLocaleString(lang(), { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`);
 const tagOf = (n) => { const m = /^\[([^\]]*)\]/.exec(String(n || "")); return m ? m[1] : ""; };
 const dateTime = (t) => new Date(t * 1000).toLocaleString(lang(), { dateStyle: "medium", timeStyle: "short" });
@@ -202,6 +203,15 @@ export function mountDuels(section, o = {}) {
     }).catch(() => { iviMap = new Map(); return iviMap; });
     return iviMapP;
   }
+  // 🎲 vs expected (owner 2026-11-02, t845u): the ⚔️ iVi → kill-split fit (scripts/fit-duel-ivi.mjs). Lazy, once per page; missing → no row.
+  let duelFit = null, duelFitP = null;
+  function ensureFit() {
+    if (duelFitP) return duelFitP;
+    duelFitP = fetch(`${dataDir}duel-ivi-fit.json`).then((r) => (r.ok ? r.json() : null)).then((d) => { duelFit = d && d.k > 0 ? d : false; return duelFit; })
+      .catch(() => { duelFit = false; return false; });
+    return duelFitP;
+  }
+  const iviOf = (p) => { const v = iviMap && p && iviMap.get(bareName(p.display).toLowerCase()); return Number.isFinite(v) && v > 0 ? v : null; };
   const iviHtml = (r) => {
     if (!iviMap) return "";
     const v = iviMap.get(bareName(r.name).toLowerCase());
@@ -333,9 +343,28 @@ export function mountDuels(section, o = {}) {
     const ca = crowdSummary(crowdRows(a), b.display), cb = crowdSummary(crowdRows(b), a.display);
     const wTxt = (w) => (w ? `${wName(items, w[0])} (${int(w[1])})` : "–");
     const cTxt = (c) => (c ? `${clsFull(c[0])} (${int(c[1])})` : "–");
-    const row = (label, hint, x, y, cls = "") => `<tr${cls ? ` class="${cls}"` : ""}><th scope="row"${hint ? ` title="${esc(hint)}"` : ""}>${esc(label)}</th><td>${x}</td><td>${y}</td></tr>`;
+    const row = (label, hint, x, y, cls = "", tx = "", ty = "") => `<tr${cls ? ` class="${cls}"` : ""}><th scope="row"${hint ? ` title="${esc(hint)}"` : ""}>${esc(label)}</th><td${tx ? ` title="${esc(tx)}"` : ""}>${x}</td><td${ty ? ` title="${esc(ty)}"` : ""}>${y}</td></tr>`;
+    // Share of the kills between them, and "+N%" on the bigger side (how much more than the other).
+    const nk = s.a.kills + s.b.kills;
+    const shareTxt = (k) => (nk ? ` <span class="duel-sub">${pct0(k / nk)}</span>` : "");
+    const more = (x, y) => (x > y && y > 0 ? ` <span class="duel-more-pct">+${int(((x / y) - 1) * 100)}%</span>` : "");
+    const ia = iviOf(a), ib = iviOf(b);
+    const luck = ia && ib && duelFit ? iviLuck(s.a.kills, s.b.kills, ia, ib, duelFit) : null;
+    const pts = (v) => `${v >= 0 ? "+" : "−"}${int(Math.abs(v) * 100)}`;
+    const verdictTxt = (v) => tr(`duel.luck.${v}`, { normal: "normal range", unusual: "unusual", very: "very unusual", few: "too few kills" }[v]);
+    let luckRow = "";
+    if (luck) {
+      const tip = tr("duel.m.luckTip", "Kill split vs what the ⚔️ iVi gap predicts. Expected share of A = iVi A^k ÷ (iVi A^k + iVi B^k), k = {k}, fitted on {pairs} pairs with {min}+ kills between them (killboards). Here: expected {ea} vs {eb}, actual {aa} vs {ab}; more lopsided than {rarer} of pairs. Normal = the typical 90% of pairs, very unusual = outside 99%. Not pure duels: an unusual split is only a cue to look closer.", {
+        k: duelFit.k.toLocaleString(lang(), { maximumFractionDigits: 2 }), pairs: int(duelFit.pairs), min: int(duelFit.min || 20),
+        ea: pct0(luck.exp), eb: pct0(1 - luck.exp), aa: pct0(luck.act), ab: pct0(1 - luck.act), rarer: luck.rarer == null ? "–" : `${luck.rarer}%` });
+      const cell = (g, mine) => `${pts(g)} ${esc(tr("duel.pts", "pts"))}${mine ? ` · <span class="duel-luck-${luck.verdict}">${esc(verdictTxt(luck.verdict))}</span>` : ""}`;
+      const expTip = (e) => tr("duel.m.luckExp", "Expected {e}", { e: pct0(e) });
+      luckRow = row(tr("duel.m.luck", "🎲 vs expected"), tip, cell(luck.gap, luck.gap >= 0), cell(-luck.gap, luck.gap < 0), "duel-luck", expTip(luck.exp), expTip(1 - luck.exp));
+    }
     return `<thead><tr><th scope="col"></th><th scope="col" class="duel-a">${esc(aName)}</th><th scope="col" class="duel-b">${esc(bName)}</th></tr></thead><tbody>` +
-      row(tr("duel.m.kills", "Kills on the other"), "", int(s.a.kills), int(s.b.kills), "duel-big") +
+      row(tr("duel.m.kills", "Kills on the other"), tr("duel.m.killsTip", "Kills on each other; % = share of the kills between them, +% = how many more than the other."), `${int(s.a.kills)}${shareTxt(s.a.kills)}${more(s.a.kills, s.b.kills)}`, `${int(s.b.kills)}${shareTxt(s.b.kills)}${more(s.b.kills, s.a.kills)}`, "duel-big") +
+      (ia && ib ? row("⚔️ iVi", tr("duel.m.iviTip", "Skill rating (same as the table); +% = how much higher than the other."), `${int(ia)}${more(ia, ib)}`, `${int(ib)}${more(ib, ia)}`) : "") +
+      luckRow +
       row(tr("duel.m.kd", "K/D vs each other"), "", kdTxt(s.a.kd), kdTxt(s.b.kd)) +
       row(tr("duel.m.crowd", "K/D vs everyone else"), tr("duel.m.crowdTip", "Kills ÷ deaths against the ~200 players they fight most (Census killboard), this opponent left out."), kdTxt(ca.kd), kdTxt(cb.kd)) +
       row(tr("duel.m.hs", "Headshot kills"), "", `${int(s.a.hs)} · ${pct(s.a.hsr)}`, `${int(s.b.hs)} · ${pct(s.b.hsr)}`) +
@@ -387,6 +416,11 @@ export function mountDuels(section, o = {}) {
     sum.hidden = false;
     setStatus(read);
     cmp.innerHTML = cmpHtml(s, items, aName, bName);
+    if (!iviMap || duelFit === null) {
+      Promise.all([ensureIvi(), ensureFit()]).then(() => {
+        if (mode === "pair" && pairs.get(pairKey()) === job && section.open) cmp.innerHTML = cmpHtml(s, items, aName, bName);
+      });
+    }
     cmpWrap.hidden = false;
 
     flatLabel();

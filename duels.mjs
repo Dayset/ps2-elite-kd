@@ -20,6 +20,29 @@
  */
 import { eventsUrl, compactEvent, mergeEvents, EVENT_PAGE } from "./scrims.mjs?v=20261028-os2";
 
+/**
+ * 🎲 vs expected (owner 2026-11-02, t845u): how far the split of the kills between the two is
+ * from what their ⚔️ iVi gap predicts. fit = data/duel-ivi-fit.json (scripts/fit-duel-ivi.mjs,
+ * fitted on cached killboard pairs): share of A = iVi_A^k ÷ (iVi_A^k + iVi_B^k); |z| shrunk by
+ * √(1 + (n − 1)·ρ) for the real-world spread; q90 / q99 from the fitted pairs. Fewer than
+ * DUEL_FIT_MIN kills → no verdict.
+ */
+export const DUEL_FIT_MIN = 20;
+export function iviLuck(ka, kb, ia, ib, fit) {
+  const n = (+ka || 0) + (+kb || 0);
+  if (!fit || !(fit.k > 0) || !(ia > 0) || !(ib > 0) || !n) return null;
+  const exp = 1 / (1 + Math.pow(ib / ia, fit.k));
+  const act = ka / n;
+  const z = (ka - n * exp) / Math.sqrt(n * exp * (1 - exp));
+  const za = z / Math.sqrt(1 + (n - 1) * (fit.rho || 0));
+  const enough = n >= (fit.min || DUEL_FIT_MIN);
+  const a = Math.abs(za);
+  const verdict = !enough ? "few" : a > fit.q99 ? "very" : a > fit.q90 ? "unusual" : "normal";
+  let rarer = null;
+  if (Array.isArray(fit.pct) && fit.pct.length) { rarer = 0; for (const v of fit.pct) if (a > v) rarer++; }
+  return { n, exp, act, gap: act - exp, z, za, verdict, rarer };
+}
+
 /** A fight between the two breaks after this many seconds without a kill between them. */
 export const DUEL_GAP = 600;
 /** A fight is "1v1" when it has min+ kills and focus+ of the history player's kills & deaths in that time were with the other one. */

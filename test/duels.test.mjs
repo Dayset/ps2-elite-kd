@@ -1,11 +1,12 @@
 // 🤺 Duels tab (duels.mjs / duels-panel.mjs, owner 2026-10-28): one player vs the crowd, two head-to-head.
-import test from "node:test";
+import test, { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
   classOf, crowdRows, crowdSummary, expectedCount, pagerOf, readPairPages, readPairNewer, pairEvents, fightsOf, fightResult,
   weaponShotUrls, parseShotStats, perKill, pairSummary, ONE_V_ONE,
   duelCacheEntry, duelCacheRestore, duelCachePrune,
+  iviLuck,
 } from "../duels.mjs";
 
 const fx = JSON.parse(readFileSync(new URL("./fixtures/scrim-royaigreenberet.json", import.meta.url), "utf8"));
@@ -327,4 +328,27 @@ test("creation floor (owner note on #83): Census paging stops at the newer chara
   assert.equal(st.done, true);
   assert.ok(st.oldest <= f.floor);
   assert.ok(calls <= 4, `${calls} pages`);
+});
+
+describe("🎲 iviLuck: kill split vs the ⚔️ iVi expectation (owner 2026-11-02, t845u)", () => {
+  const fit = { k: 0.5567, rho: 0.03751, q90: 1.668, q99: 3.191, min: 20, pct: Array.from({ length: 99 }, (_, i) => i / 30) };
+  it("equal iVi expects 50/50; a matching split is normal", () => {
+    const r = iviLuck(50, 50, 1500, 1500, fit);
+    assert.equal(r.exp, 0.5); assert.equal(r.gap, 0); assert.equal(r.verdict, "normal");
+  });
+  it("TolyaNo 150 vs Sarleyy 274 (iVi 1704 vs 2003) is +12 pts for Sarleyy, still normal range", () => {
+    const r = iviLuck(274, 150, 2003.1, 1704.2, fit);
+    assert.ok(Math.abs(r.exp - 0.522) < 0.002, String(r.exp));
+    assert.ok(Math.abs(r.gap - 0.124) < 0.002, String(r.gap));
+    assert.equal(r.verdict, "normal");
+  });
+  it("lopsided splits climb to unusual / very unusual; too few kills gives no verdict", () => {
+    assert.equal(iviLuck(30, 10, 1500, 1500, fit).verdict, "unusual");
+    assert.equal(iviLuck(360, 40, 1500, 1500, fit).verdict, "very");
+    assert.equal(iviLuck(9, 1, 1500, 1500, fit).verdict, "few");
+  });
+  it("missing fit or iVi → null", () => {
+    assert.equal(iviLuck(5, 5, 1500, 1500, null), null);
+    assert.equal(iviLuck(5, 5, 0, 1500, fit), null);
+  });
 });
