@@ -61,6 +61,6 @@ test("tracers fly straight in a 5° cone and are depth-sorted with the soldiers"
   const js = fs.readFileSync("replay/player.js", "utf8");
   assert.match(js, /const CONE = 2\.5 \* Math\.PI \/ 180;/);
   assert.doesNotMatch(js, /\(70 \+ rng\(\) \* 120\)/, "no wide vertical spray");
-  assert.match(js, /s\.draw\(ctx, t\); drawBullets\(layer\[i\]\);/);
+  assert.match(js, /s\.draw\(ctx, t, \{\}, wallT\); drawBullets\(layer\[i\]\);/, "soldiers draw with the wall clock (#107 cheer), tracers right after, per layer");
   assert.doesNotMatch(js, /drawBullets\(\); drawFx/, "tracers no longer drawn on top of everything");
 });

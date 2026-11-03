@@ -2,7 +2,7 @@
 // (scripts/build-replay.mjs, built daily from the site's own cache) and data/xp/<slug>.json. Every per-minute stat is a literal per-minute rate here: a 0.05 KPM player waits
 // ~20 real minutes between kills. The time in between is filled with the states in states.js.
 // All randomness is seeded from the player's name.
-import { Soldier, loadRigs, FX } from './soldier.js?v=20261103-mot1';
+import { Soldier, loadRigs, FX } from './soldier.js?v=20261103-celeb1';
 import { STATES, FILLERS, PHASES, phaseOf } from './states.js';
 import { shardOf, slugOf } from './shard.mjs';
 import { toDoc } from './doc.mjs?v=20261103-pair1';
@@ -13,6 +13,7 @@ import { shooter, headChance } from './engagement.mjs?v=20261103-hs1';
 import { planDuel } from './duel-plan.mjs?v=20261103-exch1';
 import { planScrim, scrimPlanEnd, topScrimPartner } from './scrim-plan.mjs?v=20261103-exch1';
 import { SHIELD, HEALTH, returnBurst, applyHits, recoveryFor } from './exchange.mjs?v=20261103-exch1';
+import { pushLine, visibleLines } from './status.mjs?v=20261103-celeb1';
 import { hpAt, barFracs, sparkFor, scoreAt, engagementAt, lifeAt as duelLifeAt, phaseState, killcamFor } from './duel-scene.mjs?v=20261103-duel2';
 import { STRIP, coverOf, assignLanes } from './lanes.mjs?v=20261103-strip1';
 import { pickWeighted, drawOpponents } from './crowd.mjs?v=20261103-crowd1';
@@ -302,15 +303,15 @@ if (!pair) {
 // front lane; pickTarget only ever picks front-lane enemies (see moveToFront).
 const F = (doc.faction && doc.faction in rigs) ? doc.faction : 'tr', foes = ['tr', 'nc', 'vs'].filter(f => f !== F);
 const laneA = assignLanes({ nAllies: P.allies, nEnemies: scrimMode ? 0 : (pair ? 4 : 5), rival: !!pair, enemyScale: P.enemyScale, pairMode: !!pair });
-const main = new Soldier(rigs[F], F, { x: laneA.main.x, y: laneA.main.y, scale: laneA.main.scale, facing: 1, seed: 0.3, rate: RATE, speed: 120, mode: mainProfile?.mode ?? 'auto', reloadMs: mainProfile?.reloadMs ?? 2400 });
+const main = new Soldier(rigs[F], F, { x: laneA.main.x, y: laneA.main.y, scale: laneA.main.scale, facing: 1, seed: 0.3, rate: RATE, speed: 120, mode: mainProfile?.mode ?? 'auto', reloadMs: mainProfile?.reloadMs ?? 2400, reducedMotion: reducedOS });
 main.isMain = true; main.lane = 0; main.slot = main.x;
 const allies = laneA.allies.map((p, i) => {
-  const a = new Soldier(rigs[F], F, { x: p.x, y: p.y, scale: p.scale, facing: 1, seed: 1.7 + i * 2.3, rate: 9 + 3 * rng(), speed: 90 });
+  const a = new Soldier(rigs[F], F, { x: p.x, y: p.y, scale: p.scale, facing: 1, seed: 1.7 + i * 2.3, rate: 9 + 3 * rng(), speed: 90, reducedMotion: reducedOS });
   a.dim = p.dim; a.lane = p.lane; a.slot = p.x; return a; });
 const enemies = laneA.enemies.map((p, i) => {
   const o = crowdOpps[i];
   const fac = o ? o.faction : foes[i % 2];
-  const s = new Soldier(rigs[fac], fac, { x: p.x, y: p.y, scale: p.scale, facing: -1, seed: 3.1 + i * 1.9, rate: o?.rate ?? 9 + 3 * rng(), speed: 170, mode: o?.mode ?? 'auto' });
+  const s = new Soldier(rigs[fac], fac, { x: p.x, y: p.y, scale: p.scale, facing: -1, seed: 3.1 + i * 1.9, rate: o?.rate ?? 9 + 3 * rng(), speed: 170, mode: o?.mode ?? 'auto', reducedMotion: reducedOS });
   s.dim = p.dim; s.lane = p.lane; s.slot = p.x; s.deadAt = -99; s.state = 'dead';
   if (o) { s.name = o.row.name; s.opp = o; }
   return s;
@@ -341,7 +342,7 @@ if (pair) {
   const FB = (pair.b.faction && pair.b.faction in rigs) ? pair.b.faction : (room === 'ps' ? (F === 'tr' ? 'nc' : 'tr') : 'tr');
   const bProf = pair.b.main ? profileOf(pair.b.main.id, pair.b.main.cat, profiles?.profiles) : null;
   rival = new Soldier(rigs[FB], FB, { x: laneA.rival.x, y: laneA.rival.y, scale: laneA.rival.scale, facing: -1, seed: 7.7,
-    rate: bProf ? shotsPerSec(bProf) : 10, speed: 170, mode: bProf?.mode ?? 'auto', reloadMs: bProf?.reloadMs ?? 2400 });
+    rate: bProf ? shotsPerSec(bProf) : 10, speed: 170, mode: bProf?.mode ?? 'auto', reloadMs: bProf?.reloadMs ?? 2400, reducedMotion: reducedOS });
   rival.slot = rival.x; rival.lane = 0; rival.deadAt = -99;
   rival.cover = makeCover(rival); walls.push(rival.cover.wall); everyone.push(rival);
 }
@@ -436,12 +437,16 @@ function land(t, b) {
   if (s === main && life.cls === 'ha') fx.push({ kind: 'shield', s, t0: t, dur: 0.35 });
   if (b.final) {
     s.hs = !!b.hs; s.set('die', t); s.deadAt = t; s.busy = false;
+    // #107: whoever lands the kill celebrates (wall clock); a headshot kill
+    // also leaves a status line on the killer.
+    b.from.cheerAt = wallT;
+    if (b.hs) line(b.from, T('pop.hs', 'headshot +1'));
     if (s === main) { stats.d++; sfx.play('death'); deathTimes.push(t); if (duelPlan) { recentRival.push({ hs: !!b.hs }); if (recentRival.length > 10) recentRival.shift(); } if (b.from.opp) oppDeaths[b.from.opp.slug] = (oppDeaths[b.from.opp.slug] || 0) + 1; if (!fast && !reducedOS && pace === 'cine') { if (b.hs) freeze = 2; bullet = { kind: 'death', w0: bullet ? wallT - 0.15 : wallT }; } return; }
     if (b.from === main) { stats.k++; sfx.play(b.hs ? 'headshot' : 'kill'); killTimes.push(t); recentMain.push({ hs: !!b.hs }); if (recentMain.length > 10) recentMain.shift(); if (s.opp) oppKills[s.opp.slug] = (oppKills[s.opp.slug] || 0) + 1; if (b.hs) stats.hs++; if (b.veh) stats.veh++;
       if (b.headHitsBefore !== undefined) hsKillLog.push({ hs: !!b.hs, headBefore: b.headHitsBefore });
       if (!fast && !reducedOS && pace === 'cine') { if (b.hs) freeze = 2; bullet = { kind: 'kill', w0: bullet ? wallT - 0.15 : wallT }; }
       pop(main, b.hs ? T('pop.hs', 'headshot +1') : b.veh ? T('pop.veh', 'vehicle kill +1') : '+1', b.hs ? '#ffe066' : '#fff', t); }
-    else if (b.assist) { stats.a++; pop(main, T('pop.assist', '+assist'), '#9fe8ff', t); }
+    else if (b.assist) { stats.a++; pop(main, T('pop.assist', '+assist'), '#9fe8ff', t); line(main, T('pop.assist', '+assist')); }
   } else if (b.from === main) sfx.play('hit');
 }
 
@@ -540,9 +545,9 @@ function pumpDuel(t) {
     else if (ev.kind === 'kill') { showKillcam(ev.eng); updateScore(); }
     else if (ev.kind === 'fx') {
       const w = ev.side === 'a' ? main : rival;
-      if (ev.rec === 'shieldRegen') fx.push({ kind: 'shield', s: w, t0: t, dur: 1.5 });
-      else if (ev.rec === 'medkit') fx.push({ kind: 'heal', from: w, to: w, t0: t, dur: 1.2 });
-      else if (ev.rec === 'medicHeal') { const m = allies.length ? pick(allies) : null; if (m) fx.push({ kind: 'heal', from: m, to: w, t0: t, dur: 1.5 }); }
+      if (ev.rec === 'shieldRegen') { fx.push({ kind: 'shield', s: w, t0: t, dur: 1.5 }); line(w, LBL('shieldRegen')); }
+      else if (ev.rec === 'medkit') { fx.push({ kind: 'heal', from: w, to: w, t0: t, dur: 1.2 }); line(w, LBL('medkit')); }
+      else if (ev.rec === 'medicHeal') { const m = allies.length ? pick(allies) : null; if (m) fx.push({ kind: 'heal', from: m, to: w, t0: t, dur: 1.5 }); line(w, LBL('medicHeal')); }
     }
     else if (ev.kind === 'back') showBackNote();
     else if (ev.kind === 'cls') life.cls = ev.cls;
@@ -613,6 +618,9 @@ if (pair && duelPlan) {
 window.__scrim = () => scrimMode ? { t0: scrimRow.t0, t1: scrimRow.t1, k: scrimRow.k, d: scrimRow.d,
   exact: scrimExact, endShown: scrimEndShown, planEnd: scrimEndAt } : null;
 window.__exch = () => ({ fights: exchLog, deaths: deathLog, pots: potLog });
+window.__cheer = () => ({ cheerAt: main.cheerAt, wallT, bob: main.lastPose?.bob ?? null, glow: main.lastPose?.cheer ?? null });
+window.__stack = () => ({ all: (main.lines ?? []).map((l) => ({ text: l.text, t0: l.t0, count: l.count })),
+  visible: visibleLines(main.lines ?? [], wallT), wallT });
 
 // ---------------------------------------------------------------- 1:1 timeline planner
 // One "cycle" = from a death (or the first spawn) to the next death. Everything is placed on the real
@@ -913,24 +921,27 @@ function runBurst(b, t) {
 }
 
 let cur = null, engaged = false, scroll = 0;
+// #107: one status line per event on the soldier's own stack (wall clock, so
+// playback speed never shortens it); repeats merge via pushLine.
+const line = (s, text) => { s.lines ??= []; pushLine(s.lines, text, wallT); };
 const HOOKS = {
   travel: { enter(s, t) { engaged = false; for (const e of enemies) if (e.state !== 'dead') { e.set('dead', t); e.deadAt = t; }
               for (const a of allies) a.set('run', t); },
             tick(s, t, dt) { scroll += dt * (s.veh ? 260 : 150); },
             exit(s, t) { for (const a of allies) a.set('idle', t); arrive(t); } },
-  reload: { enter(s, t) { main.reloadAt = t + 0.2; sfx.play('reload'); } },
+  reload: { enter(s, t) { main.reloadAt = t + 0.2; sfx.play('reload'); line(main, LBL('reloading')); } },
   // #106 recovery visuals: the cover pass already parks an idle main behind
   // his wall; regen adds the shield shimmer, medkit a self heal beam, and a
   // medic heal a beam from a nearby ally.
-  regen: { enter(s, t) { fx.push({ kind: 'shield', s: main, t0: t, dur: s.t1 - s.t0 }); } },
-  medkit: { enter(s, t) { fx.push({ kind: 'heal', from: main, to: main, t0: t, dur: s.t1 - s.t0 }); } },
-  medicHeal: { enter(s, t) { const m = allies.length ? pick(allies) : null; if (m) fx.push({ kind: 'heal', from: m, to: main, t0: t, dur: s.t1 - s.t0 }); } },
+  regen: { enter(s, t) { fx.push({ kind: 'shield', s: main, t0: t, dur: s.t1 - s.t0 }); line(main, LBL('shieldRegen')); } },
+  medkit: { enter(s, t) { fx.push({ kind: 'heal', from: main, to: main, t0: t, dur: s.t1 - s.t0 }); line(main, LBL('medkit')); } },
+  medicHeal: { enter(s, t) { const m = allies.length ? pick(allies) : null; if (m) fx.push({ kind: 'heal', from: m, to: main, t0: t, dur: s.t1 - s.t0 }); line(main, LBL('medicHeal')); } },
   revivedBy: { enter(s, t) { const m = allies.length ? pick(allies) : null; s.medic = m; },
                tick(s, t) { const tl = t - s.t0, d = s.t1 - s.t0;
                  if (s.medic && !s.healFx && tl > d - 2) { s.healFx = 1; fx.push({ kind: 'heal', from: s.medic, to: main, t0: t, dur: 1.2 }); }
-                 if (!s.up && tl > d - 0.8) { s.up = 1; main.downKeep = false; main.set('revive', t); stats.rev++; sfx.play('revive'); pop(main, T('pop.revived', 'revived'), '#8dffa5', t); } } },
-  healAlly: { enter(s, t) { const tg = allies.length ? pick(allies) : null; if (tg) fx.push({ kind: 'heal', from: main, to: tg, t0: t, dur: s.t1 - s.t0 }); } },
-  ammoBox: { enter(s, t) { life.box = { x: main.home + 40, t0: t, t1: s.t1 }; } },
+                 if (!s.up && tl > d - 0.8) { s.up = 1; main.downKeep = false; main.set('revive', t); stats.rev++; sfx.play('revive'); pop(main, T('pop.revived', 'revived'), '#8dffa5', t); line(main, T('pop.revived', 'revived')); } } },
+  healAlly: { enter(s, t) { const tg = allies.length ? pick(allies) : null; if (tg) fx.push({ kind: 'heal', from: main, to: tg, t0: t, dur: s.t1 - s.t0 }); line(main, LBL(s.id)); } },
+  ammoBox: { enter(s, t) { life.box = { x: main.home + 40, t0: t, t1: s.t1 }; line(main, LBL('resupplying')); } },
   shuffle: { enter(s, t) { s.x0 = main.x; s.dx = (main.x > main.home ? -1 : 1) * (20 + rng() * 40); },
              tick(s, t) { const k = clamp((t - s.t0) / (s.t1 - s.t0)); main.x = lerp(s.x0, s.x0 + s.dx, k);
                main.facing = s.dx > 0 ? 1 : -1; main.hop = life.cls === 'la' ? 40 * Math.sin(k * Math.PI) : 0; },
@@ -996,7 +1007,7 @@ function tick(s, t, dt) {
     if (s.id === 'assist' && s.b.done && !s.ally) {
       const al = allies.filter(alive); s.ally = al.length ? startBurst(t, pick(al), s.tg, 6, 2, true, { assist: true }) : { done: true };
       if (s.ally.rate) s.ally.rate = 13;
-      if (!al.length) { stats.a++; pop(main, T('pop.assist', '+assist'), '#9fe8ff', t); s.tg.busy = false; }   // teammate off screen
+      if (!al.length) { stats.a++; pop(main, T('pop.assist', '+assist'), '#9fe8ff', t); line(main, T('pop.assist', '+assist')); s.tg.busy = false; }   // teammate off screen
     }
     if (s.ally && !s.ally.done) runBurst(s.ally, t);
   }
@@ -1039,7 +1050,7 @@ function background(t, dt) {
       const s = pick(sh, rngBg), tg = !hasOpp && rngBg() < 0.6 && alive(main) ? main : pick(tgts, rngBg), close = tg === main && rngBg() < P.dodge;
       const b = startBurst(t, s, tg, 5 + Math.floor(rngBg() * 6), 0, false, {}, rngBg); b.close = close; b.pot = true; enemyBursts.push(b);
       if (tg === main) potLog.push({ t, cur: cur?.id ?? null, hasOpp: !!hasOpp });
-      if (close) pop(main, T('pop.close', 'close call'), '#c8d3ff', t + 0.35);
+      if (close) { pop(main, T('pop.close', 'close call'), '#c8d3ff', t + 0.35); line(main, T('pop.close', 'close call')); }
     }
   }
   enemyBursts = enemyBursts.filter(b => {
@@ -1249,7 +1260,9 @@ function drawBox(t) {
 // placeholder box for states without art (states.js: placeholder: true), progress bar = real time left
 function drawStateBox(t) {
   const s = cur; if (!s) return; const def = STATES[s.id];
-  const show = def.placeholder || (s.veh && tank.on) || debug; if (!show) return;
+  // #107: the placeholder box stays only under ?debug (status lines carry
+  // those states now); the vehicle label keeps showing.
+  const show = (s.veh && tank.on) || debug; if (!show) return;
   let lbl = s.veh && tank.on && s.id !== 'running' ? (s.id === 'idle' ? LBL('inVehicle') : `${LBL('inVehicle')} · ${LBL(s.id)}`) : LBL(s.id);
   if (s.id === 'running' && s.veh) lbl = T('st.driving', 'Driving to fight');
   if (def.countdown) lbl += ` ${Math.max(1, Math.ceil(s.t1 - t))}`;
@@ -1263,6 +1276,22 @@ function drawStateBox(t) {
   ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fillRect(x - w / 2 + 6, y + 1, w - 12, 3);
   ctx.fillStyle = '#9fe8ff'; ctx.fillRect(x - w / 2 + 6, y + 1, (w - 12) * k, 3);
   if (debug) { ctx.font = '500 12px system-ui,sans-serif'; ctx.fillStyle = '#9aa7b4'; ctx.fillText(`${s.id} · ${(s.t1 - s.t0).toFixed(1)} s`, x, y + 18); }
+  ctx.restore();
+}
+// #107: the status stack over a front-lane fighter — thin text, dark
+// outline, no box. Oldest first on top, newest at the bottom; the pair
+// overhead (name + bars) sits lower, so duelists stack higher.
+function drawStack(s) {
+  const lines = visibleLines(s.lines ?? [], wallT);
+  if (!lines.length) return;
+  const [, hy] = head(s);
+  const base = (duelPlan && (s === main || s === rival)) ? hy - 100 : hy - 40;
+  ctx.save(); ctx.font = '400 13px system-ui,sans-serif'; ctx.textAlign = 'center';
+  lines.forEach((l, j) => {
+    const y = base - (lines.length - 1 - j) * 16;
+    ctx.globalAlpha = l.alpha; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,0.7)';
+    ctx.strokeText(l.text, s.x, y); ctx.fillStyle = '#f2f5ff'; ctx.fillText(l.text, s.x, y);
+  });
   ctx.restore();
 }
 function drawWall(w) {
@@ -1306,7 +1335,7 @@ function render(t) {
     wallsBefore(s.y);
     if (s === main && (tank.on || t - tank.off < 0.4)) { if (tank.on) { drawTank(t); drawBullets(layer[i]); continue; } drawTank(t); }
     if (s === main && alive(main)) { ctx.save(); ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(s.x, s.y + 4, 70, 11, 0, 0, 7); ctx.stroke(); ctx.restore(); }
-    s.draw(ctx, t); drawBullets(layer[i]);
+    s.draw(ctx, t, {}, wallT); drawBullets(layer[i]);
     if (duelPlan && (s === main || s === rival)) drawDuelistOverhead(s, t);
     // crowd opponents (#103): small dimmed name tags, pair mode keeps third
     // parties unnamed (#98); hidden while the soldier is down
@@ -1316,6 +1345,9 @@ function render(t) {
       ctx.fillStyle = s.dim ? 'rgba(230,237,243,0.35)' : 'rgba(230,237,243,0.6)';
       ctx.fillText(stripTag(s.name), s.x, hy - 20); ctx.restore();
     }
+    // #107: status stack over each front-lane fighter (allies in lane 0
+    // included); newest at the bottom, older lines fade upward, no box.
+    if ((s === main || s === rival || s.lane === 0) && s.lines?.length) drawStack(s);
   }
   while (wi < wallsSorted.length) { const w = wallsSorted[wi++]; if (w.forMain && tank.on) continue; if (cue) { ctx.save(); ctx.filter = 'saturate(0.15)'; drawWall(w); ctx.restore(); } else drawWall(w); }
   drawFx(t, 'over');

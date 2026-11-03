@@ -8,6 +8,23 @@ const frac = (x) => x - Math.floor(x);
 const hash1 = (s, k) => frac(Math.sin(s * 127.1 + k * 311.7) * 43758.5453); // deterministic per-soldier variation, no Math.random
 const smooth = (x) => { x = clamp(x); return x * x * (3 - 2 * x); };
 
+// Winner celebration (#107, pure): ~1.2 s of WALL time after a kill, 2–3
+// small up-and-down bobs (≤ 6 % of the soldier's height: 31 rig px of the
+// 523 px rig) plus a faction-colour glow that fades out. It is a param, not
+// a state, so shooting / reload / hurt poses keep working underneath —
+// pose() just adds the bob on top. Reduced motion: glow only, no bob.
+// elapsed is wall seconds since the kill (player.js passes wallT, because
+// the data clock runs at the director's rate, not wall time).
+export const CHEER_DUR = 1.2, CHEER_BOBS = 2.5, CHEER_AMP = 31;
+export function cheerPose(elapsed, reduced = false) {
+  if (!(elapsed >= 0) || elapsed >= CHEER_DUR) return { bob: 0, glow: 0 };
+  const glow = 1 - elapsed / CHEER_DUR;
+  // one hump of |sin| is one hop (up and back down); CHEER_BOBS humps fit
+  // the window, so the sine runs half that many cycles
+  const bob = reduced ? 0 : -Math.abs(Math.sin(elapsed * Math.PI * CHEER_BOBS / CHEER_DUR)) * CHEER_AMP || 0;
+  return { bob, glow };
+}
+
 export const FX = {
   tr: { core: '#fff6c8', glow: 'rgba(255,150,40,', tracer: '#ffcc55', rate: 8, beam: 'rgba(230,60,50,' },
   nc: { core: '#ffffff', glow: 'rgba(255,215,60,', tracer: '#ffe680', rate: 6, beam: 'rgba(60,120,255,' },
@@ -29,7 +46,8 @@ export class Soldier {
       scale: o.scale ?? 0.5, facing: o.facing ?? 1, seed: o.seed ?? Math.random() * 10,
       state: 'idle', t0: 0, shots: 0, reloadAt: o.reloadAt ?? 1e9, speed: o.speed ?? 150,
       rate: o.rate ?? FX[faction].rate, aim: 0, flinchAt: o.flinchAt ?? -9, hs: o.hs ?? false, cloak: o.cloak ?? 0, hop: o.hop ?? 0,
-      mode: o.mode ?? 'auto', reloadMs: o.reloadMs ?? 2400, hp: o.hp ?? 1, overshield: o.overshield ?? false, healing: o.healing ?? false });
+      mode: o.mode ?? 'auto', reloadMs: o.reloadMs ?? 2400, hp: o.hp ?? 1, overshield: o.overshield ?? false, healing: o.healing ?? false,
+      cheerAt: o.cheerAt ?? null, reducedMotion: o.reducedMotion ?? false });
     this.bounds = o.bounds ?? [this.home - 120, this.home + 120];
   }
   set(state, t) { if (this.state !== state) { this.state = state; this.t0 = t; this.shots = 0; } }
@@ -48,9 +66,11 @@ export class Soldier {
   }
 
   // ---- pose: all numbers in rig-local px (pre-scale), angles in radians
-  pose(t) {
+  // wallT is the wall clock (for the cheer); it defaults to t so existing
+  // callers that only pass the data clock still pose identically.
+  pose(t, wallT = t) {
     const tl = t - this.t0, s = this.seed;
-    const P = { rootRot: 0, rootPiv: [0, 0], bob: 0, alpha: 1, bright: 1, dx: 0, aimErr: 0, shield: 0, heal: 0,
+    const P = { rootRot: 0, rootPiv: [0, 0], bob: 0, alpha: 1, bright: 1, dx: 0, aimErr: 0, shield: 0, heal: 0, cheer: 0,
       torso: { rot: 0, sy: 1 }, head: { rot: 0, dy: 0 }, gun: { dx: 0, dy: 0, rot: 0 },
       legL: { rot: 0, dy: 0 }, legR: { rot: 0, dy: 0 }, flash: 0, beam: 0, squash: 1, shake: 0 };
     const breath = Math.sin((t + s) * 2 * Math.PI / 2.6);
@@ -171,14 +191,21 @@ export class Soldier {
     if (this.healing) { P.heal = 1; P.bright *= 1.1; }
     if (this.hop > 0) P.bob -= this.hop;
     if (this.cloak > 0) P.alpha *= 1 - 0.7 * this.cloak;
+    // celebration: a param on top of whatever pose the soldier is in, never
+    // a state of its own (a killer mid-reload still reloads, just bouncier)
+    if (this.cheerAt != null) {
+      const ch = cheerPose(wallT - this.cheerAt, this.reducedMotion);
+      P.bob += ch.bob; P.cheer = ch.glow;
+    }
     return P;
   }
 
   // world position of a rig-local point drawn under the current transform
   static apply(m, x, y) { return [m.a * x + m.c * y + m.e, m.b * x + m.d * y + m.f]; }
 
-  draw(ctx, t, out = {}) {
-    const P = this.pose(t), R = this.rig, B = R.byName, pv = R.pivots;
+  draw(ctx, t, out = {}, wallT = t) {
+    const P = this.pose(t, wallT), R = this.rig, B = R.byName, pv = R.pivots;
+    this.lastPose = P; // #107: headless checks read the bob/glow after a kill
     // ground shadow
     if (P.alpha > 0) {
       ctx.save(); ctx.globalAlpha = 0.35 * P.alpha;
@@ -231,10 +258,11 @@ export class Soldier {
     out.muzzleAhead = Soldier.apply(m, mz[0] + 100, mz[1]);
     if (P.flash > 0) this.drawFlash(ctx, mz, P.flash, P.flashSeed);
     ctx.restore();
-    if (P.shield > 0 || P.heal > 0) { // overshield ring / self-heal glow (square corners n/a: ellipses, no roundRect)
+    if (P.shield > 0 || P.heal > 0 || P.cheer > 0) { // overshield ring / self-heal glow / win glow (square corners n/a: ellipses, no roundRect)
       ctx.save(); ctx.filter = 'none'; ctx.globalCompositeOperation = 'lighter';
       if (P.shield > 0) { ctx.globalAlpha = 0.55 * P.shield; ctx.strokeStyle = this.fx.glow + '0.9)'; ctx.lineWidth = 7; ctx.beginPath(); ctx.ellipse(0, -200, 175, 265, 0, 0, 2 * Math.PI); ctx.stroke(); }
       if (P.heal > 0) { const g = ctx.createRadialGradient(0, -200, 0, 0, -200, 280); g.addColorStop(0, 'rgba(80,255,140,0.35)'); g.addColorStop(1, 'rgba(80,255,140,0)'); ctx.globalAlpha = P.heal; ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(0, -200, 200, 280, 0, 0, 2 * Math.PI); ctx.fill(); }
+      if (P.cheer > 0) { const g = ctx.createRadialGradient(0, -200, 0, 0, -200, 280); g.addColorStop(0, this.fx.glow + (0.45 * P.cheer) + ')'); g.addColorStop(1, this.fx.glow + '0)'); ctx.globalAlpha = P.cheer; ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(0, -200, 200, 280, 0, 0, 2 * Math.PI); ctx.fill(); }
       ctx.restore();
     }
     ctx.restore();
