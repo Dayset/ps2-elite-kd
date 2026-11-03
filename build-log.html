@@ -129,6 +129,20 @@
     .st-in { padding: 4px 8px; border: 1px solid var(--border); border-radius: 0; background: var(--bg); color: var(--text); }
     .st-btn { padding: 4px 12px; border: 1px solid var(--border); border-radius: 0; background: var(--bg); color: var(--text); cursor: pointer; font: inherit; }
     .st-pre { background: var(--bg2, #1a1a1a); padding: 8px; border-radius: 0; overflow-x: auto; font-size: 0.85em; }
+    /* 2026-11-02 cleanup: 📐 rule effects are reference lists (neutral badges), long tables show 25 rows + "Show all",
+       one search box filters every list. */
+    #groupAudit .st-count, #groupAudit .st-count.hot { color: var(--dim); border-color: var(--border); }
+    .st-group > .st-note { margin: 0 0 10px; }
+    .st-find { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 0 0 12px; }
+    .st-find input { flex: 1 1 260px; max-width: 420px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 0; background: var(--panel); color: var(--text); font: inherit; }
+    .st-find input:focus { outline: 2px solid var(--accent); outline-offset: 0; }
+    #stFindInfo { color: var(--dim); font-size: 0.85rem; }
+    tr.st-cut, tr.st-nomatch { display: none; }
+    .st-searching details.st-sec.st-nohit, .st-searching details.st-sub-sec.st-nohit { display: none; }
+    .st-more { margin: 6px 0 2px; padding: 3px 12px; border: 1px solid var(--border); border-radius: 0; background: var(--bg); color: var(--accent); cursor: pointer; font: inherit; font-size: 0.85rem; }
+    .st-more:hover { border-color: var(--accent); }
+    .st-searching .st-more { display: none; }
+    .st-searching .st-nohit-t { display: none; }
   </style>
 </head>
 <body class="site-page">
@@ -140,6 +154,11 @@
 
     <p id="popLine" class="st-pop" hidden></p>
 
+    <div class="st-find" role="search">
+      <input type="search" id="stFind" placeholder="🔎 Find a player in every list" autocomplete="off" spellcheck="false" aria-label="Find a player in every list" />
+      <span id="stFindInfo" aria-live="polite"></span>
+    </div>
+
     <section class="st-glance" id="statusBar" aria-label="At a glance">
       <div class="st-tile st-state"><div class="st-tv" id="sbState">Loading…</div><div class="st-tl" id="sbLast"></div></div>
       <div class="st-tile"><div class="st-tv" id="sbHonu">—</div><div class="st-tl">Honu calls today</div></div>
@@ -150,6 +169,7 @@
     </section>
 
     <details class="st-card st-sec st-group" id="groupReview" data-default="open"><summary><h2>🔍 Needs review</h2></summary>
+      <p class="st-note">Only lists that ask for a decision. Red count = waiting for you.</p>
       <details class="st-card st-sec st-flags" id="cardFlags">
         <summary id="flagsSummary"><h2>🚩 Red flags <span id="flagsCount" class="st-count">…</span></h2></summary>
         <p class="st-note">Top players whose numbers fit an aim, vehicle, rampage or session pattern. Leads, not proof.</p>
@@ -180,6 +200,33 @@
         <div id="fx" class="st-dim">Loading…</div>
       </details>
 
+      <details class="st-card st-sec st-flags st-anoms" id="cardAnoms">
+        <summary id="anomsSummary"><h2>📉 Chart anomalies <span id="anomsCount" class="st-count">…</span></h2></summary>
+        <p class="st-note">Players whose chart we changed or who sit far outside everyone else. Count = ones that need a look.</p>
+        <details class="st-info"><summary>ⓘ How it works</summary><div class="st-rule">🌾 stat padding, † adjusted and 🧪 outliers are listed here, not in 🚩 (bins.mjs). A player who also has a 🚩 pattern keeps the full row in 🚩, with a 📉 link there and an “also in 🚩” link here.</div></details>
+        <details class="st-sub-sec" id="secPadding">
+          <summary><h3>🌾 Stat padding <span id="padCount" class="st-count">…</span></h3></summary>
+          <details class="st-info"><summary>ⓘ How it works</summary><div id="padRule" class="st-rule"></div></details>
+          <div id="padding" class="st-dim">Loading…</div>
+        </details>
+        <details class="st-sub-sec" id="secAdjusted">
+          <summary><h3>† Adjusted <span id="adjCount" class="st-count">…</span></h3></summary>
+          <details class="st-info"><summary>ⓘ How it works</summary><div id="adjRule" class="st-rule"></div></details>
+          <div id="adjusted" class="st-dim">Loading…</div>
+        </details>
+        <details class="st-sub-sec" id="secGuard">
+          <summary><h3>🧪 Outlier guard <span id="guardCount" class="st-count">…</span></h3></summary>
+          <p class="st-note">Values far outside everyone else, checked every refresh. Only unexplained ones need a look.</p>
+          <details class="st-info"><summary>ⓘ How it works</summary><div class="st-rule">Run by scripts/build-ranks.mjs → outlier-guard.mjs on the numbers the site shows, one row per player. Unexplained may mean a formula gap (like the old 🦁 Brave 6094). Explained = also a 🚩 pattern, a 🌾 or † entry, reviewed by hand, or 🛡️ established (account ≥ 1 year, eKPM ≥ 0.75, ≥ 3 stored sessions): auto-accepted and folded away.</div><div id="guardRule" class="st-rule"></div></details>
+          <div id="guard" class="st-dim">Loading…</div>
+        </details>
+        <details class="st-sub-sec" id="secLiveReview">
+          <summary><h3>🔬 Live-cache test review (#10) <span id="lrCount" class="st-count">…</span></h3></summary>
+          <p class="st-note">Players the live-cache tests (🧪 outlier guard, 🧪 session stats) can’t explain yet. For the owner to check one by one. Nothing here changes stats, marks or hides anyone.</p>
+          <div id="liveReview" class="st-dim">Loading…</div>
+        </details>
+      </details>
+
       <details class="st-card st-sec st-flags" id="cardSpawnCamp">
         <summary id="spawnCampSummary"><h2>⛺ Spawn camp check <span id="spawnCampCount" class="st-count">…</span></h2></summary>
         <p class="st-note">PC sessions with an unusual share of kills on players who had just spawned. A review hint only, not proof: big fights near a spawn room push this up too. Private to this page: never shown on the site, never hides or flags anyone.</p>
@@ -187,29 +234,19 @@
         <div id="spawnCamp" class="st-dim">Loading…</div>
       </details>
 
-      <details class="st-card st-sec st-flags" id="cardHeavySupport">
-        <summary id="heavySupportSummary"><h2>⛑️ <span data-hs="title">Heavy support</span> <span id="heavySupportCount" class="st-count">…</span></h2></summary>
-        <p class="st-note" data-hs="note">Play style: players who spend most of their time healing, reviving, resupplying and repairing, and the regular partner they support. Private to this page.</p>
-        <details class="st-info"><summary data-hs="how">ⓘ How it works</summary><div class="st-rule" id="heavySupportRule"></div></details>
-        <div id="heavySupportFilters" style="display:flex;flex-wrap:wrap;gap:8px;margin:6px 0;">
-          <label><span data-hs="fLabel">Label</span> <select id="hsLabel"><option value="all" data-hs="all">all</option><option value="pocket">⛑️🎯 pocket duo</option><option value="steady">👥 steady squad</option><option value="general">➕ general medic</option></select></label>
-          <label><span data-hs="fServer">Server</span> <select id="hsWorld"><option value="all" data-hs="all">all</option></select></label>
-          <label><span data-hs="fName">Name</span> <input id="hsName" type="search" placeholder="any player in a pair" autocomplete="off" /></label>
-          <label>🌐 <span data-hs="fLang">Language</span> <select id="hsLang"></select></label>
-        </div>
-        <div id="heavySupportTop" style="display:flex;flex-wrap:wrap;gap:6px;margin:6px 0;"></div>
-        <div id="heavySupport" class="st-dim">Loading…</div>
+      <details class="st-card st-sec st-flags" id="cardAlts">
+        <summary><h2>👥 Likely alts <span id="altsCount" class="st-count">…</span></h2></summary>
+        <p class="st-note">Characters that are probably played by one person. “Likely”, never proof: read the reasons. Nothing changes on the site.</p>
+        <details class="st-info"><summary>ⓘ How it works</summary><div id="altsRule" class="st-rule"></div></details>
+        <div id="alts" class="st-dim">Loading…</div>
       </details>
 
-      <details class="st-card st-sec st-flags st-anoms" id="cardAnoms">
-        <summary id="anomsSummary"><h2>📉 Chart anomalies <span id="anomsCount" class="st-count">…</span></h2></summary>
-        <p class="st-note">Stats we changed automatically, and values far outside everyone else. Not accusations. Count = ones that need a look.</p>
-        <details class="st-info"><summary>ⓘ How it works</summary><div class="st-rule">🌾 stat padding, † adjusted and 🧪 outliers are listed here, not in 🚩 (bins.mjs). A player who also has a 🚩 pattern keeps the full row in 🚩, with a 📉 link there and an “also in 🚩” link here.</div></details>
-        <details class="st-sub-sec" id="secPadding">
-          <summary><h3>🌾 Stat padding <span id="padCount" class="st-count">…</span></h3></summary>
-          <details class="st-info"><summary>ⓘ How it works</summary><div id="padRule" class="st-rule"></div></details>
-          <div id="padding" class="st-dim">Loading…</div>
-        </details>
+    </details>
+
+    <details class="st-card st-sec st-group st-audit" id="groupAudit"><summary><h2>📐 Rule effects</h2></summary>
+      <p class="st-note">Who each automatic rule changed. Reference only: nothing to do unless a number looks wrong.</p>
+      <details class="st-card st-sec st-flags st-anoms" id="cardRules">
+        <summary><h2>⚔️ iVi adjustments</h2></summary>
         <details class="st-sub-sec" id="secPoop">
           <summary><h3>💩 Padder penalty (−10% iVi) <span id="poopCount" class="st-count">…</span></h3></summary>
           <details class="st-info"><summary>ⓘ How it works</summary><div id="poopRule" class="st-rule"></div></details>
@@ -245,22 +282,20 @@
           <details class="st-info"><summary>ⓘ How it works</summary><div id="zrevRule" class="st-rule"></div></details>
           <div id="zrev" class="st-dim">Loading…</div>
         </details>
-        <details class="st-sub-sec" id="secAdjusted">
-          <summary><h3>† Adjusted <span id="adjCount" class="st-count">…</span></h3></summary>
-          <details class="st-info"><summary>ⓘ How it works</summary><div id="adjRule" class="st-rule"></div></details>
-          <div id="adjusted" class="st-dim">Loading…</div>
-        </details>
-        <details class="st-sub-sec" id="secGuard">
-          <summary><h3>🧪 Outlier guard <span id="guardCount" class="st-count">…</span></h3></summary>
-          <p class="st-note">Values far outside everyone else, checked every refresh. Only unexplained ones need a look.</p>
-          <details class="st-info"><summary>ⓘ How it works</summary><div class="st-rule">Run by scripts/build-ranks.mjs → outlier-guard.mjs on the numbers the site shows, one row per player. Unexplained may mean a formula gap (like the old 🦁 Brave 6094). Explained = also a 🚩 pattern, a 🌾 or † entry, reviewed by hand, or 🛡️ established (account ≥ 1 year, eKPM ≥ 0.75, ≥ 3 stored sessions): auto-accepted and folded away.</div><div id="guardRule" class="st-rule"></div></details>
-          <div id="guard" class="st-dim">Loading…</div>
-        </details>
-        <details class="st-sub-sec" id="secLiveReview">
-          <summary><h3>🔬 Live-cache test review (#10) <span id="lrCount" class="st-count">…</span></h3></summary>
-          <p class="st-note">Players the live-cache tests (🧪 outlier guard, 🧪 session stats) can’t explain yet. For the owner to check one by one. Nothing here changes stats, marks or hides anyone.</p>
-          <div id="liveReview" class="st-dim">Loading…</div>
-        </details>
+      </details>
+
+      <details class="st-card st-sec st-flags" id="cardHeavySupport">
+        <summary id="heavySupportSummary"><h2>⛑️ <span data-hs="title">Heavy support</span> <span id="heavySupportCount" class="st-count">…</span></h2></summary>
+        <p class="st-note" data-hs="note">Play style: players who spend most of their time healing, reviving, resupplying and repairing, and the regular partner they support. Private to this page.</p>
+        <details class="st-info"><summary data-hs="how">ⓘ How it works</summary><div class="st-rule" id="heavySupportRule"></div></details>
+        <div id="heavySupportFilters" style="display:flex;flex-wrap:wrap;gap:8px;margin:6px 0;">
+          <label><span data-hs="fLabel">Label</span> <select id="hsLabel"><option value="all" data-hs="all">all</option><option value="pocket">⛑️🎯 pocket duo</option><option value="steady">👥 steady squad</option><option value="general">➕ general medic</option></select></label>
+          <label><span data-hs="fServer">Server</span> <select id="hsWorld"><option value="all" data-hs="all">all</option></select></label>
+          <label><span data-hs="fName">Name</span> <input id="hsName" type="search" placeholder="any player in a pair" autocomplete="off" /></label>
+          <label>🌐 <span data-hs="fLang">Language</span> <select id="hsLang"></select></label>
+        </div>
+        <div id="heavySupportTop" style="display:flex;flex-wrap:wrap;gap:6px;margin:6px 0;"></div>
+        <div id="heavySupport" class="st-dim">Loading…</div>
       </details>
 
       <details class="st-card st-sec st-flags" id="cardStalker">
@@ -268,13 +303,6 @@
         <p class="st-note">Huge K/D, but slow and almost no headshots: usually hiding in a vehicle. Kept out of 🚩; nothing to do unless something looks off.</p>
         <details class="st-info"><summary>ⓘ How it works</summary><div id="stalkerRule" class="st-rule"></div></details>
         <div id="stalker" class="st-dim">Loading…</div>
-      </details>
-
-      <details class="st-card st-sec st-flags" id="cardAlts">
-        <summary><h2>👥 Likely alts <span id="altsCount" class="st-count">…</span></h2></summary>
-        <p class="st-note">Characters that are probably played by one person. “Likely”, never proof: read the reasons. Nothing changes on the site.</p>
-        <details class="st-info"><summary>ⓘ How it works</summary><div id="altsRule" class="st-rule"></div></details>
-        <div id="alts" class="st-dim">Loading…</div>
       </details>
 
       <details class="st-card st-sec st-flags st-sess" id="cardSession">
@@ -363,6 +391,8 @@
       document.addEventListener("toggle", function (ev) {
         var d = ev.target;
         if (!d || !d.id || !d.classList || !(d.classList.contains("st-sec") || d.classList.contains("st-sub-sec"))) return;
+        // Opened / closed by the 🔎 find box: not the user's choice, don't remember it.
+        if (d.dataset.findToggle) { delete d.dataset.findToggle; return; }
         // Store only choices that differ from the default, so the initial toggles are harmless
         // and future default changes still apply to sections the user never touched.
         if (d.open === (d.getAttribute("data-default") === "open")) delete saved[d.id];
@@ -999,7 +1029,9 @@
       $("fxCount").textContent = String(flaggedN);
       $("fxCount").classList.toggle("hot", flaggedN > 0);
       const pct = (v) => (typeof v === "number" ? Math.round(v * 100) + "%" : "—");
-      const rows = players.slice().sort((a, b) => radarUp(b.slug) - radarUp(a.slug)).map((p) => {
+      // 2026-11-02: 🚩 / 📉 / any finding first; sessions with nothing odd fold away (they were ~90% of a 20,000 px table).
+      const hasFinding = (p) => !!(p.flagged || p.odd || (p.worst && ((p.worst.reasons || []).length || (p.worst.oddities || []).length)));
+      const rowOf = (p) => {
         const w = p.worst;
         const tag = p.flagged ? '<span class="st-tag hot">🚩</span> ' : p.odd ? '<span class="st-tag">📉 review</span> ' : "";
         const who = esc(p.name) + (p.confirmedCheater ? " " + oorTag() : "") + radarCell(p.slug);
@@ -1015,11 +1047,16 @@
           "<td>" + fmt(w.activeMin, 1) + " min active, " + fmt(w.activeKpm, 1) + " KPM<br>peak: " + w.max1s + " in 1 s · " + w.max5s + " in 5 s · " + w.peak60s + " in 1 min · " + w.max5min + " in 5 min" +
           '<br><span class="st-dim">0 s gaps ' + pct(w.zeroGapShare) + ", median gap " + (w.medianGap ?? "—") + " s, headshots " + pct(w.hs) + "</span></td>" +
           "<td>" + weap + "</td><td>" + vic + '<br><span class="st-dim">' + esc(acct) + "</span></td><td>" + notes + "</td></tr>";
-      }).join("");
+      };
+      const byRadar = (a, b) => radarUp(b.slug) - radarUp(a.slug) || (b.flagged ? 1 : 0) - (a.flagged ? 1 : 0);
+      const hot = players.filter(hasFinding).sort(byRadar), calm = players.filter((p) => !hasFinding(p)).sort(byRadar);
+      const fxHead = '<div class="st-scroll"><table class="st-table"><tr><th>Player / session</th><th class="st-num">Kills / deaths</th><th>Kill rate</th><th>Top weapons</th><th>Victims / account</th><th>Findings</th></tr>';
+      const rows = (hot.length ? fxHead + hot.map(rowOf).join("") + "</table></div>" : "") +
+        (calm.length ? '<details><summary>✅ ' + calm.length + " with nothing odd</summary>" + fxHead + calm.map(rowOf).join("") + "</table></div></details>" : "");
       $("fx").innerHTML = '<div class="st-dim">' + (f.analyzed || 0) + " analyzed · " + flaggedN + " 🚩 · " + players.filter((p) => p.odd).length + " 📉 · " +
         (swept ? swept + " 🙈 hidden away · " : "") +
         ((f.candidates || []).length) + " waiting · checked " + esc(f.checkedAt ? ago(Date.parse(f.checkedAt)) : "—") + "</div>" +
-        (rows ? '<div class="st-scroll"><table class="st-table"><tr><th>Player / session</th><th class="st-num">Kills / deaths</th><th>Kill rate</th><th>Top weapons</th><th>Victims / account</th><th>Findings</th></tr>' + rows + "</table></div>" : "");
+        rows;
     }
 
     function tagTbl(a) {
@@ -1361,7 +1398,8 @@
       const nw = b.newPlayers || [];
       const nwHtml = b.newH != null
         ? '<details style="margin-top:8px;"><summary>🐣 New players by play time (under ' + b.newH + " h = p" + Math.round((b.newQ || 0) * 100) + ", any Diff): " + nw.length + " · 🐣 shown in total: " + (b.marked != null ? b.marked : "?") + "</summary>" +
-          '<div class="st-dim">' + nw.map((i) => nameCell(i) + " " + i.h + " h" + (i.diffRaw != null ? " (Diff " + sgn(i.diffRaw) + (i.diff !== i.diffRaw ? " → " + sgn(i.diff) : "") + ")" : "")).join(" · ") + "</div></details>"
+          '<div class="st-scroll"><table class="st-table"><tr><th>Player</th><th class="st-num">Hours</th><th class="st-num">Diff</th></tr>' +
+          nw.map((i) => "<tr><td>" + nameCell(i) + '</td><td class="st-num">' + i.h + '</td><td class="st-num">' + (i.diffRaw != null ? sgn(i.diffRaw) + (i.diff !== i.diffRaw ? " → " + sgn(i.diff) : "") : "—") + "</td></tr>").join("") + "</table></div></details>"
         : "";
       const gh = b.graveHidden || [];
       const ghHtml = gh.length
@@ -1685,6 +1723,105 @@
     refreshGuard();
     setInterval(() => { refreshFlags(); refreshGuard(); }, POLL_MS);
   </script>
+<script>
+/* 2026-11-02 cleanup. Long tables: first ROWS rows, then "Show all N" (remembered until reload, survives the
+   30 s re-render). 🔎 find box: hides every row without the text, hides sections with no hit, opens the ones
+   with hits (not remembered as the user's choice), and closes them again when the box is cleared. */
+(function () {
+  var ROWS = 25;
+  var main = document.querySelector("main.st-wrap");
+  var input = document.getElementById("stFind");
+  var info = document.getElementById("stFindInfo");
+  if (!main || !input) return;
+  var expanded = {}; // table key → true
+  var autoOpened = [];
+  var query = "";
+  function bodyRows(t) {
+    return Array.prototype.filter.call(t.rows, function (r) { return r.cells.length && r.cells[0].tagName === "TD"; });
+  }
+  function tableKey(t) {
+    var sec = t.closest("details[id]"), all = sec ? sec.querySelectorAll("table.st-table") : [];
+    return (sec ? sec.id : "page") + ":" + Array.prototype.indexOf.call(all, t);
+  }
+  function cap(t) {
+    var rows = bodyRows(t);
+    var holder = t.parentElement && t.parentElement.classList.contains("st-scroll") ? t.parentElement : t;
+    var btn = holder.nextElementSibling && holder.nextElementSibling.classList.contains("st-more") ? holder.nextElementSibling : null;
+    var key = tableKey(t), open = !!expanded[key] || rows.length <= ROWS + 5;
+    rows.forEach(function (r, i) { r.classList.toggle("st-cut", !open && i >= ROWS); });
+    if (open) { if (btn) btn.remove(); return; }
+    if (!btn) {
+      btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "st-more";
+      btn.addEventListener("click", function () { expanded[btn.dataset.key] = true; apply(); });
+      holder.after(btn);
+    }
+    btn.dataset.key = key;
+    btn.textContent = "Show all " + rows.length.toLocaleString() + " (" + (rows.length - ROWS).toLocaleString() + " more)";
+  }
+  function setOpen(d, open) {
+    if (d.open === open) return;
+    if (d.id) d.dataset.findToggle = "1";
+    d.open = open;
+  }
+  var busy = false;
+  function apply() {
+    busy = true;
+    var tables = main.querySelectorAll("table.st-table");
+    var q = query, hits = 0, lists = 0;
+    main.classList.toggle("st-searching", !!q);
+    main.querySelectorAll(".st-nohit").forEach(function (d) { d.classList.remove("st-nohit"); });
+    Array.prototype.forEach.call(tables, function (t) {
+      var rows = bodyRows(t), n = 0;
+      if (!q) { rows.forEach(function (r) { r.classList.remove("st-nomatch"); }); main.querySelectorAll(".st-nohit-t").forEach(function (h) { h.classList.remove("st-nohit-t"); }); cap(t); return; }
+      rows.forEach(function (r) {
+        r.classList.remove("st-cut");
+        var m = r.textContent.toLowerCase().indexOf(q) >= 0;
+        r.classList.toggle("st-nomatch", !m);
+        if (m) n++;
+      });
+      t.dataset.hits = n;
+      (t.parentElement && t.parentElement.classList.contains("st-scroll") ? t.parentElement : t).classList.toggle("st-nohit-t", !n);
+      hits += n;
+    });
+    if (q) {
+      // A section shows when any table inside it has a hit; open the way down to each hit.
+      main.querySelectorAll("details").forEach(function (d) {
+        if (d.classList.contains("st-info")) return;
+        var n = 0;
+        d.querySelectorAll("table.st-table").forEach(function (t) { n += +t.dataset.hits || 0; });
+        if (!n) { if (d.classList.contains("st-sec") || d.classList.contains("st-sub-sec")) d.classList.add("st-nohit"); return; }
+        if (!d.open && autoOpened.indexOf(d) < 0) autoOpened.push(d);
+        setOpen(d, true);
+      });
+      Array.prototype.forEach.call(tables, function (t) { if (+t.dataset.hits) lists++; });
+      info.textContent = hits ? hits.toLocaleString() + " row" + (hits === 1 ? "" : "s") + " in " + lists + " list" + (lists === 1 ? "" : "s") : "Not in any list";
+    } else {
+      info.textContent = "";
+    }
+    setTimeout(function () { busy = false; }, 0);
+  }
+  var timer = 0;
+  input.addEventListener("input", function () {
+    clearTimeout(timer);
+    timer = setTimeout(function () {
+      var was = query;
+      query = input.value.trim().toLowerCase();
+      if (was && !query) { autoOpened.forEach(function (d) { setOpen(d, false); }); autoOpened = []; }
+      apply();
+    }, 150);
+  });
+  input.addEventListener("keydown", function (e) { if (e.key === "Escape") { input.value = ""; input.dispatchEvent(new Event("input")); } });
+  // Cards re-render on every 30 s refresh: re-apply the cap / filter to the new tables.
+  var pending = 0;
+  new MutationObserver(function () {
+    if (busy || pending) return;
+    pending = requestAnimationFrame(function () { pending = 0; apply(); });
+  }).observe(main, { childList: true, subtree: true });
+  apply();
+})();
+</script>
 <script>
 /* At-a-glance tiles: run state + Honu from data/status.json (plain text only),
    section tiles mirror their section's count badge (and its "hot" state). */
