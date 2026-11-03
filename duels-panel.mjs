@@ -102,8 +102,8 @@ export function mountDuels(section, o = {}) {
   // ☰ Flat list (owner 2026-11-02, t844u): one long list of every kill, no fight rows, nothing folded.
   // Remembered in this browser; only shown for a head-to-head with kills.
   const FLAT_KEY = "duelFlat";
-  let flat = false;
-  try { flat = typeof localStorage !== "undefined" && localStorage.getItem(FLAT_KEY) === "1"; } catch (_) { /* default off */ }
+  let flat = true;
+  try { if (typeof localStorage !== "undefined") flat = localStorage.getItem(FLAT_KEY) !== "0"; } catch (_) { /* default on */ }
   const flatBtn = document.createElement("button");
   flatBtn.type = "button";
   flatBtn.className = "duel-flat";
@@ -469,16 +469,16 @@ export function mountDuels(section, o = {}) {
     flatLabel();
     flatBtn.hidden = false;
     table.classList.toggle("duel-flat-on", flat);
-    colgroup(["num", "time", "killer", "weapon", "cls", "n", "n", "gap"]);
+    colgroup(["num", "killer", "weapon", "cls", "n", "n", "gap", "time"]);
     const shotsTip = tr("duel.shotsTip", "Census does not record the bullets of one kill. This is the killer's lifetime average with that weapon: shots fired per kill (hits per kill).");
     table.querySelector("thead").innerHTML = `<tr><th class="rk-num" scope="col">#</th>` +
-      `<th class="duel-c-time" scope="col">${esc(tr("duel.c.time", "Time"))}</th>` +
       `<th class="duel-c-killer" scope="col">${esc(tr("duel.c.killer", "Kill by"))}</th>` +
       `<th class="duel-c-weapon" scope="col">${esc(tr("kf.colWeapon", "Weapon"))}</th>` +
       `<th class="duel-c-cls" scope="col" title="${esc(tr("duel.c.clsTip", "Killer's class → victim's class."))}">${esc(tr("duel.c.cls", "Classes"))}</th>` +
       `<th scope="col" title="${esc(shotsTip)}">${esc(tr("duel.c.shots", "Shots ≈"))}</th>` +
       `<th scope="col" title="${esc(shotsTip)}">${esc(tr("duel.c.hits", "Hits ≈"))}</th>` +
-      `<th scope="col" title="${esc(tr("duel.c.gapTip", "Time since the previous kill between them in this fight."))}">${esc(tr("duel.c.gap", "Gap"))}</th></tr>`;
+      `<th scope="col" title="${esc(tr("duel.c.gapTip", "Time since the previous kill between them in this fight."))}">${esc(tr("duel.c.gap", "Gap"))}</th>` +
+      `<th class="duel-c-time" scope="col">${esc(tr("duel.c.time", "Time"))}</th></tr>`;
     const oneTip = tr("duel.oneTip", "1v1: {pct}+ of the kills & deaths in that time were between these two.", { pct: `${ONE_V_ONE.focus * 100}%` });
     const open = tr("duel.fightOpen", "Show the fight's kills");
     if (!opened.size && fights.length) opened.add(0);
@@ -503,11 +503,11 @@ export function mountDuels(section, o = {}) {
           ? `<td class="duel-c-time" title="${esc(`${dateTime(e.t)}${where}`)}">${esc(`${dateOnly(e.t)} ${clock(e.t)}`)}</td>`
           : `<td class="duel-c-time" title="${esc(dateTime(e.t))}">${esc(clock(e.t))}</td>`;
         return `<tr class="kf-row ${flat ? "duel-flat-row" : "kf-sub-row"} duel-ev ${e.aKill ? "is-kill" : "is-death"}" data-of="${i}"${flat ? "" : " hidden"}><td class="rk-num">${flat ? "#" : ""}</td>` +
-          timeCell +
           `<td class="duel-c-killer"><span class="kf-mark ${e.aKill ? "kf-kill" : "kf-death"}">${esc(killer)}</span></td>` +
           `<td class="duel-c-weapon" title="${esc(wTxt)}">${e.hs ? `<span class="kf-hs" title="${esc(tr("kf.headshot", "Headshot"))}">🎯</span> ` : ""}${esc(wTxt)}</td>` +
           `<td class="duel-c-cls">${((k, v) => (k || v ? `${clsHtml(k)} → ${clsHtml(v)}` : "–"))(classOf(e.aKill ? e.aL : e.bL), classOf(e.aKill ? e.bL : e.aL))}</td>` +
-          `<td>${pk ? `≈${num1(pk.shots)}` : "–"}</td><td>${pk && pk.hits != null ? `≈${num1(pk.hits)}` : "–"}</td><td>${esc(gap)}</td></tr>`;
+          `<td>${pk ? `≈${num1(pk.shots)}` : "–"}</td><td>${pk && pk.hits != null ? `≈${num1(pk.hits)}` : "–"}</td><td>${esc(gap)}</td>` +
+          timeCell + `</tr>`;
       });
       if (!flat) return head + rows.join("");
       return rows.reverse().map((h) => h.replace('<td class="rk-num">#</td>', `<td class="rk-num">${int(kn--)}</td>`)).join("");

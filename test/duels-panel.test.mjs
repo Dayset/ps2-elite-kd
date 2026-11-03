@@ -209,7 +209,7 @@ describe("🤺 duels panel: crowd kills pin + opponent iVi (owner 2026-11-01)", 
 });
 
 describe("🤺 duels panel: ☰ Flat list (owner 2026-11-02, t844u)", () => {
-  it("flat list drops fight rows, shows every kill with its date, and is remembered", { skip: !chrome && "no Chrome", timeout: 120000 }, async () => {
+  it("flat list is on by default with time last, and the choice is remembered", { skip: !chrome && "no Chrome", timeout: 120000 }, async () => {
     await withPage(async ({ ev, nav }) => {
       await nav("index.html");
       const r = await ev(`(async () => {
@@ -221,34 +221,49 @@ describe("🤺 duels panel: ☰ Flat list (owner 2026-11-02, t844u)", () => {
         const reply = { v: 1, events: [[t, 1, "2", 1, 0, 2, 0, 0, 0], [t - 100, 1, "2", 1, 0, 2, 0, 0, 0], [t - 90000, 1, "2", 1, 0, 2, 0, 0, 0]], rev: 1, lo: t - 90000, hi: t, done: true, fights: 2, kills: 3, pages: 1, blocks: 1 };
         const getJson = async (u) => (u.includes("character/?character_id=") ? { character_list: [
           { character_id: "1", faction_id: "1", w: { world_id: "1" } }, { character_id: "2", faction_id: "3", w: { world_id: "1" } } ] } : { error: "stub" });
-        const mk = () => mountDuels(s, { getJson, baseOf: () => "https://x/get/ps2:v2/", catalog: async () => null, pairApi: async () => reply });
-        const panel = mk();
+        const mk = (sec) => mountDuels(sec, { getJson, baseOf: () => "https://x/get/ps2:v2/", catalog: async () => null, pairApi: async () => reply });
+        const panel = mk(s);
         panel.setPlayers([{ cid: "1", display: "Alice" }, { cid: "2", display: "Bob" }]);
         for (let i = 0; i < 30 && !s.querySelector("tr.duel-ev"); i++) await sleep(100);
         const btn = s.querySelector("button.duel-flat");
         const vis = () => [...s.querySelectorAll(".duel-table tbody tr")].filter((x) => !x.hidden);
-        const before = { heads: s.querySelectorAll("tr.duel-fight").length, shown: vis().length, btnHidden: btn.hidden, pressed: btn.getAttribute("aria-pressed") };
+        const before = { heads: s.querySelectorAll("tr.duel-fight").length, shown: vis().length, btnHidden: btn.hidden, pressed: btn.getAttribute("aria-pressed"), nums: vis().map((x) => x.cells[0].textContent), time: vis()[0].cells[7].textContent, head: [...s.querySelectorAll(".duel-table thead th")].map((x) => x.textContent) };
         btn.click();
         await sleep(200);
-        const after = { heads: s.querySelectorAll("tr.duel-fight").length, shown: vis().length, nums: vis().map((x) => x.cells[0].textContent), time: vis()[0].cells[1].textContent, pressed: btn.getAttribute("aria-pressed"), saved: localStorage.getItem("duelFlat") };
+        const off = { heads: s.querySelectorAll("tr.duel-fight").length, shown: vis().length, pressed: btn.getAttribute("aria-pressed"), saved: localStorage.getItem("duelFlat") };
         btn.click();
         await sleep(200);
-        const back = { heads: s.querySelectorAll("tr.duel-fight").length, saved: localStorage.getItem("duelFlat") };
+        const on = { heads: s.querySelectorAll("tr.duel-fight").length, shown: vis().length, pressed: btn.getAttribute("aria-pressed"), saved: localStorage.getItem("duelFlat") };
+        // An explicit off survives a fresh mount: default-on must not override a stored "0".
+        localStorage.setItem("duelFlat", "0");
+        const s2 = document.createElement("details");
+        s2.setAttribute("open", "");
+        s2.innerHTML = "<summary>Duels</summary><span class=\\"duel-count\\"></span><p class=\\"duel-summary\\" hidden></p><p class=\\"duel-status\\" hidden></p><div class=\\"duel-cmp-wrap\\" hidden><table class=\\"duel-cmp\\"></table></div><div class=\\"duel-scroll\\" hidden><table class=\\"duel-table\\"><thead></thead><tbody></tbody></table></div><button type=\\"button\\" class=\\"duel-more\\" hidden>Read further back</button>";
+        document.body.appendChild(s2);
+        const panel2 = mk(s2);
+        panel2.setPlayers([{ cid: "1", display: "Alice" }, { cid: "2", display: "Bob" }]);
+        for (let i = 0; i < 30 && !s2.querySelector("tr.duel-ev"); i++) await sleep(100);
+        const btn2 = s2.querySelector("button.duel-flat");
+        const storedOff = { heads: s2.querySelectorAll("tr.duel-fight").length, pressed: btn2.getAttribute("aria-pressed") };
         localStorage.removeItem("duelFlat");
-        return { before, after, back };
+        return { before, off, on, storedOff };
       })()`);
       assert.equal(r.before.btnHidden, false, "button shows for a head-to-head with kills");
-      assert.equal(r.before.pressed, "false");
-      assert.equal(r.before.heads, 2, "folded view has a row per fight");
-      assert.equal(r.before.shown, 4, "folded view: 2 fight rows + the newest fight opened, the older one folded");
-      assert.equal(r.after.heads, 0, "flat list has no fight rows");
-      assert.equal(r.after.shown, 3, "every kill shows");
-      assert.deepEqual(r.after.nums, ["3", "2", "1"], "strictly newest first, numbered n … 1");
-      assert.match(r.after.time, /\d{4}/, "flat rows carry the date (year)");
-      assert.equal(r.after.pressed, "true");
-      assert.equal(r.after.saved, "1", "choice remembered");
-      assert.equal(r.back.heads, 2, "switching back brings the fight rows");
-      assert.equal(r.back.saved, "0");
+      assert.equal(r.before.pressed, "true", "flat is on by default");
+      assert.equal(r.before.heads, 0, "default view has no fight rows");
+      assert.equal(r.before.shown, 3, "every kill shows");
+      assert.deepEqual(r.before.nums, ["3", "2", "1"], "strictly newest first, numbered n … 1");
+      assert.deepEqual(r.before.head, ["#", "Kill by", "Weapon", "Classes", "Shots ≈", "Hits ≈", "Gap", "Time"], "time is the last column");
+      assert.match(r.before.time, /\d{4}/, "flat rows carry the date (year) in the last cell");
+      assert.equal(r.off.heads, 2, "switching off brings the fight rows");
+      assert.equal(r.off.shown, 4, "folded view: 2 fight rows + the newest fight opened, the older one folded");
+      assert.equal(r.off.pressed, "false");
+      assert.equal(r.off.saved, "0", "off remembered");
+      assert.equal(r.on.heads, 0, "switching back on drops the fight rows");
+      assert.equal(r.on.pressed, "true");
+      assert.equal(r.on.saved, "1", "on remembered");
+      assert.equal(r.storedOff.pressed, "false", "a stored off stays off on a fresh mount");
+      assert.equal(r.storedOff.heads, 2, "a stored off renders folded");
     });
   });
 });
