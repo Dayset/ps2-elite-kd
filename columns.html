@@ -78,6 +78,37 @@
     .st-curve text.k { fill: var(--text); font-weight: 600; }
     .st-name-in { font: inherit; color: inherit; background: transparent; border: 1px solid var(--border); border-radius: 0; padding: 0 6px; max-width: 100%; box-sizing: border-box; }
     .st-name-in:focus { outline: none; border-color: var(--accent); }
+    /* 2026-11-02 pass: data first, words second. Example row like the main ✨ Stats table, cards in a grid,
+       each with the example's value + a percentile bar; long text folded under "How it's measured". */
+    .cx-rowh { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+    .cx-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; margin: 8px 0 4px; }
+    .cx-scroll::-webkit-scrollbar { display: none; }
+    .cx-row { border-collapse: collapse; width: 100%; font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+    .cx-row th, .cx-row td { padding: 6px 10px; text-align: center; white-space: nowrap; border-bottom: 1px solid var(--row-border); }
+    .cx-row th { font-weight: 700; font-size: 0.82rem; }
+    .cx-row th a { color: var(--text); text-decoration: none; }
+    .cx-row th a:hover { color: var(--accent); text-decoration: underline; }
+    .cx-row td { font-weight: 600; background: var(--row-alt, transparent); }
+    .cx-note { font-size: 0.82rem; margin: 2px 0 0; }
+    .cx-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: start; margin-bottom: 12px; }
+    .cx-grid > .st-card { margin-bottom: 0; }
+    @media (max-width: 760px) { .cx-grid { grid-template-columns: 1fr; } }
+    .cx-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+    .cx-top h3 { margin: 0; }
+    .cx-val { font-size: 1.35rem; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--accent); }
+    .cx-pct { display: flex; align-items: center; gap: 8px; margin: 6px 0 8px; font-size: 0.78rem; color: var(--dim); }
+    .cx-pct[hidden] { display: none; }
+    .cx-pct b { flex: 0 0 90px; height: 6px; background: var(--row-border); display: block; }
+    .cx-pct i { display: block; height: 100%; background: var(--accent); }
+    .cx-col > p:not(:last-child), .cx-col .st-hl { margin-top: 4px; }
+    .cx-more { margin-top: 8px; font-size: 0.86rem; }
+    .cx-more > summary { cursor: pointer; color: var(--dim); font-size: 0.8rem; list-style: none; }
+    .cx-more > summary::-webkit-details-marker { display: none; }
+    .cx-more > summary::before { content: "▸ "; }
+    .cx-more[open] > summary::before { content: "▾ "; }
+    .cx-more > summary:hover { color: var(--text); }
+    .cx-more[open] > summary { margin-bottom: 6px; }
+    .cx-more p, .cx-more .st-list { color: var(--muted, var(--dim)); }
   </style>
 </head>
 <body class="site-page">
@@ -100,10 +131,19 @@
     </div>
 
     <nav class="st-toc" aria-label="On this page" data-i18n-aria-label="cp.tocAria">
-      <div class="st-toc-group"><a href="#picture" data-i18n="cp.tocIdea">The idea</a> <span class="sep">·</span> <a href="#why-trackers" data-i18n="cp.tocWhy">Why trackers don’t have it</a> <span class="sep">·</span> <a href="#worked-example" data-i18n="cp.tocExample">Example</a> <span class="sep">·</span> <a href="#debug" data-i18n="cp.tocDebug">Debug columns</a></div>
-      <div class="st-toc-group"><a class="st-toc-sec" href="#adjusted">✨ Adjusted</a> <span class="sep">·</span> <a href="#ivi">⚔️ iVi</a> <span class="sep">·</span> <a href="#activity">🏃 Activity</a> <span class="sep">·</span> <a href="#brave">🦁 Brave</a> <span class="sep">·</span> <a href="#resist">🛡️ Resist</a> <span class="sep">·</span> <a href="#const">⚡ Const</a> <span class="sep">·</span> <a href="#matchup-kd">☠️ K/D</a> <span class="sep">·</span> <a href="#infantry" data-i18n="cp.tocInfantry">🪖 Infantry</a> <span class="sep">·</span> <a href="#zerg" data-i18n="cp.tocZerg">🪳 Zerg</a> <span class="sep">·</span> <a href="#pureivi" data-i18n="cp.tocPureivi">🧘‍♂️ Pure iVi</a> <span class="sep">·</span> <a href="#vehicle-cut" data-i18n="cp.tocVehicle">🚜 Vehicle cut</a> <span class="sep">·</span> <a href="#zerg-adj" data-i18n="cp.tocZergAdj">🪳⚔️ Zerg evening-out</a> <span class="sep">·</span> <a href="#padder" data-i18n="cp.tocPadder">💩 Padders</a> <span class="sep">·</span> <a href="#hut" data-i18n="cp.tocHut">What 🛖 means</a></div>
-      <div class="st-toc-group"><a class="st-toc-sec" href="#public" data-i18n="cp.tocPublic">📊 Census / Fisu / Honu</a> <span class="sep">·</span> <a href="#pub-kd">KD</a> <span class="sep">·</span> <a href="#pub-kpm">KPM</a> <span class="sep">·</span> <a href="#pub-own-kpm">own KPM</a> <span class="sep">·</span> <a href="#pub-acc">Acc %</a> <span class="sep">·</span> <a href="#pub-hsr">HSR %</a> <span class="sep">·</span> <a href="#pub-ivi">IvI</a></div>
+      <div class="st-toc-group"><a href="#picture" data-i18n="cp.tocIdea">The idea</a> <span class="sep">·</span> <a class="st-toc-sec" href="#adjusted">✨ Adjusted</a> <span class="sep">·</span> <a href="#marks" data-i18n="cp.marksH">Marks and cuts on ⚔️ iVi</a> <span class="sep">·</span> <a class="st-toc-sec" href="#public" data-i18n="cp.tocPublic">📊 Census / Fisu / Honu</a> <span class="sep">·</span> <a href="#worked-example" data-i18n="cp.tocExample">Example</a> <span class="sep">·</span> <a href="#debug" data-i18n="cp.tocDebug">Debug columns</a></div>
     </nav>
+
+    <!-- 2026-11-02: one player's row, the way the main ✨ Stats table shows it; each header jumps to its card. -->
+    <div class="st-card cx-rowcard">
+      <h2 class="cx-rowh"><span data-i18n="cp.rowH">One row, like on the main page</span> 👉 <input id="exName" class="st-name-in" type="text" value="YuigahamaYui" aria-label="Character name for the example (type any cached name)" data-i18n-aria-label="cp.exNameAria" autocomplete="off" spellcheck="false" enterkeyhint="go" /></h2>
+      <p class="st-dim" id="exMsg" role="status" hidden></p>
+      <div class="cx-scroll"><table class="cx-row">
+        <thead><tr><th><a href="#ivi">⚔️ iVi</a></th><th><a href="#activity">🏃 Activity</a></th><th><a href="#brave">🦁 Brave</a></th><th><a href="#resist">🛡️ Resist</a></th><th><a href="#matchup-kd">☠️ K/D</a></th><th><a href="#const">⚡ Const</a></th><th><a href="#luck" data-i18n="col.luck">🎲 Luck</a></th><th><a href="#assists" data-i18n="col.assists">🤝 Assists</a></th><th><a href="#zerg" data-i18n="col.zerg">🪳 Zerg</a></th><th><a href="#pureivi" data-i18n="col.pureivi">🧘‍♂️ Pure iVi</a></th><th><a href="#infantry" data-i18n="col.infantry">🪖 Infantry</a></th></tr></thead>
+        <tbody><tr><td data-ex="adjs">424</td><td data-ex="act">0.45</td><td data-ex="pvs">1.09</td><td data-ex="rf">0.77</td><td data-ex="rkd">0.804</td><td data-ex="cons">75%</td><td data-ex="luck">—</td><td data-ex="apk">0.53</td><td data-ex="zerg">67</td><td data-ex="pureivi">321</td><td data-ex="inf">54.1%</td></tr></tbody>
+      </table></div>
+      <p class="st-dim cx-note" data-i18n="cp.rowNote">Type any cached name. Tap a column to see what it means.</p>
+    </div>
 
     <div class="st-card">
       <h2 id="picture" data-i18n="cp.picture">The idea in one picture</h2>
@@ -120,34 +160,37 @@
         <text x="235" y="166" text-anchor="middle" data-i18n="cp.howFast">(how fast they kill)</text>
       </svg>
       <p data-i18n="cp.idea1">Most ✨ columns read this line: your K/D against opponents from easy (left) to hard (right). It uses the ~200 players you fight most, not your whole career.</p>
-      <p data-i18n="cp.idea2">Why it matters: a player can show 3.96 lifetime K/D and only 1.15 against the people he really fights.</p>
-    </div>
-
-    <div class="st-card">
-      <h2 id="why-trackers" data-i18n="cp.whyH">Why Honu and Fisu don’t show these</h2>
-      <p data-i18n="cp.whyP">They look up one player. These columns also need the stats of your ~200 opponents, so this site keeps them all cached and refreshed. The 📊 Census / Fisu / Honu style columns are the same numbers the trackers show.</p>
+      <details class="cx-more"><summary id="why-trackers" data-i18n="cp.whyH">Why Honu and Fisu don’t show these</summary>
+        <p data-i18n="cp.idea2">Why it matters: a player can show 3.96 lifetime K/D and only 1.15 against the people he really fights.</p>
+        <p data-i18n="cp.whyP">They look up one player. These columns also need the stats of your ~200 opponents, so this site keeps them all cached and refreshed. The 📊 Census / Fisu / Honu style columns are the same numbers the trackers show.</p>
+      </details>
     </div>
 
     <h2 class="st-section" id="adjusted" data-i18n="cp.secAdjusted">✨ Adjusted (the default columns)</h2>
-
-    <div class="st-card">
-      <h3 id="ivi" data-i18n="cp.iviH">⚔️ iVi — your overall rating</h3>
+    <div class="cx-grid">
+    <div class="st-card cx-col">
+      <div class="cx-top"><h3 id="ivi" data-i18n="cp.iviH">⚔️ iVi — your overall rating</h3><span class="cx-val" data-ex="adjs">424</span></div>
+      <div class="cx-pct" data-ex-pct="adjs"><b><i style="width:59%"></i></b><span>better than 59% of players</span></div>
       <p data-i18n="cp.iviP">How good you are, once your opponents’ strength is counted.</p>
-      <ul class="st-list">
-        <li data-i18n="cp.iviL1">Beating strong players counts more than beating weak ones.</li>
-        <li data-i18n="cp.iviL2">Fast killing adds a bonus; slow, safe play costs a little.</li>
-        <li data-i18n-html="cp.iviL3">Infantry only: vehicle and MAX kills above 10% lower it (<a href="#vehicle-cut">🚜</a>). Confirmed padders lose 10% (<a href="#padder">💩</a>).</li>
-        <li data-i18n="cp.iviL4">PlayStation: the 600 baseline is divided by the PC/PlayStation kill-speed gap (rechecked weekly), so top players compare fairly with PC.</li>
-        <li data-i18n-html="cp.iviL5">PC: evened out for <a href="#zerg-adj">🪳 Zerg</a>: low 🪳 goes up a little, high 🪳 down, the average crowd (🪳 26.8) stays.</li>
-      </ul>
       <ul class="st-hl">
         <li data-i18n-html="cp.iviHigh"><span class="up">High:</span> you beat strong players at a good pace.</li>
         <li data-i18n-html="cp.iviLow"><span class="down">Low:</span> your wins come from weak players, or you play slowly. Below zero shows as 0.</li>
       </ul>
+      <details class="cx-more"><summary data-i18n="cp.more">How it’s measured</summary>
+        <ul class="st-list">
+          <li data-i18n="cp.iviL1">Beating strong players counts more than beating weak ones.</li>
+          <li data-i18n="cp.iviL2">Fast killing adds a bonus; slow, safe play costs a little.</li>
+          <li data-i18n-html="cp.iviL3">Infantry only: vehicle and MAX kills above 10% lower it (<a href="#vehicle-cut">🚜</a>). Confirmed padders lose 10% (<a href="#padder">💩</a>).</li>
+          <li data-i18n="cp.iviL4">PlayStation: the 600 baseline is divided by the PC/PlayStation kill-speed gap (rechecked weekly), so top players compare fairly with PC.</li>
+          <li data-i18n-html="cp.iviL5">PC: evened out for <a href="#zerg-adj">🪳 Zerg</a>: low 🪳 goes up a little, high 🪳 down, the average crowd (🪳 26.8) stays.</li>
+        </ul>
+        <p><a href="#worked-example" data-i18n="cp.tocExample">Example</a> ↓</p>
+      </details>
     </div>
 
-    <div class="st-card">
-      <h3 id="activity" data-i18n="cp.actH">🏃 Activity — winning fights, fast</h3>
+    <div class="st-card cx-col">
+      <div class="cx-top"><h3 id="activity" data-i18n="cp.actH">🏃 Activity — winning fights, fast</h3><span class="cx-val" data-ex="act">0.45</span></div>
+      <div class="cx-pct" data-ex-pct="act"><b><i style="width:64%"></i></b><span>better than 64% of players</span></div>
       <p data-i18n-html="cp.actP">Your <a href="#matchup-kd">☠️ K/D</a> × how fast you kill.</p>
       <ul class="st-hl">
         <li data-i18n-html="cp.actHigh"><span class="up">High:</span> lots of fights won, quickly.</li>
@@ -155,18 +198,22 @@
       </ul>
     </div>
 
-    <div class="st-card">
-      <h3 id="brave" data-i18n="cp.braveH">🦁 Brave — does it hold against strong players?</h3>
+    <div class="st-card cx-col">
+      <div class="cx-top"><h3 id="brave" data-i18n="cp.braveH">🦁 Brave — does it hold against strong players?</h3><span class="cx-val" data-ex="pvs">1.09</span></div>
+      <div class="cx-pct" data-ex-pct="pvs"><b><i style="width:66%"></i></b><span>better than 66% of players</span></div>
       <p data-i18n="cp.braveP">Your 🏃 Activity, checked against the fastest-killing enemies you meet.</p>
       <ul class="st-hl">
         <li data-i18n-html="cp.braveHigh"><span class="up">High:</span> you stay strong when the enemy gets strong.</li>
         <li><span data-i18n-html="cp.braveLow"><span class="down">Low with a high iVi:</span> you pick easy fights and avoid even ones.</span> 🐳</li>
-        <li data-i18n="cp.bravePs">PlayStation: enemy kill speeds and your 🏃 Activity are multiplied by the PC/PlayStation kill-speed gap (rechecked weekly) before 🦁 Brave is worked out, so top players compare fairly with PC.</li>
       </ul>
+      <details class="cx-more"><summary data-i18n="cp.more">How it’s measured</summary>
+        <p data-i18n="cp.bravePs">PlayStation: enemy kill speeds and your 🏃 Activity are multiplied by the PC/PlayStation kill-speed gap (rechecked weekly) before 🦁 Brave is worked out, so top players compare fairly with PC.</p>
+      </details>
     </div>
 
-    <div class="st-card">
-      <h3 id="resist" data-i18n="cp.resH">🛡️ Resist — K/D, weighted by enemy danger</h3>
+    <div class="st-card cx-col">
+      <div class="cx-top"><h3 id="resist" data-i18n="cp.resH">🛡️ Resist — K/D, weighted by enemy danger</h3><span class="cx-val" data-ex="rf">0.77</span></div>
+      <div class="cx-pct" data-ex-pct="rf"><b><i style="width:69%"></i></b><span>better than 69% of players</span></div>
       <p data-i18n-html="cp.resP">Your <a href="#matchup-kd">☠️ K/D</a> × how fast your enemies kill. 1.0 K/D against killers is worth more than 1.0 against beginners. ⚔️ iVi is built from it.</p>
       <ul class="st-hl">
         <li data-i18n-html="cp.resHigh"><span class="up">High:</span> you hold your own against fast killers.</li>
@@ -174,18 +221,9 @@
       </ul>
     </div>
 
-    <div class="st-card">
-      <h3 id="const" data-i18n="cp.constH">⚡ Const — do you hold up at the hard end?</h3>
-      <p data-i18n="cp.constP">Your K/D in the hard third ÷ your K/D in the easy third of the picture above (max 1). Shown as a percentile.</p>
-      <ul class="st-hl">
-        <li data-i18n-html="cp.constHigh"><span class="up">High (line stays flat):</span> you do as well against hard opponents as easy ones.</li>
-        <li data-i18n-html="cp.constLow"><span class="down">Low (line drops):</span> you farm easy opponents and struggle against hard ones.</li>
-      </ul>
-      <p class="st-dim" data-i18n="cp.constNote">Catch: someone equally weak everywhere also scores high, so Const is only a colour hint, never a rating.</p>
-    </div>
-
-    <div class="st-card">
-      <h3 id="matchup-kd" data-i18n="cp.kdH">☠️ K/D — against people you actually fight</h3>
+    <div class="st-card cx-col">
+      <div class="cx-top"><h3 id="matchup-kd" data-i18n="cp.kdH">☠️ K/D — against people you actually fight</h3><span class="cx-val" data-ex="rkd">0.804</span></div>
+      <div class="cx-pct" data-ex-pct="rkd"><b><i style="width:64%"></i></b><span>better than 64% of players</span></div>
       <p data-i18n="cp.kdP">Kills ÷ deaths against your ~200 most-fought players. Not your lifetime K/D. Every ✨ column starts from this.</p>
       <ul class="st-hl">
         <li data-i18n-html="cp.kdHigh"><span class="up">High:</span> you win most of those fights.</li>
@@ -193,37 +231,73 @@
       </ul>
     </div>
 
-    <div class="st-card">
-      <h3 id="infantry" data-i18n="cp.infH">🪖 Infantry — kills made on foot</h3>
-      <p data-i18n="cp.infP">% of your lifetime kills made with infantry weapons. MAX counts as infantry here; vehicles, turrets and roadkills don’t. Shown from 100 kills (“—” until measured). Hover for your MAX and vehicle shares.</p>
-      <p data-i18n="cp.infTractor">🚜 Vehicle: a 🚜 appears next to your name, like 🪦, when you mostly play in vehicles. It works like 🪳, and every line is taken from the data at each build: your infantry share is in the lowest quarter of all ranked players (below about 71.9%) and your Honu XP shows a lot of vehicle repairs or vehicle kills per minute (top quarter of players with 2+ hours of XP detail); or your infantry share is in the lowest 2% (below about 21.7%), even without XP detail. Hover it for the hint; the Infantry number itself does not change. On 🎥 LIVE the 🪖 turns into 🚜 below that infantry cut and fills: almost empty just under the cut, full (and shiny) at half the cut (about 36%) or less. Between the cut and the median (about 85.1%) the 🪖 stays empty; above the median it fills up to 100% infantry. Not the same as the 🚜 vehicle cut on ⚔️ iVi or the 🔀🚜 Diff reduction: this mark changes no number.</p>
+    <div class="st-card cx-col">
+      <div class="cx-top"><h3 id="const" data-i18n="cp.constH">⚡ Const — do you hold up at the hard end?</h3><span class="cx-val" data-ex="cons">75%</span></div>
+      <div class="cx-pct" data-ex-pct="cons"><b><i style="width:75%"></i></b><span>better than 75% of players</span></div>
+      <p data-i18n="cp.constP">Your K/D in the hard third ÷ your K/D in the easy third of the picture above (max 1). Shown as a percentile.</p>
+      <ul class="st-hl">
+        <li data-i18n-html="cp.constHigh"><span class="up">High (line stays flat):</span> you do as well against hard opponents as easy ones.</li>
+        <li data-i18n-html="cp.constLow"><span class="down">Low (line drops):</span> you farm easy opponents and struggle against hard ones.</li>
+      </ul>
+      <details class="cx-more"><summary data-i18n="cp.more">How it’s measured</summary>
+        <p data-i18n="cp.constNote">Catch: someone equally weak everywhere also scores high, so Const is only a colour hint, never a rating.</p>
+      </details>
     </div>
 
-    <div class="st-card">
-      <h3 id="zerg" data-i18n="cp.zergH">🪳 Zerg — riding a big group</h3>
+    <div class="st-card cx-col">
+      <div class="cx-top"><h3 id="luck" data-i18n="col.luck">🎲 Luck</h3><span class="cx-val" data-ex="luck">—</span></div>
+      <div class="cx-pct" data-ex-pct="luck" hidden><b><i></i></b><span></span></div>
+      <p data-i18n="tip.luck">Wins more (+) or fewer (−) of the kills against the same opponents than ⚔️ iVi predicts. Not literally luck; vehicle kills are already adjusted.</p>
+    </div>
+
+    <div class="st-card cx-col">
+      <div class="cx-top"><h3 id="assists" data-i18n="col.assists">🤝 Assists</h3><span class="cx-val" data-ex="apk">0.53</span></div>
+      <div class="cx-pct" data-ex-pct="apk"><b><i style="width:67%"></i></b><span>better than 67% of players</span></div>
+      <p data-i18n="tip.apk">Assists per kill in recent Honu sessions: how often you help teammates get kills.</p>
+    </div>
+
+    <div class="st-card cx-col">
+      <div class="cx-top"><h3 id="zerg" data-i18n="cp.zergH">🪳 Zerg — riding a big group</h3><span class="cx-val" data-ex="zerg">67</span></div>
+      <div class="cx-pct" data-ex-pct="zerg"><b><i style="width:32%"></i></b><span>better than 32% of players</span></div>
       <p data-i18n="cp.zergP">The lower of two percentiles: 🎈 Inflation (your K/D lifted by easy fights) and 🤝 Assists (kills shared with teammates). 0–99. Shown from 100 kills in recent Honu sessions (“—” until then).</p>
       <ul class="st-hl">
         <li data-i18n-html="cp.zergHigh"><span class="down">High:</span> easy fights and lots of shared kills, at the same time. Lower is better.</li>
         <li data-i18n-html="cp.zergLow"><span class="up">Low:</span> you earn your K/D in even fights, or you fight on your own.</li>
       </ul>
-      <p class="st-dim" data-i18n="cp.zergNote">Why the lower of the two: a solo farmer of easy fights has high Inflation but few assists, and a team player in hard fights has many assists but no inflation. Neither is a zerg, so both stay low.</p>
-      <p class="st-dim" data-i18n="cp.zergRevive">Crowd check: where we have Honu XP detail (50+ deaths, 2+ h), we count per death the revives, heals, shield repairs and ammo you received, plus engineer Hardlight barrier XP (it only ticks inside a big crowd). Zergs die in a crowd, so the crowd picks them up. Revives or the crowd score in the top quarter = Zerg confirmed (hover says so). Both in the bottom half = a high Zerg is softened step by step. Never raised. No 🪳 Zerg but a top-quarter crowd score = an estimate “~N”, shown only, never sorted or marked. No XP detail = no change.</p>
-      <p class="st-dim" data-i18n-html="cp.zergGap">Apr 1 – May 6, 2026 is skipped for 🤝 Assists and 🪳 Zerg: a game bug recorded no assists then (<a href="https://www.planetside2.com/patch-notes/may-6-hotfix-2026" target="_blank" rel="noopener noreferrer">fixed May 6</a>). Too few kills left = “—”.</p>
+      <details class="cx-more"><summary data-i18n="cp.more">How it’s measured</summary>
+        <p data-i18n="cp.zergNote">Why the lower of the two: a solo farmer of easy fights has high Inflation but few assists, and a team player in hard fights has many assists but no inflation. Neither is a zerg, so both stay low.</p>
+        <p data-i18n="cp.zergRevive">Crowd check: where we have Honu XP detail (50+ deaths, 2+ h), we count per death the revives, heals, shield repairs and ammo you received, plus engineer Hardlight barrier XP (it only ticks inside a big crowd). Zergs die in a crowd, so the crowd picks them up. Revives or the crowd score in the top quarter = Zerg confirmed (hover says so). Both in the bottom half = a high Zerg is softened step by step. Never raised. No 🪳 Zerg but a top-quarter crowd score = an estimate “~N”, shown only, never sorted or marked. No XP detail = no change.</p>
+        <p data-i18n-html="cp.zergGap">Apr 1 – May 6, 2026 is skipped for 🤝 Assists and 🪳 Zerg: a game bug recorded no assists then (<a href="https://www.planetside2.com/patch-notes/may-6-hotfix-2026" target="_blank" rel="noopener noreferrer">fixed May 6</a>). Too few kills left = “—”.</p>
+      </details>
     </div>
 
-
-    <div class="st-card">
-      <h3 id="pureivi" data-i18n="cp.pureiviH">🧘‍♂️ Pure iVi — your true solo ability</h3>
+    <div class="st-card cx-col">
+      <div class="cx-top"><h3 id="pureivi" data-i18n="cp.pureiviH">🧘‍♂️ Pure iVi — your true solo ability</h3><span class="cx-val" data-ex="pureivi">321</span></div>
+      <div class="cx-pct" data-ex-pct="pureivi" hidden><b><i></i></b><span></span></div>
       <p data-i18n="cp.pureiviP">What your rating would be if every fight counted as if you fought alone. A high iVi on a zerg surfer says: you have it only because of crowd efforts. Pure iVi says: this is your true ability as a solo player.</p>
-      <ul class="st-list">
-        <li data-i18n-html="cp.pureiviL1"><b>Formula:</b> adjs above 0 → adjs × (1 − 0.00436 × 🪳); adjs at or below 0 → adjs − 0.00436 × 🪳 × 610.6. Each 🪳 point costs about 0.44% of the rating; 🪳 100 → −43.6%.</li>
-        <li data-i18n-html="cp.pureiviL2"><b>Measured, not guessed:</b> fitted on 915 duel pairs (723 infantry-only). At the same adjs gap, each 🪳 point of gap meant 0.286 fewer kill-gap points against 0.656 per adjs point — 0.286 ÷ 0.656 ≈ 0.00436.</li>
-        <li data-i18n-html="cp.pureiviL3"><b>Example:</b> ahorn, adjs 1225 at 🪳 87 → 1225 × (1 − 0.00436 × 87) ≈ <b>760</b>.</li>
-      </ul>
-      <p class="st-dim" data-i18n="cp.pureiviNote">Not a replacement for ⚔️ iVi, and not the 🪳⚔️ evening-out: that one centers on the average crowd (🪳 26.8) and lifts low-🪳 players up; Pure only ever discounts, never boosts, and has no freshness gate. PC only; no 🪳 score → “—”.</p>
+      <details class="cx-more"><summary data-i18n="cp.more">How it’s measured</summary>
+        <ul class="st-list">
+          <li data-i18n-html="cp.pureiviL1"><b>Formula:</b> adjs above 0 → adjs × (1 − 0.00436 × 🪳); adjs at or below 0 → adjs − 0.00436 × 🪳 × 610.6. Each 🪳 point costs about 0.44% of the rating; 🪳 100 → −43.6%.</li>
+          <li data-i18n-html="cp.pureiviL2"><b>Measured, not guessed:</b> fitted on 915 duel pairs (723 infantry-only). At the same adjs gap, each 🪳 point of gap meant 0.286 fewer kill-gap points against 0.656 per adjs point — 0.286 ÷ 0.656 ≈ 0.00436.</li>
+          <li data-i18n-html="cp.pureiviL3"><b>Example:</b> ahorn, adjs 1225 at 🪳 87 → 1225 × (1 − 0.00436 × 87) ≈ <b>760</b>.</li>
+        </ul>
+        <p data-i18n="cp.pureiviNote">Not a replacement for ⚔️ iVi, and not the 🪳⚔️ evening-out: that one centers on the average crowd (🪳 26.8) and lifts low-🪳 players up; Pure only ever discounts, never boosts, and has no freshness gate. PC only; no 🪳 score → “—”.</p>
+      </details>
     </div>
 
+    <div class="st-card cx-col">
+      <div class="cx-top"><h3 id="infantry" data-i18n="cp.infH">🪖 Infantry — kills made on foot</h3><span class="cx-val" data-ex="inf">54.1%</span></div>
+      <div class="cx-pct" data-ex-pct="inf" hidden><b><i></i></b><span></span></div>
+      <p data-i18n="cp.infP">% of your lifetime kills made with infantry weapons. MAX counts as infantry here; vehicles, turrets and roadkills don’t. Shown from 100 kills (“—” until measured). Hover for your MAX and vehicle shares.</p>
+      <details class="cx-more"><summary data-i18n="cp.more">How it’s measured</summary>
+        <p data-i18n="cp.infTractor">🚜 Vehicle: a 🚜 appears next to your name, like 🪦, when you mostly play in vehicles. It works like 🪳, and every line is taken from the data at each build: your infantry share is in the lowest quarter of all ranked players (below about 71.9%) and your Honu XP shows a lot of vehicle repairs or vehicle kills per minute (top quarter of players with 2+ hours of XP detail); or your infantry share is in the lowest 2% (below about 21.7%), even without XP detail. Hover it for the hint; the Infantry number itself does not change. On 🎥 LIVE the 🪖 turns into 🚜 below that infantry cut and fills: almost empty just under the cut, full (and shiny) at half the cut (about 36%) or less. Between the cut and the median (about 85.1%) the 🪖 stays empty; above the median it fills up to 100% infantry. Not the same as the 🚜 vehicle cut on ⚔️ iVi or the 🔀🚜 Diff reduction: this mark changes no number.</p>
+      </details>
+    </div>
 
+    </div>
+
+    <h2 class="st-section" id="marks" data-i18n="cp.marksH">Marks and cuts on ⚔️ iVi</h2>
+    <div class="cx-grid">
     <div class="st-card">
       <h3 id="vehicle-cut" data-i18n="cp.vcH">🚜 Vehicle + MAX cut on ⚔️ iVi</h3>
       <p data-i18n="cp.vcP">The first 10% of vehicle kills are free; every % above costs 1% of iVi. MAX kills work the same way, separately. The two add up.</p>
@@ -232,19 +306,23 @@
         <li data-i18n-html="cp.vcL2">96% vehicle → <b>−86%</b></li>
         <li data-i18n="cp.vcL3">Pure infantry → no cut</li>
       </ul>
-      <p class="st-dim" data-i18n="cp.vcNote">Why: farming infantry from a tank, aircraft or MAX is easier than on foot. Hover the iVi value to see the cut. The site owner can exempt a player.</p>
+      <details class="cx-more"><summary data-i18n="cp.more">How it’s measured</summary>
+        <p data-i18n="cp.vcNote">Why: farming infantry from a tank, aircraft or MAX is easier than on foot. Hover the iVi value to see the cut. The site owner can exempt a player.</p>
+      </details>
     </div>
 
     <div class="st-card">
       <h3 id="zerg-adj" data-i18n="cp.zaH">🪳⚔️ Zerg evening-out on ⚔️ iVi</h3>
       <p data-i18n="cp.zaP">Fighting inside a big crowd lifts the numbers a little beyond what you win on your own. We measured how much on real fights, take exactly that back, and give it to players who fight with less help.</p>
-      <ul class="st-list">
-        <li data-i18n-html="cp.zaL1"><b>Measured, not guessed:</b> 103,689 pairs of players who fought each other 30+ times. At the same ⚔️ iVi, each 🪳 step means about 0.08% fewer kills against the other player.</li>
-        <li data-i18n-html="cp.zaL2"><b>Both ways:</b> 🪳 below 26.8 (the average crowd, where players without a 🪳 score fight) goes <b>up</b>, above it goes down. At iVi 1,000: 🪳 0 → +23, 🪳 50 → −20, 🪳 99 → −62.</li>
-        <li data-i18n-html="cp.zaL3"><b>Checked on players it never saw:</b> fitted on half the players and tested on the other half, the 🪳 bias in their fights disappeared and fight predictions got slightly better.</li>
-        <li data-i18n="cp.zaL4">Same weight in every tier; most players move by 1% or less. No 🪳 score or PlayStation → unchanged. Vehicles are not counted twice: the 🚜 cut already handles them. Away for 60+ days (no recent sessions) → unchanged until a refresh brings fresh data.</li>
-      </ul>
-      <p class="st-dim" data-i18n-html="cp.zaNote">Research and numbers: <a href="https://github.com/Dayset/ps2-elite-kd/blob/main/docs/zerg-adjustment.md">docs/zerg-adjustment.md</a> · discussion: <a href="https://github.com/Dayset/ps2-elite-kd/issues/84">issue #84</a>. Hover ⚔️ iVi to see your before → after.</p>
+      <details class="cx-more"><summary data-i18n="cp.more">How it’s measured</summary>
+        <ul class="st-list">
+          <li data-i18n-html="cp.zaL1"><b>Measured, not guessed:</b> 103,689 pairs of players who fought each other 30+ times. At the same ⚔️ iVi, each 🪳 step means about 0.08% fewer kills against the other player.</li>
+          <li data-i18n-html="cp.zaL2"><b>Both ways:</b> 🪳 below 26.8 (the average crowd, where players without a 🪳 score fight) goes <b>up</b>, above it goes down. At iVi 1,000: 🪳 0 → +23, 🪳 50 → −20, 🪳 99 → −62.</li>
+          <li data-i18n-html="cp.zaL3"><b>Checked on players it never saw:</b> fitted on half the players and tested on the other half, the 🪳 bias in their fights disappeared and fight predictions got slightly better.</li>
+          <li data-i18n="cp.zaL4">Same weight in every tier; most players move by 1% or less. No 🪳 score or PlayStation → unchanged. Vehicles are not counted twice: the 🚜 cut already handles them. Away for 60+ days (no recent sessions) → unchanged until a refresh brings fresh data.</li>
+        </ul>
+        <p class="st-dim" data-i18n-html="cp.zaNote">Research and numbers: <a href="https://github.com/Dayset/ps2-elite-kd/blob/main/docs/zerg-adjustment.md">docs/zerg-adjustment.md</a> · discussion: <a href="https://github.com/Dayset/ps2-elite-kd/issues/84">issue #84</a>. Hover ⚔️ iVi to see your before → after.</p>
+      </details>
     </div>
 
     <div class="st-card">
@@ -254,8 +332,12 @@
 
     <div class="st-card">
       <h3 id="hut" data-i18n="cp.hutHead">What 🛖 / ⛑️ means</h3>
-      <p data-i18n="cp.hutLong">🛖 Spawn Room Warrior: rarely dies, plays at a slow pace and aims poorly, yet ⚔️ iVi beats IvI by a lot. That positive 🔀 Diff likely comes from safe positions, so it is reduced. The check gets stricter the higher the ⚔️ iVi and the longer the play time: newer and weaker players are judged gently, and players who die often are never touched.</p>
-      <p data-i18n="cp.hsLong">⛑️ Squad support: the same pattern as 🛖 (rarely dies, a high ⚔️ iVi for the pace and aim), from a player who mostly heals, revives, resupplies or repairs their squad. Safe play, but outside the spawn room. The 🔀 Diff is lowered the same way.</p>
+      <p data-i18n="cp.diffHut">🛖 next to a name: rarely dies, slow pace, low accuracy. That player's positive Diff is reduced, because it likely comes from safe positions.</p>
+      <details class="cx-more"><summary data-i18n="cp.more">How it’s measured</summary>
+        <p data-i18n="cp.hutLong">🛖 Spawn Room Warrior: rarely dies, plays at a slow pace and aims poorly, yet ⚔️ iVi beats IvI by a lot. That positive 🔀 Diff likely comes from safe positions, so it is reduced. The check gets stricter the higher the ⚔️ iVi and the longer the play time: newer and weaker players are judged gently, and players who die often are never touched.</p>
+        <p data-i18n="cp.hsLong">⛑️ Squad support: the same pattern as 🛖 (rarely dies, a high ⚔️ iVi for the pace and aim), from a player who mostly heals, revives, resupplies or repairs their squad. Safe play, but outside the spawn room. The 🔀 Diff is lowered the same way.</p>
+      </details>
+    </div>
     </div>
 
     <div class="st-sec-head">
@@ -274,9 +356,7 @@
       </dl>
     </div>
 
-    <h2 class="st-section" id="worked-example"><span data-i18n="cp.exTitle">Example:</span> 👉 <input id="exName" class="st-name-in" type="text" value="YuigahamaYui" aria-label="Character name for the example (type any cached name)" data-i18n-aria-label="cp.exNameAria" autocomplete="off" spellcheck="false" enterkeyhint="go" /></h2>
-    <p class="st-dim" id="exMsg" role="status" hidden></p>
-
+    <h2 class="st-section" id="worked-example"><span data-i18n="cp.exTitle">Example:</span> 👉 <span data-ex-name>YuigahamaYui</span></h2>
     <div class="st-card" id="exCard">
       <p><b>What trackers show:</b> <span class="st-num">KD 1.71 · IvI 217</span>, which looks below average.</p>
       <p><b>What the site sees:</b></p>
@@ -327,7 +407,7 @@
   </main>
   <button id="toTop" class="st-totop" aria-label="Back to top" title="Back to top" data-i18n-aria-label="cp.top" data-i18n-title="cp.top">↑</button>
   <script type="module" src="i18n.mjs"></script>
-  <script type="module" src="columns-example.mjs?v=20261101-opsrv1"></script>
+  <script type="module" src="columns-example.mjs?v=20261102-cx1"></script>
   <script>
     // TOC jump into the collapsed debug section opens it first.
     document.querySelectorAll('.st-toc a[href^="#"]').forEach(function (a) {

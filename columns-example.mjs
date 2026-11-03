@@ -17,6 +17,8 @@ import { slugKey, bareName } from "./rank-row.mjs?v=20261101-opsrv1";
 import { PADDER_PENALTY_REF } from "./padding.mjs?v=20261023-short1";
 import { traitPools, zergScore } from "./trait-scores.mjs?v=20261027-z79";
 import { zergChargedAdjs, ZERG_CHARGE, zergFresh } from "./zerg-charge.mjs?v=20261029-zadj2";
+import { pureIvI } from "./pure-ivi.mjs?v=20261029-purevis1";
+import { loadLuckData, playerLuck, luckCellHtml } from "./luck-col.mjs?v=20261102-luck5";
 
 export const DEMO_NAME = "YuigahamaYui";
 
@@ -47,6 +49,36 @@ export function rowZerg(payload, row) {
   const col = (id) => { const i = payload.cols.indexOf(id); return i >= 0 ? payload.rows.map((r) => r[i]) : []; };
   const z = zergScore(traitPools({ inflation: col("inflation"), apk: col("apk") }), row.inflation, row.apk, row.rvp, row.crp);
   return z ? z.score : null;
+}
+
+/**
+ * The example player's row, the way the main ✨ Stats table shows it (2026-11-02 columns page pass):
+ * one entry per column with the cell text and "better than p% of ranked players" (lower-is-better
+ * columns are turned round, so a higher p is always better). 🎲 Luck is filled later from its own file.
+ */
+export function rowCells(payload, row) {
+  if (!payload || !row) return [];
+  const pct = (col, v, low = false) => {
+    const pool = col === "pureivi" ? null : ranksPool(payload, col);
+    const p = pool && fin(v) ? percentileOf(pool, v) : null;
+    return p == null ? null : low ? 99 - p : p;
+  };
+  const zerg = rowZerg(payload, row);
+  const pure = pureIvI(fin(row.adjs0) ? row.adjs0 : row.adjs, zerg);
+  const consP = pct("cons", row.cons);
+  return [
+    { id: "adjs", text: fin(row.adjs) ? String(Math.max(0, Math.round(row.adjs))) : "—", pct: pct("adjs", row.adjs) },
+    { id: "act", text: f(row.act), pct: pct("act", row.act) },
+    { id: "pvs", text: f(row.pvs), pct: pct("pvs", row.pvs) },
+    { id: "rf", text: f(row.rf), pct: pct("rf", row.rf) },
+    { id: "rkd", text: f(row.rkd, 3), pct: pct("rkd", row.rkd) },
+    { id: "cons", text: consP == null ? "—" : consP + "%", pct: consP },
+    { id: "luck", text: "—", pct: null },
+    { id: "apk", text: f(row.apk), pct: pct("apk", row.apk) },
+    { id: "zerg", text: zerg == null ? "—" : String(Math.round(zerg)), pct: zerg == null ? null : 99 - Math.round(zerg) },
+    { id: "pureivi", text: pure == null ? "—" : String(Math.round(pure)), pct: null },
+    { id: "inf", text: fin(row.inf) ? row.inf.toFixed(1) + "%" : "—", pct: null }, // a share, not better or worse
+  ];
 }
 
 /** Every number the worked example shows, from one raw player file (+ population pools, + the row's 🪳 on PC). */
@@ -169,6 +201,27 @@ if (typeof document !== "undefined") {
     function paint(x) {
       $("exCard").innerHTML = exampleCard(x);
     }
+    // Example row (main-table look) + the value on every column card.
+    function paintRow(payload, row) {
+      const cells = rowCells(payload, row);
+      const better = (p) => tr("cp.better", "better than {p}% of players", { p });
+      for (const c of cells) {
+        document.querySelectorAll(`[data-ex="${c.id}"]`).forEach((el) => { el.textContent = c.text; });
+        document.querySelectorAll(`[data-ex-pct="${c.id}"]`).forEach((el) => {
+          el.hidden = c.pct == null;
+          if (c.pct == null) return;
+          const bar = el.querySelector("i"), lab = el.querySelector("span");
+          if (bar) bar.style.width = Math.max(2, c.pct) + "%";
+          if (lab) lab.textContent = better(c.pct);
+        });
+      }
+      document.querySelectorAll("[data-ex-name]").forEach((el) => { el.textContent = row.name; });
+      loadLuckData("data/").then((d) => {
+        if (!d) return;
+        const l = playerLuck(d, row.slug);
+        document.querySelectorAll('[data-ex="luck"]').forEach((el) => { el.innerHTML = luckCellHtml(l, d, esc); });
+      }).catch(() => {});
+    }
     async function show(name) {
       const my = ++seq;
       const typed = String(name || "").trim();
@@ -188,6 +241,7 @@ if (typeof document !== "undefined") {
       if (fin(row.adjs) && Math.abs(row.adjs - x.adjs) > 0.5) console.warn("columns example: ranks.json vs file iVi differ", row.adjs, x.adjs);
       say("");
       paint(x);
+      paintRow(payload, row);
     }
     let t = 0;
     input.addEventListener("input", () => { fit(); clearTimeout(t); t = setTimeout(() => show(input.value), 400); });
