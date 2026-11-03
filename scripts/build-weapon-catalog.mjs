@@ -80,6 +80,83 @@ const sorted = Object.fromEntries(Object.entries(items).sort((a, b) => +a[0] - +
 writeFileSync(join(OUT, "catalog.json"), JSON.stringify({ savedAt: new Date().toISOString(), items: sorted }) + "\n");
 console.log(`catalog: ${n} weapons, ${Object.keys(cats).length} categories`);
 
+// ---- fire profiles (issue #94) -------------------------------------------
+// Bulk-join the six Census collections locally (one query per weapon would be
+// ~400 calls; paged bulk fetches are ~20). Primary fire mode = fire_mode.type
+// "primary", first by fire_mode_index; reload/damage/pellets from fire_mode,
+// refire + head bonus from fire_mode_2 on the same fire_mode_id, mag =
+// weapon_ammo_slot slot 0 clip_size. Mode from description.en (Pump -> semi,
+// documented approximation; unknown -> the fire_mode_2 automatic flag).
+// Only INF_CATS items are written; the rest is logged. Kept in sync with
+// scripts/build-replay.mjs INF_CATS.
+const INF_CATS = new Set(['Pistol', 'LMG', 'Assault Rifle', 'SMG', 'Carbine', 'Sniper Rifle', 'Scout Rifle', 'Shotgun', 'Heavy Weapon', 'Battle Rifle', 'Crossbow', 'Infantry Weapons', 'Hybrid Rifle']);
+async function paged(coll, show) {
+  const out = [];
+  for (let start = 0; ; start += PAGE) {
+    const j = await get(`${base}${coll}?c:start=${start}&c:limit=${PAGE}&c:show=${show}`);
+    const list = (j && j[`${coll}_list`]) || [];
+    out.push(...list);
+    if (list.length < PAGE) break;
+    await sleep(300);
+  }
+  return out;
+}
+const weaponOf = new Map((await paged('item_to_weapon', 'item_id,weapon_id')).map((r) => [r.item_id, r.weapon_id]));
+const groupsOf = new Map();
+for (const r of await paged('weapon_to_fire_group', 'weapon_id,fire_group_id')) {
+  if (!groupsOf.has(r.weapon_id)) groupsOf.set(r.weapon_id, []);
+  groupsOf.get(r.weapon_id).push(r.fire_group_id);
+}
+const modesOf = new Map();
+for (const r of await paged('fire_group_to_fire_mode', 'fire_group_id,fire_mode_id,fire_mode_index')) {
+  if (!modesOf.has(r.fire_group_id)) modesOf.set(r.fire_group_id, []);
+  modesOf.get(r.fire_group_id).push({ id: r.fire_mode_id, idx: +r.fire_mode_index || 0 });
+}
+const fmById = new Map((await paged('fire_mode', 'fire_mode_id,type,description.en,reload_time_ms,pellets_per_shot,damage_max,damage_min,damage_max_range,damage_min_range')).map((r) => [r.fire_mode_id, r]));
+const fm2ById = new Map((await paged('fire_mode_2', 'fire_mode_id,fire_refire_ms,damage_head_multiplier,automatic,max_damage,min_damage,max_damage_range,min_damage_range,fire_pellets_per_shot,reload_time_ms')).map((r) => [r.fire_mode_id, r]));
+const magOf = new Map();
+for (const r of await paged('weapon_ammo_slot', 'weapon_id,weapon_slot_index,clip_size')) {
+  if (r.weapon_slot_index === '0') magOf.set(r.weapon_id, +r.clip_size);
+}
+const modeOf = (en, auto) => {
+  if (!en) return auto === '1' ? 'auto' : 'semi';
+  if (/burst/i.test(en)) return 'burst';
+  if (/bolt/i.test(en)) return 'bolt';
+  if (/semi/i.test(en) || /pump/i.test(en)) return 'semi';
+  if (/auto/i.test(en)) return 'auto';
+  return auto === '1' ? 'auto' : 'semi';
+};
+const profiles = {}, uncovered = [];
+for (const [id, e] of Object.entries(items)) {
+  if (!INF_CATS.has(e[1])) continue;
+  const w = weaponOf.get(id), groups = w ? groupsOf.get(w) || [] : [];
+  let mode = null;
+  for (const g of groups) {
+    const ms = (modesOf.get(g) || []).map((x) => ({ m: fmById.get(x.id), idx: x.idx })).filter((x) => x.m)
+      .sort((a, b) => a.idx - b.idx).map((x) => x.m);
+    mode = ms.find((m) => m.type === 'primary') || ms[0] || null;
+    if (mode) break;
+  }
+  const f2 = mode ? fm2ById.get(mode.fire_mode_id) : null;
+  const refire = f2 ? +f2.fire_refire_ms : 0, mag = w ? magOf.get(w) : undefined;
+  // damage usually lives on fire_mode; 26 weapons (Jackhammer, Tomoe, Thumper,
+  // Soakers, ...) carry it only on fire_mode_2, with min/range 0 = falloff not
+  // recorded -> flat max damage. Pellets/reload fall back the same way.
+  const dmgMax = mode?.damage_max ?? f2?.max_damage;
+  let dmgMin = mode?.damage_min ?? f2?.min_damage;
+  if (dmgMax != null && !+dmgMin) dmgMin = dmgMax;
+  const rangeMax = mode?.damage_max_range ?? f2?.max_damage_range ?? 0;
+  const rangeMin = mode?.damage_min_range ?? f2?.min_damage_range ?? 0;
+  const pellets = mode?.pellets_per_shot ?? f2?.fire_pellets_per_shot;
+  const reloadMs = mode?.reload_time_ms ?? f2?.reload_time_ms;
+  if (!mode || !refire || mag == null || dmgMax == null) { uncovered.push(id); continue; }
+  profiles[id] = [Math.round(60000 / refire), mag, +reloadMs, +dmgMax, +dmgMin,
+    +rangeMax, +rangeMin, 1 + (+f2.damage_head_multiplier || 0),
+    +pellets || 1, modeOf(mode.description?.en, f2.automatic)];
+}
+writeFileSync(join(OUT, "profiles.json"), JSON.stringify({ savedAt: new Date().toISOString(), profiles }) + "\n");
+console.log(`::notice::weapon profiles: ${Object.keys(profiles).length} infantry, ${uncovered.length} uncovered: ${uncovered.join(',') || 'none'}`);
+
 let hasCwebp = true;
 try { execFileSync("cwebp", ["-version"], { stdio: "ignore" }); } catch { hasCwebp = false; }
 if (!hasCwebp) {

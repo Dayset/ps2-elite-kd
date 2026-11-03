@@ -7,6 +7,7 @@ import { STATES, FILLERS, PHASES, phaseOf } from './states.js';
 import { shardOf, slugOf } from './shard.mjs';
 import { toDoc } from './doc.mjs?v=20261103-pair1';
 import { pairOf, pairStatus, pairRow, defaultRival, rankedRivals } from './pair.mjs?v=20261103-pair1';
+import { profileOf, shotsPerSec } from './weapons.mjs?v=20261103-weap1';
 import { t as tr, ready as i18nReady, currentLang } from '../i18n.mjs';
 
 const cv = document.getElementById('stage'), ctx = cv.getContext('2d');
@@ -27,8 +28,9 @@ const LBL = (id) => T('st.' + id, STATES[id]?.label ?? id);
 const rawName = (q.get('name') || '').trim().slice(0, 40);
 const slug = slugOf(rawName);
 const getJson = async (u) => { try { const r = await fetch(u); return r.ok ? await r.json() : null; } catch { return null; } };
-const [meta, shard, catalog] = await Promise.all([getJson('../data/replay/meta.json'),
-  slug ? getJson(`../data/replay/${shardOf(slug)}.json`) : null, getJson('../assets/weapons/catalog.json')]);
+const [meta, shard, catalog, profiles] = await Promise.all([getJson('../data/replay/meta.json'),
+  slug ? getJson(`../data/replay/${shardOf(slug)}.json`) : null, getJson('../assets/weapons/catalog.json'),
+  getJson('../assets/weapons/profiles.json')]);
 const doc = meta && shard?.p?.[slug] ? toDoc(shard.p[slug], { meta, catalog, slug }) : null;
 let fast = false;
 document.title = `🎬 ${doc ? doc.name + ' · ' : ''}${T('title', 'Duel replay')}`;
@@ -123,7 +125,8 @@ const st = {
   classes: doc.classes ? ['inf', 'la', 'med', 'eng', 'ha', 'max'].map(k => [k, doc.classes[k] || 0]).filter(c => c[1] > 0) : null,
 };
 if (!fightOk) missing.push(CL('fightStart', '⏱ To fight'));
-const RATE = 10 + 3 * rng();                       // shots/s, normal automatic fire (weapon fire rates are not in the data)
+const mainProfile = doc.main ? profileOf(doc.main.id, doc.main.cat, profiles?.profiles) : null;
+const RATE = mainProfile ? shotsPerSec(mainProfile) : 10 + 3 * rng(); // shots/s: the main's real fire rate when his weapon resolves, else normal automatic fire
 const P = {
   allies: st.zerg == null ? 0 : Math.round(st.zerg / 99 * 6),
   enemyScale: 0.46 + 0.1 * ((st.oppP ?? 50) / 99),
