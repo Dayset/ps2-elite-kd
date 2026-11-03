@@ -537,6 +537,9 @@ header .sub {
   border: 1px solid var(--token-warn-bd);
 }
 
+/* Pending-search indicator: chip look, but it is not a name and not clickable. */
+#pendingSearch { cursor: default; }
+
 /* Name the last Analyze couldn't fetch (misspelled / not real / network) */
 .name-token.failed {
   background: var(--token-fail-bg);

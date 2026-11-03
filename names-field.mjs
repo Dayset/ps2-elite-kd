@@ -8,9 +8,9 @@ import { slugKey, namesEqualIgnoreCase, bareName, parseNames } from "./app-util.
 import { forgetFailures } from "./analyze-run.mjs?v=20261101-bg1";
 import { isPenalizedPadder } from "./padding.mjs?v=20261023-short1";
 import { createOutfitTags, extractOutfitTags, OUTFIT_MAX_NAMES as OUTFIT_MAX } from "./outfit-tags.mjs?v=20261101-osrv1";
-import { extractFactionAliases } from "./faction-rating.mjs?v=20261031-fr1";
+import { extractFactionAliases, FACTION_LABEL } from "./faction-rating.mjs?v=20261031-fr1";
 import { addFactionPlayers } from "./faction-panel.mjs?v=20261031-fr4";
-import { extractServerAliases } from "./server-rating.mjs?v=20261031-sr1";
+import { extractServerAliases, SERVER_LABEL } from "./server-rating.mjs?v=20261031-sr1";
 import { addServerPlayers } from "./server-panel.mjs?v=20261031-sr2";
 import { parsePsKey, censusNsBase } from "./rooms.mjs?v=20261022-ps1";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
@@ -19,6 +19,19 @@ import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
  * $ = app.js state and functions this part uses, as live getters (and setters for state it changes), so app.js
  * stays the one owner: DEFAULT_PLACEHOLDER_NAME, LIMIT_HINT_HTML, canTakeName, outfitRoom, outfitRoster, LIVE_MODE, MAX_NAMES, cacheGet, clearGraphReadyHint, els, failedNames, fetching, findSharedEntry, graphReadyHintTimer, isListFull, isSavedName, lastLoadedNames, limitLockReady, limitNoteFaded, loadRankVals, nameLimit, nameSpan, nameTokens, persistPendingNames, players, poopHtml, rankVals, rankingsSync, renderCacheChips, runAnalyzeFromUi, scheduleGraphSync, setChartIdle, setStatus, tokenLabel, topTierFloorAdjs.
  */
+/**
+ * Labels for the pending-search indicator: what the user is searching while an outfit / faction /
+ * server expansion runs and no names have appeared yet. Outfit → "[TAG]", faction → "NC",
+ * server → "Osprey". Display-only labels: they never become name tokens (see showPendingSearch).
+ */
+export function pendingSearchLabels({ aliases = [], factions = [], servers = [] } = {}) {
+  const out = [];
+  for (const a of aliases) { const t = String(a || "").trim(); if (t) out.push(`[${t.toUpperCase()}]`); }
+  for (const f of factions) { const k = String(f || "").trim().toLowerCase(); if (k) out.push(FACTION_LABEL[k] || k.toUpperCase()); }
+  for (const s of servers) { const k = String(s || "").trim().toLowerCase(); if (k) out.push(SERVER_LABEL[k] || k); }
+  return out;
+}
+
 export function createNamesField($) {
   /** Warn (status line) that the field is full; replaces any "graph is ready" hint. */
   function showLimitHint() {
@@ -106,6 +119,7 @@ export function createNamesField($) {
     if ($.els.namesInput) $.els.namesInput.value = "";
     renderNameTokens();
     $.renderCacheChips();
+    hidePendingSearch();
   }
 
   function getNameFailure(name) {
@@ -152,6 +166,7 @@ export function createNamesField($) {
     if ($.els.namesInput) $.els.namesInput.value = "";
     renderNameTokens();
     $.renderCacheChips();
+    hidePendingSearch();
     if (overflow) showLimitHint();
     return overflow;
   }
@@ -553,6 +568,33 @@ export function createNamesField($) {
     if (!$.fetching && $.els.analyzeBtn) $.els.analyzeBtn.click();
   }
 
+  /* Pending-search indicator (owner 2026-11-02: show the tag before any names appear): while an
+   * outfit / faction / server expansion runs, the names box shows what is being searched
+   * (e.g. "⏳ [H0LY]") in the first chip slot, so the box is never empty-and-silent while a tag
+   * resolves. Display-only: it is a sibling of #nameTokens, never a name token — it enters no
+   * counts, no Analyze list, no URL — and the tag never lands on a player name (2026-10-21
+   * directive: tags stay off names). It hides the moment the expansion settles; the outfit note
+   * carries the outcome (added / unknown / error). */
+  let pendingSearchEl = null;
+  let pendingSearchGen = 0;
+  function showPendingSearch(labels) {
+    if (typeof document === "undefined" || !$.els.namesInput) return;
+    const main = $.els.namesInput.parentElement;
+    if (!main) return;
+    if (!pendingSearchEl) {
+      pendingSearchEl = document.createElement("span");
+      pendingSearchEl.id = "pendingSearch";
+      pendingSearchEl.className = "name-token unfetched";
+      main.insertBefore(pendingSearchEl, $.els.namesInput);
+    }
+    pendingSearchEl.textContent = `⏳ ${labels.join(" ")}`;
+    pendingSearchEl.hidden = false;
+  }
+  function hidePendingSearch(gen) {
+    if (gen !== undefined && gen !== pendingSearchGen) return; // a newer search took over
+    if (pendingSearchEl) pendingSearchEl.hidden = true;
+  }
+
   /** Commit trailing raw input into chips (separator flush or Analyze/Enter). */
   /**
    * Returns { tokens, rejected }: names that didn't fit (10-name cap) stay in the
@@ -576,9 +618,15 @@ export function createNamesField($) {
     const outfits = aliases.length && !$.LIVE_MODE ? outfitPart().expand(aliases).then((r) => { if (r.some((x) => x && x.added)) { sfx("plink"); resetAge(); } return r; }) : null;
     const factions = fa.factions.length && !$.LIVE_MODE ? addFactions(fa.factions) : null;
     const servers = sa.servers.length && !$.LIVE_MODE ? addServers(sa.servers) : null;
+    // Pending-search indicator: show what is being searched until the expansion settles. Only
+    // expansions that actually started count (LIVE_MODE skips all three, so no indicator strands).
+    const pendingLabels = pendingSearchLabels({ aliases: outfits ? aliases : [], factions: factions ? fa.factions : [], servers: servers ? sa.servers : [] });
+    const pendingGen = pendingLabels.length ? ++pendingSearchGen : pendingSearchGen;
+    if (pendingLabels.length) showPendingSearch(pendingLabels);
     // Analyze / Enter wait on `outfits` (analyze.mjs): it covers the faction and server aliases too.
     const all = [outfits, factions, servers].filter(Boolean);
     const pending = all.length > 1 ? Promise.all(all) : all[0] || null;
+    if (pending) pending.then(() => hidePendingSearch(pendingGen), () => hidePendingSearch(pendingGen));
     return { tokens, rejected, outfits: pending, factions, servers };
   }
 

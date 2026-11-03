@@ -279,3 +279,23 @@ test("🛡️ button: index + live markup hidden by default, shown for exactly o
   assert.ok(block.length > 50);
   assert.doesNotMatch(block.replace(/\/\*[\s\S]*?\*\//g, ""), /animation|transition/);
 });
+
+test("pending search: the names box shows the tag before any names appear", () => {
+  const nf = read("names-field.mjs");
+  // Labels: outfit → [TAG], faction → NC, server → Osprey; never a name token.
+  assert.match(nf, /export function pendingSearchLabels/);
+  assert.match(nf, /out\.push\(`\[\$\{t\.toUpperCase\(\)\}\]`\)/);
+  assert.match(nf, /FACTION_LABEL\[k\] \|\| k\.toUpperCase\(\)/);
+  assert.match(nf, /SERVER_LABEL\[k\] \|\| k/);
+  // Wiring: commitFragment shows it for expansions that started, hides on settle.
+  assert.match(nf, /pendingSearchLabels\(\{ aliases: outfits \? aliases : \[\], factions: factions \? fa\.factions : \[\], servers: servers \? sa\.servers : \[\] \}\)/);
+  assert.match(nf, /if \(pendingLabels\.length\) showPendingSearch\(pendingLabels\)/);
+  assert.match(nf, /pending\.then\(\(\) => hidePendingSearch\(pendingGen\), \(\) => hidePendingSearch\(pendingGen\)\)/);
+  // Display-only: a sibling span in the names box (first chip slot), not a token; hidden on field clear.
+  assert.match(nf, /pendingSearchEl\.id = "pendingSearch"/);
+  assert.match(nf, /main\.insertBefore\(pendingSearchEl, \$\.els\.namesInput\)/);
+  assert.match(nf, /pendingSearchEl\.className = "name-token unfetched"/);
+  // Not clickable: cursor rule, and no click handler on the indicator.
+  assert.match(read("styles.css"), /#pendingSearch \{ cursor: default; \}/);
+  assert.doesNotMatch(nf, /pendingSearchEl\.addEventListener/);
+});
