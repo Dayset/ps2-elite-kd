@@ -28,13 +28,28 @@ test("ties: fewer deaths wins; unknown-opponent rows never count", () => {
   assert.deepEqual(rev.prey, ["HunterB", 10, 1], "equal kills: fewer deaths wins; the 999-kill \"0\" row is ignored; Loser has no winning row");
 });
 
-test("floor: a hunter needs 7 kills on the target (bounty value)", () => {
+test("ladder: 7 is the usual bar; a lonely target falls back to 2, never 1", () => {
   const players = [
-    { display: "Six", rows: [{ name: "Prey", kills: 6, deaths: 0 }] },
     { display: "Seven", rows: [{ name: "Prey", kills: 7, deaths: 6 }] },
+    { display: "Six", rows: [{ name: "Solo", kills: 6, deaths: 0 }] },
+    { display: "Four", rows: [{ name: "Mid", kills: 4, deaths: 1 }] },
+    { display: "Two", rows: [{ name: "Pair", kills: 2, deaths: 0 }] },
+    { display: "One", rows: [{ name: "Single", kills: 1, deaths: 0 }] },
+  ];
+  const rev = buildRevTargets(players);
+  assert.deepEqual(rev.prey, ["Seven", 7, 6], "usual bar: a 7+ hunter shows");
+  assert.deepEqual(rev.solo, ["Six", 6, 0], "no 7+ hunter: falls back to 6");
+  assert.deepEqual(rev.mid, ["Four", 4, 1], "ladder middle: 4 counts");
+  assert.deepEqual(rev.pair, ["Two", 2, 0], "ladder bottom: 2 counts");
+  assert.equal(rev.single, undefined, "1 never counts, even when lonely");
+});
+
+test("ladder never replaces a 7+ hunter with a smaller one", () => {
+  const players = [
+    { display: "Seven", rows: [{ name: "Prey", kills: 7, deaths: 6 }] },
+    { display: "Five", rows: [{ name: "Prey", kills: 5, deaths: 0 }] },
   ];
   assert.deepEqual(buildRevTargets(players).prey, ["Seven", 7, 6]);
-  assert.deepEqual(buildRevTargets([{ display: "Six", rows: [{ name: "Solo", kills: 6, deaths: 0 }] }]), {}, "a lone sub-floor hunter leaves no entry");
 });
 
 test("tags and case are ignored on the target side; empty input gives {}", () => {

@@ -17,13 +17,16 @@
 // player's perspective like the nemesis / target lines.
 // No farm or hidden filter: the map must answer "whose target is this player,
 // per the panel's own definition", and the panel applies no such filter either.
-// Floor (owner 2026-11-03): a hunter needs at least 7 kills on the target —
-// 7 is the PlanetSide 2 bounty-kill value, picked between the measured 5
-// (keeps 77% of hunters) and 10 (keeps 50%; 10 is the median, not a small cut).
+// Bar (owner 2026-11-03): 7 is the usual bar — the PlanetSide 2 bounty-kill
+// value. A target with no 7+ hunter falls back down the ladder — 6, then 5,
+// and so on — to the best hunter available. 1 never counts: a single kill is
+// noise. The fallback never replaces a 7+ hunter: gaps are filled from the
+// floor-2 map only where the floor-7 map has no entry.
 export const REV_MIN_KILLS = 7;
+export const REV_FALLBACK_MIN_KILLS = 2;
 const bare = (n) => String(n || "").replace(/^\[[^\]]*\]\s*/, "").trim();
 
-export function buildRevTargets(players) {
+function invert(players, floor) {
   const rev = {};
   for (const p of players || []) {
     const rows = (p && (p.rawRows || p.rows)) || [];
@@ -35,7 +38,7 @@ export function buildRevTargets(players) {
         tgt = { name: String(r.name), kills: k, deaths: d };
       }
     }
-    if (!tgt || tgt.kills < REV_MIN_KILLS) continue;
+    if (!tgt || tgt.kills < floor) continue;
     const key = bare(tgt.name).toLowerCase();
     if (!key) continue;
     const cur = rev[key];
@@ -43,5 +46,12 @@ export function buildRevTargets(players) {
       rev[key] = [p.display ? String(p.display) : "", tgt.kills, tgt.deaths];
     }
   }
+  return rev;
+}
+
+export function buildRevTargets(players) {
+  const rev = invert(players, REV_MIN_KILLS);
+  const fallback = invert(players, REV_FALLBACK_MIN_KILLS);
+  for (const [key, entry] of Object.entries(fallback)) if (!rev[key]) rev[key] = entry;
   return rev;
 }
