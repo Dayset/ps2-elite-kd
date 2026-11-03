@@ -13,6 +13,7 @@ import { shooter, headChance } from './engagement.mjs?v=20261103-hs1';
 import { planDuel } from './duel-plan.mjs?v=20261103-duel2';
 import { hpAt, barFracs, sparkFor, scoreAt, engagementAt, lifeAt as duelLifeAt, phaseState, killcamFor } from './duel-scene.mjs?v=20261103-duel2';
 import { STRIP, coverOf, assignLanes } from './lanes.mjs?v=20261103-strip1';
+import { pickWeighted, drawOpponents } from './crowd.mjs?v=20261103-crowd1';
 import { t as tr, ready as i18nReady, currentLang } from '../i18n.mjs';
 
 const cv = document.getElementById('stage'), ctx = cv.getContext('2d');
@@ -153,6 +154,33 @@ const ALIVE_MEAN = Math.max(4, CYCLE - DOWN_MEAN - 3.2);   // 3.2 s = the death 
 const CLS = Object.fromEntries(Object.entries({ inf: 'Infiltrator', la: 'Light Assault', med: 'Medic', eng: 'Engineer', ha: 'Heavy Assault', max: 'MAX' })
   .map(([k, en]) => [k, T('cls.' + k, en)]));
 
+// ---------------------------------------------------------------- crowd opponents (#103)
+// The 5 enemy slots are real killboard opponents when the killboard has any:
+// a weighted draw by kills+deaths from the first 20 confirmed cross-faction
+// opponents (shard probes, cap 40; getShard is cached, so the pair flow's
+// top-12 probes are free). Each keeps his faction, his main weapon's rate and
+// mode, and his slot for the whole scene — he comes back after a respawn.
+// Fewer than 5 → the rest stay bots; none → the whole crowd stays bots,
+// exactly as before.
+let crowdOpps = [];
+if (!pair) {
+  const pool = [];
+  let probed = 0;
+  for (const c of rankedRivals(doc, aRows)) {
+    if (pool.length >= 20 || probed >= 40) break;
+    const sh = await getShard(c.slug);
+    probed++;
+    const f = sh?.p?.[c.slug]?.f;
+    if (f && f !== doc.faction && rigs[f]) {
+      const e = sh.p[c.slug];
+      const w = e.m && catalog?.items?.[e.m[0]];
+      const prof = profileOf(e.m?.[0], w?.[1], profiles?.profiles);
+      pool.push({ ...c, faction: f, rate: prof ? shotsPerSec(prof) : 9 + 3 * rng(), mode: prof?.mode ?? 'auto' });
+    }
+  }
+  crowdOpps = drawOpponents(pool, 5, rng);
+}
+
 // ---------------------------------------------------------------- cast
 // Strip stage (#105): one front lane (full size, full brightness, 3 slots per
 // side, innermost first) + one back lane (dimmed, ~70% size) for the crowd.
@@ -166,8 +194,12 @@ const allies = laneA.allies.map((p, i) => {
   const a = new Soldier(rigs[F], F, { x: p.x, y: p.y, scale: p.scale, facing: 1, seed: 1.7 + i * 2.3, rate: 9 + 3 * rng(), speed: 90 });
   a.dim = p.dim; a.lane = p.lane; a.slot = p.x; return a; });
 const enemies = laneA.enemies.map((p, i) => {
-  const s = new Soldier(rigs[foes[i % 2]], foes[i % 2], { x: p.x, y: p.y, scale: p.scale, facing: -1, seed: 3.1 + i * 1.9, rate: 9 + 3 * rng(), speed: 170 });
-  s.dim = p.dim; s.lane = p.lane; s.slot = p.x; s.deadAt = -99; s.state = 'dead'; return s;
+  const o = crowdOpps[i];
+  const fac = o ? o.faction : foes[i % 2];
+  const s = new Soldier(rigs[fac], fac, { x: p.x, y: p.y, scale: p.scale, facing: -1, seed: 3.1 + i * 1.9, rate: o?.rate ?? 9 + 3 * rng(), speed: 170, mode: o?.mode ?? 'auto' });
+  s.dim = p.dim; s.lane = p.lane; s.slot = p.x; s.deadAt = -99; s.state = 'dead';
+  if (o) { s.name = o.row.name; s.opp = o; }
+  return s;
 });
 const everyone = [main, ...allies, ...enemies];
 // cover: one basic wall tile per soldier, on the far side from the enemy, 10% transparent, and
@@ -200,6 +232,8 @@ if (pair) {
 // ---------------------------------------------------------------- effects
 let bullets = [], fx = [];
 const stats = { k: 0, d: 0, a: 0, hs: 0, hh: 0, shots: 0, hits: 0, veh: 0, rev: 0, fills: {} };
+const oppKills = {}, oppDeaths = {};   // #103: per-opponent scene kills/deaths, keyed by slug
+const pickStats = { kill: {}, death: {}, mix: {}, first: { kill: {}, death: {}, mix: {} }, swapOk: 0, swapFail: 0 };   // #103: pickTarget outcomes, keyed by slug
 // Headshot rule (#109): a kill is a headshot kill only when the killing shot
 // hits the head. Crowd bursts roll every hit: earlier hits at the per-hit
 // chance from #95's formula, the final shot keeps the segment's pre-rolled
@@ -258,8 +292,8 @@ function land(t, b) {
   if (s === main && life.cls === 'ha') fx.push({ kind: 'shield', s, t0: t, dur: 0.35 });
   if (b.final) {
     s.hs = !!b.hs; s.set('die', t); s.deadAt = t; s.busy = false;
-    if (s === main) { stats.d++; if (!fast && !reduced && !speed1) { if (b.hs) freeze = 2; bullet = { kind: 'death', w0: bullet ? wallT - 0.15 : wallT }; } return; }
-    if (b.from === main) { stats.k++; if (b.hs) stats.hs++; if (b.veh) stats.veh++;
+    if (s === main) { stats.d++; if (b.from.opp) oppDeaths[b.from.opp.slug] = (oppDeaths[b.from.opp.slug] || 0) + 1; if (!fast && !reduced && !speed1) { if (b.hs) freeze = 2; bullet = { kind: 'death', w0: bullet ? wallT - 0.15 : wallT }; } return; }
+    if (b.from === main) { stats.k++; if (s.opp) oppKills[s.opp.slug] = (oppKills[s.opp.slug] || 0) + 1; if (b.hs) stats.hs++; if (b.veh) stats.veh++;
       if (b.headHitsBefore !== undefined) hsKillLog.push({ hs: !!b.hs, headBefore: b.headHitsBefore });
       if (!fast && !reduced && !speed1) { if (b.hs) freeze = 2; bullet = { kind: 'kill', w0: bullet ? wallT - 0.15 : wallT }; }
       pop(main, b.hs ? T('pop.hs', 'headshot +1') : b.veh ? T('pop.veh', 'vehicle kill +1') : '+1', b.hs ? '#ffe066' : '#fff', t); }
@@ -561,34 +595,82 @@ if (duelPlan) {
 
 // ---------------------------------------------------------------- execution (scene clock = real seconds)
 // Lane-0 invariant (#105): every fight/assist/dying target and every killer of
-// the player is on the front lane when the first shot is fired. pickTarget
-// only ever returns a front-lane enemy; if none is usable, a back-lane enemy
-// is MOVED to a dead front soldier's slot first (the ticket allows "moved to
-// (or runs into)"), and the dead soldier inherits the back slot for its
-// respawn. Last resort (all front alive but busy): a busy front enemy —
-// still lane-correct, the double-target corner the old code avoided.
+// the player is on the front lane when the first shot is fired. A back enemy
+// is moved to a front slot first: preferably a dead front soldier's slot
+// (the #105 swap — the dead soldier inherits the back slot for its respawn),
+// else a live non-busy front soldier trades places (he is not a segment's
+// target, so the pop reads the same as the dead swap's, and it keeps #103's
+// pick weights exact instead of falling back to front enemies whenever no
+// front slot is dead or idle). Last resort (all front busy): a busy front enemy — still
+// lane-correct, the double-target corner the old code kept for the same
+// situation.
 const laneViolations = [];
 function moveToFront(e, t) {
-  const dead = enemies.find(x => x.lane === 0 && (x.state === 'die' || x.state === 'dead'));
-  if (!dead) return false;
-  const frontSlot = dead.slot, frontY = dead.y;
-  const dw = dead.cover.wall;
-  dead.slot = e.slot; dead.y = e.y; dead.lane = 1; dead.scale = dead.scale * STRIP.BACK_K; dead.dim = true;
-  dead.cover = makeCover(dead); walls.splice(walls.indexOf(dw), 1, dead.cover.wall);
+  // Prefer a dead front soldier's slot (the #105 swap — the dead soldier
+  // inherits the back slot for its respawn); else ANY non-busy front
+  // soldier trades places. Restricting the live trade to idle soldiers left
+  // a 24% swap-fail rate (marches, pot-shot bursts), and every failed swap
+  // fell back to a front enemy — a systematic front bias in the #103 pick
+  // shares. A traded runner/respawner resolves to his new slot through the
+  // normal run/respawn drivers, a traded shooter keeps firing from the back
+  // lane; busy soldiers (a segment's target, an ally-kill target) are never
+  // traded.
+  const partner = enemies.find(x => x.lane === 0 && (x.state === 'die' || x.state === 'dead'))
+    || enemies.find(x => x.lane === 0 && !x.busy);
+  if (!partner) return false;
+  const frontSlot = partner.slot, frontY = partner.y;
+  const dw = partner.cover.wall;
+  // Teleport first, then rebuild the cover: coverOf bakes the soldier's
+  // current x into peekX/hiddenX, and the peek pass parks idle soldiers at
+  // those — rebuilding before the move stranded soldiers at stale cover
+  // positions (a marching enemy's cover ended up at his march x).
+  partner.slot = e.slot; partner.y = e.y; partner.lane = 1; partner.scale = partner.scale * STRIP.BACK_K; partner.dim = true;
+  partner.x = partner.slot;
+  partner.cover = makeCover(partner); walls.splice(walls.indexOf(dw), 1, partner.cover.wall);
   const ew = e.cover.wall;
   e.slot = frontSlot; e.y = frontY; e.lane = 0; e.scale = e.scale / STRIP.BACK_K; e.dim = false;
+  e.x = e.slot;
   e.cover = makeCover(e); walls.splice(walls.indexOf(ew), 1, e.cover.wall);
-  e.x = e.slot; e.set('idle', t); e.busy = false;
+  e.set('idle', t); e.busy = false;
   return true;
 }
-function pickTarget(t) {
-  const front = enemies.filter(e => e.lane === 0);
-  let r = front.filter(ready); if (r.length) return pick(r);
-  r = front.filter(e => e.state === 'run'); if (r.length) { const e = pick(r); e.x = e.slot; e.set('idle', t); return e; }
-  const back = enemies.filter(e => e.lane === 1 && (e.state === 'idle' || e.state === 'run' || e.state === 'shoot') && !e.busy);
-  if (back.length) { const e = pick(back); if (moveToFront(e, t)) return e; }
-  r = front.filter(e => !e.busy); if (r.length) return pick(r);
-  const e = pick(front); e.x = e.slot; e.set('respawn', t); e.t0 = t - 0.9; e.set('idle', t); return e;
+function pickTarget(t, mode = 'mix') {
+  // #103: the opponent is picked FIRST, by killboard weight over the whole
+  // cast — kills by the row's kills, deaths by the row's deaths, everything
+  // else by kills+deaths. Bots (no opp) keep weight 1. A zero row weighs
+  // zero in its mode: an opponent who never killed you never kills you in
+  // the scene, so the scene shares match the killboard rows instead of a
+  // floor inventing share for him (a floor of 1 gave a 0-death opponent
+  // 12.5% of the deaths). If every weight is zero, pickWeighted returns
+  // null and the pick falls back to uniform. Picking among ready
+  // front enemies instead renormalized the shares by availability (the old
+  // stage order flattened shares toward uniform and starved back enemies:
+  // a 30-min probe had both back opponents at 0 kills). The picked enemy is
+  // then forced front-ready: back enemies move into a dead front slot, dead
+  // and respawning ones revive with the same respawn trick the old fallback
+  // used, running ones snap home. Only when no dead front slot exists does
+  // the pick fall back to a weighted pick among front enemies.
+  const w = (s) => !s.opp ? 1 : mode === 'kill' ? s.opp.kills : mode === 'death' ? s.opp.deaths : s.opp.kills + s.opp.deaths;
+  const wpick = (arr) => pickWeighted(arr, w, rng) ?? pick(arr);
+  const note = (e) => { if (e?.opp) pickStats[mode][e.opp.slug] = (pickStats[mode][e.opp.slug] || 0) + 1; return e; };
+  const forceReady = (e) => {
+    if (e.lane === 1) { if (moveToFront(e, t)) pickStats.swapOk++; else { pickStats.swapFail++; return false; } }
+    if (e.state === 'die' || e.state === 'dead' || e.state === 'respawn') { e.x = e.slot; e.set('respawn', t); e.t0 = t - 0.9; e.set('idle', t); }
+    else if (e.state === 'run') { e.x = e.slot; e.set('idle', t); }
+    return e.lane === 0;
+  };
+  let e = wpick(enemies);
+  if (e?.opp) pickStats.first[mode][e.opp.slug] = (pickStats.first[mode][e.opp.slug] || 0) + 1;
+  if (e && !e.busy && forceReady(e)) return note(e);
+  const free = enemies.filter(x => !x.busy);
+  e = free.length ? wpick(free) : null;
+  if (e && forceReady(e)) return note(e);
+  const front = enemies.filter(x => x.lane === 0);
+  e = wpick(front);
+  if (e && forceReady(e)) return note(e);
+  // last resort (all front busy): a busy front enemy — still lane-correct,
+  // the double-target corner the old code kept for the same situation
+  e = wpick(front) || enemies[0]; e.x = e.slot; e.set('respawn', t); e.t0 = t - 0.9; e.set('idle', t); return note(e);
 }
 function startBurst(t, shooter, target, n, h, final, extra = {}, r = rng) {
   const hits = new Set(); if (final) hits.add(n - 1);
@@ -648,14 +730,14 @@ function enter(s, t) {
   if (s.id === 'respawn') { main.x = main.home; main.downKeep = false; newLife(t, plan.firstDone !== true); plan.firstDone = true; }
   if (s.id === 'fight' || s.id === 'assist' || s.id === 'trading') {
     if (!engaged) arrive(t - 2);
-    const tg = pickTarget(t); if (tg.lane !== 0) laneViolations.push({ seg: s.id, t });
+    const tg = pickTarget(t, s.id === 'fight' ? 'kill' : 'mix'); if (tg.lane !== 0) laneViolations.push({ seg: s.id, t });
     tg.busy = true; s.tg = tg;
     if (s.id === 'fight' && s.veh) s.b = { tank: true, target: tg, fired: 0 };
     else s.b = startBurst(t, main, tg, s.n, s.h, s.id === 'fight', { hs: s.hs });
   }
   if (s.id === 'dying') {
     if (!engaged) arrive(t - 2);
-    const k = pickTarget(t); if (k.lane !== 0) laneViolations.push({ seg: s.id, t });
+    const k = pickTarget(t, 'death'); if (k.lane !== 0) laneViolations.push({ seg: s.id, t });
     k.busy = true; s.k = k;
     s.b = startBurst(t + 0.3, k, main, 14, 5, true); s.b.t0 = t + 0.3; s.b.rate = 12;
     s.back = startBurst(t, main, k, s.n, Math.min(s.n, sround(s.n * st.hpk / st.spk)), false); if (s.veh) s.back = { done: true };
@@ -986,6 +1068,14 @@ function render(t) {
     if (s === main && alive(main)) { ctx.save(); ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(s.x, s.y + 4, 70, 11, 0, 0, 7); ctx.stroke(); ctx.restore(); }
     s.draw(ctx, t); drawBullets(layer[i]);
     if (duelPlan && (s === main || s === rival)) drawDuelistOverhead(s, t);
+    // crowd opponents (#103): small dimmed name tags, pair mode keeps third
+    // parties unnamed (#98); hidden while the soldier is down
+    if (!duelPlan && s.name && s.state !== 'dead' && s.state !== 'die') {
+      const [, hy] = head(s);
+      ctx.save(); ctx.font = '500 12px system-ui,sans-serif'; ctx.textAlign = 'center';
+      ctx.fillStyle = s.dim ? 'rgba(230,237,243,0.35)' : 'rgba(230,237,243,0.6)';
+      ctx.fillText(stripTag(s.name), s.x, hy - 20); ctx.restore();
+    }
   }
   while (wi < wallsSorted.length) { const w = wallsSorted[wi++]; if (w.forMain && tank.on) continue; if (cue) { ctx.save(); ctx.filter = 'saturate(0.15)'; drawWall(w); ctx.restore(); } else drawWall(w); }
   drawFx(t, 'over');
@@ -1190,11 +1280,16 @@ window.__cover = () => ({ walls: walls.map(w => [Math.round(w.x), w.y, Math.roun
 // strip stage (#105): every fighter's lane + slot + scale, and every
 // fight/assist/dying target picked off the front lane (must stay empty)
 window.__lanes = () => everyone.map(s => ({ who: s === main ? 'main' : s === rival ? 'rival' : s.faction,
-  lane: s.lane ?? null, x: Math.round(s.x), y: Math.round(s.y), scale: +s.scale.toFixed(3), dim: !!s.dim, slot: s.slot ?? null }));
+  lane: s.lane ?? null, x: Math.round(s.x), y: Math.round(s.y), scale: +s.scale.toFixed(3), dim: !!s.dim, slot: s.slot ?? null, state: s.state }));
 window.__laneViolations = () => laneViolations.slice();
 // headshot rule (#109): every crowd-mode kill by the player, with the killing
 // shot's head flag and the head hits landed earlier in the same burst
 window.__hsKills = () => hsKillLog.slice();
+// crowd opponents (#103): the named cast + the scene's per-opponent kills/deaths
+window.__crowdOpps = () => crowdOpps.map(o => ({ name: stripTag(o.row.name), slug: o.slug, faction: o.faction, kills: o.kills, deaths: o.deaths }));
+window.__oppShares = () => ({ kills: { ...oppKills }, deaths: { ...oppDeaths } });
+window.__pickStats = () => JSON.parse(JSON.stringify(pickStats));
+window.__pickWeights = (mode = 'mix') => enemies.map(e => ({ slug: e.opp?.slug ?? 'bot', kills: e.opp?.kills ?? null, deaths: e.opp?.deaths ?? null, w: !e.opp ? 1 : mode === 'kill' ? Math.max(1, e.opp.kills) : mode === 'death' ? Math.max(1, e.opp.deaths) : Math.max(1, e.opp.kills + e.opp.deaths) }));
 window.__life = () => { const L = lifeAt(simT); return L && { n: L.n, phase: phaseAt(L, simT)?.ph, phases: L.phases.map(p => [p.ph, +(p.t1 - p.t0).toFixed(1)]), simT }; };
 window.__slow = () => ({ wallT, simT, scale: currentRate() });
 window.__params = () => ({ st, P, RATE, CYCLE, ALIVE_MEAN, DOWN_MEAN, missing, stats, simT, cur: cur?.id, credit, fight: fightOk ? fight : null, jump });
