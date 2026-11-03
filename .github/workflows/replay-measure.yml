@@ -1,0 +1,59 @@
+name: Replay rival measurement
+
+# 📊 #92: measure the shape of fights between two regulars from cached PC
+# killboards (one Census history read per pair, paced at CENSUS_RPM).
+# Dispatch only, resumable: each run measures the pairs the checkpoint
+# (data/replay/pair-measure-checkpoint.json) lacks until its time budget
+# runs out, then recomputes pair-model.json and commits both. Re-dispatch
+# until pair-model.json reports ≥ 200 pairs, then close #92.
+
+on:
+  workflow_dispatch:
+    inputs:
+      budget_min:
+        description: "Minutes of measuring per run (default 25)"
+        required: false
+        default: "25"
+      limit:
+        description: "Max pairs this run (0 = no limit)"
+        required: false
+        default: "0"
+
+permissions:
+  contents: write # commit data/replay/
+
+concurrency:
+  group: replay-measure
+  cancel-in-progress: false
+
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+
+      - name: Git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Measure rivalries
+        env:
+          CENSUS_SERVICE_ID: ${{ secrets.CENSUS_SERVICE_ID || vars.CENSUS_SERVICE_ID || 'daysetps2legends' }}
+          # Runners can't reach Census directly: the cache Worker proxies it.
+          CENSUS_PROXY: ${{ vars.CENSUS_PROXY || 'https://ps2-elite-kd-cache.dayset.workers.dev' }}
+          CENSUS_PROXY_KEY: ${{ secrets.CENSUS_PROXY_KEY }}
+          CENSUS_RPM: "40"
+        run: node scripts/measure-rivalries.mjs --budget-min "${{ inputs.budget_min }}" --limit "${{ inputs.limit }}"
+
+      - name: Commit (data/replay/ only)
+        env:
+          COMMIT_DIR: data/replay/
+        run: scripts/ci-commit-push.sh "chore(replay): rival measurement checkpoint + pair model [bot]"
