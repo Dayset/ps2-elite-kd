@@ -321,3 +321,47 @@ describe("🤺 duels panel: kill share, ⚔️ iVi and 🎲 vs expected (owner 2
     });
   });
 });
+
+describe("🤺 duels panel: replay links (#102)", () => {
+  it("pair summary + crowd rows link to replay/?name=A&vs=B; PS hides them", { skip: !chrome && "no Chrome", timeout: 120000 }, async () => {
+    await withPage(async ({ ev, nav }) => {
+      await nav("index.html");
+      const r = await ev(`(async () => {
+        ${fixture}
+        const { mountDuels } = await import("/duels-panel.mjs");
+        const replyFor = (q) => { const t = 1792000000; return { v: 1, events: [[t, 1, String(q), 1, 0, 2, 0, 0, 0], [t - 100, 1, String(q), 1, 0, 2, 0, 0, 0]], rev: 1, lo: t - 100, hi: t, done: true, fights: 1, kills: 2, pages: 1, blocks: 1 }; };
+        const getJson = async (u) => {
+          if (u.includes("character/?character_id=")) return { character_list: [
+            { character_id: "1", faction_id: "1", w: { world_id: "1" } },
+            { character_id: "2", faction_id: "3", w: { world_id: "1" } } ] };
+          return { error: "stub" };
+        };
+        const opts = (isPS) => ({ getJson, baseOf: () => "https://x/get/ps2:v2/", catalog: async () => null, pairApi: async (args) => replyFor(args.q), isPS });
+        const panel = mountDuels(s, opts(false));
+        panel.setPlayers([{ cid: "1", display: "Alice" }, { cid: "2", display: "Bob" }]);
+        let pairLink = null;
+        for (let i = 0; i < 60 && !pairLink; i++) { await sleep(100); const a = s.querySelector(".duel-summary a.replay-link"); if (a) pairLink = { href: a.getAttribute("href"), text: a.textContent }; }
+        panel.setPlayers([{ cid: "1", display: "Alice", rows: [{ name: "Bob", kills: 5, deaths: 3 }, { name: "Carol", kills: 2, deaths: 7 }] }]);
+        let crowdLinks = [];
+        for (let i = 0; i < 60 && crowdLinks.length < 2; i++) { await sleep(100); crowdLinks = [...s.querySelectorAll(".duel-table tbody a.replay-link")].map(a => a.getAttribute("href")); }
+        const s2 = document.createElement("details");
+        s2.setAttribute("open", "");
+        s2.innerHTML = "<summary>Duels</summary><span class=\\"duel-count\\"></span><p class=\\"duel-summary\\" hidden></p><p class=\\"duel-status\\" hidden></p><div class=\\"duel-cmp-wrap\\" hidden><table class=\\"duel-cmp\\"></table></div><div class=\\"duel-scroll\\" hidden><table class=\\"duel-table\\"><thead></thead><tbody></tbody></table></div><button type=\\"button\\" class=\\"duel-more\\" hidden>Read further back</button>";
+        document.body.appendChild(s2);
+        const psPanel = mountDuels(s2, opts(true));
+        psPanel.setPlayers([{ cid: "1", display: "Alice" }, { cid: "2", display: "Bob" }]);
+        for (let i = 0; i < 30 && !s2.querySelector(".duel-summary").textContent.includes("Alice"); i++) await sleep(100);
+        const psPairLinks = s2.querySelectorAll("a.replay-link").length;
+        psPanel.setPlayers([{ cid: "1", display: "Alice", rows: [{ name: "Bob", kills: 5, deaths: 3 }] }]);
+        for (let i = 0; i < 30 && !s2.querySelectorAll(".duel-table tbody tr").length; i++) await sleep(100);
+        const psCrowdLinks = s2.querySelectorAll("a.replay-link").length;
+        return { pairLink, crowdLinks, psPairLinks, psCrowdLinks };
+      })()`);
+      assert.equal(r.pairLink.href, "replay/?name=Alice&vs=Bob");
+      assert.match(r.pairLink.text, /Replay this duel/);
+      assert.deepEqual(r.crowdLinks.sort(), ["replay/?name=Alice&vs=Bob", "replay/?name=Alice&vs=Carol"]);
+      assert.equal(r.psPairLinks, 0, "PS hides the pair link");
+      assert.equal(r.psCrowdLinks, 0, "PS hides the crowd links");
+    });
+  });
+});

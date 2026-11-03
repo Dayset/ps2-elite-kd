@@ -48,6 +48,20 @@ function personHtml(full) {
   return `${tag ? `<span class="kf-tag">[${esc(tag)}]</span> ` : ""}<button type="button" class="kf-name" data-name="${esc(nm)}" title="${esc(tr("kf.addTip", "Add {name} to the names", { name: nm }))}">${esc(nm)}</button>`;
 }
 
+// 🎬 Replay links (#102): PC only, hidden in the PlayStation room (the replay
+// page reads PC shards; #111 brings the PS room its own replay data later).
+const replayHref = (aName, bName) => `replay/?name=${encodeURIComponent(aName)}&vs=${encodeURIComponent(bName)}`;
+const replayDuelHtml = (ps, aName, bName) => {
+  if (ps) return "";
+  const label = tr("duel.replayDuel", "🎬 Replay this duel");
+  return ` <a class="replay-link" href="${replayHref(aName, bName)}" title="${esc(label)}" aria-label="${esc(label)}">${esc(label)}</a>`;
+};
+const replayVsHtml = (ps, aName, bName) => {
+  if (ps) return "";
+  const label = tr("duel.replayVs", "Replay this duel vs {name}", { name: bName });
+  return ` <a class="replay-link" href="${replayHref(aName, bName)}" title="${esc(label)}" aria-label="${esc(label)}">🎬</a>`;
+};
+
 const fightResLabel = (res, a, b) => (res === "won" ? tr("duel.won", "{name} won", { name: a }) : res === "lost" ? tr("duel.won", "{name} won", { name: b }) : tr("scr.draw", "Draw"));
 
 /* ------------------------------------------------------------ vs the crowd */
@@ -77,7 +91,7 @@ function crowdColumns() {
  */
 export function mountDuels(section, o = {}) {
   if (!section) return { setPlayers() {} };
-  const { getJson, baseOf, addName, sortScroll, catalog = async () => null, pairApi = null, dataDir = "data/" } = o;
+  const { getJson, baseOf, addName, sortScroll, catalog = async () => null, pairApi = null, dataDir = "data/", isPS = false } = o;
   const count = section.querySelector(".duel-count");
   const sum = section.querySelector(".duel-summary");
   const status = section.querySelector(".duel-status");
@@ -269,7 +283,7 @@ export function mountDuels(section, o = {}) {
     const preyRow = preyEntry ? rows.find((r) => bareName(r.name).toLowerCase() === bareName(preyEntry[0]).toLowerCase()) : null;
     const badge = (r) => (r === s.nemesis ? ` <span class="scr-group duel-nem" title="${esc(tr("duel.nemesisTip", "Killed this player the most."))}">😈</span>` : r === s.target ? ` <span class="scr-group duel-tgt" title="${esc(tr("duel.targetTip", "This player killed them the most."))}">🎯</span>` : r === preyRow ? ` <span class="scr-group duel-prey" title="${esc(tr("duel.preyTip", "This player is their favourite target."))}">🪦</span>` : "");
     table.querySelector("tbody").innerHTML = list.map((r, i) =>
-      `<tr><td class="rk-num">${i + 1}</td><td class="duel-name">${personHtml(r.name)}${iviHtml(r)}${badge(r)}</td>` +
+      `<tr><td class="rk-num">${i + 1}</td><td class="duel-name">${personHtml(r.name)}${replayVsHtml(isPS, who, bareName(r.name))}${iviHtml(r)}${badge(r)}</td>` +
       `<td class="duel-kills">${int(r.kills)}</td><td>${int(r.deaths)}</td><td>${kdTxt(r.kd)}</td><td>${r.kpm == null ? "–" : r.kpm.toFixed(2)}</td><td>${pct(r.share)}</td></tr>`).join("");
     wrap.hidden = false;
     if (!iviMap) ensureIvi().then(() => {
@@ -453,9 +467,9 @@ export function mountDuels(section, o = {}) {
       cmpWrap.hidden = true; wrap.hidden = true; sum.hidden = true; flatBtn.hidden = true;
       return;
     }
-    sum.textContent = tr("duel.summary", "{a} {ka} – {kb} {b} · fights: {fights} (1v1: {ones}) · first {first} · last {last}", {
+    sum.innerHTML = esc(tr("duel.summary", "{a} {ka} – {kb} {b} · fights: {fights} (1v1: {ones}) · first {first} · last {last}", {
       a: aName, b: bName, ka: int(s.a.kills), kb: int(s.b.kills), fights: int(s.fights), ones: int(s.ones), first: dateOnly(s.first), last: dateOnly(s.last),
-    });
+    })) + replayDuelHtml(isPS, aName, bName);
     sum.hidden = false;
     setStatus(read);
     cmp.innerHTML = cmpHtml(s, items, aName, bName);
