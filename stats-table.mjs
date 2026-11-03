@@ -15,8 +15,8 @@ import { mountWeapons } from "./weapons.mjs?v=20261022-wp4";
 import { mountKillFeed } from "./kill-feed.mjs?v=20261028-os2";
 import { mountScrims } from "./scrims-panel.mjs?v=20261028-os2";
 import { mountOldTabs } from "./old-tabs.mjs?v=20261028-duel1";
-import { mountDuels } from "./duels-panel.mjs?v=20261102-luck3";
-import { playerLuck } from "./duels.mjs?v=20261102-luck3";
+import { mountDuels } from "./duels-panel.mjs?v=20261102-luck4";
+import { playerLuck, loadLuckData, luckPoints, luckCellHtml, luckHint, luckLabel } from "./luck-col.mjs?v=20261102-luck4";
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261020-wide1";
 import { PS_SERVERS, censusNsBase, roomLsKey } from "./rooms.mjs?v=20261022-ps1";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
@@ -81,18 +81,20 @@ export function createStatsTable($) {
   // 🪖 Infantry (% of lifetime kills with infantry weapons): value + MAX / vehicle % by slug, pool for the percentile.
   let infBySlug = null;
   // 🎲 vs expected per player (owner t849u): debug column only, loaded the first time the debug box is on.
-  let luckData = null, luckLoad = null;
+  // 🎲 Luck (luck-col.mjs): fetched once the table is on screen, then the table redraws.
+  let luckData = null, luckWait = false;
   function loadLuck() {
-    if (luckLoad) return luckLoad;
-    // A failed fetch (network blip) is not cached: the next render tries again.
-    luckLoad = fetch(`${$.DATA}duel-ivi-player.json`).then((r) => (r.ok ? r.json() : false)).catch(() => null)
-      .then((d) => {
-        if (d === null) { luckLoad = null; return; }
-        luckData = d && d.v === 1 && d.p ? d : false;
-        if (luckData && $.lastStatsList && $.showDebugCols) renderStatsTable($.lastStatsList);
-      });
-    return luckLoad;
+    if (luckData !== null || luckWait) return;
+    luckWait = true;
+    const go = () => loadLuckData($.DATA).then((d) => {
+      luckWait = false;
+      if (d === null) return; // network blip: the next render tries again
+      luckData = d;
+      if (luckData && $.lastStatsList && $.lastStatsList.length) renderStatsTable($.lastStatsList);
+    });
+    if (typeof requestIdleCallback === "function") requestIdleCallback(go, { timeout: 1500 }); else setTimeout(go, 200);
   }
+  const luckOf = (r) => (luckData && r && r.p ? playerLuck(luckData, slugKey(r.p.display)) : null);
 
   let infPool = null;
 
@@ -410,6 +412,7 @@ export function createStatsTable($) {
       return;
     }
 
+    loadLuck(); // 🎲 Luck: after the first paint (idle), not before it
     // Same per-player metrics as build-log.html red flags (player-metrics.mjs).
     const metrics = list.map((p) => playerMetrics(p));
 
@@ -430,6 +433,8 @@ export function createStatsTable($) {
       { id: "rf", label: "🛡️ Resist", hint: tr("tip.rf", "How well you hold up vs strong players: K/D vs your usual foes, scaled by how fast they kill."), fn: (r) => r.rf, digits: 2 },
       { id: "rkd", label: "☠️ K/D", hint: tr("tip.rkd", "K/D against the ~200 players you fight most, not your whole lifetime."), fn: (r) => r.rkd, digits: 3 },
       { id: "cons", label: "⚡ Const", hint: tr("tip.cons", "K/D kept vs your strongest third of foes, compared with the weakest: 1.00 = holds, 0.50 = halves."), fn: (r) => r.cons, digits: 2, pctileCell: true },
+      // 🎲 Luck (owner t850u): signed % vs what ⚔️ iVi predicts, right after ⚡ Const; numbers + meaning on hover.
+      { id: "luck", label: luckLabel(), hint: luckHint(), digits: 1, luckCell: true, fn: (r) => luckPoints(luckOf(r)) },
       { id: "apk", label: tr("col.assists", "🤝 Assists"), hint: tr("tip.apk", "Assists per kill in recent Honu sessions: how often you help teammates get kills."), fn: (r) => (apkBySlug && r.p ? apkBySlug.get(slugKey(r.p.display)) : undefined), digits: 2, apkCell: true, pctDir: "low", pctLowPhrase: "more assists" },
       // 🪳 Zerg (owner t480u): lower of the 🎈 Inflation and 🤝 Assists percentiles; lower is better (like 🤝: reversed grey %).
       // Short hover (owner t9); 🪳 revive details in columns.html#zerg.
@@ -467,11 +472,6 @@ export function createStatsTable($) {
       c.thinTip = true;
       c.fn = (r) => shownValue(r, c.id);
     }
-    // 🎲 vs expected (owner t849u): per-player version of the 🤺 Head-to-head row; debug only for now.
-    adjDebugCols.push({ id: "luck", label: tr("col.luck", "🎲 vs expected"), digits: 0, luckCell: true,
-      hint: tr("tip.luck", "Debug: does this player win more of the kills against their opponents than ⚔️ iVi predicts? The 🎲 row of 🤺 Head-to-head, averaged over every opponent with 20+ kills between them."),
-      fn: (r) => { const l = luckData && r.p ? playerLuck(luckData, slugKey(r.p.display)) : null; return l ? l.gap * 1000 : NaN; } });
-    if ($.showDebugCols) loadLuck();
     const adjCols = $.showDebugCols ? adjVisibleCols.concat(adjDebugCols) : adjVisibleCols;
     // Sorting by a hidden debug column falls back to the default (⚔️ iVi high→low).
     if (statsSortState.adjusted.key !== "name" && !adjCols.some((c) => c.id === statsSortState.adjusted.key)) {
@@ -638,19 +638,8 @@ export function createStatsTable($) {
                 const ve = infBySlug && row.p ? infBySlug.get(slugKey(row.p.display)) : null;
                 return `<td title="${escapeHtml(aimGapCellTip(v, g, aimGapPool(), ve ? ve.veh : null))}">${diffValueHtml(v)}${gTag}</td>`;
               }
-              // 🎲 vs expected: plain verdict word, numbers in the hover (same words as 🤺 Head-to-head).
-              if (c.luckCell) {
-                const l = luckData && row.p ? playerLuck(luckData, slugKey(row.p.display)) : null;
-                if (!l) return `<td class="luck-few" title="${escapeHtml(tr("luck.p.few", "Too few opponents: needs {n} with 20+ kills between them.", { n: luckData ? luckData.oppMin : 20 }))}">—</td>`;
-                const word = !l.lvl ? tr("duel.luck.as", "as expected")
-                  : l.up ? (l.lvl === 2 ? tr("duel.luck.better2", "much better") : tr("duel.luck.better1", "a bit better"))
-                    : (l.lvl === 2 ? tr("duel.luck.worse2", "much worse") : tr("duel.luck.worse1", "a bit worse"));
-                const arrow = !l.lvl ? "≈" : (l.up ? "↑" : "↓").repeat(l.lvl);
-                const pts = `${l.gap >= 0 ? "+" : "−"}${fmtNum(Math.abs(l.gap) * 100, 1)}`;
-                const tip = tr("luck.p.tip", "On average {gap} pts of the kills vs what ⚔️ iVi predicts, over {n} opponents.\nDid better than expected against {b}% of them.\nCompared with {players} players: “as expected” = the middle 90%, “much” = the outer 1%.\nHow: for each opponent with 20+ kills between them, the share of those kills they got minus what the iVi gap and vehicle kills predict, averaged by kills. Few opponents pull it toward 0.",
-                  { gap: pts, n: l.opps.toLocaleString(), b: l.beat, players: luckData.players.toLocaleString() });
-                return `<td class="luck-cell luck-${!l.lvl ? "as" : (l.up ? "up" : "down") + l.lvl}" title="${escapeHtml(tip)}">${arrow} ${escapeHtml(word)}</td>`;
-              }
+              // 🎲 Luck: "+9%" coloured by verdict band; verdict + numbers on hover (luck-col.mjs).
+              if (c.luckCell) return luckCellHtml(luckOf(row), luckData, escapeHtml);
               if (c.pctileCell) {
                 const pctl = isFiniteNum(v) && consPool ? percentileOf(consPool, v) : null;
                 const txt = pctl == null ? "—" : `${pctl}%`;

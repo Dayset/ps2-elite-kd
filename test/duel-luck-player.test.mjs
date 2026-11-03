@@ -1,4 +1,4 @@
-// 🎲 vs expected per player (owner 2026-11-02, t849u): debug column first, data from scripts/fit-duel-ivi.mjs.
+// 🎲 Luck per player (owner 2026-11-02, t849u debug → t850u public column after ⚡ Const), data from scripts/fit-duel-ivi.mjs.
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
@@ -27,7 +27,7 @@ describe("🎲 per player: playerLuck", () => {
   });
 });
 
-describe("🎲 per player: data files and the debug column", () => {
+describe("🎲 per player: data files and the public column", () => {
   for (const dir of ["data", "data-ps"]) {
     it(`${dir}/duel-ivi-player.json: versioned, small, ordered cuts, 20+ opponents`, () => {
       const f = `${dir}/duel-ivi-player.json`;
@@ -41,12 +41,35 @@ describe("🎲 per player: data files and the debug column", () => {
       assert.ok(rows.every((r) => r.length === 3 && Number.isInteger(r[0]) && r[1] >= 20 && r[2] >= 0 && r[2] <= 100));
     });
   }
-  it("the column lives with the older debug columns, not the visible ones", () => {
+  it("🎲 Luck is a public column right after ⚡ Const, in ✨ and 🏆, loaded lazily", () => {
     const src = fs.readFileSync("stats-table.mjs", "utf8");
     const vis = src.slice(src.indexOf("const adjVisibleCols = ["), src.indexOf("const adjDebugCols = ["));
-    assert.ok(!vis.includes('id: "luck"'));
-    assert.match(src, /adjDebugCols\.push\(\{ id: "luck"/);
-    assert.match(src, /if \(\$\.showDebugCols\) loadLuck\(\)/, "file loads only with the debug box on");
-    assert.doesNotMatch(src.slice(src.indexOf("luckCell: true")), /^[^\n]*cheat/im);
+    assert.match(vis, /id: "cons"[^\n]*\n(\s*\/\/[^\n]*\n)?\s*\{ id: "luck"/);
+    assert.doesNotMatch(src, /adjDebugCols\.push\(\{ id: "luck"/, "no debug duplicate");
+    assert.doesNotMatch(src, /showDebugCols\) loadLuck/, "loads for everyone");
+    const rk = fs.readFileSync("rankings.mjs", "utf8");
+    assert.match(rk, /id: "cons"[^\n]*\n(\s*\/\/[^\n]*\n)?\s*\{ id: "luck"/);
+    for (const f of ["luck-col.mjs", "stats-table.mjs", "rankings.mjs"])
+      assert.doesNotMatch(fs.readFileSync(f, "utf8").split("\n").filter((l) => /luck/i.test(l)).join("\n"), /cheat/i);
+  });
+  it("cell text: signed whole percent, dash when too few", async () => {
+    const { luckText, luckClass, luckCellHtml } = await import("../luck-col.mjs");
+    assert.equal(luckText(playerLuck(D, "b")), "+6%");
+    assert.equal(luckText(playerLuck(D, "e")), "−7%");
+    assert.equal(luckText(playerLuck(D, "a")), "0%");
+    assert.equal(luckText(null), "—");
+    assert.equal(luckClass(playerLuck(D, "a")), "luck-as");
+    assert.equal(luckClass(playerLuck(D, "c")), "luck-up2");
+    const esc = (s) => String(s);
+    assert.match(luckCellHtml(playerLuck(D, "b"), D, esc), /class="luck-cell luck-up1"[^>]*>\+6%</);
+    assert.match(luckCellHtml(null, D, esc), />—</);
+  });
+  it("9 languages carry the column label and hint", () => {
+    for (const l of ["en", "ja", "ru", "de", "fr", "zh", "es", "uk", "it"]) {
+      const d = JSON.parse(fs.readFileSync(`i18n/${l}.json`, "utf8"));
+      assert.match(d["col.luck"], /^🎲 \S/);
+      for (const k of ["tip.luck", "luck.p.tip", "luck.p.few", "rk.basisLuck"]) assert.ok(d[k], `${l} ${k}`);
+      assert.match(d["luck.p.tip"], /\{gap\}.*\{n\}.*\{b\}/s);
+    }
   });
 });

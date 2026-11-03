@@ -3350,7 +3350,9 @@ html[data-room="ps"] .controls .fresh-row-end select.room-select { border-color:
 .sr-chip { min-width: 5.2rem; }
 
 /* 🎲 vs expected per player (owner 2026-11-02, t849u; debug column): plain words, "a bit" / "much" in the warning colour. */
-.stats-table td.luck-cell { white-space: nowrap; }
-.stats-table td.luck-as, .stats-table td.luck-few { color: var(--dim); }
-.stats-table td.luck-up1, .stats-table td.luck-down1, .stats-table td.luck-up2, .stats-table td.luck-down2 { color: var(--warn); }
-.stats-table td.luck-up2, .stats-table td.luck-down2 { font-weight: 700; }
+/* 🎲 Luck (luck-col.mjs, owner t850u): "+9%" — neutral as expected, subtle a bit, warning colour only for "much". */
+td.luck-cell, td.luck-few { white-space: nowrap; }
+td.luck-few { color: var(--dim); }
+td.luck-up1 { color: var(--ok); }
+td.luck-down1 { color: var(--dim); }
+td.luck-up2, td.luck-down2 { color: var(--warn); font-weight: 700; }

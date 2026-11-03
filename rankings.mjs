@@ -44,6 +44,7 @@ import { ZREV_NOTE, zergEstimate } from "./zerg-revive.mjs?v=20261024-crowd1";
 import { VDIFF_NOTE } from "./diff-vehicle.mjs?v=20261023-short1";
 import { NBD_NOTE } from "./newbie-diff.mjs?v=20261023-nbh1";
 import { autoMarksHtml } from "./auto-marks.mjs?v=20261030-hs1";
+import { playerLuck, loadLuckData, luckPoints, luckCellHtml, luckLabel, luckText, LUCK_HINT_EN } from "./luck-col.mjs?v=20261102-luck4";
 
 /**
  * @param {{ getNames: () => string[], toggleName: (name: string, anchor: Element, add: boolean) => void, maxNames?: number }} host
@@ -55,6 +56,7 @@ const DATA = dataPrefix(ROOM);
 export function initRankings(host) {
 
   const LS_DEBUG_COLS = "ps2-elite-kd-debug-cols";
+  let luckData = null; // 🎲 Luck file (luck-col.mjs), set by loadLuck()
   const LS_HIDE_ZERO_IVI = "ps2-elite-kd-hide-zero-ivi";
   const LS_REMOVE_RANKS = "ps2-elite-kd-remove-ranks";
   const MONTH_S = 365.25 * 86400 / 12;
@@ -71,6 +73,8 @@ export function initRankings(host) {
     { id: "rf", label: "🛡️ Resist", digits: 2, tip: "How well you hold up vs strong players: K/D vs your usual foes, scaled by how fast they kill." },
     { id: "rkd", label: "☠️ K/D", digits: 3, tip: "K/D against the ~200 players you fight most, not your whole lifetime." },
     { id: "cons", label: "⚡ Const", digits: 2, tip: "K/D kept vs your strongest third of foes, compared with the weakest: 1.00 = holds, 0.50 = halves." },
+    // 🎲 Luck (owner t850u): signed % vs what ⚔️ iVi predicts (luck-col.mjs), lazy file data/duel-ivi-player.json.
+    { id: "luck", label: luckLabel(), digits: 1, luck: true, tip: LUCK_HINT_EN },
     { id: "apk", label: tr("col.assists", "🤝 Assists"), digits: 2, apk: true, tip: "Assists per kill in recent Honu sessions: how often you help teammates get kills." },
     // 🪳 Zerg / 🤥😤 Impostor–DieHard (owner t480u–t485u): computed here from the ranks.json pools (trait-scores.mjs), same numbers as ✨ Stats.
     { id: "zerg", label: tr("col.zerg", "🪳 Zerg"), digits: 0, zerg: true, tip: ZERG_HINT }, // short hover (owner t9); details on columns.html#zerg
@@ -370,6 +374,12 @@ export function initRankings(host) {
     }
     // t360u: new row objects carry no .rank yet → force assignRanks() to run again
     // (it skipped on an unchanged sort and left "undefined" ranks / a broken order).
+    // 🎲 Luck: per-player file, joined by slug once it has loaded (null = not yet / too few opponents).
+    if (luckData) {
+      for (const o of rows) { const l = playerLuck(luckData, o.slug || slugKey(o.query)); o._luck = l; o.luck = l ? luckPoints(l) : null; }
+      pools.luck = rows.map((o) => o.luck).filter(fin).sort((a, b) => a - b);
+      for (const o of rows) o.pcts.luck = pctOf(pools.luck, o.luck);
+    }
     rankedFor = "";
     data = { updatedAt: payload.updatedAt, count: (+payload.count || payload.rows.length - localOnly.size) + localOnly.size, rows, pools, infMed: infMedian(pools.inf), tracCuts: payload.tracCuts || null, srvPools: serverPools(rows, Object.keys(pools)) };
     histCache.clear();
@@ -454,7 +464,7 @@ export function initRankings(host) {
   // on which data rows happen to be rendered — no jumping on sort / tier toggle.
   // Sized to fit the header label + sort indicator, the widest thing in the column.
   const COL_W = {
-    adjs: 9, act: 13, pvs: 10, rf: 11, cons: 10, apk: 12, zerg: 10, diff: 8, rkd: 8, inf: 13,
+    adjs: 9, act: 13, pvs: 10, rf: 11, cons: 10, luck: 9, apk: 12, zerg: 10, diff: 8, rkd: 8, inf: 13,
     mech: 11, adj: 10, ekpm: 8, own: 10, coi: 9, slope: 10, inflation: 13,
     kd: 8, kpm: 8, ownKpm: 12, acc: 8, hsr: 8, ivi: 8,
   };
@@ -531,6 +541,7 @@ export function initRankings(host) {
     if (c.zerg) return fin(v) ? `<td title="${esc(zergCellTip(v, row._zerg, data.pools.zerg))}">${v}${apkPctTag(row.pcts.zerg)}</td>` : fin(row.zest) ? zergEstHtml(row.zest, esc) : `<td title="${esc(tr("zerg.missing", ZERG_MISSING))}">—</td>`;
     // t497u: 🔀 pXX = plain percentile of the signed score (share of players below); no better side.
     if (c.aimgap) return fin(v) ? `<td title="${esc(aimGapCellTip(v, row._gap, data.pools.diff, row.infVeh))}">${fmtSigned(v)}${row.pcts.diff == null ? "" : `<span class="pct" title="${esc(tr("stats.pctile", "Population percentile: higher than {n}% of cached players", { n: row.pcts.diff }))}">p${row.pcts.diff}</span>`}</td>` : `<td title="${esc(tr("diff.missing", AIMGAP_MISSING))}">—</td>`;
+    if (c.luck) return luckCellHtml(row._luck, luckData, esc);
     if (c.inf) return fin(v) ? `<td title="${esc(infTip(v, row.infMax, row.infVeh, row.pcts[c.id]))}">${fmt(v, 1)}%</td>` : `<td title="${esc(INF_PENDING_TIP)}">—</td>`;
     if (!fin(v) && c.thinTip && row.thin) return `<td class="thin-sample" title="${esc(MIN_FIGHTS_TIP)}">—</td>`;
     if (!fin(v)) return `<td>—</td>`;
@@ -944,7 +955,7 @@ export function initRankings(host) {
     }
     const light = document.documentElement.getAttribute("data-theme") === "light";
     const head = `<tr><th scope="col" class="rk-pos-num">#</th><th scope="col" class="rk-pos-name">${tr("rk.player", "Player")}</th>` + VISIBLE.map((c) => `<th scope="col" data-col="${c.id}" title="${esc(tipOf(c) || c.label)}">${esc(c.label)}</th>`).join("") + `</tr>`;
-    const basisOf = (c) => (c.apk || c.zerg ? tr("rk.basisApk", "players with 100+ session kills") : c.inf ? tr("rk.basisInf", "measured players (100+ kills)") : tr("rk.basisCached", "cached players"));
+    const basisOf = (c) => (c.luck ? tr("rk.basisLuck", "players with 20+ opponents") : c.apk || c.zerg ? tr("rk.basisApk", "players with 100+ session kills") : c.inf ? tr("rk.basisInf", "measured players (100+ kills)") : tr("rk.basisCached", "cached players"));
     // 🌍 t812u: srv = true → the same table, ranked only among the players of the row's own server.
     const tableRows = (srv) => rows.map((r) => {
       const i = colorOf.get(r.query);
@@ -952,7 +963,7 @@ export function initRankings(host) {
       const sname = sk ? SERVER_LABEL[sk] || sk : "";
       const cells = VISIBLE.map((c) => {
         const v = r[c.id];
-        if ((c.apk || c.inf || c.zerg || c.aimgap) && !fin(v)) return `<td>—</td>`; // t396u: APK ranks like the other columns
+        if ((c.apk || c.inf || c.zerg || c.aimgap || c.luck) && !fin(v)) return `<td>—</td>`; // t396u: APK ranks like the other columns
         if (!fin(v)) return r.thin && c.thinTip ? `<td class="thin-sample" title="${esc(MIN_FIGHTS_TIP)}">—</td>` : `<td>—</td>`;
         if (srv && !sk) return `<td title="${esc(tr("rk.srvUnknown", "Server unknown (old or closed world, or not looked up yet): no server rank."))}">—</td>`;
         const pool = (srv ? (data.srvPools[sk] || {})[c.id] : data.pools[c.id]) || [];
@@ -962,7 +973,7 @@ export function initRankings(host) {
         const rankTxt = srv
           ? tr("rk.srvRank", "rank {k} of {n} {basis} on {server}", { k: k.toLocaleString(), n: pool.length.toLocaleString(), basis: basisOf(c), server: sname })
           : tr("rk.rank", "rank {k} of {n} {basis}", { k: k.toLocaleString(), n: pool.length.toLocaleString(), basis: basisOf(c) });
-        return `<td title="${esc(c.label)} ${fmt(v, c.digits)}: ${esc(rankTxt)}${c.id === "adjs" && vcutTip(r) ? ". " + esc(vcutTip(r)) : ""}">` +
+        return `<td title="${esc(c.label)} ${c.luck ? luckText(r._luck) : fmt(v, c.digits)}: ${esc(rankTxt)}${c.id === "adjs" && vcutTip(r) ? ". " + esc(vcutTip(r)) : ""}">` +
           `<b>#${k.toLocaleString()}</b>${p != null ? `<span class="pct">p${p}</span>` : ""}</td>`;
       }).join("");
       // t813u: the global table says so too, with the same small tag the server table uses.
@@ -1990,6 +2001,18 @@ export function initRankings(host) {
     rebuildIndex({ ...base, rows }, fresh, localOnly);
   }
 
+  // 🎲 Luck: fetched after the table is drawn, then re-merged so 🏆 / 🏅 / 📊 all get it.
+  function loadLuck() {
+    loadLuckData(DATA).then((d) => {
+      if (!d || !base) return;
+      luckData = d;
+      remerge();
+      syncPicks({ force: true });
+      render();
+      drawDist();
+    });
+  }
+
   async function load() {
     // --- load --- (no "Loading ranks…" text: the preloaded skeleton inside
     // #ranksScroll is the loading state — Dayset 2026-10-22)
@@ -2018,6 +2041,7 @@ export function initRankings(host) {
       fillMetricSelect();
       render();
       drawDist();
+      loadLuck();
     } catch (err) {
       const sk = $("ranksSkeleton");
       if (sk) sk.remove();
