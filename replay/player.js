@@ -12,10 +12,11 @@ import { baseRate, speedAt, bulletRate, nextKillAt, calmStretchEnd } from './dir
 import { shooter } from './engagement.mjs?v=20261103-duel1';
 import { planDuel } from './duel-plan.mjs?v=20261103-duel2';
 import { hpAt, barFracs, sparkFor, scoreAt, engagementAt, lifeAt as duelLifeAt, phaseState, killcamFor } from './duel-scene.mjs?v=20261103-duel2';
+import { STRIP, coverOf, assignLanes } from './lanes.mjs?v=20261103-strip1';
 import { t as tr, ready as i18nReady, currentLang } from '../i18n.mjs';
 
 const cv = document.getElementById('stage'), ctx = cv.getContext('2d');
-const W = 1280, H = 720, GROUND = 600;
+const W = STRIP.W, H = STRIP.H, GROUND = STRIP.GROUND;
 const q = new URLSearchParams(location.search);
 let reduced = matchMedia('(prefers-reduced-motion: reduce)').matches && !q.has('preview') && !q.has('play');
 const debug = q.has('debug');
@@ -153,31 +154,28 @@ const CLS = Object.fromEntries(Object.entries({ inf: 'Infiltrator', la: 'Light A
   .map(([k, en]) => [k, T('cls.' + k, en)]));
 
 // ---------------------------------------------------------------- cast
+// Strip stage (#105): one front lane (full size, full brightness, 3 slots per
+// side, innermost first) + one back lane (dimmed, ~70% size) for the crowd.
+// The duel pair takes the two innermost front slots, so the duel is always
+// front lane; pickTarget only ever picks front-lane enemies (see moveToFront).
 const F = doc.faction in rigs ? doc.faction : 'tr', foes = ['tr', 'nc', 'vs'].filter(f => f !== F);
-const main = new Soldier(rigs[F], F, { x: 350, y: GROUND + 5, scale: 0.5, facing: 1, seed: 0.3, rate: RATE, speed: 120, mode: mainProfile?.mode ?? 'auto', reloadMs: mainProfile?.reloadMs ?? 2400 });
-main.isMain = true;
-// the crowd: dimmed, scattered wide across the field at staggered depths — no shoulder-to-shoulder
-// line, and no ally parked on the main's wall (peekX 120–365 below the wall's depth is his alone)
-const ALLY_SLOTS = [[110, -130, 0.60], [180, 60, 0.85], [480, -135, 0.60], [560, 50, 0.85], [760, -130, 0.62], [700, 0, 0.70]];
-const allies = ALLY_SLOTS.slice(0, P.allies).map(([x, dy, k], i) => {
-  const a = new Soldier(rigs[F], F, { x, y: GROUND + dy, scale: main.scale * k, facing: 1, seed: 1.7 + i * 2.3, rate: 9 + 3 * rng(), speed: 90 });
-  a.dim = true; return a; });
-const ENEMY_SLOTS = [[900, -130, 0.85], [1030, -10, 0.95], [1090, -120, 0.88], [920, 60, 1], [1120, 50, 0.90]];
-const enemies = ENEMY_SLOTS.map(([x, dy, k], i) => {
-  const s = new Soldier(rigs[foes[i % 2]], foes[i % 2], { x, y: GROUND + dy, scale: P.enemyScale * k, facing: -1, seed: 3.1 + i * 1.9, rate: 9 + 3 * rng(), speed: 170 });
-  s.slot = x; s.deadAt = -99; s.state = 'dead'; return s;
+const laneA = assignLanes({ nAllies: P.allies, nEnemies: pair ? 4 : 5, rival: !!pair, enemyScale: P.enemyScale, pairMode: !!pair });
+const main = new Soldier(rigs[F], F, { x: laneA.main.x, y: laneA.main.y, scale: laneA.main.scale, facing: 1, seed: 0.3, rate: RATE, speed: 120, mode: mainProfile?.mode ?? 'auto', reloadMs: mainProfile?.reloadMs ?? 2400 });
+main.isMain = true; main.lane = 0; main.slot = main.x;
+const allies = laneA.allies.map((p, i) => {
+  const a = new Soldier(rigs[F], F, { x: p.x, y: p.y, scale: p.scale, facing: 1, seed: 1.7 + i * 2.3, rate: 9 + 3 * rng(), speed: 90 });
+  a.dim = p.dim; a.lane = p.lane; a.slot = p.x; return a; });
+const enemies = laneA.enemies.map((p, i) => {
+  const s = new Soldier(rigs[foes[i % 2]], foes[i % 2], { x: p.x, y: p.y, scale: p.scale, facing: -1, seed: 3.1 + i * 1.9, rate: 9 + 3 * rng(), speed: 170 });
+  s.dim = p.dim; s.lane = p.lane; s.slot = p.x; s.deadAt = -99; s.state = 'dead'; return s;
 });
-if (pair) enemies.splice(1, 1); // slot 1 is the rival's; the bot there would overlap him
 const everyone = [main, ...allies, ...enemies];
 // cover: one basic wall tile per soldier, on the far side from the enemy, 10% transparent, and
 // only up to its soldier's eyes (head() height) — the head shows over the top, the body ghosts
 // through the tile. Hidden = centred on his wall; peek = stepped out past the firing edge.
 // peekX is the slot/home the rest of the code already uses.
 function makeCover(s) {
-  const w = 310 * s.scale, h = 370 * s.scale + 8;   // top lands at y − 370·scale, just under the eyes
-  const wx = s.facing > 0 ? s.x - 30 - w : s.x + 30;
-  const wall = { x: wx, y: s.y + 8, w, h };
-  return { wall, hiddenX: wx + w / 2, peekX: s.x };
+  return coverOf(s.x, s.y, s.scale, s.facing);
 }
 main.cover = makeCover(main);
 for (const a of allies) a.cover = makeCover(a);
@@ -193,11 +191,10 @@ let rival = null;
 if (pair) {
   const FB = pair.b.faction in rigs ? pair.b.faction : 'tr';
   const bProf = pair.b.main ? profileOf(pair.b.main.id, pair.b.main.cat, profiles?.profiles) : null;
-  rival = new Soldier(rigs[FB], FB, { x: 1030, y: GROUND - 10, scale: P.enemyScale * 0.95, facing: -1, seed: 7.7,
+  rival = new Soldier(rigs[FB], FB, { x: laneA.rival.x, y: laneA.rival.y, scale: laneA.rival.scale, facing: -1, seed: 7.7,
     rate: bProf ? shotsPerSec(bProf) : 10, speed: 170, mode: bProf?.mode ?? 'auto', reloadMs: bProf?.reloadMs ?? 2400 });
-  rival.slot = 1030; rival.deadAt = -99;
+  rival.slot = rival.x; rival.lane = 0; rival.deadAt = -99;
   rival.cover = makeCover(rival); walls.push(rival.cover.wall); everyone.push(rival);
-  for (const e of enemies) e.dim = true;
 }
 
 // ---------------------------------------------------------------- effects
@@ -554,10 +551,35 @@ if (duelPlan) {
 }
 
 // ---------------------------------------------------------------- execution (scene clock = real seconds)
+// Lane-0 invariant (#105): every fight/assist/dying target and every killer of
+// the player is on the front lane when the first shot is fired. pickTarget
+// only ever returns a front-lane enemy; if none is usable, a back-lane enemy
+// is MOVED to a dead front soldier's slot first (the ticket allows "moved to
+// (or runs into)"), and the dead soldier inherits the back slot for its
+// respawn. Last resort (all front alive but busy): a busy front enemy —
+// still lane-correct, the double-target corner the old code avoided.
+const laneViolations = [];
+function moveToFront(e, t) {
+  const dead = enemies.find(x => x.lane === 0 && (x.state === 'die' || x.state === 'dead'));
+  if (!dead) return false;
+  const frontSlot = dead.slot, frontY = dead.y;
+  const dw = dead.cover.wall;
+  dead.slot = e.slot; dead.y = e.y; dead.lane = 1; dead.scale = dead.scale * STRIP.BACK_K; dead.dim = true;
+  dead.cover = makeCover(dead); walls.splice(walls.indexOf(dw), 1, dead.cover.wall);
+  const ew = e.cover.wall;
+  e.slot = frontSlot; e.y = frontY; e.lane = 0; e.scale = e.scale / STRIP.BACK_K; e.dim = false;
+  e.cover = makeCover(e); walls.splice(walls.indexOf(ew), 1, e.cover.wall);
+  e.x = e.slot; e.set('idle', t); e.busy = false;
+  return true;
+}
 function pickTarget(t) {
-  let r = enemies.filter(ready); if (r.length) return pick(r);
-  r = enemies.filter(e => e.state === 'run'); if (r.length) { const e = pick(r); e.x = e.slot; e.set('idle', t); return e; }
-  const e = pick(enemies.filter(e => !e.busy)); e.x = e.slot; e.set('respawn', t); e.t0 = t - 0.9; e.set('idle', t); return e;
+  const front = enemies.filter(e => e.lane === 0);
+  let r = front.filter(ready); if (r.length) return pick(r);
+  r = front.filter(e => e.state === 'run'); if (r.length) { const e = pick(r); e.x = e.slot; e.set('idle', t); return e; }
+  const back = enemies.filter(e => e.lane === 1 && (e.state === 'idle' || e.state === 'run' || e.state === 'shoot') && !e.busy);
+  if (back.length) { const e = pick(back); if (moveToFront(e, t)) return e; }
+  r = front.filter(e => !e.busy); if (r.length) return pick(r);
+  const e = pick(front); e.x = e.slot; e.set('respawn', t); e.t0 = t - 0.9; e.set('idle', t); return e;
 }
 function startBurst(t, shooter, target, n, h, final, extra = {}, r = rng) {
   const hits = new Set(); if (final) hits.add(n - 1);
@@ -609,13 +631,15 @@ function enter(s, t) {
   if (s.id === 'respawn') { main.x = main.home; main.downKeep = false; newLife(t, plan.firstDone !== true); plan.firstDone = true; }
   if (s.id === 'fight' || s.id === 'assist' || s.id === 'trading') {
     if (!engaged) arrive(t - 2);
-    const tg = pickTarget(t); tg.busy = true; s.tg = tg;
+    const tg = pickTarget(t); if (tg.lane !== 0) laneViolations.push({ seg: s.id, t });
+    tg.busy = true; s.tg = tg;
     if (s.id === 'fight' && s.veh) s.b = { tank: true, target: tg, fired: 0 };
     else s.b = startBurst(t, main, tg, s.n, s.h, s.id === 'fight', { hs: s.hs });
   }
   if (s.id === 'dying') {
     if (!engaged) arrive(t - 2);
-    const k = pickTarget(t); k.busy = true; s.k = k;
+    const k = pickTarget(t); if (k.lane !== 0) laneViolations.push({ seg: s.id, t });
+    k.busy = true; s.k = k;
     s.b = startBurst(t + 0.3, k, main, 14, 5, true); s.b.t0 = t + 0.3; s.b.rate = 12;
     s.back = startBurst(t, main, k, s.n, Math.min(s.n, sround(s.n * st.hpk / st.spk)), false); if (s.veh) s.back = { done: true };
   }
@@ -742,11 +766,11 @@ function drawBg() {
   g.addColorStop(0, '#1b2635'); g.addColorStop(0.62, '#2a3a4c'); g.addColorStop(0.63, '#34452f'); g.addColorStop(1, '#202b1d');
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   // parallax: hills move at 1/4 of the ground while running to the fight
-  const hx = scroll * 0.25; ctx.fillStyle = '#243243'; ctx.beginPath(); ctx.moveTo(0, 455);
-  for (let x = 0; x <= W; x += 40) { const u = x + hx; ctx.lineTo(x, 430 + 28 * Math.sin(u / 170) + 14 * Math.sin(u / 53)); }
+  const hx = scroll * 0.25; ctx.fillStyle = '#243243'; ctx.beginPath(); ctx.moveTo(0, 253);
+  for (let x = 0; x <= W; x += 40) { const u = x + hx; ctx.lineTo(x, 239 + 16 * Math.sin(u / 170) + 8 * Math.sin(u / 53)); }
   ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.fill();
-  ctx.fillStyle = '#34452f'; ctx.fillRect(0, 452, W, H - 452);
-  ctx.fillStyle = 'rgba(0,0,0,.12)'; for (let i = 0; i < 40; i++) ctx.fillRect((((i * 337 - scroll) % W) + W) % W, 470 + (i * 53) % 230, 26, 3);
+  ctx.fillStyle = '#34452f'; ctx.fillRect(0, 251, W, H - 251);
+  ctx.fillStyle = 'rgba(0,0,0,.12)'; for (let i = 0; i < 40; i++) ctx.fillRect((((i * 337 - scroll) % W) + W) % W, 261 + (i * 53) % 128, 26, 2);
 }
 const TANK = { tr: ['#7a2a24', '#b8473b'], nc: ['#23407a', '#3f69c0'], vs: ['#4a2a78', '#7a4fc0'] };
 function drawTank(t) {
@@ -799,7 +823,7 @@ function drawFx(t, layer) {
         const [x, y] = body(f.s); ctx.globalCompositeOperation = 'lighter'; ctx.strokeStyle = `rgba(255,220,120,${0.8 * (1 - k)})`;
         ctx.lineWidth = 5; ctx.beginPath(); ctx.ellipse(x, y - 40 * f.s.scale, 190 * f.s.scale, 300 * f.s.scale, 0, 0, 7); ctx.stroke();
       } else if (f.kind === 'pop') {
-        ctx.globalAlpha = k < 0.75 ? 1 : 1 - (k - 0.75) / 0.25; ctx.font = '700 24px system-ui,sans-serif'; ctx.textAlign = 'center';
+        ctx.globalAlpha = k < 0.75 ? 1 : 1 - (k - 0.75) / 0.25; ctx.font = '700 20px system-ui,sans-serif'; ctx.textAlign = 'center';
         ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(0,0,0,.6)'; const y = f.y - 40 * k;
         ctx.strokeText(f.text, f.x, y); ctx.fillStyle = f.color; ctx.fillText(f.text, f.x, y);
       }
@@ -841,36 +865,37 @@ function drawDuelistOverhead(s, t) {
   ctx.restore();
 }
 function drawHud(t) {
-  ctx.save(); ctx.font = '700 22px system-ui,sans-serif'; ctx.fillStyle = 'rgba(0,0,0,.35)';
-  ctx.fillRect(14, 12, 560, 62);
-  ctx.fillStyle = '#fff'; ctx.fillText(`${doc.name}`, 28, 40);
-  const nw = ctx.measureText(doc.name).width; ctx.font = '500 16px system-ui,sans-serif'; ctx.fillStyle = '#c9d1d9';
-  ctx.fillText(`${F.toUpperCase()} · ${doc.main?.name ?? ''}`, 36 + nw, 40);
+  ctx.save(); ctx.font = '700 19px system-ui,sans-serif'; ctx.fillStyle = 'rgba(0,0,0,.35)';
+  ctx.fillRect(12, 10, 470, 54);
+  ctx.fillStyle = '#fff'; ctx.fillText(`${doc.name}`, 24, 30);
+  const nw = ctx.measureText(doc.name).width; ctx.font = '500 14px system-ui,sans-serif'; ctx.fillStyle = '#c9d1d9';
+  ctx.fillText(`${F.toUpperCase()} · ${doc.main?.name ?? ''}`, 32 + nw, 30);
   const f1 = (x, d = 2) => x == null ? '—' : (+x).toFixed(d);
-  ctx.fillStyle = '#9aa7b4'; ctx.font = '500 15px system-ui,sans-serif';
-  ctx.fillText(T('hudStats', 'K/D {kd} · KPM {kpm} · acc {acc}% · HS {hs}% · {spk} shots/kill', { kd: f1(val('kd')), kpm: f1(val('kpm')), acc: f1(val('acc'), 0), hs: f1(val('hsr'), 0), spk: f1(st.spk, 0) }), 28, 63);
+  ctx.fillStyle = '#9aa7b4'; ctx.font = '500 13px system-ui,sans-serif';
+  ctx.fillText(T('hudStats', 'K/D {kd} · KPM {kpm} · acc {acc}% · HS {hs}% · {spk} shots/kill', { kd: f1(val('kd')), kpm: f1(val('kpm')), acc: f1(val('acc'), 0), hs: f1(val('hsr'), 0), spk: f1(st.spk, 0) }), 24, 53);
   // live tally (emerges from the sim, not scripted)
   if (!reduced) {
   const acc = stats.shots ? Math.round(stats.hits / stats.shots * 100) : 0, min = t / 60, pm = x => min > 0 ? (x / min).toFixed(2) : '0.00';
   const clock = `${Math.floor(t / 3600) ? Math.floor(t / 3600) + ':' : ''}${String(Math.floor(t / 60) % 60).padStart(2, '0')}:${String(Math.floor(t) % 60).padStart(2, '0')}`;
   const s = '⏱ ' + clock + ' · ' + T('tally', 'kills {k} ({kpm}/min) · deaths {d} ({dpm}/min) · assists {a} · HS {hs} · vehicle {veh} · hit {acc}% of {shots} shots',
     { k: stats.k, kpm: pm(stats.k), d: stats.d, dpm: pm(stats.d), a: stats.a, hs: stats.hs, veh: stats.veh, acc, shots: stats.shots });
-  ctx.font = '500 15px system-ui,sans-serif'; const w = ctx.measureText(s).width;
-  ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(14, H - 44, w + 28, 30);
-  ctx.fillStyle = '#c9d1d9'; ctx.fillText(s, 28, H - 24);
+  ctx.font = '500 13px system-ui,sans-serif'; const w = ctx.measureText(s).width;
+  ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(12, H - 36, w + 24, 26);
+  ctx.fillStyle = '#c9d1d9'; ctx.fillText(s, 24, H - 18);
   }
   // speed chip (top right): the director's current rate
   const rs = rate === 2 ? '×2' : rate === 1 ? '×1' : '×' + rate.toFixed(1).replace(/\.0$/, '');
-  ctx.font = '700 18px system-ui,sans-serif'; const rw = ctx.measureText(rs).width + 20;
-  ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(W - 14 - rw, 12, rw, 30);
-  ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.fillText(rs, W - 14 - rw / 2, 33); ctx.textAlign = 'left';
-  // class badge over the main soldier
+  ctx.font = '700 16px system-ui,sans-serif'; const rw = ctx.measureText(rs).width + 20;
+  ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(W - 14 - rw, 10, rw, 26);
+  ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.fillText(rs, W - 14 - rw / 2, 29); ctx.textAlign = 'left';
+  // class badge over the main soldier (crowd mode only: pair mode already shows
+  // the class badge in the duel overhead, and the two would overlap on the strip)
   drawStateBox(t);
-  if (life.cls && alive(main) && !tank.on) {
+  if (life.cls && alive(main) && !tank.on && !duelPlan) {
     const [x, y] = head(main); ctx.font = '700 14px system-ui,sans-serif'; ctx.textAlign = 'center';
     const lbl = CLS[life.cls], bw = ctx.measureText(lbl).width + 16;
-    ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fillRect(x - bw / 2, y - 158, bw, 22);
-    ctx.fillStyle = '#e6edf3'; ctx.fillText(lbl, x, y - 142);
+    ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fillRect(x - bw / 2, y - 90, bw, 22);
+    ctx.fillStyle = '#e6edf3'; ctx.fillText(lbl, x, y - 74);
   }
   ctx.restore();
 }
@@ -887,7 +912,7 @@ function drawStateBox(t) {
   if (s.id === 'running' && s.veh) lbl = T('st.driving', 'Driving to fight');
   if (def.countdown) lbl += ` ${Math.max(1, Math.ceil(s.t1 - t))}`;
   const k = clamp((t - s.t0) / (s.t1 - s.t0));
-  const x = tank.on ? main.x : main.x, y = tank.on ? main.y - 200 : main.y - (main.state === 'dead' ? 130 : 250);
+  const x = tank.on ? main.x : main.x, y = tank.on ? main.y - 200 : main.y - (main.state === 'dead' ? 130 : 240);
   ctx.save(); ctx.font = '600 15px system-ui,sans-serif'; ctx.textAlign = 'center';
   const w = Math.max(120, ctx.measureText(lbl).width + 22);
   ctx.fillStyle = 'rgba(10,14,20,.72)'; ctx.strokeStyle = 'rgba(255,255,255,.45)'; ctx.setLineDash([5, 4]); ctx.lineWidth = 1.5;
@@ -955,8 +980,8 @@ function render(t) {
   if (jumpCard && wallT - jumpCard.w0 < 1.5) {
     ctx.save(); ctx.font = '700 30px system-ui,sans-serif'; ctx.textAlign = 'center';
     const w = ctx.measureText(jumpCard.text).width + 36;
-    ctx.fillStyle = 'rgba(10,14,20,.8)'; ctx.fillRect(W / 2 - w / 2, H / 2 - 26, w, 44);
-    ctx.fillStyle = '#fff'; ctx.fillText(jumpCard.text, W / 2, H / 2 + 6); ctx.restore();
+    ctx.fillStyle = 'rgba(10,14,20,.8)'; ctx.fillRect(W / 2 - w / 2, 84, w, 44);
+    ctx.fillStyle = '#fff'; ctx.fillText(jumpCard.text, W / 2, 116); ctx.restore();
   }
   lifeUi(t);
 }
@@ -1142,6 +1167,11 @@ window.__cover = () => ({ walls: walls.map(w => [Math.round(w.x), w.y, Math.roun
   main: { x: +main.x.toFixed(1), peekWant: main.peekWant ?? 0, cover: main.cover, state: main.state },
   allies: allies.map(a => ({ x: +a.x.toFixed(1), peekWant: a.peekWant ?? 0, cover: a.cover, state: a.state })),
   enemies: enemies.map(e => ({ x: +e.x.toFixed(1), peekWant: e.peekWant ?? 0, cover: e.cover, state: e.state, slot: e.slot })) });
+// strip stage (#105): every fighter's lane + slot + scale, and every
+// fight/assist/dying target picked off the front lane (must stay empty)
+window.__lanes = () => everyone.map(s => ({ who: s === main ? 'main' : s === rival ? 'rival' : s.faction,
+  lane: s.lane ?? null, x: Math.round(s.x), y: Math.round(s.y), scale: +s.scale.toFixed(3), dim: !!s.dim, slot: s.slot ?? null }));
+window.__laneViolations = () => laneViolations.slice();
 window.__life = () => { const L = lifeAt(simT); return L && { n: L.n, phase: phaseAt(L, simT)?.ph, phases: L.phases.map(p => [p.ph, +(p.t1 - p.t0).toFixed(1)]), simT }; };
 window.__slow = () => ({ wallT, simT, scale: currentRate() });
 window.__params = () => ({ st, P, RATE, CYCLE, ALIVE_MEAN, DOWN_MEAN, missing, stats, simT, cur: cur?.id, credit, fight: fightOk ? fight : null, jump });
