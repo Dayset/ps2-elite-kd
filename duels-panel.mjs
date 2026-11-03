@@ -252,7 +252,7 @@ export function mountDuels(section, o = {}) {
       tr("duel.crowdKd", "K/D {kd} vs the crowd", { kd: kdTxt(s.kd) }),
       s.nemesis ? tr("duel.nemesisOf", "😈 Nemesis: {name} ({k}–{d})", { name: bareName(s.nemesis.name), k: int(s.nemesis.kills), d: int(s.nemesis.deaths) }) : "",
       s.target ? tr("duel.targetOf", "🎯 Favourite target: {name} ({k}–{d})", { name: bareName(s.target.name), k: int(s.target.kills), d: int(s.target.deaths) }) : "",
-      preyEntry ? tr("duel.preyOf", "🪦 Mysterious Hunter: {name} ({k}–{d})", { name: bareName(preyEntry[0]), k: int(preyEntry[2]), d: int(preyEntry[1]) }) : "",
+      preyEntry ? tr("duel.preyOf", "🪦 Hunter: {name} ({k}–{d})", { name: bareName(preyEntry[0]), k: int(preyEntry[2]), d: int(preyEntry[1]) }) : "",
     ].filter(Boolean).join(" · ");
     sum.hidden = false;
     setStatus(tr("duel.crowdNote", "The {n} players {name} fights most (Census killboard). Add one of them to the names to see every kill between the two.", { n: rows.length.toLocaleString(lang()), name: who }));
