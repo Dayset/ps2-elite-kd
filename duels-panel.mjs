@@ -19,7 +19,7 @@ import {
   readPairPages, readPairNewer, pairEvents, fightsOf, fightResult, weaponShotUrls, parseShotStats, perKill, pairSummary,
   charInfoUrl, parseCharInfo, pairWarnings, WORLD_NAME, iviLuck, duelFitKind, DUEL_FIT_V1,
   DUEL_CACHE_KEY, duelCacheEntry, duelCacheRestore, duelCachePrune,
-} from "./duels.mjs?v=20261102-luck4";
+} from "./duels.mjs?v=20261102-luck5";
 
 const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const lang = () => { try { return currentLang() || undefined; } catch { return undefined; } };

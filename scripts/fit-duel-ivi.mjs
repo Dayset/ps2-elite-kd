@@ -25,6 +25,9 @@ import fs from "node:fs";
 import path from "node:path";
 import { DUEL_FIT_MIN, duelExpected } from "../duels.mjs";
 
+// 🎲 per-player Luck counts opponents with LUCK_PAIR_MIN+ mutual kills (owner t855u: 10, after a reliability test);
+// the duel model itself and the duels panel keep DUEL_FIT_MIN (20).
+const LUCK_PAIR_MIN = 10;
 const dir = process.argv.slice(2).find((a) => !a.startsWith("--")) || "data/";
 const lite = JSON.parse(fs.readFileSync(path.join(dir, "ranks-lite.json"), "utf8"));
 const c = lite.cols, ni = c.indexOf("name"), si = c.indexOf("slug"), ai = c.indexOf("adjs"), vi = c.indexOf("infVeh");
@@ -52,7 +55,7 @@ for (const f of fs.readdirSync(pdir)) {
     const o = bare(r.name);
     if (!o || o === "0" || o === me || !ivi.has(o)) continue;
     const k = +r.kills || 0, d = +r.deaths || 0, n = k + d;
-    if (n < DUEL_FIT_MIN) continue;
+    if (n < LUCK_PAIR_MIN) continue;
     const [A, B] = me < o ? [me, o] : [o, me];
     const old = pairs.get(`${A}|${B}`);
     if (!old || n > old.n) pairs.set(`${A}|${B}`, { A, B, x: me < o ? k : d, n });
@@ -60,7 +63,8 @@ for (const f of fs.readdirSync(pdir)) {
 }
 const vOf = (k) => (veh.has(k) ? veh.get(k) : vehMed);
 const hash = (s) => { let h = 2166136261; for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619); return (h >>> 0) / 4294967296; };
-const list = [...pairs.values()].map((q) => ({ ...q, L: Math.log(ivi.get(q.A) / ivi.get(q.B)), va: vOf(q.A), vb: vOf(q.B), dv: vOf(q.A) - vOf(q.B), test: hash(`${q.A}|${q.B}`) < 0.2 }));
+const all = [...pairs.values()].map((q) => ({ ...q, L: Math.log(ivi.get(q.A) / ivi.get(q.B)), va: vOf(q.A), vb: vOf(q.B), dv: vOf(q.A) - vOf(q.B), test: hash(`${q.A}|${q.B}`) < 0.2 }));
+const list = all.filter((q) => q.n >= DUEL_FIT_MIN); // the fit uses 20+ kill pairs only
 const sig = (t) => 1 / (1 + Math.exp(-t));
 
 // Weighted logistic regression on binomial counts (Newton). feats(q) → number[]; free: which coefs to fit.
@@ -146,7 +150,7 @@ if (process.argv.includes("--players-only")) {
 }
 
 /**
- * 🎲 per player (owner 2026-11-02, t849u; debug column first): over every opponent with MIN+ kills between them,
+ * 🎲 per player (owner 2026-11-02, t849u; debug column first): over every opponent with LUCK_PAIR_MIN+ (10) kills between them,
  * the average gap (actual − expected share of those kills, the same model as the duels row), weighted by kills.
  * Shrunk toward 0 by how noisy the player's average is (empirical Bayes: τ² / (τ² + s²)), so few or small
  * matchups pull it in. Only players with OPP_MIN+ such opponents. cuts = the player spread: middle 90% normal,
@@ -156,7 +160,7 @@ function writePlayers(fit) {
   const OPP_MIN = 20;
   const slug = (k) => k.replace(/[^a-z0-9]+/g, "");
   const per = new Map();
-  for (const q of list) {
+  for (const q of all) {
     const e = duelExpected(Math.exp(q.L), 1, fit, q.va, q.vb), r = q.x / q.n - e;
     for (const [k, rr] of [[q.A, r], [q.B, -r]]) { let a = per.get(k); if (!a) per.set(k, (a = [])); a.push([rr, q.n]); }
   }
@@ -172,7 +176,7 @@ function writePlayers(fit) {
   const p = {};
   for (const x of raw) { x.v = x.g * (tau2 / (tau2 + x.s2)); p[slug(x.k)] = [Math.round(x.v * 1000), x.m, Math.round(x.b * 100)]; }
   const vs = raw.map((x) => x.v).sort((a, b) => a - b), qq = (f) => Math.round(vs[Math.min(vs.length - 1, Math.floor(f * vs.length))] * 1000);
-  const o = { v: 1, model: fit.v || 1, min: DUEL_FIT_MIN, oppMin: OPP_MIN, pairs: list.length, players: raw.length,
+  const o = { v: 1, model: fit.v || 1, min: LUCK_PAIR_MIN, oppMin: OPP_MIN, pairs: all.length, players: raw.length,
     cuts: { lo99: qq(0.005), lo90: qq(0.05), hi90: qq(0.95), hi99: qq(0.995) }, p };
   fs.writeFileSync(path.join(dir, "duel-ivi-player.json"), JSON.stringify(o) + "\n");
   console.log(JSON.stringify({ players: o.players, cuts: o.cuts, tau: +Math.sqrt(tau2).toFixed(4) }));

@@ -1,0 +1,71 @@
+name: 🎲 Luck per player (daily)
+
+# 🎲 Luck column auto-update (owner t856u, 2026-11-02). Once a day, rebuild
+# data/duel-ivi-player.json (PC) and data-ps/duel-ivi-player.json (PS) from the
+# cached killboards (data/players, data-ps/players) and ranks-lite.json, with the
+# committed duel model (duel-ivi-fit.json) left as it is: --players-only. No network
+# besides git; ~10 s of node. Commits only when a file's content changed (the files
+# carry no timestamp, so an unchanged cache gives an identical file and no commit).
+# The ⚔️ duel model itself stays fixed; a manual run with refit=true refits it
+# (holdout-gated, scripts/fit-duel-ivi.mjs) and commits duel-ivi-fit.json too.
+
+on:
+  schedule:
+    - cron: "29 8 * * *" # daily 08:29 UTC
+  workflow_dispatch:
+    inputs:
+      refit:
+        description: "Also refit the duel model (duel-ivi-fit.json)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: luck-daily
+  cancel-in-progress: false
+
+jobs:
+  luck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          # Root *.mjs (duels.mjs) come with cone mode; data/ and data-ps/ top files come with their players/ dirs.
+          sparse-checkout: |
+            scripts
+            data/players
+            data-ps/players
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "20"
+
+      - name: Rebuild 🎲 Luck (PC + PS)
+        env:
+          REFIT: ${{ github.event.inputs.refit == 'true' && '1' || '' }}
+        run: |
+          for d in data/ data-ps/; do
+            if [ -n "$REFIT" ]; then node scripts/fit-duel-ivi.mjs "$d"; else node scripts/fit-duel-ivi.mjs "$d" --players-only; fi
+          done
+
+      - name: Commit if changed
+        env:
+          BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          files="data/duel-ivi-player.json data-ps/duel-ivi-player.json data/duel-ivi-fit.json data-ps/duel-ivi-fit.json"
+          if git diff --quiet -- $files; then echo "🎲 Luck unchanged; no commit."; exit 0; fi
+          git diff --stat -- $files
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- $files
+          git commit -q -m "chore(luck): daily 🎲 Luck rebuild [bot]"
+          for attempt in 1 2 3 4 5; do
+            if git push -q origin "HEAD:${BRANCH}"; then echo "Pushed."; exit 0; fi
+            echo "Push rejected (attempt $attempt); rebasing…"; sleep $((attempt * 5))
+            git pull -q --rebase origin "$BRANCH" || { git rebase --abort 2>/dev/null; exit 1; }
+          done
+          echo "::error::Could not push after 5 attempts"; exit 1

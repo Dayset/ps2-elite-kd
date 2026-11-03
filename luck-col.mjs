@@ -2,12 +2,12 @@
  * 🎲 Luck column (owner t849u → public t850u): per-player "vs expected" from
  * data/duel-ivi-player.json (scripts/fit-duel-ivi.mjs writePlayers). Value =
  * average gap, in points of the mutual-kill share, between what the player got
- * and what the ⚔️ iVi model (duels.mjs) predicts, over opponents with 20+ kills
- * between them; shrunk toward 0 for few opponents. Shared by ✨ Stats
+ * and what the ⚔️ iVi model (duels.mjs) predicts, over opponents with 10+ kills
+ * between them (file field min); shrunk toward 0 for few opponents. Shared by ✨ Stats
  * (stats-table.mjs) and 🏆 Rankings (rankings.mjs), one fetch for both.
  */
 import { t as tr } from "./i18n.mjs";
-import { playerLuck } from "./duels.mjs?v=20261102-luck4";
+import { playerLuck } from "./duels.mjs?v=20261102-luck5";
 
 export { playerLuck };
 
@@ -51,12 +51,12 @@ export function luckVerdict(l) {
 export const LUCK_HINT_EN = "Wins more (+) or fewer (−) of the kills against the same opponents than ⚔️ iVi predicts. Not literally luck; vehicle kills are already adjusted.";
 export const luckHint = () => tr("tip.luck", LUCK_HINT_EN);
 export const luckLabel = () => tr("col.luck", "🎲 Luck");
-export const luckFewTip = (d) => tr("luck.p.few", "Too few opponents: needs {n} with 20+ kills between them.", { n: d ? d.oppMin : 20 });
+export const luckFewTip = (d) => tr("luck.p.few", "Too few opponents: needs {n} with {k}+ kills between them.", { n: d ? d.oppMin : 20, k: d && d.min ? d.min : 10 });
 
 /** Hover: verdict, the numbers, how, and what it is not. */
 export function luckTip(l) {
   const pts = `${l.gap >= 0 ? "+" : "−"}${(Math.abs(l.gap) * 100).toFixed(1)}`;
-  return luckVerdict(l) + "\n" + tr("luck.p.tip", "{gap} pts of the kills vs what ⚔️ iVi predicts, over {n} opponents; beat the prediction against {b}% of them.\nHow: kill share vs each opponent (20+ kills between them) minus the iVi prediction, averaged.\nNot literally luck: more or fewer won mutual fights than iVi predicts; vehicle kills already adjusted.",
+  return luckVerdict(l) + "\n" + tr("luck.p.tip", "{gap} pts of the kills vs what ⚔️ iVi predicts, over {n} opponents; beat the prediction against {b}% of them.\nHow: kill share vs each opponent (10+ kills between them) minus the iVi prediction, averaged.\nNot literally luck: more or fewer won mutual fights than iVi predicts; vehicle kills already adjusted.",
     { gap: pts, n: l.opps.toLocaleString(), b: l.beat });
 }
 

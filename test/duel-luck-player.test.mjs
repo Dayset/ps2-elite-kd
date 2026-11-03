@@ -29,11 +29,11 @@ describe("🎲 per player: playerLuck", () => {
 
 describe("🎲 per player: data files and the public column", () => {
   for (const dir of ["data", "data-ps"]) {
-    it(`${dir}/duel-ivi-player.json: versioned, small, ordered cuts, 20+ opponents`, () => {
+    it(`${dir}/duel-ivi-player.json: versioned, small, ordered cuts, 20+ opponents with 10+ kills`, () => {
       const f = `${dir}/duel-ivi-player.json`;
       assert.ok(fs.statSync(f).size < 250000, "kept small");
       const d = JSON.parse(fs.readFileSync(f, "utf8"));
-      assert.equal(d.v, 1); assert.equal(d.oppMin, 20);
+      assert.equal(d.v, 1); assert.equal(d.oppMin, 20); assert.equal(d.min, 10, "opponents count from 10+ mutual kills (owner t855u)");
       const c = d.cuts;
       assert.ok(c.lo99 <= c.lo90 && c.lo90 < c.hi90 && c.hi90 <= c.hi99);
       const rows = Object.values(d.p);
