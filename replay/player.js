@@ -8,6 +8,7 @@ import { shardOf, slugOf } from './shard.mjs';
 import { toDoc } from './doc.mjs?v=20261103-pair1';
 import { pairOf, pairStatus, pairRow, defaultRival, rankedRivals } from './pair.mjs?v=20261103-pair1';
 import { profileOf, shotsPerSec } from './weapons.mjs?v=20261103-weap1';
+import { baseRate, speedAt, bulletRate, nextKillAt, calmStretchEnd } from './director.mjs?v=20261103-dir1';
 import { t as tr, ready as i18nReady, currentLang } from '../i18n.mjs';
 
 const cv = document.getElementById('stage'), ctx = cv.getContext('2d');
@@ -15,6 +16,7 @@ const W = 1280, H = 720, GROUND = 600;
 const q = new URLSearchParams(location.search);
 let reduced = matchMedia('(prefers-reduced-motion: reduce)').matches && !q.has('preview') && !q.has('play');
 const debug = q.has('debug');
+const speed1 = q.get('speed') === '1';   // ?speed=1 forces x1 everywhere (tests, owner check)
 if (q.has('bare')) document.body.classList.add('bare');
 const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 const lerp = (a, b, k) => a + (b - a) * k;
@@ -99,13 +101,18 @@ if (location.origin === 'https://dayset.github.io' && !/^ps/i.test(doc.server ||
 } catch {}
 const fightOk = fight && fight.n >= FIGHT_MIN_RUNS;
 
-// mulberry32 seeded from the name
+// mulberry32 seeded from the name; the plan has its own stream (rngPlan) so the
+// stepping granularity (director rates, __fast dt) cannot move the plan: planCycle
+// consumes rngPlan in cycle order only, while live decisions use rng
 let seed = 2166136261; for (const c of doc.slug) seed = Math.imul(seed ^ c.charCodeAt(0), 16777619);
-const rng = (() => { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a);
-  t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; })();
-const sround = x => Math.floor(x) + (rng() < x - Math.floor(x) ? 1 : 0); // stochastic rounding keeps the long-run average exact
-const pick = a => a[Math.floor(rng() * a.length)];
-const gauss = () => { let u = 0; for (let i = 0; i < 6; i++) u += rng(); return (u - 3) / Math.SQRT1_2 / Math.sqrt(1); };
+const mulberry = (s) => { let a = s >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a);
+  t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; };
+const rng = mulberry(seed);
+const rngPlan = mulberry(seed ^ 0x9e3779b9);
+const rngBg = mulberry(seed ^ 0x5bd1e995);   // background crowd: its own stream, so crowd timing cannot move main tallies
+const sround = (x, r = rng) => Math.floor(x) + (r() < x - Math.floor(x) ? 1 : 0); // stochastic rounding keeps the long-run average exact
+const pick = (a, r = rng) => a[Math.floor(r() * a.length)];
+const gauss = (r = rng) => { let u = 0; for (let i = 0; i < 6; i++) u += r(); return (u - 3) / Math.SQRT1_2 / Math.sqrt(1); };
 
 // ---------------------------------------------------------------- stats (literal per-minute rates)
 const missing = [];
@@ -193,34 +200,30 @@ const ready = s => (s.state === 'idle' || s.state === 'shoot') && (Math.abs(s.x 
 // hits deviate ≤ 0.8°, misses 1.2–2.5° and keep flying past the target (drawn on a lane just in front
 // of or behind it, see render). A close call is aimed at the head and passes at the cone's top edge.
 const CONE = 2.5 * Math.PI / 180;
-function fire(t, from, to, o = {}) {
+function fire(t, from, to, o = {}, r = rng) {
   const [x0, y0] = muzzle(from);
   const [tx, ty] = o.hs || o.close ? head(to) : body(to);
   const d = Math.hypot(tx - x0, ty - y0), v = o.shell ? 1500 : from.fx.plasma ? 1700 : 2400;
-  const off = o.close ? -CONE * Math.sign(tx - x0 || 1) : o.hit ? (rng() - 0.5) * 2 * 0.32 * CONE : (rng() < 0.5 ? -1 : 1) * (0.48 + rng() * 0.52) * CONE;
+  const off = o.close ? -CONE * Math.sign(tx - x0 || 1) : o.hit ? (r() - 0.5) * 2 * 0.32 * CONE : (r() < 0.5 ? -1 : 1) * (0.48 + r() * 0.52) * CONE;
   const a = Math.atan2(ty - y0, tx - x0) + (o.shell ? 0 : off);
   bullets.push({ x: x0, y: y0, vx: Math.cos(a) * v, vy: Math.sin(a) * v, d, left: o.hit ? d : d + 900, age: 0, from, to, ...o,
-    side: o.hit ? 1 : rng() < 0.5 ? -1 : 1,
+    side: o.hit ? 1 : r() < 0.5 ? -1 : 1,
     color: o.shell ? '#ffd27a' : from.fx.tracer, plasma: from.fx.plasma && !o.shell });
   if (from === main && !o.shell) { stats.shots++; if (o.hit) stats.hits++; }
 }
 
-// ---------------------------------------------------------------- slow motion (wall-clock envelope)
-// headshot kill / main soldier's death: ~0.7 s down to 30% speed; normal kill: lighter (~0.45 s, 55%),
-// every 3rd kill at most. The scene clock lags behind real time during slow-mo and catches up later in
-// calm states (≤ 1.25×), so long-run per-minute rates are not changed. Off under reduced motion.
-let wallT = 0, simT = 0, skipped = 0, slow = null, slowNext = 0, killsSinceSlow = 0;
-const SLOW = { hs: [0.7, 0.30], death: [0.75, 0.28], kill: [0.45, 0.55] };
-function slowmo(kind) {
-  if (reduced || fast) return;
-  if (kind === 'kill') { if (++killsSinceSlow < 3 || wallT < slowNext) return; }
-  else if (wallT < slowNext - 1.2) return;
-  const [dur, speed] = SLOW[kind]; slow = { w0: wallT, dur, speed }; slowNext = wallT + dur + 2.6; killsSinceSlow = 0;
-}
-function timeScale(w) {
-  if (!slow) return 1; const k = (w - slow.w0) / slow.dur; if (k >= 1) { slow = null; return 1; } if (k < 0) return 1;
-  const ease = x => x * x * (3 - 2 * x), env = k < 0.25 ? ease(k / 0.25) : k > 0.6 ? ease((1 - k) / 0.4) : 1;
-  return 1 - (1 - slow.speed) * env;
+// ---------------------------------------------------------------- director (wall clock -> data clock, issue #97)
+// The director only scales wall time into data time; step() and the tallies never see it.
+// bullet: {kind: 'kill'|'death', w0: wallT} while the bullet-time envelope runs;
+// freeze: wall frames left frozen for a headshot impact; jump: the last jump cut;
+// cue: the current frame plays under x0.6 (cues on). Off under reduced motion or ?speed=1.
+let wallT = 0, simT = 0, skipped = 0, rate = 1, bullet = null, freeze = 0, jump = null, jumpCard = null, cue = false;
+function currentRate() {
+  if (reduced || speed1) return 1;
+  if (bullet && wallT - bullet.w0 >= 1.05) bullet = null;
+  if (bullet) return bulletRate(wallT - bullet.w0);   // the envelope owns the rate while active
+  const tKill = nextKillAt(plan.segs, simT);
+  return speedAt(cur?.id, tKill != null ? tKill - simT : null, null);
 }
 
 function land(t, b) {
@@ -232,8 +235,8 @@ function land(t, b) {
   if (s === main && life.cls === 'ha') fx.push({ kind: 'shield', s, t0: t, dur: 0.35 });
   if (b.final) {
     s.hs = !!b.hs; s.set('die', t); s.deadAt = t; s.busy = false;
-    if (s === main) { stats.d++; slowmo('death'); return; }
-    if (b.from === main) { stats.k++; if (b.hs) stats.hs++; if (b.veh) stats.veh++; slowmo(b.hs ? 'hs' : 'kill');
+    if (s === main) { stats.d++; if (!fast && !reduced && !speed1) { if (b.hs) freeze = 2; bullet = { kind: 'death', w0: bullet ? wallT - 0.15 : wallT }; } return; }
+    if (b.from === main) { stats.k++; if (b.hs) stats.hs++; if (b.veh) stats.veh++; if (!fast && !reduced && !speed1) { if (b.hs) freeze = 2; bullet = { kind: 'kill', w0: bullet ? wallT - 0.15 : wallT }; }
       pop(main, b.hs ? T('pop.hs', 'headshot +1') : b.veh ? T('pop.veh', 'vehicle kill +1') : '+1', b.hs ? '#ffe066' : '#fff', t); }
     else if (b.assist) { stats.a++; pop(main, T('pop.assist', '+assist'), '#9fe8ff', t); }
   }
@@ -248,12 +251,13 @@ const credit = { k: 0, a: 0, hs: 0, veh: 0, rev: 0, shots: 0, hits: 0, ...Object
 const plan = { segs: [], end: 0, cycles: 0, deathsPlanned: 0 };
 const takeWhole = (key, add, cap = Infinity) => { credit[key] = Math.min(cap, credit[key] + add); const n = Math.floor(credit[key]); credit[key] -= n; return n; };
 const seg = (id, t0, dur, o = {}) => ({ id, t0, t1: t0 + dur, ...o });
-const killShots = () => Math.max(1, sround(st.spk * P.killShare));
-const killHits = () => Math.max(1, sround(st.hpk * P.killShare));
+const killShots = (r = rng) => Math.max(1, sround(st.spk * P.killShare, r));
+const killHits = (r = rng) => Math.max(1, sround(st.hpk * P.killShare, r));
 const burstDur = n => n / RATE + 0.45;
 const DYING = 3.2;
 
 function planCycle(T, first) {
+  const rng = rngPlan;   // shadow: every random call below draws the plan stream, in cycle order
   const out = [];
   let t = T;
   // down time
@@ -278,13 +282,13 @@ function planCycle(T, first) {
   if (nV && spikes.length > nV) { const at = Math.floor(rng() * (spikes.length - nV + 1)); const v = spikes.splice(0, nV); spikes.splice(at, 0, ...v); }
   for (const s of spikes) {
     if (s.id === 'fight' && s.veh) { s.n = 2; s.dur = 1.4; }
-    else if (s.id === 'fight') { s.n = killShots(); s.h = killHits(); s.dur = burstDur(s.n); }
-    else { s.n = Math.max(1, sround(st.spk * 0.35)); s.h = Math.max(0, sround(st.hpk * 0.3)); s.dur = burstDur(s.n) + 0.9; }
+    else if (s.id === 'fight') { s.n = killShots(rngPlan); s.h = killHits(rngPlan); s.dur = burstDur(s.n); }
+    else { s.n = Math.max(1, sround(st.spk * 0.35, rngPlan)); s.h = Math.max(0, sround(st.hpk * 0.3, rngPlan)); s.dur = burstDur(s.n) + 0.9; }
     if (!s.veh) { credit.shots -= s.n; credit.hits -= s.h; }
   }
   // first spike lands one "time to fight" after the death (LIVE formula), the rest spread over the life
   if (spikes.length) {
-    const ttc = clamp(st.fightMs / 1000 * Math.exp(0.8 * gauss()), 3, 240);
+    const ttc = clamp(st.fightMs / 1000 * Math.exp(0.8 * gauss(rngPlan)), 3, 240);
     const minFirst = t + (revived ? 1 : 3.5);
     let at = Math.max(minFirst, T + ttc - spikes[0].dur);
     const need = spikes.reduce((a, s) => a + s.dur + 1.2, 0) + (nV ? 4 : 0);
@@ -330,7 +334,7 @@ function planCycle(T, first) {
         fills.push(seg(id, c, d)); c += d; continue;
       }
       if (credit.shots >= 8 && room > 8 && rng() < 0.35) {   // leftover shots: an exchange without a kill
-        const n = Math.min(Math.floor(credit.shots), sround(6 + rng() * 10)), h = Math.min(Math.max(0, Math.floor(credit.hits)), sround(n * st.hpk / st.spk));
+        const n = Math.min(Math.floor(credit.shots), sround(6 + rng() * 10, rngPlan)), h = Math.min(Math.max(0, Math.floor(credit.hits)), sround(n * st.hpk / st.spk, rngPlan));
         credit.shots -= n; credit.hits -= h;
         const pad = 1 + rng() * Math.min(10, room - burstDur(n) - 3.5); fills.push(seg('idle', c, pad)); c += pad;
         fills.push(seg('trading', c, burstDur(n), { n, h })); c += burstDur(n) + 0.2;
@@ -343,7 +347,7 @@ function planCycle(T, first) {
   }
   for (const id of queue) credit[id] = Math.min(4, credit[id] + 1);   // did not fit: kept for later
   // death: a short exchange the main soldier loses; return fire comes from the shot budget
-  const rn = Math.max(0, Math.min(Math.floor(credit.shots), sround(4 + rng() * 6))); credit.shots -= rn;
+  const rn = Math.max(0, Math.min(Math.floor(credit.shots), sround(4 + rng() * 6, rngPlan))); credit.shots -= rn;
   const death = seg('dying', aliveEnd, DYING, { n: rn });
   const all = [...out, ...busy, ...fills, death].sort((a, b) => a.t0 - b.t0);
   for (const s of all) if (stint && s.t0 >= stint[0] - 0.01 && s.t0 < stint[1] && s.id !== 'running') s.veh = true;
@@ -368,18 +372,18 @@ function pickTarget(t) {
   r = enemies.filter(e => e.state === 'run'); if (r.length) { const e = pick(r); e.x = e.slot; e.set('idle', t); return e; }
   const e = pick(enemies.filter(e => !e.busy)); e.x = e.slot; e.set('respawn', t); e.t0 = t - 0.9; e.set('idle', t); return e;
 }
-function startBurst(t, shooter, target, n, h, final, extra = {}) {
+function startBurst(t, shooter, target, n, h, final, extra = {}, r = rng) {
   const hits = new Set(); if (final) hits.add(n - 1);
-  while (hits.size < Math.min(n, h)) hits.add(Math.floor(rng() * (final ? n - 1 : n)));
+  while (hits.size < Math.min(n, h)) hits.add(Math.floor(r() * (final ? n - 1 : n)));
   shooter.set('shoot', t); shooter.t0 = t; shooter.facing = target.x > shooter.x ? 1 : -1;
   const [mx, my] = muzzle(shooter), [tx, ty] = body(target);
   shooter.aim = clamp(Math.atan2(ty - my, Math.abs(tx - mx)), -0.25, 0.25);
-  return { shooter, target, n, hits, final, fired: 0, t0: t, rate: shooter.rate, extra, done: n <= 0 };
+  return { shooter, target, n, hits, final, fired: 0, t0: t, rate: shooter.rate, extra, done: n <= 0, r };
 }
 function runBurst(b, t) {
   while (b.fired < b.n && t >= b.t0 + b.fired / b.rate) {
     const i = b.fired++, hit = b.hits.has(i), fin = b.final && i === b.n - 1;
-    fire(t, b.shooter, b.target, { hit, final: fin, ...(fin ? b.extra : {}) });
+    fire(t, b.shooter, b.target, { hit, final: fin, ...(fin ? b.extra : {}) }, b.r);
   }
   if (b.fired >= b.n && !b.done) { b.done = true; b.end = t; if (b.shooter.state === 'shoot') b.shooter.set('idle', t); }
   return b.done;
@@ -479,26 +483,26 @@ function background(t, dt) {
   if (!engaged) return;
   // enemy pot-shots that miss; luck turns some into visible close calls
   if (t > nextSuppress) {
-    nextSuppress = t + P.suppress * (0.6 + 0.8 * rng());
+    nextSuppress = t + P.suppress * (0.6 + 0.8 * rngBg());
     const sh = enemies.filter(e => e.state === 'idle' && !e.busy), tgts = [main, ...allies].filter(alive);
     if (sh.length && tgts.length && !tank.on) {
-      const s = pick(sh), tg = rng() < 0.6 && alive(main) ? main : pick(tgts), close = tg === main && rng() < P.dodge;
-      const b = startBurst(t, s, tg, 5 + Math.floor(rng() * 6), 0, false); b.close = close; b.pot = true; enemyBursts.push(b);
+      const s = pick(sh, rngBg), tg = rngBg() < 0.6 && alive(main) ? main : pick(tgts, rngBg), close = tg === main && rngBg() < P.dodge;
+      const b = startBurst(t, s, tg, 5 + Math.floor(rngBg() * 6), 0, false, {}, rngBg); b.close = close; b.pot = true; enemyBursts.push(b);
       if (close) pop(main, T('pop.close', 'close call'), '#c8d3ff', t + 0.35);
     }
   }
   enemyBursts = enemyBursts.filter(b => {
-    while (b.fired < b.n && t >= b.t0 + b.fired / b.rate) { b.fired++; fire(t, b.shooter, b.target, { hit: false, close: b.close && b.fired === 3 }); }
+    while (b.fired < b.n && t >= b.t0 + b.fired / b.rate) { b.fired++; fire(t, b.shooter, b.target, { hit: false, close: b.close && b.fired === 3 }, b.r); }
     if (b.fired >= b.n) { if (b.shooter.state === 'shoot') b.shooter.set('idle', t); return false; } return true;
   });
   // the crowd fights too (their kills are theirs, not counted for the player)
   if (allies.length && t > nextAlly) {
-    nextAlly = t + 7 / allies.length * (0.5 + rng());
+    nextAlly = t + 7 / allies.length * (0.5 + rngBg());
     const free = allies.filter(a => a.state === 'idle'), tg = enemies.filter(e => ready(e));
     if (free.length && tg.length) {
-      const kill = t > nextAllyKill; if (kill) nextAllyKill = t + 40 / allies.length * (0.6 + 0.8 * rng());
-      const e = pick(tg); if (kill) e.busy = true;
-      allyBursts.push(startBurst(t, pick(free), e, 6 + Math.floor(rng() * 6), kill ? 3 : rng() < 0.3 ? 1 : 0, kill));
+      const kill = t > nextAllyKill; if (kill) nextAllyKill = t + 40 / allies.length * (0.6 + 0.8 * rngBg());
+      const e = pick(tg, rngBg); if (kill) e.busy = true;
+      allyBursts.push(startBurst(t, pick(free, rngBg), e, 6 + Math.floor(rngBg() * 6), kill ? 3 : rngBg() < 0.3 ? 1 : 0, kill, {}, rngBg));
     }
   }
   allyBursts = allyBursts.filter(b => !runBurst(b, t));
@@ -568,7 +572,7 @@ function drawBullets(list = bullets) {
   if (!list.length) return;
   ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.lineCap = 'round';
   for (const b of list) {
-    const n = Math.hypot(b.vx, b.vy), len = b.shell ? 70 : b.plasma ? 40 : 54, a = b.landed ? Math.max(0, 1 - b.age * 1.5) : 1;
+    const n = Math.hypot(b.vx, b.vy), len = (b.shell ? 70 : b.plasma ? 40 : 54) * (cue ? 2 : 1), a = b.landed ? Math.max(0, 1 - b.age * 1.5) : 1;
     ctx.strokeStyle = b.color; ctx.globalAlpha = a * (b.hit ? 1 : 0.7); ctx.lineWidth = b.shell ? 8 : b.plasma ? 8 : 3;
     ctx.shadowColor = b.color; ctx.shadowBlur = b.plasma || b.shell ? 16 : 8;
     ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.lineTo(b.x - b.vx / n * len, b.y - b.vy / n * len); ctx.stroke();
@@ -627,6 +631,11 @@ function drawHud(t) {
   ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(14, H - 44, w + 28, 30);
   ctx.fillStyle = '#c9d1d9'; ctx.fillText(s, 28, H - 24);
   }
+  // speed chip (top right): the director's current rate
+  const rs = rate === 2 ? '×2' : rate === 1 ? '×1' : '×' + rate.toFixed(1).replace(/\.0$/, '');
+  ctx.font = '700 18px system-ui,sans-serif'; const rw = ctx.measureText(rs).width + 20;
+  ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(W - 14 - rw, 12, rw, 30);
+  ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.fillText(rs, W - 14 - rw / 2, 33); ctx.textAlign = 'left';
   // class badge over the main soldier
   drawStateBox(t);
   if (life.cls && alive(main) && !tank.on) {
@@ -674,7 +683,15 @@ function drawWall(w) {
 }
 function render(t) {
   ctx.setTransform(cv.width / W, 0, 0, cv.height / H, 0, 0);
-  drawBg(); drawBox(t); drawFx(t, 'under');
+  // bullet-time cues: 1.12x push-in centred between shooter and victim, world desaturated
+  // (background, boxes, walls); fighters, tracers and pops keep their colour
+  if (cue) {
+    const b = cur?.b, sh = b?.tank ? main : b?.shooter, tg = b?.target;
+    if (sh && tg) { const [sx, sy] = body(sh), [tx, ty] = body(tg), cx = (sx + tx) / 2, cy = (sy + ty) / 2;
+      ctx.translate(cx, cy); ctx.scale(1.12, 1.12); ctx.translate(-cx, -cy); }
+    ctx.save(); ctx.filter = 'saturate(0.15)'; drawBg(); drawBox(t); ctx.restore();
+  } else { drawBg(); drawBox(t); }
+  drawFx(t, 'under');
   // depth: soldiers by ground y (main always on top); each tracer moves from its shooter's layer to
   // its target's: a hit ends just in front of the target, a miss passes just in front of or behind it
   const order = [...everyone].sort((a, b) => (a === main) - (b === main) || a.y - b.y);
@@ -689,15 +706,29 @@ function render(t) {
   // which is what "behind cover" means here. Main's wall is skipped while the tank is out.
   const wallsSorted = walls.slice().sort((a, b) => a.y - b.y);
   let wi = 0;
-  const wallsBefore = (y) => { while (wi < wallsSorted.length && wallsSorted[wi].y < y) { const w = wallsSorted[wi++]; if (w.forMain && tank.on) continue; drawWall(w); } };
+  const wallsBefore = (y) => { while (wi < wallsSorted.length && wallsSorted[wi].y < y) { const w = wallsSorted[wi++]; if (w.forMain && tank.on) continue; if (cue) { ctx.save(); ctx.filter = 'saturate(0.15)'; drawWall(w); ctx.restore(); } else drawWall(w); } };
   for (const [i, s] of order.entries()) {
     wallsBefore(s.y);
     if (s === main && (tank.on || t - tank.off < 0.4)) { if (tank.on) { drawTank(t); drawBullets(layer[i]); continue; } drawTank(t); }
     if (s === main && alive(main)) { ctx.save(); ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(s.x, s.y + 4, 70, 11, 0, 0, 7); ctx.stroke(); ctx.restore(); }
     s.draw(ctx, t); drawBullets(layer[i]);
   }
-  while (wi < wallsSorted.length) { const w = wallsSorted[wi++]; if (w.forMain && tank.on) continue; drawWall(w); }
-  drawFx(t, 'over'); drawHud(t);
+  while (wi < wallsSorted.length) { const w = wallsSorted[wi++]; if (w.forMain && tank.on) continue; if (cue) { ctx.save(); ctx.filter = 'saturate(0.15)'; drawWall(w); ctx.restore(); } else drawWall(w); }
+  drawFx(t, 'over');
+  ctx.setTransform(cv.width / W, 0, 0, cv.height / H, 0, 0);
+  if (cue) {   // vignette + own-death red tint, world only (the HUD stays crisp)
+    const g = ctx.createRadialGradient(W / 2, H / 2, H * 0.3, W / 2, H / 2, H * 0.75);
+    g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,0.45)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    if (bullet?.kind === 'death') { ctx.fillStyle = 'rgba(200,30,30,0.10)'; ctx.fillRect(0, 0, W, H); }
+  }
+  drawHud(t);
+  if (jumpCard && wallT - jumpCard.w0 < 1.5) {
+    ctx.save(); ctx.font = '700 30px system-ui,sans-serif'; ctx.textAlign = 'center';
+    const w = ctx.measureText(jumpCard.text).width + 36;
+    ctx.fillStyle = 'rgba(10,14,20,.8)'; ctx.fillRect(W / 2 - w / 2, H / 2 - 26, w, 44);
+    ctx.fillStyle = '#fff'; ctx.fillText(jumpCard.text, W / 2, H / 2 + 6); ctx.restore();
+  }
   lifeUi(t);
 }
 
@@ -821,19 +852,37 @@ function lifeUi(t, force) {
 }
 
 // ---------------------------------------------------------------- run
-// wallT = real seconds since start; simT = scene clock. Slow-mo lets simT fall behind; calm states then
-// run at up to 1.25× until simT is back on wallT, so per-minute rates hold over any long stretch.
+// wallT = real seconds since start; simT = scene clock. The director scales wall time into data
+// time (calm x2, trade x1, pre-kill x0.5, bullet time x0.2); clocks and tallies show data time.
 const STEP = 1 / 120;
-window.__render = (w) => {
+// the clock driver, factored so tests can step the director without drawing
+function advance(w) {
+  if (freeze > 0) { freeze--; wallT = w; return; }   // headshot impact: 2 frozen wall frames
+  // jump cut: a calm stretch over 20 data s is stepped through (like skip, nothing skipped
+  // in the sim) and carded; the stretch is what the plan holds (60 s ahead), so very long
+  // stretches jump in chunks, one card each
+  if (!reduced && !speed1 && !fast && baseRate(cur?.id) === 2) {
+    const end = calmStretchEnd(plan.segs, simT);
+    if (end != null) {
+      const from = simT;
+      fast = true;
+      while (simT < end) { const dt = Math.min(1 / 30, end - simT); simT += dt; step(simT, dt); }
+      fast = false;
+      if (simT > wallT) { skipped += simT - wallT; wallT = simT; }
+      jump = { n: Math.round(simT - from), at: simT };
+      jumpCard = { text: T('jumpCut', '+{n} s', { n: Math.round(simT - from) }), w0: wallT };
+    }
+  }
   while (wallT + STEP <= w) {
     wallT += STEP;
-    let k = timeScale(wallT);
-    const debt = wallT - simT;
-    if (!slow && debt > 1e-4 && cur && STATES[cur.id].calm) k = Math.min(1.25, 1 + debt * 4, 1 + debt / STEP);
-    const dt = k * STEP; simT += dt; step(simT, dt);
+    rate = currentRate();
+    cue = !reduced && !speed1 && rate < 0.6;
+    const dt = rate * STEP; simT += dt; step(simT, dt);
   }
-  render(simT); return true; };
-// test hook: run the scene clock forward without drawing or slow-mo (used by tools/probe checks)
+}
+window.__render = (w) => { advance(w); render(simT); return true; };
+window.__advance = (w) => { advance(w); return true; };   // test hook: director stepping without drawing
+// test hook: run the scene clock forward without drawing or the director (used by tools/probe checks)
 window.__fast = (sec, dt = 1 / 30) => { fast = true; const end = simT + sec; while (simT < end) { simT += dt; wallT = simT; step(simT, dt); } fast = false; render(simT); return window.__params(); };
 // ⏭ skip waiting (testing aid): run the same 1:1 clock forward to just before the next kill, assist,
 // death or phase change. Nothing is cut: every skipped second is stepped through the scene, so the
@@ -852,7 +901,7 @@ window.__skip = () => {
   const from = simT, ev = nextEvent(simT); if (!ev) return null;
   // a phase change lands just inside the new phase; a kill/assist/death in the same phase just before it
   const to = Math.max(simT, phaseOf(ev.id) !== phaseOf(cur?.id ?? ev.id) ? ev.t0 + 0.02 : ev.t0 - 0.4);
-  fast = true; slow = null;
+  fast = true; bullet = null; freeze = 0;
   while (simT < to) { const dt = Math.min(1 / 30, to - simT); simT += dt; step(simT, dt); }
   fast = false;
   if (simT > wallT) { skipped += simT - wallT; wallT = simT; }
@@ -865,8 +914,8 @@ window.__cover = () => ({ walls: walls.map(w => [Math.round(w.x), w.y, Math.roun
   allies: allies.map(a => ({ x: +a.x.toFixed(1), peekWant: a.peekWant ?? 0, cover: a.cover, state: a.state })),
   enemies: enemies.map(e => ({ x: +e.x.toFixed(1), peekWant: e.peekWant ?? 0, cover: e.cover, state: e.state, slot: e.slot })) });
 window.__life = () => { const L = lifeAt(simT); return L && { n: L.n, phase: phaseAt(L, simT)?.ph, phases: L.phases.map(p => [p.ph, +(p.t1 - p.t0).toFixed(1)]), simT }; };
-window.__slow = () => ({ wallT, simT, scale: timeScale(wallT) });
-window.__params = () => ({ st, P, RATE, CYCLE, ALIVE_MEAN, DOWN_MEAN, missing, stats, simT, cur: cur?.id, credit, fight: fightOk ? fight : null });
+window.__slow = () => ({ wallT, simT, scale: currentRate() });
+window.__params = () => ({ st, P, RATE, CYCLE, ALIVE_MEAN, DOWN_MEAN, missing, stats, simT, cur: cur?.id, credit, fight: fightOk ? fight : null, jump });
 window.__plan = () => plan.segs.map(s => [s.id, +s.t0.toFixed(1), +(s.t1 - s.t0).toFixed(1), s.veh ? 'veh' : '']);
 // the loop, factored out so the reduced-motion note can start it on demand: the OS setting
 // parks the scene on a still frame, but one tap on ▶ Play anyway (or ?play in the URL)

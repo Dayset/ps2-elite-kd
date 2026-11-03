@@ -11,7 +11,7 @@
 //   dur(r, st)    seconds; r() is the seeded random [0,1)
 //   anim          Soldier state that already has art ('idle' | 'run' | 'shoot' | 'dead' | 'revive' | 'respawn')
 //   placeholder   true = no art yet: a labelled box with a progress bar is drawn over the soldier
-//   calm          true = after slow-mo, the clock may run up to 1.25× here to catch up with real time
+//   calm          true = a quiet beat (kept for reference; playback rates now come from replay/director.mjs)
 //   hook          optional name of an existing visual in player.js (HOOKS) run on enter / each frame
 //   phase         life phase shown on the timeline strip: 'spawn' → 'travel' → 'fight' → 'death' (PHASES)
 //
