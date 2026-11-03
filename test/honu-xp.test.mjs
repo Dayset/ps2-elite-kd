@@ -80,3 +80,44 @@ describe("requested players", () => {
     assert.deepEqual(requestedXpQueue({ c: NOW }, { c: NOW - XP_RECHECK_MS - 1 }, NOW), ["c"]);
   });
 });
+
+// ⏱ time to fight (planetman replay): LIVE's timeToCombatMs from the exp blocks already fetched.
+import { fightTimesFromBlock, fightRuns, addFightRuns, fightMedianMs, FIGHT_MIN_RUNS } from "../scripts/honu-xp.mjs";
+import { combatRuns, median } from "../live-model.mjs";
+
+describe("honu-xp time to fight", () => {
+  const T = (s) => new Date(Date.parse("2026-10-23T16:00:00Z") + s * 1000).toISOString();
+  const tev = (experienceID, sourceID, otherID, s) => ({ experienceID, amount: 100, sourceID, otherID, timestamp: T(s) });
+  it("deaths = received kill XP from others, spikes = earned kill + assist XP; other ids and self events ignored", () => {
+    const g = { events: [tev(1, CID, "9", 10), tev(2, CID, "8", 40), tev(7, CID, "7", 50), tev(279, CID, "6", 90), tev(1, "5", "4", 95)] };
+    const r = { events: [tev(1, "9", CID, 5), tev(278, "8", CID, 30), tev(7, "3", CID, 31), tev(1, CID, CID, 60), tev(29, "2", CID, 70)] };
+    const acc = fightTimesFromBlock(r, CID, "r", fightTimesFromBlock(g, CID, "g"));
+    assert.equal(acc.spikes.length, 3);
+    assert.equal(acc.deaths.length, 3);
+    assert.deepEqual(fightRuns(acc.deaths, acc.spikes), [5000, 10000, 20000]);
+  });
+  it("matches live-model combatRuns for one-event-per-death input; a death with no later spike adds nothing", () => {
+    const deaths = [0, 50e3, 51e3 + 400, 200e3].map((x) => x + 1e12);
+    const spikes = [20e3, 49e3, 80e3, 81e3].map((x) => x + 1e12);
+    assert.deepEqual(fightRuns(deaths, spikes), combatRuns(deaths, spikes));
+    assert.equal(fightRuns(deaths, spikes).length, 3);
+  });
+  it("histogram grows across merges and reads back live's median", () => {
+    const runs = [3e3, 19e3, 7e3, 40e3, 19e3, 120e3];
+    const h = addFightRuns(addFightRuns(null, runs.slice(0, 3)), runs.slice(3));
+    assert.equal(h.n, 6);
+    assert.equal(fightMedianMs(h), median(runs));
+    assert.equal(fightMedianMs(null), null);
+    assert.ok(FIGHT_MIN_RUNS >= 10);
+  });
+  it("mergeXp keeps one fight histogram per player and skips sessions without runs", () => {
+    const t = Date.parse("2026-10-01T00:00:00Z");
+    const mk = (id, i, runs) => ({ id, s: t + i * 864e5, sec: 3600, k: 10, g: {}, r: {}, ...(runs ? { runs } : {}) });
+    let x = mergeXp(null, [mk(1, 0, [10e3, 20e3]), mk(2, 1)]);
+    x = mergeXp(x, [mk(3, 2, [30e3]), mk(1, 0, [99e3])]); // 1 already counted: ignored
+    assert.equal(x.fight.n, 3);
+    assert.equal(x.fight.sessions, 2);
+    assert.equal(x.fight.ms, 20000);
+    assert.equal(mergeXp(null, [mk(4, 0)]).fight, undefined);
+  });
+});

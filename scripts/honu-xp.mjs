@@ -15,6 +15,73 @@
  */
 
 const HONU_API = "https://wt.honu.pw/api/";
+
+/* ---- ⏱ time to fight, from the SAME exp blocks (no extra Honu calls) ----
+ * The LIVE page's "combat" number (live-model.mjs timeToCombatMs): for every
+ * death, the time to the player's next kill or assist; median over all such
+ * runs. Inputs, all timestamped exp events already fetched above:
+ *   deaths  = received kill XP (otherID = player, another source): the killer's
+ *             FIGHT_KILL_EXP_IDS event. Same set as live's Death events except
+ *             team kills / suicides (no XP). Revived deaths count, as on LIVE
+ *             (Honu's session "deaths" leaves revived ones out — that is why a
+ *             session can show 12 deaths but ~100 runs).
+ *   spikes  = earned kill XP (same ids) + assist XP (2, 3, 371, 372, as live).
+ * Stored as a histogram of whole seconds so the sample can grow forever in a
+ * few hundred bytes; the median is read back from it.                     */
+export const FIGHT_KILL_EXP_IDS = new Set([1, 29, 278, 279]); // Kill Player, MAX, Priority, High Priority
+export const FIGHT_ASSIST_EXP_IDS = new Set([2, 3, 371, 372]);
+/** Below this many runs the page keeps its neutral default. */
+export const FIGHT_MIN_RUNS = 20;
+
+/** Collect death / spike times (ms) of `cid` from one exp block into `acc`. */
+export function fightTimesFromBlock(block, cid, mode, acc = { deaths: [], spikes: [] }) {
+  const id = String(cid);
+  for (const e of (block && Array.isArray(block.events) ? block.events : [])) {
+    if (!e) continue;
+    const x = +e.experienceID, t = Date.parse(e.timestamp);
+    if (!Number.isFinite(t)) continue;
+    const src = String(e.sourceID);
+    if (mode === "g" && src === id && (FIGHT_KILL_EXP_IDS.has(x) || FIGHT_ASSIST_EXP_IDS.has(x))) acc.spikes.push(t);
+    if (mode === "r" && String(e.otherID) === id && src !== id && FIGHT_KILL_EXP_IDS.has(x)) acc.deaths.push(t);
+  }
+  return acc;
+}
+
+/** live-model.mjs combatRuns, same logic; deaths < 1 s apart count once (one death = one event, as on LIVE). */
+export function fightRuns(deaths, spikes) {
+  const sp = [...spikes].sort((a, b) => a - b);
+  const ds = [];
+  for (const t of [...deaths].sort((a, b) => a - b)) if (!ds.length || t - ds[ds.length - 1] >= 1000) ds.push(t);
+  const runs = [];
+  let j = 0;
+  for (const d of ds) {
+    while (j < sp.length && sp[j] <= d) j++;
+    if (j < sp.length) runs.push(sp[j] - d);
+  }
+  return runs;
+}
+
+/** Add runs (ms) into a { n, h: {sec: count} } histogram. */
+export function addFightRuns(hist, runs) {
+  const out = { n: (hist && hist.n) || 0, h: { ...((hist && hist.h) || {}) } };
+  for (const ms of runs || []) {
+    if (!(ms >= 0)) continue;
+    const k = String(Math.round(ms / 1000));
+    out.h[k] = (out.h[k] || 0) + 1;
+    out.n++;
+  }
+  return out;
+}
+
+/** Median (ms) of a histogram, same convention as live-model.mjs median (upper middle for even n). */
+export function fightMedianMs(hist) {
+  if (!hist || !(hist.n > 0)) return null;
+  const keys = Object.keys(hist.h).map(Number).sort((a, b) => a - b);
+  const want = Math.floor(hist.n / 2);
+  let seen = 0;
+  for (const k of keys) { seen += hist.h[k]; if (seen > want) return k * 1000; }
+  return keys[keys.length - 1] * 1000;
+}
 const DAY_MS = 24 * 3600 * 1000;
 
 export const XP_NEW_SESSIONS_PER_PLAYER = 3;
@@ -86,6 +153,7 @@ export function mergeXp(prev, collected, { keep = XP_DETAIL_SESSIONS_KEPT, keepI
     last: (p && p.last) || null,
     totals: { g: addInto({}, p && p.totals && p.totals.g), r: addInto({}, p && p.totals && p.totals.r) },
     counted: [...((p && p.counted) || [])],
+    fight: { n: (p && p.fight && p.fight.n) || 0, h: { ...((p && p.fight && p.fight.h) || {}) }, sessions: (p && p.fight && p.fight.sessions) || 0 },
     sessions: { ...((p && p.sessions) || {}) },
   };
   for (const c of collected || []) {
@@ -97,12 +165,15 @@ export function mergeXp(prev, collected, { keep = XP_DETAIL_SESSIONS_KEPT, keepI
     out.kills_counted += c.k;
     addInto(out.totals.g, c.g);
     addInto(out.totals.r, c.r);
+    if (Array.isArray(c.runs)) { const f = addFightRuns(out.fight, c.runs); out.fight.n = f.n; out.fight.h = f.h; out.fight.sessions++; }
     const s0 = new Date(c.s).toISOString();
     const s1 = new Date(c.s + c.sec * 1000).toISOString();
     if (!out.first || s0 < out.first) out.first = s0;
     if (!out.last || s1 > out.last) out.last = s1;
     out.sessions[sid] = { s: c.s, sec: c.sec, k: c.k, ...(Number.isFinite(c.d) ? { d: c.d } : {}), g: c.g, r: c.r };
   }
+  out.fight.ms = fightMedianMs(out.fight);
+  if (!out.fight.n) delete out.fight;
   const ids = Object.keys(out.sessions).sort((a, b) => out.sessions[b].s - out.sessions[a].s);
   for (const id of ids.slice(keep)) delete out.sessions[id];
   out.counted = out.counted.slice(0, keepIds);
@@ -128,14 +199,17 @@ export async function updateHonuXp(cid, prev, { getJson, budget = { calls: Infin
       if (budget.calls < 2 * wins.length) break;
       const g = {};
       const r = {};
+      const ft = { deaths: [], spikes: [] };
       for (const [w0, w1] of wins) {
         const q = `start=${encodeURIComponent(w0)}&end=${encodeURIComponent(w1)}&includeCharacters=false&includeExpTypes=false`;
         budget.calls -= 2; calls += 2;
-        aggregateXp(await getJson(`${HONU_API}exp/${cid}/period2?${q}`), cid, "g", g);
-        aggregateXp(await getJson(`${HONU_API}exp/characters/other?charIDs=${cid}&${q}`), cid, "r", r);
+        const gb = await getJson(`${HONU_API}exp/${cid}/period2?${q}`);
+        aggregateXp(gb, cid, "g", g); fightTimesFromBlock(gb, cid, "g", ft);
+        const rb = await getJson(`${HONU_API}exp/characters/other?charIDs=${cid}&${q}`);
+        aggregateXp(rb, cid, "r", r); fightTimesFromBlock(rb, cid, "r", ft);
       }
       const s = Date.parse(sess.start);
-      collected.push({ id: sess.id, s, sec: Math.round((Date.parse(sess.end) - s) / 1000), k: sess.kills, d: Number.isFinite(+sess.deaths) ? +sess.deaths : null, g, r });
+      collected.push({ id: sess.id, s, sec: Math.round((Date.parse(sess.end) - s) / 1000), k: sess.kills, d: Number.isFinite(+sess.deaths) ? +sess.deaths : null, g, r, runs: fightRuns(ft.deaths, ft.spikes) });
     }
     return { xp: collected.length ? mergeXp(keep, collected, { now }) : keep, calls };
   } catch (e) {
