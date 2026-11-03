@@ -114,25 +114,24 @@ const CLS = Object.fromEntries(Object.entries({ inf: 'Infiltrator', la: 'Light A
 const F = doc.faction in rigs ? doc.faction : 'tr', foes = ['tr', 'nc', 'vs'].filter(f => f !== F);
 const main = new Soldier(rigs[F], F, { x: 350, y: GROUND + 5, scale: 0.5, facing: 1, seed: 0.3, rate: RATE, speed: 120 });
 main.isMain = true;
-// the crowd: dimmed, spread wide and staggered in depth, each behind his own wall tile —
-// they sit in cover and only step out to shoot, instead of a line staring at the enemy
-const ALLY_SLOTS = [[110, -115, 0.66], [190, -50, 0.72], [500, -100, 0.66], [600, -30, 0.70], [700, -115, 0.66], [790, -55, 0.72]];
+// the crowd: dimmed, scattered wide across the field at staggered depths — no shoulder-to-shoulder
+// line, and no ally parked on the main's wall (peekX 120–365 below the wall's depth is his alone)
+const ALLY_SLOTS = [[110, -130, 0.60], [180, 60, 0.85], [480, -135, 0.60], [560, 50, 0.85], [760, -130, 0.62], [700, 0, 0.70]];
 const allies = ALLY_SLOTS.slice(0, P.allies).map(([x, dy, k], i) => {
   const a = new Soldier(rigs[F], F, { x, y: GROUND + dy, scale: main.scale * k, facing: 1, seed: 1.7 + i * 2.3, rate: 9 + 3 * rng(), speed: 90 });
   a.dim = true; return a; });
-const ENEMY_SLOTS = [[850, -120, 0.85], [945, -25, 0.95], [1020, 5, 1], [1100, -95, 0.88], [975, -60, 0.9]];
+const ENEMY_SLOTS = [[900, -130, 0.85], [1030, -10, 0.95], [1090, -120, 0.88], [920, 60, 1], [1120, 50, 0.90]];
 const enemies = ENEMY_SLOTS.map(([x, dy, k], i) => {
   const s = new Soldier(rigs[foes[i % 2]], foes[i % 2], { x, y: GROUND + dy, scale: P.enemyScale * k, facing: -1, seed: 3.1 + i * 1.9, rate: 9 + 3 * rng(), speed: 170 });
   s.slot = x; s.deadAt = -99; s.state = 'dead'; return s;
 });
 const everyone = [main, ...allies, ...enemies];
-// cover: one basic wall tile per soldier, on the far side from the enemy. Hidden = the soldier
-// centred on his wall (the wall, drawn later in depth order, occludes him); peek = stepped out
-// past the wall's firing edge. peekX is the slot/home the rest of the code already uses.
+// cover: one basic wall tile per soldier, on the far side from the enemy, 10% transparent, and
+// only up to its soldier's eyes (head() height) — the head shows over the top, the body ghosts
+// through the tile. Hidden = centred on his wall; peek = stepped out past the firing edge.
+// peekX is the slot/home the rest of the code already uses.
 function makeCover(s) {
-  // rig height is 520 (rigs.json `height`, head top at -520); the wall must clear it, plus a
-  // margin, and clear the head's ~289 width — otherwise helmets poke out over the tile
-  const w = 310 * s.scale, h = 580 * s.scale;
+  const w = 310 * s.scale, h = 370 * s.scale + 8;   // top lands at y − 370·scale, just under the eyes
   const wx = s.facing > 0 ? s.x - 30 - w : s.x + 30;
   const wall = { x: wx, y: s.y + 8, w, h };
   return { wall, hiddenX: wx + w / 2, peekX: s.x };
@@ -366,7 +365,7 @@ const HOOKS = {
                  if (s.medic && !s.healFx && tl > d - 2) { s.healFx = 1; fx.push({ kind: 'heal', from: s.medic, to: main, t0: t, dur: 1.2 }); }
                  if (!s.up && tl > d - 0.8) { s.up = 1; main.downKeep = false; main.set('revive', t); stats.rev++; pop(main, T('pop.revived', 'revived'), '#8dffa5', t); } } },
   healAlly: { enter(s, t) { const tg = allies.length ? pick(allies) : null; if (tg) fx.push({ kind: 'heal', from: main, to: tg, t0: t, dur: s.t1 - s.t0 }); } },
-  ammoBox: { enter(s, t) { life.box = { x: main.home - 170, t0: t, t1: s.t1 }; } },
+  ammoBox: { enter(s, t) { life.box = { x: main.home + 40, t0: t, t1: s.t1 }; } },
   shuffle: { enter(s, t) { s.x0 = main.x; s.dx = (main.x > main.home ? -1 : 1) * (20 + rng() * 40); },
              tick(s, t) { const k = clamp((t - s.t0) / (s.t1 - s.t0)); main.x = lerp(s.x0, s.x0 + s.dx, k);
                main.facing = s.dx > 0 ? 1 : -1; main.hop = life.cls === 'la' ? 40 * Math.sin(k * Math.PI) : 0; },
@@ -631,7 +630,7 @@ function drawStateBox(t) {
   ctx.restore();
 }
 function drawWall(w) {
-  ctx.save();
+  ctx.save(); ctx.globalAlpha = 0.9;   // 10% transparent: the soldier ghosts through his tile
   ctx.fillStyle = 'rgba(0,0,0,.35)';
   ctx.beginPath(); ctx.ellipse(w.x + w.w / 2, w.y + 2, w.w * 0.55, 10, 0, 0, 7); ctx.fill();
   ctx.fillStyle = '#46525f'; ctx.fillRect(w.x, w.y - w.h, w.w, w.h);   // basic wall tile
