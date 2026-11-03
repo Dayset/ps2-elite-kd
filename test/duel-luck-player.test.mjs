@@ -72,4 +72,9 @@ describe("🎲 per player: data files and the public column", () => {
       assert.match(d["luck.p.tip"], /\{gap\}.*\{n\}.*\{b\}/s);
     }
   });
+  it("🎲 Luck cells are plain text: no colour code (owner t851u)", () => {
+    const css = fs.readFileSync("styles.css", "utf8").split("\n").filter((l) => /(^|[^-])td\.luck-/.test(l));
+    assert.ok(css.length, "nowrap rule kept");
+    for (const l of css) assert.doesNotMatch(l, /color|font-weight/);
+  });
 });

@@ -3350,9 +3350,5 @@ html[data-room="ps"] .controls .fresh-row-end select.room-select { border-color:
 .sr-chip { min-width: 5.2rem; }
 
 /* 🎲 vs expected per player (owner 2026-11-02, t849u; debug column): plain words, "a bit" / "much" in the warning colour. */
-/* 🎲 Luck (luck-col.mjs, owner t850u): "+9%" — neutral as expected, subtle a bit, warning colour only for "much". */
+/* 🎲 Luck (luck-col.mjs, owner t850u): "+9%". No colour code (owner t851u): plain text like the other numbers; verdict on hover. */
 td.luck-cell, td.luck-few { white-space: nowrap; }
-td.luck-few { color: var(--dim); }
-td.luck-up1 { color: var(--ok); }
-td.luck-down1 { color: var(--dim); }
-td.luck-up2, td.luck-down2 { color: var(--warn); font-weight: 700; }
