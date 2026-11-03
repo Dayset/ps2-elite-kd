@@ -147,6 +147,16 @@ describe("Hide adjusted-iVi ≤ 0 players (footer checkbox)", () => {
     assert.match(appSource(), /hideZeroIviToggle/);
     assert.match(appSource(), /LS_HIDE_ZERO_IVI/);
   });
+
+  it("players line shows the hidden difference + percentage while hiding", () => {
+    const s = rankingsSource();
+    assert.match(s, /rk\.metaHidden/);
+    // Browse only: a name search skips the drop, so no difference is shown.
+    assert.match(s, /hideZeroIvi && !bare\(filter\)/);
+    assert.match(s, /hidden = data\.count - list\.length/);
+    const en = JSON.parse(read("i18n/en.json"));
+    assert.equal(en["rk.metaHidden"], "{hidden} hidden, {pct}%");
+  });
 });
 
 describe("Skill graph section: no placeholder, collapsible, pops on analyze (owner 2026-10-22)", () => {

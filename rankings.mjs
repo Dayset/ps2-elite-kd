@@ -819,8 +819,15 @@ export function initRankings(host) {
     if ($("ranksTableCount")) $("ranksTableCount").textContent = `(${data.count.toLocaleString()})`;
     // Dayset 2026-10-20: the footer stats block shows one fact per line
     // (players / Updated / fresh-fetch), not one "·"-joined sentence.
+    // Hide-≤0 on, browsing: the players line also shows how many the toggle
+    // hides and what share that is (the difference of the two numbers shown).
+    let playersLine = tr("rk.metaPlayers", "{shown} of {total} players", { shown: list.length.toLocaleString(), total: data.count.toLocaleString() });
+    if (hideZeroIvi && !bare(filter) && list.length < data.count) {
+      const hidden = data.count - list.length;
+      playersLine += ` (${tr("rk.metaHidden", "{hidden} hidden, {pct}%", { hidden: hidden.toLocaleString(), pct: (hidden / data.count * 100).toFixed(1) })})`;
+    }
     const metaLines = [
-      tr("rk.metaPlayers", "{shown} of {total} players", { shown: list.length.toLocaleString(), total: data.count.toLocaleString() }),
+      playersLine,
       tr("rk.metaUpdated", "Updated {date}", { date: fmtUpdated(data.updatedAt) }),
     ];
     if (nFresh) metaLines.push(`${FRESH_MARK} ${tr("rk.metaFresh", "{n} From your fresh fetch.", { n: nFresh })}`);
