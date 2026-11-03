@@ -141,14 +141,18 @@ const pop = (s, text, color = '#fff', t) => fx.push({ kind: 'pop', x: s.x, y: s.
 const alive = s => s.state === 'idle' || s.state === 'shoot' || s.state === 'run' || s.state === 'revive';
 const ready = s => (s.state === 'idle' || s.state === 'shoot') && Math.abs(s.x - s.slot) < 2 && !s.busy;
 
+// Shots fly straight inside a narrow cone of fire (5° wide) from the muzzle toward the aim point:
+// hits deviate ≤ 0.8°, misses 1.2–2.5° and keep flying past the target (drawn on a lane just in front
+// of or behind it, see render). A close call is aimed at the head and passes at the cone's top edge.
+const CONE = 2.5 * Math.PI / 180;
 function fire(t, from, to, o = {}) {
   const [x0, y0] = muzzle(from);
-  let [tx, ty] = o.hit ? (o.hs ? head(to) : body(to)) : body(to);
-  if (o.hit && !o.hs) { tx += (rng() - 0.5) * 18 * to.scale * 2; ty += (rng() - 0.5) * 60 * to.scale * 2; }
-  if (!o.hit) ty += (rng() < 0.5 ? -1 : 1) * (70 + rng() * 120) * to.scale * 2 * (o.close ? 0.25 : 1);
-  if (o.close) ty = head(to)[1] - 26;
+  const [tx, ty] = o.hs || o.close ? head(to) : body(to);
   const d = Math.hypot(tx - x0, ty - y0), v = o.shell ? 1500 : from.fx.plasma ? 1700 : 2400;
-  bullets.push({ x: x0, y: y0, vx: (tx - x0) / d * v, vy: (ty - y0) / d * v, left: d, age: 0, from, to, ...o,
+  const off = o.close ? -CONE * Math.sign(tx - x0 || 1) : o.hit ? (rng() - 0.5) * 2 * 0.32 * CONE : (rng() < 0.5 ? -1 : 1) * (0.48 + rng() * 0.52) * CONE;
+  const a = Math.atan2(ty - y0, tx - x0) + (o.shell ? 0 : off);
+  bullets.push({ x: x0, y: y0, vx: Math.cos(a) * v, vy: Math.sin(a) * v, d, left: o.hit ? d : d + 900, age: 0, from, to, ...o,
+    side: o.hit ? 1 : rng() < 0.5 ? -1 : 1,
     color: o.shell ? '#ffd27a' : from.fx.tracer, plasma: from.fx.plasma && !o.shell });
   if (from === main && !o.shell) { stats.shots++; if (o.hit) stats.hits++; }
 }
@@ -496,9 +500,10 @@ function drawTank(t) {
   ctx.restore();
   function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); ctx.fill(); }
 }
-function drawBullets() {
+function drawBullets(list = bullets) {
+  if (!list.length) return;
   ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.lineCap = 'round';
-  for (const b of bullets) {
+  for (const b of list) {
     const n = Math.hypot(b.vx, b.vy), len = b.shell ? 70 : b.plasma ? 40 : 54, a = b.landed ? Math.max(0, 1 - b.age * 1.5) : 1;
     ctx.strokeStyle = b.color; ctx.globalAlpha = a * (b.hit ? 1 : 0.7); ctx.lineWidth = b.shell ? 8 : b.plasma ? 8 : 3;
     ctx.shadowColor = b.color; ctx.shadowBlur = b.plasma || b.shell ? 16 : 8;
@@ -595,12 +600,22 @@ function drawStateBox(t) {
 function render(t) {
   ctx.setTransform(cv.width / W, 0, 0, cv.height / H, 0, 0);
   drawBg(); drawBox(t); drawFx(t, 'under');
-  for (const s of [...everyone].sort((a, b) => (a === main) - (b === main) || a.y - b.y)) {   // main always on top
-    if (s === main && (tank.on || t - tank.off < 0.4)) { if (tank.on) { drawTank(t); continue; } drawTank(t); }
-    if (s === main && alive(main)) { ctx.save(); ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(s.x, s.y + 4, 70, 11, 0, 0, 7); ctx.stroke(); ctx.restore(); }
-    s.draw(ctx, t);
+  // depth: soldiers by ground y (main always on top); each tracer moves from its shooter's layer to
+  // its target's: a hit ends just in front of the target, a miss passes just in front of or behind it
+  const order = [...everyone].sort((a, b) => (a === main) - (b === main) || a.y - b.y);
+  const rank = new Map(order.map((s, i) => [s, i])), layer = order.map(() => []), back = [];
+  for (const b of bullets) {
+    const r0 = rank.get(b.from) ?? order.length, r1 = (rank.get(b.to) ?? 0) + b.side * 0.5;
+    const k = lerp(r0 + 0.5, r1, clamp((b.d - b.left) / (b.d || 1)));
+    const i = Math.floor(k); (i < 0 ? back : layer[Math.min(order.length - 1, i)]).push(b);
   }
-  drawBullets(); drawFx(t, 'over'); drawHud(t);
+  drawBullets(back);
+  for (const [i, s] of order.entries()) {
+    if (s === main && (tank.on || t - tank.off < 0.4)) { if (tank.on) { drawTank(t); drawBullets(layer[i]); continue; } drawTank(t); }
+    if (s === main && alive(main)) { ctx.save(); ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(s.x, s.y + 4, 70, 11, 0, 0, 7); ctx.stroke(); ctx.restore(); }
+    s.draw(ctx, t); drawBullets(layer[i]);
+  }
+  drawFx(t, 'over'); drawHud(t);
   lifeUi(t);
 }
 
@@ -761,6 +776,7 @@ window.__skip = () => {
   render(simT); lifeUi(simT, true);
   return { from, to: simT, id: ev.id, phase: phaseOf(ev.id), stats: { ...stats } };
 };
+window.__bullets = () => bullets.map(b => ({ hit: !!b.hit, side: b.side, deg: +(Math.atan2(b.vy, b.vx) * 180 / Math.PI).toFixed(2), from: b.from === main ? 'main' : 'other' }));
 window.__life = () => { const L = lifeAt(simT); return L && { n: L.n, phase: phaseAt(L, simT)?.ph, phases: L.phases.map(p => [p.ph, +(p.t1 - p.t0).toFixed(1)]), simT }; };
 window.__slow = () => ({ wallT, simT, scale: timeScale(wallT) });
 window.__params = () => ({ st, P, RATE, CYCLE, ALIVE_MEAN, DOWN_MEAN, missing, stats, simT, cur: cur?.id, credit, fight: fightOk ? fight : null });

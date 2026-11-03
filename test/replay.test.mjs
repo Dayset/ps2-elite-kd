@@ -56,3 +56,11 @@ test("timeline strip and ⏭ skip are wired into the page", () => {
   // skipping steps the scene through the skipped time (tallies and per-minute rates stay true)
   assert.match(js, /while \(simT < to\) \{[^}]*step\(simT, dt\)/);
 });
+
+test("tracers fly straight in a 5° cone and are depth-sorted with the soldiers", () => {
+  const js = fs.readFileSync("replay/player.js", "utf8");
+  assert.match(js, /const CONE = 2\.5 \* Math\.PI \/ 180;/);
+  assert.doesNotMatch(js, /\(70 \+ rng\(\) \* 120\)/, "no wide vertical spray");
+  assert.match(js, /s\.draw\(ctx, t\); drawBullets\(layer\[i\]\);/);
+  assert.doesNotMatch(js, /drawBullets\(\); drawFx/, "tracers no longer drawn on top of everything");
+});
