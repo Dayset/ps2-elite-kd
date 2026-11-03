@@ -9,7 +9,7 @@ import { toDoc } from './doc.mjs?v=20261103-pair1';
 import { pairOf, pairStatus, pairRow, defaultRival, rankedRivals } from './pair.mjs?v=20261103-pair1';
 import { profileOf, shotsPerSec, toProfile, FALLBACK } from './weapons.mjs?v=20261103-weap1';
 import { baseRate, speedAt, bulletRate, nextKillAt, calmStretchEnd } from './director.mjs?v=20261103-dir1';
-import { shooter } from './engagement.mjs?v=20261103-duel1';
+import { shooter, headChance } from './engagement.mjs?v=20261103-hs1';
 import { planDuel } from './duel-plan.mjs?v=20261103-duel2';
 import { hpAt, barFracs, sparkFor, scoreAt, engagementAt, lifeAt as duelLifeAt, phaseState, killcamFor } from './duel-scene.mjs?v=20261103-duel2';
 import { STRIP, coverOf, assignLanes } from './lanes.mjs?v=20261103-strip1';
@@ -199,7 +199,14 @@ if (pair) {
 
 // ---------------------------------------------------------------- effects
 let bullets = [], fx = [];
-const stats = { k: 0, d: 0, a: 0, hs: 0, shots: 0, hits: 0, veh: 0, rev: 0, fills: {} };
+const stats = { k: 0, d: 0, a: 0, hs: 0, hh: 0, shots: 0, hits: 0, veh: 0, rev: 0, fills: {} };
+// Headshot rule (#109): a kill is a headshot kill only when the killing shot
+// hits the head. Crowd bursts roll every hit: earlier hits at the per-hit
+// chance from #95's formula, the final shot keeps the segment's pre-rolled
+// decision (exact long-run HS share via takeWhole); duel shots already carry
+// per-shot hs from engage(), so they are untouched here.
+const HS_P = headChance(st.hs, mainProfile?.hsMult ?? 2);
+const hsKillLog = [];
 const tank = { on: false, t0: 0, off: -9 };
 let life = { cls: null, box: null };
 const body = s => [s.x + s.facing * 10 * s.scale, s.y - 190 * s.scale];
@@ -225,7 +232,7 @@ function fire(t, from, to, o = {}, r = rng) {
   bullets.push({ x: x0, y: y0, vx: Math.cos(a) * v, vy: Math.sin(a) * v, d, left: o.hit ? d : d + 900, age: 0, from, to, ...o,
     side: o.hit ? 1 : r() < 0.5 ? -1 : 1,
     color: o.shell ? '#ffd27a' : from.fx.tracer, plasma: from.fx.plasma && !o.shell });
-  if (from === main && !o.shell) { stats.shots++; if (o.hit) stats.hits++; }
+  if (from === main && !o.shell) { stats.shots++; if (o.hit) { stats.hits++; if (o.hs) stats.hh++; } }
 }
 
 // ---------------------------------------------------------------- director (wall clock -> data clock, issue #97)
@@ -252,7 +259,9 @@ function land(t, b) {
   if (b.final) {
     s.hs = !!b.hs; s.set('die', t); s.deadAt = t; s.busy = false;
     if (s === main) { stats.d++; if (!fast && !reduced && !speed1) { if (b.hs) freeze = 2; bullet = { kind: 'death', w0: bullet ? wallT - 0.15 : wallT }; } return; }
-    if (b.from === main) { stats.k++; if (b.hs) stats.hs++; if (b.veh) stats.veh++; if (!fast && !reduced && !speed1) { if (b.hs) freeze = 2; bullet = { kind: 'kill', w0: bullet ? wallT - 0.15 : wallT }; }
+    if (b.from === main) { stats.k++; if (b.hs) stats.hs++; if (b.veh) stats.veh++;
+      if (b.headHitsBefore !== undefined) hsKillLog.push({ hs: !!b.hs, headBefore: b.headHitsBefore });
+      if (!fast && !reduced && !speed1) { if (b.hs) freeze = 2; bullet = { kind: 'kill', w0: bullet ? wallT - 0.15 : wallT }; }
       pop(main, b.hs ? T('pop.hs', 'headshot +1') : b.veh ? T('pop.veh', 'vehicle kill +1') : '+1', b.hs ? '#ffe066' : '#fff', t); }
     else if (b.assist) { stats.a++; pop(main, T('pop.assist', '+assist'), '#9fe8ff', t); }
   }
@@ -587,12 +596,20 @@ function startBurst(t, shooter, target, n, h, final, extra = {}, r = rng) {
   shooter.set('shoot', t); shooter.t0 = t; shooter.facing = target.x > shooter.x ? 1 : -1;
   const [mx, my] = muzzle(shooter), [tx, ty] = body(target);
   shooter.aim = clamp(Math.atan2(ty - my, Math.abs(tx - mx)), -0.25, 0.25);
-  return { shooter, target, n, hits, final, fired: 0, t0: t, rate: shooter.rate, extra, done: n <= 0, r };
+  return { shooter, target, n, hits, final, fired: 0, t0: t, rate: shooter.rate, extra, done: n <= 0, r, headHits: 0 };
 }
 function runBurst(b, t) {
   while (b.fired < b.n && t >= b.t0 + b.fired / b.rate) {
     const i = b.fired++, hit = b.hits.has(i), fin = b.final && i === b.n - 1;
-    fire(t, b.shooter, b.target, { hit, final: fin, ...(fin ? b.extra : {}) }, b.r);
+    // Per-hit head chance (#109): earlier hits roll HS_P; the final shot keeps
+    // the segment's pre-rolled decision when one was given (exact long-run
+    // HS share), otherwise it rolls too. The kill's type comes from this shot
+    // alone — earlier head hits never make a headshot kill by themselves.
+    const hsP = b.extra.hsP ?? HS_P;
+    const hs = hit && (fin ? (b.extra.hs ?? (b.r() < hsP)) : (b.r() < hsP));
+    const before = b.headHits;
+    if (hs) b.headHits++;
+    fire(t, b.shooter, b.target, { ...(fin ? b.extra : {}), hit, hs, final: fin, headHitsBefore: fin ? before : undefined }, b.r);
   }
   if (b.fired >= b.n && !b.done) { b.done = true; b.end = t; if (b.shooter.state === 'shoot') b.shooter.set('idle', t); }
   return b.done;
@@ -877,8 +894,11 @@ function drawHud(t) {
   if (!reduced) {
   const acc = stats.shots ? Math.round(stats.hits / stats.shots * 100) : 0, min = t / 60, pm = x => min > 0 ? (x / min).toFixed(2) : '0.00';
   const clock = `${Math.floor(t / 3600) ? Math.floor(t / 3600) + ':' : ''}${String(Math.floor(t / 60) % 60).padStart(2, '0')}:${String(Math.floor(t) % 60).padStart(2, '0')}`;
-  const s = '⏱ ' + clock + ' · ' + T('tally', 'kills {k} ({kpm}/min) · deaths {d} ({dpm}/min) · assists {a} · HS {hs} · vehicle {veh} · hit {acc}% of {shots} shots',
-    { k: stats.k, kpm: pm(stats.k), d: stats.d, dpm: pm(stats.d), a: stats.a, hs: stats.hs, veh: stats.veh, acc, shots: stats.shots });
+  const s = '⏱ ' + clock + ' · ' + (pair
+    ? T('tallyPair', 'kills {k} ({kpm}/min) · deaths {d} ({dpm}/min) · assists {a} · HS kills {hs} · vehicle {veh} · hit {acc}% of {shots} shots · head hits {hh} of {hits}',
+      { k: stats.k, kpm: pm(stats.k), d: stats.d, dpm: pm(stats.d), a: stats.a, hs: stats.hs, veh: stats.veh, acc, shots: stats.shots, hh: stats.hh, hits: stats.hits })
+    : T('tally', 'kills {k} ({kpm}/min) · deaths {d} ({dpm}/min) · assists {a} · HS kills {hs} · vehicle {veh} · hit {acc}% of {shots} shots',
+      { k: stats.k, kpm: pm(stats.k), d: stats.d, dpm: pm(stats.d), a: stats.a, hs: stats.hs, veh: stats.veh, acc, shots: stats.shots }));
   ctx.font = '500 13px system-ui,sans-serif'; const w = ctx.measureText(s).width;
   ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(12, H - 36, w + 24, 26);
   ctx.fillStyle = '#c9d1d9'; ctx.fillText(s, 24, H - 18);
@@ -1172,6 +1192,9 @@ window.__cover = () => ({ walls: walls.map(w => [Math.round(w.x), w.y, Math.roun
 window.__lanes = () => everyone.map(s => ({ who: s === main ? 'main' : s === rival ? 'rival' : s.faction,
   lane: s.lane ?? null, x: Math.round(s.x), y: Math.round(s.y), scale: +s.scale.toFixed(3), dim: !!s.dim, slot: s.slot ?? null }));
 window.__laneViolations = () => laneViolations.slice();
+// headshot rule (#109): every crowd-mode kill by the player, with the killing
+// shot's head flag and the head hits landed earlier in the same burst
+window.__hsKills = () => hsKillLog.slice();
 window.__life = () => { const L = lifeAt(simT); return L && { n: L.n, phase: phaseAt(L, simT)?.ph, phases: L.phases.map(p => [p.ph, +(p.t1 - p.t0).toFixed(1)]), simT }; };
 window.__slow = () => ({ wallT, simT, scale: currentRate() });
 window.__params = () => ({ st, P, RATE, CYCLE, ALIVE_MEAN, DOWN_MEAN, missing, stats, simT, cur: cur?.id, credit, fight: fightOk ? fight : null, jump });

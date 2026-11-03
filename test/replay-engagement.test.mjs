@@ -3,7 +3,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { shooter, engage, mulberry } from "../replay/engagement.mjs";
+import { shooter, engage, mulberry, headChance } from "../replay/engagement.mjs";
 import { toProfile, FALLBACK } from "../replay/weapons.mjs";
 
 const AR = toProfile(FALLBACK["Assault Rifle"]);
@@ -114,4 +114,15 @@ test("Monte Carlo: 20k engagements per fixture pair reproduce spk/hpk/HS within 
         assert.ok(tradeShare < 0.6 * commitShare, `${pair.id}/${sideName}: trade ${tradeShare.toFixed(3)} !< 0.6 × commit ${commitShare.toFixed(3)}`);
     }
   }
+});
+
+test("headChance() solves the per-hit head chance from the HS kill share", () => {
+  // Tolyano (HS 32.7 %, x2): about 1 hit in 5 lands on the head (#109).
+  assert.ok(Math.abs(headChance(0.327, 2) - 0.195) < 0.002, `got ${headChance(0.327, 2)}`);
+  assert.equal(headChance(0, 2), 0);
+  assert.equal(headChance(1, 2), 1);
+  assert.equal(headChance(0.5, 1), 0.5);
+  assert.ok(headChance(0.327, 2) < 0.327, "damage weighting pulls p below hsr");
+  assert.ok(Math.abs(headChance(32.7, 2) - headChance(0.327, 2)) < 1e-9, "percent input accepted");
+  assert.ok(Math.abs(headChance(0.1826, 2) - 0.1826 / (2 * (1 - 0.1826) + 0.1826)) < 1e-12);
 });

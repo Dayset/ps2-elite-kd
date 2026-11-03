@@ -77,6 +77,18 @@ const poisson = (lambda, rng) => {
   return k - 1;
 };
 
+/** Per-hit head chance solved from the HS kill share: the killing blow is
+ * damage-weighted toward headshots, so p < hsr whenever hsMult > 1.
+ * (#109 reuses it for crowd-mode bursts, where the final shot keeps the
+ * pre-rolled HS decision and only earlier hits roll this chance.) */
+export function headChance(hsr, hsMult = 2) {
+  let h = Number.isFinite(hsr) ? hsr : 0.1826;
+  if (h > 1) h /= 100;
+  h = clamp(h, 0, 1);
+  const m = Number.isFinite(hsMult) && hsMult > 0 ? hsMult : 2;
+  return h / (m * (1 - h) + h);
+}
+
 /** Calibrated shooter params from a weapon profile + lifetime stats. Cached per shooter. */
 const cache = new Map();
 export function shooter(profile, stats) {
@@ -93,7 +105,7 @@ export function shooter(profile, stats) {
   const hsMult = p.hsMult || 2;
   // Per-hit headshot probability solved from the HS kill share: the killing
   // blow is damage-weighted toward headshots, so p < hsr whenever hsMult > 1.
-  const pHS = hsr / (hsMult * (1 - hsr) + hsr);
+  const pHS = headChance(hsr, hsMult);
   const N = 1000 / (dmg * (1 + (hsMult - 1) * pHS));
   const pCommitEff = clamp(1.8 * (hpk / spk), 0.35, 0.75);
   const commitShots = N / pCommitEff;
