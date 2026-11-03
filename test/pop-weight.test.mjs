@@ -35,7 +35,8 @@ test("weightedSkill: mixes servers by real population, null without data", () =>
 test("skill top bar: wired into the existing history refresh, 9-language strings", () => {
   const res = readFileSync(new URL("../oracle/js/results.js", import.meta.url), "utf8");
   assert.match(res, /renderSkillFoot\(S\.histRows\)/);
-  assert.match(readFileSync(new URL("../oracle/index.html", import.meta.url), "utf8"), /id="miniSkill" class="mini-skill" hidden/);
+  assert.match(readFileSync(new URL("../oracle/index.html", import.meta.url), "utf8"), /id="miniSkillAlert" class="mini-skill" hidden/);
+  assert.match(readFileSync(new URL("../oracle/index.html", import.meta.url), "utf8"), /id="footSkill" class="mini-skill" hidden/);
   assert.doesNotMatch(readFileSync(new URL("../oracle/index.html", import.meta.url), "utf8"), /id="skillPop"/);
   for (const l of ["en", "ja", "ru", "de", "fr", "zh", "es", "uk", "it"]) {
     const j = JSON.parse(readFileSync(new URL(`../i18n/${l}.json`, import.meta.url), "utf8"));
