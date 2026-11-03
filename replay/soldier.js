@@ -4,6 +4,9 @@ const D = Math.PI / 180;
 const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 const ease = (x) => 1 - Math.pow(1 - clamp(x), 3);
 const bell = (x) => (x <= 0 || x >= 1) ? 0 : Math.sin(Math.PI * x) ** 2;
+const frac = (x) => x - Math.floor(x);
+const hash1 = (s, k) => frac(Math.sin(s * 127.1 + k * 311.7) * 43758.5453); // deterministic per-soldier variation, no Math.random
+const smooth = (x) => { x = clamp(x); return x * x * (3 - 2 * x); };
 
 export const FX = {
   tr: { core: '#fff6c8', glow: 'rgba(255,150,40,', tracer: '#ffcc55', rate: 8, beam: 'rgba(230,60,50,' },
@@ -25,15 +28,29 @@ export class Soldier {
     Object.assign(this, { rig, faction, fx: FX[faction], x: o.x ?? 0, y: o.y ?? 600, home: o.x ?? 0,
       scale: o.scale ?? 0.5, facing: o.facing ?? 1, seed: o.seed ?? Math.random() * 10,
       state: 'idle', t0: 0, shots: 0, reloadAt: o.reloadAt ?? 1e9, speed: o.speed ?? 150,
-      rate: o.rate ?? FX[faction].rate, aim: 0, flinchAt: -9, hs: false, cloak: 0, hop: 0 });
+      rate: o.rate ?? FX[faction].rate, aim: 0, flinchAt: o.flinchAt ?? -9, hs: o.hs ?? false, cloak: o.cloak ?? 0, hop: o.hop ?? 0,
+      mode: o.mode ?? 'auto', reloadMs: o.reloadMs ?? 2400, hp: o.hp ?? 1, overshield: o.overshield ?? false, healing: o.healing ?? false });
     this.bounds = o.bounds ?? [this.home - 120, this.home + 120];
   }
   set(state, t) { if (this.state !== state) { this.state = state; this.t0 = t; this.shots = 0; } }
 
+  // ADAD sway while shooting: direction flips every 0.3-0.8 s (seeded), amplitude
+  // 20-40 rig px, eased over 0.08 s at each flip so the soldier never pops
+  strafeDx(tl) {
+    const s = this.seed, amp = 20 + 20 * hash1(s, 0);
+    const dir0 = hash1(s, 99) < 0.5 ? 1 : -1;
+    let t = 0, k = 0, from = 0, to = dir0 * amp;
+    for (;;) {
+      const dur = 0.3 + 0.5 * hash1(s, k + 1);
+      if (tl < t + dur) return from + (to - from) * smooth((tl - t) / Math.min(0.08, dur));
+      t += dur; from = to; k++; to = -from;
+    }
+  }
+
   // ---- pose: all numbers in rig-local px (pre-scale), angles in radians
   pose(t) {
     const tl = t - this.t0, s = this.seed;
-    const P = { rootRot: 0, rootPiv: [0, 0], bob: 0, alpha: 1, bright: 1,
+    const P = { rootRot: 0, rootPiv: [0, 0], bob: 0, alpha: 1, bright: 1, dx: 0, aimErr: 0, shield: 0, heal: 0,
       torso: { rot: 0, sy: 1 }, head: { rot: 0, dy: 0 }, gun: { dx: 0, dy: 0, rot: 0 },
       legL: { rot: 0, dy: 0 }, legR: { rot: 0, dy: 0 }, flash: 0, beam: 0, squash: 1, shake: 0 };
     const breath = Math.sin((t + s) * 2 * Math.PI / 2.6);
@@ -43,12 +60,13 @@ export class Soldier {
     switch (this.state) {
       case 'idle': {
         P.head.rot = (5 * Math.sin((t + s) * 2 * Math.PI / 5.5) + 1.5 * Math.sin((t + s) * 3.1)) * D;
-        const r = (t - this.reloadAt) / 1.4;           // reload: gun dips, head looks at it
+        const r = (t - this.reloadAt) / (this.reloadMs / 1000);   // reload: gun dips, head looks at it, over the real reloadMs
         if (r > 0 && r < 1) { const b = bell(r); P.gun.rot += 10 * D * b; P.gun.dy += 3 * b; P.gun.mid = true; P.head.rot += 7 * D * b; }
         break;
       }
       case 'run': {
-        const f = tl * 2 * Math.PI * 2.4, sn = Math.sin(f);
+        const cad = 2.4 * (0.65 + 0.35 * clamp(this.hp, 0, 1)); // hurt soldiers stride slower; seed phases the cycle
+        const f = (tl + s * 0.37) * 2 * Math.PI * cad, sn = Math.sin(f);
         P.legL.dy = -Math.max(0, sn) * 30; P.legR.dy = -Math.max(0, -sn) * 30;
         P.legL.rot = 10 * D * sn; P.legR.rot = 10 * D * sn;
         P.bob = -Math.abs(Math.sin(f)) * 12;
@@ -58,11 +76,61 @@ export class Soldier {
         break;
       }
       case 'shoot': {
-        const ph = tl * this.rate, p = ph % 1, k = Math.exp(-p * 5);
-        P.gun.dx = -10 * k; P.gun.rot = -4 * D * k; P.gun.mid = true; P.torso.rot = -1.6 * D * k; P.head.rot = -2 * D * k;
-        P.flash = p < 0.35 ? 1 - p / 0.35 : 0; P.flashSeed = Math.floor(ph);
+        // burst rhythm by fire mode; recoil climbs inside a burst and resets between bursts
+        let firing = true, p = 0, shotIdx = 0, totalShots = 0, chamberRot = 0, chamberDy = 0;
+        if (this.mode === 'semi') {
+          const cyc = tl % 0.45;
+          p = cyc * this.rate; firing = p < 1; totalShots = Math.floor(tl / 0.45);
+        } else if (this.mode === 'bolt') {
+          const cyc = tl % 1.2;
+          p = cyc * this.rate; firing = p < 1; totalShots = Math.floor(tl / 1.2);
+          const ch = clamp((cyc - 1 / this.rate) / 0.4); // chambering after the shot
+          if (ch > 0 && ch < 1) { const b = bell(ch); chamberRot = 12 * D * b; chamberDy = -4 * b; }
+        } else { // auto: bursts of 4 with a 0.35 s pause
+          const burstLen = 4, cycleT = burstLen / this.rate + 0.35;
+          const cyc = tl % cycleT;
+          firing = cyc < burstLen / this.rate;
+          shotIdx = firing ? Math.floor(cyc * this.rate) : 0;
+          p = firing ? cyc * this.rate - shotIdx : 0;
+          totalShots = Math.floor(tl / cycleT) * burstLen + (firing ? shotIdx : burstLen);
+        }
+        const k = firing ? Math.exp(-p * 5) * (1 + 0.15 * shotIdx) : 0;
+        P.gun.dx = -10 * k; P.gun.rot = -4 * D * k + chamberRot; P.gun.dy += chamberDy; P.gun.mid = true; P.torso.rot = -1.6 * D * k; P.head.rot = -2 * D * k;
+        P.flash = firing && p < 0.35 ? 1 - p / 0.35 : 0; P.flashSeed = totalShots;
         P.bob = 5; P.legL.rot = -3 * D; P.legR.rot = 3 * D; // braced stance
         P.gun.rot += this.aim; P.head.rot += this.aim * 0.4;
+        P.dx += this.strafeDx(tl); // ADAD sway while shooting
+        break;
+      }
+      case 'peek': { // duck behind cover, rise to fire; aim settles over 0.15-0.3 s
+        const rise = ease(clamp(tl / 0.4));
+        P.bob = 80 * (1 - rise) + 10; P.gun.dy = 20 * (1 - rise);
+        P.torso.rot = 6 * D * (1 - rise); P.head.rot = 4 * D * (1 - rise);
+        const settle = 0.15 + 0.15 * hash1(s, 7);
+        P.aimErr = clamp(1 - tl / settle);
+        const dir = hash1(s, 8) < 0.5 ? 1 : -1;
+        P.gun.rot += P.aimErr * 6 * D * dir; P.head.rot += P.aimErr * 3 * D * dir;
+        P.legL.rot = -6 * D * (1 - rise); P.legR.rot = 6 * D * (1 - rise);
+        break;
+      }
+      case 'reload': { // gun drops, magazine swap, gun rises — over the real reloadMs
+        const r = clamp(tl / (this.reloadMs / 1000));
+        const drop = r < 0.25 ? ease(r / 0.25) : r < 0.6 ? 1 : 1 - ease((r - 0.6) / 0.4);
+        P.gun.dy = 26 * drop; P.gun.rot = 14 * D * drop; P.gun.mid = true;
+        P.head.rot = 10 * D * drop; // looks down at the gun
+        if (r >= 0.25 && r < 0.6) P.gun.dy += 4 * Math.sin((r - 0.25) / 0.35 * Math.PI); // mag out and in
+        break;
+      }
+      case 'hop': { // LA jet hop: a 0.7 s arc, legs dangle, then back on the ground
+        const a = Math.sin(clamp(tl / 0.7) * Math.PI);
+        P.bob = -60 * a; P.torso.rot = -6 * D * a;
+        P.legL.rot = 8 * D * a; P.legR.rot = -8 * D * a;
+        break;
+      }
+      case 'search': { // head and gun scan while no target is in sight
+        const x = Math.sin((t + s) * 2 * Math.PI / 2.8);
+        const sw = Math.sign(x) * Math.pow(Math.abs(x), 0.6) * 25 * D; // flattened extremes = dwell
+        P.head.rot = sw; P.gun.rot = 0.5 * sw; P.bob = 4 * Math.sin((t + s) * 0.7);
         break;
       }
       case 'die': {
@@ -94,7 +162,13 @@ export class Soldier {
       }
     }
     const fl = t - this.flinchAt;
-    if (fl >= 0 && fl < 0.22 && this.state !== 'die' && this.state !== 'dead') { const k = Math.sin(fl / 0.22 * Math.PI); P.torso.rot -= 5 * D * k; P.head.rot -= 8 * D * k; P.flinch = k; }
+    if (fl >= 0 && fl < 0.22 && this.state !== 'die' && this.state !== 'dead') { const k = Math.sin(fl / 0.22 * Math.PI); P.torso.rot -= 5 * D * k; P.head.rot -= 8 * D * k; P.flinch = k; P.dx += 4 * Math.sin(fl / 0.22 * Math.PI * 2); } // stagger on hits
+    if (this.hp < 0.5 && this.state !== 'die' && this.state !== 'dead') { // hurt: hunched, slightly crouched
+      const h = (0.5 - this.hp) / 0.5;
+      P.torso.rot += 8 * D * h; P.head.rot += 6 * D * h; P.bob += 6 * h;
+    }
+    if (this.overshield) { P.shield = 1; P.bright *= 1.15; }
+    if (this.healing) { P.heal = 1; P.bright *= 1.1; }
     if (this.hop > 0) P.bob -= this.hop;
     if (this.cloak > 0) P.alpha *= 1 - 0.7 * this.cloak;
     return P;
@@ -110,7 +184,7 @@ export class Soldier {
       ctx.save(); ctx.globalAlpha = 0.35 * P.alpha;
       ctx.fillStyle = '#000'; ctx.beginPath();
       const sw = this.state === 'die' ? 1.6 : (1 + P.bob / 200);
-      ctx.ellipse(this.x, this.y + 2, 120 * this.scale * sw, 16 * this.scale, 0, 0, 2 * Math.PI); ctx.fill(); ctx.restore();
+      ctx.ellipse(this.x + P.dx * this.scale * this.facing, this.y + 2, 120 * this.scale * sw, 16 * this.scale, 0, 0, 2 * Math.PI); ctx.fill(); ctx.restore();
     }
     if (this.state === 'run') { // dust puffs kicked up behind the feet
       const tl = t - this.t0;
@@ -136,7 +210,7 @@ export class Soldier {
     if (this.dim) ctx.filter = `brightness(${(P.bright * 0.62).toFixed(3)}) saturate(0.6)`;   // crowd: pushed back
     else if (P.bright !== 1) ctx.filter = `brightness(${P.bright})`;
     const sh = P.shake ? Math.sin(t * 90) * 4 : 0;
-    ctx.translate(this.x + sh, this.y);
+    ctx.translate(this.x + sh + P.dx * this.scale * this.facing, this.y);
     ctx.scale(this.facing * this.scale, this.scale);
     ctx.translate(P.rootPiv[0], P.rootPiv[1]); ctx.rotate(P.rootRot); ctx.translate(-P.rootPiv[0], -P.rootPiv[1]);
     if (P.squash !== 1) ctx.scale(1 / P.squash, P.squash); // tall-thin stretch on respawn
@@ -157,6 +231,12 @@ export class Soldier {
     out.muzzleAhead = Soldier.apply(m, mz[0] + 100, mz[1]);
     if (P.flash > 0) this.drawFlash(ctx, mz, P.flash, P.flashSeed);
     ctx.restore();
+    if (P.shield > 0 || P.heal > 0) { // overshield ring / self-heal glow (square corners n/a: ellipses, no roundRect)
+      ctx.save(); ctx.filter = 'none'; ctx.globalCompositeOperation = 'lighter';
+      if (P.shield > 0) { ctx.globalAlpha = 0.55 * P.shield; ctx.strokeStyle = this.fx.glow + '0.9)'; ctx.lineWidth = 7; ctx.beginPath(); ctx.ellipse(0, -200, 175, 265, 0, 0, 2 * Math.PI); ctx.stroke(); }
+      if (P.heal > 0) { const g = ctx.createRadialGradient(0, -200, 0, 0, -200, 280); g.addColorStop(0, 'rgba(80,255,140,0.35)'); g.addColorStop(1, 'rgba(80,255,140,0)'); ctx.globalAlpha = P.heal; ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(0, -200, 200, 280, 0, 0, 2 * Math.PI); ctx.fill(); }
+      ctx.restore();
+    }
     ctx.restore();
     return P;
   }

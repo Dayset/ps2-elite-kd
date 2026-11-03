@@ -2,7 +2,7 @@
 // (scripts/build-replay.mjs, built daily from the site's own cache) and data/xp/<slug>.json. Every per-minute stat is a literal per-minute rate here: a 0.05 KPM player waits
 // ~20 real minutes between kills. The time in between is filled with the states in states.js.
 // All randomness is seeded from the player's name.
-import { Soldier, loadRigs, FX } from './soldier.js';
+import { Soldier, loadRigs, FX } from './soldier.js?v=20261103-mot1';
 import { STATES, FILLERS, PHASES, phaseOf } from './states.js';
 import { shardOf, slugOf } from './shard.mjs';
 import { toDoc } from './doc.mjs?v=20261103-pair1';
@@ -151,7 +151,7 @@ const CLS = Object.fromEntries(Object.entries({ inf: 'Infiltrator', la: 'Light A
 
 // ---------------------------------------------------------------- cast
 const F = doc.faction in rigs ? doc.faction : 'tr', foes = ['tr', 'nc', 'vs'].filter(f => f !== F);
-const main = new Soldier(rigs[F], F, { x: 350, y: GROUND + 5, scale: 0.5, facing: 1, seed: 0.3, rate: RATE, speed: 120 });
+const main = new Soldier(rigs[F], F, { x: 350, y: GROUND + 5, scale: 0.5, facing: 1, seed: 0.3, rate: RATE, speed: 120, mode: mainProfile?.mode ?? 'auto', reloadMs: mainProfile?.reloadMs ?? 2400 });
 main.isMain = true;
 // the crowd: dimmed, scattered wide across the field at staggered depths — no shoulder-to-shoulder
 // line, and no ally parked on the main's wall (peekX 120–365 below the wall's depth is his alone)
