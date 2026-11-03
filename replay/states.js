@@ -35,6 +35,12 @@ export const STATES = {
   inVehicle: { phase: 'fight', label: 'In vehicle', kind: 'core', source: 'vehicle share of kills; the vehicle stint covers those kills', anim: null, hook: 'tank' },
   dying: { phase: 'death', label: 'Down', kind: 'core', source: 'DPM (deaths per real minute)', anim: 'shoot' },
 
+  // ---- recovery (#106): after a won exchange where the player took damage, before the next fight
+  recover: { phase: 'fight', label: 'Taking cover', kind: 'core', source: '#106: after a won exchange, cover while the shield waits out its ~3 s delay', anim: 'idle', dur: () => 3, calm: true },
+  shieldRegen: { phase: 'fight', label: 'Shield regenerating', kind: 'core', source: '#106: visible shield refill after the ~3 s delay', anim: 'idle', dur: () => 1.5, hook: 'regen' },
+  medkit: { phase: 'fight', label: 'Using medkit', kind: 'core', source: '#106: health fix after a won exchange when no medic is near', anim: 'idle', dur: () => 1.2, hook: 'medkit' },
+  medicHeal: { phase: 'fight', label: 'Medic healing', kind: 'core', source: '#106: health fix after a won exchange when a medic is near (chance rises with allies and revived share)', anim: 'idle', dur: () => 1.5, hook: 'medicHeal' },
+
   // ---- fillers: placed in free time, as often as their per-minute rate says
   healing: { phase: 'fight', label: 'Healing', kind: 'filler', source: 'heals given per minute (Honu XP 4, 51)',
     rate: (st) => st.healPm, dur: (r) => 2.5 + 1.5 * r(), anim: 'idle', placeholder: true, hook: 'healAlly' },

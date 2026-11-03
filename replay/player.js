@@ -10,8 +10,9 @@ import { pairOf, pairStatus, pairRow, defaultRival, rankedRivals, MED_KEYS, MED_
 import { profileOf, shotsPerSec, toProfile, FALLBACK } from './weapons.mjs?v=20261103-weap1';
 import { baseRate, bulletRate, nextKillAt, calmStretchEnd, rampTo, baseGate, resolvePace } from './director.mjs?v=20261103-pace1';
 import { shooter, headChance } from './engagement.mjs?v=20261103-hs1';
-import { planDuel } from './duel-plan.mjs?v=20261103-ps1';
-import { planScrim, scrimPlanEnd, topScrimPartner } from './scrim-plan.mjs?v=20261103-ps1';
+import { planDuel } from './duel-plan.mjs?v=20261103-exch1';
+import { planScrim, scrimPlanEnd, topScrimPartner } from './scrim-plan.mjs?v=20261103-exch1';
+import { SHIELD, HEALTH, returnBurst, applyHits, recoveryFor } from './exchange.mjs?v=20261103-exch1';
 import { hpAt, barFracs, sparkFor, scoreAt, engagementAt, lifeAt as duelLifeAt, phaseState, killcamFor } from './duel-scene.mjs?v=20261103-duel2';
 import { STRIP, coverOf, assignLanes } from './lanes.mjs?v=20261103-strip1';
 import { pickWeighted, drawOpponents } from './crowd.mjs?v=20261103-crowd1';
@@ -481,12 +482,12 @@ if (pair) {
       // mean something else entirely.
       const A = mkSide(pair.a, scrimRow.w[0]), B = mkSide(pair.b, scrimRow.w[1]);
       const found = planScrim(A.sh, B.sh, { seed: pairSeed, durationSec: scrimRow.t1 - scrimRow.t0,
-        k: scrimRow.k, d: scrimRow.d, model, aInfo: A.info, bInfo: B.info });
+        k: scrimRow.k, d: scrimRow.d, model, aInfo: A.info, bInfo: B.info, allies: allies.length });
       duelPlan = found.plan; scrimExact = found.exact;
       scrimEndAt = scrimPlanEnd(duelPlan, scrimRow.t1 - scrimRow.t0);
     } else {
       const A = mkSide(pair.a), B = mkSide(pair.b);
-      duelPlan = planDuel(A.sh, B.sh, { seed: pairSeed, durationSec: 7200, pA: pair.pA, model, aInfo: A.info, bInfo: B.info });
+      duelPlan = planDuel(A.sh, B.sh, { seed: pairSeed, durationSec: 7200, pA: pair.pA, model, aInfo: A.info, bInfo: B.info, allies: allies.length });
     }
   } catch { duelPlan = null; }
 }
@@ -537,6 +538,12 @@ function pumpDuel(t) {
       fire(t, from, to, { hit: sh.hit, hs: sh.hs, final: ev.kill, duel: true, spark: sh.hit ? sparkFor(ev.eng, ev.idx) : null });
     }
     else if (ev.kind === 'kill') { showKillcam(ev.eng); updateScore(); }
+    else if (ev.kind === 'fx') {
+      const w = ev.side === 'a' ? main : rival;
+      if (ev.rec === 'shieldRegen') fx.push({ kind: 'shield', s: w, t0: t, dur: 1.5 });
+      else if (ev.rec === 'medkit') fx.push({ kind: 'heal', from: w, to: w, t0: t, dur: 1.2 });
+      else if (ev.rec === 'medicHeal') { const m = allies.length ? pick(allies) : null; if (m) fx.push({ kind: 'heal', from: m, to: w, t0: t, dur: 1.5 }); }
+    }
     else if (ev.kind === 'back') showBackNote();
     else if (ev.kind === 'cls') life.cls = ev.cls;
   }
@@ -547,6 +554,9 @@ if (pair && duelPlan) {
     for (const s of e.segments) {
       pumpEvents.push({ t: s.t0, kind: 'state', side: 'a', state: phaseState(s.phase, 'a', e) });
       pumpEvents.push({ t: s.t0, kind: 'state', side: 'b', state: phaseState(s.phase, 'b', e) });
+      // #106: recovery visuals for the winner (cover needs none — the cover
+      // pass parks an idle soldier behind his wall).
+      if (s.rec && s.rec !== 'recover') pumpEvents.push({ t: s.t0, kind: 'fx', side: e.outcome, rec: s.rec });
     }
     e.shots.forEach((sh, i) => {
       if (sh.from === 'third') return;
@@ -602,6 +612,7 @@ if (pair && duelPlan) {
 }
 window.__scrim = () => scrimMode ? { t0: scrimRow.t0, t1: scrimRow.t1, k: scrimRow.k, d: scrimRow.d,
   exact: scrimExact, endShown: scrimEndShown, planEnd: scrimEndAt } : null;
+window.__exch = () => ({ fights: exchLog, deaths: deathLog, pots: potLog });
 
 // ---------------------------------------------------------------- 1:1 timeline planner
 // One "cycle" = from a death (or the first spawn) to the next death. Everything is placed on the real
@@ -660,6 +671,25 @@ function planCycle(T, first) {
     for (let i = 1; i < spikes.length; i++) spikes[i].t0 = Math.max(spikes[i].t0, spikes[i - 1].t0 + spikes[i - 1].dur + 1.2 + (spikes[i - 1].veh !== spikes[i].veh ? 2 : 0));
     const last = spikes.at(-1); if (last.t0 + last.dur > aliveEnd - 2) aliveEnd = last.t0 + last.dur + 2;
   }
+  // #106: every infantry kill is a 1v1 exchange — the victim fires back, and
+  // after a won exchange where the player took damage, recovery runs before
+  // the next fight. The return burst and the recovery are planned here (plan
+  // stream), so execution replays exactly what the plan decided. Later
+  // spikes shift to keep the recovery inside free time; the extra-time
+  // credit below keeps per-minute rates honest.
+  for (const s of spikes) {
+    if (s.id !== 'fight' || s.veh) continue;
+    const ret = returnBurst(rngPlan); s.retN = ret.n; s.retH = ret.h;
+    const after = applyHits(SHIELD, HEALTH, ret.h);
+    s.recovery = recoveryFor({ shield: after.shield, health: after.health, allies: allies.length, revivedShare: st.revive, r: rngPlan });
+  }
+  for (let i = 0; i < spikes.length; i++) {
+    const s = spikes[i]; if (!s.recovery) continue;
+    const nxt = spikes[i + 1];
+    const need = s.t0 + s.dur + s.recovery.dur + 1.2 + (nxt?.veh ? 2 : 0);
+    if (nxt && nxt.t0 < need) { const shift = need - nxt.t0; for (let j = i + 1; j < spikes.length; j++) spikes[j].t0 += shift; aliveEnd += shift; }
+    else if (!nxt) aliveEnd = Math.max(aliveEnd, need + 2);
+  }
   { // a life stretched to fit its fights: the extra real time still earns its share for later lives
     const extra = aliveEnd + DYING - T - cyc;
     if (extra > 0) { credit.k += st.kpm / 60 * extra; credit.a += st.kpm * st.apk / 60 * extra;
@@ -679,10 +709,12 @@ function planCycle(T, first) {
   const queue = []; for (const [id, n] of fillers) for (let i = 0; i < n; i++) queue.push(id);
   for (let i = queue.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [queue[i], queue[j]] = [queue[j], queue[i]]; }
   const marks = [free0, ...busy.flatMap(b => [b.t0, b.t1]), aliveEnd];
-  const gaps = []; for (let i = 0; i < marks.length; i += 2) if (marks[i + 1] - marks[i] > 0.2) gaps.push([marks[i], marks[i + 1], i > 0]);
+  const gaps = []; for (let i = 0; i < marks.length; i += 2) if (marks[i + 1] - marks[i] > 0.2) gaps.push([marks[i], marks[i + 1], i > 0, i > 0 ? busy[i / 2 - 1] : null]);
   const fills = [];
-  for (const [g0, g1, afterShots] of gaps) {
+  for (const [g0, g1, afterShots, prev] of gaps) {
     let c = g0;
+    // #106: recovery first, before any reload/filler/idle in this gap.
+    if (prev?.recovery) { for (const st of prev.recovery.steps) { fills.push(seg(st.id, c, st.dur)); c += st.dur; } }
     const inVeh = x => stint && x >= stint[0] && x <= stint[1];
     if (afterShots && !inVeh(c) && g1 - c >= STATES.reloading.dur() + 0.3) { fills.push(seg('reloading', c, STATES.reloading.dur())); c += STATES.reloading.dur() + 0.2; }
     while (g1 - c > 1) {
@@ -708,7 +740,9 @@ function planCycle(T, first) {
   }
   for (const id of queue) credit[id] = Math.min(4, credit[id] + 1);   // did not fit: kept for later
   // death: a short exchange the main soldier loses; return fire comes from the shot budget
-  const rn = Math.max(0, Math.min(Math.floor(credit.shots), sround(4 + rng() * 6, rngPlan))); credit.shots -= rn;
+  // #106: floored at 1 shot — the ticket's Done check needs return fire on
+  // every death, and a dry budget used to plan zero-shot back bursts.
+  const rn = Math.max(1, Math.min(Math.floor(credit.shots), sround(4 + rng() * 6, rngPlan))); credit.shots -= rn;
   const death = seg('dying', aliveEnd, DYING, { n: rn });
   const all = [...out, ...busy, ...fills, death].sort((a, b) => a.t0 - b.t0);
   for (const s of all) if (stint && s.t0 >= stint[0] - 0.01 && s.t0 < stint[1] && s.id !== 'running') s.veh = true;
@@ -735,10 +769,10 @@ function ensurePlan(t) {
 // winner reloads), plus respawn-timer/beam segments for main's returns.
 // The pump owns soldier states; step() skips enter/exit/tick for these.
 if (duelPlan) {
-  const segId = (phase, e) => phase === 'approach' ? 'running' : phase === 'spot' ? 'idle'
-    : phase === 'trade' ? 'trading' : phase === 'commit' ? 'fight'
-    : phase === 'resolution' ? (e.victim === 'a' ? 'dying' : 'idle')
-    : e.segments.find((s) => s.phase === 'aftermath')?.aIntent === 'reload' ? 'reloading' : 'idle';
+  const segId = (s, e) => s.phase === 'approach' ? 'running' : s.phase === 'spot' ? 'idle'
+    : s.phase === 'trade' ? 'trading' : s.phase === 'commit' ? 'fight'
+    : s.phase === 'resolution' ? (e.victim === 'a' ? 'dying' : 'idle')
+    : s.rec ?? (e.segments.find((x) => x.phase === 'aftermath')?.aIntent === 'reload' ? 'reloading' : 'idle');
   const msegs = [];
   let prevT1 = 0, prevDeathAt = null;
   for (const e of duelPlan.engagements) {
@@ -750,7 +784,7 @@ if (duelPlan) {
       const b0 = Math.max(prevT1, beamStart);
       if (b0 < lifeStart) msegs.push({ id: 'respawn', t0: b0, t1: lifeStart, duel: true });
     }
-    for (const s of e.segments) msegs.push({ id: segId(s.phase, e), t0: s.t0, t1: s.t1, duel: true });
+    for (const s of e.segments) msegs.push({ id: segId(s, e), t0: s.t0, t1: s.t1, duel: true });
     prevT1 = e.t1;
     if (e.victim) prevDeathAt = e.killAt ?? e.segments.find((s) => s.phase === 'resolution').t0;
   }
@@ -782,6 +816,10 @@ if (duelPlan) {
 // lane-correct, the double-target corner the old code kept for the same
 // situation.
 const laneViolations = [];
+// #106 logs for the headless Done checks: per fight the planned return fire
+// and recovery plus what actually fired; per death the killer/back bursts;
+// every pot-shot at the player with whether a segment opponent was current.
+const exchLog = [], deathLog = [], potLog = [];
 function moveToFront(e, t) {
   // Prefer a dead front soldier's slot (the #105 swap — the dead soldier
   // inherits the back slot for its respawn); else ANY non-busy front
@@ -881,6 +919,12 @@ const HOOKS = {
             tick(s, t, dt) { scroll += dt * (s.veh ? 260 : 150); },
             exit(s, t) { for (const a of allies) a.set('idle', t); arrive(t); } },
   reload: { enter(s, t) { main.reloadAt = t + 0.2; sfx.play('reload'); } },
+  // #106 recovery visuals: the cover pass already parks an idle main behind
+  // his wall; regen adds the shield shimmer, medkit a self heal beam, and a
+  // medic heal a beam from a nearby ally.
+  regen: { enter(s, t) { fx.push({ kind: 'shield', s: main, t0: t, dur: s.t1 - s.t0 }); } },
+  medkit: { enter(s, t) { fx.push({ kind: 'heal', from: main, to: main, t0: t, dur: s.t1 - s.t0 }); } },
+  medicHeal: { enter(s, t) { const m = allies.length ? pick(allies) : null; if (m) fx.push({ kind: 'heal', from: m, to: main, t0: t, dur: s.t1 - s.t0 }); } },
   revivedBy: { enter(s, t) { const m = allies.length ? pick(allies) : null; s.medic = m; },
                tick(s, t) { const tl = t - s.t0, d = s.t1 - s.t0;
                  if (s.medic && !s.healFx && tl > d - 2) { s.healFx = 1; fx.push({ kind: 'heal', from: s.medic, to: main, t0: t, dur: 1.2 }); }
@@ -911,6 +955,13 @@ function enter(s, t) {
     tg.busy = true; s.tg = tg;
     if (s.id === 'fight' && s.veh) s.b = { tank: true, target: tg, fired: 0 };
     else s.b = startBurst(t, main, tg, s.n, s.h, s.id === 'fight', { hs: s.hs });
+    // #106: the victim fires back from the first shot (plan's return burst).
+    if (s.id === 'fight' && !s.veh && s.retN > 0) s.ret = startBurst(t, tg, main, s.retN, s.retH, false);
+    if (s.id === 'fight' && !s.veh) {
+      s.exch = { t0: s.t0, dur: s.t1 - s.t0, target: tg.opp?.slug ?? null, retN: s.retN, retH: s.retH,
+        recovery: (s.recovery?.steps || []).map(x => x.id), recoveryDur: s.recovery?.dur ?? 0, mainFired: 0, retFired: 0 };
+      exchLog.push(s.exch);
+    }
   }
   if (s.id === 'dying') {
     if (!engaged) arrive(t - 2);
@@ -918,6 +969,7 @@ function enter(s, t) {
     k.busy = true; s.k = k;
     s.b = startBurst(t + 0.3, k, main, 14, 5, true); s.b.t0 = t + 0.3; s.b.rate = 12;
     s.back = startBurst(t, main, k, s.n, Math.min(s.n, sround(s.n * st.hpk / st.spk)), false); if (s.veh) s.back = { done: true };
+    s.dth = { t0: s.t0, veh: !!s.veh, killerFired: 0, backFired: 0 }; deathLog.push(s.dth);
   }
   def.hook && HOOKS[def.hook]?.enter?.(s, t);
   stats.fills[s.id] = (stats.fills[s.id] || 0) + 1;
@@ -930,10 +982,17 @@ function tick(s, t, dt) {
   } else if (s.id === 'dying') {
     if (!s.back.done && alive(main)) runBurst(s.back, t);
     if (t >= s.b.t0) runBurst(s.b, t);
+    if (s.dth) { s.dth.killerFired = s.b.fired; s.dth.backFired = s.back.done ? s.back.n ?? 0 : s.back.fired; }
     if (s.b.done) s.k.busy = false;
     if (tank.on && tl > 0.6 && !s.bail) { s.bail = 1; tank.on = false; tank.off = t; main.set('idle', t); }
   } else if (s.b) {
     runBurst(s.b, t);
+    // #106: the victim's return fire runs with the player's burst, but never
+    // past the victim's death (a short player burst can kill before the
+    // return burst finishes; the plan's retH counts the full burst, and the
+    // recovery that follows is planned from it).
+    if (s.ret && !s.ret.done && s.tg.state !== 'die' && s.tg.state !== 'dead') runBurst(s.ret, t);
+    if (s.exch) { s.exch.mainFired = s.b.fired; s.exch.retFired = s.ret ? s.ret.fired : 0; }
     if (s.id === 'assist' && s.b.done && !s.ally) {
       const al = allies.filter(alive); s.ally = al.length ? startBurst(t, pick(al), s.tg, 6, 2, true, { assist: true }) : { done: true };
       if (s.ally.rate) s.ally.rate = 13;
@@ -947,6 +1006,7 @@ function exit(s, t) {
   def.hook && HOOKS[def.hook]?.exit?.(s, t);
   if (s.tg && s.id !== 'fight' && !(s.id === 'assist' && s.ally?.final)) s.tg.busy = false;
   if (s.b && !s.b.tank && !s.b.done) { while (s.b.fired < s.b.n) runBurst(s.b, s.b.t0 + 1e3); }   // never drop budgeted shots
+  if (s.ret && !s.ret.done && s.tg.state !== 'die' && s.tg.state !== 'dead') { while (s.ret.fired < s.ret.n) runBurst(s.ret, s.ret.t0 + 1e3); }
   if (main.state === 'shoot') main.set('idle', t);
   if (s.id === 'dying' && main.state !== 'die' && main.state !== 'dead') { main.hs = false; main.set('die', t - 1); stats.d++; } // safety: the death always happens
 }
@@ -968,13 +1028,17 @@ function background(t, dt) {
     if (e.state === 'run') { e.facing = -1; e.x -= e.speed * dt; if (e.x <= e.slot) { e.x = e.slot; e.set('idle', t); } }
   }
   if (!engaged) return;
-  // enemy pot-shots that miss; luck turns some into visible close calls
+  // enemy pot-shots that miss; luck turns some into visible close calls.
+  // #106: while a segment opponent is current (fight, dying, trading,
+  // assist), pot-shots go at allies only — never at the player mid-exchange.
   if (t > nextSuppress) {
     nextSuppress = t + P.suppress * (0.6 + 0.8 * rngBg());
-    const sh = enemies.filter(e => e.state === 'idle' && !e.busy), tgts = [main, ...allies].filter(alive);
+    const hasOpp = cur && (cur.tg || cur.k);
+    const sh = enemies.filter(e => e.state === 'idle' && !e.busy), tgts = (hasOpp ? [...allies] : [main, ...allies]).filter(alive);
     if (sh.length && tgts.length && !tank.on) {
-      const s = pick(sh, rngBg), tg = rngBg() < 0.6 && alive(main) ? main : pick(tgts, rngBg), close = tg === main && rngBg() < P.dodge;
+      const s = pick(sh, rngBg), tg = !hasOpp && rngBg() < 0.6 && alive(main) ? main : pick(tgts, rngBg), close = tg === main && rngBg() < P.dodge;
       const b = startBurst(t, s, tg, 5 + Math.floor(rngBg() * 6), 0, false, {}, rngBg); b.close = close; b.pot = true; enemyBursts.push(b);
+      if (tg === main) potLog.push({ t, cur: cur?.id ?? null, hasOpp: !!hasOpp });
       if (close) pop(main, T('pop.close', 'close call'), '#c8d3ff', t + 0.35);
     }
   }

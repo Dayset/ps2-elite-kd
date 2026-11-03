@@ -33,10 +33,10 @@ function rescalePlan(plan, durationSec) {
   return { ...plan, duration: durationSec, engagements, lives, fights, cuts };
 }
 
-export function planScrim(a, b, { seed, durationSec, k, d, model, aInfo, bInfo, tries = SCRIM_TRIES }) {
+export function planScrim(a, b, { seed, durationSec, k, d, model, aInfo, bInfo, tries = SCRIM_TRIES, allies = 0 }) {
   const pA = (k + d) > 0 ? k / (k + d) : 0.5;
   if (k + d <= 0) {
-    const plan = planDuel(a, b, { seed, durationSec, pA, model, aInfo, bInfo });
+    const plan = planDuel(a, b, { seed, durationSec, pA, model, aInfo, bInfo, allies });
     const s = scoreAt(plan, Infinity);
     return { plan, exact: s.a === 0 && s.b === 0, tries: 1 };
   }
@@ -71,7 +71,7 @@ export function planScrim(a, b, { seed, durationSec, k, d, model, aInfo, bInfo, 
   let totalKills = 0, measured = 0;
   const stageA = Math.min(40, tries);
   for (let i = 0; i < stageA; i++) {
-    const plan = planDuel(a, b, { seed: seed + i, durationSec: planDur, pA, model, aInfo, bInfo, shortApproach: true });
+    const plan = planDuel(a, b, { seed: seed + i, durationSec: planDur, pA, model, aInfo, bInfo, shortApproach: true, allies });
     tried++;
     const s = scoreAt(plan, Infinity);
     totalKills += s.a + s.b; measured++;
@@ -82,7 +82,7 @@ export function planScrim(a, b, { seed, durationSec, k, d, model, aInfo, bInfo, 
     ? Math.min(planDur * 5, Math.max(planDur * 0.2, planDur * (k + d) / meanTotal))
     : planDur;
   for (let i = 0; i < tries; i++) {
-    const plan = planDuel(a, b, { seed: seed + stageA + i, durationSec: planDur2, pA, model, aInfo, bInfo, shortApproach: true });
+    const plan = planDuel(a, b, { seed: seed + stageA + i, durationSec: planDur2, pA, model, aInfo, bInfo, shortApproach: true, allies });
     tried++;
     if (attempt(plan)) return { plan: rescalePlan(plan, durationSec), exact: true, tries: tried };
   }

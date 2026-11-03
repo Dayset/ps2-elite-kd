@@ -38,6 +38,7 @@
  * with engage(a, b, mulberry(derivedSeed), { outcome, wA }).
  */
 import { engage, mulberry } from "./engagement.mjs?v=20261103-duel1";
+import { SHIELD, HEALTH, recoveryFor } from "./exchange.mjs?v=20261103-exch1";
 
 export const DEFAULTS = { gapMedianS: 45, gapSigma: 0.6, killsPerFight: [2, 4, 9], streakP: 0.55, oneVoneShare: 0.3 };
 const BREAK_P = 0.15;
@@ -80,7 +81,7 @@ export const deriveSeed = (master, idx) => (Math.imul((master >>> 0) ^ 0x9e3779b
 
 /**
  * planDuel(a, b, opts): a, b are shooter() outputs (profile + stats inside).
- * opts: { seed, durationSec, pA, model, aInfo, bInfo, shortApproach } where aInfo/bInfo are
+ * opts: { seed, durationSec, pA, model, aInfo, bInfo, shortApproach, allies } where aInfo/bInfo are
  * { kpm, classShares, revivedShare, resupplyPm }.
  * → { v, pA, params, thirdP, breakP, lives: {a, b}, engagements, fights, cuts }
  */
@@ -175,7 +176,23 @@ export function planDuel(a, b, opts = {}) {
     const tSpot = t0 + approachDur, tTrade = tSpot + spot;
     const tKill = decisive ? tTrade + eng.killAt : null;
     const tResolve = decisive ? tKill : tTrade + tradeDur;
-    const aftermathDur = U(rng, 1, 3);
+    // #106: after a won exchange the winner recovers in the aftermath when
+    // hurt — cover, shield refill, medkit or medic heal — instead of idling.
+    // The winner's end HP is the last engage() snapshot at the kill: trade
+    // damage resets at commit, so only commit-window return fire counts.
+    // The base aftermath draw always runs (stream alignment), and the medic
+    // roll draws from a derived stream, so recovery never moves an outcome
+    // or a gap draw.
+    const baseAftermath = U(rng, 1, 3);
+    let recovery = null;
+    if (decisive) {
+      const w = outcome, snaps = eng.hp[w] || [];
+      const end = [...snaps].reverse().find(([t]) => t <= eng.killAt);
+      const shield = end ? end[1] : SHIELD, health = end ? end[2] : HEALTH;
+      recovery = recoveryFor({ shield, health, healthMax: life[w].cls === "max" ? 2000 : HEALTH,
+        allies: opts.allies ?? 0, revivedShare: info[w].revivedShare ?? 0.3, r: mulberry(deriveSeed(seed, 100000 + idx)) });
+    }
+    const aftermathDur = recovery ? recovery.dur : baseAftermath;
     const t1 = tResolve + 0.5 + aftermathDur;
 
     // ---- intents: pusher from the KPM share, +0.1 toward the last winner
@@ -209,12 +226,20 @@ export function planDuel(a, b, opts = {}) {
     }
     segments.push(
       { phase: "resolution", t0: tResolve, t1: tResolve + 0.5, aIntent: intent("a", "resolution"), bIntent: intent("b", "resolution") },
-      { phase: "aftermath", t0: tResolve + 0.5, t1, aIntent: intent("a", "aftermath"), bIntent: intent("b", "aftermath") },
     );
+    if (recovery) {
+      let at = tResolve + 0.5;
+      for (const st of recovery.steps) {
+        segments.push({ phase: "aftermath", rec: st.id, t0: at, t1: at + st.dur, aIntent: intent("a", "aftermath"), bIntent: intent("b", "aftermath") });
+        at += st.dur;
+      }
+    } else {
+      segments.push({ phase: "aftermath", t0: tResolve + 0.5, t1, aIntent: intent("a", "aftermath"), bIntent: intent("b", "aftermath") });
+    }
     const shots = eng.shots.map((s) => ({ ...s, t: s.t + tTrade }));
     engagements.push({
       idx, fightIdx: curFight.idx, t0, t1, outcome, victim, revived, respawnSide, respawnDur,
-      aClass: life.a.cls, bClass: life.b.cls, segments, shots,
+      aClass: life.a.cls, bClass: life.b.cls, segments, shots, recovery,
       killAt: tKill, tradeDur, commitDur: Math.max(0, commitDur),
       // HP traces shifted into plan time (snapshots per shot, plus the commit reset).
       hp: { a: eng.hp.a.map(([t, s, h, o]) => [t + tTrade, s, h, o]), b: eng.hp.b.map(([t, s, h, o]) => [t + tTrade, s, h, o]) },
