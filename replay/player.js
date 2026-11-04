@@ -8,14 +8,14 @@ import { shardOf, slugOf } from './shard.mjs';
 import { toDoc } from './doc.mjs?v=20261103-pair1';
 import { pairOf, pairStatus, pairRow, defaultRival, rankedRivals, MED_KEYS, MED_FALLBACK } from './pair.mjs?v=20261103-pair1';
 import { profileOf, shotsPerSec, toProfile, FALLBACK } from './weapons.mjs?v=20261103-weap1';
-import { baseRate, bulletRate, nextKillAt, calmStretchEnd, rampTo, baseGate, resolvePace } from './director.mjs?v=20261103-pace1';
+import { baseRate, bulletRate, nextKillAt, calmStretchEnd, rampTo, baseGate, resolvePace, resolveSlowmo } from './director.mjs?v=20261103-slow1';
 import { shooter, headChance } from './engagement.mjs?v=20261103-real1';
 import { planDuel } from './duel-plan.mjs?v=20261103-real1';
 import { planRealFight } from './real-fight.mjs?v=20261103-real1';
 import { planScrim, scrimPlanEnd, topScrimPartner } from './scrim-plan.mjs?v=20261103-exch1';
 import { SHIELD, HEALTH, returnBurst, applyHits, recoveryFor } from './exchange.mjs?v=20261103-exch1';
 import { pushLine, visibleLines } from './status.mjs?v=20261103-celeb1';
-import { hpAt, barFracs, sparkFor, scoreAt, engagementAt, lifeAt as duelLifeAt, phaseState, killcamFor } from './duel-scene.mjs?v=20261103-real1';
+import { hpAt, barFracs, sparkFor, scoreAt, engagementAt, lifeAt as duelLifeAt, phaseState, killcamFor } from './duel-scene.mjs?v=20261103-slow1';
 import { pairEvents, fightsOf, classOf } from '../duels.mjs?v=20261102-luck5';
 import { cameraFor, coverKinds, hopKinds, approachPath, approachX, offScreenX, CORPSE_KEEP } from './camera.mjs?v=20261103-cam1';
 import { STRIP, coverOf, assignLanes } from './lanes.mjs?v=20261103-strip1';
@@ -72,6 +72,23 @@ paintSfxBtn();
 sfxBtn.addEventListener('click', () => { sfx.unlock(); sfx.setMuted(!sfx.muted); try { localStorage.setItem('ps2ekd:sfxMuted', sfx.muted ? '1' : '0'); } catch {} paintSfxBtn(); });
 paceBtns.append(sfxBtn);
 window.__sfx = () => ({ muted: sfx.muted });
+// Slow-mo toggle (Dayset 2026-11-03): the kill treatment — bullet-time
+// envelope, x0.5 in the last 1.5 data s before a kill, headshot freeze —
+// at ANY pace, not just Cinematic. Default on, so x1/x2 gain it
+// immediately and Cinematic behaves as before; off restores the exact
+// pre-toggle behavior (constants for x1/x2, gated base for cine, no
+// envelope/freeze/pre-kill anywhere). ?slowmo=0/1 wins for this load only,
+// like ?speed; clicks persist on-device.
+let slowmo = resolveSlowmo(q.get('slowmo'), (() => { try { return localStorage.getItem('ps2ekd:replaySlowmo'); } catch { return null; } })());
+const slowBtn = document.createElement('button'); slowBtn.type = 'button';
+slowBtn.textContent = '🐌';
+slowBtn.title = T('slowmoHint', 'Slow motion on kills: bullet time, x0.5 before a kill, headshot freeze — at any pace.');
+slowBtn.setAttribute('aria-label', slowBtn.title);
+const paintSlowBtn = () => { slowBtn.setAttribute('aria-pressed', slowmo ? 'true' : 'false'); slowBtn.classList.toggle('on', slowmo); };
+paintSlowBtn();
+slowBtn.addEventListener('click', () => { sfx.unlock(); slowmo = !slowmo; try { localStorage.setItem('ps2ekd:replaySlowmo', slowmo ? '1' : '0'); } catch {} paintSlowBtn(); });
+paceBtns.append(slowBtn);
+window.__slowmo = () => ({ on: slowmo });
 const paceRateEl = document.createElement('span'); paceRateEl.className = 'pace-rate'; paceRateEl.title = T('paceRateHint', 'Current playback rate.');
 paceEl.append(paceBtns, paceRateEl); cv.after(paceEl);
 function setPace(p, save = true) {
@@ -416,18 +433,32 @@ function fire(t, from, to, o = {}, r = rng) {
 let wallT = 0, simT = 0, skipped = 0, rate = 1, bullet = null, freeze = 0, jump = null, jumpCard = null, cue = false;
 // Cinematic ramp state (#110): the shown rate, the ramp it is on, and the
 // gated base rate. x1/x2 never touch this state (they return constants).
-let rateShown = 1, rampTarget = null, rampFrom = 1, rampT0 = 0, baseCurrent = null, baseChangedAt = -10;
+let rateShown = 1, rampTarget = null, rampFrom = 1, rampT0 = 0, baseCurrent = null, baseChangedAt = -10, rampInit = false;
 function currentRate() {
-  if (pace === '1') return 1;
-  if (pace === '2') return 2;
-  // Cinematic: under reduced motion, the base rates only — no slow-mo,
-  // bullet time, jump cuts or cue visuals (those are gated on reducedOS too).
-  if (reducedOS) return baseRate(cur?.id);
+  // Reduced motion: base rates only at every pace — no slow-mo, bullet
+  // time, jump cuts or cue visuals (those are gated on reducedOS too).
+  if (reducedOS) { if (pace === '1') return 1; if (pace === '2') return 2; return baseRate(cur?.id); }
   if (bullet && wallT - bullet.w0 >= 1.05) { bullet = null; rampTarget = null; rateShown = 1; }   // envelope ends at x1; the next target ramps from there
-  if (bullet) return bulletRate(wallT - bullet.w0);   // the envelope owns the rate while active, as shipped
+  if (slowmo && bullet) return bulletRate(wallT - bullet.w0);   // the envelope owns the rate while active, as shipped
+  // x1/x2: constants when slow-mo is off (exact pre-toggle behavior);
+  // with slow-mo on, the base rate plus the pre-kill x0.5, ramped.
+  if (pace === '1' || pace === '2') {
+    if (!slowmo) return pace === '1' ? 1 : 2;
+    const base = pace === '1' ? 1 : 2;
+    // First slow-mo call: start at the base rate, no opening ramp (the
+    // x1/x2 clock test measures exact constants with slow-mo off, and
+    // slow-mo on should still open at the pace, not sweep up to it).
+    if (!rampInit) { rampInit = true; rateShown = base; rampTarget = base; rampFrom = base; rampT0 = wallT; }
+    const tKill = nextKillAt(plan.segs, simT);
+    const target = (tKill != null && tKill - simT <= 1.5) ? 0.5 : base;
+    if (target !== rampTarget) { rampTarget = target; rampFrom = rateShown; rampT0 = wallT; }
+    rateShown = rampTo(rampFrom, rampTarget, wallT - rampT0, 0.4);
+    return rateShown;
+  }
+  // Cinematic: gated base + ramp as shipped; the pre-kill x0.5 is slow-mo.
   const tKill = nextKillAt(plan.segs, simT);
   [baseCurrent, baseChangedAt] = baseGate(baseCurrent, baseRate(cur?.id), wallT, baseChangedAt, 2);
-  const target = (tKill != null && tKill - simT <= 1.5) ? 0.5 : baseCurrent;
+  const target = (slowmo && tKill != null && tKill - simT <= 1.5) ? 0.5 : baseCurrent;
   if (target !== rampTarget) { rampTarget = target; rampFrom = rateShown; rampT0 = wallT; }
   rateShown = rampTo(rampFrom, rampTarget, wallT - rampT0, 0.4);
   return rateShown;
@@ -446,10 +477,10 @@ function land(t, b) {
     // also leaves a status line on the killer.
     b.from.cheerAt = wallT;
     if (b.hs) line(b.from, T('pop.hs', 'headshot +1'));
-    if (s === main) { stats.d++; sfx.play('death'); deathTimes.push(t); if (duelPlan) { recentRival.push({ hs: !!b.hs }); if (recentRival.length > 10) recentRival.shift(); } if (b.from.opp) oppDeaths[b.from.opp.slug] = (oppDeaths[b.from.opp.slug] || 0) + 1; if (!fast && !reducedOS && pace === 'cine') { if (b.hs) freeze = 2; bullet = { kind: 'death', w0: bullet ? wallT - 0.15 : wallT }; } return; }
+    if (s === main) { stats.d++; sfx.play('death'); deathTimes.push(t); if (duelPlan) { recentRival.push({ hs: !!b.hs }); if (recentRival.length > 10) recentRival.shift(); } if (b.from.opp) oppDeaths[b.from.opp.slug] = (oppDeaths[b.from.opp.slug] || 0) + 1; if (!fast && !reducedOS && slowmo) { if (b.hs) freeze = 2; bullet = { kind: 'death', w0: bullet ? wallT - 0.15 : wallT }; } return; }
     if (b.from === main) { stats.k++; sfx.play(b.hs ? 'headshot' : 'kill'); killTimes.push(t); recentMain.push({ hs: !!b.hs }); if (recentMain.length > 10) recentMain.shift(); if (s.opp) oppKills[s.opp.slug] = (oppKills[s.opp.slug] || 0) + 1; if (b.hs) stats.hs++; if (b.veh) stats.veh++;
       if (b.headHitsBefore !== undefined) hsKillLog.push({ hs: !!b.hs, headBefore: b.headHitsBefore });
-      if (!fast && !reducedOS && pace === 'cine') { if (b.hs) freeze = 2; bullet = { kind: 'kill', w0: bullet ? wallT - 0.15 : wallT }; }
+      if (!fast && !reducedOS && slowmo) { if (b.hs) freeze = 2; bullet = { kind: 'kill', w0: bullet ? wallT - 0.15 : wallT }; }
       pop(main, b.hs ? T('pop.hs', 'headshot +1') : b.veh ? T('pop.veh', 'vehicle kill +1') : '+1', b.hs ? '#ffe066' : '#fff', t); }
     else if (b.assist) { stats.a++; pop(main, T('pop.assist', '+assist'), '#9fe8ff', t); line(main, T('pop.assist', '+assist')); }
   } else if (b.from === main) sfx.play('hit');
@@ -581,7 +612,9 @@ const showKillcam = (eng) => {
   if (!kcEl) return;
   const kc = killcamFor(eng, eng.outcome === 'a' ? pair.a : pair.b);
   kcEl.replaceChildren();
-  const killer = document.createElement('b'); killer.textContent = stripTag(eng.outcome === 'a' ? pair.a.name : pair.b.name); kcEl.append(killer);
+  const killer = document.createElement('b');
+  killer.textContent = eng.outcome === 'third' ? T('crowdKill', 'the crowd') : stripTag(eng.outcome === 'a' ? pair.a.name : pair.b.name);
+  kcEl.append(killer);
   if (kc.weapon) {
     kcEl.append(document.createTextNode(' · '));
     if (kc.weapon.img != null) { const im = document.createElement('img'); im.src = `../assets/weapons/${kc.weapon.img}.webp`; im.alt = ''; kcEl.append(im); kcEl.append(document.createTextNode(' ')); }
@@ -616,7 +649,16 @@ function pumpDuel(t) {
       const sh = ev.shot, from = sh.from === 'a' ? main : rival, to = sh.from === 'a' ? rival : main;
       fire(t, from, to, { hit: sh.hit, hs: sh.hs, final: ev.kill, duel: true, spark: sh.hit ? sparkFor(ev.eng, ev.idx) : null });
     }
-    else if (ev.kind === 'kill') { showKillcam(ev.eng); updateScore(); }
+    else if (ev.kind === 'kill') {
+      showKillcam(ev.eng); updateScore();
+      // Third death: the envelope (when slow-mo is on) and the death sound
+      // for a main victim, mirroring land()'s decisive-kill treatment.
+      // No stats move: the plan's score counts decisive kills only.
+      if (ev.eng.outcome === 'third') {
+        if (ev.eng.victim === 'a') sfx.play('death');
+        if (!fast && !reducedOS && slowmo) bullet = { kind: ev.eng.victim === 'a' ? 'death' : 'kill', w0: bullet ? wallT - 0.15 : wallT };
+      }
+    }
     else if (ev.kind === 'fx') {
       const w = ev.side === 'a' ? main : rival;
       if (ev.rec === 'shieldRegen') { fx.push({ kind: 'shield', s: w, t0: t, dur: 1.5 }); line(w, LBL('shieldRegen')); }
@@ -642,9 +684,15 @@ if (pair && duelPlan) {
       pumpEvents.push({ t: sh.t, kind: 'shot', eng: e, idx: i, shot: sh,
         kill: e.killAt != null && Math.abs(sh.t - e.killAt) < 1e-9 && sh.from === e.outcome });
     });
-    if (e.killAt != null) pumpEvents.push({ t: e.killAt, kind: 'kill', eng: e });
     if (e.victim) {
       const deathT = e.killAt ?? e.segments.find((s) => s.phase === 'resolution').t0;
+      // Third deaths get a kill event too (Dayset 2026-11-03: a crowd kill
+      // with no killcam, sound or slow-mo read as a bug — the soldier just
+      // fell over). The shot itself stays unpumped: the crowd has no single
+      // shooter to draw a tracer from, so the cause is shown by the killcam
+      // ("the crowd"), the death sound and the slow-mo envelope instead.
+      // Tallies stay untouched: no stats move here, only the presentation.
+      if (e.killAt != null || e.outcome === 'third') pumpEvents.push({ t: deathT, kind: 'kill', eng: e });
       pumpEvents.push({ t: deathT + 1.2, kind: 'state', side: e.victim, state: 'dead' });
     }
   }
@@ -1920,8 +1968,14 @@ function advance(w) {
     const end = calmStretchEnd(plan.segs, simT);
     if (end != null) {
       const from = simT;
+      // Land 5 data s before the stretch ends (Dayset 2026-11-03: cutting
+      // straight into the fight felt abrupt). The tail plays at x2, so the
+      // viewer sees the approach resolve into the trade; the card shows
+      // only the seconds actually skipped, so it stays honest. The stretch
+      // is over 20 data s by construction, so the landing is always ahead.
+      const landAt = end - 5;
       fast = true;
-      while (simT < end) { const dt = Math.min(1 / 30, end - simT); simT += dt; step(simT, dt); }
+      while (simT < landAt) { const dt = Math.min(1 / 30, landAt - simT); simT += dt; step(simT, dt); }
       fast = false;
       if (simT > wallT) { skipped += simT - wallT; wallT = simT; }
       jump = { n: Math.round(simT - from), at: simT };
@@ -1931,7 +1985,7 @@ function advance(w) {
   while (wallT + STEP <= w) {
     wallT += STEP;
     rate = currentRate();
-    cue = !reducedOS && pace === 'cine' && rate < 0.6;
+    cue = !reducedOS && slowmo && rate < 0.6;
     const dt = rate * STEP; simT += dt; step(simT, dt);
   }
 }

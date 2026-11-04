@@ -65,6 +65,17 @@ export function resolvePace(urlSpeed, stored) {
   if (stored === '1' || stored === '2' || stored === 'cine') return stored;
   return '1';
 }
+// resolveSlowmo(urlSlowmo, stored): the slow-mo toggle (Dayset 2026-11-03).
+// Same shape as resolvePace: the URL wins for this load only ('0' off,
+// '1' on), else the stored choice ('0' off), else on — slow-mo defaults
+// on, so x1/x2 gain the kill treatment immediately and Cinematic behaves
+// as before. Anything else falls through to on, never crashes.
+export function resolveSlowmo(urlSlowmo, stored) {
+  if (urlSlowmo === '0') return false;
+  if (urlSlowmo === '1') return true;
+  if (stored === '0') return false;
+  return true;
+}
 // rampTo(from, to, elapsed, dur): a rate change that takes dur wall seconds
 // from start to finish, linear. The caller restarts the ramp from the
 // currently shown rate whenever the target changes, so the rate never steps:

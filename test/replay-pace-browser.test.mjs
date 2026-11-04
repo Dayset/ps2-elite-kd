@@ -69,8 +69,10 @@ async function withPage(url, metrics, fn) {
 const PAIR = "replay/index.html?name=TolyaNo&vs=Fantom220TR";
 
 test("headless: x1 and x2 clocks advance at exactly 1 and 2 data s per wall s", { skip: !chrome && "no Chrome", timeout: 300000 }, async () => {
+  // Slow-mo on means the rate is not constant by design (pre-kill x0.5,
+  // bullet envelope), so the exact-clock measurement loads with it off.
   for (const [speed, expect] of [["1", 120], ["2", 240]]) {
-    await withPage(`${PAIR}&speed=${speed}`, null, async (ev) => {
+    await withPage(`${PAIR}&speed=${speed}&slowmo=0`, null, async (ev) => {
       const out = await ev(`(() => { window.__render(120); const b = window.__params().simT;
         const btn = document.querySelector('#pace button[aria-pressed="true"]');
         return { simT: b, pressed: btn ? btn.dataset.pace : null, rateText: document.querySelector('#pace .pace-rate')?.textContent }; })()`);
@@ -192,8 +194,8 @@ test("headless: pace selector at 390 px, clickable", { skip: !chrome && "no Chro
       return { n: btns.length, before, after, stored: localStorage.getItem('ps2ekd:replayPace'),
         scrollW: document.documentElement.scrollWidth, paceW: document.getElementById('pace')?.getBoundingClientRect().width ?? 0 };
     })()`);
-    // 3 pace buttons + the SFX mute button, which has lived in #pace since SFX v0.1.
-    assert.equal(out.n, 4);
+    // 3 pace buttons + SFX mute (since SFX v0.1) + slow-mo toggle.
+    assert.equal(out.n, 5);
     assert.equal(out.before, "1");
     assert.equal(out.after, "2", "clicking x2 selects it");
     assert.equal(out.stored, "2", "a click persists the choice");

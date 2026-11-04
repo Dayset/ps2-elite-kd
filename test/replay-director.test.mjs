@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { baseRate, speedAt, bulletRate, nextKillAt, calmStretchEnd } from "../replay/director.mjs";
+import { baseRate, speedAt, bulletRate, nextKillAt, calmStretchEnd, resolveSlowmo } from "../replay/director.mjs";
 
 test("speedAt table: calm x2, combat x1, pre-kill x0.5, bullet time x0.2", () => {
   for (const s of ['running', 'respawnTimer', 'beingRevived', 'idle', 'reposition', 'reloading', 'travel', 'revived', 'aftermath'])
@@ -47,4 +47,13 @@ test("calmStretchEnd: consecutive x2 only, longer than 20 data s", () => {
   assert.equal(calmStretchEnd(short, 0), null);
   const gap = [{ id: 'idle', t0: 0, t1: 15 }, { id: 'trading', t0: 15, t1: 18 }, { id: 'idle', t0: 18, t1: 40 }];
   assert.equal(calmStretchEnd(gap, 0), null); // trading breaks the stretch
+});
+
+test("resolveSlowmo: URL wins for the load, else stored off, else on", () => {
+  assert.equal(resolveSlowmo("0", "1"), false);
+  assert.equal(resolveSlowmo("1", "0"), true);
+  assert.equal(resolveSlowmo(null, "0"), false);
+  assert.equal(resolveSlowmo(null, "1"), true);
+  assert.equal(resolveSlowmo(null, null), true);
+  assert.equal(resolveSlowmo("bogus", null), true);
 });

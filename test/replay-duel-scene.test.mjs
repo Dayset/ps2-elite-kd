@@ -98,3 +98,14 @@ test("killcamFor prefers a real fight's weaponDoc over the killer's main weapon"
   assert.equal(kc.weapon.name, "MSW-R");
   assert.equal(kc.weapon.img, "7254");
 });
+
+test("killcamFor on a crowd kill: no weapon, TTK is the trade span", () => {
+  const eng = plan.engagements.find((e) => e.outcome === "third");
+  assert.ok(eng, "the fixture plan has a third engagement");
+  const kc = killcamFor(eng, { main: { name: "Anchor", img: 9449 } });
+  assert.equal(kc.killer, "third");
+  assert.equal(kc.weapon, null, "never the rival's main as the crowd's weapon");
+  assert.equal(kc.hits, 1, "the single crowd shot");
+  assert.equal(kc.hs, 0);
+  assert.ok(kc.ttk > 0, "trade span, not 0");
+});

@@ -80,11 +80,16 @@ export function killcamFor(eng, killerDoc) {
   const shots = eng.shots.filter((s) => s.from === killer);
   const hits = shots.filter((s) => s.hit);
   const first = eng.shots.length ? eng.shots[0].t : eng.killAt;
+  // A crowd kill has no single killer weapon — never show the rival's main
+  // as if it were the killer's — and its TTK is the trade span up to the
+  // crowd shot, not 0 (killAt is null for third outcomes).
+  const last = eng.shots.length ? eng.shots[eng.shots.length - 1].t : eng.killAt;
   return {
     killer, victim: eng.victim,
-    weapon: eng.weaponDoc ? { name: eng.weaponDoc.name, img: eng.weaponDoc.img }
+    weapon: eng.outcome === 'third' ? null
+      : eng.weaponDoc ? { name: eng.weaponDoc.name, img: eng.weaponDoc.img }
       : killerDoc?.main ? { name: killerDoc.main.name, img: killerDoc.main.img } : null,
     hits: hits.length, hs: hits.filter((s) => s.hs).length,
-    ttk: eng.killAt != null ? Math.max(0, eng.killAt - first) : 0,
+    ttk: eng.killAt != null ? Math.max(0, eng.killAt - first) : Math.max(0, last - first),
   };
 }
