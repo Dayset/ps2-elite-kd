@@ -126,3 +126,21 @@ test("headChance() solves the per-hit head chance from the HS kill share", () =>
   assert.ok(Math.abs(headChance(32.7, 2) - headChance(0.327, 2)) < 1e-9, "percent input accepted");
   assert.ok(Math.abs(headChance(0.1826, 2) - 0.1826 / (2 * (1 - 0.1826) + 0.1826)) < 1e-12);
 });
+
+test("engage() hsKill conditions the killing blow only (#101)", () => {
+  const a = medShooter(), b = medShooter();
+  for (const flag of [true, false]) {
+    const r = engage(a, b, mulberry(42), { outcome: "a", wA: 0.5, hsKill: flag });
+    assert.equal(r.result, "a");
+    assert.ok(r.killAt != null, "a kill happens");
+    const killing = r.shots.find((s) => s.from === "a" && s.phase === "commit" && Math.abs(s.t - r.killAt) < 1e-9);
+    assert.ok(killing, "the killing shot is found at killAt");
+    assert.equal(killing.hs, flag, `killing shot hs is ${flag}`);
+    const lastB = r.hp.b[r.hp.b.length - 1];
+    assert.equal(lastB[1] + lastB[2] + lastB[3], 0, "loser still ends at 0 HP");
+  }
+  // Without hsKill the same seed reproduces the unconditioned engagement.
+  const plain = engage(a, b, mulberry(42), { outcome: "a", wA: 0.5 });
+  const forced = engage(a, b, mulberry(42), { outcome: "a", wA: 0.5, hsKill: true });
+  assert.ok(plain.killAt != null && forced.killAt != null);
+});

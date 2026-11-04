@@ -192,7 +192,8 @@ test("headless: pace selector at 390 px, clickable", { skip: !chrome && "no Chro
       return { n: btns.length, before, after, stored: localStorage.getItem('ps2ekd:replayPace'),
         scrollW: document.documentElement.scrollWidth, paceW: document.getElementById('pace')?.getBoundingClientRect().width ?? 0 };
     })()`);
-    assert.equal(out.n, 3);
+    // 3 pace buttons + the SFX mute button, which has lived in #pace since SFX v0.1.
+    assert.equal(out.n, 4);
     assert.equal(out.before, "1");
     assert.equal(out.after, "2", "clicking x2 selects it");
     assert.equal(out.stored, "2", "a click persists the choice");

@@ -9,12 +9,14 @@ import { toDoc } from './doc.mjs?v=20261103-pair1';
 import { pairOf, pairStatus, pairRow, defaultRival, rankedRivals, MED_KEYS, MED_FALLBACK } from './pair.mjs?v=20261103-pair1';
 import { profileOf, shotsPerSec, toProfile, FALLBACK } from './weapons.mjs?v=20261103-weap1';
 import { baseRate, bulletRate, nextKillAt, calmStretchEnd, rampTo, baseGate, resolvePace } from './director.mjs?v=20261103-pace1';
-import { shooter, headChance } from './engagement.mjs?v=20261103-cam1';
-import { planDuel } from './duel-plan.mjs?v=20261103-cam1';
+import { shooter, headChance } from './engagement.mjs?v=20261103-real1';
+import { planDuel } from './duel-plan.mjs?v=20261103-real1';
+import { planRealFight } from './real-fight.mjs?v=20261103-real1';
 import { planScrim, scrimPlanEnd, topScrimPartner } from './scrim-plan.mjs?v=20261103-exch1';
 import { SHIELD, HEALTH, returnBurst, applyHits, recoveryFor } from './exchange.mjs?v=20261103-exch1';
 import { pushLine, visibleLines } from './status.mjs?v=20261103-celeb1';
-import { hpAt, barFracs, sparkFor, scoreAt, engagementAt, lifeAt as duelLifeAt, phaseState, killcamFor } from './duel-scene.mjs?v=20261103-duel2';
+import { hpAt, barFracs, sparkFor, scoreAt, engagementAt, lifeAt as duelLifeAt, phaseState, killcamFor } from './duel-scene.mjs?v=20261103-real1';
+import { pairEvents, fightsOf, classOf } from '../duels.mjs?v=20261102-luck5';
 import { cameraFor, coverKinds, hopKinds, approachPath, approachX, offScreenX, CORPSE_KEEP } from './camera.mjs?v=20261103-cam1';
 import { STRIP, coverOf, assignLanes } from './lanes.mjs?v=20261103-strip1';
 import { pickWeighted, drawOpponents } from './crowd.mjs?v=20261103-crowd1';
@@ -123,7 +125,7 @@ const aFile = await getJson(`${dataDir}/players/${idk}.json`);
 const aRows = aFile?.player?.rows || [];
 const shardCache = new Map([[shardOf(idk), shard]]);
 const getShard = async (s) => { if (!shardCache.has(s)) shardCache.set(s, await getJson(`${dataDir}/replay/${shardOf(s)}.json`)); return shardCache.get(s); };
-let pair = null, pairNote = null;
+let pair = null, pairNote = null, pairBFile = null, pairBKey = null;
 // Scrim mode (#111): ?room=ps&scrim=<t0> replays one stored 1v1 scrim. The
 // row carries its own opponent, result and weapons, so no killboard row is
 // needed. A t0 with no 1v1 row falls back to pair mode with a note.
@@ -142,6 +144,7 @@ const resolvePair = async (bSlug, bName, bKey = bSlug) => {
   const bDoc = bShard?.p?.[bKey] ? toDoc(bShard.p[bKey], { meta, catalog, slug: bKey }) : null;
   if (room === 'ps' && bDoc) bDoc.faction = null;   // unknown, not TR (see above)
   const bFile = await getJson(`${dataDir}/players/${bKey}.json`);
+  pairBFile = bFile; pairBKey = bKey;
   const bRows = bFile?.player?.rows || [];
   const status = pairStatus(doc, bDoc, pairRow(aRows, bRows, room === 'ps' ? slugOf(doc.name) : slug, bSlug));
   if (status !== 'pair') return status;
@@ -457,8 +460,59 @@ function land(t, b) {
 // (main-weapon profiles + shard stats) and #92's pair-model.json when it is
 // there, else the planner defaults. The crowd scene keeps planCycle until
 // #98 renders the plan; the plan is exposed for the headless check.
-let duelPlan = null, scrimEndAt = 0;
+// ---------------------------------------------------------------- real fights (#101)
+// The cache Worker's pair store (#83): every kill between the two players
+// with time, weapon, headshot, vehicle and both classes. The history player
+// is the viewed player, so A is always p. A failed fetch (Worker down,
+// Census busy, removed player, bad reply) is never fatal: the page stays
+// synthesized. Pagination follows the duels panel: `want` fights first,
+// then more on demand; each call returns only what is new since `seen`.
+// Dates only, never a continent, base or zone; a fight that ended less
+// than 60 minutes ago is never offered (it would show where both are now).
+const DUEL_API = "https://ps2-elite-kd-cache.dayset.workers.dev";
+const offerable = (f) => f.t1 <= Date.now() / 1000 - 3600;
+const pairCids = () => {
+  if (room === "ps") {
+    const cut = (k) => (k || "").split("-").slice(1).join("-");
+    return { ns: idk.startsWith("eu-") ? "ps2ps4eu" : "ps2ps4us", p: cut(idk), q: cut(pairBKey) };
+  }
+  return { ns: "ps2", p: aFile?.player?.cid, q: pairBFile?.player?.cid };
+};
+const fetchPairFights = async (want, prev = null) => {
+  const { ns, p, q } = pairCids();
+  if (!ns || !/^\d{5,25}$/.test(String(p || "")) || !/^\d{5,25}$/.test(String(q || "")) || p === q) return null;
+  try {
+    let all = prev?.all || [], seen = prev?.seen || 0, done = false;
+    for (let call = 0; call < 100 && !done; call++) {
+      const r = await fetch(`${DUEL_API}/duels/pair?${new URLSearchParams({ ns, p: String(p), q: String(q), want: String(want), seen: String(seen) })}`, { signal: AbortSignal.timeout(45e3) });
+      const j = await r.json();
+      if (!j || j.v !== 1 || !Array.isArray(j.events)) return null;
+      if (j.error && !all.length) return null; // nothing stored and Census busy
+      all = all.concat(j.events);
+      seen = j.rev || seen;
+      done = !!j.done;
+      if (!done && want !== 1e6 && (j.fights || 0) >= want) break;
+      if (j.error) break; // an errored reply never claims completion; keep what we have
+    }
+    const pe = pairEvents(all, String(q), true);
+    return { fights: fightsOf(pe, all, String(p)), done, all, seen };
+  } catch { return null; }
+};
+let duelPlan = null, scrimEndAt = 0, realEndAt = 0, realEndShown = false;
+let realFight = null, realNote = null, realTitleEl = null;
 if (pair) {
+  // ?real=<fight t0> plays one recorded fight instead of the synthesized
+  // script. The t0 is stable across fetches (indices shift as new fights
+  // arrive), so a stale or too-recent t0 falls back to synthesized.
+  const realParam = q.get("real");
+  if (realParam && !scrimMode) {
+    const got = await fetchPairFights(1e6);
+    const t0 = Number(realParam);
+    const found = got?.fights.find((f) => f.t0 === t0 && offerable(f));
+    if (found) realFight = found;
+    else if (!got) realNote = T("realDown", "The fight history is unreachable — showing the synthesized scene.");
+    else realNote = T("realStale", "That fight is no longer listed — showing the synthesized scene instead.");
+  }
   try {
     const model = await getJson(`${dataDir}/replay/pair-model.json`);
     // weaponId overrides the doc's main weapon: a scrim row names the
@@ -494,7 +548,18 @@ if (pair) {
       scrimEndAt = scrimPlanEnd(duelPlan, scrimRow.t1 - scrimRow.t0);
     } else {
       const A = mkSide(pair.a), B = mkSide(pair.b);
-      duelPlan = planDuel(A.sh, B.sh, { seed: pairSeed, durationSec: 7200, pA: pair.pA, model, aInfo: A.info, bInfo: B.info, allies: allies.length });
+      if (realFight) {
+        const realWeapon = (id) => {
+          const it = id ? catalog?.items?.[String(id)] : null;
+          return { profile: id ? profileOf(String(id), it?.[1], profiles?.profiles) : null,
+            name: it?.[0] ?? null, img: it?.[3] != null ? String(it[3]) : null };
+        };
+        duelPlan = planRealFight(A.sh, B.sh, realFight, { seed: pairSeed, weapon: realWeapon, classOf,
+          allies: allies.length, aInfo: A.info, bInfo: B.info });
+        realEndAt = duelPlan.duration;
+      } else {
+        duelPlan = planDuel(A.sh, B.sh, { seed: pairSeed, durationSec: 7200, pA: pair.pA, model, aInfo: A.info, bInfo: B.info, allies: allies.length });
+      }
     }
   } catch { duelPlan = null; }
 }
@@ -523,7 +588,8 @@ const showKillcam = (eng) => {
     kcEl.append(document.createTextNode(kc.weapon.name));
   }
   const line = document.createElement('div');
-  line.textContent = `${kc.hits} ${T('hits', 'hits')} · ${kc.hs} ${T('headshots', 'headshots')} · TTK ${kc.ttk.toFixed(1)}s`;
+  line.textContent = `${kc.hits} ${T('hits', 'hits')} · ${kc.hs} ${T('headshots', 'headshots')} · TTK ${kc.ttk.toFixed(1)}s` +
+    (eng.veh ? ` · ${T('vehKill', 'vehicle kill')}` : '');
   kcEl.append(line);
   kcEl.hidden = false;
 };
@@ -616,6 +682,15 @@ if (pair && duelPlan) {
       { date: dstr, a: scrimRow.k, b: scrimRow.d, min: Math.round((scrimRow.t1 - scrimRow.t0) / 60) });
     hud.append(scrimEndEl);
   }
+  // Real-fight title card (#101): the recorded fight's date and final score,
+  // shown while it plays and kept up for the loop back to synthesized.
+  if (realFight && duelPlan) {
+    realTitleEl = document.createElement('div'); realTitleEl.id = 'realTitle'; realTitleEl.className = 'note';
+    const dstr = new Date(realFight.t0 * 1000).toLocaleDateString(LOC, { day: 'numeric', month: 'short' });
+    realTitleEl.textContent = T('realTitle', 'Real fight · {date} · {a}–{b}',
+      { date: dstr, a: realFight.a, b: realFight.b });
+    hud.append(realTitleEl);
+  }
   scoreEl = document.createElement('div'); scoreEl.id = 'duelScore';
   scoreEl.title = T('scoreAllTime', 'All-time: {a}–{b}', { a: pair.row?.kills ?? '—', b: pair.row?.deaths ?? '—' });
   document.body.append(scoreEl);
@@ -625,6 +700,8 @@ if (pair && duelPlan) {
 }
 window.__scrim = () => scrimMode ? { t0: scrimRow.t0, t1: scrimRow.t1, k: scrimRow.k, d: scrimRow.d,
   exact: scrimExact, endShown: scrimEndShown, planEnd: scrimEndAt } : null;
+window.__real = () => realFight ? { t0: realFight.t0, t1: realFight.t1, a: realFight.a, b: realFight.b,
+  one: realFight.one, endShown: realEndShown, planEnd: realEndAt, real: !!duelPlan?.real } : null;
 window.__exch = () => ({ fights: exchLog, deaths: deathLog, pots: potLog });
 window.__cheer = () => ({ cheerAt: main.cheerAt, wallT, bob: main.lastPose?.bob ?? null, glow: main.lastPose?.cheer ?? null });
 window.__camera = () => ({ scale: camScale, left: camLeft, top: camTop });
@@ -1229,11 +1306,15 @@ function drawDuelistOverhead(s, t) {
   const eng = engagementAt(duelPlan, t);
   const snap = eng ? hpAt(eng, t, side)
     : { shield: 500, health: life.cls === 'max' ? 2000 : 500, over: 0 };
-  const fr = barFracs(snap, life.cls);
+  // The engagement's class wins when one is active: a synthesized engagement
+  // always matches its life's class, so this only moves real fights, where
+  // the class comes per kill from the recorded loadout.
+  const cls = eng ? eng[side === 'a' ? 'aClass' : 'bClass'] : life.cls;
+  const fr = barFracs(snap, cls);
   s.hp = fr.health;
   const [hx, hy] = head(s);
   const name = stripTag(side === 'a' ? pair.a.name : pair.b.name);
-  const badge = (life.cls || 'inf').toUpperCase();
+  const badge = (cls || 'inf').toUpperCase();
   ctx.save();
   ctx.font = `700 ${Math.max(15, Math.round(26 * s.scale))}px system-ui,sans-serif`;
   const nw = ctx.measureText(name).width;
@@ -1478,6 +1559,13 @@ function render(t) {
     scrimEndShown = true; scrimEndEl.hidden = false;
     setTimeout(() => location.reload(), 4000);   // the loop: see the end-card comment
   }
+  // Real fight over (#101): the title card already shows the final score —
+  // keep it up a moment, then loop back to the synthesized script, the
+  // same reload pattern as the scrim end card.
+  if (realFight && realTitleEl && !realEndShown && t >= realEndAt) {
+    realEndShown = true;
+    setTimeout(() => { const u = new URL(location.href); u.searchParams.delete('real'); location.href = u.toString(); }, 4000);
+  }
 }
 
 // ---------------------------------------------------------------- living gauges (#108, DOM under the life strip)
@@ -1688,6 +1776,51 @@ const CHIPS = [
       { list: ['ha', 'med', 'eng', 'la', 'inf', 'max'].map(k => `${CLS[k]} ${doc.classes[k] ?? 0}%`).join(', ') }) : '');
   hud.append(who);
   if (pairNote) { const pn = document.createElement('div'); pn.className = 'note'; pn.textContent = pairNote; hud.append(pn); }
+  if (realNote) { const rn = document.createElement('div'); rn.className = 'note'; rn.textContent = realNote; hud.append(rn); }
+  // Real-fight menu (#101): a collapsed <details> of recorded fights
+  // (date, score, 1v1 mark). Picking one reloads with ?real=<fight t0> —
+  // the scrim pattern: a clean restart for free, same seed, same scene.
+  // The fetch runs after the scene starts, so a slow Worker never blocks
+  // the synthesized script; a failed fetch leaves only a short note.
+  if (pair && !scrimMode) {
+    const showRealNote = (text) => { const n = document.createElement('div'); n.className = 'note'; n.textContent = text; hud.append(n); };
+    const dateStr = (t) => new Date(t * 1000).toLocaleDateString(LOC, { day: 'numeric', month: 'short' });
+    const goReal = (t0) => { sfx.unlock(); const u = new URL(location.href); if (t0 == null) u.searchParams.delete('real'); else u.searchParams.set('real', String(t0)); location.href = u.toString(); };
+    fetchPairFights(3).then((got) => {
+      if (!got) { showRealNote(T('realDown', 'The fight history is unreachable — showing the synthesized scene.')); return; }
+      let state = got;
+      const details = document.createElement('details'); details.id = 'realFights';
+      const sum = document.createElement('summary'); sum.textContent = T('realMenu', 'Real fights'); details.append(sum);
+      const list = document.createElement('div'); list.className = 'real-list'; details.append(list);
+      const renderRows = () => {
+        list.replaceChildren();
+        if (realFight) {
+          const back = document.createElement('button'); back.type = 'button'; back.className = 'real-row';
+          back.textContent = T('realBack', 'Back to the synthesized scene');
+          back.addEventListener('click', () => goReal(null)); list.append(back);
+        }
+        for (const f of state.fights.filter(offerable)) {
+          const b = document.createElement('button'); b.type = 'button'; b.className = 'real-row';
+          b.textContent = `${dateStr(f.t0)} · ${f.a}–${f.b}` + (f.one ? ` · ${T('real1v1', '1v1')}` : '');
+          b.title = T('realRowHint', 'Play this recorded fight');
+          b.addEventListener('click', () => goReal(f.t0)); list.append(b);
+        }
+        if (!state.done) {
+          const more = document.createElement('button'); more.type = 'button'; more.className = 'real-row real-more';
+          more.textContent = T('realMore', 'Read further back');
+          more.addEventListener('click', async () => {
+            more.disabled = true;
+            const next = await fetchPairFights(1e6, state);
+            if (next) { state = next; renderRows(); } else more.disabled = false;
+          });
+          list.append(more);
+        }
+      };
+      renderRows();
+      if (!state.fights.some(offerable)) { showRealNote(T('realNone', 'No real fights found — showing the synthesized scene.')); return; }
+      paceEl.after(details);
+    });
+  }
   // #108: living gauges under the life strip, and the old chips collapsed
   // below them. Chip content and hover texts are unchanged, only reparented;
   // the pair-mode opponent chips (#duelChips) move into the same details.

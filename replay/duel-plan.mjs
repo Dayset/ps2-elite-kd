@@ -37,7 +37,7 @@
  * from the master seed, so any engagement can be reproduced standalone
  * with engage(a, b, mulberry(derivedSeed), { outcome, wA }).
  */
-import { engage, mulberry } from "./engagement.mjs?v=20261103-cam1";
+import { engage, mulberry } from "./engagement.mjs?v=20261103-real1";
 import { rangeFor } from "./camera.mjs?v=20261103-cam1";
 import { SHIELD, HEALTH, recoveryFor } from "./exchange.mjs?v=20261103-exch1";
 

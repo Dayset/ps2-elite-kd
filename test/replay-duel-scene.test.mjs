@@ -91,3 +91,10 @@ test("phaseState maps phases, killcamFor reads the engagement", () => {
   assert.equal(kc.weapon.img, 9449);
   assert.ok(kc.hits >= 1 && kc.hs <= kc.hits && kc.ttk > 0);
 });
+
+test("killcamFor prefers a real fight's weaponDoc over the killer's main weapon", () => {
+  const eng = plan.engagements.find((e) => e.outcome === "a" || e.outcome === "b");
+  const kc = killcamFor({ ...eng, weaponDoc: { name: "MSW-R", img: "7254" } }, { main: { name: "Anchor", img: 9449 } });
+  assert.equal(kc.weapon.name, "MSW-R");
+  assert.equal(kc.weapon.img, "7254");
+});

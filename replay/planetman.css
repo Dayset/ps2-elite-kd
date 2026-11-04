@@ -57,6 +57,11 @@ body.bare main{padding:0;max-width:none}body.bare #rm,body.bare #hud,body.bare #
 .chipsWrap{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 @media (max-width:480px){.g-label{min-width:58px}}
 #pace{display:flex;gap:10px;align-items:center;justify-content:flex-end;margin-top:6px}
+#realFights{margin-top:8px;font-size:13px}
+#realFights summary{cursor:pointer;color:#c9d1d9}
+#realFights .real-row{display:block;text-align:left;background:transparent;border:0;border-radius:0;color:#8b949e;padding:2px 0;cursor:pointer;white-space:normal}
+#realFights .real-row:hover{color:#c9d1d9}
+#realFights .real-row:disabled{opacity:.5;cursor:default}
 .pace-btns{display:flex;gap:2px}
 .pace-btns button{background:#161b22;border:1px solid #30363d;border-radius:0;color:#c9d1d9;font-size:13px;padding:2px 10px;cursor:pointer}
 .pace-btns button.on{background:#58a6ff;color:#0d1117;border-color:#58a6ff;font-weight:700}

@@ -227,7 +227,13 @@ test("headless: all 5 reference pairs run 30 data minutes with __fast, no page e
     while ((i = buf.indexOf("\0")) >= 0) {
       const msg = JSON.parse(buf.slice(0, i)); buf = buf.slice(i + 1);
       if (msg.method === "Runtime.exceptionThrown") errors.push("exception: " + (msg.params.exceptionDetails?.text || "?"));
-      if (msg.method === "Log.entryAdded" && msg.params.entry?.level === "error") errors.push("log: " + msg.params.entry.text);
+      // #101: the real-fight menu fetches the cache Worker on every pair page,
+      // and a failed fetch is a specified degradation (synthesized scene +
+      // note), not a page error — so a failed load of that endpoint alone
+      // does not trip the gate. Every other error still does.
+      if (msg.method === "Log.entryAdded" && msg.params.entry?.level === "error"
+        && !(msg.params.entry.url?.includes("ps2-elite-kd-cache.dayset.workers.dev")
+          && msg.params.entry.text?.startsWith("Failed to load resource"))) errors.push("log: " + msg.params.entry.text);
       if (msg.method === "Runtime.consoleAPICalled" && msg.params.type === "error") {
         errors.push("console: " + (msg.params.args || []).map((a) => a.value ?? a.description ?? "").join(" "));
       }

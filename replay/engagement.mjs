@@ -164,7 +164,8 @@ function damage(h, st, dmg, t, trade) {
 
 /**
  * One engagement. a, b: shooter() outputs. rng: () => [0,1).
- * opts: { outcome: 'a'|'b'|'break'|'third', wA: P(A wins | decisive), victim: 'a'|'b' (third only, else sampled) }.
+ * opts: { outcome: 'a'|'b'|'break'|'third', wA: P(A wins | decisive), victim: 'a'|'b' (third only, else sampled),
+ *   hsKill: true/false (a real kill's headshot flag — conditions the killing blow only, see below) }.
  * The trade count uses the MIX win probabilities (wA × decisive share), so a
  * forced outcome conditions the fight without breaking the averages.
  * → { shots: [{t, from, hit, hs, dmg, phase}], hp: {a: [[t, shield, health, over]], b: [...]}, result }
@@ -270,12 +271,28 @@ export function engage(a, b, rng, opts = {}) {
   const commitStart = tradeEnd + 0.5; // the lull: both regen to full
   snap(commitStart);
   const loserTotal = hpTotal(hp[lName]);
+  const hsKill = opts.hsKill ?? null;
   const wRolls = [];
   let t = commitStart, idx = 0, dealt = 0, killAt = null;
   while (dealt < loserTotal && wRolls.length < 1000) {
     const r = roll(W, wName, "commit", t, idx++ % W.burstLen);
+    let dmg = 0;
+    if (r.hit) {
+      dmg = (W.profile.dmgMax || 143) * (W.profile.pellets || 1) * (r.hs ? (W.profile.hsMult || 2) : 1);
+      // #101: a real kill's headshot flag conditions the killing blow only.
+      // A would-be killing shot re-rolls its head flag until it matches (the
+      // stream is per-engagement, and the loop breaks right after, so no
+      // other shot moves); a degenerate head rate falls back to forcing it.
+      // Non-killing hits keep their rolled flag.
+      if (hsKill != null && dealt + dmg >= loserTotal && r.hs !== hsKill) {
+        let guard = 0;
+        if (W.hsP.commit > 0 && W.hsP.commit < 1) { while (r.hs !== hsKill && guard++ < 100) r.hs = rng() < W.hsP.commit; }
+        if (r.hs !== hsKill) r.hs = hsKill;
+        dmg = (W.profile.dmgMax || 143) * (W.profile.pellets || 1) * (r.hs ? (W.profile.hsMult || 2) : 1);
+      }
+      dealt += dmg;
+    }
     wRolls.push({ t, ...r });
-    if (r.hit) dealt += (W.profile.dmgMax || 143) * (W.profile.pellets || 1) * (r.hs ? (W.profile.hsMult || 2) : 1);
     if (dealt >= loserTotal) { killAt = t; break; }
     t += 1 / W.rate;
   }

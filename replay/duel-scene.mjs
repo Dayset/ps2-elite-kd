@@ -72,7 +72,9 @@ export function phaseState(phase, side, eng) {
   if (phase === "resolution") return eng.victim === side ? "die" : "idle";
   return "idle"; // aftermath
 }
-/** Killcam data for a decisive engagement (killer doc supplies weapon name + icon). */
+/** Killcam data for a decisive engagement (killer doc supplies weapon name + icon).
+ * A real-fight engagement (#101) carries its own weaponDoc (the weapon of that
+ * kill, not the killer's main weapon) — it wins over the doc. */
 export function killcamFor(eng, killerDoc) {
   const killer = eng.outcome;
   const shots = eng.shots.filter((s) => s.from === killer);
@@ -80,7 +82,8 @@ export function killcamFor(eng, killerDoc) {
   const first = eng.shots.length ? eng.shots[0].t : eng.killAt;
   return {
     killer, victim: eng.victim,
-    weapon: killerDoc?.main ? { name: killerDoc.main.name, img: killerDoc.main.img } : null,
+    weapon: eng.weaponDoc ? { name: eng.weaponDoc.name, img: eng.weaponDoc.img }
+      : killerDoc?.main ? { name: killerDoc.main.name, img: killerDoc.main.img } : null,
     hits: hits.length, hs: hits.filter((s) => s.hs).length,
     ttk: eng.killAt != null ? Math.max(0, eng.killAt - first) : 0,
   };
