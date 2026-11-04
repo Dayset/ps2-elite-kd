@@ -45,7 +45,11 @@ export function heatCandidates({ own, lattice, flips, nowTs }, f) {
   return out.sort((a, b) => b.heat - a.heat || (a.kind === "hold" ? -1 : 1) - (b.kind === "hold" ? -1 : 1) || (a.name < b.name ? -1 : 1));
 }
 
-/** {VS: {focus, backups, quiet, heat_mode: true}, ...}: 1 order, 2 when the second is close. */
+/** {VS: {focus, backups, quiet, heat_mode: true}, ...}: 1 order, 2 when the second is close.
+ * Backfill width (owner 2026-11-02): backups are the CLOSE-gated candidates
+ * (up to 4), not just the 2nd — the dashboard shows at most 1 heat backup, so
+ * the included display is unchanged, but conduit filtering now has further
+ * close candidates to fall back on instead of going quiet. */
 export function heatPlan(args, close = CLOSE) {
   const out = {};
   for (const f of Object.keys(FAC)) {
@@ -53,7 +57,7 @@ export function heatPlan(args, close = CLOSE) {
     const c = heatCandidates(args, f);
     const e = (x) => ({ kind: x.kind, bases: [x.name], target: x.target, heat: x.heat, hot: true });
     if (!c.length) { out[f] = { focus: null, backups: [], quiet: true, heat_mode: true }; continue; }
-    out[f] = { focus: e(c[0]), backups: c[1] && c[1].heat >= close * c[0].heat ? [e(c[1])] : [], quiet: false, heat_mode: true };
+    out[f] = { focus: e(c[0]), backups: c.slice(1).filter((x) => x.heat >= close * c[0].heat).slice(0, 4).map(e), quiet: false, heat_mode: true };
   }
   return out;
 }

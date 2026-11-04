@@ -234,7 +234,9 @@ export function focusPlan({ own, lattice, getBin, t, dur, mom, header, pf = () =
         now, then: Math.round(after * 10) / 10, text: describe(f, c) };
     };
     const top = picks[0];
-    if (top) { out[f] = { focus: fmt(top), backups: picks.slice(1).filter((c) => c.ev >= top.ev / 2).slice(0, 2).map(fmt), quiet: false }; continue; }
+    // Backfill width (owner 2026-11-02): the dashboard filters conduits out
+    // of the backups and shows 2, so emit 4 — included display unchanged.
+    if (top) { out[f] = { focus: fmt(top), backups: picks.slice(1).filter((c) => c.ev >= top.ev / 2).slice(0, 4).map(fmt), quiet: false }; continue; }
     // Nothing moves our own odds: spoiler play (who wins is still ours to decide).
     // No move changes the result (decided, or a quiet front): still show newcomers where
     // the fight is, from predicted heat: push the enemy base, or guard ours, likeliest to
@@ -250,7 +252,7 @@ export function focusPlan({ own, lattice, getBin, t, dur, mom, header, pf = () =
         return { kind, bases: c.bases, target: c.target, p: c.p, cuts: [], reconnects: [], now, then: now, heat: h,
           text: kind === "push" ? `Push ${c.bases[0]} (${c.target}): the fight is there` : `Guard ${c.bases[0]} against ${c.target}: likely hit next` };
       };
-      return { focus: mk(pool[0]), backups: pool.slice(1, 3).map(mk), quiet: false, minor: true };
+      return { focus: mk(pool[0]), backups: pool.slice(1, 5).map(mk), quiet: false, minor: true };
     };
     const leader = FACS.filter((g) => g !== f).reduce((a, g) => (quo[1][g] > quo[1][a] ? g : a), FACS.find((g) => g !== f));
     const spoil = cands.filter((c) => c.kind === "take" && c.target === leader)

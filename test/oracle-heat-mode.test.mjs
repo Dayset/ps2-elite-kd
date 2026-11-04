@@ -31,7 +31,10 @@ test("heat plan: hottest fight, attack next to us or defend ours, 2nd only when 
   assert.ok(!("TR" in p), "a faction with no bases gets no plan");
   // Two fights of similar heat: two directions; warpgates never.
   p = heatPlan({ own, lattice: L, flips: [[NOW - 60, "NC", "VS", "4"], [NOW - 30, "VS", "NC", "2"]], nowTs: NOW });
-  assert.deepEqual([p.VS.focus, ...p.VS.backups].map((x) => x.bases[0]), ["A", "C"]);
+  // Backfill width (owner 2026-11-02): the Worker emits every CLOSE-gated
+  // candidate, so B (next to both flipped bases) joins as a further backup;
+  // the dashboard still shows at most 1 heat backup (filterPlan slice).
+  assert.deepEqual([p.VS.focus, ...p.VS.backups].map((x) => x.bases[0]), ["A", "C", "B"]);
   assert.ok(!heatCandidates({ own, lattice: L, flips: [[NOW - 10, "NC", "VS", "2"]], nowTs: NOW }, "VS").some((x) => /Warpgate/.test(x.name)));
   // No fight in the last 4 minutes: quiet.
   assert.equal(heatPlan({ own, lattice: L, flips: [[NOW - 300, "NC", "VS", "4"]], nowTs: NOW }).VS.quiet, true);

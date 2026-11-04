@@ -724,7 +724,10 @@ def ranked_live(sh, w0, own, adj, names, pf, winfn, flips=None, now_ts=None, res
             if a.pop("reconnect", False):
                 # bridge that reconnects a severed pocket: point at it.
                 a["priority"] = max(a["priority"], 70)
-        out[f] = {"attack": attacks[:3], "defend": defends[:3]}
+        # Backfill width (owner 2026-11-02, mirrors the JS port): the
+        # dashboard filters conduits out of these lists and shows 3, so
+        # emit 6 — included display unchanged.
+        out[f] = {"attack": attacks[:6], "defend": defends[:6]}
     return out
 
 
@@ -1017,8 +1020,8 @@ def main():
                 for k in sp_km
             ]
         for f in ("VS", "NC", "TR"):
-            rd = ranked[f]["defend"][:3]
-            ra = ranked[f]["attack"][:3]
+            rd = ranked[f]["defend"][:6]
+            ra = ranked[f]["attack"][:6]
             kk = km[f][:3]
             out["factions"][f] = {
                 # w0j (joint-normalized) so the panel agrees with the odds

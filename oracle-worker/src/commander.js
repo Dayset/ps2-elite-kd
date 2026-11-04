@@ -385,7 +385,9 @@ function rankedLive(sh, w0, own, adj, names, pf, winfn, flips, nowTs, res) {
       if (a.reconnect) a.priority = Math.max(a.priority, 70);
       delete a.reconnect;
     }
-    out[f] = { attack: attacks.slice(0, 3), defend: defends.slice(0, 3) };
+    // Backfill width (owner 2026-11-02): the dashboard filters conduits out
+    // of these lists and shows 3, so emit 6 — included display unchanged.
+    out[f] = { attack: attacks.slice(0, 6), defend: defends.slice(0, 6) };
   }
   return out;
 }
