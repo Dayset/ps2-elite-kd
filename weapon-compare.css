@@ -22,9 +22,9 @@ body { overflow: auto; }
 .wc-field input:focus-visible, .wc-field select:focus-visible { outline: 1px solid var(--accent); }
 
 .wc-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 2px; }
-.wc-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 4px 3px 8px; border: 1px solid var(--border); border-left-width: 5px; border-radius: 0; background: var(--bg); font-size: 0.85rem; }
-.wc-chip button { cursor: pointer; font: inherit; line-height: 1; color: var(--dim); background: none; border: 0; padding: 4px 8px; min-width: 2rem; min-height: 2rem; }
-.wc-chip button:hover { color: var(--text); }
+.wc-chip { cursor: pointer; color: var(--text); font: inherit; text-align: left; display: inline-flex; align-items: center; gap: 6px; padding: 3px 4px 3px 8px; border: 1px solid var(--border); border-left-width: 5px; border-radius: 0; background: var(--bg); font-size: 0.85rem; }
+.wc-chip { padding: 8px 12px; min-height: 2.5rem; }
+.wc-chip:hover { border-color: var(--accent); border-left-width: 5px; text-decoration: line-through; text-decoration-color: var(--dim); }
 
 .wc-sliders { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 10px 16px; margin-top: 10px; }
 .wc-slider { display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; color: var(--dim); }
@@ -46,6 +46,8 @@ body { overflow: auto; }
 .wc-chart .grid { stroke: var(--border); stroke-width: 1; }
 .wc-chart .axis text, .wc-chart text.ax { fill: var(--dim); font-size: 11px; }
 .wc-chart text.val { fill: var(--text); font-size: 11px; font-variant-numeric: tabular-nums; }
+.wc-chart .mark { stroke: var(--accent); stroke-width: 1.5; }
+.wc-chart .mark-t { fill: var(--accent); font-weight: 700; }
 .wc-chart .cursor { stroke: var(--dim); stroke-dasharray: 3 3; }
 .wc-readout { min-height: 1.4em; margin-top: 6px; font-size: 0.85rem; font-variant-numeric: tabular-nums; display: flex; flex-wrap: wrap; gap: 4px 14px; }
 .wc-readout .sw, .wc-legend .sw { display: inline-block; width: 10px; height: 10px; margin-right: 4px; vertical-align: baseline; }

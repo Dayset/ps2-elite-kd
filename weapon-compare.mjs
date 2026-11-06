@@ -15,6 +15,7 @@ import {
 
 export const MAX_WEAPONS = 4;
 export const MAX_RANGE = 100;
+export const DEFAULTS = Object.freeze({ acc: 20, hsr: 20, range: 20, hp: 1000 });
 const DEFAULT_IDS = [4, 14, 20];          // NC1 Gauss Rifle, T1 Cycler, Pulsar VS1
 const FACTION = { 0: "NS", 1: "VS", 2: "NC", 3: "TR" };
 const $ = (id) => document.getElementById(id);
@@ -28,12 +29,12 @@ export function parseState(search, known = () => true) {
   const q = new URLSearchParams(search);
   const num = (k, lo, hi, d) => { const v = Number(q.get(k)); return q.has(k) && Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d; };
   const ids = (q.get("w") || "").split(",").map(Number).filter((n) => Number.isInteger(n) && known(n));
-  const hp = num("hp", 100, 3000, 500);
+  const hp = num("hp", 100, 3000, DEFAULTS.hp);
   return {
     ids: [...new Set(ids)].slice(0, MAX_WEAPONS),
-    acc: Math.round(num("acc", 10, 100, 100)),
-    hsr: Math.round(num("hsr", 0, 100, 0)),
-    range: Math.round(num("r", 0, MAX_RANGE, 20)),
+    acc: Math.round(num("acc", 10, 100, DEFAULTS.acc)),
+    hsr: Math.round(num("hsr", 0, 100, DEFAULTS.hsr)),
+    range: Math.round(num("r", 0, MAX_RANGE, DEFAULTS.range)),
     hp: Math.round(hp),
     hasW: q.has("w"),
   };
@@ -43,10 +44,10 @@ export function parseState(search, known = () => true) {
 export function stateToSearch(s) {
   const q = new URLSearchParams();
   if (s.ids.length) q.set("w", s.ids.join(","));
-  if (s.acc !== 100) q.set("acc", String(s.acc));
-  if (s.hsr !== 0) q.set("hsr", String(s.hsr));
-  if (s.range !== 20) q.set("r", String(s.range));
-  if (s.hp !== 500) q.set("hp", String(s.hp));
+  if (s.acc !== DEFAULTS.acc) q.set("acc", String(s.acc));
+  if (s.hsr !== DEFAULTS.hsr) q.set("hsr", String(s.hsr));
+  if (s.range !== DEFAULTS.range) q.set("r", String(s.range));
+  if (s.hp !== DEFAULTS.hp) q.set("hp", String(s.hp));
   const str = q.toString();
   return str ? "?" + str : "";
 }
@@ -156,7 +157,10 @@ async function boot() {
   window.addEventListener("resize", () => { clearTimeout(boot.rt); boot.rt = setTimeout(renderCharts, 120); });
 
   function renderChips() {
-    $("wcChips").innerHTML = selected().map((w, i) => `<span class="wc-chip" role="listitem" style="border-left-color:${color(i)}">${esc(w.name)} <span class="wc-wmeta">${esc(FACTION[w.fac] ?? "")}</span><button type="button" data-id="${w.id}" aria-label="${esc(tr("wc.remove", "Remove {name}", { name: w.name }))}" title="${esc(tr("wc.remove", "Remove {name}", { name: w.name }))}">×</button></span>`).join("");
+    $("wcChips").innerHTML = selected().map((w, i) => {
+      const tip = esc(tr("wc.remove", "Click to remove {name}", { name: w.name }));
+      return `<button type="button" class="wc-chip" role="listitem" data-id="${w.id}" style="border-left-color:${color(i)}" title="${tip}" aria-label="${tip}">${esc(w.name)} <span class="wc-wmeta">${esc(FACTION[w.fac] ?? "")}</span></button>`;
+    }).join("");
     for (const b of $("wcChips").querySelectorAll("button")) b.addEventListener("click", () => { st.ids = st.ids.filter((id) => id !== +b.dataset.id); msg(""); renderAll(); });
   }
 
@@ -204,7 +208,7 @@ async function boot() {
     const el = $("wcTtk");
     const { ws, xs, curves, winners } = calc;
     if (!ws.length) { el.innerHTML = ""; $("wcReadout").innerHTML = ""; return; }
-    const W = chartWidth(el), H = 300, L = 48, R = 12, T = 10, STRIP = 14, B = 34 + STRIP + 16;
+    const W = chartWidth(el), H = 300, L = 60, R = 24, T = 10, STRIP = 14, B = 34 + STRIP + 16;
     const vals = curves.flat().filter((v) => v != null);
     const yMax = Math.max(100, ...vals) * 1.08;
     const yt = niceTicks(yMax, 5), yTop = yt[yt.length - 1];
@@ -214,7 +218,7 @@ async function boot() {
     for (const v of yt) s += `<line class="grid" x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}"/><text class="ax" x="${L - 6}" y="${Y(v) + 4}" text-anchor="end">${nf(v)}</text>`;
     for (const r of niceTicks(MAX_RANGE, 5)) s += `<line class="grid" x1="${X(r)}" x2="${X(r)}" y1="${T}" y2="${H - B}"/><text class="ax" x="${X(r)}" y="${H - B + 14}" text-anchor="middle">${nf(r)}</text>`;
     s += `<text class="ax" x="${W - R}" y="${H - 4}" text-anchor="end">${esc(tr("wc.xRange", "Range (m)"))}</text>`;
-    s += `<text class="ax" transform="translate(11 ${(T + H - B) / 2}) rotate(-90)" text-anchor="middle">${esc(tr("wc.yMs", "Time to kill (ms)"))}</text>`;
+    s += `<text class="ax" transform="translate(12 ${(T + H - B) / 2}) rotate(-90)" text-anchor="middle">${esc(tr("wc.yMs", "Time to kill (ms)"))}</text>`;
     curves.forEach((c, i) => {
       let d = "", pen = false;
       c.forEach((v, k) => {
@@ -230,6 +234,7 @@ async function boot() {
       s += `<rect x="${x.toFixed(1)}" y="${H - B + 22}" width="${(x2 - x).toFixed(1)}" height="${STRIP - 4}" fill="${w < 0 ? "var(--border)" : color(w)}"/>`;
     });
     s += `<text class="ax" x="${L}" y="${H - B + 48}" text-anchor="start">${esc(tr("wc.winner", "Fastest at each range"))}</text>`;
+    s += `<line class="mark" x1="${X(st.range)}" x2="${X(st.range)}" y1="${T}" y2="${H - B}"/><text class="ax mark-t" x="${Math.min(W - R, X(st.range) + 5)}" y="${T + 10}" ${X(st.range) > W - 70 ? 'text-anchor="end" dx="-10"' : ""}>${esc(fmtM(st.range))}</text>`;
     s += `<line class="cursor" id="wcCur" x1="0" x2="0" y1="${T}" y2="${H - B}" visibility="hidden"/></svg>`;
     el.innerHTML = s + legend() + `<div class="wc-legend"><span><span class="sw" style="background:var(--border)"></span>${esc(tr("wc.tie", "tie / no kill"))}</span></div>`;
     const svg = el.querySelector("svg"), cur = el.querySelector("#wcCur"), out = $("wcReadout");
@@ -242,7 +247,14 @@ async function boot() {
       out.innerHTML = `<b>${esc(tr("wc.readoutAt", "At {m} m", { m: nf(r) }))}</b>` + ws.map((w, i) => `<span><span class="sw" style="background:${color(i)}"></span>${esc(w.name)}: ${esc(fmtMs(curves[i][k]))}</span>`).join("");
     };
     svg.addEventListener("pointermove", (e) => show(e.clientX));
-    svg.addEventListener("pointerdown", (e) => show(e.clientX));
+    svg.addEventListener("pointerdown", (e) => {          // a click or tap sets the range for the other graphs and the cards
+      show(e.clientX);
+      const box = svg.getBoundingClientRect();
+      const x = (e.clientX - box.left) * (W / box.width);
+      st.range = Math.min(MAX_RANGE, Math.max(0, Math.round((x - L) / (W - L - R) * MAX_RANGE)));
+      $("wcRange").value = st.range;
+      renderAll();
+    });
     svg.addEventListener("pointerleave", () => { cur.setAttribute("visibility", "hidden"); out.innerHTML = ""; });
   }
 
@@ -251,7 +263,7 @@ async function boot() {
     $("wcCdfNote").textContent = tr("wc.cdfNote", "At {m} m. Higher and further left is better. The dots mark the 50% point.", { m: nf(st.range) });
     const { ws, dists, med } = calc;
     if (!ws.length) { el.innerHTML = ""; return; }
-    const W = chartWidth(el), H = 260, L = 48, R = 12, T = 10, B = 34;
+    const W = chartWidth(el), H = 260, L = 60, R = 24, T = 10, B = 34;
     const reach = dists.map((d) => quantileMs(d, 0.99) ?? quantileMs(d, 0.5) ?? 0);
     const xMax = Math.max(200, ...reach) * 1.05;
     const xt = niceTicks(xMax, 6), xTop = xt[xt.length - 1];
@@ -261,7 +273,7 @@ async function boot() {
     for (const p of [0, 0.25, 0.5, 0.75, 1]) s += `<line class="grid" x1="${L}" x2="${W - R}" y1="${Y(p)}" y2="${Y(p)}"/><text class="ax" x="${L - 6}" y="${Y(p) + 4}" text-anchor="end">${nf(p * 100)}%</text>`;
     for (const v of xt) s += `<line class="grid" x1="${X(v)}" x2="${X(v)}" y1="${T}" y2="${H - B}"/><text class="ax" x="${X(v)}" y="${H - B + 14}" text-anchor="middle">${nf(v)}</text>`;
     s += `<text class="ax" x="${(L + W - R) / 2}" y="${H - 4}" text-anchor="middle">${esc(tr("wc.xMs", "Time (ms)"))}</text>`;
-    s += `<text class="ax" transform="translate(11 ${(T + H - B) / 2}) rotate(-90)" text-anchor="middle">${esc(tr("wc.yChance", "Chance killed"))}</text>`;
+    s += `<text class="ax" transform="translate(12 ${(T + H - B) / 2}) rotate(-90)" text-anchor="middle">${esc(tr("wc.yChance", "Chance killed"))}</text>`;
     dists.forEach((d, i) => {
       let path = `M${X(0)} ${Y(0)}`, prev = 0;
       d.ms.forEach((t, k) => {

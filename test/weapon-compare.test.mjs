@@ -8,12 +8,12 @@ const read = (p) => readFileSync(new URL("../" + p, import.meta.url), "utf8");
 
 test("link state: defaults leave the query empty", () => {
   const s = parseState("");
-  assert.deepEqual([s.acc, s.hsr, s.range, s.hp, s.hasW], [100, 0, 20, 500, false]);
-  assert.equal(stateToSearch({ ids: [], acc: 100, hsr: 0, range: 20, hp: 500 }), "");
+  assert.deepEqual([s.acc, s.hsr, s.range, s.hp, s.hasW], [20, 20, 20, 1000, false]);
+  assert.equal(stateToSearch({ ids: [], acc: 20, hsr: 20, range: 20, hp: 1000 }), "");
 });
 
 test("link state round trip", () => {
-  const s = { ids: [4, 14, 20], acc: 55, hsr: 12, range: 35, hp: 1000 };
+  const s = { ids: [4, 14, 20], acc: 55, hsr: 12, range: 35, hp: 500 };
   const back = parseState(stateToSearch(s));
   assert.deepEqual({ ids: back.ids, acc: back.acc, hsr: back.hsr, range: back.range, hp: back.hp }, s);
 });
@@ -25,7 +25,7 @@ test("link state: junk is dropped or clamped, at most four weapons, unknown ids 
   assert.equal(s.acc, 100);
   assert.equal(s.hsr, 0);
   assert.equal(s.range, MAX_RANGE);
-  assert.equal(s.hp, 500);
+  assert.equal(s.hp, 1000);
 });
 
 test("niceTicks starts at 0, ends at or above the max and is short", () => {
