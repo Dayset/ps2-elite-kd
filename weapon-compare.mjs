@@ -15,9 +15,9 @@ import { paletteColor } from "./palette.mjs";
 import { toProfile } from "./replay/weapons.mjs";
 import {
   HP_PRESETS, ttkDistribution, quantileMs, dps, rangeAxis, ttkCurve, winnerStrip, slowerPct, withCadence,
-} from "./weapons-model.mjs?v=20261106-wcr4";
-import { METRICS, GROUPS, GROUP_EN, statValues, bestOf, rank, classBests } from "./weapon-stats.mjs?v=20261106-wcr4";
-import { simParams, compareBursts, sprayPattern, attEffects, SLOTS, slotOf, canon, TARGET, STANCES } from "./weapon-sim.mjs?v=20261106-wcr4";
+} from "./weapons-model.mjs?v=20261106-wcr5";
+import { METRICS, GROUPS, GROUP_EN, statValues, bestOf, rank, classBests } from "./weapon-stats.mjs?v=20261106-wcr5";
+import { simParams, compareBursts, sprayPattern, attEffects, SLOTS, slotOf, canon, TARGET, STANCES } from "./weapon-sim.mjs?v=20261106-wcr5";
 
 export const MAX_WEAPONS = 4;
 export const MAX_RANGE = 500;        // hard cap (the 500 m option); the chart shows 100 / 200 / 500, see viewMax()
@@ -469,11 +469,13 @@ async function boot() {
   }
 
   // ------------------------------------------------------ recoil simulator --
-  // target: the point every shot aims at (torso or head); the headshot rate is the chance a shot lands on the other one
-  const simState = { aim: "ads", stance: "crouchStill", att: {}, comp: 0, compX: 0, target: "body", seed: newSeed() };
-  const sprayTarget = () => simState.target;
-  const settingsKey = () => [simState.aim, simState.stance, simState.comp, simState.compX, simState.target, st.acc, st.hsr, st.range, st.hp].join("|");
-  const simOpts = () => ({ stance: simState.stance, aim: simState.aim, comp: simState.comp / 100, compX: simState.compX / 100, aimTarget: simState.target, acc: st.acc / 100, hsr: st.hsr / 100 });
+  // aim point in cm from the chest centre (sideways: + right; height: + up); the headshot chance lands on the other point
+  const simState = { aim: "ads", stance: "crouchStill", att: {}, comp: 0, compX: 0, aimX: 0, aimY: 0, seed: newSeed() };
+  const aimM = () => ({ x: simState.aimX / 100, y: simState.aimY / 100 });
+  // the preset button that matches the aim point (Head: 0 / 45 cm, Torso: 0 / 0 cm), if any
+  const sprayTarget = () => (simState.aimX === 0 && simState.aimY === 45 ? "head" : simState.aimX === 0 && simState.aimY === 0 ? "body" : null);
+  const settingsKey = () => [simState.aim, simState.stance, simState.comp, simState.compX, simState.aimX, simState.aimY, st.acc, st.hsr, st.range, st.hp].join("|");
+  const simOpts = () => ({ stance: simState.stance, aim: simState.aim, comp: simState.comp / 100, compX: simState.compX / 100, aimX: simState.aimX / 100, aimY: simState.aimY / 100, acc: st.acc / 100, hsr: st.hsr / 100 });
   // attachments the weapon can mount, by slot: { barrel: [names], rail: [...], ammo: [...] } (recoil.json v2: atts / descs / att)
   const partsOf = (id) => ((recoil && recoil.att && recoil.att[id]) || []).map((i) => recoil.atts[i]).filter(Boolean);
   const attsOf = (id) => {
@@ -506,7 +508,7 @@ async function boot() {
   const lastShown = new Map();     // weapon id -> last result drawn (kept on screen, dimmed, while a new one is computed)
   let gen = 0, worker = null;
   try {
-    worker = new Worker(new URL("weapon-sim-worker.mjs?v=20261106-wcr4", import.meta.url), { type: "module" });
+    worker = new Worker(new URL("weapon-sim-worker.mjs?v=20261106-wcr5", import.meta.url), { type: "module" });
     worker.onmessage = (e) => {
       const { key, kind, result } = e.data || {};
       (kind === "class" ? classSim : simCache).set(key, result);
@@ -559,15 +561,14 @@ async function boot() {
     const meds = res.map((x) => (x.r && x.r.best ? x.r.best.median : null)), rates = res.map((x) => (x.r && x.r.best ? x.r.best.killRate : null));
     const bestMed = bestOf(meds, -1), bestRate = bestOf(rates, 1);
     const cls = (v, w) => { const cb = classSim.get(classKey(w.cat)); return v != null && cb != null && v <= cb * (1 + 1e-9) ? "gold" : v != null && v === bestMed ? "good" : ""; };
-    const busyTag = `<span class="wc-busy">${esc(tr("wc.sim.busy", "simulating…"))}</span>`;
     sum.innerHTML = calc.ws.length > 1 ? `<ul class="wc-simsum">${calc.ws.map((w, i) => {
       const b = res[i].r && res[i].r.best;
-      return `<li style="--c:${color(i)}" class="${res[i].busy ? "is-busy" : ""}"><b>${esc(w.name)}</b><span class="${b ? cls(b.median, w) : ""}">${b ? esc(styleLabel(b.burst, w.p.burstN)) + " · " + esc(fmtMs(b.median)) : res[i].busy ? "" : esc(tr("wc.never", "no kill"))}</span><span class="${b && b.killRate === bestRate ? "good" : ""}">${b ? nf(b.killRate * 100) + "%" : ""}</span>${res[i].busy ? busyTag : ""}</li>`;
+      return `<li style="--c:${color(i)}"><b>${esc(w.name)}</b><span class="${b ? cls(b.median, w) : ""}">${b ? esc(styleLabel(b.burst, w.p.burstN)) + " · " + esc(fmtMs(b.median)) : res[i].busy ? "" : esc(tr("wc.never", "no kill"))}</span><span class="${b && b.killRate === bestRate ? "good" : ""}">${b ? nf(b.killRate * 100) + "%" : ""}</span></li>`;
     }).join("")}</ul>` : "";
 
     // one scale for every spray picture, so the patterns can be compared by eye
     const sprays = calc.ws.map((w, i) => { const P = !res[i].none && paramsOf(w, chosenAtt(w.id)); return P ? sprayData(w, P) : null; });
-    const S = Math.max(TARGET.halfW * 1.4, ...sprays.filter(Boolean).map((d) => d.reach)) * 1.1;
+    const S = Math.max(TARGET.halfW * 1.4, Math.abs(TARGET.bottom), TARGET.headY + TARGET.headR, ...sprays.filter(Boolean).map((d) => d.reach)) * 1.1;
     lastSprays = { sprays, S, names: calc.ws.map((w) => w.name) };
     el.innerHTML = calc.ws.map((w, i) => {
       const x = res[i];
@@ -580,7 +581,7 @@ async function boot() {
         : x.r ? esc(tr("wc.sim.nobest", "Cannot kill reliably at this range with this setup")) : "";
       const have = attsOf(w.id);
       const chips = SLOTS.filter((sl) => have[sl]).map((sl) => `<label class="wc-att"><span>${esc(tr("wc.sim.slot." + sl, SLOT_EN[sl]))}</span><select data-w="${w.id}" data-slot="${sl}"><option value="">${esc(tr("wc.sim.noAtt", "none"))}</option>${have[sl].map((n) => `<option value="${esc(n)}" ${(simState.att[w.id] || {})[sl] === n ? "selected" : ""}>${esc(n)}${((fx) => (fx ? (Object.keys(fx).length ? "" : " · " + esc(tr("wc.sim.noCombat", "no effect on killing"))) : " · " + esc(tr("wc.sim.noEffect", "not modelled"))))(attEffects(n, descsOf(w.id)[n], w.name, simState.aim === "hip"))}</option>`).join("")}</select></label>`).join("");
-      return `<article class="wc-sim${x.busy ? " is-busy" : ""}" style="--c:${color(i)}"><div class="wc-simhead"><b>${esc(w.name)}</b><span class="wc-best">${head}${x.busy ? busyTag : ""}</span></div>
+      return `<article class="wc-sim" style="--c:${color(i)}"><div class="wc-simhead"><b>${esc(w.name)}</b><span class="wc-best">${head}</span></div>
         <div class="wc-simbody"><ul class="wc-bars">${bars}</ul>${sprayFigure(sprays[i], S, i)}</div>${chips ? `<div class="wc-atts">${chips}</div>` : ""}</article>`;
     }).join("");
   }
@@ -603,18 +604,17 @@ async function boot() {
 
   // the spray picture: one full spray drawn bright (later shots fainter) and GHOST_SPRAYS more, each with new random numbers
   function sprayData(w, P) {
-    const n = Math.min(30, P.mag), aimHead = sprayTarget() === "head";
+    const n = Math.min(30, P.mag), aim = aimM();
     const seed = (simState.seed + w.id * 7919) % 2147483647;
     const main = sprayPattern(P, { distance: st.range, seed, shots: n });
     const ghosts = [];
     for (let g = 1; g <= GHOST_SPRAYS; g++) ghosts.push(...sprayPattern(P, { distance: st.range, seed: seed + g * 104723, shots: n }));
-    const cy0 = aimHead ? TARGET.headY / 2 : 0;
-    const reach = Math.max(0, ...[...main, ...ghosts].map((s) => Math.max(Math.abs(s.x), Math.abs(s.y - cy0))));
+    const reach = Math.max(Math.abs(aim.x), Math.abs(aim.y), 0, ...[...main, ...ghosts].map((s) => Math.max(Math.abs(s.x), Math.abs(s.y))));
     // what the bullets hit, over every spray drawn: head, body, or a miss
     const all = [...main, ...ghosts], tot = all.length || 1;
     const heads = all.filter((s) => s.zone === "head").length, bodies = all.filter((s) => s.zone === "body").length;
     const stats = { hit: (heads + bodies) / tot, hs: heads / (heads + bodies || 1), miss: 1 - (heads + bodies) / tot };
-    return { n, main, ghosts, cy0, reach, stats };
+    return { n, main, ghosts, aim, reach, stats };
   }
   // one bullet: a filled dot if it hit the head, a ring if the body, a grey dot if it missed
   const shotDot = (s, cx, cy, U, c, op, big) => {
@@ -625,10 +625,12 @@ async function boot() {
   };
   function sprayFigure(d, S, i, Z = 240) {
     if (!d) return "";
-    const U = (Z / 2) / S, cx = Z / 2, cy = Z / 2 + d.cy0 * U;
+    const U = (Z / 2) / S, cx = Z / 2, cy = Z / 2;
     let svg = svgOpen(Z, Z, tr("wc.sim.aria", "Where a full-magazine spray lands on the target"));
     svg += `<rect class="wc-tgt" x="${cx - TARGET.halfW * U}" y="${cy - TARGET.top * U}" width="${2 * TARGET.halfW * U}" height="${(TARGET.top - TARGET.bottom) * U}"/>`;
     svg += `<circle class="wc-tgt" cx="${cx + TARGET.headX * U}" cy="${cy - TARGET.headY * U}" r="${TARGET.headR * U}"/>`;
+    const ax = cx + d.aim.x * U, ay = cy - d.aim.y * U, k = 5;   // the aim point
+    svg += `<path class="wc-aimx" d="M${(ax - k).toFixed(1)} ${ay.toFixed(1)}H${(ax + k).toFixed(1)}M${ax.toFixed(1)} ${(ay - k).toFixed(1)}V${(ay + k).toFixed(1)}"/>`;
     svg += d.ghosts.map((s) => shotDot(s, cx, cy, U, color(i), 0.25, Z !== 240)).join("");
     svg += d.main.map((s) => shotDot(s, cx, cy, U, color(i), 0.4 + 0.6 * (1 - s.i / d.n), Z !== 240)).join("");
     svg += "</svg>";
@@ -665,8 +667,18 @@ async function boot() {
   const SEGS = [
     ["wcSimAim", [["ads", "Aiming down sights", "wc.sim.ads"], ["hip", "Hip fire", "wc.sim.hip"]], () => simState.aim, (k) => { simState.aim = k; }],
     ["wcSimStance", STANCES.map((k) => [k, STANCE_EN[k], "wc.sim.st." + k]), () => simState.stance, (k) => { simState.stance = k; }],
-    ["wcSimTarget", [["body", "Torso", "wc.sim.tgtBody"], ["head", "Head", "wc.sim.tgtHead"]], () => sprayTarget(), (k) => { simState.target = k; }],
+    ["wcSimTarget", [["body", "Torso", "wc.sim.tgtBody"], ["head", "Head", "wc.sim.tgtHead"]], () => sprayTarget(), (k) => { simState.aimX = 0; simState.aimY = k === "head" ? 45 : 0; syncAim(); }],
   ];
+  // the aim sliders (cm): they show the aim point and follow the Head / Torso presets
+  const aimXEl = $("wcSimAimX"), aimYEl = $("wcSimAimY");
+  function syncAim() {
+    aimXEl.value = simState.aimX; aimYEl.value = simState.aimY;
+    $("wcSimAimXV").textContent = nf(simState.aimX) + " cm";
+    $("wcSimAimYV").textContent = nf(simState.aimY) + " cm";
+    paintSeg();
+  }
+  aimXEl.addEventListener("input", () => { simState.aimX = +aimXEl.value; syncAim(); invalidate("sim"); });
+  aimYEl.addEventListener("input", () => { simState.aimY = +aimYEl.value; syncAim(); invalidate("sim"); });
   function paintSeg() {
     for (const [id, items, get] of SEGS) {
       const box = $(id), cur = get();
@@ -680,7 +692,7 @@ async function boot() {
   const cpx = $("wcSimCompX");
   cpx.addEventListener("input", () => { simState.compX = +cpx.value; $("wcSimCompXV").textContent = nf(simState.compX) + "%"; invalidate("sim"); });
 
-  paintLabels(); paintSeg();
+  paintLabels(); paintSeg(); syncAim();
   invalidate("all");
   // recoil data after the first draw (it is the biggest file); the table rows and the simulator fill in when it lands
   fetch("assets/weapons/recoil.json").then((r) => (r.ok ? r.json() : null)).then((j) => {

@@ -11,7 +11,7 @@
 // the cone is filled. Those are constants here, labelled on the page.
 //
 // Units: angles in degrees, distances in metres, time in ms.
-import { hitDamage } from "./weapons-model.mjs?v=20261106-wcr4";
+import { hitDamage } from "./weapons-model.mjs?v=20261106-wcr5";
 
 export const STANCES = Object.freeze(["crouchStill", "standStill", "crouchMove", "standMove"]);
 // Census player_state ids: 0 Standing, 1 Crouching, 2 Running, 5 CrouchWalking
@@ -169,6 +169,17 @@ function adjustRanges(profile, A, cat) {
   return { ...profile, rangeMaxDmg: Math.max(0, profile.rangeMaxDmg * rm + dMax), rangeMinDmg: far * rm, hsMult: hsSet ? hsSet.hsSet : Math.max(1, profile.hsMult + dHs), dmgMax: Math.max(1, (dSet ? dSet.dmgSet : profile.dmgMax) * dm + dAdd), dmgMin: Math.max(1, (dSetMin ? dSetMin.dmgSetMin : dSet ? dSet.dmgSet : profile.dmgMin) * dm + dAdd) };
 }
 
+/**
+ * Where a shot is aimed (metres from the chest centre, sideways and height) and the OTHER point the headshot chance
+ * lands on: the torso centre when the aim is on the head, else the head. opts.aimTarget "head" | "body" still works.
+ */
+export function aimPoints(opts = {}) {
+  const x = opts.aimX ?? (opts.aimTarget === "head" ? TARGET.headX : 0), y = opts.aimY ?? (opts.aimTarget === "head" ? TARGET.headY : 0);
+  const onHead = Math.hypot(x - TARGET.headX, y - TARGET.headY) <= TARGET.headR;
+  const o = onHead ? { x: 0, y: 0 } : { x: TARGET.headX, y: TARGET.headY };
+  return { aimX: x, aimY: y, otherX: o.x, otherY: o.y };
+}
+
 export function simParams(profile, fm, states, opts = {}) {
   const stance = opts.stance || "crouchStill";
   const hip = opts.aim === "hip";
@@ -212,7 +223,7 @@ export function simParams(profile, fm, states, opts = {}) {
     cofRecRate: Math.max(0.01, row.cof_recovery_rate ?? 20), cofRecDelay: row.cof_recovery_delay_ms ?? 0,
     pelletSpread: Math.max(0, (f.pellet_spread ?? f.cof_pellet_spread ?? 0) * (hip ? mul("hipSpread") * mul("spreadHipMul") : mul("spreadAdsMul")) + sumA(hip ? "spreadHip" : "spreadAds")),
     realAds, comp: Math.min(1, Math.max(0, opts.comp || 0)), compX: Math.min(1, Math.max(0, opts.compX || 0)),
-    aimTarget: opts.aimTarget === "head" ? "head" : "body", acc: opts.acc, hsr: opts.hsr,
+    ...aimPoints(opts), acc: opts.acc, hsr: opts.hsr,
     splash: A.reduce((m, a) => m + (a.splash || 0), 0), splashR: Math.max(0, ...A.map((a) => a.splashR || 0)),
     blastRatio: A.reduce((m, a) => m + (a.blastRatio || 0), 0),
     bulletRadius: A.reduce((m, a) => m + (a.bulletRadius || 0), 0),
@@ -269,14 +280,14 @@ export function simulate(P, { burst = Infinity, distance = 20, hp = 1000 }, r, k
     // the shot leaves where the crosshair is, with the cone on top (kick comes after)
     const radius = (cof + (P.pellets > 1 ? P.pelletSpread : 0)) / 2;
     // the player's aim: at the head with probability hsr, else the body; right on it with probability acc, else a clear miss
-    // the player aims at the chosen target (P.aimTarget); with probability hsr the shot lands on the OTHER one instead
-    const aimY = P.aimTarget === "head" ? TARGET.headY : 0, otherY = P.aimTarget === "head" ? 0 : TARGET.headY;
     // accuracy: the shot is on the aim point with probability acc (as in weapons-model.mjs), else a clear miss
-    let ax0 = 0, ay0 = Math.atan(aimY / distance) / RAD;
+    // the player aims at (P.aimX, P.aimY); with probability hsr the shot lands on the OTHER point instead
+    let ax0 = Math.atan((P.aimX || 0) / distance) / RAD, ay0 = Math.atan((P.aimY || 0) / distance) / RAD;
     if (P.acc != null) {
       if (r() < P.acc) {
-        const ty = r() < (P.hsr || 0) ? otherY : aimY;   // headshot rate: the chance a shot lands on the other target
-        ay0 = Math.atan(ty / distance) / RAD;
+        const hitOther = r() < (P.hsr || 0);   // headshot rate: the chance a shot lands on the other point
+        ax0 = Math.atan((hitOther ? P.otherX : P.aimX) / distance) / RAD;
+        ay0 = Math.atan((hitOther ? P.otherY : P.aimY) / distance) / RAD;
       } else {
         // a miss: a point beside the target, outside the head and the body (a few tries, then a fixed spot)
         let mx = 0.9, my = 0.6;

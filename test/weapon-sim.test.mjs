@@ -202,6 +202,9 @@ test("aim: accuracy 0 never hits, hsr 1 aims all at the head, compensation shrin
   assert.ok(run({ acc: 0.0001, hsr: 0 }, 100).every((s) => !s.zone));          // a shot misses with probability 1 - accuracy
   assert.ok(run({ acc: 0.0001, hsr: 0 }, 1).every((s) => !s.zone));
   assert.ok(run({ acc: 1, hsr: 0, aimTarget: "head" }).every((s) => s.zone === "head"));   // aim at the head: every shot on it
+  assert.ok(run({ acc: 1, hsr: 0, aimY: -0.9 }).every((s) => s.zone === "body"));          // aim at the legs: the body box
+  assert.ok(run({ acc: 1, hsr: 0, aimX: 0.5, aimY: -0.9 }).every((s) => !s.zone));         // beside the body: misses
+  assert.ok(run({ acc: 1, hsr: 1, aimY: -0.9 }).every((s) => s.zone === "head"));          // legs aimed, headshot chance: the head
   assert.ok(run({ acc: 0.7, hsr: 1 }, 20).some((s) => s.zone === "head"));    // head aim still lands heads with imperfect aim
   assert.ok(run({ acc: 1, hsr: 1 }).every((s) => s.zone === "head"));
   assert.ok(run({ acc: 1, hsr: 0 }).every((s) => s.zone === "body"));

@@ -8,7 +8,7 @@
 // rec = { fm, states, adsFm, adsStates, pool, handling } from recoil.json (null when not loaded).
 // Hip-fire cone comes from the hip fire mode's player_state_group, aim-down-sights cone from the
 // ADS fire mode's own group (fire_mode_2.iron_sights = 1), as in Izubrr/planetside_weapon_compare.
-import { hitDamage, idealTtk, minShots, dps, effectiveRpm, timeOfShot } from "./weapons-model.mjs?v=20261106-wcr4";
+import { hitDamage, idealTtk, minShots, dps, effectiveRpm, timeOfShot } from "./weapons-model.mjs?v=20261106-wcr5";
 
 export const GROUPS = Object.freeze(["kill", "damage", "magazine", "accuracyAds", "accuracyHip", "recoil", "handling"]);
 export const GROUP_EN = Object.freeze({

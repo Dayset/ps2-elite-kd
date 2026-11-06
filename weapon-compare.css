@@ -118,7 +118,6 @@ tbody.open .wc-caret::before { content: "▾"; }
 .wc-simsum { list-style: none; margin: 0 0 12px; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 6px 18px; font-size: 0.88rem; }
 .wc-simsum li { border-left: 3px solid var(--c, var(--border)); padding-left: 8px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 10px; align-items: baseline; }
 .wc-simsum li > b { grid-column: 1 / -1; }
-.wc-simsum li > .wc-busy { grid-column: 1 / -1; }
 .wc-simlist { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--wc-gap); }
 .wc-sim { border: 1px solid var(--border); border-top: 3px solid var(--c, var(--border)); background: var(--bg); padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .wc-simhead { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 2px 12px; min-height: 1.4em; }
@@ -134,8 +133,6 @@ tbody.open .wc-caret::before { content: "▾"; }
 .wc-atts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 10px; font-size: 0.78rem; padding-top: 8px; border-top: 1px solid var(--row-border); }
 .wc-att { display: flex; flex-direction: column; gap: 3px; color: var(--dim); min-width: 0; }
 .wc-att select { width: 100%; min-width: 0; height: 2rem; background: var(--input-bg); color: var(--text); border: 1px solid var(--border); border-radius: 0; font: inherit; font-size: 0.8rem; }
-.wc-busy { color: var(--dim); font-size: 0.78rem; font-style: italic; }
-.is-busy .wc-bars, .is-busy .wc-best > span:not(.wc-busy), .wc-simsum li.is-busy > span:not(.wc-busy) { opacity: 0.5; }
 
 .wc-how summary { cursor: pointer; font-weight: 600; }
 .wc-how ul { margin: 8px 0; padding-left: 1.2rem; font-size: 0.88rem; }
@@ -175,3 +172,4 @@ tbody.open .wc-caret::before { content: "▾"; }
 /* spray outcomes: misses in grey, and the hit line under each picture */
 .wc-spray .wc-miss { fill: var(--dim); }
 .wc-hitline { margin-top: 2px; font-size: 0.75rem; }
+.wc-spray .wc-aimx { stroke: var(--accent); stroke-width: 1.5; fill: none; }
