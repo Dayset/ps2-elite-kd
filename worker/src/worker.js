@@ -747,7 +747,7 @@ export function censusTarget(url, serviceId) {
   const u = url instanceof URL ? url : new URL(url);
   if (!u.pathname.startsWith(CENSUS_PROXY_PREFIX + "/")) return null;
   const rest = u.pathname.slice(CENSUS_PROXY_PREFIX.length);
-  const m = /^\/s:([A-Za-z0-9_-]+)\/get\/([a-z0-9]+):v2\/([a-z_]+)\/?$/.exec(rest);
+  const m = /^\/s:([A-Za-z0-9_-]+)\/get\/([a-z0-9]+):v2\/([a-z0-9_]+)\/?$/.exec(rest);  // digits allowed: fire_mode_2, player_state_group_2 (weapon recoil / cone of fire)
   if (!m || m[1] !== serviceId || !CENSUS_NAMESPACES.includes(m[2])) return null;
   if (u.search.length > 4e3) return null;
   return `${CENSUS_ORIGIN}/s:${serviceId}/get/${m[2]}:v2/${m[3]}${u.search}`;

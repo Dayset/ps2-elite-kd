@@ -112,7 +112,7 @@ for (const r of await paged('fire_group_to_fire_mode', 'fire_group_id,fire_mode_
   if (!modesOf.has(r.fire_group_id)) modesOf.set(r.fire_group_id, []);
   modesOf.get(r.fire_group_id).push({ id: r.fire_mode_id, idx: +r.fire_mode_index || 0 });
 }
-const fmById = new Map((await paged('fire_mode', 'fire_mode_id,type,description.en,reload_time_ms,pellets_per_shot,damage_max,damage_min,damage_max_range,damage_min_range')).map((r) => [r.fire_mode_id, r]));
+const fmById = new Map((await paged('fire_mode', 'fire_mode_id,type,description.en,player_state_group_id,cof_recoil,pellet_spread,reload_time_ms,pellets_per_shot,damage_max,damage_min,damage_max_range,damage_min_range')).map((r) => [r.fire_mode_id, r]));
 const fm2ById = new Map((await paged('fire_mode_2', 'fire_mode_id,fire_refire_ms,damage_head_multiplier,automatic,max_damage,min_damage,max_damage_range,min_damage_range,fire_pellets_per_shot,reload_time_ms')).map((r) => [r.fire_mode_id, r]));
 const magOf = new Map();
 for (const r of await paged('weapon_ammo_slot', 'weapon_id,weapon_slot_index,clip_size')) {
@@ -156,6 +156,73 @@ for (const [id, e] of Object.entries(items)) {
 }
 writeFileSync(join(OUT, "profiles.json"), JSON.stringify({ savedAt: new Date().toISOString(), profiles }) + "\n");
 console.log(`::notice::weapon profiles: ${Object.keys(profiles).length} infantry, ${uncovered.length} uncovered: ${uncovered.join(',') || 'none'}`);
+
+// ---- recoil / cone of fire (weapon comparison page) --------------------------
+// assets/weapons/recoil.json: { savedAt, weapons: { <item_id>: [fire_mode_id, player_state_group_id] },
+//   fm2: { <fire_mode_id>: {recoil_*, cof_*, sway_*, fire_* numbers} },
+//   groups: { <player_state_group_id>: [ {player_state_id, cof_*, ...} per stance ] } }
+// Census collections fire_mode_2 and player_state_group_2 (the cache Worker must allow
+// digits in collection names). Only numeric fields whose name starts with recoil_, cof_,
+// sway_, fire_ or move_ are kept; everything else stays in Census. A failure here never
+// stops the catalog or the images: it is logged as a warning and the old file stays.
+try {
+  const wantMode = new Map(), wantGroup = new Set();
+  for (const id of Object.keys(profiles)) {
+    const w = weaponOf.get(id), groups = w ? groupsOf.get(w) || [] : [];
+    for (const g of groups) {
+      const ms = (modesOf.get(g) || []).map((x) => ({ m: fmById.get(x.id), idx: x.idx })).filter((x) => x.m).sort((a, b) => a.idx - b.idx).map((x) => x.m);
+      const mode = ms.find((m) => m.type === 'primary') || ms[0];
+      if (mode) { wantMode.set(id, mode.fire_mode_id); break; }
+    }
+  }
+  const modeIds = new Set(wantMode.values());
+  const keep = (row) => {
+    const o = {};
+    for (const [k, v] of Object.entries(row)) {
+      if (!/^(recoil_|cof_|sway_|fire_|move_)/.test(k) || /_id$/.test(k)) continue;
+      const n = Number(v);
+      if (v !== '' && Number.isFinite(n)) o[k] = n;
+    }
+    return o;
+  };
+  async function pagedAll(coll, want) {
+    const out = [];
+    for (let start = 0; ; start += 500) {
+      const j = await get(`${base}${coll}?c:start=${start}&c:limit=500`);
+      const list = (j && j[`${coll}_list`]) || [];
+      for (const r of list) if (want(r)) out.push(r);
+      if (list.length < 500) break;
+      await sleep(300);
+    }
+    return out;
+  }
+  const fm2 = {};
+  for (const r of await pagedAll('fire_mode_2', (r) => modeIds.has(r.fire_mode_id))) {
+    const fm = fmById.get(r.fire_mode_id) || {};
+    fm2[r.fire_mode_id] = { ...keep(r), ...(+fm.cof_recoil ? { cof_recoil: +fm.cof_recoil } : {}), ...(+fm.pellet_spread ? { pellet_spread: +fm.pellet_spread } : {}), psg: +(r.player_state_group_id || fm.player_state_group_id || 0) };
+  }
+  const groupIds = new Set();
+  for (const id of Object.keys(profiles)) {
+    const mid = wantMode.get(id);
+    const psg = (mid && fm2[mid] && fm2[mid].psg) || (mid && fmById.get(mid)?.player_state_group_id);
+    if (psg) groupIds.add(String(psg));
+  }
+  const groups = {};
+  for (const r of await pagedAll('player_state_group_2', (r) => groupIds.has(r.player_state_group_id))) {
+    (groups[r.player_state_group_id] ||= []).push({ player_state_id: +r.player_state_id, ...keep(r) });
+  }
+  const weapons = {};
+  for (const id of Object.keys(profiles)) {
+    const mid = wantMode.get(id);
+    if (!mid || !fm2[mid]) continue;
+    weapons[id] = [+mid, +(fm2[mid].psg || fmById.get(mid)?.player_state_group_id || 0)];
+  }
+  if (Object.keys(weapons).length < 100 || !Object.keys(groups).length) throw new Error(`only ${Object.keys(weapons).length} weapons / ${Object.keys(groups).length} state groups`);
+  writeFileSync(join(OUT, "recoil.json"), JSON.stringify({ savedAt: new Date().toISOString(), weapons, fm2, groups }) + "\n");
+  console.log(`::notice::weapon recoil: ${Object.keys(weapons).length} weapons, ${Object.keys(fm2).length} fire modes, ${Object.keys(groups).length} state groups`);
+} catch (e) {
+  console.log(`::warning::weapon recoil not updated: ${e.message}`);
+}
 
 let hasCwebp = true;
 try { execFileSync("cwebp", ["-version"], { stdio: "ignore" }); } catch { hasCwebp = false; }

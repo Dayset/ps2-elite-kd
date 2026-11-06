@@ -75,6 +75,9 @@ test("Census proxy: ps2, ps2ps4us and ps2ps4eu pass; other namespaces and servic
   assert.equal(t(`/s:${sid}/get/ps2:v2/character?name.first_lower=x`), `https://census.daybreakgames.com/s:${sid}/get/ps2:v2/character?name.first_lower=x`);
   assert.equal(t(`/s:${sid}/get/ps2ps4us:v2/characters_stat?character_id=1`), `https://census.daybreakgames.com/s:${sid}/get/ps2ps4us:v2/characters_stat?character_id=1`);
   assert.equal(t(`/s:${sid}/get/ps2ps4eu:v2/characters_event_grouped?character_id=1`), `https://census.daybreakgames.com/s:${sid}/get/ps2ps4eu:v2/characters_event_grouped?character_id=1`);
+  assert.equal(t(`/s:${sid}/get/ps2:v2/fire_mode_2?c:limit=1`), `https://census.daybreakgames.com/s:${sid}/get/ps2:v2/fire_mode_2?c:limit=1`, "collection names with a digit (weapon recoil data)");
+  assert.equal(t(`/s:${sid}/get/ps2:v2/player_state_group_2?c:limit=1`), `https://census.daybreakgames.com/s:${sid}/get/ps2:v2/player_state_group_2?c:limit=1`);
+  assert.equal(t(`/s:${sid}/get/ps2:v2/Fire-Mode?c:limit=1`), null, "still no odd characters");
   assert.equal(t(`/s:${sid}/get/eq2:v2/character?x=1`), null);
   assert.equal(t(`/s:${sid}/get/ps2:v1/character?x=1`), null);
   assert.equal(t(`/s:other/get/ps2:v2/character?x=1`), null);
