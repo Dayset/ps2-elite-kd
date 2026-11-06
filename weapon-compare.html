@@ -18,7 +18,7 @@
     } catch (e) {}
   </script>
   <link rel="stylesheet" href="styles.css?v=20261031-fr1" />
-  <link rel="stylesheet" href="weapon-compare.css?v=20261106-wc2" />
+  <link rel="stylesheet" href="weapon-compare.css?v=20261106-wc3" />
 </head>
 <body class="site-page">
   <main class="wc-wrap">
@@ -95,7 +95,7 @@
         <label><span data-i18n="wc.sim.stance">Stance</span> <select id="wcSimStance"></select></label>
       </div>
       <div id="wcSim" class="wc-simlist"></div>
-      <p class="wc-dim" data-i18n="wc.sim.assume">Assumptions: the aiming cone is not in the game data, so every weapon uses the NSX Naginata's wiki values (0.15 crouched still, 0.15 standing still, 0.35 crouched moving, 0.4 standing moving) and aim bloom is half of hip bloom. Attachment effects are typed in by hand from the Izubrr repo and the March 2022 patch notes and may be out of date. The target is a head circle and a body box; the shot cone is filled evenly.</p>
+      <p class="wc-dim" data-i18n="wc.sim.assume">Aiming uses each weapon's own aim-down-sights fire mode from Census: its cone per stance, bloom and recoil. Assumptions: attachment effects are typed in by hand from the Izubrr repo and the March 2022 patch notes and may be out of date. The target is a head circle and a body box; the shot cone is filled evenly.</p>
     </section>
 
     <details class="wc-card wc-how">
@@ -112,6 +112,6 @@
   <footer class="wc-foot">
     <label class="wc-check"><input id="wcFar" type="checkbox" /> <span data-i18n="wc.far">Extend the range to 500 m (for snipers)</span></label>
   </footer>
-  <script type="module" src="weapon-compare.mjs?v=20261106-wc2"></script>
+  <script type="module" src="weapon-compare.mjs?v=20261106-wc3"></script>
 </body>
 </html>

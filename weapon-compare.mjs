@@ -12,6 +12,7 @@ import {
   HP_PRESETS, hitDamage, ttkDistribution, quantileMs, idealTtk, dps, rangeAxis, ttkCurve,
   winnerStrip, slowerPct,
 } from "./weapons-model.mjs";
+import { METRICS, GROUPS, GROUP_EN, statValues, bestOf, rank, classBests } from "./weapon-stats.mjs";
 import { simParams, compareBursts, sprayPattern, ATTACHMENTS, ADS_DEFAULT, TARGET, STANCES } from "./weapon-sim.mjs";
 
 export const MAX_WEAPONS = 4;
@@ -104,7 +105,11 @@ async function boot() {
   const recoilOf = (id) => {
     const r = recoil && recoil.weapons[id];
     if (!r) return null;
-    return { fm: recoil.fm2[r[0]] || null, states: recoil.groups[r[1]] || [], pool: r[2] || 0 };
+    return {
+      fm: recoil.fm2[r[0]] || null, states: recoil.groups[r[1]] || [], pool: r[2] || 0,
+      adsFm: (r[3] && recoil.fm2[r[3]]) || null, adsStates: (r[4] && recoil.groups[r[4]]) || [],
+      handling: (recoil.handling && recoil.handling[id]) || null,
+    };
   };
 
   // all weapons with a real, usable profile
@@ -200,51 +205,62 @@ async function boot() {
     calc = { maxR, ws, xs, curves, dists, med, ideal, dp, winners: winnerStrip(curves) };
   }
 
-  const row = (lab, val) => `<li><span class="lab">${esc(lab)}</span><span>${val}</span></li>`;
   const deg = (v) => tr("wc.deg", "{v}°", { v: nf(v, 2) });
-  const STATE_EN = { 0: "Standing", 1: "Crouching", 2: "Running", 3: "Sprinting", 4: "Falling (long)", 5: "Crouch walking", 6: "Jumping", 7: "Falling (short)" };
-  function extra(x) {
-    if (!x || !x.fm) return "";
-    const f = x.fm;
-    const v = f.recoil_magnitude_min === f.recoil_magnitude_max ? deg(f.recoil_magnitude_min) : `${nf(f.recoil_magnitude_min, 2)}–${deg(f.recoil_magnitude_max)}`;
-    return (x.pool ? row(tr("wc.pool", "Ammo pool"), nf(x.pool)) : "")
-      + row(tr("wc.recoilV", "Vertical recoil per shot"), esc(v))
-      + row(tr("wc.recoilFirst", "First-shot recoil"), "×" + nf(f.recoil_first_shot_modifier, 2))
-      + row(tr("wc.recoilH", "Horizontal recoil"), "±" + esc(deg(f.recoil_horizontal_max)))
-      + row(tr("wc.bloom", "Bloom per shot"), esc(deg(f.cof_recoil)));
-  }
-  function stances(x) {
-    if (!x || !x.states || !x.states.length) return "";
-    const rows = x.states.map((r) => row(tr("wc.st." + r.player_state_id, STATE_EN[r.player_state_id] || "#" + r.player_state_id), esc(tr("wc.cofV", "{min} / {max}", { min: nf(r.cof_min, 2), max: nf(r.cof_max, 2) })))).join("");
-    return `<details class="wc-acc"><summary>${esc(tr("wc.acc.h", "Accuracy by stance (hip cone, min / max)"))}</summary><ul class="wc-wstats">${rows}</ul><p class="wc-dim">${esc(tr("wc.accNote", "Hip-fire cone of fire from Census. Aiming-down-sights values are not in the weapon data."))}</p></details>`;
+  const fmtUnit = (unit, v, vmax) => {
+    if (v == null) return "–";
+    switch (unit) {
+      case "ms": return fmtMs(v);
+      case "s": return tr("wc.s", "{s} s", { s: nf(v / 1000, 2) });
+      case "m": return fmtM(v);
+      case "x": return "×" + nf(v, 2);
+      case "deg": return deg(v);
+      case "cone": return tr("wc.cofV", "{min} / {max}", { min: nf(v, 2), max: vmax == null ? "–" : nf(vmax, 2) });
+      case "mps": return tr("wc.mps", "{v} m/s", { v: nf(v) });
+      case "degps": return tr("wc.degps", "{v}°/s", { v: nf(v, 1) });
+      default: return nf(v);
+    }
+  };
+  // best of the whole class (category), per range / hp: cached
+  const classCache = new Map();
+  function classBestFor(cat) {
+    const key = `${cat}|${st.range}|${st.hp}|${recoil ? 1 : 0}`;
+    if (!classCache.has(key)) {
+      const vals = [...weapons.values()].filter((w) => w.cat === cat).map((w) => statValues({ p: w.p, rec: recoilOf(w.id), range: st.range, hp: st.hp }));
+      classCache.set(key, classBests(vals));
+    }
+    return classCache.get(key);
   }
 
   function renderCards() {
-    const { ws, med, ideal } = calc;
+    const { ws, med } = calc;
     const best = Math.min(...med.filter((v) => v != null));
+    const vals = ws.map((w) => statValues({ p: w.p, rec: recoilOf(w.id), range: st.range, hp: st.hp }));
+    const chosenBest = {};
+    for (const m of METRICS) chosenBest[m.key] = bestOf(vals.map((v) => v[m.key]), m.dir);
+    const medBest = bestOf(med, -1);
     $("wcCards").innerHTML = ws.map((w, i) => {
       const slower = slowerPct(med[i], Number.isFinite(best) ? best : null);
-      const cmp = med[i] == null ? "" : slower === 0 || slower == null
-        ? `<span class="good">${esc(tr("wc.fastest", "fastest"))}</span>`
+      const cmp = med[i] == null || ws.length < 2 ? "" : slower === 0 || slower == null
+        ? esc(tr("wc.fastest", "fastest"))
         : esc(tr("wc.slower", "{pct}% slower", { pct: nf(slower, slower < 10 ? 1 : 0) }));
-      const h = hitDamage(w.p, st.range);
-      const x = recoilOf(w.id);
+      const cb = classBestFor(w.cat), v = vals[i];
+      let rows = `<li class="${rank(med[i], -1, medBest, null)}"><span class="lab">${esc(tr("wc.med", "Median kill at {m} m", { m: nf(st.range) }))}</span><span class="v">${esc(fmtMs(med[i]))}${cmp ? " · " + cmp : ""}</span></li>`;
+      rows += `<li><span class="lab">${esc(tr("wc.mode", "Fire mode"))}</span><span class="v">${esc(tr("wc.mode." + w.p.mode, MODE_EN[w.p.mode] || w.p.mode))}${w.p.pellets > 1 ? " · " + esc(tr("wc.pellets", "{n} pellets", { n: nf(w.p.pellets) })) : ""}</span></li>`;
+      for (const g of GROUPS) {
+        const ms = METRICS.filter((m) => m.group === g && (v[m.key] != null || vals.some((o) => o[m.key] != null)));
+        if (!ms.length) continue;
+        rows += `<li class="grp">${esc(tr("wc.g." + g, GROUP_EN[g]))}</li>`;
+        for (const m of ms) {
+          const cls = rank(v[m.key], m.dir, chosenBest[m.key], cb[m.key]);
+          const tip = cls === "gold" ? ` title="${esc(tr("wc.goldTip", "Best of all {cat}", { cat: w.cat }))}"` : cls === "good" ? ` title="${esc(tr("wc.goodTip", "Best of the chosen weapons"))}"` : "";
+          rows += `<li class="${cls}"${tip}><span class="lab">${esc(tr("wc.k." + m.key, m.en))}</span><span class="v">${esc(fmtUnit(m.unit, v[m.key], v[m.key + ":max"]))}</span></li>`;
+        }
+      }
       return `<article class="wc-wcard" style="border-top-color:${color(i)}">
         <img src="assets/weapons/${w.img}.webp" alt="" width="64" height="32" loading="lazy" onerror="this.style.visibility='hidden'" />
         <div><div class="wc-wname">${esc(w.name)}</div><div class="wc-wmeta">${esc(FACTION[w.fac] ?? "")} · ${esc(w.cat)}</div></div>
-        <ul class="wc-wstats">
-          <li><span class="lab">${esc(tr("wc.med", "Median kill at {m} m", { m: nf(st.range) }))}</span><span>${esc(fmtMs(med[i]))} ${cmp ? "· " + cmp : ""}</span></li>
-          <li><span class="lab">${esc(tr("wc.ideal", "Best case (all hits)"))}</span><span>${esc(fmtMs(ideal[i]))}</span></li>
-          <li><span class="lab">${esc(tr("wc.rpm", "Rounds per minute"))}</span><span>${nf(w.p.rpm)}</span></li>
-          <li><span class="lab">${esc(tr("wc.mode", "Fire mode"))}</span><span>${esc(tr("wc.mode." + w.p.mode, MODE_EN[w.p.mode] || w.p.mode))}${w.p.pellets > 1 ? " · " + esc(tr("wc.pellets", "{n} pellets", { n: nf(w.p.pellets) })) : ""}</span></li>
-          <li><span class="lab">${esc(tr("wc.dmg", "Damage per hit"))}</span><span>${nf(h.body)} / ${nf(h.head)}</span></li>
-          <li><span class="lab">${esc(tr("wc.hsMult", "Headshot multiplier"))}</span><span>×${nf(w.p.hsMult, 2)}</span></li>
-          <li><span class="lab">${esc(tr("wc.fall", "Damage falloff"))}</span><span>${w.p.dmgMin !== w.p.dmgMax && w.p.rangeMinDmg > 0 ? esc(tr("wc.fallV", "{max} → {min} ({a}–{b} m)", { max: nf(w.p.dmgMax), min: nf(w.p.dmgMin), a: nf(w.p.rangeMaxDmg), b: nf(w.p.rangeMinDmg) })) : esc(tr("wc.fallNone", "none"))}</span></li>
-          <li><span class="lab">${esc(tr("wc.reload", "Reload"))}</span><span>${esc(tr("wc.s", "{s} s", { s: nf(w.p.reloadMs / 1000, 2) }))}</span></li>
-          <li><span class="lab">${esc(tr("wc.reloadLong", "Long reload"))}</span><span>${esc(tr("wc.s", "{s} s", { s: nf((w.p.reloadMs + ((x && x.fm && x.fm.reload_chamber_ms) || 0)) / 1000, 2) }))}</span></li>
-          <li><span class="lab">${esc(tr("wc.mag", "Magazine"))}</span><span>${nf(w.p.mag)}</span></li>${extra(x)}
-        </ul>${stances(x)}</article>`;
-    }).join("");
+        <ul class="wc-wstats">${rows}</ul></article>`;
+    }).join("") + `<p class="wc-key"><span class="good">■</span> ${esc(tr("wc.goodTip", "Best of the chosen weapons"))} <span class="gold">■</span> ${esc(tr("wc.goldKey", "Best of the whole class"))}</p>`;
   }
 
   // -------------------------------------------------------------- charts --
@@ -380,7 +396,7 @@ async function boot() {
       const x = recoilOf(w.id);
       if (!x || !x.fm) return `<article class="wc-sim" style="border-top-color:${color(i)}"><b>${esc(w.name)}</b><p class="wc-dim">${esc(tr("wc.sim.none", "No recoil data for this weapon."))}</p></article>`;
       const att = (simState.att[w.id] || []).filter((n) => attsOf(w.id).includes(n));
-      const P = simParams(w.p, x.fm, x.states, { stance: simState.stance, aim: simState.aim, attachments: att });
+      const P = simParams(w.p, x.fm, x.states, { stance: simState.stance, aim: simState.aim, attachments: att, adsFm: x.adsFm, adsStates: x.adsStates });
       const { rows, best } = compareBursts(P, { distance: st.range, hp: st.hp, runs: 300, seed: 1 });
       const worst = Math.max(1, ...rows.map((r) => r.median ?? 0));
       const bars = rows.map((r) => `<li class="${best && r.burst === best.burst ? "best" : ""}"><span class="lab">${esc(burstLabel(r.burst))}</span><span class="wc-bar"><i style="width:${r.median == null ? 0 : Math.max(2, r.median / worst * 100).toFixed(1)}%;background:${color(i)}"></i></span><span class="v">${r.median == null ? esc(tr("wc.never", "no kill")) : esc(fmtMs(r.median))} · ${nf(r.killRate * 100)}%</span></li>`).join("");

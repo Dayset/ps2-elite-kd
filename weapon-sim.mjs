@@ -6,8 +6,9 @@
 //
 // Data per weapon comes from Census (assets/weapons/recoil.json): vertical / horizontal
 // recoil, first-shot multiplier, bloom per shot, cone of fire per stance, recovery.
-// NOT in Census (see ASSUMPTIONS): the aim-down-sights cone, the aim bloom, the target
-// size and how the cone is filled. Those are constants here, labelled on the page.
+// Aiming uses the weapon's own ADS fire mode (fire_mode_2.iron_sights = 1): its recoil,
+// bloom and cone per stance. NOT in Census: attachment numbers, the target size and how
+// the cone is filled. Those are constants here, labelled on the page.
 //
 // Units: angles in degrees, distances in metres, time in ms.
 import { hitDamage } from "./weapons-model.mjs";
@@ -16,14 +17,14 @@ export const STANCES = Object.freeze(["crouchStill", "standStill", "crouchMove",
 // Census player_state ids: 0 Standing, 1 Crouching, 2 Running, 5 CrouchWalking
 export const STATE_ID = Object.freeze({ standStill: 0, crouchStill: 1, standMove: 2, crouchMove: 5 });
 
-/** Aim-down-sights numbers are not in Census. These are the NSX Naginata's wiki values (Accuracy table), applied to every weapon until per-weapon values are known. */
+/** Fallback only, for a weapon whose Census data has no aim-down-sights fire mode: the NSX Naginata's wiki values. Normally the ADS cone comes from the ADS fire mode's own player_state_group. */
 export const ADS_DEFAULT = Object.freeze({ crouchStill: 0.15, standStill: 0.15, crouchMove: 0.35, standMove: 0.4, bloomRatio: 0.5 });
 
 /** Target: aim point = chest centre. Head circle + body rectangle, metres, y up. */
 export const TARGET = Object.freeze({ headX: 0, headY: 0.45, headR: 0.15, halfW: 0.3, top: 0.3, bottom: -1.2 });
 
 export const ASSUMPTIONS = Object.freeze([
-  "ads-cone", "ads-bloom", "target-size", "cone-uniform", "kick-after-shot", "horizontal-tolerance", "no-compensation",
+  "target-size", "cone-uniform", "kick-after-shot", "horizontal-tolerance", "no-compensation",
 ]);
 
 /**
@@ -51,18 +52,21 @@ export const BURSTS = Object.freeze([1, 2, 3, 4, 6, 8, 12, Infinity]);
  */
 export function simParams(profile, fm, states, opts = {}) {
   const stance = opts.stance || "crouchStill";
-  const aim = opts.aim === "hip" ? "hip" : "ads";
+  const hip = opts.aim === "hip";
+  // aiming uses the weapon's own ADS fire mode (fire_mode_2.iron_sights = 1) and its own cone per stance
+  const realAds = !hip && opts.adsStates && opts.adsStates.length ? true : false;
+  const rows = realAds ? opts.adsStates : states;
+  const f = (!hip && opts.adsFm) || fm || {};
   const ads = { ...ADS_DEFAULT, ...(opts.ads || {}) };
-  const row = (states || []).find((r) => r.player_state_id === STATE_ID[stance]) || (states || [])[0] || {};
-  const f = fm || {};
+  const row = (rows || []).find((r) => r.player_state_id === STATE_ID[stance]) || (rows || [])[0] || {};
   const A = (opts.attachments || []).map((n) => ATTACHMENTS[n]).filter(Boolean);
   const mul = (key) => A.reduce((m, a) => m * (a[key] ?? 1), 1);
-  const hip = aim === "hip";
-  let cofMin = hip ? (row.cof_min ?? 2) : ads[stance];
-  let cofMax = row.cof_max ?? Math.max(cofMin, 1);        // the aim maximum is not in Census: the hip maximum is used
+  let cofMin = hip || realAds ? (row.cof_min ?? 2) : ads[stance];
+  let cofMax = row.cof_max ?? Math.max(cofMin, 1);
   if (hip) { cofMin *= mul("hipCof"); cofMax *= mul("hipCof"); }
   if (cofMax < cofMin) cofMax = cofMin;
-  let bloom = (f.cof_recoil ?? 0.1) * (hip ? mul("hipBloom") : ads.bloomRatio * mul("adsBloom"));
+  const baseBloom = f.cof_recoil ?? (fm && fm.cof_recoil) ?? 0.1;
+  const bloom = baseBloom * (hip ? mul("hipBloom") : (opts.adsFm ? 1 : ads.bloomRatio) * mul("adsBloom"));
   const rec = (hip ? mul("hipRecoil") : 1);
   const vMul = mul("vRecoil") * (hip ? 1 : mul("adsVRecoil")) * rec;
   const hMul = mul("hRecoil") * rec;
@@ -70,7 +74,7 @@ export function simParams(profile, fm, states, opts = {}) {
     gapMs: f.fire_refire_ms || 60000 / profile.rpm,
     mag: profile.mag, reloadMs: profile.reloadMs, pellets: profile.pellets, profile,
     vMin: (f.recoil_magnitude_min ?? 0.3) * vMul, vMax: (f.recoil_magnitude_max ?? 0.3) * vMul,
-    first: Math.max(0, (f.recoil_first_shot_modifier ?? 1) * mul("firstShot") * (A.some((a) => a.firstShot) ? 1 : 1)),
+    first: Math.max(0, (f.recoil_first_shot_modifier ?? 1) * mul("firstShot")),
     angMin: (f.recoil_angle_min ?? 0) * hMul, angMax: (f.recoil_angle_max ?? 0) * hMul,
     hMin: (f.recoil_horizontal_min ?? 0) * hMul, hMax: (f.recoil_horizontal_max ?? 0) * hMul,
     hTol: (f.recoil_horizontal_tolerance ?? 0.4) * hMul,
@@ -78,6 +82,7 @@ export function simParams(profile, fm, states, opts = {}) {
     cofMin, cofMax, bloom,
     cofRecRate: Math.max(0.01, row.cof_recovery_rate ?? 20), cofRecDelay: row.cof_recovery_delay_ms ?? 0,
     pelletSpread: f.pellet_spread ?? f.cof_pellet_spread ?? 0,
+    realAds,
   };
 }
 

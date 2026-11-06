@@ -87,3 +87,17 @@ test("every weapon in recoil.json builds finite sim parameters", () => {
   }
   assert.ok(n > 200, "weapons checked: " + n);
 });
+
+test("aiming uses the weapon's own ADS fire mode and cone when Census has one", () => {
+  const adsFm = { ...FM, cof_recoil: 0.04, recoil_magnitude_min: 0.3, recoil_magnitude_max: 0.3 };
+  const adsStates = [{ player_state_id: 1, cof_min: 0.1, cof_max: 3, cof_recovery_rate: 20 }, { player_state_id: 0, cof_min: 0.2, cof_max: 3 }];
+  const P = simParams(AR, FM, STATES, { stance: "crouchStill", aim: "ads", adsFm, adsStates });
+  assert.equal(P.realAds, true);
+  assert.equal(P.cofMin, 0.1);
+  assert.equal(P.cofMax, 3);
+  assert.equal(P.bloom, 0.04);
+  assert.equal(P.vMin, 0.3);
+  const hip = simParams(AR, FM, STATES, { stance: "crouchStill", aim: "hip", adsFm, adsStates });
+  assert.equal(hip.cofMin, 2.25);
+  assert.equal(hip.bloom, 0.12);
+});

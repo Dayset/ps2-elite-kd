@@ -39,7 +39,13 @@ body { overflow: auto; }
 .wc-wstats { grid-column: 1 / -1; margin: 6px 0 0; padding: 0; list-style: none; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
 .wc-wstats li { display: flex; justify-content: space-between; gap: 8px; padding: 1px 0; }
 .wc-wstats .lab { color: var(--dim); }
-.wc-wstats .good { color: var(--ok, #8ef0b0); }
+.wc-wstats .v { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.wc-wstats li.grp { display: block; margin-top: 8px; padding-top: 4px; border-top: 1px solid var(--border); color: var(--text); font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.03em; }
+.wc-wstats li.good .v, .wc-key .good { color: #3ecf74; font-weight: 700; }
+.wc-wstats li.gold .v, .wc-key .gold { color: #e8b923; font-weight: 700; }
+:root[data-theme="light"] .wc-wstats li.good .v, :root[data-theme="light"] .wc-key .good { color: #1b8a45; }
+:root[data-theme="light"] .wc-wstats li.gold .v, :root[data-theme="light"] .wc-key .gold { color: #a87a00; }
+.wc-key { grid-column: 1 / -1; margin: 0; font-size: 0.82rem; color: var(--dim); display: flex; gap: 4px 12px; flex-wrap: wrap; }
 
 .wc-chart { width: 100%; }
 .wc-chart svg { display: block; width: 100%; height: auto; touch-action: pan-y; }
