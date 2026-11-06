@@ -50,4 +50,5 @@ jobs:
       - name: Commit report
         env:
           COMMIT_DIR: data/duel-glicko-eval.json
-        run: scripts/ci-commit-push.sh "chore(duels): glicko eval report (#112) [bot]"
+        run: |
+          scripts/ci-commit-push.sh "chore(duels): glicko eval report (#112) [bot]"
