@@ -236,6 +236,7 @@ function hitZone(x, y, r = 0) {
  * A magazine runs dry -> short reload. Gives up after 3 magazines.
  */
 export function simulate(P, { burst = Infinity, distance = 20, hp = 1000 }, r, keepShots = false) {
+  distance = Math.max(0.5, distance);   // point-blank still has a distance (also keeps 0 m from dividing by zero)
   const { body, head } = hitDamage(P.profile, distance);
   const tan = Math.tan;
   let t = 0, ox = 0, oy = 0, hx = 0, cof = P.cofMin, dealt = 0, inBurst = 0, magLeft = P.mag, fired = 0;
@@ -248,9 +249,9 @@ export function simulate(P, { burst = Infinity, distance = 20, hp = 1000 }, r, k
     let ax0 = 0, ay0 = 0;
     if (P.acc != null) {
       const ty = r() < (P.hsr || 0) ? TARGET.headY : 0;
-      // a wrong aim is an ANGLE error (1-3 degrees), so it matters at range and is nothing at point-blank
+      // the aim error is an ANGLE, up to (1 - accuracy) x 3 degrees, so it matters at range and is nothing at point-blank
       let ex = 0, ey = 0;
-      if (r() >= P.acc) { const a = r() * 2 * Math.PI, m = rnd(r, 1, 3); ex = m * Math.cos(a); ey = m * Math.sin(a); }
+      if (P.acc < 1) { const a = r() * 2 * Math.PI, m = (1 - P.acc) * 3 * Math.sqrt(r()); ex = m * Math.cos(a); ey = m * Math.sin(a); }
       ax0 = Math.atan(TARGET.headX / distance) / RAD + ex; ay0 = Math.atan(ty / distance) / RAD + ey;
     }
     for (let k = 0; k < P.pellets; k++) {
