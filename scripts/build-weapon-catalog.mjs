@@ -243,22 +243,34 @@ try {
     if (Object.keys(h).length) handling[id] = h;
   }
   if (Object.keys(weapons).length < 100 || !Object.keys(groups).length) throw new Error(`only ${Object.keys(weapons).length} weapons / ${Object.keys(groups).length} state groups`);
-  // attachments that change recoil / cone numbers (effects are manual, see weapon-sim.mjs ATTACHMENTS):
-  // only which of them each weapon can mount comes from Census (item_attachment -> item name).
-  const ATT_RE = /^(Compensator|Forward Grip|Angled Forward Grip|Comfort Grip|Heavy Barrel|Short Barrel|Mobile Prediction Laser)$/i;
+  // every attachment a weapon can mount (item_attachment -> item name + item category). Numeric
+  // effects are NOT in Census: weapon-sim.mjs ATTACHMENTS holds the hand-typed ones.
   const attRows = await pagedAll('item_attachment', (r) => profiles[r.item_id]);
   const attIds = [...new Set(attRows.map((r) => r.attachment_item_id))];
-  const attName = {};
+  const attName = {}, attCatId = {}, attDesc = {};
   for (let i = 0; i < attIds.length; i += 60) {
-    const j = await get(`${base}item?item_id=${attIds.slice(i, i + 60).join(',')}&c:show=item_id,name.en&c:limit=100`);
-    for (const it of (j && j.item_list) || []) if (it.name && ATT_RE.test(it.name.en || '')) attName[it.item_id] = it.name.en;
+    const j = await get(`${base}item?item_id=${attIds.slice(i, i + 60).join(',')}&c:show=item_id,name.en,item_category_id,item_type_id,description.en&c:limit=100`);
+    for (const it of (j && j.item_list) || []) {
+      attName[it.item_id] = (it.name && it.name.en) || '';
+      attCatId[it.item_id] = +it.item_category_id || 0;
+      if (it.description && it.description.en) attDesc[it.item_id] = it.description.en;
+    }
     await sleep(200);
   }
-  const att = {};
-  for (const r of attRows) if (attName[r.attachment_item_id]) (att[r.item_id] ||= []).push(+r.attachment_item_id);
+  const catIds = new Set(Object.values(attCatId));
+  const catName = {};
+  for (const r of await pagedAll('item_category', (r) => catIds.has(+r.item_category_id))) catName[r.item_category_id] = (r.name && r.name.en) || '';
+  const attCat = {};
+  for (const [id, c] of Object.entries(attCatId)) attCat[id] = catName[c] || String(c);
+  const att = {}, attDefault = {};
+  for (const r of attRows) {
+    if (!attName[r.attachment_item_id]) continue;
+    (att[r.item_id] ||= []).push(+r.attachment_item_id);
+    if (String(r.is_default) === '1') (attDefault[r.item_id] ||= []).push(+r.attachment_item_id);
+  }
   const states = {};
   for (const r of await pagedAll('player_state', () => true)) states[r.player_state_id] = (r.description && (r.description.en || r.description)) || '';
-  writeFileSync(join(OUT, "recoil.json"), JSON.stringify({ savedAt: new Date().toISOString(), weapons, fm2, groups, states, handling, attNames: attName, att }) + "\n");
+  writeFileSync(join(OUT, "recoil.json"), JSON.stringify({ savedAt: new Date().toISOString(), weapons, fm2, groups, states, handling, attNames: attName, attCat, attDesc, att, attDefault }) + "\n");
   console.log(`::notice::weapon recoil: ${Object.keys(weapons).length} weapons, ${Object.keys(fm2).length} fire modes, ${Object.keys(groups).length} state groups`);
 } catch (e) {
   console.log(`::warning::weapon recoil not updated: ${e.message}`);
