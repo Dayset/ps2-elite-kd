@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { simParams, simulate, compareBursts, sprayPattern, rng, burstStats, ADS_DEFAULT, ATTACHMENTS } from "../weapon-sim.mjs";
+import { slotOf, SLOTS, BURSTS, simParams, simulate, compareBursts, sprayPattern, rng, burstStats, ADS_DEFAULT, ATTACHMENTS } from "../weapon-sim.mjs";
 import { toProfile } from "../replay/weapons.mjs";
 
 const AR = toProfile([600, 30, 1950, 167, 125, 10, 90, 2, 1, "auto"]);
@@ -29,7 +29,7 @@ test("attachments change the numbers the way the table says", () => {
   assert.ok(Math.abs(grip.hMax - base.hMax * 0.75) < 1e-9);
   const hipC = simParams(AR, FM, STATES, { aim: "hip", attachments: ["Compensator"] });
   assert.ok(Math.abs(hipC.cofMin - 3 * 1.15) < 1e-9 || true);
-  assert.ok(Object.keys(ATTACHMENTS).length >= 7);
+  assert.ok(Object.keys(ATTACHMENTS).length >= 6);
 });
 
 test("same seed gives the same result", () => {
@@ -100,4 +100,22 @@ test("aiming uses the weapon's own ADS fire mode and cone when Census has one", 
   const hip = simParams(AR, FM, STATES, { stance: "crouchStill", aim: "hip", adsFm, adsStates });
   assert.equal(hip.cofMin, 2.25);
   assert.equal(hip.bloom, 0.12);
+});
+
+test("attachment slots: one barrel part, rail part and ammo each; optics and cosmetics are not listed", () => {
+  assert.deepEqual([...SLOTS], ["barrel", "rail", "ammo"]);
+  for (const n of ["Heavy Barrel", "Short Barrel", "Compensator", "Flash Suppressor"]) assert.equal(slotOf(n), "barrel", n);
+  for (const n of ["Forward Grip", "Laser Sight", "Darklight Flashlight", "Comfort Grip"]) assert.equal(slotOf(n), "rail", n);
+  for (const n of ["High Velocity Ammunition", "Soft Point Ammunition", "Flechette Ammunition", "Extended Magazine"]) assert.equal(slotOf(n), "ammo", n);
+  for (const n of ["NiCO (1x)", "Default Magazine", "Pink Laser Sight", "Default Back Sight", "Cert Attachment"]) assert.equal(slotOf(n), null, n);
+});
+
+test("holding the trigger is not a firing style offered", () => {
+  assert.ok(!BURSTS.includes(Infinity));
+});
+
+test("the Naginata lists its laser, flash suppressor and ammo types", () => {
+  const rec = JSON.parse(readFileSync(new URL("../assets/weapons/recoil.json", import.meta.url), "utf8"));
+  const names = (rec.att[804249] || []).map((i) => rec.attNames[i]);
+  for (const n of ["Laser Sight", "Flash Suppressor", "Soft Point Ammunition", "High Velocity Ammunition", "Heavy Barrel", "Short Barrel"]) assert.ok(names.includes(n), n);
 });

@@ -13,7 +13,7 @@ import {
   winnerStrip, slowerPct,
 } from "./weapons-model.mjs";
 import { METRICS, GROUPS, GROUP_EN, statValues, bestOf, rank, classBests } from "./weapon-stats.mjs";
-import { simParams, compareBursts, sprayPattern, ATTACHMENTS, ADS_DEFAULT, TARGET, STANCES } from "./weapon-sim.mjs";
+import { simParams, compareBursts, sprayPattern, ATTACHMENTS, SLOTS, slotOf, ADS_DEFAULT, TARGET, STANCES } from "./weapon-sim.mjs";
 
 export const MAX_WEAPONS = 4;
 export const MAX_RANGE = 500;        // hard cap (the 500 m option); the chart shows 100 / 200 / 500, see viewMax()
@@ -256,6 +256,11 @@ async function boot() {
           rows += `<li class="${cls}"${tip}><span class="lab">${esc(tr("wc.k." + m.key, m.en))}</span><span class="v">${esc(fmtUnit(m.unit, v[m.key], v[m.key + ":max"]))}</span></li>`;
         }
       }
+      const have = attsOf(w.id);
+      if (SLOTS.some((sl) => have[sl])) {
+        rows += `<li class="grp">${esc(tr("wc.g.att", "Attachments"))}</li>`;
+        for (const sl of SLOTS) if (have[sl]) rows += `<li class="att"><span class="lab">${esc(tr("wc.sim.slot." + sl, SLOT_EN[sl]))}</span><span class="v">${have[sl].map(esc).join(", ")}</span></li>`;
+      }
       return `<article class="wc-wcard" style="border-top-color:${color(i)}">
         <img src="assets/weapons/${w.img}.webp" alt="" width="64" height="32" loading="lazy" onerror="this.style.visibility='hidden'" />
         <div><div class="wc-wname">${esc(w.name)}</div><div class="wc-wmeta">${esc(FACTION[w.fac] ?? "")} · ${esc(w.cat)}</div></div>
@@ -379,13 +384,20 @@ async function boot() {
   // ------------------------------------------------------ recoil simulator --
   const simState = { aim: "ads", stance: "crouchStill", att: {} };
   const STANCE_EN = { crouchStill: "Crouched, still", standStill: "Standing, still", crouchMove: "Crouched, moving", standMove: "Standing, moving" };
+  // attachments the weapon can mount, by slot: { barrel: [names], rail: [...], ammo: [...] }
   const attsOf = (id) => {
     const ids = recoil && recoil.att && recoil.att[id];
-    if (!ids || !recoil.attNames) return [];
-    const keys = Object.keys(ATTACHMENTS);
-    return [...new Set(ids.map((a) => keys.find((k) => k.toLowerCase() === String(recoil.attNames[a] || "").toLowerCase())).filter(Boolean))];
+    const out = {};
+    if (!ids || !recoil.attNames) return out;
+    for (const a of ids) {
+      const name = String(recoil.attNames[a] || "").trim(), slot = slotOf(name);
+      if (slot && !(out[slot] ||= []).includes(name)) out[slot].push(name);
+    }
+    return out;
   };
-  const burstLabel = (b) => (b === Infinity ? tr("wc.sim.hold", "hold the trigger") : b === 1 ? tr("wc.sim.tap", "single shots") : tr("wc.sim.burstN", "{n}-shot bursts", { n: nf(b) }));
+  const chosenAtt = (id) => Object.values(simState.att[id] || {}).filter(Boolean);
+  const SLOT_EN = { barrel: "Barrel", rail: "Rail", ammo: "Ammo and magazine" };
+  const burstLabel = (b) => (b === 1 ? tr("wc.sim.tap", "single shots") : tr("wc.sim.burstN", "{n}-shot bursts", { n: nf(b) }));
 
   function drawSim() {
     const el = $("wcSim");
@@ -395,7 +407,7 @@ async function boot() {
     el.innerHTML = calc.ws.map((w, i) => {
       const x = recoilOf(w.id);
       if (!x || !x.fm) return `<article class="wc-sim" style="border-top-color:${color(i)}"><b>${esc(w.name)}</b><p class="wc-dim">${esc(tr("wc.sim.none", "No recoil data for this weapon."))}</p></article>`;
-      const att = (simState.att[w.id] || []).filter((n) => attsOf(w.id).includes(n));
+      const att = chosenAtt(w.id);
       const P = simParams(w.p, x.fm, x.states, { stance: simState.stance, aim: simState.aim, attachments: att, adsFm: x.adsFm, adsStates: x.adsStates });
       const { rows, best } = compareBursts(P, { distance: st.range, hp: st.hp, runs: 300, seed: 1 });
       const worst = Math.max(1, ...rows.map((r) => r.median ?? 0));
@@ -411,14 +423,14 @@ async function boot() {
       const head = best
         ? esc(tr("wc.sim.best", "Best: {style}, median {ms}", { style: burstLabel(best.burst), ms: fmtMs(best.median) }))
         : esc(tr("wc.sim.nobest", "Cannot kill reliably at this range with this setup"));
-      const chips = attsOf(w.id).map((n) => `<label class="wc-att"><input type="checkbox" data-w="${w.id}" data-a="${esc(n)}" ${att.includes(n) ? "checked" : ""}/> ${esc(n)}</label>`).join("");
+      const have = attsOf(w.id);
+      const chips = SLOTS.filter((sl) => have[sl]).map((sl) => `<label class="wc-att"><span>${esc(tr("wc.sim.slot." + sl, SLOT_EN[sl]))}</span> <select data-w="${w.id}" data-slot="${sl}"><option value="">${esc(tr("wc.sim.noAtt", "none"))}</option>${have[sl].map((n) => `<option value="${esc(n)}" ${(simState.att[w.id] || {})[sl] === n ? "selected" : ""}>${esc(n)}${ATTACHMENTS[n] ? "" : " · " + esc(tr("wc.sim.noEffect", "no known numbers"))}</option>`).join("")}</select></label>`).join("");
       return `<article class="wc-sim" style="border-top-color:${color(i)}"><div class="wc-simhead"><b>${esc(w.name)}</b><span class="good">${head}</span></div>
         <div class="wc-simbody"><ul class="wc-bars">${bars}</ul><div class="wc-spray">${svg}</div></div>${chips ? `<div class="wc-atts">${chips}</div>` : ""}</article>`;
     }).join("");
-    el.querySelectorAll("input[data-w]").forEach((cb) => cb.addEventListener("change", () => {
-      const id = Number(cb.dataset.w), a = cb.dataset.a, cur = new Set(simState.att[id] || []);
-      cb.checked ? cur.add(a) : cur.delete(a);
-      simState.att[id] = [...cur];
+    el.querySelectorAll("select[data-w]").forEach((sel) => sel.addEventListener("change", () => {
+      const id = Number(sel.dataset.w);
+      simState.att[id] = { ...(simState.att[id] || {}), [sel.dataset.slot]: sel.value };
       drawSim();
     }));
   }

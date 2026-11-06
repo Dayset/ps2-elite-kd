@@ -28,10 +28,30 @@ export const ASSUMPTIONS = Object.freeze([
 ]);
 
 /**
- * Manual attachment modifiers (Census has no numbers). Sources: Izubrr/planetside_weapon_compare
- * (Forward Grip, Compensator) and the Arsenal Update patch notes, 30 Mar 2022 (the rest).
- * vRecoil / hRecoil / firstShot multiply the recoil numbers, hipCof multiplies the hip cone,
- * hipBloom / adsBloom multiply bloom per shot, hipRecoil multiplies all hip recoil, adsVRecoil only when aiming.
+ * Attachment slots. Census says which attachments a weapon can mount but not their slot, so the
+ * slot comes from the name. Only one attachment per slot can be fitted: barrel (compensator,
+ * suppressors, heavy / short barrel), rail (grips, laser, flashlight, launchers) and ammo (ammunition
+ * types and magazines). Optics, default parts, cosmetic laser colours and cert items are not listed.
+ */
+export const SLOTS = Object.freeze(["barrel", "rail", "ammo"]);
+const SLOT_RE = {
+  barrel: /^(Compensator|Flash Suppressor|Suppressor|Muzzle Brake|Heavy Barrel|Short Barrel|Smart-Choke|Hybrid Suppressor|Burst Stabilizer|Recoil Stabilizer|Confetti Suppressor)$/i,
+  rail: /^(Forward Grip|Angled Forward Grip|Comfort Grip|Laser Sight|Hybrid Laser|Darklight Flashlight|Zip Light|Grenade Launcher|Underbarrel Shotgun|Smoke Launcher|Cure Launcher|Adaptive Class Underbarrel)$/i,
+  ammo: /(Ammunition|^Extended Magazine|^Heavy Magazine|^Smart Feeder)$/i,
+};
+export function slotOf(name) {
+  for (const s of SLOTS) if (SLOT_RE[s].test(String(name || "").trim())) return s;
+  return null;
+}
+
+/**
+ * Manual attachment modifiers. Census has NO numbers for attachments, so only effects with a
+ * published number are here (Izubrr/planetside_weapon_compare README: Forward Grip, Compensator;
+ * Arsenal Update patch notes, planetside2.com: the rest). Every other attachment can be fitted but
+ * changes nothing, and the page says so.
+ * vRecoil / hRecoil / firstShot multiply the recoil numbers, hipCof the hip cone, hipBloom / adsBloom
+ * the bloom per shot, adsVRecoil the vertical recoil while aiming only.
+ * Comfort Grip: only its penalty (+20 % vertical recoil) is published.
  */
 export const ATTACHMENTS = Object.freeze({
   "Compensator": { vRecoil: 0.7, hipCof: 1.15 },
@@ -40,11 +60,10 @@ export const ATTACHMENTS = Object.freeze({
   "Comfort Grip": { vRecoil: 1.2 },
   "Heavy Barrel": { adsBloom: 0.8 },
   "Short Barrel": { hipBloom: 0.6, adsVRecoil: 1.2 },
-  "Mobile Prediction Laser": { hipRecoil: 0.4 },
 });
 
-/** Strategies: shots per burst (Infinity = hold the trigger). */
-export const BURSTS = Object.freeze([1, 2, 3, 4, 6, 8, 12, Infinity]);
+/** Strategies: shots per burst (holding the trigger down is not offered: it is never the practical choice). */
+export const BURSTS = Object.freeze([1, 2, 3, 4, 6, 8, 12]);
 
 /**
  * Everything the simulation needs, from the Census record, the stance rows and the chosen options.
@@ -173,7 +192,7 @@ export function burstStats(P, { burst, distance, hp, runs = 600, seed = 1 }) {
 
 /** All strategies; `best` = lowest median among those that kill at least half the time. */
 export function compareBursts(P, { distance = 20, hp = 1000, runs = 600, seed = 1, bursts = BURSTS } = {}) {
-  const rows = bursts.filter((b) => b <= P.mag || b === Infinity).map((burst) => burstStats(P, { burst, distance, hp, runs, seed }));
+  const rows = bursts.filter((b) => b <= P.mag).map((burst) => burstStats(P, { burst, distance, hp, runs, seed }));
   let best = null;
   for (const s of rows) if (s.median != null && s.killRate >= 0.5 && (!best || s.median < best.median)) best = s;
   return { rows, best };

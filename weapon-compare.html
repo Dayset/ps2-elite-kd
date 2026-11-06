@@ -18,7 +18,7 @@
     } catch (e) {}
   </script>
   <link rel="stylesheet" href="styles.css?v=20261031-fr1" />
-  <link rel="stylesheet" href="weapon-compare.css?v=20261106-wc3" />
+  <link rel="stylesheet" href="weapon-compare.css?v=20261106-wc5" />
 </head>
 <body class="site-page">
   <main class="wc-wrap">
@@ -53,16 +53,17 @@
       </div>
       <div id="wcChips" class="wc-chips" role="list"></div>
       <div id="wcMsg" class="wc-msg" role="status" aria-live="polite"></div>
-      <div class="wc-sliders">
-        <label class="wc-slider"><span><span data-i18n="wc.acc">Accuracy</span> <b id="wcAccV">20%</b></span>
-          <input id="wcAcc" type="range" min="10" max="100" step="1" value="20" data-i18n-title="wc.accTip" title="Share of shots (pellets) that hit the target." /></label>
-        <label class="wc-slider"><span><span data-i18n="wc.hsr">Headshot rate</span> <b id="wcHsrV">20%</b></span>
-          <input id="wcHsr" type="range" min="0" max="100" step="1" value="20" data-i18n-title="wc.hsrTip" title="Share of hits that are headshots." /></label>
-        <label class="wc-slider"><span><span data-i18n="wc.range">Range for the time curve</span> <b id="wcRangeV">20 m</b></span>
-          <input id="wcRange" type="range" min="0" max="100" step="1" value="20" /></label>
-        <label class="wc-slider"><span><span data-i18n="wc.hp">Target health</span></span>
-          <select id="wcHp" data-i18n-title="wc.hpTip" title="Total health to take down. 500 for a plain soldier, 1000 for one with extra shield or armor."></select></label>
-      </div>
+    </section>
+
+    <section class="wc-card wc-sliders wc-sticky" aria-label="Accuracy, headshot rate, range and health" data-i18n-aria-label="wc.ctlAria">
+      <label class="wc-slider"><span><span data-i18n="wc.acc">Accuracy</span> <b id="wcAccV">20%</b></span>
+        <input id="wcAcc" type="range" min="10" max="100" step="1" value="20" data-i18n-title="wc.accTip" title="Share of shots (pellets) that hit the target." /></label>
+      <label class="wc-slider"><span><span data-i18n="wc.hsr">Headshot rate</span> <b id="wcHsrV">20%</b></span>
+        <input id="wcHsr" type="range" min="0" max="100" step="1" value="20" data-i18n-title="wc.hsrTip" title="Share of hits that are headshots." /></label>
+      <label class="wc-slider"><span><span data-i18n="wc.range">Range for the time curve</span> <b id="wcRangeV">20 m</b></span>
+        <input id="wcRange" type="range" min="0" max="100" step="1" value="20" /></label>
+      <label class="wc-slider"><span><span data-i18n="wc.hp">Target health</span></span>
+        <select id="wcHp" data-i18n-title="wc.hpTip" title="Total health to take down. 500 for a plain soldier, 1000 for one with extra shield or armor."></select></label>
     </section>
 
     <div id="wcStatus" class="wc-msg" role="status" data-i18n="wc.loading">Loading weapon data…</div>
@@ -95,7 +96,7 @@
         <label><span data-i18n="wc.sim.stance">Stance</span> <select id="wcSimStance"></select></label>
       </div>
       <div id="wcSim" class="wc-simlist"></div>
-      <p class="wc-dim" data-i18n="wc.sim.assume">Aiming uses each weapon's own aim-down-sights fire mode from Census: its cone per stance, bloom and recoil. Assumptions: attachment effects are typed in by hand from the Izubrr repo and the March 2022 patch notes and may be out of date. The target is a head circle and a body box; the shot cone is filled evenly.</p>
+      <p class="wc-dim" data-i18n="wc.sim.assume">Aiming uses each weapon's own aim-down-sights fire mode from Census: its cone per stance, bloom and recoil. Only one attachment per slot can be fitted. Census has no attachment numbers: the effects used (Compensator, Forward Grip, Angled Forward Grip, Comfort Grip penalty, Heavy Barrel, Short Barrel) are typed in by hand from the Izubrr repo and the Arsenal Update patch notes; any other attachment can be fitted but changes nothing here. The target is a head circle and a body box; the shot cone is filled evenly.</p>
     </section>
 
     <details class="wc-card wc-how">
@@ -112,6 +113,6 @@
   <footer class="wc-foot">
     <label class="wc-check"><input id="wcFar" type="checkbox" /> <span data-i18n="wc.far">Extend the range to 500 m (for snipers)</span></label>
   </footer>
-  <script type="module" src="weapon-compare.mjs?v=20261106-wc3"></script>
+  <script type="module" src="weapon-compare.mjs?v=20261106-wc5"></script>
 </body>
 </html>

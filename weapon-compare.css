@@ -1,5 +1,5 @@
 /* weapon-compare.html: weapon comparison page. Flat style (no rounded corners), theme tokens only. */
-body { overflow: auto; }
+html, body { overflow: visible; overflow-x: clip; } /* hidden would make body the scroll box and break the sticky slider bar */
 .wc-wrap { max-width: none; margin: 0 auto; padding: 0; }
 .wc-head, .wc-card { background: var(--panel); border: 1px solid var(--border); border-radius: 0; padding: 12px 14px; margin-bottom: 12px; }
 .wc-head { position: relative; padding-left: 4.75rem; }
@@ -26,6 +26,7 @@ body { overflow: auto; }
 .wc-chip { padding: 8px 12px; min-height: 2.5rem; }
 .wc-chip:hover { border-color: var(--accent); border-left-width: 5px; text-decoration: line-through; text-decoration-color: var(--dim); }
 
+.wc-sticky { position: sticky; top: 0; z-index: 20; margin-top: 0; box-shadow: 0 6px 10px -8px #000; }
 .wc-sliders { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 10px 16px; margin-top: 10px; }
 .wc-slider { display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; color: var(--dim); }
 .wc-slider b { color: var(--text); font-variant-numeric: tabular-nums; }
@@ -72,7 +73,11 @@ body { overflow: auto; }
 .wc-bar { display: block; height: 10px; background: var(--border); }
 .wc-bar i { display: block; height: 100%; }
 .wc-spray svg { width: 160px; height: 180px; display: block; }
-.wc-atts { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 6px; font-size: 0.82rem; }
+.wc-atts { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 8px; font-size: 0.82rem; }
+.wc-att { display: inline-flex; align-items: center; gap: 6px; }
+.wc-att select { max-width: 17rem; }
+.wc-wstats li.att { align-items: flex-start; }
+.wc-wstats li.att .v { white-space: normal; max-width: 70%; font-size: 0.8rem; color: var(--dim); }
 .wc-sim .good { color: var(--ok, #8ef0b0); font-size: 0.88rem; }
 
 .wc-how summary { cursor: pointer; font-weight: 600; }
