@@ -164,3 +164,10 @@ tbody.open .wc-caret::before { content: "▾"; }
   .wc-bar { gap: 6px 12px; }
   .wc-dpsrow, .wc-bars li { grid-template-columns: 6rem 1fr 6.5rem; }
 }
+
+/* zoom: the spray drawn large in a dialog, and the button under each spray */
+.wc-zoombtn { margin-top: 8px; }
+.wc-zoomdlg { width: min(92vw, 640px); max-width: 92vw; padding: 14px; background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 0; }
+.wc-zoomdlg::backdrop { background: rgba(0, 0, 0, 0.55); }
+.wc-zoomhead { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.wc-zoomdlg .wc-spray svg { width: min(80vw, 560px); max-width: 100%; }

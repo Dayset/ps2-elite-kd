@@ -20,7 +20,7 @@
   <link rel="preload" href="assets/weapons/catalog.json" as="fetch" crossorigin />
   <link rel="preload" href="assets/weapons/profiles.json" as="fetch" crossorigin />
   <link rel="stylesheet" href="styles.css?v=20261031-fr1" />
-  <link rel="stylesheet" href="weapon-compare.css?v=20261106-wcr1" />
+  <link rel="stylesheet" href="weapon-compare.css?v=20261106-wcr2" />
 </head>
 <body class="site-page">
   <main class="wc-wrap">
@@ -128,6 +128,10 @@
       <p class="wc-dim" data-i18n-html="wc.credit">Inspired by <a href="https://github.com/Izubrr/planetside_weapon_compare" target="_blank" rel="noopener noreferrer">Izubrr/planetside_weapon_compare</a> and <a href="https://github.com/B4rrCH/Ps2TtkCalculator" target="_blank" rel="noopener noreferrer">B4rrCH/Ps2TtkCalculator</a> (MIT). No code was copied. Weapon data and images: Daybreak Game Company, via the Census API.</p>
     </details>
   </main>
-  <script type="module" src="weapon-compare.mjs?v=20261106-wcr1"></script>
+  <dialog id="wcZoom" class="wc-zoomdlg" aria-labelledby="wcZoomH">
+    <div class="wc-zoomhead"><b id="wcZoomH"></b><button type="button" class="wc-btn" id="wcZoomClose" data-i18n="wc.sim.zoomClose">Close</button></div>
+    <div id="wcZoomBody"></div>
+  </dialog>
+  <script type="module" src="weapon-compare.mjs?v=20261106-wcr2"></script>
 </body>
 </html>

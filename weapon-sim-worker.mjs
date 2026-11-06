@@ -6,7 +6,7 @@
 // Messages out: { gen, key, kind, result }   weapon -> compareBursts() result, class -> best median (ms) or null
 //
 // A newer `gen` makes every older job stale: stale jobs are dropped, and a long class job stops between slices.
-import { compareBursts } from "./weapon-sim.mjs?v=20261106-wcr1";
+import { compareBursts } from "./weapon-sim.mjs?v=20261106-wcr2";
 
 let latest = 0;
 const queue = [];

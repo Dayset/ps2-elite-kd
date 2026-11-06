@@ -11,7 +11,7 @@
 // the cone is filled. Those are constants here, labelled on the page.
 //
 // Units: angles in degrees, distances in metres, time in ms.
-import { hitDamage } from "./weapons-model.mjs?v=20261106-wcr1";
+import { hitDamage } from "./weapons-model.mjs?v=20261106-wcr2";
 
 export const STANCES = Object.freeze(["crouchStill", "standStill", "crouchMove", "standMove"]);
 // Census player_state ids: 0 Standing, 1 Crouching, 2 Running, 5 CrouchWalking

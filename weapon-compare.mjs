@@ -15,9 +15,9 @@ import { paletteColor } from "./palette.mjs";
 import { toProfile } from "./replay/weapons.mjs";
 import {
   HP_PRESETS, ttkDistribution, quantileMs, dps, rangeAxis, ttkCurve, winnerStrip, slowerPct, withCadence,
-} from "./weapons-model.mjs?v=20261106-wcr1";
-import { METRICS, GROUPS, GROUP_EN, statValues, bestOf, rank, classBests } from "./weapon-stats.mjs?v=20261106-wcr1";
-import { simParams, compareBursts, sprayPattern, attEffects, SLOTS, slotOf, canon, TARGET, STANCES } from "./weapon-sim.mjs?v=20261106-wcr1";
+} from "./weapons-model.mjs?v=20261106-wcr2";
+import { METRICS, GROUPS, GROUP_EN, statValues, bestOf, rank, classBests } from "./weapon-stats.mjs?v=20261106-wcr2";
+import { simParams, compareBursts, sprayPattern, attEffects, SLOTS, slotOf, canon, TARGET, STANCES } from "./weapon-sim.mjs?v=20261106-wcr2";
 
 export const MAX_WEAPONS = 4;
 export const MAX_RANGE = 500;        // hard cap (the 500 m option); the chart shows 100 / 200 / 500, see viewMax()
@@ -505,7 +505,7 @@ async function boot() {
   const lastShown = new Map();     // weapon id -> last result drawn (kept on screen, dimmed, while a new one is computed)
   let gen = 0, worker = null;
   try {
-    worker = new Worker(new URL("weapon-sim-worker.mjs?v=20261106-wcr1", import.meta.url), { type: "module" });
+    worker = new Worker(new URL("weapon-sim-worker.mjs?v=20261106-wcr2", import.meta.url), { type: "module" });
     worker.onmessage = (e) => {
       const { key, kind, result } = e.data || {};
       (kind === "class" ? classSim : simCache).set(key, result);
@@ -567,6 +567,7 @@ async function boot() {
     // one scale for every spray picture, so the patterns can be compared by eye
     const sprays = calc.ws.map((w, i) => { const P = !res[i].none && paramsOf(w, chosenAtt(w.id)); return P ? sprayData(w, P) : null; });
     const S = Math.max(TARGET.halfW * 1.4, ...sprays.filter(Boolean).map((d) => d.reach)) * 1.1;
+    lastSprays = { sprays, S, names: calc.ws.map((w) => w.name) };
     el.innerHTML = calc.ws.map((w, i) => {
       const x = res[i];
       if (x.none) return `<article class="wc-sim" style="--c:${color(i)}"><div class="wc-simhead"><b>${esc(w.name)}</b></div><p class="wc-dim">${esc(tr("wc.sim.none", "No recoil data for this weapon."))}</p></article>`;
@@ -583,6 +584,21 @@ async function boot() {
     }).join("");
   }
   let pending = new Set();
+  let lastSprays = null;
+
+  // zoom: the same spray, drawn large in a dialog (Esc or Close to leave)
+  const zoomDlg = $("wcZoom");
+  $("wcSim").addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-zoom]");
+    if (!b || !lastSprays) return;
+    const i = Number(b.dataset.zoom), d = lastSprays.sprays[i];
+    if (!d) return;
+    $("wcZoomH").textContent = lastSprays.names[i] || "";
+    $("wcZoomBody").innerHTML = sprayFigure(d, lastSprays.S, i, 560);
+    try { zoomDlg.showModal(); } catch (err) { zoomDlg.setAttribute("open", ""); }
+  });
+  $("wcZoomClose").addEventListener("click", () => zoomDlg.close ? zoomDlg.close() : zoomDlg.removeAttribute("open"));
+  zoomDlg.addEventListener("click", (e) => { if (e.target === zoomDlg) zoomDlg.close ? zoomDlg.close() : zoomDlg.removeAttribute("open"); });
 
   // the spray picture: one full spray drawn bright (later shots fainter) and GHOST_SPRAYS more, each with new random numbers
   function sprayData(w, P) {
@@ -595,16 +611,18 @@ async function boot() {
     const reach = Math.max(0, ...[...main, ...ghosts].map((s) => Math.max(Math.abs(s.x), Math.abs(s.y - cy0))));
     return { n, main, ghosts, cy0, reach };
   }
-  function sprayFigure(d, S, i) {
+  function sprayFigure(d, S, i, Z = 240) {
     if (!d) return "";
-    const Z = 240, U = (Z / 2) / S, cx = Z / 2, cy = Z / 2 + d.cy0 * U;
+    const U = (Z / 2) / S, cx = Z / 2, cy = Z / 2 + d.cy0 * U;
     let svg = svgOpen(Z, Z, tr("wc.sim.aria", "Where a full-magazine spray lands on the target"));
     svg += `<rect class="wc-tgt" x="${cx - TARGET.halfW * U}" y="${cy - TARGET.top * U}" width="${2 * TARGET.halfW * U}" height="${(TARGET.top - TARGET.bottom) * U}"/>`;
     svg += `<circle class="wc-tgt" cx="${cx + TARGET.headX * U}" cy="${cy - TARGET.headY * U}" r="${TARGET.headR * U}"/>`;
     svg += d.ghosts.map((s) => `<circle cx="${(cx + s.x * U).toFixed(1)}" cy="${(cy - s.y * U).toFixed(1)}" r="1.3" fill="${color(i)}" fill-opacity="0.22"/>`).join("");
     svg += d.main.map((s) => `<circle cx="${(cx + s.x * U).toFixed(1)}" cy="${(cy - s.y * U).toFixed(1)}" r="2.4" fill="${color(i)}" fill-opacity="${(0.4 + 0.6 * (1 - s.i / d.n)).toFixed(2)}"/>`).join("");
     svg += "</svg>";
-    return `<figure class="wc-spray">${svg}<figcaption class="wc-dim">${esc(tr("wc.sim.scale", "Weapon spray only, {m} m wide at {d} m", { m: nf(2 * S, 1), d: nf(st.range) }))} · ${esc(tr("wc.sim.ghostKey", "faint dots: {n} more sprays", { n: nf(GHOST_SPRAYS) }))}</figcaption></figure>`;
+    const cap = `${esc(tr("wc.sim.scale", "Weapon spray only, {m} m wide at {d} m", { m: nf(2 * S, 1), d: nf(st.range) }))} · ${esc(tr("wc.sim.ghostKey", "faint dots: {n} more sprays", { n: nf(GHOST_SPRAYS) }))}`;
+    if (Z !== 240) return `<figure class="wc-spray">${svg}<figcaption class="wc-dim">${cap}</figcaption></figure>`;
+    return `<figure class="wc-spray">${svg}<figcaption class="wc-dim">${cap}</figcaption></figure><button type="button" class="wc-btn wc-zoombtn" data-zoom="${i}"><span aria-hidden="true">🔍</span> <span>${esc(tr("wc.sim.zoom", "Zoom"))}</span></button>`;
   }
 
   $("wcSim").addEventListener("change", (e) => {
