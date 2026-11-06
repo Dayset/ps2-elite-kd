@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" href="data:," />
+  <title data-i18n="wc.title">⚖️ Weapon comparison</title>
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="styles.css?v=20261031-fr1" />
+  <link rel="stylesheet" href="weapon-compare.css?v=20261106-wc1" />
+</head>
+<body class="site-page">
+  <main class="wc-wrap">
+    <div class="wc-head">
+      <a class="wc-back" href="index.html" aria-label="Back to the stats" data-i18n-aria-label="wc.back">🔙</a>
+      <select id="langSelect" class="lang-select" title="Language" aria-label="Language" data-i18n-title="lang.label" data-i18n-aria-label="lang.label">
+        <option value="en" selected>🇬🇧 English</option>
+        <option value="ja">🇯🇵 日本語</option>
+        <option value="ru">🇷🇺 Русский</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="zh">🇨🇳 中文</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="uk">🇺🇦 Українська</option>
+        <option value="it">🇮🇹 Italiano</option>
+      </select>
+      <h1 data-i18n="wc.title">⚖️ Weapon comparison</h1>
+      <div class="wc-sub" data-i18n="wc.sub">Pick up to four weapons and see how fast each one kills, as graphs. Numbers come from the game's own data (Census).</div>
+    </div>
+
+    <section class="wc-card wc-pick" aria-label="Choose weapons" data-i18n-aria-label="wc.pickAria">
+      <div class="wc-pick-row">
+        <label class="wc-field">
+          <span data-i18n="wc.catLabel">Weapon type</span>
+          <select id="wcCat"></select>
+        </label>
+        <label class="wc-field wc-grow">
+          <span data-i18n="wc.add">Add a weapon</span>
+          <input id="wcSearch" type="text" list="wcList" autocomplete="off" spellcheck="false" placeholder="Type a weapon name…" data-i18n-placeholder="wc.search" />
+          <datalist id="wcList"></datalist>
+        </label>
+      </div>
+      <div id="wcChips" class="wc-chips" role="list"></div>
+      <div id="wcMsg" class="wc-msg" role="status" aria-live="polite"></div>
+      <div class="wc-sliders">
+        <label class="wc-slider"><span><span data-i18n="wc.acc">Accuracy</span> <b id="wcAccV">100%</b></span>
+          <input id="wcAcc" type="range" min="10" max="100" step="1" value="100" data-i18n-title="wc.accTip" title="Share of shots (pellets) that hit the target." /></label>
+        <label class="wc-slider"><span><span data-i18n="wc.hsr">Headshot rate</span> <b id="wcHsrV">0%</b></span>
+          <input id="wcHsr" type="range" min="0" max="100" step="1" value="0" data-i18n-title="wc.hsrTip" title="Share of hits that are headshots." /></label>
+        <label class="wc-slider"><span><span data-i18n="wc.range">Range for the time curve</span> <b id="wcRangeV">20 m</b></span>
+          <input id="wcRange" type="range" min="0" max="100" step="1" value="20" /></label>
+        <label class="wc-slider"><span><span data-i18n="wc.hp">Target health</span></span>
+          <select id="wcHp" data-i18n-title="wc.hpTip" title="Total health to take down. 500 for a plain soldier, 1000 for one with extra shield or armor."></select></label>
+      </div>
+    </section>
+
+    <div id="wcStatus" class="wc-msg" role="status" data-i18n="wc.loading">Loading weapon data…</div>
+    <section id="wcCards" class="wc-cards" aria-live="polite"></section>
+
+    <section class="wc-card">
+      <h2 data-i18n="wc.h.ttk">Time to kill by range</h2>
+      <p class="wc-note" data-i18n="wc.ttkNote">Lower is better. The middle (median) kill time at your accuracy and headshot rate. Steps appear because one more shot is needed.</p>
+      <div id="wcTtk" class="wc-chart"></div>
+      <div id="wcReadout" class="wc-readout" aria-live="off"></div>
+    </section>
+
+    <section class="wc-card">
+      <h2 data-i18n="wc.h.cdf">Chance of having killed by a given time</h2>
+      <p class="wc-note" id="wcCdfNote"></p>
+      <div id="wcCdf" class="wc-chart"></div>
+    </section>
+
+    <section class="wc-card">
+      <h2 data-i18n="wc.h.dps">Damage per second</h2>
+      <p class="wc-note" id="wcDpsNote"></p>
+      <div id="wcDps" class="wc-chart"></div>
+    </section>
+
+    <details class="wc-card wc-how">
+      <summary data-i18n="wc.how.h">How this is calculated</summary>
+      <ul>
+        <li data-i18n="wc.how.1">Damage falls off in a straight line between each weapon's near range and far range.</li>
+        <li data-i18n="wc.how.2">Time to kill counts from the first shot. A reload is added after every full magazine.</li>
+        <li data-i18n="wc.how.3">Accuracy and headshots are worked out exactly (every possible outcome), not by random trials.</li>
+        <li data-i18n="wc.how.4">Not included: recoil, bloom, armor, attachments, first-shot delay and burst pauses, because Census does not provide them.</li>
+      </ul>
+      <p class="wc-dim" data-i18n-html="wc.credit">Inspired by <a href="https://github.com/Izubrr/planetside_weapon_compare" target="_blank" rel="noopener noreferrer">Izubrr/planetside_weapon_compare</a> and <a href="https://github.com/B4rrCH/Ps2TtkCalculator" target="_blank" rel="noopener noreferrer">B4rrCH/Ps2TtkCalculator</a> (MIT). No code was copied. Weapon data and images: Daybreak Game Company, via the Census API.</p>
+    </details>
+  </main>
+  <script type="module" src="weapon-compare.mjs?v=20261106-wc1"></script>
+</body>
+</html>

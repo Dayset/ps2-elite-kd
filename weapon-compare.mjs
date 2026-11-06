@@ -1,0 +1,316 @@
+/**
+ * weapon-compare.html: weapon comparison as graphs. Data: assets/weapons/catalog.json
+ * (names, categories, factions, images) + profiles.json (fire profiles built from
+ * Census by scripts/build-weapon-catalog.mjs). All maths is in weapons-model.mjs;
+ * this file only reads the controls and draws plain SVG (no chart library, no
+ * third-party code). Every visible text goes through tr().
+ */
+import { t as tr, currentLang, ready } from "./i18n.mjs";
+import { paletteColor } from "./palette.mjs";
+import { toProfile } from "./replay/weapons.mjs";
+import {
+  HP_PRESETS, hitDamage, ttkDistribution, quantileMs, idealTtk, dps, rangeAxis, ttkCurve,
+  winnerStrip, slowerPct,
+} from "./weapons-model.mjs";
+
+export const MAX_WEAPONS = 4;
+export const MAX_RANGE = 100;
+const DEFAULT_IDS = [4, 14, 20];          // NC1 Gauss Rifle, T1 Cycler, Pulsar VS1
+const FACTION = { 0: "NS", 1: "VS", 2: "NC", 3: "TR" };
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const nf = (v, d = 0) => Number(v).toLocaleString(currentLang(), { maximumFractionDigits: d, minimumFractionDigits: d });
+const fmtMs = (v) => (v == null ? tr("wc.never", "no kill") : tr("wc.ms", "{ms} ms", { ms: nf(v) }));
+const fmtM = (v) => tr("wc.m", "{m} m", { m: nf(v) });
+
+/** Parse ?w=4,14&acc=60&hsr=10&hp=500&r=20 (pure, tested). */
+export function parseState(search, known = () => true) {
+  const q = new URLSearchParams(search);
+  const num = (k, lo, hi, d) => { const v = Number(q.get(k)); return q.has(k) && Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d; };
+  const ids = (q.get("w") || "").split(",").map(Number).filter((n) => Number.isInteger(n) && known(n));
+  const hp = num("hp", 100, 3000, 500);
+  return {
+    ids: [...new Set(ids)].slice(0, MAX_WEAPONS),
+    acc: Math.round(num("acc", 10, 100, 100)),
+    hsr: Math.round(num("hsr", 0, 100, 0)),
+    range: Math.round(num("r", 0, MAX_RANGE, 20)),
+    hp: Math.round(hp),
+    hasW: q.has("w"),
+  };
+}
+
+/** Build the ?w=… query for a state (pure, tested). Defaults are left out. */
+export function stateToSearch(s) {
+  const q = new URLSearchParams();
+  if (s.ids.length) q.set("w", s.ids.join(","));
+  if (s.acc !== 100) q.set("acc", String(s.acc));
+  if (s.hsr !== 0) q.set("hsr", String(s.hsr));
+  if (s.range !== 20) q.set("r", String(s.range));
+  if (s.hp !== 500) q.set("hp", String(s.hp));
+  const str = q.toString();
+  return str ? "?" + str : "";
+}
+
+/** Nice axis ticks from 0 to max (about n ticks). */
+export function niceTicks(max, n = 5) {
+  if (!(max > 0)) return [0];
+  const raw = max / n;
+  const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const step = [1, 2, 2.5, 5, 10].map((m) => m * mag).find((s) => s >= raw) || 10 * mag;
+  const out = [];
+  for (let v = 0; ; v += step) {            // last tick is at or above max, so the plot always holds the data
+    out.push(+v.toFixed(6));
+    if (v >= max - step * 1e-6) break;
+  }
+  return out;
+}
+
+// ---------------------------------------------------------------- page --
+
+if (typeof document !== "undefined" && document.getElementById("wcTtk")) boot();
+
+async function boot() {
+  await ready;
+  const light = document.documentElement.getAttribute("data-theme") === "light";
+  const color = (i) => paletteColor(i, light);
+  let catalog, profiles;
+  try {
+    const [c, p] = await Promise.all([
+      fetch("assets/weapons/catalog.json").then((r) => { if (!r.ok) throw new Error("catalog"); return r.json(); }),
+      fetch("assets/weapons/profiles.json").then((r) => { if (!r.ok) throw new Error("profiles"); return r.json(); }),
+    ]);
+    catalog = c.items; profiles = p.profiles;
+  } catch {
+    const st = $("wcStatus");
+    st.textContent = tr("wc.loadFail", "Weapon data could not be loaded.");
+    st.classList.add("err");
+    return;
+  }
+  $("wcStatus").hidden = true;
+
+  // all weapons with a real, usable profile
+  const weapons = new Map();
+  for (const [id, tuple] of Object.entries(profiles)) {
+    const item = catalog[id];
+    const p = toProfile(tuple);
+    if (!item || !p) continue;
+    weapons.set(Number(id), { id: Number(id), name: item[0], cat: item[1], fac: item[2], img: item[3], p });
+  }
+  const label = (w) => `${w.name} · ${FACTION[w.fac] ?? ""} · ${w.cat}`;
+  const byLabel = new Map([...weapons.values()].map((w) => [label(w).toLowerCase(), w]));
+  const sorted = [...weapons.values()].sort((a, b) => a.name.localeCompare(b.name));
+
+  const st = parseState(location.search, (id) => weapons.has(id));
+  if (!st.hasW) st.ids = DEFAULT_IDS.filter((id) => weapons.has(id));
+  if (!HP_PRESETS.includes(st.hp)) { /* a custom hp from the link stays valid */ }
+
+  // category select + hp select
+  const cats = [...new Set(sorted.map((w) => w.cat))].sort();
+  const catSel = $("wcCat");
+  const fillCats = () => {
+    catSel.innerHTML = `<option value="">${esc(tr("wc.allCats", "All types"))}</option>` + cats.map((c) => `<option value="${esc(c)}">${esc(c)}</option>`).join("");
+  };
+  fillCats();
+  const hpSel = $("wcHp");
+  const hpOptions = [...new Set([...HP_PRESETS, st.hp])].sort((a, b) => a - b);
+  hpSel.innerHTML = hpOptions.map((v) => `<option value="${v}">${nf(v)}</option>`).join("");
+  hpSel.value = String(st.hp);
+  $("wcAcc").value = st.acc; $("wcHsr").value = st.hsr; $("wcRange").value = st.range;
+
+  const fillList = () => {
+    const cat = catSel.value;
+    $("wcList").innerHTML = sorted.filter((w) => !cat || w.cat === cat).map((w) => `<option value="${esc(label(w))}"></option>`).join("");
+  };
+  fillList();
+
+  const msg = (text, err = false) => { const m = $("wcMsg"); m.textContent = text || ""; m.classList.toggle("err", !!err); };
+  const selected = () => st.ids.map((id) => weapons.get(id)).filter(Boolean);
+
+  function addByLabel() {
+    const input = $("wcSearch");
+    const raw = input.value.trim().toLowerCase();
+    if (!raw) return;
+    let w = byLabel.get(raw);
+    if (!w) {                       // a bare name that is unique
+      const hits = sorted.filter((x) => x.name.toLowerCase() === raw);
+      if (hits.length === 1) w = hits[0];
+    }
+    if (!w) { msg(tr("wc.notFound", "No weapon with that name."), true); return; }
+    if (st.ids.includes(w.id)) { input.value = ""; msg(""); return; }
+    if (st.ids.length >= MAX_WEAPONS) { msg(tr("wc.max", "Four weapons at most. Remove one to add another."), true); return; }
+    st.ids.push(w.id);
+    input.value = ""; msg("");
+    renderAll();
+  }
+  $("wcSearch").addEventListener("change", addByLabel);
+  $("wcSearch").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); addByLabel(); } });
+  $("wcSearch").addEventListener("input", () => {            // a pick from the list adds at once
+    if (byLabel.has($("wcSearch").value.trim().toLowerCase())) addByLabel();
+  });
+  catSel.addEventListener("change", fillList);
+  const onSlider = () => {
+    st.acc = +$("wcAcc").value; st.hsr = +$("wcHsr").value; st.range = +$("wcRange").value; st.hp = +hpSel.value;
+    renderAll();
+  };
+  for (const id of ["wcAcc", "wcHsr", "wcRange", "wcHp"]) $(id).addEventListener("input", onSlider);
+  window.addEventListener("resize", () => { clearTimeout(boot.rt); boot.rt = setTimeout(renderCharts, 120); });
+
+  function renderChips() {
+    $("wcChips").innerHTML = selected().map((w, i) => `<span class="wc-chip" role="listitem" style="border-left-color:${color(i)}">${esc(w.name)} <span class="wc-wmeta">${esc(FACTION[w.fac] ?? "")}</span><button type="button" data-id="${w.id}" aria-label="${esc(tr("wc.remove", "Remove {name}", { name: w.name }))}" title="${esc(tr("wc.remove", "Remove {name}", { name: w.name }))}">×</button></span>`).join("");
+    for (const b of $("wcChips").querySelectorAll("button")) b.addEventListener("click", () => { st.ids = st.ids.filter((id) => id !== +b.dataset.id); msg(""); renderAll(); });
+  }
+
+  // ------------------------------------------------------------- compute --
+  let calc = null;
+  function compute() {
+    const ws = selected();
+    const xs = rangeAxis(MAX_RANGE, 2);
+    const opt = { acc: st.acc / 100, hsr: st.hsr / 100, hp: st.hp };
+    const curves = ws.map((w) => ttkCurve(w.p, xs, opt));
+    const dists = ws.map((w) => ttkDistribution(w.p, { ...opt, range: st.range }));
+    const med = dists.map((d) => quantileMs(d, 0.5));
+    const ideal = ws.map((w) => idealTtk(w.p, { range: st.range, hp: st.hp }));
+    const dp = ws.map((w) => dps(w.p, { range: st.range }));
+    calc = { ws, xs, curves, dists, med, ideal, dp, winners: winnerStrip(curves) };
+  }
+
+  function renderCards() {
+    const { ws, med, ideal } = calc;
+    const best = Math.min(...med.filter((v) => v != null));
+    $("wcCards").innerHTML = ws.map((w, i) => {
+      const slower = slowerPct(med[i], Number.isFinite(best) ? best : null);
+      const cmp = med[i] == null ? "" : slower === 0 || slower == null
+        ? `<span class="good">${esc(tr("wc.fastest", "fastest"))}</span>`
+        : esc(tr("wc.slower", "{pct}% slower", { pct: nf(slower, slower < 10 ? 1 : 0) }));
+      const h = hitDamage(w.p, st.range);
+      return `<article class="wc-wcard" style="border-top-color:${color(i)}">
+        <img src="assets/weapons/${w.img}.webp" alt="" width="64" height="32" loading="lazy" onerror="this.style.visibility='hidden'" />
+        <div><div class="wc-wname">${esc(w.name)}</div><div class="wc-wmeta">${esc(FACTION[w.fac] ?? "")} · ${esc(w.cat)}</div></div>
+        <ul class="wc-wstats">
+          <li><span class="lab">${esc(tr("wc.med", "Median kill at {m} m", { m: nf(st.range) }))}</span><span>${esc(fmtMs(med[i]))} ${cmp ? "· " + cmp : ""}</span></li>
+          <li><span class="lab">${esc(tr("wc.ideal", "Best case (all hits)"))}</span><span>${esc(fmtMs(ideal[i]))}</span></li>
+          <li><span class="lab">${esc(tr("wc.rpm", "Rounds per minute"))}</span><span>${nf(w.p.rpm)}</span></li>
+          <li><span class="lab">${esc(tr("wc.dmg", "Damage per hit"))}</span><span>${nf(h.body)} / ${nf(h.head)}</span></li>
+        </ul></article>`;
+    }).join("");
+  }
+
+  // -------------------------------------------------------------- charts --
+  const svgOpen = (W, H, aria) => `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${esc(aria)}" xmlns="http://www.w3.org/2000/svg">`;
+  const legend = () => `<div class="wc-legend">${calc.ws.map((w, i) => `<span><span class="sw" style="background:${color(i)}"></span>${esc(w.name)}</span>`).join("")}</div>`;
+  const chartWidth = (el) => Math.max(280, Math.floor(el.clientWidth || el.parentElement.clientWidth || 600));
+
+  function drawTtk() {
+    const el = $("wcTtk");
+    const { ws, xs, curves, winners } = calc;
+    if (!ws.length) { el.innerHTML = ""; $("wcReadout").innerHTML = ""; return; }
+    const W = chartWidth(el), H = 300, L = 48, R = 12, T = 10, STRIP = 14, B = 34 + STRIP + 16;
+    const vals = curves.flat().filter((v) => v != null);
+    const yMax = Math.max(100, ...vals) * 1.08;
+    const yt = niceTicks(yMax, 5), yTop = yt[yt.length - 1];
+    const X = (r) => L + (r / MAX_RANGE) * (W - L - R);
+    const Y = (v) => T + (1 - v / yTop) * (H - T - B);
+    let s = svgOpen(W, H, tr("wc.ariaTtk", "Graph: time to kill by range for the chosen weapons"));
+    for (const v of yt) s += `<line class="grid" x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}"/><text class="ax" x="${L - 6}" y="${Y(v) + 4}" text-anchor="end">${nf(v)}</text>`;
+    for (const r of niceTicks(MAX_RANGE, 5)) s += `<line class="grid" x1="${X(r)}" x2="${X(r)}" y1="${T}" y2="${H - B}"/><text class="ax" x="${X(r)}" y="${H - B + 14}" text-anchor="middle">${nf(r)}</text>`;
+    s += `<text class="ax" x="${W - R}" y="${H - 4}" text-anchor="end">${esc(tr("wc.xRange", "Range (m)"))}</text>`;
+    s += `<text class="ax" transform="translate(11 ${(T + H - B) / 2}) rotate(-90)" text-anchor="middle">${esc(tr("wc.yMs", "Time to kill (ms)"))}</text>`;
+    curves.forEach((c, i) => {
+      let d = "", pen = false;
+      c.forEach((v, k) => {
+        if (v == null) { pen = false; return; }
+        d += `${pen ? "L" : "M"}${X(xs[k]).toFixed(1)} ${Y(v).toFixed(1)}`; pen = true;
+      });
+      s += `<path d="${d}" fill="none" stroke="${color(i)}" stroke-width="2" stroke-linejoin="round"/>`;
+    });
+    // winner strip: who kills fastest at each range
+    const cw = (W - L - R) / (xs.length - 1);
+    winners.forEach((w, k) => {
+      const x = Math.max(L, X(xs[k]) - cw / 2), x2 = Math.min(W - R, X(xs[k]) + cw / 2);
+      s += `<rect x="${x.toFixed(1)}" y="${H - B + 22}" width="${(x2 - x).toFixed(1)}" height="${STRIP - 4}" fill="${w < 0 ? "var(--border)" : color(w)}"/>`;
+    });
+    s += `<text class="ax" x="${L}" y="${H - B + 48}" text-anchor="start">${esc(tr("wc.winner", "Fastest at each range"))}</text>`;
+    s += `<line class="cursor" id="wcCur" x1="0" x2="0" y1="${T}" y2="${H - B}" visibility="hidden"/></svg>`;
+    el.innerHTML = s + legend() + `<div class="wc-legend"><span><span class="sw" style="background:var(--border)"></span>${esc(tr("wc.tie", "tie / no kill"))}</span></div>`;
+    const svg = el.querySelector("svg"), cur = el.querySelector("#wcCur"), out = $("wcReadout");
+    const show = (clientX) => {
+      const box = svg.getBoundingClientRect();
+      const x = (clientX - box.left) * (W / box.width);
+      const r = Math.min(MAX_RANGE, Math.max(0, Math.round(((x - L) / (W - L - R)) * MAX_RANGE / 2) * 2));
+      const k = xs.indexOf(r);
+      cur.setAttribute("x1", X(r)); cur.setAttribute("x2", X(r)); cur.setAttribute("visibility", "visible");
+      out.innerHTML = `<b>${esc(tr("wc.readoutAt", "At {m} m", { m: nf(r) }))}</b>` + ws.map((w, i) => `<span><span class="sw" style="background:${color(i)}"></span>${esc(w.name)}: ${esc(fmtMs(curves[i][k]))}</span>`).join("");
+    };
+    svg.addEventListener("pointermove", (e) => show(e.clientX));
+    svg.addEventListener("pointerdown", (e) => show(e.clientX));
+    svg.addEventListener("pointerleave", () => { cur.setAttribute("visibility", "hidden"); out.innerHTML = ""; });
+  }
+
+  function drawCdf() {
+    const el = $("wcCdf");
+    $("wcCdfNote").textContent = tr("wc.cdfNote", "At {m} m. Higher and further left is better. The dots mark the 50% point.", { m: nf(st.range) });
+    const { ws, dists, med } = calc;
+    if (!ws.length) { el.innerHTML = ""; return; }
+    const W = chartWidth(el), H = 260, L = 48, R = 12, T = 10, B = 34;
+    const reach = dists.map((d) => quantileMs(d, 0.99) ?? quantileMs(d, 0.5) ?? 0);
+    const xMax = Math.max(200, ...reach) * 1.05;
+    const xt = niceTicks(xMax, 6), xTop = xt[xt.length - 1];
+    const X = (v) => L + (v / xTop) * (W - L - R);
+    const Y = (p) => T + (1 - p) * (H - T - B);
+    let s = svgOpen(W, H, tr("wc.ariaCdf", "Graph: chance of having killed by a given time"));
+    for (const p of [0, 0.25, 0.5, 0.75, 1]) s += `<line class="grid" x1="${L}" x2="${W - R}" y1="${Y(p)}" y2="${Y(p)}"/><text class="ax" x="${L - 6}" y="${Y(p) + 4}" text-anchor="end">${nf(p * 100)}%</text>`;
+    for (const v of xt) s += `<line class="grid" x1="${X(v)}" x2="${X(v)}" y1="${T}" y2="${H - B}"/><text class="ax" x="${X(v)}" y="${H - B + 14}" text-anchor="middle">${nf(v)}</text>`;
+    s += `<text class="ax" x="${(L + W - R) / 2}" y="${H - 4}" text-anchor="middle">${esc(tr("wc.xMs", "Time (ms)"))}</text>`;
+    s += `<text class="ax" transform="translate(11 ${(T + H - B) / 2}) rotate(-90)" text-anchor="middle">${esc(tr("wc.yChance", "Chance killed"))}</text>`;
+    dists.forEach((d, i) => {
+      let path = `M${X(0)} ${Y(0)}`, prev = 0;
+      d.ms.forEach((t, k) => {
+        if (t > xTop) return;
+        path += `L${X(t).toFixed(1)} ${Y(prev).toFixed(1)}L${X(t).toFixed(1)} ${Y(d.cdf[k]).toFixed(1)}`;
+        prev = d.cdf[k];
+      });
+      path += `L${X(xTop).toFixed(1)} ${Y(prev).toFixed(1)}`;
+      s += `<path d="${path}" fill="none" stroke="${color(i)}" stroke-width="2"/>`;
+      if (med[i] != null && med[i] <= xTop) s += `<circle cx="${X(med[i]).toFixed(1)}" cy="${Y(0.5)}" r="4" fill="${color(i)}"><title>${esc(ws[i].name)}: ${esc(fmtMs(med[i]))}</title></circle>`;
+    });
+    el.innerHTML = s + "</svg>" + legend();
+  }
+
+  function drawDps() {
+    const el = $("wcDps");
+    $("wcDpsNote").textContent = tr("wc.dpsNote", "At {m} m, body hits, every pellet lands. Burst = the magazine's firing time only. Sustained = reloads counted.", { m: nf(st.range) });
+    const { ws, dp } = calc;
+    if (!ws.length) { el.innerHTML = ""; return; }
+    const W = chartWidth(el), ROW = 16, GAP = 14, L = 4, R = 52;
+    const max = Math.max(1, ...dp.flatMap((d) => [d.burst, d.sustained]));
+    const H = ws.length * (2 * ROW + GAP) + 6;
+    const lab = Math.min(W * 0.45, 200);
+    let s = svgOpen(W, H, tr("wc.ariaDps", "Graph: damage per second of the chosen weapons"));
+    ws.forEach((w, i) => {
+      const y0 = 4 + i * (2 * ROW + GAP);
+      s += `<text class="ax" x="${L}" y="${y0 + ROW + 4}" style="fill:var(--text)">${esc(w.name.length > 26 ? w.name.slice(0, 25) + "…" : w.name)}</text>`;
+      [["burst", dp[i].burst, 1], ["sustained", dp[i].sustained, 0.55]].forEach(([k, v, op], j) => {
+        const bw = Math.max(1, (v / max) * (W - lab - R - L));
+        const y = y0 + j * ROW;
+        s += `<rect x="${L + lab}" y="${y}" width="${bw.toFixed(1)}" height="${ROW - 3}" fill="${color(i)}" fill-opacity="${op}"><title>${esc(tr("wc." + k, k === "burst" ? "Burst" : "Sustained"))}: ${nf(v)}</title></rect>`;
+        s += `<text class="val" x="${(L + lab + bw + 5).toFixed(1)}" y="${y + ROW - 5}">${nf(v)}</text>`;
+      });
+    });
+    const key = (op, k) => `<span><span class="sw" style="background:var(--text);opacity:${op}"></span>${esc(tr("wc." + k, k === "burst" ? "Burst" : "Sustained"))}</span>`;
+    el.innerHTML = s + "</svg>" + `<div class="wc-legend">${key(1, "burst")}${key(0.55, "sustained")}</div>`;
+  }
+
+  function renderCharts() { if (!calc) return; drawTtk(); drawCdf(); drawDps(); }
+
+  function renderAll() {
+    $("wcAccV").textContent = nf(st.acc) + "%";
+    $("wcHsrV").textContent = nf(st.hsr) + "%";
+    $("wcRangeV").textContent = fmtM(st.range);
+    renderChips();
+    compute();
+    renderCards();
+    renderCharts();
+    try { history.replaceState(null, "", location.pathname + stateToSearch(st)); } catch {}
+  }
+  renderAll();
+}

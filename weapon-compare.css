@@ -1,0 +1,63 @@
+/* weapon-compare.html: weapon comparison page. Flat style (no rounded corners), theme tokens only. */
+body { overflow: auto; }
+.wc-wrap { max-width: none; margin: 0 auto; padding: 0; }
+.wc-head, .wc-card { background: var(--panel); border: 1px solid var(--border); border-radius: 0; padding: 12px 14px; margin-bottom: 12px; }
+.wc-head { position: relative; padding-left: 4.75rem; }
+.wc-head .lang-select { position: absolute; top: 10px; right: 12px; }
+.wc-back { position: absolute; top: 10px; left: 12px; width: 3rem; height: 3rem; display: inline-flex; align-items: center; justify-content: center; font-size: 1.7rem; line-height: 1; text-decoration: none; background: var(--panel); border: 1px solid var(--border); border-radius: 0; color: var(--text); }
+.wc-back:hover { border-color: var(--accent); }
+.wc-head h1 { font-size: 1.25rem; margin: 0 0 4px; padding-right: 8.5rem; }
+.wc-sub { color: var(--dim); font-size: 0.85rem; }
+.wc-card h2 { font-size: 1rem; margin: 0 0 4px; }
+.wc-note { color: var(--dim); font-size: 0.82rem; margin: 0 0 8px; }
+.wc-dim { color: var(--dim); font-size: 0.82rem; }
+.wc-wrap a { color: var(--accent); }
+.wc-msg { min-height: 1.2em; color: var(--dim); font-size: 0.85rem; margin: 4px 0; }
+.wc-msg.err { color: var(--bad, #ff7a7a); }
+
+.wc-pick-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.wc-field { display: flex; flex-direction: column; gap: 2px; font-size: 0.8rem; color: var(--dim); min-width: 11rem; }
+.wc-field.wc-grow { flex: 1 1 16rem; }
+.wc-field select, .wc-field input, .wc-slider select { background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 0; padding: 6px 8px; font: inherit; font-size: 0.9rem; }
+.wc-field input:focus-visible, .wc-field select:focus-visible { outline: 1px solid var(--accent); }
+
+.wc-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 2px; }
+.wc-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 4px 3px 8px; border: 1px solid var(--border); border-left-width: 5px; border-radius: 0; background: var(--bg); font-size: 0.85rem; }
+.wc-chip button { cursor: pointer; font: inherit; line-height: 1; color: var(--dim); background: none; border: 0; padding: 4px 8px; min-width: 2rem; min-height: 2rem; }
+.wc-chip button:hover { color: var(--text); }
+
+.wc-sliders { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 10px 16px; margin-top: 10px; }
+.wc-slider { display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; color: var(--dim); }
+.wc-slider b { color: var(--text); font-variant-numeric: tabular-nums; }
+.wc-slider input[type="range"] { width: 100%; accent-color: var(--accent); min-height: 1.6rem; }
+
+.wc-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 12px; margin-bottom: 12px; }
+.wc-wcard { background: var(--panel); border: 1px solid var(--border); border-top-width: 4px; border-radius: 0; padding: 10px 12px; display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; align-items: center; }
+.wc-wcard img { grid-row: span 2; width: 64px; height: 32px; object-fit: contain; }
+.wc-wname { font-weight: 700; }
+.wc-wmeta { color: var(--dim); font-size: 0.78rem; }
+.wc-wstats { grid-column: 1 / -1; margin: 6px 0 0; padding: 0; list-style: none; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+.wc-wstats li { display: flex; justify-content: space-between; gap: 8px; padding: 1px 0; }
+.wc-wstats .lab { color: var(--dim); }
+.wc-wstats .good { color: var(--ok, #8ef0b0); }
+
+.wc-chart { width: 100%; }
+.wc-chart svg { display: block; width: 100%; height: auto; touch-action: pan-y; }
+.wc-chart .grid { stroke: var(--border); stroke-width: 1; }
+.wc-chart .axis text, .wc-chart text.ax { fill: var(--dim); font-size: 11px; }
+.wc-chart text.val { fill: var(--text); font-size: 11px; font-variant-numeric: tabular-nums; }
+.wc-chart .cursor { stroke: var(--dim); stroke-dasharray: 3 3; }
+.wc-readout { min-height: 1.4em; margin-top: 6px; font-size: 0.85rem; font-variant-numeric: tabular-nums; display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.wc-readout .sw, .wc-legend .sw { display: inline-block; width: 10px; height: 10px; margin-right: 4px; vertical-align: baseline; }
+.wc-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.82rem; margin-top: 6px; color: var(--dim); }
+
+.wc-how summary { cursor: pointer; font-weight: 600; }
+.wc-how ul { margin: 8px 0; padding-left: 1.2rem; font-size: 0.88rem; }
+
+@media (max-width: 600px) {
+  .wc-wrap { padding: 0 16px; }
+  .wc-head { padding-left: 4rem; }
+  .wc-head h1 { padding-right: 0; font-size: 1.1rem; margin-top: 2.2rem; }
+  .wc-back { width: 2.6rem; height: 2.6rem; }
+  .wc-field { min-width: 100%; }
+}
