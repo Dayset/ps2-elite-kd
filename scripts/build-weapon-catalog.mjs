@@ -21,6 +21,7 @@ import { mkdirSync, existsSync, writeFileSync, rmSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
+import { slimRecoil, cadenceOf } from "./weapon-slim.mjs";
 
 const OUT = "assets/weapons";
 const SID = process.env.CENSUS_SERVICE_ID || "daysetps2legends";
@@ -270,7 +271,10 @@ try {
   }
   const states = {};
   for (const r of await pagedAll('player_state', () => true)) states[r.player_state_id] = (r.description && (r.description.en || r.description)) || '';
-  writeFileSync(join(OUT, "recoil.json"), JSON.stringify({ savedAt: new Date().toISOString(), weapons, fm2, groups, states, handling, attNames: attName, attCat, attDesc, att, attDefault }) + "\n");
+  // the page reads the slim form (scripts/weapon-slim.mjs: only used fields, attachment names and texts once)
+  const slim = slimRecoil({ savedAt: new Date().toISOString(), weapons, fm2, groups, states, handling, attNames: attName, attCat, attDesc, att, attDefault });
+  writeFileSync(join(OUT, "recoil.json"), JSON.stringify(slim) + "\n");
+  writeFileSync(join(OUT, "cadence.json"), JSON.stringify({ savedAt: slim.savedAt, cadence: cadenceOf(slim) }) + "\n");
   console.log(`::notice::weapon recoil: ${Object.keys(weapons).length} weapons, ${Object.keys(fm2).length} fire modes, ${Object.keys(groups).length} state groups`);
 } catch (e) {
   console.log(`::warning::weapon recoil not updated: ${e.message}`);

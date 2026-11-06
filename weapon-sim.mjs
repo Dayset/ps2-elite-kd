@@ -11,7 +11,7 @@
 // the cone is filled. Those are constants here, labelled on the page.
 //
 // Units: angles in degrees, distances in metres, time in ms.
-import { hitDamage } from "./weapons-model.mjs";
+import { hitDamage } from "./weapons-model.mjs?v=20261106-wcr1";
 
 export const STANCES = Object.freeze(["crouchStill", "standStill", "crouchMove", "standMove"]);
 // Census player_state ids: 0 Standing, 1 Crouching, 2 Running, 5 CrouchWalking
@@ -145,6 +145,11 @@ export function attEffects(name, desc, weaponName, hip = false) {
 
 /** Strategies: shots per burst (holding the trigger down is not offered: it is never the practical choice). */
 export const BURSTS = Object.freeze([1, 2, 3, 4, 6, 8, 12]);
+/** Shots per pause offered for one weapon: a burst weapon fires whole bursts (1-4 trigger pulls, then 6), others BURSTS. */
+export function stylesFor(P) {
+  const n = P && P.burstN > 1 ? P.burstN : 1;
+  return n > 1 ? [...new Set([1, 2, 3, 4, 6].map((k) => k * n))] : [...BURSTS];
+}
 
 /**
  * Everything the simulation needs, from the Census record, the stance rows and the chosen options.
@@ -188,8 +193,13 @@ export function simParams(profile, fm, states, opts = {}) {
   const rec = (hip ? mul("hipRecoil") : 1);
   const vMul = mul("vRecoil") * (hip ? 1 : mul("adsVRecoil")) * rec;
   const hMul = mul("hRecoil") * rec;
+  // firing rhythm (weapons-model.mjs withCadence): burst weapons fire burstN shots autoMs apart per trigger pull and
+  // may pull again refireMs after the last one; Census fire_refire_ms is that between-burst wait for them, not the shot gap
+  const rof = A.reduce((m, a) => m * (a.rofMul ?? 1), 1);
+  const burstN = profile.burstN > 1 ? profile.burstN : 1;
+  const shotGap = burstN > 1 ? profile.autoMs : (f.fire_refire_ms || 60000 / profile.rpm);
   return {
-    gapMs: (f.fire_refire_ms || 60000 / profile.rpm) / (A.reduce((m, a) => m * (a.rofMul ?? 1), 1)),
+    gapMs: shotGap / rof, burstN, refireMs: (burstN > 1 ? profile.refireMs : shotGap) / rof, delayMs: profile.delayMs || 0,
     mag: Math.max(1, Math.round((profile.mag + sumA("magAdd")) * mul("magMul"))), reloadMs: profile.reloadMs + sumA("reloadAdd"), pellets: pellets,
     profile: { ...adjustRanges(profile, A, opts.cat), pellets },
     vMin: (f.recoil_magnitude_min ?? 0.3) * vMul, vMax: (f.recoil_magnitude_max ?? 0.3) * vMul,
@@ -231,17 +241,29 @@ function hitZone(x, y, r = 0) {
 }
 
 /**
- * One kill attempt. Returns { ttk (ms or null), shots: [{ t, x, y, zone }], fired }.
- * `burst` shots, then a pause long enough to recover kick and bloom completely, then again.
- * A magazine runs dry -> short reload. Gives up after 3 magazines.
+ * One kill attempt. Returns { ttk (ms or null), shots: [{ i, t, x, y, zone }], fired }.
+ * The clock starts at the trigger pull, so a wind-up (P.delayMs) comes before the first shot of every pull.
+ * `burst` shots, then a pause long enough to recover kick and bloom completely, then again. Burst weapons
+ * (P.burstN > 1) fire their bursts inside that, waiting P.refireMs (+ wind-up) between trigger pulls; the kick
+ * and the cone recover during that wait. A magazine runs dry -> short reload. Gives up after 3 magazines.
+ * `r` drives the cone and the aim; `rv` / `rh` (default `r`) drive the vertical and the horizontal kick, so the
+ * two directions can come from their own random streams.
  */
-export function simulate(P, { burst = Infinity, distance = 20, hp = 1000 }, r, keepShots = false) {
+export function simulate(P, { burst = Infinity, distance = 20, hp = 1000 }, r, keepShots = false, rv = r, rh = r) {
   distance = Math.max(0.5, distance);   // point-blank still has a distance (also keeps 0 m from dividing by zero)
   const { body, head } = hitDamage(P.profile, distance);
   const tan = Math.tan;
-  let t = 0, ox = 0, oy = 0, hx = 0, cof = P.cofMin, dealt = 0, inBurst = 0, magLeft = P.mag, fired = 0;
+  const delay = P.delayMs || 0, burstN = P.burstN > 1 ? P.burstN : 1, refire = P.refireMs ?? P.gapMs;
+  let t = delay, ox = 0, oy = 0, hx = 0, cof = P.cofMin, dealt = 0, inBurst = 0, inPull = 0, magLeft = P.mag, fired = 0;
   const shots = [];
   const limit = P.mag * 3;
+  const reset = () => { ox = oy = hx = 0; cof = P.cofMin; inBurst = 0; inPull = 0; };
+  const recover = (ms) => {            // trigger released for `ms`: kick and cone settle back
+    const k = Math.hypot(ox, oy), back = Math.max(0, ms - (P.recDelay || 0)) * P.recRate / 1000;
+    const f = k > 0 ? Math.max(0, k - back) / k : 0;
+    ox *= f; oy *= f; hx *= f;
+    cof = Math.max(P.cofMin, cof - Math.max(0, ms - (P.cofRecDelay || 0)) * P.cofRecRate / 1000);
+  };
   while (fired < limit) {
     // the shot leaves where the crosshair is, with the cone on top (kick comes after)
     const radius = (cof + (P.pellets > 1 ? P.pelletSpread : 0)) / 2;
@@ -263,25 +285,27 @@ export function simulate(P, { burst = Infinity, distance = 20, hp = 1000 }, r, k
       if (zone) dealt += (zone === "head" ? head : body) + (P.blastRatio ? body * P.blastRatio : 0);
       if (P.splash && (zone || Math.hypot(x - TARGET.headX, y) <= P.splashR)) dealt += P.splash;
     }
-    fired++; inBurst++; magLeft--;
+    fired++; inBurst++; inPull++; magLeft--;
     if (dealt >= hp) return { ttk: t, shots, fired };
     // kick, bloom
     const mult = inBurst === 1 ? P.first : 1;
-    const v = rnd(r, P.vMin, P.vMax) * mult;
-    const ang = rnd(r, P.angMin, P.angMax) * RAD;
+    const v = rnd(rv, P.vMin, P.vMax) * mult;
+    const ang = rnd(rv, P.angMin, P.angMax) * RAD;
     oy += v * Math.cos(ang) * (1 - (P.comp || 0)); ox += v * Math.sin(ang);   // comp: share of the vertical kick pulled back by the player
-    let h = rnd(r, P.hMin, P.hMax);
-    let sign = r() < 0.5 ? -1 : 1;
+    const h = rnd(rh, P.hMin, P.hMax);
+    let sign = rh() < 0.5 ? -1 : 1;
     if (Math.abs(hx + sign * h) > P.hTol) sign = -sign;          // tolerance: the drift turns back
     hx += sign * h; ox += sign * h;
     cof = Math.min(P.cofMax, cof + P.bloom);
     // next shot
     if (magLeft <= 0) {
-      t += P.reloadMs; magLeft = P.mag; ox = oy = hx = 0; cof = P.cofMin; inBurst = 0;
+      t += refire + P.reloadMs + delay; magLeft = P.mag; reset();
     } else if (inBurst >= burst) {
       const kick = Math.hypot(ox, oy);
       const pause = Math.max(P.recDelay + kick / P.recRate * 1000, P.cofRecDelay + (cof - P.cofMin) / P.cofRecRate * 1000);
-      t += P.gapMs + pause; ox = oy = hx = 0; cof = P.cofMin; inBurst = 0;
+      t += Math.max(refire, P.gapMs + pause) + delay; reset();
+    } else if (burstN > 1 && inPull >= burstN) {
+      t += refire + delay; recover(refire + delay); inPull = 0;   // burst weapon: next trigger pull
     } else {
       t += P.gapMs;
       // while the trigger is held the kick does not recover (it only does after a pause)
@@ -305,17 +329,20 @@ export function burstStats(P, { burst, distance, hp, runs = 600, seed = 1 }) {
 }
 
 /** All strategies; `best` = lowest median among those that kill at least half the time. */
-export function compareBursts(P, { distance = 20, hp = 1000, runs = 600, seed = 1, bursts = BURSTS } = {}) {
-  const rows = bursts.filter((b) => b <= P.mag).map((burst) => burstStats(P, { burst, distance, hp, runs, seed }));
+export function compareBursts(P, { distance = 20, hp = 1000, runs = 600, seed = 1, bursts } = {}) {
+  const rows = (bursts || stylesFor(P)).filter((b) => b <= P.mag).map((burst) => burstStats(P, { burst, distance, hp, runs, seed }));
   let best = null;
   for (const s of rows) if (s.median != null && s.killRate >= 0.5 && (!best || s.median < best.median)) best = s;
   return { rows, best };
 }
 
-/** One full spray (hold the trigger) with the impact points, for the pattern picture. */
+/**
+ * One full spray (hold the trigger; a burst weapon pulls again as soon as it can) with the impact points, for the
+ * pattern picture. The cone, the vertical kick and the horizontal kick each get their own random stream from `seed`.
+ */
 export function sprayPattern(P, { distance = 20, seed = 1, shots = 30, aimHead = false } = {}) {
-  const r = rng(seed * 104729);
+  const r = rng(seed * 104729), rv = rng(seed * 15485863 + 7), rh = rng(seed * 32452843 + 13);
   const big = { ...P, mag: Math.max(P.mag, shots) };
-  const res = simulate({ ...big, acc: undefined, hsr: undefined, sprayAim: aimHead ? TARGET.headY : 0 }, { burst: Infinity, distance, hp: 1e9 }, r, true);
+  const res = simulate({ ...big, acc: undefined, hsr: undefined, sprayAim: aimHead ? TARGET.headY : 0 }, { burst: Infinity, distance, hp: 1e9 }, r, true, rv, rh);
   return res.shots.filter((s) => s.i < shots);
 }

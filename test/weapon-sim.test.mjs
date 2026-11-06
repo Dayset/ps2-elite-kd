@@ -116,7 +116,7 @@ test("holding the trigger is not a firing style offered", () => {
 
 test("the Naginata lists its laser, flash suppressor and ammo types", () => {
   const rec = JSON.parse(readFileSync(new URL("../assets/weapons/recoil.json", import.meta.url), "utf8"));
-  const names = (rec.att[804249] || []).map((i) => rec.attNames[i]);
+  const names = (rec.att[804249] || []).map((i) => rec.atts[i][0]);   // slim file: atts = [[name, descIndex]] (scripts/weapon-slim.mjs)
   for (const n of ["Laser Sight", "Flash Suppressor", "Soft Point Ammunition", "High Velocity Ammunition", "Heavy Barrel", "Short Barrel"]) assert.ok(names.includes(n), n);
 });
 

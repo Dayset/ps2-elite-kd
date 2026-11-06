@@ -8,7 +8,7 @@
 // rec = { fm, states, adsFm, adsStates, pool, handling } from recoil.json (null when not loaded).
 // Hip-fire cone comes from the hip fire mode's player_state_group, aim-down-sights cone from the
 // ADS fire mode's own group (fire_mode_2.iron_sights = 1), as in Izubrr/planetside_weapon_compare.
-import { hitDamage, idealTtk, minShots, dps } from "./weapons-model.mjs";
+import { hitDamage, idealTtk, minShots, dps, effectiveRpm, timeOfShot } from "./weapons-model.mjs?v=20261106-wcr1";
 
 export const GROUPS = Object.freeze(["kill", "damage", "magazine", "accuracyAds", "accuracyHip", "recoil", "handling"]);
 export const GROUP_EN = Object.freeze({
@@ -40,6 +40,9 @@ export const METRICS = Object.freeze([
   { key: "dpsSus", group: "kill", en: "Sustained damage per second", dir: 1, unit: "int", get: ({ p, range }) => dps(p, { range }).sustained },
 
   { key: "rpm", group: "damage", en: "Rounds per minute", dir: 1, unit: "int", get: ({ p }) => p.rpm },
+  { key: "rpmAvg", group: "damage", en: "Average rate over a magazine", dir: 0, unit: "int", get: ({ p }) => (p.burstN > 1 || p.delayMs ? effectiveRpm(p) : null) },
+  { key: "burstN", group: "damage", en: "Shots per trigger pull", dir: 0, unit: "int", get: ({ p }) => (p.burstN > 1 ? p.burstN : null) },
+  { key: "windup", group: "damage", en: "Wind-up before the first shot", dir: 0, unit: "ms", get: ({ p }) => p.delayMs || null },
   { key: "dmgHere", group: "damage", en: "Damage per hit here", dir: 1, unit: "int", get: ({ p, range }) => hitDamage(p, range).body * p.pellets },
   { key: "dmgMax", group: "damage", en: "Maximum damage", dir: 1, unit: "int", get: ({ p }) => p.dmgMax * p.pellets },
   { key: "dmgMin", group: "damage", en: "Minimum damage", dir: 1, unit: "int", get: ({ p }) => p.dmgMin * p.pellets },
@@ -52,7 +55,7 @@ export const METRICS = Object.freeze([
   { key: "pool", group: "magazine", en: "Ammo pool", dir: 1, unit: "int", get: ({ rec }) => (rec && rec.pool) || null },
   { key: "reload", group: "magazine", en: "Short reload", dir: -1, unit: "s", get: ({ p }) => p.reloadMs },
   { key: "reloadLong", group: "magazine", en: "Long reload", dir: -1, unit: "s", get: ({ p, rec }) => p.reloadMs + ((rec && rec.fm && rec.fm.reload_chamber_ms) || 0) },
-  { key: "magTime", group: "magazine", en: "Time to empty the magazine", dir: 0, unit: "s", get: ({ p }) => (p.mag - 1) * 60000 / p.rpm },
+  { key: "magTime", group: "magazine", en: "Time to empty the magazine", dir: 0, unit: "s", get: ({ p }) => timeOfShot(p, p.mag) },
 
   cone("accuracyAds", "adsCS", "Crouched, still", "ads", ST.crouch),
   cone("accuracyAds", "adsSS", "Standing, still", "ads", ST.stand),

@@ -2,7 +2,8 @@
 //
 // Input is the 10-field fire profile from assets/weapons/profiles.json
 // (see replay/weapons.mjs toProfile): rpm, mag, reloadMs, dmgMax, dmgMin,
-// rangeMaxDmg, rangeMinDmg, hsMult, pellets, mode. Everything here is derived
+// rangeMaxDmg, rangeMinDmg, hsMult, pellets, mode, plus the firing rhythm from
+// assets/weapons/cadence.json (withCadence: bursts, wind-up). Everything here is derived
 // from those numbers only (Census data): no recoil, bloom, attachments or
 // armor values, because Census does not carry them. The target is a plain
 // health pool (HP).
@@ -18,6 +19,54 @@
 // stable and tests can compare exact numbers.
 
 export const HP_PRESETS = Object.freeze([500, 750, 1000]);
+
+/**
+ * Wind-up before the first shot of every trigger pull that Census does not carry (fire_delay_ms is 0 or
+ * missing there). Typed in by hand, keyed by weapon name. NSX Kuwa: the item text says it fires
+ * "after a short windup"; 200 ms is the owner's value (6 Nov 2026). The wiki calls it the same wind-up
+ * as the NSX Yumi, whose Census fire_delay_ms is 250.
+ */
+export const HAND_WINDUP = Object.freeze({ "NSX Kuwa": 200, "NSX-A Kuwa": 200 });
+
+/**
+ * Add the firing rhythm to a profile. `row` = assets/weapons/cadence.json entry
+ * [burstCount, autoFireMs, refireMs, delayMs] from the hip fire mode in Census (fire_mode_2):
+ * a trigger pull waits `delayMs` (wind-up), then fires `burstCount` shots `autoFireMs` apart (1 for
+ * automatic / semi weapons), and the next pull can start `refireMs` after the last shot.
+ * Automatic weapons keep firing every 60000 / rpm ms while the trigger is held.
+ */
+export function withCadence(p, row, name) {
+  if (!p) return p;
+  const [n, auto, refire, delay] = Array.isArray(row) ? row : [];
+  const burstN = Number.isInteger(n) && n > 1 ? n : 1;
+  const hand = HAND_WINDUP[String(name || "").trim()];
+  const delayMs = Math.max(0, Number.isFinite(delay) && delay > 0 ? delay : hand || 0);
+  if (burstN === 1 && !delayMs) return p;
+  const out = { ...p, delayMs, delayHand: !(delay > 0) && !!hand };
+  if (burstN > 1) {
+    const autoMs = auto > 0 ? auto : 60000 / p.rpm;
+    // profiles.json takes rpm from fire_refire_ms, which for a burst weapon is the wait between bursts: rpm is the in-burst rate here
+    Object.assign(out, { burstN, autoMs, refireMs: refire > 0 ? refire : 60000 / p.rpm, rpm: Math.round(60000 / autoMs) });
+  }
+  return out;
+}
+
+/** Shots per minute over a whole magazine (bursts, wind-up and refire waits counted, reload not). */
+export function effectiveRpm(p) {
+  return p.mag * 60000 / (magPeriod(p) - p.reloadMs);
+}
+
+// time (ms from the trigger pull) of shot m (0-based) inside one magazine, trigger held / pulled again at once
+function shotInMag(p, m) {
+  const delay = p.delayMs || 0;
+  if (!(p.burstN > 1)) return delay + m * 60000 / p.rpm;
+  const pull = Math.floor(m / p.burstN), i = m % p.burstN;
+  return pull * (delay + (p.burstN - 1) * p.autoMs + p.refireMs) + delay + i * p.autoMs;
+}
+// one magazine from trigger pull to the next magazine's trigger pull: last shot, wait to fire again, reload
+function magPeriod(p) {
+  return shotInMag(p, p.mag - 1) + (p.burstN > 1 ? p.refireMs : 60000 / p.rpm) + p.reloadMs;
+}
 export const MAX_SHOTS = 400;
 
 /** Damage of one pellet/bullet at `range` metres (linear falloff between the two ranges). */
@@ -38,11 +87,14 @@ export function hitDamage(p, range) {
   return { body, head };
 }
 
-/** Time in ms of shot number k (1-based), including reloads between magazines. */
+/**
+ * Time in ms of shot number k (1-based), including reloads between magazines. The clock starts at the
+ * trigger pull: a weapon with a wind-up fires its first shot after the wind-up, others at t = 0.
+ */
 export function timeOfShot(p, k) {
-  const gap = 60000 / p.rpm;
   const reloads = Math.floor((k - 1) / p.mag);
-  return (k - 1) * gap + reloads * p.reloadMs;
+  if (!(p.burstN > 1) && !p.delayMs) return (k - 1) * 60000 / p.rpm + reloads * p.reloadMs;
+  return reloads * magPeriod(p) + shotInMag(p, (k - 1) % p.mag);
 }
 
 // Distribution of the damage of ONE shot: each of `pellets` pellets misses
@@ -81,18 +133,17 @@ export function ttkDistribution(p, opts = {}) {
   const { body, head } = hitDamage(p, range);
   const outcomes = shotOutcomes(p.pellets, body, head, acc, hsr);
   const cdf = [], ms = [];
-  let alive = new Float64Array(hp);   // alive[d] = P(damage so far = d), d < hp
-  alive[0] = 1;
+  // alive: damage so far (< hp) -> probability. Only a few damage totals are reachable (sums of body / head hits),
+  // so a sparse map is far faster than a dense array over every health point, with the same exact result.
+  let alive = new Map([[0, 1]]);
   let dead = 0;
   for (let k = 1; k <= MAX_SHOTS; k++) {
-    const next = new Float64Array(hp);
+    const next = new Map();
     let newlyDead = 0;
-    for (let d = 0; d < hp; d++) {
-      const pd = alive[d];
-      if (pd === 0) continue;
+    for (const [d, pd] of alive) {
       for (const [dmg, pr] of outcomes) {
         const nd = d + dmg;
-        if (nd >= hp) newlyDead += pd * pr; else next[nd] += pd * pr;
+        if (nd >= hp) newlyDead += pd * pr; else next.set(nd, (next.get(nd) || 0) + pd * pr);
       }
     }
     dead += newlyDead;
@@ -138,11 +189,10 @@ export function medianTtk(p, opts = {}) {
 export function dps(p, { range = 0 } = {}) {
   const { body } = hitDamage(p, range);
   const perShot = body * p.pellets;
-  const gap = 60000 / p.rpm;                     // ms between shots
-  const magMs = (p.mag - 1) * gap;               // first shot at 0
   const magDmg = p.mag * perShot;
-  const burst = perShot * 1000 / gap;
-  const sustained = magDmg * 1000 / (magMs + gap + p.reloadMs);
+  const period = magPeriod(p);                   // pull -> last shot -> refire wait -> reload
+  const burst = magDmg * 1000 / (period - p.reloadMs);
+  const sustained = magDmg * 1000 / period;
   return { burst, sustained };
 }
 
