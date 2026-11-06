@@ -8,6 +8,8 @@ import { autoMarksHtml, tractorMark } from "../auto-marks.mjs";
 import { infUnit, classifyDeath, feedPush, censusStats, cellText, fmtGap, LIVE_COLS, tipText, ME_REFRESH_MS, mergeFresh, FEED_MAX, emojiFill, fillDriver, glowTier, unknownFill, FULL_AT, EMPTY_AT, goodPct, FILL_DIM, HOLLOW_PX, overlayPush, overlayRows, VICTIM_LINES, eventAt, EVENT_SKEW_MS, unitGlow, ZERG_GOLD_OVER, OUTLINE_PX, LIVE_GLOWS, weaponIcon, CARD_CATEGORIES, LIVE_FPS, liveFps, HALO_KEY, haloOn, bezier, easeFill, glowIn, BEAT, TIER_MOTION, beatAt, haloAt, SHINE, shineFrame, beatSleep, tierLabel, tierVoiceLine, TIER_VOICE_LINES } from "../live.mjs";
 import { disk, dilate, erode, blurAlpha, inkBox, outlineMasks, hollowRim, spriteCss, shineAt } from "../live-sprites.mjs";
 import { appSource } from "./app-source.mjs";
+import { createHash } from "node:crypto";
+import { createObsClipTrigger, runSum, parseObsClipThreshold, obsClipAuth, ObsClipClient, OBS_CLIP_DEFAULT_THRESHOLD, OBS_CLIP_COOLDOWN_MS } from "../obs-clip.mjs";
 
 const root = new URL("../", import.meta.url);
 // #66: live.mjs = the browser part + live-model.mjs (the pure part, moved out unchanged); source checks read both
@@ -1155,4 +1157,132 @@ test("live feed has an SFX mute button (owner 2026-10-28)", () => {
   assert.match(js, /sfxBtn\.textContent = on \? "🔔" : "🔕";/);
   assert.match(js, /tr\("live\.sfxOn", "Sound effects on — click to mute"\)/);
   assert.match(js, /tr\("live\.sfxOff", "Sound effects off — click to unmute"\)/);
+});
+
+// OBS clip trigger (owner 2026-11-06): the live page saves the OBS replay
+// buffer once per run when the run's Σ victim iVi reaches the hand-editable
+// threshold (default 3000). Pure evaluator + wiring checks; no OBS, no browser.
+test("obs clip runSum: known iVi adds up, unknown (null / NaN / undefined) counts as nothing yet", () => {
+  assert.equal(runSum([1000, null, 1500, undefined, NaN, 500]), 3000);
+  assert.equal(runSum([null, null]), 0);
+  assert.equal(runSum([]), 0);
+  assert.equal(runSum(null), 0);
+});
+
+test("obs clip threshold parse: hand-typed values, garbage falls back, clamped 100–100000", () => {
+  assert.equal(parseObsClipThreshold("3000"), 3000);
+  assert.equal(parseObsClipThreshold(2500), 2500);
+  assert.equal(parseObsClipThreshold("2500.9"), 2500);
+  assert.equal(parseObsClipThreshold(""), OBS_CLIP_DEFAULT_THRESHOLD);
+  assert.equal(parseObsClipThreshold("abc"), OBS_CLIP_DEFAULT_THRESHOLD);
+  assert.equal(parseObsClipThreshold(null), OBS_CLIP_DEFAULT_THRESHOLD);
+  assert.equal(parseObsClipThreshold("50"), 100);
+  assert.equal(parseObsClipThreshold("999999"), 100000);
+  assert.equal(OBS_CLIP_DEFAULT_THRESHOLD, 3000);
+});
+
+test("obs clip trigger: fires exactly at the threshold, not below it", () => {
+  const t = createObsClipTrigger();
+  assert.equal(t.evaluate([1499, 1500], 0), false);
+  assert.equal(t.evaluate([1500, 1500], 1000), true);
+});
+
+test("obs clip trigger: unknown iVi never counts — a run of unknowns fires nothing, a late iVi re-evaluates", () => {
+  const t = createObsClipTrigger();
+  assert.equal(t.evaluate([null, null], 0), false);
+  assert.equal(t.evaluate([null, 1500], 1000), false); // one known victim so far
+  assert.equal(t.evaluate([1500, 1500], 2000), true); // the late iVi landed
+});
+
+test("obs clip trigger: once per run — later kills in the same run never re-fire", () => {
+  const t = createObsClipTrigger();
+  assert.equal(t.evaluate([3000], 0), true);
+  assert.equal(t.evaluate([3000], 1000), false);
+  assert.equal(t.evaluate([9000], 2000), false);
+});
+
+test("obs clip trigger: resetRun re-arms for the next run, but the 30 s cooldown still applies", () => {
+  const t = createObsClipTrigger();
+  assert.equal(t.evaluate([3000], 0), true);
+  t.resetRun();
+  assert.equal(t.evaluate([3000], 10000), false, "cooldown: 10 s after the save");
+  assert.equal(t.evaluate([3000], 29999), false, "cooldown: still inside 30 s");
+  assert.equal(t.evaluate([3000], 30000), true, "cooldown: 30 s after the save");
+  assert.equal(OBS_CLIP_COOLDOWN_MS, 30000);
+});
+
+test("obs clip trigger: undoFire rolls a failed save back, so the next kill can retry at once", () => {
+  const t = createObsClipTrigger();
+  assert.equal(t.evaluate([3000], 0), true);
+  t.undoFire();
+  assert.equal(t.evaluate([3000], 1000), true, "a failed save does not spend the run or the cooldown");
+  t.resetRun();
+  assert.equal(t.evaluate([3000], 40000), true, "second run fires after the cooldown");
+  t.undoFire();
+  assert.equal(t.lastSaveAt, 1000, "undo restores the previous save time (the refire at t=1000), not a blank one");
+  assert.equal(t.evaluate([3000], 45000), true, "45 s after the first save is past the cooldown again");
+});
+
+test("obs clip trigger: a lowered threshold fires on the run already banked so far", () => {
+  const t = createObsClipTrigger({ threshold: 5000 });
+  assert.equal(t.evaluate([2500], 0), false);
+  t.setThreshold(2000);
+  assert.equal(t.evaluate([2500], 1000), true);
+});
+
+test("obs clip auth: obs-websocket v5 challenge/response matches an independent SHA-256", async () => {
+  const sha = (s) => createHash("sha256").update(s, "utf8").digest();
+  const secret = sha("pw" + "salt").toString("base64");
+  const expected = sha(secret + "challenge").toString("base64");
+  assert.equal(await obsClipAuth("pw", "salt", "challenge"), expected);
+});
+
+test("obs clip client: inert until connect() — no socket, save rejects when not connected", async () => {
+  const client = new ObsClipClient({ onStatus: () => {} });
+  assert.equal(client.isConnected(), false);
+  await assert.rejects(client.saveReplayBuffer(), /not connected/);
+});
+
+test("obs clip wiring (live.mjs): threshold field, OBS client and both re-evaluation points", () => {
+  const js = readFileSync(new URL("live.mjs", root), "utf8");
+  assert.match(js, /from "\.\/obs-clip\.mjs\?v=20261106-obsclip1"/);
+  assert.match(js, /const obsClip = createObsClipTrigger\(\);/);
+  assert.match(js, /const iv = cashIv\(p\); cashKills\.push\(\{ cid: ev\.opp, iv \}\); maybeFireObsClip\(\);/);
+  assert.match(js, /for \(const e of cashKills\) if \(e\.cid === cid && !Number\.isFinite\(e\.iv\)\) e\.iv = cashIv\(p\);\n\s+maybeFireObsClip\(\); \/\/ late iVi can push the run over the OBS clip threshold/);
+  assert.match(js, /cashKills\.length = 0;\n\s+obsClip\.resetRun\(\); \/\/ the run banked: the next run may clip again/);
+  assert.match(js, /const OBS_CLIP_THRESHOLD_KEY = "ps2_live_obs_clip_threshold";/);
+  assert.match(js, /localStorage\.getItem\(OBS_CLIP_THRESHOLD_KEY\)/);
+  assert.match(js, /const OBS_CLIP_PASSWORD_KEY = "ps2_live_obs_clip_password";/);
+  assert.match(js, /localStorage\.getItem\(OBS_CLIP_PASSWORD_KEY\)/);
+  assert.match(js, /if \(saved\) obsClipPasswordEl\.value = saved;/); // the field is filled from local storage, never from a literal in code
+});
+
+test("obs clip wiring (build-live + live.html): the OBS block is generated, threshold defaults to 3000", () => {
+  const swap = readFileSync(new URL("scripts/build-live.mjs", root), "utf8");
+  const html = readFileSync(new URL("live.html", root), "utf8");
+  for (const src of [swap, html]) {
+    assert.match(src, /<div id="liveObsClip" class="live-obs-clip">/);
+    assert.match(src, /<input id="liveObsClipThreshold" type="number" min="100" max="100000" step="100" value="3000">/);
+    assert.match(src, /<input id="liveObsClipEnable" type="checkbox">/);
+    assert.match(src, /<input id="liveObsClipUrl" type="text" value="ws:\/\/127\.0\.0\.1:4455"/);
+    assert.match(src, /<input id="liveObsClipPassword" type="password"/);
+    assert.match(src, /<span id="liveObsClipStatus" class="live-obs-clip-status"/);
+  }
+  assert.match(swap, /export const LIVE_JS = "live\.mjs\?v=20261106-obsclip1";/);
+  assert.match(html, /<script type="module" src="live\.mjs\?v=20261106-obsclip1"><\/script>/);
+});
+
+test("obs clip i18n: every OBS clip key lives in en.json only and the live page uses tr() for status text", () => {
+  const en = JSON.parse(readFileSync(new URL("i18n/en.json", root), "utf8"));
+  const js = readFileSync(new URL("live.mjs", root), "utf8");
+  for (const k of ["live.obsClipThreshold", "live.obsClipEnable", "live.obsClipUrl", "live.obsClipPassword", "live.obsClipHint", "live.obsClipOff", "live.obsClipDisconnected", "live.obsClipConnecting", "live.obsClipConnected", "live.obsClipSaved", "live.obsClipFailed"]) {
+    assert.equal(typeof en[k], "string", `${k} is in en.json`);
+    assert.ok(en[k].trim().length > 0, `${k} is not empty`);
+  }
+  for (const k of ["live.obsClipSaved", "live.obsClipOff", "live.obsClipConnected", "live.obsClipConnecting", "live.obsClipFailed", "live.obsClipDisconnected"]) {
+    assert.ok(js.includes(`tr("${k}",`), `live.mjs translates ${k} via tr()`);
+  }
+  const css = cssSrc();
+  assert.match(css, /\.live-obs-clip \{/);
+  assert.match(css, /body\.live-stream #liveObsClip \{ display: none; \}/);
 });

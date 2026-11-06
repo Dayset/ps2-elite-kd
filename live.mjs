@@ -31,6 +31,7 @@ import { drawEmojiSprite, spriteCss } from "./live-sprites.mjs?v=20261024-beat1"
 import { sfx, setSfxRate, sfxEnabled, setSfxEnabled } from "./sfx.mjs?v=20261026-sfx2";
 import { say } from "./oracle/js/voice.js?v=20261027-say1";
 import { capsUrl, capsStrip, CAPS_POLL_MS } from "./live-caps.mjs?v=20261030-sp3";
+import { createObsClipTrigger, parseObsClipThreshold, OBS_CLIP_DEFAULT_URL, ObsClipClient } from "./obs-clip.mjs?v=20261106-obsclip1";
 
 const CENSUS = `https://census.daybreakgames.com/s:${CENSUS_SERVICE_ID}/get/ps2:v2/`;
 const STREAM = `wss://push.planetside2.com/streaming?environment=ps2&service-id=s:${CENSUS_SERVICE_ID}`;
@@ -741,6 +742,87 @@ function start() {
     });
     paintLaunch();
   }
+  // Owner 2026-11-06 (OBS clip trigger): when the current run's Σ victim
+  // iVi reaches the hand-editable threshold, save the OBS replay buffer
+  // once (obs-clip.mjs). Off by default; threshold, URL, enable flag and
+  // password live in localStorage on this device only — the password is
+  // never in the code. The block itself is setup UI (live.css hides it in
+  // stream mode) but the trigger keeps running there. maybeFireObsClip is
+  // called from the kill commit AND from bgPump when a late iVi lands, so
+  // a slow victim lookup can't miss the clip; the fired flag resets when
+  // the run banks.
+  const OBS_CLIP_THRESHOLD_KEY = "ps2_live_obs_clip_threshold";
+  const OBS_CLIP_ENABLED_KEY = "ps2_live_obs_clip_enabled";
+  const OBS_CLIP_URL_KEY = "ps2_live_obs_clip_url";
+  const OBS_CLIP_PASSWORD_KEY = "ps2_live_obs_clip_password";
+  const obsClip = createObsClipTrigger();
+  const obsClipStatusEl = $("liveObsClipStatus");
+  const obsClipThresholdEl = $("liveObsClipThreshold");
+  const obsClipEnableEl = $("liveObsClipEnable");
+  const obsClipUrlEl = $("liveObsClipUrl");
+  const obsClipPasswordEl = $("liveObsClipPassword");
+  const paintObsClipStatus = (state) => {
+    if (!obsClipStatusEl) return;
+    if (state === "saved") { obsClipStatusEl.textContent = tr("live.obsClipSaved", "OBS: clip saved ✓"); return; }
+    if (!obsClipEnableEl || !obsClipEnableEl.checked) { obsClipStatusEl.textContent = tr("live.obsClipOff", "OBS clip off"); return; }
+    obsClipStatusEl.textContent = state === "connected" ? tr("live.obsClipConnected", "OBS: connected")
+      : state === "connecting" ? tr("live.obsClipConnecting", "OBS: connecting…")
+      : state === "failed" ? tr("live.obsClipFailed", "OBS: save failed")
+      : tr("live.obsClipDisconnected", "OBS: not connected");
+  };
+  const obsClipClient = new ObsClipClient({
+    onStatus: (s) => { paintObsClipStatus(s === "connected" ? "connected" : s === "connecting" ? "connecting" : "disconnected"); },
+  });
+  const maybeFireObsClip = () => {
+    if (!obsClipEnableEl || !obsClipEnableEl.checked) return;
+    if (!obsClipClient.isConnected()) return;
+    if (!obsClip.evaluate(cashKills.map((e) => e.iv))) return;
+    obsClipClient.saveReplayBuffer().then(() => {
+      paintObsClipStatus("saved");
+      setTimeout(() => paintObsClipStatus(obsClipClient.isConnected() ? "connected" : "disconnected"), 3000);
+    }, () => {
+      obsClip.undoFire(); // a failed save does not spend the run — the next kill can retry
+      paintObsClipStatus("failed");
+    });
+  };
+  const obsClipConnect = () => {
+    const url = (obsClipUrlEl && obsClipUrlEl.value.trim()) || OBS_CLIP_DEFAULT_URL;
+    obsClipClient.connect(url, obsClipPasswordEl ? obsClipPasswordEl.value : "").catch(() => { paintObsClipStatus("disconnected"); });
+  };
+  if (obsClipThresholdEl) {
+    try { obsClip.setThreshold(parseObsClipThreshold(localStorage.getItem(OBS_CLIP_THRESHOLD_KEY))); } catch {}
+    obsClipThresholdEl.value = String(obsClip.threshold);
+    obsClipThresholdEl.addEventListener("change", () => {
+      obsClip.setThreshold(parseObsClipThreshold(obsClipThresholdEl.value, obsClip.threshold));
+      obsClipThresholdEl.value = String(obsClip.threshold);
+      try { localStorage.setItem(OBS_CLIP_THRESHOLD_KEY, String(obsClip.threshold)); } catch {}
+      maybeFireObsClip(); // a lowered threshold can fire on the run already banked so far
+    });
+  }
+  if (obsClipEnableEl) {
+    try { obsClipEnableEl.checked = localStorage.getItem(OBS_CLIP_ENABLED_KEY) === "on"; } catch {}
+    obsClipEnableEl.addEventListener("change", () => {
+      try { localStorage.setItem(OBS_CLIP_ENABLED_KEY, obsClipEnableEl.checked ? "on" : "off"); } catch {}
+      if (obsClipEnableEl.checked) obsClipConnect();
+      else { obsClipClient.disconnect(); paintObsClipStatus("off"); }
+    });
+  }
+  if (obsClipUrlEl) {
+    try { const saved = localStorage.getItem(OBS_CLIP_URL_KEY); if (saved) obsClipUrlEl.value = saved; } catch {}
+    obsClipUrlEl.addEventListener("change", () => {
+      try { localStorage.setItem(OBS_CLIP_URL_KEY, obsClipUrlEl.value.trim()); } catch {}
+      if (obsClipEnableEl && obsClipEnableEl.checked) obsClipConnect();
+    });
+  }
+  if (obsClipPasswordEl) {
+    try { const saved = localStorage.getItem(OBS_CLIP_PASSWORD_KEY); if (saved) obsClipPasswordEl.value = saved; } catch {}
+    obsClipPasswordEl.addEventListener("change", () => {
+      try { localStorage.setItem(OBS_CLIP_PASSWORD_KEY, obsClipPasswordEl.value); } catch {}
+      if (obsClipEnableEl && obsClipEnableEl.checked) obsClipConnect();
+    });
+  }
+  paintObsClipStatus("off");
+  if (obsClipEnableEl && obsClipEnableEl.checked) obsClipConnect();
   // Owner 2026-10-27 (live voice): the Oracle's speech (voice.js say)
   // reads each kill/death opponent's name with the iVi ratio after it.
   // One tap on 🔊/🔇 mutes; default on, like the sounds. Speech is
@@ -1043,6 +1125,7 @@ function start() {
         p.cached = liveRowFromPlayer(player, p.name);
         // a victim whose iVi was unknown at kill time pays out now
         for (const e of cashKills) if (e.cid === cid && !Number.isFinite(e.iv)) e.iv = cashIv(p);
+        maybeFireObsClip(); // late iVi can push the run over the OBS clip threshold
         render();
         drainPendingSpeech(); // and a queued tier line speaks now, if its tier is known
         if (typeof onBgFetched === "function") onBgFetched(p.name, player);
@@ -1192,7 +1275,7 @@ function start() {
       // exactly the old clear plus the new run's early lines.
       if (wasStreak === 0) st = { ...st, victims: st.victims.filter((r) => r.seq === seq || pendingSeq.has(r.seq)) };
       // DPM at the event's own time: a commit deferred behind a slow lookup doesn't shift the decay
-      const iv = cashIv(p); cashKills.push({ cid: ev.opp, iv }); dpsTick(); sfx("victory", { event: true }); if (iv > 0) sfx("chaChing", { event: true }); speakTier(p);
+      const iv = cashIv(p); cashKills.push({ cid: ev.opp, iv }); maybeFireObsClip(); dpsTick(); sfx("victory", { event: true }); if (iv > 0) sfx("chaChing", { event: true }); speakTier(p);
     }
     // Owner 2026-10-25: ANY death dims the killed list and the observed
     // player's own name to 50% — you are dead, the feed shows it — until
@@ -1220,6 +1303,7 @@ function start() {
       if (cashKills.length) cashHist.unshift({ sum: t.sum, avg: t.avg, formula: cashFormula(cashKills.map((e) => e.iv), CASH_BOOST_PCT), kills: cashKills.length, known: t.count });
       if (cashHist.length > 5) cashHist.length = 5;
       cashKills.length = 0;
+      obsClip.resetRun(); // the run banked: the next run may clip again
       renderCashHist();
       dpsTick();
     }

@@ -228,6 +228,15 @@ body.live-stream #liveVoiceLines { display: none; }
 .live-voice-lines label { display: block; margin-top: 0.15rem; }
 .live-voice-lines input { background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 0; padding: 0.1rem 0.3rem; font: inherit; margin-left: 0.25rem; }
 
+/* Owner 2026-11-06: OBS clip trigger — Σ iVi threshold (hand-editable) + OBS connection. Setup UI, never overlay content. */
+body.live-stream #liveObsClip { display: none; }
+.live-obs-clip { margin-top: 0.5rem; font-size: 0.85rem; display: flex; flex-wrap: wrap; gap: 0.25rem 0.5rem; align-items: center; }
+.live-obs-clip input[type="number"] { width: 5rem; background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 0; padding: 0.1rem 0.3rem; font: inherit; }
+.live-obs-clip input[type="text"], .live-obs-clip input[type="password"] { background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 0; padding: 0.1rem 0.3rem; font: inherit; }
+#liveObsClipUrl { width: 11rem; }
+#liveObsClipPassword { width: 9rem; }
+.live-obs-clip-status { color: var(--dim); font-size: 0.72rem; }
+.live-obs-clip-hint { width: 100%; font-size: 0.72rem; color: var(--dim); }
 /* Owner 2026-10-30: overlay launcher — the Windows line for this page's overlay, copyable. Setup UI, never overlay content. */
 body.live-stream #liveLaunch { display: none; }
 .live-launch { margin-top: 0.5rem; font-size: 0.85rem; }
