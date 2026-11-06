@@ -158,8 +158,9 @@ writeFileSync(join(OUT, "profiles.json"), JSON.stringify({ savedAt: new Date().t
 console.log(`::notice::weapon profiles: ${Object.keys(profiles).length} infantry, ${uncovered.length} uncovered: ${uncovered.join(',') || 'none'}`);
 
 // ---- recoil / cone of fire (weapon comparison page) --------------------------
-// assets/weapons/recoil.json: { savedAt, weapons: { <item_id>: [fire_mode_id, player_state_group_id] },
-//   (third entry = ammo pool), states: { <player_state_id>: Census stance name },
+// assets/weapons/recoil.json: { savedAt, weapons: { <item_id>: [hip fire_mode_id, hip player_state_group_id,
+//   ammo pool, ADS fire_mode_id, ADS player_state_group_id] }, handling: { <item_id>: {equip_ms, to_iron_sights_ms,
+//   ..., projectile_speed} }, states: { <player_state_id>: Census stance name },
 //   fm2: { <fire_mode_id>: {recoil_*, cof_*, sway_*, fire_*, reload_* numbers} },
 //   groups: { <player_state_group_id>: [ {player_state_id, cof_*, ...} per stance ] } }
 // Census collections fire_mode_2 and player_state_group_2 (the cache Worker must allow
@@ -167,16 +168,18 @@ console.log(`::notice::weapon profiles: ${Object.keys(profiles).length} infantry
 // sway_, fire_ or move_ are kept; everything else stays in Census. A failure here never
 // stops the catalog or the images: it is logged as a warning and the old file stays.
 try {
-  const wantMode = new Map(), wantGroup = new Set();
+  // Every fire group holds a hip-fire mode (iron_sights 0) and an aim-down-sights mode
+  // (iron_sights 1), each with its own player_state_group (cone per stance). The first group
+  // with modes is the weapon's main one (same rule as Izubrr/planetside_weapon_compare).
+  const groupModes = new Map();   // item id -> [fire_mode_id, ...] of the first group
   for (const id of Object.keys(profiles)) {
     const w = weaponOf.get(id), groups = w ? groupsOf.get(w) || [] : [];
     for (const g of groups) {
-      const ms = (modesOf.get(g) || []).map((x) => ({ m: fmById.get(x.id), idx: x.idx })).filter((x) => x.m).sort((a, b) => a.idx - b.idx).map((x) => x.m);
-      const mode = ms.find((m) => m.type === 'primary') || ms[0];
-      if (mode) { wantMode.set(id, mode.fire_mode_id); break; }
+      const ms = (modesOf.get(g) || []).filter((x) => fmById.get(x.id)).sort((a, b) => a.idx - b.idx).map((x) => x.id);
+      if (ms.length) { groupModes.set(id, ms); break; }
     }
   }
-  const modeIds = new Set(wantMode.values());
+  const modeIds = new Set([...groupModes.values()].flat());
   const keep = (row) => {
     const o = {};
     for (const [k, v] of Object.entries(row)) {
@@ -202,21 +205,42 @@ try {
     const fm = fmById.get(r.fire_mode_id) || {};
     fm2[r.fire_mode_id] = { ...keep(r), ...(+fm.cof_recoil ? { cof_recoil: +fm.cof_recoil } : {}), ...(+fm.pellet_spread ? { pellet_spread: +fm.pellet_spread } : {}), psg: +(r.player_state_group_id || fm.player_state_group_id || 0) };
   }
+  const pick = (id) => {
+    const ms = (groupModes.get(id) || []).filter((m) => fm2[m]);
+    const hip = ms.find((m) => fm2[m].iron_sights === 0) || ms[0];
+    const ads = ms.find((m) => fm2[m].iron_sights === 1) || null;
+    return { hip, ads };
+  };
   const groupIds = new Set();
   for (const id of Object.keys(profiles)) {
-    const mid = wantMode.get(id);
-    const psg = (mid && fm2[mid] && fm2[mid].psg) || (mid && fmById.get(mid)?.player_state_group_id);
-    if (psg) groupIds.add(String(psg));
+    const { hip, ads } = pick(id);
+    for (const m of [hip, ads]) if (m && fm2[m].psg) groupIds.add(String(fm2[m].psg));
   }
   const groups = {};
   for (const r of await pagedAll('player_state_group_2', (r) => groupIds.has(r.player_state_group_id))) {
     (groups[r.player_state_group_id] ||= []).push({ player_state_id: +r.player_state_id, ...keep(r) });
   }
-  const weapons = {};
+  // handling (weapon) and projectile speed / gravity of the hip mode
+  const handlingOf = new Map();
+  for (const r of await paged('weapon', 'weapon_id,equip_ms,unequip_ms,to_iron_sights_ms,from_iron_sights_ms,sprint_recovery_ms,move_modifier,turn_modifier')) {
+    const o = {};
+    for (const k of ['equip_ms', 'unequip_ms', 'to_iron_sights_ms', 'from_iron_sights_ms', 'sprint_recovery_ms', 'move_modifier', 'turn_modifier']) if (r[k] !== undefined && r[k] !== '') o[k] = +r[k];
+    handlingOf.set(r.weapon_id, o);
+  }
+  const projOfMode = new Map();
+  for (const r of await paged('fire_mode_to_projectile', 'fire_mode_id,projectile_id')) if (modeIds.has(r.fire_mode_id) && !projOfMode.has(r.fire_mode_id)) projOfMode.set(r.fire_mode_id, r.projectile_id);
+  const projIds = new Set(projOfMode.values());
+  const proj = new Map();
+  for (const r of await pagedAll('projectile', (r) => projIds.has(r.projectile_id))) proj.set(r.projectile_id, { speed: +r.speed || 0, gravity: +r.gravity || 0, drag: +r.drag || 0, lifespan: +r.lifespan || 0 });
+  const weapons = {}, handling = {};
   for (const id of Object.keys(profiles)) {
-    const mid = wantMode.get(id);
-    if (!mid || !fm2[mid]) continue;
-    weapons[id] = [+mid, +(fm2[mid].psg || fmById.get(mid)?.player_state_group_id || 0), capOf.get(weaponOf.get(id)) || 0];
+    const { hip, ads } = pick(id);
+    if (!hip) continue;
+    weapons[id] = [+hip, +(fm2[hip].psg || 0), capOf.get(weaponOf.get(id)) || 0, ads ? +ads : 0, ads ? +(fm2[ads].psg || 0) : 0];
+    const h = { ...(handlingOf.get(weaponOf.get(id)) || {}) };
+    const pr = proj.get(projOfMode.get(hip));
+    if (pr) Object.assign(h, { projectile_speed: pr.speed, projectile_gravity: pr.gravity });
+    if (Object.keys(h).length) handling[id] = h;
   }
   if (Object.keys(weapons).length < 100 || !Object.keys(groups).length) throw new Error(`only ${Object.keys(weapons).length} weapons / ${Object.keys(groups).length} state groups`);
   // attachments that change recoil / cone numbers (effects are manual, see weapon-sim.mjs ATTACHMENTS):
@@ -234,7 +258,7 @@ try {
   for (const r of attRows) if (attName[r.attachment_item_id]) (att[r.item_id] ||= []).push(+r.attachment_item_id);
   const states = {};
   for (const r of await pagedAll('player_state', () => true)) states[r.player_state_id] = (r.description && (r.description.en || r.description)) || '';
-  writeFileSync(join(OUT, "recoil.json"), JSON.stringify({ savedAt: new Date().toISOString(), weapons, fm2, groups, states, attNames: attName, att }) + "\n");
+  writeFileSync(join(OUT, "recoil.json"), JSON.stringify({ savedAt: new Date().toISOString(), weapons, fm2, groups, states, handling, attNames: attName, att }) + "\n");
   console.log(`::notice::weapon recoil: ${Object.keys(weapons).length} weapons, ${Object.keys(fm2).length} fire modes, ${Object.keys(groups).length} state groups`);
 } catch (e) {
   console.log(`::warning::weapon recoil not updated: ${e.message}`);
