@@ -12,6 +12,7 @@ import {
   HP_PRESETS, hitDamage, ttkDistribution, quantileMs, idealTtk, dps, rangeAxis, ttkCurve,
   winnerStrip, slowerPct,
 } from "./weapons-model.mjs";
+import { simParams, compareBursts, sprayPattern, ATTACHMENTS, ADS_DEFAULT, TARGET, STANCES } from "./weapon-sim.mjs";
 
 export const MAX_WEAPONS = 4;
 export const MAX_RANGE = 500;        // hard cap (the 500 m option); the chart shows 100 / 200 / 500, see viewMax()
@@ -99,7 +100,7 @@ async function boot() {
   }
   $("wcStatus").hidden = true;
   let recoil = null;           // assets/weapons/recoil.json: optional, the rows just stay out without it
-  fetch("assets/weapons/recoil.json").then((r) => (r.ok ? r.json() : null)).then((j) => { if (j && j.weapons) { recoil = j; if (calc) renderCards(); } }).catch(() => {});
+  fetch("assets/weapons/recoil.json").then((r) => (r.ok ? r.json() : null)).then((j) => { if (j && j.weapons) { recoil = j; if (calc) { renderCards(); drawSim(); } } }).catch(() => {});
   const recoilOf = (id) => {
     const r = recoil && recoil.weapons[id];
     if (!r) return null;
@@ -359,7 +360,60 @@ async function boot() {
     el.innerHTML = s + "</svg>" + `<div class="wc-legend">${key(1, "burst")}${key(0.55, "sustained")}</div>`;
   }
 
-  function renderCharts() { if (!calc) return; drawTtk(); drawCdf(); drawDps(); }
+  // ------------------------------------------------------ recoil simulator --
+  const simState = { aim: "ads", stance: "crouchStill", att: {} };
+  const STANCE_EN = { crouchStill: "Crouched, still", standStill: "Standing, still", crouchMove: "Crouched, moving", standMove: "Standing, moving" };
+  const attsOf = (id) => {
+    const ids = recoil && recoil.att && recoil.att[id];
+    if (!ids || !recoil.attNames) return [];
+    const keys = Object.keys(ATTACHMENTS);
+    return [...new Set(ids.map((a) => keys.find((k) => k.toLowerCase() === String(recoil.attNames[a] || "").toLowerCase())).filter(Boolean))];
+  };
+  const burstLabel = (b) => (b === Infinity ? tr("wc.sim.hold", "hold the trigger") : b === 1 ? tr("wc.sim.tap", "single shots") : tr("wc.sim.burstN", "{n}-shot bursts", { n: nf(b) }));
+
+  function drawSim() {
+    const el = $("wcSim");
+    if (!calc || !calc.ws.length) { el.innerHTML = ""; return; }
+    if (!recoil) { el.innerHTML = `<p class="wc-dim">${esc(tr("wc.sim.wait", "Loading recoil data…"))}</p>`; return; }
+    $("wcSimNote").textContent = tr("wc.sim.note", "Target at {m} m with {hp} health. No recoil control: the crosshair is never pulled back. Each style is tried 300 times.", { m: nf(st.range), hp: nf(st.hp) });
+    el.innerHTML = calc.ws.map((w, i) => {
+      const x = recoilOf(w.id);
+      if (!x || !x.fm) return `<article class="wc-sim" style="border-top-color:${color(i)}"><b>${esc(w.name)}</b><p class="wc-dim">${esc(tr("wc.sim.none", "No recoil data for this weapon."))}</p></article>`;
+      const att = (simState.att[w.id] || []).filter((n) => attsOf(w.id).includes(n));
+      const P = simParams(w.p, x.fm, x.states, { stance: simState.stance, aim: simState.aim, attachments: att });
+      const { rows, best } = compareBursts(P, { distance: st.range, hp: st.hp, runs: 300, seed: 1 });
+      const worst = Math.max(1, ...rows.map((r) => r.median ?? 0));
+      const bars = rows.map((r) => `<li class="${best && r.burst === best.burst ? "best" : ""}"><span class="lab">${esc(burstLabel(r.burst))}</span><span class="wc-bar"><i style="width:${r.median == null ? 0 : Math.max(2, r.median / worst * 100).toFixed(1)}%;background:${color(i)}"></i></span><span class="v">${r.median == null ? esc(tr("wc.never", "no kill")) : esc(fmtMs(r.median))} · ${nf(r.killRate * 100)}%</span></li>`).join("");
+      const shots = sprayPattern(P, { distance: st.range, seed: 1, shots: Math.min(30, w.p.mag) });
+      const S = Math.max(1, ...shots.map((s) => Math.max(Math.abs(s.x), Math.abs(s.y))) .map((v) => v * 1.1));
+      const U = 75 / S, cx = 80, cy = 75;
+      let svg = svgOpen(160, 180, tr("wc.sim.aria", "Where a full-magazine spray lands on the target"));
+      svg += `<rect x="${cx - TARGET.halfW * U}" y="${cy - TARGET.top * U}" width="${2 * TARGET.halfW * U}" height="${(TARGET.top - TARGET.bottom) * U}" fill="var(--border)"/>`;
+      svg += `<circle cx="${cx + TARGET.headX * U}" cy="${cy - TARGET.headY * U}" r="${TARGET.headR * U}" fill="var(--border)" stroke="var(--dim)"/>`;
+      svg += shots.map((s) => `<circle cx="${(cx + s.x * U).toFixed(1)}" cy="${(cy - s.y * U).toFixed(1)}" r="2" fill="${color(i)}" fill-opacity="${(0.35 + 0.65 * (1 - s.i / 30)).toFixed(2)}"/>`).join("");
+      svg += "</svg>";
+      const head = best
+        ? esc(tr("wc.sim.best", "Best: {style}, median {ms}", { style: burstLabel(best.burst), ms: fmtMs(best.median) }))
+        : esc(tr("wc.sim.nobest", "Cannot kill reliably at this range with this setup"));
+      const chips = attsOf(w.id).map((n) => `<label class="wc-att"><input type="checkbox" data-w="${w.id}" data-a="${esc(n)}" ${att.includes(n) ? "checked" : ""}/> ${esc(n)}</label>`).join("");
+      return `<article class="wc-sim" style="border-top-color:${color(i)}"><div class="wc-simhead"><b>${esc(w.name)}</b><span class="good">${head}</span></div>
+        <div class="wc-simbody"><ul class="wc-bars">${bars}</ul><div class="wc-spray">${svg}</div></div>${chips ? `<div class="wc-atts">${chips}</div>` : ""}</article>`;
+    }).join("");
+    el.querySelectorAll("input[data-w]").forEach((cb) => cb.addEventListener("change", () => {
+      const id = Number(cb.dataset.w), a = cb.dataset.a, cur = new Set(simState.att[id] || []);
+      cb.checked ? cur.add(a) : cur.delete(a);
+      simState.att[id] = [...cur];
+      drawSim();
+    }));
+  }
+  {
+    const a = $("wcSimAim"), s = $("wcSimStance");
+    s.innerHTML = STANCES.map((k) => `<option value="${k}">${esc(tr("wc.sim.st." + k, STANCE_EN[k]))}</option>`).join("");
+    a.addEventListener("change", () => { simState.aim = a.value; drawSim(); });
+    s.addEventListener("change", () => { simState.stance = s.value; drawSim(); });
+  }
+
+  function renderCharts() { if (!calc) return; drawTtk(); drawCdf(); drawDps(); drawSim(); }
 
   function renderAll() {
     $("wcAccV").textContent = nf(st.acc) + "%";

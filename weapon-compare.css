@@ -53,6 +53,22 @@ body { overflow: auto; }
 .wc-readout .sw, .wc-legend .sw { display: inline-block; width: 10px; height: 10px; margin-right: 4px; vertical-align: baseline; }
 .wc-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.82rem; margin-top: 6px; color: var(--dim); }
 
+.wc-simctl { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 6px 0 10px; font-size: 0.88rem; }
+.wc-simlist { display: grid; gap: 10px; }
+.wc-sim { border: 1px solid var(--border); border-top: 3px solid var(--border); padding: 8px 10px; }
+.wc-simhead { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; }
+.wc-simbody { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: flex-start; margin-top: 6px; }
+.wc-bars { list-style: none; margin: 0; padding: 0; flex: 1 1 280px; font-size: 0.84rem; }
+.wc-bars li { display: grid; grid-template-columns: 9.5em 1fr 8.5em; gap: 8px; align-items: center; padding: 1px 0; }
+.wc-bars li.best .lab { color: var(--text); font-weight: 700; }
+.wc-bars .lab { color: var(--dim); }
+.wc-bars .v { font-variant-numeric: tabular-nums; text-align: right; }
+.wc-bar { display: block; height: 10px; background: var(--border); }
+.wc-bar i { display: block; height: 100%; }
+.wc-spray svg { width: 160px; height: 180px; display: block; }
+.wc-atts { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 6px; font-size: 0.82rem; }
+.wc-sim .good { color: var(--ok, #8ef0b0); font-size: 0.88rem; }
+
 .wc-how summary { cursor: pointer; font-weight: 600; }
 .wc-how ul { margin: 8px 0; padding-left: 1.2rem; font-size: 0.88rem; }
 
