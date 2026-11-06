@@ -64,10 +64,10 @@ for (const id of ids) {
   }
   out.weapons[catalog[id][0]] = w;
 }
-for (let start = 0; ; start += 1000) {
-  const rows = list(await get(`fire_mode_2?c:start=${start}&c:limit=1000`), "fire_mode_2");
+for (let start = 0; ; start += 500) {
+  const rows = list(await get(`fire_mode_2?c:start=${start}&c:limit=500`), "fire_mode_2");
   for (const r of rows) if (wantModes.has(String(r.fire_mode_id))) for (const w of Object.values(out.weapons)) for (const m of w.fire_modes) if (String(m.fire_mode_id) === String(r.fire_mode_id)) m.fire_mode_2 = r;
-  if (rows.length < 1000) break;
+  if (rows.length < 500) break;
 }
 for (const c of ["item_attachment", "weapon_to_attachment", "weapon_datasheet", "attachment", "player_state", "player_state_group_2", "firing_mode_modifier", "weapon_modifier", "item_modifier"]) {
   const r = await get(`${c}?c:limit=2`);
