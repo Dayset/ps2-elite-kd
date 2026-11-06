@@ -396,7 +396,7 @@ async function boot() {
     return out;
   };
   const chosenAtt = (id) => Object.values(simState.att[id] || {}).filter(Boolean);
-  const SLOT_EN = { barrel: "Barrel", rail: "Rail", ammo: "Ammo and magazine" };
+  const SLOT_EN = { barrel: "Barrel", rail: "Rail", ammo: "Ammo" };
   const burstLabel = (b) => (b === 1 ? tr("wc.sim.tap", "single shots") : tr("wc.sim.burstN", "{n}-shot bursts", { n: nf(b) }));
 
   function drawSim() {
@@ -408,7 +408,7 @@ async function boot() {
       const x = recoilOf(w.id);
       if (!x || !x.fm) return `<article class="wc-sim" style="border-top-color:${color(i)}"><b>${esc(w.name)}</b><p class="wc-dim">${esc(tr("wc.sim.none", "No recoil data for this weapon."))}</p></article>`;
       const att = chosenAtt(w.id);
-      const P = simParams(w.p, x.fm, x.states, { stance: simState.stance, aim: simState.aim, attachments: att, adsFm: x.adsFm, adsStates: x.adsStates });
+      const P = simParams(w.p, x.fm, x.states, { stance: simState.stance, aim: simState.aim, attachments: att, adsFm: x.adsFm, adsStates: x.adsStates, cat: w.cat });
       const { rows, best } = compareBursts(P, { distance: st.range, hp: st.hp, runs: 300, seed: 1 });
       const worst = Math.max(1, ...rows.map((r) => r.median ?? 0));
       const bars = rows.map((r) => `<li class="${best && r.burst === best.burst ? "best" : ""}"><span class="lab">${esc(burstLabel(r.burst))}</span><span class="wc-bar"><i style="width:${r.median == null ? 0 : Math.max(2, r.median / worst * 100).toFixed(1)}%;background:${color(i)}"></i></span><span class="v">${r.median == null ? esc(tr("wc.never", "no kill")) : esc(fmtMs(r.median))} · ${nf(r.killRate * 100)}%</span></li>`).join("");
@@ -424,7 +424,7 @@ async function boot() {
         ? esc(tr("wc.sim.best", "Best: {style}, median {ms}", { style: burstLabel(best.burst), ms: fmtMs(best.median) }))
         : esc(tr("wc.sim.nobest", "Cannot kill reliably at this range with this setup"));
       const have = attsOf(w.id);
-      const chips = SLOTS.filter((sl) => have[sl]).map((sl) => `<label class="wc-att"><span>${esc(tr("wc.sim.slot." + sl, SLOT_EN[sl]))}</span> <select data-w="${w.id}" data-slot="${sl}"><option value="">${esc(tr("wc.sim.noAtt", "none"))}</option>${have[sl].map((n) => `<option value="${esc(n)}" ${(simState.att[w.id] || {})[sl] === n ? "selected" : ""}>${esc(n)}${ATTACHMENTS[n] ? "" : " · " + esc(tr("wc.sim.noEffect", "no known numbers"))}</option>`).join("")}</select></label>`).join("");
+      const chips = SLOTS.filter((sl) => have[sl]).map((sl) => `<label class="wc-att"><span>${esc(tr("wc.sim.slot." + sl, SLOT_EN[sl]))}</span> <select data-w="${w.id}" data-slot="${sl}"><option value="">${esc(tr("wc.sim.noAtt", "none"))}</option>${have[sl].map((n) => `<option value="${esc(n)}" ${(simState.att[w.id] || {})[sl] === n ? "selected" : ""}>${esc(n)}${n in ATTACHMENTS ? (Object.keys(ATTACHMENTS[n]).length ? "" : " · " + esc(tr("wc.sim.noCombat", "no effect on killing"))) : " · " + esc(tr("wc.sim.noEffect", "not modelled"))}</option>`).join("")}</select></label>`).join("");
       return `<article class="wc-sim" style="border-top-color:${color(i)}"><div class="wc-simhead"><b>${esc(w.name)}</b><span class="good">${head}</span></div>
         <div class="wc-simbody"><ul class="wc-bars">${bars}</ul><div class="wc-spray">${svg}</div></div>${chips ? `<div class="wc-atts">${chips}</div>` : ""}</article>`;
     }).join("");

@@ -28,7 +28,7 @@ test("attachments change the numbers the way the table says", () => {
   const grip = simParams(AR, FM, STATES, { aim: "ads", attachments: ["Forward Grip"] });
   assert.ok(Math.abs(grip.hMax - base.hMax * 0.75) < 1e-9);
   const hipC = simParams(AR, FM, STATES, { aim: "hip", attachments: ["Compensator"] });
-  assert.ok(Math.abs(hipC.cofMin - 3 * 1.15) < 1e-9 || true);
+  
   assert.ok(Object.keys(ATTACHMENTS).length >= 6);
 });
 
@@ -104,9 +104,9 @@ test("aiming uses the weapon's own ADS fire mode and cone when Census has one", 
 
 test("attachment slots: one barrel part, rail part and ammo each; optics and cosmetics are not listed", () => {
   assert.deepEqual([...SLOTS], ["barrel", "rail", "ammo"]);
-  for (const n of ["Heavy Barrel", "Short Barrel", "Compensator", "Flash Suppressor"]) assert.equal(slotOf(n), "barrel", n);
-  for (const n of ["Forward Grip", "Laser Sight", "Darklight Flashlight", "Comfort Grip"]) assert.equal(slotOf(n), "rail", n);
-  for (const n of ["High Velocity Ammunition", "Soft Point Ammunition", "Flechette Ammunition", "Extended Magazine"]) assert.equal(slotOf(n), "ammo", n);
+  for (const n of ["Compensator", "Suppressor", "Flash Suppressor"]) assert.equal(slotOf(n), "barrel", n);
+  for (const n of ["Forward Grip", "Laser Sight", "Darklight Flashlight", "Comfort Grip", "Heavy Barrel", "Short Barrel", "Extended Magazine"]) assert.equal(slotOf(n), "rail", n);
+  for (const n of ["High Velocity Ammunition", "Soft Point Ammunition", "Flechette Ammunition"]) assert.equal(slotOf(n), "ammo", n);
   for (const n of ["NiCO (1x)", "Default Magazine", "Pink Laser Sight", "Default Back Sight", "Cert Attachment"]) assert.equal(slotOf(n), null, n);
 });
 
@@ -118,4 +118,25 @@ test("the Naginata lists its laser, flash suppressor and ammo types", () => {
   const rec = JSON.parse(readFileSync(new URL("../assets/weapons/recoil.json", import.meta.url), "utf8"));
   const names = (rec.att[804249] || []).map((i) => rec.attNames[i]);
   for (const n of ["Laser Sight", "Flash Suppressor", "Soft Point Ammunition", "High Velocity Ammunition", "Heavy Barrel", "Short Barrel"]) assert.ok(names.includes(n), n);
+});
+
+test("Laser Sight narrows the minimum hip cone by a third, not the bloom; Soft Point pushes max damage range out 5 m", () => {
+  const base = simParams(AR, FM, STATES, { aim: "hip", stance: "standStill" });
+  const laser = simParams(AR, FM, STATES, { aim: "hip", stance: "standStill", attachments: ["Laser Sight"] });
+  assert.ok(Math.abs(laser.cofMin - base.cofMin * 0.67) < 1e-9);
+  assert.equal(laser.bloom, base.bloom);
+  assert.equal(laser.cofMax, base.cofMax);
+  const comp = simParams(AR, FM, STATES, { aim: "hip", stance: "standStill", attachments: ["Compensator"] });
+  assert.ok(Math.abs(comp.cofMin - base.cofMin * 1.15) < 1e-9);
+  assert.equal(comp.cofMax, base.cofMax, "only the minimum cone grows");
+  const ads = simParams(AR, FM, STATES, { aim: "ads", attachments: ["Laser Sight"] });
+  assert.equal(ads.cofMin, simParams(AR, FM, STATES, { aim: "ads" }).cofMin, "no effect while aiming");
+  const sp = simParams(AR, FM, STATES, { attachments: ["Soft Point Ammunition"] });
+  assert.equal(sp.profile.rangeMaxDmg, AR.rangeMaxDmg + 5);
+  assert.equal(sp.profile.rangeMinDmg, AR.rangeMinDmg);
+  const hv = simParams(AR, FM, STATES, { attachments: ["High Velocity Ammunition"] });
+  assert.equal(hv.profile.rangeMaxDmg, AR.rangeMaxDmg - 2);
+  assert.equal(hv.profile.rangeMinDmg, AR.rangeMinDmg + 20);
+  assert.equal(simParams(AR, FM, STATES, { attachments: ["Suppressor"] }).profile.rangeMinDmg, AR.rangeMinDmg - 20);
+  assert.equal(simParams(AR, FM, STATES, { attachments: ["Suppressor"], cat: "SMG" }).profile.rangeMinDmg, AR.rangeMinDmg - 10);
 });

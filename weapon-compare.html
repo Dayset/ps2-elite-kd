@@ -18,7 +18,7 @@
     } catch (e) {}
   </script>
   <link rel="stylesheet" href="styles.css?v=20261031-fr1" />
-  <link rel="stylesheet" href="weapon-compare.css?v=20261106-wc5" />
+  <link rel="stylesheet" href="weapon-compare.css?v=20261106-wc6" />
 </head>
 <body class="site-page">
   <main class="wc-wrap">
@@ -96,7 +96,7 @@
         <label><span data-i18n="wc.sim.stance">Stance</span> <select id="wcSimStance"></select></label>
       </div>
       <div id="wcSim" class="wc-simlist"></div>
-      <p class="wc-dim" data-i18n="wc.sim.assume">Aiming uses each weapon's own aim-down-sights fire mode from Census: its cone per stance, bloom and recoil. Only one attachment per slot can be fitted. Census has no attachment numbers: the effects used (Compensator, Forward Grip, Angled Forward Grip, Comfort Grip penalty, Heavy Barrel, Short Barrel) are typed in by hand from the Izubrr repo and the Arsenal Update patch notes; any other attachment can be fitted but changes nothing here. The target is a head circle and a body box; the shot cone is filled evenly.</p>
+      <p class="wc-dim" data-i18n="wc.sim.assume">Aiming uses each weapon's own aim-down-sights fire mode from Census: its cone per stance, bloom and recoil. Only one attachment per slot can be fitted (the wiki lists Heavy Barrel, Short Barrel, grips, lasers and Extended Magazine as rail attachments). Census has no attachment numbers: the effects (Compensator, Suppressor, grips, lasers, Heavy and Short Barrel, Soft Point, High Velocity) are typed in from the PlanetSide 2 wiki, patch 2023-02-08 or later. Bullet speed changes, Extended Magazine, slugs and flechettes are not modelled. The target is a head circle and a body box; the shot cone is filled evenly.</p>
     </section>
 
     <details class="wc-card wc-how">
@@ -113,6 +113,6 @@
   <footer class="wc-foot">
     <label class="wc-check"><input id="wcFar" type="checkbox" /> <span data-i18n="wc.far">Extend the range to 500 m (for snipers)</span></label>
   </footer>
-  <script type="module" src="weapon-compare.mjs?v=20261106-wc5"></script>
+  <script type="module" src="weapon-compare.mjs?v=20261106-wc6"></script>
 </body>
 </html>

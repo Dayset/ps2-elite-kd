@@ -28,16 +28,19 @@ export const ASSUMPTIONS = Object.freeze([
 ]);
 
 /**
- * Attachment slots. Census says which attachments a weapon can mount but not their slot, so the
- * slot comes from the name. Only one attachment per slot can be fitted: barrel (compensator,
- * suppressors, heavy / short barrel), rail (grips, laser, flashlight, launchers) and ammo (ammunition
- * types and magazines). Optics, default parts, cosmetic laser colours and cert items are not listed.
+ * Attachment slots, from the PlanetSide 2 wiki (Fandom, read 6 Nov 2026): Compensator, Suppressor and
+ * Flash Suppressor are barrel attachments; the grips, Laser Sight, Hybrid Laser, flashlight, Heavy
+ * Barrel, Short Barrel and Extended Magazine are all RAIL attachments (so Heavy Barrel + Short
+ * Barrel, or a grip + laser, cannot be fitted together); ammunition types are the ammo slot.
+ * Census lists what a weapon can mount but not the slot, so it comes from the name. Rarer parts
+ * (Muzzle Brake, Smart-Choke, launchers, Heavy Magazine...) are placed by the same rule, unverified.
+ * Optics, default parts, cosmetic laser colours and cert items are not listed.
  */
 export const SLOTS = Object.freeze(["barrel", "rail", "ammo"]);
 const SLOT_RE = {
-  barrel: /^(Compensator|Flash Suppressor|Suppressor|Muzzle Brake|Heavy Barrel|Short Barrel|Smart-Choke|Hybrid Suppressor|Burst Stabilizer|Recoil Stabilizer|Confetti Suppressor)$/i,
-  rail: /^(Forward Grip|Angled Forward Grip|Comfort Grip|Laser Sight|Hybrid Laser|Darklight Flashlight|Zip Light|Grenade Launcher|Underbarrel Shotgun|Smoke Launcher|Cure Launcher|Adaptive Class Underbarrel)$/i,
-  ammo: /(Ammunition|^Extended Magazine|^Heavy Magazine|^Smart Feeder)$/i,
+  barrel: /^(Compensator|Flash Suppressor|Suppressor|Muzzle Brake|Smart-Choke|Hybrid Suppressor|Burst Stabilizer|Recoil Stabilizer|Confetti Suppressor)$/i,
+  rail: /^(Forward Grip|Angled Forward Grip|Comfort Grip|Laser Sight|Hybrid Laser|Darklight Flashlight|Zip Light|Heavy Barrel|Short Barrel|Extended Magazine|Heavy Magazine|Smart Feeder|Grenade Launcher|Underbarrel Shotgun|Smoke Launcher|Cure Launcher|Adaptive Class Underbarrel)$/i,
+  ammo: /Ammunition$/i,
 };
 export function slotOf(name) {
   for (const s of SLOTS) if (SLOT_RE[s].test(String(name || "").trim())) return s;
@@ -45,21 +48,31 @@ export function slotOf(name) {
 }
 
 /**
- * Manual attachment modifiers. Census has NO numbers for attachments, so only effects with a
- * published number are here (Izubrr/planetside_weapon_compare README: Forward Grip, Compensator;
- * Arsenal Update patch notes, planetside2.com: the rest). Every other attachment can be fitted but
- * changes nothing, and the page says so.
- * vRecoil / hRecoil / firstShot multiply the recoil numbers, hipCof the hip cone, hipBloom / adsBloom
- * the bloom per shot, adsVRecoil the vertical recoil while aiming only.
- * Comfort Grip: only its penalty (+20 % vertical recoil) is published.
+ * Attachment modifiers. Census has NO numbers for attachments; these are typed in from the
+ * PlanetSide 2 wiki attachment pages (Fandom, read 6 Nov 2026, current to patch 2023-02-08 or
+ * later), which agree with Izubrr/planetside_weapon_compare and the Arsenal Update notes.
+ * vRecoil / hRecoil (horizontal recoil, tolerance, angle) / firstShot multiply the recoil numbers,
+ * hipMinCof the MINIMUM hip cone, hipSpread the hip pellet spread, hipBloom / adsBloom the bloom
+ * per shot, adsVRecoil the vertical recoil while aiming only. maxRange / minRange add metres to the
+ * damage falloff range (minRangeSmg replaces minRange on SMGs). An entry with no keys is a known
+ * attachment with no effect on killing. Bullet speed changes are not modelled: a hit is instant here.
+ * Not modelled (no usable numbers): Extended Magazine (amount depends on the weapon), Slug and
+ * Flechette ammunition (damage and pellet count depend on the shotgun class) and the rarer ammo types.
  */
 export const ATTACHMENTS = Object.freeze({
-  "Compensator": { vRecoil: 0.7, hipCof: 1.15 },
+  "Compensator": { vRecoil: 0.7, hipMinCof: 1.15 },
+  "Suppressor": { minRange: -20, minRangeSmg: -10 },
+  "Flash Suppressor": {},
   "Forward Grip": { hRecoil: 0.75 },
   "Angled Forward Grip": { firstShot: 0.4, hRecoil: 1.1 },
-  "Comfort Grip": { vRecoil: 1.2 },
+  "Comfort Grip": { vRecoil: 1.2, hRecoil: 0.8 },
+  "Laser Sight": { hipMinCof: 0.67 },
+  "Hybrid Laser": { hipMinCof: 0.67, hipSpread: 0.67 },
+  "Darklight Flashlight": {},
   "Heavy Barrel": { adsBloom: 0.8 },
   "Short Barrel": { hipBloom: 0.6, adsVRecoil: 1.2 },
+  "Soft Point Ammunition": { maxRange: 5 },
+  "High Velocity Ammunition": { maxRange: -2, minRange: 20 },
 });
 
 /** Strategies: shots per burst (holding the trigger down is not offered: it is never the practical choice). */
@@ -69,6 +82,15 @@ export const BURSTS = Object.freeze([1, 2, 3, 4, 6, 8, 12]);
  * Everything the simulation needs, from the Census record, the stance rows and the chosen options.
  * opts: { stance, aim: "ads" | "hip", attachments: [names], ads }
  */
+function adjustRanges(profile, A, cat) {
+  const sum = (k) => A.reduce((m, a) => m + (a[k] || 0), 0);
+  const dMax = sum("maxRange");
+  const dMin = A.reduce((m, a) => m + (cat === "SMG" && a.minRangeSmg != null ? a.minRangeSmg : a.minRange || 0), 0);
+  if (!dMax && !dMin) return profile;
+  const far = profile.rangeMinDmg > 0 ? Math.max(0, profile.rangeMinDmg + dMin) : profile.rangeMinDmg;
+  return { ...profile, rangeMaxDmg: Math.max(0, profile.rangeMaxDmg + dMax), rangeMinDmg: far };
+}
+
 export function simParams(profile, fm, states, opts = {}) {
   const stance = opts.stance || "crouchStill";
   const hip = opts.aim === "hip";
@@ -82,7 +104,7 @@ export function simParams(profile, fm, states, opts = {}) {
   const mul = (key) => A.reduce((m, a) => m * (a[key] ?? 1), 1);
   let cofMin = hip || realAds ? (row.cof_min ?? 2) : ads[stance];
   let cofMax = row.cof_max ?? Math.max(cofMin, 1);
-  if (hip) { cofMin *= mul("hipCof"); cofMax *= mul("hipCof"); }
+  if (hip) cofMin *= mul("hipMinCof");
   if (cofMax < cofMin) cofMax = cofMin;
   const baseBloom = f.cof_recoil ?? (fm && fm.cof_recoil) ?? 0.1;
   const bloom = baseBloom * (hip ? mul("hipBloom") : (opts.adsFm ? 1 : ads.bloomRatio) * mul("adsBloom"));
@@ -91,7 +113,8 @@ export function simParams(profile, fm, states, opts = {}) {
   const hMul = mul("hRecoil") * rec;
   return {
     gapMs: f.fire_refire_ms || 60000 / profile.rpm,
-    mag: profile.mag, reloadMs: profile.reloadMs, pellets: profile.pellets, profile,
+    mag: profile.mag, reloadMs: profile.reloadMs, pellets: profile.pellets,
+    profile: adjustRanges(profile, A, opts.cat),
     vMin: (f.recoil_magnitude_min ?? 0.3) * vMul, vMax: (f.recoil_magnitude_max ?? 0.3) * vMul,
     first: Math.max(0, (f.recoil_first_shot_modifier ?? 1) * mul("firstShot")),
     angMin: (f.recoil_angle_min ?? 0) * hMul, angMax: (f.recoil_angle_max ?? 0) * hMul,
@@ -100,7 +123,7 @@ export function simParams(profile, fm, states, opts = {}) {
     recDelay: f.recoil_recovery_delay_ms ?? 0, recRate: Math.max(0.01, f.recoil_recovery_rate ?? 10),
     cofMin, cofMax, bloom,
     cofRecRate: Math.max(0.01, row.cof_recovery_rate ?? 20), cofRecDelay: row.cof_recovery_delay_ms ?? 0,
-    pelletSpread: f.pellet_spread ?? f.cof_pellet_spread ?? 0,
+    pelletSpread: (f.pellet_spread ?? f.cof_pellet_spread ?? 0) * (hip ? mul("hipSpread") : 1),
     realAds,
   };
 }
