@@ -219,9 +219,22 @@ try {
     weapons[id] = [+mid, +(fm2[mid].psg || fmById.get(mid)?.player_state_group_id || 0), capOf.get(weaponOf.get(id)) || 0];
   }
   if (Object.keys(weapons).length < 100 || !Object.keys(groups).length) throw new Error(`only ${Object.keys(weapons).length} weapons / ${Object.keys(groups).length} state groups`);
+  // attachments that change recoil / cone numbers (effects are manual, see weapon-sim.mjs ATTACHMENTS):
+  // only which of them each weapon can mount comes from Census (item_attachment -> item name).
+  const ATT_RE = /^(Compensator|Forward Grip|Angled Forward Grip|Comfort Grip|Heavy Barrel|Short Barrel|Mobile Prediction Laser)$/i;
+  const attRows = await pagedAll('item_attachment', (r) => profiles[r.item_id]);
+  const attIds = [...new Set(attRows.map((r) => r.attachment_item_id))];
+  const attName = {};
+  for (let i = 0; i < attIds.length; i += 60) {
+    const j = await get(`${base}item?item_id=${attIds.slice(i, i + 60).join(',')}&c:show=item_id,name.en&c:limit=100`);
+    for (const it of (j && j.item_list) || []) if (it.name && ATT_RE.test(it.name.en || '')) attName[it.item_id] = it.name.en;
+    await sleep(200);
+  }
+  const att = {};
+  for (const r of attRows) if (attName[r.attachment_item_id]) (att[r.item_id] ||= []).push(+r.attachment_item_id);
   const states = {};
   for (const r of await pagedAll('player_state', () => true)) states[r.player_state_id] = (r.description && (r.description.en || r.description)) || '';
-  writeFileSync(join(OUT, "recoil.json"), JSON.stringify({ savedAt: new Date().toISOString(), weapons, fm2, groups, states }) + "\n");
+  writeFileSync(join(OUT, "recoil.json"), JSON.stringify({ savedAt: new Date().toISOString(), weapons, fm2, groups, states, attNames: attName, att }) + "\n");
   console.log(`::notice::weapon recoil: ${Object.keys(weapons).length} weapons, ${Object.keys(fm2).length} fire modes, ${Object.keys(groups).length} state groups`);
 } catch (e) {
   console.log(`::warning::weapon recoil not updated: ${e.message}`);
