@@ -382,7 +382,8 @@ async function boot() {
   }
 
   // ------------------------------------------------------ recoil simulator --
-  const simState = { aim: "ads", stance: "crouchStill", att: {}, comp: 0 };
+  const simState = { aim: "ads", stance: "crouchStill", att: {}, comp: 0, target: null };
+  const sprayTarget = () => simState.target || (st.hsr >= 50 ? "head" : "body");   // the picture follows the headshot rate until a button is pressed
   // best median kill time per weapon of a class (no attachments), for the gold "best in class" colour; filled in slices
   const simClassCache = new Map(), simClassBusy = new Set();
   const simKey = (cat) => [cat, simState.aim, simState.stance, simState.comp, st.acc, st.hsr, st.range, st.hp].join("|");
@@ -437,6 +438,7 @@ async function boot() {
     if (!calc || !calc.ws.length) { el.innerHTML = ""; return; }
     if (!recoil) { el.innerHTML = `<p class="wc-dim">${esc(tr("wc.sim.wait", "Loading recoil data…"))}</p>`; return; }
     $("wcSimNote").textContent = tr("wc.sim.note2", "Target at {m} m with {hp} health. Each shot is aimed at the head with the headshot rate, else at the body, and lands on the aim point with the accuracy (else it misses clearly); the cone and recoil come on top. Recoil compensation pulls that share of the vertical kick back, a simple pulldown. Each style is tried 300 times.", { m: nf(st.range), hp: nf(st.hp) });
+    document.querySelectorAll("#wcSimTarget .wc-segbtn").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.k === sprayTarget())));
     const results = calc.ws.map((w) => { const x = recoilOf(w.id); return x && x.fm ? bestMedian(w, chosenAtt(w.id)) : null; });
     const meds = results.map((r) => (r && r.best ? r.best.median : null)), rates = results.map((r) => (r && r.best ? r.best.killRate : null));
     const bestMed = bestOf(meds, -1), bestRate = bestOf(rates, 1);
@@ -451,7 +453,7 @@ async function boot() {
       const { rows, best } = results[i];
       const worst = Math.max(1, ...rows.map((r) => r.median ?? 0));
       const bars = rows.map((r) => `<li class="${best && r.burst === best.burst ? "best" : ""}"><span class="lab">${esc(burstLabel(r.burst))}</span><span class="wc-bar"><i style="width:${r.median == null ? 0 : Math.max(2, r.median / worst * 100).toFixed(1)}%;background:${color(i)}"></i></span><span class="v">${r.median == null ? esc(tr("wc.never", "no kill")) : esc(fmtMs(r.median))} · ${nf(r.killRate * 100)}%</span></li>`).join("");
-      const shots = sprayPattern(P, { distance: st.range, seed: 1, shots: Math.min(30, w.p.mag) });
+      const shots = sprayPattern(P, { distance: st.range, seed: 1, shots: Math.min(30, w.p.mag), aimHead: sprayTarget() === "head" });
       const S = Math.max(1, ...shots.map((s) => Math.max(Math.abs(s.x), Math.abs(s.y))) .map((v) => v * 1.1));
       const U = 145 / S, cx = 150, cy = 145;
       let svg = svgOpen(300, 340, tr("wc.sim.aria", "Where a full-magazine spray lands on the target"));
@@ -474,10 +476,28 @@ async function boot() {
     }));
   }
   {
-    const a = $("wcSimAim"), s = $("wcSimStance");
-    s.innerHTML = STANCES.map((k) => `<option value="${k}">${esc(tr("wc.sim.st." + k, STANCE_EN[k]))}</option>`).join("");
-    a.addEventListener("change", () => { simState.aim = a.value; drawSim(); });
-    s.addEventListener("change", () => { simState.stance = s.value; drawSim(); });
+    // icon buttons: aim (ADS / hip), stance (4), what the spray picture is aimed at (torso / head)
+    const ico = (body) => `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
+    const stand = '<circle cx="12" cy="4.5" r="2.3"/><path d="M12 7.5v8M12 9.5l-4 4M12 9.5l4 4M12 15.5l-3 6.5M12 15.5l3 6.5"/>';
+    const crouch = '<circle cx="11" cy="8" r="2.3"/><path d="M11 11l-1 5.5M11 12.5l5 1.5M10 16.5l6 1.5-1 4M10 16.5l-3 5"/>';
+    const speed = '<path d="M2 8h4M1 12h5M2 16h4"/>';
+    const ICONS = {
+      ads: ico('<circle cx="12" cy="12" r="6.5"/><path d="M12 2v6M12 16v6M2 12h6M16 12h6"/>'),
+      hip: ico('<path d="M2.5 13h12l2-2.5h5v4h-4.5l-1 4h-3l-.8-4H2.5z"/>'),
+      crouchStill: ico(crouch), standStill: ico(stand),
+      crouchMove: ico(crouch + speed), standMove: ico(stand + speed),
+      body: ico('<circle cx="12" cy="4.5" r="2.3" opacity=".45"/><rect x="8" y="8" width="8" height="12" rx="1" fill="currentColor" fill-opacity=".35"/>'),
+      head: ico('<circle cx="12" cy="6" r="3.8" fill="currentColor" fill-opacity=".35"/><rect x="8" y="12" width="8" height="9" rx="1" opacity=".45"/>'),
+    };
+    const seg = (id, items, get, set) => {
+      const box = $(id);
+      const paint = () => { box.innerHTML = items.map(([k, en, key]) => { const t = tr(key, en); return `<button type="button" role="radio" class="wc-segbtn" data-k="${k}" aria-checked="${get() === k}" aria-label="${esc(t)}" title="${esc(t)}">${ICONS[k]}<span>${esc(t)}</span></button>`; }).join(""); };
+      box.addEventListener("click", (e) => { const b = e.target.closest("button[data-k]"); if (!b) return; set(b.dataset.k); paint(); drawSim(); });
+      paint();
+    };
+    seg("wcSimAim", [["ads", "Aiming down sights", "wc.sim.ads"], ["hip", "Hip fire", "wc.sim.hip"]], () => simState.aim, (k) => { simState.aim = k; });
+    seg("wcSimStance", STANCES.map((k) => [k, STANCE_EN[k], "wc.sim.st." + k]), () => simState.stance, (k) => { simState.stance = k; });
+    seg("wcSimTarget", [["body", "Torso", "wc.sim.tgtBody"], ["head", "Head", "wc.sim.tgtHead"]], () => sprayTarget(), (k) => { simState.target = k; });
     const cp = $("wcSimComp");
     cp.addEventListener("input", () => { simState.comp = +cp.value; $("wcSimCompV").textContent = nf(simState.comp) + "%"; drawSim(); });
   }

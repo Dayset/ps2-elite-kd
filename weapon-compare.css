@@ -104,3 +104,11 @@ html, body { overflow: visible; overflow-x: clip; } /* hidden would make body th
 .wc-acc { grid-column: 1 / -1; margin-top: 6px; font-size: 0.85rem; }
 .wc-acc summary { cursor: pointer; color: var(--dim); }
 .wc-acc .wc-dim { margin: 4px 0 0; }
+
+.wc-segwrap { display: flex; align-items: center; gap: 8px; }
+.wc-seg { display: inline-flex; border: 1px solid var(--border); }
+.wc-segbtn { display: inline-flex; align-items: center; gap: 5px; padding: 4px 8px; background: var(--bg); color: var(--dim); border: 0; border-right: 1px solid var(--border); font: inherit; font-size: 0.8rem; cursor: pointer; }
+.wc-segbtn:last-child { border-right: 0; }
+.wc-segbtn[aria-checked="true"] { background: var(--border); color: var(--text); font-weight: 700; }
+.wc-segbtn:focus-visible { outline: 2px solid var(--text); outline-offset: -2px; }
+@media (max-width: 640px) { .wc-segbtn span { display: none; } .wc-segbtn { padding: 6px 10px; } }

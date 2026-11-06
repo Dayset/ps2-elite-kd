@@ -246,7 +246,7 @@ export function simulate(P, { burst = Infinity, distance = 20, hp = 1000 }, r, k
     // the shot leaves where the crosshair is, with the cone on top (kick comes after)
     const radius = (cof + (P.pellets > 1 ? P.pelletSpread : 0)) / 2;
     // the player's aim: at the head with probability hsr, else the body; right on it with probability acc, else a clear miss
-    let ax0 = 0, ay0 = 0;
+    let ax0 = 0, ay0 = P.sprayAim ? Math.atan(P.sprayAim / distance) / RAD : 0;   // pattern picture: aimed at the head or the torso
     if (P.acc != null) {
       const ty = r() < (P.hsr || 0) ? TARGET.headY : 0;
       // the aim error is an ANGLE, up to (1 - accuracy) x 3 degrees, so it matters at range and is nothing at point-blank
@@ -313,9 +313,9 @@ export function compareBursts(P, { distance = 20, hp = 1000, runs = 600, seed = 
 }
 
 /** One full spray (hold the trigger) with the impact points, for the pattern picture. */
-export function sprayPattern(P, { distance = 20, seed = 1, shots = 30 } = {}) {
+export function sprayPattern(P, { distance = 20, seed = 1, shots = 30, aimHead = false } = {}) {
   const r = rng(seed * 104729);
   const big = { ...P, mag: Math.max(P.mag, shots) };
-  const res = simulate({ ...big, acc: undefined, hsr: undefined }, { burst: Infinity, distance, hp: 1e9 }, r, true);
+  const res = simulate({ ...big, acc: undefined, hsr: undefined, sprayAim: aimHead ? TARGET.headY : 0 }, { burst: Infinity, distance, hp: 1e9 }, r, true);
   return res.shots.filter((s) => s.i < shots);
 }
