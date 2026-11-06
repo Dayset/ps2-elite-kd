@@ -14,9 +14,10 @@ import {
 } from "./weapons-model.mjs";
 
 export const MAX_WEAPONS = 4;
-export const MAX_RANGE = 100;
+export const MAX_RANGE = 500;        // hard cap (the 500 m option); the chart shows 100 / 200 / 500, see viewMax()
 export const DEFAULTS = Object.freeze({ acc: 20, hsr: 20, range: 20, hp: 1000 });
 const DEFAULT_IDS = [4, 14, 20];          // NC1 Gauss Rifle, T1 Cycler, Pulsar VS1
+const MODE_EN = { auto: "Automatic", semi: "Semi-auto", burst: "Burst", bolt: "Bolt action" };
 const FACTION = { 0: "NS", 1: "VS", 2: "NC", 3: "TR" };
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -36,6 +37,7 @@ export function parseState(search, known = () => true) {
     hsr: Math.round(num("hsr", 0, 100, DEFAULTS.hsr)),
     range: Math.round(num("r", 0, MAX_RANGE, DEFAULTS.range)),
     hp: Math.round(hp),
+    far: q.get("max") === "500",
     hasW: q.has("w"),
   };
 }
@@ -48,9 +50,17 @@ export function stateToSearch(s) {
   if (s.hsr !== DEFAULTS.hsr) q.set("hsr", String(s.hsr));
   if (s.range !== DEFAULTS.range) q.set("r", String(s.range));
   if (s.hp !== DEFAULTS.hp) q.set("hp", String(s.hp));
+  if (s.far) q.set("max", "500");
   const str = q.toString();
   return str ? "?" + str : "";
 }
+
+/** Longest range drawn: 100 m, 200 m when a chosen weapon still loses damage beyond 100 m (snipers), 500 m with the footer option. */
+export function viewMax(profiles, far) {
+  if (far) return 500;
+  return profiles.some((p) => p.rangeMinDmg > 100) ? 200 : 100;
+}
+export const rangeStep = (max) => (max > 200 ? 5 : max > 100 ? 4 : 2);
 
 /** Nice axis ticks from 0 to max (about n ticks). */
 export function niceTicks(max, n = 5) {
@@ -153,6 +163,8 @@ async function boot() {
     st.acc = +$("wcAcc").value; st.hsr = +$("wcHsr").value; st.range = +$("wcRange").value; st.hp = +hpSel.value;
     renderAll();
   };
+  $("wcFar").checked = st.far;
+  $("wcFar").addEventListener("change", () => { st.far = $("wcFar").checked; renderAll(); });
   for (const id of ["wcAcc", "wcHsr", "wcRange", "wcHp"]) $(id).addEventListener("input", onSlider);
   window.addEventListener("resize", () => { clearTimeout(boot.rt); boot.rt = setTimeout(renderCharts, 120); });
 
@@ -168,14 +180,16 @@ async function boot() {
   let calc = null;
   function compute() {
     const ws = selected();
-    const xs = rangeAxis(MAX_RANGE, 2);
+    const maxR = viewMax(ws.map((w) => w.p), st.far);
+    if (st.range > maxR) st.range = maxR;
+    const xs = rangeAxis(maxR, rangeStep(maxR));
     const opt = { acc: st.acc / 100, hsr: st.hsr / 100, hp: st.hp };
     const curves = ws.map((w) => ttkCurve(w.p, xs, opt));
     const dists = ws.map((w) => ttkDistribution(w.p, { ...opt, range: st.range }));
     const med = dists.map((d) => quantileMs(d, 0.5));
     const ideal = ws.map((w) => idealTtk(w.p, { range: st.range, hp: st.hp }));
     const dp = ws.map((w) => dps(w.p, { range: st.range }));
-    calc = { ws, xs, curves, dists, med, ideal, dp, winners: winnerStrip(curves) };
+    calc = { maxR, ws, xs, curves, dists, med, ideal, dp, winners: winnerStrip(curves) };
   }
 
   function renderCards() {
@@ -194,7 +208,12 @@ async function boot() {
           <li><span class="lab">${esc(tr("wc.med", "Median kill at {m} m", { m: nf(st.range) }))}</span><span>${esc(fmtMs(med[i]))} ${cmp ? "· " + cmp : ""}</span></li>
           <li><span class="lab">${esc(tr("wc.ideal", "Best case (all hits)"))}</span><span>${esc(fmtMs(ideal[i]))}</span></li>
           <li><span class="lab">${esc(tr("wc.rpm", "Rounds per minute"))}</span><span>${nf(w.p.rpm)}</span></li>
+          <li><span class="lab">${esc(tr("wc.mode", "Fire mode"))}</span><span>${esc(tr("wc.mode." + w.p.mode, MODE_EN[w.p.mode] || w.p.mode))}${w.p.pellets > 1 ? " · " + esc(tr("wc.pellets", "{n} pellets", { n: nf(w.p.pellets) })) : ""}</span></li>
           <li><span class="lab">${esc(tr("wc.dmg", "Damage per hit"))}</span><span>${nf(h.body)} / ${nf(h.head)}</span></li>
+          <li><span class="lab">${esc(tr("wc.hsMult", "Headshot multiplier"))}</span><span>×${nf(w.p.hsMult, 2)}</span></li>
+          <li><span class="lab">${esc(tr("wc.fall", "Damage falloff"))}</span><span>${w.p.dmgMin !== w.p.dmgMax && w.p.rangeMinDmg > 0 ? esc(tr("wc.fallV", "{max} → {min} ({a}–{b} m)", { max: nf(w.p.dmgMax), min: nf(w.p.dmgMin), a: nf(w.p.rangeMaxDmg), b: nf(w.p.rangeMinDmg) })) : esc(tr("wc.fallNone", "none"))}</span></li>
+          <li><span class="lab">${esc(tr("wc.reload", "Reload"))}</span><span>${esc(tr("wc.s", "{s} s", { s: nf(w.p.reloadMs / 1000, 2) }))}</span></li>
+          <li><span class="lab">${esc(tr("wc.mag", "Magazine"))}</span><span>${nf(w.p.mag)}</span></li>
         </ul></article>`;
     }).join("");
   }
@@ -206,17 +225,17 @@ async function boot() {
 
   function drawTtk() {
     const el = $("wcTtk");
-    const { ws, xs, curves, winners } = calc;
+    const { ws, xs, curves, winners, maxR } = calc;
     if (!ws.length) { el.innerHTML = ""; $("wcReadout").innerHTML = ""; return; }
     const W = chartWidth(el), H = 300, L = 60, R = 24, T = 10, STRIP = 14, B = 34 + STRIP + 16;
     const vals = curves.flat().filter((v) => v != null);
     const yMax = Math.max(100, ...vals) * 1.08;
     const yt = niceTicks(yMax, 5), yTop = yt[yt.length - 1];
-    const X = (r) => L + (r / MAX_RANGE) * (W - L - R);
+    const X = (r) => L + (r / maxR) * (W - L - R);
     const Y = (v) => T + (1 - v / yTop) * (H - T - B);
     let s = svgOpen(W, H, tr("wc.ariaTtk", "Graph: time to kill by range for the chosen weapons"));
     for (const v of yt) s += `<line class="grid" x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}"/><text class="ax" x="${L - 6}" y="${Y(v) + 4}" text-anchor="end">${nf(v)}</text>`;
-    for (const r of niceTicks(MAX_RANGE, 5)) s += `<line class="grid" x1="${X(r)}" x2="${X(r)}" y1="${T}" y2="${H - B}"/><text class="ax" x="${X(r)}" y="${H - B + 14}" text-anchor="middle">${nf(r)}</text>`;
+    for (const r of niceTicks(maxR, 5)) s += `<line class="grid" x1="${X(r)}" x2="${X(r)}" y1="${T}" y2="${H - B}"/><text class="ax" x="${X(r)}" y="${H - B + 14}" text-anchor="middle">${nf(r)}</text>`;
     s += `<text class="ax" x="${W - R}" y="${H - 4}" text-anchor="end">${esc(tr("wc.xRange", "Range (m)"))}</text>`;
     s += `<text class="ax" transform="translate(12 ${(T + H - B) / 2}) rotate(-90)" text-anchor="middle">${esc(tr("wc.yMs", "Time to kill (ms)"))}</text>`;
     curves.forEach((c, i) => {
@@ -241,8 +260,8 @@ async function boot() {
     const show = (clientX) => {
       const box = svg.getBoundingClientRect();
       const x = (clientX - box.left) * (W / box.width);
-      const r = Math.min(MAX_RANGE, Math.max(0, Math.round(((x - L) / (W - L - R)) * MAX_RANGE / 2) * 2));
-      const k = xs.indexOf(r);
+      const k = Math.min(xs.length - 1, Math.max(0, Math.round(((x - L) / (W - L - R)) * (xs.length - 1))));
+      const r = xs[k];
       cur.setAttribute("x1", X(r)); cur.setAttribute("x2", X(r)); cur.setAttribute("visibility", "visible");
       out.innerHTML = `<b>${esc(tr("wc.readoutAt", "At {m} m", { m: nf(r) }))}</b>` + ws.map((w, i) => `<span><span class="sw" style="background:${color(i)}"></span>${esc(w.name)}: ${esc(fmtMs(curves[i][k]))}</span>`).join("");
     };
@@ -251,7 +270,7 @@ async function boot() {
       show(e.clientX);
       const box = svg.getBoundingClientRect();
       const x = (e.clientX - box.left) * (W / box.width);
-      st.range = Math.min(MAX_RANGE, Math.max(0, Math.round((x - L) / (W - L - R) * MAX_RANGE)));
+      st.range = Math.min(maxR, Math.max(0, Math.round((x - L) / (W - L - R) * maxR)));
       $("wcRange").value = st.range;
       renderAll();
     });
@@ -320,6 +339,7 @@ async function boot() {
     $("wcRangeV").textContent = fmtM(st.range);
     renderChips();
     compute();
+    $("wcRange").max = calc.maxR; $("wcRange").value = st.range; $("wcRangeV").textContent = fmtM(st.range);
     renderCards();
     renderCharts();
     try { history.replaceState(null, "", location.pathname + stateToSearch(st)); } catch {}

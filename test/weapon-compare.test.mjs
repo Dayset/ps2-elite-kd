@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { parseState, stateToSearch, niceTicks, MAX_WEAPONS, MAX_RANGE } from "../weapon-compare.mjs";
+import { parseState, stateToSearch, niceTicks, viewMax, rangeStep, MAX_WEAPONS, MAX_RANGE } from "../weapon-compare.mjs";
 
 const read = (p) => readFileSync(new URL("../" + p, import.meta.url), "utf8");
 
@@ -46,4 +46,19 @@ test("the page is wired: stylesheet, module, language menu, footer link, credits
   assert.match(html, /B4rrCH\/Ps2TtkCalculator/);
   assert.match(read("index.html"), /href="weapon-compare\.html"/);
   assert.match(read("NOTICE"), /weapon-compare\.html/);
+});
+
+test("range view: 100 m, 200 m for weapons that still fall off past 100 m, 500 m with the option", () => {
+  const AR = { rangeMinDmg: 90 }, SNIPER = { rangeMinDmg: 350 };
+  assert.equal(viewMax([AR], false), 100);
+  assert.equal(viewMax([AR, SNIPER], false), 200);
+  assert.equal(viewMax([AR], true), 500);
+  assert.deepEqual([rangeStep(100), rangeStep(200), rangeStep(500)], [2, 4, 5]);
+});
+
+test("the 500 m option survives the link", () => {
+  const s = { ids: [4], acc: 20, hsr: 20, range: 300, hp: 1000, far: true };
+  assert.equal(stateToSearch(s), "?w=4&r=300&max=500");
+  assert.equal(parseState("?w=4&r=300&max=500").far, true);
+  assert.equal(parseState("?w=4").far, false);
 });
