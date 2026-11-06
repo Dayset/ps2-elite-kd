@@ -182,3 +182,14 @@ test("Explosive: -125 direct, +100 splash even when the shot lands beside the ta
   const s = simParams(AR, FM, STATES, { attachments: ["Sabot Ammunition"] });
   assert.ok(Math.abs(s.gapMs - simParams(AR, FM, STATES, {}).gapMs / 0.9) < 1e-9);
 });
+
+test("per-weapon attachments apply only to their weapon, magazine add works", () => {
+  const P = { rpm: 600, mag: 30, reloadMs: 2000, pellets: 1, dmgMax: 143, dmgMin: 112, rangeMaxDmg: 10, rangeMinDmg: 50, hsMult: 2 };
+  const a = simParams(P, {}, [], { aim: "hip", attachments: ["Impact Ammunition"], weaponName: "Arbalest" });
+  assert.equal(a.mag, 24); assert.equal(a.profile.dmgMax, 125);
+  const b = simParams(P, {}, [], { aim: "hip", attachments: ["Impact Ammunition"], weaponName: "Other" });
+  assert.equal(b.mag, 30); assert.equal(b.profile.dmgMax, 143);
+  assert.equal(simParams(P, {}, [], { attachments: ["High-capacity Battery"] }).mag, 33);
+  assert.equal(canon("Counterweight"), "Comfort Grip");
+  assert.equal(slotOf("Detect Bolt"), "ammo");
+});

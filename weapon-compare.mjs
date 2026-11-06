@@ -410,7 +410,7 @@ async function boot() {
       const x = recoilOf(w.id);
       if (!x || !x.fm) return `<article class="wc-sim" style="border-top-color:${color(i)}"><b>${esc(w.name)}</b><p class="wc-dim">${esc(tr("wc.sim.none", "No recoil data for this weapon."))}</p></article>`;
       const att = chosenAtt(w.id);
-      const P = simParams(w.p, x.fm, x.states, { stance: simState.stance, aim: simState.aim, attachments: att, adsFm: x.adsFm, adsStates: x.adsStates, cat: w.cat });
+      const P = simParams(w.p, x.fm, x.states, { stance: simState.stance, aim: simState.aim, attachments: att, adsFm: x.adsFm, adsStates: x.adsStates, cat: w.cat, weaponName: w.name });
       const { rows, best } = compareBursts(P, { distance: st.range, hp: st.hp, runs: 300, seed: 1 });
       const worst = Math.max(1, ...rows.map((r) => r.median ?? 0));
       const bars = rows.map((r) => `<li class="${best && r.burst === best.burst ? "best" : ""}"><span class="lab">${esc(burstLabel(r.burst))}</span><span class="wc-bar"><i style="width:${r.median == null ? 0 : Math.max(2, r.median / worst * 100).toFixed(1)}%;background:${color(i)}"></i></span><span class="v">${r.median == null ? esc(tr("wc.never", "no kill")) : esc(fmtMs(r.median))} · ${nf(r.killRate * 100)}%</span></li>`).join("");

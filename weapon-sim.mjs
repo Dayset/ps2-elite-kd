@@ -38,14 +38,17 @@ export const ASSUMPTIONS = Object.freeze([
  */
 export const SLOTS = Object.freeze(["barrel", "rail", "ammo"]);
 const SLOT_RE = {
-  barrel: /^(Compensator|Flash Suppressor|Suppressor|Muzzle Brake|Enhanced Plasma Containment|Smart-Choke|Hybrid Suppressor|Burst Stabilizer|Recoil Stabilizer|Confetti Suppressor)$/i,
-  rail: /^(MPL|Weighted Receiver|Straight-Pull Bolt|Supercooled Coil|Vented Power Core|Forward Grip|Angled Forward Grip|Comfort Grip|Laser Sight|Hybrid Laser|Darklight Flashlight|Zip Light|Heavy Barrel|Short Barrel|Extended Magazine|Smart Feeder|Grenade Launcher|Underbarrel Shotgun|Smoke Launcher|Cure Launcher|Adaptive Class Underbarrel)$/i,
-  ammo: /(Ammunition|^Heavy Magazine)$/i,
+  barrel: /^(Compensator|Flash Suppressor|Suppressor|Muzzle Brake|Enhanced Plasma Containment|Smart-Choke|Hybrid Suppressor|Emission Condenser|Burst Stabilizer|Recoil Stabilizer|Confetti Suppressor|Single-Fire Barrel|Stabilizing Rotor|Tungsten Liner)$/i,
+  rail: /^(MPL|Weighted Receiver|Straight-Pull Bolt|Supercooled Coil|Vented Power Core|Forward Grip|Angled Forward Grip|Comfort Grip|Laser Sight|Hybrid Laser|Darklight Flashlight|Zip Light|Heavy Barrel|Short Barrel|Extended Magazine|Smart Feeder|Grenade Launcher|Underbarrel Shotgun|Smoke Launcher|Cure Launcher|Adaptive Class Underbarrel|Safety Override|High-capacity Battery|Ballistics Computer)$/i,
+  ammo: /(Ammunition|Bolt|^Heavy Magazine)$/i,
 };
 /** Names Census gives the same part (the wiki lists them as one attachment): the effect of the first is used. "Muzzle Brake" has no wiki page; it sits beside Compensator on the same weapons, so it is treated as one (assumption). */
 export const ALIAS = Object.freeze({
   "Muzzle Brake": "Compensator", "Enhanced Plasma Containment": "Flash Suppressor",
   "Supercooled Coil": "Straight-Pull Bolt", "Zip Light": "Darklight Flashlight",
+  // same part under a weapon-specific name (assumption from the names, flagged)
+  "Counterweight": "Comfort Grip", "Condenser": "Suppressor", "Compensating Oil": "Compensator",
+  "Flash Suppressing Oil": "Flash Suppressor", "Suppressing Oil": "Suppressor",
 });
 export const canon = (name) => ALIAS[String(name || "").trim()] || String(name || "").trim();
 
@@ -90,6 +93,14 @@ export const ATTACHMENTS = Object.freeze({
   "KCAP Ammunition": { hsDelta: -0.5 },                     // headshot multiplier 2x -> 1.5x (leg damage is not modelled)
   "Soft Point Ammunition": { maxRange: 5 },
   "High Velocity Ammunition": { maxRange: -2, minRange: 20 },
+  "Single-Fire Barrel": { vRecoil: 0.8 },
+  "Stabilizing Rotor": { hipBloom: 0.75, adsBloom: 0.75, rofMul: 0.93 },
+  "Hybrid Suppressor": {}, "Emission Condenser": {}, "Ballistics Computer": {}, "Cerberus Ammunition": {}, "Manticore Ammunition": {},
+  "High-capacity Battery": { magAdd: 3 },
+  "Detect Bolt": { by: { "Hunter QCX": { dmgSet: 100 } } },
+  "Tungsten Liner": { by: { "Bishop": { dmgSet: 334, vRecoil: 2 } } },
+  "Impact Ammunition": { by: { "Arbalest": { dmgSet: 125, magAdd: -6 }, "TORQ-9": { dmgSet: 125, magAdd: -6 } } },
+  "Safety Override": { by: { "Obelisk": { hipOnly: true, rofMul: 2, dmgMul: 0.5, hipMinCof: 0.75 } } },
 });
 
 /** Strategies: shots per burst (holding the trigger down is not offered: it is never the practical choice). */
@@ -103,10 +114,10 @@ function adjustRanges(profile, A, cat) {
   const sum = (k) => A.reduce((m, a) => m + (a[k] || 0), 0);
   const dMax = sum("maxRange");
   const dMin = A.reduce((m, a) => m + (cat === "SMG" && a.minRangeSmg != null ? a.minRangeSmg : a.minRange || 0), 0);
-  const dAdd = sum("dmgAdd"), dHs = sum("hsDelta"), hsSet = A.find((a) => a.hsSet != null), dm = A.reduce((m, a) => m * (a.dmgMul ?? 1), 1);
-  if (!dMax && !dMin && !dHs && !hsSet && dm === 1 && !dAdd) return profile;
+  const dSet = A.find((a) => a.dmgSet != null), dAdd = sum("dmgAdd"), dHs = sum("hsDelta"), hsSet = A.find((a) => a.hsSet != null), dm = A.reduce((m, a) => m * (a.dmgMul ?? 1), 1);
+  if (!dMax && !dMin && !dHs && !hsSet && dm === 1 && !dAdd && !dSet) return profile;
   const far = profile.rangeMinDmg > 0 ? Math.max(0, profile.rangeMinDmg + dMin) : profile.rangeMinDmg;
-  return { ...profile, rangeMaxDmg: Math.max(0, profile.rangeMaxDmg + dMax), rangeMinDmg: far, hsMult: hsSet ? hsSet.hsSet : Math.max(1, profile.hsMult + dHs), dmgMax: Math.max(1, profile.dmgMax * dm + dAdd), dmgMin: Math.max(1, profile.dmgMin * dm + dAdd) };
+  return { ...profile, rangeMaxDmg: Math.max(0, profile.rangeMaxDmg + dMax), rangeMinDmg: far, hsMult: hsSet ? hsSet.hsSet : Math.max(1, profile.hsMult + dHs), dmgMax: Math.max(1, (dSet ? dSet.dmgSet : profile.dmgMax) * dm + dAdd), dmgMin: Math.max(1, (dSet ? dSet.dmgSet : profile.dmgMin) * dm + dAdd) };
 }
 
 export function simParams(profile, fm, states, opts = {}) {
@@ -118,7 +129,7 @@ export function simParams(profile, fm, states, opts = {}) {
   const f = (!hip && opts.adsFm) || fm || {};
   const ads = { ...ADS_DEFAULT, ...(opts.ads || {}) };
   const row = (rows || []).find((r) => r.player_state_id === STATE_ID[stance]) || (rows || [])[0] || {};
-  const A = (opts.attachments || []).map((n) => ATTACHMENTS[canon(n)]).filter(Boolean);
+  const A = (opts.attachments || []).map((n) => { const a = ATTACHMENTS[canon(n)]; if (!a) return null; if (!a.by) return a; const w = a.by[opts.weaponName]; return w && (!w.hipOnly || hip) ? w : {}; }).filter(Boolean);
   const mul = (key) => A.reduce((m, a) => m * (a[key] ?? 1), 1);
   let cofMin = hip || realAds ? (row.cof_min ?? 2) : ads[stance];
   let cofMax = row.cof_max ?? Math.max(cofMin, 1);
@@ -133,7 +144,7 @@ export function simParams(profile, fm, states, opts = {}) {
   const sumA = (k) => A.reduce((m, a) => m + (a[k] || 0), 0);
   return {
     gapMs: (f.fire_refire_ms || 60000 / profile.rpm) / (A.reduce((m, a) => m * (a.rofMul ?? 1), 1)),
-    mag: profile.mag, reloadMs: profile.reloadMs, pellets: profile.pellets,
+    mag: Math.max(1, profile.mag + A.reduce((m, a) => m + (a.magAdd || 0), 0)), reloadMs: profile.reloadMs, pellets: profile.pellets,
     profile: adjustRanges(profile, A, opts.cat),
     vMin: (f.recoil_magnitude_min ?? 0.3) * vMul, vMax: (f.recoil_magnitude_max ?? 0.3) * vMul,
     first: Math.max(0, (f.recoil_first_shot_modifier ?? 1) * mul("firstShot")),
