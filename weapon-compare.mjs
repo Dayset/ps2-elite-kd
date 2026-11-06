@@ -98,6 +98,13 @@ async function boot() {
     return;
   }
   $("wcStatus").hidden = true;
+  let recoil = null;           // assets/weapons/recoil.json: optional, the rows just stay out without it
+  fetch("assets/weapons/recoil.json").then((r) => (r.ok ? r.json() : null)).then((j) => { if (j && j.weapons) { recoil = j; if (calc) renderCards(); } }).catch(() => {});
+  const recoilOf = (id) => {
+    const r = recoil && recoil.weapons[id];
+    if (!r) return null;
+    return { fm: recoil.fm2[r[0]] || null, states: recoil.groups[r[1]] || [], pool: r[2] || 0 };
+  };
 
   // all weapons with a real, usable profile
   const weapons = new Map();
@@ -192,6 +199,25 @@ async function boot() {
     calc = { maxR, ws, xs, curves, dists, med, ideal, dp, winners: winnerStrip(curves) };
   }
 
+  const row = (lab, val) => `<li><span class="lab">${esc(lab)}</span><span>${val}</span></li>`;
+  const deg = (v) => tr("wc.deg", "{v}°", { v: nf(v, 2) });
+  const STATE_EN = { 0: "Standing", 1: "Crouching", 2: "Running", 3: "Sprinting", 4: "Falling (long)", 5: "Crouch walking", 6: "Jumping", 7: "Falling (short)" };
+  function extra(x) {
+    if (!x || !x.fm) return "";
+    const f = x.fm;
+    const v = f.recoil_magnitude_min === f.recoil_magnitude_max ? deg(f.recoil_magnitude_min) : `${nf(f.recoil_magnitude_min, 2)}–${deg(f.recoil_magnitude_max)}`;
+    return (x.pool ? row(tr("wc.pool", "Ammo pool"), nf(x.pool)) : "")
+      + row(tr("wc.recoilV", "Vertical recoil per shot"), esc(v))
+      + row(tr("wc.recoilFirst", "First-shot recoil"), "×" + nf(f.recoil_first_shot_modifier, 2))
+      + row(tr("wc.recoilH", "Horizontal recoil"), "±" + esc(deg(f.recoil_horizontal_max)))
+      + row(tr("wc.bloom", "Bloom per shot"), esc(deg(f.cof_recoil)));
+  }
+  function stances(x) {
+    if (!x || !x.states || !x.states.length) return "";
+    const rows = x.states.map((r) => row(tr("wc.st." + r.player_state_id, STATE_EN[r.player_state_id] || "#" + r.player_state_id), esc(tr("wc.cofV", "{min} / {max}", { min: nf(r.cof_min, 2), max: nf(r.cof_max, 2) })))).join("");
+    return `<details class="wc-acc"><summary>${esc(tr("wc.acc.h", "Accuracy by stance (hip cone, min / max)"))}</summary><ul class="wc-wstats">${rows}</ul><p class="wc-dim">${esc(tr("wc.accNote", "Hip-fire cone of fire from Census. Aiming-down-sights values are not in the weapon data."))}</p></details>`;
+  }
+
   function renderCards() {
     const { ws, med, ideal } = calc;
     const best = Math.min(...med.filter((v) => v != null));
@@ -201,6 +227,7 @@ async function boot() {
         ? `<span class="good">${esc(tr("wc.fastest", "fastest"))}</span>`
         : esc(tr("wc.slower", "{pct}% slower", { pct: nf(slower, slower < 10 ? 1 : 0) }));
       const h = hitDamage(w.p, st.range);
+      const x = recoilOf(w.id);
       return `<article class="wc-wcard" style="border-top-color:${color(i)}">
         <img src="assets/weapons/${w.img}.webp" alt="" width="64" height="32" loading="lazy" onerror="this.style.visibility='hidden'" />
         <div><div class="wc-wname">${esc(w.name)}</div><div class="wc-wmeta">${esc(FACTION[w.fac] ?? "")} · ${esc(w.cat)}</div></div>
@@ -213,8 +240,9 @@ async function boot() {
           <li><span class="lab">${esc(tr("wc.hsMult", "Headshot multiplier"))}</span><span>×${nf(w.p.hsMult, 2)}</span></li>
           <li><span class="lab">${esc(tr("wc.fall", "Damage falloff"))}</span><span>${w.p.dmgMin !== w.p.dmgMax && w.p.rangeMinDmg > 0 ? esc(tr("wc.fallV", "{max} → {min} ({a}–{b} m)", { max: nf(w.p.dmgMax), min: nf(w.p.dmgMin), a: nf(w.p.rangeMaxDmg), b: nf(w.p.rangeMinDmg) })) : esc(tr("wc.fallNone", "none"))}</span></li>
           <li><span class="lab">${esc(tr("wc.reload", "Reload"))}</span><span>${esc(tr("wc.s", "{s} s", { s: nf(w.p.reloadMs / 1000, 2) }))}</span></li>
-          <li><span class="lab">${esc(tr("wc.mag", "Magazine"))}</span><span>${nf(w.p.mag)}</span></li>
-        </ul></article>`;
+          <li><span class="lab">${esc(tr("wc.reloadLong", "Long reload"))}</span><span>${esc(tr("wc.s", "{s} s", { s: nf((w.p.reloadMs + ((x && x.fm && x.fm.reload_chamber_ms) || 0)) / 1000, 2) }))}</span></li>
+          <li><span class="lab">${esc(tr("wc.mag", "Magazine"))}</span><span>${nf(w.p.mag)}</span></li>${extra(x)}
+        </ul>${stances(x)}</article>`;
     }).join("");
   }
 
