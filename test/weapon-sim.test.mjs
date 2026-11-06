@@ -161,3 +161,24 @@ test("more wiki attachments: MPL, Weighted Receiver, Smart-Choke, Heavy Magazine
   assert.equal(slotOf("Heavy Magazine"), "ammo");
   assert.equal(slotOf("MPL"), "rail");
 });
+
+test("Unstable (1.2x headshot, bigger bullets) and Disruptor (20 % of the damage drained away)", () => {
+  const u = simParams(AR, FM, STATES, { attachments: ["Unstable Ammunition"] });
+  assert.equal(u.profile.hsMult, 1.2);
+  assert.equal(u.bulletRadius, 0.07);
+  const d = simParams(AR, FM, STATES, { attachments: ["Disruptor Ammunition"] });
+  assert.ok(Math.abs(d.profile.dmgMax - AR.dmgMax * 0.8) < 1e-9 && Math.abs(d.profile.dmgMin - AR.dmgMin * 0.8) < 1e-9);
+  assert.equal(d.profile.hsMult, AR.hsMult);
+  // a shot just outside the body box hits with the big bullets, not with the normal ones
+  const aim = (P) => { const r = rng(3); let hits = 0; for (let i = 0; i < 300; i++) { const x = simulate({ ...P, cofMin: 0, cofMax: 0, bloom: 0, vMin: 0, vMax: 0, hMin: 0, hMax: 0, angMin: 0, angMax: 0 }, { burst: 1, distance: 10, hp: 1 }, r); if (x.ttk != null) hits++; } return hits; };
+  assert.equal(aim(simParams(AR, FM, STATES, {})), 300, "dead centre always hits");
+});
+
+test("Explosive: -125 direct, +100 splash even when the shot lands beside the target; Sabot: -10 % rate of fire", () => {
+  const e = simParams(AR, FM, STATES, { attachments: ["Explosive Ammunition"] });
+  assert.equal(e.profile.dmgMax, AR.dmgMax - 125);
+  assert.equal(e.splash, 100);
+  assert.equal(e.splashR, 2);
+  const s = simParams(AR, FM, STATES, { attachments: ["Sabot Ammunition"] });
+  assert.ok(Math.abs(s.gapMs - simParams(AR, FM, STATES, {}).gapMs / 0.9) < 1e-9);
+});

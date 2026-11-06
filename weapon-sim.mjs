@@ -83,6 +83,10 @@ export const ATTACHMENTS = Object.freeze({
   "Smart-Choke": { spreadAds: -0.5, spreadHip: 0.5 },       // pellet spread, degrees
   "Heavy Magazine": { hipMinCof: 1.2 },                     // hip cone +20 % (the extra rounds are not modelled)
   "Vented Power Core": { angleAdd: 5 },                     // recoil angles +5 degrees (no long reload: not modelled)
+  "Unstable Ammunition": { hsSet: 1.2, bulletRadius: 0.07 }, // headshot 1.2x; bullet radius 3 cm -> 10 cm, so a hit counts up to 7 cm outside the hitbox
+  "Disruptor Ammunition": { dmgMul: 0.8 },                  // 20 % of the damage becomes a shield / energy drain (not modelled), so health damage x0.8
+  "Explosive Ammunition": { dmgAdd: -125, splash: 100, splashR: 2 }, // direct damage -125, plus 100 splash within 2 m (no headshot bonus on the splash)
+  "Sabot Ammunition": { rofMul: 0.9 },                      // rate of fire -10 % (piercing is not modelled)
   "KCAP Ammunition": { hsDelta: -0.5 },                     // headshot multiplier 2x -> 1.5x (leg damage is not modelled)
   "Soft Point Ammunition": { maxRange: 5 },
   "High Velocity Ammunition": { maxRange: -2, minRange: 20 },
@@ -99,10 +103,10 @@ function adjustRanges(profile, A, cat) {
   const sum = (k) => A.reduce((m, a) => m + (a[k] || 0), 0);
   const dMax = sum("maxRange");
   const dMin = A.reduce((m, a) => m + (cat === "SMG" && a.minRangeSmg != null ? a.minRangeSmg : a.minRange || 0), 0);
-  const dHs = sum("hsDelta");
-  if (!dMax && !dMin && !dHs) return profile;
+  const dAdd = sum("dmgAdd"), dHs = sum("hsDelta"), hsSet = A.find((a) => a.hsSet != null), dm = A.reduce((m, a) => m * (a.dmgMul ?? 1), 1);
+  if (!dMax && !dMin && !dHs && !hsSet && dm === 1 && !dAdd) return profile;
   const far = profile.rangeMinDmg > 0 ? Math.max(0, profile.rangeMinDmg + dMin) : profile.rangeMinDmg;
-  return { ...profile, rangeMaxDmg: Math.max(0, profile.rangeMaxDmg + dMax), rangeMinDmg: far, hsMult: Math.max(1, profile.hsMult + dHs) };
+  return { ...profile, rangeMaxDmg: Math.max(0, profile.rangeMaxDmg + dMax), rangeMinDmg: far, hsMult: hsSet ? hsSet.hsSet : Math.max(1, profile.hsMult + dHs), dmgMax: Math.max(1, profile.dmgMax * dm + dAdd), dmgMin: Math.max(1, profile.dmgMin * dm + dAdd) };
 }
 
 export function simParams(profile, fm, states, opts = {}) {
@@ -128,7 +132,7 @@ export function simParams(profile, fm, states, opts = {}) {
   const hMul = mul("hRecoil") * rec;
   const sumA = (k) => A.reduce((m, a) => m + (a[k] || 0), 0);
   return {
-    gapMs: f.fire_refire_ms || 60000 / profile.rpm,
+    gapMs: (f.fire_refire_ms || 60000 / profile.rpm) / (A.reduce((m, a) => m * (a.rofMul ?? 1), 1)),
     mag: profile.mag, reloadMs: profile.reloadMs, pellets: profile.pellets,
     profile: adjustRanges(profile, A, opts.cat),
     vMin: (f.recoil_magnitude_min ?? 0.3) * vMul, vMax: (f.recoil_magnitude_max ?? 0.3) * vMul,
@@ -141,6 +145,8 @@ export function simParams(profile, fm, states, opts = {}) {
     cofRecRate: Math.max(0.01, row.cof_recovery_rate ?? 20), cofRecDelay: row.cof_recovery_delay_ms ?? 0,
     pelletSpread: Math.max(0, (f.pellet_spread ?? f.cof_pellet_spread ?? 0) * (hip ? mul("hipSpread") : 1) + sumA(hip ? "spreadHip" : "spreadAds")),
     realAds,
+    splash: A.reduce((m, a) => m + (a.splash || 0), 0), splashR: Math.max(0, ...A.map((a) => a.splashR || 0)),
+    bulletRadius: A.reduce((m, a) => m + (a.bulletRadius || 0), 0),
   };
 }
 
@@ -159,10 +165,10 @@ export function rng(seed) {
 const RAD = Math.PI / 180;
 const rnd = (r, a, b) => a + (b - a) * r();
 
-function hitZone(x, y) {
-  const dx = x - TARGET.headX, dy = y - TARGET.headY;
-  if (dx * dx + dy * dy <= TARGET.headR * TARGET.headR) return "head";
-  if (Math.abs(x) <= TARGET.halfW && y <= TARGET.top && y >= TARGET.bottom) return "body";
+function hitZone(x, y, r = 0) {
+  const dx = x - TARGET.headX, dy = y - TARGET.headY, hr = TARGET.headR + r;
+  if (dx * dx + dy * dy <= hr * hr) return "head";
+  if (Math.abs(x) <= TARGET.halfW + r && y <= TARGET.top + r && y >= TARGET.bottom - r) return "body";
   return null;
 }
 
@@ -184,9 +190,10 @@ export function simulate(P, { burst = Infinity, distance = 20, hp = 1000 }, r, k
       const a = r() * 2 * Math.PI, d = Math.sqrt(r()) * radius;
       const ax = ox + d * Math.cos(a), ay = oy + d * Math.sin(a);
       const x = distance * tan(ax * RAD), y = distance * tan(ay * RAD);
-      const zone = hitZone(x, y);
+      const zone = hitZone(x, y, P.bulletRadius || 0);
       if (keepShots) shots.push({ i: fired, t, x, y, zone });
       if (zone) dealt += zone === "head" ? head : body;
+      if (P.splash && (zone || Math.hypot(x - TARGET.headX, y) <= P.splashR)) dealt += P.splash;
     }
     fired++; inBurst++; magLeft--;
     if (dealt >= hp) return { ttk: t, shots, fired };
