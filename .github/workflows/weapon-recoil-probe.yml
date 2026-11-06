@@ -1,0 +1,40 @@
+name: Weapon recoil probe
+
+# One-off: dumps the recoil / cone-of-fire / attachment fields Census carries for a
+# few weapons into assets/weapons/recoil-probe.json (scripts/probe-weapon-recoil.mjs).
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: weapon-recoil-probe
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "20"
+      - name: Git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Probe Census
+        env:
+          CENSUS_SERVICE_ID: ${{ secrets.CENSUS_SERVICE_ID || vars.CENSUS_SERVICE_ID || 'daysetps2legends' }}
+          CENSUS_PROXY: ${{ vars.CENSUS_PROXY || 'https://ps2-elite-kd-cache.dayset.workers.dev' }}
+          CENSUS_PROXY_KEY: ${{ secrets.CENSUS_PROXY_KEY }}
+        run: node scripts/probe-weapon-recoil.mjs
+      - name: Commit
+        env:
+          COMMIT_DIR: assets/weapons/
+        run: scripts/ci-commit-push.sh "chore(weapons): recoil probe [bot]"
