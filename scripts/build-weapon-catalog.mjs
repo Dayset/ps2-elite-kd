@@ -114,9 +114,9 @@ for (const r of await paged('fire_group_to_fire_mode', 'fire_group_id,fire_mode_
 }
 const fmById = new Map((await paged('fire_mode', 'fire_mode_id,type,description.en,player_state_group_id,cof_recoil,pellet_spread,reload_time_ms,pellets_per_shot,damage_max,damage_min,damage_max_range,damage_min_range')).map((r) => [r.fire_mode_id, r]));
 const fm2ById = new Map((await paged('fire_mode_2', 'fire_mode_id,fire_refire_ms,damage_head_multiplier,automatic,max_damage,min_damage,max_damage_range,min_damage_range,fire_pellets_per_shot,reload_time_ms')).map((r) => [r.fire_mode_id, r]));
-const magOf = new Map();
-for (const r of await paged('weapon_ammo_slot', 'weapon_id,weapon_slot_index,clip_size')) {
-  if (r.weapon_slot_index === '0') magOf.set(r.weapon_id, +r.clip_size);
+const magOf = new Map(), capOf = new Map();
+for (const r of await paged('weapon_ammo_slot', 'weapon_id,weapon_slot_index,clip_size,capacity')) {
+  if (r.weapon_slot_index === '0') { magOf.set(r.weapon_id, +r.clip_size); capOf.set(r.weapon_id, +r.capacity || 0); }
 }
 const modeOf = (en, auto) => {
   if (!en) return auto === '1' ? 'auto' : 'semi';
@@ -159,7 +159,8 @@ console.log(`::notice::weapon profiles: ${Object.keys(profiles).length} infantry
 
 // ---- recoil / cone of fire (weapon comparison page) --------------------------
 // assets/weapons/recoil.json: { savedAt, weapons: { <item_id>: [fire_mode_id, player_state_group_id] },
-//   fm2: { <fire_mode_id>: {recoil_*, cof_*, sway_*, fire_* numbers} },
+//   (third entry = ammo pool), states: { <player_state_id>: Census stance name },
+//   fm2: { <fire_mode_id>: {recoil_*, cof_*, sway_*, fire_*, reload_* numbers} },
 //   groups: { <player_state_group_id>: [ {player_state_id, cof_*, ...} per stance ] } }
 // Census collections fire_mode_2 and player_state_group_2 (the cache Worker must allow
 // digits in collection names). Only numeric fields whose name starts with recoil_, cof_,
@@ -179,7 +180,7 @@ try {
   const keep = (row) => {
     const o = {};
     for (const [k, v] of Object.entries(row)) {
-      if (!/^(recoil_|cof_|sway_|fire_|move_)/.test(k) || /_id$/.test(k)) continue;
+      if (!/^(recoil_|cof_|sway_|fire_|move_|reload_|bullet_|zoom_|iron_|charge_|damage_head|damage_legs)/.test(k) || /_id$/.test(k)) continue;
       const n = Number(v);
       if (v !== '' && Number.isFinite(n)) o[k] = n;
     }
@@ -215,10 +216,12 @@ try {
   for (const id of Object.keys(profiles)) {
     const mid = wantMode.get(id);
     if (!mid || !fm2[mid]) continue;
-    weapons[id] = [+mid, +(fm2[mid].psg || fmById.get(mid)?.player_state_group_id || 0)];
+    weapons[id] = [+mid, +(fm2[mid].psg || fmById.get(mid)?.player_state_group_id || 0), capOf.get(weaponOf.get(id)) || 0];
   }
   if (Object.keys(weapons).length < 100 || !Object.keys(groups).length) throw new Error(`only ${Object.keys(weapons).length} weapons / ${Object.keys(groups).length} state groups`);
-  writeFileSync(join(OUT, "recoil.json"), JSON.stringify({ savedAt: new Date().toISOString(), weapons, fm2, groups }) + "\n");
+  const states = {};
+  for (const r of await pagedAll('player_state', () => true)) states[r.player_state_id] = (r.description && (r.description.en || r.description)) || '';
+  writeFileSync(join(OUT, "recoil.json"), JSON.stringify({ savedAt: new Date().toISOString(), weapons, fm2, groups, states }) + "\n");
   console.log(`::notice::weapon recoil: ${Object.keys(weapons).length} weapons, ${Object.keys(fm2).length} fire modes, ${Object.keys(groups).length} state groups`);
 } catch (e) {
   console.log(`::warning::weapon recoil not updated: ${e.message}`);
