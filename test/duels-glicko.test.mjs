@@ -97,3 +97,11 @@ test("idle days between fights widen RD before the next kill", () => {
   const apart = duelGlicko(seqEvents(Array(25).fill(1), 1.7e9, 30 * DAY), { seed: "flat" });
   assert.ok(apart.a.mu - apart.b.mu > close.a.mu - close.b.mu, "wider RD between kills → each kill moves the rating more");
 });
+
+test("a certain outcome (huge gap) leaves both ratings unchanged instead of NaN", () => {
+  const env = glickoEnv({ tau: 0.3, sigma: 0.02 });
+  for (const [x, y] of [[rating(9500, 30, 0.02), rating(1500, 30, 0.02)], [rating(1500, 30, 0.02), rating(9500, 30, 0.02)]]) {
+    const [a, b] = rate1vs1(env, x, y);
+    for (const r of [a, b]) for (const v of [r.mu, r.phi, r.sigma]) assert.ok(Number.isFinite(v));
+  }
+});

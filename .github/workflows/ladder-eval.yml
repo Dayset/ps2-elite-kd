@@ -3,11 +3,12 @@ name: Duels ladder eval
 # Owner 2026-11-06: for two players who never met, does a full Glicko-2 ladder over every stored
 # PC kill predict better than the ⚔️ iVi 🎲 fit? scripts/ladder-eval.mjs reads the private 24/7
 # kill store (cache Worker /live/killclasses, proxy key) inside the runner; only totals leave it
-# (::notice:: lines + data/ladder-eval.json). Weekly, so the 30-day store fills up first.
+# (::notice:: lines + data/ladder-eval.json) and the public 🌐 ladder data/ladder.json (rating per cached
+# player, like iVi; no positions, removed players left out). Daily.
 
 on:
   schedule:
-    - cron: "37 6 * * 1"
+    - cron: "37 6 * * *"
   workflow_dispatch:
     inputs:
       days:
@@ -45,6 +46,6 @@ jobs:
         run: node --max-old-space-size=12000 scripts/ladder-eval.mjs
       - name: Commit report
         env:
-          COMMIT_DIR: data/ladder-eval.json
+          COMMIT_DIR: data/
         run: |
-          scripts/ci-commit-push.sh "chore(duels): ladder eval report [bot]"
+          scripts/ci-commit-push.sh "chore(duels): ladder + eval report [bot]"

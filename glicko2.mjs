@@ -80,6 +80,9 @@ export function rate(env, r0, series) {
     difference += impact * (actual - e);
     dSquareInv += e * (1 - e) * Q ** 2 * impact ** 2;
   }
+  // Python would divide by zero here: an outcome both sides were certain of (gap ≳ 7,000 points)
+  // carries no information, so the rating stays as it was (found by the ladder eval, 2026-11-06).
+  if (!(varianceInv > 1e-12)) return r0;
   difference /= varianceInv;
   const variance = 1 / varianceInv;
   const sigma = determineSigma(env, r, difference, variance);

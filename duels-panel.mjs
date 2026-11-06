@@ -20,7 +20,7 @@ import {
   charInfoUrl, parseCharInfo, pairWarnings, WORLD_NAME, iviLuck, duelFitKind, DUEL_FIT_V1,
   DUEL_CACHE_KEY, duelCacheEntry, duelCacheRestore, duelCachePrune,
 } from "./duels.mjs?v=20261102-luck5";
-import { duelGlickoFromIvi } from "./glicko2.mjs?v=20261106-glk2";
+import { duelGlickoFromIvi, pairChance, rating } from "./glicko2.mjs?v=20261106-glk3";
 
 const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const lang = () => { try { return currentLang() || undefined; } catch { return undefined; } };
@@ -107,6 +107,39 @@ export function mountDuels(section, o = {}) {
   warn.setAttribute("role", "note");
   warn.hidden = true;
   section.insertBefore(warn, status);
+  // 🌐 Infantry ladder (owner 2026-11-06): one Glicko-2 rating per PC player from every stored
+  // infantry kill of the last 30 days (data/ladder.json, built by scripts/ladder-eval.mjs).
+  // Works for any two players, also on different servers or with no kills between them.
+  const ladderEl = document.createElement("p");
+  ladderEl.className = "duel-ladder";
+  ladderEl.hidden = true;
+  section.insertBefore(ladderEl, status);
+  let ladder = null, ladderP = null;
+  function ensureLadder() {
+    if (isPS) return Promise.resolve(null);
+    if (!ladderP) ladderP = fetch(`${dataDir}ladder.json`).then((r) => (r.ok ? r.json() : null)).then((d) => { ladder = d && d.v === 1 && d.p ? d : null; return ladder; }).catch(() => null);
+    return ladderP;
+  }
+  function renderLadder() {
+    ladderEl.hidden = true;
+    if (mode !== "pair" || !a || !b) return;
+    const want = pairKey();
+    ensureLadder().then((L) => {
+      if (!L || mode !== "pair" || pairKey() !== want) return;
+      const ra = L.p[bareName(a.display).toLowerCase()], rb = L.p[bareName(b.display).toLowerCase()];
+      if (!ra || !rb) {
+        ladderEl.textContent = tr("duel.lad.none", "🌐 Infantry ladder: not enough recent infantry kills for one of them.");
+        ladderEl.title = "";
+        ladderEl.hidden = false;
+        return;
+      }
+      const p = pairChance(rating(ra[0], ra[1], 0.02), rating(rb[0], rb[1], 0.02));
+      ladderEl.textContent = tr("duel.lad.line", "🌐 Infantry ladder: {a} {ra} ±{da} · {b} {rb} ±{db} → next kill {pa} – {pb}", {
+        a: bareName(a.display), b: bareName(b.display), ra: int(ra[0]), rb: int(rb[0]), da: int(ra[1]), db: int(rb[1]), pa: pct0(p), pb: pct0(1 - p) });
+      ladderEl.title = tr("duel.lad.tip", "Rating from every infantry kill of the last {days} days against everyone, not only each other. Compares players on different servers too.\nTested on {n} first meetings: about 3% better than the iVi prediction. Different servers can\u2019t be checked against real kills.", { days: int(L.days), n: int(L.tested || 0) });
+      ladderEl.hidden = false;
+    });
+  }
   // Small spinner in the status line while a load runs (site .spinner, 14px).
   const spin = document.createElement("span");
   spin.className = "spinner";
@@ -561,6 +594,7 @@ export function mountDuels(section, o = {}) {
   async function show(more = false) {
     if (!section.open || !mode) return;
     if (mode === "crowd") {
+      ladderEl.hidden = true;
       if (shownKey === `c:${a.cid}`) return;
       shownKey = `c:${a.cid}`;
       clear();
@@ -569,6 +603,7 @@ export function mountDuels(section, o = {}) {
     }
     const key = pairKey();
     if (!more && shownKey === `p:${key}`) return;
+    renderLadder();
     // Per-pair loading (owner 2026-10-28): a previous pair's still-running load must not
     // block the new pair — switching pairs used to sit with no loading text until the
     // section was closed and reopened, because one global flag held the load. A stale

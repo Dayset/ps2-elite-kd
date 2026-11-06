@@ -21,6 +21,7 @@ import path from "node:path";
 import zlib from "node:zlib";
 import { fileURLToPath } from "node:url";
 import { duelExpected, DUEL_FIT_V1 } from "../duels.mjs";
+import { removedList } from "../opt-out.mjs";
 import { glickoEnv, rating, rate1vs1, pairChance, Q } from "../glicko2.mjs";
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -60,9 +61,9 @@ async function pullKills() {
     for (const r of rows) {
       const id = `${r.t0}|${r.t1}|${r.n}`; if (seen.has(id)) continue; seen.add(id); added++;
       for (const k of unpack(r.k)) {
-        const [t, , , a, v, , , , av] = k;
+        const [t, w, , a, v, , , , av] = k;
         if (!a || !v || a === "0" || v === "0" || a === v || +av) continue;
-        kills.push([+t, String(a), String(v)]);
+        kills.push([+t, String(a), String(v), +w]);
       }
     }
     if (rows.length < 500 || !added) break;
@@ -112,10 +113,13 @@ async function main() {
   const t0 = kills[0][0], t1 = kills[kills.length - 1][0];
   const tCut = t1 - (t1 - t0) * TEST_SHARE;
   const lad = VARIANTS.map(() => new Map());
+  const games = new Map(), world = new Map(); // per cid: infantry kills + deaths, last world seen
   const met = new Set();
   const S = { tune: {}, test: {} };
   let firstAll = 0, firstIvi = 0, testKills = 0;
-  for (const [t, a, v] of kills) {
+  for (const [t, a, v, w] of kills) {
+    games.set(a, (games.get(a) || 0) + 1); games.set(v, (games.get(v) || 0) + 1);
+    if (w) { world.set(a, w); world.set(v, w); }
     const lo = a < v ? a : v, hi = a < v ? v : a;
     const pk = lo + "|" + hi;
     const first = !met.has(pk);
@@ -152,6 +156,31 @@ async function main() {
     players: lad[0].size, pairs: met.size, firstMeetings: firstAll, firstMeetingsBothIvi: firstIvi,
     iviPlayers: iviOf.size, medianIvi: MED, bestTuned: best, tune, test,
   };
+  // 🌐 Published ladder (duels panel): the iVi-start variant, cached players with LADDER_MIN+ infantry
+  // kills + deaths. Servers never meet, so each server's ratings drift on their own: every server is
+  // shifted so its median (rating − iVi start) is 0, which puts all servers back on the iVi scale.
+  const PUB = "ivi-rd100-c1", LADDER_MIN = 20;
+  const pv = VARIANTS.find((v) => v.id === PUB), pm = lad[VARIANTS.indexOf(pv)];
+  const removed = removedList((() => { try { return read("data/opt-out.json"); } catch { return {}; } })());
+  const drift = new Map();
+  for (const [cid, r] of pm) {
+    const w = world.get(cid);
+    if (!w || !iviOf.get(cid) || (games.get(cid) || 0) < LADDER_MIN) continue;
+    if (!drift.has(w)) drift.set(w, []);
+    drift.get(w).push(r.mu - start(pv, cid).mu);
+  }
+  const shift = new Map([...drift].map(([w, xs]) => { xs.sort((x, y) => x - y); return [w, xs[xs.length >> 1]]; }));
+  const pub = {};
+  for (const [cid, r] of pm) {
+    const nm = cidName[cid] && String(cidName[cid][0]).toLowerCase();
+    if (!nm || removed.match({ cid, name: nm }) || (games.get(cid) || 0) < LADDER_MIN || !Number.isFinite(r.mu)) continue;
+    pub[nm] = [Math.round(r.mu - (shift.get(world.get(cid)) || 0)), Math.round(r.phi), games.get(cid), world.get(cid) || 0];
+  }
+  fs.writeFileSync(path.join(ROOT, "data/ladder.json"), JSON.stringify({
+    v: 1, at: report.at, days: report.days, variant: PUB, tested: test[PUB] ? test[PUB].kills : 0,
+    shift: Object.fromEntries([...shift].map(([w, x]) => [w, Math.round(x)])), cols: ["mu", "rd", "games", "world"], p: pub,
+  }) + "\n");
+  report.published = { variant: PUB, players: Object.keys(pub).length, shift: Object.fromEntries([...shift].map(([w, x]) => [w, Math.round(x)])) };
   fs.writeFileSync(path.join(ROOT, "data/ladder-eval.json"), JSON.stringify(report, null, 1) + "\n");
   const line = (m) => (test[m] ? `${m} ll ${test[m].ll} br ${test[m].brier}` : `${m} –`);
   console.log(`::notice::ladder eval: ${report.days} days, ${kills.length} infantry kills, ${met.size} pairs; first meetings in test ${firstAll} (both iVi ${firstIvi})`);
