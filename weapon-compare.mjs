@@ -465,7 +465,7 @@ async function boot() {
       const have = attsOf(w.id);
       const chips = SLOTS.filter((sl) => have[sl]).map((sl) => `<label class="wc-att"><span>${esc(tr("wc.sim.slot." + sl, SLOT_EN[sl]))}</span> <select data-w="${w.id}" data-slot="${sl}"><option value="">${esc(tr("wc.sim.noAtt", "none"))}</option>${have[sl].map((n) => `<option value="${esc(n)}" ${(simState.att[w.id] || {})[sl] === n ? "selected" : ""}>${esc(n)}${(fx => fx ? (Object.keys(fx).length ? "" : " · " + esc(tr("wc.sim.noCombat", "no effect on killing"))) : " · " + esc(tr("wc.sim.noEffect", "not modelled")))(attEffects(n, descsOf(w.id)[n], w.name, simState.aim === "hip"))}</option>`).join("")}</select></label>`).join("");
       return `<article class="wc-sim" style="border-top-color:${color(i)}"><div class="wc-simhead"><b>${esc(w.name)}</b><span class="wc-best">${head}</span></div>
-        <div class="wc-simbody"><ul class="wc-bars">${bars}</ul><div class="wc-spray">${svg}</div></div>${chips ? `<div class="wc-atts">${chips}</div>` : ""}</article>`;
+        <div class="wc-simbody"><ul class="wc-bars">${bars}</ul><div class="wc-spray">${svg}<div class="wc-dim">${esc(tr("wc.sim.scale", "Weapon spray only, {m} m wide at {d} m", { m: nf(2 * S, 1), d: nf(st.range) }))}</div></div></div>${chips ? `<div class="wc-atts">${chips}</div>` : ""}</article>`;
     }).join("");
     el.querySelectorAll("select[data-w]").forEach((sel) => sel.addEventListener("change", () => {
       const id = Number(sel.dataset.w);

@@ -248,9 +248,10 @@ export function simulate(P, { burst = Infinity, distance = 20, hp = 1000 }, r, k
     let ax0 = 0, ay0 = 0;
     if (P.acc != null) {
       const ty = r() < (P.hsr || 0) ? TARGET.headY : 0;
+      // a wrong aim is an ANGLE error (1-3 degrees), so it matters at range and is nothing at point-blank
       let ex = 0, ey = 0;
-      if (r() >= P.acc) { const a = r() * 2 * Math.PI, m = rnd(r, 2, 3); ex = m * Math.cos(a); ey = m * Math.sin(a); }
-      ax0 = Math.atan((TARGET.headX + ex) / distance) / RAD; ay0 = Math.atan((ty + ey) / distance) / RAD;
+      if (r() >= P.acc) { const a = r() * 2 * Math.PI, m = rnd(r, 1, 3); ex = m * Math.cos(a); ey = m * Math.sin(a); }
+      ax0 = Math.atan(TARGET.headX / distance) / RAD + ex; ay0 = Math.atan(ty / distance) / RAD + ey;
     }
     for (let k = 0; k < P.pellets; k++) {
       const a = r() * 2 * Math.PI, d = Math.sqrt(r()) * radius;
@@ -314,6 +315,6 @@ export function compareBursts(P, { distance = 20, hp = 1000, runs = 600, seed = 
 export function sprayPattern(P, { distance = 20, seed = 1, shots = 30 } = {}) {
   const r = rng(seed * 104729);
   const big = { ...P, mag: Math.max(P.mag, shots) };
-  const res = simulate(big, { burst: Infinity, distance, hp: 1e9 }, r, true);
+  const res = simulate({ ...big, acc: undefined, hsr: undefined }, { burst: Infinity, distance, hp: 1e9 }, r, true);
   return res.shots.filter((s) => s.i < shots);
 }

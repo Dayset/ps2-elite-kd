@@ -198,8 +198,9 @@ test("aim: accuracy 0 never hits, hsr 1 aims all at the head, compensation shrin
   const P = { rpm: 600, mag: 30, reloadMs: 2000, pellets: 1, dmgMax: 143, dmgMin: 112, rangeMaxDmg: 10, rangeMinDmg: 50, hsMult: 2 };
   const FM = { cof_recoil: 0, recoil_magnitude_min: 0.3, recoil_magnitude_max: 0.3 };
   const ST = [{ player_state_id: 1, cof_min: 0, cof_max: 0 }];
-  const run = (o) => simulate(simParams(P, FM, ST, { stance: "crouchStill", aim: "hip", ...o }), { burst: 1, distance: 20, hp: 1e9 }, rng(3), true).shots;
-  assert.ok(run({ acc: 0.0001, hsr: 0 }).every((s) => s.zone == null));
+  const run = (o, d = 20) => simulate(simParams(P, FM, ST, { stance: "crouchStill", aim: "hip", ...o }), { burst: 1, distance: d, hp: 1e9 }, rng(3), true).shots;
+  assert.ok(run({ acc: 0.0001, hsr: 0 }, 100).every((s) => s.zone == null));   // a wrong aim is an angle: a miss at 100 m
+  assert.ok(run({ acc: 0.0001, hsr: 0 }, 1).every((s) => s.zone));            // but a hit at point-blank
   assert.ok(run({ acc: 1, hsr: 1 }).every((s) => s.zone === "head"));
   assert.ok(run({ acc: 1, hsr: 0 }).every((s) => s.zone === "body"));
   const y = (o) => simulate(simParams(P, { ...FM, recoil_recovery_rate: 0.0001, recoil_recovery_delay_ms: 1e7 }, ST, { aim: "hip", ...o }), { burst: Infinity, distance: 20, hp: 1e9 }, rng(3), true).shots.at(-1).y;
