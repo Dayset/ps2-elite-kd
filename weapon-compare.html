@@ -18,7 +18,7 @@
     } catch (e) {}
   </script>
   <link rel="stylesheet" href="styles.css?v=20261031-fr1" />
-  <link rel="stylesheet" href="weapon-compare.css?v=20261106-wc9" />
+  <link rel="stylesheet" href="weapon-compare.css?v=20261106-wc10" />
 </head>
 <body class="site-page">
   <main class="wc-wrap">
@@ -94,6 +94,8 @@
       <div class="wc-simctl">
         <label><span data-i18n="wc.sim.aim">Aim</span> <select id="wcSimAim"><option value="ads" data-i18n="wc.sim.ads">Aiming down sights</option><option value="hip" data-i18n="wc.sim.hip">Hip fire</option></select></label>
         <label><span data-i18n="wc.sim.stance">Stance</span> <select id="wcSimStance"></select></label>
+        <label class="wc-slider"><span><span data-i18n="wc.sim.comp">Vertical recoil compensation</span> <b id="wcSimCompV">0%</b></span>
+          <input id="wcSimComp" type="range" min="0" max="100" step="5" value="0" data-i18n-title="wc.sim.compTip" title="Simple pulldown: the share of each shot's vertical kick that you pull back. Real recoil jumps up fast and settles a little between shots; that is not modelled." /></label>
       </div>
       <div id="wcSim" class="wc-simlist"></div>
       <p class="wc-dim" data-i18n="wc.sim.assume">Aiming uses each weapon's own aim-down-sights fire mode from Census: its cone per stance, bloom and recoil. Only one attachment per slot can be fitted (the wiki lists Heavy Barrel, Short Barrel, grips, lasers and Extended Magazine as rail attachments). Census has no attachment numbers: the effects (Compensator, Suppressor, grips, lasers, Heavy and Short Barrel, Soft Point, High Velocity) are typed in from the PlanetSide 2 wiki, patch 2023-02-08 or later. Bullet speed changes, Extended Magazine, slugs and flechettes are not modelled. The target is a head circle and a body box; the shot cone is filled evenly.</p>

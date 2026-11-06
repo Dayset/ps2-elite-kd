@@ -72,13 +72,20 @@ html, body { overflow: visible; overflow-x: clip; } /* hidden would make body th
 .wc-bars .v { font-variant-numeric: tabular-nums; text-align: right; }
 .wc-bar { display: block; height: 10px; background: var(--border); }
 .wc-bar i { display: block; height: 100%; }
-.wc-spray svg { width: 160px; height: 180px; display: block; }
+.wc-spray svg { width: 300px; max-width: 100%; height: auto; aspect-ratio: 300 / 340; display: block; }
+.wc-simsum { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 4px; font-size: 0.9rem; }
+.wc-simsum li { border-left: 3px solid var(--border); padding-left: 8px; display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.wc-simctl .wc-slider { min-width: 220px; }
+.wc-simsum .good, .wc-sim .wc-best .good { color: #3ecf74; font-weight: 700; }
+.wc-simsum .gold, .wc-sim .wc-best .gold { color: #e8b923; font-weight: 700; }
+:root[data-theme="light"] .wc-simsum .good, :root[data-theme="light"] .wc-sim .wc-best .good { color: #1b8a45; }
+:root[data-theme="light"] .wc-simsum .gold, :root[data-theme="light"] .wc-sim .wc-best .gold { color: #a87a00; }
 .wc-atts { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 8px; font-size: 0.82rem; }
 .wc-att { display: inline-flex; align-items: center; gap: 6px; }
 .wc-att select { max-width: 17rem; }
 .wc-wstats li.att { align-items: flex-start; }
 .wc-wstats li.att .v { white-space: normal; max-width: 70%; font-size: 0.8rem; color: var(--dim); }
-.wc-sim .good { color: var(--ok, #8ef0b0); font-size: 0.88rem; }
+.wc-sim .wc-best { font-size: 0.88rem; }
 
 .wc-how summary { cursor: pointer; font-weight: 600; }
 .wc-how ul { margin: 8px 0; padding-left: 1.2rem; font-size: 0.88rem; }

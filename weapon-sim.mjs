@@ -155,7 +155,7 @@ export function simParams(profile, fm, states, opts = {}) {
     cofMin, cofMax, bloom,
     cofRecRate: Math.max(0.01, row.cof_recovery_rate ?? 20), cofRecDelay: row.cof_recovery_delay_ms ?? 0,
     pelletSpread: Math.max(0, (f.pellet_spread ?? f.cof_pellet_spread ?? 0) * (hip ? mul("hipSpread") : 1) + sumA(hip ? "spreadHip" : "spreadAds")),
-    realAds,
+    realAds, comp: Math.min(1, Math.max(0, opts.comp || 0)), acc: opts.acc, hsr: opts.hsr,
     splash: A.reduce((m, a) => m + (a.splash || 0), 0), splashR: Math.max(0, ...A.map((a) => a.splashR || 0)),
     bulletRadius: A.reduce((m, a) => m + (a.bulletRadius || 0), 0),
   };
@@ -197,9 +197,17 @@ export function simulate(P, { burst = Infinity, distance = 20, hp = 1000 }, r, k
   while (fired < limit) {
     // the shot leaves where the crosshair is, with the cone on top (kick comes after)
     const radius = (cof + (P.pellets > 1 ? P.pelletSpread : 0)) / 2;
+    // the player's aim: at the head with probability hsr, else the body; right on it with probability acc, else a clear miss
+    let ax0 = 0, ay0 = 0;
+    if (P.acc != null) {
+      const ty = r() < (P.hsr || 0) ? TARGET.headY : 0;
+      let ex = 0, ey = 0;
+      if (r() >= P.acc) { const a = r() * 2 * Math.PI, m = rnd(r, 2, 3); ex = m * Math.cos(a); ey = m * Math.sin(a); }
+      ax0 = Math.atan((TARGET.headX + ex) / distance) / RAD; ay0 = Math.atan((ty + ey) / distance) / RAD;
+    }
     for (let k = 0; k < P.pellets; k++) {
       const a = r() * 2 * Math.PI, d = Math.sqrt(r()) * radius;
-      const ax = ox + d * Math.cos(a), ay = oy + d * Math.sin(a);
+      const ax = ox + ax0 + d * Math.cos(a), ay = oy + ay0 + d * Math.sin(a);
       const x = distance * tan(ax * RAD), y = distance * tan(ay * RAD);
       const zone = hitZone(x, y, P.bulletRadius || 0);
       if (keepShots) shots.push({ i: fired, t, x, y, zone });
@@ -212,7 +220,7 @@ export function simulate(P, { burst = Infinity, distance = 20, hp = 1000 }, r, k
     const mult = inBurst === 1 ? P.first : 1;
     const v = rnd(r, P.vMin, P.vMax) * mult;
     const ang = rnd(r, P.angMin, P.angMax) * RAD;
-    oy += v * Math.cos(ang); ox += v * Math.sin(ang);
+    oy += v * Math.cos(ang) * (1 - (P.comp || 0)); ox += v * Math.sin(ang);   // comp: share of the vertical kick pulled back by the player
     let h = rnd(r, P.hMin, P.hMax);
     let sign = r() < 0.5 ? -1 : 1;
     if (Math.abs(hx + sign * h) > P.hTol) sign = -sign;          // tolerance: the drift turns back

@@ -382,7 +382,32 @@ async function boot() {
   }
 
   // ------------------------------------------------------ recoil simulator --
-  const simState = { aim: "ads", stance: "crouchStill", att: {} };
+  const simState = { aim: "ads", stance: "crouchStill", att: {}, comp: 0 };
+  // best median kill time per weapon of a class (no attachments), for the gold "best in class" colour; filled in slices
+  const simClassCache = new Map(), simClassBusy = new Set();
+  const simKey = (cat) => [cat, simState.aim, simState.stance, simState.comp, st.acc, st.hsr, st.range, st.hp].join("|");
+  const simOpts = () => ({ stance: simState.stance, aim: simState.aim, comp: simState.comp / 100, acc: st.acc / 100, hsr: st.hsr / 100 });
+  const bestMedian = (w, att) => {
+    const x = recoilOf(w.id);
+    if (!x || !x.fm) return null;
+    const P = simParams(w.p, x.fm, x.states, { ...simOpts(), attachments: att, adsFm: x.adsFm, adsStates: x.adsStates, cat: w.cat, weaponName: w.name });
+    return compareBursts(P, { distance: st.range, hp: st.hp, runs: 300, seed: 1 });
+  };
+  function ensureClass(cat) {
+    const key = simKey(cat);
+    if (simClassCache.has(key) || simClassBusy.has(key)) return;
+    simClassBusy.add(key);
+    const list = [...weapons.values()].filter((w) => w.cat === cat && recoilOf(w.id));
+    let best = null, i = 0;
+    const slice = () => {
+      const stop = Math.min(list.length, i + 6);
+      for (; i < stop; i++) { const b = bestMedian(list[i], []).best; if (b && (best == null || b.median < best)) best = b.median; }
+      if (i < list.length) { setTimeout(slice, 0); return; }
+      simClassBusy.delete(key); simClassCache.set(key, best);
+      if (simKey(cat) === key || calc) drawSim();
+    };
+    setTimeout(slice, 0);
+  }
   const STANCE_EN = { crouchStill: "Crouched, still", standStill: "Standing, still", crouchMove: "Crouched, moving", standMove: "Standing, moving" };
   // attachments the weapon can mount, by slot: { barrel: [names], rail: [...], ammo: [...] }
   const attsOf = (id) => {
@@ -405,29 +430,35 @@ async function boot() {
     const el = $("wcSim");
     if (!calc || !calc.ws.length) { el.innerHTML = ""; return; }
     if (!recoil) { el.innerHTML = `<p class="wc-dim">${esc(tr("wc.sim.wait", "Loading recoil data…"))}</p>`; return; }
-    $("wcSimNote").textContent = tr("wc.sim.note", "Target at {m} m with {hp} health. No recoil control: the crosshair is never pulled back. Each style is tried 300 times.", { m: nf(st.range), hp: nf(st.hp) });
-    el.innerHTML = calc.ws.map((w, i) => {
+    $("wcSimNote").textContent = tr("wc.sim.note2", "Target at {m} m with {hp} health. Each shot is aimed at the head with the headshot rate, else at the body, and lands on the aim point with the accuracy (else it misses clearly); the cone and recoil come on top. Recoil compensation pulls that share of the vertical kick back, a simple pulldown. Each style is tried 300 times.", { m: nf(st.range), hp: nf(st.hp) });
+    const results = calc.ws.map((w) => { const x = recoilOf(w.id); return x && x.fm ? bestMedian(w, chosenAtt(w.id)) : null; });
+    const meds = results.map((r) => (r && r.best ? r.best.median : null)), rates = results.map((r) => (r && r.best ? r.best.killRate : null));
+    const bestMed = bestOf(meds, -1), bestRate = bestOf(rates, 1);
+    for (const cat of new Set(calc.ws.map((w) => w.cat))) ensureClass(cat);
+    const cls = (v, w) => { const cb = simClassCache.get(simKey(w.cat)); return v != null && cb != null && v <= cb * (1 + 1e-9) ? "gold" : v != null && v === bestMed ? "good" : ""; };
+    const sum = calc.ws.length > 1 ? `<ul class="wc-simsum">${calc.ws.map((w, i) => { const b = results[i] && results[i].best; return `<li style="border-left-color:${color(i)}"><b>${esc(w.name)}</b> <span class="${b ? cls(b.median, w) : ""}">${b ? esc(burstLabel(b.burst)) + " · " + esc(fmtMs(b.median)) : esc(tr("wc.never", "no kill"))}</span> <span class="${b && b.killRate === bestRate && calc.ws.length > 1 ? "good" : ""}">${b ? nf(b.killRate * 100) + "%" : ""}</span></li>`; }).join("")}</ul>` : "";
+    el.innerHTML = sum + calc.ws.map((w, i) => {
       const x = recoilOf(w.id);
       if (!x || !x.fm) return `<article class="wc-sim" style="border-top-color:${color(i)}"><b>${esc(w.name)}</b><p class="wc-dim">${esc(tr("wc.sim.none", "No recoil data for this weapon."))}</p></article>`;
       const att = chosenAtt(w.id);
-      const P = simParams(w.p, x.fm, x.states, { stance: simState.stance, aim: simState.aim, attachments: att, adsFm: x.adsFm, adsStates: x.adsStates, cat: w.cat, weaponName: w.name });
-      const { rows, best } = compareBursts(P, { distance: st.range, hp: st.hp, runs: 300, seed: 1 });
+      const P = simParams(w.p, x.fm, x.states, { ...simOpts(), attachments: att, adsFm: x.adsFm, adsStates: x.adsStates, cat: w.cat, weaponName: w.name });
+      const { rows, best } = results[i];
       const worst = Math.max(1, ...rows.map((r) => r.median ?? 0));
       const bars = rows.map((r) => `<li class="${best && r.burst === best.burst ? "best" : ""}"><span class="lab">${esc(burstLabel(r.burst))}</span><span class="wc-bar"><i style="width:${r.median == null ? 0 : Math.max(2, r.median / worst * 100).toFixed(1)}%;background:${color(i)}"></i></span><span class="v">${r.median == null ? esc(tr("wc.never", "no kill")) : esc(fmtMs(r.median))} · ${nf(r.killRate * 100)}%</span></li>`).join("");
       const shots = sprayPattern(P, { distance: st.range, seed: 1, shots: Math.min(30, w.p.mag) });
       const S = Math.max(1, ...shots.map((s) => Math.max(Math.abs(s.x), Math.abs(s.y))) .map((v) => v * 1.1));
-      const U = 75 / S, cx = 80, cy = 75;
-      let svg = svgOpen(160, 180, tr("wc.sim.aria", "Where a full-magazine spray lands on the target"));
+      const U = 145 / S, cx = 150, cy = 145;
+      let svg = svgOpen(300, 340, tr("wc.sim.aria", "Where a full-magazine spray lands on the target"));
       svg += `<rect x="${cx - TARGET.halfW * U}" y="${cy - TARGET.top * U}" width="${2 * TARGET.halfW * U}" height="${(TARGET.top - TARGET.bottom) * U}" fill="var(--border)"/>`;
       svg += `<circle cx="${cx + TARGET.headX * U}" cy="${cy - TARGET.headY * U}" r="${TARGET.headR * U}" fill="var(--border)" stroke="var(--dim)"/>`;
       svg += shots.map((s) => `<circle cx="${(cx + s.x * U).toFixed(1)}" cy="${(cy - s.y * U).toFixed(1)}" r="2" fill="${color(i)}" fill-opacity="${(0.35 + 0.65 * (1 - s.i / 30)).toFixed(2)}"/>`).join("");
       svg += "</svg>";
       const head = best
-        ? esc(tr("wc.sim.best", "Best: {style}, median {ms}", { style: burstLabel(best.burst), ms: fmtMs(best.median) }))
+        ? `<span class="${cls(best.median, w)}">` + esc(tr("wc.sim.best", "Best: {style}, median {ms}", { style: burstLabel(best.burst), ms: fmtMs(best.median) })) + "</span>"
         : esc(tr("wc.sim.nobest", "Cannot kill reliably at this range with this setup"));
       const have = attsOf(w.id);
       const chips = SLOTS.filter((sl) => have[sl]).map((sl) => `<label class="wc-att"><span>${esc(tr("wc.sim.slot." + sl, SLOT_EN[sl]))}</span> <select data-w="${w.id}" data-slot="${sl}"><option value="">${esc(tr("wc.sim.noAtt", "none"))}</option>${have[sl].map((n) => `<option value="${esc(n)}" ${(simState.att[w.id] || {})[sl] === n ? "selected" : ""}>${esc(n)}${canon(n) in ATTACHMENTS ? (Object.keys(ATTACHMENTS[canon(n)]).length ? "" : " · " + esc(tr("wc.sim.noCombat", "no effect on killing"))) : " · " + esc(tr("wc.sim.noEffect", "not modelled"))}</option>`).join("")}</select></label>`).join("");
-      return `<article class="wc-sim" style="border-top-color:${color(i)}"><div class="wc-simhead"><b>${esc(w.name)}</b><span class="good">${head}</span></div>
+      return `<article class="wc-sim" style="border-top-color:${color(i)}"><div class="wc-simhead"><b>${esc(w.name)}</b><span class="wc-best">${head}</span></div>
         <div class="wc-simbody"><ul class="wc-bars">${bars}</ul><div class="wc-spray">${svg}</div></div>${chips ? `<div class="wc-atts">${chips}</div>` : ""}</article>`;
     }).join("");
     el.querySelectorAll("select[data-w]").forEach((sel) => sel.addEventListener("change", () => {
@@ -441,6 +472,8 @@ async function boot() {
     s.innerHTML = STANCES.map((k) => `<option value="${k}">${esc(tr("wc.sim.st." + k, STANCE_EN[k]))}</option>`).join("");
     a.addEventListener("change", () => { simState.aim = a.value; drawSim(); });
     s.addEventListener("change", () => { simState.stance = s.value; drawSim(); });
+    const cp = $("wcSimComp");
+    cp.addEventListener("input", () => { simState.comp = +cp.value; $("wcSimCompV").textContent = nf(simState.comp) + "%"; drawSim(); });
   }
 
   function renderCharts() { if (!calc) return; drawTtk(); drawCdf(); drawDps(); drawSim(); }
