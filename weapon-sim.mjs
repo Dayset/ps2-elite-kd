@@ -11,7 +11,7 @@
 // the cone is filled. Those are constants here, labelled on the page.
 //
 // Units: angles in degrees, distances in metres, time in ms.
-import { hitDamage } from "./weapons-model.mjs?v=20261106-wcr2";
+import { hitDamage } from "./weapons-model.mjs?v=20261106-wcr4";
 
 export const STANCES = Object.freeze(["crouchStill", "standStill", "crouchMove", "standMove"]);
 // Census player_state ids: 0 Standing, 1 Crouching, 2 Running, 5 CrouchWalking
@@ -211,7 +211,8 @@ export function simParams(profile, fm, states, opts = {}) {
     cofMin, cofMax, bloom,
     cofRecRate: Math.max(0.01, row.cof_recovery_rate ?? 20), cofRecDelay: row.cof_recovery_delay_ms ?? 0,
     pelletSpread: Math.max(0, (f.pellet_spread ?? f.cof_pellet_spread ?? 0) * (hip ? mul("hipSpread") * mul("spreadHipMul") : mul("spreadAdsMul")) + sumA(hip ? "spreadHip" : "spreadAds")),
-    realAds, comp: Math.min(1, Math.max(0, opts.comp || 0)), acc: opts.acc, hsr: opts.hsr,
+    realAds, comp: Math.min(1, Math.max(0, opts.comp || 0)), compX: Math.min(1, Math.max(0, opts.compX || 0)),
+    aimTarget: opts.aimTarget === "head" ? "head" : "body", acc: opts.acc, hsr: opts.hsr,
     splash: A.reduce((m, a) => m + (a.splash || 0), 0), splashR: Math.max(0, ...A.map((a) => a.splashR || 0)),
     blastRatio: A.reduce((m, a) => m + (a.blastRatio || 0), 0),
     bulletRadius: A.reduce((m, a) => m + (a.bulletRadius || 0), 0),
@@ -268,13 +269,20 @@ export function simulate(P, { burst = Infinity, distance = 20, hp = 1000 }, r, k
     // the shot leaves where the crosshair is, with the cone on top (kick comes after)
     const radius = (cof + (P.pellets > 1 ? P.pelletSpread : 0)) / 2;
     // the player's aim: at the head with probability hsr, else the body; right on it with probability acc, else a clear miss
-    let ax0 = 0, ay0 = P.sprayAim ? Math.atan(P.sprayAim / distance) / RAD : 0;   // pattern picture: aimed at the head or the torso
+    // the player aims at the chosen target (P.aimTarget); with probability hsr the shot lands on the OTHER one instead
+    const aimY = P.aimTarget === "head" ? TARGET.headY : 0, otherY = P.aimTarget === "head" ? 0 : TARGET.headY;
+    // accuracy: the shot is on the aim point with probability acc (as in weapons-model.mjs), else a clear miss
+    let ax0 = 0, ay0 = Math.atan(aimY / distance) / RAD;
     if (P.acc != null) {
-      const ty = r() < (P.hsr || 0) ? TARGET.headY : 0;
-      // the aim error is an ANGLE, up to (1 - accuracy) x 3 degrees, so it matters at range and is nothing at point-blank
-      let ex = 0, ey = 0;
-      if (P.acc < 1) { const a = r() * 2 * Math.PI, m = (1 - P.acc) * 3 * Math.sqrt(r()); ex = m * Math.cos(a); ey = m * Math.sin(a); }
-      ax0 = Math.atan(TARGET.headX / distance) / RAD + ex; ay0 = Math.atan(ty / distance) / RAD + ey;
+      if (r() < P.acc) {
+        const ty = r() < (P.hsr || 0) ? otherY : aimY;   // headshot rate: the chance a shot lands on the other target
+        ay0 = Math.atan(ty / distance) / RAD;
+      } else {
+        // a miss: a point beside the target, outside the head and the body (a few tries, then a fixed spot)
+        let mx = 0.9, my = 0.6;
+        for (let t = 0; t < 20; t++) { const x = (r() * 2 - 1) * 0.9, y = -1.4 + r() * 2; if (!hitZone(x, y, 0.05)) { mx = x; my = y; break; } }
+        ax0 = Math.atan(mx / distance) / RAD; ay0 = Math.atan(my / distance) / RAD;
+      }
     }
     for (let k = 0; k < P.pellets; k++) {
       const a = r() * 2 * Math.PI, d = Math.sqrt(r()) * radius;
@@ -291,11 +299,14 @@ export function simulate(P, { burst = Infinity, distance = 20, hp = 1000 }, r, k
     const mult = inBurst === 1 ? P.first : 1;
     const v = rnd(rv, P.vMin, P.vMax) * mult;
     const ang = rnd(rv, P.angMin, P.angMax) * RAD;
-    oy += v * Math.cos(ang) * (1 - (P.comp || 0)); ox += v * Math.sin(ang);   // comp: share of the vertical kick pulled back by the player
+    // comp: share of the vertical kick pulled back by the player; compX: share of the sideways part (the lean from
+    // the recoil angle, and the drift) pulled back
+    const cx = 1 - (P.compX || 0);
+    oy += v * Math.cos(ang) * (1 - (P.comp || 0)); ox += v * Math.sin(ang) * cx;
     const h = rnd(rh, P.hMin, P.hMax);
     let sign = rh() < 0.5 ? -1 : 1;
-    if (Math.abs(hx + sign * h) > P.hTol) sign = -sign;          // tolerance: the drift turns back
-    hx += sign * h; ox += sign * h;
+    if (Math.abs(hx + sign * h * cx) > P.hTol) sign = -sign;     // tolerance: the drift turns back
+    hx += sign * h * cx; ox += sign * h * cx;
     cof = Math.min(P.cofMax, cof + P.bloom);
     // next shot
     if (magLeft <= 0) {
@@ -340,9 +351,10 @@ export function compareBursts(P, { distance = 20, hp = 1000, runs = 600, seed = 
  * One full spray (hold the trigger; a burst weapon pulls again as soon as it can) with the impact points, for the
  * pattern picture. The cone, the vertical kick and the horizontal kick each get their own random stream from `seed`.
  */
-export function sprayPattern(P, { distance = 20, seed = 1, shots = 30, aimHead = false } = {}) {
+export function sprayPattern(P, { distance = 20, seed = 1, shots = 30 } = {}) {
   const r = rng(seed * 104729), rv = rng(seed * 15485863 + 7), rh = rng(seed * 32452843 + 13);
   const big = { ...P, mag: Math.max(P.mag, shots) };
-  const res = simulate({ ...big, acc: undefined, hsr: undefined, sprayAim: aimHead ? TARGET.headY : 0 }, { burst: Infinity, distance, hp: 1e9 }, r, true, rv, rh);
+  // accuracy and headshot rate come from P (as in the time-to-kill runs), so each shot shows what it hit
+  const res = simulate(big, { burst: Infinity, distance, hp: 1e9 }, r, true, rv, rh);
   return res.shots.filter((s) => s.i < shots);
 }

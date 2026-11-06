@@ -199,8 +199,9 @@ test("aim: accuracy 0 never hits, hsr 1 aims all at the head, compensation shrin
   const FM = { cof_recoil: 0, recoil_magnitude_min: 0.3, recoil_magnitude_max: 0.3 };
   const ST = [{ player_state_id: 1, cof_min: 0, cof_max: 0 }];
   const run = (o, d = 20) => simulate(simParams(P, FM, ST, { stance: "crouchStill", aim: "hip", ...o }), { burst: 1, distance: d, hp: 1e9 }, rng(3), true).shots;
-  assert.ok(run({ acc: 0.0001, hsr: 0 }, 100).filter((s) => s.zone).length < 6);   // a wrong aim is an angle: mostly misses at 100 m
-  assert.ok(run({ acc: 0.0001, hsr: 0 }, 1).every((s) => s.zone));            // but a hit at point-blank
+  assert.ok(run({ acc: 0.0001, hsr: 0 }, 100).every((s) => !s.zone));          // a shot misses with probability 1 - accuracy
+  assert.ok(run({ acc: 0.0001, hsr: 0 }, 1).every((s) => !s.zone));
+  assert.ok(run({ acc: 1, hsr: 0, aimTarget: "head" }).every((s) => s.zone === "head"));   // aim at the head: every shot on it
   assert.ok(run({ acc: 0.7, hsr: 1 }, 20).some((s) => s.zone === "head"));    // head aim still lands heads with imperfect aim
   assert.ok(run({ acc: 1, hsr: 1 }).every((s) => s.zone === "head"));
   assert.ok(run({ acc: 1, hsr: 0 }).every((s) => s.zone === "body"));

@@ -171,3 +171,7 @@ tbody.open .wc-caret::before { content: "▾"; }
 .wc-zoomdlg::backdrop { background: rgba(0, 0, 0, 0.55); }
 .wc-zoomhead { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
 .wc-zoomdlg .wc-spray svg { width: min(80vw, 560px); max-width: 100%; }
+
+/* spray outcomes: misses in grey, and the hit line under each picture */
+.wc-spray .wc-miss { fill: var(--dim); }
+.wc-hitline { margin-top: 2px; font-size: 0.75rem; }
