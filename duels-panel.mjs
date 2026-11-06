@@ -20,6 +20,7 @@ import {
   charInfoUrl, parseCharInfo, pairWarnings, WORLD_NAME, iviLuck, duelFitKind, DUEL_FIT_V1,
   DUEL_CACHE_KEY, duelCacheEntry, duelCacheRestore, duelCachePrune,
 } from "./duels.mjs?v=20261102-luck5";
+import { duelGlickoFromIvi } from "./glicko2.mjs?v=20261106-glk1";
 
 const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const lang = () => { try { return currentLang() || undefined; } catch { return undefined; } };
@@ -385,7 +386,7 @@ export function mountDuels(section, o = {}) {
     return job;
   }
 
-  function cmpHtml(s, items, aName, bName) {
+  function cmpHtml(s, items, aName, bName, pe = []) {
     const ca = crowdSummary(crowdRows(a), b.display), cb = crowdSummary(crowdRows(b), a.display);
     const wTxt = (w) => (w ? `${wName(items, w[0])} (${int(w[1])})` : "–");
     const cTxt = (c) => (c ? `${clsFull(c[0])} (${int(c[1])})` : "–");
@@ -418,10 +419,27 @@ export function mountDuels(section, o = {}) {
       luckRow = row(tr("duel.m.luck", "🎲 vs expected"), tip, side(luck.gap), side(-luck.gap), "duel-luck",
         sideTip(luck.exp, luck.act, luck.gap), sideTip(1 - luck.exp, 1 - luck.act, -luck.gap));
     }
+    // 📈 Glicko (#112): the kills between them replayed in order, starting from the 🎲 prediction.
+    // Infantry kills only (a vehicle kill says little about who wins the next infantry fight).
+    let glkRow = "";
+    if (luck) {
+      const g = duelGlickoFromIvi(pe, ia, ib, duelFit, vehOf(a), vehOf(b), { now: Date.now() / 1000 });
+      const tip = tr("duel.m.glkTip", "Chess-style rating (Glicko-2) of just these two: every infantry kill between them, oldest first, moves it. It starts from what their iVi predicts.\n± = how unsure it is: it grows with every day they don\u2019t meet.\n% = chance to get the next kill between them. Vehicle kills left out.");
+      if (!g) {
+        const few = `<span class="duel-luck-few">${esc(tr("duel.glk.few", "too few infantry kills"))}</span>`;
+        glkRow = row(tr("duel.m.glk", "📈 Glicko"), tip, few, few, "duel-glk");
+      } else {
+        const last = dateOnly(g.last);
+        const cell = (r, p) => `${int(r.mu)} <span class="duel-sub">±${int(r.phi)}</span> · ${pct0(p)}`;
+        const stale = g.stale ? ` <span class="duel-luck-few">${esc(tr("duel.glk.stale", "old"))}</span>` : "";
+        const sideTip = (r) => tr("duel.m.glkSide", "Rating {r} ± {rd} (now). Infantry kills replayed: {n}; last {last}.", { r: int(r.mu), rd: int(r.phi), n: int(g.n), last });
+        glkRow = row(tr("duel.m.glk", "📈 Glicko"), tip, cell(g.aNow, g.p) + stale, cell(g.bNow, 1 - g.p) + stale, "duel-glk", sideTip(g.aNow), sideTip(g.bNow));
+      }
+    }
     return `<thead><tr><th scope="col"></th><th scope="col" class="duel-a">${esc(aName)}</th><th scope="col" class="duel-b">${esc(bName)}</th></tr></thead><tbody>` +
       row(tr("duel.m.kills", "Kills on the other"), tr("duel.m.killsTip", "Kills on each other; % = share of the kills between them, +% = how many more than the other."), `${int(s.a.kills)}${shareTxt(s.a.kills)}${more(s.a.kills, s.b.kills)}`, `${int(s.b.kills)}${shareTxt(s.b.kills)}${more(s.b.kills, s.a.kills)}`, "duel-big") +
       (ia && ib ? row("⚔️ iVi", tr("duel.m.iviTip", "Skill rating (same as the table); +% = how much higher than the other."), `${int(ia)}${more(ia, ib)}`, `${int(ib)}${more(ib, ia)}`) : "") +
-      luckRow +
+      luckRow + glkRow +
       row(tr("duel.m.kd", "K/D vs each other"), "", kdTxt(s.a.kd), kdTxt(s.b.kd)) +
       row(tr("duel.m.crowd", "K/D vs everyone else"), tr("duel.m.crowdTip", "Kills ÷ deaths against the ~200 players they fight most (Census killboard), this opponent left out."), kdTxt(ca.kd), kdTxt(cb.kd)) +
       row(tr("duel.m.hs", "Headshot kills"), "", `${int(s.a.hs)} · ${pct(s.a.hsr)}`, `${int(s.b.hs)} · ${pct(s.b.hsr)}`) +
@@ -472,10 +490,10 @@ export function mountDuels(section, o = {}) {
     })) + replayDuelHtml(isPS, aName, bName);
     sum.hidden = false;
     setStatus(read);
-    cmp.innerHTML = cmpHtml(s, items, aName, bName);
+    cmp.innerHTML = cmpHtml(s, items, aName, bName, pe);
     if (!iviMap || duelFit === null) {
       Promise.all([ensureIvi(), ensureFit()]).then(() => {
-        if (mode === "pair" && pairs.get(pairKey()) === job && section.open) cmp.innerHTML = cmpHtml(s, items, aName, bName);
+        if (mode === "pair" && pairs.get(pairKey()) === job && section.open) cmp.innerHTML = cmpHtml(s, items, aName, bName, pe);
       });
     }
     cmpWrap.hidden = false;
