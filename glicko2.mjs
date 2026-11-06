@@ -104,9 +104,9 @@ export function winpct1vs1(env, r1, r2) {
 
 /**
  * ps2ranks populate_db: tau 0.3, sigma 0.02, RD 100, min RD 30. RD0 = starting RD of the iVi seed
- * (picked on held-out pairs, see claude/duels-glicko.md). STALE_DAYS: older last kill → "stale".
+ * (picked on held-out pairs, see claude/duels-glicko.md): 30 (held-out 2026-11-06, 484 pairs: log loss 0.6405 vs 🎲 0.6453, RD 100 0.6461). STALE_DAYS: older last kill → "stale".
  */
-export const DUEL_GLICKO = Object.freeze({ tau: 0.3, sigma: 0.02, rd: 100, rd0: 100, minRd: 30, maxRd: 350, staleDays: 90, day: 86400 });
+export const DUEL_GLICKO = Object.freeze({ tau: 0.3, sigma: 0.02, rd: 100, rd0: 30, minRd: 30, maxRd: 350, staleDays: 90, day: 86400 });
 
 /**
  * Chance that A gets the next kill, from both RDs (Glickman: g of the combined RD). Symmetric:

@@ -20,7 +20,7 @@ import {
   charInfoUrl, parseCharInfo, pairWarnings, WORLD_NAME, iviLuck, duelFitKind, DUEL_FIT_V1,
   DUEL_CACHE_KEY, duelCacheEntry, duelCacheRestore, duelCachePrune,
 } from "./duels.mjs?v=20261102-luck5";
-import { duelGlickoFromIvi } from "./glicko2.mjs?v=20261106-glk1";
+import { duelGlickoFromIvi } from "./glicko2.mjs?v=20261106-glk2";
 
 const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const lang = () => { try { return currentLang() || undefined; } catch { return undefined; } };
