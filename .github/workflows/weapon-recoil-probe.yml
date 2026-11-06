@@ -37,4 +37,5 @@ jobs:
       - name: Commit
         env:
           COMMIT_DIR: assets/weapons/
-        run: scripts/ci-commit-push.sh "chore(weapons): recoil probe [bot]"
+        run: |
+          scripts/ci-commit-push.sh "chore(weapons): recoil probe [bot]"
