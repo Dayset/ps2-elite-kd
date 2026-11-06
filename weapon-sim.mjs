@@ -39,7 +39,7 @@ export const ASSUMPTIONS = Object.freeze([
 export const SLOTS = Object.freeze(["barrel", "rail", "ammo"]);
 const SLOT_RE = {
   barrel: /^(Compensator|Flash Suppressor|Suppressor|Muzzle Brake|Enhanced Plasma Containment|Smart-Choke|Hybrid Suppressor|Emission Condenser|Burst Stabilizer|Recoil Stabilizer|Confetti Suppressor|Single-Fire Barrel|Stabilizing Rotor|Tungsten Liner)$/i,
-  rail: /^(MPL|Weighted Receiver|Straight-Pull Bolt|Supercooled Coil|Vented Power Core|Forward Grip|Angled Forward Grip|Comfort Grip|Laser Sight|Hybrid Laser|Darklight Flashlight|Zip Light|Heavy Barrel|Short Barrel|Extended Magazine|Smart Feeder|Grenade Launcher|Underbarrel Shotgun|Smoke Launcher|Cure Launcher|Adaptive Class Underbarrel|Safety Override|High-capacity Battery|Ballistics Computer)$/i,
+  rail: /^(MPL|Weighted Receiver|Straight-Pull Bolt|Supercooled Coil|Vented Power Core|Forward Grip|Angled Forward Grip|Comfort Grip|Laser Sight|Hybrid Laser|Darklight Flashlight|Zip Light|Heavy Barrel|Short Barrel|Extended Magazine|Lightweight Materials|Smart Feeder|Grenade Launcher|Underbarrel Shotgun|Smoke Launcher|Cure Launcher|Adaptive Class Underbarrel|Safety Override|High-capacity Battery|Ballistics Computer)$/i,
   ammo: /(Ammunition|Bolt|^Heavy Magazine)$/i,
 };
 /** Names Census gives the same part (the wiki lists them as one attachment): the effect of the first is used. "Muzzle Brake" has no wiki page; it sits beside Compensator on the same weapons, so it is treated as one (assumption). */
@@ -71,7 +71,7 @@ export function slotOf(name) {
  */
 export const ATTACHMENTS = Object.freeze({
   "Compensator": { vRecoil: 0.7, hipMinCof: 1.15 },
-  "Suppressor": { minRange: -20, minRangeSmg: -10 },
+  "Suppressor": {},                                         // min damage range -20 m (-10 m SMG): read from each weapon's own Census description
   "Flash Suppressor": {},
   "Forward Grip": { hRecoil: 0.75 },
   "Angled Forward Grip": { firstShot: 0.4, hRecoil: 1.1 },
@@ -95,13 +95,53 @@ export const ATTACHMENTS = Object.freeze({
   "High Velocity Ammunition": { maxRange: -2, minRange: 20 },
   "Single-Fire Barrel": { vRecoil: 0.8 },
   "Stabilizing Rotor": { hipBloom: 0.75, adsBloom: 0.75, rofMul: 0.93 },
-  "Hybrid Suppressor": {}, "Emission Condenser": {}, "Ballistics Computer": {}, "Cerberus Ammunition": {}, "Manticore Ammunition": {},
+  "Hybrid Suppressor": {}, "Emission Condenser": {}, "Ballistics Computer": {}, "Manticore Ammunition": {},
   "High-capacity Battery": { magAdd: 3 },
+  "Straight-Pull Bolt": {},                                // lets a bolt-action sniper chamber the next round while aiming: the cycle is not modelled
+  "Recoil Stabilizer": { hRecoil: 0.75 }, "Burst Stabilizer": { firstShot: 0.4, hRecoil: 1.1 },
+    "Explosive Bolt": { by: { "Hunter QCX": { dmgSet: 300, magAdd: -1 } } },
+  "Incendiary Bolt": { by: { "Hunter QCX": { dmgSet: 250 } } },
   "Detect Bolt": { by: { "Hunter QCX": { dmgSet: 100 } } },
   "Tungsten Liner": { by: { "Bishop": { dmgSet: 334, vRecoil: 2 } } },
   "Impact Ammunition": { by: { "Arbalest": { dmgSet: 125, magAdd: -6 }, "TORQ-9": { dmgSet: 125, magAdd: -6 } } },
   "Safety Override": { by: { "Obelisk": { hipOnly: true, rofMul: 2, dmgMul: 0.5, hipMinCof: 0.75 } } },
 });
+
+/**
+ * Census gives every attachment item its own description with the numbers of THAT weapon's version
+ * (Extended Magazine +2 / +10 / x2, Smart Feeder +5 / +20 / +50 and its slower reload, SPRW -4 / -25,
+ * Slug 450 -> 300, Flechette -1..-3 pellets). They are read from the text here; the effects listed in
+ * ATTACHMENTS (from the wiki) win over them where both name the same key.
+ */
+export function descEffects(name, desc) {
+  const t = String(desc || "").replace(/<[^>]*>/g, " ");
+  const out = {};
+  let m;
+  if ((m = /(?:increases|adds?)[^.]*?\bby (\d+) (?:additional )?rounds?\b/i.exec(t)) || (m = /Adds (\d+) additional rounds/i.exec(t))) out.magAdd = +m[1];
+  else if ((m = /(?:increases|adds?)[^.]*?magazine size by (\d+) rounds?/i.exec(t))) out.magAdd = +m[1];
+  else if (/doubles the amount of ammunition/i.test(t)) out.magMul = 2;
+  else if ((m = /ammunition in each magazine by (\d+)%/i.exec(t))) out.magMul = 1 + m[1] / 100;
+  if ((m = /reduc(?:es|ing) magazine size by (\d+)/i.exec(t))) out.magAdd = -m[1];
+  if ((m = /reload speed by ([\d.]+) seconds/i.exec(t))) out.reloadAdd = Math.round(m[1] * 1000);
+  if (/Slug Ammunition/i.test(name) && (m = /dealing (\d+) damage, falling off to (\d+)/i.exec(t))) { out.dmgSet = +m[1]; out.dmgSetMin = +m[2]; out.pelletsSet = 1; }
+  if (/Flechette/i.test(name)) { out.rangeMul = 3; if ((m = /number of pellets fired per shot by (\d+)/i.exec(t))) out.pelletAdd = -m[1]; }
+  if (/Capsulate/i.test(name)) { out.pelletsSet = 2; out.splitDamage = true; out.spreadHipMul = 0.25; out.spreadAdsMul = 0.5; }
+  if (/Cerberus/i.test(name)) { out.pelletsSet = 3; out.splitDamage = true; }
+  if (/Lashing/i.test(name) && (m = /converts (\d+)% of the weapon's direct damage/i.exec(t))) { out.dmgMul = 1 - m[1] / 100; out.blastRatio = m[1] / (100 - m[1]); }
+  if ((m = /direct damage is also reduced by (\d+)/i.exec(t))) out.dmgAdd = -m[1];
+  if ((m = /increases the weapon's angular recoil by (\d+)%/i.exec(t))) out.angleMul = 1 + m[1] / 100;
+  if ((m = /damage falls off (\d+) meters sooner/i.exec(t))) out.minRange = -m[1];
+  return out;
+}
+
+/** Effects of one attachment on one weapon, or null when the part is not modelled. {} = no effect on killing. */
+export function attEffects(name, desc, weaponName, hip = false) {
+  const c = canon(name), st = ATTACHMENTS[c];
+  const d = descEffects(c, desc);
+  if (st && st.by) { const w = st.by[weaponName]; return w ? (!w.hipOnly || hip ? w : {}) : d; }
+  if (!st && !Object.keys(d).length) return null;
+  return { ...d, ...(st || {}) };
+}
 
 /** Strategies: shots per burst (holding the trigger down is not offered: it is never the practical choice). */
 export const BURSTS = Object.freeze([1, 2, 3, 4, 6, 8, 12]);
@@ -111,13 +151,17 @@ export const BURSTS = Object.freeze([1, 2, 3, 4, 6, 8, 12]);
  * opts: { stance, aim: "ads" | "hip", attachments: [names], ads }
  */
 function adjustRanges(profile, A, cat) {
+  const split = A.some((a) => a.splitDamage), pset = A.find((a) => a.pelletsSet != null), rm = A.reduce((m, a) => m * (a.rangeMul ?? 1), 1);
+  const nPellets = pset ? pset.pelletsSet : Math.max(1, profile.pellets + A.reduce((m, a) => m + (a.pelletAdd || 0), 0));
+  if (split && nPellets !== profile.pellets) profile = { ...profile, dmgMax: profile.dmgMax * profile.pellets / nPellets, dmgMin: profile.dmgMin * profile.pellets / nPellets };
   const sum = (k) => A.reduce((m, a) => m + (a[k] || 0), 0);
   const dMax = sum("maxRange");
   const dMin = A.reduce((m, a) => m + (cat === "SMG" && a.minRangeSmg != null ? a.minRangeSmg : a.minRange || 0), 0);
   const dSet = A.find((a) => a.dmgSet != null), dAdd = sum("dmgAdd"), dHs = sum("hsDelta"), hsSet = A.find((a) => a.hsSet != null), dm = A.reduce((m, a) => m * (a.dmgMul ?? 1), 1);
-  if (!dMax && !dMin && !dHs && !hsSet && dm === 1 && !dAdd && !dSet) return profile;
+  if (!dMax && !dMin && !dHs && !hsSet && dm === 1 && !dAdd && !dSet && rm === 1) return profile;
   const far = profile.rangeMinDmg > 0 ? Math.max(0, profile.rangeMinDmg + dMin) : profile.rangeMinDmg;
-  return { ...profile, rangeMaxDmg: Math.max(0, profile.rangeMaxDmg + dMax), rangeMinDmg: far, hsMult: hsSet ? hsSet.hsSet : Math.max(1, profile.hsMult + dHs), dmgMax: Math.max(1, (dSet ? dSet.dmgSet : profile.dmgMax) * dm + dAdd), dmgMin: Math.max(1, (dSet ? dSet.dmgSet : profile.dmgMin) * dm + dAdd) };
+  const dSetMin = A.find((a) => a.dmgSetMin != null);
+  return { ...profile, rangeMaxDmg: Math.max(0, profile.rangeMaxDmg * rm + dMax), rangeMinDmg: far * rm, hsMult: hsSet ? hsSet.hsSet : Math.max(1, profile.hsMult + dHs), dmgMax: Math.max(1, (dSet ? dSet.dmgSet : profile.dmgMax) * dm + dAdd), dmgMin: Math.max(1, (dSetMin ? dSetMin.dmgSetMin : dSet ? dSet.dmgSet : profile.dmgMin) * dm + dAdd) };
 }
 
 export function simParams(profile, fm, states, opts = {}) {
@@ -129,7 +173,7 @@ export function simParams(profile, fm, states, opts = {}) {
   const f = (!hip && opts.adsFm) || fm || {};
   const ads = { ...ADS_DEFAULT, ...(opts.ads || {}) };
   const row = (rows || []).find((r) => r.player_state_id === STATE_ID[stance]) || (rows || [])[0] || {};
-  const A = (opts.attachments || []).map((n) => { const a = ATTACHMENTS[canon(n)]; if (!a) return null; if (!a.by) return a; const w = a.by[opts.weaponName]; return w && (!w.hipOnly || hip) ? w : {}; }).filter(Boolean);
+  const A = (opts.attachments || []).map((n) => attEffects(n, opts.attDesc && opts.attDesc[n], opts.weaponName, hip)).filter(Boolean);
   const mul = (key) => A.reduce((m, a) => m * (a[key] ?? 1), 1);
   let cofMin = hip || realAds ? (row.cof_min ?? 2) : ads[stance];
   let cofMax = row.cof_max ?? Math.max(cofMin, 1);
@@ -138,25 +182,28 @@ export function simParams(profile, fm, states, opts = {}) {
   if (cofMax < cofMin) cofMax = cofMin;
   const baseBloom = f.cof_recoil ?? (fm && fm.cof_recoil) ?? 0.1;
   const bloom = baseBloom * (hip ? mul("hipBloom") : (opts.adsFm ? 1 : ads.bloomRatio) * mul("adsBloom"));
+  const sumA = (k) => A.reduce((m, a) => m + (a[k] || 0), 0);
+  const pset = A.find((a) => a.pelletsSet != null);
+  const pellets = pset ? pset.pelletsSet : Math.max(1, profile.pellets + sumA("pelletAdd"));
   const rec = (hip ? mul("hipRecoil") : 1);
   const vMul = mul("vRecoil") * (hip ? 1 : mul("adsVRecoil")) * rec;
   const hMul = mul("hRecoil") * rec;
-  const sumA = (k) => A.reduce((m, a) => m + (a[k] || 0), 0);
   return {
     gapMs: (f.fire_refire_ms || 60000 / profile.rpm) / (A.reduce((m, a) => m * (a.rofMul ?? 1), 1)),
-    mag: Math.max(1, profile.mag + A.reduce((m, a) => m + (a.magAdd || 0), 0)), reloadMs: profile.reloadMs, pellets: profile.pellets,
-    profile: adjustRanges(profile, A, opts.cat),
+    mag: Math.max(1, Math.round((profile.mag + sumA("magAdd")) * mul("magMul"))), reloadMs: profile.reloadMs + sumA("reloadAdd"), pellets: pellets,
+    profile: { ...adjustRanges(profile, A, opts.cat), pellets },
     vMin: (f.recoil_magnitude_min ?? 0.3) * vMul, vMax: (f.recoil_magnitude_max ?? 0.3) * vMul,
     first: Math.max(0, (f.recoil_first_shot_modifier ?? 1) * mul("firstShot")),
-    angMin: (f.recoil_angle_min ?? 0) * hMul - sumA("angleAdd"), angMax: (f.recoil_angle_max ?? 0) * hMul + sumA("angleAdd"),
+    angMin: (f.recoil_angle_min ?? 0) * hMul * mul("angleMul") - sumA("angleAdd"), angMax: (f.recoil_angle_max ?? 0) * hMul * mul("angleMul") + sumA("angleAdd"),
     hMin: (f.recoil_horizontal_min ?? 0) * hMul, hMax: (f.recoil_horizontal_max ?? 0) * hMul,
     hTol: (f.recoil_horizontal_tolerance ?? 0.4) * hMul,
     recDelay: f.recoil_recovery_delay_ms ?? 0, recRate: Math.max(0.01, f.recoil_recovery_rate ?? 10),
     cofMin, cofMax, bloom,
     cofRecRate: Math.max(0.01, row.cof_recovery_rate ?? 20), cofRecDelay: row.cof_recovery_delay_ms ?? 0,
-    pelletSpread: Math.max(0, (f.pellet_spread ?? f.cof_pellet_spread ?? 0) * (hip ? mul("hipSpread") : 1) + sumA(hip ? "spreadHip" : "spreadAds")),
+    pelletSpread: Math.max(0, (f.pellet_spread ?? f.cof_pellet_spread ?? 0) * (hip ? mul("hipSpread") * mul("spreadHipMul") : mul("spreadAdsMul")) + sumA(hip ? "spreadHip" : "spreadAds")),
     realAds, comp: Math.min(1, Math.max(0, opts.comp || 0)), acc: opts.acc, hsr: opts.hsr,
     splash: A.reduce((m, a) => m + (a.splash || 0), 0), splashR: Math.max(0, ...A.map((a) => a.splashR || 0)),
+    blastRatio: A.reduce((m, a) => m + (a.blastRatio || 0), 0),
     bulletRadius: A.reduce((m, a) => m + (a.bulletRadius || 0), 0),
   };
 }
@@ -211,7 +258,7 @@ export function simulate(P, { burst = Infinity, distance = 20, hp = 1000 }, r, k
       const x = distance * tan(ax * RAD), y = distance * tan(ay * RAD);
       const zone = hitZone(x, y, P.bulletRadius || 0);
       if (keepShots) shots.push({ i: fired, t, x, y, zone });
-      if (zone) dealt += zone === "head" ? head : body;
+      if (zone) dealt += (zone === "head" ? head : body) + (P.blastRatio ? body * P.blastRatio : 0);
       if (P.splash && (zone || Math.hypot(x - TARGET.headX, y) <= P.splashR)) dealt += P.splash;
     }
     fired++; inBurst++; magLeft--;

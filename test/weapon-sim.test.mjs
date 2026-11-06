@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { slotOf, canon, SLOTS, BURSTS, simParams, simulate, compareBursts, sprayPattern, rng, burstStats, ADS_DEFAULT, ATTACHMENTS } from "../weapon-sim.mjs";
+import { slotOf, canon, SLOTS, BURSTS, simParams, simulate, compareBursts, sprayPattern, rng, burstStats, ADS_DEFAULT, ATTACHMENTS, descEffects, attEffects } from "../weapon-sim.mjs";
 import { toProfile } from "../replay/weapons.mjs";
 
 const AR = toProfile([600, 30, 1950, 167, 125, 10, 90, 2, 1, "auto"]);
@@ -137,8 +137,8 @@ test("Laser Sight narrows the minimum hip cone by a third, not the bloom; Soft P
   const hv = simParams(AR, FM, STATES, { attachments: ["High Velocity Ammunition"] });
   assert.equal(hv.profile.rangeMaxDmg, AR.rangeMaxDmg - 2);
   assert.equal(hv.profile.rangeMinDmg, AR.rangeMinDmg + 20);
-  assert.equal(simParams(AR, FM, STATES, { attachments: ["Suppressor"] }).profile.rangeMinDmg, AR.rangeMinDmg - 20);
-  assert.equal(simParams(AR, FM, STATES, { attachments: ["Suppressor"], cat: "SMG" }).profile.rangeMinDmg, AR.rangeMinDmg - 10);
+  assert.equal(simParams(AR, FM, STATES, { attachments: ["Suppressor"], attDesc: { Suppressor: "the weapon's damage falls off 20 meters sooner" } }).profile.rangeMinDmg, AR.rangeMinDmg - 20);
+  assert.equal(simParams(AR, FM, STATES, { attachments: ["Suppressor"], attDesc: { Suppressor: "the weapon's damage falls off 10 meters sooner" }, cat: "SMG" }).profile.rangeMinDmg, AR.rangeMinDmg - 10);
 });
 
 test("more wiki attachments: MPL, Weighted Receiver, Smart-Choke, Heavy Magazine, KCAP, Vented Power Core, aliases", () => {
@@ -204,4 +204,19 @@ test("aim: accuracy 0 never hits, hsr 1 aims all at the head, compensation shrin
   assert.ok(run({ acc: 1, hsr: 0 }).every((s) => s.zone === "body"));
   const y = (o) => simulate(simParams(P, { ...FM, recoil_recovery_rate: 0.0001, recoil_recovery_delay_ms: 1e7 }, ST, { aim: "hip", ...o }), { burst: Infinity, distance: 20, hp: 1e9 }, rng(3), true).shots.at(-1).y;
   assert.ok(Math.abs(y({ comp: 0.5 })) < Math.abs(y({ comp: 0 })));
+});
+
+test("Census descriptions give per-weapon magazine, slug, flechette and capsulate numbers", () => {
+  assert.deepEqual(descEffects("Extended Magazine", "Increases the amount of ammunition in each magazine by 10 rounds, and the weapon takes 15% longer"), { magAdd: 10 });
+  assert.equal(descEffects("Extended Magazine", "Doubles the amount of ammunition in each magazine, and").magMul, 2);
+  assert.equal(descEffects("Smart Feeder", "Increases magazine size by 50 rounds ... slows your reload speed by 0.325 seconds.").reloadAdd, 325);
+  assert.equal(descEffects("SPRW Ammunition", "Increases projectile velocity by 25%, while reducing magazine size by 25.").magAdd, -25);
+  const slug = descEffects("Slug Ammunition", "fires an accurate, high-velocity slug dealing 450 damage, falling off to 300 at the weapon's minimum damage range.");
+  assert.deepEqual([slug.dmgSet, slug.dmgSetMin, slug.pelletsSet], [450, 300, 1]);
+  const P = { rpm: 400, mag: 6, reloadMs: 2000, pellets: 6, dmgMax: 120, dmgMin: 40, rangeMaxDmg: 8, rangeMinDmg: 30, hsMult: 1, };
+  const f = simParams(P, {}, [], { attachments: ["Flechette Ammunition"], attDesc: { "Flechette Ammunition": "triple the maximum and minimum damage falloff range, but reduce the number of pellets fired per shot by 2." } });
+  assert.equal(f.pellets, 4); assert.equal(f.profile.rangeMaxDmg, 24);
+  const c = simParams(P, {}, [], { attachments: ["Capsulate Ammunition"], attDesc: { "Capsulate Ammunition": "reduces magazine size by 4." } });
+  assert.deepEqual([c.pellets, c.mag, c.profile.dmgMax], [2, 2, 360]);
+  assert.equal(attEffects("Mystery Part", "does something", "X"), null);
 });
