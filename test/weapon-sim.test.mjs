@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { slotOf, SLOTS, BURSTS, simParams, simulate, compareBursts, sprayPattern, rng, burstStats, ADS_DEFAULT, ATTACHMENTS } from "../weapon-sim.mjs";
+import { slotOf, canon, SLOTS, BURSTS, simParams, simulate, compareBursts, sprayPattern, rng, burstStats, ADS_DEFAULT, ATTACHMENTS } from "../weapon-sim.mjs";
 import { toProfile } from "../replay/weapons.mjs";
 
 const AR = toProfile([600, 30, 1950, 167, 125, 10, 90, 2, 1, "auto"]);
@@ -139,4 +139,25 @@ test("Laser Sight narrows the minimum hip cone by a third, not the bloom; Soft P
   assert.equal(hv.profile.rangeMinDmg, AR.rangeMinDmg + 20);
   assert.equal(simParams(AR, FM, STATES, { attachments: ["Suppressor"] }).profile.rangeMinDmg, AR.rangeMinDmg - 20);
   assert.equal(simParams(AR, FM, STATES, { attachments: ["Suppressor"], cat: "SMG" }).profile.rangeMinDmg, AR.rangeMinDmg - 10);
+});
+
+test("more wiki attachments: MPL, Weighted Receiver, Smart-Choke, Heavy Magazine, KCAP, Vented Power Core, aliases", () => {
+  const base = simParams(AR, FM, STATES, { aim: "hip", stance: "standStill" });
+  const mpl = simParams(AR, FM, STATES, { aim: "hip", stance: "standStill", attachments: ["MPL"] });
+  assert.ok(Math.abs(mpl.vMin - base.vMin * 0.4) < 1e-9 && Math.abs(mpl.hMax - base.hMax * 0.4) < 1e-9);
+  const adsMpl = simParams(AR, FM, STATES, { aim: "ads", attachments: ["MPL"] });
+  assert.equal(adsMpl.vMin, simParams(AR, FM, STATES, { aim: "ads" }).vMin, "no effect while aiming");
+  assert.equal(simParams(AR, FM, STATES, { aim: "ads", attachments: ["Weighted Receiver"] }).cofMin, 0);
+  const hm = simParams(AR, FM, STATES, { aim: "hip", stance: "standStill", attachments: ["Heavy Magazine"] });
+  assert.ok(Math.abs(hm.cofMin - base.cofMin * 1.2) < 1e-9);
+  assert.equal(simParams(AR, FM, STATES, { attachments: ["KCAP Ammunition"] }).profile.hsMult, AR.hsMult - 0.5);
+  const sg = { ...FM, pellet_spread: 2 };
+  assert.equal(simParams(AR, sg, STATES, { aim: "ads", attachments: ["Smart-Choke"] }).pelletSpread, 1.5);
+  assert.equal(simParams(AR, sg, STATES, { aim: "hip", attachments: ["Smart-Choke"] }).pelletSpread, 2.5);
+  const a0 = simParams(AR, FM, STATES, { aim: "ads" }), a1 = simParams(AR, FM, STATES, { aim: "ads", attachments: ["Vented Power Core"] });
+  assert.equal(a1.angMax - a0.angMax, 5);
+  assert.equal(canon("Muzzle Brake"), "Compensator");
+  assert.equal(simParams(AR, FM, STATES, { aim: "ads", attachments: ["Muzzle Brake"] }).vMin, simParams(AR, FM, STATES, { aim: "ads", attachments: ["Compensator"] }).vMin);
+  assert.equal(slotOf("Heavy Magazine"), "ammo");
+  assert.equal(slotOf("MPL"), "rail");
 });

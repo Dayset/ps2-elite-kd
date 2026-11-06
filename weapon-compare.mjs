@@ -13,7 +13,7 @@ import {
   winnerStrip, slowerPct,
 } from "./weapons-model.mjs";
 import { METRICS, GROUPS, GROUP_EN, statValues, bestOf, rank, classBests } from "./weapon-stats.mjs";
-import { simParams, compareBursts, sprayPattern, ATTACHMENTS, SLOTS, slotOf, ADS_DEFAULT, TARGET, STANCES } from "./weapon-sim.mjs";
+import { simParams, compareBursts, sprayPattern, ATTACHMENTS, SLOTS, slotOf, canon, ADS_DEFAULT, TARGET, STANCES } from "./weapon-sim.mjs";
 
 export const MAX_WEAPONS = 4;
 export const MAX_RANGE = 500;        // hard cap (the 500 m option); the chart shows 100 / 200 / 500, see viewMax()
@@ -393,6 +393,8 @@ async function boot() {
       const name = String(recoil.attNames[a] || "").trim(), slot = slotOf(name);
       if (slot && !(out[slot] ||= []).includes(name)) out[slot].push(name);
     }
+    // a part Census lists under two names (Muzzle Brake beside Compensator) is shown once
+    for (const sl of Object.keys(out)) out[sl] = out[sl].filter((n) => canon(n) === n || !out[sl].includes(canon(n)));
     return out;
   };
   const chosenAtt = (id) => Object.values(simState.att[id] || {}).filter(Boolean);
@@ -424,7 +426,7 @@ async function boot() {
         ? esc(tr("wc.sim.best", "Best: {style}, median {ms}", { style: burstLabel(best.burst), ms: fmtMs(best.median) }))
         : esc(tr("wc.sim.nobest", "Cannot kill reliably at this range with this setup"));
       const have = attsOf(w.id);
-      const chips = SLOTS.filter((sl) => have[sl]).map((sl) => `<label class="wc-att"><span>${esc(tr("wc.sim.slot." + sl, SLOT_EN[sl]))}</span> <select data-w="${w.id}" data-slot="${sl}"><option value="">${esc(tr("wc.sim.noAtt", "none"))}</option>${have[sl].map((n) => `<option value="${esc(n)}" ${(simState.att[w.id] || {})[sl] === n ? "selected" : ""}>${esc(n)}${n in ATTACHMENTS ? (Object.keys(ATTACHMENTS[n]).length ? "" : " · " + esc(tr("wc.sim.noCombat", "no effect on killing"))) : " · " + esc(tr("wc.sim.noEffect", "not modelled"))}</option>`).join("")}</select></label>`).join("");
+      const chips = SLOTS.filter((sl) => have[sl]).map((sl) => `<label class="wc-att"><span>${esc(tr("wc.sim.slot." + sl, SLOT_EN[sl]))}</span> <select data-w="${w.id}" data-slot="${sl}"><option value="">${esc(tr("wc.sim.noAtt", "none"))}</option>${have[sl].map((n) => `<option value="${esc(n)}" ${(simState.att[w.id] || {})[sl] === n ? "selected" : ""}>${esc(n)}${canon(n) in ATTACHMENTS ? (Object.keys(ATTACHMENTS[canon(n)]).length ? "" : " · " + esc(tr("wc.sim.noCombat", "no effect on killing"))) : " · " + esc(tr("wc.sim.noEffect", "not modelled"))}</option>`).join("")}</select></label>`).join("");
       return `<article class="wc-sim" style="border-top-color:${color(i)}"><div class="wc-simhead"><b>${esc(w.name)}</b><span class="good">${head}</span></div>
         <div class="wc-simbody"><ul class="wc-bars">${bars}</ul><div class="wc-spray">${svg}</div></div>${chips ? `<div class="wc-atts">${chips}</div>` : ""}</article>`;
     }).join("");
