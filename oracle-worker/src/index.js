@@ -414,7 +414,10 @@ export async function runCycle(env, nowMs = Date.now()) {
       const oneFac = suspect.find((x) => x.startsWith("one_faction:"));
       // Sticky (out of the benchmark) only when the alert STARTED that way; a late lock (e.g. a map
       // frozen by a server going down, 10-2-46537 at t 77.5) is shown as decided but still scored.
-      const degenerate = (!!oneFac && (now - startTs) / 60 <= DEGENERATE_BY_MIN) || prevFlags.includes("degenerate");
+      // The game's own start row counts too (10-2-46594 started VS 0 / NC 100 / TR 0), so a deploy or
+      // outage that misses the first minutes still catches it.
+      const startOne = FACS.some((f) => +a.start[f.toLowerCase()] >= ONE_FACTION_PCT);
+      const degenerate = (!!oneFac && ((now - startTs) / 60 <= DEGENERATE_BY_MIN || startOne)) || prevFlags.includes("degenerate");
       if (oneFac) {
         const top = oneFac.split(":")[1];
         state.win_tree = state.win;

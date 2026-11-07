@@ -719,4 +719,8 @@ test("#114: the winner's continent lock at the end and a late lock are not 'deci
   const rep = await runCycle(env, (T0 + 40 * 60) * 1000);
   assert.deepEqual(rep.suspect["1-4-700"], ["one_faction:VS"]);
   assert.equal(DB.raw.prepare("SELECT flags FROM alert WHERE key='1-4-700'").get().flags, null);
+  // First seen late, but the game's start row was already one-faction: decided at start.
+  census.metagame.push(mg(701, 153, "started", T0 - 1500, 0, 100, 0));
+  await runCycle(env, (T0 + 41 * 60) * 1000);
+  assert.deepEqual(JSON.parse(DB.raw.prepare("SELECT flags FROM alert WHERE key='1-4-701'").get().flags), ["degenerate"]);
 });
