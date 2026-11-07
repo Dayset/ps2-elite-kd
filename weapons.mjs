@@ -165,7 +165,7 @@ export function mountWeapons(section, { getJson, baseOf, sortScroll, isFresh = (
       const name = info.name || `#${w.id}`;
       const sub = [info.category, FACTION_TAG[info.faction]].filter(Boolean).join(" · ");
       return `<tr><td class="rk-num">${i + 1}</td>` +
-        `<td class="wp-name" title="${esc(name)}${sub ? ` (${esc(sub)})` : ""}"><div class="wp-cell">${imgHtml(info)}<span class="wp-label"><span class="wp-nm">${esc(name)}</span>${sub ? `<span class="wp-cat">${esc(sub)}</span>` : ""}</span><a class="wp-cmp" href="weapon-compare.html?w=${encodeURIComponent(w.id)}" target="_blank" rel="noopener" title="${esc(tr("wp.compare", "Compare this weapon"))}" aria-label="${esc(tr("wp.compare", "Compare this weapon"))}">⚖</a></div></td>` +
+        `<td class="wp-name" title="${esc(name)}${sub ? ` (${esc(sub)})` : ""}"><a class="wp-cell wp-link" href="weapon-compare.html?w=${encodeURIComponent(w.id)}" target="_blank" rel="noopener" title="${esc(tr("wp.compare", "Compare this weapon"))}" aria-label="${esc(tr("wp.compare", "Compare this weapon"))}">${imgHtml(info)}<span class="wp-label"><span class="wp-nm">${esc(name)}</span>${sub ? `<span class="wp-cat">${esc(sub)}</span>` : ""}</span></a></td>` +
         cols.map((c) => `<td>${c.fmt(c.fn(w))}</td>`).join("") + `</tr>`;
     }).join("");
     table.querySelector("thead").innerHTML = head;
