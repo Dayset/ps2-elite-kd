@@ -10,12 +10,12 @@ import { modeFocus, ownerLookup, heatLookup, spawnLookup, pickMode, MODE_KEY, pi
 import { nextPoll } from "./poll.js?v=20261026-mode1";
 import { voiceToggle, voiceTick, bindVoiceMenu } from "./voice.js?v=20261027-say1";
 import { reportPanel } from "./players.js?v=20261102-layout1";
-import { benchPanel, initResults, refreshHistory, renderHist } from "./results.js?v=20261102-layout1";
+import { benchPanel, initResults, refreshHistory, renderHist } from "./results.js?v=20261107-fac1";
 import { renderAlertSkill } from "./skill-foot.js?v=20261102-globfoot1";
 import { initAuth } from "./auth.js?v=20261028-dev82";
 import { enhance, onSectionExpand, refreshSummary } from "./collapse.js?v=20261026-pulse1";
 import { t as tr, ready } from "../../i18n.mjs";
-import { otherAlertsLine, patchLine } from "./other.js?v=20261107-t114";
+import { patchLine, kindName, kindNoteHtml, facilityCmdHtml } from "./other.js?v=20261107-fac1";
 import { maintNotice, when, schedState, lastOnline, plannedDown, STATUS_URL } from "./maint.js?v=20261101-int1";
 import { fightsCard, popLiveLine } from "./fights.js?v=20261102-conduit1";
 await ready;   // #73: the language file is in before anything renders
@@ -183,7 +183,7 @@ function render2(now) {
   const oddLine = win && s ? `<div class="oddline">${FACS.map((f) => { const base = s.territory[f] || 0, m = s.momentum[f]; const rel = base >= 1 ? (100 * m / base) : m;
     return `<span class="${f}">${f}</span> <span class="stars">${stars(win[f].pct) || "·"}</span> <span class="note">${rel > 0.05 ? "▲" : rel < -0.05 ? "▼" : "·"}${rel >= 0 ? "+" : ""}${rel.toFixed(1)}%</span>`; }).join(" · ")}</div>` : "";
   const popAdj = s && s.win_popadj ? `<div class="second">${tr("or.popW", "With population weighting:")} ${FACS.map((f) => `<span class="${f}">${f} ${pct1(s.win_popadj[f].pct)}%</span>`).join(" · ")} <span class="note">${tr("or.popWnote", "(experimental, fades out by minute 60)")}</span></div>` : "";
-  const kindNote = a.kind === "meltdown" ? `<div class="note">${tr("or.melt", "Unstable Meltdown: only the live part of the continent counts{zone}. Territory shares and win chances are of that zone.", { zone: s && s.zone ? tr("or.meltZone", " ({n} bases, {p}% of the map)", { n: s.zone.active, p: s.zone.share }) : "" })}</div>` : "";
+  const kindNote = kindNoteHtml(a) || (a.kind === "meltdown" ? `<div class="note">${tr("or.melt", "Unstable Meltdown: only the live part of the continent counts{zone}. Territory shares and win chances are of that zone.", { zone: s && s.zone ? tr("or.meltZone", " ({n} bases, {p}% of the map)", { n: s.zone.active, p: s.zone.share }) : "" })}</div>` : "");
   const calls = s && s.calls && s.calls.length ? `<ul class="calls">${s.calls.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>` : "";
   const second = s && s.second ? `<div class="second">${tr("or.second", "🥈 Second place:")} ${Object.entries(s.second.odds).map(([f, p]) => `<span class="${f}">${f} ${pct1(p)}%</span>`).join(" · ")} ${s.second.locked ? tr("or.locked", "(locked)") : ""}</div>` : "";
   const voided = (a.flags || []).includes("votes_void");
@@ -205,17 +205,17 @@ function render2(now) {
   // same name set goes to fightsCard. Slice normalization runs in both states (see conduits.js),
   // so a future Worker backfill can't change the included display.
   const ctfSet = conduitsOn ? null : ctfNames(regionsOf[a.zone] || {});
-  const cmdView = a.status === "live" && !(s && s.decided) ? withMode(a, filterCommander(a.commander || (s && s.commander), ctfSet)) : null;
+  const cmdView = a.status === "live" && !(s && s.decided) && !(s && s.facility) ? withMode(a, filterCommander(a.commander || (s && s.commander), ctfSet)) : null;
   const liveTop = s && Array.isArray(s.fights) && s.fights[0] ? (s.fights[0].name || `#${s.fights[0].fid}`) : null;
   const linkTip = tr("or.linkBtn", "Copy link to this page");
   // ⚔️ Live fights follow the Commander faction: commander() sets S.cmdOn, so it runs here,
   // before fightsCard(s) is evaluated in the template below (it used to run after it).
   // Settled / past alerts: no empty "no live alert" commander card (2026-11-02 layout pass); the players report stays.
   // #114: decided at start = no orders (cmdView null makes commander() render nothing; the note card shows instead).
-  const decidedCmd = s && s.decided ? `<section class="card cmd idle"><h2 data-sec="ai-commander">${tr("or.h.cmd", "🎖️ AI Commander")}</h2><div class="note">${tr("or.c.decided", "No orders: one faction holds the whole continent.")}</div></section>` : "";
+  const decidedCmd = facilityCmdHtml(a) || (s && s.decided ? `<section class="card cmd idle"><h2 data-sec="ai-commander">${tr("or.h.cmd", "🎖️ AI Commander")}</h2><div class="note">${tr("or.c.decided", "No orders: one faction holds the whole continent.")}</div></section>` : "");
   const cmdHtml = a.status === "live" ? commander(cmdView, a.commander_ts, now, lead, cmdMode, heatOn, liveTop, conduitsOn) || decidedCmd : reportPanel(a);
   $("main").innerHTML = `
-    <div class="title"><b>${esc(a.world_name)} · ${esc(a.zone_name)}${a.kind === "meltdown" ? " Meltdown" : ""}</b><span class="badge ${a.status}">${esc(badgeLabel(a.status))}</span><span class="note">${esc(left)} · ${tr("or.durAlert", "{n}-min alert", { n: a.dur })}</span><button type="button" class="more linkbtn" id="copyLink" title="${linkTip}" aria-label="${linkTip}">🔗</button>${liveA ? "" : `<button type="button" class="more backlive" id="backLive">${tr("or.backLive", "← Back to live")}</button>`}</div>
+    <div class="title"><b>${esc(a.world_name)} · ${esc(a.zone_name)}${a.kind === "meltdown" ? " Meltdown" : ""}${kindName(a) ? ` · ${esc(kindName(a))}` : ""}</b><span class="badge ${a.status}">${esc(badgeLabel(a.status))}</span><span class="note">${esc(left)} · ${tr("or.durAlert", "{n}-min alert", { n: a.dur })}</span><button type="button" class="more linkbtn" id="copyLink" title="${linkTip}" aria-label="${linkTip}">🔗</button>${liveA ? "" : `<button type="button" class="more backlive" id="backLive">${tr("or.backLive", "← Back to live")}</button>`}</div>
     <div class="grid">
       <section class="card map"><h2 data-sec="map">${tr("or.h.map", "Map")}</h2><div id="replayTag" class="replaytag" hidden></div><div id="map"></div></section>
       <div class="side">
@@ -362,7 +362,7 @@ async function refreshLive() {
     else
     banner(ok ? "" : health && health.last_ok_age_s != null ? tr("or.staleMin", "Live data is {n} min old — retrying…", { n: Math.round(health.last_ok_age_s / 60) }) : tr("or.stale", "Live data is a while old — retrying…"), "warn");
     // #114: facility / aerial alerts (no odds) and flagged patch notes, one calm info strip.
-    const info = [otherAlertsLine(cy && cy.other, live.worlds, now), patchLine(cy && cy.patch)].filter(Boolean);
+    const info = [patchLine(cy && cy.patch)].filter(Boolean);
     const strip = $("infoStrip");
     if (strip) {
       strip.hidden = !info.length;

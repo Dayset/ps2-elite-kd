@@ -26,6 +26,7 @@ import { handleVote, settleStatements } from "./vote.js";
 import { handlePrivacy } from "./privacy.js";
 import { namePlayers } from "./players.js";
 import { cutAwareSnap } from "./cut.js";
+import { facilityState, evenWin } from "./facility.js";
 import { focusPlan } from "./focus.js";
 import { mixPlan, underwayCheck } from "./modes.js";
 import { heatPlan } from "./heatmode.js";
@@ -123,22 +124,6 @@ export function unknownEvents(j) {
   return Object.values(out);
 }
 
-/** Non-territory alerts running now (#114): no odds, no votes, no benchmark; shown as their own card. */
-export function otherLive(rows, now) {
-  const by = new Map();
-  for (const r of rows) {
-    const o = OTHER_ALERTS[r.event_id];
-    if (!o) continue;
-    const key = `${r.world}-${r.zone}-${r.instance_id}`;
-    const a = by.get(key) || { key, world: r.world, zone: r.zone, world_name: WORLD_NAMES[r.world] || null, zone_name: ZONE_NAMES[r.zone & 0xffff] || null, event_id: r.event_id, type: o.type, sub: o.sub, dur: o.dur };
-    if (r.state === "started") a.start_ts = r.ts;
-    else if (r.state === "ended" || r.state === "canceled") a.ended = true;
-    by.set(key, a);
-  }
-  // Unknown length (Maximum Pressure): give up after 2 h without an end row.
-  return [...by.values()].filter((a) => a.start_ts && !a.ended && now - a.start_ts < ((a.dur || 120) + 5) * 60)
-    .sort((x, y) => x.start_ts - y.start_ts);
-}
 
 export function parseFlips(j) {
   return (j.world_event_list || [])
@@ -202,7 +187,7 @@ export function dataSuspect(zNow, nowTs, s10, zone, flipsIn10, now, kind = "terr
   if (z10 && now - s10.ts <= 900 && flipsIn10 >= 2 && JSON.stringify(z10) === JSON.stringify(zNow)) out.push("map_frozen");
   if (now - nowTs > 300) out.push("map_stale");
   // Not in the last minute or after the clock: the winner's continent lock at the end is normal (1-6-49454 at t 90.4).
-  if (kind !== "meltdown" && tMin < dur - 1) { const top = FACS.find((f) => terr[f] >= ONE_FACTION_PCT); if (top) out.push(`one_faction:${top}`); }
+  if (kind === "territory" && tMin < dur - 1) { const top = FACS.find((f) => terr[f] >= ONE_FACTION_PCT); if (top) out.push(`one_faction:${top}`); }
   return out;
 }
 
@@ -211,10 +196,15 @@ const sliceOf = (w, t) => ({ VS: w.VS.pct / 100, NC: w.NC.pct / 100, TR: w.TR.pc
 /** Sum of an ended row's own region scores (VS + NC + TR, % of regions). */
 export function finalSum(final) { return FACS.reduce((s, f) => s + (+final[f] || 0), 0); }
 
+/** Alert kind: "territory" | "meltdown" | (#114) "facility" | "aerial" | "pressure". */
+export const kindOf = (eventId) => (OTHER_ALERTS[eventId] ? OTHER_ALERTS[eventId].type : alertKind(eventId));
+/** Alert length in minutes (Maximum Pressure not measured yet: 30 until an end row says otherwise). */
+export const durOf = (eventId) => TERRITORY_ALERTS[eventId] || (OTHER_ALERTS[eventId] && (OTHER_ALERTS[eventId].dur || 30)) || null;
+
 export function groupAlerts(rows) {
   const by = new Map();
   for (const r of rows) {
-    if (!TERRITORY_ALERTS[r.event_id]) continue;
+    if (!TERRITORY_ALERTS[r.event_id] && !OTHER_ALERTS[r.event_id]) continue;
     const key = `${r.world}-${r.zone}-${r.instance_id}`;
     const a = by.get(key) || { key, world: r.world, zone: r.zone, instance_id: r.instance_id, event_id: r.event_id };
     if (r.state === "started") a.start = r;
@@ -374,9 +364,10 @@ export async function runCycle(env, nowMs = Date.now()) {
   for (const a of groupAlerts(all)) {
     const prev = known.get(a.key);
     if (prev && FINAL.includes(prev.status)) continue;
-    const dur = TERRITORY_ALERTS[a.event_id];
+    const dur = durOf(a.event_id);
     const startTs = a.start.ts;
-    const base = { key: a.key, world: a.world, zone: a.zone, instance_id: a.instance_id, event_id: a.event_id, start_ts: startTs, dur, kind: alertKind(a.event_id) };
+    const other = OTHER_ALERTS[a.event_id] || null; // #114: facility / aerial / pressure alerts
+    const base = { key: a.key, world: a.world, zone: a.zone, instance_id: a.instance_id, event_id: a.event_id, start_ts: startTs, dur, kind: kindOf(a.event_id) };
 
     if (!a.end) {
       // Maintenance: never give up on an alert while its server is down or just back (t721u).
@@ -404,8 +395,19 @@ export async function runCycle(env, nowMs = Date.now()) {
         startTs, dur, now, snapNow: zNow, snap15: z15 || null, regionMap: regionMap(a.zone),
         cutSnap: (sn) => cutAwareSnap(sn, a.zone).snap,
       });
+      if (other) {
+        // #114: not a territory race. The map, owners and momentum stay; the odds come from the
+        // alert's own model (facility.js) and the territory-only parts go.
+        for (const k of ["second", "calls", "hints", "win_raw", "win_v0", "cut_aware", "zone"]) delete state[k];
+        state.alert.kind = other.type;
+        if (other.type === "facility") {
+          const fs = facilityState({ zone: a.zone, sub: other.sub, owners: state.owners, t: (now - startTs) / 60, dur, adj: (latticeFor(a.zone) || {}).adj || null });
+          if (fs) { state.win = fs.win; state.facility = fs; } else { state.win = evenWin(); state.model = "even"; }
+        } else { state.win = evenWin(); state.model = "even"; }
+        state.leader = FACS.reduce((m, f) => (state.win[f].pct > state.win[m].pct ? f : m), "VS");
+      }
       if (!(a.world in snap10)) snap10[a.world] = await latestSnap(db, a.world, now - 600);
-      const suspect = dataSuspect(zNow, snapNow.ts, snap10[a.world], a.zone, flips10.get(`${a.world}-${a.zone}`) || 0, now, alertKind(a.event_id), (now - startTs) / 60, dur);
+      const suspect = dataSuspect(zNow, snapNow.ts, snap10[a.world], a.zone, flips10.get(`${a.world}-${a.zone}`) || 0, now, base.kind, (now - startTs) / 60, dur);
       if (suspect.length) { state.suspect = suspect; (report.suspect ||= {})[a.key] = suspect; }
       // #114: a one-faction map is decided, not a forecast. The header shows the holder at 100 %
       // (elimination law: never a probability the position has already decided); the tree's
@@ -427,8 +429,8 @@ export async function runCycle(env, nowMs = Date.now()) {
       }
       // Bases cut off from their warpgate (the game stops scoring them). Logged as the
       // "_cut" benchmark variant; the live odds switch only if the rescan backs it.
-      const kindNow = alertKind(a.event_id);
-      const cutNow = kindNow === "meltdown" ? null : cutAwareSnap(zNow, a.zone);
+      const kindNow = base.kind;
+      const cutNow = kindNow === "territory" ? cutAwareSnap(zNow, a.zone) : null;
       if (cutNow && cutNow.cut.length) state.cut = cutNow.cut.map((c) => ({ fid: c.fid, name: c.name, fac: c.fac }));
       const p = await popFor(a.world, a.zone);
       if (p) {
@@ -436,7 +438,7 @@ export async function runCycle(env, nowMs = Date.now()) {
         state.pop_ns = p.ns;
         state.pop_source = "honu";
         state.pop_age_s = now - p.ts;
-        state.win_popadj = popAdjusted(state.win, state.pop, state.t);
+        if (!other) state.win_popadj = popAdjusted(state.win, state.pop, state.t);
       }
       // ⚔️ Per-base fight totals: shown and stored for the #78 backtest; the odds don't read them.
       const act = await activityFor(a.world);
@@ -469,6 +471,7 @@ export async function runCycle(env, nowMs = Date.now()) {
         if (slices[label] || t < m) continue;
         if (label === "t0") {
           if (t > 5) continue;
+          if (other) { slices.t0 = sliceOf(state.win, t); changed = true; continue; }
           const f0 = forecast({ getBin: binGetter(a.zone), kind: alertKind(a.event_id), snapNow: zNow, snap15: null, t: Math.max(t, 0), dur, zeroMomentum: true });
           slices.t0 = sliceOf(f0.win, t);
           if (f0.winRaw) { slices.t0_raw = sliceOf(f0.winRaw, t); slices.t0_v0 = sliceOf(f0.winV0, t); }
@@ -528,12 +531,13 @@ export async function runCycle(env, nowMs = Date.now()) {
     }
     // #67: finite scores are not enough. An ended row that sums far below 100 % is corrupt (frozen neutral regions):
     // hold the alert (no winner, votes given back), never settle on it and never fall back to a snapshot.
-    const finalCorrupt = finalOk && base.kind !== "meltdown" && finalSum(final) < FINAL_MIN_SUM;
+    const finalCorrupt = finalOk && base.kind === "territory" && finalSum(final) < FINAL_MIN_SUM;
     const checks = Math.min(3, 1 + Math.floor(Math.max(0, now - endTs) / 300));
     const flags = prev && prev.flags ? JSON.parse(prev.flags) : [];
     for (const f of earlyNote || []) if (!flags.includes(f)) flags.push(f);
     if (finalCorrupt && !flags.some((f) => f.startsWith("final_corrupt"))) flags.push(`final_corrupt:${finalSum(final).toFixed(1)}`);
     // Cross-check: our own last pre-end snapshot (never a post-end one).
+    if (!flags.includes("checked") && other) flags.push("checked"); // facility counts / race points: no territory cross-check
     if (!flags.includes("checked")) {
       const pre = await latestSnap(db, a.world, endTs);
       const z = pre && pre.zones[String(a.zone)];
@@ -553,13 +557,14 @@ export async function runCycle(env, nowMs = Date.now()) {
     const rec = { ...base, end_ts: endTs, final: finalOk ? final : null, checks, flags };
     // #77: a territory draw goes to Sudden Death (15 min kill race) straight away; show it as
     // such from its start row instead of "settling" on the frozen territory end for 10 minutes.
-    if (checks < 3) { const sd0 = findSuddenDeath(all, a, endTs); out.push({ ...rec, status: sd0 && !sd0.end ? "sudden_death" : "settling" }); continue; }
+    if (checks < 3) { const sd0 = other ? null : findSuddenDeath(all, a, endTs); out.push({ ...rec, status: sd0 && !sd0.end ? "sudden_death" : "settling" }); continue; }
     // Census ended row without scores: fall back to our last pre-end snapshot when
     // it is clean (fresh, not neutral-heavy); otherwise unresolved (votes given back).
     const finalWinner = async () => {
       if (finalCorrupt) return null;
       if (finalOk) return { winner: scoreWinner(final), basis: "census_final" };
       if (!flags.includes("final_missing")) flags.push("final_missing");
+      if (other) return null; // no snapshot fallback for non-territory scores
       const pre = await latestSnap(db, a.world, endTs);
       const z = pre && pre.zones[String(a.zone)];
       if (!z || endTs - pre.ts > 600) return null;
@@ -568,7 +573,7 @@ export async function runCycle(env, nowMs = Date.now()) {
       const w = scoreWinner(terr);
       return w === "draw" ? null : { winner: w, basis: "snapshot" };
     };
-    const sd = findSuddenDeath(all, a, endTs);
+    const sd = other ? null : findSuddenDeath(all, a, endTs);
     let winner = null, basis = null;
     if (sd) {
       if (sd.end && sd.end.state === "ended") {
@@ -660,8 +665,6 @@ export async function runCycle(env, nowMs = Date.now()) {
   }
 
   report.metagame = mgRows.length;
-  const other = otherLive(all, now);
-  if (other.length) report.other = other;
   if (!(mg instanceof Error)) {
     const unk = unknownEvents(mg);
     if (unk.length) report.unknown_events = unk;
@@ -691,6 +694,7 @@ export async function commanderFor(env, key, nowMs = Date.now()) {
   const now = Math.floor(nowMs / 1000);
   const a = await db.prepare("SELECT key, world, zone, event_id, start_ts, dur, status, json_extract(state, '$.suspect') AS suspect, json_extract(state, '$.win') AS win, json_extract(state, '$.fights') AS fights, json_extract(state, '$.fights_live') AS fights_live, json_extract(state, '$.fights_at') AS fights_at, json_extract(state, '$.spawn_map') AS spawn_map FROM alert WHERE key=?").bind(key).first();
   if (!a || a.status !== "live") return { key, skipped: "not live" };
+  if (OTHER_ALERTS[a.event_id]) return { key, skipped: "own orders in state" }; // #114: facility orders come with the state
   // Corrupt map window: keep the last good orders instead of computing from bad data.
   if (a.suspect && JSON.parse(a.suspect).length) return { key, skipped: "data suspect" };
   const lattice = latticeFor(a.zone);
@@ -886,7 +890,7 @@ export async function honuIngest(db, body, now) {
 const parseRow = (r) => ({
   key: r.key, world: r.world, world_name: WORLD_NAMES[r.world] || String(r.world),
   zone: r.zone, zone_name: ZONE_NAMES[r.zone] || String(r.zone),
-  instance_id: r.instance_id, event_id: r.event_id, kind: alertKind(r.event_id), start_ts: r.start_ts, dur: r.dur,
+  instance_id: r.instance_id, event_id: r.event_id, kind: kindOf(r.event_id), start_ts: r.start_ts, dur: r.dur,
   status: r.status, end_ts: r.end_ts, checks: r.checks, winner: r.winner, basis: r.basis,
   final: r.final ? JSON.parse(r.final) : null,
   flags: r.flags ? JSON.parse(r.flags).filter((f) => f !== "checked") : [],
@@ -985,13 +989,15 @@ async function handle(request, env) {
     const rows = (await db.prepare(`SELECT a.key, a.world, a.zone, a.instance_id, a.event_id, a.start_ts, a.dur, a.status, a.end_ts, a.checks, a.winner, a.basis, a.final, a.flags, NULL AS state, NULL AS commander, ${REPORT_COLS} FROM alert a LEFT JOIN report r ON r.key = a.key WHERE a.start_ts > ? AND a.status IN ('settled','canceled','unresolved','interrupted') ORDER BY a.start_ts DESC`).bind(now - days * 86400).all()).results || [];
     // #114: decided-at-start alerts never count (their bench row is closed with brier NULL; the
     // flag test also drops one scored before the guard existed).
-    const bench = (await db.prepare(`SELECT b.key, b.dur, b.slices, b.winner, b.brier FROM bench b LEFT JOIN alert a ON a.key = b.key
+    const bench = (await db.prepare(`SELECT b.key, b.dur, b.slices, b.winner, b.brier, a.event_id FROM bench b LEFT JOIN alert a ON a.key = b.key
       WHERE b.settled_ts IS NOT NULL AND b.brier IS NOT NULL AND COALESCE(a.flags, '') NOT LIKE '%"degenerate"%'`).all()).results || [];
     const agg = {};
     for (const b of bench) {
       const br = JSON.parse(b.brier);
       for (const [k, v] of Object.entries(br)) {
-        const g = (agg[`${b.dur}`] ||= {});
+        // #114: facility / aerial / pressure alerts are their own pools, never mixed into the territory ones.
+        const pool = OTHER_ALERTS[b.event_id] ? OTHER_ALERTS[b.event_id].type : `${b.dur}`;
+        const g = (agg[pool] ||= {});
         const s = (g[k] ||= { n: 0, sum: 0 });
         s.n++; s.sum += v;
       }

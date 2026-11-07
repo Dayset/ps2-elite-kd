@@ -677,7 +677,9 @@ test("#114: one-faction map is decided, kept out of the benchmark; facility aler
     mg(601, 153, "started", T0, 0, 100, 0), mg(602, 229, "started", T0 - 300, 0, 0, 0, 10, 4), mg(603, 999, "started", T0, 0, 0, 0)];
   let rep = await runCycle(env, (T0 + 60) * 1000);
   assert.deepEqual(rep.suspect["1-4-601"], ["one_faction:NC"]);
-  assert.deepEqual(rep.other.map((o) => [o.key, o.type, o.zone_name]), [["10-4-602", "aerial", "Hossin"]], "ended Dome Domination is gone, the aerial one runs");
+  // #114 follow-up: the other alert types are alerts too (own odds, own benchmark pool).
+  const other = Object.fromEntries(DB.raw.prepare("SELECT key, status FROM alert WHERE key IN ('1-4-600','10-4-602')").all().map((r) => [r.key, r.status]));
+  assert.deepEqual(other, { "1-4-600": "settling", "10-4-602": "live" });
   assert.deepEqual(rep.unknown_events.map((e) => e.event_id), [999]);
   let row = DB.raw.prepare("SELECT flags, state FROM alert WHERE key='1-4-601'").get();
   assert.deepEqual(JSON.parse(row.flags), ["degenerate"]);
@@ -723,4 +725,50 @@ test("#114: the winner's continent lock at the end and a late lock are not 'deci
   census.metagame.push(mg(701, 153, "started", T0 - 1500, 0, 100, 0));
   await runCycle(env, (T0 + 41 * 60) * 1000);
   assert.deepEqual(JSON.parse(DB.raw.prepare("SELECT flags FROM alert WHERE key='1-4-701'").get().flags), ["degenerate"]);
+});
+
+test("#114: a Dome Domination runs as an alert: facility odds and orders, benchmark in its own pool, settles on the facility count", { skip }, async () => {
+  const { runCycle, default: worker } = await import("../oracle-worker/src/index.js");
+  const R2F_ = JSON.parse(readFileSync(new URL("../oracle/backend/hossin_region_to_facility.json", import.meta.url), "utf8"));
+  const F2R = Object.fromEntries(Object.entries(R2F_).map(([r, f]) => [String(f), r]));
+  const DB = fakeD1();
+  const env = { DB };
+  const T0 = 1_794_100_000;
+  // Hossin biolabs Acan 302000, Bitol 303000, Zotz 304000: NC holds two, TR one.
+  const census = { map: { 1: 30, 2: 30, 3: 28 }, metagame: [], flips: [] };
+  installCensus(census);
+  const base = (globalThis.fetch);
+  globalThis.fetch = async (url) => {
+    const r = await base(url);
+    if (!String(url).includes("/map/")) return r;
+    const j = await r.json();
+    for (const row of j.map_list[0] ? j.map_list[0].Regions.Row : []) {
+      const fid = R2F_[row.RowData.RegionId];
+      if (fid == 302000 || fid == 303000) row.RowData.FactionId = "2";
+      if (fid == 304000) row.RowData.FactionId = "3";
+    }
+    return new Response(JSON.stringify(j), { status: 200 });
+  };
+  assert.ok(F2R["302000"] && F2R["304000"]);
+  await runCycle(env, (T0 - 1200) * 1000);
+  census.metagame = [mg(800, 16, "started", T0, 0, 2, 1)];
+  await runCycle(env, (T0 + 60) * 1000);
+  let row = DB.raw.prepare("SELECT kind, state FROM (SELECT 'x' kind, state FROM alert WHERE key='1-4-800')").get();
+  const st = JSON.parse(row.state);
+  assert.equal(st.alert.kind, "facility");
+  assert.deepEqual(st.facility.count, { VS: 0, NC: 2, TR: 1 });
+  assert.ok(st.win.NC.pct > 50 && st.win.NC.pct > st.win.TR.pct && st.win.TR.pct > st.win.VS.pct, JSON.stringify(st.win));
+  assert.equal(st.second, undefined);
+  assert.ok(Object.values(st.facility.orders).some(Boolean), "at least one faction has an order");
+  for (const m of [15, 30]) await runCycle(env, (T0 + m * 60) * 1000);
+  const bench = JSON.parse(DB.raw.prepare("SELECT slices FROM bench WHERE key='1-4-800'").get().slices);
+  assert.deepEqual(Object.keys(bench).sort(), ["t0", "t15", "t30"]);
+  census.metagame.push(mg(800, 16, "ended", T0 + 2700, 0, 2, 1));
+  for (const s of [60, 330, 630]) await runCycle(env, (T0 + 2700 + s) * 1000);
+  row = DB.raw.prepare("SELECT status, winner FROM alert WHERE key='1-4-800'").get();
+  assert.deepEqual({ ...row }, { status: "settled", winner: "NC" });
+  const hist = await (await worker.fetch(new Request("https://x/history"), env)).json();
+  assert.deepEqual(Object.keys(hist.benchmark), ["facility"], "own pool, not the 45-min one");
+  const live = await (await worker.fetch(new Request("https://x/alert?key=1-4-800"), env)).json();
+  assert.equal(live.alert.kind, "facility");
 });

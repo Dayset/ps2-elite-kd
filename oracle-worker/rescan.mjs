@@ -15,7 +15,7 @@
  *   ORACLE_API=https://ps2-oracle.dayset.workers.dev node oracle-worker/rescan.mjs [--days 30]
  * Pure scoring is exported for tests (rescanAlert, summarize).
  */
-import { forecast, alertKind, brier, FACS } from "./src/engine.js";
+import { forecast, alertKind, brier, FACS, OTHER_ALERTS } from "./src/engine.js";
 import { binGetter, hasTree, regionMap, latticeFor } from "./src/models.js";
 import { cutAwareSnap } from "./src/cut.js";
 
@@ -77,6 +77,7 @@ export function rescanAlert(a, frames) {
   if (!hasTree(a.zone) || !latticeFor(a.zone)) return { key: a.key, skip: "no model" };
   const kind = alertKind(a.event_id);
   if (kind === "meltdown") return { key: a.key, skip: "meltdown" };
+  if (OTHER_ALERTS[a.event_id]) return { key: a.key, skip: "not territory" }; // #114: facility / aerial / pressure
   // #114: one faction held the whole map (game lock after a facility alert): outside the trees.
   if ([].concat(a.flags || []).includes("degenerate") || String(a.flags || "").includes("\"degenerate\"")) return { key: a.key, skip: "degenerate" };
   const snaps = snapsFromFrames(frames || [], a.zone);

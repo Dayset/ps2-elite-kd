@@ -225,12 +225,17 @@ test("#114 patch-notes watch: flags alert / lattice / capture changes, ignores t
   assert.equal(patchHint({ flags }, T + 4 * 86400), null, "shown for 3 days");
 });
 
-test("#114 info strip lines (other alerts, patch notes)", async () => {
-  const { otherAlertsLine, patchLine } = await import("../oracle/js/other.js");
-  const T = 1_793_800_000;
-  const l = otherAlertsLine([{ world: 10, zone: 2, world_name: "Wainwright", zone_name: "Indar", type: "facility", sub: "biolab", dur: 45, start_ts: T - 600 }], {}, T);
-  assert.match(l.text, /Wainwright · Indar: Dome Domination \(hold all 3 Biolabs\), 35 min left/);
-  assert.equal(otherAlertsLine([], {}, T), null);
+test("#114 alert-type texts and the patch line", async () => {
+  const { kindName, kindNoteHtml, facilityCmdHtml, poolLabel, patchLine } = await import("../oracle/js/other.js");
+  const a = { kind: "facility", state: { facility: { sub: "biolab", targets: [{ fid: 1, name: "Acan", owner: "NC" }, { fid: 2, name: "Bitol", owner: null }, { fid: 3, name: "<Zotz>", owner: "TR" }],
+    orders: { VS: { move: "take", name: "Bitol", gain: 12.5, now: 15, then: 27.5 }, NC: { move: "hold", name: "Acan", gain: 30.1, now: 55, then: 24.9 }, TR: null } } } };
+  assert.equal(kindName(a), "Dome Domination (hold all 3 Biolabs)");
+  assert.equal(kindName({ kind: "territory" }), "");
+  assert.match(kindNoteHtml(a), /Acan NC.*Bitol.*&lt;Zotz&gt; TR/);
+  assert.match(kindNoteHtml({ kind: "aerial", state: {} }), /stay even/);
+  const c = facilityCmdHtml(a);
+  assert.match(c, /take Bitol \(15% → 27\.5%\)/); assert.match(c, /hold Acan/); assert.match(c, /no decisive move/);
+  assert.equal(poolLabel("90"), "90-min Brier:"); assert.equal(poolLabel("facility"), "Facility alerts Brier:");
   const pl = patchLine({ title: "Nov 4", url: "https://evil.example/x", topics: ["alerts", "lattice"] });
   assert.match(pl.text, /changes alerts, the lattice/);
   assert.equal(pl.url, null, "only Steam links");

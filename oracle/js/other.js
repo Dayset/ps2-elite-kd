@@ -1,7 +1,7 @@
-// #114 (2026-11-07): alerts the Oracle shows without odds — Capture Facility Alerts (Dome
-// Domination / Technological Advancement / Power Rush, back with the 2026-11-04 patch), Aerial
-// Anomalies and Maximum Pressure — and the newest Daybreak patch notes that touch alerts, the
-// lattice or captures. Pure text builders; main.js puts them in the #infoStrip.
+// #114 (2026-11-07): alert types beyond territory — Capture Facility Alerts (Dome Domination /
+// Technological Advancement / Power Rush, back with the 2026-11-04 patch), Aerial Anomalies and
+// Maximum Pressure — plus the newest Daybreak patch notes that touch alerts, the lattice or captures.
+// Pure HTML/text builders for main.js.
 import { t as tr } from "../../i18n.mjs";
 
 const NAME = {
@@ -12,17 +12,46 @@ const NAME = {
   pressure: () => tr("or.ot.pressure", "Maximum Pressure"),
 };
 const SAFE = /^https:\/\/store\.steampowered\.com\//;
+const FACS = ["VS", "NC", "TR"];
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
-/** cycle.other -> { text } or null. */
-export function otherAlertsLine(other, worlds, now) {
-  if (!Array.isArray(other) || !other.length) return null;
-  const list = other.map((o) => {
-    const name = (NAME[o.sub] || NAME[o.type] || (() => `#${o.event_id}`))();
-    const where = [o.world_name || (worlds && worlds[o.world]) || `#${o.world}`, o.zone_name || `#${o.zone}`].join(" · ");
-    const left = o.dur && o.start_ts ? Math.max(0, Math.round(o.dur - (now - o.start_ts) / 60)) : null;
-    return left != null ? tr("or.ot.item", "{where}: {name}, {n} min left", { where, name, n: left }) : tr("or.ot.itemNoClock", "{where}: {name}", { where, name });
-  });
-  return { text: tr("or.ot.line", "Also running, no win chances for this alert type: {list}.", { list: list.join("; ") }) };
+/** Alert type name for the title ("" for territory / Meltdown). */
+export function kindName(a) {
+  const s = a && a.state;
+  const sub = s && s.facility && s.facility.sub;
+  return a && (a.kind === "facility" || a.kind === "aerial" || a.kind === "pressure") ? (NAME[sub] || NAME[a.kind] || (() => ""))() : "";
+}
+
+/** Win-card note for the non-territory alert types (HTML). */
+export function kindNoteHtml(a) {
+  const s = a && a.state;
+  if (!a || !s) return "";
+  if (a.kind === "facility" && s.facility) {
+    const t = s.facility.targets.map((x) => `<span class="${esc(x.owner || "")}">${esc(x.name)}${x.owner ? ` ${esc(x.owner)}` : ""}</span>`).join(" · ");
+    return `<div class="note">${tr("or.fa.rule", "Hold all 3 to win at once; otherwise the most held at the end wins.")} 🎯 ${t}</div>`;
+  }
+  if (a.kind === "facility" || a.kind === "aerial" || a.kind === "pressure") return `<div class="note">${tr("or.fa.even", "The game shares no live score for this alert type, so win chances stay even.")}</div>`;
+  return "";
+}
+
+/** AI Commander card for a facility alert: one order per faction (HTML) or "". */
+export function facilityCmdHtml(a) {
+  const f = a && a.state && a.state.facility;
+  if (!f) return "";
+  const lines = FACS.map((x) => {
+    const o = f.orders && f.orders[x];
+    const what = !o ? tr("or.fa.none", "no decisive move right now")
+      : o.move === "take" ? tr("or.fa.take2", "All forces: take {base} ({now}% → {then}%)", { base: esc(o.name), now: o.now, then: o.then })
+        : tr("or.fa.hold2", "All forces: hold {base} (losing it: {now}% → {then}%)", { base: esc(o.name), now: o.now, then: o.then });
+    return `<div class="row"><span class="lbl ${x}">${x}</span> <span>${what}</span></div>`;
+  }).join("");
+  return `<section class="card cmd"><h2 data-sec="ai-commander">${tr("or.h.cmd", "🎖️ AI Commander")}</h2>${lines}</section>`;
+}
+
+/** Benchmark pool label: numbers are territory / Meltdown lengths, words are the other alert types. */
+export function poolLabel(key) {
+  if (/^\d+$/.test(key)) return tr("or.brierDur", "{n}-min Brier:", { n: key });
+  return ({ facility: () => tr("or.pool.facility", "Facility alerts Brier:"), aerial: () => tr("or.pool.aerial", "Aerial Anomalies Brier:"), pressure: () => tr("or.pool.pressure", "Maximum Pressure Brier:") })[key]?.() || `${esc(key)}:`;
 }
 
 /** cycle.patch -> { text, url, link } or null. */

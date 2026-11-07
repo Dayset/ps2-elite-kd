@@ -1,6 +1,7 @@
 // PS2MapOracle dashboard — split from index.html (#15). No behaviour change.
 import { S, FACS, esc, $, when, info, wide } from "./state.js?v=20261018-scrub2";
 import { get } from "./api.js?v=20261018-scrub2";
+import { poolLabel } from "./other.js?v=20261107-fac1";
 import { t as tr } from "../../i18n.mjs";
 import { renderSkillFoot } from "./skill-foot.js?v=20261102-globfoot1";
 import { myVoteMark } from "./vote.js?v=20261101-votejoin1";
@@ -58,7 +59,7 @@ export async function refreshHistory() {
   try {
     const h = await get("/history?days=7");
     const b = h.benchmark || {};
-    $("bench").innerHTML = Object.entries(b).map(([dur, sl]) => `<div>${tr("or.brierDur", "{n}-min Brier:", { n: dur })} ${benchLine(sl)}</div>`).join("") +
+    $("bench").innerHTML = Object.entries(b).map(([dur, sl]) => `<div>${poolLabel(dur)} ${benchLine(sl)}</div>`).join("") +
       (Object.keys(b).length ? `<div class="note">${tr("or.lowerBetter", "lower is better · coin-flip = {n}", { n: h.uniform })}</div>` : "");
     S.histRows = h.alerts || [];
     renderHist();
