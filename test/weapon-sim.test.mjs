@@ -3,6 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { slotOf, canon, SLOTS, BURSTS, simParams, simulate, compareBursts, sprayPattern, rng, burstStats, ADS_DEFAULT, ATTACHMENTS, descEffects, attEffects } from "../weapon-sim.mjs";
+import { fpsFireRateDrop } from "../weapons-model.mjs";
 import { toProfile } from "../replay/weapons.mjs";
 
 const AR = toProfile([600, 30, 1950, 167, 125, 10, 90, 2, 1, "auto"]);
@@ -30,6 +31,16 @@ test("attachments change the numbers the way the table says", () => {
   const hipC = simParams(AR, FM, STATES, { aim: "hip", attachments: ["Compensator"] });
   
   assert.ok(Object.keys(ATTACHMENTS).length >= 6);
+});
+
+test("FPS limit: the simulator stretches the shot gaps by the same factor, wind-up untouched", () => {
+  const base = simParams(AR, FM, STATES, { aim: "ads" });
+  const drop = fpsFireRateDrop(60, 600);
+  const slow = simParams(AR, FM, STATES, { aim: "ads", fpsDrop: drop });
+  assert.ok(Math.abs(slow.gapMs - base.gapMs / (1 - drop)) < 1e-9, `${slow.gapMs} vs ${base.gapMs}`);
+  assert.ok(Math.abs(slow.refireMs - base.refireMs / (1 - drop)) < 1e-9);
+  assert.equal(slow.delayMs, base.delayMs);
+  assert.equal(simParams(AR, FM, STATES, { aim: "ads" }).gapMs, base.gapMs, "no fpsDrop means no change");
 });
 
 test("same seed gives the same result", () => {

@@ -56,6 +56,40 @@ export function effectiveRpm(p) {
   return p.mag * 60000 / (magPeriod(p) - p.reloadMs);
 }
 
+/**
+ * Low frame rates slow the fire rate. Fitted curve from measurements (fire rate 600 rpm in the
+ * chart: 30 FPS -> -24.6 %, 60 FPS -> -13.5 %, 120 FPS -> -6.7 %, 210 FPS -> -5.3 %):
+ *   decrease = b1 * e^(b2 * fps) + b3 * rpm
+ * with b1 = 0.451, b2 = -0.028, b3 = 8.56e-5. The b3 term is the floor: faster weapons lose
+ * more even at high frame rates (600 rpm -> 5.1 %, 1000 rpm -> 8.6 %). The fit covers ~30-210 FPS;
+ * the slider clamps to 30-500 FPS, so outside the fitted range the curve is just extended flat.
+ */
+export const FPS_LIMIT = Object.freeze({ b1: 0.451, b2: -0.028, b3: 8.56e-5, min: 30, max: 500, def: 60 });
+
+/** Share of the fire rate lost at `fps` for a weapon firing `rpm` rounds per minute (0..0.9). */
+export function fpsFireRateDrop(fps, rpm) {
+  if (!(fps > 0) || !(rpm > 0)) return 0;
+  const f = Math.min(FPS_LIMIT.max, Math.max(FPS_LIMIT.min, fps));
+  const d = FPS_LIMIT.b1 * Math.exp(FPS_LIMIT.b2 * f) + FPS_LIMIT.b3 * rpm;
+  return Math.min(0.9, Math.max(0, d));
+}
+
+/**
+ * A copy of a profile with the FPS limit applied: every inter-shot wait stretches by 1 / (1 - drop),
+ * so the fire rate (and with it DPS and time to kill) falls by the drop. Wind-up and reload are
+ * fixed waits, not fire rate, so they are left alone. Returns the profile unchanged when off.
+ */
+export function withFpsLimit(p, fps) {
+  if (!p || !(fps > 0)) return p;
+  const drop = fpsFireRateDrop(fps, p.rpm);
+  if (!(drop > 0)) return p;
+  const s = 1 / (1 - drop);
+  const out = { ...p, rpm: p.rpm * (1 - drop) };
+  if (p.autoMs) out.autoMs = p.autoMs * s;
+  if (p.refireMs) out.refireMs = p.refireMs * s;
+  return out;
+}
+
 // time (ms from the trigger pull) of shot m (0-based) inside one magazine, trigger held / pulled again at once
 function shotInMag(p, m) {
   const delay = p.delayMs || 0;

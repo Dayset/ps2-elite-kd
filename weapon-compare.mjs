@@ -15,9 +15,10 @@ import { paletteColor } from "./palette.mjs";
 import { toProfile } from "./replay/weapons.mjs";
 import {
   HP_PRESETS, ttkDistribution, quantileMs, dps, rangeAxis, ttkCurve, winnerStrip, slowerPct, withCadence,
-} from "./weapons-model.mjs?v=20261106-wcr5";
-import { METRICS, GROUPS, GROUP_EN, statValues, bestOf, rank, classBests } from "./weapon-stats.mjs?v=20261106-wcr5";
-import { simParams, compareBursts, sprayPattern, attEffects, SLOTS, slotOf, canon, TARGET, STANCES } from "./weapon-sim.mjs?v=20261106-wcr5";
+  FPS_LIMIT, fpsFireRateDrop, withFpsLimit,
+} from "./weapons-model.mjs?v=20261107-wcfps1";
+import { METRICS, GROUPS, GROUP_EN, statValues, bestOf, rank, classBests } from "./weapon-stats.mjs?v=20261107-wcfps1";
+import { simParams, compareBursts, sprayPattern, attEffects, SLOTS, slotOf, canon, TARGET, STANCES } from "./weapon-sim.mjs?v=20261107-wcfps1";
 
 export const MAX_WEAPONS = 4;
 export const MAX_RANGE = 500;        // hard cap (the 500 m option); the chart shows 100 / 200 / 500, see viewMax()
@@ -34,7 +35,7 @@ const nf = (v, d = 0) => Number(v).toLocaleString(currentLang(), { maximumFracti
 const fmtMs = (v) => (v == null ? tr("wc.never", "no kill") : tr("wc.ms", "{ms} ms", { ms: nf(v) }));
 const fmtM = (v) => tr("wc.m", "{m} m", { m: nf(v) });
 
-/** Parse ?w=4,14&acc=60&hsr=10&hp=500&r=20 (pure, tested). */
+/** Parse ?w=4,14&acc=60&hsr=10&hp=500&r=20&fps=60 (pure, tested). `fps` present = the FPS limit is on. */
 export function parseState(search, known = () => true) {
   const q = new URLSearchParams(search);
   const num = (k, lo, hi, d) => { const v = Number(q.get(k)); return q.has(k) && Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d; };
@@ -47,6 +48,8 @@ export function parseState(search, known = () => true) {
     range: Math.round(num("r", 0, MAX_RANGE, DEFAULTS.range)),
     hp: Math.round(hp),
     far: q.get("max") === "500",
+    fps: Math.round(num("fps", FPS_LIMIT.min, FPS_LIMIT.max, FPS_LIMIT.def)),
+    fpsOn: q.has("fps"),
     hasW: q.has("w"),
   };
 }
@@ -60,6 +63,7 @@ export function stateToSearch(s) {
   if (s.range !== DEFAULTS.range) q.set("r", String(s.range));
   if (s.hp !== DEFAULTS.hp) q.set("hp", String(s.hp));
   if (s.far) q.set("max", "500");
+  if (s.fpsOn) q.set("fps", String(s.fps ?? FPS_LIMIT.def));
   const str = q.toString();
   return str ? "?" + str : "";
 }
@@ -198,6 +202,9 @@ async function boot() {
   $("wcRange").addEventListener("input", () => { readControls(); invalidate("range"); });
   hpSel.addEventListener("change", () => { readControls(); invalidate("acc"); });
   $("wcFar").addEventListener("change", () => { st.far = $("wcFar").checked; invalidate("all"); });
+  // footer: the experimental FPS limit (checkbox enables it, slider sets the frame rate)
+  $("wcFps").addEventListener("change", () => { st.fpsOn = $("wcFps").checked; paintFps(); invalidate("all"); });
+  $("wcFpsRange").addEventListener("input", () => { st.fps = +$("wcFpsRange").value; paintFps(); invalidate("range"); });
   window.addEventListener("resize", () => { clearTimeout(boot.rt); boot.rt = setTimeout(() => invalidate("charts"), 120); });
   window.addEventListener("ps2-lang", () => { fillCats(); fillHp(); paintSeg(); invalidate("all"); });
   $("wcChips").addEventListener("click", (e) => { const b = e.target.closest("button[data-id]"); if (b) removeId(+b.dataset.id); });
@@ -212,6 +219,19 @@ async function boot() {
     $("wcAccV").textContent = nf(st.acc) + "%";
     $("wcHsrV").textContent = nf(st.hsr) + "%";
     $("wcRangeV").textContent = fmtM(st.range);
+    paintFps();
+  }
+
+  // footer: the experimental FPS limit. The slider is dead until the box is ticked.
+  function paintFps() {
+    const on = !!st.fpsOn;
+    $("wcFps").checked = on;
+    $("wcFpsRange").disabled = !on;
+    $("wcFpsRange").value = st.fps;
+    $("wcFpsV").textContent = tr("wc.fpsV", "{fps} FPS", { fps: nf(st.fps) });
+    $("wcFpsNote").textContent = on
+      ? tr("wc.fpsReadout", "At {fps} FPS, a 600 rpm weapon loses {pct}% of its fire rate. Each weapon uses its own fire rate, so faster weapons lose more.", { fps: nf(st.fps), pct: nf(fpsFireRateDrop(st.fps, 600) * 100, 1) })
+      : tr("wc.fpsOff", "Off: fire rates as listed in Census.");
   }
 
   // ---------------------------------------------------------- scheduling --
@@ -248,14 +268,16 @@ async function boot() {
   let calc = null;
   const curveCache = new Map();
   function compute() {
-    const ws = selected();
+    // with the FPS limit on, every weapon's profile carries the slower fire rate, so TTK, DPS,
+    // the table and the simulator all slow down together from this one adjusted profile
+    const ws = st.fpsOn ? selected().map((w) => ({ ...w, p: withFpsLimit(w.p, st.fps) })) : selected();
     const maxR = viewMax(ws.map((w) => w.p), st.far);
     $("wcRange").max = maxR;
     if (st.range > maxR) { st.range = maxR; paintLabels(); }
     $("wcRange").value = st.range;
     const xs = rangeAxis(maxR, rangeStep(maxR));
     const opt = { acc: st.acc / 100, hsr: st.hsr / 100, hp: st.hp };
-    const okey = `${opt.acc}|${opt.hsr}|${opt.hp}|${maxR}`;
+    const okey = `${opt.acc}|${opt.hsr}|${opt.hp}|${maxR}|${st.fpsOn ? st.fps : 0}`;
     if (curveCache.size > 200) curveCache.clear();
     const cs = ws.map((w) => {
       const k = w.id + "|" + okey;
@@ -287,10 +309,11 @@ async function boot() {
   // best of the whole class (category) per range / hp: cached
   const classCache = new Map();
   function classBestFor(cat) {
-    const key = `${cat}|${st.range}|${st.hp}|${recoil ? 1 : 0}`;
+    const key = `${cat}|${st.range}|${st.hp}|${recoil ? 1 : 0}|${st.fpsOn ? st.fps : 0}`;
     if (!classCache.has(key)) {
       if (classCache.size > 100) classCache.clear();
-      classCache.set(key, classBests((byCat.get(cat) || []).map((w) => statValues({ p: w.p, rec: recoilOf(w.id), range: st.range, hp: st.hp }))));
+      // the class best is judged on the same slowed profiles as the chosen weapons
+      classCache.set(key, classBests((byCat.get(cat) || []).map((w) => statValues({ p: st.fpsOn ? withFpsLimit(w.p, st.fps) : w.p, rec: recoilOf(w.id), range: st.range, hp: st.hp }))));
     }
     return classCache.get(key);
   }
@@ -459,7 +482,8 @@ async function boot() {
 
   function drawDps() {
     const el = $("wcDps");
-    $("wcDpsNote").textContent = tr("wc.dpsNote", "At {m} m, body hits, every pellet lands. Burst = the magazine's firing time only. Sustained = reloads counted.", { m: nf(st.range) });
+    $("wcDpsNote").textContent = tr("wc.dpsNote", "At {m} m, body hits, every pellet lands. Burst = the magazine's firing time only. Sustained = reloads counted.", { m: nf(st.range) })
+      + (st.fpsOn ? " " + tr("wc.dpsNoteFps", "Fire rate reduced by the FPS limit in the footer.") : "");
     const { ws, dp } = calc;
     if (!ws.length) { el.innerHTML = ""; return; }
     const max = Math.max(1, ...dp.flatMap((d) => [d.burst, d.sustained]));
@@ -474,7 +498,7 @@ async function boot() {
   const aimM = () => ({ x: simState.aimX / 100, y: simState.aimY / 100 });
   // the preset button that matches the aim point (Head: 0 / 45 cm, Torso: 0 / 0 cm), if any
   const sprayTarget = () => (simState.aimX === 0 && simState.aimY === 45 ? "head" : simState.aimX === 0 && simState.aimY === 0 ? "body" : null);
-  const settingsKey = () => [simState.aim, simState.stance, simState.comp, simState.compX, simState.aimX, simState.aimY, st.acc, st.hsr, st.range, st.hp].join("|");
+  const settingsKey = () => [simState.aim, simState.stance, simState.comp, simState.compX, simState.aimX, simState.aimY, st.acc, st.hsr, st.range, st.hp, st.fpsOn ? st.fps : 0].join("|");
   const simOpts = () => ({ stance: simState.stance, aim: simState.aim, comp: simState.comp / 100, compX: simState.compX / 100, aimX: simState.aimX / 100, aimY: simState.aimY / 100, acc: st.acc / 100, hsr: st.hsr / 100 });
   // attachments the weapon can mount, by slot: { barrel: [names], rail: [...], ammo: [...] } (recoil.json v2: atts / descs / att)
   const partsOf = (id) => ((recoil && recoil.att && recoil.att[id]) || []).map((i) => recoil.atts[i]).filter(Boolean);
@@ -495,7 +519,11 @@ async function boot() {
   const paramsOf = (w, att) => {
     const x = recoilOf(w.id);
     if (!x || !x.fm) return null;
-    return simParams(w.p, x.fm, x.states, { ...simOpts(), attachments: att, attDesc: descsOf(w.id), adsFm: x.adsFm, adsStates: x.adsStates, cat: w.cat, weaponName: w.name });
+    // the simulator takes the raw Census profile and applies the FPS limit itself (simParams
+    // scales the shot gaps from the raw fire_refire_ms, which the adjusted profile cannot reach),
+    // so the drop is counted once, never twice
+    const raw = (weapons.get(w.id) || w).p;
+    return simParams(raw, x.fm, x.states, { ...simOpts(), fpsDrop: st.fpsOn ? fpsFireRateDrop(st.fps, raw.rpm) : 0, attachments: att, attDesc: descsOf(w.id), adsFm: x.adsFm, adsStates: x.adsStates, cat: w.cat, weaponName: w.name });
   };
   const styleLabel = (shots, n) => {
     const s = styleParts(shots, n);
@@ -508,7 +536,7 @@ async function boot() {
   const lastShown = new Map();     // weapon id -> last result drawn (kept on screen, dimmed, while a new one is computed)
   let gen = 0, worker = null;
   try {
-    worker = new Worker(new URL("weapon-sim-worker.mjs?v=20261106-wcr5", import.meta.url), { type: "module" });
+    worker = new Worker(new URL("weapon-sim-worker.mjs?v=20261107-wcfps1", import.meta.url), { type: "module" });
     worker.onmessage = (e) => {
       const { key, kind, result } = e.data || {};
       (kind === "class" ? classSim : simCache).set(key, result);

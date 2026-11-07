@@ -11,7 +11,7 @@
 // the cone is filled. Those are constants here, labelled on the page.
 //
 // Units: angles in degrees, distances in metres, time in ms.
-import { hitDamage } from "./weapons-model.mjs?v=20261106-wcr5";
+import { hitDamage } from "./weapons-model.mjs?v=20261107-wcfps1";
 
 export const STANCES = Object.freeze(["crouchStill", "standStill", "crouchMove", "standMove"]);
 // Census player_state ids: 0 Standing, 1 Crouching, 2 Running, 5 CrouchWalking
@@ -209,8 +209,12 @@ export function simParams(profile, fm, states, opts = {}) {
   const rof = A.reduce((m, a) => m * (a.rofMul ?? 1), 1);
   const burstN = profile.burstN > 1 ? profile.burstN : 1;
   const shotGap = burstN > 1 ? profile.autoMs : (f.fire_refire_ms || 60000 / profile.rpm);
+  // experimental FPS limit (opts.fpsDrop, a share from weapons-model.mjs fpsFireRateDrop): the shot gaps
+  // stretch by 1 / (1 - drop), the same factor withFpsLimit applies to the profile. Wind-up (delayMs)
+  // is a fixed wait, not fire rate, so it is left alone.
+  const fpsScale = opts.fpsDrop > 0 && opts.fpsDrop < 1 ? 1 / (1 - opts.fpsDrop) : 1;
   return {
-    gapMs: shotGap / rof, burstN, refireMs: (burstN > 1 ? profile.refireMs : shotGap) / rof, delayMs: profile.delayMs || 0,
+    gapMs: shotGap * fpsScale / rof, burstN, refireMs: (burstN > 1 ? profile.refireMs : shotGap) * fpsScale / rof, delayMs: profile.delayMs || 0,
     mag: Math.max(1, Math.round((profile.mag + sumA("magAdd")) * mul("magMul"))), reloadMs: profile.reloadMs + sumA("reloadAdd"), pellets: pellets,
     profile: { ...adjustRanges(profile, A, opts.cat), pellets },
     vMin: (f.recoil_magnitude_min ?? 0.3) * vMul, vMax: (f.recoil_magnitude_max ?? 0.3) * vMul,

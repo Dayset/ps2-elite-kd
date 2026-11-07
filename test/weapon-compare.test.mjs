@@ -39,7 +39,8 @@ test("niceTicks starts at 0, ends at or above the max and is short", () => {
 
 test("the page is wired: stylesheet, module, language menu, footer link, credits", () => {
   const html = read("weapon-compare.html");
-  for (const id of ["wcSearch", "wcChips", "wcAcc", "wcHsr", "wcRange", "wcHp", "wcTtk", "wcCdf", "wcDps", "langSelect"]) assert.match(html, new RegExp(`id="${id}"`), id);
+  for (const id of ["wcSearch", "wcChips", "wcAcc", "wcHsr", "wcRange", "wcHp", "wcTtk", "wcCdf", "wcDps", "langSelect", "wcFps", "wcFpsRange", "wcFpsNote"]) assert.match(html, new RegExp(`id="${id}"`), id);
+  assert.match(html, /<footer[^>]*wc-foot/);
   assert.match(html, /weapon-compare\.css\?v=/);
   assert.match(html, /weapon-compare\.mjs\?v=/);
   assert.match(html, /Izubrr\/planetside_weapon_compare/);
@@ -54,6 +55,20 @@ test("range view: 100 m, 200 m for weapons that still fall off past 100 m, 500 m
   assert.equal(viewMax([AR, SNIPER], false), 200);
   assert.equal(viewMax([AR], true), 500);
   assert.deepEqual([rangeStep(100), rangeStep(200), rangeStep(500)], [2, 4, 5]);
+});
+
+test("the FPS limit survives the link, off by default", () => {
+  const s = parseState("");
+  assert.equal(s.fpsOn, false);
+  assert.equal(s.fps, 60);
+  assert.equal(stateToSearch({ ids: [], acc: 20, hsr: 20, range: 20, hp: 1000 }), "");
+  const on = { ids: [4], acc: 20, hsr: 20, range: 20, hp: 1000, fps: 60, fpsOn: true };
+  assert.equal(stateToSearch(on), "?w=4&fps=60");
+  const back = parseState(stateToSearch(on));
+  assert.equal(back.fpsOn, true);
+  assert.equal(back.fps, 60);
+  assert.equal(parseState("?fps=999").fps, 500);
+  assert.equal(parseState("?fps=5").fps, 30);
 });
 
 test("the 500 m option survives the link", () => {

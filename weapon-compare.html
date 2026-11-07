@@ -20,7 +20,7 @@
   <link rel="preload" href="assets/weapons/catalog.json" as="fetch" crossorigin />
   <link rel="preload" href="assets/weapons/profiles.json" as="fetch" crossorigin />
   <link rel="stylesheet" href="styles.css?v=20261031-fr1" />
-  <link rel="stylesheet" href="weapon-compare.css?v=20261106-wcr5" />
+  <link rel="stylesheet" href="weapon-compare.css?v=20261107-wcfps1" />
 </head>
 <body class="site-page">
   <main class="wc-wrap">
@@ -130,14 +130,22 @@
         <li data-i18n="wc.how.3">Accuracy and headshots are worked out exactly (every possible outcome), not by random trials.</li>
         <li data-i18n="wc.how.4">The graphs above do not include recoil, bloom, armor or attachments. The simulator below them does include recoil, bloom and attachments, not armor.</li>
         <li data-i18n="wc.how.5">The NSX Kuwa's wind-up is not in Census: 200 ms is typed in by hand.</li>
+        <li data-i18n="wc.how.6">With the experimental FPS limit on, every weapon's fire rate is cut by 0.451·e^(−0.028·FPS) + 0.0000856·RPM (fitted from measurements), so damage per second, time to kill and the recoil simulator all slow down together. Reloads and wind-up are unchanged.</li>
       </ul>
       <p class="wc-dim" data-i18n-html="wc.credit">Inspired by <a href="https://github.com/Izubrr/planetside_weapon_compare" target="_blank" rel="noopener noreferrer">Izubrr/planetside_weapon_compare</a> and <a href="https://github.com/B4rrCH/Ps2TtkCalculator" target="_blank" rel="noopener noreferrer">B4rrCH/Ps2TtkCalculator</a> (MIT). No code was copied. Weapon data and images: Daybreak Game Company, via the Census API.</p>
     </details>
+
+    <footer class="wc-panel wc-foot">
+      <label class="wc-check"><input id="wcFps" type="checkbox" data-i18n-title="wc.fpsTip" title="At low frame rates the game fires slower. The drop follows the fitted curve: faster weapons lose more." /> <span data-i18n="wc.fps">Experimental FPS limit</span></label>
+      <label class="wc-ctl wc-fpsctl"><span class="wc-ctl-h"><span data-i18n="wc.fpsLabel">Frame rate</span> <b id="wcFpsV">60 FPS</b></span>
+        <input id="wcFpsRange" type="range" min="30" max="500" step="1" value="60" /></label>
+      <p id="wcFpsNote" class="wc-note"></p>
+    </footer>
   </main>
   <dialog id="wcZoom" class="wc-zoomdlg" aria-labelledby="wcZoomH">
     <div class="wc-zoomhead"><b id="wcZoomH"></b><button type="button" class="wc-btn" id="wcZoomClose" data-i18n="wc.sim.zoomClose">Close</button></div>
     <div id="wcZoomBody"></div>
   </dialog>
-  <script type="module" src="weapon-compare.mjs?v=20261106-wcr5"></script>
+  <script type="module" src="weapon-compare.mjs?v=20261107-wcfps1"></script>
 </body>
 </html>

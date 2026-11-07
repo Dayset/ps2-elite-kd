@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
   damageAt, hitDamage, timeOfShot, ttkDistribution, quantileMs, chanceByMs, minShots, idealTtk,
-  medianTtk, dps, rangeAxis, ttkCurve, winnerStrip, slowerPct,
+  medianTtk, dps, rangeAxis, ttkCurve, winnerStrip, slowerPct, withCadence, fpsFireRateDrop, withFpsLimit,
 } from "../weapons-model.mjs";
 import { toProfile } from "../replay/weapons.mjs";
 
@@ -128,6 +128,39 @@ test("slowerPct is relative, never percentage points", () => {
   assert.equal(slowerPct(220, 200), 10);
   assert.equal(slowerPct(200, 200), 0);
   assert.equal(slowerPct(null, 200), null);
+});
+
+test("FPS limit: the fitted drop matches the chart at 600 rpm", () => {
+  near(fpsFireRateDrop(30, 600), 0.246, 0.002);   // the chart reads ~24.5 % at 30 FPS
+  near(fpsFireRateDrop(60, 600), 0.135, 0.002);
+  near(fpsFireRateDrop(120, 600), 0.067, 0.002);
+  near(fpsFireRateDrop(210, 600), 0.053, 0.002);  // the chart reads ~5.2 % at 210 FPS
+});
+
+test("FPS limit: faster weapons lose more (the b3 floor), slower ones less", () => {
+  assert.ok(fpsFireRateDrop(60, 1000) > fpsFireRateDrop(60, 600));
+  assert.ok(fpsFireRateDrop(60, 600) > fpsFireRateDrop(60, 200));
+  near(fpsFireRateDrop(210, 600), 0.0514, 0.002, "at high FPS only the floor is left");
+  near(fpsFireRateDrop(500, 600), 0.0514, 0.002, "500 FPS is the same floor, not a new effect");
+});
+
+test("FPS limit: DPS and TTK slow by the drop, reload does not", () => {
+  const drop = fpsFireRateDrop(60, 600);
+  const lim = withFpsLimit(AR, 60);
+  near(lim.rpm, 600 * (1 - drop), 1e-9);
+  near(dps(lim, { range: 0 }).burst, 1670 * (1 - drop), 1e-6);
+  near(idealTtk(lim, { hp: 500 }), 200 / (1 - drop), 1e-9);
+  assert.equal(lim.reloadMs, AR.reloadMs);
+  assert.equal(withFpsLimit(AR, 0), AR, "off returns the profile unchanged");
+});
+
+test("FPS limit: burst weapons stretch the in-burst gap and the between-burst wait", () => {
+  const burst = withCadence(AR, [3, 100, 200, 0], "Test Burst");
+  const lim = withFpsLimit(burst, 60);
+  assert.equal(lim.burstN, 3);
+  const s = 1 / (1 - fpsFireRateDrop(60, 600));
+  near(lim.autoMs, 100 * s, 1e-9);
+  near(lim.refireMs, 200 * s, 1e-9);
 });
 
 test("every real profile in assets/weapons/profiles.json gives a finite ideal TTK", () => {
